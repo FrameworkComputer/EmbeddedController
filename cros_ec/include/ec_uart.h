@@ -1,14 +1,24 @@
-/* ec_uart.h - UART module for Chrome EC
- *
- * (Chromium license) */
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ec_uart.h - UART module for Chrome EC */
 
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
 #include "ec_common.h"
 
+
+/* Initializes the UART module. */
+EcError EcUartInit(void);
+
 /*****************************************************************************/
-/* Output functions */
+/* Output functions
+ *
+ * Output is buffered.  If the buffer overflows, subsequent output is
+ * discarded. */
 
 /* Print formatted output to the UART, like printf().
  *
@@ -25,30 +35,33 @@
  *
  * Note: Floating point output (%f / %g) is not required.
  */
-EcError UartPrintf(const char* format, ...);
+EcError EcUartPrintf(const char* format, ...);
 
 /* Put a null-terminated string to the UART, like puts().
  *
  * Returns error if output was truncated. */
-EcError UartPuts(const char* outstr);
+EcError EcUartPuts(const char* outstr);
 
 /* Flushes output.  Blocks until UART has transmitted all output. */
-void UartFlush(void);
+void EcUartFlushOutput(void);
 
 /*****************************************************************************/
-/* Input functions */
+/* Input functions
+ *
+ * Input is buffered.  If the buffer overflows, the oldest input in
+ * the buffer is discarded to make room for the new input.
+ *
+ * Input lines may be terminated by CR ('\r'), LF ('\n'), or CRLF; all
+ * are translated to newline. */
 
 /* Flushes input buffer, discarding all input. */
-void UartFlushInput(void);
+void EcUartFlushInput(void);
 
 /* Non-destructively checks for a character in the input buffer.
  *
- * Returns non-zero if the character <c> is in the input buffer.  If
- * c<0, returns non-zero if any character is in the input buffer. */
-/* TODO: add boolean type? */
-/* TODO: return offset of the character?  That is, how many bytes of
- * input up to and including the character. */
-int UartPeek(int c);
+ * Returns the offset into the input buffer of character <c>, or -1 if
+ * it is not in the input buffer. */
+int EcUartPeek(int c);
 
 /* Reads characters from the UART, similar to fgets().
  *
@@ -63,12 +76,15 @@ int UartPeek(int c);
  * callack that input is waiting, but then the input buffer overflows
  * or someone else grabs the input before UartGets() is called.
  *
- * Characters are stored in <dest> and are null-terminated, and
- * include the newline if present.
+ * Characters are stored in <dest> and are null-terminated.
+ * Characters include the newline if present, so that the caller can
+ * distinguish between a complete line and a truncated one.  If the
+ * input buffer is empty, a null-terminated empty string ("") is
+ * returned.
  *
  * Returns the number of characters read (not counting the terminating
  * null). */
-int UartGets(char* dest, int size);
+int EcUartGets(char* dest, int size);
 
 /* Callback handler prototype, called when the UART has input. */
 typedef void (*UartHasInputCallback)(void);
@@ -79,24 +95,8 @@ typedef void (*UartHasInputCallback)(void);
  * Callback will be called whenever the UART receives character <c>.
  * If c<0, callback will be called when the UART receives any
  * character. */
-void UartRegisterHasInputCallback(UartHasInputCallback callback, int c);
-
-/* TODO: what to do about input overflow?  That is, what if the input
- * buffer fills with 'A', and we're still waiting for a newline?  Do
- * we drop the oldest output, flush the whole thing, or call the input
- * callback with a message code?  Alternately, should the callback be able
- * to specify a buffer-full-threshold where it gets called?
- *
- * Simplest just to flush the input buffer on overflow. */
-/* YJLOU: are you talking about the UartRegisterHasInputCallback()?
- * If yes, this is not a problem because for every input key, we can drop it
- *   if there is no callback registered for it.
- * Else if you are talking about the UartGets() function, I think you can add
- *   the third return critiria: internal key buffer reaches full.
- */
+void EcUartRegisterHasInputCallback(UartHasInputCallback callback, int c);
 
 /* TODO: getc(), putc() equivalents? */
-
-/* TODO: input handler assumes debug input new lines are '\n'-delimited? */
 
 #endif  /* __CROS_EC_UART_H */

@@ -1,6 +1,9 @@
-/* ec_console.h - Debug console for Chrome EC
- *
- * (Chromium license) */
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ec_console.h - Debug console for Chrome EC */
 
 #ifndef __CROS_EC_CONSOLE_H
 #define __CROS_EC_CONSOLE_H
@@ -25,10 +28,10 @@ typedef struct EcConsoleCommandGroup {
 
 
 /* Initializes the console module. */
-EcError ConsoleInit(void);
+EcError EcConsoleInit(void);
 
 
 /* Registers a group of console commands. */
-EcError ConsoleRegisterCommands(const EcConsoleCommandGroup* group);
+EcError EcConsoleRegisterCommands(const EcConsoleCommandGroup* group);
 
 #endif  /* __CROS_EC_CONSOLE_H */
