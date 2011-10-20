@@ -1,0 +1,26 @@
+- EC Lib
+
+This wraps Blizzard driverlib and implements the EC chip interface defined
+by Google. See below diagram for architecture.
+
+
+  +--------------------+
+  |   Host BIOS/OS     |
+  +--------------------+
+
+ ---- host interface ----
+
+  +--------------------+
+  | Google EC features |
+  +--------------------+
+
+ ---- chip interface ----  The interface is defined in
+                           src/platform/ec/chip_interface/*.
+  +--------------------+   But the real implementation is in EC Lib.
+  |       EC Lib       |
+  +--------------------+
+  | Blizzard low level |
+  |   driver, the      |
+  |   driverlib.       |
+  +--------------------+
+
