@@ -1,7 +1,10 @@
-/* power_button.h - Power button function.
- *                  Hides chip-specific implementation behind this interface.
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  *
- * (Chromium license) */
+ * power_button.h - Power button function.
+ *                  Hides chip-specific implementation behind this interface.
+ */
 
 #ifndef __CHIP_INTERFACE_BATTERY_H
 #define __CHIP_INTERFACE_BATTERY_H
@@ -9,26 +12,26 @@
 
 /***********  Battery SMBus  *********************************************/
 /* Initialize the SMBus */
-EcError CrBatteryInit(void);
+EcError EcBatteryInit(void);
 
 /* Send a command to battery. Blocking */
-EcError CrBatterySendCommand(...);
+EcError EcBatterySendCommand(...);
 
 /* non-blocking read so that it can support both polling mode
  * and interrupt callback.
  */
-EcError CrBatteryRecvCommand(...);
+EcError EcBatteryRecvCommand(...);
 
 /* Register a callback when a packet comes from SMBus */
-EcError CrRegisterBatteryInterrupt(void (*isr)(...));
+EcError EcRegisterBatteryInterrupt(void (*isr)(...));
 
 #if 0  /* example code */
 void BatteryPacketArrive(...) {
-  CrBatteryRecvCommand();  // read the packet.
+  EcBatteryRecvCommand();  // read the packet.
 }
 
   ... somewhere in code ...
-  CrRegisterBatteryInterrupt(BatteryPacketArrive);
+  EcRegisterBatteryInterrupt(BatteryPacketArrive);
 
 #endif
 
@@ -38,22 +41,22 @@ void BatteryPacketArrive(...) {
  * Initialize the battery present as GPIO input pin and enable interrupt for
  * callback.
  */
-EcError CrBatteryPresentInit(void);
+EcError EcBatteryPresentInit(void);
 
 /* Calls GPIOPinRead() to read the GPIO state. */
 /* TODO: has the state been debounced? */
-EcError CrBatteryPrensentState(void);
+EcError EcBatteryPrensentState(void);
 
 /* Register a calback function. It is called while AC is plugged in or
  * unplugged.
  */
-EcError CrBatteryPresentRegister(void (*callback)(void));
+EcError EcBatteryPresentRegister(void (*callback)(void));
 
 /* Below is the example code to register this function. */
 #if 0
 /* This callback function is implemented in Chrome OS features layer. */
 void BatteryStateChanged(void) {
-  int battery_present = CrBatteryPresentState();
+  int battery_present = EcBatteryPresentState();
   if (battery_present) {
     // start to authenticate battery;
     // once authenticated, charge the battery;
@@ -62,7 +65,7 @@ void BatteryStateChanged(void) {
   }
 }
   ... somewhere in init code ...
-  CrBatteryPresentRegister(BatteryStateChanged);
+  EcBatteryPresentRegister(BatteryStateChanged);
 
 #endif /* #if 0 */
 

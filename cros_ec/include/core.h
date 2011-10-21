@@ -1,16 +1,14 @@
 /* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
  */
+#ifndef __CROS_EC_INCLUDE_CORE_H
+#define __CROS_EC_INCLUDE_CORE_H
 
-/* Fake main routine, to make sure lib functions link */
+#include "ec_common.h"
 
-#include "ec_console.h"
-#include "ec_uart.h"
+/*  main.c  */
+EcError CoreMain();
 
-int main(void) {
-
-
-
-  return 0;
-}
+#endif  /* __CROS_EC_INCLUDE_CORE_H */

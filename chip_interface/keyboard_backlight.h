@@ -1,6 +1,9 @@
-/* keyboard_backlight.h - Keyboard backlight
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  *
- * (Chromium license) */
+ * keyboard_backlight.h - Keyboard backlight
+ */
 
 #ifndef __CHIP_INTERFACE_KEYBOARD_BACKLIGHT_H
 #define __CHIP_INTERFACE_KEYBOARD_BACKLIGHT_H
@@ -14,9 +17,9 @@
  */
 
 /* Configure PWM port and set the initial backlight value. */
-EcError CrKeyboardBacklightInit(uint16_t init_lightness);
+EcError EcKeyboardBacklightInit(uint16_t init_lightness);
 
 /* Set the mapped PWM value */
-EcError CrKeyboardBacklightSet(uint16_t lightness);
+EcError EcKeyboardBacklightSet(uint16_t lightness);
 
 #endif  /* __CHIP_INTERFACE_KEYBOARD_BACKLIGHT_H */

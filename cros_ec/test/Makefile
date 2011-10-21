@@ -3,10 +3,11 @@
 # found in the LICENSE file.
 
 INCLUDES += -I./include \
-		-I$(CROS_EC_DIR)/lib/include
+		-I$(CROS_EC_DIR)/lib/include \
+		-I../../
 BUILD_ROOT = ${BUILD}/cros_ec/test
 
-TEST_NAMES = ec_os_test
+TEST_NAMES = ec_os_test ec_keyboard_test
 
 TEST_BINS = $(addprefix ${BUILD_ROOT}/,$(TEST_NAMES))
 
@@ -20,6 +21,9 @@ TEST_BINS = $(addprefix ${BUILD_ROOT}/,$(TEST_NAMES))
 CFLAGS +=  -MMD -MF $@.d -Xlinker --allow-multiple-definition
 
 LIBS := ${TEST_LIB} $(CROS_EC_LIB) $(CHIP_STUB_LIB)
+
+.SUFFIXES:
+.SUFFIXES: .o .c
 
 ifneq (${RUNTESTS},)
 EXTRA_TARGET = runtests
@@ -37,9 +41,10 @@ ${BUILD_ROOT}/%.o : %.c
 ${BUILD_ROOT}/% : %.c ${LIBS}
 	$(CC) $(CFLAGS) $(INCLUDES) $< ${LIBS} -o $@ -lrt
 
-ALLTESTS = ec_os_test
+ALLTESTS = ec_os_test ec_keyboard_test
 
 runtests:
 	${BUILD_ROOT}/ec_os_test
+	${BUILD_ROOT}/ec_keyboard_test
 
 -include ${ALL_DEPS}

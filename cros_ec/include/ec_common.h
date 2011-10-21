@@ -9,6 +9,7 @@
 #define __CROS_EC_COMMON_H
 
 #include <stdint.h>
+#include <stdio.h>  /* FIXME: will be removed for portibility in the future */
 
 /* Functions which return error return one of these.  This is an
  * integer instead of an enum to support module-internal error
@@ -32,5 +33,17 @@ enum EcErrorList {
   EC_ERROR_INTERNAL_FIRST = 0x10000,
   EC_ERROR_INTERNAL_LAST =  0x1FFFF
 };
+
+
+/* TODO: move to a proper .h file */
+#define PRINTF(fmt, ...) printf(fmt, __VA_ARGS__)
+
+/* TODO: move to a proper .h file */
+#define ASSERT(expr) do { \
+      if (!(expr)) {  \
+        PRINTF("ASSERT(%s) failed at file %s:%d.\n", \
+               #expr, __FILE__, __LINE__);  \
+      }  \
+    } while (0)
 
 #endif  /* __CROS_EC_COMMON_H */
