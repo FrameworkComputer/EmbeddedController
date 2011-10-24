@@ -9,9 +9,7 @@ TESTDIR = $(CROS_EC_TOP)/test
 BUILD_ROOT := ${BUILD}/$(shell basename ${CROS_EC_TOP})
 LIBS = $(CROS_EC_LIB)  # Firmware library must be self-contained
 
-INCLUDES = \
-	-I$(CROS_EC_TOP)/include \
-	-I$(LIBDIR)/include
+INCLUDES += -I$(LIBDIR)/include
 
 ifeq ($(FIRMWARE_ARCH),)
 INCLUDES += -I$(STUBDIR)/include
