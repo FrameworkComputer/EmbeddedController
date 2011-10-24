@@ -15,6 +15,7 @@
 #include <ftdi.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -69,7 +70,7 @@ int openpty(const char* desc) {
 
 int main(int argc, char **argv) {
   struct ftdi_context fcontext;
-  char buf[1024], buf_ec[1024], buf_x86[1024];
+  unsigned char buf[1024], buf_ec[1024], buf_x86[1024];
   int fd_ec, fd_x86;
   int rv, i;
 
@@ -180,4 +181,5 @@ int main(int argc, char **argv) {
   close(fd_x86);
   ftdi_usb_close(&fcontext);
   ftdi_deinit(&fcontext);
+  return 0;
 }

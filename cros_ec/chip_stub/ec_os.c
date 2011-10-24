@@ -396,7 +396,7 @@ EcError EcEventPost(EcEvent* event, uint32_t bits) {
 
 EcError EcEventWaitAll(EcEvent* event, uint32_t bits, int timeout_usec) {
   EcEventInternal* ei = (EcEventInternal*)event;
-  int rv;
+  int rv = 0;
 
   pthread_mutex_lock(&ei->mutex);
 
@@ -429,7 +429,7 @@ EcError EcEventWaitAll(EcEvent* event, uint32_t bits, int timeout_usec) {
 EcError EcEventWaitAny(EcEvent* event, uint32_t bits, uint32_t* got_bits_ptr,
                        int timeout_usec) {
   EcEventInternal* ei = (EcEventInternal*)event;
-  int rv;
+  int rv = 0;
 
   pthread_mutex_lock(&ei->mutex);
 

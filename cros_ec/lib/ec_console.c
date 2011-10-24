@@ -129,7 +129,7 @@ const EcConsoleCommand* FindCommand(char* name) {
 EcError ConsoleHandleCommand(char* input) {
   char* argv[MAX_ARGS_PER_COMMAND];
   const EcConsoleCommand *cmd;
-  int argc;
+  int argc = 0;
 
   /* Split input into words.  Ignore words past our limit. */
   SplitWords(input, MAX_ARGS_PER_COMMAND, &argc, argv);
