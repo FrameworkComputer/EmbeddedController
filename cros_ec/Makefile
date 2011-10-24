@@ -6,13 +6,22 @@ LIB_SRCS=\
 	lib/ec_console.c
 
 STUB_SRCS=\
+	chip_stub/ec_os.c \
 	chip_stub/ec_uart.c
 
-all: fakemain
+TESTPROGS=fakemain ec_os_test
+
+CFLAGS=-Wall -I include -I chip_stub -pthread
+
+all: $(TESTPROGS)
 
 clean:
-	rm -f fakemain
+	rm -f $(TESTPROGS)
+
+ec_os_test: test/ec_os_test.c chip_stub/ec_os.c
+	gcc $(CFLAGS) -o ec_os_test \
+	test/ec_os_test.c chip_stub/ec_os.c
 
 fakemain: test/fakemain.c $(LIB_SRCS) $(STUB_SRCS)
-	gcc -Wall -I include -o fakemain test/fakemain.c \
+	gcc $(CFLAGS) -o fakemain test/fakemain.c \
 	$(LIB_SRCS) $(STUB_SRCS)

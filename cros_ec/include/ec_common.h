@@ -25,6 +25,8 @@ enum EcErrorList {
   EC_ERROR_UNIMPLEMENTED = 2,
   /* Overflow error; too much input provided. */
   EC_ERROR_OVERFLOW = 3,
+  /* Timeout */
+  EC_ERROR_TIMEOUT = 4,
 
   /* Module-internal error codes may use this range.   */
   EC_ERROR_INTERNAL_FIRST = 0x10000,
