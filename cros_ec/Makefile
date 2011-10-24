@@ -18,9 +18,9 @@ all: $(TESTPROGS)
 clean:
 	rm -f $(TESTPROGS)
 
-ec_os_test: test/ec_os_test.c chip_stub/ec_os.c
+ec_os_test: test/ec_os_test.c chip_stub/ec_os.c chip_stub/ec_uart.c
 	gcc $(CFLAGS) -o ec_os_test \
-	test/ec_os_test.c chip_stub/ec_os.c
+	test/ec_os_test.c chip_stub/ec_os.c chip_stub/ec_uart.c
 
 fakemain: test/fakemain.c $(LIB_SRCS) $(STUB_SRCS)
 	gcc $(CFLAGS) -o fakemain test/fakemain.c \
