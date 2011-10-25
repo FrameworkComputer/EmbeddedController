@@ -42,6 +42,16 @@ EcError EcUartPrintf(const char* format, ...);
  * Returns error if output was truncated. */
 EcError EcUartPuts(const char* outstr);
 
+/* Put a null-terminated string to the UART using polling mode, like puts().
+ *
+ * Writes directly to the UART, bypassing any buffering or resource
+ * locks, blocking until the entire string has been passed to the
+ * UART.  This can be used for ensuring debug output when the system
+ * is in a questionable state such as when a fault occurs.
+ *
+ * Do not use during normal operation; use EcUartPuts() instead. */
+void EcUartPutsPolled(const char* outstr);
+
 /* Flushes output.  Blocks until UART has transmitted all output. */
 void EcUartFlushOutput(void);
 
