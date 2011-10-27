@@ -26,9 +26,9 @@ EcError EcKeyboardGetState(uint8_t *bit_array) {
 /* Called by test code. This simulates a key press or release.
  * Usually, the test code would expect a scan code is received at host side.
  */
-EcError SimulateKeyStateChange(int col, int row, int state) {
-  ASSERT(col < MAX_KEYBOARD_MATRIX_COLS);
-  ASSERT(row < MAX_KEYBOARD_MATRIX_ROWS);
+EcError SimulateKeyStateChange(int row, int col, int state) {
+  EC_ASSERT(row < MAX_KEYBOARD_MATRIX_ROWS);
+  EC_ASSERT(col < MAX_KEYBOARD_MATRIX_COLS);
 
   if (!core_keyboard_callback) return EC_ERROR_UNKNOWN;
 
@@ -38,10 +38,10 @@ EcError SimulateKeyStateChange(int col, int row, int state) {
   if (state && !current_state) {
     /* key is just pressed down */
     virtual_matrix[col] |= 1 << row;
-    core_keyboard_callback(col, row, state);
+    core_keyboard_callback(row, col, state);
   } else if (!state && current_state) {
     virtual_matrix[col] &= ~(1 << row);
-    core_keyboard_callback(col, row, state);
+    core_keyboard_callback(row, col, state);
   } else {
     /* Nothing happens if a key has been pressed or released. */
   }

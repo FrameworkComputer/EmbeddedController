@@ -9,16 +9,24 @@
 #include "cros_ec/include/core.h"
 #include "cros_ec/include/ec_common.h"
 #include "cros_ec/include/ec_keyboard.h"
+#include "board/board_interface.h"
+
+
+#define ReturnIfInitFailed(func) \
+    do {  \
+      EcError ret;  \
+      ret = func();  \
+      if (ret != EC_SUCCESS) {  \
+        printf("%s() failed at %s:%d: %d\n", #func, __FILE__, __LINE__, ret);  \
+        return ret;  \
+      }  \
+    } while (0)
 
 
 EcError CoreMain() {
-  EcError ret;
 
-  ret = EcKeyboardInit();
-  if (ret != EC_SUCCESS) {
-    printf("EcKeyboardInit() failed: %d\n", ret);
-    return ret;
-  }
+  ReturnIfInitFailed(EcKeyboardInit);
+  ReturnIfInitFailed(BoardInit);
 
   return EC_SUCCESS;
 }

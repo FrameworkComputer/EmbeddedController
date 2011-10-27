@@ -2,7 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * keyboard.h - Keyboard interface between EC core and EC Lib.
+ * keyboard.h - Keyboard interface between EC core and EC Lib. Both would
+ * include this file. And, it is EC lib to provides the real implementation
+ * (wrapping the low-level driver).
  */
 
 #ifndef __CHIP_INTERFACE_KEYBOARD_H
@@ -10,10 +12,10 @@
 
 #include "cros_ec/include/ec_common.h"
 
-#define MAX_KEYBOARD_MATRIX_COLS 16
 #define MAX_KEYBOARD_MATRIX_ROWS 8
+#define MAX_KEYBOARD_MATRIX_COLS 16
 
-typedef void (*EcKeyboardCallback)(int col, int row, int is_pressed);
+typedef void (*EcKeyboardCallback)(int row, int col, int is_pressed);
 
 /* Registers a callback function to underlayer EC lib. So that any key state
  * change would notify the upper EC main code.
@@ -25,7 +27,7 @@ EcError EcKeyboardRegisterCallback(EcKeyboardCallback cb);
 /* Asks the underlayer EC lib what keys are pressed right now.
  *
  * Sets bit_array to a debounced array of which keys are currently pressed,
- * where a 1-bit means the key is pressed. For example, if only col=2 row=3
+ * where a 1-bit means the key is pressed. For example, if only row=2 col=3
  * is pressed, it would set bit_array to {0, 0, 0x08, 0, ...}
  *
  * bit_array must be at least MAX_KEYBOARD_MATRIX_COLS bytes long.

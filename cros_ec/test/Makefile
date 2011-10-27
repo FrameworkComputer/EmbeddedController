@@ -20,7 +20,7 @@ TEST_BINS = $(addprefix ${BUILD_ROOT}/,$(TEST_NAMES))
 # Allow multiple definitions, so tests can mock functions from other libraries
 CFLAGS +=  -MMD -MF $@.d -Xlinker --allow-multiple-definition
 
-LIBS := ${TEST_LIB} $(CROS_EC_LIB) $(CHIP_STUB_LIB)
+LIBS := ${TEST_LIB} $(CROS_EC_LIB) $(CHIP_STUB_LIB) $(BOARD_LIB)
 
 .SUFFIXES:
 .SUFFIXES: .o .c

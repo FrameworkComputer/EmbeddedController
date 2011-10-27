@@ -2,15 +2,37 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * This file defines the EC commands used in mailbox between host and EC.
- *
- * This file is included by both BIOS/OS and EC firmware.
+ * This file defines the EC commands used in mailbox between host and EC, and
+ * is included by both BIOS/OS and EC firmware.
  */
 
 #ifndef __HOST_INTERFACE_EC_COMMAND_H
 #define __HOST_INTERFACE_EC_COMMAND_H
 
 #include "cros_ec/include/ec_common.h"
+
+
+/*
+ * Register ACPI callback to EC lib. The EC lib would then invoke this callback
+ * when port ACPI command is written by the host.
+ *
+ * The command would contain the value just written in 0x66 while the data would
+ * hold the value in 0x62.
+ *
+ * The callback function would return an integer to indicate how many bytes
+ * contain in output (max len is MAX_ACPI_OUTPUT_LEN defined below).
+ * Then the EC lib would output those bytes via port 0x62 one-by-one.
+ *
+ * Registering a NULL pointer can remove any registered callback.
+ */
+typedef int (*EcAcpiCallback)(
+    uint8_t command,  /* just written in port 0x66 */
+    uint8_t data,  /* just written in port 0x62 */
+    uint8_t *mailbox,
+    uint8_t* output);
+
+EcError EcAcpiRegisterCallback(EcAcpiCallback callback);
+#define MAX_ACPI_OUTPUT_LEN 4
 
 
 enum EcCommand {
@@ -127,7 +149,6 @@ enum EcCommand {
  *     - host gets the return value and reads parameters from to_host range.
  */
 
-
 /* When host writes this value to port 0x66 (ACPI command port),
  * the EC firmware would read the EcCommand in port 0x62 and execute
  * the corresponding function.
@@ -152,15 +173,35 @@ enum EcMailboxError {
   EC_MAILBOX_ERROR_UNIMPLEMENTED = 2,
 };
 
-/* The callback function can return a value which will be put at port 0x62. */
+
+/* FIXME: move to EC core internal. */
+#if 0
+/* This function is implemented by EC lib, which communicates with low level
+ * LPC driver. The EC core would register a callback function to handle
+ * the EC commands from host.
+ *
+ * When the callback function is invoked, the ec_command would store the
+ * value that was just written to port 0x62. In addition, the to_ec would
+ * point to the starting address of mailbox. If the mailbox is not direct-
+ * accessible, the EC lib needs copying to a buffer and prepare a buffer
+ * for to_host too. to_ec and to_host can be overlapped in memory.
+ *
+ * At final, the callback function can return a value which will be put at
+ * port 0x62. The EC lib (or the underlying hardware) needs to handle the
+ * IBF flags in port 0x66 so that the host knows the EC has completed the
+ * command.
+ *
+ * Registering a NULL pointer can remove any registered callback.
+*/
 typedef enum EcMailboxError (*EcMailboxCallback)(
     uint8_t ec_command,
     uint8_t *to_ec,  /* pointer to input parameter */
     uint8_t *to_host  /* pointer to output buffer */);
 
-
-/* Registering NULL can remove any registered callback. */
 EcError EcMailboxRegisterCallback(EcMailboxCallback callback);
+
+#endif
+
 
 
 #endif  /* __HOST_INTERFACE_EC_COMMAND_H */

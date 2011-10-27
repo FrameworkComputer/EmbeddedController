@@ -30,6 +30,7 @@ endif
 export TOP = $(shell pwd)
 export CROS_EC_DIR=$(TOP)/cros_ec
 export CHIP_STUB_DIR=$(CROS_EC_DIR)/chip_stub
+export BOARD_DIR=$(TOP)/board
 
 INCLUDES = -I$(TOP)/chip_interface -I$(CROS_EC_DIR)/include
 
@@ -42,11 +43,12 @@ export INCLUDES
 export BUILD = ${TOP}/build
 export CROS_EC_LIB = ${BUILD}/cros_ec.a
 export CHIP_STUB_LIB = ${BUILD}/chip_stub.a
+export BOARD_LIB = ${BUILD}/board.a
 
 ifeq ($(FIRMWARE_ARCH),)
-SUBDIRS = cros_ec cros_ec/test utility
+SUBDIRS = board cros_ec cros_ec/test utility
 else
-SUBDIRS = cros_ec
+SUBDIRS = board cros_ec
 endif
 
 all:

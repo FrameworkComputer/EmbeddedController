@@ -28,6 +28,12 @@ enum EcErrorList {
   EC_ERROR_OVERFLOW = 3,
   /* Timeout */
   EC_ERROR_TIMEOUT = 4,
+  /* Invalid parameter */
+  EC_ERROR_INVALID_PARAMETER,
+  /* Buffer is full, for output. */
+  EC_ERROR_BUFFER_FULL,
+  /* Buffer is empty, for input. */
+  EC_ERROR_BUFFER_EMPTY,
 
   /* Module-internal error codes may use this range.   */
   EC_ERROR_INTERNAL_FIRST = 0x10000,
@@ -39,10 +45,11 @@ enum EcErrorList {
 #define PRINTF(fmt, ...) printf(fmt, __VA_ARGS__)
 
 /* TODO: move to a proper .h file */
-#define ASSERT(expr) do { \
+#define EC_ASSERT(expr) do { \
       if (!(expr)) {  \
-        PRINTF("ASSERT(%s) failed at file %s:%d.\n", \
+        PRINTF("\n*** EC_ASSERT(%s) failed at file %s:%d.\n", \
                #expr, __FILE__, __LINE__);  \
+        while (1);  \
       }  \
     } while (0)
 

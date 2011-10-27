@@ -35,7 +35,8 @@ LIB_OBJS = $(LIB_SRCS:%.c=${BUILD_ROOT}/%.o)
 STUB_SRCS = \
 	./chip_stub/ec_os.c \
 	./chip_stub/ec_uart.c \
-	./chip_stub/keyboard.c
+	./chip_stub/keyboard.c \
+	./chip_stub/host.c
 
 STUB_OBJS = $(STUB_SRCS:%.c=${BUILD_ROOT}/%.o)
 

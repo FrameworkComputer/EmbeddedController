@@ -9,6 +9,6 @@
 #ifndef __EC_CHIP_STUB_KEYBOARD_H_
 #define __EC_CHIP_STUB_KEYBOARD_H_
 
-EcError SimulateKeyStateChange(int col, int row, int state);
+EcError SimulateKeyStateChange(int row, int col, int state);
 
 #endif  /* __EC_CHIP_STUB_KEYBOARD_H_ */
