@@ -15,6 +15,33 @@
 #include "cros_ec/include/ec_common.h"
 
 
+/* Keyboard command definition. Modified from Linux kernel atkbd.c file. */
+#define EC_I8042_CMD_SETLEDS       0xed
+#define EC_I8042_CMD_GSCANSET      0xf0
+#define EC_I8042_CMD_SSCANSET      0xf0
+#define EC_I8042_CMD_GETID         0xf2
+#define EC_I8042_CMD_SETREP        0xf3
+#define EC_I8042_CMD_ENABLE        0xf4
+#define EC_I8042_CMD_RESET_DIS     0xf5
+#define EC_I8042_CMD_RESET_DEF     0xf6
+#define EC_I8042_CMD_SETALL_MB     0xf8
+#define EC_I8042_CMD_SETALL_MBR    0xfa
+#define EC_I8042_CMD_RESET_BAT     0xff
+#define EC_I8042_CMD_RESEND        0xfe
+#define EC_I8042_CMD_EX_ENABLE     0xea
+#define EC_I8042_CMD_EX_SETLEDS    0xeb
+#define EC_I8042_CMD_OK_GETID      0xe8
+
+#define EC_I8042_RET_ACK           0xfa
+#define EC_I8042_RET_NAK           0xfe
+#define EC_I8042_RET_BAT           0xaa
+#define EC_I8042_RET_EMUL0         0xe0
+#define EC_I8042_RET_EMUL1         0xe1
+#define EC_I8042_RET_RELEASE       0xf0
+#define EC_I8042_RET_HANJA         0xf1
+#define EC_I8042_RET_HANGEUL       0xf2
+#define EC_I8042_RET_ERR           0xff
+
 
 /*
  * Register the i8042 callback to EC lib.

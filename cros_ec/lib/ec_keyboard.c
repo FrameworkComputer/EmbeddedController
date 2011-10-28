@@ -12,6 +12,7 @@
 
 
 static EcKeyboardMatrixCallback matrix_callback;
+static enum EcScancodeSet scancode_set = EC_SCANCODE_SET_2;
 
 static void KeyboardStateChanged(int row, int col, int is_pressed) {
   uint8_t scan_code[MAX_SCAN_CODE_LEN];
@@ -23,7 +24,7 @@ static void KeyboardStateChanged(int row, int col, int is_pressed) {
 
   EC_ASSERT(matrix_callback);
 
-  ret = matrix_callback(row, col, is_pressed, scan_code, &len);
+  ret = matrix_callback(row, col, is_pressed, scancode_set, scan_code, &len);
   if (ret == EC_SUCCESS) {
     EC_ASSERT(len > 0);
 
@@ -33,6 +34,45 @@ static void KeyboardStateChanged(int row, int col, int is_pressed) {
      *        assertion in the debug stage. */
     EC_ASSERT(ret == EC_SUCCESS);
   }
+}
+
+
+static int HandleHostCommand(
+    uint8_t command,
+    uint8_t data,
+    uint8_t *output) {
+  int out_len = 0;
+
+  switch (command) {
+    case EC_I8042_CMD_GSCANSET:  /* also EC_I8042_CMD_SSCANSET */
+      if (data == EC_SCANCODE_GET_SET) {
+        output[out_len++] = scancode_set;
+      } else if (data == EC_SCANCODE_SET_2) {
+        scancode_set = data;
+      } else {
+        output[out_len++] = EC_I8042_RET_ERR;
+      }
+      break;
+
+    case EC_I8042_CMD_SETREP:
+    case EC_I8042_CMD_ENABLE:
+    case EC_I8042_CMD_RESET_DIS:
+    case EC_I8042_CMD_RESET_DEF:
+    case EC_I8042_CMD_SETALL_MB:
+    case EC_I8042_CMD_SETALL_MBR:
+    case EC_I8042_CMD_RESET_BAT:
+    case EC_I8042_CMD_RESEND:
+    case EC_I8042_CMD_EX_ENABLE:
+    case EC_I8042_CMD_EX_SETLEDS:
+    case EC_I8042_CMD_OK_GETID:
+    case EC_I8042_CMD_GETID:
+    case EC_I8042_CMD_SETLEDS:
+    default:
+      output[out_len++] = EC_I8042_RET_ERR;
+      break;
+  }
+
+  return out_len;
 }
 
 
@@ -50,6 +90,9 @@ EcError EcKeyboardInit() {
   EcError ret;
 
   ret = EcKeyboardRegisterCallback(KeyboardStateChanged);
+  if (ret != EC_SUCCESS) return ret;
+
+  ret = EcI8042RegisterCallback(HandleHostCommand);
   if (ret != EC_SUCCESS) return ret;
 
   return EC_SUCCESS;

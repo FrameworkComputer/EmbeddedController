@@ -8,7 +8,9 @@
 #include <stdint.h>
 #include "chip_interface/keyboard.h"
 
+
 static EcKeyboardCallback core_keyboard_callback;
+/* each byte presents one column in 8 rows. 1 = pressed. */
 static uint8_t virtual_matrix[MAX_KEYBOARD_MATRIX_COLS];
 
 EcError EcKeyboardRegisterCallback(EcKeyboardCallback cb) {
@@ -17,9 +19,10 @@ EcError EcKeyboardRegisterCallback(EcKeyboardCallback cb) {
 }
 
 
+/* Returns bit array of every key press stage. */
 EcError EcKeyboardGetState(uint8_t *bit_array) {
   /* TODO: implement later */
-  return EC_SUCCESS;
+  return EC_ERROR_UNIMPLEMENTED;
 }
 
 

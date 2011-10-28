@@ -10,6 +10,16 @@
 
 #include "cros_ec/include/ec_common.h"
 
+
+enum EcScancodeSet {
+  EC_SCANCODE_GET_SET = 0,
+  EC_SCANCODE_SET_1,
+  EC_SCANCODE_SET_2,
+  EC_SCANCODE_SET_3,
+  EC_SCANCODE_MAX = EC_SCANCODE_SET_3,
+};
+
+
 /* The initialize code of keyboard lib. Called by core main. */
 EcError EcKeyboardInit();
 
@@ -22,13 +32,14 @@ EcError EcKeyboardInit();
  */
 typedef EcError (*EcKeyboardMatrixCallback)(
     int8_t row, int8_t col, int8_t pressed,
-    uint8_t *scan_code, int32_t* len);
+    enum EcScancodeSet code_set, uint8_t *scan_code, int32_t* len);
 
 EcError EcKeyboardMatrixRegisterCallback(
     int8_t row_num, int8_t col_num,
     EcKeyboardMatrixCallback callback);
 
 #define MAX_SCAN_CODE_LEN 4
+
 
 
 #endif  /* __CROS_INCLUDE_EC_KEYBOARD_H */
