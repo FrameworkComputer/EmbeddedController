@@ -28,7 +28,7 @@ EcError TestKeyMade() {
   /* Fake a key press */
   SimulateKeyStateChange(2, 3, 1);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x24);
+  EC_ASSERT(buf == 0x2c);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   /* The duplicate press event will be ignored. */
@@ -36,11 +36,11 @@ EcError TestKeyMade() {
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   /* Test 2-byte scan code */
-  SimulateKeyStateChange(3, 6, 1);
+  SimulateKeyStateChange(7, 12, 1);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
   EC_ASSERT(buf == 0xE0);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x1f);
+  EC_ASSERT(buf == 0x6b);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   return EC_SUCCESS;
@@ -50,35 +50,35 @@ EcError TestKeyReleased() {
   uint8_t buf;
 
   /* The key is not pressed yet. A release event doesn't send out a code. */
-  SimulateKeyStateChange(0, 1, 0);
+  SimulateKeyStateChange(0, 2, 0);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   /* Press and release it. Expect a release code. */
-  SimulateKeyStateChange(0, 1, 1);
+  SimulateKeyStateChange(0, 2, 1);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x0E);
+  EC_ASSERT(buf == 0x05);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
-  SimulateKeyStateChange(0, 1, 0);  /* release */
+  SimulateKeyStateChange(0, 2, 0);  /* release */
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
   EC_ASSERT(buf == 0xF0);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x0E);
+  EC_ASSERT(buf == 0x05);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   /* Test 3-byte break code */
-  SimulateKeyStateChange(7, 3, 1);
+  SimulateKeyStateChange(6, 11, 1);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
   EC_ASSERT(buf == 0xE0);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x37);
+  EC_ASSERT(buf == 0x72);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
-  SimulateKeyStateChange(7, 3, 0);  /* release */
+  SimulateKeyStateChange(6, 11, 0);  /* release */
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
   EC_ASSERT(buf == 0xE0);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
   EC_ASSERT(buf == 0xF0);
   EC_ASSERT(EC_SUCCESS == PullI8042ScanCode(&buf));
-  EC_ASSERT(buf == 0x37);
+  EC_ASSERT(buf == 0x72);
   EC_ASSERT(EC_ERROR_BUFFER_EMPTY == PullI8042ScanCode(&buf));
 
   return EC_SUCCESS;
