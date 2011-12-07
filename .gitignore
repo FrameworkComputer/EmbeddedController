@@ -1,0 +1,6 @@
+*.map
+*.bin
+*.elf
+build/
+*.swp
+*.pyc

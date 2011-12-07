@@ -1,0 +1,15 @@
+
+/**
+ * List of enabled tasks in the priority order
+ *
+ * The first one has the lowest priority.
+ */
+#define CONFIG_TASK_LIST \
+  TASK(BLINK, UserLedBlink, NULL) \
+  TASK(CONSOLE, console_task, NULL) \
+  TASK(TESTA, TaskAbc, (void *)'A') \
+  TASK(TESTB, TaskAbc, (void *)'B') \
+  TASK(TESTC, TaskAbc, (void *)'C') \
+  TASK(TESTT, TaskTick, (void *)'T')\
+  TASK(HOSTCMD, host_command_task, NULL) \
+  TASK(I8042CMD, i8042_command_task, NULL)

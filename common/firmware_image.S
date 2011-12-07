@@ -1,0 +1,25 @@
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Build the full image with 3 copies (Read only, A, B) of the program
+ */
+
+#include "config.h"
+
+#define FW_FILE(builddir,proj,sect) builddir##/##proj##.##sect##.flat
+#define STRINGIFY0(name)  #name
+#define STRINGIFY(name)  STRINGIFY0(name)
+#define FW_IMAGE(sect) STRINGIFY(FW_FILE(OUTDIR,PROJECT,sect))
+
+/* Read Only firmware */
+.section .image.RO, "ax"
+.incbin FW_IMAGE(RO)
+
+/* Read Write firmware copy A */
+.section .image.A, "ax"
+.incbin FW_IMAGE(A)
+
+/* Read Write firmware copy B */
+.section .image.B, "ax"
+.incbin FW_IMAGE(B)
