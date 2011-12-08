@@ -1,4 +1,4 @@
-# Copyright (c) 2010 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -7,7 +7,8 @@
 
 objs := $(all-objs)
 deps := $(objs:%.o=%.o.d)
-all-utils := $(foreach u,$(util-bin),$(out)/util/$(u))
+build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
+host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 
 # Create output directories if necessary
 _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || mkdir -p $(out)/$(d)))
@@ -28,6 +29,7 @@ cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf = $(LD) $(LDFLAGS) $(objs) -o $@ -T $< -Map $(out)/$*.map
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
+cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) -MMD -MF $@.d $< -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $< -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py $(silent)
 
@@ -35,7 +37,7 @@ cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py $(si
 .PHONY: all tests utils
 all: $(out)/$(PROJECT).bin $(foreach s,A B RO,$(out)/$(PROJECT).$(s).dis) utils
 
-utils: $(all-utils)
+utils: $(build-utils) $(host-utils)
 
 test-targets=$(foreach t,$(test-list),test-$(t))
 qemu-test-targets=$(foreach t,$(test-list),qemu-$(t))
@@ -79,7 +81,10 @@ $(out)/%.o:%.c
 $(out)/%.o:%.S
 	$(call quiet,c_to_o,AS     )
 
-$(all-utils): $(out)/%:%.c
+$(build-utils): $(out)/%:%.c
+	$(call quiet,c_to_build,BUILDCC)
+
+$(host-utils): $(out)/%:%.c
 	$(call quiet,c_to_host,HOSTCC )
 
 .PHONY: clean

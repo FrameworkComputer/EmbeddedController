@@ -1,4 +1,4 @@
-# Copyright (c) 2010 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -7,13 +7,15 @@
 
 # Toolchain configuration
 CROSS_COMPILE ?= armv7a-cros-linux-gnueabi-
+HOST_CROSS_COMPILE ?= i686-pc-linux-gnu-
 
 CC=$(CROSS_COMPILE)gcc
 CPP=$(CROSS_COMPILE)cpp
 LD=$(CROSS_COMPILE)ld
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
-HOSTCC?=gcc
+BUILDCC?=gcc
+HOSTCC?=$(HOST_CROSS_COMPILE)gcc
 
 CFLAGS_WARN=-Wall -Wundef -Wstrict-prototypes -Wno-trigraphs              \
             -fno-strict-aliasing -fno-common                              \
@@ -25,5 +27,6 @@ CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN)
+BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X
