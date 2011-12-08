@@ -13,6 +13,7 @@
 #include "lpc_commands.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "registers.h"
 #include "util.h"
@@ -53,14 +54,15 @@ static enum lpc_status HostCommandHello(uint8_t *data)
 
 	uart_printf("[LPC Hello 0x%08x]\n", d);
 
-	/* TODO - remove this delay.  For now, pretend command takes a long
-	 * time, so we can see the busy bit set on the host side. */
-	{
-		volatile int i __attribute__((unused));
-		int j;
-		for (j = 0; j < 10000000; j++)
-			i = j;
-	}
+#ifdef DELAY_HELLO_RESPONSE
+	/* Pretend command takes a long time, so we can see the busy
+	 * bit set on the host side. */
+	/* TODO: remove in production.  Or maybe hello should take a
+	 * param with how long the delay should be; that'd be more
+	 * useful. */
+	usleep(1000000);
+#endif
+
 	uart_puts("[LPC sending hello back]\n");
 
 	r->out_data = d + 0x01020304;
