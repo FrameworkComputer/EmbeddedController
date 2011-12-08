@@ -144,7 +144,7 @@ static void uart_1_interrupt(void)
 	 * grab it.
 	 *
 	 * TODO: move UART1 interrupt to the LPC module? */
-	if (!(LM4_UART_FR(1) & 0x20) && (LM4_LPC_ST(7) & 0x02)) {
+	if (!(LM4_UART_FR(1) & 0x20) && (LM4_LPC_ST(LPC_CH_COMX) & 0x02)) {
 		/* TODO: this clears the receive-ready interrupt too,
 		 * which will be ok once we're handing input as well.
 		 * But we're not yet. */

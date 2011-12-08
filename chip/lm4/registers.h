@@ -60,6 +60,7 @@
 #define LM4_LPC_LPCRIS         LM4REG(0x40080104)
 #define LM4_LPC_LPCMIS         LM4REG(0x40080108)
 #define LM4_LPC_LPCIC          LM4REG(0x4008010C)
+#define LM4_LPC_INT_MASK(ch, bits) ((bits) << (4 * (ch)))
 #define LM4_LPC_LPCDMACX       LM4REG(0x40080120)
 #define LM4_LPC_CH0_BASE       0x40080010
 #define LM4_LPC_CH1_BASE       0x40080020
@@ -69,7 +70,12 @@
 #define LM4_LPC_CH5_BASE       0x40080060
 #define LM4_LPC_CH6_BASE       0x40080070
 #define LM4_LPC_CH7_BASE       0x40080080
-#define LM4LPCREG(ch, offset)  LM4REG(LM4_LPC_CH##ch##_BASE + (offset))
+#define LM4_LPC_CH_SEP         0x00000010
+static inline int lm4_lpc_addr(int ch, int offset)
+{
+	return offset + LM4_LPC_CH0_BASE + LM4_LPC_CH_SEP * ch;
+}
+#define LM4LPCREG(ch, offset)  LM4REG(lm4_lpc_addr(ch, offset))
 #define LM4_LPC_CTL(ch)        LM4LPCREG(ch, 0x000)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
 #define LM4_LPC_ADR(ch)        LM4LPCREG(ch, 0x008)

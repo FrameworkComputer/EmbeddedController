@@ -36,7 +36,7 @@ static uint8_t to_host_buffer[HOST_BUFFER_SIZE];
 void i8042_init()
 {
 	head_to_buffer = tail_to_buffer = 0;
-	LM4_LPC_ST(3) = 0;  /* clear the TOH bit */
+	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;  /* clear the TOH bit */
 }
 
 
@@ -99,7 +99,7 @@ void i8042_command_task(void)
 
 			/* if the host still didn't read that away,
 			   try next time. */
-			if (LM4_LPC_ST(3) & (1 << 0 /* TOH */)) {
+			if (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) {
 #if I8042_DEBUG >= 5
 				uart_printf("[%d] i8042_command_task() "
 					    "cannot send to host due to TOH\n",

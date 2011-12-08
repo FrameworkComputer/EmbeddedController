@@ -1,3 +1,8 @@
+/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 /* Stellaris EKB-LM4F-EAC board configuration */
 
 #ifndef __BOARD_H
@@ -11,6 +16,8 @@
 #define FAN_CH_POWER_LED 3  /* Power adapter LED */
 #define FAN_CH_CPU       4  /* CPU fan */
 
+/* TODO: these should really only be used inside lpc.c; once they are, remove
+ * from board header files. */
 /* LPC channels */
 #define LPC_CH_KERNEL   0  /* Kernel commands */
 #define LPC_CH_PORT80   1  /* Port 80 debug output */
@@ -23,6 +30,7 @@
 #define LPC_POOL_OFFS_PORT80     4  /* Port 80 - 4=in, 5=out */
 #define LPC_POOL_OFFS_COMX       8  /* UART emulation range - 8-15 */
 #define LPC_POOL_OFFS_KEYBOARD  16  /* Keyboard - 16=in, 17=out */
+#define LPC_POOL_OFFS_USER      20  /* User commands - 20=in, 21=out */
 #define LPC_POOL_OFFS_CMD_DATA 512  /* Data range for commands - 512-1023 */
 /* LPC pool data pointers */
 #define LPC_POOL_KERNEL   (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_KERNEL)
@@ -30,6 +38,7 @@
 #define LPC_POOL_COMX     (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_COMX)
 #define LPC_POOL_KEYBOARD (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_KEYBOARD)
 #define LPC_POOL_CMD_DATA (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_CMD_DATA)
+#define LPC_POOL_USER     (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_USER)
 
 /* ADC inputs */
 /* TODO: really just need a lookup table for channels to inputs */

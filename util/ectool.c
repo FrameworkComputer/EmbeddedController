@@ -12,11 +12,9 @@
 #include "lpc_commands.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#define MIN(a, b) (a < b ? a : b);
+/* Don't use a macro where an inline will do... */
+static inline int MIN(int a, int b) { return a < b ? a : b; }
 
-#define EC_LPC_CMD_ADDR 0x66
-#define EC_LPC_DATA_ADDR 0x800
-#define EC_LPC_DATA_SIZE 512
 
 const char help_str[] =
 	"Commands:\n"
@@ -36,18 +34,23 @@ const char help_str[] =
 	"      Serial output test for COM2\n"
 	"  version\n"
 	"      Prints EC version\n"
+	"\n"
+	"Not working for you?  Make sure LPC I/O is configured:\n"
+	"  pci_write32 0 0x1f 0 0x88 0x007c0801\n"
+	"  pci_write32 0 0x1f 0 0x8c 0x007c0901\n"
+	"  pci_write16 0 0x1f 0 0x80 0x0010\n"
+	"  pci_write16 0 0x1f 0 0x82 0x3f02\n"
 	"";
-
 
 
 /* Waits for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
  * timeout. */
-int wait_for_ec(int timeout_usec)
+int wait_for_ec(int status_addr, int timeout_usec)
 {
 	int i;
 	for (i = 0; i < timeout_usec; i += 10) {
 		usleep(10);  /* Delay first, in case we just sent a command */
-		if (!(inb(EC_LPC_CMD_ADDR) & EC_LPC_BUSY_MASK))
+		if (!(inb(status_addr) & EC_LPC_BUSY_MASK))
 			return 0;
 	}
 	return -1;  /* Timeout */
@@ -61,14 +64,16 @@ int ec_command(int command, const void *indata, int insize,
 	uint8_t *d;
 	int i;
 
-	outb(0x42, 0x80);
+	/* TODO: add command line option to use kernel command/param window */
+	int cmd_addr = EC_LPC_ADDR_USER_CMD;
+	int param_addr = EC_LPC_ADDR_USER_PARAM;
 
-	if (insize > EC_LPC_DATA_SIZE || outsize > EC_LPC_DATA_SIZE) {
+	if (insize > EC_LPC_PARAM_SIZE || outsize > EC_LPC_PARAM_SIZE) {
 		fprintf(stderr, "Data size too big\n");
 		return -1;
 	}
 
-	if (wait_for_ec(1000000)) {
+	if (wait_for_ec(cmd_addr, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC ready\n");
 		return -1;
 	}
@@ -76,17 +81,17 @@ int ec_command(int command, const void *indata, int insize,
 	/* Write data, if any */
 	/* TODO: optimized copy using outl() */
 	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++)
-		outb(*d, EC_LPC_DATA_ADDR + i);
+		outb(*d, param_addr + i);
 
-	outb(command, EC_LPC_CMD_ADDR);
+	outb(command, cmd_addr);
 
-	if (wait_for_ec(1000000)) {
+	if (wait_for_ec(cmd_addr, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC response\n");
 		return -1;
 	}
 
 	/* Check status */
-	i = inb(EC_LPC_CMD_ADDR);
+	i = inb(cmd_addr);
 	i = EC_LPC_GET_STATUS(i);
 	if (i) {
 		fprintf(stderr, "EC returned error status %d\n", i);
@@ -95,7 +100,7 @@ int ec_command(int command, const void *indata, int insize,
 
 	/* Read data, if any */
 	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++)
-		*d = inb(EC_LPC_DATA_ADDR + i);
+		*d = inb(param_addr + i);
 
 	return 0;
 }

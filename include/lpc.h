@@ -16,11 +16,13 @@ int lpc_init(void);
 /* Returns a pointer to the host command data buffer.  This buffer
  * must only be accessed between a notification to
  * host_command_received() and a subsequent call to
- * lpc_SendHostResponse(). */
-volatile uint8_t *lpc_get_host_range(void);
+ * lpc_SendHostResponse().  <slot> is 0 for kernel-originated
+ * commands, 1 for usermode-originated commands. */
+uint8_t *lpc_get_host_range(int slot);
 
 /* Sends a response to a host command.  The bottom 4 bits of <status>
- * are sent in the status byte. */
-void lpc_send_host_response(int status);
+ * are sent in the status byte.  <slot> is 0 for kernel-originated
+ * commands, 1 for usermode-originated commands. */
+void lpc_send_host_response(int slot, int status);
 
 #endif  /* __CROS_EC_LPC_H */
