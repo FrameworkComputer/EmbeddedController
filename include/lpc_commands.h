@@ -138,5 +138,47 @@ struct lpc_params_flash_erase {
 	uint32_t size;     /* Size to erase in bytes */
 } __attribute__ ((packed));
 
+/* Flashmap offset */
+#define EC_LPC_COMMAND_FLASH_GET_FLASHMAP 0x14
+struct lpc_response_flash_flashmap {
+	uint32_t offset;   /* Flashmap offset */
+} __attribute__ ((packed));
+
+/* Enable/disable flash write protect */
+#define EC_LPC_COMMAND_FLASH_WP_ENABLE 0x15
+struct lpc_params_flash_wp_enable {
+	uint32_t enable_wp;
+} __attribute__ ((packed));
+
+/* Get flash write protection commit state */
+#define EC_LPC_COMMAND_FLASH_WP_GET_STATE 0x16
+struct lpc_response_flash_wp_enable {
+	uint32_t enable_wp;
+} __attribute__ ((packed));
+
+/* Set/get flash write protection range */
+#define EC_LPC_COMMAND_FLASH_WP_SET_RANGE 0x17
+struct lpc_params_flash_wp_range {
+	/* Byte offset aligned to info.protect_block_size */
+	uint32_t offset;
+	/* Size should be multiply of info.protect_block_size */
+	uint32_t size;
+} __attribute__ ((packed));
+
+#define EC_LPC_COMMAND_FLASH_WP_GET_RANGE 0x18
+struct lpc_response_flash_wp_range {
+	uint32_t offset;
+	uint32_t size;
+} __attribute__ ((packed));
+
+/* Read flash write protection GPIO pin */
+#define EC_LPC_COMMAND_FLASH_WP_GET_GPIO 0x19
+struct lpc_params_flash_wp_gpio {
+	uint32_t pin_no;
+} __attribute__ ((packed));
+struct lpc_response_flash_wp_gpio {
+	uint32_t value;
+} __attribute__ ((packed));
+
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

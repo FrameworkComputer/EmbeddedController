@@ -145,12 +145,50 @@ static int command_flash_wp(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_flash_wp_range(int argc, char **argv)
+{
+	int offset, size;
+	char *endptr;
+	int rv;
+
+	if (argc < 3) {
+		uart_puts("Usage: flashwprange [offset size]\n");
+		rv = flash_get_write_protect_range(&offset, &size);
+		if (rv)
+			uart_puts("flash_get_write_protect_range failed\n");
+		else
+			uart_printf("Current range : offset(%d) size(%d)\n",
+					offset, size);
+		uart_printf("FMPPEs : %08x %08x %08x %08x\n",
+				LM4_FLASH_FMPPE0, LM4_FLASH_FMPPE1,
+				LM4_FLASH_FMPPE2, LM4_FLASH_FMPPE3);
+	} else {
+		offset = strtoi(argv[1], &endptr, 0);
+		if (*endptr) {
+			uart_printf("Invalid offset \"%s\"\n", argv[1]);
+			return EC_ERROR_UNKNOWN;
+		}
+		size = strtoi(argv[2], &endptr, 0);
+		if (*endptr) {
+			uart_printf("Invalid size \"%s\"\n", argv[2]);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		rv = flash_set_write_protect_range(offset, size);
+		if (rv) {
+			uart_puts("flash_set_write_protect_range failed\n");
+			return rv;
+		}
+	}
+	return EC_SUCCESS;
+}
 
 static const struct console_command console_commands[] = {
 	{"flasherase", command_flash_erase},
 	{"flashinfo", command_flash_info},
 	{"flashwrite", command_flash_write},
 	{"flashwp", command_flash_wp},
+	{"flashwprange", command_flash_wp_range},
 };
 static const struct console_group command_group = {
 	"Flash", console_commands, ARRAY_SIZE(console_commands)
@@ -212,6 +250,64 @@ enum lpc_status flash_command_erase(uint8_t *data)
 			(struct lpc_params_flash_erase *)data;
 
 	if (flash_erase(p->offset, p->size))
+		return EC_LPC_STATUS_ERROR;
+
+	return EC_LPC_STATUS_SUCCESS;
+}
+
+/* TODO: use shadow range in EEPROM */
+static int shadow_wp_offset;
+static int shadow_wp_size;
+
+enum lpc_status flash_command_wp_enable(uint8_t *data)
+{
+	struct lpc_params_flash_wp_enable *p =
+			(struct lpc_params_flash_wp_enable *)data;
+	int offset, size;
+
+	if (p->enable_wp) {
+		offset = shadow_wp_offset;
+		size   = shadow_wp_size;
+	} else {
+		offset = 0;
+		size   = 0;
+	}
+	if (flash_set_write_protect_range(offset, size))
+		return EC_LPC_STATUS_ERROR;
+
+	return EC_LPC_STATUS_SUCCESS;
+}
+
+enum lpc_status flash_command_wp_get_state(uint8_t *data)
+{
+	struct lpc_response_flash_wp_enable *p =
+			(struct lpc_response_flash_wp_enable *)data;
+
+	if (flash_get_write_protect_status() & EC_FLASH_WP_RANGE_LOCKED)
+		p->enable_wp = 1;
+	else
+		p->enable_wp = 0;
+
+	return EC_LPC_STATUS_SUCCESS;
+}
+
+enum lpc_status flash_command_wp_set_range(uint8_t *data)
+{
+	struct lpc_params_flash_wp_range *p =
+			(struct lpc_params_flash_wp_range *)data;
+
+	if (flash_set_write_protect_range(p->offset, p->size))
+		return EC_LPC_STATUS_ERROR;
+
+	return EC_LPC_STATUS_SUCCESS;
+}
+
+enum lpc_status flash_command_wp_get_range(uint8_t *data)
+{
+	struct lpc_response_flash_wp_range *p =
+			(struct lpc_response_flash_wp_range *)data;
+
+	if (flash_get_write_protect_range(&p->offset, &p->size))
 		return EC_LPC_STATUS_ERROR;
 
 	return EC_LPC_STATUS_SUCCESS;

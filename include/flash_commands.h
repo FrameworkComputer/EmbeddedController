@@ -19,5 +19,9 @@ enum lpc_status flash_command_get_info(uint8_t *data);
 enum lpc_status flash_command_read(uint8_t *data);
 enum lpc_status flash_command_write(uint8_t *data);
 enum lpc_status flash_command_erase(uint8_t *data);
+enum lpc_status flash_command_wp_enable(uint8_t *data);
+enum lpc_status flash_command_wp_get_state(uint8_t *data);
+enum lpc_status flash_command_wp_set_range(uint8_t *data);
+enum lpc_status flash_command_wp_get_range(uint8_t *data);
 
 #endif  /* __CROS_EC_FLASH_COMMANDS_H */

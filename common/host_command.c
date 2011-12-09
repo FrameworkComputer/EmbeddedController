@@ -155,6 +155,18 @@ static void command_process(int slot)
 	case EC_LPC_COMMAND_FLASH_ERASE:
 		lpc_send_host_response(slot, flash_command_erase(data));
 		return;
+	case EC_LPC_COMMAND_FLASH_WP_ENABLE:
+		lpc_send_host_response(flash_command_wp_enable(host_data));
+		return;
+	case EC_LPC_COMMAND_FLASH_WP_GET_STATE:
+		lpc_send_host_response(flash_command_wp_get_state(host_data));
+		return;
+	case EC_LPC_COMMAND_FLASH_WP_SET_RANGE:
+		lpc_send_host_response(flash_command_wp_set_range(host_data));
+		return;
+	case EC_LPC_COMMAND_FLASH_WP_GET_RANGE:
+		lpc_send_host_response(flash_command_wp_get_range(host_data));
+		return;
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}

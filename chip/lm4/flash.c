@@ -11,6 +11,10 @@
 #include "registers.h"
 #include "util.h"
 
+#define BANK_SHIFT 5 /* bank registers have 32bits each, 2^32 */
+#define BANK_MASK ((1 << BANK_SHIFT) - 1) /* 5 bits */
+#define F_BANK(b) ((b) >> BANK_SHIFT)
+#define F_BIT(b) (1 << ((b) & BANK_MASK))
 
 static int usable_flash_size;
 
@@ -151,22 +155,136 @@ int flash_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-
-int flash_get_write_protect_range(int *offset, int *size)
+/* Get write protect status of single flash block
+ * return value:
+ *   0 - WP
+ *   non-zero - writable
+ */
+static uint32_t get_block_wp(int block)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	return LM4_FLASH_FMPPE[F_BANK(block)] & F_BIT(block);
+}
+
+static void set_block_wp(int block)
+{
+	LM4_FLASH_FMPPE[F_BANK(block)] &= ~F_BIT(block);
+}
+
+static int find_first_wp_block(void)
+{
+	int block;
+	for (block = 0; block < LM4_FLASH_FSIZE; block++)
+		if (get_block_wp(block) == 0)
+			return block;
+	return -1;
+}
+
+static int find_last_wp_block(void)
+{
+	int block;
+	for (block = LM4_FLASH_FSIZE - 1; block >= 0; block--)
+		if (get_block_wp(block) == 0)
+			return block;
+	return -1;
+}
+
+static int get_wp_range(int *start, int *nblock)
+{
+	int start_blk, end_blk;
+
+	start_blk = find_first_wp_block();
+
+	if (start_blk < 0) {
+		/* Flash is not write protected */
+		*start = 0;
+		*nblock = 0;
+		return EC_SUCCESS;
+	}
+
+	/* TODO: Sanity check the shadow value? */
+
+	end_blk = find_last_wp_block();
+	*nblock = end_blk - start_blk + 1;
+	*start = start_blk;
+	return EC_SUCCESS;
 }
 
 
+static int set_wp_range(int start, int nblock)
+{
+	int end_blk, block;
+
+	if (nblock == 0)
+		return EC_SUCCESS;
+
+	end_blk = (start + nblock - 1);
+
+	for (block = start; block <= end_blk; block++)
+		set_block_wp(block);
+
+	return EC_SUCCESS;
+}
+
+int flash_get_write_protect_range(int *offset, int *size)
+{
+	int start, nblock;
+	int rv;
+
+	rv = get_wp_range(&start, &nblock);
+	if (rv)
+		return rv;
+
+	*size = nblock * FLASH_PROTECT_BYTES;
+	*offset = start * FLASH_PROTECT_BYTES;
+	return EC_SUCCESS;
+}
+
 int flash_set_write_protect_range(int offset, int size)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int start, nblock;
+	int rv;
+
+	if ((offset < 0) || (size < 0) || ((offset + size) >
+			(LM4_FLASH_FSIZE * FLASH_PROTECT_BYTES)))
+		return EC_ERROR_UNKNOWN; /* Invalid range */
+
+	rv = flash_get_write_protect_status();
+
+	if (rv & EC_FLASH_WP_RANGE_LOCKED) {
+		if (size == 0) {
+			/* TODO: Clear shadow if system WP is asserted */
+			/* TODO: Reboot EC */
+			return EC_SUCCESS;
+		}
+
+		return EC_ERROR_UNKNOWN; /* Range locked */
+	}
+
+	start = offset / FLASH_PROTECT_BYTES;
+	nblock = ((offset + size - 1) / FLASH_PROTECT_BYTES) - start + 1;
+	rv = set_wp_range(start, nblock);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
 }
 
 
 int flash_get_write_protect_status(void)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int start, nblock;
+	int rv;
+
+	rv = get_wp_range(&start, &nblock);
+	if (rv)
+		return rv;
+
+	rv = 0;
+	if (nblock)
+		rv |= EC_FLASH_WP_RANGE_LOCKED;
+	/* TODO: get WP gpio*/
+
+	return rv;
 }
 
 
