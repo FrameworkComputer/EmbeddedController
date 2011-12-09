@@ -18,13 +18,12 @@
 #include "registers.h"
 #include "util.h"
 
-static int host_command = 0;
-static uint8_t *host_data;
+static int host_command[2];
 
 /*****************************************************************************/
 /* Host commands */
 
-void host_command_received(int command)
+void host_command_received(int slot, int command)
 {
 	/* TODO: should warn if we already think we're in a command */
 
@@ -34,19 +33,20 @@ void host_command_received(int command)
 	if (command == EC_LPC_COMMAND_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		lpc_send_host_response(EC_LPC_STATUS_ERROR);
+		lpc_send_host_response(slot, EC_LPC_STATUS_ERROR);
 		return;
 	}
 
 	/* Save the command */
-	host_command = command;
+	host_command[slot] = command;
 
-	/* Wake up the task to handle the command */
-	task_send_msg(TASK_ID_HOSTCMD, TASK_ID_HOSTCMD, 0);
+	/* Wake up the task to handle the command.  Use the slot as
+	 * the task ID. */
+	task_send_msg(TASK_ID_HOSTCMD, slot, 0);
 }
 
 
-static enum lpc_status HostCommandHello(uint8_t *data)
+static enum lpc_status host_command_hello(uint8_t *data)
 {
 	struct lpc_params_hello *p = (struct lpc_params_hello *)data;
 	struct lpc_response_hello *r = (struct lpc_response_hello *)data;
@@ -70,7 +70,7 @@ static enum lpc_status HostCommandHello(uint8_t *data)
 }
 
 
-static enum lpc_status HostCommandGetVersion(uint8_t *data)
+static enum lpc_status host_command_get_version(uint8_t *data)
 {
 	struct lpc_response_get_version *r =
 			(struct lpc_response_get_version *)data;
@@ -103,7 +103,7 @@ static enum lpc_status HostCommandGetVersion(uint8_t *data)
 }
 
 
-static enum lpc_status HostCommandReadTest(uint8_t *data)
+static enum lpc_status host_command_read_test(uint8_t *data)
 {
 	struct lpc_params_read_test *p = (struct lpc_params_read_test *)data;
 	struct lpc_response_read_test *r =
@@ -124,36 +124,39 @@ static enum lpc_status HostCommandReadTest(uint8_t *data)
 
 
 /* handle a LPC command */
-static void command_process(void)
+static void command_process(int slot)
 {
-	uart_printf("[hostcmd 0x%02x]\n", host_command);
+	int command = host_command[slot];
+	uint8_t *data = lpc_get_host_range(slot);
+
+	uart_printf("[hostcmd%d 0x%02x]\n", slot, command);
 
 	/* TODO: might be smaller to make this a table, once we get a bunch
 	 * of commands. */
-	switch (host_command) {
+	switch (command) {
 	case EC_LPC_COMMAND_HELLO:
-		lpc_send_host_response(HostCommandHello(host_data));
+		lpc_send_host_response(slot, host_command_hello(data));
 		return;
 	case EC_LPC_COMMAND_GET_VERSION:
-		lpc_send_host_response(HostCommandGetVersion(host_data));
+		lpc_send_host_response(slot, host_command_get_version(data));
 		return;
 	case EC_LPC_COMMAND_READ_TEST:
-		lpc_send_host_response(HostCommandReadTest(host_data));
+		lpc_send_host_response(slot, host_command_read_test(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_INFO:
-		lpc_send_host_response(flash_command_get_info(host_data));
+		lpc_send_host_response(slot, flash_command_get_info(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_READ:
-		lpc_send_host_response(flash_command_read(host_data));
+		lpc_send_host_response(slot, flash_command_read(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_WRITE:
-		lpc_send_host_response(flash_command_write(host_data));
+		lpc_send_host_response(slot, flash_command_write(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_ERASE:
-		lpc_send_host_response(flash_command_erase(host_data));
+		lpc_send_host_response(slot, flash_command_erase(data));
 		return;
 	default:
-		lpc_send_host_response(EC_LPC_STATUS_INVALID_COMMAND);
+		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}
 }
 
@@ -182,15 +185,16 @@ static const struct console_group command_group = {
 };
 
 /*****************************************************************************/
-/* Initialization */
+/* Initialization / task */
 
-int host_command_init(void)
+static int host_command_init(void)
 {
-	host_data = (uint8_t *)lpc_get_host_range();
+	host_command[0] = host_command[1] = -1;
 
         console_register_commands(&command_group);
 	return EC_SUCCESS;
 }
+
 
 void host_command_task(void)
 {
@@ -198,8 +202,12 @@ void host_command_task(void)
 
 	while (1) {
 		/* wait for the next command message */
-		task_wait_msg(-1);
+		int m = task_wait_msg(-1);
 		/* process it */
-		command_process();
+		/* TODO: use message flags to determine which slots */
+		if (m & 0x01)
+			command_process(0);
+		if (m & 0x02)
+			command_process(1);
 	}
 }

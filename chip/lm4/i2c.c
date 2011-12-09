@@ -13,16 +13,6 @@
 #include "uart.h"
 #include "util.h"
 
-/* I2C ports */
-#define I2C_PORT_THERMAL 5  // port 5 / PB6:7 on link, but PG6:7 on badger
-#define I2C_PORT_BATTERY 5  // port 0 / PB2:3 on Link, open on badger
-#define I2C_PORT_CHARGER 5  // port 1 / PA6:7 on Link, user LED on badger
-/* I2C port speed in kbps */
-#define I2C_SPEED_THERMAL 400  /* TODO: TMP007 supports 3.4Mbps
-				  operation; use faster speed? */
-#define I2C_SPEED_BATTERY 100
-#define I2C_SPEED_CHARGER 100
-
 
 /* Waits for the I2C bus to go idle */
 static int wait_idle(int port)

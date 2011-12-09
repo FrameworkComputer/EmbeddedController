@@ -10,6 +10,15 @@
 
 #include <stdint.h>
 
+/* I/O addresses for LPC commands */
+#define EC_LPC_ADDR_KERNEL_DATA   0x62
+#define EC_LPC_ADDR_KERNEL_CMD    0x66
+#define EC_LPC_ADDR_KERNEL_PARAM 0x800
+#define EC_LPC_ADDR_USER_DATA    0x200
+#define EC_LPC_ADDR_USER_CMD     0x204
+#define EC_LPC_ADDR_USER_PARAM   0x900
+#define EC_LPC_PARAM_SIZE          256  /* Size of param areas in bytes */
+
 /* LPC command status byte masks */
 /* EC is busy processing a command.  This covers both bit 0x04, which
  * is the busy-bit, and 0x02, which is the bit which indicates the
