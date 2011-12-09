@@ -16,7 +16,12 @@
 
 #define LM4_UART_CH0_BASE      0x4000c000
 #define LM4_UART_CH1_BASE      0x4000d000
-#define LM4UARTREG(ch, offset) LM4REG(LM4_UART_CH##ch##_BASE + (offset))
+#define LM4_UART_CH_SEP        0x00001000
+static inline int lm4_uart_addr(int ch, int offset)
+{
+	return offset + LM4_UART_CH0_BASE + LM4_UART_CH_SEP * ch;
+}
+#define LM4UARTREG(ch, offset) LM4REG(lm4_uart_addr(ch, offset))
 #define LM4_UART_DR(ch)        LM4UARTREG(ch, 0x000)
 #define LM4_UART_FR(ch)        LM4UARTREG(ch, 0x018)
 #define LM4_UART_IBRD(ch)      LM4UARTREG(ch, 0x024)

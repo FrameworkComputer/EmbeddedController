@@ -25,4 +25,10 @@ uint8_t *lpc_get_host_range(int slot);
  * commands, 1 for usermode-originated commands. */
 void lpc_send_host_response(int slot, int status);
 
+/* Returns non-zero if the COMx interface has received a character. */
+int lpc_comx_has_char(void);
+
+/* Returns the next character pending on the COMx interface. */
+int lpc_comx_get_char(void);
+
 #endif  /* __CROS_EC_LPC_H */

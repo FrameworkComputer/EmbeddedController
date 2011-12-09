@@ -9,6 +9,7 @@
 
 #include "board.h"
 #include "console.h"
+#include "lpc.h"
 #include "registers.h"
 #include "task.h"
 #include "uart.h"
@@ -85,11 +86,10 @@ static void uart_0_interrupt(void)
 				last_rx_was_cr = 0;
 			}
 
-			/* Echo characters directly to the transmit
-			 * FIFO so we don't interfere with the
-			 * transmit buffer.  This means that if a lot
-			 * of output is happening, input characters
-			 * won't always be properly echoed. */
+			/* Echo characters directly to the transmit FIFO so we
+			 * don't interfere with the transmit buffer.  This
+			 * means that if a lot of output is happening, input
+			 * characters won't always be properly echoed. */
 			if (console_mode && c == '\n')
 				LM4_UART_DR(0) = '\r';
 			LM4_UART_DR(0) = c;
@@ -97,9 +97,8 @@ static void uart_0_interrupt(void)
 			/* Handle backspace if we can */
 			if (c == '\b') {
 				if (rx_buf_head != rx_buf_tail) {
-					/* Delete the previous
-					 * character (and space over
-					 * it on the output) */
+					/* Delete the previous character (and
+					 * space over it on the output) */
 					LM4_UART_DR(0) = ' ';
 					LM4_UART_DR(0) = '\b';
 					rx_buf_head = RX_BUF_PREV(rx_buf_head);
@@ -141,17 +140,10 @@ static void uart_1_interrupt(void)
 	/* TODO: handle input */
 
 	/* If we have space in our FIFO and a character is pending in LPC,
-	 * grab it.
-	 *
-	 * TODO: move UART1 interrupt to the LPC module? */
-	if (!(LM4_UART_FR(1) & 0x20) && (LM4_LPC_ST(LPC_CH_COMX) & 0x02)) {
-		/* TODO: this clears the receive-ready interrupt too,
-		 * which will be ok once we're handing input as well.
-		 * But we're not yet. */
-		LM4_LPC_LPCDMACX = LM4_LPC_LPCDMACX;
-		/* Copy the next byte */
-		LM4_UART_DR(1) = LPC_POOL_COMX[0];
-		/* Disable transmit interrupt */
+	 * handle that character. */
+	if (!(LM4_UART_FR(1) & 0x20) && lpc_comx_has_char()) {
+		/* Copy the next byte then disable transmit interrupt */
+		LM4_UART_DR(1) = lpc_comx_get_char();
 		LM4_UART_IM(1) &= ~0x20;
 	}
 }
@@ -189,6 +181,7 @@ static void configure_gpio(void)
 int uart_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
+	int ch;
 
 	/* Enable UART0 and UART1 and delay a few clocks */
 	LM4_SYSTEM_RCGCUART |= 0x03;
@@ -197,58 +190,36 @@ int uart_init(void)
 	/* Configure GPIOs */
 	configure_gpio();
 
-	/* UART0 setup */
-	/* Disable the port via UARTCTL */
-	LM4_UART_CTL(0) = 0x0300;
-	/* Set the baud rate divisor */
-	LM4_UART_IBRD(0) = (CPU_CLOCK / 16) / BAUD_RATE;
-	LM4_UART_FBRD(0) =
+	/* Configure UART0 and UART1 (identically) */
+	for (ch = 0; ch < 2; ch++) {
+		/* Disable the port */
+		LM4_UART_CTL(ch) = 0x0300;
+		/* Set the baud rate divisor */
+		LM4_UART_IBRD(ch) = (CPU_CLOCK / 16) / BAUD_RATE;
+		LM4_UART_FBRD(ch) =
 			(((CPU_CLOCK / 16) % BAUD_RATE) * 64 + BAUD_RATE / 2) /
 			BAUD_RATE;
-	/* Set UARTLCRH to 8-N-1, FIFO enabled.  Must be done after setting
-	 * the divisor for the new divisor to take effect. */
-	LM4_UART_LCRH(0) = 0x70;
-	/* Interrupt when RX fifo at minimum (>= 1/8 full), and TX fifo when
-	 * <= 1/4 full */
-	LM4_UART_IFLS(0) = 0x01;
-	/* Unmask receive-FIFO, receive-timeout.  We need
-	 * receive-timeout because the minimum RX FIFO depth is 1/8 =
-	 * 2 bytes; without the receive-timeout we'd never be notified
-	 * about single received characters. */
-	LM4_UART_IM(0) = 0x50;
-	/* Enable the port */
-	LM4_UART_CTL(0) |= 0x0001;
-
-	/* UART1 setup */
-	/* Disable the port via UARTCTL */
-	LM4_UART_CTL(1) = 0x0300;
-	/* Set the baud rate divisor */
-	LM4_UART_IBRD(1) = (CPU_CLOCK / 16) / BAUD_RATE;
-	LM4_UART_FBRD(1) =
-			(((CPU_CLOCK / 16) % BAUD_RATE) * 64 + BAUD_RATE / 2) /
-			BAUD_RATE;
-	/* Set UARTLCRH to 8-N-1, FIFO enabled.  Must be done after setting
-	 * the divisor for the new divisor to take effect. */
-	LM4_UART_LCRH(1) = 0x70;
-	/* Unmask receive-FIFO, receive-timeout.  We need
-	 * receive-timeout because the minimum RX FIFO depth is 1/8 =
-	 * 2 bytes; without the receive-timeout we'd never be notified
-	 * about single received characters. */
-	LM4_UART_IM(1) = 0x50;
-#ifdef USE_UART_DMA
-	/* No interrupts on UART1 */
-	LM4_UART_IM(1) = 0x00;
-	/* Enable RX and TX DMA */
-	LM4_UART_DMACTL(1) = 0x03;
-#endif
-	/* Enable the port */
-	LM4_UART_CTL(1) |= 0x0001;
+		/* 8-N-1, FIFO enabled.  Must be done after setting
+		 * the divisor for the new divisor to take effect. */
+		LM4_UART_LCRH(ch) = 0x70;
+		/* Interrupt when RX fifo at minimum (>= 1/8 full), and TX fifo
+		 * when <= 1/4 full */
+		LM4_UART_IFLS(ch) = 0x01;
+		/* Unmask receive-FIFO, receive-timeout.  We need
+		 * receive-timeout because the minimum RX FIFO depth is 1/8 = 2
+		 * bytes; without the receive-timeout we'd never be notified
+		 * about single received characters. */
+		LM4_UART_IM(ch) = 0x50;
+		/* Enable the port */
+		LM4_UART_CTL(ch) |= 0x0001;
+	}
 
 	/* Print hello on UART1 for debugging */
+	/* TODO: remove in production */
 	{
 		const char *c = "Hello on UART1\r\n";
 		while (*c)
-			LM4_UART_DR(1) = *c++;
+			uart_comx_putc(*c++);
 	}
 
 	return EC_SUCCESS;
@@ -462,6 +433,7 @@ void uart_emergency_flush(void)
 	} while (tx_buf_head != tx_buf_tail);
 }
 
+
 void uart_flush_input(void)
 {
 	/* Disable interrupts */
@@ -560,4 +532,27 @@ int uart_gets(char *dest, int size)
 
 	/* Return the length we got */
 	return got;
+}
+
+
+/*****************************************************************************/
+/* COMx functions */
+
+
+int uart_comx_putc_ok(void)
+{
+	if (LM4_UART_FR(1) & 0x20) {
+		/* FIFO is full, so enable transmit interrupt to let us know
+		 * when it empties. */
+		LM4_UART_IM(1) |= 0x20;
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+
+void uart_comx_putc(int c)
+{
+	LM4_UART_DR(1) = c;
 }

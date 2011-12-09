@@ -109,32 +109,9 @@ int lpc_init(void)
 	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
 	 * can enable IRQs on its own. */
 	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
-
-#ifdef USE_LPC_COMx_DMA
-	/* TODO: haven't been able to get this to work yet */
-	/* COMx UART DMA mode */
-	LM4_LPC_LPCDMACX = 0x00070000;
-
-	/* TODO: set up DMA */
-	LM4_SYSTEM_RCGCDMA = 1;
-	/* Wait 3 clocks before accessing other DMA regs */
-	LM4_SYSTEM_RCGCDMA = 1;
-	LM4_SYSTEM_RCGCDMA = 1;
-	LM4_SYSTEM_RCGCDMA = 1;
-	/* Enable master */
-	LM4_DMA_DMACFG = 1;
-	/* TODO: hope we don't need the channel control structs; we're just
-	 * throwing this somewhere in memory.  Shouldn't need it if we leave
-	 * all the channel disabled, though. */
-	LM4_DMA_DMACTLBASE = 0x20004000;
-	/* Map UART and LPC DMA functions to channels */
-	LM4_DMA_DMACHMAP0 = 0x00003000;  /* Channel 3 encoding 3 = LPC0 Ch3 */
-	LM4_DMA_DMACHMAP1 = 0x00000011;  /* Channels 8,9 encoding 1 = UART1 */
-#else
 	/* Use our LPC interrupt handler to notify COMxIM on write-from-host */
 	LM4_LPC_LPCDMACX = 0x00110000;
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
-#endif
 
 	/* Enable LPC channels */
 	LM4_LPC_LPCCTL =
@@ -172,6 +149,23 @@ void lpc_send_host_response(int slot, int status)
 	else
 		LPC_POOL_KERNEL[1] = 0;
 }
+
+
+int lpc_comx_has_char(void)
+{
+	return LM4_LPC_ST(LPC_CH_COMX) & 0x02;
+}
+
+
+int lpc_comx_get_char(void)
+{
+	/* TODO: this clears the receive-ready interrupt too, which will be ok
+	 * once we're handing output to COMx as well.  But we're not yet. */
+	LM4_LPC_LPCDMACX = LM4_LPC_LPCDMACX;
+	/* Copy the next byte */
+	return LPC_POOL_COMX[0];
+}
+
 
 
 /* LPC interrupt handler */
@@ -229,16 +223,10 @@ static void lpc_interrupt(void)
 		LM4_LPC_LPCDMACX = cis;
 
 		/* Handle host writes */
-		if (LM4_LPC_ST(LPC_CH_COMX) & 0x02) {
-			if (LM4_UART_FR(1) & 0x20) {
-				/* FIFO is full, so enable transmit
-				 * interrupt to let us know when it
-				 * empties */
-				LM4_UART_IM(1) |= 0x20;
-			} else {
-				/* Space in FIFO, so copy byte */
-				LM4_UART_DR(1) = LPC_POOL_COMX[0];
-			}
+		if (lpc_comx_has_char()) {
+			/* Copy a character to the UART if there's space */
+			if (uart_comx_putc_ok())
+				uart_comx_putc(lpc_comx_get_char());
 		}
 
 		/* TODO: handle UART input to host - if host read the
