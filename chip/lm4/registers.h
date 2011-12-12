@@ -1,7 +1,6 @@
 /* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2011 Google Inc.
  *
  * Register map for LM4x processor
  */
@@ -49,7 +48,12 @@ static inline int lm4_uart_addr(int ch, int offset)
 #define LM4_ADC_SS1_BASE       0x40038060
 #define LM4_ADC_SS2_BASE       0x40038080
 #define LM4_ADC_SS3_BASE       0x400380a0
-#define LM4ADCREG(ss, offset)  LM4REG(LM4_ADC_SS##ss##_BASE + (offset))
+#define LM4_ADC_SS_SEP         0x00000020
+static inline int lm4_adc_addr(int ss, int offset)
+{
+	return offset + LM4_ADC_SS0_BASE + LM4_ADC_SS_SEP * ss;
+}
+#define LM4ADCREG(ss, offset)  LM4REG(lm4_adc_addr(ss, offset))
 #define LM4_ADC_SSMUX(ss)      LM4ADCREG(ss, 0x000)
 #define LM4_ADC_SSCTL(ss)      LM4ADCREG(ss, 0x004)
 #define LM4_ADC_SSFIFO(ss)     LM4ADCREG(ss, 0x008)
@@ -95,7 +99,12 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_FAN_CH3_BASE       0x40084040
 #define LM4_FAN_CH4_BASE       0x40084050
 #define LM4_FAN_CH5_BASE       0x40084060
-#define LM4FANREG(ch, offset)  LM4REG(LM4_FAN_CH##ch##_BASE + (offset))
+#define LM4_FAN_CH_SEP         0x00000010
+static inline int lm4_fan_addr(int ch, int offset)
+{
+	return offset + LM4_FAN_CH0_BASE + LM4_FAN_CH_SEP * ch;
+}
+#define LM4FANREG(ch, offset)  LM4REG(lm4_fan_addr(ch, offset))
 #define LM4_FAN_FANCH(ch)      LM4FANREG(ch, 0x000)
 #define LM4_FAN_FANCMD(ch)     LM4FANREG(ch, 0x004)
 #define LM4_FAN_FANCST(ch)     LM4FANREG(ch, 0x008)
@@ -218,10 +227,24 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_GPIO_PORTG_AHB_BASE     0x4005E000
 #define LM4_GPIO_PORTH_AHB_BASE     0x4005F000
 #define LM4_GPIO_PORTJ_AHB_BASE     0x40060000
-
-#define LM4GPIOREG(port, offset) LM4REG(LM4_GPIO_PORT##port##_BASE + (offset))
-
-#define LM4_GPIO_DATA_BITS(port, off) LM4GPIOREG(port, 0x000 + (off))
+/* Ports for passing to LM4GPIOREG(); abstracted from base addresses above so
+ * that we can switch to/from AHB. */
+#define LM4_GPIO_A LM4_GPIO_PORTA_BASE
+#define LM4_GPIO_B LM4_GPIO_PORTB_BASE
+#define LM4_GPIO_C LM4_GPIO_PORTC_BASE
+#define LM4_GPIO_D LM4_GPIO_PORTD_BASE
+#define LM4_GPIO_E LM4_GPIO_PORTE_BASE
+#define LM4_GPIO_F LM4_GPIO_PORTF_BASE
+#define LM4_GPIO_G LM4_GPIO_PORTG_BASE
+#define LM4_GPIO_H LM4_GPIO_PORTH_BASE
+#define LM4_GPIO_K LM4_GPIO_PORTK_BASE
+#define LM4_GPIO_L LM4_GPIO_PORTL_BASE
+#define LM4_GPIO_M LM4_GPIO_PORTM_BASE
+#define LM4_GPIO_N LM4_GPIO_PORTN_BASE
+#define LM4_GPIO_P LM4_GPIO_PORTP_BASE
+#define LM4_GPIO_Q LM4_GPIO_PORTQ_BASE
+#define LM4GPIOREG(port, offset)      LM4REG((port) + (offset))
+#define LM4_GPIO_DATA(port, mask)     LM4GPIOREG(port, ((mask) << 2))
 #define LM4_GPIO_DIR(port)            LM4GPIOREG(port, 0x400)
 #define LM4_GPIO_IS(port)             LM4GPIOREG(port, 0x404)
 #define LM4_GPIO_IBE(port)            LM4GPIOREG(port, 0x408)
@@ -275,64 +298,74 @@ static inline int lm4_i2c_addr(int port, int offset)
 
 
 /* Timers */
-#define LM4TIMERREG(tmr, offset) LM4REG(LM4_TIMER##tmr##_BASE + (offset))
-
+/* Timers 0-5 are 16/32 bit */
 #define LM4_TIMER0_BASE                 0x40030000
 #define LM4_TIMER1_BASE                 0x40031000
 #define LM4_TIMER2_BASE                 0x40032000
 #define LM4_TIMER3_BASE                 0x40033000
 #define LM4_TIMER4_BASE                 0x40034000
 #define LM4_TIMER5_BASE                 0x40035000
+/* Timers 6-11 are 32/64 bit */
 #define LM4_TIMERW0_BASE                0x40036000
 #define LM4_TIMERW1_BASE                0x40037000
-#define LM4_TIMERW2_BASE                0x4004C000
-#define LM4_TIMERW3_BASE                0x4004D000
-#define LM4_TIMERW4_BASE                0x4004E000
-#define LM4_TIMERW5_BASE                0x4004F000
-
+#define LM4_TIMERW2_BASE                0x4004c000
+#define LM4_TIMERW3_BASE                0x4004d000
+#define LM4_TIMERW4_BASE                0x4004e000
+#define LM4_TIMERW5_BASE                0x4004f000
+#define LM4_TIMER_SEP                   0x00001000
+static inline int lm4_timer_addr(int timer, int offset)
+{
+	if (timer < 8)
+		return offset + LM4_TIMER0_BASE + LM4_TIMER_SEP * timer;
+	else
+		return offset + LM4_TIMERW2_BASE + LM4_TIMER_SEP * (timer - 8);
+}
+#define LM4TIMERREG(timer, offset)      LM4REG(lm4_timer_addr(timer, offset))
 #define LM4_TIMER_CFG(tmr)              LM4TIMERREG(tmr, 0x00)
 #define LM4_TIMER_TAMR(tmr)             LM4TIMERREG(tmr, 0x04)
 #define LM4_TIMER_TBMR(tmr)             LM4TIMERREG(tmr, 0x08)
-#define LM4_TIMER_CTL(tmr)              LM4TIMERREG(tmr, 0x0C)
+#define LM4_TIMER_CTL(tmr)              LM4TIMERREG(tmr, 0x0c)
 #define LM4_TIMER_SYNC(tmr)             LM4TIMERREG(tmr, 0x10)
 #define LM4_TIMER_IMR(tmr)              LM4TIMERREG(tmr, 0x18)
-#define LM4_TIMER_RIS(tmr)              LM4TIMERREG(tmr, 0x1C)
+#define LM4_TIMER_RIS(tmr)              LM4TIMERREG(tmr, 0x1c)
 #define LM4_TIMER_MIS(tmr)              LM4TIMERREG(tmr, 0x20)
 #define LM4_TIMER_ICR(tmr)              LM4TIMERREG(tmr, 0x24)
 #define LM4_TIMER_TAILR(tmr)            LM4TIMERREG(tmr, 0x28)
-#define LM4_TIMER_TBILR(tmr)            LM4TIMERREG(tmr, 0x2C)
+#define LM4_TIMER_TBILR(tmr)            LM4TIMERREG(tmr, 0x2c)
 #define LM4_TIMER_TAMATCHR(tmr)         LM4TIMERREG(tmr, 0x30)
 #define LM4_TIMER_TBMATCHR(tmr)         LM4TIMERREG(tmr, 0x34)
 #define LM4_TIMER_TAPR(tmr)             LM4TIMERREG(tmr, 0x38)
-#define LM4_TIMER_TBPR(tmr)             LM4TIMERREG(tmr, 0x3C)
+#define LM4_TIMER_TBPR(tmr)             LM4TIMERREG(tmr, 0x3c)
 #define LM4_TIMER_TAPMR(tmr)            LM4TIMERREG(tmr, 0x40)
 #define LM4_TIMER_TBPMR(tmr)            LM4TIMERREG(tmr, 0x44)
 #define LM4_TIMER_TAR(tmr)              LM4TIMERREG(tmr, 0x48)
-#define LM4_TIMER_TBR(tmr)              LM4TIMERREG(tmr, 0x4C)
+#define LM4_TIMER_TBR(tmr)              LM4TIMERREG(tmr, 0x4c)
 #define LM4_TIMER_TAV(tmr)              LM4TIMERREG(tmr, 0x50)
 #define LM4_TIMER_TBV(tmr)              LM4TIMERREG(tmr, 0x54)
 #define LM4_TIMER_RTCPD(tmr)            LM4TIMERREG(tmr, 0x58)
-#define LM4_TIMER_TAPS(tmr)             LM4TIMERREG(tmr, 0x5C)
+#define LM4_TIMER_TAPS(tmr)             LM4TIMERREG(tmr, 0x5c)
 #define LM4_TIMER_TBPS(tmr)             LM4TIMERREG(tmr, 0x60)
 #define LM4_TIMER_TAPV(tmr)             LM4TIMERREG(tmr, 0x64)
 #define LM4_TIMER_TBPV(tmr)             LM4TIMERREG(tmr, 0x68)
 
-#define LM4_SYSTICK_CTRL                LM4REG(0xE000E010)
-#define LM4_SYSTICK_RELOAD              LM4REG(0xE000E014)
-#define LM4_SYSTICK_CURRENT             LM4REG(0xE000E018)
+#define LM4_SYSTICK_CTRL                LM4REG(0xe000e010)
+#define LM4_SYSTICK_RELOAD              LM4REG(0xe000e014)
+#define LM4_SYSTICK_CURRENT             LM4REG(0xe000e018)
 
 /* Watchdogs */
-#define LM4WDTREG(num, offset) LM4REG(LM4_WATCHDOG##num##_BASE + (offset))
-
 #define LM4_WATCHDOG0_BASE              0x40000000
 #define LM4_WATCHDOG1_BASE              0x40001000
-
+static inline int lm4_watchdog_addr(int num, int offset)
+{
+	return offset + (num ? LM4_WATCHDOG1_BASE : LM4_WATCHDOG0_BASE);
+}
+#define LM4WDTREG(num, offset) LM4REG(lm4_watchdog_addr(num, offset))
 #define LM4_WATCHDOG_LOAD(n)            LM4WDTREG(n, 0x000)
 #define LM4_WATCHDOG_VALUE(n)           LM4WDTREG(n, 0x004)
 #define LM4_WATCHDOG_CTL(n)             LM4WDTREG(n, 0x008)
-#define LM4_WATCHDOG_ICR(n)             LM4WDTREG(n, 0x00C)
+#define LM4_WATCHDOG_ICR(n)             LM4WDTREG(n, 0x00c)
 #define LM4_WATCHDOG_RIS(n)             LM4WDTREG(n, 0x010)
 #define LM4_WATCHDOG_TEST(n)            LM4WDTREG(n, 0x418)
-#define LM4_WATCHDOG_LOCK(n)            LM4WDTREG(n, 0xC00)
+#define LM4_WATCHDOG_LOCK(n)            LM4WDTREG(n, 0xc00)
 
 #endif /* __LM4_REGISTERS */

@@ -32,15 +32,17 @@ static void configure_gpios(void)
 	/* Use alternate function 1 for PN4 (channel 3 PWM) and PN6:7
 	   (channel 4 PWM/tach) */
 	// TODO: depends on which PWMs we're using
-	LM4_GPIO_AFSEL(N) |= 0xd0;
-	LM4_GPIO_PCTL(N) = (LM4_GPIO_PCTL(N) & 0x00f0ffff) | 0x11010000;
-	LM4_GPIO_DEN(N) |= 0xd0;
+	LM4_GPIO_AFSEL(LM4_GPIO_N) |= 0xd0;
+	LM4_GPIO_PCTL(LM4_GPIO_N) = (LM4_GPIO_PCTL(LM4_GPIO_N) & 0x00f0ffff) |
+		0x11010000;
+	LM4_GPIO_DEN(LM4_GPIO_N) |= 0xd0;
 
 	/* Use alternate function 1 for PK6 (channel 1 PWM) */
 	// TODO: GPIO module depends on fan channel
-	LM4_GPIO_AFSEL(K) |= 0x40;
-	LM4_GPIO_PCTL(K) = (LM4_GPIO_PCTL(K) & 0xf0ffffff) | 0x01000000;
-	LM4_GPIO_DEN(K) |= 0x40;
+	LM4_GPIO_AFSEL(LM4_GPIO_K) |= 0x40;
+	LM4_GPIO_PCTL(LM4_GPIO_K) = (LM4_GPIO_PCTL(LM4_GPIO_K) & 0xf0ffffff) |
+		0x01000000;
+	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x40;
 
 }
 

@@ -29,18 +29,18 @@ static void configure_gpio(void)
 	/* I/O: PL0:3 = command/address/data
 	 * inp: PL4 (frame), PL5 (reset), PM0 (powerdown), PM5 (clock)
 	 * out: PM1 (sci), PM2 (clkrun), PM4 (serirq) */
-	LM4_GPIO_AFSEL(L) |= 0x3f;
-	LM4_GPIO_AFSEL(M) |= 0x37;
-	LM4_GPIO_PCTL(L) |= 0x00ffffff;
-	LM4_GPIO_PCTL(M) |= 0x00ff0fff;
-	LM4_GPIO_DEN(L) |= 0x3f;
-	LM4_GPIO_DEN(M) |= 0x37;
+	LM4_GPIO_AFSEL(LM4_GPIO_L) |= 0x3f;
+	LM4_GPIO_AFSEL(LM4_GPIO_M) |= 0x37;
+	LM4_GPIO_PCTL(LM4_GPIO_L) |= 0x00ffffff;
+	LM4_GPIO_PCTL(LM4_GPIO_M) |= 0x00ff0fff;
+	LM4_GPIO_DEN(LM4_GPIO_L) |= 0x3f;
+	LM4_GPIO_DEN(LM4_GPIO_M) |= 0x37;
 
 	/* Set the drive strength to 8mA for serirq only */
 	/* TODO: Only necessary on BDS because the cabling to the x86
 	 * is long and flaky; remove this for Link.  Setting this for all
 	 * I/O lines seems to hang the x86 during boot. */
-	LM4_GPIO_DR8R(M) |= 0x00000010;
+	LM4_GPIO_DR8R(LM4_GPIO_M) |= 0x00000010;
 }
 
 

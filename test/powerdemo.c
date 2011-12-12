@@ -33,9 +33,9 @@ static volatile enum {
 static void __stop_timer(void)
 {
 	/* Disable timer A */
-	LM4_TIMER_CTL(W1) &= ~0x01;
+	LM4_TIMER_CTL(7) &= ~0x01;
 	/* Clear any pending interrupts */
-	LM4_TIMER_ICR(W1) = LM4_TIMER_RIS(W1);
+	LM4_TIMER_ICR(7) = LM4_TIMER_RIS(7);
 }
 
 
@@ -46,15 +46,15 @@ static void __start_timer(int usec)
 	/* Stop the timer, if it was started */
 	__stop_timer();
 	/* Set the delay, counting function overhead */
-	LM4_TIMER_TAILR(W1) = usec;
+	LM4_TIMER_TAILR(7) = usec;
 	/* Start timer A */
-	LM4_TIMER_CTL(W1) |= 0x01;
+	LM4_TIMER_CTL(7) |= 0x01;
 }
 
 
 static void __set_state(int new_state, int pin_value, int timeout)
 {
-	LM4_GPIO_DATA_BITS(D, 0x08 << 2) = (pin_value ? 0x08 : 0);
+	LM4_GPIO_DATA(LM4_GPIO_D, 0x08) = (pin_value ? 0x08 : 0);
 	if (timeout)
 		__start_timer(timeout);
 	else
@@ -73,36 +73,36 @@ int power_demo_init(void)
 	/* wait 3 clock cycles before using the module */
 	scratch = LM4_SYSTEM_RCGCWTIMER;
 	/* Ensure timer is disabled : TAEN = TBEN = 0 */
-	LM4_TIMER_CTL(W1) &= ~0x101;
+	LM4_TIMER_CTL(7) &= ~0x101;
 	/* 32-bit timer mode */
-	LM4_TIMER_CFG(W1) = 4;
+	LM4_TIMER_CFG(7) = 4;
 	/* Set the prescaler to increment every microsecond */
-	LM4_TIMER_TAPR(W1) = CLOCKSOURCE_DIVIDER;
+	LM4_TIMER_TAPR(7) = CLOCKSOURCE_DIVIDER;
 	/* One-shot, counting down */
-	LM4_TIMER_TAMR(W1) = 0x01;
+	LM4_TIMER_TAMR(7) = 0x01;
 	/* Set overflow interrupt */
-	LM4_TIMER_IMR(W1) = 0x1;
+	LM4_TIMER_IMR(7) = 0x1;
 
 	/* Enable clock to GPIO module D */
 	LM4_SYSTEM_RCGCGPIO |= 0x0008;
 
 	/* Clear GPIOAFSEL and enable digital function for pins 0-3 */
-	LM4_GPIO_AFSEL(D) &= ~0x0f;
-	LM4_GPIO_DEN(D) |= 0x0f;
+	LM4_GPIO_AFSEL(LM4_GPIO_D) &= ~0x0f;
+	LM4_GPIO_DEN(LM4_GPIO_D) |= 0x0f;
 
 	/* Set pins 0-2 as input, pin 3 as output */
-	LM4_GPIO_DIR(D) = (LM4_GPIO_DIR(D) & ~0x0f) | 0x08;
+	LM4_GPIO_DIR(LM4_GPIO_D) = (LM4_GPIO_DIR(LM4_GPIO_D) & ~0x0f) | 0x08;
 
 	/* Set pin 0 to edge-sensitive, both edges, pull-up */
-	LM4_GPIO_IS(D) &= ~0x01;
-	LM4_GPIO_IBE(D) |= 0x01;
-	LM4_GPIO_PUR(D) |= 0x01;
+	LM4_GPIO_IS(LM4_GPIO_D) &= ~0x01;
+	LM4_GPIO_IBE(LM4_GPIO_D) |= 0x01;
+	LM4_GPIO_PUR(LM4_GPIO_D) |= 0x01;
 
 	/* Move to idle state */
 	__set_state(POWER_STATE_IDLE, 1, 0);
 
 	/* Enable interrupt on pin 0 */
-	LM4_GPIO_IM(D) |= 0x01;
+	LM4_GPIO_IM(LM4_GPIO_D) |= 0x01;
 
 	return EC_SUCCESS;
 }
@@ -111,14 +111,14 @@ int power_demo_init(void)
 /* GPIO interrupt handler */
 static void __gpio_d_interrupt(void)
 {
-	uint32_t mis = LM4_GPIO_MIS(D);
+	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_D);
 
 	/* Clear the interrupt bits we're handling */
-	LM4_GPIO_ICR(D) = mis;
+	LM4_GPIO_ICR(LM4_GPIO_D) = mis;
 
 	/* Handle edges */
 	if (mis & 0x01) {
-		if (LM4_GPIO_DATA_BITS(D, 0x01 << 2)) {
+		if (LM4_GPIO_DATA(LM4_GPIO_D, 0x01)) {
 			if (state == POWER_STATE_WAIT)
 				__set_state(POWER_STATE_DOWN2, 0, 2000 - 28);
 		} else {
@@ -134,9 +134,9 @@ DECLARE_IRQ(3, __gpio_d_interrupt, 1);
 /* Timer interrupt handler */
 static void __timer_w1_interrupt(void)
 {
-	uint32_t mis = LM4_TIMER_RIS(W1);
+	uint32_t mis = LM4_TIMER_RIS(7);
 	/* Clear the interrupt reasons we're handling */
-	LM4_TIMER_ICR(W1) = mis;
+	LM4_TIMER_ICR(7) = mis;
 
 	/* Transition to next state */
 	switch (state) {
@@ -157,7 +157,7 @@ static void __timer_w1_interrupt(void)
 		__set_state(POWER_STATE_DOWN15, 0, 15000 - 328);
 		break;
 	case POWER_STATE_DOWN15:
-		if (LM4_GPIO_DATA_BITS(D, 0x01 << 2)) {
+		if (LM4_GPIO_DATA(LM4_GPIO_D, 0x01)) {
 			/* Button has already been released; go straight to
 			 * idle */
 			__set_state(POWER_STATE_IDLE, 1, 0);

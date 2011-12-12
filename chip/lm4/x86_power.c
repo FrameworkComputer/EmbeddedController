@@ -30,7 +30,7 @@ enum x86_signal {
 						   * PCH_DPWROK via resistor */
 	PM_SLP_SUS#,         PD3, inp, SLP_SUS
 	SLP_A#,              PG5, i/o, SLP_A#     /* Intel claims inp; why does
-						   * schematic claim I/O? */  
+						   * schematic claim I/O? */
 	SLP_ME_CSW_DEV#,     PG4, i/o, SLP_ME_CSW_DEV#  /* Intel also claims
 							 * inp? */
 	PM_SLP_S3#,          PJ0, inp, SLP_S3#
@@ -121,7 +121,7 @@ struct signal_gpio {
 };
 
 struct signal_gpio gpios[] =  {
-	
+
 
 
 };
@@ -131,20 +131,6 @@ struct signal_gpio gpios[] =  {
 
 int x86_power_init(void)
 {
-#if 0
-	/* Enable clock to GPIO block A */
-	LM4_SYSTEM_RCGCGPIO |= 0x0001;
-
-	/* Turn off the LED before we make it an output */
-	gpio_set(EC_GPIO_DEBUG_LED, 0);
-
-	/* Clear GPIOAFSEL bits for block A pin 7 */
-	LM4_GPIO_AFSEL(A) &= ~(0x80);
-
-	/* Set GPIO to digital enable, output */
-	LM4_GPIO_DEN(A) |= 0x80;
-	LM4_GPIO_DIR(A) |= 0x80;
-#endif
 	return EC_SUCCESS;
 }
 

@@ -164,19 +164,21 @@ static void configure_gpio(void)
 
 	/* UART0 setup; RX and TX are GPIO PA0 and PA1 */
 	/* Enable alternate function */
-	LM4_GPIO_AFSEL(A) |= 0x03;
+	LM4_GPIO_AFSEL(LM4_GPIO_A) |= 0x03;
 	/* Alternate function 1 */
-	LM4_GPIO_PCTL(A) = (LM4_GPIO_PCTL(A) & 0xffffff00) | 0x11;
+	LM4_GPIO_PCTL(LM4_GPIO_A) = (LM4_GPIO_PCTL(LM4_GPIO_A) & 0xffffff00)
+		| 0x11;
 	/* Enable digital function */
-	LM4_GPIO_DEN(A) |= 0x03;
+	LM4_GPIO_DEN(LM4_GPIO_A) |= 0x03;
 
 	/* UART1 setup; RX and TX are GPIO PB0 and PB1 */
 	/* Enable alternate function */
-	LM4_GPIO_AFSEL(B) |= 0x03;
+	LM4_GPIO_AFSEL(LM4_GPIO_B) |= 0x03;
 	/* Alternate function 1 */
-	LM4_GPIO_PCTL(B) = (LM4_GPIO_PCTL(B) & 0xffffff00) | 0x11;
+	LM4_GPIO_PCTL(LM4_GPIO_B) = (LM4_GPIO_PCTL(LM4_GPIO_B) & 0xffffff00)
+		| 0x11;
 	/* Enable digital function */
-	LM4_GPIO_DEN(B) = 0x03;
+	LM4_GPIO_DEN(LM4_GPIO_B) = 0x03;
 }
 
 

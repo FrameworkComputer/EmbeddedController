@@ -35,20 +35,20 @@ static uint32_t next_deadline = 0xffffffff;
 void __hw_clock_event_set(uint32_t deadline)
 {
 	/* set the match on the deadline */
-	LM4_TIMER_TAMATCHR(W0) = 0xffffffff - deadline;
+	LM4_TIMER_TAMATCHR(6) = 0xffffffff - deadline;
 	/* Set the match interrupt */
-	LM4_TIMER_IMR(W0) |= 0x10;
+	LM4_TIMER_IMR(6) |= 0x10;
 }
 
 void __hw_clock_event_clear(void)
 {
 	/* Disable the match interrupt */
-	LM4_TIMER_IMR(W0) &= ~0x10;
+	LM4_TIMER_IMR(6) &= ~0x10;
 }
 
 static uint32_t __hw_clock_source_read(void)
 {
-	return 0xffffffff - LM4_TIMER_TAV(W0);
+	return 0xffffffff - LM4_TIMER_TAV(6);
 }
 
 static void expire_timer(task_id_t tskid)
@@ -107,10 +107,10 @@ reprocess_timers:
 
 static void __hw_clock_source_irq(void)
 {
-	uint32_t status = LM4_TIMER_RIS(W0);
+	uint32_t status = LM4_TIMER_RIS(6);
 
 	/* clear interrupt */
-	LM4_TIMER_ICR(W0) = status;
+	LM4_TIMER_ICR(6) = status;
 	/* free running counter as overflowed */
 	if (status & 0x01) {
 		clksrc_high++;
@@ -133,19 +133,19 @@ static void __hw_clock_source_init(void)
 	scratch = LM4_SYSTEM_RCGCWTIMER;
 
 	/* Ensure timer is disabled : TAEN = TBEN = 0 */
-	LM4_TIMER_CTL(W0) &= ~0x101;
+	LM4_TIMER_CTL(6) &= ~0x101;
 	/* Set overflow interrupt */
-	LM4_TIMER_IMR(W0) = 0x1;
+	LM4_TIMER_IMR(6) = 0x1;
 	/* 32-bit timer mode */
-	LM4_TIMER_CFG(W0) = 4;
+	LM4_TIMER_CFG(6) = 4;
 	/* set the prescaler to increment every microsecond */
-	LM4_TIMER_TAPR(W0) = CLOCKSOURCE_DIVIDER;
+	LM4_TIMER_TAPR(6) = CLOCKSOURCE_DIVIDER;
 	/* Periodic mode, counting down */
-	LM4_TIMER_TAMR(W0) = 0x22;
+	LM4_TIMER_TAMR(6) = 0x22;
 	/* use the full 32-bits of the timer */
-	LM4_TIMER_TAILR(W0) = 0xffffffff;
+	LM4_TIMER_TAILR(6) = 0xffffffff;
 	/* Starts counting in timer A */
-	LM4_TIMER_CTL(W0) |= 0x1;
+	LM4_TIMER_CTL(6) |= 0x1;
 }
 
 
@@ -245,7 +245,7 @@ int command_timer_info(int argc, char **argv)
 	            "Deadline: 0x%08x%08x us\n"
 	            "Active timers:\n",
 	            ts.le.hi, ts.le.lo, clksrc_high,
-	            0xffffffff -LM4_TIMER_TAMATCHR(W0));
+		    0xffffffff - LM4_TIMER_TAMATCHR(6));
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & (1<<tskid))
 			uart_printf("Tsk %d tmr 0x%08x%08x\n", tskid,

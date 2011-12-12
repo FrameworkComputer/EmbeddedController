@@ -23,8 +23,8 @@ static void configure_gpio(void)
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
         /* Use analog function for PE3 (AIN0) */
-	LM4_GPIO_DEN(E) &= ~0x08;
-	LM4_GPIO_AMSEL(E) |= 0x08;
+	LM4_GPIO_DEN(LM4_GPIO_E) &= ~0x08;
+	LM4_GPIO_AMSEL(LM4_GPIO_E) |= 0x08;
 }
 
 

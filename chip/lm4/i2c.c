@@ -175,12 +175,13 @@ static void configure_gpio(void)
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
 	/* Use alternate function 3 for PG6:7 */
-	LM4_GPIO_AFSEL(G) |= 0xc0;
-	LM4_GPIO_PCTL(G) = (LM4_GPIO_PCTL(N) & 0x00ffffff) | 0x33000000;
-	LM4_GPIO_DEN(G) |= 0xc0;
+	LM4_GPIO_AFSEL(LM4_GPIO_G) |= 0xc0;
+	LM4_GPIO_PCTL(LM4_GPIO_G) = (LM4_GPIO_PCTL(LM4_GPIO_G) & 0x00ffffff) |
+		0x33000000;
+	LM4_GPIO_DEN(LM4_GPIO_G) |= 0xc0;
 	/* Configure SDA as open-drain.  SCL should not be open-drain,
 	 * since it has an internal pull-up. */
-	LM4_GPIO_ODR(G) |= 0x80;
+	LM4_GPIO_ODR(LM4_GPIO_G) |= 0x80;
 }
 
 
