@@ -42,7 +42,7 @@ task_id_t task_get_current(void);
 uint32_t *task_get_event_bitmap(task_id_t tsk);
 
 /**
- * Wait for the incoming next message.
+ * Waits for the incoming next message.
  *
  * if an event is already pending, it returns it immediatly, else it
  * de-schedules the calling task and wake up the next one in the priority order
@@ -55,7 +55,7 @@ uint32_t *task_get_event_bitmap(task_id_t tsk);
 uint32_t task_wait_msg(int timeout_us);
 
 /**
- * Change the task scheduled after returning from the exception.
+ * Changes the task scheduled after returning from the exception.
  *
  * If task_send_msg has been called and has set need_resched flag,
  * we re-compute which task is running and eventually swap the context
@@ -66,11 +66,21 @@ uint32_t task_wait_msg(int timeout_us);
  */
 void task_resched_if_needed(void *excep_return);
 
-/* Initialize tasks and interrupt controller */
+/* Initializes tasks and interrupt controller. */
 int task_init(void);
 
-/* Start the task scheduling */
+/* Starts task scheduling. */
 int task_start(void);
+
+/* Enables an interrupt. */
+void task_enable_irq(int irq);
+
+/* Disables an interrupt. */
+void task_disable_irq(int irq);
+
+/* Software-triggers an interrupt. */
+void task_trigger_irq(int irq);
+
 
 struct irq_priority {
 	uint8_t irq;
@@ -78,8 +88,12 @@ struct irq_priority {
 };
 
 /**
- * Connect the interrupt handler "routine" to the irq number "irq" and
- * ensure it is enabled in the interrupt controller with the right priority
+ * Connects the interrupt handler "routine" to the irq number "irq" and
+ * ensures it is enabled in the interrupt controller with the right priority.
+ *
+ * Note that you MUST pass irq as the number ("5") not as a #defined constant,
+ * because it's stringized and matched up with a weak reference from init.S.
+ * TODO: fix that; it's typo-prone.
  */
 #define DECLARE_IRQ(irq, routine, priority)                     \
 	void irq_##irq##_handler(void)				\

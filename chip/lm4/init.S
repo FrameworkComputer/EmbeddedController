@@ -202,8 +202,8 @@ data_loop:
 
     /**
      * Set stack pointer
-     * already done my Cortex-M hardware but this allows software to jump directly
-     * to reset function or to run on other ARM
+     * already done my Cortex-M hardware but this allows software to
+     * jump directly to reset function or to run on other ARM
      */
     ldr r0, =stack_end
     mov sp, r0

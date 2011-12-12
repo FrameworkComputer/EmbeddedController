@@ -128,6 +128,8 @@ static void uart_0_interrupt(void)
 	if (tx_buf_tail == tx_buf_head)
 		LM4_UART_IM(0) &= ~0x20;
 }
+/* TODO: can't use LM4_IRQ_UART0 constant because it messes with the
+ * DECLARE_IRQ() macro. */
 DECLARE_IRQ(5, uart_0_interrupt, 1);
 
 
@@ -248,7 +250,7 @@ int uart_puts(const char *outstr)
 		 * UART where the FIFO only triggers the interrupt when its
 		 * threshold is _crossed_, not just met. */
 		LM4_UART_IM(0) |= 0x20;
-		LM4_NVIC_SWTRIG = 5;
+		task_trigger_irq(LM4_IRQ_UART0);
 	}
 
 	/* Successful if we consumed all output */
@@ -388,7 +390,7 @@ int uart_printf(const char *format, ...)
 		 * UART where the FIFO only triggers the interrupt when its
 		 * threshold is _crossed_, not just met. */
 		LM4_UART_IM(0) |= 0x20;
-		LM4_NVIC_SWTRIG = 5;
+		task_trigger_irq(LM4_IRQ_UART0);
 	}
 
 	/* Successful if we consumed all output */
@@ -409,7 +411,7 @@ void uart_flush_output(void)
 		 * printf() and back. */
 		if (!(LM4_UART_IM(0) & 0x20)) {
 			LM4_UART_IM(0) |= 0x20;
-			LM4_NVIC_SWTRIG = 5;
+			task_trigger_irq(LM4_IRQ_UART0);
 		}
 	}
 
@@ -437,7 +439,7 @@ void uart_emergency_flush(void)
 void uart_flush_input(void)
 {
 	/* Disable interrupts */
-	LM4_NVIC_DIS(0) = (1 << 5);
+	task_disable_irq(LM4_IRQ_UART0);
 
 	/* Call interrupt handler to empty the hardware FIFO */
 	uart_0_interrupt();
@@ -446,7 +448,7 @@ void uart_flush_input(void)
 	rx_buf_tail = rx_buf_head;
 
 	/* Re-enable interrupts */
-	LM4_NVIC_EN(0) = (1 << 5);
+	task_enable_irq(LM4_IRQ_UART0);
 }
 
 
@@ -457,7 +459,7 @@ int uart_peek(int c)
 
 	/* Disable interrupts while we pull characters out, because the
 	 * interrupt handler can also modify the tail pointer. */
-	LM4_NVIC_DIS(0) = (1 << 5);
+	task_disable_irq(LM4_IRQ_UART0);
 
 	/* Call interrupt handler to empty the hardware FIFO.  The minimum
 	 * FIFO trigger depth is 1/8 (2 chars), so this is the only way to
@@ -473,7 +475,7 @@ int uart_peek(int c)
 	}
 
 	/* Re-enable interrupts */
-	LM4_NVIC_EN(0) = (1 << 5);
+	task_enable_irq(LM4_IRQ_UART0);
 
 	return index;
 }
@@ -484,7 +486,7 @@ int uart_getc(void)
 	int c;
 
 	/* Disable interrupts */
-	LM4_NVIC_DIS(0) = (1 << 5);
+	task_disable_irq(LM4_IRQ_UART0);
 
 	/* Call interrupt handler to empty the hardware FIFO */
 	uart_0_interrupt();
@@ -497,7 +499,7 @@ int uart_getc(void)
 	}
 
 	/* Re-enable interrupts */
-	LM4_NVIC_EN(0) = (1 << 5);
+	task_enable_irq(LM4_IRQ_UART0);
 
 	return c;
 }
@@ -510,7 +512,7 @@ int uart_gets(char *dest, int size)
 
 	/* Disable interrupts while we pull characters out, because the
 	 * interrupt handler can also modify the tail pointer. */
-	LM4_NVIC_DIS(0) = (1 << 5);
+	task_disable_irq(LM4_IRQ_UART0);
 
 	/* Call interrupt handler to empty the hardware FIFO */
 	uart_0_interrupt();
@@ -525,7 +527,7 @@ int uart_gets(char *dest, int size)
 	}
 
 	/* Re-enable interrupts */
-	LM4_NVIC_EN(0) = (1 << 5);
+	task_enable_irq(LM4_IRQ_UART0);
 
 	/* Null-terminate */
 	dest[got] = '\0';

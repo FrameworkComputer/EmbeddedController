@@ -177,6 +177,20 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_NVIC_PRI(x)        LM4REG(0xe000e400 + 4 * (x))
 #define LM4_NVIC_APINT         LM4REG(0xe000ed0c)
 #define LM4_NVIC_SWTRIG        LM4REG(0xe000ef00)
+/* IRQ numbers */
+#define LM4_IRQ_GPIOD            3
+#define LM4_IRQ_UART0            5
+#define LM4_IRQ_UART1            6
+#define LM4_IRQ_I2C0             8
+#define LM4_IRQ_WATCHDOG        18
+#define LM4_IRQ_I2C1            37
+#define LM4_IRQ_I2C2            68
+#define LM4_IRQ_I2C3            69
+#define LM4_IRQ_TIMERW0A        94
+#define LM4_IRQ_TIMERW1A        96
+#define LM4_IRQ_LPC            108
+#define LM4_IRQ_I2C4           109
+#define LM4_IRQ_I2C5           110
 
 #define LM4_SCB_SYSCTRL        LM4REG(0xe000ed10)
 

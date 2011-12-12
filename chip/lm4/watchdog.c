@@ -46,7 +46,7 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	 * instead de-activate the interrupt in the NVIC :
 	 * so, we will get the trace only once
 	 */
-	LM4_NVIC_DIS(0) = 1 << 18;
+	task_disable_irq(LM4_IRQ_WATCHDOG);
 
 	asm("mrs %0, psp":"=r"(psp));
 	if ((excep_lr & 0xf) == 1) {
@@ -81,7 +81,8 @@ void irq_18_handler(void)
 		     "b task_resched_if_needed\n");
 }
 const struct irq_priority prio_18 __attribute__((section(".rodata.irqprio")))
-		= {18, 0}; /* put the watchdog at the highest priority */
+		= {LM4_IRQ_WATCHDOG, 0}; /* put the watchdog at the highest
+					    priority */
 
 void watchdog_reload(void)
 {

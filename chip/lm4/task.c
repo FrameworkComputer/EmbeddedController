@@ -244,10 +244,30 @@ uint32_t task_send_msg(task_id_t tskid, task_id_t from, int wait)
 	return 0;
 }
 
+
 uint32_t task_wait_msg(int timeout_us)
 {
 	return __wait_msg(timeout_us, TASK_ID_IDLE);
 }
+
+
+void task_enable_irq(int irq)
+{
+	LM4_NVIC_EN(irq / 32) = 1 << (irq % 32);
+}
+
+
+void task_disable_irq(int irq)
+{
+	LM4_NVIC_DIS(irq / 32) = 1 << (irq % 32);
+}
+
+
+void task_trigger_irq(int irq)
+{
+	LM4_NVIC_SWTRIG = irq;
+}
+
 
 /**
  * Enable all used IRQ in the NVIC and set their priorities
@@ -269,7 +289,10 @@ static void __nvic_init_irqs(void)
 				(LM4_NVIC_PRI(irq / 4) &
 				 ~(0x7 << prio_shift)) |
 				(prio << prio_shift);
-		LM4_NVIC_EN(irq / 32) |= 1<<(irq % 32);
+
+		/* TODO: enabling all interrupts here causes a race condition
+		   between an interrupt and setting up the handler for it. */
+		task_enable_irq(irq);
 	}
 }
 

@@ -170,7 +170,7 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid)
 	/* modify the next event if needed */
 	if ((tstamp.le.hi < clksrc_high) ||
 	    ((tstamp.le.hi == clksrc_high) && (tstamp.le.lo <= next_deadline)))
-		LM4_NVIC_SWTRIG = 94;
+		task_trigger_irq(LM4_IRQ_TIMERW0A);
 
 	return EC_SUCCESS;
 }
