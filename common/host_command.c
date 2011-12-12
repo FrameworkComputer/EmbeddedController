@@ -156,17 +156,22 @@ static void command_process(int slot)
 		lpc_send_host_response(slot, flash_command_erase(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_WP_ENABLE:
-		lpc_send_host_response(flash_command_wp_enable(host_data));
+		lpc_send_host_response(slot, flash_command_wp_enable(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_WP_GET_STATE:
-		lpc_send_host_response(flash_command_wp_get_state(host_data));
+		lpc_send_host_response(slot, flash_command_wp_get_state(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_WP_SET_RANGE:
-		lpc_send_host_response(flash_command_wp_set_range(host_data));
+		lpc_send_host_response(slot, flash_command_wp_set_range(data));
 		return;
 	case EC_LPC_COMMAND_FLASH_WP_GET_RANGE:
-		lpc_send_host_response(flash_command_wp_get_range(host_data));
+		lpc_send_host_response(slot, flash_command_wp_get_range(data));
 		return;
+#ifdef SUPPORT_CHECKSUM
+	case EC_LPC_COMMAND_FLASH_CHECKSUM:
+		lpc_send_host_response(slot, flash_command_checksum(data));
+		return;
+#endif
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}

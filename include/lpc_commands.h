@@ -10,6 +10,14 @@
 
 #include <stdint.h>
 
+
+/* During the development stage, the LPC bus has high error bit rate.
+ * Using checksum can detect the error and trigger re-transmit.
+ * FIXME: remove this after mass production.
+ */
+#define SUPPORT_CHECKSUM
+
+
 /* I/O addresses for LPC commands */
 #define EC_LPC_ADDR_KERNEL_DATA   0x62
 #define EC_LPC_ADDR_KERNEL_CMD    0x66
@@ -179,6 +187,22 @@ struct lpc_params_flash_wp_gpio {
 struct lpc_response_flash_wp_gpio {
 	uint32_t value;
 } __attribute__ ((packed));
+
+#ifdef SUPPORT_CHECKSUM
+/* Checksum a range of flash datq */
+#define EC_LPC_COMMAND_FLASH_CHECKSUM 0x1f
+struct lpc_params_flash_checksum {
+	uint32_t offset;   /* Byte offset to read */
+	uint32_t size;     /* Size to read in bytes */
+} __attribute__ ((packed));
+struct lpc_response_flash_checksum {
+	uint8_t checksum;
+} __attribute__ ((packed));
+#define BYTE_IN(sum, byte) do {  \
+		sum = (sum << 1) | (sum >> 7);  \
+		sum ^= (byte ^ 0x53);  \
+	} while (0)
+#endif  /* SUPPORT_CHECKSUM */
 
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

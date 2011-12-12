@@ -20,7 +20,7 @@
 
 static int command_flash_info(int argc, char **argv)
 {
-	uart_printf("Usable flash size: %d KB\n", flash_get_size());
+	uart_printf("Usable flash size: %d B\n", flash_get_size());
 	return EC_SUCCESS;
 }
 
@@ -212,6 +212,32 @@ enum lpc_status flash_command_get_info(uint8_t *data)
 }
 
 
+#ifdef SUPPORT_CHECKSUM
+enum lpc_status flash_command_checksum(uint8_t *data)
+{
+	struct lpc_params_flash_checksum *p =
+	                (struct lpc_params_flash_checksum *)data;
+	struct lpc_response_flash_checksum *r =
+	                (struct lpc_response_flash_checksum *)data;
+	uint8_t cs, byte;
+	int j;
+
+	for (cs = 0, j = 0; j < p->size; ++j) {
+		if (flash_read(p->offset + j, 1, &byte)) {
+			uart_printf("flash_read() error at 0x%02x.\n",
+			            p->offset + j);
+			return EC_LPC_STATUS_ERROR;
+		}
+		BYTE_IN(cs, byte);
+	}
+
+	r->checksum = cs;
+
+	return EC_LPC_STATUS_SUCCESS;
+}
+#endif
+
+
 enum lpc_status flash_command_read(uint8_t *data)
 {
 	struct lpc_params_flash_read *p =
@@ -322,4 +348,3 @@ int flash_commands_init(void)
 	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }
-

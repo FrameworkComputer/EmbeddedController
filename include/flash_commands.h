@@ -23,5 +23,9 @@ enum lpc_status flash_command_wp_enable(uint8_t *data);
 enum lpc_status flash_command_wp_get_state(uint8_t *data);
 enum lpc_status flash_command_wp_set_range(uint8_t *data);
 enum lpc_status flash_command_wp_get_range(uint8_t *data);
+#ifdef SUPPORT_CHECKSUM
+enum lpc_status flash_command_checksum(uint8_t *data);
+#endif
+
 
 #endif  /* __CROS_EC_FLASH_COMMANDS_H */
