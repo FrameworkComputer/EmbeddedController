@@ -11,7 +11,8 @@ build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 
 # Create output directories if necessary
-_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || mkdir -p $(out)/$(d)))
+_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
+	    mkdir -p $(out)/$(d)))
 
 section = $(subst .,,$(suffix $(1)))
 
@@ -29,9 +30,11 @@ cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf = $(LD) $(LDFLAGS) $(objs) -o $@ -T $< -Map $(out)/$*.map
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
-cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) -MMD -MF $@.d $< -o $@
+cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
+	         -MMD -MF $@.d $< -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $< -o $@
-cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py $(silent)
+cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
+	   $(silent)
 
 
 .PHONY: all tests utils
