@@ -13,6 +13,10 @@
 /* Force header files to define grantpt(), posix_openpt(), cfmakeraw() */
 #define _BSD_SOURCE
 #define _XOPEN_SOURCE 600
+/* Force header file to declare ptsname_r(), etc. */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 
 #include <fcntl.h>
 #include <ftdi.h>
