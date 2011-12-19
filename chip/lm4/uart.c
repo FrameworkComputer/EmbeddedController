@@ -128,9 +128,7 @@ static void uart_0_interrupt(void)
 	if (tx_buf_tail == tx_buf_head)
 		LM4_UART_IM(0) &= ~0x20;
 }
-/* TODO: can't use LM4_IRQ_UART0 constant because it messes with the
- * DECLARE_IRQ() macro. */
-DECLARE_IRQ(5, uart_0_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_UART0, uart_0_interrupt, 1);
 
 
 /* Interrupt handler for UART1 */
@@ -150,7 +148,7 @@ static void uart_1_interrupt(void)
 	}
 }
 /* Must be same prio as LPC interrupt handler so they don't preempt */
-DECLARE_IRQ(6, uart_1_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_UART1, uart_1_interrupt, 2);
 
 
 /* Configure GPIOs for the UART module. */

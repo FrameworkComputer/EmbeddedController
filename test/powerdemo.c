@@ -128,7 +128,7 @@ static void __gpio_d_interrupt(void)
 	}
 }
 
-DECLARE_IRQ(3, __gpio_d_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOD, __gpio_d_interrupt, 1);
 
 
 /* Timer interrupt handler */
@@ -172,7 +172,7 @@ static void __timer_w1_interrupt(void)
 	}
 }
 
-DECLARE_IRQ(96, __timer_w1_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_TIMERW1A, __timer_w1_interrupt, 1);
 
 int power_demo_task(void)
 {

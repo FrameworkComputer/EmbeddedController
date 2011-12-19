@@ -151,12 +151,12 @@ static void i2c3_interrupt(void) { handle_interrupt(3); }
 static void i2c4_interrupt(void) { handle_interrupt(4); }
 static void i2c5_interrupt(void) { handle_interrupt(5); }
 
-DECLARE_IRQ(8, i2c0_interrupt, 2);
-DECLARE_IRQ(37, i2c1_interrupt, 2);
-DECLARE_IRQ(68, i2c2_interrupt, 2);
-DECLARE_IRQ(69, i2c3_interrupt, 2);
-DECLARE_IRQ(109, i2c4_interrupt, 2);
-DECLARE_IRQ(110, i2c5_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C0, i2c0_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C1, i2c1_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C2, i2c2_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C3, i2c3_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C4, i2c4_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_I2C5, i2c5_interrupt, 2);
 
 /*****************************************************************************/
 /* Console commands */

@@ -235,4 +235,4 @@ static void lpc_interrupt(void)
 	}
 }
 
-DECLARE_IRQ(108, lpc_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);

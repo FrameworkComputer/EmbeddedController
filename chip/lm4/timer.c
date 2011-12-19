@@ -118,7 +118,7 @@ static void __hw_clock_source_irq(void)
 	/* Find expired timers and set the new timer deadline */
 	process_timers();
 }
-DECLARE_IRQ(94, __hw_clock_source_irq, 1);
+DECLARE_IRQ(LM4_IRQ_TIMERW0A, __hw_clock_source_irq, 1);
 
 
 static void __hw_clock_source_init(void)

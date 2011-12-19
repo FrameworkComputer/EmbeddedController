@@ -186,20 +186,109 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_NVIC_PRI(x)        LM4REG(0xe000e400 + 4 * (x))
 #define LM4_NVIC_APINT         LM4REG(0xe000ed0c)
 #define LM4_NVIC_SWTRIG        LM4REG(0xe000ef00)
+
 /* IRQ numbers */
+#define LM4_IRQ_GPIOA            0
+#define LM4_IRQ_GPIOB            1
+#define LM4_IRQ_GPIOC            2
 #define LM4_IRQ_GPIOD            3
+#define LM4_IRQ_GPIOE            4
 #define LM4_IRQ_UART0            5
 #define LM4_IRQ_UART1            6
+#define LM4_IRQ_SSI0             7
 #define LM4_IRQ_I2C0             8
+/* 9 - 13 reserved */
+#define LM4_IRQ_ADC0_SS0        14
+#define LM4_IRQ_ADC0_SS1        15
+#define LM4_IRQ_ADC0_SS2        16
+#define LM4_IRQ_ADC0_SS3        17
 #define LM4_IRQ_WATCHDOG        18
+#define LM4_IRQ_TIMER0A         19
+#define LM4_IRQ_TIMER0B         20
+#define LM4_IRQ_TIMER1A         21
+#define LM4_IRQ_TIMER1B         22
+#define LM4_IRQ_TIMER2A         23
+#define LM4_IRQ_TIMER2B         24
+#define LM4_IRQ_ACMP0           25
+#define LM4_IRQ_ACMP1           26
+#define LM4_IRQ_ACMP2           27
+#define LM4_IRQ_SYSCTRL         28
+#define LM4_IRQ_EEPROM          29
+#define LM4_IRQ_GPIOF           30
+#define LM4_IRQ_GPIOG           31
+#define LM4_IRQ_GPIOH           32
+#define LM4_IRQ_UART2           33
+#define LM4_IRQ_SSI1            34
+#define LM4_IRQ_TIMER3A         35
+#define LM4_IRQ_TIMER3B         36
 #define LM4_IRQ_I2C1            37
+/* 38 - 42 reserved */
+#define LM4_IRQ_HIBERNATE       43
+/* 44 - 45 reserved */
+#define LM4_IRQ_UDMA_SOFTWARE   46
+#define LM4_IRQ_UDMA_ERROR      47
+#define LM4_IRQ_ADC1_SS0        48
+#define LM4_IRQ_ADC1_SS1        49
+#define LM4_IRQ_ADC1_SS2        50
+#define LM4_IRQ_ADC1_SS3        51
+/* 52 - 53 reserved */
+#define LM4_IRQ_GPIOJ           54
+#define LM4_IRQ_GPIOK           55
+#define LM4_IRQ_GPIOL           56
+#define LM4_IRQ_SSI2            57
+#define LM4_IRQ_SSI3            58
+#define LM4_IRQ_UART3           59
+#define LM4_IRQ_UART4           60
+#define LM4_IRQ_UART5           61
+#define LM4_IRQ_UART6           62
+#define LM4_IRQ_UART7           63
+/* 64 - 67 reserved */
 #define LM4_IRQ_I2C2            68
 #define LM4_IRQ_I2C3            69
+#define LM4_IRQ_TIMER4A         70
+#define LM4_IRQ_TIMER4B         71
+/* 72 - 91 reserved */
+#define LM4_IRQ_TIMER5A         92
+#define LM4_IRQ_TIMER5B         93
 #define LM4_IRQ_TIMERW0A        94
+#define LM4_IRQ_TIMERW0B        95
 #define LM4_IRQ_TIMERW1A        96
+#define LM4_IRQ_TIMERW1B        97
+#define LM4_IRQ_TIMERW2A        98
+#define LM4_IRQ_TIMERW2B        99
+#define LM4_IRQ_TIMERW3A       100
+#define LM4_IRQ_TIMERW3B       101
+#define LM4_IRQ_TIMERW4A       102
+#define LM4_IRQ_TIMERW4B       103
+#define LM4_IRQ_TIMERW5A       104
+#define LM4_IRQ_TIMERW5B       105
+#define LM4_IRQ_SYS_EXCEPTION  106
+#define LM4_IRQ_SYS_PECI       107
 #define LM4_IRQ_LPC            108
 #define LM4_IRQ_I2C4           109
 #define LM4_IRQ_I2C5           110
+#define LM4_IRQ_GPIOM          111
+#define LM4_IRQ_GPION          112
+/* 113 reserved */
+#define LM4_IRQ_FAN            114
+/* 115 reserved */
+#define LM4_IRQ_GPIOP          116
+#define LM4_IRQ_GPIOP1         117
+#define LM4_IRQ_GPIOP2         118
+#define LM4_IRQ_GPIOP3         119
+#define LM4_IRQ_GPIOP4         120
+#define LM4_IRQ_GPIOP5         121
+#define LM4_IRQ_GPIOP6         122
+#define LM4_IRQ_GPIOP7         123
+#define LM4_IRQ_GPIOQ          124
+#define LM4_IRQ_GPIOQ1         125
+#define LM4_IRQ_GPIOQ2         126
+#define LM4_IRQ_GPIOQ3         127
+#define LM4_IRQ_GPIOQ4         128
+#define LM4_IRQ_GPIOQ5         129
+#define LM4_IRQ_GPIOQ6         130
+#define LM4_IRQ_GPIOQ7         131
+/* 132 - 138 reserved */
 
 #define LM4_SCB_SYSCTRL        LM4REG(0xe000ed10)
 

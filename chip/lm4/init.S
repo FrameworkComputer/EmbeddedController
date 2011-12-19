@@ -20,156 +20,134 @@
 
 /* Exceptions vector */
 vectors:
-.long stack_end       @ initial stack pointer
-.long reset           @ reset handler
-vector nmi            @ NMI handler
-vector hard_fault     @ HardFault handler
-vector mpu_fault      @ MPU fault handler
-vector bus_fault      @ Bus fault handler
-vector usage_fault    @ Usage fault handler
-.long 0               @ reserved
-.long 0               @ reserved
-.long 0               @ reserved
-.long 0               @ reserved
-vector svc            @ SWI
-vector debug          @ Debug handler
-.long 0               @ reserved
-vector pendsv         @ PendSV handler
-vector sys_tick       @ SysTick handler
-vector irq_0          @ IRQ 0 handler
-vector irq_1          @ IRQ 1 handler
-vector irq_2          @ IRQ 2 handler
-vector irq_3          @ IRQ 3 handler
-vector irq_4          @ IRQ 4 handler
-vector irq_5          @ IRQ 5 handler
-vector irq_6          @ IRQ 6 handler
-vector irq_7          @ IRQ 7 handler
-vector irq_8          @ IRQ 8 handler
-vector irq_9          @ IRQ 9 handler
-vector irq_10         @ IRQ 10 handler
-vector irq_11         @ IRQ 11 handler
-vector irq_12         @ IRQ 12 handler
-vector irq_13         @ IRQ 13 handler
-vector irq_14         @ IRQ 14 handler
-vector irq_15         @ IRQ 15 handler
-vector irq_16         @ IRQ 16 handler
-vector irq_17         @ IRQ 17 handler
-vector irq_18         @ IRQ 18 handler
-vector irq_19         @ IRQ 19 handler
-vector irq_20         @ IRQ 20 handler
-vector irq_21         @ IRQ 21 handler
-vector irq_22         @ IRQ 22 handler
-vector irq_23         @ IRQ 23 handler
-vector irq_24         @ IRQ 24 handler
-vector irq_25         @ IRQ 25 handler
-vector irq_26         @ IRQ 26 handler
-vector irq_27         @ IRQ 27 handler
-vector irq_28         @ IRQ 28 handler
-vector irq_29         @ IRQ 29 handler
-vector irq_30         @ IRQ 30 handler
-vector irq_31         @ IRQ 31 handler
-vector irq_32         @ IRQ 32 handler
-vector irq_33         @ IRQ 33 handler
-vector irq_34         @ IRQ 34 handler
-vector irq_35         @ IRQ 35 handler
-vector irq_36         @ IRQ 36 handler
-vector irq_37         @ IRQ 37 handler
-vector irq_38         @ IRQ 38 handler
-vector irq_39         @ IRQ 39 handler
-vector irq_40         @ IRQ 40 handler
-vector irq_41         @ IRQ 41 handler
-vector irq_42         @ IRQ 42 handler
-vector irq_43         @ IRQ 43 handler
-vector irq_44         @ IRQ 44 handler
-vector irq_45         @ IRQ 45 handler
-vector irq_46         @ IRQ 46 handler
-vector irq_47         @ IRQ 47 handler
-vector irq_48         @ IRQ 48 handler
-vector irq_49         @ IRQ 49 handler
-vector irq_50         @ IRQ 50 handler
-vector irq_51         @ IRQ 51 handler
-vector irq_52         @ IRQ 52 handler
-vector irq_53         @ IRQ 53 handler
-vector irq_54         @ IRQ 54 handler
-vector irq_55         @ IRQ 55 handler
-vector irq_56         @ IRQ 56 handler
-vector irq_57         @ IRQ 57 handler
-vector irq_58         @ IRQ 58 handler
-vector irq_59         @ IRQ 59 handler
-vector irq_60         @ IRQ 60 handler
-vector irq_61         @ IRQ 61 handler
-vector irq_62         @ IRQ 62 handler
-vector irq_63         @ IRQ 63 handler
-vector irq_64         @ IRQ 64 handler
-vector irq_65         @ IRQ 65 handler
-vector irq_66         @ IRQ 66 handler
-vector irq_67         @ IRQ 67 handler
-vector irq_68         @ IRQ 68 handler
-vector irq_69         @ IRQ 69 handler
-vector irq_70         @ IRQ 70 handler
-vector irq_71         @ IRQ 71 handler
-vector irq_72         @ IRQ 72 handler
-vector irq_73         @ IRQ 73 handler
-vector irq_74         @ IRQ 74 handler
-vector irq_75         @ IRQ 75 handler
-vector irq_76         @ IRQ 76 handler
-vector irq_77         @ IRQ 77 handler
-vector irq_78         @ IRQ 78 handler
-vector irq_79         @ IRQ 79 handler
-vector irq_80         @ IRQ 80 handler
-vector irq_81         @ IRQ 81 handler
-vector irq_82         @ IRQ 82 handler
-vector irq_83         @ IRQ 83 handler
-vector irq_84         @ IRQ 84 handler
-vector irq_85         @ IRQ 85 handler
-vector irq_86         @ IRQ 86 handler
-vector irq_87         @ IRQ 87 handler
-vector irq_88         @ IRQ 88 handler
-vector irq_89         @ IRQ 89 handler
-vector irq_90         @ IRQ 90 handler
-vector irq_91         @ IRQ 91 handler
-vector irq_92         @ IRQ 92 handler
-vector irq_93         @ IRQ 93 handler
-vector irq_94         @ IRQ 94 handler
-vector irq_95         @ IRQ 95 handler
-vector irq_96         @ IRQ 96 handler
-vector irq_97         @ IRQ 97 handler
-vector irq_98         @ IRQ 98 handler
-vector irq_99         @ IRQ 99 handler
-vector irq_100        @ IRQ 100 handler
-vector irq_101        @ IRQ 101 handler
-vector irq_102        @ IRQ 102 handler
-vector irq_103        @ IRQ 103 handler
-vector irq_104        @ IRQ 104 handler
-vector irq_105        @ IRQ 105 handler
-vector irq_106        @ IRQ 106 handler
-vector irq_107        @ IRQ 107 handler
-vector irq_108        @ IRQ 108 handler
-vector irq_109        @ IRQ 109 handler
-vector irq_110        @ IRQ 110 handler
-vector irq_111        @ IRQ 111 handler
-vector irq_112        @ IRQ 112 handler
-vector irq_113        @ IRQ 113 handler
-vector irq_114        @ IRQ 114 handler
-vector irq_115        @ IRQ 115 handler
-vector irq_116        @ IRQ 116 handler
-vector irq_117        @ IRQ 117 handler
-vector irq_118        @ IRQ 118 handler
-vector irq_119        @ IRQ 119 handler
-vector irq_120        @ IRQ 120 handler
-vector irq_121        @ IRQ 121 handler
-vector irq_122        @ IRQ 122 handler
-vector irq_123        @ IRQ 123 handler
-vector irq_124        @ IRQ 124 handler
-vector irq_125        @ IRQ 125 handler
-vector irq_126        @ IRQ 126 handler
-vector irq_127        @ IRQ 127 handler
-vector irq_128        @ IRQ 128 handler
-vector irq_129        @ IRQ 129 handler
-vector irq_130        @ IRQ 130 handler
-vector irq_131        @ IRQ 131 handler
+.long stack_end       		  @ initial stack pointer
+.long reset           		  @ reset handler
+vector nmi            		  @ NMI handler
+vector hard_fault     		  @ HardFault handler
+vector mpu_fault      		  @ MPU fault handler
+vector bus_fault      		  @ Bus fault handler
+vector usage_fault    		  @ Usage fault handler
+.long 0               		  @ reserved
+.long 0               		  @ reserved
+.long 0               		  @ reserved
+.long 0               		  @ reserved
+vector svc            		  @ SWI
+vector debug          		  @ Debug handler
+.long 0               		  @ reserved
+vector pendsv         		  @ PendSV handler
+vector sys_tick       		  @ SysTick handler
+vector irq_LM4_IRQ_GPIOA          @ IRQ   0 handler
+vector irq_LM4_IRQ_GPIOB          @ IRQ   1 handler
+vector irq_LM4_IRQ_GPIOC          @ IRQ   2 handler
+vector irq_LM4_IRQ_GPIOD          @ IRQ   3 handler
+vector irq_LM4_IRQ_GPIOE          @ IRQ   4 handler
+vector irq_LM4_IRQ_UART0          @ IRQ   5 handler
+vector irq_LM4_IRQ_UART1          @ IRQ   6 handler
+vector irq_LM4_IRQ_SSI0           @ IRQ   7 handler
+vector irq_LM4_IRQ_I2C0           @ IRQ   8 handler
+.rept 5
+.long 0                           @ IRQ   9-13: reserved
+.endr
+vector irq_LM4_IRQ_ADC0_SS0       @ IRQ  14 handler
+vector irq_LM4_IRQ_ADC0_SS1       @ IRQ  15 handler
+vector irq_LM4_IRQ_ADC0_SS2       @ IRQ  16 handler
+vector irq_LM4_IRQ_ADC0_SS3       @ IRQ  17 handler
+vector irq_LM4_IRQ_WATCHDOG       @ IRQ  18 handler
+vector irq_LM4_IRQ_TIMER0A        @ IRQ  19 handler
+vector irq_LM4_IRQ_TIMER0B        @ IRQ  20 handler
+vector irq_LM4_IRQ_TIMER1A        @ IRQ  21 handler
+vector irq_LM4_IRQ_TIMER1B        @ IRQ  22 handler
+vector irq_LM4_IRQ_TIMER2A        @ IRQ  23 handler
+vector irq_LM4_IRQ_TIMER2B        @ IRQ  24 handler
+vector irq_LM4_IRQ_ACMP0          @ IRQ  25 handler
+vector irq_LM4_IRQ_ACMP1          @ IRQ  26 handler
+vector irq_LM4_IRQ_ACMP2          @ IRQ  27 handler
+vector irq_LM4_IRQ_SYSCTRL        @ IRQ  28 handler
+vector irq_LM4_IRQ_EEPROM         @ IRQ  29 handler
+vector irq_LM4_IRQ_GPIOF          @ IRQ  30 handler
+vector irq_LM4_IRQ_GPIOG          @ IRQ  31 handler
+vector irq_LM4_IRQ_GPIOH          @ IRQ  32 handler
+vector irq_LM4_IRQ_UART2          @ IRQ  33 handler
+vector irq_LM4_IRQ_SSI1           @ IRQ  34 handler
+vector irq_LM4_IRQ_TIMER3A        @ IRQ  35 handler
+vector irq_LM4_IRQ_TIMER3B        @ IRQ  36 handler
+vector irq_LM4_IRQ_I2C1           @ IRQ  37 handler
+.rept 5
+.long 0                           @ IRQ  38-42: reserved
+.endr
+vector irq_LM4_IRQ_HIBERNATE      @ IRQ  43 handler
+.long 0                           @ IRQ  44: reserved
+.long 0                           @ IRQ  45: reserved
+vector irq_LM4_IRQ_UDMA_SOFTWARE  @ IRQ  46 handler
+vector irq_LM4_IRQ_UDMA_ERROR     @ IRQ  47 handler
+vector irq_LM4_IRQ_ADC1_SS0       @ IRQ  48 handler
+vector irq_LM4_IRQ_ADC1_SS1       @ IRQ  49 handler
+vector irq_LM4_IRQ_ADC1_SS2       @ IRQ  50 handler
+vector irq_LM4_IRQ_ADC1_SS3       @ IRQ  51 handler
+.long 0                           @ IRQ  52: reserved
+.long 0                           @ IRQ  53: reserved
+vector irq_LM4_IRQ_GPIOJ          @ IRQ  54 handler
+vector irq_LM4_IRQ_GPIOK          @ IRQ  55 handler
+vector irq_LM4_IRQ_GPIOL          @ IRQ  56 handler
+vector irq_LM4_IRQ_SSI2           @ IRQ  57 handler
+vector irq_LM4_IRQ_SSI3           @ IRQ  58 handler
+vector irq_LM4_IRQ_UART3          @ IRQ  59 handler
+vector irq_LM4_IRQ_UART4          @ IRQ  60 handler
+vector irq_LM4_IRQ_UART5          @ IRQ  61 handler
+vector irq_LM4_IRQ_UART6          @ IRQ  62 handler
+vector irq_LM4_IRQ_UART7          @ IRQ  63 handler
+.rept 4
+.long 0                           @ IRQ  64-67: reserved
+.endr
+vector irq_LM4_IRQ_I2C2           @ IRQ  68 handler
+vector irq_LM4_IRQ_I2C3           @ IRQ  69 handler
+vector irq_LM4_IRQ_TIMER4A        @ IRQ  70 handler
+vector irq_LM4_IRQ_TIMER4B        @ IRQ  71 handler
+.rept 20
+.long 0                           @ IRQ  72-91: reserved
+.endr
+vector irq_LM4_IRQ_TIMER5A        @ IRQ  92 handler
+vector irq_LM4_IRQ_TIMER5B        @ IRQ  93 handler
+vector irq_LM4_IRQ_TIMERW0A       @ IRQ  94 handler
+vector irq_LM4_IRQ_TIMERW0B       @ IRQ  95 handler
+vector irq_LM4_IRQ_TIMERW1A       @ IRQ  96 handler
+vector irq_LM4_IRQ_TIMERW1B       @ IRQ  97 handler
+vector irq_LM4_IRQ_TIMERW2A       @ IRQ  98 handler
+vector irq_LM4_IRQ_TIMERW2B       @ IRQ  99 handler
+vector irq_LM4_IRQ_TIMERW3A       @ IRQ 100 handler
+vector irq_LM4_IRQ_TIMERW3B       @ IRQ 101 handler
+vector irq_LM4_IRQ_TIMERW4A       @ IRQ 102 handler
+vector irq_LM4_IRQ_TIMERW4B       @ IRQ 103 handler
+vector irq_LM4_IRQ_TIMERW5A       @ IRQ 104 handler
+vector irq_LM4_IRQ_TIMERW5B       @ IRQ 105 handler
+vector irq_LM4_IRQ_SYS_EXCEPTION  @ IRQ 106 handler
+vector irq_LM4_IRQ_SYS_PECI       @ IRQ 107 handler
+vector irq_LM4_IRQ_LPC            @ IRQ 108 handler
+vector irq_LM4_IRQ_I2C4           @ IRQ 109 handler
+vector irq_LM4_IRQ_I2C5           @ IRQ 110 handler
+vector irq_LM4_IRQ_GPIOM          @ IRQ 111 handler
+vector irq_LM4_IRQ_GPION          @ IRQ 112 handler
+.long 0                           @ IRQ 113: reserved
+vector irq_LM4_IRQ_FAN            @ IRQ 114 handler
+.long 0                           @ IRQ 115: reserved
+vector irq_LM4_IRQ_GPIOP          @ IRQ 116 handler
+vector irq_LM4_IRQ_GPIOP1         @ IRQ 117 handler
+vector irq_LM4_IRQ_GPIOP2         @ IRQ 118 handler
+vector irq_LM4_IRQ_GPIOP3         @ IRQ 119 handler
+vector irq_LM4_IRQ_GPIOP4         @ IRQ 120 handler
+vector irq_LM4_IRQ_GPIOP5         @ IRQ 121 handler
+vector irq_LM4_IRQ_GPIOP6         @ IRQ 122 handler
+vector irq_LM4_IRQ_GPIOP7         @ IRQ 123 handler
+vector irq_LM4_IRQ_GPIOQ          @ IRQ 124 handler
+vector irq_LM4_IRQ_GPIOQ1         @ IRQ 125 handler
+vector irq_LM4_IRQ_GPIOQ2         @ IRQ 126 handler
+vector irq_LM4_IRQ_GPIOQ3         @ IRQ 127 handler
+vector irq_LM4_IRQ_GPIOQ4         @ IRQ 128 handler
+vector irq_LM4_IRQ_GPIOQ5         @ IRQ 129 handler
+vector irq_LM4_IRQ_GPIOQ6         @ IRQ 130 handler
+vector irq_LM4_IRQ_GPIOQ7         @ IRQ 131 handler
 .rept 108
-.long 0               @ IRQ 132-239: reserved
+.long 0                           @ IRQ 132-239: reserved
 .endr
 
 .global reset
