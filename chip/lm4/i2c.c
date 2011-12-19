@@ -8,34 +8,41 @@
 #include "board.h"
 #include "console.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "registers.h"
 #include "uart.h"
 #include "util.h"
 
+#define NUM_PORTS 6
 
-/* Waits for the I2C bus to go idle */
+static task_id_t task_waiting_on_port[NUM_PORTS];
+
+
 static int wait_idle(int port)
 {
-	int s, i;
+	int i;
+	int wait_msg;
 
-	/* Spin waiting for busy flag to go away */
-	/* TODO: should use interrupt handler */
-	for (i = 1000; i >= 0; i--) {
-		s = LM4_I2C_MCS(port);
-		if (s & 0x01) {
-			/* Still busy */
-			udelay(1000);
-			continue;
-		}
+	i = LM4_I2C_MCS(port);
+	if (i & 0x01) {
+		/* Port is busy, so wait for the interrupt */
+		task_waiting_on_port[port] = task_get_current();
+		LM4_I2C_MIMR(port) = 0x03;
+		wait_msg = task_wait_msg(1000000);
+		LM4_I2C_MIMR(port) = 0x00;
+		task_waiting_on_port[port] = -1;
+		if (wait_msg == 1 << TASK_ID_TIMER)
+			return EC_ERROR_TIMEOUT;
 
-		/* Check for errors */
-		if (s & 0x02)
-			return EC_ERROR_UNKNOWN;
-
-		return EC_SUCCESS;
+		i = LM4_I2C_MCS(port);
 	}
-	return EC_ERROR_TIMEOUT;
+
+	/* Check for errors */
+	if (i & 0x02)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 
@@ -120,6 +127,38 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 
 
 /*****************************************************************************/
+/* Interrupt handlers */
+
+/* Handles an interrupt on the specified port. */
+static void handle_interrupt(int port)
+{
+	int id = task_waiting_on_port[port];
+
+	/* Clear the interrupt status*/
+	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
+
+	/* Wake up the task which was waiting on the interrupt, if any */
+	/* TODO: send message based on I2C port number? */
+	if (id != TASK_ID_INVALID)
+		task_send_msg(id, id, 0);
+}
+
+
+static void i2c0_interrupt(void) { handle_interrupt(0); }
+static void i2c1_interrupt(void) { handle_interrupt(1); }
+static void i2c2_interrupt(void) { handle_interrupt(2); }
+static void i2c3_interrupt(void) { handle_interrupt(3); }
+static void i2c4_interrupt(void) { handle_interrupt(4); }
+static void i2c5_interrupt(void) { handle_interrupt(5); }
+
+DECLARE_IRQ(8, i2c0_interrupt, 2);
+DECLARE_IRQ(37, i2c1_interrupt, 2);
+DECLARE_IRQ(68, i2c2_interrupt, 2);
+DECLARE_IRQ(69, i2c3_interrupt, 2);
+DECLARE_IRQ(109, i2c4_interrupt, 2);
+DECLARE_IRQ(110, i2c5_interrupt, 2);
+
+/*****************************************************************************/
 /* Console commands */
 
 
@@ -188,8 +227,9 @@ static void configure_gpio(void)
 int i2c_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
+	int i;
 
-	/* Enable I2C5 module and delay a few clocks */
+	/* Enable I2C modules and delay a few clocks */
 	LM4_SYSTEM_RCGCI2C |= (1 << I2C_PORT_THERMAL) |
 		(1 << I2C_PORT_BATTERY) | (1 << I2C_PORT_CHARGER);
 	scratch = LM4_SYSTEM_RCGCI2C;
@@ -197,7 +237,11 @@ int i2c_init(void)
 	/* Configure GPIOs */
 	configure_gpio();
 
-	/* Initialize ports as master */
+	/* No tasks are waiting on ports */
+	for (i = 0; i < NUM_PORTS; i++)
+		task_waiting_on_port[i] = TASK_ID_INVALID;
+
+	/* Initialize ports as master, with interrupts enabled */
 	LM4_I2C_MCR(I2C_PORT_THERMAL) = 0x10;
 	LM4_I2C_MTPR(I2C_PORT_THERMAL) =
 		(CPU_CLOCK / (I2C_SPEED_THERMAL * 10 * 2)) - 1;
