@@ -204,6 +204,21 @@ struct lpc_response_flash_checksum {
 	} while (0)
 #endif  /* SUPPORT_CHECKSUM */
 
+/*****************************************************************************/
+/* PWM commands */
+
+/* Get fan RPM */
+#define EC_LPC_COMMAND_PWM_GET_FAN_RPM 0x20
+struct lpc_response_pwm_get_fan_rpm {
+	uint32_t rpm;
+} __attribute__ ((packed));
+
+/* Set target fan RPM */
+#define EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM 0x21
+struct lpc_params_pwm_set_fan_target_rpm {
+	uint32_t rpm;
+} __attribute__ ((packed));
+
 
 /*****************************************************************************/
 /* Temperature sensor commands */

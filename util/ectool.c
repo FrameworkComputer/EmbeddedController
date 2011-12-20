@@ -37,6 +37,10 @@ const char help_str[] =
 	"      Prints EC version\n"
 	"  temps\n"
 	"      Print temperature\n"
+	"  pwmgetfanrpm\n"
+	"      Prints current fan RPM\n"
+	"  pwmsetfanrpm <targetrpm>\n"
+	"      Set target fan RPM\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
 	"  pci_write32 0 0x1f 0 0x88 0x007c0801\n"
@@ -460,6 +464,46 @@ int cmd_temperature(void)
 	return 0;
 }
 
+int cmd_pwm_get_fan_rpm(void)
+{
+	struct lpc_response_pwm_get_fan_rpm r;
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_PWM_GET_FAN_RPM, NULL, 0, &r, sizeof(r));
+	if (rv)
+	        return rv;
+
+	printf("Current fan RPM: %d\n", r.rpm);
+
+	return 0;
+}
+
+int cmd_pwm_set_fan_rpm(int argc, char *argv[])
+{
+	struct lpc_params_pwm_set_fan_target_rpm p;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+	        fprintf(stderr,
+	                "Usage: pwmsetfanrpm <targetrpm>\n");
+	        return -1;
+	}
+	p.rpm = strtol(argv[0], &e, 0);
+	if (e && *e) {
+	        fprintf(stderr, "Bad RPM.\n");
+	        return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM,
+	                &p, sizeof(p), NULL, 0);
+	if (rv)
+	        return rv;
+
+	printf("Fan target RPM set.\n");
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
@@ -493,6 +537,10 @@ int main(int argc, char *argv[])
 		return cmd_version();
 	if (!strcasecmp(argv[1], "temps"))
 		return cmd_temperature();
+	if (!strcasecmp(argv[1], "pwmgetfanrpm"))
+	        return cmd_pwm_get_fan_rpm();
+	if (!strcasecmp(argv[1], "pwmsetfanrpm"))
+	        return cmd_pwm_set_fan_rpm(argc - 2, argv + 2);
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);

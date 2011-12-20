@@ -10,6 +10,7 @@
 #include "flash_commands.h"
 #include "host_command.h"
 #include "temp_sensor_commands.h"
+#include "pwm_commands.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "system.h"
@@ -176,6 +177,12 @@ static void command_process(int slot)
 	case EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS:
 		lpc_send_host_response(slot, temp_sensor_command_get_readings(data));
 		return;
+	case EC_LPC_COMMAND_PWM_GET_FAN_RPM:
+		lpc_send_host_response(slot, pwm_command_get_fan_rpm(data));
+	        return;
+	case EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM:
+	        lpc_send_host_response(slot, pwm_command_set_fan_target_rpm(data));
+	        return;
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}
@@ -198,11 +205,11 @@ static int command_version(int argc, char **argv)
 
 
 static const struct console_command console_commands[] = {
-        {"version", command_version},
+	{"version", command_version},
 };
 
 static const struct console_group command_group = {
-        "Host commands", console_commands, ARRAY_SIZE(console_commands)
+	"Host commands", console_commands, ARRAY_SIZE(console_commands)
 };
 
 /*****************************************************************************/
@@ -212,7 +219,7 @@ static int host_command_init(void)
 {
 	host_command[0] = host_command[1] = -1;
 
-        console_register_commands(&command_group);
+	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }
 

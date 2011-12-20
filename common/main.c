@@ -23,6 +23,7 @@
 #include "port80.h"
 #include "powerdemo.h"
 #include "pwm.h"
+#include "pwm_commands.h"
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
