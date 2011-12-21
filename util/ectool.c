@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "lpc_commands.h"
+#include "temp_sensor.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 /* Don't use a macro where an inline will do... */
@@ -34,6 +35,8 @@ const char help_str[] =
 	"      Serial output test for COM2\n"
 	"  version\n"
 	"      Prints EC version\n"
+	"  temps\n"
+	"      Print temperature\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
 	"  pci_write32 0 0x1f 0 0x88 0x007c0801\n"
@@ -430,6 +433,32 @@ int cmd_serial_test(int argc, char *argv[])
 	return 0;
 }
 
+int get_temperature(int sensor_id, const char* name)
+{
+	struct lpc_params_temp_sensor_get_readings p;
+	struct lpc_response_temp_sensor_get_readings r;
+	int rv;
+
+	p.temp_sensor_id = sensor_id;
+	printf("Reading %s...", name);
+	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS, &p, sizeof(p), &r, sizeof(r));
+	if (rv)
+		printf("Error\n");
+	else
+		printf("%d\n", r.value);
+	return rv;
+}
+
+int cmd_temperature(void)
+{
+	int rv1, rv2, rv3;
+	rv1 = get_temperature(TEMP_SENSOR_CASE, "TEMP_SENSOR_CASE");
+	rv2 = get_temperature(TEMP_SENSOR_CASE_DIE, "TEMP_SENSOR_CASE_DIE");
+	rv3 = get_temperature(TEMP_SENSOR_EC_INTERNAL, "TEMP_SENSOR_EC_INTERNAL");
+	if (rv1 || rv2 || rv3)
+		return -1;
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -462,6 +491,8 @@ int main(int argc, char *argv[])
 		return cmd_serial_test(argc - 2, argv + 2);
 	if (!strcasecmp(argv[1], "version"))
 		return cmd_version();
+	if (!strcasecmp(argv[1], "temps"))
+		return cmd_temperature();
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);

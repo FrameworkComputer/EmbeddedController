@@ -205,4 +205,16 @@ struct lpc_response_flash_checksum {
 #endif  /* SUPPORT_CHECKSUM */
 
 
+/*****************************************************************************/
+/* Temperature sensor commands */
+
+/* Get temperature readings */
+#define EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS 0x30
+struct lpc_params_temp_sensor_get_readings {
+	uint8_t temp_sensor_id;
+} __attribute__ ((packed));
+struct lpc_response_temp_sensor_get_readings {
+	uint32_t value;
+} __attribute__ ((packed));
+
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

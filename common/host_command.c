@@ -9,6 +9,7 @@
 #include "console.h"
 #include "flash_commands.h"
 #include "host_command.h"
+#include "temp_sensor_commands.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "system.h"
@@ -172,6 +173,9 @@ static void command_process(int slot)
 		lpc_send_host_response(slot, flash_command_checksum(data));
 		return;
 #endif
+	case EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS:
+		lpc_send_host_response(slot, temp_sensor_command_get_readings(data));
+		return;
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}
