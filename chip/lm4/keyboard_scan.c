@@ -14,19 +14,48 @@
 #include "uart.h"
 #include "util.h"
 
-#define KB_COLS 13
 
 /* Notes:
  *
- * Columns (outputs):
- *    KSO0 - KSO7  = PQ0:7
- *    KSO8 - KSO11 = PK0:3
- *    KSO12        = PN2
- * Rows (inputs):
- *    KSI0 - KSI7  = PH0:7
- * Other:
- *    PWR_BTN#     = PC5
+ * EVT board:
+ *
+ *   Columns (outputs):
+ *      KSO0 - KSO7  = PP0:7
+ *      KSO8 - KSO12 = PQ0:4
+ *
+ *   Rows (inputs):
+ *      KSI0 - KSI7  = PN0:7
+ *
+ *   Other:
+ *      PWR_BTN#     = PK7
+ *
+ *
+ * Hacked board:
+ *
+ *   Columns (outputs):
+ *      KSO0 - KSO7  = PQ0:7
+ *      KSO8 - KSO11 = PK0:3
+ *      KSO12        = PN2
+ *   Rows (inputs):
+ *      KSI0 - KSI7  = PH0:7
+ *   Other:
+ *      PWR_BTN#     = PC5
  */
+
+
+/* used for select_column() */
+enum COLUMN_INDEX {
+	COLUMN_ASSERT_ALL = -2,
+	COLUMN_TRI_STATE_ALL = -1,
+	/* 0 ~ 12 for the corresponding column */
+};
+
+#define POLLING_MODE_TIMEOUT 1000000  /* 1 sec */
+#define SCAN_LOOP_DELAY 10000         /* 10 ms */
+
+#undef EVT  /* FIXME: define this for EVT board. */
+
+#define KB_COLS 13
 
 static uint8_t raw_state[KB_COLS];
 
@@ -47,7 +76,12 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 static void select_column(int col)
 {
 #if defined(EVT)
-	if (col < 0) {
+	if (col == COLUMN_ASSERT_ALL) {
+		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
+		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
+		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
+		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) &= ~0x1f;
+	} else if (col == COLUMN_TRI_STATE_ALL) {
 		LM4_GPIO_DIR(LM4_GPIO_P) &= ~0xff;
 		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
 	} else if (col < 8) {
@@ -69,7 +103,14 @@ static void select_column(int col)
 		col = 10;
 	}
 
-	if (col < 0) {
+	if (col == COLUMN_ASSERT_ALL) {
+		LM4_GPIO_DIR(LM4_GPIO_Q) = 0xff;
+		LM4_GPIO_DIR(LM4_GPIO_K) |= 0x0f;
+		LM4_GPIO_DIR(LM4_GPIO_N) |= 0x04;
+		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) = 0;
+		LM4_GPIO_DATA(LM4_GPIO_K, 0xff) &= ~0x0f;
+		LM4_GPIO_DATA(LM4_GPIO_N, 0xff) &= ~0x04;
+	} else if (col == COLUMN_TRI_STATE_ALL) {
 		/* All tri-stated */
 		LM4_GPIO_DIR(LM4_GPIO_Q) = 0;
 		LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x0f;
@@ -121,7 +162,7 @@ int keyboard_scan_init(void)
 	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= 0x1f;  /* KSO[12:8] */
 	LM4_GPIO_DEN(LM4_GPIO_Q) |= 0x1f;
 #else
-	LM4_GPIO_AFSEL(LM4_GPIO_H) = 0;
+	LM4_GPIO_AFSEL(LM4_GPIO_H) = 0;      /* KSI[7:0] */
 	LM4_GPIO_DEN(LM4_GPIO_H) = 0xff;
 	LM4_GPIO_AFSEL(LM4_GPIO_K) &= ~0x0f;
 	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x0f;
@@ -148,7 +189,7 @@ int keyboard_scan_init(void)
 	LM4_GPIO_PUR(LM4_GPIO_C) |= 0x04;
 
 	/* Tri-state the columns */
-	select_column(-1);
+	select_column(COLUMN_TRI_STATE_ALL);
 
 	/* Initialize raw state */
 	for (i = 0; i < KB_COLS; i++)
@@ -162,11 +203,59 @@ int keyboard_scan_init(void)
 }
 
 
-void check_keys_down(void)
+static uint32_t clear_matrix_interrupt_status(void) {
+#if defined(EVT)
+	uint32_t port = LM4_GPIO_N;
+#else
+	uint32_t port = LM4_GPIO_H;
+#endif
+	uint32_t ris = LM4_GPIO_RIS(port);
+	LM4_GPIO_ICR(port) = ris;
+
+	return ris;
+}
+
+
+void wait_for_interrupt(void)
+{
+	uart_printf("Enter %s() ...\n", __func__);
+
+	/* Assert all outputs would trigger un-wanted interrupts.
+	 * Clear them before enable interrupt. */
+	select_column(COLUMN_ASSERT_ALL);
+	clear_matrix_interrupt_status();
+
+#if defined(EVT)
+	LM4_GPIO_IS(LM4_GPIO_N) = 0;      /* 0: edge-sensitive */
+	LM4_GPIO_IBE(LM4_GPIO_N) = 0xff;  /* 1: both edge */
+	LM4_GPIO_IM(LM4_GPIO_N) = 0xff;   /* 1: enable interrupt */
+#else
+	LM4_GPIO_IS(LM4_GPIO_H) = 0;      /* 0: edge-sensitive */
+	LM4_GPIO_IBE(LM4_GPIO_H) = 0xff;  /* 1: both edge */
+	LM4_GPIO_IM(LM4_GPIO_H) = 0xff;   /* 1: enable interrupt */
+#endif
+}
+
+
+void enter_polling_mode(void)
+{
+	uart_printf("Enter %s() ...\n", __func__);
+#if defined(EVT)
+	LM4_GPIO_IM(LM4_GPIO_N) = 0;  /* 0: disable interrupt */
+#else
+	LM4_GPIO_IM(LM4_GPIO_H) = 0;  /* 0: disable interrupt */
+#endif
+	select_column(COLUMN_TRI_STATE_ALL);
+}
+
+
+/* Returns 1 if any key is still pressed. 0 if no key is pressed. */
+static int check_keys_changed(void)
 {
 	int c;
 	uint8_t r;
 	int change = 0;
+	int num_press = 0;
 
 	for (c = 0; c < KB_COLS; c++) {
 		/* Select column, then wait a bit for it to settle */
@@ -204,29 +293,75 @@ void check_keys_down(void)
 			change = 1;
 		}
 	}
-	select_column(-1);
+	select_column(COLUMN_TRI_STATE_ALL);
 
 	if (change) {
 		uart_puts("[Keyboard state:");
 		for (c = 0; c < KB_COLS; c++) {
-			if (raw_state[c])
+			if (raw_state[c]) {
 				uart_printf(" %02x", raw_state[c]);
-			else
+			} else {
 				uart_puts(" --");
+			}
 		}
 		uart_puts("]\n");
 	}
+
+	/* Count number of key pressed */
+	for (c = 0; c < KB_COLS; c++) {
+		if (raw_state[c]) ++num_press;
+	}
+
+	return num_press ? 1 : 0;
 }
 
 
 void keyboard_scan_task(void)
 {
+	int key_press_timer = 0;
+
 	keyboard_scan_init();
 
 	while (1) {
-		/* Sleep for a while */
-		usleep(25000);
-		/* Check for keys down */
-		check_keys_down();
+		wait_for_interrupt();
+		task_wait_msg(-1);
+
+		enter_polling_mode();
+		/* Busy polling keyboard state. */
+		while (1) {
+			/* sleep for debounce. */
+			usleep(SCAN_LOOP_DELAY);
+			/* Check for keys down */
+			if (check_keys_changed()) {
+				key_press_timer = 0;
+			} else {
+				if (++key_press_timer >=
+				    (POLLING_MODE_TIMEOUT / SCAN_LOOP_DELAY)) {
+					key_press_timer = 0;
+					break;  /* exit the while loop */
+				}
+			}
+		}
+		/* TODO: A race condition here.
+		 *       If a key state is changed here (before interrupt is
+		 *       enabled), it will be lost.
+		 */
 	}
 }
+
+
+
+static void matrix_interrupt(void)
+{
+	uint32_t ris = clear_matrix_interrupt_status();
+
+	if (ris) {
+		task_send_msg(TASK_ID_KEYSCAN, TASK_ID_KEYSCAN, 0);
+	}
+}
+
+#if defined(EVT)
+DECLARE_IRQ(LM4_IRQ_GPION, matrix_interrupt, 3);
+#else
+DECLARE_IRQ(LM4_IRQ_GPIOH, matrix_interrupt, 3);
+#endif
