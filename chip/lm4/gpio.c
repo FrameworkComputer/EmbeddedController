@@ -9,10 +9,12 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
+#include "uart.h"
 
 enum debounce_isr_id
 {
 	DEBOUNCE_LID,
+	DEBOUNCE_PWRBTN,
 	DEBOUNCE_ISR_ID_MAX
 };
 
@@ -26,6 +28,24 @@ struct debounce_isr_t
 
 struct debounce_isr_t debounce_isr[DEBOUNCE_ISR_ID_MAX];
 
+enum power_button_state {
+	PWRBTN_STATE_STOPPED = 0,
+	PWRBTN_STATE_START = 1,
+	PWRBTN_STATE_T0 = 2,
+	PWRBTN_STATE_T1 = 3,
+	PWRBTN_STATE_T2 = 4,
+	PWRBTN_STATE_STOPPING = 5,
+};
+static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
+/* The next timestamp to move onto next state if power button is still pressed.
+ */
+static timestamp_t pwrbtn_next_ts = {0};
+
+#define PWRBTN_DELAY_T0 32000  // 32ms
+#define PWRBTN_DELAY_T1 (4000000 - PWRBTN_DELAY_T0)  // 4 secs - t0
+#define PWRBTN_DELAY_T2 4000000  // 4 secs
+
+
 static void lid_switch_isr(void)
 {
 	/* TODO: Currently we pass through the LID_SW# pin to R_EC_LID_OUT#
@@ -37,6 +57,94 @@ static void lid_switch_isr(void)
 	}
 	else {
 		LM4_GPIO_DATA(LM4_GPIO_F, 0x1) = 0x0;
+	}
+}
+
+
+/* Power button state machine.
+ *
+ *   PWRBTN#   ---                      ----
+ *     to EC     |______________________|
+ *
+ *
+ *   PWRBTN#   ---  ---------           ----
+ *    to PCH     |__|       |___________|
+ *                t0    t1       t2
+ */
+static void set_pwrbtn_to_pch(int high)
+{
+#if defined(EVT)
+	LM4_GPIO_DATA(LM4_GPIO_G, 0x80) = high ? 0x80 : 0;  // PG7 - R_PBTN_OUT#
+#else
+	uart_printf("[%d] set_pwrbtn_to_pch(%s)\n", get_time().le.lo, high ? "HIGH" : "LOW");
+#endif
+}
+
+static void pwrbtn_sm_start(void)
+{
+	pwrbtn_state = PWRBTN_STATE_START;
+	pwrbtn_next_ts = get_time();  // execute action now!
+}
+
+static void pwrbtn_sm_stop(void)
+{
+	pwrbtn_state = PWRBTN_STATE_STOPPING;
+	pwrbtn_next_ts = get_time();  // execute action now!
+}
+
+static void pwrbtn_sm_handle(timestamp_t current)
+{
+	// Not the time to move onto next state.
+	if (pwrbtn_state == PWRBTN_STATE_STOPPED ||
+	    current.val < pwrbtn_next_ts.val) return;
+
+	switch (pwrbtn_state) {
+	case PWRBTN_STATE_START:
+		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T0;
+		pwrbtn_state = PWRBTN_STATE_T0;
+		set_pwrbtn_to_pch(0);
+		break;
+	case PWRBTN_STATE_T0:
+		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T1;
+		pwrbtn_state = PWRBTN_STATE_T1;
+		set_pwrbtn_to_pch(1);
+		break;
+	case PWRBTN_STATE_T1:
+		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T2;
+		pwrbtn_state = PWRBTN_STATE_T2;
+		set_pwrbtn_to_pch(0);
+		break;
+	case PWRBTN_STATE_T2:
+		/* T2 has passed */
+	case PWRBTN_STATE_STOPPING:
+		set_pwrbtn_to_pch(1);
+		pwrbtn_state = PWRBTN_STATE_STOPPED;
+		break;
+	default:
+		break;
+	}
+}
+
+static void power_button_isr(void)
+{
+#if defined(EVT)
+	uint32_t val = LM4_GPIO_DATA(LM4_GPIO_K, 0x80);  // PK7
+#else
+	uint32_t val = LM4_GPIO_DATA(LM4_GPIO_C, 0x20);  // PC5
+#endif
+
+	if (!val) {
+		/* pressed */
+		pwrbtn_sm_start();
+		/* TODO: implement after chip/lm4/x86_power.c is completed. */
+		// if system is in S5, power_on_system()
+		// elif system is in S3, resume_system()
+		// else S0 i8042_send_host(make_code);
+	} else {
+		/* released */
+		pwrbtn_sm_stop();
+		/* TODO: implement after chip/lm4/x86_power.c is completed. */
+		// if system in S0, i8042_send_host(break_code);
 	}
 }
 
@@ -76,6 +184,30 @@ int gpio_pre_init(void)
 	LM4_GPIO_DIR(LM4_GPIO_F) |= 0x1;
 	LM4_GPIO_DEN(LM4_GPIO_F) |= 0x1;
 
+	/* Setup power button input and output pins */
+#if defined(EVT)
+	/* input: PK7 */
+	LM4_GPIO_PCTL(LM4_GPIO_K) &= ~0xf0000000;
+	LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x80;
+	LM4_GPIO_PUR(LM4_GPIO_K) |= 0x80;
+	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x80;
+	LM4_GPIO_IM(LM4_GPIO_K) |= 0x80;
+	LM4_GPIO_IBE(LM4_GPIO_K) |= 0x80;
+	/* output: PG7 */
+	LM4_GPIO_PCTL(LM4_GPIO_G) &= ~0xf0000000;
+	LM4_GPIO_DATA(LM4_GPIO_G, 0x80) = 0x80;
+	LM4_GPIO_DIR(LM4_GPIO_G) |= 0x80;
+	LM4_GPIO_DEN(LM4_GPIO_G) |= 0x80;
+#else
+	/* input: PC5 */
+	LM4_GPIO_PCTL(LM4_GPIO_C) &= ~0x00f00000;
+	LM4_GPIO_DIR(LM4_GPIO_C) &= ~0x20;
+	LM4_GPIO_PUR(LM4_GPIO_C) |= 0x20;
+	LM4_GPIO_DEN(LM4_GPIO_C) |= 0x20;
+	LM4_GPIO_IM(LM4_GPIO_C) |= 0x20;
+	LM4_GPIO_IBE(LM4_GPIO_C) |= 0x20;
+#endif
+
 	return EC_SUCCESS;
 }
 
@@ -84,6 +216,8 @@ int gpio_init(void)
 {
 	debounce_isr[DEBOUNCE_LID].started = 0;
 	debounce_isr[DEBOUNCE_LID].callback = lid_switch_isr;
+	debounce_isr[DEBOUNCE_PWRBTN].started = 0;
+	debounce_isr[DEBOUNCE_PWRBTN].callback = power_button_isr;
 
 	return EC_SUCCESS;
 }
@@ -125,6 +259,16 @@ static void gpio_interrupt(int port, uint32_t mis)
 		debounce_isr[DEBOUNCE_LID].tstamp = timelimit;
 		debounce_isr[DEBOUNCE_LID].started = 1;
 	}
+
+	/* Handle power button */
+#if defined(EVT)
+	if (port == LM4_GPIO_K && (mis & 0x80)) {  // PK7
+#else
+	if (port == LM4_GPIO_C && (mis & 0x20)) {  // PC5
+#endif
+		debounce_isr[DEBOUNCE_PWRBTN].tstamp = timelimit;
+		debounce_isr[DEBOUNCE_PWRBTN].started = 1;
+	}
 }
 
 static void __gpio_k_interrupt(void)
@@ -136,8 +280,20 @@ static void __gpio_k_interrupt(void)
 
 	gpio_interrupt(LM4_GPIO_K, mis);
 }
-
 DECLARE_IRQ(LM4_IRQ_GPIOK, __gpio_k_interrupt, 1);
+
+#if !defined(EVT)
+static void __gpio_c_interrupt(void)
+{
+	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_C);
+
+	/* Clear the interrupt bits we received */
+	LM4_GPIO_ICR(LM4_GPIO_C) = mis;
+
+	gpio_interrupt(LM4_GPIO_C, mis);
+}
+DECLARE_IRQ(LM4_IRQ_GPIOC, __gpio_c_interrupt, 1);
+#endif
 
 int gpio_task(void)
 {
@@ -154,6 +310,8 @@ int gpio_task(void)
 				debounce_isr[i].callback();
 			}
 		}
+
+		pwrbtn_sm_handle(ts);
 	}
 
 	return EC_SUCCESS;
