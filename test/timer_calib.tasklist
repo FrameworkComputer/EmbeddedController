@@ -6,6 +6,8 @@
  */
 #define CONFIG_TASK_LIST \
   TASK(BLINK, UserLedBlink, NULL) \
+  TASK(KEYSCAN, keyboard_scan_task, NULL) \
+  TASK(GPIOISR, gpio_task, NULL) \
   TASK(TESTTMR, timer_calib_task, (void *)'T')\
   TASK(CONSOLE, console_task, NULL) \
   TASK(HOSTCMD, host_command_task, NULL) \
