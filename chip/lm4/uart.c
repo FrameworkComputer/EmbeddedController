@@ -137,7 +137,7 @@ static void uart_1_interrupt(void)
 	/* Clear transmit and receive interrupt status */
 	LM4_UART_ICR(1) = 0x70;
 
-	/* TODO: handle input */
+	/* TODO: (crosbug.com/p/7488) handle input */
 
 	/* If we have space in our FIFO and a character is pending in LPC,
 	 * handle that character. */
@@ -330,7 +330,8 @@ int uart_printf(const char *format, ...)
 			int is_negative = 0;
 			int base = 10;
 
-			/* TODO: handle "%l" prefix for uint64_t */
+			/* TODO: (crosbug.com/p/7490) handle "%l" prefix for
+			 * uint64_t */
 
 			v = va_arg(args, uint32_t);
 

@@ -36,10 +36,10 @@
 void UserLedBlink(void)
 {
 	while (1) {
-		gpio_set(EC_GPIO_DEBUG_LED, 1);
+		gpio_set_level(EC_GPIO_DEBUG_LED, 1);
 		usleep(500000);
 		watchdog_reload();
-		gpio_set(EC_GPIO_DEBUG_LED, 0);
+		gpio_set_level(EC_GPIO_DEBUG_LED, 0);
 		usleep(500000);
 		watchdog_reload();
 	}
@@ -61,8 +61,9 @@ int main(void)
 	gpio_pre_init();
 	vboot_pre_init();
 
-	/* TODO - race condition on enabling interrupts.  Module inits
-	 * should call task_IntEnable(int) when they're ready... */
+	/* TODO (crosbug.com/p/7456)- race condition on enabling
+	 * interrupts.  Module inits should call task_IntEnable(int)
+	 * when they're ready... */
 	task_init();
 
 	watchdog_init(1100);

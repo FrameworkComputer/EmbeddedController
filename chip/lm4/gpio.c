@@ -154,7 +154,7 @@ int gpio_pre_init(void)
 	LM4_SYSTEM_RCGCGPIO |= 0x0001;
 
 	/* Turn off the LED before we make it an output */
-	gpio_set(EC_GPIO_DEBUG_LED, 0);
+	gpio_set_level(EC_GPIO_DEBUG_LED, 0);
 
 	/* Clear GPIOAFSEL bits for block A pin 7 */
 	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~(0x80);
@@ -223,19 +223,18 @@ int gpio_init(void)
 }
 
 
-int gpio_get(enum gpio_signal signal, int *value_ptr)
+int gpio_get_level(enum gpio_signal signal)
 {
 	switch (signal) {
 	case EC_GPIO_DEBUG_LED:
-		*value_ptr = (LM4_GPIO_DATA(LM4_GPIO_A, 0x80) & 0x80 ? 1 : 0);
-		return EC_SUCCESS;
+		return LM4_GPIO_DATA(LM4_GPIO_A, 0x80) & 0x80 ? 1 : 0;
 	default:
-		return EC_ERROR_UNKNOWN;
+		return 0;
 	}
 }
 
 
-int gpio_set(enum gpio_signal signal, int value)
+int gpio_set_level(enum gpio_signal signal, int value)
 {
 	switch (signal) {
 	case EC_GPIO_DEBUG_LED:

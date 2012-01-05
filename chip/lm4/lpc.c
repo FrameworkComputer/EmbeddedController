@@ -37,9 +37,9 @@ static void configure_gpio(void)
 	LM4_GPIO_DEN(LM4_GPIO_M) |= 0x37;
 
 	/* Set the drive strength to 8mA for serirq only */
-	/* TODO: Only necessary on BDS because the cabling to the x86
-	 * is long and flaky; remove this for Link.  Setting this for all
-	 * I/O lines seems to hang the x86 during boot. */
+	/* TODO: (crosbug.com/p/7495) Only necessary on BDS because the cabling
+	 * to the x86 is long and flaky; remove this for Link.  Setting this
+	 * for all I/O lines seems to hang the x86 during boot. */
 	LM4_GPIO_DR8R(LM4_GPIO_M) |= 0x00000010;
 }
 
@@ -143,7 +143,8 @@ void lpc_send_host_response(int slot, int status)
 	/* Write dummy value to data byte.  This sets the TOH bit in the
 	 * status byte and triggers an IRQ on the host so the host can read
 	 * the status. */
-	/* TODO: or it would, if we actually set up host IRQs */
+	/* TODO: (crosbug.com/p/7496) or it would, if we actually set up host
+	 * IRQs */
 	if (slot)
 		LPC_POOL_USER[1] = 0;
 	else
@@ -159,8 +160,9 @@ int lpc_comx_has_char(void)
 
 int lpc_comx_get_char(void)
 {
-	/* TODO: this clears the receive-ready interrupt too, which will be ok
-	 * once we're handing output to COMx as well.  But we're not yet. */
+	/* TODO: (crosbug.com/p/7488) this clears the receive-ready interrupt
+	 * too, which will be ok once we're handing output to COMx as well.
+	 * But we're not yet. */
 	LM4_LPC_LPCDMACX = LM4_LPC_LPCDMACX;
 	/* Copy the next byte */
 	return LPC_POOL_COMX[0];
@@ -229,9 +231,9 @@ static void lpc_interrupt(void)
 				uart_comx_putc(lpc_comx_get_char());
 		}
 
-		/* TODO: handle UART input to host - if host read the
-		 * to-host data, see if there's another byte still
-		 * waiting on UART1. */
+		/* TODO: (crosbug.com/p/7488) handle UART input to host - if
+		 * host read the to-host data, see if there's another byte
+		 * still waiting on UART1. */
 	}
 }
 

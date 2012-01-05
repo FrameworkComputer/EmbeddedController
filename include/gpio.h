@@ -32,10 +32,10 @@ int gpio_init(void);
  * supported / not present on the board. */
 
 /* Gets the current value of a signal (0=low, 1=hi). */
-int gpio_get(enum gpio_signal signal, int *value_ptr);
+int gpio_get_level(enum gpio_signal signal);
 
 /* Sets the current value of a signal.  Returns error if the signal is
  * not supported or is an input signal. */
-int gpio_set(enum gpio_signal signal, int value);
+int gpio_set_level(enum gpio_signal signal, int value);
 
 #endif  /* __CROS_EC_GPIO_H */

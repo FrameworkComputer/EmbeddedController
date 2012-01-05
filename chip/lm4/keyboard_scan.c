@@ -63,7 +63,8 @@ static uint8_t raw_state[KB_COLS];
 static const uint8_t *actual_key_mask;
 
 /* All actual key masks (todo: move to keyboard matrix definition */
-/* TODO: fill in real key mask with 0-bits for coords that aren't keys */
+/* TODO: (crosbug.com/p/7485) fill in real key mask with 0-bits for coords that
+   aren't keys */
 static const uint8_t actual_key_masks[4][KB_COLS] = {
 	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
@@ -342,7 +343,7 @@ void keyboard_scan_task(void)
 				}
 			}
 		}
-		/* TODO: A race condition here.
+		/* TODO: (crosbug.com/p/7484) A race condition here.
 		 *       If a key state is changed here (before interrupt is
 		 *       enabled), it will be lost.
 		 */

@@ -217,8 +217,6 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 		return EC_ERROR_UNKNOWN;
 
-	/* TODO: fail if we've already started up interrupts, etc. */
-
 	/* Load the appropriate reset vector */
 	if (copy == SYSTEM_IMAGE_RW_A)
 		init_addr = *(uint32_t *)(CONFIG_FW_A_OFF + 4);
@@ -227,8 +225,16 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	else
 		return EC_ERROR_UNKNOWN;
 
-	/* TODO: sanity check reset vector; must be inside the
-	 * appropriate image. */
+	/* TODO: sanity checks (crosbug.com/p/7468)
+	 *
+	 * Fail if called outside of pre-init.
+	 *
+	 * Fail if reboot reason is not soft reboot.  Power-on
+	 * reset cause must run RO firmware; if it wants to move to RW
+	 * firmware, it must go through a soft reboot first
+	 *
+	 * Sanity check reset vector; must be inside the appropriate
+	 * image. */
 
 	/* Jump to the reset vector */
 	resetvec = (void(*)(void))init_addr;
@@ -241,11 +247,13 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 int system_reset(int is_cold)
 {
-	/* TODO - warm vs. cold */
+	/* TODO: (crosbug.com/p/7470) support cold boot; this is a
+	   warm boot. */
 	LM4_NVIC_APINT = 0x05fa0004;
 
 	/* Spin and wait for reboot; should never return */
-	/* TODO: should disable task swaps while waiting */
+	/* TODO: (crosbug.com/p/7471) should disable task swaps while
+	   waiting */
 	while (1) {}
 
 	return EC_ERROR_UNKNOWN;
@@ -262,8 +270,10 @@ int system_set_scratchpad(uint32_t value)
 		return rv;
 
 	/* Write scratchpad */
-	/* TODO: might be more elegant to have a write_hibernate_reg() method
-	 * which takes an address and data and does the delays */
+	/* TODO: (crosbug.com/p/7472) might be more elegant to have a
+	 * write_hibernate_reg() method which takes an address and
+	 * data and does the delays.  Then we could move the hibernate
+	 * register accesses to a separate module. */
 	LM4_HIBERNATE_HIBDATA = value;
 
 	/* Wait for write-complete */
@@ -302,9 +312,10 @@ const char *system_get_version(enum system_image_copy_t copy)
 	}
 
 	/* Search for version cookies in target image */
-	/* TODO: could be smarter about where to search if we stuffed
-	 * the version data into a predefined area of the image - for
-	 * example, immediately following the reset vectors. */
+	/* TODO: (crosbug.com/p/7469) could be smarter about where to
+	 * search if we stuffed the version data into a predefined
+	 * area of the image - for example, immediately following the
+	 * reset vectors. */
 	pend = (uint32_t *)(imoffset + CONFIG_FW_IMAGE_SIZE
 			    - sizeof(version_data));
 	for (p = (uint32_t *)imoffset; p <= pend; p++) {

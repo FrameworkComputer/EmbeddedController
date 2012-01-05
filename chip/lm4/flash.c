@@ -50,9 +50,9 @@ int flash_read(int offset, int size, char *data)
 		return EC_ERROR_UNKNOWN;  /* Invalid range */
 
 	/* Just read the flash from its memory window. */
-	/* TODO: is this affected by data cache?  That is, if we read a
-	 * block, then alter it, then read it again, do we get the old
-	 * data? */
+	/* TODO: (crosbug.com/p/7473) is this affected by data cache?
+	 * That is, if we read a block, then alter it, then read it
+	 * again, do we get the old data? */
 	memcpy(data, (char *)offset, size);
 	return EC_SUCCESS;
 }
@@ -60,7 +60,7 @@ int flash_read(int offset, int size, char *data)
 
 /* Performs a write-buffer operation.  Buffer (FWB) and address (FMA)
  * must be pre-loaded. */
-static int WriteBuffer(void)
+static int write_buffer(void)
 {
 	if (!LM4_FLASH_FWBVAL)
 		return EC_SUCCESS;  /* Nothing to do */
@@ -94,8 +94,8 @@ int flash_write(int offset, int size, const char *data)
 	    (offset | size) & (FLASH_WRITE_BYTES - 1))
 		return EC_ERROR_UNKNOWN;  /* Invalid range */
 
-	/* TODO - safety check - don't allow writing to the image we're
-	 * running from */
+	/* TODO (crosbug.com/p/7478) - safety check - don't allow writing to
+	 * the image we're running from */
 
 	/* Get initial page and write buffer index */
 	LM4_FLASH_FMA = offset & ~(FLASH_FWB_BYTES - 1);
@@ -105,7 +105,7 @@ int flash_write(int offset, int size, const char *data)
 	for ( ; size > 0; size -= 4) {
 		LM4_FLASH_FWB[i++] = *data32++;
 		if (i == FLASH_FWB_WORDS) {
-			rv = WriteBuffer();
+			rv = write_buffer();
 			if (rv != EC_SUCCESS)
 				return rv;
 
@@ -117,7 +117,7 @@ int flash_write(int offset, int size, const char *data)
 
 	/* Handle final partial page, if any */
 	if (i > 0) {
-		rv = WriteBuffer();
+		rv = write_buffer();
 		if (rv != EC_SUCCESS)
 			return rv;
 	}
@@ -132,8 +132,8 @@ int flash_erase(int offset, int size)
 	    (offset | size) & (FLASH_ERASE_BYTES - 1))
 		return EC_ERROR_UNKNOWN;  /* Invalid range */
 
-	/* TODO - safety check - don't allow erasing the image we're running
-	 * from */
+	/* TODO (crosbug.com/p/7478) - safety check - don't allow erasing the
+	 * image we're running from */
 
 	LM4_FLASH_FCMISC = LM4_FLASH_FCRIS;  /* Clear previous error status */
 	LM4_FLASH_FMA = offset;
@@ -295,7 +295,10 @@ int flash_init(void)
 	 * returns one less than the number of protection pages. */
 	usable_flash_size = LM4_FLASH_FSIZE * FLASH_PROTECT_BYTES;
 
-	/* TODO - check WP# GPIO.  If it's set and the flash protect range
-	 * is set, write the flash protection registers. */
+	/* TODO (crosbug.com/p/7453) - check WP# GPIO.  If it's set and the
+	 * flash protect range is set, write the flash protection registers.
+	 * Probably cleaner to do this in vboot, since we're going to need to
+	 * use the same last block of flash to hold the firmware rollback
+	 * counters. */
 	return EC_SUCCESS;
 }

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Temperature sensor module for Chrome EC */
+/* I2C port module for Chrome EC */
 
 #include "board.h"
 #include "console.h"
