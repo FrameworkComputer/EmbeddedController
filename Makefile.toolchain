@@ -24,7 +24,8 @@ CFLAGS_WARN=-Wall -Wundef -Wstrict-prototypes -Wno-trigraphs              \
             -Wno-pointer-sign -fno-strict-overflow -fconserve-stack
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
-CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist
+CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist \
+              -DBOARD=$(BOARD) -DBOARD_$(BOARD)
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)

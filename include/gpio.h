@@ -12,12 +12,13 @@
 
 /* GPIO signal definitions. */
 enum gpio_signal {
-	/* Firmware write protect */
-	EC_GPIO_WRITE_PROTECT = 0,
-	/* Recovery switch */
-	EC_GPIO_RECOVERY_SWITCH,
-	/* Debug LED */
-	EC_GPIO_DEBUG_LED
+	EC_GPIO_DEBUG_LED = 0,       /* Debug LED */
+	EC_GPIO_POWER_BUTTON,        /* Power button */
+	EC_GPIO_POWER_BUTTON_OUT,    /* Power button output to PCH */
+	EC_GPIO_LID_SWITCH,          /* Lid switch */
+	EC_GPIO_LID_SWITCH_OUT,      /* Lid switch output to PCH */
+	/* Number of GPIOs; not an actual GPIO */
+	EC_GPIO_COUNT
 };
 
 

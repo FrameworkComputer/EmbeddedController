@@ -21,6 +21,7 @@
 #include "lpc.h"
 #include "memory_commands.h"
 #include "port80.h"
+#include "power_button.h"
 #include "powerdemo.h"
 #include "pwm.h"
 #include "pwm_commands.h"
@@ -81,6 +82,7 @@ int main(void)
 	i2c_init();
 	temp_sensor_init();
 	memory_commands_init();
+	power_button_init();
 	keyboard_init();
 	adc_init();
 
