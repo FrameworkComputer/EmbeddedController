@@ -33,6 +33,7 @@
 #include "uart.h"
 #include "vboot.h"
 #include "watchdog.h"
+#include "usb_charge.h"
 
 /* example task blinking the user LED */
 void UserLedBlink(void)
@@ -91,6 +92,7 @@ int main(void)
 	power_button_init();
 	keyboard_init();
 	adc_init();
+	usb_charge_init();
 
 	/* Print the reset cause */
 	uart_printf("\n\n--- Chrome EC initialized! ---\n");

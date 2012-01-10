@@ -58,6 +58,9 @@
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPIOH
 #define KB_SCAN_ROW_GPIO LM4_GPIO_H
 
+/* USB charge port */
+#define USB_CHARGE_PORT_COUNT 0
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
