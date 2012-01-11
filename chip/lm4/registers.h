@@ -355,6 +355,8 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_AMSEL(port)          LM4GPIOREG(port, 0x528)
 #define LM4_GPIO_PCTL(port)           LM4GPIOREG(port, 0x52c)
 
+/* Value to write to LM4_GPIO_LOCK to unlock writes */
+#define LM4_GPIO_LOCK_UNLOCK          0x4c4f434b
 
 /* I2C */
 #define LM4_I2C0_BASE                 0x40020000

@@ -17,6 +17,7 @@
 #include "flash_commands.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "jtag.h"
 #include "keyboard.h"
 #include "lpc.h"
 #include "memory_commands.h"
@@ -51,6 +52,7 @@ int main(void)
 {
 	/* Configure the pin multiplexers */
 	configure_board();
+	jtag_pre_init();
 	/* Set the CPU clocks / PLLs */
 	clock_init();
 

@@ -18,7 +18,8 @@
 struct gpio_info {
 	const char *name;
 	int port;   /* Port (LM4_GPIO_*) */
-	int mask;   /* Bitmask on that port (0x01 - 0x80) */
+	int mask;   /* Bitmask on that port (0x01 - 0x80; 0x00 =
+		       signal not implemented) */
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
@@ -199,6 +200,11 @@ static int command_gpio_set(int argc, char **argv)
 	if (i == EC_GPIO_COUNT) {
 		uart_puts("Unknown signal name.\n");
 		return EC_ERROR_UNKNOWN;
+	}
+
+	if (!signal_info[i].mask) {
+		uart_puts("Signal is not implemented; ignoring request.\n");
+		return EC_SUCCESS;
 	}
 
 	v = strtoi(argv[2], &e, 0);
