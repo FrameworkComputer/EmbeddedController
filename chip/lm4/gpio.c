@@ -5,6 +5,7 @@
 
 /* GPIO module for Chrome EC */
 
+#include "console.h"
 #include "gpio.h"
 #include "power_button.h"
 #include "registers.h"
@@ -15,19 +16,46 @@
 
 
 struct gpio_info {
+	const char *name;
 	int port;   /* Port (LM4_GPIO_*) */
 	int mask;   /* Bitmask on that port (0x01 - 0x80) */
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
+/* Macro for signals which don't exist */
+#define SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0x00, NULL}
 
+/* Signal information.  Must match order from enum gpio_signal. */
 const struct gpio_info signal_info[EC_GPIO_COUNT] = {
-	{LM4_GPIO_A, 0x80, NULL},                     /* DEBUG_LED */
-	{LM4_GPIO_C, 0x20, power_button_interrupt},   /* POWER_BUTTON */
-	{LM4_GPIO_C, 0x00, NULL},                     /* POWER_BUTTON_OUT */
-	{LM4_GPIO_D, 0x01, power_button_interrupt},   /* LID_SWITCH */
-	{LM4_GPIO_D, 0x00, NULL},                     /* LID_SWITCH_OUT */
+	/* Signals with interrupt handlers */
+	{"POWER_BUTTON", LM4_GPIO_C, 0x20, power_button_interrupt},
+	{"LID_SWITCH",   LM4_GPIO_D, 0x01, power_button_interrupt},
+	/* Other signals */
+	{"DEBUG_LED",    LM4_GPIO_A, 0x80, NULL},
+	SIGNAL_NOT_IMPLEMENTED("POWER_BUTTON_OUT"),
+	SIGNAL_NOT_IMPLEMENTED("LID_SWITCH_OUT"),
 };
+
+#undef SIGNAL_NOT_IMPLEMENTED
+
+
+/* Find a GPIO signal by name.  Returns the signal index, or EC_GPIO_COUNT if
+ * no match. */
+static enum gpio_signal find_signal_by_name(const char *name)
+{
+	const struct gpio_info *g = signal_info;
+	int i;
+
+	if (!name || !*name)
+		return EC_GPIO_COUNT;
+
+	for (i = 0; i < EC_GPIO_COUNT; i++, g++) {
+		if (!strcasecmp(name, g->name))
+			return i;
+	}
+
+	return EC_GPIO_COUNT;
+}
 
 
 int gpio_pre_init(void)
@@ -112,6 +140,8 @@ int gpio_set_level(enum gpio_signal signal, int value)
 	return EC_SUCCESS;
 }
 
+/*****************************************************************************/
+/* Interrupt handlers */
 
 static void gpio_interrupt(int port, uint32_t mis)
 {
@@ -136,8 +166,64 @@ static void __gpio_c_interrupt(void)
 }
 DECLARE_IRQ(LM4_IRQ_GPIOC, __gpio_c_interrupt, 1);
 
+/*****************************************************************************/
+/* Console commands */
+
+static int command_gpio_get(int argc, char **argv)
+{
+	const struct gpio_info *g = signal_info;
+	int i;
+
+	uart_puts("Current GPIO levels:\n");
+	for (i = 0; i < EC_GPIO_COUNT; i++, g++) {
+		if (g->mask)
+			uart_printf("  %d %s\n", gpio_get_level(i), g->name);
+		else
+			uart_printf("  - %s\n", g->name);
+	}
+	return EC_SUCCESS;
+}
+
+
+static int command_gpio_set(int argc, char **argv)
+{
+	char *e;
+	int v, i;
+
+	if (argc < 3) {
+		uart_puts("Usage: gpioset <signal_name> <0|1>\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	i = find_signal_by_name(argv[1]);
+	if (i == EC_GPIO_COUNT) {
+		uart_puts("Unknown signal name.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	v = strtoi(argv[2], &e, 0);
+	if (*e) {
+		uart_puts("Invalid signal value.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return gpio_set_level(i, v);
+}
+
+
+static const struct console_command console_commands[] = {
+	{"gpioget", command_gpio_get},
+	{"gpioset", command_gpio_set},
+};
+static const struct console_group command_group = {
+	"GPIO", console_commands, ARRAY_SIZE(console_commands)
+};
+
+/*****************************************************************************/
+/* Initialization */
 
 int gpio_init(void)
 {
+	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

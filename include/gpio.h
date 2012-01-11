@@ -12,10 +12,12 @@
 
 /* GPIO signal definitions. */
 enum gpio_signal {
-	EC_GPIO_DEBUG_LED = 0,       /* Debug LED */
-	EC_GPIO_POWER_BUTTON,        /* Power button */
-	EC_GPIO_POWER_BUTTON_OUT,    /* Power button output to PCH */
+	/* Signals with interrupt handlers are first for efficiency */
+	EC_GPIO_POWER_BUTTON = 0,    /* Power button */
 	EC_GPIO_LID_SWITCH,          /* Lid switch */
+	/* Other signals */
+	EC_GPIO_DEBUG_LED,           /* Debug LED */
+	EC_GPIO_POWER_BUTTON_OUT,    /* Power button output to PCH */
 	EC_GPIO_LID_SWITCH_OUT,      /* Lid switch output to PCH */
 	/* Number of GPIOs; not an actual GPIO */
 	EC_GPIO_COUNT
