@@ -9,6 +9,9 @@
 
 int jtag_pre_init(void)
 {
+	/* Enable clocks to GPIO block C */
+	LM4_SYSTEM_RCGCGPIO |= 0x0004;
+
 	/* Ensure PC0:3 are set to JTAG function.  They should be set this way
 	 * on a cold boot, but on a warm reboot a previous misbehaving image
 	 * could have set them differently. */

@@ -63,7 +63,7 @@ static int command_sleep(int argc, char **argv)
 		clock = strtoi(argv[2], NULL, 10);
 	}
 	/* remove LED current sink  */
-	gpio_set_level(EC_GPIO_DEBUG_LED, 0);
+	gpio_set_level(GPIO_DEBUG_LED, 0);
 
 	uart_printf("Going to sleep : level %d clock %d...\n", level, clock);
 	uart_flush_output();

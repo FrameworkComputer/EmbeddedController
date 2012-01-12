@@ -50,8 +50,8 @@ static void lid_switch_isr(void)
 	/* TODO: Currently we pass through the LID_SW# pin to R_EC_LID_OUT#
 	 * directly. Modify this if we need to consider more conditions. */
 #ifdef BOARD_bds
-	gpio_set_level(EC_GPIO_LID_SWITCH_OUT,
-		       gpio_get_level(EC_GPIO_LID_SWITCH));
+	gpio_set_level(GPIO_PCH_LID_SWITCHn,
+		       gpio_get_level(GPIO_LID_SWITCHn));
 #endif
 }
 
@@ -69,7 +69,7 @@ static void lid_switch_isr(void)
 static void set_pwrbtn_to_pch(int high)
 {
 #ifdef BOARD_link
-	gpio_set_level(EC_GPIO_POWER_BUTTON_OUT, high);
+	gpio_set_level(GPIO_PCH_PWRBTN, high);
 #else
 	uart_printf("[%d] set_pwrbtn_to_pch(%s)\n",
 		    get_time().le.lo, high ? "HIGH" : "LOW");
@@ -128,7 +128,7 @@ static void pwrbtn_sm_handle(timestamp_t current)
 
 static void power_button_isr(void)
 {
-	if (!gpio_get_level(EC_GPIO_POWER_BUTTON)) {
+	if (!gpio_get_level(GPIO_POWER_BUTTONn)) {
 		/* pressed */
 		pwrbtn_sm_start();
 		/* TODO: implement after chip/lm4/x86_power.c is completed. */
@@ -147,7 +147,7 @@ static void power_button_isr(void)
 void power_button_interrupt(enum gpio_signal signal)
 {
 	timestamp_t timelimit;
-	int d = (signal == EC_GPIO_LID_SWITCH ? DEBOUNCE_LID : DEBOUNCE_PWRBTN);
+	int d = (signal == GPIO_LID_SWITCHn ? DEBOUNCE_LID : DEBOUNCE_PWRBTN);
 
 	/* TODO: (crosbug.com/p/7456) there's currently a race condition where
 	 * we can get an interrupt before clock_init() has been called.  In

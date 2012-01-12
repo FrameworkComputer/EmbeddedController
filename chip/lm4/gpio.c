@@ -27,20 +27,70 @@ struct gpio_info {
 #define SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0x00, NULL}
 
 /* Signal information.  Must match order from enum gpio_signal. */
-const struct gpio_info signal_info[EC_GPIO_COUNT] = {
-	/* Signals with interrupt handlers */
-	{"POWER_BUTTON", LM4_GPIO_C, 0x20, power_button_interrupt},
-	{"LID_SWITCH",   LM4_GPIO_D, 0x01, power_button_interrupt},
-	/* Other signals */
+const struct gpio_info signal_info[GPIO_COUNT] = {
+	/* Inputs with interrupt handlers are first for efficiency */
+	{"POWER_BUTTONn", LM4_GPIO_C, 0x20, power_button_interrupt},
+	{"LID_SWITCHn",   LM4_GPIO_D, 0x01, power_button_interrupt},
+	SIGNAL_NOT_IMPLEMENTED("POWER_ONEWIRE"),
+	SIGNAL_NOT_IMPLEMENTED("THERMAL_DATA_READYn"),
+	/* Other inputs */
+	SIGNAL_NOT_IMPLEMENTED("AC_PRESENT"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_BKLTEN"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_An"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_ME_CSW_DEVn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_S3n"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_S4n"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_S5n"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SLP_SUSn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SUSWARNn"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_1_5V_DDR"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_1_5V_PCH"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_1_8VS"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_5VALW"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_CPU_CORE"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_VCCP"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_VCCSA"),
+	SIGNAL_NOT_IMPLEMENTED("PGOOD_VGFX_CORE"),
+	SIGNAL_NOT_IMPLEMENTED("RECOVERYn"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_STATUSn"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_STATUSn"),
+	SIGNAL_NOT_IMPLEMENTED("WRITE_PROTECTn"),
+	/* Outputs */
+	SIGNAL_NOT_IMPLEMENTED("CPU_PROCHOTn"),
 	{"DEBUG_LED",    LM4_GPIO_A, 0x80, NULL},
-	SIGNAL_NOT_IMPLEMENTED("POWER_BUTTON_OUT"),
-	SIGNAL_NOT_IMPLEMENTED("LID_SWITCH_OUT"),
+	SIGNAL_NOT_IMPLEMENTED("ENABLE_1_5V_DDR"),
+	SIGNAL_NOT_IMPLEMENTED("ENABLE_BACKLIGHT"),
+	SIGNAL_NOT_IMPLEMENTED("ENABLE_VCORE"),
+	SIGNAL_NOT_IMPLEMENTED("ENABLE_VS"),
+	SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_A20GATE"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_DPWROK"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_HDA_SDO"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_LID_SWITCHn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_NMIn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_PWRBTNn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_PWROK"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_RCINn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_RSMRSTn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SMIn"),
+	SIGNAL_NOT_IMPLEMENTED("PCH_SUSACKn"),
+	SIGNAL_NOT_IMPLEMENTED("SHUNT_1_5V_DDR"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_CTL1"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_CTL2"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_CTL3"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_ENABLE"),
+	SIGNAL_NOT_IMPLEMENTED("USB1_ILIM_SEL"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_CTL1"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_CTL2"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_CTL3"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_ENABLE"),
+	SIGNAL_NOT_IMPLEMENTED("USB2_ILIM_SEL"),
 };
 
 #undef SIGNAL_NOT_IMPLEMENTED
 
 
-/* Find a GPIO signal by name.  Returns the signal index, or EC_GPIO_COUNT if
+/* Find a GPIO signal by name.  Returns the signal index, or GPIO_COUNT if
  * no match. */
 static enum gpio_signal find_signal_by_name(const char *name)
 {
@@ -48,24 +98,25 @@ static enum gpio_signal find_signal_by_name(const char *name)
 	int i;
 
 	if (!name || !*name)
-		return EC_GPIO_COUNT;
+		return GPIO_COUNT;
 
-	for (i = 0; i < EC_GPIO_COUNT; i++, g++) {
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (!strcasecmp(name, g->name))
 			return i;
 	}
 
-	return EC_GPIO_COUNT;
+	return GPIO_COUNT;
 }
 
 
 int gpio_pre_init(void)
 {
-	/* Enable clock to GPIO block A */
-	LM4_SYSTEM_RCGCGPIO |= 0x0001;
+	/* Enable clocks to the GPIO blocks we use.  Bits are encoded this way;
+	 * blocks we use are in caps: .qpn mlkj hgfe DCbA */
+	LM4_SYSTEM_RCGCGPIO |= 0x000d;
 
 	/* Turn off the LED before we make it an output */
-	gpio_set_level(EC_GPIO_DEBUG_LED, 0);
+	gpio_set_level(GPIO_DEBUG_LED, 0);
 
 	/* Clear GPIOAFSEL bits for block A pin 7 */
 	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~(0x80);
@@ -149,7 +200,7 @@ static void gpio_interrupt(int port, uint32_t mis)
 	int i = 0;
 	const struct gpio_info *g = signal_info;
 
-	for (i = 0; i < EC_GPIO_COUNT; i++, g++) {
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (port == g->port && (mis & g->mask) && g->irq_handler)
 			g->irq_handler(i);
 	}
@@ -176,11 +227,13 @@ static int command_gpio_get(int argc, char **argv)
 	int i;
 
 	uart_puts("Current GPIO levels:\n");
-	for (i = 0; i < EC_GPIO_COUNT; i++, g++) {
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (g->mask)
 			uart_printf("  %d %s\n", gpio_get_level(i), g->name);
 		else
 			uart_printf("  - %s\n", g->name);
+		/* We'd overflow the output buffer without flushing */
+		uart_flush_output();
 	}
 	return EC_SUCCESS;
 }
@@ -197,7 +250,7 @@ static int command_gpio_set(int argc, char **argv)
 	}
 
 	i = find_signal_by_name(argv[1]);
-	if (i == EC_GPIO_COUNT) {
+	if (i == GPIO_COUNT) {
 		uart_puts("Unknown signal name.\n");
 		return EC_ERROR_UNKNOWN;
 	}
