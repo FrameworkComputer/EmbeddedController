@@ -15,6 +15,15 @@
 #include "util.h"
 
 
+/* 0-terminated list of GPIO bases */
+const uint32_t gpio_bases[] = {
+	LM4_GPIO_A, LM4_GPIO_B, LM4_GPIO_C, LM4_GPIO_D,
+	LM4_GPIO_E, LM4_GPIO_F, LM4_GPIO_G, LM4_GPIO_H,
+	LM4_GPIO_J, LM4_GPIO_K, LM4_GPIO_L, LM4_GPIO_M,
+	LM4_GPIO_N, LM4_GPIO_P, LM4_GPIO_Q, 0
+};
+
+
 struct gpio_info {
 	const char *name;
 	int port;   /* Port (LM4_GPIO_*) */
@@ -109,6 +118,19 @@ static enum gpio_signal find_signal_by_name(const char *name)
 }
 
 
+/* Find the index of a GPIO port base address (LM4_GPIO_[A-Q]); this is used by
+ * the clock gating registers.  Returns the index, or -1 if no match. */
+static int find_gpio_port_index(uint32_t port_base)
+{
+	int i;
+	for (i = 0; gpio_bases[i]; i++) {
+		if (gpio_bases[i] == port_base)
+			return i;
+	}
+	return -1;
+}
+
+
 int gpio_pre_init(void)
 {
 	/* Enable clocks to the GPIO blocks we use.  Bits are encoded this way;
@@ -173,6 +195,44 @@ int gpio_pre_init(void)
 #endif
 
 	return EC_SUCCESS;
+}
+
+
+void gpio_set_alternate_function(int port, int mask, int func)
+{
+	int port_index = find_gpio_port_index(port);
+	int cgmask;
+
+	if (port_index < 0)
+		return;  /* TODO: assert */
+
+	/* Enable the GPIO port if necessary */
+	cgmask = 1 << port_index;
+	if ((LM4_SYSTEM_RCGCGPIO & cgmask) != cgmask) {
+		volatile uint32_t scratch  __attribute__((unused));
+		LM4_SYSTEM_RCGCGPIO |= cgmask;
+		/* Delay a few clocks before accessing GPIO registers on that
+		 * port. */
+		scratch = LM4_SYSTEM_RCGCGPIO;
+	}
+
+	if (func) {
+		int pctlmask = 0;
+		int i;
+		/* Expand mask from bits to nibbles */
+		for (i = 0; i < 8; i++) {
+			if (mask & (1 << i))
+				pctlmask |= 1 << (4 * i);
+		}
+
+		LM4_GPIO_PCTL(port) =
+			(LM4_GPIO_PCTL(port) & ~(pctlmask * 0xf)) |
+			(pctlmask * func);
+		LM4_GPIO_AFSEL(port) |= mask;
+	} else {
+		LM4_GPIO_AFSEL(port) &= ~mask;
+	}
+	LM4_GPIO_DEN(port) |= mask;
 }
 
 

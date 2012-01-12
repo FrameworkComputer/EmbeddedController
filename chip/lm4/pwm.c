@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "console.h"
+#include "gpio.h"
 #include "pwm.h"
 #include "registers.h"
 #include "uart.h"
@@ -19,31 +20,19 @@
 
 
 /* Configures the GPIOs for the fan module. */
-/* TODO: this is currently hard-coded for BDS; needs to do the right
-   thing for Link. */
 static void configure_gpios(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable GPIO K,N modules and delay a few clocks */
-	LM4_SYSTEM_RCGCGPIO |= 0x1200;
-	scratch = LM4_SYSTEM_RCGCGPIO;
-
-	/* Use alternate function 1 for PN4 (channel 3 PWM) and PN6:7
-	   (channel 4 PWM/tach) */
-	// TODO: depends on which PWMs we're using
-	LM4_GPIO_AFSEL(LM4_GPIO_N) |= 0xd0;
-	LM4_GPIO_PCTL(LM4_GPIO_N) = (LM4_GPIO_PCTL(LM4_GPIO_N) & 0x00f0ffff) |
-		0x11010000;
-	LM4_GPIO_DEN(LM4_GPIO_N) |= 0xd0;
-
-	/* Use alternate function 1 for PK6 (channel 1 PWM) */
-	// TODO: GPIO module depends on fan channel
-	LM4_GPIO_AFSEL(LM4_GPIO_K) |= 0x40;
-	LM4_GPIO_PCTL(LM4_GPIO_K) = (LM4_GPIO_PCTL(LM4_GPIO_K) & 0xf0ffffff) |
-		0x01000000;
-	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x40;
-
+#ifdef BOARD_link
+	/* PK6 alternate function 1 = channel 1 PWM */
+	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
+	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
+	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
+#else
+	/* PK6 alternate function 1 = channel 1 PWM */
+	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
+	/* PN6:7 alternate function 1 = channel 4 PWM/tach */
+	gpio_set_alternate_function(LM4_GPIO_N, 0xc0, 1);
+#endif
 }
 
 
@@ -70,12 +59,6 @@ int pwm_set_keyboard_backlight(int percent)
 	return EC_SUCCESS;
 }
 
-
-int pwm_set_power_led(int percent)
-{
-	LM4_FAN_FANCMD(FAN_CH_POWER_LED) = ((percent * MAX_PWM) / 100) << 16;
-	return EC_SUCCESS;
-}
 
 /*****************************************************************************/
 /* Console commands */
@@ -185,37 +168,11 @@ static int command_kblight(int argc, char **argv)
 }
 
 
-static int command_powerled(int argc, char **argv)
-{
-	char *e;
-	int rv;
-	int i;
-
-	if (argc < 2) {
-		uart_puts("Usage: powerled <percent>\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	i = strtoi(argv[1], &e, 0);
-	if (*e) {
-		uart_puts("Invalid percent\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	uart_printf("Setting power LED to %d%%...\n", i);
-	rv = pwm_set_keyboard_backlight(i);
-	if (rv == EC_SUCCESS)
-		uart_printf("Done.\n");
-	return rv;
-}
-
-
 static const struct console_command console_commands[] = {
 	{"fanduty", command_fan_duty},
 	{"faninfo", command_fan_info},
 	{"fanset", command_fan_set},
 	{"kblight", command_kblight},
-	{"powerled", command_powerled},
 };
 static const struct console_group command_group = {
 	"PWM", console_commands, ARRAY_SIZE(console_commands)
@@ -261,25 +218,12 @@ int pwm_init(void)
 	 * 0x0001 = bit 0      = manual control */
 	LM4_FAN_FANCH(FAN_CH_KBLIGHT) = 0x0001;
 
-	/* Configure power LED:
-	 * 0x0000 = bit 15     = auto-restart
-	 * 0x0000 = bit 14     = slow acceleration
-	 * 0x0000 = bits 13:11 = no hysteresis
-	 * 0x0000 = bits 10:8  = start period (2<<0) edges
-	 * 0x0000 = bits 7:6   = no fast start
-	 * 0x0000 = bits 5:4   = average 4 edges when calculating RPM
-	 * 0x0000 = bits 3:2   = 4 pulses per revolution
-	 * 0x0001 = bit 0      = manual control */
-	LM4_FAN_FANCH(FAN_CH_POWER_LED) = 0x0001;
-
-	/* Set initial fan speed to maximum, backlight off, power LED off */
+	/* Set initial fan speed to maximum, backlight off */
 	pwm_set_fan_target_rpm(-1);
 	pwm_set_keyboard_backlight(0);
-	pwm_set_power_led(0);
 
 	/* Enable CPU fan and keyboard backlight */
-	LM4_FAN_FANCTL |= (1 << FAN_CH_CPU) | (1 << FAN_CH_KBLIGHT) |
-		(1 << FAN_CH_POWER_LED);
+	LM4_FAN_FANCTL |= (1 << FAN_CH_CPU) | (1 << FAN_CH_KBLIGHT);
 
 	console_register_commands(&command_group);
 	return EC_SUCCESS;

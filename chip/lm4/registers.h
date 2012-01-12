@@ -301,6 +301,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_PORTF_BASE         0x40025000
 #define LM4_GPIO_PORTG_BASE         0x40026000
 #define LM4_GPIO_PORTH_BASE         0x40027000
+#define LM4_GPIO_PORTJ_BASE         0x4003d000
 #define LM4_GPIO_PORTK_BASE         0x40061000
 #define LM4_GPIO_PORTL_BASE         0x40062000
 #define LM4_GPIO_PORTM_BASE         0x40063000
@@ -309,12 +310,12 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_PORTQ_BASE         0x40066000
 #define LM4_GPIO_PORTA_AHB_BASE     0x40058000
 #define LM4_GPIO_PORTB_AHB_BASE     0x40059000
-#define LM4_GPIO_PORTC_AHB_BASE     0x4005A000
-#define LM4_GPIO_PORTD_AHB_BASE     0x4005B000
-#define LM4_GPIO_PORTE_AHB_BASE     0x4005C000
-#define LM4_GPIO_PORTF_AHB_BASE     0x4005D000
-#define LM4_GPIO_PORTG_AHB_BASE     0x4005E000
-#define LM4_GPIO_PORTH_AHB_BASE     0x4005F000
+#define LM4_GPIO_PORTC_AHB_BASE     0x4005a000
+#define LM4_GPIO_PORTD_AHB_BASE     0x4005b000
+#define LM4_GPIO_PORTE_AHB_BASE     0x4005c000
+#define LM4_GPIO_PORTF_AHB_BASE     0x4005d000
+#define LM4_GPIO_PORTG_AHB_BASE     0x4005e000
+#define LM4_GPIO_PORTH_AHB_BASE     0x4005f000
 #define LM4_GPIO_PORTJ_AHB_BASE     0x40060000
 /* Ports for passing to LM4GPIOREG(); abstracted from base addresses above so
  * that we can switch to/from AHB. */
@@ -326,6 +327,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_F LM4_GPIO_PORTF_BASE
 #define LM4_GPIO_G LM4_GPIO_PORTG_BASE
 #define LM4_GPIO_H LM4_GPIO_PORTH_BASE
+#define LM4_GPIO_J LM4_GPIO_PORTJ_BASE
 #define LM4_GPIO_K LM4_GPIO_PORTK_BASE
 #define LM4_GPIO_L LM4_GPIO_PORTL_BASE
 #define LM4_GPIO_M LM4_GPIO_PORTM_BASE

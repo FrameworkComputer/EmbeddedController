@@ -9,6 +9,7 @@
 
 #include "board.h"
 #include "console.h"
+#include "gpio.h"
 #include "lpc.h"
 #include "registers.h"
 #include "task.h"
@@ -152,31 +153,19 @@ DECLARE_IRQ(LM4_IRQ_UART1, uart_1_interrupt, 2);
 
 
 /* Configure GPIOs for the UART module. */
-/* TODO: board-dependent; on Link UART1 is PC4/PC5, not PB0/PB1. */
 static void configure_gpio(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable clocks to GPIO blocks A and B, then delay a few clocks. */
-	LM4_SYSTEM_RCGCGPIO |= 0x0003;
-
-	/* UART0 setup; RX and TX are GPIO PA0 and PA1 */
-	/* Enable alternate function */
-	LM4_GPIO_AFSEL(LM4_GPIO_A) |= 0x03;
-	/* Alternate function 1 */
-	LM4_GPIO_PCTL(LM4_GPIO_A) = (LM4_GPIO_PCTL(LM4_GPIO_A) & 0xffffff00)
-		| 0x11;
-	/* Enable digital function */
-	LM4_GPIO_DEN(LM4_GPIO_A) |= 0x03;
-
-	/* UART1 setup; RX and TX are GPIO PB0 and PB1 */
-	/* Enable alternate function */
-	LM4_GPIO_AFSEL(LM4_GPIO_B) |= 0x03;
-	/* Alternate function 1 */
-	LM4_GPIO_PCTL(LM4_GPIO_B) = (LM4_GPIO_PCTL(LM4_GPIO_B) & 0xffffff00)
-		| 0x11;
-	/* Enable digital function */
-	LM4_GPIO_DEN(LM4_GPIO_B) = 0x03;
+#ifdef BOARD_link
+	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
+	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
+	/* UART1 RX and TX are GPIO PC4:5 alternate function 2 */
+	gpio_set_alternate_function(LM4_GPIO_B, 0x03, 2);
+#else
+	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
+	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
+	/* UART1 RX and TX are GPIO PB0:1 alternate function 1*/
+	gpio_set_alternate_function(LM4_GPIO_B, 0x03, 1);
+#endif
 }
 
 

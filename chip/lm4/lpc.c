@@ -6,6 +6,7 @@
 /* LPC module for Chrome EC */
 
 #include "board.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "i8042.h"
 #include "lpc.h"
@@ -19,28 +20,21 @@
 /* Configures GPIOs for module. */
 static void configure_gpio(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable clocks to GPIO modules L, M (p. 404) */
-	LM4_SYSTEM_RCGCGPIO |= 0x0c00;
-	scratch = LM4_SYSTEM_RCGCGPIO;
-
 	/* Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins. */
 	/* I/O: PL0:3 = command/address/data
 	 * inp: PL4 (frame), PL5 (reset), PM0 (powerdown), PM5 (clock)
 	 * out: PM1 (sci), PM2 (clkrun), PM4 (serirq) */
-	LM4_GPIO_AFSEL(LM4_GPIO_L) |= 0x3f;
-	LM4_GPIO_AFSEL(LM4_GPIO_M) |= 0x37;
-	LM4_GPIO_PCTL(LM4_GPIO_L) |= 0x00ffffff;
-	LM4_GPIO_PCTL(LM4_GPIO_M) |= 0x00ff0fff;
-	LM4_GPIO_DEN(LM4_GPIO_L) |= 0x3f;
-	LM4_GPIO_DEN(LM4_GPIO_M) |= 0x37;
+	/* TODO: PM2 is NMI#; not needed */
+	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
+	gpio_set_alternate_function(LM4_GPIO_M, 0x37, 0x0f);
 
+#ifdef BOARD_bds
 	/* Set the drive strength to 8mA for serirq only */
 	/* TODO: (crosbug.com/p/7495) Only necessary on BDS because the cabling
 	 * to the x86 is long and flaky; remove this for Link.  Setting this
 	 * for all I/O lines seems to hang the x86 during boot. */
 	LM4_GPIO_DR8R(LM4_GPIO_M) |= 0x00000010;
+#endif
 }
 
 
