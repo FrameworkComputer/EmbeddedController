@@ -24,22 +24,109 @@ const uint32_t gpio_bases[] = {
 };
 
 
+/* Raw flags for GPIO_INFO */
+#define GI_OUTPUT      0x0001  /* Output */
+#define GI_PULL        0x0002  /* Input with on-chip pullup/pulldown */
+#define GI_HIGH        0x0004  /* If GI_OUTPUT, default high; if GI_PULL, pull
+				* up (otherwise default low / pull down) */
+#define GI_INT_RISING  0x0010  /* Interrupt on rising edge */
+#define GI_INT_FALLING 0x0020  /* Interrupt on falling edge */
+#define GI_INT_BOTH    0x0040  /* Interrupt on both edges */
+#define GI_INT_LOW     0x0080  /* Interrupt on low level */
+#define GI_INT_HIGH    0x0100  /* Interrupt on high level */
+/* Common flag combinations */
+#define GI_OUT_LOW     GI_OUTPUT
+#define GI_OUT_HIGH    (GI_OUTPUT | GI_HIGH)
+#define GI_PULL_DOWN   GI_PULL
+#define GI_PULL_UP     (GI_PULL | GI_HIGH)
+#define GI_INT_EDGE    (GI_INT_RISING | GI_INT_FALLING | GI_INT_BOTH)
+#define GI_INT_LEVEL   (GI_INT_LOW | GI_INT_HIGH)
+#define GI_INT_ANY     (GI_INT_EDGE | GI_INT_LEVEL)
+/* Note that if no flags are present, the signal is a high-Z input */
+
 struct gpio_info {
 	const char *name;
 	int port;   /* Port (LM4_GPIO_*) */
 	int mask;   /* Bitmask on that port (0x01 - 0x80; 0x00 =
 		       signal not implemented) */
+	uint32_t flags;   /* Flags (GI_*) */
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
 /* Macro for signals which don't exist */
-#define SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0x00, NULL}
+#define SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0, 0, NULL}
 
 /* Signal information.  Must match order from enum gpio_signal. */
+#ifdef BOARD_link
 const struct gpio_info signal_info[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"POWER_BUTTONn", LM4_GPIO_C, 0x20, power_button_interrupt},
-	{"LID_SWITCHn",   LM4_GPIO_D, 0x01, power_button_interrupt},
+	{"POWER_BUTTONn",       LM4_GPIO_K, (1<<7), GI_INT_BOTH,
+	 power_button_interrupt},
+	{"LID_SWITCHn",         LM4_GPIO_K, (1<<5), GI_INT_BOTH,
+	 power_button_interrupt},
+	/* Other inputs */
+	{"POWER_ONEWIRE",       LM4_GPIO_H, (1<<2), 0, NULL},
+	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
+	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), 0, NULL},
+	{"PCH_BKLTEN",          LM4_GPIO_J, (1<<3), 0, NULL},
+	{"PCH_SLP_An",          LM4_GPIO_G, (1<<5), 0, NULL},
+	{"PCH_SLP_ME_CSW_DEVn", LM4_GPIO_G, (1<<4), 0, NULL},
+	{"PCH_SLP_S3n",         LM4_GPIO_J, (1<<0), 0, NULL},
+	{"PCH_SLP_S4n",         LM4_GPIO_J, (1<<1), 0, NULL},
+	{"PCH_SLP_S5n",         LM4_GPIO_J, (1<<2), 0, NULL},
+	{"PCH_SLP_SUSn",        LM4_GPIO_G, (1<<3), 0, NULL},
+	{"PCH_SUSWARNn",        LM4_GPIO_G, (1<<2), 0, NULL},
+	{"PGOOD_1_5V_DDR",      LM4_GPIO_K, (1<<0), 0, NULL},
+	{"PGOOD_1_5V_PCH",      LM4_GPIO_K, (1<<1), 0, NULL},
+	{"PGOOD_1_8VS",         LM4_GPIO_K, (1<<3), 0, NULL},
+	{"PGOOD_5VALW",         LM4_GPIO_H, (1<<0), 0, NULL},
+	{"PGOOD_CPU_CORE",      LM4_GPIO_M, (1<<3), 0, NULL},
+	{"PGOOD_VCCP",          LM4_GPIO_K, (1<<2), 0, NULL},
+	{"PGOOD_VCCSA",         LM4_GPIO_H, (1<<1), 0, NULL},
+	{"PGOOD_VGFX_CORE",     LM4_GPIO_D, (1<<2), 0, NULL},
+	{"RECOVERYn",           LM4_GPIO_H, (1<<7), 0, NULL},
+	{"USB1_STATUSn",        LM4_GPIO_E, (1<<7), 0, NULL},
+	{"USB2_STATUSn",        LM4_GPIO_E, (1<<1), 0, NULL},
+	{"WRITE_PROTECTn",      LM4_GPIO_J, (1<<4), 0, NULL},
+	/* Outputs; all unasserted by default */
+	{"CPU_PROCHOTn",        LM4_GPIO_F, (1<<2), GI_OUT_HIGH, NULL},
+	{"ENABLE_1_5V_DDR",     LM4_GPIO_H, (1<<5), GI_OUT_LOW, NULL},
+	{"ENABLE_BACKLIGHT",    LM4_GPIO_H, (1<<4), GI_OUT_LOW, NULL},
+	{"ENABLE_VCORE",        LM4_GPIO_F, (1<<7), GI_OUT_LOW, NULL},
+	{"ENABLE_VS",           LM4_GPIO_G, (1<<6), GI_OUT_LOW, NULL},
+	{"ENTERING_RW",         LM4_GPIO_J, (1<<5), GI_OUT_LOW, NULL},
+	{"PCH_A20GATE",         LM4_GPIO_Q, (1<<6), GI_OUT_LOW, NULL},
+	{"PCH_DPWROK",          LM4_GPIO_G, (1<<0), GI_OUT_LOW, NULL},
+	{"PCH_HDA_SDO",         LM4_GPIO_G, (1<<1), GI_OUT_LOW, NULL},
+	{"PCH_LID_SWITCHn",     LM4_GPIO_F, (1<<0), GI_OUT_HIGH, NULL},
+	{"PCH_NMIn",            LM4_GPIO_M, (1<<2), GI_OUT_HIGH, NULL},
+	{"PCH_PWRBTNn",         LM4_GPIO_G, (1<<7), GI_OUT_HIGH, NULL},
+	{"PCH_PWROK",           LM4_GPIO_F, (1<<5), GI_OUT_LOW, NULL},
+	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GI_OUT_HIGH, NULL},
+	/* Exception: RSMRST# is asserted at power-on */
+	{"PCH_RSMRSTn",         LM4_GPIO_F, (1<<1), GI_OUT_LOW, NULL},
+	{"PCH_SMIn",            LM4_GPIO_F, (1<<4), GI_OUT_HIGH, NULL},
+	{"PCH_SUSACKn",         LM4_GPIO_F, (1<<3), GI_OUT_HIGH, NULL},
+	{"SHUNT_1_5V_DDR",      LM4_GPIO_F, (1<<6), GI_OUT_HIGH, NULL},
+	{"USB1_CTL1",           LM4_GPIO_E, (1<<2), GI_OUT_LOW, NULL},
+	{"USB1_CTL2",           LM4_GPIO_E, (1<<3), GI_OUT_LOW, NULL},
+	{"USB1_CTL3",           LM4_GPIO_E, (1<<4), GI_OUT_LOW, NULL},
+	{"USB1_ENABLE",         LM4_GPIO_E, (1<<5), GI_OUT_LOW, NULL},
+	{"USB1_ILIM_SEL",       LM4_GPIO_E, (1<<6), GI_OUT_LOW, NULL},
+	{"USB2_CTL1",           LM4_GPIO_D, (1<<4), GI_OUT_LOW, NULL},
+	{"USB2_CTL2",           LM4_GPIO_D, (1<<5), GI_OUT_LOW, NULL},
+	{"USB2_CTL3",           LM4_GPIO_D, (1<<6), GI_OUT_LOW, NULL},
+	{"USB2_ENABLE",         LM4_GPIO_D, (1<<7), GI_OUT_LOW, NULL},
+	{"USB2_ILIM_SEL",       LM4_GPIO_E, (1<<0), GI_OUT_LOW, NULL},
+};
+
+#else
+const struct gpio_info signal_info[GPIO_COUNT] = {
+	/* Inputs with interrupt handlers are first for efficiency */
+	{"POWER_BUTTONn", LM4_GPIO_C, (1<<5), GI_PULL_UP | GI_INT_BOTH,
+	 power_button_interrupt},
+	{"LID_SWITCHn",   LM4_GPIO_D, (1<<0), GI_PULL_UP | GI_INT_BOTH,
+	 power_button_interrupt},
 	SIGNAL_NOT_IMPLEMENTED("POWER_ONEWIRE"),
 	SIGNAL_NOT_IMPLEMENTED("THERMAL_DATA_READYn"),
 	/* Other inputs */
@@ -66,7 +153,7 @@ const struct gpio_info signal_info[GPIO_COUNT] = {
 	SIGNAL_NOT_IMPLEMENTED("WRITE_PROTECTn"),
 	/* Outputs */
 	SIGNAL_NOT_IMPLEMENTED("CPU_PROCHOTn"),
-	{"DEBUG_LED",    LM4_GPIO_A, 0x80, NULL},
+	{"DEBUG_LED",    LM4_GPIO_A, (1<<7), GI_OUT_LOW, NULL},
 	SIGNAL_NOT_IMPLEMENTED("ENABLE_1_5V_DDR"),
 	SIGNAL_NOT_IMPLEMENTED("ENABLE_BACKLIGHT"),
 	SIGNAL_NOT_IMPLEMENTED("ENABLE_VCORE"),
@@ -95,6 +182,8 @@ const struct gpio_info signal_info[GPIO_COUNT] = {
 	SIGNAL_NOT_IMPLEMENTED("USB2_ENABLE"),
 	SIGNAL_NOT_IMPLEMENTED("USB2_ILIM_SEL"),
 };
+
+#endif
 
 #undef SIGNAL_NOT_IMPLEMENTED
 
@@ -133,66 +222,59 @@ static int find_gpio_port_index(uint32_t port_base)
 
 int gpio_pre_init(void)
 {
-	/* Enable clocks to the GPIO blocks we use.  Bits are encoded this way;
-	 * blocks we use are in caps: .qpn mlkj hgfe DCbA */
-	LM4_SYSTEM_RCGCGPIO |= 0x000d;
+	volatile uint32_t scratch  __attribute__((unused));
+	const struct gpio_info *g = signal_info;
+	int i;
 
-	/* Turn off the LED before we make it an output */
-	gpio_set_level(GPIO_DEBUG_LED, 0);
+	/* Enable clocks to all the GPIO blocks (since we use all of them as
+	 * GPIOs) */
+	LM4_SYSTEM_RCGCGPIO |= 0x7fff;
+	scratch = LM4_SYSTEM_RCGCGPIO;  /* Delay a few clocks */
 
-	/* Clear GPIOAFSEL bits for block A pin 7 */
-	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~(0x80);
+	/* Disable GPIO commit control for PD7 and PF0, since we don't use the
+	 * NMI pin function. */
+	LM4_GPIO_LOCK(LM4_GPIO_D) = LM4_GPIO_LOCK_UNLOCK;
+	LM4_GPIO_CR(LM4_GPIO_D) |= 0x80;
+	LM4_GPIO_LOCK(LM4_GPIO_D) = 0;
+	LM4_GPIO_LOCK(LM4_GPIO_F) = LM4_GPIO_LOCK_UNLOCK;
+	LM4_GPIO_CR(LM4_GPIO_F) |= 0x01;
+	LM4_GPIO_LOCK(LM4_GPIO_F) = 0;
 
-	/* Set GPIO to digital enable, output */
-	LM4_GPIO_DEN(LM4_GPIO_A) |= 0x80;
-	LM4_GPIO_DIR(LM4_GPIO_A) |= 0x80;
+	/* Clear SSI0 alternate function on PA2:5 */
+	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~0x3c;
 
-#ifdef BOARD_link
-	/* Set up LID switch input (block K pin 5) */
-	LM4_GPIO_PCTL(LM4_GPIO_K) &= ~(0xf00000);
-	LM4_GPIO_DIR(LM4_GPIO_K) &= ~(0x20);
-	LM4_GPIO_PUR(LM4_GPIO_K) |= 0x20;
-	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x20;
-	LM4_GPIO_IM(LM4_GPIO_K) |= 0x20;
-	LM4_GPIO_IBE(LM4_GPIO_K) |= 0x20;
+	/* Set all GPIOs to defaults */
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
 
-	/* Block F pin 0 is NMI pin, so we have to unlock GPIO Lock register and
-	   set the bit in GPIOCR register first. */
-	LM4_GPIO_LOCK(LM4_GPIO_F) = 0x4c4f434b;
-	LM4_GPIO_CR(LM4_GPIO_F) |= 0x1;
-	LM4_GPIO_LOCK(LM4_GPIO_F) = 0x0;
+		/* Handle GPIO direction */
+		if (g->flags & GI_OUTPUT) {
+			/* Output with default level */
+			gpio_set_level(i, g->flags & GI_HIGH);
+			LM4_GPIO_DIR(g->port) |= g->mask;
+		} else {
+			/* Input */
+			if (g->flags & GI_PULL) {
+				/* With pull up/down */
+				if (g->flags & GI_HIGH)
+					LM4_GPIO_PUR(g->port) |= g->mask;
+				else
+					LM4_GPIO_PDR(g->port) |= g->mask;
+			}
+		}
 
-	/* Set up LID switch output (block F pin 0) */
-	LM4_GPIO_PCTL(LM4_GPIO_F) &= ~(0xf);
-	LM4_GPIO_DATA(LM4_GPIO_F, 0x1) =
-		(LM4_GPIO_DATA(LM4_GPIO_K, 0x20) ? 1 : 0);
-	LM4_GPIO_DIR(LM4_GPIO_F) |= 0x1;
-	LM4_GPIO_DEN(LM4_GPIO_F) |= 0x1;
-#endif
+		/* Use as GPIO, not alternate function */
+		gpio_set_alternate_function(g->port, g->mask, 0);
 
-	/* Setup power button input and output pins */
-#ifdef BOARD_link
-	/* input: PK7 */
-	LM4_GPIO_PCTL(LM4_GPIO_K) &= ~0xf0000000;
-	LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x80;
-	LM4_GPIO_PUR(LM4_GPIO_K) |= 0x80;
-	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x80;
-	LM4_GPIO_IM(LM4_GPIO_K) |= 0x80;
-	LM4_GPIO_IBE(LM4_GPIO_K) |= 0x80;
-	/* output: PG7 */
-	LM4_GPIO_PCTL(LM4_GPIO_G) &= ~0xf0000000;
-	LM4_GPIO_DATA(LM4_GPIO_G, 0x80) = 0x80;
-	LM4_GPIO_DIR(LM4_GPIO_G) |= 0x80;
-	LM4_GPIO_DEN(LM4_GPIO_G) |= 0x80;
-#else
-	/* input: PC5 */
-	LM4_GPIO_PCTL(LM4_GPIO_C) &= ~0x00f00000;
-	LM4_GPIO_DIR(LM4_GPIO_C) &= ~0x20;
-	LM4_GPIO_PUR(LM4_GPIO_C) |= 0x20;
-	LM4_GPIO_DEN(LM4_GPIO_C) |= 0x20;
-	LM4_GPIO_IM(LM4_GPIO_C) |= 0x20;
-	LM4_GPIO_IBE(LM4_GPIO_C) |= 0x20;
-#endif
+		/* Set up interrupts if necessary */
+		if (g->flags & GI_INT_LEVEL)
+			LM4_GPIO_IS(g->port) |= g->mask;
+		if (g->flags & (GI_INT_RISING | GI_INT_HIGH))
+			LM4_GPIO_IEV(g->port) |= g->mask;
+		if (g->flags & GI_INT_BOTH)
+			LM4_GPIO_IBE(g->port) |= g->mask;
+		if (g->flags & GI_INT_ANY)
+			LM4_GPIO_IM(g->port) |= g->mask;
+	}
 
 	return EC_SUCCESS;
 }
@@ -286,13 +368,25 @@ static int command_gpio_get(int argc, char **argv)
 	const struct gpio_info *g = signal_info;
 	int i;
 
+	/* If a signal is specified, print only that one */
+	if (argc == 2) {
+		i = find_signal_by_name(argv[1]);
+		if (i == GPIO_COUNT) {
+			uart_puts("Unknown signal name.\n");
+			return EC_ERROR_UNKNOWN;
+		}
+		g = signal_info + i;
+		uart_printf("  %d %s\n", gpio_get_level(i), g->name);
+		return EC_SUCCESS;
+	}
+
+	/* Otherwise print them all */
 	uart_puts("Current GPIO levels:\n");
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (g->mask)
 			uart_printf("  %d %s\n", gpio_get_level(i), g->name);
-		else
-			uart_printf("  - %s\n", g->name);
-		/* We'd overflow the output buffer without flushing */
+		/* We have enough GPIOs that we'll overflow the output buffer
+		 * without flushing */
 		uart_flush_output();
 	}
 	return EC_SUCCESS;
@@ -301,6 +395,7 @@ static int command_gpio_get(int argc, char **argv)
 
 static int command_gpio_set(int argc, char **argv)
 {
+	const struct gpio_info *g;
 	char *e;
 	int v, i;
 
@@ -314,10 +409,15 @@ static int command_gpio_set(int argc, char **argv)
 		uart_puts("Unknown signal name.\n");
 		return EC_ERROR_UNKNOWN;
 	}
+	g = signal_info + i;
 
-	if (!signal_info[i].mask) {
-		uart_puts("Signal is not implemented; ignoring request.\n");
-		return EC_SUCCESS;
+	if (!g->mask) {
+		uart_puts("Signal is not implemented.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+	if (!(g->flags & GI_OUTPUT)) {
+		uart_puts("Signal is not an output.\n");
+		return EC_ERROR_UNKNOWN;
 	}
 
 	v = strtoi(argv[2], &e, 0);

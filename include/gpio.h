@@ -42,7 +42,9 @@ enum gpio_signal {
 	GPIO_WRITE_PROTECTn,      /* Write protect input */
 	/* Outputs */
 	GPIO_CPU_PROCHOTn,        /* Force CPU to think it's overheated */
+#ifdef BOARD_bds
 	GPIO_DEBUG_LED,           /* Debug LED */
+#endif
 	GPIO_ENABLE_1_5V_DDR,     /* Enable +1.5V_DDR supply */
 	GPIO_ENABLE_BACKLIGHT,    /* Enable backlight power */
 	GPIO_ENABLE_VCORE,        /* Enable +CPU_CORE and +VGFX_CORE */

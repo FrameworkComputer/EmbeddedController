@@ -62,8 +62,11 @@ static int command_sleep(int argc, char **argv)
 	if (argc >= 3) {
 		clock = strtoi(argv[2], NULL, 10);
 	}
+
+#ifdef BOARD_bds
 	/* remove LED current sink  */
 	gpio_set_level(GPIO_DEBUG_LED, 0);
+#endif
 
 	uart_printf("Going to sleep : level %d clock %d...\n", level, clock);
 	uart_flush_output();

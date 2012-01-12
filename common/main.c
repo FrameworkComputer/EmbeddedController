@@ -38,10 +38,14 @@
 void UserLedBlink(void)
 {
 	while (1) {
+#ifdef BOARD_bds
 		gpio_set_level(GPIO_DEBUG_LED, 1);
+#endif
 		usleep(500000);
 		watchdog_reload();
+#ifdef BOARD_bds
 		gpio_set_level(GPIO_DEBUG_LED, 0);
+#endif
 		usleep(500000);
 		watchdog_reload();
 	}
