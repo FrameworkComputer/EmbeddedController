@@ -209,18 +209,45 @@ static void configure_gpio(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
+#ifdef BOARD_link
+	/* PA6:7 = I2C1 SCL/SDA; PB2:3 = I2C0 SCL/SDA; PB6:7 = I2C5 SCL/SDA */
+
+	/* Enable GPIOA,B modules and delay a few clocks */
+	LM4_SYSTEM_RCGCGPIO |= 0x0003;
+	scratch = LM4_SYSTEM_RCGCGPIO;
+
+	/* Use alternate function 3 for PA6:7, PB2:3, PB6:7 */
+	LM4_GPIO_AFSEL(LM4_GPIO_A) |= 0xc0;
+	LM4_GPIO_AFSEL(LM4_GPIO_B) |= 0xcc;
+
+	LM4_GPIO_PCTL(LM4_GPIO_A) =
+		(LM4_GPIO_PCTL(LM4_GPIO_A) & 0x00ffffff) | 0x33000000;
+	LM4_GPIO_PCTL(LM4_GPIO_B) =
+		(LM4_GPIO_PCTL(LM4_GPIO_B) & 0x00ff00ff) | 0x33003300;
+
+	LM4_GPIO_DEN(LM4_GPIO_A) |= 0xc0;
+	LM4_GPIO_DEN(LM4_GPIO_B) |= 0xcc;
+
+	/* Configure SDA as open-drain.  SCL should not be open-drain,
+	 * since it has an internal pull-up. */
+	LM4_GPIO_ODR(LM4_GPIO_A) |= 0x80;
+	LM4_GPIO_ODR(LM4_GPIO_B) |= 0x88;
+#else
+	/* PG6:7 = I2C5 SCL/SDA */
+
 	/* Enable GPIOG module and delay a few clocks */
 	LM4_SYSTEM_RCGCGPIO |= 0x0040;
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
 	/* Use alternate function 3 for PG6:7 */
 	LM4_GPIO_AFSEL(LM4_GPIO_G) |= 0xc0;
-	LM4_GPIO_PCTL(LM4_GPIO_G) = (LM4_GPIO_PCTL(LM4_GPIO_G) & 0x00ffffff) |
-		0x33000000;
+	LM4_GPIO_PCTL(LM4_GPIO_G) =
+		(LM4_GPIO_PCTL(LM4_GPIO_G) & 0x00ffffff) | 0x33000000;
 	LM4_GPIO_DEN(LM4_GPIO_G) |= 0xc0;
 	/* Configure SDA as open-drain.  SCL should not be open-drain,
 	 * since it has an internal pull-up. */
 	LM4_GPIO_ODR(LM4_GPIO_G) |= 0x80;
+#endif
 }
 
 

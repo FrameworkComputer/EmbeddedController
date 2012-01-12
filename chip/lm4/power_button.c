@@ -49,10 +49,8 @@ static void lid_switch_isr(void)
 {
 	/* TODO: Currently we pass through the LID_SW# pin to R_EC_LID_OUT#
 	 * directly. Modify this if we need to consider more conditions. */
-#ifdef BOARD_bds
 	gpio_set_level(GPIO_PCH_LID_SWITCHn,
 		       gpio_get_level(GPIO_LID_SWITCHn));
-#endif
 }
 
 
@@ -68,12 +66,9 @@ static void lid_switch_isr(void)
  */
 static void set_pwrbtn_to_pch(int high)
 {
-#ifdef BOARD_link
-	gpio_set_level(GPIO_PCH_PWRBTN, high);
-#else
 	uart_printf("[%d] set_pwrbtn_to_pch(%s)\n",
 		    get_time().le.lo, high ? "HIGH" : "LOW");
-#endif
+	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
 
 
