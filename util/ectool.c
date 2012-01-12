@@ -35,8 +35,9 @@ const char help_str[] =
 	"      Serial output test for COM2\n"
 	"  version\n"
 	"      Prints EC version\n"
-	"  temps\n"
-	"      Print temperature\n"
+	"  temps [sensorname]\n"
+	"      Print temperature.\n"
+	"      If sensorname is omitted, print temperature from all sensor.\n"
 	"  pwmgetfanrpm\n"
 	"      Prints current fan RPM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
@@ -445,7 +446,8 @@ int get_temperature(int sensor_id, const char* name)
 
 	p.temp_sensor_id = sensor_id;
 	printf("Reading %s...", name);
-	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS, &p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS,
+			&p, sizeof(p), &r, sizeof(r));
 	if (rv)
 		printf("Error\n");
 	else
@@ -453,12 +455,17 @@ int get_temperature(int sensor_id, const char* name)
 	return rv;
 }
 
-int cmd_temperature(void)
+int cmd_temperature(int argc, char *argv[])
 {
-	int rv1, rv2, rv3;
-	rv1 = get_temperature(TEMP_SENSOR_CASE, "TEMP_SENSOR_CASE");
-	rv2 = get_temperature(TEMP_SENSOR_CASE_DIE, "TEMP_SENSOR_CASE_DIE");
-	rv3 = get_temperature(TEMP_SENSOR_EC_INTERNAL, "TEMP_SENSOR_EC_INTERNAL");
+	int rv1 = 0, rv2 = 0, rv3 = 0;
+	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_CASE") == 0)
+		rv1 = get_temperature(TEMP_SENSOR_CASE, "TEMP_SENSOR_CASE");
+	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_CASE_DIE") == 0)
+		rv2 = get_temperature(TEMP_SENSOR_CASE_DIE,
+				      "TEMP_SENSOR_CASE_DIE");
+	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_EC_INTERNAL") == 0)
+		rv3 = get_temperature(TEMP_SENSOR_EC_INTERNAL,
+				      "TEMP_SENSOR_EC_INTERNAL");
 	if (rv1 || rv2 || rv3)
 		return -1;
 	return 0;
@@ -536,7 +543,7 @@ int main(int argc, char *argv[])
 	if (!strcasecmp(argv[1], "version"))
 		return cmd_version();
 	if (!strcasecmp(argv[1], "temps"))
-		return cmd_temperature();
+		return cmd_temperature(argc - 2, argv + 2);
 	if (!strcasecmp(argv[1], "pwmgetfanrpm"))
 	        return cmd_pwm_get_fan_rpm();
 	if (!strcasecmp(argv[1], "pwmsetfanrpm"))
