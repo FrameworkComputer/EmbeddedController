@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "lpc_commands.h"
-#include "temp_sensor.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 /* Don't use a macro where an inline will do... */
@@ -35,9 +34,8 @@ const char help_str[] =
 	"      Serial output test for COM2\n"
 	"  version\n"
 	"      Prints EC version\n"
-	"  temps [sensorname]\n"
+	"  temps <sensorid>\n"
 	"      Print temperature.\n"
-	"      If sensorname is omitted, print temperature from all sensor.\n"
 	"  pwmgetfanrpm\n"
 	"      Prints current fan RPM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
@@ -438,14 +436,27 @@ int cmd_serial_test(int argc, char *argv[])
 	return 0;
 }
 
-int get_temperature(int sensor_id, const char* name)
+int cmd_temperature(int argc, char *argv[])
 {
 	struct lpc_params_temp_sensor_get_readings p;
 	struct lpc_response_temp_sensor_get_readings r;
 	int rv;
+	int id;
+	char *e;
 
-	p.temp_sensor_id = sensor_id;
-	printf("Reading %s...", name);
+	if (argc != 1) {
+		fprintf(stderr, "Usage: temps <sensorid>\n");
+		return -1;
+	}
+
+	id = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad sensor ID.\n");
+		return -1;
+	}
+
+	p.temp_sensor_id = id;
+	printf("Reading temperature...");
 	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS,
 			&p, sizeof(p), &r, sizeof(r));
 	if (rv)
@@ -453,22 +464,6 @@ int get_temperature(int sensor_id, const char* name)
 	else
 		printf("%d\n", r.value);
 	return rv;
-}
-
-int cmd_temperature(int argc, char *argv[])
-{
-	int rv1 = 0, rv2 = 0, rv3 = 0;
-	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_CASE") == 0)
-		rv1 = get_temperature(TEMP_SENSOR_CASE, "TEMP_SENSOR_CASE");
-	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_CASE_DIE") == 0)
-		rv2 = get_temperature(TEMP_SENSOR_CASE_DIE,
-				      "TEMP_SENSOR_CASE_DIE");
-	if (argc == 0 || strcasecmp(argv[0], "TEMP_SENSOR_EC_INTERNAL") == 0)
-		rv3 = get_temperature(TEMP_SENSOR_EC_INTERNAL,
-				      "TEMP_SENSOR_EC_INTERNAL");
-	if (rv1 || rv2 || rv3)
-		return -1;
-	return 0;
 }
 
 int cmd_pwm_get_fan_rpm(void)

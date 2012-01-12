@@ -31,7 +31,8 @@
 #include "vboot.h"
 #include "watchdog.h"
 #include "usb_charge.h"
-
+#include "chip_temp_sensor.h"
+#include "charger.h"
 
 int main(void)
 {
@@ -75,10 +76,12 @@ int main(void)
 	i2c_init();
 #ifdef CONFIG_TEMP_SENSOR
 	temp_sensor_init();
+	chip_temp_sensor_init();
 #endif
 	power_button_init();
 	adc_init();
 	usb_charge_init();
+	charger_init();
 
 	/* Print the reset cause */
 	uart_printf("\n\n--- Chrome EC initialized! ---\n");

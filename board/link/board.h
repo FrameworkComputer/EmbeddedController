@@ -138,6 +138,23 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
+enum temp_sensor_id {
+	/* I2C die temperature sensor near CPU */
+	TEMP_SENSOR_I2C_DIE_NEAR_CPU = 0,
+	/* PCH temperature sensor */
+	TEMP_SENSOR_I2C_DIE_NEAR_PCH,
+	/* DDR memory temperature sensor */
+	TEMP_SENSOR_I2C_DIE_NEAR_DDR,
+	/* Battery charger temperature sensor */
+	TEMP_SENSOR_I2C_DIE_NEAR_CHARGER,
+	/* EC internal temperature sensor */
+	TEMP_SENSOR_EC_INTERNAL,
+
+	/* TODO: I2C temperature sensors. */
+
+	TEMP_SENSOR_COUNT
+};
+
 void configure_board(void);
 
 #endif /* __BOARD_H */
