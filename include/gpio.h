@@ -40,6 +40,9 @@ struct gpio_info {
 	int mask;         /* Bitmask on that port (0x01 - 0x80; 0x00 =
 			   * signal not implemented) */
 	uint32_t flags;   /* Flags (GPIO_*) */
+	/* Interrupt handler.  If non-NULL, and the signal's interrupt is
+	 * enabled, this will be called in the context of the GPIO interrupt
+	 * handler. */
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
@@ -60,6 +63,11 @@ int gpio_get_level(enum gpio_signal signal);
 /* Sets the current value of a signal.  Returns error if the signal is
  * not supported or is an input signal. */
 int gpio_set_level(enum gpio_signal signal, int value);
+
+/* Enables interrupts for the signal.  The signal must have been defined with
+ * an interrupt handler.  Normally called by the module which handles the
+ * interrupt, once it's ready to start processing interrupts. */
+int gpio_enable_interrupt(enum gpio_signal signal);
 
 /* Set alternate function <func> for GPIO <port> (LM4_GPIO_*) and <mask>.  If
  * func==0, configures the specified GPIOs for normal GPIO operation.

@@ -38,7 +38,6 @@ static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
 /* The next timestamp to move onto next state if power button is still pressed.
  */
 static timestamp_t pwrbtn_next_ts = {0};
-static int init_called;
 
 #define PWRBTN_DELAY_T0 32000  /* 32ms */
 #define PWRBTN_DELAY_T1 (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
@@ -144,13 +143,6 @@ void power_button_interrupt(enum gpio_signal signal)
 	timestamp_t timelimit;
 	int d = (signal == GPIO_LID_SWITCHn ? DEBOUNCE_LID : DEBOUNCE_PWRBTN);
 
-	/* TODO: (crosbug.com/p/7456) there's currently a race condition where
-	 * we can get an interrupt before clock_init() has been called.  In
-	 * this case, get_time crashes().  Work around this by checking if our
-	 * init has been called and ignoring interrupts if so. */
-	if (!init_called)
-		return;
-
 	/* Set 30 ms debounce timelimit */
 	timelimit = get_time();
 	timelimit.val += 30000;
@@ -168,7 +160,9 @@ int power_button_init(void)
 	debounce_isr[DEBOUNCE_PWRBTN].started = 0;
 	debounce_isr[DEBOUNCE_PWRBTN].callback = power_button_isr;
 
-	init_called = 1;
+	/* Enable interrupts, now that we've initialized */
+	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
+	gpio_enable_interrupt(GPIO_LID_SWITCHn);
 
 	return EC_SUCCESS;
 }

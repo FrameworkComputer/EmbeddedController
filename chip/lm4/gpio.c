@@ -113,8 +113,7 @@ int gpio_pre_init(void)
 			LM4_GPIO_IEV(g->port) |= g->mask;
 		if (g->flags & GPIO_INT_BOTH)
 			LM4_GPIO_IBE(g->port) |= g->mask;
-		if (g->flags & GPIO_INT_ANY)
-			LM4_GPIO_IM(g->port) |= g->mask;
+		/* Interrupt is enabled by gpio_enable_interrupt() */
 	}
 
 	return EC_SUCCESS;
@@ -175,6 +174,19 @@ int gpio_set_level(enum gpio_signal signal, int value)
 	return EC_SUCCESS;
 }
 
+
+int gpio_enable_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	/* Fail if no interrupt handler */
+	if (!g->irq_handler)
+		return EC_ERROR_UNKNOWN;
+
+	LM4_GPIO_IM(g->port) |= g->mask;
+	return EC_SUCCESS;
+}
+
 /*****************************************************************************/
 /* Interrupt handlers */
 
@@ -189,17 +201,26 @@ static void gpio_interrupt(int port, uint32_t mis)
 	}
 }
 
+/* Handlers for each GPIO port.  These read and clear the interrupt bits for
+ * the port, then call the master handler above. */
 
 static void __gpio_c_interrupt(void)
 {
+	/* Read and clear the interrupt status */
 	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_C);
-
-	/* Clear the interrupt bits we received */
 	LM4_GPIO_ICR(LM4_GPIO_C) = mis;
-
 	gpio_interrupt(LM4_GPIO_C, mis);
 }
 DECLARE_IRQ(LM4_IRQ_GPIOC, __gpio_c_interrupt, 1);
+
+static void __gpio_k_interrupt(void)
+{
+	/* Read and clear the interrupt status */
+	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_K);
+	LM4_GPIO_ICR(LM4_GPIO_K) = mis;
+	gpio_interrupt(LM4_GPIO_K, mis);
+}
+DECLARE_IRQ(LM4_IRQ_GPIOK, __gpio_k_interrupt, 1);
 
 /*****************************************************************************/
 /* Console commands */
