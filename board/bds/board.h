@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -53,6 +53,22 @@
 #define I2C_SPEED_CHARGER 100
 #define I2C_SPEED_THERMAL 400  /* TODO: TMP007 supports 3.4Mbps
 				  operation; use faster speed? */
+/* GPIO signal list */
+enum gpio_signal {
+	/* Inputs with interrupt handlers are first for efficiency */
+	GPIO_POWER_BUTTONn = 0,   /* Power button */
+	GPIO_LID_SWITCHn,         /* Lid switch */
+	/* Other inputs */
+	/* Outputs */
+	GPIO_DEBUG_LED,           /* Debug LED */
+	/* Signals which aren't implemented on BDS but we'll emulate anyway, to
+	 * make it more convenient to debug other code. */
+	GPIO_PCH_LID_SWITCHn,     /* Lid switch output to PCH */
+	GPIO_PCH_PWRBTNn,         /* Power button output to PCH */
+
+	/* Number of GPIOs; not an actual GPIO */
+	GPIO_COUNT
+};
 
 void configure_board(void);
 

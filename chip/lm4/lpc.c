@@ -23,10 +23,9 @@ static void configure_gpio(void)
 	/* Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins. */
 	/* I/O: PL0:3 = command/address/data
 	 * inp: PL4 (frame), PL5 (reset), PM0 (powerdown), PM5 (clock)
-	 * out: PM1 (sci), PM2 (clkrun), PM4 (serirq) */
-	/* TODO: PM2 is NMI#; not needed */
+	 * out: PM1 (sci), PM4 (serirq) */
 	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
-	gpio_set_alternate_function(LM4_GPIO_M, 0x37, 0x0f);
+	gpio_set_alternate_function(LM4_GPIO_M, 0x33, 0x0f);
 
 #ifdef BOARD_bds
 	/* Set the drive strength to 8mA for serirq only */
