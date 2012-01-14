@@ -46,6 +46,16 @@
 /* TODO: assign real ADC inputs */
 #define ADC_IN0 11  /* Charger current */
 
+enum adc_channel
+{
+	/* EC internal die temperature in degrees K. */
+	ADC_CH_EC_TEMP = 0,
+	/* Charger current in mA. */
+	ADC_CH_CHARGER_CURRENT,
+
+	ADC_CH_COUNT
+};
+
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 1

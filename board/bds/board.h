@@ -46,6 +46,16 @@
 /* TODO: really just need a lookup table for channels to inputs */
 #define ADC_IN0 0  /* Turn POT on badger board */
 
+enum adc_channel
+{
+	/* EC internal die temperature in degrees K. */
+	ADC_CH_EC_TEMP = 0,
+	/* Treat BDS pot input as charger current. */
+	ADC_CH_CHARGER_CURRENT,
+
+	ADC_CH_COUNT
+};
+
 /* I2C ports */
 #define I2C_PORT_BATTERY 5  // port 0 / PB2:3 on Link, open on badger
 #define I2C_PORT_CHARGER 5  // port 1 / PA6:7 on Link, user LED on badger

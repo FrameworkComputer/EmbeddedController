@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-/* ADC module for Chrome EC */
+/* LM4-specific ADC module for Chrome EC */
 
-#include "board.h"
+#include "lm4_adc.h"
 #include "console.h"
 #include "adc.h"
 #include "timer.h"
@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "util.h"
 
+extern const struct adc_t adc_channels[ADC_CH_COUNT];
 
 static void configure_gpio(void)
 {
@@ -22,16 +23,13 @@ static void configure_gpio(void)
 	LM4_SYSTEM_RCGCGPIO |= 0x0010;
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
-        /* Use analog function for PE3 (AIN0) */
+	/* Use analog function for PE3 (AIN0) */
 	LM4_GPIO_DEN(LM4_GPIO_E) &= ~0x08;
 	LM4_GPIO_AMSEL(LM4_GPIO_E) |= 0x08;
 }
 
-
-int adc_read(enum adc_channel ch)
+int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
 	/* TODO: right now we have only a single channel so this is
 	 * simple.  When we have multiple channels, should we...
 	 *
@@ -44,84 +42,95 @@ int adc_read(enum adc_channel ch)
 	 * callers; doesn't matter if just used for debugging.
 	 *
 	 * 3) Both? */
-	if (ch != ADC_CH_POT)
-		return ADC_READ_ERROR;
-
-	/* Empty the FIFO of any previous results */
-	while (!(LM4_ADC_SSFSTAT(0) & 0x100))
-		scratch = LM4_ADC_SSFIFO(0);
-
-	/* Clear the interrupt status */
-	LM4_ADC_ADCISC |= 0x01;
-
-	/* Initiate sample sequence */
-	LM4_ADC_ADCPSSI |= 0x01;
-
-	/* Wait for interrupt */
-	/* TODO: use a real interrupt */
-	while (!(LM4_ADC_ADCRIS & 0x01));
-
-	/* Read the FIFO */
-	return LM4_ADC_SSFIFO(0);
-}
-
-
-int adc_read_ec_temperature(void)
-{
 	volatile uint32_t scratch  __attribute__((unused));
-	int a;
 
 	/* Empty the FIFO of any previous results */
-	while (!(LM4_ADC_SSFSTAT(3) & 0x100))
-		scratch = LM4_ADC_SSFIFO(3);
+	while (!(LM4_ADC_SSFSTAT(seq) & 0x100))
+		scratch = LM4_ADC_SSFIFO(seq);
 
 	/* Clear the interrupt status */
-	LM4_ADC_ADCISC |= 0x08;
+	LM4_ADC_ADCISC |= 0x01 << seq;
 
 	/* Initiate sample sequence */
-	LM4_ADC_ADCPSSI |= 0x08;
+	LM4_ADC_ADCPSSI |= 0x01 << seq;
 
 	/* Wait for interrupt */
 	/* TODO: use a real interrupt */
 	/* TODO: timeout */
-	while (!(LM4_ADC_ADCRIS & 0x08));
+	while (!(LM4_ADC_ADCRIS & (0x01 << seq)));
 
 	/* Read the FIFO and convert to temperature */
-	a = LM4_ADC_SSFIFO(3);
-	return 273 + (295 - (225 * 2 * a) / ADC_READ_MAX) / 2;
+	return LM4_ADC_SSFIFO(seq);
 }
 
+int lm4_adc_configure(enum lm4_adc_sequencer seq,
+		      int ain_id,
+		      int ssctl)
+{
+	volatile uint32_t scratch  __attribute__((unused));
+	/* TODO: set up clock using ADCCC register? */
+	/* Configure sample sequencer */
+	LM4_ADC_ADCACTSS &= ~(0x01 << seq);
+	/* Trigger sequencer by processor request */
+	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & ~(0xf << (seq * 4))) | 0x00;
+	/* Sample internal temp sensor */
+	if (ain_id != LM4_AIN_NONE) {
+		LM4_ADC_SSMUX(seq) = ain_id & 0xf;
+		LM4_ADC_SSEMUX(seq) = ain_id >> 4;
+	}
+	else {
+		LM4_ADC_SSMUX(seq) = 0x00;
+		LM4_ADC_SSEMUX(seq) = 0x00;
+	}
+	LM4_ADC_SSCTL(seq) = ssctl;
+	/* Enable sample sequencer */
+	LM4_ADC_ADCACTSS |= 0x01 << seq;
+
+	return EC_SUCCESS;
+}
+
+int adc_read_channel(enum adc_channel ch)
+{
+	const struct adc_t *adc = adc_channels + ch;
+	int rv = lm4_adc_flush_and_read(adc->sequencer);
+	return rv * adc->factor_mul / adc->factor_div + adc->shift;
+}
 
 /*****************************************************************************/
 /* Console commands */
 
-static int command_adc(int argc, char **argv)
-{
-	uart_printf("ADC channel %d = 0x%03x\n", ADC_IN0,
-		    adc_read(ADC_CH_POT));
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(adc, command_adc);
-
-
 static int command_ectemp(int argc, char **argv)
 {
-	int t = adc_read_ec_temperature();
+	int t = adc_read_channel(ADC_CH_EC_TEMP);
 	uart_printf("EC temperature is %d K = %d C\n", t, t-273);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
 
+static int command_adc(int argc, char **argv)
+{
+	int i;
 
+	for (i = 0; i < ADC_CH_COUNT; ++i)
+		uart_printf("ADC channel \"%s\" = %d\n",
+			     adc_channels[i].name,
+			     adc_read_channel(i));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(adc, command_adc);
+
+/*****************************************************************************/
 /* Initialization */
 
 int adc_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
+	int i;
+	const struct adc_t *adc;
 
         /* Enable ADC0 module and delay a few clocks */
 	LM4_SYSTEM_RCGCADC |= 0x01;
-	scratch = LM4_SYSTEM_RCGCADC;
+	udelay(1);
 
 	/* Configure GPIOs */
 	configure_gpio();
@@ -130,29 +139,11 @@ int adc_init(void)
 	 * VDDA and GNDA. */
 	LM4_ADC_ADCCTL = 0x01;
 
-	/* TODO: set up clock using ADCCC register? */
-
-	/* Configure sample sequencer 0 */
-	LM4_ADC_ADCACTSS &= ~0x01;
-	/* Trigger SS0 by processor request */
-	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & 0xfffffff0) | 0x00;
-	/* Sample only our one channel */
-	LM4_ADC_SSMUX(0) = ADC_IN0 & 0x0f;
-	LM4_ADC_SSEMUX(0) = (ADC_IN0 >> 4) & 0x0f;
-	LM4_ADC_SSCTL(0) = 0x06;  /* IE0 | END0 */
-	/* Enable sample sequencer 0 */
-	LM4_ADC_ADCACTSS |= 0x01;
-
-	/* Configure sample sequencer 3 */
-	LM4_ADC_ADCACTSS &= ~0x08;
-	/* Trigger SS3 by processor request */
-	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & 0xffffff0f) | 0x00;
-	/* Sample internal temp sensor */
-	LM4_ADC_SSMUX(3) = 0x00;
-	LM4_ADC_SSEMUX(3) = 0x00;
-	LM4_ADC_SSCTL(3) = 0x0e;  /* TS0 | IE0 | END0 */
-	/* Enable sample sequencer 3 */
-	LM4_ADC_ADCACTSS |= 0x08;
+	/* Initialize ADC sequencer */
+	for (i = 0; i < ADC_CH_COUNT; ++i) {
+		adc = adc_channels + i;
+		lm4_adc_configure(adc->sequencer, adc->channel, adc->flag);
+	}
 
 	return EC_SUCCESS;
 }
