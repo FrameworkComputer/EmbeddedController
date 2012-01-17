@@ -289,10 +289,6 @@ static void __nvic_init_irqs(void)
 				(LM4_NVIC_PRI(irq / 4) &
 				 ~(0x7 << prio_shift)) |
 				(prio << prio_shift);
-
-		/* TODO: enabling all interrupts here causes a race condition
-		   between an interrupt and setting up the handler for it. */
-		task_enable_irq(irq);
 	}
 }
 

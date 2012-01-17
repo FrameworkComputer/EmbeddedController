@@ -116,6 +116,27 @@ int gpio_pre_init(void)
 		/* Interrupt is enabled by gpio_enable_interrupt() */
 	}
 
+	/* Enable IRQs now that pins are set up */
+	task_enable_irq(LM4_IRQ_GPIOA);
+	task_enable_irq(LM4_IRQ_GPIOB);
+	task_enable_irq(LM4_IRQ_GPIOC);
+	task_enable_irq(LM4_IRQ_GPIOD);
+	task_enable_irq(LM4_IRQ_GPIOE);
+	task_enable_irq(LM4_IRQ_GPIOF);
+	task_enable_irq(LM4_IRQ_GPIOG);
+#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPIOH)
+	task_enable_irq(LM4_IRQ_GPIOH);
+#endif
+	task_enable_irq(LM4_IRQ_GPIOJ);
+	task_enable_irq(LM4_IRQ_GPIOK);
+	task_enable_irq(LM4_IRQ_GPIOL);
+	task_enable_irq(LM4_IRQ_GPIOM);
+#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+	task_enable_irq(LM4_IRQ_GPION);
+#endif
+	task_enable_irq(LM4_IRQ_GPIOP);
+	task_enable_irq(LM4_IRQ_GPIOQ);
+
 	return EC_SUCCESS;
 }
 
@@ -203,24 +224,58 @@ static void gpio_interrupt(int port, uint32_t mis)
 
 /* Handlers for each GPIO port.  These read and clear the interrupt bits for
  * the port, then call the master handler above. */
+#define GPIO_IRQ_FUNC(irqfunc, gpiobase)		\
+	static void irqfunc(void)			\
+	{						\
+		uint32_t mis = LM4_GPIO_MIS(gpiobase);	\
+		LM4_GPIO_ICR(gpiobase) = mis;		\
+		gpio_interrupt(gpiobase, mis);		\
+	}
 
-static void __gpio_c_interrupt(void)
-{
-	/* Read and clear the interrupt status */
-	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_C);
-	LM4_GPIO_ICR(LM4_GPIO_C) = mis;
-	gpio_interrupt(LM4_GPIO_C, mis);
-}
+GPIO_IRQ_FUNC(__gpio_a_interrupt, LM4_GPIO_A);
+GPIO_IRQ_FUNC(__gpio_b_interrupt, LM4_GPIO_B);
+GPIO_IRQ_FUNC(__gpio_c_interrupt, LM4_GPIO_C);
+GPIO_IRQ_FUNC(__gpio_d_interrupt, LM4_GPIO_D);
+GPIO_IRQ_FUNC(__gpio_e_interrupt, LM4_GPIO_E);
+GPIO_IRQ_FUNC(__gpio_f_interrupt, LM4_GPIO_F);
+GPIO_IRQ_FUNC(__gpio_g_interrupt, LM4_GPIO_G);
+#if (KB_SCAN_ROW_GPIO != LM4_GPIO_H)
+GPIO_IRQ_FUNC(__gpio_h_interrupt, LM4_GPIO_H);
+#endif
+GPIO_IRQ_FUNC(__gpio_j_interrupt, LM4_GPIO_J);
+GPIO_IRQ_FUNC(__gpio_k_interrupt, LM4_GPIO_K);
+GPIO_IRQ_FUNC(__gpio_l_interrupt, LM4_GPIO_L);
+GPIO_IRQ_FUNC(__gpio_m_interrupt, LM4_GPIO_M);
+#if (KB_SCAN_ROW_GPIO != LM4_GPIO_N)
+GPIO_IRQ_FUNC(__gpio_n_interrupt, LM4_GPIO_N);
+#endif
+GPIO_IRQ_FUNC(__gpio_p_interrupt, LM4_GPIO_P);
+GPIO_IRQ_FUNC(__gpio_q_interrupt, LM4_GPIO_Q);
+
+#undef GPIO_IRQ_FUNC
+
+/* Declare IRQs */
+/* TODO: nesting this macro inside the GPIO_IRQ_FUNC macro works poorly because
+ * DECLARE_IRQ() stringizes its inputs. */
+DECLARE_IRQ(LM4_IRQ_GPIOA, __gpio_a_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOB, __gpio_b_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOC, __gpio_c_interrupt, 1);
-
-static void __gpio_k_interrupt(void)
-{
-	/* Read and clear the interrupt status */
-	uint32_t mis = LM4_GPIO_MIS(LM4_GPIO_K);
-	LM4_GPIO_ICR(LM4_GPIO_K) = mis;
-	gpio_interrupt(LM4_GPIO_K, mis);
-}
+DECLARE_IRQ(LM4_IRQ_GPIOD, __gpio_d_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOE, __gpio_e_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOF, __gpio_f_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOG, __gpio_g_interrupt, 1);
+#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPIOH)
+DECLARE_IRQ(LM4_IRQ_GPIOH, __gpio_h_interrupt, 1);
+#endif
+DECLARE_IRQ(LM4_IRQ_GPIOJ, __gpio_j_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOK, __gpio_k_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOL, __gpio_l_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOM, __gpio_m_interrupt, 1);
+#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+DECLARE_IRQ(LM4_IRQ_GPION, __gpio_n_interrupt, 1);
+#endif
+DECLARE_IRQ(LM4_IRQ_GPIOP, __gpio_p_interrupt, 1);
+DECLARE_IRQ(LM4_IRQ_GPIOQ, __gpio_q_interrupt, 1);
 
 /*****************************************************************************/
 /* Console commands */

@@ -205,6 +205,10 @@ int uart_init(void)
 		LM4_UART_CTL(ch) |= 0x0001;
 	}
 
+	/* Enable interrupts */
+	task_enable_irq(LM4_IRQ_UART0);
+	task_enable_irq(LM4_IRQ_UART1);
+
 	/* Print hello on UART1 for debugging */
 	/* TODO: remove in production */
 	{

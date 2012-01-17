@@ -115,6 +115,9 @@ int lpc_init(void)
 		(1 << LPC_CH_USER) |
 		(1 << LPC_CH_COMX);
 
+	/* Enable LPC interrupt */
+	task_enable_irq(LM4_IRQ_LPC);
+
 	return EC_SUCCESS;
 }
 

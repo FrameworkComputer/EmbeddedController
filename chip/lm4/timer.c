@@ -125,7 +125,8 @@ static void __hw_clock_source_init(void)
 {
 	volatile uint32_t scratch __attribute__((unused));
 
-	/* use WTIMER0 configured as a free running counter with 1us period */
+	/* Use WTIMER0 (timer 6) configured as a free running counter with 1 us
+	 * period */
 
 	/* Enable WTIMER0 clock */
 	LM4_SYSTEM_RCGCWTIMER |= 1;
@@ -146,6 +147,9 @@ static void __hw_clock_source_init(void)
 	LM4_TIMER_TAILR(6) = 0xffffffff;
 	/* Starts counting in timer A */
 	LM4_TIMER_CTL(6) |= 0x1;
+
+	/* Enable interrupt */
+	task_enable_irq(LM4_IRQ_TIMERW0A);
 }
 
 

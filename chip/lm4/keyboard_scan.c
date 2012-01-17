@@ -5,6 +5,7 @@
 
 /* Keyboard scanner module for Chrome EC */
 
+#include "board.h"
 #include "console.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
@@ -17,7 +18,7 @@
 
 /* Notes:
  *
- * EVT board:
+ * Link proto0 board:
  *
  *   Columns (outputs):
  *      KSO0 - KSO7  = PP0:7
@@ -30,7 +31,7 @@
  *      PWR_BTN#     = PK7
  *
  *
- * Hacked board:
+ * BDS board:
  *
  *   Columns (outputs):
  *      KSO0 - KSO7  = PQ0:7
@@ -53,8 +54,6 @@ enum COLUMN_INDEX {
 #define POLLING_MODE_TIMEOUT 1000000  /* 1 sec */
 #define SCAN_LOOP_DELAY 10000         /* 10 ms */
 
-#undef EVT  /* FIXME: define this for EVT board. */
-
 #define KB_COLS 13
 
 static uint8_t raw_state[KB_COLS];
@@ -76,7 +75,7 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 /* Drives the specified column low; other columns are tri-stated */
 static void select_column(int col)
 {
-#if defined(EVT)
+#ifdef BOARD_link
 	if (col == COLUMN_ASSERT_ALL) {
 		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
 		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
@@ -142,7 +141,7 @@ int keyboard_scan_init(void)
 	int i;
 
         /* Enable GPIOs */
-#if defined(EVT)
+#ifdef BOARD_link
 	/* Enable clock to GPIO modules C,H,K,N,P,Q */
 	LM4_SYSTEM_RCGCGPIO |= 0x7284;
 #else
@@ -155,7 +154,7 @@ int keyboard_scan_init(void)
          * PK0:3, PN2, PQ0:7. */
 	LM4_GPIO_AFSEL(LM4_GPIO_C) &= ~0x20;
 	LM4_GPIO_DEN(LM4_GPIO_C) |= 0x20;
-#if defined(EVT)
+#ifdef BOARD_link
 	LM4_GPIO_AFSEL(LM4_GPIO_N) &= 0xff;  /* KSI[7:0] */
 	LM4_GPIO_DEN(LM4_GPIO_N) |= 0xff;
 	LM4_GPIO_AFSEL(LM4_GPIO_P) &= 0xff;  /* KSO[7:0] */
@@ -173,15 +172,9 @@ int keyboard_scan_init(void)
 	LM4_GPIO_DEN(LM4_GPIO_Q) = 0xff;
 #endif
 
-#if defined(EVT)
-	/* Set PN0:7 as inputs with pull-up */
-	LM4_GPIO_DIR(LM4_GPIO_N) = 0;
-	LM4_GPIO_PUR(LM4_GPIO_N) = 0xff;
-#else
-	/* Set PH0:7 as inputs with pull-up */
-	LM4_GPIO_DIR(LM4_GPIO_H) = 0;
-	LM4_GPIO_PUR(LM4_GPIO_H) = 0xff;
-#endif
+	/* Set row inputs with pull-up */
+	LM4_GPIO_DIR(KB_SCAN_ROW_GPIO) = 0;
+	LM4_GPIO_PUR(KB_SCAN_ROW_GPIO) = 0xff;
 
 	/* Set PC5 as input with pull-up. */
 	/* TODO: no need for pull-up on real circuit, since it'll be
@@ -200,18 +193,16 @@ int keyboard_scan_init(void)
 	 * key mask properly */
 	actual_key_mask = actual_key_masks[0];
 
+	/* Enable interrupts, now that we're set up */
+	task_enable_irq(KB_SCAN_ROW_IRQ);
+
 	return EC_SUCCESS;
 }
 
 
 static uint32_t clear_matrix_interrupt_status(void) {
-#if defined(EVT)
-	uint32_t port = LM4_GPIO_N;
-#else
-	uint32_t port = LM4_GPIO_H;
-#endif
-	uint32_t ris = LM4_GPIO_RIS(port);
-	LM4_GPIO_ICR(port) = ris;
+	uint32_t ris = LM4_GPIO_RIS(KB_SCAN_ROW_GPIO);
+	LM4_GPIO_ICR(KB_SCAN_ROW_GPIO) = ris;
 
 	return ris;
 }
@@ -219,33 +210,23 @@ static uint32_t clear_matrix_interrupt_status(void) {
 
 void wait_for_interrupt(void)
 {
-	uart_printf("Enter %s() ...\n", __func__);
+	uart_printf("[kbscan %s()]\n", __func__);
 
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
 	select_column(COLUMN_ASSERT_ALL);
 	clear_matrix_interrupt_status();
 
-#if defined(EVT)
-	LM4_GPIO_IS(LM4_GPIO_N) = 0;      /* 0: edge-sensitive */
-	LM4_GPIO_IBE(LM4_GPIO_N) = 0xff;  /* 1: both edge */
-	LM4_GPIO_IM(LM4_GPIO_N) = 0xff;   /* 1: enable interrupt */
-#else
-	LM4_GPIO_IS(LM4_GPIO_H) = 0;      /* 0: edge-sensitive */
-	LM4_GPIO_IBE(LM4_GPIO_H) = 0xff;  /* 1: both edge */
-	LM4_GPIO_IM(LM4_GPIO_H) = 0xff;   /* 1: enable interrupt */
-#endif
+	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;      /* 0: edge-sensitive */
+	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;  /* 1: both edge */
+	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0xff;   /* 1: enable interrupt */
 }
 
 
 void enter_polling_mode(void)
 {
-	uart_printf("Enter %s() ...\n", __func__);
-#if defined(EVT)
-	LM4_GPIO_IM(LM4_GPIO_N) = 0;  /* 0: disable interrupt */
-#else
-	LM4_GPIO_IM(LM4_GPIO_H) = 0;  /* 0: disable interrupt */
-#endif
+	uart_printf("[kbscan %s()]\n", __func__);
+	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0;  /* 0: disable interrupt */
 	select_column(COLUMN_TRI_STATE_ALL);
 }
 
@@ -263,11 +244,7 @@ static int check_keys_changed(void)
 		select_column(c);
 		usleep(20);
 		/* Read the row state */
-#if defined(EVT)
-		r = LM4_GPIO_DATA(LM4_GPIO_N, 0xff);
-#else
-		r = LM4_GPIO_DATA(LM4_GPIO_H, 0xff);
-#endif
+		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
 		/* Invert it so 0=not pressed, 1=pressed */
 		r ^= 0xff;
 		/* Mask off keys that don't exist so they never show
@@ -361,8 +338,14 @@ static void matrix_interrupt(void)
 	}
 }
 
-#if defined(EVT)
+/* TODO: DECLARE_IRQ stringizing plays poorly with other macros, so need this
+ * ugly workaround */
+#if (KB_SCAN_ROW_IRQ == LM4_IRQ_GPIOH)
+DECLARE_IRQ(LM4_IRQ_GPIOH, matrix_interrupt, 3);
+#elif (KB_SCAN_ROW_IRQ == LM4_IRQ_GPION)
 DECLARE_IRQ(LM4_IRQ_GPION, matrix_interrupt, 3);
 #else
-DECLARE_IRQ(LM4_IRQ_GPIOH, matrix_interrupt, 3);
+#error "Unsupported KB_SCAN_ROW_IRQ"
+/* If you add a board with different GPIO, also make sure supporting code in
+ * gpio.c is changed so the interrupts don't fight... */
 #endif

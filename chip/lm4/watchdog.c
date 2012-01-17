@@ -130,5 +130,8 @@ int watchdog_init(int period_ms)
 	/* lock watchdog registers against unintended accesses */
 	LM4_WATCHDOG_LOCK(0) = 0xdeaddead;
 
+	/* Enable watchdog interrupt */
+	task_enable_irq(LM4_IRQ_WATCHDOG);
+
 	return EC_SUCCESS;
 }

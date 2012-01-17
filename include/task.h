@@ -92,9 +92,9 @@ struct irq_priority {
  * ensures it is enabled in the interrupt controller with the right priority.
  *
  * Note that you MUST pass irq using a LM4_IRQ_* constant from register.h, not
- * as a number, because it's stringized and matched up with a weak reference
- * from init.S.  (This is still better than passing it as a raw number, because
- * that's more typo-prone.)
+ * as a number, and not as some other #defined constant, because it's
+ * stringized and matched up with a weak reference from init.S.  (This is still
+ * better than passing it as a raw number, because that's more typo-prone.)
  */
 #define DECLARE_IRQ(irq, routine, priority)                     \
 	void irq_##irq##_handler(void)				\

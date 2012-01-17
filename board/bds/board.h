@@ -53,6 +53,11 @@
 #define I2C_SPEED_CHARGER 100
 #define I2C_SPEED_THERMAL 400  /* TODO: TMP007 supports 3.4Mbps
 				  operation; use faster speed? */
+
+/* Keyboard scanner uses an entire GPIO bank for row inputs */
+#define KB_SCAN_ROW_IRQ  LM4_IRQ_GPIOH
+#define KB_SCAN_ROW_GPIO LM4_GPIO_H
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
