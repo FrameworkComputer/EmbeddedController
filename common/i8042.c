@@ -9,8 +9,7 @@
 #include "common.h"
 #include "i8042.h"
 #include "keyboard.h"
-/* TODO: Code in common.c should not directly access chip registers */
-#include "registers.h"
+#include "lpc.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -32,14 +31,17 @@ static int tail_to_buffer = 0;
 #define HOST_BUFFER_SIZE (16)
 static uint8_t to_host_buffer[HOST_BUFFER_SIZE];
 
+static int i8042_irq_enabled = 0;
 
+
+/* Reset all i8042 buffer */
 void i8042_init()
 {
 	head_to_buffer = tail_to_buffer = 0;
-	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;  /* clear the TOH bit */
 }
 
 
+/* Called by the chip-specific code when host sedns a byte to port 0x60. */
 void i8042_receives_data(int data)
 {
 	int ret_len;
@@ -52,6 +54,7 @@ void i8042_receives_data(int data)
 }
 
 
+/* Called by the chip-specific code when host sedns a byte to port 0x64. */
 void i8042_receives_command(int cmd)
 {
 	int ret_len;
@@ -64,6 +67,7 @@ void i8042_receives_command(int cmd)
 }
 
 
+/* Called by EC common code to send bytes to host via port 0x60. */
 static void enq_to_host(int len, uint8_t *to_host)
 {
 	int from, to;
@@ -77,6 +81,18 @@ static void enq_to_host(int len, uint8_t *to_host)
 		tail_to_buffer = (tail_to_buffer + len) % HOST_BUFFER_SIZE;
 	}
 	/* end of atomic protection */
+}
+
+
+/* Called by common/keyboard.c when the host wants to receive keyboard IRQ
+ * (or not).
+ */
+void i8042_enable_keyboard_irq(void) {
+	i8042_irq_enabled = 1;
+}
+
+void i8042_disable_keyboard_irq(void) {
+	i8042_irq_enabled = 0;
 }
 
 
@@ -99,10 +115,11 @@ void i8042_command_task(void)
 
 			/* if the host still didn't read that away,
 			   try next time. */
-			if (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) {
+			if (lpc_keyboard_has_char()) {
 #if I8042_DEBUG >= 5
 				uart_printf("[%d] i8042_command_task() "
-					    "cannot send to host due to TOH\n",
+					    "cannot send to host due to host "
+					    "havn't taken away.\n",
 					    get_time().le.lo);
 #endif
 				break;
@@ -114,8 +131,8 @@ void i8042_command_task(void)
 				(head_to_buffer + 1) % HOST_BUFFER_SIZE;
 			/* end of atomic protection */
 
-			/* Write to host. TOH is set automatically. */
-			LPC_POOL_KEYBOARD[1] = chr;
+			/* Write to host. */
+			lpc_keyboard_put_char(chr, i8042_irq_enabled);
 #if I8042_DEBUG >= 4
 			uart_printf("[%d] i8042_command_task() "
 				    "sends to host: 0x%02x\n",

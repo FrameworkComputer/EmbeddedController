@@ -27,13 +27,14 @@
 /*
  * i8042 global settings.
  */
-static int i8042_enabled = 0;  /* default the keyboard is disabled. */
+static int keyboard_enabled = 0;  /* default the keyboard is disabled. */
 static uint8_t resend_command[MAX_SCAN_CODE_LEN];
 static uint8_t resend_command_len = 0;
 static uint8_t controller_ram_address;
 static uint8_t controller_ram[0x20] = {
-  I8042_AUX_DIS,  /* the so called "command byte" */
-                  /* 0x01 - 0x1f are controller RAM */
+  /* the so called "command byte" */
+  I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS,
+  /* 0x01 - 0x1f are controller RAM */
 };
 
 /*
@@ -120,6 +121,12 @@ static enum ec_error_list matrix_callback(
   }
 
   *len = 0;
+
+  if (controller_ram[0] & I8042_XLATE) {
+    /* If the keyboard translation is enabled,
+     * then always generates set 1. */
+    code_set = SCANCODE_SET_1;
+  }
 
   switch (code_set) {
   case SCANCODE_SET_1:
@@ -215,6 +222,53 @@ void keyboard_state_changed(int row, int col, int is_pressed) {
 }
 
 
+void keyboard_enable(int enable) {
+  if (!keyboard_enabled && enable) {
+    /* enable */
+  } else if (keyboard_enabled && !enable) {
+    /* disable */
+    reset_rate_and_delay();
+    clean_underlying_buffer();
+  }
+  keyboard_enabled = enable;
+}
+
+
+uint8_t read_ctl_ram(uint8_t addr) {
+  ASSERT(addr < 0x20);  // Controller RAM is only 32 bytes.
+
+  return controller_ram[addr];
+}
+
+
+/* Manipulates the controller_ram[]. Some bits change may trigger internal
+ * state change.
+ */
+void update_ctl_ram(uint8_t addr, uint8_t data) {
+  uint8_t orig;
+
+  ASSERT(addr < 0x20);  // Controller RAM is only 32 bytes.
+  orig = controller_ram[addr];
+  controller_ram[addr] = data;
+#if KEYBOARD_DEBUG >= 5
+  uart_printf("Set CTR_RAM[0x%02x]=0x%02x (old:0x%02x)\n",
+              addr, data, orig);
+#endif
+
+  if (addr == 0x00) {  /* the controller RAM */
+    /* Handle the I8042_KBD_DIS bit */
+    keyboard_enable(!(data & I8042_KBD_DIS));
+
+    /* Handle the I8042_ENIRQ1 bit */
+    if (!(orig & I8042_ENIRQ1) && (data & I8042_ENIRQ1)) {
+      i8042_enable_keyboard_irq();
+    } else if ((orig & I8042_ENIRQ1) && !(data & I8042_ENIRQ1)) {
+      i8042_disable_keyboard_irq();
+    }
+  }
+}
+
+
 enum {
   STATE_NORMAL = 0,
   STATE_SCANCODE,
@@ -237,7 +291,7 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
   switch (data_port_state) {
   case STATE_SCANCODE:
 #if KEYBOARD_DEBUG >= 5
-    uart_printf("Eaten by STATE_SCANCODE\n");
+    uart_printf("Eaten by STATE_SCANCODE: 0x%02x\n", data);
 #endif
     if (data == SCANCODE_GET_SET) {
       output[out_len++] = I8042_RET_ACK;
@@ -261,22 +315,27 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
     break;
 
   case STATE_WRITE_CMD_BYTE:
-    controller_ram[controller_ram_address] = data;
 #if KEYBOARD_DEBUG >= 5
-    uart_printf("Set command_bytes[0x%02x]=0x%02x\n",
-        controller_ram_address,
-        controller_ram[controller_ram_address]);
+    uart_printf("Eaten by STATE_WRITE_CMD_BYTE: 0x%02x\n", data);
 #endif
+    update_ctl_ram(controller_ram_address, data);
     output[out_len++] = I8042_RET_ACK;
     data_port_state = STATE_NORMAL;
     break;
 
   case STATE_ECHO_MOUSE:
+#if KEYBOARD_DEBUG >= 5
+    uart_printf("Eaten by STATE_ECHO_MOUSE: 0x%02x\n", data);
+#endif
+    output[out_len++] = I8042_RET_ACK;
     output[out_len++] = data;
     data_port_state = STATE_NORMAL;
     break;
 
   case STATE_SEND_TO_MOUSE:
+#if KEYBOARD_DEBUG >= 5
+    uart_printf("Eaten by STATE_SEND_TO_MOUSE: 0x%02x\n", data);
+#endif
     data_port_state = STATE_NORMAL;
     break;
 
@@ -292,6 +351,11 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
         /* We use screen indicator. Do thing in keyboard controller. */
         output[out_len++] = I8042_RET_ACK;
         data_port_state = STATE_SETLEDS;
+        break;
+
+      case I8042_CMD_DIAG_ECHO:
+        output[out_len++] = I8042_RET_ACK;
+        output[out_len++] = I8042_CMD_DIAG_ECHO;
         break;
 
       case I8042_CMD_GETID:    /* fall-thru */
@@ -314,13 +378,12 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
 
       case I8042_CMD_ENABLE:
         output[out_len++] = I8042_RET_ACK;
-        i8042_enabled = 1;
-        clean_underlying_buffer();
+        keyboard_enable(1);
         break;
 
       case I8042_CMD_RESET_DIS:
         output[out_len++] = I8042_RET_ACK;
-        i8042_enabled = 0;
+        keyboard_enable(0);
         reset_rate_and_delay();
         clean_underlying_buffer();
         break;
@@ -333,7 +396,7 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
 
       case I8042_CMD_RESET_BAT:
         output[out_len++] = I8042_RET_ACK;
-        i8042_enabled = 0;
+        keyboard_enable(0);
         output[out_len++] = I8042_RET_BAT;
         output[out_len++] = I8042_RET_BAT;
         break;
@@ -357,9 +420,6 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
       case I8042_CMD_EX_ENABLE:
       default:
         output[out_len++] = I8042_RET_NAK;
-        i8042_enabled = 0;
-        reset_rate_and_delay();
-        clean_underlying_buffer();
 #if KEYBOARD_DEBUG >= 1
         uart_printf("Unsupported i8042 data 0x%02x.\n", data);
 #endif
@@ -389,7 +449,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output) {
 #endif
   switch (command) {
   case I8042_READ_CMD_BYTE:
-    output[out_len++] = controller_ram[0];
+    output[out_len++] = read_ctl_ram(0);
     break;
 
   case I8042_WRITE_CMD_BYTE:
@@ -398,19 +458,27 @@ int handle_keyboard_command(uint8_t command, uint8_t *output) {
     break;
 
   case I8042_DIS_KB:
-    i8042_enabled = 0;
+    keyboard_enable(0);
     break;
 
   case I8042_ENA_KB:
-    i8042_enabled = 1;
+    keyboard_enable(1);
+    break;
+
+  case I8042_RESET_SELF_TEST:
+    output[out_len++] = 0x55;  // Self test success.
     break;
 
   case I8042_DIS_MOUSE:
-    controller_ram[0] |= I8042_AUX_DIS;
+    update_ctl_ram(0, read_ctl_ram(0) | I8042_AUX_DIS);
     break;
 
   case I8042_ENA_MOUSE:
-    controller_ram[0] &= ~I8042_AUX_DIS;
+    update_ctl_ram(0, read_ctl_ram(0) & ~I8042_AUX_DIS);
+    break;
+
+  case I8042_TEST_MOUSE:
+    output[out_len++] = 0;  // no error detected
     break;
 
   case I8042_ECHO_MOUSE:
@@ -424,19 +492,22 @@ int handle_keyboard_command(uint8_t command, uint8_t *output) {
   default:
     if (command >= I8042_READ_CTL_RAM &&
         command <= I8042_READ_CTL_RAM_END) {
-      output[out_len++] = controller_ram[command - 0x20];
+      output[out_len++] = read_ctl_ram(command - 0x20);
     } else if (command >= I8042_WRITE_CTL_RAM &&
                command <= I8042_WRITE_CTL_RAM_END) {
       data_port_state = STATE_WRITE_CMD_BYTE;
       controller_ram_address = command - 0x60;
+    } else if (command >= I8042_PULSE_START &&
+               command <= I8042_PULSE_END) {
+      /* Pulse Output Bit. Not implemented. Ignore it. */
     } else {
 #if KEYBOARD_DEBUG >= 1
       uart_printf("Unsupported cmd:[0x%02x]\n", command);
 #endif
-      i8042_enabled = 0;
       reset_rate_and_delay();
       clean_underlying_buffer();
       output[out_len++] = I8042_RET_NAK;
+      data_port_state = STATE_NORMAL;
     }
     break;
   }
@@ -451,6 +522,8 @@ static int command_codeset(int argc, char **argv)
 
 	if (argc == 1) {
 		uart_printf("Current scancode set: %d\n", scancode_set);
+		uart_printf("I8042_XLATE: %d\n",
+		            controller_ram[0] & I8042_XLATE ? 1 : 0);
 	} else if (argc == 2) {
 		set = strtoi(argv[1], NULL, 0);
 		switch (set) {

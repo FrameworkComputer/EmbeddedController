@@ -10,6 +10,13 @@
 
 #include "common.h"
 
+
+/* Manually generates an IRQ to host.
+ * Note that the irq_num == 0 would set the AH bit (Active High).
+ */
+void lpc_manual_irq(int irq_num);
+
+
 /* Initializes the LPC module. */
 int lpc_init(void);
 
@@ -24,6 +31,12 @@ uint8_t *lpc_get_host_range(int slot);
  * are sent in the status byte.  <slot> is 0 for kernel-originated
  * commands, 1 for usermode-originated commands. */
 void lpc_send_host_response(int slot, int status);
+
+/* Return true if the TOH is still set */
+int lpc_keyboard_has_char(void);
+
+/* Send a byte to host via port 0x60 and asserts IRQ if specified. */
+void lpc_keyboard_put_char(uint8_t chr, int send_irq);
 
 /* Returns non-zero if the COMx interface has received a character. */
 int lpc_comx_has_char(void);

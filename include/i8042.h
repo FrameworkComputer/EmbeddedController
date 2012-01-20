@@ -63,6 +63,9 @@
 #define I8042_ENA_KB            0xae
 #define I8042_ECHO_MOUSE        0xd3  /* expect a byte on port 0x60 */
 #define I8042_SEND_TO_MOUSE     0xd4  /* expect a byte on port 0x60 */
+#define I8042_PULSE_START       0xf0
+#define I8042_PULSE_END         0xfd
+#define I8042_SYSTEM_RESET      0xfe
 
 /* port 0x60 return value */
 #define I8042_RET_BAT           0xaa
@@ -79,9 +82,12 @@
 #define I8042_RET_ERR           0xff
 
 /* port 64 - command byte bits */
+#define I8042_XLATE             (1 << 6)
 #define I8042_AUX_DIS           (1 << 5)
+#define I8042_KBD_DIS           (1 << 4)
 #define I8042_SYS_FLAG          (1 << 2)
 #define I8042_ENIRQ12           (1 << 1)
+#define I8042_ENIRQ1            (1 << 0)
 
 
 void i8042_init(void);
@@ -96,6 +102,13 @@ void i8042_init(void);
  */
 void i8042_receives_data(int data);
 void i8042_receives_command(int cmd);
+
+
+/* Called by common/keyboard.c when the host doesn't want to receive
+ * keyboard IRQ.
+ */
+void i8042_enable_keyboard_irq(void);
+void i8042_disable_keyboard_irq(void);
 
 
 /* Send the scan code to the host. The EC lib will push the scan code bytes
