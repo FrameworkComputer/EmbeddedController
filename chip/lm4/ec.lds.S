@@ -1,3 +1,7 @@
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 #include "config.h"
 
 #define CONFIG_FW_SECT_OFF(section) CONFIG_FW_##section##_OFF
@@ -16,7 +20,11 @@ SECTIONS
     .text : {
         OUTDIR/chip/CHIP/init.o (.text)
         *(.text*)
+#ifdef COMPILE_FOR_RAM
+    } > IRAM
+#else
     } > FLASH
+#endif
     . = ALIGN(4);
     .rodata : {
         __irqprio = .;
@@ -24,9 +32,15 @@ SECTIONS
         __irqprio_end = .;
         *(.rodata*)
         . = ALIGN(4);
+#ifdef COMPILE_FOR_RAM
+    } > IRAM
+    __ro_end = . ;
+    .data : {
+#else
     } > FLASH
     __ro_end = . ;
     .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
+#endif
         . = ALIGN(4);
         __data_start = .;
         *(.data.tasks)

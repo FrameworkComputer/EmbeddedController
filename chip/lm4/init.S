@@ -167,6 +167,7 @@ bss_loop:
     strlt r0, [r1], #4
     blt bss_loop
 
+#ifndef COMPILE_FOR_RAM
     /* Copy initialized data to Internal RAM */
     ldr r0,_ro_end
     ldr r1,_data_start
@@ -177,6 +178,7 @@ data_loop:
     it lt
     strlt r3, [r1], #4
     blt data_loop
+#endif
 
     /**
      * Set stack pointer

@@ -1,3 +1,7 @@
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 /* Memory mapping */
 #define CONFIG_FLASH_BASE       0x00000000
@@ -17,3 +21,6 @@
 
 /* build with assertions and debug messages */
 #define CONFIG_DEBUG
+
+/* Compile for running from RAM instead of flash */
+/* #define COMPILE_FOR_RAM */
