@@ -15,7 +15,7 @@ SECTIONS
 {
     .text : {
         OUTDIR/chip/CHIP/init.o (.text)
-        *(.text)
+        *(.text*)
     } > FLASH
     . = ALIGN(4);
     .rodata : {
