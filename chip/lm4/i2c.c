@@ -192,14 +192,7 @@ static int command_scan(int argc, char **argv)
 	uart_puts("done.\n");
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"i2cscan", command_scan},
-};
-static const struct console_group command_group = {
-	"I2C", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(i2cscan, command_scan);
 
 
 /*****************************************************************************/
@@ -266,6 +259,5 @@ int i2c_init(void)
 	task_enable_irq(LM4_IRQ_I2C4);
 	task_enable_irq(LM4_IRQ_I2C5);
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

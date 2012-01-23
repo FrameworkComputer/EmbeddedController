@@ -308,6 +308,7 @@ static int command_gpio_get(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(gpioget, command_gpio_get);
 
 
 static int command_gpio_set(int argc, char **argv)
@@ -345,21 +346,4 @@ static int command_gpio_set(int argc, char **argv)
 
 	return gpio_set_level(i, v);
 }
-
-
-static const struct console_command console_commands[] = {
-	{"gpioget", command_gpio_get},
-	{"gpioset", command_gpio_set},
-};
-static const struct console_group command_group = {
-	"GPIO", console_commands, ARRAY_SIZE(console_commands)
-};
-
-/*****************************************************************************/
-/* Initialization */
-
-int gpio_init(void)
-{
-	console_register_commands(&command_group);
-	return EC_SUCCESS;
-}
+DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set);

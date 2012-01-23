@@ -85,14 +85,7 @@ static int command_reboot(int argc, char **argv)
         system_reset(1);
         return EC_SUCCESS;
 }
-
-static const struct console_command console_commands[] = {
-        {"reboot", command_reboot},
-};
-
-static const struct console_group command_group = {
-        "Verified boot", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
 
 /*****************************************************************************/
 /* Initialization */
@@ -102,12 +95,4 @@ int vboot_pre_init(void)
 	/* Jump to a different image if necessary; this may not return */
 	jump_to_other_image();
 	return EC_SUCCESS;
-}
-
-
-int vboot_init(void)
-{
-        /* Register our internal commands */
-        console_register_commands(&command_group);
-        return EC_SUCCESS;
 }

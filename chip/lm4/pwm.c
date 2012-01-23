@@ -74,6 +74,7 @@ static int command_fan_info(int argc, char **argv)
 		    (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(faninfo, command_fan_info);
 
 
 static int command_fan_set(int argc, char **argv)
@@ -107,6 +108,7 @@ static int command_fan_set(int argc, char **argv)
 		uart_printf("Done.\n");
 	return rv;
 }
+DECLARE_CONSOLE_COMMAND(fanset, command_fan_set);
 
 
 /* TODO: this is a temporary command for debugging tach issues */
@@ -141,6 +143,7 @@ static int command_fan_duty(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(fanduty, command_fan_duty);
 
 
 static int command_kblight(int argc, char **argv)
@@ -166,16 +169,13 @@ static int command_kblight(int argc, char **argv)
 		uart_printf("Done.\n");
 	return rv;
 }
-
+DECLARE_CONSOLE_COMMAND(kblight, command_kblight);
 
 static const struct console_command console_commands[] = {
 	{"fanduty", command_fan_duty},
 	{"faninfo", command_fan_info},
 	{"fanset", command_fan_set},
 	{"kblight", command_kblight},
-};
-static const struct console_group command_group = {
-	"PWM", console_commands, ARRAY_SIZE(console_commands)
 };
 
 
@@ -225,6 +225,5 @@ int pwm_init(void)
 	/* Enable CPU fan and keyboard backlight */
 	LM4_FAN_FANCTL |= (1 << FAN_CH_CPU) | (1 << FAN_CH_KBLIGHT);
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

@@ -119,13 +119,7 @@ static int command_set_mode(int argc, char **argv)
 	uart_printf("Setting USB mode...\n");
 	return usb_charge_set_mode(port_id, mode);
 }
-
-static const struct console_command console_commands[] = {
-	{"usbchargemode", command_set_mode},
-};
-static const struct console_group command_group = {
-	"USB Charging Control", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);
 
 
 /*****************************************************************************/
@@ -138,7 +132,5 @@ int usb_charge_init(void)
 	for (i = 0; i < USB_CHARGE_PORT_COUNT; ++i)
 		usb_charge_set_mode(i, USB_CHARGE_MODE_DOWNSTREAM_500MA);
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }
-

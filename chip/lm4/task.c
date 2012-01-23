@@ -316,6 +316,7 @@ int command_task_info(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info);
 
 
 static int command_task_ready(int argc, char **argv)
@@ -330,15 +331,7 @@ static int command_task_ready(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command task_commands[] = {
-	{"taskinfo", command_task_info},
-	{"taskready", command_task_ready}
-};
-static const struct console_group task_group = {
-	"Task", task_commands, ARRAY_SIZE(task_commands)
-};
+DECLARE_CONSOLE_COMMAND(taskready, command_task_ready);
 #endif
 
 
@@ -350,11 +343,6 @@ int task_init(void)
 
 	/* Initialize IRQs */
 	__nvic_init_irqs();
-
-#ifdef CONFIG_DEBUG
-	/* Register our internal commands */
-	console_register_commands(&task_group);
-#endif
 
 	return EC_SUCCESS;
 }

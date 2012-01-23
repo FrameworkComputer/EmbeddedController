@@ -473,17 +473,4 @@ static int command_codeset(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"codeset", command_codeset},
-};
-static const struct console_group command_group = {
-	"Keyboard", console_commands, ARRAY_SIZE(console_commands)
-};
-
-
-enum ec_error_list keyboard_init(void) {
-
-	return console_register_commands(&command_group);
-}
+DECLARE_CONSOLE_COMMAND(codeset, command_codeset);

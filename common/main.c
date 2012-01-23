@@ -79,19 +79,14 @@ int main(void)
 	timer_init();
 	uart_init();
 	system_init();
-	gpio_init();
 	flash_init();
 	eeprom_init();
 	port_80_init();
 	lpc_init();
-	flash_commands_init();
-	vboot_init();
 	pwm_init();
 	i2c_init();
 	temp_sensor_init();
-	memory_commands_init();
 	power_button_init();
-	keyboard_init();
 	adc_init();
 	usb_charge_init();
 

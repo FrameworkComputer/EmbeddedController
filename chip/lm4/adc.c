@@ -101,6 +101,7 @@ static int command_adc(int argc, char **argv)
 		    adc_read(ADC_CH_POT));
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(adc, command_adc);
 
 
 static int command_ectemp(int argc, char **argv)
@@ -109,18 +110,9 @@ static int command_ectemp(int argc, char **argv)
 	uart_printf("EC temperature is %d K = %d C\n", t, t-273);
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
 
 
-static const struct console_command console_commands[] = {
-	{"adc", command_adc},
-	{"ectemp", command_ectemp},
-};
-static const struct console_group command_group = {
-	"ADC", console_commands, ARRAY_SIZE(console_commands)
-};
-
-
-/*****************************************************************************/
 /* Initialization */
 
 int adc_init(void)
@@ -162,6 +154,5 @@ int adc_init(void)
 	/* Enable sample sequencer 3 */
 	LM4_ADC_ADCACTSS |= 0x08;
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

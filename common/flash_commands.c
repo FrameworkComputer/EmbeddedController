@@ -23,6 +23,7 @@ static int command_flash_info(int argc, char **argv)
 	uart_printf("Usable flash size: %d B\n", flash_get_size());
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info);
 
 
 static int command_flash_erase(int argc, char **argv)
@@ -61,6 +62,7 @@ static int command_flash_erase(int argc, char **argv)
 
 	return rv;
 }
+DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase);
 
 
 static int command_flash_write(int argc, char **argv)
@@ -119,6 +121,7 @@ static int command_flash_write(int argc, char **argv)
 
 	return rv;
 }
+DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write);
 
 
 static int command_flash_wp(int argc, char **argv)
@@ -144,6 +147,7 @@ static int command_flash_wp(int argc, char **argv)
 	uart_printf("FMPPE1 after: 0x%08x\n", LM4_FLASH_FMPPE1);
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
 
 static int command_flash_wp_range(int argc, char **argv)
 {
@@ -182,18 +186,7 @@ static int command_flash_wp_range(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-
-static const struct console_command console_commands[] = {
-	{"flasherase", command_flash_erase},
-	{"flashinfo", command_flash_info},
-	{"flashwrite", command_flash_write},
-	{"flashwp", command_flash_wp},
-	{"flashwprange", command_flash_wp_range},
-};
-static const struct console_group command_group = {
-	"Flash", console_commands, ARRAY_SIZE(console_commands)
-};
-
+DECLARE_CONSOLE_COMMAND(flashwprange, command_flash_wp_range);
 
 
 /*****************************************************************************/
@@ -337,14 +330,4 @@ enum lpc_status flash_command_wp_get_range(uint8_t *data)
 		return EC_LPC_STATUS_ERROR;
 
 	return EC_LPC_STATUS_SUCCESS;
-}
-
-/*****************************************************************************/
-/* Initialization */
-
-int flash_commands_init(void)
-{
-	/* Register our internal commands */
-	console_register_commands(&command_group);
-	return EC_SUCCESS;
 }

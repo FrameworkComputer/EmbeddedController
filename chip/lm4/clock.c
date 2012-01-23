@@ -143,14 +143,8 @@ static int command_sleep(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 
-
-static const struct console_command clock_commands[] = {
-	{"sleep", command_sleep}
-};
-static const struct console_group clock_group = {
-	"Clock", clock_commands, ARRAY_SIZE(clock_commands)
-};
 
 static void clock_init_pll(uint32_t value)
 {
@@ -199,11 +193,6 @@ int clock_init(void)
 	BUILD_ASSERT(CPU_CLOCK == 66666667);
 	/* Osc source = internal 16MHz oscillator */
 	clock_init_pll(0x01400550);
-
-#ifdef CONFIG_DEBUG
-	/* Register our internal commands */
-	console_register_commands(&clock_group);
-#endif
 
 	return EC_SUCCESS;
 }

@@ -19,14 +19,6 @@ struct console_command {
 };
 
 
-/* Console command group */
-struct console_group {
-	const char *group_name;  /* Name of the command group */
-	const struct console_command *commands;  /* List of commands */
-	int command_count;  /* Number of commands in list */
-};
-
-
 /* Initializes the console module. */
 int console_init(void);
 
@@ -34,8 +26,11 @@ int console_init(void);
 /* Called by UART when a line of input is pending. */
 void console_has_input(void);
 
-
-/* Registers a group of console commands. */
-int console_register_commands(const struct console_group *group);
+/* Register a console command handler */
+#define DECLARE_CONSOLE_COMMAND(name, routine)			\
+	static const char __con_cmd_label_##name[] = #name;	\
+	const struct console_command __con_cmd_##name		\
+		__attribute__((section(".rodata.cmds")))	\
+		= {__con_cmd_label_##name, routine}
 
 #endif  /* __CROS_EC_CONSOLE_H */

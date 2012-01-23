@@ -11,29 +11,19 @@
 #include "registers.h"
 #include "util.h"
 
-#define MAX_COMMAND_GROUPS 20
 #define MAX_ARGS_PER_COMMAND 10
 
 #define PROMPT "> "
 
-static const struct console_group *group_list[MAX_COMMAND_GROUPS];
-static int group_count = 0;
+/* Xonsole commands are described in a special section */
+extern const struct console_command __cmds[];
+extern const struct console_command __cmds_end[];
 
 
 void console_has_input(void)
 {
 	/* Wake up the console task */
 	task_send_msg(TASK_ID_CONSOLE, TASK_ID_CONSOLE, 0);
-}
-
-
-int console_register_commands(const struct console_group *group)
-{
-	if (group_count >= MAX_COMMAND_GROUPS)
-		return EC_ERROR_OVERFLOW;
-
-	group_list[group_count++] = group;
-	return EC_SUCCESS;
 }
 
 
@@ -80,15 +70,10 @@ int split_words(char *input, int max_argc, int *argc, char **argv)
 const struct console_command *find_command(char *name)
 {
 	const struct console_command *cmd;
-	int c, g;
 
-	/* Find the command in the command groups */
-	for (g = 0; g < group_count; g++) {
-		cmd = group_list[g]->commands;
-		for (c = group_list[g]->command_count; c > 0; c--, cmd++) {
-			if (!strcasecmp(name, cmd->name))
-				return cmd;
-		}
+	for (cmd = __cmds; cmd < __cmds_end; cmd++) {
+		if (!strcasecmp(name, cmd->name))
+			return cmd;
 	}
 
 	return NULL;
@@ -166,15 +151,11 @@ void console_task(void)
 static int command_help(int argc, char **argv)
 {
 	const struct console_command *cmd;
-	int c, g;
 
 	uart_puts("Known commands:\n");
 
-	for (g = 0; g < group_count; g++) {
-		cmd = group_list[g]->commands;
-		uart_printf("Group %s:\n", group_list[g]->group_name);
-		for (c = group_list[g]->command_count; c > 0; c--, cmd++)
-			uart_printf("  %s\n", cmd->name);
+	for (cmd = __cmds; cmd < __cmds_end; cmd++) {
+		uart_printf("  %s\n", cmd->name);
 		/* Generates enough output to overflow the buffer */
 		uart_flush_output();
 	}
@@ -183,14 +164,7 @@ static int command_help(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-
-static const struct console_command console_commands[] = {
-	{"help", command_help},
-	{"?", command_help},
-};
-static const struct console_group command_group = {
-	"Console", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(help, command_help);
 
 /*****************************************************************************/
 /* Initialization */
@@ -202,6 +176,6 @@ int console_init(void)
 	uart_set_console_mode(1);
 	uart_printf("Console is enabled; type HELP for help.\n");
 	uart_puts(PROMPT);
-	/* Register our internal commands */
-	return console_register_commands(&command_group);
+
+	return EC_SUCCESS;
 }

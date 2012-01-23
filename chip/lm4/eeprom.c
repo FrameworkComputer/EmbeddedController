@@ -125,6 +125,7 @@ static int command_eeprom_info(int argc, char **argv)
 	uart_printf("  Block-hide flags: 0x%08x\n", LM4_EEPROM_EEHIDE);
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(eeinfo, command_eeprom_info);
 
 
 static int command_eeprom_read(int argc, char **argv)
@@ -160,6 +161,7 @@ static int command_eeprom_read(int argc, char **argv)
 			    block, offset, d);
 	return rv;
 }
+DECLARE_CONSOLE_COMMAND(eeread, command_eeprom_read);
 
 
 static int command_eeprom_write(int argc, char **argv)
@@ -198,6 +200,7 @@ static int command_eeprom_write(int argc, char **argv)
 		uart_puts("done.\n");
 	return rv;
 }
+DECLARE_CONSOLE_COMMAND(eewrite, command_eeprom_write);
 
 
 static int command_eeprom_hide(int argc, char **argv)
@@ -223,17 +226,7 @@ static int command_eeprom_hide(int argc, char **argv)
 		uart_printf("Done.\n");
 	return rv;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"eeinfo", command_eeprom_info},
-	{"eeread", command_eeprom_read},
-	{"eewrite", command_eeprom_write},
-	{"eehide", command_eeprom_hide},
-};
-static const struct console_group command_group = {
-	"EEPROM", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide);
 
 
 /*****************************************************************************/
@@ -251,6 +244,5 @@ int eeprom_init(void)
 	wait_for_done();
 	block_count = LM4_EEPROM_EESIZE >> 16;
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

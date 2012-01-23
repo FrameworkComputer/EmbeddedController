@@ -54,21 +54,13 @@ static int command_port80(int argc, char **argv)
 	uart_puts(" <--newest\n");
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"port80", command_port80},
-};
-static const struct console_group command_group = {
-	"Port 80", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(port80, command_port80);
 
 /*****************************************************************************/
 /* Initialization */
 
 int port_80_init(void)
 {
-	console_register_commands(&command_group);
 	memset(history, 0, sizeof(history));
 	return EC_SUCCESS;
 }

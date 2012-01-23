@@ -92,6 +92,7 @@ static int command_temps(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(temps, command_temps);
 
 
 /* TODO: the battery charger would normally be on a separate I2C bus.
@@ -126,6 +127,7 @@ static int command_charger(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(charger, command_charger);
 
 
 /* TODO: the battery would normally be on a separate I2C bus.  For
@@ -160,16 +162,7 @@ static int command_battery(int argc, char **argv)
 	
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"temps", command_temps},
-	{"charger", command_charger},
-	{"battery", command_battery},
-};
-static const struct console_group command_group = {
-	"Temp sensor", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(battery, command_battery);
 
 
 /*****************************************************************************/
@@ -192,6 +185,5 @@ int temp_sensor_init(void)
 	i2c_write16(I2C_PORT_THERMAL, TEMP0_ADDR, 0x02, 0x7500);
 #endif
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }

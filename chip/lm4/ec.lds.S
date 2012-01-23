@@ -30,6 +30,9 @@ SECTIONS
         __irqprio = .;
         *(.rodata.irqprio)
         __irqprio_end = .;
+        __cmds = .;
+        *(.rodata.cmds)
+        __cmds_end = .;
         *(.rodata*)
         . = ALIGN(4);
 #ifdef COMPILE_FOR_RAM

@@ -229,6 +229,7 @@ static int command_wait(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(waitms, command_wait);
 
 
 static int command_get_time(int argc, char **argv)
@@ -238,6 +239,7 @@ static int command_get_time(int argc, char **argv)
 	return EC_SUCCESS;
 
 }
+DECLARE_CONSOLE_COMMAND(gettime, command_get_time);
 
 
 int command_timer_info(int argc, char **argv)
@@ -258,16 +260,7 @@ int command_timer_info(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command timer_commands[] = {
-	{"waitms", command_wait},
-	{"timerinfo", command_timer_info},
-	{"gettime", command_get_time}
-};
-static const struct console_group timer_group = {
-	"Timer", timer_commands, ARRAY_SIZE(timer_commands)
-};
+DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info);
 
 
 int timer_init(void)
@@ -275,9 +268,6 @@ int timer_init(void)
 	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
 
 	__hw_clock_source_init();
-
-	/* Register our internal commands */
-	console_register_commands(&timer_group);
 
 	return EC_SUCCESS;
 }

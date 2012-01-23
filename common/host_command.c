@@ -202,15 +202,7 @@ static int command_version(int argc, char **argv)
 		    system_get_version(SYSTEM_IMAGE_RW_B));
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"version", command_version},
-};
-
-static const struct console_group command_group = {
-	"Host commands", console_commands, ARRAY_SIZE(console_commands)
-};
+DECLARE_CONSOLE_COMMAND(version, command_version);
 
 /*****************************************************************************/
 /* Initialization / task */
@@ -219,7 +211,6 @@ static int host_command_init(void)
 {
 	host_command[0] = host_command[1] = -1;
 
-	console_register_commands(&command_group);
 	return EC_SUCCESS;
 }
 

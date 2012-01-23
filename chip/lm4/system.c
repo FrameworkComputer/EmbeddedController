@@ -12,20 +12,6 @@
 #include "util.h"
 #include "version.h"
 
-/* Forward declarations for console commands */
-static int command_sysinfo(int argc, char **argv);
-static int command_set_scratchpad(int argc, char **argv);
-static int command_hibernate(int argc, char **argv);
-
-static const struct console_command console_commands[] = {
-	{"setscratch", command_set_scratchpad},
-	{"sysinfo", command_sysinfo},
-	{"hibernate", command_hibernate}
-};
-static const struct console_group command_group = {
-	"System", console_commands, ARRAY_SIZE(console_commands)
-};
-
 struct version_struct {
 	uint32_t cookie1;
 	char version[32];
@@ -161,8 +147,7 @@ int system_init(void)
 	 * this image. */
 	LM4_SYSTEM_RESC = 0;
 
-	/* Register our internal commands */
-	return console_register_commands(&command_group);
+	return EC_SUCCESS;
 }
 
 
@@ -339,6 +324,7 @@ static int command_sysinfo(int argc, char **argv)
 	uart_printf("Firmware copy: %s\n", system_get_image_copy_string());
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
 
 
 static int command_set_scratchpad(int argc, char **argv)
@@ -359,6 +345,7 @@ static int command_set_scratchpad(int argc, char **argv)
 	uart_printf("Setting scratchpad to 0x%08x\n", s);
 	return  system_set_scratchpad(s);
 }
+DECLARE_CONSOLE_COMMAND(setscratchpad, command_set_scratchpad);
 
 static int command_hibernate(int argc, char **argv)
 {
@@ -380,3 +367,4 @@ static int command_hibernate(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);

@@ -31,6 +31,8 @@ static int command_write_word(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(ww, command_write_word);
+DECLARE_CONSOLE_COMMAND(writeword, command_write_word);
 
 
 static int command_read_word(int argc, char **argv)
@@ -50,21 +52,5 @@ static int command_read_word(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-
-
-static const struct console_command console_commands[] = {
-	{"rw", command_read_word},
-	{"ww", command_write_word},
-	{"readword", command_read_word},
-	{"writeword", command_write_word},
-};
-static const struct console_group command_group = {
-	"Memory", console_commands, ARRAY_SIZE(console_commands)
-};
-
-
-int memory_commands_init(void)
-{
-	/* Register our internal commands */
-	return console_register_commands(&command_group);
-}
+DECLARE_CONSOLE_COMMAND(rw, command_read_word);
+DECLARE_CONSOLE_COMMAND(readword, command_read_word);
