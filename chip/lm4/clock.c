@@ -169,6 +169,14 @@ static void clock_init_pll(uint32_t value)
 
 	/* Enable main and precision internal oscillators */
 	LM4_SYSTEM_RCC &= ~0x3;
+
+	/* Perform an auto calibration of the internal oscillator, using the
+	 * 32.768KHz hibernate clock. */
+	/* TODO: (crosbug.com/p/7693) This is only needed on early chips which
+	 * aren't factory trimmed. */
+	LM4_SYSTEM_PIOSCCAL = 0x80000000;
+	LM4_SYSTEM_PIOSCCAL = 0x80000200;
+
 	/* wait 1 million CPU cycles */
 	wait_cycles(512 * 1024);
 

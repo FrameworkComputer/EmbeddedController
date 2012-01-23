@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -160,6 +160,8 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_RESC        LM4REG(0x400fe05c)
 #define LM4_SYSTEM_RCC         LM4REG(0x400fe060)
 #define LM4_SYSTEM_RCC2        LM4REG(0x400fe070)
+#define LM4_SYSTEM_PIOSCCAL    LM4REG(0x400fe150)
+#define LM4_SYSTEM_PIOSCSTAT   LM4REG(0x400fe154)
 #define LM4_SYSTEM_PLLSTAT     LM4REG(0x400fe168)
 #define LM4_SYSTEM_RCGCWD      LM4REG(0x400fe600)
 #define LM4_SYSTEM_RCGCTIMER   LM4REG(0x400fe604)

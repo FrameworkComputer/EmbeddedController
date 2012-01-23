@@ -1,9 +1,8 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2011 Google Inc.
  *
- * Example of EC main loop
+ * Main routine for Chrome EC
  */
 
 #include "registers.h"
@@ -36,6 +35,7 @@
 #include "usb_charge.h"
 
 /* example task blinking the user LED */
+/* TODO: This also kicks the watchdog, so MUST be present! */
 void UserLedBlink(void)
 {
 	while (1) {
@@ -58,6 +58,11 @@ int main(void)
 	/* Configure the pin multiplexers */
 	configure_board();
 	jtag_pre_init();
+
+	/* Initialize the system module.  This enables the hibernate clock
+	 * source we need to calibrate the internal oscillator. */
+	system_pre_init();
+
 	/* Set the CPU clocks / PLLs */
 	clock_init();
 
@@ -65,13 +70,9 @@ int main(void)
 	 * another image if necessary.  This must be done as early as
 	 * possible, so that the minimum number of components get
 	 * re-initialized if we jump to another image. */
-	system_pre_init();
 	gpio_pre_init();
 	vboot_pre_init();
 
-	/* TODO (crosbug.com/p/7456)- race condition on enabling
-	 * interrupts.  Module inits should call task_IntEnable(int)
-	 * when they're ready... */
 	task_init();
 
 	watchdog_init(1100);
