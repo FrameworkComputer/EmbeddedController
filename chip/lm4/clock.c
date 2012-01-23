@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -166,6 +166,7 @@ static void clock_init_pll(uint32_t value)
 	/* Put a bypass on the system clock PLLs, no divider */
 	LM4_SYSTEM_RCC = (LM4_SYSTEM_RCC | 0x800) & ~0x400000;
 	LM4_SYSTEM_RCC2 = (LM4_SYSTEM_RCC2 | 0x800) & ~0x80000000;
+
 	/* Enable main and precision internal oscillators */
 	LM4_SYSTEM_RCC &= ~0x3;
 	/* wait 1 million CPU cycles */
@@ -173,25 +174,23 @@ static void clock_init_pll(uint32_t value)
 
 	/* clear PLL lock flag (aka PLLLMIS) */
 	LM4_SYSTEM_MISC = 0x40;
-	/* clear powerdown / set XTAL frequency and divider */
-	LM4_SYSTEM_RCC = (LM4_SYSTEM_RCC & ~0x07c027c0) | (value & 0x07c007c0);
+	/* clear powerdown / set XTAL frequency, divider, and source */
+	LM4_SYSTEM_RCC = (LM4_SYSTEM_RCC & ~0x07c027f0) | (value & 0x07c007f0);
 	/* wait 32 CPU cycles */
 	wait_cycles(16);
 	/* wait for PLL to lock */
 	while (!(LM4_SYSTEM_RIS & 0x40));
 
-	/* Remove bypass on PLL and set oscillator source to main */
-	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC & ~0x830;
+	/* Remove bypass on PLL */
+	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC & ~0x800;
 }
 
 int clock_init(void)
 {
-	/* Use 66.667Mhz clock from PLL */
+	/* CPU clock = PLL/3 = 66.667MHz; System clock = PLL */
 	BUILD_ASSERT(CPU_CLOCK == 66666667);
-	/* CPU clock = PLL/3 ; System clock = PLL
-	 * Osc source = main OSC ; external crystal = 16 Mhz
-	 */
-	clock_init_pll(0x01400540);
+	/* Osc source = internal 16MHz oscillator */
+	clock_init_pll(0x01400550);
 
 #ifdef CONFIG_DEBUG
 	/* Register our internal commands */
