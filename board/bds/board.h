@@ -42,7 +42,7 @@
 
 /* ADC inputs */
 /* TODO: really just need a lookup table for channels to inputs */
-#define ADC_IN_POT 0  /* Turn POT on badger board */
+#define ADC_IN0 0  /* Turn POT on badger board */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 5  // port 0 / PB2:3 on Link, open on badger

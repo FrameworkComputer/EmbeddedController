@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -97,7 +97,8 @@ int adc_read_ec_temperature(void)
 
 static int command_adc(int argc, char **argv)
 {
-	uart_printf("ADC POT channel = 0x%03x\n",adc_read(ADC_CH_POT));
+	uart_printf("ADC channel %d = 0x%03x\n", ADC_IN0,
+		    adc_read(ADC_CH_POT));
 	return EC_SUCCESS;
 }
 
@@ -143,9 +144,9 @@ int adc_init(void)
 	LM4_ADC_ADCACTSS &= ~0x01;
 	/* Trigger SS0 by processor request */
 	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & 0xfffffff0) | 0x00;
-	/* Sample AIN0 only */
-	LM4_ADC_SSMUX(0) = ADC_IN_POT & 0x0f;
-	LM4_ADC_SSEMUX(0) = (ADC_IN_POT >> 4) & 0x0f;
+	/* Sample only our one channel */
+	LM4_ADC_SSMUX(0) = ADC_IN0 & 0x0f;
+	LM4_ADC_SSEMUX(0) = (ADC_IN0 >> 4) & 0x0f;
 	LM4_ADC_SSCTL(0) = 0x06;  /* IE0 | END0 */
 	/* Enable sample sequencer 0 */
 	LM4_ADC_ADCACTSS |= 0x01;

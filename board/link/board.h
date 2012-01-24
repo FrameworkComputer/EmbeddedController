@@ -42,7 +42,7 @@
 
 /* ADC inputs */
 /* TODO: assign real ADC inputs */
-#define ADC_IN_POT 0  /* Turn POT on badger board */
+#define ADC_IN0 11  /* Charger current */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
