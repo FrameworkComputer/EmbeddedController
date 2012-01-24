@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,7 +28,7 @@
  *      KSI0 - KSI7  = PN0:7
  *
  *   Other:
- *      PWR_BTN#     = PK7
+ *      PWR_BTN#     = PK7 (handled by gpio module)
  *
  *
  * BDS board:
@@ -40,7 +40,7 @@
  *   Rows (inputs):
  *      KSI0 - KSI7  = PH0:7
  *   Other:
- *      PWR_BTN#     = PC5
+ *      PWR_BTN#     = PC5 (handled by gpio module)
  */
 
 
@@ -61,7 +61,7 @@ static uint8_t raw_state[KB_COLS];
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
 
-/* All actual key masks (todo: move to keyboard matrix definition */
+/* All actual key masks (todo: move to keyboard matrix definition) */
 /* TODO: (crosbug.com/p/7485) fill in real key mask with 0-bits for coords that
    aren't keys */
 static const uint8_t actual_key_masks[4][KB_COLS] = {
@@ -142,18 +142,16 @@ int keyboard_scan_init(void)
 
         /* Enable GPIOs */
 #ifdef BOARD_link
-	/* Enable clock to GPIO modules C,H,K,N,P,Q */
-	LM4_SYSTEM_RCGCGPIO |= 0x7284;
+	/* Enable clock to GPIO modules N,P,Q */
+	LM4_SYSTEM_RCGCGPIO |= 0x7000;
 #else
 	/* Enable clock to GPIO modules C,H,K,N,Q */
 	LM4_SYSTEM_RCGCGPIO |= 0x5284;
 #endif
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
-	/* Clear GPIOAFSEL and enable digital function for PC5, PH0:7,
-         * PK0:3, PN2, PQ0:7. */
-	LM4_GPIO_AFSEL(LM4_GPIO_C) &= ~0x20;
-	LM4_GPIO_DEN(LM4_GPIO_C) |= 0x20;
+	/* Clear GPIOAFSEL and enable digital function for PH0:7,
+	 * PK0:3, PN2, PQ0:7.  Power button is just a GPIO now. */
 #ifdef BOARD_link
 	LM4_GPIO_AFSEL(LM4_GPIO_N) &= 0xff;  /* KSI[7:0] */
 	LM4_GPIO_DEN(LM4_GPIO_N) |= 0xff;
@@ -175,12 +173,6 @@ int keyboard_scan_init(void)
 	/* Set row inputs with pull-up */
 	LM4_GPIO_DIR(KB_SCAN_ROW_GPIO) = 0;
 	LM4_GPIO_PUR(KB_SCAN_ROW_GPIO) = 0xff;
-
-	/* Set PC5 as input with pull-up. */
-	/* TODO: no need for pull-up on real circuit, since it'll be
-	 * externally pulled up. */
-	LM4_GPIO_DIR(LM4_GPIO_C) &= ~0x04;
-	LM4_GPIO_PUR(LM4_GPIO_C) |= 0x04;
 
 	/* Tri-state the columns */
 	select_column(COLUMN_TRI_STATE_ALL);
