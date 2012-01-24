@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -159,7 +159,7 @@ static void configure_gpio(void)
 	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
 	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
 	/* UART1 RX and TX are GPIO PC4:5 alternate function 2 */
-	gpio_set_alternate_function(LM4_GPIO_B, 0x03, 2);
+	gpio_set_alternate_function(LM4_GPIO_C, 0x30, 2);
 #else
 	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
 	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
