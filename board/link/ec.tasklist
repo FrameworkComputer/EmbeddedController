@@ -14,7 +14,7 @@
  * 'd' in an opaque parameter passed to the routine at startup
  */
 #define CONFIG_TASK_LIST \
-	TASK(BLINK, UserLedBlink, NULL) \
+	TASK(WATCHDOG, watchdog_task, NULL) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(POWERBTN, power_button_task, NULL) \
 	TASK(X86POWER, x86_power_task, NULL) \

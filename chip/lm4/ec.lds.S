@@ -30,6 +30,7 @@ SECTIONS
         __irqprio = .;
         *(.rodata.irqprio)
         __irqprio_end = .;
+        . = ALIGN(4);
         __cmds = .;
         *(.rodata.cmds)
         __cmds_end = .;

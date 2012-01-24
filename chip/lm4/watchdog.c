@@ -11,7 +11,9 @@
 #include "common.h"
 #include "config.h"
 #include "registers.h"
+#include "gpio.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 
@@ -134,4 +136,21 @@ int watchdog_init(int period_ms)
 	task_enable_irq(LM4_IRQ_WATCHDOG);
 
 	return EC_SUCCESS;
+}
+
+/* Low priority task to reload the watchdog */
+void watchdog_task(void)
+{
+	while (1) {
+#ifdef BOARD_bds
+		gpio_set_level(GPIO_DEBUG_LED, 1);
+#endif
+		usleep(500000);
+		watchdog_reload();
+#ifdef BOARD_bds
+		gpio_set_level(GPIO_DEBUG_LED, 0);
+#endif
+		usleep(500000);
+		watchdog_reload();
+	}
 }

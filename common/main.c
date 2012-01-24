@@ -34,24 +34,6 @@
 #include "watchdog.h"
 #include "usb_charge.h"
 
-/* example task blinking the user LED */
-/* TODO: This also kicks the watchdog, so MUST be present! */
-void UserLedBlink(void)
-{
-	while (1) {
-#ifdef BOARD_bds
-		gpio_set_level(GPIO_DEBUG_LED, 1);
-#endif
-		usleep(500000);
-		watchdog_reload();
-#ifdef BOARD_bds
-		gpio_set_level(GPIO_DEBUG_LED, 0);
-#endif
-		usleep(500000);
-		watchdog_reload();
-	}
-}
-
 
 int main(void)
 {
@@ -75,7 +57,9 @@ int main(void)
 
 	task_init();
 
+#ifdef CONFIG_TASK_WATCHDOG
 	watchdog_init(1100);
+#endif
 	timer_init();
 	uart_init();
 	system_init();

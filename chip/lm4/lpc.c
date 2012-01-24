@@ -174,6 +174,7 @@ static void lpc_interrupt(void)
 	/* Clear the interrupt bits we're handling */
 	LM4_LPC_LPCIC = mis;
 
+#ifdef CONFIG_TASK_HOSTCMD
 	/* Handle host kernel/user command writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4)) {
 		/* Set the busy bit and clear the status */
@@ -193,11 +194,13 @@ static void lpc_interrupt(void)
 		 * This clears the FRMH bit in the status byte. */
 		host_command_received(1, LPC_POOL_USER[0]);
 	}
+#endif
 
 	/* Handle port 80 writes (CH0MIS1) */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_PORT80, 2))
 		port_80_write(LPC_POOL_PORT80[0]);
 
+#ifdef CONFIG_TASK_I8042CMD
 	/* Handle port 60 command (CH3MIS2) and data (CH3MIS1) */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 2)) {
 		/* Read the data byte and pass to the i8042 handler.
@@ -213,6 +216,7 @@ static void lpc_interrupt(void)
 		/* Host picks up the data, try to send remaining bytes */
 		task_send_msg(TASK_ID_I8042CMD, TASK_ID_I8042CMD, 0);
 	}
+#endif
 
 	/* Handle COMx */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_COMX, 2)) {

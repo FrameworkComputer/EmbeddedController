@@ -5,7 +5,7 @@
 # Embedded Controller firmware build system - common targets
 #
 
-objs := $(all-objs)
+objs := $(all-y)
 deps := $(objs:%.o=%.o.d)
 build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
