@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,10 +15,9 @@
 
 #define PROMPT "> "
 
-/* Xonsole commands are described in a special section */
+/* Console commands are described in a special section */
 extern const struct console_command __cmds[];
 extern const struct console_command __cmds_end[];
-
 
 void console_has_input(void)
 {
@@ -151,17 +150,35 @@ void console_task(void)
 static int command_help(int argc, char **argv)
 {
 	const struct console_command *cmd;
+	const int ncmds = ((uint32_t)__cmds_end - (uint32_t)__cmds) /
+		sizeof(struct console_command);
+	const char *prev = " ";
+	int i;
 
-	uart_puts("Known commands:\n");
+	uart_puts("Known commands:");
 
-	for (cmd = __cmds; cmd < __cmds_end; cmd++) {
-		uart_printf("  %s\n", cmd->name);
+	/* Sort the commands by name */
+	for (i = 0; i < ncmds; i++) {
+		const char *next = "zzzz";
+
+		if (!(i % 5))
+			uart_puts("\n  ");
+
+		/* Find the next command */
+		for (cmd = __cmds; cmd < __cmds_end; cmd++) {
+			if (strcasecmp(prev, cmd->name) < 0 &&
+			    strcasecmp(cmd->name, next) < 0)
+				next = cmd->name;
+		}
+
+		uart_printf("%-15s", next);
 		/* Generates enough output to overflow the buffer */
 		uart_flush_output();
+
+		prev = next;
 	}
 
-	uart_puts("'.' repeats the last command.\n");
-
+	uart_puts("\n'.' repeats the last command.\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(help, command_help);
