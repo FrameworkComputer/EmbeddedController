@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,9 +14,13 @@
 #include "util.h"
 
 
-/* Address of first temp sensor in system */
+/* Address of temp sensors in system */
 #define TEMP0_ADDR ((0x40 << 1) | I2C_FLAG_BIG_ENDIAN)
-/* TODO: support all 6 temp sensors */
+#ifdef BOARD_link
+#define TEMP1_ADDR ((0x41 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP2_ADDR ((0x43 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP3_ADDR ((0x45 << 1) | I2C_FLAG_BIG_ENDIAN)
+#endif
 
 /* Address of battery charger */
 #define CHARGER_ADDR 0x12
@@ -24,6 +28,13 @@
 /* Address of battery */
 #define BATTERY_ADDR 0x16
 
+
+static const int i2c_addrs[] = {
+	TEMP0_ADDR,
+#ifdef BOARD_link
+	TEMP1_ADDR, TEMP2_ADDR, TEMP3_ADDR,
+#endif
+};
 
 int temp_sensor_read(enum temp_sensor_id id)
 {
@@ -61,34 +72,37 @@ static int command_temps(int argc, char **argv)
 	int traw, t;
 	int rv;
 	int d;
+	int i;
 
 	uart_puts("Reading temperature sensors...\n");
 
-	uart_printf("  Temp from die:   %d K\n\n",
-		    temp_sensor_read(TEMP_SENSOR_CASE_DIE));
+	for (i = 0; i < ARRAY_SIZE(i2c_addrs); i++) {
+		int a = i2c_addrs[i];
+		uart_printf("Sensor at 0x%02x:\n", a);
 
-	uart_puts("Debug data:\n");
-	rv = i2c_read16(I2C_PORT_THERMAL, TEMP0_ADDR, 0xfe, &d);
-	if (rv)
-		return rv;
-	uart_printf("  Manufacturer ID: 0x%04x\n", d);
-	
-	rv = i2c_read16(I2C_PORT_THERMAL, TEMP0_ADDR, 0xff, &d);
-	uart_printf("  Device ID:       0x%04x\n", d);
+		rv = i2c_read16(I2C_PORT_THERMAL, a, 0xfe, &d);
+		if (rv)
+			return rv;
+		uart_printf("  Manufacturer ID: 0x%04x\n", d);
 
-	rv = i2c_read16(I2C_PORT_THERMAL, TEMP0_ADDR, 0x02, &d);
-	uart_printf("  Config:          0x%04x\n", d);
+		rv = i2c_read16(I2C_PORT_THERMAL, a, 0xff, &d);
+		uart_printf("  Device ID:       0x%04x\n", d);
 
-	rv = i2c_read16(I2C_PORT_THERMAL, TEMP0_ADDR, 0x00, &vraw);
-	v = ((int)(int16_t)vraw * 15625) / 100;
-	uart_printf("  Voltage:         0x%04x = %d nV\n", vraw, v);
+		rv = i2c_read16(I2C_PORT_THERMAL, a, 0x02, &d);
+		uart_printf("  Config:          0x%04x\n", d);
 
-	rv = i2c_read16(I2C_PORT_THERMAL, TEMP0_ADDR, 0x01, &traw);
-	t = ((int)(int16_t)traw * 100) / 128;
-	uart_printf("  Temperature:     0x%04x = %d.%02d C\n",
-		    traw, t / 100, t > 0 ? t % 100 : 100 - (t % 100));
+		rv = i2c_read16(I2C_PORT_THERMAL, a, 0x01, &traw);
+		t = ((int)(int16_t)traw * 100) / 128;
+		uart_printf("  Die Temperature: 0x%04x = %d.%02d C\n",
+			    traw, t / 100, t > 0 ? t % 100 : 100 - (t % 100));
 
-	/* TODO: correction factor from voltage offset */
+		rv = i2c_read16(I2C_PORT_THERMAL, a, 0x00, &vraw);
+		v = ((int)(int16_t)vraw * 15625) / 100;
+		uart_printf("  Voltage:         0x%04x = %d nV\n", vraw, v);
+		/* TODO: calculate remote temperature from voltage offset */
+
+		uart_flush_output();
+	}
 
 	return EC_SUCCESS;
 }
@@ -109,7 +123,7 @@ static int command_charger(int argc, char **argv)
 	if (rv)
 		return rv;
 	uart_printf("  Manufacturer ID: 0x%04x\n", d);
-	
+
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0xff, &d);
 	uart_printf("  Device ID:       0x%04x\n", d);
 
@@ -159,7 +173,6 @@ static int command_battery(int argc, char **argv)
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x15, &d);
 	uart_printf("  Desired charge voltage: 0x%04x = %d mV\n", d, d);
 
-	
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery);
