@@ -293,6 +293,52 @@ static void __nvic_init_irqs(void)
 }
 
 
+void mutex_lock(struct mutex *mtx)
+{
+	uint32_t value;
+	uint32_t id = 1 << task_get_current();
+
+	ASSERT(id != TASK_ID_INVALID);
+	atomic_or(&mtx->waiters, id);
+
+	do {
+		/* try to get the lock (set 1 into the lock field) */
+		__asm__ __volatile__("   ldrex   %0, [%1]\n"
+				     "   teq     %0, #0\n"
+				     "   it eq\n"
+				     "   strexeq %0, %2, [%1]\n"
+				     : "=&r" (value)
+				     : "r" (&mtx->lock), "r" (1) : "cc");
+		if (value) {
+			/* contention on the mutex */
+			task_wait_msg(0);
+		}
+	} while (value);
+
+	atomic_clear(&mtx->waiters, id);
+}
+
+void mutex_unlock(struct mutex *mtx)
+{
+	uint32_t waiters;
+	task_ *tsk = __get_current();
+
+	__asm__ __volatile__("   ldr     %0, [%2]\n"
+			     "   str     %3, [%1]\n"
+			     : "=&r" (waiters)
+			     : "r" (&mtx->lock), "r" (&mtx->waiters), "r" (0)
+			     : "cc");
+	while (waiters) {
+		task_id_t id = 31 - __builtin_clz(waiters);
+		/* somebody is waiting on the mutex */
+		task_send_msg(id, TASK_ID_MUTEX, 0);
+		waiters &= ~(1 << id);
+	}
+	/* Ensure no event is remaining from mutex wake-up */
+	atomic_clear(&tsk->events, 1 << TASK_ID_MUTEX);
+}
+
+
 #ifdef CONFIG_DEBUG
 
 /* store the task names for easier debugging */

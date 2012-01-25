@@ -32,6 +32,7 @@ enum {
 	/* Number of tasks */
 	TASK_ID_COUNT,
 	/* Special task identifiers */
+	TASK_ID_MUTEX   = 0x1e, /* signal mutex unlocking */
 	TASK_ID_TIMER   = 0x1f, /* message from an expired timer */
 	TASK_ID_CURRENT = 0xfe, /* the currently running task */
 	TASK_ID_INVALID = 0xff  /* unable to find the task */

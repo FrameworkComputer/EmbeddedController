@@ -81,6 +81,21 @@ void task_disable_irq(int irq);
 /* Software-triggers an interrupt. */
 void task_trigger_irq(int irq);
 
+struct mutex {
+	uint32_t lock;
+	uint32_t waiters;
+};
+
+/**
+ * try to lock the mutex mtx
+ * and de-schedule the task if it is already locked by another task.
+ *
+ * Should not be used in interrupt context !
+ */
+void mutex_lock(struct mutex *mtx);
+
+/* Release a mutex previously locked by the same task. */
+void mutex_unlock(struct mutex *mtx);
 
 struct irq_priority {
 	uint8_t irq;
