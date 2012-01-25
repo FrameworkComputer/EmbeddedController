@@ -280,10 +280,27 @@ DECLARE_IRQ(LM4_IRQ_GPIOQ, __gpio_q_interrupt, 1);
 /*****************************************************************************/
 /* Console commands */
 
+static uint8_t last_val[(GPIO_COUNT + 7) / 8];
+
+/* If v is different from the last value for index i, updates the last value
+ * and returns 1; else returns 0. */
+static int last_val_changed(int i, int v)
+{
+	if (v && !(last_val[i / 8] & (1 << (i % 8)))) {
+		last_val[i / 8] |= 1 << (i % 8);
+		return 1;
+	} else if (!v && last_val[i / 8] & (1 << (i % 8))) {
+		last_val[i / 8] &= ~(1 << (i % 8));
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 static int command_gpio_get(int argc, char **argv)
 {
 	const struct gpio_info *g = gpio_list;
-	int i;
+	int changed, v, i;
 
 	/* If a signal is specified, print only that one */
 	if (argc == 2) {
@@ -293,15 +310,23 @@ static int command_gpio_get(int argc, char **argv)
 			return EC_ERROR_UNKNOWN;
 		}
 		g = gpio_list + i;
-		uart_printf("  %d %s\n", gpio_get_level(i), g->name);
+		v = gpio_get_level(i);
+		changed = last_val_changed(i, v);
+		uart_printf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
+
 		return EC_SUCCESS;
 	}
 
 	/* Otherwise print them all */
 	uart_puts("Current GPIO levels:\n");
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		if (g->mask)
-			uart_printf("  %d %s\n", gpio_get_level(i), g->name);
+		if (!g->mask)
+			continue;  /* Skip unsupported signals */
+
+		v = gpio_get_level(i);
+		changed = last_val_changed(i, v);
+		uart_printf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
+
 		/* We have enough GPIOs that we'll overflow the output buffer
 		 * without flushing */
 		uart_flush_output();
