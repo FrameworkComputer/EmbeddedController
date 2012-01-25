@@ -16,6 +16,9 @@
 #define CONFIG_FW_A_OFF         CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_B_OFF         (2 * CONFIG_FW_IMAGE_SIZE)
 
+/* Number of IRQ vectors on the NVIC */
+#define CONFIG_IRQ_COUNT 240
+
 /* System stack size */
 #define CONFIG_STACK_SIZE 4096
 
