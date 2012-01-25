@@ -59,7 +59,7 @@ qemu-tests: $(qemu-test-targets)
 
 $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )
-$(out)/%.lds: chip/$(CHIP)/ec.lds.S
+$(out)/%.lds: core/$(CORE)/ec.lds.S
 	$(call quiet,lds,LDS    )
 
 $(out)/%.bin: $(out)/%.obj

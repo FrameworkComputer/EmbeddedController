@@ -28,6 +28,7 @@ CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 # Get build configuration from sub-directories
 include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
+include core/$(CORE)/build.mk
 include common/build.mk
 include test/build.mk
 include util/build.mk
@@ -35,11 +36,12 @@ include util/build.mk
 objs_from_dir=$(foreach obj,$(2), $(out)/$(1)/$(obj))
 
 # Get all sources to build
-all-y=$(call objs_from_dir,chip/$(CHIP),$(chip-y))
+all-y=$(call objs_from_dir,core/$(CORE),$(core-y))
+all-y+=$(call objs_from_dir,chip/$(CHIP),$(chip-y))
 all-y+=$(call objs_from_dir,board/$(BOARD),$(board-y))
 all-y+=$(call objs_from_dir,common,$(common-y))
 all-y+=$(call objs_from_dir,test,$($(PROJECT)-y))
-dirs=chip/$(CHIP) board/$(BOARD) common test util
+dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common test util
 includes=include $(dirs)
 
 include Makefile.rules

@@ -18,7 +18,7 @@ MEMORY
 SECTIONS
 {
     .text : {
-        OUTDIR/chip/CHIP/init.o (.text)
+        OUTDIR/core/CORE/init.o (.text)
         *(.text*)
 #ifdef COMPILE_FOR_RAM
     } > IRAM

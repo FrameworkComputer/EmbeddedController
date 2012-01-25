@@ -25,7 +25,7 @@ CFLAGS_WARN=-Wall -Wundef -Wstrict-prototypes -Wno-trigraphs              \
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist \
-              -DBOARD=$(BOARD) -DBOARD_$(BOARD)
+              -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE)
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
