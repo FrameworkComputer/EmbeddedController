@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,17 +9,12 @@
 
 #include "task.h"
 #include "timer.h"
+#include "hwtimer.h"
 #include "atomic.h"
 #include "board.h"
 #include "console.h"
 #include "uart.h"
-#include "registers.h"
 #include "util.h"
-
-#define US_PER_SECOND 1000000
-
-/* Divider to get microsecond for the clock */
-#define CLOCKSOURCE_DIVIDER (CPU_CLOCK/US_PER_SECOND)
 
 /* high word of the 64-bit timestamp counter  */
 static volatile uint32_t clksrc_high;
@@ -32,24 +27,8 @@ static timestamp_t timer_deadline[TASK_ID_COUNT];
 
 static uint32_t next_deadline = 0xffffffff;
 
-void __hw_clock_event_set(uint32_t deadline)
-{
-	/* set the match on the deadline */
-	LM4_TIMER_TAMATCHR(6) = 0xffffffff - deadline;
-	/* Set the match interrupt */
-	LM4_TIMER_IMR(6) |= 0x10;
-}
-
-void __hw_clock_event_clear(void)
-{
-	/* Disable the match interrupt */
-	LM4_TIMER_IMR(6) &= ~0x10;
-}
-
-static uint32_t __hw_clock_source_read(void)
-{
-	return 0xffffffff - LM4_TIMER_TAV(6);
-}
+/* Hardware timer routine IRQ number */
+static int timer_irq;
 
 static void expire_timer(task_id_t tskid)
 {
@@ -62,13 +41,16 @@ static void expire_timer(task_id_t tskid)
 /**
  * Search the next deadline and program it in the timer hardware
  *
- * It returns a bitmap of expired timers.
+ * overflow: if true, the 32-bit counter as overflowed since the last call.
  */
-static void process_timers(void)
+void process_timers(int overflow)
 {
 	uint32_t check_timer, running_t0;
 	timestamp_t next;
 	timestamp_t now;
+
+	if (overflow)
+		clksrc_high++;
 
 reprocess_timers:
 	next.val = 0xffffffffffffffff;
@@ -105,54 +87,6 @@ reprocess_timers:
 	//TODO narrow race: deadline might have been reached before
 }
 
-static void __hw_clock_source_irq(void)
-{
-	uint32_t status = LM4_TIMER_RIS(6);
-
-	/* clear interrupt */
-	LM4_TIMER_ICR(6) = status;
-	/* free running counter as overflowed */
-	if (status & 0x01) {
-		clksrc_high++;
-	}
-	/* Find expired timers and set the new timer deadline */
-	process_timers();
-}
-DECLARE_IRQ(LM4_IRQ_TIMERW0A, __hw_clock_source_irq, 1);
-
-
-static void __hw_clock_source_init(void)
-{
-	volatile uint32_t scratch __attribute__((unused));
-
-	/* Use WTIMER0 (timer 6) configured as a free running counter with 1 us
-	 * period */
-
-	/* Enable WTIMER0 clock */
-	LM4_SYSTEM_RCGCWTIMER |= 1;
-	/* wait 3 clock cycles before using the module */
-	scratch = LM4_SYSTEM_RCGCWTIMER;
-
-	/* Ensure timer is disabled : TAEN = TBEN = 0 */
-	LM4_TIMER_CTL(6) &= ~0x101;
-	/* Set overflow interrupt */
-	LM4_TIMER_IMR(6) = 0x1;
-	/* 32-bit timer mode */
-	LM4_TIMER_CFG(6) = 4;
-	/* set the prescaler to increment every microsecond */
-	LM4_TIMER_TAPR(6) = CLOCKSOURCE_DIVIDER;
-	/* Periodic mode, counting down */
-	LM4_TIMER_TAMR(6) = 0x22;
-	/* use the full 32-bits of the timer */
-	LM4_TIMER_TAILR(6) = 0xffffffff;
-	/* Starts counting in timer A */
-	LM4_TIMER_CTL(6) |= 0x1;
-
-	/* Enable interrupt */
-	task_enable_irq(LM4_IRQ_TIMERW0A);
-}
-
-
 void udelay(unsigned us)
 {
 	timestamp_t deadline = get_time();
@@ -174,11 +108,10 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid)
 	/* modify the next event if needed */
 	if ((tstamp.le.hi < clksrc_high) ||
 	    ((tstamp.le.hi == clksrc_high) && (tstamp.le.lo <= next_deadline)))
-		task_trigger_irq(LM4_IRQ_TIMERW0A);
+		task_trigger_irq(timer_irq);
 
 	return EC_SUCCESS;
 }
-
 
 int timer_cancel(task_id_t tskid)
 {
@@ -251,7 +184,7 @@ int command_timer_info(int argc, char **argv)
 	            "Deadline: 0x%08x%08x us\n"
 	            "Active timers:\n",
 	            ts.le.hi, ts.le.lo, clksrc_high,
-		    0xffffffff - LM4_TIMER_TAMATCHR(6));
+		    __hw_clock_event_get());
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & (1<<tskid))
 			uart_printf("Tsk %d tmr 0x%08x%08x\n", tskid,
@@ -267,7 +200,7 @@ int timer_init(void)
 {
 	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
 
-	__hw_clock_source_init();
+	timer_irq = __hw_clock_source_init();
 
 	return EC_SUCCESS;
 }
