@@ -10,10 +10,10 @@
 #include "config.h"
 #include "atomic.h"
 #include "console.h"
+#include "cpu.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
-#include "registers.h"
 #include "util.h"
 
 /**
@@ -253,19 +253,19 @@ uint32_t task_wait_msg(int timeout_us)
 
 void task_enable_irq(int irq)
 {
-	LM4_NVIC_EN(irq / 32) = 1 << (irq % 32);
+	CPU_NVIC_EN(irq / 32) = 1 << (irq % 32);
 }
 
 
 void task_disable_irq(int irq)
 {
-	LM4_NVIC_DIS(irq / 32) = 1 << (irq % 32);
+	CPU_NVIC_DIS(irq / 32) = 1 << (irq % 32);
 }
 
 
 void task_trigger_irq(int irq)
 {
-	LM4_NVIC_SWTRIG = irq;
+	CPU_NVIC_SWTRIG = irq;
 }
 
 
@@ -285,8 +285,8 @@ static void __nvic_init_irqs(void)
 		uint8_t irq = __irqprio[i].irq;
 		uint8_t prio = __irqprio[i].priority;
 		uint32_t prio_shift = irq % 4 * 8 + 5;
-		LM4_NVIC_PRI(irq / 4) =
-				(LM4_NVIC_PRI(irq / 4) &
+		CPU_NVIC_PRI(irq / 4) =
+				(CPU_NVIC_PRI(irq / 4) &
 				 ~(0x7 << prio_shift)) |
 				(prio << prio_shift);
 	}

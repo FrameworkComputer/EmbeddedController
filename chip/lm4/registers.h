@@ -183,12 +183,6 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_DMA_DMACHMAP2      LM4REG(0x400ff518)
 #define LM4_DMA_DMACHMAP3      LM4REG(0x400ff51c)
 
-#define LM4_NVIC_EN(x)         LM4REG(0xe000e100 + 4 * (x))
-#define LM4_NVIC_DIS(x)        LM4REG(0xe000e180 + 4 * (x))
-#define LM4_NVIC_PRI(x)        LM4REG(0xe000e400 + 4 * (x))
-#define LM4_NVIC_APINT         LM4REG(0xe000ed0c)
-#define LM4_NVIC_SWTRIG        LM4REG(0xe000ef00)
-
 /* IRQ numbers */
 #define LM4_IRQ_GPIOA            0
 #define LM4_IRQ_GPIOB            1

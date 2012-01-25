@@ -6,6 +6,7 @@
 /* System module for Chrome EC */
 
 #include "console.h"
+#include "cpu.h"
 #include "registers.h"
 #include "system.h"
 #include "uart.h"
@@ -234,7 +235,7 @@ int system_reset(int is_cold)
 {
 	/* TODO: (crosbug.com/p/7470) support cold boot; this is a
 	   warm boot. */
-	LM4_NVIC_APINT = 0x05fa0004;
+	CPU_NVIC_APINT = 0x05fa0004;
 
 	/* Spin and wait for reboot; should never return */
 	/* TODO: (crosbug.com/p/7471) should disable task swaps while
