@@ -11,6 +11,13 @@
 #include "util.h"
 #include "x86_power.h"
 
+#ifndef CONFIG_X86POWER
+#define x86_power_interrupt NULL
+#endif
+#ifndef CONFIG_POWERBTN
+#define power_button_interrupt NULL
+#endif
+
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
