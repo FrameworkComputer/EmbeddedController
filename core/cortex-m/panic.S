@@ -67,21 +67,18 @@ panic_print:
  * r0: asciiZ string pointer
  */
 emergency_puts:
-    ldr r1, =0x4000c000                       @ UART0 first register
+    ldr r1, =CONFIG_UART_ADDRESS              @ UART base address
 1:
     ldrb r3, [r0], #1                         @ read one character
     cmp r3, #0                                @ end of the string ?
     beq 3f                                    @ if yes, return
 2:  /* putchar */
-    ldr r2, [r1, #0x18]                       @ read LM4_UART0_UARTFR
-    tst r2, #0x20                             @ TX FIFO full ?
-    bne 2b                                    @ if yes, wait
-    str r3, [r1]                              @ send character to UART DR
+    ldr r2, [r1, #CONFIG_UART_SR_OFFSET]      @ read UART status
+    tst r2, #CONFIG_UART_SR_TXEMPTY           @ free space on TX ?
+    beq 2b                                    @ if no, wait
+    str r3, [r1, #CONFIG_UART_DR_OFFSET]      @ send character to UART DR
     b 1b                                      @ goto next character
-3:  /* flush */
-    ldr r2, [r1, #0x18]                       @ read LM4_UART0_UARTFR
-    tst r2, #0x8                              @ TX on-going ?
-    bne 3b                                    @ if yes, wait
+3:  /* return */
     bx lr
 
 /* write a number in hexadecimal in a text buffer
