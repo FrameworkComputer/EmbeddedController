@@ -11,7 +11,6 @@
 #include "timer.h"
 #include "hwtimer.h"
 #include "atomic.h"
-#include "board.h"
 #include "console.h"
 #include "uart.h"
 #include "util.h"

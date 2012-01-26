@@ -5,9 +5,6 @@
  * Main routine for Chrome EC
  */
 
-#include "registers.h"
-#include "board.h"
-
 #include "adc.h"
 #include "clock.h"
 #include "console.h"

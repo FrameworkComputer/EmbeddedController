@@ -8,7 +8,6 @@
 #include "console.h"
 #include "task.h"
 #include "uart.h"
-#include "registers.h"
 #include "util.h"
 
 #define MAX_ARGS_PER_COMMAND 10

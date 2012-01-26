@@ -6,10 +6,8 @@
 /* System module for Chrome EC */
 
 #include "console.h"
-#include "registers.h"
 #include "uart.h"
 #include "util.h"
-#include "version.h"
 
 
 static int command_write_word(int argc, char **argv)
