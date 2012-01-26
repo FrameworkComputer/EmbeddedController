@@ -80,20 +80,17 @@ static void select_column(int col)
 		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
 		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
 		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) &= ~0x1f;
-	} else if (col == COLUMN_TRI_STATE_ALL) {
-		LM4_GPIO_DIR(LM4_GPIO_P) &= ~0xff;
-		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
-	} else if (col < 8) {
-		LM4_GPIO_DIR(LM4_GPIO_P) &= ~0xff;
-		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = ~(1 << col);
-		LM4_GPIO_DIR(LM4_GPIO_P) = (1 << col) & 0xff;
+		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0;
 	} else {
-		LM4_GPIO_DIR(LM4_GPIO_P) &= ~0xff;
+		LM4_GPIO_DIR(LM4_GPIO_P) = 0;
 		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) = ~(1 << (col - 8));
-		LM4_GPIO_DIR(LM4_GPIO_Q) |= 1 << (col - 8);
+		if (col < 8) {
+			LM4_GPIO_DIR(LM4_GPIO_P) |= 1 << col;
+			LM4_GPIO_DATA(LM4_GPIO_P, 1 << col) = 0;
+		} else if (col != COLUMN_TRI_STATE_ALL) {
+			LM4_GPIO_DIR(LM4_GPIO_Q) |= 1 << (col - 8);
+			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
+		}
 	}
 #else  /* BDS definition */
 	/* Somehow the col 10 and 11 are swapped on bds. */
@@ -150,18 +147,13 @@ int keyboard_scan_init(void)
 #endif
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
-	/* Clear GPIOAFSEL and enable digital function for PH0:7,
-	 * PK0:3, PN2, PQ0:7.  Power button is just a GPIO now. */
+	/* Clear GPIOAFSEL and enable digital function for rows */
 #ifdef BOARD_link
-	LM4_GPIO_AFSEL(LM4_GPIO_N) &= 0xff;  /* KSI[7:0] */
-	LM4_GPIO_DEN(LM4_GPIO_N) |= 0xff;
-	LM4_GPIO_AFSEL(LM4_GPIO_P) &= 0xff;  /* KSO[7:0] */
-	LM4_GPIO_DEN(LM4_GPIO_P) |= 0xff;
-	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= 0x1f;  /* KSO[12:8] */
+	LM4_GPIO_AFSEL(LM4_GPIO_P) = 0;  /* KSO[7:0] */
+	LM4_GPIO_DEN(LM4_GPIO_P) = 0xff;
+	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= ~0x1f;  /* KSO[12:8] */
 	LM4_GPIO_DEN(LM4_GPIO_Q) |= 0x1f;
 #else
-	LM4_GPIO_AFSEL(LM4_GPIO_H) = 0;      /* KSI[7:0] */
-	LM4_GPIO_DEN(LM4_GPIO_H) = 0xff;
 	LM4_GPIO_AFSEL(LM4_GPIO_K) &= ~0x0f;
 	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x0f;
 	LM4_GPIO_AFSEL(LM4_GPIO_N) &= ~0x04;
@@ -171,6 +163,8 @@ int keyboard_scan_init(void)
 #endif
 
 	/* Set row inputs with pull-up */
+	LM4_GPIO_AFSEL(KB_SCAN_ROW_GPIO) &= 0xff;
+	LM4_GPIO_DEN(KB_SCAN_ROW_GPIO) |= 0xff;
 	LM4_GPIO_DIR(KB_SCAN_ROW_GPIO) = 0;
 	LM4_GPIO_PUR(KB_SCAN_ROW_GPIO) = 0xff;
 
@@ -329,15 +323,4 @@ static void matrix_interrupt(void)
 		task_send_msg(TASK_ID_KEYSCAN, TASK_ID_KEYSCAN, 0);
 	}
 }
-
-/* TODO: DECLARE_IRQ stringizing plays poorly with other macros, so need this
- * ugly workaround */
-#if (KB_SCAN_ROW_IRQ == LM4_IRQ_GPIOH)
-DECLARE_IRQ(LM4_IRQ_GPIOH, matrix_interrupt, 3);
-#elif (KB_SCAN_ROW_IRQ == LM4_IRQ_GPION)
-DECLARE_IRQ(LM4_IRQ_GPION, matrix_interrupt, 3);
-#else
-#error "Unsupported KB_SCAN_ROW_IRQ"
-/* If you add a board with different GPIO, also make sure supporting code in
- * gpio.c is changed so the interrupts don't fight... */
-#endif
+DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);

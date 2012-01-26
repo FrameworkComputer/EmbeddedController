@@ -93,8 +93,10 @@ int gpio_pre_init(void)
 		/* Handle GPIO direction */
 		if (g->flags & GPIO_OUTPUT) {
 			/* Output with default level */
-			gpio_set_level(i, g->flags & GPIO_HIGH);
 			LM4_GPIO_DIR(g->port) |= g->mask;
+			/* Must set level after direction; writes to GPIO_DATA
+			 * before direction is output appear to be ignored. */
+			gpio_set_level(i, g->flags & GPIO_HIGH);
 		} else {
 			/* Input */
 			if (g->flags & GPIO_PULL) {
