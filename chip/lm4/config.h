@@ -31,5 +31,11 @@
 /* build with assertions and debug messages */
 #define CONFIG_DEBUG
 
+/* Optional features */
+#define CONFIG_FLASH
+#define CONFIG_LPC
+#define CONFIG_PWM
+#define CONFIG_TEMP_SENSOR
+
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */

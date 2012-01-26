@@ -8,7 +8,11 @@
 # LM4 SoC has a Cortex-M4 ARM core
 CORE:=cortex-m
 
-chip-y=pwm.o i2c.o adc.o jtag.o
-chip-y+=clock.o gpio.o system.o lpc.o uart.o power_button.o
-chip-y+=flash.o watchdog.o eeprom.o temp_sensor.o hwtimer.o
+chip-y=i2c.o adc.o jtag.o
+chip-y+=clock.o gpio.o system.o uart.o power_button.o
+chip-y+=watchdog.o eeprom.o hwtimer.o
+chip-$(CONFIG_FLASH)+=flash.o
+chip-$(CONFIG_LPC)+=lpc.o
+chip-$(CONFIG_PWM)+=pwm.o
+chip-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o

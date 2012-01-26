@@ -6,6 +6,7 @@
  */
 
 #include "adc.h"
+#include "config.h"
 #include "clock.h"
 #include "console.h"
 #include "eeprom.h"
@@ -60,13 +61,21 @@ int main(void)
 	timer_init();
 	uart_init();
 	system_init();
+#ifdef CONFIG_FLASH
 	flash_init();
+#endif
 	eeprom_init();
+#ifdef CONFIG_LPC
 	port_80_init();
 	lpc_init();
+#endif
+#ifdef CONFIG_PWM
 	pwm_init();
+#endif
 	i2c_init();
+#ifdef CONFIG_TEMP_SENSOR
 	temp_sensor_init();
+#endif
 	power_button_init();
 	adc_init();
 	usb_charge_init();

@@ -5,9 +5,12 @@
 # Common files build
 #
 
-common-y=main.o util.o console.o vboot.o pwm_commands.o
-common-y+=flash_commands.o port80.o
-common-y+=memory_commands.o shared_mem.o temp_sensor_commands.o usb_charge.o
+common-y=main.o util.o console.o vboot.o
+common-y+=memory_commands.o shared_mem.o usb_charge.o
+common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
+common-$(CONFIG_FLASH)+=flash_commands.o
+common-$(CONFIG_PWM)+=pwm_commands.o
+common-$(CONFIG_TEMP_SENSOR)+=temp_sensor_commands.o
