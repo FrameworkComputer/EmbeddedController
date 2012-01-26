@@ -56,6 +56,9 @@ int system_init(void);
  * the cause is not known. */
 enum system_reset_cause_t system_get_reset_cause(void);
 
+/* Record the cause of the last reset. */
+void system_set_reset_cause(enum system_reset_cause_t cause);
+
 /* Returns a text description of the last reset cause. */
 const char *system_get_reset_cause_string(void);
 
