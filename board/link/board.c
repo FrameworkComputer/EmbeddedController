@@ -5,16 +5,17 @@
 /* EC for Link board configuration */
 
 #include "board.h"
+#include "config.h"
 #include "gpio.h"
 #include "power_button.h"
 #include "registers.h"
 #include "util.h"
 #include "x86_power.h"
 
-#ifndef CONFIG_X86POWER
+#ifndef CONFIG_TASK_X86POWER
 #define x86_power_interrupt NULL
 #endif
-#ifndef CONFIG_POWERBTN
+#ifndef CONFIG_TASK_POWERBTN
 #define power_button_interrupt NULL
 #endif
 

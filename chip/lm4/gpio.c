@@ -87,6 +87,9 @@ int gpio_pre_init(void)
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 
+		/* Use as GPIO, not alternate function */
+		gpio_set_alternate_function(g->port, g->mask, 0);
+
 		/* Handle GPIO direction */
 		if (g->flags & GPIO_OUTPUT) {
 			/* Output with default level */
@@ -102,9 +105,6 @@ int gpio_pre_init(void)
 					LM4_GPIO_PDR(g->port) |= g->mask;
 			}
 		}
-
-		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, 0);
 
 		/* Set up interrupts if necessary */
 		if (g->flags & GPIO_INT_LEVEL)
