@@ -117,6 +117,7 @@ static int wait_in_signals(uint32_t want)
 
 	while ((in_signals & in_want) != in_want) {
 		if (task_wait_msg(DEFAULT_TIMEOUT) == (1 << TASK_ID_TIMER)) {
+			update_in_signals();
 			uart_printf("[x86 power timeout on input; "
 				    "wanted 0x%04x, got 0x%04x]\n",
 				    in_want, in_signals & in_want);
@@ -202,21 +203,14 @@ void x86_power_task(void)
 	x86_power_init();
 
 	while (1) {
-		uart_printf("[x86 power state %d = %s]\n", state,
-			    state_names[state]);
+		uart_printf("[x86 power state %d = %s, in 0x%04x]\n",
+			    state, state_names[state], in_signals);
 
 		switch (state) {
 
 		case X86_G3:
 			/* Move to S5 state on boot */
 			state = X86_G3S5;
-			break;
-
-		case X86_S5:
-			/* For bringup, power on one second after boot */
-			/* TODO: remove post-bringup */
-			usleep(1000000);
-			state = X86_S5S0;
 			break;
 
 		case X86_G3S5:
@@ -274,6 +268,14 @@ void x86_power_task(void)
 			state = X86_S0;
 			break;
 
+		case X86_S5:
+#ifdef AUTO_POWER_UP
+			/* For bringup, power on one second after boot */
+			/* TODO: remove post-bringup */
+			usleep(1000000);
+			state = X86_S5S0;
+			break;
+#endif
 		case X86_S0:
 			/* Steady state; wait for a message */
 			task_wait_msg(-1);
@@ -281,5 +283,34 @@ void x86_power_task(void)
 	}
 }
 
+/*****************************************************************************/
+/* Console commnands */
 
+static int command_x86power(int argc, char **argv)
+{
+	enum x86_state current = state;
+	/* If no args provided, print current state */
+	if (argc < 2) {
+		uart_printf("Current X86 state: %d (%s)\n",
+			    state, state_names[state]);
+		return EC_SUCCESS;
+	}
 
+	/* Get state to move to */
+	if (!strcasecmp(argv[1], "S0")) {
+		if (state == X86_S5)
+			state = X86_S5S0;
+	}
+
+	if (current == state)
+		uart_puts("State not changed.\n");
+	else {
+		uart_printf("New X86 state: %d (%s)\n",
+			    state, state_names[state]);
+		/* Wake up the task if it's asleep */
+		task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(x86power, command_x86power);
