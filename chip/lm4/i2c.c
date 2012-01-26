@@ -168,7 +168,7 @@ static void scan_bus(int port, char *desc)
 	int rv;
 	int a;
 
-	uart_printf("Scanning %s I2C bus...\n", desc);
+	uart_printf("Scanning %s I2C bus (%d)...\n", desc, port);
 
 	for (a = 0; a < 0x100; a += 2) {
 		uart_puts(".");
@@ -178,10 +178,67 @@ static void scan_bus(int port, char *desc)
 		LM4_I2C_MCS(port) = 0x07;
 		rv = wait_idle(port);
 		if (rv == EC_SUCCESS)
-			uart_printf("\nFound device at 0x%02x\n", a);
+			uart_printf("\nFound device at 8-bit addr 0x%02x\n", a);
 	}
 	uart_puts("\n");
 }
+
+
+static int command_i2cread(int argc, char **argv)
+{
+	int port, addr, count = 1;
+	char *e;
+	int rv;
+	int d, i;
+
+	if (argc < 3) {
+		uart_puts("Usage: i2cread <port> <addr> [count]\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	port = strtoi(argv[1], &e, 0);
+	if (*e) {
+		uart_puts("Invalid port\n");
+		return EC_ERROR_INVAL;
+	}
+	if (port != I2C_PORT_THERMAL && port != I2C_PORT_BATTERY &&
+	    port != I2C_PORT_CHARGER) {
+		uart_puts("Unsupported port\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	addr = strtoi(argv[2], &e, 0);
+	if (*e || (addr & 0x01)) {
+		uart_puts("Invalid addr; try 'i2cscan' command\n");
+		return EC_ERROR_INVAL;
+	}
+
+	if (argc > 3) {
+		count = strtoi(argv[3], &e, 0);
+		if (*e) {
+			uart_puts("Invalid count\n");
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	uart_printf("Reading %d bytes from I2C device %d:0x%02x...\n",
+		    count, port, addr);
+	LM4_I2C_MSA(port) = addr | 0x01;
+	for (i = 0; i < count; i++) {
+		if (i == 0)
+			LM4_I2C_MCS(port) = (count > 1 ? 0x0b : 0x07);
+		else
+			LM4_I2C_MCS(port) = (i == count - 1 ? 0x05 : 0x09);
+		rv = wait_idle(port);
+		if (rv != EC_SUCCESS)
+			return rv;
+		d = LM4_I2C_MDR(port) & 0xff;
+		uart_printf("0x%02x ", d);
+	}
+	uart_puts("\n");
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread);
 
 
 static int command_scan(int argc, char **argv)
