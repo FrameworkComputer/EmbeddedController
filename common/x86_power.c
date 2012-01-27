@@ -41,18 +41,22 @@ static const char * const state_names[] = {
 };
 
 /* Input state flags */
-#define IN_PGOOD_5VALW            0x0001
-#define IN_PGOOD_1_5V_DDR         0x0002
-#define IN_PGOOD_1_5V_PCH         0x0004
-#define IN_PGOOD_1_8VS            0x0008
-#define IN_PGOOD_VCCP             0x0010
-#define IN_PGOOD_VCCSA            0x0020
-#define IN_PGOOD_CPU_CORE         0x0040
-#define IN_PGOOD_VGFX_CORE        0x0080
-#define IN_PCH_SLP_S3n_DEASSERTED 0x0100
-#define IN_PCH_SLP_S4n_DEASSERTED 0x0200
-#define IN_PCH_SLP_S5n_DEASSERTED 0x0400
-#define IN_PCH_SLP_An_DEASSERTED  0x0800
+#define IN_PGOOD_5VALW             0x0001
+#define IN_PGOOD_1_5V_DDR          0x0002
+#define IN_PGOOD_1_5V_PCH          0x0004
+#define IN_PGOOD_1_8VS             0x0008
+#define IN_PGOOD_VCCP              0x0010
+#define IN_PGOOD_VCCSA             0x0020
+#define IN_PGOOD_CPU_CORE          0x0040
+#define IN_PGOOD_VGFX_CORE         0x0080
+#define IN_PCH_SLP_S3n_DEASSERTED  0x0100
+#define IN_PCH_SLP_S4n_DEASSERTED  0x0200
+#define IN_PCH_SLP_S5n_DEASSERTED  0x0400
+#define IN_PCH_SLP_An_DEASSERTED   0x0800
+#define IN_PCH_SLP_SUSn_DEASSERTED 0x1000
+#define IN_PCH_SLP_MEn_DEASSERTED  0x2000
+#define IN_PCH_SUSWARNn_DEASSERTED 0x4000
+#define IN_PCH_BKLTEN_ASSERTED     0x8000
 /* All always-on supplies */
 #define IN_PGOOD_ALWAYS_ON   (IN_PGOOD_5VALW)
 /* All non-core power rails */
@@ -76,6 +80,7 @@ static uint32_t in_want;      /* Input signal state we're waiting for */
 static void update_in_signals(void)
 {
 	uint32_t inew = 0;
+	int v;
 
 	if (gpio_get_level(GPIO_PGOOD_5VALW))
 		inew |= IN_PGOOD_5VALW;
@@ -104,6 +109,23 @@ static void update_in_signals(void)
 		inew |= IN_PCH_SLP_S4n_DEASSERTED;
 	if (gpio_get_level(GPIO_PCH_SLP_S5n))
 		inew |= IN_PCH_SLP_S5n_DEASSERTED;
+
+	if (gpio_get_level(GPIO_PCH_SLP_SUSn))
+		inew |= IN_PCH_SLP_SUSn_DEASSERTED;
+	if (gpio_get_level(GPIO_PCH_SLP_ME_CSW_DEVn))
+		inew |= IN_PCH_SLP_MEn_DEASSERTED;
+
+	v = gpio_get_level(GPIO_PCH_SUSWARNn);
+	if (v)
+		inew |= IN_PCH_SUSWARNn_DEASSERTED;
+	/* Copy SUSWARN# signal from PCH to SUSACK# */
+	gpio_set_level(GPIO_PCH_SUSACKn, v);
+
+	v = gpio_get_level(GPIO_PCH_BKLTEN);
+	if (v)
+		inew |= IN_PCH_BKLTEN_ASSERTED;
+	/* Copy backlight enable signal from PCH to BKLTEN */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, v);
 
 	in_signals = inew;
 }
@@ -137,30 +159,13 @@ static int wait_in_signals(uint32_t want)
 
 void x86_power_interrupt(enum gpio_signal signal)
 {
-	/* Signals we handle specially */
-	switch (signal) {
-	case GPIO_PCH_BKLTEN:
-		/* Copy backlight enable signal from PCH to BKLTEN */
-		gpio_set_level(GPIO_ENABLE_BACKLIGHT,
-			       gpio_get_level(GPIO_PCH_BKLTEN));
-		return;
+	/* Shadow signals and compare with our desired signal state. */
+	update_in_signals();
 
-	case GPIO_PCH_SUSWARNn:
-		/* Copy SUSWARN# signal from PCH to SUSACK# */
-		gpio_set_level(GPIO_PCH_SUSACKn,
-			       gpio_get_level(GPIO_PCH_SUSWARNn));
-		return;
-
-	default:
-		/* All other signals we shadow and compare with our desired
-		 * signal state. */
-		update_in_signals();
-
-		/* Wake task if we want at least one signal, and all all the
-		 * inputs we want are present */
-		if (in_want && (in_signals & in_want) == in_want)
-			task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
-	}
+	/* Wake task if we want at least one signal, and all all the inputs we
+	 * want are present */
+	if (in_want && (in_signals & in_want) == in_want)
+		task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
 }
 
 /*****************************************************************************/
