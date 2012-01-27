@@ -110,6 +110,66 @@ int uart_gets(char *dest, int size);
 /* TODO: getc(), putc() equivalents? */
 
 /*****************************************************************************/
+/* Hardware UART driver functions */
+
+/* Flushes the transmit FIFO. */
+void uart_tx_flush(void);
+
+/* Returns true if there is room to transmit a character immediatly. */
+int uart_tx_ready(void);
+
+/* Returns true if the UART has character available. */
+int uart_rx_available(void);
+
+/**
+ * Sends a character to the UART data register.
+ *
+ * c : byte to send.
+ */
+void uart_write_char(char c);
+
+/**
+ * Reads and returns one char from the UART data register.
+ *
+ * Called when uart_rx_available once returns true.
+ */
+int uart_read_char(void);
+
+/**
+ * Disables all UART related IRQs.
+ *
+ * To avoid concurrent accesses on UART management variables.
+ */
+void uart_disable_interrupt(void);
+
+/* Re-enables UART IRQs. */
+void uart_enable_interrupt(void);
+
+/**
+ * Re-enables the UART transmit interrupt.
+ *
+ * It also forces triggering an interrupt if the hardware doesn't automatically
+ * trigger it when the transmit buffer was filled beforehand.
+ */
+void uart_tx_start(void);
+
+/* Disables the UART transmit interrupt. */
+void uart_tx_stop(void);
+
+/* Returns true if the UART transmit interrupt is disabled */
+int uart_tx_stopped(void);
+
+/**
+ * Helper for UART processing.
+ * Read the input FIFO until empty, then fill the output FIFO until the transmit
+ * buffer is empty or the FIFO full.
+ *
+ * Designed to be called from the driver interrupt handler.
+ */
+void uart_process(void);
+
+
+/*****************************************************************************/
 /* COMx functions */
 
 /* Returns non-zero if ok to put a character via uart_comx_putc(). */
