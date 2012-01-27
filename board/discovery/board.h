@@ -8,6 +8,9 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+/* 16 MHz SYSCLK clock frequency */
+#define CPU_CLOCK 16000000
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* GPIO signal list */
