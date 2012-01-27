@@ -43,6 +43,7 @@
 int atoi(const char *nptr);
 int isdigit(int c);
 int isspace(int c);
+int isalpha(int c);
 void *memcpy(void *dest, const void *src, int len);
 void *memset(void *dest, int c, int len);
 int strcasecmp(const char *s1, const char *s2);

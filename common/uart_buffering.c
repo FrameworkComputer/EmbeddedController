@@ -29,6 +29,7 @@ static volatile char rx_buf[RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
 static int last_rx_was_cr;
+static int in_escape;
 
 static int console_mode = 1;
 
@@ -76,11 +77,24 @@ void uart_process(void)
 				last_rx_was_cr = 0;
 			}
 
+			/* Eat common terminal escape sequences (ESC [ ...).
+			 * Would be really cool if we used arrow keys to edit
+			 * command history, but for now it's sufficient just to
+			 * keep them from causing problems. */
+			if (c == 0x1B) {
+				in_escape = 1;
+				continue;
+			} else if (in_escape) {
+				if (isalpha(c) || c == '~')
+					in_escape = 0;
+				continue;
+			}
+
 			/* Echo characters directly to the transmit FIFO so we
 			 * don't interfere with the transmit buffer.  This
 			 * means that if a lot of output is happening, input
 			 * characters won't always be properly echoed. */
-			if (console_mode && c == '\n')
+			if (c == '\n')
 				uart_write_char('\r');
 			uart_write_char(c);
 
