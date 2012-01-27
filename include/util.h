@@ -38,6 +38,12 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define NULL ((void *)0)
 
+/**
+ * macros for integer division with various rounding variants
+ * default integer division rounds down.
+ */
+#define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
+#define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
 /* Standard library functions */
 int atoi(const char *nptr);

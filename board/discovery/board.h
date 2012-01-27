@@ -11,6 +11,9 @@
 /* 16 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 16000000
 
+/* Use USART3 as console serial port */
+#define CONFIG_CONSOLE_UART 3
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* GPIO signal list */
