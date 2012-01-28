@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,6 +17,13 @@
 #define MAX_RPM 0x1fff
 /* Max PWM for fan controller */
 #define MAX_PWM 0x1ff
+/* Scaling factor for requested/actual RPM for CPU fan.  We need this because
+ * the fan controller on Blizzard filters tach pulses that are less than 64
+ * 15625Hz ticks apart, which works out to ~7000rpm on an unscaled fan.  By
+ * telling the controller we actually have twice as many edges per revolution,
+ * the controller can handle fans that actually go twice as fast.  See
+ * crosbug.com/p/7718. */
+#define CPU_FAN_SCALE 2
 
 
 /* Configures the GPIOs for the fan module. */
@@ -38,12 +45,16 @@ static void configure_gpios(void)
 
 int pwm_get_fan_rpm(void)
 {
-	return LM4_FAN_FANCST(FAN_CH_CPU) & MAX_RPM;
+	return (LM4_FAN_FANCST(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
 }
 
 
 int pwm_set_fan_target_rpm(int rpm)
 {
+	/* Apply fan scaling */
+	if (rpm > 0)
+		rpm /= CPU_FAN_SCALE;
+
 	/* Treat out-of-range requests as requests for maximum fan speed */
 	if (rpm < 0 || rpm > MAX_RPM)
 		rpm = MAX_RPM;
@@ -67,7 +78,7 @@ static int command_fan_info(int argc, char **argv)
 {
 	uart_printf("Fan actual speed: %4d rpm\n", pwm_get_fan_rpm());
 	uart_printf("    target speed: %4d rpm\n",
-		    LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM);
+		    (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE);
 	uart_printf("    duty cycle:   %d%%\n",
 		    ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
 	uart_printf("    status:       %d\n",
@@ -203,9 +214,10 @@ int pwm_init(void)
 	 * 0x0000 = bits 10:8  = start period (2<<0) edges
 	 * 0x0000 = bits 7:6   = no fast start
 	 * 0x0020 = bits 5:4   = average 4 edges when calculating RPM
-	 * 0x0008 = bits 3:2   = 4 pulses per revolution
+	 * 0x000c = bits 3:2   = 8 pulses per revolution
+	 *                       (see note at top of file)
 	 * 0x0000 = bit 0      = automatic control */
-	LM4_FAN_FANCH(FAN_CH_CPU) = 0x8028;
+	LM4_FAN_FANCH(FAN_CH_CPU) = 0x802c;
 
 	/* Configure keyboard backlight:
 	 * 0x0000 = bit 15     = auto-restart
