@@ -117,7 +117,7 @@ struct irq_priority {
 		routine();					\
 		task_resched_if_needed(ret);			\
 	}							\
-	const struct irq_priority prio_##irq                    \
+	const struct irq_priority IRQ_BUILD_NAME(prio_, irq, )  \
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
 
