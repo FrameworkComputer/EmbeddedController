@@ -39,6 +39,8 @@
 #define LPC_POOL_KEYBOARD (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_KEYBOARD)
 #define LPC_POOL_CMD_DATA (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_CMD_DATA)
 #define LPC_POOL_USER     (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_USER)
+/* LPC COMx I/O address (in x86 I/O address space) */
+#define LPC_COMX_ADDR 0x2f8  /* COM2, since superIO uses COM1 */
 
 /* ADC inputs */
 /* TODO: really just need a lookup table for channels to inputs */

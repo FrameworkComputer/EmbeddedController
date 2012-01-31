@@ -96,9 +96,9 @@ int lpc_init(void)
 	/* Unmask interrupt for host command writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
 
-	/* Set LPC channel 7 to I/O address 0x2F8 (COM2), bytes 8-15.
-	 * Channel 7 ignores the TYPE bit. */
-	LM4_LPC_ADR(LPC_CH_COMX) = 0x2f8;
+	/* Set LPC channel 7 to COM port I/O address.  Note that channel 7
+	 * ignores the TYPE bit and is always an 8-byte range. */
+	LM4_LPC_ADR(LPC_CH_COMX) = LPC_COMX_ADDR;
 	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
 	 * can enable IRQs on its own. */
 	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
