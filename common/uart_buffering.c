@@ -15,13 +15,19 @@
 /* Buffer sizes; should be power of 2 */
 #define TX_BUF_SIZE 512
 #define RX_BUF_SIZE 128  /* suggest larger than 80 to copy&paste script. */
+#define HISTORY_SIZE 8
 
-/* Macros to advance in the circular transmit and receive buffers */
+/* The size limit of single command */
+#define RX_LINE_SIZE 80
+
+/* Macros to advance in the circular buffers */
 #define TX_BUF_NEXT(i) (((i) + 1) & (TX_BUF_SIZE - 1))
 #define RX_BUF_NEXT(i) (((i) + 1) & (RX_BUF_SIZE - 1))
 #define RX_BUF_PREV(i) (((i) - 1) & (RX_BUF_SIZE - 1))
+#define CMD_HIST_NEXT(i) (((i) + 1) & (HISTORY_SIZE - 1))
+#define CMD_HIST_PREV(i) (((i) - 1) & (HISTORY_SIZE - 1))
 
-/* Macro to calculate difference of pointers in the circular receive buffers */
+/* Macro to calculate difference of pointers in the circular receive buffer. */
 #define RX_BUF_DIFF(i, j) (((i) - (j)) & (RX_BUF_SIZE - 1))
 
 /* Transmit and receive buffers */
@@ -31,10 +37,23 @@ static volatile int tx_buf_tail;
 static volatile char rx_buf[RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
-static volatile int rx_buf_ptr;
+static volatile char rx_cur_buf[RX_LINE_SIZE];
+static volatile int rx_cur_buf_tail;
+static volatile int rx_cur_buf_head;
+static volatile int rx_cur_buf_ptr;
 static int last_rx_was_cr;
 static int in_escape;
 static char esc_seq_char;
+
+/* Command history */
+struct cmd_history_t {
+	volatile int head;
+	volatile int tail;
+};
+static struct cmd_history_t cmd_history[HISTORY_SIZE];
+static volatile int cmd_history_head;
+static volatile int cmd_history_tail;
+static volatile int cmd_history_ptr;
 
 static int console_mode = 1;
 
@@ -64,8 +83,8 @@ static int __tx_char(int c)
 
 static void move_rx_ptr_fwd(void)
 {
-	if (rx_buf_ptr != rx_buf_head) {
-		rx_buf_ptr = RX_BUF_NEXT(rx_buf_ptr);
+	if (rx_cur_buf_ptr != rx_cur_buf_head) {
+		++rx_cur_buf_ptr;
 		uart_write_char(0x1B);
 		uart_write_char('[');
 		uart_write_char('1');
@@ -75,8 +94,8 @@ static void move_rx_ptr_fwd(void)
 
 static void move_rx_ptr_bwd(void)
 {
-	if (rx_buf_ptr != rx_buf_tail) {
-		rx_buf_ptr = RX_BUF_PREV(rx_buf_ptr);
+	if (rx_cur_buf_ptr != 0) {
+		--rx_cur_buf_ptr;
 		uart_write_char(0x1B);
 		uart_write_char('[');
 		uart_write_char('1');
@@ -84,30 +103,30 @@ static void move_rx_ptr_bwd(void)
 	}
 }
 
-static void move_cursor_back(int dist)
+static void repeat_char(char c, int cnt)
 {
-	while (dist--)
-		uart_write_char('\b');
+	while (cnt--)
+		uart_write_char(c);
 }
 
 static void handle_backspace(void)
 {
-	if (rx_buf_ptr != rx_buf_tail) {
+	if (rx_cur_buf_ptr != 0) {
 		/* Move texts after cursor and also update rx buffer. */
-		int ptr = rx_buf_ptr;
-		while (ptr != rx_buf_head) {
-			uart_write_char(rx_buf[ptr]);
-			rx_buf[RX_BUF_PREV(ptr)] = rx_buf[ptr];
-			ptr = RX_BUF_NEXT(ptr);
+		int ptr;
+		for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr) {
+			uart_write_char(rx_cur_buf[ptr]);
+			rx_cur_buf[ptr - 1] = rx_cur_buf[ptr];
 		}
+
 		/* Space over last character and move cursor back to correct
 		 * position.
 		 */
 		uart_write_char(' ');
-		move_cursor_back(RX_BUF_DIFF(ptr, rx_buf_ptr) + 1);
+		repeat_char('\b', ptr - rx_cur_buf_ptr + 1);
 
-		rx_buf_head = RX_BUF_PREV(rx_buf_head);
-		rx_buf_ptr = RX_BUF_PREV(rx_buf_ptr);
+		--rx_cur_buf_head;
+		--rx_cur_buf_ptr;
 	}
 	else
 		/* Cursor moves pass the first character. Move it back. */
@@ -118,30 +137,139 @@ static void insert_char(char c)
 {
 	int ptr;
 
+	/* On overflow, discard input */
+	if (rx_cur_buf_head == RX_LINE_SIZE)
+		return;
+
 	/* Move buffer ptr to the end if 'c' is new line */
 	if (c == '\n')
-		rx_buf_ptr = rx_buf_head;
+		rx_cur_buf_ptr = rx_cur_buf_head;
 
 	/* Move text after cursor. */
-	ptr = rx_buf_ptr;
-	while (ptr != rx_buf_head) {
-		uart_write_char(rx_buf[ptr]);
-		ptr = RX_BUF_NEXT(ptr);
-	}
+	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr)
+		uart_write_char(rx_cur_buf[ptr]);
+
 	/* Insert character to rx buffer and move cursor to correct
 	 * position.
 	 */
-	while (ptr != rx_buf_ptr) {
-		rx_buf[ptr] = rx_buf[RX_BUF_PREV(ptr)];
-		uart_write_char('\b');
-		ptr = RX_BUF_PREV(ptr);
+	repeat_char('\b', ptr - rx_cur_buf_ptr);
+	for (ptr = rx_cur_buf_head; ptr > rx_cur_buf_ptr; --ptr)
+		rx_cur_buf[ptr] = rx_cur_buf[ptr - 1];
+	rx_cur_buf[rx_cur_buf_ptr] = c;
+	++rx_cur_buf_head;
+	++rx_cur_buf_ptr;
+
+	/* Insert character directly into rx_buf if not in console mode. */
+	if (!console_mode) {
+		rx_buf[rx_buf_head] = c;
+		rx_buf_head = RX_BUF_NEXT(rx_buf_head);
+		if (rx_buf_tail == rx_buf_head)
+			rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
 	}
-	rx_buf[rx_buf_ptr] = c;
-	rx_buf_head = RX_BUF_NEXT(rx_buf_head);
-	rx_buf_ptr = RX_BUF_NEXT(rx_buf_ptr);
-	/* On overflow, discard oldest output */
-	if (rx_buf_head == rx_buf_tail)
-		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+}
+
+static int rx_buf_space_available(void)
+{
+	if (cmd_history_head == cmd_history_tail)
+		return RX_BUF_SIZE;
+	return RX_BUF_DIFF(cmd_history[cmd_history_tail].tail,
+			   cmd_history[CMD_HIST_PREV(cmd_history_head)].head);
+}
+
+static void history_save(void)
+{
+	int ptr;
+	int tail, head;
+	int hist_id;
+
+	/* If there is not enough space in rx buffer, discard the oldest
+	 * history. */
+	while (rx_buf_space_available() < rx_cur_buf_head)
+		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
+
+	/* If history buffer is full, discard the oldest one */
+	hist_id = cmd_history_head;
+	cmd_history_head = CMD_HIST_NEXT(cmd_history_head);
+	if (cmd_history_head == cmd_history_tail)
+		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
+
+	/* Copy the current command, but we do not save the '\n' */
+	if (hist_id == cmd_history_tail)
+		tail = 0;
+	else
+		tail = cmd_history[CMD_HIST_PREV(hist_id)].head + 1;
+	head = tail;
+	for (ptr = 0; ptr < rx_cur_buf_head; ++ptr, head = RX_BUF_NEXT(head))
+		rx_buf[head] = rx_cur_buf[ptr];
+	if (rx_buf[RX_BUF_PREV(head)] == '\n') {
+		head = RX_BUF_PREV(head);
+		rx_buf[head] = '\0';
+	}
+
+	cmd_history[hist_id].head = head;
+	cmd_history[hist_id].tail = tail;
+}
+
+static void history_load(int id)
+{
+	int head = cmd_history[id].head;
+	int tail = cmd_history[id].tail;
+	int ptr;
+
+	cmd_history_ptr = id;
+
+	/* Move cursor back to begin of the line. */
+	repeat_char('\b', rx_cur_buf_ptr);
+
+	/* Load command and print it. */
+	for (ptr = tail, rx_cur_buf_ptr = 0; ptr != head;
+			ptr = RX_BUF_NEXT(ptr), ++rx_cur_buf_ptr) {
+		rx_cur_buf[rx_cur_buf_ptr] = rx_buf[ptr];
+		uart_write_char(rx_buf[ptr]);
+	}
+
+	/* If needed, space over the remaining text. */
+	if (rx_cur_buf_ptr < rx_cur_buf_head) {
+		repeat_char(' ', rx_cur_buf_head - rx_cur_buf_ptr);
+		repeat_char('\b', rx_cur_buf_head - rx_cur_buf_ptr);
+	}
+
+	rx_cur_buf_head = rx_cur_buf_ptr;
+}
+
+static void history_prev(void)
+{
+	if (cmd_history_ptr == cmd_history_tail)
+		return;
+
+	/* Stash the current command if we are not currently using history.
+	 * Prevent loading history if there is no space to stash current
+	 * command. */
+	if (cmd_history_ptr == cmd_history_head) {
+		int last_id = CMD_HIST_PREV(cmd_history_head);
+		int last_len = RX_BUF_DIFF(cmd_history[last_id].head,
+					   cmd_history[last_id].tail);
+		if (last_len + rx_cur_buf_head > RX_BUF_SIZE)
+			return;
+
+		history_save();
+	}
+
+	cmd_history_ptr = CMD_HIST_PREV(cmd_history_ptr);
+	history_load(cmd_history_ptr);
+}
+
+static void history_next(void)
+{
+	if (cmd_history_ptr == cmd_history_head)
+		return;
+
+	cmd_history_ptr = CMD_HIST_NEXT(cmd_history_ptr);
+	history_load(cmd_history_ptr);
+
+	/* Remove the stashed command if we just loaded it. */
+	if (cmd_history_ptr == CMD_HIST_PREV(cmd_history_head))
+		cmd_history_head = cmd_history_ptr;
 }
 
 /* Helper for UART processing */
@@ -177,10 +305,14 @@ void uart_process(void)
 				if (esc_seq_char == 0x1B && c == '[')
 					esc_seq_char = '[';
 				else if (esc_seq_char == '[') {
-					if (c == 'D') /* Left key */
-						move_rx_ptr_bwd();
+					if (c == 'A') /* Up key */
+						history_prev();
+					else if (c == 'B') /* Down key */
+						history_next();
 					else if (c == 'C') /* Right key */
 						move_rx_ptr_fwd();
+					else if (c == 'D') /* Left key */
+						move_rx_ptr_bwd();
 					esc_seq_char = 0;
 				}
 				else
@@ -194,9 +326,7 @@ void uart_process(void)
 			}
 
 			/* Echo characters directly to the transmit FIFO so we
-			 * don't interfere with the transmit buffer.  This
-			 * means that if a lot of output is happening, input
-			 * characters won't always be properly echoed. */
+			 * don't interfere with the transmit buffer. */
 			if (c == '\n')
 				uart_write_char('\r');
 			uart_write_char(c);
@@ -229,6 +359,9 @@ void uart_process(void)
 void uart_set_console_mode(int enable)
 {
 	console_mode = enable;
+
+	if (!enable)
+		rx_cur_buf_ptr = rx_cur_buf_head;
 }
 
 
@@ -429,6 +562,7 @@ void uart_flush_input(void)
 	uart_process();
 
 	/* Clear the input buffer */
+	rx_cur_buf_head = 0;
 	rx_buf_tail = rx_buf_head;
 
 	/* Re-enable interrupts */
@@ -450,10 +584,9 @@ int uart_peek(int c)
 	 * ensure we've pulled the very last character out of the FIFO. */
 	uart_process();
 
-	for (i = rx_buf_tail; i != rx_buf_head; i = RX_BUF_NEXT(i)) {
-		if (rx_buf[i] == c) {
-			index = (RX_BUF_SIZE + i - rx_buf_tail) &
-					(RX_BUF_SIZE - 1);
+	for (i = 0; i < rx_cur_buf_head; ++i) {
+		if (rx_cur_buf[i] == c) {
+			index = i;
 			break;
 		}
 	}
@@ -501,15 +634,25 @@ int uart_gets(char *dest, int size)
 	/* Call interrupt handler to empty the hardware FIFO */
 	uart_process();
 
+	/* Remove the stashed command if any. */
+	if (cmd_history_ptr != cmd_history_head)
+		cmd_history_head = CMD_HIST_PREV(cmd_history_head);
+
+	/* Record last command. */
+	if (!(rx_cur_buf_head == 1 && rx_cur_buf[0] == '\n'))
+		history_save();
+	cmd_history_ptr = cmd_history_head;
+
 	/* Read characters */
-	while (got < size - 1 && rx_buf_tail != rx_buf_head) {
-		c = rx_buf[rx_buf_tail];
+	while (got < size - 1 && got < rx_cur_buf_head) {
+		c = rx_cur_buf[got];
 		dest[got++] = c;
-		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
 		if (c == '\n')
 			break;  /* Stop on newline */
 	}
-	rx_buf_ptr = rx_buf_tail;
+	rx_cur_buf_ptr = 0;
+	rx_cur_buf_head = 0;
+	rx_cur_buf_tail = rx_cur_buf_head;
 
 	/* Re-enable interrupts */
 	uart_enable_interrupt();

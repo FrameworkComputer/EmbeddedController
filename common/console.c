@@ -103,7 +103,6 @@ static int handle_command(char *input)
 }
 
 
-static char last_input[80];
 static char input_buf[80];
 
 /* handle a console command */
@@ -117,12 +116,6 @@ void console_process(void)
 	 * priority tasks a chance to run? */
 	while (uart_peek('\n') >= 0) {
 		uart_gets(input_buf, sizeof(input_buf));
-
-		/* "." repeats the last command, if any */
-		if (!strcasecmp(input_buf, ".\n"))
-			strzcpy(input_buf, last_input, sizeof(input_buf));
-		else if (!isspace(*input_buf))
-			strzcpy(last_input, input_buf, sizeof(last_input));
 
 		rv = handle_command(input_buf);
                 if (rv != EC_SUCCESS)
@@ -177,7 +170,7 @@ static int command_help(int argc, char **argv)
 		prev = next;
 	}
 
-	uart_puts("\n'.' repeats the last command.\n");
+	uart_puts("\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(help, command_help);
@@ -187,7 +180,6 @@ DECLARE_CONSOLE_COMMAND(help, command_help);
 
 int console_init(void)
 {
-	*last_input = '\0';
 	*input_buf = '\0';
 	uart_set_console_mode(1);
 	uart_printf("Console is enabled; type HELP for help.\n");

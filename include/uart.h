@@ -123,6 +123,7 @@ int uart_rx_available(void);
 
 /**
  * Sends a character to the UART data register.
+ * If the transmit FIFO is full, this function blocks until there is space.
  *
  * c : byte to send.
  */

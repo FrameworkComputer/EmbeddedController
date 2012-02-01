@@ -58,6 +58,10 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
+	/* Wait for space in transmit FIFO. */
+	while (!uart_tx_ready())
+		;
+
 	LM4_UART_DR(0) = c;
 }
 
