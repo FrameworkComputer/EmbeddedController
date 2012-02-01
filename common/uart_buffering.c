@@ -21,6 +21,9 @@
 #define RX_BUF_NEXT(i) (((i) + 1) & (RX_BUF_SIZE - 1))
 #define RX_BUF_PREV(i) (((i) - 1) & (RX_BUF_SIZE - 1))
 
+/* Macro to calculate difference of pointers in the circular receive buffers */
+#define RX_BUF_DIFF(i, j) (((i) - (j)) & (RX_BUF_SIZE - 1))
+
 /* Transmit and receive buffers */
 static volatile char tx_buf[TX_BUF_SIZE];
 static volatile int tx_buf_head;
@@ -28,8 +31,10 @@ static volatile int tx_buf_tail;
 static volatile char rx_buf[RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
+static volatile int rx_buf_ptr;
 static int last_rx_was_cr;
 static int in_escape;
+static char esc_seq_char;
 
 static int console_mode = 1;
 
@@ -57,6 +62,88 @@ static int __tx_char(int c)
 	return 0;
 }
 
+static void move_rx_ptr_fwd(void)
+{
+	if (rx_buf_ptr != rx_buf_head) {
+		rx_buf_ptr = RX_BUF_NEXT(rx_buf_ptr);
+		uart_write_char(0x1B);
+		uart_write_char('[');
+		uart_write_char('1');
+		uart_write_char('C');
+	}
+}
+
+static void move_rx_ptr_bwd(void)
+{
+	if (rx_buf_ptr != rx_buf_tail) {
+		rx_buf_ptr = RX_BUF_PREV(rx_buf_ptr);
+		uart_write_char(0x1B);
+		uart_write_char('[');
+		uart_write_char('1');
+		uart_write_char('D');
+	}
+}
+
+static void move_cursor_back(int dist)
+{
+	while (dist--)
+		uart_write_char('\b');
+}
+
+static void handle_backspace(void)
+{
+	if (rx_buf_ptr != rx_buf_tail) {
+		/* Move texts after cursor and also update rx buffer. */
+		int ptr = rx_buf_ptr;
+		while (ptr != rx_buf_head) {
+			uart_write_char(rx_buf[ptr]);
+			rx_buf[RX_BUF_PREV(ptr)] = rx_buf[ptr];
+			ptr = RX_BUF_NEXT(ptr);
+		}
+		/* Space over last character and move cursor back to correct
+		 * position.
+		 */
+		uart_write_char(' ');
+		move_cursor_back(RX_BUF_DIFF(ptr, rx_buf_ptr) + 1);
+
+		rx_buf_head = RX_BUF_PREV(rx_buf_head);
+		rx_buf_ptr = RX_BUF_PREV(rx_buf_ptr);
+	}
+	else
+		/* Cursor moves pass the first character. Move it back. */
+		uart_write_char(' ');
+}
+
+static void insert_char(char c)
+{
+	int ptr;
+
+	/* Move buffer ptr to the end if 'c' is new line */
+	if (c == '\n')
+		rx_buf_ptr = rx_buf_head;
+
+	/* Move text after cursor. */
+	ptr = rx_buf_ptr;
+	while (ptr != rx_buf_head) {
+		uart_write_char(rx_buf[ptr]);
+		ptr = RX_BUF_NEXT(ptr);
+	}
+	/* Insert character to rx buffer and move cursor to correct
+	 * position.
+	 */
+	while (ptr != rx_buf_ptr) {
+		rx_buf[ptr] = rx_buf[RX_BUF_PREV(ptr)];
+		uart_write_char('\b');
+		ptr = RX_BUF_PREV(ptr);
+	}
+	rx_buf[rx_buf_ptr] = c;
+	rx_buf_head = RX_BUF_NEXT(rx_buf_head);
+	rx_buf_ptr = RX_BUF_NEXT(rx_buf_ptr);
+	/* On overflow, discard oldest output */
+	if (rx_buf_head == rx_buf_tail)
+		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+}
+
 /* Helper for UART processing */
 void uart_process(void)
 {
@@ -77,16 +164,32 @@ void uart_process(void)
 				last_rx_was_cr = 0;
 			}
 
-			/* Eat common terminal escape sequences (ESC [ ...).
+			/* Handle left and right key, and eat other terminal
+			 * escape sequences (ESC [ ...).
 			 * Would be really cool if we used arrow keys to edit
 			 * command history, but for now it's sufficient just to
 			 * keep them from causing problems. */
 			if (c == 0x1B) {
 				in_escape = 1;
+				esc_seq_char = c;
 				continue;
 			} else if (in_escape) {
-				if (isalpha(c) || c == '~')
+				if (esc_seq_char == 0x1B && c == '[')
+					esc_seq_char = '[';
+				else if (esc_seq_char == '[') {
+					if (c == 'D') /* Left key */
+						move_rx_ptr_bwd();
+					else if (c == 'C') /* Right key */
+						move_rx_ptr_fwd();
+					esc_seq_char = 0;
+				}
+				else
+					esc_seq_char = 0;
+
+				if (isalpha(c) || c == '~') {
+					esc_seq_char = 0;
 					in_escape = 0;
+				}
 				continue;
 			}
 
@@ -100,22 +203,12 @@ void uart_process(void)
 
 			/* Handle backspace if we can */
 			if (c == '\b') {
-				if (rx_buf_head != rx_buf_tail) {
-					/* Delete the previous character (and
-					 * space over it on the output) */
-					uart_write_char(' ');
-					uart_write_char('\b');
-					rx_buf_head = RX_BUF_PREV(rx_buf_head);
-				}
+				handle_backspace();
 				continue;
 			}
 		}
 
-		rx_buf[rx_buf_head] = c;
-		rx_buf_head = RX_BUF_NEXT(rx_buf_head);
-		/* On overflow, discard oldest output */
-		if (rx_buf_head == rx_buf_tail)
-			rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+		insert_char(c);
 
 		/* Call console callback on newline, if in console mode */
 		if (console_mode && c == '\n')
@@ -416,6 +509,7 @@ int uart_gets(char *dest, int size)
 		if (c == '\n')
 			break;  /* Stop on newline */
 	}
+	rx_buf_ptr = rx_buf_tail;
 
 	/* Re-enable interrupts */
 	uart_enable_interrupt();
