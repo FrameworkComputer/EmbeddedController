@@ -27,6 +27,7 @@ void uart_tx_start(void)
 {
 	STM32L_USART_CR1(UARTN) |= 0x80;
 	should_stop = 0;
+	task_trigger_irq(STM32L_IRQ_USART(UARTN));
 }
 
 void uart_tx_stop(void)
