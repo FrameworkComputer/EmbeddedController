@@ -49,7 +49,8 @@ qemu-test-targets=$(foreach t,$(test-list),qemu-$(t))
 $(test-targets): test-%:
 	@set -e ; \
 	echo "  BUILD   $(out)/$*" ; \
-	$(MAKE) -s BOARD=$(BOARD) PROJECT=$* out=$(out)/$*
+	$(MAKE) --no-print-directory BOARD=$(BOARD) PROJECT=$* \
+	        V=$(V) out=$(out)/$*
 
 $(qemu-test-targets): qemu-%: test-%
 	$(call quiet,qemu,TEST   )
