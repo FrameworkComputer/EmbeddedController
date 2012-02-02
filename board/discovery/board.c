@@ -20,6 +20,9 @@ void configure_board(void)
 				(0x7 << 12) | (0x7 << 8);
 	STM32L_GPIO_MODER(B) = (STM32L_GPIO_MODER(B) & ~0x00F00000) |
 				0x00A00000;
+
+	/* Green and blue LEDs : configure port 6 and 7 as output */
+	STM32L_GPIO_MODER(B) |= (1 << (7 * 2)) | (1 << (6 * 2));
 }
 
 /**
@@ -28,6 +31,9 @@ void configure_board(void)
  */
 int jtag_pre_init(void)
 {
+	/* stop TIM2, TIM3 and watchdogs when the JTAG stops the CPU */
+	STM32L_DBGMCU_APB1FZ |= 0x00001803;
+
 	return EC_SUCCESS;
 }
 

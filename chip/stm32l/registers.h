@@ -221,6 +221,15 @@
 #define STM32L_RTC_TAFCR             REG32(STM32L_RTC_BASE + 0x40)
 #define STM32L_RTC_BACKUP(n)         REG32(STM32L_RTC_BASE + 0x50 + 4 * (n))
 
+/* --- Debug --- */
+
+#define STM32L_DBGMCU_BASE           0xE0042000
+
+#define STM32L_DBGMCU_IDCODE         REG32(STM32L_DBGMCU_BASE + 0x00)
+#define STM32L_DBGMCU_CR             REG32(STM32L_DBGMCU_BASE + 0x04)
+#define STM32L_DBGMCU_APB1FZ         REG32(STM32L_DBGMCU_BASE + 0x08)
+#define STM32L_DBGMCU_APB2FZ         REG32(STM32L_DBGMCU_BASE + 0x0C)
+
 /* --- MISC --- */
 
 #define STM32L_RI_BASE               0x40007C04
