@@ -9,6 +9,25 @@
 #include "power_button.h"
 #include "registers.h"
 #include "util.h"
+#include "lm4_adc.h"
+#include "adc.h"
+
+/* ADC channels. Must be in the exactly same order as in enum adc_channel. */
+const struct adc_t adc_channels[ADC_CH_COUNT] =
+{
+	/* EC internal temperature is calculated by
+	 * 273 + (295 - 450 * ADC_VALUE / ADC_READ_MAX) / 2
+	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
+	 */
+	{"ECTemp", LM4_ADC_SEQ0, -225, ADC_READ_MAX, 420,
+	 LM4_NO_AIN, 0x0e /* TS0 | IE0 | END0 */},
+
+	/* Charger current is mapped from 0~4000mA to 0~1.6V.
+	 * And ADC maps 0~3.3V to ADC_READ_MAX.
+	 */
+	{"ChargerCurrent", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
+	 LM4_AIN(ADC_IN0), 0x06 /* IE0 | END0 */},
+};
 
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */

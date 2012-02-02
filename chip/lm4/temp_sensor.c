@@ -53,11 +53,11 @@ int temp_sensor_read(enum temp_sensor_id id)
 			return -1;
 		t = (int)(int16_t)traw / 128;
 		return t + 273;
-
 	case TEMP_SENSOR_EC_INTERNAL:
-		return adc_read_ec_temperature();
+		return adc_read_channel(ADC_CH_EC_TEMP);
+	default:
+		return -1;
 	}
-
 	/* If we're still here, we don't handle that sensor */
 	return -1;
 }

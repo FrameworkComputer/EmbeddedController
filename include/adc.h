@@ -9,27 +9,24 @@
 #define __CROS_EC_ADC_H
 
 #include "common.h"
+#include "board.h"
 
-/* Value returned by adc_read_*() methods if the read failed. */
-#define ADC_READ_ERROR -1
-
-/* Minimum and maximum values returned by adc_read(). */
-#define ADC_READ_MIN 0
-#define ADC_READ_MAX 4095
-
-/* ADC channels */
-/* TODO: channel mapping is board-specific */
-enum adc_channel {
-	ADC_CH_POT = 0,
+/* Data structure to define ADC channels. */
+struct adc_t
+{
+	const char* name;
+	int sequencer;
+	int factor_mul;
+	int factor_div;
+	int shift;
+	int channel;
+	int flag;
 };
 
 /* Initializes the module. */
 int adc_init(void);
 
-/* Reads an ADC channel.  Returns the ADC value, or ADC_READ_ERROR if error. */
-int adc_read(enum adc_channel ch);
-
-/* Returns the internal EC temperature in K, or ADC_READ_ERROR if error. */
-int adc_read_ec_temperature(void);
+/* Read ADC channel. */
+int adc_read_channel(enum adc_channel ch);
 
 #endif  /* __CROS_EC_ADC_H */
