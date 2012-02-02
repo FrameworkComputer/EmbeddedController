@@ -15,17 +15,51 @@
 
 extern const struct adc_t adc_channels[ADC_CH_COUNT];
 
+/* GPIO port and mask for AINs. */
+const uint32_t ain_port[24][2] = {
+	{LM4_GPIO_E, (1<<3)},
+	{LM4_GPIO_E, (1<<2)},
+	{LM4_GPIO_E, (1<<1)},
+	{LM4_GPIO_E, (1<<0)},
+	{LM4_GPIO_D, (1<<7)},
+	{LM4_GPIO_D, (1<<6)},
+	{LM4_GPIO_D, (1<<5)},
+	{LM4_GPIO_D, (1<<4)},
+	{LM4_GPIO_E, (1<<5)},
+	{LM4_GPIO_E, (1<<4)},
+	{LM4_GPIO_B, (1<<4)},
+	{LM4_GPIO_B, (1<<5)},
+	{LM4_GPIO_D, (1<<3)},
+	{LM4_GPIO_D, (1<<2)},
+	{LM4_GPIO_D, (1<<1)},
+	{LM4_GPIO_D, (1<<0)},
+	{LM4_GPIO_K, (1<<0)},
+	{LM4_GPIO_K, (1<<1)},
+	{LM4_GPIO_K, (1<<2)},
+	{LM4_GPIO_K, (1<<3)},
+	{LM4_GPIO_E, (1<<7)},
+	{LM4_GPIO_E, (1<<6)},
+	{LM4_GPIO_N, (1<<1)},
+	{LM4_GPIO_N, (1<<0)},
+};
+
 static void configure_gpio(void)
 {
+	int i;
 	volatile uint32_t scratch  __attribute__((unused));
 
 	/* Enable GPIOE module and delay a few clocks */
 	LM4_SYSTEM_RCGCGPIO |= 0x0010;
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
-	/* Use analog function for PE3 (AIN0) */
-	LM4_GPIO_DEN(LM4_GPIO_E) &= ~0x08;
-	LM4_GPIO_AMSEL(LM4_GPIO_E) |= 0x08;
+	/* Use analog function for AIN */
+	for (i = 0; i < ADC_CH_COUNT; ++i) {
+		int id = adc_channels[i].channel;
+		if (id != LM4_AIN_NONE)
+			gpio_set_alternate_function(ain_port[id][0],
+						    ain_port[id][1],
+						    1);
+	}
 }
 
 int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)

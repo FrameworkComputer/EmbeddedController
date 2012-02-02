@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "board.h"
+#include "gpio.h"
 
 /* Data structure to define ADC channels. */
 struct adc_t

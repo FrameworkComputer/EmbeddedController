@@ -27,10 +27,9 @@ enum lm4_adc_sequencer
 
 /* Just plain id mapping for code readability */
 #define LM4_AIN(x) (x)
-#define LM4_AIN_NONE (-1)
 
 /* Dummy value for "channel" in adc_t if we don't have an external channel. */
-#define LM4_NO_AIN 0
+#define LM4_AIN_NONE (-1)
 
 /* Flush an ADC sequencer and initiate a read. Return raw ADC value. */
 int lm4_adc_flush_and_read(enum lm4_adc_sequencer);
