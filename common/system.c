@@ -51,7 +51,8 @@ const char *system_get_reset_cause_string(void)
 
 enum system_image_copy_t system_get_image_copy(void)
 {
-	int copy = (uint32_t)system_get_image_copy / CONFIG_FW_IMAGE_SIZE;
+	int copy = ((uint32_t)system_get_image_copy - CONFIG_FLASH_BASE) /
+		   CONFIG_FW_IMAGE_SIZE;
 	switch (copy) {
 	case 0:
 		return SYSTEM_IMAGE_RO;
