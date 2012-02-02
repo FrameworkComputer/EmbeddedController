@@ -7,6 +7,7 @@
 
 common-y=main.o util.o console.o vboot.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system.o usb_charge.o
+common-y+=gpio_commands.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
