@@ -230,6 +230,12 @@
 #define STM32L_DBGMCU_APB1FZ         REG32(STM32L_DBGMCU_BASE + 0x08)
 #define STM32L_DBGMCU_APB2FZ         REG32(STM32L_DBGMCU_BASE + 0x0C)
 
+/* --- Flash --- */
+
+#define STM32L_FLASH_REGS_BASE       0x40023c00
+
+#define STM32L_FLASH_ACR             REG32(STM32L_FLASH_REGS_BASE + 0x00)
+
 /* --- MISC --- */
 
 #define STM32L_RI_BASE               0x40007C04

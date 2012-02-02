@@ -28,6 +28,8 @@ void __idle(void)
 
 int clock_init(void)
 {
+	uint32_t tmp_acr;
+
 	/*
 	 * The initial state :
 	 *  SYSCLK from HSI (=16MHz), no divider on AHB, APB1, APB2
@@ -43,6 +45,23 @@ int clock_init(void)
 			;
 	}
 
+	/* Set the recommended flash settings for 16MHz clock.
+	 *
+	 * The 3 bits must be programmed strictly sequentially,
+	 * but it is faster not to read-back the value of the ACR register
+	 * in the middle of the sequence so let's use a temporary variable.
+	 */
+	tmp_acr = STM32L_FLASH_ACR;
+	/* Enable 64-bit access */
+	tmp_acr |= (1 << 2);
+	STM32L_FLASH_ACR = tmp_acr;
+	/* Enable Prefetch Buffer */
+	tmp_acr |= (1 << 1);
+	STM32L_FLASH_ACR = tmp_acr;
+	/* Flash 1 wait state */
+	tmp_acr |= (1 << 0);
+	STM32L_FLASH_ACR = tmp_acr;
+
 	/*
 	 * stays on HSI, no prescaler, PLLSRC = HSI, PLLMUL = x3, PLLDIV = /3,
 	 * no MCO                      => PLLVCO = 48 MHz and PLLCLK = 16 Mhz
@@ -56,14 +75,9 @@ int clock_init(void)
 		;
 	/* switch to SYSCLK to the PLL */
 	STM32L_RCC_CFGR = 0x00800003;
-
-	/* switch on LSI */
-	STM32L_RCC_CSR |= 1 << 0;
-	/* Wait for LSI to be ready */
-	while (!(STM32L_RCC_CSR & (1 << 1)))
+	/* wait until the PLL is the clock source */
+	while ((STM32L_RCC_CFGR & 0xc) != 0xc)
 		;
-	/* Enable RTC and use LSI as clock source */
-	STM32L_RCC_CSR = (STM32L_RCC_CSR & ~0x00430000) | 0x00420000;
 
 	return EC_SUCCESS;
 }
