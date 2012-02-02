@@ -18,8 +18,12 @@
 
 /* GPIO signal list */
 enum gpio_signal {
-	GPIO_DUMMY0 = 0,   /* Dummy GPIO */
-	GPIO_DUMMY1,
+	/* Inputs with interrupt handlers are first for efficiency */
+	GPIO_USER_BUTTON = 0,     /* Blue user button */
+	/* Other inputs */
+	/* Outputs */
+	GPIO_BLUE_LED,            /* Blue debug LED */
+	GPIO_GREEN_LED,           /* Green debug LED */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

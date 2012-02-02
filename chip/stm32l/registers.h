@@ -125,6 +125,13 @@
 #define STM32L_GPIOE_BASE            0x40021000
 #define STM32L_GPIOH_BASE            0x40021400
 
+#define GPIO_A                       STM32L_GPIOA_BASE
+#define GPIO_B                       STM32L_GPIOB_BASE
+#define GPIO_C                       STM32L_GPIOC_BASE
+#define GPIO_D                       STM32L_GPIOD_BASE
+#define GPIO_E                       STM32L_GPIOE_BASE
+#define GPIO_H                       STM32L_GPIOH_BASE
+
 #define STM32L_GPIO_REG32(l, offset) \
 		REG32(STM32L_CAT(STM32L_GPIO, l, _BASE) + (offset))
 #define STM32L_GPIO_REG16(l, offset) \
@@ -140,6 +147,17 @@
 #define STM32L_GPIO_LCKR(l)          STM32L_GPIO_REG32(l, 0x1C)
 #define STM32L_GPIO_AFRL(l)          STM32L_GPIO_REG32(l, 0x20)
 #define STM32L_GPIO_AFRH(l)          STM32L_GPIO_REG32(l, 0x24)
+
+#define STM32L_GPIO_MODER_OFF(b)     REG32((b) + 0x00)
+#define STM32L_GPIO_OTYPER_OFF(b)    REG16((b) + 0x04)
+#define STM32L_GPIO_OSPEEDR_OFF(b)   REG32((b) + 0x08)
+#define STM32L_GPIO_PUPDR_OFF(b)     REG32((b) + 0x0C)
+#define STM32L_GPIO_IDR_OFF(b)       REG16((b) + 0x10)
+#define STM32L_GPIO_ODR_OFF(b)       REG16((b) + 0x14)
+#define STM32L_GPIO_BSRR_OFF(b)      REG32((b) + 0x18)
+#define STM32L_GPIO_LCKR_OFF(b)      REG32((b) + 0x1C)
+#define STM32L_GPIO_AFRL_OFF(b)      REG32((b) + 0x20)
+#define STM32L_GPIO_AFRH_OFF(b)      REG32((b) + 0x24)
 
 /* --- I2C --- */
 #define STM32L_I2C1_BASE             0x40005400

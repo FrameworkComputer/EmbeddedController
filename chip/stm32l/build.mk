@@ -8,5 +8,5 @@
 # STM32L15xx SoC family has a Cortex-M3 ARM core
 CORE:=cortex-m
 
-chip-y=uart.o clock.o hwtimer.o system.o
+chip-y=uart.o clock.o hwtimer.o system.o gpio.o
 chip-$(CONFIG_TASK_WATCHDOG)+=watchdog.o

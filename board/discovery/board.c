@@ -6,7 +6,19 @@
 
 #include "board.h"
 #include "common.h"
+#include "gpio.h"
 #include "registers.h"
+#include "util.h"
+
+/* GPIO signal list.  Must match order from enum gpio_signal. */
+const struct gpio_info gpio_list[GPIO_COUNT] = {
+	/* Inputs with interrupt handlers are first for efficiency */
+	{"USER_BUTTON", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
+	/* Other inputs */
+	/* Outputs */
+	{"BLUE_LED",    GPIO_B, (1<<6), GPIO_OUT_LOW, NULL},
+	{"GREEN_LED",   GPIO_B, (1<<7), GPIO_OUT_LOW, NULL},
+};
 
 void configure_board(void)
 {
@@ -20,9 +32,6 @@ void configure_board(void)
 				(0x7 << 12) | (0x7 << 8);
 	STM32L_GPIO_MODER(B) = (STM32L_GPIO_MODER(B) & ~0x00F00000) |
 				0x00A00000;
-
-	/* Green and blue LEDs : configure port 6 and 7 as output */
-	STM32L_GPIO_MODER(B) |= (1 << (7 * 2)) | (1 << (6 * 2));
 }
 
 /**
@@ -34,11 +43,6 @@ int jtag_pre_init(void)
 	/* stop TIM2, TIM3 and watchdogs when the JTAG stops the CPU */
 	STM32L_DBGMCU_APB1FZ |= 0x00001803;
 
-	return EC_SUCCESS;
-}
-
-int gpio_pre_init(void)
-{
 	return EC_SUCCESS;
 }
 
