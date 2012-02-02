@@ -37,6 +37,30 @@ static void configure_gpio(void)
 }
 
 
+/* Manually generates an IRQ to host (edge-trigger).
+ *
+ * For SERIRQ quite mode, we need to set LM4_LPC_LPCIRQCTL twice.
+ * The first one is to assert IRQ (pull low), and then the second one is
+ * to de-assert it. This generates a pulse (high-low-high) for an IRQ.
+ *
+ * Note that the irq_num == 0 would set the AH bit (Active High).
+ */
+void lpc_manual_irq(int irq_num) {
+	uint32_t common_bits =
+	    0x00000004 |  /* PULSE */
+	    0x00000002 |  /* ONCHG - for quiet mode */
+	    0x00000001;   /* SND - send immediately */
+
+	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
+	LM4_LPC_LPCIRQCTL = (1 << (irq_num + 16)) | common_bits;
+
+	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
+	LM4_LPC_LPCIRQCTL = common_bits;  /* generate a all-high frame to
+	                                   * simulate a rising edge. */
+	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
+}
+
+
 int lpc_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
@@ -47,6 +71,7 @@ int lpc_init(void)
 
 	LM4_LPC_LPCIM = 0;
 	LM4_LPC_LPCCTL = 0;
+	LM4_LPC_LPCIRQCTL = 0;
 
 	/* Configure GPIOs */
 	configure_gpio();
@@ -83,7 +108,7 @@ int lpc_init(void)
 	 * data writes, pool bytes 0(data)/1(cmd) */
 	LM4_LPC_ADR(LPC_CH_KEYBOARD) = 0x60;
 	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (1 << 24/* IRQSEL1 */) |
-		(1 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
+		(0 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
 	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;
 	/* Unmask interrupt for host command/data writes and data reads */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 7);
@@ -145,6 +170,19 @@ void lpc_send_host_response(int slot, int status)
 		LPC_POOL_USER[1] = 0;
 	else
 		LPC_POOL_KERNEL[1] = 0;
+}
+
+
+/* Return true if the TOH is still set */
+int lpc_keyboard_has_char() {
+	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) ? 1 : 0;
+}
+
+void lpc_keyboard_put_char(uint8_t chr, int send_irq) {
+	LPC_POOL_KEYBOARD[1] = chr;
+	if (send_irq) {
+		lpc_manual_irq(1);  /* IRQ#1 */
+	}
 }
 
 
