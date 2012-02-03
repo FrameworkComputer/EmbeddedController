@@ -14,6 +14,7 @@
 #include "port80.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 
 
@@ -37,6 +38,17 @@ static void configure_gpio(void)
 }
 
 
+static void wait_send_serirq(uint32_t lpcirqctl) {
+	LM4_LPC_LPCIRQCTL = lpcirqctl;
+
+	/* TODO: udelay() is not graceful. Since the SIRQRIS is almost not
+	 *       cleared in continuous mode and EC has problem to file
+	 *       more than 1 frame in the quiet mode, this is the best way
+	 *       we can do right now. */
+	udelay(4);  /* 4 us is the time of 2 SERIRQ frames, which is long
+	             * enough to guarantee the IRQ has been sent out. */
+}
+
 /* Manually generates an IRQ to host (edge-trigger).
  *
  * For SERIRQ quite mode, we need to set LM4_LPC_LPCIRQCTL twice.
@@ -51,13 +63,11 @@ void lpc_manual_irq(int irq_num) {
 	    0x00000002 |  /* ONCHG - for quiet mode */
 	    0x00000001;   /* SND - send immediately */
 
-	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
-	LM4_LPC_LPCIRQCTL = (1 << (irq_num + 16)) | common_bits;
+	/* send out the IRQ first. */
+	wait_send_serirq((1 << (irq_num + 16)) | common_bits);
 
-	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
-	LM4_LPC_LPCIRQCTL = common_bits;  /* generate a all-high frame to
-	                                   * simulate a rising edge. */
-	while (LM4_LPC_LPCIRQCTL & 1);  /* wait until SND is cleared */
+	/* generate a all-high frame to simulate a rising edge. */
+	wait_send_serirq(common_bits);
 }
 
 
@@ -174,7 +184,7 @@ void lpc_send_host_response(int slot, int status)
 
 
 /* Return true if the TOH is still set */
-int lpc_keyboard_has_char() {
+int lpc_keyboard_has_char(void) {
 	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) ? 1 : 0;
 }
 
