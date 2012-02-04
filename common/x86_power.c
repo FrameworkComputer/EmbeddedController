@@ -239,10 +239,14 @@ void x86_power_task(void)
 			/* TODO: this should be in response to a power button
 			 * event, not causing one.  For initial bringup,
 			 * simulate the event. */
+
 			/* Assert power button */
 			gpio_set_level(GPIO_PCH_PWRBTNn, 0);
-			/* Wait 16ms after asserting PWRBTN# */
-			usleep(16000);
+
+			/* Wait at least 16ms after asserting PWRBTN#.  More
+			 * is better for now, apparently. */
+			usleep(100000);
+
 			/* Release power button */
 			gpio_set_level(GPIO_PCH_PWRBTNn, 1);
 
