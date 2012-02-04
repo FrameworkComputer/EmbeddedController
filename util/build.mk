@@ -6,4 +6,4 @@
 #
 
 host-util-bin=ectool
-build-util-bin=ec_uartd
+build-util-bin=ec_uartd stm32mon
