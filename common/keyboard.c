@@ -547,3 +547,36 @@ static int command_codeset(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(codeset, command_codeset);
+
+
+static int command_controller_ram(int argc, char **argv)
+{
+	int index;
+
+	if (argc >= 2) {
+		index = strtoi(argv[1], NULL, 0);
+		uart_printf("Controller RAM index = %d\n", index);
+		if (index >= 0x20) {
+			uart_printf("Index is out of range (0x00-0x1f).\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
+		if (argc >= 3) {
+			controller_ram[index] = strtoi(argv[2], NULL, 0);
+			uart_printf("Write ctlram[%d] as 0x%02x.\n",
+			            index, controller_ram[index]);
+		} else {
+			uart_printf("ctlram[%d] is 0x%02x.\n",
+			            index, controller_ram[index]);
+		}
+	} else {
+		uart_puts("Usage: ctrlram <index> [<write_value>]\n");
+		uart_puts("\nGet/set controller RAM.\n\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	uart_flush_output();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram);
