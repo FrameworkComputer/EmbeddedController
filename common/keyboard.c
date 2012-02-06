@@ -562,7 +562,7 @@ static int command_controller_ram(int argc, char **argv)
 		}
 
 		if (argc >= 3) {
-			controller_ram[index] = strtoi(argv[2], NULL, 0);
+			update_ctl_ram(index, strtoi(argv[2], NULL, 0));
 			uart_printf("Write ctlram[%d] as 0x%02x.\n",
 			            index, controller_ram[index]);
 		} else {
