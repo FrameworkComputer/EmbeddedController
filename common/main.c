@@ -25,7 +25,9 @@
 #include "pwm_commands.h"
 #include "system.h"
 #include "task.h"
+#ifdef CONFIG_TEMP_SENSOR
 #include "temp_sensor.h"
+#endif
 #include "timer.h"
 #include "uart.h"
 #include "vboot.h"
@@ -81,7 +83,9 @@ int main(void)
 	power_button_init();
 	adc_init();
 	usb_charge_init();
+#ifdef CONFIG_CHARGER
 	charger_init();
+#endif
 
 	/* Print the reset cause */
 	uart_printf("\n\n--- Chrome EC initialized! ---\n");
