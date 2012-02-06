@@ -11,6 +11,9 @@
 #include "common.h"
 #include "board.h"
 
+/* forward declaration */
+enum temp_sensor_id;
+
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 struct temp_sensor_t {
 	const char* name;

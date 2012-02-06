@@ -12,6 +12,9 @@
 #include "board.h"
 #include "gpio.h"
 
+/* forward declaration */
+enum adc_channel;
+
 /* Data structure to define ADC channels. */
 struct adc_t
 {
