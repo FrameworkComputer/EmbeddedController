@@ -56,6 +56,9 @@ enum adc_channel
 	ADC_CH_COUNT
 };
 
+/* Charger module */
+#define CONFIG_CHARGER_BQ24725
+
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 1
