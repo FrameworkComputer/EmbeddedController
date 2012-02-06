@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -137,8 +137,12 @@ int lpc_init(void)
 	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
 	 * can enable IRQs on its own. */
 	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
-	/* Use our LPC interrupt handler to notify COMxIM on write-from-host */
-	LM4_LPC_LPCDMACX = 0x00110000;
+	/* Enable COMx emulation for reads and writes. */
+	LM4_LPC_LPCDMACX = 0x00310000;
+	/* Unmask interrupt for host data writes.  We don't need interrupts for
+	 * reads, because there's no flow control in that direction; LPC is
+	 * much faster than the UART, and the UART doesn't have anywhere
+	 * sensible to buffer input anyway. */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
 
 	/* Enable LPC channels */
@@ -188,6 +192,7 @@ int lpc_keyboard_has_char(void) {
 	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) ? 1 : 0;
 }
 
+
 void lpc_keyboard_put_char(uint8_t chr, int send_irq) {
 	LPC_POOL_KEYBOARD[1] = chr;
 	if (send_irq) {
@@ -204,12 +209,14 @@ int lpc_comx_has_char(void)
 
 int lpc_comx_get_char(void)
 {
-	/* TODO: (crosbug.com/p/7488) this clears the receive-ready interrupt
-	 * too, which will be ok once we're handing output to COMx as well.
-	 * But we're not yet. */
-	LM4_LPC_LPCDMACX = LM4_LPC_LPCDMACX;
-	/* Copy the next byte */
 	return LPC_POOL_COMX[0];
+}
+
+
+void lpc_comx_put_char(int c)
+{
+	LPC_POOL_COMX[1] = c;
+	/* TODO: manually trigger IRQ, like we do for keyboard? */
 }
 
 
@@ -268,20 +275,12 @@ static void lpc_interrupt(void)
 
 	/* Handle COMx */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_COMX, 2)) {
-		uint32_t cis = LM4_LPC_LPCDMACX;
-		/* Clear the interrupt reasons we're handling */
-		LM4_LPC_LPCDMACX = cis;
-
 		/* Handle host writes */
 		if (lpc_comx_has_char()) {
 			/* Copy a character to the UART if there's space */
 			if (uart_comx_putc_ok())
 				uart_comx_putc(lpc_comx_get_char());
 		}
-
-		/* TODO: (crosbug.com/p/7488) handle UART input to host - if
-		 * host read the to-host data, see if there's another byte
-		 * still waiting on UART1. */
 	}
 }
 

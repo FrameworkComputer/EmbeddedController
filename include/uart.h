@@ -175,7 +175,7 @@ void uart_process(void);
 /* Returns non-zero if ok to put a character via uart_comx_putc(). */
 int uart_comx_putc_ok(void);
 
-/* Puts a character to the COMx interface. */
+/* Puts a character to the COMx UART interface. */
 void uart_comx_putc(int c);
 
 #endif  /* __CROS_EC_UART_H */

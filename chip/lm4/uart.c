@@ -104,6 +104,13 @@ static void uart_1_interrupt(void)
 		LM4_UART_DR(1) = lpc_comx_get_char();
 		LM4_UART_IM(1) &= ~0x20;
 	}
+
+	/* Handle received character.  There is no flow control on input;
+	 * received characters are blindly forwarded to LPC.  This is ok
+	 * because LPC is much faster than UART, and we don't have flow control
+	 * on the UART receive-side either. */
+	if (!(LM4_UART_FR(1) & 0x10))
+		lpc_comx_put_char(LM4_UART_DR(1));
 }
 /* Must be same prio as LPC interrupt handler so they don't preempt */
 DECLARE_IRQ(LM4_IRQ_UART1, uart_1_interrupt, 2);
@@ -183,10 +190,8 @@ int uart_init(void)
 	return EC_SUCCESS;
 }
 
-
 /*****************************************************************************/
 /* COMx functions */
-
 
 int uart_comx_putc_ok(void)
 {
