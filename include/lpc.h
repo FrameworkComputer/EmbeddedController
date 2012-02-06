@@ -44,4 +44,7 @@ int lpc_comx_has_char(void);
 /* Returns the next character pending on the COMx interface. */
 int lpc_comx_get_char(void);
 
+/* Puts a character to the COMx LPC interface. */
+void lpc_comx_put_char(int c);
+
 #endif  /* __CROS_EC_LPC_H */
