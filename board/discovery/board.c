@@ -5,7 +5,6 @@
 /* STM32L Discovery board-specific configuration */
 
 #include "board.h"
-#include "common.h"
 #include "gpio.h"
 #include "registers.h"
 #include "util.h"

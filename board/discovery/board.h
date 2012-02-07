@@ -16,6 +16,9 @@
 
 #define USB_CHARGE_PORT_COUNT 0
 
+/* Host connects to keyboard controller module via I2C */
+#define HOST_KB_BUS_I2C
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */

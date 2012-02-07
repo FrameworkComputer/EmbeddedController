@@ -9,7 +9,6 @@
 #include "common.h"
 #include "i8042.h"
 #include "keyboard.h"
-#include "lpc.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -115,7 +114,7 @@ void i8042_command_task(void)
 
 			/* if the host still didn't read that away,
 			   try next time. */
-			if (lpc_keyboard_has_char()) {
+			if (keyboard_has_char()) {
 #if I8042_DEBUG >= 5
 				uart_printf("[%d] i8042_command_task() "
 					    "cannot send to host due to host "
@@ -132,7 +131,7 @@ void i8042_command_task(void)
 			/* end of atomic protection */
 
 			/* Write to host. */
-			lpc_keyboard_put_char(chr, i8042_irq_enabled);
+			keyboard_put_char(chr, i8042_irq_enabled);
 #if I8042_DEBUG >= 4
 			uart_printf("[%d] i8042_command_task() "
 				    "sends to host: 0x%02x\n",

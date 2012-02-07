@@ -9,6 +9,9 @@
 #include "console.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
+#ifdef HOST_KB_BUS_LPC
+#include "lpc.h"
+#endif
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -393,3 +396,21 @@ static void matrix_interrupt(void)
 	}
 }
 DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
+
+int keyboard_has_char()
+{
+#if defined(HOST_KB_BUS_LPC)
+	return lpc_keyboard_has_char();
+#else
+#error "keyboard_scan needs to know what bus to use for keyboard interface"
+#endif
+}
+
+void keyboard_put_char(uint8_t chr, int send_irq)
+{
+#if defined(HOST_KB_BUS_LPC)
+	lpc_keyboard_put_char(chr, send_irq);
+#else
+#error "keyboard_scan needs to know what bus to use for keyboard interface"
+#endif
+}

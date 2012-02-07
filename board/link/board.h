@@ -96,6 +96,9 @@ enum adc_channel
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION
 #define KB_SCAN_ROW_GPIO LM4_GPIO_N
 
+/* Host connects to keyboard controller module via LPC */
+#define HOST_KB_BUS_LPC
+
 /* USB charge port */
 #define USB_CHARGE_PORT_COUNT 2
 

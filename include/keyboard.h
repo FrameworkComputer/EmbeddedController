@@ -95,5 +95,10 @@ enum ec_error_list keyboard_register_callback(keyboard_callback cb);
  */
 enum ec_error_list keyboard_get_state(uint8_t *bit_array);
 
+/* Return true if the TOH is still set */
+extern int keyboard_has_char(void);
+
+extern void keyboard_put_char(uint8_t chr, int send_irq);
+
 
 #endif  /* __INCLUDE_KEYBOARD_H */
