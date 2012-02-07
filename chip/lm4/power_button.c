@@ -28,11 +28,11 @@ struct debounce_isr_t debounce_isr[DEBOUNCE_ISR_ID_MAX];
 
 enum power_button_state {
 	PWRBTN_STATE_STOPPED = 0,
-	PWRBTN_STATE_START = 1,
-	PWRBTN_STATE_T0 = 2,
-	PWRBTN_STATE_T1 = 3,
-	PWRBTN_STATE_T2 = 4,
-	PWRBTN_STATE_STOPPING = 5,
+	PWRBTN_STATE_START,
+	PWRBTN_STATE_T0,
+	PWRBTN_STATE_T1,
+	PWRBTN_STATE_HELD_DOWN,
+	PWRBTN_STATE_STOPPING,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
 /* The next timestamp to move onto next state if power button is still pressed.
@@ -41,7 +41,6 @@ static timestamp_t pwrbtn_next_ts = {0};
 
 #define PWRBTN_DELAY_T0 32000  /* 32ms */
 #define PWRBTN_DELAY_T1 (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-#define PWRBTN_DELAY_T2 4000000  /* 4 secs */
 
 
 static void lid_switch_isr(void)
@@ -61,7 +60,7 @@ static void lid_switch_isr(void)
  *
  *   PWRBTN#   ---  ---------           ----
  *    to PCH     |__|       |___________|
- *                t0    t1       t2
+ *                t0    t1    held down
  */
 static void set_pwrbtn_to_pch(int high)
 {
@@ -88,8 +87,7 @@ static void pwrbtn_sm_stop(void)
 static void pwrbtn_sm_handle(timestamp_t current)
 {
 	/* Not the time to move onto next state */
-	if (pwrbtn_state == PWRBTN_STATE_STOPPED ||
-	    current.val < pwrbtn_next_ts.val)
+	if (current.val < pwrbtn_next_ts.val)
 		return;
 
 	switch (pwrbtn_state) {
@@ -104,17 +102,16 @@ static void pwrbtn_sm_handle(timestamp_t current)
 		set_pwrbtn_to_pch(1);
 		break;
 	case PWRBTN_STATE_T1:
-		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T2;
-		pwrbtn_state = PWRBTN_STATE_T2;
+		pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
 		set_pwrbtn_to_pch(0);
 		break;
-	case PWRBTN_STATE_T2:
-		/* T2 has passed */
 	case PWRBTN_STATE_STOPPING:
 		set_pwrbtn_to_pch(1);
 		pwrbtn_state = PWRBTN_STATE_STOPPED;
 		break;
-	default:
+	case PWRBTN_STATE_STOPPED:
+	case PWRBTN_STATE_HELD_DOWN:
+		/* Do nothing */
 		break;
 	}
 }
