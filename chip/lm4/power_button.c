@@ -5,11 +5,13 @@
 
 /* Power button and lid switch module for Chrome EC */
 
+#include "console.h"
 #include "gpio.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "util.h"
 
 enum debounce_isr_id {
 	DEBOUNCE_LID,
@@ -185,3 +187,28 @@ void power_button_task(void)
 	}
 }
 
+
+/*****************************************************************************/
+/* Console commnands */
+
+static int command_powerbtn(int argc, char **argv)
+{
+	int ms = 100;  /* Press duration in ms */
+	char *e;
+
+	if (argc > 1) {
+		ms = strtoi(argv[1], &e, 0);
+		if (*e) {
+			uart_puts("Invalid duration.\n"
+				  "Usage: powerbtn [duration_ms]\n");
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	uart_printf("Simulating %d ms power button press.\n", ms);
+	set_pwrbtn_to_pch(0);
+	usleep(ms * 1000);
+	set_pwrbtn_to_pch(1);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn);

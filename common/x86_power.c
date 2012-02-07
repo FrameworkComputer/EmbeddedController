@@ -20,14 +20,17 @@
 #define DEFAULT_TIMEOUT 1000000
 
 enum x86_state {
-	/* Stable states */
 	X86_G3 = 0,                 /* Initial state */
 	X86_S5,                     /* System is off */
+	X86_S3,                     /* RAM is on; processor is asleep */
 	X86_S0,                     /* System is on */
 
 	/* Transitions */
 	X86_G3S5,                   /* G3 -> S5 (at system init time) */
-	X86_S5S0,                   /* S5 -> S0 */
+	X86_S5S3,                   /* S5 -> S3 */
+	X86_S3S0,                   /* S3 -> S0 */
+	X86_S0S3,                   /* S0 -> S3 */
+	X86_S3S5,                   /* S3 -> S5 */
 
 	/* TODO: S3 state, S0S5, S0S3, S3S0 */
 };
@@ -35,9 +38,13 @@ enum x86_state {
 static const char * const state_names[] = {
 	"G3",
 	"S5",
+	"S3",
 	"S0",
 	"G3->S5",
-	"S5->S0",
+	"S5->S3",
+	"S3->S0",
+	"S0->S3",
+	"S3->S5",
 };
 
 /* Input state flags */
@@ -162,10 +169,8 @@ void x86_power_interrupt(enum gpio_signal signal)
 	/* Shadow signals and compare with our desired signal state. */
 	update_in_signals();
 
-	/* Wake task if we want at least one signal, and all all the inputs we
-	 * want are present */
-	if (in_want && (in_signals & in_want) == in_want)
-		task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
+	/* Wake up the task */
+	task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
 }
 
 /*****************************************************************************/
@@ -212,7 +217,6 @@ void x86_power_task(void)
 			    state, state_names[state], in_signals);
 
 		switch (state) {
-
 		case X86_G3:
 			/* Move to S5 state on boot */
 			state = X86_G3S5;
@@ -235,14 +239,18 @@ void x86_power_task(void)
 			state = X86_S5;
 			break;
 
-		case X86_S5S0:
-			/* Wait for PM_SLP_S3n to be asserted */
-			wait_in_signals(IN_ALL_PM_SLP_DEASSERTED);
 
-			/* Turn on power rails */
-			gpio_set_level(GPIO_ENABLE_VS, 1);
+		case X86_S5S3:
+			/* Turn on power to RAM */
 			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 0);
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
+
+			state = X86_S3;
+			break;
+
+		case X86_S3S0:
+			/* Turn on power rails */
+			gpio_set_level(GPIO_ENABLE_VS, 1);
 
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);
@@ -263,20 +271,67 @@ void x86_power_task(void)
 			state = X86_S0;
 			break;
 
+		case X86_S0S3:
+			/* Clear PCH_PWROK */
+			gpio_set_level(GPIO_PCH_PWROK, 0);
+
+			/* Wait 40ns */
+			udelay(1);
+
+			/* Disable +CPU_CORE and +VGFX_CORE */
+			gpio_set_level(GPIO_ENABLE_VCORE, 0);
+
+			/* Turn off power rails */
+			gpio_set_level(GPIO_ENABLE_VS, 0);
+
+			state = X86_S3;
+			break;
+
+		case X86_S3S5:
+			/* Turn off power to RAM */
+			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
+			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 1);
+
+			state = X86_S5;
+			break;
+
 		case X86_S5:
-			/* If PM_SLP_S3# is deasserted, system is trying to
-			 * power on. */
-			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
-				state = X86_S5S0;
+			if (gpio_get_level(GPIO_PCH_SLP_S5n) == 1) {
+				/* Power up to next state */
+				state = X86_S5S3;
 				break;
 			}
 
 			/* Otherwise, steady state; wait for a message */
+			in_want = 0;
+			task_wait_msg(-1);
+			break;
+
+		case X86_S3:
+			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
+				/* Power up to next state */
+				state = X86_S3S0;
+				break;
+			} else if (gpio_get_level(GPIO_PCH_SLP_S5n) == 0) {
+				/* Power down to next state */
+				state = X86_S3S5;
+				break;
+			}
+
+			/* Otherwise, steady state; wait for a message */
+			in_want = 0;
 			task_wait_msg(-1);
 			break;
 
 		case X86_S0:
-			/* Steady state; wait for a message */
+			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
+				/* Power down to next state */
+				state = X86_S0S3;
+				break;
+			}
+
+			/* Otherwise, steady state; wait for a message */
+			in_want = 0;
 			task_wait_msg(-1);
 		}
 	}
@@ -287,33 +342,12 @@ void x86_power_task(void)
 
 static int command_x86power(int argc, char **argv)
 {
-	enum x86_state current = state;
-	/* If no args provided, print current state */
-	if (argc < 2) {
-		uart_printf("Current X86 state: %d (%s)\n",
-			    state, state_names[state]);
-		return EC_SUCCESS;
-	}
+	/* Print current state */
+	uart_printf("Current X86 state: %d (%s)\n", state, state_names[state]);
 
-	/* Get state to move to */
-	if (!strcasecmp(argv[1], "S0")) {
-		if (state == X86_S5) {
-			/* Simulate a 100ms power button press */
-			uart_puts("Simulating power button press.\n");
-			gpio_set_level(GPIO_PCH_PWRBTNn, 0);
-			usleep(100000);
-			gpio_set_level(GPIO_PCH_PWRBTNn, 1);
-		}
-	}
-
-	if (current == state)
-		uart_puts("State not changed.\n");
-	else {
-		uart_printf("New X86 state: %d (%s)\n",
-			    state, state_names[state]);
-		/* Wake up the task if it's asleep */
-		task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
-	}
+	/* Forcing a power state from EC is deprecated */
+	if (argc > 1)
+		uart_puts("Use 'powerbtn' instead of 'x86power s0'.\n");
 
 	return EC_SUCCESS;
 }
