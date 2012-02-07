@@ -3,16 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Charger/battery debug command module for Chrome EC */
-
-/* TODO: remove this or merge into charger/battery modules
- * once charger and battery modules are ready.
- */
-
-#include "charger.h"
 #include "board.h"
-#include "i2c.h"
+#include "charger.h"
 #include "console.h"
+#include "i2c.h"
 #include "uart.h"
 #include "util.h"
 
@@ -21,6 +15,11 @@
 
 /* Address of battery */
 #define BATTERY_ADDR 0x16
+
+int charger_init(void)
+{
+	return EC_SUCCESS;
+}
 
 /*****************************************************************************/
 /* Console commands */
@@ -87,10 +86,3 @@ static int command_battery(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery);
 
-/*****************************************************************************/
-/* Initialization */
-
-int charger_init(void)
-{
-	return EC_SUCCESS;
-}

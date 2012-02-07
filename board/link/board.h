@@ -58,6 +58,8 @@ enum adc_channel
 
 /* Charger module */
 #define CONFIG_CHARGER_BQ24725
+#define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
+#define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
