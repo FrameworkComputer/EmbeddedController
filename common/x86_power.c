@@ -236,20 +236,6 @@ void x86_power_task(void)
 			break;
 
 		case X86_S5S0:
-			/* TODO: this should be in response to a power button
-			 * event, not causing one.  For initial bringup,
-			 * simulate the event. */
-
-			/* Assert power button */
-			gpio_set_level(GPIO_PCH_PWRBTNn, 0);
-
-			/* Wait at least 16ms after asserting PWRBTN#.  More
-			 * is better for now, apparently. */
-			usleep(100000);
-
-			/* Release power button */
-			gpio_set_level(GPIO_PCH_PWRBTNn, 1);
-
 			/* Wait for PM_SLP_S3n to be asserted */
 			wait_in_signals(IN_ALL_PM_SLP_DEASSERTED);
 
@@ -278,13 +264,17 @@ void x86_power_task(void)
 			break;
 
 		case X86_S5:
-#ifdef AUTO_POWER_UP
-			/* For bringup, power on one second after boot */
-			/* TODO: remove post-bringup */
-			usleep(1000000);
-			state = X86_S5S0;
+			/* If PM_SLP_S3# is deasserted, system is trying to
+			 * power on. */
+			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
+				state = X86_S5S0;
+				break;
+			}
+
+			/* Otherwise, steady state; wait for a message */
+			task_wait_msg(-1);
 			break;
-#endif
+
 		case X86_S0:
 			/* Steady state; wait for a message */
 			task_wait_msg(-1);
@@ -307,8 +297,13 @@ static int command_x86power(int argc, char **argv)
 
 	/* Get state to move to */
 	if (!strcasecmp(argv[1], "S0")) {
-		if (state == X86_S5)
-			state = X86_S5S0;
+		if (state == X86_S5) {
+			/* Simulate a 100ms power button press */
+			uart_puts("Simulating power button press.\n");
+			gpio_set_level(GPIO_PCH_PWRBTNn, 0);
+			usleep(100000);
+			gpio_set_level(GPIO_PCH_PWRBTNn, 1);
+		}
 	}
 
 	if (current == state)
