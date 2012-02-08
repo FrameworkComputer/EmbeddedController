@@ -19,8 +19,8 @@
 #define DEFAULT_SENSE_RESISTOR 10
 #define R_SNS CONFIG_BQ24725_R_SNS
 #define R_AC  CONFIG_BQ24725_R_AC
-#define REG_TO_CURRENT(REG, RS) ((REG) * (RS) / DEFAULT_SENSE_RESISTOR)
-#define CURRENT_TO_REG(CUR, RS) ((CUR) * DEFAULT_SENSE_RESISTOR / (RS))
+#define REG_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS))
+#define CURRENT_TO_REG(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR)
 
 /* Charger infomation
  * charge voltage bitmask: 0111 1111 1111 0000
@@ -166,49 +166,56 @@ int charger_init(void)
 	 * charger watch dog timer = 175sec
 	 * charger input current limit = 4096 * 10 / RS_AC
 	 */
-
-	return charger_set_input_current(4096);
+	return EC_SUCCESS;
 }
 
 
 /* Console commands */
 
-static int command_charger(int argc, char **argv)
+static void print_usage(void)
+{
+	uart_puts("Usage: charger [set_command value]\n");
+	uart_puts("    charger input   input_current_in_mA\n");
+	uart_puts("    charger voltage voltage_limit_in_mV\n");
+	uart_puts("    charger current current_limit_in_mA\n\n");
+}
+
+static int print_info(void)
 {
 	int rv;
 	int d;
 	const struct charger_info *info;
 
-	uart_puts("Reading battery properties : now (max, min, step)\n");
+	uart_puts("Charger properties : now (max, min, step)\n");
 
 	/* info */
 	info = charger_get_info();
-	uart_printf("  chip name     : %s\n", info->name);
+	uart_printf("  name           : %s\n", info->name);
 
 	/* manufacturer id */
 	rv = charger_manufacturer_id(&d);
 	if (rv)
 		return rv;
-	uart_printf("  manufacturer id: 0x%04X\n");
+	uart_printf("  manufacturer id: 0x%04x\n", d);
 
 	/* device id */
 	rv = charger_device_id(&d);
 	if (rv)
 		return rv;
-	uart_printf("  device id     : 0x%04X\n");
+	uart_printf("  device id      : 0x%04x\n", d);
 
 	/* charge voltage limit */
 	rv = charger_get_voltage(&d);
 	if (rv)
 		return rv;
-	uart_printf("  voltage       : %d (%d, %d, %d)\n", d,
+	uart_printf("  voltage        : %5d (%5d, %4d, %3d)\n", d,
 		info->voltage_max, info->voltage_min, info->voltage_step);
 
 	/* charge current limit */
 	rv = charger_get_current(&d);
 	if (rv)
 		return rv;
-	uart_printf("  current       : %d (%d, %d, %d)\n", d,
+	uart_printf("  current        : %5d (%5d, %4d, %3d)\n", d,
 		info->current_max, info->current_min, info->current_step);
 
 	/* input current limit */
@@ -216,9 +223,49 @@ static int command_charger(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	uart_printf("  input     : %d (%d, %d, %d)\n", d,
+	uart_printf("  input current  : %5d (%5d, %4d, %3d)\n", d,
 		info->input_current_max, info->input_current_min,
 		info->input_current_step);
+
+	return EC_SUCCESS;
+}
+
+static int command_charger(int argc, char **argv)
+{
+	int d;
+	char *endptr;
+
+	if (argc != 3) {
+		if (argc != 1)
+			print_usage();
+		return print_info();
+	}
+
+	if (strcasecmp(argv[1], "input") == 0) {
+		d = strtoi(argv[2], &endptr, 0);
+		if (*endptr) {
+			print_usage();
+			return EC_ERROR_UNKNOWN;
+		}
+		return charger_set_input_current(d);
+	} else if (strcasecmp(argv[1], "current") == 0) {
+		d = strtoi(argv[2], &endptr, 0);
+		if (*endptr) {
+			print_usage();
+			return EC_ERROR_UNKNOWN;
+		}
+		return charger_set_current(d);
+	} else if (strcasecmp(argv[1], "voltage") == 0) {
+		d = strtoi(argv[2], &endptr, 0);
+		if (*endptr) {
+			print_usage();
+			return EC_ERROR_UNKNOWN;
+		}
+		return charger_set_voltage(d);
+	} else {
+		print_usage();
+		return print_info();
+	}
 
 	return EC_SUCCESS;
 }
