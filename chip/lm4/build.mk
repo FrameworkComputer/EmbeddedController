@@ -16,4 +16,3 @@ chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_TEMP_SENSOR)+=chip_temp_sensor.o
 chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o
-chip-$(CONFIG_CHARGER)+=charger.o
