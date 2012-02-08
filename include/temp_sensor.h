@@ -45,8 +45,11 @@ int temp_sensor_read(enum temp_sensor_id id);
 #define TMP006_PORT(ADDR) (ADDR >> 16)
 #define TMP006_REG(ADDR) (ADDR & 0xffff)
 
-/* Read TI TMP006 temperature sensor. Return temperature in K. */
-int temp_sensor_tmp006_read(const struct temp_sensor_t* sensor);
+/* Read TI TMP006 die temperature sensor. Return temperature in K. */
+int temp_sensor_tmp006_read_die_temp(const struct temp_sensor_t* sensor);
+
+/* Read TI TMP006 object temperature sensor. Return temperature in K. */
+int temp_sensor_tmp006_read_object_temp(const struct temp_sensor_t* sensor);
 
 /* Configure TMP006 DRDY pin. */
 void temp_sensor_tmp006_config(const struct temp_sensor_t* sensor);

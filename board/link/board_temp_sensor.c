@@ -25,13 +25,13 @@
  */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 	{"CPU", TEMP_SENSOR_I2C_DIE_NEAR_CPU, TEMP_CPU_ADDR,
-		temp_sensor_tmp006_read, temp_sensor_tmp006_print},
+		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print},
 	{"PCH", TEMP_SENSOR_I2C_DIE_NEAR_PCH, TEMP_PCH_ADDR,
-		temp_sensor_tmp006_read, temp_sensor_tmp006_print},
+		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print},
 	{"DDR", TEMP_SENSOR_I2C_DIE_NEAR_DDR, TEMP_DDR_ADDR,
-		temp_sensor_tmp006_read, temp_sensor_tmp006_print},
+		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print},
 	{"Charger", TEMP_SENSOR_I2C_DIE_NEAR_CHARGER, TEMP_CHARGER_ADDR,
-		temp_sensor_tmp006_read, temp_sensor_tmp006_print},
+		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print},
 	{"ECInternal", TEMP_SENSOR_EC_INTERNAL, TEMP_SENSOR_NO_ADDR,
 		chip_temp_sensor_read, TEMP_SENSOR_NO_PRINT},
 };

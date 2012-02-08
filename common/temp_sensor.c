@@ -27,7 +27,7 @@ int temp_sensor_read(enum temp_sensor_id id)
 	return sensor->read(sensor);
 }
 
-int temp_sensor_tmp006_read(const struct temp_sensor_t* sensor)
+int temp_sensor_tmp006_read_die_temp(const struct temp_sensor_t* sensor)
 {
 	int traw, t;
 	int rv;
@@ -38,6 +38,78 @@ int temp_sensor_tmp006_read(const struct temp_sensor_t* sensor)
 		return -1;
 	t = (int)(int16_t)traw / 128;
 	return t + 273;
+}
+
+/* Calculate the remote object temperature.
+ * Parameters:
+ *     Tdie: Die temperature in 1/100 K.
+ *     Vobj: Voltage read from register 0. In nV.
+ *     S0:   Sensitivity factor in 1/1000.
+ * Return:
+ *     Object temperature in 1/100 K.
+ */
+int temp_sensor_tmp006_calculate_object_temp(int Tdie, int Vobj, int S0)
+{
+	int32_t Tx, S19, Vos, Vx, fv9, ub, lb;
+
+	/* Calculate according to TMP006 users guide.
+	 * Division is delayed when possible to preserve precision, but should
+	 * not cause overflow.
+	 * Assuming Tdie is between 200K and 400K, and S0 between 3e-14 and
+	 * 9e-14, the maximum value during the calculation should be less than
+	 * (1 << 30), which fits in int32_t.
+	 */
+	Tx = Tdie - 29815;
+	/* S19 is the sensitivity multipled by 1e19 */
+	S19 = S0 * (100000 + 175 * Tx / 100 -
+		1678 * Tx / 100 * Tx / 100000) / 1000;
+	/* Vos is the offset voltage in nV */
+	Vos = -29400 - 570 * Tx / 100 + 463 * Tx / 100 * Tx / 10000;
+	Vx = Vobj - Vos;
+	/* fv9 is Seebeck coefficient f(Vobj) multipled by 1e9 */
+	fv9 = Vx + 134 * Vx / 100000 * Vx / 100000;
+
+	/* The last step in the calculation involves square root, so we use
+	 * binary search.
+	 * Assuming the object temperature is between 200K and 400K, the search
+	 * should take at most 14 iterations.
+	 */
+	ub = 40000;
+	lb = 20000;
+	while (lb != ub) {
+		int32_t t, rhs, lhs;
+
+		t = (ub + lb) / 2;
+		lhs = t / 100 * t / 10000 * t / 10000 * (S19/100) / 1000 * t;
+		rhs = Tdie / 100 * Tdie / 10000 * Tdie / 10000 * (S19/100) / 1000 *
+			Tdie + fv9 * 1000;
+		if (lhs > rhs)
+			ub = t;
+		else
+			lb = t + 1;
+	}
+
+	return ub;
+}
+
+int temp_sensor_tmp006_read_object_temp(const struct temp_sensor_t* sensor)
+{
+	int traw, t;
+	int vraw, v;
+	int rv;
+	int addr = sensor->addr;
+
+	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
+	if (rv)
+		return -1;
+	t = (int)(int16_t)traw / 128 + 273;
+
+	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x00, &vraw);
+	if (rv)
+		return -1;
+	v = ((int)(int16_t)vraw * 15625) / 100;
+
+	return temp_sensor_tmp006_calculate_object_temp(t * 100, v, 6400);
 }
 
 void temp_sensor_tmp006_config(const struct temp_sensor_t* sensor)
@@ -132,6 +204,44 @@ static int command_sensor_info(int argc, char ** argv)
 }
 DECLARE_CONSOLE_COMMAND(tempsinfo, command_sensor_info);
 
+/* TMP006 object temperature calculation command.
+ * TODO: This command is only for debugging. Remove it when temporal correciton
+ *       is done.
+ */
+static int command_sensor_remote(int argc, char **argv)
+{
+	char *e;
+	int32_t Td2, Vobj9, Sm03;
+
+	if (argc != 4) {
+		uart_puts("Usage: tempcorrect <Tdie*100> <Vobj*10^9> <S0*10^11>\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	Td2 = strtoi(argv[1], &e, 0);
+	if (e && *e) {
+		uart_puts("Bad Tdie.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	Vobj9 = strtoi(argv[2], &e, 0);
+	if (e && *e) {
+		uart_puts("Bad Vobj.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	Sm03 = strtoi(argv[3], &e, 0);
+	if (e && *e) {
+		uart_puts("Bad S0.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	uart_printf("%d\n",
+		temp_sensor_tmp006_calculate_object_temp(Td2, Vobj9, Sm03));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(tempremote, command_sensor_remote);
 
 /*****************************************************************************/
 /* Initialization */
