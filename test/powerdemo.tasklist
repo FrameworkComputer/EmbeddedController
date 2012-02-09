@@ -1,0 +1,4 @@
+
+#define CONFIG_TASK_LIST \
+	TASK(CONSOLE, console_task, NULL) \
+	TASK(POWERDEMO, power_demo_task, NULL)

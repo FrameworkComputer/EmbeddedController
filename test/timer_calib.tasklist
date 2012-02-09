@@ -1,0 +1,10 @@
+
+/**
+ * List of enabled tasks in the priority order
+ *
+ * The first one has the lowest priority.
+ */
+#define CONFIG_TASK_LIST \
+  TASK(WATCHDOG, watchdog_task, NULL) \
+  TASK(TESTTMR, timer_calib_task, (void *)'T')\
+  TASK(CONSOLE, console_task, NULL)

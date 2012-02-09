@@ -1,3 +1,6 @@
-board/*/
 build/
-vendor/
+*.map
+*.bin
+*.elf
+*.swp
+*.pyc

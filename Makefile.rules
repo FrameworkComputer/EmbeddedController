@@ -1,0 +1,100 @@
+# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Embedded Controller firmware build system - common targets
+#
+
+objs := $(all-y)
+deps := $(objs:%.o=%.o.d)
+build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
+host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
+
+# Create output directories if necessary
+_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
+	    mkdir -p $(out)/$(d)))
+
+section = $(subst .,,$(suffix $(1)))
+
+# Decrease verbosity unless you pass V=1
+quiet = $(if $(V),,@echo '  $(2)' $(subst $(out)/,,$@) ; )$(cmd_$(1))
+silent = $(if $(V),,1>/dev/null)
+
+# commands to build all targets
+cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
+          -DSECTION=$(call section,$*) $< -o $@
+cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $@
+cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
+                  -DPROJECT=$* -Wl,--build-id=none -o $@ $<
+cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
+cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
+cmd_elf = $(LD) $(LDFLAGS) $(objs) -o $@ -T $< -Map $(out)/$*.map
+cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
+cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
+	         -MMD -MF $@.d $< -o $@
+cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $< -o $@
+cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
+	   $(silent)
+
+
+.PHONY: all tests utils
+all: $(out)/$(PROJECT).bin $(foreach s,A B RO,$(out)/$(PROJECT).$(s).dis) utils
+
+utils: $(build-utils) $(host-utils)
+
+test-targets=$(foreach t,$(test-list),test-$(t))
+qemu-test-targets=$(foreach t,$(test-list),qemu-$(t))
+.PHONY: $(qemu-test-target) $(test-targets)
+
+$(test-targets): test-%:
+	@set -e ; \
+	echo "  BUILD   $(out)/$*" ; \
+	$(MAKE) --no-print-directory BOARD=$(BOARD) PROJECT=$* \
+	        V=$(V) out=$(out)/$*
+
+$(qemu-test-targets): qemu-%: test-%
+	$(call quiet,qemu,TEST   )
+
+tests: $(test-targets)
+qemu-tests: $(qemu-test-targets)
+
+$(out)/firmware_image.lds: common/firmware_image.lds.S
+	$(call quiet,lds,LDS    )
+$(out)/%.lds: core/$(CORE)/ec.lds.S
+	$(call quiet,lds,LDS    )
+
+$(out)/%.bin: $(out)/%.obj
+	$(call quiet,obj_to_bin,OBJCOPY)
+
+$(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds \
+              $(out)/%.RO.flat $(out)/%.A.flat $(out)/%.B.flat
+	$(call quiet,flat_to_obj,CAT    )
+
+$(out)/%.dis: $(out)/%.elf
+	$(call quiet,elf_to_dis,OBJDUMP)
+
+$(out)/%.flat: $(out)/%.elf
+	$(call quiet,elf_to_flat,OBJCOPY)
+
+$(out)/%.elf: $(out)/%.lds $(objs)
+	$(call quiet,elf,LD     )
+
+$(out)/%.o:%.c
+	$(call quiet,c_to_o,CC     )
+
+$(out)/%.o:%.S
+	$(call quiet,c_to_o,AS     )
+
+$(build-utils): $(out)/%:%.c
+	$(call quiet,c_to_build,BUILDCC)
+
+$(host-utils): $(out)/%:%.c
+	$(call quiet,c_to_host,HOSTCC )
+
+.PHONY: clean
+clean:
+	-rm -rf $(out)
+
+.SECONDARY:
+
+-include $(deps)
