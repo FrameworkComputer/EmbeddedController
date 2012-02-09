@@ -5,6 +5,7 @@
 
 /* Port 80 module for Chrome EC */
 
+#include "board.h"
 #include "console.h"
 #include "port80.h"
 #include "uart.h"
@@ -20,10 +21,12 @@ static int last_data = -1;  /* Last data written to port 80 */
 
 void port_80_write(int data)
 {
+#ifndef CONFIG_PORT80_PRINT_DUPLICATES
 	/* Ignore duplicate writes, since the linux kernel writes to port 80
 	 * as a delay mechanism during boot. */
 	if (data == last_data)
 		return;
+#endif
 
 	/* TODO: post to SWI and print from there?  This currently
 	 * prints from inside the LPC interrupt itself. */
