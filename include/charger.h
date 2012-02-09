@@ -27,9 +27,11 @@ struct charger_info {
 	uint16_t input_current_step;
 };
 
-/* Initializes the charger, with AC input on and battery
- * charging off. */
+/* Initializes the charger */
 int charger_init(void);
+
+/* Power state machine post init */
+int charger_post_init(void);
 
 /* Get charger information. */
 const struct charger_info *charger_get_info(void);

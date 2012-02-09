@@ -18,3 +18,4 @@ common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o temp_sensor_commands.o
 
 # Board driver modules
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
+common-$(CONFIG_SMART_BATTERY)+=smart_battery.o

@@ -44,8 +44,8 @@ static const struct charger_info bq24725_charger_info = {
 
 static int charger_set_input_current(int input_current)
 {
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_INPUT_CURRENT, CURRENT_TO_REG(input_current, R_AC));
+	return sbc_write(BQ24725_INPUT_CURRENT,
+		CURRENT_TO_REG(input_current, R_AC));
 }
 
 static int charger_get_input_current(int *input_current)
@@ -53,8 +53,7 @@ static int charger_get_input_current(int *input_current)
 	int rv;
 	int reg;
 
-	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_INPUT_CURRENT, &reg);
+	rv = sbc_read(BQ24725_INPUT_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -65,26 +64,22 @@ static int charger_get_input_current(int *input_current)
 
 static int charger_manufacturer_id(int *id)
 {
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_MANUFACTURE_ID, id);
+	return sbc_read(BQ24725_MANUFACTURE_ID, id);
 }
 
 static int charger_device_id(int *id)
 {
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_DEVICE_ID, id);
+	return sbc_read(BQ24725_DEVICE_ID, id);
 }
 
 static int charger_get_option(int *option)
 {
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_CHARGE_OPTION, option);
+	return sbc_read(BQ24725_CHARGE_OPTION, option);
 }
 
 static int charger_set_option(int option)
 {
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		BQ24725_CHARGE_OPTION, option);
+	return sbc_write(BQ24725_CHARGE_OPTION, option);
 }
 
 /* charger interfaces */
@@ -132,8 +127,7 @@ int charger_get_current(int *current)
 	int rv;
 	int reg;
 
-	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		SB_CHARGING_CURRENT, &reg);
+	rv = sbc_read(SB_CHARGING_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -143,30 +137,36 @@ int charger_get_current(int *current)
 
 int charger_set_current(int current)
 {
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		SB_CHARGING_CURRENT, CURRENT_TO_REG(current, R_SNS));
+	return sbc_write(SB_CHARGING_CURRENT, CURRENT_TO_REG(current, R_SNS));
 }
 
 int charger_get_voltage(int *voltage)
 {
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		SB_CHARGING_VOLTAGE, voltage);
+	return sbc_read(SB_CHARGING_VOLTAGE, voltage);
 }
 
 int charger_set_voltage(int voltage)
 {
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR,
-		SB_CHARGING_VOLTAGE, voltage);
+	return sbc_write(SB_CHARGING_VOLTAGE, voltage);
 }
 
 /* Initialization */
 int charger_init(void)
 {
 	/* bq24725 power on reset state:
-	 * charger watch dog timer = 175sec
-	 * charger input current limit = 4096 * 10 / RS_AC
+	 * watch dog timer     = 175 sec
+	 * input current limit = ~1/2 maximum setting
+	 * charging voltage    = 0 mV
+	 * charging current    = 0 mA
 	 */
 	return EC_SUCCESS;
+}
+
+/* Charging power state initialization */
+int charger_post_init(void)
+{
+	/* Set charger input current limit */
+	return charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
 }
 
 

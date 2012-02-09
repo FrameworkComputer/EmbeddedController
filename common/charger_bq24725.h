@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_CHARGER_BQ24725_H
 #define __CROS_EC_CHARGER_BQ24725_H
 
-/* I2C address */
-#define CHARGER_ADDR 0x12
-
 /* Chip specific commands */
 #define BQ24725_CHARGE_OPTION           0x12
 #define BQ24725_INPUT_CURRENT           0x3f
