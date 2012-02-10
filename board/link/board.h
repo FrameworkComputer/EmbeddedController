@@ -159,8 +159,10 @@ enum temp_sensor_id {
 	TEMP_SENSOR_I2C_DIE_NEAR_CHARGER,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
+	/* CPU die temperature via PECI */
+	TEMP_SENSOR_CPU_PECI,
 
-	/* TODO: I2C temperature sensors. */
+	/* TODO: I2C remote temperature sensors. */
 
 	TEMP_SENSOR_COUNT
 };

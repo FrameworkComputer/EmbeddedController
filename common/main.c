@@ -6,8 +6,10 @@
  */
 
 #include "adc.h"
-#include "config.h"
+#include "charger.h"
+#include "chip_temp_sensor.h"
 #include "clock.h"
+#include "config.h"
 #include "console.h"
 #include "eeprom.h"
 #include "flash.h"
@@ -18,6 +20,7 @@
 #include "keyboard.h"
 #include "lpc.h"
 #include "memory_commands.h"
+#include "peci.h"
 #include "port80.h"
 #include "power_button.h"
 #include "powerdemo.h"
@@ -25,16 +28,12 @@
 #include "pwm_commands.h"
 #include "system.h"
 #include "task.h"
-#ifdef CONFIG_TEMP_SENSOR
 #include "temp_sensor.h"
-#endif
 #include "timer.h"
 #include "uart.h"
+#include "usb_charge.h"
 #include "vboot.h"
 #include "watchdog.h"
-#include "usb_charge.h"
-#include "chip_temp_sensor.h"
-#include "charger.h"
 
 int main(void)
 {
@@ -85,6 +84,10 @@ int main(void)
 	usb_charge_init();
 #ifdef CONFIG_CHARGER
 	charger_init();
+#endif
+
+#ifdef CONFIG_PECI
+	peci_init();
 #endif
 
 	/* Print the reset cause */
