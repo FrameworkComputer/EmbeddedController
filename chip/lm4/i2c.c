@@ -26,7 +26,7 @@ static int wait_idle(int port)
 	int wait_msg;
 
 	i = LM4_I2C_MCS(port);
-	if (i & 0x01) {
+	while (i & 0x01) {
 		/* Port is busy, so wait for the interrupt */
 		task_waiting_on_port[port] = task_get_current();
 		LM4_I2C_MIMR(port) = 0x03;
