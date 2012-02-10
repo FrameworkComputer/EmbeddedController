@@ -13,6 +13,8 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+#include "x86_power.h"
+
 
 #define KEYBOARD_DEBUG 1
 
@@ -36,6 +38,7 @@ static uint8_t controller_ram[0x20] = {
   I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS,
   /* 0x01 - 0x1f are controller RAM */
 };
+static int power_button_pressed = 0;
 
 /*
  * Scancode settings
@@ -106,6 +109,17 @@ static uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
 };
 
 
+/* change to set 1 if the I8042_XLATE flag is set. */
+static enum scancode_set_list acting_code_set(enum scancode_set_list set) {
+  if (controller_ram[0] & I8042_XLATE) {
+    /* If the keyboard translation is enabled,
+     * then always generates set 1. */
+    return SCANCODE_SET_1;
+  }
+  return set;
+}
+
+
 static enum ec_error_list matrix_callback(
     int8_t row, int8_t col, int8_t pressed,
     enum scancode_set_list code_set, uint8_t *scan_code, int32_t* len) {
@@ -122,11 +136,7 @@ static enum ec_error_list matrix_callback(
 
   *len = 0;
 
-  if (controller_ram[0] & I8042_XLATE) {
-    /* If the keyboard translation is enabled,
-     * then always generates set 1. */
-    code_set = SCANCODE_SET_1;
-  }
+  code_set = acting_code_set(code_set);
 
   switch (code_set) {
   case SCANCODE_SET_1:
@@ -513,6 +523,32 @@ int handle_keyboard_command(uint8_t command, uint8_t *output) {
   }
 
   return out_len;
+}
+
+
+void keyboard_set_power_button(int pressed)
+{
+	enum scancode_set_list code_set;
+	enum ec_error_list ret;
+	uint8_t code[2][2][3] = {
+		{  /* set 1 */
+			{0xe0, 0xde},        /* break */
+			{0xe0, 0x5e},        /* make */
+		}, {  /* set 2 */
+			{0xe0, 0xf0, 0x37},  /* break */
+			{0xe0, 0x37},        /* make */
+		}
+	};
+
+	power_button_pressed = pressed;
+
+	if (x86_power_in_S0()) {
+		code_set = acting_code_set(scancode_set);
+		ret = i8042_send_to_host(
+		    (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
+		    code[code_set - SCANCODE_SET_1][pressed]);
+		ASSERT(ret == EC_SUCCESS);
+	}
 }
 
 

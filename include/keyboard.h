@@ -50,6 +50,11 @@ int handle_keyboard_data(uint8_t data, uint8_t *output);
 int handle_keyboard_command(uint8_t command, uint8_t *output);
 
 
+/* Send make/break code of power button to host.
+ */
+void keyboard_set_power_button(int pressed);
+
+
 /* Register the board-specific keyboard matrix translation function.
  * The callback function accepts col/row and returns the scan code.
  *

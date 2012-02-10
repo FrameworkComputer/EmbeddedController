@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "gpio.h"
+#include "keyboard.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
@@ -63,6 +64,11 @@ static void lid_switch_isr(void)
  *   PWRBTN#   ---  ---------           ----
  *    to PCH     |__|       |___________|
  *                t0    t1    held down
+ *
+ *   scan code   |                      |
+ *    to host    v                      v
+ *     @S0   make code             break code
+ *
  */
 static void set_pwrbtn_to_pch(int high)
 {
@@ -124,15 +130,11 @@ static void power_button_isr(void)
 	if (!gpio_get_level(GPIO_POWER_BUTTONn)) {
 		/* pressed */
 		pwrbtn_sm_start();
-		/* TODO: implement after chip/lm4/x86_power.c is completed. */
-		/* if system is in S5, power_on_system()
-		 * elif system is in S3, resume_system()
-		 * else S0 i8042_send_host(make_code); */
+		keyboard_set_power_button(1);
 	} else {
 		/* released */
 		pwrbtn_sm_stop();
-		/* TODO: implement after chip/lm4/x86_power.c is completed. */
-		/* if system in S0, i8042_send_host(break_code); */
+		keyboard_set_power_button(0);
 	}
 }
 

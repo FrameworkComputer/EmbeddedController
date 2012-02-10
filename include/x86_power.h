@@ -17,4 +17,8 @@ int x86_power_init(void);
 /* Interrupt handler for input GPIOs */
 void x86_power_interrupt(enum gpio_signal signal);
 
+/* Returns true if the system is in S0. */
+int x86_power_in_S0(void);
+
+
 #endif  /* __CROS_EC_X86_POWER_H */
