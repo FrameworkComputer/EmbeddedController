@@ -175,7 +175,7 @@ static int command_temps(int argc, char **argv)
 			rv = -1;
 		}
 		else
-			uart_printf("%d K\n\n", t);
+			uart_printf("%d K = %d C\n\n", t, t - 273);
 	}
 
 	if (rv == -1)
@@ -188,19 +188,20 @@ DECLARE_CONSOLE_COMMAND(temps, command_temps);
 static int command_sensor_info(int argc, char **argv)
 {
 	int i;
-	int rv;
+	int rv, rv1;
 	const struct temp_sensor_t* sensor;
 
+	rv1 = EC_SUCCESS;
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		sensor = temp_sensors + i;
 		if (sensor->print == TEMP_SENSOR_NO_PRINT)
 			continue;
 		rv = sensor->print(sensor);
 		if (rv != EC_SUCCESS)
-			return rv;
+			rv1 = rv;
 	}
 
-	return EC_SUCCESS;
+	return rv1;
 }
 DECLARE_CONSOLE_COMMAND(tempsinfo, command_sensor_info);
 
