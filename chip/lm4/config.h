@@ -38,6 +38,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_CHARGER
 #define CONFIG_LIGHTBAR
+#define CONFIG_FPU
 
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */

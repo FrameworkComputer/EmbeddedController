@@ -5,7 +5,12 @@
 # Cortex-M4 core OS files build
 #
 
+# FPU compilation flags
+CFLAGS_FPU-$(CONFIG_FPU)=-mfpu=fpv4-sp-d16 -mfloat-abi=hard
+
 # CPU specific compilation flags
 CFLAGS_CPU=-mcpu=cortex-m4 -mthumb -Os -mno-sched-prolog
+CFLAGS_CPU+=$(CFLAGS_FPU-y)
 
 core-y=init.o panic.o switch.o task.o timer.o
+core-$(CONFIG_FPU)+=fpu.o

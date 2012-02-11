@@ -336,6 +336,21 @@ data_loop:
     ldr r0, =stack_end
     mov sp, r0
 
+#ifdef CONFIG_FPU
+    /* Enable FPU */
+    /* CPACR is located at address 0xE000ED88 */
+    ldr r0, =0xE000ED88
+    /* Read CPACR */
+    ldr r1, [r0]
+    /* Set bits 20-23 to enable CP10 and CP11 coprocessors */
+    orr r1, r1, #(0xF << 20)
+    /* Write back the modified value to the CPACR */
+    str r1, [r0] /* wait for store to complete */
+    dsb
+    /* reset pipeline now the FPU is enabled */
+    isb
+#endif /* CONFIG_FPU */
+
     /* jump to C code */
     bl main
     /* we should not return here */

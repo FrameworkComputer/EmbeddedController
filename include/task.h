@@ -11,6 +11,13 @@
 #include "common.h"
 #include "task_id.h"
 
+/* Disables CPU interrupt bit. This might break the system so think really hard
+ * before using these. There are usually better ways of accomplishing this. */
+void interrupt_disable(void);
+
+/* Enables CPU interrupt */
+void interrupt_enable(void);
+
 /**
  * Return true if we are in interrupt context
  */
