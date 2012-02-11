@@ -8,6 +8,9 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+/* Optional features */
+#define CONFIG_PECI
+
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
 

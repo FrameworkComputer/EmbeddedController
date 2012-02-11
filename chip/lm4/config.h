@@ -37,7 +37,6 @@
 #define CONFIG_PWM
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_CHARGER
-#define CONFIG_PECI
 
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */

@@ -15,8 +15,8 @@
 	TMP006_ADDR(I2C_PORT_THERMAL, TEMP_CASE_DIE_REG_ADDR)
 
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-	{"ECInternal", TEMP_SENSOR_EC_INTERNAL, TEMP_SENSOR_NO_ADDR,
+	{"ECInternal", TEMP_SENSOR_NO_ADDR,
 		chip_temp_sensor_read, TEMP_SENSOR_NO_PRINT},
-	{"CaseDie", TEMP_SENSOR_CASE_DIE, TEMP_CASE_DIE_ADDR,
+	{"CaseDie", TEMP_CASE_DIE_ADDR,
 		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print}
 };

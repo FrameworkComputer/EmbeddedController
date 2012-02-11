@@ -11,10 +11,6 @@
 
 int chip_temp_sensor_read(const struct temp_sensor_t* sensor)
 {
-	/* LM4 only has internal temperature sensor */
-	if (sensor->id != TEMP_SENSOR_EC_INTERNAL)
-		return EC_ERROR_INVAL;
-
 	return adc_read_channel(ADC_CH_EC_TEMP);
 }
 

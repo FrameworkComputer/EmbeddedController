@@ -9,7 +9,8 @@
 #define __CROS_EC_PECI_H
 
 #include "common.h"
-#include "temp_sensor.h"
+
+struct temp_sensor_t;
 
 /* Initializes the module. */
 int peci_init(void);

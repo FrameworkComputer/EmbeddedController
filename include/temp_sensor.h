@@ -12,9 +12,10 @@
 #include "board.h"
 
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
+enum temp_sensor_id;
+
 struct temp_sensor_t {
 	const char* name;
-	enum temp_sensor_id id;
 	/* Sensor address. Used by read and print functions. */
 	int addr;
 	/* Read sensor value and return temperature in K. */

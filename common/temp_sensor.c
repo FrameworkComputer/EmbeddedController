@@ -169,7 +169,7 @@ static int command_temps(int argc, char **argv)
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		uart_printf("  Temp from %s:  ", temp_sensors[i].name);
-		t = temp_sensor_read(temp_sensors[i].id);
+		t = temp_sensor_read(i);
 		if (t < 0) {
 			uart_printf("Error.\n\n");
 			rv = -1;
@@ -185,7 +185,7 @@ static int command_temps(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps);
 
-static int command_sensor_info(int argc, char ** argv)
+static int command_sensor_info(int argc, char **argv)
 {
 	int i;
 	int rv;

@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "peci.h"
 #include "registers.h"
+#include "temp_sensor.h"
 #include "uart.h"
 #include "util.h"
 
@@ -52,9 +53,6 @@ int peci_get_cpu_temp(void)
 
 int peci_temp_sensor_read(const struct temp_sensor_t* sensor)
 {
-	if (sensor->id != TEMP_SENSOR_CPU_PECI)
-		return EC_ERROR_INVAL;
-
 	return peci_get_cpu_temp();
 }
 
