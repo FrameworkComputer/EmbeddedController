@@ -88,11 +88,11 @@ int strtoi(const char *nptr, char **endptr, int base)
 
 	while((c = *nptr++) && isspace(c)) {}
 
-	if (c == '0' && *nptr == 'x' && (base == 0 || base == 16)) {
+	if (c == '0' && *nptr == 'x') {
 		base = 16;
 		c = nptr[1];
 		nptr += 2;
-	} else {
+	} else if (base == 0) {
 		base = 10;
 		if (c == '-') {
 			neg = 1;
