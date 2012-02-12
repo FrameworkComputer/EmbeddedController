@@ -43,6 +43,6 @@ all-y+=$(call objs_from_dir,board/$(BOARD),$(board-y))
 all-y+=$(call objs_from_dir,common,$(common-y))
 all-y+=$(call objs_from_dir,test,$($(PROJECT)-y))
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common test util
-includes=include $(dirs)
+includes=include core/$(CORE)/include $(dirs)
 
 include Makefile.rules
