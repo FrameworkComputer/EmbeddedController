@@ -126,6 +126,61 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 	return wait_idle(port);
 }
 
+/* TODO:(crosbug.com/p/8026) combine common functions to save space */
+
+int i2c_read8(int port, int slave_addr, int offset, int* data)
+{
+	int rv;
+
+	*data = 0;
+
+	/* Transmit the offset address to the slave; leave the master in
+	 * transmit state. */
+	LM4_I2C_MSA(port) = slave_addr & 0xff;
+	LM4_I2C_MDR(port) = offset & 0xff;
+	LM4_I2C_MCS(port) = 0x03;
+
+	rv = wait_idle(port);
+	if (rv)
+		return rv;
+
+	/* Send repeated start followed by receive and stop */
+	LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x01;
+	LM4_I2C_MCS(port) = 0x07;	/* NOTE: datasheet suggests 0x0b, but
+					 * 0x07 with the change in direction
+					 * flips it to a RECEIVE and STOP.
+					 * I think.
+					 */
+	rv = wait_idle(port);
+	if (rv)
+		return rv;
+
+	/* Read the byte */
+	*data = LM4_I2C_MDR(port) & 0xff;
+
+	return EC_SUCCESS;
+}
+
+int i2c_write8(int port, int slave_addr, int offset, int data)
+{
+	int rv;
+
+	/* Transmit the offset address to the slave; leave the master in
+	 * transmit state. */
+	LM4_I2C_MDR(port) = offset & 0xff;
+	LM4_I2C_MSA(port) = slave_addr & 0xff;
+	LM4_I2C_MCS(port) = 0x03;
+
+	rv = wait_idle(port);
+	if (rv)
+		return rv;
+
+	/* Send repeated start followed by transmit and stop */
+	LM4_I2C_MDR(port) = data & 0xff;
+	LM4_I2C_MCS(port) = 0x05;
+
+	return wait_idle(port);
+}
 
 /*****************************************************************************/
 /* Interrupt handlers */

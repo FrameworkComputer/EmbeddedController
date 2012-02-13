@@ -26,4 +26,14 @@ int i2c_read16(int port, int slave_addr, int offset, int* data);
  * space. */
 int i2c_write16(int port, int slave_addr, int offset, int data);
 
+/* Reads an 8-bit register from the slave at 8-bit slave address
+ * <slaveaddr>, at the specified 8-bit <offset> in the slave's address
+ * space. */
+int i2c_read8(int port, int slave_addr, int offset, int* data);
+
+/* Writes an 8-bit register to the slave at 8-bit slave address
+ * <slaveaddr>, at the specified 8-bit <offset> in the slave's address
+ * space. */
+int i2c_write8(int port, int slave_addr, int offset, int data);
+
 #endif  /* __CROS_EC_I2C_H */
