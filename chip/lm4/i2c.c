@@ -32,7 +32,7 @@ static int wait_idle(int port)
 		LM4_I2C_MIMR(port) = 0x03;
 		wait_msg = task_wait_msg(1000000);
 		LM4_I2C_MIMR(port) = 0x00;
-		task_waiting_on_port[port] = -1;
+		task_waiting_on_port[port] = TASK_ID_INVALID;
 		if (wait_msg == 1 << TASK_ID_TIMER)
 			return EC_ERROR_TIMEOUT;
 
@@ -56,7 +56,7 @@ int i2c_read16(int port, int slave_addr, int offset, int* data)
 
 	/* Transmit the offset address to the slave; leave the master in
 	 * transmit state. */
-	LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x00;
+	LM4_I2C_MSA(port) = slave_addr & 0xff;
 	LM4_I2C_MDR(port) = offset & 0xff;
 	LM4_I2C_MCS(port) = 0x03;
 
@@ -98,7 +98,7 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 	/* Transmit the offset address to the slave; leave the master in
 	 * transmit state. */
 	LM4_I2C_MDR(port) = offset & 0xff;
-	LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x00;
+	LM4_I2C_MSA(port) = slave_addr & 0xff;
 	LM4_I2C_MCS(port) = 0x03;
 
 	rv = wait_idle(port);
