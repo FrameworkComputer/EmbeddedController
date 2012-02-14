@@ -18,6 +18,7 @@
 #include "i2c.h"
 #include "jtag.h"
 #include "keyboard.h"
+#include "keyboard_scan.h"
 #include "lpc.h"
 #include "memory_commands.h"
 #include "peci.h"
@@ -63,6 +64,9 @@ int main(void)
 	timer_init();
 	uart_init();
 	system_init();
+#ifdef CONFIG_TASK_KEYSCAN
+	keyboard_scan_init();
+#endif
 #ifdef CONFIG_FLASH
 	flash_init();
 #endif

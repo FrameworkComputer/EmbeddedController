@@ -53,10 +53,12 @@ enum COLUMN_INDEX {
 
 #define POLLING_MODE_TIMEOUT 1000000  /* 1 sec */
 #define SCAN_LOOP_DELAY 10000         /* 10 ms */
+#define COLUMN_CHARGE_US 40           /* Column charge time in usec */
 
 #define KB_COLS 13
 
 static uint8_t raw_state[KB_COLS];
+static int recovery_key_pressed;
 
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
@@ -71,6 +73,18 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 	{0},
 	{0},
 	};
+
+/* Key mask for the recovery key (reload) */
+static const uint8_t recovery_key_mask[KB_COLS] = {
+	0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+/* Key mask for keys allowed to be pressed at the same time as the recovery
+ * key.  If more keys than this are pressed, the recovery key will be ignored;
+ * this protects against accidentally triggering recovery when a cat sits on
+ * your keyboard.  (reload, ESC are ok) */
+static const uint8_t recovery_allowed_mask[KB_COLS] = {
+	0x00, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 /* Drives the specified column low; other columns are tri-stated */
 static void select_column(int col)
@@ -132,10 +146,157 @@ static void select_column(int col)
 #endif
 }
 
+
+static uint32_t clear_matrix_interrupt_status(void) {
+	uint32_t ris = LM4_GPIO_RIS(KB_SCAN_ROW_GPIO);
+	LM4_GPIO_ICR(KB_SCAN_ROW_GPIO) = ris;
+
+	return ris;
+}
+
+
+static void wait_for_interrupt(void)
+{
+	uart_printf("[kbscan %s()]\n", __func__);
+
+	/* Assert all outputs would trigger un-wanted interrupts.
+	 * Clear them before enable interrupt. */
+	select_column(COLUMN_ASSERT_ALL);
+	clear_matrix_interrupt_status();
+
+	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;      /* 0: edge-sensitive */
+	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;  /* 1: both edge */
+	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0xff;   /* 1: enable interrupt */
+}
+
+
+static void enter_polling_mode(void)
+{
+	uart_printf("[kbscan %s()]\n", __func__);
+	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0;  /* 0: disable interrupt */
+	select_column(COLUMN_TRI_STATE_ALL);
+}
+
+
+/* Update the raw key state without sending messages.  Used in pre-init, so
+ * must not make task-switching-dependent calls like usleep(); udelay() is ok
+ * because it's a spin-loop. */
+static void update_key_state(void)
+{
+	int c;
+	uint8_t r;
+
+	for (c = 0; c < KB_COLS; c++) {
+		/* Select column, then wait a bit for it to settle */
+		select_column(c);
+		udelay(COLUMN_CHARGE_US);
+		/* Read the row state */
+		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
+		/* Invert it so 0=not pressed, 1=pressed */
+		r ^= 0xff;
+		/* Mask off keys that don't exist so they never show
+		 * as pressed */
+		raw_state[c] = r & actual_key_mask[c];
+	}
+	select_column(COLUMN_TRI_STATE_ALL);
+}
+
+
+/* Print the raw keyboard state */
+static void print_raw_state(const char *msg)
+{
+	int c;
+
+	uart_printf("[%s:", msg);
+	for (c = 0; c < KB_COLS; c++) {
+		if (raw_state[c])
+			uart_printf(" %02x", raw_state[c]);
+		else
+			uart_puts(" --");
+	}
+	uart_puts("]\n");
+}
+
+
+/* Returns 1 if any key is still pressed. 0 if no key is pressed. */
+static int check_keys_changed(void)
+{
+	int c;
+	uint8_t r;
+	int change = 0;
+	int num_press = 0;
+
+	for (c = 0; c < KB_COLS; c++) {
+		/* Select column, then wait a bit for it to settle */
+		select_column(c);
+		udelay(COLUMN_CHARGE_US);
+		/* Read the row state */
+		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
+		/* Invert it so 0=not pressed, 1=pressed */
+		r ^= 0xff;
+		/* Mask off keys that don't exist so they never show
+		 * as pressed */
+		r &= actual_key_mask[c];
+
+#ifdef OR_WITH_CURRENT_STATE_FOR_TESTING
+		/* KLUDGE - or current state in, so we can make sure
+		 * all the lines are hooked up */
+		r |= raw_state[c];
+#endif
+
+		/* Check for changes */
+		if (r != raw_state[c]) {
+			int i;
+			for (i = 0; i < 8; ++i) {
+				uint8_t prev = (raw_state[c] >> i) & 1;
+				uint8_t now = (r >> i) & 1;
+				if (prev != now) {
+					keyboard_state_changed(i, c, now);
+				}
+			}
+			raw_state[c] = r;
+			change = 1;
+		}
+	}
+	select_column(COLUMN_TRI_STATE_ALL);
+
+	if (change)
+		print_raw_state("KB raw state");
+
+	/* Count number of key pressed */
+	for (c = 0; c < KB_COLS; c++) {
+		if (raw_state[c]) ++num_press;
+	}
+
+	return num_press ? 1 : 0;
+}
+
+
+/* Returns non-zero if the recovery key is pressed, and only other allowed keys
+ * are pressed. */
+static int check_recovery_key(void) {
+	int c;
+
+	for (c = 0; c < KB_COLS; c++) {
+		if ((raw_state[c] & recovery_key_mask[c])
+		    != recovery_key_mask[c])
+			return 0;  /* Missing required key */
+		if (raw_state[c] & ~recovery_allowed_mask[c])
+			return 0;  /* Additional disallowed key pressed */
+	}
+	return 1;
+}
+
+
+int keyboard_scan_recovery_pressed(void)
+{
+	return recovery_key_pressed;
+}
+
+
 int keyboard_scan_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
-	int i;
 
         /* Enable GPIOs */
 #ifdef BOARD_link
@@ -171,13 +332,13 @@ int keyboard_scan_init(void)
 	/* Tri-state the columns */
 	select_column(COLUMN_TRI_STATE_ALL);
 
-	/* Initialize raw state */
-	for (i = 0; i < KB_COLS; i++)
-		raw_state[i] = 0;
-
 	/* TODO: method to set which keyboard we have, so we set the actual
 	 * key mask properly */
 	actual_key_mask = actual_key_masks[0];
+
+	/* Initialize raw state and check if the recovery key is pressed. */
+	update_key_state();
+	recovery_key_pressed = check_recovery_key();
 
 	/* Enable interrupts, now that we're set up */
 	task_enable_irq(KB_SCAN_ROW_IRQ);
@@ -186,105 +347,13 @@ int keyboard_scan_init(void)
 }
 
 
-static uint32_t clear_matrix_interrupt_status(void) {
-	uint32_t ris = LM4_GPIO_RIS(KB_SCAN_ROW_GPIO);
-	LM4_GPIO_ICR(KB_SCAN_ROW_GPIO) = ris;
-
-	return ris;
-}
-
-
-void wait_for_interrupt(void)
-{
-	uart_printf("[kbscan %s()]\n", __func__);
-
-	/* Assert all outputs would trigger un-wanted interrupts.
-	 * Clear them before enable interrupt. */
-	select_column(COLUMN_ASSERT_ALL);
-	clear_matrix_interrupt_status();
-
-	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;      /* 0: edge-sensitive */
-	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;  /* 1: both edge */
-	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0xff;   /* 1: enable interrupt */
-}
-
-
-void enter_polling_mode(void)
-{
-	uart_printf("[kbscan %s()]\n", __func__);
-	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0;  /* 0: disable interrupt */
-	select_column(COLUMN_TRI_STATE_ALL);
-}
-
-
-/* Returns 1 if any key is still pressed. 0 if no key is pressed. */
-static int check_keys_changed(void)
-{
-	int c;
-	uint8_t r;
-	int change = 0;
-	int num_press = 0;
-
-	for (c = 0; c < KB_COLS; c++) {
-		/* Select column, then wait a bit for it to settle */
-		select_column(c);
-		usleep(20);
-		/* Read the row state */
-		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
-		/* Invert it so 0=not pressed, 1=pressed */
-		r ^= 0xff;
-		/* Mask off keys that don't exist so they never show
-		 * as pressed */
-		r &= actual_key_mask[c];
-
-#ifdef OR_WITH_CURRENT_STATE_FOR_TESTING
-		/* KLUDGE - or current state in, so we can make sure
-		 * all the lines are hooked up */
-		r |= raw_state[c];
-#endif
-
-		/* Check for changes */
-		if (r != raw_state[c]) {
-			int i;
-			for (i = 0; i < 8; ++i) {
-				uint8_t prev = (raw_state[c] >> i) & 1;
-				uint8_t now = (r >> i) & 1;
-				if (prev != now) {
-					keyboard_state_changed(i, c, now);
-				}
-			}
-			raw_state[c] = r;
-			change = 1;
-		}
-	}
-	select_column(COLUMN_TRI_STATE_ALL);
-
-	if (change) {
-		uart_puts("[Keyboard state:");
-		for (c = 0; c < KB_COLS; c++) {
-			if (raw_state[c]) {
-				uart_printf(" %02x", raw_state[c]);
-			} else {
-				uart_puts(" --");
-			}
-		}
-		uart_puts("]\n");
-	}
-
-	/* Count number of key pressed */
-	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c]) ++num_press;
-	}
-
-	return num_press ? 1 : 0;
-}
-
-
 void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
 
-	keyboard_scan_init();
+	print_raw_state("KB init state");
+	if (recovery_key_pressed)
+		uart_puts("[KB recovery key pressed at init!]\n");
 
 	while (1) {
 		wait_for_interrupt();

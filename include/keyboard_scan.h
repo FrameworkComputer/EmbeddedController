@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,5 +12,8 @@
 
 /* Initializes the module. */
 int keyboard_scan_init(void);
+
+/* Returns non-zero if recovery key was pressed at boot. */
+int keyboard_scan_recovery_pressed(void);
 
 #endif  /* __CROS_KEYBOARD_SCAN_H */
