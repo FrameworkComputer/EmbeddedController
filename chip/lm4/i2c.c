@@ -363,6 +363,10 @@ int i2c_init(void)
 	LM4_I2C_MTPR(I2C_PORT_CHARGER) =
 		(CPU_CLOCK / (I2C_SPEED_CHARGER * 10 * 2)) - 1;
 
+	LM4_I2C_MCR(I2C_PORT_LIGHTBAR) = 0x10;
+	LM4_I2C_MTPR(I2C_PORT_LIGHTBAR) =
+		(CPU_CLOCK / (I2C_SPEED_LIGHTBAR * 10 * 2)) - 1;
+
 	/* Enable irqs */
 	task_enable_irq(LM4_IRQ_I2C0);
 	task_enable_irq(LM4_IRQ_I2C1);

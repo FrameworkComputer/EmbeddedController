@@ -84,11 +84,13 @@ enum adc_channel
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 1
 #define I2C_PORT_THERMAL 5
+#define I2C_PORT_LIGHTBAR 1
 /* I2C port speeds in kbps */
 #define I2C_SPEED_BATTERY 100
 #define I2C_SPEED_CHARGER 100
 #define I2C_SPEED_THERMAL 400  /* TODO: TMP007 supports 3.4Mbps
 				  operation; use faster speed? */
+#define I2C_SPEED_LIGHTBAR 400
 
 /* Keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION

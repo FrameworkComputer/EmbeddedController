@@ -15,6 +15,7 @@ common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_FLASH)+=flash_commands.o
 common-$(CONFIG_PWM)+=pwm_commands.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o temp_sensor_commands.o
+common-$(CONFIG_LIGHTBAR)+=leds.o
 
 # Board driver modules
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
