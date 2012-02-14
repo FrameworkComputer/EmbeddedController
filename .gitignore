@@ -1,4 +1,5 @@
 build/
+private/
 *.map
 *.bin
 *.elf
