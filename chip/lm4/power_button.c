@@ -14,47 +14,6 @@
 #include "uart.h"
 #include "util.h"
 
-enum debounce_isr_id {
-	DEBOUNCE_LID,
-	DEBOUNCE_PWRBTN,
-	DEBOUNCE_ISR_ID_MAX
-};
-
-struct debounce_isr_t {
-	/* TODO: Add a carry bit to indicate timestamp overflow */
-	timestamp_t tstamp;
-	int started;
-	void (*callback)(void);
-};
-
-struct debounce_isr_t debounce_isr[DEBOUNCE_ISR_ID_MAX];
-
-enum power_button_state {
-	PWRBTN_STATE_STOPPED = 0,
-	PWRBTN_STATE_START,
-	PWRBTN_STATE_T0,
-	PWRBTN_STATE_T1,
-	PWRBTN_STATE_HELD_DOWN,
-	PWRBTN_STATE_STOPPING,
-};
-static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
-/* The next timestamp to move onto next state if power button is still pressed.
- */
-static timestamp_t pwrbtn_next_ts = {0};
-
-#define PWRBTN_DELAY_T0 32000  /* 32ms */
-#define PWRBTN_DELAY_T1 (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-
-
-static void lid_switch_isr(void)
-{
-	/* TODO: Currently we pass through the LID_SW# pin to R_EC_LID_OUT#
-	 * directly. Modify this if we need to consider more conditions. */
-	gpio_set_level(GPIO_PCH_LID_SWITCHn,
-		       gpio_get_level(GPIO_LID_SWITCHn));
-}
-
-
 /* Power button state machine.
  *
  *   PWRBTN#   ---                      ----
@@ -68,44 +27,60 @@ static void lid_switch_isr(void)
  *   scan code   |                      |
  *    to host    v                      v
  *     @S0   make code             break code
- *
  */
+#define PWRBTN_DEBOUNCE_US 30000  /* Debounce time for power button */
+#define PWRBTN_DELAY_T0    32000  /* 32ms (PCH requires >16ms) */
+#define PWRBTN_DELAY_T1    (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
+
+#define LID_DEBOUNCE_US    30000  /* Debounce time for lid switch */
+#define LID_PWRBTN_US      PWRBTN_DELAY_T0 /* Length of time to simulate power
+					    * button press on lid open */
+
+enum power_button_state {
+	PWRBTN_STATE_STOPPED = 0,
+	PWRBTN_STATE_START,
+	PWRBTN_STATE_T0,
+	PWRBTN_STATE_T1,
+	PWRBTN_STATE_HELD_DOWN,
+	PWRBTN_STATE_STOPPING,
+};
+static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
+
+/* Time for next state transition of power button state machine, or 0 if the
+ * state doesn't have a timeout. */
+static uint64_t tnext_state;
+
+/* Debounce timeouts for power button and lid switch.  0 means the signal is
+ * stable (not being debounced). */
+static uint64_t tdebounce_lid;
+static uint64_t tdebounce_pwr;
+
+
 static void set_pwrbtn_to_pch(int high)
 {
-	uart_printf("[%d] set_pwrbtn_to_pch(%s)\n",
-		    get_time().le.lo, high ? "HIGH" : "LOW");
+	uart_printf("[PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
 	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
 
 
-static void pwrbtn_sm_start(void)
-{
-	pwrbtn_state = PWRBTN_STATE_START;
-	pwrbtn_next_ts = get_time();  /* execute action now! */
-}
-
-
-static void pwrbtn_sm_stop(void)
-{
-	pwrbtn_state = PWRBTN_STATE_STOPPING;
-	pwrbtn_next_ts = get_time();  /* execute action now ! */
-}
-
-
-static void pwrbtn_sm_handle(timestamp_t current)
+/* Power button state machine.  Passed current time from usec counter. */
+static void state_machine(uint64_t tnow)
 {
 	/* Not the time to move onto next state */
-	if (current.val < pwrbtn_next_ts.val)
+	if (tnow < tnext_state)
 		return;
+
+	/* States last forever unless otherwise specified */
+	tnext_state = 0;
 
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_START:
-		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T0;
+		tnext_state = tnow + PWRBTN_DELAY_T0;
 		pwrbtn_state = PWRBTN_STATE_T0;
 		set_pwrbtn_to_pch(0);
 		break;
 	case PWRBTN_STATE_T0:
-		pwrbtn_next_ts.val = current.val + PWRBTN_DELAY_T1;
+		tnext_state = tnow + PWRBTN_DELAY_T1;
 		pwrbtn_state = PWRBTN_STATE_T1;
 		set_pwrbtn_to_pch(1);
 		break;
@@ -125,41 +100,65 @@ static void pwrbtn_sm_handle(timestamp_t current)
 }
 
 
-static void power_button_isr(void)
+/* Handle debounced power button changing state */
+static void power_button_changed(uint64_t tnow)
 {
 	if (!gpio_get_level(GPIO_POWER_BUTTONn)) {
 		/* pressed */
-		pwrbtn_sm_start();
+		pwrbtn_state = PWRBTN_STATE_START;
 		keyboard_set_power_button(1);
 	} else {
 		/* released */
-		pwrbtn_sm_stop();
+		pwrbtn_state = PWRBTN_STATE_STOPPING;
 		keyboard_set_power_button(0);
+	}
+	tnext_state = tnow;  /* Trigger next state transition now */
+}
+
+
+/* Handle debounced lid switch changing state */
+static void lid_switch_changed(uint64_t tnow)
+{
+	int v = gpio_get_level(GPIO_LID_SWITCHn);
+	uart_printf("[PB lid %s]\n", v ? "open" : "closed");
+
+	/* Pass signal on to PCH; this is how the BIOS/OS knows to suspend or
+	 * shutdown when the lid is closed. */
+	gpio_set_level(GPIO_PCH_LID_SWITCHn, v);
+
+	/* If the lid has opened, also send a power button pulse to the PCH.
+	 * We technically only need to send this when the main processor is in
+	 * S5, but it's not harmful to send at other times. */
+	if (v) {
+		set_pwrbtn_to_pch(0);
+		pwrbtn_state = PWRBTN_STATE_STOPPING;
+		tnext_state = tnow + LID_PWRBTN_US;
 	}
 }
 
 
 void power_button_interrupt(enum gpio_signal signal)
 {
-	timestamp_t timelimit;
-	int d = (signal == GPIO_LID_SWITCHn ? DEBOUNCE_LID : DEBOUNCE_PWRBTN);
+	/* Reset debounce time for the changed signal */
+	if (signal == GPIO_LID_SWITCHn)
+		tdebounce_lid = get_time().val + LID_DEBOUNCE_US;
+	else
+		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
 
-	/* Set 30 ms debounce timelimit */
-	timelimit = get_time();
-	timelimit.val += 30000;
-
-	/* Handle lid switch and power button debounce */
-	debounce_isr[d].tstamp = timelimit;
-	debounce_isr[d].started = 1;
+	/* We don't have a way to tell the task to wake up at the end of the
+         * debounce interval; wake it up now so it can go back to sleep for the
+         * remainder of the interval.  The alternative would be to have the
+         * task wake up _every_ debounce_us on its own; that's less desirable
+         * when the EC should be sleeping. */
+	task_send_msg(TASK_ID_POWERBTN, TASK_ID_POWERBTN, 0);
 }
 
 
 int power_button_init(void)
 {
-	debounce_isr[DEBOUNCE_LID].started = 0;
-	debounce_isr[DEBOUNCE_LID].callback = lid_switch_isr;
-	debounce_isr[DEBOUNCE_PWRBTN].started = 0;
-	debounce_isr[DEBOUNCE_PWRBTN].callback = power_button_isr;
+	/* Copy initial switch states to PCH */
+	gpio_set_level(GPIO_PCH_PWRBTNn, gpio_get_level(GPIO_POWER_BUTTONn));
+	gpio_set_level(GPIO_PCH_LID_SWITCHn, gpio_get_level(GPIO_LID_SWITCHn));
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
@@ -171,24 +170,46 @@ int power_button_init(void)
 
 void power_button_task(void)
 {
-	int i;
-	timestamp_t ts;
-
+	uint64_t t;
+	uint64_t tsleep;
 	while (1) {
-		usleep(1000);
-		ts = get_time();
-		for (i = 0; i < DEBOUNCE_ISR_ID_MAX; ++i) {
-			if (debounce_isr[i].started &&
-				ts.val >= debounce_isr[i].tstamp.val) {
-				debounce_isr[i].started = 0;
-				debounce_isr[i].callback();
-			}
+		t = get_time().val;
+
+		/* Handle debounce timeouts for power button and lid switch */
+		if (tdebounce_pwr && t >= tdebounce_pwr) {
+			tdebounce_pwr = 0;
+			power_button_changed(t);
+		}
+		if (tdebounce_lid && t >= tdebounce_lid) {
+			tdebounce_lid = 0;
+			lid_switch_changed(t);
 		}
 
-		pwrbtn_sm_handle(ts);
+		/* Update state machine */
+		state_machine(t);
+
+		/* Sleep until our next timeout */
+		tsleep = -1;
+		if (tdebounce_pwr && tdebounce_pwr < tsleep)
+			tsleep = tdebounce_pwr;
+		if (tdebounce_lid && tdebounce_lid < tsleep)
+			tsleep = tdebounce_lid;
+		if (tnext_state && tnext_state < tsleep)
+			tsleep = tnext_state;
+		t = get_time().val;
+		if (tsleep > t) {
+			unsigned d = tsleep == -1 ? -1 : (unsigned)(tsleep - t);
+			/* (Yes, the conversion from uint64_t to unsigned could
+			 * theoretically overflow if we wanted to sleep for
+			 * more than 2^32 us, but our timeouts are small enough
+			 * that can't happen - and even if it did, we'd just go
+			 * back to sleep after deciding that we woke up too
+			 * early.) */
+			uart_printf("[PB task wait %d]\n", d);
+			task_wait_msg(d);
+		}
 	}
 }
-
 
 /*****************************************************************************/
 /* Console commnands */
