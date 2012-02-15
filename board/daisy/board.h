@@ -20,11 +20,10 @@
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_EC_PWRON = 0,     /* Power button */
-	GPIO_LID_OPEN,         /* LID switch detection */
 	GPIO_PP1800_LDO2,      /* LDO2 is ON (end of PMIC sequence) */
 	GPIO_SOC1V8_XPSHOLD,   /* App Processor ON  */
 	GPIO_CHARGER_INT,
-	GPIO_EC_INT,
+	GPIO_LID_OPEN,         /* LID switch detection */
 	/* Other inputs */
 	/* Outputs */
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
@@ -33,6 +32,7 @@ enum gpio_signal {
 	GPIO_PMIC_ACOK,        /* 5v rail ready */
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
+	GPIO_EC_INT,
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
