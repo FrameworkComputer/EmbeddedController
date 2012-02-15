@@ -11,9 +11,10 @@
 #include "util.h"
 #include "console.h"
 #include "board.h"
+#include "peci.h"
+#include "tmp006.h"
 #include "task.h"
-#include "fpu.h"
-#include "math.h"
+#include "chip_temp_sensor.h"
 
 /* Defined in board_temp_sensor.c. Must be in the same order as
  * in enum temp_sensor_id.
@@ -27,171 +28,31 @@ int temp_sensor_read(enum temp_sensor_id id)
 	if (id < 0 || id >= TEMP_SENSOR_COUNT)
 		return -1;
 	sensor = temp_sensors + id;
-	return sensor->read(sensor);
+	return sensor->read(sensor->idx);
 }
 
-int temp_sensor_tmp006_read_die_temp(const struct temp_sensor_t* sensor)
+void poll_all_sensors(void)
 {
-	int traw, t;
-	int rv;
-	int addr = sensor->addr;
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
-	if (rv)
-		return -1;
-	t = (int)(int16_t)traw / 128;
-	return t + 273;
-}
-
-/* Calculate the remote object temperature.
- * Parameters:
- *     Tdie: Die temperature in 1/100 K.
- *     Vobj: Voltage read from register 0. In nV.
- *     S0:   Sensitivity factor in 1e-17.
- * Return:
- *     Object temperature in 1/100 K.
- */
-int temp_sensor_tmp006_calculate_object_temp(int Tdie_i, int Vobj_i, int S0_i)
-{
-#ifdef CONFIG_FPU
-	float Tdie, Vobj, S0;
-	float Tx, S, Vos, Vx, fv, Tobj, T4;
-	int Tobj_i;
-
-	enable_fpu();
-
-	Tdie = (float)Tdie_i * 1e-2f;
-	Vobj = (float)Vobj_i * 1e-9f;
-	S0 = (float)S0_i * 1e-17f;
-
-	/* Calculate according to TMP006 users guide. */
-	Tx = Tdie - 298.15f;
-	/* S is the sensitivity */
-	S = S0 * (1.0f + 1.75e-3f * Tx - 1.678e-5f * Tx * Tx);
-	/* Vos is the offset voltage */
-	Vos = -2.94e-5f - 5.7e-7f * Tx + 4.63e-9f * Tx * Tx;
-	Vx = Vobj - Vos;
-	/* fv is Seebeck coefficient f(Vobj) */
-	fv = Vx + 13.4f * Vx * Vx;
-
-	T4 = Tdie * Tdie * Tdie * Tdie + fv / S;
-	Tobj = sqrtf(sqrtf(T4));
-	Tobj_i = (int32_t)(Tobj * 100.0f);
-
-	disable_fpu(Tobj_i);
-
-	return Tobj_i;
-#else
-	/* This is the fixed-point version of object temperature calculation.
-	 * Should be accurate but it is hard to prevent and debug
-	 * overflow/underflow problem. Only use this version if there is no
-	 * FPU support.
-	 * Division is delayed when possible to preserve precision, but should
-	 * not cause overflow.
-	 * Assuming Tdie is between 200K and 400K, and S0 between 3e-14 and
-	 * 9e-14, the maximum value during the calculation should be less than
-	 * (1 << 30), which fits in int32_t.
-	 */
-	int32_t Tx, S19, Vos, Vx, fv9, ub, lb;
-
-	Tx = Tdie - 29815;
-	/* S19 is the sensitivity multipled by 1e19 */
-	S19 = S0 * (100000 + 175 * Tx / 100 -
-			1678 * Tx / 100 * Tx / 100000) / 1000;
-	/* Vos is the offset voltage in nV */
-	Vos = -29400 - 570 * Tx / 100 + 463 * Tx / 100 * Tx / 10000;
-	Vx = Vobj - Vos;
-	/* fv9 is Seebeck coefficient f(Vobj) multipled by 1e9 */
-	fv9 = Vx + 134 * Vx / 100000 * Vx / 100000;
-
-	/* The last step in the calculation involves square root, so we use
-	 * binary search.
-	 * Assuming the object temperature is between 200K and 400K, the search
-	 * should take at most 14 iterations.
-	 */
-	ub = 40000;
-	lb = 20000;
-	while (lb != ub) {
-		int32_t t, rhs, lhs;
-
-		t = (ub + lb) / 2;
-		lhs = t / 100 * t / 10000 * t / 10000 * (S19/100) / 1000 * t;
-		rhs = Tdie / 100 * Tdie / 10000 * Tdie / 10000 * (S19/100) /
-			1000 * Tdie + fv9 * 1000;
-		if (lhs > rhs)
-			ub = t;
-		else
-			lb = t + 1;
-	}
-
-	return ub;
+#ifdef CONFIG_TMP006
+	tmp006_poll();
+#endif
+#ifdef CONFIG_PECI
+	peci_temp_sensor_poll();
+#endif
+#ifdef CHIP_lm4
+	chip_temp_sensor_poll();
 #endif
 }
 
-int temp_sensor_tmp006_read_object_temp(const struct temp_sensor_t* sensor)
+void temp_sensor_task(void)
 {
-	int traw, t;
-	int vraw, v;
-	int rv;
-	int addr = sensor->addr;
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
-	if (rv)
-		return -1;
-	t = (int)(int16_t)traw / 128 + 273;
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x00, &vraw);
-	if (rv)
-		return -1;
-	v = ((int)(int16_t)vraw * 15625) / 100;
-
-	return temp_sensor_tmp006_calculate_object_temp(t * 100, v, 6400);
+	while (1) {
+		poll_all_sensors();
+		/* Wait 1s */
+		task_wait_msg(1000000);
+	}
 }
 
-void temp_sensor_tmp006_config(const struct temp_sensor_t* sensor)
-{
-	int addr = sensor->addr;
-
-	/* Configure the sensor:
-	 * 0x7000 = bits 14:12 = continuous conversion
-	 * 0x0400 = bits 11:9  = ADC conversion rate (1/sec)
-	 * 0x0100 = bit 8      = DRDY pin enabled */
-
-	/* TODO: support shutdown mode for power-saving? */
-	i2c_write16(TMP006_PORT(addr), TMP006_REG(addr), 0x02, 0x7500);
-}
-
-int temp_sensor_tmp006_print(const struct temp_sensor_t* sensor)
-{
-	int vraw, v;
-	int traw, t;
-	int rv;
-	int d;
-	int addr = sensor->addr;
-
-	uart_printf("Debug data from %s:\n", sensor->name);
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0xfe, &d);
-	if (rv)
-		return rv;
-	uart_printf("  Manufacturer ID: 0x%04x\n", d);
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0xff, &d);
-	uart_printf("  Device ID:       0x%04x\n", d);
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x02, &d);
-	uart_printf("  Config:          0x%04x\n", d);
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x00, &vraw);
-	v = ((int)(int16_t)vraw * 15625) / 100;
-	uart_printf("  Voltage:         0x%04x = %d nV\n", vraw, v);
-
-	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
-	t = ((int)(int16_t)traw * 100) / 128;
-	uart_printf("  Temperature:     0x%04x = %d.%02d C\n",
-		    traw, t / 100, t > 0 ? t % 100 : 100 - (t % 100));
-
-	return EC_SUCCESS;
-}
 /*****************************************************************************/
 /* Console commands */
 
@@ -220,65 +81,6 @@ static int command_temps(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps);
-
-static int command_sensor_info(int argc, char **argv)
-{
-	int i;
-	int rv, rv1;
-	const struct temp_sensor_t* sensor;
-
-	rv1 = EC_SUCCESS;
-	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		sensor = temp_sensors + i;
-		if (sensor->print == TEMP_SENSOR_NO_PRINT)
-			continue;
-		rv = sensor->print(sensor);
-		if (rv != EC_SUCCESS)
-			rv1 = rv;
-	}
-
-	return rv1;
-}
-DECLARE_CONSOLE_COMMAND(tempsinfo, command_sensor_info);
-
-/* TMP006 object temperature calculation command.
- * TODO: This command is only for debugging. Remove it when temporal correciton
- *       is done.
- */
-static int command_sensor_remote(int argc, char **argv)
-{
-	char *e;
-	int32_t Td2, Vobj9, Sm03;
-
-	if (argc != 4) {
-		uart_puts("Usage: tempcorrect <Tdie*100> <Vobj*10^9> <S0*10^11>\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Td2 = strtoi(argv[1], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad Tdie.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Vobj9 = strtoi(argv[2], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad Vobj.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Sm03 = strtoi(argv[3], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad S0.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	uart_printf("%d\n",
-		temp_sensor_tmp006_calculate_object_temp(Td2, Vobj9, Sm03));
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(tempremote, command_sensor_remote);
 
 /*****************************************************************************/
 /* Initialization */

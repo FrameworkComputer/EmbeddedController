@@ -10,6 +10,7 @@
 
 /* Optional features */
 #define CONFIG_PECI
+#define CONFIG_TMP006
 
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
@@ -170,12 +171,20 @@ enum gpio_signal {
 enum temp_sensor_id {
 	/* I2C die temperature sensor near CPU */
 	TEMP_SENSOR_I2C_DIE_NEAR_CPU = 0,
-	/* PCH temperature sensor */
+	/* I2C object temperature sensor near CPU */
+	TEMP_SENSOR_I2C_CPU,
+	/* I2C die temperature sensor near PCH */
 	TEMP_SENSOR_I2C_DIE_NEAR_PCH,
-	/* DDR memory temperature sensor */
+	/* I2C object temperature sensor near PCH */
+	TEMP_SENSOR_I2C_PCH,
+	/* I2C die temperature sensor near DDR memory */
 	TEMP_SENSOR_I2C_DIE_NEAR_DDR,
-	/* Battery charger temperature sensor */
+	/* I2C object temperature sensor near CPU */
+	TEMP_SENSOR_I2C_DDR,
+	/* I2C die temperature sensor near battery charger */
 	TEMP_SENSOR_I2C_DIE_NEAR_CHARGER,
+	/* I2C object temperature sensor near CPU */
+	TEMP_SENSOR_I2C_CHARGER,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
 	/* CPU die temperature via PECI */
@@ -185,6 +194,9 @@ enum temp_sensor_id {
 
 	TEMP_SENSOR_COUNT
 };
+
+/* The number of TMP006 sensor chips on the board. */
+#define TMP006_COUNT 4
 
 void configure_board(void);
 

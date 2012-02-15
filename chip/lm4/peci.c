@@ -28,6 +28,7 @@
 #define PECI_TD_FET_NS 25  /* Guess; TODO: what is real delay */
 #define PECI_TD_INT_NS 80
 
+static int last_temp_val;
 
 /* Configures the GPIOs for the PECI module. */
 static void configure_gpios(void)
@@ -50,10 +51,21 @@ int peci_get_cpu_temp(void)
 	return v >> 6;
 }
 
-
-int peci_temp_sensor_read(const struct temp_sensor_t* sensor)
+int peci_temp_sensor_poll(void)
 {
-	return peci_get_cpu_temp();
+	int val = peci_get_cpu_temp();
+
+	if (val > 0) {
+		last_temp_val = val;
+		return EC_SUCCESS;
+	}
+	else
+		return EC_ERROR_UNKNOWN;
+}
+
+int peci_temp_sensor_get_val(int idx)
+{
+	return last_temp_val;
 }
 
 /*****************************************************************************/

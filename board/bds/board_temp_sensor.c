@@ -9,14 +9,22 @@
 #include "chip_temp_sensor.h"
 #include "board.h"
 #include "i2c.h"
+#include "tmp006.h"
+#include "util.h"
 
 #define TEMP_CASE_DIE_REG_ADDR ((0x40 << 1) | I2C_FLAG_BIG_ENDIAN)
 #define TEMP_CASE_DIE_ADDR \
 	TMP006_ADDR(I2C_PORT_THERMAL, TEMP_CASE_DIE_REG_ADDR)
 
+/* Temperature sensors data. Must be in the same order as enum
+ * temp_sensor_id.
+ */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-	{"ECInternal", TEMP_SENSOR_NO_ADDR,
-		chip_temp_sensor_read, TEMP_SENSOR_NO_PRINT},
-	{"CaseDie", TEMP_CASE_DIE_ADDR,
-		temp_sensor_tmp006_read_die_temp, temp_sensor_tmp006_print}
+	{"ECInternal", chip_temp_sensor_get_val, 0},
+	{"CaseDie", tmp006_get_val, 0},
+	{"Object", tmp006_get_val, 0},
+};
+
+const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
+	{"TMP006", TEMP_CASE_DIE_ADDR},
 };

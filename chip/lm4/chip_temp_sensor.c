@@ -9,9 +9,18 @@
 #include "board.h"
 #include "temp_sensor.h"
 
-int chip_temp_sensor_read(const struct temp_sensor_t* sensor)
+static int last_val;
+
+int chip_temp_sensor_poll(void)
 {
-	return adc_read_channel(ADC_CH_EC_TEMP);
+	last_val = adc_read_channel(ADC_CH_EC_TEMP);
+
+	return EC_SUCCESS;
+}
+
+int chip_temp_sensor_get_val(int idx)
+{
+	return last_val;
 }
 
 int chip_temp_sensor_init(void)

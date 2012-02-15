@@ -30,6 +30,7 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "tmp006.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
