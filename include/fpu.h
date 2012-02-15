@@ -11,7 +11,9 @@
 /* Enables FPU. Note that this function also disables interrupt. */
 void enable_fpu(void);
 
-/* Disables FPU. This function also enables interrupt. */
-void disable_fpu(void);
+/* Disables FPU. This function also enables interrupt.
+ * The value passed in serves as optimization barrier. This value would be
+ * calculated before FPU is disabled regardless of compiler optimization. */
+void disable_fpu(int32_t);
 
 #endif  /* __EC_FPU_H */
