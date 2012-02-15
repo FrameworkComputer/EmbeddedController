@@ -15,4 +15,5 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL) \
+	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(CONSOLE, console_task, NULL)
