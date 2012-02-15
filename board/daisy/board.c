@@ -35,6 +35,12 @@ void configure_board(void)
 	 * TODO: more fine-grained enabling for power saving
 	 */
 	STM32L_RCC_AHBENR |= 0x3f;
+
+	/* Select Alternate function for USART1 on pins PA9/PA10 */
+	STM32L_GPIO_AFRH(A) = (STM32L_GPIO_AFRH(A) & ~0x00000FF0) |
+				(0x7 << 8) | (0x7 << 4);
+	STM32L_GPIO_MODER(A) = (STM32L_GPIO_MODER(A) & ~0x003C0000) |
+				0x00280000;
 }
 
 /**
