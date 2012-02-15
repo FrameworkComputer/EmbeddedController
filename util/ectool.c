@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -42,10 +42,10 @@ const char help_str[] =
 	"      Set target fan RPM\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
-	"  pci_write32 0 0x1f 0 0x88 0x007c0801\n"
-	"  pci_write32 0 0x1f 0 0x8c 0x007c0901\n"
+	"  pci_write32 0 0x1f 0 0x88 0x00fc0801\n"
+	"  pci_write32 0 0x1f 0 0x8c 0x00fc0901\n"
 	"  pci_write16 0 0x1f 0 0x80 0x0010\n"
-	"  pci_write16 0 0x1f 0 0x82 0x3f02\n"
+	"  pci_write16 0 0x1f 0 0x82 0x3d01\n"
 	"";
 
 

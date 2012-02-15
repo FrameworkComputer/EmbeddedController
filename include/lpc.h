@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -26,6 +26,10 @@ int lpc_init(void);
  * lpc_SendHostResponse().  <slot> is 0 for kernel-originated
  * commands, 1 for usermode-originated commands. */
 uint8_t *lpc_get_host_range(int slot);
+
+/* Returns a pointer to the memory-mapped buffer.  This buffer is writable at
+ * any time, and the host can read it at any time. */
+uint8_t *lpc_get_memmap_range(void);
 
 /* Sends a response to a host command.  The bottom 4 bits of <status>
  * are sent in the status byte.  <slot> is 0 for kernel-originated
