@@ -27,6 +27,7 @@ $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 
 # Get build configuration from sub-directories
+-include private/build.mk
 include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
@@ -40,9 +41,10 @@ objs_from_dir=$(foreach obj,$(2), $(out)/$(1)/$(obj))
 all-y=$(call objs_from_dir,core/$(CORE),$(core-y))
 all-y+=$(call objs_from_dir,chip/$(CHIP),$(chip-y))
 all-y+=$(call objs_from_dir,board/$(BOARD),$(board-y))
+all-y+=$(call objs_from_dir,private,$(private-y))
 all-y+=$(call objs_from_dir,common,$(common-y))
 all-y+=$(call objs_from_dir,test,$($(PROJECT)-y))
-dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common test util
+dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common test util
 includes=include core/$(CORE)/include $(dirs)
 
 include Makefile.rules
