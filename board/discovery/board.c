@@ -27,11 +27,19 @@ void configure_board(void)
 	 */
 	STM32L_RCC_AHBENR |= 0x3f;
 
+#if CONFIG_CONSOLE_UART == 1
+	/* Select Alternate function for USART1 on pins PA9/PA10 */
+	STM32L_GPIO_AFRH(A) = (STM32L_GPIO_AFRH(A) & ~0x00000FF0) |
+				(0x7 << 8) | (0x7 << 4);
+	STM32L_GPIO_MODER(A) = (STM32L_GPIO_MODER(A) & ~0x003C0000) |
+				0x00280000;
+#elif CONFIG_CONSOLE_UART == 3
 	/* Select Alternate function for USART3 on pins PB10/PB11 */
 	STM32L_GPIO_AFRH(B) = (STM32L_GPIO_AFRH(B) & ~0x0000FF00) |
 				(0x7 << 12) | (0x7 << 8);
 	STM32L_GPIO_MODER(B) = (STM32L_GPIO_MODER(B) & ~0x00F00000) |
 				0x00A00000;
+#endif
 }
 
 /**
