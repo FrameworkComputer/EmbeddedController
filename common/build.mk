@@ -12,6 +12,7 @@ common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
+common-$(CONFIG_TASK_GAIAPOWER)+=gaia_power.o
 common-$(CONFIG_FLASH)+=flash_commands.o
 common-$(CONFIG_PWM)+=pwm_commands.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o temp_sensor_commands.o

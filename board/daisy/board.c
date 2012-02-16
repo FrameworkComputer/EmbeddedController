@@ -10,12 +10,15 @@
 #include "registers.h"
 #include "util.h"
 
+/* GPIO interrupt handlers prototypes */
+void gaia_power_event(enum gpio_signal signal);
+
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"EC_PWRON",    GPIO_A, (1<<0),  GPIO_INT_BOTH, NULL},
-	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, NULL},
-	{"XPSHOLD",     GPIO_A, (1<<11), GPIO_INT_RISING, NULL},
+	{"EC_PWRON",    GPIO_A, (1<<0),  GPIO_INT_BOTH, gaia_power_event},
+	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
+	{"XPSHOLD",     GPIO_A, (1<<11), GPIO_INT_RISING, gaia_power_event},
 	{"CHARGER_INT", GPIO_B, (1<<0),  GPIO_INT_RISING, NULL},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, NULL},
 	/* Other inputs */
