@@ -254,10 +254,19 @@
 
 #define STM32L_FLASH_ACR             REG32(STM32L_FLASH_REGS_BASE + 0x00)
 
+/* --- External Interrupts --- */
+#define STM32L_EXTI_BASE             0x40010400
+
+#define STM32L_EXTI_IMR              REG32(STM32L_EXTI_BASE + 0x00)
+#define STM32L_EXTI_EMR              REG32(STM32L_EXTI_BASE + 0x04)
+#define STM32L_EXTI_RTSR             REG32(STM32L_EXTI_BASE + 0x08)
+#define STM32L_EXTI_FTSR             REG32(STM32L_EXTI_BASE + 0x0c)
+#define STM32L_EXTI_SWIER            REG32(STM32L_EXTI_BASE + 0x10)
+#define STM32L_EXTI_PR               REG32(STM32L_EXTI_BASE + 0x14)
+
 /* --- MISC --- */
 
 #define STM32L_RI_BASE               0x40007C04
-#define STM32L_EXTI_BASE             0x40010400
 #define STM32L_ADC1_BASE             0x40012400
 #define STM32L_ADC_BASE              0x40012700
 #define STM32L_COMP_BASE             0x40007C00
