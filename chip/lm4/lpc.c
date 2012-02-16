@@ -163,7 +163,13 @@ int lpc_init(void)
 
 uint8_t *lpc_get_host_range(int slot)
 {
-	return (uint8_t *)LPC_POOL_CMD_DATA + 256 * slot;
+	return (uint8_t *)LPC_POOL_CMD_DATA + EC_LPC_PARAM_SIZE * slot;
+}
+
+
+uint8_t *lpc_get_memmap_range(void)
+{
+	return (uint8_t *)LPC_POOL_CMD_DATA + EC_LPC_PARAM_SIZE * 2;
 }
 
 

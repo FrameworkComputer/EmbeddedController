@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,15 +24,18 @@
 #define EC_LPC_ADDR_KERNEL_PARAM 0x800
 #define EC_LPC_ADDR_USER_DATA    0x200
 #define EC_LPC_ADDR_USER_CMD     0x204
-#define EC_LPC_ADDR_USER_PARAM   0x900
-#define EC_LPC_PARAM_SIZE          256  /* Size of param areas in bytes */
+#define EC_LPC_ADDR_USER_PARAM   0x880
+#define EC_LPC_PARAM_SIZE          128  /* Size of each param area in bytes */
+
+#define EC_LPC_ADDR_MEMMAP       0x900
+#define EC_LPC_MEMMAP_SIZE         256
 
 /* LPC command status byte masks */
 /* EC is busy processing a command.  This covers both bit 0x04, which
  * is the busy-bit, and 0x02, which is the bit which indicates the
  * host has written a byte but the EC hasn't picked it up yet. */
 #define EC_LPC_BUSY_MASK   0x06
-#define EC_LPC_STATUS_MASK 0xF0  /* Mask for status codes in status byte */
+#define EC_LPC_STATUS_MASK 0xf0  /* Mask for status codes in status byte */
 #define EC_LPC_GET_STATUS(x) (((x) & EC_LPC_STATUS_MASK) >> 4)
 
 /* LPC command response codes */
@@ -55,7 +58,7 @@ enum lpc_status {
  * busy, because the reboot command is processed at interrupt
  * level.  Note that when the EC reboots, the host will reboot too, so
  * there is no response to this command. */
-#define EC_LPC_COMMAND_REBOOT 0xD1  /* Think "die" */
+#define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
 
 
 /* Hello.  This is a simple command to test the EC is responsive to
@@ -100,7 +103,7 @@ struct lpc_response_read_test {
 /* Flash commands */
 
 /* Maximum bytes that can be read/written in a single command */
-#define EC_LPC_FLASH_SIZE_MAX 128
+#define EC_LPC_FLASH_SIZE_MAX 64
 
 /* Get flash info */
 #define EC_LPC_COMMAND_FLASH_INFO 0x10
