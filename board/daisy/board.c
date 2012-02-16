@@ -17,7 +17,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, NULL},
 	{"XPSHOLD",     GPIO_A, (1<<11), GPIO_INT_RISING, NULL},
 	{"CHARGER_INT", GPIO_B, (1<<0),  GPIO_INT_RISING, NULL},
-	{"EC_INT",      GPIO_B, (1<<9),  GPIO_INT_RISING, NULL},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, NULL},
 	/* Other inputs */
 	/* Outputs */
@@ -27,6 +26,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PMIC_ACOK",   GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
+	{"EC_INT",      GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
 };
 
 void configure_board(void)
