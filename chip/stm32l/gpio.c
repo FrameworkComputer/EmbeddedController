@@ -74,6 +74,42 @@ int gpio_pre_init(void)
 }
 
 
+void gpio_set_alternate_function(int port, int mask, int func)
+{
+	int bit;
+	uint8_t half;
+	uint32_t afr;
+	uint32_t moder = STM32L_GPIO_MODER_OFF(port);
+
+	/* Low half of the GPIO bank */
+	half = mask & 0xff;
+	afr = STM32L_GPIO_AFRL_OFF(port);
+	while (half) {
+		bit = 31 - __builtin_clz(half);
+		afr &= ~(0xf << (bit * 4));
+		afr |= func << (bit * 4);
+		moder &= ~(0x3 << (bit * 2 + 0));
+		moder |= 0x2 << (bit * 2 + 0);
+		half &= ~(1 << bit);
+	}
+	STM32L_GPIO_AFRL_OFF(port) = afr;
+
+	/* High half of the GPIO bank */
+	half = mask >> 8;
+	afr = STM32L_GPIO_AFRH_OFF(port);
+	while (half) {
+		bit = 31 - __builtin_clz(half);
+		afr &= ~(0xf << (bit * 4));
+		afr |= func << (bit * 4);
+		moder &= ~(0x3 << (bit * 2 + 16));
+		moder |= 0x2 << (bit * 2 + 16);
+		half &= ~(1 << bit);
+	}
+	STM32L_GPIO_AFRH_OFF(port) = afr;
+	STM32L_GPIO_MODER_OFF(port) = moder;
+}
+
+
 int gpio_get_level(enum gpio_signal signal)
 {
 	return !!(STM32L_GPIO_IDR_OFF(gpio_list[signal].port) &

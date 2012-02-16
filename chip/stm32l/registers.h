@@ -159,6 +159,18 @@
 #define STM32L_GPIO_AFRL_OFF(b)      REG32((b) + 0x20)
 #define STM32L_GPIO_AFRH_OFF(b)      REG32((b) + 0x24)
 
+#define GPIO_ALT_SYS                 0x0
+#define GPIO_ALT_TIM2                0x1
+#define GPIO_ALT_TIM3_4              0x2
+#define GPIO_ALT_TIM9_11             0x3
+#define GPIO_ALT_I2C                 0x4
+#define GPIO_ALT_SPI                 0x5
+#define GPIO_ALT_USART               0x7
+#define GPIO_ALT_USB                 0xA
+#define GPIO_ALT_LCD                 0xB
+#define GPIO_ALT_RI                  0xE
+#define GPIO_ALT_EVENTOUT            0xF
+
 /* --- I2C --- */
 #define STM32L_I2C1_BASE             0x40005400
 #define STM32L_I2C2_BASE             0x40005800

@@ -40,10 +40,7 @@ void configure_board(void)
 	STM32L_RCC_AHBENR |= 0x3f;
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
-	STM32L_GPIO_AFRH(A) = (STM32L_GPIO_AFRH(A) & ~0x00000FF0) |
-				(0x7 << 8) | (0x7 << 4);
-	STM32L_GPIO_MODER(A) = (STM32L_GPIO_MODER(A) & ~0x003C0000) |
-				0x00280000;
+        gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
 }
 
 /**
