@@ -9,4 +9,5 @@
 CORE:=cortex-m
 
 chip-y=uart.o clock.o hwtimer.o system.o gpio.o
+chip-y+=jtag.o stubs.o
 chip-$(CONFIG_TASK_WATCHDOG)+=watchdog.o

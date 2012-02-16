@@ -42,35 +42,3 @@ void configure_board(void)
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
         gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
 }
-
-/**
- * Stubs for non implemented drivers
- * TODO: implement
- */
-int jtag_pre_init(void)
-{
-	/* stop TIM2, TIM3 and watchdogs when the JTAG stops the CPU */
-	STM32L_DBGMCU_APB1FZ |= 0x00001803;
-
-	return EC_SUCCESS;
-}
-
-int eeprom_init(void)
-{
-	return EC_SUCCESS;
-}
-
-int i2c_init(void)
-{
-	return EC_SUCCESS;
-}
-
-int power_button_init(void)
-{
-	return EC_SUCCESS;
-}
-
-int adc_init(void)
-{
-	return EC_SUCCESS;
-}
