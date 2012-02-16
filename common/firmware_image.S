@@ -20,6 +20,8 @@
 .section .image.A, "ax"
 .incbin FW_IMAGE(A)
 
+#ifndef CONFIG_NO_RW_B
 /* Read Write firmware copy B */
 .section .image.B, "ax"
 .incbin FW_IMAGE(B)
+#endif
