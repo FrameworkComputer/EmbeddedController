@@ -235,4 +235,15 @@ struct lpc_response_temp_sensor_get_readings {
 	uint32_t value;
 } __attribute__ ((packed));
 
+
+/*****************************************************************************/
+/* USB charging control commands */
+
+/* Set USB port charging mode */
+#define EC_LPC_COMMAND_USB_CHARGE_SET_MODE 0x40
+struct lpc_params_usb_charge_set_mode {
+	uint8_t usb_port_id;
+	uint8_t mode;
+} __attribute__ ((packed));
+
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

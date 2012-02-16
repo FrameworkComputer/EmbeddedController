@@ -40,6 +40,8 @@ const char help_str[] =
 	"      Prints current fan RPM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
 	"      Set target fan RPM\n"
+	"  usbchargemode <port> <mode>\n"
+	"      Set USB charging mode\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
 	"  pci_write32 0 0x1f 0 0x88 0x00fc0801\n"
@@ -506,6 +508,39 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_usb_charge_set_mode(int argc, char *argv[])
+{
+	struct lpc_params_usb_charge_set_mode p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr,
+			"Usage: usbchargemode <port_id> <mode_id>\n");
+		return -1;
+	}
+	p.usb_port_id = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port ID.\n");
+		return -1;
+	}
+	p.mode = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad mode ID.\n");
+		return -1;
+	}
+
+	printf("Setting port %d to mode %d...\n", p.usb_port_id, p.mode);
+
+	rv = ec_command(EC_LPC_COMMAND_USB_CHARGE_SET_MODE,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("USB charging mode set.\n");
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
@@ -543,6 +578,8 @@ int main(int argc, char *argv[])
 	        return cmd_pwm_get_fan_rpm();
 	if (!strcasecmp(argv[1], "pwmsetfanrpm"))
 	        return cmd_pwm_set_fan_rpm(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "usbchargemode"))
+	        return cmd_usb_charge_set_mode(argc - 2, argv + 2);
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);

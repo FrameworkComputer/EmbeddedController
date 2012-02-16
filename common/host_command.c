@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "temp_sensor_commands.h"
 #include "pwm_commands.h"
+#include "usb_charge_commands.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "system.h"
@@ -183,6 +184,9 @@ static void command_process(int slot)
 	case EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM:
 	        lpc_send_host_response(slot, pwm_command_set_fan_target_rpm(data));
 	        return;
+	case EC_LPC_COMMAND_USB_CHARGE_SET_MODE:
+		lpc_send_host_response(slot, usb_charge_command_set_mode(data));
+		return;
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}
