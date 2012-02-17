@@ -74,6 +74,7 @@ int main(void)
 #ifdef CONFIG_LPC
 	port_80_init();
 	lpc_init();
+	uart_comx_enable();
 #endif
 #ifdef CONFIG_PWM
 	pwm_init();

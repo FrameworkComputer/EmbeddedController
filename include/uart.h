@@ -173,6 +173,9 @@ void uart_process(void);
 /*****************************************************************************/
 /* COMx functions */
 
+/* Enables comx interrupts */
+void uart_comx_enable(void);
+
 /* Returns non-zero if ok to put a character via uart_comx_putc(). */
 int uart_comx_putc_ok(void);
 

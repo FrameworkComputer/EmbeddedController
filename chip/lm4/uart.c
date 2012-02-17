@@ -179,8 +179,20 @@ int uart_init(void)
 		LM4_UART_CTL(ch) |= 0x0001;
 	}
 
-	/* Enable interrupts */
+	/* Enable interrupts for UART0 only. UART1 will have to wait until the
+	 * LPC bus is initialized.
+	 */
 	task_enable_irq(LM4_IRQ_UART0);
+
+	return EC_SUCCESS;
+}
+
+
+/*****************************************************************************/
+/* COMx functions */
+
+void uart_comx_enable(void)
+{
 	task_enable_irq(LM4_IRQ_UART1);
 
 	/* Print hello on UART1 for debugging */
@@ -190,12 +202,8 @@ int uart_init(void)
 		while (*c)
 			uart_comx_putc(*c++);
 	}
-
-	return EC_SUCCESS;
 }
 
-/*****************************************************************************/
-/* COMx functions */
 
 int uart_comx_putc_ok(void)
 {
