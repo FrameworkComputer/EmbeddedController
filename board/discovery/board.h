@@ -23,6 +23,15 @@
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_USER_BUTTON = 0,     /* Blue user button */
+	/* Keyboard inputs */
+	KB_COL00,
+	KB_COL01,
+	KB_COL02,
+	KB_COL03,
+	KB_COL04,
+	KB_COL05,
+	KB_COL06,
+	KB_COL07,
 	/* Other inputs */
 	/* Outputs */
 	GPIO_BLUE_LED,            /* Blue debug LED */
@@ -33,5 +42,7 @@ enum gpio_signal {
 };
 
 void configure_board(void);
+
+void matrix_interrupt(enum gpio_signal signal);
 
 #endif /* __BOARD_H */
