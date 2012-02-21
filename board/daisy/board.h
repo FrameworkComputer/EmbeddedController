@@ -24,6 +24,15 @@ enum gpio_signal {
 	GPIO_SOC1V8_XPSHOLD,   /* App Processor ON  */
 	GPIO_CHARGER_INT,
 	GPIO_LID_OPEN,         /* LID switch detection */
+	/* Keyboard inputs */
+	KB_COL00,
+	KB_COL01,
+	KB_COL02,
+	KB_COL03,
+	KB_COL04,
+	KB_COL05,
+	KB_COL06,
+	KB_COL07,
 	/* Other inputs */
 	/* Outputs */
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
@@ -39,5 +48,7 @@ enum gpio_signal {
 };
 
 void configure_board(void);
+
+void matrix_interrupt(enum gpio_signal signal);
 
 #endif /* __BOARD_H */
