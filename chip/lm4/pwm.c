@@ -64,9 +64,16 @@ int pwm_set_fan_target_rpm(int rpm)
 }
 
 
+int pwm_get_keyboard_backlight(void)
+{
+	return ((LM4_FAN_FANCMD(FAN_CH_KBLIGHT) >> 16) * 100 +
+		MAX_PWM / 2) / MAX_PWM;
+}
+
+
 int pwm_set_keyboard_backlight(int percent)
 {
-	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM) / 100) << 16;
+	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM + 50) / 100) << 16;
 	return EC_SUCCESS;
 }
 
@@ -164,8 +171,9 @@ static int command_kblight(int argc, char **argv)
 	int i;
 
 	if (argc < 2) {
-		uart_puts("Usage: kblight <percent>\n");
-		return EC_ERROR_UNKNOWN;
+		uart_printf("Keyboard backlight is at %d%%\n",
+			    pwm_get_keyboard_backlight());
+		return EC_SUCCESS;
 	}
 
 	i = strtoi(argv[1], &e, 0);
@@ -181,14 +189,6 @@ static int command_kblight(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(kblight, command_kblight);
-
-static const struct console_command console_commands[] = {
-	{"fanduty", command_fan_duty},
-	{"faninfo", command_fan_info},
-	{"fanset", command_fan_set},
-	{"kblight", command_kblight},
-};
-
 
 /*****************************************************************************/
 /* Initialization */

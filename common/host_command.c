@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -176,13 +176,23 @@ static void command_process(int slot)
 		return;
 #endif
 	case EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS:
-		lpc_send_host_response(slot, temp_sensor_command_get_readings(data));
+		lpc_send_host_response(slot,
+				       temp_sensor_command_get_readings(data));
 		return;
 	case EC_LPC_COMMAND_PWM_GET_FAN_RPM:
 		lpc_send_host_response(slot, pwm_command_get_fan_rpm(data));
 	        return;
 	case EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM:
-	        lpc_send_host_response(slot, pwm_command_set_fan_target_rpm(data));
+	        lpc_send_host_response(slot,
+				       pwm_command_set_fan_target_rpm(data));
+	        return;
+	case EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT:
+		lpc_send_host_response(slot,
+		    pwm_command_get_keyboard_backlight(data));
+	        return;
+	case EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT:
+	        lpc_send_host_response(slot,
+		    pwm_command_set_keyboard_backlight(data));
 	        return;
 	case EC_LPC_COMMAND_USB_CHARGE_SET_MODE:
 		lpc_send_host_response(slot, usb_charge_command_set_mode(data));

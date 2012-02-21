@@ -222,6 +222,17 @@ struct lpc_params_pwm_set_fan_target_rpm {
 	uint32_t rpm;
 } __attribute__ ((packed));
 
+/* Get keyboard backlight */
+#define EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT 0x22
+struct lpc_response_pwm_get_keyboard_backlight {
+	uint8_t percent;
+} __attribute__ ((packed));
+
+/* Set keyboard backlight */
+#define EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT 0x23
+struct lpc_params_pwm_set_keyboard_backlight {
+	uint8_t percent;
+} __attribute__ ((packed));
 
 /*****************************************************************************/
 /* Temperature sensor commands */

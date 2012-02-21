@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -18,6 +18,9 @@ int pwm_get_fan_rpm(void);
 
 /* Sets the target fan RPM.  Pass -1 to set fan to maximum. */
 int pwm_set_fan_target_rpm(int rpm);
+
+/* Gets the keyboard backlight percentage (0=off, 100=max). */
+int pwm_get_keyboard_backlight(void);
 
 /* Sets the keyboard backlight percentage (0=off, 100=max). */
 int pwm_set_keyboard_backlight(int percent);
