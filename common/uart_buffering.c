@@ -367,15 +367,13 @@ void uart_set_console_mode(int enable)
 
 int uart_puts(const char *outstr)
 {
-	int was_empty = (tx_buf_head == tx_buf_tail);
-
 	/* Put all characters in the output buffer */
 	while (*outstr) {
 		if (__tx_char(*outstr++) != 0)
 			break;
 	}
 
-	if (was_empty)
+	if (uart_tx_stopped())
 		uart_tx_start();
 
 	/* Successful if we consumed all output */
@@ -392,7 +390,6 @@ int uart_printf(const char *format, ...)
 	int is_left;
 	int pad_zero;
 	int pad_width;
-	int was_empty = (tx_buf_head == tx_buf_tail);
 	va_list args;
 	char *vstr;
 	int vlen;
@@ -510,7 +507,7 @@ int uart_printf(const char *format, ...)
 	}
 	va_end(args);
 
-	if (was_empty)
+	if (uart_tx_stopped())
 		uart_tx_start();
 
 	/* Successful if we consumed all output */
