@@ -83,7 +83,12 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	LM4_HIBERNATE_HIBRTCLD = 0;
 	/* go to hibernation and wake on RTC match or WAKE pin */
 	wait_for_hibctl_wc();
+#ifdef BOARD_link
+	/* Need VDD3ON because we can't drop VDD externally */
+	LM4_HIBERNATE_HIBCTL = 0x15B;
+#else
 	LM4_HIBERNATE_HIBCTL = 0x5B;
+#endif
 	/* we are going to hibernate ... */
 	while (1) ;
 }
