@@ -19,8 +19,15 @@
 /* Delay between 1.35v and 3.3v rails startup */
 #define DELAY_RAIL_STAGGERING 100  /* 100us */
 
+/* Long power key press to force shutdown */
+#define DELAY_FORCE_SHUTDOWN  8000000 /* 8s */
+
+/* PMIC fails to set the LDO2 output */
+#define PMIC_TIMEOUT          200000  /* 200ms */
+
 /* Default timeout for input transition */
-#define FAIL_TIMEOUT          1000000 /* 5s */
+#define FAIL_TIMEOUT          5000000 /* 5s */
+
 
 /* Application processor power state */
 static int ap_on;
@@ -56,6 +63,37 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 	return EC_SUCCESS;
 }
 
+/* Wait for some event triggering the shutdown.
+ *
+ * It can be either a long power button press or a shutdown triggered from the
+ * AP and detected by reading XPSHOLD.
+ */
+static void wait_for_power_off(void)
+{
+	timestamp_t deadline, now;
+
+	while (1) {
+		/* wait for power button press or XPSHOLD falling edge */
+		while ((gpio_get_level(GPIO_EC_PWRON) == 0) &&
+			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
+				task_wait_msg(-1);
+		}
+		/* XPSHOLD released by AP : shutdown immediatly */
+		if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
+			return;
+
+		/* check if power button is pressed for 8s */
+		deadline.val = get_time().val + DELAY_FORCE_SHUTDOWN;
+		while ((gpio_get_level(GPIO_EC_PWRON) == 1) &&
+			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
+			now = get_time();
+			if ((now.val >= deadline.val) ||
+				(task_wait_msg(deadline.val - now.val) ==
+				 (1 << TASK_ID_TIMER)))
+					return;
+		}
+	}
+}
 
 void gaia_power_event(enum gpio_signal signal)
 {
@@ -97,7 +135,7 @@ void gaia_power_task(void)
 		/* Startup PMIC */
 		gpio_set_level(GPIO_PMIC_ACOK, 1);
 		/* wait for all PMIC regulators to be ready */
-		wait_in_signal(GPIO_PP1800_LDO2, 1, FAIL_TIMEOUT);
+		wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
 		/* Enable DDR 1.35v power rail */
 		gpio_set_level(GPIO_EN_PP1350, 1);
@@ -117,9 +155,16 @@ void gaia_power_task(void)
 		ap_on = 1;
 		uart_printf("AP running ...\n");
 
-		/* wait forever : TODO implement power OFF */
-		while (1)
-			task_wait_msg(-1);
+		/* Wait for power off from AP or long power button press */
+		wait_for_power_off();
+		/* switch off all rails */
+		gpio_set_level(GPIO_EN_PP3300, 0);
+		gpio_set_level(GPIO_EN_PP1350, 0);
+		gpio_set_level(GPIO_EN_PP5000, 0);
+		uart_printf("Shutdown complete.\n");
+
+		/* Ensure the power button is released */
+		wait_in_signal(GPIO_EC_PWRON, 0, -1);
 	}
 }
 
