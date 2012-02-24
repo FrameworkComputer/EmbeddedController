@@ -117,6 +117,11 @@ int ec_command(int command, const void *indata, int insize,
 	return 0;
 }
 
+uint8_t read_mapped_mem8(uint8_t offset)
+{
+	return inb(EC_LPC_ADDR_MEMMAP + offset);
+}
+
 
 void print_help(const char *prog)
 {
@@ -444,8 +449,6 @@ int cmd_serial_test(int argc, char *argv[])
 
 int cmd_temperature(int argc, char *argv[])
 {
-	struct lpc_params_temp_sensor_get_readings p;
-	struct lpc_response_temp_sensor_get_readings r;
 	int rv;
 	int id;
 	char *e;
@@ -461,14 +464,19 @@ int cmd_temperature(int argc, char *argv[])
 		return -1;
 	}
 
-	p.temp_sensor_id = id;
+	/* Currently we only store up to 16 temperature sensor data in
+	 * mapped memory. */
+	if (id >= 16) {
+		printf("Sensor with ID greater than 16 unsupported.\n");
+		return -1;
+	}
+
 	printf("Reading temperature...");
-	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS,
-			&p, sizeof(p), &r, sizeof(r));
-	if (rv)
+	rv = read_mapped_mem8(id);
+	if (rv == 0xff)
 		printf("Error\n");
 	else
-		printf("%d\n", r.value);
+		printf("%d\n", rv + EC_LPC_TEMP_SENSOR_OFFSET);
 	return rv;
 }
 

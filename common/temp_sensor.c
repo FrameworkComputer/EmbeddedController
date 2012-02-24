@@ -15,6 +15,8 @@
 #include "tmp006.h"
 #include "task.h"
 #include "chip_temp_sensor.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 
 /* Defined in board_temp_sensor.c. Must be in the same order as
  * in enum temp_sensor_id.
@@ -44,10 +46,27 @@ void poll_all_sensors(void)
 #endif
 }
 
+
+static void update_lpc_mapped_memory(void)
+{
+	int i, t;
+	uint8_t *mapped = lpc_get_memmap_range() + EC_LPC_MEMMAP_TEMP_SENSOR;
+
+	memset(mapped, 0xff, 16);
+
+	for (i = 0; i < TEMP_SENSOR_COUNT && i < 16; ++i) {
+		t = temp_sensor_read(i);
+		if (t != -1)
+			mapped[i] = t - EC_LPC_TEMP_SENSOR_OFFSET;
+	}
+}
+
+
 void temp_sensor_task(void)
 {
 	while (1) {
 		poll_all_sensors();
+		update_lpc_mapped_memory();
 		/* Wait 1s */
 		task_wait_msg(1000000);
 	}

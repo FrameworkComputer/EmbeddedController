@@ -30,6 +30,21 @@
 #define EC_LPC_ADDR_MEMMAP       0x900
 #define EC_LPC_MEMMAP_SIZE         256
 
+/* The offset address of each type of data in mapped memory. */
+#define EC_LPC_MEMMAP_TEMP_SENSOR 0x00
+#define EC_LPC_MEMMAP_FAN         0x10
+#define EC_LPC_MEMMAP_BATT_VOLT   0x20
+#define EC_LPC_MEMMAP_BATT_RATE   0x24
+#define EC_LPC_MEMMAP_BATT_CAP    0x28
+#define EC_LPC_MEMMAP_BATT_FLAG   0x2c
+#define EC_LPC_MEMMAP_LID         0x30
+
+/* The offset of temperature value stored in mapped memory.
+ * This allows reporting a temperature range of
+ * 200K to 454K = -73C to 181C.
+ */
+#define EC_LPC_TEMP_SENSOR_OFFSET 200
+
 /* LPC command status byte masks */
 /* EC is busy processing a command.  This covers both bit 0x04, which
  * is the busy-bit, and 0x02, which is the bit which indicates the
