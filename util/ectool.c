@@ -117,9 +117,22 @@ int ec_command(int command, const void *indata, int insize,
 	return 0;
 }
 
+
 uint8_t read_mapped_mem8(uint8_t offset)
 {
 	return inb(EC_LPC_ADDR_MEMMAP + offset);
+}
+
+
+uint16_t read_mapped_mem16(uint8_t offset)
+{
+	return inw(EC_LPC_ADDR_MEMMAP + offset);
+}
+
+
+uint32_t read_mapped_mem32(uint8_t offset)
+{
+	return inl(EC_LPC_ADDR_MEMMAP + offset);
 }
 
 
@@ -472,7 +485,7 @@ int cmd_temperature(int argc, char *argv[])
 	}
 
 	printf("Reading temperature...");
-	rv = read_mapped_mem8(id);
+	rv = read_mapped_mem8(EC_LPC_MEMMAP_TEMP_SENSOR + id);
 	if (rv == 0xff)
 		printf("Error\n");
 	else
@@ -482,14 +495,16 @@ int cmd_temperature(int argc, char *argv[])
 
 int cmd_pwm_get_fan_rpm(void)
 {
-	struct lpc_response_pwm_get_fan_rpm r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_PWM_GET_FAN_RPM, NULL, 0, &r, sizeof(r));
-	if (rv)
-	        return rv;
+	rv = read_mapped_mem16(EC_LPC_MEMMAP_FAN);
+	if (rv == 0xffff)
+	        return -1;
 
-	printf("Current fan RPM: %d\n", r.rpm);
+	if (rv == 0xfffe)
+		printf("Fan stalled!\n");
+	else
+		printf("Current fan RPM: %d\n", rv);
 
 	return 0;
 }

@@ -12,6 +12,9 @@
 #include "registers.h"
 #include "uart.h"
 #include "util.h"
+#include "task.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 
 /* Maximum RPM for fan controller */
 #define MAX_RPM 0x1fff
@@ -86,6 +89,35 @@ int pwm_set_keyboard_backlight(int percent)
 {
 	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM + 50) / 100) << 16;
 	return EC_SUCCESS;
+}
+
+
+static void update_lpc_mapped_memory(void)
+{
+	int i, r;
+	uint16_t *mapped = (uint16_t *)(lpc_get_memmap_range() +
+					EC_LPC_MEMMAP_FAN);
+
+	for (i = 0; i < 4; ++i)
+		mapped[i] = 0xffff;
+
+	r = pwm_get_fan_rpm();
+
+	/* Write fan speed. Or 0xFFFE for fan stalled. */
+	if (r)
+		mapped[0] = r;
+	else
+		mapped[0] = 0xfffe;
+}
+
+
+void pwm_task(void)
+{
+	while (1) {
+		update_lpc_mapped_memory();
+		/* Wait 1s */
+		task_wait_msg(1000000);
+	}
 }
 
 
