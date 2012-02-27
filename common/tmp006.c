@@ -26,6 +26,8 @@ struct tmp006_data_t {
 	int t[4];
 	/* The index of the current value in the dir temperature array. */
 	int tidx;
+	/* Fail bit: 1 if last read fail. 0 if ok. */
+	int fail;
 };
 
 static struct tmp006_data_t tmp006_data[TMP006_COUNT];
@@ -33,6 +35,8 @@ static struct tmp006_data_t tmp006_data[TMP006_COUNT];
 static int tmp006_read_die_temp(int idx)
 {
 	int pidx = (tmp006_data[idx].tidx - 1) & 0x3;
+	if (tmp006_data[idx].fail == 1)
+		return -1;
 	return tmp006_data[idx].t[pidx] / 100;
 }
 
@@ -98,6 +102,9 @@ static int tmp006_read_object_temp(int idx)
 	int t = tmp006_data[idx].t[pidx];
 	int v = tmp006_data[idx].v;
 
+	if (tmp006_data[idx].fail)
+		return -1;
+
 	v = tmp006_correct_object_voltage(
 		t,
 		tmp006_data[idx].t[(pidx + 3) & 3],
@@ -118,19 +125,24 @@ static int tmp006_poll_sensor(int sensor_id)
 	int idx;
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
-	if (rv)
+	if (rv) {
+		tmp006_data[sensor_id].fail = 1;
 		return EC_ERROR_UNKNOWN;
+	}
 	t = ((int)(int16_t)traw * 100) / 128 + 27300;
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x00, &vraw);
-	if (rv)
+	if (rv) {
+		tmp006_data[sensor_id].fail = 1;
 		return EC_ERROR_UNKNOWN;
+	}
 	v = ((int)(int16_t)vraw * 15625) / 100;
 
 	idx = tmp006_data[sensor_id].tidx;
 	tmp006_data[sensor_id].t[idx] = t;
 	tmp006_data[sensor_id].v = v;
 	tmp006_data[sensor_id].tidx = (idx + 1) & 3;
+	tmp006_data[sensor_id].fail = 0;
 
 	return EC_SUCCESS;
 }
