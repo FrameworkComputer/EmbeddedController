@@ -63,6 +63,12 @@ int pwm_get_fan_rpm(void)
 }
 
 
+int pwm_get_fan_target_rpm(void)
+{
+	return (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
+}
+
+
 int pwm_set_fan_target_rpm(int rpm)
 {
 	/* Apply fan scaling */

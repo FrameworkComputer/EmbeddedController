@@ -20,6 +20,9 @@ int pwm_enable_fan(int enable);
 /* Gets the current fan RPM. */
 int pwm_get_fan_rpm(void);
 
+/* Get the target fan RPM. */
+int pwm_get_fan_target_rpm(void);
+
 /* Sets the target fan RPM.  Pass -1 to set fan to maximum. */
 int pwm_set_fan_target_rpm(int rpm);
 
