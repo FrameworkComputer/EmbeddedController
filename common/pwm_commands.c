@@ -18,7 +18,7 @@ enum lpc_status pwm_command_get_fan_rpm(uint8_t *data)
 	struct lpc_response_pwm_get_fan_rpm *r =
 			(struct lpc_response_pwm_get_fan_rpm *)data;
 
-	r->rpm = pwm_get_fan_rpm();
+	r->rpm = pwm_get_fan_target_rpm();
 	return EC_LPC_STATUS_SUCCESS;
 }
 
