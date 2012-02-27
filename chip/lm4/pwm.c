@@ -43,17 +43,6 @@ static void configure_gpios(void)
 }
 
 
-int pwm_enable_fan(int enable)
-{
-	if (enable)
-		LM4_FAN_FANCTL |= (1 << FAN_CH_CPU);
-	else
-		LM4_FAN_FANCTL &= ~(1 << FAN_CH_CPU);
-
-	return EC_SUCCESS;
-}
-
-
 int pwm_get_fan_rpm(void)
 {
 	return (LM4_FAN_FANCST(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
@@ -101,9 +90,6 @@ static int command_fan_info(int argc, char **argv)
 		    ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
 	uart_printf("    status:       %d\n",
 		    (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
-	uart_printf("    enabled:      %s\n",
-		    LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
-
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(faninfo, command_fan_info);
@@ -130,9 +116,9 @@ static int command_fan_set(int argc, char **argv)
 
         /* Move the fan to automatic control */
         if (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) {
-		pwm_enable_fan(0);
-		LM4_FAN_FANCH(FAN_CH_CPU) &= ~0x0001;
-		pwm_enable_fan(1);
+		LM4_FAN_FANCTL &= ~(1 << FAN_CH_CPU);
+          LM4_FAN_FANCH(FAN_CH_CPU) &= ~0x0001;
+          LM4_FAN_FANCTL |= (1 << FAN_CH_CPU);
         }
 
 	rv = pwm_set_fan_target_rpm(rpm);
@@ -165,9 +151,9 @@ static int command_fan_duty(int argc, char **argv)
 
         /* Move the fan to manual control */
         if (!(LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001)) {
-		pwm_enable_fan(0);
+		LM4_FAN_FANCTL &= ~(1 << FAN_CH_CPU);
 		LM4_FAN_FANCH(FAN_CH_CPU) |= 0x0001;
-		pwm_enable_fan(1);
+		LM4_FAN_FANCTL |= (1 << FAN_CH_CPU);
         }
 
         /* Set the duty cycle */
@@ -248,9 +234,8 @@ int pwm_init(void)
 	pwm_set_fan_target_rpm(-1);
 	pwm_set_keyboard_backlight(0);
 
-	/* Enable keyboard backlight.  Fan will be enabled later by whatever
-	 * controls the fan power supply. */
-	LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
+	/* Enable CPU fan and keyboard backlight */
+	LM4_FAN_FANCTL |= (1 << FAN_CH_CPU) | (1 << FAN_CH_KBLIGHT);
 
 	return EC_SUCCESS;
 }

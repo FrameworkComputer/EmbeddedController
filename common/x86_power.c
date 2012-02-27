@@ -9,7 +9,6 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
-#include "pwm.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -262,9 +261,6 @@ void x86_power_task(void)
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
 
-			/* Enable fan, now that +5VS is turned on */
-			pwm_enable_fan(1);
-
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);
 
@@ -296,9 +292,6 @@ void x86_power_task(void)
 
 			/* Assert RCINn */
 			gpio_set_level(GPIO_PCH_RCINn, 0);
-
-			/* Disable fan, since it's powered by +5VS */
-			pwm_enable_fan(0);
 
 			/* Turn off power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 0);
