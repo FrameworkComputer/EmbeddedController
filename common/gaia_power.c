@@ -133,7 +133,7 @@ void gaia_power_task(void)
 		usleep(DELAY_5V_SETUP);
 
 		/* Startup PMIC */
-		gpio_set_level(GPIO_PMIC_ACOK, 1);
+		gpio_set_level(GPIO_PMIC_ACOK, 0);
 		/* wait for all PMIC regulators to be ready */
 		wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
@@ -149,7 +149,7 @@ void gaia_power_task(void)
 		 */
 		wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, FAIL_TIMEOUT);
 		/* release PMIC startup signal */
-		gpio_set_level(GPIO_PMIC_ACOK, 0);
+		gpio_set_level(GPIO_PMIC_ACOK, 1);
 
 		/* Power ON state */
 		ap_on = 1;

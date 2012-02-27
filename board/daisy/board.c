@@ -34,7 +34,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<3),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
-	{"PMIC_ACOK",   GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
+	{"PMIC_ACOK",   GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"ENTERING_RW", GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
