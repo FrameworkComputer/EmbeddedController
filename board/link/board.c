@@ -83,7 +83,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_NMIn",            LM4_GPIO_M, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWRBTNn",         LM4_GPIO_G, (1<<7), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",           LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GPIO_OUT_HIGH, NULL},
+	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GPIO_OUT_LOW, NULL},
 	/* Exception: RSMRST# is asserted at power-on */
 	{"PCH_RSMRSTn",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMIn",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
