@@ -542,13 +542,16 @@ void keyboard_set_power_button(int pressed)
 
 	power_button_pressed = pressed;
 
-	if (x86_power_in_S0()) {
-		code_set = acting_code_set(scancode_set);
-		ret = i8042_send_to_host(
-		    (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
-		    code[code_set - SCANCODE_SET_1][pressed]);
-		ASSERT(ret == EC_SUCCESS);
-	}
+#ifdef CONFIG_TASK_X86POWER
+	/* Only send the scan code if x86 is fully awake */
+	if (!x86_power_in_S0())
+		return;
+#endif
+	code_set = acting_code_set(scancode_set);
+	ret = i8042_send_to_host(
+		 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
+		 code[code_set - SCANCODE_SET_1][pressed]);
+	ASSERT(ret == EC_SUCCESS);
 }
 
 
