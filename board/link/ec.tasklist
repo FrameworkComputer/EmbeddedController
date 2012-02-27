@@ -16,6 +16,7 @@
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL) \
 	TASK(TEMPSENSOR, temp_sensor_task, NULL) \
+	TASK(THERMAL, thermal_task, NULL) \
 	TASK(PWM, pwm_task, NULL) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(POWERBTN, power_button_task, NULL) \
