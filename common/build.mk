@@ -15,7 +15,7 @@ common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_TASK_GAIAPOWER)+=gaia_power.o
 common-$(CONFIG_FLASH)+=flash_commands.o
 common-$(CONFIG_PWM)+=pwm_commands.o
-common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o temp_sensor_commands.o
+common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 common-$(CONFIG_TMP006)+=tmp006.o
 common-$(CONFIG_LIGHTBAR)+=leds.o
 
