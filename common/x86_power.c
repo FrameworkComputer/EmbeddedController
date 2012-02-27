@@ -255,9 +255,6 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3S0:
-			/* Deassert RCINn */
-			gpio_set_level(GPIO_PCH_RCINn, 1);
-
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
 
@@ -289,9 +286,6 @@ void x86_power_task(void)
 
 			/* Disable +CPU_CORE and +VGFX_CORE */
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
-
-			/* Assert RCINn */
-			gpio_set_level(GPIO_PCH_RCINn, 0);
 
 			/* Turn off power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 0);
