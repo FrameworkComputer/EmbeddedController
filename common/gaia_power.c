@@ -23,10 +23,10 @@
 #define DELAY_FORCE_SHUTDOWN  8000000 /* 8s */
 
 /* PMIC fails to set the LDO2 output */
-#define PMIC_TIMEOUT          200000  /* 200ms */
+#define PMIC_TIMEOUT          15000  /* 15ms */
 
 /* Default timeout for input transition */
-#define FAIL_TIMEOUT          5000000 /* 5s */
+#define FAIL_TIMEOUT          500000 /* 500ms */
 
 
 /* Application processor power state */
