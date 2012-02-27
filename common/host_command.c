@@ -9,7 +9,6 @@
 #include "console.h"
 #include "flash_commands.h"
 #include "host_command.h"
-#include "temp_sensor_commands.h"
 #include "pwm_commands.h"
 #include "usb_charge_commands.h"
 #include "lpc.h"
@@ -175,10 +174,6 @@ static void command_process(int slot)
 		lpc_send_host_response(slot, flash_command_checksum(data));
 		return;
 #endif
-	case EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS:
-		lpc_send_host_response(slot,
-				       temp_sensor_command_get_readings(data));
-		return;
 	case EC_LPC_COMMAND_PWM_GET_FAN_RPM:
 		lpc_send_host_response(slot, pwm_command_get_fan_rpm(data));
 	        return;

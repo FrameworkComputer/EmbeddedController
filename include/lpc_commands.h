@@ -249,24 +249,12 @@ struct lpc_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
 } __attribute__ ((packed));
 
-/*****************************************************************************/
-/* Temperature sensor commands */
-
-/* Get temperature readings */
-#define EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS 0x30
-struct lpc_params_temp_sensor_get_readings {
-	uint8_t temp_sensor_id;
-} __attribute__ ((packed));
-struct lpc_response_temp_sensor_get_readings {
-	uint32_t value;
-} __attribute__ ((packed));
-
 
 /*****************************************************************************/
 /* USB charging control commands */
 
 /* Set USB port charging mode */
-#define EC_LPC_COMMAND_USB_CHARGE_SET_MODE 0x40
+#define EC_LPC_COMMAND_USB_CHARGE_SET_MODE 0x30
 struct lpc_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
 	uint8_t mode;
