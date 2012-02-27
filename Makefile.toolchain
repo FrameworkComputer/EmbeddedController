@@ -6,7 +6,7 @@
 #
 
 # Toolchain configuration
-CROSS_COMPILE ?= armv7a-cros-linux-gnueabi-
+CROSS_COMPILE ?= arm-none-eabi-
 HOST_CROSS_COMPILE ?= i686-pc-linux-gnu-
 
 CC=$(CROSS_COMPILE)gcc
