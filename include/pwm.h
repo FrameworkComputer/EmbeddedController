@@ -13,6 +13,10 @@
 /* Initializes the module. */
 int pwm_init(void);
 
+/* Enables/disables the fan.  This should be called by whatever function
+ * enables the power supply to the fan. */
+int pwm_enable_fan(int enable);
+
 /* Gets the current fan RPM. */
 int pwm_get_fan_rpm(void);
 
