@@ -7,14 +7,10 @@
 
 #include "console.h"
 #include "usb_charge.h"
-#include "usb_charge_commands.h"
-#include "lpc_commands.h"
+#include "host_command.h"
 #include "uart.h"
 #include "util.h"
 
-
-/*****************************************************************************/
-/* Host commands */
 
 enum lpc_status usb_charge_command_set_mode(uint8_t *data)
 {
@@ -31,3 +27,5 @@ enum lpc_status usb_charge_command_set_mode(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_USB_CHARGE_SET_MODE,
+		     usb_charge_command_set_mode);

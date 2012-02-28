@@ -10,12 +10,10 @@
 
 #include "common.h"
 
-
 /* Manually generates an IRQ to host.
  * Note that the irq_num == 0 would set the AH bit (Active High).
  */
 void lpc_manual_irq(int irq_num);
-
 
 /* Initializes the LPC module. */
 int lpc_init(void);

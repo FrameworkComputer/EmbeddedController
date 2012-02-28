@@ -5,23 +5,21 @@
 
 /* Host command module for Chrome EC */
 
-#include "board.h"
-#include "config.h"
 #include "console.h"
-#include "flash_commands.h"
 #include "host_command.h"
 #include "lpc.h"
 #include "lpc_commands.h"
-#include "pstore_commands.h"
-#include "pwm_commands.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
-#include "usb_charge_commands.h"
 #include "util.h"
 
 static int host_command[2];
+
+/* Host commands are described in a special section */
+extern const struct host_command __hcmds[];
+extern const struct host_command __hcmds_end[];
 
 /*****************************************************************************/
 /* Host commands */
@@ -71,6 +69,7 @@ static enum lpc_status host_command_hello(uint8_t *data)
 	r->out_data = d + 0x01020304;
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HELLO, host_command_hello);
 
 
 static enum lpc_status host_command_get_version(uint8_t *data)
@@ -104,6 +103,7 @@ static enum lpc_status host_command_get_version(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_VERSION, host_command_get_version);
 
 
 static enum lpc_status host_command_read_test(uint8_t *data)
@@ -124,89 +124,37 @@ static enum lpc_status host_command_read_test(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_READ_TEST, host_command_read_test);
 
 
-/* handle a LPC command */
+/* Finds a command by command number.  Returns the command structure, or NULL if
+ * no match found. */
+static const struct host_command *find_host_command(int command)
+{
+	const struct host_command *cmd;
+
+	for (cmd = __hcmds; cmd < __hcmds_end; cmd++) {
+		if (command == cmd->command)
+			return cmd;
+	}
+
+	return NULL;
+}
+
+
+/* Handle a LPC command */
 static void command_process(int slot)
 {
 	int command = host_command[slot];
 	uint8_t *data = lpc_get_host_range(slot);
+	const struct host_command *cmd = find_host_command(command);
 
 	uart_printf("[hostcmd%d 0x%02x]\n", slot, command);
 
-	/* TODO: might be smaller to make this a table, once we get a bunch
-	 * of commands. */
-	switch (command) {
-	case EC_LPC_COMMAND_HELLO:
-		lpc_send_host_response(slot, host_command_hello(data));
-		return;
-	case EC_LPC_COMMAND_GET_VERSION:
-		lpc_send_host_response(slot, host_command_get_version(data));
-		return;
-	case EC_LPC_COMMAND_READ_TEST:
-		lpc_send_host_response(slot, host_command_read_test(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_INFO:
-		lpc_send_host_response(slot, flash_command_get_info(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_READ:
-		lpc_send_host_response(slot, flash_command_read(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_WRITE:
-		lpc_send_host_response(slot, flash_command_write(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_ERASE:
-		lpc_send_host_response(slot, flash_command_erase(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_WP_ENABLE:
-		lpc_send_host_response(slot, flash_command_wp_enable(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_WP_GET_STATE:
-		lpc_send_host_response(slot, flash_command_wp_get_state(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_WP_SET_RANGE:
-		lpc_send_host_response(slot, flash_command_wp_set_range(data));
-		return;
-	case EC_LPC_COMMAND_FLASH_WP_GET_RANGE:
-		lpc_send_host_response(slot, flash_command_wp_get_range(data));
-		return;
-#ifdef SUPPORT_CHECKSUM
-	case EC_LPC_COMMAND_FLASH_CHECKSUM:
-		lpc_send_host_response(slot, flash_command_checksum(data));
-		return;
-#endif
-	case EC_LPC_COMMAND_PWM_GET_FAN_RPM:
-		lpc_send_host_response(slot, pwm_command_get_fan_rpm(data));
-	        return;
-	case EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM:
-	        lpc_send_host_response(slot,
-				       pwm_command_set_fan_target_rpm(data));
-	        return;
-	case EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT:
-		lpc_send_host_response(slot,
-		    pwm_command_get_keyboard_backlight(data));
-	        return;
-	case EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT:
-	        lpc_send_host_response(slot,
-		    pwm_command_set_keyboard_backlight(data));
-	        return;
-	case EC_LPC_COMMAND_USB_CHARGE_SET_MODE:
-		lpc_send_host_response(slot, usb_charge_command_set_mode(data));
-		return;
-#ifdef CONFIG_PSTORE
-	case EC_LPC_COMMAND_PSTORE_INFO:
-		lpc_send_host_response(slot, pstore_command_get_info(data));
-		return;
-	case EC_LPC_COMMAND_PSTORE_READ:
-		lpc_send_host_response(slot, pstore_command_read(data));
-		return;
-	case EC_LPC_COMMAND_PSTORE_WRITE:
-		lpc_send_host_response(slot, pstore_command_write(data));
-		return;
-#endif
-	default:
+	if (cmd)
+		lpc_send_host_response(slot, cmd->handler(data));
+	else
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
-	}
 }
 
 /*****************************************************************************/

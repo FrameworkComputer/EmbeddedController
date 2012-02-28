@@ -34,6 +34,9 @@ SECTIONS
         __cmds = .;
         *(.rodata.cmds)
         __cmds_end = .;
+        __hcmds = .;
+        *(.rodata.hcmds)
+        __hcmds_end = .;
         *(.rodata*)
         . = ALIGN(4);
 #ifdef COMPILE_FOR_RAM

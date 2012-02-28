@@ -7,8 +7,7 @@
 
 #include "board.h"
 #include "eeprom.h"
-#include "lpc_commands.h"
-#include "pstore_commands.h"
+#include "host_command.h"
 #include "uart.h"
 #include "util.h"
 
@@ -34,6 +33,7 @@ enum lpc_status pstore_command_get_info(uint8_t *data)
 	r->access_size = sizeof(uint32_t);
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PSTORE_INFO, pstore_command_get_info);
 
 
 enum lpc_status pstore_command_read(uint8_t *data)
@@ -71,6 +71,7 @@ enum lpc_status pstore_command_read(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PSTORE_READ, pstore_command_read);
 
 
 enum lpc_status pstore_command_write(uint8_t *data)
@@ -107,3 +108,4 @@ enum lpc_status pstore_command_write(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PSTORE_WRITE, pstore_command_write);

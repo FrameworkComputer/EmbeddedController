@@ -1,14 +1,13 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Flash memory module for Chrome EC */
+/* Flash memory commands for Chrome EC */
 
 #include "console.h"
 #include "flash.h"
-#include "flash_commands.h"
-#include "lpc_commands.h"
+#include "host_command.h"
 #include "registers.h"  /* TODO: remove; only for temp debugging */
 #include "shared_mem.h"
 #include "uart.h"
@@ -203,6 +202,7 @@ enum lpc_status flash_command_get_info(uint8_t *data)
 	r->protect_block_size = FLASH_PROTECT_BYTES;
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_INFO, flash_command_get_info);
 
 
 #ifdef SUPPORT_CHECKSUM
@@ -228,6 +228,7 @@ enum lpc_status flash_command_checksum(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_CHECKSUM, flash_command_checksum);
 #endif
 
 
@@ -246,6 +247,7 @@ enum lpc_status flash_command_read(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_READ, flash_command_read);
 
 
 enum lpc_status flash_command_write(uint8_t *data)
@@ -261,6 +263,7 @@ enum lpc_status flash_command_write(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WRITE, flash_command_write);
 
 
 enum lpc_status flash_command_erase(uint8_t *data)
@@ -273,6 +276,8 @@ enum lpc_status flash_command_erase(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_ERASE, flash_command_erase);
+
 
 /* TODO: use shadow range in EEPROM */
 static int shadow_wp_offset;
@@ -296,6 +301,9 @@ enum lpc_status flash_command_wp_enable(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_ENABLE,
+		     flash_command_wp_enable);
+
 
 enum lpc_status flash_command_wp_get_state(uint8_t *data)
 {
@@ -309,6 +317,9 @@ enum lpc_status flash_command_wp_get_state(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_STATE,
+		     flash_command_wp_get_state);
+
 
 enum lpc_status flash_command_wp_set_range(uint8_t *data)
 {
@@ -320,6 +331,9 @@ enum lpc_status flash_command_wp_set_range(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_SET_RANGE,
+		     flash_command_wp_set_range);
+
 
 enum lpc_status flash_command_wp_get_range(uint8_t *data)
 {
@@ -331,3 +345,5 @@ enum lpc_status flash_command_wp_get_range(uint8_t *data)
 
 	return EC_LPC_STATUS_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_RANGE,
+		     flash_command_wp_get_range);
