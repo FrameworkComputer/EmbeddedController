@@ -151,7 +151,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
 
 static int command_flash_wp_range(int argc, char **argv)
 {
-	int offset, size;
+	uint32_t offset, size;
 	char *endptr;
 	int rv;
 
@@ -167,12 +167,12 @@ static int command_flash_wp_range(int argc, char **argv)
 				LM4_FLASH_FMPPE0, LM4_FLASH_FMPPE1,
 				LM4_FLASH_FMPPE2, LM4_FLASH_FMPPE3);
 	} else {
-		offset = strtoi(argv[1], &endptr, 0);
+		offset = (uint32_t)strtoi(argv[1], &endptr, 0);
 		if (*endptr) {
 			uart_printf("Invalid offset \"%s\"\n", argv[1]);
 			return EC_ERROR_UNKNOWN;
 		}
-		size = strtoi(argv[2], &endptr, 0);
+		size = (uint32_t)strtoi(argv[2], &endptr, 0);
 		if (*endptr) {
 			uart_printf("Invalid size \"%s\"\n", argv[2]);
 			return EC_ERROR_UNKNOWN;

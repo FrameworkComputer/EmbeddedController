@@ -188,7 +188,7 @@ static int find_last_wp_block(void)
 	return -1;
 }
 
-static int get_wp_range(int *start, int *nblock)
+static int get_wp_range(uint32_t *start, uint32_t *nblock)
 {
 	int start_blk, end_blk;
 
@@ -204,8 +204,8 @@ static int get_wp_range(int *start, int *nblock)
 	/* TODO: Sanity check the shadow value? */
 
 	end_blk = find_last_wp_block();
-	*nblock = end_blk - start_blk + 1;
-	*start = start_blk;
+	*nblock = (uint32_t)(end_blk - start_blk + 1);
+	*start = (uint32_t)start_blk;
 	return EC_SUCCESS;
 }
 
@@ -225,9 +225,9 @@ static int set_wp_range(int start, int nblock)
 	return EC_SUCCESS;
 }
 
-int flash_get_write_protect_range(int *offset, int *size)
+int flash_get_write_protect_range(uint32_t *offset, uint32_t *size)
 {
-	int start, nblock;
+	uint32_t start, nblock;
 	int rv;
 
 	rv = get_wp_range(&start, &nblock);
@@ -239,13 +239,12 @@ int flash_get_write_protect_range(int *offset, int *size)
 	return EC_SUCCESS;
 }
 
-int flash_set_write_protect_range(int offset, int size)
+int flash_set_write_protect_range(uint32_t offset, uint32_t size)
 {
 	int start, nblock;
 	int rv;
 
-	if ((offset < 0) || (size < 0) || ((offset + size) >
-			(LM4_FLASH_FSIZE * FLASH_PROTECT_BYTES)))
+	if ((offset + size) > (LM4_FLASH_FSIZE * FLASH_PROTECT_BYTES))
 		return EC_ERROR_UNKNOWN; /* Invalid range */
 
 	rv = flash_get_write_protect_status();
@@ -272,7 +271,7 @@ int flash_set_write_protect_range(int offset, int size)
 
 int flash_get_write_protect_status(void)
 {
-	int start, nblock;
+	uint32_t start, nblock;
 	int rv;
 
 	rv = get_wp_range(&start, &nblock);

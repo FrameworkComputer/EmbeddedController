@@ -68,8 +68,8 @@ int flash_erase(int offset, int size);
  * the write protect range is also locked, and may not be subsequently
  * altered until after a cold boot with the write protect pin
  * deasserted. */
-int flash_get_write_protect_range(int *offset, int *size);
-int flash_set_write_protect_range(int offset, int size);
+int flash_get_write_protect_range(uint32_t *offset, uint32_t *size);
+int flash_set_write_protect_range(uint32_t offset, uint32_t size);
 
 /* The write protect range has been stored into the chip registers
  * this boot.  The flash is write protected and the range cannot be
