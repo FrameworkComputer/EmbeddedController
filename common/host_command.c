@@ -158,22 +158,6 @@ static void command_process(int slot)
 }
 
 /*****************************************************************************/
-/* Console commands */
-
-/* Command handler - prints EC version. */
-static int command_version(int argc, char **argv)
-{
-	uart_printf("RO version:   %s\n",
-		    system_get_version(SYSTEM_IMAGE_RO));
-	uart_printf("RW-A version: %s\n",
-		    system_get_version(SYSTEM_IMAGE_RW_A));
-	uart_printf("RW-B version: %s\n",
-		    system_get_version(SYSTEM_IMAGE_RW_B));
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(version, command_version);
-
-/*****************************************************************************/
 /* Initialization / task */
 
 static int host_command_init(void)

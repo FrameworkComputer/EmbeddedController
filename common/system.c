@@ -86,8 +86,10 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	/* Load the appropriate reset vector */
 	if (copy == SYSTEM_IMAGE_RW_A)
 		init_addr = *(uint32_t *)(CONFIG_FW_A_OFF + 4);
+#ifndef CONFIG_NO_RW_B
 	else if (copy == SYSTEM_IMAGE_RW_B)
 		init_addr = *(uint32_t *)(CONFIG_FW_B_OFF + 4);
+#endif
 	else
 		return EC_ERROR_UNKNOWN;
 
@@ -128,9 +130,11 @@ const char *system_get_version(enum system_image_copy_t copy)
 	case SYSTEM_IMAGE_RW_A:
 		imoffset = CONFIG_FW_A_OFF;
 		break;
+#ifndef CONFIG_NO_RW_B
 	case SYSTEM_IMAGE_RW_B:
 		imoffset = CONFIG_FW_B_OFF;
 		break;
+#endif
 	default:
 		return "";
 	}
@@ -185,6 +189,7 @@ static int command_set_scratchpad(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(setscratchpad, command_set_scratchpad);
 
+
 static int command_hibernate(int argc, char **argv)
 {
 	int seconds;
@@ -206,3 +211,16 @@ static int command_hibernate(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);
+
+
+static int command_version(int argc, char **argv)
+{
+	uart_printf("RO version:   %s\n",
+		    system_get_version(SYSTEM_IMAGE_RO));
+	uart_printf("RW-A version: %s\n",
+		    system_get_version(SYSTEM_IMAGE_RW_A));
+	uart_printf("RW-B version: %s\n",
+		    system_get_version(SYSTEM_IMAGE_RW_B));
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(version, command_version);
