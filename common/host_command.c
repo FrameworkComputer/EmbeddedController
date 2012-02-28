@@ -5,19 +5,20 @@
 
 /* Host command module for Chrome EC */
 
+#include "board.h"
 #include "config.h"
 #include "console.h"
 #include "flash_commands.h"
 #include "host_command.h"
-#include "pwm_commands.h"
-#include "usb_charge_commands.h"
 #include "lpc.h"
 #include "lpc_commands.h"
+#include "pstore_commands.h"
+#include "pwm_commands.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
-#include "registers.h"
+#include "usb_charge_commands.h"
 #include "util.h"
 
 static int host_command[2];
@@ -192,6 +193,17 @@ static void command_process(int slot)
 	case EC_LPC_COMMAND_USB_CHARGE_SET_MODE:
 		lpc_send_host_response(slot, usb_charge_command_set_mode(data));
 		return;
+#ifdef CONFIG_PSTORE
+	case EC_LPC_COMMAND_PSTORE_INFO:
+		lpc_send_host_response(slot, pstore_command_get_info(data));
+		return;
+	case EC_LPC_COMMAND_PSTORE_READ:
+		lpc_send_host_response(slot, pstore_command_read(data));
+		return;
+	case EC_LPC_COMMAND_PSTORE_WRITE:
+		lpc_send_host_response(slot, pstore_command_write(data));
+		return;
+#endif
 	default:
 		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
 	}

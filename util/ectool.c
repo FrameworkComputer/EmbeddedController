@@ -28,6 +28,12 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
+	"  pstoreinfo\n"
+	"      Prints information on the EC host persistent storage\n"
+	"  pstoreread <offset> <size> <outfile>\n"
+	"      Reads from EC host persistent storage to a file\n"
+	"  pstorewrite <offset> <infile>\n"
+	"      Writes to EC host persistent storage from a file\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  sertest\n"
@@ -53,6 +59,72 @@ const char help_str[] =
 	"  pci_write16 0 0x1f 0 0x80 0x0010\n"
 	"  pci_write16 0 0x1f 0 0x82 0x3d01\n"
 	"";
+
+
+/* Write a buffer to the file.  Return non-zero if error. */
+static int write_file(const char *filename, const char *buf, int size)
+{
+	FILE *f;
+	int i;
+
+	/* Write to file */
+	f = fopen(filename, "wb");
+	if (!f) {
+		perror("Error opening output file");
+		return -1;
+	}
+	i = fwrite(buf, 1, size, f);
+	fclose(f);
+	if (i != size) {
+		perror("Error writing to file");
+		return -1;
+	}
+
+	return 0;
+}
+
+
+/* Read a file into a buffer.  Sets *size to the size of the buffer.  Returns
+ * the buffer, which must be freed with free() by the caller.  Returns NULL if
+ * error. */
+static char *read_file(const char *filename, int *size)
+{
+	FILE *f = fopen(filename, "rb");
+	char *buf;
+	int i;
+
+	if (!f) {
+		perror("Error opening input file");
+		return NULL;
+	}
+
+	fseek(f, 0, SEEK_END);
+	*size = ftell(f);
+	rewind(f);
+	if (*size > 0x100000) {
+		fprintf(stderr, "File seems unreasonably large\n");
+		fclose(f);
+		return NULL;
+	}
+
+	buf = (char *)malloc(*size);
+	if (!buf) {
+		fprintf(stderr, "Unable to allocate buffer.\n");
+		fclose(f);
+		return NULL;
+	}
+
+	printf("Reading %d bytes from %s...\n", *size, filename);
+	i = fread(buf, 1, *size, f);
+	fclose(f);
+	if (i != *size) {
+		perror("Error reading file");
+		free(buf);
+		return NULL;
+	}
+
+	return buf;
+}
 
 
 /* Waits for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
@@ -283,7 +355,6 @@ int cmd_flash_read(int argc, char *argv[])
 	int i;
 	char *e;
 	char *buf;
-	FILE *f;
 
 	if (argc < 3) {
 		fprintf(stderr,
@@ -322,20 +393,11 @@ int cmd_flash_read(int argc, char *argv[])
 		memcpy(buf + i, r.data, p.size);
 	}
 
-	/* Write to file */
-	f = fopen(argv[2], "wb");
-	if (!f) {
-		perror("Error opening output file");
-		free(buf);
-		return -1;
-	}
-	i = fwrite(buf, 1, size, f);
-	fclose(f);
+	rv = write_file(argv[2], buf, size);
 	free(buf);
-	if (i != size) {
-		perror("Error writing to file");
+	if (rv)
 		return -1;
-	}
+
 	printf("done.\n");
 	return 0;
 }
@@ -349,7 +411,6 @@ int cmd_flash_write(int argc, char *argv[])
 	int i;
 	char *e;
 	char *buf;
-	FILE *f;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: flashwrite <offset> <filename>\n");
@@ -362,34 +423,9 @@ int cmd_flash_write(int argc, char *argv[])
 	}
 
 	/* Read the input file */
-	f = fopen(argv[1], "rb");
-	if (!f) {
-		perror("Error opening input file");
+	buf = read_file(argv[1], &size);
+	if (!buf)
 		return -1;
-	}
-	fseek(f, 0, SEEK_END);
-	size = ftell(f);
-	rewind(f);
-	if (size > 0x100000) {
-		fprintf(stderr, "File seems unreasonably large\n");
-		fclose(f);
-		return -1;
-	}
-
-	buf = (char *)malloc(size);
-	if (!buf) {
-		fprintf(stderr, "Unable to allocate buffer.\n");
-		fclose(f);
-		return -1;
-	}
-
-	printf("Reading %d bytes from %s...\n", size, argv[1]);
-	i = fread(buf, 1, size, f);
-	if (i != size) {
-		perror("Error reading file");
-		free(buf);
-		return -1;
-	}
 
 	printf("Writing to offset %d...\n", offset);
 
@@ -460,6 +496,7 @@ int cmd_serial_test(int argc, char *argv[])
 	return 0;
 }
 
+
 int cmd_temperature(int argc, char *argv[])
 {
 	int rv;
@@ -493,6 +530,7 @@ int cmd_temperature(int argc, char *argv[])
 	return rv;
 }
 
+
 int cmd_pwm_get_fan_rpm(void)
 {
 	int rv;
@@ -508,6 +546,7 @@ int cmd_pwm_get_fan_rpm(void)
 
 	return 0;
 }
+
 
 int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 {
@@ -535,6 +574,7 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 	return 0;
 }
 
+
 int cmd_pwm_get_keyboard_backlight(void)
 {
 	struct lpc_response_pwm_get_keyboard_backlight r;
@@ -549,6 +589,7 @@ int cmd_pwm_get_keyboard_backlight(void)
 
 	return 0;
 }
+
 
 int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 {
@@ -575,6 +616,7 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	printf("Keyboard backlight set.\n");
 	return 0;
 }
+
 
 int cmd_usb_charge_set_mode(int argc, char *argv[])
 {
@@ -608,6 +650,124 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 	printf("USB charging mode set.\n");
 	return 0;
 }
+
+
+int cmd_pstore_info(void)
+{
+	struct lpc_response_pstore_info r;
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_PSTORE_INFO, NULL, 0, &r, sizeof(r));
+	if (rv)
+		return rv;
+
+	printf("PstoreSize %d\nAccessSize %d\n", r.pstore_size, r.access_size);
+	return 0;
+}
+
+
+int cmd_pstore_read(int argc, char *argv[])
+{
+	struct lpc_params_pstore_read p;
+	struct lpc_response_pstore_read r;
+	int offset, size;
+	int rv;
+	int i;
+	char *e;
+	char *buf;
+
+	if (argc < 3) {
+		fprintf(stderr,
+			"Usage: pstoreread <offset> <size> <filename>\n");
+		return -1;
+	}
+	offset = strtol(argv[0], &e, 0);
+	if ((e && *e) || offset < 0 || offset > 0x10000) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+	size = strtol(argv[1], &e, 0);
+	if ((e && *e) || size <= 0 || size > 0x10000) {
+		fprintf(stderr, "Bad size.\n");
+		return -1;
+	}
+	printf("Reading %d bytes at offset %d...\n", size, offset);
+
+	buf = (char *)malloc(size);
+	if (!buf) {
+		fprintf(stderr, "Unable to allocate buffer.\n");
+		return -1;
+	}
+
+	/* Read data in chunks */
+	for (i = 0; i < size; i += EC_LPC_PSTORE_SIZE_MAX) {
+		p.offset = offset + i;
+		p.size = MIN(size - i, EC_LPC_PSTORE_SIZE_MAX);
+		rv = ec_command(EC_LPC_COMMAND_PSTORE_READ,
+				&p, sizeof(p), &r, sizeof(r));
+		if (rv) {
+			fprintf(stderr, "Read error at offset %d\n", i);
+			free(buf);
+			return -1;
+		}
+		memcpy(buf + i, r.data, p.size);
+	}
+
+	rv = write_file(argv[2], buf, size);
+	free(buf);
+	if (rv)
+		return -1;
+
+	printf("done.\n");
+	return 0;
+}
+
+
+int cmd_pstore_write(int argc, char *argv[])
+{
+	struct lpc_params_pstore_write p;
+	int offset, size;
+	int rv;
+	int i;
+	char *e;
+	char *buf;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: pstorewrite <offset> <filename>\n");
+		return -1;
+	}
+	offset = strtol(argv[0], &e, 0);
+	if ((e && *e) || offset < 0 || offset > 0x10000) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+
+	/* Read the input file */
+	buf = read_file(argv[1], &size);
+	if (!buf)
+		return -1;
+
+	printf("Writing to offset %d...\n", offset);
+
+	/* Write data in chunks */
+	for (i = 0; i < size; i += EC_LPC_PSTORE_SIZE_MAX) {
+		p.offset = offset + i;
+		p.size = MIN(size - i, EC_LPC_PSTORE_SIZE_MAX);
+		memcpy(p.data, buf + i, p.size);
+		rv = ec_command(EC_LPC_COMMAND_PSTORE_WRITE,
+				&p, sizeof(p), NULL, 0);
+		if (rv) {
+			fprintf(stderr, "Write error at offset %d\n", i);
+			free(buf);
+			return -1;
+		}
+	}
+
+	free(buf);
+	printf("done.\n");
+	return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -652,6 +812,12 @@ int main(int argc, char *argv[])
 	        return cmd_pwm_set_keyboard_backlight(argc - 2, argv + 2);
 	if (!strcasecmp(argv[1], "usbchargemode"))
 	        return cmd_usb_charge_set_mode(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "pstoreinfo"))
+		return cmd_pstore_info();
+	if (!strcasecmp(argv[1], "pstoreread"))
+		return cmd_pstore_read(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "pstorewrite"))
+		return cmd_pstore_write(argc - 2, argv + 2);
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);

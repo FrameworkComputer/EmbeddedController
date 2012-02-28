@@ -11,6 +11,7 @@
 /* Optional features */
 #define CONFIG_PECI
 #define CONFIG_TMP006
+#define CONFIG_PSTORE
 
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
