@@ -207,8 +207,22 @@ int x86_power_init(void)
 }
 
 /*****************************************************************************/
-int x86_power_in_S0(void) {
+
+int x86_power_in_S0(void)
+{
 	return state == X86_S0;
+}
+
+
+void x86_power_cpu_overheated(int too_hot)
+{
+	/* TODO: crosbug.com/p/8242 - real implementation */
+}
+
+
+void x86_power_force_shutdown(void)
+{
+	/* TODO: crosbug.com/p/8242 - real implementation */
 }
 
 
