@@ -50,6 +50,7 @@ static int tmp006_read_die_temp(int idx)
  */
 static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i, int S0_i)
 {
+#ifdef CONFIG_FPU
 	float Tdie, Vobj, S0;
 	float Tx, S, Vos, Vx, fv, Tobj, T4;
 	int Tobj_i;
@@ -77,6 +78,51 @@ static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i, int S0_i)
 	disable_fpu(Tobj_i);
 
 	return Tobj_i;
+#else
+	/* This is the fixed-point version of object temperature calculation.
+	 * Should be accurate but it is hard to prevent and debug
+	 * overflow/underflow problem. Only use this version if there is no
+	 * FPU support.
+	 * Division is delayed when possible to preserve precision, but should
+	 * not cause overflow.
+	 * Assuming Tdie is between 200K and 400K, and S0 between 3e-14 and
+	 * 9e-14, the maximum value during the calculation should be less than
+	 * (1 << 30), which fits in int32_t.
+	 */
+	int32_t Tx, S19, Vos, Vx, fv9, ub, lb;
+
+	Tx = Tdie - 29815;
+	/* S19 is the sensitivity multipled by 1e19 */
+	S19 = S0 * (100000 + 175 * Tx / 100 -
+			1678 * Tx / 100 * Tx / 100000) / 1000;
+	/* Vos is the offset voltage in nV */
+	Vos = -29400 - 570 * Tx / 100 + 463 * Tx / 100 * Tx / 10000;
+	Vx = Vobj - Vos;
+	/* fv9 is Seebeck coefficient f(Vobj) multipled by 1e9 */
+	fv9 = Vx + 134 * Vx / 100000 * Vx / 100000;
+
+	/* The last step in the calculation involves square root, so we use
+	 * binary search.
+	 * Assuming the object temperature is between 200K and 400K, the search
+	 * should take at most 14 iterations.
+	 */
+	ub = 40000;
+	lb = 20000;
+	while (lb != ub) {
+		int32_t t, rhs, lhs;
+
+		t = (ub + lb) / 2;
+		lhs = t / 100 * t / 10000 * t / 10000 * (S19/100) / 1000 * t;
+		rhs = Tdie / 100 * Tdie / 10000 * Tdie / 10000 * (S19/100) /
+			1000 * Tdie + fv9 * 1000;
+		if (lhs > rhs)
+			ub = t;
+		else
+			lb = t + 1;
+	}
+
+	return ub;
+#endif /* CONFIG_FPU */
 }
 
 /* Temporal Correction
@@ -208,45 +254,6 @@ int tmp006_poll(void)
 
 /*****************************************************************************/
 /* Console commands */
-
-/* TMP006 object temperature calculation command.
- * TODO: This command is only for debugging. Remove it when temporal correciton
- *       is done.
- */
-static int command_sensor_remote(int argc, char **argv)
-{
-	char *e;
-	int32_t Td2, Vobj9, Sm03;
-
-	if (argc != 4) {
-		uart_puts("Usage: tempcorrect <Tdie*100> <Vobj*10^9> <S0*10^11>\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Td2 = strtoi(argv[1], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad Tdie.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Vobj9 = strtoi(argv[2], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad Vobj.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	Sm03 = strtoi(argv[3], &e, 0);
-	if (e && *e) {
-		uart_puts("Bad S0.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	uart_printf("%d\n",
-		tmp006_calculate_object_temp(Td2, Vobj9, Sm03));
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(tempremote, command_sensor_remote);
 
 static int command_sensor_info(int argc, char **argv)
 {
