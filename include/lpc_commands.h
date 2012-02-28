@@ -136,7 +136,6 @@ struct lpc_response_flash_info {
 	uint32_t protect_block_size;
 } __attribute__ ((packed));
 
-
 /* Read flash */
 #define EC_LPC_COMMAND_FLASH_READ 0x11
 struct lpc_params_flash_read {
@@ -147,15 +146,13 @@ struct lpc_response_flash_read {
 	uint8_t data[EC_LPC_FLASH_SIZE_MAX];
 } __attribute__ ((packed));
 
-
 /* Write flash */
 #define EC_LPC_COMMAND_FLASH_WRITE 0x12
 struct lpc_params_flash_write {
-	uint32_t offset;   /* Byte offset to erase */
-	uint32_t size;     /* Size to erase in bytes */
+	uint32_t offset;   /* Byte offset to write */
+	uint32_t size;     /* Size to write in bytes */
 	uint8_t data[EC_LPC_FLASH_SIZE_MAX];
 } __attribute__ ((packed));
-
 
 /* Erase flash */
 #define EC_LPC_COMMAND_FLASH_ERASE 0x13
@@ -249,7 +246,6 @@ struct lpc_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
 } __attribute__ ((packed));
 
-
 /*****************************************************************************/
 /* USB charging control commands */
 
@@ -258,6 +254,40 @@ struct lpc_params_pwm_set_keyboard_backlight {
 struct lpc_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
 	uint8_t mode;
+} __attribute__ ((packed));
+
+/*****************************************************************************/
+/* Persistent storage for host */
+
+/* Maximum bytes that can be read/written in a single command */
+#define EC_LPC_PSTORE_SIZE_MAX 64
+
+/* Get persistent storage info */
+#define EC_LPC_COMMAND_PSTORE_INFO 0x40
+struct lpc_response_pstore_info {
+	/* Persistent storage size, in bytes */
+	uint32_t pstore_size;
+	/* Access size.  Read/write offset and size must be a multiple
+	 * of this. */
+	uint32_t access_size;
+} __attribute__ ((packed));
+
+/* Read persistent storage */
+#define EC_LPC_COMMAND_PSTORE_READ 0x41
+struct lpc_params_pstore_read {
+	uint32_t offset;   /* Byte offset to read */
+	uint32_t size;     /* Size to read in bytes */
+} __attribute__ ((packed));
+struct lpc_response_pstore_read {
+	uint8_t data[EC_LPC_PSTORE_SIZE_MAX];
+} __attribute__ ((packed));
+
+/* Write persistent storage */
+#define EC_LPC_COMMAND_PSTORE_WRITE 0x42
+struct lpc_params_pstore_write {
+	uint32_t offset;   /* Byte offset to write */
+	uint32_t size;     /* Size to write in bytes */
+	uint8_t data[EC_LPC_PSTORE_SIZE_MAX];
 } __attribute__ ((packed));
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */
