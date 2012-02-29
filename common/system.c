@@ -11,18 +11,6 @@
 #include "util.h"
 #include "version.h"
 
-struct version_struct {
-	uint32_t cookie1;
-	char version[32];
-	uint32_t cookie2;
-} __attribute__ ((packed));
-
-static const struct version_struct version_data = {
-	0xce112233,
-	CROS_EC_VERSION_STRING,
-	0xce445566
-};
-
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 
 enum system_reset_cause_t system_get_reset_cause(void)
@@ -116,7 +104,6 @@ int system_run_image_copy(enum system_image_copy_t copy)
 const char *system_get_version(enum system_image_copy_t copy)
 {
 	int imoffset;
-	const uint32_t *p, *pend;
 	const struct version_struct *v;
 
 	/* Handle version of current image */
@@ -139,23 +126,20 @@ const char *system_get_version(enum system_image_copy_t copy)
 		return "";
 	}
 
-	/* Search for version cookies in target image */
-	/* TODO: (crosbug.com/p/7469) could be smarter about where to
-	 * search if we stuffed the version data into a predefined
-	 * area of the image - for example, immediately following the
-	 * reset vectors. */
-	pend = (uint32_t *)(imoffset + CONFIG_FW_IMAGE_SIZE
-			    - sizeof(version_data));
-	for (p = (uint32_t *)imoffset; p <= pend; p++) {
-		v = (const struct version_struct *)p;
-		if (v->cookie1 == version_data.cookie1 &&
-		    v->cookie2 == version_data.cookie2)
-			return v->version;
-	}
+	/* The version string is always located after the reset vectors */
+	v = (const struct version_struct *)((uint8_t *)&version_data
+		+ imoffset);
+	if (v->cookie1 == version_data.cookie1 &&
+	    v->cookie2 == version_data.cookie2)
+		return v->version;
 
 	return "";
 }
 
+const char *system_get_build_info(void)
+{
+	return build_info;
+}
 
 static int command_sysinfo(int argc, char **argv)
 {
@@ -221,6 +205,7 @@ static int command_version(int argc, char **argv)
 		    system_get_version(SYSTEM_IMAGE_RW_A));
 	uart_printf("RW-B version: %s\n",
 		    system_get_version(SYSTEM_IMAGE_RW_B));
+	uart_printf("Current build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version);

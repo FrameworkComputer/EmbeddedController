@@ -76,6 +76,11 @@ int system_run_image_copy(enum system_image_copy_t copy);
  * currently-running image. */
 const char *system_get_version(enum system_image_copy_t copy);
 
+/* Returns information about the build including the version
+ * the build date and user/machine.
+ */
+const char *system_get_build_info(void);
+
 /* Resets the system.  If is_cold!=0, performs a cold reset (which
  * resets on-chip peripherals); else performs a warm reset (which does
  * not reset on-chip peripherals).  If successful, does not return.

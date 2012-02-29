@@ -18,6 +18,10 @@ MEMORY
 SECTIONS
 {
     .text : {
+        OUTDIR/core/CORE/init.o (.text.vecttable)
+        . = ALIGN(4);
+        *(.rodata.ver)
+        . = ALIGN(4);
         OUTDIR/core/CORE/init.o (.text)
         *(.text*)
 #ifdef COMPILE_FOR_RAM

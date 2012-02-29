@@ -35,6 +35,7 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $< -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
 	   $(silent)
+cmd_version = ./util/getversion.sh > $@
 
 
 .PHONY: all tests utils
@@ -84,6 +85,10 @@ $(out)/%.o:%.c
 
 $(out)/%.o:%.S
 	$(call quiet,c_to_o,AS     )
+
+$(out)/common/version.o: $(out)/ec_version.h
+$(out)/ec_version.h: $(filter-out $(out)/common/version.o,$(objs))
+	$(call quiet,version,VERSION)
 
 $(build-utils): $(out)/%:%.c
 	$(call quiet,c_to_build,BUILDCC)

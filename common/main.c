@@ -96,9 +96,9 @@ int main(void)
 
 	/* Print the reset cause */
 	uart_printf("\n\n--- Chrome EC initialized! ---\n");
-	uart_printf("(image: %s, version: %s, last reset: %s)\n",
+	uart_printf("build: %s\n", system_get_build_info());
+	uart_printf("(image: %s, last reset: %s)\n",
 		    system_get_image_copy_string(),
-		    system_get_version(SYSTEM_IMAGE_UNKNOWN),
 		    system_get_reset_cause_string());
 
 	/* Launch task scheduling (never returns) */

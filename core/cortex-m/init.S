@@ -7,10 +7,7 @@
 
 #include "config.h"
 
-.text
-
-.syntax unified
-.code 16
+.section .text.vecttable
 
 .macro vector name
 .long \name\()_handler
@@ -298,11 +295,15 @@ vector_irq 252                    @ IRQ 252 handler
 vector_irq 253                    @ IRQ 253 handler
 vector_irq 254                    @ IRQ 254 handler
 
+.text
+.syntax unified
+.code 16
+
 .global reset
 .thumb_func
 reset:
     /* set the vector table on our current code */
-    adr r1, vectors
+    ldr r1, =vectors
     ldr r2, =0xE000ED08   /* VTABLE register in SCB*/
     str r1, [r2]
     /* Clear BSS */
