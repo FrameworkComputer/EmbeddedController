@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "util.h"
 #include "task.h"
+#include "thermal.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 
@@ -173,6 +174,11 @@ static int command_fan_set(int argc, char **argv)
 		pwm_enable_fan(1);
         }
 
+#ifdef CONFIG_TASK_THERMAL
+	/* Disable thermal engine automatic fan control. */
+	thermal_toggle_auto_fan_ctrl(0);
+#endif
+
 	rv = pwm_set_fan_target_rpm(rpm);
 	if (rv == EC_SUCCESS)
 		uart_printf("Done.\n");
@@ -207,6 +213,11 @@ static int command_fan_duty(int argc, char **argv)
 		LM4_FAN_FANCH(FAN_CH_CPU) |= 0x0001;
 		pwm_enable_fan(1);
         }
+
+#ifdef CONFIG_TASK_THERMAL
+	/* Disable thermal engine automatic fan control. */
+	thermal_toggle_auto_fan_ctrl(0);
+#endif
 
         /* Set the duty cycle */
 	LM4_FAN_FANCMD(FAN_CH_CPU) = pwm << 16;

@@ -230,3 +230,10 @@ static int command_thermal_config(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(thermal, command_thermal_config);
+
+
+static int command_thermal_auto_fan_ctrl(int argc, char **argv)
+{
+	return thermal_toggle_auto_fan_ctrl(1);
+}
+DECLARE_CONSOLE_COMMAND(autofan, command_thermal_auto_fan_ctrl);
