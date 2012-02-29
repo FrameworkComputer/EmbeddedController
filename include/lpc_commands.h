@@ -290,4 +290,28 @@ struct lpc_params_pstore_write {
 	uint8_t data[EC_LPC_PSTORE_SIZE_MAX];
 } __attribute__ ((packed));
 
+/*****************************************************************************/
+/* Thermal engine commands */
+
+/* Set thershold value */
+#define EC_LPC_COMMAND_THERMAL_SET_THRESHOLD 0x50
+struct lpc_params_thermal_set_threshold {
+	uint8_t sensor_id;
+	uint8_t threshold_id;
+	uint16_t value;
+} __attribute__ ((packed));
+
+/* Get threshold value */
+#define EC_LPC_COMMAND_THERMAL_GET_THRESHOLD 0x51
+struct lpc_params_thermal_get_threshold {
+	uint8_t sensor_id;
+	uint8_t threshold_id;
+} __attribute__ ((packed));
+struct lpc_response_thermal_get_threshold {
+	uint16_t value;
+} __attribute__ ((packed));
+
+/* Toggling automatic fan control */
+#define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
+
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

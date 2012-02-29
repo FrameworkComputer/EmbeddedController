@@ -7,6 +7,7 @@
 
 #include "host_command.h"
 #include "pwm.h"
+#include "thermal.h"
 
 
 enum lpc_status pwm_command_get_fan_rpm(uint8_t *data)
@@ -25,6 +26,9 @@ enum lpc_status pwm_command_set_fan_target_rpm(uint8_t *data)
 	struct lpc_params_pwm_set_fan_target_rpm *p =
 			(struct lpc_params_pwm_set_fan_target_rpm *)data;
 
+#ifdef CONFIG_TASK_THERMAL
+	thermal_toggle_auto_fan_ctrl(0);
+#endif
 	pwm_set_fan_target_rpm(p->rpm);
 	return EC_LPC_STATUS_SUCCESS;
 }
