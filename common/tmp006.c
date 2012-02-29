@@ -265,6 +265,7 @@ static int command_sensor_info(int argc, char **argv)
 		rv = tmp006_print(i);
 		if (rv != EC_SUCCESS)
 			rv1 = rv;
+		uart_flush_output();
 	}
 
 	return rv1;
