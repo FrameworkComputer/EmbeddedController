@@ -197,7 +197,7 @@ static void history_save(void)
 	if (hist_id == cmd_history_tail)
 		tail = 0;
 	else
-		tail = cmd_history[CMD_HIST_PREV(hist_id)].head + 1;
+		tail = RX_BUF_NEXT(cmd_history[CMD_HIST_PREV(hist_id)].head);
 	head = tail;
 	for (ptr = 0; ptr < rx_cur_buf_head; ++ptr, head = RX_BUF_NEXT(head))
 		rx_buf[head] = rx_cur_buf[ptr];
