@@ -59,6 +59,11 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
+	/* we normally never wait here since uart_write_char is normally called
+	 * when the buffer is ready, excepted when we insert a carriage return
+	 * before a line feed in the interrupt routine.
+	 */
+	while (!uart_tx_ready()) ;
 	STM32L_USART_DR(UARTN) = c;
 }
 
