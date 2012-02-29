@@ -42,6 +42,12 @@ const char help_str[] =
 	"      Prints EC version\n"
 	"  temps <sensorid>\n"
 	"      Print temperature.\n"
+	"  thermalget <sensor_id> <threshold_id>\n"
+	"      Get the threshold temperature value from thermal engine.\n"
+	"  thermalset <sensor_id> <threshold_id> <value>\n"
+	"      Set the threshold temperature value for thermal engine.\n"
+	"  autofanctrl <on>\n"
+	"      Turn on automatic fan speed control.\n"
 	"  pwmgetfanrpm\n"
 	"      Prints current fan RPM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
@@ -531,6 +537,101 @@ int cmd_temperature(int argc, char *argv[])
 }
 
 
+int cmd_thermal_get_threshold(int argc, char *argv[])
+{
+	struct lpc_params_thermal_get_threshold p;
+	struct lpc_response_thermal_get_threshold r;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: thermalget <sensorid> <thresholdid>\n");
+		return -1;
+	}
+
+	p.sensor_id = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad sensor ID.\n");
+		return -1;
+	}
+
+	p.threshold_id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad threshold ID.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv)
+		return rv;
+
+	if (r.value < 0)
+		return -1;
+
+	printf("Threshold %d for sensor %d is %d K.\n",
+			p.threshold_id, p.sensor_id, r.value);
+
+	return 0;
+}
+
+
+int cmd_thermal_set_threshold(int argc, char *argv[])
+{
+	struct lpc_params_thermal_set_threshold p;
+	char *e;
+	int rv;
+
+	if (argc != 3) {
+		fprintf(stderr,
+			"Usage: thermalset <sensorid> <thresholdid> <value>\n");
+		return -1;
+	}
+
+	p.sensor_id = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad sensor ID.\n");
+		return -1;
+	}
+
+	p.threshold_id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad threshold ID.\n");
+		return -1;
+	}
+
+	p.value = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad threshold value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_THERMAL_SET_THRESHOLD,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Threshold %d for sensor %d set to %d.\n",
+			p.threshold_id, p.sensor_id, p.value);
+
+	return 0;
+}
+
+
+int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
+{
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL,
+			NULL, 0, NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Automatic fan control is now on.\n");
+	return 0;
+}
+
+
 int cmd_pwm_get_fan_rpm(void)
 {
 	int rv;
@@ -802,6 +903,12 @@ int main(int argc, char *argv[])
 		return cmd_version();
 	if (!strcasecmp(argv[1], "temps"))
 		return cmd_temperature(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "thermalget"))
+		return cmd_thermal_get_threshold(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "thermalset"))
+		return cmd_thermal_set_threshold(argc - 2, argv + 2);
+	if (!strcasecmp(argv[1], "autofanctrl"))
+		return cmd_thermal_auto_fan_ctrl(argc - 2, argv + 2);
 	if (!strcasecmp(argv[1], "pwmgetfanrpm"))
 	        return cmd_pwm_get_fan_rpm();
 	if (!strcasecmp(argv[1], "pwmsetfanrpm"))
