@@ -5,12 +5,9 @@
 
 /* Thermal engine host commands for Chrome EC */
 
-#include "thermal.h"
 #include "host_command.h"
+#include "thermal.h"
 
-
-/*****************************************************************************/
-/* Host commands */
 
 enum lpc_status thermal_command_set_threshold(uint8_t *data)
 {
@@ -18,8 +15,8 @@ enum lpc_status thermal_command_set_threshold(uint8_t *data)
 			(struct lpc_params_thermal_set_threshold *)data;
 
 	if (thermal_set_threshold(p->sensor_id, p->threshold_id, p->value))
-		return EC_LPC_STATUS_ERROR;
-	return EC_LPC_STATUS_SUCCESS;
+		return EC_LPC_RESULT_ERROR;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_SET_THRESHOLD,
 		thermal_command_set_threshold);
@@ -34,9 +31,9 @@ enum lpc_status thermal_command_get_threshold(uint8_t *data)
 
 	r->value = thermal_get_threshold(p->sensor_id, p->threshold_id);
 	if (r->value == -1)
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
 		thermal_command_get_threshold);
@@ -45,8 +42,8 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
 enum lpc_status thermal_command_auto_fan_ctrl(uint8_t *data)
 {
 	if (thermal_toggle_auto_fan_ctrl(1))
-		return EC_LPC_STATUS_ERROR;
-	return EC_LPC_STATUS_SUCCESS;
+		return EC_LPC_RESULT_ERROR;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL,
 		thermal_command_auto_fan_ctrl);

@@ -173,23 +173,22 @@ uint8_t *lpc_get_memmap_range(void)
 }
 
 
-void lpc_send_host_response(int slot, int status)
+void lpc_send_host_response(int slot, int result)
 {
 	int ch = slot ? LPC_CH_USER : LPC_CH_KERNEL;
 
-	/* Set status nibble (bits 7:4 from host side) and clear the busy
-	 * bit (0x1000) (bit 2 from host side) */
-	LM4_LPC_ST(ch) = (LM4_LPC_ST(ch) & 0xffffe0ff) | ((status & 0xf) << 8);
-
-	/* Write dummy value to data byte.  This sets the TOH bit in the
+	/* Write result to the data byte.  This sets the TOH bit in the
 	 * status byte and triggers an IRQ on the host so the host can read
-	 * the status. */
+	 * the result. */
 	/* TODO: (crosbug.com/p/7496) or it would, if we actually set up host
 	 * IRQs */
 	if (slot)
-		LPC_POOL_USER[1] = 0;
+		LPC_POOL_USER[1] = result;
 	else
-		LPC_POOL_KERNEL[1] = 0;
+		LPC_POOL_KERNEL[1] = result;
+
+	/* Clear the busy bit */
+	LM4_LPC_ST(ch) &= ~(1 << 12);
 }
 
 
@@ -238,18 +237,16 @@ static void lpc_interrupt(void)
 #ifdef CONFIG_TASK_HOSTCMD
 	/* Handle host kernel/user command writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4)) {
-		/* Set the busy bit and clear the status */
-		LM4_LPC_ST(LPC_CH_KERNEL) = (LM4_LPC_ST(LPC_CH_KERNEL) &
-					     0xffffe0ff) | 0x1000;
+		/* Set the busy bit */
+		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 12);
 
 		/* Read the command byte and pass to the host command handler.
 		 * This clears the FRMH bit in the status byte. */
 		host_command_received(0, LPC_POOL_KERNEL[0]);
 	}
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
-		/* Set the busy bit and clear the status */
-		LM4_LPC_ST(LPC_CH_USER) = (LM4_LPC_ST(LPC_CH_USER) &
-					   0xffffe0ff) | 0x1000;
+		/* Set the busy bit */
+		LM4_LPC_ST(LPC_CH_USER) |= (1 << 12);
 
 		/* Read the command byte and pass to the host command handler.
 		 * This clears the FRMH bit in the status byte. */

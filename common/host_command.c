@@ -34,7 +34,7 @@ void host_command_received(int slot, int command)
 	if (command == EC_LPC_COMMAND_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		lpc_send_host_response(slot, EC_LPC_STATUS_ERROR);
+		lpc_send_host_response(slot, EC_LPC_RESULT_ERROR);
 		return;
 	}
 
@@ -67,7 +67,7 @@ static enum lpc_status host_command_hello(uint8_t *data)
 	uart_puts("[LPC sending hello back]\n");
 
 	r->out_data = d + 0x01020304;
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HELLO, host_command_hello);
 
@@ -101,7 +101,7 @@ static enum lpc_status host_command_get_version(uint8_t *data)
 		break;
 	}
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_VERSION, host_command_get_version);
 
@@ -117,12 +117,12 @@ static enum lpc_status host_command_read_test(uint8_t *data)
 	int i;
 
 	if (size > ARRAY_SIZE(r->data))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
 	for (i = 0; i < size; i++)
 		r->data[i] = offset + i;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_READ_TEST, host_command_read_test);
 
@@ -154,7 +154,7 @@ static void command_process(int slot)
 	if (cmd)
 		lpc_send_host_response(slot, cmd->handler(data));
 	else
-		lpc_send_host_response(slot, EC_LPC_STATUS_INVALID_COMMAND);
+		lpc_send_host_response(slot, EC_LPC_RESULT_INVALID_COMMAND);
 }
 
 /*****************************************************************************/
