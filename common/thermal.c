@@ -144,10 +144,8 @@ static void thermal_process(void)
 			continue;
 
 		cur_temp = temp_sensor_read(i);
+
 		/* Sensor failure. */
-		/* TODO: PECI temperature sensor is currently flaky and thus
-		 * sensor failure is now ignored. Change this when we have
-		 * reliable PECI temperature sensor. */
 		if (cur_temp == -1) {
 			if (flag & THERMAL_CONFIG_WARNING_ON_FAIL)
 				smi_sensor_failure_warning();

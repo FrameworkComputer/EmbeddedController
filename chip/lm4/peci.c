@@ -53,12 +53,10 @@ int peci_get_cpu_temp(void)
 
 int peci_temp_sensor_poll(void)
 {
-	int val = peci_get_cpu_temp();
+	last_temp_val = peci_get_cpu_temp();
 
-	if (val > 0) {
-		last_temp_val = val;
+	if (last_temp_val > 0)
 		return EC_SUCCESS;
-	}
 	else
 		return EC_ERROR_UNKNOWN;
 }
