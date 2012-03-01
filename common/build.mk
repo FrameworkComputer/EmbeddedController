@@ -23,4 +23,5 @@ common-$(CONFIG_LIGHTBAR)+=leds.o
 
 # Board driver modules
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
-common-$(CONFIG_SMART_BATTERY)+=smart_battery.o
+common-$(CONFIG_BATTERY_ATL706486)+=battery_atl706486.o
+common-$(CONFIG_SMART_BATTERY)+=smart_battery.o charge_state.o
