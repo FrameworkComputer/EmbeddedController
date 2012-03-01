@@ -39,6 +39,13 @@
 #define EC_LPC_MEMMAP_BATT_FLAG   0x2c
 #define EC_LPC_MEMMAP_LID         0x30
 
+/* The battery bit flags. */
+#define EC_BATT_FLAG_AC_PRESENT   0x01
+#define EC_BATT_FLAG_BATT_PRESENT 0x02
+#define EC_BATT_FLAG_DISCHARGING  0x04
+#define EC_BATT_FLAG_CHARGING     0x08
+#define EC_BATT_FLAG_LEVEL_CRITICAL 0x10
+
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of
  * 200K to 454K = -73C to 181C.
