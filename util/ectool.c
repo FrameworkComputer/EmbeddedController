@@ -222,7 +222,7 @@ void print_help(const char *prog)
 }
 
 
-int cmd_hello(void)
+int cmd_hello(int argc, char *argv[])
 {
 	struct lpc_params_hello p;
 	struct lpc_response_hello r;
@@ -245,7 +245,7 @@ int cmd_hello(void)
 }
 
 
-int cmd_version(void)
+int cmd_version(int argc, char *argv[])
 {
   static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
 	struct lpc_response_get_version r;
@@ -336,7 +336,7 @@ int cmd_read_test(int argc, char *argv[])
 }
 
 
-int cmd_flash_info(void)
+int cmd_flash_info(int argc, char *argv[])
 {
 	struct lpc_response_flash_info r;
 	int rv;
@@ -638,7 +638,7 @@ int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 }
 
 
-int cmd_pwm_get_fan_rpm(void)
+int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 {
 	int rv;
 
@@ -682,7 +682,7 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 }
 
 
-int cmd_pwm_get_keyboard_backlight(void)
+int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 {
 	struct lpc_response_pwm_get_keyboard_backlight r;
 	int rv;
@@ -759,7 +759,7 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 }
 
 
-int cmd_pstore_info(void)
+int cmd_pstore_info(int argc, char *argv[])
 {
 	struct lpc_response_pstore_info r;
 	int rv;
@@ -876,8 +876,41 @@ int cmd_pstore_write(int argc, char *argv[])
 }
 
 
+struct command {
+	const char *name;
+	int (*handler)(int argc, char *argv[]);
+};
+
+/* NULL-terminated list of commands */
+const struct command commands[] = {
+	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
+	{"flasherase", cmd_flash_erase},
+	{"flashread", cmd_flash_read},
+	{"flashwrite", cmd_flash_write},
+	{"flashinfo", cmd_flash_info},
+	{"hello", cmd_hello},
+	{"pstoreinfo", cmd_pstore_info},
+	{"pstoreread", cmd_pstore_read},
+	{"pstorewrite", cmd_pstore_write},
+	{"pwmgetfanrpm", cmd_pwm_get_fan_rpm},
+	{"pwmgetkblight", cmd_pwm_get_keyboard_backlight},
+	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
+	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
+	{"readtest", cmd_read_test},
+	{"sertest", cmd_serial_test},
+	{"temps", cmd_temperature},
+	{"thermalget", cmd_thermal_get_threshold},
+	{"thermalset", cmd_thermal_set_threshold},
+	{"usbchargemode", cmd_usb_charge_set_mode},
+	{"version", cmd_version},
+	{NULL, NULL}
+};
+
+
 int main(int argc, char *argv[])
 {
+	const struct command *cmd;
+
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
 	    !strcasecmp(argv[1], "help")) {
 		print_help(argv[0]);
@@ -891,46 +924,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* Handle commands */
-	if (!strcasecmp(argv[1], "flashinfo"))
-		return cmd_flash_info();
-	if (!strcasecmp(argv[1], "flashread"))
-		return cmd_flash_read(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "flashwrite"))
-		return cmd_flash_write(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "flasherase"))
-		return cmd_flash_erase(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "hello"))
-		return cmd_hello();
-	if (!strcasecmp(argv[1], "readtest"))
-		return cmd_read_test(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "sertest"))
-		return cmd_serial_test(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "version"))
-		return cmd_version();
-	if (!strcasecmp(argv[1], "temps"))
-		return cmd_temperature(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "thermalget"))
-		return cmd_thermal_get_threshold(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "thermalset"))
-		return cmd_thermal_set_threshold(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "autofanctrl"))
-		return cmd_thermal_auto_fan_ctrl(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "pwmgetfanrpm"))
-	        return cmd_pwm_get_fan_rpm();
-	if (!strcasecmp(argv[1], "pwmsetfanrpm"))
-	        return cmd_pwm_set_fan_rpm(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "pwmgetkblight"))
-	        return cmd_pwm_get_keyboard_backlight();
-	if (!strcasecmp(argv[1], "pwmsetkblight"))
-	        return cmd_pwm_set_keyboard_backlight(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "usbchargemode"))
-	        return cmd_usb_charge_set_mode(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "pstoreinfo"))
-		return cmd_pstore_info();
-	if (!strcasecmp(argv[1], "pstoreread"))
-		return cmd_pstore_read(argc - 2, argv + 2);
-	if (!strcasecmp(argv[1], "pstorewrite"))
-		return cmd_pstore_write(argc - 2, argv + 2);
+	for (cmd = commands; cmd; cmd++) {
+		if (!strcasecmp(argv[1], cmd->name))
+			return cmd->handler(argc - 2, argv + 2);
+	}
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);
