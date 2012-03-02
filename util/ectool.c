@@ -530,11 +530,16 @@ int cmd_temperature(int argc, char *argv[])
 
 	printf("Reading temperature...");
 	rv = read_mapped_mem8(EC_LPC_MEMMAP_TEMP_SENSOR + id);
-	if (rv == 0xff)
+	if (rv == 0xff) {
+		printf("Sensor not present\n");
+		return -1;
+	} else if (rv == 0xfe) {
 		printf("Error\n");
-	else
+		return -1;
+	} else {
 		printf("%d\n", rv + EC_LPC_TEMP_SENSOR_OFFSET);
-	return rv;
+		return 0;
+	}
 }
 
 
