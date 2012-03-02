@@ -23,7 +23,7 @@ if ghash=`git rev-parse --short --verify HEAD 2>/dev/null`; then
 	# changed
 	git status > /dev/null 2>&1
 
-	dirty=`sh -c "[ $(git diff-index --name-only HEAD) ] && echo '-dirty'"`
+	dirty=`sh -c "[ '$(git diff-index --name-only HEAD)' ] && echo '-dirty'"`
 	ver="${ver_major}.${ver_branch}.${numcommits}-${ghash}${dirty}"
 else
 	ver="no_version"
