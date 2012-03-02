@@ -18,6 +18,18 @@ static inline int MIN(int a, int b) { return a < b ? a : b; }
 
 const char help_str[] =
 	"Commands:\n"
+	"  eventclear <mask>\n"
+	"      Clears EC host events flags where mask has bits set\n"
+	"  eventget\n"
+	"      Prints raw EC host event flags\n"
+	"  eventgetscimask\n"
+	"      Prints SCI mask for EC host events\n"
+	"  eventgetsmimask\n"
+	"      Prints SMI mask for EC host events\n"
+	"  eventsetscimask <mask>\n"
+	"      Sets the SCI mask for EC host events\n"
+	"  eventsetsmimask <mask>\n"
+	"      Sets the SMI mask for EC host events\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
 	"  flashread <offset> <size> <outfile>\n"
@@ -34,6 +46,8 @@ const char help_str[] =
 	"      Reads from EC host persistent storage to a file\n"
 	"  pstorewrite <offset> <infile>\n"
 	"      Writes to EC host persistent storage from a file\n"
+	"  queryec\n"
+	"      Does an ACPI Query Embedded Controller command\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  sertest\n"
@@ -876,6 +890,138 @@ int cmd_pstore_write(int argc, char *argv[])
 }
 
 
+int cmd_acpi_query_ec(int argc, char *argv[])
+{
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_ACPI_QUERY_EVENT, NULL, 0, NULL, 0);
+	if (rv)
+		printf("Got host event %d (mask 0x%08x)\n", rv, 1 << (rv - 1));
+	else
+		printf("No host event pending.\n");
+	return 0;
+}
+
+
+int cmd_host_event_get_raw(int argc, char *argv[])
+{
+	printf("Current host events: 0x%08x\n",
+	       read_mapped_mem32(EC_LPC_MEMMAP_HOST_EVENTS));
+	return 0;
+}
+
+
+int cmd_host_event_get_smi_mask(int argc, char *argv[])
+{
+	struct lpc_response_host_event_get_smi_mask r;
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK,
+			NULL, 0, &r, sizeof(r));
+	if (rv)
+	        return rv;
+
+	printf("Current host event SMI mask: 0x%08x\n", r.mask);
+	return 0;
+}
+
+
+int cmd_host_event_get_sci_mask(int argc, char *argv[])
+{
+	struct lpc_response_host_event_get_sci_mask r;
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK,
+			NULL, 0, &r, sizeof(r));
+	if (rv)
+	        return rv;
+
+	printf("Current host event SCI mask: 0x%08x\n", r.mask);
+	return 0;
+}
+
+
+int cmd_host_event_set_smi_mask(int argc, char *argv[])
+{
+	struct lpc_params_host_event_set_smi_mask p;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+	        fprintf(stderr,
+	                "Usage: eventsmimask <mask>\n");
+	        return -1;
+	}
+	p.mask = strtol(argv[0], &e, 0);
+	if (e && *e) {
+	        fprintf(stderr, "Bad mask.\n");
+	        return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK,
+	                &p, sizeof(p), NULL, 0);
+	if (rv)
+	        return rv;
+
+	printf("Mask set.\n");
+	return 0;
+}
+
+
+int cmd_host_event_set_sci_mask(int argc, char *argv[])
+{
+	struct lpc_params_host_event_set_sci_mask p;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+	        fprintf(stderr,
+	                "Usage: eventscimask <mask>\n");
+	        return -1;
+	}
+	p.mask = strtol(argv[0], &e, 0);
+	if (e && *e) {
+	        fprintf(stderr, "Bad mask.\n");
+	        return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK,
+	                &p, sizeof(p), NULL, 0);
+	if (rv)
+	        return rv;
+
+	printf("Mask set.\n");
+	return 0;
+}
+
+
+int cmd_host_event_clear(int argc, char *argv[])
+{
+	struct lpc_params_host_event_clear p;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+	        fprintf(stderr,
+	                "Usage: eventclear <mask>\n");
+	        return -1;
+	}
+	p.mask = strtol(argv[0], &e, 0);
+	if (e && *e) {
+	        fprintf(stderr, "Bad mask.\n");
+	        return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_CLEAR,
+	                &p, sizeof(p), NULL, 0);
+	if (rv)
+	        return rv;
+
+	printf("Host events cleared.\n");
+	return 0;
+}
+
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -884,6 +1030,12 @@ struct command {
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
+	{"eventclear", cmd_host_event_clear},
+	{"eventget", cmd_host_event_get_raw},
+	{"eventgetscimask", cmd_host_event_get_sci_mask},
+	{"eventgetsmimask", cmd_host_event_get_smi_mask},
+	{"eventsetscimask", cmd_host_event_set_sci_mask},
+	{"eventsetsmimask", cmd_host_event_set_smi_mask},
 	{"flasherase", cmd_flash_erase},
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
@@ -896,6 +1048,7 @@ const struct command commands[] = {
 	{"pwmgetkblight", cmd_pwm_get_keyboard_backlight},
 	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
+	{"queryec", cmd_acpi_query_ec},
 	{"readtest", cmd_read_test},
 	{"sertest", cmd_serial_test},
 	{"temps", cmd_temperature},

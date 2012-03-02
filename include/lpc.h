@@ -48,4 +48,19 @@ int lpc_comx_get_char(void);
 /* Puts a character to the COMx LPC interface. */
 void lpc_comx_put_char(int c);
 
+/* Set one or more SCI/SMI event bits. */
+void lpc_set_host_events(uint32_t mask);
+
+/* Clear one or more SCI/SMI event bits.  Write 1 to a bit to clear it. */
+void lpc_clear_host_events(uint32_t mask);
+
+/* Return the raw SCI/SMI event state. */
+uint32_t lpc_get_host_events(void);
+
+/* Set the SMI (sci=0) or SMI (sci=1) event mask. */
+void lpc_set_host_event_mask(int sci, uint32_t mask);
+
+/* Return the SMI (sci=0) or SMI (sci=1) event mask. */
+uint32_t lpc_get_host_event_mask(int sci);
+
 #endif  /* __CROS_EC_LPC_H */

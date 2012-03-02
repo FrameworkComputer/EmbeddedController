@@ -127,6 +127,28 @@ static enum lpc_status host_command_read_test(uint8_t *data)
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_READ_TEST, host_command_read_test);
 
 
+/* ACPI query event handler.  Note that the returned value is NOT actually
+ * an EC_LPC_RESULT enum; it's 0 if no event was pending, or the 1-based
+ * index of the lowest bit which was set. */
+static enum lpc_status host_command_acpi_query_event(uint8_t *data)
+{
+	uint32_t events = lpc_get_host_events();
+	int i;
+
+	for (i = 0; i < 32; i++) {
+		if (events & (1 << i)) {
+			lpc_clear_host_events(1 << i);
+			return (enum lpc_status)(i + 1);
+		}
+	}
+
+	/* No events pending */
+	return (enum lpc_status)0;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_ACPI_QUERY_EVENT,
+		     host_command_acpi_query_event);
+
+
 /* Finds a command by command number.  Returns the command structure, or NULL if
  * no match found. */
 static const struct host_command *find_host_command(int command)

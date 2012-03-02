@@ -37,7 +37,8 @@
 #define EC_LPC_MEMMAP_BATT_RATE   0x24
 #define EC_LPC_MEMMAP_BATT_CAP    0x28
 #define EC_LPC_MEMMAP_BATT_FLAG   0x2c
-#define EC_LPC_MEMMAP_LID         0x30
+#define EC_LPC_MEMMAP_SWITCHES    0x30
+#define EC_LPC_MEMMAP_HOST_EVENTS 0x34
 
 /* The battery bit flags. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
@@ -93,12 +94,8 @@ enum lpc_status {
  * no struct is specified, the command does not input or output data,
  * respectively. */
 
-/* Reboot.  This command will work even when the EC LPC interface is
- * busy, because the reboot command is processed at interrupt
- * level.  Note that when the EC reboots, the host will reboot too, so
- * there is no response to this command. */
-#define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
-
+/*****************************************************************************/
+/* General / test commands */
 
 /* Hello.  This is a simple command to test the EC is responsive to
  * commands. */
@@ -137,6 +134,7 @@ struct lpc_params_read_test {
 struct lpc_response_read_test {
 	uint32_t data[32];
 } __attribute__ ((packed));
+
 
 /*****************************************************************************/
 /* Flash commands */
@@ -337,5 +335,56 @@ struct lpc_response_thermal_get_threshold {
 
 /* Toggling automatic fan control */
 #define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
+
+/*****************************************************************************/
+/* Host event commands */
+
+#define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK 0x88
+struct lpc_response_host_event_get_smi_mask {
+	uint32_t mask;
+} __attribute__ ((packed));
+
+#define EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK 0x89
+struct lpc_response_host_event_get_sci_mask {
+	uint32_t mask;
+} __attribute__ ((packed));
+
+#define EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK 0x8a
+struct lpc_params_host_event_set_smi_mask {
+	uint32_t mask;
+} __attribute__ ((packed));
+
+#define EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK 0x8b
+struct lpc_params_host_event_set_sci_mask {
+	uint32_t mask;
+} __attribute__ ((packed));
+
+#define EC_LPC_COMMAND_HOST_EVENT_CLEAR 0x8c
+struct lpc_params_host_event_clear {
+	uint32_t mask;
+} __attribute__ ((packed));
+
+/*****************************************************************************/
+/* Special commands
+ *
+ * These do not follow the normal rules for commands.  See each command for
+ * details. */
+
+/* ACPI Query Embedded Controller
+ *
+ * This clears the lowest-order bit in the currently pending host events, and
+ * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
+ * event 0x80000000 = 32), or 0 if no event was pending. */
+#define EC_LPC_COMMAND_ACPI_QUERY_EVENT 0x84
+
+/* Reboot
+ *
+ * This command will work even when the EC LPC interface is busy, because the
+ * reboot command is processed at interrupt level.  Note that when the EC
+ * reboots, the host will reboot too, so there is no response to this
+ * command. */
+#define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
+
+
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */

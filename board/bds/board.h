@@ -117,6 +117,7 @@ enum gpio_signal {
 	GPIO_PCH_DPWROK,          /* DPWROK signal to PCH */
 	GPIO_PCH_PWROK,           /* PWROK / APWROK signals to PCH */
 	GPIO_PCH_RSMRSTn,         /* Reset PCH resume power plane logic */
+	GPIO_PCH_SMIn,            /* System management interrupt to PCH */
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_SHUNT_1_5V_DDR,      /* Shunt +1.5V_DDR; may also enable +3V_TP
 				   * depending on stuffing. */

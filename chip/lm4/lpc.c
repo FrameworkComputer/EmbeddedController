@@ -18,6 +18,10 @@
 #include "uart.h"
 
 
+static uint32_t host_events;   /* Currently pending SCI/SMI events */
+static uint32_t smi_mask, sci_mask;  /* Event masks for SMI, SCI events */
+
+
 /* Configures GPIOs for module. */
 static void configure_gpio(void)
 {
@@ -188,7 +192,9 @@ void lpc_send_host_response(int slot, int result)
 		LPC_POOL_KERNEL[1] = result;
 
 	/* Clear the busy bit */
+	task_disable_irq(LM4_IRQ_LPC);
 	LM4_LPC_ST(ch) &= ~(1 << 12);
+	task_enable_irq(LM4_IRQ_LPC);
 }
 
 
@@ -224,6 +230,87 @@ void lpc_comx_put_char(int c)
 	/* TODO: manually trigger IRQ, like we do for keyboard? */
 }
 
+
+/* Update the host event status.  Sends a pulse on EC_SMIn if either SMI or SCI
+ * masked event status becomes non-zero. */
+static void update_host_event_status(void) {
+	uint32_t *mapped_raw_events =
+		(uint32_t*)(lpc_get_memmap_range() + EC_LPC_MEMMAP_HOST_EVENTS);
+
+	int need_pulse = 0;
+
+	/* Disable LPC interrupt while updating status register */
+	task_disable_irq(LM4_IRQ_LPC);
+
+	if (host_events & smi_mask) {
+		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 10)))
+			need_pulse = 1;
+		LM4_LPC_ST(LPC_CH_USER) |= (1 << 10);
+	} else {
+		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 10);
+	}
+
+	if (host_events & sci_mask) {
+		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 9)))
+			need_pulse = 1;
+		LM4_LPC_ST(LPC_CH_USER) |= (1 << 9);
+	} else {
+		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 9);
+	}
+
+	/* Copy host events to mapped memory */
+	*mapped_raw_events = host_events;
+
+	task_enable_irq(LM4_IRQ_LPC);
+
+	if (need_pulse) {
+		gpio_set_level(GPIO_PCH_SMIn, 0);
+		/* If the x86 is in S0, SMI# is sampled at 33MHz, so minimum
+		 * pulse length is 60ns.  If the x86 is in S3, SMI# is sampled
+		 * at 32.768KHz, so we need pulse length >61us.  Both are short
+		 * enough fast and events are infrequent, so just delay for
+		 * 65us. */
+		udelay(65);
+		gpio_set_level(GPIO_PCH_SMIn, 1);
+	}
+}
+
+
+void lpc_set_host_events(uint32_t mask)
+{
+	host_events |= mask;
+	update_host_event_status();
+}
+
+
+void lpc_clear_host_events(uint32_t mask)
+{
+	host_events &= ~mask;
+	update_host_event_status();
+}
+
+
+uint32_t lpc_get_host_events(void)
+{
+	return host_events;
+}
+
+
+void lpc_set_host_event_mask(int sci, uint32_t mask)
+{
+	if (sci)
+		sci_mask = mask;
+	else
+		smi_mask = mask;
+
+	update_host_event_status();
+}
+
+
+uint32_t lpc_get_host_event_mask(int sci)
+{
+	return sci ? sci_mask : smi_mask;
+}
 
 
 /* LPC interrupt handler */
@@ -286,5 +373,5 @@ static void lpc_interrupt(void)
 		}
 	}
 }
-
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
+

@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
+#include "lpc.h"
 #include "pwm.h"
 #include "task.h"
 #include "timer.h"
@@ -272,6 +273,11 @@ void x86_power_task(void)
 		case X86_S3S0:
 			/* Deassert RCINn */
 			gpio_set_level(GPIO_PCH_RCINn, 1);
+
+			/* Mask all SCI/SMI host events until the host unmasks
+			 * them itself.  */
+			lpc_set_host_event_mask(0, 0);
+			lpc_set_host_event_mask(1, 0);
 
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
