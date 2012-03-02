@@ -5,16 +5,18 @@
 
 /* TMP006 temperature sensor module for Chrome EC */
 
-#include "tmp006.h"
-#include "temp_sensor.h"
 #include "board.h"
+#include "config.h"
+#include "console.h"
+#include "fpu.h"
+#include "gpio.h"
+#include "i2c.h"
+#include "math.h"
+#include "task.h"
+#include "temp_sensor.h"
+#include "tmp006.h"
 #include "uart.h"
 #include "util.h"
-#include "console.h"
-#include "task.h"
-#include "fpu.h"
-#include "math.h"
-#include "i2c.h"
 
 /* Defined in board_temp_sensor.c. */
 extern const struct tmp006_t tmp006_sensors[TMP006_COUNT];
@@ -170,6 +172,14 @@ static int tmp006_poll_sensor(int sensor_id)
 	int addr = tmp006_sensors[sensor_id].addr;
 	int idx;
 
+	/* TODO: For now, all TMP006 sensors are powered by VS. Modify this
+	 *       if we have different design.
+	 */
+	if (gpio_get_level(GPIO_PGOOD_1_8VS) == 0) {
+		tmp006_data[sensor_id].fail = 1;
+		return EC_ERROR_UNKNOWN;
+	}
+
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
 	if (rv) {
 		tmp006_data[sensor_id].fail = 1;
@@ -201,7 +211,17 @@ static int tmp006_print(int idx)
 	int d;
 	int addr = tmp006_sensors[idx].addr;
 
+
 	uart_printf("Debug data from %s:\n", tmp006_sensors[idx].name);
+
+	/* TODO: For now, all TMP006 sensors are powered by VS. Modify this
+	 *       if we have different design.
+	 */
+	if (gpio_get_level(GPIO_PGOOD_1_8VS) == 0) {
+		uart_puts("Sensor powered off.\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0xfe, &d);
 	if (rv)
 		return rv;
