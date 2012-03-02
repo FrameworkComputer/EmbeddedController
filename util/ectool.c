@@ -140,7 +140,7 @@ int wait_for_ec(int status_addr, int timeout_usec)
 	int i;
 	for (i = 0; i < timeout_usec; i += 10) {
 		usleep(10);  /* Delay first, in case we just sent a command */
-		if (!(inb(status_addr) & EC_LPC_BUSY_MASK))
+		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
 			return 0;
 	}
 	return -1;  /* Timeout */
@@ -156,6 +156,7 @@ int ec_command(int command, const void *indata, int insize,
 
 	/* TODO: add command line option to use kernel command/param window */
 	int cmd_addr = EC_LPC_ADDR_USER_CMD;
+	int data_addr = EC_LPC_ADDR_USER_DATA;
 	int param_addr = EC_LPC_ADDR_USER_PARAM;
 
 	if (insize > EC_LPC_PARAM_SIZE || outsize > EC_LPC_PARAM_SIZE) {
@@ -180,15 +181,15 @@ int ec_command(int command, const void *indata, int insize,
 		return -1;
 	}
 
-	/* Check status */
-	i = inb(cmd_addr);
-	i = EC_LPC_GET_STATUS(i);
+	/* Check result */
+	i = inb(data_addr);
 	if (i) {
-		fprintf(stderr, "EC returned error status %d\n", i);
+		fprintf(stderr, "EC returned error result code %d\n", i);
 		return i;
 	}
 
 	/* Read data, if any */
+	/* TODO: optimized copy using outl() */
 	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++)
 		*d = inb(param_addr + i);
 

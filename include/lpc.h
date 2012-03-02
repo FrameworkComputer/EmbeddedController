@@ -29,10 +29,9 @@ uint8_t *lpc_get_host_range(int slot);
  * any time, and the host can read it at any time. */
 uint8_t *lpc_get_memmap_range(void);
 
-/* Sends a response to a host command.  The bottom 4 bits of <status>
- * are sent in the status byte.  <slot> is 0 for kernel-originated
+/* Sends a result code to a host command.  <slot> is 0 for kernel-originated
  * commands, 1 for usermode-originated commands. */
-void lpc_send_host_response(int slot, int status);
+void lpc_send_host_response(int slot, int result);
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void);

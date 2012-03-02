@@ -200,7 +200,7 @@ enum lpc_status flash_command_get_info(uint8_t *data)
 	r->write_block_size = FLASH_WRITE_BYTES;
 	r->erase_block_size = FLASH_ERASE_BYTES;
 	r->protect_block_size = FLASH_PROTECT_BYTES;
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_INFO, flash_command_get_info);
 
@@ -219,14 +219,14 @@ enum lpc_status flash_command_checksum(uint8_t *data)
 		if (flash_read(p->offset + j, 1, &byte)) {
 			uart_printf("flash_read() error at 0x%02x.\n",
 			            p->offset + j);
-			return EC_LPC_STATUS_ERROR;
+			return EC_LPC_RESULT_ERROR;
 		}
 		BYTE_IN(cs, byte);
 	}
 
 	r->checksum = cs;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_CHECKSUM, flash_command_checksum);
 #endif
@@ -240,12 +240,12 @@ enum lpc_status flash_command_read(uint8_t *data)
 			(struct lpc_response_flash_read *)data;
 
 	if (p->size > sizeof(r->data))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
 	if (flash_read(p->offset, p->size, r->data))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_READ, flash_command_read);
 
@@ -256,12 +256,12 @@ enum lpc_status flash_command_write(uint8_t *data)
 			(struct lpc_params_flash_write *)data;
 
 	if (p->size > sizeof(p->data))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
 	if (flash_write(p->offset, p->size, p->data))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WRITE, flash_command_write);
 
@@ -272,9 +272,9 @@ enum lpc_status flash_command_erase(uint8_t *data)
 			(struct lpc_params_flash_erase *)data;
 
 	if (flash_erase(p->offset, p->size))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_ERASE, flash_command_erase);
 
@@ -297,9 +297,9 @@ enum lpc_status flash_command_wp_enable(uint8_t *data)
 		size   = 0;
 	}
 	if (flash_set_write_protect_range(offset, size))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_ENABLE,
 		     flash_command_wp_enable);
@@ -315,7 +315,7 @@ enum lpc_status flash_command_wp_get_state(uint8_t *data)
 	else
 		p->enable_wp = 0;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_STATE,
 		     flash_command_wp_get_state);
@@ -327,9 +327,9 @@ enum lpc_status flash_command_wp_set_range(uint8_t *data)
 			(struct lpc_params_flash_wp_range *)data;
 
 	if (flash_set_write_protect_range(p->offset, p->size))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_SET_RANGE,
 		     flash_command_wp_set_range);
@@ -341,9 +341,9 @@ enum lpc_status flash_command_wp_get_range(uint8_t *data)
 			(struct lpc_response_flash_wp_range *)data;
 
 	if (flash_get_write_protect_range(&p->offset, &p->size))
-		return EC_LPC_STATUS_ERROR;
+		return EC_LPC_RESULT_ERROR;
 
-	return EC_LPC_STATUS_SUCCESS;
+	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_RANGE,
 		     flash_command_wp_get_range);
