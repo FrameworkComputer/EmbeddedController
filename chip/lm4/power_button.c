@@ -8,6 +8,8 @@
 #include "console.h"
 #include "gpio.h"
 #include "keyboard.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"
@@ -107,6 +109,8 @@ static void power_button_changed(uint64_t tnow)
 		/* pressed */
 		pwrbtn_state = PWRBTN_STATE_START;
 		keyboard_set_power_button(1);
+		lpc_set_host_events(
+			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_POWER_BUTTON));
 	} else {
 		/* released */
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
@@ -125,6 +129,9 @@ static void lid_switch_changed(uint64_t tnow)
 	/* Pass signal on to PCH; this is how the BIOS/OS knows to suspend or
 	 * shutdown when the lid is closed. */
 	gpio_set_level(GPIO_PCH_LID_SWITCHn, v);
+
+	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
+		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
 
 	/* If the lid has opened, also send a power button pulse to the PCH.
 	 * We technically only need to send this when the main processor is in

@@ -87,6 +87,28 @@ enum lpc_status {
 };
 
 
+/* Host event codes.  Note these are 1-based, not 0-based, because ACPI query
+ * EC command uses code 0 to mean "no event pending".  We explicitly specify
+ * each value in the enum listing so they won't change if we delete/insert an
+ * item or rearrange the list (it needs to be stable across platforms, not
+ * just within a single compiled instance). */
+enum host_event_code {
+	EC_LPC_HOST_EVENT_LID_CLOSED = 1,
+	EC_LPC_HOST_EVENT_LID_OPEN = 2,
+	EC_LPC_HOST_EVENT_POWER_BUTTON = 3,
+	EC_LPC_HOST_EVENT_AC_CONNECTED = 4,
+	EC_LPC_HOST_EVENT_AC_DISCONNECTED = 5,
+	EC_LPC_HOST_EVENT_BATTERY_LOW = 6,
+	EC_LPC_HOST_EVENT_BATTERY_CRITICAL = 7,
+	EC_LPC_HOST_EVENT_BATTERY = 8,
+	EC_LPC_HOST_EVENT_THERMAL_THRESHOLD = 9,
+	EC_LPC_HOST_EVENT_THERMAL_OVERLOAD = 10,
+	EC_LPC_HOST_EVENT_THERMAL = 11,
+	EC_LPC_HOST_EVENT_USB_CHARGER = 12,
+};
+/* Host event mask */
+#define EC_LPC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
+
 /* Notes on commands:
  *
  * Each command is an 8-byte command value.  Commands which take
