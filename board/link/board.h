@@ -81,6 +81,7 @@ enum adc_channel
 
 /* Battery module */
 #define CONFIG_SMART_BATTERY
+#define CONFIG_BATTERY_ATL706486
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0

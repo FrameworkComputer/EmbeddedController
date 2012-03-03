@@ -225,5 +225,22 @@ static inline int battery_design_voltage(int *voltage)
 static inline int battery_serial_number(int *serial)
 	{ return sb_read(SB_SERIAL_NUMBER, serial); }
 
+/* Read battery discharging current
+ * unit: mA
+ * negative value: charging
+ */
+int battery_current(int *current);
+int battery_average_current(int *current);
+
+/* Calculate battery time in minutes, under a charging rate
+ * rate >  0: charging, negative time to full
+ * rate <  0: discharging, positive time to empty
+ * rate == 0: invalid input, time = 0
+ */
+int battery_time_at_rate(int rate, int *minutes);
+
+/* Read manufacturer date */
+int battery_manufacturer_date(int *year, int *month, int *day);
+
 #endif /* __CROS_EC_SMART_BATTERY_H */
 
