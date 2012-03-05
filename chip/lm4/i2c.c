@@ -17,9 +17,20 @@
 
 #define NUM_PORTS 6
 
+#define LM4_I2C_MCS_RUN   (1 << 0)
+#define LM4_I2C_MCS_START (1 << 1)
+#define LM4_I2C_MCS_STOP  (1 << 2)
+#define LM4_I2C_MCS_ACK   (1 << 3)
+#define LM4_I2C_MCS_HS    (1 << 4)
+#define LM4_I2C_MCS_QCMD  (1 << 5)
+
+#define START 1
+#define STOP  1
+#define NO_START 0
+#define NO_STOP  0
+
 static task_id_t task_waiting_on_port[NUM_PORTS];
 static struct mutex port_mutex[NUM_PORTS];
-
 
 static int wait_idle(int port)
 {
@@ -47,56 +58,113 @@ static int wait_idle(int port)
 	return EC_SUCCESS;
 }
 
+/* Transmit one block of raw data, then receive one block of raw data.
+ * <start> flag indicates this smbus session start from idle state.
+ * <stop>  flag means this session can be termicate with smbus stop bit
+ */
+static int i2c_transmit_receive(int port, int slave_addr,
+		uint8_t *transmit_data, int transmit_size,
+		uint8_t *receive_data, int receive_size,
+		int start, int stop)
+{
+	int rv, i;
+	int started = start ? 0 : 1;
+	uint32_t reg_mcs;
 
-int i2c_read16(int port, int slave_addr, int offset, int* data)
+	if (transmit_size == 0 && receive_size == 0)
+		return EC_SUCCESS;
+
+	if (transmit_data) {
+		LM4_I2C_MSA(port) = slave_addr & 0xff;
+		for (i = 0; i < transmit_size; i++) {
+			LM4_I2C_MDR(port) = transmit_data[i];
+			/* Setup master control/status register
+			 * MCS sequence on multi-byte write:
+			 *     0x3 0x1 0x1 ... 0x1 0x5
+			 * Single byte write:
+			 *     0x7
+			 */
+			reg_mcs = LM4_I2C_MCS_RUN;
+			/* Set start bit on first byte */
+			if (!started) {
+				started = 1;
+				reg_mcs |= LM4_I2C_MCS_START;
+			}
+			/* Send stop bit if the stop flag is on,
+			 * and caller doesn't expect to receive
+			 * data.
+			 */
+			if (stop && receive_size == 0 && i ==
+					(transmit_size - 1))
+				reg_mcs |= LM4_I2C_MCS_STOP;
+
+			LM4_I2C_MCS(port) = reg_mcs;
+
+			rv = wait_idle(port);
+			if (rv)
+				return rv;
+		}
+	}
+
+	if (receive_size) {
+		if (transmit_size)
+			/* resend start bit when change direction */
+			started = 0;
+
+		LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x01;
+		for (i = 0; i < receive_size; i++) {
+			LM4_I2C_MDR(port) = receive_data[i];
+			/* MCS receive sequence on multi-byte read:
+			 *     0xb 0x9 0x9 ... 0x9 0x5
+			 * Single byte read:
+			 *     0x7
+			 */
+			reg_mcs = LM4_I2C_MCS_RUN;
+			if (!started) {
+				started = 1;
+				reg_mcs |= LM4_I2C_MCS_START;
+			}
+			/* ACK all bytes except the last one */
+			if (stop && i == (receive_size - 1))
+				reg_mcs |= LM4_I2C_MCS_STOP;
+			else
+				reg_mcs |= LM4_I2C_MCS_ACK;
+
+			LM4_I2C_MCS(port) = reg_mcs;
+			rv = wait_idle(port);
+			if (rv)
+				return rv;
+			receive_data[i] = LM4_I2C_MDR(port) & 0xff;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+
+
+int i2c_read16(int port, int slave_addr, int offset, int *data)
 {
 	int rv;
-	int d;
+	uint8_t reg, buf[2];
 
+	reg = offset & 0xff;
+	/* I2C read 16-bit word:
+	 * Transmit 8-bit offset, and read 16bits
+	 */
 	mutex_lock(port_mutex + port);
-
-	*data = 0;
-
-	/* Transmit the offset address to the slave; leave the master in
-	 * transmit state. */
-	LM4_I2C_MSA(port) = slave_addr & 0xff;
-	LM4_I2C_MDR(port) = offset & 0xff;
-	LM4_I2C_MCS(port) = 0x03;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Send repeated start followed by receive */
-	LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x01;
-	LM4_I2C_MCS(port) = 0x0b;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Read the first byte */
-	d = LM4_I2C_MDR(port) & 0xff;
-
-	/* Issue another read and then a stop. */
-	LM4_I2C_MCS(port) = 0x05;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Read the second byte */
-	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
-		*data = (d << 8) | (LM4_I2C_MDR(port) & 0xff);
-	else
-		*data = ((LM4_I2C_MDR(port) & 0xff) << 8) | d;
+	rv = i2c_transmit_receive(port, slave_addr, &reg, 1, buf, 2,
+					START, STOP);
 	mutex_unlock(port_mutex + port);
+
+	if (rv)
+		return rv;
+
+	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
+		*data = ((int)buf[0] << 8) | buf[1];
+	else
+		*data = ((int)buf[1] << 8) | buf[0];
+
 	return EC_SUCCESS;
 }
 
@@ -104,112 +172,92 @@ int i2c_read16(int port, int slave_addr, int offset, int* data)
 int i2c_write16(int port, int slave_addr, int offset, int data)
 {
 	int rv;
+	uint8_t buf[3];
+
+	buf[0] = offset & 0xff;
+
+	if (slave_addr & I2C_FLAG_BIG_ENDIAN) {
+		buf[1] = (data >> 8) & 0xff;
+		buf[2] = data & 0xff;
+	} else {
+		buf[1] = data & 0xff;
+		buf[2] = (data >> 8) & 0xff;
+	}
 
 	mutex_lock(port_mutex + port);
-
-	/* Transmit the offset address to the slave; leave the master in
-	 * transmit state. */
-	LM4_I2C_MDR(port) = offset & 0xff;
-	LM4_I2C_MSA(port) = slave_addr & 0xff;
-	LM4_I2C_MCS(port) = 0x03;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Transmit the first byte */
-	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
-		LM4_I2C_MDR(port) = (data >> 8) & 0xff;
-	else
-		LM4_I2C_MDR(port) = data & 0xff;
-	LM4_I2C_MCS(port) = 0x01;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Transmit the second byte and then a stop */
-	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
-		LM4_I2C_MDR(port) = data & 0xff;
-	else
-		LM4_I2C_MDR(port) = (data >> 8) & 0xff;
-	LM4_I2C_MCS(port) = 0x05;
-
+	rv = i2c_transmit_receive(port, slave_addr, buf, 3, 0, 0,
+					START, STOP);
 	mutex_unlock(port_mutex + port);
-	return wait_idle(port);
-}
 
-/* TODO:(crosbug.com/p/8026) combine common functions to save space */
+	return rv;
+}
 
 int i2c_read8(int port, int slave_addr, int offset, int* data)
 {
 	int rv;
+	uint8_t reg, val;
+
+	reg = offset;
 
 	mutex_lock(port_mutex + port);
-
-	*data = 0;
-
-	/* Transmit the offset address to the slave; leave the master in
-	 * transmit state. */
-	LM4_I2C_MSA(port) = slave_addr & 0xff;
-	LM4_I2C_MDR(port) = offset & 0xff;
-	LM4_I2C_MCS(port) = 0x03;
-
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Send repeated start followed by receive and stop */
-	LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x01;
-	LM4_I2C_MCS(port) = 0x07;	/* NOTE: datasheet suggests 0x0b, but
-					 * 0x07 with the change in direction
-					 * flips it to a RECEIVE and STOP.
-					 * I think.
-					 */
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
-
-	/* Read the byte */
-	*data = LM4_I2C_MDR(port) & 0xff;
-
+	rv = i2c_transmit_receive(port, slave_addr, &reg, 1, &val, 1,
+					START, STOP);
 	mutex_unlock(port_mutex + port);
-	return EC_SUCCESS;
+
+	if (!rv)
+		*data = val;
+
+	return rv;
 }
 
 int i2c_write8(int port, int slave_addr, int offset, int data)
 {
 	int rv;
+	uint8_t buf[2];
+
+	buf[0] = offset;
+	buf[1] = data;
+
+	mutex_lock(port_mutex + port);
+	rv = i2c_transmit_receive(port, slave_addr, buf, 2, 0, 0,
+					START, STOP);
+	mutex_unlock(port_mutex + port);
+
+	return rv;
+}
+
+/* Read ascii string using smbus read block protocol.
+ * The return data <data> will be null terminated.
+ */
+int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
+	int len)
+{
+	int rv;
+	uint8_t reg, block_length;
 
 	mutex_lock(port_mutex + port);
 
-	/* Transmit the offset address to the slave; leave the master in
-	 * transmit state. */
-	LM4_I2C_MDR(port) = offset & 0xff;
-	LM4_I2C_MSA(port) = slave_addr & 0xff;
-	LM4_I2C_MCS(port) = 0x03;
+	reg = offset;
+	/* Send device reg space offset, and read back block length.
+	 * Keep this session open without a stop
+	 */
+	rv = i2c_transmit_receive(port, slave_addr, &reg, 1, &block_length, 1,
+					START, NO_STOP);
+	if (rv)
+		goto exit;
 
-	rv = wait_idle(port);
-	if (rv) {
-		mutex_unlock(port_mutex + port);
-		return rv;
-	}
+	if (len && block_length > (len - 1))
+		block_length = len - 1;
 
-	/* Send repeated start followed by transmit and stop */
-	LM4_I2C_MDR(port) = data & 0xff;
-	LM4_I2C_MCS(port) = 0x05;
+	rv = i2c_transmit_receive(port, slave_addr, 0, 0, data, block_length,
+					NO_START, STOP);
+	data[block_length] = 0;
 
+exit:
 	mutex_unlock(port_mutex + port);
-	return wait_idle(port);
+	return rv;
 }
+
 
 /*****************************************************************************/
 /* Interrupt handlers */
@@ -265,7 +313,7 @@ static void scan_bus(int port, char *desc)
 		rv = wait_idle(port);
 		if (rv == EC_SUCCESS)
 			uart_printf("\nFound device at 8-bit addr 0x%02x\n", a);
-	}
+}
 
 	mutex_unlock(port_mutex + port);
 
