@@ -5,6 +5,7 @@
 /* Stellaris EKB-LM4F-EAC board-specific configuration */
 
 #include "board.h"
+#include "chipset.h"
 #include "gpio.h"
 #include "power_button.h"
 #include "registers.h"
@@ -70,6 +71,15 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	GPIO_SIGNAL_NOT_IMPLEMENTED("PCH_SUSACKn"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("SHUNT_1_5V_DDR"),
 };
+
+
+/* BDS system is only half-wired to an x86 chipset, so it can't tell what state
+ * the chipset is in.  Rather than scatter ifdef's everywhere, put a mock
+ * chipset interface here. */
+int chipset_in_state(enum chipset_state in_state)
+{
+	return 1;  /* Sure, I'm in whatever state you want. */
+}
 
 
 void configure_board(void)

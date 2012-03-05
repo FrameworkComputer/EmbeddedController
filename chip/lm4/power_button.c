@@ -5,6 +5,7 @@
 
 /* Power button and lid switch module for Chrome EC */
 
+#include "chipset.h"
 #include "console.h"
 #include "gpio.h"
 #include "keyboard.h"
@@ -133,10 +134,9 @@ static void lid_switch_changed(uint64_t tnow)
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
 		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
 
-	/* If the lid has opened, also send a power button pulse to the PCH.
-	 * We technically only need to send this when the main processor is in
-	 * S5, but it's not harmful to send at other times. */
-	if (v) {
+	/* If the lid has opened and the chipset is is soft-off, send a power
+	 * button pulse to wake up the chipset. */
+	if (v && chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
 		set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
 		tnext_state = tnow + LID_PWRBTN_US;

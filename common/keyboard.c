@@ -542,11 +542,9 @@ void keyboard_set_power_button(int pressed)
 
 	power_button_pressed = pressed;
 
-#ifndef BOARD_bds
 	/* Only send the scan code if main chipset is fully awake */
 	if (!chipset_in_state(CHIPSET_STATE_ON))
 		return;
-#endif
 
 	code_set = acting_code_set(scancode_set);
 	ret = i8042_send_to_host(
