@@ -380,6 +380,45 @@ struct lpc_response_thermal_get_threshold {
 #define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
 
 /*****************************************************************************/
+/* Battery commands */
+
+/* Maximum asciiz length of battery text data  */
+#define EC_LPC_BATT_TEXT_MAX 32
+
+/* Get battery info */
+#define EC_LPC_COMMAND_BATTERY_INFO 0x60
+struct lpc_response_battery_info {
+	uint32_t design_capacity;
+	uint32_t last_full_charge_capacity;
+	uint32_t design_output_voltage;
+	uint32_t design_capacity_warning;
+	uint32_t design_capacity_low;
+	uint32_t cycle_count;
+} __attribute__ ((packed));
+
+/* Following 4 battery commands use the same response data type
+ *   BATTERY_TYPE
+ *   BATTERY_MODEL_NUMBER
+ *   BATTERY_MODEL_NUMBER
+ *   BATTERY_SERIAL_NUMBER
+ */
+struct lpc_response_battery_text {
+	char text[EC_LPC_BATT_TEXT_MAX];
+} __attribute__ ((packed));
+
+/* Get battery chemistry */
+#define EC_LPC_COMMAND_BATTERY_TYPE 0x61
+
+/* Get battery model number */
+#define EC_LPC_COMMAND_BATTERY_MODEL_NUMBER 0x62
+
+/* Get battery serial number */
+#define EC_LPC_COMMAND_BATTERY_SERIAL_NUMBER 0x63
+
+/* Get battery OEM name */
+#define EC_LPC_COMMAND_BATTERY_OEM 0x64
+
+/*****************************************************************************/
 /* Host event commands */
 
 #define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK 0x88
@@ -427,7 +466,5 @@ struct lpc_params_host_event_clear {
  * reboots, the host will reboot too, so there is no response to this
  * command. */
 #define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
-
-
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */
