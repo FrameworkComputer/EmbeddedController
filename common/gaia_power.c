@@ -6,6 +6,7 @@
 /* GAIA SoC power sequencing module for Chrome EC */
 
 #include "board.h"
+#include "chipset.h"  /* This module implements chipset functions too */
 #include "console.h"
 #include "gpio.h"
 #include "task.h"
@@ -111,10 +112,29 @@ int gaia_power_init(void)
 	return EC_SUCCESS;
 }
 
-/* TODO: rename this to something generic */
-int x86_power_in_S0(void) {
-	return ap_on;
+
+/*****************************************************************************/
+/* Chipset interface */
+
+/* Returns non-zero if the chipset is in the specified state. */
+int chipset_in_state(enum chipset_state in_state)
+{
+	switch (in_state) {
+	case CHIPSET_STATE_SOFT_OFF:
+		return ap_on == 0;
+	case CHIPSET_STATE_SUSPEND:
+		/* TODO: implement */
+		return 0;
+	case CHIPSET_STATE_ON:
+		return ap_on;
+	}
+
+	/* Should never get here since we list all states above, but compiler
+	 * doesn't seem to understand that. */
+	return 0;
 }
+
+/*****************************************************************************/
 
 void gaia_power_task(void)
 {

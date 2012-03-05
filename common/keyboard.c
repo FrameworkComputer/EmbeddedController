@@ -1,10 +1,11 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Chrome OS EC keyboard common code.
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "keyboard.h"
@@ -13,7 +14,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "x86_power.h"
 
 
 #define KEYBOARD_DEBUG 1
@@ -542,11 +542,12 @@ void keyboard_set_power_button(int pressed)
 
 	power_button_pressed = pressed;
 
-#ifdef CONFIG_TASK_X86POWER
-	/* Only send the scan code if x86 is fully awake */
-	if (!x86_power_in_S0())
+#ifndef BOARD_bds
+	/* Only send the scan code if main chipset is fully awake */
+	if (!chipset_in_state(CHIPSET_STATE_ON))
 		return;
 #endif
+
 	code_set = acting_code_set(scancode_set);
 	ret = i8042_send_to_host(
 		 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,

@@ -17,9 +17,6 @@ int x86_power_init(void);
 /* Interrupt handler for input GPIOs */
 void x86_power_interrupt(enum gpio_signal signal);
 
-/* Returns true if the system is in S0. */
-int x86_power_in_S0(void);
-
 /* Informs the power module that the CPU has overheated (too_hot=1) or is
  * no longer too hot (too_hot=0). */
 void x86_power_cpu_overheated(int too_hot);

@@ -6,6 +6,7 @@
 /* X86 chipset power control module for Chrome EC */
 
 #include "board.h"
+#include "chipset.h"
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
@@ -33,8 +34,6 @@ enum x86_state {
 	X86_S3S0,                   /* S3 -> S0 */
 	X86_S0S3,                   /* S0 -> S3 */
 	X86_S3S5,                   /* S3 -> S5 */
-
-	/* TODO: S3 state, S0S5, S0S3, S3S0 */
 };
 
 static const char * const state_names[] = {
@@ -163,6 +162,37 @@ static int wait_in_signals(uint32_t want)
 }
 
 
+void x86_power_cpu_overheated(int too_hot)
+{
+	/* TODO: crosbug.com/p/8242 - real implementation */
+}
+
+
+void x86_power_force_shutdown(void)
+{
+	/* TODO: crosbug.com/p/8242 - real implementation */
+}
+
+/*****************************************************************************/
+/* Chipset interface */
+
+/* Returns non-zero if the chipset is in the specified state. */
+int chipset_in_state(enum chipset_state in_state)
+{
+	switch (in_state) {
+	case CHIPSET_STATE_SOFT_OFF:
+		return (state == X86_S5);
+	case CHIPSET_STATE_SUSPEND:
+		return (state == X86_S3);
+	case CHIPSET_STATE_ON:
+		return (state == X86_S0);
+	}
+
+	/* Should never get here since we list all states above, but compiler
+	 * doesn't seem to understand that. */
+	return 0;
+}
+
 /*****************************************************************************/
 /* Interrupts */
 
@@ -206,26 +236,6 @@ int x86_power_init(void)
 
 	return EC_SUCCESS;
 }
-
-/*****************************************************************************/
-
-int x86_power_in_S0(void)
-{
-	return state == X86_S0;
-}
-
-
-void x86_power_cpu_overheated(int too_hot)
-{
-	/* TODO: crosbug.com/p/8242 - real implementation */
-}
-
-
-void x86_power_force_shutdown(void)
-{
-	/* TODO: crosbug.com/p/8242 - real implementation */
-}
-
 
 /*****************************************************************************/
 /* Task function */

@@ -6,6 +6,7 @@
 /* Thermal engine module for Chrome EC */
 
 #include "board.h"
+#include "chipset.h"
 #include "console.h"
 #include "gpio.h"
 #include "pwm.h"
@@ -140,7 +141,7 @@ static void thermal_process(void)
 			continue;
 
 		if (flag & THERMAL_CONFIG_NEED_CPU &&
-		    x86_power_in_S0() == 0)
+		    !chipset_in_state(CHIPSET_STATE_ON))
 			continue;
 
 		cur_temp = temp_sensor_read(i);
