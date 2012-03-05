@@ -225,6 +225,28 @@ static inline int battery_design_voltage(int *voltage)
 static inline int battery_serial_number(int *serial)
 	{ return sb_read(SB_SERIAL_NUMBER, serial); }
 
+/* Read manufacturer name */
+static inline int battery_manufacturer_name(char *manufacturer_name,
+	int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_MANUFACTURER_NAME, manufacturer_name, buf_size);
+}
+
+/* Read device name */
+static inline int battery_device_name(char *device_name, int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_DEVICE_NAME, device_name, buf_size);
+}
+
+/* Read battery type/chemistry */
+static inline int battery_device_chemistry(char *device_chemistry, int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_DEVICE_CHEMISTRY, device_chemistry, buf_size);
+}
+
 /* Read battery discharging current
  * unit: mA
  * negative value: charging
