@@ -70,8 +70,8 @@ static const uint8_t *actual_key_mask;
 /* TODO: (crosbug.com/p/7485) fill in real key mask with 0-bits for coords that
    aren't keys */
 static const uint8_t actual_key_masks[4][KB_COLS] = {
-	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+	{0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+	 0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8},  /* full set */
 	{0},
 	{0},
 	{0},
@@ -224,10 +224,11 @@ static void print_raw_state(const char *msg)
 /* Returns 1 if any key is still pressed. 0 if no key is pressed. */
 static int check_keys_changed(void)
 {
-	int c;
+	int c, c2;
 	uint8_t r;
 	int change = 0;
 	int num_press = 0;
+	uint8_t keys[KB_COLS];
 
 	for (c = 0; c < KB_COLS; c++) {
 		/* Select column, then wait a bit for it to settle */
@@ -247,7 +248,22 @@ static int check_keys_changed(void)
 		r |= raw_state[c];
 #endif
 
-		/* Check for changes */
+		keys[c] = r;
+	}
+	select_column(COLUMN_TRI_STATE_ALL);
+
+	/* ignore if a ghost key appears. */
+	for (c = 0; c < KB_COLS; c++) {
+		if (!keys[c]) continue;
+		for (c2 = c + 1; c2 < KB_COLS; c2++) {
+			uint8_t common = keys[c] & keys[c2];
+			if (common & (common - 1)) goto out;
+		}
+	}
+
+	/* Check for changes */
+	for (c = 0; c < KB_COLS; c++) {
+		r = keys[c];
 		if (r != raw_state[c]) {
 			int i;
 			for (i = 0; i < 8; ++i) {
@@ -261,11 +277,11 @@ static int check_keys_changed(void)
 			change = 1;
 		}
 	}
-	select_column(COLUMN_TRI_STATE_ALL);
 
 	if (change)
 		print_raw_state("KB raw state");
 
+out:
 	/* Count number of key pressed */
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state[c]) ++num_press;
