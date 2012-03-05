@@ -52,6 +52,8 @@ const char help_str[] =
 	"      Reads a pattern from the EC via LPC\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
+	"  switches\n"
+	"      Prints current EC switch positions\n"
 	"  version\n"
 	"      Prints EC version\n"
 	"  temps <sensorid>\n"
@@ -1030,6 +1032,21 @@ int cmd_host_event_clear(int argc, char *argv[])
 }
 
 
+int cmd_switches(int argc, char *argv[])
+{
+	uint8_t s = read_mapped_mem8(EC_LPC_MEMMAP_SWITCHES);
+	printf("Current switches: 0x%02x\n", s);
+	printf("Lid switch:       %s\n",
+	       (s & EC_LPC_SWITCH_LID_OPEN ? "OPEN" : "CLOSED"));
+	printf("Power button:     %s\n",
+	       (s & EC_LPC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
+	printf("Write protect:    %sABLED\n",
+	       (s & EC_LPC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
+
+	return 0;
+}
+
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -1059,6 +1076,7 @@ const struct command commands[] = {
 	{"queryec", cmd_acpi_query_ec},
 	{"readtest", cmd_read_test},
 	{"sertest", cmd_serial_test},
+	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},

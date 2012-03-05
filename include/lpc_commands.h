@@ -40,12 +40,17 @@
 #define EC_LPC_MEMMAP_SWITCHES    0x30
 #define EC_LPC_MEMMAP_HOST_EVENTS 0x34
 
-/* The battery bit flags. */
+/* Battery bit flags at EC_LPC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
 #define EC_BATT_FLAG_BATT_PRESENT 0x02
 #define EC_BATT_FLAG_DISCHARGING  0x04
 #define EC_BATT_FLAG_CHARGING     0x08
 #define EC_BATT_FLAG_LEVEL_CRITICAL 0x10
+
+/* Switch flags at EC_LPC_MEMMAP_SWITCHES */
+#define EC_LPC_SWITCH_LID_OPEN               0x01
+#define EC_LPC_SWITCH_POWER_BUTTON_PRESSED   0x02
+#define EC_LPC_SWITCH_WRITE_PROTECT_DISABLED 0x04
 
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of

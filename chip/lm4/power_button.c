@@ -58,6 +58,8 @@ static uint64_t tnext_state;
 static uint64_t tdebounce_lid;
 static uint64_t tdebounce_pwr;
 
+static uint8_t *memmap_switches;
+
 
 static void set_pwrbtn_to_pch(int high)
 {
@@ -109,12 +111,14 @@ static void power_button_changed(uint64_t tnow)
 	if (!gpio_get_level(GPIO_POWER_BUTTONn)) {
 		/* pressed */
 		pwrbtn_state = PWRBTN_STATE_START;
+		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(1);
 		lpc_set_host_events(
 			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_POWER_BUTTON));
 	} else {
 		/* released */
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
+		*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(0);
 	}
 	tnext_state = tnow;  /* Trigger next state transition now */
@@ -134,12 +138,20 @@ static void lid_switch_changed(uint64_t tnow)
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
 		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
 
-	/* If the lid has opened and the chipset is is soft-off, send a power
-	 * button pulse to wake up the chipset. */
-	if (v && chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
-		set_pwrbtn_to_pch(0);
-		pwrbtn_state = PWRBTN_STATE_STOPPING;
-		tnext_state = tnow + LID_PWRBTN_US;
+	if (v) {
+		/* Lid open */
+		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+
+		/* If the chipset is is soft-off, send a power button pulse to
+		 * wake up the chipset. */
+		if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
+			set_pwrbtn_to_pch(0);
+			pwrbtn_state = PWRBTN_STATE_STOPPING;
+			tnext_state = tnow + LID_PWRBTN_US;
+		}
+	} else {
+		/* Lid closed */
+		*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
 	}
 }
 
@@ -163,6 +175,14 @@ void power_button_interrupt(enum gpio_signal signal)
 
 int power_button_init(void)
 {
+	/* Set up memory-mapped switch positions */
+	memmap_switches = lpc_get_memmap_range() + EC_LPC_MEMMAP_SWITCHES;
+	*memmap_switches = 0;
+	if (gpio_get_level(GPIO_POWER_BUTTONn) == 0)
+		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+	if (gpio_get_level(GPIO_PCH_LID_SWITCHn) != 0)
+		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+
 	/* Copy initial switch states to PCH */
 	gpio_set_level(GPIO_PCH_PWRBTNn, gpio_get_level(GPIO_POWER_BUTTONn));
 	gpio_set_level(GPIO_PCH_LID_SWITCHn, gpio_get_level(GPIO_LID_SWITCHn));
@@ -235,6 +255,9 @@ static int command_powerbtn(int argc, char **argv)
 		}
 	}
 
+	/* Note that this only simulates the raw power button signal to the
+	 * PCH.  It does not simulate the full state machine which sends SMIs
+	 * and other events to other parts of the EC and chipset. */
 	uart_printf("Simulating %d ms power button press.\n", ms);
 	set_pwrbtn_to_pch(0);
 	usleep(ms * 1000);
