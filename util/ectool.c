@@ -263,9 +263,14 @@ int cmd_version(int argc, char *argv[])
 {
   static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
 	struct lpc_response_get_version r;
+	struct lpc_response_get_build_info r2;
 	int rv;
 
 	rv = ec_command(EC_LPC_COMMAND_GET_VERSION, NULL, 0, &r, sizeof(r));
+	if (rv)
+		return rv;
+	rv = ec_command(EC_LPC_COMMAND_GET_BUILD_INFO,
+			NULL, 0, &r2, sizeof(r2));
 	if (rv)
 		return rv;
 
@@ -273,6 +278,7 @@ int cmd_version(int argc, char *argv[])
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
 	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
+	r2.build_string[sizeof(r2.build_string) - 1] = '\0';
 
         /* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
@@ -281,6 +287,8 @@ int cmd_version(int argc, char *argv[])
 	printf("Firmware copy: %s\n",
 	       (r.current_image < ARRAY_SIZE(fw_copies) ?
 		fw_copies[r.current_image] : "?"));
+	printf("Build info:    %s\n", r2.build_string);
+
 	return 0;
 }
 

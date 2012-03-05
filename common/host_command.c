@@ -72,40 +72,6 @@ static enum lpc_status host_command_hello(uint8_t *data)
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HELLO, host_command_hello);
 
 
-static enum lpc_status host_command_get_version(uint8_t *data)
-{
-	struct lpc_response_get_version *r =
-			(struct lpc_response_get_version *)data;
-
-	uart_printf("[LPC GetVersion]\n");
-
-	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
-		sizeof(r->version_string_ro));
-	strzcpy(r->version_string_rw_a, system_get_version(SYSTEM_IMAGE_RW_A),
-		sizeof(r->version_string_rw_a));
-	strzcpy(r->version_string_rw_b, system_get_version(SYSTEM_IMAGE_RW_B),
-		sizeof(r->version_string_rw_b));
-
-	switch(system_get_image_copy()) {
-	case SYSTEM_IMAGE_RO:
-		r->current_image = EC_LPC_IMAGE_RO;
-		break;
-	case SYSTEM_IMAGE_RW_A:
-		r->current_image = EC_LPC_IMAGE_RW_A;
-		break;
-	case SYSTEM_IMAGE_RW_B:
-		r->current_image = EC_LPC_IMAGE_RW_B;
-		break;
-	default:
-		r->current_image = EC_LPC_IMAGE_UNKNOWN;
-		break;
-	}
-
-	return EC_LPC_RESULT_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_VERSION, host_command_get_version);
-
-
 static enum lpc_status host_command_read_test(uint8_t *data)
 {
 	struct lpc_params_read_test *p = (struct lpc_params_read_test *)data;

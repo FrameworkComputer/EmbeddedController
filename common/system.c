@@ -6,6 +6,8 @@
 /* System module for Chrome EC : common functions */
 
 #include "console.h"
+#include "host_command.h"
+#include "lpc_commands.h"
 #include "system.h"
 #include "uart.h"
 #include "util.h"
@@ -141,6 +143,9 @@ const char *system_get_build_info(void)
 	return build_info;
 }
 
+/*****************************************************************************/
+/* Console commands */
+
 static int command_sysinfo(int argc, char **argv)
 {
 	uart_printf("Reset cause: %d (%s)\n",
@@ -209,3 +214,50 @@ static int command_version(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version);
+
+/*****************************************************************************/
+/* Host commands */
+
+static enum lpc_status host_command_get_version(uint8_t *data)
+{
+	struct lpc_response_get_version *r =
+			(struct lpc_response_get_version *)data;
+
+	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
+		sizeof(r->version_string_ro));
+	strzcpy(r->version_string_rw_a, system_get_version(SYSTEM_IMAGE_RW_A),
+		sizeof(r->version_string_rw_a));
+	strzcpy(r->version_string_rw_b, system_get_version(SYSTEM_IMAGE_RW_B),
+		sizeof(r->version_string_rw_b));
+
+	switch(system_get_image_copy()) {
+	case SYSTEM_IMAGE_RO:
+		r->current_image = EC_LPC_IMAGE_RO;
+		break;
+	case SYSTEM_IMAGE_RW_A:
+		r->current_image = EC_LPC_IMAGE_RW_A;
+		break;
+	case SYSTEM_IMAGE_RW_B:
+		r->current_image = EC_LPC_IMAGE_RW_B;
+		break;
+	default:
+		r->current_image = EC_LPC_IMAGE_UNKNOWN;
+		break;
+	}
+
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_VERSION, host_command_get_version);
+
+
+static enum lpc_status host_command_build_info(uint8_t *data)
+{
+	struct lpc_response_get_build_info *r =
+			(struct lpc_response_get_build_info *)data;
+
+	strzcpy(r->build_string, system_get_build_info(),
+		sizeof(r->build_string));
+
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_BUILD_INFO, host_command_build_info);

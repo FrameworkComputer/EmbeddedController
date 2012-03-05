@@ -158,6 +158,13 @@ struct lpc_response_read_test {
 } __attribute__ ((packed));
 
 
+/* Get build information */
+#define EC_LPC_COMMAND_GET_BUILD_INFO 0x04
+struct lpc_response_get_build_info {
+	char build_string[EC_LPC_PARAM_SIZE];
+} __attribute__ ((packed));
+
+
 /*****************************************************************************/
 /* Flash commands */
 
