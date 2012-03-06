@@ -51,9 +51,10 @@ struct stm32_def {
 	const char *name;
 	uint32_t flash_start;
 	uint32_t flash_size;
+	uint32_t page_size;
 } chip_defs[] = {
-	{0x416, "STM32L15xx", 0x08000000, 0x20000},
-	{0x420, "STM32F100xx", 0x08000000, 0x20000},
+	{0x416, "STM32L15xx", 0x08000000, 0x20000, 256},
+	{0x420, "STM32F100xx", 0x08000000, 0x20000, 1024},
 	{ 0 }
 };
 
@@ -78,6 +79,8 @@ typedef struct {
 	int size;
 	uint8_t *data;
 } payload_t;
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int open_serial(const char *port)
 {
@@ -380,24 +383,32 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 	return size;
 }
 
-int command_ext_erase(int fd, uint16_t count, uint16_t *pages)
+int command_ext_erase(int fd, uint16_t count, uint16_t start)
 {
 	int res;
 	uint16_t count_be = htons(count);
 	payload_t load = { 2, (uint8_t *)&count_be };
+	uint16_t *pages = NULL;
 
 	if (count < 0xfff0) {
-		/* not a special value */
-		/* TODO implement page-list erase */
+		int i;
+		/* not a special value : build a list of pages */
+		load.size = 2 * (count + 1);
+		pages = malloc(load.size);
 		if (!pages)
-			return -EINVAL;
+			return -ENOMEM;
+		load.data = (uint8_t *)pages;
+		pages[0] = htons(count - 1);
+		for (i = 0; i < count; i++)
+			pages[i+1] = htons(start + i);
 	}
 
 	res = send_command(fd, CMD_EXTERASE, &load, 1, NULL, 0);
 	if (res >= 0)
 		printf("Flash erased.\n");
-	printf("ERASE res = %d\n", res);
 
+	if (pages)
+		free(pages);
 	return res;
 }
 
@@ -637,11 +648,16 @@ int main(int argc, char **argv)
 	if (flags & FLAG_UNPROTECT)
 		command_write_unprotect(ser);
 
-	if (flags & FLAG_ERASE)
-		command_ext_erase(ser, ERASE_ALL, NULL);
+	if (flags & FLAG_ERASE || output_filename) {
+		/* Mass erase is not supported on STM32L15xx */
+		/* command_ext_erase(ser, ERASE_ALL, 0); */
+		int i, page_count = chip->flash_size / chip->page_size;
+		for (i = 0; i < page_count; i += 128)
+			command_ext_erase(ser, MIN(128, page_count - i), i);
+	}
 
 	if (input_filename)
-		read_flash(ser, chip, input_filename, 0, 0);
+		read_flash(ser, chip, input_filename, 0, chip->flash_size);
 
 	if (output_filename)
 		write_flash(ser, chip, output_filename, 0);
