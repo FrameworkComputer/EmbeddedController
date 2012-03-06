@@ -27,6 +27,15 @@
 #define EC_LPC_ADDR_USER_PARAM   0x880
 #define EC_LPC_PARAM_SIZE          128  /* Size of each param area in bytes */
 
+/* EC command register bit functions */
+#define EC_LPC_CMDR_DATA	(1 << 0)
+#define EC_LPC_CMDR_PENDING	(1 << 1)
+#define EC_LPC_CMDR_BUSY	(1 << 2)
+#define EC_LPC_CMDR_CMD		(1 << 3)
+#define EC_LPC_CMDR_ACPI_BRST	(1 << 4)
+#define EC_LPC_CMDR_SCI		(1 << 5)
+#define EC_LPC_CMDR_SMI		(1 << 6)
+
 #define EC_LPC_ADDR_MEMMAP       0x900
 #define EC_LPC_MEMMAP_SIZE         256
 
