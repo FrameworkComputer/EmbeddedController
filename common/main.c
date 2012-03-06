@@ -45,8 +45,11 @@ int main(void)
 	 * source we need to calibrate the internal oscillator. */
 	system_pre_init();
 
-	/* Set the CPU clocks / PLLs */
+	/* Set the CPU clocks / PLLs and timer */
 	clock_init();
+	timer_init();
+	/* The timer used by get_time() is now started, so everything after
+	 * this can be benchmarked. */
 
 	/* Do system, gpio, and vboot pre-initialization so we can jump to
 	 * another image if necessary.  This must be done as early as
@@ -60,7 +63,6 @@ int main(void)
 #ifdef CONFIG_TASK_WATCHDOG
 	watchdog_init(1100);
 #endif
-	timer_init();
 	uart_init();
 	system_init();
 #ifdef CONFIG_TASK_KEYSCAN
@@ -94,8 +96,11 @@ int main(void)
 	peci_init();
 #endif
 
-	/* Print the reset cause */
-	uart_printf("\n\n--- Chrome EC initialized! ---\n");
+	/* Print the init time and reset cause.  Init time isn't completely
+	 * accurate because it can't take into account the time for the first
+	 * few module inits, but it'll at least catch the majority of them. */
+	uart_printf("\n\n--- Chrome EC initialized in %d us ---\n",
+		    get_time().le.lo);
 	uart_printf("build: %s\n", system_get_build_info());
 	uart_printf("(image: %s, last reset: %s)\n",
 		    system_get_image_copy_string(),

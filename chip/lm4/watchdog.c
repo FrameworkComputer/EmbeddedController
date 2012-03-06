@@ -141,6 +141,11 @@ int watchdog_init(int period_ms)
 /* Low priority task to reload the watchdog */
 void watchdog_task(void)
 {
+	/* Print when the watchdog task starts.  This is the lowest priority
+	 * task, so this only starts once all other tasks have gotten a chance
+	 * to do their task inits and have gone to sleep. */
+	uart_printf("[watchdog task started at %d us]\n", get_time().le.lo);
+
 	while (1) {
 #ifdef BOARD_bds
 		gpio_set_level(GPIO_DEBUG_LED, 1);

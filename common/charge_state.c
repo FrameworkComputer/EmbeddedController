@@ -308,25 +308,17 @@ static enum power_state state_error(void)
 
 	/* Debug output */
 	if (error_flags != last_error_flags) {
-		uart_printf("errors   : %02x\n", error_flags);
-		uart_printf("previous : %02x\n", last_error_flags);
-		last_error_flags = error_flags;
-		uart_printf("ac       : %d\n", ac);
-		uart_puts("charger\n");
-		if (ac)
-			if (error_flags & (F_CHG_V | F_CHG_I))
-				uart_puts("  error\n");
-			else
-				uart_puts("  ok\n");
-		else
-			uart_puts("  offline\n");
+		uart_printf("[Charge error flags %02x -> %02x; AC=%d",
+			    last_error_flags, error_flags, ac);
 
-		uart_puts("battery\n");
-		uart_printf("  voltage: %5d\n", bat_v);
-		uart_printf("  current: %5d\n", bat_i);
-		uart_printf("  temp   : %5d\n", (bat_temp - 2731) / 10);
-		uart_printf("  des_vol: %5d\n", desired_v);
-		uart_printf("  des_cur: %5d\n", desired_i);
+		if (error_flags & (F_CHG_V | F_CHG_I))
+			uart_puts(", charger error");
+
+		uart_printf(", battery V=%d I=%d T=%d Vwant=%d Iwant=%d]\n",
+			    bat_v, bat_i, (bat_temp - 2731) / 10,
+			    desired_v, desired_i);
+
+		last_error_flags = error_flags;
 	}
 
 	*memmap_batt_flags = batt_flags;
@@ -392,7 +384,7 @@ void charge_state_machine_task(void)
 		}
 
 		if (new_state)
-			uart_printf("CHARGE: %s --> %s\n",
+			uart_printf("[Charge state %s -> %s]\n",
 				_state_name[current_state],
 				_state_name[new_state]);
 
