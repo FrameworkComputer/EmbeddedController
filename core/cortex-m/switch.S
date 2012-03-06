@@ -26,7 +26,7 @@
  *
  * must be called from interrupt context
  *
- * the structure of tje saved context on the stack is :
+ * the structure of the saved context on the stack is :
  *     r0, r1, r2, r3, r12, lr, pc, psr, r4, r5, r6, r7, r8, r9, r10, r11
  *       exception frame              <|> additional registers
  */

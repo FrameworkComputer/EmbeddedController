@@ -39,15 +39,34 @@ void __idle(void);
 CONFIG_TASK_LIST
 #undef TASK
 
+/* store the task names for easier debugging */
+#define TASK(n, r, d)  #n,
+#include TASK_LIST
+static const char * const task_names[] = {
+	"<< idle >>",
+	CONFIG_TASK_LIST
+};
+#undef TASK
 
 extern void __switchto(task_ *from, task_ *to);
+
+
+static void task_exit_trap(void)
+{
+	int i = task_get_current();
+	uart_printf("[Task %d (%s) exited!]\n", i, task_names[i]);
+	/* Exited tasks simply sleep forever */
+	while (1)
+		task_wait_msg(-1);
+}
+
 
 
 /* declare and fill the contexts for all the tasks */
 #define TASK(n, r, d)  {						\
 	.context[0] = (uint32_t)(tasks + TASK_ID_##n + 1) - 64,	        \
 	.context[TASK_SIZE/4 - 8/*r0*/] = (uint32_t)d,                  \
-	/* TODO set a LR to a trap */		                        \
+	.context[TASK_SIZE/4 - 3/*lr*/] = (uint32_t)task_exit_trap,     \
 	.context[TASK_SIZE/4 - 2/*pc*/] = (uint32_t)r,                  \
 	.context[TASK_SIZE/4 - 1/*psr*/] = 0x01000000 },
 #include TASK_LIST
@@ -352,15 +371,6 @@ void mutex_unlock(struct mutex *mtx)
 
 
 #ifdef CONFIG_DEBUG
-
-/* store the task names for easier debugging */
-#define TASK(n, r, d)  #n,
-#include TASK_LIST
-static const char * const task_names[] = {
-	"<< idle >>",
-	CONFIG_TASK_LIST
-};
-#undef TASK
 
 
 int command_task_info(int argc, char **argv)
