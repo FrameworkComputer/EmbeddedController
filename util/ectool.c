@@ -18,6 +18,8 @@ static inline int MIN(int a, int b) { return a < b ? a : b; }
 
 const char help_str[] =
 	"Commands:\n"
+	"  battery\n"
+	"      Prints battery info\n"
 	"  eventclear <mask>\n"
 	"      Clears EC host events flags where mask has bits set\n"
 	"  eventget\n"
@@ -282,7 +284,7 @@ int cmd_version(int argc, char *argv[])
 	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
 	r2.build_string[sizeof(r2.build_string) - 1] = '\0';
 
-        /* Print versions */
+	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
 	printf("RW-A version:  %s\n", r.version_string_rw_a);
 	printf("RW-B version:  %s\n", r.version_string_rw_b);
@@ -668,7 +670,7 @@ int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 
 	rv = read_mapped_mem16(EC_LPC_MEMMAP_FAN);
 	if (rv == 0xffff)
-	        return -1;
+		return -1;
 
 	if (rv == 0xfffe)
 		printf("Fan stalled!\n");
@@ -686,20 +688,20 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 	int rv;
 
 	if (argc != 1) {
-	        fprintf(stderr,
-	                "Usage: pwmsetfanrpm <targetrpm>\n");
-	        return -1;
+		fprintf(stderr,
+			"Usage: pwmsetfanrpm <targetrpm>\n");
+		return -1;
 	}
 	p.rpm = strtol(argv[0], &e, 0);
 	if (e && *e) {
-	        fprintf(stderr, "Bad RPM.\n");
-	        return -1;
+		fprintf(stderr, "Bad RPM.\n");
+		return -1;
 	}
 
 	rv = ec_command(EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM,
-	                &p, sizeof(p), NULL, 0);
+			&p, sizeof(p), NULL, 0);
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Fan target RPM set.\n");
 	return 0;
@@ -714,7 +716,7 @@ int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 	rv = ec_command(EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Current keyboard backlight percent: %d\n", r.percent);
 
@@ -729,20 +731,20 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	int rv;
 
 	if (argc != 1) {
-	        fprintf(stderr,
-	                "Usage: pwmsetkblight <percent>\n");
-	        return -1;
+		fprintf(stderr,
+			"Usage: pwmsetkblight <percent>\n");
+		return -1;
 	}
 	p.percent = strtol(argv[0], &e, 0);
 	if (e && *e) {
-	        fprintf(stderr, "Bad percent.\n");
-	        return -1;
+		fprintf(stderr, "Bad percent.\n");
+		return -1;
 	}
 
 	rv = ec_command(EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT,
-	                &p, sizeof(p), NULL, 0);
+			&p, sizeof(p), NULL, 0);
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Keyboard backlight set.\n");
 	return 0;
@@ -929,7 +931,7 @@ int cmd_host_event_get_smi_mask(int argc, char *argv[])
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Current host event SMI mask: 0x%08x\n", r.mask);
 	return 0;
@@ -944,7 +946,7 @@ int cmd_host_event_get_sci_mask(int argc, char *argv[])
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Current host event SCI mask: 0x%08x\n", r.mask);
 	return 0;
@@ -958,20 +960,20 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 	int rv;
 
 	if (argc != 1) {
-	        fprintf(stderr,
-	                "Usage: eventsmimask <mask>\n");
-	        return -1;
+		fprintf(stderr,
+			"Usage: eventsmimask <mask>\n");
+		return -1;
 	}
 	p.mask = strtol(argv[0], &e, 0);
 	if (e && *e) {
-	        fprintf(stderr, "Bad mask.\n");
-	        return -1;
+		fprintf(stderr, "Bad mask.\n");
+		return -1;
 	}
 
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK,
-	                &p, sizeof(p), NULL, 0);
+			&p, sizeof(p), NULL, 0);
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Mask set.\n");
 	return 0;
@@ -985,20 +987,20 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 	int rv;
 
 	if (argc != 1) {
-	        fprintf(stderr,
-	                "Usage: eventscimask <mask>\n");
-	        return -1;
+		fprintf(stderr,
+			"Usage: eventscimask <mask>\n");
+		return -1;
 	}
 	p.mask = strtol(argv[0], &e, 0);
 	if (e && *e) {
-	        fprintf(stderr, "Bad mask.\n");
-	        return -1;
+		fprintf(stderr, "Bad mask.\n");
+		return -1;
 	}
 
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK,
-	                &p, sizeof(p), NULL, 0);
+			&p, sizeof(p), NULL, 0);
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Mask set.\n");
 	return 0;
@@ -1012,20 +1014,20 @@ int cmd_host_event_clear(int argc, char *argv[])
 	int rv;
 
 	if (argc != 1) {
-	        fprintf(stderr,
-	                "Usage: eventclear <mask>\n");
-	        return -1;
+		fprintf(stderr,
+			"Usage: eventclear <mask>\n");
+		return -1;
 	}
 	p.mask = strtol(argv[0], &e, 0);
 	if (e && *e) {
-	        fprintf(stderr, "Bad mask.\n");
-	        return -1;
+		fprintf(stderr, "Bad mask.\n");
+		return -1;
 	}
 
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_CLEAR,
-	                &p, sizeof(p), NULL, 0);
+			&p, sizeof(p), NULL, 0);
 	if (rv)
-	        return rv;
+		return rv;
 
 	printf("Host events cleared.\n");
 	return 0;
@@ -1047,6 +1049,57 @@ int cmd_switches(int argc, char *argv[])
 }
 
 
+int cmd_battery(int argc, char *argv[])
+{
+	struct lpc_response_battery_info batt_info;
+	struct lpc_response_battery_text batt_text;
+	int rv;
+
+	printf("Battery info:\n");
+
+	rv = ec_command(EC_LPC_COMMAND_BATTERY_OEM,
+			NULL, 0, &batt_text, sizeof(batt_text));
+	if (rv)
+		return rv;
+	printf("  OEM name:          %s\n", batt_text.text);
+
+	rv = ec_command(EC_LPC_COMMAND_BATTERY_MODEL_NUMBER,
+			NULL, 0, &batt_text, sizeof(batt_text));
+	if (rv)
+		return rv;
+	printf("  Model number:           %s\n", batt_text.text);
+
+	rv = ec_command(EC_LPC_COMMAND_BATTERY_TYPE,
+			NULL, 0, &batt_text, sizeof(batt_text));
+	if (rv)
+		return rv;
+	printf("  Chemistry:              %s\n", batt_text.text);
+
+	rv = ec_command(EC_LPC_COMMAND_BATTERY_SERIAL_NUMBER,
+			NULL, 0, &batt_text, sizeof(batt_text));
+	if (rv)
+		return rv;
+	printf("  Serial number:          %s\n", batt_text.text);
+
+	rv = ec_command(EC_LPC_COMMAND_BATTERY_INFO,
+			NULL, 0, &batt_info, sizeof(batt_info));
+	if (rv)
+		return rv;
+	printf("  Design capacity:        %u mAh\n",
+			batt_info.design_capacity);
+	printf("  Last full charge:       %u mAh\n",
+			batt_info.last_full_charge_capacity);
+	printf("  Design output voltage   %u mV\n",
+			batt_info.design_output_voltage);
+	printf("  Design capacity warning %u mAh\n",
+			batt_info.design_capacity_warning);
+	printf("  Design capacity low     %u mAh\n",
+			batt_info.design_capacity_low);
+	printf("  Cycle count             %u\n",
+			batt_info.cycle_count);
+	return 0;
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -1055,6 +1108,7 @@ struct command {
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
+	{"battery", cmd_battery},
 	{"eventclear", cmd_host_event_clear},
 	{"eventget", cmd_host_event_get_raw},
 	{"eventgetscimask", cmd_host_event_get_sci_mask},
