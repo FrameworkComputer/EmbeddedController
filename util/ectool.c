@@ -1037,13 +1037,17 @@ int cmd_host_event_clear(int argc, char *argv[])
 int cmd_switches(int argc, char *argv[])
 {
 	uint8_t s = read_mapped_mem8(EC_LPC_MEMMAP_SWITCHES);
-	printf("Current switches: 0x%02x\n", s);
-	printf("Lid switch:       %s\n",
+	printf("Current switches:   0x%02x\n", s);
+	printf("Lid switch:         %s\n",
 	       (s & EC_LPC_SWITCH_LID_OPEN ? "OPEN" : "CLOSED"));
-	printf("Power button:     %s\n",
+	printf("Power button:       %s\n",
 	       (s & EC_LPC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
-	printf("Write protect:    %sABLED\n",
+	printf("Write protect:      %sABLED\n",
 	       (s & EC_LPC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
+	printf("Keyboard recovery:  %sABLED\n",
+	       (s & EC_LPC_SWITCH_KEYBOARD_RECOVERY ? "EN" : "DIS"));
+	printf("Dedicated recovery: %sABLED\n",
+	       (s & EC_LPC_SWITCH_DEDICATED_RECOVERY ? "EN" : "DIS"));
 
 	return 0;
 }

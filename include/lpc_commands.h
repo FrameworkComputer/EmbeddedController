@@ -60,6 +60,10 @@
 #define EC_LPC_SWITCH_LID_OPEN               0x01
 #define EC_LPC_SWITCH_POWER_BUTTON_PRESSED   0x02
 #define EC_LPC_SWITCH_WRITE_PROTECT_DISABLED 0x04
+/* Recovery requested via keyboard */
+#define EC_LPC_SWITCH_KEYBOARD_RECOVERY      0x08
+/* Recovery requested via dedicated signal (from servo board) */
+#define EC_LPC_SWITCH_DEDICATED_RECOVERY     0x10
 
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of

@@ -121,6 +121,8 @@ enum gpio_signal {
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_SHUNT_1_5V_DDR,      /* Shunt +1.5V_DDR; may also enable +3V_TP
 				   * depending on stuffing. */
+	GPIO_RECOVERYn,           /* Recovery signal from servo */
+	GPIO_WRITE_PROTECTn,      /* Write protect input */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

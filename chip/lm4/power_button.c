@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "keyboard.h"
+#include "keyboard_scan.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "power_button.h"
@@ -59,6 +60,26 @@ static uint64_t tdebounce_lid;
 static uint64_t tdebounce_pwr;
 
 static uint8_t *memmap_switches;
+
+
+/* Update status of non-debounced switches */
+static void update_other_switches(void)
+{
+	if (gpio_get_level(GPIO_WRITE_PROTECTn) != 0)
+		*memmap_switches |= EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
+	else
+		*memmap_switches &= ~EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
+
+	if (keyboard_scan_recovery_pressed())
+		*memmap_switches |= EC_LPC_SWITCH_KEYBOARD_RECOVERY;
+	else
+		*memmap_switches &= ~EC_LPC_SWITCH_KEYBOARD_RECOVERY;
+
+	if (gpio_get_level(GPIO_RECOVERYn) == 0)
+		*memmap_switches |= EC_LPC_SWITCH_DEDICATED_RECOVERY;
+	else
+		*memmap_switches &= ~EC_LPC_SWITCH_DEDICATED_RECOVERY;
+}
 
 
 static void set_pwrbtn_to_pch(int high)
@@ -159,10 +180,18 @@ static void lid_switch_changed(uint64_t tnow)
 void power_button_interrupt(enum gpio_signal signal)
 {
 	/* Reset debounce time for the changed signal */
-	if (signal == GPIO_LID_SWITCHn)
+	switch (signal) {
+	case GPIO_LID_SWITCHn:
 		tdebounce_lid = get_time().val + LID_DEBOUNCE_US;
-	else
+		break;
+	case GPIO_POWER_BUTTONn:
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
+		break;
+	default:
+		/* Non-debounced switches; we'll update their state
+		 * automatically the next time through the task loop. */
+		break;
+	}
 
 	/* We don't have a way to tell the task to wake up at the end of the
          * debounce interval; wake it up now so it can go back to sleep for the
@@ -182,6 +211,7 @@ int power_button_init(void)
 		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 	if (gpio_get_level(GPIO_PCH_LID_SWITCHn) != 0)
 		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+	update_other_switches();
 
 	/* Copy initial switch states to PCH */
 	gpio_set_level(GPIO_PCH_PWRBTNn, gpio_get_level(GPIO_POWER_BUTTONn));
@@ -190,6 +220,8 @@ int power_button_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_LID_SWITCHn);
+	gpio_enable_interrupt(GPIO_WRITE_PROTECTn);
+	gpio_enable_interrupt(GPIO_RECOVERYn);
 
 	return EC_SUCCESS;
 }
@@ -211,6 +243,9 @@ void power_button_task(void)
 			tdebounce_lid = 0;
 			lid_switch_changed(t);
 		}
+
+		/* Handle non-debounced switches */
+		update_other_switches();
 
 		/* Update state machine */
 		state_machine(t);
