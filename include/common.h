@@ -10,6 +10,15 @@
 
 #include <stdint.h>
 
+
+/* TODO: This is a serious security hole and should be removed in mass
+ *       production. We add this to allow manual firmware update.
+ *       Once we complete the vboot and autoupdate, we should remove this.
+ *       https://code.google.com/p/chrome-os-partner/issues/detail?id=8391
+ */
+#define CONFIG_REBOOT_EC
+
+
 /* List of common error codes that can be returned */
 enum ec_error_list {
 	/* Success - no error */

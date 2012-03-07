@@ -76,6 +76,8 @@ const char help_str[] =
 	"      Set keyboard backlight in percent\n"
 	"  usbchargemode <port> <mode>\n"
 	"      Set USB charging mode\n"
+	"  reboot_ec <RO|A|B>\n"
+	"      Reboot EC to RO or RW A/B\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
 	"  pci_write32 0 0x1f 0 0x88 0x00fc0801\n"
@@ -356,6 +358,40 @@ int cmd_read_test(int argc, char *argv[])
 		printf("Found %d errors\n", errors);
 		return -1;
 	}
+
+	printf("done.\n");
+	return 0;
+}
+
+int cmd_reboot_ec(int argc, char *argv[])
+{
+	struct lpc_params_reboot_ec p;
+	int rv;
+
+	if (argc < 1) {
+		rv = ec_command(EC_LPC_COMMAND_REBOOT, NULL, 0, NULL, 0);
+	} else if (argc == 1) {
+		if ( !strcmp(argv[0], "RO")) {
+			p.target = EC_LPC_IMAGE_RO;
+		} else if (!strcmp(argv[0], "A")) {
+			p.target = EC_LPC_IMAGE_RW_A;
+		} else if (!strcmp(argv[0], "B")) {
+			p.target = EC_LPC_IMAGE_RW_B;
+		} else {
+			fprintf(stderr,
+			        "Not supported firmware copy: %s\n", argv[0]);
+			return -1;
+		}
+
+		rv = ec_command(EC_LPC_COMMAND_REBOOT_EC,
+		                &p, sizeof(p), NULL, 0);
+	} else {
+		fprintf(stderr, "Wrong argument count: %d\n", argc);
+		return -1;
+	}
+
+	if (rv)
+		return rv;
 
 	printf("done.\n");
 	return 0;
@@ -1133,6 +1169,7 @@ const struct command commands[] = {
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
 	{"queryec", cmd_acpi_query_ec},
 	{"readtest", cmd_read_test},
+	{"reboot_ec", cmd_reboot_ec},
 	{"sertest", cmd_serial_test},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
@@ -1161,7 +1198,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Handle commands */
-	for (cmd = commands; cmd; cmd++) {
+	for (cmd = commands; cmd->name; cmd++) {
 		if (!strcasecmp(argv[1], cmd->name))
 			return cmd->handler(argc - 2, argv + 2);
 	}

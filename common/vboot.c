@@ -5,7 +5,10 @@
 
 /* Verified boot module for Chrome EC */
 
+#include "common.h"  /* for CONFIG_REBOOT_EC */
 #include "console.h"
+#include "host_command.h"  /* for CONFIG_REBOOT_EC */
+#include "lpc_commands.h"  /* for CONFIG_REBOOT_EC */
 #include "system.h"
 #include "uart.h"
 #include "util.h"
@@ -86,6 +89,35 @@ static int command_reboot(int argc, char **argv)
         return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
+
+#ifdef CONFIG_REBOOT_EC
+enum lpc_status vboot_command_reboot(uint8_t *data) {
+	struct lpc_params_reboot_ec *p =
+		(struct lpc_params_reboot_ec *)data;
+
+	switch (p->target) {
+	case EC_LPC_IMAGE_RW_A:
+		uart_puts("Rebooting to image A!\n\n\n");
+		system_set_scratchpad(SCRATCHPAD_REQUEST_A);
+		break;
+	case EC_LPC_IMAGE_RW_B:
+		uart_puts("Rebooting to image B!\n\n\n");
+		system_set_scratchpad(SCRATCHPAD_REQUEST_B);
+		break;
+	case EC_LPC_IMAGE_RO:  /* do nothing */
+		uart_puts("Rebooting to image RO!\n\n\n");
+		break;
+	default:
+		return EC_LPC_RESULT_ERROR;
+	}
+
+	uart_flush_output();
+	/* TODO - param to specify warm/cold */
+	system_reset(1);
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_REBOOT_EC, vboot_command_reboot);
+#endif /* CONFIG_REBOOT_EC */
 
 /*****************************************************************************/
 /* Initialization */

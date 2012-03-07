@@ -471,4 +471,9 @@ struct lpc_params_host_event_clear {
  * command. */
 #define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
 
+#define EC_LPC_COMMAND_REBOOT_EC 0xd2
+struct lpc_params_reboot_ec {
+	uint8_t target;  /* enum lpc_current_image */
+} __attribute__ ((packed));
+
 #endif  /* __CROS_EC_LPC_COMMANDS_H */
