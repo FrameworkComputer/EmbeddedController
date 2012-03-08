@@ -159,11 +159,13 @@ int uart_init(void)
 	for (ch = 0; ch < 2; ch++) {
 		/* Disable the port */
 		LM4_UART_CTL(ch) = 0x0300;
+		/* Use the internal oscillator */
+		LM4_UART_CC(ch) = 0x1;
 		/* Set the baud rate divisor */
-		LM4_UART_IBRD(ch) = (CPU_CLOCK / 16) / BAUD_RATE;
+		LM4_UART_IBRD(ch) = (INTERNAL_CLOCK / 16) / BAUD_RATE;
 		LM4_UART_FBRD(ch) =
-			(((CPU_CLOCK / 16) % BAUD_RATE) * 64 + BAUD_RATE / 2) /
-			BAUD_RATE;
+			(((INTERNAL_CLOCK / 16) % BAUD_RATE) * 64
+			 + BAUD_RATE / 2) / BAUD_RATE;
 		/* 8-N-1, FIFO enabled.  Must be done after setting
 		 * the divisor for the new divisor to take effect. */
 		LM4_UART_LCRH(ch) = 0x70;

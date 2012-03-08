@@ -5,11 +5,11 @@
 
 /* LM4-specific ADC module for Chrome EC */
 
-#include "lm4_adc.h"
-#include "console.h"
 #include "adc.h"
-#include "timer.h"
+#include "console.h"
+#include "lm4_adc.h"
 #include "registers.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 
@@ -172,6 +172,9 @@ int adc_init(void)
 	/* Use external voltage references (VREFA+, VREFA-) instead of
 	 * VDDA and GNDA. */
 	LM4_ADC_ADCCTL = 0x01;
+
+	/* Use internal oscillator */
+	LM4_ADC_ADCCC = 0x1;
 
 	/* Initialize ADC sequencer */
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
