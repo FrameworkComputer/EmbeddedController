@@ -142,6 +142,8 @@ static int command_fan_info(int argc, char **argv)
 		    (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
 	uart_printf("    enabled:      %s\n",
 		    LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
+	uart_printf("    powered:      %s\n",
+		    gpio_get_level(GPIO_ENABLE_VS) ? "yes" : "no");
 
 	return EC_SUCCESS;
 }
@@ -171,8 +173,9 @@ static int command_fan_set(int argc, char **argv)
         if (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) {
 		pwm_enable_fan(0);
 		LM4_FAN_FANCH(FAN_CH_CPU) &= ~0x0001;
-		pwm_enable_fan(1);
         }
+	/* Always enable the fan */
+	pwm_enable_fan(1);
 
 #ifdef CONFIG_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
@@ -182,6 +185,7 @@ static int command_fan_set(int argc, char **argv)
 	rv = pwm_set_fan_target_rpm(rpm);
 	if (rv == EC_SUCCESS)
 		uart_printf("Done.\n");
+
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(fanset, command_fan_set);
@@ -211,8 +215,9 @@ static int command_fan_duty(int argc, char **argv)
         if (!(LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001)) {
 		pwm_enable_fan(0);
 		LM4_FAN_FANCH(FAN_CH_CPU) |= 0x0001;
-		pwm_enable_fan(1);
         }
+	/* Always enable the fan */
+	pwm_enable_fan(1);
 
 #ifdef CONFIG_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
