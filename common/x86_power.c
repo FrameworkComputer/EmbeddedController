@@ -173,6 +173,19 @@ void x86_power_force_shutdown(void)
 	/* TODO: crosbug.com/p/8242 - real implementation */
 }
 
+
+void x86_power_reset(void)
+{
+	/* Ignore if RCINn is already low */
+	if (gpio_get_level(GPIO_PCH_RCINn) == 0)
+		return;
+
+	/* Pulse must be at least 16 PCI clocks long = 500ns */
+	gpio_set_level(GPIO_PCH_RCINn, 0);
+	udelay(10);
+	gpio_set_level(GPIO_PCH_RCINn, 1);
+}
+
 /*****************************************************************************/
 /* Chipset interface */
 
@@ -414,3 +427,12 @@ static int command_x86power(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(x86power, command_x86power);
+
+
+static int command_x86reset(int argc, char **argv)
+{
+	/* Force the x86 to reset */
+	x86_power_reset();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset);
