@@ -72,6 +72,9 @@ int main(void)
 	flash_init();
 #endif
 	eeprom_init();
+
+	vboot_init();
+
 #ifdef CONFIG_LPC
 	port_80_init();
 	lpc_init();

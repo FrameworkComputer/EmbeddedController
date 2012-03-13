@@ -124,7 +124,16 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_REBOOT_EC, vboot_command_reboot);
 
 int vboot_pre_init(void)
 {
-	/* Jump to a different image if necessary; this may not return */
+	/* FIXME(wfrichar): crosbug.com/p/7453: should protect flash */
+	return EC_SUCCESS;
+}
+
+
+int vboot_init(void)
+{
+	/* FIXME(wfrichar): placeholder for full verified boot implementation.
+	 * TBD exactly how, but we may want to continue in RO firmware, jump
+	 * directly to one of the RW firmwares, etc. */
 	jump_to_other_image();
 	return EC_SUCCESS;
 }
