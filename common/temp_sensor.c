@@ -84,14 +84,14 @@ static int command_temps(int argc, char **argv)
 	uart_puts("Reading temperature sensors...\n");
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		uart_printf("  Temp from %s:  ", temp_sensors[i].name);
+		uart_printf("  %-20s: ", temp_sensors[i].name);
 		t = temp_sensor_read(i);
 		if (t < 0) {
-			uart_printf("Error.\n\n");
+			uart_printf("Error\n");
 			rv = -1;
 		}
 		else
-			uart_printf("%d K = %d C\n\n", t, t - 273);
+			uart_printf("%d K = %d C\n", t, t - 273);
 	}
 
 	if (rv == -1)
