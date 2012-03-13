@@ -598,6 +598,9 @@ int cmd_temperature(int argc, char *argv[])
 	} else if (rv == 0xfe) {
 		printf("Error\n");
 		return -1;
+	} else if (rv == 0xfd) {
+		printf("Sensor disabled/unpowered\n");
+		return -1;
 	} else {
 		printf("%d\n", rv + EC_LPC_TEMP_SENSOR_OFFSET);
 		return 0;

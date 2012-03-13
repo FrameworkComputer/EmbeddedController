@@ -5,18 +5,21 @@
 
 /* Temperature sensor module for Chrome EC */
 
-#include "i2c.h"
-#include "temp_sensor.h"
-#include "uart.h"
-#include "util.h"
-#include "console.h"
 #include "board.h"
-#include "peci.h"
-#include "tmp006.h"
-#include "task.h"
 #include "chip_temp_sensor.h"
+#include "chipset.h"
+#include "console.h"
+#include "gpio.h"
+#include "i2c.h"
 #include "lpc.h"
 #include "lpc_commands.h"
+#include "peci.h"
+#include "task.h"
+#include "temp_sensor.h"
+#include "thermal.h"
+#include "tmp006.h"
+#include "uart.h"
+#include "util.h"
 
 /* Defined in board_temp_sensor.c. Must be in the same order as
  * in enum temp_sensor_id.
@@ -32,6 +35,23 @@ int temp_sensor_read(enum temp_sensor_id id)
 	sensor = temp_sensors + id;
 	return sensor->read(sensor->idx);
 }
+
+
+int temp_sensor_powered(enum temp_sensor_id id)
+{
+	int flag = temp_sensors[id].power_flags;
+
+	if (flag & TEMP_SENSOR_POWER_VS &&
+	    gpio_get_level(GPIO_PGOOD_1_8VS) == 0)
+		return 0;
+
+	if (flag & TEMP_SENSOR_POWER_CPU &&
+	    !chipset_in_state(CHIPSET_STATE_ON))
+		return 0;
+
+	return 1;
+}
+
 
 void poll_all_sensors(void)
 {
@@ -55,9 +75,15 @@ static void update_lpc_mapped_memory(void)
 	memset(mapped, 0xff, 16);
 
 	for (i = 0; i < TEMP_SENSOR_COUNT && i < 16; ++i) {
+		if (!temp_sensor_powered(i)) {
+			mapped[i] = 0xfd;
+			continue;
+		}
 		t = temp_sensor_read(i);
 		if (t != -1)
 			mapped[i] = t - EC_LPC_TEMP_SENSOR_OFFSET;
+		else
+			mapped[i] = 0xfe;
 	}
 }
 

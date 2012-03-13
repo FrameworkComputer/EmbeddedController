@@ -140,12 +140,7 @@ static void thermal_process(void)
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		int flag = thermal_config[i].config_flags;
 
-		if (flag & THERMAL_CONFIG_NEED_VS &&
-		    gpio_get_level(GPIO_PGOOD_1_8VS) == 0)
-			continue;
-
-		if (flag & THERMAL_CONFIG_NEED_CPU &&
-		    !chipset_in_state(CHIPSET_STATE_ON))
+		if (!temp_sensor_powered(i))
 			continue;
 
 		cur_temp = temp_sensor_read(i);

@@ -11,11 +11,17 @@
 #include "common.h"
 #include "board.h"
 
+#define TEMP_SENSOR_POWER_NONE 0x0
+#define TEMP_SENSOR_POWER_VS 0x1
+#define TEMP_SENSOR_POWER_CPU 0x2
+
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 enum temp_sensor_id;
 
 struct temp_sensor_t {
 	const char* name;
+	/* Flags indicating power needed by temp sensor. */
+	int8_t power_flags;
 	/* Read sensor value and return temperature in K. */
 	int (*read)(int idx);
 	/* Index among the same kind of sensors. */
@@ -28,5 +34,8 @@ int temp_sensor_init(void);
 /* Returns the most recently measured temperature for the sensor in K,
  * or -1 if error. */
 int temp_sensor_read(enum temp_sensor_id id);
+
+/* Return non-zero if sensor is powered. */
+int temp_sensor_powered(enum temp_sensor_id id);
 
 #endif  /* __CROS_EC_TEMP_SENSOR_H */
