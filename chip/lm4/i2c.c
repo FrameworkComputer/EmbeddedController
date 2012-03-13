@@ -426,7 +426,8 @@ int i2c_init(void)
 
 	/* Enable I2C modules and delay a few clocks */
 	LM4_SYSTEM_RCGCI2C |= (1 << I2C_PORT_THERMAL) |
-		(1 << I2C_PORT_BATTERY) | (1 << I2C_PORT_CHARGER);
+		(1 << I2C_PORT_BATTERY) | (1 << I2C_PORT_CHARGER) |
+		(1 << I2C_PORT_LIGHTBAR);
 	scratch = LM4_SYSTEM_RCGCI2C;
 
 	/* Configure GPIOs */

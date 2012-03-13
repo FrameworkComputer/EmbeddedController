@@ -277,6 +277,11 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 0);
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
 
+			/* Enable touchpad power and take touchscreen out of
+			 * reset, so they can wake the system from suspend. */
+			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
+
 			state = X86_S3;
 			break;
 
@@ -293,6 +298,8 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_VS, 1);
 
 			/* Enable fan, now that +5VS is turned on */
+			/* TODO: On proto1+, fan is on +5VALW, so we can leave
+			 * it on all the time. */
 			pwm_enable_fan(1);
 
 			/* Wait for non-core power rails good */
@@ -328,6 +335,8 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_PCH_RCINn, 0);
 
 			/* Disable fan, since it's powered by +5VS */
+			/* TODO: On proto1+, fan is on +5VALW, so we can leave
+			 * it on all the time. */
 			pwm_enable_fan(0);
 
 			/* Turn off power rails */
@@ -337,6 +346,10 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3S5:
+			/* Disable touchpad power and reset touchscreen. */
+			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
 			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 1);
