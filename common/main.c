@@ -20,6 +20,7 @@
 #include "keyboard_scan.h"
 #include "lpc.h"
 #include "memory_commands.h"
+#include "onewire.h"
 #include "peci.h"
 #include "port80.h"
 #include "power_button.h"
@@ -93,6 +94,9 @@ int main(void)
 #endif
 	adc_init();
 	usb_charge_init();
+#ifdef CONFIG_ONEWIRE
+	onewire_init();
+#endif
 #ifdef CONFIG_CHARGER
 	charger_init();
 #endif

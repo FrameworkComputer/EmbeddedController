@@ -9,9 +9,11 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_ONEWIRE
 #define CONFIG_PECI
-#define CONFIG_TMP006
+#define CONFIG_POWER_LED
 #define CONFIG_PSTORE
+#define CONFIG_TMP006
 
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
@@ -110,7 +112,6 @@ enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_POWER_BUTTONn = 0,   /* Power button */
 	GPIO_LID_SWITCHn,         /* Lid switch */
-	GPIO_POWER_ONEWIRE,       /* 1-wire interface to power adapter LEDs */
 	GPIO_THERMAL_DATA_READYn, /* Data ready from I2C thermal sensor */
 	/* Other inputs */
 	GPIO_AC_PRESENT,          /* AC power present */

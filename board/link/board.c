@@ -30,7 +30,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"LID_SWITCHn",         LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
 	 power_button_interrupt},
 	/* Other inputs */
-	{"POWER_ONEWIRE",       LM4_GPIO_H, (1<<2), 0, NULL},
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), 0, NULL},
 	{"PCH_BKLTEN",          LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
