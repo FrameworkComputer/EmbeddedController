@@ -9,6 +9,8 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 #include "pwm.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -67,13 +69,15 @@ int thermal_toggle_auto_fan_ctrl(int auto_fan_on)
 
 static void smi_overheated_warning(void)
 {
-	/* TODO: crosbug.com/p/8249 */
+	lpc_set_host_events(
+		EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_THERMAL_OVERLOAD));
 }
 
 
 static void smi_sensor_failure_warning(void)
 {
-	/* TODO: crosbug.com/p/8249 */
+	lpc_set_host_events(
+		EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_THERMAL));
 }
 
 
