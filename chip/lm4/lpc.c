@@ -149,6 +149,10 @@ int lpc_init(void)
 	 * sensible to buffer input anyway. */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
 
+	/* Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
+	 * PLTRST# signal for debugging. */
+	LM4_LPC_LPCIM |= (1 << 31);
+
 	/* Enable LPC channels */
 	LM4_LPC_LPCCTL =
 		(1 << LPC_CH_KERNEL) |
@@ -371,6 +375,12 @@ static void lpc_interrupt(void)
 			if (uart_comx_putc_ok())
 				uart_comx_putc(lpc_comx_get_char());
 		}
+	}
+
+	/* Debugging: print changes to LPC0RESET */
+	if (mis & (1 << 31)) {
+		uart_printf("[LPC PLTRST# %sasserted]\n",
+			    (LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
 	}
 }
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
