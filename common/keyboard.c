@@ -110,6 +110,10 @@ static uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
 };
 
 
+/* Recording which key is being simulated pressed. */
+static uint8_t simulated_key[CROS_COL_NUM];
+
+
 /* change to set 1 if the I8042_XLATE flag is set. */
 static enum scancode_set_list acting_code_set(enum scancode_set_list set) {
   if (controller_ram[0] & I8042_XLATE) {
@@ -625,3 +629,52 @@ static int command_controller_ram(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram);
+
+
+static int command_keyboard_press(int argc, char **argv)
+{
+	int i, j;
+	int r, c, p;
+	char *e;
+	if (argc == 1) {
+		uart_puts("Simulated key:\n");
+		for (i = 0; i < CROS_COL_NUM; ++i) {
+			if (simulated_key[i] == 0)
+				continue;
+			for (j = 0; j < CROS_ROW_NUM; ++j)
+				if (simulated_key[i] & (1 << j))
+					uart_printf("\t%d %d\n", i, j);
+		}
+	} else if (argc == 4) {
+		c = strtoi(argv[1], &e, 0);
+		if ((e && *e) || c < 0 || c >= CROS_COL_NUM) {
+			uart_puts("Bad column.\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
+		r = strtoi(argv[2], &e, 0);
+		if ((e && *e) || r < 0 || r >= CROS_ROW_NUM) {
+			uart_puts("Bad row.\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
+		p = strtoi(argv[3], &e, 0);
+		if ((e && *e) || p < 0 || p > 1) {
+			uart_puts("Bad pressed flag.\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
+		if ((simulated_key[c] & (1 << r)) == (p << r))
+			return EC_SUCCESS;
+
+		simulated_key[c] = (simulated_key[c] & ~(1 << r)) | (p << r);
+
+		keyboard_state_changed(r, c, p);
+	} else {
+		uart_puts("Usage: kbpress [<col> <row> <pressed>]\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press);
