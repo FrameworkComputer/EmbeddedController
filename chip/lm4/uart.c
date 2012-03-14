@@ -193,17 +193,18 @@ int uart_init(void)
 /*****************************************************************************/
 /* COMx functions */
 
+/* Write a character to COMx, waiting for space in the output buffer if
+ * necessary. */
+static void uart_comx_putc_wait(int c)
+{
+		while (!uart_comx_putc_ok()) {}
+		uart_comx_putc(c);
+}
+
+
 void uart_comx_enable(void)
 {
 	task_enable_irq(LM4_IRQ_UART1);
-
-	/* Print hello on UART1 for debugging */
-	/* TODO: remove in production */
-	{
-		const char *c = "Hello on UART1\r\n";
-		while (*c)
-			uart_comx_putc(*c++);
-	}
 }
 
 
@@ -224,3 +225,24 @@ void uart_comx_putc(int c)
 {
 	LM4_UART_DR(1) = c;
 }
+
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_comxtest(int argc, char **argv)
+{
+	/* Put characters to COMX port */
+	const char *c = argc > 1 ? argv[1] : "testing comx output!";
+
+	uart_printf("Writing \"%s\\r\\n\" to COMx UART...\n", c);
+
+	while (*c)
+		uart_comx_putc_wait(*c++);
+
+	uart_comx_putc_wait('\r');
+	uart_comx_putc_wait('\n');
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(comxtest, command_comxtest);
