@@ -164,12 +164,11 @@ uint32_t *task_get_event_bitmap(task_id_t tskid)
 void svc_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
-	uint32_t reg;
 
 	/* push the priority to -1 until the return, to avoid being
 	 * interrupted */
-	asm volatile("mov %0, #1\n"
-	             "msr faultmask, %0" :"=r"(reg));
+	asm volatile("cpsid f\n"
+		     "isb\n");
 	current = __get_task_scheduled();
 	if (desched && !current->events) {
 		/* Remove our own ready bit */
