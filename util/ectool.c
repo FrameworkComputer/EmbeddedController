@@ -60,6 +60,8 @@ const char help_str[] =
 	"      Prints EC version\n"
 	"  temps <sensorid>\n"
 	"      Print temperature.\n"
+	"  tempread <sensorid>\n"
+	"      Force a read of temperature sensor.\n"
 	"  thermalget <sensor_id> <threshold_id>\n"
 	"      Get the threshold temperature value from thermal engine.\n"
 	"  thermalset <sensor_id> <threshold_id> <value>\n"
@@ -605,6 +607,41 @@ int cmd_temperature(int argc, char *argv[])
 		printf("%d\n", rv + EC_LPC_TEMP_SENSOR_OFFSET);
 		return 0;
 	}
+}
+
+
+int cmd_temperature_read(int argc, char *argv[])
+{
+	struct lpc_params_temp_sensor_get_readings p;
+	struct lpc_response_temp_sensor_get_readings r;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+		fprintf(stderr, "Usage: tempread <sensorid\n>");
+		return -1;
+	}
+
+	p.temp_sensor_id = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad sensor ID.\n");
+		return -1;
+	}
+
+	printf("Reading temperature...");
+
+	rv = ec_command(EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv)
+		return rv;
+
+	if (r.value < 0) {
+		printf("Error\n");
+		return -1;
+	}
+
+	printf("%d\n", r.value);
+	return 0;
 }
 
 
@@ -1176,6 +1213,7 @@ const struct command commands[] = {
 	{"sertest", cmd_serial_test},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
+	{"tempread", cmd_temperature_read},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
 	{"usbchargemode", cmd_usb_charge_set_mode},

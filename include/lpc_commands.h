@@ -423,6 +423,18 @@ struct lpc_response_battery_text {
 #define EC_LPC_COMMAND_BATTERY_OEM 0x64
 
 /*****************************************************************************/
+/* Temperature sensor commands */
+
+/* Get temperature readings */
+#define EC_LPC_COMMAND_TEMP_SENSOR_GET_READINGS 0x70
+struct lpc_params_temp_sensor_get_readings {
+	uint8_t temp_sensor_id;
+} __attribute__ ((packed));
+struct lpc_response_temp_sensor_get_readings {
+	uint32_t value;
+} __attribute__((packed));
+
+/*****************************************************************************/
 /* Host event commands */
 
 #define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK 0x88
