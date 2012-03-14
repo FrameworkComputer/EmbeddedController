@@ -27,16 +27,16 @@
  * temp_sensor_id.
  */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-	{"I2C_CPU-Die", tmp006_get_val, 0},
-	{"I2C_CPU-Object", tmp006_get_val, 1},
-	{"I2C_PCH-Die", tmp006_get_val, 2},
-	{"I2C_PCH-Object", tmp006_get_val, 3},
-	{"I2C_DDR-Die", tmp006_get_val, 4},
-	{"I2C_DDR-Object", tmp006_get_val, 5},
-	{"I2C_Charger-Die", tmp006_get_val, 6},
-	{"I2C_Charger-Object", tmp006_get_val, 7},
-	{"ECInternal", chip_temp_sensor_get_val, 0},
-	{"PECI", peci_temp_sensor_get_val, 0},
+	{"I2C_CPU-Die", TEMP_SENSOR_POWER_VS, tmp006_get_val, 0},
+	{"I2C_CPU-Object", TEMP_SENSOR_POWER_VS, tmp006_get_val, 1},
+	{"I2C_PCH-Die", TEMP_SENSOR_POWER_VS, tmp006_get_val, 2},
+	{"I2C_PCH-Object", TEMP_SENSOR_POWER_VS, tmp006_get_val, 3},
+	{"I2C_DDR-Die", TEMP_SENSOR_POWER_VS, tmp006_get_val, 4},
+	{"I2C_DDR-Object", TEMP_SENSOR_POWER_VS, tmp006_get_val, 5},
+	{"I2C_Charger-Die", TEMP_SENSOR_POWER_VS, tmp006_get_val, 6},
+	{"I2C_Charger-Object", TEMP_SENSOR_POWER_VS, tmp006_get_val, 7},
+	{"ECInternal", TEMP_SENSOR_POWER_NONE, chip_temp_sensor_get_val, 0},
+	{"PECI", TEMP_SENSOR_POWER_CPU, peci_temp_sensor_get_val, 0},
 };
 
 const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {

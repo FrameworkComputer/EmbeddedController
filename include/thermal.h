@@ -12,8 +12,6 @@
 
 #define THERMAL_CONFIG_NO_FLAG 0x0
 #define THERMAL_CONFIG_WARNING_ON_FAIL 0x1
-#define THERMAL_CONFIG_NEED_VS 0x2
-#define THERMAL_CONFIG_NEED_CPU 0x4
 
 /* Set a threshold temperature to this value to disable the threshold limit. */
 #define THERMAL_THRESHOLD_DISABLE 0
