@@ -102,7 +102,13 @@ static void overheated_action(void)
 		else if (overheated[THRESHOLD_FAN_LO])
 			pwm_set_fan_target_rpm(6000);
 		else
-			pwm_set_fan_target_rpm(0);
+			/* TODO: Currently temperature polling task sometimes
+			 * hangs. So we should not turn off fan according to
+			 * temperature readings. Modify this to turn off fan
+			 * when we have reliable temperature readings.
+			 * See crosbug.com/p/8479
+			 */
+			pwm_set_fan_target_rpm(4000);
 	}
 }
 
