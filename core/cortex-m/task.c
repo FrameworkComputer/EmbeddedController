@@ -339,8 +339,11 @@ void mutex_lock(struct mutex *mtx)
 				     "   it eq\n"
 				     "   strexeq %0, %2, [%1]\n"
 				     : "=&r" (value)
-				     : "r" (&mtx->lock), "r" (1) : "cc");
-		if (value) {
+				     : "r" (&mtx->lock), "r" (2) : "cc");
+		/* "value" is equals to 1 if the store conditional failed,
+		 * 2 if somebody else owns the mutex, 0 else.
+		 */
+		if (value == 2) {
 			/* contention on the mutex */
 			task_wait_msg(0);
 		}
