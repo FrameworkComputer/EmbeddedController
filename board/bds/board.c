@@ -13,6 +13,10 @@
 #include "lm4_adc.h"
 #include "adc.h"
 
+#ifndef CONFIG_TASK_POWERBTN
+#define power_button_interrupt NULL
+#endif
+
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[ADC_CH_COUNT] =
 {

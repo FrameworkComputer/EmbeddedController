@@ -88,7 +88,9 @@ int main(void)
 	temp_sensor_init();
 	chip_temp_sensor_init();
 #endif
+#ifdef CONFIG_TASK_POWERBTN
 	power_button_init();
+#endif
 	adc_init();
 	usb_charge_init();
 #ifdef CONFIG_CHARGER
