@@ -91,7 +91,7 @@ enum gpio_signal {
 	GPIO_DEBUG_LED,           /* Debug LED */
 	/* Signals which aren't implemented on BDS but we'll emulate anyway, to
 	 * make it more convenient to debug other code. */
-	GPIO_PCH_LID_SWITCHn,     /* Lid switch output to PCH */
+	GPIO_PCH_WAKEn,           /* Wake output to PCH */
 	GPIO_PCH_PWRBTNn,         /* Power button output to PCH */
 
 	GPIO_PCH_BKLTEN,          /* Backlight enable signal from PCH */

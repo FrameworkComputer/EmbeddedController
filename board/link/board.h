@@ -147,7 +147,7 @@ enum gpio_signal {
 	GPIO_PCH_DPWROK,          /* DPWROK signal to PCH */
 	GPIO_PCH_HDA_SDO,         /* HDA_SDO signal to PCH; when high, ME
 				   * ignores security descriptor */
-	GPIO_PCH_LID_SWITCHn,     /* Lid switch output to PCH */
+	GPIO_PCH_WAKEn,           /* Wake signal output to PCH */
 	GPIO_PCH_NMIn,            /* Non-maskable interrupt pin to PCH */
 	GPIO_PCH_PWRBTNn,         /* Power button output to PCH */
 	GPIO_PCH_PWROK,           /* PWROK / APWROK signals to PCH */

@@ -152,10 +152,6 @@ static void lid_switch_changed(uint64_t tnow)
 	int v = gpio_get_level(GPIO_LID_SWITCHn);
 	uart_printf("[PB lid %s]\n", v ? "open" : "closed");
 
-	/* Pass signal on to PCH; this is how the BIOS/OS knows to suspend or
-	 * shutdown when the lid is closed. */
-	gpio_set_level(GPIO_PCH_LID_SWITCHn, v);
-
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
 		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
 
@@ -209,13 +205,12 @@ int power_button_init(void)
 	*memmap_switches = 0;
 	if (gpio_get_level(GPIO_POWER_BUTTONn) == 0)
 		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
-	if (gpio_get_level(GPIO_PCH_LID_SWITCHn) != 0)
+	if (gpio_get_level(GPIO_LID_SWITCHn) != 0)
 		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
 	update_other_switches();
 
-	/* Copy initial switch states to PCH */
+	/* Copy initial power button state to PCH */
 	gpio_set_level(GPIO_PCH_PWRBTNn, gpio_get_level(GPIO_POWER_BUTTONn));
-	gpio_set_level(GPIO_PCH_LID_SWITCHn, gpio_get_level(GPIO_LID_SWITCHn));
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);

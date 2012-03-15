@@ -324,10 +324,11 @@ void x86_power_task(void)
 			/* Deassert RCINn */
 			gpio_set_level(GPIO_PCH_RCINn, 1);
 
-			/* Mask all SCI/SMI host events until the host unmasks
+			/* Mask all host events until the host unmasks
 			 * them itself.  */
-			lpc_set_host_event_mask(0, 0);
-			lpc_set_host_event_mask(1, 0);
+			lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
+			lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+			lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
 
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);

@@ -18,8 +18,8 @@
 #include "uart.h"
 
 
-static uint32_t host_events;   /* Currently pending SCI/SMI events */
-static uint32_t smi_mask, sci_mask;  /* Event masks for SMI, SCI events */
+static uint32_t host_events;     /* Currently pending SCI/SMI events */
+static uint32_t event_mask[3];   /* Event masks for each type */
 
 
 /* Configures GPIOs for module. */
@@ -246,7 +246,7 @@ static void update_host_event_status(void) {
 	/* Disable LPC interrupt while updating status register */
 	task_disable_irq(LM4_IRQ_LPC);
 
-	if (host_events & smi_mask) {
+	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
 		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 10)))
 			need_pulse = 1;
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 10);
@@ -254,7 +254,7 @@ static void update_host_event_status(void) {
 		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 10);
 	}
 
-	if (host_events & sci_mask) {
+	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
 		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 9)))
 			need_pulse = 1;
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 9);
@@ -267,6 +267,13 @@ static void update_host_event_status(void) {
 
 	task_enable_irq(LM4_IRQ_LPC);
 
+	/* Update level-sensitive wake signal */
+	if (host_events & event_mask[LPC_HOST_EVENT_WAKE])
+		gpio_set_level(GPIO_PCH_WAKEn, 0);
+	else
+		gpio_set_level(GPIO_PCH_WAKEn, 1);
+
+	/* Send pulse on SMI signal if needed */
 	if (need_pulse) {
 		gpio_set_level(GPIO_PCH_SMIn, 0);
 		/* If the x86 is in S0, SMI# is sampled at 33MHz, so minimum
@@ -282,6 +289,9 @@ static void update_host_event_status(void) {
 
 void lpc_set_host_events(uint32_t mask)
 {
+	if ((host_events & mask) == mask)
+		return;
+
 	host_events |= mask;
 	update_host_event_status();
 }
@@ -289,6 +299,9 @@ void lpc_set_host_events(uint32_t mask)
 
 void lpc_clear_host_events(uint32_t mask)
 {
+	if (!(host_events & mask))
+		return;
+
 	host_events &= ~mask;
 	update_host_event_status();
 }
@@ -300,20 +313,16 @@ uint32_t lpc_get_host_events(void)
 }
 
 
-void lpc_set_host_event_mask(int sci, uint32_t mask)
+void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
-	if (sci)
-		sci_mask = mask;
-	else
-		smi_mask = mask;
-
+	event_mask[type] = mask;
 	update_host_event_status();
 }
 
 
-uint32_t lpc_get_host_event_mask(int sci)
+uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 {
-	return sci ? sci_mask : smi_mask;
+	return event_mask[type];
 }
 
 

@@ -28,10 +28,14 @@ const char help_str[] =
 	"      Prints SCI mask for EC host events\n"
 	"  eventgetsmimask\n"
 	"      Prints SMI mask for EC host events\n"
+	"  eventgetwakemask\n"
+	"      Prints wake mask for EC host events\n"
 	"  eventsetscimask <mask>\n"
 	"      Sets the SCI mask for EC host events\n"
 	"  eventsetsmimask <mask>\n"
 	"      Sets the SMI mask for EC host events\n"
+	"  eventsetwakemask <mask>\n"
+	"      Sets the wake mask for EC host events\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
 	"  flashread <offset> <size> <outfile>\n"
@@ -1001,7 +1005,7 @@ int cmd_host_event_get_raw(int argc, char *argv[])
 
 int cmd_host_event_get_smi_mask(int argc, char *argv[])
 {
-	struct lpc_response_host_event_get_smi_mask r;
+	struct lpc_response_host_event_mask r;
 	int rv;
 
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK,
@@ -1016,7 +1020,7 @@ int cmd_host_event_get_smi_mask(int argc, char *argv[])
 
 int cmd_host_event_get_sci_mask(int argc, char *argv[])
 {
-	struct lpc_response_host_event_get_sci_mask r;
+	struct lpc_response_host_event_mask r;
 	int rv;
 
 	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK,
@@ -1029,9 +1033,24 @@ int cmd_host_event_get_sci_mask(int argc, char *argv[])
 }
 
 
+int cmd_host_event_get_wake_mask(int argc, char *argv[])
+{
+	struct lpc_response_host_event_mask r;
+	int rv;
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_WAKE_MASK,
+			NULL, 0, &r, sizeof(r));
+	if (rv)
+		return rv;
+
+	printf("Current host event wake mask: 0x%08x\n", r.mask);
+	return 0;
+}
+
+
 int cmd_host_event_set_smi_mask(int argc, char *argv[])
 {
-	struct lpc_params_host_event_set_smi_mask p;
+	struct lpc_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1058,7 +1077,7 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 
 int cmd_host_event_set_sci_mask(int argc, char *argv[])
 {
-	struct lpc_params_host_event_set_sci_mask p;
+	struct lpc_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1083,9 +1102,36 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 }
 
 
+int cmd_host_event_set_wake_mask(int argc, char *argv[])
+{
+	struct lpc_params_host_event_mask p;
+	char *e;
+	int rv;
+
+	if (argc != 1) {
+		fprintf(stderr,
+			"Usage: eventwakemask <mask>\n");
+		return -1;
+	}
+	p.mask = strtol(argv[0], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad mask.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_WAKE_MASK,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Mask set.\n");
+	return 0;
+}
+
+
 int cmd_host_event_clear(int argc, char *argv[])
 {
-	struct lpc_params_host_event_clear p;
+	struct lpc_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1193,8 +1239,10 @@ const struct command commands[] = {
 	{"eventget", cmd_host_event_get_raw},
 	{"eventgetscimask", cmd_host_event_get_sci_mask},
 	{"eventgetsmimask", cmd_host_event_get_smi_mask},
+	{"eventgetwakemask", cmd_host_event_get_wake_mask},
 	{"eventsetscimask", cmd_host_event_set_sci_mask},
 	{"eventsetsmimask", cmd_host_event_set_smi_mask},
+	{"eventsetwakemask", cmd_host_event_set_wake_mask},
 	{"flasherase", cmd_flash_erase},
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},

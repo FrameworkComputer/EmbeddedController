@@ -123,6 +123,7 @@ enum host_event_code {
 	EC_LPC_HOST_EVENT_THERMAL_OVERLOAD = 10,
 	EC_LPC_HOST_EVENT_THERMAL = 11,
 	EC_LPC_HOST_EVENT_USB_CHARGER = 12,
+	EC_LPC_HOST_EVENT_KEY_PRESSED = 13,
 };
 /* Host event mask */
 #define EC_LPC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
@@ -437,30 +438,26 @@ struct lpc_response_temp_sensor_get_readings {
 /*****************************************************************************/
 /* Host event commands */
 
-#define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK 0x88
-struct lpc_response_host_event_get_smi_mask {
+/* Host event mask params and response structures, shared by all of the host
+ * event commands below. */
+struct lpc_params_host_event_mask {
 	uint32_t mask;
 } __attribute__ ((packed));
 
-#define EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK 0x89
-struct lpc_response_host_event_get_sci_mask {
+struct lpc_response_host_event_mask {
 	uint32_t mask;
 } __attribute__ ((packed));
 
-#define EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK 0x8a
-struct lpc_params_host_event_set_smi_mask {
-	uint32_t mask;
-} __attribute__ ((packed));
+/* These all use lpc_response_host_event_mask */
+#define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK  0x88
+#define EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK  0x89
+#define EC_LPC_COMMAND_HOST_EVENT_GET_WAKE_MASK 0x8d
 
-#define EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK 0x8b
-struct lpc_params_host_event_set_sci_mask {
-	uint32_t mask;
-} __attribute__ ((packed));
-
-#define EC_LPC_COMMAND_HOST_EVENT_CLEAR 0x8c
-struct lpc_params_host_event_clear {
-	uint32_t mask;
-} __attribute__ ((packed));
+/* These all use lpc_params_host_event_mask */
+#define EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK  0x8a
+#define EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK  0x8b
+#define EC_LPC_COMMAND_HOST_EVENT_CLEAR         0x8c
+#define EC_LPC_COMMAND_HOST_EVENT_SET_WAKE_MASK 0x8e
 
 /*****************************************************************************/
 /* Special commands
