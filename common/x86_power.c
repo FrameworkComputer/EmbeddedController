@@ -174,16 +174,38 @@ void x86_power_force_shutdown(void)
 }
 
 
-void x86_power_reset(void)
+void x86_power_reset(int cold_reset)
 {
-	/* Ignore if RCINn is already low */
-	if (gpio_get_level(GPIO_PCH_RCINn) == 0)
-		return;
+	if (cold_reset) {
+		/* Drop and restore PWROK.  This causes the PCH to reboot,
+		 * regardless of its after-G3 setting.  This type of reboot
+		 * causes the PCH to assert PLTRST#, SLP_S3#, and SLP_S5#, so
+		 * we actually drop power to the rest of the system (hence, a
+		 * "cold" reboot). */
 
-	/* Pulse must be at least 16 PCI clocks long = 500ns */
-	gpio_set_level(GPIO_PCH_RCINn, 0);
-	udelay(10);
-	gpio_set_level(GPIO_PCH_RCINn, 1);
+		/* Ignore if PWROK is already low */
+		if (gpio_get_level(GPIO_PCH_PWROK) == 0)
+			return;
+
+		/* PWROK must deassert for at least 3 RTC clocks = 91 us */
+		gpio_set_level(GPIO_PCH_PWROK, 0);
+		udelay(100);
+		gpio_set_level(GPIO_PCH_PWROK, 1);
+
+	} else {
+		/* Send a RCIN# pulse to the PCH.  This just causes it to
+		 * assert INIT# to the CPU without dropping power or asserting
+		 * PLTRST# to reset the rest of the system. */
+
+		/* Ignore if RCINn is already low */
+		if (gpio_get_level(GPIO_PCH_RCINn) == 0)
+			return;
+
+		/* Pulse must be at least 16 PCI clocks long = 500 ns */
+		gpio_set_level(GPIO_PCH_RCINn, 0);
+		udelay(10);
+		gpio_set_level(GPIO_PCH_RCINn, 1);
+	}
 }
 
 /*****************************************************************************/
@@ -431,8 +453,16 @@ DECLARE_CONSOLE_COMMAND(x86power, command_x86power);
 
 static int command_x86reset(int argc, char **argv)
 {
+	int is_cold = 1;
+
+	if (argc > 1 && !strcasecmp(argv[1], "cold"))
+		is_cold = 1;
+	else if (argc > 1 && !strcasecmp(argv[1], "warm"))
+		is_cold = 0;
+
 	/* Force the x86 to reset */
-	x86_power_reset();
+	uart_printf("Issuing x86 %s reset...\n", is_cold ? "cold" : "warm");
+	x86_power_reset(is_cold);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset);

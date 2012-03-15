@@ -25,7 +25,8 @@ void x86_power_cpu_overheated(int too_hot);
  * intended for use when the system is too hot or battery power is critical. */
 void x86_power_force_shutdown(void);
 
-/* Pulse the reset line to the x86. */
-void x86_power_reset(void);
+/* Reset the x86.  If cold_reset!=0, forces a cold reset by sending
+ * power-not-ok; otherwise, just pulses the reset line to the x86. */
+void x86_power_reset(int cold_reset);
 
 #endif  /* __CROS_EC_X86_POWER_H */
