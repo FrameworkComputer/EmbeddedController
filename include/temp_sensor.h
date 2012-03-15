@@ -18,10 +18,24 @@
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 enum temp_sensor_id;
 
+/* Type of temperature sensors. */
+enum temp_sensor_type {
+	/* CPU temperature sensors. */
+	TEMP_SENSOR_TYPE_CPU = 0,
+	/* Other on-board temperature sensors. */
+	TEMP_SENSOR_TYPE_BOARD,
+	/* Case temperature sensors. */
+	TEMP_SENSOR_TYPE_CASE,
+
+	TEMP_SENSOR_TYPE_COUNT
+};
+
 struct temp_sensor_t {
 	const char* name;
 	/* Flags indicating power needed by temp sensor. */
 	int8_t power_flags;
+	/* Temperature sensor type. */
+	enum temp_sensor_type type;
 	/* Read sensor value and return temperature in K. */
 	int (*read)(int idx);
 	/* Index among the same kind of sensors. */

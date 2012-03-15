@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_THERMAL_H
 #define __CROS_EC_THERMAL_H
 
+#include "temp_sensor.h"
 #include "util.h"
 
 #define THERMAL_CONFIG_NO_FLAG 0x0
@@ -46,10 +47,10 @@ struct thermal_config_t {
 };
 
 /* Set the threshold temperature value. Return -1 on error. */
-int thermal_set_threshold(int sensor_id, int threshold_id, int value);
+int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int value);
 
 /* Get the threshold temperature value. Return -1 on error. */
-int thermal_get_threshold(int sensor_id, int threshold_id);
+int thermal_get_threshold(enum temp_sensor_type type, int threshold_id);
 
 /* Toggle automatic fan speed control. Return -1 on error. */
 int thermal_toggle_auto_fan_ctrl(int auto_fan_on);

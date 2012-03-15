@@ -19,9 +19,22 @@
 #include "util.h"
 #include "x86_power.h"
 
-/* Defined in board_thermal.c. Must be in the same order
- * as in enum temp_sensor_id. */
-extern struct thermal_config_t thermal_config[TEMP_SENSOR_COUNT];
+/* Defined in board_temp_sensor.c. Must be in the same order as
+ * in enum temp_sensor_id.
+ */
+extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
+
+/* Temperature threshold configuration. Must be in the same order as in
+ * enum temp_sensor_type. */
+struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
+	/* TEMP_SENSOR_TYPE_CPU */
+	{THERMAL_CONFIG_WARNING_ON_FAIL, {328, 338, 343, 348, 353}},
+	/* TEMP_SENSOR_TYPE_BOARD */
+	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL}},
+	/* TEMP_SENSOR_TYPE_CASE */
+	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE,
+	 THERMAL_THRESHOLD_DISABLE, 343, THERMAL_THRESHOLD_DISABLE, 358}},
+};
 
 /* Number of consecutive overheated events for each temperature sensor. */
 static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT];
@@ -34,29 +47,25 @@ static int8_t overheated[THRESHOLD_COUNT];
 static int fan_ctrl_on = 1;
 
 
-int thermal_set_threshold(int sensor_id, int threshold_id, int value)
+int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int value)
 {
-	if (sensor_id < 0 || sensor_id >= TEMP_SENSOR_COUNT)
-		return EC_ERROR_INVAL;
 	if (threshold_id < 0 || threshold_id >= THRESHOLD_COUNT)
 		return EC_ERROR_INVAL;
 	if (value < 0)
 		return EC_ERROR_INVAL;
 
-	thermal_config[sensor_id].thresholds[threshold_id] = value;
+	thermal_config[type].thresholds[threshold_id] = value;
 
 	return EC_SUCCESS;
 }
 
 
-int thermal_get_threshold(int sensor_id, int threshold_id)
+int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 {
-	if (sensor_id < 0 || sensor_id >= TEMP_SENSOR_COUNT)
-		return EC_ERROR_INVAL;
 	if (threshold_id < 0 || threshold_id >= THRESHOLD_COUNT)
 		return EC_ERROR_INVAL;
 
-	return thermal_config[sensor_id].thresholds[threshold_id];
+	return thermal_config[type].thresholds[threshold_id];
 }
 
 
@@ -120,7 +129,8 @@ static inline void update_and_check_stat(int temp,
 					 int sensor_id,
 					 int threshold_id)
 {
-	const struct thermal_config_t *config = thermal_config + sensor_id;
+	enum temp_sensor_type type = temp_sensors[sensor_id].type;
+	const struct thermal_config_t *config = thermal_config + type;
 	const int16_t threshold = config->thresholds[threshold_id];
 
 	if (threshold > 0 && temp >= threshold) {
@@ -152,7 +162,8 @@ static void thermal_process(void)
 		overheated[i] = 0;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		int flag = thermal_config[i].config_flags;
+		enum temp_sensor_type type = temp_sensors[i].type;
+		int flag = thermal_config[type].config_flags;
 
 		if (!temp_sensor_powered(i))
 			continue;
@@ -185,10 +196,10 @@ void thermal_task(void)
 /*****************************************************************************/
 /* Console commands */
 
-static void print_thermal_config(int sensor_id)
+static void print_thermal_config(enum temp_sensor_type type)
 {
-	const struct thermal_config_t *config = thermal_config + sensor_id;
-	uart_printf("Sensor %d:\n", sensor_id);
+	const struct thermal_config_t *config = thermal_config + type;
+	uart_printf("Sensor Type %d:\n", type);
 	uart_printf("\tFan Low: %d K \n",
 			config->thresholds[THRESHOLD_FAN_LO]);
 	uart_printf("\tFan High: %d K \n",
@@ -205,21 +216,22 @@ static void print_thermal_config(int sensor_id)
 static int command_thermal_config(int argc, char **argv)
 {
 	char *e;
-	int sensor_id, threshold_id, value;
+	int sensor_type, threshold_id, value;
 
 	if (argc != 2 && argc != 4) {
-		uart_puts("Usage: thermal <sensor> [<threshold_id> <value>]\n");
+		uart_puts("Usage: thermal <sensor_type> [<threshold_id> <value>]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	sensor_id = strtoi(argv[1], &e, 0);
-	if ((e && *e) || sensor_id < 0 || sensor_id >= TEMP_SENSOR_COUNT) {
-		uart_puts("Bad sensor ID.\n");
+	sensor_type = strtoi(argv[1], &e, 0);
+	if ((e && *e) || sensor_type < 0 ||
+	    sensor_type >= TEMP_SENSOR_TYPE_COUNT) {
+		uart_puts("Bad sensor type ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	if (argc == 2) {
-		print_thermal_config(sensor_id);
+		print_thermal_config(sensor_type);
 		return EC_SUCCESS;
 	}
 
@@ -235,9 +247,9 @@ static int command_thermal_config(int argc, char **argv)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	thermal_config[sensor_id].thresholds[threshold_id] = value;
-	uart_printf("Setting threshold %d of sensor %d to %d\n",
-			threshold_id, sensor_id, value);
+	thermal_config[sensor_type].thresholds[threshold_id] = value;
+	uart_printf("Setting threshold %d of sensor type %d to %d\n",
+			threshold_id, sensor_type, value);
 
 	return EC_SUCCESS;
 }

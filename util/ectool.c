@@ -657,13 +657,13 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 	int rv;
 
 	if (argc != 2) {
-		fprintf(stderr, "Usage: thermalget <sensorid> <thresholdid>\n");
+		fprintf(stderr, "Usage: thermalget <sensortypeid> <thresholdid>\n");
 		return -1;
 	}
 
-	p.sensor_id = strtol(argv[0], &e, 0);
+	p.sensor_type = strtol(argv[0], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad sensor ID.\n");
+		fprintf(stderr, "Bad sensor type ID.\n");
 		return -1;
 	}
 
@@ -681,8 +681,8 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 	if (r.value < 0)
 		return -1;
 
-	printf("Threshold %d for sensor %d is %d K.\n",
-			p.threshold_id, p.sensor_id, r.value);
+	printf("Threshold %d for sensor type %d is %d K.\n",
+			p.threshold_id, p.sensor_type, r.value);
 
 	return 0;
 }
@@ -696,13 +696,13 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 
 	if (argc != 3) {
 		fprintf(stderr,
-			"Usage: thermalset <sensorid> <thresholdid> <value>\n");
+			"Usage: thermalset <sensortypeid> <thresholdid> <value>\n");
 		return -1;
 	}
 
-	p.sensor_id = strtol(argv[0], &e, 0);
+	p.sensor_type = strtol(argv[0], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad sensor ID.\n");
+		fprintf(stderr, "Bad sensor type ID.\n");
 		return -1;
 	}
 
@@ -723,8 +723,8 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 	if (rv)
 		return rv;
 
-	printf("Threshold %d for sensor %d set to %d.\n",
-			p.threshold_id, p.sensor_id, p.value);
+	printf("Threshold %d for sensor type %d set to %d.\n",
+			p.threshold_id, p.sensor_type, p.value);
 
 	return 0;
 }

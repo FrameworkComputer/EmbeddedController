@@ -366,7 +366,7 @@ struct lpc_params_pstore_write {
 /* Set thershold value */
 #define EC_LPC_COMMAND_THERMAL_SET_THRESHOLD 0x50
 struct lpc_params_thermal_set_threshold {
-	uint8_t sensor_id;
+	uint8_t sensor_type;
 	uint8_t threshold_id;
 	uint16_t value;
 } __attribute__ ((packed));
@@ -374,7 +374,7 @@ struct lpc_params_thermal_set_threshold {
 /* Get threshold value */
 #define EC_LPC_COMMAND_THERMAL_GET_THRESHOLD 0x51
 struct lpc_params_thermal_get_threshold {
-	uint8_t sensor_id;
+	uint8_t sensor_type;
 	uint8_t threshold_id;
 } __attribute__ ((packed));
 struct lpc_response_thermal_get_threshold {
