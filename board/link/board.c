@@ -4,15 +4,15 @@
  */
 /* EC for Link board configuration */
 
+#include "adc.h"
 #include "board.h"
 #include "config.h"
 #include "gpio.h"
+#include "lm4_adc.h"
 #include "power_button.h"
 #include "registers.h"
 #include "util.h"
 #include "x86_power.h"
-#include "lm4_adc.h"
-#include "adc.h"
 
 #ifndef CONFIG_TASK_X86POWER
 #define x86_power_interrupt NULL

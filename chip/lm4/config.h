@@ -41,13 +41,10 @@
 /* build with assertions and debug messages */
 #define CONFIG_DEBUG
 
-/* Optional features */
+/* Optional features present on this chip */
 #define CONFIG_FLASH
 #define CONFIG_LPC
 #define CONFIG_PWM
-#define CONFIG_TEMP_SENSOR
-#define CONFIG_CHARGER
-#define CONFIG_LIGHTBAR
 #define CONFIG_FPU
 
 /* Compile for running from RAM instead of flash */

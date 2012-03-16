@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "console.h"
+#include "gpio.h"
 #include "lm4_adc.h"
 #include "registers.h"
 #include "timer.h"

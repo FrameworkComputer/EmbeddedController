@@ -9,6 +9,8 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_CHARGER
+#define CONFIG_LIGHTBAR
 #define CONFIG_ONEWIRE
 #define CONFIG_PECI
 #define CONFIG_POWER_LED

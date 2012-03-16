@@ -9,7 +9,7 @@
 #define __BOARD_H
 
 /* Config flags */
-#define CONFIG_TMP006
+#define CONFIG_LIGHTBAR
 
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667

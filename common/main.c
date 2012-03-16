@@ -85,7 +85,7 @@ int main(void)
 	pwm_init();
 #endif
 	i2c_init();
-#ifdef CONFIG_TEMP_SENSOR
+#ifdef CONFIG_TASK_TEMPSENSOR
 	temp_sensor_init();
 	chip_temp_sensor_init();
 #endif
