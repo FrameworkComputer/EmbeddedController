@@ -118,7 +118,7 @@ const struct adc_t adc_channels[ADC_CH_COUNT] =
 	 * And ADC maps 0~3.3V to ADC_READ_MAX.
 	 */
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
-	 LM4_AIN(ADC_IN0), 0x06 /* IE0 | END0 */},
+	 LM4_AIN(11), 0x06 /* IE0 | END0 */},
 };
 
 void configure_board(void)

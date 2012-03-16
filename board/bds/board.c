@@ -29,9 +29,12 @@ const struct adc_t adc_channels[ADC_CH_COUNT] =
 
 	/* Charger current is mapped from 0~4000mA to 0~1.6V.
 	 * And ADC maps 0~3.3V to ADC_READ_MAX.
+	 *
+	 * Note that on BDS, this is really just the turn pot on the Badger
+	 * board, but that's good enough for debugging the ADC.
 	 */
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
-	 LM4_AIN(ADC_IN0), 0x06 /* IE0 | END0 */},
+	 LM4_AIN(0), 0x06 /* IE0 | END0 */},
 };
 
 

@@ -45,10 +45,6 @@
 /* LPC COMx I/O address (in x86 I/O address space) */
 #define LPC_COMX_ADDR 0x2f8  /* COM2, since superIO uses COM1 */
 
-/* ADC inputs */
-/* TODO: really just need a lookup table for channels to inputs */
-#define ADC_IN0 0  /* Turn POT on badger board */
-
 enum adc_channel
 {
 	/* EC internal die temperature in degrees K. */

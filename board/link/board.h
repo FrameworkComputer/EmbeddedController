@@ -55,10 +55,6 @@
 /* LPC COMx I/O address (in x86 I/O address space) */
 #define LPC_COMX_ADDR 0x3f8  /* COM1 */
 
-/* ADC inputs */
-/* TODO: assign real ADC inputs */
-#define ADC_IN0 11  /* Charger current */
-
 enum adc_channel
 {
 	/* EC internal die temperature in degrees K. */
