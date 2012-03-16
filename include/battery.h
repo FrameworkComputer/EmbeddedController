@@ -8,8 +8,10 @@
 #ifndef __CROS_EC_BATTERY_H
 #define __CROS_EC_BATTERY_H
 
-#define BATTERY_WARNING_PERCENTAGE 10
-#define BATTERY_LOW_PERCENTAGE 3
+/* Design capacities, percentage */
+#define BATTERY_LEVEL_WARNING 15
+#define BATTERY_LEVEL_LOW 10
+#define BATTERY_LEVEL_CRITICAL 3
 
 #endif /* __CROS_EC_BATTERY_H */
 
