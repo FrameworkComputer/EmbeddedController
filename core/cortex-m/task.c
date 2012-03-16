@@ -75,7 +75,11 @@ static void task_exit_trap(void)
 
 #define GUARD_VALUE 0x12345678
 
-/* declare and fill the contexts for all the tasks */
+/* Declare and fill the contexts for all tasks. Note that while it would be
+ * more readable to use the struct fields (.sp, .guard) where applicable, gcc
+ * can't mix initializing some fields on one side of the union and some fields
+ * on the other, so we have to use .context for all initialization.
+ */
 #define TASK(n, r, d)  {						\
 	.context[0] = (uint32_t)(tasks + TASK_ID_##n + 1) - 64,	        \
 	.context[2] = GUARD_VALUE,					\
@@ -90,13 +94,8 @@ static task_ tasks[] __attribute__((section(".data.tasks")))
 	CONFIG_TASK_LIST
 };
 #undef TASK
-/* Reserve space to discard context on first context switch.
- * Fill in guard value to prevent overflow detection failure at first
- * context switch. Modify this if the position of guard value changes.
- * TODO: come up with a better way than hardcoding the position of guard value.
- */
-uint32_t scratchpad[17] __attribute__((section(".data.tasks"))) =
-	{0, 0, GUARD_VALUE};
+/* Reserve space to discard context on first context switch. */
+uint32_t scratchpad[17] __attribute__((section(".data.tasks")));
 
 /* context switch at the next exception exit if needed */
 /* TODO: who sets this back to 0 after it's set to 1? */
@@ -427,6 +426,10 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready);
 
 int task_pre_init(void)
 {
+	/* Fill in guard value in scratchpad to prevent stack overflow
+	 * detection failure on the first context switch. */
+	((task_ *)scratchpad)->guard = GUARD_VALUE;
+
 	/* sanity checks about static task invariants */
 	BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
 	BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
