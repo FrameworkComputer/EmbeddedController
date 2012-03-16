@@ -20,19 +20,10 @@ static int scroll = 0;
 
 void port_80_write(int data)
 {
-#ifndef CONFIG_PORT80_PRINT_DUPLICATES
-	static int last_data = -1;  /* Last data written to port 80 */
-
-	/* Ignore duplicate writes, since the linux kernel writes to port 80
-	 * as a delay mechanism during boot. */
-	if (data == last_data)
-		return;
-
-	last_data = data;
-#endif
-
-	/* TODO: post to SWI and print from there?  This currently
-	 * prints from inside the LPC interrupt itself. */
+	/* Note that this currently prints from inside the LPC interrupt
+	 * itself.  Probably not worth the system overhead to buffer the data
+	 * and print it from a task, because we're printing a small amount of
+	 * data and uart_printf() doesn't block. */
 	uart_printf("%c[Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
 	history[head] = data;

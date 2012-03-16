@@ -55,11 +55,6 @@
 /* LPC COMx I/O address (in x86 I/O address space) */
 #define LPC_COMX_ADDR 0x3f8  /* COM1 */
 
-/* Define the following to print repeated duplicate port 80 writes.  Normally
- * we only print the port 80 value when it changes, because the kernel spams
- * port 80 with repeated writes as a delay mechanism. */
-#define CONFIG_PORT80_PRINT_DUPLICATES
-
 /* ADC inputs */
 /* TODO: assign real ADC inputs */
 #define ADC_IN0 11  /* Charger current */
