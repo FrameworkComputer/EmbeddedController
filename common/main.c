@@ -38,43 +38,71 @@
 
 int main(void)
 {
-	/* Configure the pin multiplexers */
+	/* Pre-initialization (pre-verified boot) stage.  Initialization at
+	 * this level should do as little as possible, because verified boot
+	 * may need to jump to another image, which will repeat this
+	 * initialization.  In particular, modules should NOT enable
+	 * interrupts.*/
+
+	/* Configure the pin multiplexers and GPIOs */
 	configure_board();
 	jtag_pre_init();
+	gpio_pre_init();
+
+#ifdef CONFIG_FLASH
+	flash_pre_init();
+#endif
+
+	/* Verified boot pre-init.  This write-protects flash if necessary.
+	 * Flash and GPIOs must be initialized first. */
+	vboot_pre_init();
 
 	/* Initialize the system module.  This enables the hibernate clock
 	 * source we need to calibrate the internal oscillator. */
 	system_pre_init();
 
-	/* Set the CPU clocks / PLLs and timer */
+	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();
-	timer_init();
-	/* The timer used by get_time() is now started, so everything after
-	 * this can be benchmarked. */
 
-	/* Do system, gpio, and vboot pre-initialization so we can jump to
-	 * another image if necessary.  This must be done as early as
-	 * possible, so that the minimum number of components get
-	 * re-initialized if we jump to another image. */
-	gpio_pre_init();
-	vboot_pre_init();
-
+	/* Initialize interrupts, but don't enable any of them.  Note that
+	 * task scheduling is not enabled until task_start() below. */
 	task_init();
 
+	/* Main initialization stage.  Modules may enable interrupts here. */
+
+	/* Initialize UART.  uart_printf(), etc. may now be used. */
+	uart_init();
+
 #ifdef CONFIG_TASK_WATCHDOG
+	/* Intialize watchdog timer.  All lengthy operations between now and
+	 * task_start() must periodically call watchdog_reload() to avoid
+	 * triggering a watchdog reboot.  (This pretty much applies only to
+	 * verified boot, because all *other* lengthy operations should be done
+	 * by tasks.) */
 	watchdog_init(1100);
 #endif
-	uart_init();
-	system_init();
+
+	/* Initialize timer.  Everything after this can be benchmarked.
+	 * get_time() and udelay() may now be used.  usleep() requires task
+	 * scheduling, so cannot be used yet. */
+	timer_init();
+
+	/* Verified boot needs to read the initial keyboard state and EEPROM
+	 * contents. */
 #ifdef CONFIG_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
-#ifdef CONFIG_FLASH
-	flash_init();
-#endif
+#ifdef CONFIG_EEPROM
 	eeprom_init();
+#endif
 
+	/* Verified boot initialization.  This may jump to another image, which
+	 * will need to reconfigure / reinitialize the system, so as little as
+	 * possible should be done above this step. */
 	vboot_init();
+
+	system_init();
+	gpio_init();
 
 #ifdef CONFIG_LPC
 	port_80_init();
@@ -84,7 +112,9 @@ int main(void)
 #ifdef CONFIG_PWM
 	pwm_init();
 #endif
+#ifdef CONFIG_I2C
 	i2c_init();
+#endif
 #ifdef CONFIG_TASK_TEMPSENSOR
 	temp_sensor_init();
 	chip_temp_sensor_init();
@@ -92,17 +122,20 @@ int main(void)
 #ifdef CONFIG_TASK_POWERBTN
 	power_button_init();
 #endif
+#ifdef CONFIG_ADC
 	adc_init();
-	usb_charge_init();
+#endif
 #ifdef CONFIG_ONEWIRE
 	onewire_init();
 #endif
 #ifdef CONFIG_CHARGER
 	charger_init();
 #endif
-
 #ifdef CONFIG_PECI
 	peci_init();
+#endif
+#ifdef CONFIG_USB_CHARGE
+	usb_charge_init();
 #endif
 
 	/* Print the init time and reset cause.  Init time isn't completely

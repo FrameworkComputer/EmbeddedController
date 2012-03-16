@@ -9,13 +9,17 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_BATTERY_ATL706486
 #define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24725
 #define CONFIG_LIGHTBAR
 #define CONFIG_ONEWIRE
 #define CONFIG_PECI
 #define CONFIG_POWER_LED
 #define CONFIG_PSTORE
+#define CONFIG_SMART_BATTERY
 #define CONFIG_TMP006
+#define CONFIG_USB_CHARGE
 
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
@@ -71,7 +75,6 @@ enum adc_channel
 };
 
 /* Charger module */
-#define CONFIG_CHARGER_BQ24725
 /* Set charger input current limit
  * Note - this value should depend on external power adapter,
  *        designed charging voltage, and the maximum power of
@@ -83,9 +86,6 @@ enum adc_channel
 #define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
 #define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
 
-/* Battery module */
-#define CONFIG_SMART_BATTERY
-#define CONFIG_BATTERY_ATL706486
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0

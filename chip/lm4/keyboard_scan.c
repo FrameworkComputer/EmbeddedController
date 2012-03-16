@@ -359,9 +359,6 @@ int keyboard_scan_init(void)
 	update_key_state();
 	recovery_key_pressed = check_recovery_key();
 
-	/* Enable interrupts, now that we're set up */
-	task_enable_irq(KB_SCAN_ROW_IRQ);
-
 	return EC_SUCCESS;
 }
 
@@ -373,6 +370,9 @@ void keyboard_scan_task(void)
 	print_raw_state("init state");
 	if (recovery_key_pressed)
 		uart_puts("[KB recovery key pressed at init!]\n");
+
+	/* Enable interrupts */
+	task_enable_irq(KB_SCAN_ROW_IRQ);
 
 	while (1) {
 		wait_for_interrupt();

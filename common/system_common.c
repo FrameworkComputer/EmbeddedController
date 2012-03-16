@@ -230,7 +230,7 @@ static enum lpc_status host_command_get_version(uint8_t *data)
 	strzcpy(r->version_string_rw_b, system_get_version(SYSTEM_IMAGE_RW_B),
 		sizeof(r->version_string_rw_b));
 
-	switch(system_get_image_copy()) {
+	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
 		r->current_image = EC_LPC_IMAGE_RO;
 		break;

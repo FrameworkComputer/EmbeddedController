@@ -51,6 +51,9 @@
  *    KB_COL05:06 = PC14:15
  *    KB_COL07 = PD2
  *  Other:
+ *
+ * TODO: clean up the nomenclature above; it's weird that KB_ROW00 is a column
+ * and KB_COL00 is a row...
  */
 
 extern struct gpio_info gpio_list[];
@@ -204,6 +207,7 @@ static void select_column(int col)
 	}
 }
 
+
 int keyboard_scan_init(void)
 {
 	int i, j;
@@ -286,15 +290,6 @@ int keyboard_scan_init(void)
 	/* TODO: method to set which keyboard we have, so we set the actual
 	 * key mask properly */
 	actual_key_mask = actual_key_masks[0];
-
-	gpio_enable_interrupt(KB_COL00);
-	gpio_enable_interrupt(KB_COL01);
-	gpio_enable_interrupt(KB_COL02);
-	gpio_enable_interrupt(KB_COL03);
-	gpio_enable_interrupt(KB_COL04);
-	gpio_enable_interrupt(KB_COL05);
-	gpio_enable_interrupt(KB_COL06);
-	gpio_enable_interrupt(KB_COL07);
 
 	return EC_SUCCESS;
 }
@@ -418,7 +413,15 @@ void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
 
-	keyboard_scan_init();
+	/* Enable interrupts for keyboard rows */
+	gpio_enable_interrupt(KB_COL00);
+	gpio_enable_interrupt(KB_COL01);
+	gpio_enable_interrupt(KB_COL02);
+	gpio_enable_interrupt(KB_COL03);
+	gpio_enable_interrupt(KB_COL04);
+	gpio_enable_interrupt(KB_COL05);
+	gpio_enable_interrupt(KB_COL06);
+	gpio_enable_interrupt(KB_COL07);
 
 	while (1) {
 		wait_for_interrupt();

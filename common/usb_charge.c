@@ -14,7 +14,6 @@
 
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
-#ifdef BOARD_link
 	if (port_id == 0) {
 		gpio_set_level(GPIO_USB1_CTL1, (mode & 0x4) >> 2);
 		gpio_set_level(GPIO_USB1_CTL2, (mode & 0x2) >> 1);
@@ -25,32 +24,26 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 		gpio_set_level(GPIO_USB2_CTL2, (mode & 0x2) >> 1);
 		gpio_set_level(GPIO_USB2_CTL3, mode & 0x1);
 	}
-#endif
 }
 
 static void usb_charge_set_enabled(int port_id, int en)
 {
-#ifdef BOARD_link
 	if (port_id == 0)
 		gpio_set_level(GPIO_USB1_ENABLE, en);
 	else
 		gpio_set_level(GPIO_USB2_ENABLE, en);
-#endif
 }
 
 static void usb_charge_set_ilim(int port_id, int sel)
 {
-#ifdef BOARD_link
 	if (port_id == 0)
 		gpio_set_level(GPIO_USB1_ILIM_SEL, sel);
 	else
 		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
-#endif
 }
 
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
-
 	if (port_id >= USB_CHARGE_PORT_COUNT)
 		return EC_ERROR_INVAL;
 

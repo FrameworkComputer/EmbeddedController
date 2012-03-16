@@ -8,10 +8,14 @@
 # LM4 SoC has a Cortex-M4 ARM core
 CORE:=cortex-m
 
-chip-y=i2c.o adc.o jtag.o
-chip-y+=clock.o gpio.o system.o uart.o
-chip-y+=watchdog.o eeprom.o hwtimer.o
+# Required chip modules
+chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o watchdog.o
+
+# Optional chip modules
+chip-$(CONFIG_ADC)+=adc.o
+chip-$(CONFIG_EEPROM)+=eeprom.o
 chip-$(CONFIG_FLASH)+=flash.o
+chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_ONEWIRE)+=onewire.o
 chip-$(CONFIG_PECI)+=peci.o

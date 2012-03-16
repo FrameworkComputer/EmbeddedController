@@ -287,7 +287,7 @@ int flash_get_write_protect_status(void)
 }
 
 
-int flash_init(void)
+int flash_pre_init(void)
 {
 	/* Calculate usable flash size.  Reserve one protection block
 	 * at the top to hold the write protect range.  FSIZE already

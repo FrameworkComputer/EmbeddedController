@@ -61,6 +61,12 @@ int gpio_pre_init(void)
 		/* Interrupt is enabled by gpio_enable_interrupt() */
 	}
 
+	return EC_SUCCESS;
+}
+
+
+int gpio_init(void)
+{
 	/* Enable IRQs now that pins are set up */
 	task_enable_irq(STM32L_IRQ_EXTI0);
 	task_enable_irq(STM32L_IRQ_EXTI1);

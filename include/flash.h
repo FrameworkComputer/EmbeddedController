@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,7 @@
 
 
 /* Initializes the module. */
-int flash_init(void);
+int flash_pre_init(void);
 
 /* Returns the usable size of flash in bytes.  Note that this is
  * smaller than the actual flash size, */

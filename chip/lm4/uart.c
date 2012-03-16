@@ -99,8 +99,7 @@ static void uart_1_interrupt(void)
 	/* Clear transmit and receive interrupt status */
 	LM4_UART_ICR(1) = 0x70;
 
-	/* TODO: (crosbug.com/p/7488) handle input */
-
+#ifdef CONFIG_LPC
 	/* If we have space in our FIFO and a character is pending in LPC,
 	 * handle that character. */
 	if (!(LM4_UART_FR(1) & 0x20) && lpc_comx_has_char()) {
@@ -115,6 +114,7 @@ static void uart_1_interrupt(void)
 	 * on the UART receive-side either. */
 	if (!(LM4_UART_FR(1) & 0x10))
 		lpc_comx_put_char(LM4_UART_DR(1));
+#endif
 }
 /* Must be same prio as LPC interrupt handler so they don't preempt */
 DECLARE_IRQ(LM4_IRQ_UART1, uart_1_interrupt, 2);
