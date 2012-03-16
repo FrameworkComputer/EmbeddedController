@@ -130,7 +130,15 @@ static inline void update_and_check_stat(int temp,
 			overheated[threshold_id] = 1;
 		}
 	}
-	else
+	else if (ot_count[sensor_id][threshold_id] >= 10 &&
+		 temp >= threshold - 3) {
+		/* Once the threshold is reached, only if the temperature
+		 * drops to 3 degrees below threshold do we deassert
+		 * overheated signal. This is to prevent temperature
+		 * oscillating around the threshold causing threshold
+		 * keep being triggered. */
+		overheated[threshold_id] = 1;
+	} else
 		ot_count[sensor_id][threshold_id] = 0;
 }
 
