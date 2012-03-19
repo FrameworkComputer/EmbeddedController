@@ -24,8 +24,8 @@ enum lpc_status battery_command_get_info(uint8_t *data)
 	if (battery_design_capacity(&val))
 		return EC_LPC_RESULT_ERROR;
 	r->design_capacity         = val;
-	r->design_capacity_warning = val * BATTERY_WARNING_PERCENTAGE / 100;
-	r->design_capacity_low     = val * BATTERY_LOW_PERCENTAGE / 100;
+	r->design_capacity_warning = val * BATTERY_LEVEL_WARNING / 100;
+	r->design_capacity_low     = val * BATTERY_LEVEL_LOW / 100;
 
 	if (battery_full_charge_capacity(&val))
 		return EC_LPC_RESULT_ERROR;
