@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "lpc.h"
 #include "lpc_commands.h"
+#include "power_led.h"
 #include "smart_battery.h"
 #include "timer.h"
 #include "uart.h"
@@ -452,6 +453,10 @@ void charge_state_machine_task(void)
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
 			*ctx.memmap_batt_flags = batt_flags;
+
+			/* Charge done */
+			powerled_set(POWERLED_GREEN);
+
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
 		case PWR_STATE_DISCHARGE:
@@ -466,8 +471,17 @@ void charge_state_machine_task(void)
 			batt_flags |= EC_BATT_FLAG_CHARGING;
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
 			*ctx.memmap_batt_flags = batt_flags;
+
+			/* Charging */
+			powerled_set(POWERLED_YELLOW);
+
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
+		case PWR_STATE_ERROR:
+			/* Error */
+			powerled_set(POWERLED_RED);
+
+			sleep_usec = POLL_PERIOD_CHARGE;
 		default:
 			sleep_usec = POLL_PERIOD_SHORT;
 		}
