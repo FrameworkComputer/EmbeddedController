@@ -9,6 +9,7 @@
 #include "host_command.h"
 #include "lpc_commands.h"
 #include "system.h"
+#include "task.h"
 #include "uart.h"
 #include "util.h"
 #include "version.h"
@@ -64,39 +65,60 @@ const char *system_get_image_copy_string(void)
 }
 
 
+/* Jump to what we hope is the init address of an image.  This function does
+ * not return. */
+static void jump_to_image(uint32_t init_addr)
+{
+	void (*resetvec)(void) = (void(*)(void))init_addr;
+
+	/* Flush UART output unless the UART hasn't been initialized yet */
+	if (uart_init_done())
+		uart_flush_output();
+
+	/* Disable interrupts before jump */
+	interrupt_disable();
+
+	/* Jump to the reset vector */
+	resetvec();
+}
+
+
 int system_run_image_copy(enum system_image_copy_t copy)
 {
+	uint32_t base;
 	uint32_t init_addr;
-	void (*resetvec)(void);
-
-	/* Fail if we're not in RO firmware */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
-		return EC_ERROR_UNKNOWN;
-
-	/* Load the appropriate reset vector */
-	if (copy == SYSTEM_IMAGE_RW_A)
-		init_addr = *(uint32_t *)(CONFIG_FW_A_OFF + 4);
-#ifndef CONFIG_NO_RW_B
-	else if (copy == SYSTEM_IMAGE_RW_B)
-		init_addr = *(uint32_t *)(CONFIG_FW_B_OFF + 4);
-#endif
-	else
-		return EC_ERROR_UNKNOWN;
 
 	/* TODO: sanity checks (crosbug.com/p/7468)
 	 *
-	 * Fail if called outside of pre-init.
-	 *
-	 * Fail if reboot reason is not soft reboot.  Power-on
-	 * reset cause must run RO firmware; if it wants to move to RW
-	 * firmware, it must go through a soft reboot first
-	 *
-	 * Sanity check reset vector; must be inside the appropriate
-	 * image. */
+	 * For this to be allowed either WP must be disabled, or ALL of the
+	 * following must be true:
+	 *  - We must currently be running the RO image.
+	 *  - We must still be in init (that is, before task_start().
+	 *  - The target image must be A or B. */
 
-	/* Jump to the reset vector */
-	resetvec = (void(*)(void))init_addr;
-	resetvec();
+	/* Load the appropriate reset vector */
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+		base = CONFIG_FW_RO_OFF;
+		break;
+	case SYSTEM_IMAGE_RW_A:
+		base = CONFIG_FW_A_OFF;
+		break;
+#ifndef CONFIG_NO_RW_B
+	case SYSTEM_IMAGE_RW_B:
+		base = CONFIG_FW_B_OFF;
+		break;
+#endif
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	/* Make sure the reset vector is inside the destination image */
+	init_addr = *(uint32_t *)(base + 4);
+	if (init_addr < base || init_addr >= base + CONFIG_FW_IMAGE_SIZE)
+		return EC_ERROR_UNKNOWN;
+
+	jump_to_image(init_addr);
 
 	/* Should never get here */
 	return EC_ERROR_UNIMPLEMENTED;
@@ -215,6 +237,46 @@ static int command_version(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(version, command_version);
 
+
+static int command_sysjump(int argc, char **argv)
+{
+	uint32_t addr;
+	char *e;
+
+	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
+	 * be disabled. */
+
+	if (argc < 2) {
+		uart_puts("Usage: sysjump <RO | A | B | addr>\n");
+		return EC_ERROR_INVAL;
+	}
+
+	/* Handle named images */
+	if (!strcasecmp(argv[1], "RO")) {
+		uart_puts("Jumping directly to RO image...\n");
+		return system_run_image_copy(SYSTEM_IMAGE_RO);
+	} else if (!strcasecmp(argv[1], "A")) {
+		uart_puts("Jumping directly to image A...\n");
+		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
+	} else if (!strcasecmp(argv[1], "B")) {
+		uart_puts("Jumping directly to image B...\n");
+		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
+	}
+
+	/* Check for arbitrary address */
+	addr = strtoi(argv[1], &e, 0);
+	if (e && *e) {
+		uart_puts("Invalid image address\n");
+		return EC_ERROR_INVAL;
+	}
+	uart_printf("Jumping directly to 0x%08x...\n", addr);
+	uart_flush_output();
+	jump_to_image(addr);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
+
+
 /*****************************************************************************/
 /* Host commands */
 
@@ -261,3 +323,41 @@ static enum lpc_status host_command_build_info(uint8_t *data)
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_BUILD_INFO, host_command_build_info);
+
+
+#ifdef CONFIG_REBOOT_EC
+enum lpc_status host_command_reboot(uint8_t *data)
+{
+	struct lpc_params_reboot_ec *p =
+		(struct lpc_params_reboot_ec *)data;
+
+	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
+	 * be disabled. */
+
+	switch (p->target) {
+	case EC_LPC_IMAGE_RO:
+		uart_puts("[Rebooting to image RO!\n]");
+		system_run_image_copy(SYSTEM_IMAGE_RO);
+		break;
+	case EC_LPC_IMAGE_RW_A:
+		uart_puts("[Rebooting to image A!]\n");
+		system_run_image_copy(SYSTEM_IMAGE_RW_A);
+		break;
+	case EC_LPC_IMAGE_RW_B:
+		uart_puts("[Rebooting to image B!]\n");
+		system_run_image_copy(SYSTEM_IMAGE_RW_B);
+		break;
+	default:
+		return EC_LPC_RESULT_ERROR;
+	}
+
+	/* We normally never get down here, because we'll have jumped to
+	 * another image.  To confirm this command worked, the host will need
+	 * to check what image is current using GET_VERSION.
+	 *
+	 * If we DO get down here, something went wrong in the reboot, so
+	 * return error. */
+	return EC_LPC_RESULT_ERROR;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_REBOOT_EC, host_command_reboot);
+#endif /* CONFIG_REBOOT_EC */

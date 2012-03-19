@@ -302,7 +302,13 @@ vector_irq 254                    @ IRQ 254 handler
 .global reset
 .thumb_func
 reset:
-    /* set the vector table on our current code */
+    /* Ensure we're in privileged mode with main stack.
+     * Necessary if we've jumped directly here from another image
+     * after task_start(). */
+    mov r0, #0
+    msr control, r0      @ use : priv. mode / main stack / no floating point
+    isb                  @ ensure the write is done
+    /* Set the vector table on our current code */
     ldr r1, =vectors
     ldr r2, =0xE000ED08   /* VTABLE register in SCB*/
     str r1, [r2]

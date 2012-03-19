@@ -16,6 +16,7 @@
 /* Nested Vectored Interrupt Controller */
 #define CPU_NVIC_EN(x)         CPUREG(0xe000e100 + 4 * (x))
 #define CPU_NVIC_DIS(x)        CPUREG(0xe000e180 + 4 * (x))
+#define CPU_NVIC_UNPEND(x)     CPUREG(0xe000e280 + 4 * (x))
 #define CPU_NVIC_PRI(x)        CPUREG(0xe000e400 + 4 * (x))
 #define CPU_NVIC_APINT         CPUREG(0xe000ed0c)
 #define CPU_NVIC_SWTRIG        CPUREG(0xe000ef00)

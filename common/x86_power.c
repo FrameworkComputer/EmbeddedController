@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "lpc.h"
 #include "pwm.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -77,7 +78,9 @@ static const char * const state_names[] = {
 				  IN_PCH_SLP_S4n_DEASSERTED |		\
 				  IN_PCH_SLP_S5n_DEASSERTED |		\
 				  IN_PCH_SLP_An_DEASSERTED)
-
+/* All inputs in the right state for S0 */
+#define IN_ALL_S0 (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE |		\
+		   IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
 static enum x86_state state;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
@@ -245,11 +248,34 @@ void x86_power_interrupt(enum gpio_signal signal)
 
 int x86_power_init(void)
 {
+	/* Default to G3 state unless proven otherwise */
 	state = X86_G3;
 
 	/* Update input state */
 	update_in_signals();
 	in_want = 0;
+
+	/* If this is a warm reboot, see if the x86 is already powered on; if
+	 * so, leave it there instead of cycling through G3. */
+	if (system_get_reset_cause() == SYSTEM_RESET_SOFT_WARM) {
+		if ((in_signals & IN_ALL_S0) == IN_ALL_S0) {
+			uart_puts("[x86 already in S0]\n");
+			state = X86_S0;
+		} else {
+			/* Force all signals to their G3 states */
+			uart_puts("[x86 forcing G3]\n");
+			gpio_set_level(GPIO_PCH_PWROK, 0);
+			gpio_set_level(GPIO_ENABLE_VCORE, 0);
+			gpio_set_level(GPIO_PCH_RCINn, 0);
+			gpio_set_level(GPIO_ENABLE_VS, 0);
+			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
+			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 1);
+			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
+			gpio_set_level(GPIO_PCH_DPWROK, 0);
+		}
+	}
 
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_PCH_BKLTEN);

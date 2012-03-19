@@ -74,7 +74,7 @@ uint32_t task_wait_msg(int timeout_us);
 void task_resched_if_needed(void *excep_return);
 
 /* Initializes tasks and interrupt controller. */
-int task_init(void);
+int task_pre_init(void);
 
 /* Starts task scheduling. */
 int task_start(void);

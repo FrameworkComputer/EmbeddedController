@@ -299,18 +299,28 @@ void task_trigger_irq(int irq)
 }
 
 
-/**
- * Enable all used IRQ in the NVIC and set their priorities
- * as defined by the DECLARE_IRQ statements
- */
+/* Initialize IRQs in the NVIC and set their priorities as defined by the
+ * DECLARE_IRQ statements. */
 static void __nvic_init_irqs(void)
 {
-	/* get the IRQ priorities section from the linker */
+	/* Get the IRQ priorities section from the linker */
 	extern struct irq_priority __irqprio[];
 	extern struct irq_priority __irqprio_end[];
 	int irq_count = __irqprio_end - __irqprio;
 	int i;
 
+	/* Mask and clear all pending interrupts */
+	for (i = 0; i < 5; i++) {
+		CPU_NVIC_DIS(i) = 0xffffffff;
+		CPU_NVIC_UNPEND(i) = 0xffffffff;
+	}
+
+	/* Re-enable global interrupts in case they're disabled.  On a reboot,
+	 * they're already enabled; if we've jumped here from another image,
+	 * they're not. */
+	interrupt_enable();
+
+	/* Set priorities */
 	for (i = 0; i < irq_count; i++) {
 		uint8_t irq = __irqprio[i].irq;
 		uint8_t prio = __irqprio[i].priority;
@@ -405,7 +415,7 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready);
 #endif
 
 
-int task_init(void)
+int task_pre_init(void)
 {
 	/* sanity checks about static task invariants */
 	BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
