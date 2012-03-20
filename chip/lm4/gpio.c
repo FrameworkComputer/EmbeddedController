@@ -16,7 +16,7 @@
 
 
 /* 0-terminated list of GPIO bases */
-const uint32_t gpio_bases[] = {
+static const uint32_t gpio_bases[] = {
 	LM4_GPIO_A, LM4_GPIO_B, LM4_GPIO_C, LM4_GPIO_D,
 	LM4_GPIO_E, LM4_GPIO_F, LM4_GPIO_G, LM4_GPIO_H,
 	LM4_GPIO_J, LM4_GPIO_K, LM4_GPIO_L, LM4_GPIO_M,
@@ -45,12 +45,18 @@ int gpio_pre_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	const struct gpio_info *g = gpio_list;
+	int is_warm = 0;
 	int i;
 
-	/* Enable clocks to all the GPIO blocks (since we use all of them as
-	 * GPIOs) */
-	LM4_SYSTEM_RCGCGPIO |= 0x7fff;
-	scratch = LM4_SYSTEM_RCGCGPIO;  /* Delay a few clocks */
+	if (LM4_SYSTEM_RCGCGPIO == 0x7fff) {
+		/* This is a warm reboot */
+		is_warm = 1;
+	} else {
+		/* Enable clocks to all the GPIO blocks (since we use all of
+		 * them as GPIOs) */
+		LM4_SYSTEM_RCGCGPIO |= 0x7fff;
+		scratch = LM4_SYSTEM_RCGCGPIO;  /* Delay a few clocks */
+	}
 
 	/* Disable GPIO commit control for PD7 and PF0, since we don't use the
 	 * NMI pin function. */
@@ -64,6 +70,10 @@ int gpio_pre_init(void)
 	/* Clear SSI0 alternate function on PA2:5 */
 	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~0x3c;
 
+	/* Mask all GPIO interrupts */
+	for (i = 0; gpio_bases[i]; i++)
+		LM4_GPIO_IM(gpio_bases[i]) = 0;
+
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 
@@ -76,7 +86,11 @@ int gpio_pre_init(void)
 			LM4_GPIO_DIR(g->port) |= g->mask;
 			/* Must set level after direction; writes to GPIO_DATA
 			 * before direction is output appear to be ignored. */
-			gpio_set_level(i, g->flags & GPIO_HIGH);
+			/* Only set level on a cold reboot; on a warm reboot we
+			 * want to leave things where they were or we'll shut
+			 * off the x86. */
+			if (!is_warm)
+				gpio_set_level(i, g->flags & GPIO_HIGH);
 		} else {
 			/* Input */
 			if (g->flags & GPIO_PULL) {

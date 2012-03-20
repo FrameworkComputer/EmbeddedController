@@ -114,10 +114,13 @@ int watchdog_init(int period_ms)
 
 	/* Enable watchdog 0 clock */
 	LM4_SYSTEM_RCGCWD |= 0x1;
-	/* wait 3 clock cycles before using the module */
+	/* Wait 3 clock cycles before using the module */
 	scratch = LM4_SYSTEM_RCGCWD;
 
-	/* set the time-out period */
+	/* Unlock watchdog registers */
+	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
+
+	/* Set the time-out period */
 	watchdog_period = period_ms * (CPU_CLOCK / 1000);
 	LM4_WATCHDOG_LOAD(0) = watchdog_period;
 
@@ -129,7 +132,10 @@ int watchdog_init(int period_ms)
 	 */
 	LM4_WATCHDOG_CTL(0) = 0x3;
 
-	/* lock watchdog registers against unintended accesses */
+	/* Reset watchdog interrupt bits */
+	LM4_WATCHDOG_ICR(0) = LM4_WATCHDOG_RIS(0);
+
+	/* Lock watchdog registers against unintended accesses */
 	LM4_WATCHDOG_LOCK(0) = 0xdeaddead;
 
 	/* Enable watchdog interrupt */

@@ -14,6 +14,8 @@
 /* Initializes the UART module. */
 int uart_init(void);
 
+/* Return non-zero if UART init has completed. */
+int uart_init_done(void);
 
 /* Enables console mode if <enable>!=0.  In console mode:
  *    - Input is echoed

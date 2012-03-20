@@ -49,6 +49,10 @@ int main(void)
 	jtag_pre_init();
 	gpio_pre_init();
 
+	/* Initialize interrupts, but don't enable any of them.  Note that
+	 * task scheduling is not enabled until task_start() below. */
+	task_pre_init();
+
 #ifdef CONFIG_FLASH
 	flash_pre_init();
 #endif
@@ -63,10 +67,6 @@ int main(void)
 
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();
-
-	/* Initialize interrupts, but don't enable any of them.  Note that
-	 * task scheduling is not enabled until task_start() below. */
-	task_init();
 
 	/* Main initialization stage.  Modules may enable interrupts here. */
 

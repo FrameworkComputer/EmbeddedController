@@ -61,7 +61,8 @@ static void check_reset_cause(void)
 	} else if (raw_reset_cause) {
 		reset_cause = SYSTEM_RESET_OTHER;
 	} else {
-		reset_cause = SYSTEM_RESET_UNKNOWN;
+		/* Reset cause is still 0, so this is a warm reset. */
+		reset_cause = SYSTEM_RESET_SOFT_WARM;
 	}
 	system_set_reset_cause(reset_cause);
 }

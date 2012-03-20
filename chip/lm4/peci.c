@@ -97,6 +97,9 @@ int peci_init(void)
 	/* Configure GPIOs */
 	configure_gpios();
 
+	/* Disable polling while reconfiguring */
+	LM4_PECI_CTL = 0;
+
 	/* Calculate baud setting from desired rate, compensating for internal
 	 * and external delays. */
 	baud = CPU_CLOCK / (4 * PECI_BAUD_RATE) - 2;

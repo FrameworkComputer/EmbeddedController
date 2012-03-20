@@ -19,6 +19,15 @@
 /* Baud rate for UARTs */
 #define BAUD_RATE 115200
 
+
+static int init_done;
+
+
+int uart_init_done(void)
+{
+	return init_done;
+}
+
 void uart_tx_start(void)
 {
 	/* Re-enable the transmit interrupt, then forcibly trigger the
@@ -185,6 +194,8 @@ int uart_init(void)
 	 * LPC bus is initialized.
 	 */
 	task_enable_irq(LM4_IRQ_UART0);
+
+	init_done = 1;
 
 	return EC_SUCCESS;
 }

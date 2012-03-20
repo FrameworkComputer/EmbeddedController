@@ -20,8 +20,14 @@
 /* Console USART index */
 #define UARTN CONFIG_CONSOLE_UART
 
-/* record last TX control action */
-static int should_stop;
+static int init_done;    /* Initialization done? */
+static int should_stop;  /* Last TX control action */
+
+
+int uart_init_done(void)
+{
+	return init_done;
+}
 
 void uart_tx_start(void)
 {
@@ -137,6 +143,8 @@ int uart_init(void)
 
 	/* Enable interrupts */
 	task_enable_irq(STM32L_IRQ_USART(UARTN));
+
+	init_done = 1;
 
 	return EC_SUCCESS;
 }
