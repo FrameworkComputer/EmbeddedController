@@ -10,6 +10,8 @@
 #include "console.h"
 #include "keyboard.h"
 #include "i8042.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 #include "registers.h"
 #include "timer.h"
 #include "uart.h"
@@ -214,6 +216,19 @@ static void clean_underlying_buffer(void) {
 }
 
 
+/* TODO: Move this implementation to platform-dependent files.
+ *       We don't do it now because not every board implement x86_power.c
+ *         bds: no CONFIG_LPC and no CONFIG_TASK_X86POWER
+ *         daisy(variants): no CONFIG_LPC and no CONFIG_TASK_X86POWER
+ *       crosbug.com/p/8523
+ */
+static void keyboard_wakeup(void) {
+#ifdef CONFIG_LPC
+  lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_KEY_PRESSED));
+#endif
+}
+
+
 void keyboard_state_changed(int row, int col, int is_pressed) {
   uint8_t scan_code[MAX_SCAN_CODE_LEN];
   int32_t len;
@@ -233,6 +248,10 @@ void keyboard_state_changed(int row, int col, int is_pressed) {
     /* FIXME: long-term solution is to ignore this key. However, keep
      *        assertion in the debug stage. */
     ASSERT(ret == EC_SUCCESS);
+  }
+
+  if (is_pressed) {
+    keyboard_wakeup();
   }
 }
 
