@@ -466,3 +466,9 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 {
 	/* TODO: needs to be implemented */
 }
+
+int keyboard_scan_recovery_pressed(void)
+{
+	/* TODO: (crosbug.com/p/8573) needs to be implemented */
+	return 0;
+}

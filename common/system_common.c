@@ -277,6 +277,15 @@ static int command_sysjump(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
 
 
+static int command_reboot(int argc, char **argv)
+{
+	uart_puts("Rebooting!\n\n\n");
+	uart_flush_output();
+	system_reset(1);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
+
 /*****************************************************************************/
 /* Host commands */
 

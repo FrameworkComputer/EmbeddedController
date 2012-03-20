@@ -1,94 +1,49 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Verified boot module for Chrome EC */
 
-#include "common.h"  /* for CONFIG_REBOOT_EC */
-#include "console.h"
-#include "host_command.h"  /* for CONFIG_REBOOT_EC */
-#include "lpc_commands.h"  /* for CONFIG_REBOOT_EC */
+#include "gpio.h"
+#include "keyboard_scan.h"
 #include "system.h"
 #include "uart.h"
 #include "util.h"
 #include "vboot.h"
 
 
-#define SCRATCHPAD_EMPTY       0
-#define SCRATCHPAD_REQUEST_A   0xb00daaaa
-#define SCRATCHPAD_REQUEST_B   0xb00dbbbb
-#define SCRATCHPAD_SELECTED_A  0x0000d1da
-#define SCRATCHPAD_SELECTED_B  0x0000d1db
-#define SCRATCHPAD_SELECTED_RO 0x0000d1d0
-#define SCRATCHPAD_FAILED_A    0x0000eeea
-#define SCRATCHPAD_FAILED_B    0x0000eeeb
-
-
 /* Jumps to one of the RW images if necessary. */
 static void jump_to_other_image(void)
 {
-	int s;
-
+	/* Only jump to another image if we're currently in RO */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
-		return;  /* Not in RO firmware, so ignore scratchpad */
+		return;
 
-	if (system_get_reset_cause() != SYSTEM_RESET_SOFT_COLD) {
-		/* In RO firmware, but not because of a warm boot.
-		 * Stay in RO regardless of scratchpad, and clear it
-		 * so we don't use it on the next boot. */
-		system_set_scratchpad(SCRATCHPAD_EMPTY);
+	/* Don't jump if recovery requested */
+	if (keyboard_scan_recovery_pressed()) {
+		uart_puts("Vboot staying in RO because key pressed.\n");
 		return;
 	}
 
-	/* TODO: check recovery button; if it's pressed, stay in RO */
-
-	/* Check for a scratchpad value we recognize.  Clear the
-	 * scratchpad before jumping, so we only do this once. */
-	s = system_get_scratchpad();
-	if (s == SCRATCHPAD_REQUEST_A) {
-		system_set_scratchpad(SCRATCHPAD_SELECTED_A);
-		system_run_image_copy(SYSTEM_IMAGE_RW_A);
-		/* Shouldn't normally return; if we did, flag error */
-		system_set_scratchpad(SCRATCHPAD_FAILED_A);
-	} else if (s == SCRATCHPAD_REQUEST_B) {
-		system_set_scratchpad(SCRATCHPAD_SELECTED_B);
-		system_run_image_copy(SYSTEM_IMAGE_RW_B);
-		/* Shouldn't normally return; if we did, flag error */
-		system_set_scratchpad(SCRATCHPAD_FAILED_B);
-	} else {
-		system_set_scratchpad(SCRATCHPAD_EMPTY);
+#if !defined(BOARD_daisy) && !defined(BOARD_discovery)
+	/* TODO: (crosbug.com/p/8572) Daisy and discovery don't define a GPIO
+	 * for the recovery signal from servo, so can't check it. */
+	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
+		uart_puts("Vboot staying in RO due to recovery signal.\n");
+		return;
 	}
+#endif
+
+
+#ifdef BOARD_link
+	/* TODO: (crosbug.com/p/8561) once daisy can warm-boot to another
+	 * image, enable this there too. */
+	/* TODO: real verified boot (including recovery reason); for now, just
+	 * jump to image A. */
+	system_run_image_copy(SYSTEM_IMAGE_RW_A);
+#endif
 }
-
-
-/*****************************************************************************/
-/* Console commands */
-
-static int command_reboot(int argc, char **argv)
-{
-	/* Handle request to boot to a specific image */
-	if (argc >= 2) {
-		if (!strcasecmp(argv[1], "a")) {
-			uart_puts("Rebooting to image A!\n\n\n");
-			system_set_scratchpad(SCRATCHPAD_REQUEST_A);
-		} else if (!strcasecmp(argv[1], "b")) {
-			uart_puts("Rebooting to image B!\n\n\n");
-			system_set_scratchpad(SCRATCHPAD_REQUEST_B);
-		} else {
-			uart_puts("Usage: reboot [ A | B ]\n");
-			return EC_ERROR_UNKNOWN;
-		}
-	} else {
-		uart_puts("Rebooting to RO!\n\n\n");
-	}
-
-        uart_flush_output();
-        /* TODO - param to specify warm/cold */
-        system_reset(1);
-        return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
 
 /*****************************************************************************/
 /* Initialization */
