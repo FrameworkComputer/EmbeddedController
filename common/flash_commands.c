@@ -10,6 +10,7 @@
 #include "host_command.h"
 #include "registers.h"  /* TODO: remove; only for temp debugging */
 #include "shared_mem.h"
+#include "system.h"
 #include "uart.h"
 #include "util.h"
 
@@ -258,6 +259,9 @@ enum lpc_status flash_command_write(uint8_t *data)
 	if (p->size > sizeof(p->data))
 		return EC_LPC_RESULT_ERROR;
 
+	if (system_unsafe_to_overwrite(p->offset, p->size))
+		return EC_LPC_RESULT_ACCESS_DENIED;
+
 	if (flash_write(p->offset, p->size, p->data))
 		return EC_LPC_RESULT_ERROR;
 
@@ -270,6 +274,9 @@ enum lpc_status flash_command_erase(uint8_t *data)
 {
 	struct lpc_params_flash_erase *p =
 			(struct lpc_params_flash_erase *)data;
+
+	if (system_unsafe_to_overwrite(p->offset, p->size))
+		return EC_LPC_RESULT_ACCESS_DENIED;
 
 	if (flash_erase(p->offset, p->size))
 		return EC_LPC_RESULT_ERROR;

@@ -65,6 +65,9 @@ const char *system_get_reset_cause_string(void);
 /* Returns the image copy which is currently running. */
 enum system_image_copy_t system_get_image_copy(void);
 
+/* Returns true if the given range is overlapped with the active image. */
+int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
+
 /* Returns a text description of the image copy which is currently running. */
 const char *system_get_image_copy_string(void);
 

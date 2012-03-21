@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "lpc_commands.h"
 #include "system.h"
 #include "task.h"
@@ -54,6 +55,26 @@ enum system_image_copy_t system_get_image_copy(void)
 	default:
 		return SYSTEM_IMAGE_UNKNOWN;
 	}
+}
+
+
+/* Returns true if the given range is overlapped with the active image.
+ *
+ * We only care the runtime code since the EC is running over it.
+ * We don't care about the vector table, FMAP, and init code.
+ * Read core/$CORE/ec.lds.S about the below extern symbols.
+ */
+int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
+	int copy = ((uint32_t)system_unsafe_to_overwrite - CONFIG_FLASH_BASE) /
+	           CONFIG_FW_IMAGE_SIZE;
+	uint32_t r_offset = copy * CONFIG_FW_IMAGE_SIZE;
+	uint32_t r_size = CONFIG_FW_IMAGE_SIZE;
+
+	if ((offset >= r_offset && offset < (r_offset + r_size)) ||
+	    (r_offset >= offset && r_offset < (offset + size)))
+		return 1;
+	else
+		return 0;
 }
 
 
@@ -335,6 +356,13 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_BUILD_INFO, host_command_build_info);
 
 
 #ifdef CONFIG_REBOOT_EC
+static void clean_busy_bits(void) {
+#ifdef CONFIG_LPC
+	lpc_send_host_response(0, EC_LPC_RESULT_SUCCESS);
+	lpc_send_host_response(1, EC_LPC_RESULT_SUCCESS);
+#endif
+}
+
 enum lpc_status host_command_reboot(uint8_t *data)
 {
 	struct lpc_params_reboot_ec *p =
@@ -346,14 +374,17 @@ enum lpc_status host_command_reboot(uint8_t *data)
 	switch (p->target) {
 	case EC_LPC_IMAGE_RO:
 		uart_puts("[Rebooting to image RO!\n]");
+		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RO);
 		break;
 	case EC_LPC_IMAGE_RW_A:
 		uart_puts("[Rebooting to image A!]\n");
+		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RW_A);
 		break;
 	case EC_LPC_IMAGE_RW_B:
 		uart_puts("[Rebooting to image B!]\n");
+		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RW_B);
 		break;
 	default:
