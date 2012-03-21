@@ -24,6 +24,7 @@
 #define CONFIG_TASK_PROFILING
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
+#define CONFIG_IR357x
 
 /* Enable the fake developer switch.  See crosbug.com/p/8884 */
 #define CONFIG_FAKE_DEV_SWITCH
@@ -102,6 +103,7 @@ enum adc_channel
 #define I2C_PORT_CHARGER 0  /* Note: proto0 used port 1 */
 #define I2C_PORT_THERMAL 5
 #define I2C_PORT_LIGHTBAR 1
+#define I2C_PORT_REGULATOR 0
 /* There are only 3 I2C ports used because battery and charger share a port */
 #define I2C_PORTS_USED 3
 
