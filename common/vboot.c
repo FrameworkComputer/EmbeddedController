@@ -26,6 +26,11 @@ static void jump_to_other_image(void)
 		return;
 	}
 
+	/* Don't jump if we're in RO becuase we jumped there (this keeps us
+	 * from jumping to RO only to jump right back). */
+	if (system_get_reset_cause() == SYSTEM_RESET_SOFT_WARM)
+		return;
+
 #if !defined(BOARD_daisy) && !defined(BOARD_discovery)
 	/* TODO: (crosbug.com/p/8572) Daisy and discovery don't define a GPIO
 	 * for the recovery signal from servo, so can't check it. */
