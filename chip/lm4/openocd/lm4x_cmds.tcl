@@ -10,6 +10,9 @@ proc flash_lm4 {path size} {
 	set lastsect [expr {$size / 1024 - 1}];
 	reset halt;
 	flash erase_sector 0 0 $lastsect;
+	# Note erase_sector silently fails sometimes; see crosbug.com/p/8632
+	# Dump a few words as a diagnostic for whether erase succeeded
+	mdw 0 16
 	flash write_image $path 0;
 	reset
 }
