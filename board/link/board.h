@@ -78,6 +78,11 @@ enum adc_channel
 #define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
 #define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
 
+/* Board specific charging current limit
+ * The current constrant of all components on the charging path.
+ */
+#define CONFIG_CHARGING_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
+
 /* EEPROM blocks */
 #define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */
 #define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */

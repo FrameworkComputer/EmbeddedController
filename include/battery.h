@@ -9,9 +9,10 @@
 #define __CROS_EC_BATTERY_H
 
 /* Design capacities, percentage */
-#define BATTERY_LEVEL_WARNING 15
-#define BATTERY_LEVEL_LOW 10
-#define BATTERY_LEVEL_CRITICAL 3
+#define BATTERY_LEVEL_WARNING  15
+#define BATTERY_LEVEL_LOW      10
+#define BATTERY_LEVEL_CRITICAL 5
+#define BATTERY_LEVEL_SHUTDOWN 3
 
 #endif /* __CROS_EC_BATTERY_H */
 

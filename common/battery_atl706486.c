@@ -7,6 +7,54 @@
 
 #include "battery_pack.h"
 
+/* Design capacity
+ *   Battery capacity = 8500 mAh
+ *   1C = 8500 mA
+ */
+#define C     8500
+#define C_001 (int)(C * 0.01)
+#define C_01  (int)(C * 0.1)
+#define C_02  (int)(C * 0.2)
+#define C_05  (int)(C * 0.5)
+#define C_07  (int)(C * 0.7)
+
+static const struct battery_info info = {
+	/* Designed voltage
+	 *   max    = 8.4V
+	 *   normal = 7.4V
+	 *   min    = 6.0V
+	 */
+	.voltage_max    = 8400,
+	.voltage_normal = 7400,
+	.voltage_min    = 6000,
+
+	/* Operation temperation range
+	 *   0   <= T_charge    <= 45
+	 *   -20 <= T_discharge <= 60
+	 */
+	.temp_charge_min    = 0,
+	.temp_charge_max    = 45,
+	.temp_discharge_min = -20,
+	.temp_discharge_max = 60,
+
+	/* Maximum discharging current
+	 * TODO(rong): Check if we need this in power manager
+	 *
+	 * 1.0C
+	 * 25 <= T_maxdischarge <= 45
+	 *
+	 * .current_discharge_max = C,
+	 * .temp_maxdisch_max     = 45,
+	 * .temp_maxdisch_min     = 25
+	 *
+	 */
+
+	/* Pre-charge voltage and current
+	 *   I <= 0.01C
+	 */
+	.precharge_current  = C_001,
+};
+
 /* Convert Celsius degree to Deci Kelvin degree */
 static inline int celsius_to_deci_kelvin(int degree_c)
 {
@@ -19,42 +67,24 @@ static inline void limit_value(int *val, int limit)
 		*val = limit;
 }
 
+const struct battery_info *battery_get_info(void)
+{
+	return &info;
+}
+
 /* Vendor provided parameters for battery charging */
 void battery_vendor_params(struct batt_params *batt)
 {
-	/* Designed capacity
-	 *   Battery capacity = 8400 mAh
-	 *   1C = 8400 mA
-	 */
-	const int C = 8400;
-	const int C_01 = C * 0.1;
-	const int C_02 = C * 0.2;
-	const int C_05 = C * 0.5;
-	const int C_07 = C * 0.7;
-
-	/* Designed voltage
-	 *   max    = 8.4V
-	 *   normal = 7.4V
-	 */
-	const int V_max = 8400;
-
-	/* Operation temperation range
-	 *   0   <= T_charge    <= 45
-	 *   -20 <= T_discharge <= 60
-	 */
-	const int T_charge_min = 0;
-	const int T_charge_max = 45;
-
 	int *desired_current = &batt->desired_current;
 
 	/* Hard limits
 	 *  - charging voltage < 8.4V
 	 *  - charging temperature range 0 ~ 45 degree Celcius
 	 *  */
-	if (batt->desired_voltage > V_max)
-		batt->desired_voltage = V_max;
-	if (batt->temperature >= celsius_to_deci_kelvin(T_charge_max) ||
-	    batt->temperature <= celsius_to_deci_kelvin(T_charge_min)) {
+	if (batt->desired_voltage > info.voltage_max)
+		batt->desired_voltage = info.voltage_max;
+	if (batt->temperature >= celsius_to_deci_kelvin(info.temp_charge_max) ||
+	    batt->temperature <= celsius_to_deci_kelvin(info.temp_charge_min)) {
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
 	}

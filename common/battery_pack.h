@@ -17,6 +17,24 @@ struct batt_params {
 	int desired_current;
 };
 
+/* Battery constants */
+struct battery_info {
+	/* Design voltage */
+	int voltage_max;
+	int voltage_normal;
+	int voltage_min;
+	/* Working temperature */
+	int temp_charge_min;
+	int temp_charge_max;
+	int temp_discharge_min;
+	int temp_discharge_max;
+	/* Pre-charge */
+	int precharge_current;
+};
+
+/* Vendor provided battery constants */
+const struct battery_info *battery_get_info(void);
+
 /* Vendor provided parameters for battery charging */
 void battery_vendor_params(struct batt_params *batt);
 

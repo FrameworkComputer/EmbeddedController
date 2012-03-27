@@ -9,91 +9,25 @@
 #include "battery.h"
 #include "battery_pack.h"
 #include "board.h"
-#include "console.h"
+#include "charge_state.h"
 #include "charger.h"
+#include "chipset.h"
+#include "console.h"
 #include "gpio.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "power_led.h"
 #include "smart_battery.h"
+#include "system.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+#include "x86_power.h"
 
 /* Stop charge when state of charge reaches this percentage */
 #define STOP_CHARGE_THRESHOLD 100
 
-/* power state task polling period in usec */
-#define POLL_PERIOD_LONG        500000
-#define POLL_PERIOD_CHARGE      250000
-#define POLL_PERIOD_SHORT       100000
-#define MIN_SLEEP_USEC          50000
-
-/* Power state error flags */
-#define F_CHARGER_INIT        (1 << 0) /* Charger initialization */
-#define F_CHARGER_VOLTAGE     (1 << 1) /* Charger maximun output voltage */
-#define F_CHARGER_CURRENT     (1 << 2) /* Charger maximum output current */
-#define F_BATTERY_VOLTAGE     (1 << 3) /* Battery voltage */
-#define F_BATTERY_CURRENT     (1 << 4) /* Battery charging current */
-#define F_DESIRED_VOLTAGE     (1 << 5) /* Battery desired voltage */
-#define F_DESIRED_CURRENT     (1 << 6) /* Battery desired current */
-#define F_BATTERY_TEMPERATURE (1 << 7) /* Battery temperature */
-#define F_BATTERY_MODE        (1 << 8) /* Battery mode */
-#define F_BATTERY_CAPACITY    (1 << 9) /* Battery capacity */
-#define F_BATTERY_STATE_OF_CHARGE (1 << 10) /* State of charge, percentage */
-
-#define F_BATTERY_MASK (F_BATTERY_VOLTAGE | F_BATTERY_CURRENT |  \
-			F_DESIRED_VOLTAGE | F_DESIRED_CURRENT |  \
-			F_BATTERY_TEMPERATURE | F_BATTERY_MODE | \
-			F_BATTERY_CAPACITY | F_BATTERY_STATE_OF_CHARGE)
-#define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | \
-			F_CHARGER_INIT)
-
-/* Power states */
-enum power_state {
-	PWR_STATE_UNCHANGE = 0,
-	PWR_STATE_INIT,
-	PWR_STATE_IDLE,
-	PWR_STATE_DISCHARGE,
-	PWR_STATE_CHARGE,
-	PWR_STATE_ERROR
-};
-/* Debugging constants, in the same order as power_state. */
-static const char * const state_name[] = {
-	"unchange",
-	"init",
-	"idle",
-	"discharge",
-	"charge",
-	"error"
-};
-
-/* Power state data
- * Status collection of charging state machine.
- */
-struct power_state_data {
-	int ac;
-	int charging_voltage;
-	int charging_current;
-	struct batt_params batt;
-	enum power_state state;
-	uint32_t error;
-	timestamp_t ts;
-};
-
-/* State context
- * The shared context for state handler. The context contains current and
- * previous state.
- */
-struct power_state_context {
-	struct power_state_data curr;
-	struct power_state_data prev;
-	uint32_t *memmap_batt_volt;
-	/* TODO(rong): check endianness of EC and memmap*/
-	uint32_t *memmap_batt_rate;
-	uint32_t *memmap_batt_cap;
-	uint8_t *memmap_batt_flags;
-};
+static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 /* helper function(s) */
 static inline int get_ac(void)
@@ -148,6 +82,26 @@ static void update_battery_info(void)
 	}
 }
 
+/* Prevent battery from going into deep discharge state */
+static void poweroff_wait_ac(void)
+{
+	/* Shutdown the main processor */
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* chipset_force_state(CHIPSET_STATE_SOFT_OFF);
+		 * TODO(rong): remove platform dependent code
+		 */
+#ifdef CONFIG_POWER_X86POWER
+		x86_power_force_shutdown();
+#endif /* CONFIG_POWER_X86POWER */
+	}
+
+	/* TODO(rong): remove this workaround after ec deep sleep */
+	while (!get_ac()) {
+		/* Check ac_present every 5 seconds */
+		usleep(SECOND * 5);
+	}
+}
+
 /* Common handler for charging states.
  * This handler gets battery charging parameters, charger state, ac state,
  * and timestamp. It also fills memory map and issues power events on state
@@ -173,8 +127,6 @@ static int state_common(struct power_state_context *ctx)
 		if (curr->ac) {
 			/* AC on
 			 *   Initialize charger to power on reset mode
-			 * TODO(rong):
-			 * crosbug.com/p/7937 Send PCH AC present
 			 */
 			rv = charger_post_init();
 			if (rv)
@@ -206,6 +158,18 @@ static int state_common(struct power_state_context *ctx)
 		*batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
 
 	rv = battery_temperature(&batt->temperature);
+	if (rv) {
+		/* Check low battery condition and retry */
+		if (curr->ac && !(curr->error & F_CHARGER_MASK) &&
+				(curr->charging_voltage == 0 ||
+				curr->charging_current == 0)) {
+			charger_set_voltage(ctx->battery->voltage_min);
+			charger_set_current(ctx->charger->current_min);
+			usleep(SECOND);
+			rv = battery_temperature(&batt->temperature);
+		}
+	}
+
 	if (rv)
 		curr->error |= F_BATTERY_TEMPERATURE;
 
@@ -232,6 +196,14 @@ static int state_common(struct power_state_context *ctx)
 	rv = battery_state_of_charge(&batt->state_of_charge);
 	if (rv)
 		curr->error |= F_BATTERY_STATE_OF_CHARGE;
+
+	/* Prevent deep discharging */
+	if (!curr->ac)
+		if ((batt->state_of_charge < BATTERY_LEVEL_SHUTDOWN &&
+		    !(curr->error & F_BATTERY_STATE_OF_CHARGE)) ||
+		    (batt->voltage <= ctx->battery->voltage_min &&
+		    !(curr->error & F_BATTERY_VOLTAGE)))
+			poweroff_wait_ac();
 
 	/* Check battery presence */
 	if (curr->error & F_BATTERY_MASK) {
@@ -260,6 +232,11 @@ static int state_common(struct power_state_context *ctx)
 
 	/* Apply battery pack vendor charging method */
 	battery_vendor_params(batt);
+
+#ifdef CONFIG_CHARGING_CURRENT_LIMIT
+	if (batt->desired_current > CONFIG_CHARGING_CURRENT_LIMIT)
+		batt->desired_current = CONFIG_CHARGING_CURRENT_LIMIT;
+#endif
 
 	rv = battery_get_battery_mode(&d);
 	if (rv) {
@@ -320,6 +297,9 @@ static enum power_state state_init(struct power_state_context *ctx)
  */
 static enum power_state state_idle(struct power_state_context *ctx)
 {
+	struct batt_params *batt = &ctx->curr.batt;
+	const struct charger_info *c_info = ctx->charger;
+
 	if (!ctx->curr.ac)
 		return PWR_STATE_INIT;
 
@@ -338,10 +318,19 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	if (ctx->curr.batt.desired_voltage &&
 	    ctx->curr.batt.desired_current) {
 		/* Set charger output constraints */
-		if (charger_set_voltage(ctx->curr.batt.desired_voltage))
-			return PWR_STATE_ERROR;
-		if (charger_set_current(ctx->curr.batt.desired_current))
-			return PWR_STATE_ERROR;
+		if (batt->desired_current < ctx->charger->current_min) {
+			/* Trickle charging */
+			if (charger_set_current(c_info->current_min) ||
+			    charger_set_voltage(batt->voltage))
+				return PWR_STATE_ERROR;
+			ctx->trickle_charging_time = get_time();
+		} else {
+			/* Normal charging */
+			if (charger_set_voltage(batt->desired_voltage) ||
+			    charger_set_current(batt->desired_current))
+				return PWR_STATE_ERROR;
+		}
+		ctx->charger_update_time = get_time();
 		return PWR_STATE_CHARGE;
 	}
 
@@ -354,15 +343,18 @@ static enum power_state state_idle(struct power_state_context *ctx)
  */
 static enum power_state state_charge(struct power_state_context *ctx)
 {
-	if (!ctx->curr.ac)
-		return PWR_STATE_INIT;
-
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
+
+	if (ctx->curr.batt.desired_current < ctx->charger->current_min)
+		return trickle_charge(ctx);
 
 	/* Check charger reset */
 	if (ctx->curr.charging_voltage == 0 ||
 	    ctx->curr.charging_current == 0)
+		return PWR_STATE_INIT;
+
+	if (!ctx->curr.ac)
 		return PWR_STATE_INIT;
 
 	if (ctx->curr.batt.state_of_charge >= STOP_CHARGE_THRESHOLD) {
@@ -371,12 +363,18 @@ static enum power_state state_charge(struct power_state_context *ctx)
 		return PWR_STATE_IDLE;
 	}
 
-	if (ctx->curr.batt.desired_voltage != ctx->curr.charging_voltage)
-		if (charger_set_voltage(ctx->curr.batt.desired_voltage))
+	if ((ctx->curr.batt.desired_voltage != ctx->curr.charging_voltage) ||
+	    (ctx->curr.batt.desired_current != ctx->curr.charging_current) ||
+	    (ctx->curr.ts.val - ctx->charger_update_time.val >
+						CHARGER_UPDATE_PERIOD)) {
+		if (ctx->curr.batt.desired_current < ctx->charger->current_min)
+			return PWR_STATE_INIT;
+
+		if (charger_set_voltage(ctx->curr.batt.desired_voltage) ||
+		    charger_set_current(ctx->curr.batt.desired_current))
 			return PWR_STATE_ERROR;
-	if (ctx->curr.batt.desired_current != ctx->curr.charging_current)
-		if (charger_set_current(ctx->curr.batt.desired_current))
-			return PWR_STATE_ERROR;
+		ctx->charger_update_time = get_time();
+	}
 
 	return PWR_STATE_UNCHANGE;
 }
@@ -432,7 +430,8 @@ static enum power_state state_error(struct power_state_context *ctx)
 
 static void charging_progress(struct power_state_context *ctx)
 {
-	int minutes;
+	int seconds, minutes;
+
 	if (ctx->curr.batt.state_of_charge !=
 	    ctx->prev.batt.state_of_charge) {
 		if (ctx->curr.ac)
@@ -442,6 +441,23 @@ static void charging_progress(struct power_state_context *ctx)
 
 		uart_printf("[Battery %3d%% / %dh:%d]\n",
 			ctx->curr.batt.state_of_charge,
+			minutes / 60, minutes % 60);
+		return;
+	}
+
+	if (ctx->curr.charging_voltage != ctx->prev.charging_voltage &&
+			ctx->trickle_charging_time.val) {
+		/* Calculating minutes by dividing usec by 60 million
+		 * GNU toolchain generate architecture dependent calls
+		 * instead of machine code when the divisor is large.
+		 * Hence following calculation was broke into 2 lines.
+		 */
+		seconds = (int)(get_time().val -
+				ctx->trickle_charging_time.val) / (int)SECOND;
+		minutes = seconds / 60;
+		uart_printf("[Precharge CHG(%dmV) BATT(%dmV %dmA) "
+			"%dh:%d]\n", ctx->curr.charging_voltage,
+			ctx->curr.batt.voltage, ctx->curr.batt.current,
 			minutes / 60, minutes % 60);
 	}
 }
@@ -457,6 +473,9 @@ void charge_state_machine_task(void)
 
 	ctx.prev.state = PWR_STATE_INIT;
 	ctx.curr.state = PWR_STATE_INIT;
+	ctx.trickle_charging_time.val = 0;
+	ctx.battery = battery_get_info();
+	ctx.charger = charger_get_info();
 
 	/* Setup LPC direct memmap */
 	ctx.memmap_batt_volt  = (uint32_t *)(lpc_get_memmap_range() +
@@ -550,6 +569,8 @@ void charge_state_machine_task(void)
 
 		if (sleep_usec < MIN_SLEEP_USEC)
 			sleep_usec = MIN_SLEEP_USEC;
+		if (sleep_usec > MAX_SLEEP_USEC)
+			sleep_usec = MAX_SLEEP_USEC;
 
 		usleep(sleep_usec);
 	}
