@@ -71,7 +71,7 @@ static void enq_to_host(int len, uint8_t *to_host)
 {
 	int from, to;
 
-	/* TODO: need atomic protection */
+	/* Check if the buffer has enough space, then copy them to buffer. */
 	if ((tail_to_buffer + len) <= (head_to_buffer + HOST_BUFFER_SIZE - 1)) {
 		for (from = 0, to = tail_to_buffer; from < len;) {
 			to_host_buffer[to++] = to_host[from++];
@@ -79,7 +79,6 @@ static void enq_to_host(int len, uint8_t *to_host)
 		}
 		tail_to_buffer = (tail_to_buffer + len) % HOST_BUFFER_SIZE;
 	}
-	/* end of atomic protection */
 }
 
 
@@ -105,11 +104,10 @@ void i8042_command_task(void)
 			uint8_t chr;
 			int empty = 0;
 
-			/* TODO: need atomic protection */
+			/* Check if we have data in buffer to host. */
 			if (head_to_buffer == tail_to_buffer) {
 				empty = 1;  /* nothing to host */
 			}
-			/* end of atomic protection */
 			if (empty) break;
 
 			/* if the host still didn't read that away,
@@ -124,11 +122,10 @@ void i8042_command_task(void)
 				break;
 			}
 
-			/* TODO: need atomic protection */
+			/* Get a char from buffer. */
 			chr = to_host_buffer[head_to_buffer];
 			head_to_buffer =
 				(head_to_buffer + 1) % HOST_BUFFER_SIZE;
-			/* end of atomic protection */
 
 			/* Write to host. */
 			keyboard_put_char(chr, i8042_irq_enabled);
