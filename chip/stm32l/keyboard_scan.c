@@ -65,8 +65,8 @@ enum COL_INDEX {
 	/* 0 ~ 12 for the corresponding column */
 };
 
-#define POLLING_MODE_TIMEOUT 1000000  /* 1 sec */
-#define SCAN_LOOP_DELAY 10000         /* 10 ms */
+#define POLLING_MODE_TIMEOUT 100000   /* 100 ms */
+#define SCAN_LOOP_DELAY 10000         /*  10 ms */
 
 #define KB_COLS 13
 
@@ -344,7 +344,7 @@ static int check_keys_changed(void)
 
 		/* Select column, then wait a bit for it to settle */
 		select_column(c);
-		udelay(100);
+		udelay(50);
 
 		r = 0;
 #if defined(BOARD_daisy) || defined(BOARD_discovery) || defined(BOARD_adv)
