@@ -14,13 +14,81 @@
 #include "uart.h"
 #include "util.h"
 
+/* Parse offset and size from command line argv[0] and argv[1].
+ *
+ * Default values: If argc<1, leaves offset unchanged, returning error if
+ * *offset<0.  If argc<2, leaves size unchanged, returning error if *size<0. */
+static int parse_offset_size(int argc, char **argv, int *offset, int *size)
+{
+	char *e;
+	int i;
+
+	if (argc >= 1) {
+		i = (uint32_t)strtoi(argv[0], &e, 0);
+		if (e && *e) {
+			uart_printf("Invalid offset \"%s\"\n", argv[0]);
+			return EC_ERROR_INVAL;
+		}
+		*offset = i;
+	} else if (*offset < 0) {
+		uart_puts("Must specify offset.\n");
+		return EC_ERROR_INVAL;
+	}
+
+	if (argc >= 2) {
+		i = (uint32_t)strtoi(argv[1], &e, 1);
+		if (e && *e) {
+			uart_printf("Invalid size \"%s\"\n", argv[1]);
+			return EC_ERROR_INVAL;
+		}
+		*size = i;
+	} else if (*size < 0) {
+		uart_puts("Must specify offset and size.\n");
+		return EC_ERROR_INVAL;
+	}
+
+	return EC_SUCCESS;
+}
+
 
 /*****************************************************************************/
 /* Console commands */
 
 static int command_flash_info(int argc, char **argv)
 {
-	uart_printf("Usable flash size: %d B\n", flash_get_size());
+	const uint8_t *wp;
+	int banks = flash_get_size() / flash_get_protect_block_size();
+	int i;
+
+	uart_printf("Physical size: %4d KB\n", flash_physical_size() / 1024);
+	uart_printf("Usable size:   %4d KB\n", flash_get_size() / 1024);
+	uart_printf("Write block:   %4d B\n", flash_get_write_block_size());
+	uart_printf("Erase block:   %4d B\n", flash_get_erase_block_size());
+	uart_printf("Protect block: %4d B\n", flash_get_protect_block_size());
+
+	i = flash_get_protect_lock();
+	uart_printf("Protect lock:  %s%s\n",
+		    (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked",
+		    (i & FLASH_PROTECT_LOCK_APPLIED) ? " AND APPLIED" : "");
+	uart_printf("WP pin:        %s\n", (i & FLASH_PROTECT_PIN_ASSERTED) ?
+		    "ASSERTED" : "deasserted");
+
+	wp = flash_get_protect_array();
+
+	uart_puts("Protected now:");
+	for (i = 0; i < banks; i++) {
+		if (!(i & 7))
+			uart_puts(" ");
+		uart_puts(wp[i] & FLASH_PROTECT_UNTIL_REBOOT ? "Y" : ".");
+	}
+	uart_puts("\n  Persistent: ");
+	for (i = 0; i < banks; i++) {
+		if (!(i & 7))
+			uart_puts(" ");
+		uart_puts(wp[i] & FLASH_PROTECT_PERSISTENT ? "Y" : ".");
+	}
+	uart_puts("\n");
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info);
@@ -28,73 +96,37 @@ DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info);
 
 static int command_flash_erase(int argc, char **argv)
 {
-	int offset = 0;
-	int size = FLASH_ERASE_BYTES;
-	char *endptr;
+	int offset = -1;
+	int size = flash_get_erase_block_size();
 	int rv;
 
-	if (argc < 2) {
-		uart_puts("Usage: flasherase <offset> [size]\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	offset = strtoi(argv[1], &endptr, 0);
-	if (*endptr) {
-		uart_puts("Invalid offset\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	if (argc > 2) {
-		size = strtoi(argv[2], &endptr, 0);
-		if (*endptr) {
-			uart_puts("Invalid size\n");
-			return EC_ERROR_UNKNOWN;
-		}
-	}
+	rv = parse_offset_size(argc - 1, argv + 1, &offset, &size);
+	if (rv)
+		return rv;
 
 	uart_printf("Erasing %d bytes at offset 0x%x (%d)...\n",
 		    size, offset, offset);
-	rv = flash_erase(offset, size);
-	if (rv == EC_SUCCESS)
-		uart_puts("done.\n");
-	else
-		uart_printf("failed. (error %d)\n", rv);
-
-	return rv;
+	return flash_erase(offset, size);
 }
 DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase);
 
 
 static int command_flash_write(int argc, char **argv)
 {
-	char *data;
-	int offset = 0;
-	int size = 1024;  /* Default size */
-	char *endptr;
+	int offset = -1;
+	int size = flash_get_erase_block_size();
 	int rv;
+	char *data;
 	int i;
 
-	if (argc < 2) {
-		uart_puts("Usage: flashwrite <offset> <size>\n");
-		return EC_ERROR_UNKNOWN;
-	}
 
-	offset = strtoi(argv[1], &endptr, 0);
-	if (*endptr) {
-		uart_puts("Invalid offset\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	rv = parse_offset_size(argc - 1, argv + 1, &offset, &size);
+	if (rv)
+		return rv;
 
-	if (argc > 2) {
-		size = strtoi(argv[2], &endptr, 0);
-		if (*endptr) {
-			uart_puts("Invalid size\n");
-			return EC_ERROR_UNKNOWN;
-		}
-		if (size > shared_mem_size()) {
-			uart_puts("Truncating size\n");
-			size = sizeof(data);
-		}
+	if (size > shared_mem_size()) {
+		uart_puts("Truncating size\n");
+		size = shared_mem_size();
 	}
 
         /* Acquire the shared memory buffer */
@@ -124,70 +156,46 @@ static int command_flash_write(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write);
 
 
+static const char flash_wp_help[] =
+	"Usage: flashwp <now | set | clear> <offset> [size]\n"
+	"   or: flashwp <lock | unlock>\n";
+
+
 static int command_flash_wp(int argc, char **argv)
 {
-	int b = 0;
-	char *endptr;
-
-	if (argc < 2) {
-		uart_puts("Usage: flashwp [bitmask]\n");
-		uart_printf("(current value of FMPPE1: 0x%08x)\n",
-			    LM4_FLASH_FMPPE1);
-		return EC_SUCCESS;
-	}
-
-	b = strtoi(argv[1], &endptr, 0);
-	if (*endptr) {
-		uart_puts("Invalid bitmask\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	uart_printf("FMPPE1 before: 0x%08x\n", LM4_FLASH_FMPPE1);
-	LM4_FLASH_FMPPE1 = b;
-	uart_printf("FMPPE1 after: 0x%08x\n", LM4_FLASH_FMPPE1);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
-
-static int command_flash_wp_range(int argc, char **argv)
-{
-	uint32_t offset, size;
-	char *endptr;
+	int offset = -1;
+	int size = flash_get_protect_block_size();
 	int rv;
 
-	if (argc < 3) {
-		uart_puts("Usage: flashwprange [offset size]\n");
-		rv = flash_get_write_protect_range(&offset, &size);
-		if (rv)
-			uart_puts("flash_get_write_protect_range failed\n");
-		else
-			uart_printf("Current range : offset(%d) size(%d)\n",
-					offset, size);
-		uart_printf("FMPPEs : %08x %08x %08x %08x\n",
-				LM4_FLASH_FMPPE0, LM4_FLASH_FMPPE1,
-				LM4_FLASH_FMPPE2, LM4_FLASH_FMPPE3);
-	} else {
-		offset = (uint32_t)strtoi(argv[1], &endptr, 0);
-		if (*endptr) {
-			uart_printf("Invalid offset \"%s\"\n", argv[1]);
-			return EC_ERROR_UNKNOWN;
-		}
-		size = (uint32_t)strtoi(argv[2], &endptr, 0);
-		if (*endptr) {
-			uart_printf("Invalid size \"%s\"\n", argv[2]);
-			return EC_ERROR_UNKNOWN;
-		}
-
-		rv = flash_set_write_protect_range(offset, size);
-		if (rv) {
-			uart_puts("flash_set_write_protect_range failed\n");
-			return rv;
-		}
+	if (argc < 2) {
+		uart_puts(flash_wp_help);
+		return EC_ERROR_INVAL;
 	}
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(flashwprange, command_flash_wp_range);
 
+	/* Commands that don't need offset and size */
+	if (!strcasecmp(argv[1], "lock"))
+		return flash_lock_protect(1);
+	else if (!strcasecmp(argv[1], "unlock"))
+		return flash_lock_protect(0);
+
+	/* All remaining commands need offset and size */
+	rv = parse_offset_size(argc - 2, argv + 2, &offset, &size);
+	if (rv)
+		return rv;
+
+	if (!strcasecmp(argv[1], "now"))
+		return flash_protect_until_reboot(offset, size);
+	else if (!strcasecmp(argv[1], "set"))
+		return flash_set_protect(offset, size, 1);
+	else if (!strcasecmp(argv[1], "clear"))
+		return flash_set_protect(offset, size, 0);
+	else {
+		uart_puts(flash_wp_help);
+		return EC_ERROR_INVAL;
+	}
+
+}
+DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
 
 /*****************************************************************************/
 /* Host commands */
@@ -198,9 +206,9 @@ enum lpc_status flash_command_get_info(uint8_t *data)
 			(struct lpc_response_flash_info *)data;
 
 	r->flash_size = flash_get_size();
-	r->write_block_size = FLASH_WRITE_BYTES;
-	r->erase_block_size = FLASH_ERASE_BYTES;
-	r->protect_block_size = FLASH_PROTECT_BYTES;
+	r->write_block_size = flash_get_write_block_size();
+	r->erase_block_size = flash_get_erase_block_size();
+	r->protect_block_size = flash_get_protect_block_size();
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_INFO, flash_command_get_info);
@@ -286,7 +294,13 @@ enum lpc_status flash_command_erase(uint8_t *data)
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_ERASE, flash_command_erase);
 
 
-/* TODO: use shadow range in EEPROM */
+#ifdef REWORK_THESE_TO_USE_NEW_WP_MECHANISM
+/* TODO: (crosbug.com/p/8448) rework these to use the new WP mechanism.  Note
+ * that the concept of a single range oversimplifies how WP works; there are
+ * multiple protected regions, including the persistent WP state (last bank)
+ * and rollback information (bank before that; will be implemented by
+ * vboot). */
+
 static int shadow_wp_offset;
 static int shadow_wp_size;
 
@@ -354,3 +368,5 @@ enum lpc_status flash_command_wp_get_range(uint8_t *data)
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_RANGE,
 		     flash_command_wp_get_range);
+
+#endif /* REWORK_THESE_TO_USE_NEW_WP_MECHANISM */
