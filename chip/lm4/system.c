@@ -182,3 +182,36 @@ uint32_t system_get_scratchpad(void)
 {
 	return LM4_HIBERNATE_HIBDATA;
 }
+
+
+const char *system_get_chip_vendor(void)
+{
+	return "ti";
+}
+
+const char *system_get_chip_name(void)
+{
+	if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e20000) {
+		return "lm4fsxhh5bb";
+	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e30000) {
+		return "lm4fs232h5bb";
+	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e40000) {
+		return "lm4fs99h5bb";
+	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e60000) {
+		return "lm4fs1ah5bb";
+	} else {
+		return "";
+	}
+}
+
+const char *system_get_chip_revision(void)
+{
+	static char rev[3];
+
+	/* Extract the major[15:8] and minor[7:0] revisions. */
+	rev[0] = 'A' + ((LM4_SYSTEM_DID0 >> 8) & 0xff);
+	rev[1] = '0' + (LM4_SYSTEM_DID0 & 0xff);
+	rev[2] = 0;
+
+	return rev;
+}

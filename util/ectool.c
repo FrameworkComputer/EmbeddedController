@@ -21,6 +21,8 @@ const char help_str[] =
 	"Commands:\n"
 	"  battery\n"
 	"      Prints battery info\n"
+	"  chipinfo\n"
+	"      Prints chip info\n"
 	"  eventclear <mask>\n"
 	"      Clears EC host events flags where mask has bits set\n"
 	"  eventget\n"
@@ -1225,6 +1227,24 @@ int cmd_battery(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_chipinfo(int argc, char *argv[])
+{
+	struct lpc_response_get_chip_info info;
+	int rv;
+
+	printf("Chip info:\n");
+
+	rv = ec_command(EC_LPC_COMMAND_GET_CHIP_INFO,
+			NULL, 0, &info, sizeof(info));
+	if (rv)
+		return rv;
+	printf("  vendor:    %s\n", info.vendor);
+	printf("  name:      %s\n", info.name);
+	printf("  revision:  %s\n", info.revision);
+
+	return 0;
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -1234,6 +1254,7 @@ struct command {
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"battery", cmd_battery},
+	{"chipinfo", cmd_chipinfo},
 	{"eventclear", cmd_host_event_clear},
 	{"eventget", cmd_host_event_get_raw},
 	{"eventgetscimask", cmd_host_event_get_sci_mask},

@@ -409,6 +409,20 @@ static enum lpc_status host_command_build_info(uint8_t *data)
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_BUILD_INFO, host_command_build_info);
 
 
+static enum lpc_status host_command_get_chip_info(uint8_t *data)
+{
+	struct lpc_response_get_chip_info *r =
+			(struct lpc_response_get_chip_info *)data;
+
+	strzcpy(r->vendor, system_get_chip_vendor(), sizeof(r->vendor));
+	strzcpy(r->name, system_get_chip_name(), sizeof(r->name));
+	strzcpy(r->revision, system_get_chip_revision(), sizeof(r->revision));
+
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_CHIP_INFO, host_command_get_chip_info);
+
+
 #ifdef CONFIG_REBOOT_EC
 static void clean_busy_bits(void) {
 #ifdef CONFIG_LPC

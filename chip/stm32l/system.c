@@ -111,3 +111,19 @@ uint32_t system_get_scratchpad(void)
 {
 	return STM32L_RTC_BACKUP(0);
 }
+
+
+const char *system_get_chip_vendor(void)
+{
+	return "stm";
+}
+
+const char *system_get_chip_name(void)
+{
+	return "stm32l151r8";
+}
+
+const char *system_get_chip_revision(void)
+{
+	return "";
+}

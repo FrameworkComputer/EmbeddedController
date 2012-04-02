@@ -107,6 +107,11 @@ int system_set_scratchpad(uint32_t value);
 /* Returns the current scratchpad register value. */
 uint32_t system_get_scratchpad(void);
 
+/* Returns the chip info */
+const char *system_get_chip_vendor(void);
+const char *system_get_chip_name(void);
+const char *system_get_chip_revision(void);
+
 /* TODO: request sleep.  How do we want to handle transitioning
  * to/from low-power states? */
 

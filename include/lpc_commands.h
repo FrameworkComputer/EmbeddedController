@@ -194,6 +194,16 @@ struct lpc_response_get_build_info {
 } __attribute__ ((packed));
 
 
+/* Get chip info */
+#define EC_LPC_COMMAND_GET_CHIP_INFO 0x05
+struct lpc_response_get_chip_info {
+	/* Null-terminated strings */
+	char vendor[32];
+	char name[32];
+	char revision[32];  /* Mask version */
+} __attribute__ ((packed));
+
+
 /*****************************************************************************/
 /* Flash commands */
 
