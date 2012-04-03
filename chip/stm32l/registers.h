@@ -287,5 +287,7 @@
 #define STM32L_SPI2_BASE             0x40003800
 #define STM32L_CRC_BASE              0x40023000
 #define STM32L_LCD_BASE              0x40002400
+#define STM32L_DMA1_BASE             0x40026000
+#define STM32L_DMA2_BASE             0x40026400
 
 #endif /* __STM32L_REGISTERS */
