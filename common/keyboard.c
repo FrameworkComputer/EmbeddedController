@@ -13,6 +13,7 @@
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
@@ -63,11 +64,13 @@ static enum scancode_set_list scancode_set = SCANCODE_SET_2;
 #define DEFAULT_TYPEMATIC_VALUE ((1 << 5) || (1 << 3) || (3 << 0))
 #define DEFAULT_FIRST_DELAY 500
 #define DEFAULT_INTER_DELAY 91
+#define TYPEMATIC_DELAY_UNIT 1000  /* 1ms = 1000us */
 static uint8_t typematic_value_from_host = DEFAULT_TYPEMATIC_VALUE;
 static int refill_first_delay = DEFAULT_FIRST_DELAY;  /* unit: ms */
-static int counter_first_delay;
 static int refill_inter_delay = DEFAULT_INTER_DELAY;  /* unit: ms */
-static int counter_inter_delay;
+static int typematic_delay;                           /* unit: us */
+static int typematic_len = 0;  /* length of typematic_scan_code */
+static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 
 
 /* The standard Chrome OS keyboard matrix table. */
@@ -252,6 +255,13 @@ void keyboard_state_changed(int row, int col, int is_pressed) {
 
   if (is_pressed) {
     keyboard_wakeup();
+
+    typematic_delay = refill_first_delay * 1000;
+    memcpy(typematic_scan_code, scan_code, len);
+    typematic_len = len;
+    task_wake(TASK_ID_TYPEMATIC);
+  } else {
+    typematic_len = 0;
   }
 }
 
@@ -390,8 +400,7 @@ int handle_keyboard_data(uint8_t data, uint8_t *output) {
     uart_printf("[Eaten by STATE_SETREP: 0x%02x]\n", data);
 #endif
     typematic_value_from_host = data;
-    refill_first_delay = counter_first_delay + counter_inter_delay;
-    refill_first_delay = ((typematic_value_from_host & 0x60) >> 5) * 250;
+    refill_first_delay = (((typematic_value_from_host & 0x60) >> 5) + 1) * 250;
     refill_inter_delay = 1000 *  /* ms */
                          (1 << ((typematic_value_from_host & 0x18) >> 3)) *
                          ((typematic_value_from_host & 0x7) + 8) /
@@ -618,6 +627,63 @@ void keyboard_set_power_button(int pressed)
 		 code[code_set - SCANCODE_SET_1][pressed]);
 	ASSERT(ret == EC_SUCCESS);
 }
+
+
+
+void keyboard_typematic_task(void)
+{
+  while (1) {
+    task_wait_event(-1);
+
+    while (typematic_len) {
+      usleep(TYPEMATIC_DELAY_UNIT);
+      typematic_delay -= TYPEMATIC_DELAY_UNIT;
+
+      if (typematic_delay <= 0) {
+        /* re-send to host */
+        i8042_send_to_host(typematic_len, typematic_scan_code);
+        typematic_delay = refill_inter_delay * 1000;
+      }
+    }
+  }
+}
+
+
+static int command_typematic(int argc, char **argv)
+{
+	if (argc == 1) {
+		int i;
+
+		uart_printf("Value set from host: 0x%02x\n",
+		            typematic_value_from_host);
+		uart_printf("Refill first delay : %d (ms)\n",
+		            refill_first_delay);
+		uart_printf("       inter delay : %d (ms)\n",
+		            refill_inter_delay);
+		uart_printf("Current delay      : %d (us)\n",
+		            typematic_delay);
+
+		uart_puts("Repeat scan code   : ");
+		for (i = 0; i < typematic_len; ++i) {
+			uart_printf("0x%02x ", typematic_scan_code[i]);
+		}
+		uart_puts("\n");
+	} else if (argc == 3) {
+		refill_first_delay = strtoi(argv[1], NULL, 0);
+		refill_inter_delay = strtoi(argv[2], NULL, 0);
+		uart_puts("New typematic delays:\n");
+		uart_printf("    Refill first delay : %d (ms)\n",
+		            refill_first_delay);
+		uart_printf("    Refill inter delay : %d (ms)\n",
+		            refill_inter_delay);
+	} else {
+		uart_puts("Usage: typematic [<first> <inter>]\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(typematic, command_typematic);
 
 
 static int command_codeset(int argc, char **argv)

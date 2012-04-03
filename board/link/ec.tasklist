@@ -20,6 +20,7 @@
 	TASK(THERMAL, thermal_task, NULL) \
 	TASK(PWM, pwm_task, NULL) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
+	TASK(TYPEMATIC, keyboard_typematic_task, NULL) \
 	TASK(POWERBTN, power_button_task, NULL) \
 	TASK(X86POWER, x86_power_task, NULL) \
 	TASK(CONSOLE, console_task, NULL) \
