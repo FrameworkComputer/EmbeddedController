@@ -68,11 +68,13 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	 * situation.
 	 */
 	command_task_info(0, NULL);
+	uart_emergency_flush();
 	command_timer_info(0, NULL);
+	uart_emergency_flush();
 }
 
-void irq_LM4_IRQ_WATCHDOG_handler(void) __attribute__((naked));
-void irq_LM4_IRQ_WATCHDOG_handler(void)
+void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void) __attribute__((naked));
+void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 {
 	asm volatile("mov r0, lr\n"
 	             "mov r1, sp\n"
@@ -82,7 +84,7 @@ void irq_LM4_IRQ_WATCHDOG_handler(void)
 	             "mov r0, lr\n"
 		     "b task_resched_if_needed\n");
 }
-const struct irq_priority prio_LM4_IRQ_WATCHDOG
+const struct irq_priority IRQ_BUILD_NAME(prio_, LM4_IRQ_WATCHDOG, )
 	__attribute__((section(".rodata.irqprio")))
 		= {LM4_IRQ_WATCHDOG, 0}; /* put the watchdog at the highest
 					    priority */
