@@ -28,7 +28,7 @@ static void jump_to_other_image(void)
 
 	/* Don't jump if we're in RO becuase we jumped there (this keeps us
 	 * from jumping to RO only to jump right back). */
-	if (system_get_reset_cause() == SYSTEM_RESET_SOFT_WARM)
+	if (system_jumped_to_this_image())
 		return;
 
 #if !defined(BOARD_daisy) && !defined(BOARD_discovery)
