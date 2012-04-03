@@ -80,7 +80,7 @@ static const char * const state_names[] = {
 				  IN_PCH_SLP_An_DEASSERTED)
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0 (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE |		\
-		   IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
+		   IN_PGOOD_CPU_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
 static enum x86_state state;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
@@ -368,12 +368,9 @@ void x86_power_task(void)
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);
 
-			/* Enable +CPU_CORE and +VGFX_CORE */
+			/* Enable +CPU_CORE and +VGFX_CORE regulator.  The CPU
+			 * itself will request the supplies when it's ready. */
 			gpio_set_level(GPIO_ENABLE_VCORE, 1);
-
-			/* Wait for all supplies good */
-			wait_in_signals(IN_PGOOD_ALL_NONCORE |
-					IN_PGOOD_ALL_CORE);
 
 			/* Wait 99ms after all voltages good */
 			usleep(99000);
