@@ -9,6 +9,7 @@
 
 #include "console.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 
@@ -458,7 +459,11 @@ int uart_printf(const char *format, ...)
 			/* TODO: (crosbug.com/p/7490) handle "%l" prefix for
 			 * uint64_t */
 
-			v = va_arg(args, uint32_t);
+			/* Special-case: %T = current time */
+			if (c == 'T')
+				v = get_time().le.lo;
+			else
+				v = va_arg(args, uint32_t);
 
 			switch (c) {
 			case 'd':
@@ -468,6 +473,7 @@ int uart_printf(const char *format, ...)
 				}
 				break;
 			case 'u':
+			case 'T':
 				break;
 			case 'x':
 			case 'p':

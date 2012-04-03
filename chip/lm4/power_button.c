@@ -84,7 +84,7 @@ static void update_other_switches(void)
 
 static void set_pwrbtn_to_pch(int high)
 {
-	uart_printf("[PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
+	uart_printf("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
 	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
 
@@ -150,7 +150,7 @@ static void power_button_changed(uint64_t tnow)
 static void lid_switch_changed(uint64_t tnow)
 {
 	int v = gpio_get_level(GPIO_LID_SWITCHn);
-	uart_printf("[PB lid %s]\n", v ? "open" : "closed");
+	uart_printf("[%T PB lid %s]\n", v ? "open" : "closed");
 
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
 		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
@@ -262,7 +262,7 @@ void power_button_task(void)
 			 * that can't happen - and even if it did, we'd just go
 			 * back to sleep after deciding that we woke up too
 			 * early.) */
-			uart_printf("[PB task wait %d]\n", d);
+			uart_printf("[%T PB task wait %d]\n", d);
 			task_wait_msg(d);
 		}
 	}

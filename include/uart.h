@@ -41,16 +41,20 @@ int uart_puts(const char *outstr);
  *
  * Returns error if output was truncated.
  *
- * Must support format strings for:
+ * Supports the following format strings:
  *   char (%c)
  *   string (%s)
  *   native int (signed/unsigned) (%d / %u / %x)
  *   int32_t / uint32_t (%d / %x)
- *   int64_t / uint64_t (%ld / %lu / %lx)
  *   pointer (%p)
+ * And the following special format codes:
+ *   current time in us (%T)
  * including padding (%-5s, %8d, %08x)
  *
- * Note: Floating point output (%f / %g) is not required.
+ * Support planned for:
+ *   int64_t / uint64_t (%ld / %lu / %lx)
+ *
+ * Note: Floating point output (%f / %g) is not supported.
  */
 int uart_printf(const char *format, ...);
 

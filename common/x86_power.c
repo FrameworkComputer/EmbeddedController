@@ -307,7 +307,7 @@ void x86_power_task(void)
 	x86_power_init();
 
 	while (1) {
-		uart_printf("[x86 power state %d = %s, in 0x%04x]\n",
+		uart_printf("[%T x86 power state %d = %s, in 0x%04x]\n",
 			    state, state_names[state], in_signals);
 
 		switch (state) {
