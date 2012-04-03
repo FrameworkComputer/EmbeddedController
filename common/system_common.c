@@ -15,11 +15,34 @@
 #include "util.h"
 #include "version.h"
 
+
+/* Data passed between the current image and the next one when jumping between
+ * images. */
+#define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
+#define JUMP_DATA_VERSION 1
+struct jump_data {
+	/* Add new fields to the _start_ of the struct, since we copy it to the
+	 * _end_ of RAM between images.  This way, the magic number will always
+	 * be the last word in RAM regardless of how many fields are added. */
+	int reset_cause;  /* Reset cause for the previous boot */
+	int version;      /* Version (JUMP_DATA_VERSION) */
+	int magic;        /* Magic number (JUMP_DATA_MAGIC) */
+};
+
+
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
+static int jumped_to_image;
+
 
 enum system_reset_cause_t system_get_reset_cause(void)
 {
 	return reset_cause;
+}
+
+
+int system_jumped_to_this_image(void)
+{
+	return jumped_to_image;
 }
 
 
@@ -91,6 +114,8 @@ const char *system_get_image_copy_string(void)
 static void jump_to_image(uint32_t init_addr)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
+	struct jump_data *jdata = (struct jump_data *)
+		(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - sizeof(struct jump_data));
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())
@@ -98,6 +123,11 @@ static void jump_to_image(uint32_t init_addr)
 
 	/* Disable interrupts before jump */
 	interrupt_disable();
+
+	/* Fill in preserved data between jumps */
+	jdata->magic = JUMP_DATA_MAGIC;
+	jdata->version = JUMP_DATA_VERSION;
+	jdata->reset_cause = reset_cause;
 
 	/* Jump to the reset vector */
 	resetvec();
@@ -181,9 +211,31 @@ const char *system_get_version(enum system_image_copy_t copy)
 	return "";
 }
 
+
 const char *system_get_build_info(void)
 {
 	return build_info;
+}
+
+
+int system_common_pre_init(void)
+{
+	struct jump_data *jdata = (struct jump_data *)
+		(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - sizeof(struct jump_data));
+
+	/* Check jump data if this is a jump between images */
+	if (jdata->magic == JUMP_DATA_MAGIC &&
+	    jdata->version == JUMP_DATA_VERSION &&
+	    reset_cause == SYSTEM_RESET_SOFT_WARM) {
+		/* Yes, we jumped to this image */
+		jumped_to_image = 1;
+		/* Overwrite the reset cause with the real one */
+		reset_cause = jdata->reset_cause;
+		/* Clear the jump struct's magic number */
+		jdata->magic = 0;
+	}
+
+	return EC_SUCCESS;
 }
 
 /*****************************************************************************/
@@ -196,6 +248,8 @@ static int command_sysinfo(int argc, char **argv)
 		    system_get_reset_cause_string());
 	uart_printf("Scratchpad: 0x%08x\n", system_get_scratchpad());
 	uart_printf("Firmware copy: %s\n", system_get_image_copy_string());
+	uart_printf("Jumped to this copy: %s\n",
+		    system_jumped_to_this_image() ? "yes" : "no");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);

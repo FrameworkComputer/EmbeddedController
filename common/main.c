@@ -64,6 +64,7 @@ int main(void)
 	/* Initialize the system module.  This enables the hibernate clock
 	 * source we need to calibrate the internal oscillator. */
 	system_pre_init();
+	system_common_pre_init();
 
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();

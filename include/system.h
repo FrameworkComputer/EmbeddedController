@@ -49,6 +49,10 @@ enum system_image_copy_t {
  * set up. */
 int system_pre_init(void);
 
+/* System common pre-initialization; called after chip-specific
+ * system_pre_init(). */
+int system_common_pre_init(void);
+
 /* Initializes the system module. */
 int system_init(void);
 
@@ -64,6 +68,10 @@ const char *system_get_reset_cause_string(void);
 
 /* Returns the image copy which is currently running. */
 enum system_image_copy_t system_get_image_copy(void);
+
+/* Returns non-zero if the system has switched between image copies at least
+ * once since the last real boot. */
+int system_jumped_to_this_image(void);
 
 /* Returns true if the given range is overlapped with the active image. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);

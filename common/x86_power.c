@@ -255,9 +255,10 @@ int x86_power_init(void)
 	update_in_signals();
 	in_want = 0;
 
-	/* If this is a warm reboot, see if the x86 is already powered on; if
-	 * so, leave it there instead of cycling through G3. */
-	if (system_get_reset_cause() == SYSTEM_RESET_SOFT_WARM) {
+	/* If we're switching between images without rebooting, see if the x86
+	 * is already powered on; if so, leave it there instead of cycling
+	 * through G3. */
+	if (system_jumped_to_this_image()) {
 		if ((in_signals & IN_ALL_S0) == IN_ALL_S0) {
 			uart_puts("[x86 already in S0]\n");
 			state = X86_S0;
