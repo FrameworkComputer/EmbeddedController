@@ -388,7 +388,7 @@ static void lpc_interrupt(void)
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
-		uart_printf("[LPC PLTRST# %sasserted]\n",
+		uart_printf("[%T LPC PLTRST# %sasserted]\n",
 			    (LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
 	}
 }

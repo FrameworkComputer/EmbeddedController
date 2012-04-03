@@ -24,7 +24,7 @@ void port_80_write(int data)
 	 * itself.  Probably not worth the system overhead to buffer the data
 	 * and print it from a task, because we're printing a small amount of
 	 * data and uart_printf() doesn't block. */
-	uart_printf("%c[Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
+	uart_printf("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
 	history[head] = data;
 	head = (head + 1) & (HISTORY_LEN - 1);
