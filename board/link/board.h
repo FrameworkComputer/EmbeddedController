@@ -21,10 +21,6 @@
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
 
-/* Temporarily use RECOVERYn signal for the write protect signal instead of
- * WRITE_PROTECTn.  This way we can test via servo.  crosbug.com/p/8580. */
-#define CONFIG_WP_USES_RECOVERY_GPIO
-
 /* 66.667 Mhz clock frequency */
 #define CPU_CLOCK  66666667
 

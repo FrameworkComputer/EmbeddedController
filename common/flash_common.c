@@ -30,14 +30,7 @@ static struct persist_state pstate; /* RAM copy of pstate data */
 /* Return non-zero if the write protect pin is asserted */
 static int wp_pin_asserted(void)
 {
-#ifdef CONFIG_WP_USES_RECOVERY_GPIO
-	/* Bypass all WP if the recovery GPIO is asserted.  This is a temporary
-	 * workaround to allow servo-based testing of WP.  See
-	 * crosbug.com/p/8580. */
-	return gpio_get_level(GPIO_RECOVERYn) == 0 ? 0 : 1;
-#else
 	return gpio_get_level(GPIO_WRITE_PROTECTn) == 0 ? 1 : 0;
-#endif
 }
 
 
