@@ -13,6 +13,7 @@
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "power_button.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -35,6 +36,9 @@
 #define PWRBTN_DEBOUNCE_US 30000  /* Debounce time for power button */
 #define PWRBTN_DELAY_T0    32000  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
+#define PWRBTN_RECOVERY_US 200000 /* Length of time to simulate power button
+				   * press when booting into
+				   * keyboard-controlled recovery mode */
 
 #define LID_DEBOUNCE_US    30000  /* Debounce time for lid switch */
 #define LID_PWRBTN_US      PWRBTN_DELAY_T0 /* Length of time to simulate power
@@ -47,6 +51,8 @@ enum power_button_state {
 	PWRBTN_STATE_T1,
 	PWRBTN_STATE_HELD_DOWN,
 	PWRBTN_STATE_STOPPING,
+	PWRBTN_STATE_BOOT_RESET,
+	PWRBTN_STATE_BOOT_RECOVERY,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
 
@@ -89,6 +95,13 @@ static void set_pwrbtn_to_pch(int high)
 }
 
 
+/* Return 1 if power button is pressed, 0 if not pressed. */
+static int get_power_button_pressed(void)
+{
+	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
+}
+
+
 /* Power button state machine.  Passed current time from usec counter. */
 static void state_machine(uint64_t tnow)
 {
@@ -118,8 +131,13 @@ static void state_machine(uint64_t tnow)
 		set_pwrbtn_to_pch(1);
 		pwrbtn_state = PWRBTN_STATE_STOPPED;
 		break;
+	case PWRBTN_STATE_BOOT_RECOVERY:
+		set_pwrbtn_to_pch(1);
+		pwrbtn_state = PWRBTN_STATE_BOOT_RESET;
+		break;
 	case PWRBTN_STATE_STOPPED:
 	case PWRBTN_STATE_HELD_DOWN:
+	case PWRBTN_STATE_BOOT_RESET:
 		/* Do nothing */
 		break;
 	}
@@ -129,20 +147,33 @@ static void state_machine(uint64_t tnow)
 /* Handle debounced power button changing state */
 static void power_button_changed(uint64_t tnow)
 {
-	if (!gpio_get_level(GPIO_POWER_BUTTONn)) {
-		/* pressed */
+	if (pwrbtn_state == PWRBTN_STATE_BOOT_RECOVERY) {
+		/* Ignore all power button changes during the recovery pulse */
+		uart_printf("[%T PB changed during recovery pulse]\n");
+	} else if (get_power_button_pressed()) {
+		/* Power button pressed */
+		uart_printf("[%T PB pressed]\n");
 		pwrbtn_state = PWRBTN_STATE_START;
+		tnext_state = tnow;
 		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(1);
 		lpc_set_host_events(
 			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_POWER_BUTTON));
+	} else if (pwrbtn_state == PWRBTN_STATE_BOOT_RESET) {
+		/* Ignore the first power button release after a
+		 * keyboard-controlled reset, since we already told the PCH the
+		 * power button was released. */
+		uart_printf("[%T PB released after keyboard reset]\n");
+		pwrbtn_state = PWRBTN_STATE_STOPPED;
 	} else {
-		/* released */
+		/* Power button released normally (outside of a
+		 * keyboard-controlled reset) */
+		uart_printf("[%T PB released]\n");
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
+		tnext_state = tnow;
 		*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(0);
 	}
-	tnext_state = tnow;  /* Trigger next state transition now */
 }
 
 
@@ -203,14 +234,33 @@ int power_button_init(void)
 	/* Set up memory-mapped switch positions */
 	memmap_switches = lpc_get_memmap_range() + EC_LPC_MEMMAP_SWITCHES;
 	*memmap_switches = 0;
-	if (gpio_get_level(GPIO_POWER_BUTTONn) == 0)
-		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
 	if (gpio_get_level(GPIO_LID_SWITCHn) != 0)
 		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
 	update_other_switches();
 
-	/* Copy initial power button state to PCH */
-	gpio_set_level(GPIO_PCH_PWRBTNn, gpio_get_level(GPIO_POWER_BUTTONn));
+	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
+		/* Reset triggered by keyboard-controlled reset, so override
+		 * the power button signal to the PCH. */
+		if (keyboard_scan_recovery_pressed()) {
+			/* In recovery mode, so send a power button pulse to
+			 * the PCH so it powers on. */
+			set_pwrbtn_to_pch(0);
+			pwrbtn_state = PWRBTN_STATE_BOOT_RECOVERY;
+			tnext_state = get_time().val + PWRBTN_RECOVERY_US;
+		} else {
+			/* Keyboard-controlled reset, so don't let the PCH see
+			 * that the power button was pressed.  Otherwise, it
+			 * might power on. */
+			set_pwrbtn_to_pch(1);
+			pwrbtn_state = PWRBTN_STATE_BOOT_RESET;
+		}
+	} else {
+		/* Copy initial power button state to PCH and memory-mapped
+		 * switch positions. */
+		set_pwrbtn_to_pch(get_power_button_pressed() ? 0 : 1);
+		if (get_power_button_pressed())
+			*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+	}
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
@@ -262,14 +312,15 @@ void power_button_task(void)
 			 * that can't happen - and even if it did, we'd just go
 			 * back to sleep after deciding that we woke up too
 			 * early.) */
-			uart_printf("[%T PB task wait %d]\n", d);
+			uart_printf("[%T PB task %d wait %d]\n",
+				    pwrbtn_state, d);
 			task_wait_msg(d);
 		}
 	}
 }
 
 /*****************************************************************************/
-/* Console commnands */
+/* Console commands */
 
 static int command_powerbtn(int argc, char **argv)
 {
