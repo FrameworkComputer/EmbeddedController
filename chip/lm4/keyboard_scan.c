@@ -13,6 +13,7 @@
 #include "lpc.h"
 #endif
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -355,9 +356,13 @@ int keyboard_scan_init(void)
 	 * key mask properly */
 	actual_key_mask = actual_key_masks[0];
 
-	/* Initialize raw state and check if the recovery key is pressed. */
+	/* Initialize raw state */
 	update_key_state();
-	recovery_key_pressed = check_recovery_key();
+
+	/* If we're booting due to a reset-pin-caused reset, check if the
+	 * recovery key is pressed. */
+	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN)
+		recovery_key_pressed = check_recovery_key();
 
 	return EC_SUCCESS;
 }
