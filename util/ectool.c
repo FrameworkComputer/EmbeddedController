@@ -46,6 +46,10 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
+	"  lightbar reset\n"
+	"      Puts the lightbar into idle mode\n"
+	"  lightbar test [NUM]\n"
+	"      Cycles lights once. Optional argument does nothing.\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -793,6 +797,33 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_lightbar(int argc, char *argv[])
+{
+	struct lpc_params_lightbar_test p;
+	char *e;
+
+	p.tbd = 0;
+
+	if (argc) {
+		if (!strcmp("reset", argv[0])) {
+			return ec_command(EC_LPC_COMMAND_LIGHTBAR_RESET,
+					  NULL, 0, NULL, 0);
+		} else if (!strcmp("test", argv[0])) {
+			if (argc > 1) {
+				p.tbd = strtol(argv[1], &e, 0);
+				if (e && *e) {
+					fprintf(stderr, "Bad arg\n");
+					return -1;
+				}
+			}
+			return ec_command(EC_LPC_COMMAND_LIGHTBAR_TEST,
+					  &p, sizeof(p), NULL, 0);
+		}
+	}
+
+	printf("Usage: lightbar reset | test [NUM]\n");
+	return -1;
+}
 
 int cmd_usb_charge_set_mode(int argc, char *argv[])
 {
@@ -1211,6 +1242,7 @@ const struct command commands[] = {
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},
 	{"hello", cmd_hello},
+	{"lightbar", cmd_lightbar},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},
