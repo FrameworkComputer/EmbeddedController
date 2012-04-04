@@ -71,7 +71,7 @@ static uint8_t *memmap_switches;
 /* Update status of non-debounced switches */
 static void update_other_switches(void)
 {
-	if (gpio_get_level(GPIO_WRITE_PROTECTn) != 0)
+	if (gpio_get_level(GPIO_WRITE_PROTECT) == 0)
 		*memmap_switches |= EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
@@ -265,7 +265,7 @@ int power_button_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_LID_SWITCHn);
-	gpio_enable_interrupt(GPIO_WRITE_PROTECTn);
+	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 	gpio_enable_interrupt(GPIO_RECOVERYn);
 
 	return EC_SUCCESS;

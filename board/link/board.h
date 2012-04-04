@@ -127,7 +127,7 @@ enum gpio_signal {
 	GPIO_RECOVERYn,           /* Recovery signal from servo */
 	GPIO_USB1_STATUSn,        /* USB charger port 1 status output */
 	GPIO_USB2_STATUSn,        /* USB charger port 2 status output */
-	GPIO_WRITE_PROTECTn,      /* Write protect input */
+	GPIO_WRITE_PROTECT,       /* Write protect input */
 	/* Outputs */
 	GPIO_CPU_PROCHOTn,        /* Force CPU to think it's overheated */
 	GPIO_ENABLE_1_5V_DDR,     /* Enable +1.5V_DDR supply */
