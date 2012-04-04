@@ -119,6 +119,7 @@ enum gpio_signal {
 				   * depending on stuffing. */
 	GPIO_RECOVERYn,           /* Recovery signal from servo */
 	GPIO_WRITE_PROTECTn,      /* Write protect input */
+	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
