@@ -59,6 +59,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"ENTERING_RW", GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
+	{"CODEC_INT",   GPIO_H, (1<<1),  GPIO_HI_Z, NULL},
 	{"KB_OUT00",    GPIO_B, (1<<5),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT02",    GPIO_B, (1<<12), GPIO_KB_OUTPUT, NULL},
@@ -119,6 +120,10 @@ void configure_board(void)
 
 void board_keyboard_scan_ready(void)
 {
+	/* notify audio codec of keypress for noise suppression */
+	gpio_set_level(GPIO_CODEC_INT, 0);
+	gpio_set_level(GPIO_CODEC_INT, 1);
+
 	/* interrupt host by toggling EC_INT */
 	gpio_set_level(GPIO_EC_INT, 0);
 	gpio_set_level(GPIO_EC_INT, 1);

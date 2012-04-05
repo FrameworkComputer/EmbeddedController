@@ -45,6 +45,7 @@ enum gpio_signal {
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
+	GPIO_CODEC_INT,        /* To audio codec (KB noise cancellation) */
 	GPIO_KB_OUT00,
 	GPIO_KB_OUT01,
 	GPIO_KB_OUT02,
