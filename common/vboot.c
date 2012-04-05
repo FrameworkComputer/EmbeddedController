@@ -20,11 +20,13 @@ static void jump_to_other_image(void)
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 		return;
 
+#ifdef CONFIG_TASK_KEYSCAN
 	/* Don't jump if recovery requested */
 	if (keyboard_scan_recovery_pressed()) {
 		uart_puts("Vboot staying in RO because key pressed.\n");
 		return;
 	}
+#endif
 
 	/* Don't jump if we're in RO becuase we jumped there (this keeps us
 	 * from jumping to RO only to jump right back). */

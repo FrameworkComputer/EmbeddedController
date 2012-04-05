@@ -372,7 +372,7 @@ static void lpc_interrupt(void)
 	}
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 1)) {
 		/* Host picks up the data, try to send remaining bytes */
-		task_send_msg(TASK_ID_I8042CMD, TASK_ID_I8042CMD, 0);
+		task_wake(TASK_ID_I8042CMD);
 	}
 #endif
 

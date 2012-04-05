@@ -30,16 +30,16 @@ int mutex_random_task(void *unused)
 	/* wait to be activated */
 
 	while (1) {
-		task_wait_msg(0);
+		task_wait_event(0);
 		uart_printf("%c+\n", letter);
 		mutex_lock(&mtx);
 		uart_printf("%c=\n", letter);
-		task_wait_msg(0);
+		task_wait_event(0);
 		uart_printf("%c-\n", letter);
 		mutex_unlock(&mtx);
 	}
 
-	task_wait_msg(0);
+	task_wait_event(0);
 
 	return EC_SUCCESS;
 }
@@ -50,15 +50,15 @@ int mutex_second_task(void *unused)
 
 	uart_printf("\n[Mutex second task %d]\n", id);
 
-	task_wait_msg(0);
+	task_wait_event(0);
 	uart_printf("MTX2: locking...");
 	mutex_lock(&mtx);
 	uart_printf("done\n");
-	task_send_msg(TASK_ID_MTX1, 1, 0);
+	task_wake(TASK_ID_MTX1);
 	uart_printf("MTX2: unlocking...\n");
 	mutex_unlock(&mtx);
 
-	task_wait_msg(0);
+	task_wait_event(0);
 
 	return EC_SUCCESS;
 }
@@ -85,7 +85,7 @@ int mutex_main_task(void *unused)
 	/* --- Serialization to test simple contention --- */
 	uart_printf("Simple contention :\n");
 	/* lock the mutex from the other task */
-	task_send_msg(TASK_ID_MTX2, 1, 1);
+	task_set_event(TASK_ID_MTX2, TASK_EVENT_WAKE, 1);
 	/* block on the mutex */
 	uart_printf("MTX1: blocking...\n");
 	mutex_lock(&mtx);
@@ -96,17 +96,17 @@ int mutex_main_task(void *unused)
 	uart_printf("Massive locking/unlocking :\n");
 	for (i = 0; i < 500; i++) {
 		/* Wake up a random task */
-		task_send_msg(RANDOM_TASK(rtask), 1, 0);
+		task_wake(RANDOM_TASK(rtask));
 		/* next pseudo random delay */
 		rtask = prng(rtask);
 		/* Wait for a "random" period */
-		task_wait_msg(PERIOD_US(rdelay));
+		task_wait_event(PERIOD_US(rdelay));
 		/* next pseudo random delay */
 		rdelay = prng(rdelay);
 	}
 
 	uart_printf("Test done.\n");
-	task_wait_msg(0);
+	task_wait_event(0);
 
 	return EC_SUCCESS;
 }

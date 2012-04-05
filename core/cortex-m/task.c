@@ -57,7 +57,7 @@ static void task_exit_trap(void)
 	uart_printf("[Task %d (%s) exited!]\n", i, task_names[i]);
 	/* Exited tasks simply sleep forever */
 	while (1)
-		task_wait_msg(-1);
+		task_wait_event(-1);
 }
 
 
@@ -198,15 +198,6 @@ void __schedule(int desched, int resched)
 }
 
 
-/**
- * Change the task scheduled after returning from the exception.
- *
- * If task_send_msg has been called and has set need_resched flag,
- * we re-compute which task is running and eventually swap the context
- * saved on the process stack to restore the new one at exception exit.
- *
- * it must be called from interrupt context !
- */
 void task_resched_if_needed(void *excep_return)
 {
 	/**
@@ -220,7 +211,7 @@ void task_resched_if_needed(void *excep_return)
 }
 
 
-static uint32_t __wait_msg(int timeout_us, task_id_t resched)
+static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 {
 	task_ *tsk = __get_current();
 	task_id_t me = tsk - tasks;
@@ -247,17 +238,13 @@ static uint32_t __wait_msg(int timeout_us, task_id_t resched)
 }
 
 
-uint32_t task_send_msg(task_id_t tskid, task_id_t from, int wait)
+uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 	ASSERT(receiver);
 
-	if (from == TASK_ID_CURRENT) {
-		from = task_get_current();
-	}
-
 	/* set the event bit in the receiver message bitmap */
-	atomic_or(&receiver->events, 1 << from);
+	atomic_or(&receiver->events, event);
 
 	/* Re-schedule if priorities have changed */
 	if (in_interrupt_context()) {
@@ -266,7 +253,7 @@ uint32_t task_send_msg(task_id_t tskid, task_id_t from, int wait)
 		need_resched = 1;
 	} else {
 		if (wait)
-			return __wait_msg(-1, tskid);
+			return __wait_evt(-1, tskid);
 		else
 			__schedule(0, tskid);
 	}
@@ -275,9 +262,9 @@ uint32_t task_send_msg(task_id_t tskid, task_id_t from, int wait)
 }
 
 
-uint32_t task_wait_msg(int timeout_us)
+uint32_t task_wait_event(int timeout_us)
 {
-	return __wait_msg(timeout_us, TASK_ID_IDLE);
+	return __wait_evt(timeout_us, TASK_ID_IDLE);
 }
 
 
@@ -354,7 +341,7 @@ void mutex_lock(struct mutex *mtx)
 		 */
 		if (value == 2) {
 			/* contention on the mutex */
-			task_wait_msg(0);
+			task_wait_event(0);
 		}
 	} while (value);
 
@@ -374,11 +361,11 @@ void mutex_unlock(struct mutex *mtx)
 	while (waiters) {
 		task_id_t id = 31 - __builtin_clz(waiters);
 		/* somebody is waiting on the mutex */
-		task_send_msg(id, TASK_ID_MUTEX, 0);
+		task_set_event(id, TASK_EVENT_MUTEX, 0);
 		waiters &= ~(1 << id);
 	}
 	/* Ensure no event is remaining from mutex wake-up */
-	atomic_clear(&tsk->events, 1 << TASK_ID_MUTEX);
+	atomic_clear(&tsk->events, TASK_EVENT_MUTEX);
 }
 
 

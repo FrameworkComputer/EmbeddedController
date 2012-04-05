@@ -149,7 +149,7 @@ static int wait_in_signals(uint32_t want)
 	in_want = want;
 
 	while ((in_signals & in_want) != in_want) {
-		if (task_wait_msg(DEFAULT_TIMEOUT) == (1 << TASK_ID_TIMER)) {
+		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
 			update_in_signals();
 			uart_printf("[x86 power timeout on input; "
 				    "wanted 0x%04x, got 0x%04x]\n",
@@ -240,7 +240,7 @@ void x86_power_interrupt(enum gpio_signal signal)
 	update_in_signals();
 
 	/* Wake up the task */
-	task_send_msg(TASK_ID_X86POWER, TASK_ID_X86POWER, 0);
+	task_wake(TASK_ID_X86POWER);
 }
 
 /*****************************************************************************/
@@ -426,7 +426,7 @@ void x86_power_task(void)
 
 			/* Otherwise, steady state; wait for a message */
 			in_want = 0;
-			task_wait_msg(-1);
+			task_wait_event(-1);
 			break;
 
 		case X86_S3:
@@ -442,7 +442,7 @@ void x86_power_task(void)
 
 			/* Otherwise, steady state; wait for a message */
 			in_want = 0;
-			task_wait_msg(-1);
+			task_wait_event(-1);
 			break;
 
 		case X86_S0:
@@ -454,7 +454,7 @@ void x86_power_task(void)
 
 			/* Otherwise, steady state; wait for a message */
 			in_want = 0;
-			task_wait_msg(-1);
+			task_wait_event(-1);
 		}
 	}
 }

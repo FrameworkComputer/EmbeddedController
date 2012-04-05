@@ -381,7 +381,7 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		wait_for_interrupt();
-		task_wait_msg(-1);
+		task_wait_event(-1);
 
 		enter_polling_mode();
 		/* Busy polling keyboard state. */
@@ -412,9 +412,8 @@ static void matrix_interrupt(void)
 {
 	uint32_t ris = clear_matrix_interrupt_status();
 
-	if (ris) {
-		task_send_msg(TASK_ID_KEYSCAN, TASK_ID_KEYSCAN, 0);
-	}
+	if (ris)
+		task_wake(TASK_ID_KEYSCAN);
 }
 DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
 

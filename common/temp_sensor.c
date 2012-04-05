@@ -17,6 +17,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
+#include "timer.h"
 #include "tmp006.h"
 #include "uart.h"
 #include "util.h"
@@ -93,8 +94,7 @@ void temp_sensor_task(void)
 	while (1) {
 		poll_all_sensors();
 		update_lpc_mapped_memory();
-		/* Wait 1s */
-		task_wait_msg(1000000);
+		usleep(1000000);
 	}
 }
 

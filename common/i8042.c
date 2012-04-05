@@ -98,7 +98,7 @@ void i8042_command_task(void)
 {
 	while (1) {
 		/* Either a new byte to host or host picking up can un-block. */
-		task_wait_msg(-1);
+		task_wait_event(-1);
 
 		while (1) {
 			uint8_t chr;
@@ -144,7 +144,7 @@ enum ec_error_list i8042_send_to_host(int len, uint8_t *to_host)
 	enq_to_host(len, to_host);
 
 	/* Wake up the task to handle the command */
-	task_send_msg(TASK_ID_I8042CMD, TASK_ID_I8042CMD, 0);
+	task_wake(TASK_ID_I8042CMD);
 
 	return EC_SUCCESS;
 }

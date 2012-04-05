@@ -15,6 +15,8 @@
 #include "uart.h"
 #include "util.h"
 
+#define TASK_EVENT_SLOT(n) TASK_EVENT_CUSTOM(1 << n)
+
 static int host_command[2];
 
 /* Host commands are described in a special section */
@@ -41,9 +43,8 @@ void host_command_received(int slot, int command)
 	/* Save the command */
 	host_command[slot] = command;
 
-	/* Wake up the task to handle the command.  Use the slot as
-	 * the task ID. */
-	task_send_msg(TASK_ID_HOSTCMD, slot, 0);
+	/* Wake up the task to handle the command for the slot */
+	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_SLOT(slot), 0);
 }
 
 
@@ -161,13 +162,12 @@ void host_command_task(void)
 	host_command_init();
 
 	while (1) {
-		/* wait for the next command message */
-		int m = task_wait_msg(-1);
+		/* wait for the next command event */
+		int evt = task_wait_event(-1);
 		/* process it */
-		/* TODO: use message flags to determine which slots */
-		if (m & 0x01)
+		if (evt & TASK_EVENT_SLOT(0))
 			command_process(0);
-		if (m & 0x02)
+		if (evt & TASK_EVENT_SLOT(1))
 			command_process(1);
 	}
 }

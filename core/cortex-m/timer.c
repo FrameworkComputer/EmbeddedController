@@ -34,7 +34,7 @@ static void expire_timer(task_id_t tskid)
 	/* we are done with this timer */
 	atomic_clear(&timer_running, 1<<tskid);
 	/* wake up the taks waiting for this timer */
-	task_send_msg(tskid, TASK_ID_TIMER, 0);
+	task_set_event(tskid, TASK_EVENT_TIMER, 0);
 }
 
 /**
@@ -130,12 +130,12 @@ void usleep(unsigned us)
 	uint32_t evt = 0;
 	ASSERT(us);
 	do {
-		evt |= task_wait_msg(us);
-	} while (!(evt & (1 << TASK_ID_TIMER)));
+		evt |= task_wait_event(us);
+	} while (!(evt & TASK_EVENT_TIMER));
 	/* re-queue other events which happened in the meanwhile */
 	if (evt)
 		atomic_or(task_get_event_bitmap(task_get_current()),
-		          evt & ~(1 << TASK_ID_TIMER));
+			  evt & ~TASK_EVENT_TIMER);
 }
 
 

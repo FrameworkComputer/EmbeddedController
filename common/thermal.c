@@ -15,6 +15,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 #include "x86_power.h"
@@ -193,8 +194,7 @@ void thermal_task(void)
 {
 	while (1) {
 		thermal_process();
-		/* Wait 1s */
-		task_wait_msg(1000000);
+		usleep(1000000);
 	}
 }
 

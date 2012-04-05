@@ -54,8 +54,8 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 		gpio_get_level(signal) != value) {
 		now = get_time();
 		if ((now.val >= deadline.val) ||
-			(task_wait_msg(deadline.val - now.val) ==
-			 (1 << TASK_ID_TIMER))) {
+			(task_wait_event(deadline.val - now.val) ==
+			 TASK_EVENT_TIMER)) {
 			uart_printf("Timeout waiting for GPIO %d\n", signal);
 			return EC_ERROR_TIMEOUT;
 		}
@@ -77,7 +77,7 @@ static void wait_for_power_off(void)
 		/* wait for power button press or XPSHOLD falling edge */
 		while ((gpio_get_level(GPIO_EC_PWRON) == 0) &&
 			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
-				task_wait_msg(-1);
+				task_wait_event(-1);
 		}
 		/* XPSHOLD released by AP : shutdown immediatly */
 		if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
@@ -89,8 +89,8 @@ static void wait_for_power_off(void)
 			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
 			now = get_time();
 			if ((now.val >= deadline.val) ||
-				(task_wait_msg(deadline.val - now.val) ==
-				 (1 << TASK_ID_TIMER)))
+				(task_wait_event(deadline.val - now.val) ==
+				 TASK_EVENT_TIMER))
 					return;
 		}
 	}
@@ -99,7 +99,7 @@ static void wait_for_power_off(void)
 void gaia_power_event(enum gpio_signal signal)
 {
 	/* Wake up the task */
-	task_send_msg(TASK_ID_GAIAPOWER, TASK_ID_GAIAPOWER, 0);
+	task_wake(TASK_ID_GAIAPOWER);
 }
 
 int gaia_power_init(void)
@@ -197,7 +197,7 @@ static int command_force_power(int argc, char **argv)
 	force_signal = GPIO_EC_PWRON;
 	force_value = 1;
 	/* Wake up the task */
-	task_send_msg(TASK_ID_GAIAPOWER, TASK_ID_GAIAPOWER, 0);
+	task_wake(TASK_ID_GAIAPOWER);
 	/* wait 100 ms */
 	usleep(100000);
 	/* release power button */

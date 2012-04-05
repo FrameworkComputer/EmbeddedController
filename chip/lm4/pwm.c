@@ -14,6 +14,7 @@
 #include "util.h"
 #include "task.h"
 #include "thermal.h"
+#include "timer.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 
@@ -122,8 +123,7 @@ void pwm_task(void)
 {
 	while (1) {
 		update_lpc_mapped_memory();
-		/* Wait 1s */
-		task_wait_msg(1000000);
+		usleep(1000000);
 	}
 }
 

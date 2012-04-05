@@ -225,7 +225,7 @@ void power_button_interrupt(enum gpio_signal signal)
          * remainder of the interval.  The alternative would be to have the
          * task wake up _every_ debounce_us on its own; that's less desirable
          * when the EC should be sleeping. */
-	task_send_msg(TASK_ID_POWERBTN, TASK_ID_POWERBTN, 0);
+	task_wake(TASK_ID_POWERBTN);
 }
 
 
@@ -314,7 +314,7 @@ void power_button_task(void)
 			 * early.) */
 			uart_printf("[%T PB task %d wait %d]\n",
 				    pwrbtn_state, d);
-			task_wait_msg(d);
+			task_wait_event(d);
 		}
 	}
 }

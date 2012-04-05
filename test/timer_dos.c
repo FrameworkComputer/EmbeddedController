@@ -1,7 +1,6 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2011 Google Inc.
  *
  * Tasks for timer test.
  */
@@ -29,7 +28,7 @@ int TaskTimer(void *seed)
 
 	while (1) {
 		/* Wait for a "random" period */
-		task_wait_msg(PERIOD_US(num));
+		task_wait_event(PERIOD_US(num));
 		uart_printf("%01d\n", id);
 		/* next pseudo random delay */
 		num = prng(num);

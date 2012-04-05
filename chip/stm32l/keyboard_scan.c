@@ -425,7 +425,7 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		wait_for_interrupt();
-		task_wait_msg(-1);
+		task_wait_event(-1);
 
 		enter_polling_mode();
 		/* Busy polling keyboard state. */
@@ -453,7 +453,7 @@ void keyboard_scan_task(void)
 
 void matrix_interrupt(enum gpio_signal signal)
 {
-	task_send_msg(TASK_ID_KEYSCAN, TASK_ID_KEYSCAN, 0);
+	task_wake(TASK_ID_KEYSCAN);
 }
 
 int keyboard_has_char()

@@ -35,17 +35,17 @@ static struct mutex port_mutex[NUM_PORTS];
 static int wait_idle(int port)
 {
 	int i;
-	int wait_msg;
+	int event;
 
 	i = LM4_I2C_MCS(port);
 	while (i & 0x01) {
 		/* Port is busy, so wait for the interrupt */
 		task_waiting_on_port[port] = task_get_current();
 		LM4_I2C_MIMR(port) = 0x03;
-		wait_msg = task_wait_msg(1000000);
+		event = task_wait_event(1000000);
 		LM4_I2C_MIMR(port) = 0x00;
 		task_waiting_on_port[port] = TASK_ID_INVALID;
-		if (wait_msg == 1 << TASK_ID_TIMER)
+		if (event == TASK_EVENT_TIMER)
 			return EC_ERROR_TIMEOUT;
 
 		i = LM4_I2C_MCS(port);
@@ -271,9 +271,9 @@ static void handle_interrupt(int port)
 	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
 
 	/* Wake up the task which was waiting on the interrupt, if any */
-	/* TODO: send message based on I2C port number? */
+	/* TODO: set event based on I2C port number? */
 	if (id != TASK_ID_INVALID)
-		task_send_msg(id, id, 0);
+		task_wake(id);
 }
 
 

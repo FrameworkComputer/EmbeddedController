@@ -1,7 +1,6 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2011 Google Inc.
  *
  * Tasks for scheduling test.
  */
@@ -35,7 +34,7 @@ int timer_calib_task(void *data)
 	usleep(1000000);
 	t1 = get_time();
 	uart_printf("done. delay = %d us\n", difftime(t0, t1));
-	
+
 	/* try small usleep */
 	uart_printf("- short sleep :\n");
 	uart_flush_output();
@@ -49,7 +48,7 @@ int timer_calib_task(void *data)
 
 	uart_printf("Done.\n");
 	/* sleep forever */
-	task_wait_msg(-1);
+	task_wait_event(-1);
 
 	return EC_SUCCESS;
 }

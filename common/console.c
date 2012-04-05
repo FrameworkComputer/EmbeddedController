@@ -21,7 +21,7 @@ extern const struct console_command __cmds_end[];
 void console_has_input(void)
 {
 	/* Wake up the console task */
-	task_send_msg(TASK_ID_CONSOLE, TASK_ID_CONSOLE, 0);
+	task_wake(TASK_ID_CONSOLE);
 }
 
 
@@ -131,7 +131,7 @@ void console_task(void)
 	while (1) {
 		console_process();
 		/* wait for the next command message */
-		task_wait_msg(-1);
+		task_wait_event(-1);
 	}
 }
 

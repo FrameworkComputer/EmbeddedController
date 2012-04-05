@@ -1,7 +1,6 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- * Copyright 2011 Google Inc.
  *
  * Tasks for scheduling test.
  */
@@ -24,7 +23,7 @@ int TaskAbc(void *data)
 	while (1) {
 		uart_puts(string);
 		uart_flush_output();
-		task_send_msg(next, TASK_ID_CURRENT, 1);
+		task_set_event(next, TASK_EVENT_WAKE, 1);
 	}
 
 	return EC_SUCCESS;
