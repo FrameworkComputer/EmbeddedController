@@ -177,30 +177,48 @@ static void power_button_changed(uint64_t tnow)
 }
 
 
+/* Lid open */
+static void lid_switch_open(uint64_t tnow)
+{
+	uart_printf("[%T PB lid open]\n");
+
+	*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+
+	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
+			    EC_LPC_HOST_EVENT_LID_OPEN));
+
+	/* If the chipset is is soft-off, send a power button pulse to
+	 * wake up the chipset. */
+	if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
+		set_pwrbtn_to_pch(0);
+		pwrbtn_state = PWRBTN_STATE_STOPPING;
+		tnext_state = tnow + LID_PWRBTN_US;
+		task_wake(TASK_ID_POWERBTN);
+	}
+}
+
+
+/* Lid close */
+static void lid_switch_close(uint64_t tnow)
+{
+	uart_printf("[%T PB lid close]\n");
+
+	*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
+
+	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
+			    EC_LPC_HOST_EVENT_LID_CLOSED));
+}
+
+
 /* Handle debounced lid switch changing state */
 static void lid_switch_changed(uint64_t tnow)
 {
 	int v = gpio_get_level(GPIO_LID_SWITCHn);
-	uart_printf("[%T PB lid %s]\n", v ? "open" : "closed");
 
-	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK((v ?
-		EC_LPC_HOST_EVENT_LID_OPEN : EC_LPC_HOST_EVENT_LID_CLOSED)));
-
-	if (v) {
-		/* Lid open */
-		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
-
-		/* If the chipset is is soft-off, send a power button pulse to
-		 * wake up the chipset. */
-		if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
-			set_pwrbtn_to_pch(0);
-			pwrbtn_state = PWRBTN_STATE_STOPPING;
-			tnext_state = tnow + LID_PWRBTN_US;
-		}
-	} else {
-		/* Lid closed */
-		*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
-	}
+	if (v)
+		lid_switch_open(tnow);
+	else
+		lid_switch_close(tnow);
 }
 
 
@@ -346,3 +364,19 @@ static int command_powerbtn(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn);
+
+
+static int command_lidopen(int argc, char **argv)
+{
+	lid_switch_open(get_time().val);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen);
+
+
+static int command_lidclose(int argc, char **argv)
+{
+	lid_switch_close(get_time().val);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose);
