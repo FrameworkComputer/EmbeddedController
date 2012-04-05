@@ -38,16 +38,25 @@
 
 #define EC_LPC_ADDR_MEMMAP       0x900
 #define EC_LPC_MEMMAP_SIZE         256
+#define EC_LPC_MEMMAP_TEXT_MAX     8  /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
 #define EC_LPC_MEMMAP_TEMP_SENSOR 0x00
 #define EC_LPC_MEMMAP_FAN         0x10
-#define EC_LPC_MEMMAP_BATT_VOLT   0x20
-#define EC_LPC_MEMMAP_BATT_RATE   0x24
-#define EC_LPC_MEMMAP_BATT_CAP    0x28
-#define EC_LPC_MEMMAP_BATT_FLAG   0x2c
 #define EC_LPC_MEMMAP_SWITCHES    0x30
 #define EC_LPC_MEMMAP_HOST_EVENTS 0x34
+#define EC_LPC_MEMMAP_BATT_VOLT   0x40 /* Battery Present Voltage */
+#define EC_LPC_MEMMAP_BATT_RATE   0x44 /* Battery Present Rate */
+#define EC_LPC_MEMMAP_BATT_CAP    0x48 /* Battery Remaining Capacity */
+#define EC_LPC_MEMMAP_BATT_FLAG   0x4c /* Battery State, defined below */
+#define EC_LPC_MEMMAP_BATT_DCAP   0x50 /* Battery Design Capacity */
+#define EC_LPC_MEMMAP_BATT_DVLT   0x54 /* Battery Design Voltage */
+#define EC_LPC_MEMMAP_BATT_LFCC   0x58 /* Battery Last Full Charge Capacity */
+#define EC_LPC_MEMMAP_BATT_CCNT   0x5c /* Battery Cycle Count */
+#define EC_LPC_MEMMAP_BATT_MFGR   0x60 /* Battery Manufacturer String */
+#define EC_LPC_MEMMAP_BATT_MODEL  0x68 /* Battery Model Number String */
+#define EC_LPC_MEMMAP_BATT_SERIAL 0x70 /* Battery Serial Number String */
+#define EC_LPC_MEMMAP_BATT_TYPE   0x78 /* Battery Type String */
 
 /* Battery bit flags at EC_LPC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
@@ -397,45 +406,6 @@ struct lpc_response_thermal_get_threshold {
 
 /* Toggling automatic fan control */
 #define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
-
-/*****************************************************************************/
-/* Battery commands */
-
-/* Maximum asciiz length of battery text data  */
-#define EC_LPC_BATT_TEXT_MAX 32
-
-/* Get battery info */
-#define EC_LPC_COMMAND_BATTERY_INFO 0x60
-struct lpc_response_battery_info {
-	uint32_t design_capacity;
-	uint32_t last_full_charge_capacity;
-	uint32_t design_output_voltage;
-	uint32_t design_capacity_warning;
-	uint32_t design_capacity_low;
-	uint32_t cycle_count;
-} __attribute__ ((packed));
-
-/* Following 4 battery commands use the same response data type
- *   BATTERY_TYPE
- *   BATTERY_MODEL_NUMBER
- *   BATTERY_MODEL_NUMBER
- *   BATTERY_SERIAL_NUMBER
- */
-struct lpc_response_battery_text {
-	char text[EC_LPC_BATT_TEXT_MAX];
-} __attribute__ ((packed));
-
-/* Get battery chemistry */
-#define EC_LPC_COMMAND_BATTERY_TYPE 0x61
-
-/* Get battery model number */
-#define EC_LPC_COMMAND_BATTERY_MODEL_NUMBER 0x62
-
-/* Get battery serial number */
-#define EC_LPC_COMMAND_BATTERY_SERIAL_NUMBER 0x63
-
-/* Get battery OEM name */
-#define EC_LPC_COMMAND_BATTERY_OEM 0x64
 
 /*****************************************************************************/
 /* Host event commands */

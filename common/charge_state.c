@@ -101,6 +101,53 @@ static inline int get_ac(void)
 	return gpio_get_level(GPIO_AC_PRESENT);
 }
 
+/* Battery information used to fill ACPI _BIF and/or _BIX */
+static void update_battery_info(void)
+{
+	char *batt_str;
+	int batt_serial;
+
+	/* Design Capacity of Full */
+	battery_design_capacity((int *)(lpc_get_memmap_range() +
+					EC_LPC_MEMMAP_BATT_DCAP));
+
+	/* Design Voltage */
+	battery_design_voltage((int *)(lpc_get_memmap_range() +
+				       EC_LPC_MEMMAP_BATT_DVLT));
+
+	/* Last Full Charge Capacity */
+	battery_full_charge_capacity((int *)(lpc_get_memmap_range() +
+					     EC_LPC_MEMMAP_BATT_LFCC));
+
+	/* Cycle Count */
+	battery_cycle_count((int *)(lpc_get_memmap_range() +
+				    EC_LPC_MEMMAP_BATT_CCNT));
+
+	/* Battery Manufacturer string */
+	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_MFGR);
+	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
+	battery_manufacturer_name(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+
+	/* Battery Model string */
+	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_MODEL);
+	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
+	battery_device_name(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+
+	/* Battery Type string */
+	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_TYPE);
+	battery_device_chemistry(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+
+	/* Smart battery serial number is 16 bits */
+	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_SERIAL);
+	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
+	if (battery_serial_number(&batt_serial) == 0) {
+		*batt_str++ = hex2asc(0xf & (batt_serial >> 12));
+		*batt_str++ = hex2asc(0xf & (batt_serial >> 8));
+		*batt_str++ = hex2asc(0xf & (batt_serial >> 4));
+		*batt_str++ = hex2asc(0xf & batt_serial);
+	}
+}
+
 /* Common handler for charging states.
  * This handler gets battery charging parameters, charger state, ac state,
  * and timestamp. It also fills memory map and issues power events on state
@@ -171,7 +218,8 @@ static int state_common(struct power_state_context *ctx)
 	if (rv)
 		curr->error |= F_BATTERY_CURRENT;
 	/* Memory mapped value: discharge rate */
-	*ctx->memmap_batt_rate = batt->current < 0 ? -batt->current : 0;
+	*ctx->memmap_batt_rate = batt->current < 0 ?
+		-batt->current : batt->current;
 
 	rv = battery_desired_voltage(&batt->desired_voltage);
 	if (rv)
@@ -254,6 +302,13 @@ static enum power_state state_init(struct power_state_context *ctx)
 	/* Check general error conditions */
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
+
+	/* Update static battery info */
+	update_battery_info();
+
+	/* Send battery event to host */
+	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
+			    EC_LPC_HOST_EVENT_BATTERY));
 
 	return PWR_STATE_IDLE;
 }

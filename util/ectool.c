@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "lpc_commands.h"
+#include "battery.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 /* Don't use a macro where an inline will do... */
@@ -240,6 +241,21 @@ uint16_t read_mapped_mem16(uint8_t offset)
 uint32_t read_mapped_mem32(uint8_t offset)
 {
 	return inl(EC_LPC_ADDR_MEMMAP + offset);
+}
+
+
+int read_mapped_string(uint8_t offset, char *buf)
+{
+	int c;
+
+	for (c = 0; c < EC_LPC_MEMMAP_TEXT_MAX; c++) {
+		buf[c] = inb(EC_LPC_ADDR_MEMMAP + offset + c);
+		if (buf[c] == 0)
+			return c;
+	}
+
+	buf[EC_LPC_MEMMAP_TEXT_MAX-1] = 0;
+	return EC_LPC_MEMMAP_TEXT_MAX;
 }
 
 
@@ -1171,52 +1187,41 @@ int cmd_switches(int argc, char *argv[])
 
 int cmd_battery(int argc, char *argv[])
 {
-	struct lpc_response_battery_info batt_info;
-	struct lpc_response_battery_text batt_text;
+	char batt_text[EC_LPC_MEMMAP_TEXT_MAX];
 	int rv;
 
 	printf("Battery info:\n");
 
-	rv = ec_command(EC_LPC_COMMAND_BATTERY_OEM,
-			NULL, 0, &batt_text, sizeof(batt_text));
+	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MFGR, batt_text);
 	if (rv)
-		return rv;
-	printf("  OEM name:          %s\n", batt_text.text);
+		printf("  OEM name:               %s\n", batt_text);
 
-	rv = ec_command(EC_LPC_COMMAND_BATTERY_MODEL_NUMBER,
-			NULL, 0, &batt_text, sizeof(batt_text));
+	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MODEL, batt_text);
 	if (rv)
-		return rv;
-	printf("  Model number:           %s\n", batt_text.text);
+		printf("  Model number:           %s\n", batt_text);
 
-	rv = ec_command(EC_LPC_COMMAND_BATTERY_TYPE,
-			NULL, 0, &batt_text, sizeof(batt_text));
+	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_TYPE, batt_text);
 	if (rv)
-		return rv;
-	printf("  Chemistry:              %s\n", batt_text.text);
+		printf("  Chemistry   :           %s\n", batt_text);
 
-	rv = ec_command(EC_LPC_COMMAND_BATTERY_SERIAL_NUMBER,
-			NULL, 0, &batt_text, sizeof(batt_text));
+	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_SERIAL, batt_text);
 	if (rv)
-		return rv;
-	printf("  Serial number:          %s\n", batt_text.text);
+		printf("  Serial number:          %s\n", batt_text);
 
-	rv = ec_command(EC_LPC_COMMAND_BATTERY_INFO,
-			NULL, 0, &batt_info, sizeof(batt_info));
-	if (rv)
-		return rv;
 	printf("  Design capacity:        %u mAh\n",
-			batt_info.design_capacity);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP));
 	printf("  Last full charge:       %u mAh\n",
-			batt_info.last_full_charge_capacity);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_LFCC));
 	printf("  Design output voltage   %u mV\n",
-			batt_info.design_output_voltage);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DVLT));
 	printf("  Design capacity warning %u mAh\n",
-			batt_info.design_capacity_warning);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP) *
+	       BATTERY_LEVEL_WARNING / 100);
 	printf("  Design capacity low     %u mAh\n",
-			batt_info.design_capacity_low);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP) *
+	       BATTERY_LEVEL_LOW / 100);
 	printf("  Cycle count             %u\n",
-			batt_info.cycle_count);
+	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_CCNT));
 	return 0;
 }
 

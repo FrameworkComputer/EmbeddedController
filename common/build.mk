@@ -16,8 +16,7 @@ common-$(CONFIG_LPC)+=port80.o host_event_commands.o
 common-$(CONFIG_POWER_LED)+=power_led.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm_commands.o
-common-$(CONFIG_SMART_BATTERY)+=smart_battery.o charge_state.o \
-                                battery_commands.o
+common-$(CONFIG_SMART_BATTERY)+=smart_battery.o charge_state.o
 common-$(CONFIG_TASK_GAIAPOWER)+=gaia_power.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
