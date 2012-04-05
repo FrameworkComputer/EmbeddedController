@@ -75,6 +75,36 @@ void lpc_manual_irq(int irq_num) {
 }
 
 
+/* Generate SMI pulse to the host chipset via GPIO.
+ *
+ * If the x86 is in S0, SMI# is sampled at 33MHz, so minimum
+ * pulse length is 60ns.  If the x86 is in S3, SMI# is sampled
+ * at 32.768KHz, so we need pulse length >61us.  Both are short
+ * enough and events are infrequent, so just delay for 65us.
+ */
+static void lpc_generate_smi(void)
+{
+	gpio_set_level(GPIO_PCH_SMIn, 0);
+	udelay(65);
+	gpio_set_level(GPIO_PCH_SMIn, 1);
+
+	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
+		uart_printf("[%T smi 0x%08x]\n",
+			    host_events & event_mask[LPC_HOST_EVENT_SMI]);
+}
+
+
+/* Generate SCI pulse to the host chipset via LPC0SCI */
+static void lpc_generate_sci(void)
+{
+	LM4_LPC_LPCCTL |= LM4_LPC_SCI_START;
+
+	if (host_events & event_mask[LPC_HOST_EVENT_SCI])
+		uart_printf("[%T sci 0x%08x]\n",
+			    host_events & event_mask[LPC_HOST_EVENT_SCI]);
+}
+
+
 int lpc_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
@@ -154,7 +184,7 @@ int lpc_init(void)
 	LM4_LPC_LPCIM |= (1 << 31);
 
 	/* Enable LPC channels */
-	LM4_LPC_LPCCTL =
+	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
 		(1 << LPC_CH_KERNEL) |
 		(1 << LPC_CH_PORT80) |
 		(1 << LPC_CH_CMD_DATA) |
@@ -199,6 +229,11 @@ void lpc_send_host_response(int slot, int result)
 	task_disable_irq(LM4_IRQ_LPC);
 	LM4_LPC_ST(ch) &= ~(1 << 12);
 	task_enable_irq(LM4_IRQ_LPC);
+
+	/* ACPI 5.0-12.6.1: Generate SCI for Output Buffer Full
+	 * condition on the kernel channel. */
+	if (ch == LPC_CH_KERNEL)
+		lpc_generate_sci();
 }
 
 
@@ -235,31 +270,41 @@ void lpc_comx_put_char(int c)
 }
 
 
-/* Update the host event status.  Sends a pulse on EC_SMIn if either SMI or SCI
- * masked event status becomes non-zero. */
+/* Update the host event status.
+ * Sends a pulse if masked event status becomes non-zero:
+ *  SMI pulse via EC_SMIn GPIO
+ *  SCI pulse via LPC0SCI
+ */
 static void update_host_event_status(void) {
 	uint32_t *mapped_raw_events =
 		(uint32_t*)(lpc_get_memmap_range() + EC_LPC_MEMMAP_HOST_EVENTS);
 
-	int need_pulse = 0;
+	int need_sci = 0;
+	int need_smi = 0;
 
 	/* Disable LPC interrupt while updating status register */
 	task_disable_irq(LM4_IRQ_LPC);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
-		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 10)))
-			need_pulse = 1;
+		/* Only generate SMI for first event */
+		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 10)) ||
+		    !(LM4_LPC_ST(LPC_CH_KERNEL) & (1 << 10)))
+			need_smi = 1;
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 10);
+		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 10);
 	} else {
 		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 10);
+		LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 10);
 	}
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
-		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 9)))
-			need_pulse = 1;
+		/* Generate SCI for every event */
+		need_sci = 1;
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 9);
+		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 9);
 	} else {
 		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 9);
+		LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 9);
 	}
 
 	/* Copy host events to mapped memory */
@@ -274,16 +319,12 @@ static void update_host_event_status(void) {
 		gpio_set_level(GPIO_PCH_WAKEn, 1);
 
 	/* Send pulse on SMI signal if needed */
-	if (need_pulse) {
-		gpio_set_level(GPIO_PCH_SMIn, 0);
-		/* If the x86 is in S0, SMI# is sampled at 33MHz, so minimum
-		 * pulse length is 60ns.  If the x86 is in S3, SMI# is sampled
-		 * at 32.768KHz, so we need pulse length >61us.  Both are short
-		 * enough fast and events are infrequent, so just delay for
-		 * 65us. */
-		udelay(65);
-		gpio_set_level(GPIO_PCH_SMIn, 1);
-	}
+	if (need_smi)
+		lpc_generate_smi();
+
+	/* ACPI 5.0-12.6.1: Generate SCI for SCI_EVT=1. */
+	if (need_sci)
+		lpc_generate_sci();
 }
 
 
@@ -343,6 +384,10 @@ static void lpc_interrupt(void)
 		/* Read the command byte and pass to the host command handler.
 		 * This clears the FRMH bit in the status byte. */
 		host_command_received(0, LPC_POOL_KERNEL[0]);
+
+		/* ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty
+		 * condition on the kernel channel. */
+		lpc_generate_sci();
 	}
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
 		/* Set the busy bit */

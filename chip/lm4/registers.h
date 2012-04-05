@@ -64,6 +64,11 @@ static inline int lm4_adc_addr(int ss, int offset)
 #define LM4_ADC_SSEMUX(ss)     LM4ADCREG(ss, 0x018)
 
 #define LM4_LPC_LPCCTL         LM4REG(0x40080000)
+#define LM4_LPC_SCI_START      (1 << 9)  /* Start a pulse on LPC0SCI signal */
+#define LM4_LPC_SCI_CLK_1      (0 << 10) /* SCI asserted for 1 clock period */
+#define LM4_LPC_SCI_CLK_2      (1 << 10) /* SCI asserted for 2 clock periods */
+#define LM4_LPC_SCI_CLK_4      (2 << 10) /* SCI asserted for 4 clock periods */
+#define LM4_LPC_SCI_CLK_8      (3 << 10) /* SCI asserted for 8 clock periods */
 #define LM4_LPC_LPCSTS         LM4REG(0x40080004)
 #define LM4_LPC_LPCIRQCTL      LM4REG(0x40080008)
 #define LM4_LPC_LPCIRQST       LM4REG(0x4008000c)
