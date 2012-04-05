@@ -8,6 +8,7 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "timer.h"
 #include "uart.h"
@@ -61,7 +62,7 @@ static const struct {
 
 /* We don't actually shut down the driver chips, because the reset pullup
  * uses more power than leaving them enabled but inactive. */
-void lightbar_off(void)
+static void lightbar_off(void)
 {
 	gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
 	i2c_write8(I2C_PORT_LIGHTBAR, DRIVER_FUN, 0x01, 0x00);
@@ -69,7 +70,7 @@ void lightbar_off(void)
 }
 
 /* Initialize & activate driver chips, but no LEDs on yet. */
-void lightbar_on(void)
+static void lightbar_on(void)
 {
 	int i;
 	gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
@@ -83,7 +84,7 @@ void lightbar_on(void)
 
 /* Set the color for an LED (0-3). RGB values should be in 0-255. They'll be
  * scaled so that maxium brightness is at 255. */
-void lightbar_setcolor(int led, int red, int green, int blue)
+static void lightbar_setcolor(int led, int red, int green, int blue)
 {
 	int driver, bank;
 	driver = DRIVER_SMART + (led/2) * 2;
@@ -93,8 +94,72 @@ void lightbar_setcolor(int led, int red, int green, int blue)
 	i2c_write8(I2C_PORT_LIGHTBAR, driver, bank+2, SCALE(green, MAX_GREEN));
 }
 
+static const struct {
+	uint8_t r, g, b;
+} testy[] = {
+	{0xff, 0x00, 0x00},
+	{0x00, 0xff, 0x00},
+	{0x00, 0x00, 0xff},
+	{0xff, 0xff, 0x00},
+	{0x00, 0xff, 0xff},
+	{0xff, 0x00, 0xff},
+	{0xff, 0xff, 0xff},
+};
+
+static void lightbar_test(void)
+{
+	int i, j, k, r, g, b;
+	int kmax = 254;
+	int kstep = 4;
+	lightbar_on();
+	for (i = 0; i < ARRAY_SIZE(testy); i++) {
+		for (k = 0; k <= kmax; k += kstep) {
+			for (j = 0; j < 4; j++) {
+				r = testy[i].r ? k : 0;
+				g = testy[i].g ? k : 0;
+				b = testy[i].b ? k : 0;
+				lightbar_setcolor(j, r, g, b);
+			}
+		}
+		for (k = kmax; k >= 0; k -= kstep) {
+			for (j = 0; j < 4; j++) {
+				r = testy[i].r ? k : 0;
+				g = testy[i].g ? k : 0;
+				b = testy[i].b ? k : 0;
+				lightbar_setcolor(j, r, g, b);
+			}
+		}
+	}
+	lightbar_on();
+}
+
+
+
 /* FIXME: Do I want some auto-cycling functions? Pulsing, etc.? Investigate to
  * see what's possible and looks nice. */
+
+/****************************************************************************/
+/* host commands */
+
+static enum lpc_status lpc_cmd_reset(uint8_t *data)
+{
+	uart_printf("%s()\n", __func__);
+	lightbar_off();
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_LIGHTBAR_RESET, lpc_cmd_reset);
+
+static enum lpc_status lpc_cmd_test(uint8_t *data)
+{
+	struct lpc_params_lightbar_test *p =
+		(struct lpc_params_lightbar_test *)data;
+
+	uart_printf("%s(0x%02x)\n", __func__, p->tbd);
+	lightbar_test();
+	return EC_LPC_RESULT_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_LPC_COMMAND_LIGHTBAR_TEST, lpc_cmd_test);
+
 
 /****************************************************************************/
 /* Console commands */
@@ -136,19 +201,6 @@ static int set(int driver, char *regstr, char *valstr)
 	return EC_SUCCESS;
 }
 
-static const struct {
-	uint8_t r, g, b;
-} testy[] = {
-	{0xff, 0x00, 0x00},
-	{0x00, 0xff, 0x00},
-	{0x00, 0x00, 0xff},
-	{0xff, 0xff, 0x00},
-	{0x00, 0xff, 0xff},
-	{0xff, 0x00, 0xff},
-	{0xff, 0xff, 0xff},
-};
-
-
 static int command_lightbar(int argc, char **argv)
 {
 	int led, red, green, blue;
@@ -185,33 +237,7 @@ static int command_lightbar(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "test")) {
-		int i, j, k, r, g, b;
-		int kmax = 254;
-		if (3 == argc)
-			kmax = strtoi(argv[2], &e, 16);
-		kmax &= 0xfe;
-		lightbar_on();
-		for (i = 0; i < ARRAY_SIZE(testy); i++) {
-			for (k = 0; k <= kmax; k += 2) {
-				for (j = 0; j < 4; j++) {
-					r = testy[i].r ? k : 0;
-					g = testy[i].g ? k : 0;
-					b = testy[i].b ? k : 0;
-					lightbar_setcolor(j, r, g, b);
-				}
-				usleep(1000);
-			}
-			for (k = kmax; k; k -= 2) {
-				for (j = 0; j < 4; j++) {
-					r = testy[i].r ? k : 0;
-					g = testy[i].g ? k : 0;
-					b = testy[i].b ? k : 0;
-					lightbar_setcolor(j, r, g, b);
-				}
-				usleep(1000);
-			}
-		}
-		lightbar_on();
+		lightbar_test();
 		return EC_SUCCESS;
 	}
 
