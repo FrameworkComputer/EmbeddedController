@@ -14,6 +14,10 @@
 #define THERMAL_CONFIG_NO_FLAG 0x0
 #define THERMAL_CONFIG_WARNING_ON_FAIL 0x1
 
+/* Number of steps for fan speed control. Speed of each step defined
+ * in thermal.c */
+#define THERMAL_FAN_STEPS 5
+
 /* Set a threshold temperature to this value to disable the threshold limit. */
 #define THERMAL_THRESHOLD_DISABLE 0
 
@@ -24,12 +28,8 @@
 #define THERMAL_THRESHOLD_DISABLE_ALL 0
 
 enum thermal_threshold {
-	/* Low fan speed */
-	THRESHOLD_FAN_LO = 0,
-	/* High fan speed */
-	THRESHOLD_FAN_HI,
 	/* Issue overheating warning */
-	THRESHOLD_WARNING,
+	THRESHOLD_WARNING = 0,
 	/* Shut down CPU */
 	THRESHOLD_CPU_DOWN,
 	/* Shut down everything we can */
@@ -43,7 +43,7 @@ struct thermal_config_t {
 	/* Configuration flags. */
 	int8_t config_flags;
 	/* Threshold temperatures. */
-	int16_t thresholds[THRESHOLD_COUNT];
+	int16_t thresholds[THRESHOLD_COUNT + THERMAL_FAN_STEPS];
 };
 
 /* Set the threshold temperature value. Return -1 on error. */
