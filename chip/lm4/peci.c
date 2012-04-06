@@ -6,6 +6,7 @@
 /* PECI interface for Chrome EC */
 
 #include "board.h"
+#include "clock.h"
 #include "console.h"
 #include "gpio.h"
 #include "peci.h"
@@ -51,6 +52,7 @@ int peci_get_cpu_temp(void)
 	return v >> 6;
 }
 
+
 int peci_temp_sensor_poll(void)
 {
 	last_temp_val = peci_get_cpu_temp();
@@ -61,9 +63,31 @@ int peci_temp_sensor_poll(void)
 		return EC_ERROR_UNKNOWN;
 }
 
+
 int peci_temp_sensor_get_val(int idx)
 {
 	return last_temp_val;
+}
+
+
+void peci_clock_changed(int freq)
+{
+	int baud;
+
+	/* Disable polling while reconfiguring */
+	LM4_PECI_CTL = 0;
+
+	/* Calculate baud setting from desired rate, compensating for internal
+	 * and external delays. */
+	baud = freq / (4 * PECI_BAUD_RATE) - 2;
+	baud -= (freq / 1000000) * (PECI_TD_FET_NS + PECI_TD_INT_NS) / 1000;
+
+	/* Set baud rate and polling rate */
+	LM4_PECI_DIV = (baud << 16) |
+		(PECI_POLL_INTERVAL_MS * (freq / 1000 / 4096));
+
+	/* Set up temperature monitoring to report in degrees K */
+	LM4_PECI_CTL = ((PECI_TJMAX + 273) << 22) | 0x2001;
 }
 
 /*****************************************************************************/
@@ -88,7 +112,6 @@ DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp);
 int peci_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
-	int baud;
 
 	/* Enable the PECI module and delay a few clocks */
 	LM4_SYSTEM_RCGCPECI = 1;
@@ -97,21 +120,8 @@ int peci_init(void)
 	/* Configure GPIOs */
 	configure_gpios();
 
-	/* Disable polling while reconfiguring */
-	LM4_PECI_CTL = 0;
-
-	/* Calculate baud setting from desired rate, compensating for internal
-	 * and external delays. */
-	baud = CPU_CLOCK / (4 * PECI_BAUD_RATE) - 2;
-	baud -= (CPU_CLOCK / 1000000) * (PECI_TD_FET_NS + PECI_TD_INT_NS)
-		/ 1000;
-
-	/* Set baud rate and polling rate */
-	LM4_PECI_DIV = (baud << 16) |
-		(PECI_POLL_INTERVAL_MS * (CPU_CLOCK / 1000 / 4096));
-
-	/* Set up temperature monitoring to report in degrees K */
-	LM4_PECI_CTL = ((PECI_TJMAX + 273) << 22) | 0x2001;
+	/* Set initial clock frequency */
+	peci_clock_changed(clock_get_freq());
 
 	return EC_SUCCESS;
 }

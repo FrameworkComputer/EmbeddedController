@@ -15,6 +15,9 @@ struct temp_sensor_t;
 /* Initializes the module. */
 int peci_init(void);
 
+/* Notifies the module the system clock frequency has changed to <freq>. */
+void peci_clock_changed(int freq);
+
 /* Returns the current CPU temperature in degrees K, or -1 if error.
  *
  * Note that the PECI interface is currently a little flaky; if you get an

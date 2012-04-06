@@ -1,13 +1,12 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Watchdog driver */
 
-#include <stdint.h>
-
 #include "board.h"
+#include "clock.h"
 #include "common.h"
 #include "config.h"
 #include "registers.h"
@@ -25,8 +24,9 @@
 /* magic value to unlock the watchdog registers */
 #define LM4_WATCHDOG_MAGIC_WORD  0x1ACCE551
 
-/* watchdog counter initial value */
-static uint32_t watchdog_period;
+#define WATCHDOG_PERIOD_MS 1100  /* Watchdog period in ms */
+
+static uint32_t watchdog_period;     /* Watchdog counter initial value */
 
 /* console debug command prototypes */
 int command_task_info(int argc, char **argv);
@@ -110,7 +110,15 @@ void watchdog_reload(void)
 	LM4_WATCHDOG_LOCK(0) = 0xdeaddead;
 }
 
-int watchdog_init(int period_ms)
+
+void watchdog_clock_changed(int freq)
+{
+	/* Set the timeout period */
+	watchdog_period = WATCHDOG_PERIOD_MS * (freq / 1000);
+}
+
+
+int watchdog_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -122,8 +130,8 @@ int watchdog_init(int period_ms)
 	/* Unlock watchdog registers */
 	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
 
-	/* Set the time-out period */
-	watchdog_period = period_ms * (CPU_CLOCK / 1000);
+	/* Set initial timeout period */
+	watchdog_clock_changed(clock_get_freq());
 	LM4_WATCHDOG_LOAD(0) = watchdog_period;
 
 	/* de-activate the watchdog when the JTAG stops the CPU */

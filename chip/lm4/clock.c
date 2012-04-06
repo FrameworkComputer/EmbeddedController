@@ -5,41 +5,74 @@
 
 /* Clocks and power management settings */
 
-#include <stdint.h>
-
 #include "board.h"
 #include "clock.h"
 #include "config.h"
 #include "console.h"
 #include "gpio.h"
+#include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
-#include "registers.h"
 #include "util.h"
 
-/**
- * Idle task
- * executed when no task are ready to be scheduled
- */
-void __idle(void)
+#define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
+
+/* Disable the PLL; run off internal oscillator. */
+static void clock_disable_pll(void)
 {
-	while (1) {
-		/* wait for the irq event */
-		asm("wfi");
-		/* TODO more power management here */
-	}
+	/* Switch to 16MHz internal oscillator and power down the PLL */
+	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(0) |
+		LM4_SYSTEM_RCC_BYPASS |
+		LM4_SYSTEM_RCC_PWRDN |
+		LM4_SYSTEM_RCC_OSCSRC(1) |
+		LM4_SYSTEM_RCC_MOSCDIS;
+	LM4_SYSTEM_RCC2 &= ~LM4_SYSTEM_RCC2_USERCC2;
 }
 
-/* simple busy waiting before clocks are initialized */
-static void wait_cycles(uint32_t cycles)
+
+/* Enable the PLL to run at full clock speed */
+static void clock_enable_pll(void)
+{
+	/* Disable the PLL so we can reconfigure it */
+	clock_disable_pll();
+
+	/* Enable the PLL (PWRDN is no longer set) and set divider.  PLL is
+	 * still bypassed, since it hasn't locked yet. */
+	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(2) |
+		LM4_SYSTEM_RCC_USESYSDIV |
+		LM4_SYSTEM_RCC_BYPASS |
+		LM4_SYSTEM_RCC_OSCSRC(1) |
+		LM4_SYSTEM_RCC_MOSCDIS;
+
+	/* Wait for the PLL to lock */
+	clock_wait_cycles(1024);
+	while (!(LM4_SYSTEM_PLLSTAT & 1))
+		;
+
+	/* Remove bypass on PLL */
+	LM4_SYSTEM_RCC &= ~LM4_SYSTEM_RCC_BYPASS;
+}
+
+
+void clock_wait_cycles(uint32_t cycles)
 {
 	asm("1: subs %0, #1\n"
 	    "   bne 1b\n" :: "r"(cycles));
 }
 
-/**
- * Function to measure baseline for power consumption.
+
+int clock_get_freq(void)
+{
+	return (LM4_SYSTEM_PLLSTAT & 1) ? PLL_CLOCK : INTERNAL_CLOCK;
+}
+
+
+/*****************************************************************************/
+/* Console commands */
+
+/* Function to measure baseline for power consumption.
  *
  * Levels :
  *   0 : CPU running in tight loop
@@ -47,8 +80,7 @@ static void wait_cycles(uint32_t cycles)
  *   2 : CPU in sleep mode
  *   3 : CPU in sleep mode and peripherals gated
  *   4 : CPU in deep sleep mode
- *   5 : CPU in deep sleep mode and peripherals gated
- */
+ *   5 : CPU in deep sleep mode and peripherals gated */
 static int command_sleep(int argc, char **argv)
 {
 	int level = 0;
@@ -146,53 +178,71 @@ static int command_sleep(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 
 
-static void clock_init_pll(uint32_t value)
+/* TODO: temporary holding place for notifying modules of clock change.  Should
+ * be moved to main.c after we finish measuring the power savings, so the clock
+ * frequency is automatically dropped after verified boot. */
+#include "i2c.h"
+#include "hwtimer.h"
+#include "peci.h"
+#include "watchdog.h"
+
+static int command_disable_pll(int argc, char **argv)
 {
-	/**
-	 * at startup, OSCSRC is PIOSC (precision internal oscillator)
-	 * PLL and PLL2 are in power-down
-	 */
+	int freq;
 
-	/* PLL already setup */
-	if (LM4_SYSTEM_PLLSTAT & 1)
-		return;
+	clock_disable_pll();
 
-	/* Put a bypass on the system clock PLLs, no divider */
-	LM4_SYSTEM_RCC = (LM4_SYSTEM_RCC | 0x800) & ~0x400000;
-	LM4_SYSTEM_RCC2 = (LM4_SYSTEM_RCC2 | 0x800) & ~0x80000000;
+	/* Notify modules of frequency change */
+	freq = clock_get_freq();
+	hwtimer_clock_changed(freq);
+#ifdef CONFIG_TASK_WATCHDOG
+	watchdog_clock_changed(freq);
+#endif
+#ifdef CONFIG_I2C
+	i2c_clock_changed(freq);
+#endif
+#ifdef CONFIG_PECI
+	peci_clock_changed(freq);
+#endif
 
-	/* Enable main and precision internal oscillators */
-	LM4_SYSTEM_RCC &= ~0x3;
-
-	/* Perform an auto calibration of the internal oscillator, using the
-	 * 32.768KHz hibernate clock. */
-	/* TODO: (crosbug.com/p/7693) This is only needed on early chips which
-	 * aren't factory trimmed. */
-	LM4_SYSTEM_PIOSCCAL = 0x80000000;
-	LM4_SYSTEM_PIOSCCAL = 0x80000200;
-
-	/* wait 1 million CPU cycles */
-	wait_cycles(512 * 1024);
-
-	/* clear PLL lock flag (aka PLLLMIS) */
-	LM4_SYSTEM_MISC = 0x40;
-	/* clear powerdown / set XTAL frequency, divider, and source */
-	LM4_SYSTEM_RCC = (LM4_SYSTEM_RCC & ~0x07c027f0) | (value & 0x07c007f0);
-	/* wait 32 CPU cycles */
-	wait_cycles(16);
-	/* wait for PLL to lock */
-	while (!(LM4_SYSTEM_RIS & 0x40));
-
-	/* Remove bypass on PLL */
-	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC & ~0x800;
+	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(nopll, command_disable_pll);
+
+/*****************************************************************************/
+/* Initialization */
 
 int clock_init(void)
 {
-	/* CPU clock = PLL/3 = 66.667MHz; System clock = PLL */
-	BUILD_ASSERT(CPU_CLOCK == 66666667);
-	/* Osc source = internal 16MHz oscillator */
-	clock_init_pll(0x01400550);
+
+#ifndef BOARD_bds
+	/* Only BDS has an external crystal; other boards don't have one, and
+	 * can disable main oscillator control to reduce power consumption. */
+	LM4_SYSTEM_MOSCCTL = 0x04;
+#endif
+
+	/* Perform an auto calibration of the internal oscillator using the
+	 * 32.768KHz hibernate clock, unless we've already done so. */
+	/* TODO: (crosbug.com/p/7693) This is only needed on early chips which
+	 * aren't factory trimmed. */
+	if ((LM4_SYSTEM_PIOSCSTAT & 0x300) != 0x100) {
+		/* Start calibration */
+		LM4_SYSTEM_PIOSCCAL = 0x80000000;
+		LM4_SYSTEM_PIOSCCAL = 0x80000200;
+		/* Wait for result */
+		clock_wait_cycles(16);
+		while (!(LM4_SYSTEM_PIOSCSTAT & 0x300))
+			;
+	}
+
+	/* TODO: UART seems to glitch unless we wait 500k cycles before
+	 * enabling the PLL, but only if this is a cold boot.  Why?  UART
+	 * doesn't even use the PLL'd system clock.  I've heard rumors the
+	 * Stellaris ROM library does this too, but why? */
+	if (!system_jumped_to_this_image())
+		clock_wait_cycles(500000);
+
+	clock_enable_pll();
 
 	return EC_SUCCESS;
 }

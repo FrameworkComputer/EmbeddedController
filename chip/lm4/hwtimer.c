@@ -5,17 +5,13 @@
 
 /* Hardware timers driver */
 
-#include <stdint.h>
-
 #include "board.h"
+#include "clock.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "task.h"
 
 #define US_PER_SECOND 1000000
-
-/* Divider to get microsecond for the clock */
-#define CLOCKSOURCE_DIVIDER (CPU_CLOCK/US_PER_SECOND)
 
 void __hw_clock_event_set(uint32_t deadline)
 {
@@ -57,6 +53,14 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(LM4_IRQ_TIMERW0A, __hw_clock_source_irq, 1);
 
 
+void hwtimer_clock_changed(int freq)
+{
+	/* Set the prescaler to increment every microsecond.  This takes
+	 * effect immediately, because the TAILD bit in TAMR is clear. */
+	LM4_TIMER_TAPR(6) = freq / US_PER_SECOND;
+}
+
+
 int __hw_clock_source_init(void)
 {
 	volatile uint32_t scratch __attribute__((unused));
@@ -75,8 +79,10 @@ int __hw_clock_source_init(void)
 	LM4_TIMER_IMR(6) = 0x1;
 	/* 32-bit timer mode */
 	LM4_TIMER_CFG(6) = 4;
-	/* set the prescaler to increment every microsecond */
-	LM4_TIMER_TAPR(6) = CLOCKSOURCE_DIVIDER;
+
+	/* Set initial clock frequency */
+	hwtimer_clock_changed(clock_get_freq());
+
 	/* Periodic mode, counting down */
 	LM4_TIMER_TAMR(6) = 0x22;
 	/* use the full 32-bits of the timer */

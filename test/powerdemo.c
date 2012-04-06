@@ -6,16 +6,14 @@
 /* Power state machine demo module for Chrome EC */
 
 #include "board.h"
+#include "clock.h"
 #include "powerdemo.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "registers.h"
 
-
 #define US_PER_SECOND 1000000
-/* Divider to get microsecond for the clock */
-#define CLOCKSOURCE_DIVIDER (CPU_CLOCK/US_PER_SECOND)
 
 static volatile enum {
 	POWER_STATE_IDLE = 0,    /* Idle */
@@ -77,7 +75,7 @@ int power_demo_init(void)
 	/* 32-bit timer mode */
 	LM4_TIMER_CFG(7) = 4;
 	/* Set the prescaler to increment every microsecond */
-	LM4_TIMER_TAPR(7) = CLOCKSOURCE_DIVIDER;
+	LM4_TIMER_TAPR(7) = clock_get_freq() / US_PER_SECOND;
 	/* One-shot, counting down */
 	LM4_TIMER_TAMR(7) = 0x01;
 	/* Set overflow interrupt */
