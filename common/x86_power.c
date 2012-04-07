@@ -10,6 +10,7 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
+#include "lightbar.h"
 #include "lpc.h"
 #include "pwm.h"
 #include "system.h"
@@ -379,9 +380,13 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_PCH_PWROK, 1);
 
 			state = X86_S0;
+
+			lightbar_sequence(LIGHTBAR_S3S0);
 			break;
 
 		case X86_S0S3:
+			lightbar_sequence(LIGHTBAR_S0S3);
+
 			/* Clear PCH_PWROK */
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 
