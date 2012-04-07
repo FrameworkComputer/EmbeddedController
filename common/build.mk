@@ -5,7 +5,7 @@
 # Common files build
 #
 
-common-y=main.o util.o console.o vboot.o uart_buffering.o
+common-y=main.o message.o util.o console.o vboot.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system_common.o
 common-y+=gpio_commands.o version.o
 common-$(CONFIG_BATTERY_ATL706486)+=battery_atl706486.o
