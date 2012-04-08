@@ -27,6 +27,7 @@
 #include "power_button.h"
 #include "powerdemo.h"
 #include "pwm.h"
+#include "spi.h"
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -117,6 +118,9 @@ int main(void)
 	port_80_init();
 	lpc_init();
 	uart_comx_enable();
+#endif
+#ifdef CONFIG_SPI
+	spi_init();
 #endif
 #ifdef CONFIG_PWM
 	pwm_init();
