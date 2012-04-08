@@ -251,6 +251,34 @@
 #define STM32L_RTC_TAFCR             REG32(STM32L_RTC_BASE + 0x40)
 #define STM32L_RTC_BACKUP(n)         REG32(STM32L_RTC_BASE + 0x50 + 4 * (n))
 
+/* --- SPI --- */
+#define STM32L_SPI1_BASE             0x40013000
+#define STM32L_SPI2_BASE             0x40003800
+
+#define STM32L_SPI1_PORT             0
+#define STM32L_SPI2_PORT             1
+
+/*
+ * TODO(vpalatin):
+ * For whatever reason, our toolchain is substandard and generate a
+ * function every time you are using this inline function.
+ *
+ * That's why I have not used inline stuff in the registers definition.
+ */
+#define stm32l_spi_addr(port, offset) \
+	((port == 0) ? \
+		(STM32L_SPI1_BASE + offset) : \
+		(STM32L_SPI2_BASE + offset))
+
+#define STM32L_SPI_REG16(p, l)       REG16(stm32l_spi_addr((p), l))
+#define STM32L_SPI_CR1(p)            STM32L_SPI_REG16((p), 0x00)
+#define STM32L_SPI_CR2(p)            STM32L_SPI_REG16((p), 0x04)
+#define STM32L_SPI_SR(p)             STM32L_SPI_REG16((p), 0x08)
+#define STM32L_SPI_DR(p)             STM32L_SPI_REG16((p), 0x0c)
+#define STM32L_SPI_CRCPR(p)          STM32L_SPI_REG16((p), 0x10)
+#define STM32L_SPI_RXCRCR(p)         STM32L_SPI_REG16((p), 0x14)
+#define STM32L_SPI_TXCRCR(p)         STM32L_SPI_REG16((p), 0x18)
+
 /* --- Debug --- */
 
 #define STM32L_DBGMCU_BASE           0xE0042000
@@ -283,8 +311,6 @@
 #define STM32L_ADC_BASE              0x40012700
 #define STM32L_COMP_BASE             0x40007C00
 #define STM32L_DAC_BASE              0x40007400
-#define STM32L_SPI1_BASE             0x40013000
-#define STM32L_SPI2_BASE             0x40003800
 #define STM32L_CRC_BASE              0x40023000
 #define STM32L_LCD_BASE              0x40002400
 #define STM32L_DMA1_BASE             0x40026000
