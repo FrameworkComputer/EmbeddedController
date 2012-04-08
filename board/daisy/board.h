@@ -14,6 +14,8 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
+#define CONFIG_SPI
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* GPIO signal list */
@@ -34,6 +36,7 @@ enum gpio_signal {
 	KB_COL06,
 	KB_COL07,
 	/* Other inputs */
+	GPIO_SPI1_NSS,
 	/* Outputs */
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
 	GPIO_EN_PP5000,        /* 5.0v rail enable */

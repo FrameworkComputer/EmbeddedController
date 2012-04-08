@@ -9,6 +9,7 @@
 #include "dma.h"
 #include "gpio.h"
 #include "registers.h"
+#include "spi.h"
 #include "util.h"
 
 /*
@@ -45,6 +46,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_COL06",    GPIO_C, (1<<15), GPIO_INT_BOTH, matrix_interrupt},
 	{"KB_COL07",    GPIO_D, (1<<2),  GPIO_INT_BOTH, matrix_interrupt},
 	/* Other inputs */
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_INT_RISING, NULL},
+
 	/* Outputs */
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<3),  GPIO_OUT_LOW, NULL},
@@ -57,6 +60,9 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 void configure_board(void)
 {
+	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
+	STM32L_RCC_APB2ENR |= 1 << 0;
+
 	dma_init();
 
 	/* Enable all GPIOs clocks
@@ -64,8 +70,35 @@ void configure_board(void)
 	 */
 	STM32L_RCC_AHBENR |= 0x3f;
 
+	/* Enable SPI */
+	STM32L_RCC_APB2ENR |= (1<<12);
+	/*| (1 << 0);  - removed since this breaks USB download? */
+
+	/* SPI1 on pins PA4-7 (push-pull, no pullup/down, 10MHz) */
+	STM32L_GPIO_PUPDR_OFF(GPIO_A) &= ~((2 << (7 * 2)) |
+					(2 << (6 * 2)) |
+					(2 << (5 * 2)) |
+					(2 << (4 * 2)));
+	STM32L_GPIO_OTYPER_OFF(GPIO_A) &= ~((1 << 7) |
+					(1 << 6) |
+					(1 << 5) |
+					(1 << 4));
+	gpio_set_alternate_function(GPIO_A, (1<<7) |
+					(1<<6) |
+					(1<<5) |
+					(1<<4), GPIO_ALT_SPI);
+	STM32L_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
+
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
-        gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
+	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
+
+	/* EC_INT is output, open-drain */
+	STM32L_GPIO_OTYPER_OFF(GPIO_B) |= (1<<9);
+	STM32L_GPIO_PUPDR_OFF(GPIO_B) &= ~(0x3 << (2*9));
+	STM32L_GPIO_MODER_OFF(GPIO_B) &= ~(0x3 << (2*9));
+	STM32L_GPIO_MODER_OFF(GPIO_B) |= 0x1 << (2*9);
+	/* put GPIO in Hi-Z state */
+	gpio_set_level(GPIO_EC_INT, 1);
 }
 
 void board_keyboard_scan_ready(void)
