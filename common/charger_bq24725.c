@@ -137,6 +137,16 @@ int charger_get_current(int *current)
 
 int charger_set_current(int current)
 {
+	const struct charger_info *info = charger_get_info();
+
+	/* Clip the charge current to the range the charger can supply.  This
+	 * is a temporary workaround for the battery requesting a very small
+	 * current for trickle-charging.  See crosbug.com/p/8662. */
+	if (current > 0 && current < info->current_min)
+		current = info->current_min;
+	if (current > info->current_max)
+		current = info->current_max;
+
 	return sbc_write(SB_CHARGING_CURRENT, CURRENT_TO_REG(current, R_SNS));
 }
 
