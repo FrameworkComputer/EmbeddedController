@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_LPC_COMMANDS_H
 #define __CROS_EC_LPC_COMMANDS_H
 
-#include <stdint.h>
-
-
 /* During the development stage, the LPC bus has high error bit rate.
  * Using checksum can detect the error and trigger re-transmit.
  * FIXME: remove this after mass production.
@@ -37,8 +34,8 @@
 #define EC_LPC_CMDR_SMI		(1 << 6)
 
 #define EC_LPC_ADDR_MEMMAP       0x900
-#define EC_LPC_MEMMAP_SIZE         256
-#define EC_LPC_MEMMAP_TEXT_MAX     8  /* Size of a string in the memory map */
+#define EC_LPC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
+#define EC_LPC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
 #define EC_LPC_MEMMAP_TEMP_SENSOR 0x00
@@ -79,6 +76,15 @@
  * 200K to 454K = -73C to 181C.
  */
 #define EC_LPC_TEMP_SENSOR_OFFSET 200
+
+/*
+ * This header file is used in coreboot both in C and ACPI code.
+ * The ACPI code is pre-processed to handle constants but the ASL
+ * compiler is unable to handle actual C code so keep it separate.
+ */
+#ifndef __ACPI__
+
+#include <stdint.h>
 
 /* LPC command status byte masks */
 /* EC has written a byte in the data register and host hasn't read it yet */
@@ -466,5 +472,7 @@ struct lpc_response_host_event_mask {
 struct lpc_params_reboot_ec {
 	uint8_t target;  /* enum lpc_current_image */
 } __attribute__ ((packed));
+
+#endif  /* !__ACPI__ */
 
 #endif  /* __CROS_EC_LPC_COMMANDS_H */
