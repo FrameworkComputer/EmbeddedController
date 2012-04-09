@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,7 @@
 /* I2C port module for Chrome EC */
 
 #include "board.h"
+#include "clock.h"
 #include "console.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -57,6 +58,7 @@ static int wait_idle(int port)
 
 	return EC_SUCCESS;
 }
+
 
 /* Transmit one block of raw data, then receive one block of raw data.
  * <start> flag indicates this smbus session start from idle state.
@@ -142,7 +144,6 @@ static int i2c_transmit_receive(int port, int slave_addr,
 }
 
 
-
 int i2c_read16(int port, int slave_addr, int offset, int *data)
 {
 	int rv;
@@ -192,6 +193,7 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 	return rv;
 }
 
+
 int i2c_read8(int port, int slave_addr, int offset, int* data)
 {
 	int rv;
@@ -210,6 +212,7 @@ int i2c_read8(int port, int slave_addr, int offset, int* data)
 	return rv;
 }
 
+
 int i2c_write8(int port, int slave_addr, int offset, int data)
 {
 	int rv;
@@ -226,9 +229,7 @@ int i2c_write8(int port, int slave_addr, int offset, int data)
 	return rv;
 }
 
-/* Read ascii string using smbus read block protocol.
- * The return data <data> will be null terminated.
- */
+
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	int len)
 {
@@ -258,6 +259,18 @@ exit:
 	return rv;
 }
 
+
+void i2c_clock_changed(int freq)
+{
+	LM4_I2C_MTPR(I2C_PORT_THERMAL) =
+		(freq / (I2C_SPEED_THERMAL * 10 * 2)) - 1;
+	LM4_I2C_MTPR(I2C_PORT_BATTERY) =
+		(freq / (I2C_SPEED_BATTERY * 10 * 2)) - 1;
+	LM4_I2C_MTPR(I2C_PORT_CHARGER) =
+		(freq / (I2C_SPEED_CHARGER * 10 * 2)) - 1;
+	LM4_I2C_MTPR(I2C_PORT_LIGHTBAR) =
+		(freq / (I2C_SPEED_LIGHTBAR * 10 * 2)) - 1;
+}
 
 /*****************************************************************************/
 /* Interrupt handlers */
@@ -439,20 +452,12 @@ int i2c_init(void)
 
 	/* Initialize ports as master, with interrupts enabled */
 	LM4_I2C_MCR(I2C_PORT_THERMAL) = 0x10;
-	LM4_I2C_MTPR(I2C_PORT_THERMAL) =
-		(CPU_CLOCK / (I2C_SPEED_THERMAL * 10 * 2)) - 1;
-
 	LM4_I2C_MCR(I2C_PORT_BATTERY) = 0x10;
-	LM4_I2C_MTPR(I2C_PORT_BATTERY) =
-		(CPU_CLOCK / (I2C_SPEED_BATTERY * 10 * 2)) - 1;
-
 	LM4_I2C_MCR(I2C_PORT_CHARGER) = 0x10;
-	LM4_I2C_MTPR(I2C_PORT_CHARGER) =
-		(CPU_CLOCK / (I2C_SPEED_CHARGER * 10 * 2)) - 1;
-
 	LM4_I2C_MCR(I2C_PORT_LIGHTBAR) = 0x10;
-	LM4_I2C_MTPR(I2C_PORT_LIGHTBAR) =
-		(CPU_CLOCK / (I2C_SPEED_LIGHTBAR * 10 * 2)) - 1;
+
+	/* Set initial clock frequency */
+	i2c_clock_changed(clock_get_freq());
 
 	/* Enable irqs */
 	task_enable_irq(LM4_IRQ_I2C0);

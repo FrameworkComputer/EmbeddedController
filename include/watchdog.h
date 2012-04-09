@@ -1,21 +1,21 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Watchdog driver */
 
-#ifndef _WATCHDOG_H
-#define _WATCHDOG_H
+#ifndef __CROS_EC_WATCHDOG_H
+#define __CROS_EC_WATCHDOG_H
+
+/* Initialize the watchdog.  This will cause the CPU to reboot if it has been
+ * more than 2 watchdog periods since watchdog_reload() has been called. */
+int watchdog_init(int period_ms);
 
 /* Reload the watchdog counter */
 void watchdog_reload(void);
 
-/**
- * Initialize the watchdog
- * with a reloading period of <period_ms> milliseconds.
- * It reboots the CPU if the counter has not been reloaded for twice the period.
- */
-int watchdog_init(int period_ms);
+/* Notifies the module the system clock frequency has changed to <freq>. */
+void watchdog_clock_changed(int freq);
 
-#endif /* _WATCHDOG_H */
+#endif /* __CROS_EC_WATCHDOG_H */

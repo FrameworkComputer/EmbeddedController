@@ -21,9 +21,6 @@
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
 
-/* 66.667 Mhz clock frequency */
-#define CPU_CLOCK  66666667
-
 /* Fan PWM channels */
 #define FAN_CH_CPU       0  /* CPU fan */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */

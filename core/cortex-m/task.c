@@ -35,7 +35,7 @@ typedef union {
 /* declare task routine prototypes */
 #define TASK(n, r, d) int r(void *);
 #include TASK_LIST
-void __idle(void);
+static void __idle(void);
 CONFIG_TASK_LIST
 #undef TASK
 
@@ -49,6 +49,17 @@ static const char * const task_names[] = {
 #undef TASK
 
 extern void __switchto(task_ *from, task_ *to);
+
+
+/* Idle task.  Executed when no tasks are ready to be scheduled. */
+void __idle(void)
+{
+	while (1) {
+		/* Wait for the irq event */
+		asm("wfi");
+		/* TODO: more power management here */
+	}
+}
 
 
 static void task_exit_trap(void)

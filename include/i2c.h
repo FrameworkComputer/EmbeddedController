@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,6 +15,9 @@
 
 /* Initializes the module. */
 int i2c_init(void);
+
+/* Notifies the module the system clock frequency has changed to <freq>. */
+void i2c_clock_changed(int freq);
 
 /* Reads a 16-bit register from the slave at 8-bit slave address
  * <slaveaddr>, at the specified 8-bit <offset> in the slave's address

@@ -11,9 +11,6 @@
 /* Config flags */
 #define CONFIG_LIGHTBAR
 
-/* 66.667 Mhz clock frequency */
-#define CPU_CLOCK  66666667
-
 /* Fan PWM channels */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
 #define FAN_CH_POWER_LED 3  /* Power adapter LED */

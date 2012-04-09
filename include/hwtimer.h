@@ -30,6 +30,9 @@ uint32_t __hw_clock_source_read(void);
  */
 int __hw_clock_source_init(void);
 
+/* Notifies the module the system clock frequency has changed to <freq>. */
+void hwtimer_clock_changed(int freq);
+
 /**
  * Searches the next deadline and program it in the timer hardware.
  *

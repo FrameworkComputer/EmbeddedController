@@ -13,19 +13,6 @@
 #include "registers.h"
 #include "util.h"
 
-/**
- * Idle task
- * executed when no task are ready to be scheduled
- */
-void __idle(void)
-{
-	while (1) {
-		/* wait for the irq event */
-		asm("wfi");
-		/* TODO more power management here */
-	}
-}
-
 int clock_init(void)
 {
 	uint32_t tmp_acr;

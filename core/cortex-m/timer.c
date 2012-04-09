@@ -167,7 +167,8 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait);
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
-	uart_printf("Time: 0x%08x%08x us\n", ts.le.hi, ts.le.lo);
+	uart_printf("Time: 0x%08x%08x us (%u %u)\n", ts.le.hi, ts.le.lo,
+		    ts.le.hi, ts.le.lo);
 	return EC_SUCCESS;
 
 }
