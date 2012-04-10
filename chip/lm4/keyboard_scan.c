@@ -7,11 +7,10 @@
 
 #include "board.h"
 #include "console.h"
+#include "eoption.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
-#ifdef HOST_KB_BUS_LPC
 #include "lpc.h"
-#endif
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -62,6 +61,7 @@ enum COLUMN_INDEX {
 #define KB_COLS 13
 
 static uint8_t raw_state[KB_COLS];
+static uint8_t raw_state_at_boot[KB_COLS];
 static int recovery_key_pressed;
 
 /* Mask with 1 bits only for keys that actually exist */
@@ -78,17 +78,15 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 	{0},
 	};
 
-/* Key mask for the recovery key (reload) */
-static const uint8_t recovery_key_mask[KB_COLS] = {
-	0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-/* Key mask for keys allowed to be pressed at the same time as the recovery
- * key.  If more keys than this are pressed, the recovery key will be ignored;
- * this protects against accidentally triggering recovery when a cat sits on
- * your keyboard.  (reload, ESC are ok) */
-static const uint8_t recovery_allowed_mask[KB_COLS] = {
-	0x00, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+/* Key masks for special boot keys */
+#define MASK_INDEX_ESC     1
+#define MASK_VALUE_ESC     0x02
+#define MASK_INDEX_REFRESH 2
+#define MASK_VALUE_REFRESH 0x04
+#define MASK_INDEX_D       2
+#define MASK_VALUE_D       0x10
+#define MASK_INDEX_F       3
+#define MASK_VALUE_F       0x10
 
 /* Drives the specified column low; other columns are tri-stated */
 static void select_column(int col)
@@ -292,16 +290,25 @@ out:
 }
 
 
-/* Returns non-zero if the recovery key is pressed, and only other allowed keys
- * are pressed. */
-static int check_recovery_key(void) {
+/* Returns non-zero if the specified key is pressed, and only other allowed
+ * keys are pressed. */
+static int check_boot_key(int index, int mask)
+{
+	uint8_t allowed_mask[KB_COLS] = {0};
 	int c;
 
+	/* Check for the key */
+	if (!(raw_state_at_boot[index] & mask))
+		return 0;
+
+	/* Make sure only other allowed keys are pressed.  This protects
+	 * against accidentally triggering the special key when a cat sits on
+	 * your keyboard.  Currently, only the requested key and ESC are
+	 * allowed. */
+	allowed_mask[index] |= mask;
+	allowed_mask[MASK_INDEX_ESC] |= MASK_VALUE_ESC;
 	for (c = 0; c < KB_COLS; c++) {
-		if ((raw_state[c] & recovery_key_mask[c])
-		    != recovery_key_mask[c])
-			return 0;  /* Missing required key */
-		if (raw_state[c] & ~recovery_allowed_mask[c])
+		if (raw_state_at_boot[c] & ~allowed_mask[c])
 			return 0;  /* Additional disallowed key pressed */
 	}
 	return 1;
@@ -359,10 +366,23 @@ int keyboard_scan_init(void)
 	/* Initialize raw state */
 	update_key_state();
 
+	/* Copy to the state at boot */
+	memcpy(raw_state_at_boot, raw_state, sizeof(raw_state_at_boot));
+
 	/* If we're booting due to a reset-pin-caused reset, check if the
 	 * recovery key is pressed. */
-	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN)
-		recovery_key_pressed = check_recovery_key();
+	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
+		recovery_key_pressed = check_boot_key(MASK_INDEX_REFRESH,
+						      MASK_VALUE_REFRESH);
+
+#ifdef CONFIG_FAKE_DEV_SWITCH
+		/* Turn fake dev switch on if D pressed, off if F pressed. */
+		if (check_boot_key(MASK_INDEX_D, MASK_VALUE_D))
+			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 1);
+		else if (check_boot_key(MASK_INDEX_F, MASK_VALUE_F))
+			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 0);
+#endif
+	}
 
 	return EC_SUCCESS;
 }
@@ -407,7 +427,6 @@ void keyboard_scan_task(void)
 }
 
 
-
 static void matrix_interrupt(void)
 {
 	uint32_t ris = clear_matrix_interrupt_status();
@@ -417,6 +436,7 @@ static void matrix_interrupt(void)
 }
 DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
 
+
 int keyboard_has_char()
 {
 #if defined(HOST_KB_BUS_LPC)
@@ -425,6 +445,7 @@ int keyboard_has_char()
 #error "keyboard_scan needs to know what bus to use for keyboard interface"
 #endif
 }
+
 
 void keyboard_put_char(uint8_t chr, int send_irq)
 {

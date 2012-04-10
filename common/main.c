@@ -12,6 +12,7 @@
 #include "config.h"
 #include "console.h"
 #include "eeprom.h"
+#include "eoption.h"
 #include "flash.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -89,17 +90,24 @@ int main(void)
 	timer_init();
 
 	/* Verified boot needs to read the initial keyboard state and EEPROM
-	 * contents. */
-#ifdef CONFIG_TASK_KEYSCAN
-	keyboard_scan_init();
-#endif
+	 * contents.  EEPROM must be up first, so keyboard_scan can toggle
+	 * debugging settings via keys held at boot. */
 #ifdef CONFIG_EEPROM
 	eeprom_init();
+#endif
+#ifdef CONFIG_EOPTION
+	eoption_init();
+#endif
+#ifdef CONFIG_TASK_KEYSCAN
+	keyboard_scan_init();
 #endif
 
 	/* Verified boot initialization.  This may jump to another image, which
 	 * will need to reconfigure / reinitialize the system, so as little as
-	 * possible should be done above this step. */
+	 * possible should be done above this step.
+	 *
+	 * Note that steps above here may be done TWICE per boot, once in the
+	 * RO image and once in the RW image. */
 	vboot_init();
 
 	system_init();

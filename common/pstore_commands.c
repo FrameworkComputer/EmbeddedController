@@ -11,13 +11,6 @@
 #include "uart.h"
 #include "util.h"
 
-/* TODO: move these to board.h */
-#ifdef CONFIG_PSTORE
-/* Start block and block count for host persistent storage in EC EEPROM */
-#define PSTORE_EEPROM_BLOCK_START 16
-#define PSTORE_EEPROM_BLOCK_COUNT 16
-#endif
-
 enum lpc_status pstore_command_get_info(uint8_t *data)
 {
 	struct lpc_response_pstore_info *r =
@@ -26,10 +19,10 @@ enum lpc_status pstore_command_get_info(uint8_t *data)
 	uart_printf("ee block size=%d, count=%d\n",
 		    eeprom_get_block_size(), eeprom_get_block_count());
 
-	ASSERT(PSTORE_EEPROM_BLOCK_START + PSTORE_EEPROM_BLOCK_COUNT <=
+	ASSERT(EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE <=
 	       eeprom_get_block_count());
 
-	r->pstore_size = PSTORE_EEPROM_BLOCK_COUNT * eeprom_get_block_size();
+	r->pstore_size = EEPROM_BLOCK_COUNT_PSTORE * eeprom_get_block_size();
 	r->access_size = sizeof(uint32_t);
 	return EC_LPC_RESULT_SUCCESS;
 }
@@ -44,7 +37,7 @@ enum lpc_status pstore_command_read(uint8_t *data)
 			(struct lpc_response_pstore_read *)data;
 	char *dest = r->data;
 	int block_size = eeprom_get_block_size();
-	int block = p->offset / block_size + PSTORE_EEPROM_BLOCK_COUNT;
+	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
@@ -56,7 +49,7 @@ enum lpc_status pstore_command_read(uint8_t *data)
 		int bytes_this = MIN(bytes_left, block_size - offset);
 
 		if (block >=
-		    PSTORE_EEPROM_BLOCK_START + PSTORE_EEPROM_BLOCK_COUNT)
+		    EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE)
 			return EC_LPC_RESULT_ERROR;
 
 		if (eeprom_read(block, offset, bytes_this, dest))
@@ -81,7 +74,7 @@ enum lpc_status pstore_command_write(uint8_t *data)
 
 	const char *src = p->data;
 	int block_size = eeprom_get_block_size();
-	int block = p->offset / block_size + PSTORE_EEPROM_BLOCK_COUNT;
+	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
@@ -93,7 +86,7 @@ enum lpc_status pstore_command_write(uint8_t *data)
 		int bytes_this = MIN(bytes_left, block_size - offset);
 
 		if (block >=
-		    PSTORE_EEPROM_BLOCK_START + PSTORE_EEPROM_BLOCK_COUNT)
+		    EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE)
 			return EC_LPC_RESULT_ERROR;
 
 		if (eeprom_write(block, offset, bytes_this, src))

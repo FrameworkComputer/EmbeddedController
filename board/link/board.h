@@ -12,6 +12,7 @@
 #define CONFIG_BATTERY_ATL706486
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24725
+#define CONFIG_EOPTION
 #define CONFIG_LIGHTBAR
 #define CONFIG_ONEWIRE
 #define CONFIG_PECI
@@ -20,6 +21,9 @@
 #define CONFIG_SMART_BATTERY
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
+
+/* Enable the fake developer switch.  See crosbug.com/p/8884 */
+#define CONFIG_FAKE_DEV_SWITCH
 
 /* Fan PWM channels */
 #define FAN_CH_CPU       0  /* CPU fan */
@@ -73,6 +77,11 @@ enum adc_channel
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
 #define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
+
+/* EEPROM blocks */
+#define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */
+#define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
+#define EEPROM_BLOCK_COUNT_PSTORE 16
 
 
 /* I2C ports */

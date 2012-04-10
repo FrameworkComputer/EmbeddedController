@@ -70,6 +70,8 @@
 #define EC_LPC_SWITCH_KEYBOARD_RECOVERY      0x08
 /* Recovery requested via dedicated signal (from servo board) */
 #define EC_LPC_SWITCH_DEDICATED_RECOVERY     0x10
+/* Fake developer switch (for testing) */
+#define EC_LPC_SWITCH_FAKE_DEVELOPER         0x20
 
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of
