@@ -17,10 +17,9 @@ proc flash_lm4 {path size} {
 	reset
 }
 
-# Link proto0 has 128KB flash; proto1+ will likely have 256KB, in which
-# case this'll need changing.
+# Link proto0 has 128KB flash; proto1+ have 256KB
 proc flash_link { } {
-	flash_lm4 ../../../build/link/ec.bin 131072
+	flash_lm4 ../../../build/link/ec.bin 262144
 }
 
 proc flash_bds { } {

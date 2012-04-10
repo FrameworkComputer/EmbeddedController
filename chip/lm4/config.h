@@ -16,12 +16,8 @@
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         0x00008000
 
-/* Disable RW.B firmware due to code size.
- * TODO: Add it back when we can. */
-#define CONFIG_NO_RW_B
-
 /* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE    (60 * 1024)
+#define CONFIG_FW_IMAGE_SIZE    (80 * 1024)
 #define CONFIG_FW_RO_OFF        0
 #define CONFIG_FW_A_OFF         CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_B_OFF         (2 * CONFIG_FW_IMAGE_SIZE)
