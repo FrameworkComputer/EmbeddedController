@@ -455,3 +455,9 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 #error "keyboard_scan needs to know what bus to use for keyboard interface"
 #endif
 }
+
+/* We don't support this API yet, just return -1 */
+int keyboard_get_scan(uint8_t **buffp, int max_bytes)
+{
+	return -1;
+}

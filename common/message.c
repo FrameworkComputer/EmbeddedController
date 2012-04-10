@@ -10,6 +10,7 @@
 
 #include "board.h"
 #include "message.h"
+#include "keyboard_scan.h"
 #include "util.h"
 
 /* Our ID message - Matrix KeyBoard Protocol */
@@ -39,6 +40,8 @@ static int message_get_response(int cmd, uint8_t **buffp, int max_len)
 	case CMDC_ID:
 		*buffp = (char *)proto_id;
 		return sizeof(proto_id) - 1;
+	case CMDC_KEY_STATE:
+		return keyboard_get_scan(buffp, max_len);
 	default:
 		return -1;
 	}

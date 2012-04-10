@@ -73,7 +73,11 @@ enum COL_INDEX {
 /* 15:14, 12:8, 2 */
 #define IRQ_MASK 0xdf04
 
+/* The keyboard state from the last read */
 static uint8_t raw_state[KB_COLS];
+
+/* The keyboard state we will return when requested */
+static uint8_t saved_state[KB_COLS];
 
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
@@ -166,6 +170,15 @@ static const uint32_t ports[] = { GPIO_A, GPIO_B, GPIO_C, GPIO_D };
 #else
 #error "Need to specify GPIO ports used by keyboard"
 #endif
+
+/* Provide a default function in case the board doesn't have one */
+void __board_keyboard_scan_ready(void)
+{
+}
+
+void board_keyboard_scan_ready(void)
+		__attribute__((weak, alias("__board_keyboard_scan_ready")));
+
 
 static void select_column(int col)
 {
@@ -283,9 +296,12 @@ int keyboard_scan_init(void)
 		STM32L_GPIO_PUPDR_OFF(ports[i]) = tmp32;
 	}
 
-	/* Initialize raw state */
-	for (i = 0; i < KB_COLS; i++)
-		raw_state[i] = 0;
+	/*
+	 * Initialize raw state since host may request it before
+	 * a key has been pressed (e.g. during keyboard driver init)
+	 */
+	for (i = 0; i < ARRAY_SIZE(raw_state); i++)
+		raw_state[i] = 0x00;
 
 	/* TODO: method to set which keyboard we have, so we set the actual
 	 * key mask properly */
@@ -395,6 +411,9 @@ static int check_keys_changed(void)
 	}
 
 	if (change) {
+		memcpy(saved_state, raw_state, sizeof(saved_state));
+		board_keyboard_scan_ready();
+
 		uart_printf("[%d keys pressed: ", num_press);
 		for (c = 0; c < KB_COLS; c++) {
 			if (raw_state[c])
@@ -471,4 +490,10 @@ int keyboard_scan_recovery_pressed(void)
 {
 	/* TODO: (crosbug.com/p/8573) needs to be implemented */
 	return 0;
+}
+
+int keyboard_get_scan(uint8_t **buffp, int max_bytes)
+{
+	*buffp = saved_state;
+	return sizeof(saved_state);
 }
