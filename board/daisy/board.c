@@ -6,6 +6,7 @@
 
 #include "board.h"
 #include "common.h"
+#include "dma.h"
 #include "gpio.h"
 #include "registers.h"
 #include "util.h"
@@ -42,6 +43,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 void configure_board(void)
 {
+	dma_init();
+
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */
