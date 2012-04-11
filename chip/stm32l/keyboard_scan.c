@@ -227,8 +227,6 @@ int keyboard_scan_init(void)
 	uint32_t tmp32;
 	uint16_t tmp16;
 
-	uart_printf("[kbscan %s()] initializing keyboard...\n", __func__);
-
 	/* initialize outputs (pull-up, open-drain)
 	 * TODO: this should be done via GPIO declaration in board.c */
 	for (i = 0; i < ARRAY_SIZE(ports); i++) {
