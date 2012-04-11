@@ -33,23 +33,24 @@ int gpio_pre_init(void)
 		/* bitmask for registers with 2 bits per GPIO pin */
 		uint32_t mask2 = (g->mask * g->mask) | (g->mask * g->mask * 2);
 
-		if (g->flags & GPIO_OUTPUT) {
-			/* Set pin level */
-			gpio_set_level(i, g->flags & GPIO_HIGH);
-			/* General purpose output : MODE = 01 */
+		if (g->flags & GPIO_PULL_UP) /* Pull Up = 01 */
+			STM32L_GPIO_PUPDR_OFF(g->port) |= 0x55555555 & mask2;
+		else if (g->flags & GPIO_PULL_DOWN) /* Pull Down = 10 */
+			STM32L_GPIO_PUPDR_OFF(g->port) |= 0xaaaaaaaa & mask2;
+
+		if (g->flags & GPIO_OPEN_DRAIN)
+			STM32L_GPIO_OTYPER_OFF(g->port) |= g->mask;
+
+		/*
+		 * Set pin level after port has been set up as to avoid
+		 * potential damage, e.g. driving an open-drain output
+		 * high before it has been configured as such.
+		 */
+		if (g->flags & GPIO_OUTPUT) { /* General purpose, MODE = 01 */
 			STM32L_GPIO_MODER_OFF(g->port) |= 0x55555555 & mask2;
-		} else {
-			/* Input */
+			gpio_set_level(i, g->flags & GPIO_HIGH);
+		} else if (g->flags & GPIO_INPUT) {
 			STM32L_GPIO_MODER_OFF(g->port) &= ~mask2;
-			if (g->flags & GPIO_PULL) {
-				/* With pull up/down */
-				if (g->flags & GPIO_HIGH) /* Pull Up = 01 */
-					STM32L_GPIO_PUPDR_OFF(g->port) |=
-							0x55555555 & mask2;
-				else /* Pull Down = 10 */
-					STM32L_GPIO_PUPDR_OFF(g->port) |=
-							0xaaaaaaaa & mask2;
-			}
 		}
 
 		/* Set up interrupts if necessary */
