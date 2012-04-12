@@ -388,14 +388,6 @@ static int check_keys_changed(void)
 
 		/* Check for changes */
 		if (r != raw_state[c]) {
-			int i;
-			for (i = 0; i < 8; ++i) {
-				uint8_t prev = (raw_state[c] >> i) & 1;
-				uint8_t now = (r >> i) & 1;
-				if (prev != now)
-					/* TODO: implement this */
-					; //keyboard_state_changed(i, c, now);
-			}
 			raw_state[c] = r;
 			change = 1;
 		}
