@@ -19,9 +19,13 @@ enum lightbar_sequence {
 	LIGHTBAR_S3S0,				/* 5 */
 	LIGHTBAR_S0S3,				/* 6 */
 	LIGHTBAR_S3S5,				/* 7 */
-	/* extra patterns */
-	LIGHTBAR_TEST,				/* 8 */
-	LIGHTBAR_PULSE,				/* 9 */
+	/* Who's in charge?  */
+	LIGHTBAR_EC_STOP,			/* 8 - EC ignore LEDs */
+	LIGHTBAR_EC_RUN,			/* 9 - EC drive LEDs */
+	/* Extra patterns */
+	LIGHTBAR_PULSE,				/* a */
+	LIGHTBAR_TEST,				/* b */
+	LIGHTBAR_KONAMI,			/* c */
 	/* that's all */
 	LIGHTBAR_NUM_SEQUENCES
 };

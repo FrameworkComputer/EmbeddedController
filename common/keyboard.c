@@ -10,6 +10,7 @@
 #include "console.h"
 #include "keyboard.h"
 #include "i8042.h"
+#include "lightbar.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "registers.h"
@@ -44,6 +45,7 @@ static uint8_t controller_ram[0x20] = {
   /* 0x01 - 0x1f are controller RAM */
 };
 static int power_button_pressed = 0;
+static void keyboard_special(uint16_t k);
 
 /*
  * Scancode settings
@@ -144,6 +146,9 @@ static enum ec_error_list matrix_callback(
       col > CROS_COL_NUM) {
     return EC_ERROR_INVAL;
   }
+
+  if (pressed)
+    keyboard_special(scancode_set1[row][col]);
 
   *len = 0;
 
@@ -601,6 +606,25 @@ int handle_keyboard_command(uint8_t command, uint8_t *output) {
   return out_len;
 }
 
+/* U U D D L R L R b a */
+static void keyboard_special(uint16_t k)
+{
+	static uint8_t s = 0;
+	static const uint16_t a[] = {0xe048, 0xe048, 0xe050, 0xe050, 0xe04b,
+				     0xe04d, 0xe04b, 0xe04d, 0x0030, 0x001e};
+	if (k == a[s])
+		s++;
+	else if (k != 0xe048)
+		s = 0;
+	else if (s != 2)
+		s = 1;
+	if (s == ARRAY_SIZE(a)) {
+		s = 0;
+#ifdef CONFIG_TASK_LIGHTBAR
+		lightbar_sequence(LIGHTBAR_KONAMI);
+#endif
+	}
+}
 
 void keyboard_set_power_button(int pressed)
 {
