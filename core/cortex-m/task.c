@@ -302,6 +302,12 @@ void task_disable_irq(int irq)
 }
 
 
+void task_clear_pending_irq(int irq)
+{
+	CPU_NVIC_UNPEND(irq / 32) = 1 << (irq % 32);
+}
+
+
 void task_trigger_irq(int irq)
 {
 	CPU_NVIC_SWTRIG = irq;

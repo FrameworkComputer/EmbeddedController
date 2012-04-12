@@ -94,6 +94,15 @@ void task_disable_irq(int irq);
 /* Software-triggers an interrupt. */
 void task_trigger_irq(int irq);
 
+/* Clears a pending interrupt.
+ *
+ * Note that most interrupts can be removed from the pending state simply by
+ * handling whatever caused the interrupt in the first place.  This only needs
+ * to be called if an interrupt handler disables itself without clearing the
+ * reason for the interrupt, and then the interrupt is re-enabled from a
+ * different context. */
+void task_clear_pending_irq(int irq);
+
 struct mutex {
 	uint32_t lock;
 	uint32_t waiters;
