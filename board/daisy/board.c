@@ -11,6 +11,20 @@
 #include "registers.h"
 #include "util.h"
 
+/*
+ * Daisy keyboard summary:
+ * 1. KEYSCAN task woken up via GPIO external interrupt when a key is pressed.
+ * 2. The task scans the keyboard matrix for changes. If key state has
+ *    changed, the board-specific kb_send() function is called.
+ * 3. For Daisy, the EC is connected via I2C and acts as a slave, so the AP
+ *    must initiate all transactions. EC_INT is driven low to interrupt AP when
+ *    new data becomes available.
+ * 4. When the AP is interrupted, it initiates two i2c transactions:
+ *    1. 1-byte write: AP writes 0x01 to make EC send keyboard state.
+ *    2. 14-byte read: AP reads 1 keyboard packet (13 byte keyboard state +
+ *       1-byte checksum).
+ */
+
 /* GPIO interrupt handlers prototypes */
 void gaia_power_event(enum gpio_signal signal);
 
@@ -52,4 +66,11 @@ void configure_board(void)
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
         gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
+}
+
+void board_keyboard_scan_ready(void)
+{
+	/* interrupt host by toggling EC_INT */
+	gpio_set_level(GPIO_EC_INT, 0);
+	gpio_set_level(GPIO_EC_INT, 1);
 }
