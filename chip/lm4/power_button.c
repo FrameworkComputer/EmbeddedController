@@ -122,8 +122,15 @@ static void state_machine(uint64_t tnow)
 
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_START:
-		tnext_state = tnow + PWRBTN_DELAY_T0;
-		pwrbtn_state = PWRBTN_STATE_T0;
+		if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
+			/* Chipset is off, so just pass the true power button
+			 * state to the chipset. */
+			pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
+		} else {
+			/* Chipset is on, so send the chipset a pulse */
+			tnext_state = tnow + PWRBTN_DELAY_T0;
+			pwrbtn_state = PWRBTN_STATE_T0;
+		}
 		set_pwrbtn_to_pch(0);
 		break;
 	case PWRBTN_STATE_T0:
@@ -132,8 +139,14 @@ static void state_machine(uint64_t tnow)
 		set_pwrbtn_to_pch(1);
 		break;
 	case PWRBTN_STATE_T1:
+		/* If the chipset is already off, don't tell it the power
+		 * button is down; it'll just cause the chipset to turn on
+		 * again. */
+		if (!chipset_in_state(CHIPSET_STATE_SOFT_OFF))
+			set_pwrbtn_to_pch(0);
+		else
+			uart_printf("[%T PB chipset already off]\n");
 		pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
-		set_pwrbtn_to_pch(0);
 		break;
 	case PWRBTN_STATE_STOPPING:
 		set_pwrbtn_to_pch(1);
