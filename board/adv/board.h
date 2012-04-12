@@ -25,14 +25,14 @@ enum gpio_signal {
 	GPIO_CHARGER_INT,
 	GPIO_LID_OPEN,         /* LID switch detection */
 	/* Keyboard inputs */
-	KB_COL00,
-	KB_COL01,
-	KB_COL02,
-	KB_COL03,
-	KB_COL04,
-	KB_COL05,
-	KB_COL06,
-	KB_COL07,
+	GPIO_KB_IN00,
+	GPIO_KB_IN01,
+	GPIO_KB_IN02,
+	GPIO_KB_IN03,
+	GPIO_KB_IN04,
+	GPIO_KB_IN05,
+	GPIO_KB_IN06,
+	GPIO_KB_IN07,
 	/* Other inputs */
 	/* Outputs */
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
@@ -42,6 +42,20 @@ enum gpio_signal {
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
+	/* Keyboard outputs */
+	GPIO_KB_OUT00,
+	GPIO_KB_OUT01,
+	GPIO_KB_OUT02,
+	GPIO_KB_OUT03,
+	GPIO_KB_OUT04,
+	GPIO_KB_OUT05,
+	GPIO_KB_OUT06,
+	GPIO_KB_OUT07,
+	GPIO_KB_OUT08,
+	GPIO_KB_OUT09,
+	GPIO_KB_OUT10,
+	GPIO_KB_OUT11,
+	GPIO_KB_OUT12,
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
