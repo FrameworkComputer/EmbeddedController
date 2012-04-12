@@ -93,6 +93,12 @@ static void wait_for_power_off(void)
 				 TASK_EVENT_TIMER))
 					return;
 		}
+
+		/*
+		 * Holding down the power button causes this loop to spin
+		 * endlessly, triggering the watchdog. So add a wait here.
+		 */
+		task_wait_event(-1);
 	}
 }
 
