@@ -6,9 +6,10 @@
 /* Flash memory module for Chrome EC */
 
 #include "flash.h"
-#include "uart.h"
 #include "registers.h"
+#include "uart.h"
 #include "util.h"
+#include "watchdog.h"
 
 #define FLASH_WRITE_BYTES      4
 #define FLASH_FWB_WORDS       32
@@ -71,6 +72,12 @@ static int write_buffer(void)
 	/* Start write operation at page boundary */
 	LM4_FLASH_FMC2 = 0xa4420001;
 
+#ifdef CONFIG_TASK_WATCHDOG
+	/* Reload the watchdog timer, so that writing a large amount of flash
+	 * doesn't cause a watchdog reset. */
+	watchdog_reload();
+#endif
+
 	/* Wait for write to complete */
 	/* TODO: timeout */
 	while (LM4_FLASH_FMC2 & 0x01) {}
@@ -124,6 +131,13 @@ int flash_physical_erase(int offset, int size)
 	LM4_FLASH_FMA = offset;
 
 	for ( ; size > 0; size -= FLASH_ERASE_BYTES) {
+
+#ifdef CONFIG_TASK_WATCHDOG
+		/* Reload the watchdog timer, so that erasing many flash pages
+		 * doesn't cause a watchdog reset. */
+		watchdog_reload();
+#endif
+
 		/* Start erase */
 		LM4_FLASH_FMC = 0xa4420002;
 
