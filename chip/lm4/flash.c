@@ -7,6 +7,7 @@
 
 #include "flash.h"
 #include "registers.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 #include "watchdog.h"
@@ -22,6 +23,9 @@
 #define F_BANK(b) ((b) >> BANK_SHIFT)
 #define F_BIT(b) (1 << ((b) & BANK_MASK))
 
+/* Flash timeouts.  These are 2x the spec sheet max. */
+#define ERASE_TIMEOUT_MS 200
+#define WRITE_TIMEOUT_US 300
 
 int flash_get_write_block_size(void)
 {
@@ -63,6 +67,8 @@ int flash_physical_read(int offset, int size, char *data)
  * pre-loaded. */
 static int write_buffer(void)
 {
+	int t;
+
 	if (!LM4_FLASH_FWBVAL)
 		return EC_SUCCESS;  /* Nothing to do */
 
@@ -79,8 +85,11 @@ static int write_buffer(void)
 #endif
 
 	/* Wait for write to complete */
-	/* TODO: timeout */
-	while (LM4_FLASH_FMC2 & 0x01) {}
+	for (t = 0; LM4_FLASH_FMC2 & 0x01; t += 10) {
+		if (t > WRITE_TIMEOUT_US)
+			return EC_ERROR_TIMEOUT;
+		udelay(10);
+	}
 
 	/* Check for error conditions - program failed, erase needed,
 	 * voltage error. */
@@ -131,10 +140,12 @@ int flash_physical_erase(int offset, int size)
 	LM4_FLASH_FMA = offset;
 
 	for ( ; size > 0; size -= FLASH_ERASE_BYTES) {
+		int t;
 
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer, so that erasing many flash pages
-		 * doesn't cause a watchdog reset. */
+		 * doesn't cause a watchdog reset.  May not need this now that
+		 * we're using usleep() below. */
 		watchdog_reload();
 #endif
 
@@ -142,8 +153,11 @@ int flash_physical_erase(int offset, int size)
 		LM4_FLASH_FMC = 0xa4420002;
 
 		/* Wait for erase to complete */
-		/* TODO: timeout */
-		while (LM4_FLASH_FMC & 0x02) {}
+		for (t = 0; LM4_FLASH_FMC & 0x02; t++) {
+			if (t > ERASE_TIMEOUT_MS)
+				return EC_ERROR_TIMEOUT;
+			usleep(1000);
+		}
 
 		/* Check for error conditions - erase failed, voltage error,
 		 * protection error */
