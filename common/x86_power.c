@@ -66,7 +66,6 @@ static const char * const state_names[] = {
 #define IN_PCH_SLP_SUSn_DEASSERTED 0x1000
 #define IN_PCH_SLP_MEn_DEASSERTED  0x2000
 #define IN_PCH_SUSWARNn_DEASSERTED 0x4000
-#define IN_PCH_BKLTEN_ASSERTED     0x8000
 /* All always-on supplies */
 #define IN_PGOOD_ALWAYS_ON   (IN_PGOOD_5VALW)
 /* All non-core power rails */
@@ -132,12 +131,6 @@ static void update_in_signals(void)
 		inew |= IN_PCH_SUSWARNn_DEASSERTED;
 	/* Copy SUSWARN# signal from PCH to SUSACK# */
 	gpio_set_level(GPIO_PCH_SUSACKn, v);
-
-	v = gpio_get_level(GPIO_PCH_BKLTEN);
-	if (v)
-		inew |= IN_PCH_BKLTEN_ASSERTED;
-	/* Copy backlight enable signal from PCH to BKLTEN */
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, v);
 
 	in_signals = inew;
 }
