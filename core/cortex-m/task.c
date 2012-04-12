@@ -106,7 +106,7 @@ static int need_resched = 0;
  *
  * Currently all tasks are enabled at startup.
  */
-static unsigned tasks_ready = (1<<TASK_ID_COUNT) - 1;
+static uint32_t tasks_ready = (1<<TASK_ID_COUNT) - 1;
 
 
 static task_ *__get_current(void)
@@ -271,7 +271,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	/* Re-schedule if priorities have changed */
 	if (in_interrupt_context()) {
 		/* the receiver might run again */
-		tasks_ready |= 1 << tskid;
+		atomic_or(&tasks_ready, 1 << tskid);
 		need_resched = 1;
 	} else {
 		if (wait)
