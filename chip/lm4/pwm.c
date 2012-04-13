@@ -86,6 +86,17 @@ int pwm_set_fan_target_rpm(int rpm)
 }
 
 
+int pwm_enable_keyboard_backlight(int enable)
+{
+	if (enable)
+		LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
+	else
+		LM4_FAN_FANCTL &= ~(1 << FAN_CH_KBLIGHT);
+
+	return EC_SUCCESS;
+}
+
+
 int pwm_get_keyboard_backlight(void)
 {
 	return ((LM4_FAN_FANCMD(FAN_CH_KBLIGHT) >> 16) * 100 +

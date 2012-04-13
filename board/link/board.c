@@ -33,7 +33,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), 0, NULL},
 	{"PCH_BKLTEN",          LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 power_button_interrupt},
 	{"PCH_SLP_An",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,
 	 x86_power_interrupt},
 	{"PCH_SLP_ME_CSW_DEVn", LM4_GPIO_G, (1<<4), GPIO_INT_BOTH,

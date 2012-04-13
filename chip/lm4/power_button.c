@@ -14,6 +14,7 @@
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "power_button.h"
+#include "pwm.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -67,7 +68,7 @@ static uint64_t tdebounce_lid;
 static uint64_t tdebounce_pwr;
 
 static uint8_t *memmap_switches;
-
+static int debounced_lid_open;
 
 /* Update status of non-debounced switches */
 static void update_other_switches(void)
@@ -107,6 +108,19 @@ static void set_pwrbtn_to_pch(int high)
 static int get_power_button_pressed(void)
 {
 	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
+}
+
+
+static void update_backlight(void)
+{
+	/* Only enable the backlight if the lid is open */
+	if (gpio_get_level(GPIO_PCH_BKLTEN) && debounced_lid_open)
+		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	else
+		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+
+	/* Same with keyboard backlight */
+	pwm_enable_keyboard_backlight(debounced_lid_open);
 }
 
 
@@ -203,6 +217,7 @@ static void lid_switch_open(uint64_t tnow)
 {
 	uart_printf("[%T PB lid open]\n");
 
+	debounced_lid_open = 1;
 	*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
 
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
@@ -224,6 +239,7 @@ static void lid_switch_close(uint64_t tnow)
 {
 	uart_printf("[%T PB lid close]\n");
 
+	debounced_lid_open = 0;
 	*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
 
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
@@ -234,12 +250,12 @@ static void lid_switch_close(uint64_t tnow)
 /* Handle debounced lid switch changing state */
 static void lid_switch_changed(uint64_t tnow)
 {
-	int v = gpio_get_level(GPIO_LID_SWITCHn);
-
-	if (v)
+	if (gpio_get_level(GPIO_LID_SWITCHn))
 		lid_switch_open(tnow);
 	else
 		lid_switch_close(tnow);
+
+	update_backlight();
 }
 
 
@@ -252,6 +268,9 @@ void power_button_interrupt(enum gpio_signal signal)
 		break;
 	case GPIO_POWER_BUTTONn:
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
+		break;
+	case GPIO_PCH_BKLTEN:
+		update_backlight();
 		break;
 	default:
 		/* Non-debounced switches; we'll update their state
@@ -273,9 +292,12 @@ int power_button_init(void)
 	/* Set up memory-mapped switch positions */
 	memmap_switches = lpc_get_memmap_range() + EC_LPC_MEMMAP_SWITCHES;
 	*memmap_switches = 0;
-	if (gpio_get_level(GPIO_LID_SWITCHn) != 0)
+	if (gpio_get_level(GPIO_LID_SWITCHn) != 0) {
+		debounced_lid_open = 1;
 		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+	}
 	update_other_switches();
+	update_backlight();
 
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
 		/* Reset triggered by keyboard-controlled reset, so override
