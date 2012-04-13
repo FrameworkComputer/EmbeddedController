@@ -134,6 +134,24 @@ static void jump_to_image(uint32_t init_addr)
 }
 
 
+/* Return the base pointer for the image copy, or 0xffffffff if error. */
+static uint32_t get_base(enum system_image_copy_t copy)
+{
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+		return CONFIG_FW_RO_OFF;
+	case SYSTEM_IMAGE_RW_A:
+		return CONFIG_FW_A_OFF;
+#ifndef CONFIG_NO_RW_B
+	case SYSTEM_IMAGE_RW_B:
+		return CONFIG_FW_B_OFF;
+#endif
+	default:
+		return 0xffffffff;
+	}
+}
+
+
 int system_run_image_copy(enum system_image_copy_t copy)
 {
 	uint32_t base;
@@ -148,21 +166,9 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	 *  - The target image must be A or B. */
 
 	/* Load the appropriate reset vector */
-	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-		base = CONFIG_FW_RO_OFF;
-		break;
-	case SYSTEM_IMAGE_RW_A:
-		base = CONFIG_FW_A_OFF;
-		break;
-#ifndef CONFIG_NO_RW_B
-	case SYSTEM_IMAGE_RW_B:
-		base = CONFIG_FW_B_OFF;
-		break;
-#endif
-	default:
+	base = get_base(copy);
+	if (base == 0xffffffff)
 		return EC_ERROR_INVAL;
-	}
 
 	/* Make sure the reset vector is inside the destination image */
 	init_addr = *(uint32_t *)(base + 4);
@@ -178,32 +184,24 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-	int imoffset;
+	uint32_t addr;
 	const struct version_struct *v;
 
 	/* Handle version of current image */
 	if (copy == system_get_image_copy() || copy == SYSTEM_IMAGE_UNKNOWN)
 		return version_data.version;
 
-	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-		imoffset = CONFIG_FW_RO_OFF;
-		break;
-	case SYSTEM_IMAGE_RW_A:
-		imoffset = CONFIG_FW_A_OFF;
-		break;
-#ifndef CONFIG_NO_RW_B
-	case SYSTEM_IMAGE_RW_B:
-		imoffset = CONFIG_FW_B_OFF;
-		break;
-#endif
-	default:
+	addr = get_base(copy);
+	if (addr == 0xffffffff)
 		return "";
-	}
 
-	/* The version string is always located after the reset vectors */
-	v = (const struct version_struct *)((uint8_t *)&version_data
-		+ imoffset);
+	/* The version string is always located after the reset vectors, so
+	 * it's the same as in the current image. */
+	addr += ((uint32_t)&version_data - get_base(system_get_image_copy()));
+
+	/* Make sure the version struct cookies match before returning the
+	 * version string. */
+	v = (const struct version_struct *)addr;
 	if (v->cookie1 == version_data.cookie1 &&
 	    v->cookie2 == version_data.cookie2)
 		return v->version;
