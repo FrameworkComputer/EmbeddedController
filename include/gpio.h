@@ -13,21 +13,26 @@
 
 
 /* Flag definitions for gpio_info. */
+#define GPIO_INPUT       0x0000  /* Input */
 #define GPIO_OUTPUT      0x0001  /* Output */
 #define GPIO_PULL        0x0002  /* Input with on-chip pullup/pulldown */
 #define GPIO_HIGH        0x0004  /* If GPIO_OUTPUT, default high; if GPIO_PULL,
 				  * pull up (otherwise default low / pull
 				  * down) */
+#define GPIO_OPEN_DRAIN  0x0008  /* Output type is open-drain */
 #define GPIO_INT_RISING  0x0010  /* Interrupt on rising edge */
 #define GPIO_INT_FALLING 0x0020  /* Interrupt on falling edge */
 #define GPIO_INT_BOTH    0x0040  /* Interrupt on both edges */
 #define GPIO_INT_LOW     0x0080  /* Interrupt on low level */
 #define GPIO_INT_HIGH    0x0100  /* Interrupt on high level */
+
+
 /* Common flag combinations */
 #define GPIO_OUT_LOW     GPIO_OUTPUT
 #define GPIO_OUT_HIGH    (GPIO_OUTPUT | GPIO_HIGH)
 #define GPIO_PULL_DOWN   GPIO_PULL
 #define GPIO_PULL_UP     (GPIO_PULL | GPIO_HIGH)
+#define GPIO_HI_Z        (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH)
 #define GPIO_INT_EDGE    (GPIO_INT_RISING | GPIO_INT_FALLING | GPIO_INT_BOTH)
 #define GPIO_INT_LEVEL   (GPIO_INT_LOW | GPIO_INT_HIGH)
 #define GPIO_INT_ANY     (GPIO_INT_EDGE | GPIO_INT_LEVEL)
