@@ -51,6 +51,7 @@ void configure_board(void)
 	 */
 	STM32L_RCC_AHBENR |= 0x3f;
 	STM32L_RCC_AHBLPENR |= 0x0e;
+	STM32L_RCC_APB2ENR |= 0x01;
 
 #if CONFIG_CONSOLE_UART == 1
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
