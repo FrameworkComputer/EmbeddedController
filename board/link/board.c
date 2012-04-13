@@ -90,7 +90,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_RSMRSTn",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMIn",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
 	{"PCH_SUSACKn",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
-	{"SHUNT_1_5V_DDR",      LM4_GPIO_F, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"TOUCHSCREEN_RESETn",  LM4_GPIO_B, (1<<0), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL1",           LM4_GPIO_E, (1<<2), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL2",           LM4_GPIO_E, (1<<3), GPIO_OUT_LOW, NULL},
