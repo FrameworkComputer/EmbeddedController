@@ -155,8 +155,6 @@ enum gpio_signal {
 	GPIO_PCH_RSMRSTn,         /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMIn,            /* System management interrupt to PCH */
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
-	GPIO_SHUNT_1_5V_DDR,      /* Shunt +1.5V_DDR (Proto0 only) */
-				  /* TODO: remove once we move to proto1 */
 	GPIO_TOUCHSCREEN_RESETn,  /* Reset touch screen (Proto1+) */
 	GPIO_USB1_CTL1,           /* USB charger port 1 CTL1 output */
 	GPIO_USB1_CTL2,           /* USB charger port 1 CTL2 output */

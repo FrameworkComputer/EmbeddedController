@@ -266,7 +266,6 @@ int x86_power_init(void)
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
-			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 1);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 		}
@@ -330,7 +329,6 @@ void x86_power_task(void)
 
 		case X86_S5S3:
 			/* Turn on power to RAM */
-			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 0);
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
 
 			/* Enable touchpad power and take touchscreen out of
@@ -410,7 +408,6 @@ void x86_power_task(void)
 
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
-			gpio_set_level(GPIO_SHUNT_1_5V_DDR, 1);
 
 			state = X86_S5;
 			break;
