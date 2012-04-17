@@ -55,7 +55,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PMIC_ACOK",   GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"ENTERING_RW", GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"EC_INT",      GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
+	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
 };
 
 void configure_board(void)
