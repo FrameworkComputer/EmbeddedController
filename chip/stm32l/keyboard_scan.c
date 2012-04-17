@@ -3,7 +3,11 @@
  * found in the LICENSE file.
  */
 
-/* Keyboard scanner module for Chrome EC */
+/*
+ * Keyboard scanner module for Chrome EC
+ *
+ * TODO: Finish cleaning up nomenclature (cols/rows/inputs/outputs),
+ */
 
 #include "board.h"
 #include "gpio.h"
@@ -14,47 +18,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-
-/* Notes:
- *
- * Daisy schematic calls the outputs rows and the inputs columns. The
- * codebase uses the opposite convention.
- *
- * Outputs: Open-drain, pull-up, output '1' --> impedence state (Hi-Z)
- * Inputs: Pull-up
- * Daisy:
- *
- *  Columns (outputs):
- *    KB_ROW00 = PB5
- *    KB_ROW01 = PB8
- *    KB_ROW02:5 = PB12:15
- *    KB_ROW06:8 = PC0:2
- *    KB_ROW09:12 = PC4:7
- *  Rows (inputs):
- *    KB_COL00:04 = PC8:12
- *    KB_COL05:06 = PC14:15
- *    KB_COL07 = PD2
- *  Other:
- *
- *
- * Discovery:
- *
- *  Columns (outputs):
- *    KB_ROW00 = PB5
- *    KB_ROW01 = PB8
- *    KB_ROW02:05 = PB12:15
- *    KB_ROW06:08 = PC0:2
- *    KB_ROW09:10 = PA1:2
- *    KB_ROW11:12 = PC6:7
- *  Rows (inputs):
- *    KB_COL00:04 = PC8:12
- *    KB_COL05:06 = PC14:15
- *    KB_COL07 = PD2
- *  Other:
- *
- * TODO: clean up the nomenclature above; it's weird that KB_ROW00 is a column
- * and KB_COL00 is a row...
- */
 
 extern struct gpio_info gpio_list[];
 
@@ -99,70 +62,6 @@ struct kbc_gpio {
 	int pin;
 };
 
-const struct kbc_gpio kbc_outputs[] = {
-	/* Keep this in order of column number */
-#if defined(BOARD_daisy)
-	{  0, GPIO_B,  5 },	/* KB_ROW00: PB5 */
-	{  1, GPIO_B,  8 },	/* KB_ROW01: PB8 */
-	{  2, GPIO_B, 12 },	/* KB_ROW02: PB12 */
-	{  3, GPIO_B, 13 },	/* KB_ROW03: PB13 */
-	{  4, GPIO_B, 14 },	/* KB_ROW04: PB14 */
-	{  5, GPIO_B, 15 },	/* KB_ROW05: PB15 */
-	{  6, GPIO_C,  0 },	/* KB_ROW06: PC0 */
-	{  7, GPIO_C,  1 },	/* KB_ROW07: PC1 */
-	{  8, GPIO_C,  2 },	/* KB_ROW08: PC2 */
-	{  9, GPIO_C,  4 },	/* KB_ROW09: PC4 */
-	{ 10, GPIO_C,  5 },	/* KB_ROW10: PC5 */
-	{ 11, GPIO_C,  6 },	/* KB_ROW11: PC6 */
-	{ 12, GPIO_C,  7 },	/* KB_ROW12: PC7 */
-#elif defined(BOARD_discovery)
-	{  0, GPIO_B,  5 },	/* KB_ROW00: PB5 */
-	{  1, GPIO_B,  8 },	/* KB_ROW01: PB8 */
-	{  2, GPIO_B, 12 },	/* KB_ROW02: PB12 */
-	{  3, GPIO_B, 13 },	/* KB_ROW03: PB13 */
-	{  4, GPIO_B, 14 },	/* KB_ROW04: PB14 */
-	{  5, GPIO_B, 15 },	/* KB_ROW05: PB15 */
-	{  6, GPIO_C,  0 },	/* KB_ROW06: PC0 */
-	{  7, GPIO_C,  1 },	/* KB_ROW07: PC1 */
-	{  8, GPIO_C,  2 },	/* KB_ROW08: PC2 */
-	{  9, GPIO_A,  1 },	/* KB_ROW09: PA1 */
-	{ 10, GPIO_A,  2 },	/* KB_ROW10: PA2 */
-	{ 11, GPIO_C,  6 },	/* KB_ROW11: PC6 */
-	{ 12, GPIO_C,  7 },	/* KB_ROW12: PC7 */
-#elif defined(BOARD_adv)
-	{  0, GPIO_B,  5 },	/* KB_ROW00: PB5 */
-	{  1, GPIO_B,  8 },	/* KB_ROW01: PB8 */
-	{  2, GPIO_B, 12 },	/* KB_ROW02: PB12 */
-	{  3, GPIO_B, 14 },	/* KB_ROW03: PB14 */
-	{  4, GPIO_B, 15 },	/* KB_ROW04: PB15 */
-	{  5, GPIO_C,  0 },	/* KB_ROW05: PC0 */
-	{  6, GPIO_C,  2 },	/* KB_ROW06: PC2 */
-	{  7, GPIO_C,  4 },	/* KB_ROW07: PC4 */
-	{  8, GPIO_C,  5 },	/* KB_ROW08: PC5 */
-	{  9, GPIO_C,  6 },	/* KB_ROW09: PC6 */
-	{ 10, GPIO_B, 13 },	/* KB_ROW10: PB13 */
-	{ 11, GPIO_C,  1 },	/* KB_ROW11: PC1 */
-	{ 12, GPIO_C,  7 },	/* KB_ROW12: PC7 */
-#else
-#error "Need to define columns (outputs) for this board"
-#endif
-};
-
-const struct kbc_gpio kbc_inputs[] = {
-#if defined(BOARD_daisy) || defined(BOARD_discovery) || defined(BOARD_adv)
-	{  0, GPIO_C,  8 },	/* KB_COL00: PC8 */
-	{  1, GPIO_C,  9 },	/* KB_COL01: PC9 */
-	{  2, GPIO_C, 10 },	/* KB_COL02: PC10 */
-	{  3, GPIO_C, 11 },	/* KB_COL03: PC11 */
-	{  4, GPIO_C, 12 },	/* KB_COL04: PC12 */
-	{  5, GPIO_C, 14 },	/* KB_COL05: PC14 */
-	{  6, GPIO_C, 15 },	/* KB_COL06: PC15 */
-	{  7, GPIO_D,  2 },	/* KB_COL07: PD2 */
-#else
-#error "Need to define rows (inputs) for this board"
-#endif
-};
-
 #if defined(BOARD_daisy) || defined(BOARD_adv)
 static const uint32_t ports[] = { GPIO_B, GPIO_C, GPIO_D };
 #elif defined(BOARD_discovery)
@@ -182,30 +81,29 @@ void board_keyboard_scan_ready(void)
 
 static void select_column(int col)
 {
-	int i;
-	int done = 0;
+	int i, done = 0;
 
 	for (i = 0; i < ARRAY_SIZE(ports); i++) {
 		uint32_t bsrr = 0;
 		int j;
 
-		for (j = 0; j < ARRAY_SIZE(kbc_outputs); j++) {
-			if (kbc_outputs[j].port != ports[i])
+		for (j = GPIO_KB_OUT00; j < GPIO_KB_OUT12; j++) {
+			if (gpio_list[j].port != ports[i])
 				continue;
 
 			if (col == COL_ASSERT_ALL) {
 				/* drive low (clear output data) */
-				bsrr |= (1 << (kbc_outputs[j].pin)) << 16;
+				bsrr |= gpio_list[j].mask << 16;
 			} else if (col == COL_TRI_STATE_ALL) {
 				/* put column in hi-Z state (set output data) */
-				bsrr |= 1 << (kbc_outputs[j].pin);
+				bsrr |= gpio_list[j].mask;
 			} else {
 				/* drive specified column low, others => hi-Z */
-				if (kbc_outputs[j].num == col) {
+				if (j - GPIO_KB_OUT00 == col) {
 					/* to avoid conflict, tri-state all
 					 * columns first, then assert column */
 					select_column(COL_TRI_STATE_ALL);
-					bsrr |= (1 << kbc_outputs[j].pin) << 16;
+					bsrr |= gpio_list[j].mask << 16;
 					done = 1;
 					break;
 				}
@@ -223,81 +121,15 @@ static void select_column(int col)
 
 int keyboard_scan_init(void)
 {
-	int i, j;
-	uint32_t tmp32;
-	uint16_t tmp16;
+	int i;
 
-	/* initialize outputs (pull-up, open-drain)
-	 * TODO: this should be done via GPIO declaration in board.c */
-	for (i = 0; i < ARRAY_SIZE(ports); i++) {
-		uint32_t mask32 = 0, mode = 0, pupd = 0;
-		uint16_t mask16 = 0, otype = 0;
-
-		for (j = 0; j < ARRAY_SIZE(kbc_outputs); j++) {
-			if (kbc_outputs[j].port != ports[i])
-				continue;
-
-			mask32 |= 3 << (kbc_outputs[j].pin * 2);
-			mask16 |= 1 << kbc_outputs[j].pin;
-
-			/* output mode */
-			mode |= 1 << (kbc_outputs[j].pin * 2);
-
-			/* pull-up */
-			pupd |= 1 << (kbc_outputs[j].pin * 2);
-
-			/* open-drain */
-			otype |= 1 << kbc_outputs[j].pin;
-		}
-
-		if (!mask32)	/* nothing to do on this port */
-			continue;
-
-		tmp32 = STM32L_GPIO_MODER_OFF(ports[i]);
-		tmp32 = (tmp32 & ~mask32) | mode;
-		STM32L_GPIO_MODER_OFF(ports[i]) = tmp32;
-
-		tmp32 = STM32L_GPIO_PUPDR_OFF(ports[i]);
-		tmp32 = (tmp32 & ~mask32) | pupd;
-		STM32L_GPIO_PUPDR_OFF(ports[i]) = tmp32;
-
-		tmp16 = STM32L_GPIO_OTYPER_OFF(ports[i]);
-		tmp16 = (tmp16 & ~mask16) | otype;
-		STM32L_GPIO_OTYPER_OFF(ports[i]) = tmp16;
-	}
+	uart_printf("[kbscan %s()] initializing keyboard...\n", __func__);
 
 	/* Tri-state (put into Hi-Z) the outputs */
 	select_column(COL_TRI_STATE_ALL);
 
-	/* initialize inputs
-	 * TODO: this should be done via GPIO declaration in board.c */
-	for (i = 0; i < ARRAY_SIZE(ports); i++) {
-		uint32_t mask32 = 0, pupd = 0;
-
-		for (j = 0; j < ARRAY_SIZE(kbc_inputs); j++) {
-			if (kbc_inputs[j].port != ports[i])
-				continue;
-
-			mask32 |= 3 << (kbc_inputs[j].pin * 2);
-
-			/* pull-up */
-			pupd |= 1 << (kbc_inputs[j].pin * 2);
-		}
-
-		if (!mask32)
-			continue;	/* nothing to do on this port */
-
-		STM32L_GPIO_MODER_OFF(ports[i]) &= ~mask32;
-
-		tmp32 = STM32L_GPIO_PUPDR_OFF(ports[i]);
-		tmp32 = (tmp32 & ~mask32) | pupd;
-		STM32L_GPIO_PUPDR_OFF(ports[i]) = tmp32;
-	}
-
-	/*
-	 * Initialize raw state since host may request it before
-	 * a key has been pressed (e.g. during keyboard driver init)
-	 */
+	/* initialize raw state since host may request it before
+	 * a key has been pressed (e.g. during keyboard driver init) */
 	for (i = 0; i < ARRAY_SIZE(raw_state); i++)
 		raw_state[i] = 0x00;
 
@@ -422,15 +254,15 @@ void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
 
-	/* Enable interrupts for keyboard rows */
-	gpio_enable_interrupt(KB_COL00);
-	gpio_enable_interrupt(KB_COL01);
-	gpio_enable_interrupt(KB_COL02);
-	gpio_enable_interrupt(KB_COL03);
-	gpio_enable_interrupt(KB_COL04);
-	gpio_enable_interrupt(KB_COL05);
-	gpio_enable_interrupt(KB_COL06);
-	gpio_enable_interrupt(KB_COL07);
+	/* Enable interrupts for keyboard matrix inputs */
+	gpio_enable_interrupt(GPIO_KB_IN00);
+	gpio_enable_interrupt(GPIO_KB_IN01);
+	gpio_enable_interrupt(GPIO_KB_IN02);
+	gpio_enable_interrupt(GPIO_KB_IN03);
+	gpio_enable_interrupt(GPIO_KB_IN04);
+	gpio_enable_interrupt(GPIO_KB_IN05);
+	gpio_enable_interrupt(GPIO_KB_IN06);
+	gpio_enable_interrupt(GPIO_KB_IN07);
 
 	while (1) {
 		wait_for_interrupt();
