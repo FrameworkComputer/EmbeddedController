@@ -26,7 +26,7 @@ enum scancode_set_list {
 
 
 /* The initialize code of keyboard lib. Called by core main. */
-enum ec_error_list keyboard_init(void);
+int keyboard_init(void);
 
 
 /* Called by keyboard scan code once any key state change (after de-bounce),

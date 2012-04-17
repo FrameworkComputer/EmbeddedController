@@ -13,6 +13,7 @@
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -799,3 +800,18 @@ static int command_keyboard_press(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press);
+
+
+int keyboard_init(void)
+{
+	/* If the host is still alive during the EC resets (ex. reboot_ec),
+	 * we should enable keyboard so that the user can type. */
+	enum system_reset_cause_t reset_cause = system_get_reset_cause();
+	if (reset_cause == SYSTEM_RESET_SOFT_WARM ||
+	    reset_cause == SYSTEM_RESET_WATCHDOG ||
+	    reset_cause == SYSTEM_RESET_SOFT_COLD ) {
+		i8042_enable_keyboard_irq();
+	}
+
+	return 0;
+}

@@ -99,6 +99,9 @@ int main(void)
 #ifdef CONFIG_EOPTION
 	eoption_init();
 #endif
+#ifdef CONFIG_TASK_I8042CMD
+	keyboard_init();
+#endif
 #ifdef CONFIG_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
