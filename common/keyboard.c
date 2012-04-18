@@ -805,12 +805,13 @@ DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press);
 int keyboard_init(void)
 {
 	/* If the host is still alive during the EC resets (ex. reboot_ec),
-	 * we should enable keyboard so that the user can type. */
+	 * we should restore keyboard states so that the user can type. */
 	enum system_reset_cause_t reset_cause = system_get_reset_cause();
 	if (reset_cause == SYSTEM_RESET_SOFT_WARM ||
 	    reset_cause == SYSTEM_RESET_WATCHDOG ||
 	    reset_cause == SYSTEM_RESET_SOFT_COLD ) {
 		i8042_enable_keyboard_irq();
+		controller_ram[0] &= ~I8042_XLATE;
 	}
 
 	return 0;
