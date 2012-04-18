@@ -11,6 +11,7 @@
 #include "config.h"
 #include "registers.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -76,6 +77,7 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	uart_emergency_flush();
 }
 
+
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void) __attribute__((naked));
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 {
@@ -118,11 +120,13 @@ void watchdog_reload(void)
 }
 
 
-void watchdog_clock_changed(int freq)
+static int watchdog_freq_changed(void)
 {
 	/* Set the timeout period */
-	watchdog_period = WATCHDOG_PERIOD_MS * (freq / 1000);
+	watchdog_period = WATCHDOG_PERIOD_MS * (clock_get_freq() / 1000);
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_FREQ_CHANGE, watchdog_freq_changed, HOOK_PRIO_DEFAULT);
 
 
 int watchdog_init(void)
@@ -138,7 +142,7 @@ int watchdog_init(void)
 	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
 
 	/* Set initial timeout period */
-	watchdog_clock_changed(clock_get_freq());
+	watchdog_freq_changed();
 	LM4_WATCHDOG_LOAD(0) = watchdog_period;
 
 	/* De-activate the watchdog when the JTAG stops the CPU */

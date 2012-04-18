@@ -5,8 +5,8 @@
 
 /* Hardware timer driver API */
 
-#ifndef __EC_HWTIMER_H
-#define __EC_HWTIMER_H
+#ifndef __CROS_EC_HWTIMER_H
+#define __CROS_EC_HWTIMER_H
 
 /**
  * Programs when the next timer should fire an interrupt.
@@ -30,9 +30,6 @@ uint32_t __hw_clock_source_read(void);
  */
 int __hw_clock_source_init(void);
 
-/* Notifies the module the system clock frequency has changed to <freq>. */
-void hwtimer_clock_changed(int freq);
-
 /**
  * Searches the next deadline and program it in the timer hardware.
  *
@@ -43,4 +40,4 @@ void hwtimer_clock_changed(int freq);
  */
 void process_timers(int overflow);
 
-#endif  /* __EC_HWTIMER_H */
+#endif  /* __CROS_EC_HWTIMER_H */

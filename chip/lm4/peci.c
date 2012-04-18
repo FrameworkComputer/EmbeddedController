@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "peci.h"
 #include "registers.h"
 #include "temp_sensor.h"
@@ -70,8 +71,9 @@ int peci_temp_sensor_get_val(int idx)
 }
 
 
-void peci_clock_changed(int freq)
+static int peci_freq_changed(void)
 {
+	int freq = clock_get_freq();
 	int baud;
 
 	/* Disable polling while reconfiguring */
@@ -88,7 +90,10 @@ void peci_clock_changed(int freq)
 
 	/* Set up temperature monitoring to report in degrees K */
 	LM4_PECI_CTL = ((PECI_TJMAX + 273) << 22) | 0x2001;
+
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT - 1);
 
 /*****************************************************************************/
 /* Console commands */
@@ -121,7 +126,7 @@ int peci_init(void)
 	configure_gpios();
 
 	/* Set initial clock frequency */
-	peci_clock_changed(clock_get_freq());
+	peci_freq_changed();
 
 	return EC_SUCCESS;
 }

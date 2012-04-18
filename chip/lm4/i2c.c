@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
@@ -260,8 +261,10 @@ exit:
 }
 
 
-void i2c_clock_changed(int freq)
+static int i2c_freq_changed(void)
 {
+	int freq = clock_get_freq();
+
 	LM4_I2C_MTPR(I2C_PORT_THERMAL) =
 		(freq / (I2C_SPEED_THERMAL * 10 * 2)) - 1;
 	LM4_I2C_MTPR(I2C_PORT_BATTERY) =
@@ -270,7 +273,10 @@ void i2c_clock_changed(int freq)
 		(freq / (I2C_SPEED_CHARGER * 10 * 2)) - 1;
 	LM4_I2C_MTPR(I2C_PORT_LIGHTBAR) =
 		(freq / (I2C_SPEED_LIGHTBAR * 10 * 2)) - 1;
+
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT + 1);
 
 /*****************************************************************************/
 /* Interrupt handlers */
@@ -306,7 +312,6 @@ DECLARE_IRQ(LM4_IRQ_I2C5, i2c5_interrupt, 2);
 
 /*****************************************************************************/
 /* Console commands */
-
 
 static void scan_bus(int port, char *desc)
 {
@@ -457,7 +462,7 @@ int i2c_init(void)
 	LM4_I2C_MCR(I2C_PORT_LIGHTBAR) = 0x10;
 
 	/* Set initial clock frequency */
-	i2c_clock_changed(clock_get_freq());
+	i2c_freq_changed();
 
 	/* Enable irqs */
 	task_enable_irq(LM4_IRQ_I2C0);

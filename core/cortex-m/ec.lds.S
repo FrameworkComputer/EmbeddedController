@@ -34,13 +34,24 @@ SECTIONS
         __irqprio = .;
         *(.rodata.irqprio)
         __irqprio_end = .;
+
         . = ALIGN(4);
         __cmds = .;
         *(.rodata.cmds)
         __cmds_end = .;
+
+        . = ALIGN(4);
         __hcmds = .;
         *(.rodata.hcmds)
         __hcmds_end = .;
+
+        . = ALIGN(4);
+        __hooks_freq_change = .;
+        *(.rodata.HOOK_FREQ_CHANGE)
+        __hooks_freq_change_end = .;
+
+
+        . = ALIGN(4);
         *(.rodata*)
         . = ALIGN(4);
 #ifdef COMPILE_FOR_RAM

@@ -10,6 +10,7 @@
 #include "config.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -178,34 +179,10 @@ static int command_sleep(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 
 
-/* TODO: temporary holding place for notifying modules of clock change.  Should
- * be moved to main.c after we finish measuring the power savings, so the clock
- * frequency is automatically dropped after verified boot. */
-#include "i2c.h"
-#include "hwtimer.h"
-#include "peci.h"
-#include "watchdog.h"
-
 static int command_disable_pll(int argc, char **argv)
 {
-	int freq;
-
-	clock_disable_pll();
-
 	/* Notify modules of frequency change */
-	freq = clock_get_freq();
-	hwtimer_clock_changed(freq);
-#ifdef CONFIG_TASK_WATCHDOG
-	watchdog_clock_changed(freq);
-#endif
-#ifdef CONFIG_I2C
-	i2c_clock_changed(freq);
-#endif
-#ifdef CONFIG_PECI
-	peci_clock_changed(freq);
-#endif
-
-	return EC_SUCCESS;
+	return hook_notify(HOOK_FREQ_CHANGE, 0);
 }
 DECLARE_CONSOLE_COMMAND(nopll, command_disable_pll);
 

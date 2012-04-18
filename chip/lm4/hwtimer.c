@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "clock.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "task.h"
@@ -21,10 +22,12 @@ void __hw_clock_event_set(uint32_t deadline)
 	LM4_TIMER_IMR(6) |= 0x10;
 }
 
+
 uint32_t __hw_clock_event_get(void)
 {
 	return 0xffffffff - LM4_TIMER_TAMATCHR(6);
 }
+
 
 void __hw_clock_event_clear(void)
 {
@@ -32,10 +35,12 @@ void __hw_clock_event_clear(void)
 	LM4_TIMER_IMR(6) &= ~0x10;
 }
 
+
 uint32_t __hw_clock_source_read(void)
 {
 	return 0xffffffff - LM4_TIMER_TAV(6);
 }
+
 
 static void __hw_clock_source_irq(void)
 {
@@ -53,12 +58,15 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(LM4_IRQ_TIMERW0A, __hw_clock_source_irq, 1);
 
 
-void hwtimer_clock_changed(int freq)
+static int update_prescaler(void)
 {
 	/* Set the prescaler to increment every microsecond.  This takes
 	 * effect immediately, because the TAILD bit in TAMR is clear. */
-	LM4_TIMER_TAPR(6) = freq / US_PER_SECOND;
+	LM4_TIMER_TAPR(6) = clock_get_freq() / US_PER_SECOND;
+
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
 
 int __hw_clock_source_init(void)
@@ -80,8 +88,8 @@ int __hw_clock_source_init(void)
 	/* 32-bit timer mode */
 	LM4_TIMER_CFG(6) = 4;
 
-	/* Set initial clock frequency */
-	hwtimer_clock_changed(clock_get_freq());
+	/* Set initial prescaler */
+	update_prescaler();
 
 	/* Periodic mode, counting down */
 	LM4_TIMER_TAMR(6) = 0x22;

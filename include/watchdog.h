@@ -15,7 +15,4 @@ int watchdog_init(int period_ms);
 /* Reload the watchdog counter */
 void watchdog_reload(void);
 
-/* Notifies the module the system clock frequency has changed to <freq>. */
-void watchdog_clock_changed(int freq);
-
 #endif /* __CROS_EC_WATCHDOG_H */

@@ -10,21 +10,16 @@
 
 #include "common.h"
 
-struct temp_sensor_t;
-
-/* Initializes the module. */
+/* Initialize the module. */
 int peci_init(void);
 
-/* Notifies the module the system clock frequency has changed to <freq>. */
-void peci_clock_changed(int freq);
-
-/* Returns the current CPU temperature in degrees K, or -1 if error.
+/* Return the current CPU temperature in degrees K, or -1 if error.
  *
  * Note that the PECI interface is currently a little flaky; if you get an
  * error, retry a bit later. */
 int peci_get_cpu_temp(void);
 
-/* Reads the CPU temperature sensor via PECI.  This interface is for the
+/* Read the CPU temperature sensor via PECI.  This interface is for the
  * temperature sensor module.  Returns the temperature in degrees K, or -1 if
  * error. */
 int peci_temp_sensor_get_val(int idx);
