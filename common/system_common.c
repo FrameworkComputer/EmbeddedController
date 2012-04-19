@@ -253,6 +253,16 @@ static int command_sysinfo(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
 
 
+static int command_chipinfo(int argc, char **argv)
+{
+	uart_printf("Chip vendor:   %s\n", system_get_chip_vendor());
+	uart_printf("Chip name:     %s\n", system_get_chip_name());
+	uart_printf("Chip revision: %s\n", system_get_chip_revision());
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(chipinfo, command_chipinfo);
+
+
 static int command_set_scratchpad(int argc, char **argv)
 {
 	int s;
