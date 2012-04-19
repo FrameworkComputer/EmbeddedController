@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -42,10 +42,7 @@ struct temp_sensor_t {
 	int idx;
 };
 
-/* Initializes the module. */
-int temp_sensor_init(void);
-
-/* Returns the most recently measured temperature for the sensor in K,
+/* Return the most recently measured temperature for the sensor in K,
  * or -1 if error. */
 int temp_sensor_read(enum temp_sensor_id id);
 

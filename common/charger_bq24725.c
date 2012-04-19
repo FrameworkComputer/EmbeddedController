@@ -160,8 +160,8 @@ int charger_set_voltage(int voltage)
 	return sbc_write(SB_CHARGING_VOLTAGE, voltage);
 }
 
-/* Initialization */
-int charger_init(void)
+/* Charging power state initialization */
+int charger_post_init(void)
 {
 	/* bq24725 power on reset state:
 	 * watch dog timer     = 175 sec
@@ -169,12 +169,7 @@ int charger_init(void)
 	 * charging voltage    = 0 mV
 	 * charging current    = 0 mA
 	 */
-	return EC_SUCCESS;
-}
 
-/* Charging power state initialization */
-int charger_post_init(void)
-{
 	/* Set charger input current limit */
 	return charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
 }

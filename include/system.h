@@ -53,9 +53,6 @@ int system_pre_init(void);
  * system_pre_init(). */
 int system_common_pre_init(void);
 
-/* Initializes the system module. */
-int system_init(void);
-
 /* Returns the cause of the last reset, or SYSTEM_RESET_UNKNOWN if
  * the cause is not known. */
 enum system_reset_cause_t system_get_reset_cause(void);

@@ -114,13 +114,13 @@ int main(void)
 	 * RO image and once in the RW image. */
 	vboot_init();
 
-	system_init();
+	/* Initialize driver modules.  These can occur in any order.  State
+	 * machines are initialized in their task functions, not here. */
+
 	gpio_init();
 
 #ifdef CONFIG_LPC
-	port_80_init();
 	lpc_init();
-	uart_comx_enable();
 #endif
 #ifdef CONFIG_SPI
 	spi_init();
@@ -131,10 +131,6 @@ int main(void)
 #ifdef CONFIG_I2C
 	i2c_init();
 #endif
-#ifdef CONFIG_TASK_TEMPSENSOR
-	temp_sensor_init();
-	chip_temp_sensor_init();
-#endif
 #ifdef CONFIG_TASK_POWERBTN
 	power_button_init();
 #endif
@@ -143,9 +139,6 @@ int main(void)
 #endif
 #ifdef CONFIG_ONEWIRE
 	onewire_init();
-#endif
-#ifdef CONFIG_CHARGER
-	charger_init();
 #endif
 #ifdef CONFIG_PECI
 	peci_init();
