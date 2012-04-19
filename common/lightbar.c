@@ -53,7 +53,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_GREEN 0x38
 #define MAX_BLUE  0x67
 
-/* How many LEDs do we have? Right now, only four. */
+/* How many LEDs do we have? */
 #define NUM_LEDS 4
 
 /* How we'd like to see the driver chips initialized. The controllers have some
@@ -119,6 +119,22 @@ static inline uint8_t scale(int val, int max)
 	return scale_abs((val * brightness)/255, max);
 }
 
+
+/* Helper function. */
+static void setrgb(int led, int red, int green, int blue)
+{
+	int ctrl, bank;
+	current[led][0] = red;
+	current[led][1] = green;
+	current[led][2] = blue;
+	ctrl = led_to_ctrl[led];
+	bank = led_to_isc[led];
+	controller_write(ctrl, bank, scale(blue, MAX_BLUE));
+	controller_write(ctrl, bank+1, scale(red, MAX_RED));
+	controller_write(ctrl, bank+2, scale(green, MAX_GREEN));
+}
+
+
 /******************************************************************************/
 /* Basic LED control functions. */
 /******************************************************************************/
@@ -139,18 +155,17 @@ static void lightbar_on(void)
 	controller_write(1, 0x01, 0x20);
 }
 
-/* LEDs are numbered 0-3, RGB values should be in 0-255. */
-static void lightbar_setcolor(int led, int red, int green, int blue)
+
+/* LEDs are numbered 0-3, RGB values should be in 0-255.
+ * If you specify too large an LED, it sets them all. */
+static void lightbar_setrgb(int led, int red, int green, int blue)
 {
-	int ctrl, bank;
-	current[led][0] = red;
-	current[led][1] = green;
-	current[led][2] = blue;
-	ctrl = led_to_ctrl[led];
-	bank = led_to_isc[led];
-	controller_write(ctrl, bank, scale(blue, MAX_BLUE));
-	controller_write(ctrl, bank+1, scale(red, MAX_RED));
-	controller_write(ctrl, bank+2, scale(green, MAX_GREEN));
+	int i;
+	if (led >= NUM_LEDS)
+		for (i = 0; i < NUM_LEDS; i++)
+			setrgb(i, red, green, blue);
+	else
+		setrgb(led, red, green, blue);
 }
 
 static inline void lightbar_brightness(int newval)
@@ -159,7 +174,7 @@ static inline void lightbar_brightness(int newval)
 	uart_printf("%s[(%d)]\n", __func__, newval);
 	brightness = newval;
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setcolor(i, current[i][0],
+		lightbar_setrgb(i, current[i][0],
 				  current[i][1], current[i][2]);
 }
 
@@ -198,7 +213,7 @@ static uint32_t sequence_s5(void)
 	/* For now, do something to indicate S5. We might see it. */
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setcolor(i, 255, 0, 0);
+		lightbar_setrgb(i, 255, 0, 0);
 
 	/* The lightbar loses power in S5, so just wait forever. */
 	WAIT_OR_RET(-1);
@@ -221,7 +236,7 @@ static uint32_t sequence_s5s3(void)
 	 * We might see it. */
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setcolor(i, 255, 255, 255);
+		lightbar_setrgb(i, 255, 255, 255);
 	WAIT_OR_RET(500000);
 
 	return 0;
@@ -240,9 +255,9 @@ static uint32_t sequence_s0(void)
 		l = l % NUM_LEDS;
 		n = n % 5;
 		if (n == 4)
-			lightbar_setcolor(l, 0, 0, 0);
+			lightbar_setrgb(l, 0, 0, 0);
 		else
-			lightbar_setcolor(l, testy[n].r,
+			lightbar_setrgb(l, testy[n].r,
 					  testy[n].g, testy[n].b);
 		l++;
 		n++;
@@ -257,18 +272,18 @@ static uint32_t sequence_s0s3(void)
 {
 	uart_printf("[%s()]\n", __func__);
 	lightbar_on();
-	lightbar_setcolor(0, 0, 0, 255);
-	lightbar_setcolor(1, 255, 0, 0);
-	lightbar_setcolor(2, 255, 255, 0);
-	lightbar_setcolor(3, 0, 255, 0);
+	lightbar_setrgb(0, 0, 0, 255);
+	lightbar_setrgb(1, 255, 0, 0);
+	lightbar_setrgb(2, 255, 255, 0);
+	lightbar_setrgb(3, 0, 255, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(0, 0, 0, 0);
+	lightbar_setrgb(0, 0, 0, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(1, 0, 0, 0);
+	lightbar_setrgb(1, 0, 0, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(2, 0, 0, 0);
+	lightbar_setrgb(2, 0, 0, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(3, 0, 0, 0);
+	lightbar_setrgb(3, 0, 0, 0);
 	return 0;
 }
 
@@ -279,18 +294,18 @@ static uint32_t sequence_s3(void)
 	uart_printf("[%s()]\n", __func__);
 	lightbar_off();
 	lightbar_init_vals();
-	lightbar_setcolor(0, 0, 0, 0);
-	lightbar_setcolor(1, 0, 0, 0);
-	lightbar_setcolor(2, 0, 0, 0);
-	lightbar_setcolor(3, 0, 0, 0);
+	lightbar_setrgb(0, 0, 0, 0);
+	lightbar_setrgb(1, 0, 0, 0);
+	lightbar_setrgb(2, 0, 0, 0);
+	lightbar_setrgb(3, 0, 0, 0);
 	while (1) {
 		WAIT_OR_RET(3000000);
 		lightbar_on();
 		i = i % NUM_LEDS;
 		/* FIXME: indicate battery level? */
-		lightbar_setcolor(i, testy[i].r, testy[i].g, testy[i].b);
+		lightbar_setrgb(i, testy[i].r, testy[i].g, testy[i].b);
 		WAIT_OR_RET(100000);
-		lightbar_setcolor(i, 0, 0, 0);
+		lightbar_setrgb(i, 0, 0, 0);
 		i++;
 		lightbar_off();
 	}
@@ -304,13 +319,13 @@ static uint32_t sequence_s3s0(void)
 	uart_printf("[%s()]\n", __func__);
 	lightbar_init_vals();
 	lightbar_on();
-	lightbar_setcolor(0, 0, 0, 255);
+	lightbar_setrgb(0, 0, 0, 255);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(1, 255, 0, 0);
+	lightbar_setrgb(1, 255, 0, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(2, 255, 255, 0);
+	lightbar_setrgb(2, 255, 255, 0);
 	WAIT_OR_RET(200000);
-	lightbar_setcolor(3, 0, 255, 0);
+	lightbar_setrgb(3, 0, 255, 0);
 	WAIT_OR_RET(200000);
 	return 0;
 }
@@ -326,7 +341,7 @@ static uint32_t sequence_s3s5(void)
 	 * We might see it. */
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setcolor(i, 0, 0, 255);
+		lightbar_setrgb(i, 0, 0, 255);
 	WAIT_OR_RET(500000);
 
 	return 0;
@@ -349,7 +364,7 @@ static uint32_t sequence_test(void)
 				r = testy[i].r ? k : 0;
 				g = testy[i].g ? k : 0;
 				b = testy[i].b ? k : 0;
-				lightbar_setcolor(j, r, g, b);
+				lightbar_setrgb(j, r, g, b);
 			}
 			WAIT_OR_RET(10000);
 		}
@@ -358,7 +373,7 @@ static uint32_t sequence_test(void)
 				r = testy[i].r ? k : 0;
 				g = testy[i].g ? k : 0;
 				b = testy[i].b ? k : 0;
-				lightbar_setcolor(j, r, g, b);
+				lightbar_setrgb(j, r, g, b);
 			}
 			WAIT_OR_RET(10000);
 		}
@@ -373,38 +388,28 @@ static uint32_t sequence_test(void)
 static uint32_t sequence_pulse(void)
 {
 	uint32_t msg;
-	int r, g, b;
+	int r = scale(255, MAX_RED);
+	int g = scale(255, MAX_BLUE);
+	int b = scale(255, MAX_GREEN);
+	struct initdata_s pulse_vals[] = {
+		{0x11, 0xce},
+		{0x12, 0x67},
+		{0x13, 0xef},
+		{0x15, b},
+		{0x16, r},
+		{0x17, g},
+		{0x18, b},
+		{0x19, r},
+		{0x1a, g},
+	};
 
 	uart_printf("[%s()]\n", __func__);
-
-	r = scale(255, MAX_RED);
-	g = scale(255, MAX_BLUE);
-	b = scale(255, MAX_GREEN);
 
 	lightbar_init_vals();
 	lightbar_on();
 
-	controller_write(0, 0x11, 0xce);
-	controller_write(0, 0x12, 0x67);
-	controller_write(0, 0x13, 0xef);
-
-	controller_write(0, 0x15, b);
-	controller_write(0, 0x16, r);
-	controller_write(0, 0x17, g);
-	controller_write(0, 0x18, b);
-	controller_write(0, 0x19, r);
-	controller_write(0, 0x1a, g);
-
-	controller_write(1, 0x11, 0xce);
-	controller_write(1, 0x12, 0x67);
-	controller_write(1, 0x13, 0xcd);
-
-	controller_write(1, 0x15, b);
-	controller_write(1, 0x16, r);
-	controller_write(1, 0x17, g);
-	controller_write(1, 0x18, b);
-	controller_write(1, 0x19, r);
-	controller_write(1, 0x1a, g);
+	set_from_array(pulse_vals, ARRAY_SIZE(pulse_vals));
+	controller_write(1, 0x13, 0xcd);	/* this one's different */
 
 	/* Not using WAIT_OR_RET() here, because we want to clean up when we're
 	 * done. The only way out is to get a message. */
@@ -413,13 +418,155 @@ static uint32_t sequence_pulse(void)
 	return TASK_EVENT_CUSTOM(msg);
 }
 
+
+
+/* The host CPU (or someone) is going to poke at the lightbar directly, so we
+ * don't want the EC messing with it. We'll just sit here and ignore all
+ * other messages until we're told to continue. */
+static uint32_t sequence_ec_stop(void)
+{
+	uint32_t msg;
+
+	uart_printf("[%s()]\n", __func__);
+
+	do {
+		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
+		uart_printf("[%s - got msg %x]\n", __func__, msg);
+	} while (msg != LIGHTBAR_EC_RUN);
+	/* FIXME: What should we do if the host shuts down? */
+
+	uart_printf("[%s() - leaving]\n", __func__);
+
+	return 0;
+}
+
+/* We shouldn't come here, but if we do it shouldn't hurt anything */
+static uint32_t sequence_error(void)
+{
+	uart_printf("[%s()]\n", __func__);
+
+	lightbar_init_vals();
+	lightbar_on();
+
+	lightbar_setrgb(0, 255, 255, 255);
+	lightbar_setrgb(1, 255, 0, 255);
+	lightbar_setrgb(2, 0, 255, 255);
+	lightbar_setrgb(3, 255, 255, 255);
+
+	WAIT_OR_RET(10000000);
+
+	return 0;
+}
+
+
+static const struct {
+	uint8_t led;
+	uint8_t r, g, b;
+	unsigned int delay;
+} konami[] = {
+
+	{1, 0xff, 0xff, 0x00, 0},
+	{2, 0xff, 0xff, 0x00, 100000},
+	{1, 0x00, 0x00, 0x00, 0},
+	{2, 0x00, 0x00, 0x00, 100000},
+
+	{1, 0xff, 0xff, 0x00, 0},
+	{2, 0xff, 0xff, 0x00, 100000},
+	{1, 0x00, 0x00, 0x00, 0},
+	{2, 0x00, 0x00, 0x00, 100000},
+
+	{0, 0x00, 0x00, 0xff, 0},
+	{3, 0x00, 0x00, 0xff, 100000},
+	{0, 0x00, 0x00, 0x00, 0},
+	{3, 0x00, 0x00, 0x00, 100000},
+
+	{0, 0x00, 0x00, 0xff, 0},
+	{3, 0x00, 0x00, 0xff, 100000},
+	{0, 0x00, 0x00, 0x00, 0},
+	{3, 0x00, 0x00, 0x00, 100000},
+
+	{0, 0xff, 0x00, 0x00, 0},
+	{1, 0xff, 0x00, 0x00, 100000},
+	{0, 0x00, 0x00, 0x00, 0},
+	{1, 0x00, 0x00, 0x00, 100000},
+
+	{2, 0x00, 0xff, 0x00, 0},
+	{3, 0x00, 0xff, 0x00, 100000},
+	{2, 0x00, 0x00, 0x00, 0},
+	{3, 0x00, 0x00, 0x00, 100000},
+
+	{0, 0xff, 0x00, 0x00, 0},
+	{1, 0xff, 0x00, 0x00, 100000},
+	{0, 0x00, 0x00, 0x00, 0},
+	{1, 0x00, 0x00, 0x00, 100000},
+
+	{2, 0x00, 0xff, 0x00, 0},
+	{3, 0x00, 0xff, 0x00, 100000},
+	{2, 0x00, 0x00, 0x00, 0},
+	{3, 0x00, 0x00, 0x00, 100000},
+
+	{0, 0x00, 0xff, 0xff, 0},
+	{2, 0x00, 0xff, 0xff, 100000},
+	{0, 0x00, 0x00, 0x00, 0},
+	{2, 0x00, 0x00, 0x00, 150000},
+
+	{1, 0xff, 0x00, 0xff, 0},
+	{3, 0xff, 0x00, 0xff, 100000},
+	{1, 0x00, 0x00, 0x00, 0},
+	{3, 0x00, 0x00, 0x00, 250000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+	{4, 0xff, 0xff, 0xff, 100000},
+	{4, 0x00, 0x00, 0x00, 100000},
+
+};
+
+static uint32_t sequence_konami(void)
+{
+	int i;
+	int tmp;
+
+	uart_printf("[%s()]\n", __func__);
+	lightbar_init_vals();
+	lightbar_on();
+
+	tmp = brightness;
+	brightness = 255;
+
+	for (i = 0; i < ARRAY_SIZE(konami); i++) {
+		lightbar_setrgb(konami[i].led,
+				  konami[i].r, konami[i].g, konami[i].b);
+		if (konami[i].delay)
+			usleep(konami[i].delay);
+	}
+
+	brightness = tmp;
+
+	return 0;
+}
+
 /****************************************************************************/
-/* Lightbar task. It just cycles between various pretty patterns. */
+/* The main lightbar task. It just cycles between various pretty patterns. */
 /****************************************************************************/
 
-/* IMPORTANT: The order here must match the enum lightbar_sequence values. */
+/* IMPORTANT: The order here must match the enum lightbar_sequence order.
+ * FIXME: Use some preprocessor tricks to ensure that's always true. */
 static uint32_t (*sequence[])(void) = {
-	0,
+	sequence_error,				/* idle - not used */
 	sequence_s5,
 	sequence_s3,
 	sequence_s0,
@@ -427,8 +574,11 @@ static uint32_t (*sequence[])(void) = {
 	sequence_s3s0,
 	sequence_s0s3,
 	sequence_s3s5,
-	sequence_test,
+	sequence_ec_stop,
+	sequence_error,				/* unexpected ec run */
 	sequence_pulse,
+	sequence_test,
+	sequence_konami,
 };
 
 void lightbar_task(void)
@@ -469,6 +619,10 @@ void lightbar_task(void)
 				state = LIGHTBAR_S5;
 				break;
 			case LIGHTBAR_TEST:
+			case LIGHTBAR_EC_STOP:
+			case LIGHTBAR_EC_RUN:
+			case LIGHTBAR_NULL:
+			case LIGHTBAR_KONAMI:
 				state = previous_state;
 			default:
 				break;
@@ -478,7 +632,7 @@ void lightbar_task(void)
 }
 
 
-/* Request a preset sequence from the lightbar task. */
+/* Function to request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence num)
 {
 	uart_printf("[%s(%d)]\n", __func__, num);
@@ -516,8 +670,8 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_LIGHTBAR_TEST, lpc_cmd_test);
 static int help(const char *cmd)
 {
 	uart_printf("Usage:  %s\n", cmd);
-	uart_printf("        %s reset\n", cmd);
 	uart_printf("        %s off\n", cmd);
+	uart_printf("        %s init\n", cmd);
 	uart_printf("        %s on\n", cmd);
 	uart_printf("        %s msg NUM\n", cmd);
 	uart_printf("        %s brightness NUM\n", cmd);
@@ -543,6 +697,8 @@ static void dump_regs(void)
 
 static int command_lightbar(int argc, char **argv)
 {
+	int i;
+
 	if (1 == argc) {		/* no args = dump 'em all */
 		dump_regs();
 		return EC_SUCCESS;
@@ -592,7 +748,11 @@ static int command_lightbar(int argc, char **argv)
 		int red = strtoi(argv[2], &e, 16);
 		int green = strtoi(argv[3], &e, 16);
 		int blue = strtoi(argv[4], &e, 16);
-		lightbar_setcolor(led, red, green, blue);
+		if (led >= NUM_LEDS)
+			for (i = 0; i < NUM_LEDS; i++)
+				lightbar_setrgb(i, red, green, blue);
+		else
+			lightbar_setrgb(led, red, green, blue);
 		return EC_SUCCESS;
 	}
 
