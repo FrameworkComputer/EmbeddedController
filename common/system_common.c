@@ -6,6 +6,7 @@
 /* System module for Chrome EC : common functions */
 
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
 #include "lpc_commands.h"
@@ -16,22 +17,53 @@
 #include "version.h"
 
 
+struct jump_tag {
+	uint16_t tag;
+	uint8_t data_size;
+	uint8_t data_version;
+};
+
+
 /* Data passed between the current image and the next one when jumping between
  * images. */
 #define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
-#define JUMP_DATA_VERSION 1
+#define JUMP_DATA_VERSION 2
 struct jump_data {
 	/* Add new fields to the _start_ of the struct, since we copy it to the
 	 * _end_ of RAM between images.  This way, the magic number will always
 	 * be the last word in RAM regardless of how many fields are added. */
-	int reset_cause;  /* Reset cause for the previous boot */
-	int version;      /* Version (JUMP_DATA_VERSION) */
-	int magic;        /* Magic number (JUMP_DATA_MAGIC) */
+
+	/* Fields from version 2 */
+	int jump_tag_total;  /* Total size of all jump tags */
+
+	/* Fields from version 1 */
+	int reset_cause;     /* Reset cause for the previous boot */
+	int version;         /* Version (JUMP_DATA_VERSION) */
+	int magic;           /* Magic number (JUMP_DATA_MAGIC).  If this
+			      * doesn't match at pre-init time, assume no valid
+			      * data from the previous image. */
 };
 
+/* Jump data goes at the end of RAM */
+static struct jump_data * const jdata =
+	(struct jump_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
+			     - sizeof(struct jump_data));
 
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 static int jumped_to_image;
+
+
+int system_usable_ram_end(void)
+{
+	/* Leave space at the end of RAM for jump data.
+	 *
+	 * Note that jump_tag_total is 0 on a reboot, so we have the maximum
+	 * amount of RAM available on a reboot; we only lose space for stored
+	 * tags after a sysjump.  When verified boot runs after a reboot, it'll
+	 * have as much RAM as we can give it; after verified boot jumps to
+	 * another image there'll be less RAM, but we'll care less too. */
+	return (uint32_t)jdata - jdata->jump_tag_total;
+}
 
 
 enum system_reset_cause_t system_get_reset_cause(void)
@@ -43,6 +75,56 @@ enum system_reset_cause_t system_get_reset_cause(void)
 int system_jumped_to_this_image(void)
 {
 	return jumped_to_image;
+}
+
+
+int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
+{
+	struct jump_tag *t;
+
+	/* Only allowed during a sysjump */
+	if (jdata->magic != JUMP_DATA_MAGIC)
+		return EC_ERROR_UNKNOWN;
+
+	/* Make room for the new tag */
+	if (size > 255 || (size & 3))
+		return EC_ERROR_INVAL;
+	jdata->jump_tag_total += size + sizeof(struct jump_tag);
+
+	t = (struct jump_tag *)system_usable_ram_end();
+	t->tag = tag;
+	t->data_size = size;
+	t->data_version = version;
+	if (size)
+		memcpy(t + 1, data, size);
+
+	return EC_SUCCESS;
+}
+
+const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
+{
+	const struct jump_tag *t;
+	int used = 0;
+
+	/* Search through tag data for a match */
+	while (used < jdata->jump_tag_total) {
+		/* Check the next tag */
+		t = (const struct jump_tag *)(system_usable_ram_end() + used);
+		used += sizeof(struct jump_tag) + t->data_size;
+		if (t->tag != tag)
+			continue;
+
+		/* Found a match */
+		if (size)
+			*size = t->data_size;
+		if (version)
+			*version = t->data_version;
+
+		return (const uint8_t *)(t + 1);
+	}
+
+	/* If we're still here, no match */
+	return NULL;
 }
 
 
@@ -112,8 +194,6 @@ const char *system_get_image_copy_string(void)
 static void jump_to_image(uint32_t init_addr)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
-	struct jump_data *jdata = (struct jump_data *)
-		(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - sizeof(struct jump_data));
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())
@@ -126,6 +206,10 @@ static void jump_to_image(uint32_t init_addr)
 	jdata->magic = JUMP_DATA_MAGIC;
 	jdata->version = JUMP_DATA_VERSION;
 	jdata->reset_cause = reset_cause;
+	jdata->jump_tag_total = 0;  /* Reset tags */
+
+	/* Call other hooks; these may add tags */
+	hook_notify(HOOK_SYSJUMP, 0);
 
 	/* Jump to the reset vector */
 	resetvec();
@@ -216,19 +300,26 @@ const char *system_get_build_info(void)
 
 int system_common_pre_init(void)
 {
-	struct jump_data *jdata = (struct jump_data *)
-		(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - sizeof(struct jump_data));
-
 	/* Check jump data if this is a jump between images */
 	if (jdata->magic == JUMP_DATA_MAGIC &&
-	    jdata->version == JUMP_DATA_VERSION &&
+	    jdata->version >= 1 &&
 	    reset_cause == SYSTEM_RESET_SOFT_WARM) {
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
 		/* Overwrite the reset cause with the real one */
 		reset_cause = jdata->reset_cause;
-		/* Clear the jump struct's magic number */
+
+		/* Initialize fields added after version 1 */
+		if (jdata->version < 2)
+			jdata->jump_tag_total = 0;
+
+		/* Clear the jump struct's magic number.  This prevents
+		 * accidentally detecting a jump when there wasn't one, and
+		 * disallows use of system_add_jump_tag(). */
 		jdata->magic = 0;
+	} else {
+		/* Clear the whole jump_data struct */
+		memset(jdata, 0, sizeof(struct jump_data));
 	}
 
 	return EC_SUCCESS;

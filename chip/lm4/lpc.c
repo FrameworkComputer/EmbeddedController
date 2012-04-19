@@ -14,10 +14,13 @@
 #include "lpc_commands.h"
 #include "port80.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "util.h"
 
+#define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
@@ -104,104 +107,6 @@ static void lpc_generate_sci(void)
 		uart_printf("[%T sci 0x%08x]\n",
 			    host_events & event_mask[LPC_HOST_EVENT_SCI]);
 }
-
-
-static int lpc_init(void)
-{
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable RGCGLPC then delay a few clocks. */
-	LM4_SYSTEM_RCGCLPC = 1;
-	scratch = LM4_SYSTEM_RCGCLPC;
-
-	LM4_LPC_LPCIM = 0;
-	LM4_LPC_LPCCTL = 0;
-	LM4_LPC_LPCIRQCTL = 0;
-
-	/* Configure GPIOs */
-	configure_gpio();
-
-	/* Set LPC channel 0 to I/O address 0x62 (data) / 0x66 (command),
-	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
-	LM4_LPC_ADR(LPC_CH_KERNEL) = EC_LPC_ADDR_KERNEL_DATA;
-	LM4_LPC_CTL(LPC_CH_KERNEL) = (LPC_POOL_OFFS_KERNEL << (5 - 1));
-	/* Unmask interrupt for host command writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4);
-
-	/* Set LPC channel 1 to I/O address 0x80 (data), single endpoint,
-	 * pool bytes 4(data)/5(cmd). */
-	LM4_LPC_ADR(LPC_CH_PORT80) = 0x80;
-	LM4_LPC_CTL(LPC_CH_PORT80) = (LPC_POOL_OFFS_PORT80 << (5 - 1));
-	/* Unmask interrupt for host data writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_PORT80, 2);
-
-
-	/* Set LPC channel 2 to I/O address 0x800, range endpoint,
-	 * arbitration disabled, pool bytes 512-1023.  To access this from
-	 * x86, use the following commands to set GEN_LPC2 and GEN_LPC3:
-	 *
-	 *   pci_write32 0 0x1f 0 0x88 0x007c0801
-	 *   pci_write32 0 0x1f 0 0x8c 0x007c0901
-	 */
-	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_KERNEL_PARAM;
-	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x801D |
-		(LPC_POOL_OFFS_CMD_DATA << (5 - 1));
-
-	/* Set LPC channel 3 to I/O address 0x60 (data) / 0x64 (command),
-	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
-	LM4_LPC_ADR(LPC_CH_KEYBOARD) = 0x60;
-	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (1 << 24/* IRQSEL1 */) |
-		(0 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
-	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;
-	/* Unmask interrupt for host command/data writes and data reads */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 7);
-
-	/* Set LPC channel 4 to I/O address 0x200 (data) / 0x204 (command),
-	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
-	LM4_LPC_ADR(LPC_CH_USER) = EC_LPC_ADDR_USER_DATA;
-	LM4_LPC_CTL(LPC_CH_USER) = (LPC_POOL_OFFS_USER << (5 - 1));
-	/* Unmask interrupt for host command writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
-
-	/* Set LPC channel 7 to COM port I/O address.  Note that channel 7
-	 * ignores the TYPE bit and is always an 8-byte range. */
-	LM4_LPC_ADR(LPC_CH_COMX) = LPC_COMX_ADDR;
-	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
-	 * can enable IRQs on its own. */
-	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
-	/* Enable COMx emulation for reads and writes. */
-	LM4_LPC_LPCDMACX = 0x00310000;
-	/* Unmask interrupt for host data writes.  We don't need interrupts for
-	 * reads, because there's no flow control in that direction; LPC is
-	 * much faster than the UART, and the UART doesn't have anywhere
-	 * sensible to buffer input anyway. */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
-
-	/* Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
-	 * PLTRST# signal for debugging. */
-	LM4_LPC_LPCIM |= (1 << 31);
-
-	/* Enable LPC channels */
-	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
-		(1 << LPC_CH_KERNEL) |
-		(1 << LPC_CH_PORT80) |
-		(1 << LPC_CH_CMD_DATA) |
-		(1 << LPC_CH_KEYBOARD) |
-		(1 << LPC_CH_USER) |
-		(1 << LPC_CH_COMX);
-
-	/* Enable LPC interrupt */
-	task_enable_irq(LM4_IRQ_LPC);
-
-	/* Enable COMx UART */
-	uart_comx_enable();
-
-	return EC_SUCCESS;
-}
-DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT);
 
 
 uint8_t *lpc_get_host_range(int slot)
@@ -438,9 +343,136 @@ static void lpc_interrupt(void)
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
-		uart_printf("[%T LPC PLTRST# %sasserted]\n",
+		uart_printf("[%T LPC RESET# %sasserted]\n",
 			    (LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
 	}
 }
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
 
+
+/* Preserve event masks across a sysjump */
+static int lpc_sysjump(void)
+{
+	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
+			    sizeof(event_mask), event_mask);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
+
+
+/* Restore event masks after a sysjump */
+static void lpc_post_sysjump(void)
+{
+	const uint32_t *prev_mask;
+	int size, version;
+
+	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
+							  &version, &size);
+	if (!prev_mask || version != 1 || size != sizeof(event_mask))
+		return;
+
+	memcpy(event_mask, prev_mask, sizeof(event_mask));
+	update_host_event_status();
+}
+
+
+static int lpc_init(void)
+{
+	volatile uint32_t scratch  __attribute__((unused));
+
+	/* Enable RGCGLPC then delay a few clocks. */
+	LM4_SYSTEM_RCGCLPC = 1;
+	scratch = LM4_SYSTEM_RCGCLPC;
+
+	LM4_LPC_LPCIM = 0;
+	LM4_LPC_LPCCTL = 0;
+	LM4_LPC_LPCIRQCTL = 0;
+
+	/* Configure GPIOs */
+	configure_gpio();
+
+	/* Set LPC channel 0 to I/O address 0x62 (data) / 0x66 (command),
+	 * single endpoint, offset 0 for host command/writes and 1 for EC
+	 * data writes, pool bytes 0(data)/1(cmd) */
+	LM4_LPC_ADR(LPC_CH_KERNEL) = EC_LPC_ADDR_KERNEL_DATA;
+	LM4_LPC_CTL(LPC_CH_KERNEL) = (LPC_POOL_OFFS_KERNEL << (5 - 1));
+	/* Unmask interrupt for host command writes */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4);
+
+	/* Set LPC channel 1 to I/O address 0x80 (data), single endpoint,
+	 * pool bytes 4(data)/5(cmd). */
+	LM4_LPC_ADR(LPC_CH_PORT80) = 0x80;
+	LM4_LPC_CTL(LPC_CH_PORT80) = (LPC_POOL_OFFS_PORT80 << (5 - 1));
+	/* Unmask interrupt for host data writes */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_PORT80, 2);
+
+
+	/* Set LPC channel 2 to I/O address 0x800, range endpoint,
+	 * arbitration disabled, pool bytes 512-1023.  To access this from
+	 * x86, use the following commands to set GEN_LPC2 and GEN_LPC3:
+	 *
+	 *   pci_write32 0 0x1f 0 0x88 0x007c0801
+	 *   pci_write32 0 0x1f 0 0x8c 0x007c0901
+	 */
+	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_KERNEL_PARAM;
+	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x801D |
+		(LPC_POOL_OFFS_CMD_DATA << (5 - 1));
+
+	/* Set LPC channel 3 to I/O address 0x60 (data) / 0x64 (command),
+	 * single endpoint, offset 0 for host command/writes and 1 for EC
+	 * data writes, pool bytes 0(data)/1(cmd) */
+	LM4_LPC_ADR(LPC_CH_KEYBOARD) = 0x60;
+	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (1 << 24/* IRQSEL1 */) |
+		(0 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
+	LM4_LPC_ST(LPC_CH_KEYBOARD) = 0;
+	/* Unmask interrupt for host command/data writes and data reads */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 7);
+
+	/* Set LPC channel 4 to I/O address 0x200 (data) / 0x204 (command),
+	 * single endpoint, offset 0 for host command/writes and 1 for EC
+	 * data writes, pool bytes 0(data)/1(cmd) */
+	LM4_LPC_ADR(LPC_CH_USER) = EC_LPC_ADDR_USER_DATA;
+	LM4_LPC_CTL(LPC_CH_USER) = (LPC_POOL_OFFS_USER << (5 - 1));
+	/* Unmask interrupt for host command writes */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
+
+	/* Set LPC channel 7 to COM port I/O address.  Note that channel 7
+	 * ignores the TYPE bit and is always an 8-byte range. */
+	LM4_LPC_ADR(LPC_CH_COMX) = LPC_COMX_ADDR;
+	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
+	 * can enable IRQs on its own. */
+	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
+	/* Enable COMx emulation for reads and writes. */
+	LM4_LPC_LPCDMACX = 0x00310000;
+	/* Unmask interrupt for host data writes.  We don't need interrupts for
+	 * reads, because there's no flow control in that direction; LPC is
+	 * much faster than the UART, and the UART doesn't have anywhere
+	 * sensible to buffer input anyway. */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
+
+	/* Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
+	 * PLTRST# signal for debugging. */
+	LM4_LPC_LPCIM |= (1 << 31);
+
+	/* Enable LPC channels */
+	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
+		(1 << LPC_CH_KERNEL) |
+		(1 << LPC_CH_PORT80) |
+		(1 << LPC_CH_CMD_DATA) |
+		(1 << LPC_CH_KEYBOARD) |
+		(1 << LPC_CH_USER) |
+		(1 << LPC_CH_COMX);
+
+	/* Enable LPC interrupt */
+	task_enable_irq(LM4_IRQ_LPC);
+
+	/* Enable COMx UART */
+	uart_comx_enable();
+
+	/* Restore event masks if needed */
+	lpc_post_sysjump();
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT);

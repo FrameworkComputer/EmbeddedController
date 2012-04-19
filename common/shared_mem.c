@@ -1,35 +1,30 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Shared memory module for Chrome EC */
 
+#include "config.h"
+#include "link_defs.h"
 #include "shared_mem.h"
-#include "uart.h"
+#include "system.h"
 
-/* Size of shared memory buffer */
-#define SHARED_MEM_SIZE 4096
-
-static char shared_buf[SHARED_MEM_SIZE];
-static int buf_in_use = 0;
-
-
-int shared_mem_init(void)
-{
-	return EC_SUCCESS;
-}
+static int buf_in_use;
 
 
 int shared_mem_size(void)
 {
-	return SHARED_MEM_SIZE;
+	/* Use all the RAM we can.  The shared memory buffer is the
+	 * last thing allocated from the start of RAM, so we can use
+	 * everything up to the jump data at the end of RAM. */
+	return system_usable_ram_end() - (uint32_t)__shared_mem_buf;
 }
 
 
 int shared_mem_acquire(int size, int wait, char **dest_ptr)
 {
-	if (size > SHARED_MEM_SIZE || size <= 0)
+	if (size > shared_mem_size() || size <= 0)
 		return EC_ERROR_INVAL;
 
 	/* TODO: if task_start() hasn't been called, fail immediately
@@ -42,7 +37,7 @@ int shared_mem_acquire(int size, int wait, char **dest_ptr)
 
 	/* TODO: atomically acquire buf_in_use. */
 	buf_in_use = 1;
-	*dest_ptr = shared_buf;
+	*dest_ptr = __shared_mem_buf;
 	return EC_SUCCESS;
 }
 

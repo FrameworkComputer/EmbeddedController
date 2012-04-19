@@ -10,6 +10,20 @@
 #include "uart.h"
 #include "util.h"
 
+struct hook_ptrs {
+	const struct hook_data *start;
+	const struct hook_data *end;
+};
+
+/* Hook data start and end pointers for each type of hook.  Must be in same
+ * order as enum hook_type. */
+static const struct hook_ptrs hook_list[] = {
+	{__hooks_init, __hooks_init_end},
+	{__hooks_freq_change, __hooks_freq_change_end},
+	{__hooks_sysjump, __hooks_sysjump_end},
+};
+
+
 int hook_notify(enum hook_type type, int stop_on_error)
 {
 	const struct hook_data *start, *end, *p;
@@ -17,21 +31,8 @@ int hook_notify(enum hook_type type, int stop_on_error)
 	int last_prio = HOOK_PRIO_FIRST - 1, prio;
 	int rv_error = EC_SUCCESS, rv;
 
-	/* Get the start and end pointers for the hook type */
-	switch (type) {
-	case HOOK_INIT:
-		start = __hooks_init;
-		end = __hooks_init_end;
-		break;
-	case HOOK_FREQ_CHANGE:
-		start = __hooks_freq_change;
-		end = __hooks_freq_change_end;
-		break;
-	default:
-		/* Unhandled hook type */
-		return EC_ERROR_UNKNOWN;
-	}
-
+	start = hook_list[type].start;
+	end = hook_list[type].end;
 	count = ((uint32_t)end - (uint32_t)start) / sizeof(struct hook_data);
 
 	/* Call all the hooks in priority order */

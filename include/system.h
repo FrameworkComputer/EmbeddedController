@@ -70,6 +70,23 @@ enum system_image_copy_t system_get_image_copy(void);
  * once since the last real boot. */
 int system_jumped_to_this_image(void);
 
+/* Preserve data across a jump between images.  <tag> identifies the data
+ * type.  <size> must be a multiple of 4 bytes, and less than 255 bytes.
+ * <version> is the data version, so that tag data can evolve as firmware
+ * is updated.  <data> points to the data to save.
+ *
+ * This may ONLY be called from within a HOOK_SYSJUMP handler. */
+int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
+
+/* Retrieve data stored by a previous image's call to
+ * system_add_jump_tag().  If a matching tag is found, retrieves
+ * <size> and <version>, and returns a pointer to the data.  Returns
+ * NULL if no matching tag is found. */
+const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
+
+/* Returns the address just past the last usable byte in RAM. */
+int system_usable_ram_end(void);
+
 /* Returns true if the given range is overlapped with the active image. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 

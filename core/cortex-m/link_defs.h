@@ -20,11 +20,15 @@ extern const struct hook_data __hooks_init[];
 extern const struct hook_data __hooks_init_end[];
 extern const struct hook_data __hooks_freq_change[];
 extern const struct hook_data __hooks_freq_change_end[];
+extern const struct hook_data __hooks_sysjump[];
+extern const struct hook_data __hooks_sysjump_end[];
 
 extern const struct host_command __hcmds[];
 extern const struct host_command __hcmds_end[];
 
 extern const struct irq_priority __irqprio[];
 extern const struct irq_priority __irqprio_end[];
+
+extern uint8_t __shared_mem_buf[];
 
 #endif /* __CROS_EC_LINK_DEFS_H */
