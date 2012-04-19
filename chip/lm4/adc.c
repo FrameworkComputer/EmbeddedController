@@ -10,11 +10,14 @@
 #include "gpio.h"
 #include "lm4_adc.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
 
 extern const struct adc_t adc_channels[ADC_CH_COUNT];
+
+static task_id_t task_waiting_on_ss[LM4_ADC_SEQ_COUNT];
 
 /* GPIO port and mask for AINs. */
 const uint32_t ain_port[24][2] = {
@@ -78,10 +81,15 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	 *
 	 * 3) Both? */
 	volatile uint32_t scratch  __attribute__((unused));
+	int event;
 
 	/* Empty the FIFO of any previous results */
 	while (!(LM4_ADC_SSFSTAT(seq) & 0x100))
 		scratch = LM4_ADC_SSFIFO(seq);
+
+	/* TODO: This assumes we don't have multiple tasks accessing
+	 * the same sequencer. Add mutex lock if needed. */
+	task_waiting_on_ss[seq] = task_get_current();
 
 	/* Clear the interrupt status */
 	LM4_ADC_ADCISC |= 0x01 << seq;
@@ -90,9 +98,10 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	LM4_ADC_ADCPSSI |= 0x01 << seq;
 
 	/* Wait for interrupt */
-	/* TODO: use a real interrupt */
-	/* TODO: timeout */
-	while (!(LM4_ADC_ADCRIS & (0x01 << seq)));
+	event = task_wait_event(1000000);
+	task_waiting_on_ss[seq] = TASK_ID_INVALID;
+	if (event == TASK_EVENT_TIMER)
+		return ADC_READ_ERROR;
 
 	/* Read the FIFO and convert to temperature */
 	return LM4_ADC_SSFIFO(seq);
@@ -128,8 +137,38 @@ int adc_read_channel(enum adc_channel ch)
 {
 	const struct adc_t *adc = adc_channels + ch;
 	int rv = lm4_adc_flush_and_read(adc->sequencer);
+
+	if (rv == ADC_READ_ERROR)
+		return ADC_READ_ERROR;
 	return rv * adc->factor_mul / adc->factor_div + adc->shift;
 }
+
+/*****************************************************************************/
+/* Interrupt handlers */
+
+/* Handles an interrupt on the specified sample sequencer. */
+static void handle_interrupt(int ss)
+{
+	int id = task_waiting_on_ss[ss];
+
+	/* Clear the interrupt status */
+	LM4_ADC_ADCISC = (0x1 << ss);
+
+	/* Wake up the task which was waiting on the interrupt, if any */
+	if (id != TASK_ID_INVALID)
+		task_wake(id);
+}
+
+
+static void ss0_interrupt(void) { handle_interrupt(0); }
+static void ss1_interrupt(void) { handle_interrupt(1); }
+static void ss2_interrupt(void) { handle_interrupt(2); }
+static void ss3_interrupt(void) { handle_interrupt(3); }
+
+DECLARE_IRQ(LM4_IRQ_ADC0_SS0, ss0_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_ADC0_SS1, ss1_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_ADC0_SS2, ss2_interrupt, 2);
+DECLARE_IRQ(LM4_IRQ_ADC0_SS3, ss3_interrupt, 2);
 
 /*****************************************************************************/
 /* Console commands */
@@ -176,6 +215,13 @@ int adc_init(void)
 
 	/* Use internal oscillator */
 	LM4_ADC_ADCCC = 0x1;
+
+	/* Enable interrupt */
+	LM4_ADC_ADCIM = 0xF;
+	task_enable_irq(LM4_IRQ_ADC0_SS0);
+	task_enable_irq(LM4_IRQ_ADC0_SS1);
+	task_enable_irq(LM4_IRQ_ADC0_SS2);
+	task_enable_irq(LM4_IRQ_ADC0_SS3);
 
 	/* Initialize ADC sequencer */
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
