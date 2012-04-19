@@ -10,9 +10,6 @@
 
 #include "common.h"
 
-/* Initialize the module. */
-int peci_init(void);
-
 /* Return the current CPU temperature in degrees K, or -1 if error.
  *
  * Note that the PECI interface is currently a little flaky; if you get an

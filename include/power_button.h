@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,9 +10,6 @@
 
 #include "common.h"
 #include "gpio.h"
-
-/* Initializes the module. */
-int power_button_init(void);
 
 /* Interrupt handler for the power button and lid switch.  Passed the signal
  * which triggered the interrupt. */

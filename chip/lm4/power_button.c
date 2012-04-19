@@ -9,6 +9,7 @@
 #include "console.h"
 #include "eoption.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
@@ -287,7 +288,7 @@ void power_button_interrupt(enum gpio_signal signal)
 }
 
 
-int power_button_init(void)
+static int power_button_init(void)
 {
 	/* Set up memory-mapped switch positions */
 	memmap_switches = lpc_get_memmap_range() + EC_LPC_MEMMAP_SWITCHES;
@@ -331,6 +332,7 @@ int power_button_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
 
 
 void power_button_task(void)

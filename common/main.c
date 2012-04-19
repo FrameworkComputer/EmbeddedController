@@ -5,36 +5,20 @@
  * Main routine for Chrome EC
  */
 
-#include "adc.h"
-#include "charger.h"
-#include "chip_temp_sensor.h"
 #include "clock.h"
 #include "config.h"
-#include "console.h"
 #include "eeprom.h"
 #include "eoption.h"
 #include "flash.h"
 #include "gpio.h"
-#include "i2c.h"
+#include "hooks.h"
 #include "jtag.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
-#include "lpc.h"
-#include "memory_commands.h"
-#include "onewire.h"
-#include "peci.h"
-#include "port80.h"
-#include "power_button.h"
-#include "powerdemo.h"
-#include "pwm.h"
-#include "spi.h"
 #include "system.h"
 #include "task.h"
-#include "temp_sensor.h"
-#include "tmp006.h"
 #include "timer.h"
 #include "uart.h"
-#include "usb_charge.h"
 #include "vboot.h"
 #include "watchdog.h"
 
@@ -114,38 +98,12 @@ int main(void)
 	 * RO image and once in the RW image. */
 	vboot_init();
 
-	/* Initialize driver modules.  These can occur in any order.  State
-	 * machines are initialized in their task functions, not here. */
+	/* TODO: reduce core clock now that vboot is done */
 
-	gpio_init();
-
-#ifdef CONFIG_LPC
-	lpc_init();
-#endif
-#ifdef CONFIG_SPI
-	spi_init();
-#endif
-#ifdef CONFIG_PWM
-	pwm_init();
-#endif
-#ifdef CONFIG_I2C
-	i2c_init();
-#endif
-#ifdef CONFIG_TASK_POWERBTN
-	power_button_init();
-#endif
-#ifdef CONFIG_ADC
-	adc_init();
-#endif
-#ifdef CONFIG_ONEWIRE
-	onewire_init();
-#endif
-#ifdef CONFIG_PECI
-	peci_init();
-#endif
-#ifdef CONFIG_USB_CHARGE
-	usb_charge_init();
-#endif
+	/* Initialize other driver modules.  These can occur in any order.
+	 * Non-driver modules with tasks do their inits from their task
+	 * functions, not here. */
+	hook_notify(HOOK_INIT, 0);
 
 	/* Print the init time and reset cause.  Init time isn't completely
 	 * accurate because it can't take into account the time for the first

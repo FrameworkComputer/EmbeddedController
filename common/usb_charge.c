@@ -5,11 +5,12 @@
 
 /* USB charging control module for Chrome EC */
 
-#include "usb_charge.h"
 #include "board.h"
-#include "gpio.h"
-#include "uart.h"
 #include "console.h"
+#include "gpio.h"
+#include "hooks.h"
+#include "uart.h"
+#include "usb_charge.h"
 #include "util.h"
 
 static void usb_charge_set_control_mode(int port_id, int mode)
@@ -26,6 +27,7 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 	}
 }
 
+
 static void usb_charge_set_enabled(int port_id, int en)
 {
 	if (port_id == 0)
@@ -34,6 +36,7 @@ static void usb_charge_set_enabled(int port_id, int en)
 		gpio_set_level(GPIO_USB2_ENABLE, en);
 }
 
+
 static void usb_charge_set_ilim(int port_id, int sel)
 {
 	if (port_id == 0)
@@ -41,6 +44,7 @@ static void usb_charge_set_ilim(int port_id, int sel)
 	else
 		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
 }
+
 
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
@@ -76,7 +80,6 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 
 	return EC_SUCCESS;
 }
-
 
 /*****************************************************************************/
 /* Console commands */
@@ -114,11 +117,10 @@ static int command_set_mode(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);
 
-
 /*****************************************************************************/
 /* Initialization */
 
-int usb_charge_init(void)
+static int usb_charge_init(void)
 {
 	int i;
 
@@ -127,3 +129,4 @@ int usb_charge_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);

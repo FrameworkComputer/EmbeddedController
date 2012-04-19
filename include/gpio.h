@@ -59,9 +59,6 @@ struct gpio_info {
  * set up. */
 int gpio_pre_init(void);
 
-/* Initializes the GPIO module. */
-int gpio_init(void);
-
 /* Gets the current value of a signal (0=low, 1=hi). */
 int gpio_get_level(enum gpio_signal signal);
 

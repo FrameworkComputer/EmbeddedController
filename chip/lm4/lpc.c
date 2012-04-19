@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "i8042.h"
 #include "lpc.h"
@@ -105,7 +106,7 @@ static void lpc_generate_sci(void)
 }
 
 
-int lpc_init(void)
+static int lpc_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -200,6 +201,7 @@ int lpc_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT);
 
 
 uint8_t *lpc_get_host_range(int slot)

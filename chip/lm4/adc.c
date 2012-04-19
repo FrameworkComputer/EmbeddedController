@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "lm4_adc.h"
 #include "registers.h"
 #include "task.h"
@@ -47,6 +48,7 @@ const uint32_t ain_port[24][2] = {
 	{LM4_GPIO_N, (1<<0)},
 };
 
+
 static void configure_gpio(void)
 {
 	int i;
@@ -65,6 +67,7 @@ static void configure_gpio(void)
 						    1);
 	}
 }
+
 
 int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 {
@@ -107,6 +110,7 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	return LM4_ADC_SSFIFO(seq);
 }
 
+
 int lm4_adc_configure(enum lm4_adc_sequencer seq,
 		      int ain_id,
 		      int ssctl)
@@ -132,6 +136,7 @@ int lm4_adc_configure(enum lm4_adc_sequencer seq,
 
 	return EC_SUCCESS;
 }
+
 
 int adc_read_channel(enum adc_channel ch)
 {
@@ -181,6 +186,7 @@ static int command_ectemp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
 
+
 static int command_adc(int argc, char **argv)
 {
 	int i;
@@ -197,7 +203,7 @@ DECLARE_CONSOLE_COMMAND(adc, command_adc);
 /*****************************************************************************/
 /* Initialization */
 
-int adc_init(void)
+static int adc_init(void)
 {
 	int i;
 	const struct adc_t *adc;
@@ -231,3 +237,4 @@ int adc_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);

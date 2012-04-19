@@ -114,7 +114,7 @@ DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp);
 /*****************************************************************************/
 /* Initialization */
 
-int peci_init(void)
+static int peci_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -130,3 +130,4 @@ int peci_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
