@@ -14,8 +14,8 @@
 #define HISTORY_LEN 16
 
 static uint8_t history[HISTORY_LEN];
-static int head = 0;  /* Next index to use / oldest previous entry */
-static int scroll = 0;
+static int head;  /* Next index to use / oldest previous entry */
+static int scroll;
 
 
 void port_80_write(int data)
@@ -29,7 +29,6 @@ void port_80_write(int data)
 	history[head] = data;
 	head = (head + 1) & (HISTORY_LEN - 1);
 }
-
 
 /*****************************************************************************/
 /* Console commands */
@@ -58,12 +57,3 @@ static int command_port80(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80);
-
-/*****************************************************************************/
-/* Initialization */
-
-int port_80_init(void)
-{
-	memset(history, 0, sizeof(history));
-	return EC_SUCCESS;
-}

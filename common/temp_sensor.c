@@ -127,10 +127,3 @@ static int command_temps(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps);
 
-/*****************************************************************************/
-/* Initialization */
-
-int temp_sensor_init(void)
-{
-	return EC_SUCCESS;
-}

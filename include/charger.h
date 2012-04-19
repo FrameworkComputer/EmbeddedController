@@ -27,9 +27,6 @@ struct charger_info {
 	uint16_t input_current_step;
 };
 
-/* Initializes the charger */
-int charger_init(void);
-
 /* Power state machine post init */
 int charger_post_init(void);
 

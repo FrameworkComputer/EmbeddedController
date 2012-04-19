@@ -5,8 +5,8 @@
 
 /* Temperature sensor module for LM4 chip */
 
-#ifndef __CHIP_TEMP_SENSOR_H
-#define __CHIP_TEMP_SENSOR_H
+#ifndef __CROS_EC_CHIP_TEMP_SENSOR_H
+#define __CROS_EC_CHIP_TEMP_SENSOR_H
 
 struct temp_sensor_t;
 
@@ -16,6 +16,4 @@ int chip_temp_sensor_poll(void);
 /* Temperature reading function. Return temperature in K. */
 int chip_temp_sensor_get_val(int idx);
 
-int chip_temp_sensor_init(void);
-
-#endif /* __CHIP_TEMP_SENSOR_H */
+#endif /* __CROS_EC_CHIP_TEMP_SENSOR_H */

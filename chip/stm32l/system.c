@@ -16,6 +16,9 @@ static void check_reset_cause(void)
 	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 	uint32_t raw_cause = STM32L_RCC_CSR;
 
+	/* Clear the hardware reset cause by setting the RMVF bit */
+	STM32L_RCC_CSR |= 1 << 24;
+
 	if (copy == SYSTEM_IMAGE_RW_A || copy == SYSTEM_IMAGE_RW_B) {
 		/* If we're in image A or B, the only way we can get there is
 		 * via a warm reset. */
@@ -67,17 +70,6 @@ int system_pre_init(void)
 	}
 
 	check_reset_cause();
-
-	return EC_SUCCESS;
-}
-
-
-int system_init(void)
-{
-	/* Clear the hardware reset cause by setting the RMVF bit,
-	 * now that we've committed to running this image.
-	 */
-	STM32L_RCC_CSR |= 1 << 24;
 
 	return EC_SUCCESS;
 }

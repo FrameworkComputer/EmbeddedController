@@ -29,8 +29,9 @@ static void check_reset_cause(void)
 	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 	uint32_t raw_reset_cause;
 
-	/* Read the raw reset cause */
+	/* Read and clear the raw reset cause */
 	raw_reset_cause = LM4_SYSTEM_RESC;
+	LM4_SYSTEM_RESC = 0;
 
 	if (hib_status & 0x0d) {
 		/* the hibernation module wakes up the system */
@@ -127,16 +128,6 @@ int system_pre_init(void)
 	LM4_HIBERNATE_HIBIM = 0;
 
 	check_reset_cause();
-
-	return EC_SUCCESS;
-}
-
-
-int system_init(void)
-{
-	/* Clear the hardware reset cause, now that we've committed to running
-	 * this image. */
-	LM4_SYSTEM_RESC = 0;
 
 	return EC_SUCCESS;
 }

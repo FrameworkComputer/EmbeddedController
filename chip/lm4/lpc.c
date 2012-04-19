@@ -195,6 +195,9 @@ int lpc_init(void)
 	/* Enable LPC interrupt */
 	task_enable_irq(LM4_IRQ_LPC);
 
+	/* Enable COMx UART */
+	uart_comx_enable();
+
 	return EC_SUCCESS;
 }
 
