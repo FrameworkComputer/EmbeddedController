@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "host_command.h"
+#include "link_defs.h"
 #include "lpc.h"
 #include "lpc_commands.h"
 #include "system.h"
@@ -19,12 +20,6 @@
 
 static int host_command[2];
 
-/* Host commands are described in a special section */
-extern const struct host_command __hcmds[];
-extern const struct host_command __hcmds_end[];
-
-/*****************************************************************************/
-/* Host commands */
 
 void host_command_received(int slot, int command)
 {

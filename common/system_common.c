@@ -84,9 +84,7 @@ enum system_image_copy_t system_get_image_copy(void)
 /* Returns true if the given range is overlapped with the active image.
  *
  * We only care the runtime code since the EC is running over it.
- * We don't care about the vector table, FMAP, and init code.
- * Read core/$CORE/ec.lds.S about the below extern symbols.
- */
+ * We don't care about the vector table, FMAP, and init code. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 	int copy = ((uint32_t)system_unsafe_to_overwrite - CONFIG_FLASH_BASE) /
 	           CONFIG_FW_IMAGE_SIZE;

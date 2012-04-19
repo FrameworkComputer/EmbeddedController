@@ -6,6 +6,7 @@
 /* Console module for Chrome EC */
 
 #include "console.h"
+#include "link_defs.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
@@ -14,9 +15,6 @@
 
 #define PROMPT "> "
 
-/* Console commands are described in a special section */
-extern const struct console_command __cmds[];
-extern const struct console_command __cmds_end[];
 
 void console_has_input(void)
 {

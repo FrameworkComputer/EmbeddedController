@@ -6,15 +6,9 @@
 /* System hooks for Chrome EC */
 
 #include "hooks.h"
+#include "link_defs.h"
 #include "uart.h"
 #include "util.h"
-
-/* Hooks are described in special sections */
-extern const struct hook_data __hooks_init[];
-extern const struct hook_data __hooks_init_end[];
-extern const struct hook_data __hooks_freq_change[];
-extern const struct hook_data __hooks_freq_change_end[];
-
 
 int hook_notify(enum hook_type type, int stop_on_error)
 {

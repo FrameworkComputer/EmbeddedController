@@ -1,12 +1,14 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Atomic operations for ARMv7 */
 
-#ifndef __ATOMIC_H
-#define __ATOMIC_H
+#ifndef __CROS_EC_ATOMIC_H
+#define __CROS_EC_ATOMIC_H
+
+#include "common.h"
 
 /**
  * Implements atomic arithmetic operations on 32-bit integers.
@@ -62,4 +64,4 @@ static inline uint32_t atomic_read_clear(uint32_t *addr)
 
 	return ret;
 }
-#endif  /* __ATOMIC_H */
+#endif  /* __CROS_EC_ATOMIC_H */

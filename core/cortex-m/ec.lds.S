@@ -31,6 +31,7 @@ SECTIONS
 #endif
     . = ALIGN(4);
     .rodata : {
+	/* Symbols defined here are declared in link_defs.h */
         __irqprio = .;
         *(.rodata.irqprio)
         __irqprio_end = .;

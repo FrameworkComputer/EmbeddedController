@@ -19,7 +19,7 @@
 #include "uart.h"
 #include "util.h"
 
-extern struct gpio_info gpio_list[];
+extern const struct gpio_info gpio_list[];
 
 /* used for select_column() */
 enum COL_INDEX {

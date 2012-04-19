@@ -1,16 +1,15 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Task scheduling / events module for Chrome EC operating system */
 
-#include <stdint.h>
-
 #include "config.h"
 #include "atomic.h"
 #include "console.h"
 #include "cpu.h"
+#include "link_defs.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -319,8 +318,6 @@ void task_trigger_irq(int irq)
 static void __nvic_init_irqs(void)
 {
 	/* Get the IRQ priorities section from the linker */
-	extern struct irq_priority __irqprio[];
-	extern struct irq_priority __irqprio_end[];
 	int irq_count = __irqprio_end - __irqprio;
 	int i;
 
