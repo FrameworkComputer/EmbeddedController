@@ -7,8 +7,9 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
-#include <message.h>
+#include "message.h"
 #include "registers.h"
 #include "task.h"
 #include "uart.h"
@@ -222,7 +223,8 @@ static int i2c_init2(void)
 	return EC_SUCCESS;
 }
 
-int i2c_init(void)
+
+static int i2c_init(void)
 {
 	int rc = 0;
 
@@ -230,3 +232,4 @@ int i2c_init(void)
 	rc |= i2c_init2();
 	return rc;
 }
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);

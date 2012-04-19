@@ -10,9 +10,6 @@
 
 #include "common.h"
 
-/* Initialize the module. */
-int pwm_init(void);
-
 /* Enable/disable the fan.  This should be called by whatever function
  * enables the power supply to the fan. */
 int pwm_enable_fan(int enable);
@@ -34,8 +31,5 @@ int pwm_get_keyboard_backlight(void);
 
 /* Set the keyboard backlight percentage (0=off, 100=max). */
 int pwm_set_keyboard_backlight(int percent);
-
-/* Set the power LED brightness to the specified percent (0=off, 100=max). */
-int pwm_set_power_led(int percent);
 
 #endif  /* __CROS_EC_PWM_H */

@@ -1,16 +1,16 @@
-/*
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
  * SPI driver for Chrome EC.
  *
  * This uses DMA although not in an optimal way yet.
- *
- * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
  */
 
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "message.h"
 #include "registers.h"
 #include "spi.h"
@@ -154,7 +154,7 @@ static void spi1_interrupt(void) { spi_interrupt(STM32L_SPI1_PORT); };
 
 DECLARE_IRQ(STM32L_IRQ_SPI1, spi1_interrupt, 2);
 
-int spi_init(void)
+static int spi_init(void)
 {
 	int port;
 
@@ -186,3 +186,4 @@ int spi_init(void)
 #endif
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);

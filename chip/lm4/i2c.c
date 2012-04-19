@@ -437,7 +437,7 @@ static void configure_gpio(void)
 }
 
 
-int i2c_init(void)
+static int i2c_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	int i;
@@ -474,3 +474,4 @@ int i2c_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);

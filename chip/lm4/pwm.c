@@ -8,6 +8,7 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "pwm.h"
 #include "registers.h"
 #include "uart.h"
@@ -272,7 +273,7 @@ DECLARE_CONSOLE_COMMAND(kblight, command_kblight);
 /*****************************************************************************/
 /* Initialization */
 
-int pwm_init(void)
+static int pwm_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -324,3 +325,4 @@ int pwm_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);

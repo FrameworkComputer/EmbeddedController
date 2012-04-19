@@ -8,7 +8,4 @@
 #ifndef __CROS_EC_SPI_H
 #define __CROS_EC_SPI_H
 
-/* Initialize the SPI module ready for use */
-extern int spi_init(void);
-
 #endif  /* __CROS_EC_SPI_H */

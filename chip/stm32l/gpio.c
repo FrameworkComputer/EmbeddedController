@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "task.h"
 #include "uart.h"
@@ -66,7 +67,7 @@ int gpio_pre_init(void)
 }
 
 
-int gpio_init(void)
+static int gpio_init(void)
 {
 	/* Enable IRQs now that pins are set up */
 	task_enable_irq(STM32L_IRQ_EXTI0);
@@ -79,6 +80,7 @@ int gpio_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 
 void gpio_set_alternate_function(int port, int mask, int func)

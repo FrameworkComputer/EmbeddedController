@@ -7,8 +7,9 @@
 
 #include "board.h"
 #include "gpio.h"
-#include "timer.h"
+#include "hooks.h"
 #include "registers.h"
+#include "timer.h"
 
 #define ONEWIRE_PIN (1<<2)  /* One-wire pin mask (on GPIO H) */
 
@@ -131,10 +132,11 @@ static void configure_gpio(void)
 }
 
 
-int onewire_init(void)
+static int onewire_init(void)
 {
 	/* Configure GPIOs */
 	configure_gpio();
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, onewire_init, HOOK_PRIO_DEFAULT);

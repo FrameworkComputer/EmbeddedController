@@ -17,9 +17,6 @@
 
 #include "common.h"
 
-/* Initialize the module. */
-int onewire_init(void);
-
 /* Reset the 1-wire bus.  Returns error if presence detect fails. */
 int onewire_reset(void);
 

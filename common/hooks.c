@@ -10,6 +10,8 @@
 #include "util.h"
 
 /* Hooks are described in special sections */
+extern const struct hook_data __hooks_init[];
+extern const struct hook_data __hooks_init_end[];
 extern const struct hook_data __hooks_freq_change[];
 extern const struct hook_data __hooks_freq_change_end[];
 
@@ -23,6 +25,10 @@ int hook_notify(enum hook_type type, int stop_on_error)
 
 	/* Get the start and end pointers for the hook type */
 	switch (type) {
+	case HOOK_INIT:
+		start = __hooks_init;
+		end = __hooks_init_end;
+		break;
 	case HOOK_FREQ_CHANGE:
 		start = __hooks_freq_change;
 		end = __hooks_freq_change_end;

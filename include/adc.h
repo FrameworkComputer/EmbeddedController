@@ -11,9 +11,6 @@
 #include "common.h"
 #include "board.h"
 
-/* forward declaration */
-enum adc_channel;
-
 /* Data structure to define ADC channels. */
 struct adc_t
 {
@@ -25,9 +22,6 @@ struct adc_t
 	int channel;
 	int flag;
 };
-
-/* Initializes the module. */
-int adc_init(void);
 
 /* Read ADC channel. */
 int adc_read_channel(enum adc_channel ch);
