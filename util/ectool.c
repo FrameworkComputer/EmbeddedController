@@ -337,12 +337,12 @@ int cmd_read_test(int argc, char *argv[])
 	char *buf;
 	uint32_t *b;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: readtest <pattern_offset> <size>\n");
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <pattern_offset> <size>\n", argv[0]);
 		return -1;
 	}
-	offset = strtol(argv[0], &e, 0);
-	size = strtol(argv[1], &e, 0);
+	offset = strtol(argv[1], &e, 0);
+	size = strtol(argv[2], &e, 0);
 	if ((e && *e) || size <= 0 || size > 0x100000) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
@@ -394,18 +394,18 @@ int cmd_reboot_ec(int argc, char *argv[])
 	struct lpc_params_reboot_ec p;
 	int rv;
 
-	if (argc < 1) {
+	if (argc < 2) {
 		rv = ec_command(EC_LPC_COMMAND_REBOOT, NULL, 0, NULL, 0);
-	} else if (argc == 1) {
-		if ( !strcmp(argv[0], "RO")) {
+	} else if (argc == 2) {
+		if (!strcmp(argv[1], "RO")) {
 			p.target = EC_LPC_IMAGE_RO;
-		} else if (!strcmp(argv[0], "A")) {
+		} else if (!strcmp(argv[1], "A")) {
 			p.target = EC_LPC_IMAGE_RW_A;
-		} else if (!strcmp(argv[0], "B")) {
+		} else if (!strcmp(argv[1], "B")) {
 			p.target = EC_LPC_IMAGE_RW_B;
 		} else {
 			fprintf(stderr,
-			        "Not supported firmware copy: %s\n", argv[0]);
+				"Not supported firmware copy: %s\n", argv[1]);
 			return -1;
 		}
 
@@ -451,17 +451,17 @@ int cmd_flash_read(int argc, char *argv[])
 	char *e;
 	char *buf;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		fprintf(stderr,
-			"Usage: flashread <offset> <size> <filename>\n");
+			"Usage: %s <offset> <size> <filename>\n", argv[0]);
 		return -1;
 	}
-	offset = strtol(argv[0], &e, 0);
+	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > 0x100000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
-	size = strtol(argv[1], &e, 0);
+	size = strtol(argv[2], &e, 0);
 	if ((e && *e) || size <= 0 || size > 0x100000) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
@@ -488,7 +488,7 @@ int cmd_flash_read(int argc, char *argv[])
 		memcpy(buf + i, r.data, p.size);
 	}
 
-	rv = write_file(argv[2], buf, size);
+	rv = write_file(argv[3], buf, size);
 	free(buf);
 	if (rv)
 		return -1;
@@ -507,18 +507,18 @@ int cmd_flash_write(int argc, char *argv[])
 	char *e;
 	char *buf;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: flashwrite <offset> <filename>\n");
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <offset> <filename>\n", argv[0]);
 		return -1;
 	}
-	offset = strtol(argv[0], &e, 0);
+	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > 0x100000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
 
 	/* Read the input file */
-	buf = read_file(argv[1], &size);
+	buf = read_file(argv[2], &size);
 	if (!buf)
 		return -1;
 
@@ -549,16 +549,16 @@ int cmd_flash_erase(int argc, char *argv[])
 	struct lpc_params_flash_erase p;
 	char *e;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: flasherase <offset> <size>\n");
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <offset> <size>\n", argv[0]);
 		return -1;
 	}
-	p.offset = strtol(argv[0], &e, 0);
+	p.offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || p.offset < 0 || p.offset > 0x100000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
-	p.size = strtol(argv[1], &e, 0);
+	p.size = strtol(argv[2], &e, 0);
 	if ((e && *e) || p.size <= 0 || p.size > 0x100000) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
@@ -598,12 +598,12 @@ int cmd_temperature(int argc, char *argv[])
 	int id;
 	char *e;
 
-	if (argc != 1) {
-		fprintf(stderr, "Usage: temps <sensorid>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <sensorid>\n", argv[0]);
 		return -1;
 	}
 
-	id = strtol(argv[0], &e, 0);
+	id = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad sensor ID.\n");
 		return -1;
@@ -641,18 +641,19 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: thermalget <sensortypeid> <thresholdid>\n");
+	if (argc != 3) {
+		fprintf(stderr,
+			"Usage: %s <sensortypeid> <thresholdid>\n", argv[0]);
 		return -1;
 	}
 
-	p.sensor_type = strtol(argv[0], &e, 0);
+	p.sensor_type = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad sensor type ID.\n");
 		return -1;
 	}
 
-	p.threshold_id = strtol(argv[1], &e, 0);
+	p.threshold_id = strtol(argv[2], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad threshold ID.\n");
 		return -1;
@@ -679,25 +680,26 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 3) {
+	if (argc != 4) {
 		fprintf(stderr,
-			"Usage: thermalset <sensortypeid> <thresholdid> <value>\n");
+			"Usage: %s <sensortypeid> <thresholdid> <value>\n",
+			argv[0]);
 		return -1;
 	}
 
-	p.sensor_type = strtol(argv[0], &e, 0);
+	p.sensor_type = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad sensor type ID.\n");
 		return -1;
 	}
 
-	p.threshold_id = strtol(argv[1], &e, 0);
+	p.threshold_id = strtol(argv[2], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad threshold ID.\n");
 		return -1;
 	}
 
-	p.value = strtol(argv[2], &e, 0);
+	p.value = strtol(argv[3], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad threshold value.\n");
 		return -1;
@@ -752,12 +754,12 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
+	if (argc != 2) {
 		fprintf(stderr,
-			"Usage: pwmsetfanrpm <targetrpm>\n");
+			"Usage: %s <targetrpm>\n", argv[0]);
 		return -1;
 	}
-	p.rpm = strtol(argv[0], &e, 0);
+	p.rpm = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad RPM.\n");
 		return -1;
@@ -795,12 +797,11 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
-		fprintf(stderr,
-			"Usage: pwmsetkblight <percent>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <percent>\n", argv[0]);
 		return -1;
 	}
-	p.percent = strtol(argv[0], &e, 0);
+	p.percent = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad percent.\n");
 		return -1;
@@ -822,13 +823,13 @@ int cmd_lightbar(int argc, char *argv[])
 
 	p.tbd = 0;
 
-	if (argc) {
-		if (!strcmp("reset", argv[0])) {
+	if (argc > 1) {
+		if (!strcmp("reset", argv[1])) {
 			return ec_command(EC_LPC_COMMAND_LIGHTBAR_RESET,
 					  NULL, 0, NULL, 0);
-		} else if (!strcmp("test", argv[0])) {
-			if (argc > 1) {
-				p.tbd = strtol(argv[1], &e, 0);
+		} else if (!strcmp("test", argv[1])) {
+			if (argc > 2) {
+				p.tbd = strtol(argv[2], &e, 0);
 				if (e && *e) {
 					fprintf(stderr, "Bad arg\n");
 					return -1;
@@ -839,7 +840,7 @@ int cmd_lightbar(int argc, char *argv[])
 		}
 	}
 
-	printf("Usage: lightbar reset | test [NUM]\n");
+	printf("Usage: %s reset | test [NUM]\n", argv[0]);
 	return -1;
 }
 
@@ -849,17 +850,17 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 2) {
+	if (argc != 3) {
 		fprintf(stderr,
-			"Usage: usbchargemode <port_id> <mode_id>\n");
+			"Usage: %s <port_id> <mode_id>\n", argv[0]);
 		return -1;
 	}
-	p.usb_port_id = strtol(argv[0], &e, 0);
+	p.usb_port_id = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad port ID.\n");
 		return -1;
 	}
-	p.mode = strtol(argv[1], &e, 0);
+	p.mode = strtol(argv[2], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad mode ID.\n");
 		return -1;
@@ -901,17 +902,17 @@ int cmd_pstore_read(int argc, char *argv[])
 	char *e;
 	char *buf;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		fprintf(stderr,
-			"Usage: pstoreread <offset> <size> <filename>\n");
+			"Usage: %s <offset> <size> <filename>\n", argv[0]);
 		return -1;
 	}
-	offset = strtol(argv[0], &e, 0);
+	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > 0x10000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
-	size = strtol(argv[1], &e, 0);
+	size = strtol(argv[2], &e, 0);
 	if ((e && *e) || size <= 0 || size > 0x10000) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
@@ -938,7 +939,7 @@ int cmd_pstore_read(int argc, char *argv[])
 		memcpy(buf + i, r.data, p.size);
 	}
 
-	rv = write_file(argv[2], buf, size);
+	rv = write_file(argv[3], buf, size);
 	free(buf);
 	if (rv)
 		return -1;
@@ -957,18 +958,18 @@ int cmd_pstore_write(int argc, char *argv[])
 	char *e;
 	char *buf;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: pstorewrite <offset> <filename>\n");
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <offset> <filename>\n", argv[0]);
 		return -1;
 	}
-	offset = strtol(argv[0], &e, 0);
+	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > 0x10000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
 
 	/* Read the input file */
-	buf = read_file(argv[1], &size);
+	buf = read_file(argv[2], &size);
 	if (!buf)
 		return -1;
 
@@ -1066,12 +1067,11 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
-		fprintf(stderr,
-			"Usage: eventsmimask <mask>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
 		return -1;
 	}
-	p.mask = strtol(argv[0], &e, 0);
+	p.mask = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad mask.\n");
 		return -1;
@@ -1093,12 +1093,11 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
-		fprintf(stderr,
-			"Usage: eventscimask <mask>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
 		return -1;
 	}
-	p.mask = strtol(argv[0], &e, 0);
+	p.mask = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad mask.\n");
 		return -1;
@@ -1120,12 +1119,11 @@ int cmd_host_event_set_wake_mask(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
-		fprintf(stderr,
-			"Usage: eventwakemask <mask>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
 		return -1;
 	}
-	p.mask = strtol(argv[0], &e, 0);
+	p.mask = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad mask.\n");
 		return -1;
@@ -1147,12 +1145,11 @@ int cmd_host_event_clear(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc != 1) {
-		fprintf(stderr,
-			"Usage: eventclear <mask>\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
 		return -1;
 	}
-	p.mask = strtol(argv[0], &e, 0);
+	p.mask = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad mask.\n");
 		return -1;
@@ -1309,7 +1306,7 @@ int main(int argc, char *argv[])
 	/* Handle commands */
 	for (cmd = commands; cmd->name; cmd++) {
 		if (!strcasecmp(argv[1], cmd->name))
-			return cmd->handler(argc - 2, argv + 2);
+			return cmd->handler(argc - 1, argv + 1);
 	}
 
 	/* If we're still here, command was unknown */
