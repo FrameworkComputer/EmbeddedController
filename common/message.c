@@ -83,8 +83,8 @@ int message_process_cmd(int cmd, uint8_t *out_msg, int max_len)
 
 	for (i = 0; i < msg_len; i++) {
 		if (need_copy)
-			out_msg[i + 3] = *msg;
-		sum += *msg;
+			out_msg[i + 3] = msg[i];
+		sum += msg[i];
 	}
 	out_msg[i + 3] = sum & 0xff;
 	out_msg[i + 4] = MSG_PREAMBLE;
