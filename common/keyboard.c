@@ -10,6 +10,7 @@
 #include "console.h"
 #include "keyboard.h"
 #include "i8042.h"
+#include "hooks.h"
 #include "lightbar.h"
 #include "lpc.h"
 #include "lpc_commands.h"
@@ -23,6 +24,7 @@
 
 
 #define KEYBOARD_DEBUG 1
+
 
 #undef ASSERT
 #define ASSERT(expr) do { \
@@ -74,6 +76,16 @@ static int refill_inter_delay = DEFAULT_INTER_DELAY;  /* unit: ms */
 static int typematic_delay;                           /* unit: us */
 static int typematic_len = 0;  /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
+
+
+#define KB_SYSJUMP_TAG 0x4b42  // "KB"
+#define KB_HOOK_VERSION 1
+/* the previous keyboard state before reboot_ec. */
+struct kb_state {
+	uint8_t codeset;
+	uint8_t ctlram;
+	uint8_t pad[2];  // pad to 4 bytes for system_add_jump_tag().
+};
 
 
 /* The standard Chrome OS keyboard matrix table. */
@@ -826,17 +838,44 @@ static int command_keyboard_press(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press);
 
 
-int keyboard_init(void)
+/* Preserves the states of keyboard controller to keep the initialized states
+ * between reboot_ec commands. Saving info include:
+ *
+ *   - code set
+ *   - controller_ram[0]:
+ *     - XLATE
+ *     - KB/TP disabled
+ *     - KB/TP IRQ enabled
+ */
+static int keyboard_preserve_state(void)
 {
-	/* If the host is still alive during the EC resets (ex. reboot_ec),
-	 * we should restore keyboard states so that the user can type. */
-	enum system_reset_cause_t reset_cause = system_get_reset_cause();
-	if (reset_cause == SYSTEM_RESET_SOFT_WARM ||
-	    reset_cause == SYSTEM_RESET_WATCHDOG ||
-	    reset_cause == SYSTEM_RESET_SOFT_COLD ) {
-		i8042_enable_keyboard_irq();
-		controller_ram[0] &= ~I8042_XLATE;
+	struct kb_state state;
+
+	state.codeset = scancode_set;
+	state.ctlram = controller_ram[0];
+
+	system_add_jump_tag(KB_SYSJUMP_TAG, KB_HOOK_VERSION,
+	                    sizeof(state), &state);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, keyboard_preserve_state, HOOK_PRIO_DEFAULT);
+
+
+/* Restores the keyboard states after reboot_ec command. See above function. */
+static int keyboard_restore_state(void)
+{
+	const struct kb_state *prev;
+	int version, size;
+
+	prev = (const struct kb_state *)system_get_jump_tag(KB_SYSJUMP_TAG,
+	                                                    &version, &size);
+	if (prev && version == KB_HOOK_VERSION && size == sizeof(*prev)) {
+		// Coming back from a sysjump, so restore settings.
+		scancode_set = prev->codeset;
+		update_ctl_ram(0, prev->ctlram);
 	}
 
-	return 0;
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);

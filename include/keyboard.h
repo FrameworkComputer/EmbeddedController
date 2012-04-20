@@ -25,10 +25,6 @@ enum scancode_set_list {
 };
 
 
-/* The initialize code of keyboard lib. Called by core main. */
-int keyboard_init(void);
-
-
 /* Called by keyboard scan code once any key state change (after de-bounce),
  *
  * This function will look up matrix table and convert scancode host.
