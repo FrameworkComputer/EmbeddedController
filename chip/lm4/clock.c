@@ -192,16 +192,11 @@ DECLARE_CONSOLE_COMMAND(nopll, command_disable_pll);
 int clock_init(void)
 {
 
-#ifndef BOARD_bds
-	/* Only BDS has an external crystal; other boards don't have one, and
-	 * can disable main oscillator control to reduce power consumption. */
-	LM4_SYSTEM_MOSCCTL = 0x04;
-#endif
-
+#ifdef BOARD_bds
 	/* Perform an auto calibration of the internal oscillator using the
-	 * 32.768KHz hibernate clock, unless we've already done so. */
-	/* TODO: (crosbug.com/p/7693) This is only needed on early chips which
-	 * aren't factory trimmed. */
+	 * 32.768KHz hibernate clock, unless we've already done so.  This is
+	 * only necessary on A2 silicon as on BDS; A3 silicon is all
+	 * factory-trimmed. */
 	if ((LM4_SYSTEM_PIOSCSTAT & 0x300) != 0x100) {
 		/* Start calibration */
 		LM4_SYSTEM_PIOSCCAL = 0x80000000;
@@ -211,6 +206,11 @@ int clock_init(void)
 		while (!(LM4_SYSTEM_PIOSCSTAT & 0x300))
 			;
 	}
+#else
+	/* Only BDS has an external crystal; other boards don't have one, and
+	 * can disable main oscillator control to reduce power consumption. */
+	LM4_SYSTEM_MOSCCTL = 0x04;
+#endif
 
 	/* TODO: UART seems to glitch unless we wait 500k cycles before
 	 * enabling the PLL, but only if this is a cold boot.  Why?  UART
