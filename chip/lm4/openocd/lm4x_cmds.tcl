@@ -6,24 +6,33 @@
 
 # Program internal flash
 
-proc flash_lm4 {path size} {
-	set lastsect [expr {$size / 1024 - 1}];
+proc flash_lm4 {path offset size} {
+	set firstsect [expr {$offset / 1024}];
+	set lastsect [expr {($offset + $size) / 1024 - 1}];
 	reset halt;
-	flash erase_sector 0 0 $lastsect;
+	flash erase_sector 0 $firstsect $lastsect;
 	# Note erase_sector silently fails sometimes; see crosbug.com/p/8632
 	# Dump a few words as a diagnostic for whether erase succeeded
 	mdw 0 16
-	flash write_image $path 0;
+	flash write_image $path $offset;
 	reset
 }
 
 # Link proto0 has 128KB flash; proto1+ have 256KB
 proc flash_link { } {
-	flash_lm4 ../../../build/link/ec.bin 262144
+	flash_lm4 ../../../build/link/ec.bin 0 262144
+}
+
+proc flash_link_a { } {
+	flash_lm4 ../../../build/link/ec.A.flat 81920 81920
+}
+
+proc flash_link_b { } {
+	flash_lm4 ../../../build/link/ec.B.flat 163840 81920
 }
 
 proc flash_bds { } {
-	flash_lm4 ../../../build/bds/ec.bin 262144
+	flash_lm4 ../../../build/bds/ec.bin 0 262144
 }
 
 # Boot a software using internal RAM only
