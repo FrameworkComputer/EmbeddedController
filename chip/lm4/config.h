@@ -23,7 +23,7 @@
 #define CONFIG_FW_B_OFF         (2 * CONFIG_FW_IMAGE_SIZE)
 
 /* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT 240
+#define CONFIG_IRQ_COUNT 132
 
 /* Debug UART parameters for panic message */
 #define CONFIG_UART_ADDRESS    0x4000c000

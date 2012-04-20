@@ -8,6 +8,7 @@
 #ifndef __EC_TASK_H
 #define __EC_TASK_H
 
+#include "board.h"
 #include "common.h"
 #include "task_id.h"
 
@@ -69,6 +70,16 @@ uint32_t *task_get_event_bitmap(task_id_t tsk);
  * Returns the bitmap of received events (and clears it atomically). */
 uint32_t task_wait_event(int timeout_us);
 
+#ifdef CONFIG_TASK_PROFILING
+/* Start tracking an interrupt.
+ *
+ * This must be called from interrupt context(!) before the interrupt routine
+ * is called. */
+void task_start_irq_handler(void *excep_return);
+#else
+#define task_start_irq_handler(excep_return)
+#endif
+
 /* Change the task scheduled after returning from the exception.
  *
  * If task_send_event() has been called and has set need_resched flag,
@@ -82,7 +93,7 @@ void task_resched_if_needed(void *excep_return);
 /* Initializes tasks and interrupt controller. */
 int task_pre_init(void);
 
-/* Starts task scheduling. */
+/* Starts task scheduling.  Does not normally return. */
 int task_start(void);
 
 /* Enables an interrupt. */
@@ -132,6 +143,7 @@ struct irq_priority {
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
 		void *ret = __builtin_return_address(0);	\
+		task_start_irq_handler(ret);			\
 		routine();					\
 		task_resched_if_needed(ret);			\
 	}							\

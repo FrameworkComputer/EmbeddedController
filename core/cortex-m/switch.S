@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -42,22 +42,26 @@ __switchto:
   bx lr                  @ return from exception
 
 /**
- * Start the task scheduling
+ * Start the task scheduling.  r0 is a pointer to need_resched, which is
+ * set to 1 after the task stack is set up.
  */
-.global task_start
+.global __task_start
 .thumb_func
-task_start:
+__task_start:
   ldr r2,=scratchpad     @ area used as dummy thread stack for the first switch
   mov r3, #2
-  mov r0, #0             @ __Schedule parameter : de-schedule nothing
-  mov r1, #0             @ __Schedule parameter : re-schedule nothing
   add r2, #17*4          @ put the pointer at the top of the stack
+  mov r1, #0             @ __Schedule parameter : re-schedule nothing
   msr psp, r2            @ setup a thread stack up to the first context switch
+  mov r2, #1
   isb                    @ ensure the write is done
   msr control, r3        @ use : priv. mode / thread stack / no floating point
+  mov r3, r0
+  mov r0, #0             @ __Schedule parameter : de-schedule nothing
   isb                    @ ensure the write is done
+  str r2, [r3]           @ Task scheduling is now active
   bl __schedule          @ execute the task with the highest priority
   /* we should never return here */
-  mov r0, #1            @ set to EC_ERROR_UNKNOWN
+  mov r0, #1             @ set to EC_ERROR_UNKNOWN
   bx lr
 

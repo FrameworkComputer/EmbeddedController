@@ -26,11 +26,15 @@ typedef union {
 	struct {
 		uint32_t sp;       /* saved stack pointer for context switch */
 		uint32_t events;   /* bitmaps of received events */
+		uint64_t runtime;  /* Time spent in task */
 		uint32_t guard;    /* Guard value to detect stack overflow */
 		uint8_t stack[0];  /* task stack */
 	};
 	uint32_t context[TASK_SIZE/4];
 } task_;
+
+#define CONTEXT_SP      (__builtin_offsetof(task_, sp) / sizeof(uint32_t))
+#define CONTEXT_GUARD   (__builtin_offsetof(task_, guard) / sizeof(uint32_t))
 
 /* declare task routine prototypes */
 #define TASK(n, r, d) int r(void *);
@@ -48,8 +52,18 @@ static const char * const task_names[] = {
 };
 #undef TASK
 
-extern void __switchto(task_ *from, task_ *to);
 
+#ifdef CONFIG_TASK_PROFILING
+static uint64_t task_start_time; /* Time task scheduling started */
+static uint64_t exc_start_time;  /* Time of task->exception transition */
+static uint64_t exc_end_time;    /* Time of exception->task transition */
+static uint64_t exc_total_time;  /* Total time in exceptions */
+static uint32_t svc_calls;       /* Service calls */
+static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
+#endif
+
+extern void __switchto(task_ *from, task_ *to);
+extern int __task_start(int *need_resched);
 
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
@@ -77,11 +91,10 @@ static void task_exit_trap(void)
 /* Declare and fill the contexts for all tasks. Note that while it would be
  * more readable to use the struct fields (.sp, .guard) where applicable, gcc
  * can't mix initializing some fields on one side of the union and some fields
- * on the other, so we have to use .context for all initialization.
- */
+ * on the other, so we have to use .context for all initialization. */
 #define TASK(n, r, d)  {						\
-	.context[0] = (uint32_t)(tasks + TASK_ID_##n + 1) - 64,	        \
-	.context[2] = GUARD_VALUE,					\
+	.context[CONTEXT_SP] = (uint32_t)(tasks + TASK_ID_##n + 1) - 64,\
+	.context[CONTEXT_GUARD] = GUARD_VALUE,				\
 	.context[TASK_SIZE/4 - 8/*r0*/] = (uint32_t)d,                  \
 	.context[TASK_SIZE/4 - 3/*lr*/] = (uint32_t)task_exit_trap,     \
 	.context[TASK_SIZE/4 - 2/*pc*/] = (uint32_t)r,                  \
@@ -96,8 +109,11 @@ static task_ tasks[] __attribute__((section(".data.tasks")))
 /* Reserve space to discard context on first context switch. */
 uint32_t scratchpad[17] __attribute__((section(".data.tasks")));
 
-/* context switch at the next exception exit if needed */
-/* TODO: who sets this back to 0 after it's set to 1? */
+/* Has task context switching been enabled? */
+/* TODO: (crosbug.com/p/9274) this currently gets enabled at tast start time
+ * and never cleared.  We should optimize when we need to call svc_handler()
+ * so we don't waste time calling it if we're not profiling and no event has
+ * occurred. */
 static int need_resched = 0;
 
 /**
@@ -136,13 +152,13 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 	return tasks + id;
 }
 
-/* Disables CPU interrupt */
+
 void interrupt_disable(void)
 {
 	asm("cpsid i");
 }
 
-/* Enables CPU interrupt bit. */
+
 void interrupt_enable(void)
 {
 	asm("cpsie i");
@@ -155,6 +171,14 @@ inline int in_interrupt_context(void)
 	asm("mrs %0, ipsr \n"             /* read exception number */
 	    "lsl %0, #23  \n":"=r"(ret)); /* exception bits are the 9 LSB */
 	return ret;
+}
+
+
+inline int get_interrupt_context(void)
+{
+	int ret;
+	asm("mrs %0, ipsr \n":"=r"(ret)); /* read exception number */
+	return ret & 0x1ff;                /* exception bits are the 9 LSB */
 }
 
 
@@ -181,11 +205,25 @@ uint32_t *task_get_event_bitmap(task_id_t tskid)
 void svc_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
+#ifdef CONFIG_TASK_PROFILING
+	int exc = get_interrupt_context();
+	uint64_t t;
+#endif
 
-	/* push the priority to -1 until the return, to avoid being
+	/* Push the priority to -1 until the return, to avoid being
 	 * interrupted */
 	asm volatile("cpsid f\n"
 		     "isb\n");
+
+#ifdef CONFIG_TASK_PROFILING
+	/* SVCall isn't triggered via DECLARE_IRQ(), so it needs to track its
+	 * start time explicitly. */
+	if (exc == 0xb) {
+		exc_start_time = get_time().val;
+		svc_calls++;
+	}
+#endif
+
 	current = __get_task_scheduled();
 #ifdef CONFIG_OVERFLOW_DETECT
 	ASSERT(current->guard == GUARD_VALUE);
@@ -199,6 +237,17 @@ void svc_handler(int desched, task_id_t resched)
 
 	ASSERT(tasks_ready);
 	next = __task_id_to_ptr(31 - __builtin_clz(tasks_ready));
+
+#ifdef CONFIG_TASK_PROFILING
+	/* Track time in interrupts */
+	t = get_time().val;
+	exc_total_time += (t - exc_start_time);
+
+	/* Bill the current task for time between the end of the last interrupt
+	 * and the start of this one. */
+	current->runtime += (exc_start_time - exc_end_time);
+	exc_end_time = t;
+#endif
 
 	/* Nothing to do */
 	if (next == current)
@@ -219,12 +268,34 @@ void __schedule(int desched, int resched)
 }
 
 
+#ifdef CONFIG_TASK_PROFILING
+void task_start_irq_handler(void *excep_return)
+{
+	/* Get time before checking depth, in case this handler is
+	 * pre-empted */
+	uint64_t t = get_time().val;
+	int irq = get_interrupt_context() - 16;
+
+	/* Track IRQ distribution.  No need for atomic add, because an IRQ
+	* can't pre-empt itself. */
+	if (irq < ARRAY_SIZE(irq_dist))
+		irq_dist[irq]++;
+
+	/* Continue iff a rescheduling event happened and we are not called
+	 * from another exception (this must match the logic for when we chain
+	 * to svc_handler() below). */
+	if (!need_resched || (((uint32_t)excep_return & 0xf) == 1))
+		return;
+
+	exc_start_time = t;
+}
+#endif
+
+
 void task_resched_if_needed(void *excep_return)
 {
-	/**
-	 * continue iff a rescheduling event happened and
-	 * we are not called from another exception
-	 */
+	/* Continue iff a rescheduling event happened and we are not called
+	 * from another exception. */
 	if (!need_resched || (((uint32_t)excep_return & 0xf) == 1))
 		return;
 
@@ -271,7 +342,6 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	if (in_interrupt_context()) {
 		/* the receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
-		need_resched = 1;
 	} else {
 		if (wait)
 			return __wait_evt(-1, tskid);
@@ -318,7 +388,7 @@ void task_trigger_irq(int irq)
 static void __nvic_init_irqs(void)
 {
 	/* Get the IRQ priorities section from the linker */
-	int irq_count = __irqprio_end - __irqprio;
+	int exc_calls = __irqprio_end - __irqprio;
 	int i;
 
 	/* Mask and clear all pending interrupts */
@@ -333,7 +403,7 @@ static void __nvic_init_irqs(void)
 	interrupt_enable();
 
 	/* Set priorities */
-	for (i = 0; i < irq_count; i++) {
+	for (i = 0; i < exc_calls; i++) {
 		uint8_t irq = __irqprio[i].irq;
 		uint8_t prio = __irqprio[i].priority;
 		uint32_t prio_shift = irq % 4 * 8 + 5;
@@ -373,6 +443,7 @@ void mutex_lock(struct mutex *mtx)
 	atomic_clear(&mtx->waiters, id);
 }
 
+
 void mutex_unlock(struct mutex *mtx)
 {
 	uint32_t waiters;
@@ -401,11 +472,30 @@ int command_task_info(int argc, char **argv)
 {
 	int i;
 
+#ifdef CONFIG_TASK_PROFILING
+	uart_printf("Task switching started: %10ld us\n", task_start_time);
+	uart_printf("Time in tasks:          %10ld us\n",
+		    get_time().val - task_start_time);
+	uart_printf("Time in exceptions:     %10ld us\n", exc_total_time);
+	uart_flush_output();
+	uart_printf("Service calls:          %10d\n", svc_calls);
+	uart_puts("IRQ counts by type:\n");
+	for (i = 0; i < ARRAY_SIZE(irq_dist); i++) {
+		if (irq_dist[i])
+			uart_printf("%4d %8d\n", i, irq_dist[i]);
+	}
+#endif
+
+	uart_puts("Task Ready Name         Events    Time (us)\n");
+
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-		uart_printf("%2d %c %-16s events %08x\n", i, is_ready,
-		            task_names[i], tasks[i].events);
+		uart_printf("%4d %c %-16s %08x %10ld\n", i, is_ready,
+			    task_names[i], tasks[i].events, tasks[i].runtime);
+		uart_flush_output();
 	}
+
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info);
@@ -441,4 +531,14 @@ int task_pre_init(void)
 	__nvic_init_irqs();
 
 	return EC_SUCCESS;
+}
+
+
+int task_start(void)
+{
+#ifdef CONFIG_TASK_PROFILING
+	task_start_time = exc_end_time = get_time().val;
+#endif
+
+	return __task_start(&need_resched);
 }
