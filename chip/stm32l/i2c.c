@@ -116,7 +116,7 @@ void i2c2_work_task(void)
 			msg_len = message_process_cmd(i2c_xmit_mode[I2C2],
 						  out_msg, sizeof(out_msg));
 			if (msg_len > 0) {
-				i2c_write_raw(I2C2, out_msg, sizeof(out_msg));
+				i2c_write_raw(I2C2, out_msg, msg_len);
 			} else {
 				uart_printf("%s: unexpected mode %u\n",
 						__func__, i2c_xmit_mode[I2C2]);
