@@ -452,24 +452,40 @@ int uart_printf(const char *format, ...)
 			if (vstr == NULL)
 				vstr = "(NULL)";
 		} else {
-			uint32_t v;
+			uint64_t v;
 			int is_negative = 0;
+			int is_64bit = 0;
 			int base = 10;
 
-			/* TODO: (crosbug.com/p/7490) handle "%l" prefix for
-			 * uint64_t */
+			if (c == 'l') {
+				is_64bit = 1;
+				c = *format++;
+			}
 
 			/* Special-case: %T = current time */
-			if (c == 'T')
-				v = get_time().le.lo;
-			else
+			if (c == 'T') {
+				v = get_time().val;
+				is_64bit = 1;
+			} else if (is_64bit) {
+				v = va_arg(args, uint64_t);
+			} else {
 				v = va_arg(args, uint32_t);
+			}
 
 			switch (c) {
 			case 'd':
-				if ((int)v < 0) {
-					is_negative = 1;
-					v = -v;
+				if (is_64bit) {
+					if ((int64_t)v < 0) {
+						is_negative = 1;
+						if (v != (1ULL << 63))
+							v = -v;
+					}
+				} else {
+					if ((int)v < 0) {
+						is_negative = 1;
+						if (v != (1ULL << 31))
+							v = -(int)v;
+					}
 				}
 				break;
 			case 'u':
@@ -496,10 +512,9 @@ int uart_printf(const char *format, ...)
 			if (!v)
 				*(--vstr) = '0';
 
-			while (v) {
-				*(--vstr) = int_chars[v % base];
-				v /= base;
-			}
+			while (v)
+				*(--vstr) = int_chars[uint64divmod(&v, base)];
+
 			if (is_negative)
 				*(--vstr) = '-';
 		}

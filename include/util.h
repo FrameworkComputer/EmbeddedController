@@ -1,15 +1,14 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Various utility functions and macros */
 
-#ifndef __UTIL_H
-#define __UTIL_H
+#ifndef __CROS_EC_UTIL_H
+#define __CROS_EC_UTIL_H
 
-#include <stdint.h>
-
+#include "common.h"
 #include "config.h"
 
 /**
@@ -60,7 +59,18 @@ void *memset(void *dest, int c, int len);
 int strcasecmp(const char *s1, const char *s2);
 int strlen(const char *s);
 int strtoi(const char *nptr, char **endptr, int base);
+
+/* Like strncpy(), but guarantees null termination. */
 char *strzcpy(char *dest, const char *src, int len);
+
 int tolower(int c);
 
-#endif  /* __UTIL_H */
+/* 64-bit divide-and-modulo.  Does the equivalent of:
+ *
+ *   r = *n % d;
+ *   *n /= d;
+ *   return r;
+ */
+int uint64divmod(uint64_t *v, int by);
+
+#endif  /* __CROS_EC_UTIL_H */

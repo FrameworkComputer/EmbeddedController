@@ -167,29 +167,31 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait);
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
-	uart_printf("Time: 0x%08x%08x us (%u %u)\n", ts.le.hi, ts.le.lo,
-		    ts.le.hi, ts.le.lo);
-	return EC_SUCCESS;
+	uart_printf("Time: 0x%016lx = %ld us\n", ts.val, ts.val);
 
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(gettime, command_get_time);
 
 
 int command_timer_info(int argc, char **argv)
 {
-	timestamp_t ts = get_time();
+	uint64_t t = get_time().val;
+	uint64_t deadline = (uint64_t)clksrc_high << 32 |
+		__hw_clock_event_get();
 	int tskid;
 
-	uart_printf("Time:     0x%08x%08x us\n"
-	            "Deadline: 0x%08x%08x us\n"
-	            "Active timers:\n",
-	            ts.le.hi, ts.le.lo, clksrc_high,
-		    __hw_clock_event_get());
+	uart_printf("Time:     0x%016lx us\n"
+		    "Deadline: 0x%016lx -> %10ld us from now\n"
+		    "Active timers:\n",
+		    t, deadline, deadline - t);
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
-		if (timer_running & (1<<tskid))
-			uart_printf("Tsk %d tmr 0x%08x%08x\n", tskid,
-			            timer_deadline[tskid].le.hi,
-			            timer_deadline[tskid].le.lo);
+		if (timer_running & (1<<tskid)) {
+			uart_printf("  Tsk %2d  0x%016lx -> %10ld\n", tskid,
+				    timer_deadline[tskid].val,
+				    timer_deadline[tskid].val - t);
+			uart_flush_output();
+		}
 	}
 	return EC_SUCCESS;
 }

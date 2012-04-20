@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -46,16 +46,13 @@ int uart_puts(const char *outstr);
  *   string (%s)
  *   native int (signed/unsigned) (%d / %u / %x)
  *   int32_t / uint32_t (%d / %x)
+ *   int64_t / uint64_t (%ld / %lu / %lx)
  *   pointer (%p)
  * And the following special format codes:
  *   current time in us (%T)
- * including padding (%-5s, %8d, %08x)
+ * including padding (%-5s, %8d, %08x, %016lx)
  *
- * Support planned for:
- *   int64_t / uint64_t (%ld / %lu / %lx)
- *
- * Note: Floating point output (%f / %g) is not supported.
- */
+ * Floating point output (%f / %g) is not supported. */
 int uart_printf(const char *format, ...);
 
 /* Flushes output.  Blocks until UART has transmitted all output. */

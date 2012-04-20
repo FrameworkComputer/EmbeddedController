@@ -10,7 +10,7 @@
 #define __CROS_EC_CHARGE_STATE_H
 
 /* Time constants */
-#define MSEC    ((uint64_t)1000)
+#define MSEC    (1000ULL)
 #define SECOND  (MSEC * 1000)
 #define MINUTE  (SECOND * 60)
 #define HOUR    (MINUTE * 60)
