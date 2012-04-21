@@ -69,7 +69,7 @@ int message_process_cmd(int cmd, uint8_t *out_msg, int max_len)
 	 */
 	if (msg_len + MSG_PROTO_BYTES > max_len)
 		msg_len = max_len - MSG_PROTO_BYTES;
-	len = msg_len + 4;
+	len = msg_len + MSG_PROTO_BYTES;
 	ASSERT(msg_len >= 0 && msg_len < 0xffff);
 	need_copy = msg != out_msg + MSG_HEADER_BYTES;
 	ASSERT(!need_copy ||

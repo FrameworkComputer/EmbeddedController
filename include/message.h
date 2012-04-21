@@ -46,8 +46,8 @@ enum message_cmd_t {
  * The hdr byte is just a tag to indicate that the real message follows. It
  * signals the end of any preamble required by the interface.
  *
- * The 16-bit length includes the length of the header, len bytes, message
- * and checksum, but not the final preamble byte.
+ * The 16-bit length is the entire packet size, including the header, length
+ * bytes, message payload, checksum, and postamble byte.
  *
  * The checksum is calculated as the sum of the header, len byte and message.
  *
