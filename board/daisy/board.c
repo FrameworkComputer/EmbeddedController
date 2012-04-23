@@ -73,10 +73,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT11",    GPIO_C, (1<<6),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
-
-	/* bi-directional, initialized as hi-Z until alt. function is set */
-	{"I2C_SCL",     GPIO_B, (1<<10), GPIO_HI_Z, NULL},
-	{"I2C_SDA",     GPIO_B, (1<<11), GPIO_HI_Z, NULL},
 };
 
 void configure_board(void)
@@ -110,6 +106,17 @@ void configure_board(void)
 					(1<<4), GPIO_ALT_SPI);
 	STM32L_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
 
+	/*
+	 * I2C SCL/SDA on PB10-11, bi-directional, no pull-up/down, initialized
+	 * as hi-Z until alt. function is set
+	 */
+	STM32L_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
+	STM32L_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
+	STM32L_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2));
+	STM32L_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10);
+	STM32L_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10);
+	gpio_set_alternate_function(GPIO_B, (1<<11) | (1<<10), GPIO_ALT_I2C);
+
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
 	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
 
@@ -120,9 +127,6 @@ void configure_board(void)
 	STM32L_GPIO_MODER_OFF(GPIO_B) |= 0x1 << (2*9);
 	/* put GPIO in Hi-Z state */
 	gpio_set_level(GPIO_EC_INT, 1);
-
-	/* I2C2 SCL/SDA on pins PB10/PB11 - no internal pullup/down */
-	gpio_set_alternate_function(GPIO_B, (1<<10) | (1<<11), GPIO_ALT_I2C);
 }
 
 void board_keyboard_scan_ready(void)
