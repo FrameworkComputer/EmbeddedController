@@ -27,9 +27,12 @@ enum {
 
 /* The command codes that we understand */
 enum message_cmd_t {
-	CMDC_NOP,	/* No operation / ping */
-	CMDC_ID,	/* Read EC ID */
-	CMDC_KEY_STATE,	/* Read key state */
+	/* control / status messages */
+	CMDC_NOP,			/* No operation / ping */
+	CMDC_ID,			/* Read EC ID */
+
+	/* functional messages */
+	CMDC_KEY_STATE = 0x20,		/* Read key state */
 };
 
 
