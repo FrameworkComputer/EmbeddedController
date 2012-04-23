@@ -132,6 +132,10 @@ enum temp_sensor_id {
 
 #define TMP006_COUNT 1
 
+/* Target value for BOOTCFG.  This currently toggles the polarity bit without
+ * enabling the boot loader, simply to prove we can program it. */
+#define BOOTCFG_VALUE 0xfffffdfe
+
 void configure_board(void);
 
 #endif /* __BOARD_H */

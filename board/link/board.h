@@ -206,6 +206,16 @@ enum temp_sensor_id {
 /* The number of TMP006 sensor chips on the board. */
 #define TMP006_COUNT 4
 
+
+/* Target value for BOOTCFG.  This currently toggles the polarity bit without
+ * enabling the boot loader, simply to prove we can program it. */
+/* TODO: (crosbug.com/p/8769) set BOOTCFG to 0x7ffffffe, which will prevent
+ * subsequent writes to BOOTCFG.  Alternately, we could set BOOTCFG to some
+ * signal which has a pullup/pulldown, and use that as a failsafe to get into
+ * the boot loader, if we somehow brick the RO firmware. */
+#define BOOTCFG_VALUE 0xfffffdfe
+
+
 void configure_board(void);
 
 #endif /* __BOARD_H */

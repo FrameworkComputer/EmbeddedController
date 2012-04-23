@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : hardware specific implementation */
 
+#include "board.h"
 #include "cpu.h"
 #include "registers.h"
 #include "system.h"
@@ -121,13 +122,24 @@ int system_pre_init(void)
 				break;
 		}
 	}
-	/* initialize properly registers after reset (cf errata) */
+
+	/* Initialize registers after reset (cf errata) */
+	/* TODO: fixed in A3 chip stepping? */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCT = 0x7fff;
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIM = 0;
 
 	check_reset_cause();
+
+	/* Initialize bootcfg if needed */
+	if (LM4_SYSTEM_BOOTCFG != BOOTCFG_VALUE) {
+		LM4_FLASH_FMD = BOOTCFG_VALUE;
+		LM4_FLASH_FMA = 0x75100000;
+		LM4_FLASH_FMC = 0xa4420008;  /* WRKEY | COMT */
+		while (LM4_FLASH_FMC & 0x08)
+			;
+	}
 
 	return EC_SUCCESS;
 }
