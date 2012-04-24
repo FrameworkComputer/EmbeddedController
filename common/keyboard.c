@@ -26,14 +26,6 @@
 #define KEYBOARD_DEBUG 1
 
 
-#undef ASSERT
-#define ASSERT(expr) do { \
-      if (!(expr)) { \
-        uart_printf("[ASSERT(%s) failed at %s:%d]\n", #expr, __FUNCTION__, __LINE__); \
-        while (1) usleep(1000000); \
-      } \
-    } while (0)
-
 /*
  * i8042 global settings.
  */
@@ -265,10 +257,6 @@ void keyboard_state_changed(int row, int col, int is_pressed) {
     ASSERT(len > 0);
 
     i8042_send_to_host(len, scan_code);
-  } else {
-    /* FIXME: long-term solution is to ignore this key. However, keep
-     *        assertion in the debug stage. */
-    ASSERT(ret == EC_SUCCESS);
   }
 
   if (is_pressed) {
@@ -297,9 +285,10 @@ void keyboard_enable(int enable) {
 
 
 uint8_t read_ctl_ram(uint8_t addr) {
-  ASSERT(addr < 0x20);  // Controller RAM is only 32 bytes.
-
-  return controller_ram[addr];
+  if (addr < 0x20)  // Controller RAM is only 32 bytes.
+    return controller_ram[addr];
+  else
+    return 0;
 }
 
 
@@ -309,7 +298,9 @@ uint8_t read_ctl_ram(uint8_t addr) {
 void update_ctl_ram(uint8_t addr, uint8_t data) {
   uint8_t orig;
 
-  ASSERT(addr < 0x20);  // Controller RAM is only 32 bytes.
+  if (addr >= 0x20);  // Controller RAM is only 32 bytes.
+    return;
+
   orig = controller_ram[addr];
   controller_ram[addr] = data;
 #if KEYBOARD_DEBUG >= 5
