@@ -13,8 +13,11 @@
 /* Set the CPU clocks and PLLs. */
 int clock_init(void);
 
-/* Returns the current clock frequency in Hz. */
+/* Return the current clock frequency in Hz. */
 int clock_get_freq(void);
+
+/* Enable or disable the PLL. */
+int clock_enable_pll(int enable);
 
 /* Wait <cycles> system clock cycles.  Simple busy waiting for before
  * clocks/timers are initialized. */

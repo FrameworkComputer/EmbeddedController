@@ -95,13 +95,15 @@ int main(void)
 	 * RO image and once in the RW image. */
 	vboot_init();
 
-	/* TODO: reduce core clock now that vboot is done */
-
 	/* Initialize other driver modules.  These can occur in any order.
 	 * Non-driver modules with tasks do their inits from their task
 	 * functions, not here. */
 	hook_notify(HOOK_INIT, 0);
 
+#ifdef BOARD_link
+	/* Reduce core clock now that init is done */
+	clock_enable_pll(0);
+#endif
 	/* Print the init time and reset cause.  Init time isn't completely
 	 * accurate because it can't take into account the time for the first
 	 * few module inits, but it'll at least catch the majority of them. */
