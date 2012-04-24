@@ -16,6 +16,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "util.h"
 #include "x86_power.h"
 
@@ -329,6 +330,9 @@ void x86_power_task(void)
 			/* Wait 5ms for SUSCLK to stabilize */
 			usleep(5000);
 
+			/* Turn off USB ports. */
+			usb_charge_all_ports_off();
+
 			state = X86_S5;
 			break;
 
@@ -341,6 +345,9 @@ void x86_power_task(void)
 			 * reset, so they can wake the system from suspend. */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
+
+			/* Turn on USB ports as we go into S3 or S0. */
+			usb_charge_all_ports_on();
 
 			state = X86_S3;
 			break;
@@ -420,6 +427,9 @@ void x86_power_task(void)
 
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
+
+			/* Turn off USB ports. */
+			usb_charge_all_ports_off();
 
 			state = X86_S5;
 			break;
