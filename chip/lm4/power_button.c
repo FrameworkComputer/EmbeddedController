@@ -19,8 +19,11 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_POWERBTN, outstr)
+#define CPRINTF(format, args...) cprintf(CC_POWERBTN, format, ## args)
 
 /* Power button state machine.
  *
@@ -100,7 +103,7 @@ static void update_other_switches(void)
 
 static void set_pwrbtn_to_pch(int high)
 {
-	uart_printf("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
+	CPRINTF("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
 	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
 
@@ -160,7 +163,7 @@ static void state_machine(uint64_t tnow)
 		if (!chipset_in_state(CHIPSET_STATE_SOFT_OFF))
 			set_pwrbtn_to_pch(0);
 		else
-			uart_printf("[%T PB chipset already off]\n");
+			CPRINTF("[%T PB chipset already off]\n");
 		pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
 		break;
 	case PWRBTN_STATE_STOPPING:
@@ -185,10 +188,10 @@ static void power_button_changed(uint64_t tnow)
 {
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_RECOVERY) {
 		/* Ignore all power button changes during the recovery pulse */
-		uart_printf("[%T PB changed during recovery pulse]\n");
+		CPRINTF("[%T PB changed during recovery pulse]\n");
 	} else if (get_power_button_pressed()) {
 		/* Power button pressed */
-		uart_printf("[%T PB pressed]\n");
+		CPRINTF("[%T PB pressed]\n");
 		pwrbtn_state = PWRBTN_STATE_START;
 		tnext_state = tnow;
 		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
@@ -199,12 +202,12 @@ static void power_button_changed(uint64_t tnow)
 		/* Ignore the first power button release after a
 		 * keyboard-controlled reset, since we already told the PCH the
 		 * power button was released. */
-		uart_printf("[%T PB released after keyboard reset]\n");
+		CPRINTF("[%T PB released after keyboard reset]\n");
 		pwrbtn_state = PWRBTN_STATE_STOPPED;
 	} else {
 		/* Power button released normally (outside of a
 		 * keyboard-controlled reset) */
-		uart_printf("[%T PB released]\n");
+		CPRINTF("[%T PB released]\n");
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
 		tnext_state = tnow;
 		*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
@@ -216,7 +219,7 @@ static void power_button_changed(uint64_t tnow)
 /* Lid open */
 static void lid_switch_open(uint64_t tnow)
 {
-	uart_printf("[%T PB lid open]\n");
+	CPRINTF("[%T PB lid open]\n");
 
 	debounced_lid_open = 1;
 	*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
@@ -238,7 +241,7 @@ static void lid_switch_open(uint64_t tnow)
 /* Lid close */
 static void lid_switch_close(uint64_t tnow)
 {
-	uart_printf("[%T PB lid close]\n");
+	CPRINTF("[%T PB lid close]\n");
 
 	debounced_lid_open = 0;
 	*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
@@ -375,8 +378,7 @@ void power_button_task(void)
 			 * that can't happen - and even if it did, we'd just go
 			 * back to sleep after deciding that we woke up too
 			 * early.) */
-			uart_printf("[%T PB task %d wait %d]\n",
-				    pwrbtn_state, d);
+			CPRINTF("[%T PB task %d wait %d]\n", pwrbtn_state, d);
 			task_wait_event(d);
 		}
 	}
@@ -393,8 +395,8 @@ static int command_powerbtn(int argc, char **argv)
 	if (argc > 1) {
 		ms = strtoi(argv[1], &e, 0);
 		if (*e) {
-			uart_puts("Invalid duration.\n"
-				  "Usage: powerbtn [duration_ms]\n");
+			ccputs("Invalid duration.\n"
+			       "Usage: powerbtn [duration_ms]\n");
 			return EC_ERROR_INVAL;
 		}
 	}
@@ -402,7 +404,7 @@ static int command_powerbtn(int argc, char **argv)
 	/* Note that this only simulates the raw power button signal to the
 	 * PCH.  It does not simulate the full state machine which sends SMIs
 	 * and other events to other parts of the EC and chipset. */
-	uart_printf("Simulating %d ms power button press.\n", ms);
+	ccprintf("Simulating %d ms power button press.\n", ms);
 	set_pwrbtn_to_pch(0);
 	usleep(ms * 1000);
 	set_pwrbtn_to_pch(1);

@@ -12,7 +12,6 @@
 #include "link_defs.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 /**
@@ -68,6 +67,11 @@ extern int __task_start(int *need_resched);
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
+	/* Print when the idle task starts.  This is the lowest priority task,
+	 * so this only starts once all other tasks have gotten a chance to do
+	 * their task inits and have gone to sleep. */
+	cprintf(CC_TASK, "[%T idle task started]\n");
+
 	while (1) {
 		/* Wait for the irq event */
 		asm("wfi");
@@ -79,7 +83,7 @@ void __idle(void)
 static void task_exit_trap(void)
 {
 	int i = task_get_current();
-	uart_printf("[Task %d (%s) exited!]\n", i, task_names[i]);
+	cprintf(CC_TASK, "[%T Task %d (%s) exited!]\n", i, task_names[i]);
 	/* Exited tasks simply sleep forever */
 	while (1)
 		task_wait_event(-1);
@@ -473,26 +477,26 @@ int command_task_info(int argc, char **argv)
 	int i;
 
 #ifdef CONFIG_TASK_PROFILING
-	uart_printf("Task switching started: %10ld us\n", task_start_time);
-	uart_printf("Time in tasks:          %10ld us\n",
+	ccprintf("Task switching started: %10ld us\n", task_start_time);
+	ccprintf("Time in tasks:          %10ld us\n",
 		    get_time().val - task_start_time);
-	uart_printf("Time in exceptions:     %10ld us\n", exc_total_time);
-	uart_flush_output();
-	uart_printf("Service calls:          %10d\n", svc_calls);
-	uart_puts("IRQ counts by type:\n");
+	ccprintf("Time in exceptions:     %10ld us\n", exc_total_time);
+	cflush();
+	ccprintf("Service calls:          %10d\n", svc_calls);
+	ccputs("IRQ counts by type:\n");
 	for (i = 0; i < ARRAY_SIZE(irq_dist); i++) {
 		if (irq_dist[i])
-			uart_printf("%4d %8d\n", i, irq_dist[i]);
+			ccprintf("%4d %8d\n", i, irq_dist[i]);
 	}
 #endif
 
-	uart_puts("Task Ready Name         Events    Time (us)\n");
+	ccputs("Task Ready Name         Events    Time (us)\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-		uart_printf("%4d %c %-16s %08x %10ld\n", i, is_ready,
-			    task_names[i], tasks[i].events, tasks[i].runtime);
-		uart_flush_output();
+		ccprintf("%4d %c %-16s %08x %10ld\n", i, is_ready,
+			 task_names[i], tasks[i].events, tasks[i].runtime);
+		cflush();
 	}
 
 
@@ -504,10 +508,10 @@ DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info);
 static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
-		uart_printf("tasks_ready: 0x%08x\n", tasks_ready);
+		ccprintf("tasks_ready: 0x%08x\n", tasks_ready);
 	} else {
 		tasks_ready = strtoi(argv[1], NULL, 16);
-		uart_printf("Setting tasks_ready to 0x%08x\n", tasks_ready);
+		ccprintf("Setting tasks_ready to 0x%08x\n", tasks_ready);
 		__schedule(0, 0);
 	}
 

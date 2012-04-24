@@ -8,8 +8,11 @@
 #include "console.h"
 #include "usb_charge.h"
 #include "host_command.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 
 enum lpc_status usb_charge_command_set_mode(uint8_t *data)
@@ -18,8 +21,8 @@ enum lpc_status usb_charge_command_set_mode(uint8_t *data)
 			(struct lpc_params_usb_charge_set_mode *)data;
 	int rv;
 
-	uart_printf("[Setting USB port %d to mode %d]\n",
-		    p->usb_port_id, p->mode);
+	CPRINTF("[Setting USB port %d to mode %d]\n",
+		p->usb_port_id, p->mode);
 	rv = usb_charge_set_mode(p->usb_port_id, p->mode);
 
 	if (rv != EC_SUCCESS)

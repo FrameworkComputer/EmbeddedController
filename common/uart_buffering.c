@@ -357,6 +357,7 @@ void uart_process(void)
 		uart_tx_stop();
 }
 
+
 void uart_set_console_mode(int enable)
 {
 	console_mode = enable;
@@ -382,7 +383,7 @@ int uart_puts(const char *outstr)
 }
 
 
-int uart_printf(const char *format, ...)
+int uart_vprintf(const char *format, va_list args)
 {
 	static const char int_chars[] = "0123456789abcdef";
 	static const char error_str[] = "ERROR";
@@ -394,11 +395,8 @@ int uart_printf(const char *format, ...)
 	int is_left;
 	int pad_zero;
 	int pad_width;
-	va_list args;
 	char *vstr;
 	int vlen;
-
-	va_start(args, format);
 
 	while (*format && !dropped_chars) {
 		int c = *format++;
@@ -532,7 +530,6 @@ int uart_printf(const char *format, ...)
 			vlen++;
 		}
 	}
-	va_end(args);
 
 	if (uart_tx_stopped())
 		uart_tx_start();
@@ -540,6 +537,19 @@ int uart_printf(const char *format, ...)
 	/* Successful if we consumed all output */
 	return dropped_chars ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
+
+
+int uart_printf(const char *format, ...)
+{
+	int rv;
+	va_list args;
+
+	va_start(args, format);
+	rv = uart_vprintf(format, args);
+	va_end(args);
+	return rv;
+}
+
 
 void uart_flush_output(void)
 {

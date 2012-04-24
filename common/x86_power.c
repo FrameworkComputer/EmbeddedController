@@ -16,9 +16,12 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 #include "x86_power.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_X86POWER, outstr)
+#define CPRINTF(format, args...) cprintf(CC_X86POWER, format, ## args)
 
 /* Default timeout in us; if we've been waiting this long for an input
  * transition, just jump to the next state. */
@@ -145,9 +148,9 @@ static int wait_in_signals(uint32_t want)
 	while ((in_signals & in_want) != in_want) {
 		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
 			update_in_signals();
-			uart_printf("[x86 power timeout on input; "
-				    "wanted 0x%04x, got 0x%04x]\n",
-				    in_want, in_signals & in_want);
+			CPRINTF("[x86 power timeout on input; "
+				"wanted 0x%04x, got 0x%04x]\n",
+				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
 		}
 		/* TODO: should really shrink the remaining timeout if we woke
@@ -240,7 +243,7 @@ void x86_power_interrupt(enum gpio_signal signal)
 /*****************************************************************************/
 /* Initialization */
 
-int x86_power_init(void)
+static int x86_power_init(void)
 {
 	/* Default to G3 state unless proven otherwise */
 	state = X86_G3;
@@ -254,11 +257,11 @@ int x86_power_init(void)
 	 * through G3. */
 	if (system_jumped_to_this_image()) {
 		if ((in_signals & IN_ALL_S0) == IN_ALL_S0) {
-			uart_puts("[x86 already in S0]\n");
+			CPUTS("[x86 already in S0]\n");
 			state = X86_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			uart_puts("[x86 forcing G3]\n");
+			CPUTS("[x86 forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
 			gpio_set_level(GPIO_PCH_RCINn, 0);
@@ -300,8 +303,8 @@ void x86_power_task(void)
 	x86_power_init();
 
 	while (1) {
-		uart_printf("[%T x86 power state %d = %s, in 0x%04x]\n",
-			    state, state_names[state], in_signals);
+		CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
+			state, state_names[state], in_signals);
 
 		switch (state) {
 		case X86_G3:
@@ -460,11 +463,11 @@ void x86_power_task(void)
 static int command_x86power(int argc, char **argv)
 {
 	/* Print current state */
-	uart_printf("Current X86 state: %d (%s)\n", state, state_names[state]);
+	ccprintf("Current X86 state: %d (%s)\n", state, state_names[state]);
 
 	/* Forcing a power state from EC is deprecated */
 	if (argc > 1)
-		uart_puts("Use 'powerbtn' instead of 'x86power s0'.\n");
+		ccputs("Use 'powerbtn' instead of 'x86power s0'.\n");
 
 	return EC_SUCCESS;
 }
@@ -481,7 +484,7 @@ static int command_x86reset(int argc, char **argv)
 		is_cold = 0;
 
 	/* Force the x86 to reset */
-	uart_printf("Issuing x86 %s reset...\n", is_cold ? "cold" : "warm");
+	ccprintf("Issuing x86 %s reset...\n", is_cold ? "cold" : "warm");
 	x86_power_reset(is_cold);
 	return EC_SUCCESS;
 }

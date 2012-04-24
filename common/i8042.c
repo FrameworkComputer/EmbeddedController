@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -7,15 +7,27 @@
 
 #include "board.h"
 #include "common.h"
+#include "console.h"
 #include "i8042.h"
 #include "keyboard.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 
 #define I8042_DEBUG 1
+
+/* Console output macros */
+#if I8042_DEBUG >= 4
+#define CPRINTF4(format, args...) cprintf(CC_I8042, format, ## args)
+#else
+#define CPRINTF4(format, args...)
+#endif
+#if I8042_DEBUG >= 5
+#define CPRINTF5(format, args...) cprintf(CC_I8042, format, ## args)
+#else
+#define CPRINTF5(format, args...)
+#endif
 
 #define MAX_QUEUED_KEY_PRESS 16
 
@@ -113,12 +125,9 @@ void i8042_command_task(void)
 			/* if the host still didn't read that away,
 			   try next time. */
 			if (keyboard_has_char()) {
-#if I8042_DEBUG >= 5
-				uart_printf("[%d] i8042_command_task() "
-					    "cannot send to host due to host "
-					    "havn't taken away.\n",
-					    get_time().le.lo);
-#endif
+				CPRINTF5("[%T i8042_command_task() "
+					 "cannot send to host due to host "
+					 "haven't taken away.\n");
 				break;
 			}
 
@@ -129,11 +138,8 @@ void i8042_command_task(void)
 
 			/* Write to host. */
 			keyboard_put_char(chr, i8042_irq_enabled);
-#if I8042_DEBUG >= 4
-			uart_printf("[%d] i8042_command_task() "
-				    "sends to host: 0x%02x\n",
-				    get_time().le.lo, chr);
-#endif
+			CPRINTF4("[%T i8042_command_task() "
+				 "sends to host: 0x%02x\n", chr);
 		}
 	}
 }

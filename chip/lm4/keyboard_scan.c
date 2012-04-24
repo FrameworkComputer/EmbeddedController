@@ -15,8 +15,11 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
+#define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
 
 /* Notes:
@@ -159,7 +162,7 @@ static uint32_t clear_matrix_interrupt_status(void) {
 
 static void wait_for_interrupt(void)
 {
-	uart_puts("[KB wait]\n");
+	CPUTS("[KB wait]\n");
 
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
@@ -174,7 +177,7 @@ static void wait_for_interrupt(void)
 
 static void enter_polling_mode(void)
 {
-	uart_puts("[KB poll]\n");
+	CPUTS("[KB poll]\n");
 	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0;  /* 0: disable interrupt */
 	select_column(COLUMN_TRI_STATE_ALL);
 }
@@ -209,14 +212,14 @@ static void print_raw_state(const char *msg)
 {
 	int c;
 
-	uart_printf("[KB %s:", msg);
+	CPRINTF("[KB %s:", msg);
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state[c])
-			uart_printf(" %02x", raw_state[c]);
+			CPRINTF(" %02x", raw_state[c]);
 		else
-			uart_puts(" --");
+			CPUTS(" --");
 	}
-	uart_puts("]\n");
+	CPUTS("]\n");
 }
 
 
@@ -394,7 +397,7 @@ void keyboard_scan_task(void)
 
 	print_raw_state("init state");
 	if (recovery_key_pressed)
-		uart_puts("[KB recovery key pressed at init!]\n");
+		CPUTS("[KB recovery key pressed at init!]\n");
 
 	/* Enable interrupts */
 	task_enable_irq(KB_SCAN_ROW_IRQ);

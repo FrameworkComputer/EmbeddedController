@@ -13,8 +13,11 @@
 #include "lightbar.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
+#define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
 
 /******************************************************************************/
 /* How to talk to the controller */
@@ -92,7 +95,7 @@ static void set_from_array(const struct initdata_s *data, int count)
 
 static void lightbar_init_vals(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	set_from_array(init_vals, ARRAY_SIZE(init_vals));
 }
 
@@ -141,7 +144,7 @@ static void setrgb(int led, int red, int green, int blue)
 
 static void lightbar_off(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	/* Just go into standby mode. No register values should change. */
 	controller_write(0, 0x01, 0x00);
 	controller_write(1, 0x01, 0x00);
@@ -149,7 +152,7 @@ static void lightbar_off(void)
 
 static void lightbar_on(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	/* Come out of standby mode. */
 	controller_write(0, 0x01, 0x20);
 	controller_write(1, 0x01, 0x20);
@@ -171,7 +174,7 @@ static void lightbar_setrgb(int led, int red, int green, int blue)
 static inline void lightbar_brightness(int newval)
 {
 	int i;
-	uart_printf("%s[(%d)]\n", __func__, newval);
+	CPRINTF("%s[(%d)]\n", __func__, newval);
 	brightness = newval;
 	for (i = 0; i < NUM_LEDS; i++)
 		lightbar_setrgb(i, current[i][0],
@@ -208,7 +211,7 @@ static const struct {
 static uint32_t sequence_s5(void)
 {
 	int i;
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	/* For now, do something to indicate S5. We might see it. */
 	lightbar_on();
@@ -226,7 +229,7 @@ static uint32_t sequence_s5s3(void)
 {
 	int i;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	/* The controllers need 100us after power is applied before they'll
 	 * respond. */
 	usleep(100);
@@ -248,7 +251,7 @@ static uint32_t sequence_s0(void)
 	int l = 0;
 	int n = 0;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	lightbar_on();
 
 	while (1) {
@@ -270,7 +273,7 @@ static uint32_t sequence_s0(void)
 /* CPU is going to sleep */
 static uint32_t sequence_s0s3(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	lightbar_on();
 	lightbar_setrgb(0, 0, 0, 255);
 	lightbar_setrgb(1, 255, 0, 0);
@@ -291,7 +294,7 @@ static uint32_t sequence_s0s3(void)
 static uint32_t sequence_s3(void)
 {
 	int i = 0;
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	lightbar_off();
 	lightbar_init_vals();
 	lightbar_setrgb(0, 0, 0, 0);
@@ -316,7 +319,7 @@ static uint32_t sequence_s3(void)
 /* CPU is waking from sleep */
 static uint32_t sequence_s3s0(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	lightbar_init_vals();
 	lightbar_on();
 	lightbar_setrgb(0, 0, 0, 255);
@@ -335,7 +338,7 @@ static uint32_t sequence_s3s5(void)
 {
 	int i;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
@@ -354,7 +357,7 @@ static uint32_t sequence_test(void)
 	int kmax = 254;
 	int kstep = 8;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	lightbar_init_vals();
 	lightbar_on();
@@ -403,7 +406,7 @@ static uint32_t sequence_pulse(void)
 		{0x1a, g},
 	};
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	lightbar_init_vals();
 	lightbar_on();
@@ -427,15 +430,15 @@ static uint32_t sequence_ec_stop(void)
 {
 	uint32_t msg;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
-		uart_printf("[%s - got msg %x]\n", __func__, msg);
+		CPRINTF("[%s - got msg %x]\n", __func__, msg);
 	} while (msg != LIGHTBAR_EC_RUN);
 	/* FIXME: What should we do if the host shuts down? */
 
-	uart_printf("[%s() - leaving]\n", __func__);
+	CPRINTF("[%s() - leaving]\n", __func__);
 
 	return 0;
 }
@@ -443,7 +446,7 @@ static uint32_t sequence_ec_stop(void)
 /* We shouldn't come here, but if we do it shouldn't hurt anything */
 static uint32_t sequence_error(void)
 {
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 
 	lightbar_init_vals();
 	lightbar_on();
@@ -540,7 +543,7 @@ static uint32_t sequence_konami(void)
 	int i;
 	int tmp;
 
-	uart_printf("[%s()]\n", __func__);
+	CPRINTF("[%s()]\n", __func__);
 	lightbar_init_vals();
 	lightbar_on();
 
@@ -599,7 +602,7 @@ void lightbar_task(void)
 
 	while (1) {
 		msg = sequence[state]();
-		uart_printf("[%s(%d)]\n", __func__, msg);
+		CPRINTF("[%s(%d)]\n", __func__, msg);
 		msg = TASK_EVENT_CUSTOM(msg);
 		if (msg && msg < LIGHTBAR_NUM_SEQUENCES) {
 			previous_state = state;
@@ -635,7 +638,7 @@ void lightbar_task(void)
 /* Function to request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence num)
 {
-	uart_printf("[%s(%d)]\n", __func__, num);
+	CPRINTF("[%s(%d)]\n", __func__, num);
 	if (num && num < LIGHTBAR_NUM_SEQUENCES)
 		task_set_event(TASK_ID_LIGHTBAR,
 			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(num), 0);
@@ -669,14 +672,14 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_LIGHTBAR_TEST, lpc_cmd_test);
 
 static int help(const char *cmd)
 {
-	uart_printf("Usage:  %s\n", cmd);
-	uart_printf("        %s off\n", cmd);
-	uart_printf("        %s init\n", cmd);
-	uart_printf("        %s on\n", cmd);
-	uart_printf("        %s msg NUM\n", cmd);
-	uart_printf("        %s brightness NUM\n", cmd);
-	uart_printf("        %s CTRL REG VAL\n", cmd);
-	uart_printf("        %s LED RED GREEN BLUE\n", cmd);
+	ccprintf("Usage:  %s\n", cmd);
+	ccprintf("        %s off\n", cmd);
+	ccprintf("        %s init\n", cmd);
+	ccprintf("        %s on\n", cmd);
+	ccprintf("        %s msg NUM\n", cmd);
+	ccprintf("        %s brightness NUM\n", cmd);
+	ccprintf("        %s CTRL REG VAL\n", cmd);
+	ccprintf("        %s LED RED GREEN BLUE\n", cmd);
 	return EC_ERROR_UNKNOWN;
 }
 
@@ -691,7 +694,7 @@ static void dump_regs(void)
 		reg = reglist[i];
 		d1 = controller_read(0, reg);
 		d2 = controller_read(1, reg);
-		uart_printf(" %02x     %02x     %02x\n", reg, d1, d2);
+		ccprintf(" %02x     %02x     %02x\n", reg, d1, d2);
 	}
 }
 

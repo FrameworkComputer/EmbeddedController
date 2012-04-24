@@ -16,6 +16,9 @@
 #include "util.h"
 #include "version.h"
 
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 struct jump_tag {
 	uint16_t tag;
@@ -330,12 +333,12 @@ int system_common_pre_init(void)
 
 static int command_sysinfo(int argc, char **argv)
 {
-	uart_printf("Reset cause: %d (%s)\n",
+	ccprintf("Reset cause: %d (%s)\n",
 		    system_get_reset_cause(),
 		    system_get_reset_cause_string());
-	uart_printf("Scratchpad: 0x%08x\n", system_get_scratchpad());
-	uart_printf("Firmware copy: %s\n", system_get_image_copy_string());
-	uart_printf("Jumped to this copy: %s\n",
+	ccprintf("Scratchpad: 0x%08x\n", system_get_scratchpad());
+	ccprintf("Firmware copy: %s\n", system_get_image_copy_string());
+	ccprintf("Jumped to this copy: %s\n",
 		    system_jumped_to_this_image() ? "yes" : "no");
 	return EC_SUCCESS;
 }
@@ -344,9 +347,9 @@ DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
 
 static int command_chipinfo(int argc, char **argv)
 {
-	uart_printf("Chip vendor:   %s\n", system_get_chip_vendor());
-	uart_printf("Chip name:     %s\n", system_get_chip_name());
-	uart_printf("Chip revision: %s\n", system_get_chip_revision());
+	ccprintf("Chip vendor:   %s\n", system_get_chip_vendor());
+	ccprintf("Chip name:     %s\n", system_get_chip_name());
+	ccprintf("Chip revision: %s\n", system_get_chip_revision());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(chipinfo, command_chipinfo);
@@ -358,16 +361,16 @@ static int command_set_scratchpad(int argc, char **argv)
 	char *e;
 
 	if (argc < 2) {
-		uart_puts("Usage: scratchpad <value>\n");
+		ccputs("Usage: scratchpad <value>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	s = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid scratchpad value\n");
+		ccputs("Invalid scratchpad value\n");
 		return EC_ERROR_UNKNOWN;
 	}
-	uart_printf("Setting scratchpad to 0x%08x\n", s);
+	ccprintf("Setting scratchpad to 0x%08x\n", s);
 	return  system_set_scratchpad(s);
 }
 DECLARE_CONSOLE_COMMAND(setscratchpad, command_set_scratchpad);
@@ -379,15 +382,15 @@ static int command_hibernate(int argc, char **argv)
 	int microseconds = 0;
 
 	if (argc < 2) {
-		uart_puts("Usage: hibernate <seconds> [<microseconds>]\n");
+		ccputs("Usage: hibernate <seconds> [<microseconds>]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 	seconds = strtoi(argv[1], NULL, 0);
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
 
-	uart_printf("Hibernating for %d.%06d s ...\n", seconds, microseconds);
-	uart_flush_output();
+	ccprintf("Hibernating for %d.%06d s ...\n", seconds, microseconds);
+	cflush();
 
 	system_hibernate(seconds, microseconds);
 
@@ -398,13 +401,13 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);
 
 static int command_version(int argc, char **argv)
 {
-	uart_printf("RO version:   %s\n",
+	ccprintf("RO version:   %s\n",
 		    system_get_version(SYSTEM_IMAGE_RO));
-	uart_printf("RW-A version: %s\n",
+	ccprintf("RW-A version: %s\n",
 		    system_get_version(SYSTEM_IMAGE_RW_A));
-	uart_printf("RW-B version: %s\n",
+	ccprintf("RW-B version: %s\n",
 		    system_get_version(SYSTEM_IMAGE_RW_B));
-	uart_printf("Current build: %s\n", system_get_build_info());
+	ccprintf("Current build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version);
@@ -419,30 +422,30 @@ static int command_sysjump(int argc, char **argv)
 	 * be disabled. */
 
 	if (argc < 2) {
-		uart_puts("Usage: sysjump <RO | A | B | addr>\n");
+		ccputs("Usage: sysjump <RO | A | B | addr>\n");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO")) {
-		uart_puts("Jumping directly to RO image...\n");
+		ccputs("Jumping directly to RO image...\n");
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
 	} else if (!strcasecmp(argv[1], "A")) {
-		uart_puts("Jumping directly to image A...\n");
+		ccputs("Jumping directly to image A...\n");
 		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
 	} else if (!strcasecmp(argv[1], "B")) {
-		uart_puts("Jumping directly to image B...\n");
+		ccputs("Jumping directly to image B...\n");
 		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 	}
 
 	/* Check for arbitrary address */
 	addr = strtoi(argv[1], &e, 0);
 	if (e && *e) {
-		uart_puts("Invalid image address\n");
+		ccputs("Invalid image address\n");
 		return EC_ERROR_INVAL;
 	}
-	uart_printf("Jumping directly to 0x%08x...\n", addr);
-	uart_flush_output();
+	ccprintf("Jumping directly to 0x%08x...\n", addr);
+	cflush();
 	jump_to_image(addr);
 	return EC_SUCCESS;
 }
@@ -451,8 +454,8 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
 
 static int command_reboot(int argc, char **argv)
 {
-	uart_puts("Rebooting!\n\n\n");
-	uart_flush_output();
+	ccputs("Rebooting!\n\n\n");
+	cflush();
 	system_reset(1);
 	return EC_SUCCESS;
 }
@@ -538,17 +541,17 @@ enum lpc_status host_command_reboot(uint8_t *data)
 
 	switch (p->target) {
 	case EC_LPC_IMAGE_RO:
-		uart_puts("[Rebooting to image RO!\n]");
+		CPUTS("[Rebooting to image RO!\n]");
 		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RO);
 		break;
 	case EC_LPC_IMAGE_RW_A:
-		uart_puts("[Rebooting to image A!]\n");
+		CPUTS("[Rebooting to image A!]\n");
 		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RW_A);
 		break;
 	case EC_LPC_IMAGE_RW_B:
-		uart_puts("[Rebooting to image B!]\n");
+		CPUTS("[Rebooting to image B!]\n");
 		clean_busy_bits();
 		system_run_image_copy(SYSTEM_IMAGE_RW_B);
 		break;

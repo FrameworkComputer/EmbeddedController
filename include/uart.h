@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
+#include <stdarg.h>  /* For va_list */
 #include "common.h"
 
 
@@ -54,6 +55,10 @@ int uart_puts(const char *outstr);
  *
  * Floating point output (%f / %g) is not supported. */
 int uart_printf(const char *format, ...);
+
+/* Print formatted output to the UART, like vprintf().  Supports the same
+ * formatting codes as uart_printf(). */
+int uart_vprintf(const char *format, va_list args);
 
 /* Flushes output.  Blocks until UART has transmitted all output. */
 void uart_flush_output(void);

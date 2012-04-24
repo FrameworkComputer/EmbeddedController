@@ -15,19 +15,74 @@
 
 #define PROMPT "> "
 
+/* Default to all channels active */
+static uint32_t channel_mask = 0xffffffff;
 
-void console_has_input(void)
+static char input_buf[80];  /* Current console command line */
+
+/* List of channel names; must match enum console_channel. */
+/* TODO: move this to board.c */
+static const char *channel_names[CC_CHANNEL_COUNT] = {
+	"command",
+	"charger",
+	"hostcmd",
+	"i8042",
+	"keyboard",
+	"keyscan",
+	"lightbar",
+	"lpc",
+	"port80",
+	"powerbtn",
+	"system",
+	"task",
+	"usbcharge",
+	"x86power",
+};
+
+/*****************************************************************************/
+/* Channel-based console output */
+
+int cputs(enum console_channel channel, const char *outstr)
 {
-	/* Wake up the console task */
-	task_wake(TASK_ID_CONSOLE);
+	/* Filter out inactive channels */
+	if (!((1 << channel) & channel_mask))
+		return EC_SUCCESS;
+
+	return uart_puts(outstr);
 }
 
+
+int cprintf(enum console_channel channel, const char *format, ...)
+{
+	int rv;
+	va_list args;
+
+	/* Filter out inactive channels */
+	if (!((1 << channel) & channel_mask))
+		return EC_SUCCESS;
+
+	va_start(args, format);
+	rv = uart_vprintf(format, args);
+	va_end(args);
+	return rv;
+}
+
+
+void cflush(void)
+{
+	uart_flush_output();
+}
+
+
+
+/*****************************************************************************/
+/* Console input */
 
 /* Splits a line of input into words.  Stores the count of words in
  * <argc>.  Stores pointers to the words in <argv>, which must be at
  * least <max_argc> long.  If more than <max_argc> words are found,
  * discards the excess and returns EC_ERROR_OVERFLOW. */
-int split_words(char *input, int max_argc, int *argc, char **argv)
+static int split_words(char *input, int max_argc, int *argc, char **argv)
 {
 	char *c;
 	int in_word = 0;
@@ -63,7 +118,7 @@ int split_words(char *input, int max_argc, int *argc, char **argv)
 
 /* Finds a command by name.  Returns the command structure, or NULL if
  * no match found. */
-const struct console_command *find_command(char *name)
+static const struct console_command *find_command(char *name)
 {
 	const struct console_command *cmd;
 
@@ -96,15 +151,26 @@ static int handle_command(char *input)
 	if (cmd)
 		return cmd->handler(argc, argv);
 
-	uart_printf("Command '%s' not found.\n", argv[0]);
+	ccprintf("Command '%s' not found.\n", argv[0]);
 	return EC_ERROR_UNKNOWN;
 }
 
 
-static char input_buf[80];
+static int console_init(void)
+{
+	*input_buf = '\0';
+	uart_set_console_mode(1);
+	uart_printf("Console is enabled; type HELP for help.\n");
+	uart_puts(PROMPT);
+
+	/* TODO: restore channel list from EEPROM */
+
+	return EC_SUCCESS;
+}
+
 
 /* handle a console command */
-void console_process(void)
+static void console_process(void)
 {
         int rv;
 
@@ -122,6 +188,14 @@ void console_process(void)
 	}
 }
 
+
+void console_has_input(void)
+{
+	/* Wake up the console task */
+	task_wake(TASK_ID_CONSOLE);
+}
+
+
 void console_task(void)
 {
 	console_init();
@@ -132,6 +206,7 @@ void console_task(void)
 		task_wait_event(-1);
 	}
 }
+
 
 /*****************************************************************************/
 /* Console commands */
@@ -152,7 +227,7 @@ static int command_help(int argc, char **argv)
 		const char *next = "zzzz";
 
 		if (!(i % 5))
-			uart_puts("\n  ");
+			ccputs("\n  ");
 
 		/* Find the next command */
 		for (cmd = __cmds; cmd < __cmds_end; cmd++) {
@@ -161,27 +236,55 @@ static int command_help(int argc, char **argv)
 				next = cmd->name;
 		}
 
-		uart_printf("%-15s", next);
+		ccprintf("%-15s", next);
 		/* Generates enough output to overflow the buffer */
-		uart_flush_output();
+		cflush();
 
 		prev = next;
 	}
 
-	uart_puts("\n");
+	ccputs("\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(help, command_help);
 
-/*****************************************************************************/
-/* Initialization */
 
-int console_init(void)
+/* Set active channels */
+static int command_ch(int argc, char **argv)
 {
-	*input_buf = '\0';
-	uart_set_console_mode(1);
-	uart_printf("Console is enabled; type HELP for help.\n");
-	uart_puts(PROMPT);
+	int m;
+	char *e;
 
-	return EC_SUCCESS;
-}
+	/* If no args, print the list of channels */
+	if (argc == 1) {
+		int i;
+		ccputs(" # Mask     Enabled Channel\n");
+		for (i = 0; i < CC_CHANNEL_COUNT; i++) {
+			ccprintf("%2d %08x %c       %s\n",
+				 i, 1 << i,
+				 (channel_mask & (1 << i) ? '*' : ' '),
+				 channel_names[i]);
+		}
+		return EC_SUCCESS;
+	}
+
+	/* If one arg, set the mask */
+	if (argc == 2) {
+		m = strtoi(argv[1], &e, 0);
+		if (e && *e) {
+			ccputs("Invalid mask\n");
+			return EC_ERROR_INVAL;
+		}
+		/* No disabling the command output channel */
+		channel_mask = m | (1 << CC_COMMAND);
+
+		/* TODO: save channel list to EEPROM */
+
+		return EC_SUCCESS;
+	}
+
+	/* Otherwise, print help */
+	ccputs("Usage: ch [newmask]\n");
+	return EC_ERROR_INVAL;
+};
+DECLARE_CONSOLE_COMMAND(ch, command_ch);

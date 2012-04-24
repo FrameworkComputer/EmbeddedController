@@ -13,8 +13,11 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 #define TASK_EVENT_SLOT(n) TASK_EVENT_CUSTOM(1 << n)
 
@@ -49,7 +52,7 @@ static enum lpc_status host_command_hello(uint8_t *data)
 	struct lpc_response_hello *r = (struct lpc_response_hello *)data;
 	uint32_t d = p->in_data;
 
-	uart_printf("[LPC Hello 0x%08x]\n", d);
+	CPRINTF("[LPC Hello 0x%08x]\n", d);
 
 #ifdef DELAY_HELLO_RESPONSE
 	/* Pretend command takes a long time, so we can see the busy
@@ -60,7 +63,7 @@ static enum lpc_status host_command_hello(uint8_t *data)
 	usleep(1000000);
 #endif
 
-	uart_puts("[LPC sending hello back]\n");
+	CPUTS("[LPC sending hello back]\n");
 
 	r->out_data = d + 0x01020304;
 	return EC_LPC_RESULT_SUCCESS;
@@ -133,7 +136,7 @@ static void command_process(int slot)
 	uint8_t *data = lpc_get_host_range(slot);
 	const struct host_command *cmd = find_host_command(command);
 
-	uart_printf("[hostcmd%d 0x%02x]\n", slot, command);
+	CPRINTF("[hostcmd%d 0x%02x]\n", slot, command);
 
 	if (cmd)
 		lpc_send_host_response(slot, cmd->handler(data));

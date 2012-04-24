@@ -36,12 +36,10 @@ static uint32_t watchdog_period;     /* Watchdog counter initial value */
 int command_task_info(int argc, char **argv);
 int command_timer_info(int argc, char **argv);
 
-/**
- * watchdog debug trace.
- *
- * It is triggered if the watchdog has not been reloaded after 1x the timeout
- * period, after 2x the period an hardware reset is triggering.
- */
+
+/* Watchdog debug trace.  This is triggered if the watchdog has not been
+ * reloaded after 1x the timeout period, after 2x the period an hardware reset
+ * is triggering. */
 void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 {
 	uint32_t psp;
@@ -168,11 +166,6 @@ int watchdog_init(void)
 /* Low priority task to reload the watchdog */
 void watchdog_task(void)
 {
-	/* Print when the watchdog task starts.  This is the lowest priority
-	 * task, so this only starts once all other tasks have gotten a chance
-	 * to do their task inits and have gone to sleep. */
-	uart_printf("[watchdog task started at %d us]\n", get_time().le.lo);
-
 	while (1) {
 #ifdef BOARD_bds
 		gpio_set_level(GPIO_DEBUG_LED, 1);

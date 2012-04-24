@@ -11,9 +11,6 @@
 #include "common.h"
 #include "gpio.h"
 
-/* Initializes the module. */
-int x86_power_init(void);
-
 /* Interrupt handler for input GPIOs */
 void x86_power_interrupt(enum gpio_signal signal);
 

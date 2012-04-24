@@ -5,8 +5,6 @@
 
 /* Watchdog driver */
 
-#include <stdint.h>
-
 #include "board.h"
 #include "common.h"
 #include "config.h"
@@ -14,7 +12,6 @@
 #include "gpio.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 /* LSI oscillator frequency is typically 38 kHz
@@ -28,11 +25,13 @@
 #define IWDG_PRESCALER 6
 #define IWDG_PRESCALER_DIV (1 << ((IWDG_PRESCALER) + 2))
 
+
 void watchdog_reload(void)
 {
 	/* Reload the watchdog */
 	STM32L_IWDG_KR = 0xaaaa;
 }
+
 
 int watchdog_init(int period_ms)
 {
@@ -55,14 +54,10 @@ int watchdog_init(int period_ms)
 	return EC_SUCCESS;
 }
 
+
 /* Low priority task to reload the watchdog */
 void watchdog_task(void)
 {
-	/* Print when the watchdog task starts.  This is the lowest priority
-	 * task, so this only starts once all other tasks have gotten a chance
-	 * to do their task inits and have gone to sleep. */
-	uart_printf("[watchdog task started at %d us]\n", get_time().le.lo);
-
 	while (1) {
 #ifdef BOARD_discovery
 		gpio_set_level(GPIO_GREEN_LED, 1);

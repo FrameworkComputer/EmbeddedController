@@ -8,8 +8,9 @@
 #include "board.h"
 #include "console.h"
 #include "port80.h"
-#include "uart.h"
 #include "util.h"
+
+#define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
 
 #define HISTORY_LEN 16
 
@@ -24,7 +25,7 @@ void port_80_write(int data)
 	 * itself.  Probably not worth the system overhead to buffer the data
 	 * and print it from a task, because we're printing a small amount of
 	 * data and uart_printf() doesn't block. */
-	uart_printf("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
+	CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
 	history[head] = data;
 	head = (head + 1) & (HISTORY_LEN - 1);
@@ -42,7 +43,7 @@ static int command_port80(int argc, char **argv)
 	 * (scrolling) or CR (non-scrolling). */
 	if (argc > 1 && !strcasecmp(argv[1], "scroll")) {
 		scroll = !scroll;
-		uart_printf("port80 scrolling %sabled\n",
+		ccprintf("port80 scrolling %sabled\n",
 			    scroll ? "en" : "dis");
 		return EC_SUCCESS;
 	}
@@ -50,10 +51,10 @@ static int command_port80(int argc, char **argv)
 	/* Technically, if a port 80 write comes in while we're
 	 * printing this, we could print an incorrect history.
 	 * Probably not worth the complexity to work around that. */
-	uart_puts("Last port 80 writes:");
+	ccputs("Last port 80 writes:");
 	for (i = 0; i < HISTORY_LEN; i++)
-		uart_printf(" %02x", history[(h + i) & (HISTORY_LEN - 1)]);
-	uart_puts(" <--newest\n");
+		ccprintf(" %02x", history[(h + i) & (HISTORY_LEN - 1)]);
+	ccputs(" <--newest\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80);

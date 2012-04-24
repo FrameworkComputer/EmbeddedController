@@ -10,14 +10,18 @@
  */
 
 #include "board.h"
+#include "console.h"
 #include "gpio.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
+#define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
 extern const struct gpio_info gpio_list[];
 
@@ -123,7 +127,7 @@ int keyboard_scan_init(void)
 {
 	int i;
 
-	uart_printf("[kbscan %s()] initializing keyboard...\n", __func__);
+	CPRINTF("[kbscan %s()] initializing keyboard...\n", __func__);
 
 	/* Tri-state (put into Hi-Z) the outputs */
 	select_column(COL_TRI_STATE_ALL);
@@ -236,14 +240,14 @@ static int check_keys_changed(void)
 		memcpy(saved_state, raw_state, sizeof(saved_state));
 		board_keyboard_scan_ready();
 
-		uart_printf("[%d keys pressed: ", num_press);
+		CPRINTF("[%d keys pressed: ", num_press);
 		for (c = 0; c < KB_COLS; c++) {
 			if (raw_state[c])
-				uart_printf(" %02x", raw_state[c]);
+				CPRINTF(" %02x", raw_state[c]);
 			else
-				uart_puts(" --");
+				CPUTS(" --");
 		}
-		uart_puts("]\n");
+		CPUTS("]\n");
 	}
 
 	return num_press ? 1 : 0;

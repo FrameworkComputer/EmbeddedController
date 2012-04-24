@@ -6,6 +6,7 @@
 /* LPC module for Chrome EC */
 
 #include "board.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -19,6 +20,10 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_LPC, outstr)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
@@ -93,8 +98,8 @@ static void lpc_generate_smi(void)
 	gpio_set_level(GPIO_PCH_SMIn, 1);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
-		uart_printf("[%T smi 0x%08x]\n",
-			    host_events & event_mask[LPC_HOST_EVENT_SMI]);
+		CPRINTF("[%T smi 0x%08x]\n",
+			host_events & event_mask[LPC_HOST_EVENT_SMI]);
 }
 
 
@@ -104,8 +109,8 @@ static void lpc_generate_sci(void)
 	LM4_LPC_LPCCTL |= LM4_LPC_SCI_START;
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI])
-		uart_printf("[%T sci 0x%08x]\n",
-			    host_events & event_mask[LPC_HOST_EVENT_SCI]);
+		CPRINTF("[%T sci 0x%08x]\n",
+			host_events & event_mask[LPC_HOST_EVENT_SCI]);
 }
 
 
@@ -343,8 +348,8 @@ static void lpc_interrupt(void)
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
-		uart_printf("[%T LPC RESET# %sasserted]\n",
-			    (LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
+		CPRINTF("[%T LPC RESET# %sasserted]\n",
+			(LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
 	}
 }
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
