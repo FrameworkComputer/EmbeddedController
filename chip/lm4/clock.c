@@ -21,7 +21,7 @@
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
 
 /* Disable the PLL; run off internal oscillator. */
-static void clock_disable_pll(void)
+static void disable_pll(void)
 {
 	/* Switch to 16MHz internal oscillator and power down the PLL */
 	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(0) |
@@ -33,11 +33,11 @@ static void clock_disable_pll(void)
 }
 
 
-/* Enable the PLL to run at full clock speed */
-static void clock_enable_pll(void)
+/* Enable the PLL to run at full clock speed. */
+static void enable_pll(void)
 {
 	/* Disable the PLL so we can reconfigure it */
-	clock_disable_pll();
+	disable_pll();
 
 	/* Enable the PLL (PWRDN is no longer set) and set divider.  PLL is
 	 * still bypassed, since it hasn't locked yet. */
@@ -54,6 +54,18 @@ static void clock_enable_pll(void)
 
 	/* Remove bypass on PLL */
 	LM4_SYSTEM_RCC &= ~LM4_SYSTEM_RCC_BYPASS;
+}
+
+
+int clock_enable_pll(int enable)
+{
+	if (enable)
+		enable_pll();
+	else
+		disable_pll();
+
+	/* Notify modules of frequency change */
+	return hook_notify(HOOK_FREQ_CHANGE, 0);
 }
 
 
@@ -179,12 +191,14 @@ static int command_sleep(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 
 
-static int command_disable_pll(int argc, char **argv)
+static int command_pll(int argc, char **argv)
 {
-	/* Notify modules of frequency change */
-	return hook_notify(HOOK_FREQ_CHANGE, 0);
+	/* Toggle the PLL */
+	clock_enable_pll(LM4_SYSTEM_RCC & LM4_SYSTEM_RCC_BYPASS ? 1 : 0);
+	uart_printf("Clock frequency is now %d\n", clock_get_freq());
+	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(nopll, command_disable_pll);
+DECLARE_CONSOLE_COMMAND(pll, command_pll);
 
 /*****************************************************************************/
 /* Initialization */
@@ -219,7 +233,8 @@ int clock_init(void)
 	if (!system_jumped_to_this_image())
 		clock_wait_cycles(500000);
 
-	clock_enable_pll();
+	/* Start out with PLL enabled */
+	enable_pll();
 
 	return EC_SUCCESS;
 }
