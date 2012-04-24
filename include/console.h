@@ -36,6 +36,7 @@ enum console_channel {
 	CC_LPC,
 	CC_PORT80,
 	CC_POWERBTN,
+	CC_PWM,
 	CC_SYSTEM,
 	CC_TASK,
 	CC_USBCHARGE,

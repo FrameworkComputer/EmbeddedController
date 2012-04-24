@@ -37,6 +37,7 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"lpc",
 	"port80",
 	"powerbtn",
+	"pwm",
 	"system",
 	"task",
 	"usbcharge",

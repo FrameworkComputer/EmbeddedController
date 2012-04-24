@@ -130,9 +130,25 @@ static void update_lpc_mapped_memory(void)
 }
 
 
+static void check_fan_failure(void)
+{
+	if ((LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) &&
+	    ((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) {
+		/* Fan enabled but stalled. Issues warning.
+		 * As we have thermal shutdown protection, issuing warning
+		 * here should be enough.
+		 */
+		lpc_set_host_events(
+			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_THERMAL));
+		cputs(CC_PWM, "[Fan stalled!]\n");
+	}
+}
+
+
 void pwm_task(void)
 {
 	while (1) {
+		check_fan_failure();
 		update_lpc_mapped_memory();
 		usleep(1000000);
 	}
