@@ -23,11 +23,11 @@ static uint32_t timer_running = 0;
 
 /* deadlines of all timers */
 static timestamp_t timer_deadline[TASK_ID_COUNT];
-
 static uint32_t next_deadline = 0xffffffff;
 
 /* Hardware timer routine IRQ number */
 static int timer_irq;
+
 
 static void expire_timer(task_id_t tskid)
 {
@@ -37,11 +37,7 @@ static void expire_timer(task_id_t tskid)
 	task_set_event(tskid, TASK_EVENT_TIMER, 0);
 }
 
-/**
- * Search the next deadline and program it in the timer hardware
- *
- * overflow: if true, the 32-bit counter as overflowed since the last call.
- */
+
 void process_timers(int overflow)
 {
 	uint32_t check_timer, running_t0;
@@ -86,6 +82,7 @@ reprocess_timers:
 	//TODO narrow race: deadline might have been reached before
 }
 
+
 void udelay(unsigned us)
 {
 	timestamp_t deadline = get_time();
@@ -93,6 +90,7 @@ void udelay(unsigned us)
 	deadline.val += us;
 	while (get_time().val < deadline.val) {}
 }
+
 
 int timer_arm(timestamp_t tstamp, task_id_t tskid)
 {
@@ -111,6 +109,7 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid)
 
 	return EC_SUCCESS;
 }
+
 
 int timer_cancel(task_id_t tskid)
 {
@@ -152,6 +151,31 @@ timestamp_t get_time(void)
 }
 
 
+void timer_print_info(void)
+{
+	uint64_t t = get_time().val;
+	uint64_t deadline = (uint64_t)clksrc_high << 32 |
+		__hw_clock_event_get();
+	int tskid;
+
+	ccprintf("Time:     0x%016lx us\n"
+		 "Deadline: 0x%016lx -> %10ld us from now\n"
+		 "Active timers:\n",
+		 t, deadline, deadline - t);
+	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
+		if (timer_running & (1<<tskid)) {
+			ccprintf("  Tsk %2d  0x%016lx -> %10ld %x\n", tskid,
+				 timer_deadline[tskid].val,
+				 timer_deadline[tskid].val - t, 0xabcd);
+			if (in_interrupt_context())
+				uart_emergency_flush();
+			else
+				cflush();
+		}
+	}
+}
+
+
 static int command_wait(int argc, char **argv)
 {
 	if (argc < 2)
@@ -176,23 +200,7 @@ DECLARE_CONSOLE_COMMAND(gettime, command_get_time);
 
 int command_timer_info(int argc, char **argv)
 {
-	uint64_t t = get_time().val;
-	uint64_t deadline = (uint64_t)clksrc_high << 32 |
-		__hw_clock_event_get();
-	int tskid;
-
-	ccprintf("Time:     0x%016lx us\n"
-		 "Deadline: 0x%016lx -> %10ld us from now\n"
-		 "Active timers:\n",
-		 t, deadline, deadline - t);
-	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
-		if (timer_running & (1<<tskid)) {
-			ccprintf("  Tsk %2d  0x%016lx -> %10ld\n", tskid,
-				 timer_deadline[tskid].val,
-				 timer_deadline[tskid].val - t);
-			cflush();
-		}
-	}
+	timer_print_info();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info);

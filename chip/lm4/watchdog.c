@@ -32,11 +32,6 @@
 
 static uint32_t watchdog_period;     /* Watchdog counter initial value */
 
-/* console debug command prototypes */
-int command_task_info(int argc, char **argv);
-int command_timer_info(int argc, char **argv);
-
-
 /* Watchdog debug trace.  This is triggered if the watchdog has not been
  * reloaded after 1x the timeout period, after 2x the period an hardware reset
  * is triggering. */
@@ -45,11 +40,10 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	uint32_t psp;
 	uint32_t *stack;
 
-	/* we do NOT reset the watchdog interrupt here, it will be done in
-	 * watchdog_reload() or fire the reset
-	 * instead de-activate the interrupt in the NVIC :
-	 * so, we will get the trace only once
-	 */
+	/* Do NOT reset the watchdog interrupt here; it will be done in
+	 * watchdog_reload(), or reset will be triggered if we don't call that
+	 * by the next watchdog period.  Instead, de-activate the interrupt in
+	 * the NVIC, so the watchdog trace will only be printed once. */
 	task_disable_irq(LM4_IRQ_WATCHDOG);
 
 	asm("mrs %0, psp":"=r"(psp));
@@ -61,17 +55,20 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 		stack = (uint32_t *)psp;
 	}
 
-	uart_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ###\n",
+	uart_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ",
 	            stack[6], stack[5], psp);
-	/* ensure this debug message is always flushed to the UART */
+	if ((excep_lr & 0xf) == 1)
+		uart_puts("(exc) ###\n");
+	else
+		uart_printf("(task %d) ###\n", task_from_addr(psp));
+	/* Ensure this debug message is always flushed to the UART */
 	uart_emergency_flush();
-	/* if we are blocked in a high priority IT handler, the following
-	 * debug messages might not appear but they are useless in that
-	 * situation.
-	 */
-	command_task_info(0, NULL);
+
+	/* If we are blocked in a high priority IT handler, the following debug
+	 * messages might not appear but they are useless in that situation. */
+	timer_print_info();
 	uart_emergency_flush();
-	command_timer_info(0, NULL);
+	task_print_list();
 	uart_emergency_flush();
 }
 
@@ -125,6 +122,10 @@ static int watchdog_freq_changed(void)
 {
 	/* Set the timeout period */
 	watchdog_period = WATCHDOG_PERIOD_MS * (clock_get_freq() / 1000);
+
+	/* Reload the watchdog timer now */
+	watchdog_reload();
+
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, watchdog_freq_changed, HOOK_PRIO_DEFAULT);
@@ -139,12 +140,11 @@ int watchdog_init(void)
 	/* Wait 3 clock cycles before using the module */
 	scratch = LM4_SYSTEM_RCGCWD;
 
-	/* Unlock watchdog registers */
-	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
-
 	/* Set initial timeout period */
 	watchdog_freq_changed();
-	LM4_WATCHDOG_LOAD(0) = watchdog_period;
+
+	/* Unlock watchdog registers */
+	LM4_WATCHDOG_LOCK(0) = LM4_WATCHDOG_MAGIC_WORD;
 
 	/* De-activate the watchdog when the JTAG stops the CPU */
 	LM4_WATCHDOG_TEST(0) |= 1 << 8;

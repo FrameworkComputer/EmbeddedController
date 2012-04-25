@@ -12,6 +12,7 @@
 #include "link_defs.h"
 #include "task.h"
 #include "timer.h"
+#include "uart.h"
 #include "util.h"
 
 /**
@@ -191,13 +192,19 @@ inline int get_interrupt_context(void)
 }
 
 
-task_id_t task_get_current(void)
+task_id_t task_from_addr(uint32_t addr)
 {
-	task_id_t id = __get_current() - tasks;
+	task_id_t id = (addr - (uint32_t)tasks) >> TASK_SIZE_LOG2;
 	if (id >= TASK_ID_COUNT)
 		id = TASK_ID_INVALID;
 
 	return id;
+}
+
+
+task_id_t task_get_current(void)
+{
+	return task_from_addr((uint32_t)__get_current());
 }
 
 
@@ -208,9 +215,7 @@ uint32_t *task_get_event_bitmap(task_id_t tskid)
 }
 
 
-/**
- * scheduling system call
- */
+/* Scheduling system call */
 void svc_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
@@ -484,6 +489,23 @@ void mutex_unlock(struct mutex *mtx)
 }
 
 
+void task_print_list(void)
+{
+	int i;
+	ccputs("Task Ready Name         Events    Time (us)\n");
+
+	for (i = 0; i < TASK_ID_COUNT; i++) {
+		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
+		ccprintf("%4d %c %-16s %08x %10ld\n", i, is_ready,
+			 task_names[i], tasks[i].events, tasks[i].runtime);
+		if (in_interrupt_context())
+			uart_emergency_flush();
+		else
+			cflush();
+	}
+}
+
+
 #ifdef CONFIG_DEBUG
 
 
@@ -491,17 +513,10 @@ int command_task_info(int argc, char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
 	int total = 0;
-#endif
 	int i;
+#endif
 
-	ccputs("Task Ready Name         Events    Time (us)\n");
-
-	for (i = 0; i < TASK_ID_COUNT; i++) {
-		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-		ccprintf("%4d %c %-16s %08x %10ld\n", i, is_ready,
-			 task_names[i], tasks[i].events, tasks[i].runtime);
-		cflush();
-	}
+	task_print_list();
 
 #ifdef CONFIG_TASK_PROFILING
 	ccputs("IRQ counts by type:\n");
@@ -539,7 +554,9 @@ static int command_task_ready(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(taskready, command_task_ready);
-#endif
+
+
+#endif  /* CONFIG_DEBUG */
 
 
 int task_pre_init(void)

@@ -107,8 +107,8 @@ int main(void)
 	/* Print the init time and reset cause.  Init time isn't completely
 	 * accurate because it can't take into account the time for the first
 	 * few module inits, but it'll at least catch the majority of them. */
-	uart_printf("\n\n--- Chrome EC initialized in %d us ---\n",
-		    get_time().le.lo);
+	uart_printf("\n\n--- Chrome EC initialized in %ld us ---\n",
+		    get_time().val);
 	uart_printf("build: %s\n", system_get_build_info());
 	uart_printf("(image: %s, last reset: %s)\n",
 		    system_get_image_copy_string(),
