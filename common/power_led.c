@@ -9,7 +9,6 @@
 #include "onewire.h"
 #include "power_led.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 #define POWERLED_RETRIES 10
@@ -87,14 +86,14 @@ static int command_powerled(int argc, char **argv)
 		}
 	}
 	if (i >= POWERLED_COLOR_COUNT) {
-		uart_puts("Please specify a color:");
+		ccputs("Please specify a color:");
 		for (i = 0; i < POWERLED_COLOR_COUNT; i++)
-			uart_printf(" %s", color_names[i]);
-		uart_puts("\n");
+			ccprintf(" %s", color_names[i]);
+		ccputs("\n");
 		return EC_ERROR_INVAL;
 	}
 
-	uart_printf("Setting power LED to %s...\n", color_names[i]);
+	ccprintf("Setting power LED to %s...\n", color_names[i]);
 	return powerled_set(i);
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled);

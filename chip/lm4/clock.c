@@ -15,7 +15,6 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
@@ -113,8 +112,8 @@ static int command_sleep(int argc, char **argv)
 	gpio_set_level(GPIO_DEBUG_LED, 0);
 #endif
 
-	uart_printf("Going to sleep : level %d clock %d...\n", level, clock);
-	uart_flush_output();
+	ccprintf("Going to sleep : level %d clock %d...\n", level, clock);
+	cflush();
 
 	/* clock setting */
 	if (clock) {
@@ -161,8 +160,8 @@ static int command_sleep(int argc, char **argv)
 	}
 
 	if (uartfbrd) {
-		uart_printf("We are still alive. RCC=%08x\n", LM4_SYSTEM_RCC);
-		uart_flush_output();
+		ccprintf("We are still alive. RCC=%08x\n", LM4_SYSTEM_RCC);
+		cflush();
 	}
 
 	asm volatile("cpsid i");
@@ -195,7 +194,7 @@ static int command_pll(int argc, char **argv)
 {
 	/* Toggle the PLL */
 	clock_enable_pll(LM4_SYSTEM_RCC & LM4_SYSTEM_RCC_BYPASS ? 1 : 0);
-	uart_printf("Clock frequency is now %d\n", clock_get_freq());
+	ccprintf("Clock frequency is now %d\n", clock_get_freq());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pll, command_pll);

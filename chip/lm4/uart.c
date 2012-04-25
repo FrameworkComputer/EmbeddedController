@@ -5,8 +5,6 @@
 
 /* UART module for Chrome EC */
 
-#include <stdarg.h>
-
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
@@ -246,7 +244,7 @@ static int command_comxtest(int argc, char **argv)
 	/* Put characters to COMX port */
 	const char *c = argc > 1 ? argv[1] : "testing comx output!";
 
-	uart_printf("Writing \"%s\\r\\n\" to COMx UART...\n", c);
+	ccprintf("Writing \"%s\\r\\n\" to COMx UART...\n", c);
 
 	while (*c)
 		uart_comx_putc_wait(*c++);

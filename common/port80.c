@@ -24,7 +24,7 @@ void port_80_write(int data)
 	/* Note that this currently prints from inside the LPC interrupt
 	 * itself.  Probably not worth the system overhead to buffer the data
 	 * and print it from a task, because we're printing a small amount of
-	 * data and uart_printf() doesn't block. */
+	 * data and cprintf() doesn't block. */
 	CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
 	history[head] = data;

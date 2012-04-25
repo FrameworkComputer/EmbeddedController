@@ -7,7 +7,6 @@
 #include "charger.h"
 #include "console.h"
 #include "i2c.h"
-#include "uart.h"
 #include "util.h"
 
 /* Address of battery charger */
@@ -29,57 +28,58 @@ static int command_charger(int argc, char **argv)
 	int rv;
 	int d;
 
-	uart_puts("Reading battery charger...\n");
+	ccputs("Reading battery charger...\n");
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0xfe, &d);
 	if (rv)
 		return rv;
-	uart_printf("  Manufacturer ID: 0x%04x\n", d);
+	ccprintf("  Manufacturer ID: 0x%04x\n", d);
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0xff, &d);
-	uart_printf("  Device ID:       0x%04x\n", d);
+	ccprintf("  Device ID:       0x%04x\n", d);
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0x12, &d);
-	uart_printf("  Option:          0x%04x\n", d);
+	ccprintf("  Option:          0x%04x\n", d);
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0x14, &d);
-	uart_printf("  Charge current:  0x%04x\n", d);
+	ccprintf("  Charge current:  0x%04x\n", d);
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0x15, &d);
-	uart_printf("  Charge voltage:  0x%04x\n", d);
+	ccprintf("  Charge voltage:  0x%04x\n", d);
 
 	rv = i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, 0x3f, &d);
-	uart_printf("  Input current:   0x%04x\n", d);
+	ccprintf("  Input current:   0x%04x\n", d);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(charger, command_charger);
+
 
 static int command_battery(int argc, char **argv)
 {
 	int rv;
 	int d;
 
-	uart_puts("Reading battery...\n");
+	ccputs("Reading battery...\n");
 
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x08, &d);
 	if (rv)
 		return rv;
-	uart_printf("  Temperature:            0x%04x = %d C\n",
-		    d, (d-2731)/10);
+	ccprintf("  Temperature:            0x%04x = %d C\n",
+		 d, (d-2731)/10);
 
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x09, &d);
-	uart_printf("  Voltage:                0x%04x = %d mV\n", d, d);
+	ccprintf("  Voltage:                0x%04x = %d mV\n", d, d);
 
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x0f, &d);
-	uart_printf("  Remaining capacity:     0x%04x = %d mAh\n", d, d);
+	ccprintf("  Remaining capacity:     0x%04x = %d mAh\n", d, d);
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x10, &d);
-	uart_printf("  Full charge capacity:   0x%04x = %d mAh\n", d, d);
+	ccprintf("  Full charge capacity:   0x%04x = %d mAh\n", d, d);
 
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x14, &d);
-	uart_printf("  Desired charge current: 0x%04x = %d mA\n", d, d);
+	ccprintf("  Desired charge current: 0x%04x = %d mA\n", d, d);
 	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, 0x15, &d);
-	uart_printf("  Desired charge voltage: 0x%04x = %d mV\n", d, d);
+	ccprintf("  Desired charge voltage: 0x%04x = %d mV\n", d, d);
 
 
 	return EC_SUCCESS;

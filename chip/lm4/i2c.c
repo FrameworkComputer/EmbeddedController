@@ -14,7 +14,6 @@
 #include "task.h"
 #include "timer.h"
 #include "registers.h"
-#include "uart.h"
 #include "util.h"
 
 #define NUM_PORTS 6
@@ -318,24 +317,24 @@ static void scan_bus(int port, char *desc)
 	int rv;
 	int a;
 
-	uart_printf("Scanning %s I2C bus (%d)...\n", desc, port);
+	ccprintf("Scanning %s I2C bus (%d)...\n", desc, port);
 
 	mutex_lock(port_mutex + port);
 
 	for (a = 0; a < 0x100; a += 2) {
-		uart_puts(".");
+		ccputs(".");
 
 		/* Do a single read */
 		LM4_I2C_MSA(port) = a | 0x01;
 		LM4_I2C_MCS(port) = 0x07;
 		rv = wait_idle(port);
 		if (rv == EC_SUCCESS)
-			uart_printf("\nFound device at 8-bit addr 0x%02x\n", a);
+			ccprintf("\nFound device at 8-bit addr 0x%02x\n", a);
 }
 
 	mutex_unlock(port_mutex + port);
 
-	uart_puts("\n");
+	ccputs("\n");
 }
 
 
@@ -347,37 +346,37 @@ static int command_i2cread(int argc, char **argv)
 	int d, i;
 
 	if (argc < 3) {
-		uart_puts("Usage: i2cread <port> <addr> [count]\n");
+		ccputs("Usage: i2cread <port> <addr> [count]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	port = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid port\n");
+		ccputs("Invalid port\n");
 		return EC_ERROR_INVAL;
 	}
 	if (port != I2C_PORT_THERMAL && port != I2C_PORT_BATTERY &&
 	    port != I2C_PORT_CHARGER) {
-		uart_puts("Unsupported port\n");
+		ccputs("Unsupported port\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	addr = strtoi(argv[2], &e, 0);
 	if (*e || (addr & 0x01)) {
-		uart_puts("Invalid addr; try 'i2cscan' command\n");
+		ccputs("Invalid addr; try 'i2cscan' command\n");
 		return EC_ERROR_INVAL;
 	}
 
 	if (argc > 3) {
 		count = strtoi(argv[3], &e, 0);
 		if (*e) {
-			uart_puts("Invalid count\n");
+			ccputs("Invalid count\n");
 			return EC_ERROR_INVAL;
 		}
 	}
 
-	uart_printf("Reading %d bytes from I2C device %d:0x%02x...\n",
-		    count, port, addr);
+	ccprintf("Reading %d bytes from I2C device %d:0x%02x...\n",
+		 count, port, addr);
 	mutex_lock(port_mutex + port);
 	LM4_I2C_MSA(port) = addr | 0x01;
 	for (i = 0; i < count; i++) {
@@ -391,10 +390,10 @@ static int command_i2cread(int argc, char **argv)
 			return rv;
 		}
 		d = LM4_I2C_MDR(port) & 0xff;
-		uart_printf("0x%02x ", d);
+		ccprintf("0x%02x ", d);
 	}
 	mutex_unlock(port_mutex + port);
-	uart_puts("\n");
+	ccputs("\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread);
@@ -405,7 +404,7 @@ static int command_scan(int argc, char **argv)
 	scan_bus(I2C_PORT_THERMAL, "thermal");
 	scan_bus(I2C_PORT_BATTERY, "battery");
 	scan_bus(I2C_PORT_CHARGER, "charger");
-	uart_puts("done.\n");
+	ccputs("done.\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cscan, command_scan);

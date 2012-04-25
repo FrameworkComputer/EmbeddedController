@@ -13,7 +13,6 @@
 #include "peci.h"
 #include "registers.h"
 #include "temp_sensor.h"
-#include "uart.h"
 #include "util.h"
 
 /* Max junction temperature for processor in degrees C */
@@ -102,11 +101,11 @@ static int command_peci_temp(int argc, char **argv)
 {
 	int t = peci_get_cpu_temp();
 	if (t == -1) {
-		uart_puts("Error reading CPU temperature via PECI\n");
-		uart_printf("Error code = 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
+		ccputs("Error reading CPU temperature via PECI\n");
+		ccprintf("Error code = 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
 		return EC_ERROR_UNKNOWN;
 	}
-	uart_printf("Current CPU temperature = %d K = %d C\n", t, t - 273);
+	ccprintf("Current CPU temperature = %d K = %d C\n", t, t - 273);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp);

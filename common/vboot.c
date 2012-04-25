@@ -5,12 +5,16 @@
 
 /* Verified boot module for Chrome EC */
 
+#include "console.h"
 #include "gpio.h"
 #include "keyboard_scan.h"
 #include "system.h"
-#include "uart.h"
 #include "util.h"
 #include "vboot.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_VBOOT, outstr)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
 
 
 /* Jumps to one of the RW images if necessary. */
@@ -23,7 +27,7 @@ static void jump_to_other_image(void)
 #ifdef CONFIG_TASK_KEYSCAN
 	/* Don't jump if recovery requested */
 	if (keyboard_scan_recovery_pressed()) {
-		uart_puts("Vboot staying in RO because key pressed.\n");
+		CPUTS("[Vboot staying in RO because key pressed]\n");
 		return;
 	}
 #endif
@@ -37,7 +41,7 @@ static void jump_to_other_image(void)
 	/* TODO: (crosbug.com/p/8572) Daisy and discovery don't define a GPIO
 	 * for the recovery signal from servo, so can't check it. */
 	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
-		uart_puts("Vboot staying in RO due to recovery signal.\n");
+		CPUTS("[Vboot staying in RO due to recovery signal]\n");
 		return;
 	}
 #endif

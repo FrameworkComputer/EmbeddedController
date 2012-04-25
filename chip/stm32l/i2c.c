@@ -12,7 +12,10 @@
 #include "message.h"
 #include "registers.h"
 #include "task.h"
-#include "uart.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_I2C, outstr)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /* 8-bit I2C slave address */
 #define I2C_ADDRESS 0xec
@@ -108,7 +111,7 @@ void i2c2_work_task(void)
 			/* RxNE; AP issued write command */
 			i2c_read_raw(I2C2, &i2c_xmit_mode[I2C2], 1);
 #ifdef CONFIG_DEBUG
-			uart_printf("%s: i2c2_xmit_mode: %02x\n",
+			CPRINTF("%s: i2c2_xmit_mode: %02x\n",
 					__func__, i2c_xmit_mode[I2C2]);
 #endif
 		} else if (tmp16 & (1 << 7)) {
@@ -118,7 +121,7 @@ void i2c2_work_task(void)
 			if (msg_len > 0) {
 				i2c_write_raw(I2C2, out_msg, msg_len);
 			} else {
-				uart_printf("%s: unexpected mode %u\n",
+				CPRINTF("%s: unexpected mode %u\n",
 						__func__, i2c_xmit_mode[I2C2]);
 			}
 		}
@@ -138,24 +141,24 @@ static void i2c_event_handler(int port)
 		STM32L_I2C_SR1(port);
 		STM32L_I2C_SR2(port);
 #ifdef CONFIG_DEBUG
-		uart_printf("%s: ADDR\n", __func__);
+		CPRINTF("%s: ADDR\n", __func__);
 #endif
 	} else if (i2c_sr1[port] & (1 << 2)) {
 		;
 #ifdef CONFIG_DEBUG
-		uart_printf("%s: BTF\n", __func__);
+		CPRINTF("%s: BTF\n", __func__);
 #endif
 	} else if (i2c_sr1[port] & (1 << 4)) {
 		/* clear STOPF bit by reading SR1 and then writing CR1 */
 		STM32L_I2C_SR1(port);
 		STM32L_I2C_CR1(port) = STM32L_I2C_CR1(port);
 #ifdef CONFIG_DEBUG
-		uart_printf("%s: STOPF\n", __func__);
+		CPRINTF("%s: STOPF\n", __func__);
 #endif
 	} else {
 		;
 #ifdef CONFIG_DEBUG
-		uart_printf("%s: unknown event\n", __func__);
+		CPRINTF("%s: unknown event\n", __func__);
 #endif
 	}
 
@@ -176,12 +179,12 @@ static void i2c_error_handler(int port)
 	if (i2c_sr1[port] & 1 << 10) {
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
-		uart_printf("%s: AF detected\n", __func__);
+		CPRINTF("%s: AF detected\n", __func__);
 	}
-	uart_printf("%s: tx byte count: %u, rx_byte_count: %u\n",
+	CPRINTF("%s: tx byte count: %u, rx_byte_count: %u\n",
 			__func__, tx_byte_count, rx_byte_count);
-	uart_printf("%s: I2C_SR1(%s): 0x%04x\n", __func__, port, i2c_sr1[port]);
-	uart_printf("%s: I2C_SR2(%s): 0x%04x\n",
+	CPRINTF("%s: I2C_SR1(%s): 0x%04x\n", __func__, port, i2c_sr1[port]);
+	CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
 			__func__, port, STM32L_I2C_SR2(port));
 #endif
 
@@ -219,7 +222,7 @@ static int i2c_init2(void)
 	task_enable_irq(STM32L_IRQ_I2C2_EV);
 	task_enable_irq(STM32L_IRQ_I2C2_ER);
 
-	uart_printf("done\n");
+	CPUTS("done\n");
 	return EC_SUCCESS;
 }
 

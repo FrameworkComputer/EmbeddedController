@@ -9,9 +9,9 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "uart.h"
 #include "usb_charge.h"
 #include "util.h"
+
 
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
@@ -91,28 +91,28 @@ static int command_set_mode(int argc, char **argv)
 	char* endptr;
 
 	if (argc != 3) {
-		uart_puts("Usage: usbchargemode <port_id> <mode>\n");
-		uart_puts("Modes: 0=Disabled.\n"
-			  "       1=Dedicated charging. Auto select.\n"
-			  "       2=Dedicated charging. BC 1.2.\n"
-			  "       3=Downstream. Max 500mA.\n"
-			  "       4=Downstream. Max 1.5A.\n");
+		ccputs("Usage: usbchargemode <port_id> <mode>\n");
+		ccputs("Modes: 0=Disabled.\n"
+		       "       1=Dedicated charging. Auto select.\n"
+		       "       2=Dedicated charging. BC 1.2.\n"
+		       "       3=Downstream. Max 500mA.\n"
+		       "       4=Downstream. Max 1.5A.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	port_id = strtoi(argv[1], &endptr, 0);
 	if (*endptr || port_id < 0 || port_id >= USB_CHARGE_PORT_COUNT) {
-		uart_puts("Invalid port ID.\n");
+		ccputs("Invalid port ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	mode = strtoi(argv[2], &endptr, 0);
 	if (*endptr || mode < 0 || mode >= USB_CHARGE_MODE_COUNT) {
-		uart_puts("Invalid mode.\n");
+		ccputs("Invalid mode.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_printf("Setting USB mode...\n");
+	ccprintf("Setting USB mode...\n");
 	return usb_charge_set_mode(port_id, mode);
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);

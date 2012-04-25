@@ -24,7 +24,11 @@ enum console_channel {
 	CC_COMMAND = 0,  /* Console command (interactive I/O).  Use this only
 			  * inside a console command routine. */
 	CC_CHARGER,
+	CC_CHIPSET,
+	CC_DMA,
+	CC_GPIO,
 	CC_HOSTCMD,
+	CC_I2C,
 	CC_I8042,
 	CC_KEYBOARD,
 	CC_KEYSCAN,
@@ -35,7 +39,7 @@ enum console_channel {
 	CC_SYSTEM,
 	CC_TASK,
 	CC_USBCHARGE,
-	CC_X86POWER,
+	CC_VBOOT,
 	/* Channel count; not itself a channel */
 	CC_CHANNEL_COUNT
 };

@@ -12,7 +12,6 @@
 #include "common.h"
 #include "i2c.h"
 #include "smart_battery.h"
-#include "uart.h"
 #include "util.h"
 
 /* Sense resistor configurations and macros */
@@ -179,10 +178,10 @@ int charger_post_init(void)
 
 static void print_usage(void)
 {
-	uart_puts("Usage: charger [set_command value]\n");
-	uart_puts("    charger input   input_current_in_mA\n");
-	uart_puts("    charger voltage voltage_limit_in_mV\n");
-	uart_puts("    charger current current_limit_in_mA\n\n");
+	ccputs("Usage: charger [set_command value]\n");
+	ccputs("    charger input   input_current_in_mA\n");
+	ccputs("    charger voltage voltage_limit_in_mV\n");
+	ccputs("    charger current current_limit_in_mA\n\n");
 }
 
 static int print_info(void)
@@ -191,46 +190,46 @@ static int print_info(void)
 	int d;
 	const struct charger_info *info;
 
-	uart_puts("Charger properties : now (max, min, step)\n");
+	ccputs("Charger properties : now (max, min, step)\n");
 
 	/* info */
 	info = charger_get_info();
-	uart_printf("  name           : %s\n", info->name);
+	ccprintf("  name           : %s\n", info->name);
 
 	/* manufacturer id */
 	rv = charger_manufacturer_id(&d);
 	if (rv)
 		return rv;
-	uart_printf("  manufacturer id: 0x%04x\n", d);
+	ccprintf("  manufacturer id: 0x%04x\n", d);
 
 	/* device id */
 	rv = charger_device_id(&d);
 	if (rv)
 		return rv;
-	uart_printf("  device id      : 0x%04x\n", d);
+	ccprintf("  device id      : 0x%04x\n", d);
 
 	/* charge voltage limit */
 	rv = charger_get_voltage(&d);
 	if (rv)
 		return rv;
-	uart_printf("  voltage        : %5d (%5d, %4d, %3d)\n", d,
-		info->voltage_max, info->voltage_min, info->voltage_step);
+	ccprintf("  voltage        : %5d (%5d, %4d, %3d)\n", d,
+		 info->voltage_max, info->voltage_min, info->voltage_step);
 
 	/* charge current limit */
 	rv = charger_get_current(&d);
 	if (rv)
 		return rv;
-	uart_printf("  current        : %5d (%5d, %4d, %3d)\n", d,
-		info->current_max, info->current_min, info->current_step);
+	ccprintf("  current        : %5d (%5d, %4d, %3d)\n", d,
+		 info->current_max, info->current_min, info->current_step);
 
 	/* input current limit */
 	rv = charger_get_input_current(&d);
 	if (rv)
 		return rv;
 
-	uart_printf("  input current  : %5d (%5d, %4d, %3d)\n", d,
-		info->input_current_max, info->input_current_min,
-		info->input_current_step);
+	ccprintf("  input current  : %5d (%5d, %4d, %3d)\n", d,
+		 info->input_current_max, info->input_current_min,
+		 info->input_current_step);
 
 	return EC_SUCCESS;
 }

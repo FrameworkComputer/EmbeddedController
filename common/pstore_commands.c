@@ -8,16 +8,13 @@
 #include "board.h"
 #include "eeprom.h"
 #include "host_command.h"
-#include "uart.h"
 #include "util.h"
+
 
 enum lpc_status pstore_command_get_info(uint8_t *data)
 {
 	struct lpc_response_pstore_info *r =
 			(struct lpc_response_pstore_info *)data;
-
-	uart_printf("ee block size=%d, count=%d\n",
-		    eeprom_get_block_size(), eeprom_get_block_count());
 
 	ASSERT(EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE <=
 	       eeprom_get_block_count());

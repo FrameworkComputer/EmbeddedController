@@ -11,8 +11,11 @@
 #include "gpio.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5v regulator output to stabilize */
 #define DELAY_5V_SETUP        1000  /* 1ms */
@@ -56,7 +59,7 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 		if ((now.val >= deadline.val) ||
 			(task_wait_event(deadline.val - now.val) ==
 			 TASK_EVENT_TIMER)) {
-			uart_printf("Timeout waiting for GPIO %d\n", signal);
+			CPRINTF("Timeout waiting for GPIO %d\n", signal);
 			return EC_ERROR_TIMEOUT;
 		}
 	}
@@ -179,7 +182,7 @@ void gaia_power_task(void)
 
 		/* Power ON state */
 		ap_on = 1;
-		uart_printf("AP running ...\n");
+		CPUTS("AP running ...\n");
 
 		/* Wait for power off from AP or long power button press */
 		wait_for_power_off();
@@ -187,7 +190,7 @@ void gaia_power_task(void)
 		gpio_set_level(GPIO_EN_PP3300, 0);
 		gpio_set_level(GPIO_EN_PP1350, 0);
 		gpio_set_level(GPIO_EN_PP5000, 0);
-		uart_printf("Shutdown complete.\n");
+		CPUTS("Shutdown complete.\n");
 
 		/* Ensure the power button is released */
 		wait_in_signal(GPIO_EC_PWRON, 0, -1);

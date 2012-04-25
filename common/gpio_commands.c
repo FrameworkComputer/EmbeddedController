@@ -8,7 +8,6 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
-#include "uart.h"
 #include "util.h"
 
 
@@ -61,30 +60,30 @@ static int command_gpio_get(int argc, char **argv)
 	if (argc == 2) {
 		i = find_signal_by_name(argv[1]);
 		if (i == GPIO_COUNT) {
-			uart_puts("Unknown signal name.\n");
+			ccputs("Unknown signal name.\n");
 			return EC_ERROR_UNKNOWN;
 		}
 		g = gpio_list + i;
 		v = gpio_get_level(i);
 		changed = last_val_changed(i, v);
-		uart_printf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
+		ccprintf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
 
 		return EC_SUCCESS;
 	}
 
 	/* Otherwise print them all */
-	uart_puts("Current GPIO levels:\n");
+	ccputs("Current GPIO levels:\n");
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (!g->mask)
 			continue;  /* Skip unsupported signals */
 
 		v = gpio_get_level(i);
 		changed = last_val_changed(i, v);
-		uart_printf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
+		ccprintf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
 
 		/* We have enough GPIOs that we'll overflow the output buffer
 		 * without flushing */
-		uart_flush_output();
+		cflush();
 	}
 	return EC_SUCCESS;
 }
@@ -98,29 +97,29 @@ static int command_gpio_set(int argc, char **argv)
 	int v, i;
 
 	if (argc < 3) {
-		uart_puts("Usage: gpioset <signal_name> <0|1>\n");
+		ccputs("Usage: gpioset <signal_name> <0|1>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	i = find_signal_by_name(argv[1]);
 	if (i == GPIO_COUNT) {
-		uart_puts("Unknown signal name.\n");
+		ccputs("Unknown signal name.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 	g = gpio_list + i;
 
 	if (!g->mask) {
-		uart_puts("Signal is not implemented.\n");
+		ccputs("Signal is not implemented.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 	if (!(g->flags & GPIO_OUTPUT)) {
-		uart_puts("Signal is not an output.\n");
+		ccputs("Signal is not an output.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	v = strtoi(argv[2], &e, 0);
 	if (*e) {
-		uart_puts("Invalid signal value.\n");
+		ccputs("Invalid signal value.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 

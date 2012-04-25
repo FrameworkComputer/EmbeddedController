@@ -203,6 +203,8 @@ static int tmp006_poll_sensor(int sensor_id)
 	return EC_SUCCESS;
 }
 
+
+/* Print temperature info for a sensor; used by console command. */
 static int tmp006_print(int idx)
 {
 	int vraw, v;
@@ -212,35 +214,35 @@ static int tmp006_print(int idx)
 	int addr = tmp006_sensors[idx].addr;
 
 
-	uart_printf("Debug data from %s:\n", tmp006_sensors[idx].name);
+	ccprintf("Debug data from %s:\n", tmp006_sensors[idx].name);
 
 	/* TODO: For now, all TMP006 sensors are powered by VS. Modify this
 	 *       if we have different design.
 	 */
 	if (gpio_get_level(GPIO_PGOOD_1_8VS) == 0) {
-		uart_puts("Sensor powered off.\n");
+		ccputs("Sensor powered off.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0xfe, &d);
 	if (rv)
 		return rv;
-	uart_printf("  Manufacturer ID: 0x%04x\n", d);
+	ccprintf("  Manufacturer ID: 0x%04x\n", d);
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0xff, &d);
-	uart_printf("  Device ID:       0x%04x\n", d);
+	ccprintf("  Device ID:       0x%04x\n", d);
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x02, &d);
-	uart_printf("  Config:          0x%04x\n", d);
+	ccprintf("  Config:          0x%04x\n", d);
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x00, &vraw);
 	v = ((int)(int16_t)vraw * 15625) / 100;
-	uart_printf("  Voltage:         0x%04x = %d nV\n", vraw, v);
+	ccprintf("  Voltage:         0x%04x = %d nV\n", vraw, v);
 
 	rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x01, &traw);
 	t = ((int)(int16_t)traw * 100) / 128;
-	uart_printf("  Temperature:     0x%04x = %d.%02d C\n",
-		    traw, t / 100, t > 0 ? t % 100 : 100 - (t % 100));
+	ccprintf("  Temperature:     0x%04x = %d.%02d C\n",
+		 traw, t / 100, t > 0 ? t % 100 : 100 - (t % 100));
 
 	return EC_SUCCESS;
 }
@@ -285,7 +287,7 @@ static int command_sensor_info(int argc, char **argv)
 		rv = tmp006_print(i);
 		if (rv != EC_SUCCESS)
 			rv1 = rv;
-		uart_flush_output();
+		cflush();
 	}
 
 	return rv1;

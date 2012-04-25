@@ -9,15 +9,14 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "lpc.h"
+#include "lpc_commands.h"
 #include "pwm.h"
 #include "registers.h"
-#include "uart.h"
-#include "util.h"
 #include "task.h"
 #include "thermal.h"
 #include "timer.h"
-#include "lpc.h"
-#include "lpc_commands.h"
+#include "util.h"
 
 /* Maximum RPM for fan controller */
 #define MAX_RPM 0x1fff
@@ -145,17 +144,17 @@ void pwm_task(void)
 
 static int command_fan_info(int argc, char **argv)
 {
-	uart_printf("Fan actual speed: %4d rpm\n", pwm_get_fan_rpm());
-	uart_printf("    target speed: %4d rpm\n",
-		    (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE);
-	uart_printf("    duty cycle:   %d%%\n",
-		    ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
-	uart_printf("    status:       %d\n",
-		    (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
-	uart_printf("    enabled:      %s\n",
-		    LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
-	uart_printf("    powered:      %s\n",
-		    gpio_get_level(GPIO_ENABLE_VS) ? "yes" : "no");
+	ccprintf("Fan actual speed: %4d rpm\n", pwm_get_fan_rpm());
+	ccprintf("    target speed: %4d rpm\n",
+		 (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE);
+	ccprintf("    duty cycle:   %d%%\n",
+		 ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
+	ccprintf("    status:       %d\n",
+		 (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
+	ccprintf("    enabled:      %s\n",
+		 LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
+	ccprintf("    powered:      %s\n",
+		 gpio_get_level(GPIO_ENABLE_VS) ? "yes" : "no");
 
 	return EC_SUCCESS;
 }
@@ -169,17 +168,17 @@ static int command_fan_set(int argc, char **argv)
 	int rv;
 
 	if (argc < 2) {
-		uart_puts("Usage: fanset <rpm>\n");
+		ccputs("Usage: fanset <rpm>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	rpm = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid speed\n");
+		ccputs("Invalid speed\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_printf("Setting fan speed to %d rpm...\n", rpm);
+	ccprintf("Setting fan speed to %d rpm...\n", rpm);
 
         /* Move the fan to automatic control */
         if (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) {
@@ -196,7 +195,7 @@ static int command_fan_set(int argc, char **argv)
 
 	rv = pwm_set_fan_target_rpm(rpm);
 	if (rv == EC_SUCCESS)
-		uart_printf("Done.\n");
+		ccprintf("Done.\n");
 
 	return rv;
 }
@@ -210,18 +209,18 @@ static int command_fan_duty(int argc, char **argv)
 	char *e;
 
 	if (argc < 2) {
-		uart_puts("Usage: fanduty <percent>\n");
+		ccputs("Usage: fanduty <percent>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	d = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid duty cycle\n");
+		ccputs("Invalid duty cycle\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
         pwm = (MAX_PWM * d) / 100;
-	uart_printf("Setting fan duty cycle to %d%% = 0x%x...\n", d, pwm);
+	ccprintf("Setting fan duty cycle to %d%% = 0x%x...\n", d, pwm);
 
         /* Move the fan to manual control */
         if (!(LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001)) {
@@ -251,21 +250,21 @@ static int command_kblight(int argc, char **argv)
 	int i;
 
 	if (argc < 2) {
-		uart_printf("Keyboard backlight is at %d%%\n",
-			    pwm_get_keyboard_backlight());
+		ccprintf("Keyboard backlight is at %d%%\n",
+			 pwm_get_keyboard_backlight());
 		return EC_SUCCESS;
 	}
 
 	i = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid percent\n");
+		ccputs("Invalid percent\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_printf("Setting keyboard backlight to %d%%...\n", i);
+	ccprintf("Setting keyboard backlight to %d%%...\n", i);
 	rv = pwm_set_keyboard_backlight(i);
 	if (rv == EC_SUCCESS)
-		uart_printf("Done.\n");
+		ccprintf("Done.\n");
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(kblight, command_kblight);

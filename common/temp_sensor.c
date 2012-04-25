@@ -19,13 +19,13 @@
 #include "thermal.h"
 #include "timer.h"
 #include "tmp006.h"
-#include "uart.h"
 #include "util.h"
 
 /* Defined in board_temp_sensor.c. Must be in the same order as
  * in enum temp_sensor_id.
  */
 extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
+
 
 int temp_sensor_read(enum temp_sensor_id id)
 {
@@ -107,17 +107,17 @@ static int command_temps(int argc, char **argv)
 	int rv = 0;
 	int t;
 
-	uart_puts("Reading temperature sensors...\n");
+	ccputs("Reading temperature sensors...\n");
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		uart_printf("  %-20s: ", temp_sensors[i].name);
+		ccprintf("  %-20s: ", temp_sensors[i].name);
 		t = temp_sensor_read(i);
 		if (t < 0) {
-			uart_printf("Error\n");
+			ccprintf("Error\n");
 			rv = -1;
 		}
 		else
-			uart_printf("%d K = %d C\n", t, t - 273);
+			ccprintf("%d K = %d C\n", t, t - 273);
 	}
 
 	if (rv == -1)

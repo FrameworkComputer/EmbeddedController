@@ -6,12 +6,16 @@
 /* GPIO module for Chrome EC */
 
 #include "board.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_GPIO, outstr)
+#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 
 /* Signal information from board.c.  Must match order from enum gpio_signal. */
 extern const struct gpio_info gpio_list[GPIO_COUNT];
@@ -151,8 +155,8 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 
 #ifdef CONFIG_DEBUG
 	if (exti_events[bit]) {
-		uart_printf("Overriding %s with %s on EXTI%d\n",
-			    exti_events[bit]->name, g->name, bit);
+		CPRINTF("Overriding %s with %s on EXTI%d\n",
+			exti_events[bit]->name, g->name, bit);
 	}
 #endif
 	exti_events[bit] = g;

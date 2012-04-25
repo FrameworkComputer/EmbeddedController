@@ -16,7 +16,6 @@
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 #include "x86_power.h"
 
@@ -28,7 +27,7 @@ extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
 /* Temperature threshold configuration. Must be in the same order as in
  * enum temp_sensor_type. Threshold values for overheated action first.
  * Followed by fan speed stepping thresholds. */
-struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
+static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
 	 {343, 348, 353, 318, 323, 328, 333, 338}},
@@ -44,7 +43,8 @@ struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
  * turn off fan according to temperature readings. Modify this to turn off fan
  * when we have reliable temperature readings. See crosbug.com/p/8479
  */
-const int fan_speed[THERMAL_FAN_STEPS + 1] = {4000, 5000, 6000, 7000, 8000, -1};
+static const int fan_speed[THERMAL_FAN_STEPS + 1] = {4000, 5000, 6000, 7000,
+						     8000, -1};
 
 /* Number of consecutive overheated events for each temperature sensor. */
 static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT + THERMAL_FAN_STEPS];
@@ -204,13 +204,13 @@ void thermal_task(void)
 static void print_thermal_config(enum temp_sensor_type type)
 {
 	const struct thermal_config_t *config = thermal_config + type;
-	uart_printf("Sensor Type %d:\n", type);
-	uart_printf("\tWarning: %d K \n",
-			config->thresholds[THRESHOLD_WARNING]);
-	uart_printf("\tCPU Down: %d K \n",
-			config->thresholds[THRESHOLD_CPU_DOWN]);
-	uart_printf("\tPower Down: %d K \n",
-			config->thresholds[THRESHOLD_POWER_DOWN]);
+	ccprintf("Sensor Type %d:\n", type);
+	ccprintf("\tWarning: %d K\n",
+		 config->thresholds[THRESHOLD_WARNING]);
+	ccprintf("\tCPU Down: %d K\n",
+		 config->thresholds[THRESHOLD_CPU_DOWN]);
+	ccprintf("\tPower Down: %d K\n",
+		 config->thresholds[THRESHOLD_POWER_DOWN]);
 }
 
 
@@ -219,12 +219,12 @@ static void print_fan_stepping(enum temp_sensor_type type)
 	const struct thermal_config_t *config = thermal_config + type;
 	int i;
 
-	uart_printf("Sensor Type %d:\n", type);
-	uart_printf("\tLowest speed: %d RPM\n", fan_speed[0]);
+	ccprintf("Sensor Type %d:\n", type);
+	ccprintf("\tLowest speed: %d RPM\n", fan_speed[0]);
 	for (i = 0; i < THERMAL_FAN_STEPS; ++i)
-		uart_printf("\t%3d K:        %d RPM\n",
-			    config->thresholds[THRESHOLD_COUNT + i],
-			    fan_speed[i+1]);
+		ccprintf("\t%3d K:        %d RPM\n",
+			 config->thresholds[THRESHOLD_COUNT + i],
+			 fan_speed[i+1]);
 }
 
 
@@ -234,14 +234,15 @@ static int command_thermal_config(int argc, char **argv)
 	int sensor_type, threshold_id, value;
 
 	if (argc != 2 && argc != 4) {
-		uart_puts("Usage: thermal <sensor_type> [<threshold_id> <value>]\n");
+		ccputs("Usage: thermal <sensor_type> "
+		       "[<threshold_id> <value>]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	sensor_type = strtoi(argv[1], &e, 0);
 	if ((e && *e) || sensor_type < 0 ||
 	    sensor_type >= TEMP_SENSOR_TYPE_COUNT) {
-		uart_puts("Bad sensor type ID.\n");
+		ccputs("Bad sensor type ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -252,19 +253,19 @@ static int command_thermal_config(int argc, char **argv)
 
 	threshold_id = strtoi(argv[2], &e, 0);
 	if ((e && *e) || threshold_id < 0 || threshold_id >= THRESHOLD_COUNT) {
-		uart_puts("Bad threshold ID.\n");
+		ccputs("Bad threshold ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	value = strtoi(argv[3], &e, 0);
 	if ((e && *e) || value < 0) {
-		uart_puts("Bad threshold value.\n");
+		ccputs("Bad threshold value.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	thermal_config[sensor_type].thresholds[threshold_id] = value;
-	uart_printf("Setting threshold %d of sensor type %d to %d\n",
-			threshold_id, sensor_type, value);
+	ccprintf("Setting threshold %d of sensor type %d to %d\n",
+		 threshold_id, sensor_type, value);
 
 	return EC_SUCCESS;
 }
@@ -277,14 +278,15 @@ static int command_fan_config(int argc, char **argv)
 	int sensor_type, stepping_id, value;
 
 	if (argc != 2 && argc != 4) {
-		uart_puts("Usage: thermalfan <sensor_type> [<stepping_id> <value>]\n");
+		ccputs("Usage: thermalfan <sensor_type> "
+		       "[<stepping_id> <value>]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	sensor_type = strtoi(argv[1], &e, 0);
 	if ((e && *e) || sensor_type < 0 ||
 	    sensor_type >= TEMP_SENSOR_TYPE_COUNT) {
-		uart_puts("Bad sensor type ID.\n");
+		ccputs("Bad sensor type ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -295,19 +297,20 @@ static int command_fan_config(int argc, char **argv)
 
 	stepping_id = strtoi(argv[2], &e, 0);
 	if ((e && *e) || stepping_id < 0 || stepping_id >= THERMAL_FAN_STEPS) {
-		uart_puts("Bad stepping ID.\n");
+		ccputs("Bad stepping ID.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	value = strtoi(argv[3], &e, 0);
 	if ((e && *e) || value < 0) {
-		uart_puts("Bad threshold value.\n");
+		ccputs("Bad threshold value.\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	thermal_config[sensor_type].thresholds[THRESHOLD_COUNT + stepping_id] = value;
-	uart_printf("Setting fan step %d of sensor type %d to %d K\n",
-			stepping_id, sensor_type, value);
+	thermal_config[sensor_type].thresholds[THRESHOLD_COUNT + stepping_id] =
+		value;
+	ccprintf("Setting fan step %d of sensor type %d to %d K\n",
+		 stepping_id, sensor_type, value);
 
 	return EC_SUCCESS;
 }

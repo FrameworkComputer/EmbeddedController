@@ -13,7 +13,6 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 extern const struct adc_t adc_channels[ADC_CH_COUNT];
@@ -181,7 +180,7 @@ DECLARE_IRQ(LM4_IRQ_ADC0_SS3, ss3_interrupt, 2);
 static int command_ectemp(int argc, char **argv)
 {
 	int t = adc_read_channel(ADC_CH_EC_TEMP);
-	uart_printf("EC temperature is %d K = %d C\n", t, t-273);
+	ccprintf("EC temperature is %d K = %d C\n", t, t-273);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
@@ -192,9 +191,8 @@ static int command_adc(int argc, char **argv)
 	int i;
 
 	for (i = 0; i < ADC_CH_COUNT; ++i)
-		uart_printf("ADC channel \"%s\" = %d\n",
-			     adc_channels[i].name,
-			     adc_read_channel(i));
+		ccprintf("ADC channel \"%s\" = %d\n",
+			 adc_channels[i].name, adc_read_channel(i));
 
 	return EC_SUCCESS;
 }

@@ -6,8 +6,11 @@
 #include "dma.h"
 #include "registers.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_DMA, outstr)
+#define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
 
 
 /**
@@ -110,17 +113,17 @@ void dma_check(int channel, char *buff)
 
 	chan = get_channel(channel);
 	count = REG32(&chan->cndtr);
-	uart_printf("c=%d\n", count);
+	CPRINTF("c=%d\n", count);
 	udelay(1000 * 100);
-	uart_printf("c=%d\n",
+	CPRINTF("c=%d\n",
 		    REG32(&chan->cndtr));
 	for (i = 0; i < count; i++)
-		uart_printf("%02x ", buff[i]);
+		CPRINTF("%02x ", buff[i]);
 	udelay(1000 * 100);
-	uart_printf("c=%d\n",
+	CPRINTF("c=%d\n",
 		    REG32(&chan->cndtr));
 	for (i = 0; i < count; i++)
-		uart_printf("%02x ", buff[i]);
+		CPRINTF("%02x ", buff[i]);
 }
 
 /* Run a check of memory-to-memory DMA */
@@ -155,8 +158,8 @@ void dma_test(void)
 	ctrl |= DMA_EN;
 	REG32(&chan->ccr) = ctrl;
 	for (i = 0; i < count; i++)
-		uart_printf("%d/%d ", periph[i], memory[i]);
-	uart_printf("\ncount=%d\n", REG32(&chan->cndtr));
+		CPRINTF("%d/%d ", periph[i], memory[i]);
+	CPRINTF("\ncount=%d\n", REG32(&chan->cndtr));
 }
 #endif /* CONFIG_TEST */
 

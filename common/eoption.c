@@ -9,7 +9,6 @@
 #include "console.h"
 #include "eeprom.h"
 #include "eoption.h"
-#include "uart.h"
 #include "util.h"
 
 #define EOPTION_MAGIC 0x456f       /* Magic number for header 'Eo' */
@@ -142,22 +141,22 @@ static int command_eoption_get(int argc, char **argv)
 	if (argc == 2) {
 		i = find_option_by_name(argv[1], bool_opts);
 		if (i == -1) {
-			uart_puts("Unknown option.\n");
+			ccputs("Unknown option.\n");
 			return EC_ERROR_INVAL;
 		}
 		d = bool_opts + i;
-		uart_printf("  %d %s\n", eoption_get_bool(i), d->name);
+		ccprintf("  %d %s\n", eoption_get_bool(i), d->name);
 		return EC_SUCCESS;
 	}
 
 	/* Otherwise print them all */
-	uart_puts("Boolean options:\n");
+	ccputs("Boolean options:\n");
 	for (i = 0, d = bool_opts; d->name; i++, d++) {
-		uart_printf("  %d %s\n", eoption_get_bool(i), d->name);
+		ccprintf("  %d %s\n", eoption_get_bool(i), d->name);
 
 		/* We have enough options that we'll overflow the output buffer
 		 * without flushing */
-		uart_flush_output();
+		cflush();
 	}
 	return EC_SUCCESS;
 }
@@ -170,13 +169,13 @@ static int command_eoption_set(int argc, char **argv)
 	int v, i;
 
 	if (argc < 3) {
-		uart_puts("Usage: optset <option> <value>\n");
+		ccputs("Usage: optset <option> <value>\n");
 		return EC_ERROR_INVAL;
 	}
 
 	v = strtoi(argv[2], &e, 0);
 	if (*e) {
-		uart_puts("Invalid value.\n");
+		ccputs("Invalid value.\n");
 		return EC_ERROR_INVAL;
 	}
 
@@ -184,7 +183,7 @@ static int command_eoption_set(int argc, char **argv)
 	if (i != -1) {
 		return eoption_set_bool(i, v);
 	} else {
-		uart_puts("Unknown option.\n");
+		ccputs("Unknown option.\n");
 		return EC_ERROR_INVAL;
 	}
 }

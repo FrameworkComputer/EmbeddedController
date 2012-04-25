@@ -20,8 +20,8 @@
 #include "x86_power.h"
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_X86POWER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_X86POWER, format, ## args)
+#define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Default timeout in us; if we've been waiting this long for an input
  * transition, just jump to the next state. */

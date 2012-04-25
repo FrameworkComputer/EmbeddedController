@@ -25,7 +25,11 @@ static char input_buf[80];  /* Current console command line */
 static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"command",
 	"charger",
+	"chipset",
+	"dma",
+	"gpio",
 	"hostcmd",
+	"i2c",
 	"i8042",
 	"keyboard",
 	"keyscan",
@@ -36,7 +40,7 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"system",
 	"task",
 	"usbcharge",
-	"x86power",
+	"vboot",
 };
 
 /*****************************************************************************/
@@ -160,8 +164,8 @@ static int console_init(void)
 {
 	*input_buf = '\0';
 	uart_set_console_mode(1);
-	uart_printf("Console is enabled; type HELP for help.\n");
-	uart_puts(PROMPT);
+	ccprintf("Console is enabled; type HELP for help.\n");
+	ccputs(PROMPT);
 
 	/* TODO: restore channel list from EEPROM */
 
@@ -183,8 +187,8 @@ static void console_process(void)
 
 		rv = handle_command(input_buf);
                 if (rv != EC_SUCCESS)
-                  uart_printf("Command returned error %d\n", rv);
-		uart_puts(PROMPT);
+			ccprintf("Command returned error %d\n", rv);
+		ccputs(PROMPT);
 	}
 }
 
@@ -220,7 +224,7 @@ static int command_help(int argc, char **argv)
 	const char *prev = " ";
 	int i;
 
-	uart_puts("Known commands:");
+	ccputs("Known commands:");
 
 	/* Sort the commands by name */
 	for (i = 0; i < ncmds; i++) {

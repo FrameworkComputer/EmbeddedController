@@ -11,7 +11,6 @@
 #include "registers.h"  /* TODO: remove; only for temp debugging */
 #include "shared_mem.h"
 #include "system.h"
-#include "uart.h"
 #include "util.h"
 
 /* Parse offset and size from command line argv[0] and argv[1].
@@ -26,24 +25,24 @@ static int parse_offset_size(int argc, char **argv, int *offset, int *size)
 	if (argc >= 1) {
 		i = (uint32_t)strtoi(argv[0], &e, 0);
 		if (e && *e) {
-			uart_printf("Invalid offset \"%s\"\n", argv[0]);
+			ccprintf("Invalid offset \"%s\"\n", argv[0]);
 			return EC_ERROR_INVAL;
 		}
 		*offset = i;
 	} else if (*offset < 0) {
-		uart_puts("Must specify offset.\n");
+		ccputs("Must specify offset.\n");
 		return EC_ERROR_INVAL;
 	}
 
 	if (argc >= 2) {
 		i = (uint32_t)strtoi(argv[1], &e, 1);
 		if (e && *e) {
-			uart_printf("Invalid size \"%s\"\n", argv[1]);
+			ccprintf("Invalid size \"%s\"\n", argv[1]);
 			return EC_ERROR_INVAL;
 		}
 		*size = i;
 	} else if (*size < 0) {
-		uart_puts("Must specify offset and size.\n");
+		ccputs("Must specify offset and size.\n");
 		return EC_ERROR_INVAL;
 	}
 
@@ -60,34 +59,34 @@ static int command_flash_info(int argc, char **argv)
 	int banks = flash_get_size() / flash_get_protect_block_size();
 	int i;
 
-	uart_printf("Physical size: %4d KB\n", flash_physical_size() / 1024);
-	uart_printf("Usable size:   %4d KB\n", flash_get_size() / 1024);
-	uart_printf("Write block:   %4d B\n", flash_get_write_block_size());
-	uart_printf("Erase block:   %4d B\n", flash_get_erase_block_size());
-	uart_printf("Protect block: %4d B\n", flash_get_protect_block_size());
+	ccprintf("Physical size: %4d KB\n", flash_physical_size() / 1024);
+	ccprintf("Usable size:   %4d KB\n", flash_get_size() / 1024);
+	ccprintf("Write block:   %4d B\n", flash_get_write_block_size());
+	ccprintf("Erase block:   %4d B\n", flash_get_erase_block_size());
+	ccprintf("Protect block: %4d B\n", flash_get_protect_block_size());
 
 	i = flash_get_protect_lock();
-	uart_printf("Protect lock:  %s%s\n",
-		    (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked",
-		    (i & FLASH_PROTECT_LOCK_APPLIED) ? " AND APPLIED" : "");
-	uart_printf("WP pin:        %s\n", (i & FLASH_PROTECT_PIN_ASSERTED) ?
-		    "ASSERTED" : "deasserted");
+	ccprintf("Protect lock:  %s%s\n",
+		 (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked",
+		 (i & FLASH_PROTECT_LOCK_APPLIED) ? " AND APPLIED" : "");
+	ccprintf("WP pin:        %s\n", (i & FLASH_PROTECT_PIN_ASSERTED) ?
+		 "ASSERTED" : "deasserted");
 
 	wp = flash_get_protect_array();
 
-	uart_puts("Protected now:");
+	ccputs("Protected now:");
 	for (i = 0; i < banks; i++) {
 		if (!(i & 7))
-			uart_puts(" ");
-		uart_puts(wp[i] & FLASH_PROTECT_UNTIL_REBOOT ? "Y" : ".");
+			ccputs(" ");
+		ccputs(wp[i] & FLASH_PROTECT_UNTIL_REBOOT ? "Y" : ".");
 	}
-	uart_puts("\n  Persistent: ");
+	ccputs("\n  Persistent: ");
 	for (i = 0; i < banks; i++) {
 		if (!(i & 7))
-			uart_puts(" ");
-		uart_puts(wp[i] & FLASH_PROTECT_PERSISTENT ? "Y" : ".");
+			ccputs(" ");
+		ccputs(wp[i] & FLASH_PROTECT_PERSISTENT ? "Y" : ".");
 	}
-	uart_puts("\n");
+	ccputs("\n");
 
 	return EC_SUCCESS;
 }
@@ -104,7 +103,7 @@ static int command_flash_erase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	uart_printf("Erasing %d bytes at offset 0x%x (%d)...\n",
+	ccprintf("Erasing %d bytes at offset 0x%x (%d)...\n",
 		    size, offset, offset);
 	return flash_erase(offset, size);
 }
@@ -125,14 +124,14 @@ static int command_flash_write(int argc, char **argv)
 		return rv;
 
 	if (size > shared_mem_size()) {
-		uart_puts("Truncating size\n");
+		ccputs("Truncating size\n");
 		size = shared_mem_size();
 	}
 
         /* Acquire the shared memory buffer */
 	rv = shared_mem_acquire(size, 0, &data);
 	if (rv) {
-		uart_printf("Unable to acquire %d byte buffer\n", size);
+		ccprintf("Unable to acquire %d byte buffer\n", size);
 		return rv;
 	}
 
@@ -140,13 +139,13 @@ static int command_flash_write(int argc, char **argv)
 	for (i = 0; i < size; i++)
 		data[i] = i;
 
-	uart_printf("Writing %d bytes to offset 0x%x (%d)...\n",
-		    size, offset, offset);
+	ccprintf("Writing %d bytes to offset 0x%x (%d)...\n",
+		 size, offset, offset);
 	rv = flash_write(offset, size, data);
 	if (rv == EC_SUCCESS)
-		uart_puts("done.\n");
+		ccputs("done.\n");
 	else
-		uart_printf("failed. (error %d)\n", rv);
+		ccprintf("failed. (error %d)\n", rv);
 
 	/* Free the buffer */
 	shared_mem_release(data);
@@ -168,7 +167,7 @@ static int command_flash_wp(int argc, char **argv)
 	int rv;
 
 	if (argc < 2) {
-		uart_puts(flash_wp_help);
+		ccputs(flash_wp_help);
 		return EC_ERROR_INVAL;
 	}
 
@@ -190,7 +189,7 @@ static int command_flash_wp(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "clear"))
 		return flash_set_protect(offset, size, 0);
 	else {
-		uart_puts(flash_wp_help);
+		ccputs(flash_wp_help);
 		return EC_ERROR_INVAL;
 	}
 
@@ -225,11 +224,8 @@ enum lpc_status flash_command_checksum(uint8_t *data)
 	int j;
 
 	for (cs = 0, j = 0; j < p->size; ++j) {
-		if (flash_read(p->offset + j, 1, &byte)) {
-			uart_printf("flash_read() error at 0x%02x.\n",
-			            p->offset + j);
+		if (flash_read(p->offset + j, 1, &byte))
 			return EC_LPC_RESULT_ERROR;
-		}
 		BYTE_IN(cs, byte);
 	}
 

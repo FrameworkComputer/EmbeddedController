@@ -735,8 +735,6 @@ static int command_codeset(int argc, char **argv)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_flush_output();
-
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(codeset, command_codeset);
@@ -767,8 +765,6 @@ static int command_controller_ram(int argc, char **argv)
 		ccputs("\nGet/set controller RAM.\n\n");
 		return EC_ERROR_UNKNOWN;
 	}
-
-	uart_flush_output();
 
 	return EC_SUCCESS;
 }

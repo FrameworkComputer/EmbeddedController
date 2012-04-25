@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,7 +7,6 @@
 
 #include "eeprom.h"
 #include "console.h"
-#include "uart.h"
 #include "registers.h"
 #include "util.h"
 
@@ -120,9 +119,9 @@ int eeprom_hide(int block)
 
 static int command_eeprom_info(int argc, char **argv)
 {
-	uart_printf("EEPROM: %d blocks of %d bytes\n",
-		    eeprom_get_block_count(), eeprom_get_block_size());
-	uart_printf("  Block-hide flags: 0x%08x\n", LM4_EEPROM_EEHIDE);
+	ccprintf("EEPROM: %d blocks of %d bytes\n",
+		 eeprom_get_block_count(), eeprom_get_block_size());
+	ccprintf("  Block-hide flags: 0x%08x\n", LM4_EEPROM_EEHIDE);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(eeinfo, command_eeprom_info);
@@ -137,28 +136,27 @@ static int command_eeprom_read(int argc, char **argv)
 	uint32_t d;
 
 	if (argc < 2) {
-		uart_puts("Usage: eeread <block> [offset]\n");
+		ccputs("Usage: eeread <block> [offset]\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	block = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid block\n");
+		ccputs("Invalid block\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	if (argc > 2) {
 		offset = strtoi(argv[2], &e, 0);
 		if (*e) {
-			uart_puts("Invalid offset\n");
+			ccputs("Invalid offset\n");
 			return EC_ERROR_UNKNOWN;
 		}
 	}
 
 	rv = eeprom_read(block, offset, sizeof(d), (char *)&d);
 	if (rv == EC_SUCCESS)
-		uart_printf("Block %d offset %d = 0x%08x\n",
-			    block, offset, d);
+		ccprintf("Block %d offset %d = 0x%08x\n", block, offset, d);
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(eeread, command_eeprom_read);
@@ -173,31 +171,30 @@ static int command_eeprom_write(int argc, char **argv)
 	uint32_t d;
 
 	if (argc < 4) {
-		uart_puts("Usage: eeread <block> <offset> <data>\n");
+		ccputs("Usage: eeread <block> <offset> <data>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	block = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid block\n");
+		ccputs("Invalid block\n");
 		return EC_ERROR_UNKNOWN;
 	}
 	offset = strtoi(argv[2], &e, 0);
 	if (*e) {
-		uart_puts("Invalid offset\n");
+		ccputs("Invalid offset\n");
 		return EC_ERROR_UNKNOWN;
 	}
 	d = strtoi(argv[3], &e, 0);
 	if (*e) {
-		uart_puts("Invalid data\n");
+		ccputs("Invalid data\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_printf("Writing 0x%08x to block %d offset %d...\n",
-		    d, block, offset);
+	ccprintf("Writing 0x%08x to block %d offset %d...\n", d, block, offset);
 	rv = eeprom_write(block, offset, sizeof(d), (char *)&d);
 	if (rv == EC_SUCCESS)
-		uart_puts("done.\n");
+		ccputs("done.\n");
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(eewrite, command_eeprom_write);
@@ -210,20 +207,20 @@ static int command_eeprom_hide(int argc, char **argv)
 	int rv;
 
 	if (argc < 2) {
-		uart_puts("Usage: eehide <block>\n");
+		ccputs("Usage: eehide <block>\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	block = strtoi(argv[1], &e, 0);
 	if (*e) {
-		uart_puts("Invalid block\n");
+		ccputs("Invalid block\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	uart_printf("Hiding EEPROM block %d...\n", block);
+	ccprintf("Hiding EEPROM block %d...\n", block);
 	rv = eeprom_hide(block);
 	if (rv == EC_SUCCESS)
-		uart_printf("Done.\n");
+		ccprintf("Done.\n");
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide);
