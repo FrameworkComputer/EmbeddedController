@@ -46,8 +46,10 @@ static int message_get_response(int cmd, uint8_t **buffp, int max_len)
 	case CMDC_ID:
 		*buffp = (char *)ec_id;
 		return sizeof(ec_id) - 1;
+#ifdef CONFIG_TASK_KEYSCAN
 	case CMDC_KEY_STATE:
 		return keyboard_get_scan(buffp, max_len);
+#endif
 	default:
 		return -1;
 	}

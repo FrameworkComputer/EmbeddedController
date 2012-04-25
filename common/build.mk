@@ -12,16 +12,16 @@ common-$(CONFIG_BATTERY_ATL706486)+=battery_atl706486.o
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
 common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_FLASH)+=flash_common.o flash_commands.o
-common-$(CONFIG_LIGHTBAR)+=lightbar.o
 common-$(CONFIG_LPC)+=port80.o host_event_commands.o
 common-$(CONFIG_POWER_LED)+=power_led.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm_commands.o
-common-$(CONFIG_SMART_BATTERY)+=smart_battery.o charge_state.o \
-	battery_precharge.o
 common-$(CONFIG_TASK_GAIAPOWER)+=gaia_power.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
+common-$(CONFIG_TASK_LIGHTBAR)+=lightbar.o
+common-$(CONFIG_TASK_POWERSTATE)+=smart_battery.o charge_state.o \
+	battery_precharge.o
 common-$(CONFIG_TASK_TEMPSENSOR)+=temp_sensor.o
 common-$(CONFIG_TASK_THERMAL)+=thermal.o thermal_commands.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o

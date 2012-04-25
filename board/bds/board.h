@@ -8,9 +8,6 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/* Config flags */
-#define CONFIG_LIGHTBAR
-
 /* Fan PWM channels */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
 #define FAN_CH_POWER_LED 3  /* Power adapter LED */

@@ -30,7 +30,14 @@
 #define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_PULL_UP | GPIO_OPEN_DRAIN)
 
 /* GPIO interrupt handlers prototypes */
+#ifndef CONFIG_TASK_GAIAPOWER
+#define gaia_power_event NULL
+#else
 void gaia_power_event(enum gpio_signal signal);
+#endif
+#ifndef CONFIG_TASK_KEYSCAN
+#define matrix_interrupt NULL
+#endif
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {

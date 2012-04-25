@@ -12,6 +12,10 @@
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_PULL_UP | GPIO_OPEN_DRAIN)
 
+#ifndef CONFIG_TASK_KEYSCAN
+#define matrix_interrupt NULL
+#endif
+
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */

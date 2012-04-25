@@ -10,4 +10,4 @@ CHIP:=lm4
 
 board-y=board.o
 board-$(CONFIG_CHARGER)+=dummy_charger.o
-board-$(CONFIG_TASK_TEMPSENSOR)+=board_temp_sensor.o
+board-y+=board_temp_sensor.o

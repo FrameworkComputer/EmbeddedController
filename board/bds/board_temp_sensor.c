@@ -20,12 +20,16 @@
  * temp_sensor_id.
  */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
+#ifdef CONFIG_TASK_TEMPSENSOR
 	{"ECInternal", TEMP_SENSOR_POWER_NONE, TEMP_SENSOR_TYPE_BOARD,
 	 chip_temp_sensor_get_val, 0},
+#endif
+#ifdef CONFIG_TMP006
 	{"CaseDie", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_BOARD,
 	 tmp006_get_val, 0},
 	{"Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
 	 tmp006_get_val, 1},
+#endif
 };
 
 const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
