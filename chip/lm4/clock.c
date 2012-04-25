@@ -193,8 +193,20 @@ DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 static int command_pll(int argc, char **argv)
 {
 	/* Toggle the PLL */
-	clock_enable_pll(LM4_SYSTEM_RCC & LM4_SYSTEM_RCC_BYPASS ? 1 : 0);
-	ccprintf("Clock frequency is now %d\n", clock_get_freq());
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "off"))
+			clock_enable_pll(0);
+		else if (!strcasecmp(argv[1], "on"))
+			clock_enable_pll(1);
+		else
+			ccputs("Usage: pll [off | on]\n");
+	}
+
+	/* Print current PLL state */
+	ccprintf("RCC:     0x%08x\n", LM4_SYSTEM_RCC);
+	ccprintf("RCC2:    0x%08x\n", LM4_SYSTEM_RCC2);
+	ccprintf("PLLSTAT: 0x%08x\n", LM4_SYSTEM_PLLSTAT);
+	ccprintf("Clock:   %d Hz\n", clock_get_freq());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pll, command_pll);
