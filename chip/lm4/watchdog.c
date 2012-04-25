@@ -79,12 +79,15 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void) __attribute__((naked));
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 {
+	/* Naked call so we can extract raw LR and SP */
 	asm volatile("mov r0, lr\n"
-	             "mov r1, sp\n"
-	             "push {lr}\n"
-	             "bl watchdog_trace\n"
-	             "pop {lr}\n"
-	             "mov r0, lr\n"
+		     "mov r1, sp\n"
+		     /* Must push registers in pairs to keep 64-bit aligned
+		      * stack for ARM EABI.  This also conveninently saves
+		      * R0=LR so we can pass it to task_resched_if_needed. */
+		     "push {r0, lr}\n"
+		     "bl watchdog_trace\n"
+		     "pop {r0, lr}\n"
 		     "b task_resched_if_needed\n");
 }
 const struct irq_priority IRQ_BUILD_NAME(prio_, LM4_IRQ_WATCHDOG, )
