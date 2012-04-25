@@ -388,15 +388,19 @@ static enum power_state state_charge(struct power_state_context *ctx)
  */
 static enum power_state state_discharge(struct power_state_context *ctx)
 {
+	struct batt_params *batt = &ctx->curr.batt;
 	if (ctx->curr.ac)
 		return PWR_STATE_INIT;
 
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
 
-	/* TODO(rong): crosbug.com/p/8451
-	 * handle overtemp in discharge mode
+	/* Overtemp in discharging state
+	 *   - poweroff host and ec
 	 */
+	if (batt->temperature > ctx->battery->temp_discharge_max ||
+	    batt->temperature < ctx->battery->temp_discharge_min)
+		poweroff_wait_ac();
 
 	return PWR_STATE_UNCHANGE;
 }
