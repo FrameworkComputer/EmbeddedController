@@ -77,19 +77,18 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 void configure_board(void)
 {
-	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
-	STM32L_RCC_APB2ENR |= 1 << 0;
-
 	dma_init();
 
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */
 	STM32L_RCC_AHBENR |= 0x3f;
+	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
+	/* FIXME: This seems to break USB download in U-Boot (?!?) */
+	STM32L_RCC_APB2ENR |= 1 << 0;
 
 	/* Enable SPI */
 	STM32L_RCC_APB2ENR |= (1<<12);
-	/*| (1 << 0);  - removed since this breaks USB download? */
 
 	/* SPI1 on pins PA4-7 (push-pull, no pullup/down, 10MHz) */
 	STM32L_GPIO_PUPDR_OFF(GPIO_A) &= ~((2 << (7 * 2)) |
