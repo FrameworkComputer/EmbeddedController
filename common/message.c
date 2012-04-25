@@ -13,9 +13,12 @@
 #include "keyboard_scan.h"
 #include "util.h"
 
-/* Our ID message - Matrix KeyBoard Protocol */
-static const char proto_id[] = "Google Chrome MKBP v1";
+/* EC ID */
+/* (TODO(dhendrix): Define this in board-specific code */
+static const char ec_id[] = "Google Chrome EC";
 
+/* Protocol version (least significant byte in lowest byte position) */
+static const uint8_t proto_ver[] = { 1, 0, 0, 0 };
 
 /**
  * Get the response to a given command
@@ -34,12 +37,15 @@ static int message_get_response(int cmd, uint8_t **buffp, int max_len)
 	 * Invalid commands are ignored, just returning a stream of 0xff
 	 * bytes.
 	 */
-	switch (cmd & MSG_CMD_MASK) {
+	switch (cmd) {
+	case CMDC_PROTO_VER:
+		*buffp = (uint8_t *)proto_ver;
+		return sizeof(proto_ver);
 	case CMDC_NOP:
 		return 0;
 	case CMDC_ID:
-		*buffp = (char *)proto_id;
-		return sizeof(proto_id) - 1;
+		*buffp = (char *)ec_id;
+		return sizeof(ec_id) - 1;
 	case CMDC_KEY_STATE:
 		return keyboard_get_scan(buffp, max_len);
 	default:
@@ -55,10 +61,9 @@ int message_process_cmd(int cmd, uint8_t *out_msg, int max_len)
 	int msg_len;
 	int need_copy;
 	int sum = 0;
-	int len;
 	int i;
 
-	msg = out_msg + MSG_HEADER_BYTES;
+	msg = out_msg;
 	msg_len = message_get_response(cmd, &msg, max_len - MSG_PROTO_BYTES);
 	if (msg_len < 0)
 		return msg_len;
@@ -69,25 +74,18 @@ int message_process_cmd(int cmd, uint8_t *out_msg, int max_len)
 	 */
 	if (msg_len + MSG_PROTO_BYTES > max_len)
 		msg_len = max_len - MSG_PROTO_BYTES;
-	len = msg_len + MSG_PROTO_BYTES;
 	ASSERT(msg_len >= 0 && msg_len < 0xffff);
-	need_copy = msg != out_msg + MSG_HEADER_BYTES;
+	need_copy = msg != out_msg;
 	ASSERT(!need_copy ||
 		msg + msg_len < out_msg ||
 		msg > out_msg + sizeof(out_msg));
 
-	out_msg[0] = MSG_HEADER;
-	out_msg[1] = len & 0xff;
-	out_msg[2] = (len >> 8) & 0xff;
-	sum += MSG_HEADER + len + (len >> 8);
-
 	for (i = 0; i < msg_len; i++) {
 		if (need_copy)
-			out_msg[i + 3] = msg[i];
+			out_msg[i] = msg[i];
 		sum += msg[i];
 	}
-	out_msg[i + 3] = sum & 0xff;
-	out_msg[i + 4] = MSG_PREAMBLE;
+	out_msg[i] = sum;
 
 	return msg_len + MSG_PROTO_BYTES;
 }
