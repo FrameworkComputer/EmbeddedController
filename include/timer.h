@@ -1,17 +1,17 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Timer module for Chrome EC operating system */
 
-#ifndef __EC_TIMER_H
-#define __EC_TIMER_H
+#ifndef __CROS_EC_TIMER_H
+#define __CROS_EC_TIMER_H
 
 #include "common.h"
 #include "task_id.h"
 
-/* Micro-second timestamp. */
+/* Microsecond timestamp. */
 typedef union {
 	uint64_t val;
 	struct {
@@ -23,38 +23,29 @@ typedef union {
 /* Initializes the Timer module. */
 int timer_init(void);
 
-/**
- * Launches a one-shot timer.
- *
- * tstamp : timestamp in micro-seconds when the timer expires
- * tskid : identifier of the task owning the timer
- */
+/* Launch a one-shot timer for task <tskid> which expires at timestamp
+ * <tstamp>. */
 int timer_arm(timestamp_t tstamp, task_id_t tskid);
 
-/**
- * Cancels a running timer.
- *
- * tskid : identifier of the task owning the timer
- */
+/* Cancel a running timer for the specified task id. */
 int timer_cancel(task_id_t tskid);
 
-/**
- * Busy wait the selected number of micro-seconds
- */
+/* Busy-wait the selected number of microseconds.  Note that calling this
+ * with us>1000 may impact system performance; use usleep for longer delays. */
 void udelay(unsigned us);
 
-/**
- * Sleep during the selected number of micro-seconds
- *
- * The current task will be de-scheduled until the delay expired
+/* Sleep during the selected number of microseconds.  The current task will be
+ * de-scheduled until the delay expires.
  *
  * Note: if an event happens before the end of sleep, the function will return.
  */
 void usleep(unsigned us);
 
-/**
- * Get the current timestamp from the system timer
- */
+/* Get the current timestamp from the system timer. */
 timestamp_t get_time(void);
 
-#endif  /* __EC_TIMER_H */
+/* Print the current timer information using the command output channel.  This
+ * may be called from interrupt level. */
+void timer_print_info(void);
+
+#endif  /* __CROS_EC_TIMER_H */

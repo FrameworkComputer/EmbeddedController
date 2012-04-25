@@ -55,6 +55,11 @@ static inline void task_wake(task_id_t tskid)
  * When called in interrupt context, returns TASK_ID_INVALID. */
 task_id_t task_get_current(void);
 
+/* Convert an address to the corresponding task ID.  The address may be a stack
+ * pointer or the task data for a task.  Returns TASK_ID_INVALID if the address
+ * does not correspond to a task. */
+task_id_t task_from_addr(uint32_t addr);
+
 /* Return a pointer to the bitmap of events of the task. */
 uint32_t *task_get_event_bitmap(task_id_t tsk);
 
@@ -69,6 +74,10 @@ uint32_t *task_get_event_bitmap(task_id_t tsk);
  *
  * Returns the bitmap of received events (and clears it atomically). */
 uint32_t task_wait_event(int timeout_us);
+
+/* Prints the list of tasks using the command output channel.  This may be
+ * called from interrupt level. */
+void task_print_list(void);
 
 #ifdef CONFIG_TASK_PROFILING
 /* Start tracking an interrupt.
