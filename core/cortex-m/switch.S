@@ -42,7 +42,7 @@ __switchto:
   bx lr                  @ return from exception
 
 /**
- * Start the task scheduling.  r0 is a pointer to need_resched, which is
+ * Start the task scheduling.  r0 is a pointer to task_stack_ready, which is
  * set to 1 after the task stack is set up.
  */
 .global __task_start
