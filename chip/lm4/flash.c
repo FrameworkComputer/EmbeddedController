@@ -8,7 +8,6 @@
 #include "flash.h"
 #include "registers.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 #include "watchdog.h"
 

@@ -9,7 +9,6 @@
 #include "flash.h"
 #include "gpio.h"
 #include "registers.h"
-#include "uart.h"
 #include "util.h"
 
 #define PERSIST_STATE_VERSION 1

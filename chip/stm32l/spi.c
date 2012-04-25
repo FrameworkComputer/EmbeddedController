@@ -16,7 +16,6 @@
 #include "spi.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 
