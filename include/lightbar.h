@@ -7,8 +7,11 @@
 #ifndef __CROS_EC_LIGHTBAR_H
 #define __CROS_EC_LIGHTBAR_H
 
+/****************************************************************************/
+/* Internal stuff */
+
 /* Define the types of sequences */
-#define LBMSG(state) LIGHTBAR_##state,
+#define LBMSG(state) LIGHTBAR_##state
 #include "lightbar_msg_list.h"
 enum lightbar_sequence {
 	LIGHTBAR_MSG_LIST
@@ -18,5 +21,21 @@ enum lightbar_sequence {
 
 /* Request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence s);
+
+/****************************************************************************/
+/* External stuff */
+
+/* These are the commands available to the EC console or via LPC. */
+enum lightbar_command {
+	LIGHTBAR_CMD_DUMP,
+	LIGHTBAR_CMD_OFF,
+	LIGHTBAR_CMD_ON,
+	LIGHTBAR_CMD_INIT,
+	LIGHTBAR_CMD_BRIGHTNESS,
+	LIGHTBAR_CMD_SEQ,
+	LIGHTBAR_CMD_REG,
+	LIGHTBAR_CMD_RGB,
+	LIGHTBAR_NUM_CMDS
+};
 
 #endif  /* __CROS_EC_LIGHTBAR_H */

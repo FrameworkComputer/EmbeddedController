@@ -3,12 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/io.h>
 #include <unistd.h>
 
+#include "lightbar.h"
 #include "lpc_commands.h"
 #include "battery.h"
 
@@ -816,32 +818,155 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	return 0;
 }
 
-int cmd_lightbar(int argc, char *argv[])
+
+#define LBMSG(state) #state
+#include "lightbar_msg_list.h"
+static const char const *lightbar_cmds[] = {
+	LIGHTBAR_MSG_LIST
+};
+#undef LBMSG
+
+/* This needs to match the values used in common/lightbar.c.  I'd like to
+ * define this in one and only one place, but I can't think of a good way to do
+ * that without adding bunch of complexity. This will do for now.
+ */
+static const struct {
+	uint8_t insize;
+	uint8_t outsize;
+} lb_command_paramcount[LIGHTBAR_NUM_CMDS] = {
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.dump),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.off),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.off) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.on),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.on) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.init),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.init) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.brightness),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.brightness) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.seq),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.seq) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.reg),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.reg) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.rgb),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.rgb) },
+};
+
+static int lb_help(const char *cmd)
 {
-	struct lpc_params_lightbar_test p;
-	char *e;
+	printf("Usage:\n");
+	printf("  %s                       - dump all regs\n", cmd);
+	printf("  %s off                   - enter standby\n", cmd);
+	printf("  %s on                    - leave standby\n", cmd);
+	printf("  %s init                  - load default vals\n", cmd);
+	printf("  %s brightness NUM        - set intensity (0-ff)\n", cmd);
+	printf("  %s seq [NUM|SEQUENCE]    - run given pattern"
+		 " (no arg for list)\n", cmd);
+	printf("  %s CTRL REG VAL          - set LED controller regs\n", cmd);
+	printf("  %s LED RED GREEN BLUE    - set color manually"
+		 " (LED=4 for all)\n", cmd);
+	return 0;
+}
 
-	p.tbd = 0;
+static uint8_t lb_find_msg_by_name(const char *str)
+{
+	uint8_t i;
+	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
+		if (!strcasecmp(str, lightbar_cmds[i]))
+			return i;
 
-	if (argc > 1) {
-		if (!strcmp("reset", argv[1])) {
-			return ec_command(EC_LPC_COMMAND_LIGHTBAR_RESET,
-					  NULL, 0, NULL, 0);
-		} else if (!strcmp("test", argv[1])) {
-			if (argc > 2) {
-				p.tbd = strtol(argv[2], &e, 0);
-				if (e && *e) {
-					fprintf(stderr, "Bad arg\n");
-					return -1;
-				}
-			}
-			return ec_command(EC_LPC_COMMAND_LIGHTBAR_TEST,
-					  &p, sizeof(p), NULL, 0);
+	return LIGHTBAR_NUM_SEQUENCES;
+}
+
+static void lb_show_msg_names(void)
+{
+	int i;
+	printf("sequence names:");
+	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
+		printf(" %s", lightbar_cmds[i]);
+	printf("\n");
+}
+
+static int lb_do_cmd(enum lightbar_command cmd,
+		     struct lpc_params_lightbar_cmd *ptr)
+{
+	int r;
+	ptr->in.cmd = cmd;
+	r = ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+		       ptr, lb_command_paramcount[cmd].insize,
+		       ptr, lb_command_paramcount[cmd].outsize);
+	return r;
+}
+
+static int cmd_lightbar(int argc, char **argv)
+{
+	int i, r;
+	struct lpc_params_lightbar_cmd param;
+
+	if (1 == argc) {		/* no args = dump 'em all */
+		r = lb_do_cmd(LIGHTBAR_CMD_DUMP, &param);
+		if (r)
+			return r;
+		for (i = 0; i < sizeof(param.out.dump); i += 3) {
+			printf(" %02x     %02x     %02x\n",
+			       param.out.dump[i],
+			       param.out.dump[i+1],
+			       param.out.dump[i+2]);
 		}
+		return 0;
 	}
 
-	printf("Usage: %s reset | test [NUM]\n", argv[0]);
-	return -1;
+	if (argc == 2 && !strcasecmp(argv[1], "init"))
+		return lb_do_cmd(LIGHTBAR_CMD_INIT, &param);
+
+	if (argc == 2 && !strcasecmp(argv[1], "off"))
+		return lb_do_cmd(LIGHTBAR_CMD_OFF, &param);
+
+	if (argc == 2 && !strcasecmp(argv[1], "on"))
+		return lb_do_cmd(LIGHTBAR_CMD_ON, &param);
+
+	if (argc == 3 && !strcasecmp(argv[1], "brightness")) {
+		char *e;
+		param.in.brightness.num = 0xff & strtoul(argv[2], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_BRIGHTNESS, &param);
+	}
+
+	if (argc >= 2 && !strcasecmp(argv[1], "seq")) {
+		char *e;
+		uint8_t num;
+		if (argc == 2) {
+			lb_show_msg_names();
+			return 0;
+		}
+		num = 0xff & strtoul(argv[2], &e, 16);
+		if (e && *e)
+			num = lb_find_msg_by_name(argv[2]);
+		if (num >= LIGHTBAR_NUM_SEQUENCES) {
+			fprintf(stderr, "Invalid arg\n");
+			return -1;
+		}
+		param.in.seq.num = num;
+		return lb_do_cmd(LIGHTBAR_CMD_SEQ, &param);
+	}
+
+	if (argc == 4) {
+		char *e;
+		param.in.reg.ctrl = 0xff & strtoul(argv[1], &e, 16);
+		param.in.reg.reg = 0xff & strtoul(argv[2], &e, 16);
+		param.in.reg.value = 0xff & strtoul(argv[3], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_REG, &param);
+	}
+
+	if (argc == 5) {
+		char *e;
+		param.in.rgb.led = strtoul(argv[1], &e, 16);
+		param.in.rgb.red = strtoul(argv[2], &e, 16);
+		param.in.rgb.green = strtoul(argv[3], &e, 16);
+		param.in.rgb.blue = strtoul(argv[4], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_RGB, &param);
+	}
+
+	return lb_help(argv[0]);
 }
 
 int cmd_usb_charge_set_mode(int argc, char *argv[])
