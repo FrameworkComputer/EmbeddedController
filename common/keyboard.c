@@ -18,7 +18,6 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 #include "x86_power.h"
 

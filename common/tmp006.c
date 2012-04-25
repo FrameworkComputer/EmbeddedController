@@ -15,7 +15,6 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "tmp006.h"
-#include "uart.h"
 #include "util.h"
 
 /* Defined in board_temp_sensor.c. */

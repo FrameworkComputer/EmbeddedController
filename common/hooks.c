@@ -7,7 +7,6 @@
 
 #include "hooks.h"
 #include "link_defs.h"
-#include "uart.h"
 #include "util.h"
 
 struct hook_ptrs {
