@@ -5,5 +5,5 @@
 # Host tools build
 #
 
-host-util-bin=ectool
+host-util-bin=ectool lbplay
 build-util-bin=ec_uartd stm32mon
