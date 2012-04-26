@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -260,6 +261,25 @@ int read_mapped_string(uint8_t offset, char *buf)
 
 	buf[EC_LPC_MEMMAP_TEXT_MAX-1] = 0;
 	return EC_LPC_MEMMAP_TEXT_MAX;
+}
+
+
+int is_string_printable(const char *buf)
+{
+	while (*buf) {
+		if (isprint(*buf))
+			return 0;
+		buf++;
+	}
+
+	return 1;
+}
+
+
+/* Check SBS numerical value range */
+int is_battery_range(int val)
+{
+	return (val >= 0 && val <= 65535) ? 1 : 0;
 }
 
 
@@ -1312,41 +1332,70 @@ int cmd_switches(int argc, char *argv[])
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_LPC_MEMMAP_TEXT_MAX];
-	int rv;
+	int rv, val;
 
 	printf("Battery info:\n");
 
 	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MFGR, batt_text);
-	if (rv)
+	if (rv) {
+		if (!is_string_printable(batt_text))
+			goto cmd_error;
 		printf("  OEM name:               %s\n", batt_text);
+	}
 
 	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MODEL, batt_text);
-	if (rv)
+	if (rv) {
+		if (!is_string_printable(batt_text))
+			goto cmd_error;
 		printf("  Model number:           %s\n", batt_text);
+	}
 
 	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_TYPE, batt_text);
-	if (rv)
+	if (rv) {
+		if (!is_string_printable(batt_text))
+			goto cmd_error;
 		printf("  Chemistry   :           %s\n", batt_text);
+	}
 
 	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_SERIAL, batt_text);
-	if (rv)
+	if (rv) {
+		if (!is_string_printable(batt_text))
+			goto cmd_error;
 		printf("  Serial number:          %s\n", batt_text);
+	}
 
-	printf("  Design capacity:        %u mAh\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP));
-	printf("  Last full charge:       %u mAh\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_LFCC));
-	printf("  Design output voltage   %u mV\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DVLT));
+	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Design capacity:        %u mAh\n", val);
+
+	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_LFCC);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Last full charge:       %u mAh\n", val);
+
+	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DVLT);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Design output voltage   %u mV\n", val);
+
+	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP);
+	if (!is_battery_range(val))
+		goto cmd_error;
 	printf("  Design capacity warning %u mAh\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP) *
-	       BATTERY_LEVEL_WARNING / 100);
+		val * BATTERY_LEVEL_WARNING / 100);
 	printf("  Design capacity low     %u mAh\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP) *
-	       BATTERY_LEVEL_LOW / 100);
-	printf("  Cycle count             %u\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_BATT_CCNT));
+		val * BATTERY_LEVEL_LOW / 100);
+
+	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_CCNT);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Cycle count             %u\n", val);
+
 	return 0;
+cmd_error:
+	fprintf(stderr, "Bad battery info value. Check protocol version.");
+	return -1;
 }
 
 int cmd_chipinfo(int argc, char *argv[])
