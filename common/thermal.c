@@ -30,7 +30,7 @@ extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
 static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
-	 {343, 348, 353, 318, 323, 328, 333, 338}},
+	 {368, 383, 388, 328, 338, 348, 358, 368}},
 	/* TEMP_SENSOR_TYPE_BOARD */
 	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL}},
 	/* TEMP_SENSOR_TYPE_CASE */
@@ -39,12 +39,9 @@ static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 };
 
 /* Fan speed settings. */
-/* TODO: Currently temperature polling task sometimes hangs. So we should not
- * turn off fan according to temperature readings. Modify this to turn off fan
- * when we have reliable temperature readings. See crosbug.com/p/8479
- */
-static const int fan_speed[THERMAL_FAN_STEPS + 1] = {4000, 5000, 6000, 7000,
-						     8000, -1};
+/* Max RPM is about 11000. Setting each step to be 20% of the max RPM. */
+static const int fan_speed[THERMAL_FAN_STEPS + 1] = {0, 2200, 4400, 6600,
+						     8800, -1};
 
 /* Number of consecutive overheated events for each temperature sensor. */
 static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT + THERMAL_FAN_STEPS];
