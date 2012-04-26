@@ -345,17 +345,45 @@ struct lpc_params_pwm_set_keyboard_backlight {
 } __attribute__ ((packed));
 
 /*****************************************************************************/
-/* Lightbar commands */
+/* Lightbar commands. This looks worse than it is. Since we only use one LPC
+ * command to say "talk to the lightbar", we put the "and tell it to do X"
+ * part into a subcommand. We'll make separate structs for subcommands with
+ * different input args, so that we know how much to expect. */
 
-#define EC_LPC_COMMAND_LIGHTBAR_RESET 0x28
-/* No params needed */
+#define EC_LPC_COMMAND_LIGHTBAR_CMD 0x28
+struct lpc_params_lightbar_cmd {
+	union {
+		union {
+			uint8_t cmd;
+			struct {
+				uint8_t cmd;
+			} dump, off, on, init;
+			struct num {
+				uint8_t cmd;
+				uint8_t num;
+			} brightness, seq;
 
-#define EC_LPC_COMMAND_LIGHTBAR_TEST 0x29
-struct lpc_params_lightbar_test {
-	uint8_t tbd;
+			struct reg {
+				uint8_t cmd;
+				uint8_t ctrl, reg, value;
+			} reg;
+			struct rgb {
+				uint8_t cmd;
+				uint8_t led, red, green, blue;
+			} rgb;
+		} in;
+		union {
+			uint8_t dump[69];
+			uint8_t off[0];
+			uint8_t on[0];
+			uint8_t init[0];
+			uint8_t brightness[0];
+			uint8_t seq[0];
+			uint8_t reg[0];
+			uint8_t rgb[0];
+		} out;
+	};
 } __attribute__ ((packed));
-
-
 
 /*****************************************************************************/
 /* USB charging control commands */

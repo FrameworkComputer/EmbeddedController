@@ -7,16 +7,16 @@
  * types.
  */
 #define LIGHTBAR_MSG_LIST                       \
-	LBMSG(ERROR)				\
-	LBMSG(S5)				\
-	LBMSG(S3)				\
-	LBMSG(S0)				\
-	LBMSG(S5S3)				\
-	LBMSG(S3S0)				\
-	LBMSG(S0S3)				\
-	LBMSG(S3S5)				\
-	LBMSG(STOP)				\
-	LBMSG(RUN)				\
-	LBMSG(PULSE)				\
-	LBMSG(TEST)				\
-	LBMSG(KONAMI)
+	LBMSG(ERROR),				\
+	LBMSG(S5),				\
+	LBMSG(S3),				\
+	LBMSG(S0),				\
+	LBMSG(S5S3),				\
+	LBMSG(S3S0),				\
+	LBMSG(S0S3),				\
+	LBMSG(S3S5),				\
+	LBMSG(STOP),				\
+	LBMSG(RUN),				\
+	LBMSG(PULSE),				\
+	LBMSG(TEST),				\
+	LBMSG(KONAMI),
