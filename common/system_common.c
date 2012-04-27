@@ -36,6 +36,8 @@ struct jump_data {
 	 * _end_ of RAM between images.  This way, the magic number will always
 	 * be the last word in RAM regardless of how many fields are added. */
 
+	uint8_t recovery_required; /* signal recovery mode to BIOS */
+
 	/* Fields from version 2 */
 	int jump_tag_total;  /* Total size of all jump tags */
 
@@ -72,6 +74,12 @@ int system_usable_ram_end(void)
 enum system_reset_cause_t system_get_reset_cause(void)
 {
 	return reset_cause;
+}
+
+
+int system_get_recovery_required(void)
+{
+	return jdata->recovery_required;
 }
 
 
@@ -194,7 +202,8 @@ const char *system_get_image_copy_string(void)
 
 /* Jump to what we hope is the init address of an image.  This function does
  * not return. */
-static void jump_to_image(uint32_t init_addr)
+static void jump_to_image(uint32_t init_addr,
+			  int recovery_required)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
 
@@ -206,6 +215,7 @@ static void jump_to_image(uint32_t init_addr)
 	interrupt_disable();
 
 	/* Fill in preserved data between jumps */
+	jdata->recovery_required = recovery_required != 0;
 	jdata->magic = JUMP_DATA_MAGIC;
 	jdata->version = JUMP_DATA_VERSION;
 	jdata->reset_cause = reset_cause;
@@ -237,7 +247,15 @@ static uint32_t get_base(enum system_image_copy_t copy)
 }
 
 
-int system_run_image_copy(enum system_image_copy_t copy)
+static const char * const image_names[] = {
+	"Unknown",
+	"RO",
+	"A",
+	"B"
+};
+
+int system_run_image_copy(enum system_image_copy_t copy,
+			  int recovery_required)
 {
 	uint32_t base;
 	uint32_t init_addr;
@@ -260,7 +278,9 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	if (init_addr < base || init_addr >= base + CONFIG_FW_IMAGE_SIZE)
 		return EC_ERROR_UNKNOWN;
 
-	jump_to_image(init_addr);
+	CPRINTF("Rebooting to image %s\n", image_names[copy]);
+
+	jump_to_image(init_addr, recovery_required);
 
 	/* Should never get here */
 	return EC_ERROR_UNIMPLEMENTED;
@@ -426,16 +446,15 @@ static int command_sysjump(int argc, char **argv)
 		return EC_ERROR_INVAL;
 	}
 
+	ccputs("Processing sysjump command\n");
+
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO")) {
-		ccputs("Jumping directly to RO image...\n");
-		return system_run_image_copy(SYSTEM_IMAGE_RO);
+		return system_run_image_copy(SYSTEM_IMAGE_RO, 0);
 	} else if (!strcasecmp(argv[1], "A")) {
-		ccputs("Jumping directly to image A...\n");
-		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
+		return system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
 	} else if (!strcasecmp(argv[1], "B")) {
-		ccputs("Jumping directly to image B...\n");
-		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
+		return system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
 	}
 
 	/* Check for arbitrary address */
@@ -446,7 +465,7 @@ static int command_sysjump(int argc, char **argv)
 	}
 	ccprintf("Jumping directly to 0x%08x...\n", addr);
 	cflush();
-	jump_to_image(addr);
+	jump_to_image(addr, 0);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
@@ -533,31 +552,34 @@ static void clean_busy_bits(void) {
 
 enum lpc_status host_command_reboot(uint8_t *data)
 {
+	enum system_image_copy_t copy;
+
 	struct lpc_params_reboot_ec *p =
 		(struct lpc_params_reboot_ec *)data;
+
+	int recovery_request = p->reboot_flags &
+		EC_LPC_COMMAND_REBOOT_BIT_RECOVERY;
 
 	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
 	 * be disabled. */
 
 	switch (p->target) {
 	case EC_LPC_IMAGE_RO:
-		CPUTS("[Rebooting to image RO!\n]");
-		clean_busy_bits();
-		system_run_image_copy(SYSTEM_IMAGE_RO);
+		copy = SYSTEM_IMAGE_RO;
 		break;
 	case EC_LPC_IMAGE_RW_A:
-		CPUTS("[Rebooting to image A!]\n");
-		clean_busy_bits();
-		system_run_image_copy(SYSTEM_IMAGE_RW_A);
+		copy = SYSTEM_IMAGE_RW_A;
 		break;
 	case EC_LPC_IMAGE_RW_B:
-		CPUTS("[Rebooting to image B!]\n");
-		clean_busy_bits();
-		system_run_image_copy(SYSTEM_IMAGE_RW_B);
+		copy = SYSTEM_IMAGE_RW_B;
 		break;
 	default:
 		return EC_LPC_RESULT_ERROR;
 	}
+
+	clean_busy_bits();
+	CPUTS("Executing host reboot command\n");
+	system_run_image_copy(copy, recovery_request);
 
 	/* We normally never get down here, because we'll have jumped to
 	 * another image.  To confirm this command worked, the host will need

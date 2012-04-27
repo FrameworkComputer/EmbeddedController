@@ -92,6 +92,10 @@ static void update_other_switches(void)
 	else
 		*memmap_switches &= ~EC_LPC_SWITCH_DEDICATED_RECOVERY;
 
+	/* Was this a reboot requesting recovery? */
+	if (system_get_recovery_required())
+		*memmap_switches |= EC_LPC_SWITCH_DEDICATED_RECOVERY;
+
 #ifdef CONFIG_FAKE_DEV_SWITCH
 	if (eoption_get_bool(EOPTION_BOOL_FAKE_DEV))
 		*memmap_switches |= EC_LPC_SWITCH_FAKE_DEVELOPER;
