@@ -77,6 +77,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"ENABLE_TOUCHPAD",     LM4_GPIO_C, (1<<6), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VCORE",        LM4_GPIO_F, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VS",           LM4_GPIO_G, (1<<6), GPIO_OUT_LOW, NULL},
+	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW",         LM4_GPIO_J, (1<<5), GPIO_OUT_LOW, NULL},
 	{"LIGHTBAR_RESETn",     LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_A20GATE",         LM4_GPIO_Q, (1<<6), GPIO_OUT_LOW, NULL},

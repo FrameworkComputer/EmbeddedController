@@ -271,6 +271,7 @@ static int x86_power_init(void)
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
+			gpio_set_level(GPIO_ENABLE_5VALW, 0);
 		}
 	}
 
@@ -313,6 +314,8 @@ void x86_power_task(void)
 			break;
 
 		case X86_G3S5:
+			/* switch on +5V always-on */
+			gpio_set_level(GPIO_ENABLE_5VALW, 1);
 			/* Wait for the always-on rails to be good */
 			wait_in_signals(IN_PGOOD_ALWAYS_ON);
 

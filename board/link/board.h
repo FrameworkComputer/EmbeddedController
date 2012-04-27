@@ -145,6 +145,7 @@ enum gpio_signal {
 	GPIO_ENABLE_TOUCHPAD,     /* Enable touchpad power */
 	GPIO_ENABLE_VCORE,        /* Enable +CPU_CORE and +VGFX_CORE */
 	GPIO_ENABLE_VS,           /* Enable VS power supplies */
+	GPIO_ENABLE_5VALW,        /* Enable +5V always on rail */
 	GPIO_ENTERING_RW,         /* Indicate when EC is entering RW code */
 	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
 	GPIO_PCH_A20GATE,         /* A20GATE signal to PCH */
