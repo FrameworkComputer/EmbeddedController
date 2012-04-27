@@ -7,7 +7,7 @@
 
 common-y=main.o message.o util.o console.o vboot.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
-common-y+=gpio_commands.o version.o
+common-y+=gpio_commands.o version.o fmap.o
 common-$(CONFIG_BATTERY_ATL706486)+=battery_atl706486.o
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
 common-$(CONFIG_EOPTION)+=eoption.o

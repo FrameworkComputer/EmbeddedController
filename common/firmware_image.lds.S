@@ -16,15 +16,19 @@ SECTIONS
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.RO : AT(CONFIG_FW_RO_OFF) {
         *(.image.RO)
-    } > FLASH
+    } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.A : AT(CONFIG_FW_A_OFF) {
         *(.image.A)
-    } > FLASH
+    } > FLASH =0xff
 #ifndef CONFIG_NO_RW_B
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.B : AT(CONFIG_FW_B_OFF) {
         *(.image.B)
-    } > FLASH
+    } > FLASH =0xff
 #endif
+    /* NOTE: EC implementation reserves one bank for itself */
+    .padding : AT(CONFIG_FLASH_SIZE - CONFIG_FLASH_BANK_SIZE - 1) {
+        BYTE(0xff);
+    } > FLASH =0xff
 }

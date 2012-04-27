@@ -15,6 +15,7 @@ _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
 	    mkdir -p $(out)/$(d)))
 
 section = $(subst .,,$(suffix $(1)))
+section_is = $(subst .,,SECTION_IS_$(suffix $(1)))
 
 # Decrease verbosity unless you pass V=1
 quiet = $(if $(V),,@echo '  $(2)' $(subst $(out)/,,$@) ; )$(cmd_$(1))
@@ -22,6 +23,7 @@ silent = $(if $(V),,1>/dev/null)
 
 # commands to build all targets
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
+          -D$(call section_is,$*) \
           -DSECTION=$(call section,$*) $< -o $@
 cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $@
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
