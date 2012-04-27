@@ -47,39 +47,39 @@ void process_timers(int overflow)
 	if (overflow)
 		clksrc_high++;
 
-reprocess_timers:
-	next.val = 0xffffffffffffffff;
-	now = get_time();
 	do {
-		/* read atomically the current state of timer running */
-		check_timer = running_t0 = timer_running;
-		while (check_timer) {
-			int tskid = 31 - __builtin_clz(check_timer);
+		next.val = 0xffffffffffffffff;
+		now = get_time();
+		do {
+			/* read atomically the current state of timer running */
+			check_timer = running_t0 = timer_running;
+			while (check_timer) {
+				int tskid = 31 - __builtin_clz(check_timer);
 
-			/* timer has expired ? */
-			if (timer_deadline[tskid].val < now.val)
-				expire_timer(tskid);
-			else if ((timer_deadline[tskid].le.hi == now.le.hi) &&
-			         (timer_deadline[tskid].le.lo < next.le.lo))
-				next.val = timer_deadline[tskid].val;
+				/* timer has expired ? */
+				if (timer_deadline[tskid].val < now.val)
+					expire_timer(tskid);
+				else if ((timer_deadline[tskid].le.hi ==
+					  now.le.hi) &&
+					 (timer_deadline[tskid].le.lo <
+					  next.le.lo))
+					next.val = timer_deadline[tskid].val;
 
-			check_timer &= ~(1 << tskid);
+				check_timer &= ~(1 << tskid);
+			}
+		/* if there is a new timer, let's retry */
+		} while (timer_running & ~running_t0);
+
+		if (next.le.hi == 0xffffffff) {
+			/* no deadline to set */
+			__hw_clock_event_clear();
+			next_deadline = 0xffffffff;
+			return;
 		}
-	/* if there is a new timer, let's retry */
-	} while (timer_running & ~running_t0);
 
-	if (next.le.hi == 0xffffffff) {
-		/* no deadline to set */
-		__hw_clock_event_clear();
-		next_deadline = 0xffffffff;
-		return;
-	}
-
-	if (next.val <= get_time().val)
-		goto reprocess_timers;
-	__hw_clock_event_set(next.le.lo);
-	next_deadline = next.le.lo;
-	//TODO narrow race: deadline might have been reached before
+		__hw_clock_event_set(next.le.lo);
+		next_deadline = next.le.lo;
+	} while (next.val <= get_time().val);
 }
 
 
