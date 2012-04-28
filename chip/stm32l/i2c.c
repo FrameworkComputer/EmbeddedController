@@ -18,7 +18,7 @@
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /* 8-bit I2C slave address */
-#define I2C_ADDRESS 0xec
+#define I2C_ADDRESS 0x3c
 
 /* I2C bus frequency */
 #define I2C_FREQ 100000 /* Hz */
