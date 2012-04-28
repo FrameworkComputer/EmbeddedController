@@ -26,8 +26,11 @@
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  8000000 /* 8s */
 
+/* debounce time to prevent accidental power-on after keyboard power off */
+#define KB_PWR_ON_DEBOUNCE    250    /* 250us */
+
 /* PMIC fails to set the LDO2 output */
-#define PMIC_TIMEOUT          15000  /* 15ms */
+#define PMIC_TIMEOUT          100000  /* 100ms */
 
 /* Default timeout for input transition */
 #define FAIL_TIMEOUT          500000 /* 500ms */
@@ -78,24 +81,32 @@ static void wait_for_power_off(void)
 
 	while (1) {
 		/* wait for power button press or XPSHOLD falling edge */
-		while ((gpio_get_level(GPIO_EC_PWRON) == 0) &&
+		while ((gpio_get_level(GPIO_KB_PWR_ON) == 1) &&
 			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
 				task_wait_event(-1);
 		}
+
 		/* XPSHOLD released by AP : shutdown immediatly */
 		if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
 			return;
 
+		/* relay to PMIC */
+		gpio_set_level(GPIO_PMIC_PWRON, 0);
+
 		/* check if power button is pressed for 8s */
 		deadline.val = get_time().val + DELAY_FORCE_SHUTDOWN;
-		while ((gpio_get_level(GPIO_EC_PWRON) == 1) &&
+		while ((gpio_get_level(GPIO_KB_PWR_ON) == 0) &&
 			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
 			now = get_time();
 			if ((now.val >= deadline.val) ||
 				(task_wait_event(deadline.val - now.val) ==
-				 TASK_EVENT_TIMER))
+				 TASK_EVENT_TIMER)) {
+					gpio_set_level(GPIO_PMIC_PWRON, 1);
 					return;
+			}
 		}
+
+		gpio_set_level(GPIO_PMIC_PWRON, 1);
 
 		/*
 		 * Holding down the power button causes this loop to spin
@@ -114,7 +125,7 @@ void gaia_power_event(enum gpio_signal signal)
 int gaia_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
-	gpio_enable_interrupt(GPIO_EC_PWRON);
+	gpio_enable_interrupt(GPIO_KB_PWR_ON);
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 
@@ -154,7 +165,11 @@ void gaia_power_task(void)
 		ap_on = 0;
 
 		/* wait for Power button press */
-		wait_in_signal(GPIO_EC_PWRON, 1, -1);
+		wait_in_signal(GPIO_KB_PWR_ON, 0, -1);
+
+		usleep(KB_PWR_ON_DEBOUNCE);
+		if (gpio_get_level(GPIO_KB_PWR_ON) == 1)
+			continue;
 
 		/* Enable 5v power rail */
 		gpio_set_level(GPIO_EN_PP5000, 1);
@@ -162,9 +177,17 @@ void gaia_power_task(void)
 		usleep(DELAY_5V_SETUP);
 
 		/* Startup PMIC */
-		gpio_set_level(GPIO_PMIC_ACOK, 0);
+		gpio_set_level(GPIO_PMIC_PWRON, 0);
 		/* wait for all PMIC regulators to be ready */
 		wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
+
+		/* if PP1800_LDO2 did not come up (e.g. PMIC_TIMEOUT was
+		 * reached), turn off 5v rail and start over */
+		if (gpio_get_level(GPIO_PP1800_LDO2) == 0) {
+			gpio_set_level(GPIO_EN_PP5000, 0);
+			usleep(DELAY_5V_SETUP);
+			continue;
+		}
 
 		/* Enable DDR 1.35v power rail */
 		gpio_set_level(GPIO_EN_PP1350, 1);
@@ -178,7 +201,7 @@ void gaia_power_task(void)
 		 */
 		wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, FAIL_TIMEOUT);
 		/* release PMIC startup signal */
-		gpio_set_level(GPIO_PMIC_ACOK, 1);
+		gpio_set_level(GPIO_PMIC_PWRON, 1);
 
 		/* Power ON state */
 		ap_on = 1;
@@ -193,7 +216,7 @@ void gaia_power_task(void)
 		CPUTS("Shutdown complete.\n");
 
 		/* Ensure the power button is released */
-		wait_in_signal(GPIO_EC_PWRON, 0, -1);
+		wait_in_signal(GPIO_KB_PWR_ON, 1, -1);
 	}
 }
 
@@ -203,7 +226,7 @@ void gaia_power_task(void)
 static int command_force_power(int argc, char **argv)
 {
 	/* simulate power button pressed */
-	force_signal = GPIO_EC_PWRON;
+	force_signal = GPIO_KB_PWR_ON;
 	force_value = 1;
 	/* Wake up the task */
 	task_wake(TASK_ID_GAIAPOWER);
