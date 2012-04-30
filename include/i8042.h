@@ -90,7 +90,7 @@
 #define I8042_ENIRQ1            (1 << 0)
 
 
-void i8042_init(void);
+void i8042_flush_buffer(void);
 
 
 /* common/i8042.c implements this function, which is called by lpc.c
