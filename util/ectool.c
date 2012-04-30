@@ -267,7 +267,7 @@ int read_mapped_string(uint8_t offset, char *buf)
 int is_string_printable(const char *buf)
 {
 	while (*buf) {
-		if (isprint(*buf))
+		if (!isprint(*buf))
 			return 0;
 		buf++;
 	}
