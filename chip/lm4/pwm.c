@@ -132,7 +132,8 @@ static void update_lpc_mapped_memory(void)
 
 static void check_fan_failure(void)
 {
-	if ((LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) &&
+	if (pwm_get_fan_target_rpm() != 0 &&
+	    (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) &&
 	    ((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) {
 		/* Fan enabled but stalled. Issues warning.
 		 * As we have thermal shutdown protection, issuing warning
