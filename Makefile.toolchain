@@ -1,4 +1,4 @@
-# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -25,7 +25,8 @@ CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist \
-              -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE) -DCHIP_$(CHIP)
+              -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE) -DCHIP_$(CHIP) \
+              -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_VARIANT_$(CHIP_VARIANT)
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
