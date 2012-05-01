@@ -166,5 +166,5 @@ void dma_test(void)
 void dma_init(void)
 {
 	/* Enable DMA1, we don't support DMA2 yet */
-	STM32_RCC_AHBENR |= 1 << 24;
+	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
 }

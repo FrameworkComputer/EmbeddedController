@@ -7,8 +7,10 @@
 #define __CROS_EC_CHIP_CONFIG_H
 
 /* use variant specific configuration for flash / UART / IRQ */
-#ifdef CHIP_VARIANT_stm32l15x
+#if defined(CHIP_VARIANT_stm32l15x)
 #include "config-stm32l15x.h"
+#elif defined(CHIP_VARIANT_stm32f100)
+#include "config-stm32f100.h"
 #else
 #error "Unsupported chip variant"
 #endif

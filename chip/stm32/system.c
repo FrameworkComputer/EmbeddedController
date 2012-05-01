@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "registers.h"
 #include "system.h"
+#include "version.h"
 
 
 static void check_reset_cause(void)
@@ -62,12 +63,23 @@ int system_pre_init(void)
 	while (!(STM32_RCC_CSR & (1 << 1)))
 		;
 	/* re-configure RTC if needed */
+#if defined(CHIP_VARIANT_stm32l15x)
 	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_CSR |= 0x00800000;
 		/* Enable RTC and use LSI as clock source */
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
+#elif defined(CHIP_VARIANT_stm32f100)
+	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
+		/* the RTC settings are bad, we need to reset it */
+		STM32_RCC_BDCR |= 0x00010000;
+		/* Enable RTC and use LSI as clock source */
+		STM32_RCC_BDCR = (STM32_RCC_BDCR & ~0x00018300) | 0x00008200;
+	}
+#else
+#error "Unsupported chip variant"
+#endif
 
 	check_reset_cause();
 
@@ -112,7 +124,7 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	return "stm32l151r8";
+	return STRINGIFY(CHIP_VARIANT);
 }
 
 const char *system_get_chip_revision(void)

@@ -124,6 +124,10 @@ int uart_init(void)
 		STM32_RCC_APB1ENR |= 1 << 17; /* USART2 */
 	else if (UARTN == 3)
 		STM32_RCC_APB1ENR |= 1 << 18; /* USART3 */
+	else if (UARTN == 4)
+		STM32_RCC_APB1ENR |= 1 << 19; /* USART4 */
+	else if (UARTN == 5)
+		STM32_RCC_APB1ENR |= 1 << 20; /* USART5 */
 
 	/* UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * RXNE interrupt, TX and RX enabled.
