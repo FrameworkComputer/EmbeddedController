@@ -1,0 +1,140 @@
+#!/bin/bash
+
+# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+COMMON_SH=/usr/lib/crosutils/common.sh
+. "${COMMON_SH}" || exit 1
+
+get_default_board
+
+# Flags
+DEFINE_string board "${DEFAULT_BOARD}" \
+	"The board to run debugger on."
+DEFINE_string image "" \
+	"Full pathname of the EC firmware image to flash."
+DEFINE_boolean ro "${FLAGS_FALSE}" \
+	"Write only the read-only partition"
+
+# Parse command line
+FLAGS_HELP="usage: $0 [flags]"
+FLAGS "$@" || exit 1
+eval set -- "${FLAGS_ARGV}"
+check_flags_only_and_allow_null_arg "$@" && set --
+
+BOARD=${FLAGS_board}
+BOARD_ROOT=/build/${BOARD}
+
+# Possible default EC images
+if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+	EC_FILE=ec.RO.flat
+else
+	EC_FILE=ec.bin
+fi
+EMERGE_BUILD=${BOARD_ROOT}/firmware/${EC_FILE}
+LOCAL_BUILD=${SRC_ROOT}/platform/ec/build/${BOARD}/${EC_FILE}
+
+# Find the EC image to use
+function ec_image() {
+	# No image specified on the command line, try default ones
+	if [[ ! -z "${FLAGS_image}" ]] ; then
+		if [ ! -x "${FLAGS_image}" ]; then
+			die "Invalid image path : ${FLAGS_image}"
+		fi
+		echo "${FLAGS_image}"
+		return
+	else
+		if [ -x "${LOCAL_BUILD}" ]; then
+			echo "${LOCAL_BUILD}"
+			return
+		fi
+		if [ -x "${EMERGE_BUILD}" ]; then
+			echo "${EMERGE_BUILD}"
+			return
+		fi
+	fi
+	die "no EC image found : build one or specify one."
+}
+
+# Find the EC UART on the servo v2
+function ec_uart() {
+	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
+	(dut-control uart1_pty || die "${SERVOD_FAIL}") | cut -d: -f2
+}
+
+# Servo variables management
+
+SERVO_VARS="uart1_en uart1_parity uart1_baudrate \
+jtag_buf_on_flex_en jtag_buf_en spi1_vref"
+
+function dut_control() {
+	dut-control "$1" >/dev/null
+}
+
+function servo_save() {
+	dut-control ${SERVO_VARS}
+}
+
+function servo_restore() {
+	echo "$1" | while read line
+	do
+		dut_control "$line"
+	done
+}
+
+# Board specific flashing scripts
+
+function flash_daisy() {
+	TOOL_PATH="${SCRIPT_LOCATION}/../build/${BOARD}/util:$PATH"
+	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
+	if [ ! -x "$STM32MON" ]; then
+		die "no stm32mon util found."
+	fi
+
+	info "Using serial flasher : ${STM32MON}"
+
+	dut_control uart1_en:on
+	dut_control uart1_parity:even
+	dut_control uart1_baudrate:115200
+	# force the EC to boot in serial monitor mode
+	dut_control spi1_vref:pp3300
+	# reset the EC
+	dut_control cold_reset:on
+	dut_control cold_reset:off
+	${STM32MON} -d ${EC_UART} -e -w ${IMG}
+}
+
+function flash_link() {
+	IMG_SIZE=262144
+	OCD_CFG="servo_v2_slower.cfg"
+	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
+	OCD_CMDS="init ; flash_lm4 ${IMG} 0 262144 ; exit"
+
+	dut_control jtag_buf_on_flex_en:on jtag_buf_en:on
+
+	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}"
+}
+
+IMG="$(ec_image)"
+info "Using EC image : ${IMG}"
+
+EC_UART="$(ec_uart)"
+info "EC UART pty : ${EC_UART}"
+
+save="$(servo_save)"
+
+case "${BOARD}" in
+	daisy | snow ) flash_daisy ;;
+	link ) flash_link ;;
+	*) die "board ${BOARD} not supported" ;;
+esac
+
+info "Flashing done."
+
+# Restore servo settings
+servo_restore "$save"
+
+# reset the EC
+dut_control cold_reset:on
+dut_control cold_reset:off
