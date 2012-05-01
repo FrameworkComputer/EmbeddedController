@@ -26,7 +26,7 @@ void gaia_power_event(enum gpio_signal signal);
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"EC_PWRON",    GPIO_A, (1<<0),  GPIO_INT_BOTH, gaia_power_event},
+	{"KB_PWR_ON",    GPIO_A, (1<<0),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
 	{"XPSHOLD",     GPIO_A, (1<<11), GPIO_INT_RISING, gaia_power_event},
 	{"CHARGER_INT", GPIO_B, (1<<0),  GPIO_INT_RISING, NULL},
@@ -44,7 +44,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EN_PP1350",   GPIO_A, (1<<9),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<10), GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
-	{"PMIC_ACOK",   GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
+	{"PMIC_PWRON",   GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"ENTERING_RW", GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},

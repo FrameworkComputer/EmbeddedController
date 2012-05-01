@@ -19,7 +19,7 @@
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_EC_PWRON = 0,     /* Power button */
+	GPIO_KB_PWR_ON = 0,    /* Power button */
 	GPIO_PP1800_LDO2,      /* LDO2 is ON (end of PMIC sequence) */
 	GPIO_SOC1V8_XPSHOLD,   /* App Processor ON  */
 	GPIO_CHARGER_INT,
@@ -38,7 +38,7 @@ enum gpio_signal {
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
 	GPIO_EN_PP5000,        /* 5.0v rail enable */
 	GPIO_EN_PP3300,        /* 3.3v rail enable */
-	GPIO_PMIC_ACOK,        /* 5v rail ready */
+	GPIO_PMIC_PWRON,       /* 5v rail ready */
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
