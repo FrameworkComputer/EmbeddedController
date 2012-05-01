@@ -53,9 +53,9 @@ void configure_board(void)
 	 * GPIO clocks in low-power (sleep) mode.
 	 * TODO: more fine-grained enabling for power saving
 	 */
-	STM32L_RCC_AHBENR |= 0x3f;
-	STM32L_RCC_AHBLPENR |= 0x0e;
-	STM32L_RCC_APB2ENR |= 0x01;
+	STM32_RCC_AHBENR |= 0x3f;
+	STM32_RCC_AHBLPENR |= 0x0e;
+	STM32_RCC_APB2ENR |= 0x01;
 
 #if CONFIG_CONSOLE_UART == 1
 	/* Select Alternate function for USART1 on pins PA9/PA10 */

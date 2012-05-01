@@ -5,6 +5,6 @@
 # Board specific files build
 
 # the IC is STmicro STM32L151R8H6
-CHIP:=stm32l
+CHIP:=stm32
 
 board-y=board.o

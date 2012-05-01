@@ -27,8 +27,8 @@
 #define I2C_CCR (CPU_CLOCK/(2 * I2C_FREQ))
 
 #define NUM_PORTS 2
-#define I2C1      STM32L_I2C1_PORT
-#define I2C2      STM32L_I2C2_PORT
+#define I2C1      STM32_I2C1_PORT
+#define I2C2      STM32_I2C2_PORT
 
 static task_id_t task_waiting_on_port[NUM_PORTS];
 static struct mutex port_mutex[NUM_PORTS];
@@ -53,14 +53,14 @@ static uint8_t out_msg[32];
 static void wait_rx(int port)
 {
 	/* TODO: Add timeouts and error checking for safety */
-	while (!(STM32L_I2C_SR1(port) & (1 << 6)))
+	while (!(STM32_I2C_SR1(port) & (1 << 6)))
 		;
 }
 
 static void wait_tx(int port)
 {
 	/* TODO: Add timeouts and error checking for safety */
-	while (!(STM32L_I2C_SR1(port) & (1 << 7)))
+	while (!(STM32_I2C_SR1(port) & (1 << 7)))
 		;
 }
 
@@ -73,7 +73,7 @@ static int i2c_read_raw(int port, void *buf, int len)
 	rx_byte_count = 0;
 	for (i = 0; i < len; i++) {
 		wait_rx(port);
-		data[i] = STM32L_I2C_DR(port);
+		data[i] = STM32_I2C_DR(port);
 		rx_byte_count++;
 	}
 	mutex_unlock(&port_mutex[port]);
@@ -90,7 +90,7 @@ static int i2c_write_raw(int port, void *buf, int len)
 	tx_byte_count = 0;
 	for (i = 0; i < len; i++) {
 		tx_byte_count++;
-		STM32L_I2C_DR(port) = data[i];
+		STM32_I2C_DR(port) = data[i];
 		wait_tx(port);
 	}
 	mutex_unlock(&port_mutex[port]);
@@ -132,14 +132,14 @@ static void i2c_event_handler(int port)
 {
 
 	/* save and clear status */
-	i2c_sr1[port] = STM32L_I2C_SR1(port);
-	STM32L_I2C_SR1(port) = 0;
+	i2c_sr1[port] = STM32_I2C_SR1(port);
+	STM32_I2C_SR1(port) = 0;
 
 	/* transfer matched our slave address */
 	if (i2c_sr1[port] & (1 << 1)) {
 		/* cleared by reading SR1 followed by reading SR2 */
-		STM32L_I2C_SR1(port);
-		STM32L_I2C_SR2(port);
+		STM32_I2C_SR1(port);
+		STM32_I2C_SR2(port);
 #ifdef CONFIG_DEBUG
 		CPRINTF("%s: ADDR\n", __func__);
 #endif
@@ -150,8 +150,8 @@ static void i2c_event_handler(int port)
 #endif
 	} else if (i2c_sr1[port] & (1 << 4)) {
 		/* clear STOPF bit by reading SR1 and then writing CR1 */
-		STM32L_I2C_SR1(port);
-		STM32L_I2C_CR1(port) = STM32L_I2C_CR1(port);
+		STM32_I2C_SR1(port);
+		STM32_I2C_CR1(port) = STM32_I2C_CR1(port);
 #ifdef CONFIG_DEBUG
 		CPRINTF("%s: STOPF\n", __func__);
 #endif
@@ -169,11 +169,11 @@ static void i2c_event_handler(int port)
 	}
 }
 static void i2c2_event_interrupt(void) { i2c_event_handler(I2C2); }
-DECLARE_IRQ(STM32L_IRQ_I2C2_EV, i2c2_event_interrupt, 3);
+DECLARE_IRQ(STM32_IRQ_I2C2_EV, i2c2_event_interrupt, 3);
 
 static void i2c_error_handler(int port)
 {
-	i2c_sr1[port] = STM32L_I2C_SR1(port);
+	i2c_sr1[port] = STM32_I2C_SR1(port);
 
 #ifdef CONFIG_DEBUG
 	if (i2c_sr1[port] & 1 << 10) {
@@ -185,42 +185,42 @@ static void i2c_error_handler(int port)
 			__func__, tx_byte_count, rx_byte_count);
 	CPRINTF("%s: I2C_SR1(%s): 0x%04x\n", __func__, port, i2c_sr1[port]);
 	CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
-			__func__, port, STM32L_I2C_SR2(port));
+			__func__, port, STM32_I2C_SR2(port));
 #endif
 
-	STM32L_I2C_SR1(port) &= ~0xdf00;
+	STM32_I2C_SR1(port) &= ~0xdf00;
 }
 static void i2c2_error_interrupt(void) { i2c_error_handler(I2C2); }
-DECLARE_IRQ(STM32L_IRQ_I2C2_ER, i2c2_error_interrupt, 2);
+DECLARE_IRQ(STM32_IRQ_I2C2_ER, i2c2_error_interrupt, 2);
 
 static int i2c_init2(void)
 {
 	int i;
 
 	/* enable I2C2 clock */
-	STM32L_RCC_APB1ENR |= 1 << 22;
+	STM32_RCC_APB1ENR |= 1 << 22;
 
 	/* set clock configuration : standard mode (100kHz) */
-	STM32L_I2C_CCR(I2C2) = I2C_CCR;
+	STM32_I2C_CCR(I2C2) = I2C_CCR;
 
 	/* set slave address */
-	STM32L_I2C_OAR1(I2C2) = I2C_ADDRESS;
+	STM32_I2C_OAR1(I2C2) = I2C_ADDRESS;
 
 	/* configuration : I2C mode / Periphal enabled, ACK enabled */
-	STM32L_I2C_CR1(I2C2) = (1 << 10) | (1 << 0);
+	STM32_I2C_CR1(I2C2) = (1 << 10) | (1 << 0);
 	/* error and event interrupts enabled / input clock is 16Mhz */
-	STM32L_I2C_CR2(I2C2) = (1 << 9) | (1 << 8) | 0x10;
+	STM32_I2C_CR2(I2C2) = (1 << 9) | (1 << 8) | 0x10;
 
 	/* clear status */
-	STM32L_I2C_SR1(I2C2) = 0;
+	STM32_I2C_SR1(I2C2) = 0;
 
 	/* No tasks are waiting on ports */
 	for (i = 0; i < NUM_PORTS; i++)
 		task_waiting_on_port[i] = TASK_ID_INVALID;
 
 	/* enable event and error interrupts */
-	task_enable_irq(STM32L_IRQ_I2C2_EV);
-	task_enable_irq(STM32L_IRQ_I2C2_ER);
+	task_enable_irq(STM32_IRQ_I2C2_EV);
+	task_enable_irq(STM32_IRQ_I2C2_ER);
 
 	CPUTS("done\n");
 	return EC_SUCCESS;

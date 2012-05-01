@@ -89,20 +89,20 @@ void configure_board(void)
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */
-	STM32L_RCC_AHBENR |= 0x3f;
+	STM32_RCC_AHBENR |= 0x3f;
 	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
 	/* FIXME: This seems to break USB download in U-Boot (?!?) */
-	STM32L_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= 1 << 0;
 
 	/* Enable SPI */
-	STM32L_RCC_APB2ENR |= (1<<12);
+	STM32_RCC_APB2ENR |= (1<<12);
 
 	/* SPI1 on pins PA4-7 (push-pull, no pullup/down, 10MHz) */
-	STM32L_GPIO_PUPDR_OFF(GPIO_A) &= ~((2 << (7 * 2)) |
+	STM32_GPIO_PUPDR_OFF(GPIO_A) &= ~((2 << (7 * 2)) |
 					(2 << (6 * 2)) |
 					(2 << (5 * 2)) |
 					(2 << (4 * 2)));
-	STM32L_GPIO_OTYPER_OFF(GPIO_A) &= ~((1 << 7) |
+	STM32_GPIO_OTYPER_OFF(GPIO_A) &= ~((1 << 7) |
 					(1 << 6) |
 					(1 << 5) |
 					(1 << 4));
@@ -110,27 +110,27 @@ void configure_board(void)
 					(1<<6) |
 					(1<<5) |
 					(1<<4), GPIO_ALT_SPI);
-	STM32L_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
+	STM32_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
 
 	/*
 	 * I2C SCL/SDA on PB10-11, bi-directional, no pull-up/down, initialized
 	 * as hi-Z until alt. function is set
 	 */
-	STM32L_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
-	STM32L_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
-	STM32L_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2));
-	STM32L_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10);
-	STM32L_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10);
+	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
+	STM32_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
+	STM32_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2));
+	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10);
+	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10);
 	gpio_set_alternate_function(GPIO_B, (1<<11) | (1<<10), GPIO_ALT_I2C);
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
 	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
 
 	/* EC_INT is output, open-drain */
-	STM32L_GPIO_OTYPER_OFF(GPIO_B) |= (1<<9);
-	STM32L_GPIO_PUPDR_OFF(GPIO_B) &= ~(0x3 << (2*9));
-	STM32L_GPIO_MODER_OFF(GPIO_B) &= ~(0x3 << (2*9));
-	STM32L_GPIO_MODER_OFF(GPIO_B) |= 0x1 << (2*9);
+	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<9);
+	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~(0x3 << (2*9));
+	STM32_GPIO_MODER_OFF(GPIO_B) &= ~(0x3 << (2*9));
+	STM32_GPIO_MODER_OFF(GPIO_B) |= 0x1 << (2*9);
 	/* put GPIO in Hi-Z state */
 	gpio_set_level(GPIO_EC_INT, 1);
 }

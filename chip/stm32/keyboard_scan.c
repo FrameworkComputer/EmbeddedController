@@ -115,7 +115,7 @@ static void select_column(int col)
 		}
 
 		if (bsrr)
-			STM32L_GPIO_BSRR_OFF(ports[i]) = bsrr;
+			STM32_GPIO_BSRR_OFF(ports[i]) = bsrr;
 
 		if (done)
 			break;
@@ -151,18 +151,18 @@ void wait_for_interrupt(void)
 
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
-	pr_before = STM32L_EXTI_PR;
+	pr_before = STM32_EXTI_PR;
 	select_column(COL_ASSERT_ALL);
-	pr_after = STM32L_EXTI_PR;
-	STM32L_EXTI_PR |= ((pr_after & ~pr_before) & IRQ_MASK);
+	pr_after = STM32_EXTI_PR;
+	STM32_EXTI_PR |= ((pr_after & ~pr_before) & IRQ_MASK);
 
-	STM32L_EXTI_IMR |= IRQ_MASK;	/* 1: unmask interrupt */
+	STM32_EXTI_IMR |= IRQ_MASK;	/* 1: unmask interrupt */
 }
 
 
 void enter_polling_mode(void)
 {
-	STM32L_EXTI_IMR &= ~IRQ_MASK;	/* 0: mask interrupts */
+	STM32_EXTI_IMR &= ~IRQ_MASK;	/* 0: mask interrupts */
 	select_column(COL_TRI_STATE_ALL);
 }
 
@@ -184,7 +184,7 @@ static int check_keys_changed(void)
 
 		r = 0;
 #if defined(BOARD_daisy) || defined(BOARD_discovery) || defined(BOARD_adv)
-		tmp = STM32L_GPIO_IDR(C);
+		tmp = STM32_GPIO_IDR(C);
 		/* KB_COL00:04 = PC8:12 */
 		if (tmp & (1 << 8))
 			r |= 1 << 0;
@@ -202,7 +202,7 @@ static int check_keys_changed(void)
 		if (tmp & (1 << 15))
 			r |= 1 << 6;
 
-		tmp = STM32L_GPIO_IDR(D);
+		tmp = STM32_GPIO_IDR(D);
 		/* KB_COL07 = PD2 */
 		if (tmp & (1 << 2))
 			r |= 1 << 7;
