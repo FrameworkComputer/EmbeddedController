@@ -206,7 +206,7 @@ static const struct {
 /* Interruptible delay */
 #define WAIT_OR_RET(A) do { \
 	uint32_t msg = task_wait_event(A); \
-	if (!(msg & TASK_EVENT_TIMER)) \
+	if (TASK_EVENT_CUSTOM(msg)) \
 		return TASK_EVENT_CUSTOM(msg); } while (0)
 
 /* CPU is off */
