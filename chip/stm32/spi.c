@@ -157,7 +157,7 @@ static int spi_init(void)
 {
 	int port;
 
-#if defined(BOARD_discovery) || defined(BOARD_daisy)
+#if defined(BOARD_daisy)
 	/**
 	 * SPI1
 	 * PA7: SPI1_MOSI

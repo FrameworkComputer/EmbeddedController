@@ -66,10 +66,8 @@ struct kbc_gpio {
 	int pin;
 };
 
-#if defined(BOARD_daisy) || defined(BOARD_adv)
+#if defined(BOARD_daisy)
 static const uint32_t ports[] = { GPIO_B, GPIO_C, GPIO_D };
-#elif defined(BOARD_discovery)
-static const uint32_t ports[] = { GPIO_A, GPIO_B, GPIO_C, GPIO_D };
 #else
 #error "Need to specify GPIO ports used by keyboard"
 #endif
@@ -183,7 +181,7 @@ static int check_keys_changed(void)
 		udelay(50);
 
 		r = 0;
-#if defined(BOARD_daisy) || defined(BOARD_discovery) || defined(BOARD_adv)
+#if defined(BOARD_daisy)
 		tmp = STM32_GPIO_IDR(C);
 		/* KB_COL00:04 = PC8:12 */
 		if (tmp & (1 << 8))

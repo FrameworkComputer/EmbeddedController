@@ -20,11 +20,7 @@
 #define CONFIG_IRQ_COUNT 45
 
 /* Debug UART parameters for panic message */
-#ifdef BOARD_adv
-#define CONFIG_UART_ADDRESS    0x40004400 /* USART2 */
-#else
 #define CONFIG_UART_ADDRESS    0x40013800 /* USART1 */
-#endif
 #define CONFIG_UART_DR_OFFSET  0x04
 #define CONFIG_UART_SR_OFFSET  0x00
 #define CONFIG_UART_SR_TXEMPTY 0x80
