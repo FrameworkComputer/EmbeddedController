@@ -123,8 +123,6 @@ int keyboard_scan_init(void)
 {
 	int i;
 
-	CPRINTF("[kbscan %s()] initializing keyboard...\n", __func__);
-
 	/* Tri-state (put into Hi-Z) the outputs */
 	select_column(COL_TRI_STATE_ALL);
 
