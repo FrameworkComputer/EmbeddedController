@@ -52,7 +52,7 @@ static void jump_to_other_image(void)
 	 * image, enable this there too. */
 	/* TODO: real verified boot (including recovery reason); for now, just
 	 * jump to image A. */
-	system_run_image_copy(SYSTEM_IMAGE_RW_A);
+	system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
 #endif
 }
 
