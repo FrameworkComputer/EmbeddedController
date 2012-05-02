@@ -78,13 +78,10 @@ SECTIONS
         . = ALIGN(4);
         __data_end = .;
     } > IRAM
-#ifdef SECTION_IS_RO
+#if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
     .google CONFIG_FW_RO_GBB_OFF : AT(CONFIG_FW_RO_GBB_OFF) {
         *(.google)
-        . += 16;
     } > FLASH
-    ASSERT(SIZEOF(.text) + SIZEOF(.rodata) + SIZEOF(.data) + SIZEOF(.google)
-           <= CONFIG_FW_IMAGE_SIZE, "Too much stuff to fit in the image")
 #else
     /DISCARD/ : {
               *(.google)

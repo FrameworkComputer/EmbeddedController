@@ -50,6 +50,7 @@
 #define CONFIG_ADC
 #define CONFIG_EEPROM
 #define CONFIG_FLASH
+#define CONFIG_VBOOT
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_LPC

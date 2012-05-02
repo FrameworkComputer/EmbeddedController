@@ -43,9 +43,11 @@ int main(void)
 	flash_pre_init();
 #endif
 
+#ifdef CONFIG_VBOOT
 	/* Verified boot pre-init.  This write-protects flash if necessary.
 	 * Flash and GPIOs must be initialized first. */
 	vboot_pre_init();
+#endif
 
 	/* Initialize the system module.  This enables the hibernate clock
 	 * source we need to calibrate the internal oscillator. */
@@ -87,6 +89,7 @@ int main(void)
 	keyboard_scan_init();
 #endif
 
+#ifdef CONFIG_VBOOT
 	/* Verified boot initialization.  This may jump to another image, which
 	 * will need to reconfigure / reinitialize the system, so as little as
 	 * possible should be done above this step.
@@ -94,6 +97,7 @@ int main(void)
 	 * Note that steps above here may be done TWICE per boot, once in the
 	 * RO image and once in the RW image. */
 	vboot_init();
+#endif
 
 	/* Initialize other driver modules.  These can occur in any order.
 	 * Non-driver modules with tasks do their inits from their task
