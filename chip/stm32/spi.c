@@ -33,6 +33,25 @@ enum {
 };
 
 /*
+ * Since message.c no longer supports our protocol, we must do it all here.
+ *
+ * We allow a preamble and a header byte so that SPI can function at all.
+ * We also add a 16-bit length so that we can tell that we got the whole
+ * message, since the master decides how many bytes to read.
+ */
+enum {
+	/* The bytes which appear before the header in a message */
+	SPI_MSG_PREAMBLE	= 0xff,
+
+	/* The header byte, which follows the preamble */
+	SPI_MSG_HEADER		= 0xec,
+
+	SPI_MSG_HEADER_BYTES	= 3,
+	SPI_MSG_TRAILER_BYTES	= 2,
+	SPI_MSG_PROTO_BYTES	= SPI_MSG_HEADER_BYTES + SPI_MSG_TRAILER_BYTES,
+};
+
+/*
  * Our input and output buffers. These must be large enough for our largest
  * message, including protocol overhead.
  */
@@ -74,6 +93,16 @@ void spi_work_task(void)
  * The format of a reply is as per the command interface, with a number of
  * preamble bytes before it.
  *
+ * The format of a reply is a sequence of bytes:
+ *
+ * <hdr> <len_lo> <len_hi> <msg bytes> <sum> <preamble bytes>
+ *
+ * The hdr byte is just a tag to indicate that the real message follows. It
+ * signals the end of any preamble required by the interface.
+ *
+ * The 16-bit length is the entire packet size, including the header, length
+ * bytes, message payload, checksum, and postamble byte.
+ *
  * The preamble is typically 2 bytes, but can be longer if the STM takes ages
  * to react to the incoming message. Since we send our first byte as the AP
  * sends us the command, we clearly can't send anything sensible for that
@@ -86,12 +115,29 @@ void spi_work_task(void)
  * interface faster than the CPU clock with this approach.
  *
  * @param port		Port to send reply back on (STM32_SPI0/1_PORT)
- * @param msg		Message to send
- * @param msg_len	Length of message in bytes
+ * @param msg		Message to send, which starts SPI_MSG_HEADER_BYTES
+ *			bytes into the buffer
+ * @param msg_len	Length of message in bytes, including checksum
  */
 static void reply(int port, char *msg, int msg_len)
 {
 	int dmac;
+	int sum;
+
+	/* Get the old checksumsum */
+	sum = msg[msg_len - 1 + SPI_MSG_HEADER_BYTES];
+
+	/* Add our header bytes */
+	msg_len += SPI_MSG_HEADER_BYTES + SPI_MSG_TRAILER_BYTES -
+			MSG_TRAILER_BYTES;
+	msg[0] = SPI_MSG_HEADER;
+	msg[1] = msg_len & 0xff;
+	msg[2] = (msg_len >> 8) & 0xff;
+
+	/* Update the checksum */
+	sum += msg[0] + msg[1] + msg[2];
+	msg[msg_len - 2] = sum;
+	msg[msg_len - 1] = SPI_MSG_PREAMBLE;
 
 	/*
 	 * This method is not really suitable for very large messages. If
@@ -118,7 +164,6 @@ static void reply(int port, char *msg, int msg_len)
 static void spi_interrupt(int port)
 {
 	int msg_len;
-	char *buff;
 	int dmac;
 	int cmd;
 
@@ -134,15 +179,11 @@ static void spi_interrupt(int port)
 	dma_start_rx(dmac, sizeof(in_msg), (void *)&STM32_SPI_DR(port),
 		     in_msg);
 
-	/*
-	 * Process the command and send the reply. We provide our output
-	 * buffer as a suggested location for reply, since this may stop us
-	 * needing to copy the message.
-	 */
-	buff = out_msg;
-	msg_len = message_process_cmd(cmd, out_msg, sizeof(out_msg));
+	/* Process the command and send the reply */
+	msg_len = message_process_cmd(cmd, out_msg + SPI_MSG_HEADER_BYTES,
+				      sizeof(out_msg) - SPI_MSG_PROTO_BYTES);
 	if (msg_len >= 0)
-		reply(port, buff, msg_len);
+		reply(port, out_msg, msg_len);
 
 	/* Wake up the task that watches for end of the incoming message */
 	task_wake(TASK_ID_SPI_WORK);
