@@ -49,7 +49,8 @@ const struct _ec_fmap {
 		.fmap_ver_major = FMAP_VER_MAJOR,
 		.fmap_ver_minor = FMAP_VER_MINOR,
 		.fmap_base = CONFIG_FLASH_BASE,
-		.fmap_size = CONFIG_FLASH_SIZE,
+		/* NOTE: EC implementation reserves one bank for itself */
+		.fmap_size = CONFIG_FLASH_SIZE - CONFIG_FLASH_BANK_SIZE,
 		.fmap_name = "EC_FMAP",
 		.fmap_nareas = NUM_EC_FMAP_AREAS,
 	},
