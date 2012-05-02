@@ -69,8 +69,8 @@ void configure_board(void)
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */
-	STM32L_RCC_AHBENR |= 0x3f;
-	STM32L_RCC_APB2ENR |= 0x01;
+	STM32_RCC_AHBENR |= 0x3f;
+	STM32_RCC_APB2ENR |= 0x01;
 
 	/* Select Alternate function for USART2 on pins PA2/PA3 */
         gpio_set_alternate_function(GPIO_A, (1<<2) | (1<<3), GPIO_ALT_USART);

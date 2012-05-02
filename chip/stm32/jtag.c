@@ -10,7 +10,7 @@
 int jtag_pre_init(void)
 {
 	/* stop TIM2, TIM3 and watchdogs when the JTAG stops the CPU */
-	STM32L_DBGMCU_APB1FZ |= 0x00001803;
+	STM32_DBGMCU_APB1FZ |= 0x00001803;
 
 	return EC_SUCCESS;
 }

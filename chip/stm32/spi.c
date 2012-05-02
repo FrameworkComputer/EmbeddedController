@@ -51,7 +51,7 @@ static char in_msg[32 + MSG_PROTO_BYTES];
  */
 void spi_work_task(void)
 {
-	int port = STM32L_SPI1_PORT;
+	int port = STM32_SPI1_PORT;
 
 	while (1) {
 		task_wait_event(-1);
@@ -63,8 +63,8 @@ void spi_work_task(void)
 		/* Transfer is now complete, so reset everything */
 		dma_disable(DMA_CHANNEL_FOR_SPI_RX(port));
 		dma_disable(DMA_CHANNEL_FOR_SPI_TX(port));
-		STM32L_SPI_CR2(port) &= ~CR2_TXDMAEN;
-		STM32L_SPI_DR(port) = 0xff;
+		STM32_SPI_CR2(port) &= ~CR2_TXDMAEN;
+		STM32_SPI_DR(port) = 0xff;
 	}
 }
 
@@ -85,7 +85,7 @@ void spi_work_task(void)
  * It is interesting to note that it seems to be possible to run the SPI
  * interface faster than the CPU clock with this approach.
  *
- * @param port		Port to send reply back on (STM32L_SPI0/1_PORT)
+ * @param port		Port to send reply back on (STM32_SPI0/1_PORT)
  * @param msg		Message to send
  * @param msg_len	Length of message in bytes
  */
@@ -99,9 +99,9 @@ static void reply(int port, char *msg, int msg_len)
 	 * the message, and then a third to do the trailer, rather than
 	 * copying the message around.
 	 */
-	STM32L_SPI_CR2(port) |= CR2_TXDMAEN;
+	STM32_SPI_CR2(port) |= CR2_TXDMAEN;
 	dmac = DMA_CHANNEL_FOR_SPI_TX(port);
-	dma_start_tx(dmac, msg_len, (void *)&STM32L_SPI_DR(port), out_msg);
+	dma_start_tx(dmac, msg_len, (void *)&STM32_SPI_DR(port), out_msg);
 }
 
 /**
@@ -113,7 +113,7 @@ static void reply(int port, char *msg, int msg_len)
  * We will not get interrupts on subsequent bytes since the DMA will handle
  * the incoming data.
  *
- * @param port	Port that the interrupt came in on (STM32L_SPI0/1_PORT)
+ * @param port	Port that the interrupt came in on (STM32_SPI0/1_PORT)
  */
 static void spi_interrupt(int port)
 {
@@ -123,15 +123,15 @@ static void spi_interrupt(int port)
 	int cmd;
 
 	/* Make sure there is a byte available */
-	if (!(STM32L_SPI_SR(port) & SR_RXNE))
+	if (!(STM32_SPI_SR(port) & SR_RXNE))
 		return;
 
 	/* Get the command byte */
-	cmd = STM32L_SPI_DR(port);
+	cmd = STM32_SPI_DR(port);
 
 	/* Read the rest of the message - for now we do nothing with it */
 	dmac = DMA_CHANNEL_FOR_SPI_RX(port);
-	dma_start_rx(dmac, sizeof(in_msg), (void *)&STM32L_SPI_DR(port),
+	dma_start_rx(dmac, sizeof(in_msg), (void *)&STM32_SPI_DR(port),
 		     in_msg);
 
 	/*
@@ -149,9 +149,9 @@ static void spi_interrupt(int port)
 }
 
 /* The interrupt code cannot pass a parameters, so handle this here */
-static void spi1_interrupt(void) { spi_interrupt(STM32L_SPI1_PORT); };
+static void spi1_interrupt(void) { spi_interrupt(STM32_SPI1_PORT); };
 
-DECLARE_IRQ(STM32L_IRQ_SPI1, spi1_interrupt, 2);
+DECLARE_IRQ(STM32_IRQ_SPI1, spi1_interrupt, 2);
 
 static int spi_init(void)
 {
@@ -167,19 +167,19 @@ static int spi_init(void)
 	 *
 	 * 8-bit data, master mode, full-duplex, clock is fpclk / 2
 	 */
-	port = STM32L_SPI1_PORT;
+	port = STM32_SPI1_PORT;
 
 	/* enable rx buffer not empty interrupt, and rx DMA */
-	STM32L_SPI_CR2(port) |= CR2_RXNEIE | CR2_RXDMAEN;
+	STM32_SPI_CR2(port) |= CR2_RXNEIE | CR2_RXDMAEN;
 
 	/* set up an interrupt when we get the first byte of a packet */
-	task_enable_irq(STM32L_IRQ_SPI1);
+	task_enable_irq(STM32_IRQ_SPI1);
 
 	/* write 0xff which will be our default output value */
-	STM32L_SPI_DR(port) = 0xff;
+	STM32_SPI_DR(port) = 0xff;
 
 	/* enable the SPI peripheral */
-	STM32L_SPI_CR1(port) |= CR1_SPE;
+	STM32_SPI_CR1(port) |= CR1_SPE;
 #else
 #error "Need to know how to set up SPI for this board"
 #endif

@@ -29,7 +29,7 @@
 void watchdog_reload(void)
 {
 	/* Reload the watchdog */
-	STM32L_IWDG_KR = 0xaaaa;
+	STM32_IWDG_KR = 0xaaaa;
 }
 
 
@@ -41,15 +41,15 @@ int watchdog_init(int period_ms)
 	watchdog_period = period_ms * (LSI_CLOCK / IWDG_PRESCALER_DIV) / 1000;
 
 	/* Unlock watchdog registers */
-	STM32L_IWDG_KR = 0x5555;
+	STM32_IWDG_KR = 0x5555;
 
 	/* Set the prescaler between the LSI clock and the watchdog counter */
-	STM32L_IWDG_PR = IWDG_PRESCALER & 7;
+	STM32_IWDG_PR = IWDG_PRESCALER & 7;
 	/* Set the reload value of the watchdog counter */
-	STM32L_IWDG_RLR = watchdog_period & 0x7FF ;
+	STM32_IWDG_RLR = watchdog_period & 0x7FF ;
 
 	/* Start the watchdog (and re-lock registers) */
-	STM32L_IWDG_KR = 0xcccc;
+	STM32_IWDG_KR = 0xcccc;
 
 	return EC_SUCCESS;
 }

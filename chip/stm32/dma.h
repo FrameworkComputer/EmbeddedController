@@ -2,11 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Register map and API for STM32L processor dma registers
+ * Register map and API for STM32 processor dma registers
  */
 
-#ifndef __STM32L_DMA
-#define __STM32L_DMA
+#ifndef __STM32_DMA
+#define __STM32_DMA
 
 #include "common.h"
 
@@ -67,13 +67,13 @@ enum {
  */
 
 /**
- * @param spi	SPI port to request: STM32L_SPI1_PORT or STM32L_SPI2_PORT
+ * @param spi	SPI port to request: STM32_SPI1_PORT or STM32_SPI2_PORT
  * @return DMA channel to use for rx / tx on that port
  */
 #define DMA_CHANNEL_FOR_SPI_RX(spi) \
-	((spi) == STM32L_SPI1_PORT ? DMAC_SPI1_RX : DMAC_SPI2_RX)
+	((spi) == STM32_SPI1_PORT ? DMAC_SPI1_RX : DMAC_SPI2_RX)
 #define DMA_CHANNEL_FOR_SPI_TX(spi) \
-	((spi) == STM32L_SPI1_PORT ? DMAC_SPI1_TX : DMAC_SPI2_TX)
+	((spi) == STM32_SPI1_PORT ? DMAC_SPI1_TX : DMAC_SPI2_TX)
 
 /**
  * Start a DMA transfer to transmit data from memory to a peripheral

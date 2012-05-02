@@ -14,10 +14,10 @@ static void check_reset_cause(void)
 {
 	enum system_image_copy_t copy = system_get_image_copy();
 	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
-	uint32_t raw_cause = STM32L_RCC_CSR;
+	uint32_t raw_cause = STM32_RCC_CSR;
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
-	STM32L_RCC_CSR |= 1 << 24;
+	STM32_RCC_CSR |= 1 << 24;
 
 	if (copy == SYSTEM_IMAGE_RW_A || copy == SYSTEM_IMAGE_RW_B) {
 		/* If we're in image A or B, the only way we can get there is
@@ -52,21 +52,21 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 int system_pre_init(void)
 {
 	/* enable clock on Power module */
-	STM32L_RCC_APB1ENR |= 1 << 28;
+	STM32_RCC_APB1ENR |= 1 << 28;
 	/* Enable access to RCC CSR register and RTC backup registers */
-	STM32L_PWR_CR |= 1 << 8;
+	STM32_PWR_CR |= 1 << 8;
 
 	/* switch on LSI */
-	STM32L_RCC_CSR |= 1 << 0;
+	STM32_RCC_CSR |= 1 << 0;
 	/* Wait for LSI to be ready */
-	while (!(STM32L_RCC_CSR & (1 << 1)))
+	while (!(STM32_RCC_CSR & (1 << 1)))
 		;
 	/* re-configure RTC if needed */
-	if ((STM32L_RCC_CSR & 0x00C30000) != 0x00420000) {
+	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
 		/* the RTC settings are bad, we need to reset it */
-		STM32L_RCC_CSR |= 0x00800000;
+		STM32_RCC_CSR |= 0x00800000;
 		/* Enable RTC and use LSI as clock source */
-		STM32L_RCC_CSR = (STM32L_RCC_CSR & ~0x00C30000) | 0x00420000;
+		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
 
 	check_reset_cause();
@@ -93,7 +93,7 @@ int system_reset(int is_cold)
 
 int system_set_scratchpad(uint32_t value)
 {
-	STM32L_RTC_BACKUP(0) = value;
+	STM32_RTC_BACKUP(0) = value;
 
 	return EC_SUCCESS;
 }
@@ -101,7 +101,7 @@ int system_set_scratchpad(uint32_t value)
 
 uint32_t system_get_scratchpad(void)
 {
-	return STM32L_RTC_BACKUP(0);
+	return STM32_RTC_BACKUP(0);
 }
 
 

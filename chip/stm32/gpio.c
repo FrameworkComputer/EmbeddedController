@@ -31,43 +31,43 @@ int gpio_pre_init(void)
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */
-	STM32L_RCC_AHBENR |= 0x3f;
+	STM32_RCC_AHBENR |= 0x3f;
 
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		/* bitmask for registers with 2 bits per GPIO pin */
 		uint32_t mask2 = (g->mask * g->mask) | (g->mask * g->mask * 2);
 		uint32_t val;
 
-		val = STM32L_GPIO_PUPDR_OFF(g->port) & ~mask2;
+		val = STM32_GPIO_PUPDR_OFF(g->port) & ~mask2;
 		if (g->flags & GPIO_PULL_UP) /* Pull Up = 01 */
 			val |= 0x55555555 & mask2;
 		else if (g->flags & GPIO_PULL_DOWN) /* Pull Down = 10 */
 			val |= 0xaaaaaaaa & mask2;
-		STM32L_GPIO_PUPDR_OFF(g->port) = val;
+		STM32_GPIO_PUPDR_OFF(g->port) = val;
 
 		if (g->flags & GPIO_OPEN_DRAIN)
-			STM32L_GPIO_OTYPER_OFF(g->port) |= g->mask;
+			STM32_GPIO_OTYPER_OFF(g->port) |= g->mask;
 
 		/*
 		 * Set pin level after port has been set up as to avoid
 		 * potential damage, e.g. driving an open-drain output
 		 * high before it has been configured as such.
 		 */
-		val = STM32L_GPIO_MODER_OFF(g->port) & ~mask2;
+		val = STM32_GPIO_MODER_OFF(g->port) & ~mask2;
 		if (g->flags & GPIO_OUTPUT) { /* General purpose, MODE = 01 */
 			val |= 0x55555555 & mask2;
-			STM32L_GPIO_MODER_OFF(g->port) = val;
+			STM32_GPIO_MODER_OFF(g->port) = val;
 			gpio_set_level(i, g->flags & GPIO_HIGH);
 		} else if (g->flags & GPIO_INPUT) { /* Input, MODE=00 */
-			STM32L_GPIO_MODER_OFF(g->port) = val;
+			STM32_GPIO_MODER_OFF(g->port) = val;
 		}
 
 		/* Set up interrupts if necessary */
 		ASSERT(!(g->flags & GPIO_INT_LEVEL));
 		if (g->flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
-			STM32L_EXTI_RTSR |= g->mask;
+			STM32_EXTI_RTSR |= g->mask;
 		if (g->flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
-			STM32L_EXTI_FTSR |= g->mask;
+			STM32_EXTI_FTSR |= g->mask;
 		/* Interrupt is enabled by gpio_enable_interrupt() */
 	}
 
@@ -78,13 +78,13 @@ int gpio_pre_init(void)
 static int gpio_init(void)
 {
 	/* Enable IRQs now that pins are set up */
-	task_enable_irq(STM32L_IRQ_EXTI0);
-	task_enable_irq(STM32L_IRQ_EXTI1);
-	task_enable_irq(STM32L_IRQ_EXTI2);
-	task_enable_irq(STM32L_IRQ_EXTI3);
-	task_enable_irq(STM32L_IRQ_EXTI4);
-	task_enable_irq(STM32L_IRQ_EXTI9_5);
-	task_enable_irq(STM32L_IRQ_EXTI15_10);
+	task_enable_irq(STM32_IRQ_EXTI0);
+	task_enable_irq(STM32_IRQ_EXTI1);
+	task_enable_irq(STM32_IRQ_EXTI2);
+	task_enable_irq(STM32_IRQ_EXTI3);
+	task_enable_irq(STM32_IRQ_EXTI4);
+	task_enable_irq(STM32_IRQ_EXTI9_5);
+	task_enable_irq(STM32_IRQ_EXTI15_10);
 
 	return EC_SUCCESS;
 }
@@ -96,11 +96,11 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	int bit;
 	uint8_t half;
 	uint32_t afr;
-	uint32_t moder = STM32L_GPIO_MODER_OFF(port);
+	uint32_t moder = STM32_GPIO_MODER_OFF(port);
 
 	/* Low half of the GPIO bank */
 	half = mask & 0xff;
-	afr = STM32L_GPIO_AFRL_OFF(port);
+	afr = STM32_GPIO_AFRL_OFF(port);
 	while (half) {
 		bit = 31 - __builtin_clz(half);
 		afr &= ~(0xf << (bit * 4));
@@ -109,11 +109,11 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		moder |= 0x2 << (bit * 2 + 0);
 		half &= ~(1 << bit);
 	}
-	STM32L_GPIO_AFRL_OFF(port) = afr;
+	STM32_GPIO_AFRL_OFF(port) = afr;
 
 	/* High half of the GPIO bank */
 	half = mask >> 8;
-	afr = STM32L_GPIO_AFRH_OFF(port);
+	afr = STM32_GPIO_AFRH_OFF(port);
 	while (half) {
 		bit = 31 - __builtin_clz(half);
 		afr &= ~(0xf << (bit * 4));
@@ -122,21 +122,21 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		moder |= 0x2 << (bit * 2 + 16);
 		half &= ~(1 << bit);
 	}
-	STM32L_GPIO_AFRH_OFF(port) = afr;
-	STM32L_GPIO_MODER_OFF(port) = moder;
+	STM32_GPIO_AFRH_OFF(port) = afr;
+	STM32_GPIO_MODER_OFF(port) = moder;
 }
 
 
 int gpio_get_level(enum gpio_signal signal)
 {
-	return !!(STM32L_GPIO_IDR_OFF(gpio_list[signal].port) &
+	return !!(STM32_GPIO_IDR_OFF(gpio_list[signal].port) &
 		  gpio_list[signal].mask);
 }
 
 
 int gpio_set_level(enum gpio_signal signal, int value)
 {
-	STM32L_GPIO_BSRR_OFF(gpio_list[signal].port) =
+	STM32_GPIO_BSRR_OFF(gpio_list[signal].port) =
 			gpio_list[signal].mask << (value ? 0 : 16);
 
 	return EC_SUCCESS;
@@ -163,10 +163,10 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 
 	group = bit / 4;
 	shift = (bit % 4) * 4;
-	bank = (g->port - STM32L_GPIOA_BASE) / 0x400;
-	STM32L_SYSCFG_EXTICR(group) = (STM32L_SYSCFG_EXTICR(group) &
+	bank = (g->port - STM32_GPIOA_BASE) / 0x400;
+	STM32_SYSCFG_EXTICR(group) = (STM32_SYSCFG_EXTICR(group) &
 			~(0xF << shift)) | (bank << shift);
-	STM32L_EXTI_IMR |= g->mask;
+	STM32_EXTI_IMR |= g->mask;
 
 	return EC_SUCCESS;
 }
@@ -178,9 +178,9 @@ static void gpio_interrupt(void)
 {
 	int bit;
 	const struct gpio_info *g;
-	uint32_t pending = STM32L_EXTI_PR;
+	uint32_t pending = STM32_EXTI_PR;
 
-	STM32L_EXTI_PR = pending;
+	STM32_EXTI_PR = pending;
 
 	while (pending) {
 		bit = 31 - __builtin_clz(pending);
@@ -190,10 +190,10 @@ static void gpio_interrupt(void)
 		pending &= ~(1 << bit);
 	}
 }
-DECLARE_IRQ(STM32L_IRQ_EXTI0, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI1, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI2, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI3, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI4, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI9_5, gpio_interrupt, 1);
-DECLARE_IRQ(STM32L_IRQ_EXTI15_10, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI0, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI1, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI2, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI3, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI4, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI9_5, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI15_10, gpio_interrupt, 1);

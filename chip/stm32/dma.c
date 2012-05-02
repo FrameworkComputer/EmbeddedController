@@ -27,10 +27,10 @@ static struct dma_channel *get_channel(int channel)
 	/* Get a pointer to the correct controller and channel */
 	ASSERT(channel < DMA_NUM_CHANNELS);
 	if (channel < DMA1_NUM_CHANNELS) {
-		dma = (struct dma_ctlr *)STM32L_DMA1_BASE;
+		dma = (struct dma_ctlr *)STM32_DMA1_BASE;
 		chan = &dma->chan[channel];
 	} else {
-		dma = (struct dma_ctlr *)STM32L_DMA2_BASE;
+		dma = (struct dma_ctlr *)STM32_DMA2_BASE;
 		chan = &dma->chan[channel - DMA1_NUM_CHANNELS];
 	}
 
@@ -166,5 +166,5 @@ void dma_test(void)
 void dma_init(void)
 {
 	/* Enable DMA1, we don't support DMA2 yet */
-	STM32L_RCC_AHBENR |= 1 << 24;
+	STM32_RCC_AHBENR |= 1 << 24;
 }
