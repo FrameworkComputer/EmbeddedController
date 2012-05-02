@@ -440,10 +440,12 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 
 #define STM32_OPTB_BASE             0x1FF80000
 
-#define STM32_OPTB_RDP              REG32(STM32_OPTB_BASE + 0x00)
-#define STM32_OPTB_USER             REG32(STM32_OPTB_BASE + 0x04)
-#define STM32_OPTB_WRP01            REG32(STM32_OPTB_BASE + 0x08)
-#define STM32_OPTB_WRP23            REG32(STM32_OPTB_BASE + 0x0c)
+#define STM32_OPTB_RDP_OFF          0x00
+#define STM32_OPTB_USER_OFF         0x04
+#define STM32_OPTB_WRP_OFF(n)       (0x08 + (n&1) + (n&2) * 2)
+#define STM32_OPTB_WRP23            0x0c
+
+#define STM32_OPTB_COMPL_SHIFT      16
 
 #elif defined(CHIP_VARIANT_stm32f100)
 #define STM32_FLASH_REGS_BASE       0x40022000
@@ -458,6 +460,13 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 #define STM32_FLASH_WRPR            REG32(STM32_FLASH_REGS_BASE + 0x20)
 
 #define STM32_OPTB_BASE             0x1FFFF800
+
+#define STM32_OPTB_RDP_OFF          0x00
+#define STM32_OPTB_USER_OFF         0x02
+#define STM32_OPTB_WRP_OFF(n)       (0x08 + (n&3) * 2)
+#define STM32_OPTB_WRP23            0x0c
+
+#define STM32_OPTB_COMPL_SHIFT      8
 
 #else
 #error Unsupported chip variant

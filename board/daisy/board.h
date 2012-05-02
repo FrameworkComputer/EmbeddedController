@@ -14,6 +14,9 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
+/* support programming on-chip flash */
+#define CONFIG_FLASH
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* GPIO signal list */
