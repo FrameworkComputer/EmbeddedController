@@ -30,13 +30,15 @@ struct jump_tag {
 /* Data passed between the current image and the next one when jumping between
  * images. */
 #define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
-#define JUMP_DATA_VERSION 2
+#define JUMP_DATA_VERSION 3
 struct jump_data {
 	/* Add new fields to the _start_ of the struct, since we copy it to the
 	 * _end_ of RAM between images.  This way, the magic number will always
 	 * be the last word in RAM regardless of how many fields are added. */
 
+	/* Fields from version 3 */
 	uint8_t recovery_required; /* signal recovery mode to BIOS */
+	int header_size;     /* Header size to correctly point to jump tags. */
 
 	/* Fields from version 2 */
 	int jump_tag_total;  /* Total size of all jump tags */
@@ -220,6 +222,7 @@ static void jump_to_image(uint32_t init_addr,
 	jdata->version = JUMP_DATA_VERSION;
 	jdata->reset_cause = reset_cause;
 	jdata->jump_tag_total = 0;  /* Reset tags */
+	jdata->header_size = sizeof(struct jump_data);
 
 	/* Call other hooks; these may add tags */
 	hook_notify(HOOK_SYSJUMP, 0);
@@ -327,14 +330,48 @@ int system_common_pre_init(void)
 	if (jdata->magic == JUMP_DATA_MAGIC &&
 	    jdata->version >= 1 &&
 	    reset_cause == SYSTEM_RESET_SOFT_WARM) {
+		int jtag_total;  /* #byte of jump tags */
+		int delta;       /* delta of header size */
+		uint8_t *jtag;   /* point to _real_ start of jump tags */
+
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
 		/* Overwrite the reset cause with the real one */
 		reset_cause = jdata->reset_cause;
 
+		/* Header version 3 introduces the header_size field.
+		 * Thus we can estimate the real offset of jump tags
+		 * between different header versions.
+		 */
+		if (jdata->version == 1) {
+			jtag_total = 0;
+			delta = sizeof(struct jump_data) - 12;
+		} else if (jdata->version == 2) {
+			jtag_total = jdata->jump_tag_total;
+			delta = sizeof(struct jump_data) - 16;
+		} else {
+			jtag_total = jdata->jump_tag_total;
+			delta = sizeof(struct jump_data) - jdata->header_size;
+		}
+		jtag = ((uint8_t*)jdata) + delta - jtag_total;
+		/* TODO: re-write with memmove(). */
+		if (delta > 0) {
+			memcpy(jtag - delta, jtag, jtag_total);
+		} else {
+			int i;
+			for (i = jtag_total - 1; i >= 0; i--)
+				jtag[i - delta] = jtag[i];
+		}
+
 		/* Initialize fields added after version 1 */
 		if (jdata->version < 2)
 			jdata->jump_tag_total = 0;
+
+		/* Initialize fields added after version 2 */
+		if (jdata->version < 3) {
+			jdata->recovery_required = 0;
+			jdata->header_size = 16;
+		}
 
 		/* Clear the jump struct's magic number.  This prevents
 		 * accidentally detecting a jump when there wasn't one, and
