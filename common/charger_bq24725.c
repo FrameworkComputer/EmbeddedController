@@ -196,6 +196,12 @@ static int print_info(void)
 	info = charger_get_info();
 	ccprintf("  name           : %s\n", info->name);
 
+	/* option */
+	rv = charger_get_option(&d);
+	if (rv)
+		return rv;
+	ccprintf("  option         : %016b (0x%04x)\n", d, d);
+
 	/* manufacturer id */
 	rv = charger_manufacturer_id(&d);
 	if (rv)
