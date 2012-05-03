@@ -182,6 +182,12 @@ void gpio_set_alternate_function(int port, int mask, int func)
 }
 
 
+const char *gpio_get_name(enum gpio_signal signal)
+{
+	return gpio_list[signal].name;
+}
+
+
 int gpio_get_level(enum gpio_signal signal)
 {
 	return LM4_GPIO_DATA(gpio_list[signal].port,
