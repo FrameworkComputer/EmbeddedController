@@ -43,26 +43,33 @@ static int ap_on;
 static int force_signal = -1;
 static int force_value;
 
-/* Wait for GPIO "signal" to reach level "value".
+/*
+ * Wait for GPIO "signal" to reach level "value".
  * Returns EC_ERROR_TIMEOUT if timeout before reaching the desired state.
+ *
+ * @param signal	Signal to watch
+ * @param value		Value to watch for
+ * @param timeout	Timeout in microseconds from now, or -1 to wait forever
+ * @return 0 if signal did change to required value, EC_ERROR_TIMEOUT if we
+ * timed out first.
  */
 static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 {
 	timestamp_t deadline;
 	timestamp_t now = get_time();
 
-	if (timeout < 0)
-		deadline.le.hi = 0xffffffff;
-	else
-		deadline.val = now.val + timeout;
+	deadline.val = now.val + timeout;
 
 	while (((force_signal != signal) || (force_value != value)) &&
-		gpio_get_level(signal) != value) {
+			gpio_get_level(signal) != value) {
 		now = get_time();
-		if ((now.val >= deadline.val) ||
-			(task_wait_event(deadline.val - now.val) ==
-			 TASK_EVENT_TIMER)) {
-			CPRINTF("Timeout waiting for GPIO %d\n", signal);
+		if (timeout < 0) {
+			task_wait_event(-1);
+		} else if (timestamp_expired(deadline, &now) ||
+				(task_wait_event(deadline.val - now.val) ==
+					TASK_EVENT_TIMER)) {
+			CPRINTF("Timeout waiting for GPIO %d/%s\n", signal,
+				    gpio_get_name(signal));
 			return EC_ERROR_TIMEOUT;
 		}
 	}
