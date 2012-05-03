@@ -3,7 +3,25 @@
  * found in the LICENSE file.
  */
 
-/* GAIA SoC power sequencing module for Chrome EC */
+/*
+ * GAIA SoC power sequencing module for Chrome EC
+ *
+ * This implements the following features:
+ *
+ * - Cold reset powers off the AP
+ *
+ *  When powered off:
+ *  - Press pwron turns on the AP
+ *  - Hold pwron turns on the AP, and then 16s later turns it off and leaves
+ *  it off until pwron is released and pressed again
+ *
+ *  When powered on:
+ *  - The PMIC PWRON signal is released one second after the power button is
+ *  released (we expect that U-Boot as asserted XPSHOLD by then)
+ *  - Holding pwron for 8s powers off the AP
+ *  - Pressing and releasing pwron within that 8s is ignored
+ *  - If XPSHOLD is dropped by the AP, then we power the AP off
+ */
 
 #include "board.h"
 #include "chipset.h"  /* This module implements chipset functions too */
@@ -26,6 +44,29 @@
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  8000000 /* 8s */
 
+/*
+ * If the power key is pressed to turn on, then held for this long, we
+ * power off.
+ *
+ * The idea here is that behavior for 8s for AP shutdown is unchanged
+ * but power-on is modified to allow enough time U-Boot to be updated
+ * via USB (which takes about 10sec).
+ *
+ * So after power button is pressed:
+
+ * Normal case: User releases power button and gaia_power_task() goes
+ *    into the inner loop, waiting for next event to occur (power button
+ *    press or XPSHOLD == 0).
+ *
+ * U-Boot updating: User presses and holds power button. EC does not
+ *    check XPSHOLD, and waits up to 16sec for an event. If no event occurs
+ *    within 16sec, EC powers off AP.
+ */
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(16 * 1000000)
+
+/* Delay after power button release before we release GPIO_PMIC_PWRON_L */
+#define DELAY_RELEASE_PWRON	1000000 /* 1s */
+
 /* debounce time to prevent accidental power-on after keyboard power off */
 #define KB_PWR_ON_DEBOUNCE    250    /* 250us */
 
@@ -42,6 +83,18 @@ static int ap_on;
 /* simulated event state */
 static int force_signal = -1;
 static int force_value;
+
+/* 1 if the power button was pressed last time we checked */
+static char power_button_was_pressed;
+
+/* time where we will power off, if power button still held down */
+static timestamp_t power_off_deadline;
+
+/* 1 if we have released GPIO_PMIC_PWRON_L */
+static int pwron_released;
+
+/* time where we will release GPIO_PMIC_PWRON_L */
+static timestamp_t pwron_deadline;
 
 /*
  * Wait for GPIO "signal" to reach level "value".
@@ -77,50 +130,47 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 	return EC_SUCCESS;
 }
 
-/* Wait for some event triggering the shutdown.
+/*
+ * Check for some event triggering the shutdown.
  *
  * It can be either a long power button press or a shutdown triggered from the
  * AP and detected by reading XPSHOLD.
+ *
+ * @return 1 if a shutdown should happen, 0 if not
  */
-static void wait_for_power_off(void)
+static int check_for_power_off_event(void)
 {
-	timestamp_t deadline, now;
+	timestamp_t now;
+	int pressed = 0;
 
-	while (1) {
-		/* wait for power button press or XPSHOLD falling edge */
-		while ((gpio_get_level(GPIO_KB_PWR_ON_L) == 1) &&
-			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
-				task_wait_event(-1);
-		}
-
-		/* XPSHOLD released by AP : shutdown immediatly */
-		if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
-			return;
-
-		/* relay to PMIC */
-		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
-
-		/* check if power button is pressed for 8s */
-		deadline.val = get_time().val + DELAY_FORCE_SHUTDOWN;
-		while ((gpio_get_level(GPIO_KB_PWR_ON_L) == 0) &&
-			(gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 1)) {
-			now = get_time();
-			if ((now.val >= deadline.val) ||
-				(task_wait_event(deadline.val - now.val) ==
-				 TASK_EVENT_TIMER)) {
-					gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-					return;
-			}
-		}
-
-		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-
-		/*
-		 * Holding down the power button causes this loop to spin
-		 * endlessly, triggering the watchdog. So add a wait here.
-		 */
-		task_wait_event(-1);
+	/* Check for power button press */
+	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
+		udelay(KB_PWR_ON_DEBOUNCE);
+		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
+			pressed = 1;
 	}
+
+	now = get_time();
+	if (pressed) {
+		if (!power_button_was_pressed) {
+			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
+			CPRINTF("Waiting for long power press %u\n",
+				power_off_deadline.le.lo);
+		} else if (timestamp_expired(power_off_deadline, &now)) {
+			power_off_deadline.val = 0;
+			CPRINTF("Power off after long press now=%u, %u\n",
+				now.le.lo, power_off_deadline.le.lo);
+			return 2;
+		}
+	} else if (power_button_was_pressed) {
+		CPUTS("Cancel power off\n");
+	}
+	power_button_was_pressed = pressed;
+
+	/* XPSHOLD released by AP : shutdown immediately */
+	if (pwron_released && gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
+		return 3;
+	return 0;
 }
 
 void gaia_power_event(enum gpio_signal signal)
@@ -159,7 +209,6 @@ int chipset_in_state(int state_mask)
 	return 0;
 }
 
-
 void chipset_exit_hard_off(void)
 {
 	/* TODO: implement, if/when we take the AP down to a hard-off state */
@@ -167,67 +216,167 @@ void chipset_exit_hard_off(void)
 
 /*****************************************************************************/
 
+/**
+ * Check if there has been a power-on event
+ *
+ * This waits for the power button to be pressed, then returns whether it
+ * is still pressed, after a debounce period
+ *
+ * @return 1 if there has been a power-on event, 0 if not
+ */
+static int check_for_power_on_event(void)
+{
+	/* wait for Power button press */
+	wait_in_signal(GPIO_KB_PWR_ON_L, 0, -1);
+
+	udelay(KB_PWR_ON_DEBOUNCE);
+	return gpio_get_level(GPIO_KB_PWR_ON_L) == 0;
+}
+
+/**
+ * Power on the AP
+ *
+ * @return 0 if ok, -1 on error (PP1800_LDO2 failed to come on)
+ */
+static int power_on(void)
+{
+	/* Enable 5v power rail */
+	gpio_set_level(GPIO_EN_PP5000, 1);
+	/* wait to have stable power */
+	usleep(DELAY_5V_SETUP);
+
+	/* Startup PMIC */
+	gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+	/* wait for all PMIC regulators to be ready */
+	wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
+
+	/*
+	 * If PP1800_LDO2 did not come up (e.g. PMIC_TIMEOUT was reached),
+	 * turn off 5v rail and start over.
+	 */
+	if (gpio_get_level(GPIO_PP1800_LDO2) == 0) {
+		gpio_set_level(GPIO_EN_PP5000, 0);
+		usleep(DELAY_5V_SETUP);
+		CPUTS("Fatal error: PMIC failed to enable\n");
+		return -1;
+	}
+
+	/* Enable DDR 1.35v power rail */
+	gpio_set_level(GPIO_EN_PP1350, 1);
+	/* wait to avoid large inrush current */
+	usleep(DELAY_RAIL_STAGGERING);
+	/* Enable 3.3v power rail */
+	gpio_set_level(GPIO_EN_PP3300, 1);
+	CPUTS("AP running ...\n");
+	ap_on = 1;
+	return 0;
+}
+
+/**
+ * Wait for the power button to be released
+ *
+ * @return 0 if ok, -1 if power button failed to release
+ */
+static int wait_for_power_button_release(unsigned int timeout_us)
+{
+	/* wait for Power button release */
+	wait_in_signal(GPIO_KB_PWR_ON_L, 1, timeout_us);
+
+	udelay(KB_PWR_ON_DEBOUNCE);
+	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
+		CPUTS("Power button was not released in time\n");
+		return -1;
+	}
+	CPUTS("Power button released\n");
+	return 0;
+}
+
+/**
+ * Power off the AP
+ */
+static void power_off(void)
+{
+	/* switch off all rails */
+	gpio_set_level(GPIO_EN_PP3300, 0);
+	gpio_set_level(GPIO_EN_PP1350, 0);
+	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
+	gpio_set_level(GPIO_EN_PP5000, 0);
+	CPUTS("Shutdown complete.\n");
+	ap_on = 0;
+}
+
+/**
+ * Set a timer to release GPIO_PMIC_PWRON_L in the future
+ */
+static void set_pwron_timer(void)
+{
+	pwron_deadline = get_time();
+	pwron_deadline.val += DELAY_RELEASE_PWRON;
+	CPRINTF("Setting pwron timer %d\n", pwron_deadline.val);
+	pwron_released = 0;
+}
+
+static void check_pwron_release(void)
+{
+	if (!pwron_released && timestamp_expired(pwron_deadline, NULL)) {
+		pwron_deadline.val = 0;
+		pwron_released = 1;
+		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
+		CPRINTF("Releasing pwron\n");
+	}
+}
+
+/*
+ * Calculates the delay in microseconds to the next time we have to check
+ * for a power event,
+ *
+  *@return delay to next check, or -1 if no future check is needed
+ */
+static int next_pwr_event(void)
+{
+	uint64_t next;
+
+	if (!pwron_deadline.val && !power_off_deadline.val)
+		return -1;
+
+	/* We know that pwron_deadline will be earlier, if it exists */
+	next = pwron_deadline.val ? pwron_deadline.val
+			: power_off_deadline.val;
+	return next - get_time().val;
+}
+
+
+/*****************************************************************************/
+
 void gaia_power_task(void)
 {
+	int value;
+
 	gaia_power_init();
+	ap_on = 0;
 
 	while (1) {
-		/* Power OFF state */
-		ap_on = 0;
+		/* Wait until we need to power on, then power on */
+		while (!check_for_power_on_event())
+			task_wait_event(-1);
 
-		/* wait for Power button press */
-		wait_in_signal(GPIO_KB_PWR_ON_L, 0, -1);
-
-		usleep(KB_PWR_ON_DEBOUNCE);
-		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 1)
-			continue;
-
-		/* Enable 5v power rail */
-		gpio_set_level(GPIO_EN_PP5000, 1);
-		/* wait to have stable power */
-		usleep(DELAY_5V_SETUP);
-
-		/* Startup PMIC */
-		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
-		/* wait for all PMIC regulators to be ready */
-		wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
-
-		/* if PP1800_LDO2 did not come up (e.g. PMIC_TIMEOUT was
-		 * reached), turn off 5v rail and start over */
-		if (gpio_get_level(GPIO_PP1800_LDO2) == 0) {
-			gpio_set_level(GPIO_EN_PP5000, 0);
-			usleep(DELAY_5V_SETUP);
-			continue;
-		}
-
-		/* Enable DDR 1.35v power rail */
-		gpio_set_level(GPIO_EN_PP1350, 1);
-		/* wait to avoid large inrush current */
-		usleep(DELAY_RAIL_STAGGERING);
-		/* Enable 3.3v power rail */
-		gpio_set_level(GPIO_EN_PP3300, 1);
-
-		/* wait for the Application Processor to take control of the
-		 * PMIC.
+		/*
+		 * If we can power on, and the power button is released,
+		 * start running!
 		 */
-		wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, FAIL_TIMEOUT);
-		/* release PMIC startup signal */
-		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-
-		/* Power ON state */
-		ap_on = 1;
-		CPUTS("AP running ...\n");
-
-		/* Wait for power off from AP or long power button press */
-		wait_for_power_off();
-		/* switch off all rails */
-		gpio_set_level(GPIO_EN_PP3300, 0);
-		gpio_set_level(GPIO_EN_PP1350, 0);
-		gpio_set_level(GPIO_EN_PP5000, 0);
-		CPUTS("Shutdown complete.\n");
-
-		/* Ensure the power button is released */
-		wait_in_signal(GPIO_KB_PWR_ON_L, 1, -1);
+		if (!power_on() && !wait_for_power_button_release(
+					DELAY_SHUTDOWN_ON_POWER_HOLD)) {
+			/* Wait until we need to power off, then power off */
+			power_button_was_pressed = 0;
+			set_pwron_timer();
+			while (value = check_for_power_off_event(), !value) {
+				check_pwron_release();
+				task_wait_event(next_pwr_event());
+			}
+			CPRINTF("ending loop %d\n", value);
+		}
+		power_off();
+		wait_for_power_button_release(-1);
 	}
 }
 
