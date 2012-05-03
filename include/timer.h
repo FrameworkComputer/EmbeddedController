@@ -30,6 +30,14 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid);
 /* Cancel a running timer for the specified task id. */
 int timer_cancel(task_id_t tskid);
 
+/**
+ * Check if a timestamp has passed / expired
+ *
+ * @param deadline	deadline timer value to check
+ * @return 0 if deadline has not yet passed, 1 if it has passed
+ */
+int timestamp_expired(timestamp_t deadline);
+
 /* Busy-wait the selected number of microseconds.  Note that calling this
  * with us>1000 may impact system performance; use usleep for longer delays. */
 void udelay(unsigned us);
