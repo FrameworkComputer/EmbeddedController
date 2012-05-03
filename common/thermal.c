@@ -30,11 +30,11 @@ extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
 static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
-	 {368, 383, 388, 328, 338, 348, 358, 368}},
+	 {341, 358, 368, 318, 323, 328, 333, 338}},
 	/* TEMP_SENSOR_TYPE_BOARD */
 	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL}},
 	/* TEMP_SENSOR_TYPE_CASE */
-	{THERMAL_CONFIG_NO_FLAG, {343, THERMAL_THRESHOLD_DISABLE, 358,
+	{THERMAL_CONFIG_NO_FLAG, {333, THERMAL_THRESHOLD_DISABLE, 348,
 	 THERMAL_THRESHOLD_DISABLE_ALL}},
 };
 
@@ -100,6 +100,9 @@ static void smi_sensor_failure_warning(void)
 }
 
 
+/* TODO: When we need different overheated action for different boards,
+ *       move these action to board-specific file. (e.g. board_thermal.c)
+ */
 static void overheated_action(void)
 {
 	if (overheated[THRESHOLD_POWER_DOWN]) {
@@ -109,11 +112,15 @@ static void overheated_action(void)
 
 	if (overheated[THRESHOLD_CPU_DOWN])
 		x86_power_cpu_overheated(1);
-	else {
+	else
 		x86_power_cpu_overheated(0);
-		if (overheated[THRESHOLD_WARNING])
-			smi_overheated_warning();
+
+	if (overheated[THRESHOLD_WARNING]) {
+		smi_overheated_warning();
+		gpio_set_level(GPIO_CPU_PROCHOTn, 0);
 	}
+	else
+		gpio_set_level(GPIO_CPU_PROCHOTn, 1);
 
 	if (fan_ctrl_on) {
 		int i;
