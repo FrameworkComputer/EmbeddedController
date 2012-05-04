@@ -79,7 +79,7 @@ SECTIONS
         __data_end = .;
     } > IRAM
 #if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
-    .google CONFIG_FW_RO_GBB_OFF : AT(CONFIG_FW_RO_GBB_OFF) {
+    .google CONFIG_FMAP_OFF : AT(CONFIG_FMAP_OFF) {
         *(.google)
     } > FLASH
 #else

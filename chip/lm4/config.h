@@ -22,14 +22,24 @@
 #define CONFIG_FW_A_OFF         CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_B_OFF         (2 * CONFIG_FW_IMAGE_SIZE)
 
-/* FIXME(wfrichar): Replace with real GBB size & location. */
-#define CONFIG_FW_RO_GBB_SIZE   CONFIG_FLASH_BANK_SIZE
-#define CONFIG_FW_RO_GBB_OFF    (CONFIG_FW_RO_OFF + CONFIG_FW_IMAGE_SIZE - \
-				 CONFIG_FW_RO_GBB_SIZE)
-#define CONFIG_FW_RO_SIZE (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_RO_GBB_SIZE)
-#define CONFIG_FW_A_SIZE CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_B_SIZE CONFIG_FW_IMAGE_SIZE
-
+/* We'll put the vboot stuff at the top of each image, since the vector table
+ * has to go at the start. 4K should be enough for what we need. 2K isn't. */
+#define CONFIG_VBOOT_REGION_SIZE     0x1000
+#define CONFIG_VBOOT_ROOTKEY_SIZE    0x800
+#define CONFIG_VBOOT_REGION_OFF      (CONFIG_FW_IMAGE_SIZE \
+					- CONFIG_VBOOT_REGION_SIZE)
+/* Specifics for each image */
+#define CONFIG_FW_RO_SIZE            CONFIG_VBOOT_REGION_OFF
+#define CONFIG_FW_A_SIZE             CONFIG_VBOOT_REGION_OFF
+#define CONFIG_FW_B_SIZE             CONFIG_VBOOT_REGION_OFF
+#define CONFIG_VBOOT_ROOTKEY_OFF     (CONFIG_FW_RO_OFF \
+					+ CONFIG_VBOOT_REGION_OFF)
+#define CONFIG_FMAP_OFF              (CONFIG_VBOOT_ROOTKEY_OFF \
+					+ CONFIG_VBOOT_ROOTKEY_SIZE)
+#define CONFIG_VBLOCK_A_OFF          (CONFIG_FW_A_OFF + CONFIG_FW_A_SIZE)
+#define CONFIG_VBLOCK_B_OFF          (CONFIG_FW_B_OFF + CONFIG_FW_B_SIZE)
+#define CONFIG_VBLOCK_A_SIZE         CONFIG_VBOOT_REGION_SIZE
+#define CONFIG_VBLOCK_B_SIZE         CONFIG_VBOOT_REGION_SIZE
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 132

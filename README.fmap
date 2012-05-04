@@ -1,0 +1,40 @@
+In the most general case, the flash layout looks something like this:
+
+  +---------------------+
+  | Reserved for EC use |
+  +---------------------+
+
+  +---------------------+
+  |     Vblock B        |
+  +---------------------+
+  |  RW firmware B      |
+  +---------------------+
+
+  +---------------------+
+  |     Vblock A        |
+  +---------------------+
+  |  RW firmware A      |
+  +---------------------+
+
+  +---------------------+
+  |       FMAP          |
+  +---------------------+
+  |   Public root key   |
+  +---------------------+
+  |  Read-only firmware |
+  +---------------------+
+
+
+BIOS firmware (and kernel) put the vblock info at the start of each image
+where it's easy to find. The Blizzard EC expects the firmware vector table
+to come first, so we have to put the vblock at the end. This means we have
+to know where to look for it, but that's built into the FMAP and the RO
+firmware anyway, so that's not an issue.
+
+The RO firmware doesn't need a vblock of course, but it does need some
+reserved space for vboot-related things.
+
+Using SHA256/RSA4096, the vblock is 2468 bytes (0x9a4), while the public
+root key is 1064 bytes (0x428) and the current FMAP is 644 bytes (0x284). If
+we reserve 4K at the top of each FW image, that should give us plenty of
+room for vboot-related stuff.

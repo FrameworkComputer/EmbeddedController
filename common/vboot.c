@@ -17,43 +17,46 @@
 #define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
 
 
-/* Jumps to one of the RW images if necessary. */
-static void jump_to_other_image(void)
+/* Might I want to jump to one of the RW images? */
+static int maybe_jump_to_other_image(void)
 {
-	/* Only jump to another image if we're currently in RO */
+	/* Not all boards even have RW EC firmware. I think it's just Link at
+	 * the moment. */
+#ifndef BOARD_link
+	/* TODO: (crosbug.com/p/8561) once daisy can warm-boot to another
+	 * image, enable it here too. */
+	CPUTS("[Vboot staying in RO because that's all there is]\n");
+	return 0;
+#endif
+
+	/* We'll only jump to another image if we're currently in RO */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
-		return;
+		return 0;
 
 #ifdef CONFIG_TASK_KEYSCAN
 	/* Don't jump if recovery requested */
 	if (keyboard_scan_recovery_pressed()) {
-		CPUTS("[Vboot staying in RO because key pressed]\n");
-		return;
+		CPUTS("[Vboot staying in RO because recovery key pressed]\n");
+		return 0;
 	}
 #endif
 
 	/* Don't jump if we're in RO becuase we jumped there (this keeps us
 	 * from jumping to RO only to jump right back). */
 	if (system_jumped_to_this_image())
-		return;
+		return 0;
 
 #if !defined(BOARD_daisy)
 	/* TODO: (crosbug.com/p/8572) Daisy doesn't define a GPIO
 	 * for the recovery signal from servo, so can't check it. */
 	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
 		CPUTS("[Vboot staying in RO due to recovery signal]\n");
-		return;
+		return 0;
 	}
 #endif
 
-
-#ifdef BOARD_link
-	/* TODO: (crosbug.com/p/8561) once daisy can warm-boot to another
-	 * image, enable this there too. */
-	/* TODO: real verified boot (including recovery reason); for now, just
-	 * jump to image A. */
-	system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
-#endif
+	/* Okay, we might want to jump to a RW image. */
+	return 1;
 }
 
 /*****************************************************************************/
@@ -68,9 +71,24 @@ int vboot_pre_init(void)
 
 int vboot_init(void)
 {
+	/* nothing to do, so do nothing */
+	if (!maybe_jump_to_other_image())
+		return EC_SUCCESS;
+
 	/* FIXME(wfrichar): placeholder for full verified boot implementation.
 	 * TBD exactly how, but we may want to continue in RO firmware, jump
 	 * directly to one of the RW firmwares, etc. */
-	jump_to_other_image();
+	CPRINTF("[ROOT_KEY is at 0x%x, size 0x%x]\n",
+		CONFIG_VBOOT_ROOTKEY_OFF, CONFIG_VBOOT_ROOTKEY_SIZE);
+	CPRINTF("[FW_MAIN_A is at 0x%x, size 0x%x]\n",
+		CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
+	CPRINTF("[VBLOCK_A is at 0x%x, size 0x%x]\n",
+		CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_A_SIZE);
+	CPRINTF("[FW_MAIN_B is at 0x%x, size 0x%x]\n",
+		CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
+	CPRINTF("[VBLOCK_B is at 0x%x, size 0x%x]\n",
+		CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_B_SIZE);
+
+	system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
 	return EC_SUCCESS;
 }
