@@ -35,7 +35,7 @@ static int parse_offset_size(int argc, char **argv, int *offset, int *size)
 	}
 
 	if (argc >= 2) {
-		i = (uint32_t)strtoi(argv[1], &e, 1);
+		i = (uint32_t)strtoi(argv[1], &e, 0);
 		if (e && *e) {
 			ccprintf("Invalid size \"%s\"\n", argv[1]);
 			return EC_ERROR_INVAL;
@@ -290,33 +290,12 @@ enum lpc_status flash_command_erase(uint8_t *data)
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_ERASE, flash_command_erase);
 
 
-#ifdef REWORK_THESE_TO_USE_NEW_WP_MECHANISM
-/* TODO: (crosbug.com/p/8448) rework these to use the new WP mechanism.  Note
- * that the concept of a single range oversimplifies how WP works; there are
- * multiple protected regions, including the persistent WP state (last bank)
- * and rollback information (bank before that; will be implemented by
- * vboot). */
-
-static int shadow_wp_offset;
-static int shadow_wp_size;
-
 enum lpc_status flash_command_wp_enable(uint8_t *data)
 {
 	struct lpc_params_flash_wp_enable *p =
 			(struct lpc_params_flash_wp_enable *)data;
-	int offset, size;
 
-	if (p->enable_wp) {
-		offset = shadow_wp_offset;
-		size   = shadow_wp_size;
-	} else {
-		offset = 0;
-		size   = 0;
-	}
-	if (flash_set_write_protect_range(offset, size))
-		return EC_LPC_RESULT_ERROR;
-
-	return EC_LPC_RESULT_SUCCESS;
+	return flash_lock_protect(p->enable_wp ? 1 : 0);
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_ENABLE,
 		     flash_command_wp_enable);
@@ -327,7 +306,7 @@ enum lpc_status flash_command_wp_get_state(uint8_t *data)
 	struct lpc_response_flash_wp_enable *p =
 			(struct lpc_response_flash_wp_enable *)data;
 
-	if (flash_get_write_protect_status() & EC_FLASH_WP_RANGE_LOCKED)
+	if (flash_get_protect_lock() & FLASH_PROTECT_LOCK_SET)
 		p->enable_wp = 1;
 	else
 		p->enable_wp = 0;
@@ -342,11 +321,14 @@ enum lpc_status flash_command_wp_set_range(uint8_t *data)
 {
 	struct lpc_params_flash_wp_range *p =
 			(struct lpc_params_flash_wp_range *)data;
+	enum lpc_status ret;
 
-	if (flash_set_write_protect_range(p->offset, p->size))
-		return EC_LPC_RESULT_ERROR;
+	if (p->size)
+		ret = flash_set_protect(p->offset, p->size, 1);
+	else
+		ret = flash_set_protect(0, flash_get_size(), 0);
 
-	return EC_LPC_RESULT_SUCCESS;
+	return ret;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_SET_RANGE,
 		     flash_command_wp_set_range);
@@ -356,13 +338,40 @@ enum lpc_status flash_command_wp_get_range(uint8_t *data)
 {
 	struct lpc_response_flash_wp_range *p =
 			(struct lpc_response_flash_wp_range *)data;
+	int pbsize = flash_get_protect_block_size();
+	int banks = flash_get_size() / pbsize;
+	const uint8_t *blocks;
+	int i;
+	int min = -1, max = banks - 1;  /* the enclosed range for protected. */
 
-	if (flash_get_write_protect_range(&p->offset, &p->size))
-		return EC_LPC_RESULT_ERROR;
+	blocks = flash_get_protect_array();
+	for (i = 0; i < banks; i++) {
+		if (min == -1) {
+			/* Looking for the first protected bank. */
+			if (blocks[i] & (FLASH_PROTECT_PERSISTENT |
+					 FLASH_PROTECT_UNTIL_REBOOT)) {
+				min = i;
+			}
+		} else if (i < max) {
+			/* Looking for the unprotected bank. */
+			if (!(blocks[i] & (FLASH_PROTECT_PERSISTENT |
+					   FLASH_PROTECT_UNTIL_REBOOT))) {
+				max = i - 1;
+			}
+		}
+	}
+
+	/* TODO(crosbug.com/p/9492): return multiple region of ranges(). */
+	if (min == -1) {
+		/* None of bank is protected. */
+		p->offset = 0;
+		p->size = 0;
+	} else {
+		p->offset = min * pbsize;
+		p->size = (max - min + 1) * pbsize;
+	}
 
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_RANGE,
 		     flash_command_wp_get_range);
-
-#endif /* REWORK_THESE_TO_USE_NEW_WP_MECHANISM */
