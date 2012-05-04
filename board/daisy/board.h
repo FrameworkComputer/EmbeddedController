@@ -57,8 +57,6 @@ enum gpio_signal {
 	GPIO_KB_OUT10,
 	GPIO_KB_OUT11,
 	GPIO_KB_OUT12,
-	GPIO_I2C_SCL,
-	GPIO_I2C_SDA,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
