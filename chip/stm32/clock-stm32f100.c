@@ -35,14 +35,14 @@ int clock_init(void)
 	 * no MCO                      => PLLCLK = 16 Mhz
 	 */
 	BUILD_ASSERT(CPU_CLOCK == 16000000);
-	STM32_RCC_CFGR = 0x00880001;
+	STM32_RCC_CFGR = 0x00080000;
 	/* Enable the PLL */
 	STM32_RCC_CR |= 1 << 24;
 	/* Wait for the PLL to lock */
 	while (!(STM32_RCC_CR & (1 << 25)))
 		;
 	/* switch to SYSCLK to the PLL */
-	STM32_RCC_CFGR = 0x00880002;
+	STM32_RCC_CFGR = 0x00080002;
 	/* wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
