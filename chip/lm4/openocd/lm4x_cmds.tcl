@@ -51,3 +51,9 @@ proc ramboot_link { } {
 proc ramboot_bds { } {
 	ramboot_lm4 ../../../build/bds/ec.RO.flat
 }
+
+proc flash_emerged_link { } {
+	set firmware_image ../../../../../../chroot/build/link/firmware/ec.bin
+
+	flash_lm4 $firmware_image 0 262144
+}
