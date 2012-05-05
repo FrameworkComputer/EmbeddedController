@@ -46,8 +46,8 @@ static int maybe_jump_to_other_image(void)
 	if (system_jumped_to_this_image())
 		return 0;
 
-#if !defined(BOARD_daisy)
-	/* TODO: (crosbug.com/p/8572) Daisy doesn't define a GPIO
+#if !defined(CHIP_stm32)
+	/* TODO: (crosbug.com/p/8572) Daisy and Snow don't define a GPIO
 	 * for the recovery signal from servo, so can't check it. */
 	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
 		CPUTS("[Vboot staying in RO due to recovery signal]\n");
