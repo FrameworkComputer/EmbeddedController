@@ -358,6 +358,9 @@ void x86_power_task(void)
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
 
+			/* Enable WLAN */
+			gpio_set_level(GPIO_ENABLE_WLAN, 1);
+
 			/* Enable fan, now that +5VS is turned on */
 			/* TODO: On proto1+, fan is on +5VALW, so we can leave
 			 * it on all the time. */
@@ -400,6 +403,9 @@ void x86_power_task(void)
 			/* TODO: On proto1+, fan is on +5VALW, so we can leave
 			 * it on all the time. */
 			pwm_enable_fan(0);
+
+			/* Disable WLAN */
+			gpio_set_level(GPIO_ENABLE_WLAN, 0);
 
 			/* Turn off power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 0);

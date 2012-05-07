@@ -81,6 +81,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"ENABLE_TOUCHPAD",     LM4_GPIO_C, (1<<6), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VCORE",        LM4_GPIO_F, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VS",           LM4_GPIO_G, (1<<6), GPIO_OUT_LOW, NULL},
+	{"ENABLE_WLAN",         LM4_GPIO_Q, (1<<5), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW",         LM4_GPIO_J, (1<<5), GPIO_OUT_LOW, NULL},
 	{"LIGHTBAR_RESETn",     LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_A20GATE",         LM4_GPIO_Q, (1<<6), GPIO_OUT_LOW, NULL},
@@ -92,8 +93,13 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_PWROK",           LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GPIO_OUT_LOW, NULL},
 	{"PCH_RSMRSTn",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
+	/* RTCRST# is unasserted by default so we don't clear the RTC wells
+	 * in the PCH when the EC resets. */
+	{"PCH_RTCRSTn",         LM4_GPIO_F, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"PCH_SMIn",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
 	{"PCH_SUSACKn",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
+	{"RADIO_DISABLE_WLAN",  LM4_GPIO_D, (1<<0), GPIO_OUT_LOW, NULL},
+	{"RADIO_DISABLE_BT",    LM4_GPIO_D, (1<<1), GPIO_OUT_LOW, NULL},
 	{"TOUCHSCREEN_RESETn",  LM4_GPIO_B, (1<<0), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL1",           LM4_GPIO_E, (1<<2), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL2",           LM4_GPIO_E, (1<<3), GPIO_OUT_LOW, NULL},
