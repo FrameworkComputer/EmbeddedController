@@ -56,6 +56,7 @@ int isspace(int c);
 int isalpha(int c);
 void *memcpy(void *dest, const void *src, int len);
 void *memset(void *dest, int c, int len);
+void *memmove(void *dest, const void *src, int len);
 int strcasecmp(const char *s1, const char *s2);
 int strlen(const char *s);
 int strtoi(const char *nptr, char **endptr, int base);

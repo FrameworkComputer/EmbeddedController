@@ -144,6 +144,27 @@ void *memset(void *dest, int c, int len)
 }
 
 
+void *memmove(void *dest, const void *src, int len)
+{
+	if ((uint32_t)dest <= (uint32_t)src ||
+	    (uint32_t)dest >= (uint32_t)src + len) {
+		/* Start of destination doesn't overlap source, so just use
+		 * memcpy(). */
+		return memcpy(dest, src, len);
+	} else {
+		/* Copy from end, so we don't overwrite the source */
+		char *d = (char *)dest + len;
+		const char *s = (const char *)src + len;
+		/* TODO: optimized version using LDM/STM would be much faster */
+		while (len > 0) {
+			*(--d) = *(--s);
+			len--;
+		}
+		return dest;
+	}
+}
+
+
 char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;

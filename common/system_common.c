@@ -31,14 +31,15 @@ struct jump_tag {
  * images. */
 #define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
 #define JUMP_DATA_VERSION 3
+#define JUMP_DATA_SIZE_V2 16  /* Size of version 2 jump data struct */
 struct jump_data {
 	/* Add new fields to the _start_ of the struct, since we copy it to the
 	 * _end_ of RAM between images.  This way, the magic number will always
 	 * be the last word in RAM regardless of how many fields are added. */
 
 	/* Fields from version 3 */
-	uint8_t recovery_required; /* signal recovery mode to BIOS */
-	int header_size;     /* Header size to correctly point to jump tags. */
+	uint8_t recovery_required; /* Signal recovery mode to BIOS */
+	int struct_size;           /* Size of struct jump_data */
 
 	/* Fields from version 2 */
 	int jump_tag_total;  /* Total size of all jump tags */
@@ -56,13 +57,14 @@ static struct jump_data * const jdata =
 	(struct jump_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
 			     - sizeof(struct jump_data));
 
+static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 static int jumped_to_image;
 
 
 int system_usable_ram_end(void)
 {
-	/* Leave space at the end of RAM for jump data.
+	/* Leave space at the end of RAM for jump data and tags.
 	 *
 	 * Note that jump_tag_total is 0 on a reboot, so we have the maximum
 	 * amount of RAM available on a reboot; we only lose space for stored
@@ -196,9 +198,8 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 
 const char *system_get_image_copy_string(void)
 {
-	static const char * const copy_descs[] = {"unknown", "RO", "A", "B"};
 	int copy = system_get_image_copy();
-	return copy < ARRAY_SIZE(copy_descs) ? copy_descs[copy] : "?";
+	return copy < ARRAY_SIZE(image_names) ? image_names[copy] : "?";
 }
 
 
@@ -222,7 +223,7 @@ static void jump_to_image(uint32_t init_addr,
 	jdata->version = JUMP_DATA_VERSION;
 	jdata->reset_cause = reset_cause;
 	jdata->jump_tag_total = 0;  /* Reset tags */
-	jdata->header_size = sizeof(struct jump_data);
+	jdata->struct_size = sizeof(struct jump_data);
 
 	/* Call other hooks; these may add tags */
 	hook_notify(HOOK_SYSJUMP, 0);
@@ -249,13 +250,6 @@ static uint32_t get_base(enum system_image_copy_t copy)
 	}
 }
 
-
-static const char * const image_names[] = {
-	"Unknown",
-	"RO",
-	"A",
-	"B"
-};
 
 int system_run_image_copy(enum system_image_copy_t copy,
 			  int recovery_required)
@@ -330,37 +324,28 @@ int system_common_pre_init(void)
 	if (jdata->magic == JUMP_DATA_MAGIC &&
 	    jdata->version >= 1 &&
 	    reset_cause == SYSTEM_RESET_SOFT_WARM) {
-		int jtag_total;  /* #byte of jump tags */
-		int delta;       /* delta of header size */
-		uint8_t *jtag;   /* point to _real_ start of jump tags */
+		int delta;       /* Change in jump data struct size between the
+				  * previous image and this one. */
 
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
 		/* Overwrite the reset cause with the real one */
 		reset_cause = jdata->reset_cause;
 
-		/* Header version 3 introduces the header_size field.
-		 * Thus we can estimate the real offset of jump tags
-		 * between different header versions.
-		 */
-		if (jdata->version == 1) {
-			jtag_total = 0;
-			delta = sizeof(struct jump_data) - 12;
-		} else if (jdata->version == 2) {
-			jtag_total = jdata->jump_tag_total;
-			delta = sizeof(struct jump_data) - 16;
-		} else {
-			jtag_total = jdata->jump_tag_total;
-			delta = sizeof(struct jump_data) - jdata->header_size;
-		}
-		jtag = ((uint8_t*)jdata) + delta - jtag_total;
-		/* TODO: re-write with memmove(). */
-		if (delta > 0) {
-			memcpy(jtag - delta, jtag, jtag_total);
-		} else {
-			int i;
-			for (i = jtag_total - 1; i >= 0; i--)
-				jtag[i - delta] = jtag[i];
+		/* If the jump data structure isn't the same size as the
+		 * current one, shift the jump tags to immediately before the
+		 * current jump data structure, to make room for initalizing
+		 * the new fields below. */
+		if (jdata->version == 1)
+			delta = 0;  /* No tags in v1, so no need for move */
+		else if (jdata->version == 2)
+			delta = sizeof(struct jump_data) - JUMP_DATA_SIZE_V2;
+		else
+			delta = sizeof(struct jump_data) - jdata->struct_size;
+
+		if (delta && jdata->jump_tag_total) {
+			uint8_t *d = (uint8_t *)system_usable_ram_end();
+			memmove(d, d + delta, jdata->jump_tag_total);
 		}
 
 		/* Initialize fields added after version 1 */
@@ -368,10 +353,11 @@ int system_common_pre_init(void)
 			jdata->jump_tag_total = 0;
 
 		/* Initialize fields added after version 2 */
-		if (jdata->version < 3) {
+		if (jdata->version < 3)
 			jdata->recovery_required = 0;
-			jdata->header_size = 16;
-		}
+
+		/* Struct size is now the current struct size */
+		jdata->struct_size = sizeof(struct jump_data);
 
 		/* Clear the jump struct's magic number.  This prevents
 		 * accidentally detecting a jump when there wasn't one, and

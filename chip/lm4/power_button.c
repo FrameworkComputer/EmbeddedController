@@ -93,6 +93,8 @@ static void update_other_switches(void)
 		*memmap_switches &= ~EC_LPC_SWITCH_DEDICATED_RECOVERY;
 
 	/* Was this a reboot requesting recovery? */
+	/* TODO: should use a different flag, not the dedicated recovery
+	 * switch flag! */
 	if (system_get_recovery_required())
 		*memmap_switches |= EC_LPC_SWITCH_DEDICATED_RECOVERY;
 
