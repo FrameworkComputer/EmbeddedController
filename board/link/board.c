@@ -32,6 +32,9 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Other inputs */
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), 0, NULL},
+	{"BOARD_VERSION1",      LM4_GPIO_H, (1<<6), 0, NULL},
+	{"BOARD_VERSION2",      LM4_GPIO_L, (1<<6), 0, NULL},
+	{"BOARD_VERSION3",      LM4_GPIO_L, (1<<7), 0, NULL},
 	{"PCH_BKLTEN",          LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
 	 power_button_interrupt},
 	{"PCH_SLP_An",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,
@@ -73,11 +76,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOTn",        LM4_GPIO_F, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"ENABLE_1_5V_DDR",     LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
+	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENABLE_BACKLIGHT",    LM4_GPIO_H, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENABLE_TOUCHPAD",     LM4_GPIO_C, (1<<6), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VCORE",        LM4_GPIO_F, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VS",           LM4_GPIO_G, (1<<6), GPIO_OUT_LOW, NULL},
-	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW",         LM4_GPIO_J, (1<<5), GPIO_OUT_LOW, NULL},
 	{"LIGHTBAR_RESETn",     LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_A20GATE",         LM4_GPIO_Q, (1<<6), GPIO_OUT_LOW, NULL},

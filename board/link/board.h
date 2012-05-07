@@ -118,6 +118,9 @@ enum gpio_signal {
 	GPIO_THERMAL_DATA_READYn, /* Data ready from I2C thermal sensor */
 	/* Other inputs */
 	GPIO_AC_PRESENT,          /* AC power present */
+	GPIO_BOARD_VERSION1,      /* Board version stuffing resistor 1 */
+	GPIO_BOARD_VERSION2,      /* Board version stuffing resistor 2 */
+	GPIO_BOARD_VERSION3,      /* Board version stuffing resistor 3 */
 	GPIO_PCH_BKLTEN,          /* Backlight enable signal from PCH */
 	GPIO_PCH_SLP_An,          /* SLP_A# signal from PCH */
 	GPIO_PCH_SLP_ME_CSW_DEVn, /* SLP_ME_CSW_DEV# signal from PCH */
@@ -141,11 +144,11 @@ enum gpio_signal {
 	/* Outputs */
 	GPIO_CPU_PROCHOTn,        /* Force CPU to think it's overheated */
 	GPIO_ENABLE_1_5V_DDR,     /* Enable +1.5V_DDR supply */
+	GPIO_ENABLE_5VALW,        /* Enable +5V always on rail */
 	GPIO_ENABLE_BACKLIGHT,    /* Enable backlight power */
 	GPIO_ENABLE_TOUCHPAD,     /* Enable touchpad power */
 	GPIO_ENABLE_VCORE,        /* Enable +CPU_CORE and +VGFX_CORE */
 	GPIO_ENABLE_VS,           /* Enable VS power supplies */
-	GPIO_ENABLE_5VALW,        /* Enable +5V always on rail */
 	GPIO_ENTERING_RW,         /* Indicate when EC is entering RW code */
 	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
 	GPIO_PCH_A20GATE,         /* A20GATE signal to PCH */
