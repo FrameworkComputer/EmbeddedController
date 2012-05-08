@@ -11,10 +11,6 @@
 #include "util.h"
 
 
-/* Signal information from board.c.  Must match order from enum gpio_signal. */
-extern const struct gpio_info gpio_list[GPIO_COUNT];
-
-
 /* Find a GPIO signal by name.  Returns the signal index, or GPIO_COUNT if
  * no match. */
 static enum gpio_signal find_signal_by_name(const char *name)

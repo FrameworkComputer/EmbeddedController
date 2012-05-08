@@ -51,6 +51,9 @@ struct gpio_info {
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
+/* Signal information from board.c.  Must match order from enum gpio_signal. */
+extern const struct gpio_info gpio_list[GPIO_COUNT];
+
 /* Macro for signals which don't exist */
 #define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0, 0, NULL}
 

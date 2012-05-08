@@ -17,9 +17,6 @@
 #define CPUTS(outstr) cputs(CC_GPIO, outstr)
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 
-/* Signal information from board.c.  Must match order from enum gpio_signal. */
-extern const struct gpio_info gpio_list[GPIO_COUNT];
-
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 

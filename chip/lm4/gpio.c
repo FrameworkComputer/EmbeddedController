@@ -24,10 +24,6 @@ static const uint32_t gpio_bases[] = {
 };
 
 
-/* Signal information from board.c.  Must match order from enum gpio_signal. */
-extern const struct gpio_info gpio_list[GPIO_COUNT];
-
-
 /* Find the index of a GPIO port base address (LM4_GPIO_[A-Q]); this is used by
  * the clock gating registers.  Returns the index, or -1 if no match. */
 static int find_gpio_port_index(uint32_t port_base)
