@@ -11,10 +11,12 @@
 #include <sys/io.h>
 #include <unistd.h>
 
+#include "battery.h"
 #include "lightbar.h"
 #include "lpc_commands.h"
-#include "battery.h"
 
+/* Handy tricks */
+#define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }
@@ -846,14 +848,14 @@ static const char const *lightbar_cmds[] = {
 };
 #undef LBMSG
 
-/* This needs to match the values used in common/lightbar.c.  I'd like to
+/* This needs to match the values defined in lightbar.h. I'd like to
  * define this in one and only one place, but I can't think of a good way to do
  * that without adding bunch of complexity. This will do for now.
  */
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
-} lb_command_paramcount[LIGHTBAR_NUM_CMDS] = {
+} lb_command_paramcount[] = {
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.dump),
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump) },
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.off),
@@ -870,6 +872,8 @@ static const struct {
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.reg) },
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.rgb),
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.rgb) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.get_seq),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.get_seq) },
 };
 
 static int lb_help(const char *cmd)
@@ -898,15 +902,6 @@ static uint8_t lb_find_msg_by_name(const char *str)
 	return LIGHTBAR_NUM_SEQUENCES;
 }
 
-static void lb_show_msg_names(void)
-{
-	int i;
-	printf("sequence names:");
-	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
-		printf(" %s", lightbar_cmds[i]);
-	printf("\n");
-}
-
 static int lb_do_cmd(enum lightbar_command cmd,
 		     struct lpc_params_lightbar_cmd *ptr)
 {
@@ -918,6 +913,21 @@ static int lb_do_cmd(enum lightbar_command cmd,
 	return r;
 }
 
+static void lb_show_msg_names(void)
+{
+	int i, current_state;
+	struct lpc_params_lightbar_cmd param;
+
+	(void)lb_do_cmd(LIGHTBAR_CMD_GET_SEQ, &param);
+	current_state = param.out.get_seq.num;
+
+	printf("sequence names:");
+	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
+		printf(" %s", lightbar_cmds[i]);
+	printf("\nCurrent = 0x%x %s\n", current_state,
+	       lightbar_cmds[current_state]);
+}
+
 static int cmd_lightbar(int argc, char **argv)
 {
 	int i, r;
@@ -927,11 +937,11 @@ static int cmd_lightbar(int argc, char **argv)
 		r = lb_do_cmd(LIGHTBAR_CMD_DUMP, &param);
 		if (r)
 			return r;
-		for (i = 0; i < sizeof(param.out.dump); i += 3) {
+		for (i = 0; i < ARRAY_SIZE(param.out.dump.vals); i++) {
 			printf(" %02x     %02x     %02x\n",
-			       param.out.dump[i],
-			       param.out.dump[i+1],
-			       param.out.dump[i+2]);
+			       param.out.dump.vals[i].reg,
+			       param.out.dump.vals[i].ic0,
+			       param.out.dump.vals[i].ic1);
 		}
 		return 0;
 	}
@@ -1464,6 +1474,8 @@ const struct command commands[] = {
 int main(int argc, char *argv[])
 {
 	const struct command *cmd;
+
+	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
 	    !strcasecmp(argv[1], "help")) {

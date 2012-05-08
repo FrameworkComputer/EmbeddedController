@@ -349,7 +349,6 @@ struct lpc_params_pwm_set_keyboard_backlight {
  * command to say "talk to the lightbar", we put the "and tell it to do X"
  * part into a subcommand. We'll make separate structs for subcommands with
  * different input args, so that we know how much to expect. */
-
 #define EC_LPC_COMMAND_LIGHTBAR_CMD 0x28
 struct lpc_params_lightbar_cmd {
 	union {
@@ -357,7 +356,7 @@ struct lpc_params_lightbar_cmd {
 			uint8_t cmd;
 			struct {
 				uint8_t cmd;
-			} dump, off, on, init;
+			} dump, off, on, init, get_seq;
 			struct num {
 				uint8_t cmd;
 				uint8_t num;
@@ -373,14 +372,19 @@ struct lpc_params_lightbar_cmd {
 			} rgb;
 		} in;
 		union {
-			uint8_t dump[69];
-			uint8_t off[0];
-			uint8_t on[0];
-			uint8_t init[0];
-			uint8_t brightness[0];
-			uint8_t seq[0];
-			uint8_t reg[0];
-			uint8_t rgb[0];
+			struct dump {
+				struct {
+					uint8_t reg;
+					uint8_t ic0;
+					uint8_t ic1;
+				} vals[23];
+			} dump;
+			struct get_seq {
+				uint8_t num;
+			} get_seq;
+			struct {
+				/* no return params */
+			} off, on, init, brightness, seq, reg, rgb;
 		} out;
 	};
 } __attribute__ ((packed));

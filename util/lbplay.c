@@ -13,6 +13,9 @@
 #include "lightbar.h"
 #include "lpc_commands.h"
 
+/* Handy tricks */
+#define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /* Waits for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
  * timeout. */
@@ -80,7 +83,7 @@ static int ec_command(int command, const void *indata, int insize,
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
-} lb_command_paramcount[LIGHTBAR_NUM_CMDS] = {
+} lb_command_paramcount[] = {
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.dump),
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump) },
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.off),
@@ -97,6 +100,8 @@ static const struct {
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.reg) },
 	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.rgb),
 	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.rgb) },
+	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.get_seq),
+	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.get_seq) },
 };
 
 
@@ -169,10 +174,32 @@ void lightbar_rgb(int led, int red, int green, int blue)
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
 
+void wait_for_ec_to_stop(void)
+{
+	int r;
+	struct lpc_params_lightbar_cmd param;
+	int count = 0;
+
+	do {
+		usleep(100000);
+		param.in.cmd = LIGHTBAR_CMD_GET_SEQ;
+		r = ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+			       &param,
+			       lb_command_paramcount[param.in.cmd].insize,
+			       &param,
+			       lb_command_paramcount[param.in.cmd].outsize);
+		if (count++ > 10) {
+			fprintf(stderr, "EC isn't responding\n");
+			exit(1);
+		}
+	} while (r != 0 && param.out.get_seq.num != LIGHTBAR_STOP);
+}
 
 int main(int argc, char **argv)
 {
 	int i;
+
+	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
 	/* Request I/O privilege */
 	if (iopl(3) < 0) {
@@ -183,6 +210,9 @@ int main(int argc, char **argv)
 
 	/* Tell the EC to let us drive. */
 	lightbar_sequence(LIGHTBAR_STOP);
+
+	/* Wait until it's listening */
+	wait_for_ec_to_stop();
 
 	/* Initialize it */
 	lightbar_off();

@@ -590,10 +590,11 @@ static struct lightbar_cmd_t lightbar_cmds[] = {
 };
 #undef LBMSG
 
+static enum lightbar_sequence current_state, previous_state;
+
 void lightbar_task(void)
 {
 	uint32_t msg;
-	enum lightbar_sequence state, previous_state;
 
 	/* Keep the controllers out of reset. The reset pullup uses more power
 	 * than leaving them in standby. */
@@ -605,36 +606,36 @@ void lightbar_task(void)
 
 	/* FIXME: What to do first? For now, nothing, followed by more
 	   nothing. */
-	state = LIGHTBAR_STOP;
+	current_state = LIGHTBAR_STOP;
 	previous_state = LIGHTBAR_S5;
 
 	while (1) {
-		msg = lightbar_cmds[state].sequence();
+		msg = lightbar_cmds[current_state].sequence();
 		CPRINTF("[%s(%d)]\n", __func__, msg);
 		msg = TASK_EVENT_CUSTOM(msg);
 		if (msg && msg < LIGHTBAR_NUM_SEQUENCES) {
-			previous_state = state;
-			state = TASK_EVENT_CUSTOM(msg);
+			previous_state = current_state;
+			current_state = TASK_EVENT_CUSTOM(msg);
 		} else {
-			switch (state) {
+			switch (current_state) {
 			case LIGHTBAR_S5S3:
-				state = LIGHTBAR_S3;
+				current_state = LIGHTBAR_S3;
 				break;
 			case LIGHTBAR_S3S0:
-				state = LIGHTBAR_S0;
+				current_state = LIGHTBAR_S0;
 				break;
 			case LIGHTBAR_S0S3:
-				state = LIGHTBAR_S3;
+				current_state = LIGHTBAR_S3;
 				break;
 			case LIGHTBAR_S3S5:
-				state = LIGHTBAR_S5;
+				current_state = LIGHTBAR_S5;
 				break;
 			case LIGHTBAR_TEST:
 			case LIGHTBAR_STOP:
 			case LIGHTBAR_RUN:
 			case LIGHTBAR_ERROR:
 			case LIGHTBAR_KONAMI:
-				state = previous_state;
+				current_state = previous_state;
 			default:
 				break;
 			}
@@ -663,20 +664,19 @@ static const uint8_t dump_reglist[] = {
 	0x18, 0x19, 0x1a
 };
 
-static void do_cmd_dump(uint8_t *outptr)
+static void do_cmd_dump(struct lpc_params_lightbar_cmd *ptr)
 {
-	int i, n;
+	int i;
 	uint8_t reg;
 
-	BUILD_ASSERT(3 * ARRAY_SIZE(dump_reglist) ==
-		     sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump));
+	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) ==
+		     ARRAY_SIZE(ptr->out.dump.vals));
 
-	n = ARRAY_SIZE(dump_reglist);
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
 		reg = dump_reglist[i];
-		*outptr++ = reg;
-		*outptr++ = controller_read(0, reg);
-		*outptr++ = controller_read(1, reg);
+		ptr->out.dump.vals[i].reg = reg;
+		ptr->out.dump.vals[i].ic0 = controller_read(0, reg);
+		ptr->out.dump.vals[i].ic1 = controller_read(1, reg);
 	}
 }
 
@@ -704,7 +704,7 @@ static enum lpc_status lpc_cmd_lightbar(uint8_t *data)
 
 	switch (ptr->in.cmd) {
 	case LIGHTBAR_CMD_DUMP:
-		do_cmd_dump(ptr->out.dump);
+		do_cmd_dump(ptr);
 		break;
 	case LIGHTBAR_CMD_OFF:
 		lightbar_off();
@@ -732,7 +732,11 @@ static enum lpc_status lpc_cmd_lightbar(uint8_t *data)
 			   ptr->in.rgb.green,
 			   ptr->in.rgb.blue);
 		break;
+	case LIGHTBAR_CMD_GET_SEQ:
+		ptr->out.get_seq.num = current_state;
+		break;
 	default:
+		CPRINTF("[invalid lightbar cmd 0x%x]\n", ptr->in.cmd);
 		return EC_LPC_RESULT_INVALID_PARAM;
 	}
 
@@ -778,19 +782,24 @@ static void show_msg_names(void)
 	ccprintf("sequence names:");
 	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
 		ccprintf(" %s", lightbar_cmds[i].string);
-	ccprintf("\n");
+	ccprintf("\nCurrent = 0x%x %s\n", current_state,
+		 lightbar_cmds[current_state].string);
 }
 
 static int command_lightbar(int argc, char **argv)
 {
-	int i, j;
-	uint8_t num, buf[128];
+	int i;
+	uint8_t num;
+	struct lpc_params_lightbar_cmd params;
 
 	if (1 == argc) {		/* no args = dump 'em all */
-		do_cmd_dump(buf);
-		for (i = j = 0; i < ARRAY_SIZE(dump_reglist); i++, j += 3)
+		do_cmd_dump(&params);
+		for (i = 0; i < ARRAY_SIZE(dump_reglist); i++)
 			ccprintf(" %02x     %02x     %02x\n",
-				 buf[j], buf[j+1], buf[j+2]);
+				 params.out.dump.vals[i].reg,
+				 params.out.dump.vals[i].ic0,
+				 params.out.dump.vals[i].ic1);
+
 		return EC_SUCCESS;
 	}
 
