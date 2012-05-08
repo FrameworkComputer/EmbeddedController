@@ -16,7 +16,10 @@
 #define PROMPT "> "
 
 /* Default to all channels active */
-static uint32_t channel_mask = 0xffffffff;
+#ifndef CC_DEFAULT
+#define CC_DEFAULT	CC_ALL
+#endif
+static uint32_t channel_mask = CC_DEFAULT;
 
 static char input_buf[80];  /* Current console command line */
 
@@ -50,7 +53,7 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 int cputs(enum console_channel channel, const char *outstr)
 {
 	/* Filter out inactive channels */
-	if (!((1 << channel) & channel_mask))
+	if (!(CC_MASK(channel) & channel_mask))
 		return EC_SUCCESS;
 
 	return uart_puts(outstr);
@@ -63,7 +66,7 @@ int cprintf(enum console_channel channel, const char *format, ...)
 	va_list args;
 
 	/* Filter out inactive channels */
-	if (!((1 << channel) & channel_mask))
+	if (!(CC_MASK(channel) & channel_mask))
 		return EC_SUCCESS;
 
 	va_start(args, format);
@@ -266,8 +269,8 @@ static int command_ch(int argc, char **argv)
 		ccputs(" # Mask     Enabled Channel\n");
 		for (i = 0; i < CC_CHANNEL_COUNT; i++) {
 			ccprintf("%2d %08x %c       %s\n",
-				 i, 1 << i,
-				 (channel_mask & (1 << i) ? '*' : ' '),
+				 i, CC_MASK(i),
+				 (channel_mask & CC_MASK(i)) ? '*' : ' ',
 				 channel_names[i]);
 			cflush();
 		}
@@ -282,7 +285,7 @@ static int command_ch(int argc, char **argv)
 			return EC_ERROR_INVAL;
 		}
 		/* No disabling the command output channel */
-		channel_mask = m | (1 << CC_COMMAND);
+		channel_mask = m | CC_MASK(CC_COMMAND);
 
 		/* TODO: save channel list to EEPROM */
 

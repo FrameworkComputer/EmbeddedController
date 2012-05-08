@@ -45,6 +45,13 @@ enum console_channel {
 	CC_CHANNEL_COUNT
 };
 
+/* Mask in channel_mask for a particular channel */
+#define CC_MASK(channel)	(1UL << (channel))
+
+/* Mask to use to enable all channels */
+#define CC_ALL			0xffffffffUL
+
+
 /* Put a string to the console channel. */
 int cputs(enum console_channel channel, const char *outstr);
 
