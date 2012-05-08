@@ -37,7 +37,7 @@ typedef struct _FmapAreaHeader {
 } __attribute__((packed)) FmapAreaHeader;
 
 
-#define NUM_EC_FMAP_AREAS 14
+#define NUM_EC_FMAP_AREAS 17
 const struct _ec_fmap {
 	FmapHeader header;
 	FmapAreaHeader area[NUM_EC_FMAP_AREAS];
@@ -94,6 +94,29 @@ const struct _ec_fmap {
 			.area_name = "EC_IMAGE",
 			.area_offset = CONFIG_FW_RO_OFF,
 			.area_size = 0, /* Always zero */
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+		{
+			/* The range for write protect, for lagecy firmware
+			 * updater. Should be identical to 'WP_RO'. */
+			.area_name = "EC_RO",
+			.area_offset = CONFIG_FW_RO_OFF,
+			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+		{
+			/* The range for autoupdate to update A/B at once. */
+			.area_name = "EC_RW",
+			.area_offset = CONFIG_FW_A_OFF,
+			.area_size = CONFIG_FW_IMAGE_SIZE * 2,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+		{
+			/* The range for write protect, for factory finalize
+			 * test case. Should be identical to 'EC_RO'. */
+			.area_name = "WP_RO",
+			.area_offset = CONFIG_FW_RO_OFF,
+			.area_size = CONFIG_FW_IMAGE_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
