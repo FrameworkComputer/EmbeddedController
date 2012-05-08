@@ -20,11 +20,13 @@ SECTIONS
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.A : AT(CONFIG_FW_A_OFF) {
         *(.image.A)
+        BYTE(0xEA)                      /* Mark end explicitly */
     } > FLASH =0xff
 #ifndef CONFIG_NO_RW_B
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.B : AT(CONFIG_FW_B_OFF) {
         *(.image.B)
+        BYTE(0xEB)                      /* Mark end explicitly */
     } > FLASH =0xff
 #endif
     /* NOTE: EC implementation reserves one bank for itself */
