@@ -59,6 +59,22 @@ SECTIONS
         *(.rodata.HOOK_SYSJUMP)
         __hooks_sysjump_end = .;
 
+        __hooks_chipset_startup = .;
+        *(.rodata.HOOK_CHIPSET_STARTUP)
+        __hooks_chipset_startup_end = .;
+
+        __hooks_chipset_resume = .;
+        *(.rodata.HOOK_CHIPSET_RESUME)
+        __hooks_chipset_resume_end = .;
+
+        __hooks_chipset_suspend = .;
+        *(.rodata.HOOK_CHIPSET_SUSPEND)
+        __hooks_chipset_suspend_end = .;
+
+        __hooks_chipset_shutdown = .;
+        *(.rodata.HOOK_CHIPSET_SHUTDOWN)
+        __hooks_chipset_shutdown_end = .;
+
         . = ALIGN(4);
         *(.rodata*)
         . = ALIGN(4);

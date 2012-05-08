@@ -27,10 +27,6 @@ enum usb_charge_mode {
 	USB_CHARGE_MODE_COUNT
 };
 
-int usb_charge_all_ports_on(void);
-
-int usb_charge_all_ports_off(void);
-
 int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode);
 
 #endif  /* __CROS_EC_USB_CHARGE_H */

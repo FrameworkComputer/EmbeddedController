@@ -481,3 +481,14 @@ static int lpc_init(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT);
+
+
+static int lpc_resume(void)
+{
+	/* Mask all host events until the host unmasks them itself.  */
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);

@@ -7,16 +7,12 @@
 
 #include "board.h"
 #include "chipset.h"
-#include "clock.h"
 #include "console.h"
 #include "gpio.h"
-#include "lightbar.h"
-#include "lpc.h"
-#include "pwm.h"
+#include "hooks.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "usb_charge.h"
 #include "util.h"
 #include "x86_power.h"
 
@@ -29,9 +25,11 @@
 #define DEFAULT_TIMEOUT 1000000
 
 enum x86_state {
-	X86_G3 = 0,                 /* Initial state */
-	X86_S5,                     /* System is off */
-	X86_S3,                     /* RAM is on; processor is asleep */
+	X86_G3 = 0,                 /* System is off (not technically all the
+				     * way into G3, which means totally
+				     * unpowered...) */
+	X86_S5,                     /* System is soft-off */
+	X86_S3,                     /* Suspend; RAM on, processor is asleep */
 	X86_S0,                     /* System is on */
 
 	/* Transitions */
@@ -213,6 +211,7 @@ void x86_power_reset(int cold_reset)
 /* Chipset interface */
 
 /* Returns non-zero if the chipset is in the specified state. */
+/* TODO: change in_state to bitmask so multiple states can be checked */
 int chipset_in_state(enum chipset_state in_state)
 {
 	switch (in_state) {
@@ -315,7 +314,7 @@ void x86_power_task(void)
 			break;
 
 		case X86_G3S5:
-			/* switch on +5V always-on */
+			/* Switch on +5V always-on */
 			gpio_set_level(GPIO_ENABLE_5VALW, 1);
 			/* Wait for the always-on rails to be good */
 			wait_in_signals(IN_PGOOD_ALWAYS_ON);
@@ -330,12 +329,8 @@ void x86_power_task(void)
 			/* Wait 5ms for SUSCLK to stabilize */
 			usleep(5000);
 
-			/* Turn off USB ports. */
-			usb_charge_all_ports_off();
-
 			state = X86_S5;
 			break;
-
 
 		case X86_S5S3:
 			/* Turn on power to RAM */
@@ -346,8 +341,8 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
 
-			/* Turn on USB ports as we go into S3 or S0. */
-			usb_charge_all_ports_on();
+			/* Call hooks now that rails are up */
+			hook_notify(HOOK_CHIPSET_STARTUP, 0);
 
 			state = X86_S3;
 			break;
@@ -355,12 +350,6 @@ void x86_power_task(void)
 		case X86_S3S0:
 			/* Deassert RCINn */
 			gpio_set_level(GPIO_PCH_RCINn, 1);
-
-			/* Mask all host events until the host unmasks
-			 * them itself.  */
-			lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
-			lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
-			lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
 
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
@@ -370,17 +359,15 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 1);
 			gpio_set_level(GPIO_RADIO_ENABLE_BT, 1);
 
-			/* Enable fan, now that +5VS is turned on */
-			/* TODO: On proto1+, fan is on +5VALW, so we can leave
-			 * it on all the time. */
-			pwm_enable_fan(1);
-
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);
 
 			/* Enable +CPU_CORE and +VGFX_CORE regulator.  The CPU
 			 * itself will request the supplies when it's ready. */
 			gpio_set_level(GPIO_ENABLE_VCORE, 1);
+
+			/* Call hooks now that rails are up */
+			hook_notify(HOOK_CHIPSET_RESUME, 0);
 
 			/* Wait 99ms after all voltages good */
 			usleep(99000);
@@ -389,12 +376,11 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_PCH_PWROK, 1);
 
 			state = X86_S0;
-
-			lightbar_sequence(LIGHTBAR_S3S0);
 			break;
 
 		case X86_S0S3:
-			lightbar_sequence(LIGHTBAR_S0S3);
+			/* Call hooks before we remove power rails */
+			hook_notify(HOOK_CHIPSET_SUSPEND, 0);
 
 			/* Clear PCH_PWROK */
 			gpio_set_level(GPIO_PCH_PWROK, 0);
@@ -408,11 +394,6 @@ void x86_power_task(void)
 			/* Assert RCINn */
 			gpio_set_level(GPIO_PCH_RCINn, 0);
 
-			/* Disable fan, since it's powered by +5VS */
-			/* TODO: On proto1+, fan is on +5VALW, so we can leave
-			 * it on all the time. */
-			pwm_enable_fan(0);
-
 			/* Disable WLAN */
 			gpio_set_level(GPIO_ENABLE_WLAN, 0);
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
@@ -425,15 +406,15 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3S5:
+			/* Call hooks before we remove power rails */
+			hook_notify(HOOK_CHIPSET_SHUTDOWN, 0);
+
 			/* Disable touchpad power and reset touchscreen. */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
 
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
-
-			/* Turn off USB ports. */
-			usb_charge_all_ports_off();
 
 			state = X86_S5;
 			break;

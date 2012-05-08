@@ -342,3 +342,19 @@ static int pwm_init(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+
+
+static int pwm_resume(void)
+{
+	pwm_enable_fan(1);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_resume, HOOK_PRIO_DEFAULT);
+
+
+static int pwm_suspend(void)
+{
+	pwm_enable_fan(0);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_suspend, HOOK_PRIO_DEFAULT);

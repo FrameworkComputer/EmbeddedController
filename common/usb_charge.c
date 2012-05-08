@@ -47,7 +47,7 @@ static void usb_charge_set_ilim(int port_id, int sel)
 }
 
 
-int usb_charge_all_ports_on(void)
+static int usb_charge_all_ports_on(void)
 {
 	usb_charge_set_mode(0, USB_CHARGE_MODE_DOWNSTREAM_500MA);
 	usb_charge_set_mode(1, USB_CHARGE_MODE_DOWNSTREAM_500MA);
@@ -55,7 +55,7 @@ int usb_charge_all_ports_on(void)
 }
 
 
-int usb_charge_all_ports_off(void)
+static int usb_charge_all_ports_off(void)
 {
 	usb_charge_set_mode(0, USB_CHARGE_MODE_DISABLED);
 	usb_charge_set_mode(1, USB_CHARGE_MODE_DISABLED);
@@ -135,7 +135,7 @@ static int command_set_mode(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);
 
 /*****************************************************************************/
-/* Initialization */
+/* Hooks */
 
 static int usb_charge_init(void)
 {
@@ -147,3 +147,21 @@ static int usb_charge_init(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
+
+
+static int usb_charge_startup(void)
+{
+	/* Turn on USB ports on as we go into S3 or S0. */
+	usb_charge_all_ports_on();
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_charge_startup, HOOK_PRIO_DEFAULT);
+
+
+static int usb_charge_shutdown(void)
+{
+	/* Turn on USB ports off as we go back to S5. */
+	usb_charge_all_ports_off();
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_charge_shutdown, HOOK_PRIO_DEFAULT);

@@ -8,6 +8,7 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "lightbar.h"
@@ -652,6 +653,21 @@ void lightbar_sequence(enum lightbar_sequence num)
 			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(num), 0);
 }
 
+
+static int lightbar_resume(void)
+{
+	lightbar_sequence(LIGHTBAR_S3S0);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, lightbar_resume, HOOK_PRIO_DEFAULT);
+
+
+static int lightbar_suspend(void)
+{
+	lightbar_sequence(LIGHTBAR_S0S3);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_suspend, HOOK_PRIO_DEFAULT);
 
 /****************************************************************************/
 /* Generic command-handling (should work the same for both console & LPC) */

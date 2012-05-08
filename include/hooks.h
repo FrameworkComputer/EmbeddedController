@@ -18,14 +18,24 @@ enum hook_priority {
 
 
 enum hook_type {
-	HOOK_INIT = 0,     /* System init */
-	HOOK_FREQ_CHANGE,  /* System clock changed frequency */
-	HOOK_SYSJUMP,      /* About to jump to another image.  Modules which
-			    * need to preserve data across such a jump should
-			    * save it here and restore it in HOOK_INIT.
-			    *
-			    * NOTE: This hook is called with interrupts
-			    * disabled! */
+	HOOK_INIT = 0,         /* System init */
+	HOOK_FREQ_CHANGE,      /* System clock changed frequency */
+	HOOK_SYSJUMP,          /* About to jump to another image.  Modules
+				* which need to preserve data across such a
+				* jump should save it here and restore it in
+				* HOOK_INIT.
+				*
+				* NOTE: This hook is called with interrupts
+				* disabled! */
+	HOOK_CHIPSET_STARTUP,  /* System is starting up.  All suspend rails are
+				* now on. */
+	HOOK_CHIPSET_RESUME,   /* System is resuming from suspend, or booting
+				* and has reached the point where all voltage
+				* rails are on */
+	HOOK_CHIPSET_SUSPEND,  /* System is suspending, or shutting down; all
+				* voltage rails are still on */
+	HOOK_CHIPSET_SHUTDOWN, /* System is shutting down.  All suspend rails
+				* are still on. */
 };
 
 
