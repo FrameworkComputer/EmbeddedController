@@ -23,8 +23,6 @@
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
-extern const struct gpio_info gpio_list[];
-
 /* used for select_column() */
 enum COL_INDEX {
 	COL_ASSERT_ALL = -2,
