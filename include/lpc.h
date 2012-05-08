@@ -25,6 +25,12 @@ int lpc_keyboard_has_char(void);
 /* Send a byte to host via port 0x60 and asserts IRQ if specified. */
 void lpc_keyboard_put_char(uint8_t chr, int send_irq);
 
+/* Clear the keyboard buffer. */
+void lpc_keyboard_clear_buffer(void);
+
+/* Send an IRQ to host if there is a byte in buffer already. */
+void lpc_keyboard_resume_irq(void);
+
 /* Return non-zero if the COMx interface has received a character. */
 int lpc_comx_has_char(void);
 

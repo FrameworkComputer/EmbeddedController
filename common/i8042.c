@@ -49,6 +49,7 @@ static int i8042_irq_enabled = 0;
 void i8042_init()
 {
 	head_to_buffer = tail_to_buffer = 0;
+	keyboard_clear_buffer();
 }
 
 
@@ -86,6 +87,8 @@ static void enq_to_host(int len, uint8_t *to_host)
 	/* Check if the buffer has enough space, then copy them to buffer. */
 	if ((tail_to_buffer + len) <= (head_to_buffer + HOST_BUFFER_SIZE - 1)) {
 		for (from = 0, to = tail_to_buffer; from < len;) {
+			kblog_put('t', to);
+			kblog_put('T', to_host[from]);
 			to_host_buffer[to++] = to_host[from++];
 			to %= HOST_BUFFER_SIZE;
 		}
@@ -99,6 +102,7 @@ static void enq_to_host(int len, uint8_t *to_host)
  */
 void i8042_enable_keyboard_irq(void) {
 	i8042_irq_enabled = 1;
+	keyboard_resume_interrupt();
 }
 
 void i8042_disable_keyboard_irq(void) {
@@ -133,6 +137,8 @@ void i8042_command_task(void)
 
 			/* Get a char from buffer. */
 			chr = to_host_buffer[head_to_buffer];
+			kblog_put('k', head_to_buffer);
+			kblog_put('K', chr);
 			head_to_buffer =
 				(head_to_buffer + 1) % HOST_BUFFER_SIZE;
 
@@ -147,9 +153,15 @@ void i8042_command_task(void)
 
 enum ec_error_list i8042_send_to_host(int len, uint8_t *to_host)
 {
+	int i;
+
+	for (i = 0; i < len; i++)
+		kblog_put('s', to_host[i]);
+
+	/* Put to queue in memory */
 	enq_to_host(len, to_host);
 
-	/* Wake up the task to handle the command */
+	/* Wake up the task to move from queue to the buffer to host. */
 	task_wake(TASK_ID_I8042CMD);
 
 	return EC_SUCCESS;

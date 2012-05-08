@@ -470,6 +470,24 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 #endif
 }
 
+void keyboard_clear_buffer(void)
+{
+#if defined(HOST_KB_BUS_LPC)
+	lpc_keyboard_clear_buffer();
+#else
+#error "keyboard_scan needs to know what bus to use for keyboard interface"
+#endif
+}
+
+void keyboard_resume_interrupt(void)
+{
+#if defined(HOST_KB_BUS_LPC)
+	lpc_keyboard_resume_irq();
+#else
+#error "keyboard_scan needs to know what bus to use for keyboard interface"
+#endif
+}
+
 /* We don't support this API yet, just return -1 */
 int keyboard_get_scan(uint8_t **buffp, int max_bytes)
 {

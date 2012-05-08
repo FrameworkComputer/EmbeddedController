@@ -27,6 +27,9 @@
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
+/* TO Host bit in LPCCH?ST) */
+#define TOH (1 << 0)
+
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 
@@ -51,15 +54,20 @@ static void configure_gpio(void)
 }
 
 
-static void wait_send_serirq(uint32_t lpcirqctl) {
-	LM4_LPC_LPCIRQCTL = lpcirqctl;
-
+static void wait_irq_sent(void)
+{
 	/* TODO: udelay() is not graceful. Since the SIRQRIS is almost not
 	 *       cleared in continuous mode and EC has problem to file
 	 *       more than 1 frame in the quiet mode, this is the best way
 	 *       we can do right now. */
 	udelay(4);  /* 4 us is the time of 2 SERIRQ frames, which is long
 	             * enough to guarantee the IRQ has been sent out. */
+}
+
+static void wait_send_serirq(uint32_t lpcirqctl)
+{
+	LM4_LPC_LPCIRQCTL = lpcirqctl;
+	wait_irq_sent();
 }
 
 /* Manually generates an IRQ to host (edge-trigger).
@@ -163,13 +171,35 @@ void host_send_response(int slot, const uint8_t *data, int size)
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void) {
-	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & (1 << 0 /* TOH */)) ? 1 : 0;
+	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & TOH) ? 1 : 0;
 }
 
 
+/* Put a char to host buffer and send IRQ if specified. */
 void lpc_keyboard_put_char(uint8_t chr, int send_irq) {
 	LPC_POOL_KEYBOARD[1] = chr;
 	if (send_irq) {
+		lpc_manual_irq(1);  /* IRQ#1 */
+	}
+}
+
+
+/* Clear the keyboard buffer. */
+void lpc_keyboard_clear_buffer(void)
+{
+	/* Make sure the previous TOH and IRQ has been sent out. */
+	wait_irq_sent();
+
+	LM4_LPC_ST(LPC_CH_KEYBOARD) &= ~TOH;
+
+	/* Ensure there is no TOH set in this period. */
+	wait_irq_sent();
+}
+
+/* Send an IRQ to host if there is a byte in buffer already. */
+void lpc_keyboard_resume_irq(void)
+{
+	if (lpc_keyboard_has_char()) {
 		lpc_manual_irq(1);  /* IRQ#1 */
 	}
 }

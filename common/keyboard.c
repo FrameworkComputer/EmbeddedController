@@ -15,6 +15,7 @@
 #include "lpc.h"
 #include "ec_commands.h"
 #include "registers.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -142,6 +143,15 @@ static uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
 static uint8_t simulated_key[CROS_COL_NUM];
 
 
+/* Log the traffic between EC and host -- for debug only */
+struct kblog_t {
+	uint8_t type;
+	uint8_t byte;
+};
+static struct kblog_t *kblog;
+static int kblog_len;
+
+
 /* Change to set 1 if the I8042_XLATE flag is set. */
 static enum scancode_set_list acting_code_set(enum scancode_set_list set)
 {
@@ -238,7 +248,7 @@ static void reset_rate_and_delay(void)
 }
 
 
-static void clean_underlying_buffer(void)
+static void clear_underlying_buffer(void)
 {
 	i8042_init();
 }
@@ -272,7 +282,8 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 			      &len);
 	if (ret == EC_SUCCESS) {
 		ASSERT(len > 0);
-		i8042_send_to_host(len, scan_code);
+		if (keyboard_enabled)
+			i8042_send_to_host(len, scan_code);
 	}
 
 	if (is_pressed) {
@@ -295,7 +306,7 @@ void keyboard_enable(int enable)
 	} else if (keyboard_enabled && !enable) {
 		/* disable */
 		reset_rate_and_delay();
-		clean_underlying_buffer();
+		typematic_len = 0;  /* stop typematic */
 	}
 	keyboard_enabled = enable;
 }
@@ -325,13 +336,16 @@ void update_ctl_ram(uint8_t addr, uint8_t data)
 		 addr, data, orig);
 
 	if (addr == 0x00) {  /* the controller RAM */
+		/* Enable IRQ before enable keyboard (queue chars to host) */
+		if (!(orig & I8042_ENIRQ1) && (data & I8042_ENIRQ1))
+			i8042_enable_keyboard_irq();
+
 		/* Handle the I8042_KBD_DIS bit */
 		keyboard_enable(!(data & I8042_KBD_DIS));
 
-		/* Handle the I8042_ENIRQ1 bit */
-		if (!(orig & I8042_ENIRQ1) && (data & I8042_ENIRQ1))
-			i8042_enable_keyboard_irq();
-		else if ((orig & I8042_ENIRQ1) && !(data & I8042_ENIRQ1))
+		/* Disable IRQ after disable keyboard so that every char
+		 * must have informed the host. */
+		if ((orig & I8042_ENIRQ1) && !(data & I8042_ENIRQ1))
 			i8042_disable_keyboard_irq();
 	}
 }
@@ -357,6 +371,7 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 	int i;
 
 	CPRINTF5("[KB recv data: 0x%02x]\n", data);
+	kblog_put('d', data);
 
 	switch (data_port_state) {
 	case STATE_SCANCODE:
@@ -393,13 +408,11 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 	case STATE_WRITE_CMD_BYTE:
 		CPRINTF5("[Eaten by STATE_WRITE_CMD_BYTE: 0x%02x]\n", data);
 		update_ctl_ram(controller_ram_address, data);
-		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_ECHO_MOUSE:
 		CPRINTF5("[Eaten by STATE_ECHO_MOUSE: 0x%02x]\n", data);
-		output[out_len++] = I8042_RET_ACK;
 		output[out_len++] = data;
 		data_port_state = STATE_NORMAL;
 		break;
@@ -462,30 +475,31 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case I8042_CMD_ENABLE:
 			output[out_len++] = I8042_RET_ACK;
 			keyboard_enable(1);
+			clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_DIS:
 			output[out_len++] = I8042_RET_ACK;
 			keyboard_enable(0);
 			reset_rate_and_delay();
-			clean_underlying_buffer();
+			clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_DEF:
 			output[out_len++] = I8042_RET_ACK;
 			reset_rate_and_delay();
-			clean_underlying_buffer();
+			clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_BAT:
+			reset_rate_and_delay();
+			clear_underlying_buffer();
 			output[out_len++] = I8042_RET_ACK;
-			keyboard_enable(0);
 			output[out_len++] = I8042_RET_BAT;
 			output[out_len++] = I8042_RET_BAT;
 			break;
 
 		case I8042_CMD_RESEND:
-			output[out_len++] = I8042_RET_ACK;
 			save_for_resend = 0;
 			for (i = 0; i < resend_command_len; ++i)
 				output[out_len++] = resend_command[i];
@@ -525,6 +539,8 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 	int out_len = 0;
 
 	CPRINTF5("[KB recv cmd: 0x%02x]\n", command);
+	kblog_put('c', command);
+
 	switch (command) {
 	case I8042_READ_CMD_BYTE:
 		output[out_len++] = read_ctl_ram(0);
@@ -536,11 +552,11 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		break;
 
 	case I8042_DIS_KB:
-		keyboard_enable(0);
+		update_ctl_ram(0, read_ctl_ram(0) | I8042_KBD_DIS);
 		break;
 
 	case I8042_ENA_KB:
-		keyboard_enable(1);
+		update_ctl_ram(0, read_ctl_ram(0) & ~I8042_KBD_DIS);
 		break;
 
 	case I8042_RESET_SELF_TEST:
@@ -590,7 +606,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		} else {
 			CPRINTF("[Unsupported cmd: 0x%02x]\n", command);
 			reset_rate_and_delay();
-			clean_underlying_buffer();
+			clear_underlying_buffer();
 			output[out_len++] = I8042_RET_NAK;
 			data_port_state = STATE_NORMAL;
 		}
@@ -644,10 +660,22 @@ void keyboard_set_power_button(int pressed)
 		return;
 
 	code_set = acting_code_set(scancode_set);
-	ret = i8042_send_to_host(
-		 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
-		 code[code_set - SCANCODE_SET_1][pressed]);
-	ASSERT(ret == EC_SUCCESS);
+	if (keyboard_enabled) {
+		ret = i8042_send_to_host(
+			 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
+			 code[code_set - SCANCODE_SET_1][pressed]);
+		ASSERT(ret == EC_SUCCESS);
+	}
+}
+
+
+void kblog_put(char type, uint8_t byte)
+{
+	if (kblog && kblog_len < MAX_KBLOG) {
+		kblog[kblog_len].type = type;
+		kblog[kblog_len].byte = byte;
+		kblog_len++;
+	}
 }
 
 
@@ -662,8 +690,9 @@ void keyboard_typematic_task(void)
 
 			if (typematic_delay <= 0) {
 				/* re-send to host */
-				i8042_send_to_host(typematic_len,
-						   typematic_scan_code);
+				if (keyboard_enabled)
+					i8042_send_to_host(typematic_len,
+							   typematic_scan_code);
 				typematic_delay = refill_inter_delay * 1000;
 			}
 		}
@@ -716,6 +745,7 @@ static int command_codeset(int argc, char **argv)
 		ccprintf("Current scancode set: %d\n", scancode_set);
 		ccprintf("I8042_XLATE: %d\n",
 		            controller_ram[0] & I8042_XLATE ? 1 : 0);
+
 	} else if (argc == 2) {
 		set = strtoi(argv[1], NULL, 0);
 		switch (set) {
@@ -817,6 +847,41 @@ static int command_keyboard_press(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press);
+
+
+static int command_keyboard_log(int argc, char **argv)
+{
+	int i;
+
+	if (argc == 1) {
+		ccprintf("KBC log (len=%d):\n", kblog_len);
+		for (i = 0; kblog && i < kblog_len; ++i) {
+			ccprintf("%c.%02x ", kblog[i].type, kblog[i].byte);
+			if ((i & 15) == 15) {
+				ccputs("\n");
+				cflush();
+			}
+		}
+		ccputs("\n");
+	} else if (argc == 2 && !strcasecmp("on", argv[1])) {
+		if (!kblog) {
+			ASSERT(EC_SUCCESS ==
+			       shared_mem_acquire(sizeof(*kblog) * MAX_KBLOG,
+			       1, (char **)&kblog));
+			kblog_len = 0;
+		}
+	} else if (argc == 2 && !strcasecmp("off", argv[1])) {
+		kblog_len = 0;
+		shared_mem_release(kblog);
+		kblog = NULL;
+	} else {
+		ccputs("Usage: kblog [on/off]\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log);
 
 
 /* Preserves the states of keyboard controller to keep the initialized states
