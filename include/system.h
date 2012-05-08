@@ -105,6 +105,10 @@ int system_run_image_copy(enum system_image_copy_t copy,
  * currently-running image. */
 const char *system_get_version(enum system_image_copy_t copy);
 
+/* Return the board version number.  The meaning of this number is
+ * board-dependent; see enum board_version in board.h for known versions. */
+int system_get_board_version(void);
+
 /* Returns information about the build including the version
  * the build date and user/machine.
  */

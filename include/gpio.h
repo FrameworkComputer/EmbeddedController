@@ -62,7 +62,7 @@ extern const struct gpio_info gpio_list[GPIO_COUNT];
  * set up. */
 int gpio_pre_init(void);
 
-/* Gets the current value of a signal (0=low, 1=hi). */
+/* Get the current value of a signal (0=low, 1=hi). */
 int gpio_get_level(enum gpio_signal signal);
 
 /**
@@ -73,11 +73,15 @@ int gpio_get_level(enum gpio_signal signal);
  */
 const char *gpio_get_name(enum gpio_signal signal);
 
-/* Sets the current value of a signal.  Returns error if the signal is
- * not supported or is an input signal. */
+/* Set the flags for a signal.  Note that this does not set the signal level
+ * based on the presence/absence of GPIO_HIGH; call gpio_set_level() afterwards
+ * to do that if needed. */
+int gpio_set_flags(enum gpio_signal signal, int flags);
+
+/* Set the current value of a signal. */
 int gpio_set_level(enum gpio_signal signal, int value);
 
-/* Enables interrupts for the signal.  The signal must have been defined with
+/* Enable interrupts for the signal.  The signal must have been defined with
  * an interrupt handler.  Normally called by the module which handles the
  * interrupt, once it's ready to start processing interrupts. */
 int gpio_enable_interrupt(enum gpio_signal signal);

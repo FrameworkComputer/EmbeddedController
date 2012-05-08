@@ -76,36 +76,13 @@ int gpio_pre_init(void)
 		/* Use as GPIO, not alternate function */
 		gpio_set_alternate_function(g->port, g->mask, 0);
 
-		/* Handle GPIO direction */
-		if (g->flags & GPIO_OUTPUT) {
-			/* Output with default level */
-			LM4_GPIO_DIR(g->port) |= g->mask;
-			/* Must set level after direction; writes to GPIO_DATA
-			 * before direction is output appear to be ignored. */
-			/* Only set level on a cold reboot; on a warm reboot we
-			 * want to leave things where they were or we'll shut
-			 * off the x86. */
-			if (!is_warm)
-				gpio_set_level(i, g->flags & GPIO_HIGH);
-		} else {
-			/* Input */
-			if (g->flags & GPIO_PULL) {
-				/* With pull up/down */
-				if (g->flags & GPIO_HIGH)
-					LM4_GPIO_PUR(g->port) |= g->mask;
-				else
-					LM4_GPIO_PDR(g->port) |= g->mask;
-			}
-		}
+		/* Set up GPIO based on flags */
+		gpio_set_flags(i, g->flags);
 
-		/* Set up interrupts if necessary */
-		if (g->flags & GPIO_INT_LEVEL)
-			LM4_GPIO_IS(g->port) |= g->mask;
-		if (g->flags & (GPIO_INT_RISING | GPIO_INT_HIGH))
-			LM4_GPIO_IEV(g->port) |= g->mask;
-		if (g->flags & GPIO_INT_BOTH)
-			LM4_GPIO_IBE(g->port) |= g->mask;
-		/* Interrupt is enabled by gpio_enable_interrupt() */
+		/* If this is a cold boot, set the level.  On a warm reboot,
+		 * leave things where they were or we'll shut off the x86. */
+		if ((g->flags & GPIO_OUTPUT) && !is_warm)
+			gpio_set_level(i, g->flags & GPIO_HIGH);
 	}
 
 	return EC_SUCCESS;
@@ -197,6 +174,53 @@ int gpio_set_level(enum gpio_signal signal, int value)
 	 * we care about. */
 	LM4_GPIO_DATA(gpio_list[signal].port,
 		      gpio_list[signal].mask) = (value ? 0xff : 0);
+	return EC_SUCCESS;
+}
+
+
+int gpio_set_flags(enum gpio_signal signal, int flags)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	if (flags & GPIO_OUTPUT) {
+		/* Output */
+		LM4_GPIO_DIR(g->port) |= g->mask;
+
+		if (g->flags & GPIO_OPEN_DRAIN)
+			LM4_GPIO_ODR(g->port) |= g->mask;
+		else
+			LM4_GPIO_ODR(g->port) &= ~g->mask;
+	} else {
+		/* Input */
+		if (g->flags & GPIO_PULL) {
+			/* With pull up/down */
+			if (g->flags & GPIO_HIGH)
+				LM4_GPIO_PUR(g->port) |= g->mask;
+			else
+				LM4_GPIO_PDR(g->port) |= g->mask;
+		} else {
+			/* No pull up/down */
+			LM4_GPIO_PUR(g->port) &= ~g->mask;
+			LM4_GPIO_PDR(g->port) &= ~g->mask;
+		}
+	}
+
+	/* Set up interrupt type */
+	if (g->flags & GPIO_INT_LEVEL)
+		LM4_GPIO_IS(g->port) |= g->mask;
+	else
+		LM4_GPIO_IS(g->port) &= ~g->mask;
+
+	if (g->flags & (GPIO_INT_RISING | GPIO_INT_HIGH))
+		LM4_GPIO_IEV(g->port) |= g->mask;
+	else
+		LM4_GPIO_IEV(g->port) &= ~g->mask;
+
+	if (g->flags & GPIO_INT_BOTH)
+		LM4_GPIO_IBE(g->port) |= g->mask;
+	else
+		LM4_GPIO_IBE(g->port) &= ~g->mask;
+
 	return EC_SUCCESS;
 }
 

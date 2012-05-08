@@ -5,7 +5,9 @@
 
 /* System module for Chrome EC : common functions */
 
+#include "clock.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
@@ -312,6 +314,40 @@ const char *system_get_version(enum system_image_copy_t copy)
 }
 
 
+int system_get_board_version(void)
+{
+	int v = 0;
+
+#ifdef BOARD_link
+	/* Drive board revision GPIOs as outputs briefly.  This clears any
+	 * charge on the proto1 test points, since proto1 doesn't have
+	 * stuffing resistors. */
+	/* TODO: (crosbug.com/p/9559) remove when proto1 has been superseded by
+	 * EVT */
+	gpio_set_flags(GPIO_BOARD_VERSION1, GPIO_OUTPUT);
+	gpio_set_flags(GPIO_BOARD_VERSION2, GPIO_OUTPUT);
+	gpio_set_flags(GPIO_BOARD_VERSION3, GPIO_OUTPUT);
+	gpio_set_level(GPIO_BOARD_VERSION1, 0);
+	gpio_set_level(GPIO_BOARD_VERSION2, 0);
+	gpio_set_level(GPIO_BOARD_VERSION3, 0);
+	clock_wait_cycles(20);
+	gpio_set_flags(GPIO_BOARD_VERSION1, GPIO_INPUT);
+	gpio_set_flags(GPIO_BOARD_VERSION2, GPIO_INPUT);
+	gpio_set_flags(GPIO_BOARD_VERSION3, GPIO_INPUT);
+	clock_wait_cycles(20);
+
+	if (gpio_get_level(GPIO_BOARD_VERSION1))
+		v |= 0x01;
+	if (gpio_get_level(GPIO_BOARD_VERSION2))
+		v |= 0x02;
+	if (gpio_get_level(GPIO_BOARD_VERSION3))
+		v |= 0x04;
+#endif
+
+	return v;
+}
+
+
 const char *system_get_build_info(void)
 {
 	return build_info;
@@ -444,11 +480,12 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);
 
 static int command_version(int argc, char **argv)
 {
-	ccprintf("RO version:   %s\n",
+	ccprintf("Board version: %d\n", system_get_board_version());
+	ccprintf("RO version:    %s\n",
 		    system_get_version(SYSTEM_IMAGE_RO));
-	ccprintf("RW-A version: %s\n",
+	ccprintf("RW-A version:  %s\n",
 		    system_get_version(SYSTEM_IMAGE_RW_A));
-	ccprintf("RW-B version: %s\n",
+	ccprintf("RW-B version:  %s\n",
 		    system_get_version(SYSTEM_IMAGE_RW_B));
 	ccprintf("Current build: %s\n", system_get_build_info());
 	return EC_SUCCESS;

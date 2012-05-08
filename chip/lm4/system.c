@@ -192,6 +192,7 @@ const char *system_get_chip_vendor(void)
 	return "ti";
 }
 
+
 const char *system_get_chip_name(void)
 {
 	if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e20000) {
@@ -206,6 +207,7 @@ const char *system_get_chip_name(void)
 		return "";
 	}
 }
+
 
 const char *system_get_chip_revision(void)
 {
