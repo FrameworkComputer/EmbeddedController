@@ -1,3 +1,4 @@
+# -*- makefile -*-
 # Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -28,7 +29,7 @@ CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist \
               -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE) -DCHIP_$(CHIP) \
               -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_VARIANT_$(CHIP_VARIANT)
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE)
-CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN)
+CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
 BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X

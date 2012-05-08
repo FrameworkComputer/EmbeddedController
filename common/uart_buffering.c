@@ -549,6 +549,11 @@ int uart_printf(const char *format, ...)
 	va_end(args);
 	return rv;
 }
+/* For use when debugging verified boot. We could wrap it with a real function,
+ * but it's rarely needed and this doesn't add any extra code. We have to
+ * declare it here in order for this trick to work.  */
+void VbExDebug(const char *format, ...)
+	__attribute__((weak, alias("uart_printf")));
 
 
 void uart_flush_output(void)

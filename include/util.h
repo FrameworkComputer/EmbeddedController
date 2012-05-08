@@ -32,10 +32,18 @@
 
 
 /* Standard macros / definitions */
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+#ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+#ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef NULL
 #define NULL ((void *)0)
+#endif
 
 /**
  * macros for integer division with various rounding variants

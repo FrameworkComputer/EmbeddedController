@@ -1,3 +1,4 @@
+# -*- makefile -*-
 # Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -27,4 +28,32 @@ common-$(CONFIG_TASK_THERMAL)+=thermal.o thermal_commands.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_TMP006)+=tmp006.o
 common-$(CONFIG_USB_CHARGE)+=usb_charge.o usb_charge_commands.o
-common-$(CONFIG_VBOOT)+=vboot.o fmap.o
+
+# verified boot stuff
+VBOOT_SOURCE?=/usr/src/vboot
+VBOOT_DEVKEYS?=/usr/share/vboot/devkeys
+
+CFLAGS_$(CONFIG_VBOOT)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
+# CFLAGS_$(CONFIG_VBOOT)+= -DVBOOT_DEBUG
+
+common-$(CONFIG_VBOOT)+= fmap.o vboot.o vboot_stub.o
+
+includes-$(CONFIG_VBOOT)+= \
+	$(VBOOT_SOURCE)/include \
+	$(VBOOT_SOURCE)/lib/include \
+	$(VBOOT_SOURCE)/lib/cryptolib/include
+
+dirs-$(CONFIG_VBOOT)+= \
+	vboot/lib vboot/lib/cryptolib
+
+vboot-$(CONFIG_VBOOT)+= \
+	lib/vboot_common.o \
+	lib/utility.o \
+	lib/cryptolib/padding.o \
+	lib/cryptolib/rsa_utility.o \
+	lib/cryptolib/rsa.o \
+	lib/cryptolib/sha_utility.o \
+	lib/cryptolib/sha256.o \
+	lib/stateful_util.o
+
+sign-$(CONFIG_VBOOT)+=sign_image

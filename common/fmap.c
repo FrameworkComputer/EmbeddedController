@@ -83,7 +83,6 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* FIXME(wfrichar): GBB != FMAP. Use the right terms */
 			.area_name = "FMAP",
 			.area_offset = (uint32_t)&ec_fmap,
 			.area_size = sizeof(ec_fmap),

@@ -6,16 +6,84 @@
 /* Verified boot module for Chrome EC */
 
 #include "console.h"
+#include "cryptolib.h"
 #include "gpio.h"
 #include "keyboard_scan.h"
 #include "system.h"
+#include "timer.h"
 #include "util.h"
 #include "vboot.h"
+#include "vboot_api.h"
+#include "vboot_common.h"
+#include "vboot_struct.h"
+#include "watchdog.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_VBOOT, outstr)
 #define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
 
+/****************************************************************************/
+
+enum howgood {
+	IMAGE_IS_BAD,
+	IMAGE_IS_GOOD,
+	IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY,
+};
+
+static enum howgood good_image(uint8_t *key_data,
+			       uint8_t *vblock_data, uint32_t vblock_size,
+			       uint8_t *fv_data, uint32_t fv_size) {
+	VbPublicKey *sign_key;
+	VbKeyBlockHeader *key_block;
+	VbECPreambleHeader *preamble;
+	uint32_t now = 0;
+	RSAPublicKey *rsa;
+
+	key_block = (VbKeyBlockHeader *)vblock_data;
+	sign_key = (VbPublicKey *)key_data;
+
+	watchdog_reload();
+	if (0 != KeyBlockVerify(key_block, vblock_size, sign_key, 0)) {
+		CPRINTF("[Error verifying key block]\n");
+		return IMAGE_IS_BAD;
+	}
+
+	now += key_block->key_block_size;
+	rsa = PublicKeyToRSA(&key_block->data_key);
+	if (!rsa) {
+		CPRINTF("[Error parsing data key]\n");
+		return IMAGE_IS_BAD;
+	}
+
+	watchdog_reload();
+	preamble = (VbECPreambleHeader *)(vblock_data + now);
+	if (0 != VerifyECPreamble(preamble, vblock_size - now, rsa)) {
+		CPRINTF("[Error verifying preamble]\n");
+		RSAPublicKeyFree(rsa);
+		return IMAGE_IS_BAD;
+	}
+
+	if (preamble->flags & VB_FIRMWARE_PREAMBLE_USE_RO_NORMAL) {
+		CPRINTF("[Flags says USE_RO_NORMAL]\n");
+		RSAPublicKeyFree(rsa);
+		return IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY;
+	}
+
+	watchdog_reload();
+	if (0 != EqualData(fv_data, fv_size, &preamble->body_digest, rsa)) {
+		CPRINTF("Error verifying firmware body]\n");
+		RSAPublicKeyFree(rsa);
+		return IMAGE_IS_BAD;
+	}
+
+	RSAPublicKeyFree(rsa);
+
+	watchdog_reload();
+	CPRINTF("[Verified!]\n");
+	return IMAGE_IS_GOOD;
+}
+
+/****************************************************************************/
 
 /* Might I want to jump to one of the RW images? */
 static int maybe_jump_to_other_image(void)
@@ -68,27 +136,70 @@ int vboot_pre_init(void)
 	return EC_SUCCESS;
 }
 
-
 int vboot_init(void)
 {
-	/* nothing to do, so do nothing */
+	enum howgood r;
+	timestamp_t ts1, ts2;
+
+	CPRINTF("\n[--- %s() ---]\n", __func__);
+
 	if (!maybe_jump_to_other_image())
 		return EC_SUCCESS;
 
-	/* FIXME(wfrichar): placeholder for full verified boot implementation.
-	 * TBD exactly how, but we may want to continue in RO firmware, jump
-	 * directly to one of the RW firmwares, etc. */
-	CPRINTF("[ROOT_KEY is at 0x%x, size 0x%x]\n",
-		CONFIG_VBOOT_ROOTKEY_OFF, CONFIG_VBOOT_ROOTKEY_SIZE);
-	CPRINTF("[FW_MAIN_A is at 0x%x, size 0x%x]\n",
-		CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
-	CPRINTF("[VBLOCK_A is at 0x%x, size 0x%x]\n",
-		CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_A_SIZE);
-	CPRINTF("[FW_MAIN_B is at 0x%x, size 0x%x]\n",
-		CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
-	CPRINTF("[VBLOCK_B is at 0x%x, size 0x%x]\n",
-		CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_B_SIZE);
+	CPRINTF("[Check image A...]\n");
 
-	system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
-	return EC_SUCCESS;
+	ts1 = get_time();
+	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
+		       (uint8_t *)CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_A_SIZE,
+		       (uint8_t *)CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
+	ts2 = get_time();
+
+	CPRINTF("[result=%d, elapsed time=%ld]\n", r, ts2.val - ts1.val);
+
+	switch (r) {
+	case IMAGE_IS_GOOD:
+		CPRINTF("[Image A verified at %T]\n");
+		system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
+		CPRINTF("[ERROR: Unable to jump to image A]\n");
+		goto bad;
+	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
+		CPRINTF("[Image A verified at %T]\n");
+		CPRINTF("[Staying in RO mode]\n");
+		return EC_SUCCESS;
+	default:
+		CPRINTF("[Image A is invalid]\n");
+	}
+
+#ifdef CONFIG_NO_RW_B
+	CPRINTF("[No image B to check]\n");
+#else
+	CPRINTF("[Check image B...]\n");
+
+	ts1 = get_time();
+	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
+		       (uint8_t *)CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_B_SIZE,
+		       (uint8_t *)CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
+	ts2 = get_time();
+
+	CPRINTF("[result=%d, elapsed time=%ld]\n", r, ts2.val - ts1.val);
+
+	switch (r) {
+	case IMAGE_IS_GOOD:
+		CPRINTF("[Image B verified at %T]\n");
+		system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
+		CPRINTF("[ERROR: Unable to jump to image B]\n");
+		goto bad;
+	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
+		CPRINTF("[Image B verified at %T]\n");
+		CPRINTF("[Staying in RO mode]\n");
+		return EC_SUCCESS;
+	default:
+		CPRINTF("[Image B is invalid]\n");
+	}
+#endif
+
+bad:
+	CPRINTF("[Staying in RO mode]\n");
+	CPRINTF("[FIXME: How to trigger recovery mode?]\n");
+	return EC_ERROR_UNKNOWN;
 }

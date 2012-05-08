@@ -38,6 +38,8 @@ include common/build.mk
 include test/build.mk
 include util/build.mk
 
+includes+=$(includes-y)
+
 objs_from_dir=$(foreach obj,$(2), $(out)/$(1)/$(obj))
 
 # Get all sources to build
@@ -47,6 +49,7 @@ all-y+=$(call objs_from_dir,board/$(BOARD),$(board-y))
 all-y+=$(call objs_from_dir,private,$(private-y))
 all-y+=$(call objs_from_dir,common,$(common-y))
 all-y+=$(call objs_from_dir,test,$($(PROJECT)-y))
+all-y+=$(call objs_from_dir,vboot,$(vboot-y))
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common test util
 
 include Makefile.rules

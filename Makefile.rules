@@ -1,3 +1,4 @@
+# -*- makefile -*-
 # Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -12,6 +13,8 @@ host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 
 # Create output directories if necessary
 _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
+	    mkdir -p $(out)/$(d)))
+_dir_y_create := $(foreach d,$(dirs-y),$(shell [ -d $(out)/$(d) ] || \
 	    mkdir -p $(out)/$(d)))
 
 section = $(subst .,,$(suffix $(1)))
@@ -38,6 +41,13 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $< -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
 	   $(silent)
 cmd_version = ./util/getversion.sh > $@
+cmd_sign = vbutil_ec --sign $@ \
+		--version 1 \
+		--keyblock $(VBOOT_DEVKEYS)/ec.keyblock \
+		--signprivate $(VBOOT_DEVKEYS)/ec_data_key.vbprivk \
+		--signpubkey $(VBOOT_DEVKEYS)/ec_root_key.vbpubk \
+		$(silent)
+cmd_mv = mv $^ $@
 
 
 .PHONY: all tests utils
@@ -66,8 +76,12 @@ $(out)/firmware_image.lds: common/firmware_image.lds.S
 $(out)/%.lds: core/$(CORE)/ec.lds.S
 	$(call quiet,lds,LDS    )
 
-$(out)/%.bin: $(out)/%.obj
+$(out)/%.bin: $(out)/%.bin.tmp
+	$(call quiet,mv,MV     )
+
+$(out)/%.bin.tmp: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)
+	$(if $(sign-y),$(call quiet,sign,SIGN   ),)
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds \
               $(out)/%.RO.flat $(out)/%.A.flat $(out)/%.B.flat
@@ -83,6 +97,9 @@ $(out)/%.elf: $(out)/%.lds $(objs)
 	$(call quiet,elf,LD     )
 
 $(out)/%.o:%.c
+	$(call quiet,c_to_o,CC     )
+
+$(out)/vboot/%.o:$(VBOOT_SOURCE)/%.c
 	$(call quiet,c_to_o,CC     )
 
 $(out)/%.o:%.S
