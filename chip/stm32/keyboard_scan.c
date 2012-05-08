@@ -87,7 +87,7 @@ static void select_column(int col)
 		uint32_t bsrr = 0;
 		int j;
 
-		for (j = GPIO_KB_OUT00; j < GPIO_KB_OUT12; j++) {
+		for (j = GPIO_KB_OUT00; j <= GPIO_KB_OUT12; j++) {
 			if (gpio_list[j].port != ports[i])
 				continue;
 
