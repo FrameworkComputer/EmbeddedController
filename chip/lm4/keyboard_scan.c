@@ -375,8 +375,19 @@ int keyboard_scan_init(void)
 	/* If we're booting due to a reset-pin-caused reset, check if the
 	 * recovery key is pressed. */
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
-		recovery_key_pressed = check_boot_key(MASK_INDEX_REFRESH,
-						      MASK_VALUE_REFRESH);
+		/* Proto1 used ESC key */
+		/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
+#ifdef BOARD_link
+		if (system_get_board_version() == BOARD_VERSION_PROTO1) {
+			recovery_key_pressed =
+				check_boot_key(MASK_INDEX_REFRESH,
+					       MASK_VALUE_REFRESH);
+		} else
+#endif
+			{
+			recovery_key_pressed =
+				check_boot_key(MASK_INDEX_ESC, MASK_VALUE_ESC);
+		}
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
 		/* Turn fake dev switch on if D pressed, off if F pressed. */
