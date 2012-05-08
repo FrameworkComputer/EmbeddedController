@@ -162,8 +162,9 @@ enum gpio_signal {
 	GPIO_PCH_PWROK,           /* PWROK / APWROK signals to PCH */
 	GPIO_PCH_RCINn,           /* RCIN# signal to PCH */
 	GPIO_PCH_RSMRSTn,         /* Reset PCH resume power plane logic */
-	GPIO_PCH_RTCRSTn,         /* Reset PCH RTC wells */
+	GPIO_PCH_RTCRSTn,         /* Reset PCH RTC well */
 	GPIO_PCH_SMIn,            /* System management interrupt to PCH */
+	GPIO_PCH_SRTCRSTn,        /* Reset PCH ME RTC well */
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_RADIO_DISABLE_WLAN,  /* Disable WLAN radio */
 	GPIO_RADIO_DISABLE_BT,    /* Disable bluetooth radio */
