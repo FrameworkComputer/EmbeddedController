@@ -14,3 +14,4 @@ chip-$(CONFIG_TASK_SPI_WORK)+=spi.o
 chip-$(CONFIG_TASK_I2C2_WORK)+=i2c.o
 chip-$(CONFIG_TASK_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o
+chip-$(CONFIG_FLASH)+=flash-$(CHIP_VARIANT).o

@@ -76,6 +76,8 @@ SECTIONS
         *(.data.tasks)
         *(.data)
         . = ALIGN(4);
+        *(.iram.text)
+        . = ALIGN(4);
         __data_end = .;
     } > IRAM
 #if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)

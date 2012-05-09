@@ -29,7 +29,12 @@ static struct persist_state pstate; /* RAM copy of pstate data */
 /* Return non-zero if the write protect pin is asserted */
 static int wp_pin_asserted(void)
 {
+#ifdef CHIP_stm32
+	/* TODO (vpalatin) : write protect scheme for stm32 */
+	return 0; /* always disable write protect */
+#else
 	return gpio_get_level(GPIO_WRITE_PROTECT);
+#endif
 }
 
 
