@@ -136,22 +136,26 @@ int gaia_power_init(void)
 /*****************************************************************************/
 /* Chipset interface */
 
-/* Returns non-zero if the chipset is in the specified state. */
-int chipset_in_state(enum chipset_state in_state)
+int chipset_in_state(int state_mask)
 {
-	switch (in_state) {
-	case CHIPSET_STATE_SOFT_OFF:
-		return ap_on == 0;
-	case CHIPSET_STATE_SUSPEND:
-		/* TODO: implement */
-		return 0;
-	case CHIPSET_STATE_ON:
-		return ap_on;
-	}
+	/* If AP is off, match any off state for now */
+	if ((state_mask & CHIPSET_STATE_ANY_OFF) && !ap_on)
+		return 1;
 
-	/* Should never get here since we list all states above, but compiler
-	 * doesn't seem to understand that. */
+	/* If AP is on, match on state */
+	if ((state_mask & CHIPSET_STATE_ON) && ap_on)
+		return 1;
+
+	/* TODO: detect suspend state */
+
+	/* In any other case, we don't have a match */
 	return 0;
+}
+
+
+void chipset_exit_hard_off(void)
+{
+	/* TODO: implement, if/when we take the AP down to a hard-off state */
 }
 
 /*****************************************************************************/

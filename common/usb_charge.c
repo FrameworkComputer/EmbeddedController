@@ -139,7 +139,7 @@ DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);
 
 static int usb_charge_init(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_SOFT_OFF))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		usb_charge_all_ports_off();
 	else
 		usb_charge_all_ports_on();

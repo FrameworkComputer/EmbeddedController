@@ -24,6 +24,9 @@
  * transition, just jump to the next state. */
 #define DEFAULT_TIMEOUT 1000000
 
+/* Timeout for dropping back from S5 to G3 */
+#define S5_INACTIVITY_TIMEOUT 10000000
+
 enum x86_state {
 	X86_G3 = 0,                 /* System is off (not technically all the
 				     * way into G3, which means totally
@@ -38,6 +41,7 @@ enum x86_state {
 	X86_S3S0,                   /* S3 -> S0 */
 	X86_S0S3,                   /* S0 -> S3 */
 	X86_S3S5,                   /* S3 -> S5 */
+	X86_S5G3,                   /* S5 -> G3 */
 };
 
 static const char * const state_names[] = {
@@ -50,6 +54,7 @@ static const char * const state_names[] = {
 	"S3->S0",
 	"S0->S3",
 	"S3->S5",
+	"S5->G3",
 };
 
 /* Input state flags */
@@ -87,7 +92,7 @@ static const char * const state_names[] = {
 static enum x86_state state;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
 static uint32_t in_want;      /* Input signal state we're waiting for */
-
+static int want_g3_exit;      /* Should we exit the G3 state? */
 
 /* Update input signal state */
 static void update_in_signals(void)
@@ -210,22 +215,56 @@ void x86_power_reset(int cold_reset)
 /*****************************************************************************/
 /* Chipset interface */
 
-/* Returns non-zero if the chipset is in the specified state. */
-/* TODO: change in_state to bitmask so multiple states can be checked */
-int chipset_in_state(enum chipset_state in_state)
+int chipset_in_state(int state_mask)
 {
-	switch (in_state) {
-	case CHIPSET_STATE_SOFT_OFF:
-		return (state == X86_S5);
-	case CHIPSET_STATE_SUSPEND:
-		return (state == X86_S3);
-	case CHIPSET_STATE_ON:
-		return (state == X86_S0);
+	int need_mask = 0;
+
+	/* TODO: what to do about state transitions?  If the caller wants
+	 * HARD_OFF|SOFT_OFF and we're in G3S5, we could still return
+	 * non-zero. */
+	switch (state) {
+	case X86_G3:
+		need_mask = CHIPSET_STATE_HARD_OFF;
+		break;
+	case X86_G3S5:
+	case X86_S5G3:
+		/* In between hard and soft off states.  Match only if caller
+		 * will accept both. */
+		need_mask = CHIPSET_STATE_HARD_OFF | CHIPSET_STATE_SOFT_OFF;
+		break;
+	case X86_S5:
+		need_mask = CHIPSET_STATE_SOFT_OFF;
+		break;
+	case X86_S5S3:
+	case X86_S3S5:
+		need_mask = CHIPSET_STATE_SOFT_OFF | CHIPSET_STATE_SUSPEND;
+		break;
+	case X86_S3:
+		need_mask = CHIPSET_STATE_SUSPEND;
+		break;
+	case X86_S3S0:
+	case X86_S0S3:
+		need_mask = CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON;
+		break;
+	case X86_S0:
+		need_mask = CHIPSET_STATE_ON;
+		break;
 	}
 
-	/* Should never get here since we list all states above, but compiler
-	 * doesn't seem to understand that. */
-	return 0;
+	/* Return non-zero if all needed bits are present */
+	return (state_mask & need_mask) == need_mask;
+}
+
+
+void chipset_exit_hard_off(void)
+{
+	/* If not in the hard-off state nor headed there, nothing to do */
+	if (state != X86_G3 && state != X86_S5G3)
+		return;
+
+	/* Set a flag to leave G3, then wake the task */
+	want_g3_exit = 1;
+	task_wake(TASK_ID_X86POWER);
 }
 
 /*****************************************************************************/
@@ -245,8 +284,10 @@ void x86_power_interrupt(enum gpio_signal signal)
 
 static int x86_power_init(void)
 {
-	/* Default to G3 state unless proven otherwise */
-	state = X86_G3;
+	/* Default to moving towards S5 state unless proven otherwise.  This
+	 * supports booting the main processor during the boot process.  We'll
+	 * drop back to G3 if we stay inactive in S5.*/
+	state = X86_G3S5;
 
 	/* Update input state */
 	update_in_signals();
@@ -309,8 +350,60 @@ void x86_power_task(void)
 
 		switch (state) {
 		case X86_G3:
-			/* Move to S5 state on boot */
-			state = X86_G3S5;
+			if (want_g3_exit) {
+				want_g3_exit = 0;
+				state = X86_G3S5;
+				break;
+			}
+
+			/* Steady state; wait for a message */
+			in_want = 0;
+			task_wait_event(-1);
+			break;
+
+		case X86_S5:
+			if (gpio_get_level(GPIO_PCH_SLP_S5n) == 1) {
+				/* Power up to next state */
+				state = X86_S5S3;
+				break;
+			}
+
+			/* Wait for inactivity timeout */
+			in_want = 0;
+			if (task_wait_event(S5_INACTIVITY_TIMEOUT) ==
+			    TASK_EVENT_TIMER) {
+				/* Drop to G3; wake not requested yet */
+				want_g3_exit = 0;
+				state = X86_S5G3;
+			}
+			break;
+
+		case X86_S3:
+			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
+				/* Power up to next state */
+				state = X86_S3S0;
+				break;
+			} else if (gpio_get_level(GPIO_PCH_SLP_S5n) == 0) {
+				/* Power down to next state */
+				state = X86_S3S5;
+				break;
+			}
+
+			/* Otherwise, steady state; wait for a message */
+			in_want = 0;
+			task_wait_event(-1);
+			break;
+
+		case X86_S0:
+			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
+				/* Power down to next state */
+				state = X86_S0S3;
+				break;
+			}
+
+			/* Otherwise, steady state; wait for a message */
+			in_want = 0;
+			task_wait_event(-1);
 			break;
 
 		case X86_G3S5:
@@ -419,50 +512,22 @@ void x86_power_task(void)
 			state = X86_S5;
 			break;
 
-		case X86_S5:
-			if (gpio_get_level(GPIO_PCH_SLP_S5n) == 1) {
-				/* Power up to next state */
-				state = X86_S5S3;
-				break;
-			}
+		case X86_S5G3:
+			/* Deassert DPWROK, assert RSMRST# */
+			gpio_set_level(GPIO_PCH_DPWROK, 0);
+			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 
-			/* Otherwise, steady state; wait for a message */
-			in_want = 0;
-			task_wait_event(-1);
+			/* Switch off +5V always-on */
+			gpio_set_level(GPIO_ENABLE_5VALW, 0);
+
+			state = X86_G3;
 			break;
-
-		case X86_S3:
-			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
-				/* Power up to next state */
-				state = X86_S3S0;
-				break;
-			} else if (gpio_get_level(GPIO_PCH_SLP_S5n) == 0) {
-				/* Power down to next state */
-				state = X86_S3S5;
-				break;
-			}
-
-			/* Otherwise, steady state; wait for a message */
-			in_want = 0;
-			task_wait_event(-1);
-			break;
-
-		case X86_S0:
-			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
-				/* Power down to next state */
-				state = X86_S0S3;
-				break;
-			}
-
-			/* Otherwise, steady state; wait for a message */
-			in_want = 0;
-			task_wait_event(-1);
 		}
 	}
 }
 
 /*****************************************************************************/
-/* Console commnands */
+/* Console commands */
 
 static int command_x86power(int argc, char **argv)
 {

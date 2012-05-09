@@ -42,13 +42,14 @@
 #define PWRBTN_DEBOUNCE_US 30000  /* Debounce time for power button */
 #define PWRBTN_DELAY_T0    32000  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-#define PWRBTN_RECOVERY_US 200000 /* Length of time to simulate power button
-				   * press when booting into
-				   * keyboard-controlled recovery mode */
+#define PWRBTN_INITIAL_US  200000 /* Length of time to stretch initial power
+				   * button press to give chipset a chance to
+				   * wake up (~100ms) and react to the press
+				   * (~16ms).  Also used as pulse length for
+				   * simulated power button presses when the
+				   * system is off. */
 
 #define LID_DEBOUNCE_US    30000  /* Debounce time for lid switch */
-#define LID_PWRBTN_US      PWRBTN_DELAY_T0 /* Length of time to simulate power
-					    * button press on lid open */
 
 enum power_button_state {
 	PWRBTN_STATE_STOPPED = 0,
@@ -59,6 +60,7 @@ enum power_button_state {
 	PWRBTN_STATE_STOPPING,
 	PWRBTN_STATE_BOOT_RESET,
 	PWRBTN_STATE_BOOT_RECOVERY,
+	PWRBTN_STATE_WAS_OFF,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
 
@@ -146,10 +148,16 @@ static void state_machine(uint64_t tnow)
 
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_START:
-		if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
-			/* Chipset is off, so just pass the true power button
-			 * state to the chipset. */
-			pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			/* Chipset is off, so wake the chipset and send it a
+			 * long enough pulse to wake up.  After that we'll
+			 * reflect the true power button state.  If we don't
+			 * stretch the pulse here, the user may release the
+			 * power button before the chipset finishes waking from
+			 * hard off state. */
+			chipset_exit_hard_off();
+			tnext_state = tnow + PWRBTN_INITIAL_US;
+			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
 		} else {
 			/* Chipset is on, so send the chipset a pulse */
 			tnext_state = tnow + PWRBTN_DELAY_T0;
@@ -166,10 +174,10 @@ static void state_machine(uint64_t tnow)
 		/* If the chipset is already off, don't tell it the power
 		 * button is down; it'll just cause the chipset to turn on
 		 * again. */
-		if (!chipset_in_state(CHIPSET_STATE_SOFT_OFF))
-			set_pwrbtn_to_pch(0);
-		else
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			CPRINTF("[%T PB chipset already off]\n");
+		else
+			set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
 		break;
 	case PWRBTN_STATE_STOPPING:
@@ -179,6 +187,17 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_BOOT_RECOVERY:
 		set_pwrbtn_to_pch(1);
 		pwrbtn_state = PWRBTN_STATE_BOOT_RESET;
+		break;
+	case PWRBTN_STATE_WAS_OFF:
+		if (get_power_button_pressed()) {
+			/* User is still holding the power button */
+			pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
+		} else {
+			/* Stop stretching the power button press */
+			*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+			keyboard_set_power_button(0);
+			pwrbtn_state = PWRBTN_STATE_STOPPING;
+		}
 		break;
 	case PWRBTN_STATE_STOPPED:
 	case PWRBTN_STATE_HELD_DOWN:
@@ -195,6 +214,9 @@ static void power_button_changed(uint64_t tnow)
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_RECOVERY) {
 		/* Ignore all power button changes during the recovery pulse */
 		CPRINTF("[%T PB changed during recovery pulse]\n");
+	} else if (pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
+		/* Ignore all power button changes during an initial pulse */
+		CPRINTF("[%T PB changed during initial pulse]\n");
 	} else if (get_power_button_pressed()) {
 		/* Power button pressed */
 		CPRINTF("[%T PB pressed]\n");
@@ -233,12 +255,13 @@ static void lid_switch_open(uint64_t tnow)
 	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
 			    EC_LPC_HOST_EVENT_LID_OPEN));
 
-	/* If the chipset is is soft-off, send a power button pulse to
-	 * wake up the chipset. */
-	if (chipset_in_state(CHIPSET_STATE_SOFT_OFF)) {
+	/* If the chipset is off, send a power button pulse to wake up the
+	 * chipset. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		chipset_exit_hard_off();
 		set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
-		tnext_state = tnow + LID_PWRBTN_US;
+		tnext_state = tnow + PWRBTN_INITIAL_US;
 		task_wake(TASK_ID_POWERBTN);
 	}
 }
@@ -317,7 +340,7 @@ static int power_button_init(void)
 			 * the PCH so it powers on. */
 			set_pwrbtn_to_pch(0);
 			pwrbtn_state = PWRBTN_STATE_BOOT_RECOVERY;
-			tnext_state = get_time().val + PWRBTN_RECOVERY_US;
+			tnext_state = get_time().val + PWRBTN_INITIAL_US;
 		} else {
 			/* Keyboard-controlled reset, so don't let the PCH see
 			 * that the power button was pressed.  Otherwise, it
@@ -395,7 +418,7 @@ void power_button_task(void)
 
 static int command_powerbtn(int argc, char **argv)
 {
-	int ms = 100;  /* Press duration in ms */
+	int ms = PWRBTN_INITIAL_US / 1000;  /* Press duration in ms */
 	char *e;
 
 	if (argc > 1) {
@@ -411,6 +434,7 @@ static int command_powerbtn(int argc, char **argv)
 	 * PCH.  It does not simulate the full state machine which sends SMIs
 	 * and other events to other parts of the EC and chipset. */
 	ccprintf("Simulating %d ms power button press.\n", ms);
+	chipset_exit_hard_off();
 	set_pwrbtn_to_pch(0);
 	usleep(ms * 1000);
 	set_pwrbtn_to_pch(1);

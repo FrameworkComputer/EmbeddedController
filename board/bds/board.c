@@ -86,9 +86,14 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 /* BDS system is only half-wired to an x86 chipset, so it can't tell what state
  * the chipset is in.  Rather than scatter ifdef's everywhere, put a mock
  * chipset interface here. */
-int chipset_in_state(enum chipset_state in_state)
+int chipset_in_state(int state_mask)
 {
 	return 1;  /* Sure, I'm in whatever state you want. */
+}
+
+
+void chipset_exit_hard_off(void)
+{
 }
 
 
