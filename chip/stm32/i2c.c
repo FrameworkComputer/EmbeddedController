@@ -39,9 +39,12 @@ static uint16_t i2c_sr1[NUM_PORTS];
 static unsigned int tx_byte_count;
 static unsigned int rx_byte_count;
 
-/* i2c_xmit_mode determines what EC sends when AP initiates a
-   read transaction */
-static enum message_cmd_t i2c_xmit_mode[NUM_PORTS];
+/*
+ * i2c_xmit_mode determines what EC sends when AP initiates a
+ * read transaction. If AP has not set a transmit mode, then
+ * default to NOP.
+ */
+static enum message_cmd_t i2c_xmit_mode[NUM_PORTS] = { CMDC_NOP, CMDC_NOP };
 
 /*
  * Our output buffers. These must be large enough for our largest message,
@@ -124,6 +127,9 @@ void i2c2_work_task(void)
 				CPRINTF("%s: unexpected mode %u\n",
 						__func__, i2c_xmit_mode[I2C2]);
 			}
+
+			/* reset EC mode to NOP after transfer is finished */
+			i2c_xmit_mode[I2C2] = CMDC_NOP;
 		}
 	}
 }
