@@ -201,10 +201,6 @@ void x86_power_reset(int cold_reset)
 		 * assert INIT# to the CPU without dropping power or asserting
 		 * PLTRST# to reset the rest of the system. */
 
-		/* Ignore if RCINn is already low */
-		if (gpio_get_level(GPIO_PCH_RCINn) == 0)
-			return;
-
 		/* Pulse must be at least 16 PCI clocks long = 500 ns */
 		gpio_set_level(GPIO_PCH_RCINn, 0);
 		udelay(10);
@@ -305,7 +301,6 @@ static int x86_power_init(void)
 			CPUTS("[x86 forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
-			gpio_set_level(GPIO_PCH_RCINn, 0);
 			gpio_set_level(GPIO_ENABLE_VS, 0);
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
@@ -407,12 +402,8 @@ void x86_power_task(void)
 			break;
 
 		case X86_G3S5:
-			/* Switch on +5V always-on */
-			gpio_set_level(GPIO_ENABLE_5VALW, 1);
-			/* Wait for the always-on rails to be good */
-			wait_in_signals(IN_PGOOD_ALWAYS_ON);
-
-			/* Wait 10ms after +5VALW good */
+			/* Wait 10ms after +3VALW good, since that powers
+			 * VccDSW and VccSUS. */
 			usleep(10000);
 
 			/* Assert DPWROK, deassert RSMRST# */
@@ -426,13 +417,23 @@ void x86_power_task(void)
 			break;
 
 		case X86_S5S3:
+			/* Switch on +5V always-on */
+			gpio_set_level(GPIO_ENABLE_5VALW, 1);
+			/* Wait for the always-on rails to be good */
+			wait_in_signals(IN_PGOOD_ALWAYS_ON);
+
+			/* Take touchscreen and lightbar out of reset, now
+			 * that +5VALW is available and we won't leak +3VALW
+			 * through the reset line. */
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
+			gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
+
 			/* Turn on power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
 
-			/* Enable touchpad power and take touchscreen out of
-			 * reset, so they can wake the system from suspend. */
+			/* Enable touchpad power so it can wake the system from
+			 * suspend. */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
 
 			/* Call hooks now that rails are up */
 			hook_notify(HOOK_CHIPSET_STARTUP, 0);
@@ -441,9 +442,6 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3S0:
-			/* Deassert RCINn */
-			gpio_set_level(GPIO_PCH_RCINn, 1);
-
 			/* Turn on power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 1);
 
@@ -484,9 +482,6 @@ void x86_power_task(void)
 			/* Disable +CPU_CORE and +VGFX_CORE */
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
 
-			/* Assert RCINn */
-			gpio_set_level(GPIO_PCH_RCINn, 0);
-
 			/* Disable WLAN */
 			gpio_set_level(GPIO_ENABLE_WLAN, 0);
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
@@ -502,12 +497,19 @@ void x86_power_task(void)
 			/* Call hooks before we remove power rails */
 			hook_notify(HOOK_CHIPSET_SHUTDOWN, 0);
 
-			/* Disable touchpad power and reset touchscreen. */
+			/* Disable touchpad power */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
 
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
+
+			/* Put touchscreen and lightbar in reset, so we won't
+			 * leak +3VALW through the reset line. */
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+			gpio_set_level(GPIO_LIGHTBAR_RESETn, 0);
+
+			/* Switch off +5V always-on */
+			gpio_set_level(GPIO_ENABLE_5VALW, 0);
 
 			state = X86_S5;
 			break;
@@ -516,9 +518,6 @@ void x86_power_task(void)
 			/* Deassert DPWROK, assert RSMRST# */
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
-
-			/* Switch off +5V always-on */
-			gpio_set_level(GPIO_ENABLE_5VALW, 0);
 
 			state = X86_G3;
 			break;

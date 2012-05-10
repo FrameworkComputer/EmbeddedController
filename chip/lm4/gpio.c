@@ -184,14 +184,18 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 
 	if (flags & GPIO_OUTPUT) {
 		/* Output */
-		LM4_GPIO_DIR(g->port) |= g->mask;
-
+		/* Select open drain first, so that we don't glitch the signal
+		 * when changing the line to an output. */
 		if (g->flags & GPIO_OPEN_DRAIN)
 			LM4_GPIO_ODR(g->port) |= g->mask;
 		else
 			LM4_GPIO_ODR(g->port) &= ~g->mask;
+
+		LM4_GPIO_DIR(g->port) |= g->mask;
 	} else {
 		/* Input */
+		LM4_GPIO_DIR(g->port) &= ~g->mask;
+
 		if (g->flags & GPIO_PULL) {
 			/* With pull up/down */
 			if (g->flags & GPIO_HIGH)

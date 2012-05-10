@@ -117,11 +117,10 @@ static void overheated_action(void)
 
 	if (overheated[THRESHOLD_WARNING]) {
 		smi_overheated_warning();
-		gpio_set_flags(GPIO_CPU_PROCHOTn, GPIO_OUTPUT);
 		gpio_set_level(GPIO_CPU_PROCHOTn, 0);
 	}
 	else
-		gpio_set_flags(GPIO_CPU_PROCHOTn, 0);
+		gpio_set_flags(GPIO_CPU_PROCHOTn, 1);
 
 	if (fan_ctrl_on) {
 		int i;
