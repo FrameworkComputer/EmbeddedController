@@ -597,11 +597,16 @@ void lightbar_task(void)
 {
 	uint32_t msg;
 
-	/* Keep the controllers out of reset. The reset pullup uses more power
-	 * than leaving them in standby. */
-	gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
-	usleep(100);
-
+	/* Reset lightbar to a known state */
+	/* TODO: (crosbug.com/p/9561) only needed on proto1, since on EVT the
+	 * lightbar loses power when +5VALW goes away, and will come back on
+	 * with these default values anyway.
+	 *
+	 * Also note than on EVT, it costs more power to deassert lightbar
+	 * reset than it does to hold the lightbar in reset, because the
+	 * lightbar reset line is a leakage path from +3VALW.  On proto1,
+	 * that's reversed, because the LED drivers consume more power held in
+	 * reset than out of reset. */
 	lightbar_init_vals();
 	lightbar_off();
 

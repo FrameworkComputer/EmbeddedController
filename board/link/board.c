@@ -74,8 +74,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"WRITE_PROTECT",       LM4_GPIO_J, (1<<4), GPIO_INT_BOTH,
 	 power_button_interrupt},
 	/* Outputs; all unasserted by default except for reset signals */
-	/* CPU_PROCHOTn is high-Z unless we're driving it */
-	{"CPU_PROCHOTn",        LM4_GPIO_F, (1<<2), 0, NULL},
+	{"CPU_PROCHOTn",        LM4_GPIO_F, (1<<2), GPIO_HI_Z, NULL},
 	{"ENABLE_1_5V_DDR",     LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENABLE_BACKLIGHT",    LM4_GPIO_H, (1<<4), GPIO_OUT_LOW, NULL},
@@ -92,13 +91,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_NMIn",            LM4_GPIO_M, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWRBTNn",         LM4_GPIO_G, (1<<7), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",           LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GPIO_OUT_LOW, NULL},
+	{"PCH_RCINn",           LM4_GPIO_Q, (1<<7), GPIO_HI_Z, NULL},
 	{"PCH_RSMRSTn",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
-	/* RTCRST# (and SRTCRST# below) are unasserted by default so we don't
-	 * clear the RTC wells in the PCH when the EC resets. */
-	{"PCH_RTCRSTn",         LM4_GPIO_F, (1<<6), GPIO_OUT_HIGH, NULL},
+	{"PCH_RTCRSTn",         LM4_GPIO_F, (1<<6), GPIO_HI_Z, NULL},
 	{"PCH_SMIn",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
-	{"PCH_SRTCRSTn",        LM4_GPIO_C, (1<<7), GPIO_OUT_HIGH, NULL},
+	{"PCH_SRTCRSTn",        LM4_GPIO_C, (1<<7), GPIO_HI_Z, NULL},
 	{"PCH_SUSACKn",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
 	{"RADIO_ENABLE_WLAN",   LM4_GPIO_D, (1<<0), GPIO_OUT_LOW, NULL},
 	{"RADIO_ENABLE_BT",     LM4_GPIO_D, (1<<1), GPIO_OUT_LOW, NULL},
