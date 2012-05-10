@@ -269,6 +269,7 @@ static int command_ch(int argc, char **argv)
 				 i, 1 << i,
 				 (channel_mask & (1 << i) ? '*' : ' '),
 				 channel_names[i]);
+			cflush();
 		}
 		return EC_SUCCESS;
 	}
