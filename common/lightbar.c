@@ -718,7 +718,7 @@ static void do_cmd_rgb(uint8_t led,
 /* Host commands via LPC bus */
 /****************************************************************************/
 
-static enum lpc_status lpc_cmd_lightbar(uint8_t *data)
+static int lpc_cmd_lightbar(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_lightbar_cmd *ptr =
 		(struct lpc_params_lightbar_cmd *)data;
@@ -726,6 +726,7 @@ static enum lpc_status lpc_cmd_lightbar(uint8_t *data)
 	switch (ptr->in.cmd) {
 	case LIGHTBAR_CMD_DUMP:
 		do_cmd_dump(ptr);
+		*resp_size = sizeof(struct lpc_params_lightbar_cmd);
 		break;
 	case LIGHTBAR_CMD_OFF:
 		lightbar_off();
@@ -755,6 +756,7 @@ static enum lpc_status lpc_cmd_lightbar(uint8_t *data)
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
 		ptr->out.get_seq.num = current_state;
+		*resp_size = sizeof(struct lpc_params_lightbar_cmd);
 		break;
 	default:
 		CPRINTF("[invalid lightbar cmd 0x%x]\n", ptr->in.cmd);

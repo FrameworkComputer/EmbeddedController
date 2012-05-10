@@ -9,7 +9,7 @@
 #include "thermal.h"
 
 
-enum lpc_status thermal_command_set_threshold(uint8_t *data)
+int thermal_command_set_threshold(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_thermal_set_threshold *p =
 			(struct lpc_params_thermal_set_threshold *)data;
@@ -22,7 +22,7 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_SET_THRESHOLD,
 		thermal_command_set_threshold);
 
 
-enum lpc_status thermal_command_get_threshold(uint8_t *data)
+int thermal_command_get_threshold(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_thermal_get_threshold *p =
 			(struct lpc_params_thermal_get_threshold *)data;
@@ -33,13 +33,14 @@ enum lpc_status thermal_command_get_threshold(uint8_t *data)
 	if (r->value == -1)
 		return EC_LPC_RESULT_ERROR;
 
+	*resp_size = sizeof(struct lpc_response_thermal_get_threshold);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
 		thermal_command_get_threshold);
 
 
-enum lpc_status thermal_command_auto_fan_ctrl(uint8_t *data)
+int thermal_command_auto_fan_ctrl(uint8_t *data, int *resp_size)
 {
 	if (thermal_toggle_auto_fan_ctrl(1))
 		return EC_LPC_RESULT_ERROR;

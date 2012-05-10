@@ -60,43 +60,46 @@ DECLARE_CONSOLE_COMMAND(hostevent, command_host_event);
 /*****************************************************************************/
 /* Host commands */
 
-static enum lpc_status host_event_get_smi_mask(uint8_t *data)
+static int host_event_get_smi_mask(uint8_t *data, int *resp_size)
 {
 	struct lpc_response_host_event_mask *r =
 		(struct lpc_response_host_event_mask *)data;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	*resp_size = sizeof(struct lpc_response_host_event_mask);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK,
 		     host_event_get_smi_mask);
 
 
-static enum lpc_status host_event_get_sci_mask(uint8_t *data)
+static int host_event_get_sci_mask(uint8_t *data, int *resp_size)
 {
 	struct lpc_response_host_event_mask *r =
 		(struct lpc_response_host_event_mask *)data;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	*resp_size = sizeof(struct lpc_response_host_event_mask);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK,
 		     host_event_get_sci_mask);
 
 
-static enum lpc_status host_event_get_wake_mask(uint8_t *data)
+static int host_event_get_wake_mask(uint8_t *data, int *resp_size)
 {
 	struct lpc_response_host_event_mask *r =
 		(struct lpc_response_host_event_mask *)data;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
+	*resp_size = sizeof(struct lpc_response_host_event_mask);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_GET_WAKE_MASK,
 		     host_event_get_wake_mask);
 
 
-static enum lpc_status host_event_set_smi_mask(uint8_t *data)
+static int host_event_set_smi_mask(uint8_t *data, int *resp_size)
 {
 	const struct lpc_params_host_event_mask *p =
 		(const struct lpc_params_host_event_mask *)data;
@@ -108,7 +111,7 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK,
 		     host_event_set_smi_mask);
 
 
-static enum lpc_status host_event_set_sci_mask(uint8_t *data)
+static int host_event_set_sci_mask(uint8_t *data, int *resp_size)
 {
 	const struct lpc_params_host_event_mask *p =
 		(const struct lpc_params_host_event_mask *)data;
@@ -120,7 +123,7 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK,
 		     host_event_set_sci_mask);
 
 
-static enum lpc_status host_event_set_wake_mask(uint8_t *data)
+static int host_event_set_wake_mask(uint8_t *data, int *resp_size)
 {
 	const struct lpc_params_host_event_mask *p =
 		(const struct lpc_params_host_event_mask *)data;
@@ -132,7 +135,7 @@ DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HOST_EVENT_SET_WAKE_MASK,
 		     host_event_set_wake_mask);
 
 
-static enum lpc_status host_event_clear(uint8_t *data)
+static int host_event_clear(uint8_t *data, int *resp_size)
 {
 	const struct lpc_params_host_event_mask *p =
 		(const struct lpc_params_host_event_mask *)data;

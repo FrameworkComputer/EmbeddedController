@@ -15,7 +15,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 
-enum lpc_status usb_charge_command_set_mode(uint8_t *data)
+int usb_charge_command_set_mode(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_usb_charge_set_mode *p =
 			(struct lpc_params_usb_charge_set_mode *)data;
