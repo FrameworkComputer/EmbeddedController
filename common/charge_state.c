@@ -15,7 +15,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "power_led.h"
 #include "smart_battery.h"
 #include "system.h"
@@ -46,37 +46,37 @@ static void update_battery_info(void)
 
 	/* Design Capacity of Full */
 	battery_design_capacity((int *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_BATT_DCAP));
+					EC_MEMMAP_BATT_DCAP));
 
 	/* Design Voltage */
 	battery_design_voltage((int *)(lpc_get_memmap_range() +
-				       EC_LPC_MEMMAP_BATT_DVLT));
+				       EC_MEMMAP_BATT_DVLT));
 
 	/* Last Full Charge Capacity */
 	battery_full_charge_capacity((int *)(lpc_get_memmap_range() +
-					     EC_LPC_MEMMAP_BATT_LFCC));
+					     EC_MEMMAP_BATT_LFCC));
 
 	/* Cycle Count */
 	battery_cycle_count((int *)(lpc_get_memmap_range() +
-				    EC_LPC_MEMMAP_BATT_CCNT));
+				    EC_MEMMAP_BATT_CCNT));
 
 	/* Battery Manufacturer string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_MFGR);
-	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
-	battery_manufacturer_name(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_MFGR);
+	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
+	battery_manufacturer_name(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Battery Model string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_MODEL);
-	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
-	battery_device_name(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_MODEL);
+	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
+	battery_device_name(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Battery Type string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_TYPE);
-	battery_device_chemistry(batt_str, EC_LPC_MEMMAP_TEXT_MAX);
+	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_TYPE);
+	battery_device_chemistry(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Smart battery serial number is 16 bits */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_LPC_MEMMAP_BATT_SERIAL);
-	memset(batt_str, 0, EC_LPC_MEMMAP_TEXT_MAX);
+	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_SERIAL);
+	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	if (battery_serial_number(&batt_serial) == 0) {
 		*batt_str++ = hex2asc(0xf & (batt_serial >> 12));
 		*batt_str++ = hex2asc(0xf & (batt_serial >> 8));
@@ -134,12 +134,12 @@ static int state_common(struct power_state_context *ctx)
 			rv = charger_post_init();
 			if (rv)
 				curr->error |= F_CHARGER_INIT;
-			lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-				EC_LPC_HOST_EVENT_AC_CONNECTED));
+			lpc_set_host_events(EC_HOST_EVENT_MASK(
+				EC_HOST_EVENT_AC_CONNECTED));
 		} else {
 			/* AC off */
-			lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-				EC_LPC_HOST_EVENT_AC_DISCONNECTED));
+			lpc_set_host_events(EC_HOST_EVENT_MASK(
+				EC_HOST_EVENT_AC_DISCONNECTED));
 		}
 	}
 
@@ -219,16 +219,16 @@ static int state_common(struct power_state_context *ctx)
 	/* Battery charge level low */
 	if (batt->state_of_charge <= BATTERY_LEVEL_LOW &&
 			prev->batt.state_of_charge > BATTERY_LEVEL_LOW)
-		lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-			EC_LPC_HOST_EVENT_BATTERY_LOW));
+		lpc_set_host_events(EC_HOST_EVENT_MASK(
+			EC_HOST_EVENT_BATTERY_LOW));
 
 	/* Battery charge level critical */
 	if (batt->state_of_charge <= BATTERY_LEVEL_CRITICAL) {
 		*ctx->memmap_batt_flags |= EC_BATT_FLAG_LEVEL_CRITICAL;
 		/* Send battery critical host event */
 		if (prev->batt.state_of_charge > BATTERY_LEVEL_CRITICAL)
-			lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-					EC_LPC_HOST_EVENT_BATTERY_CRITICAL));
+			lpc_set_host_events(EC_HOST_EVENT_MASK(
+					EC_HOST_EVENT_BATTERY_CRITICAL));
 	} else
 		*ctx->memmap_batt_flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
 
@@ -287,8 +287,8 @@ static enum power_state state_init(struct power_state_context *ctx)
 	update_battery_info();
 
 	/* Send battery event to host */
-	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-			    EC_LPC_HOST_EVENT_BATTERY));
+	lpc_set_host_events(EC_HOST_EVENT_MASK(
+			    EC_HOST_EVENT_BATTERY));
 
 	return PWR_STATE_IDLE;
 }
@@ -486,13 +486,13 @@ void charge_state_machine_task(void)
 
 	/* Setup LPC direct memmap */
 	ctx.memmap_batt_volt  = (uint32_t *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_BATT_VOLT);
+					EC_MEMMAP_BATT_VOLT);
 	ctx.memmap_batt_rate  = (uint32_t *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_BATT_RATE);
+					EC_MEMMAP_BATT_RATE);
 	ctx.memmap_batt_cap   = (uint32_t *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_BATT_CAP);
+					EC_MEMMAP_BATT_CAP);
 	ctx.memmap_batt_flags = (uint8_t *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_BATT_FLAG);
+					EC_MEMMAP_BATT_FLAG);
 
 	while (1) {
 

@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "lightbar.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
@@ -43,7 +43,7 @@ static int ec_command(int command, const void *indata, int insize,
 	int data_addr = EC_LPC_ADDR_USER_DATA;
 	int param_addr = EC_LPC_ADDR_USER_PARAM;
 
-	if (insize > EC_LPC_PARAM_SIZE || outsize > EC_LPC_PARAM_SIZE) {
+	if (insize > EC_PARAM_SIZE || outsize > EC_PARAM_SIZE) {
 		fprintf(stderr, "Data size too big\n");
 		return -1;
 	}
@@ -84,32 +84,32 @@ static const struct {
 	uint8_t insize;
 	uint8_t outsize;
 } lb_command_paramcount[] = {
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.dump),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.off),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.off) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.on),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.on) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.init),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.init) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.brightness),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.brightness) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.seq),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.seq) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.reg),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.reg) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.rgb),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.rgb) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.get_seq),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.get_seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.dump),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.dump) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.off),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.off) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.on),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.on) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.init),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.init) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.brightness),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.brightness) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.seq),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.reg),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.reg) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.rgb),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.rgb) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.get_seq),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.get_seq) },
 };
 
 
 static void lb_cmd_noargs(enum lightbar_command cmd)
 {
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	param.in.cmd = cmd;
-	ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -131,45 +131,45 @@ inline void lightbar_init_vals(void)
 
 void lightbar_brightness(int newval)
 {
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_BRIGHTNESS;
 	param.in.brightness.num = newval;
-	ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
 
 void lightbar_sequence(enum lightbar_sequence num)
 {
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_SEQ;
 	param.in.seq.num = num;
-	ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
 
 void lightbar_reg(uint8_t ctrl, uint8_t reg, uint8_t val)
 {
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_REG;
 	param.in.reg.ctrl = ctrl;
 	param.in.reg.reg = reg;
 	param.in.reg.value = val;
-	ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
 
 void lightbar_rgb(int led, int red, int green, int blue)
 {
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_RGB;
 	param.in.rgb.led = led;
 	param.in.rgb.red = red;
 	param.in.rgb.green = green;
 	param.in.rgb.blue = blue;
-	ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -177,13 +177,13 @@ void lightbar_rgb(int led, int red, int green, int blue)
 void wait_for_ec_to_stop(void)
 {
 	int r;
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 	int count = 0;
 
 	do {
 		usleep(100000);
 		param.in.cmd = LIGHTBAR_CMD_GET_SEQ;
-		r = ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+		r = ec_command(EC_CMD_LIGHTBAR_CMD,
 			       &param,
 			       lb_command_paramcount[param.in.cmd].insize,
 			       &param,

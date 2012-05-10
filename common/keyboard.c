@@ -13,7 +13,7 @@
 #include "hooks.h"
 #include "lightbar.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -254,7 +254,7 @@ static void keyboard_wakeup(void)
 {
 #ifdef CONFIG_LPC
 	lpc_set_host_events(
-		EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_KEY_PRESSED));
+		EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED));
 #endif
 }
 

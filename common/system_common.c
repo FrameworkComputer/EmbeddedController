@@ -11,7 +11,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "system.h"
 #include "task.h"
 #include "uart.h"
@@ -545,8 +545,8 @@ DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
 
 static int host_command_get_version(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_get_version *r =
-			(struct lpc_response_get_version *)data;
+	struct ec_response_get_version *r =
+			(struct ec_response_get_version *)data;
 
 	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
 		sizeof(r->version_string_ro));
@@ -557,59 +557,59 @@ static int host_command_get_version(uint8_t *data, int *resp_size)
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
-		r->current_image = EC_LPC_IMAGE_RO;
+		r->current_image = EC_IMAGE_RO;
 		break;
 	case SYSTEM_IMAGE_RW_A:
-		r->current_image = EC_LPC_IMAGE_RW_A;
+		r->current_image = EC_IMAGE_RW_A;
 		break;
 	case SYSTEM_IMAGE_RW_B:
-		r->current_image = EC_LPC_IMAGE_RW_B;
+		r->current_image = EC_IMAGE_RW_B;
 		break;
 	default:
-		r->current_image = EC_LPC_IMAGE_UNKNOWN;
+		r->current_image = EC_IMAGE_UNKNOWN;
 		break;
 	}
 
-	*resp_size = sizeof(struct lpc_response_get_version);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_get_version);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_VERSION, host_command_get_version);
+DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION, host_command_get_version);
 
 
 static int host_command_build_info(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_get_build_info *r =
-			(struct lpc_response_get_build_info *)data;
+	struct ec_response_get_build_info *r =
+			(struct ec_response_get_build_info *)data;
 
 	strzcpy(r->build_string, system_get_build_info(),
 		sizeof(r->build_string));
 
-	*resp_size = sizeof(struct lpc_response_get_build_info);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_get_build_info);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_BUILD_INFO, host_command_build_info);
+DECLARE_HOST_COMMAND(EC_CMD_GET_BUILD_INFO, host_command_build_info);
 
 
 static int host_command_get_chip_info(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_get_chip_info *r =
-			(struct lpc_response_get_chip_info *)data;
+	struct ec_response_get_chip_info *r =
+			(struct ec_response_get_chip_info *)data;
 
 	strzcpy(r->vendor, system_get_chip_vendor(), sizeof(r->vendor));
 	strzcpy(r->name, system_get_chip_name(), sizeof(r->name));
 	strzcpy(r->revision, system_get_chip_revision(), sizeof(r->revision));
 
-	*resp_size = sizeof(struct lpc_response_get_chip_info);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_get_chip_info);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_GET_CHIP_INFO, host_command_get_chip_info);
+DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO, host_command_get_chip_info);
 
 
 #ifdef CONFIG_REBOOT_EC
 static void clean_busy_bits(void) {
 #ifdef CONFIG_LPC
-	host_send_result(0, EC_LPC_RESULT_SUCCESS);
-	host_send_result(1, EC_LPC_RESULT_SUCCESS);
+	host_send_result(0, EC_RES_SUCCESS);
+	host_send_result(1, EC_RES_SUCCESS);
 #endif
 }
 
@@ -617,27 +617,27 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 {
 	enum system_image_copy_t copy;
 
-	struct lpc_params_reboot_ec *p =
-		(struct lpc_params_reboot_ec *)data;
+	struct ec_params_reboot_ec *p =
+		(struct ec_params_reboot_ec *)data;
 
 	int recovery_request = p->reboot_flags &
-		EC_LPC_COMMAND_REBOOT_BIT_RECOVERY;
+		EC_CMD_REBOOT_BIT_RECOVERY;
 
 	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
 	 * be disabled. */
 
 	switch (p->target) {
-	case EC_LPC_IMAGE_RO:
+	case EC_IMAGE_RO:
 		copy = SYSTEM_IMAGE_RO;
 		break;
-	case EC_LPC_IMAGE_RW_A:
+	case EC_IMAGE_RW_A:
 		copy = SYSTEM_IMAGE_RW_A;
 		break;
-	case EC_LPC_IMAGE_RW_B:
+	case EC_IMAGE_RW_B:
 		copy = SYSTEM_IMAGE_RW_B;
 		break;
 	default:
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 	}
 
 	clean_busy_bits();
@@ -650,7 +650,7 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 	 *
 	 * If we DO get down here, something went wrong in the reboot, so
 	 * return error. */
-	return EC_LPC_RESULT_ERROR;
+	return EC_RES_ERROR;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_REBOOT_EC, host_command_reboot);
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC, host_command_reboot);
 #endif /* CONFIG_REBOOT_EC */

@@ -201,131 +201,131 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
 
 int flash_command_get_info(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_flash_info *r =
-			(struct lpc_response_flash_info *)data;
+	struct ec_response_flash_info *r =
+			(struct ec_response_flash_info *)data;
 
 	r->flash_size = flash_get_size();
 	r->write_block_size = flash_get_write_block_size();
 	r->erase_block_size = flash_get_erase_block_size();
 	r->protect_block_size = flash_get_protect_block_size();
-	*resp_size = sizeof(struct lpc_response_flash_info);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_flash_info);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_INFO, flash_command_get_info);
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO, flash_command_get_info);
 
 
 #ifdef SUPPORT_CHECKSUM
 int flash_command_checksum(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_checksum *p =
-	                (struct lpc_params_flash_checksum *)data;
-	struct lpc_response_flash_checksum *r =
-	                (struct lpc_response_flash_checksum *)data;
+	struct ec_params_flash_checksum *p =
+		(struct ec_params_flash_checksum *)data;
+	struct ec_response_flash_checksum *r =
+		(struct ec_response_flash_checksum *)data;
 	uint8_t cs, byte;
 	int j;
 
 	for (cs = 0, j = 0; j < p->size; ++j) {
 		if (flash_read(p->offset + j, 1, &byte))
-			return EC_LPC_RESULT_ERROR;
+			return EC_RES_ERROR;
 		BYTE_IN(cs, byte);
 	}
 
 	r->checksum = cs;
 
-	*resp_size = sizeof(struct lpc_response_flash_checksum);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_flash_checksum);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_CHECKSUM, flash_command_checksum);
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_CHECKSUM, flash_command_checksum);
 #endif
 
 
 int flash_command_read(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_read *p =
-			(struct lpc_params_flash_read *)data;
-	struct lpc_response_flash_read *r =
-			(struct lpc_response_flash_read *)data;
+	struct ec_params_flash_read *p =
+			(struct ec_params_flash_read *)data;
+	struct ec_response_flash_read *r =
+			(struct ec_response_flash_read *)data;
 
 	if (p->size > sizeof(r->data))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
 	if (flash_read(p->offset, p->size, r->data))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
-	*resp_size = sizeof(struct lpc_response_flash_read);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_flash_read);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_READ, flash_command_read);
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ, flash_command_read);
 
 
 int flash_command_write(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_write *p =
-			(struct lpc_params_flash_write *)data;
+	struct ec_params_flash_write *p =
+			(struct ec_params_flash_write *)data;
 
 	if (p->size > sizeof(p->data))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
 	if (system_unsafe_to_overwrite(p->offset, p->size))
-		return EC_LPC_RESULT_ACCESS_DENIED;
+		return EC_RES_ACCESS_DENIED;
 
 	if (flash_write(p->offset, p->size, p->data))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
-	return EC_LPC_RESULT_SUCCESS;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WRITE, flash_command_write);
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE, flash_command_write);
 
 
 int flash_command_erase(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_erase *p =
-			(struct lpc_params_flash_erase *)data;
+	struct ec_params_flash_erase *p =
+			(struct ec_params_flash_erase *)data;
 
 	if (system_unsafe_to_overwrite(p->offset, p->size))
-		return EC_LPC_RESULT_ACCESS_DENIED;
+		return EC_RES_ACCESS_DENIED;
 
 	if (flash_erase(p->offset, p->size))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
-	return EC_LPC_RESULT_SUCCESS;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_ERASE, flash_command_erase);
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase);
 
 
 int flash_command_wp_enable(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_wp_enable *p =
-			(struct lpc_params_flash_wp_enable *)data;
+	struct ec_params_flash_wp_enable *p =
+			(struct ec_params_flash_wp_enable *)data;
 
 	return flash_lock_protect(p->enable_wp ? 1 : 0);
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_ENABLE,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_ENABLE,
 		     flash_command_wp_enable);
 
 
 int flash_command_wp_get_state(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_flash_wp_enable *p =
-			(struct lpc_response_flash_wp_enable *)data;
+	struct ec_response_flash_wp_enable *p =
+			(struct ec_response_flash_wp_enable *)data;
 
 	if (flash_get_protect_lock() & FLASH_PROTECT_LOCK_SET)
 		p->enable_wp = 1;
 	else
 		p->enable_wp = 0;
 
-	*resp_size = sizeof(struct lpc_response_flash_wp_enable);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_flash_wp_enable);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_STATE,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_GET_STATE,
 		     flash_command_wp_get_state);
 
 
 int flash_command_wp_set_range(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_flash_wp_range *p =
-			(struct lpc_params_flash_wp_range *)data;
-	enum lpc_status ret;
+	struct ec_params_flash_wp_range *p =
+			(struct ec_params_flash_wp_range *)data;
+	enum ec_status ret;
 
 	if (p->size)
 		ret = flash_set_protect(p->offset, p->size, 1);
@@ -334,14 +334,14 @@ int flash_command_wp_set_range(uint8_t *data, int *resp_size)
 
 	return ret;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_SET_RANGE,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_SET_RANGE,
 		     flash_command_wp_set_range);
 
 
 int flash_command_wp_get_range(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_flash_wp_range *p =
-			(struct lpc_response_flash_wp_range *)data;
+	struct ec_response_flash_wp_range *p =
+			(struct ec_response_flash_wp_range *)data;
 	int pbsize = flash_get_protect_block_size();
 	int banks = flash_get_size() / pbsize;
 	const uint8_t *blocks;
@@ -375,8 +375,8 @@ int flash_command_wp_get_range(uint8_t *data, int *resp_size)
 		p->size = (max - min + 1) * pbsize;
 	}
 
-	*resp_size = sizeof(struct lpc_response_flash_wp_range);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_flash_wp_range);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_FLASH_WP_GET_RANGE,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_GET_RANGE,
 		     flash_command_wp_get_range);

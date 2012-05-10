@@ -12,7 +12,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "peci.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -71,7 +71,7 @@ void poll_all_sensors(void)
 static void update_lpc_mapped_memory(void)
 {
 	int i, t;
-	uint8_t *mapped = lpc_get_memmap_range() + EC_LPC_MEMMAP_TEMP_SENSOR;
+	uint8_t *mapped = lpc_get_memmap_range() + EC_MEMMAP_TEMP_SENSOR;
 
 	memset(mapped, 0xff, 16);
 
@@ -82,7 +82,7 @@ static void update_lpc_mapped_memory(void)
 		}
 		t = temp_sensor_read(i);
 		if (t != -1)
-			mapped[i] = t - EC_LPC_TEMP_SENSOR_OFFSET;
+			mapped[i] = t - EC_TEMP_SENSOR_OFFSET;
 		else
 			mapped[i] = 0xfe;
 	}
@@ -126,4 +126,3 @@ static int command_temps(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps);
-

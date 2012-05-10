@@ -13,7 +13,7 @@
 
 #include "battery.h"
 #include "lightbar.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
@@ -195,7 +195,7 @@ int ec_command(int command, const void *indata, int insize,
 	int data_addr = EC_LPC_ADDR_USER_DATA;
 	int param_addr = EC_LPC_ADDR_USER_PARAM;
 
-	if (insize > EC_LPC_PARAM_SIZE || outsize > EC_LPC_PARAM_SIZE) {
+	if (insize > EC_PARAM_SIZE || outsize > EC_PARAM_SIZE) {
 		fprintf(stderr, "Data size too big\n");
 		return -1;
 	}
@@ -255,14 +255,14 @@ int read_mapped_string(uint8_t offset, char *buf)
 {
 	int c;
 
-	for (c = 0; c < EC_LPC_MEMMAP_TEXT_MAX; c++) {
+	for (c = 0; c < EC_MEMMAP_TEXT_MAX; c++) {
 		buf[c] = inb(EC_LPC_ADDR_MEMMAP + offset + c);
 		if (buf[c] == 0)
 			return c;
 	}
 
-	buf[EC_LPC_MEMMAP_TEXT_MAX-1] = 0;
-	return EC_LPC_MEMMAP_TEXT_MAX;
+	buf[EC_MEMMAP_TEXT_MAX-1] = 0;
+	return EC_MEMMAP_TEXT_MAX;
 }
 
 
@@ -294,13 +294,13 @@ void print_help(const char *prog)
 
 int cmd_hello(int argc, char *argv[])
 {
-	struct lpc_params_hello p;
-	struct lpc_response_hello r;
+	struct ec_params_hello p;
+	struct ec_response_hello r;
 	int rv;
 
 	p.in_data = 0xa0b0c0d0;
 
-	rv = ec_command(EC_LPC_COMMAND_HELLO, &p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_CMD_HELLO, &p, sizeof(p), &r, sizeof(r));
 	if (rv)
 		return rv;
 
@@ -318,14 +318,14 @@ int cmd_hello(int argc, char *argv[])
 int cmd_version(int argc, char *argv[])
 {
   static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
-	struct lpc_response_get_version r;
-	struct lpc_response_get_build_info r2;
+	struct ec_response_get_version r;
+	struct ec_response_get_build_info r2;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_GET_VERSION, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
-	rv = ec_command(EC_LPC_COMMAND_GET_BUILD_INFO,
+	rv = ec_command(EC_CMD_GET_BUILD_INFO,
 			NULL, 0, &r2, sizeof(r2));
 	if (rv)
 		return rv;
@@ -351,8 +351,8 @@ int cmd_version(int argc, char *argv[])
 
 int cmd_read_test(int argc, char *argv[])
 {
-	struct lpc_params_read_test p;
-	struct lpc_response_read_test r;
+	struct ec_params_read_test p;
+	struct ec_response_read_test r;
 	int offset, size;
 	int errors = 0;
 	int rv;
@@ -383,7 +383,7 @@ int cmd_read_test(int argc, char *argv[])
 	for (i = 0; i < size; i += sizeof(r.data)) {
 		p.offset = offset + i / sizeof(uint32_t);
 		p.size = MIN(size - i, sizeof(r.data));
-		rv = ec_command(EC_LPC_COMMAND_READ_TEST, &p, sizeof(p),
+		rv = ec_command(EC_CMD_READ_TEST, &p, sizeof(p),
 				&r, sizeof(r));
 		if (rv) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -415,25 +415,25 @@ int cmd_read_test(int argc, char *argv[])
 
 int cmd_reboot_ec(int argc, char *argv[])
 {
-	struct lpc_params_reboot_ec p;
+	struct ec_params_reboot_ec p;
 	int rv;
 
 	if (argc < 2) {
-		rv = ec_command(EC_LPC_COMMAND_REBOOT, NULL, 0, NULL, 0);
+		rv = ec_command(EC_CMD_REBOOT, NULL, 0, NULL, 0);
 	} else if (argc == 2) {
 		if (!strcmp(argv[1], "RO")) {
-			p.target = EC_LPC_IMAGE_RO;
+			p.target = EC_IMAGE_RO;
 		} else if (!strcmp(argv[1], "A")) {
-			p.target = EC_LPC_IMAGE_RW_A;
+			p.target = EC_IMAGE_RW_A;
 		} else if (!strcmp(argv[1], "B")) {
-			p.target = EC_LPC_IMAGE_RW_B;
+			p.target = EC_IMAGE_RW_B;
 		} else {
 			fprintf(stderr,
 				"Not supported firmware copy: %s\n", argv[1]);
 			return -1;
 		}
 
-		rv = ec_command(EC_LPC_COMMAND_REBOOT_EC,
+		rv = ec_command(EC_CMD_REBOOT_EC,
 		                &p, sizeof(p), NULL, 0);
 	} else {
 		fprintf(stderr, "Wrong argument count: %d\n", argc);
@@ -450,10 +450,10 @@ int cmd_reboot_ec(int argc, char *argv[])
 
 int cmd_flash_info(int argc, char *argv[])
 {
-	struct lpc_response_flash_info r;
+	struct ec_response_flash_info r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_FLASH_INFO, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_FLASH_INFO, NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
 
@@ -467,8 +467,8 @@ int cmd_flash_info(int argc, char *argv[])
 
 int cmd_flash_read(int argc, char *argv[])
 {
-	struct lpc_params_flash_read p;
-	struct lpc_response_flash_read r;
+	struct ec_params_flash_read p;
+	struct ec_response_flash_read r;
 	int offset, size;
 	int rv;
 	int i;
@@ -499,10 +499,10 @@ int cmd_flash_read(int argc, char *argv[])
 	}
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += EC_LPC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_LPC_FLASH_SIZE_MAX);
-		rv = ec_command(EC_LPC_COMMAND_FLASH_READ,
+		p.size = MIN(size - i, EC_FLASH_SIZE_MAX);
+		rv = ec_command(EC_CMD_FLASH_READ,
 				&p, sizeof(p), &r, sizeof(r));
 		if (rv) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -524,7 +524,7 @@ int cmd_flash_read(int argc, char *argv[])
 
 int cmd_flash_write(int argc, char *argv[])
 {
-	struct lpc_params_flash_write p;
+	struct ec_params_flash_write p;
 	int offset, size;
 	int rv;
 	int i;
@@ -549,11 +549,11 @@ int cmd_flash_write(int argc, char *argv[])
 	printf("Writing to offset %d...\n", offset);
 
 	/* Write data in chunks */
-	for (i = 0; i < size; i += EC_LPC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_LPC_FLASH_SIZE_MAX);
+		p.size = MIN(size - i, EC_FLASH_SIZE_MAX);
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_LPC_COMMAND_FLASH_WRITE,
+		rv = ec_command(EC_CMD_FLASH_WRITE,
 				&p, sizeof(p), NULL, 0);
 		if (rv) {
 			fprintf(stderr, "Write error at offset %d\n", i);
@@ -570,7 +570,7 @@ int cmd_flash_write(int argc, char *argv[])
 
 int cmd_flash_erase(int argc, char *argv[])
 {
-	struct lpc_params_flash_erase p;
+	struct ec_params_flash_erase p;
 	char *e;
 
 	if (argc < 3) {
@@ -589,7 +589,7 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	printf("Erasing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_LPC_COMMAND_FLASH_ERASE, &p, sizeof(p), NULL, 0))
+	if (ec_command(EC_CMD_FLASH_ERASE, &p, sizeof(p), NULL, 0))
 		return -1;
 
 	printf("done.\n");
@@ -641,7 +641,7 @@ int cmd_temperature(int argc, char *argv[])
 	}
 
 	printf("Reading temperature...");
-	rv = read_mapped_mem8(EC_LPC_MEMMAP_TEMP_SENSOR + id);
+	rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
 	if (rv == 0xff) {
 		printf("Sensor not present\n");
 		return -1;
@@ -652,7 +652,7 @@ int cmd_temperature(int argc, char *argv[])
 		printf("Sensor disabled/unpowered\n");
 		return -1;
 	} else {
-		printf("%d\n", rv + EC_LPC_TEMP_SENSOR_OFFSET);
+		printf("%d\n", rv + EC_TEMP_SENSOR_OFFSET);
 		return 0;
 	}
 }
@@ -660,8 +660,8 @@ int cmd_temperature(int argc, char *argv[])
 
 int cmd_thermal_get_threshold(int argc, char *argv[])
 {
-	struct lpc_params_thermal_get_threshold p;
-	struct lpc_response_thermal_get_threshold r;
+	struct ec_params_thermal_get_threshold p;
+	struct ec_response_thermal_get_threshold r;
 	char *e;
 	int rv;
 
@@ -683,7 +683,7 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD,
 			&p, sizeof(p), &r, sizeof(r));
 	if (rv)
 		return rv;
@@ -700,7 +700,7 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 
 int cmd_thermal_set_threshold(int argc, char *argv[])
 {
-	struct lpc_params_thermal_set_threshold p;
+	struct ec_params_thermal_set_threshold p;
 	char *e;
 	int rv;
 
@@ -729,7 +729,7 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_THERMAL_SET_THRESHOLD,
+	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -745,7 +745,7 @@ int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 {
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL,
+	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL,
 			NULL, 0, NULL, 0);
 	if (rv)
 		return rv;
@@ -759,7 +759,7 @@ int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 {
 	int rv;
 
-	rv = read_mapped_mem16(EC_LPC_MEMMAP_FAN);
+	rv = read_mapped_mem16(EC_MEMMAP_FAN);
 	if (rv == 0xffff)
 		return -1;
 
@@ -774,7 +774,7 @@ int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 
 int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 {
-	struct lpc_params_pwm_set_fan_target_rpm p;
+	struct ec_params_pwm_set_fan_target_rpm p;
 	char *e;
 	int rv;
 
@@ -789,7 +789,7 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM,
+	rv = ec_command(EC_CMD_PWM_SET_FAN_TARGET_RPM,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -801,10 +801,10 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 
 int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 {
-	struct lpc_response_pwm_get_keyboard_backlight r;
+	struct ec_response_pwm_get_keyboard_backlight r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT,
+	rv = ec_command(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
@@ -817,7 +817,7 @@ int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 
 int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 {
-	struct lpc_params_pwm_set_keyboard_backlight p;
+	struct ec_params_pwm_set_keyboard_backlight p;
 	char *e;
 	int rv;
 
@@ -831,7 +831,7 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT,
+	rv = ec_command(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -856,24 +856,24 @@ static const struct {
 	uint8_t insize;
 	uint8_t outsize;
 } lb_command_paramcount[] = {
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.dump),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.dump) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.off),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.off) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.on),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.on) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.init),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.init) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.brightness),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.brightness) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.seq),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.seq) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.reg),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.reg) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.rgb),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.rgb) },
-	{ sizeof(((struct lpc_params_lightbar_cmd *)0)->in.get_seq),
-	  sizeof(((struct lpc_params_lightbar_cmd *)0)->out.get_seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.dump),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.dump) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.off),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.off) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.on),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.on) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.init),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.init) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.brightness),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.brightness) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.seq),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.reg),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.reg) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.rgb),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.rgb) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.get_seq),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.get_seq) },
 };
 
 static int lb_help(const char *cmd)
@@ -903,11 +903,11 @@ static uint8_t lb_find_msg_by_name(const char *str)
 }
 
 static int lb_do_cmd(enum lightbar_command cmd,
-		     struct lpc_params_lightbar_cmd *ptr)
+		     struct ec_params_lightbar_cmd *ptr)
 {
 	int r;
 	ptr->in.cmd = cmd;
-	r = ec_command(EC_LPC_COMMAND_LIGHTBAR_CMD,
+	r = ec_command(EC_CMD_LIGHTBAR_CMD,
 		       ptr, lb_command_paramcount[cmd].insize,
 		       ptr, lb_command_paramcount[cmd].outsize);
 	return r;
@@ -916,7 +916,7 @@ static int lb_do_cmd(enum lightbar_command cmd,
 static void lb_show_msg_names(void)
 {
 	int i, current_state;
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 
 	(void)lb_do_cmd(LIGHTBAR_CMD_GET_SEQ, &param);
 	current_state = param.out.get_seq.num;
@@ -931,7 +931,7 @@ static void lb_show_msg_names(void)
 static int cmd_lightbar(int argc, char **argv)
 {
 	int i, r;
-	struct lpc_params_lightbar_cmd param;
+	struct ec_params_lightbar_cmd param;
 
 	if (1 == argc) {		/* no args = dump 'em all */
 		r = lb_do_cmd(LIGHTBAR_CMD_DUMP, &param);
@@ -1001,7 +1001,7 @@ static int cmd_lightbar(int argc, char **argv)
 
 int cmd_usb_charge_set_mode(int argc, char *argv[])
 {
-	struct lpc_params_usb_charge_set_mode p;
+	struct ec_params_usb_charge_set_mode p;
 	char *e;
 	int rv;
 
@@ -1023,7 +1023,7 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 
 	printf("Setting port %d to mode %d...\n", p.usb_port_id, p.mode);
 
-	rv = ec_command(EC_LPC_COMMAND_USB_CHARGE_SET_MODE,
+	rv = ec_command(EC_CMD_USB_CHARGE_SET_MODE,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -1035,10 +1035,10 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 
 int cmd_pstore_info(int argc, char *argv[])
 {
-	struct lpc_response_pstore_info r;
+	struct ec_response_pstore_info r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_PSTORE_INFO, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_PSTORE_INFO, NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
 
@@ -1049,8 +1049,8 @@ int cmd_pstore_info(int argc, char *argv[])
 
 int cmd_pstore_read(int argc, char *argv[])
 {
-	struct lpc_params_pstore_read p;
-	struct lpc_response_pstore_read r;
+	struct ec_params_pstore_read p;
+	struct ec_response_pstore_read r;
 	int offset, size;
 	int rv;
 	int i;
@@ -1081,10 +1081,10 @@ int cmd_pstore_read(int argc, char *argv[])
 	}
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += EC_LPC_PSTORE_SIZE_MAX) {
+	for (i = 0; i < size; i += EC_PSTORE_SIZE_MAX) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_LPC_PSTORE_SIZE_MAX);
-		rv = ec_command(EC_LPC_COMMAND_PSTORE_READ,
+		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
+		rv = ec_command(EC_CMD_PSTORE_READ,
 				&p, sizeof(p), &r, sizeof(r));
 		if (rv) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -1106,7 +1106,7 @@ int cmd_pstore_read(int argc, char *argv[])
 
 int cmd_pstore_write(int argc, char *argv[])
 {
-	struct lpc_params_pstore_write p;
+	struct ec_params_pstore_write p;
 	int offset, size;
 	int rv;
 	int i;
@@ -1131,11 +1131,11 @@ int cmd_pstore_write(int argc, char *argv[])
 	printf("Writing to offset %d...\n", offset);
 
 	/* Write data in chunks */
-	for (i = 0; i < size; i += EC_LPC_PSTORE_SIZE_MAX) {
+	for (i = 0; i < size; i += EC_PSTORE_SIZE_MAX) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_LPC_PSTORE_SIZE_MAX);
+		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_LPC_COMMAND_PSTORE_WRITE,
+		rv = ec_command(EC_CMD_PSTORE_WRITE,
 				&p, sizeof(p), NULL, 0);
 		if (rv) {
 			fprintf(stderr, "Write error at offset %d\n", i);
@@ -1154,7 +1154,7 @@ int cmd_acpi_query_ec(int argc, char *argv[])
 {
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_ACPI_QUERY_EVENT, NULL, 0, NULL, 0);
+	rv = ec_command(EC_CMD_ACPI_QUERY_EVENT, NULL, 0, NULL, 0);
 	if (rv)
 		printf("Got host event %d (mask 0x%08x)\n", rv, 1 << (rv - 1));
 	else
@@ -1166,17 +1166,17 @@ int cmd_acpi_query_ec(int argc, char *argv[])
 int cmd_host_event_get_raw(int argc, char *argv[])
 {
 	printf("Current host events: 0x%08x\n",
-	       read_mapped_mem32(EC_LPC_MEMMAP_HOST_EVENTS));
+	       read_mapped_mem32(EC_MEMMAP_HOST_EVENTS));
 	return 0;
 }
 
 
 int cmd_host_event_get_smi_mask(int argc, char *argv[])
 {
-	struct lpc_response_host_event_mask r;
+	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_SMI_MASK,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
@@ -1188,10 +1188,10 @@ int cmd_host_event_get_smi_mask(int argc, char *argv[])
 
 int cmd_host_event_get_sci_mask(int argc, char *argv[])
 {
-	struct lpc_response_host_event_mask r;
+	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_SCI_MASK,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
@@ -1203,10 +1203,10 @@ int cmd_host_event_get_sci_mask(int argc, char *argv[])
 
 int cmd_host_event_get_wake_mask(int argc, char *argv[])
 {
-	struct lpc_response_host_event_mask r;
+	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_GET_WAKE_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 			NULL, 0, &r, sizeof(r));
 	if (rv)
 		return rv;
@@ -1218,7 +1218,7 @@ int cmd_host_event_get_wake_mask(int argc, char *argv[])
 
 int cmd_host_event_set_smi_mask(int argc, char *argv[])
 {
-	struct lpc_params_host_event_mask p;
+	struct ec_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1232,7 +1232,7 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_SMI_MASK,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -1244,7 +1244,7 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 
 int cmd_host_event_set_sci_mask(int argc, char *argv[])
 {
-	struct lpc_params_host_event_mask p;
+	struct ec_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1258,7 +1258,7 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_SCI_MASK,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -1270,7 +1270,7 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 
 int cmd_host_event_set_wake_mask(int argc, char *argv[])
 {
-	struct lpc_params_host_event_mask p;
+	struct ec_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1284,7 +1284,7 @@ int cmd_host_event_set_wake_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_SET_WAKE_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_WAKE_MASK,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -1296,7 +1296,7 @@ int cmd_host_event_set_wake_mask(int argc, char *argv[])
 
 int cmd_host_event_clear(int argc, char *argv[])
 {
-	struct lpc_params_host_event_mask p;
+	struct ec_params_host_event_mask p;
 	char *e;
 	int rv;
 
@@ -1310,7 +1310,7 @@ int cmd_host_event_clear(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_LPC_COMMAND_HOST_EVENT_CLEAR,
+	rv = ec_command(EC_CMD_HOST_EVENT_CLEAR,
 			&p, sizeof(p), NULL, 0);
 	if (rv)
 		return rv;
@@ -1322,18 +1322,18 @@ int cmd_host_event_clear(int argc, char *argv[])
 
 int cmd_switches(int argc, char *argv[])
 {
-	uint8_t s = read_mapped_mem8(EC_LPC_MEMMAP_SWITCHES);
+	uint8_t s = read_mapped_mem8(EC_MEMMAP_SWITCHES);
 	printf("Current switches:   0x%02x\n", s);
 	printf("Lid switch:         %s\n",
-	       (s & EC_LPC_SWITCH_LID_OPEN ? "OPEN" : "CLOSED"));
+	       (s & EC_SWITCH_LID_OPEN ? "OPEN" : "CLOSED"));
 	printf("Power button:       %s\n",
-	       (s & EC_LPC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
+	       (s & EC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
 	printf("Write protect:      %sABLED\n",
-	       (s & EC_LPC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
+	       (s & EC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
 	printf("Keyboard recovery:  %sABLED\n",
-	       (s & EC_LPC_SWITCH_KEYBOARD_RECOVERY ? "EN" : "DIS"));
+	       (s & EC_SWITCH_KEYBOARD_RECOVERY ? "EN" : "DIS"));
 	printf("Dedicated recovery: %sABLED\n",
-	       (s & EC_LPC_SWITCH_DEDICATED_RECOVERY ? "EN" : "DIS"));
+	       (s & EC_SWITCH_DEDICATED_RECOVERY ? "EN" : "DIS"));
 
 	return 0;
 }
@@ -1341,55 +1341,55 @@ int cmd_switches(int argc, char *argv[])
 
 int cmd_battery(int argc, char *argv[])
 {
-	char batt_text[EC_LPC_MEMMAP_TEXT_MAX];
+	char batt_text[EC_MEMMAP_TEXT_MAX];
 	int rv, val;
 
 	printf("Battery info:\n");
 
-	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MFGR, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_MFGR, batt_text);
 	if (rv) {
 		if (!is_string_printable(batt_text))
 			goto cmd_error;
 		printf("  OEM name:               %s\n", batt_text);
 	}
 
-	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_MODEL, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_MODEL, batt_text);
 	if (rv) {
 		if (!is_string_printable(batt_text))
 			goto cmd_error;
 		printf("  Model number:           %s\n", batt_text);
 	}
 
-	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_TYPE, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_TYPE, batt_text);
 	if (rv) {
 		if (!is_string_printable(batt_text))
 			goto cmd_error;
 		printf("  Chemistry   :           %s\n", batt_text);
 	}
 
-	rv = read_mapped_string(EC_LPC_MEMMAP_BATT_SERIAL, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_SERIAL, batt_text);
 	if (rv) {
 		if (!is_string_printable(batt_text))
 			goto cmd_error;
 		printf("  Serial number:          %s\n", batt_text);
 	}
 
-	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP);
+	val = read_mapped_mem32(EC_MEMMAP_BATT_DCAP);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Design capacity:        %u mAh\n", val);
 
-	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_LFCC);
+	val = read_mapped_mem32(EC_MEMMAP_BATT_LFCC);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Last full charge:       %u mAh\n", val);
 
-	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DVLT);
+	val = read_mapped_mem32(EC_MEMMAP_BATT_DVLT);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Design output voltage   %u mV\n", val);
 
-	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_DCAP);
+	val = read_mapped_mem32(EC_MEMMAP_BATT_DCAP);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Design capacity warning %u mAh\n",
@@ -1397,7 +1397,7 @@ int cmd_battery(int argc, char *argv[])
 	printf("  Design capacity low     %u mAh\n",
 		val * BATTERY_LEVEL_LOW / 100);
 
-	val = read_mapped_mem32(EC_LPC_MEMMAP_BATT_CCNT);
+	val = read_mapped_mem32(EC_MEMMAP_BATT_CCNT);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Cycle count             %u\n", val);
@@ -1410,12 +1410,12 @@ cmd_error:
 
 int cmd_chipinfo(int argc, char *argv[])
 {
-	struct lpc_response_get_chip_info info;
+	struct ec_response_get_chip_info info;
 	int rv;
 
 	printf("Chip info:\n");
 
-	rv = ec_command(EC_LPC_COMMAND_GET_CHIP_INFO,
+	rv = ec_command(EC_CMD_GET_CHIP_INFO,
 			NULL, 0, &info, sizeof(info));
 	if (rv)
 		return rv;

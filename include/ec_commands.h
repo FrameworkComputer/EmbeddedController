@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* LPC command constants for Chrome EC */
+/* Host communication command constants for Chrome EC */
 
-#ifndef __CROS_EC_LPC_COMMANDS_H
-#define __CROS_EC_LPC_COMMANDS_H
+#ifndef __CROS_EC_COMMANDS_H
+#define __CROS_EC_COMMANDS_H
 
 /* During the development stage, the LPC bus has high error bit rate.
  * Using checksum can detect the error and trigger re-transmit.
@@ -15,7 +15,7 @@
 #define SUPPORT_CHECKSUM
 
 /* Current version of this protocol */
-#define EC_LPC_PROTO_VERSION      0x00000002
+#define EC_PROTO_VERSION          0x00000002
 
 /* I/O addresses for LPC commands */
 #define EC_LPC_ADDR_KERNEL_DATA   0x62
@@ -24,7 +24,7 @@
 #define EC_LPC_ADDR_USER_DATA    0x200
 #define EC_LPC_ADDR_USER_CMD     0x204
 #define EC_LPC_ADDR_USER_PARAM   0x880
-#define EC_LPC_PARAM_SIZE          128  /* Size of each param area in bytes */
+#define EC_PARAM_SIZE          128  /* Size of each param area in bytes */
 
 /* EC command register bit functions */
 #define EC_LPC_CMDR_DATA	(1 << 0)
@@ -36,50 +36,50 @@
 #define EC_LPC_CMDR_SMI		(1 << 6)
 
 #define EC_LPC_ADDR_MEMMAP       0x900
-#define EC_LPC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
-#define EC_LPC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
+#define EC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
+#define EC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
-#define EC_LPC_MEMMAP_TEMP_SENSOR 0x00
-#define EC_LPC_MEMMAP_FAN         0x10
-#define EC_LPC_MEMMAP_SWITCHES    0x30
-#define EC_LPC_MEMMAP_HOST_EVENTS 0x34
-#define EC_LPC_MEMMAP_BATT_VOLT   0x40 /* Battery Present Voltage */
-#define EC_LPC_MEMMAP_BATT_RATE   0x44 /* Battery Present Rate */
-#define EC_LPC_MEMMAP_BATT_CAP    0x48 /* Battery Remaining Capacity */
-#define EC_LPC_MEMMAP_BATT_FLAG   0x4c /* Battery State, defined below */
-#define EC_LPC_MEMMAP_BATT_DCAP   0x50 /* Battery Design Capacity */
-#define EC_LPC_MEMMAP_BATT_DVLT   0x54 /* Battery Design Voltage */
-#define EC_LPC_MEMMAP_BATT_LFCC   0x58 /* Battery Last Full Charge Capacity */
-#define EC_LPC_MEMMAP_BATT_CCNT   0x5c /* Battery Cycle Count */
-#define EC_LPC_MEMMAP_BATT_MFGR   0x60 /* Battery Manufacturer String */
-#define EC_LPC_MEMMAP_BATT_MODEL  0x68 /* Battery Model Number String */
-#define EC_LPC_MEMMAP_BATT_SERIAL 0x70 /* Battery Serial Number String */
-#define EC_LPC_MEMMAP_BATT_TYPE   0x78 /* Battery Type String */
+#define EC_MEMMAP_TEMP_SENSOR 0x00
+#define EC_MEMMAP_FAN         0x10
+#define EC_MEMMAP_SWITCHES    0x30
+#define EC_MEMMAP_HOST_EVENTS 0x34
+#define EC_MEMMAP_BATT_VOLT   0x40 /* Battery Present Voltage */
+#define EC_MEMMAP_BATT_RATE   0x44 /* Battery Present Rate */
+#define EC_MEMMAP_BATT_CAP    0x48 /* Battery Remaining Capacity */
+#define EC_MEMMAP_BATT_FLAG   0x4c /* Battery State, defined below */
+#define EC_MEMMAP_BATT_DCAP   0x50 /* Battery Design Capacity */
+#define EC_MEMMAP_BATT_DVLT   0x54 /* Battery Design Voltage */
+#define EC_MEMMAP_BATT_LFCC   0x58 /* Battery Last Full Charge Capacity */
+#define EC_MEMMAP_BATT_CCNT   0x5c /* Battery Cycle Count */
+#define EC_MEMMAP_BATT_MFGR   0x60 /* Battery Manufacturer String */
+#define EC_MEMMAP_BATT_MODEL  0x68 /* Battery Model Number String */
+#define EC_MEMMAP_BATT_SERIAL 0x70 /* Battery Serial Number String */
+#define EC_MEMMAP_BATT_TYPE   0x78 /* Battery Type String */
 
-/* Battery bit flags at EC_LPC_MEMMAP_BATT_FLAG. */
+/* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
 #define EC_BATT_FLAG_BATT_PRESENT 0x02
 #define EC_BATT_FLAG_DISCHARGING  0x04
 #define EC_BATT_FLAG_CHARGING     0x08
 #define EC_BATT_FLAG_LEVEL_CRITICAL 0x10
 
-/* Switch flags at EC_LPC_MEMMAP_SWITCHES */
-#define EC_LPC_SWITCH_LID_OPEN               0x01
-#define EC_LPC_SWITCH_POWER_BUTTON_PRESSED   0x02
-#define EC_LPC_SWITCH_WRITE_PROTECT_DISABLED 0x04
+/* Switch flags at EC_MEMMAP_SWITCHES */
+#define EC_SWITCH_LID_OPEN               0x01
+#define EC_SWITCH_POWER_BUTTON_PRESSED   0x02
+#define EC_SWITCH_WRITE_PROTECT_DISABLED 0x04
 /* Recovery requested via keyboard */
-#define EC_LPC_SWITCH_KEYBOARD_RECOVERY      0x08
+#define EC_SWITCH_KEYBOARD_RECOVERY      0x08
 /* Recovery requested via dedicated signal (from servo board) */
-#define EC_LPC_SWITCH_DEDICATED_RECOVERY     0x10
+#define EC_SWITCH_DEDICATED_RECOVERY     0x10
 /* Fake developer switch (for testing) */
-#define EC_LPC_SWITCH_FAKE_DEVELOPER         0x20
+#define EC_SWITCH_FAKE_DEVELOPER         0x20
 
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of
  * 200K to 454K = -73C to 181C.
  */
-#define EC_LPC_TEMP_SENSOR_OFFSET 200
+#define EC_TEMP_SENSOR_OFFSET 200
 
 /*
  * This header file is used in coreboot both in C and ACPI code.
@@ -114,14 +114,14 @@
 #define EC_LPC_STATUS_BUSY_MASK \
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
-/* LPC command response codes */
+/* Host command response codes */
 /* TODO: move these so they don't overlap SCI/SMI data? */
-enum lpc_status {
-	EC_LPC_RESULT_SUCCESS = 0,
-	EC_LPC_RESULT_INVALID_COMMAND = 1,
-	EC_LPC_RESULT_ERROR = 2,
-	EC_LPC_RESULT_INVALID_PARAM = 3,
-	EC_LPC_RESULT_ACCESS_DENIED = 4,
+enum ec_status {
+	EC_RES_SUCCESS = 0,
+	EC_RES_INVALID_COMMAND = 1,
+	EC_RES_ERROR = 2,
+	EC_RES_INVALID_PARAM = 3,
+	EC_RES_ACCESS_DENIED = 4,
 };
 
 
@@ -131,22 +131,22 @@ enum lpc_status {
  * item or rearrange the list (it needs to be stable across platforms, not
  * just within a single compiled instance). */
 enum host_event_code {
-	EC_LPC_HOST_EVENT_LID_CLOSED = 1,
-	EC_LPC_HOST_EVENT_LID_OPEN = 2,
-	EC_LPC_HOST_EVENT_POWER_BUTTON = 3,
-	EC_LPC_HOST_EVENT_AC_CONNECTED = 4,
-	EC_LPC_HOST_EVENT_AC_DISCONNECTED = 5,
-	EC_LPC_HOST_EVENT_BATTERY_LOW = 6,
-	EC_LPC_HOST_EVENT_BATTERY_CRITICAL = 7,
-	EC_LPC_HOST_EVENT_BATTERY = 8,
-	EC_LPC_HOST_EVENT_THERMAL_THRESHOLD = 9,
-	EC_LPC_HOST_EVENT_THERMAL_OVERLOAD = 10,
-	EC_LPC_HOST_EVENT_THERMAL = 11,
-	EC_LPC_HOST_EVENT_USB_CHARGER = 12,
-	EC_LPC_HOST_EVENT_KEY_PRESSED = 13,
+	EC_HOST_EVENT_LID_CLOSED = 1,
+	EC_HOST_EVENT_LID_OPEN = 2,
+	EC_HOST_EVENT_POWER_BUTTON = 3,
+	EC_HOST_EVENT_AC_CONNECTED = 4,
+	EC_HOST_EVENT_AC_DISCONNECTED = 5,
+	EC_HOST_EVENT_BATTERY_LOW = 6,
+	EC_HOST_EVENT_BATTERY_CRITICAL = 7,
+	EC_HOST_EVENT_BATTERY = 8,
+	EC_HOST_EVENT_THERMAL_THRESHOLD = 9,
+	EC_HOST_EVENT_THERMAL_OVERLOAD = 10,
+	EC_HOST_EVENT_THERMAL = 11,
+	EC_HOST_EVENT_USB_CHARGER = 12,
+	EC_HOST_EVENT_KEY_PRESSED = 13,
 };
 /* Host event mask */
-#define EC_LPC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
+#define EC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
 
 /* Notes on commands:
  *
@@ -160,60 +160,60 @@ enum host_event_code {
 
 /* Get protocol version, used to deal with non-backward compatible protocol
  * changes. */
-#define EC_LPC_COMMAND_PROTO_VERSION 0x00
-struct lpc_response_proto_version {
+#define EC_CMD_PROTO_VERSION 0x00
+struct ec_response_proto_version {
 	uint32_t version;
 } __attribute__ ((packed));
 
 /* Hello.  This is a simple command to test the EC is responsive to
  * commands. */
-#define EC_LPC_COMMAND_HELLO 0x01
-struct lpc_params_hello {
+#define EC_CMD_HELLO 0x01
+struct ec_params_hello {
 	uint32_t in_data;  /* Pass anything here */
 } __attribute__ ((packed));
-struct lpc_response_hello {
+struct ec_response_hello {
 	uint32_t out_data;  /* Output will be in_data + 0x01020304 */
 } __attribute__ ((packed));
 
 
 /* Get version number */
-#define EC_LPC_COMMAND_GET_VERSION 0x02
-enum lpc_current_image {
-	EC_LPC_IMAGE_UNKNOWN = 0,
-	EC_LPC_IMAGE_RO,
-	EC_LPC_IMAGE_RW_A,
-	EC_LPC_IMAGE_RW_B
+#define EC_CMD_GET_VERSION 0x02
+enum ec_current_image {
+	EC_IMAGE_UNKNOWN = 0,
+	EC_IMAGE_RO,
+	EC_IMAGE_RW_A,
+	EC_IMAGE_RW_B
 };
-struct lpc_response_get_version {
+struct ec_response_get_version {
 	/* Null-terminated version strings for RO, RW-A, RW-B */
 	char version_string_ro[32];
 	char version_string_rw_a[32];
 	char version_string_rw_b[32];
-	uint32_t current_image;  /* One of lpc_current_image */
+	uint32_t current_image;  /* One of ec_current_image */
 } __attribute__ ((packed));
 
 
 /* Read test */
-#define EC_LPC_COMMAND_READ_TEST 0x03
-struct lpc_params_read_test {
+#define EC_CMD_READ_TEST 0x03
+struct ec_params_read_test {
 	uint32_t offset;   /* Starting value for read buffer */
 	uint32_t size;     /* Size to read in bytes */
 } __attribute__ ((packed));
-struct lpc_response_read_test {
+struct ec_response_read_test {
 	uint32_t data[32];
 } __attribute__ ((packed));
 
 
 /* Get build information */
-#define EC_LPC_COMMAND_GET_BUILD_INFO 0x04
-struct lpc_response_get_build_info {
-	char build_string[EC_LPC_PARAM_SIZE];
+#define EC_CMD_GET_BUILD_INFO 0x04
+struct ec_response_get_build_info {
+	char build_string[EC_PARAM_SIZE];
 } __attribute__ ((packed));
 
 
 /* Get chip info */
-#define EC_LPC_COMMAND_GET_CHIP_INFO 0x05
-struct lpc_response_get_chip_info {
+#define EC_CMD_GET_CHIP_INFO 0x05
+struct ec_response_get_chip_info {
 	/* Null-terminated strings */
 	char vendor[32];
 	char name[32];
@@ -225,11 +225,11 @@ struct lpc_response_get_chip_info {
 /* Flash commands */
 
 /* Maximum bytes that can be read/written in a single command */
-#define EC_LPC_FLASH_SIZE_MAX 64
+#define EC_FLASH_SIZE_MAX 64
 
 /* Get flash info */
-#define EC_LPC_COMMAND_FLASH_INFO 0x10
-struct lpc_response_flash_info {
+#define EC_CMD_FLASH_INFO 0x10
+struct ec_response_flash_info {
 	/* Usable flash size, in bytes */
 	uint32_t flash_size;
 	/* Write block size.  Write offset and size must be a multiple
@@ -244,80 +244,80 @@ struct lpc_response_flash_info {
 } __attribute__ ((packed));
 
 /* Read flash */
-#define EC_LPC_COMMAND_FLASH_READ 0x11
-struct lpc_params_flash_read {
+#define EC_CMD_FLASH_READ 0x11
+struct ec_params_flash_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
 } __attribute__ ((packed));
-struct lpc_response_flash_read {
-	uint8_t data[EC_LPC_FLASH_SIZE_MAX];
+struct ec_response_flash_read {
+	uint8_t data[EC_FLASH_SIZE_MAX];
 } __attribute__ ((packed));
 
 /* Write flash */
-#define EC_LPC_COMMAND_FLASH_WRITE 0x12
-struct lpc_params_flash_write {
+#define EC_CMD_FLASH_WRITE 0x12
+struct ec_params_flash_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
-	uint8_t data[EC_LPC_FLASH_SIZE_MAX];
+	uint8_t data[EC_FLASH_SIZE_MAX];
 } __attribute__ ((packed));
 
 /* Erase flash */
-#define EC_LPC_COMMAND_FLASH_ERASE 0x13
-struct lpc_params_flash_erase {
+#define EC_CMD_FLASH_ERASE 0x13
+struct ec_params_flash_erase {
 	uint32_t offset;   /* Byte offset to erase */
 	uint32_t size;     /* Size to erase in bytes */
 } __attribute__ ((packed));
 
 /* Flashmap offset */
-#define EC_LPC_COMMAND_FLASH_GET_FLASHMAP 0x14
-struct lpc_response_flash_flashmap {
+#define EC_CMD_FLASH_GET_FLASHMAP 0x14
+struct ec_response_flash_flashmap {
 	uint32_t offset;   /* Flashmap offset */
 } __attribute__ ((packed));
 
 /* Enable/disable flash write protect */
-#define EC_LPC_COMMAND_FLASH_WP_ENABLE 0x15
-struct lpc_params_flash_wp_enable {
+#define EC_CMD_FLASH_WP_ENABLE 0x15
+struct ec_params_flash_wp_enable {
 	uint32_t enable_wp;
 } __attribute__ ((packed));
 
 /* Get flash write protection commit state */
-#define EC_LPC_COMMAND_FLASH_WP_GET_STATE 0x16
-struct lpc_response_flash_wp_enable {
+#define EC_CMD_FLASH_WP_GET_STATE 0x16
+struct ec_response_flash_wp_enable {
 	uint32_t enable_wp;
 } __attribute__ ((packed));
 
 /* Set/get flash write protection range */
-#define EC_LPC_COMMAND_FLASH_WP_SET_RANGE 0x17
-struct lpc_params_flash_wp_range {
+#define EC_CMD_FLASH_WP_SET_RANGE 0x17
+struct ec_params_flash_wp_range {
 	/* Byte offset aligned to info.protect_block_size */
 	uint32_t offset;
 	/* Size should be multiply of info.protect_block_size */
 	uint32_t size;
 } __attribute__ ((packed));
 
-#define EC_LPC_COMMAND_FLASH_WP_GET_RANGE 0x18
-struct lpc_response_flash_wp_range {
+#define EC_CMD_FLASH_WP_GET_RANGE 0x18
+struct ec_response_flash_wp_range {
 	uint32_t offset;
 	uint32_t size;
 } __attribute__ ((packed));
 
 /* Read flash write protection GPIO pin */
-#define EC_LPC_COMMAND_FLASH_WP_GET_GPIO 0x19
-struct lpc_params_flash_wp_gpio {
+#define EC_CMD_FLASH_WP_GET_GPIO 0x19
+struct ec_params_flash_wp_gpio {
 	uint32_t pin_no;
 } __attribute__ ((packed));
-struct lpc_response_flash_wp_gpio {
+struct ec_response_flash_wp_gpio {
 	uint32_t value;
 } __attribute__ ((packed));
 
 #ifdef SUPPORT_CHECKSUM
 /* Checksum a range of flash datq */
-#define EC_LPC_COMMAND_FLASH_CHECKSUM 0x1f
-struct lpc_params_flash_checksum {
+#define EC_CMD_FLASH_CHECKSUM 0x1f
+struct ec_params_flash_checksum {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
 } __attribute__ ((packed));
-struct lpc_response_flash_checksum {
+struct ec_response_flash_checksum {
 	uint8_t checksum;
 } __attribute__ ((packed));
 #define BYTE_IN(sum, byte) do {  \
@@ -330,26 +330,26 @@ struct lpc_response_flash_checksum {
 /* PWM commands */
 
 /* Get fan RPM */
-#define EC_LPC_COMMAND_PWM_GET_FAN_RPM 0x20
-struct lpc_response_pwm_get_fan_rpm {
+#define EC_CMD_PWM_GET_FAN_RPM 0x20
+struct ec_response_pwm_get_fan_rpm {
 	uint32_t rpm;
 } __attribute__ ((packed));
 
 /* Set target fan RPM */
-#define EC_LPC_COMMAND_PWM_SET_FAN_TARGET_RPM 0x21
-struct lpc_params_pwm_set_fan_target_rpm {
+#define EC_CMD_PWM_SET_FAN_TARGET_RPM 0x21
+struct ec_params_pwm_set_fan_target_rpm {
 	uint32_t rpm;
 } __attribute__ ((packed));
 
 /* Get keyboard backlight */
-#define EC_LPC_COMMAND_PWM_GET_KEYBOARD_BACKLIGHT 0x22
-struct lpc_response_pwm_get_keyboard_backlight {
+#define EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT 0x22
+struct ec_response_pwm_get_keyboard_backlight {
 	uint8_t percent;
 } __attribute__ ((packed));
 
 /* Set keyboard backlight */
-#define EC_LPC_COMMAND_PWM_SET_KEYBOARD_BACKLIGHT 0x23
-struct lpc_params_pwm_set_keyboard_backlight {
+#define EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT 0x23
+struct ec_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
 } __attribute__ ((packed));
 
@@ -358,8 +358,8 @@ struct lpc_params_pwm_set_keyboard_backlight {
  * command to say "talk to the lightbar", we put the "and tell it to do X"
  * part into a subcommand. We'll make separate structs for subcommands with
  * different input args, so that we know how much to expect. */
-#define EC_LPC_COMMAND_LIGHTBAR_CMD 0x28
-struct lpc_params_lightbar_cmd {
+#define EC_CMD_LIGHTBAR_CMD 0x28
+struct ec_params_lightbar_cmd {
 	union {
 		union {
 			uint8_t cmd;
@@ -402,8 +402,8 @@ struct lpc_params_lightbar_cmd {
 /* USB charging control commands */
 
 /* Set USB port charging mode */
-#define EC_LPC_COMMAND_USB_CHARGE_SET_MODE 0x30
-struct lpc_params_usb_charge_set_mode {
+#define EC_CMD_USB_CHARGE_SET_MODE 0x30
+struct ec_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
 	uint8_t mode;
 } __attribute__ ((packed));
@@ -412,11 +412,11 @@ struct lpc_params_usb_charge_set_mode {
 /* Persistent storage for host */
 
 /* Maximum bytes that can be read/written in a single command */
-#define EC_LPC_PSTORE_SIZE_MAX 64
+#define EC_PSTORE_SIZE_MAX 64
 
 /* Get persistent storage info */
-#define EC_LPC_COMMAND_PSTORE_INFO 0x40
-struct lpc_response_pstore_info {
+#define EC_CMD_PSTORE_INFO 0x40
+struct ec_response_pstore_info {
 	/* Persistent storage size, in bytes */
 	uint32_t pstore_size;
 	/* Access size.  Read/write offset and size must be a multiple
@@ -425,59 +425,59 @@ struct lpc_response_pstore_info {
 } __attribute__ ((packed));
 
 /* Read persistent storage */
-#define EC_LPC_COMMAND_PSTORE_READ 0x41
-struct lpc_params_pstore_read {
+#define EC_CMD_PSTORE_READ 0x41
+struct ec_params_pstore_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
 } __attribute__ ((packed));
-struct lpc_response_pstore_read {
-	uint8_t data[EC_LPC_PSTORE_SIZE_MAX];
+struct ec_response_pstore_read {
+	uint8_t data[EC_PSTORE_SIZE_MAX];
 } __attribute__ ((packed));
 
 /* Write persistent storage */
-#define EC_LPC_COMMAND_PSTORE_WRITE 0x42
-struct lpc_params_pstore_write {
+#define EC_CMD_PSTORE_WRITE 0x42
+struct ec_params_pstore_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
-	uint8_t data[EC_LPC_PSTORE_SIZE_MAX];
+	uint8_t data[EC_PSTORE_SIZE_MAX];
 } __attribute__ ((packed));
 
 /*****************************************************************************/
 /* Thermal engine commands */
 
 /* Set thershold value */
-#define EC_LPC_COMMAND_THERMAL_SET_THRESHOLD 0x50
-struct lpc_params_thermal_set_threshold {
+#define EC_CMD_THERMAL_SET_THRESHOLD 0x50
+struct ec_params_thermal_set_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
 	uint16_t value;
 } __attribute__ ((packed));
 
 /* Get threshold value */
-#define EC_LPC_COMMAND_THERMAL_GET_THRESHOLD 0x51
-struct lpc_params_thermal_get_threshold {
+#define EC_CMD_THERMAL_GET_THRESHOLD 0x51
+struct ec_params_thermal_get_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
 } __attribute__ ((packed));
-struct lpc_response_thermal_get_threshold {
+struct ec_response_thermal_get_threshold {
 	uint16_t value;
 } __attribute__ ((packed));
 
 /* Toggling automatic fan control */
-#define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
+#define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
 /*****************************************************************************/
 /* Matrix KeyBoard Protocol */
 
 /* Read key state */
-#define EC_LPC_COMMAND_MKBP_STATE 0x60
-struct lpc_response_mkbp_state {
+#define EC_CMD_MKBP_STATE 0x60
+struct ec_response_mkbp_state {
 	uint8_t cols[32];
 } __attribute__ ((packed));
 
 /* Provide information about the matrix : number of rows and columns */
-#define EC_LPC_COMMAND_MKBP_INFO 0x61
-struct lpc_response_mkbp_info {
+#define EC_CMD_MKBP_INFO 0x61
+struct ec_response_mkbp_info {
 	uint32_t rows;
 	uint32_t cols;
 } __attribute__ ((packed));
@@ -487,24 +487,24 @@ struct lpc_response_mkbp_info {
 
 /* Host event mask params and response structures, shared by all of the host
  * event commands below. */
-struct lpc_params_host_event_mask {
+struct ec_params_host_event_mask {
 	uint32_t mask;
 } __attribute__ ((packed));
 
-struct lpc_response_host_event_mask {
+struct ec_response_host_event_mask {
 	uint32_t mask;
 } __attribute__ ((packed));
 
-/* These all use lpc_response_host_event_mask */
-#define EC_LPC_COMMAND_HOST_EVENT_GET_SMI_MASK  0x88
-#define EC_LPC_COMMAND_HOST_EVENT_GET_SCI_MASK  0x89
-#define EC_LPC_COMMAND_HOST_EVENT_GET_WAKE_MASK 0x8d
+/* These all use ec_response_host_event_mask */
+#define EC_CMD_HOST_EVENT_GET_SMI_MASK  0x88
+#define EC_CMD_HOST_EVENT_GET_SCI_MASK  0x89
+#define EC_CMD_HOST_EVENT_GET_WAKE_MASK 0x8d
 
-/* These all use lpc_params_host_event_mask */
-#define EC_LPC_COMMAND_HOST_EVENT_SET_SMI_MASK  0x8a
-#define EC_LPC_COMMAND_HOST_EVENT_SET_SCI_MASK  0x8b
-#define EC_LPC_COMMAND_HOST_EVENT_CLEAR         0x8c
-#define EC_LPC_COMMAND_HOST_EVENT_SET_WAKE_MASK 0x8e
+/* These all use ec_params_host_event_mask */
+#define EC_CMD_HOST_EVENT_SET_SMI_MASK  0x8a
+#define EC_CMD_HOST_EVENT_SET_SCI_MASK  0x8b
+#define EC_CMD_HOST_EVENT_CLEAR         0x8c
+#define EC_CMD_HOST_EVENT_SET_WAKE_MASK 0x8e
 
 /*****************************************************************************/
 /* Special commands
@@ -517,7 +517,7 @@ struct lpc_response_host_event_mask {
  * This clears the lowest-order bit in the currently pending host events, and
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
  * event 0x80000000 = 32), or 0 if no event was pending. */
-#define EC_LPC_COMMAND_ACPI_QUERY_EVENT 0x84
+#define EC_CMD_ACPI_QUERY_EVENT 0x84
 
 /* Reboot
  *
@@ -525,16 +525,16 @@ struct lpc_response_host_event_mask {
  * reboot command is processed at interrupt level.  Note that when the EC
  * reboots, the host will reboot too, so there is no response to this
  * command. */
-#define EC_LPC_COMMAND_REBOOT 0xd1  /* Think "die" */
+#define EC_CMD_REBOOT 0xd1  /* Think "die" */
 
-#define EC_LPC_COMMAND_REBOOT_EC 0xd2
-#define EC_LPC_COMMAND_REBOOT_BIT_RECOVERY (1 << 0)
+#define EC_CMD_REBOOT_EC 0xd2
+#define EC_CMD_REBOOT_BIT_RECOVERY (1 << 0)
 
-struct lpc_params_reboot_ec {
-	uint8_t target;  /* enum lpc_current_image */
+struct ec_params_reboot_ec {
+	uint8_t target;  /* enum ec_current_image */
 	uint8_t reboot_flags;
 } __attribute__ ((packed));
 
 #endif  /* !__ACPI__ */
 
-#endif  /* __CROS_EC_LPC_COMMANDS_H */
+#endif  /* __CROS_EC_COMMANDS_H */

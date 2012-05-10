@@ -9,7 +9,7 @@
 #define __CROS_EC_HOST_COMMAND_H
 
 #include "common.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 
 /* Host command */
 struct host_command {

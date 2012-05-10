@@ -17,8 +17,8 @@
 
 int usb_charge_command_set_mode(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_usb_charge_set_mode *p =
-			(struct lpc_params_usb_charge_set_mode *)data;
+	struct ec_params_usb_charge_set_mode *p =
+			(struct ec_params_usb_charge_set_mode *)data;
 	int rv;
 
 	CPRINTF("[Setting USB port %d to mode %d]\n",
@@ -26,9 +26,9 @@ int usb_charge_command_set_mode(uint8_t *data, int *resp_size)
 	rv = usb_charge_set_mode(p->usb_port_id, p->mode);
 
 	if (rv != EC_SUCCESS)
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
-	return EC_LPC_RESULT_SUCCESS;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_USB_CHARGE_SET_MODE,
+DECLARE_HOST_COMMAND(EC_CMD_USB_CHARGE_SET_MODE,
 		     usb_charge_command_set_mode);

@@ -12,7 +12,7 @@
 #include "host_command.h"
 #include "i8042.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "port80.h"
 #include "registers.h"
 #include "system.h"
@@ -116,13 +116,13 @@ static void lpc_generate_sci(void)
 
 uint8_t *host_get_buffer(int slot)
 {
-	return (uint8_t *)LPC_POOL_CMD_DATA + EC_LPC_PARAM_SIZE * slot;
+	return (uint8_t *)LPC_POOL_CMD_DATA + EC_PARAM_SIZE * slot;
 }
 
 
 uint8_t *lpc_get_memmap_range(void)
 {
-	return (uint8_t *)LPC_POOL_CMD_DATA + EC_LPC_PARAM_SIZE * 2;
+	return (uint8_t *)LPC_POOL_CMD_DATA + EC_PARAM_SIZE * 2;
 }
 
 
@@ -158,7 +158,7 @@ void host_send_response(int slot, const uint8_t *data, int size)
 	if (data != out)
 		memcpy(out, data, size);
 
-	host_send_result(slot, EC_LPC_RESULT_SUCCESS);
+	host_send_result(slot, EC_RES_SUCCESS);
 }
 
 /* Return true if the TOH is still set */
@@ -201,7 +201,7 @@ void lpc_comx_put_char(int c)
  */
 static void update_host_event_status(void) {
 	uint32_t *mapped_raw_events =
-		(uint32_t*)(lpc_get_memmap_range() + EC_LPC_MEMMAP_HOST_EVENTS);
+		(uint32_t *)(lpc_get_memmap_range() + EC_MEMMAP_HOST_EVENTS);
 
 	int need_sci = 0;
 	int need_smi = 0;

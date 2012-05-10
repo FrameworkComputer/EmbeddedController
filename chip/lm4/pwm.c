@@ -10,7 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "pwm.h"
 #include "registers.h"
 #include "task.h"
@@ -115,7 +115,7 @@ static void update_lpc_mapped_memory(void)
 {
 	int i, r;
 	uint16_t *mapped = (uint16_t *)(lpc_get_memmap_range() +
-					EC_LPC_MEMMAP_FAN);
+					EC_MEMMAP_FAN);
 
 	for (i = 0; i < 4; ++i)
 		mapped[i] = 0xffff;
@@ -140,7 +140,7 @@ static void check_fan_failure(void)
 		 * here should be enough.
 		 */
 		lpc_set_host_events(
-			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_THERMAL));
+			EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL));
 		cputs(CC_PWM, "[Fan stalled!]\n");
 	}
 }

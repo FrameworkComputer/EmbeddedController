@@ -13,7 +13,7 @@
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "system.h"
@@ -80,31 +80,31 @@ static int debounced_lid_open;
 static void update_other_switches(void)
 {
 	if (gpio_get_level(GPIO_WRITE_PROTECT) == 0)
-		*memmap_switches |= EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
+		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
-		*memmap_switches &= ~EC_LPC_SWITCH_WRITE_PROTECT_DISABLED;
+		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
 
 	if (keyboard_scan_recovery_pressed())
-		*memmap_switches |= EC_LPC_SWITCH_KEYBOARD_RECOVERY;
+		*memmap_switches |= EC_SWITCH_KEYBOARD_RECOVERY;
 	else
-		*memmap_switches &= ~EC_LPC_SWITCH_KEYBOARD_RECOVERY;
+		*memmap_switches &= ~EC_SWITCH_KEYBOARD_RECOVERY;
 
 	if (gpio_get_level(GPIO_RECOVERYn) == 0)
-		*memmap_switches |= EC_LPC_SWITCH_DEDICATED_RECOVERY;
+		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 	else
-		*memmap_switches &= ~EC_LPC_SWITCH_DEDICATED_RECOVERY;
+		*memmap_switches &= ~EC_SWITCH_DEDICATED_RECOVERY;
 
 	/* Was this a reboot requesting recovery? */
 	/* TODO: should use a different flag, not the dedicated recovery
 	 * switch flag! */
 	if (system_get_recovery_required())
-		*memmap_switches |= EC_LPC_SWITCH_DEDICATED_RECOVERY;
+		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
 	if (eoption_get_bool(EOPTION_BOOL_FAKE_DEV))
-		*memmap_switches |= EC_LPC_SWITCH_FAKE_DEVELOPER;
+		*memmap_switches |= EC_SWITCH_FAKE_DEVELOPER;
 	else
-		*memmap_switches &= ~EC_LPC_SWITCH_FAKE_DEVELOPER;
+		*memmap_switches &= ~EC_SWITCH_FAKE_DEVELOPER;
 #endif
 }
 
@@ -194,7 +194,7 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
 		} else {
 			/* Stop stretching the power button press */
-			*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+			*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 			keyboard_set_power_button(0);
 			pwrbtn_state = PWRBTN_STATE_STOPPING;
 		}
@@ -222,10 +222,10 @@ static void power_button_changed(uint64_t tnow)
 		CPRINTF("[%T PB pressed]\n");
 		pwrbtn_state = PWRBTN_STATE_START;
 		tnext_state = tnow;
-		*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+		*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(1);
 		lpc_set_host_events(
-			EC_LPC_HOST_EVENT_MASK(EC_LPC_HOST_EVENT_POWER_BUTTON));
+			EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
 	} else if (pwrbtn_state == PWRBTN_STATE_BOOT_RESET) {
 		/* Ignore the first power button release after a
 		 * keyboard-controlled reset, since we already told the PCH the
@@ -238,7 +238,7 @@ static void power_button_changed(uint64_t tnow)
 		CPRINTF("[%T PB released]\n");
 		pwrbtn_state = PWRBTN_STATE_STOPPING;
 		tnext_state = tnow;
-		*memmap_switches &= ~EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+		*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 		keyboard_set_power_button(0);
 	}
 }
@@ -250,10 +250,10 @@ static void lid_switch_open(uint64_t tnow)
 	CPRINTF("[%T PB lid open]\n");
 
 	debounced_lid_open = 1;
-	*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+	*memmap_switches |= EC_SWITCH_LID_OPEN;
 
-	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-			    EC_LPC_HOST_EVENT_LID_OPEN));
+	lpc_set_host_events(EC_HOST_EVENT_MASK(
+			    EC_HOST_EVENT_LID_OPEN));
 
 	/* If the chipset is off, send a power button pulse to wake up the
 	 * chipset. */
@@ -273,10 +273,10 @@ static void lid_switch_close(uint64_t tnow)
 	CPRINTF("[%T PB lid close]\n");
 
 	debounced_lid_open = 0;
-	*memmap_switches &= ~EC_LPC_SWITCH_LID_OPEN;
+	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
 
-	lpc_set_host_events(EC_LPC_HOST_EVENT_MASK(
-			    EC_LPC_HOST_EVENT_LID_CLOSED));
+	lpc_set_host_events(EC_HOST_EVENT_MASK(
+			    EC_HOST_EVENT_LID_CLOSED));
 }
 
 
@@ -323,11 +323,11 @@ void power_button_interrupt(enum gpio_signal signal)
 static int power_button_init(void)
 {
 	/* Set up memory-mapped switch positions */
-	memmap_switches = lpc_get_memmap_range() + EC_LPC_MEMMAP_SWITCHES;
+	memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
 	*memmap_switches = 0;
 	if (gpio_get_level(GPIO_LID_SWITCHn) != 0) {
 		debounced_lid_open = 1;
-		*memmap_switches |= EC_LPC_SWITCH_LID_OPEN;
+		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	}
 	update_other_switches();
 	update_backlight();
@@ -353,7 +353,7 @@ static int power_button_init(void)
 		 * switch positions. */
 		set_pwrbtn_to_pch(get_power_button_pressed() ? 0 : 1);
 		if (get_power_button_pressed())
-			*memmap_switches |= EC_LPC_SWITCH_POWER_BUTTON_PRESSED;
+			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 	}
 
 	/* Enable interrupts, now that we've initialized */

@@ -9,7 +9,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
-#include "lpc_commands.h"
+#include "ec_commands.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -31,10 +31,10 @@ void host_command_received(int slot, int command)
 	/* If this is the reboot command, reboot immediately.  This gives
 	 * the host processor a way to unwedge the EC even if it's busy with
 	 * some other command. */
-	if (command == EC_LPC_COMMAND_REBOOT) {
+	if (command == EC_CMD_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		host_send_result(slot, EC_LPC_RESULT_ERROR);
+		host_send_result(slot, EC_RES_ERROR);
 		return;
 	}
 
@@ -47,21 +47,21 @@ void host_command_received(int slot, int command)
 
 static int host_command_proto_version(uint8_t *data, int *resp_size)
 {
-	struct lpc_response_proto_version *r =
-		(struct lpc_response_proto_version *)data;
+	struct ec_response_proto_version *r =
+		(struct ec_response_proto_version *)data;
 
-	r->version = EC_LPC_PROTO_VERSION;
+	r->version = EC_PROTO_VERSION;
 
-	*resp_size = sizeof(struct lpc_response_proto_version);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_proto_version);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PROTO_VERSION,
+DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION,
 		     host_command_proto_version);
 
 static int host_command_hello(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_hello *p = (struct lpc_params_hello *)data;
-	struct lpc_response_hello *r = (struct lpc_response_hello *)data;
+	struct ec_params_hello *p = (struct ec_params_hello *)data;
+	struct ec_response_hello *r = (struct ec_response_hello *)data;
 	uint32_t d = p->in_data;
 
 	CPRINTF("[LPC Hello 0x%08x]\n", d);
@@ -78,36 +78,36 @@ static int host_command_hello(uint8_t *data, int *resp_size)
 	CPUTS("[LPC sending hello back]\n");
 
 	r->out_data = d + 0x01020304;
-	*resp_size = sizeof(struct lpc_response_hello);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_hello);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_HELLO, host_command_hello);
+DECLARE_HOST_COMMAND(EC_CMD_HELLO, host_command_hello);
 
 
 static int host_command_read_test(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_read_test *p = (struct lpc_params_read_test *)data;
-	struct lpc_response_read_test *r =
-			(struct lpc_response_read_test *)data;
+	struct ec_params_read_test *p = (struct ec_params_read_test *)data;
+	struct ec_response_read_test *r =
+			(struct ec_response_read_test *)data;
 
 	int offset = p->offset;
 	int size = p->size / sizeof(uint32_t);
 	int i;
 
 	if (size > ARRAY_SIZE(r->data))
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
 	for (i = 0; i < size; i++)
 		r->data[i] = offset + i;
 
-	*resp_size = sizeof(struct lpc_response_read_test);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_read_test);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_READ_TEST, host_command_read_test);
+DECLARE_HOST_COMMAND(EC_CMD_READ_TEST, host_command_read_test);
 
 
 /* ACPI query event handler.  Note that the returned value is NOT actually
- * an EC_LPC_RESULT enum; it's 0 if no event was pending, or the 1-based
+ * an EC_RES enum; it's 0 if no event was pending, or the 1-based
  * index of the lowest bit which was set. */
 static int host_command_acpi_query_event(uint8_t *data, int *resp_size)
 {
@@ -124,7 +124,7 @@ static int host_command_acpi_query_event(uint8_t *data, int *resp_size)
 	/* No events pending */
 	return 0;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_ACPI_QUERY_EVENT,
+DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
 		     host_command_acpi_query_event);
 
 
@@ -155,12 +155,12 @@ static void command_process(int slot)
 	if (cmd) {
 		int size = 0;
 		int res = cmd->handler(data, &size);
-		if ((res == EC_LPC_RESULT_SUCCESS) && size)
+		if ((res == EC_RES_SUCCESS) && size)
 			host_send_response(slot, data, size);
 		else
 			host_send_result(slot, res);
 	} else {
-		host_send_result(slot, EC_LPC_RESULT_INVALID_COMMAND);
+		host_send_result(slot, EC_RES_INVALID_COMMAND);
 	}
 }
 

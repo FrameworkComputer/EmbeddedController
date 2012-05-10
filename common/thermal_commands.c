@@ -11,40 +11,40 @@
 
 int thermal_command_set_threshold(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_thermal_set_threshold *p =
-			(struct lpc_params_thermal_set_threshold *)data;
+	struct ec_params_thermal_set_threshold *p =
+			(struct ec_params_thermal_set_threshold *)data;
 
 	if (thermal_set_threshold(p->sensor_type, p->threshold_id, p->value))
-		return EC_LPC_RESULT_ERROR;
-	return EC_LPC_RESULT_SUCCESS;
+		return EC_RES_ERROR;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_SET_THRESHOLD,
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
 		thermal_command_set_threshold);
 
 
 int thermal_command_get_threshold(uint8_t *data, int *resp_size)
 {
-	struct lpc_params_thermal_get_threshold *p =
-			(struct lpc_params_thermal_get_threshold *)data;
-	struct lpc_response_thermal_get_threshold *r =
-			(struct lpc_response_thermal_get_threshold *)data;
+	struct ec_params_thermal_get_threshold *p =
+			(struct ec_params_thermal_get_threshold *)data;
+	struct ec_response_thermal_get_threshold *r =
+			(struct ec_response_thermal_get_threshold *)data;
 
 	r->value = thermal_get_threshold(p->sensor_type, p->threshold_id);
 	if (r->value == -1)
-		return EC_LPC_RESULT_ERROR;
+		return EC_RES_ERROR;
 
-	*resp_size = sizeof(struct lpc_response_thermal_get_threshold);
-	return EC_LPC_RESULT_SUCCESS;
+	*resp_size = sizeof(struct ec_response_thermal_get_threshold);
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_GET_THRESHOLD,
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
 		thermal_command_get_threshold);
 
 
 int thermal_command_auto_fan_ctrl(uint8_t *data, int *resp_size)
 {
 	if (thermal_toggle_auto_fan_ctrl(1))
-		return EC_LPC_RESULT_ERROR;
-	return EC_LPC_RESULT_SUCCESS;
+		return EC_RES_ERROR;
+	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL,
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_AUTO_FAN_CTRL,
 		thermal_command_auto_fan_ctrl);
