@@ -106,6 +106,7 @@ static int host_command_read_test(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_READ_TEST, host_command_read_test);
 
 
+#ifdef CONFIG_LPC
 /* ACPI query event handler.  Note that the returned value is NOT actually
  * an EC_RES enum; it's 0 if no event was pending, or the 1-based
  * index of the lowest bit which was set. */
@@ -126,6 +127,7 @@ static int host_command_acpi_query_event(uint8_t *data, int *resp_size)
 }
 DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
 		     host_command_acpi_query_event);
+#endif
 
 
 /* Finds a command by command number.  Returns the command structure, or NULL if

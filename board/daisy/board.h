@@ -17,6 +17,9 @@
 /* support programming on-chip flash */
 #define CONFIG_FLASH
 
+/* use I2C for host communication */
+#define CONFIG_I2C
+
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 
