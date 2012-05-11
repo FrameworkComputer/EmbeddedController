@@ -57,6 +57,13 @@ int main(void)
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();
 
+	/* Initialize timer.  Everything after this can be benchmarked.
+	 * get_time() and udelay() may now be used.  usleep() requires task
+	 * scheduling, so cannot be used yet.  Note that interrupts declared
+	 * via DECLARE_IRQ() call timer routines when profiling is enabled, so
+	 * timer init() must be before uart_init(). */
+	timer_init();
+
 	/* Main initialization stage.  Modules may enable interrupts here. */
 
 	/* Initialize UART.  uart_printf(), etc. may now be used. */
@@ -70,11 +77,6 @@ int main(void)
 	 * by tasks.) */
 	watchdog_init(1100);
 #endif
-
-	/* Initialize timer.  Everything after this can be benchmarked.
-	 * get_time() and udelay() may now be used.  usleep() requires task
-	 * scheduling, so cannot be used yet. */
-	timer_init();
 
 	/* Verified boot needs to read the initial keyboard state and EEPROM
 	 * contents.  EEPROM must be up first, so keyboard_scan can toggle
