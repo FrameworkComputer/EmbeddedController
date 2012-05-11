@@ -69,7 +69,7 @@ static int update_prescaler(void)
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
 
-int __hw_clock_source_init(void)
+int __hw_clock_source_init(uint32_t start_t)
 {
 	volatile uint32_t scratch __attribute__((unused));
 
@@ -93,10 +93,13 @@ int __hw_clock_source_init(void)
 
 	/* Periodic mode, counting down */
 	LM4_TIMER_TAMR(6) = 0x22;
-	/* use the full 32-bits of the timer */
+	/* Use the full 32-bits of the timer */
 	LM4_TIMER_TAILR(6) = 0xffffffff;
 	/* Starts counting in timer A */
 	LM4_TIMER_CTL(6) |= 0x1;
+	/* Override the count with the start value now that counting has
+	 * started. */
+	LM4_TIMER_TAV(6) = 0xffffffff - start_t;
 
 	/* Enable interrupt */
 	task_enable_irq(LM4_IRQ_TIMERW0A);

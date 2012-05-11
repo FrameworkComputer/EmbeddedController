@@ -141,12 +141,12 @@ int vboot_init(void)
 	enum howgood r;
 	timestamp_t ts1, ts2;
 
-	CPRINTF("\n[--- %s() ---]\n", __func__);
+	CPRINTF("[%T Vboot init]\n");
 
 	if (!maybe_jump_to_other_image())
 		return EC_SUCCESS;
 
-	CPRINTF("[Check image A...]\n");
+	CPRINTF("[%T Vboot check image A...]\n");
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
@@ -154,16 +154,17 @@ int vboot_init(void)
 		       (uint8_t *)CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
 	ts2 = get_time();
 
-	CPRINTF("[result=%d, elapsed time=%ld]\n", r, ts2.val - ts1.val);
+	CPRINTF("[%T Vboot result=%d, elapsed time=%ld us]\n",
+		r, ts2.val - ts1.val);
 
 	switch (r) {
 	case IMAGE_IS_GOOD:
-		CPRINTF("[Image A verified at %T]\n");
+		CPRINTF("[Image A verified]\n");
 		system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
 		CPRINTF("[ERROR: Unable to jump to image A]\n");
 		goto bad;
 	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
-		CPRINTF("[Image A verified at %T]\n");
+		CPRINTF("[Image A verified]\n");
 		CPRINTF("[Staying in RO mode]\n");
 		return EC_SUCCESS;
 	default:
@@ -171,9 +172,9 @@ int vboot_init(void)
 	}
 
 #ifdef CONFIG_NO_RW_B
-	CPRINTF("[No image B to check]\n");
+	CPRINTF("[Vboot no image B to check]\n");
 #else
-	CPRINTF("[Check image B...]\n");
+	CPRINTF("[%T Vboot check image B...]\n");
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
@@ -181,16 +182,17 @@ int vboot_init(void)
 		       (uint8_t *)CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
 	ts2 = get_time();
 
-	CPRINTF("[result=%d, elapsed time=%ld]\n", r, ts2.val - ts1.val);
+	CPRINTF("[%T Vboot result=%d, elapsed time=%ld us]\n",
+		r, ts2.val - ts1.val);
 
 	switch (r) {
 	case IMAGE_IS_GOOD:
-		CPRINTF("[Image B verified at %T]\n");
+		CPRINTF("[Image B verified]\n");
 		system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
 		CPRINTF("[ERROR: Unable to jump to image B]\n");
 		goto bad;
 	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
-		CPRINTF("[Image B verified at %T]\n");
+		CPRINTF("[Image B verified]\n");
 		CPRINTF("[Staying in RO mode]\n");
 		return EC_SUCCESS;
 	default:

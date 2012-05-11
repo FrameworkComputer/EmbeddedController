@@ -24,11 +24,12 @@ void __hw_clock_event_clear(void);
 uint32_t __hw_clock_source_read(void);
 
 /**
- * Initializes the hardware timer used to provide clock services.
+ * Initializes the hardware timer used to provide clock services, using the
+ * specified start timer value.
  *
  * It returns the IRQ number of the timer routine.
  */
-int __hw_clock_source_init(void);
+int __hw_clock_source_init(uint32_t start_t);
 
 /**
  * Searches the next deadline and program it in the timer hardware.

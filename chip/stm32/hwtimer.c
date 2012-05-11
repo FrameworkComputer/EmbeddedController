@@ -90,7 +90,7 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(STM32_IRQ_TIM2, __hw_clock_source_irq, 1);
 DECLARE_IRQ(STM32_IRQ_TIM3, __hw_clock_source_irq, 1);
 
-int __hw_clock_source_init(void)
+int __hw_clock_source_init(uint32_t start_t)
 {
 	/*
 	 * we use 2 chained 16-bit counters to emulate a 32-bit one :
@@ -133,6 +133,11 @@ int __hw_clock_source_init(void)
 	/* Start counting */
 	STM32_TIM_CR1(2) |= 1;
 	STM32_TIM_CR1(3) |= 1;
+
+	/* Override the count with the start value now that counting has
+	 * started. */
+	STM32_TIM_CNT(2) = start_t >> 16;
+	STM32_TIM_CNT(3) = start_t & 0xffff;
 
 	/* Enable timer interrupts */
 	task_enable_irq(STM32_IRQ_TIM2);

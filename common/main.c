@@ -68,6 +68,17 @@ int main(void)
 
 	/* Initialize UART.  uart_printf(), etc. may now be used. */
 	uart_init();
+	if (system_jumped_to_this_image())
+		uart_printf("[%T UART initialized after sysjump]\n");
+	else {
+		uart_puts("\n\n--- UART initialized after reboot ---\n");
+		uart_printf("[Reset cause: %s]\n",
+			    system_get_reset_cause_string());
+	}
+	uart_printf("[Image: %s, %s]\n",
+		    system_get_image_copy_string(),
+		    system_get_build_info());
+
 
 #ifdef CONFIG_TASK_WATCHDOG
 	/* Intialize watchdog timer.  All lengthy operations between now and
@@ -110,15 +121,10 @@ int main(void)
 	/* Reduce core clock now that init is done */
 	clock_enable_pll(0);
 #endif
-	/* Print the init time and reset cause.  Init time isn't completely
-	 * accurate because it can't take into account the time for the first
-	 * few module inits, but it'll at least catch the majority of them. */
-	uart_printf("\n\n--- Chrome EC initialized in %ld us ---\n",
-		    get_time().val);
-	uart_printf("build: %s\n", system_get_build_info());
-	uart_printf("(image: %s, last reset: %s)\n",
-		    system_get_image_copy_string(),
-		    system_get_reset_cause_string());
+	/* Print the init time.  Not completely accurate because it can't take
+	 * into account the time for the first few module inits, but it'll at
+	 * least catch the majority of them. */
+	uart_printf("[%T Inits done]\n");
 
 	/* Launch task scheduling (never returns) */
 	return task_start();

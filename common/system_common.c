@@ -277,7 +277,7 @@ int system_run_image_copy(enum system_image_copy_t copy,
 	if (init_addr < base || init_addr >= base + CONFIG_FW_IMAGE_SIZE)
 		return EC_ERROR_UNKNOWN;
 
-	CPRINTF("Rebooting to image %s\n", image_names[copy]);
+	CPRINTF("[%T Jumping to image %s]\n", image_names[copy]);
 
 	jump_to_image(init_addr, recovery_required);
 

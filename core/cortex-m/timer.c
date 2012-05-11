@@ -5,15 +5,15 @@
 
 /* Timer module for Chrome EC operating system */
 
-#include <stdint.h>
-
-#include "task.h"
-#include "timer.h"
-#include "hwtimer.h"
 #include "atomic.h"
 #include "console.h"
+#include "hooks.h"
+#include "hwtimer.h"
+#include "system.h"
 #include "uart.h"
 #include "util.h"
+#include "task.h"
+#include "timer.h"
 
 /* high word of the 64-bit timestamp counter  */
 static volatile uint32_t clksrc_high;
@@ -212,11 +212,37 @@ int command_timer_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info);
 
 
+#define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
+
+
+/* Preserve time across a sysjump */
+static int timer_sysjump(void)
+{
+	timestamp_t ts = get_time();
+	system_add_jump_tag(TIMER_SYSJUMP_TAG, 1, sizeof(ts), &ts);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
+
+
 int timer_init(void)
 {
+	const timestamp_t *ts;
+	int size, version;
+
 	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
 
-	timer_irq = __hw_clock_source_init();
+	/* Restore time from before sysjump */
+	ts = (const timestamp_t *)system_get_jump_tag(TIMER_SYSJUMP_TAG,
+						      &version, &size);
+	if (ts && version == 1 && size == sizeof(timestamp_t)) {
+		clksrc_high = ts->le.hi;
+		timer_irq = __hw_clock_source_init(ts->le.lo);
+	} else {
+		clksrc_high = 0;
+		timer_irq = __hw_clock_source_init(0);
+	}
 
 	return EC_SUCCESS;
 }
