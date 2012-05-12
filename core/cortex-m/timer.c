@@ -37,11 +37,16 @@ static void expire_timer(task_id_t tskid)
 	task_set_event(tskid, TASK_EVENT_TIMER, 0);
 }
 
-int timestamp_expired(timestamp_t deadline)
+int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 {
-	timestamp_t now = get_time();
+	timestamp_t now_val;
 
-	return ((int64_t)(now.val - deadline.val) >= 0);
+	if (!now) {
+		now_val = get_time();
+		now = &now_val;
+	}
+
+	return ((int64_t)(now->val - deadline.val) >= 0);
 }
 
 void process_timers(int overflow)
