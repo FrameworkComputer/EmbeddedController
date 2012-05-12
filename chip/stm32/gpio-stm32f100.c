@@ -123,6 +123,7 @@ int gpio_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 
 void gpio_set_alternate_function(int port, int mask, int func)
