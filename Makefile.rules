@@ -48,7 +48,11 @@ cmd_sign = vbutil_ec --sign $@ \
 		--signpubkey $(VBOOT_DEVKEYS)/ec_root_key.vbpubk \
 		$(silent)
 cmd_mv = mv $^ $@
-
+cmd_extractab = cd $(out) && \
+	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A RW_SECTION_B $(silent) && \
+	mv RW_SECTION_A $(PROJECT).A.bin && mv RW_SECTION_B $(PROJECT).B.bin
+cmd_copyab = cd $(out) && cp $(PROJECT).A.flat $(PROJECT).A.bin && \
+	cp $(PROJECT).B.flat $(PROJECT).B.bin
 
 .PHONY: all tests utils
 all: $(out)/$(PROJECT).bin $(foreach s,A B RO,$(out)/$(PROJECT).$(s).dis) utils
@@ -82,6 +86,8 @@ $(out)/%.bin: $(out)/%.bin.tmp
 $(out)/%.bin.tmp: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)
 	$(if $(sign-y),$(call quiet,sign,SIGN   ),)
+	$(if $(sign-y),$(call quiet,extractab,EXTR_AB), \
+			$(call quiet,copyab,COPY_AB))
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds \
               $(out)/%.RO.flat $(out)/%.A.flat $(out)/%.B.flat
