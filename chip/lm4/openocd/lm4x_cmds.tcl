@@ -24,11 +24,11 @@ proc flash_link { } {
 }
 
 proc flash_link_a { } {
-	flash_lm4 ../../../build/link/ec.A.flat 81920 81920
+	flash_lm4 ../../../build/link/ec.A.bin 81920 81920
 }
 
 proc flash_link_b { } {
-	flash_lm4 ../../../build/link/ec.B.flat 163840 81920
+	flash_lm4 ../../../build/link/ec.B.bin 163840 81920
 }
 
 proc flash_bds { } {
