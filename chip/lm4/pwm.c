@@ -171,7 +171,7 @@ static int command_fan_info(int argc, char **argv)
 	ccprintf("    enabled:      %s\n",
 		 LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
 	ccprintf("    powered:      %s\n",
-		 gpio_get_level(GPIO_ENABLE_VS) ? "yes" : "no");
+		 gpio_get_level(GPIO_PGOOD_5VALW) ? "yes" : "no");
 
 	return EC_SUCCESS;
 }
