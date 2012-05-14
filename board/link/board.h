@@ -142,7 +142,7 @@ enum gpio_signal {
 	GPIO_USB2_STATUSn,        /* USB charger port 2 status output */
 	GPIO_WRITE_PROTECT,       /* Write protect input */
 	/* Outputs */
-	GPIO_CPU_PROCHOTn,        /* Force CPU to think it's overheated */
+	GPIO_CPU_PROCHOT,         /* Force CPU to think it's overheated */
 	GPIO_ENABLE_1_5V_DDR,     /* Enable +1.5V_DDR supply */
 	GPIO_ENABLE_5VALW,        /* Enable +5V always on rail */
 	GPIO_ENABLE_BACKLIGHT,    /* Enable backlight power */

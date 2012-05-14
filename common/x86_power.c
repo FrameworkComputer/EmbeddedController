@@ -93,6 +93,8 @@ static enum x86_state state;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
 static uint32_t in_want;      /* Input signal state we're waiting for */
 static int want_g3_exit;      /* Should we exit the G3 state? */
+static int throttle_cpu;      /* Throttle CPU? */
+
 
 /* Update input signal state */
 static void update_in_signals(void)
@@ -261,6 +263,16 @@ void chipset_exit_hard_off(void)
 	/* Set a flag to leave G3, then wake the task */
 	want_g3_exit = 1;
 	task_wake(TASK_ID_X86POWER);
+}
+
+
+void chipset_throttle_cpu(int throttle)
+{
+	throttle_cpu = throttle;
+
+	/* Immediately set throttling if CPU is on */
+	if (state == X86_S0)
+		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
 /*****************************************************************************/
@@ -463,6 +475,10 @@ void x86_power_task(void)
 			/* Wait 99ms after all voltages good */
 			usleep(99000);
 
+			/* Throttle CPU if necessary.  This should only be
+			 * asserted when +VCCP is powered (it is by now). */
+			gpio_set_flags(GPIO_CPU_PROCHOT, throttle_cpu);
+
 			/* Set PCH_PWROK */
 			gpio_set_level(GPIO_PCH_PWROK, 1);
 
@@ -486,6 +502,10 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_WLAN, 0);
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
 			gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
+
+			/* Deassert prochot since CPU is off and we're about
+			 * to drop +VCCP. */
+			gpio_set_flags(GPIO_CPU_PROCHOT, 0);
 
 			/* Turn off power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 0);
