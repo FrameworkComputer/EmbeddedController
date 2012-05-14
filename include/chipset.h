@@ -38,4 +38,7 @@ int chipset_in_state(int state_mask);
  * already left the state, or was not in the state to begin with. */
 void chipset_exit_hard_off(void);
 
+/* Enable/disable CPU throttling. */
+void chipset_throttle_cpu(int throttle);
+
 #endif  /* __CROS_EC_CHIPSET_H */
