@@ -128,14 +128,18 @@ static int split_words(char *input, int max_argc, int *argc, char **argv)
  * no match found. */
 static const struct console_command *find_command(char *name)
 {
-	const struct console_command *cmd;
+	const struct console_command *cmd, *match = NULL;
+	int match_length = strlen(name);
 
 	for (cmd = __cmds; cmd < __cmds_end; cmd++) {
-		if (!strcasecmp(name, cmd->name))
-			return cmd;
+		if (!strncasecmp(name, cmd->name, match_length)) {
+			if (match)
+				return NULL;
+			match = cmd;
+		}
 	}
 
-	return NULL;
+	return match;
 }
 
 
@@ -159,7 +163,7 @@ static int handle_command(char *input)
 	if (cmd)
 		return cmd->handler(argc, argv);
 
-	ccprintf("Command '%s' not found.\n", argv[0]);
+	ccprintf("Command '%s' either not found or ambiguous.\n", argv[0]);
 	return EC_ERROR_UNKNOWN;
 }
 
@@ -293,7 +297,7 @@ static int command_ch(int argc, char **argv)
 	}
 
 	/* Otherwise, print help */
-	ccputs("Usage: ch [newmask]\n");
+	ccputs("Usage: chan [newmask]\n");
 	return EC_ERROR_INVAL;
 };
-DECLARE_CONSOLE_COMMAND(ch, command_ch);
+DECLARE_CONSOLE_COMMAND(chan, command_ch);

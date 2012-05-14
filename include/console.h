@@ -76,7 +76,10 @@ void cflush(void);
 void console_has_input(void);
 
 
-/* Register a console command handler */
+/*
+ * Register a console command handler. Note that `name' must never be a
+ * beginning of another existing command name.
+ */
 #define DECLARE_CONSOLE_COMMAND(name, routine)			\
 	static const char __con_cmd_label_##name[] = #name;	\
 	const struct console_command __con_cmd_##name		\
