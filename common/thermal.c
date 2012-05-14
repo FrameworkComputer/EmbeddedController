@@ -238,7 +238,7 @@ static int command_thermal_config(int argc, char **argv)
 	int sensor_type, threshold_id, value;
 
 	if (argc != 2 && argc != 4) {
-		ccputs("Usage: thermal <sensor_type> "
+		ccputs("Usage: thermalconf <sensor_type> "
 		       "[<threshold_id> <value>]\n");
 		return EC_ERROR_UNKNOWN;
 	}
@@ -273,7 +273,7 @@ static int command_thermal_config(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(thermal, command_thermal_config);
+DECLARE_CONSOLE_COMMAND(thermalconf, command_thermal_config);
 
 
 static int command_fan_config(int argc, char **argv)
