@@ -474,7 +474,7 @@ void charge_state_machine_task(void)
 {
 	struct power_state_context ctx;
 	timestamp_t ts;
-	int sleep_usec, diff_usec;
+	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum power_state new_state;
 	uint8_t batt_flags;
 
@@ -563,7 +563,12 @@ void charge_state_machine_task(void)
 			powerled_set(POWERLED_RED);
 
 			sleep_usec = POLL_PERIOD_CHARGE;
+			break;
+		case PWR_STATE_UNCHANGE:
+			/* Don't change sleep duration */
+			break;
 		default:
+			/* Other state; poll quickly and hope it goes away */
 			sleep_usec = POLL_PERIOD_SHORT;
 		}
 
@@ -572,14 +577,14 @@ void charge_state_machine_task(void)
 
 		ts = get_time();
 		diff_usec = (int)(ts.val - ctx.curr.ts.val);
-		sleep_usec -= diff_usec;
+		sleep_next = sleep_usec - diff_usec;
 
-		if (sleep_usec < MIN_SLEEP_USEC)
-			sleep_usec = MIN_SLEEP_USEC;
-		if (sleep_usec > MAX_SLEEP_USEC)
-			sleep_usec = MAX_SLEEP_USEC;
+		if (sleep_next < MIN_SLEEP_USEC)
+			sleep_next = MIN_SLEEP_USEC;
+		if (sleep_next > MAX_SLEEP_USEC)
+			sleep_next = MAX_SLEEP_USEC;
 
-		usleep(sleep_usec);
+		usleep(sleep_next);
 	}
 }
 
