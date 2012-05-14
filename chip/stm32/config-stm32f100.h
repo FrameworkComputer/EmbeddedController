@@ -13,6 +13,7 @@
 /* Size of one firmware image in flash */
 #define CONFIG_FW_IMAGE_SIZE    (32 * 1024)
 #define CONFIG_FW_RO_OFF        0
+#define CONFIG_NO_RW_B
 #define CONFIG_FW_A_OFF         CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_B_OFF         (2 * CONFIG_FW_IMAGE_SIZE)
 
