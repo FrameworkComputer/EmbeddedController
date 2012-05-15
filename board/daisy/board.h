@@ -22,6 +22,9 @@
 
 #define USB_CHARGE_PORT_COUNT 0
 
+/* EC drives 13 outputs to keyboard matrix */
+#define KB_OUTPUTS 13
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
