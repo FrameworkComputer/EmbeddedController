@@ -114,6 +114,7 @@ enum gpio_signal {
 				   * depending on stuffing. */
 	GPIO_WRITE_PROTECT,       /* Write protect input */
 	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
+	GPIO_AC_PRESENT,          /* AC present signal */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

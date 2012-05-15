@@ -18,4 +18,7 @@ void power_button_interrupt(enum gpio_signal signal);
 /* Power button task */
 void power_button_task(void);
 
+/* Return non-zero if AC power is present. */
+int power_ac_present(void);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */

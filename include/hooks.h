@@ -36,6 +36,7 @@ enum hook_type {
 				* voltage rails are still on */
 	HOOK_CHIPSET_SHUTDOWN, /* System is shutting down.  All suspend rails
 				* are still on. */
+	HOOK_AC_CHANGE,        /* AC power plugged in or removed */
 };
 
 

@@ -75,6 +75,7 @@ static uint64_t tdebounce_pwr;
 
 static uint8_t *memmap_switches;
 static int debounced_lid_open;
+static int ac_changed;
 
 /* Update status of non-debounced switches */
 static void update_other_switches(void)
@@ -292,18 +293,28 @@ static void lid_switch_changed(uint64_t tnow)
 }
 
 
+int power_ac_present(void)
+{
+	return gpio_get_level(GPIO_AC_PRESENT);
+}
+
+
 void power_button_interrupt(enum gpio_signal signal)
 {
-	/* Reset debounce time for the changed signal */
 	switch (signal) {
 	case GPIO_LID_SWITCHn:
+		/* Reset lid debounce time */
 		tdebounce_lid = get_time().val + LID_DEBOUNCE_US;
 		break;
 	case GPIO_POWER_BUTTONn:
+		/* Reset power button debounce time */
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
 		break;
 	case GPIO_PCH_BKLTEN:
 		update_backlight();
+		break;
+	case GPIO_AC_PRESENT:
+		ac_changed = 1;
 		break;
 	default:
 		/* Non-debounced switches; we'll update their state
@@ -357,10 +368,11 @@ static int power_button_init(void)
 	}
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
 	gpio_enable_interrupt(GPIO_LID_SWITCHn);
-	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
+	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_RECOVERYn);
+	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 
 	return EC_SUCCESS;
 }
@@ -373,6 +385,12 @@ void power_button_task(void)
 	uint64_t tsleep;
 	while (1) {
 		t = get_time().val;
+
+		/* Handle AC state changes */
+		if (ac_changed) {
+			ac_changed = 0;
+			hook_notify(HOOK_AC_CHANGE, 0);
+		}
 
 		/* Handle debounce timeouts for power button and lid switch */
 		if (tdebounce_pwr && t >= tdebounce_pwr) {

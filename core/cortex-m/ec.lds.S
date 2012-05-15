@@ -76,6 +76,10 @@ SECTIONS
         *(.rodata.HOOK_CHIPSET_SHUTDOWN)
         __hooks_chipset_shutdown_end = .;
 
+        __hooks_ac_change = .;
+        *(.rodata.HOOK_AC_CHANGE)
+        __hooks_ac_change_end = .;
+
         . = ALIGN(4);
         *(.rodata*)
         . = ALIGN(4);

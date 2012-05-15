@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "lpc.h"
 #include "ec_commands.h"
+#include "power_button.h"
 #include "power_led.h"
 #include "smart_battery.h"
 #include "system.h"
@@ -31,12 +32,6 @@
 #define STOP_CHARGE_THRESHOLD 100
 
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
-
-/* helper function(s) */
-static inline int get_ac(void)
-{
-	return gpio_get_level(GPIO_AC_PRESENT);
-}
 
 /* Battery information used to fill ACPI _BIF and/or _BIX */
 static void update_battery_info(void)
@@ -99,7 +94,7 @@ static void poweroff_wait_ac(void)
 	}
 
 	/* TODO(rong): remove this workaround after ec deep sleep */
-	while (!get_ac()) {
+	while (!power_ac_present()) {
 		/* Check ac_present every 5 seconds */
 		usleep(SECOND * 5);
 	}
@@ -125,7 +120,7 @@ static int state_common(struct power_state_context *ctx)
 	curr->error = 0;
 
 	/* Detect AC change */
-	curr->ac = get_ac();
+	curr->ac = power_ac_present();
 	if (curr->ac != prev->ac) {
 		if (curr->ac) {
 			/* AC on

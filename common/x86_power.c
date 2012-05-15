@@ -10,6 +10,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "power_button.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -209,6 +210,22 @@ void x86_power_reset(int cold_reset)
 		gpio_set_level(GPIO_PCH_RCINn, 1);
 	}
 }
+
+
+/* Hook notified when AC state changes. */
+static int x86_power_ac_change(void)
+{
+	if (power_ac_present()) {
+		CPRINTF("[%T x86 AC on]\n");
+		/* TODO: (crosbug.com/p/9609) re-enable turbo? */
+	} else {
+		CPRINTF("[%T x86 AC off]\n");
+		/* TODO: (crosbug.com/p/9609) disable turbo */
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, x86_power_ac_change, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Chipset interface */

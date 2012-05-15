@@ -31,7 +31,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 power_button_interrupt},
 	/* Other inputs */
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
-	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), 0, NULL},
+	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
+	 power_button_interrupt},
 	{"BOARD_VERSION1",      LM4_GPIO_H, (1<<6), 0, NULL},
 	{"BOARD_VERSION2",      LM4_GPIO_L, (1<<6), 0, NULL},
 	{"BOARD_VERSION3",      LM4_GPIO_L, (1<<7), 0, NULL},
