@@ -16,8 +16,11 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
+
+static int freq;
 
 /* Disable the PLL; run off internal oscillator. */
 static void disable_pll(void)
@@ -29,6 +32,8 @@ static void disable_pll(void)
 		LM4_SYSTEM_RCC_OSCSRC(1) |
 		LM4_SYSTEM_RCC_MOSCDIS;
 	LM4_SYSTEM_RCC2 &= ~LM4_SYSTEM_RCC2_USERCC2;
+
+	freq = INTERNAL_CLOCK;
 }
 
 
@@ -53,6 +58,8 @@ static void enable_pll(void)
 
 	/* Remove bypass on PLL */
 	LM4_SYSTEM_RCC &= ~LM4_SYSTEM_RCC_BYPASS;
+
+	freq = PLL_CLOCK;
 }
 
 
@@ -77,7 +84,7 @@ void clock_wait_cycles(uint32_t cycles)
 
 int clock_get_freq(void)
 {
-	return (LM4_SYSTEM_PLLSTAT & 1) ? PLL_CLOCK : INTERNAL_CLOCK;
+	return freq;
 }
 
 
@@ -180,10 +187,13 @@ static int command_sleep(int argc, char **argv)
 		LM4_SCB_SYSCTRL |= 0x4;
 	/* go to low power mode (forever ...) */
 	if (level > 1)
-		while (1)
+		while (1) {
 			asm("wfi");
+			watchdog_reload();
+		}
 	else
-		while(1);
+		while (1)
+			watchdog_reload();
 
 	return EC_SUCCESS;
 }
@@ -192,14 +202,32 @@ DECLARE_CONSOLE_COMMAND(sleep, command_sleep);
 
 static int command_pll(int argc, char **argv)
 {
+	int div = 1;
+
 	/* Toggle the PLL */
 	if (argc > 1) {
 		if (!strcasecmp(argv[1], "off"))
 			clock_enable_pll(0);
 		else if (!strcasecmp(argv[1], "on"))
 			clock_enable_pll(1);
-		else
-			ccputs("Usage: pll [off | on]\n");
+		else {
+			/* Disable PLL and set extra divider */
+			char *e;
+			div = strtoi(argv[1], &e, 10);
+			if (e && *e)
+				return EC_ERROR_INVAL;
+
+			LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(div - 1) |
+				LM4_SYSTEM_RCC_BYPASS |
+				LM4_SYSTEM_RCC_PWRDN |
+				LM4_SYSTEM_RCC_OSCSRC(1) |
+				LM4_SYSTEM_RCC_MOSCDIS;
+
+			freq = INTERNAL_CLOCK / div;
+
+			/* Notify modules of frequency change */
+			hook_notify(HOOK_FREQ_CHANGE, 0);
+		}
 	}
 
 	/* Print current PLL state */
