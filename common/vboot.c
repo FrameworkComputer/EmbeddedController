@@ -88,15 +88,6 @@ static enum howgood good_image(uint8_t *key_data,
 /* Might I want to jump to one of the RW images? */
 static int maybe_jump_to_other_image(void)
 {
-	/* Not all boards even have RW EC firmware. I think it's just Link at
-	 * the moment. */
-#ifndef BOARD_link
-	/* TODO: (crosbug.com/p/8561) once daisy can warm-boot to another
-	 * image, enable it here too. */
-	CPUTS("[Vboot staying in RO because that's all there is]\n");
-	return 0;
-#endif
-
 	/* We'll only jump to another image if we're currently in RO */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 		return 0;
@@ -116,7 +107,8 @@ static int maybe_jump_to_other_image(void)
 
 #if !defined(CHIP_stm32)
 	/* TODO: (crosbug.com/p/8572) Daisy and Snow don't define a GPIO
-	 * for the recovery signal from servo, so can't check it. */
+	 * for the recovery signal from servo, so we can't check it.
+	 * BDS uses the DOWN button. */
 	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
 		CPUTS("[Vboot staying in RO due to recovery signal]\n");
 		return 0;

@@ -76,6 +76,7 @@ enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_POWER_BUTTONn = 0,   /* Power button */
 	GPIO_LID_SWITCHn,         /* Lid switch */
+	GPIO_RECOVERYn,           /* Recovery signal from DOWN button */
 	/* Other inputs */
 	/* Outputs */
 	GPIO_DEBUG_LED,           /* Debug LED */
@@ -111,7 +112,6 @@ enum gpio_signal {
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_SHUNT_1_5V_DDR,      /* Shunt +1.5V_DDR; may also enable +3V_TP
 				   * depending on stuffing. */
-	GPIO_RECOVERYn,           /* Recovery signal from servo */
 	GPIO_WRITE_PROTECT,       /* Write protect input */
 	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
 

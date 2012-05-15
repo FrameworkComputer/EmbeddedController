@@ -45,6 +45,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 power_button_interrupt},
 	{"LID_SWITCHn",   LM4_GPIO_D, (1<<0), GPIO_PULL_UP | GPIO_INT_BOTH,
 	 power_button_interrupt},
+	{"RECOVERYn",   LM4_GPIO_D, (1<<1), GPIO_PULL_UP | GPIO_INT_BOTH,
+	 power_button_interrupt},
 	/* Other inputs */
 	/* Outputs */
 	{"DEBUG_LED",    LM4_GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
@@ -77,7 +79,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	GPIO_SIGNAL_NOT_IMPLEMENTED("PCH_SMIn"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("PCH_SUSACKn"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("SHUNT_1_5V_DDR"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("RECOVERYn"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WRITE_PROTECT"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("LIGHTBAR_RESETn"),
 };
