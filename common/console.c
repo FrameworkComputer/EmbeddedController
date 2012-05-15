@@ -227,36 +227,19 @@ void console_task(void)
 static int command_help(int argc, char **argv)
 {
 	const int ncmds = __cmds_end - __cmds;
-	int i, j, cols, rows;
-	unsigned char indices[ncmds];
-
-	/* Initialize the index. */
-	for (i = 0; i < ncmds; i++)
-		indices[i] = i;
-
-	/* Bubble sort commands by name. */
-	for (i = 0; i < (ncmds - 1); i++) {
-		for (j = i + 1; j < ncmds; j++) {
-			if (strcasecmp(__cmds[indices[i]].name,
-				       __cmds[indices[j]].name) > 0) {
-				int tmp = indices[j];
-				indices[j] = indices[i];
-				indices[i] = tmp;
-			}
-		}
-	}
+	const int cols = 5;  /* printing in five columns */
+	const int rows = (ncmds + cols - 1) / cols;
+	int i, j;
 
 	ccputs("Known commands:\n");
 
-	cols = 5;  /* printing in five columns */
-	rows = (ncmds + 1) / cols;
 	for (i = 0; i < rows; i++) {
 		ccputs("  ");
 		for (j = 0; j < cols; j++) {
 			int index = j * rows + i;
 			if (index >= ncmds)
 				break;
-			ccprintf("%-15s", __cmds[indices[index]].name);
+			ccprintf("%-15s", __cmds[index].name);
 		}
 		ccputs("\n");
 		cflush();
