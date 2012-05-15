@@ -66,7 +66,7 @@ void configure_board(void);
 
 void matrix_interrupt(enum gpio_signal signal);
 
-/* Signal to the AP that keyboard scan data is available */
-void board_keyboard_scan_ready(void);
+/* Signal to AP that data is waiting */
+void board_interrupt_host(void);
 
 #endif /* __BOARD_H */

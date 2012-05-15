@@ -135,13 +135,16 @@ void configure_board(void)
 	gpio_set_level(GPIO_EC_INT, 1);
 }
 
-void board_keyboard_scan_ready(void)
+void board_interrupt_host(void)
+{
+	/* interrupt host by toggling EC_INT */
+	gpio_set_level(GPIO_EC_INT, 0);
+	gpio_set_level(GPIO_EC_INT, 1);
+}
+
+void board_keyboard_suppress_noise(void)
 {
 	/* notify audio codec of keypress for noise suppression */
 	gpio_set_level(GPIO_CODEC_INT, 0);
 	gpio_set_level(GPIO_CODEC_INT, 1);
-
-	/* interrupt host by toggling EC_INT */
-	gpio_set_level(GPIO_EC_INT, 0);
-	gpio_set_level(GPIO_EC_INT, 1);
 }

@@ -69,13 +69,12 @@ static const uint32_t ports[] = { GPIO_B, GPIO_C, GPIO_D };
 #endif
 
 /* Provide a default function in case the board doesn't have one */
-void __board_keyboard_scan_ready(void)
+void __board_keyboard_suppress_noise(void)
 {
 }
 
-void board_keyboard_scan_ready(void)
-		__attribute__((weak, alias("__board_keyboard_scan_ready")));
-
+void board_keyboard_suppress_noise(void)
+		__attribute__((weak, alias("__board_keyboard_suppress_noise")));
 
 static void select_column(int col)
 {
@@ -226,7 +225,8 @@ static int check_keys_changed(void)
 
 	if (change) {
 		memcpy(saved_state, raw_state, sizeof(saved_state));
-		board_keyboard_scan_ready();
+		board_keyboard_suppress_noise();
+		board_interrupt_host();
 
 		CPRINTF("[%d keys pressed: ", num_press);
 		for (c = 0; c < KB_OUTPUTS; c++) {
