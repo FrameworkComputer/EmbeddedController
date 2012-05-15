@@ -38,7 +38,7 @@ SECTIONS
 
         . = ALIGN(4);
         __cmds = .;
-        *(.rodata.cmds)
+        *(SORT(.rodata.cmds*))
         __cmds_end = .;
 
         . = ALIGN(4);

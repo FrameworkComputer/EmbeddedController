@@ -83,7 +83,7 @@ void console_has_input(void);
 #define DECLARE_CONSOLE_COMMAND(name, routine)			\
 	static const char __con_cmd_label_##name[] = #name;	\
 	const struct console_command __con_cmd_##name		\
-		__attribute__((section(".rodata.cmds")))	\
+		__attribute__((section(".rodata.cmds." #name)))	\
 		= {__con_cmd_label_##name, routine}
 
 #endif  /* __CROS_EC_CONSOLE_H */
