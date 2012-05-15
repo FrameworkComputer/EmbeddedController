@@ -75,9 +75,9 @@ void __idle(void)
 	cprintf(CC_TASK, "[%T idle task started]\n");
 
 	while (1) {
-		/* Wait for the irq event */
+		/* Wait for the next irq event.  This stops the CPU clock
+		 * (sleep / deep sleep, depending on chip config). */
 		asm("wfi");
-		/* TODO: more power management here */
 	}
 }
 
