@@ -11,7 +11,7 @@
 #include "util.h"
 
 
-enum lpc_status pstore_command_get_info(uint8_t *data)
+int pstore_command_get_info(uint8_t *data, int *resp_size)
 {
 	struct lpc_response_pstore_info *r =
 			(struct lpc_response_pstore_info *)data;
@@ -21,12 +21,13 @@ enum lpc_status pstore_command_get_info(uint8_t *data)
 
 	r->pstore_size = EEPROM_BLOCK_COUNT_PSTORE * eeprom_get_block_size();
 	r->access_size = sizeof(uint32_t);
+	*resp_size = sizeof(struct lpc_response_pstore_info);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PSTORE_INFO, pstore_command_get_info);
 
 
-enum lpc_status pstore_command_read(uint8_t *data)
+int pstore_command_read(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_pstore_read *p =
 			(struct lpc_params_pstore_read *)data;
@@ -59,12 +60,13 @@ enum lpc_status pstore_command_read(uint8_t *data)
 		dest += bytes_this;
 	}
 
+	*resp_size = sizeof(struct lpc_response_pstore_read);
 	return EC_LPC_RESULT_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_LPC_COMMAND_PSTORE_READ, pstore_command_read);
 
 
-enum lpc_status pstore_command_write(uint8_t *data)
+int pstore_command_write(uint8_t *data, int *resp_size)
 {
 	struct lpc_params_pstore_write *p =
 			(struct lpc_params_pstore_write *)data;

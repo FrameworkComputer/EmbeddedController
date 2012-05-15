@@ -14,6 +14,8 @@
  */
 #define SUPPORT_CHECKSUM
 
+/* Current version of this protocol */
+#define EC_LPC_PROTO_VERSION      0x00000002
 
 /* I/O addresses for LPC commands */
 #define EC_LPC_ADDR_KERNEL_DATA   0x62
@@ -155,6 +157,13 @@ enum host_event_code {
 
 /*****************************************************************************/
 /* General / test commands */
+
+/* Get protocol version, used to deal with non-backward compatible protocol
+ * changes. */
+#define EC_LPC_COMMAND_PROTO_VERSION 0x00
+struct lpc_response_proto_version {
+	uint32_t version;
+} __attribute__ ((packed));
 
 /* Hello.  This is a simple command to test the EC is responsive to
  * commands. */
@@ -456,6 +465,22 @@ struct lpc_response_thermal_get_threshold {
 
 /* Toggling automatic fan control */
 #define EC_LPC_COMMAND_THERMAL_AUTO_FAN_CTRL 0x52
+
+/*****************************************************************************/
+/* Matrix KeyBoard Protocol */
+
+/* Read key state */
+#define EC_LPC_COMMAND_MKBP_STATE 0x60
+struct lpc_response_mkbp_state {
+	uint8_t cols[32];
+} __attribute__ ((packed));
+
+/* Provide information about the matrix : number of rows and columns */
+#define EC_LPC_COMMAND_MKBP_INFO 0x61
+struct lpc_response_mkbp_info {
+	uint32_t rows;
+	uint32_t cols;
+} __attribute__ ((packed));
 
 /*****************************************************************************/
 /* Host event commands */

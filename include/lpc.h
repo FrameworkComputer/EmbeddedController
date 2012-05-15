@@ -15,19 +15,9 @@
  */
 void lpc_manual_irq(int irq_num);
 
-/* Return a pointer to the host command data buffer.  This buffer must
- * only be accessed between a notification to host_command_received()
- * and a subsequent call to lpc_SendHostResponse().  <slot> is 0 for
- * kernel-originated commands, 1 for usermode-originated commands. */
-uint8_t *lpc_get_host_range(int slot);
-
 /* Return a pointer to the memory-mapped buffer.  This buffer is writable at
  * any time, and the host can read it at any time. */
 uint8_t *lpc_get_memmap_range(void);
-
-/* Send a result code to a host command.  <slot> is 0 for kernel-originated
- * commands, 1 for usermode-originated commands. */
-void lpc_send_host_response(int slot, int result);
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void);

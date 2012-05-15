@@ -114,7 +114,7 @@ static void lpc_generate_sci(void)
 }
 
 
-uint8_t *lpc_get_host_range(int slot)
+uint8_t *host_get_buffer(int slot)
 {
 	return (uint8_t *)LPC_POOL_CMD_DATA + EC_LPC_PARAM_SIZE * slot;
 }
@@ -126,7 +126,7 @@ uint8_t *lpc_get_memmap_range(void)
 }
 
 
-void lpc_send_host_response(int slot, int result)
+void host_send_result(int slot, int result)
 {
 	int ch = slot ? LPC_CH_USER : LPC_CH_KERNEL;
 
@@ -151,6 +151,15 @@ void lpc_send_host_response(int slot, int result)
 		lpc_generate_sci();
 }
 
+void host_send_response(int slot, const uint8_t *data, int size)
+{
+	uint8_t *out = host_get_buffer(slot);
+
+	if (data != out)
+		memcpy(out, data, size);
+
+	host_send_result(slot, EC_LPC_RESULT_SUCCESS);
+}
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void) {
