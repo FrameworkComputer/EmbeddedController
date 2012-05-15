@@ -6,6 +6,7 @@
 
 #define CONFIG_FW_SECT_OFF(section) CONFIG_FW_##section##_OFF
 #define CONFIG_FW_BASE(section) (CONFIG_FLASH_BASE + CONFIG_FW_SECT_OFF(section))
+#define CONFIG_FMAP_BASE(section) CONFIG_FW_BASE(section) + CONFIG_FMAP_OFF
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
@@ -97,7 +98,7 @@ SECTIONS
         __data_end = .;
     } > IRAM
 #if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
-    .google CONFIG_FMAP_OFF : AT(CONFIG_FMAP_OFF) {
+    .google CONFIG_FMAP_BASE(SECTION) : AT(CONFIG_FMAP_BASE(SECTION)) {
         *(.google)
     } > FLASH
 #else
