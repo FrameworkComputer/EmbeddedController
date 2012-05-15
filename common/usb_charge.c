@@ -10,8 +10,21 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "system.h"
 #include "usb_charge.h"
 #include "util.h"
+
+
+#define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
+#define USB_HOOK_VERSION 1
+/* The previous USB port state before sys jump */
+struct usb_state {
+	uint8_t port_mode[USB_CHARGE_PORT_COUNT];
+	uint8_t pad[2]; /* Pad to 4 bytes for system_add_jump_tag(). */
+};
+
+
+static uint8_t charge_mode[USB_CHARGE_PORT_COUNT];
 
 
 static void usb_charge_set_control_mode(int port_id, int mode)
@@ -95,6 +108,8 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 			return EC_ERROR_UNKNOWN;
 	}
 
+	charge_mode[port_id] = mode;
+
 	return EC_SUCCESS;
 }
 
@@ -137,12 +152,32 @@ DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode);
 /*****************************************************************************/
 /* Hooks */
 
+static int usb_charge_preserve_state(void)
+{
+	struct usb_state state;
+
+	state.port_mode[0] = charge_mode[0];
+	state.port_mode[1] = charge_mode[1];
+
+	system_add_jump_tag(USB_SYSJUMP_TAG, USB_HOOK_VERSION,
+			    sizeof(state), &state);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, usb_charge_preserve_state, HOOK_PRIO_DEFAULT);
+
 static int usb_charge_init(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		usb_charge_all_ports_off();
+	const struct usb_state *prev;
+	int version, size;
+
+	prev = (const struct usb_state *)system_get_jump_tag(USB_SYSJUMP_TAG,
+							     &version, &size);
+	if (prev && version == USB_HOOK_VERSION && size == sizeof(*prev)) {
+		usb_charge_set_mode(0, prev->port_mode[0]);
+		usb_charge_set_mode(1, prev->port_mode[1]);
+	}
 	else
-		usb_charge_all_ports_on();
+		usb_charge_all_ports_off();
 
 	return EC_SUCCESS;
 }
