@@ -31,4 +31,7 @@ int keyboard_scan_recovery_pressed(void);
  */
 int keyboard_get_scan(uint8_t **buffp, int max_bytes);
 
+/* clear any saved keyboard state (empty FIFO, etc) */
+void keyboard_clear_state(void);
+
 #endif  /* __CROS_KEYBOARD_SCAN_H */
