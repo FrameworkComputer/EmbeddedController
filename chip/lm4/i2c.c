@@ -16,7 +16,7 @@
 #include "registers.h"
 #include "util.h"
 
-#define NUM_PORTS 6
+#define NUM_PORTS 6  /* Number of physical ports */
 
 #define LM4_I2C_MCS_RUN   (1 << 0)
 #define LM4_I2C_MCS_START (1 << 1)
@@ -32,6 +32,7 @@
 
 static task_id_t task_waiting_on_port[NUM_PORTS];
 static struct mutex port_mutex[NUM_PORTS];
+extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 
 static int wait_idle(int port)
 {
@@ -263,15 +264,11 @@ exit:
 static int i2c_freq_changed(void)
 {
 	int freq = clock_get_freq();
+	int i;
 
-	LM4_I2C_MTPR(I2C_PORT_THERMAL) =
-		(freq / (I2C_SPEED_THERMAL * 10 * 2)) - 1;
-	LM4_I2C_MTPR(I2C_PORT_BATTERY) =
-		(freq / (I2C_SPEED_BATTERY * 10 * 2)) - 1;
-	LM4_I2C_MTPR(I2C_PORT_CHARGER) =
-		(freq / (I2C_SPEED_CHARGER * 10 * 2)) - 1;
-	LM4_I2C_MTPR(I2C_PORT_LIGHTBAR) =
-		(freq / (I2C_SPEED_LIGHTBAR * 10 * 2)) - 1;
+	for (i = 0; i < I2C_PORTS_USED; i++)
+		LM4_I2C_MTPR(i2c_ports[i].port) =
+			(freq / (i2c_ports[i].kbps * 10 * 2)) - 1;
 
 	return EC_SUCCESS;
 }
@@ -289,7 +286,6 @@ static void handle_interrupt(int port)
 	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
 
 	/* Wake up the task which was waiting on the interrupt, if any */
-	/* TODO: set event based on I2C port number? */
 	if (id != TASK_ID_INVALID)
 		task_wake(id);
 }
@@ -312,7 +308,7 @@ DECLARE_IRQ(LM4_IRQ_I2C5, i2c5_interrupt, 2);
 /*****************************************************************************/
 /* Console commands */
 
-static void scan_bus(int port, char *desc)
+static void scan_bus(int port, const char *desc)
 {
 	int rv;
 	int a;
@@ -355,8 +351,10 @@ static int command_i2cread(int argc, char **argv)
 		ccputs("Invalid port\n");
 		return EC_ERROR_INVAL;
 	}
-	if (port != I2C_PORT_THERMAL && port != I2C_PORT_BATTERY &&
-	    port != I2C_PORT_CHARGER) {
+
+	for (i = 0; i < I2C_PORTS_USED && port != i2c_ports[i].port; i++)
+		;
+	if (i >= I2C_PORTS_USED) {
 		ccputs("Unsupported port\n");
 		return EC_ERROR_UNKNOWN;
 	}
@@ -401,9 +399,10 @@ DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread);
 
 static int command_scan(int argc, char **argv)
 {
-	scan_bus(I2C_PORT_THERMAL, "thermal");
-	scan_bus(I2C_PORT_BATTERY, "battery");
-	scan_bus(I2C_PORT_CHARGER, "charger");
+	int i;
+
+	for (i = 0; i < I2C_PORTS_USED; i++)
+		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
 	ccputs("done.\n");
 	return EC_SUCCESS;
 }
@@ -439,12 +438,14 @@ static void configure_gpio(void)
 static int i2c_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
+	uint32_t mask = 0;
 	int i;
 
 	/* Enable I2C modules and delay a few clocks */
-	LM4_SYSTEM_RCGCI2C |= (1 << I2C_PORT_THERMAL) |
-		(1 << I2C_PORT_BATTERY) | (1 << I2C_PORT_CHARGER) |
-		(1 << I2C_PORT_LIGHTBAR);
+	for (i = 0; i < I2C_PORTS_USED; i++)
+		mask |= 1 << i2c_ports[i].port;
+
+	LM4_SYSTEM_RCGCI2C |= mask;
 	scratch = LM4_SYSTEM_RCGCI2C;
 
 	/* Configure GPIOs */
@@ -455,10 +456,8 @@ static int i2c_init(void)
 		task_waiting_on_port[i] = TASK_ID_INVALID;
 
 	/* Initialize ports as master, with interrupts enabled */
-	LM4_I2C_MCR(I2C_PORT_THERMAL) = 0x10;
-	LM4_I2C_MCR(I2C_PORT_BATTERY) = 0x10;
-	LM4_I2C_MCR(I2C_PORT_CHARGER) = 0x10;
-	LM4_I2C_MCR(I2C_PORT_LIGHTBAR) = 0x10;
+	for (i = 0; i < I2C_PORTS_USED; i++)
+		LM4_I2C_MCR(i2c_ports[i].port) = 0x10;
 
 	/* Set initial clock frequency */
 	i2c_freq_changed();

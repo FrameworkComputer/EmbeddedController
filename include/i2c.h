@@ -13,6 +13,13 @@
 /* Flags for slave address field, in addition to the 8-bit address */
 #define I2C_FLAG_BIG_ENDIAN 0x100  /* 16 byte values are MSB-first */
 
+/* Data structure to define I2C port configuration. */
+struct i2c_port_t {
+	const char *name;  /* Port name */
+	int port;          /* Port */
+	int kbps;          /* Speed in kbps */
+};
+
 /* Read a 16-bit register from the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */
 int i2c_read16(int port, int slave_addr, int offset, int* data);

@@ -88,18 +88,13 @@ enum adc_channel
 #define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
 #define EEPROM_BLOCK_COUNT_PSTORE 16
 
-
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0  /* Note: proto0 used port 1 */
 #define I2C_PORT_THERMAL 5
 #define I2C_PORT_LIGHTBAR 1
-/* I2C port speeds in kbps */
-#define I2C_SPEED_BATTERY 100
-#define I2C_SPEED_CHARGER 100
-#define I2C_SPEED_THERMAL 400  /* TODO: TMP007 supports 3.4Mbps
-				  operation; use faster speed? */
-#define I2C_SPEED_LIGHTBAR 400
+/* There are only 3 I2C ports used because battery and charger share a port */
+#define I2C_PORTS_USED 3
 
 /* Keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION

@@ -4,16 +4,16 @@
  */
 /* Stellaris EKB-LM4F-EAC board-specific configuration */
 
+#include "adc.h"
 #include "board.h"
 #include "gpio.h"
+#include "i2c.h"
+#include "lm4_adc.h"
 #include "registers.h"
 #include "util.h"
-#include "lm4_adc.h"
-#include "adc.h"
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
-const struct adc_t adc_channels[ADC_CH_COUNT] =
-{
+const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	/* EC internal temperature is calculated by
 	 * 273 + (295 - 450 * ADC_VALUE / ADC_READ_MAX) / 2
 	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
@@ -29,6 +29,12 @@ const struct adc_t adc_channels[ADC_CH_COUNT] =
 	 */
 	{"BDSPot", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */},
+};
+
+
+/* I2C ports */
+const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 };
 
 

@@ -16,15 +16,9 @@ enum adc_channel
 };
 
 /* I2C ports */
-#define I2C_PORT_BATTERY 5  // port 0 / PB2:3 on Link, open on badger
-#define I2C_PORT_CHARGER 5  // port 1 / PA6:7 on Link, user LED on badger
-#define I2C_PORT_THERMAL 5  // port 5 / PB6:7 on link, but PG6:7 on badger
 #define I2C_PORT_LIGHTBAR 5  // port 5 / PA6:7 on link, but PG6:7 on badger
-/* I2C port speeds in kbps.  All the same because they all share a port */
-#define I2C_SPEED_BATTERY 400
-#define I2C_SPEED_CHARGER 400
-#define I2C_SPEED_LIGHTBAR 400
-#define I2C_SPEED_THERMAL 400
+/* Number of I2C ports used */
+#define I2C_PORTS_USED 1
 
 /* GPIO signal list */
 enum gpio_signal {
