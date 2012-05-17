@@ -336,10 +336,13 @@ int keyboard_scan_init(void)
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
 		/* Turn fake dev switch on if D pressed, off if F pressed. */
-		if (check_boot_key(MASK_INDEX_D, MASK_VALUE_D))
+		if (check_boot_key(MASK_INDEX_D, MASK_VALUE_D)) {
 			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 1);
-		else if (check_boot_key(MASK_INDEX_F, MASK_VALUE_F))
+			CPUTS("[Enabling fake dev-mode]\n");
+		} else if (check_boot_key(MASK_INDEX_F, MASK_VALUE_F)) {
 			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 0);
+			CPUTS("[Disabling fake dev-mode]\n");
+		}
 #endif
 	}
 
