@@ -63,8 +63,6 @@
 #define CONFIG_VBOOT
 #define CONFIG_FPU
 #define CONFIG_I2C
-#define CONFIG_LPC
-#define CONFIG_PWM
 
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */

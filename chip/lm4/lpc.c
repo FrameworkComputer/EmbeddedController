@@ -43,14 +43,6 @@ static void configure_gpio(void)
 	 * out: PM1 (sci), PM4 (serirq) */
 	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
 	gpio_set_alternate_function(LM4_GPIO_M, 0x33, 0x0f);
-
-#ifdef BOARD_bds
-	/* Set the drive strength to 8mA for serirq only */
-	/* TODO: (crosbug.com/p/7495) Only necessary on BDS because the cabling
-	 * to the x86 is long and flaky; remove this for Link.  Setting this
-	 * for all I/O lines seems to hang the x86 during boot. */
-	LM4_GPIO_DR8R(LM4_GPIO_M) |= 0x00000010;
-#endif
 }
 
 

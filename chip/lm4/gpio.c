@@ -99,14 +99,12 @@ static int gpio_init(void)
 	task_enable_irq(LM4_IRQ_GPIOE);
 	task_enable_irq(LM4_IRQ_GPIOF);
 	task_enable_irq(LM4_IRQ_GPIOG);
-#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPIOH)
 	task_enable_irq(LM4_IRQ_GPIOH);
-#endif
 	task_enable_irq(LM4_IRQ_GPIOJ);
 	task_enable_irq(LM4_IRQ_GPIOK);
 	task_enable_irq(LM4_IRQ_GPIOL);
 	task_enable_irq(LM4_IRQ_GPIOM);
-#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+#if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
 	task_enable_irq(LM4_IRQ_GPION);
 #endif
 	task_enable_irq(LM4_IRQ_GPIOP);
@@ -272,14 +270,12 @@ GPIO_IRQ_FUNC(__gpio_d_interrupt, LM4_GPIO_D);
 GPIO_IRQ_FUNC(__gpio_e_interrupt, LM4_GPIO_E);
 GPIO_IRQ_FUNC(__gpio_f_interrupt, LM4_GPIO_F);
 GPIO_IRQ_FUNC(__gpio_g_interrupt, LM4_GPIO_G);
-#if (KB_SCAN_ROW_GPIO != LM4_GPIO_H)
 GPIO_IRQ_FUNC(__gpio_h_interrupt, LM4_GPIO_H);
-#endif
 GPIO_IRQ_FUNC(__gpio_j_interrupt, LM4_GPIO_J);
 GPIO_IRQ_FUNC(__gpio_k_interrupt, LM4_GPIO_K);
 GPIO_IRQ_FUNC(__gpio_l_interrupt, LM4_GPIO_L);
 GPIO_IRQ_FUNC(__gpio_m_interrupt, LM4_GPIO_M);
-#if (KB_SCAN_ROW_GPIO != LM4_GPIO_N)
+#if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_N)
 GPIO_IRQ_FUNC(__gpio_n_interrupt, LM4_GPIO_N);
 #endif
 GPIO_IRQ_FUNC(__gpio_p_interrupt, LM4_GPIO_P);
@@ -297,14 +293,12 @@ DECLARE_IRQ(LM4_IRQ_GPIOD, __gpio_d_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOE, __gpio_e_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOF, __gpio_f_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOG, __gpio_g_interrupt, 1);
-#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPIOH)
 DECLARE_IRQ(LM4_IRQ_GPIOH, __gpio_h_interrupt, 1);
-#endif
 DECLARE_IRQ(LM4_IRQ_GPIOJ, __gpio_j_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOK, __gpio_k_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOL, __gpio_l_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOM, __gpio_m_interrupt, 1);
-#if (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+#if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_N)
 DECLARE_IRQ(LM4_IRQ_GPION, __gpio_n_interrupt, 1);
 #endif
 DECLARE_IRQ(LM4_IRQ_GPIOP, __gpio_p_interrupt, 1);

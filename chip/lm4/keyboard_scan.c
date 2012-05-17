@@ -94,7 +94,6 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 /* Drives the specified column low; other columns are tri-stated */
 static void select_column(int col)
 {
-#ifdef BOARD_link
 	if (col == COLUMN_ASSERT_ALL) {
 		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
 		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
@@ -111,44 +110,6 @@ static void select_column(int col)
 			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
 		}
 	}
-#else  /* BDS definition */
-	/* Somehow the col 10 and 11 are swapped on bds. */
-	if (col == 10) {
-		col = 11;
-	} else if (col == 11) {
-		col = 10;
-	}
-
-	if (col == COLUMN_ASSERT_ALL) {
-		LM4_GPIO_DIR(LM4_GPIO_Q) = 0xff;
-		LM4_GPIO_DIR(LM4_GPIO_K) |= 0x0f;
-		LM4_GPIO_DIR(LM4_GPIO_N) |= 0x04;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) = 0;
-		LM4_GPIO_DATA(LM4_GPIO_K, 0xff) &= ~0x0f;
-		LM4_GPIO_DATA(LM4_GPIO_N, 0xff) &= ~0x04;
-	} else if (col == COLUMN_TRI_STATE_ALL) {
-		/* All tri-stated */
-		LM4_GPIO_DIR(LM4_GPIO_Q) = 0;
-		LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x0f;
-		LM4_GPIO_DIR(LM4_GPIO_N) &= ~0x04;
-	} else if (col < 8) {
-		LM4_GPIO_DIR(LM4_GPIO_Q) = 1 << col;
-		LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x0f;
-		LM4_GPIO_DIR(LM4_GPIO_N) &= ~0x04;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0xff) = ~(1 << col);
-	} else if (col < 12) {
-		LM4_GPIO_DIR(LM4_GPIO_Q) = 0;
-		LM4_GPIO_DIR(LM4_GPIO_K) = (LM4_GPIO_DIR(LM4_GPIO_K) & ~0x0f) |
-			(1 << (col - 8));
-		LM4_GPIO_DIR(LM4_GPIO_N) &= ~0x04;
-		LM4_GPIO_DATA(LM4_GPIO_K, 0x0f) = ~(1 << (col - 8));
-	} else {  /* col == 12 */
-		LM4_GPIO_DIR(LM4_GPIO_Q) = 0;
-		LM4_GPIO_DIR(LM4_GPIO_K) &= ~0x0f;
-		LM4_GPIO_DIR(LM4_GPIO_N) |= 0x04;
-		LM4_GPIO_DATA(LM4_GPIO_N, 0x04) = ~0x04;
-	}
-#endif
 }
 
 
@@ -328,30 +289,17 @@ int keyboard_scan_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
-        /* Enable GPIOs */
-#ifdef BOARD_link
 	/* Enable clock to GPIO modules N,P,Q */
+	/* TODO: gpio_pre_init() enables all the GPIO modules, so can remove
+	 * this entirely.  */
 	LM4_SYSTEM_RCGCGPIO |= 0x7000;
-#else
-	/* Enable clock to GPIO modules C,H,K,N,Q */
-	LM4_SYSTEM_RCGCGPIO |= 0x5284;
-#endif
 	scratch = LM4_SYSTEM_RCGCGPIO;
 
 	/* Clear GPIOAFSEL and enable digital function for rows */
-#ifdef BOARD_link
 	LM4_GPIO_AFSEL(LM4_GPIO_P) = 0;  /* KSO[7:0] */
 	LM4_GPIO_DEN(LM4_GPIO_P) = 0xff;
 	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= ~0x1f;  /* KSO[12:8] */
 	LM4_GPIO_DEN(LM4_GPIO_Q) |= 0x1f;
-#else
-	LM4_GPIO_AFSEL(LM4_GPIO_K) &= ~0x0f;
-	LM4_GPIO_DEN(LM4_GPIO_K) |= 0x0f;
-	LM4_GPIO_AFSEL(LM4_GPIO_N) &= ~0x04;
-	LM4_GPIO_DEN(LM4_GPIO_N) |= 0x04;
-	LM4_GPIO_AFSEL(LM4_GPIO_Q) = 0;
-	LM4_GPIO_DEN(LM4_GPIO_Q) = 0xff;
-#endif
 
 	/* Set row inputs with pull-up */
 	LM4_GPIO_AFSEL(KB_SCAN_ROW_GPIO) &= 0xff;
@@ -377,14 +325,11 @@ int keyboard_scan_init(void)
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
 		/* Proto1 used ESC key */
 		/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
-#ifdef BOARD_link
 		if (system_get_board_version() == BOARD_VERSION_PROTO1) {
 			recovery_key_pressed =
 				check_boot_key(MASK_INDEX_REFRESH,
 					       MASK_VALUE_REFRESH);
-		} else
-#endif
-			{
+		} else {
 			recovery_key_pressed =
 				check_boot_key(MASK_INDEX_ESC, MASK_VALUE_ESC);
 		}

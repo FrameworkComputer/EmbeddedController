@@ -34,17 +34,10 @@
 /* Configures the GPIOs for the fan module. */
 static void configure_gpios(void)
 {
-#ifdef BOARD_link
 	/* PK6 alternate function 1 = channel 1 PWM */
 	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
 	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
 	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
-#else
-	/* PK6 alternate function 1 = channel 1 PWM */
-	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
-	/* PN6:7 alternate function 1 = channel 4 PWM/tach */
-	gpio_set_alternate_function(LM4_GPIO_N, 0xc0, 1);
-#endif
 }
 
 
@@ -333,11 +326,6 @@ static int pwm_init(void)
 	/* Enable keyboard backlight.  Fan will be enabled later by whatever
 	 * controls the fan power supply. */
 	LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
-
-#ifdef BOARD_bds
-	/* Fan power supply is always on on BDS */
-	pwm_enable_fan(1);
-#endif
 
 	return EC_SUCCESS;
 }
