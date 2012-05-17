@@ -9,6 +9,7 @@
 #include "cpu.h"
 #include "registers.h"
 #include "system.h"
+#include "task.h"
 
 
 static int wait_for_hibctl_wc(void)
@@ -147,13 +148,14 @@ int system_pre_init(void)
 
 int system_reset(int is_cold)
 {
+	/* Disable interrupts to avoid task swaps during reboot */
+	interrupt_disable();
+
 	/* TODO: (crosbug.com/p/7470) support cold boot; this is a
 	   warm boot. */
 	CPU_NVIC_APINT = 0x05fa0004;
 
 	/* Spin and wait for reboot; should never return */
-	/* TODO: (crosbug.com/p/7471) should disable task swaps while
-	   waiting */
 	while (1) {}
 
 	return EC_ERROR_UNKNOWN;
