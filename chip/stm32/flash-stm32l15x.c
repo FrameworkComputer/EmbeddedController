@@ -13,6 +13,9 @@
 #include "util.h"
 #include "watchdog.h"
 
+/* crosbug.com/p/9811 workaround 64-byte payload limitation */
+#define CONFIG_64B_WORKAROUND
+
 #define FLASH_WRITE_BYTES    128
 #define FLASH_ERASE_BYTES    256
 #define FLASH_PROTECT_BYTES 4096
@@ -42,9 +45,19 @@
 #define PRG_LOCK (1<<1)
 #define OPT_LOCK (1<<2)
 
+#ifdef CONFIG_64B_WORKAROUND
+/* used to buffer the write payload smaller than the half page size */
+static uint32_t write_buffer[FLASH_WRITE_BYTES / sizeof(uint32_t)];
+static int buffered_off = -1;
+#endif
+
 int flash_get_write_block_size(void)
 {
+#ifdef CONFIG_64B_WORKAROUND
+	return 64;
+#else
 	return FLASH_WRITE_BYTES;
+#endif
 }
 
 
@@ -170,6 +183,29 @@ int flash_physical_write(int offset, int size, const char *data)
 	uint32_t *data32 = (uint32_t *)data;
 	uint32_t *address;
 	int res = EC_SUCCESS;
+
+#ifdef CONFIG_64B_WORKAROUND
+		if ((size < FLASH_WRITE_BYTES) || (offset & 64)) {
+			if ((size != 64) ||
+			    ((offset & 64) && (buffered_off != offset - 64))) {
+				res = EC_ERROR_UNKNOWN;
+				goto exit_wr;
+
+			}
+			if (offset & 64) {
+				/* second 64B packet : flash ! */
+				memcpy(write_buffer + 16, data32, 64);
+				offset -= 64;
+				size += 64;
+				data32 = write_buffer;
+			} else {
+				/* first 64B packet : just store it */
+				buffered_off = offset;
+				memcpy(write_buffer, data32, 64);
+				return EC_SUCCESS;
+			}
+		}
+#endif
 
 	if (unlock(PRG_LOCK) != EC_SUCCESS) {
 		res = EC_ERROR_UNKNOWN;
