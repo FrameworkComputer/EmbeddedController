@@ -214,7 +214,7 @@ static int command_pll(int argc, char **argv)
 			/* Disable PLL and set extra divider */
 			char *e;
 			div = strtoi(argv[1], &e, 10);
-			if (e && *e)
+			if (*e)
 				return EC_ERROR_INVAL;
 
 			LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(div - 1) |

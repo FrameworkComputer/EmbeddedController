@@ -119,9 +119,9 @@ int eeprom_hide(int block)
 
 static int command_eeprom_info(int argc, char **argv)
 {
-	ccprintf("EEPROM: %d blocks of %d bytes\n",
-		 eeprom_get_block_count(), eeprom_get_block_size());
-	ccprintf("  Block-hide flags: 0x%08x\n", LM4_EEPROM_EEHIDE);
+	ccprintf("%d blocks @ %d bytes, hide=0x%08x\n",
+		 eeprom_get_block_count(), eeprom_get_block_size(),
+		 LM4_EEPROM_EEHIDE);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(eeinfo, command_eeprom_info);
@@ -135,28 +135,22 @@ static int command_eeprom_read(int argc, char **argv)
 	int rv;
 	uint32_t d;
 
-	if (argc < 2) {
-		ccputs("Usage: eeread <block> [offset]\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 
 	block = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid block\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 
 	if (argc > 2) {
 		offset = strtoi(argv[2], &e, 0);
-		if (*e) {
-			ccputs("Invalid offset\n");
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*e)
+			return EC_ERROR_INVAL;
 	}
 
 	rv = eeprom_read(block, offset, sizeof(d), (char *)&d);
 	if (rv == EC_SUCCESS)
-		ccprintf("Block %d offset %d = 0x%08x\n", block, offset, d);
+		ccprintf("%d:%d = 0x%08x\n", block, offset, d);
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(eeread, command_eeprom_read);
@@ -167,63 +161,45 @@ static int command_eeprom_write(int argc, char **argv)
 	int block = 0;
 	int offset = 0;
 	char *e;
-	int rv;
 	uint32_t d;
 
-	if (argc < 4) {
-		ccputs("Usage: eeread <block> <offset> <data>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 4)
+		return EC_ERROR_INVAL;
 
 	block = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid block\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 	offset = strtoi(argv[2], &e, 0);
-	if (*e) {
-		ccputs("Invalid offset\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 	d = strtoi(argv[3], &e, 0);
-	if (*e) {
-		ccputs("Invalid data\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 
-	ccprintf("Writing 0x%08x to block %d offset %d...\n", d, block, offset);
-	rv = eeprom_write(block, offset, sizeof(d), (char *)&d);
-	if (rv == EC_SUCCESS)
-		ccputs("done.\n");
-	return rv;
+	ccprintf("Writing 0x%08x to %d:%d...\n", d, block, offset);
+	return eeprom_write(block, offset, sizeof(d), (char *)&d);
 }
 DECLARE_CONSOLE_COMMAND(eewrite, command_eeprom_write);
 
 
+#ifdef CONSOLE_COMMAND_EEHIDE
 static int command_eeprom_hide(int argc, char **argv)
 {
 	int block = 0;
 	char *e;
-	int rv;
 
-	if (argc < 2) {
-		ccputs("Usage: eehide <block>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 
 	block = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid block\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 
-	ccprintf("Hiding EEPROM block %d...\n", block);
-	rv = eeprom_hide(block);
-	if (rv == EC_SUCCESS)
-		ccprintf("Done.\n");
-	return rv;
+	ccprintf("Hiding block %d\n", block);
+	return eeprom_hide(block);
 }
 DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide);
+#endif
 
 
 /*****************************************************************************/

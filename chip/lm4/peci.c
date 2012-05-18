@@ -101,11 +101,10 @@ static int command_peci_temp(int argc, char **argv)
 {
 	int t = peci_get_cpu_temp();
 	if (t == -1) {
-		ccputs("Error reading CPU temperature via PECI\n");
-		ccprintf("Error code = 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
+		ccprintf("PECI error 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
 		return EC_ERROR_UNKNOWN;
 	}
-	ccprintf("Current CPU temperature = %d K = %d C\n", t, t - 273);
+	ccprintf("CPU temp = %d K = %d C\n", t, t - 273);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp);

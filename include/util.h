@@ -68,6 +68,8 @@ void *memmove(void *dest, const void *src, int len);
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, int size);
 int strlen(const char *s);
+
+/* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
 
 /* Like strncpy(), but guarantees null termination. */

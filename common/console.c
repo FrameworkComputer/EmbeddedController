@@ -163,7 +163,7 @@ static int handle_command(char *input)
 	if (cmd)
 		return cmd->handler(argc, argv);
 
-	ccprintf("Command '%s' either not found or ambiguous.\n", argv[0]);
+	ccprintf("Command '%s' not found or ambiguous.\n", argv[0]);
 	return EC_ERROR_UNKNOWN;
 }
 
@@ -253,30 +253,15 @@ DECLARE_CONSOLE_COMMAND(help, command_help);
 /* Set active channels */
 static int command_ch(int argc, char **argv)
 {
-	int m;
+	int i;
 	char *e;
-
-	/* If no args, print the list of channels */
-	if (argc == 1) {
-		int i;
-		ccputs(" # Mask     Enabled Channel\n");
-		for (i = 0; i < CC_CHANNEL_COUNT; i++) {
-			ccprintf("%2d %08x %c       %s\n",
-				 i, CC_MASK(i),
-				 (channel_mask & CC_MASK(i)) ? '*' : ' ',
-				 channel_names[i]);
-			cflush();
-		}
-		return EC_SUCCESS;
-	}
 
 	/* If one arg, set the mask */
 	if (argc == 2) {
-		m = strtoi(argv[1], &e, 0);
-		if (e && *e) {
-			ccputs("Invalid mask\n");
+		int m = strtoi(argv[1], &e, 0);
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
+
 		/* No disabling the command output channel */
 		channel_mask = m | CC_MASK(CC_COMMAND);
 
@@ -285,8 +270,15 @@ static int command_ch(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	/* Otherwise, print help */
-	ccputs("Usage: chan [newmask]\n");
-	return EC_ERROR_INVAL;
+	/* Print the list of channels */
+	ccputs(" # Mask     E Channel\n");
+	for (i = 0; i < CC_CHANNEL_COUNT; i++) {
+		ccprintf("%2d %08x %c %s\n",
+			 i, CC_MASK(i),
+			 (channel_mask & CC_MASK(i)) ? '*' : ' ',
+			 channel_names[i]);
+		cflush();
+	}
+	return EC_SUCCESS;
 };
 DECLARE_CONSOLE_COMMAND(chan, command_ch);

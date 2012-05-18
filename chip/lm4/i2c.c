@@ -34,6 +34,7 @@ static task_id_t task_waiting_on_port[NUM_PORTS];
 static struct mutex port_mutex[NUM_PORTS];
 extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 
+
 static int wait_idle(int port)
 {
 	int i;
@@ -241,10 +242,9 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 
 	reg = offset;
 	/* Send device reg space offset, and read back block length.
-	 * Keep this session open without a stop
-	 */
+	 * Keep this session open without a stop */
 	rv = i2c_transmit_receive(port, slave_addr, &reg, 1, &block_length, 1,
-					START, NO_STOP);
+				  START, NO_STOP);
 	if (rv)
 		goto exit;
 
@@ -252,7 +252,7 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 		block_length = len - 1;
 
 	rv = i2c_transmit_receive(port, slave_addr, 0, 0, data, block_length,
-					NO_START, STOP);
+				  NO_START, STOP);
 	data[block_length] = 0;
 
 exit:
@@ -313,7 +313,7 @@ static void scan_bus(int port, const char *desc)
 	int rv;
 	int a;
 
-	ccprintf("Scanning %s I2C bus (%d)...\n", desc, port);
+	ccprintf("Scanning %d %s\n", desc, port);
 
 	mutex_lock(port_mutex + port);
 
@@ -325,11 +325,10 @@ static void scan_bus(int port, const char *desc)
 		LM4_I2C_MCS(port) = 0x07;
 		rv = wait_idle(port);
 		if (rv == EC_SUCCESS)
-			ccprintf("\nFound device at 8-bit addr 0x%02x\n", a);
-}
+			ccprintf("0x%02x\n", a);
+	}
 
 	mutex_unlock(port_mutex + port);
-
 	ccputs("\n");
 }
 
@@ -341,16 +340,12 @@ static int command_i2cread(int argc, char **argv)
 	int rv;
 	int d, i;
 
-	if (argc < 3) {
-		ccputs("Usage: i2cread <port> <addr> [count]\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 3)
+		return EC_ERROR_INVAL;
 
 	port = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid port\n");
+	if (*e)
 		return EC_ERROR_INVAL;
-	}
 
 	for (i = 0; i < I2C_PORTS_USED && port != i2c_ports[i].port; i++)
 		;

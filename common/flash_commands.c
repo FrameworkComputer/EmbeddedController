@@ -24,27 +24,19 @@ static int parse_offset_size(int argc, char **argv, int *offset, int *size)
 
 	if (argc >= 1) {
 		i = (uint32_t)strtoi(argv[0], &e, 0);
-		if (e && *e) {
-			ccprintf("Invalid offset \"%s\"\n", argv[0]);
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
 		*offset = i;
-	} else if (*offset < 0) {
-		ccputs("Must specify offset.\n");
+	} else if (*offset < 0)
 		return EC_ERROR_INVAL;
-	}
 
 	if (argc >= 2) {
 		i = (uint32_t)strtoi(argv[1], &e, 0);
-		if (e && *e) {
-			ccprintf("Invalid size \"%s\"\n", argv[1]);
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
 		*size = i;
-	} else if (*size < 0) {
-		ccputs("Must specify offset and size.\n");
+	} else if (*size < 0)
 		return EC_ERROR_INVAL;
-	}
 
 	return EC_SUCCESS;
 }
@@ -59,18 +51,18 @@ static int command_flash_info(int argc, char **argv)
 	int banks = flash_get_size() / flash_get_protect_block_size();
 	int i;
 
-	ccprintf("Physical size: %4d KB\n", flash_physical_size() / 1024);
-	ccprintf("Usable size:   %4d KB\n", flash_get_size() / 1024);
-	ccprintf("Write block:   %4d B\n", flash_get_write_block_size());
-	ccprintf("Erase block:   %4d B\n", flash_get_erase_block_size());
-	ccprintf("Protect block: %4d B\n", flash_get_protect_block_size());
+	ccprintf("Physical:%4d KB\n", flash_physical_size() / 1024);
+	ccprintf("Usable:  %4d KB\n", flash_get_size() / 1024);
+	ccprintf("Write:   %4d B\n", flash_get_write_block_size());
+	ccprintf("Erase:   %4d B\n", flash_get_erase_block_size());
+	ccprintf("Protect: %4d B\n", flash_get_protect_block_size());
 
 	i = flash_get_protect_lock();
-	ccprintf("Protect lock:  %s%s\n",
+	ccprintf("Lock:    %s%s\n",
 		 (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked",
-		 (i & FLASH_PROTECT_LOCK_APPLIED) ? " AND APPLIED" : "");
-	ccprintf("WP pin:        %s\n", (i & FLASH_PROTECT_PIN_ASSERTED) ?
-		 "ASSERTED" : "deasserted");
+		 (i & FLASH_PROTECT_LOCK_APPLIED) ? ",APPLIED" : "");
+	ccprintf("WP pin:  %sasserted\n",
+		 (i & FLASH_PROTECT_PIN_ASSERTED) ? "" : "de");
 
 	wp = flash_get_protect_array();
 
@@ -103,8 +95,7 @@ static int command_flash_erase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	ccprintf("Erasing %d bytes at offset 0x%x (%d)...\n",
-		    size, offset, offset);
+	ccprintf("Erasing %d bytes at 0x%x...\n", size, offset, offset);
 	return flash_erase(offset, size);
 }
 DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase);
@@ -123,15 +114,13 @@ static int command_flash_write(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	if (size > shared_mem_size()) {
-		ccputs("Truncating size\n");
+	if (size > shared_mem_size())
 		size = shared_mem_size();
-	}
 
         /* Acquire the shared memory buffer */
 	rv = shared_mem_acquire(size, 0, &data);
 	if (rv) {
-		ccprintf("Unable to acquire %d byte buffer\n", size);
+		ccputs("Can't get shared mem\n");
 		return rv;
 	}
 
@@ -139,13 +128,9 @@ static int command_flash_write(int argc, char **argv)
 	for (i = 0; i < size; i++)
 		data[i] = i;
 
-	ccprintf("Writing %d bytes to offset 0x%x (%d)...\n",
+	ccprintf("Writing %d bytes to 0x%x...\n",
 		 size, offset, offset);
 	rv = flash_write(offset, size, data);
-	if (rv == EC_SUCCESS)
-		ccputs("done.\n");
-	else
-		ccprintf("failed. (error %d)\n", rv);
 
 	/* Free the buffer */
 	shared_mem_release(data);
@@ -155,21 +140,14 @@ static int command_flash_write(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write);
 
 
-static const char flash_wp_help[] =
-	"Usage: flashwp <now | set | clear> <offset> [size]\n"
-	"   or: flashwp <lock | unlock>\n";
-
-
 static int command_flash_wp(int argc, char **argv)
 {
 	int offset = -1;
 	int size = flash_get_protect_block_size();
 	int rv;
 
-	if (argc < 2) {
-		ccputs(flash_wp_help);
+	if (argc < 2)
 		return EC_ERROR_INVAL;
-	}
 
 	/* Commands that don't need offset and size */
 	if (!strcasecmp(argv[1], "lock"))
@@ -188,11 +166,8 @@ static int command_flash_wp(int argc, char **argv)
 		return flash_set_protect(offset, size, 1);
 	else if (!strcasecmp(argv[1], "clear"))
 		return flash_set_protect(offset, size, 0);
-	else {
-		ccputs(flash_wp_help);
+	else
 		return EC_ERROR_INVAL;
-	}
-
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
 

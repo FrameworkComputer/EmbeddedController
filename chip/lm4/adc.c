@@ -177,6 +177,7 @@ DECLARE_IRQ(LM4_IRQ_ADC0_SS3, ss3_interrupt, 2);
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONSOLE_COMMAND_ECTEMP
 static int command_ectemp(int argc, char **argv)
 {
 	int t = adc_read_channel(ADC_CH_EC_TEMP);
@@ -184,6 +185,7 @@ static int command_ectemp(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
+#endif
 
 
 static int command_adc(int argc, char **argv)
