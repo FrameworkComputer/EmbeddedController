@@ -23,12 +23,18 @@ static const struct gpio_info *exti_events[16];
 int gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
+	int is_warm = 0;
 	int i;
 
-	/* Enable all GPIOs clocks
-	 * TODO: more fine-grained enabling for power saving
-	 */
-	STM32_RCC_AHBENR |= 0x3f;
+	if ((STM32_RCC_AHBENR & 0x3f) == 0x3f) {
+		/* This is a warm reboot */
+		is_warm = 1;
+	} else {
+		/* Enable all GPIOs clocks
+		 * TODO: more fine-grained enabling for power saving
+		 */
+		STM32_RCC_AHBENR |= 0x3f;
+	}
 
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		/* bitmask for registers with 2 bits per GPIO pin */
@@ -54,7 +60,11 @@ int gpio_pre_init(void)
 		if (g->flags & GPIO_OUTPUT) { /* General purpose, MODE = 01 */
 			val |= 0x55555555 & mask2;
 			STM32_GPIO_MODER_OFF(g->port) = val;
-			gpio_set_level(i, g->flags & GPIO_HIGH);
+			/* If this is a cold boot, set the level.
+			 * On a warm reboot, leave things where they were
+			 * or we'll shut off the AP. */
+			if (!is_warm)
+				gpio_set_level(i, g->flags & GPIO_HIGH);
 		} else if (g->flags & GPIO_INPUT) { /* Input, MODE=00 */
 			STM32_GPIO_MODER_OFF(g->port) = val;
 		}
