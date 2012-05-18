@@ -52,17 +52,34 @@
 #define LID_DEBOUNCE_US    30000  /* Debounce time for lid switch */
 
 enum power_button_state {
-	PWRBTN_STATE_STOPPED = 0,
-	PWRBTN_STATE_START,
-	PWRBTN_STATE_T0,
-	PWRBTN_STATE_T1,
-	PWRBTN_STATE_HELD_DOWN,
-	PWRBTN_STATE_STOPPING,
-	PWRBTN_STATE_BOOT_RESET,
-	PWRBTN_STATE_BOOT_RECOVERY,
-	PWRBTN_STATE_WAS_OFF,
+	PWRBTN_STATE_IDLE = 0,      /* Button up; state machine idle */
+	PWRBTN_STATE_PRESSED,       /* Button pressed; debouncing done */
+	PWRBTN_STATE_T0,            /* Button down, chipset on; sending
+				     * initial short pulse */
+	PWRBTN_STATE_T1,            /* Button down, chipset on; delaying
+				     * until we should reassert signal */
+	PWRBTN_STATE_HELD,          /* Button down, signal asserted to
+				     * chipset */
+	PWRBTN_STATE_LID_OPEN,      /* Force pulse due to lid-open event */
+	PWRBTN_STATE_RELEASED,      /* Button released; debouncing done */
+	PWRBTN_STATE_EAT_RELEASE,   /* Ignore next button release */
+	PWRBTN_STATE_BOOT_RECOVERY, /* Forced pulse at EC boot */
+	PWRBTN_STATE_WAS_OFF,       /* Chipset was off; stretching pulse */
 };
-static enum power_button_state pwrbtn_state = PWRBTN_STATE_STOPPED;
+static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
+
+static const char * const state_names[] = {
+	"idle",
+	"pressed",
+	"t0",
+	"t1",
+	"held",
+	"lid-open",
+	"released",
+	"eat-release",
+	"recovery",
+	"was-off",
+};
 
 /* Time for next state transition of power button state machine, or 0 if the
  * state doesn't have a timeout. */
@@ -75,7 +92,10 @@ static uint64_t tdebounce_pwr;
 
 static uint8_t *memmap_switches;
 static int debounced_lid_open;
+static int debounced_power_pressed;
 static int ac_changed;
+static int simulate_power_pressed;
+
 
 /* Update status of non-debounced switches */
 static void update_other_switches(void)
@@ -117,10 +137,21 @@ static void set_pwrbtn_to_pch(int high)
 }
 
 
-/* Return 1 if power button is pressed, 0 if not pressed. */
+/* Get raw power button signal state; 1 if power button is pressed, 0 if not
+ * pressed. */
 static int get_power_button_pressed(void)
 {
+	if (simulate_power_pressed)
+		return 1;
+
 	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
+}
+
+
+/* Get raw lid switch state; 1 if lid is open, 0 if closed. */
+static int get_lid_open(void)
+{
+	return gpio_get_level(GPIO_LID_SWITCHn) ? 1 : 0;
 }
 
 
@@ -137,6 +168,178 @@ static void update_backlight(void)
 }
 
 
+/* Handle debounced power button down */
+static void power_button_pressed(uint64_t tnow)
+{
+	if (debounced_power_pressed == 1) {
+		CPRINTF("[%T PB already pressed]\n");
+		return;
+	}
+
+	CPRINTF("[%T PB pressed]\n");
+	debounced_power_pressed = 1;
+	pwrbtn_state = PWRBTN_STATE_PRESSED;
+	tnext_state = tnow;
+	*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+	keyboard_set_power_button(1);
+	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
+}
+
+
+/* Handle debounced power button up */
+static void power_button_released(uint64_t tnow)
+{
+	if (debounced_power_pressed == 0) {
+		CPRINTF("[%T PB already released]\n");
+		return;
+	}
+
+	CPRINTF("[%T PB released]\n");
+	debounced_power_pressed = 0;
+	pwrbtn_state = PWRBTN_STATE_RELEASED;
+	tnext_state = tnow;
+	*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
+	keyboard_set_power_button(0);
+}
+
+
+/* Handle lid open */
+static void lid_switch_open(uint64_t tnow)
+{
+	if (debounced_lid_open) {
+		CPRINTF("[%T PB lid already open]\n");
+		return;
+	}
+
+	CPRINTF("[%T PB lid open]\n");
+	debounced_lid_open = 1;
+	*memmap_switches |= EC_SWITCH_LID_OPEN;
+	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
+
+	/* If the chipset is off, send a power button pulse to wake up the
+	 * chipset. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		chipset_exit_hard_off();
+		set_pwrbtn_to_pch(0);
+		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
+		tnext_state = tnow + PWRBTN_INITIAL_US;
+		task_wake(TASK_ID_POWERBTN);
+	}
+}
+
+
+/* Handle lid close */
+static void lid_switch_close(uint64_t tnow)
+{
+	if (!debounced_lid_open) {
+		CPRINTF("[%T PB lid already closed]\n");
+		return;
+	}
+
+	CPRINTF("[%T PB lid close]\n");
+	debounced_lid_open = 0;
+	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
+	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED));
+}
+
+
+/* Handle debounced power button changing state */
+static void power_button_changed(uint64_t tnow)
+{
+	if (pwrbtn_state == PWRBTN_STATE_BOOT_RECOVERY ||
+	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
+	    pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
+		/* Ignore all power button changes during an initial pulse */
+		CPRINTF("[%T PB ignoring change]\n");
+		return;
+	}
+
+	if (get_power_button_pressed()) {
+		/* Power button pressed */
+		power_button_pressed(tnow);
+	} else {
+		/* Power button released */
+		if (pwrbtn_state == PWRBTN_STATE_EAT_RELEASE) {
+			/* Ignore the first power button release if we already
+			 * told the PCH the power button was released. */
+			CPRINTF("[%T PB ignoring release]\n");
+			pwrbtn_state = PWRBTN_STATE_IDLE;
+			return;
+		}
+
+		power_button_released(tnow);
+	}
+}
+
+
+/* Handle debounced lid switch changing state */
+static void lid_switch_changed(uint64_t tnow)
+{
+	if (get_lid_open())
+		lid_switch_open(tnow);
+	else
+		lid_switch_close(tnow);
+
+	update_backlight();
+}
+
+
+/* Set initial power button state */
+static void set_initial_pwrbtn_state(void)
+{
+	debounced_power_pressed = get_power_button_pressed();
+
+	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
+		/* Reset triggered by keyboard-controlled reset, so override
+		 * the power button signal to the PCH. */
+		if (keyboard_scan_recovery_pressed()) {
+			/* In recovery mode, so send a power button pulse to
+			 * the PCH so it powers on. */
+			CPRINTF("[%T PB init-recovery]\n");
+			set_pwrbtn_to_pch(0);
+			pwrbtn_state = PWRBTN_STATE_BOOT_RECOVERY;
+			tnext_state = get_time().val + PWRBTN_INITIAL_US;
+		} else {
+			/* Keyboard-controlled reset, so don't let the PCH see
+			 * that the power button was pressed.  Otherwise, it
+			 * might power on. */
+			CPRINTF("[%T PB init-reset]\n");
+			set_pwrbtn_to_pch(1);
+			if (get_power_button_pressed())
+				pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
+			else
+				pwrbtn_state = PWRBTN_STATE_IDLE;
+		}
+	} else if (system_get_reset_cause() == SYSTEM_RESET_WAKE_PIN &&
+		   debounced_lid_open == 1) {
+		/* Reset triggered by wake pin and lid is open, so power on the
+		 * system.   Note that on EVT+, if the system is off, lid is
+		 * open, and you plug it in, it'll turn on due to AC detect. */
+		CPRINTF("[%T PB init-hib-wake]\n");
+		set_pwrbtn_to_pch(0);
+		if (get_power_button_pressed())
+			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
+		else
+			pwrbtn_state = PWRBTN_STATE_LID_OPEN;
+		tnext_state = get_time().val + PWRBTN_INITIAL_US;
+	} else {
+		/* Copy initial power button state to PCH and memory-mapped
+		 * switch positions. */
+		set_pwrbtn_to_pch(get_power_button_pressed() ? 0 : 1);
+		if (get_power_button_pressed())
+			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+	}
+}
+
+
+int power_ac_present(void)
+{
+	return gpio_get_level(GPIO_AC_PRESENT);
+}
+
+/*****************************************************************************/
+/* Task / state machine */
+
 /* Power button state machine.  Passed current time from usec counter. */
 static void state_machine(uint64_t tnow)
 {
@@ -148,7 +351,7 @@ static void state_machine(uint64_t tnow)
 	tnext_state = 0;
 
 	switch (pwrbtn_state) {
-	case PWRBTN_STATE_START:
+	case PWRBTN_STATE_PRESSED:
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			/* Chipset is off, so wake the chipset and send it a
 			 * long enough pulse to wake up.  After that we'll
@@ -179,128 +382,136 @@ static void state_machine(uint64_t tnow)
 			CPRINTF("[%T PB chipset already off]\n");
 		else
 			set_pwrbtn_to_pch(0);
-		pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
+		pwrbtn_state = PWRBTN_STATE_HELD;
 		break;
-	case PWRBTN_STATE_STOPPING:
+	case PWRBTN_STATE_RELEASED:
+	case PWRBTN_STATE_LID_OPEN:
 		set_pwrbtn_to_pch(1);
-		pwrbtn_state = PWRBTN_STATE_STOPPED;
+		pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_BOOT_RECOVERY:
+		/* Initial forced pulse is done.  Ignore the actual power
+		 * button until it's released, so that holding down the
+		 * recovery combination doesn't cause the chipset to shut back
+		 * down. */
 		set_pwrbtn_to_pch(1);
-		pwrbtn_state = PWRBTN_STATE_BOOT_RESET;
+		if (get_power_button_pressed())
+			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
+		else
+			pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_WAS_OFF:
+		/* Done stretching initial power button signal, so show the
+		 * true power button state to the PCH. */
 		if (get_power_button_pressed()) {
 			/* User is still holding the power button */
-			pwrbtn_state = PWRBTN_STATE_HELD_DOWN;
+			pwrbtn_state = PWRBTN_STATE_HELD;
 		} else {
 			/* Stop stretching the power button press */
-			*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
-			keyboard_set_power_button(0);
-			pwrbtn_state = PWRBTN_STATE_STOPPING;
+			power_button_released(tnow);
 		}
 		break;
-	case PWRBTN_STATE_STOPPED:
-	case PWRBTN_STATE_HELD_DOWN:
-	case PWRBTN_STATE_BOOT_RESET:
+	case PWRBTN_STATE_IDLE:
+	case PWRBTN_STATE_HELD:
+	case PWRBTN_STATE_EAT_RELEASE:
 		/* Do nothing */
 		break;
 	}
 }
 
 
-/* Handle debounced power button changing state */
-static void power_button_changed(uint64_t tnow)
+void power_button_task(void)
 {
-	if (pwrbtn_state == PWRBTN_STATE_BOOT_RECOVERY) {
-		/* Ignore all power button changes during the recovery pulse */
-		CPRINTF("[%T PB changed during recovery pulse]\n");
-	} else if (pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
-		/* Ignore all power button changes during an initial pulse */
-		CPRINTF("[%T PB changed during initial pulse]\n");
-	} else if (get_power_button_pressed()) {
-		/* Power button pressed */
-		CPRINTF("[%T PB pressed]\n");
-		pwrbtn_state = PWRBTN_STATE_START;
-		tnext_state = tnow;
-		*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
-		keyboard_set_power_button(1);
-		lpc_set_host_events(
-			EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
-	} else if (pwrbtn_state == PWRBTN_STATE_BOOT_RESET) {
-		/* Ignore the first power button release after a
-		 * keyboard-controlled reset, since we already told the PCH the
-		 * power button was released. */
-		CPRINTF("[%T PB released after keyboard reset]\n");
-		pwrbtn_state = PWRBTN_STATE_STOPPED;
-	} else {
-		/* Power button released normally (outside of a
-		 * keyboard-controlled reset) */
-		CPRINTF("[%T PB released]\n");
-		pwrbtn_state = PWRBTN_STATE_STOPPING;
-		tnext_state = tnow;
-		*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
-		keyboard_set_power_button(0);
+	uint64_t t;
+	uint64_t tsleep;
+
+	while (1) {
+		t = get_time().val;
+
+		/* Handle AC state changes */
+		if (ac_changed) {
+			ac_changed = 0;
+			hook_notify(HOOK_AC_CHANGE, 0);
+		}
+
+		/* Handle debounce timeouts for power button and lid switch */
+		if (tdebounce_pwr && t >= tdebounce_pwr) {
+			tdebounce_pwr = 0;
+			if (get_power_button_pressed() !=
+			    debounced_power_pressed)
+				power_button_changed(t);
+		}
+		if (tdebounce_lid && t >= tdebounce_lid) {
+			tdebounce_lid = 0;
+			if (get_lid_open() != debounced_lid_open)
+				lid_switch_changed(t);
+		}
+
+		/* Handle non-debounced switches */
+		update_other_switches();
+
+		/* Update state machine */
+		CPRINTF("[%T PB task %d = %s, sw 0x%02x]\n", pwrbtn_state,
+			state_names[pwrbtn_state], *memmap_switches);
+
+		state_machine(t);
+
+		/* Sleep until our next timeout */
+		tsleep = -1;
+		if (tdebounce_pwr && tdebounce_pwr < tsleep)
+			tsleep = tdebounce_pwr;
+		if (tdebounce_lid && tdebounce_lid < tsleep)
+			tsleep = tdebounce_lid;
+		if (tnext_state && tnext_state < tsleep)
+			tsleep = tnext_state;
+		t = get_time().val;
+		if (tsleep > t) {
+			unsigned d = tsleep == -1 ? -1 : (unsigned)(tsleep - t);
+			/* (Yes, the conversion from uint64_t to unsigned could
+			 * theoretically overflow if we wanted to sleep for
+			 * more than 2^32 us, but our timeouts are small enough
+			 * that can't happen - and even if it did, we'd just go
+			 * back to sleep after deciding that we woke up too
+			 * early.) */
+			CPRINTF("[%T PB task %d = %s, wait %d]\n", pwrbtn_state,
+			state_names[pwrbtn_state], d);
+			task_wait_event(d);
+		}
 	}
 }
 
+/*****************************************************************************/
+/* Hooks */
 
-/* Lid open */
-static void lid_switch_open(uint64_t tnow)
+static int power_button_init(void)
 {
-	CPRINTF("[%T PB lid open]\n");
-
-	debounced_lid_open = 1;
-	*memmap_switches |= EC_SWITCH_LID_OPEN;
-
-	lpc_set_host_events(EC_HOST_EVENT_MASK(
-			    EC_HOST_EVENT_LID_OPEN));
-
-	/* If the chipset is off, send a power button pulse to wake up the
-	 * chipset. */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		chipset_exit_hard_off();
-		set_pwrbtn_to_pch(0);
-		pwrbtn_state = PWRBTN_STATE_STOPPING;
-		tnext_state = tnow + PWRBTN_INITIAL_US;
-		task_wake(TASK_ID_POWERBTN);
+	/* Set up memory-mapped switch positions */
+	memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
+	*memmap_switches = 0;
+	if (get_lid_open()) {
+		debounced_lid_open = 1;
+		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	}
-}
-
-
-/* Lid close */
-static void lid_switch_close(uint64_t tnow)
-{
-	CPRINTF("[%T PB lid close]\n");
-
-	debounced_lid_open = 0;
-	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
-
-	lpc_set_host_events(EC_HOST_EVENT_MASK(
-			    EC_HOST_EVENT_LID_CLOSED));
-}
-
-
-/* Handle debounced lid switch changing state */
-static void lid_switch_changed(uint64_t tnow)
-{
-	if (gpio_get_level(GPIO_LID_SWITCHn))
-		lid_switch_open(tnow);
-	else
-		lid_switch_close(tnow);
-
+	update_other_switches();
 	update_backlight();
-}
 
+	set_initial_pwrbtn_state();
 
-int power_ac_present(void)
-{
-	return gpio_get_level(GPIO_AC_PRESENT);
+	/* Enable interrupts, now that we've initialized */
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
+	gpio_enable_interrupt(GPIO_LID_SWITCHn);
+	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
+	gpio_enable_interrupt(GPIO_RECOVERYn);
+	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
+
+	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
 
 
 void power_button_interrupt(enum gpio_signal signal)
 {
+	/* Reset debounce time for the changed signal */
 	switch (signal) {
 	case GPIO_LID_SWITCHn:
 		/* Reset lid debounce time */
@@ -323,112 +534,11 @@ void power_button_interrupt(enum gpio_signal signal)
 	}
 
 	/* We don't have a way to tell the task to wake up at the end of the
-         * debounce interval; wake it up now so it can go back to sleep for the
-         * remainder of the interval.  The alternative would be to have the
-         * task wake up _every_ debounce_us on its own; that's less desirable
-         * when the EC should be sleeping. */
+	 * debounce interval; wake it up now so it can go back to sleep for the
+	 * remainder of the interval.  The alternative would be to have the task
+	 * wake up _every_ debounce_us on its own; that's less desirable when
+	 * the EC should be sleeping. */
 	task_wake(TASK_ID_POWERBTN);
-}
-
-
-static int power_button_init(void)
-{
-	/* Set up memory-mapped switch positions */
-	memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
-	*memmap_switches = 0;
-	if (gpio_get_level(GPIO_LID_SWITCHn) != 0) {
-		debounced_lid_open = 1;
-		*memmap_switches |= EC_SWITCH_LID_OPEN;
-	}
-	update_other_switches();
-	update_backlight();
-
-	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
-		/* Reset triggered by keyboard-controlled reset, so override
-		 * the power button signal to the PCH. */
-		if (keyboard_scan_recovery_pressed()) {
-			/* In recovery mode, so send a power button pulse to
-			 * the PCH so it powers on. */
-			set_pwrbtn_to_pch(0);
-			pwrbtn_state = PWRBTN_STATE_BOOT_RECOVERY;
-			tnext_state = get_time().val + PWRBTN_INITIAL_US;
-		} else {
-			/* Keyboard-controlled reset, so don't let the PCH see
-			 * that the power button was pressed.  Otherwise, it
-			 * might power on. */
-			set_pwrbtn_to_pch(1);
-			pwrbtn_state = PWRBTN_STATE_BOOT_RESET;
-		}
-	} else {
-		/* Copy initial power button state to PCH and memory-mapped
-		 * switch positions. */
-		set_pwrbtn_to_pch(get_power_button_pressed() ? 0 : 1);
-		if (get_power_button_pressed())
-			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
-	}
-
-	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_AC_PRESENT);
-	gpio_enable_interrupt(GPIO_LID_SWITCHn);
-	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
-	gpio_enable_interrupt(GPIO_RECOVERYn);
-	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
-
-	return EC_SUCCESS;
-}
-DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
-
-
-void power_button_task(void)
-{
-	uint64_t t;
-	uint64_t tsleep;
-	while (1) {
-		t = get_time().val;
-
-		/* Handle AC state changes */
-		if (ac_changed) {
-			ac_changed = 0;
-			hook_notify(HOOK_AC_CHANGE, 0);
-		}
-
-		/* Handle debounce timeouts for power button and lid switch */
-		if (tdebounce_pwr && t >= tdebounce_pwr) {
-			tdebounce_pwr = 0;
-			power_button_changed(t);
-		}
-		if (tdebounce_lid && t >= tdebounce_lid) {
-			tdebounce_lid = 0;
-			lid_switch_changed(t);
-		}
-
-		/* Handle non-debounced switches */
-		update_other_switches();
-
-		/* Update state machine */
-		state_machine(t);
-
-		/* Sleep until our next timeout */
-		tsleep = -1;
-		if (tdebounce_pwr && tdebounce_pwr < tsleep)
-			tsleep = tdebounce_pwr;
-		if (tdebounce_lid && tdebounce_lid < tsleep)
-			tsleep = tdebounce_lid;
-		if (tnext_state && tnext_state < tsleep)
-			tsleep = tnext_state;
-		t = get_time().val;
-		if (tsleep > t) {
-			unsigned d = tsleep == -1 ? -1 : (unsigned)(tsleep - t);
-			/* (Yes, the conversion from uint64_t to unsigned could
-			 * theoretically overflow if we wanted to sleep for
-			 * more than 2^32 us, but our timeouts are small enough
-			 * that can't happen - and even if it did, we'd just go
-			 * back to sleep after deciding that we woke up too
-			 * early.) */
-			CPRINTF("[%T PB task %d wait %d]\n", pwrbtn_state, d);
-			task_wait_event(d);
-		}
-	}
 }
 
 /*****************************************************************************/
@@ -448,14 +558,18 @@ static int command_powerbtn(int argc, char **argv)
 		}
 	}
 
-	/* Note that this only simulates the raw power button signal to the
-	 * PCH.  It does not simulate the full state machine which sends SMIs
-	 * and other events to other parts of the EC and chipset. */
 	ccprintf("Simulating %d ms power button press.\n", ms);
-	chipset_exit_hard_off();
-	set_pwrbtn_to_pch(0);
+	simulate_power_pressed = 1;
+	tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
+	task_wake(TASK_ID_POWERBTN);
+
 	usleep(ms * 1000);
-	set_pwrbtn_to_pch(1);
+
+	ccprintf("Simulating power button release.\n");
+	simulate_power_pressed = 0;
+	tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
+	task_wake(TASK_ID_POWERBTN);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn);
