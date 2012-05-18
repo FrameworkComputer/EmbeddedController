@@ -12,29 +12,17 @@
 
 /* Reset causes */
 enum system_reset_cause_t {
-	/* Unknown reset cause */
-	SYSTEM_RESET_UNKNOWN = 0,
-	/* System reset cause is known, but not one of the causes
-	 * listed below */
-	SYSTEM_RESET_OTHER,
-	/* Brownout */
-	SYSTEM_RESET_BROWNOUT,
-	/* Power-on reset */
-	SYSTEM_RESET_POWER_ON,
-	/* Reset caused by asserting reset (RST#) pin */
-	SYSTEM_RESET_RESET_PIN,
-	/* Software requested cold reset */
-	SYSTEM_RESET_SOFT_COLD,
-	/* Software requested warm reset */
-	SYSTEM_RESET_SOFT_WARM,
-	/* Watchdog timer reset */
-	SYSTEM_RESET_WATCHDOG,
-	/* the RTC alarm triggered power on */
-	SYSTEM_RESET_RTC_ALARM,
-	/* the Wake pin triggered power on */
-	SYSTEM_RESET_WAKE_PIN,
-	/* the low battery detection triggered power on */
-	SYSTEM_RESET_LOW_BATTERY,
+	SYSTEM_RESET_UNKNOWN = 0,  /* Unknown reset cause */
+	SYSTEM_RESET_OTHER,        /* System reset cause is known, but not one
+				    * of the causes listed below */
+	SYSTEM_RESET_BROWNOUT,     /* Brownout */
+	SYSTEM_RESET_POWER_ON,     /* Power-on reset */
+	SYSTEM_RESET_RESET_PIN,    /* Reset pin asserted */
+	SYSTEM_RESET_SOFT,         /* Soft reset trigger by core */
+	SYSTEM_RESET_WATCHDOG,     /* Watchdog timer reset */
+	SYSTEM_RESET_RTC_ALARM,    /* RTC alarm wake */
+	SYSTEM_RESET_WAKE_PIN,     /* Wake pin triggered wake */
+	SYSTEM_RESET_LOW_BATTERY,  /* Low battery triggered wake */
 };
 
 /* System images */
@@ -114,12 +102,10 @@ int system_get_board_version(void);
  */
 const char *system_get_build_info(void);
 
-/* Resets the system.  If is_cold!=0, performs a cold reset (which
- * resets on-chip peripherals); else performs a warm reset (which does
- * not reset on-chip peripherals).  If successful, does not return.
- * Returns error if the reboot type cannot be requested (e.g. brownout
- * or reset pin). */
-int system_reset(int is_cold);
+/* Resets the system.  If is_hard, performs a hard reset, which cuts power to
+ * the entire system; else performs a soft reset (which resets the core and
+ * on-chip peripherals, without actually cutting power to the chip). */
+void system_reset(int is_hard);
 
 /* Sets a scratchpad register to the specified value.  The scratchpad
  * register must maintain its contents across a software-requested

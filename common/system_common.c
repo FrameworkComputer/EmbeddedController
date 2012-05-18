@@ -155,8 +155,7 @@ const char *system_get_reset_cause_string(void)
 {
 	static const char * const cause_descs[] = {
 		"unknown", "other", "brownout", "power-on", "reset pin",
-		"soft cold", "soft warm", "watchdog", "rtc alarm", "wake pin",
-		"low battery"};
+		"soft", "watchdog", "rtc alarm", "wake pin", "low battery"};
 
 	return reset_cause < ARRAY_SIZE(cause_descs) ?
 			cause_descs[reset_cause] : "?";
@@ -356,10 +355,12 @@ const char *system_get_build_info(void)
 
 int system_common_pre_init(void)
 {
-	/* Check jump data if this is a jump between images */
+	/* Check jump data if this is a jump between images.  Jumps all show up
+	 * as an unknown reset reason, because we jumped directly from one
+	 * image to another without actually triggering a chip reset. */
 	if (jdata->magic == JUMP_DATA_MAGIC &&
 	    jdata->version >= 1 &&
-	    reset_cause == SYSTEM_RESET_SOFT_WARM) {
+	    reset_cause == SYSTEM_RESET_UNKNOWN) {
 		int delta;       /* Change in jump data struct size between the
 				  * previous image and this one. */
 
@@ -533,9 +534,16 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
 
 static int command_reboot(int argc, char **argv)
 {
+	int is_hard = 0;
+
+	if (argc == 2 && !strcasecmp(argv[1], "hard")) {
+		ccputs("Hard-");
+		is_hard = 1;
+	}
+
 	ccputs("Rebooting!\n\n\n");
 	cflush();
-	system_reset(1);
+	system_reset(is_hard);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot);

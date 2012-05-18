@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -60,6 +60,7 @@ panic:
 panic_print:
     ldr r0, =msg_excep                        @ pointer to the text buffer
     bl emergency_puts                         @ print the banner
+    mov r0, #0                                @ Soft boot
     b system_reset                            @ Reboot the system
 
 /* Helpers for exception trace */

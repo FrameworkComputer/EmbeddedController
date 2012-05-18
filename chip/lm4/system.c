@@ -26,7 +26,6 @@ static int wait_for_hibctl_wc(void)
 
 static void check_reset_cause(void)
 {
-	enum system_image_copy_t copy = system_get_image_copy();
 	uint32_t hib_status = LM4_HIBERNATE_HIBRIS;
 	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 	uint32_t raw_reset_cause;
@@ -36,25 +35,24 @@ static void check_reset_cause(void)
 	LM4_SYSTEM_RESC = 0;
 
 	if (hib_status & 0x0d) {
-		/* the hibernation module wakes up the system */
+		/* The hibernation module woke up the system */
 		if (hib_status & 0x8)
 			reset_cause = SYSTEM_RESET_WAKE_PIN;
 		else if (hib_status & 0x1)
+			/* Note that system_reset(1) also triggers this reset
+			 * cause, because it uses hibernate with a RTC wake to
+			 * trigger a power-on reset. */
 			reset_cause = SYSTEM_RESET_RTC_ALARM;
 		else if (hib_status & 0x4)
 			reset_cause = SYSTEM_RESET_LOW_BATTERY;
-		/* clear the pending interrupt */
+		/* Clear the pending interrupt */
 		wait_for_hibctl_wc();
 		LM4_HIBERNATE_HIBIC = hib_status;
-	} else if (copy == SYSTEM_IMAGE_RW_A || copy == SYSTEM_IMAGE_RW_B) {
-		/* If we're in image A or B, the only way we can get there is
-		 * via a warm reset. */
-		reset_cause = SYSTEM_RESET_SOFT_WARM;
 	} else if (raw_reset_cause & 0x28) {
 		/* Watchdog timer 0 or 1 */
 		reset_cause = SYSTEM_RESET_WATCHDOG;
 	} else if (raw_reset_cause & 0x10) {
-		reset_cause = SYSTEM_RESET_SOFT_COLD;
+		reset_cause = SYSTEM_RESET_SOFT;
 	} else if (raw_reset_cause & 0x04) {
 		reset_cause = SYSTEM_RESET_BROWNOUT;
 	} else if (raw_reset_cause & 0x02) {
@@ -63,9 +61,6 @@ static void check_reset_cause(void)
 		reset_cause = SYSTEM_RESET_RESET_PIN;
 	} else if (raw_reset_cause) {
 		reset_cause = SYSTEM_RESET_OTHER;
-	} else {
-		/* Reset cause is still 0, so this is a warm reset. */
-		reset_cause = SYSTEM_RESET_SOFT_WARM;
 	}
 	system_set_reset_cause(reset_cause);
 }
@@ -87,12 +82,19 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	LM4_HIBERNATE_HIBRTCLD = 0;
 	/* go to hibernation and wake on RTC match or WAKE pin */
 	wait_for_hibctl_wc();
+
 #ifdef BOARD_link
-	/* Need VDD3ON because we can't drop VDD externally */
-	LM4_HIBERNATE_HIBCTL = 0x15B;
+	if (system_get_board_version() == BOARD_VERSION_PROTO1) {
+		/* Need VDD3ON because we can't drop VDD externally */
+		LM4_HIBERNATE_HIBCTL = 0x15B;
+	} else {
+		/* EVT+ can drop VDD */
+		LM4_HIBERNATE_HIBCTL = 0x5B;
+	}
 #else
 	LM4_HIBERNATE_HIBCTL = 0x5B;
 #endif
+
 	/* we are going to hibernate ... */
 	while (1) ;
 }
@@ -146,19 +148,21 @@ int system_pre_init(void)
 }
 
 
-int system_reset(int is_cold)
+void system_reset(int is_hard)
 {
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
-	/* TODO: (crosbug.com/p/7470) support cold boot; this is a
-	   warm boot. */
-	CPU_NVIC_APINT = 0x05fa0004;
+	if (is_hard) {
+		/* Bounce through hibernate to trigger a hard reboot */
+		system_hibernate(0, 50000);
+	} else {
+		/* Soft reboot */
+		CPU_NVIC_APINT = 0x05fa0004;
+	}
 
 	/* Spin and wait for reboot; should never return */
 	while (1) {}
-
-	return EC_ERROR_UNKNOWN;
 }
 
 
