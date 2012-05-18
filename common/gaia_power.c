@@ -226,6 +226,10 @@ void chipset_exit_hard_off(void)
  */
 static int check_for_power_on_event(void)
 {
+	/* the system is already ON */
+	if (gpio_get_level(GPIO_EN_PP3300))
+		return 1;
+
 	/* wait for Power button press */
 	wait_in_signal(GPIO_KB_PWR_ON_L, 0, -1);
 

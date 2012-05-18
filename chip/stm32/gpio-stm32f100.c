@@ -49,13 +49,19 @@ static void gpio_config_info(const struct gpio_info *g, uint32_t *addr,
 int gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
+	int is_warm = 0;
 	int i;
 	uint32_t addr, cnf, mode, mask;
 
-	/* Enable all GPIOs clocks
-	 * TODO: more fine-grained enabling for power saving
-	 */
-	STM32_RCC_APB2ENR |= 0x1fd;
+	if ((STM32_RCC_APB2ENR & 0x1fd) == 0x1fd) {
+		/* This is a warm reboot */
+		is_warm = 1;
+	} else {
+		/* Enable all GPIOs clocks
+		 * TODO: more fine-grained enabling for power saving
+		 */
+		STM32_RCC_APB2ENR |= 0x1fd;
+	}
 
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
@@ -92,7 +98,12 @@ int gpio_pre_init(void)
 		 * potential damage, e.g. driving an open-drain output
 		 * high before it has been configured as such.
 		 */
-		if (g->flags & GPIO_OUTPUT) /* General purpose, MODE = 01 */
+		if ((g->flags & GPIO_OUTPUT) && !is_warm)
+			/* General purpose, MODE = 01
+			 *
+			 * If this is a cold boot, set the level.
+			 * On a warm reboot, leave things where they were
+			 * or we'll shut off the AP. */
 			gpio_set_level(i, g->flags & GPIO_HIGH);
 
 		REG32(addr) = mask;
