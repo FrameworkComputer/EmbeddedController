@@ -164,18 +164,21 @@ const char *system_get_reset_cause_string(void)
 
 enum system_image_copy_t system_get_image_copy(void)
 {
-	int copy = ((uint32_t)system_get_image_copy - CONFIG_FLASH_BASE) /
-		   CONFIG_FW_IMAGE_SIZE;
-	switch (copy) {
-	case 0:
+	uint32_t my_addr = (uint32_t)system_get_image_copy;
+
+	if (my_addr >= CONFIG_SECTION_RO_OFF &&
+	    my_addr < (CONFIG_SECTION_RO_OFF + CONFIG_SECTION_RO_SIZE))
 		return SYSTEM_IMAGE_RO;
-	case 1:
+
+	if (my_addr >= CONFIG_SECTION_A_OFF &&
+	    my_addr < (CONFIG_SECTION_A_OFF + CONFIG_SECTION_A_SIZE))
 		return SYSTEM_IMAGE_RW_A;
-	case 2:
+
+	if (my_addr >= CONFIG_SECTION_B_OFF &&
+	    my_addr < (CONFIG_SECTION_B_OFF + CONFIG_SECTION_B_SIZE))
 		return SYSTEM_IMAGE_RW_B;
-	default:
-		return SYSTEM_IMAGE_UNKNOWN;
-	}
+
+	return SYSTEM_IMAGE_UNKNOWN;
 }
 
 
@@ -184,10 +187,25 @@ enum system_image_copy_t system_get_image_copy(void)
  * We only care the runtime code since the EC is running over it.
  * We don't care about the vector table, FMAP, and init code. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
-	int copy = ((uint32_t)system_unsafe_to_overwrite - CONFIG_FLASH_BASE) /
-	           CONFIG_FW_IMAGE_SIZE;
-	uint32_t r_offset = copy * CONFIG_FW_IMAGE_SIZE;
-	uint32_t r_size = CONFIG_FW_IMAGE_SIZE;
+	uint32_t r_offset;
+	uint32_t r_size;
+
+	switch (system_get_image_copy()) {
+	case SYSTEM_IMAGE_RO:
+		r_offset = CONFIG_FW_RO_OFF;
+		r_size = CONFIG_FW_RO_SIZE;
+		break;
+	case SYSTEM_IMAGE_RW_A:
+		r_offset = CONFIG_FW_A_OFF;
+		r_size = CONFIG_FW_A_SIZE;
+		break;
+	case SYSTEM_IMAGE_RW_B:
+		r_offset = CONFIG_FW_B_OFF;
+		r_size = CONFIG_FW_B_SIZE;
+		break;
+	default:
+		return 0;
+	}
 
 	if ((offset >= r_offset && offset < (r_offset + r_size)) ||
 	    (r_offset >= offset && r_offset < (offset + size)))
@@ -251,6 +269,23 @@ static uint32_t get_base(enum system_image_copy_t copy)
 	}
 }
 
+/* Return the size of the image copy, or 0 if error. */
+static uint32_t get_size(enum system_image_copy_t copy)
+{
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+		return CONFIG_FW_RO_SIZE;
+	case SYSTEM_IMAGE_RW_A:
+		return CONFIG_FW_A_SIZE;
+#ifndef CONFIG_NO_RW_B
+	case SYSTEM_IMAGE_RW_B:
+		return CONFIG_FW_B_SIZE;
+#endif
+	default:
+		return 0;
+	}
+}
+
 
 int system_run_image_copy(enum system_image_copy_t copy,
 			  int recovery_required)
@@ -273,7 +308,7 @@ int system_run_image_copy(enum system_image_copy_t copy,
 
 	/* Make sure the reset vector is inside the destination image */
 	init_addr = *(uint32_t *)(base + 4);
-	if (init_addr < base || init_addr >= base + CONFIG_FW_IMAGE_SIZE)
+	if (init_addr < base || init_addr >= base + get_size(copy))
 		return EC_ERROR_UNKNOWN;
 
 	CPRINTF("[%T Jumping to image %s]\n", image_names[copy]);

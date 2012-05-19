@@ -142,7 +142,7 @@ int vboot_init(void)
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
-		       (uint8_t *)CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_A_SIZE,
+		       (uint8_t *)CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_SIZE,
 		       (uint8_t *)CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
 	ts2 = get_time();
 
@@ -170,7 +170,7 @@ int vboot_init(void)
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
-		       (uint8_t *)CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_B_SIZE,
+		       (uint8_t *)CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_SIZE,
 		       (uint8_t *)CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
 	ts2 = get_time();
 

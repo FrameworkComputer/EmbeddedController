@@ -13,7 +13,6 @@
 #define FMAP_SIGNATURE_SIZE 8
 #define FMAP_VER_MAJOR 1
 #define FMAP_VER_MINOR 0
-#define FMAP_SEARCH_STRIDE 64		/* Spec revision 1.01 */
 
 typedef struct _FmapHeader {
 	char        fmap_signature[FMAP_SIGNATURE_SIZE];
@@ -48,8 +47,7 @@ const struct _ec_fmap {
 		.fmap_ver_major = FMAP_VER_MAJOR,
 		.fmap_ver_minor = FMAP_VER_MINOR,
 		.fmap_base = CONFIG_FLASH_BASE,
-		/* NOTE: EC implementation reserves one bank for itself */
-		.fmap_size = CONFIG_FLASH_SIZE - CONFIG_FLASH_BANK_SIZE,
+		.fmap_size = CONFIG_FLASH_SIZE,
 		.fmap_name = "EC_FMAP",
 		.fmap_nareas = NUM_EC_FMAP_AREAS,
 	},
@@ -58,8 +56,8 @@ const struct _ec_fmap {
 	/* RO Firmware */
 		{
 			.area_name = "RO_SECTION",
-			.area_offset = CONFIG_FW_RO_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_offset = CONFIG_SECTION_RO_OFF,
+			.area_size = CONFIG_SECTION_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
@@ -91,7 +89,7 @@ const struct _ec_fmap {
 		{
 			/* A dummy region to identify it as EC firmware */
 			.area_name = "EC_IMAGE",
-			.area_offset = CONFIG_FW_RO_OFF,
+			.area_offset = CONFIG_SECTION_RO_OFF,
 			.area_size = 0, /* Always zero */
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -99,31 +97,32 @@ const struct _ec_fmap {
 			/* The range for write protect, for lagecy firmware
 			 * updater. Should be identical to 'WP_RO'. */
 			.area_name = "EC_RO",
-			.area_offset = CONFIG_FW_RO_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_offset = CONFIG_SECTION_RO_OFF,
+			.area_size = CONFIG_SECTION_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
 			/* The range for autoupdate to update A/B at once. */
 			.area_name = "EC_RW",
-			.area_offset = CONFIG_FW_A_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE * 2,
+			.area_offset = CONFIG_SECTION_A_OFF,
+			.area_size = CONFIG_SECTION_A_SIZE
+					+ CONFIG_SECTION_B_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
 			/* The range for write protect, for factory finalize
 			 * test case. Should be identical to 'EC_RO'. */
 			.area_name = "WP_RO",
-			.area_offset = CONFIG_FW_RO_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_offset = CONFIG_SECTION_RO_OFF,
+			.area_size = CONFIG_SECTION_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
 		/* Firmware A */
 		{
 			.area_name = "RW_SECTION_A",
-			.area_offset = CONFIG_FW_A_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_offset = CONFIG_SECTION_A_OFF,
+			.area_size = CONFIG_SECTION_A_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
@@ -141,15 +140,15 @@ const struct _ec_fmap {
 		{
 			.area_name = "VBLOCK_A",
 			.area_offset = CONFIG_VBLOCK_A_OFF,
-			.area_size = CONFIG_VBLOCK_A_SIZE,
+			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 
 		/* Firmware B */
 		{
 			.area_name = "RW_SECTION_B",
-			.area_offset = CONFIG_FW_B_OFF,
-			.area_size = CONFIG_FW_IMAGE_SIZE,
+			.area_offset = CONFIG_SECTION_B_OFF,
+			.area_size = CONFIG_SECTION_B_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
@@ -167,7 +166,7 @@ const struct _ec_fmap {
 		{
 			.area_name = "VBLOCK_B",
 			.area_offset = CONFIG_VBLOCK_B_OFF,
-			.area_size = CONFIG_VBLOCK_B_SIZE,
+			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 	}

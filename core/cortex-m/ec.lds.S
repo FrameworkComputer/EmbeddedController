@@ -4,16 +4,19 @@
  */
 #include "config.h"
 
-#define CONFIG_FW_SECT_OFF(section) CONFIG_FW_##section##_OFF
-#define CONFIG_FW_BASE(section) (CONFIG_FLASH_BASE + CONFIG_FW_SECT_OFF(section))
-#define CONFIG_FMAP_BASE(section) CONFIG_FW_BASE(section) + CONFIG_FMAP_OFF
+#define FW_OFF_(section) CONFIG_FW_##section##_OFF
+#define FW_OFF(section) FW_OFF_(section)
+
+#define FW_SIZE_(section) CONFIG_FW_##section##_SIZE
+#define FW_SIZE(section) FW_SIZE_(section)
+
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(reset)
 MEMORY
 {
-    FLASH (rx) : ORIGIN = CONFIG_FW_BASE(SECTION), LENGTH = CONFIG_FW_IMAGE_SIZE
+    FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 }
 SECTIONS
@@ -82,7 +85,11 @@ SECTIONS
 
         . = ALIGN(4);
         *(.rodata*)
-        . = ALIGN(4);
+
+#if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
+        . = ALIGN(64);
+        *(.google)
+#endif
 #ifdef COMPILE_FOR_RAM
     } > IRAM
     __ro_end = . ;
@@ -101,11 +108,17 @@ SECTIONS
         . = ALIGN(4);
         __data_end = .;
     } > IRAM
-#if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
-    .google CONFIG_FMAP_BASE(SECTION) : AT(CONFIG_FMAP_BASE(SECTION)) {
-        *(.google)
-    } > FLASH
-#else
+    /* The linker won't notice if the .data section is too big to fit,
+     * apparently because we're sending it into IRAM, not FLASH. The following
+     * symbol isn't used by the code, but running "objdump -t *.elf | grep hey"
+     * will let us check how much flash space we're actually using. The
+     * explicit ASSERT afterwards will cause the linker to abort if we use too
+     * much. */
+    __hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+    ASSERT(FW_SIZE(SECTION) >
+                 (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
+                 "No room left in the flash")
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_VBOOT))
     /DISCARD/ : {
               *(.google)
               }

@@ -14,7 +14,7 @@
 #define PERSIST_STATE_VERSION 1
 #define MAX_BANKS (CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE)
 
-/* Persistent protection state */
+/* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
 	uint8_t lock;               /* Lock flags */
@@ -337,7 +337,7 @@ int flash_get_protect_lock(void)
 int flash_pre_init(void)
 {
 	/* Calculate usable flash size.  Reserve one protection block
-	 * at the top to hold the write protect data. */
+	 * at the top to hold the "pretend SPI" write protect data. */
 	usable_flash_size = flash_physical_size() -
 		flash_get_protect_block_size();
 
