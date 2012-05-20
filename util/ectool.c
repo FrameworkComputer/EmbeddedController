@@ -76,6 +76,8 @@ const char help_str[] =
 	"      Prints EC version\n"
 	"  temps <sensorid>\n"
 	"      Print temperature.\n"
+	"  tempsinfo <sensorid>\n"
+	"      Print temperature sensor info.\n"
 	"  thermalget <sensor_id> <threshold_id>\n"
 	"      Get the threshold temperature value from thermal engine.\n"
 	"  thermalset <sensor_id> <threshold_id> <value>\n"
@@ -655,6 +657,36 @@ int cmd_temperature(int argc, char *argv[])
 		printf("%d\n", rv + EC_TEMP_SENSOR_OFFSET);
 		return 0;
 	}
+}
+
+
+int cmd_temp_sensor_info(int argc, char *argv[])
+{
+	struct ec_params_temp_sensor_get_info p;
+	struct ec_response_temp_sensor_get_info r;
+	int rv;
+	char *e;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <sensorid>\n", argv[0]);
+		return -1;
+	}
+
+	p.id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad sensor ID.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv)
+		return rv;
+
+	printf("Sensor name: %s\n", r.sensor_name);
+	printf("Sensor type: %d\n", r.sensor_type);
+
+	return 0;
 }
 
 
@@ -1463,6 +1495,7 @@ const struct command commands[] = {
 	{"sertest", cmd_serial_test},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
+	{"tempsinfo", cmd_temp_sensor_info},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
 	{"usbchargemode", cmd_usb_charge_set_mode},

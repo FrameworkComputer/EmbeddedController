@@ -502,6 +502,20 @@ struct ec_response_mkbp_info {
 } __attribute__ ((packed));
 
 /*****************************************************************************/
+/* Temperature sensor commands */
+
+/* Read temperature sensor info */
+#define EC_CMD_TEMP_SENSOR_GET_INFO 0x70
+struct ec_params_temp_sensor_get_info {
+	uint8_t id;
+} __attribute__ ((packed));
+
+struct ec_response_temp_sensor_get_info {
+	char sensor_name[32];
+	uint8_t sensor_type;
+} __attribute__ ((packed));
+
+/*****************************************************************************/
 /* Host event commands */
 
 /* Host event mask params and response structures, shared by all of the host
