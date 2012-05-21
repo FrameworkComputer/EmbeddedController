@@ -336,10 +336,14 @@ int flash_get_protect_lock(void)
 
 int flash_pre_init(void)
 {
+#ifdef CHIP_stm32
+	usable_flash_size = flash_physical_size();
+#else
 	/* Calculate usable flash size.  Reserve one protection block
 	 * at the top to hold the "pretend SPI" write protect data. */
 	usable_flash_size = flash_physical_size() -
 		flash_get_protect_block_size();
+#endif
 
 	/* Apply write protect to blocks if needed */
 	return apply_pstate();

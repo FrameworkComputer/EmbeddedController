@@ -90,7 +90,7 @@ SECTIONS
         . = ALIGN(4);
         *(.rodata*)
 
-#if defined(SECTION_IS_RO) && defined(CONFIG_VBOOT)
+#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
         . = ALIGN(64);
         *(.google)
 #endif
@@ -122,7 +122,7 @@ SECTIONS
     ASSERT(FW_SIZE(SECTION) >
                  (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
-#if !(defined(SECTION_IS_RO) && defined(CONFIG_VBOOT))
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
     /DISCARD/ : {
               *(.google)
               }

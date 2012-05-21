@@ -14,9 +14,6 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
-/* support programming on-chip flash */
-#define CONFIG_FLASH
-
 /* use I2C for host communication */
 #define CONFIG_I2C
 

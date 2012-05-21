@@ -18,6 +18,9 @@
 /* System stack size */
 #define CONFIG_STACK_SIZE 1024
 
+/* support programming on-chip flash */
+#define CONFIG_FLASH
+
 /* build with assertions and debug messages */
 #define CONFIG_DEBUG
 
