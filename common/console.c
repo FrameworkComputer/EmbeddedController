@@ -194,7 +194,9 @@ static void console_process(void)
 		uart_gets(input_buf, sizeof(input_buf));
 
 		rv = handle_command(input_buf);
-                if (rv != EC_SUCCESS)
+		if (rv == EC_ERROR_INVAL)
+			ccputs("Command usage/param invalid.\n");
+		else if (rv != EC_SUCCESS)
 			ccprintf("Command returned error %d\n", rv);
 		ccputs(PROMPT);
 	}

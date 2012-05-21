@@ -173,16 +173,8 @@ int charger_post_init(void)
 	return charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
 }
 
-
+/*****************************************************************************/
 /* Console commands */
-
-static void print_usage(void)
-{
-	ccputs("Usage: charger [set_command value]\n");
-	ccputs("    charger input   input_current_in_mA\n");
-	ccputs("    charger voltage voltage_limit_in_mV\n");
-	ccputs("    charger current current_limit_in_mA\n\n");
-}
 
 static int print_info(void)
 {
@@ -190,94 +182,81 @@ static int print_info(void)
 	int d;
 	const struct charger_info *info;
 
-	ccputs("Charger properties : now (max, min, step)\n");
-
 	/* info */
 	info = charger_get_info();
-	ccprintf("  name           : %s\n", info->name);
+	ccprintf("Name  : %s\n", info->name);
 
 	/* option */
 	rv = charger_get_option(&d);
 	if (rv)
 		return rv;
-	ccprintf("  option         : %016b (0x%04x)\n", d, d);
+	ccprintf("Option: %016b (0x%04x)\n", d, d);
 
 	/* manufacturer id */
 	rv = charger_manufacturer_id(&d);
 	if (rv)
 		return rv;
-	ccprintf("  manufacturer id: 0x%04x\n", d);
+	ccprintf("Man id: 0x%04x\n", d);
 
 	/* device id */
 	rv = charger_device_id(&d);
 	if (rv)
 		return rv;
-	ccprintf("  device id      : 0x%04x\n", d);
+	ccprintf("Dev id: 0x%04x\n", d);
 
 	/* charge voltage limit */
 	rv = charger_get_voltage(&d);
 	if (rv)
 		return rv;
-	ccprintf("  voltage        : %5d (%5d, %4d, %3d)\n", d,
-		 info->voltage_max, info->voltage_min, info->voltage_step);
+	ccprintf("V_batt: %5d (%4d - %5d, %3d)\n", d,
+		 info->voltage_min, info->voltage_max, info->voltage_step);
 
 	/* charge current limit */
 	rv = charger_get_current(&d);
 	if (rv)
 		return rv;
-	ccprintf("  current        : %5d (%5d, %4d, %3d)\n", d,
-		 info->current_max, info->current_min, info->current_step);
+	ccprintf("I_batt: %5d (%4d - %5d, %3d)\n", d,
+		 info->current_min, info->current_max, info->current_step);
 
 	/* input current limit */
 	rv = charger_get_input_current(&d);
 	if (rv)
 		return rv;
 
-	ccprintf("  input current  : %5d (%5d, %4d, %3d)\n", d,
-		 info->input_current_max, info->input_current_min,
+	ccprintf("I_in  : %5d (%4d - %5d, %3d)\n", d,
+		 info->input_current_min, info->input_current_max,
 		 info->input_current_step);
 
 	return EC_SUCCESS;
 }
+
 
 static int command_charger(int argc, char **argv)
 {
 	int d;
 	char *endptr;
 
-	if (argc != 3) {
-		if (argc != 1)
-			print_usage();
+	if (argc != 3)
 		return print_info();
-	}
 
 	if (strcasecmp(argv[1], "input") == 0) {
 		d = strtoi(argv[2], &endptr, 0);
-		if (*endptr) {
-			print_usage();
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*endptr)
+			return EC_ERROR_INVAL;
 		return charger_set_input_current(d);
 	} else if (strcasecmp(argv[1], "current") == 0) {
 		d = strtoi(argv[2], &endptr, 0);
-		if (*endptr) {
-			print_usage();
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*endptr)
+			return EC_ERROR_INVAL;
 		return charger_set_current(d);
 	} else if (strcasecmp(argv[1], "voltage") == 0) {
 		d = strtoi(argv[2], &endptr, 0);
 		if (*endptr) {
-			print_usage();
-			return EC_ERROR_UNKNOWN;
+			return EC_ERROR_INVAL;
 		}
 		return charger_set_voltage(d);
-	} else {
-		print_usage();
-		return print_info();
-	}
-
-	return EC_SUCCESS;
+	} else
+		return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(charger, command_charger);
 

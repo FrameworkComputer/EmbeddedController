@@ -413,13 +413,11 @@ int system_common_pre_init(void)
 
 static int command_sysinfo(int argc, char **argv)
 {
-	ccprintf("Reset cause: %d (%s)\n",
+	ccprintf("Last reset: %d (%s)\n",
 		    system_get_reset_cause(),
 		    system_get_reset_cause_string());
-	ccprintf("Scratchpad: 0x%08x\n", system_get_scratchpad());
-	ccprintf("Firmware copy: %s\n", system_get_image_copy_string());
-	ccprintf("Jumped to this copy: %s\n",
-		    system_jumped_to_this_image() ? "yes" : "no");
+	ccprintf("Copy: %s\n", system_get_image_copy_string());
+	ccprintf("Jump: %s\n", system_jumped_to_this_image() ? "yes" : "no");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
@@ -427,33 +425,32 @@ DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
 
 static int command_chipinfo(int argc, char **argv)
 {
-	ccprintf("Chip vendor:   %s\n", system_get_chip_vendor());
-	ccprintf("Chip name:     %s\n", system_get_chip_name());
-	ccprintf("Chip revision: %s\n", system_get_chip_revision());
+	ccprintf("Vendor:   %s\n", system_get_chip_vendor());
+	ccprintf("Name:     %s\n", system_get_chip_name());
+	ccprintf("Revision: %s\n", system_get_chip_revision());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(chipinfo, command_chipinfo);
 
 
-static int command_set_scratchpad(int argc, char **argv)
+#ifdef CONSOLE_COMMAND_SCRATCHPAD
+static int command_scratchpad(int argc, char **argv)
 {
-	int s;
-	char *e;
+	int rv = EC_SUCCESS;
 
-	if (argc < 2) {
-		ccputs("Usage: scratchpad <value>\n");
-		return EC_ERROR_UNKNOWN;
+	if (argc == 2) {
+		char *e;
+		int s = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_INVAL;
+		rv = system_set_scratchpad(s);
 	}
 
-	s = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid scratchpad value\n");
-		return EC_ERROR_UNKNOWN;
-	}
-	ccprintf("Setting scratchpad to 0x%08x\n", s);
-	return  system_set_scratchpad(s);
+	ccprintf("Scratchpad: 0x%08x\n", system_get_scratchpad());
+	return rv;
 }
-DECLARE_CONSOLE_COMMAND(setscratchpad, command_set_scratchpad);
+DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad);
+#endif
 
 
 static int command_hibernate(int argc, char **argv)
@@ -461,15 +458,13 @@ static int command_hibernate(int argc, char **argv)
 	int seconds;
 	int microseconds = 0;
 
-	if (argc < 2) {
-		ccputs("Usage: hibernate <seconds> [<microseconds>]\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 	seconds = strtoi(argv[1], NULL, 0);
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
 
-	ccprintf("Hibernating for %d.%06d s ...\n", seconds, microseconds);
+	ccprintf("Hibernating for %d.%06d s\n", seconds, microseconds);
 	cflush();
 
 	system_hibernate(seconds, microseconds);
@@ -481,14 +476,11 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);
 
 static int command_version(int argc, char **argv)
 {
-	ccprintf("Board version: %d\n", system_get_board_version());
-	ccprintf("RO version:    %s\n",
-		    system_get_version(SYSTEM_IMAGE_RO));
-	ccprintf("RW-A version:  %s\n",
-		    system_get_version(SYSTEM_IMAGE_RW_A));
-	ccprintf("RW-B version:  %s\n",
-		    system_get_version(SYSTEM_IMAGE_RW_B));
-	ccprintf("Current build: %s\n", system_get_build_info());
+	ccprintf("Board: %d\n", system_get_board_version());
+	ccprintf("RO:    %s\n", system_get_version(SYSTEM_IMAGE_RO));
+	ccprintf("RW-A:  %s\n", system_get_version(SYSTEM_IMAGE_RW_A));
+	ccprintf("RW-B:  %s\n", system_get_version(SYSTEM_IMAGE_RW_B));
+	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version);
@@ -502,10 +494,8 @@ static int command_sysjump(int argc, char **argv)
 	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
 	 * be disabled. */
 
-	if (argc < 2) {
-		ccputs("Usage: sysjump <RO | A | B | addr>\n");
+	if (argc < 2)
 		return EC_ERROR_INVAL;
-	}
 
 	ccputs("Processing sysjump command\n");
 
@@ -520,11 +510,10 @@ static int command_sysjump(int argc, char **argv)
 
 	/* Check for arbitrary address */
 	addr = strtoi(argv[1], &e, 0);
-	if (e && *e) {
-		ccputs("Invalid image address\n");
+	if (*e)
 		return EC_ERROR_INVAL;
-	}
-	ccprintf("Jumping directly to 0x%08x...\n", addr);
+
+	ccprintf("Jumping to 0x%08x\n", addr);
 	cflush();
 	jump_to_image(addr, 0);
 	return EC_SUCCESS;

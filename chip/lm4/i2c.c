@@ -349,27 +349,20 @@ static int command_i2cread(int argc, char **argv)
 
 	for (i = 0; i < I2C_PORTS_USED && port != i2c_ports[i].port; i++)
 		;
-	if (i >= I2C_PORTS_USED) {
-		ccputs("Unsupported port\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (i >= I2C_PORTS_USED)
+		return EC_ERROR_INVAL;
 
 	addr = strtoi(argv[2], &e, 0);
-	if (*e || (addr & 0x01)) {
-		ccputs("Invalid addr; try 'i2cscan' command\n");
+	if (*e || (addr & 0x01))
 		return EC_ERROR_INVAL;
-	}
 
 	if (argc > 3) {
 		count = strtoi(argv[3], &e, 0);
-		if (*e) {
-			ccputs("Invalid count\n");
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
 	}
 
-	ccprintf("Reading %d bytes from I2C device %d:0x%02x...\n",
-		 count, port, addr);
+	ccprintf("Reading %d bytes from %d:0x%02x:", count, port, addr);
 	mutex_lock(port_mutex + port);
 	LM4_I2C_MSA(port) = addr | 0x01;
 	for (i = 0; i < count; i++) {
@@ -383,7 +376,7 @@ static int command_i2cread(int argc, char **argv)
 			return rv;
 		}
 		d = LM4_I2C_MDR(port) & 0xff;
-		ccprintf("0x%02x ", d);
+		ccprintf(" 0x%02x", d);
 	}
 	mutex_unlock(port_mutex + port);
 	ccputs("\n");
@@ -398,7 +391,6 @@ static int command_scan(int argc, char **argv)
 
 	for (i = 0; i < I2C_PORTS_USED; i++)
 		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
-	ccputs("done.\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cscan, command_scan);

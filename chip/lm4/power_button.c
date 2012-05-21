@@ -551,11 +551,8 @@ static int command_powerbtn(int argc, char **argv)
 
 	if (argc > 1) {
 		ms = strtoi(argv[1], &e, 0);
-		if (*e) {
-			ccputs("Invalid duration.\n"
-			       "Usage: powerbtn [duration_ms]\n");
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
 	}
 
 	ccprintf("Simulating %d ms power button press.\n", ms);
