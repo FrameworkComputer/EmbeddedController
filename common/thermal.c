@@ -57,11 +57,13 @@ static int fan_ctrl_on = 1;
 
 int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int value)
 {
+	if (type < 0 || type >= TEMP_SENSOR_TYPE_COUNT)
+		return -1;
 	if (threshold_id < 0 ||
 	    threshold_id >= THRESHOLD_COUNT + THERMAL_FAN_STEPS)
-		return EC_ERROR_INVAL;
+		return -1;
 	if (value < 0)
-		return EC_ERROR_INVAL;
+		return -1;
 
 	thermal_config[type].thresholds[threshold_id] = value;
 
@@ -71,9 +73,11 @@ int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int valu
 
 int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 {
+	if (type < 0 || type >= TEMP_SENSOR_TYPE_COUNT)
+		return -1;
 	if (threshold_id < 0 ||
 	    threshold_id >= THRESHOLD_COUNT + THERMAL_FAN_STEPS)
-		return EC_ERROR_INVAL;
+		return -1;
 
 	return thermal_config[type].thresholds[threshold_id];
 }
