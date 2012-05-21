@@ -34,6 +34,8 @@ extern const struct hook_data __hooks_chipset_shutdown[];
 extern const struct hook_data __hooks_chipset_shutdown_end[];
 extern const struct hook_data __hooks_ac_change[];
 extern const struct hook_data __hooks_ac_change_end[];
+extern const struct hook_data __hooks_lid_change[];
+extern const struct hook_data __hooks_lid_change_end[];
 
 /* Host commands */
 extern const struct host_command __hcmds[];

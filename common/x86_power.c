@@ -211,22 +211,6 @@ void x86_power_reset(int cold_reset)
 	}
 }
 
-
-/* Hook notified when AC state changes. */
-static int x86_power_ac_change(void)
-{
-	if (power_ac_present()) {
-		CPRINTF("[%T x86 AC on]\n");
-		/* TODO: (crosbug.com/p/9609) re-enable turbo? */
-	} else {
-		CPRINTF("[%T x86 AC off]\n");
-		/* TODO: (crosbug.com/p/9609) disable turbo */
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, x86_power_ac_change, HOOK_PRIO_DEFAULT);
-
 /*****************************************************************************/
 /* Chipset interface */
 
@@ -291,6 +275,34 @@ void chipset_throttle_cpu(int throttle)
 	if (state == X86_S0)
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
+
+/*****************************************************************************/
+/* Hooks */
+
+/* Hook notified when lid state changes. */
+static int x86_lid_change(void)
+{
+	/* Wake up the task to update power state */
+	task_wake(TASK_ID_X86POWER);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
+
+
+/* Hook notified when AC state changes. */
+static int x86_power_ac_change(void)
+{
+	if (power_ac_present()) {
+		CPRINTF("[%T x86 AC on]\n");
+		/* TODO: (crosbug.com/p/9609) re-enable turbo? */
+	} else {
+		CPRINTF("[%T x86 AC off]\n");
+		/* TODO: (crosbug.com/p/9609) disable turbo */
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, x86_power_ac_change, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Interrupts */
@@ -403,6 +415,13 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3:
+			/* If lid is closed; hold touchscreen in reset to cut
+			 * power usage.  If lid is open, take touchscreen out
+			 * of reset so it can wake the processor. */
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn,
+				       power_lid_open_debounced());
+
+			/* Check for state transitions */
 			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
 				/* Power up to next state */
 				state = X86_S3S0;
@@ -451,10 +470,9 @@ void x86_power_task(void)
 			/* Wait for the always-on rails to be good */
 			wait_in_signals(IN_PGOOD_ALWAYS_ON);
 
-			/* Take touchscreen and lightbar out of reset, now
-			 * that +5VALW is available and we won't leak +3VALW
-			 * through the reset line. */
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
+			/* Take lightbar out of reset, now that +5VALW is
+			 * available and we won't leak +3VALW through the reset
+			 * line. */
 			gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
 
 			/* Turn on power to RAM */
@@ -478,6 +496,11 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_WLAN, 1);
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 1);
 			gpio_set_level(GPIO_RADIO_ENABLE_BT, 1);
+
+			/* Make sure touchscreen is out if reset (even if the
+			 * lid is still closed); it may have been turned off if
+			 * the lid was closed in S3. */
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
 
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);

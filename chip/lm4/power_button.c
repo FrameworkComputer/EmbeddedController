@@ -215,6 +215,7 @@ static void lid_switch_open(uint64_t tnow)
 	debounced_lid_open = 1;
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
 	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
+	hook_notify(HOOK_LID_CHANGE, 0);
 
 	/* If the chipset is off, send a power button pulse to wake up the
 	 * chipset. */
@@ -239,6 +240,7 @@ static void lid_switch_close(uint64_t tnow)
 	CPRINTF("[%T PB lid close]\n");
 	debounced_lid_open = 0;
 	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
+	hook_notify(HOOK_LID_CHANGE, 0);
 	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED));
 }
 
@@ -335,6 +337,12 @@ static void set_initial_pwrbtn_state(void)
 int power_ac_present(void)
 {
 	return gpio_get_level(GPIO_AC_PRESENT);
+}
+
+
+int power_lid_open_debounced(void)
+{
+	return debounced_lid_open;
 }
 
 /*****************************************************************************/

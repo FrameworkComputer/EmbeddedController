@@ -25,6 +25,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_chipset_suspend, __hooks_chipset_suspend_end},
 	{__hooks_chipset_shutdown, __hooks_chipset_shutdown_end},
 	{__hooks_ac_change, __hooks_ac_change_end},
+	{__hooks_lid_change, __hooks_lid_change_end},
 };
 
 
