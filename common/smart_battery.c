@@ -116,40 +116,39 @@ static int command_battery(int argc, char **argv)
 	char text[32];
 	const char *unit;
 
-	ccputs("Reading battery...\n");
-
 	rv = battery_temperature(&d);
 	if (rv)
 		return rv;
-	ccprintf("  Temperature:            0x%04x = %d x 0.1K (%d C)\n",
+
+	ccprintf("  Temp:      0x%04x = %d x 0.1K (%d C)\n",
 		 d, d, (d-2731)/10);
 
-	ccprintf("  Manufacturer:           %s\n",
+	ccprintf("  Manuf:     %s\n",
 		 battery_manufacturer_name(text, sizeof(text)) == EC_SUCCESS ?
 		 text : "(error)");
 
-	ccprintf("  Device:                 %s\n",
+	ccprintf("  Device:    %s\n",
 		 battery_device_name(text, sizeof(text)) == EC_SUCCESS ?
 		 text : "(error)");
 
-	ccprintf("  Chemistry:              %s\n",
+	ccprintf("  Chem:      %s\n",
 		 battery_device_chemistry(text, sizeof(text)) == EC_SUCCESS ?
 		 text : "(error)");
 
 	battery_serial_number(&d);
-	ccprintf("  Serial number:          0x%04x\n", d);
+	ccprintf("  Serial:    0x%04x\n", d);
 
 	battery_voltage(&d);
-	ccprintf("  Voltage:                0x%04x = %d mV\n", d, d);
+	ccprintf("  V:         0x%04x = %d mV\n", d, d);
 
 	battery_desired_voltage(&d);
-	ccprintf("  Desired voltage         0x%04x = %d mV\n", d, d);
+	ccprintf("  V-desired: 0x%04x = %d mV\n", d, d);
 
 	battery_design_voltage(&d);
-	ccprintf("  Design output voltage   0x%04x = %d mV\n", d, d);
+	ccprintf("  V-design:  0x%04x = %d mV\n", d, d);
 
 	battery_current(&d);
-	ccprintf("  Current:                0x%04x = %d mA",
+	ccprintf("  I:         0x%04x = %d mA",
 		d & 0xffff, d);
 	if (d > 0)
 		ccputs("(CHG)");
@@ -159,36 +158,26 @@ static int command_battery(int argc, char **argv)
 
 
 	battery_desired_current(&d);
-	ccprintf("  Desired current         0x%04x = %d mA\n", d, d);
+	ccprintf("  I-desired: 0x%04x = %d mA\n", d, d);
 
 	battery_get_battery_mode(&d);
-	ccprintf("  Battery mode:           0x%04x\n", d);
+	ccprintf("  Mode:      0x%04x\n", d);
 	unit = (d & MODE_CAPACITY) ? "0 mW" : " mAh";
 
 	battery_state_of_charge(&d);
-	ccprintf("  %% of charge:            %d %%\n", d);
+	ccprintf("  Charge:    %d %%\n", d);
 
 	battery_state_of_charge_abs(&d);
-	ccprintf("  Abs %% of charge:        %d %%\n", d);
+	ccprintf("    Abs:     %d %%\n", d);
 
 	battery_remaining_capacity(&d);
-	ccprintf("  Remaining capacity:     %d%s\n", d, unit);
+	ccprintf("  Remaining: %d%s\n", d, unit);
 
 	battery_full_charge_capacity(&d);
-	ccprintf("  Full charge capacity:   %d%s\n", d, unit);
+	ccprintf("  Cap-full:  %d%s\n", d, unit);
 
 	battery_design_capacity(&d);
-	ccprintf("  Design capacity:        %d%s\n", d, unit);
-
-	battery_time_to_empty(&d);
-	if (d == 65535) {
-		hour   = 0;
-		minute = 0;
-	} else {
-		hour   = d / 60;
-		minute = d % 60;
-	}
-	ccprintf("  Time to empty:          %dh:%d\n", hour, minute);
+	ccprintf("    Design:  %d%s\n", d, unit);
 
 	battery_time_to_full(&d);
 	if (d == 65535) {
@@ -198,13 +187,29 @@ static int command_battery(int argc, char **argv)
 		hour   = d / 60;
 		minute = d % 60;
 	}
-	ccprintf("  Time to full:           %dh:%d\n", hour, minute);
+	ccprintf("  Time-full: %dh:%d\n", hour, minute);
+
+	battery_time_to_empty(&d);
+	if (d == 65535) {
+		hour   = 0;
+		minute = 0;
+	} else {
+		hour   = d / 60;
+		minute = d % 60;
+	}
+	ccprintf("    Empty:   %dh:%d\n", hour, minute);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery);
 
 
+/* Usage:sb <r/w> cmd [uint16_t w_word]
+ *     sb r 0x14 // desired charging current
+ *     sb r 0x15 // desired charging voltage
+ *     sb r 0x3  // battery mode
+ *     sb w 0x3 0xe001 // set battery mode
+ */
 static int command_sb(int argc, char **argv)
 {
 	int rv;
@@ -212,44 +217,34 @@ static int command_sb(int argc, char **argv)
 	char *e;
 
 	if (argc < 3)
-		goto usage;
+		return EC_ERROR_INVAL;
 
 	cmd = strtoi(argv[2], &e, 0);
-	if (*e) {
-		ccputs("Invalid cmd.\n");
-		goto usage;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 
 	if (argv[1][0] == 'r') {
 		rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, &d);
-		if (rv) {
-			ccputs("I2C read failed.\n");
+		if (rv)
 			return rv;
-		}
+
 		ccprintf("R SBCMD[%04x] 0x%04x (%d)\n", cmd, d, d);
 		return EC_SUCCESS;
 	} else if (argc >= 4 && argv[1][0] == 'w') {
 		d = strtoi(argv[3], &e, 0);
-		if (*e) {
-			ccputs("Invalid w_word.\n");
-			goto usage;
-		}
+		if (*e)
+			return EC_ERROR_INVAL;
+
 		ccprintf("W SBCMD[%04x] 0x%04x (%d)\n", cmd, d, d);
 		rv = i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, d);
-		if (rv) {
-			ccputs("I2C write failed.\n");
+		if (rv)
 			return rv;
-		}
 		return EC_SUCCESS;
 	}
 
-usage:
-	ccputs("Usage:sb <r/w> cmd [uint16_t w_word]\n");
-	ccputs("    sb r 0x14 // desired charging current\n");
-	ccputs("    sb r 0x15 // desired charging voltage\n");
-	ccputs("    sb r 0x3  // battery mode\n");
-	ccputs("    sb w 0x3 0xe001 // set battery mode\n");
-	return EC_SUCCESS;
+	return EC_ERROR_INVAL;
+
+
 }
 DECLARE_CONSOLE_COMMAND(sb, command_sb);
 

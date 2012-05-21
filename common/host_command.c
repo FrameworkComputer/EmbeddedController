@@ -45,6 +45,7 @@ void host_command_received(int slot, int command)
 	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_SLOT(slot), 0);
 }
 
+
 static int host_command_proto_version(uint8_t *data, int *resp_size)
 {
 	struct ec_response_proto_version *r =
@@ -55,27 +56,14 @@ static int host_command_proto_version(uint8_t *data, int *resp_size)
 	*resp_size = sizeof(struct ec_response_proto_version);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION,
-		     host_command_proto_version);
+DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION, host_command_proto_version);
+
 
 static int host_command_hello(uint8_t *data, int *resp_size)
 {
 	struct ec_params_hello *p = (struct ec_params_hello *)data;
 	struct ec_response_hello *r = (struct ec_response_hello *)data;
 	uint32_t d = p->in_data;
-
-	CPRINTF("[LPC Hello 0x%08x]\n", d);
-
-#ifdef DELAY_HELLO_RESPONSE
-	/* Pretend command takes a long time, so we can see the busy
-	 * bit set on the host side. */
-	/* TODO: remove in production.  Or maybe hello should take a
-	 * param with how long the delay should be; that'd be more
-	 * useful. */
-	usleep(1000000);
-#endif
-
-	CPUTS("[LPC sending hello back]\n");
 
 	r->out_data = d + 0x01020304;
 	*resp_size = sizeof(struct ec_response_hello);
@@ -125,8 +113,7 @@ static int host_command_acpi_query_event(uint8_t *data, int *resp_size)
 	/* No events pending */
 	return 0;
 }
-DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
-		     host_command_acpi_query_event);
+DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT, host_command_acpi_query_event);
 #endif
 
 

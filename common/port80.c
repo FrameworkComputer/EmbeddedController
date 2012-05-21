@@ -43,18 +43,16 @@ static int command_port80(int argc, char **argv)
 	 * (scrolling) or CR (non-scrolling). */
 	if (argc > 1 && !strcasecmp(argv[1], "scroll")) {
 		scroll = !scroll;
-		ccprintf("port80 scrolling %sabled\n",
-			    scroll ? "en" : "dis");
+		ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
 		return EC_SUCCESS;
 	}
 
-	/* Technically, if a port 80 write comes in while we're
-	 * printing this, we could print an incorrect history.
-	 * Probably not worth the complexity to work around that. */
-	ccputs("Last port 80 writes:");
+	/* Technically, if a port 80 write comes in while we're printing this,
+	 * we could print an incorrect history.  Probably not worth the
+	 * complexity to work around that. */
 	for (i = 0; i < HISTORY_LEN; i++)
 		ccprintf(" %02x", history[(h + i) & (HISTORY_LEN - 1)]);
-	ccputs(" <--newest\n");
+	ccputs(" <--new\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80);

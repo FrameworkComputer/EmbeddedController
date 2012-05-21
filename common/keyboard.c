@@ -22,7 +22,6 @@
 #include "util.h"
 #include "x86_power.h"
 
-
 #define KEYBOARD_DEBUG 1
 
 /* Console output macros */
@@ -41,6 +40,14 @@
 #define CPUTS5(outstr)
 #define CPRINTF5(format, args...)
 #endif
+
+enum scancode_set_list {
+	SCANCODE_GET_SET = 0,
+	SCANCODE_SET_1,
+	SCANCODE_SET_2,
+	SCANCODE_SET_3,
+	SCANCODE_MAX = SCANCODE_SET_3,
+};
 
 
 /*
@@ -194,49 +201,49 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 		break;
 
 	default:
-		CPRINTF("[Not supported scan code set: %d]\n", code_set);
+		CPRINTF("[Scancode set %d unsupported]\n", code_set);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 
 	if (!make_code) {
-		CPRINTF("[No scancode for (row:col)=(%d:%d)]\n", row, col);
+		CPRINTF("[Scancode %d:%d missing]\n", row, col);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 
-  /* Output the make code (from table) */
-  if (make_code >= 0x0100) {
-    *len += 2;
-    scan_code[0] = make_code >> 8;
-    scan_code[1] = make_code & 0xff;
-  } else {
-    *len += 1;
-    scan_code[0] = make_code & 0xff;
-  }
+	/* Output the make code (from table) */
+	if (make_code >= 0x0100) {
+		*len += 2;
+		scan_code[0] = make_code >> 8;
+		scan_code[1] = make_code & 0xff;
+	} else {
+		*len += 1;
+		scan_code[0] = make_code & 0xff;
+	}
 
-  switch (code_set) {
-  case SCANCODE_SET_1:
-    /* OR 0x80 for the last byte. */
-    if (!pressed) {
-      ASSERT(*len >= 1);
-      scan_code[*len - 1] |= 0x80;
-    }
-    break;
+	switch (code_set) {
+	case SCANCODE_SET_1:
+		/* OR 0x80 for the last byte. */
+		if (!pressed) {
+			ASSERT(*len >= 1);
+			scan_code[*len - 1] |= 0x80;
+		}
+		break;
 
-  case SCANCODE_SET_2:
-    /* insert the break byte, move back the last byte and insert a 0xf0 byte
-     * before that. */
-    if (!pressed) {
-      ASSERT(*len >= 1);
-      scan_code[*len] = scan_code[*len - 1];
-      scan_code[*len - 1] = 0xF0;
-      *len += 1;
-    }
-    break;
-  default:
-    break;
-  }
+	case SCANCODE_SET_2:
+		/* insert the break byte, move back the last byte and insert a
+		 * 0xf0 byte before that. */
+		if (!pressed) {
+			ASSERT(*len >= 1);
+			scan_code[*len] = scan_code[*len - 1];
+			scan_code[*len - 1] = 0xF0;
+			*len += 1;
+		}
+		break;
+	default:
+		break;
+	}
 
-  return EC_SUCCESS;
+	return EC_SUCCESS;
 }
 
 
@@ -702,36 +709,22 @@ void keyboard_typematic_task(void)
 
 static int command_typematic(int argc, char **argv)
 {
-	if (argc == 1) {
-		int i;
+	int i;
 
-		ccprintf("Value set from host: 0x%02x\n",
-		            typematic_value_from_host);
-		ccprintf("Refill first delay : %d (ms)\n",
-		            refill_first_delay);
-		ccprintf("       inter delay : %d (ms)\n",
-		            refill_inter_delay);
-		ccprintf("Current delay      : %d (us)\n",
-		            typematic_delay);
-
-		ccputs("Repeat scan code   : ");
-		for (i = 0; i < typematic_len; ++i) {
-			ccprintf("0x%02x ", typematic_scan_code[i]);
-		}
-		ccputs("\n");
-	} else if (argc == 3) {
+	if (argc == 3) {
 		refill_first_delay = strtoi(argv[1], NULL, 0);
 		refill_inter_delay = strtoi(argv[2], NULL, 0);
-		ccputs("New typematic delays:\n");
-		ccprintf("    Refill first delay : %d (ms)\n",
-		            refill_first_delay);
-		ccprintf("    Refill inter delay : %d (ms)\n",
-		            refill_inter_delay);
-	} else {
-		ccputs("Usage: typematic [<first> <inter>]\n");
-		return EC_ERROR_UNKNOWN;
 	}
 
+	ccprintf("From host:    0x%02x\n", typematic_value_from_host);
+	ccprintf("First delay: %d ms\n", refill_first_delay);
+	ccprintf("Inter delay: %d ms\n", refill_inter_delay);
+	ccprintf("Current:     %d ms\n", typematic_delay / 1000);
+
+	ccputs("Repeat scan code:");
+	for (i = 0; i < typematic_len; ++i)
+		ccprintf(" 0x%02x", typematic_scan_code[i]);
+	ccputs("\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typematic, command_typematic);
@@ -739,31 +732,20 @@ DECLARE_CONSOLE_COMMAND(typematic, command_typematic);
 
 static int command_codeset(int argc, char **argv)
 {
-	int set;
-
-	if (argc == 1) {
-		ccprintf("Current scancode set: %d\n", scancode_set);
-		ccprintf("I8042_XLATE: %d\n",
-		            controller_ram[0] & I8042_XLATE ? 1 : 0);
-
-	} else if (argc == 2) {
-		set = strtoi(argv[1], NULL, 0);
+	if (argc == 2) {
+		int set = strtoi(argv[1], NULL, 0);
 		switch (set) {
 		case SCANCODE_SET_1:  /* fall-thru */
 		case SCANCODE_SET_2:  /* fall-thru */
 			scancode_set = set;
-			ccprintf("Set scancode set to %d\n", scancode_set);
 			break;
 		default:
-			ccprintf("Scancode %d is NOT supported.\n", set);
-			return EC_ERROR_UNKNOWN;
-			break;
+			return EC_ERROR_INVAL;
 		}
-	} else {
-		ccputs("Usage: codeset [<set>]\n");
-		return EC_ERROR_UNKNOWN;
 	}
 
+	ccprintf("Set: %d\n", scancode_set);
+	ccprintf("I8042_XLATE: %d\n", controller_ram[0] & I8042_XLATE ? 1 : 0);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(codeset, command_codeset);
@@ -773,28 +755,17 @@ static int command_controller_ram(int argc, char **argv)
 {
 	int index;
 
-	if (argc >= 2) {
-		index = strtoi(argv[1], NULL, 0);
-		ccprintf("Controller RAM index = %d\n", index);
-		if (index >= 0x20) {
-			ccprintf("Index is out of range (0x00-0x1f).\n");
-			return EC_ERROR_UNKNOWN;
-		}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 
-		if (argc >= 3) {
-			update_ctl_ram(index, strtoi(argv[2], NULL, 0));
-			ccprintf("Write ctlram[%d] as 0x%02x.\n",
-			            index, controller_ram[index]);
-		} else {
-			ccprintf("ctlram[%d] is 0x%02x.\n",
-			            index, controller_ram[index]);
-		}
-	} else {
-		ccputs("Usage: ctrlram <index> [<write_value>]\n");
-		ccputs("\nGet/set controller RAM.\n\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	index = strtoi(argv[1], NULL, 0);
+	if (index >= 0x20)
+		return EC_ERROR_INVAL;
 
+	if (argc >= 3)
+		update_ctl_ram(index, strtoi(argv[2], NULL, 0));
+
+	ccprintf("%d = 0x%02x\n", index, controller_ram[index]);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram);
@@ -802,10 +773,9 @@ DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram);
 
 static int command_keyboard_press(int argc, char **argv)
 {
-	int i, j;
-	int r, c, p;
-	char *e;
 	if (argc == 1) {
+		int i, j;
+
 		ccputs("Simulated key:\n");
 		for (i = 0; i < CROS_COL_NUM; ++i) {
 			if (simulated_key[i] == 0)
@@ -814,24 +784,22 @@ static int command_keyboard_press(int argc, char **argv)
 				if (simulated_key[i] & (1 << j))
 					ccprintf("\t%d %d\n", i, j);
 		}
+
 	} else if (argc == 4) {
+		int r, c, p;
+		char *e;
+
 		c = strtoi(argv[1], &e, 0);
-		if ((e && *e) || c < 0 || c >= CROS_COL_NUM) {
-			ccputs("Bad column.\n");
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*e || c < 0 || c >= CROS_COL_NUM)
+			return EC_ERROR_INVAL;
 
 		r = strtoi(argv[2], &e, 0);
-		if ((e && *e) || r < 0 || r >= CROS_ROW_NUM) {
-			ccputs("Bad row.\n");
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*e || r < 0 || r >= CROS_ROW_NUM)
+			return EC_ERROR_INVAL;
 
 		p = strtoi(argv[3], &e, 0);
-		if ((e && *e) || p < 0 || p > 1) {
-			ccputs("Bad pressed flag.\n");
-			return EC_ERROR_UNKNOWN;
-		}
+		if (*e || p < 0 || p > 1)
+			return EC_ERROR_INVAL;
 
 		if ((simulated_key[c] & (1 << r)) == (p << r))
 			return EC_SUCCESS;
@@ -839,9 +807,6 @@ static int command_keyboard_press(int argc, char **argv)
 		simulated_key[c] = (simulated_key[c] & ~(1 << r)) | (p << r);
 
 		keyboard_state_changed(r, c, p);
-	} else {
-		ccputs("Usage: kbpress [<col> <row> <pressed>]\n");
-		return EC_ERROR_UNKNOWN;
 	}
 
 	return EC_SUCCESS;
@@ -872,12 +837,11 @@ static int command_keyboard_log(int argc, char **argv)
 		}
 	} else if (argc == 2 && !strcasecmp("off", argv[1])) {
 		kblog_len = 0;
-		shared_mem_release(kblog);
+		if (kblog)
+			shared_mem_release(kblog);
 		kblog = NULL;
-	} else {
-		ccputs("Usage: kblog [on/off]\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	} else
+		return EC_ERROR_INVAL;
 
 	return EC_SUCCESS;
 }

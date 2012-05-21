@@ -140,17 +140,14 @@ static int command_eoption_get(int argc, char **argv)
 	/* If a signal is specified, print only that one */
 	if (argc == 2) {
 		i = find_option_by_name(argv[1], bool_opts);
-		if (i == -1) {
-			ccputs("Unknown option.\n");
+		if (i == -1)
 			return EC_ERROR_INVAL;
-		}
 		d = bool_opts + i;
 		ccprintf("  %d %s\n", eoption_get_bool(i), d->name);
 		return EC_SUCCESS;
 	}
 
 	/* Otherwise print them all */
-	ccputs("Boolean options:\n");
 	for (i = 0, d = bool_opts; d->name; i++, d++) {
 		ccprintf("  %d %s\n", eoption_get_bool(i), d->name);
 
@@ -168,23 +165,17 @@ static int command_eoption_set(int argc, char **argv)
 	char *e;
 	int v, i;
 
-	if (argc < 3) {
-		ccputs("Usage: optset <option> <value>\n");
+	if (argc < 3)
 		return EC_ERROR_INVAL;
-	}
 
 	v = strtoi(argv[2], &e, 0);
-	if (*e) {
-		ccputs("Invalid value.\n");
+	if (*e)
 		return EC_ERROR_INVAL;
-	}
 
 	i = find_option_by_name(argv[1], bool_opts);
-	if (i != -1) {
-		return eoption_set_bool(i, v);
-	} else {
-		ccputs("Unknown option.\n");
+	if (i == -1)
 		return EC_ERROR_INVAL;
-	}
+
+	return eoption_set_bool(i, v);
 }
 DECLARE_CONSOLE_COMMAND(optset, command_eoption_set);

@@ -76,24 +76,13 @@ int powerled_set(enum powerled_color color)
 
 static int command_powerled(int argc, char **argv)
 {
-	int i = POWERLED_COLOR_COUNT;
+	int i;
 
 	/* Pick a color, any color... */
-	if (argc >= 1) {
-		for (i = 0; i < POWERLED_COLOR_COUNT; i++) {
-			if (!strcasecmp(argv[1], color_names[i]))
-				break;
-		}
+	for (i = 0; i < POWERLED_COLOR_COUNT; i++) {
+		if (!strcasecmp(argv[1], color_names[i]))
+			return powerled_set(i);
 	}
-	if (i >= POWERLED_COLOR_COUNT) {
-		ccputs("Please specify a color:");
-		for (i = 0; i < POWERLED_COLOR_COUNT; i++)
-			ccprintf(" %s", color_names[i]);
-		ccputs("\n");
-		return EC_ERROR_INVAL;
-	}
-
-	ccprintf("Setting power LED to %s...\n", color_names[i]);
-	return powerled_set(i);
+	return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled);

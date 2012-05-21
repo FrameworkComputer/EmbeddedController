@@ -119,7 +119,7 @@ static inline uint8_t scale(int val, int max)
 
 static void lightbar_init_vals(void)
 {
-	CPRINTF("[%s()]\n", __func__);
+	CPRINTF("[%T LB init_vals]\n");
 	set_from_array(init_vals, ARRAY_SIZE(init_vals));
 	memset(current, 0, sizeof(current));
 }
@@ -146,7 +146,7 @@ static void setrgb(int led, int red, int green, int blue)
 
 static void lightbar_off(void)
 {
-	CPRINTF("[%s()]\n", __func__);
+	CPRINTF("[%T LB off]\n");
 	/* Just go into standby mode. No register values should change. */
 	controller_write(0, 0x01, 0x00);
 	controller_write(1, 0x01, 0x00);
@@ -154,7 +154,7 @@ static void lightbar_off(void)
 
 static void lightbar_on(void)
 {
-	CPRINTF("[%s()]\n", __func__);
+	CPRINTF("[%T LB on]\n");
 	/* Come out of standby mode. */
 	controller_write(0, 0x01, 0x20);
 	controller_write(1, 0x01, 0x20);
@@ -176,7 +176,7 @@ static void lightbar_setrgb(int led, int red, int green, int blue)
 static inline void lightbar_brightness(int newval)
 {
 	int i;
-	CPRINTF("%s[(%d)]\n", __func__, newval);
+	CPRINTF("[%T LB bright %d]\n", newval);
 	brightness = newval;
 	for (i = 0; i < NUM_LEDS; i++)
 		lightbar_setrgb(i, current[i][0],
@@ -214,7 +214,6 @@ static const struct {
 static uint32_t sequence_S5(void)
 {
 	int i;
-	CPRINTF("[%s()]\n", __func__);
 
 	/* Do something short to indicate S5. We might see it. */
 	lightbar_on();
@@ -234,7 +233,6 @@ static uint32_t sequence_S5S3(void)
 {
 	int i;
 
-	CPRINTF("[%s()]\n", __func__);
 	/* The controllers need 100us after power is applied before they'll
 	 * respond. */
 	usleep(100);
@@ -256,7 +254,6 @@ static uint32_t sequence_S0(void)
 	int l = 0;
 	int n = 0;
 
-	CPRINTF("[%s()]\n", __func__);
 	lightbar_on();
 
 	while (1) {
@@ -278,7 +275,6 @@ static uint32_t sequence_S0(void)
 /* CPU is going to sleep */
 static uint32_t sequence_S0S3(void)
 {
-	CPRINTF("[%s()]\n", __func__);
 	lightbar_on();
 	lightbar_setrgb(0, 0, 0, 255);
 	lightbar_setrgb(1, 255, 0, 0);
@@ -299,7 +295,6 @@ static uint32_t sequence_S0S3(void)
 static uint32_t sequence_S3(void)
 {
 	int i = 0;
-	CPRINTF("[%s()]\n", __func__);
 	lightbar_off();
 	lightbar_init_vals();
 	lightbar_setrgb(0, 0, 0, 0);
@@ -324,7 +319,6 @@ static uint32_t sequence_S3(void)
 /* CPU is waking from sleep */
 static uint32_t sequence_S3S0(void)
 {
-	CPRINTF("[%s()]\n", __func__);
 	lightbar_init_vals();
 	lightbar_on();
 	lightbar_setrgb(0, 0, 0, 255);
@@ -343,8 +337,6 @@ static uint32_t sequence_S3S5(void)
 {
 	int i;
 
-	CPRINTF("[%s()]\n", __func__);
-
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
 	lightbar_on();
@@ -361,8 +353,6 @@ static uint32_t sequence_TEST(void)
 	int i, j, k, r, g, b;
 	int kmax = 254;
 	int kstep = 8;
-
-	CPRINTF("[%s()]\n", __func__);
 
 	lightbar_init_vals();
 	lightbar_on();
@@ -411,8 +401,6 @@ static uint32_t sequence_PULSE(void)
 		{0x1a, g},
 	};
 
-	CPRINTF("[%s()]\n", __func__);
-
 	lightbar_init_vals();
 	lightbar_on();
 
@@ -435,15 +423,13 @@ static uint32_t sequence_STOP(void)
 {
 	uint32_t msg;
 
-	CPRINTF("[%s()]\n", __func__);
-
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
-		CPRINTF("[%s - got msg %x]\n", __func__, msg);
+		CPRINTF("[%T LB stop got msg %x]\n", msg);
 	} while (msg != LIGHTBAR_RUN);
 	/* FIXME: What should we do if the host shuts down? */
 
-	CPRINTF("[%s() - leaving]\n", __func__);
+	CPRINTF("[%T LB restarting]\n");
 
 	return 0;
 }
@@ -451,15 +437,12 @@ static uint32_t sequence_STOP(void)
 /* Telling us to run when we're already running should do nothing. */
 static uint32_t sequence_RUN(void)
 {
-	CPRINTF("[%s()]\n", __func__);
 	return 0;
 }
 
 /* We shouldn't come here, but if we do it shouldn't hurt anything */
 static uint32_t sequence_ERROR(void)
 {
-	CPRINTF("[%s()]\n", __func__);
-
 	lightbar_init_vals();
 	lightbar_on();
 
@@ -555,7 +538,6 @@ static uint32_t sequence_KONAMI(void)
 	int i;
 	int tmp;
 
-	CPRINTF("[%s()]\n", __func__);
 	lightbar_init_vals();
 	lightbar_on();
 
@@ -616,8 +598,10 @@ void lightbar_task(void)
 	previous_state = LIGHTBAR_S5;
 
 	while (1) {
+		CPRINTF("[%T LB task %d = %s]\n",
+			current_state, lightbar_cmds[current_state]);
 		msg = lightbar_cmds[current_state].sequence();
-		CPRINTF("[%s(%d)]\n", __func__, msg);
+		CPRINTF("[%T LB msg %d]\n", msg);
 		msg = TASK_EVENT_CUSTOM(msg);
 		if (msg && msg < LIGHTBAR_NUM_SEQUENCES) {
 			previous_state = current_state;
@@ -652,7 +636,7 @@ void lightbar_task(void)
 /* Function to request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence num)
 {
-	CPRINTF("[%s(%d)]\n", __func__, num);
+	CPRINTF("[%T LB seq %d]\n", num);
 	if (num && num < LIGHTBAR_NUM_SEQUENCES)
 		task_set_event(TASK_ID_LIGHTBAR,
 			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(num), 0);
@@ -759,7 +743,7 @@ static int lpc_cmd_lightbar(uint8_t *data, int *resp_size)
 		*resp_size = sizeof(struct ec_params_lightbar_cmd);
 		break;
 	default:
-		CPRINTF("[invalid lightbar cmd 0x%x]\n", ptr->in.cmd);
+		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -773,6 +757,7 @@ DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD, lpc_cmd_lightbar);
 /* EC console commands */
 /****************************************************************************/
 
+#ifdef CONSOLE_COMMAND_LIGHTBAR_HELP
 static int help(const char *cmd)
 {
 	ccprintf("Usage:\n");
@@ -788,6 +773,7 @@ static int help(const char *cmd)
 		 " (LED=4 for all)\n", cmd);
 	return EC_SUCCESS;
 }
+#endif
 
 static uint8_t find_msg_by_name(const char *str)
 {
@@ -802,7 +788,7 @@ static uint8_t find_msg_by_name(const char *str)
 static void show_msg_names(void)
 {
 	int i;
-	ccprintf("sequence names:");
+	ccprintf("Sequences:");
 	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
 		ccprintf(" %s", lightbar_cmds[i].string);
 	ccprintf("\nCurrent = 0x%x %s\n", current_state,
@@ -885,6 +871,10 @@ static int command_lightbar(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	return help(argv[0]);
+#ifdef CONSOLE_COMMAND_LIGHTBAR_HELP
+	help(argv[0]);
+#endif
+
+	return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar);
