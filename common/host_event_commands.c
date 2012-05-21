@@ -19,39 +19,30 @@ static int command_host_event(int argc, char **argv)
 	if (argc == 3) {
 		char *e;
 		int i = strtoi(argv[2], &e, 0);
-		if (*e) {
-			ccputs("Invalid event mask\n");
+		if (*e)
 			return EC_ERROR_INVAL;
-		}
 
-		if (!strcasecmp(argv[1], "set")) {
-			ccprintf("Setting host event mask 0x%08x\n", i);
+		if (!strcasecmp(argv[1], "set"))
 			lpc_set_host_events(i);
-		} else if (!strcasecmp(argv[1], "clear")) {
-			ccprintf("Clearing host event mask 0x%08x\n", i);
+		else if (!strcasecmp(argv[1], "clear"))
 			lpc_clear_host_events(i);
-		} else if (!strcasecmp(argv[1], "smi")) {
-			ccprintf("Setting SMI mask to 0x%08x\n", i);
+		else if (!strcasecmp(argv[1], "smi"))
 			lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, i);
-		} else if (!strcasecmp(argv[1], "sci")) {
-			ccprintf("Setting SCI mask to 0x%08x\n", i);
+		else if (!strcasecmp(argv[1], "sci"))
 			lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, i);
-		} else if (!strcasecmp(argv[1], "wake")) {
-			ccprintf("Setting wake mask to 0x%08x\n", i);
+		else if (!strcasecmp(argv[1], "wake"))
 			lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, i);
-		} else {
-			ccputs("Unknown sub-command\n");
+		else
 			return EC_ERROR_INVAL;
-		}
 	}
 
 	/* Print current SMI/SCI status */
-	ccprintf("Raw host events: 0x%08x\n", lpc_get_host_events());
-	ccprintf("SMI mask:        0x%08x\n",
+	ccprintf("Events:    0x%08x\n", lpc_get_host_events());
+	ccprintf("SMI mask:  0x%08x\n",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_SMI));
-	ccprintf("SCI mask:        0x%08x\n",
+	ccprintf("SCI mask:  0x%08x\n",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_SCI));
-	ccprintf("Wake mask:       0x%08x\n",
+	ccprintf("Wake mask: 0x%08x\n",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE));
 	return EC_SUCCESS;
 }

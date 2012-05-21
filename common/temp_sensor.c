@@ -104,25 +104,19 @@ void temp_sensor_task(void)
 static int command_temps(int argc, char **argv)
 {
 	int i;
-	int rv = 0;
+	int rv = EC_SUCCESS;
 	int t;
-
-	ccputs("Reading temperature sensors...\n");
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		ccprintf("  %-20s: ", temp_sensors[i].name);
 		t = temp_sensor_read(i);
 		if (t < 0) {
 			ccprintf("Error\n");
-			rv = -1;
-		}
-		else
+			rv = EC_ERROR_UNKNOWN;
+		} else
 			ccprintf("%d K = %d C\n", t, t - 273);
 	}
 
-	if (rv == -1)
-		return EC_ERROR_UNKNOWN;
-
-	return EC_SUCCESS;
+	return rv;
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps);

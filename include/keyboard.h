@@ -18,15 +18,6 @@
 
 #define MAX_KBLOG 512
 
-enum scancode_set_list {
-  SCANCODE_GET_SET = 0,
-  SCANCODE_SET_1,
-  SCANCODE_SET_2,
-  SCANCODE_SET_3,
-  SCANCODE_MAX = SCANCODE_SET_3,
-};
-
-
 /* Called by keyboard scan code once any key state change (after de-bounce),
  *
  * This function will look up matrix table and convert scancode host.
@@ -56,36 +47,11 @@ void keyboard_set_power_button(int pressed);
 /* Log the keyboard-related information */
 void kblog_put(char type, uint8_t byte);
 
-
-/* Register the board-specific keyboard matrix translation function.
- * The callback function accepts col/row and returns the scan code.
- *
- * Note that *scan_code must be at least 4 bytes long to store maximum
- * possible sequence.
- */
-typedef enum ec_error_list (*keyboard_matrix_callback)(
-    int8_t row, int8_t col, int8_t pressed,
-    enum scancode_set_list code_set, uint8_t *scan_code, int32_t* len);
-
-enum ec_error_list keyboard_matrix_register_callback(
-    int8_t row_num, int8_t col_num,
-    keyboard_matrix_callback callback);
-
-
 /***************************************************************************/
 /* Below is the interface with the underlying chip-dependent code.
  */
 #define MAX_KEYBOARD_MATRIX_ROWS 8
 #define MAX_KEYBOARD_MATRIX_COLS 16
-
-typedef void (*keyboard_callback)(int row, int col, int is_pressed);
-
-/* Registers a callback function to underlayer EC lib. So that any key state
- * change would notify the upper EC main code.
- *
- * Note that passing NULL removes any previously registered callback.
- */
-enum ec_error_list keyboard_register_callback(keyboard_callback cb);
 
 /* Asks the underlayer EC lib what keys are pressed right now.
  *
