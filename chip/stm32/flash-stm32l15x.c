@@ -311,7 +311,9 @@ int flash_physical_get_protect(int block)
 
 void flash_physical_set_protect(int block)
 {
+	if (0) { /* TODO: crosbug.com/p/9849 verify WP */
 	int byte_off = STM32_OPTB_WRP_OFF(block/8);
 	uint8_t val = read_optb(byte_off) | (1 << (block % 8));
 	write_optb(byte_off, val);
+	}
 }
