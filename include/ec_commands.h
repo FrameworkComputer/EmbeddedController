@@ -8,6 +8,25 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
+/* Protocol overview
+ *
+ * request:  CMD [ P0 P1 P2 ... Pn S ]
+ * response: ERR [ P0 P1 P2 ... Pn S ]
+ *
+ * where the bytes are defined as follow :
+ *      - CMD is the command code. (defined by EC_CMD_ constants)
+ *      - ERR is the error code. (defined by EC_RES_ constants)
+ *      - Px is the optional payload.
+ *        it is not sent if the error code is not success.
+ *        (defined by ec_params_ and ec_response_ structures)
+ *      - S is the checksum which is the sum of all payload bytes.
+ *
+ * On LPC, CMD and ERR are sent/received at EC_LPC_ADDR_KERNEL|USER_CMD
+ * and the payloads are sent/received at EC_LPC_ADDR_KERNEL|USER_PARAM.
+ * On I2C, all bytes are sent serially in the same message.
+ */
+
+
 /* During the development stage, the LPC bus has high error bit rate.
  * Using checksum can detect the error and trigger re-transmit.
  * FIXME: remove this after mass production.

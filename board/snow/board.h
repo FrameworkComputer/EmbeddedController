@@ -14,6 +14,9 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
+/* use I2C for host communication */
+#define CONFIG_I2C
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* EC drives 13 outputs to keyboard matrix */

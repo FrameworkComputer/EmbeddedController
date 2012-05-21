@@ -18,5 +18,4 @@
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(GAIAPOWER, gaia_power_task, NULL) \
 	TASK(CONSOLE, console_task, NULL) \
-	TASK(SPI_WORK, spi_work_task, NULL) \
-	TASK(I2C2_WORK, i2c2_work_task, NULL)
+	TASK(HOSTCMD, host_command_task, NULL)

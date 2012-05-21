@@ -6,12 +6,14 @@
 #include "board.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
-#include "message.h"
 #include "registers.h"
 #include "task.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
@@ -30,35 +32,15 @@
 #define I2C1      STM32_I2C1_PORT
 #define I2C2      STM32_I2C2_PORT
 
-static task_id_t task_waiting_on_port[NUM_PORTS];
-static struct mutex port_mutex[NUM_PORTS];
 
 static uint16_t i2c_sr1[NUM_PORTS];
 
-/* per-transaction counters */
-static unsigned int tx_byte_count;
-static unsigned int rx_byte_count;
+/* buffer for host commands (including error code and checksum) */
+static uint8_t host_buffer[EC_PARAM_SIZE + 2];
 
-/*
- * i2c_xmit_mode determines what EC sends when AP initiates a
- * read transaction. If AP has not set a transmit mode, then
- * default to NOP.
- */
-static enum message_cmd_t i2c_xmit_mode[NUM_PORTS] = { CMDC_NOP, CMDC_NOP };
+/* current position in host buffer for reception */
+static int rx_index;
 
-/*
- * Our output buffers. These must be large enough for our largest message,
- * including protocol overhead.
- */
-static uint8_t out_msg[32];
-
-
-static void wait_rx(int port)
-{
-	/* TODO: Add timeouts and error checking for safety */
-	while (!(STM32_I2C_SR1(port) & (1 << 6)))
-		;
-}
 
 static void wait_tx(int port)
 {
@@ -67,71 +49,59 @@ static void wait_tx(int port)
 		;
 }
 
-static int i2c_read_raw(int port, void *buf, int len)
-{
-	int i;
-	uint8_t *data = buf;
-
-	mutex_lock(&port_mutex[port]);
-	rx_byte_count = 0;
-	for (i = 0; i < len; i++) {
-		wait_rx(port);
-		data[i] = STM32_I2C_DR(port);
-		rx_byte_count++;
-	}
-	mutex_unlock(&port_mutex[port]);
-
-	return len;
-}
-
 static int i2c_write_raw(int port, void *buf, int len)
 {
 	int i;
 	uint8_t *data = buf;
 
-	mutex_lock(&port_mutex[port]);
-	tx_byte_count = 0;
 	for (i = 0; i < len; i++) {
-		tx_byte_count++;
 		STM32_I2C_DR(port) = data[i];
 		wait_tx(port);
 	}
-	mutex_unlock(&port_mutex[port]);
 
 	return len;
 }
 
-void i2c2_work_task(void)
+static void _send_result(int slot, int result, int size)
 {
-	int msg_len;
-	uint16_t tmp16;
-	task_waiting_on_port[1] = task_get_current();
+	int i;
+	int len = 1;
+	uint8_t sum = 0;
 
-	while (1) {
-		task_wait_event(-1);
-		tmp16 = i2c_sr1[I2C2];
-		if (tmp16 & (1 << 6)) {
-			/* RxNE; AP issued write command */
-			i2c_read_raw(I2C2, &i2c_xmit_mode[I2C2], 1);
-#ifdef CONFIG_DEBUG
-			CPRINTF("%s: i2c2_xmit_mode: %02x\n",
-					__func__, i2c_xmit_mode[I2C2]);
-#endif
-		} else if (tmp16 & (1 << 7)) {
-			/* RxE; AP is waiting for EC response */
-			msg_len = message_process_cmd(i2c_xmit_mode[I2C2],
-						  out_msg, sizeof(out_msg));
-			if (msg_len > 0) {
-				i2c_write_raw(I2C2, out_msg, msg_len);
-			} else {
-				CPRINTF("%s: unexpected mode %u\n",
-						__func__, i2c_xmit_mode[I2C2]);
-			}
-
-			/* reset EC mode to NOP after transfer is finished */
-			i2c_xmit_mode[I2C2] = CMDC_NOP;
-		}
+	ASSERT(slot == 0);
+	/* record the error code */
+	host_buffer[0] = result;
+	if (size) {
+		/* compute checksum */
+		for (i = 1; i <= size; i++)
+			sum += host_buffer[i];
+		host_buffer[size + 1] = sum;
+		len = size + 2;
 	}
+
+	/* send the answer to the AP */
+	i2c_write_raw(I2C2, host_buffer, len);
+}
+
+void host_send_result(int slot, int result)
+{
+	_send_result(slot, result, 0);
+}
+
+void host_send_response(int slot, const uint8_t *data, int size)
+{
+	uint8_t *out = host_get_buffer(slot);
+
+	if (data != out)
+		memcpy(out, data, size);
+
+	_send_result(slot, EC_RES_SUCCESS, size);
+}
+
+uint8_t *host_get_buffer(int slot)
+{
+	ASSERT(slot == 0);
+	return host_buffer + 1 /* skip room for error code */;
 }
 
 static void i2c_event_handler(int port)
@@ -146,32 +116,35 @@ static void i2c_event_handler(int port)
 		/* cleared by reading SR1 followed by reading SR2 */
 		STM32_I2C_SR1(port);
 		STM32_I2C_SR2(port);
-#ifdef CONFIG_DEBUG
-		CPRINTF("%s: ADDR\n", __func__);
-#endif
-	} else if (i2c_sr1[port] & (1 << 2)) {
-		;
-#ifdef CONFIG_DEBUG
-		CPRINTF("%s: BTF\n", __func__);
-#endif
 	} else if (i2c_sr1[port] & (1 << 4)) {
 		/* clear STOPF bit by reading SR1 and then writing CR1 */
 		STM32_I2C_SR1(port);
 		STM32_I2C_CR1(port) = STM32_I2C_CR1(port);
-#ifdef CONFIG_DEBUG
-		CPRINTF("%s: STOPF\n", __func__);
-#endif
-	} else {
-		;
-#ifdef CONFIG_DEBUG
-		CPRINTF("%s: unknown event\n", __func__);
-#endif
 	}
 
-	/* RxNE or TxE, wake the worker task */
-	if (i2c_sr1[port] & ((1 << 6) | (1 << 7))) {
-		if (port == I2C2)
-			task_wake(TASK_ID_I2C2_WORK);
+	/* RxNE event */
+	if (i2c_sr1[port] & (1 << 6)) {
+		if (port == I2C2) { /* AP issued write command */
+			if (rx_index >= sizeof(host_buffer) - 1) {
+				rx_index = 0;
+				CPRINTF("I2C message too large\n");
+			}
+			host_buffer[rx_index++] = STM32_I2C_DR(I2C2);
+		}
+	}
+	/* TxE event */
+	if (i2c_sr1[port] & (1 << 7)) {
+		if (port == I2C2) { /* AP is waiting for EC response */
+			if (rx_index) {
+				/* we have an available command : execute it */
+				host_command_received(0, host_buffer[0]);
+				/* reset host buffer after end of transfer */
+				rx_index = 0;
+			} else {
+				/* spurious read : return dummy value */
+				STM32_I2C_DR(port) = 0xec;
+			}
+		}
 	}
 }
 static void i2c2_event_interrupt(void) { i2c_event_handler(I2C2); }
@@ -185,13 +158,12 @@ static void i2c_error_handler(int port)
 	if (i2c_sr1[port] & 1 << 10) {
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
-		CPRINTF("%s: AF detected\n", __func__);
-	}
-	CPRINTF("%s: tx byte count: %u, rx_byte_count: %u\n",
-			__func__, tx_byte_count, rx_byte_count);
-	CPRINTF("%s: I2C_SR1(%s): 0x%04x\n", __func__, port, i2c_sr1[port]);
-	CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
+	} else {
+		CPRINTF("%s: I2C_SR1(%s): 0x%04x\n",
+			__func__, port, i2c_sr1[port]);
+		CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
 			__func__, port, STM32_I2C_SR2(port));
+	}
 #endif
 
 	STM32_I2C_SR1(port) &= ~0xdf00;
@@ -201,8 +173,6 @@ DECLARE_IRQ(STM32_IRQ_I2C2_ER, i2c2_error_interrupt, 2);
 
 static int i2c_init2(void)
 {
-	int i;
-
 	/* enable I2C2 clock */
 	STM32_RCC_APB1ENR |= 1 << 22;
 
@@ -219,10 +189,6 @@ static int i2c_init2(void)
 
 	/* clear status */
 	STM32_I2C_SR1(I2C2) = 0;
-
-	/* No tasks are waiting on ports */
-	for (i = 0; i < NUM_PORTS; i++)
-		task_waiting_on_port[i] = TASK_ID_INVALID;
 
 	/* enable event and error interrupts */
 	task_enable_irq(STM32_IRQ_I2C2_EV);

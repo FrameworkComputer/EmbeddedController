@@ -13,6 +13,7 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "registers.h"
@@ -39,9 +40,6 @@ enum COL_INDEX {
 
 /* The keyboard state from the last read */
 static uint8_t raw_state[KB_OUTPUTS];
-
-/* The keyboard state we will return when requested */
-static uint8_t saved_state[KB_OUTPUTS];
 
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
@@ -386,9 +384,23 @@ int keyboard_scan_recovery_pressed(void)
 	return 0;
 }
 
-int keyboard_get_scan(uint8_t **buffp, int max_bytes)
+static int keyboard_get_scan(uint8_t *data, int *resp_size)
 {
-	kb_fifo_remove(saved_state);
-	*buffp = saved_state;
-	return KB_OUTPUTS;
+	kb_fifo_remove(data);
+	*resp_size = KB_OUTPUTS;
+
+	return EC_RES_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_STATE, keyboard_get_scan);
+
+static int keyboard_get_info(uint8_t *data, int *resp_size)
+{
+	struct ec_response_mkbp_info *r = (struct ec_response_mkbp_info *)data;
+
+	r->rows = 8;
+	r->cols = KB_OUTPUTS;
+
+	*resp_size = sizeof(struct ec_response_mkbp_info);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO, keyboard_get_info);
