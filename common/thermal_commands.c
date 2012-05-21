@@ -28,10 +28,11 @@ int thermal_command_get_threshold(uint8_t *data, int *resp_size)
 			(struct ec_params_thermal_get_threshold *)data;
 	struct ec_response_thermal_get_threshold *r =
 			(struct ec_response_thermal_get_threshold *)data;
+	int value = thermal_get_threshold(p->sensor_type, p->threshold_id);
 
-	r->value = thermal_get_threshold(p->sensor_type, p->threshold_id);
-	if (r->value == -1)
+	if (value == -1)
 		return EC_RES_ERROR;
+	r->value = value;
 
 	*resp_size = sizeof(struct ec_response_thermal_get_threshold);
 	return EC_RES_SUCCESS;
