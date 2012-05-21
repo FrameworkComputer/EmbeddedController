@@ -33,9 +33,6 @@ typedef union {
 	uint32_t context[TASK_SIZE/4];
 } task_;
 
-#define CONTEXT_SP      (__builtin_offsetof(task_, sp) / sizeof(uint32_t))
-#define CONTEXT_GUARD   (__builtin_offsetof(task_, guard) / sizeof(uint32_t))
-
 /* declare task routine prototypes */
 #define TASK(n, r, d) int r(void *);
 #include TASK_LIST
@@ -94,24 +91,23 @@ static void task_exit_trap(void)
 
 #define GUARD_VALUE 0x12345678
 
-/* Declare and fill the contexts for all tasks. Note that while it would be
- * more readable to use the struct fields (.sp, .guard) where applicable, gcc
- * can't mix initializing some fields on one side of the union and some fields
- * on the other, so we have to use .context for all initialization. */
-#define TASK(n, r, d)  {						\
-	.context[CONTEXT_SP] = (uint32_t)(tasks + TASK_ID_##n + 1) - 64,\
-	.context[CONTEXT_GUARD] = GUARD_VALUE,				\
-	.context[TASK_SIZE/4 - 8/*r0*/] = (uint32_t)d,                  \
-	.context[TASK_SIZE/4 - 3/*lr*/] = (uint32_t)task_exit_trap,     \
-	.context[TASK_SIZE/4 - 2/*pc*/] = (uint32_t)r,                  \
-	.context[TASK_SIZE/4 - 1/*psr*/] = 0x01000000 },
+/* Startup parameters for all tasks. */
+#define TASK(n, r, d)  {	\
+	.r0 = (uint32_t)d,	\
+	.pc = (uint32_t)r,	\
+},
 #include TASK_LIST
-static task_ tasks[] __attribute__((section(".data.tasks")))
-		__attribute__((aligned(TASK_SIZE))) = {
+static const struct {
+	uint32_t r0;
+	uint32_t pc;
+} const tasks_init[] = {
 	TASK(IDLE, __idle, 0)
 	CONFIG_TASK_LIST
 };
 #undef TASK
+/* Contexts and stacks for all tasks. */
+static task_ tasks[TASK_ID_COUNT] __attribute__((section(".bss.tasks")))
+		__attribute__((aligned(TASK_SIZE)));
 /* Reserve space to discard context on first context switch. */
 uint32_t scratchpad[17] __attribute__((section(".data.tasks")));
 
@@ -561,6 +557,20 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready);
 
 int task_pre_init(void)
 {
+	int i;
+
+	/* fill the task memory with initial values */
+	for (i = 0; i < TASK_ID_COUNT; i++) {
+		tasks[i].sp = (uint32_t)(tasks + i + 1) - 64;
+		tasks[i].guard = GUARD_VALUE;
+		/* initial context on stack */
+		tasks[i].context[TASK_SIZE/4 - 8/*r0*/] = tasks_init[i].r0;
+		tasks[i].context[TASK_SIZE/4 - 3/*lr*/] =
+			(uint32_t)task_exit_trap;
+		tasks[i].context[TASK_SIZE/4 - 2/*pc*/] = tasks_init[i].pc;
+		tasks[i].context[TASK_SIZE/4 - 1/*psr*/] = 0x01000000;
+	}
+
 	/* Fill in guard value in scratchpad to prevent stack overflow
 	 * detection failure on the first context switch. */
 	((task_ *)scratchpad)->guard = GUARD_VALUE;
