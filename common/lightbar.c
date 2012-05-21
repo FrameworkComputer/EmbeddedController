@@ -119,7 +119,7 @@ static inline uint8_t scale(int val, int max)
 
 static void lightbar_init_vals(void)
 {
-	CPRINTF("[%T LB init_vals]\n");
+	CPRINTF("[%T LB_init_vals]\n");
 	set_from_array(init_vals, ARRAY_SIZE(init_vals));
 	memset(current, 0, sizeof(current));
 }
@@ -146,7 +146,7 @@ static void setrgb(int led, int red, int green, int blue)
 
 static void lightbar_off(void)
 {
-	CPRINTF("[%T LB off]\n");
+	CPRINTF("[%T LB_off]\n");
 	/* Just go into standby mode. No register values should change. */
 	controller_write(0, 0x01, 0x00);
 	controller_write(1, 0x01, 0x00);
@@ -154,7 +154,7 @@ static void lightbar_off(void)
 
 static void lightbar_on(void)
 {
-	CPRINTF("[%T LB on]\n");
+	CPRINTF("[%T LB_on]\n");
 	/* Come out of standby mode. */
 	controller_write(0, 0x01, 0x20);
 	controller_write(1, 0x01, 0x20);
@@ -176,7 +176,7 @@ static void lightbar_setrgb(int led, int red, int green, int blue)
 static inline void lightbar_brightness(int newval)
 {
 	int i;
-	CPRINTF("[%T LB bright %d]\n", newval);
+	CPRINTF("[%T LB_bright 0x%02x]\n", newval);
 	brightness = newval;
 	for (i = 0; i < NUM_LEDS; i++)
 		lightbar_setrgb(i, current[i][0],
@@ -213,15 +213,7 @@ static const struct {
 /* CPU is off */
 static uint32_t sequence_S5(void)
 {
-	int i;
-
-	/* Do something short to indicate S5. We might see it. */
-	lightbar_on();
-	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, 255, 0, 0);
-	WAIT_OR_RET(2000000);
-
-	/* Then just wait forever. */
+	/* Just wait forever. */
 	lightbar_off();
 	WAIT_OR_RET(-1);
 	return 0;
@@ -242,33 +234,17 @@ static uint32_t sequence_S5S3(void)
 	 * We might see it. */
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, 255, 255, 255);
+		lightbar_setrgb(i, 0, 255, 0);
 	WAIT_OR_RET(500000);
-
 	return 0;
 }
 
 /* CPU is fully on */
 static uint32_t sequence_S0(void)
 {
-	int l = 0;
-	int n = 0;
-
 	lightbar_on();
-
-	while (1) {
-		l = l % NUM_LEDS;
-		n = n % 5;
-		if (n == 4)
-			lightbar_setrgb(l, 0, 0, 0);
-		else
-			lightbar_setrgb(l, testy[n].r,
-					  testy[n].g, testy[n].b);
-		l++;
-		n++;
-		WAIT_OR_RET(50000);
-	}
-
+	lightbar_setrgb(NUM_LEDS, 255, 255, 255);
+	WAIT_OR_RET(-1);
 	return 0;
 }
 
@@ -276,11 +252,6 @@ static uint32_t sequence_S0(void)
 static uint32_t sequence_S0S3(void)
 {
 	lightbar_on();
-	lightbar_setrgb(0, 0, 0, 255);
-	lightbar_setrgb(1, 255, 0, 0);
-	lightbar_setrgb(2, 255, 255, 0);
-	lightbar_setrgb(3, 0, 255, 0);
-	WAIT_OR_RET(200000);
 	lightbar_setrgb(0, 0, 0, 0);
 	WAIT_OR_RET(200000);
 	lightbar_setrgb(1, 0, 0, 0);
@@ -294,41 +265,31 @@ static uint32_t sequence_S0S3(void)
 /* CPU is sleeping */
 static uint32_t sequence_S3(void)
 {
-	int i = 0;
 	lightbar_off();
 	lightbar_init_vals();
-	lightbar_setrgb(0, 0, 0, 0);
-	lightbar_setrgb(1, 0, 0, 0);
-	lightbar_setrgb(2, 0, 0, 0);
-	lightbar_setrgb(3, 0, 0, 0);
+	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 	while (1) {
 		WAIT_OR_RET(3000000);
 		lightbar_on();
-		i = i % NUM_LEDS;
 		/* FIXME: indicate battery level? */
-		lightbar_setrgb(i, testy[i].r, testy[i].g, testy[i].b);
+		lightbar_setrgb(NUM_LEDS, 255, 255, 255);
 		WAIT_OR_RET(100000);
-		lightbar_setrgb(i, 0, 0, 0);
-		i++;
+		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 		lightbar_off();
 	}
-
 	return 0;
 }
 
 /* CPU is waking from sleep */
 static uint32_t sequence_S3S0(void)
 {
+	int i;
 	lightbar_init_vals();
 	lightbar_on();
-	lightbar_setrgb(0, 0, 0, 255);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(1, 255, 0, 0);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(2, 255, 255, 0);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(3, 0, 255, 0);
-	WAIT_OR_RET(200000);
+	for (i = 0; i < NUM_LEDS; i++) {
+		lightbar_setrgb(i, 255, 255, 255);
+		WAIT_OR_RET(200000);
+	}
 	return 0;
 }
 
@@ -341,9 +302,8 @@ static uint32_t sequence_S3S5(void)
 	 * We might see it. */
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, 0, 0, 255);
+		lightbar_setrgb(i, 255, 0, 0);
 	WAIT_OR_RET(500000);
-
 	return 0;
 }
 
@@ -376,7 +336,6 @@ static uint32_t sequence_TEST(void)
 			WAIT_OR_RET(10000);
 		}
 	}
-
 	return 0;
 }
 
@@ -425,12 +384,11 @@ static uint32_t sequence_STOP(void)
 
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
-		CPRINTF("[%T LB stop got msg %x]\n", msg);
+		CPRINTF("[%T LB_stop got msg 0x%x]\n", msg);
 	} while (msg != LIGHTBAR_RUN);
 	/* FIXME: What should we do if the host shuts down? */
 
-	CPRINTF("[%T LB restarting]\n");
-
+	CPRINTF("[%T LB_stop->running]\n");
 	return 0;
 }
 
@@ -452,7 +410,6 @@ static uint32_t sequence_ERROR(void)
 	lightbar_setrgb(3, 255, 255, 255);
 
 	WAIT_OR_RET(10000000);
-
 	return 0;
 }
 
@@ -552,7 +509,6 @@ static uint32_t sequence_KONAMI(void)
 	}
 
 	brightness = tmp;
-
 	return 0;
 }
 
@@ -591,22 +547,23 @@ void lightbar_task(void)
 	 * reset than out of reset. */
 	lightbar_init_vals();
 	lightbar_off();
+	lightbar_brightness(0x40);		/* default brightness */
 
-	/* FIXME: What to do first? For now, nothing, followed by more
-	   nothing. */
-	current_state = LIGHTBAR_STOP;
+	current_state = LIGHTBAR_S5;
 	previous_state = LIGHTBAR_S5;
 
 	while (1) {
 		CPRINTF("[%T LB task %d = %s]\n",
-			current_state, lightbar_cmds[current_state]);
+			current_state, lightbar_cmds[current_state].string);
 		msg = lightbar_cmds[current_state].sequence();
-		CPRINTF("[%T LB msg %d]\n", msg);
 		msg = TASK_EVENT_CUSTOM(msg);
 		if (msg && msg < LIGHTBAR_NUM_SEQUENCES) {
+			CPRINTF("[%T LB msg %d = %s]\n", msg,
+				lightbar_cmds[msg].string);
 			previous_state = current_state;
 			current_state = TASK_EVENT_CUSTOM(msg);
 		} else {
+			CPRINTF("[%T LB msg %d]\n", msg);
 			switch (current_state) {
 			case LIGHTBAR_S5S3:
 				current_state = LIGHTBAR_S3;
@@ -636,10 +593,13 @@ void lightbar_task(void)
 /* Function to request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence num)
 {
-	CPRINTF("[%T LB seq %d]\n", num);
-	if (num && num < LIGHTBAR_NUM_SEQUENCES)
+	if (num && num < LIGHTBAR_NUM_SEQUENCES) {
+		CPRINTF("[%T LB_seq %d = %s]\n", num,
+			lightbar_cmds[num].string);
 		task_set_event(TASK_ID_LIGHTBAR,
 			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(num), 0);
+	} else
+		CPRINTF("[%T LB_seq %d - ignored]\n", num);
 }
 
 
