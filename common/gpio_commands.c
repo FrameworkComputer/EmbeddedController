@@ -11,6 +11,9 @@
 #include "util.h"
 
 
+static uint8_t last_val[(GPIO_COUNT + 7) / 8];
+
+
 /* Find a GPIO signal by name.  Returns the signal index, or GPIO_COUNT if
  * no match. */
 static enum gpio_signal find_signal_by_name(const char *name)
@@ -30,8 +33,6 @@ static enum gpio_signal find_signal_by_name(const char *name)
 }
 
 
-static uint8_t last_val[(GPIO_COUNT + 7) / 8];
-
 /* If v is different from the last value for index i, updates the last value
  * and returns 1; else returns 0. */
 static int last_val_changed(int i, int v)
@@ -47,6 +48,7 @@ static int last_val_changed(int i, int v)
 	}
 }
 
+
 static int command_gpio_get(int argc, char **argv)
 {
 	const struct gpio_info *g = gpio_list;
@@ -55,10 +57,8 @@ static int command_gpio_get(int argc, char **argv)
 	/* If a signal is specified, print only that one */
 	if (argc == 2) {
 		i = find_signal_by_name(argv[1]);
-		if (i == GPIO_COUNT) {
-			ccputs("Unknown signal name.\n");
-			return EC_ERROR_UNKNOWN;
-		}
+		if (i == GPIO_COUNT)
+			return EC_ERROR_INVAL;
 		g = gpio_list + i;
 		v = gpio_get_level(i);
 		changed = last_val_changed(i, v);
@@ -68,7 +68,6 @@ static int command_gpio_get(int argc, char **argv)
 	}
 
 	/* Otherwise print them all */
-	ccputs("Current GPIO levels:\n");
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		if (!g->mask)
 			continue;  /* Skip unsupported signals */
@@ -92,32 +91,23 @@ static int command_gpio_set(int argc, char **argv)
 	char *e;
 	int v, i;
 
-	if (argc < 3) {
-		ccputs("Usage: gpioset <signal_name> <0|1>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 3)
+		return EC_ERROR_INVAL;
 
 	i = find_signal_by_name(argv[1]);
-	if (i == GPIO_COUNT) {
-		ccputs("Unknown signal name.\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (i == GPIO_COUNT)
+		return EC_ERROR_INVAL;
 	g = gpio_list + i;
 
-	if (!g->mask) {
-		ccputs("Signal is not implemented.\n");
-		return EC_ERROR_UNKNOWN;
-	}
-	if (!(g->flags & GPIO_OUTPUT)) {
-		ccputs("Signal is not an output.\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (!g->mask)
+		return EC_ERROR_INVAL;
+
+	if (!(g->flags & GPIO_OUTPUT))
+		return EC_ERROR_INVAL;
 
 	v = strtoi(argv[2], &e, 0);
-	if (*e) {
-		ccputs("Invalid signal value.\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (*e)
+		return EC_ERROR_INVAL;
 
 	return gpio_set_level(i, v);
 }

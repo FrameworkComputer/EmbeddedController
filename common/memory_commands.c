@@ -14,14 +14,12 @@ static int command_write_word(int argc, char **argv)
 	volatile uint32_t *address;
 	uint32_t value;
 
-	if (argc != 3) {
-		ccputs("Usage: ww <address> <value>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc != 3)
+		return EC_ERROR_INVAL;
 	address = (uint32_t*)strtoi(argv[1], NULL, 0);
 	value = strtoi(argv[2], NULL, 0);
 
-	ccprintf("write word 0x%p = 0x%08x\n", address, value);
+	ccprintf("write 0x%p = 0x%08x\n", address, value);
 	cflush();  /* Flush before writing in case this crashes */
 
 	*address = value;
@@ -37,14 +35,13 @@ static int command_read_word(int argc, char **argv)
 	volatile uint32_t *address;
 	uint32_t value;
 
-	if (argc != 2) {
-		ccputs("Usage: rw <address>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc != 2)
+		return EC_ERROR_INVAL;
+
 	address = (uint32_t*)strtoi(argv[1], NULL, 0);
 	value = *address;
 
-	ccprintf("read word 0x%p = 0x%08x\n", address, value);
+	ccprintf("read 0x%p = 0x%08x\n", address, value);
 
 	return EC_SUCCESS;
 }

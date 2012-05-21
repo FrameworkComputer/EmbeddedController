@@ -154,16 +154,16 @@ void pwm_task(void)
 
 static int command_fan_info(int argc, char **argv)
 {
-	ccprintf("Fan actual speed: %4d rpm\n", pwm_get_fan_rpm());
-	ccprintf("    target speed: %4d rpm\n",
+	ccprintf("Actual: %4d rpm\n", pwm_get_fan_rpm());
+	ccprintf("Target: %4d rpm\n",
 		 (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE);
-	ccprintf("    duty cycle:   %d%%\n",
+	ccprintf("Duty:   %d%%\n",
 		 ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
-	ccprintf("    status:       %d\n",
+	ccprintf("Status: %d\n",
 		 (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
-	ccprintf("    enabled:      %s\n",
+	ccprintf("Enable: %s\n",
 		 LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
-	ccprintf("    powered:      %s\n",
+	ccprintf("Power:  %s\n",
 		 gpio_get_level(GPIO_PGOOD_5VALW) ? "yes" : "no");
 
 	return EC_SUCCESS;
@@ -175,20 +175,13 @@ static int command_fan_set(int argc, char **argv)
 {
 	int rpm = 0;
 	char *e;
-	int rv;
 
-	if (argc < 2) {
-		ccputs("Usage: fanset <rpm>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 
 	rpm = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid speed\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	ccprintf("Setting fan speed to %d rpm...\n", rpm);
+	if (*e)
+		return EC_ERROR_INVAL;
 
         /* Move the fan to automatic control */
         if (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) {
@@ -203,30 +196,24 @@ static int command_fan_set(int argc, char **argv)
 	thermal_toggle_auto_fan_ctrl(0);
 #endif
 
-	rv = pwm_set_fan_target_rpm(rpm);
-	if (rv == EC_SUCCESS)
-		ccprintf("Done.\n");
-
-	return rv;
+	return pwm_set_fan_target_rpm(rpm);
 }
 DECLARE_CONSOLE_COMMAND(fanset, command_fan_set);
 
 
+#ifdef CONSOLE_COMMAND_FANDUTY
 /* TODO: this is a temporary command for debugging tach issues */
 static int command_fan_duty(int argc, char **argv)
 {
   int d = 0, pwm;
 	char *e;
 
-	if (argc < 2) {
-		ccputs("Usage: fanduty <percent>\n");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (argc < 2)
+		return EC_ERROR_INVAL;
 
 	d = strtoi(argv[1], &e, 0);
 	if (*e) {
-		ccputs("Invalid duty cycle\n");
-		return EC_ERROR_UNKNOWN;
+		return EC_ERROR_INVAL;
 	}
 
         pwm = (MAX_PWM * d) / 100;
@@ -251,30 +238,22 @@ static int command_fan_duty(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(fanduty, command_fan_duty);
+#endif
 
 
 static int command_kblight(int argc, char **argv)
 {
-	char *e;
-	int rv;
-	int i;
+	int rv = EC_SUCCESS;
 
-	if (argc < 2) {
-		ccprintf("Keyboard backlight is at %d%%\n",
-			 pwm_get_keyboard_backlight());
-		return EC_SUCCESS;
+	if (argc >= 2) {
+		char *e;
+		int i = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_INVAL;
+		rv = pwm_set_keyboard_backlight(i);
 	}
 
-	i = strtoi(argv[1], &e, 0);
-	if (*e) {
-		ccputs("Invalid percent\n");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	ccprintf("Setting keyboard backlight to %d%%...\n", i);
-	rv = pwm_set_keyboard_backlight(i);
-	if (rv == EC_SUCCESS)
-		ccprintf("Done.\n");
+	ccprintf("Keyboard backlight: %d%%\n", pwm_get_keyboard_backlight());
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(kblight, command_kblight);
