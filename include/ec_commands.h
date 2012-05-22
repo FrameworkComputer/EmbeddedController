@@ -239,6 +239,12 @@ struct ec_response_get_chip_info {
 	char revision[32];  /* Mask version */
 } __attribute__ ((packed));
 
+/* Get board HW version. */
+#define EC_CMD_GET_BOARD_VERSION 0x06
+struct ec_params_board_version {
+	uint16_t board_version;  /* A monotonously incrementing number. */
+} __attribute__ ((packed));
+
 
 /*****************************************************************************/
 /* Flash commands */

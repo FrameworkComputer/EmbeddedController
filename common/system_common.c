@@ -637,6 +637,19 @@ static int host_command_get_chip_info(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO, host_command_get_chip_info);
 
 
+int host_command_get_board_version(uint8_t *data, int *resp_size)
+{
+	struct ec_params_board_version *board_v =
+			(struct ec_params_board_version *) data;
+
+	board_v->board_version = (uint16_t) system_get_board_version();
+
+	*resp_size = sizeof(struct ec_params_board_version);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version);
+
+
 #ifdef CONFIG_REBOOT_EC
 static void clean_busy_bits(void) {
 #ifdef CONFIG_LPC
