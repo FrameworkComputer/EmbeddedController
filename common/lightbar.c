@@ -602,6 +602,15 @@ void lightbar_sequence(enum lightbar_sequence num)
 		CPRINTF("[%T LB_seq %d - ignored]\n", num);
 }
 
+/****************************************************************************/
+/* Get notifications from other parts of the system */
+
+static int lightbar_startup(void)
+{
+	lightbar_sequence(LIGHTBAR_S5S3);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, lightbar_startup, HOOK_PRIO_DEFAULT);
 
 static int lightbar_resume(void)
 {
@@ -610,13 +619,19 @@ static int lightbar_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lightbar_resume, HOOK_PRIO_DEFAULT);
 
-
 static int lightbar_suspend(void)
 {
 	lightbar_sequence(LIGHTBAR_S0S3);
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_suspend, HOOK_PRIO_DEFAULT);
+
+static int lightbar_shutdown(void)
+{
+	lightbar_sequence(LIGHTBAR_S3S5);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, lightbar_shutdown, HOOK_PRIO_DEFAULT);
 
 /****************************************************************************/
 /* Generic command-handling (should work the same for both console & LPC) */
