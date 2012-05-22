@@ -54,7 +54,7 @@ struct stm32_def {
 	uint32_t page_size;
 } chip_defs[] = {
 	{0x416, "STM32L15xx", 0x08000000, 0x20000, 256},
-	{0x420, "STM32F100xx", 0x08000000, 0x20000, 1024},
+	{0x420, "STM32F100xx", 0x08000000, 0x10000, 1024},
 	{ 0 }
 };
 
@@ -79,6 +79,8 @@ typedef struct {
 	int size;
 	uint8_t *data;
 } payload_t;
+
+static int has_exterase;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -312,8 +314,11 @@ int command_get_commands(int fd)
 		}
 		printf("Bootloader v%d.%d, commands : ",
 		       cmds[1] >> 4, cmds[1] & 0xf);
-		for (i = 2; i < 2 + cmds[0]; i++)
+		for (i = 2; i < 2 + cmds[0]; i++) {
+			if (cmds[i] == CMD_EXTERASE)
+				has_exterase = 1;
 			printf("%02x ", cmds[i]);
+		}
 		printf("\n");
 		return 0;
 	}
@@ -404,6 +409,34 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 	}
 
 	res = send_command(fd, CMD_EXTERASE, &load, 1, NULL, 0);
+	if (res >= 0)
+		printf("Flash erased.\n");
+
+	if (pages)
+		free(pages);
+	return res;
+}
+
+int command_erase(int fd, uint8_t count, uint8_t start)
+{
+	int res;
+	payload_t load = { 1, (uint8_t *)&count };
+	uint8_t *pages = NULL;
+
+	if (count < 0xff) {
+		int i;
+		/* not a special value : build a list of pages */
+		load.size = count + 1;
+		pages = malloc(load.size);
+		if (!pages)
+			return -ENOMEM;
+		load.data = (uint8_t *)pages;
+		pages[0] = count - 1;
+		for (i = 0; i < count; i++)
+			pages[i+1] = start + i;
+	}
+
+	res = send_command(fd, CMD_ERASE, &load, 1, NULL, 0);
 	if (res >= 0)
 		printf("Flash erased.\n");
 
@@ -652,8 +685,13 @@ int main(int argc, char **argv)
 		/* Mass erase is not supported on STM32L15xx */
 		/* command_ext_erase(ser, ERASE_ALL, 0); */
 		int i, page_count = chip->flash_size / chip->page_size;
-		for (i = 0; i < page_count; i += 128)
-			command_ext_erase(ser, MIN(128, page_count - i), i);
+		for (i = 0; i < page_count; i += 128) {
+			int count = MIN(128, page_count - i);
+			if (has_exterase)
+				command_ext_erase(ser, count, i);
+			else
+				command_erase(ser, count, i);
+		}
 	}
 
 	if (input_filename)
