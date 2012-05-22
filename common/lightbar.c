@@ -204,11 +204,19 @@ static const struct {
 /* Now for the pretty patterns */
 /******************************************************************************/
 
+/* Here's where we keep messages waiting to be delivered to lightbar task. If
+ * more than one is sent before the task responds, we only want to deliver the
+ * latest one. */
+static uint32_t pending_msg;
+/* And here's the task event that we use to trigger delivery. */
+#define PENDING_MSG 1
+
+
 /* Interruptible delay */
 #define WAIT_OR_RET(A) do { \
 	uint32_t msg = task_wait_event(A); \
-	if (TASK_EVENT_CUSTOM(msg)) \
-		return TASK_EVENT_CUSTOM(msg); } while (0)
+	if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) \
+		return PENDING_MSG; } while (0)
 
 /* CPU is off */
 static uint32_t sequence_S5(void)
@@ -223,18 +231,16 @@ static uint32_t sequence_S5(void)
  * might not be useful. */
 static uint32_t sequence_S5S3(void)
 {
-	int i;
-
 	/* The controllers need 100us after power is applied before they'll
-	 * respond. */
+	 * respond. Don't return early, because we still want to initialize the
+	 * lightbar even if another message comes along while we're waiting. */
 	usleep(100);
 	lightbar_init_vals();
 
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
 	lightbar_on();
-	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, 0, 255, 0);
+	lightbar_setrgb(NUM_LEDS, 0, 255, 0);
 	WAIT_OR_RET(500000);
 	return 0;
 }
@@ -251,14 +257,12 @@ static uint32_t sequence_S0(void)
 /* CPU is going to sleep */
 static uint32_t sequence_S0S3(void)
 {
+	int i;
 	lightbar_on();
-	lightbar_setrgb(0, 0, 0, 0);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(1, 0, 0, 0);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(2, 0, 0, 0);
-	WAIT_OR_RET(200000);
-	lightbar_setrgb(3, 0, 0, 0);
+	for (i = 0; i < NUM_LEDS; i++) {
+		lightbar_setrgb(i, 0, 0, 0);
+		WAIT_OR_RET(200000);
+	}
 	return 0;
 }
 
@@ -296,19 +300,16 @@ static uint32_t sequence_S3S0(void)
 /* Sleep to off. */
 static uint32_t sequence_S3S5(void)
 {
-	int i;
-
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
 	lightbar_on();
-	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, 255, 0, 0);
+	lightbar_setrgb(NUM_LEDS, 255, 0, 0);
 	WAIT_OR_RET(500000);
 	return 0;
 }
 
-/* FIXME: This can be removed. */
-static uint32_t sequence_TEST(void)
+/* Used by factory. */
+static uint32_t sequence_TEST_inner(void)
 {
 	int i, j, k, r, g, b;
 	int kmax = 254;
@@ -336,7 +337,20 @@ static uint32_t sequence_TEST(void)
 			WAIT_OR_RET(10000);
 		}
 	}
+
 	return 0;
+}
+
+static uint32_t sequence_TEST(void)
+{
+	int tmp;
+	uint32_t r;
+
+	tmp = brightness;
+	brightness = 255;
+	r = sequence_TEST_inner();
+	brightness = tmp;
+	return r;
 }
 
 /* This uses the auto-cycling features of the controllers to make a semi-random
@@ -384,8 +398,8 @@ static uint32_t sequence_STOP(void)
 
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
-		CPRINTF("[%T LB_stop got msg 0x%x]\n", msg);
-	} while (msg != LIGHTBAR_RUN);
+		CPRINTF("[%T LB_stop got pending_msg %d]\n", pending_msg);
+	} while (msg != PENDING_MSG || pending_msg != LIGHTBAR_RUN);
 	/* FIXME: What should we do if the host shuts down? */
 
 	CPRINTF("[%T LB_stop->running]\n");
@@ -556,14 +570,13 @@ void lightbar_task(void)
 		CPRINTF("[%T LB task %d = %s]\n",
 			current_state, lightbar_cmds[current_state].string);
 		msg = lightbar_cmds[current_state].sequence();
-		msg = TASK_EVENT_CUSTOM(msg);
-		if (msg && msg < LIGHTBAR_NUM_SEQUENCES) {
-			CPRINTF("[%T LB msg %d = %s]\n", msg,
-				lightbar_cmds[msg].string);
+		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) {
+			CPRINTF("[%T LB msg %d = %s]\n", pending_msg,
+				lightbar_cmds[pending_msg].string);
 			previous_state = current_state;
-			current_state = TASK_EVENT_CUSTOM(msg);
+			current_state = pending_msg;
 		} else {
-			CPRINTF("[%T LB msg %d]\n", msg);
+			CPRINTF("[%T LB msg 0x%x]\n", msg);
 			switch (current_state) {
 			case LIGHTBAR_S5S3:
 				current_state = LIGHTBAR_S3;
@@ -596,8 +609,10 @@ void lightbar_sequence(enum lightbar_sequence num)
 	if (num && num < LIGHTBAR_NUM_SEQUENCES) {
 		CPRINTF("[%T LB_seq %d = %s]\n", num,
 			lightbar_cmds[num].string);
+		pending_msg = num;
 		task_set_event(TASK_ID_LIGHTBAR,
-			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(num), 0);
+			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(PENDING_MSG),
+			       0);
 	} else
 		CPRINTF("[%T LB_seq %d - ignored]\n", num);
 }
