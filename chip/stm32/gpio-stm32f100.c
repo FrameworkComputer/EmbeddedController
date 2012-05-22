@@ -53,8 +53,8 @@ int gpio_pre_init(void)
 	int i;
 	uint32_t addr, cnf, mode, mask;
 
-	if ((STM32_RCC_APB2ENR & 0x1fd) == 0x1fd) {
-		/* This is a warm reboot */
+	if (STM32_RCC_APB1ENR & 1) {
+		/* This is a warm reboot : TIM2 is already active */
 		is_warm = 1;
 	} else {
 		/* Enable all GPIOs clocks
