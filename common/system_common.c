@@ -164,7 +164,7 @@ const char *system_get_reset_cause_string(void)
 
 enum system_image_copy_t system_get_image_copy(void)
 {
-	uint32_t my_addr = (uint32_t)system_get_image_copy;
+	uint32_t my_addr = (uint32_t)system_get_image_copy - CONFIG_FLASH_BASE;
 
 	if (my_addr >= CONFIG_SECTION_RO_OFF &&
 	    my_addr < (CONFIG_SECTION_RO_OFF + CONFIG_SECTION_RO_SIZE))
