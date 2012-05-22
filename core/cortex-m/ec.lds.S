@@ -83,6 +83,10 @@ SECTIONS
         *(.rodata.HOOK_AC_CHANGE)
         __hooks_ac_change_end = .;
 
+        __hooks_lid_change = .;
+        *(.rodata.HOOK_LID_CHANGE)
+        __hooks_lid_change_end = .;
+
         . = ALIGN(4);
         *(.rodata*)
 

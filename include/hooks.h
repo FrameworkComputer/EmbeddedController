@@ -37,6 +37,8 @@ enum hook_type {
 	HOOK_CHIPSET_SHUTDOWN, /* System is shutting down.  All suspend rails
 				* are still on. */
 	HOOK_AC_CHANGE,        /* AC power plugged in or removed */
+	HOOK_LID_CHANGE,       /* Lid opened or closed.  Based on debounced lid
+				* state, not raw lid GPIO input. */
 };
 
 
