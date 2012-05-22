@@ -418,6 +418,33 @@ struct ec_params_lightbar_cmd {
 } __attribute__ ((packed));
 
 /*****************************************************************************/
+/* Verified boot commands. Details still evolving. */
+#define EC_CMD_VBOOT_CMD 0x29
+struct ec_params_vboot_cmd {
+	union {
+		union {
+			uint8_t cmd;
+			struct {
+				uint8_t cmd;
+				/* no inputs */
+			} get_flags;
+			struct {
+				uint8_t cmd;
+				uint8_t val;
+			} set_flags;
+		} in;
+		union {
+			struct {
+				uint8_t val;
+			} get_flags;
+			struct {
+				/* no outputs */
+			} set_flags;
+		} out;
+	};
+} __attribute__ ((packed));
+
+/*****************************************************************************/
 /* USB charging control commands */
 
 /* Set USB port charging mode */
