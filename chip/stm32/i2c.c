@@ -176,6 +176,12 @@ static int i2c_init2(void)
 	/* enable I2C2 clock */
 	STM32_RCC_APB1ENR |= 1 << 22;
 
+	/* force reset if the bus is stuck in BUSY state */
+	if (STM32_I2C_SR2(I2C2) & 0x2) {
+		STM32_I2C_CR1(I2C2) = 0x8000;
+		STM32_I2C_CR1(I2C2) = 0x0000;
+	}
+
 	/* set clock configuration : standard mode (100kHz) */
 	STM32_I2C_CCR(I2C2) = I2C_CCR;
 
