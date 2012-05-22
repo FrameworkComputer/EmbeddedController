@@ -50,10 +50,14 @@ int uart_puts(const char *outstr);
  *   int64_t / uint64_t (%ld / %lu / %lx)
  *   pointer (%p)
  * And the following special format codes:
- *   current time in us (%T)
+ *   current time in sec (%T) - interpreted as "%.6T" for fixed-point format
  * including padding (%-5s, %8d, %08x, %016lx)
  *
- * Floating point output (%f / %g) is not supported. */
+ * Floating point output (%f / %g) is not supported, but there is a fixed-point
+ * extension for integers; a padding option of .N (where N is a number) will
+ * put a decimal before that many digits.  For example, printing 123 with
+ * format code %.6d will result in "0.000123".  This is most useful for
+ * printing times, voltages, and currents. */
 int uart_printf(const char *format, ...);
 
 /* Print formatted output to the UART, like vprintf().  Supports the same

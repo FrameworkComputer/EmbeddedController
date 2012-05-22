@@ -170,14 +170,14 @@ void timer_print_info(void)
 	int tskid;
 
 	ccprintf("Time:     0x%016lx us\n"
-		 "Deadline: 0x%016lx -> %10ld us from now\n"
+		 "Deadline: 0x%016lx -> %11.6ld s from now\n"
 		 "Active timers:\n",
 		 t, deadline, deadline - t);
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & (1<<tskid)) {
-			ccprintf("  Tsk %2d  0x%016lx -> %10ld %x\n", tskid,
+			ccprintf("  Tsk %2d  0x%016lx -> %11.6ld\n", tskid,
 				 timer_deadline[tskid].val,
-				 timer_deadline[tskid].val - t, 0xabcd);
+				 timer_deadline[tskid].val - t);
 			if (in_interrupt_context())
 				uart_emergency_flush();
 			else
@@ -202,7 +202,7 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait);
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
-	ccprintf("Time: 0x%016lx = %ld us\n", ts.val, ts.val);
+	ccprintf("Time: 0x%016lx = %.6ld s\n", ts.val, ts.val);
 
 	return EC_SUCCESS;
 }

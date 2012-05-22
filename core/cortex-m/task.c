@@ -492,11 +492,11 @@ void mutex_unlock(struct mutex *mtx)
 void task_print_list(void)
 {
 	int i;
-	ccputs("Task Ready Name         Events    Time (us)\n");
+	ccputs("Task Ready Name         Events      Time (s)\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-		ccprintf("%4d %c %-16s %08x %10ld\n", i, is_ready,
+		ccprintf("%4d %c %-16s %08x %11.6ld\n", i, is_ready,
 			 task_names[i], tasks[i].events, tasks[i].runtime);
 		if (in_interrupt_context())
 			uart_emergency_flush();
@@ -527,13 +527,13 @@ int command_task_info(int argc, char **argv)
 			total += irq_dist[i];
 		}
 	}
-	ccprintf("Service calls:          %10d\n", svc_calls);
-	ccprintf("Total exceptions:       %10d\n", total + svc_calls);
-	ccprintf("Task switches:          %10d\n", task_switches);
-	ccprintf("Task switching started: %10ld us\n", task_start_time);
-	ccprintf("Time in tasks:          %10ld us\n",
+	ccprintf("Service calls:          %11d\n", svc_calls);
+	ccprintf("Total exceptions:       %11d\n", total + svc_calls);
+	ccprintf("Task switches:          %11d\n", task_switches);
+	ccprintf("Task switching started: %11.6ld s\n", task_start_time);
+	ccprintf("Time in tasks:          %11.6ld s\n",
 		 get_time().val - task_start_time);
-	ccprintf("Time in exceptions:     %10ld us\n", exc_total_time);
+	ccprintf("Time in exceptions:     %11.6ld s\n", exc_total_time);
 #endif
 
 	return EC_SUCCESS;

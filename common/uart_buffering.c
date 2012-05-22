@@ -387,7 +387,7 @@ int uart_vprintf(const char *format, va_list args)
 {
 	static const char int_chars[] = "0123456789abcdef";
 	static const char error_str[] = "ERROR";
-	char intbuf[33];
+	char intbuf[34];
 		/* Longest uint64 in decimal = 20
 		 * longest uint32 in binary  = 32
 		 */
@@ -454,6 +454,18 @@ int uart_vprintf(const char *format, va_list args)
 			int is_negative = 0;
 			int is_64bit = 0;
 			int base = 10;
+			int fixed_point = 0;
+
+			/* Handle fixed point numbers */
+			if (c == '.') {
+				c = *format++;
+				if (c < '0' || c > '9') {
+					format = error_str;
+					continue;
+				}
+				fixed_point = c - '0';
+				c = *format++;
+			}
 
 			if (c == 'l') {
 				is_64bit = 1;
@@ -464,6 +476,7 @@ int uart_vprintf(const char *format, va_list args)
 			if (c == 'T') {
 				v = get_time().val;
 				is_64bit = 1;
+				fixed_point = 6;
 			} else if (is_64bit) {
 				v = va_arg(args, uint64_t);
 			} else {
@@ -506,6 +519,13 @@ int uart_vprintf(const char *format, va_list args)
 			 * buffer and working backwards. */
 			vstr = intbuf + sizeof(intbuf) - 1;
 			*(vstr) = '\0';
+
+			/* Handle digits to right of decimal for fixed point
+			 * numbers. */
+			for (vlen = 0; vlen < fixed_point; vlen++)
+				*(--vstr) = int_chars[uint64divmod(&v, 10)];
+			if (fixed_point)
+				*(--vstr) = '.';
 
 			if (!v)
 				*(--vstr) = '0';

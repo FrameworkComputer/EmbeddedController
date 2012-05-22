@@ -120,8 +120,8 @@ static int command_battery(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	ccprintf("  Temp:      0x%04x = %d x 0.1K (%d C)\n",
-		 d, d, (d-2731)/10);
+	ccprintf("  Temp:      0x%04x = %.1d K (%.1d C)\n",
+		 d, d, d - 2731);
 
 	ccprintf("  Manuf:     %s\n",
 		 battery_manufacturer_name(text, sizeof(text)) == EC_SUCCESS ?
