@@ -144,6 +144,7 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC,
 		},
 
+#ifndef CONFIG_NO_RW_B
 		/* Firmware B */
 		{
 			.area_name = "RW_SECTION_B",
@@ -169,5 +170,6 @@ const struct _ec_fmap {
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
+#endif /* CONFIG_NO_RW_B */
 	}
 };
