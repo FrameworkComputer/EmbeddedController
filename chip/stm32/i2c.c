@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */
@@ -28,6 +29,9 @@
 /* Clock divider for I2C controller */
 #define I2C_CCR (CPU_CLOCK/(2 * I2C_FREQ))
 
+/* Transmit timeout in microseconds */
+#define I2C_TX_TIMEOUT 10000 /* us */
+
 #define NUM_PORTS 2
 #define I2C1      STM32_I2C1_PORT
 #define I2C2      STM32_I2C2_PORT
@@ -41,12 +45,19 @@ static uint8_t host_buffer[EC_PARAM_SIZE + 2];
 /* current position in host buffer for reception */
 static int rx_index;
 
+/* indicates if a wait loop should abort */
+static volatile int abort_transaction;
 
-static void wait_tx(int port)
+static int wait_tx(int port)
 {
-	/* TODO: Add timeouts and error checking for safety */
-	while (!(STM32_I2C_SR1(port) & (1 << 7)))
+	static timestamp_t deadline;
+
+	deadline.val = get_time().val + I2C_TX_TIMEOUT;
+	/* wait for TxE or errors (Timeout, STOP, BERR, AF) */
+	while (!(STM32_I2C_SR1(port) & (1<<7)) && !abort_transaction &&
+	       (get_time().val < deadline.val))
 		;
+	return !(STM32_I2C_SR1(port) & (1 << 7));
 }
 
 static int i2c_write_raw(int port, void *buf, int len)
@@ -54,9 +65,13 @@ static int i2c_write_raw(int port, void *buf, int len)
 	int i;
 	uint8_t *data = buf;
 
+	abort_transaction = 0;
 	for (i = 0; i < len; i++) {
 		STM32_I2C_DR(port) = data[i];
-		wait_tx(port);
+		if (wait_tx(port)) {
+			CPRINTF("TX failed\n");
+			break;
+		}
 	}
 
 	return len;
@@ -117,6 +132,7 @@ static void i2c_event_handler(int port)
 		STM32_I2C_SR1(port);
 		STM32_I2C_SR2(port);
 	} else if (i2c_sr1[port] & (1 << 4)) {
+		abort_transaction = 1;
 		/* clear STOPF bit by reading SR1 and then writing CR1 */
 		STM32_I2C_SR1(port);
 		STM32_I2C_CR1(port) = STM32_I2C_CR1(port);
@@ -154,17 +170,16 @@ static void i2c_error_handler(int port)
 {
 	i2c_sr1[port] = STM32_I2C_SR1(port);
 
-#ifdef CONFIG_DEBUG
 	if (i2c_sr1[port] & 1 << 10) {
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
 	} else {
+		abort_transaction = 1;
 		CPRINTF("%s: I2C_SR1(%s): 0x%04x\n",
 			__func__, port, i2c_sr1[port]);
 		CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
 			__func__, port, STM32_I2C_SR2(port));
 	}
-#endif
 
 	STM32_I2C_SR1(port) &= ~0xdf00;
 }
