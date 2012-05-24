@@ -187,6 +187,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 
 #define LM4_SYSTEM_DID0        LM4REG(0x400fe000)
 #define LM4_SYSTEM_DID1        LM4REG(0x400fe004)
+#define LM4_SYSTEM_PBORCTL     LM4REG(0x400fe030)
 #define LM4_SYSTEM_RIS         LM4REG(0x400fe050)
 #define LM4_SYSTEM_MISC        LM4REG(0x400fe058)
 #define LM4_SYSTEM_RESC        LM4REG(0x400fe05c)

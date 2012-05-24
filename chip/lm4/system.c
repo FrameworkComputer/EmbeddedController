@@ -144,6 +144,9 @@ int system_pre_init(void)
 			;
 	}
 
+	/* Brown-outs should trigger a reset */
+	LM4_SYSTEM_PBORCTL |= 0x02;
+
 	return EC_SUCCESS;
 }
 
