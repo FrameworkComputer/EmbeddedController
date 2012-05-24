@@ -16,6 +16,9 @@
 #include "registers.h"
 #include "util.h"
 
+#define CPUTS(outstr) cputs(CC_I2C, outstr)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+
 #define NUM_PORTS 6  /* Number of physical ports */
 
 #define LM4_I2C_MCS_RUN   (1 << 0)
@@ -266,9 +269,29 @@ static int i2c_freq_changed(void)
 	int freq = clock_get_freq();
 	int i;
 
-	for (i = 0; i < I2C_PORTS_USED; i++)
-		LM4_I2C_MTPR(i2c_ports[i].port) =
-			(freq / (i2c_ports[i].kbps * 10 * 2)) - 1;
+	for (i = 0; i < I2C_PORTS_USED; i++) {
+		/* From datasheet:
+		 *     SCL_PRD = 2 * (1 + TPR) * (SCL_LP + SCL_HP) * CLK_PRD
+		 *
+		 * so:
+		 *     TPR = SCL_PRD / (2 * (SCL_LP + SCL_HP) * CLK_PRD) - 1
+		 *
+		 * converting from period to frequency:
+		 *     TPR = CLK_FREQ / (SCL_FREQ * 2 * (SCL_LP + SCL_HP)) - 1
+		 */
+		const int d = 2 * (6 + 4) * (i2c_ports[i].kbps * 1000);
+
+		/* Round TPR up, so desired kbps is an upper bound */
+		const int tpr = (freq + d - 1) / d - 1;
+
+#ifdef PRINT_I2C_SPEEDS
+		const int f = freq / (2 * (1 + tpr) * (6 + 4));
+		CPRINTF("[I2C%d clk=%d tpr=%d freq=%d]\n",
+			i2c_ports[i].port, freq, tpr, f);
+#endif
+
+		LM4_I2C_MTPR(i2c_ports[i].port) = tpr;
+	}
 
 	return EC_SUCCESS;
 }
@@ -282,7 +305,7 @@ static void handle_interrupt(int port)
 {
 	int id = task_waiting_on_port[port];
 
-	/* Clear the interrupt status*/
+	/* Clear the interrupt status */
 	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
 
 	/* Wake up the task which was waiting on the interrupt, if any */
@@ -313,7 +336,16 @@ static void scan_bus(int port, const char *desc)
 	int rv;
 	int a;
 
-	ccprintf("Scanning %d %s\n", desc, port);
+	ccprintf("Scanning %d %s", port, desc);
+
+	/* Don't scan a busy port, since reads will just fail / time out */
+	a = LM4_I2C_MBMON(port);
+	if ((a & 0x03) != 0x03) {
+		ccprintf(": port busy (SDA=%d, SCL=%d)\n",
+		 (LM4_I2C_MBMON(port) & 0x02) ? 1 : 0,
+		 (LM4_I2C_MBMON(port) & 0x01) ? 1 : 0);
+		return;
+	}
 
 	mutex_lock(port_mutex + port);
 
@@ -325,7 +357,7 @@ static void scan_bus(int port, const char *desc)
 		LM4_I2C_MCS(port) = 0x07;
 		rv = wait_idle(port);
 		if (rv == EC_SUCCESS)
-			ccprintf("0x%02x\n", a);
+			ccprintf("\n  0x%02x", a);
 	}
 
 	mutex_unlock(port_mutex + port);
