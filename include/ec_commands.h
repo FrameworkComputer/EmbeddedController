@@ -533,6 +533,7 @@ struct ec_response_mkbp_state {
 struct ec_response_mkbp_info {
 	uint32_t rows;
 	uint32_t cols;
+	uint8_t switches;
 } __attribute__ ((packed));
 
 /* Simulate key press */

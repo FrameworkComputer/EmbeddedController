@@ -27,6 +27,7 @@
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "console.h"
 #include "gpio.h"
+#include "keyboard_scan.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -95,6 +96,9 @@ static int pwron_released;
 
 /* time where we will release GPIO_PMIC_PWRON_L */
 static timestamp_t pwron_deadline;
+
+/* force AP power on (used for recovery keypress) */
+static int auto_power_on;
 
 /*
  * Wait for GPIO "signal" to reach level "value".
@@ -189,6 +193,10 @@ int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 
+	/* auto power on if the recovery combination was pressed */
+	if (keyboard_scan_recovery_pressed())
+		auto_power_on = 1;
+
 	return EC_SUCCESS;
 }
 
@@ -232,6 +240,12 @@ static int check_for_power_on_event(void)
 	/* the system is already ON */
 	if (gpio_get_level(GPIO_EN_PP3300))
 		return 1;
+
+	/* power on requested at EC startup for recovery */
+	if (auto_power_on) {
+		auto_power_on = 0;
+		return 1;
+	}
 
 	/* wait for Power button press */
 	wait_in_signal(GPIO_KB_PWR_ON_L, 0, -1);

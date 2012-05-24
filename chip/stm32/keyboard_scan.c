@@ -17,6 +17,7 @@
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -41,6 +42,9 @@ enum COL_INDEX {
 /* The keyboard state from the last read */
 static uint8_t raw_state[KB_OUTPUTS];
 
+/* status of keyboard related switches */
+static uint8_t switches;
+
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
 
@@ -54,6 +58,12 @@ static const uint8_t actual_key_masks[4][KB_OUTPUTS] = {
 	{0},
 	{0},
 	};
+
+/* Key masks for special boot keys */
+#define MASK_INDEX_ESC     1
+#define MASK_VALUE_ESC     0x02
+#define MASK_INDEX_REFRESH 2
+#define MASK_VALUE_REFRESH 0x04
 
 struct kbc_gpio {
 	int num;		/* logical row or column number */
@@ -187,26 +197,6 @@ static void select_column(int col)
 }
 
 
-int keyboard_scan_init(void)
-{
-	int i;
-
-	/* Tri-state (put into Hi-Z) the outputs */
-	select_column(COL_TRI_STATE_ALL);
-
-	/* initialize raw state since host may request it before
-	 * a key has been pressed (e.g. during keyboard driver init) */
-	for (i = 0; i < ARRAY_SIZE(raw_state); i++)
-		raw_state[i] = 0x00;
-
-	/* TODO: method to set which keyboard we have, so we set the actual
-	 * key mask properly */
-	actual_key_mask = actual_key_masks[0];
-
-	return EC_SUCCESS;
-}
-
-
 void wait_for_interrupt(void)
 {
 	uint32_t pr_before, pr_after;
@@ -316,6 +306,58 @@ static int check_keys_changed(void)
 }
 
 
+/* Returns non-zero if the user has triggered a recovery reset by pushing
+ * Power + Refresh + ESC. */
+static int check_recovery_key(void)
+{
+	int c;
+
+	/* check the recovery key only if we're booting due to a
+	 * reset-pin-caused reset. */
+	if (system_get_reset_cause() != SYSTEM_RESET_RESET_PIN)
+		return 0;
+
+	/* cold boot : Power + Refresh were pressed,
+	 * check if ESC is also pressed for recovery. */
+	if (!(raw_state[MASK_INDEX_ESC] & MASK_VALUE_ESC))
+		return 0;
+
+	/* Make sure only other allowed keys are pressed.  This protects
+	 * against accidentally triggering the special key when a cat sits on
+	 * your keyboard.  Currently, only the requested key and ESC are
+	 * allowed. */
+	for (c = 0; c < KB_OUTPUTS; c++) {
+		if (raw_state[c] &&
+		(c != MASK_INDEX_ESC || raw_state[c] != MASK_VALUE_ESC) &&
+		(c != MASK_INDEX_REFRESH || raw_state[c] != MASK_VALUE_REFRESH))
+			return 0;  /* Additional disallowed key pressed */
+	}
+
+	CPRINTF("Keyboard RECOVERY detected !\n");
+	return 1;
+}
+
+
+int keyboard_scan_init(void)
+{
+	/* Tri-state (put into Hi-Z) the outputs */
+	select_column(COL_TRI_STATE_ALL);
+
+	/* TODO: method to set which keyboard we have, so we set the actual
+	 * key mask properly */
+	actual_key_mask = actual_key_masks[0];
+
+	/* Initialize raw state */
+	check_keys_changed();
+
+	/* is recovery key pressed on cold startup ? */
+	switches |= check_recovery_key() ?
+			EC_SWITCH_KEYBOARD_RECOVERY : 0;
+
+	return EC_SUCCESS;
+}
+
+
 void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
@@ -376,8 +418,7 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 
 int keyboard_scan_recovery_pressed(void)
 {
-	/* TODO: (crosbug.com/p/8573) needs to be implemented */
-	return 0;
+	return switches & EC_SWITCH_KEYBOARD_RECOVERY;
 }
 
 static int keyboard_get_scan(uint8_t *data, int *resp_size)
@@ -397,6 +438,7 @@ static int keyboard_get_info(uint8_t *data, int *resp_size)
 
 	r->rows = 8;
 	r->cols = KB_OUTPUTS;
+	r->switches = switches;
 
 	*resp_size = sizeof(struct ec_response_mkbp_info);
 	return EC_RES_SUCCESS;
