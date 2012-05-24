@@ -53,6 +53,9 @@ void kblog_put(char type, uint8_t byte);
 #define MAX_KEYBOARD_MATRIX_ROWS 8
 #define MAX_KEYBOARD_MATRIX_COLS 16
 
+/* Clear the keyboard buffer to host. */
+void keyboard_clear_underlying_buffer(void);
+
 /* Asks the underlayer EC lib what keys are pressed right now.
  *
  * Sets bit_array to a debounced array of which keys are currently pressed,

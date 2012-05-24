@@ -200,6 +200,7 @@ static void power_button_released(uint64_t tnow)
 	tnext_state = tnow;
 	*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 	keyboard_set_power_button(0);
+	keyboard_enable_scanning(1);
 }
 
 
@@ -528,6 +529,12 @@ void power_button_interrupt(enum gpio_signal signal)
 	case GPIO_POWER_BUTTONn:
 		/* Reset power button debounce time */
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
+		if (get_power_button_pressed()) {
+			/* We want to disable the matrix scan as soon as
+			 * possible to reduce the risk of false-reboot triggered
+			 * by those keys on the same column with ESC key. */
+			keyboard_enable_scanning(0);
+		}
 		break;
 	case GPIO_PCH_BKLTEN:
 		update_backlight();

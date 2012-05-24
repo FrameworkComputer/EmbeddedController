@@ -255,9 +255,9 @@ static void reset_rate_and_delay(void)
 }
 
 
-static void clear_underlying_buffer(void)
+void keyboard_clear_underlying_buffer(void)
 {
-	i8042_init();
+	i8042_flush_buffer();
 }
 
 
@@ -482,25 +482,25 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case I8042_CMD_ENABLE:
 			output[out_len++] = I8042_RET_ACK;
 			keyboard_enable(1);
-			clear_underlying_buffer();
+			keyboard_clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_DIS:
 			output[out_len++] = I8042_RET_ACK;
 			keyboard_enable(0);
 			reset_rate_and_delay();
-			clear_underlying_buffer();
+			keyboard_clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_DEF:
 			output[out_len++] = I8042_RET_ACK;
 			reset_rate_and_delay();
-			clear_underlying_buffer();
+			keyboard_clear_underlying_buffer();
 			break;
 
 		case I8042_CMD_RESET_BAT:
 			reset_rate_and_delay();
-			clear_underlying_buffer();
+			keyboard_clear_underlying_buffer();
 			output[out_len++] = I8042_RET_ACK;
 			output[out_len++] = I8042_RET_BAT;
 			output[out_len++] = I8042_RET_BAT;
@@ -613,7 +613,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		} else {
 			CPRINTF("[Unsupported cmd: 0x%02x]\n", command);
 			reset_rate_and_delay();
-			clear_underlying_buffer();
+			keyboard_clear_underlying_buffer();
 			output[out_len++] = I8042_RET_NAK;
 			data_port_state = STATE_NORMAL;
 		}

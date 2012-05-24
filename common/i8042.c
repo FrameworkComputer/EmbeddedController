@@ -46,7 +46,7 @@ static int i8042_irq_enabled = 0;
 
 
 /* Reset all i8042 buffer */
-void i8042_init()
+void i8042_flush_buffer()
 {
 	head_to_buffer = tail_to_buffer = 0;
 	keyboard_clear_buffer();

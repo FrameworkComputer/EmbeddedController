@@ -19,4 +19,9 @@ int keyboard_scan_recovery_pressed(void);
 /* clear any saved keyboard state (empty FIFO, etc) */
 void keyboard_clear_state(void);
 
+
+/* Enables/disables keyboard matrix scan. */
+void keyboard_enable_scanning(int enable);
+
+
 #endif  /* __CROS_KEYBOARD_SCAN_H */
