@@ -25,7 +25,8 @@
 #define CPUTS(outstr) cputs(CC_POWERBTN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_POWERBTN, format, ## args)
 
-/* Power button state machine.
+/* When chipset is on, we stretch the power button signal to it so chipset
+ * hard-reset is triggered at ~8 sec, not ~4 sec:
  *
  *   PWRBTN#   ---                      ----
  *     to EC     |______________________|
@@ -39,6 +40,7 @@
  *    to host    v                      v
  *     @S0   make code             break code
  */
+/* TODO: link to full power button / lid switch state machine description. */
 #define PWRBTN_DEBOUNCE_US 30000  /* Debounce time for power button */
 #define PWRBTN_DELAY_T0    32000  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
@@ -215,8 +217,9 @@ static void lid_switch_open(uint64_t tnow)
 	CPRINTF("[%T PB lid open]\n");
 	debounced_lid_open = 1;
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
-	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
 	hook_notify(HOOK_LID_CHANGE, 0);
+	update_backlight();
+	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
 
 	/* If the chipset is off, send a power button pulse to wake up the
 	 * chipset. */
@@ -242,6 +245,7 @@ static void lid_switch_close(uint64_t tnow)
 	debounced_lid_open = 0;
 	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
 	hook_notify(HOOK_LID_CHANGE, 0);
+	update_backlight();
 	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED));
 }
 
@@ -282,8 +286,6 @@ static void lid_switch_changed(uint64_t tnow)
 		lid_switch_open(tnow);
 	else
 		lid_switch_close(tnow);
-
-	update_backlight();
 }
 
 
