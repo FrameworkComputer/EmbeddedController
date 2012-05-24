@@ -16,6 +16,8 @@ struct tmp006_t {
 	const char* name;
 	/* I2C address formed by TMP006_ADDR macro. */
 	int addr;
+	/* Sensitivity factor, in 10^11. */
+	int sens;
 };
 
 /* Poll all TMP006 sensors. Return 0 on success. */

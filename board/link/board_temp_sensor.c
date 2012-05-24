@@ -56,8 +56,9 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 };
 
 const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
-	{"CPU", TEMP_CPU_ADDR},
-	{"PCH", TEMP_PCH_ADDR},
-	{"DDR", TEMP_DDR_ADDR},
-	{"Charger", TEMP_CHARGER_ADDR},
+	/* TODO: Calibrate sensitivity factors. See crosbug.com/p/9599 */
+	{"CPU", TEMP_CPU_ADDR, 2771},
+	{"PCH", TEMP_PCH_ADDR, 4762},
+	{"DDR", TEMP_DDR_ADDR, 6400},
+	{"Charger", TEMP_CHARGER_ADDR, 7154},
 };

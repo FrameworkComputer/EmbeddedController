@@ -160,7 +160,8 @@ static int tmp006_read_object_temp(int idx)
 		v);
 
 	/* TODO: Calibrate the sensitivity factor. */
-	return tmp006_calculate_object_temp(t, v, 6400) / 100;
+	return tmp006_calculate_object_temp(t, v,
+			tmp006_sensors[idx].sens) / 100;
 }
 
 static int tmp006_poll_sensor(int sensor_id)
