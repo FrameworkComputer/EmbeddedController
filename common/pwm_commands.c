@@ -43,6 +43,7 @@ int pwm_command_get_keyboard_backlight(uint8_t *data, int *resp_size)
 			(struct ec_response_pwm_get_keyboard_backlight *)data;
 
 	r->percent = pwm_get_keyboard_backlight();
+	r->enabled = pwm_get_keyboard_backlight_enabled();
 	*resp_size = sizeof(struct ec_response_pwm_get_keyboard_backlight);
 	return EC_RES_SUCCESS;
 }

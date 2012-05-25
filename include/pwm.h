@@ -26,6 +26,9 @@ int pwm_set_fan_target_rpm(int rpm);
 /* Enable/disable the keyboard backlight. */
 int pwm_enable_keyboard_backlight(int enable);
 
+/* Get the keyboard backlight enable/disable status (1=enabled, 0=disabled). */
+int pwm_get_keyboard_backlight_enabled(void);
+
 /* Get the keyboard backlight percentage (0=off, 100=max). */
 int pwm_get_keyboard_backlight(void);
 

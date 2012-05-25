@@ -370,6 +370,7 @@ struct ec_params_pwm_set_fan_target_rpm {
 #define EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT 0x22
 struct ec_response_pwm_get_keyboard_backlight {
 	uint8_t percent;
+	uint8_t enabled;
 } __attribute__ ((packed));
 
 /* Set keyboard backlight */

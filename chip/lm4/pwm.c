@@ -90,6 +90,12 @@ int pwm_enable_keyboard_backlight(int enable)
 }
 
 
+int pwm_get_keyboard_backlight_enabled(void)
+{
+	return (LM4_FAN_FANCTL & (1 << FAN_CH_KBLIGHT)) ? 1 : 0;
+}
+
+
 int pwm_get_keyboard_backlight(void)
 {
 	return ((LM4_FAN_FANCMD(FAN_CH_KBLIGHT) >> 16) * 100 +
