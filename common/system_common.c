@@ -5,8 +5,10 @@
 
 /* System module for Chrome EC : common functions */
 
+#include "board.h"
 #include "clock.h"
 #include "console.h"
+#include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -62,6 +64,30 @@ static struct jump_data * const jdata =
 static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 static int jumped_to_image;
+static int disable_jump;
+
+
+int system_is_locked(void)
+{
+#ifdef CONFIG_SYSTEM_UNLOCKED
+	/* System is explicitly unlocked */
+	return 0;
+
+#elif defined(BOARD_link) && defined(CONFIG_FLASH)
+	/* On link, unlocked if write protect pin deasserted or flash protect
+	 * lock not applied. */
+	int lock = flash_get_protect_lock();
+	if (!(lock & FLASH_PROTECT_PIN_ASSERTED) ||
+	    !(lock & FLASH_PROTECT_LOCK_APPLIED))
+		return 0;
+
+	/* If WP pin is asserted and lock is applied, we're locked */
+	return 1;
+#else
+	/* Other configs are locked by default */
+	return 1;
+#endif
+}
 
 
 int system_usable_ram_end(void)
@@ -148,6 +174,12 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 void system_set_reset_cause(enum system_reset_cause_t cause)
 {
 	reset_cause = cause;
+}
+
+
+void system_disable_jump(void)
+{
+	disable_jump = 1;
 }
 
 
@@ -293,13 +325,26 @@ int system_run_image_copy(enum system_image_copy_t copy,
 	uint32_t base;
 	uint32_t init_addr;
 
-	/* TODO: sanity checks (crosbug.com/p/7468)
-	 *
-	 * For this to be allowed either WP must be disabled, or ALL of the
-	 * following must be true:
-	 *  - We must currently be running the RO image.
-	 *  - We must still be in init (that is, before task_start().
-	 *  - The target image must be A or B. */
+	if (system_is_locked()) {
+		/* System is locked, so disallow jumping between images unless
+		 * this is the initial jump from RO to RW code. */
+
+		/* Must currently be running the RO image */
+		if (system_get_image_copy() != SYSTEM_IMAGE_RO)
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Target image must be RW image */
+		if (copy != SYSTEM_IMAGE_RW_A && copy != SYSTEM_IMAGE_RW_B)
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Can't have already jumped between images */
+		if (jumped_to_image)
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Jumping must still be enabled */
+		if (disable_jump)
+			return EC_ERROR_ACCESS_DENIED;
+	}
 
 	/* Load the appropriate reset vector */
 	base = get_base(copy);
@@ -316,7 +361,7 @@ int system_run_image_copy(enum system_image_copy_t copy,
 	jump_to_image(init_addr, recovery_required);
 
 	/* Should never get here */
-	return EC_ERROR_UNIMPLEMENTED;
+	return EC_ERROR_UNKNOWN;
 }
 
 
@@ -451,8 +496,9 @@ static int command_sysinfo(int argc, char **argv)
 	ccprintf("Last reset: %d (%s)\n",
 		    system_get_reset_cause(),
 		    system_get_reset_cause_string());
-	ccprintf("Copy: %s\n", system_get_image_copy_string());
-	ccprintf("Jump: %s\n", system_jumped_to_this_image() ? "yes" : "no");
+	ccprintf("Copy:   %s\n", system_get_image_copy_string());
+	ccprintf("Jumped: %s\n", system_jumped_to_this_image() ? "yes" : "no");
+	ccprintf("Locked: %s\n", system_is_locked() ? "yes" : "no");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
@@ -530,8 +576,9 @@ static int command_sysjump(int argc, char **argv)
 	uint32_t addr;
 	char *e;
 
-	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
-	 * be disabled. */
+	/* Command is only allowed on an unlocked system */
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
@@ -659,26 +706,16 @@ int host_command_get_board_version(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version);
 
 
-#ifdef CONFIG_REBOOT_EC
-static void clean_busy_bits(void) {
-#ifdef CONFIG_LPC
-	host_send_result(0, EC_RES_SUCCESS);
-	host_send_result(1, EC_RES_SUCCESS);
-#endif
-}
-
 int host_command_reboot(uint8_t *data, int *resp_size)
 {
 	enum system_image_copy_t copy;
+	struct ec_params_reboot_ec *p =	(struct ec_params_reboot_ec *)data;
+	int recovery_request = p->reboot_flags & EC_CMD_REBOOT_BIT_RECOVERY;
 
-	struct ec_params_reboot_ec *p =
-		(struct ec_params_reboot_ec *)data;
-
-	int recovery_request = p->reboot_flags &
-		EC_CMD_REBOOT_BIT_RECOVERY;
-
-	/* TODO: (crosbug.com/p/7468) For this command to be allowed, WP must
-	 * be disabled. */
+	/* This command is only allowed on unlocked systems, because jumping
+	 * directly to another image bypasses verified boot. */
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
 
 	switch (p->target) {
 	case EC_IMAGE_RO:
@@ -694,8 +731,13 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 		return EC_RES_ERROR;
 	}
 
-	clean_busy_bits();
-	CPUTS("Executing host reboot command\n");
+#ifdef CONFIG_LPC
+	/* Clean busy bits on host */
+	host_send_result(0, EC_RES_SUCCESS);
+	host_send_result(1, EC_RES_SUCCESS);
+#endif
+
+	CPUTS("[Executing host reboot command]\n");
 	system_run_image_copy(copy, recovery_request);
 
 	/* We normally never get down here, because we'll have jumped to
@@ -707,4 +749,3 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 	return EC_RES_ERROR;
 }
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC, host_command_reboot);
-#endif /* CONFIG_REBOOT_EC */

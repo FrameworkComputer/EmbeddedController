@@ -10,6 +10,7 @@
 
 /* Optional features */
 #define CONFIG_CONSOLE_CMDHELP
+#define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 
 enum adc_channel
 {

@@ -17,6 +17,13 @@
 /* use I2C for host communication */
 #define CONFIG_I2C
 
+/* Allow dangerous commands all the time, since we don't have a write protect
+ * switch. */
+/* TODO: (crosbug.com/p/9986) This is a serious security hole and should be
+ * removed in mass production. We add this to allow manual firmware update.
+ * Once we complete the vboot and autoupdate, we should remove this. */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 

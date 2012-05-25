@@ -110,6 +110,11 @@ int main(void)
 	 * Note that steps above here may be done TWICE per boot, once in the
 	 * RO image and once in the RW image. */
 	vboot_init();
+
+	/* If system is locked, disable system jumps now that vboot has had its
+	 * chance to jump to a RW image. */
+	if (system_is_locked())
+		system_disable_jump();
 #endif
 
 	/* Initialize other driver modules.  These can occur in any order.

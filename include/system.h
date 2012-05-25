@@ -45,19 +45,31 @@ int system_common_pre_init(void);
  * the cause is not known. */
 enum system_reset_cause_t system_get_reset_cause(void);
 
-/* returns a Boolean indicating if BIOS should come up in recovery mode */
+/* Return a Boolean indicating if BIOS should come up in recovery mode */
 int system_get_recovery_required(void);
 
 /* Record the cause of the last reset. */
 void system_set_reset_cause(enum system_reset_cause_t cause);
 
-/* Returns a text description of the last reset cause. */
+/* Return a text description of the last reset cause. */
 const char *system_get_reset_cause_string(void);
 
-/* Returns the image copy which is currently running. */
+/* Return non-zero if the system is locked down for normal consumer use.
+ * Potentially-dangerous developer and/or factory commands must be disabled
+ * unless this command returns 0.
+ *
+ * This should be controlled by the same mechanism which write-protects the
+ * read-only image (so that the only way to unlock the system is to unprotect
+ * the read-only image). */
+int system_is_locked(void);
+
+/* Disable jumping between images for the rest of this boot. */
+void system_disable_jump(void);
+
+/* Return the image copy which is currently running. */
 enum system_image_copy_t system_get_image_copy(void);
 
-/* Returns non-zero if the system has switched between image copies at least
+/* Return non-zero if the system has switched between image copies at least
  * once since the last real boot. */
 int system_jumped_to_this_image(void);
 
@@ -75,20 +87,20 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
  * NULL if no matching tag is found. */
 const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 
-/* Returns the address just past the last usable byte in RAM. */
+/* Return the address just past the last usable byte in RAM. */
 int system_usable_ram_end(void);
 
 /* Returns true if the given range is overlapped with the active image. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 
-/* Returns a text description of the image copy which is currently running. */
+/* Return a text description of the image copy which is currently running. */
 const char *system_get_image_copy_string(void);
 
-/* Jumps to the specified image copy. */
+/* Jump to the specified image copy. */
 int system_run_image_copy(enum system_image_copy_t copy,
 			  int recovery_request);
 
-/* Returns the version string for an image copy, or an empty string if
+/* Return the version string for an image copy, or an empty string if
  * error.  If copy==SYSTEM_IMAGE_UNKNOWN, returns the version for the
  * currently-running image. */
 const char *system_get_version(enum system_image_copy_t copy);
@@ -97,25 +109,24 @@ const char *system_get_version(enum system_image_copy_t copy);
  * board-dependent; see enum board_version in board.h for known versions. */
 int system_get_board_version(void);
 
-/* Returns information about the build including the version
- * the build date and user/machine.
- */
+/* Return information about the build including the version, build date and
+ * user/machine which performed the build. */
 const char *system_get_build_info(void);
 
-/* Resets the system.  If is_hard, performs a hard reset, which cuts power to
+/* Reset the system.  If is_hard, performs a hard reset, which cuts power to
  * the entire system; else performs a soft reset (which resets the core and
  * on-chip peripherals, without actually cutting power to the chip). */
 void system_reset(int is_hard);
 
-/* Sets a scratchpad register to the specified value.  The scratchpad
+/* Set a scratchpad register to the specified value.  The scratchpad
  * register must maintain its contents across a software-requested
  * warm reset. */
 int system_set_scratchpad(uint32_t value);
 
-/* Returns the current scratchpad register value. */
+/* Return the current scratchpad register value. */
 uint32_t system_get_scratchpad(void);
 
-/* Returns the chip info */
+/* Return the chip info */
 const char *system_get_chip_vendor(void);
 const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
@@ -123,10 +134,11 @@ const char *system_get_chip_revision(void);
 /* TODO: request sleep.  How do we want to handle transitioning
  * to/from low-power states? */
 
-/* put the system in hibernation for the specified duration */
+/* Put the EC in hibernate (lowest EC power state) for the specified
+ * duration.  Note that this is NOT the same as chipset S4/hibernate. */
 void system_hibernate(uint32_t seconds, uint32_t microseconds);
 
-/* minimum duration to get proper hibernation */
+/* Minimum duration to get proper hibernation */
 #define SYSTEM_HIB_MINIMUM_DURATION 0, 1000
 
 #endif  /* __CROS_EC_SYSTEM_H */
