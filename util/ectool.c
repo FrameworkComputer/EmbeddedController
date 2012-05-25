@@ -27,6 +27,8 @@ static inline int MIN(int a, int b) { return a < b ? a : b; }
 
 const char help_str[] =
 	"Commands:\n"
+	"  backlight <enabled>\n"
+	"      Enable/disable LCD backlight\n"
 	"  battery\n"
 	"      Prints battery info\n"
 	"  chipinfo\n"
@@ -89,6 +91,8 @@ const char help_str[] =
 	"      Get the threshold temperature value from thermal engine.\n"
 	"  thermalset <sensor_id> <threshold_id> <value>\n"
 	"      Set the threshold temperature value for thermal engine.\n"
+	"  wireless <mask>\n"
+	"      Enable/disable WLAN/Bluetooth radio\n"
 	"  autofanctrl <on>\n"
 	"      Turn on automatic fan speed control.\n"
 	"  pwmgetfanrpm\n"
@@ -1384,6 +1388,60 @@ int cmd_switches(int argc, char *argv[])
 }
 
 
+int cmd_wireless(int argc, char *argv[])
+{
+	struct ec_params_switch_enable_wireless p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
+		fprintf(stderr, "  0x1 = WLAN\n"
+				"  0x2 = Bluetooth\n");
+		return -1;
+	}
+	p.enabled = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Success.\n");
+	return 0;
+}
+
+
+int cmd_lcd_backlight(int argc, char *argv[])
+{
+	struct ec_params_switch_enable_backlight p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <0|1>\n", argv[0]);
+		return -1;
+	}
+	p.enabled = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_SWITCH_ENABLE_BKLIGHT,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Success.\n");
+	return 0;
+}
+
+
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_MEMMAP_TEXT_MAX];
@@ -1479,6 +1537,7 @@ struct command {
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
+	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"chipinfo", cmd_chipinfo},
 	{"eventclear", cmd_host_event_clear},
@@ -1515,6 +1574,7 @@ const struct command commands[] = {
 	{"thermalset", cmd_thermal_set_threshold},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"version", cmd_version},
+	{"wireless", cmd_wireless},
 	{NULL, NULL}
 };
 

@@ -94,6 +94,10 @@
 /* Fake developer switch (for testing) */
 #define EC_SWITCH_FAKE_DEVELOPER         0x20
 
+/* Wireless switch flags */
+#define EC_WIRELESS_SWITCH_WLAN      0x01
+#define EC_WIRELESS_SWITCH_BLUETOOTH 0x02
+
 /* The offset of temperature value stored in mapped memory.
  * This allows reporting a temperature range of
  * 200K to 454K = -73C to 181C.
@@ -581,6 +585,21 @@ struct ec_response_host_event_mask {
 #define EC_CMD_HOST_EVENT_SET_SCI_MASK  0x8b
 #define EC_CMD_HOST_EVENT_CLEAR         0x8c
 #define EC_CMD_HOST_EVENT_SET_WAKE_MASK 0x8e
+
+/*****************************************************************************/
+/* GPIO switch commands */
+
+/* Enable/disable LCD backlight */
+#define EC_CMD_SWITCH_ENABLE_BKLIGHT 0x90
+struct ec_params_switch_enable_backlight {
+	uint8_t enabled;
+} __attribute__ ((packed));
+
+/* Enabled/disable WLAN/Bluetooth */
+#define EC_CMD_SWITCH_ENABLE_WIRELESS 0x91
+struct ec_params_switch_enable_wireless {
+	uint8_t enabled;
+} __attribute__ ((packed));
 
 /*****************************************************************************/
 /* Special commands

@@ -10,6 +10,7 @@
 #include "eoption.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
@@ -637,3 +638,16 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 			NULL,
 			"Print memmap switch state",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+int switch_command_enable_backlight(uint8_t *data, int *resp_size)
+{
+	struct ec_params_switch_enable_backlight *p =
+			(struct ec_params_switch_enable_backlight *)data;
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, p->enabled);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
+		switch_command_enable_backlight);

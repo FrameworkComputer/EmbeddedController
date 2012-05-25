@@ -10,6 +10,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"
@@ -606,3 +607,19 @@ DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset,
 			"[warm | cold]",
 			"Issue x86 reset",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+int switch_command_enable_wireless(uint8_t *data, int *resp_size)
+{
+	struct ec_params_switch_enable_wireless *p =
+			(struct ec_params_switch_enable_wireless *)data;
+	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
+		       p->enabled & EC_WIRELESS_SWITCH_WLAN);
+	gpio_set_level(GPIO_RADIO_ENABLE_BT,
+		       p->enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
+		switch_command_enable_wireless);
