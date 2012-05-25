@@ -32,6 +32,11 @@
 /* EC drives 13 outputs to keyboard matrix */
 #define KB_OUTPUTS 13
 
+/* Charging */
+#define CONFIG_SMART_BATTERY
+#define I2C_PORT_BATTERY 1
+#define I2C_PORT_CHARGER 1
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */

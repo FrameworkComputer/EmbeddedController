@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_SMART_BATTERY
 #define CONFIG_BATTERY_ATL706486
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24725
