@@ -119,4 +119,7 @@ static int command_temps(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(temps, command_temps);
+DECLARE_CONSOLE_COMMAND(temps, command_temps,
+			NULL,
+			"Print temp sensors",
+			NULL);

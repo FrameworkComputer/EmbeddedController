@@ -20,7 +20,7 @@ static int command_host_event(int argc, char **argv)
 		char *e;
 		int i = strtoi(argv[2], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM2;
 
 		if (!strcasecmp(argv[1], "set"))
 			lpc_set_host_events(i);
@@ -33,7 +33,7 @@ static int command_host_event(int argc, char **argv)
 		else if (!strcasecmp(argv[1], "wake"))
 			lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, i);
 		else
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM1;
 	}
 
 	/* Print current SMI/SCI status */
@@ -46,7 +46,10 @@ static int command_host_event(int argc, char **argv)
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE));
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hostevent, command_host_event);
+DECLARE_CONSOLE_COMMAND(hostevent, command_host_event,
+			"[set | clear | smi | sci | wake] [mask]",
+			"Print / set host event state",
+			NULL);
 
 /*****************************************************************************/
 /* Host commands */

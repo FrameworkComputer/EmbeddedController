@@ -201,7 +201,10 @@ static int command_battery(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(battery, command_battery);
+DECLARE_CONSOLE_COMMAND(battery, command_battery,
+			NULL,
+			"Print battery info",
+			NULL);
 
 
 /* Usage:sb <r/w> cmd [uint16_t w_word]
@@ -217,11 +220,11 @@ static int command_sb(int argc, char **argv)
 	char *e;
 
 	if (argc < 3)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	cmd = strtoi(argv[2], &e, 0);
 	if (*e)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM2;
 
 	if (argv[1][0] == 'r') {
 		rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, &d);
@@ -233,7 +236,7 @@ static int command_sb(int argc, char **argv)
 	} else if (argc >= 4 && argv[1][0] == 'w') {
 		d = strtoi(argv[3], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM3;
 
 		ccprintf("W SBCMD[%04x] 0x%04x (%d)\n", cmd, d, d);
 		rv = i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, d);
@@ -246,5 +249,8 @@ static int command_sb(int argc, char **argv)
 
 
 }
-DECLARE_CONSOLE_COMMAND(sb, command_sb);
+DECLARE_CONSOLE_COMMAND(sb, command_sb,
+			"[r addr | w addr value]",
+			"Read/write smart battery data",
+			NULL);
 

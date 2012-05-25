@@ -83,6 +83,9 @@ static int command_powerled(int argc, char **argv)
 		if (!strcasecmp(argv[1], color_names[i]))
 			return powerled_set(i);
 	}
-	return EC_ERROR_INVAL;
+	return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND(powerled, command_powerled);
+DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
+			"<off | red | yellow | green>",
+			"Set power LED color",
+			NULL);

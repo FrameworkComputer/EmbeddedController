@@ -373,25 +373,25 @@ static int command_i2cread(int argc, char **argv)
 	int d, i;
 
 	if (argc < 3)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &e, 0);
 	if (*e)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 
 	for (i = 0; i < I2C_PORTS_USED && port != i2c_ports[i].port; i++)
 		;
 	if (i >= I2C_PORTS_USED)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 
 	addr = strtoi(argv[2], &e, 0);
 	if (*e || (addr & 0x01))
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM2;
 
 	if (argc > 3) {
 		count = strtoi(argv[3], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM3;
 	}
 
 	ccprintf("Reading %d bytes from %d:0x%02x:", count, port, addr);
@@ -414,7 +414,10 @@ static int command_i2cread(int argc, char **argv)
 	ccputs("\n");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread);
+DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread,
+			"port addr [count]",
+			"Read from I2C",
+			NULL);
 
 
 static int command_scan(int argc, char **argv)
@@ -425,7 +428,10 @@ static int command_scan(int argc, char **argv)
 		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(i2cscan, command_scan);
+DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
+			NULL,
+			"Scan I2C ports for devices",
+			NULL);
 
 
 /*****************************************************************************/

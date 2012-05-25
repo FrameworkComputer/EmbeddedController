@@ -291,4 +291,7 @@ static int command_sensor_info(int argc, char **argv)
 
 	return rv1;
 }
-DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info);
+DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info,
+			NULL,
+			"Print TMP006 sensors",
+			NULL);

@@ -455,17 +455,10 @@ static int command_sysinfo(int argc, char **argv)
 	ccprintf("Jump: %s\n", system_jumped_to_this_image() ? "yes" : "no");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo);
-
-
-static int command_chipinfo(int argc, char **argv)
-{
-	ccprintf("Vendor:   %s\n", system_get_chip_vendor());
-	ccprintf("Name:     %s\n", system_get_chip_name());
-	ccprintf("Revision: %s\n", system_get_chip_revision());
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(chipinfo, command_chipinfo);
+DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
+			NULL,
+			"Print system info",
+			NULL);
 
 
 #ifdef CONSOLE_COMMAND_SCRATCHPAD
@@ -477,14 +470,17 @@ static int command_scratchpad(int argc, char **argv)
 		char *e;
 		int s = strtoi(argv[1], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM1;
 		rv = system_set_scratchpad(s);
 	}
 
 	ccprintf("Scratchpad: 0x%08x\n", system_get_scratchpad());
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad);
+DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
+			"[val]",
+			"Get or set scratchpad value",
+			NULL);
 #endif
 
 
@@ -494,7 +490,7 @@ static int command_hibernate(int argc, char **argv)
 	int microseconds = 0;
 
 	if (argc < 2)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 	seconds = strtoi(argv[1], NULL, 0);
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
@@ -506,11 +502,16 @@ static int command_hibernate(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate);
+DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
+			"sec [usec]",
+			"Hibernate the EC",
+			NULL);
 
 
 static int command_version(int argc, char **argv)
 {
+	ccprintf("Chip:  %s %s %s\n", system_get_chip_vendor(),
+		 system_get_chip_name(), system_get_chip_revision());
 	ccprintf("Board: %d\n", system_get_board_version());
 	ccprintf("RO:    %s\n", system_get_version(SYSTEM_IMAGE_RO));
 	ccprintf("RW-A:  %s\n", system_get_version(SYSTEM_IMAGE_RW_A));
@@ -518,7 +519,10 @@ static int command_version(int argc, char **argv)
 	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(version, command_version);
+DECLARE_CONSOLE_COMMAND(version, command_version,
+			NULL,
+			"Print versions",
+			NULL);
 
 
 static int command_sysjump(int argc, char **argv)
@@ -530,30 +534,32 @@ static int command_sysjump(int argc, char **argv)
 	 * be disabled. */
 
 	if (argc < 2)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	ccputs("Processing sysjump command\n");
 
 	/* Handle named images */
-	if (!strcasecmp(argv[1], "RO")) {
+	if (!strcasecmp(argv[1], "RO"))
 		return system_run_image_copy(SYSTEM_IMAGE_RO, 0);
-	} else if (!strcasecmp(argv[1], "A")) {
+	else if (!strcasecmp(argv[1], "A"))
 		return system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
-	} else if (!strcasecmp(argv[1], "B")) {
+	else if (!strcasecmp(argv[1], "B"))
 		return system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
-	}
 
 	/* Check for arbitrary address */
 	addr = strtoi(argv[1], &e, 0);
 	if (*e)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 
 	ccprintf("Jumping to 0x%08x\n", addr);
 	cflush();
 	jump_to_image(addr, 0);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump);
+DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
+			"[RO | A | B | addr]",
+			"Jump to a system image or address",
+			NULL);
 
 
 static int command_reboot(int argc, char **argv)
@@ -570,7 +576,10 @@ static int command_reboot(int argc, char **argv)
 	system_reset(is_hard);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(reboot, command_reboot);
+DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
+			"[hard]",
+			"Reboot the EC",
+			NULL);
 
 /*****************************************************************************/
 /* Host commands */

@@ -184,7 +184,10 @@ static int command_ectemp(int argc, char **argv)
 	ccprintf("EC temperature is %d K = %d C\n", t, t-273);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp);
+DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp,
+			NULL,
+			"Print EC temperature",
+			NULL);
 #endif
 
 
@@ -198,7 +201,10 @@ static int command_adc(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(adc, command_adc);
+DECLARE_CONSOLE_COMMAND(adc, command_adc,
+			NULL,
+			"Print ADC channels",
+			NULL);
 
 /*****************************************************************************/
 /* Initialization */

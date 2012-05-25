@@ -35,6 +35,17 @@ enum ec_error_list {
 	EC_ERROR_INVAL = 5,
 	/* Already in use */
 	EC_ERROR_BUSY = 6,
+	/* Invalid console command param (PARAMn means parameter n is bad) */
+	EC_ERROR_PARAM1 = 11,
+	EC_ERROR_PARAM2 = 12,
+	EC_ERROR_PARAM3 = 13,
+	EC_ERROR_PARAM4 = 14,
+	EC_ERROR_PARAM5 = 15,
+	EC_ERROR_PARAM6 = 16,
+	EC_ERROR_PARAM7 = 17,
+	EC_ERROR_PARAM8 = 18,
+	EC_ERROR_PARAM9 = 19,
+	EC_ERROR_PARAM_COUNT = 20,  /* Wrong number of params */
 
 	/* Module-internal error codes may use this range.   */
 	EC_ERROR_INTERNAL_FIRST = 0x10000,

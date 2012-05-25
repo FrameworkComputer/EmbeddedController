@@ -189,14 +189,24 @@ void timer_print_info(void)
 
 static int command_wait(int argc, char **argv)
 {
-	if (argc < 2)
-		return EC_ERROR_INVAL;
+	char *e;
+	int i;
 
-	udelay(atoi(argv[1]) * 1000);
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	i = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	udelay(i * 1000);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(waitms, command_wait);
+DECLARE_CONSOLE_COMMAND(waitms, command_wait,
+			"msec",
+			"Busy-wait for msec",
+			NULL);
 
 
 static int command_get_time(int argc, char **argv)
@@ -206,7 +216,10 @@ static int command_get_time(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gettime, command_get_time);
+DECLARE_CONSOLE_COMMAND(gettime, command_get_time,
+			NULL,
+			"Print current time",
+			NULL);
 
 
 int command_timer_info(int argc, char **argv)
@@ -214,7 +227,10 @@ int command_timer_info(int argc, char **argv)
 	timer_print_info();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info);
+DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info,
+			NULL,
+			"Print timer info",
+			NULL);
 
 
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */

@@ -141,7 +141,7 @@ static int command_eoption_get(int argc, char **argv)
 	if (argc == 2) {
 		i = find_option_by_name(argv[1], bool_opts);
 		if (i == -1)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM1;
 		d = bool_opts + i;
 		ccprintf("  %d %s\n", eoption_get_bool(i), d->name);
 		return EC_SUCCESS;
@@ -157,7 +157,10 @@ static int command_eoption_get(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(optget, command_eoption_get);
+DECLARE_CONSOLE_COMMAND(optget, command_eoption_get,
+			"[name]",
+			"Print EC option(s)",
+			NULL);
 
 
 static int command_eoption_set(int argc, char **argv)
@@ -166,16 +169,19 @@ static int command_eoption_set(int argc, char **argv)
 	int v, i;
 
 	if (argc < 3)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	v = strtoi(argv[2], &e, 0);
 	if (*e)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM2;
 
 	i = find_option_by_name(argv[1], bool_opts);
 	if (i == -1)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 
 	return eoption_set_bool(i, v);
 }
-DECLARE_CONSOLE_COMMAND(optset, command_eoption_set);
+DECLARE_CONSOLE_COMMAND(optset, command_eoption_set,
+			"name value",
+			"Set EC option",
+			NULL);

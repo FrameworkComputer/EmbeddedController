@@ -569,7 +569,7 @@ static int command_powerbtn(int argc, char **argv)
 	if (argc > 1) {
 		ms = strtoi(argv[1], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM1;
 	}
 
 	ccprintf("Simulating %d ms power button press.\n", ms);
@@ -586,7 +586,10 @@ static int command_powerbtn(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn);
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
+			"[msec]",
+			"Simulate power button press",
+			NULL);
 
 
 static int command_lidopen(int argc, char **argv)
@@ -594,7 +597,10 @@ static int command_lidopen(int argc, char **argv)
 	lid_switch_open(get_time().val);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen);
+DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen,
+			NULL,
+			"Simulate lid open",
+			NULL);
 
 
 static int command_lidclose(int argc, char **argv)
@@ -602,7 +608,10 @@ static int command_lidclose(int argc, char **argv)
 	lid_switch_close(get_time().val);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose);
+DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
+			NULL,
+			"Simulate lid close",
+			NULL);
 
 static int command_mmapinfo(int argc, char **argv)
 {
@@ -624,4 +633,7 @@ static int command_mmapinfo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo);
+DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
+			NULL,
+			"Print memmap switch state",
+			NULL);

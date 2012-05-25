@@ -13,30 +13,32 @@
 #include "system.h"
 #include "util.h"
 
-/* Parse offset and size from command line argv[0] and argv[1].
+/* Parse offset and size from command line argv[shift] and argv[shift+1]
  *
- * Default values: If argc<1, leaves offset unchanged, returning error if
- * *offset<0.  If argc<2, leaves size unchanged, returning error if *size<0. */
-static int parse_offset_size(int argc, char **argv, int *offset, int *size)
+ * Default values: If argc<=shift, leaves offset unchanged, returning error if
+ * *offset<0.  If argc<shift+1, leaves size unchanged, returning error if
+ * *size<0. */
+static int parse_offset_size(int argc, char **argv, int shift,
+			     int *offset, int *size)
 {
 	char *e;
 	int i;
 
-	if (argc >= 1) {
-		i = (uint32_t)strtoi(argv[0], &e, 0);
+	if (argc > shift) {
+		i = (uint32_t)strtoi(argv[shift], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM1;
 		*offset = i;
 	} else if (*offset < 0)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
-	if (argc >= 2) {
-		i = (uint32_t)strtoi(argv[1], &e, 0);
+	if (argc > shift + 1) {
+		i = (uint32_t)strtoi(argv[shift + 1], &e, 0);
 		if (*e)
-			return EC_ERROR_INVAL;
+			return EC_ERROR_PARAM2;
 		*size = i;
 	} else if (*size < 0)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	return EC_SUCCESS;
 }
@@ -82,7 +84,10 @@ static int command_flash_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info);
+DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
+			NULL,
+			"Print flash info",
+			NULL);
 
 
 static int command_flash_erase(int argc, char **argv)
@@ -91,14 +96,17 @@ static int command_flash_erase(int argc, char **argv)
 	int size = flash_get_erase_block_size();
 	int rv;
 
-	rv = parse_offset_size(argc - 1, argv + 1, &offset, &size);
+	rv = parse_offset_size(argc, argv, 1, &offset, &size);
 	if (rv)
 		return rv;
 
 	ccprintf("Erasing %d bytes at 0x%x...\n", size, offset, offset);
 	return flash_erase(offset, size);
 }
-DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase);
+DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
+			"offset [size]",
+			"Erase flash",
+			NULL);
 
 
 static int command_flash_write(int argc, char **argv)
@@ -110,7 +118,7 @@ static int command_flash_write(int argc, char **argv)
 	int i;
 
 
-	rv = parse_offset_size(argc - 1, argv + 1, &offset, &size);
+	rv = parse_offset_size(argc, argv, 1, &offset, &size);
 	if (rv)
 		return rv;
 
@@ -137,7 +145,10 @@ static int command_flash_write(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write);
+DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
+			"offset [size]",
+			"Write pattern to flash",
+			NULL);
 
 
 static int command_flash_wp(int argc, char **argv)
@@ -147,7 +158,7 @@ static int command_flash_wp(int argc, char **argv)
 	int rv;
 
 	if (argc < 2)
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM_COUNT;
 
 	/* Commands that don't need offset and size */
 	if (!strcasecmp(argv[1], "lock"))
@@ -156,7 +167,7 @@ static int command_flash_wp(int argc, char **argv)
 		return flash_lock_protect(0);
 
 	/* All remaining commands need offset and size */
-	rv = parse_offset_size(argc - 2, argv + 2, &offset, &size);
+	rv = parse_offset_size(argc, argv, 2, &offset, &size);
 	if (rv)
 		return rv;
 
@@ -167,9 +178,12 @@ static int command_flash_wp(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "clear"))
 		return flash_set_protect(offset, size, 0);
 	else
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 }
-DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp);
+DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
+			"<lock | unlock | now | set | clear> offset [size]",
+			"Print or modify flash write protect",
+			NULL);
 
 /*****************************************************************************/
 /* Host commands */

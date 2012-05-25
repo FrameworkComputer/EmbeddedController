@@ -588,20 +588,6 @@ void x86_power_task(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_x86power(int argc, char **argv)
-{
-	/* Print current state */
-	ccprintf("Current X86 state: %d (%s)\n", state, state_names[state]);
-
-	/* Forcing a power state from EC is deprecated */
-	if (argc > 1)
-		ccputs("Use 'powerbtn' instead of 'x86power s0'.\n");
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(x86power, command_x86power);
-
-
 static int command_x86reset(int argc, char **argv)
 {
 	int is_cold = 1;
@@ -616,4 +602,7 @@ static int command_x86reset(int argc, char **argv)
 	x86_power_reset(is_cold);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset);
+DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset,
+			"[warm | cold]",
+			"Issue x86 reset",
+			NULL);

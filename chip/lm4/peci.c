@@ -107,7 +107,10 @@ static int command_peci_temp(int argc, char **argv)
 	ccprintf("CPU temp = %d K = %d C\n", t, t - 273);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp);
+DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
+			NULL,
+			"Print CPU temperature",
+			NULL);
 
 /*****************************************************************************/
 /* Initialization */
