@@ -603,3 +603,25 @@ static int command_lidclose(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose);
+
+static int command_mmapinfo(int argc, char **argv)
+{
+	uint8_t *memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
+	uint8_t val = *memmap_switches;
+	int i;
+	const char *explanation[] = {
+		"lid_open",
+		"powerbtn",
+		"wp_off",
+		"kbd_rec",
+		"gpio_rec",
+		"fake_dev",
+	};
+	ccprintf("memmap switches = 0x%x\n", val);
+	for (i = 0; i < ARRAY_SIZE(explanation); i++)
+		if (val & (1 << i))
+			ccprintf(" %s\n", explanation[i]);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo);
