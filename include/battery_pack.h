@@ -38,5 +38,4 @@ const struct battery_info *battery_get_info(void);
 /* Vendor provided parameters for battery charging */
 void battery_vendor_params(struct batt_params *batt);
 
-#endif //__CROS_EC_BATTERY_PACK_H
-
+#endif
