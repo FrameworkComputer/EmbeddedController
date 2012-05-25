@@ -76,8 +76,8 @@ void board_keyboard_suppress_noise(void)
 		__attribute__((weak, alias("__board_keyboard_suppress_noise")));
 
 #define KB_FIFO_DEPTH		16	/* FIXME: this is pretty huge */
-static int kb_fifo_start;		/* first entry */
-static int kb_fifo_end;			/* last entry */
+static uint32_t kb_fifo_start;		/* first entry */
+static uint32_t kb_fifo_end;			/* last entry */
 static uint32_t kb_fifo_entries;	/* number of existing entries */
 static uint8_t kb_fifo[KB_FIFO_DEPTH][KB_OUTPUTS];
 
@@ -111,10 +111,7 @@ static int kb_fifo_add(uint8_t *buffp)
 
 	memcpy(kb_fifo[kb_fifo_end], buffp, KB_OUTPUTS);
 
-	if (kb_fifo_end == KB_FIFO_DEPTH - 1)
-		kb_fifo_end = 0;
-	else
-		kb_fifo_end++;
+	kb_fifo_end = (kb_fifo_end + 1) % KB_FIFO_DEPTH;
 
 	atomic_add(&kb_fifo_entries, 1);
 
@@ -129,10 +126,11 @@ kb_fifo_push_done:
   */
 static int kb_fifo_remove(uint8_t *buffp)
 {
-	memcpy(buffp, kb_fifo[kb_fifo_start], KB_OUTPUTS);
-
 	if (!kb_fifo_entries) {
-		CPRINTF("%s: No entries remaining in FIFO\n", __func__);
+		/* no entry remaining in FIFO : return last known state */
+		memcpy(buffp, kb_fifo[(kb_fifo_start - 1) % KB_FIFO_DEPTH],
+		       KB_OUTPUTS);
+
 		/*
 		 * Bail out without changing any FIFO indices and let the
 		 * caller know something strange happened. The buffer will
@@ -140,11 +138,9 @@ static int kb_fifo_remove(uint8_t *buffp)
 		 */
 		return EC_ERROR_UNKNOWN;
 	}
+	memcpy(buffp, kb_fifo[kb_fifo_start], KB_OUTPUTS);
 
-	if (kb_fifo_start ==  KB_FIFO_DEPTH - 1)
-		kb_fifo_start = 0;
-	else
-		kb_fifo_start++;
+	kb_fifo_start = (kb_fifo_start + 1) % KB_FIFO_DEPTH;
 
 	atomic_sub(&kb_fifo_entries, 1);
 

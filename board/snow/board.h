@@ -17,6 +17,9 @@
 /* use I2C for host communication */
 #define CONFIG_I2C
 
+/* By default, enable all console messages except keyboard */
+#define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
+
 #define USB_CHARGE_PORT_COUNT 0
 
 /* EC drives 13 outputs to keyboard matrix */
