@@ -35,18 +35,6 @@
  *
  *   Other:
  *      PWR_BTN#     = PK7 (handled by gpio module)
- *
- *
- * BDS board:
- *
- *   Columns (outputs):
- *      KSO0 - KSO7  = PQ0:7
- *      KSO8 - KSO11 = PK0:3
- *      KSO12        = PN2
- *   Rows (inputs):
- *      KSI0 - KSI7  = PH0:7
- *   Other:
- *      PWR_BTN#     = PC5 (handled by gpio module)
  */
 
 
@@ -93,27 +81,28 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 #define MASK_INDEX_F       3
 #define MASK_VALUE_F       0x10
 
-/* Drives the specified column low; other columns are tri-stated */
+
+/* Drive the specified column low; other columns are tri-stated */
 static void select_column(int col)
 {
-	if (col == COLUMN_ASSERT_ALL) {
-		if (!enable_scanning)
-			return;
+	if (col == COLUMN_TRI_STATE_ALL || !enable_scanning) {
+		/* Tri-state all outputs */
+		LM4_GPIO_DIR(LM4_GPIO_P) = 0;
+		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
+	} else if (col == COLUMN_ASSERT_ALL) {
+		/* Assert all outputs */
 		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
 		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
 		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
 		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0;
 	} else {
+		/* Assert a single output */
 		LM4_GPIO_DIR(LM4_GPIO_P) = 0;
 		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
-		/* Return after the above TRI_STATE_ALL has be run. */
-		if (!enable_scanning)
-			return;
-
-		if (col >= 0 && col < 8) {
+		if (col < 8) {
 			LM4_GPIO_DIR(LM4_GPIO_P) |= 1 << col;
 			LM4_GPIO_DATA(LM4_GPIO_P, 1 << col) = 0;
-		} else if (col != COLUMN_TRI_STATE_ALL) {
+		} else {
 			LM4_GPIO_DIR(LM4_GPIO_Q) |= 1 << (col - 8);
 			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
 		}
@@ -371,8 +360,13 @@ void keyboard_scan_task(void)
 	enable_scanning = 1;
 
 	while (1) {
+		/* Enable all outputs */
 		wait_for_interrupt();
-		task_wait_event(-1);
+
+		/* Wait for scanning enabled and key pressed. */
+		do {
+			task_wait_event(-1);
+		} while (!enable_scanning);
 
 		enter_polling_mode();
 		/* Busy polling keyboard state. */
@@ -389,10 +383,6 @@ void keyboard_scan_task(void)
 					break;  /* exit the while loop */
 				}
 			}
-		}
-		/* Don't continue if the power button is not released yet. */
-		while (!enable_scanning) {
-			usleep(SCAN_LOOP_DELAY);
 		}
 	}
 }
@@ -427,6 +417,7 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 #endif
 }
 
+
 void keyboard_clear_buffer(void)
 {
 #if defined(HOST_KB_BUS_LPC)
@@ -435,6 +426,7 @@ void keyboard_clear_buffer(void)
 #error "keyboard_scan needs to know what bus to use for keyboard interface"
 #endif
 }
+
 
 void keyboard_resume_interrupt(void)
 {
@@ -445,16 +437,16 @@ void keyboard_resume_interrupt(void)
 #endif
 }
 
-/* We don't support this API yet, just return -1 */
+
 int keyboard_get_scan(uint8_t **buffp, int max_bytes)
 {
+	/* We don't support this API yet; just return -1. */
 	return -1;
 }
 
 
-/* The actuall implementation is controlling the enable_scanning variable,
- * then that controls whether select_column() can pull-down columns or not.
- */
+/* The actual implementation is controlling the enable_scanning variable, then
+ * that controls whether select_column() can pull-down columns or not. */
 void keyboard_enable_scanning(int enable)
 {
 	enable_scanning = enable;
