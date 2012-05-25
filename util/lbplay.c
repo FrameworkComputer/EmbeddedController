@@ -10,6 +10,7 @@
 #include <sys/io.h>
 #include <unistd.h>
 
+#include "comm-host.h"
 #include "lightbar.h"
 #include "ec_commands.h"
 
@@ -17,68 +18,6 @@
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-/* Waits for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
- * timeout. */
-static int wait_for_ec(int status_addr, int timeout_usec)
-{
-	int i;
-	for (i = 0; i < timeout_usec; i += 10) {
-		usleep(10);  /* Delay first, in case we just sent a command */
-		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
-			return 0;
-	}
-	return -1;  /* Timeout */
-}
-
-
-/* Sends a command to the EC.  Returns the command status code, or
- * -1 if other error. */
-static int ec_command(int command, const void *indata, int insize,
-		      void *outdata, int outsize) {
-	uint8_t *d;
-	int i;
-
-	/* TODO: add command line option to use kernel command/param window */
-	int cmd_addr = EC_LPC_ADDR_USER_CMD;
-	int data_addr = EC_LPC_ADDR_USER_DATA;
-	int param_addr = EC_LPC_ADDR_USER_PARAM;
-
-	if (insize > EC_PARAM_SIZE || outsize > EC_PARAM_SIZE) {
-		fprintf(stderr, "Data size too big\n");
-		return -1;
-	}
-
-	if (wait_for_ec(cmd_addr, 1000000)) {
-		fprintf(stderr, "Timeout waiting for EC ready\n");
-		return -1;
-	}
-
-	/* Write data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++)
-		outb(*d, param_addr + i);
-
-	outb(command, cmd_addr);
-
-	if (wait_for_ec(cmd_addr, 1000000)) {
-		fprintf(stderr, "Timeout waiting for EC response\n");
-		return -1;
-	}
-
-	/* Check result */
-	i = inb(data_addr);
-	if (i) {
-		fprintf(stderr, "EC returned error result code %d\n", i);
-		return i;
-	}
-
-	/* Read data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++)
-		*d = inb(param_addr + i);
-
-	return 0;
-}
 
 static const struct {
 	uint8_t insize;
@@ -201,12 +140,8 @@ int main(int argc, char **argv)
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
-	/* Request I/O privilege */
-	if (iopl(3) < 0) {
-		perror("Error getting I/O privilege");
+	if (comm_init() < 0)
 		return -3;
-	}
-
 
 	/* Tell the EC to let us drive. */
 	lightbar_sequence(LIGHTBAR_STOP);

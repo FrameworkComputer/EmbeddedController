@@ -7,4 +7,5 @@
 #
 
 host-util-bin=ectool lbplay
+host-util-common=comm-lpc
 build-util-bin=ec_uartd stm32mon
