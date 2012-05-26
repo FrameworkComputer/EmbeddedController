@@ -26,20 +26,15 @@ struct host_command {
    command slots (0=kernel, 1=user). */
 void host_command_received(int slot, int command);
 
-/* Send errors or success result code to a host command,
- * without response data.
- * <slot> is 0 for kernel-originated commands,
- *           1 for usermode-originated commands.
- * <result> is the error code. */
-void host_send_result(int slot, int result);
-
    // success results with response data
 /* Send a successful result code along with response data to a host command.
  * <slot> is 0 for kernel-originated commands,
  *           1 for usermode-originated commands.
+ * <result> is the result code for the command (EC_RES_...)
  * <data> is the buffer with the response payload.
  * <size> is the size of the response buffer. */
-void host_send_response(int slot, const uint8_t *data, int size);
+void host_send_response(int slot, enum ec_status result, const uint8_t *data,
+			int size);
 
 /* Return a pointer to the host command data buffer.  This buffer must
  * only be accessed between a notification to host_command_received()

@@ -34,7 +34,7 @@ void host_command_received(int slot, int command)
 	if (command == EC_CMD_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		host_send_result(slot, EC_RES_ERROR);
+		host_send_response(slot, EC_RES_ERROR, NULL, 0);
 		return;
 	}
 
@@ -144,12 +144,10 @@ static void command_process(int slot)
 	if (cmd) {
 		int size = 0;
 		int res = cmd->handler(data, &size);
-		if ((res == EC_RES_SUCCESS) && size)
-			host_send_response(slot, data, size);
-		else
-			host_send_result(slot, res);
+
+		host_send_response(slot, res, data, size);
 	} else {
-		host_send_result(slot, EC_RES_INVALID_COMMAND);
+		host_send_response(slot, EC_RES_INVALID_COMMAND, data, 0);
 	}
 }
 

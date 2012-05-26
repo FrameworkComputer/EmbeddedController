@@ -121,7 +121,7 @@ static int i2c_write_raw(int port, void *buf, int len)
 	return len;
 }
 
-static void _send_result(int slot, int result, int size)
+static void _send_result(int slot, enum ec_status result, int size)
 {
 	int i;
 	int len = 1;
@@ -142,19 +142,15 @@ static void _send_result(int slot, int result, int size)
 	i2c_write_raw(I2C2, host_buffer, len);
 }
 
-void host_send_result(int slot, int result)
-{
-	_send_result(slot, result, 0);
-}
-
-void host_send_response(int slot, const uint8_t *data, int size)
+void host_send_response(int slot, enum ec_status result, const uint8_t *data,
+			int size)
 {
 	uint8_t *out = host_get_buffer(slot);
 
-	if (data != out)
+	if (size > 0 && data != out)
 		memcpy(out, data, size);
 
-	_send_result(slot, EC_RES_SUCCESS, size);
+	_send_result(slot, result, size);
 }
 
 uint8_t *host_get_buffer(int slot)

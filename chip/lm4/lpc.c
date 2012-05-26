@@ -126,7 +126,7 @@ uint8_t *lpc_get_memmap_range(void)
 }
 
 
-void host_send_result(int slot, int result)
+static void send_result(int slot, enum ec_status result)
 {
 	int ch = slot ? LPC_CH_USER : LPC_CH_KERNEL;
 
@@ -151,20 +151,18 @@ void host_send_result(int slot, int result)
 		lpc_generate_sci();
 }
 
-void host_send_response(int slot, const uint8_t *data, int size)
+void host_send_response(int slot, enum ec_status result, const uint8_t *data,
+			int size)
 {
 	uint8_t *out = host_get_buffer(slot);
 
 	/* Fail if response doesn't fit in the param buffer */
-	if (size < 0 || size > EC_PARAM_SIZE) {
-		host_send_result(slot, EC_RES_ERROR);
-		return;
-	}
-
-	if (data != out)
+	if (size < 0 || size > EC_PARAM_SIZE)
+		result = EC_RES_ERROR;
+	else if (data != out)
 		memcpy(out, data, size);
 
-	host_send_result(slot, EC_RES_SUCCESS);
+	send_result(slot, result);
 }
 
 /* Return true if the TOH is still set */

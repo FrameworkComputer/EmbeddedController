@@ -741,10 +741,10 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 #ifdef CONFIG_TASK_HOSTCMD
 #ifdef CONFIG_LPC
 	/* Clean busy bits on host */
-	host_send_result(0, EC_RES_SUCCESS);
-	host_send_result(1, EC_RES_SUCCESS);
+	host_send_response(0, EC_RES_SUCCESS, NULL, 0);
+	host_send_response(1, EC_RES_SUCCESS, NULL, 0);
 #elif defined CONFIG_I2C
-	host_send_result(0, EC_RES_SUCCESS);
+	host_send_response(0, EC_RES_SUCCESS, NULL, 0);
 #endif
 #endif
 
