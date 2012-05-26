@@ -121,36 +121,23 @@ static int i2c_write_raw(int port, void *buf, int len)
 	return len;
 }
 
-static void _send_result(int slot, enum ec_status result, int size)
-{
-	int i;
-	int len = 1;
-	uint8_t sum = 0;
-
-	ASSERT(slot == 0);
-	/* record the error code */
-	host_buffer[0] = result;
-	if (size) {
-		/* compute checksum */
-		for (i = 1; i <= size; i++)
-			sum += host_buffer[i];
-		host_buffer[size + 1] = sum;
-		len = size + 2;
-	}
-
-	/* send the answer to the AP */
-	i2c_write_raw(I2C2, host_buffer, len);
-}
-
 void host_send_response(int slot, enum ec_status result, const uint8_t *data,
 			int size)
 {
-	uint8_t *out = host_get_buffer(slot);
+	uint8_t *out = host_buffer;
+	int sum, i;
 
-	if (size > 0 && data != out)
-		memcpy(out, data, size);
+	ASSERT(slot == 0);
+	*out++ = result;
+	for (i = 0, sum = 0; i < size; i++, data++, out++) {
+		if (data != out)
+			*out = *data;
+		sum += *data;
+	}
+	*out++ = sum & 0xff;
 
-	_send_result(slot, result, size);
+	/* send the answer to the AP */
+	i2c_write_raw(I2C2, host_buffer, out - host_buffer);
 }
 
 uint8_t *host_get_buffer(int slot)
