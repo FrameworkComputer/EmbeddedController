@@ -21,6 +21,19 @@ struct host_command {
 	int (*handler)(uint8_t *data, int *response_size);
 };
 
+/**
+ * Process a host command and return its response
+ *
+ * @param slot		is 0 for kernel-originated commands,
+ *			1 for usermode-originated commands.
+ * @param command	The command code
+ * @param data		Buffer holding the command, and used for the
+ * 			response payload.
+ * @param response_size	Returns the size of the response
+ * @return resulting status
+ */
+enum ec_status host_command_process(int slot, int command, uint8_t *data,
+				    int *response_size);
 
 /* Called by LPC module when a command is written to one of the
    command slots (0=kernel, 1=user). */

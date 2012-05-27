@@ -132,25 +132,34 @@ static const struct host_command *find_host_command(int command)
 }
 
 
-/* Handle a LPC command */
-static void command_process(int slot)
+enum ec_status host_command_process(int slot, int command, uint8_t *data,
+				    int *response_size)
 {
-	int command = host_command[slot];
-	uint8_t *data = host_get_buffer(slot);
 	const struct host_command *cmd = find_host_command(command);
+	enum ec_status res = EC_RES_INVALID_COMMAND;
 
 	CPRINTF("[hostcmd%d 0x%02x]\n", slot, command);
 
-	if (cmd) {
-		int size = 0;
-		int res = cmd->handler(data, &size);
+	*response_size = 0;
+	if (cmd)
+		res = cmd->handler(data, response_size);
 
-		host_send_response(slot, res, data, size);
-	} else {
-		host_send_response(slot, EC_RES_INVALID_COMMAND, data, 0);
-	}
+	return res;
 }
 
+/* Handle a host command */
+static void command_process(int slot)
+{
+	int size;
+	int res;
+
+	CPRINTF("[hostcmd%d 0x%02x]\n", slot, host_command[slot]);
+
+	res = host_command_process(slot, host_command[slot],
+				   host_get_buffer(slot), &size);
+
+	host_send_response(slot, res, host_get_buffer(slot), size);
+}
 /*****************************************************************************/
 /* Initialization / task */
 
