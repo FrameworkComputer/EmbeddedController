@@ -11,7 +11,7 @@
 #include "dma.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "message.h"
+#include "host_command.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -55,8 +55,8 @@ enum {
  * Our input and output buffers. These must be large enough for our largest
  * message, including protocol overhead.
  */
-static char out_msg[32 + MSG_PROTO_BYTES];
-static char in_msg[32 + MSG_PROTO_BYTES];
+static char out_msg[32];
+static char in_msg[32];
 
 /**
  * Monitor the SPI bus
@@ -68,7 +68,7 @@ static char in_msg[32 + MSG_PROTO_BYTES];
  * TODO(sjg): Use an interrupt on NSS to triggler this function.
  *
  */
-void spi_work_task(void)
+void spi_task(void)
 {
 	int port = STM32_SPI1_PORT;
 
@@ -121,22 +121,19 @@ void spi_work_task(void)
  */
 static void reply(int port, char *msg, int msg_len)
 {
+	int sum, i;
 	int dmac;
-	int sum;
-
-	/* Get the old checksumsum */
-	sum = msg[msg_len - 1 + SPI_MSG_HEADER_BYTES];
 
 	/* Add our header bytes */
-	msg_len += SPI_MSG_HEADER_BYTES + SPI_MSG_TRAILER_BYTES -
-			MSG_TRAILER_BYTES;
+	msg_len += SPI_MSG_HEADER_BYTES + SPI_MSG_TRAILER_BYTES;
 	msg[0] = SPI_MSG_HEADER;
 	msg[1] = msg_len & 0xff;
 	msg[2] = (msg_len >> 8) & 0xff;
 
-	/* Update the checksum */
-	sum += msg[0] + msg[1] + msg[2];
-	msg[msg_len - 2] = sum;
+	/* Calculate the checksum */
+	for (i = sum = 0; i < msg_len - 2; i++)
+		sum += msg[i];
+	msg[msg_len - 2] = sum & 0xff;
 	msg[msg_len - 1] = SPI_MSG_PREAMBLE;
 
 	/*
@@ -163,6 +160,7 @@ static void reply(int port, char *msg, int msg_len)
  */
 static void spi_interrupt(int port)
 {
+	enum ec_status status;
 	int msg_len;
 	int dmac;
 	int cmd;
@@ -180,13 +178,13 @@ static void spi_interrupt(int port)
 		     in_msg);
 
 	/* Process the command and send the reply */
-	msg_len = message_process_cmd(cmd, out_msg + SPI_MSG_HEADER_BYTES,
-				      sizeof(out_msg) - SPI_MSG_PROTO_BYTES);
-	if (msg_len >= 0)
-		reply(port, out_msg, msg_len);
+	status = host_command_process(0, cmd,
+			out_msg + SPI_MSG_HEADER_BYTES + 1, &msg_len);
+	out_msg[SPI_MSG_HEADER_BYTES] = status;
+	reply(port, out_msg, msg_len);
 
 	/* Wake up the task that watches for end of the incoming message */
-	task_wake(TASK_ID_SPI_WORK);
+	task_wake(TASK_ID_SPI);
 }
 
 /* The interrupt code cannot pass a parameters, so handle this here */
