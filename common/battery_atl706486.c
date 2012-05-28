@@ -29,13 +29,15 @@ static const struct battery_info info = {
 	.voltage_min    = 6000,
 
 	/* Operation temperation range
-	 *   0   <= T_charge    <= 45
-	 *   -20 <= T_discharge <= 60
+	 *   0   <= T_charge    <= 45 deg C
+	 *   -20 <= T_discharge <= 60 deg C
+	 *
+	 * The temperature values below should be deci-Kelvin
 	 */
-	.temp_charge_min    = 0,
-	.temp_charge_max    = 45,
-	.temp_discharge_min = -20,
-	.temp_discharge_max = 60,
+	.temp_charge_min    =   0,
+	.temp_charge_max    =  45 * 10 + 2731,
+	.temp_discharge_min = -20 * 10 + 2731,
+	.temp_discharge_max =  60 * 10 + 2731,
 
 	/* Maximum discharging current
 	 * TODO(rong): Check if we need this in power manager
