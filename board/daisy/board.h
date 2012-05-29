@@ -34,6 +34,7 @@
 
 /* Charging */
 #define CONFIG_SMART_BATTERY
+#define CONFIG_PMU_TPS65090
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
 
