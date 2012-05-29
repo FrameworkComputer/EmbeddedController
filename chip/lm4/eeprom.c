@@ -8,7 +8,9 @@
 #include "eeprom.h"
 #include "console.h"
 #include "registers.h"
+#include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* Size of EEPROM block in bytes */
 #define EEPROM_BLOCK_SIZE 64
@@ -17,12 +19,13 @@
 static int block_count;
 
 
-/* Waits for the current EEPROM operation to finish. */
+/* Waits for the current EEPROM operation to finish; all operations but write
+ * should normally finish in 4 system clocks.  eeprom_write() has its own
+ * delay loop for the longer delay. */
 static int wait_for_done(void)
 {
-	/* TODO: how long is a reasonable timeout? */
 	int i;
-	for (i = 0; i < 1000000; i++) {
+	for (i = 0; i < 1000; i++) {
 		if (!(LM4_EEPROM_EEDONE & 0x01))
 			return EC_SUCCESS;
 	}
@@ -72,7 +75,7 @@ int eeprom_read(int block, int offset, int size, char *data)
 int eeprom_write(int block, int offset, int size, const char *data)
 {
 	uint32_t *d = (uint32_t *)data;
-	int rv;
+	int rv, i;
 
 	if (block < 0 || block >= block_count ||
 	    offset < 0 || offset > EEPROM_BLOCK_SIZE || offset & 3 ||
@@ -92,9 +95,17 @@ int eeprom_write(int block, int offset, int size, const char *data)
 	/* Write 32 bits at a time; wait for each write to complete */
 	for ( ; size; size -= sizeof(uint32_t)) {
 		LM4_EEPROM_EERDWRINC = *(d++);
-		rv = wait_for_done();
-		if (rv)
-			return rv;
+
+		/* Writes nominally take ~110us, but can take up to 1800 ms
+		 * worst-case (near endurance limit and need erase/copy). */
+		for (i = 0; i < 2000 && (LM4_EEPROM_EEDONE & 0x01); i++) {
+			/* First few delays are smaller for nominal case */
+			usleep(i < 20 ? 100 : 1000);
+			/* Reload the watchdog timer in case we're called
+			 * before task scheduling starts. */
+			watchdog_reload();
+		}
+
 		if (LM4_EEPROM_EEDONE)
 			return EC_ERROR_UNKNOWN;
 	}
