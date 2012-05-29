@@ -19,6 +19,7 @@
 #define CONFIG_PECI
 #define CONFIG_POWER_LED
 #define CONFIG_PSTORE
+#define CONFIG_SPI
 #define CONFIG_TASK_PROFILING
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
@@ -165,6 +166,7 @@ enum gpio_signal {
 	GPIO_PCH_SUSACKn,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_RADIO_ENABLE_WLAN,   /* Enable WLAN radio */
 	GPIO_RADIO_ENABLE_BT,     /* Enable bluetooth radio */
+	GPIO_SPI_CSn,             /* SPI chip select */
 	GPIO_TOUCHSCREEN_RESETn,  /* Reset touch screen (Proto1+) */
 	GPIO_USB1_CTL1,           /* USB charger port 1 CTL1 output */
 	GPIO_USB1_CTL2,           /* USB charger port 1 CTL2 output */

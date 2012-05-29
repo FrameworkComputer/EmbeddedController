@@ -101,6 +101,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_SUSACKn",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
 	{"RADIO_ENABLE_WLAN",   LM4_GPIO_D, (1<<0), GPIO_OUT_LOW, NULL},
 	{"RADIO_ENABLE_BT",     LM4_GPIO_D, (1<<1), GPIO_OUT_LOW, NULL},
+	{"SPI_CSn",             LM4_GPIO_A, (1<<3), GPIO_HI_Z, NULL},
 	{"TOUCHSCREEN_RESETn",  LM4_GPIO_B, (1<<0), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL1",           LM4_GPIO_E, (1<<2), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL2",           LM4_GPIO_E, (1<<3), GPIO_OUT_LOW, NULL},
