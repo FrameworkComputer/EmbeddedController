@@ -129,6 +129,8 @@ static int need_resched_or_profiling = 0;
  */
 static uint32_t tasks_ready = (1<<TASK_ID_COUNT) - 1;
 
+static int start_called;  /* Has task swapping started */
+
 
 static task_ *__get_current(void)
 {
@@ -208,6 +210,12 @@ uint32_t *task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 	return &tsk->events;
+}
+
+
+int task_start_called(void)
+{
+	return start_called;
 }
 
 
@@ -597,6 +605,7 @@ int task_start(void)
 #ifdef CONFIG_TASK_PROFILING
 	task_start_time = exc_end_time = get_time().val;
 #endif
+	start_called = 1;
 
 	return __task_start(&need_resched_or_profiling);
 }

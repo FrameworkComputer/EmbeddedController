@@ -99,22 +99,26 @@ void task_start_irq_handler(void *excep_return);
  * last call of the interrupt handler. */
 void task_resched_if_needed(void *excep_return);
 
-/* Initializes tasks and interrupt controller. */
+/* Initialize tasks and interrupt controller. */
 int task_pre_init(void);
 
-/* Starts task scheduling.  Does not normally return. */
+/* Start task scheduling.  Does not normally return. */
 int task_start(void);
 
-/* Enables an interrupt. */
+/* Return non-zero if task_start() has been called and task scheduling has
+ * started. */
+int task_start_called(void);
+
+/* Enable an interrupt. */
 void task_enable_irq(int irq);
 
-/* Disables an interrupt. */
+/* Disable an interrupt. */
 void task_disable_irq(int irq);
 
-/* Software-triggers an interrupt. */
+/* Software-trigger an interrupt. */
 void task_trigger_irq(int irq);
 
-/* Clears a pending interrupt.
+/* Clear a pending interrupt.
  *
  * Note that most interrupts can be removed from the pending state simply by
  * handling whatever caused the interrupt in the first place.  This only needs
