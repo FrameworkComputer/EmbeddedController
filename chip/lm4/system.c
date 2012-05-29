@@ -66,6 +66,19 @@ static void check_reset_cause(void)
 }
 
 
+/* A3 and earlier chip stepping has a problem accessing flash during shutdown.
+ * To work around that, we jump to RAM before hibernating.  This function must
+ * live in RAM.  It must be called with interrupts disabled, cannot call other
+ * functions, and can't be declared static (or else the compiler optimizes it
+ * into the main hibernate function. */
+void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
+{
+	LM4_HIBERNATE_HIBCTL = hibctl;
+	while (1)
+		;
+}
+
+
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* clear pending interrupt */
@@ -86,17 +99,14 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 #ifdef BOARD_link
 	if (system_get_board_version() == BOARD_VERSION_PROTO1) {
 		/* Need VDD3ON because we can't drop VDD externally */
-		LM4_HIBERNATE_HIBCTL = 0x15B;
+		__enter_hibernate(0x15B);
 	} else {
 		/* EVT+ can drop VDD */
-		LM4_HIBERNATE_HIBCTL = 0x5B;
+		__enter_hibernate(0x5B);
 	}
 #else
-	LM4_HIBERNATE_HIBCTL = 0x5B;
+	__enter_hibernate(0x5B);
 #endif
-
-	/* we are going to hibernate ... */
-	while (1) ;
 }
 
 
@@ -165,7 +175,8 @@ void system_reset(int is_hard)
 	}
 
 	/* Spin and wait for reboot; should never return */
-	while (1) {}
+	while (1)
+		;
 }
 
 
