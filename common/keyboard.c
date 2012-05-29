@@ -11,6 +11,7 @@
 #include "keyboard.h"
 #include "i8042.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "lightbar.h"
 #include "lpc.h"
 #include "ec_commands.h"
@@ -861,6 +862,20 @@ DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
 			"[on | off]",
 			"Print or toggle keyboard event log",
 			NULL);
+
+
+static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
+{
+	struct ec_params_mkbp_simulate_key *p =
+			(struct ec_params_mkbp_simulate_key *)data;
+
+	simulated_key[p->col] = (simulated_key[p->col] & ~(1 << p->row)) |
+				(p->pressed << p->row);
+
+	keyboard_state_changed(p->row, p->col, p->pressed);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY, mkbp_command_simulate_key);
 
 
 /* Preserves the states of keyboard controller to keep the initialized states

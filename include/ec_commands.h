@@ -535,6 +535,14 @@ struct ec_response_mkbp_info {
 	uint32_t cols;
 } __attribute__ ((packed));
 
+/* Simulate key press */
+#define EC_CMD_MKBP_SIMULATE_KEY 0x62
+struct ec_params_mkbp_simulate_key {
+	uint8_t col;
+	uint8_t row;
+	uint8_t pressed;
+} __attribute__ ((packed));
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 
