@@ -6,19 +6,42 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/io.h>
+#include <sys/param.h>
 #include <unistd.h>
 
 #include "comm-host.h"
 #include "ec_commands.h"
 
 
+#define INITIAL_UDELAY 10    /* 10 us */
+#define MAXIMUM_UDELAY 10000 /* 10 ms */
+
 int comm_init(void)
 {
+	int i;
+	int byte = 0xff;
+
 	/* Request I/O privilege */
 	if (iopl(3) < 0) {
 		perror("Error getting I/O privilege");
 		return -3;
 	}
+
+	/* Test if the I/O port has been configured for GEC.
+	 * If they all are 0xff, then very possible you cannot access GEC. */
+	byte &= inb(EC_LPC_ADDR_USER_CMD);
+	byte &= inb(EC_LPC_ADDR_USER_DATA);
+	for (i = 0; i < EC_FLASH_SIZE_MAX /* big enough */; ++i)
+		byte &= inb(EC_LPC_ADDR_USER_PARAM + i);
+	if (byte == 0xff) {
+		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
+			EC_LPC_ADDR_USER_CMD, EC_LPC_ADDR_USER_DATA,
+			EC_LPC_ADDR_USER_PARAM,
+			EC_LPC_ADDR_USER_PARAM + EC_FLASH_SIZE_MAX - 1);
+		fprintf(stderr, "Very likely this board doesn't have GEC.\n");
+		return -4;
+	}
+
 	return 0;
 }
 
@@ -28,10 +51,21 @@ int comm_init(void)
 static int wait_for_ec(int status_addr, int timeout_usec)
 {
 	int i;
-	for (i = 0; i < timeout_usec; i += 10) {
-		usleep(10);  /* Delay first, in case we just sent a command */
+	int delay = INITIAL_UDELAY;
+
+	for (i = 0; i < timeout_usec; i += delay) {
+		/* Delay first, in case we just sent out a command but
+		 * the EC hasn't raise the busy flag. However, I think
+		 * this doesn't happen since the LPC commands are executed
+		 * in order and the busy flag is set by hardware.
+		 * TODO: move this delay after inb(status). */
+		usleep(MIN(delay, timeout_usec - i));
+
 		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
 			return 0;
+
+		/* Increase the delay interval */
+		delay = MIN(delay * 2, MAXIMUM_UDELAY);
 	}
 	return -1;  /* Timeout */
 }
