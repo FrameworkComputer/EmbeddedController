@@ -307,7 +307,7 @@ static int check_keys_changed(void)
 		CPUTS("]\n");
 
 		if (kb_fifo_add(raw_state) == EC_SUCCESS)
-			board_interrupt_host();
+			board_interrupt_host(1);
 		else
 			CPRINTF("dropped keystroke\n");
 	}
@@ -383,6 +383,8 @@ int keyboard_scan_recovery_pressed(void)
 static int keyboard_get_scan(uint8_t *data, int *resp_size)
 {
 	kb_fifo_remove(data);
+	if (!kb_fifo_entries)
+		board_interrupt_host(0);
 	*resp_size = KB_OUTPUTS;
 
 	return EC_RES_SUCCESS;

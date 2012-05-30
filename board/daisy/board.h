@@ -85,6 +85,6 @@ void matrix_interrupt(enum gpio_signal signal);
 void board_keyboard_suppress_noise(void);
 
 /* Signal to AP that data is waiting */
-void board_interrupt_host(void);
+void board_interrupt_host(int active);
 
 #endif /* __BOARD_H */
