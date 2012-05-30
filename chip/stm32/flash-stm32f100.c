@@ -13,7 +13,7 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define FLASH_WRITE_BYTES      2
+#define FLASH_WRITE_BYTES     64
 #define FLASH_ERASE_BYTES   1024
 #define FLASH_PROTECT_BYTES 4096
 
@@ -141,7 +141,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	STM32_FLASH_CR |= (1<<0);
 
 
-	for ( ; size > 0; size -= FLASH_WRITE_BYTES) {
+	for ( ; size > 0; size -= sizeof(*data16)) {
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
