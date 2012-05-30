@@ -57,6 +57,8 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
+	"  kbpress\n"
+	"      Simulate key press\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
 	"  vboot get\n"
@@ -1036,6 +1038,46 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 }
 
 
+int cmd_kbpress(int argc, char *argv[])
+{
+	struct ec_params_mkbp_simulate_key p;
+	char *e;
+	int rv;
+
+	if (argc != 4) {
+		fprintf(stderr,
+			"Usage: %s <row> <col> <0|1>\n", argv[0]);
+		return -1;
+	}
+	p.row = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad row.\n");
+		return -1;
+	}
+	p.col = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad column.\n");
+		return -1;
+	}
+	p.pressed = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad pressed flag.\n");
+		return -1;
+	}
+
+	printf("%s row %d col %d.\n", p.pressed ? "Pressing" : "Releasing",
+				      p.row,
+				      p.col);
+
+	rv = ec_command(EC_CMD_MKBP_SIMULATE_KEY,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+	printf("Done.\n");
+	return 0;
+}
+
+
 int cmd_pstore_info(int argc, char *argv[])
 {
 	struct ec_response_pstore_info r;
@@ -1452,6 +1494,7 @@ const struct command commands[] = {
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},
 	{"hello", cmd_hello},
+	{"kbpress", cmd_kbpress},
 	{"lightbar", cmd_lightbar},
 	{"vboot", cmd_vboot},
 	{"pstoreinfo", cmd_pstore_info},
