@@ -55,7 +55,9 @@ cmd_copyab = cd $(out) && cp $(PROJECT).A.flat $(PROJECT).A.bin && \
 	cp $(PROJECT).B.flat $(PROJECT).B.bin
 
 .PHONY: all tests utils
-all: $(out)/$(PROJECT).bin $(foreach s,A B RO,$(out)/$(PROJECT).$(s).dis) utils
+all: $(out)/$(PROJECT).bin utils
+
+dis: $(foreach s,A B RO,$(out)/$(PROJECT).$(s).dis)
 
 utils: $(build-utils) $(host-utils)
 
