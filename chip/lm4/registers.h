@@ -33,6 +33,30 @@ static inline int lm4_uart_addr(int ch, int offset)
 #define LM4_UART_DMACTL(ch)    LM4UARTREG(ch, 0x048)
 #define LM4_UART_CC(ch)        LM4UARTREG(ch, 0xfc8)
 
+#define LM4_SSI_BASE           0x40008000
+#define LM4_SSI_CH_SEP         0x40001000
+static inline int lm4_spi_addr(int ch, int offset)
+{
+	return offset + LM4_SSI_BASE + LM4_SSI_CH_SEP * ch;
+}
+#define LM4SSIREG(ch, offset)  LM4REG(lm4_spi_addr(ch, offset))
+#define LM4_SSI_CR0(ch)        LM4SSIREG(ch, 0x000)
+#define LM4_SSI_CR1(ch)        LM4SSIREG(ch, 0x004)
+#define LM4_SSI_DR(ch)         LM4SSIREG(ch, 0x008)
+#define LM4_SSI_SR(ch)         LM4SSIREG(ch, 0x00c)
+#define LM4_SSI_SR_TFE         (1 << 0)  /* Transmit FIFO empty */
+#define LM4_SSI_SR_TNF         (1 << 1)  /* Transmit FIFO not full */
+#define LM4_SSI_SR_RNE         (1 << 2)  /* Receive FIFO not empty */
+#define LM4_SSI_SR_RFF         (1 << 3)  /* Receive FIFO full */
+#define LM4_SSI_SR_BSY         (1 << 4)  /* Busy */
+#define LM4_SSI_CPSR(ch)       LM4SSIREG(ch, 0x010)
+#define LM4_SSI_IM(ch)         LM4SSIREG(ch, 0x014)
+#define LM4_SSI_RIS(ch)        LM4SSIREG(ch, 0x018)
+#define LM4_SSI_MIS(ch)        LM4SSIREG(ch, 0x01c)
+#define LM4_SSI_ICR(ch)        LM4SSIREG(ch, 0x020)
+#define LM4_SSI_DMACTL(ch)     LM4SSIREG(ch, 0x024)
+#define LM4_SSI_CC(ch)         LM4SSIREG(ch, 0xfc8)
+
 #define LM4_ADC_ADCACTSS       LM4REG(0x40038000)
 #define LM4_ADC_ADCRIS         LM4REG(0x40038004)
 #define LM4_ADC_ADCIM          LM4REG(0x40038008)
@@ -222,6 +246,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_RCGCDMA     LM4REG(0x400fe60c)
 #define LM4_SYSTEM_RCGCHIB     LM4REG(0x400fe614)
 #define LM4_SYSTEM_RCGCUART    LM4REG(0x400fe618)
+#define LM4_SYSTEM_RCGCSSI     LM4REG(0x400fe61c)
 #define LM4_SYSTEM_RCGCI2C     LM4REG(0x400fe620)
 #define LM4_SYSTEM_RCGCADC     LM4REG(0x400fe638)
 #define LM4_SYSTEM_RCGCLPC     LM4REG(0x400fe648)
