@@ -58,7 +58,7 @@ struct stm32_def {
 	{ 0 }
 };
 
-#define DEFAULT_TIMEOUT 2 /* seconds */
+#define DEFAULT_TIMEOUT 4 /* seconds */
 #define DEFAULT_BAUDRATE B38400
 #define PAGE_SIZE 256
 
@@ -119,6 +119,23 @@ int open_serial(const char *port)
 	return fd;
 }
 
+static void discard_input(int fd)
+{
+	uint8_t buffer[64];
+	int res, i;
+
+	/* eat trailing garbage */
+	do {
+		res = read(fd, buffer, sizeof(buffer));
+		if (res > 0) {
+			printf("Recv[%d]:", res);
+			for (i = 0; i < res; i++)
+				printf("%02x ", buffer[i]);
+			printf("\n");
+		}
+	} while (res > 0);
+}
+
 int wait_for_ack(int fd)
 {
 	uint8_t resp;
@@ -136,12 +153,14 @@ int wait_for_ack(int fd)
 				return 0;
 			else if (resp == RESP_NACK) {
 				fprintf(stderr, "NACK\n");
+				discard_input(fd);
 				return -EINVAL;
 			} else {
 				fprintf(stderr, "Receive junk: %02x\n", resp);
 			}
 		}
 	}
+	fprintf(stderr, "Timeout\n");
 	return -ETIMEDOUT;
 }
 
@@ -202,7 +221,8 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 
 		/* Wait for the ACK */
 		if (wait_for_ack(fd) < 0) {
-			fprintf(stderr, "Failed to get payload %d ACK\n", c);
+			fprintf(stderr, "payload %d ACK failed for CMD%02x\n",
+				c, cmd);
 			return -1;
 		}
 
@@ -253,9 +273,8 @@ struct stm32_def *command_get_id(int fd)
 
 int init_monitor(int fd)
 {
-	int res, i;
+	int res;
 	uint8_t init = CMD_INIT;
-	uint8_t buffer[64];
 
 	printf("Waiting for the monitor startup ...");
 	fflush(stdout);
@@ -288,13 +307,7 @@ int init_monitor(int fd)
 	printf("Done.\n");
 
 	/* read trailing chars */
-	res = read(fd, buffer, sizeof(buffer));
-	if (res > 0) {
-		printf("Recv[%d]:", res);
-		for (i = 0; i < res; i++)
-			printf("%02x ", buffer[i]);
-		printf("\n");
-	}
+	discard_input(fd);
 
 	return 0;
 }
