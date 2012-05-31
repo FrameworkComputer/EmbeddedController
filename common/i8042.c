@@ -80,7 +80,7 @@ void i8042_receives_command(int cmd)
 
 
 /* Called by EC common code to send bytes to host via port 0x60. */
-static void enq_to_host(int len, uint8_t *to_host)
+static void enq_to_host(int len, const uint8_t *to_host)
 {
 	int from, to;
 
@@ -151,7 +151,7 @@ void i8042_command_task(void)
 }
 
 
-enum ec_error_list i8042_send_to_host(int len, uint8_t *to_host)
+enum ec_error_list i8042_send_to_host(int len, const uint8_t *to_host)
 {
 	int i;
 

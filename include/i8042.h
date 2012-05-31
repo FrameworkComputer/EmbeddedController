@@ -119,7 +119,7 @@ void i8042_disable_keyboard_irq(void);
  * Return:
  *   EC_ERROR_BUFFER_FULL -- the queue to host is full. Try again?
  */
-enum ec_error_list i8042_send_to_host(int len, uint8_t *to_host);
+enum ec_error_list i8042_send_to_host(int len, const uint8_t *to_host);
 
 
 #endif  /* __INTERFACE_I8042_H */

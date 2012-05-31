@@ -108,7 +108,7 @@ struct kb_state {
 /* The standard Chrome OS keyboard matrix table. */
 #define CROS_ROW_NUM 8  /* TODO: +1 for power button. */
 #define CROS_COL_NUM 13
-static uint16_t scancode_set1[CROS_ROW_NUM][CROS_COL_NUM] = {
+static const uint16_t scancode_set1[CROS_ROW_NUM][CROS_COL_NUM] = {
 	{0x0000, 0xe05b, 0x003b, 0x0030, 0x0044, 0x0073, 0x0031, 0x0000, 0x000d,
 	 0x0000, 0xe038, 0x0000, 0x0000},
 	{0x0000, 0x0001, 0x003e, 0x0022, 0x0041, 0x0000, 0x0023, 0x0000, 0x0028,
@@ -127,7 +127,7 @@ static uint16_t scancode_set1[CROS_ROW_NUM][CROS_COL_NUM] = {
 	 0x0018, 0x0000, 0xe048, 0xe04b},
 };
 
-static uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
+static const uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
 	{0x0000, 0xe01f, 0x0005, 0x0032, 0x0009, 0x0051, 0x0031, 0x0000, 0x0055,
 	 0x0000, 0xe011, 0x0000, 0x0000},
 	{0x0000, 0x0076, 0x000c, 0x0034, 0x0083, 0x0000, 0x0033, 0x0000, 0x0052,
@@ -322,7 +322,7 @@ void keyboard_enable(int enable)
 
 uint8_t read_ctl_ram(uint8_t addr)
 {
-	if (addr < 0x20)  /* Controller RAM is only 32 bytes. */
+	if (addr < ARRAY_SIZE(controller_ram))
 		return controller_ram[addr];
 	else
 		return 0;
@@ -335,7 +335,7 @@ void update_ctl_ram(uint8_t addr, uint8_t data)
 {
 	uint8_t orig;
 
-	if (addr >= 0x20)  /* Controller RAM is only 32 bytes. */
+	if (addr >= ARRAY_SIZE(controller_ram))
 		return;
 
 	orig = controller_ram[addr];
@@ -359,7 +359,7 @@ void update_ctl_ram(uint8_t addr, uint8_t data)
 }
 
 
-enum {
+static enum {
 	STATE_NORMAL = 0,
 	STATE_SCANCODE,
 	STATE_SETLEDS,
@@ -766,7 +766,7 @@ static int command_controller_ram(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	index = strtoi(argv[1], NULL, 0);
-	if (index >= 0x20)
+	if (index >= ARRAY_SIZE(controller_ram))
 		return EC_ERROR_PARAM1;
 
 	if (argc >= 3)
@@ -843,10 +843,12 @@ static int command_keyboard_log(int argc, char **argv)
 		ccputs("\n");
 	} else if (argc == 2 && !strcasecmp("on", argv[1])) {
 		if (!kblog) {
-			ASSERT(EC_SUCCESS ==
-			       shared_mem_acquire(sizeof(*kblog) * MAX_KBLOG,
-			       1, (char **)&kblog));
+			int rv = shared_mem_acquire(sizeof(*kblog) * MAX_KBLOG,
+						    1, (char **)&kblog);
+			if (rv != EC_SUCCESS)
+				kblog = NULL;
 			kblog_len = 0;
+			return rv;
 		}
 	} else if (argc == 2 && !strcasecmp("off", argv[1])) {
 		kblog_len = 0;
@@ -868,6 +870,9 @@ static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
 {
 	struct ec_params_mkbp_simulate_key *p =
 			(struct ec_params_mkbp_simulate_key *)data;
+
+	if (p->col >= ARRAY_SIZE(simulated_key))
+		return EC_RES_INVALID_PARAM;
 
 	simulated_key[p->col] = (simulated_key[p->col] & ~(1 << p->row)) |
 				(p->pressed << p->row);
