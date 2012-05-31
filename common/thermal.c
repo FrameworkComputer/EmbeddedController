@@ -35,7 +35,7 @@ static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL}},
 	/* TEMP_SENSOR_TYPE_CASE */
 	{THERMAL_CONFIG_NO_FLAG, {341, THERMAL_THRESHOLD_DISABLE, 353,
-	 318, 323, 348, 333, 338}},
+	 318, 323, 328, 333, 338}},
 };
 
 /* Fan speed settings. */
