@@ -5,7 +5,7 @@
 
 /* Memory mapping */
 #define CONFIG_FLASH_BASE       0x08000000
-#define CONFIG_FLASH_SIZE       0x00010000
+#define CONFIG_FLASH_SIZE       0x00020000
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         0x00002000
