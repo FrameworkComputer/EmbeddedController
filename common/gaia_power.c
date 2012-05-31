@@ -152,6 +152,8 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
+		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
 			CPRINTF("Waiting for long power press %u\n",
@@ -164,6 +166,7 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPUTS("Cancel power off\n");
+		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	}
 	power_button_was_pressed = pressed;
 
