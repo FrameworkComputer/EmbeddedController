@@ -101,9 +101,14 @@ SECTIONS
 #endif
     __ro_end = . ;
     .bss : {
-        . = ALIGN(4);
+	/* Stacks must be 64-bit aligned */
+        . = ALIGN(8);
         __bss_start = .;
         *(.bss.tasks)
+        *(.bss.task_scratchpad)
+        . = ALIGN(8);
+        *(.bss.system_stack)
+	/* Rest of .bss takes care of its own alignment */
         *(.bss)
         . = ALIGN(4);
         __bss_end = .;

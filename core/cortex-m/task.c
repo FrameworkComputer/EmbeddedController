@@ -108,8 +108,12 @@ static const struct {
 /* Contexts and stacks for all tasks. */
 static task_ tasks[TASK_ID_COUNT] __attribute__((section(".bss.tasks")))
 		__attribute__((aligned(TASK_SIZE)));
-/* Reserve space to discard context on first context switch. */
-uint32_t scratchpad[17] __attribute__((section(".data.tasks")));
+/* Reserve space to discard context on first context switch.  This must
+ * immediately follow tasks, so that it is start-aligned to TASK_SIZE so that
+ * __get_current(scratchpad) == scratchpad.  Note that aligned(TASK_SIZE) also
+ * size-aligns it, which wastes (512 - 17*4) bytes of RAM, so we simply put it
+ * in its own section which immediately follows .bss.tasks in ec.lds.S. */
+uint32_t scratchpad[17] __attribute__((section(".bss.task_scratchpad")));
 
 /* Should IRQs chain to svc_handler()?  This should be set if either of the
  * following is true:
