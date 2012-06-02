@@ -170,14 +170,6 @@ int watchdog_init(void)
 void watchdog_task(void)
 {
 	while (1) {
-#ifdef BOARD_bds
-		gpio_set_level(GPIO_DEBUG_LED, 1);
-#endif
-		usleep(WATCHDOG_RELOAD_MS * 1000);
-		watchdog_reload();
-#ifdef BOARD_bds
-		gpio_set_level(GPIO_DEBUG_LED, 0);
-#endif
 		usleep(WATCHDOG_RELOAD_MS * 1000);
 		watchdog_reload();
 	}
