@@ -55,15 +55,3 @@ int watchdog_init(void)
 
 	return EC_SUCCESS;
 }
-
-
-/* Low priority task to reload the watchdog */
-void watchdog_task(void)
-{
-	while (1) {
-		usleep(500000);
-		watchdog_reload();
-		usleep(500000);
-		watchdog_reload();
-	}
-}

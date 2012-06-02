@@ -15,3 +15,4 @@ CFLAGS_CPU+=$(CFLAGS_FPU-y)
 
 core-y=init.o panic.o switch.o task.o timer.o
 core-$(CONFIG_FPU)+=fpu.o
+core-$(CONFIG_TASK_WATCHDOG)+=watchdog.o
