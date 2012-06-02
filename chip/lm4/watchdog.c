@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+#include "watchdog.h"
 
 /*
  * We use watchdog 0 which is clocked on the system clock
@@ -24,11 +25,6 @@
 
 /* magic value to unlock the watchdog registers */
 #define LM4_WATCHDOG_MAGIC_WORD  0x1ACCE551
-
-#define WATCHDOG_PERIOD_MS 1100  /* Watchdog period in ms */
-#define WATCHDOG_RELOAD_MS 500   /* Interval in ms between reloads of the
-				  * watchdog timer.  Should be less than half
-				  * of the watchdog period. */
 
 static uint32_t watchdog_period;     /* Watchdog counter initial value */
 

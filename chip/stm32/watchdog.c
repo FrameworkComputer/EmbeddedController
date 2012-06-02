@@ -13,6 +13,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* LSI oscillator frequency is typically 38 kHz
  * but might vary from 28 to 56kHz.
@@ -33,12 +34,13 @@ void watchdog_reload(void)
 }
 
 
-int watchdog_init(int period_ms)
+int watchdog_init(void)
 {
 	uint32_t watchdog_period;
 
 	/* set the time-out period */
-	watchdog_period = period_ms * (LSI_CLOCK / IWDG_PRESCALER_DIV) / 1000;
+	watchdog_period = WATCHDOG_PERIOD_MS *
+			(LSI_CLOCK / IWDG_PRESCALER_DIV) / 1000;
 
 	/* Unlock watchdog registers */
 	STM32_IWDG_KR = 0x5555;

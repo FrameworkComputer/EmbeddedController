@@ -86,7 +86,7 @@ int main(void)
 	 * triggering a watchdog reboot.  (This pretty much applies only to
 	 * verified boot, because all *other* lengthy operations should be done
 	 * by tasks.) */
-	watchdog_init(1100);
+	watchdog_init();
 #endif
 
 	/* Verified boot needs to read the initial keyboard state and EEPROM
