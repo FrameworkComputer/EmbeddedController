@@ -13,6 +13,6 @@ CFLAGS_FPU-$(CONFIG_FPU)=-mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_CPU=-mcpu=cortex-m4 -mthumb -Os -mno-sched-prolog
 CFLAGS_CPU+=$(CFLAGS_FPU-y)
 
-core-y=init.o panic.o switch.o task.o timer.o
+core-y=cpu.o init.o panic.o switch.o task.o timer.o
 core-$(CONFIG_FPU)+=fpu.o
 core-$(CONFIG_TASK_WATCHDOG)+=watchdog.o
