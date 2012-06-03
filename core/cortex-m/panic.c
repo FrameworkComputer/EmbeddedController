@@ -150,6 +150,141 @@ static void print_reg(int regnum, uint32_t *regs, int index)
 	panic_putc((regnum & 3) == 3 ? '\n' : ' ');
 }
 
+#ifdef CONFIG_PANIC_HELP
+/* Names for each of the bits in the mmfs register, starting at bit 0 */
+static const char * const mmfs_name[32] = {
+	"Instruction access violation",
+	"Data access violation",
+	NULL,
+	"Unstack from exception violation",
+	"Stack from exception violation",
+	NULL,
+	NULL,
+	NULL,
+
+	"Instruction bus error",
+	"Precise data bus error",
+	"Imprecise data bus error",
+	"Unstack from exception bus fault",
+	"Stack from exception bus fault",
+	NULL,
+	NULL,
+	NULL,
+
+	"Undefined instructions",
+	"Invalid state",
+	"Invalid PC",
+	"No coprocessor",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+
+	"Unaligned",
+	"Divide by 0",
+	NULL,
+	NULL,
+
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
+
+/* Names for the first 5 bits in the DFSR */
+static const char * const dfsr_name[] = {
+	"Halt request",
+	"Breakpoint",
+	"Data watchpoint/trace",
+	"Vector catch",
+	"External debug request",
+};
+
+
+/**
+ * Helper function to display a separator after the previous item
+ *
+ * If items have been displayed already, we display a comma separator.
+ * In any case, the count of items displayed is incremeneted.
+ *
+ * @param count		Number of items displayed so far (0 for none)
+ */
+static void do_separate(int *count)
+{
+	if (*count)
+		panic_puts(", ");
+	(*count)++;
+}
+
+
+/**
+ * Show a textual representaton of the fault registers
+ *
+ * A list of detected faults is shown, with no trailing newline.
+ *
+ * @param mmfs		Value of Memory Manage Fault Status
+ * @param hfsr		Value of Hard Fault Status
+ * @param dfsr		Value of Debug Fault Status
+ */
+static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
+{
+	unsigned int upto;
+	int count = 0;
+
+	for (upto = 0; upto < 32; upto++) {
+		if ((mmfs & (1 << upto)) && mmfs_name[upto]) {
+			do_separate(&count);
+			panic_puts(mmfs_name[upto]);
+		}
+	}
+
+	if (hfsr & CPU_NVIC_HFSR_DEBUGEVT) {
+		do_separate(&count);
+		panic_puts("Debug event");
+	}
+	if (hfsr & CPU_NVIC_HFSR_FORCED) {
+		do_separate(&count);
+		panic_puts("Forced hard fault");
+	}
+	if (hfsr & CPU_NVIC_HFSR_VECTTBL) {
+		do_separate(&count);
+		panic_puts("Vector table bus fault");
+	}
+
+	for (upto = 0; upto < 5; upto++) {
+		if ((dfsr & (1 << upto))) {
+			do_separate(&count);
+			panic_puts(dfsr_name[upto]);
+		}
+	}
+}
+
+
+/**
+ * Show extra information that might be useful to understand a panic()
+ *
+ * We show fault register information, including the fault address registers
+ * if valid.
+ */
+static void panic_show_extra(void)
+{
+	uint32_t mmfs;
+
+	mmfs = CPU_NVIC_MMFS;
+	show_fault(mmfs, CPU_NVIC_HFSR, CPU_NVIC_DFSR);
+	if (mmfs & CPU_NVIC_MMFS_BFARVALID)
+		panic_printf(", bfar = %x", CPU_NVIC_BFAR);
+	if (mmfs & CPU_NVIC_MMFS_MFARVALID)
+		panic_printf(", mfar = %x", CPU_NVIC_MFAR);
+	panic_putc('\n');
+	panic_printf("mmfs = %x, ", mmfs);
+	panic_printf("shcsr = %x, ", CPU_NVIC_SHCSR);
+	panic_printf("hfsr = %x, ", CPU_NVIC_HFSR);
+	panic_printf("dfsr = %x", CPU_NVIC_DFSR);
+}
+#endif /* CONFIG_PANIC_HELP */
+
 
 /**
  * Display a message and reboot
@@ -186,6 +321,9 @@ void report_panic(const char *msg, uint32_t *lregs)
 		print_reg(13, &psp, 0);
 		print_reg(14, sregs, 5);
 		print_reg(15, sregs, 6);
+#ifdef CONFIG_PANIC_HELP
+		panic_show_extra();
+#endif
 	}
 
 	panic_reboot();

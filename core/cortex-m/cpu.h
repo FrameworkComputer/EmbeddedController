@@ -23,4 +23,24 @@
 
 #define CPU_SCB_SYSCTRL        CPUREG(0xe000ed10)
 
+#define CPU_NVIC_CCR           CPUREG(0xe000ed14)
+#define CPU_NVIC_SHCSR         CPUREG(0xe000ed24)
+#define CPU_NVIC_MMFS          CPUREG(0xe000ed28)
+#define CPU_NVIC_HFSR          CPUREG(0xe000ed2c)
+#define CPU_NVIC_DFSR          CPUREG(0xe000ed30)
+#define CPU_NVIC_MFAR          CPUREG(0xe000ed34)
+#define CPU_NVIC_BFAR          CPUREG(0xe000ed38)
+
+enum {
+	CPU_NVIC_MMFS_BFARVALID		= 1 << 15,
+	CPU_NVIC_MMFS_MFARVALID		= 1 << 7,
+
+	CPU_NVIC_CCR_DIV_0_TRAP		= 1 << 4,
+	CPU_NVIC_CCR_UNALIGN_TRAP	= 1 << 3,
+
+	CPU_NVIC_HFSR_DEBUGEVT		= 1UL << 31,
+	CPU_NVIC_HFSR_FORCED		= 1 << 30,
+	CPU_NVIC_HFSR_VECTTBL		= 1 << 1,
+};
+
 #endif /* __CPU_H */
