@@ -16,9 +16,15 @@
 #include "watchdog.h"
 
 
+/* This is the size of our private panic stack, if we have one */
+#define STACK_SIZE_WORDS	64
+
 /* We save registers here for display by report_panic() */
 static struct save_area
 {
+#ifdef CONFIG_PANIC_NEW_STACK
+	uint32_t stack[STACK_SIZE_WORDS];
+#endif
 	uint32_t saved_regs[11];	/* psp, ipsr, lr, r4-r11 */
 } save_area __attribute__((aligned(8)));
 
@@ -207,6 +213,9 @@ void exception_panic(void)
 		"mrs r2, ipsr\n"
 		"mov r3, lr\n"
 		"stmia r0, {r1-r11}\n"
+#ifdef CONFIG_PANIC_NEW_STACK
+		"mov sp, r0\n"
+#endif
 		"mov r1, r0\n"
 		"mov r0, #0\n"
 		"b report_panic" : :
