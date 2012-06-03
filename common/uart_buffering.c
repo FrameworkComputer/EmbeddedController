@@ -339,10 +339,10 @@ void uart_process(void)
 			 * don't interfere with the transmit buffer. */
 			if (c == '\n')
 				uart_write_char('\r');
-			uart_write_char(c);
+			uart_write_char(c == 0x7f ? '\b' : c);
 
 			/* Handle backspace if we can */
-			if (c == '\b') {
+			if (c == '\b' || c == 0x7f) {
 				handle_backspace();
 				continue;
 			}
