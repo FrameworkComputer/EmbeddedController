@@ -24,3 +24,13 @@ by Google. See below diagram for architecture.
   |   driverlib.       |
   +--------------------+
 
+
+
+Build Options
+=============
+
+- CONFIG_WATCHDOG_HELP
+
+	Try to detect a watchdog that is about to fire, and print a trace.
+	This is needed on STM32, where the independent watchdog has no early
+	warning feature and the windowed watchdog has a very short period.

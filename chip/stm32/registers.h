@@ -333,6 +333,9 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 #define STM32_WWDG_CFR              REG32(STM32_WWDG_BASE + 0x04)
 #define STM32_WWDG_SR               REG32(STM32_WWDG_BASE + 0x08)
 
+#define STM32_WWDG_TB_8             (3 << 7)
+#define STM32_WWDG_EWI              (1 << 9)
+
 #define STM32_IWDG_BASE             0x40003000
 
 #define STM32_IWDG_KR               REG32(STM32_IWDG_BASE + 0x00)
