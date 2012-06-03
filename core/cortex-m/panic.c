@@ -360,3 +360,15 @@ void exception_panic(void)
 			[save_area] "r" (save_area.saved_regs)
 		);
 }
+
+
+#ifdef CONFIG_ASSERT_HELP
+void panic_assert_fail(const char *msg, const char *func, const char *fname,
+		       int linenum)
+{
+	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n", msg, func,
+		     fname, linenum);
+
+	panic_reboot();
+}
+#endif

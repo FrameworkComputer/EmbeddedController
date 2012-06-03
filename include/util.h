@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "panic.h"
 
 /**
  * Trigger a compilation failure if the condition
@@ -22,10 +23,18 @@
  * is not verified at runtime.
  */
 #ifdef CONFIG_DEBUG
-#define ASSERT(cond) do {			\
+# ifdef CONFIG_ASSERT_HELP
+#  define ASSERT(cond) do {			\
+		if (!(cond))			\
+			panic_assert_fail(#cond, __func__, __FILE__, \
+				__LINE__);	\
+	} while (0);
+# else
+#  define ASSERT(cond) do {			\
 		if (!(cond))			\
 			__asm("bkpt");		\
 	} while (0);
+# endif
 #else
 #define ASSERT(cond)
 #endif

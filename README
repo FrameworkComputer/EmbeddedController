@@ -54,3 +54,9 @@ Build Options
 	Precise data bus error, Forced hard fault, Vector catch, bfar = 60000000
 	mmfs = 00008200, shcsr = 00000000, hfsr = 40000000, dfsr = 00000008
 
+- CONFIG_ASSERT_HELP
+
+	Report assertion failures in a vebose manner to aid debugging. When
+	enabled an ASSERT() which fails will produce message in the form:
+
+		ASSERTION FAILURE '<expr>' in function() at file:line

@@ -56,6 +56,18 @@ void panic_vprintf(const char *format, va_list args);
  */
 void panic_printf(const char *format, ...);
 
+
+/**
+ * Report an assertion failure and reset
+ *
+ * @param msg		Assertion expression or other message
+ * @param func		Function name where assertion happened
+ * @param fname		File name where assertion happened
+ * @param linenum	Line number where assertion happened
+ */
+void panic_assert_fail(const char *msg, const char *func, const char *fname,
+		       int linenum);
+
 /**
  * Report a panic to the panic reporting device
  *
