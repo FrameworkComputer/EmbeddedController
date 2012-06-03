@@ -19,6 +19,7 @@
 
 #define CONFIG_PANIC_HELP
 #define CONFIG_PANIC_NEW_STACK
+#define CONFIG_ASSERT_HELP
 
 /* Allow dangerous commands all the time, since we don't have a write protect
  * switch. */
