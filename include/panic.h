@@ -69,6 +69,13 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum);
 
 /**
+ * Display a panic message and reset
+ *
+ * @param msg	Panic message
+ */
+void panic(const char *msg);
+
+/**
  * Report a panic to the panic reporting device
  *
  * This is exported only to permit use from assembler.

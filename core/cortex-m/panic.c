@@ -372,3 +372,9 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 	panic_reboot();
 }
 #endif
+
+
+void panic(const char *msg)
+{
+	report_panic(msg, NULL);
+}
