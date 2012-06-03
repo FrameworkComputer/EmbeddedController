@@ -368,7 +368,7 @@ fini_loop:
 /* default exception handler */
 .thumb_func
 default_handler:
-    b panic
+    b exception_panic
 
 _bss_start:
     .long __bss_start
