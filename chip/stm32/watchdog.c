@@ -34,6 +34,39 @@ void watchdog_reload(void)
 }
 
 
+/**
+ * Chcek if a watchdog interrupt needs to be reported.
+ *
+ * If so, this function should call watchdog_trace()
+ *
+ * @param excep_lr	Value of lr to indicate caller return
+ * @param excep_sp	Value of sp to indicate caller task id
+ */
+void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+{
+	/* This is not actually called for now, since we reset instead */
+}
+
+
+void IRQ_HANDLER(STM32_IRQ_WWDG)(void) __attribute__((naked));
+void IRQ_HANDLER(STM32_IRQ_WWDG)(void)
+{
+	/* Naked call so we can extract raw LR and SP */
+	asm volatile("mov r0, lr\n"
+		     "mov r1, sp\n"
+		     /* Must push registers in pairs to keep 64-bit aligned
+		      * stack for ARM EABI.  This also conveninently saves
+		      * R0=LR so we can pass it to task_resched_if_needed. */
+		     "push {r0, lr}\n"
+		     "bl watchdog_check\n"
+		     "pop {r0, lr}\n"
+		     "b task_resched_if_needed\n");
+}
+const struct irq_priority IRQ_BUILD_NAME(prio_, STM32_IRQ_WWDG, )
+	__attribute__((section(".rodata.irqprio")))
+		= {STM32_IRQ_WWDG, 0}; /* put the watchdog at the highest
+					    priority */
+
 int watchdog_init(void)
 {
 	uint32_t watchdog_period;

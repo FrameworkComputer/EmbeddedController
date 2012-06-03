@@ -20,6 +20,18 @@
  * more than 2 watchdog periods since watchdog_reload() has been called. */
 int watchdog_init(void);
 
+/**
+ * Display a trace with information about an expired watchdog timer
+ *
+ * This shows the location in the code where the expiration happened.
+ * Usually this helps locate a loop which is blocking execution of the
+ * watchdog task.
+ *
+ * @param excep_lr	Value of lr to indicate caller return
+ * @param excep_sp	Value of sp to indicate caller task id
+ */
+void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp);
+
 /* Reload the watchdog counter */
 void watchdog_reload(void);
 

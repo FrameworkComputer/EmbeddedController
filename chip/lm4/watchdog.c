@@ -13,8 +13,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "task.h"
-#include "timer.h"
-#include "uart.h"
 #include "util.h"
 #include "watchdog.h"
 
@@ -28,47 +26,6 @@
 
 static uint32_t watchdog_period;     /* Watchdog counter initial value */
 
-/* Watchdog debug trace.  This is triggered if the watchdog has not been
- * reloaded after 1x the timeout period, after 2x the period an hardware reset
- * is triggering. */
-void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
-{
-	uint32_t psp;
-	uint32_t *stack;
-
-	/* Do NOT reset the watchdog interrupt here; it will be done in
-	 * watchdog_reload(), or reset will be triggered if we don't call that
-	 * by the next watchdog period.  Instead, de-activate the interrupt in
-	 * the NVIC, so the watchdog trace will only be printed once. */
-	task_disable_irq(LM4_IRQ_WATCHDOG);
-
-	asm("mrs %0, psp":"=r"(psp));
-	if ((excep_lr & 0xf) == 1) {
-		/* we were already in exception context */
-		stack = (uint32_t *)excep_sp;
-	} else {
-		/* we were in task context */
-		stack = (uint32_t *)psp;
-	}
-
-	uart_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ",
-	            stack[6], stack[5], psp);
-	if ((excep_lr & 0xf) == 1)
-		uart_puts("(exc) ###\n");
-	else
-		uart_printf("(task %d) ###\n", task_from_addr(psp));
-	/* Ensure this debug message is always flushed to the UART */
-	uart_emergency_flush();
-
-	/* If we are blocked in a high priority IT handler, the following debug
-	 * messages might not appear but they are useless in that situation. */
-	timer_print_info();
-	uart_emergency_flush();
-	task_print_list();
-	uart_emergency_flush();
-}
-
-
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void) __attribute__((naked));
 void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 {
@@ -80,8 +37,18 @@ void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 		      * R0=LR so we can pass it to task_resched_if_needed. */
 		     "push {r0, lr}\n"
 		     "bl watchdog_trace\n"
+		      /* Do NOT reset the watchdog interrupt here; it will
+		       * be done in watchdog_reload(), or reset will be
+		       * triggered if we don't call that by the next watchdog
+		       * period.  Instead, de-activate the interrupt in the
+		       * NVIC, so the watchdog trace will only be printed
+		       * once.
+		       */
+		     "mov r0, %[irq]\n"
+		     "bl task_disable_irq\n"
 		     "pop {r0, lr}\n"
-		     "b task_resched_if_needed\n");
+		     "b task_resched_if_needed\n"
+			: : [irq] "i" (LM4_IRQ_WATCHDOG));
 }
 const struct irq_priority IRQ_BUILD_NAME(prio_, LM4_IRQ_WATCHDOG, )
 	__attribute__((section(".rodata.irqprio")))
