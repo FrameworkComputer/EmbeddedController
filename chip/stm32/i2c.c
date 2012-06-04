@@ -302,7 +302,7 @@ static inline void disable_ack(int port)
 
 static inline void dump_i2c_reg(int port)
 {
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_I2C
 	CPRINTF("CR1  : %016b\n", STM32_I2C_CR1(port));
 	CPRINTF("CR2  : %016b\n", STM32_I2C_CR2(port));
 	CPRINTF("SR2  : %016b\n", STM32_I2C_SR2(port));
@@ -312,7 +312,7 @@ static inline void dump_i2c_reg(int port)
 	CPRINTF("DR   : %016b\n", STM32_I2C_DR(port));
 	CPRINTF("CCR  : %016b\n", STM32_I2C_CCR(port));
 	CPRINTF("TRISE: %016b\n", STM32_I2C_TRISE(port));
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_I2C */
 }
 
 static int wait_status(int port, uint32_t mask)
@@ -326,8 +326,10 @@ static int wait_status(int port, uint32_t mask)
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
 		if (t2.val - t1.val > 100000) {
+#ifdef CONFIG_DEBUG_I2C
 			CPRINTF(" m %016b\n", mask);
 			CPRINTF(" - %016b\n", r);
+#endif /* CONFIG_DEBUG_I2C */
 			return EC_ERROR_TIMEOUT;
 		}
 		usleep(2000);
