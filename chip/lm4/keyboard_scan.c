@@ -11,6 +11,7 @@
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
+#include "power_button.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -55,7 +56,6 @@ enum COLUMN_INDEX {
 static int enable_scanning = 1;
 static uint8_t raw_state[KB_COLS];
 static uint8_t raw_state_at_boot[KB_COLS];
-static int recovery_key_pressed;
 
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
@@ -276,12 +276,6 @@ static int check_boot_key(int index, int mask)
 }
 
 
-int keyboard_scan_recovery_pressed(void)
-{
-	return recovery_key_pressed;
-}
-
-
 int keyboard_scan_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
@@ -323,12 +317,13 @@ int keyboard_scan_init(void)
 		/* Proto1 used ESC key */
 		/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
 		if (system_get_board_version() == BOARD_VERSION_PROTO1) {
-			recovery_key_pressed =
+			power_set_recovery_pressed(
 				check_boot_key(MASK_INDEX_REFRESH,
-					       MASK_VALUE_REFRESH);
+					       MASK_VALUE_REFRESH));
 		} else {
-			recovery_key_pressed =
-				check_boot_key(MASK_INDEX_ESC, MASK_VALUE_ESC);
+			power_set_recovery_pressed(
+				check_boot_key(MASK_INDEX_ESC,
+					       MASK_VALUE_ESC));
 		}
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
@@ -352,8 +347,6 @@ void keyboard_scan_task(void)
 	int key_press_timer = 0;
 
 	print_raw_state("init state");
-	if (recovery_key_pressed)
-		CPUTS("[KB recovery key pressed at init!]\n");
 
 	/* Enable interrupts */
 	task_enable_irq(KB_SCAN_ROW_IRQ);

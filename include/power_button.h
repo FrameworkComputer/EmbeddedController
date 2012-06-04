@@ -25,4 +25,11 @@ int power_ac_present(void);
  * signal from the GPIO. */
 int power_lid_open_debounced(void);
 
+/* Return non-zero if the recovery button is pressed. */
+int power_recovery_pressed(void);
+
+/* Set the state of the recovery button.  Called by the keyboard scanner at
+ * init if the keyboard recovery combo was pressed. */
+void power_set_recovery_pressed(int pressed);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */
