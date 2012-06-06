@@ -263,9 +263,12 @@ static int check_boot_key(int index, int mask)
 	 * your keyboard.  Currently, only the requested key and the keys used
 	 * for the Silego reset are allowed. */
 	allowed_mask[index] |= mask;
-	/* TODO: (crosbug.com/p/10210) this is correct for proto1, but EVT+
-	 * uses Refresh as the reset key. */
-	allowed_mask[MASK_INDEX_ESC] |= MASK_VALUE_ESC;
+
+	/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
+	if (system_get_board_version() == BOARD_VERSION_PROTO1)
+		allowed_mask[MASK_INDEX_ESC] |= MASK_VALUE_ESC;
+	else
+		allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
 
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state_at_boot[c] & ~allowed_mask[c])
