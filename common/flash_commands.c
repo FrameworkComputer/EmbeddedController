@@ -188,7 +188,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 /*****************************************************************************/
 /* Host commands */
 
-int flash_command_get_info(uint8_t *data, int *resp_size)
+static int flash_command_get_info(uint8_t *data, int *resp_size)
 {
 	struct ec_response_flash_info *r =
 			(struct ec_response_flash_info *)data;
@@ -204,7 +204,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO, flash_command_get_info);
 
 
 #ifdef SUPPORT_CHECKSUM
-int flash_command_checksum(uint8_t *data, int *resp_size)
+static int flash_command_checksum(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_checksum *p =
 		(struct ec_params_flash_checksum *)data;
@@ -228,7 +228,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_CHECKSUM, flash_command_checksum);
 #endif
 
 
-int flash_command_read(uint8_t *data, int *resp_size)
+static int flash_command_read(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_read *p =
 			(struct ec_params_flash_read *)data;
@@ -247,7 +247,7 @@ int flash_command_read(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ, flash_command_read);
 
 
-int flash_command_write(uint8_t *data, int *resp_size)
+static int flash_command_write(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_write *p =
 			(struct ec_params_flash_write *)data;
@@ -266,7 +266,7 @@ int flash_command_write(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE, flash_command_write);
 
 
-int flash_command_erase(uint8_t *data, int *resp_size)
+static int flash_command_erase(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_erase *p =
 			(struct ec_params_flash_erase *)data;
@@ -282,7 +282,7 @@ int flash_command_erase(uint8_t *data, int *resp_size)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase);
 
 
-int flash_command_wp_enable(uint8_t *data, int *resp_size)
+static int flash_command_wp_enable(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_wp_enable *p =
 			(struct ec_params_flash_wp_enable *)data;
@@ -293,7 +293,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_ENABLE,
 		     flash_command_wp_enable);
 
 
-int flash_command_wp_get_state(uint8_t *data, int *resp_size)
+static int flash_command_wp_get_state(uint8_t *data, int *resp_size)
 {
 	struct ec_response_flash_wp_enable *p =
 			(struct ec_response_flash_wp_enable *)data;
@@ -310,7 +310,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_GET_STATE,
 		     flash_command_wp_get_state);
 
 
-int flash_command_wp_set_range(uint8_t *data, int *resp_size)
+static int flash_command_wp_set_range(uint8_t *data, int *resp_size)
 {
 	struct ec_params_flash_wp_range *p =
 			(struct ec_params_flash_wp_range *)data;
@@ -327,7 +327,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WP_SET_RANGE,
 		     flash_command_wp_set_range);
 
 
-int flash_command_wp_get_range(uint8_t *data, int *resp_size)
+static int flash_command_wp_get_range(uint8_t *data, int *resp_size)
 {
 	struct ec_response_flash_wp_range *p =
 			(struct ec_response_flash_wp_range *)data;
