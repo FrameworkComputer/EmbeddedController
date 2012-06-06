@@ -10,7 +10,6 @@
 #include "eoption.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
-#include "lpc.h"
 #include "power_button.h"
 #include "registers.h"
 #include "system.h"
@@ -53,7 +52,7 @@ enum COLUMN_INDEX {
 #define KB_COLS 13
 
 
-static int enable_scanning = 1;
+static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 static uint8_t raw_state[KB_COLS];
 static uint8_t raw_state_at_boot[KB_COLS];
 
@@ -61,8 +60,6 @@ static uint8_t raw_state_at_boot[KB_COLS];
 static const uint8_t *actual_key_mask;
 
 /* All actual key masks (todo: move to keyboard matrix definition) */
-/* TODO: (crosbug.com/p/7485) fill in real key mask with 0-bits for coords that
-   aren't keys */
 static const uint8_t actual_key_masks[4][KB_COLS] = {
 	{0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 	 0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8},  /* full set */
@@ -122,8 +119,6 @@ static void wait_for_interrupt(void)
 	select_column(COLUMN_ASSERT_ALL);
 	clear_matrix_interrupt_status();
 
-	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;      /* 0: edge-sensitive */
-	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;  /* 1: both edge */
 	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0xff;   /* 1: enable interrupt */
 }
 
@@ -137,8 +132,8 @@ static void enter_polling_mode(void)
 
 
 /* Update the raw key state without sending messages.  Used in pre-init, so
- * must not make task-switching-dependent calls like usleep(); udelay() is ok
- * because it's a spin-loop. */
+ * must not make task-switching-dependent calls; udelay() is ok because it's a
+ * spin-loop. */
 static void update_key_state(void)
 {
 	int c;
@@ -160,7 +155,7 @@ static void update_key_state(void)
 }
 
 
-/* Print the raw keyboard state */
+/* Print the raw keyboard state. */
 static void print_raw_state(const char *msg)
 {
 	int c;
@@ -176,13 +171,12 @@ static void print_raw_state(const char *msg)
 }
 
 
-/* Returns 1 if any key is still pressed. 0 if no key is pressed. */
+/* Return 1 if any key is still pressed, 0 if no key is pressed. */
 static int check_keys_changed(void)
 {
 	int c, c2;
 	uint8_t r;
 	int change = 0;
-	int num_press = 0;
 	uint8_t keys[KB_COLS];
 
 	for (c = 0; c < KB_COLS; c++) {
@@ -207,12 +201,20 @@ static int check_keys_changed(void)
 	}
 	select_column(COLUMN_TRI_STATE_ALL);
 
-	/* ignore if a ghost key appears. */
+	/* Ignore if a ghost key appears */
 	for (c = 0; c < KB_COLS; c++) {
-		if (!keys[c]) continue;
+		if (!keys[c])
+			continue;
 		for (c2 = c + 1; c2 < KB_COLS; c2++) {
+			/* A little bit of cleverness here.  Ghosting happens
+			 * if 2 columns share at least 2 keys.  So we OR the
+			 * columns together and then see if more than one bit
+			 * is set.  x&(x-1) is non-zero only if x has more
+			 * than one bit set. */
 			uint8_t common = keys[c] & keys[c2];
-			if (common & (common - 1)) goto out;
+
+			if (common & (common - 1))
+				goto out;
 		}
 	}
 
@@ -221,12 +223,11 @@ static int check_keys_changed(void)
 		r = keys[c];
 		if (r != raw_state[c]) {
 			int i;
-			for (i = 0; i < 8; ++i) {
+			for (i = 0; i < 8; i++) {
 				uint8_t prev = (raw_state[c] >> i) & 1;
 				uint8_t now = (r >> i) & 1;
-				if (prev != now && enable_scanning) {
+				if (prev != now && enable_scanning)
 					keyboard_state_changed(i, c, now);
-				}
 			}
 			raw_state[c] = r;
 			change = 1;
@@ -237,12 +238,12 @@ static int check_keys_changed(void)
 		print_raw_state("raw state");
 
 out:
-	/* Count number of key pressed */
+	/* Return non-zero if at least one key is pressed */
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c]) ++num_press;
+		if (raw_state[c])
+			return 1;
 	}
-
-	return num_press ? 1 : 0;
+	return 0;
 }
 
 
@@ -259,10 +260,13 @@ static int check_boot_key(int index, int mask)
 
 	/* Make sure only other allowed keys are pressed.  This protects
 	 * against accidentally triggering the special key when a cat sits on
-	 * your keyboard.  Currently, only the requested key and ESC are
-	 * allowed. */
+	 * your keyboard.  Currently, only the requested key and the keys used
+	 * for the Silego reset are allowed. */
 	allowed_mask[index] |= mask;
+	/* TODO: (crosbug.com/p/10210) this is correct for proto1, but EVT+
+	 * uses Refresh as the reset key. */
 	allowed_mask[MASK_INDEX_ESC] |= MASK_VALUE_ESC;
+
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state_at_boot[c] & ~allowed_mask[c])
 			return 0;  /* Additional disallowed key pressed */
@@ -289,6 +293,9 @@ int keyboard_scan_init(void)
 	LM4_GPIO_DEN(KB_SCAN_ROW_GPIO) |= 0xff;
 	LM4_GPIO_DIR(KB_SCAN_ROW_GPIO) = 0;
 	LM4_GPIO_PUR(KB_SCAN_ROW_GPIO) = 0xff;
+	/* Edge-sensitive on both edges.  Don't enable interrupts yet. */
+	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;
+	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;
 
 	/* Tri-state the columns */
 	select_column(COLUMN_TRI_STATE_ALL);
@@ -342,7 +349,6 @@ void keyboard_scan_task(void)
 
 	/* Enable interrupts */
 	task_enable_irq(KB_SCAN_ROW_IRQ);
-	enable_scanning = 1;
 
 	while (1) {
 		/* Enable all outputs */
@@ -381,53 +387,6 @@ static void matrix_interrupt(void)
 		task_wake(TASK_ID_KEYSCAN);
 }
 DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
-
-
-int keyboard_has_char()
-{
-#if defined(HOST_KB_BUS_LPC)
-	return lpc_keyboard_has_char();
-#else
-#error "keyboard_scan needs to know what bus to use for keyboard interface"
-#endif
-}
-
-
-void keyboard_put_char(uint8_t chr, int send_irq)
-{
-#if defined(HOST_KB_BUS_LPC)
-	lpc_keyboard_put_char(chr, send_irq);
-#else
-#error "keyboard_scan needs to know what bus to use for keyboard interface"
-#endif
-}
-
-
-void keyboard_clear_buffer(void)
-{
-#if defined(HOST_KB_BUS_LPC)
-	lpc_keyboard_clear_buffer();
-#else
-#error "keyboard_scan needs to know what bus to use for keyboard interface"
-#endif
-}
-
-
-void keyboard_resume_interrupt(void)
-{
-#if defined(HOST_KB_BUS_LPC)
-	lpc_keyboard_resume_irq();
-#else
-#error "keyboard_scan needs to know what bus to use for keyboard interface"
-#endif
-}
-
-
-int keyboard_get_scan(uint8_t **buffp, int max_bytes)
-{
-	/* We don't support this API yet; just return -1. */
-	return -1;
-}
 
 
 /* The actual implementation is controlling the enable_scanning variable, then

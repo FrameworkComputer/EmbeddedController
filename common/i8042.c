@@ -10,6 +10,7 @@
 #include "console.h"
 #include "i8042.h"
 #include "keyboard.h"
+#include "lpc.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -49,7 +50,7 @@ static int i8042_irq_enabled = 0;
 void i8042_flush_buffer()
 {
 	head_to_buffer = tail_to_buffer = 0;
-	keyboard_clear_buffer();
+	lpc_keyboard_clear_buffer();
 }
 
 
@@ -102,7 +103,7 @@ static void enq_to_host(int len, const uint8_t *to_host)
  */
 void i8042_enable_keyboard_irq(void) {
 	i8042_irq_enabled = 1;
-	keyboard_resume_interrupt();
+	lpc_keyboard_resume_irq();
 }
 
 void i8042_disable_keyboard_irq(void) {
@@ -128,7 +129,7 @@ void i8042_command_task(void)
 
 			/* if the host still didn't read that away,
 			   try next time. */
-			if (keyboard_has_char()) {
+			if (lpc_keyboard_has_char()) {
 				CPRINTF5("[%T i8042_command_task() "
 					 "cannot send to host due to host "
 					 "haven't taken away.\n");
@@ -143,7 +144,7 @@ void i8042_command_task(void)
 				(head_to_buffer + 1) % HOST_BUFFER_SIZE;
 
 			/* Write to host. */
-			keyboard_put_char(chr, i8042_irq_enabled);
+			lpc_keyboard_put_char(chr, i8042_irq_enabled);
 			CPRINTF4("[%T i8042_command_task() "
 				 "sends to host: 0x%02x\n", chr);
 		}

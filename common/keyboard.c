@@ -152,12 +152,13 @@ static uint8_t simulated_key[CROS_COL_NUM];
 
 
 /* Log the traffic between EC and host -- for debug only */
+#define MAX_KBLOG 512  /* Max events in keyboard log */
 struct kblog_t {
 	uint8_t type;
 	uint8_t byte;
 };
-static struct kblog_t *kblog;
-static int kblog_len;
+static struct kblog_t *kblog;  /* Log buffer, or NULL if not logging */
+static int kblog_len;          /* Current log length */
 
 
 /* Change to set 1 if the I8042_XLATE flag is set. */

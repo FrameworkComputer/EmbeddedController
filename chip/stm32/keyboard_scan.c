@@ -405,7 +405,7 @@ void matrix_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_KEYSCAN);
 }
 
-int keyboard_has_char()
+int keyboard_has_char(void)
 {
 	/* TODO: needs to be implemented */
 	return 0;
