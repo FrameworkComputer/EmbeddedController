@@ -518,7 +518,7 @@ void x86_power_task(void)
 
 			/* Throttle CPU if necessary.  This should only be
 			 * asserted when +VCCP is powered (it is by now). */
-			gpio_set_flags(GPIO_CPU_PROCHOT, throttle_cpu);
+			gpio_set_level(GPIO_CPU_PROCHOT, throttle_cpu);
 
 			/* Set PCH_PWROK */
 			gpio_set_level(GPIO_PCH_PWROK, 1);
@@ -546,7 +546,7 @@ void x86_power_task(void)
 
 			/* Deassert prochot since CPU is off and we're about
 			 * to drop +VCCP. */
-			gpio_set_flags(GPIO_CPU_PROCHOT, 0);
+			gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 			/* Turn off power rails */
 			gpio_set_level(GPIO_ENABLE_VS, 0);
