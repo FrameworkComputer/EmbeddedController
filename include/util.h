@@ -52,11 +52,6 @@
 #define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
-static inline uint8_t hex2asc(uint8_t hex)
-{
-	return hex + ((hex > 9) ? 'A' : '0');
-}
-
 /* Standard library functions */
 int atoi(const char *nptr);
 int isdigit(int c);

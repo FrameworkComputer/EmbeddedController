@@ -40,28 +40,12 @@ int uart_puts(const char *outstr);
 
 /* Print formatted output to the UART, like printf().
  *
- * Returns error if output was truncated.
- *
- * Supports the following format strings:
- *   char (%c)
- *   string (%s)
- *   native int (signed/unsigned) (%d / %u / %x)
- *   int32_t / uint32_t (%d / %x)
- *   int64_t / uint64_t (%ld / %lu / %lx)
- *   pointer (%p)
- * And the following special format codes:
- *   current time in sec (%T) - interpreted as "%.6T" for fixed-point format
- * including padding (%-5s, %8d, %08x, %016lx)
- *
- * Floating point output (%f / %g) is not supported, but there is a fixed-point
- * extension for integers; a padding option of .N (where N is a number) will
- * put a decimal before that many digits.  For example, printing 123 with
- * format code %.6d will result in "0.000123".  This is most useful for
- * printing times, voltages, and currents. */
+ * See printf.h for valid formatting codes. */
 int uart_printf(const char *format, ...);
 
-/* Print formatted output to the UART, like vprintf().  Supports the same
- * formatting codes as uart_printf(). */
+/* Print formatted output to the UART, like vprintf().
+ *
+ * See printf.h for valid formatting codes. */
 int uart_vprintf(const char *format, va_list args);
 
 /* Flushes output.  Blocks until UART has transmitted all output. */
@@ -69,10 +53,15 @@ void uart_flush_output(void);
 
 /* Flushes output.
  *
- * Blocks until UART has transmitted all output,
- * even if we are in high priority interrupt context
- */
+ * Blocks until UART has transmitted all output, even in a high priority
+ * interrupt context. */
 void uart_emergency_flush(void);
+
+/* Like uart_printf(), but bypasses the transmit buffer.
+ *
+ * Blocks until UART has transmitted the formatted output, even in a high
+ * priority interrupt context. */
+int uart_emergency_printf(const char *format, ...);
 
 /*****************************************************************************/
 /* Input functions

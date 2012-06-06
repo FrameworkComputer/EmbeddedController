@@ -63,8 +63,9 @@ enum console_channel {
 /* Put a string to the console channel. */
 int cputs(enum console_channel channel, const char *outstr);
 
-/* Print formatted output to the console channel.  See uart_vprintf() for
- * valid format codes. */
+/* Print formatted output to the console channel.
+ *
+ * See printf.h for valid formatting codes. */
 int cprintf(enum console_channel channel, const char *format, ...);
 
 /* Flush the console output for all channels. */

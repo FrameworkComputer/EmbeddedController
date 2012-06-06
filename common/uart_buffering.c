@@ -9,9 +9,9 @@
 
 #include "console.h"
 #include "task.h"
-#include "timer.h"
 #include "uart.h"
 #include "util.h"
+#include "printf.h"
 
 /* Buffer sizes; should be power of 2 */
 #define TX_BUF_SIZE 512
@@ -58,19 +58,17 @@ static volatile int cmd_history_ptr;
 
 static int console_mode = 1;
 
-/* TODO: should have an API to set raw mode for the UART.  In raw
- * mode, we don't do CRLF translation or echo input. */
-
 
 /* Put a single character into the transmit buffer.  Does not enable
  * the transmit interrupt; assumes that happens elsewhere.  Returns
- * zero if the character was transmitted, 1 if it was dropped. */
-static int __tx_char(int c)
+ * zero if the character was transmitted, 1 if it was dropped.  We only
+ * have a single transmit buffer, so context is ignored. */
+static int __tx_char(void *context, int c)
 {
 	int tx_buf_next;
 
 	/* Do newline to CRLF translation */
-	if (console_mode && c == '\n' && __tx_char('\r'))
+	if (console_mode && c == '\n' && __tx_char(NULL, '\r'))
 		return 1;
 
 	tx_buf_next = TX_BUF_NEXT(tx_buf_head);
@@ -81,6 +79,7 @@ static int __tx_char(int c)
 	tx_buf_head = tx_buf_next;
 	return 0;
 }
+
 
 static void move_rx_ptr_fwd(void)
 {
@@ -93,6 +92,7 @@ static void move_rx_ptr_fwd(void)
 	}
 }
 
+
 static void move_rx_ptr_bwd(void)
 {
 	if (rx_cur_buf_ptr != 0) {
@@ -104,11 +104,13 @@ static void move_rx_ptr_bwd(void)
 	}
 }
 
+
 static void repeat_char(char c, int cnt)
 {
 	while (cnt--)
 		uart_write_char(c);
 }
+
 
 static void handle_backspace(void)
 {
@@ -133,6 +135,7 @@ static void handle_backspace(void)
 		/* Cursor moves pass the first character. Move it back. */
 		uart_write_char(' ');
 }
+
 
 static void insert_char(char c)
 {
@@ -169,6 +172,7 @@ static void insert_char(char c)
 	}
 }
 
+
 static int rx_buf_space_available(void)
 {
 	if (cmd_history_head == cmd_history_tail)
@@ -176,6 +180,7 @@ static int rx_buf_space_available(void)
 	return RX_BUF_DIFF(cmd_history[cmd_history_tail].tail,
 			   cmd_history[CMD_HIST_PREV(cmd_history_head)].head);
 }
+
 
 static void history_save(void)
 {
@@ -211,6 +216,7 @@ static void history_save(void)
 	cmd_history[hist_id].tail = tail;
 }
 
+
 static void history_load(int id)
 {
 	int head = cmd_history[id].head;
@@ -238,6 +244,7 @@ static void history_load(int id)
 	rx_cur_buf_head = rx_cur_buf_ptr;
 }
 
+
 static void history_prev(void)
 {
 	if (cmd_history_ptr == cmd_history_tail)
@@ -260,6 +267,7 @@ static void history_prev(void)
 	history_load(cmd_history_ptr);
 }
 
+
 static void history_next(void)
 {
 	if (cmd_history_ptr == cmd_history_head)
@@ -272,6 +280,7 @@ static void history_next(void)
 	if (cmd_history_ptr == CMD_HIST_PREV(cmd_history_head))
 		cmd_history_head = cmd_history_ptr;
 }
+
 
 /* Helper for UART processing */
 void uart_process(void)
@@ -371,7 +380,7 @@ int uart_puts(const char *outstr)
 {
 	/* Put all characters in the output buffer */
 	while (*outstr) {
-		if (__tx_char(*outstr++) != 0)
+		if (__tx_char(NULL, *outstr++) != 0)
 			break;
 	}
 
@@ -385,177 +394,12 @@ int uart_puts(const char *outstr)
 
 int uart_vprintf(const char *format, va_list args)
 {
-	static const char int_chars[] = "0123456789abcdef";
-	static const char error_str[] = "ERROR";
-	char intbuf[34];
-		/* Longest uint64 in decimal = 20
-		 * longest uint32 in binary  = 32
-		 */
-	int dropped_chars = 0;
-	int is_left;
-	int pad_zero;
-	int pad_width;
-	char *vstr;
-	int vlen;
-
-	while (*format && !dropped_chars) {
-		int c = *format++;
-
-		/* Copy normal characters */
-		if (c != '%') {
-			dropped_chars |= __tx_char(c);
-			continue;
-		}
-
-		/* Get first format character */
-		c = *format++;
-
-		/* Send "%" for "%%" input */
-		if (c == '%' || c == '\0') {
-			dropped_chars |= __tx_char('%');
-			continue;
-		}
-
-		/* Handle %c */
-		if (c == 'c') {
-			c = va_arg(args, int);
-			dropped_chars |= __tx_char(c);
-			continue;
-		}
-
-		/* Handle left-justification ("%-5s") */
-		is_left = (c == '-');
-		if (is_left)
-			c = *format++;
-
-		/* Handle padding with 0's */
-		pad_zero = (c == '0');
-		if (pad_zero)
-			c = *format++;
-
-		/* Count padding length */
-		pad_width = 0;
-		while (c >= '0' && c <= '9') {
-			pad_width = (10 * pad_width) + c - '0';
-			c = *format++;
-		}
-		if (pad_width > 80) {
-			/* Sanity check for width failed */
-			format = error_str;
-			continue;
-		}
-
-		if (c == 's') {
-			vstr = va_arg(args, char *);
-			if (vstr == NULL)
-				vstr = "(NULL)";
-		} else {
-			uint64_t v;
-			int is_negative = 0;
-			int is_64bit = 0;
-			int base = 10;
-			int fixed_point = 0;
-
-			/* Handle fixed point numbers */
-			if (c == '.') {
-				c = *format++;
-				if (c < '0' || c > '9') {
-					format = error_str;
-					continue;
-				}
-				fixed_point = c - '0';
-				c = *format++;
-			}
-
-			if (c == 'l') {
-				is_64bit = 1;
-				c = *format++;
-			}
-
-			/* Special-case: %T = current time */
-			if (c == 'T') {
-				v = get_time().val;
-				is_64bit = 1;
-				fixed_point = 6;
-			} else if (is_64bit) {
-				v = va_arg(args, uint64_t);
-			} else {
-				v = va_arg(args, uint32_t);
-			}
-
-			switch (c) {
-			case 'd':
-				if (is_64bit) {
-					if ((int64_t)v < 0) {
-						is_negative = 1;
-						if (v != (1ULL << 63))
-							v = -v;
-					}
-				} else {
-					if ((int)v < 0) {
-						is_negative = 1;
-						if (v != (1ULL << 31))
-							v = -(int)v;
-					}
-				}
-				break;
-			case 'u':
-			case 'T':
-				break;
-			case 'x':
-			case 'p':
-				base = 16;
-				break;
-			case 'b':
-				base = 2;
-				break;
-			default:
-				format = error_str;
-			}
-			if (format == error_str)
-				continue; /* Bad format specifier */
-
-			/* Convert integer to string, starting at end of
-			 * buffer and working backwards. */
-			vstr = intbuf + sizeof(intbuf) - 1;
-			*(vstr) = '\0';
-
-			/* Handle digits to right of decimal for fixed point
-			 * numbers. */
-			for (vlen = 0; vlen < fixed_point; vlen++)
-				*(--vstr) = int_chars[uint64divmod(&v, 10)];
-			if (fixed_point)
-				*(--vstr) = '.';
-
-			if (!v)
-				*(--vstr) = '0';
-
-			while (v)
-				*(--vstr) = int_chars[uint64divmod(&v, base)];
-
-			if (is_negative)
-				*(--vstr) = '-';
-		}
-
-		/* Copy string (or stringified integer) */
-		vlen = strlen(vstr);
-		while (vlen < pad_width && !is_left) {
-			dropped_chars |= __tx_char(pad_zero ? '0' : ' ');
-			vlen++;
-		}
-		while (*vstr)
-			dropped_chars |= __tx_char(*vstr++);
-		while (vlen < pad_width && is_left) {
-			dropped_chars |= __tx_char(' ');
-			vlen++;
-		}
-	}
+	int rv = vfnprintf(__tx_char, NULL, format, args);
 
 	if (uart_tx_stopped())
 		uart_tx_start();
 
-	/* Successful if we consumed all output */
-	return dropped_chars ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+	return rv;
 }
 
 
@@ -569,6 +413,37 @@ int uart_printf(const char *format, ...)
 	va_end(args);
 	return rv;
 }
+
+
+/* Add a character directly to the UART buffer */
+static int emergency_txchar(void *format, int c)
+{
+	/* Wait for space */
+	while (!uart_tx_ready())
+		;
+
+	/* Write the character */
+	uart_write_char(c);
+	return 0;
+}
+
+
+int uart_emergency_printf(const char *format, ...)
+{
+	int rv;
+	va_list args;
+
+	va_start(args, format);
+	rv = vfnprintf(emergency_txchar, NULL, format, args);
+	va_end(args);
+
+	/* Wait for transmit FIFO empty */
+	uart_tx_flush();
+
+	return rv;
+}
+
+
 /* For use when debugging verified boot. We could wrap it with a real function,
  * but it's rarely needed and this doesn't add any extra code. We have to
  * declare it here in order for this trick to work.  */

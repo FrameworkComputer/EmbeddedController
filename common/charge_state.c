@@ -18,6 +18,7 @@
 #include "ec_commands.h"
 #include "power_button.h"
 #include "power_led.h"
+#include "printf.h"
 #include "smart_battery.h"
 #include "system.h"
 #include "timer.h"
@@ -72,12 +73,8 @@ static void update_battery_info(void)
 	/* Smart battery serial number is 16 bits */
 	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_SERIAL);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
-	if (battery_serial_number(&batt_serial) == 0) {
-		*batt_str++ = hex2asc(0xf & (batt_serial >> 12));
-		*batt_str++ = hex2asc(0xf & (batt_serial >> 8));
-		*batt_str++ = hex2asc(0xf & (batt_serial >> 4));
-		*batt_str++ = hex2asc(0xf & batt_serial);
-	}
+	if (battery_serial_number(&batt_serial) == 0)
+		snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X", batt_serial);
 }
 
 /* Prevent battery from going into deep discharge state */
