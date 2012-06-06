@@ -608,6 +608,17 @@ DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset,
 			"Issue x86 reset",
 			NULL);
 
+static int command_powerinfo(int argc, char **argv)
+{
+	CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
+		state, state_names[state], in_signals);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
+			"",
+			"Show current power state",
+			NULL);
+
 /*****************************************************************************/
 /* Host commands */
 
