@@ -87,25 +87,20 @@ static void select_column(int col)
 {
 	if (col == COLUMN_TRI_STATE_ALL || !enable_scanning) {
 		/* Tri-state all outputs */
-		LM4_GPIO_DIR(LM4_GPIO_P) = 0;
-		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
+		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
+		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
 	} else if (col == COLUMN_ASSERT_ALL) {
 		/* Assert all outputs */
-		LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
-		LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
 		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
 		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0;
 	} else {
 		/* Assert a single output */
-		LM4_GPIO_DIR(LM4_GPIO_P) = 0;
-		LM4_GPIO_DIR(LM4_GPIO_Q) &= ~0x1f;
-		if (col < 8) {
-			LM4_GPIO_DIR(LM4_GPIO_P) |= 1 << col;
+		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
+		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
+		if (col < 8)
 			LM4_GPIO_DATA(LM4_GPIO_P, 1 << col) = 0;
-		} else {
-			LM4_GPIO_DIR(LM4_GPIO_Q) |= 1 << (col - 8);
+		else
 			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
-		}
 	}
 }
 
@@ -278,19 +273,16 @@ static int check_boot_key(int index, int mask)
 
 int keyboard_scan_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable clock to GPIO modules N,P,Q */
-	/* TODO: gpio_pre_init() enables all the GPIO modules, so can remove
-	 * this entirely.  */
-	LM4_SYSTEM_RCGCGPIO |= 0x7000;
-	scratch = LM4_SYSTEM_RCGCGPIO;
-
-	/* Clear GPIOAFSEL and enable digital function for rows */
+	/* Set column outputs as open-drain; we either pull them low or let
+	 * them float high. */
 	LM4_GPIO_AFSEL(LM4_GPIO_P) = 0;  /* KSO[7:0] */
-	LM4_GPIO_DEN(LM4_GPIO_P) = 0xff;
 	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= ~0x1f;  /* KSO[12:8] */
+	LM4_GPIO_DEN(LM4_GPIO_P) = 0xff;
 	LM4_GPIO_DEN(LM4_GPIO_Q) |= 0x1f;
+	LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
+	LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
+	LM4_GPIO_ODR(LM4_GPIO_P) = 0xff;
+	LM4_GPIO_ODR(LM4_GPIO_Q) |= 0x1f;
 
 	/* Set row inputs with pull-up */
 	LM4_GPIO_AFSEL(KB_SCAN_ROW_GPIO) &= 0xff;
