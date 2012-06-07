@@ -163,9 +163,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				if (digit < 10)
 					*(--vstr) = '0' + digit;
 				else if (c == 'X')
-					*(--vstr) = 'A' + digit - 9;
+					*(--vstr) = 'A' + digit - 10;
 				else
-					*(--vstr) = 'a' + digit - 9;
+					*(--vstr) = 'a' + digit - 10;
 			}
 
 			if (is_negative)
