@@ -29,29 +29,29 @@
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 #ifdef CONFIG_TMP006
 	{"I2C_CPU-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CPU,
-	 tmp006_get_val, 0},
+	 tmp006_get_val, 0, 7},
 	{"I2C_CPU-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
-	 tmp006_get_val, 1},
+	 tmp006_get_val, 1, 7},
 	{"I2C_PCH-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_BOARD,
-	 tmp006_get_val, 2},
+	 tmp006_get_val, 2, 7},
 	{"I2C_PCH-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
-	 tmp006_get_val, 3},
+	 tmp006_get_val, 3, 7},
 	{"I2C_DDR-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_BOARD,
-	 tmp006_get_val, 4},
+	 tmp006_get_val, 4, 7},
 	{"I2C_DDR-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
-	 tmp006_get_val, 5},
+	 tmp006_get_val, 5, 7},
 	{"I2C_Charger-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_BOARD,
-	 tmp006_get_val, 6},
+	 tmp006_get_val, 6, 7},
 	{"I2C_Charger-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
-	 tmp006_get_val, 7},
+	 tmp006_get_val, 7, 7},
 #endif
 #ifdef CONFIG_TASK_TEMPSENSOR
 	{"ECInternal", TEMP_SENSOR_POWER_NONE, TEMP_SENSOR_TYPE_BOARD,
-	 chip_temp_sensor_get_val, 0},
+	 chip_temp_sensor_get_val, 0, 4},
 #endif
 #ifdef CONFIG_PECI
 	{"PECI", TEMP_SENSOR_POWER_CPU, TEMP_SENSOR_TYPE_CPU,
-	 peci_temp_sensor_get_val, 0},
+	 peci_temp_sensor_get_val, 0, 0},
 #endif
 };
 

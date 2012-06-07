@@ -137,7 +137,7 @@ static void overheated_action(void)
 
 
 /* Update counter and check if the counter has reached delay limit.
- * Note that we have 10 seconds delay to prevent one error value triggering
+ * Note that we have various delay period to prevent one error value triggering
  * overheated action. */
 static inline void update_and_check_stat(int temp,
 					 int sensor_id,
@@ -146,15 +146,16 @@ static inline void update_and_check_stat(int temp,
 	enum temp_sensor_type type = temp_sensors[sensor_id].type;
 	const struct thermal_config_t *config = thermal_config + type;
 	const int16_t threshold = config->thresholds[threshold_id];
+	const int delay = temp_sensors[sensor_id].action_delay_sec;
 
 	if (threshold > 0 && temp >= threshold) {
 		++ot_count[sensor_id][threshold_id];
-		if (ot_count[sensor_id][threshold_id] >= 10) {
-			ot_count[sensor_id][threshold_id] = 10;
+		if (ot_count[sensor_id][threshold_id] >= delay) {
+			ot_count[sensor_id][threshold_id] = delay;
 			overheated[threshold_id] = 1;
 		}
 	}
-	else if (ot_count[sensor_id][threshold_id] >= 10 &&
+	else if (ot_count[sensor_id][threshold_id] >= delay &&
 		 temp >= threshold - 3) {
 		/* Once the threshold is reached, only if the temperature
 		 * drops to 3 degrees below threshold do we deassert
