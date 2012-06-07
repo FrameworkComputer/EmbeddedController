@@ -91,7 +91,7 @@ static const char * const state_names[] = {
 #define IN_ALL_S0 (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE |		\
 		   IN_PGOOD_CPU_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
-static enum x86_state state;  /* Current state */
+static enum x86_state state = X86_G3;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
 static uint32_t in_want;      /* Input signal state we're waiting for */
 static int want_g3_exit;      /* Should we exit the G3 state? */
@@ -264,7 +264,9 @@ void chipset_exit_hard_off(void)
 
 	/* Set a flag to leave G3, then wake the task */
 	want_g3_exit = 1;
-	task_wake(TASK_ID_X86POWER);
+
+	if (task_start_called())
+		task_wake(TASK_ID_X86POWER);
 }
 
 
@@ -322,11 +324,6 @@ void x86_power_interrupt(enum gpio_signal signal)
 
 static int x86_power_init(void)
 {
-	/* Default to moving towards S5 state unless proven otherwise.  This
-	 * supports booting the main processor during the boot process.  We'll
-	 * drop back to G3 if we stay inactive in S5.*/
-	state = X86_G3S5;
-
 	/* Update input state */
 	update_in_signals();
 	in_want = 0;

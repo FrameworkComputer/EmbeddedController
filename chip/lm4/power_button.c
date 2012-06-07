@@ -308,6 +308,7 @@ static void set_initial_pwrbtn_state(void)
 			/* In recovery mode, so send a power button pulse to
 			 * the PCH so it powers on. */
 			CPRINTF("[%T PB init-recovery]\n");
+			chipset_exit_hard_off();
 			set_pwrbtn_to_pch(0);
 			pwrbtn_state = PWRBTN_STATE_BOOT_RECOVERY;
 			tnext_state = get_time().val + PWRBTN_INITIAL_US;
@@ -328,6 +329,7 @@ static void set_initial_pwrbtn_state(void)
 		 * system.   Note that on EVT+, if the system is off, lid is
 		 * open, and you plug it in, it'll turn on due to AC detect. */
 		CPRINTF("[%T PB init-hib-wake]\n");
+		chipset_exit_hard_off();
 		set_pwrbtn_to_pch(0);
 		if (get_power_button_pressed())
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
@@ -338,8 +340,11 @@ static void set_initial_pwrbtn_state(void)
 		/* Copy initial power button state to PCH and memory-mapped
 		 * switch positions. */
 		set_pwrbtn_to_pch(get_power_button_pressed() ? 0 : 1);
-		if (get_power_button_pressed())
+		if (get_power_button_pressed()) {
+			/* Wake chipset if power button is pressed at boot */
+			chipset_exit_hard_off();
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+		}
 	}
 }
 
