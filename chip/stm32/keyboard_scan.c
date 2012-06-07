@@ -138,8 +138,8 @@ static int kb_fifo_remove(uint8_t *buffp)
 {
 	if (!kb_fifo_entries) {
 		/* no entry remaining in FIFO : return last known state */
-		memcpy(buffp, kb_fifo[(kb_fifo_start - 1) % KB_FIFO_DEPTH],
-		       KB_OUTPUTS);
+		int last = (kb_fifo_start + KB_FIFO_DEPTH - 1) % KB_FIFO_DEPTH;
+		memcpy(buffp, kb_fifo[last], KB_OUTPUTS);
 
 		/*
 		 * Bail out without changing any FIFO indices and let the
