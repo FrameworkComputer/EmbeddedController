@@ -4,8 +4,10 @@
  * found in the LICENSE file.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 #include "config.h"
+#include "version.h"
 
 /* FMAP structs. See http://code.google.com/p/flashmap/wiki/FmapSpec */
 #define FMAP_NAMELEN 32
@@ -68,8 +70,10 @@ const struct _ec_fmap {
 		},
 		{
 			.area_name = "RO_FRID",	/* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_RO_OFF,
-			.area_size = 0,
+			.area_offset = CONFIG_FW_RO_OFF +
+				(uint32_t)__version_struct_offset +
+				offsetof(struct version_struct,  version),
+			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
@@ -133,8 +137,10 @@ const struct _ec_fmap {
 		},
 		{
 			.area_name = "RW_FWID_A", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_A_OFF,
-			.area_size = 0,
+			.area_offset = CONFIG_FW_A_OFF +
+				(uint32_t)__version_struct_offset +
+				offsetof(struct version_struct,  version),
+			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
@@ -160,8 +166,10 @@ const struct _ec_fmap {
 		},
 		{
 			.area_name = "RW_FWID_B", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_B_OFF,
-			.area_size = 0,
+			.area_offset = CONFIG_FW_B_OFF +
+				(uint32_t)__version_struct_offset +
+				offsetof(struct version_struct,  version),
+			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{

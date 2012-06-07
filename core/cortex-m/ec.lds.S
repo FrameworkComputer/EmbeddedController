@@ -24,6 +24,7 @@ SECTIONS
     .text : {
         OUTDIR/core/CORE/init.o (.text.vecttable)
         . = ALIGN(4);
+        __version_struct_offset = .;
         *(.rodata.ver)
         . = ALIGN(4);
         OUTDIR/core/CORE/init.o (.text)

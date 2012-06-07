@@ -25,5 +25,6 @@ struct version_struct {
 
 extern const struct version_struct version_data;
 extern const char build_info[];
+extern const char __version_struct_offset[];
 
 #endif  /* __CROS_EC_VERSION_H */
