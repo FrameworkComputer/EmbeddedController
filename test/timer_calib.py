@@ -39,7 +39,7 @@ def test(helper):
       one_pass(helper)
 
       helper.ec_command("reboot")
-      helper.wait_output("--- Chrome EC initialized")
+      helper.wait_output("--- UART initialized")
 
       # get the timing results on the second pass
       # to avoid binary translation overhead

@@ -6,10 +6,10 @@
 #
 
 def test(helper):
-      helper.wait_output("--- Chrome EC initialized")
+      helper.wait_output("--- UART initialized")
       helper.ec_command("version")
-      ro = helper.wait_output("RO version:\s*(?P<ro>\S+)", use_re=True)["ro"]
-      wa = helper.wait_output("RW-A version:\s*(?P<a>\S+)", use_re=True)["a"]
-      wb = helper.wait_output("RW-B version:\s*(?P<b>\S*)", use_re=True)["b"]
+      ro = helper.wait_output("RO:\s*(?P<ro>\S+)", use_re=True)["ro"]
+      wa = helper.wait_output("RW-A:\s*(?P<a>\S+)", use_re=True)["a"]
+      wb = helper.wait_output("RW-B:\s*(?P<b>\S*)", use_re=True)["b"]
       helper.trace("Version (RO/A/B) %s / %s / %s\n" % (ro, wa, wb))
       return True # PASS !
