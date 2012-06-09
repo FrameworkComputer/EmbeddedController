@@ -40,16 +40,17 @@ include util/build.mk
 
 includes+=$(includes-y)
 
-objs_from_dir=$(foreach obj,$(2), $(out)/$(1)/$(obj))
+objs_from_dir=$(foreach obj, $($(2)-y), \
+	        $(out)/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj)))
 
 # Get all sources to build
-all-y=$(call objs_from_dir,core/$(CORE),$(core-y))
-all-y+=$(call objs_from_dir,chip/$(CHIP),$(chip-y))
-all-y+=$(call objs_from_dir,board/$(BOARD),$(board-y))
-all-y+=$(call objs_from_dir,private,$(private-y))
-all-y+=$(call objs_from_dir,common,$(common-y))
-all-y+=$(call objs_from_dir,test,$($(PROJECT)-y))
-all-y+=$(call objs_from_dir,vboot,$(vboot-y))
+all-y=$(call objs_from_dir,core/$(CORE),core)
+all-y+=$(call objs_from_dir,chip/$(CHIP),chip)
+all-y+=$(call objs_from_dir,board/$(BOARD),board)
+all-y+=$(call objs_from_dir,private,private)
+all-y+=$(call objs_from_dir,common,common)
+all-y+=$(call objs_from_dir,test,$(PROJECT))
+all-y+=$(call objs_from_dir,vboot,vboot)
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common test util
 
 include Makefile.rules
