@@ -272,6 +272,7 @@ static void power_button_changed(uint64_t tnow)
 			 * told the PCH the power button was released. */
 			CPRINTF("[%T PB ignoring release]\n");
 			pwrbtn_state = PWRBTN_STATE_IDLE;
+			keyboard_enable_scanning(1);
 			return;
 		}
 
@@ -433,10 +434,12 @@ static void state_machine(uint64_t tnow)
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
 		set_pwrbtn_to_pch(1);
-		if (get_power_button_pressed())
+		if (get_power_button_pressed()) {
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
-		else
+		} else {
 			pwrbtn_state = PWRBTN_STATE_IDLE;
+			keyboard_enable_scanning(1);
+		}
 		break;
 	case PWRBTN_STATE_WAS_OFF:
 		/* Done stretching initial power button signal, so show the
