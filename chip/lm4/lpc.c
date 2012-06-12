@@ -155,6 +155,12 @@ void host_send_response(int slot, const uint8_t *data, int size)
 {
 	uint8_t *out = host_get_buffer(slot);
 
+	/* Fail if response doesn't fit in the param buffer */
+	if (size < 0 || size > EC_PARAM_SIZE) {
+		host_send_result(slot, EC_RES_ERROR);
+		return;
+	}
+
 	if (data != out)
 		memcpy(out, data, size);
 
