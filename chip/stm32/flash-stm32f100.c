@@ -121,10 +121,6 @@ static void write_optb(int byte, uint8_t value)
 
 int flash_physical_write(int offset, int size, const char *data)
 {
-	/* this is pretty nasty, we need to enforce alignment instead of this
-	 * wild cast : TODO crosbug.com/p/9526
-	 */
-	uint16_t *data16 = (uint16_t *)data;
 	uint16_t *address = (uint16_t *)(CONFIG_FLASH_BASE + offset);
 	int res = EC_SUCCESS;
 	int i;
@@ -141,7 +137,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	STM32_FLASH_CR |= (1<<0);
 
 
-	for ( ; size > 0; size -= sizeof(*data16)) {
+	for ( ; size > 0; size -= sizeof(uint16_t)) {
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
@@ -154,7 +150,7 @@ int flash_physical_write(int offset, int size, const char *data)
 			;
 
 		/* write the half word */
-		*address++ = *data16++;
+		*address++ = data[0] + (data[1] << 8);
 
 		/* Wait for writes to complete */
 		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
