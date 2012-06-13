@@ -51,7 +51,7 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 #endif
 #ifdef CONFIG_PECI
 	{"PECI", TEMP_SENSOR_POWER_CPU, TEMP_SENSOR_TYPE_CPU,
-	 peci_temp_sensor_get_val, 0, 0},
+	 peci_temp_sensor_get_val, 0, 2},
 #endif
 };
 
