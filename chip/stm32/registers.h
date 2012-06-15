@@ -235,13 +235,9 @@
 
 #define STM32_AFIO_BASE             0x40010000
 #define STM32_AFIO_EXTICR(n)        REG32(STM32_AFIO_BASE + 8 + 4 * (n))
-#define STM32_GPIO_AFIO_EVCR_OFF(b) REG16((b) + 0x00)
-#define STM32_GPIO_AFIO_MAPR_OFF(b) REG32((b) + 0x04)
-#define STM32_GPIO_AFIO_EXTICR1(b)  REG16((b) + 0x08)
-#define STM32_GPIO_AFIO_EXTICR2(b)  REG16((b) + 0x0c)
-#define STM32_GPIO_AFIO_EXTICR3(b)  REG16((b) + 0x10)
-#define STM32_GPIO_AFIO_EXTICR4(b)  REG16((b) + 0x14)
-#define STM32_GPIO_AFIO_MAPR2(b)    REG16((b) + 0x1c)
+#define STM32_GPIO_AFIO_EVCR        REG32(STM32_AFIO_BASE + 0x00)
+#define STM32_GPIO_AFIO_MAPR        REG32(STM32_AFIO_BASE + 0x04)
+#define STM32_GPIO_AFIO_MAPR2       REG32(STM32_AFIO_BASE + 0x1c)
 
 #else
 #error Unsupported chip variant

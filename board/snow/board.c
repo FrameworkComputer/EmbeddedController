@@ -49,8 +49,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
+	{"ENTERING_RW", GPIO_D, (1<<0),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
+	{"CODEC_INT",   GPIO_D, (1<<1),  GPIO_HI_Z, NULL},
 	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT02",    GPIO_B, (1<<12), GPIO_KB_OUTPUT, NULL},
@@ -79,6 +81,9 @@ void configure_board(void)
 
 	/* Enable SPI */
 	STM32_RCC_APB2ENR |= (1<<12);
+
+	/* remap OSC_IN/OSC_OUT to PD0/PD1 */
+	STM32_GPIO_AFIO_MAPR |= 1 << 15;
 
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
 	val = STM32_GPIO_CRL_OFF(GPIO_A) & ~0xffff0000;
