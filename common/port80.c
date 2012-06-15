@@ -15,20 +15,22 @@
 #define HISTORY_LEN 16
 
 static uint8_t history[HISTORY_LEN];
-static int head;  /* Next index to use / oldest previous entry */
+static int writes;  /* Number of port 80 writes so far */
 static int scroll;
 
 
 void port_80_write(int data)
 {
-	/* Note that this currently prints from inside the LPC interrupt
+	/*
+	 * Note that this currently prints from inside the LPC interrupt
 	 * itself.  Probably not worth the system overhead to buffer the data
 	 * and print it from a task, because we're printing a small amount of
-	 * data and cprintf() doesn't block. */
+	 * data and cprintf() doesn't block.
+	 */
 	CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
-	history[head] = data;
-	head = (head + 1) & (HISTORY_LEN - 1);
+	history[writes % ARRAY_SIZE(history)] = data;
+	writes++;
 }
 
 /*****************************************************************************/
@@ -36,22 +38,35 @@ void port_80_write(int data)
 
 static int command_port80(int argc, char **argv)
 {
-	int h = head;
+	int head, tail;
 	int i;
 
-	/* 'port80 scroll' toggles whether port 80 output begins with a newline
-	 * (scrolling) or CR (non-scrolling). */
+	/*
+	 * 'port80 scroll' toggles whether port 80 output begins with a newline
+	 * (scrolling) or CR (non-scrolling).
+	 */
 	if (argc > 1 && !strcasecmp(argv[1], "scroll")) {
 		scroll = !scroll;
 		ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
 		return EC_SUCCESS;
 	}
 
-	/* Technically, if a port 80 write comes in while we're printing this,
+	/*
+	 * Print the port 80 writes so far, clipped to the length of our
+	 * history buffer.
+	 *
+	 * Technically, if a port 80 write comes in while we're printing this,
 	 * we could print an incorrect history.  Probably not worth the
-	 * complexity to work around that. */
-	for (i = 0; i < HISTORY_LEN; i++)
-		ccprintf(" %02x", history[(h + i) & (HISTORY_LEN - 1)]);
+	 * complexity to work around that.
+	 */
+	head = writes;
+	if (head > ARRAY_SIZE(history))
+		tail = head - ARRAY_SIZE(history);
+	else
+		tail = 0;
+
+	for (i = tail; i < head; i++)
+		ccprintf(" %02x", history[i % ARRAY_SIZE(history)]);
 	ccputs(" <--new\n");
 	return EC_SUCCESS;
 }
