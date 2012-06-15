@@ -6,7 +6,7 @@
 # on-board test binaries build
 #
 
-test-list=hello pingpong timer_calib timer_dos mutex
+test-list=hello pingpong timer_calib timer_dos timer_jump mutex
 #disable: powerdemo
 
 pingpong-y=pingpong.o
