@@ -308,12 +308,12 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 }
 
 
-void keyboard_enable(int enable)
+static void keyboard_enable(int enable)
 {
 	if (!keyboard_enabled && enable) {
-		/* enable */
+		CPRINTF("[%T KB enable]\n");
 	} else if (keyboard_enabled && !enable) {
-		/* disable */
+		CPRINTF("[%T KB disable]\n");
 		reset_rate_and_delay();
 		typematic_len = 0;  /* stop typematic */
 	}
@@ -321,7 +321,7 @@ void keyboard_enable(int enable)
 }
 
 
-uint8_t read_ctl_ram(uint8_t addr)
+static uint8_t read_ctl_ram(uint8_t addr)
 {
 	if (addr < ARRAY_SIZE(controller_ram))
 		return controller_ram[addr];
@@ -332,7 +332,7 @@ uint8_t read_ctl_ram(uint8_t addr)
 
 /* Manipulate the controller_ram[]. Some bits change may trigger internal
  * state change. */
-void update_ctl_ram(uint8_t addr, uint8_t data)
+static void update_ctl_ram(uint8_t addr, uint8_t data)
 {
 	uint8_t orig;
 
@@ -708,6 +708,8 @@ void keyboard_typematic_task(void)
 	}
 }
 
+/*****************************************************************************/
+/* Console commands */
 
 static int command_typematic(int argc, char **argv)
 {
@@ -867,6 +869,28 @@ DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
 			NULL);
 
 
+static int command_keyboard(int argc, char **argv)
+{
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "enable"))
+			keyboard_enable(1);
+		else if (!strcasecmp(argv[1], "disable"))
+			keyboard_enable(0);
+		else
+			return EC_ERROR_PARAM1;
+	}
+
+	ccprintf("Enabled: %d\n", keyboard_enabled);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
+			"[enable | disable]",
+			"Print or toggle keyboard info",
+			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
 static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
 {
 	struct ec_params_mkbp_simulate_key *p =
@@ -883,6 +907,8 @@ static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
 }
 DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY, mkbp_command_simulate_key);
 
+/*****************************************************************************/
+/* Hooks */
 
 /* Preserves the states of keyboard controller to keep the initialized states
  * between reboot_ec commands. Saving info include:
