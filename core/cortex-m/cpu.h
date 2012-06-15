@@ -21,4 +21,6 @@
 #define CPU_NVIC_APINT         CPUREG(0xe000ed0c)
 #define CPU_NVIC_SWTRIG        CPUREG(0xe000ef00)
 
+#define CPU_SCB_SYSCTRL        CPUREG(0xe000ed10)
+
 #endif /* __CPU_H */

@@ -365,8 +365,6 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_IRQ_GPIOQ7         131
 /* 132 - 138 reserved */
 
-#define LM4_SCB_SYSCTRL        LM4REG(0xe000ed10)
-
 /* GPIO */
 #define LM4_GPIO_PORTA_BASE         0x40004000
 #define LM4_GPIO_PORTB_BASE         0x40005000

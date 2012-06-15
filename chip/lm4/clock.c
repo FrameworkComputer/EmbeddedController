@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "clock.h"
+#include "cpu.h"
 #include "config.h"
 #include "console.h"
 #include "gpio.h"
@@ -184,7 +185,7 @@ static int command_sleep(int argc, char **argv)
 	}
 	/* set deep sleep bit */
 	if (level >= 4)
-		LM4_SCB_SYSCTRL |= 0x4;
+		CPU_SCB_SYSCTRL |= 0x4;
 	/* go to low power mode (forever ...) */
 	if (level > 1)
 		while (1) {
