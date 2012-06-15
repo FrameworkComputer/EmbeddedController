@@ -29,6 +29,9 @@
 /* compute RW firmware hash at startup */
 #define CONFIG_VBOOT
 
+/* use STOP mode when we have nothing to do */
+#define CONFIG_LOW_POWER_IDLE
+
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */

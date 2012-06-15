@@ -9,6 +9,7 @@
 
 #include "board.h"
 #include "config.h"
+#include "clock.h"
 #include "registers.h"
 #include "task.h"
 #include "uart.h"
@@ -31,6 +32,7 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
+	disable_sleep(SLEEP_MASK_UART);
 	STM32_USART_CR1(UARTN) |= 0x80;
 	should_stop = 0;
 	task_trigger_irq(STM32_IRQ_USART(UARTN));
@@ -40,6 +42,7 @@ void uart_tx_stop(void)
 {
 	STM32_USART_CR1(UARTN) &= ~0x80;
 	should_stop = 1;
+	enable_sleep(SLEEP_MASK_UART);
 }
 
 int uart_tx_stopped(void)

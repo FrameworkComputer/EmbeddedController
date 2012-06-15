@@ -23,4 +23,17 @@ int clock_enable_pll(int enable);
  * clocks/timers are initialized. */
 void clock_wait_cycles(uint32_t cycles);
 
+/* Low power modes for idle API */
+
+enum {
+	SLEEP_MASK_AP_RUN = (1 << 0), /* the main CPU is running */
+	SLEEP_MASK_UART   = (1 << 1), /* UART communication on-going */
+	SLEEP_MASK_I2C    = (1 << 2), /* I2C master communication on-going */
+
+	SLEEP_MASK_FORCE  = (1 << 31), /* Force disabling low power modes */
+};
+
+void enable_sleep(uint32_t mask);
+void disable_sleep(uint32_t mask);
+
 #endif  /* __CROS_EC_CLOCK_H */

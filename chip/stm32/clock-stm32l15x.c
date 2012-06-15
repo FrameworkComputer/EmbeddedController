@@ -13,6 +13,16 @@
 #include "registers.h"
 #include "util.h"
 
+void enable_sleep(uint32_t mask)
+{
+	/* low power mode not implemented */
+}
+
+void disable_sleep(uint32_t mask)
+{
+	/* low power mode not implemented */
+}
+
 int clock_init(void)
 {
 	uint32_t tmp_acr;

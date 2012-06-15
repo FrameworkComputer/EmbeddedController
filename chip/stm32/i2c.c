@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "chipset.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -634,6 +635,7 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 	ASSERT(out && out_bytes);
 	ASSERT(in || !in_bytes);
 
+	disable_sleep(SLEEP_MASK_I2C);
 	mutex_lock(&i2c_mutex);
 
 	if (board_i2c_claim(port)) {
@@ -655,6 +657,7 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 
 err_claim:
 	mutex_unlock(&i2c_mutex);
+	enable_sleep(SLEEP_MASK_I2C);
 
 	return rv;
 }

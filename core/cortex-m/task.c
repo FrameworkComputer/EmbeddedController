@@ -36,7 +36,7 @@ typedef union {
 /* declare task routine prototypes */
 #define TASK(n, r, d) int r(void *);
 #include TASK_LIST
-static void __idle(void);
+void __idle(void);
 CONFIG_TASK_LIST
 #undef TASK
 
@@ -63,6 +63,7 @@ static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
 extern void __switchto(task_ *from, task_ *to);
 extern int __task_start(int *task_stack_ready);
 
+#ifndef CONFIG_LOW_POWER_IDLE
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
@@ -77,6 +78,7 @@ void __idle(void)
 		asm("wfi");
 	}
 }
+#endif /* !CONFIG_LOW_POWER_IDLE */
 
 
 static void task_exit_trap(void)

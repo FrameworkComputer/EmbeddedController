@@ -23,6 +23,7 @@
  *  - If XPSHOLD is dropped by the AP, then we power the AP off
  */
 
+#include "clock.h"
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "common.h"
 #include "console.h"
@@ -225,7 +226,9 @@ void gaia_suspend_event(enum gpio_signal signal)
 			powerled_set_state(POWERLED_STATE_OFF);
 		/* Call hooks here since we don't know it prior to AP suspend */
 		hook_notify(HOOK_CHIPSET_SUSPEND, 0);
+		enable_sleep(SLEEP_MASK_AP_RUN);
 	} else {
+		disable_sleep(SLEEP_MASK_AP_RUN);
 		powerled_set_state(POWERLED_STATE_ON);
 		hook_notify(HOOK_CHIPSET_RESUME, 0);
 	}
@@ -379,6 +382,7 @@ static int power_on(void)
 	/* Enable 3.3v power rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	ap_on = 1;
+	disable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_ON);
 
 	/* Call hooks now that AP is running */
@@ -421,6 +425,7 @@ static void power_off(void)
 	gpio_set_level(GPIO_EN_PP5000, 0);
 	ap_on = 0;
 	lid_changed = 0;
+	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
 	CPUTS("Shutdown complete.\n");
 }
