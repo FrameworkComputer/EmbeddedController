@@ -86,13 +86,18 @@ void configure_board(void)
 	STM32_GPIO_CRL_OFF(GPIO_A) = val;
 
 	/*
-	 * I2C SCL/SDA on PB10-11, bi-directional, no pull-up/down, initialized
-	 * as hi-Z until alt. function is set
+	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,
+	 * initialized as hi-Z until alt. function is set
 	 */
 	val = STM32_GPIO_CRH_OFF(GPIO_B) & ~0x0000ff00;
 	val |= 0x0000dd00;
 	STM32_GPIO_CRH_OFF(GPIO_B) = val;
-	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10);
+
+	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0xff000000;
+	val |= 0xdd000000;
+	STM32_GPIO_CRL_OFF(GPIO_B) = val;
+
+	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
 	val = STM32_GPIO_CRH_OFF(GPIO_A) & ~0x00000ff0;

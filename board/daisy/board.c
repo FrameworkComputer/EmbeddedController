@@ -113,15 +113,21 @@ void configure_board(void)
 	STM32_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
 
 	/*
-	 * I2C SCL/SDA on PB10-11, bi-directional, no pull-up/down, initialized
-	 * as hi-Z until alt. function is set
+	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,
+	 * initialized as hi-Z until alt. function is set
 	 */
-	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
-	STM32_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)));
-	STM32_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2));
-	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10);
-	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10);
-	gpio_set_alternate_function(GPIO_B, (1<<11) | (1<<10), GPIO_ALT_I2C);
+	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)) |
+					(3 << (7*2)) | (3 << (6*2)));
+	STM32_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)) |
+					(3 << (7*2)) | (3 << (6*2)));
+	STM32_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2)) |
+					(1 << (7*2)) | (1 << (6*2));
+	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
+	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
+	gpio_set_alternate_function(GPIO_B, (1<<11) |
+					(1<<10) |
+					(1<<7)  |
+					(1<<6), GPIO_ALT_I2C);
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
 	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);

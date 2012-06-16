@@ -612,6 +612,8 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef I2C_PORT_HOST
+
 static int command_i2c(int argc, char **argv)
 {
 	int rw = 0;
@@ -665,16 +667,16 @@ static int command_i2c(int argc, char **argv)
 
 	switch (rw) {
 	case 0:
-		rv = i2c_read8(I2C2, slave_addr, offset, &value);
+		rv = i2c_read8(I2C_PORT_HOST, slave_addr, offset, &value);
 		break;
 	case 1:
-		rv = i2c_read16(I2C2, slave_addr, offset, &value);
+		rv = i2c_read16(I2C_PORT_HOST, slave_addr, offset, &value);
 		break;
 	case 2:
-		rv = i2c_write8(I2C2, slave_addr, offset, value);
+		rv = i2c_write8(I2C_PORT_HOST, slave_addr, offset, value);
 		break;
 	case 3:
-		rv = i2c_write16(I2C2, slave_addr, offset, value);
+		rv = i2c_write16(I2C_PORT_HOST, slave_addr, offset, value);
 		break;
 	}
 
@@ -697,4 +699,6 @@ DECLARE_CONSOLE_COMMAND(i2c, command_i2c,
 			"r/r16/w/w16 slave_addr offset [value]",
 			"Read write i2c",
 			NULL);
+
+#endif /* I2C_PORT_HOST */
 
