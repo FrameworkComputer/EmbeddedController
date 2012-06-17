@@ -85,15 +85,9 @@ static void poweroff_wait_ac(void)
 		/* chipset_force_state(CHIPSET_STATE_SOFT_OFF);
 		 * TODO(rong): remove platform dependent code
 		 */
-#ifdef CONFIG_POWER_X86POWER
+#ifdef CONFIG_TASK_X86POWER
 		x86_power_force_shutdown();
-#endif /* CONFIG_POWER_X86POWER */
-	}
-
-	/* TODO(rong): remove this workaround after ec deep sleep */
-	while (!power_ac_present()) {
-		/* Check ac_present every 5 seconds */
-		usleep(SECOND * 5);
+#endif /* CONFIG_TASK_X86POWER */
 	}
 }
 
