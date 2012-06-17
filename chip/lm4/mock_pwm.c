@@ -47,6 +47,13 @@ int pwm_get_keyboard_backlight_enabled(void)
 }
 
 
+int pwm_enable_keyboard_backlight(int enable)
+{
+	/* Not implemented */
+	return EC_SUCCESS;
+}
+
+
 void pwm_task(void)
 {
 	/* Do nothing */
