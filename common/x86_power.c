@@ -172,13 +172,25 @@ static int wait_in_signals(uint32_t want)
 
 void x86_power_cpu_overheated(int too_hot)
 {
-	/* TODO: crosbug.com/p/8242 - real implementation */
+	static int overheat_count;
+
+	if (too_hot) {
+		overheat_count++;
+		if (overheat_count > 3)
+			x86_power_force_shutdown();
+	} else {
+		overheat_count = 0;
+	}
 }
 
 
 void x86_power_force_shutdown(void)
 {
-	/* TODO: crosbug.com/p/8242 - real implementation */
+	/* Force x86 off. This condition will reset once the state machine
+	 * transitions to G3.
+	 */
+	gpio_set_level(GPIO_PCH_DPWROK, 0);
+	gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 }
 
 
