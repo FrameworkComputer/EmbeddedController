@@ -9,8 +9,8 @@
 proc flash_lm4 {path offset size} {
 	set firstsect [expr {$offset / 1024}];
 	set lastsect [expr {($offset + $size) / 1024 - 1}];
-	reset halt;
-	flash erase_sector 0 $firstsect $lastsect;
+	reset init;
+	flash erase_sector internal $firstsect $lastsect;
 	# Note erase_sector silently fails sometimes; see crosbug.com/p/8632
 	# Dump a few words as a diagnostic for whether erase succeeded
 	mdw 0 16
