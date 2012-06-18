@@ -253,9 +253,6 @@ struct ec_params_board_version {
 /*****************************************************************************/
 /* Flash commands */
 
-/* Maximum bytes that can be read/written in a single command */
-#define EC_FLASH_SIZE_MAX 64
-
 /* Get flash info */
 #define EC_CMD_FLASH_INFO 0x10
 struct ec_response_flash_info {
@@ -279,7 +276,7 @@ struct ec_params_flash_read {
 	uint32_t size;     /* Size to read in bytes */
 } __attribute__ ((packed));
 struct ec_response_flash_read {
-	uint8_t data[EC_FLASH_SIZE_MAX];
+	uint8_t data[EC_PARAM_SIZE];
 } __attribute__ ((packed));
 
 /* Write flash */
@@ -287,7 +284,8 @@ struct ec_response_flash_read {
 struct ec_params_flash_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
-	uint8_t data[EC_FLASH_SIZE_MAX];
+	uint8_t data[64];  /* Could really use EC_PARAM_SIZE - 8, but tidiest
+			    * to use a power of 2 so writes stay aligned. */
 } __attribute__ ((packed));
 
 /* Erase flash */

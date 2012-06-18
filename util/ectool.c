@@ -413,9 +413,9 @@ int cmd_flash_read(int argc, char *argv[])
 	}
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += sizeof(r.data)) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_FLASH_SIZE_MAX);
+		p.size = MIN(size - i, sizeof(r.data));
 		rv = ec_command(EC_CMD_FLASH_READ,
 				&p, sizeof(p), &r, sizeof(r));
 		if (rv) {
@@ -463,12 +463,11 @@ int cmd_flash_write(int argc, char *argv[])
 	printf("Writing to offset %d...\n", offset);
 
 	/* Write data in chunks */
-	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += sizeof(p.data)) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, EC_FLASH_SIZE_MAX);
+		p.size = MIN(size - i, sizeof(p.data));
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_CMD_FLASH_WRITE,
-				&p, sizeof(p), NULL, 0);
+		rv = ec_command(EC_CMD_FLASH_WRITE, &p, sizeof(p), NULL, 0);
 		if (rv) {
 			fprintf(stderr, "Write error at offset %d\n", i);
 			free(buf);

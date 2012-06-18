@@ -87,9 +87,9 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	printf("Writing partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
 	/* Write data in chunks */
-	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += sizeof(wr_req.data)) {
 		wr_req.offset = offset + i;
-		wr_req.size = MIN(size - i, EC_FLASH_SIZE_MAX);
+		wr_req.size = MIN(size - i, sizeof(wr_req.data));
 		memcpy(wr_req.data, payload + i, wr_req.size);
 		res = ec_command(EC_CMD_FLASH_WRITE, &wr_req, sizeof(wr_req),
 				 NULL, 0);
@@ -102,9 +102,9 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	printf("Verifying partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
 	/* Read data in chunks */
-	for (i = 0; i < size; i += EC_FLASH_SIZE_MAX) {
+	for (i = 0; i < size; i += sizeof(rd_resp.data)) {
 		rd_req.offset = offset + i;
-		rd_req.size = MIN(size - i, EC_FLASH_SIZE_MAX);
+		rd_req.size = MIN(size - i, sizeof(rd_resp.data));
 		res = ec_command(EC_CMD_FLASH_READ, &rd_req, sizeof(rd_req),
 				 &rd_resp, sizeof(rd_resp));
 		if (res) {

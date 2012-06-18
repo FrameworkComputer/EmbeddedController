@@ -13,7 +13,7 @@
 #include "ec_commands.h"
 
 
-#define INITIAL_UDELAY 10    /* 10 us */
+#define INITIAL_UDELAY 5     /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
 
 int comm_init(void)
@@ -31,13 +31,13 @@ int comm_init(void)
 	 * If they all are 0xff, then very possible you cannot access GEC. */
 	byte &= inb(EC_LPC_ADDR_USER_CMD);
 	byte &= inb(EC_LPC_ADDR_USER_DATA);
-	for (i = 0; i < EC_FLASH_SIZE_MAX /* big enough */; ++i)
+	for (i = 0; i < EC_PARAM_SIZE && byte == 0xff; ++i)
 		byte &= inb(EC_LPC_ADDR_USER_PARAM + i);
 	if (byte == 0xff) {
 		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
 			EC_LPC_ADDR_USER_CMD, EC_LPC_ADDR_USER_DATA,
 			EC_LPC_ADDR_USER_PARAM,
-			EC_LPC_ADDR_USER_PARAM + EC_FLASH_SIZE_MAX - 1);
+			EC_LPC_ADDR_USER_PARAM + EC_PARAM_SIZE - 1);
 		fprintf(stderr, "Very likely this board doesn't have GEC.\n");
 		return -4;
 	}
@@ -64,8 +64,9 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
 			return 0;
 
-		/* Increase the delay interval */
-		delay = MIN(delay * 2, MAXIMUM_UDELAY);
+		/* Increase the delay interval after a few rapid checks */
+		if (i > 20)
+			delay = MIN(delay * 2, MAXIMUM_UDELAY);
 	}
 	return -1;  /* Timeout */
 }
