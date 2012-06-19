@@ -572,6 +572,10 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		output[out_len++] = 0x55;  /* Self test success */
 		break;
 
+	case I8042_TEST_KB_PORT:
+		output[out_len++] = 0x00;
+		break;
+
 	case I8042_DIS_MOUSE:
 		update_ctl_ram(0, read_ctl_ram(0) | I8042_AUX_DIS);
 		break;
