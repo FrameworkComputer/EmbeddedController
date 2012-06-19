@@ -66,8 +66,8 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 
 	current = get_version();
 	if (current == part) {
-		rst_req.target = part == EC_IMAGE_RO ?
-				EC_IMAGE_RW_A : EC_IMAGE_RO;
+		rst_req.cmd = part == EC_IMAGE_RO ?
+			      EC_REBOOT_JUMP_RW_A : EC_REBOOT_JUMP_RO;
 		ec_command(EC_CMD_REBOOT_EC, &rst_req, sizeof(rst_req),
 			   NULL, 0);
 		/* wait EC reboot */

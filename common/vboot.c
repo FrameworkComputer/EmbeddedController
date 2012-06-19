@@ -154,7 +154,7 @@ int vboot_init(void)
 	switch (r) {
 	case IMAGE_IS_GOOD:
 		CPRINTF("[Image A verified]\n");
-		system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
+		system_run_image_copy(SYSTEM_IMAGE_RW_A);
 		CPRINTF("[ERROR: Unable to jump to image A]\n");
 		goto bad;
 	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
@@ -182,7 +182,7 @@ int vboot_init(void)
 	switch (r) {
 	case IMAGE_IS_GOOD:
 		CPRINTF("[Image B verified]\n");
-		system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
+		system_run_image_copy(SYSTEM_IMAGE_RW_B);
 		CPRINTF("[ERROR: Unable to jump to image B]\n");
 		goto bad;
 	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:

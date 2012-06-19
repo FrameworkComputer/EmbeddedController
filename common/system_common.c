@@ -8,12 +8,12 @@
 #include "board.h"
 #include "clock.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "system.h"
 #include "task.h"
 #include "uart.h"
@@ -42,8 +42,8 @@ struct jump_data {
 	 * be the last word in RAM regardless of how many fields are added. */
 
 	/* Fields from version 3 */
-	uint8_t recovery_required; /* Signal recovery mode to BIOS */
-	int struct_size;           /* Size of struct jump_data */
+	uint8_t reserved0;   /* (used in proto1 to signal recovery mode) */
+	int struct_size;     /* Size of struct jump_data */
 
 	/* Fields from version 2 */
 	int jump_tag_total;  /* Total size of all jump tags */
@@ -65,7 +65,7 @@ static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 static int jumped_to_image;
 static int disable_jump;
-
+static enum ec_reboot_cmd reboot_at_shutdown;
 
 int system_is_locked(void)
 {
@@ -106,12 +106,6 @@ int system_usable_ram_end(void)
 enum system_reset_cause_t system_get_reset_cause(void)
 {
 	return reset_cause;
-}
-
-
-int system_get_recovery_required(void)
-{
-	return jdata->recovery_required;
 }
 
 
@@ -256,8 +250,7 @@ const char *system_get_image_copy_string(void)
 
 /* Jump to what we hope is the init address of an image.  This function does
  * not return. */
-static void jump_to_image(uint32_t init_addr,
-			  int recovery_required)
+static void jump_to_image(uint32_t init_addr)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
 
@@ -278,7 +271,7 @@ static void jump_to_image(uint32_t init_addr,
 	interrupt_disable();
 
 	/* Fill in preserved data between jumps */
-	jdata->recovery_required = recovery_required != 0;
+	jdata->reserved0 = 0;
 	jdata->magic = JUMP_DATA_MAGIC;
 	jdata->version = JUMP_DATA_VERSION;
 	jdata->reset_cause = reset_cause;
@@ -328,8 +321,7 @@ static uint32_t get_size(enum system_image_copy_t copy)
 }
 
 
-int system_run_image_copy(enum system_image_copy_t copy,
-			  int recovery_required)
+int system_run_image_copy(enum system_image_copy_t copy)
 {
 	uint32_t base;
 	uint32_t init_addr;
@@ -367,7 +359,7 @@ int system_run_image_copy(enum system_image_copy_t copy,
 
 	CPRINTF("[%T Jumping to image %s]\n", image_names[copy]);
 
-	jump_to_image(init_addr, recovery_required);
+	jump_to_image(init_addr);
 
 	/* Should never get here */
 	return EC_ERROR_UNKNOWN;
@@ -480,7 +472,7 @@ int system_common_pre_init(void)
 
 		/* Initialize fields added after version 2 */
 		if (jdata->version < 3)
-			jdata->recovery_required = 0;
+			jdata->reserved0 = 0;
 
 		/* Struct size is now the current struct size */
 		jdata->struct_size = sizeof(struct jump_data);
@@ -496,6 +488,36 @@ int system_common_pre_init(void)
 
 	return EC_SUCCESS;
 }
+
+/* Handle a pending reboot command */
+static int handle_pending_reboot(enum ec_reboot_cmd cmd)
+{
+	switch (cmd) {
+	case EC_REBOOT_CANCEL:
+		return EC_SUCCESS;
+	case EC_REBOOT_JUMP_RO:
+		return system_run_image_copy(SYSTEM_IMAGE_RO);
+	case EC_REBOOT_JUMP_RW_A:
+		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
+	case EC_REBOOT_JUMP_RW_B:
+		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
+	case EC_REBOOT_COLD:
+		system_reset(1);
+		/* That shouldn't return... */
+		return EC_ERROR_UNKNOWN;
+	default:
+		return EC_ERROR_INVAL;
+	}
+}
+
+/*****************************************************************************/
+/* Hooks */
+
+static int system_common_shutdown(void)
+{
+	return handle_pending_reboot(reboot_at_shutdown);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
@@ -596,11 +618,11 @@ static int command_sysjump(int argc, char **argv)
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
-		return system_run_image_copy(SYSTEM_IMAGE_RO, 0);
+		return system_run_image_copy(SYSTEM_IMAGE_RO);
 	else if (!strcasecmp(argv[1], "A"))
-		return system_run_image_copy(SYSTEM_IMAGE_RW_A, 0);
+		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
 	else if (!strcasecmp(argv[1], "B"))
-		return system_run_image_copy(SYSTEM_IMAGE_RW_B, 0);
+		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 
 	/* Check for arbitrary address */
 	addr = strtoi(argv[1], &e, 0);
@@ -609,7 +631,7 @@ static int command_sysjump(int argc, char **argv)
 
 	ccprintf("Jumping to 0x%08x\n", addr);
 	cflush();
-	jump_to_image(addr, 0);
+	jump_to_image(addr);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
@@ -717,28 +739,19 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version);
 
 int host_command_reboot(uint8_t *data, int *resp_size)
 {
-	enum system_image_copy_t copy;
-	struct ec_params_reboot_ec *p =	(struct ec_params_reboot_ec *)data;
-	int recovery_request = p->reboot_flags & EC_CMD_REBOOT_BIT_RECOVERY;
+	struct ec_params_reboot_ec *p = (struct ec_params_reboot_ec *)data;
 
-	/* This command is only allowed on unlocked systems, because jumping
-	 * directly to another image bypasses verified boot. */
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
-	switch (p->target) {
-	case EC_IMAGE_RO:
-		copy = SYSTEM_IMAGE_RO;
-		break;
-	case EC_IMAGE_RW_A:
-		copy = SYSTEM_IMAGE_RW_A;
-		break;
-	case EC_IMAGE_RW_B:
-		copy = SYSTEM_IMAGE_RW_B;
-		break;
-	default:
-		return EC_RES_ERROR;
+	if (p->cmd == EC_REBOOT_CANCEL) {
+		/* Cancel pending reboot */
+		reboot_at_shutdown = EC_REBOOT_CANCEL;
+		return EC_RES_SUCCESS;
+	} else if (p->flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
+		/* Store request for processing at chipset shutdown */
+		reboot_at_shutdown = p->cmd;
+		return EC_RES_SUCCESS;
 	}
+
+	/* TODO: (crosbug.com/p/9040) handle EC_REBOOT_FLAG_POWER_ON */
 
 #ifdef CONFIG_TASK_HOSTCMD
 #ifdef CONFIG_LPC
@@ -751,14 +764,15 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 #endif
 
 	CPUTS("[Executing host reboot command]\n");
-	system_run_image_copy(copy, recovery_request);
-
-	/* We normally never get down here, because we'll have jumped to
-	 * another image.  To confirm this command worked, the host will need
-	 * to check what image is current using GET_VERSION.
-	 *
-	 * If we DO get down here, something went wrong in the reboot, so
-	 * return error. */
-	return EC_RES_ERROR;
+	switch (handle_pending_reboot(p->cmd)) {
+	case EC_SUCCESS:
+		return EC_RES_SUCCESS;
+	case EC_ERROR_INVAL:
+		return EC_RES_INVALID_PARAM;
+	case EC_ERROR_ACCESS_DENIED:
+		return EC_RES_ACCESS_DENIED;
+	default:
+		return EC_RES_ERROR;
+	}
 }
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC, host_command_reboot);

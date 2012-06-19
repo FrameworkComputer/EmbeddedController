@@ -45,9 +45,6 @@ int system_common_pre_init(void);
  * the cause is not known. */
 enum system_reset_cause_t system_get_reset_cause(void);
 
-/* Return a Boolean indicating if BIOS should come up in recovery mode */
-int system_get_recovery_required(void);
-
 /* Record the cause of the last reset. */
 void system_set_reset_cause(enum system_reset_cause_t cause);
 
@@ -97,8 +94,7 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 const char *system_get_image_copy_string(void);
 
 /* Jump to the specified image copy. */
-int system_run_image_copy(enum system_image_copy_t copy,
-			  int recovery_request);
+int system_run_image_copy(enum system_image_copy_t copy);
 
 /* Return the version string for an image copy, or an empty string if
  * error.  If copy==SYSTEM_IMAGE_UNKNOWN, returns the version for the

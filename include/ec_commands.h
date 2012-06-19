@@ -600,6 +600,33 @@ struct ec_params_switch_enable_wireless {
 } __attribute__ ((packed));
 
 /*****************************************************************************/
+/* System commands */
+
+/* TODO: this is a confusing name, since it doesn't necessarily reboot the EC.
+ * Rename to "set image" or something similar. */
+#define EC_CMD_REBOOT_EC 0xd2
+
+/* Command */
+enum ec_reboot_cmd {
+	EC_REBOOT_CANCEL = 0,        /* Cancel a pending reboot */
+	EC_REBOOT_JUMP_RO,           /* Jump to RO without rebooting */
+	EC_REBOOT_JUMP_RW_A,         /* Jump to RW-A without rebooting */
+	EC_REBOOT_JUMP_RW_B,         /* Jump to RW-B without rebooting */
+	EC_REBOOT_COLD,              /* Cold-reboot */
+};
+
+/* Flags for ec_params_reboot_ec.reboot_flags */
+#define EC_REBOOT_FLAG_RESERVED0      (1 << 0)  /* Was recovery request */
+#define EC_REBOOT_FLAG_ON_AP_SHUTDOWN (1 << 1)
+#define EC_REBOOT_FLAG_POWER_ON       (1 << 2)
+
+struct ec_params_reboot_ec {
+	uint8_t cmd;           /* enum ec_reboot_cmd */
+	uint8_t flags;         /* See EC_REBOOT_FLAG_* */
+} __attribute__ ((packed));
+
+
+/*****************************************************************************/
 /* Special commands
  *
  * These do not follow the normal rules for commands.  See each command for
@@ -619,14 +646,6 @@ struct ec_params_switch_enable_wireless {
  * reboots, the host will reboot too, so there is no response to this
  * command. */
 #define EC_CMD_REBOOT 0xd1  /* Think "die" */
-
-#define EC_CMD_REBOOT_EC 0xd2
-#define EC_CMD_REBOOT_BIT_RECOVERY (1 << 0)
-
-struct ec_params_reboot_ec {
-	uint8_t target;  /* enum ec_current_image */
-	uint8_t reboot_flags;
-} __attribute__ ((packed));
 
 #endif  /* !__ACPI__ */
 

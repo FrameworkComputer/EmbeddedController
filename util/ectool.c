@@ -83,7 +83,7 @@ const char help_str[] =
 	"      Does an ACPI Query Embedded Controller command\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
-	"  reboot_ec <RO|A|B>\n"
+	"  reboot_ec <RO|A|B> [at-shutdown]\n"
 	"      Reboot EC to RO or RW A/B\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
@@ -327,38 +327,49 @@ int cmd_read_test(int argc, char *argv[])
 	return 0;
 }
 
+
 int cmd_reboot_ec(int argc, char *argv[])
 {
 	struct ec_params_reboot_ec p;
-	int rv;
+	int i;
 
 	if (argc < 2) {
-		rv = ec_command(EC_CMD_REBOOT, NULL, 0, NULL, 0);
-	} else if (argc == 2) {
-		if (!strcmp(argv[1], "RO")) {
-			p.target = EC_IMAGE_RO;
-		} else if (!strcmp(argv[1], "A")) {
-			p.target = EC_IMAGE_RW_A;
-		} else if (!strcmp(argv[1], "B")) {
-			p.target = EC_IMAGE_RW_B;
-		} else {
-			fprintf(stderr,
-				"Not supported firmware copy: %s\n", argv[1]);
-			return -1;
-		}
+		/*
+		 * No params specified so tell the EC to reboot immediately.
+		 * That reboots the AP as well, so unlikely we'll be around
+		 * to see a return code from this...
+		 */
+		return ec_command(EC_CMD_REBOOT, NULL, 0, NULL, 0);
+	}
 
-		rv = ec_command(EC_CMD_REBOOT_EC,
-		                &p, sizeof(p), NULL, 0);
-	} else {
-		fprintf(stderr, "Wrong argument count: %d\n", argc);
+	/* Parse command */
+	if (!strcmp(argv[1], "cancel"))
+		p.cmd = EC_REBOOT_CANCEL;
+	else if (!strcmp(argv[1], "RO"))
+		p.cmd = EC_REBOOT_JUMP_RO;
+	else if (!strcmp(argv[1], "A"))
+		p.cmd = EC_REBOOT_JUMP_RW_A;
+	else if (!strcmp(argv[1], "B"))
+		p.cmd = EC_REBOOT_JUMP_RW_B;
+	else if (!strcmp(argv[1], "cold"))
+		p.cmd = EC_REBOOT_COLD;
+	else {
+		fprintf(stderr, "Unknown command: %s\n", argv[1]);
 		return -1;
 	}
 
-	if (rv)
-		return rv;
+	/* Parse flags, if any */
+	p.flags = 0;
+	for (i = 2; i < argc; i++) {
+		if (!strcmp(argv[i], "at-shutdown"))
+			p.flags |= EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
+		else {
+			fprintf(stderr, "Unknown flag: %s\n", argv[i]);
+			return -1;
+		}
+	}
 
-	printf("done.\n");
-	return 0;
+	return ec_command(EC_CMD_REBOOT_EC, &p, sizeof(p), NULL, 0);
 }
 
 
