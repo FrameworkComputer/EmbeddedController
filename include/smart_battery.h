@@ -90,8 +90,8 @@
 #define STATUS_OVERCHARGED_ALARM        (1 << 15)
 
 /* Charger alarm warning */
-#define ALARM_OVER_CHARGE               0x8000
-#define ALARM_TERMINATE_CHARG           0x4000
+#define ALARM_OVER_CHARGED              0x8000
+#define ALARM_TERMINATE_CHARGE          0x4000
 #define ALARM_RESERVED_2000             0x2000
 #define ALARM_OVER_TEMP                 0x1000
 #define ALARM_TERMINATE_DISCHARGE       0x0800
@@ -101,7 +101,7 @@
 #define ALARM_STATUS_INITIALIZE         0x0080
 #define ALARM_STATUS_DISCHARGING        0x0040
 #define ALARM_STATUS_FULLY_CHARGED      0x0020
-#define ALARM_STATUS_FULLY_DISCHARG     0x0010
+#define ALARM_STATUS_FULLY_DISCHARGED   0x0010
 /* Charge mode */
 #define CHARGE_FLAG_INHIBIT_CHARGE      (1 << 0)
 #define CHARGE_FLAG_ENABLE_POLLING      (1 << 1)

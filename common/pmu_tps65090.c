@@ -9,9 +9,6 @@
 #include "console.h"
 #include "common.h"
 #include "i2c.h"
-#include "task.h"
-#include "timer.h"
-#include "smart_battery.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -19,6 +16,10 @@
 
 #define TPS65090_I2C_ADDR 0x90
 
+#define IRQ1_REG 0x00
+#define IRQ2_REG 0x01
+#define IRQ1MASK 0x02
+#define IRQ2MASK 0x03
 #define CG_CTRL0 0x04
 #define CG_CTRL1 0x05
 #define CG_CTRL2 0x06
@@ -28,140 +29,99 @@
 #define CG_STATUS1 0x0a
 #define CG_STATUS2 0x0b
 
-#define CHARGER_ENABLE 1
-#define FASTCHARGE_SHIFT 2
-#define FASTCHARGE_MASK (7 << FASTCHARGE_SHIFT)
+/* IRQ events */
+#define EVENT_VACG    (1 <<  1)
+#define EVENT_VBATG   (1 <<  3)
 
-enum FASTCHARGE_SAFETY_TIMER {
-	FASTCHARGE_2HRS,
-	FASTCHARGE_3HRS,
-	FASTCHARGE_4HRS,
-	FASTCHARGE_5HRS,
-	FASTCHARGE_6HRS,
-	FASTCHARGE_7HRS,
-	FASTCHARGE_8HRS,
-	FASTCHARGE_10HRS
-};
+/* Charger alarm */
+#define CHARGER_ALARM 3
 
+/* Read/write tps65090 register */
 static inline int pmu_read(int reg, int *value)
 {
-	int rv;
-
-	rv = i2c_read8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
-#ifdef CONFIG_DEBUG
-	CPRINTF("%s %d %d failed\n", __func__, reg, *value);
-#endif /* CONFIG_DEBUG */
-
-	return rv;
+	return i2c_read8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
 }
 
 static inline int pmu_write(int reg, int value)
 {
+	return i2c_write8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
+}
+
+/* Clear tps65090 irq */
+static inline int pmu_clear_irq(void)
+{
+	return pmu_write(IRQ1_REG, 0);
+}
+
+/* Read all tps65090 interrupt events */
+static int pmu_get_event(int *event)
+{
+	static int prev_event;
 	int rv;
+	int irq1, irq2;
 
-	rv = i2c_write8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
-#ifdef CONFIG_DEBUG
-	CPRINTF("%s %d %d failed\n", __func__, reg, value);
-#endif /* CONFIG_DEBUG */
+	pmu_clear_irq();
 
-	return rv;
-}
-
-static int pmu_enable_charger(int enable)
-{
-	int rv, d;
-
-	rv = pmu_read(CG_CTRL0, &d);
+	rv = pmu_read(IRQ1_REG, &irq1);
+	if (rv)
+		return rv;
+	rv = pmu_read(IRQ2_REG, &irq2);
 	if (rv)
 		return rv;
 
-	if (enable)
-		d |= CHARGER_ENABLE;
-	else
-		d &= ~CHARGER_ENABLE;
+	*event = irq1 | (irq2 << 8);
 
-	return pmu_write(CG_CTRL0, d);
+	if (prev_event != *event) {
+		CPRINTF("pmu event: %016b\n", *event);
+		prev_event = *event;
+	}
+
+	return EC_SUCCESS;
 }
 
-static int pmu_set_fastcharge_safty_timer(enum FASTCHARGE_SAFETY_TIMER stime)
+int pmu_is_charger_alarm(void)
 {
-	int rv, d;
+	int status;
+	if (pmu_read(CG_STATUS1, &status) || (status & CHARGER_ALARM))
+		return 1;
+	return 0;
+}
 
-	rv = pmu_read(CG_CTRL0, &d);
+int pmu_get_power_source(int *ac_good, int *battery_good)
+{
+	int rv, event;
+
+	rv = pmu_get_event(&event);
 	if (rv)
 		return rv;
 
-	d &= ~FASTCHARGE_MASK;
-	d |= stime << FASTCHARGE_SHIFT;
+	if (ac_good)
+		*ac_good = event & EVENT_VACG;
+	if (battery_good)
+		*battery_good = event & EVENT_VBATG;
 
-	return pmu_write(CG_CTRL0, d);
+	return EC_SUCCESS;
 }
 
 void pmu_init(void)
 {
-	/* Fast charge timer = 2 hours
-	 * TODO: move this setting into battery pack file
+	/* Init configuration
+	 *   Fast charge timer    : 2 hours
+	 *   Charger              : disable
+	 *   External pin control : enable
+	 *
+	 * TODO: move settings to battery pack specific init
 	 */
-	pmu_set_fastcharge_safty_timer(FASTCHARGE_2HRS);
+	pmu_write(CG_CTRL0, 2);
 
-	/* Enable charging  */
-	pmu_enable_charger(1);
+	/* Enable interrupt mask */
+	pmu_write(IRQ1MASK, 0xff);
+	pmu_write(IRQ2MASK, 0xff);
+
+	/* Limit full charge current to 50%
+	 * TODO: remove this temporary hack.
+	 */
+	pmu_write(CG_CTRL3, 0xbb);
 }
 
-#ifdef CONFIG_TASK_PMU_TPS65090_CHARGER
-
-void pmu_charger_task(void)
-{
-	int rv, d;
-	int alarm = -1, batt_temp = -1;
-	int batt_v = -1, batt_i = -1;
-	int desired_v = -1, desired_i = -1;
-
-	pmu_init();
-
-	while (1) {
-		/* Get battery alarm, voltage, current, temperature
-		 * TODO: Add discharging control
-		 */
-		rv = battery_status(&d);
-		if (!rv && alarm != d) {
-			CPRINTF("[batt alarm %016b]\n", d);
-			alarm = d;
-		}
-
-		rv = battery_voltage(&d);
-		if (!rv && batt_v != d) {
-			CPRINTF("[batt V %d mV]\n", d);
-			batt_v = d;
-		}
-
-		rv = battery_current(&d);
-		if (!rv && batt_i != d) {
-			CPRINTF("[batt I %d mA]\n", d);
-			batt_i = d;
-		}
-
-		rv = battery_desired_voltage(&d);
-		if (!rv && desired_v != d) {
-			CPRINTF("[batt d_V %d mV]\n", d);
-			desired_v = d;
-		}
-
-		rv = battery_desired_current(&d);
-		if (!rv && desired_i != d) {
-			CPRINTF("[batt d_I %d mA]\n", d);
-			desired_i = d;
-		}
-
-		rv = battery_temperature(&d);
-		if (!rv && batt_temp != d) {
-			batt_temp = d;
-			CPRINTF("[batt T %d.%d C]\n",
-				(d - 2731) / 10, (d - 2731) % 10);
-		}
-		usleep(5000000);
-	}
-}
-
-#endif /* CONFIG_TASK_PMU_TPS65090_CHARGER */
 
