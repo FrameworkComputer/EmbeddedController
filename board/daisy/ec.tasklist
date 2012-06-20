@@ -15,6 +15,7 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL) \
+	TASK(POWERLED, power_led_task, NULL) \
 	TASK(PMU_TPS65090_CHARGER, pmu_charger_task, NULL) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(GAIAPOWER, gaia_power_task, NULL) \
