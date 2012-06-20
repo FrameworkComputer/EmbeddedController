@@ -10,6 +10,7 @@
 #include "eoption.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
+#include "keyboard_scan_stub.h"
 #include "power_button.h"
 #include "registers.h"
 #include "system.h"
@@ -21,30 +22,6 @@
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
-
-/* Notes:
- *
- * Link proto0 board:
- *
- *   Columns (outputs):
- *      KSO0 - KSO7  = PP0:7
- *      KSO8 - KSO12 = PQ0:4
- *
- *   Rows (inputs):
- *      KSI0 - KSI7  = PN0:7
- *
- *   Other:
- *      PWR_BTN#     = PK7 (handled by gpio module)
- */
-
-
-/* used for select_column() */
-enum COLUMN_INDEX {
-	COLUMN_ASSERT_ALL = -2,
-	COLUMN_TRI_STATE_ALL = -1,
-	/* 0 ~ 12 for the corresponding column */
-};
-
 #define POLLING_MODE_TIMEOUT 1000000  /* 1 sec */
 #define SCAN_LOOP_DELAY 10000         /* 10 ms */
 #define COLUMN_CHARGE_US 40           /* Column charge time in usec */
@@ -52,7 +29,6 @@ enum COLUMN_INDEX {
 #define KB_COLS 13
 
 
-static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 static uint8_t raw_state[KB_COLS];
 static uint8_t raw_state_at_boot[KB_COLS];
 
@@ -79,55 +55,24 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 #define MASK_VALUE_F       0x10
 
 
-/* Drive the specified column low; other columns are tri-stated */
-static void select_column(int col)
-{
-	if (col == COLUMN_TRI_STATE_ALL || !enable_scanning) {
-		/* Tri-state all outputs */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
-	} else if (col == COLUMN_ASSERT_ALL) {
-		/* Assert all outputs */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0;
-	} else {
-		/* Assert a single output */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
-		if (col < 8)
-			LM4_GPIO_DATA(LM4_GPIO_P, 1 << col) = 0;
-		else
-			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
-	}
-}
-
-
-static uint32_t clear_matrix_interrupt_status(void) {
-	uint32_t ris = LM4_GPIO_RIS(KB_SCAN_ROW_GPIO);
-	LM4_GPIO_ICR(KB_SCAN_ROW_GPIO) = ris;
-
-	return ris;
-}
-
-
 static void wait_for_interrupt(void)
 {
 	CPUTS("[KB wait]\n");
 
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
-	select_column(COLUMN_ASSERT_ALL);
-	clear_matrix_interrupt_status();
+	lm4_select_column(COLUMN_ASSERT_ALL);
+	lm4_clear_matrix_interrupt_status();
 
-	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0xff;   /* 1: enable interrupt */
+	lm4_enable_matrix_interrupt();
 }
 
 
 static void enter_polling_mode(void)
 {
 	CPUTS("[KB poll]\n");
-	LM4_GPIO_IM(KB_SCAN_ROW_GPIO) = 0;  /* 0: disable interrupt */
-	select_column(COLUMN_TRI_STATE_ALL);
+	lm4_disable_matrix_interrupt();
+	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
 
@@ -141,17 +86,17 @@ static void update_key_state(void)
 
 	for (c = 0; c < KB_COLS; c++) {
 		/* Select column, then wait a bit for it to settle */
-		select_column(c);
+		lm4_select_column(c);
 		udelay(COLUMN_CHARGE_US);
 		/* Read the row state */
-		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
+		r = lm4_read_raw_row_state();
 		/* Invert it so 0=not pressed, 1=pressed */
 		r ^= 0xff;
 		/* Mask off keys that don't exist so they never show
 		 * as pressed */
 		raw_state[c] = r & actual_key_mask[c];
 	}
-	select_column(COLUMN_TRI_STATE_ALL);
+	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
 
@@ -181,10 +126,10 @@ static int check_keys_changed(void)
 
 	for (c = 0; c < KB_COLS; c++) {
 		/* Select column, then wait a bit for it to settle */
-		select_column(c);
+		lm4_select_column(c);
 		udelay(COLUMN_CHARGE_US);
 		/* Read the row state */
-		r = LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff);
+		r = lm4_read_raw_row_state();
 		/* Invert it so 0=not pressed, 1=pressed */
 		r ^= 0xff;
 		/* Mask off keys that don't exist so they never show
@@ -199,7 +144,7 @@ static int check_keys_changed(void)
 
 		keys[c] = r;
 	}
-	select_column(COLUMN_TRI_STATE_ALL);
+	lm4_select_column(COLUMN_TRI_STATE_ALL);
 
 	/* Ignore if a ghost key appears */
 	for (c = 0; c < KB_COLS; c++) {
@@ -226,7 +171,7 @@ static int check_keys_changed(void)
 			for (i = 0; i < 8; i++) {
 				uint8_t prev = (raw_state[c] >> i) & 1;
 				uint8_t now = (r >> i) & 1;
-				if (prev != now && enable_scanning)
+				if (prev != now && lm4_get_scanning_enabled())
 					keyboard_state_changed(i, c, now);
 			}
 			raw_state[c] = r;
@@ -280,28 +225,11 @@ static int check_boot_key(int index, int mask)
 
 int keyboard_scan_init(void)
 {
-	/* Set column outputs as open-drain; we either pull them low or let
-	 * them float high. */
-	LM4_GPIO_AFSEL(LM4_GPIO_P) = 0;  /* KSO[7:0] */
-	LM4_GPIO_AFSEL(LM4_GPIO_Q) &= ~0x1f;  /* KSO[12:8] */
-	LM4_GPIO_DEN(LM4_GPIO_P) = 0xff;
-	LM4_GPIO_DEN(LM4_GPIO_Q) |= 0x1f;
-	LM4_GPIO_DIR(LM4_GPIO_P) = 0xff;
-	LM4_GPIO_DIR(LM4_GPIO_Q) |= 0x1f;
-	LM4_GPIO_ODR(LM4_GPIO_P) = 0xff;
-	LM4_GPIO_ODR(LM4_GPIO_Q) |= 0x1f;
-
-	/* Set row inputs with pull-up */
-	LM4_GPIO_AFSEL(KB_SCAN_ROW_GPIO) &= 0xff;
-	LM4_GPIO_DEN(KB_SCAN_ROW_GPIO) |= 0xff;
-	LM4_GPIO_DIR(KB_SCAN_ROW_GPIO) = 0;
-	LM4_GPIO_PUR(KB_SCAN_ROW_GPIO) = 0xff;
-	/* Edge-sensitive on both edges.  Don't enable interrupts yet. */
-	LM4_GPIO_IS(KB_SCAN_ROW_GPIO) = 0;
-	LM4_GPIO_IBE(KB_SCAN_ROW_GPIO) = 0xff;
+	/* Configure GPIO */
+	lm4_configure_keyboard_gpio();
 
 	/* Tri-state the columns */
-	select_column(COLUMN_TRI_STATE_ALL);
+	lm4_select_column(COLUMN_TRI_STATE_ALL);
 
 	/* TODO: method to set which keyboard we have, so we set the actual
 	 * key mask properly */
@@ -360,11 +288,11 @@ void keyboard_scan_task(void)
 		/* Wait for scanning enabled and key pressed. */
 		do {
 			task_wait_event(-1);
-		} while (!enable_scanning);
+		} while (!lm4_get_scanning_enabled());
 
 		enter_polling_mode();
 		/* Busy polling keyboard state. */
-		while (enable_scanning) {
+		while (lm4_get_scanning_enabled()) {
 			/* sleep for debounce. */
 			usleep(SCAN_LOOP_DELAY);
 			/* Check for keys down */
@@ -384,7 +312,7 @@ void keyboard_scan_task(void)
 
 static void matrix_interrupt(void)
 {
-	uint32_t ris = clear_matrix_interrupt_status();
+	uint32_t ris = lm4_clear_matrix_interrupt_status();
 
 	if (ris)
 		task_wake(TASK_ID_KEYSCAN);
@@ -393,17 +321,17 @@ DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
 
 
 /* The actual implementation is controlling the enable_scanning variable, then
- * that controls whether select_column() can pull-down columns or not. */
+ * that controls whether lm4_select_column() can pull-down columns or not. */
 void keyboard_enable_scanning(int enable)
 {
-	enable_scanning = enable;
+	lm4_set_scanning_enabled(enable);
 	if (enable) {
 		/* A power button press had tri-stated all columns (see the
 		 * 'else' statement below), we need a wake-up to unlock
 		 * the task_wait_event() loop after wait_for_interrupt(). */
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
-		select_column(COLUMN_TRI_STATE_ALL);
+		lm4_select_column(COLUMN_TRI_STATE_ALL);
 		keyboard_clear_underlying_buffer();
 	}
 }
