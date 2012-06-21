@@ -172,13 +172,18 @@ static void thermal_process(void)
 {
 	int i, j;
 	int cur_temp;
+	int flag;
 
 	for (i = 0; i < THRESHOLD_COUNT + THERMAL_FAN_STEPS; ++i)
 		overheated[i] = 0;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		enum temp_sensor_type type = temp_sensors[i].type;
-		int flag = thermal_config[type].config_flags;
+
+		if (type == TEMP_SENSOR_TYPE_IGNORED)
+			continue;
+
+		flag = thermal_config[type].config_flags;
 
 		if (!temp_sensor_powered(i))
 			continue;

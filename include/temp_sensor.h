@@ -20,6 +20,8 @@ enum temp_sensor_id;
 
 /* Type of temperature sensors. */
 enum temp_sensor_type {
+	/* Ignore this temperature sensor. */
+	TEMP_SENSOR_TYPE_IGNORED = -1,
 	/* CPU temperature sensors. */
 	TEMP_SENSOR_TYPE_CPU = 0,
 	/* Other on-board temperature sensors. */

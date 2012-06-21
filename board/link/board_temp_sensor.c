@@ -30,7 +30,7 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 #ifdef CONFIG_TMP006
 	{"I2C_CPU-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CPU,
 	 tmp006_get_val, 0, 7},
-	{"I2C_CPU-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_CASE,
+	{"I2C_CPU-Object", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_IGNORED,
 	 tmp006_get_val, 1, 7},
 	{"I2C_PCH-Die", TEMP_SENSOR_POWER_VS, TEMP_SENSOR_TYPE_BOARD,
 	 tmp006_get_val, 2, 7},
