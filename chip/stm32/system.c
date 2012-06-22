@@ -19,6 +19,14 @@
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
+	BKPDATA_INDEX_VBNV_CONTEXT0,
+	BKPDATA_INDEX_VBNV_CONTEXT1,
+	BKPDATA_INDEX_VBNV_CONTEXT2,
+	BKPDATA_INDEX_VBNV_CONTEXT3,
+	BKPDATA_INDEX_VBNV_CONTEXT4,
+	BKPDATA_INDEX_VBNV_CONTEXT5,
+	BKPDATA_INDEX_VBNV_CONTEXT6,
+	BKPDATA_INDEX_VBNV_CONTEXT7,
 };
 
 
@@ -214,6 +222,41 @@ const char *system_get_chip_name(void)
 const char *system_get_chip_revision(void)
 {
 	return "";
+}
+
+
+int system_get_vbnvcontext(uint8_t *block)
+{
+	enum bkpdata_index i;
+	uint16_t value;
+
+	for (i = BKPDATA_INDEX_VBNV_CONTEXT0;
+			i <= BKPDATA_INDEX_VBNV_CONTEXT7; i++) {
+		value = bkpdata_read(i);
+		*block++ = (uint8_t)(value & 0xff);
+		*block++ = (uint8_t)(value >> 8);
+	}
+
+	return EC_SUCCESS;
+}
+
+
+int system_set_vbnvcontext(const uint8_t *block)
+{
+	enum bkpdata_index i;
+	uint16_t value;
+	int err;
+
+	for (i = BKPDATA_INDEX_VBNV_CONTEXT0;
+			i <= BKPDATA_INDEX_VBNV_CONTEXT7; i++) {
+		value = *block++;
+		value |= ((uint16_t)*block++) << 8;
+		err = bkpdata_write(i, value);
+		if (err)
+			return err;
+	}
+
+	return EC_SUCCESS;
 }
 
 

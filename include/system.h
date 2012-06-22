@@ -173,6 +173,16 @@ const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
 
 /**
+ * Get/Set VbNvContext in non-volatile storage.  The block should be 16 bytes
+ * long, which is the current size of VbNvContext block.
+ *
+ * @param block		Pointer to a buffer holding VbNvContext.
+ * @return 0 on success, !0 on error.
+ */
+int system_get_vbnvcontext(uint8_t *block);
+int system_set_vbnvcontext(const uint8_t *block);
+
+/**
  * Put the EC in hibernate (lowest EC power state).
  *
  * @param seconds	Number of seconds to hibernate.
