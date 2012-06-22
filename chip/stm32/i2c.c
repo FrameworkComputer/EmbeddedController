@@ -4,6 +4,7 @@
  */
 
 #include "board.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -379,6 +380,10 @@ static void handle_i2c_error(int port, int rv)
 	timestamp_t t1, t2;
 	uint32_t r;
 
+	/* we have not used the bus, just exit */
+	if (rv == EC_ERROR_BUSY)
+		return;
+
 	if (rv)
 		dump_i2c_reg(port);
 
@@ -406,6 +411,10 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	int size, int stop)
 {
 	int rv, i;
+
+	/* if the AP is ON, don't play with the connection */
+	if ((port == I2C_PORT_SLAVE) && chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_BUSY;
 
 	disable_ack(port);
 	rv = master_start(port, slave_addr);
@@ -446,6 +455,10 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	 *
 	 */
 	int rv, i;
+
+	/* if the AP is ON, don't play with the connection */
+	if ((port == I2C_PORT_SLAVE) && chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_BUSY;
 
 	if (data == NULL || size < 1)
 		return EC_ERROR_INVAL;
@@ -701,4 +714,3 @@ DECLARE_CONSOLE_COMMAND(i2c, command_i2c,
 			NULL);
 
 #endif /* I2C_PORT_HOST */
-
