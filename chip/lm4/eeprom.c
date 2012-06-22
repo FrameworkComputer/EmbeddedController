@@ -5,8 +5,9 @@
 
 /* EEPROM module for Chrome EC */
 
-#include "eeprom.h"
+#include "clock.h"
 #include "console.h"
+#include "eeprom.h"
 #include "registers.h"
 #include "timer.h"
 #include "util.h"
@@ -19,16 +20,26 @@
 static int block_count;
 
 
-/* Waits for the current EEPROM operation to finish; all operations but write
- * should normally finish in 4 system clocks.  eeprom_write() has its own
- * delay loop for the longer delay. */
+/*
+ * Wait for the current EEPROM operation to finish; all operations but write
+ * should normally finish in 4 system clocks, but worst case is up to
+ * 1800ms if the EEPROM needs to do an internal page erase/copy.  We must
+ * spin-wait for this delay, because EEPROM operations will fail if the chip
+ * drops to sleep mode.
+ */
 static int wait_for_done(void)
 {
-	int i;
-	for (i = 0; i < 1000; i++) {
-		if (!(LM4_EEPROM_EEDONE & 0x01))
-			return EC_SUCCESS;
+	int j;
+
+	for (j = 0; j < 20; j++) {  /* 20 * 100 ms = 2000 ms */
+		uint64_t tstop = get_time().val + 100000;  /* 100ms from now */
+		while (get_time().val < tstop) {
+			if (!(LM4_EEPROM_EEDONE & 0x01))
+				return EC_SUCCESS;
+		}
+		watchdog_reload();
 	}
+
 	return EC_ERROR_UNKNOWN;
 }
 
@@ -75,7 +86,7 @@ int eeprom_read(int block, int offset, int size, char *data)
 int eeprom_write(int block, int offset, int size, const char *data)
 {
 	uint32_t *d = (uint32_t *)data;
-	int rv, i;
+	int rv;
 
 	if (block < 0 || block >= block_count ||
 	    offset < 0 || offset > EEPROM_BLOCK_SIZE || offset & 3 ||
@@ -96,18 +107,17 @@ int eeprom_write(int block, int offset, int size, const char *data)
 	for ( ; size; size -= sizeof(uint32_t)) {
 		LM4_EEPROM_EERDWRINC = *(d++);
 
-		/* Writes nominally take ~110us, but can take up to 1800 ms
-		 * worst-case (near endurance limit and need erase/copy). */
-		for (i = 0; i < 2000 && (LM4_EEPROM_EEDONE & 0x01); i++) {
-			/* First few delays are smaller for nominal case */
-			usleep(i < 20 ? 100 : 1000);
-			/* Reload the watchdog timer in case we're called
-			 * before task scheduling starts. */
-			watchdog_reload();
-		}
+		rv = wait_for_done();
+		if (rv)
+			return rv;
 
-		if (LM4_EEPROM_EEDONE)
+		if (LM4_EEPROM_EEDONE & 0x10) {
+			/* Failed due to write protect */
+			return EC_ERROR_ACCESS_DENIED;
+		} else if (LM4_EEPROM_EEDONE & 0x100) {
+			/* Failed due to program voltage level */
 			return EC_ERROR_UNKNOWN;
+		}
 	}
 
 	return EC_SUCCESS;
@@ -231,14 +241,33 @@ DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide,
 
 int eeprom_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
 	/* Enable the EEPROM module and delay a few clocks */
 	LM4_SYSTEM_RCGCEEPROM = 1;
-	scratch = LM4_SYSTEM_RCGCEEPROM;
+	clock_wait_cycles(6);
 
+	/* Wait for internal EEPROM init to finish */
 	wait_for_done();
+
+	/* Store block count */
 	block_count = LM4_EEPROM_EESIZE >> 16;
+
+	/*
+	 * Handle resetting the EEPROM module to clear state from a previous
+	 * error condition.
+	 */
+	if (LM4_EEPROM_EESUPP & 0xc0) {
+		LM4_SYSTEM_SREEPROM = 1;
+		clock_wait_cycles(200);
+		LM4_SYSTEM_SREEPROM = 0;
+
+		/* Wait again for internal init to finish */
+		clock_wait_cycles(6);
+		wait_for_done();
+
+		/* Fail if error condition didn't clear */
+		if (LM4_EEPROM_EESUPP & 0xc0)
+			return EC_ERROR_UNKNOWN;
+	}
 
 	return EC_SUCCESS;
 }
