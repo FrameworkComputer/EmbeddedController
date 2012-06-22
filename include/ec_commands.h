@@ -433,7 +433,9 @@ struct ec_params_lightbar_cmd {
 } __attribute__ ((packed));
 
 /*****************************************************************************/
-/* Verified boot commands. Details still evolving. */
+/* Verified boot commands */
+
+/* Verified boot command. Details still evolving. */
 #define EC_CMD_VBOOT_CMD 0x29
 struct ec_params_vboot_cmd {
 	union {
@@ -458,6 +460,47 @@ struct ec_params_vboot_cmd {
 		} out;
 	};
 } __attribute__ ((packed));
+
+/* Verified boot hash command */
+#define EC_CMD_VBOOT_HASH 0x2A
+
+struct ec_params_vboot_hash {
+	uint8_t cmd;             /* enum ec_vboot_hash_cmd */
+	uint8_t hash_type;       /* enum ec_vboot_hash_type */
+	uint8_t nonce_size;      /* Nonce size; may be 0 */
+	uint8_t reserved0;       /* Reserved; set 0 */
+	uint32_t offset;         /* Offset in flash to hash */
+	uint32_t size;           /* Number of bytes to hash */
+	uint8_t nonce_data[64];  /* Nonce data; ignored if nonce_size=0 */
+} __attribute__ ((packed));
+
+struct ec_response_vboot_hash {
+	uint8_t status;          /* enum ec_vboot_hash_status */
+	uint8_t hash_type;       /* enum ec_vboot_hash_type */
+	uint8_t digest_size;     /* Size of hash digest in bytes */
+	uint8_t reserved0;       /* Ignore; will be 0 */
+	uint32_t offset;         /* Offset in flash which was hashed */
+	uint32_t size;           /* Number of bytes hashed */
+	uint8_t hash_digest[64]; /* Hash digest data */
+} __attribute__ ((packed));
+
+enum ec_vboot_hash_cmd {
+	EC_VBOOT_HASH_GET,     /* Get current hash status */
+	EC_VBOOT_HASH_ABORT,   /* Abort calculating current hash */
+	EC_VBOOT_HASH_START,   /* Start computing a new hash */
+	EC_VBOOT_HASH_RECALC,  /* Synchronously compute a new hash */
+};
+
+enum ec_vboot_hash_type {
+	EC_VBOOT_HASH_TYPE_SHA256,  /* SHA-256 */
+};
+
+enum ec_vboot_hash_status {
+	EC_VBOOT_HASH_STATUS_NONE,     /* No hash (not started, or aborted) */
+	EC_VBOOT_HASH_STATUS_DONE,     /* Finished computing a hash */
+	EC_VBOOT_HASH_STATUS_BUSY,     /* Busy computing a hash */
+};
+
 
 /*****************************************************************************/
 /* USB charging control commands */

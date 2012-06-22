@@ -15,6 +15,7 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL) \
+	TASK(VBOOTHASH, vboot_hash_task, NULL) \
 	TASK(LIGHTBAR, lightbar_task, NULL) \
 	TASK(POWERSTATE, charge_state_machine_task, NULL) \
 	TASK(TEMPSENSOR, temp_sensor_task, NULL) \

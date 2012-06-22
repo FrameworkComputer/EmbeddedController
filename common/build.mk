@@ -39,7 +39,7 @@ VBOOT_DEVKEYS?=/usr/share/vboot/devkeys
 CFLAGS_$(CONFIG_VBOOT)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
 # CFLAGS_$(CONFIG_VBOOT)+= -DVBOOT_DEBUG
 
-common-$(CONFIG_VBOOT)+= vboot.o vboot_stub.o
+common-$(CONFIG_VBOOT)+= vboot.o vboot_stub.o vboot_hash.o
 
 includes-$(CONFIG_VBOOT)+= \
 	$(VBOOT_SOURCE)/include \

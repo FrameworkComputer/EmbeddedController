@@ -36,6 +36,8 @@ const char help_str[] =
 	"      Prints battery info\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
+	"  echash [CMDS]\n"
+	"      Various EC hash commands\n"
 	"  eventclear <mask>\n"
 	"      Clears EC host events flags where mask has bits set\n"
 	"  eventget\n"
@@ -1565,6 +1567,126 @@ int cmd_chipinfo(int argc, char *argv[])
 	return 0;
 }
 
+
+static int ec_hash_help(const char *cmd)
+{
+	printf("Usage:\n");
+	printf("  %s                        - get last hash\n", cmd);
+	printf("  %s abort                  - abort hashing\n", cmd);
+	printf("  %s start [<offset> <size> [<nonce>]] - start hashing\n", cmd);
+	printf("  %s recalc [<offset> <size> [<nonce>]] - sync rehash\n", cmd);
+	return 0;
+}
+
+
+static int ec_hash_print(const struct ec_response_vboot_hash *r)
+{
+	int i;
+
+	if (r->status == EC_VBOOT_HASH_STATUS_BUSY) {
+		printf("status:  busy\n");
+		return 0;
+	} else if (r->status == EC_VBOOT_HASH_STATUS_NONE) {
+		printf("status:  unavailable\n");
+		return 0;
+	} else if (r->status != EC_VBOOT_HASH_STATUS_DONE) {
+		printf("status:  %d\n", r->status);
+		return 0;
+	}
+
+	printf("status:  done\n");
+	if (r->hash_type == EC_VBOOT_HASH_TYPE_SHA256)
+		printf("type:    SHA-256\n");
+	else
+		printf("type:    %d\n", r->hash_type);
+
+	printf("offset:  0x%08x\n", r->offset);
+	printf("size:    0x%08x\n", r->size);
+
+	printf("hash:    ");
+	for (i = 0; i < r->digest_size; i++)
+		printf("%02x", r->hash_digest[i]);
+	printf("\n");
+	return 0;
+}
+
+
+int cmd_ec_hash(int argc, char *argv[])
+{
+	struct ec_params_vboot_hash p;
+	struct ec_response_vboot_hash r;
+	char *e;
+
+	if (argc < 2) {
+		/* Get hash status */
+		p.cmd = EC_VBOOT_HASH_GET;
+		if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+			return -1;
+
+		return ec_hash_print(&r);
+	}
+
+	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
+		/* Abort hash calculation */
+		p.cmd = EC_VBOOT_HASH_ABORT;
+		if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+			return -1;
+		return 0;
+	}
+
+	/* The only other commands are start and recalc */
+	if (!strcasecmp(argv[1], "start"))
+		p.cmd = EC_VBOOT_HASH_START;
+	else if (!strcasecmp(argv[1], "recalc"))
+		p.cmd = EC_VBOOT_HASH_RECALC;
+	else
+		return ec_hash_help(argv[0]);
+
+	if (argc < 4) {
+		fprintf(stderr, "Must specify offset and size\n");
+		return -1;
+	}
+
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+	p.offset = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+	p.size = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad size.\n");
+		return -1;
+	}
+
+	if (argc == 5) {
+		/*
+		 * Technically nonce can be any binary data up to 64 bytes,
+		 * but this command only supports a 32-bit value.
+		 */
+		uint32_t nonce = strtol(argv[4], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad nonce integer.\n");
+			return -1;
+		}
+		memcpy(p.nonce_data, &nonce, sizeof(nonce));
+		p.nonce_size = sizeof(nonce);
+	} else
+		p.nonce_size = 0;
+
+	printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
+	if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+		return -1;
+
+	/* Start command doesn't wait for hashing to finish */
+	if (p.cmd == EC_VBOOT_HASH_START)
+		return 0;
+
+	/* Recalc command does wait around, so a result is ready now */
+	return ec_hash_print(&r);
+}
+
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -1576,6 +1698,7 @@ const struct command commands[] = {
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"chipinfo", cmd_chipinfo},
+	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
 	{"eventget", cmd_host_event_get_raw},
 	{"eventgetscimask", cmd_host_event_get_sci_mask},
