@@ -37,6 +37,16 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_TARGET_RPM,
 		     pwm_command_set_fan_target_rpm);
 
 
+int pwm_command_fan_duty(uint8_t *data, int *resp_size)
+{
+	struct ec_params_pwm_set_fan_duty *p =
+			(struct ec_params_pwm_set_fan_duty *)data;
+	pwm_set_fan_duty(p->percent);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY, pwm_command_fan_duty);
+
+
 int pwm_command_get_keyboard_backlight(uint8_t *data, int *resp_size)
 {
 	struct ec_response_pwm_get_keyboard_backlight *r =

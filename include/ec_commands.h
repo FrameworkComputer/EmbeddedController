@@ -381,6 +381,12 @@ struct ec_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
 } __attribute__ ((packed));
 
+/* Set target fan PWM duty cycle */
+#define EC_CMD_PWM_SET_FAN_DUTY 0x24
+struct ec_params_pwm_set_fan_duty {
+	uint32_t percent;
+} __attribute__ ((packed));
+
 /*****************************************************************************/
 /* Lightbar commands. This looks worse than it is. Since we only use one LPC
  * command to say "talk to the lightbar", we put the "and tell it to do X"

@@ -23,6 +23,9 @@ int pwm_get_fan_target_rpm(void);
 /* Set the target fan RPM.  Pass -1 to set fan to maximum. */
 int pwm_set_fan_target_rpm(int rpm);
 
+/* Set the fan PWM duty cycle (0-100), disabling the automatic control. */
+int pwm_set_fan_duty(int percent);
+
 /* Enable/disable the keyboard backlight. */
 int pwm_enable_keyboard_backlight(int enable);
 

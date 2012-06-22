@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "battery.h"
+#include "board.h"
 #include "comm-host.h"
 #include "ec_commands.h"
 #include "lightbar.h"
@@ -51,6 +52,8 @@ const char help_str[] =
 	"      Sets the SMI mask for EC host events\n"
 	"  eventsetwakemask <mask>\n"
 	"      Sets the wake mask for EC host events\n"
+	"  fanduty <percent>\n"
+	"      Forces the fan PWM to a constant duty cycle\n"
 	"  flasherase <offset> <size>\n"
 	"      Erases EC flash\n"
 	"  flashinfo\n"
@@ -797,6 +800,31 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_fanduty(int argc, char *argv[])
+{
+	struct ec_params_pwm_set_fan_duty p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr,
+			"Usage: %s <targetrpm>\n", argv[0]);
+		return -1;
+	}
+	p.percent = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad percent arg.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY,
+			&p, sizeof(p), NULL, 0);
+	if (rv)
+		return rv;
+
+	printf("Fan duty cycle set.\n");
+	return 0;
+}
 
 #define LBMSG(state) #state
 #include "lightbar_msg_list.h"
@@ -1556,6 +1584,7 @@ const struct command commands[] = {
 	{"eventsetscimask", cmd_host_event_set_sci_mask},
 	{"eventsetsmimask", cmd_host_event_set_smi_mask},
 	{"eventsetwakemask", cmd_host_event_set_wake_mask},
+	{"fanduty", cmd_fanduty},
 	{"flasherase", cmd_flash_erase},
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},

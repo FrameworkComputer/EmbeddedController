@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "lpc.h"
 #include "ec_commands.h"
 #include "pwm.h"
@@ -212,23 +213,11 @@ DECLARE_CONSOLE_COMMAND(fanset, command_fan_set,
 			"Set fan speed",
 			NULL);
 
-
-#ifdef CONFIG_CONSOLE_CMD_FANDUTY
-/* TODO: this is a temporary command for debugging tach issues */
-static int command_fan_duty(int argc, char **argv)
+int pwm_set_fan_duty(int percent)
 {
-  int d = 0, pwm;
-	char *e;
+	int pwm;
 
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	d = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM1;
-
-        pwm = (MAX_PWM * d) / 100;
-	ccprintf("Setting fan duty cycle to %d%% = 0x%x...\n", d, pwm);
+	pwm = (MAX_PWM * percent) / 100;
 
         /* Move the fan to manual control */
         if (!(LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001)) {
@@ -248,12 +237,28 @@ static int command_fan_duty(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fanduty, command_fan_duty,
+
+static int ec_command_fan_duty(int argc, char **argv)
+{
+	int percent = 0;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	percent = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	ccprintf("Setting fan duty cycle to %d%%\n", percent);
+	pwm_set_fan_duty(percent);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fanduty, ec_command_fan_duty,
 			"percent",
 			"Set fan duty cycle",
 			NULL);
-#endif
-
 
 static int command_kblight(int argc, char **argv)
 {
