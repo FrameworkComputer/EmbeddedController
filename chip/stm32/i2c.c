@@ -50,6 +50,26 @@ static int rx_index;
 /* indicates if a wait loop should abort */
 static volatile int abort_transaction;
 
+static inline void disable_i2c_interrupt(int port)
+{
+	STM32_I2C_CR2(port) &= ~(3 << 8);
+}
+
+static inline void enable_i2c_interrupt(int port)
+{
+	STM32_I2C_CR2(port) |= 3 << 8;
+}
+
+static inline void enable_ack(int port)
+{
+	STM32_I2C_CR1(port) |= (1 << 10);
+}
+
+static inline void disable_ack(int port)
+{
+	STM32_I2C_CR1(port) &= ~(1 << 10);
+}
+
 static int wait_tx(int port)
 {
 	static timestamp_t deadline;
@@ -67,6 +87,9 @@ static int i2c_write_raw(int port, void *buf, int len)
 	int i;
 	uint8_t *data = buf;
 
+	/* we don't want to race with TxE interrupt event */
+	disable_i2c_interrupt(port);
+
 	abort_transaction = 0;
 	for (i = 0; i < len; i++) {
 		STM32_I2C_DR(port) = data[i];
@@ -75,6 +98,8 @@ static int i2c_write_raw(int port, void *buf, int len)
 			break;
 		}
 	}
+
+	enable_i2c_interrupt(port);
 
 	return len;
 }
@@ -280,26 +305,6 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 #define SR1_OVR		(1 << 11)	/* Overrun/underrun */
 #define SR1_PECERR	(1 << 12)	/* PEC err in reception */
 #define SR1_TIMEOUT	(1 << 14)	/* Timeout : 25ms */
-
-static inline void disable_i2c_interrupt(int port)
-{
-	STM32_I2C_CR2(port) &= ~(3 << 8);
-}
-
-static inline void enable_i2c_interrupt(int port)
-{
-	STM32_I2C_CR2(port) |= 3 << 8;
-}
-
-static inline void enable_ack(int port)
-{
-	STM32_I2C_CR1(port) |= (1 << 10);
-}
-
-static inline void disable_ack(int port)
-{
-	STM32_I2C_CR1(port) &= ~(1 << 10);
-}
 
 static inline void dump_i2c_reg(int port)
 {
