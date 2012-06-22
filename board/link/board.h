@@ -28,6 +28,9 @@
 /* Enable the fake developer switch.  See crosbug.com/p/8884 */
 #define CONFIG_FAKE_DEV_SWITCH
 
+/* Enable direct fan PWM control. See crosbug.com/p/10747 */
+#define CONFIG_CONSOLE_CMD_FANDUTY
+
 /* Fan PWM channels */
 #define FAN_CH_CPU       0  /* CPU fan */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */

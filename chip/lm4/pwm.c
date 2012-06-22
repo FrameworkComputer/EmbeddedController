@@ -213,7 +213,7 @@ DECLARE_CONSOLE_COMMAND(fanset, command_fan_set,
 			NULL);
 
 
-#ifdef CONSOLE_COMMAND_FANDUTY
+#ifdef CONFIG_CONSOLE_CMD_FANDUTY
 /* TODO: this is a temporary command for debugging tach issues */
 static int command_fan_duty(int argc, char **argv)
 {
