@@ -8,6 +8,35 @@
 #ifndef __CROS_EC_HWTIMER_H
 #define __CROS_EC_HWTIMER_H
 
+struct timer_ctlr {
+	unsigned cr1;
+	unsigned cr2;
+	unsigned smcr;
+	unsigned dier;
+
+	unsigned sr;
+	unsigned egr;
+	unsigned ccmr1;
+	unsigned ccmr2;
+
+	unsigned ccer;
+	unsigned cnt;
+	unsigned psc;
+	unsigned arr;
+
+	unsigned reserved30;
+	unsigned ccr1;
+	unsigned ccr2;
+	unsigned ccr3;
+
+	unsigned ccr4;
+	unsigned reserved44;
+	unsigned dcr;
+	unsigned dmar;
+
+	unsigned or;
+};
+
 /**
  * Programs when the next timer should fire an interrupt.
  * deadline: timestamp of the event.
@@ -40,5 +69,20 @@ int __hw_clock_source_init(uint32_t start_t);
  * hardware timer interrupt routine.
  */
 void process_timers(int overflow);
+
+/**
+ * Set up the timer that we will use as a watchdog warning.
+ *
+ * Once this has been set up, we will print a warning shortly before the
+ * real watchdog fires. To avoid this, hwtimer_reset_watchdog() must be
+ * called periodically.
+ *
+ * This is needed since the real watchdog timer (IWDG) does not provide
+ * an interrupt to warn of an impending watchdog reset.
+ */
+void hwtimer_setup_watchdog(void);
+
+/* Reset the watchdog timer, to avoid the watchdog warning */
+void hwtimer_reset_watchdog(void);
 
 #endif  /* __CROS_EC_HWTIMER_H */

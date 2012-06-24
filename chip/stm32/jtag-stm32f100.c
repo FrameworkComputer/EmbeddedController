@@ -9,8 +9,8 @@
 
 int jtag_pre_init(void)
 {
-	/* stop TIM2, TIM3 and watchdogs when the JTAG stops the CPU */
-	STM32_DBGMCU_CR |= 0x00001b00;
+	/* stop TIM1-4 and watchdogs when the JTAG stops the CPU */
+	STM32_DBGMCU_CR |= 0x00003f00;
 
 	return EC_SUCCESS;
 }

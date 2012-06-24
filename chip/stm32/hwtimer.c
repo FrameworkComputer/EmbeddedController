@@ -10,13 +10,24 @@
 #include "board.h"
 #include "common.h"
 #include "hwtimer.h"
+#include "panic.h"
 #include "registers.h"
 #include "task.h"
+#include "watchdog.h"
 
 #define US_PER_SECOND 1000000
 
 /* Divider to get microsecond for the clock */
 #define CLOCKSOURCE_DIVIDER (CPU_CLOCK/US_PER_SECOND)
+
+#ifdef CHIP_VARIANT_stm32f100
+#define TIM_WD_IRQ	STM32_IRQ_TIM1_UP_TIM16
+#define TIM_WD		1	/* Timer to use for watchdog */
+#endif
+
+enum {
+	TIM_WD_BASE	= STM32_TIM1_BASE,
+};
 
 static uint32_t last_deadline;
 
@@ -145,3 +156,93 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	return STM32_IRQ_TIM4;
 }
+
+/*
+ * We don't have TIM1 on STM32L, so don't support this function for now.
+ * TIM5 doesn't appear to exist in either variant, and TIM9 cannot be
+ * triggered as a slave from TIM4. We could perhaps use TIM9 as our
+ * fast counter on STM32L.
+ */
+#ifdef CHIP_VARIANT_stm32f100
+
+void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+{
+	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
+
+	/* clear status */
+	timer->sr = 0;
+
+	watchdog_trace(excep_lr, excep_sp);
+}
+
+void IRQ_HANDLER(TIM_WD_IRQ)(void) __attribute__((naked));
+void IRQ_HANDLER(TIM_WD_IRQ)(void)
+{
+	/* Naked call so we can extract raw LR and SP */
+	asm volatile("mov r0, lr\n"
+		     "mov r1, sp\n"
+		     /* Must push registers in pairs to keep 64-bit aligned
+		      * stack for ARM EABI.  This also conveninently saves
+		      * R0=LR so we can pass it to task_resched_if_needed. */
+		     "push {r0, lr}\n"
+		     "bl watchdog_check\n"
+		     "pop {r0, lr}\n"
+		     "b task_resched_if_needed\n");
+}
+const struct irq_priority IRQ_BUILD_NAME(prio_, TIM_WD_IRQ, )
+	__attribute__((section(".rodata.irqprio")))
+		= {TIM_WD_IRQ, 0}; /* put the watchdog at the highest
+					    priority */
+
+void hwtimer_setup_watchdog(void)
+{
+	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
+
+	/* Enable clock */
+#if TIM_WD == 1
+	STM32_RCC_APB2ENR |= 1 << 11;
+#else
+	STM32_RCC_APB1ENR |= 1 << (TIM_WD - 2);
+#endif
+
+	/*
+	 * Timer configuration : Down counter, counter disabled, update
+	 * event only on overflow.
+	 */
+	timer->cr1 = 0x0014 | (1 << 7);
+
+	/* TIM (slave mode) uses ITR3 as internal trigger */
+	timer->smcr = 0x0037;
+
+	/*
+	 * The auto-reload value is based on the period between rollovers
+	 * for TIM4. Since TIM4 runs at 1MHz, it will overflow in 65.536ms.
+	 * We divide our required watchdog period by this amount to obtain
+	 * the number of times TIM4 can overflow before we generate an
+	 * interrupt.
+	 */
+	timer->arr = timer->cnt = WATCHDOG_PERIOD_MS * 1000 / (1 << 16);
+
+	/* count on every TIM4 overflow */
+	timer->psc = 0;
+
+	/* Reload the pre-scaler from arr when it goes below zero */
+	timer->egr = 0x0000;
+
+	/* setup the overflow interrupt */
+	timer->dier = 0x0001;
+
+	/* Start counting */
+	timer->cr1 |= 1;
+
+	/* Enable timer interrupts */
+	task_enable_irq(TIM_WD_IRQ);
+}
+
+void hwtimer_reset_watchdog(void)
+{
+	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
+
+	timer->cnt = timer->arr;
+}
+#endif

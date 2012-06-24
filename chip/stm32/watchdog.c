@@ -10,6 +10,7 @@
 #include "config.h"
 #include "registers.h"
 #include "gpio.h"
+#include "hwtimer.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -51,51 +52,10 @@ void watchdog_reload(void)
 	STM32_IWDG_KR = 0xaaaa;
 
 	watchdog_reset_count();
+#ifdef CONFIG_WATCHDOG_HELP
+	hwtimer_reset_watchdog();
+#endif
 }
-
-
-/**
- * Chcek if a watchdog interrupt needs to be reported.
- *
- * If so, this function should call watchdog_trace()
- *
- * @param excep_lr	Value of lr to indicate caller return
- * @param excep_sp	Value of sp to indicate caller task id
- */
-void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
-{
-	/* Reset the windowed watchdog here */
-	STM32_WWDG_CR = 0xff;
-	STM32_WWDG_SR = 0;
-
-	/* If the count has expired, output a trace */
-	if (!--watchdog_count) {
-		/* Reset here, to give the UART enough time to send trace */
-		watchdog_reset_count();
-		watchdog_trace(excep_lr, excep_sp);
-		watchdog_reset_count();
-	}
-}
-
-
-void IRQ_HANDLER(STM32_IRQ_WWDG)(void) __attribute__((naked));
-void IRQ_HANDLER(STM32_IRQ_WWDG)(void)
-{
-	/* Naked call so we can extract raw LR and SP */
-	asm volatile("mov r0, lr\n"
-		     "mov r1, sp\n"
-		     /* Must push registers in pairs to keep 64-bit aligned
-		      * stack for ARM EABI.  This also conveninently saves
-		      * R0=LR so we can pass it to task_resched_if_needed. */
-		     "push {r0, lr}\n"
-		     "bl watchdog_check\n"
-		     "pop {r0, lr}\n"
-		     "b task_resched_if_needed\n");
-}
-const struct irq_priority IRQ_BUILD_NAME(prio_, STM32_IRQ_WWDG, )
-	__attribute__((section(".rodata.irqprio")))
-		= {STM32_IRQ_WWDG, 0}; /* put the watchdog at the highest
-					    priority */
 
 int watchdog_init(void)
 {
@@ -119,15 +79,8 @@ int watchdog_init(void)
 	watchdog_reset_count();
 
 #ifdef CONFIG_WATCHDOG_HELP
-	/* enable clock */
-	STM32_RCC_APB1ENR |= 1 << 11;
-
-	STM32_WWDG_SR = 0;
-	STM32_WWDG_CR = 0xff;
-	STM32_WWDG_CFR = 0x7f | STM32_WWDG_TB_8 | STM32_WWDG_EWI;
-
-	/* Enable watchdog interrupt */
-	task_enable_irq(IRQ_WATCHDOG);
+	/* Use a harder timer to warn about an impending watchdog reset */
+	hwtimer_setup_watchdog();
 #endif
 
 	return EC_SUCCESS;
