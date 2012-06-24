@@ -71,6 +71,7 @@ int flash_physical_read(int offset, int size, char *data)
 	return EC_SUCCESS;
 }
 
+
 static int unlock(int locks)
 {
 	/* unlock CR if needed */

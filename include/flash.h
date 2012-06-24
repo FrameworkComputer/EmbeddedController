@@ -24,6 +24,22 @@ int flash_get_protect_block_size(void);
 /* Return the physical size of flash in bytes */
 int flash_physical_size(void);
 
+/**
+ * Get the physical memory address of a flash offset
+ *
+ * This is used for direct flash access. We assume that the flash is
+ * contiguous from this start address through to the end of the usable
+ * flash.
+ *
+ * @param offset	Flash offset to get address of
+ * @param dataptrp	Returns pointer to memory address of flash offset
+ * @return pointer to flash memory offset, if ok, else NULL
+ */
+static inline char *flash_physical_dataptr(int offset)
+{
+	return (char *)offset;
+}
+
 /* Read <size> bytes of data from offset <offset> into <data>. */
 int flash_physical_read(int offset, int size, char *data);
 
@@ -49,6 +65,27 @@ int flash_pre_init(void);
 /* Returns the usable size of flash in bytes.  Note that this is
  * smaller than the actual flash size, */
 int flash_get_size(void);
+
+/**
+ * Get the physical memory address of a flash offset
+ *
+ * This is used for direct flash access. We assume that the flash is
+ * contiguous from this start address through to the end of the usable
+ * flash.
+ *
+ * This function returns NULL if offset + size_req extends beyond the end
+ * of flash, or if either size_req or offset are not aligned to 'align'.
+ *
+ * @param offset	Flash offset to get address of
+ * @param size_req	Number of bytes requested
+ * @param align		Ensure offset and size_req are aligned to given
+ *			power of two.
+ * @param sizep		If not NULL, returns amount of flash available at
+ *			this memory addr, unless function fails, iwc it is
+ *			unset.
+ * @return pointer to flash, or NULL on error
+ */
+char *flash_dataptr(int offset, int size_req, int align, int *sizep);
 
 /* Reads <size> bytes of data from offset <offset> into <data>. */
 int flash_read(int offset, int size, char *data);
