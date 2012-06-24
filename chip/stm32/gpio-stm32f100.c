@@ -174,6 +174,13 @@ void gpio_set_alternate_function(int port, int mask, int func)
 }
 
 
+uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
+{
+	*mask = gpio_list[signal].mask;
+	return (uint16_t *)&STM32_GPIO_IDR_OFF(gpio_list[signal].port);
+}
+
+
 int gpio_get_level(enum gpio_signal signal)
 {
 	return !!(STM32_GPIO_IDR_OFF(gpio_list[signal].port) &

@@ -66,6 +66,18 @@ int gpio_pre_init(void);
 int gpio_get_level(enum gpio_signal signal);
 
 /**
+ * Get faster access to a GPIO level
+ *
+ * Use this function to find out the register address and mask for a GPIO
+ * value. Then you can just check that instead of calling gpio_get_level().
+ *
+ * @param signal	Signal to return details for
+ * @param mask		Mask value to use
+ * @return pointer to register to read to get GPIO value
+ */
+uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask);
+
+/**
  * Returns the name of a given GPIO signal.
  *
  * @param signal	Signal to return.
