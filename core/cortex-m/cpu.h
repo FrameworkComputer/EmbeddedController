@@ -41,6 +41,10 @@ enum {
 	CPU_NVIC_HFSR_DEBUGEVT		= 1UL << 31,
 	CPU_NVIC_HFSR_FORCED		= 1 << 30,
 	CPU_NVIC_HFSR_VECTTBL		= 1 << 1,
+
+	CPU_NVIC_SHCSR_MEMFAULTENA	= 1 << 16,
+	CPU_NVIC_SHCSR_BUSFAULTENA	= 1 << 17,
+	CPU_NVIC_SHCSR_USGFAULTENA	= 1 << 18,
 };
 
 /* Set up the cpu to detect faults */
