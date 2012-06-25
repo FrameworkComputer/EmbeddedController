@@ -23,14 +23,15 @@
 #define MAX_RPM 0x1fff
 /* Max PWM for fan controller */
 #define MAX_PWM 0x1ff
-/* Scaling factor for requested/actual RPM for CPU fan.  We need this because
+/*
+ * Scaling factor for requested/actual RPM for CPU fan.  We need this because
  * the fan controller on Blizzard filters tach pulses that are less than 64
  * 15625Hz ticks apart, which works out to ~7000rpm on an unscaled fan.  By
  * telling the controller we actually have twice as many edges per revolution,
  * the controller can handle fans that actually go twice as fast.  See
- * crosbug.com/p/7718. */
+ * crosbug.com/p/7718.
+ */
 #define CPU_FAN_SCALE 2
-
 
 /* Configures the GPIOs for the fan module. */
 static void configure_gpios(void)
@@ -40,7 +41,6 @@ static void configure_gpios(void)
 	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
 	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
 }
-
 
 int pwm_enable_fan(int enable)
 {
@@ -52,18 +52,15 @@ int pwm_enable_fan(int enable)
 	return EC_SUCCESS;
 }
 
-
 int pwm_get_fan_rpm(void)
 {
 	return (LM4_FAN_FANCST(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
 }
 
-
 int pwm_get_fan_target_rpm(void)
 {
 	return (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
 }
-
 
 int pwm_set_fan_target_rpm(int rpm)
 {
@@ -79,7 +76,6 @@ int pwm_set_fan_target_rpm(int rpm)
 	return EC_SUCCESS;
 }
 
-
 int pwm_enable_keyboard_backlight(int enable)
 {
 	if (enable)
@@ -90,12 +86,10 @@ int pwm_enable_keyboard_backlight(int enable)
 	return EC_SUCCESS;
 }
 
-
 int pwm_get_keyboard_backlight_enabled(void)
 {
 	return (LM4_FAN_FANCTL & (1 << FAN_CH_KBLIGHT)) ? 1 : 0;
 }
-
 
 int pwm_get_keyboard_backlight(void)
 {
@@ -103,13 +97,11 @@ int pwm_get_keyboard_backlight(void)
 		MAX_PWM / 2) / MAX_PWM;
 }
 
-
 int pwm_set_keyboard_backlight(int percent)
 {
 	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM + 50) / 100) << 16;
 	return EC_SUCCESS;
 }
-
 
 static void update_lpc_mapped_memory(void)
 {
@@ -129,22 +121,20 @@ static void update_lpc_mapped_memory(void)
 		mapped[0] = 0xfffe;
 }
 
-
 static void check_fan_failure(void)
 {
 	if (pwm_get_fan_target_rpm() != 0 &&
 	    (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) &&
 	    ((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) {
-		/* Fan enabled but stalled. Issues warning.
-		 * As we have thermal shutdown protection, issuing warning
-		 * here should be enough.
+		/*
+		 * Fan enabled but stalled. Issues warning.  As we have thermal
+		 * shutdown protection, issuing warning here should be enough.
 		 */
 		lpc_set_host_events(
 			EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL));
 		cputs(CC_PWM, "[Fan stalled!]\n");
 	}
 }
-
 
 void pwm_task(void)
 {
@@ -179,7 +169,6 @@ DECLARE_CONSOLE_COMMAND(faninfo, command_fan_info,
 			NULL,
 			"Print fan info",
 			NULL);
-
 
 static int command_fan_set(int argc, char **argv)
 {
@@ -297,7 +286,8 @@ static int pwm_init(void)
 	/* Disable all fans */
 	LM4_FAN_FANCTL = 0;
 
-	/* Configure CPU fan:
+	/*
+	 * Configure CPU fan:
 	 * 0x8000 = bit 15     = auto-restart
 	 * 0x0000 = bit 14     = slow acceleration
 	 * 0x0000 = bits 13:11 = no hysteresis
@@ -306,10 +296,12 @@ static int pwm_init(void)
 	 * 0x0020 = bits 5:4   = average 4 edges when calculating RPM
 	 * 0x000c = bits 3:2   = 8 pulses per revolution
 	 *                       (see note at top of file)
-	 * 0x0000 = bit 0      = automatic control */
+	 * 0x0000 = bit 0      = automatic control
+	 */
 	LM4_FAN_FANCH(FAN_CH_CPU) = 0x802c;
 
-	/* Configure keyboard backlight:
+	/*
+	 * Configure keyboard backlight:
 	 * 0x0000 = bit 15     = auto-restart
 	 * 0x0000 = bit 14     = slow acceleration
 	 * 0x0000 = bits 13:11 = no hysteresis
@@ -317,21 +309,23 @@ static int pwm_init(void)
 	 * 0x0000 = bits 7:6   = no fast start
 	 * 0x0000 = bits 5:4   = average 4 edges when calculating RPM
 	 * 0x0000 = bits 3:2   = 4 pulses per revolution
-	 * 0x0001 = bit 0      = manual control */
+	 * 0x0001 = bit 0      = manual control
+	 */
 	LM4_FAN_FANCH(FAN_CH_KBLIGHT) = 0x0001;
 
 	/* Set initial fan speed to maximum, backlight off */
 	pwm_set_fan_target_rpm(-1);
 	pwm_set_keyboard_backlight(0);
 
-	/* Enable keyboard backlight.  Fan will be enabled later by whatever
-	 * controls the fan power supply. */
+	/*
+	 * Enable keyboard backlight.  Fan will be enabled later by whatever
+	 * controls the fan power supply.
+	 */
 	LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
 
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
-
 
 static int pwm_resume(void)
 {
@@ -340,10 +334,16 @@ static int pwm_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_resume, HOOK_PRIO_DEFAULT);
 
-
 static int pwm_suspend(void)
 {
 	pwm_enable_fan(0);
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_suspend, HOOK_PRIO_DEFAULT);
+
+static int pwm_shutdown(void)
+{
+	pwm_set_keyboard_backlight(0);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_shutdown, HOOK_PRIO_DEFAULT);
