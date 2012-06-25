@@ -35,8 +35,7 @@ void panic_putc(int ch)
 	if (ch == '\n')
 		panic_putc('\r');
 	uart_write_char(ch);
-	while (uart_tx_ready())
-		;
+	uart_tx_flush();
 }
 
 
