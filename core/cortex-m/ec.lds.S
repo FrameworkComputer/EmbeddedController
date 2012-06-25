@@ -95,6 +95,7 @@ SECTIONS
         . = ALIGN(64);
         *(.google)
 #endif
+        . = ALIGN(4);
 #ifdef COMPILE_FOR_RAM
     } > IRAM
 #else
