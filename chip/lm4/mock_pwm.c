@@ -54,6 +54,13 @@ int pwm_enable_keyboard_backlight(int enable)
 }
 
 
+int pwm_set_fan_duty(int percent)
+{
+	/* Not implemented */
+	return EC_SUCCESS;
+}
+
+
 void pwm_task(void)
 {
 	/* Do nothing */
