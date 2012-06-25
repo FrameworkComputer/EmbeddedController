@@ -155,7 +155,7 @@ enum gpio_signal {
 	GPIO_ENABLE_VS,           /* Enable VS power supplies */
 	GPIO_ENABLE_WLAN,         /* Enable WLAN module power (+3VS_WLAN) */
 	GPIO_ENTERING_RW,         /* Indicate when EC is entering RW code */
-	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers (Proto1+) */
+	GPIO_LIGHTBAR_RESETn,     /* Reset lightbar controllers */
 	GPIO_PCH_A20GATE,         /* A20GATE signal to PCH */
 	GPIO_PCH_DPWROK,          /* DPWROK signal to PCH */
 	GPIO_PCH_HDA_SDO,         /* HDA_SDO signal to PCH; when high, ME
@@ -173,7 +173,7 @@ enum gpio_signal {
 	GPIO_RADIO_ENABLE_WLAN,   /* Enable WLAN radio */
 	GPIO_RADIO_ENABLE_BT,     /* Enable bluetooth radio */
 	GPIO_SPI_CSn,             /* SPI chip select */
-	GPIO_TOUCHSCREEN_RESETn,  /* Reset touch screen (Proto1+) */
+	GPIO_TOUCHSCREEN_RESETn,  /* Reset touch screen */
 	GPIO_USB1_CTL1,           /* USB charger port 1 CTL1 output */
 	GPIO_USB1_CTL2,           /* USB charger port 1 CTL2 output */
 	GPIO_USB1_CTL3,           /* USB charger port 1 CTL3 output */

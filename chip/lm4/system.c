@@ -81,32 +81,23 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	/* clear pending interrupt */
+	/* Clear pending interrupt */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
-	/* set RTC alarm match */
+
+	/* Set RTC alarm match */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCM0 = seconds;
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCSS = (microseconds * 512 / 15625) << 16;
 
-	/* start counting toward the alarm */
+	/* Start counting toward the alarm */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCLD = 0;
-	/* go to hibernation and wake on RTC match or WAKE pin */
-	wait_for_hibctl_wc();
 
-#ifdef BOARD_link
-	if (system_get_board_version() == BOARD_VERSION_PROTO1) {
-		/* Need VDD3ON because we can't drop VDD externally */
-		__enter_hibernate(0x15B);
-	} else {
-		/* EVT+ can drop VDD */
-		__enter_hibernate(0x5B);
-	}
-#else
+	/* Go to hibernation and wake on RTC match or WAKE pin */
+	wait_for_hibctl_wc();
 	__enter_hibernate(0x5B);
-#endif
 }
 
 
@@ -136,8 +127,10 @@ int system_pre_init(void)
 		}
 	}
 
-	/* Initialize registers after reset (cf errata) */
-	/* TODO: fixed in A3 chip stepping? */
+	/*
+	 * Initialize registers after reset to work around LM4 chip errata
+	 * (still present in A3 chip stepping).
+	 */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCT = 0x7fff;
 	wait_for_hibctl_wc();

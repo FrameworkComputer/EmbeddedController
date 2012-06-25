@@ -105,7 +105,7 @@ static inline uint8_t scale_abs(int val, int max)
 }
 
 /* It will often be simpler to provide an overall brightness control. */
-static int brightness = 255;
+static int brightness = 0x40;
 
 /* So that we can make brightness changes happen instantly, we need to track
  * the current values. The values in the controllers aren't very helpful. */
@@ -548,20 +548,6 @@ static enum lightbar_sequence current_state, previous_state;
 void lightbar_task(void)
 {
 	uint32_t msg;
-
-	/* Reset lightbar to a known state */
-	/* TODO: (crosbug.com/p/9561) only needed on proto1, since on EVT the
-	 * lightbar loses power when +5VALW goes away, and will come back on
-	 * with these default values anyway.
-	 *
-	 * Also note than on EVT, it costs more power to deassert lightbar
-	 * reset than it does to hold the lightbar in reset, because the
-	 * lightbar reset line is a leakage path from +3VALW.  On proto1,
-	 * that's reversed, because the LED drivers consume more power held in
-	 * reset than out of reset. */
-	lightbar_init_vals();
-	lightbar_off();
-	lightbar_brightness(0x40);		/* default brightness */
 
 	current_state = LIGHTBAR_S5;
 	previous_state = LIGHTBAR_S5;

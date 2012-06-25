@@ -208,12 +208,7 @@ static int check_boot_key(int index, int mask)
 	 * your keyboard.  Currently, only the requested key and the keys used
 	 * for the Silego reset are allowed. */
 	allowed_mask[index] |= mask;
-
-	/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
-	if (system_get_board_version() == BOARD_VERSION_PROTO1)
-		allowed_mask[MASK_INDEX_ESC] |= MASK_VALUE_ESC;
-	else
-		allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
+	allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
 
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state_at_boot[c] & ~allowed_mask[c])
@@ -244,17 +239,8 @@ int keyboard_scan_init(void)
 	/* If we're booting due to a reset-pin-caused reset, check if the
 	 * recovery key is pressed. */
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
-		/* Proto1 used ESC key */
-		/* TODO: (crosbug.com/p/9561) remove once proto1 obsolete */
-		if (system_get_board_version() == BOARD_VERSION_PROTO1) {
-			power_set_recovery_pressed(
-				check_boot_key(MASK_INDEX_REFRESH,
-					       MASK_VALUE_REFRESH));
-		} else {
-			power_set_recovery_pressed(
-				check_boot_key(MASK_INDEX_ESC,
-					       MASK_VALUE_ESC));
-		}
+		power_set_recovery_pressed(check_boot_key(MASK_INDEX_ESC,
+							  MASK_VALUE_ESC));
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
 		/* Turn fake dev switch on if D pressed, off if F pressed. */
