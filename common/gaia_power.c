@@ -28,6 +28,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "keyboard_scan.h"
+#include "power_led.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -100,60 +101,6 @@ static timestamp_t pwron_deadline;
 
 /* force AP power on (used for recovery keypress) */
 static int auto_power_on;
-
-/*****************************************************************************/
-/* Keyboard power button LED state machine */
-
-/* Suspend mode blinking duty cycle */
-#define LED_OFF_PERIOD  1500000
-#define LED_ON_PERIOD     50000
-
-/* GPIO level for each LED state : it's an active low output */
-#define LED_GPIO_ON   0
-#define LED_GPIO_OFF  1
-
-/* power LED FSM states */
-static enum power_led_state {
-	POWER_LED_OFF,
-	POWER_LED_ON,
-	POWER_LED_SUSP0,
-	POWER_LED_SUSP1,
-
-	POWER_LED_STATE_COUNT
-} led_state;
-
-/* power LED FSM parameters for each state */
-static const struct {
-	int gpio;
-	int duration;
-	enum power_led_state next;
-} led_config[POWER_LED_STATE_COUNT] = {
-	[POWER_LED_OFF]   = {LED_GPIO_OFF, -1,             POWER_LED_OFF},
-	[POWER_LED_ON]    = {LED_GPIO_ON,  -1,             POWER_LED_ON},
-	[POWER_LED_SUSP0] = {LED_GPIO_OFF, LED_OFF_PERIOD, POWER_LED_SUSP1},
-	[POWER_LED_SUSP1] = {LED_GPIO_ON,  LED_ON_PERIOD,  POWER_LED_SUSP0},
-};
-
-static void set_power_led(enum power_led_state new_state)
-{
-	led_state = new_state;
-	/* Wake up the task */
-	task_wake(TASK_ID_POWERLED);
-}
-
-void power_led_task(void)
-{
-	while (1) {
-		int state_timeout;
-
-		gpio_set_level(GPIO_POWER_LED_L, led_config[led_state].gpio);
-		state_timeout = led_config[led_state].duration;
-		led_state = led_config[led_state].next;
-		task_wait_event(state_timeout);
-	}
-}
-
-/*****************************************************************************/
 
 /*
  * Wait for GPIO "signal" to reach level "value".
@@ -242,7 +189,8 @@ void gaia_suspend_event(enum gpio_signal signal)
 
 	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
 
-	set_power_led(ap_suspended ? POWER_LED_SUSP0 : POWER_LED_ON);
+	powerled_set_state(ap_suspended ?
+			POWERLED_STATE_SUSPEND : POWERLED_STATE_ON);
 }
 
 void gaia_power_event(enum gpio_signal signal)
@@ -356,7 +304,7 @@ static int power_on(void)
 	/* Enable 3.3v power rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	ap_on = 1;
-	set_power_led(POWER_LED_ON);
+	powerled_set_state(POWERLED_STATE_ON);
 	CPUTS("AP running ...\n");
 	return 0;
 }
@@ -391,7 +339,7 @@ static void power_off(void)
 	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	gpio_set_level(GPIO_EN_PP5000, 0);
 	ap_on = 0;
-	set_power_led(POWER_LED_OFF);
+	powerled_set_state(POWERLED_STATE_OFF);
 	CPUTS("Shutdown complete.\n");
 }
 

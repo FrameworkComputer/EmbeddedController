@@ -56,7 +56,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"ENTERING_RW", GPIO_D, (1<<0),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"POWER_LED_L", GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
 	{"CODEC_INT",   GPIO_D, (1<<1),  GPIO_HI_Z, NULL},
 	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
@@ -129,6 +128,15 @@ void configure_board(void)
 	/* use PB3 as a GPIO, so disable JTAG and keep only SWD */
 	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x7 << 24))
 			       | (2 << 24);
+
+	/* remap TIM2_CH2 to PB3 */
+	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x3 << 8))
+			       | (1 << 8);
+
+	/* set power LED to alternate function to be driven by TIM2/PWM */
+	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0x0000f000;
+	val |= 0x00009000;
+	STM32_GPIO_CRL_OFF(GPIO_B) = val;
 
 	/*
 	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,

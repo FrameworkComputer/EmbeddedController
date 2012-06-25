@@ -79,7 +79,6 @@ enum gpio_signal {
 	GPIO_PMIC_PWRON_L,     /* 5v rail ready */
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
-	GPIO_POWER_LED_L,      /* Power state keyboard LED */
 	GPIO_EC_INT,
 	GPIO_CODEC_INT,        /* To audio codec (KB noise cancellation) */
 	GPIO_KB_OUT00,

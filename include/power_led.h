@@ -18,7 +18,17 @@ enum powerled_color {
 	POWERLED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
+enum powerled_state {
+	POWERLED_STATE_OFF,
+	POWERLED_STATE_ON,
+	POWERLED_STATE_SUSPEND,
+	POWERLED_STATE_COUNT
+};
+
 /* Set the power adapter LED to the specified color. */
 int powerled_set(enum powerled_color color);
+
+/* Set the power LED according to the specified state. */
+void powerled_set_state(enum powerled_state state);
 
 #endif  /* __CROS_EC_POWER_LED_H */
