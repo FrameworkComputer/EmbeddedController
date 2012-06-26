@@ -34,7 +34,11 @@ void i8042_command_task(void)
 
 enum ec_error_list i8042_send_to_host(int len, const uint8_t *bytes)
 {
-	uart_printf("i8042 SEND\n");
+	int i;
+	uart_printf("i8042 SEND:");
+	for (i = 0; i < len; ++i)
+		uart_printf(" %02x", bytes[i]);
+	uart_printf("\n");
 	return EC_SUCCESS;
 }
 

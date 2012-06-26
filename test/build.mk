@@ -7,7 +7,7 @@
 #
 
 test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
-test-list+=power_button kb_deghost
+test-list+=power_button kb_deghost scancode
 #disable: powerdemo
 
 pingpong-y=pingpong.o
@@ -31,3 +31,7 @@ common-mock-power_button-i8042.o=mock_i8042.o
 # Mock modules for 'kb_deghost'
 chip-mock-kb_deghost-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
 common-mock-kb_deghost-i8042.o=mock_i8042.o
+
+# Mock modules for 'scancode'
+chip-mock-scancode-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
+common-mock-scancode-i8042.o=mock_i8042.o
