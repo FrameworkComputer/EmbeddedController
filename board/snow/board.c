@@ -46,9 +46,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
 	/* Other inputs */
-	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_INT_RISING, NULL},
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
 
 	/* Outputs */
+	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},

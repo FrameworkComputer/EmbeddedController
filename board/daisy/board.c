@@ -60,9 +60,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
 	/* Other inputs */
-	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_INT_RISING, NULL},
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
 
 	/* Outputs */
+	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
@@ -141,21 +142,6 @@ void configure_board(void)
 
 	/* Enable SPI */
 	STM32_RCC_APB2ENR |= (1<<12);
-
-	/* SPI1 on pins PA4-7 (push-pull, no pullup/down, 10MHz) */
-	STM32_GPIO_PUPDR_OFF(GPIO_A) &= ~((2 << (7 * 2)) |
-					(2 << (6 * 2)) |
-					(2 << (5 * 2)) |
-					(2 << (4 * 2)));
-	STM32_GPIO_OTYPER_OFF(GPIO_A) &= ~((1 << 7) |
-					(1 << 6) |
-					(1 << 5) |
-					(1 << 4));
-	gpio_set_alternate_function(GPIO_A, (1<<7) |
-					(1<<6) |
-					(1<<5) |
-					(1<<4), GPIO_ALT_SPI);
-	STM32_GPIO_OSPEEDR_OFF(GPIO_A) |= 0xff00;
 
 	/*
 	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,
