@@ -235,8 +235,8 @@ static int i2c_init1(void)
 	/* set clock configuration : standard mode (100kHz) */
 	STM32_I2C_CCR(I2C1) = I2C_CCR;
 
-	/* configuration : I2C mode / Periphal enabled */
-	STM32_I2C_CR1(I2C1) = (1 << 0);
+	/* configuration : I2C mode / Periphal enabled, ACK enabled */
+	STM32_I2C_CR1(I2C1) = (1 << 10) | (1 << 0);
 	/* error and event interrupts enabled / input clock is 16Mhz */
 	STM32_I2C_CR2(I2C1) = (1 << 9) | (1 << 8) | 0x10;
 
@@ -332,8 +332,9 @@ static int wait_status(int port, uint32_t mask)
 			CPRINTF(" - %016b\n", r);
 #endif /* CONFIG_DEBUG_I2C */
 			return EC_ERROR_TIMEOUT;
+		} else if (t2.val - t1.val > 150) {
+			usleep(2000);
 		}
-		usleep(2000);
 		r = STM32_I2C_SR1(port);
 	}
 
@@ -353,8 +354,8 @@ static int master_start(int port, int slave_addr)
 {
 	int rv;
 
-	/* Change to master send mode, send start bit */
-	STM32_I2C_CR1(port) |= (1 << 8);
+	/* Change to master send mode, reset stop bit, send start bit */
+	STM32_I2C_CR1(port) = (STM32_I2C_CR1(port) & ~(1 << 9)) | (1 << 8);
 	/* Wait for start bit sent event */
 	rv = wait_status(port, SR1_SB);
 	if (rv)
@@ -398,13 +399,19 @@ static void handle_i2c_error(int port, int rv)
 		t2 = get_time();
 		if (t2.val - t1.val > 1000000) {
 			dump_i2c_reg(port);
-			return;
+			goto cr_cleanup;
 		}
 		/* Send stop */
 		master_stop(port);
 		usleep(10000);
 		r = STM32_I2C_SR2(port);
 	}
+cr_cleanup:
+	/**
+	 * reset control register to the default state :
+	 * I2C mode / Periphal enabled, ACK enabled
+	 */
+	STM32_I2C_CR1(port) = (1 << 10) | (1 << 0);
 }
 
 static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
@@ -428,7 +435,10 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 			return rv;
 		STM32_I2C_DR(port) = data[i];
 	}
-	rv = wait_status(port, SR1_BTF | SR1_TxE);
+	rv = wait_status(port, SR1_TxE);
+	if (rv)
+		return rv;
+	rv = wait_status(port, SR1_BTF);
 	if (rv)
 		return rv;
 
