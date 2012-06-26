@@ -97,6 +97,13 @@ int dma_start_rx(unsigned channel, unsigned count, void *periph,
 	return 0;
 }
 
+int dma_bytes_done(struct dma_channel *chan, int orig_count)
+{
+	if (!(REG32(&chan->ccr) & DMA_EN))
+		return 0;
+	return orig_count - REG32(&chan->cndtr);
+}
+
 /* Hide this code behind an undefined CONFIG for now */
 #ifdef CONFIG_DMA_TEST
 

@@ -118,6 +118,19 @@ int dma_start_rx(unsigned channel, unsigned count, void *periph,
 void dma_disable(unsigned channel);
 
 /**
+ * Get the number of bytes available to read, or number of bytes written
+ *
+ * Since the DMA controller counts downwards, if we know the starting value
+ * we can work out how many bytes have been completed so far.
+ *
+ * @param chan		DMA channel to check (use dma_get_channel())
+ * @param orig_count	Original number of bytes requested on channel
+ * @return number of bytes completed on a channel, or 0 if this channel is
+ *		not enabled
+ */
+int dma_bytes_done(struct dma_channel *chan, int orig_count);
+
+/**
  * Start a previously-prepared dma channel
  *
  * @param chan	Channel to start (returned from dma_prepare...())
