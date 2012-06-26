@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "board.h"
+#include "console.h"
 #include "dma.h"
 #include "registers.h"
 #include "timer.h"
@@ -104,8 +106,25 @@ int dma_bytes_done(struct dma_channel *chan, int orig_count)
 	return orig_count - REG32(&chan->cndtr);
 }
 
-/* Hide this code behind an undefined CONFIG for now */
-#ifdef CONFIG_DMA_TEST
+
+#ifdef CONFIG_DMA_HELP
+void dma_dump(unsigned channel)
+{
+	struct dma_channel *chan;
+	struct dma_ctlr *dma;
+
+	/* Get a pointer to the correct controller and channel */
+	ASSERT(channel < DMA_NUM_CHANNELS);
+	dma = (struct dma_ctlr *)STM32_DMA1_BASE;
+
+	chan = dma_get_channel(channel);
+	CPRINTF("ccr=%x, cndtr=%x, cpar=%x, cmar=%x\n", chan->ccr,
+		chan->cndtr, chan->cpar, chan->cmar);
+	CPRINTF("chan %d, isr=%x, ifcr=%x\n",
+		channel,
+		(dma->isr >> (channel * 4)) & 0xf,
+		(dma->ifcr >> (channel * 4)) & 0xf);
+}
 
 void dma_check(int channel, char *buff)
 {
@@ -163,7 +182,7 @@ void dma_test(void)
 		CPRINTF("%d/%d ", periph[i], memory[i]);
 	CPRINTF("\ncount=%d\n", REG32(&chan->cndtr));
 }
-#endif /* CONFIG_TEST */
+#endif /* CONFIG_DMA_HELP */
 
 void dma_init(void)
 {

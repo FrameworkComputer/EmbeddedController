@@ -146,6 +146,13 @@ void dma_go(struct dma_channel *chan);
 void dma_check(int channel, char *buff);
 
 /**
+ * Dump out imformation about a dma channel
+ *
+ * @param channel	Channel number to read (DMAC_...)
+ */
+void dma_dump(unsigned channel);
+
+/**
  * Testing: Test that DMA works correctly for memory to memory transfers
  */
 void dma_test(void);
