@@ -72,20 +72,19 @@ static void prepare_channel(struct dma_channel *chan, unsigned count,
 	ctrl |= 0 << 10; /* MSIZE (memory size in bytes) */
 	ctrl |= 1 << 8;  /* PSIZE (16-bits for now) */
 	REG32(&chan->ccr) = ctrl;
-
-	/* Fire it up */
-	ctrl |= DMA_EN;
-	REG32(&chan->ccr) = ctrl;
 }
 
-int dma_start_tx(unsigned channel, unsigned count, void *periph,
-		 const void *memory)
+void dma_go(struct dma_channel *chan)
 {
-	struct dma_channel *chan = dma_get_channel(channel);
+	/* Fire it up */
+	REG32(&chan->ccr) |= DMA_EN;
+}
 
+void dma_prepare_tx(struct dma_channel *chan, unsigned count, void *periph,
+	       const void *memory)
+{
 	prepare_channel(chan, count, periph, memory,
 				DMA_MINC_MASK | DMA_DIR_FROM_MEM_MASK);
-	return 0;
 }
 
 int dma_start_rx(unsigned channel, unsigned count, void *periph,
@@ -94,6 +93,7 @@ int dma_start_rx(unsigned channel, unsigned count, void *periph,
 	struct dma_channel *chan = dma_get_channel(channel);
 
 	prepare_channel(chan, count, periph, memory, DMA_MINC_MASK);
+	dma_go(chan);
 	return 0;
 }
 
