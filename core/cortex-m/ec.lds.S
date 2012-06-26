@@ -26,7 +26,11 @@ SECTIONS
         . = ALIGN(4);
         __version_struct_offset = .;
         *(.rodata.ver)
+#ifdef SHIFT_CODE_FOR_TEST
+        . = ALIGN(256);
+#else
         . = ALIGN(4);
+#endif
         OUTDIR/core/CORE/init.o (.text)
         *(.text*)
 #ifdef COMPILE_FOR_RAM
