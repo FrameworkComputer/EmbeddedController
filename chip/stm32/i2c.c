@@ -70,6 +70,23 @@ static inline void disable_ack(int port)
 	STM32_I2C_CR1(port) &= ~(1 << 10);
 }
 
+int __board_i2c_claim(int port)
+{
+	return 0;
+}
+
+int board_i2c_claim(int port)
+	__attribute__((weak, alias("__board_i2c_claim")));
+
+
+void __board_i2c_release(int port)
+{
+}
+
+void board_i2c_release(int port)
+	__attribute__((weak, alias("__board_i2c_release")));
+
+
 static int wait_tx(int port)
 {
 	static timestamp_t deadline;
@@ -554,6 +571,12 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 	ASSERT(in || !in_bytes);
 
 	mutex_lock(&i2c_mutex);
+
+	if (board_i2c_claim(port)) {
+		rv = EC_ERROR_BUSY;
+		goto err_claim;
+	}
+
 	disable_i2c_interrupt(port);
 
 	rv = i2c_master_transmit(port, slave_addr, out, out_bytes,
@@ -563,6 +586,10 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 	handle_i2c_error(port, rv);
 
 	enable_i2c_interrupt(port);
+
+	board_i2c_release(port);
+
+err_claim:
 	mutex_unlock(&i2c_mutex);
 
 	return rv;
