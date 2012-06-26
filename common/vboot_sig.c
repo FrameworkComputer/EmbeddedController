@@ -5,10 +5,11 @@
 
 /* Verified boot module for Chrome EC */
 
+#include "board.h"
+#include "config.h"
 #include "console.h"
 #include "cryptolib.h"
 #include "gpio.h"
-#include "power_button.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
@@ -88,23 +89,27 @@ static int maybe_jump_to_other_image(void)
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 		return 0;
 
-#ifdef CONFIG_TASK_POWERBTN
+#ifdef CONFIG_TASK_KEYSCAN
 	/* Don't jump if recovery requested */
-	if (power_recovery_pressed()) {
+	if (keyboard_scan_recovery_pressed()) {
 		CPUTS("[Vboot staying in RO because recovery key pressed]\n");
 		return 0;
 	}
 #endif
 
-	/* Don't jump if we're in RO becuase we jumped there (this keeps us
-	 * from jumping to RO only to jump right back). */
+	/*
+	 * Don't jump if we're in RO becuase we jumped there (this keeps us
+	 * from jumping to RO only to jump right back).
+	 */
 	if (system_jumped_to_this_image())
 		return 0;
 
 #if !defined(CHIP_stm32)
-	/* TODO: (crosbug.com/p/8572) Daisy and Snow don't define a GPIO
-	 * for the recovery signal from servo, so we can't check it.
-	 * BDS uses the DOWN button. */
+	/*
+	 * TODO: (crosbug.com/p/8572) Daisy and Snow don't define a GPIO for
+	 * the recovery signal from servo, so we can't check it.  BDS uses the
+	 * DOWN button.
+	 */
 	if (gpio_get_level(GPIO_RECOVERYn) == 0) {
 		CPUTS("[Vboot staying in RO due to recovery signal]\n");
 		return 0;

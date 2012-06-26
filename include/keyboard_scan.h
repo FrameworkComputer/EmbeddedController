@@ -13,11 +13,31 @@
 /* Initializes the module. */
 int keyboard_scan_init(void);
 
-/* Returns non-zero if recovery key was pressed at boot.  Used by st32m-based
- * boards only; lm4-based boards use power_recovery_pressed(). */
+/* Key held down at keyboard-controlled reset boot time. */
+enum boot_key {
+	BOOT_KEY_NONE,  /* No keys other than keyboard-controlled reset keys */
+	BOOT_KEY_ESC,
+	BOOT_KEY_D,
+	BOOT_KEY_F,
+	BOOT_KEY_DOWN_ARROW,
+	BOOT_KEY_OTHER = -1,  /* None of the above */
+};
+
+/*
+ * Return the key held down at boot time in addition to the keyboard-controlled
+ * reset keys.  Returns BOOT_KEY_OTHER if none of the keys specifically checked
+ * was pressed, or reset was not caused by a keyboard-controlled reset, or if
+ * the state has been cleared by keyboard_scan_clear_boot_key().
+ */
+enum boot_key keyboard_scan_get_boot_key(void);
+
+/* Clear the boot key state. */
+void keyboard_scan_clear_boot_key(void);
+
+/* Return non-zero if recovery key was pressed at boot. */
 int keyboard_scan_recovery_pressed(void);
 
-/* clear any saved keyboard state (empty FIFO, etc) */
+/* Clear any saved keyboard state (empty FIFO, etc) */
 void keyboard_clear_state(void);
 
 /* Enables/disables keyboard matrix scan. */

@@ -28,9 +28,21 @@
 
 #define KB_COLS 13
 
+/* Boot key list.  Must be in same order as enum boot_key. */
+struct boot_key_entry {
+	uint8_t mask_index;
+	uint8_t mask_value;
+};
+const struct boot_key_entry boot_key_list[] = {
+	{0, 0x00},
+	{1, 0x02},
+	{2, 0x10},
+	{3, 0x10},
+	{11, 0x40},
+};
 
 static uint8_t raw_state[KB_COLS];
-static uint8_t raw_state_at_boot[KB_COLS];
+enum boot_key boot_key_value = BOOT_KEY_OTHER;
 
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
@@ -45,15 +57,8 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 	};
 
 /* Key masks for special boot keys */
-#define MASK_INDEX_ESC     1
-#define MASK_VALUE_ESC     0x02
 #define MASK_INDEX_REFRESH 2
 #define MASK_VALUE_REFRESH 0x04
-#define MASK_INDEX_D       2
-#define MASK_VALUE_D       0x10
-#define MASK_INDEX_F       3
-#define MASK_VALUE_F       0x10
-
 
 static void wait_for_interrupt(void)
 {
@@ -67,7 +72,6 @@ static void wait_for_interrupt(void)
 	lm4_enable_matrix_interrupt();
 }
 
-
 static void enter_polling_mode(void)
 {
 	CPUTS("[KB poll]\n");
@@ -75,10 +79,11 @@ static void enter_polling_mode(void)
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
-
-/* Update the raw key state without sending messages.  Used in pre-init, so
+/*
+ * Update the raw key state without sending messages.  Used in pre-init, so
  * must not make task-switching-dependent calls; udelay() is ok because it's a
- * spin-loop. */
+ * spin-loop.
+ */
 static void update_key_state(void)
 {
 	int c;
@@ -99,7 +104,6 @@ static void update_key_state(void)
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
-
 /* Print the raw keyboard state. */
 static void print_raw_state(const char *msg)
 {
@@ -114,7 +118,6 @@ static void print_raw_state(const char *msg)
 	}
 	CPUTS("]\n");
 }
-
 
 /* Return 1 if any key is still pressed, 0 if no key is pressed. */
 static int check_keys_changed(void)
@@ -132,13 +135,17 @@ static int check_keys_changed(void)
 		r = lm4_read_raw_row_state();
 		/* Invert it so 0=not pressed, 1=pressed */
 		r ^= 0xff;
-		/* Mask off keys that don't exist so they never show
-		 * as pressed */
+		/*
+		 * Mask off keys that don't exist so they never show as
+		 * pressed.
+		 */
 		r &= actual_key_mask[c];
 
 #ifdef OR_WITH_CURRENT_STATE_FOR_TESTING
-		/* KLUDGE - or current state in, so we can make sure
-		 * all the lines are hooked up */
+		/*
+		 * KLUDGE - or current state in, so we can make sure
+		 * all the lines are hooked up.
+		 */
 		r |= raw_state[c];
 #endif
 
@@ -151,11 +158,13 @@ static int check_keys_changed(void)
 		if (!keys[c])
 			continue;
 		for (c2 = c + 1; c2 < KB_COLS; c2++) {
-			/* A little bit of cleverness here.  Ghosting happens
+			/*
+			 * A little bit of cleverness here.  Ghosting happens
 			 * if 2 columns share at least 2 keys.  So we OR the
 			 * columns together and then see if more than one bit
-			 * is set.  x&(x-1) is non-zero only if x has more
-			 * than one bit set. */
+			 * is set.  x&(x-1) is non-zero only if x has more than
+			 * one bit set.
+			 */
 			uint8_t common = keys[c] & keys[c2];
 
 			if (common & (common - 1))
@@ -191,32 +200,49 @@ out:
 	return 0;
 }
 
-
-/* Returns non-zero if the specified key is pressed, and only other allowed
- * keys are pressed. */
-static int check_boot_key(int index, int mask)
+/*
+ * Return non-zero if the specified key is pressed, with at most the keys used
+ * for keyboard-controlled reset also pressed.
+ */
+static int check_key(int index, int mask)
 {
 	uint8_t allowed_mask[KB_COLS] = {0};
 	int c;
 
 	/* Check for the key */
-	if (!(raw_state_at_boot[index] & mask))
+	if (mask && !(raw_state[index] & mask))
 		return 0;
 
-	/* Make sure only other allowed keys are pressed.  This protects
-	 * against accidentally triggering the special key when a cat sits on
-	 * your keyboard.  Currently, only the requested key and the keys used
-	 * for the Silego reset are allowed. */
+	/* Check for other allowed keys */
 	allowed_mask[index] |= mask;
 	allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
 
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state_at_boot[c] & ~allowed_mask[c])
-			return 0;  /* Additional disallowed key pressed */
+		if (raw_state[c] & ~allowed_mask[c])
+			return 0;  /* Disallowed key pressed */
 	}
 	return 1;
 }
 
+enum boot_key keyboard_scan_get_boot_key(void)
+{
+	return boot_key_value;
+}
+
+void keyboard_scan_clear_boot_key(void)
+{
+	boot_key_value = BOOT_KEY_OTHER;
+
+#ifdef CONFIG_TASK_POWERBTN
+	/* Wake the power button task to update the recovery switch state */
+	task_wake(TASK_ID_POWERBTN);
+#endif
+}
+
+int keyboard_scan_recovery_pressed(void)
+{
+	return boot_key_value == BOOT_KEY_ESC ? 1 : 0;
+}
 
 int keyboard_scan_init(void)
 {
@@ -226,28 +252,37 @@ int keyboard_scan_init(void)
 	/* Tri-state the columns */
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 
-	/* TODO: method to set which keyboard we have, so we set the actual
-	 * key mask properly */
+	/*
+	 * TODO: method to set which keyboard we have, so we set the actual
+	 * key mask properly.
+	 */
 	actual_key_mask = actual_key_masks[0];
 
 	/* Initialize raw state */
 	update_key_state();
 
-	/* Copy to the state at boot */
-	memcpy(raw_state_at_boot, raw_state, sizeof(raw_state_at_boot));
-
-	/* If we're booting due to a reset-pin-caused reset, check if the
-	 * recovery key is pressed. */
+	/*
+	 * If we're booting due to a reset-pin-caused reset, check what other
+	 * single key is held down (if any).
+	 */
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
-		power_set_recovery_pressed(check_boot_key(MASK_INDEX_ESC,
-							  MASK_VALUE_ESC));
+		const struct boot_key_entry *k = boot_key_list;
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
+			if (check_key(k->mask_index, k->mask_value)) {
+				CPRINTF("[KB boot key %d]\n", i);
+				boot_key_value = i;
+				break;
+			}
+		}
 
 #ifdef CONFIG_FAKE_DEV_SWITCH
 		/* Turn fake dev switch on if D pressed, off if F pressed. */
-		if (check_boot_key(MASK_INDEX_D, MASK_VALUE_D)) {
+		if (boot_key_value == BOOT_KEY_D) {
 			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 1);
 			CPUTS("[Enabling fake dev-mode]\n");
-		} else if (check_boot_key(MASK_INDEX_F, MASK_VALUE_F)) {
+		} else if (boot_key_value == BOOT_KEY_F) {
 			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 0);
 			CPUTS("[Disabling fake dev-mode]\n");
 		}
@@ -256,7 +291,6 @@ int keyboard_scan_init(void)
 
 	return EC_SUCCESS;
 }
-
 
 void keyboard_scan_task(void)
 {
@@ -295,7 +329,6 @@ void keyboard_scan_task(void)
 	}
 }
 
-
 static void matrix_interrupt(void)
 {
 	uint32_t ris = lm4_clear_matrix_interrupt_status();
@@ -305,16 +338,19 @@ static void matrix_interrupt(void)
 }
 DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
 
-
-/* The actual implementation is controlling the enable_scanning variable, then
- * that controls whether lm4_select_column() can pull-down columns or not. */
+/*
+ * The actual implementation is controlling the enable_scanning variable, then
+ * that controls whether lm4_select_column() can pull-down columns or not.
+ */
 void keyboard_enable_scanning(int enable)
 {
 	lm4_set_scanning_enabled(enable);
 	if (enable) {
-		/* A power button press had tri-stated all columns (see the
-		 * 'else' statement below), we need a wake-up to unlock
-		 * the task_wait_event() loop after wait_for_interrupt(). */
+		/*
+		 * A power button press had tri-stated all columns (see the
+		 * 'else' statement below), we need a wake-up to unlock the
+		 * task_wait_event() loop after wait_for_interrupt().
+		 */
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
 		lm4_select_column(COLUMN_TRI_STATE_ALL);

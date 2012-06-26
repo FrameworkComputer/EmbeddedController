@@ -98,8 +98,6 @@ static int debounced_lid_open;
 static int debounced_power_pressed;
 static int ac_changed;
 static int simulate_power_pressed;
-static int keyboard_recovery_pressed;
-
 
 /* Update status of non-debounced switches */
 static void update_other_switches(void)
@@ -113,7 +111,7 @@ static void update_other_switches(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
 
-	if (keyboard_recovery_pressed)
+	if (keyboard_scan_recovery_pressed())
 		*memmap_switches |= EC_SWITCH_KEYBOARD_RECOVERY;
 	else
 		*memmap_switches &= ~EC_SWITCH_KEYBOARD_RECOVERY;
@@ -224,7 +222,7 @@ static void lid_switch_open(uint64_t tnow)
 	/* If the chipset is off, clear keyboard recovery and send a power
 	 * button pulse to wake up the chipset. */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		power_set_recovery_pressed(0);
+		keyboard_scan_clear_boot_key();
 		chipset_exit_hard_off();
 		set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
@@ -299,7 +297,7 @@ static void set_initial_pwrbtn_state(void)
 	if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) {
 		/* Reset triggered by keyboard-controlled reset, so override
 		 * the power button signal to the PCH. */
-		if (keyboard_recovery_pressed) {
+		if (keyboard_scan_recovery_pressed()) {
 			/* In recovery mode, so send a power button pulse to
 			 * the PCH so it powers on. */
 			CPRINTF("[%T PB init-recovery]\n");
@@ -356,24 +354,6 @@ int power_lid_open_debounced(void)
 }
 
 
-int power_recovery_pressed(void)
-{
-	return keyboard_recovery_pressed;
-}
-
-
-void power_set_recovery_pressed(int pressed)
-{
-	if (keyboard_recovery_pressed == pressed)
-		return;
-
-	CPRINTF("[%T PB recovery button %s]\n",
-		pressed ? "pressed" : "released");
-
-	keyboard_recovery_pressed = pressed;
-	update_other_switches();
-}
-
 /*****************************************************************************/
 /* Task / state machine */
 
@@ -391,13 +371,15 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_PRESSED:
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			/* Clear keyboard recovery */
-			power_set_recovery_pressed(0);
-			/* Chipset is off, so wake the chipset and send it a
+			keyboard_scan_clear_boot_key();
+			/*
+			 * Chipset is off, so wake the chipset and send it a
 			 * long enough pulse to wake up.  After that we'll
 			 * reflect the true power button state.  If we don't
 			 * stretch the pulse here, the user may release the
 			 * power button before the chipset finishes waking from
-			 * hard off state. */
+			 * hard off state.
+			 */
 			chipset_exit_hard_off();
 			tnext_state = tnow + PWRBTN_INITIAL_US;
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
@@ -414,9 +396,11 @@ static void state_machine(uint64_t tnow)
 		set_pwrbtn_to_pch(1);
 		break;
 	case PWRBTN_STATE_T1:
-		/* If the chipset is already off, don't tell it the power
+		/*
+		 * If the chipset is already off, don't tell it the power
 		 * button is down; it'll just cause the chipset to turn on
-		 * again. */
+		 * again.
+		 */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			CPRINTF("[%T PB chipset already off]\n");
 		else
