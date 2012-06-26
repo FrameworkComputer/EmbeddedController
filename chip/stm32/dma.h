@@ -76,6 +76,14 @@ enum {
 	((spi) == STM32_SPI1_PORT ? DMAC_SPI1_TX : DMAC_SPI2_TX)
 
 /**
+ * Get a pointer to a DMA channel.
+ *
+ * @param channel	Channel number to read (DMAC_...)
+ * @return pointer to DMA channel registers
+ */
+struct dma_channel *dma_get_channel(int channel);
+
+/**
  * Start a DMA transfer to transmit data from memory to a peripheral
  *
  * @param channel	Channel number to read (DMAC_...)

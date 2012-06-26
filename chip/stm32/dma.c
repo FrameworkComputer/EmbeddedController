@@ -13,13 +13,7 @@
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
 
 
-/**
- * Get a pointer to a DMA channel.
- *
- * @param channel	Channel number to read (DMAC_...)
- * @return pointer to DMA channel registers
- */
-static struct dma_channel *get_channel(int channel)
+struct dma_channel *dma_get_channel(int channel)
 {
 	struct dma_channel *chan;
 	struct dma_ctlr *dma;
@@ -41,7 +35,7 @@ void dma_disable(unsigned channel)
 {
 	struct dma_channel *chan;
 
-	chan = get_channel(channel);
+	chan = dma_get_channel(channel);
 
 	if (REG32(&chan->ccr) & DMA_EN)
 		REG32(&chan->ccr) &= ~DMA_EN;
@@ -65,7 +59,7 @@ static int prepare_channel(unsigned channel, unsigned count, void *periph,
 	struct dma_channel *chan;
 	uint32_t ctrl;
 
-	chan = get_channel(channel);
+	chan = dma_get_channel(channel);
 
 	if (REG32(&chan->ccr) & DMA_EN)
 		REG32(&chan->ccr) &= ~DMA_EN;
@@ -111,7 +105,7 @@ void dma_check(int channel, char *buff)
 	int count;
 	int i;
 
-	chan = get_channel(channel);
+	chan = dma_get_channel(channel);
 	count = REG32(&chan->cndtr);
 	CPRINTF("c=%d\n", count);
 	udelay(1000 * 100);
@@ -136,7 +130,7 @@ void dma_test(void)
 	unsigned count = sizeof(periph);
 	int i;
 
-	chan = get_channel(channel);
+	chan = dma_get_channel(channel);
 	memset(memory, '\0', sizeof(memory));
 	for (i = 0; i < count; i++)
 		periph[i] = 10 + i;
