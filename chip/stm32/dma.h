@@ -84,15 +84,18 @@ enum {
 struct dma_channel *dma_get_channel(int channel);
 
 /**
- * Start a DMA transfer to transmit data from memory to a peripheral
+ * Prepare a DMA transfer to transmit data from memory to a peripheral
  *
- * @param channel	Channel number to read (DMAC_...)
+ * Call dma_go() afterwards to actually start the transfer.
+ *
+ * @param chan		Channel to prepare (use dma_get_channel())
  * @param count		Number of bytes to transfer
  * @param periph	Pointer to peripheral data register
  * @param memory	Pointer to memory address
+ * @return pointer to prepared channel
  */
-int dma_start_tx(unsigned channel, unsigned count, void *periph,
-		 const void *memory);
+void dma_prepare_tx(struct dma_channel *chan, unsigned count,
+		    void *periph, const void *memory);
 
 /**
  * Start a DMA transfer to receive data to memory from a peripheral
@@ -113,6 +116,13 @@ int dma_start_rx(unsigned channel, unsigned count, void *periph,
  * @param channel	Channel number to stop (DMAC_...)
  */
 void dma_disable(unsigned channel);
+
+/**
+ * Start a previously-prepared dma channel
+ *
+ * @param chan	Channel to start (returned from dma_prepare...())
+ */
+void dma_go(struct dma_channel *chan);
 
 /**
  * Testing: Print out the data transferred by a channel
