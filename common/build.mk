@@ -39,7 +39,9 @@ VBOOT_DEVKEYS?=/usr/share/vboot/devkeys
 CFLAGS_$(CONFIG_VBOOT)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
 # CFLAGS_$(CONFIG_VBOOT)+= -DVBOOT_DEBUG
 
-common-$(CONFIG_VBOOT)+= vboot.o vboot_stub.o vboot_hash.o
+common-$(CONFIG_VBOOT)+=vboot.o vboot_stub.o
+common-$(CONFIG_VBOOT_HASH)+=vboot_hash.o
+common-$(CONFIG_VBOOT_SIG)+=vboot_sig.o
 
 includes-$(CONFIG_VBOOT)+= \
 	$(VBOOT_SOURCE)/include \
@@ -50,13 +52,15 @@ dirs-$(CONFIG_VBOOT)+= \
 	vboot/lib vboot/lib/cryptolib
 
 vboot-$(CONFIG_VBOOT)+= \
+	lib/cryptolib/padding.o \
+	lib/cryptolib/sha_utility.o \
+	lib/cryptolib/sha256.o
+
+vboot-$(CONFIG_VBOOT_SIG)+= \
 	lib/vboot_common.o \
 	lib/utility.o \
-	lib/cryptolib/padding.o \
 	lib/cryptolib/rsa_utility.o \
 	lib/cryptolib/rsa.o \
-	lib/cryptolib/sha_utility.o \
-	lib/cryptolib/sha256.o \
 	lib/stateful_util.o
 
-sign-$(CONFIG_VBOOT)+=sign_image
+sign-$(CONFIG_VBOOT_SIG)+=sign_image

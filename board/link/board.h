@@ -15,8 +15,9 @@
 #define CONFIG_CHARGER_BQ24725
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_EOPTION
-#define CONFIG_ONEWIRE
+#define CONFIG_IR357x
 #define CONFIG_LPC
+#define CONFIG_ONEWIRE
 #define CONFIG_PECI
 #define CONFIG_POWER_LED
 #define CONFIG_PSTORE
@@ -24,7 +25,8 @@
 #define CONFIG_TASK_PROFILING
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
-#define CONFIG_IR357x
+#define CONFIG_VBOOT
+#define CONFIG_VBOOT_HASH
 
 /* Enable the fake developer switch.  See crosbug.com/p/8884 */
 #define CONFIG_FAKE_DEV_SWITCH

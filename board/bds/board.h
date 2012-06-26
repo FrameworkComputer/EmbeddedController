@@ -11,6 +11,8 @@
 /* Optional features */
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
+#define CONFIG_VBOOT
+#define CONFIG_VBOOT_SIG
 
 enum adc_channel
 {
