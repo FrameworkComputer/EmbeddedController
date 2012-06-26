@@ -534,96 +534,85 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	return EC_SUCCESS;
 }
 
-int i2c_read16(int port, int slave_addr, int offset, int *data)
+/**
+ * Perform an I2C transaction, involve a write, and optional read.
+ *
+ * @param port		I2C port to use (e.g. I2C_PORT_HOST)
+ * @param slave_addr	Slave address of chip to access on I2C bus
+ * @param out		Buffer containing bytes to output
+ * @param out_bytes	Number of bytes to send (must be >0)
+ * @param in		Buffer to place input bytes
+ * @param in_bytes	Number of bytse to receive
+ * @return 0 if ok, else ER_ERROR...
+ */
+static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
+	     uint8_t *in, int in_bytes)
 {
 	int rv;
-	uint8_t reg, buf[2] = {0, 0};
 
-	reg = offset & 0xff;
+	ASSERT(out && out_bytes);
+	ASSERT(in || !in_bytes);
 
 	mutex_lock(&i2c_mutex);
 	disable_i2c_interrupt(port);
 
-	rv = i2c_master_transmit(port, slave_addr, &reg, 1, 0);
-	if (!rv)
-		rv = i2c_master_receive(port, slave_addr, buf, 2);
+	rv = i2c_master_transmit(port, slave_addr, out, out_bytes,
+				 in_bytes ? 0 : 1);
+	if (!rv && in_bytes)
+		rv = i2c_master_receive(port, slave_addr, in, in_bytes);
 	handle_i2c_error(port, rv);
 
 	enable_i2c_interrupt(port);
 	mutex_unlock(&i2c_mutex);
 
-	if (rv)
-		return rv;
+	return rv;
+}
 
-	*data = ((int)buf[1] << 8) | buf[0];
+int i2c_read16(int port, int slave_addr, int offset, int *data)
+{
+	uint8_t reg, buf[2];
+	int rv;
 
-	return EC_SUCCESS;
+	reg = offset & 0xff;
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2);
+
+	*data = (buf[1] << 8) | buf[0];
+
+	return rv;
 }
 
 int i2c_write16(int port, int slave_addr, int offset, int data)
 {
-	int rv;
 	uint8_t buf[3];
 
 	buf[0] = offset & 0xff;
 	buf[1] = data & 0xff;
 	buf[2] = (data >> 8) & 0xff;
 
-	mutex_lock(&i2c_mutex);
-	disable_i2c_interrupt(port);
-
-	rv = i2c_master_transmit(port, slave_addr, buf, 3, 1);
-	handle_i2c_error(port, rv);
-
-	enable_i2c_interrupt(port);
-	mutex_unlock(&i2c_mutex);
-
-	return rv;
+	return i2c_xfer(port, slave_addr, buf, sizeof(buf), NULL, 0);
 }
 
 int i2c_read8(int port, int slave_addr, int offset, int *data)
 {
+	uint8_t reg, buf[2];
 	int rv;
-	uint8_t reg, buf;
 
 	reg = offset & 0xff;
-	mutex_lock(&i2c_mutex);
-	disable_i2c_interrupt(port);
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2);
 
-	rv = i2c_master_transmit(port, slave_addr, &reg, 1, 0);
-	if (!rv)
-		rv = i2c_master_receive(port, slave_addr, &buf, 1);
-	handle_i2c_error(port, rv);
+	*data = buf[1];
 
-	enable_i2c_interrupt(port);
-	mutex_unlock(&i2c_mutex);
-
-	if (rv)
-		return rv;
-
-	*data = buf;
-
-	return EC_SUCCESS;
+	return rv;
 }
 
 int i2c_write8(int port, int slave_addr, int offset, int data)
 {
-	int rv;
 	uint8_t buf[2];
 
 	buf[0] = offset & 0xff;
 	buf[1] = data & 0xff;
 
-	mutex_lock(&i2c_mutex);
-	disable_i2c_interrupt(port);
-
-	rv = i2c_master_transmit(port, slave_addr, buf, 2, 1);
-	handle_i2c_error(port, rv);
-
-	enable_i2c_interrupt(port);
-	mutex_unlock(&i2c_mutex);
-
-	return rv;
+	return i2c_xfer(port, slave_addr, buf, sizeof(buf), NULL, 0);
 }
 
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
