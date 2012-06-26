@@ -8,6 +8,11 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+/* Debug features */
+#define CONFIG_PANIC_HELP
+#define CONFIG_PANIC_NEW_STACK
+#define CONFIG_ASSERT_HELP
+
 /* Optional features */
 #define CONFIG_SMART_BATTERY
 #define CONFIG_BATTERY_ATL706486
