@@ -424,10 +424,6 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 {
 	int rv, i;
 
-	/* if the AP is ON, don't play with the connection */
-	if ((port == I2C_PORT_SLAVE) && chipset_in_state(CHIPSET_STATE_ON))
-		return EC_ERROR_BUSY;
-
 	disable_ack(port);
 	rv = master_start(port, slave_addr);
 	if (rv)
@@ -470,10 +466,6 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	 *
 	 */
 	int rv, i;
-
-	/* if the AP is ON, don't play with the connection */
-	if ((port == I2C_PORT_SLAVE) && chipset_in_state(CHIPSET_STATE_ON))
-		return EC_ERROR_BUSY;
 
 	if (data == NULL || size < 1)
 		return EC_ERROR_INVAL;

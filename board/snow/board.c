@@ -5,12 +5,15 @@
 /* Snow board-specific configuration */
 
 #include "board.h"
+#include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "registers.h"
 #include "spi.h"
+#include "timer.h"
 #include "util.h"
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
@@ -170,3 +173,71 @@ void board_interrupt_host(int active)
 	/* interrupt host by using active low EC_INT signal */
 	gpio_set_level(GPIO_EC_INT, !active);
 }
+
+enum {
+	/* Time between requesting bus and deciding that we have it */
+	BUS_SLEW_DELAY_US	= 10,
+
+	/* Time between retrying to see if the AP has released the bus */
+	BUS_WAIT_RETRY_US	= 3000,
+
+	/* Time to wait until the bus becomes free */
+	BUS_WAIT_FREE_US	= 50 * 1000,
+};
+
+#ifdef CONFIG_ARBITRATE_I2C
+#define GPIO_AP_CLAIM	GPIO_SPI1_NSS
+#define GPIO_EC_CLAIM	GPIO_SPI1_MISO
+
+int board_i2c_claim(int port)
+{
+	timestamp_t start;
+
+	if (port != I2C_PORT_HOST)
+		return EC_SUCCESS;
+
+	/* If AP is off, we have the bus */
+	if (!chipset_in_state(CHIPSET_STATE_ON)) {
+		gpio_set_level(GPIO_EC_CLAIM, 0);
+		return EC_SUCCESS;
+	}
+
+	/* Start a round of trying to claim the bus */
+	start = get_time();
+	do {
+		timestamp_t start_retry;
+		int waiting = 0;
+
+		/* Indicate that we want to claim the bus */
+		gpio_set_level(GPIO_EC_CLAIM, 0);
+		usleep(BUS_SLEW_DELAY_US);
+
+		/* Wait for the AP to release it */
+		start_retry = get_time();
+		while (time_since32(start_retry) < BUS_WAIT_RETRY_US) {
+			if (gpio_get_level(GPIO_AP_CLAIM)) {
+				/* We got it, so return */
+				return EC_SUCCESS;
+			}
+
+			if (!waiting)
+				waiting = 1;
+		}
+
+		/* It didn't release, so give up, wait, and try again */
+		gpio_set_level(GPIO_EC_CLAIM, 1);
+
+		usleep(BUS_WAIT_RETRY_US);
+	} while (time_since32(start) < BUS_WAIT_FREE_US);
+
+	return EC_ERROR_BUSY;
+}
+
+void board_i2c_release(int port)
+{
+	if (port == I2C_PORT_HOST) {
+		/* Release our claim */
+		gpio_set_level(GPIO_EC_CLAIM, 1);
+	}
+}
+#endif
