@@ -44,22 +44,19 @@ void dma_disable(unsigned channel)
 /**
  * Prepare a channel for use and start it
  *
- * @param channel	Channel number to read (DMAC_...)
+ * @param chan		Channel number to read (DMAC_...)
  * @param count		Number of bytes to transfer
  * @param periph	Pointer to peripheral data register
  * @param memory	Pointer to memory address
  * @param flags		DMA flags for the control register, normally:
- *				DMA_DIR_FROM_MEM_MASK for tx
- *				0 for rx
- * @return 0 if ok, -1 on error
+				DMA_MINC_MASK |
+ *				(DMA_DIR_FROM_MEM_MASK for tx
+ *				0 for rx)
  */
-static int prepare_channel(unsigned channel, unsigned count, void *periph,
-		 const void *memory, unsigned flags)
+static void prepare_channel(struct dma_channel *chan, unsigned count,
+		void *periph, const void *memory, unsigned flags)
 {
-	struct dma_channel *chan;
 	uint32_t ctrl;
-
-	chan = dma_get_channel(channel);
 
 	if (REG32(&chan->ccr) & DMA_EN)
 		REG32(&chan->ccr) &= ~DMA_EN;
@@ -71,7 +68,7 @@ static int prepare_channel(unsigned channel, unsigned count, void *periph,
 	ctrl = DMA_PL_VERY_HIGH << DMA_PL_SHIFT;
 	REG32(&chan->ccr) = ctrl;
 
-	ctrl |= DMA_MINC_MASK | flags;
+	ctrl |= flags;
 	ctrl |= 0 << 10; /* MSIZE (memory size in bytes) */
 	ctrl |= 1 << 8;  /* PSIZE (16-bits for now) */
 	REG32(&chan->ccr) = ctrl;
@@ -79,21 +76,25 @@ static int prepare_channel(unsigned channel, unsigned count, void *periph,
 	/* Fire it up */
 	ctrl |= DMA_EN;
 	REG32(&chan->ccr) = ctrl;
-
-	return 0;
 }
 
 int dma_start_tx(unsigned channel, unsigned count, void *periph,
 		 const void *memory)
 {
-	return prepare_channel(channel, count, periph, memory,
-				DMA_DIR_FROM_MEM_MASK);
+	struct dma_channel *chan = dma_get_channel(channel);
+
+	prepare_channel(chan, count, periph, memory,
+				DMA_MINC_MASK | DMA_DIR_FROM_MEM_MASK);
+	return 0;
 }
 
 int dma_start_rx(unsigned channel, unsigned count, void *periph,
 		 const void *memory)
 {
-	return prepare_channel(channel, count, periph, memory, 0);
+	struct dma_channel *chan = dma_get_channel(channel);
+
+	prepare_channel(chan, count, periph, memory, DMA_MINC_MASK);
+	return 0;
 }
 
 /* Hide this code behind an undefined CONFIG for now */
