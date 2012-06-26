@@ -1,0 +1,25 @@
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/**
+ * List of enabled tasks in the priority order
+ *
+ * The first one has the lowest priority.
+ *
+ * For each task, use the macro TASK(n, r, d) where :
+ * 'n' in the name of the task
+ * 'r' in the main routine of the task
+ * 'd' in an opaque parameter passed to the routine at startup
+ */
+#define CONFIG_TASK_LIST \
+	TASK(WATCHDOG, watchdog_task, NULL) \
+	TASK(VBOOTHASH, vboot_hash_task, NULL) \
+	TASK(PWM, pwm_task, NULL) \
+	TASK(TYPEMATIC, keyboard_typematic_task, NULL) \
+	TASK(X86POWER, x86_power_task, NULL) \
+	TASK(I8042CMD, i8042_command_task, NULL) \
+	TASK(KEYSCAN, keyboard_scan_task, NULL) \
+	TASK(POWERBTN, power_button_task, NULL) \
+	TASK(CONSOLE, console_task, NULL)

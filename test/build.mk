@@ -7,7 +7,7 @@
 #
 
 test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
-test-list+=power_button kb_deghost scancode
+test-list+=power_button kb_deghost scancode typematic
 #disable: powerdemo
 
 pingpong-y=pingpong.o
@@ -35,3 +35,7 @@ common-mock-kb_deghost-i8042.o=mock_i8042.o
 # Mock modules for 'scancode'
 chip-mock-scancode-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
 common-mock-scancode-i8042.o=mock_i8042.o
+
+# Mock modules for 'typematic'
+chip-mock-typematic-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
+common-mock-typematic-i8042.o=mock_i8042.o
