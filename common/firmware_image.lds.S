@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board.h"
 #include "config.h"
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
@@ -22,7 +23,7 @@ SECTIONS
         *(.image.A)
         BYTE(0xEA)                      /* Mark end explicitly */
     } > FLASH =0xff
-#ifndef CONFIG_NO_RW_B
+#ifdef CONFIG_RW_B
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
     .image.B : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_B_OFF) {
         *(.image.B)

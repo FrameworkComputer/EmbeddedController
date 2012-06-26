@@ -5,6 +5,8 @@
 
 /* Verified boot module for Chrome EC */
 
+#include "board.h"
+#include "config.h"
 #include "console.h"
 #include "eoption.h"
 #include "host_command.h"

@@ -150,9 +150,7 @@ int vboot_check_signature(void)
 		CPRINTF("[Image A is invalid]\n");
 	}
 
-#ifdef CONFIG_NO_RW_B
-	CPRINTF("[Vboot no image B to check]\n");
-#else
+#ifdef CONFIG_RW_B
 	CPRINTF("[%T Vboot check image B...]\n");
 
 	ts1 = get_time();
@@ -177,7 +175,9 @@ int vboot_check_signature(void)
 	default:
 		CPRINTF("[Image B is invalid]\n");
 	}
-#endif
+#else  /* CONFIG_RW_B */
+	CPRINTF("[Vboot no image B to check]\n");
+#endif  /* CONFIG_RW_B */
 
 bad:
 	CPRINTF("[Staying in RO mode]\n");

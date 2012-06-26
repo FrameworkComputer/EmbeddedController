@@ -135,10 +135,10 @@ int main(int argc, char *argv[])
 	if (comm_init() < 0)
 		return -3;
 
-#ifndef CONFIG_NO_RW_B
+#ifdef CONFIG_RW_B
 	flash_partition(EC_IMAGE_RW_B, data + CONFIG_FW_B_OFF,
 			CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
-#endif /* !CONFIG_NO_RW_B */
+#endif /* CONFIG_RW_B */
 	flash_partition(EC_IMAGE_RW_A, data + CONFIG_FW_A_OFF,
 			CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
 	flash_partition(EC_IMAGE_RO, data + CONFIG_FW_RO_OFF,

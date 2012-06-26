@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "board.h"
 #include "config.h"
 #include "version.h"
 
@@ -150,7 +151,7 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC,
 		},
 
-#ifndef CONFIG_NO_RW_B
+#ifdef CONFIG_RW_B
 		/* Firmware B */
 		{
 			.area_name = "RW_SECTION_B",
@@ -178,6 +179,6 @@ const struct _ec_fmap {
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
-#endif /* CONFIG_NO_RW_B */
+#endif /* CONFIG_RW_B */
 	}
 };

@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "clock.h"
+#include "config.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "flash.h"
@@ -294,7 +295,7 @@ static uint32_t get_base(enum system_image_copy_t copy)
 		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
 	case SYSTEM_IMAGE_RW_A:
 		return CONFIG_FLASH_BASE + CONFIG_FW_A_OFF;
-#ifndef CONFIG_NO_RW_B
+#ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
 		return CONFIG_FLASH_BASE + CONFIG_FW_B_OFF;
 #endif
@@ -311,7 +312,7 @@ static uint32_t get_size(enum system_image_copy_t copy)
 		return CONFIG_FW_RO_SIZE;
 	case SYSTEM_IMAGE_RW_A:
 		return CONFIG_FW_A_SIZE;
-#ifndef CONFIG_NO_RW_B
+#ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
 		return CONFIG_FW_B_SIZE;
 #endif

@@ -24,6 +24,8 @@
  * Once we complete the vboot and autoupdate, we should remove this. */
 #define CONFIG_SYSTEM_UNLOCKED
 
+#ifndef __ASSEMBLER__
+
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 
@@ -100,5 +102,7 @@ void board_interrupt_host(int active);
 
 /* Auto detect EC i2c host port */
 int board_i2c_host_port(void);
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

@@ -31,6 +31,8 @@
 /* Enable the fake developer switch.  See crosbug.com/p/8884 */
 #define CONFIG_FAKE_DEV_SWITCH
 
+#ifndef __ASSEMBLER__
+
 /* Fan PWM channels */
 #define FAN_CH_CPU       0  /* CPU fan */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
@@ -237,5 +239,7 @@ enum board_version {
 
 
 void configure_board(void);
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
