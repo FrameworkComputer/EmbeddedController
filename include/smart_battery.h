@@ -11,6 +11,7 @@
 #include "board.h"
 #include "common.h"
 #include "i2c.h"
+#include "smart_battery_stub.h"
 
 /* Smart battery and charger I2C address */
 #define BATTERY_ADDR 0x16
@@ -127,19 +128,6 @@
 /* Charger specification info */
 #define INFO_CHARGER_SPEC(INFO)         ((INFO) & 0xf)
 #define INFO_SELECTOR_SUPPORT(INFO)     (((INFO) >> 4) & 1)
-
-/* Inline helper functions */
-static inline int sbc_read(int cmd, int *param)
-	{ return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param); }
-
-static inline int sbc_write(int cmd, int param)
-	{ return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param); }
-
-static inline int sb_read(int cmd, int *param)
-	{ return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param); }
-
-static inline int sb_write(int cmd, int param)
-	{ return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param); }
 
 /* Get/set battery mode */
 static inline int battery_get_battery_mode(int *mode)
