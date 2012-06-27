@@ -77,6 +77,13 @@
 /* Charger alarm */
 #define CHARGER_ALARM 3
 
+/* FET control register bits */
+#define FET_CTRL_ENFET   (1 << 0)
+#define FET_CTRL_ADENFET (1 << 1)
+#define FET_CTRL_PGFET   (1 << 4)
+
+#define FET_CTRL_BASE (FET1_CTRL - 1)
+
 void __board_hard_reset(void)
 {
 	CPRINTF("This board is not capable of a hard reset.\n");
@@ -361,6 +368,35 @@ int pmu_low_current_charging(int enable)
 		reg_val &= ~CG_NOITERM;
 
 	return pmu_write(CG_CTRL5, reg_val);
+}
+
+int pmu_enable_fet(int fet_id, int enable, int *power_good)
+{
+	int rv, reg;
+	int reg_offset;
+
+	reg_offset = FET_CTRL_BASE + fet_id;
+
+	rv = pmu_read(reg_offset, &reg);
+	if (rv)
+		return rv;
+	if (enable)
+		reg |= FET_CTRL_ADENFET | FET_CTRL_ENFET;
+	else
+		reg &= ~FET_CTRL_ENFET;
+
+	rv = pmu_write(reg_offset, reg);
+	if (rv)
+		return rv;
+
+	if (power_good) {
+		rv = pmu_read(reg_offset, &reg);
+		if (rv)
+			return rv;
+		*power_good = reg & FET_CTRL_PGFET;
+	}
+
+	return EC_SUCCESS;
 }
 
 void pmu_irq_handler(enum gpio_signal signal)
