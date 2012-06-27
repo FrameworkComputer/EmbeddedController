@@ -22,17 +22,21 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
-/* Default timeout in us; if we've been waiting this long for an input
- * transition, just jump to the next state. */
+/*
+ * Default timeout in us; if we've been waiting this long for an input
+ * transition, just jump to the next state.
+ */
 #define DEFAULT_TIMEOUT 1000000
 
 /* Timeout for dropping back from S5 to G3 */
 #define S5_INACTIVITY_TIMEOUT 10000000
 
 enum x86_state {
-	X86_G3 = 0,                 /* System is off (not technically all the
+	X86_G3 = 0,                 /*
+				     * System is off (not technically all the
 				     * way into G3, which means totally
-				     * unpowered...) */
+				     * unpowered...)
+				     */
 	X86_S5,                     /* System is soft-off */
 	X86_S3,                     /* Suspend; RAM on, processor is asleep */
 	X86_S0,                     /* System is on */
@@ -97,7 +101,6 @@ static uint32_t in_want;      /* Input signal state we're waiting for */
 static int want_g3_exit;      /* Should we exit the G3 state? */
 static int throttle_cpu;      /* Throttle CPU? */
 
-
 /* Update input signal state */
 static void update_in_signals(void)
 {
@@ -146,9 +149,10 @@ static void update_in_signals(void)
 	in_signals = inew;
 }
 
-
-/* Wait for all the inputs in <want> to be present.  Returns EC_ERROR_TIMEOUT
- * if timeout before reaching the desired state. */
+/*
+ * Wait for all the inputs in <want> to be present.  Returns EC_ERROR_TIMEOUT
+ * if timeout before reaching the desired state.
+ */
 static int wait_in_signals(uint32_t want)
 {
 	in_want = want;
@@ -161,14 +165,15 @@ static int wait_in_signals(uint32_t want)
 				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
 		}
-		/* TODO: should really shrink the remaining timeout if we woke
+		/*
+		 * TODO: should really shrink the remaining timeout if we woke
 		 * up but didn't have all the signals we wanted.  Also need to
 		 * handle aborts if we're no longer in the same state we were
-		 * when we started waiting. */
+		 * when we started waiting.
+		 */
 	}
 	return EC_SUCCESS;
 }
-
 
 void x86_power_cpu_overheated(int too_hot)
 {
@@ -183,25 +188,26 @@ void x86_power_cpu_overheated(int too_hot)
 	}
 }
 
-
 void x86_power_force_shutdown(void)
 {
-	/* Force x86 off. This condition will reset once the state machine
+	/*
+	 * Force x86 off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
 	gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 }
 
-
 void x86_power_reset(int cold_reset)
 {
 	if (cold_reset) {
-		/* Drop and restore PWROK.  This causes the PCH to reboot,
+		/*
+		 * Drop and restore PWROK.  This causes the PCH to reboot,
 		 * regardless of its after-G3 setting.  This type of reboot
 		 * causes the PCH to assert PLTRST#, SLP_S3#, and SLP_S5#, so
 		 * we actually drop power to the rest of the system (hence, a
-		 * "cold" reboot). */
+		 * "cold" reboot).
+		 */
 
 		/* Ignore if PWROK is already low */
 		if (gpio_get_level(GPIO_PCH_PWROK) == 0)
@@ -213,9 +219,11 @@ void x86_power_reset(int cold_reset)
 		gpio_set_level(GPIO_PCH_PWROK, 1);
 
 	} else {
-		/* Send a RCIN# pulse to the PCH.  This just causes it to
+		/*
+		 * Send a RCIN# pulse to the PCH.  This just causes it to
 		 * assert INIT# to the CPU without dropping power or asserting
-		 * PLTRST# to reset the rest of the system. */
+		 * PLTRST# to reset the rest of the system.
+		 */
 
 		/* Pulse must be at least 16 PCI clocks long = 500 ns */
 		gpio_set_level(GPIO_PCH_RCINn, 0);
@@ -231,17 +239,21 @@ int chipset_in_state(int state_mask)
 {
 	int need_mask = 0;
 
-	/* TODO: what to do about state transitions?  If the caller wants
+	/*
+	 * TODO: what to do about state transitions?  If the caller wants
 	 * HARD_OFF|SOFT_OFF and we're in G3S5, we could still return
-	 * non-zero. */
+	 * non-zero.
+	 */
 	switch (state) {
 	case X86_G3:
 		need_mask = CHIPSET_STATE_HARD_OFF;
 		break;
 	case X86_G3S5:
 	case X86_S5G3:
-		/* In between hard and soft off states.  Match only if caller
-		 * will accept both. */
+		/*
+		 * In between hard and soft off states.  Match only if caller
+		 * will accept both.
+		 */
 		need_mask = CHIPSET_STATE_HARD_OFF | CHIPSET_STATE_SOFT_OFF;
 		break;
 	case X86_S5:
@@ -267,7 +279,6 @@ int chipset_in_state(int state_mask)
 	return (state_mask & need_mask) == need_mask;
 }
 
-
 void chipset_exit_hard_off(void)
 {
 	/* If not in the hard-off state nor headed there, nothing to do */
@@ -280,7 +291,6 @@ void chipset_exit_hard_off(void)
 	if (task_start_called())
 		task_wake(TASK_ID_X86POWER);
 }
-
 
 void chipset_throttle_cpu(int throttle)
 {
@@ -302,7 +312,6 @@ static int x86_lid_change(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
-
 
 /* Hook notified when AC state changes. */
 static int x86_power_ac_change(void)
@@ -340,9 +349,11 @@ static int x86_power_init(void)
 	update_in_signals();
 	in_want = 0;
 
-	/* If we're switching between images without rebooting, see if the x86
+	/*
+	 * If we're switching between images without rebooting, see if the x86
 	 * is already powered on; if so, leave it there instead of cycling
-	 * through G3. */
+	 * through G3.
+	 */
 	if (system_jumped_to_this_image()) {
 		if ((in_signals & IN_ALL_S0) == IN_ALL_S0) {
 			CPUTS("[x86 already in S0]\n");
@@ -425,9 +436,11 @@ void x86_power_task(void)
 			break;
 
 		case X86_S3:
-			/* If lid is closed; hold touchscreen in reset to cut
+			/*
+			 * If lid is closed; hold touchscreen in reset to cut
 			 * power usage.  If lid is open, take touchscreen out
-			 * of reset so it can wake the processor. */
+			 * of reset so it can wake the processor.
+			 */
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn,
 				       power_lid_open_debounced());
 
@@ -460,8 +473,10 @@ void x86_power_task(void)
 			break;
 
 		case X86_G3S5:
-			/* Wait 10ms after +3VALW good, since that powers
-			 * VccDSW and VccSUS. */
+			/*
+			 * Wait 10ms after +3VALW good, since that powers
+			 * VccDSW and VccSUS.
+			 */
 			usleep(10000);
 
 			/* Assert DPWROK, deassert RSMRST# */
@@ -480,16 +495,20 @@ void x86_power_task(void)
 			/* Wait for the always-on rails to be good */
 			wait_in_signals(IN_PGOOD_ALWAYS_ON);
 
-			/* Take lightbar out of reset, now that +5VALW is
+			/*
+			 * Take lightbar out of reset, now that +5VALW is
 			 * available and we won't leak +3VALW through the reset
-			 * line. */
+			 * line.
+			 */
 			gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
 
 			/* Turn on power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
 
-			/* Enable touchpad power so it can wake the system from
-			 * suspend. */
+			/*
+			 * Enable touchpad power so it can wake the system from
+			 * suspend.
+			 */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 
 			/* Call hooks now that rails are up */
@@ -507,16 +526,20 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 1);
 			gpio_set_level(GPIO_RADIO_ENABLE_BT, 1);
 
-			/* Make sure touchscreen is out if reset (even if the
+			/*
+			 * Make sure touchscreen is out if reset (even if the
 			 * lid is still closed); it may have been turned off if
-			 * the lid was closed in S3. */
+			 * the lid was closed in S3.
+			 */
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
 
 			/* Wait for non-core power rails good */
 			wait_in_signals(IN_PGOOD_ALL_NONCORE);
 
-			/* Enable +CPU_CORE and +VGFX_CORE regulator.  The CPU
-			 * itself will request the supplies when it's ready. */
+			/*
+			 * Enable +CPU_CORE and +VGFX_CORE regulator.  The CPU
+			 * itself will request the supplies when it's ready.
+			 */
 			gpio_set_level(GPIO_ENABLE_VCORE, 1);
 
 			/* Call hooks now that rails are up */
@@ -525,8 +548,10 @@ void x86_power_task(void)
 			/* Wait 99ms after all voltages good */
 			usleep(99000);
 
-			/* Throttle CPU if necessary.  This should only be
-			 * asserted when +VCCP is powered (it is by now). */
+			/*
+			 * Throttle CPU if necessary.  This should only be
+			 * asserted when +VCCP is powered (it is by now).
+			 */
 			gpio_set_level(GPIO_CPU_PROCHOT, throttle_cpu);
 
 			/* Set PCH_PWROK */
@@ -553,8 +578,10 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
 			gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
 
-			/* Deassert prochot since CPU is off and we're about
-			 * to drop +VCCP. */
+			/*
+			 * Deassert prochot since CPU is off and we're about
+			 * to drop +VCCP.
+			 */
 			gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 			/* Turn off power rails */
@@ -573,8 +600,10 @@ void x86_power_task(void)
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
 
-			/* Put touchscreen and lightbar in reset, so we won't
-			 * leak +3VALW through the reset line. */
+			/*
+			 * Put touchscreen and lightbar in reset, so we won't
+			 * leak +3VALW through the reset line.
+			 */
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
 			gpio_set_level(GPIO_LIGHTBAR_RESETn, 0);
 
@@ -619,13 +648,28 @@ DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset,
 
 static int command_powerinfo(int argc, char **argv)
 {
-	CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
-		state, state_names[state], in_signals);
+	/*
+	 * Print x86 power state in same format as state machine.  This is
+	 * used by FAFT tests, so must match exactly.
+	 */
+	ccprintf("[%T x86 power state %d = %s, in 0x%04x]\n",
+		 state, state_names[state], in_signals);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
-			"",
-			"Show current power state",
+			NULL,
+			"Show current x86 power state",
+			NULL);
+
+static int command_x86shutdown(int argc, char **argv)
+{
+	x86_power_force_shutdown();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(x86shutdown, command_x86shutdown,
+			NULL,
+			"Force x86 shutdown",
 			NULL);
 
 /*****************************************************************************/
@@ -642,4 +686,4 @@ int switch_command_enable_wireless(uint8_t *data, int *resp_size)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
-		switch_command_enable_wireless);
+		     switch_command_enable_wireless);
