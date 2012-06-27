@@ -23,6 +23,10 @@ proc flash_link { } {
 	flash_lm4 ../../../build/link/ec.bin 0 262144
 }
 
+proc flash_link_ro { } {
+	flash_lm4 ../../../build/link/ec.RO.flat 0 81920
+}
+
 proc flash_link_a { } {
 	flash_lm4 ../../../build/link/ec.A.bin 81920 81920
 }
