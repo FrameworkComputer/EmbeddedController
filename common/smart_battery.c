@@ -108,20 +108,20 @@ int battery_manufacturer_date(int *year, int *month, int *day)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_battery(int argc, char **argv)
+static int print_battery_info(void)
 {
-	int rv;
-	int d;
+	int value;
 	int hour, minute;
 	char text[32];
 	const char *unit;
+	int rv;
 
-	rv = battery_temperature(&d);
+	rv = battery_temperature(&value);
 	if (rv)
 		return rv;
 
 	ccprintf("  Temp:      0x%04x = %.1d K (%.1d C)\n",
-		 d, d, d - 2731);
+		 value, value, value - 2731);
 
 	ccprintf("  Manuf:     %s\n",
 		 battery_manufacturer_name(text, sizeof(text)) == EC_SUCCESS ?
@@ -135,74 +135,98 @@ static int command_battery(int argc, char **argv)
 		 battery_device_chemistry(text, sizeof(text)) == EC_SUCCESS ?
 		 text : "(error)");
 
-	battery_serial_number(&d);
-	ccprintf("  Serial:    0x%04x\n", d);
+	battery_serial_number(&value);
+	ccprintf("  Serial:    0x%04x\n", value);
 
-	battery_voltage(&d);
-	ccprintf("  V:         0x%04x = %d mV\n", d, d);
+	battery_voltage(&value);
+	ccprintf("  V:         0x%04x = %d mV\n", value, value);
 
-	battery_desired_voltage(&d);
-	ccprintf("  V-desired: 0x%04x = %d mV\n", d, d);
+	battery_desired_voltage(&value);
+	ccprintf("  V-desired: 0x%04x = %d mV\n", value, value);
 
-	battery_design_voltage(&d);
-	ccprintf("  V-design:  0x%04x = %d mV\n", d, d);
+	battery_design_voltage(&value);
+	ccprintf("  V-design:  0x%04x = %d mV\n", value, value);
 
-	battery_current(&d);
+	battery_current(&value);
 	ccprintf("  I:         0x%04x = %d mA",
-		d & 0xffff, d);
-	if (d > 0)
+		value & 0xffff, value);
+	if (value > 0)
 		ccputs("(CHG)");
-	else if (d < 0)
+	else if (value < 0)
 		ccputs("(DISCHG)");
 	ccputs("\n");
 
 
-	battery_desired_current(&d);
-	ccprintf("  I-desired: 0x%04x = %d mA\n", d, d);
+	battery_desired_current(&value);
+	ccprintf("  I-desired: 0x%04x = %d mA\n", value, value);
 
-	battery_get_battery_mode(&d);
-	ccprintf("  Mode:      0x%04x\n", d);
-	unit = (d & MODE_CAPACITY) ? "0 mW" : " mAh";
+	battery_get_battery_mode(&value);
+	ccprintf("  Mode:      0x%04x\n", value);
+	unit = (value & MODE_CAPACITY) ? "0 mW" : " mAh";
 
-	battery_state_of_charge(&d);
-	ccprintf("  Charge:    %d %%\n", d);
+	battery_state_of_charge(&value);
+	ccprintf("  Charge:    %d %%\n", value);
 
-	battery_state_of_charge_abs(&d);
-	ccprintf("    Abs:     %d %%\n", d);
+	battery_state_of_charge_abs(&value);
+	ccprintf("    Abs:     %d %%\n", value);
 
-	battery_remaining_capacity(&d);
-	ccprintf("  Remaining: %d%s\n", d, unit);
+	battery_remaining_capacity(&value);
+	ccprintf("  Remaining: %d%s\n", value, unit);
 
-	battery_full_charge_capacity(&d);
-	ccprintf("  Cap-full:  %d%s\n", d, unit);
+	battery_full_charge_capacity(&value);
+	ccprintf("  Cap-full:  %d%s\n", value, unit);
 
-	battery_design_capacity(&d);
-	ccprintf("    Design:  %d%s\n", d, unit);
+	battery_design_capacity(&value);
+	ccprintf("    Design:  %d%s\n", value, unit);
 
-	battery_time_to_full(&d);
-	if (d == 65535) {
+	battery_time_to_full(&value);
+	if (value == 65535) {
 		hour   = 0;
 		minute = 0;
 	} else {
-		hour   = d / 60;
-		minute = d % 60;
+		hour   = value / 60;
+		minute = value % 60;
 	}
 	ccprintf("  Time-full: %dh:%d\n", hour, minute);
 
-	battery_time_to_empty(&d);
-	if (d == 65535) {
+	battery_time_to_empty(&value);
+	if (value == 65535) {
 		hour   = 0;
 		minute = 0;
 	} else {
-		hour   = d / 60;
-		minute = d % 60;
+		hour   = value / 60;
+		minute = value % 60;
 	}
 	ccprintf("    Empty:   %dh:%d\n", hour, minute);
 
-	return EC_SUCCESS;
+	return 0;
+}
+
+static int command_battery(int argc, char **argv)
+{
+	int repeat = 1;
+	int rv = 0;
+	int loop;
+	char *e;
+
+	if (argc > 1) {
+		repeat = strtoi(argv[1], &e, 0);
+		if (*e) {
+			ccputs("Invalid repeat count\n");
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	for (loop = 0; loop < repeat; loop++)
+		rv = print_battery_info();
+
+	if (rv)
+		ccprintf("Failed - error %d\n", rv);
+
+	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery,
-			NULL,
+			"<repeat_count>",
 			"Print battery info",
 			NULL);
 
