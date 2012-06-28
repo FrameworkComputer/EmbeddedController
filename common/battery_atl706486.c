@@ -85,8 +85,8 @@ void battery_vendor_params(struct batt_params *batt)
 	 *  */
 	if (batt->desired_voltage > info.voltage_max)
 		batt->desired_voltage = info.voltage_max;
-	if (batt->temperature >= celsius_to_deci_kelvin(info.temp_charge_max) ||
-	    batt->temperature <= celsius_to_deci_kelvin(info.temp_charge_min)) {
+	if (batt->temperature >= info.temp_charge_max ||
+	    batt->temperature <= info.temp_charge_min) {
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
 	}
