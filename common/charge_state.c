@@ -335,7 +335,8 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
 
-	if (ctx->curr.batt.desired_current < ctx->charger->current_min)
+	if (ctx->curr.batt.desired_current < ctx->charger->current_min &&
+	    ctx->curr.batt.desired_current > 0)
 		return trickle_charge(ctx);
 
 	/* Check charger reset */
