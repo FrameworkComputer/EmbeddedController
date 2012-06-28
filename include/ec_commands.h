@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
+#include "common.h"
+
 /* Protocol overview
  *
  * request:  CMD [ P0 P1 P2 ... Pn S ]
@@ -186,17 +188,17 @@ enum host_event_code {
 #define EC_CMD_PROTO_VERSION 0x00
 struct ec_response_proto_version {
 	uint32_t version;
-} __attribute__ ((packed));
+} __packed;
 
 /* Hello.  This is a simple command to test the EC is responsive to
  * commands. */
 #define EC_CMD_HELLO 0x01
 struct ec_params_hello {
 	uint32_t in_data;  /* Pass anything here */
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_hello {
 	uint32_t out_data;  /* Output will be in_data + 0x01020304 */
-} __attribute__ ((packed));
+} __packed;
 
 
 /* Get version number */
@@ -213,7 +215,7 @@ struct ec_response_get_version {
 	char version_string_rw_a[32];
 	char version_string_rw_b[32];
 	uint32_t current_image;  /* One of ec_current_image */
-} __attribute__ ((packed));
+} __packed;
 
 
 /* Read test */
@@ -221,17 +223,17 @@ struct ec_response_get_version {
 struct ec_params_read_test {
 	uint32_t offset;   /* Starting value for read buffer */
 	uint32_t size;     /* Size to read in bytes */
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_read_test {
 	uint32_t data[32];
-} __attribute__ ((packed));
+} __packed;
 
 
 /* Get build information */
 #define EC_CMD_GET_BUILD_INFO 0x04
 struct ec_response_get_build_info {
 	char build_string[EC_PARAM_SIZE];
-} __attribute__ ((packed));
+} __packed;
 
 
 /* Get chip info */
@@ -241,13 +243,13 @@ struct ec_response_get_chip_info {
 	char vendor[32];
 	char name[32];
 	char revision[32];  /* Mask version */
-} __attribute__ ((packed));
+} __packed;
 
 /* Get board HW version. */
 #define EC_CMD_GET_BOARD_VERSION 0x06
 struct ec_params_board_version {
 	uint16_t board_version;  /* A monotonously incrementing number. */
-} __attribute__ ((packed));
+} __packed;
 
 
 /*****************************************************************************/
@@ -267,17 +269,17 @@ struct ec_response_flash_info {
 	/* Protection block size.  Protection offset and size must be a
 	 * multiple of this. */
 	uint32_t protect_block_size;
-} __attribute__ ((packed));
+} __packed;
 
 /* Read flash */
 #define EC_CMD_FLASH_READ 0x11
 struct ec_params_flash_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_flash_read {
 	uint8_t data[EC_PARAM_SIZE];
-} __attribute__ ((packed));
+} __packed;
 
 /* Write flash */
 #define EC_CMD_FLASH_WRITE 0x12
@@ -286,32 +288,32 @@ struct ec_params_flash_write {
 	uint32_t size;     /* Size to write in bytes */
 	uint8_t data[64];  /* Could really use EC_PARAM_SIZE - 8, but tidiest
 			    * to use a power of 2 so writes stay aligned. */
-} __attribute__ ((packed));
+} __packed;
 
 /* Erase flash */
 #define EC_CMD_FLASH_ERASE 0x13
 struct ec_params_flash_erase {
 	uint32_t offset;   /* Byte offset to erase */
 	uint32_t size;     /* Size to erase in bytes */
-} __attribute__ ((packed));
+} __packed;
 
 /* Flashmap offset */
 #define EC_CMD_FLASH_GET_FLASHMAP 0x14
 struct ec_response_flash_flashmap {
 	uint32_t offset;   /* Flashmap offset */
-} __attribute__ ((packed));
+} __packed;
 
 /* Enable/disable flash write protect */
 #define EC_CMD_FLASH_WP_ENABLE 0x15
 struct ec_params_flash_wp_enable {
 	uint32_t enable_wp;
-} __attribute__ ((packed));
+} __packed;
 
 /* Get flash write protection commit state */
 #define EC_CMD_FLASH_WP_GET_STATE 0x16
 struct ec_response_flash_wp_enable {
 	uint32_t enable_wp;
-} __attribute__ ((packed));
+} __packed;
 
 /* Set/get flash write protection range */
 #define EC_CMD_FLASH_WP_SET_RANGE 0x17
@@ -320,22 +322,22 @@ struct ec_params_flash_wp_range {
 	uint32_t offset;
 	/* Size should be multiply of info.protect_block_size */
 	uint32_t size;
-} __attribute__ ((packed));
+} __packed;
 
 #define EC_CMD_FLASH_WP_GET_RANGE 0x18
 struct ec_response_flash_wp_range {
 	uint32_t offset;
 	uint32_t size;
-} __attribute__ ((packed));
+} __packed;
 
 /* Read flash write protection GPIO pin */
 #define EC_CMD_FLASH_WP_GET_GPIO 0x19
 struct ec_params_flash_wp_gpio {
 	uint32_t pin_no;
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_flash_wp_gpio {
 	uint32_t value;
-} __attribute__ ((packed));
+} __packed;
 
 #ifdef SUPPORT_CHECKSUM
 /* Checksum a range of flash datq */
@@ -343,10 +345,10 @@ struct ec_response_flash_wp_gpio {
 struct ec_params_flash_checksum {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_flash_checksum {
 	uint8_t checksum;
-} __attribute__ ((packed));
+} __packed;
 #define BYTE_IN(sum, byte) do {  \
 		sum = (sum << 1) | (sum >> 7);  \
 		sum ^= (byte ^ 0x53);  \
@@ -360,32 +362,32 @@ struct ec_response_flash_checksum {
 #define EC_CMD_PWM_GET_FAN_RPM 0x20
 struct ec_response_pwm_get_fan_rpm {
 	uint32_t rpm;
-} __attribute__ ((packed));
+} __packed;
 
 /* Set target fan RPM */
 #define EC_CMD_PWM_SET_FAN_TARGET_RPM 0x21
 struct ec_params_pwm_set_fan_target_rpm {
 	uint32_t rpm;
-} __attribute__ ((packed));
+} __packed;
 
 /* Get keyboard backlight */
 #define EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT 0x22
 struct ec_response_pwm_get_keyboard_backlight {
 	uint8_t percent;
 	uint8_t enabled;
-} __attribute__ ((packed));
+} __packed;
 
 /* Set keyboard backlight */
 #define EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT 0x23
 struct ec_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
-} __attribute__ ((packed));
+} __packed;
 
 /* Set target fan PWM duty cycle */
 #define EC_CMD_PWM_SET_FAN_DUTY 0x24
 struct ec_params_pwm_set_fan_duty {
 	uint32_t percent;
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Lightbar commands. This looks worse than it is. Since we only use one LPC
@@ -430,7 +432,7 @@ struct ec_params_lightbar_cmd {
 			} off, on, init, brightness, seq, reg, rgb;
 		} out;
 	};
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Verified boot commands */
@@ -459,7 +461,7 @@ struct ec_params_vboot_cmd {
 			} set_flags;
 		} out;
 	};
-} __attribute__ ((packed));
+} __packed;
 
 /* Verified boot hash command */
 #define EC_CMD_VBOOT_HASH 0x2A
@@ -472,7 +474,7 @@ struct ec_params_vboot_hash {
 	uint32_t offset;         /* Offset in flash to hash */
 	uint32_t size;           /* Number of bytes to hash */
 	uint8_t nonce_data[64];  /* Nonce data; ignored if nonce_size=0 */
-} __attribute__ ((packed));
+} __packed;
 
 struct ec_response_vboot_hash {
 	uint8_t status;          /* enum ec_vboot_hash_status */
@@ -482,7 +484,7 @@ struct ec_response_vboot_hash {
 	uint32_t offset;         /* Offset in flash which was hashed */
 	uint32_t size;           /* Number of bytes hashed */
 	uint8_t hash_digest[64]; /* Hash digest data */
-} __attribute__ ((packed));
+} __packed;
 
 enum ec_vboot_hash_cmd {
 	EC_VBOOT_HASH_GET,     /* Get current hash status */
@@ -510,7 +512,7 @@ enum ec_vboot_hash_status {
 struct ec_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
 	uint8_t mode;
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Persistent storage for host */
@@ -526,17 +528,17 @@ struct ec_response_pstore_info {
 	/* Access size.  Read/write offset and size must be a multiple
 	 * of this. */
 	uint32_t access_size;
-} __attribute__ ((packed));
+} __packed;
 
 /* Read persistent storage */
 #define EC_CMD_PSTORE_READ 0x41
 struct ec_params_pstore_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_pstore_read {
 	uint8_t data[EC_PSTORE_SIZE_MAX];
-} __attribute__ ((packed));
+} __packed;
 
 /* Write persistent storage */
 #define EC_CMD_PSTORE_WRITE 0x42
@@ -544,7 +546,7 @@ struct ec_params_pstore_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
 	uint8_t data[EC_PSTORE_SIZE_MAX];
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Thermal engine commands */
@@ -555,17 +557,17 @@ struct ec_params_thermal_set_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
 	uint16_t value;
-} __attribute__ ((packed));
+} __packed;
 
 /* Get threshold value */
 #define EC_CMD_THERMAL_GET_THRESHOLD 0x51
 struct ec_params_thermal_get_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
-} __attribute__ ((packed));
+} __packed;
 struct ec_response_thermal_get_threshold {
 	uint16_t value;
-} __attribute__ ((packed));
+} __packed;
 
 /* Toggling automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
@@ -577,7 +579,7 @@ struct ec_response_thermal_get_threshold {
 #define EC_CMD_MKBP_STATE 0x60
 struct ec_response_mkbp_state {
 	uint8_t cols[32];
-} __attribute__ ((packed));
+} __packed;
 
 /* Provide information about the matrix : number of rows and columns */
 #define EC_CMD_MKBP_INFO 0x61
@@ -585,7 +587,7 @@ struct ec_response_mkbp_info {
 	uint32_t rows;
 	uint32_t cols;
 	uint8_t switches;
-} __attribute__ ((packed));
+} __packed;
 
 /* Simulate key press */
 #define EC_CMD_MKBP_SIMULATE_KEY 0x62
@@ -593,7 +595,7 @@ struct ec_params_mkbp_simulate_key {
 	uint8_t col;
 	uint8_t row;
 	uint8_t pressed;
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Temperature sensor commands */
@@ -602,12 +604,12 @@ struct ec_params_mkbp_simulate_key {
 #define EC_CMD_TEMP_SENSOR_GET_INFO 0x70
 struct ec_params_temp_sensor_get_info {
 	uint8_t id;
-} __attribute__ ((packed));
+} __packed;
 
 struct ec_response_temp_sensor_get_info {
 	char sensor_name[32];
 	uint8_t sensor_type;
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* Host event commands */
@@ -616,11 +618,11 @@ struct ec_response_temp_sensor_get_info {
  * event commands below. */
 struct ec_params_host_event_mask {
 	uint32_t mask;
-} __attribute__ ((packed));
+} __packed;
 
 struct ec_response_host_event_mask {
 	uint32_t mask;
-} __attribute__ ((packed));
+} __packed;
 
 /* These all use ec_response_host_event_mask */
 #define EC_CMD_HOST_EVENT_GET_SMI_MASK  0x88
@@ -640,13 +642,13 @@ struct ec_response_host_event_mask {
 #define EC_CMD_SWITCH_ENABLE_BKLIGHT 0x90
 struct ec_params_switch_enable_backlight {
 	uint8_t enabled;
-} __attribute__ ((packed));
+} __packed;
 
 /* Enabled/disable WLAN/Bluetooth */
 #define EC_CMD_SWITCH_ENABLE_WIRELESS 0x91
 struct ec_params_switch_enable_wireless {
 	uint8_t enabled;
-} __attribute__ ((packed));
+} __packed;
 
 /*****************************************************************************/
 /* System commands */
@@ -672,7 +674,7 @@ enum ec_reboot_cmd {
 struct ec_params_reboot_ec {
 	uint8_t cmd;           /* enum ec_reboot_cmd */
 	uint8_t flags;         /* See EC_REBOOT_FLAG_* */
-} __attribute__ ((packed));
+} __packed;
 
 
 /*****************************************************************************/

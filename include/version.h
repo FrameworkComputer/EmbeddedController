@@ -21,7 +21,7 @@ struct version_struct {
 	uint32_t cookie1;
 	char version[32];
 	uint32_t cookie2;
-} __attribute__ ((packed));
+} __packed;
 
 extern const struct version_struct version_data;
 extern const char build_info[];

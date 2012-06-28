@@ -5,8 +5,9 @@
  */
 
 #include <stddef.h>
-#include <stdint.h>
+
 #include "board.h"
+#include "common.h"
 #include "config.h"
 #include "version.h"
 
@@ -25,7 +26,7 @@ typedef struct _FmapHeader {
 	uint32_t    fmap_size;
 	char        fmap_name[FMAP_NAMELEN];
 	uint16_t    fmap_nareas;
-} __attribute__((packed)) FmapHeader;
+} __packed FmapHeader;
 
 #define FMAP_AREA_STATIC      (1 << 0)	/* can be checksummed */
 #define FMAP_AREA_COMPRESSED  (1 << 1)  /* may be compressed */
@@ -36,7 +37,7 @@ typedef struct _FmapAreaHeader {
 	uint32_t area_size;
 	char     area_name[FMAP_NAMELEN];
 	uint16_t area_flags;
-} __attribute__((packed)) FmapAreaHeader;
+} __packed FmapAreaHeader;
 
 
 #define NUM_EC_FMAP_AREAS 17

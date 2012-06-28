@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,14 @@
 #define __CROS_EC_COMMON_H
 
 #include <stdint.h>
+
+/*
+ * Define __packed if someone hasn't beat us to it.  Linux kernel style
+ * checking prefers __packed over __attribute__((packed)).
+ */
+#ifndef __packed
+#define __packed __attribute__((packed))
+#endif
 
 /* List of common error codes that can be returned */
 enum ec_error_list {
