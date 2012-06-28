@@ -32,6 +32,7 @@ void x86_power_cpu_overheated(int too_hot)
 void x86_power_force_shutdown(void)
 {
 	uart_puts("Force shutdown\n");
+	mock_power_on = 0;
 }
 
 
