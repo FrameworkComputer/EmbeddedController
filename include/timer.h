@@ -57,4 +57,21 @@ timestamp_t get_time(void);
  * may be called from interrupt level. */
 void timer_print_info(void);
 
+/**
+ * Returns the number of microseconds that have elapsed from a start time.
+ *
+ * This function is for timing short delays typically of a few milliseconds
+ * or so.
+ *
+ * Note that this is limited to a maximum of 32 bits, which is around an
+ * hour. After that, the value returned will wrap.
+ *
+ * @param start		Start time to compare against
+ * @return number of microseconds that have elspsed since that start time
+ */
+static inline unsigned time_since32(timestamp_t start)
+{
+	return get_time().le.lo - start.le.lo;
+}
+
 #endif  /* __CROS_EC_TIMER_H */
