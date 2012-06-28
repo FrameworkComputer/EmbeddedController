@@ -220,7 +220,7 @@ int cmd_hello(int argc, char *argv[])
 	p.in_data = 0xa0b0c0d0;
 
 	rv = ec_command(EC_CMD_HELLO, &p, sizeof(p), &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	if (r.out_data != 0xa1b2c3d4) {
@@ -242,11 +242,11 @@ int cmd_version(int argc, char *argv[])
 	int rv;
 
 	rv = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 	rv = ec_command(EC_CMD_GET_BUILD_INFO,
 			NULL, 0, &r2, sizeof(r2));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	/* Ensure versions are null-terminated before we print them */
@@ -304,10 +304,10 @@ int cmd_read_test(int argc, char *argv[])
 		p.size = MIN(size - i, sizeof(r.data));
 		rv = ec_command(EC_CMD_READ_TEST, &p, sizeof(p),
 				&r, sizeof(r));
-		if (rv) {
+		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			free(buf);
-			return -1;
+			return rv;
 		}
 		memcpy(buf + i, r.data, p.size);
 	}
@@ -384,7 +384,7 @@ int cmd_flash_info(int argc, char *argv[])
 	int rv;
 
 	rv = ec_command(EC_CMD_FLASH_INFO, NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("FlashSize %d\nWriteSize %d\nEraseSize %d\nProtectSize %d\n",
@@ -434,10 +434,10 @@ int cmd_flash_read(int argc, char *argv[])
 		p.size = MIN(size - i, sizeof(r.data));
 		rv = ec_command(EC_CMD_FLASH_READ,
 				&p, sizeof(p), &r, sizeof(r));
-		if (rv) {
+		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			free(buf);
-			return -1;
+			return rv;
 		}
 		memcpy(buf + i, r.data, p.size);
 	}
@@ -445,7 +445,7 @@ int cmd_flash_read(int argc, char *argv[])
 	rv = write_file(argv[3], buf, size);
 	free(buf);
 	if (rv)
-		return -1;
+		return rv;
 
 	printf("done.\n");
 	return 0;
@@ -484,10 +484,10 @@ int cmd_flash_write(int argc, char *argv[])
 		p.size = MIN(size - i, sizeof(p.data));
 		memcpy(p.data, buf + i, p.size);
 		rv = ec_command(EC_CMD_FLASH_WRITE, &p, sizeof(p), NULL, 0);
-		if (rv) {
+		if (rv < 0) {
 			fprintf(stderr, "Write error at offset %d\n", i);
 			free(buf);
-			return -1;
+			return rv;
 		}
 	}
 
@@ -518,7 +518,7 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	printf("Erasing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_FLASH_ERASE, &p, sizeof(p), NULL, 0))
+	if (ec_command(EC_CMD_FLASH_ERASE, &p, sizeof(p), NULL, 0) < 0)
 		return -1;
 
 	printf("done.\n");
@@ -607,7 +607,7 @@ int cmd_temp_sensor_info(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO,
 			&p, sizeof(p), &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Sensor name: %s\n", r.sensor_name);
@@ -644,7 +644,7 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD,
 			&p, sizeof(p), &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	if (r.value < 0)
@@ -688,9 +688,8 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD,
-			&p, sizeof(p), NULL, 0);
-	if (rv)
+	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
 		return rv;
 
 	printf("Threshold %d for sensor type %d set to %d.\n",
@@ -704,9 +703,8 @@ int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 {
 	int rv;
 
-	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL,
-			NULL, 0, NULL, 0);
-	if (rv)
+	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, NULL, 0, NULL, 0);
+	if (rv < 0)
 		return rv;
 
 	printf("Automatic fan control is now on.\n");
@@ -748,9 +746,8 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_FAN_TARGET_RPM,
-			&p, sizeof(p), NULL, 0);
-	if (rv)
+	rv = ec_command(EC_CMD_PWM_SET_FAN_TARGET_RPM, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
 		return rv;
 
 	printf("Fan target RPM set.\n");
@@ -765,7 +762,7 @@ int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
 			NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	if (r.enabled == 1)
@@ -795,7 +792,7 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Keyboard backlight set.\n");
@@ -819,9 +816,8 @@ int cmd_fanduty(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY,
-			&p, sizeof(p), NULL, 0);
-	if (rv)
+	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
 		return rv;
 
 	printf("Fan duty cycle set.\n");
@@ -1018,7 +1014,7 @@ static int cmd_vboot(int argc, char **argv)
 			       vb_command_paramcount[param.in.cmd].insize,
 			       &param,
 			       vb_command_paramcount[param.in.cmd].outsize);
-		if (r)
+		if (r < 0)
 			return r;
 
 		v = param.out.get_flags.val;
@@ -1072,7 +1068,7 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_USB_CHARGE_SET_MODE,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("USB charging mode set.\n");
@@ -1113,7 +1109,7 @@ int cmd_kbpress(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_MKBP_SIMULATE_KEY,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 	printf("Done.\n");
 	return 0;
@@ -1126,7 +1122,7 @@ int cmd_pstore_info(int argc, char *argv[])
 	int rv;
 
 	rv = ec_command(EC_CMD_PSTORE_INFO, NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("PstoreSize %d\nAccessSize %d\n", r.pstore_size, r.access_size);
@@ -1173,10 +1169,10 @@ int cmd_pstore_read(int argc, char *argv[])
 		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
 		rv = ec_command(EC_CMD_PSTORE_READ,
 				&p, sizeof(p), &r, sizeof(r));
-		if (rv) {
+		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			free(buf);
-			return -1;
+			return rv;
 		}
 		memcpy(buf + i, r.data, p.size);
 	}
@@ -1184,7 +1180,7 @@ int cmd_pstore_read(int argc, char *argv[])
 	rv = write_file(argv[3], buf, size);
 	free(buf);
 	if (rv)
-		return -1;
+		return rv;
 
 	printf("done.\n");
 	return 0;
@@ -1222,12 +1218,11 @@ int cmd_pstore_write(int argc, char *argv[])
 		p.offset = offset + i;
 		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_CMD_PSTORE_WRITE,
-				&p, sizeof(p), NULL, 0);
-		if (rv) {
+		rv = ec_command(EC_CMD_PSTORE_WRITE, &p, sizeof(p), NULL, 0);
+		if (rv < 0) {
 			fprintf(stderr, "Write error at offset %d\n", i);
 			free(buf);
-			return -1;
+			return rv;
 		}
 	}
 
@@ -1242,10 +1237,17 @@ int cmd_acpi_query_ec(int argc, char *argv[])
 	int rv;
 
 	rv = ec_command(EC_CMD_ACPI_QUERY_EVENT, NULL, 0, NULL, 0);
-	if (rv)
+	if (rv < 0) {
+		/*
+		 * ACPI query-event follows different rules for its return
+		 * code; it returns the next pending event instead of an error
+		 * code.  So turn the return code back into a positive number.
+		 */
+		rv = -rv;
 		printf("Got host event %d (mask 0x%08x)\n", rv, 1 << (rv - 1));
-	else
+	} else {
 		printf("No host event pending.\n");
+	}
 	return 0;
 }
 
@@ -1265,7 +1267,7 @@ int cmd_host_event_get_smi_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_GET_SMI_MASK,
 			NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Current host event SMI mask: 0x%08x\n", r.mask);
@@ -1280,7 +1282,7 @@ int cmd_host_event_get_sci_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_GET_SCI_MASK,
 			NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Current host event SCI mask: 0x%08x\n", r.mask);
@@ -1295,7 +1297,7 @@ int cmd_host_event_get_wake_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 			NULL, 0, &r, sizeof(r));
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Current host event wake mask: 0x%08x\n", r.mask);
@@ -1321,7 +1323,7 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_SET_SMI_MASK,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Mask set.\n");
@@ -1347,7 +1349,7 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_SET_SCI_MASK,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Mask set.\n");
@@ -1373,7 +1375,7 @@ int cmd_host_event_set_wake_mask(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_SET_WAKE_MASK,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Mask set.\n");
@@ -1399,7 +1401,7 @@ int cmd_host_event_clear(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_HOST_EVENT_CLEAR,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Host events cleared.\n");
@@ -1446,7 +1448,7 @@ int cmd_wireless(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Success.\n");
@@ -1472,7 +1474,7 @@ int cmd_lcd_backlight(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_SWITCH_ENABLE_BKLIGHT,
 			&p, sizeof(p), NULL, 0);
-	if (rv)
+	if (rv < 0)
 		return rv;
 
 	printf("Success.\n");
@@ -1556,9 +1558,8 @@ int cmd_chipinfo(int argc, char *argv[])
 
 	printf("Chip info:\n");
 
-	rv = ec_command(EC_CMD_GET_CHIP_INFO,
-			NULL, 0, &info, sizeof(info));
-	if (rv)
+	rv = ec_command(EC_CMD_GET_CHIP_INFO, NULL, 0, &info, sizeof(info));
+	if (rv < 0)
 		return rv;
 	printf("  vendor:    %s\n", info.vendor);
 	printf("  name:      %s\n", info.name);
@@ -1620,7 +1621,8 @@ int cmd_ec_hash(int argc, char *argv[])
 	if (argc < 2) {
 		/* Get hash status */
 		p.cmd = EC_VBOOT_HASH_GET;
-		if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+		if (ec_command(EC_CMD_VBOOT_HASH,
+			       &p, sizeof(p), &r, sizeof(r)) < 0)
 			return -1;
 
 		return ec_hash_print(&r);
@@ -1629,7 +1631,8 @@ int cmd_ec_hash(int argc, char *argv[])
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
 		/* Abort hash calculation */
 		p.cmd = EC_VBOOT_HASH_ABORT;
-		if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+		if (ec_command(EC_CMD_VBOOT_HASH,
+			       &p, sizeof(p), &r, sizeof(r)) < 0)
 			return -1;
 		return 0;
 	}
@@ -1675,7 +1678,7 @@ int cmd_ec_hash(int argc, char *argv[])
 		p.nonce_size = 0;
 
 	printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)))
+	if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)) < 0)
 		return -1;
 
 	/* Start command doesn't wait for hashing to finish */

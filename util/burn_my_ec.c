@@ -20,18 +20,17 @@
 
 static const char * const part_name[] = {"unknown", "RO", "A", "B"};
 
-enum ec_current_image get_version(void)
+enum ec_current_image get_version(enum ec_current_image *version_ptr)
 {
 	struct ec_response_get_version r;
 	struct ec_response_get_build_info r2;
 	int res;
 
 	res = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
-	if (res)
+	if (res < 0)
 		return res;
-	res = ec_command(EC_CMD_GET_BUILD_INFO,
-			NULL, 0, &r2, sizeof(r2));
-	if (res)
+	res = ec_command(EC_CMD_GET_BUILD_INFO, NULL, 0, &r2, sizeof(r2));
+	if (res < 0)
 		return res;
 
 	/* Ensure versions are null-terminated before we print them */
@@ -49,7 +48,10 @@ enum ec_current_image get_version(void)
 		part_name[r.current_image] : "?"));
 	printf("Build info:    %s\n", r2.build_string);
 
-	return r.current_image;
+	if (version_ptr)
+		*version_ptr = r.current_image;
+
+	return 0;
 }
 
 int flash_partition(enum ec_current_image part, const uint8_t *payload,
@@ -62,9 +64,14 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	struct ec_response_flash_read rd_resp;
 	int res;
 	uint32_t i;
-	enum ec_current_image current;
+	enum ec_current_image current = EC_IMAGE_UNKNOWN;
 
-	current = get_version();
+	res = get_version(&current);
+	if (res < 0) {
+		fprintf(stderr, "Get version failed : %d\n", res);
+		return -1;
+	}
+
 	if (current == part) {
 		rst_req.cmd = part == EC_IMAGE_RO ?
 			      EC_REBOOT_JUMP_RW_A : EC_REBOOT_JUMP_RO;
@@ -79,7 +86,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	er_req.size = size;
 	er_req.offset = offset;
 	res = ec_command(EC_CMD_FLASH_ERASE, &er_req, sizeof(er_req), NULL, 0);
-	if (res) {
+	if (res < 0) {
 		fprintf(stderr, "Erase failed : %d\n", res);
 		return -1;
 	}
@@ -93,7 +100,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 		memcpy(wr_req.data, payload + i, wr_req.size);
 		res = ec_command(EC_CMD_FLASH_WRITE, &wr_req, sizeof(wr_req),
 				 NULL, 0);
-		if (res) {
+		if (res < 0) {
 			fprintf(stderr, "Write error at 0x%08x : %d\n", i, res);
 			return -1;
 		}
@@ -107,7 +114,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 		rd_req.size = MIN(size - i, sizeof(rd_resp.data));
 		res = ec_command(EC_CMD_FLASH_READ, &rd_req, sizeof(rd_req),
 				 &rd_resp, sizeof(rd_resp));
-		if (res) {
+		if (res < 0) {
 			fprintf(stderr, "Read error at 0x%08x : %d\n", i, res);
 			return -1;
 		}
@@ -116,9 +123,8 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 				offset + i, offset + i + size);
 	}
 	printf("Done.\n");
-	get_version();
 
-	return 0;
+	return get_version(NULL);
 }
 
 /* black magic to include the EC firmware binary as a payload inside

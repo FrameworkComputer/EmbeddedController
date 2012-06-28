@@ -91,11 +91,11 @@ int ec_command(int command, const void *indata, int insize,
 	struct i2c_msg i2c_msg[2];
 
 	if (i2c_fd < 0)
-		return -1;
+		return -EC_RES_ERROR;
 
 	if (ioctl(i2c_fd, I2C_SLAVE, EC_I2C_ADDR) < 0) {
 		fprintf(stderr, "Cannot set I2C slave address\n");
-		return -1;
+		return -EC_RES_ERROR;
 	}
 
 	i2c_msg[0].addr = EC_I2C_ADDR;
@@ -149,6 +149,7 @@ int ec_command(int command, const void *indata, int insize,
 	if (ret < 0) {
 		fprintf(stderr, "i2c transfer failed: %d (err: %d)\n",
 			ret, errno);
+		ret = -EC_RES_ERROR;
 		goto done;
 	}
 
@@ -157,6 +158,8 @@ int ec_command(int command, const void *indata, int insize,
 	if (ret) {
 		debug("command 0x%02x returned an error %d\n",
 			 command, i2c_msg[1].buf[0]);
+		/* Translate ERROR to -ERROR */
+		ret = -ret;
 	} else if (outsize) {
 		debug("i2c resp  :");
 		/* copy response packet payload and compute checksum */
@@ -169,9 +172,12 @@ int ec_command(int command, const void *indata, int insize,
 
 		if (sum != resp_buf[outsize + 1]) {
 			debug("bad packet checksum\n");
-			ret = -1;
+			ret = -EC_RES_ERROR;
 			goto done;
 		}
+
+		/* Return output buffer size */
+		ret = outsize;
 	}
 done:
 	if (resp_buf)

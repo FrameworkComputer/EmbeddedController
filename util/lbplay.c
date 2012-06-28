@@ -131,7 +131,7 @@ void wait_for_ec_to_stop(void)
 			fprintf(stderr, "EC isn't responding\n");
 			exit(1);
 		}
-	} while (r != 0 && param.out.get_seq.num != LIGHTBAR_STOP);
+	} while (r < 0 && param.out.get_seq.num != LIGHTBAR_STOP);
 }
 
 int main(int argc, char **argv)
