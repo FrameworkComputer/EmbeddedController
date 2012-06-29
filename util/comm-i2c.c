@@ -18,7 +18,6 @@
 #include <sys/types.h>
 
 #include "comm-host.h"
-#include "ec_commands.h"
 
 #define EC_I2C_ADDR 0x1e
 

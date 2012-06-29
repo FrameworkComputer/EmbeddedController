@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
-#include "common.h"
-
 /* Protocol overview
  *
  * request:  CMD [ P0 P1 P2 ... Pn S ]

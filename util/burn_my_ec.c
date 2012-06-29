@@ -10,10 +10,7 @@
 #include <sys/param.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "comm-host.h"
-#include "ec_commands.h"
-#include "system.h"
 
 #define STR0(name)  #name
 #define STR(name)   STR0(name)

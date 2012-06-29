@@ -12,7 +12,6 @@
 
 #include "comm-host.h"
 #include "lightbar.h"
-#include "ec_commands.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))

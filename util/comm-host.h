@@ -6,7 +6,8 @@
 #ifndef COMM_HOST_H
 #define COMM_HOST_H
 
-#include <stdint.h>
+#include "common.h"
+#include "ec_commands.h"
 
 /* Perform initializations needed for subsequent requests
  *

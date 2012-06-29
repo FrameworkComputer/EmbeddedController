@@ -12,11 +12,8 @@
 #include <unistd.h>
 
 #include "battery.h"
-#include "board.h"
 #include "comm-host.h"
-#include "ec_commands.h"
 #include "lightbar.h"
-#include "system.h"
 #include "vboot.h"
 
 /* Handy tricks */

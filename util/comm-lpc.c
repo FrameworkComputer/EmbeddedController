@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "comm-host.h"
-#include "ec_commands.h"
 
 #define INITIAL_UDELAY 5     /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
