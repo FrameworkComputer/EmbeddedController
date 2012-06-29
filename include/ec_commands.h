@@ -105,8 +105,6 @@
  */
 #ifndef __ACPI__
 
-#include <stdint.h>
-
 /* LPC command status byte masks */
 /* EC has written a byte in the data register and host hasn't read it yet */
 #define EC_LPC_STATUS_TO_HOST     0x01
