@@ -8,7 +8,8 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
-/* Protocol overview
+/*
+ * Protocol overview
  *
  * request:  CMD [ P0 P1 P2 ... Pn S ]
  * response: ERR [ P0 P1 P2 ... Pn S ]
@@ -25,13 +26,6 @@
  * and the payloads are sent/received at EC_LPC_ADDR_KERNEL|USER_PARAM.
  * On I2C, all bytes are sent serially in the same message.
  */
-
-
-/* During the development stage, the LPC bus has high error bit rate.
- * Using checksum can detect the error and trigger re-transmit.
- * FIXME: remove this after mass production.
- */
-#define SUPPORT_CHECKSUM
 
 /* Current version of this protocol */
 #define EC_PROTO_VERSION          0x00000002
@@ -336,22 +330,6 @@ struct ec_params_flash_wp_gpio {
 struct ec_response_flash_wp_gpio {
 	uint32_t value;
 } __packed;
-
-#ifdef SUPPORT_CHECKSUM
-/* Checksum a range of flash datq */
-#define EC_CMD_FLASH_CHECKSUM 0x1f
-struct ec_params_flash_checksum {
-	uint32_t offset;   /* Byte offset to read */
-	uint32_t size;     /* Size to read in bytes */
-} __packed;
-struct ec_response_flash_checksum {
-	uint8_t checksum;
-} __packed;
-#define BYTE_IN(sum, byte) do {  \
-		sum = (sum << 1) | (sum >> 7);  \
-		sum ^= (byte ^ 0x53);  \
-	} while (0)
-#endif  /* SUPPORT_CHECKSUM */
 
 /*****************************************************************************/
 /* PWM commands */
