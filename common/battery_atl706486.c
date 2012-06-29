@@ -34,7 +34,7 @@ static const struct battery_info info = {
 	 *
 	 * The temperature values below should be deci-Kelvin
 	 */
-	.temp_charge_min    =   0,
+	.temp_charge_min    =   0 * 10 + 2731,
 	.temp_charge_max    =  45 * 10 + 2731,
 	.temp_discharge_min = -20 * 10 + 2731,
 	.temp_discharge_max =  60 * 10 + 2731,
@@ -89,6 +89,7 @@ void battery_vendor_params(struct batt_params *batt)
 	    batt->temperature <= info.temp_charge_min) {
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
+		return;
 	}
 
 	/* Vendor provided charging method
