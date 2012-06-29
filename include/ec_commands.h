@@ -92,16 +92,16 @@
 #define EC_WIRELESS_SWITCH_WLAN      0x01
 #define EC_WIRELESS_SWITCH_BLUETOOTH 0x02
 
-/* The offset of temperature value stored in mapped memory.
- * This allows reporting a temperature range of
- * 200K to 454K = -73C to 181C.
+/*
+ * The offset of temperature value stored in mapped memory.  This allows
+ * reporting a temperature range of 200K to 454K = -73C to 181C.
  */
 #define EC_TEMP_SENSOR_OFFSET 200
 
 /*
- * This header file is used in coreboot both in C and ACPI code.
- * The ACPI code is pre-processed to handle constants but the ASL
- * compiler is unable to handle actual C code so keep it separate.
+ * This header file is used in coreboot both in C and ACPI code.  The ACPI code
+ * is pre-processed to handle constants but the ASL compiler is unable to
+ * handle actual C code so keep it separate.
  */
 #ifndef __ACPI__
 
@@ -116,8 +116,7 @@
 #define EC_LPC_STATUS_PROCESSING  0x04
 /* Last write to EC was a command, not data */
 #define EC_LPC_STATUS_LAST_CMD    0x08
-/* EC is in burst mode.  Chrome EC doesn't support this, so this bit is never
- * set. */
+/* EC is in burst mode.  Unsupported by Chrome EC, so this bit is never set */
 #define EC_LPC_STATUS_BURST_MODE  0x10
 /* SCI event is pending (requesting SCI query) */
 #define EC_LPC_STATUS_SCI_PENDING 0x20
@@ -126,8 +125,10 @@
 /* (reserved) */
 #define EC_LPC_STATUS_RESERVED    0x80
 
-/* EC is busy.  This covers both the EC processing a command, and the host has
- * written a new command but the EC hasn't picked it up yet. */
+/*
+ * EC is busy.  This covers both the EC processing a command, and the host has
+ * written a new command but the EC hasn't picked it up yet.
+ */
 #define EC_LPC_STATUS_BUSY_MASK \
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
@@ -141,12 +142,13 @@ enum ec_status {
 	EC_RES_ACCESS_DENIED = 4,
 };
 
-
-/* Host event codes.  Note these are 1-based, not 0-based, because ACPI query
+/*
+ * Host event codes.  Note these are 1-based, not 0-based, because ACPI query
  * EC command uses code 0 to mean "no event pending".  We explicitly specify
  * each value in the enum listing so they won't change if we delete/insert an
  * item or rearrange the list (it needs to be stable across platforms, not
- * just within a single compiled instance). */
+ * just within a single compiled instance).
+ */
 enum host_event_code {
 	EC_HOST_EVENT_LID_CLOSED = 1,
 	EC_HOST_EVENT_LID_OPEN = 2,
@@ -165,42 +167,54 @@ enum host_event_code {
 /* Host event mask */
 #define EC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
 
-/* Notes on commands:
+/*
+ * Notes on commands:
  *
- * Each command is an 8-byte command value.  Commands which take
- * params or return response data specify structs for that data.  If
- * no struct is specified, the command does not input or output data,
- * respectively. */
+ * Each command is an 8-byte command value.  Commands which take params or
+ * return response data specify structs for that data.  If no struct is
+ * specified, the command does not input or output data, respectively.
+ * Parameter/response length is implicit in the structs.  Some underlying
+ * communication protocols (I2C, SPI) may add length or checksum headers, but
+ * those are implementation-dependent and not defined here.
+ */
 
 /*****************************************************************************/
 /* General / test commands */
 
-/* Get protocol version, used to deal with non-backward compatible protocol
- * changes. */
+/*
+ * Get protocol version, used to deal with non-backward compatible protocol
+ * changes.
+ */
 #define EC_CMD_PROTO_VERSION 0x00
+
 struct ec_response_proto_version {
 	uint32_t version;
 } __packed;
 
-/* Hello.  This is a simple command to test the EC is responsive to
- * commands. */
+/*
+ * Hello.  This is a simple command to test the EC is responsive to
+ * commands.
+ */
 #define EC_CMD_HELLO 0x01
+
 struct ec_params_hello {
 	uint32_t in_data;  /* Pass anything here */
 } __packed;
+
 struct ec_response_hello {
 	uint32_t out_data;  /* Output will be in_data + 0x01020304 */
 } __packed;
 
-
 /* Get version number */
 #define EC_CMD_GET_VERSION 0x02
+
 enum ec_current_image {
 	EC_IMAGE_UNKNOWN = 0,
 	EC_IMAGE_RO,
 	EC_IMAGE_RW_A,
 	EC_IMAGE_RW_B
 };
+
 struct ec_response_get_version {
 	/* Null-terminated version strings for RO, RW-A, RW-B */
 	char version_string_ro[32];
@@ -209,27 +223,28 @@ struct ec_response_get_version {
 	uint32_t current_image;  /* One of ec_current_image */
 } __packed;
 
-
 /* Read test */
 #define EC_CMD_READ_TEST 0x03
+
 struct ec_params_read_test {
 	uint32_t offset;   /* Starting value for read buffer */
 	uint32_t size;     /* Size to read in bytes */
 } __packed;
+
 struct ec_response_read_test {
 	uint32_t data[32];
 } __packed;
 
-
 /* Get build information */
 #define EC_CMD_GET_BUILD_INFO 0x04
+
 struct ec_response_get_build_info {
 	char build_string[EC_PARAM_SIZE];
 } __packed;
 
-
 /* Get chip info */
 #define EC_CMD_GET_CHIP_INFO 0x05
+
 struct ec_response_get_chip_info {
 	/* Null-terminated strings */
 	char vendor[32];
@@ -239,6 +254,7 @@ struct ec_response_get_chip_info {
 
 /* Get board HW version. */
 #define EC_CMD_GET_BOARD_VERSION 0x06
+
 struct ec_params_board_version {
 	uint16_t board_version;  /* A monotonously incrementing number. */
 } __packed;
@@ -249,41 +265,55 @@ struct ec_params_board_version {
 
 /* Get flash info */
 #define EC_CMD_FLASH_INFO 0x10
+
 struct ec_response_flash_info {
 	/* Usable flash size, in bytes */
 	uint32_t flash_size;
-	/* Write block size.  Write offset and size must be a multiple
-	 * of this. */
+	/*
+	 * Write block size.  Write offset and size must be a multiple
+	 * of this.
+	 */
 	uint32_t write_block_size;
-	/* Erase block size.  Erase offset and size must be a multiple
-	 * of this. */
+	/*
+	 * Erase block size.  Erase offset and size must be a multiple
+	 * of this.
+	 */
 	uint32_t erase_block_size;
-	/* Protection block size.  Protection offset and size must be a
-	 * multiple of this. */
+	/*
+	 * Protection block size.  Protection offset and size must be a
+	 * multiple of this.
+	 */
 	uint32_t protect_block_size;
 } __packed;
 
 /* Read flash */
 #define EC_CMD_FLASH_READ 0x11
+
 struct ec_params_flash_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
 } __packed;
+
 struct ec_response_flash_read {
 	uint8_t data[EC_PARAM_SIZE];
 } __packed;
 
 /* Write flash */
 #define EC_CMD_FLASH_WRITE 0x12
+
 struct ec_params_flash_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
-	uint8_t data[64];  /* Could really use EC_PARAM_SIZE - 8, but tidiest
-			    * to use a power of 2 so writes stay aligned. */
+	/*
+	 * Data to write.  Could really use EC_PARAM_SIZE - 8, but tidiest to
+	 * use a power of 2 so writes stay aligned.
+	 */
+	uint8_t data[64];
 } __packed;
 
 /* Erase flash */
 #define EC_CMD_FLASH_ERASE 0x13
+
 struct ec_params_flash_erase {
 	uint32_t offset;   /* Byte offset to erase */
 	uint32_t size;     /* Size to erase in bytes */
@@ -291,24 +321,28 @@ struct ec_params_flash_erase {
 
 /* Flashmap offset */
 #define EC_CMD_FLASH_GET_FLASHMAP 0x14
+
 struct ec_response_flash_flashmap {
 	uint32_t offset;   /* Flashmap offset */
 } __packed;
 
 /* Enable/disable flash write protect */
 #define EC_CMD_FLASH_WP_ENABLE 0x15
+
 struct ec_params_flash_wp_enable {
 	uint32_t enable_wp;
 } __packed;
 
 /* Get flash write protection commit state */
 #define EC_CMD_FLASH_WP_GET_STATE 0x16
+
 struct ec_response_flash_wp_enable {
 	uint32_t enable_wp;
 } __packed;
 
 /* Set/get flash write protection range */
 #define EC_CMD_FLASH_WP_SET_RANGE 0x17
+
 struct ec_params_flash_wp_range {
 	/* Byte offset aligned to info.protect_block_size */
 	uint32_t offset;
@@ -317,6 +351,7 @@ struct ec_params_flash_wp_range {
 } __packed;
 
 #define EC_CMD_FLASH_WP_GET_RANGE 0x18
+
 struct ec_response_flash_wp_range {
 	uint32_t offset;
 	uint32_t size;
@@ -324,9 +359,11 @@ struct ec_response_flash_wp_range {
 
 /* Read flash write protection GPIO pin */
 #define EC_CMD_FLASH_WP_GET_GPIO 0x19
+
 struct ec_params_flash_wp_gpio {
 	uint32_t pin_no;
 } __packed;
+
 struct ec_response_flash_wp_gpio {
 	uint32_t value;
 } __packed;
@@ -336,18 +373,21 @@ struct ec_response_flash_wp_gpio {
 
 /* Get fan RPM */
 #define EC_CMD_PWM_GET_FAN_RPM 0x20
+
 struct ec_response_pwm_get_fan_rpm {
 	uint32_t rpm;
 } __packed;
 
 /* Set target fan RPM */
 #define EC_CMD_PWM_SET_FAN_TARGET_RPM 0x21
+
 struct ec_params_pwm_set_fan_target_rpm {
 	uint32_t rpm;
 } __packed;
 
 /* Get keyboard backlight */
 #define EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT 0x22
+
 struct ec_response_pwm_get_keyboard_backlight {
 	uint8_t percent;
 	uint8_t enabled;
@@ -355,22 +395,27 @@ struct ec_response_pwm_get_keyboard_backlight {
 
 /* Set keyboard backlight */
 #define EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT 0x23
+
 struct ec_params_pwm_set_keyboard_backlight {
 	uint8_t percent;
 } __packed;
 
 /* Set target fan PWM duty cycle */
 #define EC_CMD_PWM_SET_FAN_DUTY 0x24
+
 struct ec_params_pwm_set_fan_duty {
 	uint32_t percent;
 } __packed;
 
 /*****************************************************************************/
-/* Lightbar commands. This looks worse than it is. Since we only use one LPC
- * command to say "talk to the lightbar", we put the "and tell it to do X"
- * part into a subcommand. We'll make separate structs for subcommands with
- * different input args, so that we know how much to expect. */
+/*
+ * Lightbar commands. This looks worse than it is. Since we only use one LPC
+ * command to say "talk to the lightbar", we put the "and tell it to do X" part
+ * into a subcommand. We'll make separate structs for subcommands with
+ * different input args, so that we know how much to expect.
+ */
 #define EC_CMD_LIGHTBAR_CMD 0x28
+
 struct ec_params_lightbar_cmd {
 	union {
 		union {
@@ -413,8 +458,12 @@ struct ec_params_lightbar_cmd {
 /*****************************************************************************/
 /* Verified boot commands */
 
-/* Verified boot command. Details still evolving. */
+/*
+ * Verified boot uber-command.  Details still evolving.  Like the lightbar
+ * command above, this takes sub-commands.
+ */
 #define EC_CMD_VBOOT_CMD 0x29
+
 struct ec_params_vboot_cmd {
 	union {
 		union {
@@ -479,12 +528,12 @@ enum ec_vboot_hash_status {
 	EC_VBOOT_HASH_STATUS_BUSY,     /* Busy computing a hash */
 };
 
-
 /*****************************************************************************/
 /* USB charging control commands */
 
 /* Set USB port charging mode */
 #define EC_CMD_USB_CHARGE_SET_MODE 0x30
+
 struct ec_params_usb_charge_set_mode {
 	uint8_t usb_port_id;
 	uint8_t mode;
@@ -498,26 +547,29 @@ struct ec_params_usb_charge_set_mode {
 
 /* Get persistent storage info */
 #define EC_CMD_PSTORE_INFO 0x40
+
 struct ec_response_pstore_info {
 	/* Persistent storage size, in bytes */
 	uint32_t pstore_size;
-	/* Access size.  Read/write offset and size must be a multiple
-	 * of this. */
+	/* Access size; read/write offset and size must be a multiple of this */
 	uint32_t access_size;
 } __packed;
 
 /* Read persistent storage */
 #define EC_CMD_PSTORE_READ 0x41
+
 struct ec_params_pstore_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
 } __packed;
+
 struct ec_response_pstore_read {
 	uint8_t data[EC_PSTORE_SIZE_MAX];
 } __packed;
 
 /* Write persistent storage */
 #define EC_CMD_PSTORE_WRITE 0x42
+
 struct ec_params_pstore_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
@@ -529,6 +581,7 @@ struct ec_params_pstore_write {
 
 /* Set thershold value */
 #define EC_CMD_THERMAL_SET_THRESHOLD 0x50
+
 struct ec_params_thermal_set_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
@@ -537,10 +590,12 @@ struct ec_params_thermal_set_threshold {
 
 /* Get threshold value */
 #define EC_CMD_THERMAL_GET_THRESHOLD 0x51
+
 struct ec_params_thermal_get_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
 } __packed;
+
 struct ec_response_thermal_get_threshold {
 	uint16_t value;
 } __packed;
@@ -549,16 +604,18 @@ struct ec_response_thermal_get_threshold {
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
 /*****************************************************************************/
-/* Matrix KeyBoard Protocol */
+/* MKBP - Matrix KeyBoard Protocol */
 
 /* Read key state */
 #define EC_CMD_MKBP_STATE 0x60
+
 struct ec_response_mkbp_state {
 	uint8_t cols[32];
 } __packed;
 
 /* Provide information about the matrix : number of rows and columns */
 #define EC_CMD_MKBP_INFO 0x61
+
 struct ec_response_mkbp_info {
 	uint32_t rows;
 	uint32_t cols;
@@ -567,6 +624,7 @@ struct ec_response_mkbp_info {
 
 /* Simulate key press */
 #define EC_CMD_MKBP_SIMULATE_KEY 0x62
+
 struct ec_params_mkbp_simulate_key {
 	uint8_t col;
 	uint8_t row;
@@ -578,6 +636,7 @@ struct ec_params_mkbp_simulate_key {
 
 /* Read temperature sensor info */
 #define EC_CMD_TEMP_SENSOR_GET_INFO 0x70
+
 struct ec_params_temp_sensor_get_info {
 	uint8_t id;
 } __packed;
@@ -590,8 +649,10 @@ struct ec_response_temp_sensor_get_info {
 /*****************************************************************************/
 /* Host event commands */
 
-/* Host event mask params and response structures, shared by all of the host
- * event commands below. */
+/*
+ * Host event mask params and response structures, shared by all of the host
+ * event commands below.
+ */
 struct ec_params_host_event_mask {
 	uint32_t mask;
 } __packed;
@@ -616,12 +677,14 @@ struct ec_response_host_event_mask {
 
 /* Enable/disable LCD backlight */
 #define EC_CMD_SWITCH_ENABLE_BKLIGHT 0x90
+
 struct ec_params_switch_enable_backlight {
 	uint8_t enabled;
 } __packed;
 
-/* Enabled/disable WLAN/Bluetooth */
+/* Enable/disable WLAN/Bluetooth */
 #define EC_CMD_SWITCH_ENABLE_WIRELESS 0x91
+
 struct ec_params_switch_enable_wireless {
 	uint8_t enabled;
 } __packed;
@@ -629,8 +692,10 @@ struct ec_params_switch_enable_wireless {
 /*****************************************************************************/
 /* System commands */
 
-/* TODO: this is a confusing name, since it doesn't necessarily reboot the EC.
- * Rename to "set image" or something similar. */
+/*
+ * TODO: this is a confusing name, since it doesn't necessarily reboot the EC.
+ * Rename to "set image" or something similar.
+ */
 #define EC_CMD_REBOOT_EC 0xd2
 
 /* Command */
@@ -652,26 +717,32 @@ struct ec_params_reboot_ec {
 	uint8_t flags;         /* See EC_REBOOT_FLAG_* */
 } __packed;
 
-
 /*****************************************************************************/
-/* Special commands
+/*
+ * Special commands
  *
  * These do not follow the normal rules for commands.  See each command for
- * details. */
+ * details.
+ */
 
-/* ACPI Query Embedded Controller
+/*
+ * ACPI Query Embedded Controller
  *
  * This clears the lowest-order bit in the currently pending host events, and
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
- * event 0x80000000 = 32), or 0 if no event was pending. */
+ * event 0x80000000 = 32), or 0 if no event was pending.
+ */
 #define EC_CMD_ACPI_QUERY_EVENT 0x84
 
-/* Reboot
+/*
+ * Reboot NOW
  *
  * This command will work even when the EC LPC interface is busy, because the
  * reboot command is processed at interrupt level.  Note that when the EC
- * reboots, the host will reboot too, so there is no response to this
- * command. */
+ * reboots, the host will reboot too, so there is no response to this command.
+ *
+ * Use EC_CMD_REBOOT_EC to reboot the EC more politely.
+ */
 #define EC_CMD_REBOOT 0xd1  /* Think "die" */
 
 #endif  /* !__ACPI__ */
