@@ -621,13 +621,13 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 
 int i2c_read8(int port, int slave_addr, int offset, int *data)
 {
-	uint8_t reg, buf[2];
+	uint8_t reg, buf[1];
 	int rv;
 
 	reg = offset & 0xff;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2);
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 1);
 
-	*data = buf[1];
+	*data = buf[0];
 
 	return rv;
 }

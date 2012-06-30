@@ -29,6 +29,9 @@
 #define CG_STATUS1 0x0a
 #define CG_STATUS2 0x0b
 
+/* Charger control */
+#define CG_CTRL0_EN   1
+
 /* IRQ events */
 #define EVENT_VACG    (1 <<  1)
 #define EVENT_VBATG   (1 <<  3)
@@ -106,6 +109,22 @@ int pmu_get_power_source(int *ac_good, int *battery_good)
 		*battery_good = event & EVENT_VBATG;
 
 	return EC_SUCCESS;
+}
+
+int pmu_enable_charger(int enable)
+{
+	int rv;
+	int reg;
+
+	rv = pmu_read(CG_CTRL0, &reg);
+	if (rv)
+		return rv;
+
+	if (reg & CG_CTRL0_EN)
+		return EC_SUCCESS;
+
+	return pmu_write(CG_CTRL0, enable ? (reg | CG_CTRL0_EN) :
+			(reg & ~CG_CTRL0));
 }
 
 void pmu_init(void)

@@ -44,8 +44,9 @@
 /* Charging */
 #define CONFIG_SMART_BATTERY
 #define CONFIG_PMU_TPS65090
-#define CONFIG_I2C_HOST_AUTO
-#define I2C_PORT_HOST board_i2c_host_port()
+/* #define CONFIG_I2C_HOST_AUTO */
+/* #define I2C_PORT_HOST board_i2c_host_port() */
+#define I2C_PORT_HOST 1
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
