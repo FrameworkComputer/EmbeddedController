@@ -123,8 +123,8 @@ int __hw_clock_source_init(uint32_t start_t)
 	STM32_TIM_PSC(4) = CLOCKSOURCE_DIVIDER - 1;
 
 	/* Reload the pre-scaler */
-	STM32_TIM_EGR(3) = 0x0000;
-	STM32_TIM_EGR(4) = 0x0000;
+	STM32_TIM_EGR(3) = 0x0001;
+	STM32_TIM_EGR(4) = 0x0001;
 
 	/* setup the overflow interrupt on TIM3 */
 	STM32_TIM_DIER(3) = 0x0001;
