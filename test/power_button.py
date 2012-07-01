@@ -15,14 +15,6 @@ SHORTER_THAN_T0 = 0.01
 LONGER_THAN_T0 = 0.05
 LONGER_THAN_T1 = 5
 
-def check_no_output(helper, reg_ex):
-    success = False
-    try:
-        helper.wait_output(reg_ex, use_re=True, timeout=1)
-    except:
-        success = True
-    return success
-
 def consume_output(helper, reg_ex):
     done = False
     while not done:
@@ -44,7 +36,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 0")
       time.sleep(SHORTER_THAN_T0)
       helper.ec_command("gpiomock POWER_BUTTONn 1")
-      if not check_no_output(helper, "PB released"):
+      if not helper.check_no_output("PB released"):
           return False
 
       helper.trace("Press power button for longer than T0 and check this\n" +
@@ -54,7 +46,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 1")
       helper.wait_output("PB released", timeout=1)
       # Expect shown only once
-      if not check_no_output(helper, "PB released"):
+      if not helper.check_no_output("PB released"):
           return False
 
       helper.trace("Press power button for two consecutive SHORTER_THAN_T0\n" +
@@ -66,7 +58,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 0")
       time.sleep(SHORTER_THAN_T0)
       helper.ec_command("gpiomock POWER_BUTTONn 1")
-      if not check_no_output(helper, "PB released"):
+      if not helper.check_no_output("PB released"):
           return False
 
       helper.trace("Hold down power button for LONGER_THAN_T0 and check a\n" +
@@ -77,7 +69,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 1")
       helper.wait_output("pwrbtn=LOW", timeout=1)
       helper.wait_output("pwrbtn=HIGH", timeout=1)
-      if not check_no_output(helper, "pwrbtn=LOW"):
+      if not helper.check_no_output("pwrbtn=LOW"):
           return False
 
       helper.trace("Press power button for SHORTER_THAN_T0, release for\n" +
@@ -92,7 +84,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 1")
       helper.wait_output("pwrbtn=LOW", timeout=1)
       helper.wait_output("pwrbtn=HIGH", timeout=1)
-      if not check_no_output(helper, "pwrbtn=LOW"):
+      if not helper.check_no_output("pwrbtn=LOW"):
           return False
 
       helper.trace("Hold down power button, wait for power button press\n" +
@@ -104,7 +96,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 1")
       time.sleep(SHORTER_THAN_T0)
       helper.ec_command("gpiomock POWER_BUTTONn 0")
-      if not check_no_output(helper, "PB released"):
+      if not helper.check_no_output("PB released"):
           return False
       helper.ec_command("gpiomock POWER_BUTTONn 1")
       helper.wait_output("PB released", timeout=1)
@@ -119,7 +111,7 @@ def test(helper):
                                  use_re=True)["t"]
       t_high = helper.wait_output("\[(?P<t>[\d\.]+) PB PCH pwrbtn=HIGH\]",
                                   use_re=True)["t"]
-      if not check_no_output(helper, "pwrbtn=LOW"):
+      if not helper.check_no_output("pwrbtn=LOW"):
           return False
       if float(t_high) - float(t_low) <= LONGER_THAN_T0 - 0.1:
           return False
@@ -130,7 +122,7 @@ def test(helper):
       helper.ec_command("gpiomock POWER_BUTTONn 0")
       time.sleep(LONGER_THAN_T0)
       helper.ec_command("gpiomock POWER_BUTTONn 1")
-      if not check_no_output(helper, "i8042 SEND"):
+      if not helper.check_no_output("i8042 SEND"):
           return False
 
       helper.trace("While powered on, hold down power button for\n" +
@@ -144,7 +136,7 @@ def test(helper):
                                  use_re=True)["t"]
       t_high = helper.wait_output("\[(?P<t>[\d\.]+) PB PCH pwrbtn=HIGH\]",
                                   use_re=True)["t"]
-      if not check_no_output(helper, "pwrbtn=LOW"):
+      if not helper.check_no_output("pwrbtn=LOW"):
           return False
       if float(t_high) - float(t_low) >= 0.1:
           return False
@@ -168,7 +160,7 @@ def test(helper):
       helper.wait_output("pwrbtn=HIGH", timeout=1)
       helper.wait_output("pwrbtn=LOW", timeout=1)
       helper.wait_output("pwrbtn=HIGH", timeout=1)
-      if not check_no_output(helper, "pwrbtn=LOW"):
+      if not helper.check_no_output("pwrbtn=LOW"):
           return False
 
       return True # PASS !

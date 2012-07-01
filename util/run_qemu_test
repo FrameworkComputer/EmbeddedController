@@ -167,6 +167,15 @@ class EcTest:
                     signal.signal(signal.SIGALRM, old_handler)
                     return
 
+    def check_no_output(self, string, use_re = False, timeout = 1):
+        success = False
+        try:
+            self.wait_output(string, use_re=use_re, timeout=timeout)
+        except:
+            success = True
+        return success
+
+
     def wait_prompt(self):
         self.wait_output("> ")
 

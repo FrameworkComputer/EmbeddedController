@@ -7,14 +7,6 @@
 
 import time
 
-def check_no_output(helper, reg_ex):
-    success = False
-    try:
-        helper.wait_output(reg_ex, use_re=True, timeout=1)
-    except:
-        success = True
-    return success
-
 def test(helper):
       # Wait for EC initialized
       helper.wait_output("--- UART initialized")
@@ -33,13 +25,13 @@ def test(helper):
       # Expect this is ignored
       helper.ec_command("mockmatrix 2 1 1")
       helper.ec_command("mockmatrix 1 2 1")
-      if not check_no_output(helper, "KB raw"):
+      if not helper.check_no_output("KB raw"):
           return False
       # Now release (1, 2) which should cause (2, 1) to be released also
       # Expect this is ignored
       helper.ec_command("mockmatrix 2 1 0")
       helper.ec_command("mockmatrix 1 2 0")
-      if not check_no_output(helper, "KB raw"):
+      if not helper.check_no_output("KB raw"):
           return False
 
       # Done testing with (1, 1) and (2, 2). Release them.

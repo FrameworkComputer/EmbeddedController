@@ -11,14 +11,6 @@ SHORTER_THAN_DEBOUNCE_TIME = 0.005 # 5ms
 LONGER_THAN_DEBOUNCE_TIME = 0.020 # 20ms
 KEYPRESS_REGEX = "\[KB raw state: (?P<km>[0-9\s-]*)\]"
 
-def check_no_output(helper, reg_ex):
-    success = False
-    try:
-        helper.wait_output(reg_ex, use_re=True, timeout=1)
-    except:
-        success = True
-    return success
-
 def consume_output(helper, reg_ex):
     done = False
     while not done:
@@ -55,7 +47,7 @@ def test(helper):
       helper.ec_command("mockmatrix 1 1 1")
       time.sleep(SHORTER_THAN_DEBOUNCE_TIME)
       helper.ec_command("mockmatrix 1 1 0")
-      if not check_no_output(helper, KEYPRESS_REGEX):
+      if not helper.check_no_output(KEYPRESS_REGEX, use_re=True):
           return False
 
       # Press for a longer period and check keypress is accepted
@@ -82,7 +74,7 @@ def test(helper):
           return False
       if not expect_key_count(helper, 0): # Release
           return False
-      if not check_no_output(helper, KEYPRESS_REGEX):
+      if not helper.check_no_output(KEYPRESS_REGEX, use_re=True):
           return False
 
       # Hold down a key and press another key for a short period. Expect
@@ -94,7 +86,7 @@ def test(helper):
       helper.ec_command("mockmatrix 2 2 1")
       time.sleep(SHORTER_THAN_DEBOUNCE_TIME)
       helper.ec_command("mockmatrix 2 2 0")
-      if not check_no_output(helper, KEYPRESS_REGEX):
+      if not helper.check_no_output(KEYPRESS_REGEX, use_re=True):
           return False
       helper.ec_command("mockmatrix 1 1 0")
       if not expect_key_count(helper, 0):

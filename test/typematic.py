@@ -9,21 +9,13 @@ import time
 
 KEY_PRESS_MSG = "i8042 SEND"
 
-def check_no_output(helper, reg_ex):
-    success = False
-    try:
-        helper.wait_output(reg_ex, use_re=True, timeout=1)
-    except:
-        success = True
-    return success
-
 def expect_keypress(helper, lower_bound, upper_bound):
     for i in xrange(lower_bound + 1): # Plus 1 break code
         helper.wait_output(KEY_PRESS_MSG)
     for i in xrange(upper_bound - lower_bound):
-        if check_no_output(helper, KEY_PRESS_MSG):
+        if helper.check_no_output(KEY_PRESS_MSG):
             return True
-    if not check_no_output(helper, KEY_PRESS_MSG):
+    if not helper.check_no_output(KEY_PRESS_MSG):
         return False
     return True
 
