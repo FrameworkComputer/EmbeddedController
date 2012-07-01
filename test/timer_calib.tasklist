@@ -6,5 +6,6 @@
  */
 #define CONFIG_TASK_LIST \
   TASK(WATCHDOG, watchdog_task, NULL) \
+  TASK(VBOOTHASH, vboot_hash_task, NULL) \
   TASK(TESTTMR, timer_calib_task, (void *)'T')\
   TASK(CONSOLE, console_task, NULL)
