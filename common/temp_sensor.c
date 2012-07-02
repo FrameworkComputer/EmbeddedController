@@ -54,16 +54,22 @@ int temp_sensor_powered(enum temp_sensor_id id)
 }
 
 
-void poll_all_sensors(void)
+void poll_slow_sensors(void)
 {
+	/* Poll every second */
 #ifdef CONFIG_TMP006
 	tmp006_poll();
 #endif
-#ifdef CONFIG_PECI
-	peci_temp_sensor_poll();
-#endif
 #ifdef CHIP_lm4
 	chip_temp_sensor_poll();
+#endif
+}
+
+static void poll_fast_sensors(void)
+{
+	/* Poll every 1/4 second */
+#ifdef CONFIG_PECI
+	peci_temp_sensor_poll();
 #endif
 }
 
@@ -91,10 +97,14 @@ static void update_lpc_mapped_memory(void)
 
 void temp_sensor_task(void)
 {
+	int i;
 	while (1) {
-		poll_all_sensors();
+		for (i = 0; i < 4; ++i) {
+			usleep(250000);
+			poll_fast_sensors();
+		}
+		poll_slow_sensors();
 		update_lpc_mapped_memory();
-		usleep(1000000);
 	}
 }
 
