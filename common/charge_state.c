@@ -464,6 +464,8 @@ void charge_state_machine_task(void)
 	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum power_state new_state;
 	uint8_t batt_flags;
+	enum powerled_color led_color = POWERLED_OFF;
+	int rv_setled = 0;
 
 	ctx.prev.state = PWR_STATE_INIT;
 	ctx.curr.state = PWR_STATE_INIT;
@@ -523,7 +525,8 @@ void charge_state_machine_task(void)
 			*ctx.memmap_batt_flags = batt_flags;
 
 			/* Charge done */
-			powerled_set(POWERLED_GREEN);
+			led_color = POWERLED_GREEN;
+			rv_setled = powerled_set(POWERLED_GREEN);
 
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
@@ -541,18 +544,22 @@ void charge_state_machine_task(void)
 			*ctx.memmap_batt_flags = batt_flags;
 
 			/* Charging */
-			powerled_set(POWERLED_YELLOW);
+			led_color = POWERLED_YELLOW;
+			rv_setled = powerled_set(POWERLED_YELLOW);
 
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_ERROR:
 			/* Error */
-			powerled_set(POWERLED_RED);
+			led_color = POWERLED_RED;
+			rv_setled = powerled_set(POWERLED_RED);
 
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_UNCHANGE:
 			/* Don't change sleep duration */
+			if (rv_setled)
+				rv_setled = powerled_set(led_color);
 			break;
 		default:
 			/* Other state; poll quickly and hope it goes away */
