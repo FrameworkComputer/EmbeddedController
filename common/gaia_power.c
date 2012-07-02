@@ -72,6 +72,9 @@
 /* debounce time to prevent accidental power-on after keyboard power off */
 #define KB_PWR_ON_DEBOUNCE    250    /* 250us */
 
+/* debounce time to prevent accidental power event after lid open/close */
+#define LID_SWITCH_DEBOUNCE   250    /* 250us */
+
 /* PMIC fails to set the LDO2 output */
 #define PMIC_TIMEOUT          100000  /* 100ms */
 
@@ -89,6 +92,9 @@ static int force_value;
 
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
+
+/* 1 if a change in lid switch state has been detected */
+static char lid_changed;
 
 /* time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
@@ -189,8 +195,14 @@ void gaia_suspend_event(enum gpio_signal signal)
 
 	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
 
-	powerled_set_state(ap_suspended ?
-			POWERLED_STATE_SUSPEND : POWERLED_STATE_ON);
+	if (ap_suspended) {
+		if (gpio_get_level(GPIO_LID_OPEN))
+			powerled_set_state(POWERLED_STATE_SUSPEND);
+		else
+			powerled_set_state(POWERLED_STATE_OFF);
+	} else {
+		powerled_set_state(POWERLED_STATE_ON);
+	}
 }
 
 void gaia_power_event(enum gpio_signal signal)
@@ -199,10 +211,18 @@ void gaia_power_event(enum gpio_signal signal)
 	task_wake(TASK_ID_GAIAPOWER);
 }
 
+void gaia_lid_event(enum gpio_signal signal)
+{
+	/* inform power task that lid switch has changed */
+	lid_changed = 1;
+	task_wake(TASK_ID_GAIAPOWER);
+}
+
 int gaia_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
+	gpio_enable_interrupt(GPIO_LID_OPEN);
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 
@@ -245,8 +265,8 @@ void chipset_exit_hard_off(void)
 /**
  * Check if there has been a power-on event
  *
- * This waits for the power button to be pressed, then returns whether it
- * is still pressed, after a debounce period
+ * This checks all power-on event signals and returns boolean 0 or 1 to
+ * indicate if any have been triggered (with debounce taken into account).
  *
  * @return 1 if there has been a power-on event, 0 if not
  */
@@ -262,11 +282,23 @@ static int check_for_power_on_event(void)
 		return 1;
 	}
 
-	/* wait for Power button press */
-	wait_in_signal(GPIO_KB_PWR_ON_L, 0, -1);
+	/* to avoid false positives, check lid only if a change was detected */
+	if (lid_changed) {
+		udelay(LID_SWITCH_DEBOUNCE);
+		if (gpio_get_level(GPIO_LID_OPEN) == 1) {
+			lid_changed = 0;
+			return 1;
+		}
+	}
 
-	udelay(KB_PWR_ON_DEBOUNCE);
-	return gpio_get_level(GPIO_KB_PWR_ON_L) == 0;
+	/* check for power button press */
+	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
+		udelay(KB_PWR_ON_DEBOUNCE);
+		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
+			return 1;
+	}
+
+	return 0;
 }
 
 /**
