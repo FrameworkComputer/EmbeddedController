@@ -27,7 +27,7 @@ int temp_sensor_command_get_info(uint8_t *data, int *resp_size)
 	if (id >= TEMP_SENSOR_COUNT)
 		return EC_RES_ERROR;
 
-	strzcpy(r->sensor_name, temp_sensors[id].name, 30);
+	strzcpy(r->sensor_name, temp_sensors[id].name, sizeof(r->sensor_name));
 	r->sensor_type = temp_sensors[id].type;
 
 	*resp_size = sizeof(struct ec_response_temp_sensor_get_info);
