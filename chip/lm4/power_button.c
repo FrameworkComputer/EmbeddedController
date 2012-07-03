@@ -535,7 +535,7 @@ static int power_button_init(void)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT + 1);
 
 
 void power_button_interrupt(enum gpio_signal signal)

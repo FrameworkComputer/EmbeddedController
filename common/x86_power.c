@@ -393,14 +393,13 @@ static int x86_power_init(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Task function */
 
 void x86_power_task(void)
 {
-	x86_power_init();
-
 	while (1) {
 		CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
 			state, state_names[state], in_signals);
