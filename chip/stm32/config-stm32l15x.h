@@ -11,7 +11,7 @@
 #define CONFIG_RAM_SIZE         0x00004000
 
 /* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE    (32 * 1024)
+#define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
 
 #define CONFIG_FW_RO_OFF        0
 #define CONFIG_FW_RO_SIZE       CONFIG_FW_IMAGE_SIZE
