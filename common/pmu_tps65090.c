@@ -9,6 +9,7 @@
 #include "console.h"
 #include "common.h"
 #include "i2c.h"
+#include "pmu_tpschrome.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -38,17 +39,6 @@
 
 /* Charger alarm */
 #define CHARGER_ALARM 3
-
-/* Read/write tps65090 register */
-static inline int pmu_read(int reg, int *value)
-{
-	return i2c_read8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
-}
-
-static inline int pmu_write(int reg, int value)
-{
-	return i2c_write8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
-}
 
 /* Clear tps65090 irq */
 static inline int pmu_clear_irq(void)
@@ -80,6 +70,17 @@ static int pmu_get_event(int *event)
 	}
 
 	return EC_SUCCESS;
+}
+
+/* Read/write tps65090 register */
+int pmu_read(int reg, int *value)
+{
+	return i2c_read8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
+}
+
+int pmu_write(int reg, int value)
+{
+	return i2c_write8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
 }
 
 int pmu_is_charger_alarm(void)
@@ -129,6 +130,9 @@ int pmu_enable_charger(int enable)
 
 void pmu_init(void)
 {
+#ifdef CONFIG_PMU_BOARD_INIT
+	board_pmu_init();
+#else
 	/* Init configuration
 	 *   Fast charge timer    : 2 hours
 	 *   Charger              : disable
@@ -137,13 +141,13 @@ void pmu_init(void)
 	 * TODO: move settings to battery pack specific init
 	 */
 	pmu_write(CG_CTRL0, 2);
-
-	/* Enable interrupt mask */
-	pmu_write(IRQ1MASK, 0xff);
-	pmu_write(IRQ2MASK, 0xff);
-
 	/* Limit full charge current to 50%
 	 * TODO: remove this temporary hack.
 	 */
 	pmu_write(CG_CTRL3, 0xbb);
+#endif
+	/* Enable interrupt mask */
+	pmu_write(IRQ1MASK, 0xff);
+	pmu_write(IRQ2MASK, 0xff);
+
 }

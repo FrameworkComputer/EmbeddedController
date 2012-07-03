@@ -56,7 +56,11 @@ static void enable_charging(int enable)
 	if (gpio_get_level(GPIO_CHARGER_EN) != enable)
 		gpio_set_level(GPIO_CHARGER_EN, enable);
 
-	pmu_enable_charger(enable);
+	/* With NOITERM bit set, charger can be controlled by gpio.
+	 * Hence following charger enable command can be removed.
+	 *
+	 * pmu_enable_charger(enable);
+	 */
 }
 
 

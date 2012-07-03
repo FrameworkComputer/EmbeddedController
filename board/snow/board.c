@@ -11,6 +11,7 @@
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "pmu_tpschrome.h"
 #include "registers.h"
 #include "spi.h"
 #include "timer.h"
@@ -240,4 +241,41 @@ void board_i2c_release(int port)
 		gpio_set_level(GPIO_EC_CLAIM, 1);
 	}
 }
-#endif
+#endif /* CONFIG_ARBITRATE_I2C */
+
+#ifdef CONFIG_PMU_BOARD_INIT
+/**
+ * Initialize PMU register settings
+ *
+ * PMU init settings depend on board configuration. This function should be
+ * called inside PMU init function.
+ */
+void board_pmu_init(void)
+{
+	/**
+	 * Explanation:
+	 *
+	 * 1.  Timeout is by default 2hrs. This increases to 3hrs. At 1.8A
+	 *     charging, this should be long enough for the 4000mA-hr battery,
+	 *     assuming it spends about 30mins in the CC mode, but doesn't
+	 *     allow for much margin.
+	 * 2.  Change temp range T23 (0C-40C), to 1.8A max charge.  This is
+	 *     currently set to 2.4A which is higher than the recommend charge
+	 *     current of 2A.
+	 * 3.  Change temp range T34 (40C-60C) to 1.8A max charge, and change
+	 *     charge voltage to 8.6V.  This is currently set to 1.2A/8.49V.
+	 *     Because the NTC is on the board, this is quickly reached so
+	 *     slow charging may occur.  The battery is rated for 2A charging
+	 *     up to 60C.
+	 * 4.  Set NOITERM bit. On a fully dead battery, the pack goes into a
+	 *     mode where it only lets in a very small current via there is a
+	 *     different charge path.  This fools the charger into thinking
+	 *     the current vs voltage is bad.  This bit corrects this.
+	 */
+	pmu_write(0x04, 0x06);
+	pmu_write(0x07, 0xbd);
+	pmu_write(0x08, 0xfd);
+	pmu_write(0x09, 0xe0);
+}
+#endif /* CONFIG_BOARD_PMU_INIT */
+

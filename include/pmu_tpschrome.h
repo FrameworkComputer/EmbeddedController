@@ -12,6 +12,24 @@
 #define FET_LCD_PANEL 6
 
 /**
+ * Read pmu register
+ *
+ * @param reg           register offset
+ * @param value         pointer to output value
+ * @return              return EC_SUCCESS on success, err code otherwise
+ */
+int pmu_read(int reg, int *value);
+
+/**
+ * Write pmu register
+ *
+ * @param reg           register offset
+ * @param value         new register value
+ * @return              return EC_SUCCESS on success, err code otherwise
+ */
+int pmu_write(int reg, int value);
+
+/**
  * Check pmu charger alarm
  *
  * @return 0 if there's no charging alarm or pmu access failed
