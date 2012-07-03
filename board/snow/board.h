@@ -53,6 +53,7 @@
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
+#define CONFIG_ARBITRATE_I2C I2C_PORT_HOST
 
 /* GPIO signal list */
 enum gpio_signal {
