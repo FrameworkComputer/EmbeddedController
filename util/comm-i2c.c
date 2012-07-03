@@ -186,30 +186,70 @@ done:
 	return ret;
 }
 
-
 uint8_t read_mapped_mem8(uint8_t offset)
 {
-	/* Not implemented */
-	return 0xff;
-}
+	struct ec_params_read_memmap p;
+	uint8_t val;
 
+	p.offset = offset;
+	p.size = sizeof(val);
+
+	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+		       &val, sizeof(val)) < 0)
+		return 0xff;
+
+	return val;
+}
 
 uint16_t read_mapped_mem16(uint8_t offset)
 {
-	/* Not implemented */
-	return 0xffff;
-}
+	struct ec_params_read_memmap p;
+	uint16_t val;
 
+	p.offset = offset;
+	p.size = sizeof(val);
+
+	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+		       &val, sizeof(val)) < 0)
+		return 0xffff;
+
+	return val;
+}
 
 uint32_t read_mapped_mem32(uint8_t offset)
 {
-	/* Not implemented */
-	return 0xffffffff;
-}
+	struct ec_params_read_memmap p;
+	uint32_t val;
 
+	p.offset = offset;
+	p.size = sizeof(val);
+
+	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+		       &val, sizeof(val)) < 0)
+		return 0xffffffff;
+
+	return val;
+}
 
 int read_mapped_string(uint8_t offset, char *buf)
 {
-	strncpy(buf, "NOT IMPLEMENTED", EC_MEMMAP_TEXT_MAX);
-	return sizeof("NOT IMPLEMENTED");
+	struct ec_params_read_memmap p;
+	int c;
+
+	p.offset = offset;
+	p.size = EC_MEMMAP_TEXT_MAX;
+
+	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+		       buf, EC_MEMMAP_TEXT_MAX) < 0) {
+		*buf = 0;
+		return -1;
+	}
+
+	for (c = 0; c < EC_MEMMAP_TEXT_MAX; c++) {
+		if (buf[c] == 0)
+			return c;
+	}
+
+	buf[EC_MEMMAP_TEXT_MAX - 1] = 0;
+	return EC_MEMMAP_TEXT_MAX - 1;
 }

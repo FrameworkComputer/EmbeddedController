@@ -29,6 +29,11 @@ int ec_command(int command, const void *indata, int insize,
 uint8_t read_mapped_mem8(uint8_t offset);
 uint16_t read_mapped_mem16(uint8_t offset);
 uint32_t read_mapped_mem32(uint8_t offset);
+/*
+ * Read a memory-mapped string at the specified offset and store into buf,
+ * which must be at least size EC_MEMMAP_TEXT_MAX.  Returns the length of
+ * the copied string, not counting the terminating '\0', or <0 if error.
+ */
 int read_mapped_string(uint8_t offset, char *buf);
 
 #endif /* COMM_HOST_H */

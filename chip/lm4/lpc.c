@@ -227,7 +227,7 @@ void lpc_comx_put_char(int c)
  */
 static void update_host_event_status(void) {
 	uint32_t *mapped_raw_events =
-		(uint32_t *)(lpc_get_memmap_range() + EC_MEMMAP_HOST_EVENTS);
+		(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
 
 	int need_sci = 0;
 	int need_smi = 0;

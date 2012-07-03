@@ -5,14 +5,13 @@
 
 /* Temperature sensor module for Chrome EC */
 
-#include "board.h"
 #include "chip_temp_sensor.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "i2c.h"
-#include "lpc.h"
-#include "ec_commands.h"
+#include "host_command.h"
 #include "peci.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -74,10 +73,10 @@ static void poll_fast_sensors(void)
 }
 
 
-static void update_lpc_mapped_memory(void)
+static void update_mapped_memory(void)
 {
 	int i, t;
-	uint8_t *mapped = lpc_get_memmap_range() + EC_MEMMAP_TEMP_SENSOR;
+	uint8_t *mapped = host_get_memmap(EC_MEMMAP_TEMP_SENSOR);
 
 	memset(mapped, 0xff, 16);
 
@@ -104,7 +103,7 @@ void temp_sensor_task(void)
 			poll_fast_sensors();
 		}
 		poll_slow_sensors();
-		update_lpc_mapped_memory();
+		update_mapped_memory();
 	}
 }
 

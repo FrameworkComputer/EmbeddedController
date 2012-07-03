@@ -257,6 +257,22 @@ struct ec_params_board_version {
 	uint16_t board_version;  /* A monotonously incrementing number. */
 } __packed;
 
+/*
+ * Read memory-mapped data.
+ *
+ * This is an alternate interface to memory-mapped data for bus protocols
+ * which don't support direct-mapped memory - I2C, SPI, etc.
+ */
+#define EC_CMD_READ_MEMMAP 0x07
+
+struct ec_params_read_memmap {
+	uint8_t offset;   /* Offset in memmap (EC_MEMMAP_*) */
+	uint8_t size;     /* Size to read in bytes */
+} __packed;
+
+struct ec_response_read_memmap {
+	uint32_t data[EC_PARAM_SIZE];
+} __packed;
 
 /*****************************************************************************/
 /* Flash commands */

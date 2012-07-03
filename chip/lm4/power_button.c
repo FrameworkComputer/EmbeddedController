@@ -515,7 +515,7 @@ void power_button_task(void)
 static int power_button_init(void)
 {
 	/* Set up memory-mapped switch positions */
-	memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
+	memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	*memmap_switches = 0;
 	if (get_lid_open()) {
 		debounced_lid_open = 1;
@@ -633,7 +633,7 @@ DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
 
 static int command_mmapinfo(int argc, char **argv)
 {
-	uint8_t *memmap_switches = lpc_get_memmap_range() + EC_MEMMAP_SWITCHES;
+	uint8_t *memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	uint8_t val = *memmap_switches;
 	int i;
 	const char *explanation[] = {

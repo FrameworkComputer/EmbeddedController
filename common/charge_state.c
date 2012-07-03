@@ -8,14 +8,14 @@
 
 #include "battery.h"
 #include "battery_pack.h"
-#include "board.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "power_button.h"
 #include "power_led.h"
 #include "printf.h"
@@ -41,37 +41,34 @@ static void update_battery_info(void)
 	int batt_serial;
 
 	/* Design Capacity of Full */
-	battery_design_capacity((int *)(lpc_get_memmap_range() +
-					EC_MEMMAP_BATT_DCAP));
+	battery_design_capacity((int *)host_get_memmap(EC_MEMMAP_BATT_DCAP));
 
 	/* Design Voltage */
-	battery_design_voltage((int *)(lpc_get_memmap_range() +
-				       EC_MEMMAP_BATT_DVLT));
+	battery_design_voltage((int *)host_get_memmap(EC_MEMMAP_BATT_DVLT));
 
 	/* Last Full Charge Capacity */
-	battery_full_charge_capacity((int *)(lpc_get_memmap_range() +
-					     EC_MEMMAP_BATT_LFCC));
+	battery_full_charge_capacity(
+		(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC));
 
 	/* Cycle Count */
-	battery_cycle_count((int *)(lpc_get_memmap_range() +
-				    EC_MEMMAP_BATT_CCNT));
+	battery_cycle_count((int *)host_get_memmap(EC_MEMMAP_BATT_CCNT));
 
 	/* Battery Manufacturer string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_MFGR);
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MFGR);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	battery_manufacturer_name(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Battery Model string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_MODEL);
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MODEL);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	battery_device_name(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Battery Type string */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_TYPE);
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_TYPE);
 	battery_device_chemistry(batt_str, EC_MEMMAP_TEXT_MAX);
 
 	/* Smart battery serial number is 16 bits */
-	batt_str = (char *)(lpc_get_memmap_range() + EC_MEMMAP_BATT_SERIAL);
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	if (battery_serial_number(&batt_serial) == 0)
 		snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X", batt_serial);
@@ -474,14 +471,13 @@ void charge_state_machine_task(void)
 	ctx.charger = charger_get_info();
 
 	/* Setup LPC direct memmap */
-	ctx.memmap_batt_volt  = (uint32_t *)(lpc_get_memmap_range() +
-					EC_MEMMAP_BATT_VOLT);
-	ctx.memmap_batt_rate  = (uint32_t *)(lpc_get_memmap_range() +
-					EC_MEMMAP_BATT_RATE);
-	ctx.memmap_batt_cap   = (uint32_t *)(lpc_get_memmap_range() +
-					EC_MEMMAP_BATT_CAP);
-	ctx.memmap_batt_flags = (uint8_t *)(lpc_get_memmap_range() +
-					EC_MEMMAP_BATT_FLAG);
+	ctx.memmap_batt_volt =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
+	ctx.memmap_batt_rate =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_RATE);
+	ctx.memmap_batt_cap =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	ctx.memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 
 	while (1) {
 

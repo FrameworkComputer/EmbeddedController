@@ -157,6 +157,6 @@ int read_mapped_string(uint8_t offset, char *buf)
 			return c;
 	}
 
-	buf[EC_MEMMAP_TEXT_MAX-1] = 0;
-	return EC_MEMMAP_TEXT_MAX;
+	buf[EC_MEMMAP_TEXT_MAX - 1] = 0;
+	return EC_MEMMAP_TEXT_MAX - 1;
 }

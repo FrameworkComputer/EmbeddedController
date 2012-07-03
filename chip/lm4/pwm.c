@@ -5,13 +5,12 @@
 
 /* PWM control module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "pwm.h"
 #include "registers.h"
 #include "task.h"
@@ -103,11 +102,10 @@ int pwm_set_keyboard_backlight(int percent)
 	return EC_SUCCESS;
 }
 
-static void update_lpc_mapped_memory(void)
+static void update_mapped_memory(void)
 {
 	int i, r;
-	uint16_t *mapped = (uint16_t *)(lpc_get_memmap_range() +
-					EC_MEMMAP_FAN);
+	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
 
 	for (i = 0; i < 4; ++i)
 		mapped[i] = 0xffff;
@@ -140,7 +138,7 @@ void pwm_task(void)
 {
 	while (1) {
 		check_fan_failure();
-		update_lpc_mapped_memory();
+		update_mapped_memory();
 		usleep(1000000);
 	}
 }

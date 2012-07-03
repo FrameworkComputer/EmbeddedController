@@ -22,6 +22,17 @@ struct host_command {
 };
 
 /**
+ * Return a pointer to the memory-mapped buffer.
+ *
+ * This buffer is EC_MEMMAP_SIZE bytes long, is writable at any time, and the
+ * host can read it at any time.
+ *
+ * @param offset        Offset within the range to return
+ * @return pointer to the buffer at that offset
+ */
+uint8_t *host_get_memmap(int offset);
+
+/**
  * Process a host command and return its response
  *
  * @param slot		is 0 for kernel-originated commands,

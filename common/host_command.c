@@ -23,6 +23,18 @@
 
 static int host_command[2];
 
+#ifndef CONFIG_LPC
+static uint8_t host_memmap[EC_MEMMAP_SIZE];
+#endif
+
+uint8_t *host_get_memmap(int offset)
+{
+#ifdef CONFIG_LPC
+	return lpc_get_memmap_range() + offset;
+#else
+	return host_memmap + offset;
+#endif
+}
 
 void host_command_received(int slot, int command)
 {
@@ -93,6 +105,32 @@ static int host_command_read_test(uint8_t *data, int *resp_size)
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_TEST, host_command_read_test);
 
+#ifndef CONFIG_LPC
+/*
+ * Host command to read memory map is not needed on LPC, because LPC can
+ * directly map the data to the host's memory space.
+ */
+static int host_command_read_memmap(uint8_t *data, int *resp_size)
+{
+	struct ec_params_read_memmap *p = (struct ec_params_read_memmap *)data;
+	struct ec_response_read_memmap *r =
+			(struct ec_response_read_memmap *)data;
+
+	/* Copy params out of data before we overwrite it with output */
+	uint8_t offset = p->offset;
+	uint8_t size = p->size;
+
+	if (size > sizeof(r->data) || offset > EC_MEMMAP_SIZE ||
+	    offset + size > EC_MEMMAP_SIZE)
+		return EC_RES_INVALID_PARAM;
+
+	memcpy(r->data, host_get_memmap(offset), size);
+
+	*resp_size = size;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP, host_command_read_memmap);
+#endif
 
 #ifdef CONFIG_LPC
 /* ACPI query event handler.  Note that the returned value is NOT actually
@@ -114,7 +152,7 @@ static int host_command_acpi_query_event(uint8_t *data, int *resp_size)
 	return 0;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT, host_command_acpi_query_event);
-#endif
+#endif  /* CONFIG_LPC */
 
 
 /* Finds a command by command number.  Returns the command structure, or NULL if
