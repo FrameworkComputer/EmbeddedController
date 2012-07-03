@@ -34,9 +34,11 @@
 #ifndef CONFIG_TASK_GAIAPOWER
 #define gaia_power_event NULL
 #define gaia_suspend_event NULL
+#define gaia_lid_event NULL
 #else
 void gaia_power_event(enum gpio_signal signal);
 void gaia_suspend_event(enum gpio_signal signal);
+void gaia_lid_event(enum gpio_signal signal);
 #endif
 #ifndef CONFIG_TASK_KEYSCAN
 #define matrix_interrupt NULL
@@ -49,7 +51,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_RISING, gaia_power_event},
 	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_RISING, NULL},
-	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, NULL},
+	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
 	{"SUSPEND_L",   GPIO_A, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT, matrix_interrupt},
