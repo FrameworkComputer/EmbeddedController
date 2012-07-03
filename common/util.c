@@ -184,6 +184,8 @@ void *memmove(void *dest, const void *src, int len)
 char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;
+	if (len <= 0)
+		return dest;
 	while (len > 1 && *src) {
 		*(d++) = *(src++);
 		len--;
