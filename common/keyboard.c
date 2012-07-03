@@ -263,7 +263,8 @@ void keyboard_clear_underlying_buffer(void)
 }
 
 
-/* TODO: Move this implementation to platform-dependent files.
+/*
+ * TODO: Move this implementation to platform-dependent files.
  *       We don't do it now because not every board implement x86_power.c
  *         bds: no CONFIG_LPC and no CONFIG_TASK_X86POWER
  *         daisy(variants): no CONFIG_LPC and no CONFIG_TASK_X86POWER
@@ -271,10 +272,7 @@ void keyboard_clear_underlying_buffer(void)
  */
 static void keyboard_wakeup(void)
 {
-#ifdef CONFIG_LPC
-	lpc_set_host_events(
-		EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED));
-#endif
+	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
 
 

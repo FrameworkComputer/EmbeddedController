@@ -14,7 +14,6 @@
 #include "host_command.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
-#include "lpc.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "system.h"
@@ -189,7 +188,7 @@ static void power_button_pressed(uint64_t tnow)
 	tnext_state = tnow;
 	*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 	keyboard_set_power_button(1);
-	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
+	host_set_single_event(EC_HOST_EVENT_POWER_BUTTON);
 }
 
 
@@ -224,7 +223,7 @@ static void lid_switch_open(uint64_t tnow)
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
 	hook_notify(HOOK_LID_CHANGE, 0);
 	update_backlight();
-	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
+	host_set_single_event(EC_HOST_EVENT_LID_OPEN);
 
 	/* If the chipset is off, clear keyboard recovery and send a power
 	 * button pulse to wake up the chipset. */
@@ -252,7 +251,7 @@ static void lid_switch_close(uint64_t tnow)
 	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
 	hook_notify(HOOK_LID_CHANGE, 0);
 	update_backlight();
-	lpc_set_host_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED));
+	host_set_single_event(EC_HOST_EVENT_LID_CLOSED);
 }
 
 

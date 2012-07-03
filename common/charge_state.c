@@ -5,7 +5,6 @@
  * Battery charging task and state machine.
  */
 
-
 #include "battery.h"
 #include "battery_pack.h"
 #include "charge_state.h"
@@ -15,7 +14,6 @@
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
-#include "lpc.h"
 #include "power_button.h"
 #include "power_led.h"
 #include "printf.h"
@@ -117,12 +115,10 @@ static int state_common(struct power_state_context *ctx)
 			rv = charger_post_init();
 			if (rv)
 				curr->error |= F_CHARGER_INIT;
-			lpc_set_host_events(EC_HOST_EVENT_MASK(
-				EC_HOST_EVENT_AC_CONNECTED));
+			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
 		} else {
 			/* AC off */
-			lpc_set_host_events(EC_HOST_EVENT_MASK(
-				EC_HOST_EVENT_AC_DISCONNECTED));
+			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
 		}
 	}
 
@@ -202,16 +198,14 @@ static int state_common(struct power_state_context *ctx)
 	/* Battery charge level low */
 	if (batt->state_of_charge <= BATTERY_LEVEL_LOW &&
 			prev->batt.state_of_charge > BATTERY_LEVEL_LOW)
-		lpc_set_host_events(EC_HOST_EVENT_MASK(
-			EC_HOST_EVENT_BATTERY_LOW));
+		host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
 
 	/* Battery charge level critical */
 	if (batt->state_of_charge <= BATTERY_LEVEL_CRITICAL) {
 		*ctx->memmap_batt_flags |= EC_BATT_FLAG_LEVEL_CRITICAL;
 		/* Send battery critical host event */
 		if (prev->batt.state_of_charge > BATTERY_LEVEL_CRITICAL)
-			lpc_set_host_events(EC_HOST_EVENT_MASK(
-					EC_HOST_EVENT_BATTERY_CRITICAL));
+			host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
 	} else
 		*ctx->memmap_batt_flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
 
@@ -270,8 +264,7 @@ static enum power_state state_init(struct power_state_context *ctx)
 	update_battery_info();
 
 	/* Send battery event to host */
-	lpc_set_host_events(EC_HOST_EVENT_MASK(
-			    EC_HOST_EVENT_BATTERY));
+	host_set_single_event(EC_HOST_EVENT_BATTERY);
 
 	return PWR_STATE_IDLE;
 }

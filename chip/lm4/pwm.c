@@ -10,7 +10,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "lpc.h"
 #include "pwm.h"
 #include "registers.h"
 #include "task.h"
@@ -128,8 +127,7 @@ static void check_fan_failure(void)
 		 * Fan enabled but stalled. Issues warning.  As we have thermal
 		 * shutdown protection, issuing warning here should be enough.
 		 */
-		lpc_set_host_events(
-			EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL));
+		host_set_single_event(EC_HOST_EVENT_THERMAL);
 		cputs(CC_PWM, "[Fan stalled!]\n");
 	}
 }

@@ -46,11 +46,42 @@ uint8_t *host_get_memmap(int offset);
 enum ec_status host_command_process(int slot, int command, uint8_t *data,
 				    int *response_size);
 
-/* Called by LPC module when a command is written to one of the
-   command slots (0=kernel, 1=user). */
+/**
+ * Set one or more host event bits.
+ *
+ * @param mask          Event bits to set (use EC_HOST_EVENT_MASK()).
+ */
+void host_set_events(uint32_t mask);
+
+/**
+ * Set a single host event.
+ *
+ * @param event         Event to set (EC_HOST_EVENT_*).
+ */
+static inline void host_set_single_event(int event)
+{
+	host_set_events(EC_HOST_EVENT_MASK(event));
+}
+
+/**
+ * Clear one or more host event bits.
+ *
+ * @param mask          Event bits to clear (use EC_HOST_EVENT_MASK()).
+ *                      Write 1 to a bit to clear it.
+ */
+void host_clear_events(uint32_t mask);
+
+/**
+ * Return the raw SCI/SMI event state.
+ */
+uint32_t host_get_events(void);
+
+/**
+ * Called by host interface module when a command is written to one of the
+ * command slots (0=kernel, 1=user).
+ */
 void host_command_received(int slot, int command);
 
-   // success results with response data
 /* Send a successful result code along with response data to a host command.
  * <slot> is 0 for kernel-originated commands,
  *           1 for usermode-originated commands.

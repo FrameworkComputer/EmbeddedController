@@ -5,12 +5,11 @@
 
 /* Thermal engine module for Chrome EC */
 
-#include "board.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
-#include "lpc.h"
-#include "ec_commands.h"
+#include "host_command.h"
 #include "pwm.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -89,18 +88,14 @@ int thermal_toggle_auto_fan_ctrl(int auto_fan_on)
 	return EC_SUCCESS;
 }
 
-
 static void smi_overheated_warning(void)
 {
-	lpc_set_host_events(
-		EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_OVERLOAD));
+	host_set_single_event(EC_HOST_EVENT_THERMAL_OVERLOAD);
 }
-
 
 static void smi_sensor_failure_warning(void)
 {
-	lpc_set_host_events(
-		EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL));
+	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
 
 
