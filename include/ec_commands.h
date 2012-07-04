@@ -161,9 +161,23 @@ enum host_event_code {
 	EC_HOST_EVENT_THERMAL = 11,
 	EC_HOST_EVENT_USB_CHARGER = 12,
 	EC_HOST_EVENT_KEY_PRESSED = 13,
+	/*
+	 * EC has finished initializing the host interface.  The host can check
+	 * for this event following sending a EC_CMD_REBOOT_EC command to
+	 * determine when the EC is ready to accept subsequent commands.
+	 */
+	EC_HOST_EVENT_INTERFACE_READY = 14,
+	/*
+	 * The high bit of the event mask is not used as a host event code.  If
+	 * it reads back as set, then the entire event mask should be
+	 * considered invalid by the host.  This can happen when reading the
+	 * raw event status via EC_MEMMAP_HOST_EVENTS but the LPC interface is
+	 * not initialized on the EC, or improperly configured on the host.
+	 */
+	EC_HOST_EVENT_INVALID = 32
 };
 /* Host event mask */
-#define EC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
+#define EC_HOST_EVENT_MASK(event_code) (1UL << ((event_code) - 1))
 
 /*
  * Notes on commands:

@@ -176,7 +176,7 @@ enum ec_status host_command_process(int slot, int command, uint8_t *data,
 	const struct host_command *cmd = find_host_command(command);
 	enum ec_status res = EC_RES_INVALID_COMMAND;
 
-	CPRINTF("[hostcmd%d 0x%02x]\n", slot, command);
+	CPRINTF("[%T hostcmd%d 0x%02x]\n", slot, command);
 
 	*response_size = 0;
 	if (cmd)
@@ -191,23 +191,25 @@ static void command_process(int slot)
 	int size;
 	int res;
 
-	CPRINTF("[hostcmd%d 0x%02x]\n", slot, host_command[slot]);
+	CPRINTF("[%T hostcmd%d 0x%02x]\n", slot, host_command[slot]);
 
 	res = host_command_process(slot, host_command[slot],
 				   host_get_buffer(slot), &size);
 
 	host_send_response(slot, res, host_get_buffer(slot), size);
 }
+
 /*****************************************************************************/
 /* Initialization / task */
 
 static int host_command_init(void)
 {
 	host_command[0] = host_command[1] = -1;
+	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
+	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
 
 	return EC_SUCCESS;
 }
-
 
 void host_command_task(void)
 {

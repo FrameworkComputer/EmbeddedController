@@ -284,6 +284,7 @@ void lpc_set_host_events(uint32_t mask)
 		return;
 
 	host_events |= mask;
+	CPRINTF("[%T event set 0x%08x -> %08x]\n", mask, host_events);
 	update_host_event_status();
 }
 
@@ -294,6 +295,7 @@ void lpc_clear_host_events(uint32_t mask)
 		return;
 
 	host_events &= ~mask;
+	CPRINTF("[%T event clear 0x%08x -> %08x]\n", mask, host_events);
 	update_host_event_status();
 }
 

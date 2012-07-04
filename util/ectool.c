@@ -1251,8 +1251,14 @@ int cmd_acpi_query_ec(int argc, char *argv[])
 
 int cmd_host_event_get_raw(int argc, char *argv[])
 {
-	printf("Current host events: 0x%08x\n",
-	       read_mapped_mem32(EC_MEMMAP_HOST_EVENTS));
+	uint32_t events = read_mapped_mem32(EC_MEMMAP_HOST_EVENTS);
+
+	if (events & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID)) {
+		printf("Current host events: invalid\n");
+		return -1;
+	}
+
+	printf("Current host events: 0x%08x\n", events);
 	return 0;
 }
 
