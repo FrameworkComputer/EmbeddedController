@@ -73,19 +73,19 @@ int flash_get_size(void);
  * contiguous from this start address through to the end of the usable
  * flash.
  *
- * This function returns NULL if offset + size_req extends beyond the end
- * of flash, or if either size_req or offset are not aligned to 'align'.
+ * This function returns -1 if offset + size_req extends beyond the end
+ * of flash, the offset is out of range, or if either size_req or offset
+ * are not aligned to 'align'.
  *
  * @param offset	Flash offset to get address of
  * @param size_req	Number of bytes requested
  * @param align		Ensure offset and size_req are aligned to given
  *			power of two.
- * @param sizep		If not NULL, returns amount of flash available at
- *			this memory addr, unless function fails, iwc it is
- *			unset.
- * @return pointer to flash, or NULL on error
+ * @param ptrp		If not NULL, returns a pointer to this flash offset
+ *			in memory, unless function fails, iwc it is unset.
+ * @return size of flash region available at *ptrp, or -1 on error
  */
-char *flash_dataptr(int offset, int size_req, int align, int *sizep);
+int flash_dataptr(int offset, int size_req, int align, char **ptrp);
 
 /* Reads <size> bytes of data from offset <offset> into <data>. */
 int flash_read(int offset, int size, char *data);

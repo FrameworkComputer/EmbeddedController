@@ -136,22 +136,22 @@ int flash_get_size(void)
 }
 
 
-char *flash_dataptr(int offset, int size_req, int align, int *sizep)
+int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 {
 	if (offset < 0 || size_req < 0 ||
 			offset + size_req > usable_flash_size ||
 			(offset | size_req) & (align - 1))
-		return NULL;  /* Invalid range */
-	if (sizep)
-		*sizep = usable_flash_size - offset;
+		return -1;  /* Invalid range */
+	if (ptrp)
+		*ptrp = flash_physical_dataptr(offset);
 
-	return flash_physical_dataptr(offset);
+	return usable_flash_size - offset;
 }
 
 
 int flash_read(int offset, int size, char *data)
 {
-	if (!flash_dataptr(offset, size, 1, NULL))
+	if (flash_dataptr(offset, size, 1, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	return flash_physical_read(offset, size, data);
@@ -160,7 +160,8 @@ int flash_read(int offset, int size, char *data)
 
 int flash_write(int offset, int size, const char *data)
 {
-	if (!flash_dataptr(offset, size, flash_get_write_block_size(), NULL))
+	if (flash_dataptr(offset, size, flash_get_write_block_size(),
+			NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	/* TODO (crosbug.com/p/7478) - safety check - don't allow writing to
@@ -172,7 +173,8 @@ int flash_write(int offset, int size, const char *data)
 
 int flash_erase(int offset, int size)
 {
-	if (!flash_dataptr(offset, size, flash_get_erase_block_size(), NULL))
+	if (flash_dataptr(offset, size, flash_get_erase_block_size(),
+			NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	/* TODO (crosbug.com/p/7478) - safety check - don't allow erasing the
@@ -187,7 +189,7 @@ int flash_protect_until_reboot(int offset, int size)
 	int pbsize = flash_get_protect_block_size();
 	int i;
 
-	if (!flash_dataptr(offset, size, pbsize, NULL))
+	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	/* Convert offset and size to blocks */
@@ -206,7 +208,7 @@ int flash_set_protect(int offset, int size, int enable)
 	int pbsize = flash_get_protect_block_size();
 	int rv, i;
 
-	if (!flash_dataptr(offset, size, pbsize, NULL))
+	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	/* Fail if write protect block is already locked */
@@ -292,7 +294,7 @@ int flash_get_protect(int offset, int size)
 	uint8_t minflags = 0xff;
 	int i;
 
-	if (!flash_dataptr(offset, size, pbsize, NULL))
+	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
 		return 0;  /* Invalid range; assume nothing protected */
 
 	/* Convert offset and size to blocks */
