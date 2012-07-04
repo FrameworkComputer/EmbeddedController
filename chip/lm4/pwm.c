@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "pwm.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "thermal.h"
 #include "timer.h"
@@ -31,6 +32,19 @@
  */
 #define CPU_FAN_SCALE 2
 
+
+#define PWM_SYSJUMP_TAG 0x504d  /* "PM" */
+#define PWM_HOOK_VERSION 1
+/* the previous pwm state before reboot_ec. */
+struct pwm_state {
+	uint16_t fan_rpm;
+	uint8_t fan_en;
+	uint8_t kblight_en;
+	uint8_t kblight_percent;
+	char pad; /* Pad to multiple of 4 bytes. */
+};
+
+
 /* Configures the GPIOs for the fan module. */
 static void configure_gpios(void)
 {
@@ -48,6 +62,11 @@ int pwm_enable_fan(int enable)
 		LM4_FAN_FANCTL &= ~(1 << FAN_CH_CPU);
 
 	return EC_SUCCESS;
+}
+
+int pwm_get_fan_enabled(void)
+{
+	return (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) ? 1 : 0;
 }
 
 int pwm_get_fan_rpm(void)
@@ -120,8 +139,7 @@ static void update_mapped_memory(void)
 
 static void check_fan_failure(void)
 {
-	if (pwm_get_fan_target_rpm() != 0 &&
-	    (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) &&
+	if (pwm_get_fan_target_rpm() != 0 && pwm_get_fan_enabled() &&
 	    ((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) {
 		/*
 		 * Fan enabled but stalled. Issues warning.  As we have thermal
@@ -148,14 +166,13 @@ void pwm_task(void)
 static int command_fan_info(int argc, char **argv)
 {
 	ccprintf("Actual: %4d rpm\n", pwm_get_fan_rpm());
-	ccprintf("Target: %4d rpm\n",
-		 (LM4_FAN_FANCMD(FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE);
+	ccprintf("Target: %4d rpm\n", pwm_get_fan_target_rpm());
 	ccprintf("Duty:   %d%%\n",
 		 ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
 	ccprintf("Status: %d\n",
 		 (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
 	ccprintf("Enable: %s\n",
-		 LM4_FAN_FANCTL & (1 << FAN_CH_CPU) ? "yes" : "no");
+		 pwm_get_fan_enabled() ? "yes" : "no");
 	ccprintf("Power:  %s\n",
 		 gpio_get_level(GPIO_PGOOD_5VALW) ? "yes" : "no");
 
@@ -271,6 +288,8 @@ DECLARE_CONSOLE_COMMAND(kblight, command_kblight,
 static int pwm_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
+	const struct pwm_state *prev;
+	int version, size;
 
 	/* Enable the fan module and delay a few clocks */
 	LM4_SYSTEM_RCGCFAN = 1;
@@ -309,19 +328,46 @@ static int pwm_init(void)
 	 */
 	LM4_FAN_FANCH(FAN_CH_KBLIGHT) = 0x0001;
 
-	/* Set initial fan speed to maximum, backlight off */
-	pwm_set_fan_target_rpm(-1);
-	pwm_set_keyboard_backlight(0);
+	prev = (const struct pwm_state *)system_get_jump_tag(PWM_SYSJUMP_TAG,
+							     &version, &size);
+	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
+		/* Restore previous state. */
+		pwm_enable_fan(prev->fan_en);
+		pwm_set_fan_target_rpm(prev->fan_rpm);
+		pwm_enable_keyboard_backlight(prev->kblight_en);
+		pwm_set_keyboard_backlight(prev->kblight_percent);
+	}
+	else {
+		/* Set initial fan speed to maximum, backlight off */
+		pwm_set_fan_target_rpm(-1);
+		pwm_set_keyboard_backlight(0);
 
-	/*
-	 * Enable keyboard backlight.  Fan will be enabled later by whatever
-	 * controls the fan power supply.
-	 */
-	LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
+		/*
+		 * Enable keyboard backlight.  Fan will be enabled later by whatever
+		 * controls the fan power supply.
+		 */
+		pwm_enable_keyboard_backlight(1);
+	}
 
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+
+static int pwm_preserve_state(void)
+{
+	struct pwm_state state;
+
+	state.fan_en = pwm_get_fan_enabled();
+	state.fan_rpm = pwm_get_fan_target_rpm();
+	state.kblight_en = pwm_get_keyboard_backlight_enabled();
+	state.kblight_percent = pwm_get_keyboard_backlight();
+
+	system_add_jump_tag(PWM_SYSJUMP_TAG, PWM_HOOK_VERSION,
+			    sizeof(state), &state);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, pwm_preserve_state, HOOK_PRIO_DEFAULT);
 
 static int pwm_resume(void)
 {
