@@ -76,6 +76,7 @@ enum gpio_signal {
 	GPIO_KB_IN06,
 	GPIO_KB_IN07,
 	/* Other inputs */
+	GPIO_AC_PWRBTN_L,
 	GPIO_SPI1_NSS,
 	/* Outputs */
 	GPIO_SPI1_MISO,

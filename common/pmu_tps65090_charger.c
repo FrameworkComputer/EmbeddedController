@@ -55,48 +55,44 @@ static void enable_charging(int enable)
 	enable = enable ? 1 : 0;
 	if (gpio_get_level(GPIO_CHARGER_EN) != enable)
 		gpio_set_level(GPIO_CHARGER_EN, enable);
-
-	/* With NOITERM bit set, charger can be controlled by gpio.
-	 * Hence following charger enable command can be removed.
-	 *
-	 * pmu_enable_charger(enable);
-	 */
 }
 
 
 /**
- * An ES1 workaround to get AC state
- * The dev boards without rework can not get AC state directly from gpio.
- * And the tps65090 VACG/VBATG does not reflect AC and battery state correctly.
- * This workaround uses tps65090 irq event and battery i2c to get correct AC
- * state.
+ * Get AC state through GPIO
+ *
+ * @return 0        AC off
+ * @return 1        AC on
+ *
+ * TODO: This is a board specific function, should be moved to
+ * system_common.c or board.c
  */
 static int get_ac(void)
 {
-	int rv;
-	int ac, batt, alarm;
+	/*
+	 * Detect AC state using combined gpio pins
+	 *
+	 * On daisy and snow, there's no single gpio signal to detect AC.
+	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
+	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
+	 * Hence the ac state can be logical OR of these two signal line.
+	 *
+	 * One drawback of this detection is, when press-and-hold power
+	 * button. AC state will be unknown. The implementation below treats
+	 * that condition as AC off.
+	 *
+	 * TODO(rongchang): move board related function to board/ and common
+	 * interface to system_get_ac()
+	 */
 
-	rv = pmu_get_power_source(&ac, &batt);
-	if (rv)
-		return 0;
-
-	if (ac && batt)
-		return 1;
-
-	if (ac || batt) {
-		enable_charging(1);
-		usleep(10000);
-		enable_charging(0);
-	}
-
-
-	if (battery_status(&alarm) == 0)
-		return 0;
-
-	return 1;
+	return gpio_get_level(GPIO_AC_PWRBTN_L) &&
+			gpio_get_level(GPIO_KB_PWR_ON_L);
 }
 
-/* TODO: move battery vendor specific functions to battery pack module */
+/*
+ * TODO(rongchang): move battery vendor specific functions to battery pack
+ * module
+ */
 static int battery_temperature_celsius(int t)
 {
 	return (t - 2731) / 10;
@@ -144,7 +140,7 @@ static int system_off(void)
 		CPUTS("[pmu] turn system off\n");
 		chipset_exit_hard_off();
 
-		/* TODO: After have impl in chipset_exit_hard_off(),
+		/* TODO(rongchang): After have impl in chipset_exit_hard_off(),
 		 * remove these gpio hack
 		 */
 		gpio_set_level(GPIO_EN_PP3300, 0);
@@ -153,7 +149,7 @@ static int system_off(void)
 		gpio_set_level(GPIO_EN_PP5000, 0);
 	}
 
-	return ST_IDLE;
+	return wait_t1_idle();
 }
 
 static int notify_battery_low(void)
@@ -166,7 +162,7 @@ static int notify_battery_low(void)
 		if (now.val - last_notify_time.val > 60000000) {
 			CPUTS("[pmu] notify battery low (< 10%)\n");
 			last_notify_time = now;
-			/* TODO: notify AP */
+			/* TODO(rongchang): notify AP ? */
 		}
 	}
 	return ST_DISCHARGING;
@@ -240,14 +236,17 @@ static int calc_next_state(int state)
 		if (battery_temperature(&batt_temp) ||
 				!battery_charging_range(batt_temp)) {
 			CPUTS("[pmu] charging: battery hot\n");
+			enable_charging(0);
 			break;
 		}
 		if (battery_status(&alarm) || (alarm & ALARM_CHARGING)) {
 			CPUTS("[pmu] charging: battery alarm\n");
+			enable_charging(0);
 			break;
 		}
 		if (pmu_is_charger_alarm()) {
 			CPUTS("[pmu] charging: charger alarm\n");
+			enable_charging(0);
 			break;
 		}
 		return wait_t2_charging();
@@ -261,6 +260,7 @@ static int calc_next_state(int state)
 		if (battery_temperature(&batt_temp) == 0) {
 			if (!battery_discharging_range(batt_temp)) {
 				CPUTS("[pmu] discharging: battery hot\n");
+				enable_charging(0);
 				return system_off();
 			}
 		}
@@ -268,6 +268,7 @@ static int calc_next_state(int state)
 		if (!battery_status(&alarm) && (alarm & ALARM_DISCHARGING)) {
 			CPRINTF("[pmu] discharging: battery alarm %016b\n",
 					alarm);
+			enable_charging(0);
 			return system_off();
 		}
 		/* Check remaining charge % */
