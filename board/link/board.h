@@ -225,13 +225,10 @@ enum temp_sensor_id {
 /* The number of TMP006 sensor chips on the board. */
 #define TMP006_COUNT 4
 
-/* Target value for BOOTCFG.  This currently toggles the polarity bit without
- * enabling the boot loader, simply to prove we can program it. */
-/* TODO: (crosbug.com/p/8769) set BOOTCFG to 0x7ffffffe, which will prevent
- * subsequent writes to BOOTCFG.  Alternately, we could set BOOTCFG to some
- * signal which has a pullup/pulldown, and use that as a failsafe to get into
- * the boot loader, if we somehow brick the RO firmware. */
-#define BOOTCFG_VALUE 0xfffffdfe
+/* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
+ * pullup. If this signal is pulled to ground when the EC boots, the EC will get
+ * into the boot loader and we can recover bricked EC. */
+#define BOOTCFG_VALUE 0x7fff88fe
 
 /* Known board versions for system_get_board_version(). */
 enum board_version {
