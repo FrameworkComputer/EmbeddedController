@@ -321,13 +321,26 @@ static inline void dump_i2c_reg(int port)
 #endif /* CONFIG_DEBUG_I2C */
 }
 
-static int wait_status(int port, uint32_t mask)
+enum wait_t {
+	WAIT_NONE,
+	WAIT_MASTER_START,
+	WAIT_ADDR_READY,
+	WAIT_XMIT_TXE,
+	WAIT_XMIT_FINAL_TXE,
+	WAIT_XMIT_BTF,
+	WAIT_XMIT_STOP,
+	WAIT_RX_NE,
+	WAIT_RX_NE_FINAL,
+	WAIT_RX_NE_STOP,
+	WAIT_RX_NE_STOP_SIZE2,
+};
+
+static int wait_status(int port, uint32_t mask, enum wait_t wait)
 {
 	uint32_t r;
 	timestamp_t t1, t2;
 
-
-	t1 = get_time();
+	t1 = t2 = get_time();
 	r = STM32_I2C_SR1(port);
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
@@ -336,12 +349,17 @@ static int wait_status(int port, uint32_t mask)
 			CPRINTF(" m %016b\n", mask);
 			CPRINTF(" - %016b\n", r);
 #endif /* CONFIG_DEBUG_I2C */
+			CPRINTF("i2c wait_status timeout type %d, %d us\n",
+				wait, (unsigned)t2.val - (unsigned)t1.val);
 			return EC_ERROR_TIMEOUT;
 		} else if (t2.val - t1.val > 150) {
 			usleep(2000);
 		}
 		r = STM32_I2C_SR1(port);
 	}
+
+	if (t2.val - t1.val > 1000)
+		CPRINTF("timeout=%dus\n", (unsigned)t2.val - (unsigned)t1.val);
 
 	return EC_SUCCESS;
 }
@@ -362,13 +380,13 @@ static int master_start(int port, int slave_addr)
 	/* Change to master send mode, reset stop bit, send start bit */
 	STM32_I2C_CR1(port) = (STM32_I2C_CR1(port) & ~(1 << 9)) | (1 << 8);
 	/* Wait for start bit sent event */
-	rv = wait_status(port, SR1_SB);
+	rv = wait_status(port, SR1_SB, WAIT_MASTER_START);
 	if (rv)
 		return rv;
 	/* Send address */
 	STM32_I2C_DR(port) = slave_addr;
 	/* Wait for addr ready */
-	rv = wait_status(port, SR1_ADDR);
+	rv = wait_status(port, SR1_ADDR, WAIT_ADDR_READY);
 	if (rv)
 		return rv;
 	read_clear_status(port);
@@ -431,21 +449,21 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 
 	/* TODO: use common i2c_write_raw instead */
 	for (i = 0; i < size; i++) {
-		rv = wait_status(port, SR1_TxE);
+		rv = wait_status(port, SR1_TxE, WAIT_XMIT_TXE);
 		if (rv)
 			return rv;
 		STM32_I2C_DR(port) = data[i];
 	}
-	rv = wait_status(port, SR1_TxE);
+	rv = wait_status(port, SR1_TxE, WAIT_XMIT_FINAL_TXE);
 	if (rv)
 		return rv;
-	rv = wait_status(port, SR1_BTF);
+	rv = wait_status(port, SR1_BTF, WAIT_XMIT_BTF);
 	if (rv)
 		return rv;
 
 	if (stop) {
 		master_stop(port);
-		return wait_status(port, 0);
+		return wait_status(port, 0, WAIT_XMIT_STOP);
 	}
 
 	return EC_SUCCESS;
@@ -483,7 +501,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 
 	if (size >= 2) {
 		for (i = 0; i < (size - 2); i++) {
-			rv = wait_status(port, SR1_RxNE);
+			rv = wait_status(port, SR1_RxNE, WAIT_RX_NE);
 			if (rv)
 				return rv;
 
@@ -500,7 +518,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		 *   => wait rx ready
 		 *   => read [n-1]
 		 */
-		rv = wait_status(port, SR1_RxNE);
+		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_FINAL);
 		if (rv)
 			return rv;
 
@@ -509,7 +527,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 
 		data[i] = STM32_I2C_DR(port);
 
-		rv = wait_status(port, SR1_RxNE);
+		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_STOP);
 		if (rv)
 			return rv;
 
@@ -517,7 +535,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		data[i] = STM32_I2C_DR(port);
 	} else {
 		master_stop(port);
-		rv = wait_status(port, SR1_RxNE);
+		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_STOP_SIZE2);
 		if (rv)
 			return rv;
 		data[0] = STM32_I2C_DR(port);
