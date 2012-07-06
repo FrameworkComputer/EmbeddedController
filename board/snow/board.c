@@ -183,7 +183,7 @@ enum {
 	BUS_WAIT_RETRY_US	= 3000,
 
 	/* Time to wait until the bus becomes free */
-	BUS_WAIT_FREE_US	= 50 * 1000,
+	BUS_WAIT_FREE_US	= 100 * 1000,
 };
 
 #ifdef CONFIG_ARBITRATE_I2C
@@ -231,6 +231,10 @@ int board_i2c_claim(int port)
 		usleep(BUS_WAIT_RETRY_US);
 	} while (time_since32(start) < BUS_WAIT_FREE_US);
 
+	gpio_set_level(GPIO_EC_CLAIM, 1);
+	usleep(BUS_SLEW_DELAY_US);
+
+	panic_puts("Unable to access I2C bus (arbitration timeout)\n");
 	return EC_ERROR_BUSY;
 }
 
@@ -239,6 +243,7 @@ void board_i2c_release(int port)
 	if (port == I2C_PORT_HOST) {
 		/* Release our claim */
 		gpio_set_level(GPIO_EC_CLAIM, 1);
+		usleep(BUS_SLEW_DELAY_US);
 	}
 }
 #endif /* CONFIG_ARBITRATE_I2C */
