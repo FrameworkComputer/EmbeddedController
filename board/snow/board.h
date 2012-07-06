@@ -55,6 +55,8 @@
 #define I2C_PORT_SLAVE 1
 #define CONFIG_ARBITRATE_I2C I2C_PORT_HOST
 
+#define CONFIG_CMD_PMU
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */

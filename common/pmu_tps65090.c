@@ -10,6 +10,7 @@
 #include "common.h"
 #include "i2c.h"
 #include "pmu_tpschrome.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -151,3 +152,54 @@ void pmu_init(void)
 	pmu_write(IRQ2MASK, 0xff);
 
 }
+
+#ifdef CONFIG_CMD_PMU
+static int print_pmu_info(void)
+{
+	int reg, ret;
+	int value;
+
+	for (reg = 0; reg < 0xc; reg++) {
+		ret = pmu_read(reg, &value);
+		if (ret)
+			return ret;
+		if (!reg)
+			ccputs("PMU: ");
+
+		ccprintf("%02x ", value);
+	}
+	ccputs("\n");
+
+	return 0;
+}
+
+static int command_pmu(int argc, char **argv)
+{
+	int repeat = 1;
+	int rv = 0;
+	int loop;
+	char *e;
+
+	if (argc > 1) {
+		repeat = strtoi(argv[1], &e, 0);
+		if (*e) {
+			ccputs("Invalid repeat count\n");
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	for (loop = 0; loop < repeat; loop++) {
+		rv = print_pmu_info();
+		usleep(1000);
+	}
+
+	if (rv)
+		ccprintf("Failed - error %d\n", rv);
+
+	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pmu, command_pmu,
+			"<repeat_count>",
+			"Print PMU info",
+			NULL);
+#endif
