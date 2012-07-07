@@ -18,6 +18,9 @@
 #define CONFIG_UART_SR_OFFSET  0x18
 #define CONFIG_UART_SR_TXEMPTY 0x80
 
+/* Use a bigger console output buffer */
+#define CONFIG_UART_TX_BUF_SIZE 1024
+
 /****************************************************************************/
 /* Memory mapping */
 

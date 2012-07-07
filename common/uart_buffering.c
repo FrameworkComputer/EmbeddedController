@@ -7,35 +7,46 @@
 
 #include <stdarg.h>
 
+#include "common.h"
 #include "console.h"
+#include "printf.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
-#include "printf.h"
 
-/* Buffer sizes; should be power of 2 */
-#define TX_BUF_SIZE 512
-#define RX_BUF_SIZE 128  /* suggest larger than 80 to copy&paste script. */
+/*
+ * Transmit and receive buffer sizes must be power of 2 for the macros below
+ * to work properly.
+ */
+#ifndef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 512
+#endif
+
+#ifndef CONFIG_UART_RX_BUF_SIZE
+/* Must be larger than RX_LINE_SIZE to copy and paste scripts */
+#define CONFIG_UART_RX_BUF_SIZE 128
+#endif
+
 #define HISTORY_SIZE 8
 
 /* The size limit of single command */
 #define RX_LINE_SIZE 80
 
 /* Macros to advance in the circular buffers */
-#define TX_BUF_NEXT(i) (((i) + 1) & (TX_BUF_SIZE - 1))
-#define RX_BUF_NEXT(i) (((i) + 1) & (RX_BUF_SIZE - 1))
-#define RX_BUF_PREV(i) (((i) - 1) & (RX_BUF_SIZE - 1))
+#define TX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_TX_BUF_SIZE - 1))
+#define RX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
+#define RX_BUF_PREV(i) (((i) - 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
 #define CMD_HIST_NEXT(i) (((i) + 1) & (HISTORY_SIZE - 1))
 #define CMD_HIST_PREV(i) (((i) - 1) & (HISTORY_SIZE - 1))
 
 /* Macro to calculate difference of pointers in the circular receive buffer. */
-#define RX_BUF_DIFF(i, j) (((i) - (j)) & (RX_BUF_SIZE - 1))
+#define RX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
 /* Transmit and receive buffers */
-static volatile char tx_buf[TX_BUF_SIZE];
+static volatile char tx_buf[CONFIG_UART_TX_BUF_SIZE];
 static volatile int tx_buf_head;
 static volatile int tx_buf_tail;
-static volatile char rx_buf[RX_BUF_SIZE];
+static volatile char rx_buf[CONFIG_UART_RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
 static volatile char rx_cur_buf[RX_LINE_SIZE];
@@ -176,7 +187,7 @@ static void insert_char(char c)
 static int rx_buf_space_available(void)
 {
 	if (cmd_history_head == cmd_history_tail)
-		return RX_BUF_SIZE;
+		return CONFIG_UART_RX_BUF_SIZE;
 	return RX_BUF_DIFF(cmd_history[cmd_history_tail].tail,
 			   cmd_history[CMD_HIST_PREV(cmd_history_head)].head);
 }
@@ -257,7 +268,7 @@ static void history_prev(void)
 		int last_id = CMD_HIST_PREV(cmd_history_head);
 		int last_len = RX_BUF_DIFF(cmd_history[last_id].head,
 					   cmd_history[last_id].tail);
-		if (last_len + rx_cur_buf_head > RX_BUF_SIZE)
+		if (last_len + rx_cur_buf_head > CONFIG_UART_RX_BUF_SIZE)
 			return;
 
 		history_save();
