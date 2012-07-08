@@ -330,6 +330,10 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	uint32_t base;
 	uint32_t init_addr;
 
+	/* If system is already running the requested image, done */
+	if (system_get_image_copy() == copy)
+		return EC_SUCCESS;
+
 	if (system_is_locked()) {
 		/* System is locked, so disallow jumping between images unless
 		 * this is the initial jump from RO to RW code. */
