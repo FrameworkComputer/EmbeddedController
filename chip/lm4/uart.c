@@ -149,12 +149,6 @@ int uart_init(void)
 	volatile uint32_t scratch  __attribute__((unused));
 	int ch;
 
-	/*
-	 * Check that the UART parameters used for panic/watchdog are matching
-	 * the UART0 parameters.
-	*/
-	BUILD_ASSERT(LM4_UART_CH0_BASE == CONFIG_UART_ADDRESS);
-
 	/* Enable UART0 and UART1 and delay a few clocks */
 	LM4_SYSTEM_RCGCUART |= 0x03;
 	scratch = LM4_SYSTEM_RCGCUART;

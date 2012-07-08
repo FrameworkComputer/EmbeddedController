@@ -111,12 +111,6 @@ DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 1);
 
 int uart_init(void)
 {
-	/*
-	 * Check that the UART parameters used for panic/watchdog are matching
-	 * the console USART parameters.
-	*/
-	BUILD_ASSERT(STM32_USART_BASE(UARTN) == CONFIG_UART_ADDRESS);
-
 	/* Enable USART clock */
 	if (UARTN == 1)
 		STM32_RCC_APB2ENR |= 1 << 14; /* USART1 */

@@ -12,12 +12,6 @@
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 132
 
-/* Debug UART parameters for panic message */
-#define CONFIG_UART_ADDRESS    0x4000c000
-#define CONFIG_UART_DR_OFFSET  0x00
-#define CONFIG_UART_SR_OFFSET  0x18
-#define CONFIG_UART_SR_TXEMPTY 0x80
-
 /* Use a bigger console output buffer */
 #define CONFIG_UART_TX_BUF_SIZE 1024
 
