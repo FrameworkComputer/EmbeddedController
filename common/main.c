@@ -128,7 +128,6 @@ int main(void)
 	 * RO image and once in the RW image.
 	 */
 	vboot_check_signature();
-#endif
 
 	/*
 	 * If system is locked, disable system jumps now that vboot has had its
@@ -136,6 +135,7 @@ int main(void)
 	 */
 	if (system_is_locked())
 		system_disable_jump();
+#endif
 
 	/*
 	 * Initialize other driver modules.  These can occur in any order.
