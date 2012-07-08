@@ -137,8 +137,7 @@ const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
 	 * this list so we don't double-initialize it. */
 	{"batt_chg", I2C_PORT_BATTERY,  100},
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
-	/* TODO: TMP007 supports 3.4Mbps operation; use faster speed? */
-	{"thermal",  I2C_PORT_THERMAL,  400},
+	{"thermal",  I2C_PORT_THERMAL,  100},
 };
 
 void configure_board(void)
