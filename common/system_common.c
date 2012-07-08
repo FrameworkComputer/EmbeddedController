@@ -492,6 +492,9 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		system_reset(1);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
+	case EC_REBOOT_DISABLE_JUMP:
+		system_disable_jump();
+		return EC_SUCCESS;
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -606,14 +609,8 @@ static int command_sysjump(int argc, char **argv)
 	uint32_t addr;
 	char *e;
 
-	/* Command is only allowed on an unlocked system */
-	if (system_is_locked())
-		return EC_ERROR_ACCESS_DENIED;
-
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
-
-	ccputs("Processing sysjump command\n");
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
@@ -622,6 +619,10 @@ static int command_sysjump(int argc, char **argv)
 		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
 	else if (!strcasecmp(argv[1], "B"))
 		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
+	else if (!strcasecmp(argv[1], "disable")) {
+		system_disable_jump();
+		return EC_SUCCESS;
+	}
 
 	/* Arbitrary jumps are only allowed on an unlocked system */
 	if (system_is_locked())
@@ -638,7 +639,7 @@ static int command_sysjump(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
-			"[RO | A | B | addr]",
+			"[RO | A | B | addr | disable]",
 			"Jump to a system image or address",
 			NULL);
 

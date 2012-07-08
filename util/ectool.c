@@ -85,7 +85,7 @@ const char help_str[] =
 	"      Does an ACPI Query Embedded Controller command\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
-	"  reboot_ec <RO|A|B> [at-shutdown]\n"
+	"  reboot_ec <RO|A|B|disable-jump> [at-shutdown]\n"
 	"      Reboot EC to RO or RW A/B\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
@@ -355,6 +355,8 @@ int cmd_reboot_ec(int argc, char *argv[])
 		p.cmd = EC_REBOOT_JUMP_RW_B;
 	else if (!strcmp(argv[1], "cold"))
 		p.cmd = EC_REBOOT_COLD;
+	else if (!strcmp(argv[1], "disable-jump"))
+		p.cmd = EC_REBOOT_DISABLE_JUMP;
 	else {
 		fprintf(stderr, "Unknown command: %s\n", argv[1]);
 		return -1;

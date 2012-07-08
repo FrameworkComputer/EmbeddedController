@@ -733,6 +733,7 @@ enum ec_reboot_cmd {
 	EC_REBOOT_JUMP_RW_A,         /* Jump to RW-A without rebooting */
 	EC_REBOOT_JUMP_RW_B,         /* Jump to RW-B without rebooting */
 	EC_REBOOT_COLD,              /* Cold-reboot */
+	EC_REBOOT_DISABLE_JUMP,      /* Disable jump until next reboot */
 };
 
 /* Flags for ec_params_reboot_ec.reboot_flags */
