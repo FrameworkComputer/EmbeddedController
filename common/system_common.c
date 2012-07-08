@@ -65,11 +65,15 @@ static struct jump_data * const jdata =
 static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
 static int jumped_to_image;
-static int disable_jump;
+static int disable_jump;  /* Disable ALL jumps if system is locked */
+static int force_locked;  /* Force system locked even if WP isn't enabled */
 static enum ec_reboot_cmd reboot_at_shutdown;
 
 int system_is_locked(void)
 {
+	if (force_locked)
+		return 1;
+
 #ifdef CONFIG_SYSTEM_UNLOCKED
 	/* System is explicitly unlocked */
 	return 0;
@@ -77,9 +81,8 @@ int system_is_locked(void)
 #elif defined(BOARD_link) && defined(CONFIG_FLASH)
 	/* On link, unlocked if write protect pin deasserted or flash protect
 	 * lock not applied. */
-	int lock = flash_get_protect_lock();
-	if (!(lock & FLASH_PROTECT_PIN_ASSERTED) ||
-	    !(lock & FLASH_PROTECT_LOCK_APPLIED))
+	if ((FLASH_PROTECT_PIN_ASSERTED | FLASH_PROTECT_LOCK_APPLIED) &
+	    ~flash_get_protect_lock())
 		return 0;
 
 	/* If WP pin is asserted and lock is applied, we're locked */
@@ -513,7 +516,18 @@ static int command_sysinfo(int argc, char **argv)
 		    system_get_reset_cause_string());
 	ccprintf("Copy:   %s\n", system_get_image_copy_string());
 	ccprintf("Jumped: %s\n", system_jumped_to_this_image() ? "yes" : "no");
-	ccprintf("Locked: %s\n", system_is_locked() ? "yes" : "no");
+
+	ccputs("Flags: ");
+	if (system_is_locked()) {
+		ccputs(" locked");
+		if (force_locked)
+			ccputs(" (forced)");
+		if (disable_jump)
+			ccputs(" jump-disabled");
+	} else
+		ccputs(" unlocked");
+	ccputs("\n");
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
@@ -609,6 +623,10 @@ static int command_sysjump(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "B"))
 		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 
+	/* Arbitrary jumps are only allowed on an unlocked system */
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Check for arbitrary address */
 	addr = strtoi(argv[1], &e, 0);
 	if (*e)
@@ -642,6 +660,16 @@ static int command_reboot(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
 			"[hard]",
 			"Reboot the EC",
+			NULL);
+
+static int command_system_lock(int argc, char **argv)
+{
+	force_locked = 1;
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(syslock, command_system_lock,
+			NULL,
+			"Lock the system, even if WP is disabled",
 			NULL);
 
 /*****************************************************************************/
