@@ -652,9 +652,13 @@ static int command_reboot(int argc, char **argv)
 {
 	int is_hard = 0;
 
-	if (argc == 2 && !strcasecmp(argv[1], "hard")) {
-		ccputs("Hard-");
-		is_hard = 1;
+	if (argc == 2) {
+		if (!strcasecmp(argv[1], "hard") ||
+		    !strcasecmp(argv[1], "cold")) {
+			ccputs("Hard-");
+			is_hard = 1;
+		} else
+			return EC_ERROR_PARAM1;
 	}
 
 	ccputs("Rebooting!\n\n\n");
