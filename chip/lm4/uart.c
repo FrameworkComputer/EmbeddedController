@@ -77,6 +77,13 @@ int uart_read_char(void)
 	return LM4_UART_DR(0);
 }
 
+static void uart_clear_rx_fifo(int channel)
+{
+	int scratch __attribute__ ((unused));
+	while (!(LM4_UART_FR(channel) & 0x10))
+		scratch = LM4_UART_DR(channel);
+}
+
 void uart_disable_interrupt(void)
 {
 	task_disable_irq(LM4_IRQ_UART0);
@@ -185,6 +192,7 @@ int uart_init(void)
 	/* Enable interrupts for UART0 only. UART1 will have to wait until the
 	 * LPC bus is initialized.
 	 */
+	uart_clear_rx_fifo(0);
 	task_enable_irq(LM4_IRQ_UART0);
 
 	init_done = 1;
@@ -207,6 +215,7 @@ static void uart_comx_putc_wait(int c)
 
 void uart_comx_enable(void)
 {
+	uart_clear_rx_fifo(1);
 	task_enable_irq(LM4_IRQ_UART1);
 }
 
