@@ -152,6 +152,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 		/* write the half word */
 		*address++ = data[0] + (data[1] << 8);
+		data += 2;
 
 		/* Wait for writes to complete */
 		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
