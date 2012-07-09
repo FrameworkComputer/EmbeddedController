@@ -116,6 +116,11 @@ int pwm_get_keyboard_backlight(void)
 
 int pwm_set_keyboard_backlight(int percent)
 {
+	if (percent < 0)
+		percent = 0;
+	else if (percent > 100)
+		percent = 100;
+
 	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM + 50) / 100) << 16;
 	return EC_SUCCESS;
 }
@@ -218,6 +223,11 @@ DECLARE_CONSOLE_COMMAND(fanset, command_fan_set,
 int pwm_set_fan_duty(int percent)
 {
 	int pwm;
+
+	if (percent < 0)
+		percent = 0;
+	else if (percent > 100)
+		percent = 100;
 
 	pwm = (MAX_PWM * percent) / 100;
 
