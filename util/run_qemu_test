@@ -199,6 +199,9 @@ class EcTest:
             self.report("QEMU FATAL ERROR: " + e.value)
             return 1
 
+        # Set up import path so each test can import other modules inside 'test'
+        sys.path.insert(0, os.path.dirname(os.path.abspath(self.__test)))
+
         testmod = imp.load_module("testmodule", file(self.__test,"r"),
                                   self.__test, (".py","r",imp.PY_SOURCE))
         self.report("RUN: %s" % os.path.basename(self.__test))
