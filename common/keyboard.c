@@ -8,13 +8,13 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "keyboard.h"
 #include "i8042.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lightbar.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -897,6 +897,10 @@ static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
 {
 	struct ec_params_mkbp_simulate_key *p =
 			(struct ec_params_mkbp_simulate_key *)data;
+
+	/* Only available on unlocked systems */
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
 
 	if (p->col >= ARRAY_SIZE(simulated_key))
 		return EC_RES_INVALID_PARAM;
