@@ -27,8 +27,12 @@
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
-/* TO Host bit in LPCCH?ST) */
-#define TOH (1 << 0)
+/* Bit masks for LPCCH?ST */
+#define LPC_STATUS_MASK_BUSY     (1 << 12)
+#define LPC_STATUS_MASK_SMI      (1 << 10)
+#define LPC_STATUS_MASK_SCI      (1 <<  9)
+#define LPC_STATUS_MASK_PRESENT  (1 <<  8)
+#define LPC_STATUS_MASK_TOH      (1 <<  0)  /* TO Host bit */
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
@@ -147,14 +151,14 @@ void host_send_response(enum ec_status result, const uint8_t *data, int size)
 
 	/* Clear the busy bit */
 	task_disable_irq(LM4_IRQ_LPC);
-	LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 12);
+	LM4_LPC_ST(LPC_CH_USER) &= ~LPC_STATUS_MASK_BUSY;
 	task_enable_irq(LM4_IRQ_LPC);
 }
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void)
 {
-	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & TOH) ? 1 : 0;
+	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LPC_STATUS_MASK_TOH) ? 1 : 0;
 }
 
 
@@ -174,7 +178,7 @@ void lpc_keyboard_clear_buffer(void)
 	/* Make sure the previous TOH and IRQ has been sent out. */
 	wait_irq_sent();
 
-	LM4_LPC_ST(LPC_CH_KEYBOARD) &= ~TOH;
+	LM4_LPC_ST(LPC_CH_KEYBOARD) &= ~LPC_STATUS_MASK_TOH;
 
 	/* Ensure there is no TOH set in this period. */
 	wait_irq_sent();
@@ -225,18 +229,18 @@ static void update_host_event_status(void) {
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
 		/* Only generate SMI for first event */
-		if (!(LM4_LPC_ST(LPC_CH_ACPI) & (1 << 10)))
+		if (!(LM4_LPC_ST(LPC_CH_ACPI) & LPC_STATUS_MASK_SMI))
 			need_smi = 1;
-		LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 10);
+		LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_SMI;
 	} else
-		LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 10);
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_SMI;
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
 		/* Generate SCI for every event */
 		need_sci = 1;
-		LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 9);
+		LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_SCI;
 	} else
-		LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 9);
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_SCI;
 
 	/* Copy host events to mapped memory */
 	*mapped_raw_events = host_events;
@@ -308,7 +312,7 @@ static void handle_acpi_command(void)
 	int i;
 
 	/* Set the busy bit */
-	LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 12);
+	LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_BUSY;
 
 	/*
 	 * Read the command byte and pass to the host command handler.
@@ -337,7 +341,7 @@ static void handle_acpi_command(void)
 	LPC_POOL_ACPI[1] = result;
 
 	/* Clear the busy bit */
-	LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 12);
+	LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_BUSY;
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
@@ -363,7 +367,7 @@ static void lpc_interrupt(void)
 	/* Handle user command writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
 		/* Set the busy bit */
-		LM4_LPC_ST(LPC_CH_USER) |= (1 << 12);
+		LM4_LPC_ST(LPC_CH_USER) |= LPC_STATUS_MASK_BUSY;
 
 		/*
 		 * Read the command byte and pass to the host command handler.
@@ -469,6 +473,7 @@ static int lpc_init(void)
 	 */
 	LM4_LPC_ADR(LPC_CH_ACPI) = EC_LPC_ADDR_ACPI_DATA;
 	LM4_LPC_CTL(LPC_CH_ACPI) = (LPC_POOL_OFFS_ACPI << (5 - 1));
+	LM4_LPC_ST(LPC_CH_ACPI) = 0;
 	/* Unmask interrupt for host command writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_ACPI, 4);
 
@@ -511,6 +516,7 @@ static int lpc_init(void)
 	 */
 	LM4_LPC_ADR(LPC_CH_USER) = EC_LPC_ADDR_USER_DATA;
 	LM4_LPC_CTL(LPC_CH_USER) = (LPC_POOL_OFFS_USER << (5 - 1));
+	LM4_LPC_ST(LPC_CH_USER) = 0;
 	/* Unmask interrupt for host command writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
 
