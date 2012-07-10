@@ -191,8 +191,6 @@ static void command_process(int slot)
 	int size;
 	int res;
 
-	CPRINTF("[%T hostcmd%d 0x%02x]\n", slot, host_command[slot]);
-
 	res = host_command_process(slot, host_command[slot],
 				   host_get_buffer(slot), &size);
 
