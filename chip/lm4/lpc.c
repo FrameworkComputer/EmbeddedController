@@ -319,6 +319,53 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 }
 
 
+/* Handle an ACPI command on the kernel channel */
+static void handle_acpi_command(void)
+{
+	int cmd;
+	int result = 0;
+	int i;
+
+	/* Set the busy bit */
+	LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 12);
+
+	/*
+	 * Read the command byte and pass to the host command handler.
+	 * This clears the FRMH bit in the status byte.
+	 */
+	cmd = LPC_POOL_KERNEL[0];
+
+	/* Process the command */
+	switch (cmd) {
+	case EC_CMD_ACPI_QUERY_EVENT:
+		for (i = 0; i < 32; i++) {
+			if (host_events & (1 << i)) {
+				lpc_clear_host_events(1 << i);
+				result = i + 1;  /* Events are 1-based */
+				break;
+			}
+		}
+		break;
+
+	default:
+		/* Something we don't handle; ignore it */
+		break;
+	}
+
+	/* Write the response */
+	LPC_POOL_KERNEL[1] = result;
+
+	/* Clear the busy bit */
+	LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 12);
+
+	/*
+	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
+	 * Full condition on the kernel channel.
+	 */
+	lpc_generate_sci();
+}
+
+
 /* LPC interrupt handler */
 static void lpc_interrupt(void)
 {
@@ -329,18 +376,9 @@ static void lpc_interrupt(void)
 
 #ifdef CONFIG_TASK_HOSTCMD
 	/* Handle host kernel/user command writes */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4)) {
-		/* Set the busy bit */
-		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 12);
+	if (mis & LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4))
+		handle_acpi_command();
 
-		/* Read the command byte and pass to the host command handler.
-		 * This clears the FRMH bit in the status byte. */
-		host_command_received(0, LPC_POOL_KERNEL[0]);
-
-		/* ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty
-		 * condition on the kernel channel. */
-		lpc_generate_sci();
-	}
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
 		/* Set the busy bit */
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 12);

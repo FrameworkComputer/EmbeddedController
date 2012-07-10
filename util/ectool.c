@@ -1230,26 +1230,6 @@ int cmd_pstore_write(int argc, char *argv[])
 }
 
 
-int cmd_acpi_query_ec(int argc, char *argv[])
-{
-	int rv;
-
-	rv = ec_command(EC_CMD_ACPI_QUERY_EVENT, NULL, 0, NULL, 0);
-	if (rv < 0) {
-		/*
-		 * ACPI query-event follows different rules for its return
-		 * code; it returns the next pending event instead of an error
-		 * code.  So turn the return code back into a positive number.
-		 */
-		rv = -rv;
-		printf("Got host event %d (mask 0x%08x)\n", rv, 1 << (rv - 1));
-	} else {
-		printf("No host event pending.\n");
-	}
-	return 0;
-}
-
-
 int cmd_host_event_get_raw(int argc, char *argv[])
 {
 	uint32_t events = read_mapped_mem32(EC_MEMMAP_HOST_EVENTS);
@@ -1720,7 +1700,6 @@ const struct command commands[] = {
 	{"pwmgetkblight", cmd_pwm_get_keyboard_backlight},
 	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
-	{"queryec", cmd_acpi_query_ec},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
 	{"sertest", cmd_serial_test},

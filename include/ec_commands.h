@@ -760,6 +760,8 @@ struct ec_params_reboot_ec {
  * This clears the lowest-order bit in the currently pending host events, and
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
  * event 0x80000000 = 32), or 0 if no event was pending.
+ *
+ * This command is valid ONLY on port 62/66.
  */
 #define EC_CMD_ACPI_QUERY_EVENT 0x84
 
