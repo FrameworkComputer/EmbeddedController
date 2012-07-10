@@ -782,13 +782,8 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 	/* TODO: (crosbug.com/p/9040) handle EC_REBOOT_FLAG_POWER_ON */
 
 #ifdef CONFIG_TASK_HOSTCMD
-#ifdef CONFIG_LPC
 	/* Clean busy bits on host */
-	host_send_response(0, EC_RES_SUCCESS, NULL, 0);
-	host_send_response(1, EC_RES_SUCCESS, NULL, 0);
-#elif defined CONFIG_I2C
-	host_send_response(0, EC_RES_SUCCESS, NULL, 0);
-#endif
+	host_send_response(EC_RES_SUCCESS, NULL, 0);
 #endif
 
 	CPUTS("[Executing host reboot command]\n");

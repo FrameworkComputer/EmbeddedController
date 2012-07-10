@@ -5,14 +5,14 @@
 
 /* LPC module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i8042.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "port80.h"
 #include "registers.h"
 #include "system.h"
@@ -114,9 +114,9 @@ static void lpc_generate_sci(void)
 }
 
 
-uint8_t *host_get_buffer(int slot)
+uint8_t *host_get_buffer(void)
 {
-	return (uint8_t *)LPC_POOL_CMD_DATA + EC_PARAM_SIZE * slot;
+	return (uint8_t *)LPC_POOL_CMD_DATA;
 }
 
 
@@ -125,36 +125,9 @@ uint8_t *lpc_get_memmap_range(void)
 	return (uint8_t *)LPC_POOL_MEMMAP;
 }
 
-
-static void send_result(int slot, enum ec_status result)
+void host_send_response(enum ec_status result, const uint8_t *data, int size)
 {
-	int ch = slot ? LPC_CH_USER : LPC_CH_KERNEL;
-
-	/* Write result to the data byte.  This sets the TOH bit in the
-	 * status byte and triggers an IRQ on the host so the host can read
-	 * the result. */
-	/* TODO: (crosbug.com/p/7496) or it would, if we actually set up host
-	 * IRQs */
-	if (slot)
-		LPC_POOL_USER[1] = result;
-	else
-		LPC_POOL_KERNEL[1] = result;
-
-	/* Clear the busy bit */
-	task_disable_irq(LM4_IRQ_LPC);
-	LM4_LPC_ST(ch) &= ~(1 << 12);
-	task_enable_irq(LM4_IRQ_LPC);
-
-	/* ACPI 5.0-12.6.1: Generate SCI for Output Buffer Full
-	 * condition on the kernel channel. */
-	if (ch == LPC_CH_KERNEL)
-		lpc_generate_sci();
-}
-
-void host_send_response(int slot, enum ec_status result, const uint8_t *data,
-			int size)
-{
-	uint8_t *out = host_get_buffer(slot);
+	uint8_t *out = host_get_buffer();
 
 	/* Fail if response doesn't fit in the param buffer */
 	if (size < 0 || size > EC_PARAM_SIZE)
@@ -162,17 +135,32 @@ void host_send_response(int slot, enum ec_status result, const uint8_t *data,
 	else if (data != out)
 		memcpy(out, data, size);
 
-	send_result(slot, result);
+	/*
+	 * Write result to the data byte.  This sets the TOH bit in the
+	 * status byte and triggers an IRQ on the host so the host can read
+	 * the result.
+	 *
+	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
+	 * IRQs
+	 */
+	LPC_POOL_USER[1] = result;
+
+	/* Clear the busy bit */
+	task_disable_irq(LM4_IRQ_LPC);
+	LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 12);
+	task_enable_irq(LM4_IRQ_LPC);
 }
 
 /* Return true if the TOH is still set */
-int lpc_keyboard_has_char(void) {
+int lpc_keyboard_has_char(void)
+{
 	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & TOH) ? 1 : 0;
 }
 
 
 /* Put a char to host buffer and send IRQ if specified. */
-void lpc_keyboard_put_char(uint8_t chr, int send_irq) {
+void lpc_keyboard_put_char(uint8_t chr, int send_irq)
+{
 	LPC_POOL_KEYBOARD[1] = chr;
 	if (send_irq) {
 		lpc_manual_irq(1);  /* IRQ#1 */
@@ -237,25 +225,18 @@ static void update_host_event_status(void) {
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
 		/* Only generate SMI for first event */
-		if (!(LM4_LPC_ST(LPC_CH_USER) & (1 << 10)) ||
-		    !(LM4_LPC_ST(LPC_CH_KERNEL) & (1 << 10)))
+		if (!(LM4_LPC_ST(LPC_CH_ACPI) & (1 << 10)))
 			need_smi = 1;
-		LM4_LPC_ST(LPC_CH_USER) |= (1 << 10);
-		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 10);
-	} else {
-		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 10);
-		LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 10);
-	}
+		LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 10);
+	} else
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 10);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
 		/* Generate SCI for every event */
 		need_sci = 1;
-		LM4_LPC_ST(LPC_CH_USER) |= (1 << 9);
-		LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 9);
-	} else {
-		LM4_LPC_ST(LPC_CH_USER) &= ~(1 << 9);
-		LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 9);
-	}
+		LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 9);
+	} else
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 9);
 
 	/* Copy host events to mapped memory */
 	*mapped_raw_events = host_events;
@@ -319,7 +300,7 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 }
 
 
-/* Handle an ACPI command on the kernel channel */
+/* Handle an ACPI command */
 static void handle_acpi_command(void)
 {
 	int cmd;
@@ -327,13 +308,13 @@ static void handle_acpi_command(void)
 	int i;
 
 	/* Set the busy bit */
-	LM4_LPC_ST(LPC_CH_KERNEL) |= (1 << 12);
+	LM4_LPC_ST(LPC_CH_ACPI) |= (1 << 12);
 
 	/*
 	 * Read the command byte and pass to the host command handler.
 	 * This clears the FRMH bit in the status byte.
 	 */
-	cmd = LPC_POOL_KERNEL[0];
+	cmd = LPC_POOL_ACPI[0];
 
 	/* Process the command */
 	switch (cmd) {
@@ -353,10 +334,10 @@ static void handle_acpi_command(void)
 	}
 
 	/* Write the response */
-	LPC_POOL_KERNEL[1] = result;
+	LPC_POOL_ACPI[1] = result;
 
 	/* Clear the busy bit */
-	LM4_LPC_ST(LPC_CH_KERNEL) &= ~(1 << 12);
+	LM4_LPC_ST(LPC_CH_ACPI) &= ~(1 << 12);
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
@@ -375,17 +356,20 @@ static void lpc_interrupt(void)
 	LM4_LPC_LPCIC = mis;
 
 #ifdef CONFIG_TASK_HOSTCMD
-	/* Handle host kernel/user command writes */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4))
+	/* Handle ACPI command writes */
+	if (mis & LM4_LPC_INT_MASK(LPC_CH_ACPI, 4))
 		handle_acpi_command();
 
+	/* Handle user command writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
 		/* Set the busy bit */
 		LM4_LPC_ST(LPC_CH_USER) |= (1 << 12);
 
-		/* Read the command byte and pass to the host command handler.
-		 * This clears the FRMH bit in the status byte. */
-		host_command_received(1, LPC_POOL_USER[0]);
+		/*
+		 * Read the command byte and pass to the host command handler.
+		 * This clears the FRMH bit in the status byte.
+		 */
+		host_command_received(LPC_POOL_USER[0]);
 	}
 #endif
 
@@ -472,35 +456,41 @@ static int lpc_init(void)
 	/* Configure GPIOs */
 	configure_gpio();
 
-	/* Set LPC channel 0 to I/O address 0x62 (data) / 0x66 (command),
+	/*
+	 * Set LPC channel 0 to I/O address 0x62 (data) / 0x66 (command),
 	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
-	LM4_LPC_ADR(LPC_CH_KERNEL) = EC_LPC_ADDR_KERNEL_DATA;
-	LM4_LPC_CTL(LPC_CH_KERNEL) = (LPC_POOL_OFFS_KERNEL << (5 - 1));
+	 * data writes, pool bytes 0(data)/1(cmd)
+	 */
+	LM4_LPC_ADR(LPC_CH_ACPI) = EC_LPC_ADDR_ACPI_DATA;
+	LM4_LPC_CTL(LPC_CH_ACPI) = (LPC_POOL_OFFS_ACPI << (5 - 1));
 	/* Unmask interrupt for host command writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KERNEL, 4);
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_ACPI, 4);
 
-	/* Set LPC channel 1 to I/O address 0x80 (data), single endpoint,
-	 * pool bytes 4(data)/5(cmd). */
+	/*
+	 * Set LPC channel 1 to I/O address 0x80 (data), single endpoint,
+	 * pool bytes 4(data)/5(cmd).
+	 */
 	LM4_LPC_ADR(LPC_CH_PORT80) = 0x80;
 	LM4_LPC_CTL(LPC_CH_PORT80) = (LPC_POOL_OFFS_PORT80 << (5 - 1));
 	/* Unmask interrupt for host data writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_PORT80, 2);
 
-
-	/* Set LPC channel 2 to I/O address 0x800, range endpoint,
-	 * arbitration disabled, pool bytes 512-767.  To access this from
+	/*
+	 * Set LPC channel 2 to I/O address 0x880, range endpoint,
+	 * arbitration disabled, pool bytes 512-639.  To access this from
 	 * x86, use the following command to set GEN_LPC2:
 	 *
 	 *   pci_write32 0 0x1f 0 0x88 0x007c0801
 	 */
-	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_KERNEL_PARAM;
-	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x8019 |
+	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_USER_PARAM;
+	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x8015 |
 		(LPC_POOL_OFFS_CMD_DATA << (5 - 1));
 
-	/* Set LPC channel 3 to I/O address 0x60 (data) / 0x64 (command),
+	/*
+	 * Set LPC channel 3 to I/O address 0x60 (data) / 0x64 (command),
 	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
+	 * data writes, pool bytes 0(data)/1(cmd)
+	 */
 	LM4_LPC_ADR(LPC_CH_KEYBOARD) = 0x60;
 	LM4_LPC_CTL(LPC_CH_KEYBOARD) = (1 << 24/* IRQSEL1 */) |
 		(0 << 18/* IRQEN1 */) | (LPC_POOL_OFFS_KEYBOARD << (5 - 1));
@@ -508,15 +498,18 @@ static int lpc_init(void)
 	/* Unmask interrupt for host command/data writes and data reads */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 7);
 
-	/* Set LPC channel 4 to I/O address 0x200 (data) / 0x204 (command),
+	/*
+	 * Set LPC channel 4 to I/O address 0x200 (data) / 0x204 (command),
 	 * single endpoint, offset 0 for host command/writes and 1 for EC
-	 * data writes, pool bytes 0(data)/1(cmd) */
+	 * data writes, pool bytes 0(data)/1(cmd)
+	 */
 	LM4_LPC_ADR(LPC_CH_USER) = EC_LPC_ADDR_USER_DATA;
 	LM4_LPC_CTL(LPC_CH_USER) = (LPC_POOL_OFFS_USER << (5 - 1));
 	/* Unmask interrupt for host command writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
 
-	/* Set LPC channel 5 to I/O address 0x900, range endpoint,
+	/*
+	 * Set LPC channel 5 to I/O address 0x900, range endpoint,
 	 * arbitration enabled, pool bytes 768-1023.  To access this from
 	 * x86, use the following command to set GEN_LPC3:
 	 *
@@ -525,27 +518,35 @@ static int lpc_init(void)
 	LM4_LPC_ADR(LPC_CH_MEMMAP) = EC_LPC_ADDR_MEMMAP;
 	LM4_LPC_CTL(LPC_CH_MEMMAP) = 0x0019 | (LPC_POOL_OFFS_MEMMAP << (5 - 1));
 
-	/* Set LPC channel 7 to COM port I/O address.  Note that channel 7
-	 * ignores the TYPE bit and is always an 8-byte range. */
+	/*
+	 * Set LPC channel 7 to COM port I/O address.  Note that channel 7
+	 * ignores the TYPE bit and is always an 8-byte range.
+	 */
 	LM4_LPC_ADR(LPC_CH_COMX) = LPC_COMX_ADDR;
-	/* TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
-	 * can enable IRQs on its own. */
+	/*
+	 * TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
+	 * can enable IRQs on its own.
+	 */
 	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
 	/* Enable COMx emulation for reads and writes. */
 	LM4_LPC_LPCDMACX = 0x00310000;
-	/* Unmask interrupt for host data writes.  We don't need interrupts for
+	/*
+	 * Unmask interrupt for host data writes.  We don't need interrupts for
 	 * reads, because there's no flow control in that direction; LPC is
 	 * much faster than the UART, and the UART doesn't have anywhere
-	 * sensible to buffer input anyway. */
+	 * sensible to buffer input anyway.
+	 */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
 
-	/* Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
-	 * PLTRST# signal for debugging. */
+	/*
+	 * Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
+	 * PLTRST# signal for debugging.
+	 */
 	LM4_LPC_LPCIM |= (1 << 31);
 
 	/* Enable LPC channels */
 	LM4_LPC_LPCCTL = LM4_LPC_SCI_CLK_1 |
-		(1 << LPC_CH_KERNEL) |
+		(1 << LPC_CH_ACPI) |
 		(1 << LPC_CH_PORT80) |
 		(1 << LPC_CH_CMD_DATA) |
 		(1 << LPC_CH_KEYBOARD) |

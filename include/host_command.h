@@ -35,15 +35,13 @@ uint8_t *host_get_memmap(int offset);
 /**
  * Process a host command and return its response
  *
- * @param slot		is 0 for kernel-originated commands,
- *			1 for usermode-originated commands.
  * @param command	The command code
  * @param data		Buffer holding the command, and used for the
  * 			response payload.
  * @param response_size	Returns the size of the response
  * @return resulting status
  */
-enum ec_status host_command_process(int slot, int command, uint8_t *data,
+enum ec_status host_command_process(int command, uint8_t *data,
 				    int *response_size);
 
 /**
@@ -77,25 +75,23 @@ void host_clear_events(uint32_t mask);
 uint32_t host_get_events(void);
 
 /**
- * Called by host interface module when a command is written to one of the
- * command slots (0=kernel, 1=user).
+ * Called by host interface module when a command is received.
  */
-void host_command_received(int slot, int command);
+void host_command_received(int command);
 
-/* Send a successful result code along with response data to a host command.
- * <slot> is 0 for kernel-originated commands,
- *           1 for usermode-originated commands.
- * <result> is the result code for the command (EC_RES_...)
- * <data> is the buffer with the response payload.
- * <size> is the size of the response buffer. */
-void host_send_response(int slot, enum ec_status result, const uint8_t *data,
-			int size);
+/**
+ * Send a successful result code along with response data to a host command.
+ *
+ * @param result        Result code for the command (EC_RES_...)
+ * @param data          Buffer with the response payload.
+ * @param size          Size of the response buffer.
+ */
+void host_send_response(enum ec_status result, const uint8_t *data, int size);
 
 /* Return a pointer to the host command data buffer.  This buffer must
  * only be accessed between a notification to host_command_received()
- * and a subsequent call to lpc_SendHostResponse().  <slot> is 0 for
- * kernel-originated commands, 1 for usermode-originated commands. */
-uint8_t *host_get_buffer(int slot);
+ * and a subsequent call to lpc_SendHostResponse(). */
+uint8_t *host_get_buffer(void);
 
 /* Register a host command handler */
 #define DECLARE_HOST_COMMAND(command, routine)				\

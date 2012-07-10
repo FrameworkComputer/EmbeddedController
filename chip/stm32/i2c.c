@@ -121,13 +121,11 @@ static int i2c_write_raw(int port, void *buf, int len)
 	return len;
 }
 
-void host_send_response(int slot, enum ec_status result, const uint8_t *data,
-			int size)
+void host_send_response(enum ec_status result, const uint8_t *data, int size)
 {
 	uint8_t *out = host_buffer;
 	int sum, i;
 
-	ASSERT(slot == 0);
 	*out++ = result;
 	for (i = 0, sum = 0; i < size; i++, data++, out++) {
 		if (data != out)
@@ -140,9 +138,8 @@ void host_send_response(int slot, enum ec_status result, const uint8_t *data,
 	i2c_write_raw(I2C2, host_buffer, out - host_buffer);
 }
 
-uint8_t *host_get_buffer(int slot)
+uint8_t *host_get_buffer(void)
 {
-	ASSERT(slot == 0);
 	return host_buffer + 1 /* skip room for error code */;
 }
 
@@ -180,7 +177,7 @@ static void i2c_event_handler(int port)
 		if (port == I2C2) { /* AP is waiting for EC response */
 			if (rx_index) {
 				/* we have an available command : execute it */
-				host_command_received(0, host_buffer[0]);
+				host_command_received(host_buffer[0]);
 				/* reset host buffer after end of transfer */
 				rx_index = 0;
 			} else {

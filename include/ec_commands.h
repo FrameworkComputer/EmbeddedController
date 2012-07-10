@@ -31,13 +31,12 @@
 #define EC_PROTO_VERSION          0x00000002
 
 /* I/O addresses for LPC commands */
-#define EC_LPC_ADDR_KERNEL_DATA   0x62
-#define EC_LPC_ADDR_KERNEL_CMD    0x66
-#define EC_LPC_ADDR_KERNEL_PARAM 0x800
-#define EC_LPC_ADDR_USER_DATA    0x200
-#define EC_LPC_ADDR_USER_CMD     0x204
-#define EC_LPC_ADDR_USER_PARAM   0x880
-#define EC_PARAM_SIZE          128  /* Size of each param area in bytes */
+#define EC_LPC_ADDR_ACPI_DATA  0x62
+#define EC_LPC_ADDR_ACPI_CMD   0x66
+#define EC_LPC_ADDR_USER_DATA  0x200
+#define EC_LPC_ADDR_USER_CMD   0x204
+#define EC_LPC_ADDR_USER_PARAM 0x880
+#define EC_PARAM_SIZE          128  /* Size of param area in bytes */
 
 /* EC command register bit functions */
 #define EC_LPC_CMDR_DATA	(1 << 0)

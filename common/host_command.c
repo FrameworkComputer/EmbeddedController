@@ -5,11 +5,12 @@
 
 /* Host command module for Chrome EC */
 
+#include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
-#include "ec_commands.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -19,9 +20,9 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-#define TASK_EVENT_SLOT(n) TASK_EVENT_CUSTOM(1 << n)
+#define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
 
-static int host_command[2];
+static int pending_cmd;
 
 #ifndef CONFIG_LPC
 static uint8_t host_memmap[EC_MEMMAP_SIZE];
@@ -36,25 +37,27 @@ uint8_t *host_get_memmap(int offset)
 #endif
 }
 
-void host_command_received(int slot, int command)
+void host_command_received(int command)
 {
 	/* TODO: should warn if we already think we're in a command */
 
-	/* If this is the reboot command, reboot immediately.  This gives
-	 * the host processor a way to unwedge the EC even if it's busy with
-	 * some other command. */
+	/*
+	 * If this is the reboot command, reboot immediately.  This gives the
+	 * host processor a way to unwedge the EC even if it's busy with some
+	 * other command.
+	 */
 	if (command == EC_CMD_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		host_send_response(slot, EC_RES_ERROR, NULL, 0);
+		host_send_response(EC_RES_ERROR, NULL, 0);
 		return;
 	}
 
 	/* Save the command */
-	host_command[slot] = command;
+	pending_cmd = command;
 
-	/* Wake up the task to handle the command for the slot */
-	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_SLOT(slot), 0);
+	/* Wake up the task to handle the command */
+	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
 }
 
 
@@ -146,14 +149,13 @@ static const struct host_command *find_host_command(int command)
 	return NULL;
 }
 
-
-enum ec_status host_command_process(int slot, int command, uint8_t *data,
+enum ec_status host_command_process(int command, uint8_t *data,
 				    int *response_size)
 {
 	const struct host_command *cmd = find_host_command(command);
 	enum ec_status res = EC_RES_INVALID_COMMAND;
 
-	CPRINTF("[%T hostcmd%d 0x%02x]\n", slot, command);
+	CPRINTF("[%T hostcmd 0x%02x]\n", command);
 
 	*response_size = 0;
 	if (cmd)
@@ -162,24 +164,12 @@ enum ec_status host_command_process(int slot, int command, uint8_t *data,
 	return res;
 }
 
-/* Handle a host command */
-static void command_process(int slot)
-{
-	int size;
-	int res;
-
-	res = host_command_process(slot, host_command[slot],
-				   host_get_buffer(slot), &size);
-
-	host_send_response(slot, res, host_get_buffer(slot), size);
-}
-
 /*****************************************************************************/
 /* Initialization / task */
 
 static int host_command_init(void)
 {
-	host_command[0] = host_command[1] = -1;
+	pending_cmd = -1;
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
 	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
 
@@ -194,9 +184,13 @@ void host_command_task(void)
 		/* wait for the next command event */
 		int evt = task_wait_event(-1);
 		/* process it */
-		if (evt & TASK_EVENT_SLOT(0))
-			command_process(0);
-		if (evt & TASK_EVENT_SLOT(1))
-			command_process(1);
+		if (evt & TASK_EVENT_CMD_PENDING) {
+			int size = 0;  /* Default to no response data */
+			int res = host_command_process(pending_cmd,
+						       host_get_buffer(),
+						       &size);
+
+			host_send_response(res, host_get_buffer(), size);
+		}
 	}
 }
