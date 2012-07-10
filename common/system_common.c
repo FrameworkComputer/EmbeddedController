@@ -761,15 +761,21 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version);
 
 int host_command_reboot(uint8_t *data, int *resp_size)
 {
-	struct ec_params_reboot_ec *p = (struct ec_params_reboot_ec *)data;
+	struct ec_params_reboot_ec p;
 
-	if (p->cmd == EC_REBOOT_CANCEL) {
+	/*
+	 * Ensure reboot parameters don't get clobbered when the response
+	 * is sent in case data argument points to the host tx/rx buffer.
+	 */
+	memcpy(&p, data, sizeof(p));
+
+	if (p.cmd == EC_REBOOT_CANCEL) {
 		/* Cancel pending reboot */
 		reboot_at_shutdown = EC_REBOOT_CANCEL;
 		return EC_RES_SUCCESS;
-	} else if (p->flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
+	} else if (p.flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
 		/* Store request for processing at chipset shutdown */
-		reboot_at_shutdown = p->cmd;
+		reboot_at_shutdown = p.cmd;
 		return EC_RES_SUCCESS;
 	}
 
@@ -786,7 +792,7 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 #endif
 
 	CPUTS("[Executing host reboot command]\n");
-	switch (handle_pending_reboot(p->cmd)) {
+	switch (handle_pending_reboot(p.cmd)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;
 	case EC_ERROR_INVAL:
