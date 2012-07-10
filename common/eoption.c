@@ -31,7 +31,7 @@ enum block_offsets {
 /* Boolean options.  Must be in the same order as enum eoption_bool, and must
  * be terminated by an entry with a NULL name. */
 static const struct eoption_bool_data bool_opts[] = {
-	{OFFSET_BOOL0, (1 << 0), "fake_dev_switch"},
+	{OFFSET_BOOL0, (1 << 0), "bool_test"},
 	{0, 0, NULL},
 };
 

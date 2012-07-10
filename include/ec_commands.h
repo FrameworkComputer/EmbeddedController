@@ -85,8 +85,8 @@
 #define EC_SWITCH_KEYBOARD_RECOVERY      0x08
 /* Recovery requested via dedicated signal (from servo board) */
 #define EC_SWITCH_DEDICATED_RECOVERY     0x10
-/* Fake developer switch (for testing) */
-#define EC_SWITCH_FAKE_DEVELOPER         0x20
+/* Was fake developer mode switch; now unused.  Remove in next refactor. */
+#define EC_SWITCH_IGNORE0                0x20
 
 /* Wireless switch flags */
 #define EC_WIRELESS_SWITCH_WLAN      0x01

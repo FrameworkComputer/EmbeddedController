@@ -35,24 +35,11 @@ static int host_cmd_vboot(uint8_t *data, int *resp_size)
 	switch (ptr->in.cmd) {
 	case VBOOT_CMD_GET_FLAGS:
 		v = VBOOT_FLAGS_IMAGE_MASK & system_get_image_copy();
-#ifdef CONFIG_FAKE_DEV_SWITCH
-		if (eoption_get_bool(EOPTION_BOOL_FAKE_DEV))
-			v |= VBOOT_FLAGS_FAKE_DEVMODE;
-#endif
 		ptr->out.get_flags.val = v;
 		*resp_size = sizeof(struct ec_params_vboot_cmd);
 		break;
 	case VBOOT_CMD_SET_FLAGS:
 		v = ptr->in.set_flags.val;
-#ifdef CONFIG_FAKE_DEV_SWITCH
-		if (v & VBOOT_FLAGS_FAKE_DEVMODE) {
-			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 1);
-			CPUTS("[Enabling fake dev-mode]\n");
-		} else {
-			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 0);
-			CPUTS("[Disabling fake dev-mode]\n");
-		}
-#endif
 		break;
 	default:
 		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);

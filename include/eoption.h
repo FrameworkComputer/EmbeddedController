@@ -12,7 +12,7 @@
 
 /* Boolean options */
 enum eoption_bool {
-	EOPTION_BOOL_FAKE_DEV = 0,  /* Fake developer switch */
+	EOPTION_BOOL_TEST = 0,  /* Test option */
 };
 
 /* Initialize the module. */

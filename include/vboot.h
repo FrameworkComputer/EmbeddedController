@@ -35,6 +35,6 @@ enum vboot_command {
  * will be moved elsewhere.
  */
 #define VBOOT_FLAGS_IMAGE_MASK       0x03   /* enum system_image_copy_t */
-#define VBOOT_FLAGS_FAKE_DEVMODE     0x04   /* fake dev-mode bit */
+#define VBOOT_FLAGS_UNUSED           0x04   /* was fake dev-mode bit */
 
 #endif  /* __CROS_EC_VBOOT_H */

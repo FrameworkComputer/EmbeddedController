@@ -126,13 +126,6 @@ static void update_other_switches(void)
 		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 	else
 		*memmap_switches &= ~EC_SWITCH_DEDICATED_RECOVERY;
-
-#ifdef CONFIG_FAKE_DEV_SWITCH
-	if (eoption_get_bool(EOPTION_BOOL_FAKE_DEV))
-		*memmap_switches |= EC_SWITCH_FAKE_DEVELOPER;
-	else
-		*memmap_switches &= ~EC_SWITCH_FAKE_DEVELOPER;
-#endif
 }
 
 

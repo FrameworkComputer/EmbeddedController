@@ -33,9 +33,6 @@
 #define CONFIG_VBOOT
 #define CONFIG_VBOOT_HASH
 
-/* Enable the fake developer switch.  See crosbug.com/p/8884 */
-#define CONFIG_FAKE_DEV_SWITCH
-
 #ifndef __ASSEMBLER__
 
 /* Fan PWM channels */

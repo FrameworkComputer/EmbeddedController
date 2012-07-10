@@ -1017,9 +1017,8 @@ static int cmd_vboot(int argc, char **argv)
 			return r;
 
 		v = param.out.get_flags.val;
-		printf("0x%02x image=%s fake_dev=%d\n", v,
-		       image_names[VBOOT_FLAGS_IMAGE_MASK & v],
-		       VBOOT_FLAGS_FAKE_DEVMODE & v ? 1 : 0);
+		printf("0x%02x image=%s\n", v,
+		       image_names[VBOOT_FLAGS_IMAGE_MASK & v]);
 		return 0;
 	}
 

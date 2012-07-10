@@ -277,17 +277,6 @@ int keyboard_scan_init(void)
 				break;
 			}
 		}
-
-#ifdef CONFIG_FAKE_DEV_SWITCH
-		/* Turn fake dev switch on if D pressed, off if F pressed. */
-		if (boot_key_value == BOOT_KEY_D) {
-			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 1);
-			CPUTS("[Enabling fake dev-mode]\n");
-		} else if (boot_key_value == BOOT_KEY_F) {
-			eoption_set_bool(EOPTION_BOOL_FAKE_DEV, 0);
-			CPUTS("[Disabling fake dev-mode]\n");
-		}
-#endif
 	}
 
 	return EC_SUCCESS;
