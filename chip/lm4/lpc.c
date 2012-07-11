@@ -32,9 +32,9 @@
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
+static struct host_cmd_handler_args host_cmd_args;
 
-
-/* Configures GPIOs for module. */
+/* Configure GPIOs for module */
 static void configure_gpio(void)
 {
 	/* Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins. */
@@ -113,8 +113,8 @@ static void lpc_generate_sci(void)
 			host_events & event_mask[LPC_HOST_EVENT_SCI]);
 }
 
-
-uint8_t *host_get_buffer(void)
+/* Return buffer for host command params/response. */
+static uint8_t *host_get_buffer(void)
 {
 	return (uint8_t *)LPC_POOL_CMD_DATA;
 }
@@ -131,7 +131,7 @@ void host_send_response(enum ec_status result, const uint8_t *data, int size)
 
 	/* Fail if response doesn't fit in the param buffer */
 	if (size < 0 || size > EC_PARAM_SIZE)
-		result = EC_RES_ERROR;
+		result = EC_RES_INVALID_RESPONSE;
 	else if (data != out)
 		memcpy(out, data, size);
 
@@ -369,7 +369,13 @@ static void lpc_interrupt(void)
 		 * Read the command byte and pass to the host command handler.
 		 * This clears the FRMH bit in the status byte.
 		 */
-		host_command_received(LPC_POOL_USER[0]);
+		host_cmd_args.command = LPC_POOL_USER[0];
+		host_cmd_args.version = 0;
+		host_cmd_args.params = host_get_buffer();
+		host_cmd_args.params_size = EC_PARAM_SIZE;
+		host_cmd_args.response = host_get_buffer();
+		host_cmd_args.response_size = 0;
+		host_command_received(&host_cmd_args);
 	}
 #endif
 

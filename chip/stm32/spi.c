@@ -160,6 +160,7 @@ static void reply(int port, char *msg, int msg_len)
  */
 static void spi_interrupt(int port)
 {
+	struct host_cmd_handler_args args;
 	enum ec_status status;
 	int msg_len;
 	int dmac;
@@ -177,11 +178,31 @@ static void spi_interrupt(int port)
 	dma_start_rx(dmac, sizeof(in_msg), (void *)&STM32_SPI_DR(port),
 		     in_msg);
 
-	/* Process the command and send the reply */
-	status = host_command_process(0, cmd,
-			out_msg + SPI_MSG_HEADER_BYTES + 1, &msg_len);
+	/*
+	 * Process the command and send the reply.
+	 *
+	 * This is kind of ugly, because the host command interface can
+	 * only call host_send_response() for one host bus, but stm32 could
+	 * potentially have both I2C and SPI active at the same time on the
+	 * current devel board.
+	 */
+	args.command = cmd;
+	args.version = 0;
+	args.params = out_msg + SPI_MSG_HEADER_BYTES + 1;
+	args.params_size = sizeof(out_msg) - SPI_MSG_PROTO_BYTES;
+	/* TODO: use a different initial buffer for params vs. response */
+	args.response = args.params;
+	args.response_size = 0;
+
+	status = host_command_process(&args);
+
+	if (args.response_size < 0 || args.response_size > EC_PARAM_SIZE)
+		status = EC_RES_INVALID_RESPONSE;
+	else if (args.response != args.params)
+		memcpy(args.response, args.params, args.response_size);
+
 	out_msg[SPI_MSG_HEADER_BYTES] = status;
-	reply(port, out_msg, msg_len);
+	reply(port, out_msg, args.response_size);
 
 	/* Wake up the task that watches for end of the incoming message */
 	task_wake(TASK_ID_SPI);

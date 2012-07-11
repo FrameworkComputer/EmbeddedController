@@ -22,7 +22,7 @@
 
 #define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
 
-static int pending_cmd;
+static struct host_cmd_handler_args *pending_args;
 
 #ifndef CONFIG_LPC
 static uint8_t host_memmap[EC_MEMMAP_SIZE];
@@ -37,7 +37,7 @@ uint8_t *host_get_memmap(int offset)
 #endif
 }
 
-void host_command_received(int command)
+void host_command_received(struct host_cmd_handler_args *args)
 {
 	/* TODO: should warn if we already think we're in a command */
 
@@ -46,7 +46,7 @@ void host_command_received(int command)
 	 * host processor a way to unwedge the EC even if it's busy with some
 	 * other command.
 	 */
-	if (command == EC_CMD_REBOOT) {
+	if (args->command == EC_CMD_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
 		host_send_response(EC_RES_ERROR, NULL, 0);
@@ -54,7 +54,7 @@ void host_command_received(int command)
 	}
 
 	/* Save the command */
-	pending_cmd = command;
+	pending_args = args;
 
 	/* Wake up the task to handle the command */
 	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
@@ -182,38 +182,19 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 		     host_command_get_cmd_versions,
 		     EC_VER_MASK(0));
 
-enum ec_status host_command_process(int command, uint8_t *data,
-				    int *response_size)
+enum ec_status host_command_process(struct host_cmd_handler_args *args)
 {
-	const struct host_command *cmd = find_host_command(command);
-	struct host_cmd_handler_args args;
-	enum ec_status res;
+	const struct host_command *cmd = find_host_command(args->command);
 
-	CPRINTF("[%T hostcmd 0x%02x]\n", command);
+	CPRINTF("[%T hostcmd 0x%02x]\n", args->command);
 
 	if (!cmd)
 		return EC_RES_INVALID_COMMAND;
 
-	/* TODO: right now we assume the same data buffer for both params
-	 * and response.  This isn't true for I2C/SPI; we should
-	 * propagate args farther up the call chain. */
-	args.command = command;
-	args.version = 0;
-	args.params = data;
-	args.params_size = EC_PARAM_SIZE;
-	args.response = data;
-	args.response_size = 0;
+	if (!(EC_VER_MASK(args->version) & cmd->version_mask))
+		return EC_RES_INVALID_VERSION;
 
-	res = cmd->handler(&args);
-
-	/* Copy response data if necessary */
-	*response_size = args.response_size;
-	if (args.response_size > EC_PARAM_SIZE)
-		return EC_RES_INVALID_RESPONSE;
-	else if (args.response_size && args.response != data)
-		memcpy(data, args.response, args.response_size);
-
-	return res;
+	return cmd->handler(args);
 }
 
 /*****************************************************************************/
@@ -221,7 +202,6 @@ enum ec_status host_command_process(int command, uint8_t *data,
 
 static int host_command_init(void)
 {
-	pending_cmd = -1;
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
 	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
 
@@ -236,13 +216,10 @@ void host_command_task(void)
 		/* wait for the next command event */
 		int evt = task_wait_event(-1);
 		/* process it */
-		if (evt & TASK_EVENT_CMD_PENDING) {
-			int size = 0;  /* Default to no response data */
-			int res = host_command_process(pending_cmd,
-						       host_get_buffer(),
-						       &size);
-
-			host_send_response(res, host_get_buffer(), size);
+		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
+			enum ec_status res = host_command_process(pending_args);
+			host_send_response(res, pending_args->response,
+					   pending_args->response_size);
 		}
 	}
 }

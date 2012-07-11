@@ -54,14 +54,10 @@ uint8_t *host_get_memmap(int offset);
 /**
  * Process a host command and return its response
  *
- * @param command	The command code
- * @param data		Buffer holding the command, and used for the
- * 			response payload.
- * @param response_size	Returns the size of the response
+ * @param args	        Command handler args
  * @return resulting status
  */
-enum ec_status host_command_process(int command, uint8_t *data,
-				    int *response_size);
+enum ec_status host_command_process(struct host_cmd_handler_args *args);
 
 /**
  * Set one or more host event bits.
@@ -96,7 +92,7 @@ uint32_t host_get_events(void);
 /**
  * Called by host interface module when a command is received.
  */
-void host_command_received(int command);
+void host_command_received(struct host_cmd_handler_args *args);
 
 /**
  * Send a successful result code along with response data to a host command.
@@ -106,11 +102,6 @@ void host_command_received(int command);
  * @param size          Size of the response buffer.
  */
 void host_send_response(enum ec_status result, const uint8_t *data, int size);
-
-/* Return a pointer to the host command data buffer.  This buffer must
- * only be accessed between a notification to host_command_received()
- * and a subsequent call to lpc_SendHostResponse(). */
-uint8_t *host_get_buffer(void);
 
 /* Register a host command handler */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\

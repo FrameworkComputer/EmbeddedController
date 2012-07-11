@@ -43,6 +43,7 @@ static struct mutex i2c_mutex;
 
 /* buffer for host commands (including error code and checksum) */
 static uint8_t host_buffer[EC_PARAM_SIZE + 2];
+static struct host_cmd_handler_args host_cmd_args;
 
 /* current position in host buffer for reception */
 static int rx_index;
@@ -138,11 +139,6 @@ void host_send_response(enum ec_status result, const uint8_t *data, int size)
 	i2c_write_raw(I2C2, host_buffer, out - host_buffer);
 }
 
-uint8_t *host_get_buffer(void)
-{
-	return host_buffer + 1 /* skip room for error code */;
-}
-
 static void i2c_event_handler(int port)
 {
 
@@ -177,7 +173,14 @@ static void i2c_event_handler(int port)
 		if (port == I2C2) { /* AP is waiting for EC response */
 			if (rx_index) {
 				/* we have an available command : execute it */
-				host_command_received(host_buffer[0]);
+				host_cmd_args.command = host_buffer[0];
+				host_cmd_args.version = 0;
+				host_cmd_args.params = host_buffer + 1;
+				host_cmd_args.params_size = EC_PARAM_SIZE;
+				/* skip room for error code */
+				host_cmd_args.response = host_buffer + 1;
+				host_cmd_args.response_size = 0;
+				host_command_received(&host_cmd_args);
 				/* reset host buffer after end of transfer */
 				rx_index = 0;
 			} else {
