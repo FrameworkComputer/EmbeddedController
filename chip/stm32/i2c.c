@@ -341,7 +341,7 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 	r = STM32_I2C_SR1(port);
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
-		if (t2.val - t1.val > 100000) {
+		if (t2.val - t1.val > I2C_TX_TIMEOUT) {
 #ifdef CONFIG_DEBUG_I2C
 			CPRINTF(" m %016b\n", mask);
 			CPRINTF(" - %016b\n", r);
@@ -350,7 +350,7 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 				wait, (unsigned)t2.val - (unsigned)t1.val);
 			return EC_ERROR_TIMEOUT;
 		} else if (t2.val - t1.val > 150) {
-			usleep(2000);
+			usleep(100);
 		}
 		r = STM32_I2C_SR1(port);
 	}
@@ -417,13 +417,13 @@ static void handle_i2c_error(int port, int rv)
 	t1 = get_time();
 	while (r & 2) {
 		t2 = get_time();
-		if (t2.val - t1.val > 1000000) {
+		if (t2.val - t1.val > I2C_TX_TIMEOUT) {
 			dump_i2c_reg(port);
 			goto cr_cleanup;
 		}
 		/* Send stop */
 		master_stop(port);
-		usleep(10000);
+		usleep(1000);
 		r = STM32_I2C_SR2(port);
 	}
 cr_cleanup:
