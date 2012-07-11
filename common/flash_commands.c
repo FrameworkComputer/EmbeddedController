@@ -207,9 +207,6 @@ static int flash_command_read(struct host_cmd_handler_args *args)
 	const struct ec_params_flash_read *p =
 		(const struct ec_params_flash_read *)args->params;
 
-	if (p->size > EC_PARAM_SIZE)
-		return EC_RES_INVALID_PARAM;
-
 	if (flash_dataptr(p->offset, p->size, 1, (char **)&args->response) < 0)
 		return EC_RES_ERROR;
 

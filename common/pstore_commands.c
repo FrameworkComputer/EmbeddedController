@@ -37,7 +37,7 @@ int pstore_command_read(struct host_cmd_handler_args *args)
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
-	if (p->size > sizeof(EC_PARAM_SIZE))
+	if (p->size > args->response_max)
 		return EC_RES_INVALID_PARAM;
 
 	while (bytes_left) {

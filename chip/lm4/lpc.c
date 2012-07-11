@@ -377,6 +377,7 @@ static void lpc_interrupt(void)
 		host_cmd_args.params = host_get_buffer();
 		host_cmd_args.params_size = EC_PARAM_SIZE;
 		host_cmd_args.response = host_get_buffer();
+		host_cmd_args.response_max = EC_PARAM_SIZE;
 		host_cmd_args.response_size = 0;
 		host_command_received(&host_cmd_args);
 	}

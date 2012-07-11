@@ -179,6 +179,7 @@ static void i2c_event_handler(int port)
 				host_cmd_args.params_size = EC_PARAM_SIZE;
 				/* skip room for error code */
 				host_cmd_args.response = host_buffer + 1;
+				host_cmd_args.response_max = EC_PARAM_SIZE;
 				host_cmd_args.response_size = 0;
 				host_command_received(&host_cmd_args);
 				/* reset host buffer after end of transfer */

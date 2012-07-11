@@ -192,6 +192,7 @@ static void spi_interrupt(int port)
 	args.params_size = sizeof(out_msg) - SPI_MSG_PROTO_BYTES;
 	/* TODO: use a different initial buffer for params vs. response */
 	args.response = args.params;
+	args.response_max = sizeof(out_msg) - SPI_MSG_PROTO_BYTES;
 	args.response_size = 0;
 
 	status = host_command_process(&args);

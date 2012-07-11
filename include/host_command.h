@@ -19,11 +19,17 @@ struct host_cmd_handler_args {
 	uint8_t params_size;   /* Size of input parameters in bytes */
 	/*
 	 * Pointer to output response data buffer.  On input to the handler,
-	 * points to a EC_PARAM_SIZE-byte buffer.  Command handler can change
+	 * points to a buffer of size response_max.  Command handler can change
 	 * this to point to a different location instead of memcpy()'ing data
 	 * into the provided buffer.
 	 */
 	uint8_t *response;
+	/*
+	 * Maximum size of response buffer provided to command handler.  If the
+	 * handler changes response to point to its own larger buffer, it may
+	 * return a response_size greater than response_max.
+	 */
+	uint8_t response_max;
 	uint8_t response_size; /* Size of data pointed to by resp_ptr */
 };
 
