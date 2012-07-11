@@ -34,15 +34,15 @@ int comm_init(void)
 	 * byte, since we don't support ACPI burst mode and thus bit 4 should
 	 * be 0.
 	 */
-	byte &= inb(EC_LPC_ADDR_USER_CMD);
-	byte &= inb(EC_LPC_ADDR_USER_DATA);
-	for (i = 0; i < EC_PARAM_SIZE && byte == 0xff; ++i)
-		byte &= inb(EC_LPC_ADDR_USER_PARAM + i);
+	byte &= inb(EC_LPC_ADDR_HOST_CMD);
+	byte &= inb(EC_LPC_ADDR_HOST_DATA);
+	for (i = 0; i < EC_OLD_PARAM_SIZE && byte == 0xff; ++i)
+		byte &= inb(EC_LPC_ADDR_OLD_PARAM + i);
 	if (byte == 0xff) {
 		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
-			EC_LPC_ADDR_USER_CMD, EC_LPC_ADDR_USER_DATA,
-			EC_LPC_ADDR_USER_PARAM,
-			EC_LPC_ADDR_USER_PARAM + EC_PARAM_SIZE - 1);
+			EC_LPC_ADDR_HOST_CMD, EC_LPC_ADDR_HOST_DATA,
+			EC_LPC_ADDR_OLD_PARAM,
+			EC_LPC_ADDR_OLD_PARAM + EC_OLD_PARAM_SIZE - 1);
 		fprintf(stderr,
 			"Very likely this board doesn't have a Chromium EC.\n");
 		return -4;
@@ -86,15 +86,18 @@ int ec_command(int command, const void *indata, int insize,
 	uint8_t *d;
 	int i;
 
-	/* TODO: add command line option to use kernel command/param window */
-	int cmd_addr = EC_LPC_ADDR_USER_CMD;
-	int data_addr = EC_LPC_ADDR_USER_DATA;
-	int param_addr = EC_LPC_ADDR_USER_PARAM;
+	int cmd_addr = EC_LPC_ADDR_HOST_CMD;
+	int data_addr = EC_LPC_ADDR_HOST_DATA;
+	int param_addr = EC_LPC_ADDR_OLD_PARAM;
 
-	if (insize > EC_PARAM_SIZE || outsize > EC_PARAM_SIZE) {
+	if (insize > EC_OLD_PARAM_SIZE) {
 		fprintf(stderr, "Data size too big\n");
 		return -EC_RES_ERROR;
 	}
+
+	/* Clip output buffer to the size we can actually use */
+	if (outsize > EC_OLD_PARAM_SIZE)
+		outsize = EC_OLD_PARAM_SIZE;
 
 	if (wait_for_ec(cmd_addr, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC ready\n");

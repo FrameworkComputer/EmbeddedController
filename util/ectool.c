@@ -270,7 +270,7 @@ int cmd_version(int argc, char *argv[])
 {
   static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
 	struct ec_response_get_version r;
-	char build_string[EC_PARAM_SIZE];
+	char build_string[EC_HOST_PARAM_SIZE];
 	int rv;
 
 	rv = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
@@ -432,7 +432,7 @@ int cmd_flash_info(int argc, char *argv[])
 int cmd_flash_read(int argc, char *argv[])
 {
 	struct ec_params_flash_read p;
-	uint8_t rdata[EC_PARAM_SIZE];
+	uint8_t rdata[EC_OLD_PARAM_SIZE];
 	int offset, size;
 	int rv;
 	int i;
@@ -1166,7 +1166,7 @@ int cmd_pstore_info(int argc, char *argv[])
 int cmd_pstore_read(int argc, char *argv[])
 {
 	struct ec_params_pstore_read p;
-	uint8_t rdata[EC_PARAM_SIZE];
+	uint8_t rdata[EC_PSTORE_SIZE_MAX];
 	int offset, size;
 	int rv;
 	int i;

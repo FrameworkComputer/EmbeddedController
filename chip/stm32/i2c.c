@@ -42,7 +42,7 @@ static uint16_t i2c_sr1[NUM_PORTS];
 static struct mutex i2c_mutex;
 
 /* buffer for host commands (including error code and checksum) */
-static uint8_t host_buffer[EC_PARAM_SIZE + 2];
+static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 2];
 static struct host_cmd_handler_args host_cmd_args;
 
 /* current position in host buffer for reception */
@@ -176,10 +176,10 @@ static void i2c_event_handler(int port)
 				host_cmd_args.command = host_buffer[0];
 				host_cmd_args.version = 0;
 				host_cmd_args.params = host_buffer + 1;
-				host_cmd_args.params_size = EC_PARAM_SIZE;
+				host_cmd_args.params_size = EC_HOST_PARAM_SIZE;
 				/* skip room for error code */
 				host_cmd_args.response = host_buffer + 1;
-				host_cmd_args.response_max = EC_PARAM_SIZE;
+				host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
 				host_cmd_args.response_size = 0;
 				host_command_received(&host_cmd_args);
 				/* reset host buffer after end of transfer */

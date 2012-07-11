@@ -37,6 +37,11 @@ static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
 
+static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
+	EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
+static uint8_t * const old_params = (uint8_t *)LPC_POOL_CMD_DATA +
+	EC_LPC_ADDR_OLD_PARAM - EC_LPC_ADDR_HOST_ARGS;
+
 /* Configure GPIOs for module */
 static void configure_gpio(void)
 {
@@ -116,13 +121,6 @@ static void lpc_generate_sci(void)
 			host_events & event_mask[LPC_HOST_EVENT_SCI]);
 }
 
-/* Return buffer for host command params/response. */
-static uint8_t *host_get_buffer(void)
-{
-	return (uint8_t *)LPC_POOL_CMD_DATA;
-}
-
-
 uint8_t *lpc_get_memmap_range(void)
 {
 	return (uint8_t *)LPC_POOL_MEMMAP;
@@ -130,10 +128,10 @@ uint8_t *lpc_get_memmap_range(void)
 
 void host_send_response(enum ec_status result, const uint8_t *data, int size)
 {
-	uint8_t *out = host_get_buffer();
+	uint8_t *out = old_params;
 
 	/* Fail if response doesn't fit in the param buffer */
-	if (size < 0 || size > EC_PARAM_SIZE)
+	if (size < 0 || size > EC_OLD_PARAM_SIZE)
 		result = EC_RES_INVALID_RESPONSE;
 	else if (data != out)
 		memcpy(out, data, size);
@@ -146,11 +144,11 @@ void host_send_response(enum ec_status result, const uint8_t *data, int size)
 	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
 	 * IRQs
 	 */
-	LPC_POOL_USER[1] = result;
+	LPC_POOL_CMD[1] = result;
 
 	/* Clear the busy bit */
 	task_disable_irq(LM4_IRQ_LPC);
-	LM4_LPC_ST(LPC_CH_USER) &= ~LPC_STATUS_MASK_BUSY;
+	LM4_LPC_ST(LPC_CH_CMD) &= ~LPC_STATUS_MASK_BUSY;
 	task_enable_irq(LM4_IRQ_LPC);
 }
 
@@ -364,20 +362,20 @@ static void lpc_interrupt(void)
 		handle_acpi_command();
 
 	/* Handle user command writes */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_USER, 4)) {
+	if (mis & LM4_LPC_INT_MASK(LPC_CH_CMD, 4)) {
 		/* Set the busy bit */
-		LM4_LPC_ST(LPC_CH_USER) |= LPC_STATUS_MASK_BUSY;
+		LM4_LPC_ST(LPC_CH_CMD) |= LPC_STATUS_MASK_BUSY;
 
 		/*
 		 * Read the command byte and pass to the host command handler.
 		 * This clears the FRMH bit in the status byte.
 		 */
-		host_cmd_args.command = LPC_POOL_USER[0];
+		host_cmd_args.command = LPC_POOL_CMD[0];
 		host_cmd_args.version = 0;
-		host_cmd_args.params = host_get_buffer();
-		host_cmd_args.params_size = EC_PARAM_SIZE;
-		host_cmd_args.response = host_get_buffer();
-		host_cmd_args.response_max = EC_PARAM_SIZE;
+		host_cmd_args.params = old_params;
+		host_cmd_args.params_size = EC_OLD_PARAM_SIZE;
+		host_cmd_args.response = old_params;
+		host_cmd_args.response_max = EC_OLD_PARAM_SIZE;
 		host_cmd_args.response_size = 0;
 		host_command_received(&host_cmd_args);
 	}
@@ -493,8 +491,8 @@ static int lpc_init(void)
 	 *
 	 *   pci_write32 0 0x1f 0 0x88 0x007c0801
 	 */
-	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_USER_PARAM;
-	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x8015 |
+	LM4_LPC_ADR(LPC_CH_CMD_DATA) = EC_LPC_ADDR_HOST_ARGS;
+	LM4_LPC_CTL(LPC_CH_CMD_DATA) = 0x8019 |
 		(LPC_POOL_OFFS_CMD_DATA << (5 - 1));
 
 	/*
@@ -514,11 +512,11 @@ static int lpc_init(void)
 	 * single endpoint, offset 0 for host command/writes and 1 for EC
 	 * data writes, pool bytes 0(data)/1(cmd)
 	 */
-	LM4_LPC_ADR(LPC_CH_USER) = EC_LPC_ADDR_USER_DATA;
-	LM4_LPC_CTL(LPC_CH_USER) = (LPC_POOL_OFFS_USER << (5 - 1));
-	LM4_LPC_ST(LPC_CH_USER) = 0;
+	LM4_LPC_ADR(LPC_CH_CMD) = EC_LPC_ADDR_HOST_DATA;
+	LM4_LPC_CTL(LPC_CH_CMD) = (LPC_POOL_OFFS_CMD << (5 - 1));
+	LM4_LPC_ST(LPC_CH_CMD) = 0;
 	/* Unmask interrupt for host command writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_USER, 4);
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_CMD, 4);
 
 	/*
 	 * Set LPC channel 5 to I/O address 0x900, range endpoint,
@@ -562,7 +560,7 @@ static int lpc_init(void)
 		(1 << LPC_CH_PORT80) |
 		(1 << LPC_CH_CMD_DATA) |
 		(1 << LPC_CH_KEYBOARD) |
-		(1 << LPC_CH_USER) |
+		(1 << LPC_CH_CMD) |
 		(1 << LPC_CH_MEMMAP) |
 		(1 << LPC_CH_COMX);
 

@@ -20,7 +20,7 @@ static const char * const part_name[] = {"unknown", "RO", "A", "B"};
 enum ec_current_image get_version(enum ec_current_image *version_ptr)
 {
 	struct ec_response_get_version r;
-	char build_info[EC_PARAM_SIZE];
+	char build_info[EC_HOST_PARAM_SIZE];
 	int res;
 
 	res = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
@@ -59,7 +59,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	struct ec_params_flash_erase er_req;
 	struct ec_params_flash_write wr_req;
 	struct ec_params_flash_read rd_req;
-	uint8_t rd_resp[EC_PARAM_SIZE];
+	uint8_t rd_resp[EC_OLD_PARAM_SIZE];
 	int res;
 	uint32_t i;
 	enum ec_current_image current = EC_IMAGE_UNKNOWN;
