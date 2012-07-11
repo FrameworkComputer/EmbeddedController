@@ -30,7 +30,7 @@ static int hc_flash_info(int argc, char **argv)
 	struct ec_response_flash_info *r =
 		(struct ec_response_flash_info *)data;
 
-	res = host_command_process(0, EC_CMD_FLASH_INFO, data, &resp_size);
+	res = host_command_process(EC_CMD_FLASH_INFO, data, &resp_size);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	uart_printf("flash_size = %d\n", r->flash_size);
@@ -66,7 +66,7 @@ static int hc_flash_read(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	res = host_command_process(0, EC_CMD_FLASH_READ, data, &resp_size);
+	res = host_command_process(EC_CMD_FLASH_READ, data, &resp_size);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	for (i = 0; i < size; ++i) {
@@ -115,7 +115,7 @@ static int hc_flash_write(int argc, char **argv)
 		seed = seed * mult + add;
 	}
 
-	res = host_command_process(0, EC_CMD_FLASH_WRITE, data, &resp_size);
+	res = host_command_process(EC_CMD_FLASH_WRITE, data, &resp_size);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	return EC_SUCCESS;
@@ -144,7 +144,7 @@ static int hc_flash_erase(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	res = host_command_process(0, EC_CMD_FLASH_ERASE, data, &resp_size);
+	res = host_command_process(EC_CMD_FLASH_ERASE, data, &resp_size);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	return EC_SUCCESS;

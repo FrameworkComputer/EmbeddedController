@@ -26,6 +26,20 @@ def xor_sum(size, seed, mult, add):
         seed = seed * mult + add
     return ret
 
+def test_erase(helper, offset, size):
+    helper.ec_command("hcflasherase %d %d" % (offset, size))
+    helper.wait_output("Flash erase at %x size %x" % (offset, size))
+
+def test_read(helper, offset, size):
+    helper.ec_command("hcflashread %d %d" % (offset, size))
+    while size > 0:
+        cur_size = size if size <= 32 else 32
+        expect_str = ''.join([("%02x" % (x & 0xff)) for x in
+                range(offset, offset + cur_size)])
+        helper.wait_output(expect_str)
+        offset = offset + cur_size
+        size = size - cur_size
+
 def test_write(helper, offset, size, expect_fail=False):
     seed = random.randint(2, 10000)
     mult = random.randint(2, 10000)
