@@ -202,6 +202,13 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 
 static int host_command_init(void)
 {
+	/* Initialize memory map ID area */
+	host_get_memmap(EC_MEMMAP_ID)[0] = 'E';
+	host_get_memmap(EC_MEMMAP_ID)[1] = 'C';
+	*host_get_memmap(EC_MEMMAP_ID_VERSION) = 1;
+	*host_get_memmap(EC_MEMMAP_EVENTS_VERSION) = 1;
+
+
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
 	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
 

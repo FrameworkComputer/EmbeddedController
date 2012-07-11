@@ -97,6 +97,10 @@ static void update_mapped_memory(void)
 void temp_sensor_task(void)
 {
 	int i;
+
+	/* Switch data is now present */
+	*host_get_memmap(EC_MEMMAP_THERMAL_VERSION) = 1;
+
 	while (1) {
 		for (i = 0; i < 4; ++i) {
 			usleep(250000);

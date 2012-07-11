@@ -55,22 +55,28 @@
 #define EC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
-#define EC_MEMMAP_TEMP_SENSOR 0x00
-#define EC_MEMMAP_FAN         0x10
-#define EC_MEMMAP_SWITCHES    0x30
-#define EC_MEMMAP_HOST_EVENTS 0x34
-#define EC_MEMMAP_BATT_VOLT   0x40 /* Battery Present Voltage */
-#define EC_MEMMAP_BATT_RATE   0x44 /* Battery Present Rate */
-#define EC_MEMMAP_BATT_CAP    0x48 /* Battery Remaining Capacity */
-#define EC_MEMMAP_BATT_FLAG   0x4c /* Battery State, defined below */
-#define EC_MEMMAP_BATT_DCAP   0x50 /* Battery Design Capacity */
-#define EC_MEMMAP_BATT_DVLT   0x54 /* Battery Design Voltage */
-#define EC_MEMMAP_BATT_LFCC   0x58 /* Battery Last Full Charge Capacity */
-#define EC_MEMMAP_BATT_CCNT   0x5c /* Battery Cycle Count */
-#define EC_MEMMAP_BATT_MFGR   0x60 /* Battery Manufacturer String */
-#define EC_MEMMAP_BATT_MODEL  0x68 /* Battery Model Number String */
-#define EC_MEMMAP_BATT_SERIAL 0x70 /* Battery Serial Number String */
-#define EC_MEMMAP_BATT_TYPE   0x78 /* Battery Type String */
+#define EC_MEMMAP_TEMP_SENSOR      0x00
+#define EC_MEMMAP_FAN              0x10
+#define EC_MEMMAP_ID               0x20 /* 'E' 'C' */
+#define EC_MEMMAP_ID_VERSION       0x22 /* Version of data in 0x20 - 0x2f */
+#define EC_MEMMAP_THERMAL_VERSION  0x23 /* Version of data in 0x00 - 0x1f */
+#define EC_MEMMAP_BATTERY_VERSION  0x24 /* Version of data in 0x40 - 0x7f */
+#define EC_MEMMAP_SWITCHES_VERSION 0x25 /* Version of data in 0x30 - 0x33 */
+#define EC_MEMMAP_EVENTS_VERSION   0x26 /* Version of data in 0x34 - 0x3f */
+#define EC_MEMMAP_SWITCHES         0x30
+#define EC_MEMMAP_HOST_EVENTS      0x34
+#define EC_MEMMAP_BATT_VOLT        0x40 /* Battery Present Voltage */
+#define EC_MEMMAP_BATT_RATE        0x44 /* Battery Present Rate */
+#define EC_MEMMAP_BATT_CAP         0x48 /* Battery Remaining Capacity */
+#define EC_MEMMAP_BATT_FLAG        0x4c /* Battery State, defined below */
+#define EC_MEMMAP_BATT_DCAP        0x50 /* Battery Design Capacity */
+#define EC_MEMMAP_BATT_DVLT        0x54 /* Battery Design Voltage */
+#define EC_MEMMAP_BATT_LFCC        0x58 /* Battery Last Full Charge Capacity */
+#define EC_MEMMAP_BATT_CCNT        0x5c /* Battery Cycle Count */
+#define EC_MEMMAP_BATT_MFGR        0x60 /* Battery Manufacturer String */
+#define EC_MEMMAP_BATT_MODEL       0x68 /* Battery Model Number String */
+#define EC_MEMMAP_BATT_SERIAL      0x70 /* Battery Serial Number String */
+#define EC_MEMMAP_BATT_TYPE        0x78 /* Battery Type String */
 
 /* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01

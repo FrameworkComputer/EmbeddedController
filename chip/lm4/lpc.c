@@ -7,7 +7,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -579,6 +578,9 @@ static int lpc_init(void)
 		/* Do a dummy slave write; this should cause SW1ST to be set */
 		*LPC_POOL_MEMMAP = *LPC_POOL_MEMMAP;
 	}
+
+	/* Initialize memory map to all zero */
+	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
 
 	/* Enable LPC interrupt */
 	task_enable_irq(LM4_IRQ_LPC);

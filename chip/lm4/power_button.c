@@ -518,6 +518,9 @@ static int power_button_init(void)
 
 	set_initial_pwrbtn_state();
 
+	/* Switch data is now present */
+	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
+
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 	gpio_enable_interrupt(GPIO_LID_SWITCHn);

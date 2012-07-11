@@ -70,6 +70,9 @@ static void update_battery_info(void)
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	if (battery_serial_number(&batt_serial) == 0)
 		snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X", batt_serial);
+
+	/* Battery data is now present */
+	*host_get_memmap(EC_MEMMAP_BATTERY_VERSION) = 1;
 }
 
 /* Prevent battery from going into deep discharge state */
