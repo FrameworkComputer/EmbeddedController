@@ -8,6 +8,8 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
+#include "system.h"
 #include "util.h"
 
 
@@ -48,6 +50,8 @@ static int last_val_changed(int i, int v)
 	}
 }
 
+/*****************************************************************************/
+/* Console commands */
 
 static int command_gpio_get(int argc, char **argv)
 {
@@ -118,3 +122,55 @@ DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set,
 			"name <0 | 1>",
 			"Set a GPIO",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+static int gpio_command_get(struct host_cmd_handler_args *args)
+{
+	struct ec_params_gpio_get *p =
+			(struct ec_params_gpio_get *)args->params;
+	struct ec_response_gpio_get *r =
+			(struct ec_response_gpio_get *)args->response;
+	int i;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	i = find_signal_by_name(p->name);
+	if (i == GPIO_COUNT)
+		return EC_RES_ERROR;
+
+	r->val = gpio_get_level(i);
+	args->response_size = sizeof(struct ec_response_gpio_get);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GPIO_GET, gpio_command_get, EC_VER_MASK(0));
+
+
+static int gpio_command_set(struct host_cmd_handler_args *args)
+{
+	struct ec_params_gpio_set *p =
+			(struct ec_params_gpio_set *)args->params;
+	int i;
+	const struct gpio_info *g;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	i = find_signal_by_name(p->name);
+	if (i == GPIO_COUNT)
+		return EC_RES_ERROR;
+	g = gpio_list + i;
+
+	if (!g->mask)
+		return EC_RES_ERROR;
+
+	if (!(g->flags & GPIO_OUTPUT))
+		return EC_RES_ERROR;
+
+	if (gpio_set_level(i, p->val) != EC_SUCCESS)
+		return EC_RES_ERROR;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GPIO_SET, gpio_command_set, EC_VER_MASK(0));

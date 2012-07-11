@@ -69,6 +69,10 @@ const char help_str[] =
 	"      Reads from EC flash to a file\n"
 	"  flashwrite <offset> <infile>\n"
 	"      Writes to EC flash from a file\n"
+	"  gpioget <GPIO name>\n"
+	"      Get the value of GPIO signal\n"
+	"  gpioset <GPIO name>\n"
+	"      Set the value of GPIO signal\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
 	"  kbpress\n"
@@ -1678,6 +1682,66 @@ int cmd_charge_force_idle(int argc, char *argv[])
 }
 
 
+int cmd_gpio_get(int argc, char *argv[])
+{
+	struct ec_params_gpio_get p;
+	struct ec_response_gpio_get r;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <GPIO name>\n", argv[0]);
+		return -1;
+	}
+
+	if (strlen(argv[1]) + 1 > sizeof(p.name)) {
+		fprintf(stderr, "GPIO name too long.\n");
+		return -1;
+	}
+	strcpy(p.name, argv[1]);
+
+	rv = ec_command(EC_CMD_GPIO_GET, 0,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("GPIO %s = %d\n", p.name, r.val);
+	return 0;
+}
+
+
+int cmd_gpio_set(int argc, char *argv[])
+{
+	struct ec_params_gpio_set p;
+	char *e;
+	int rv;
+
+	if (argc != 3) {
+		fprintf(stderr, "Usage: %s <GPIO name> <0 | 1>\n", argv[0]);
+		return -1;
+	}
+
+	if (strlen(argv[1]) + 1 > sizeof(p.name)) {
+		fprintf(stderr, "GPIO name too long.\n");
+		return -1;
+	}
+	strcpy(p.name, argv[1]);
+
+	p.val = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_GPIO_SET, 0,
+			&p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("GPIO %s set to %d\n", p.name, p.val);
+	return 0;
+}
+
+
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_MEMMAP_TEXT_MAX];
@@ -1905,6 +1969,8 @@ const struct command commands[] = {
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},
+	{"gpioget", cmd_gpio_get},
+	{"gpioset", cmd_gpio_set},
 	{"hello", cmd_hello},
 	{"kbpress", cmd_kbpress},
 	{"i2cread", cmd_i2c_read},
