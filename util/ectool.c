@@ -33,6 +33,8 @@ const char help_str[] =
 	"      Prints battery info\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
+	"  cmdversions <cmd>\n"
+	"      Prints supported version mask for a command number\n"
 	"  echash [CMDS]\n"
 	"      Various EC hash commands\n"
 	"  eventclear <mask>\n"
@@ -81,8 +83,6 @@ const char help_str[] =
 	"      Set target fan RPM\n"
 	"  pwmsetkblight <percent>\n"
 	"      Set keyboard backlight in percent\n"
-	"  queryec\n"
-	"      Does an ACPI Query Embedded Controller command\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|A|B|disable-jump> [at-shutdown]\n"
@@ -230,6 +230,37 @@ int cmd_hello(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_cmdversions(int argc, char *argv[])
+{
+	struct ec_params_get_cmd_versions p;
+	struct ec_response_get_cmd_versions r;
+	char *e;
+	int cmd;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <cmd>\n", argv[0]);
+		return -1;
+	}
+	cmd = strtol(argv[1], &e, 0);
+	if ((e && *e) || cmd < 0 || cmd > 0xff) {
+		fprintf(stderr, "Bad command number.\n");
+		return -1;
+	}
+
+	p.cmd = cmd;
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0) {
+		if (rv == -EC_RES_INVALID_PARAM)
+			printf("Command 0x%02x not supported by EC.\n", cmd);
+
+		return rv;
+	}
+
+	printf("Command 0x%02x supports version mask 0x%08x\n",
+	       cmd, r.version_mask);
+	return 0;
+}
 
 int cmd_version(int argc, char *argv[])
 {
@@ -1675,6 +1706,7 @@ const struct command commands[] = {
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"chipinfo", cmd_chipinfo},
+	{"cmdversions", cmd_cmdversions},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
 	{"eventget", cmd_host_event_get_raw},

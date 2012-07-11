@@ -60,6 +60,22 @@ void host_command_received(int command)
 	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
 }
 
+/*
+ * Find a command by command number.  Returns the command structure, or NULL if
+ * no match found.
+ */
+static const struct host_command *find_host_command(int command)
+{
+	const struct host_command *cmd;
+
+	for (cmd = __hcmds; cmd < __hcmds_end; cmd++) {
+		if (command == cmd->command)
+			return cmd;
+	}
+
+	return NULL;
+}
+
 static int host_command_proto_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_proto_version *r =
@@ -144,21 +160,27 @@ DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP,
 		     EC_VER_MASK(0));
 #endif
 
-/*
- * Find a command by command number.  Returns the command structure, or NULL if
- * no match found.
- */
-static const struct host_command *find_host_command(int command)
+static int host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 {
-	const struct host_command *cmd;
+	const struct ec_params_get_cmd_versions *p =
+		(const struct ec_params_get_cmd_versions *)args->params;
+	struct ec_response_get_cmd_versions *r =
+		(struct ec_response_get_cmd_versions *)args->response;
 
-	for (cmd = __hcmds; cmd < __hcmds_end; cmd++) {
-		if (command == cmd->command)
-			return cmd;
-	}
+	const struct host_command *cmd = find_host_command(p->cmd);
 
-	return NULL;
+	if (!cmd)
+		return EC_RES_INVALID_PARAM;
+
+	r->version_mask = cmd->version_mask;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
 }
+DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
+		     host_command_get_cmd_versions,
+		     EC_VER_MASK(0));
 
 enum ec_status host_command_process(int command, uint8_t *data,
 				    int *response_size)
