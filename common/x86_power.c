@@ -674,15 +674,18 @@ DECLARE_CONSOLE_COMMAND(x86shutdown, command_x86shutdown,
 /*****************************************************************************/
 /* Host commands */
 
-int switch_command_enable_wireless(uint8_t *data, int *resp_size)
+static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
 {
-	struct ec_params_switch_enable_wireless *p =
-			(struct ec_params_switch_enable_wireless *)data;
+	const struct ec_params_switch_enable_wireless *p =
+		(const struct ec_params_switch_enable_wireless *)args->params;
+
 	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
 		       p->enabled & EC_WIRELESS_SWITCH_WLAN);
 	gpio_set_level(GPIO_RADIO_ENABLE_BT,
 		       p->enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
-		     switch_command_enable_wireless);
+		     switch_command_enable_wireless,
+		     EC_VER_MASK(0));

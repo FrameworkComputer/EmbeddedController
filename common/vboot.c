@@ -5,10 +5,8 @@
 
 /* Verified boot module for Chrome EC */
 
-#include "board.h"
-#include "config.h"
+#include "common.h"
 #include "console.h"
-#include "eoption.h"
 #include "host_command.h"
 #include "system.h"
 #include "vboot.h"
@@ -26,27 +24,31 @@ int vboot_pre_init(void)
 /****************************************************************************/
 /* Host commands */
 
-static int host_cmd_vboot(uint8_t *data, int *resp_size)
+static int host_cmd_vboot(struct host_cmd_handler_args *args)
 {
-	struct ec_params_vboot_cmd *ptr =
-		(struct ec_params_vboot_cmd *)data;
+	const struct ec_params_vboot_cmd *p =
+		(const struct ec_params_vboot_cmd *)args->params;
+	struct ec_params_vboot_cmd *r =
+		(struct ec_params_vboot_cmd *)args->response;
 	uint8_t v;
 
-	switch (ptr->in.cmd) {
+	switch (p->in.cmd) {
 	case VBOOT_CMD_GET_FLAGS:
 		v = VBOOT_FLAGS_IMAGE_MASK & system_get_image_copy();
-		ptr->out.get_flags.val = v;
-		*resp_size = sizeof(struct ec_params_vboot_cmd);
+		r->out.get_flags.val = v;
+		args->response_size = sizeof(r);
 		break;
 	case VBOOT_CMD_SET_FLAGS:
-		v = ptr->in.set_flags.val;
+		v = p->in.set_flags.val;
 		break;
 	default:
-		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);
+		CPRINTF("[%T LB bad cmd 0x%x]\n", p->in.cmd);
 		return EC_RES_INVALID_PARAM;
 	}
 
 	return EC_RES_SUCCESS;
 }
 
-DECLARE_HOST_COMMAND(EC_CMD_VBOOT_CMD, host_cmd_vboot);
+DECLARE_HOST_COMMAND(EC_CMD_VBOOT_CMD,
+		     host_cmd_vboot,
+		     EC_VER_MASK(0));

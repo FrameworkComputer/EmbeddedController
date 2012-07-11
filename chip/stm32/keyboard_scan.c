@@ -421,26 +421,33 @@ int keyboard_scan_recovery_pressed(void)
 	return switches & EC_SWITCH_KEYBOARD_RECOVERY;
 }
 
-static int keyboard_get_scan(uint8_t *data, int *resp_size)
+static int keyboard_get_scan(struct host_cmd_handler_args *args)
 {
-	kb_fifo_remove(data);
+	kb_fifo_remove(args->response);
 	if (!kb_fifo_entries)
 		board_interrupt_host(0);
-	*resp_size = KB_OUTPUTS;
+
+	args->response_size = KB_OUTPUTS;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_STATE, keyboard_get_scan);
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_STATE,
+		     keyboard_get_scan,
+		     EC_VER_MASK(0));
 
-static int keyboard_get_info(uint8_t *data, int *resp_size)
+static int keyboard_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_mkbp_info *r = (struct ec_response_mkbp_info *)data;
+	struct ec_response_mkbp_info *r =
+		(struct ec_response_mkbp_info *)args->response;
 
 	r->rows = 8;
 	r->cols = KB_OUTPUTS;
 	r->switches = switches;
 
-	*resp_size = sizeof(struct ec_response_mkbp_info);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO, keyboard_get_info);
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO,
+		     keyboard_get_info,
+		     EC_VER_MASK(0));

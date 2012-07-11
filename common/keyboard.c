@@ -893,10 +893,10 @@ DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
 /*****************************************************************************/
 /* Host commands */
 
-static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
+static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
 {
-	struct ec_params_mkbp_simulate_key *p =
-			(struct ec_params_mkbp_simulate_key *)data;
+	const struct ec_params_mkbp_simulate_key *p =
+		(const struct ec_params_mkbp_simulate_key *)args->params;
 
 	/* Only available on unlocked systems */
 	if (system_is_locked())
@@ -911,7 +911,9 @@ static int mkbp_command_simulate_key(uint8_t *data, int *resp_size)
 	keyboard_state_changed(p->row, p->col, p->pressed);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY, mkbp_command_simulate_key);
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
+		     mkbp_command_simulate_key,
+		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Hooks */

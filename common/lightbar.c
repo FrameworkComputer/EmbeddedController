@@ -5,7 +5,7 @@
  * LED controls.
  */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -678,15 +678,24 @@ static void do_cmd_rgb(uint8_t led,
 /* Host commands via LPC bus */
 /****************************************************************************/
 
-static int lpc_cmd_lightbar(uint8_t *data, int *resp_size)
+static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 {
 	struct ec_params_lightbar_cmd *ptr =
-		(struct ec_params_lightbar_cmd *)data;
+		(struct ec_params_lightbar_cmd *)args->response;
+
+	/*
+	 * TODO: (crosbug.com/p/11277) Now that params and response are
+	 * separate pointers, they need to be propagated to the lightbar
+	 * sub-commands.  For now, just copy params to response so the
+	 * sub-commands above will work unchanged.
+	 */
+	if (args->params != args->response)
+		memcpy(args->response, args->params, args->params_size);
 
 	switch (ptr->in.cmd) {
 	case LIGHTBAR_CMD_DUMP:
 		do_cmd_dump(ptr);
-		*resp_size = sizeof(struct ec_params_lightbar_cmd);
+		args->response_size = sizeof(struct ec_params_lightbar_cmd);
 		break;
 	case LIGHTBAR_CMD_OFF:
 		lightbar_off();
@@ -716,7 +725,7 @@ static int lpc_cmd_lightbar(uint8_t *data, int *resp_size)
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
 		ptr->out.get_seq.num = current_state;
-		*resp_size = sizeof(struct ec_params_lightbar_cmd);
+		args->response_size = sizeof(struct ec_params_lightbar_cmd);
 		break;
 	default:
 		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);
@@ -726,7 +735,10 @@ static int lpc_cmd_lightbar(uint8_t *data, int *resp_size)
 	return EC_RES_SUCCESS;
 }
 
-DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD, lpc_cmd_lightbar);
+DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD,
+		     lpc_cmd_lightbar,
+		     EC_VER_MASK(0));
+
 
 
 /****************************************************************************/

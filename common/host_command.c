@@ -60,38 +60,43 @@ void host_command_received(int command)
 	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
 }
 
-
-static int host_command_proto_version(uint8_t *data, int *resp_size)
+static int host_command_proto_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_proto_version *r =
-		(struct ec_response_proto_version *)data;
+		(struct ec_response_proto_version *)args->response;
 
 	r->version = EC_PROTO_VERSION;
+	args->response_size = sizeof(*r);
 
-	*resp_size = sizeof(struct ec_response_proto_version);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION, host_command_proto_version);
+DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION,
+		     host_command_proto_version,
+		     EC_VER_MASK(0));
 
-
-static int host_command_hello(uint8_t *data, int *resp_size)
+static int host_command_hello(struct host_cmd_handler_args *args)
 {
-	struct ec_params_hello *p = (struct ec_params_hello *)data;
-	struct ec_response_hello *r = (struct ec_response_hello *)data;
+	const struct ec_params_hello *p =
+		(const struct ec_params_hello *)args->params;
+	struct ec_response_hello *r =
+		(struct ec_response_hello *)args->response;
 	uint32_t d = p->in_data;
 
 	r->out_data = d + 0x01020304;
-	*resp_size = sizeof(struct ec_response_hello);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HELLO, host_command_hello);
+DECLARE_HOST_COMMAND(EC_CMD_HELLO,
+		     host_command_hello,
+		     EC_VER_MASK(0));
 
-
-static int host_command_read_test(uint8_t *data, int *resp_size)
+static int host_command_read_test(struct host_cmd_handler_args *args)
 {
-	struct ec_params_read_test *p = (struct ec_params_read_test *)data;
+	const struct ec_params_read_test *p =
+		(const struct ec_params_read_test *)args->params;
 	struct ec_response_read_test *r =
-			(struct ec_response_read_test *)data;
+		(struct ec_response_read_test *)args->response;
 
 	int offset = p->offset;
 	int size = p->size / sizeof(uint32_t);
@@ -103,40 +108,46 @@ static int host_command_read_test(uint8_t *data, int *resp_size)
 	for (i = 0; i < size; i++)
 		r->data[i] = offset + i;
 
-	*resp_size = sizeof(struct ec_response_read_test);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_READ_TEST, host_command_read_test);
+DECLARE_HOST_COMMAND(EC_CMD_READ_TEST,
+		     host_command_read_test,
+		     EC_VER_MASK(0));
 
 #ifndef CONFIG_LPC
 /*
  * Host command to read memory map is not needed on LPC, because LPC can
  * directly map the data to the host's memory space.
  */
-static int host_command_read_memmap(uint8_t *data, int *resp_size)
+static int host_command_read_memmap(struct host_cmd_handler_args *args)
 {
-	struct ec_params_read_memmap *p = (struct ec_params_read_memmap *)data;
-	struct ec_response_read_memmap *r =
-			(struct ec_response_read_memmap *)data;
+	const struct ec_params_read_memmap *p =
+		(const struct ec_params_read_memmap *)args->params;
 
 	/* Copy params out of data before we overwrite it with output */
 	uint8_t offset = p->offset;
 	uint8_t size = p->size;
 
-	if (size > sizeof(r->data) || offset > EC_MEMMAP_SIZE ||
+	if (size > EC_PARAM_SIZE || offset > EC_MEMMAP_SIZE ||
 	    offset + size > EC_MEMMAP_SIZE)
 		return EC_RES_INVALID_PARAM;
 
-	memcpy(r->data, host_get_memmap(offset), size);
+	args->response = host_get_memmap(offset);
+	args->response_size = size;
 
-	*resp_size = size;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP, host_command_read_memmap);
+DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP,
+		     host_command_read_memmap,
+		     EC_VER_MASK(0));
 #endif
 
-/* Finds a command by command number.  Returns the command structure, or NULL if
- * no match found. */
+/*
+ * Find a command by command number.  Returns the command structure, or NULL if
+ * no match found.
+ */
 static const struct host_command *find_host_command(int command)
 {
 	const struct host_command *cmd;
@@ -153,13 +164,32 @@ enum ec_status host_command_process(int command, uint8_t *data,
 				    int *response_size)
 {
 	const struct host_command *cmd = find_host_command(command);
-	enum ec_status res = EC_RES_INVALID_COMMAND;
+	struct host_cmd_handler_args args;
+	enum ec_status res;
 
 	CPRINTF("[%T hostcmd 0x%02x]\n", command);
 
-	*response_size = 0;
-	if (cmd)
-		res = cmd->handler(data, response_size);
+	if (!cmd)
+		return EC_RES_INVALID_COMMAND;
+
+	/* TODO: right now we assume the same data buffer for both params
+	 * and response.  This isn't true for I2C/SPI; we should
+	 * propagate args farther up the call chain. */
+	args.command = command;
+	args.version = 0;
+	args.params = data;
+	args.params_size = EC_PARAM_SIZE;
+	args.response = data;
+	args.response_size = 0;
+
+	res = cmd->handler(&args);
+
+	/* Copy response data if necessary */
+	*response_size = args.response_size;
+	if (args.response_size > EC_PARAM_SIZE)
+		return EC_RES_INVALID_RESPONSE;
+	else if (args.response_size && args.response != data)
+		memcpy(data, args.response, args.response_size);
 
 	return res;
 }

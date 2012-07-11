@@ -6,8 +6,8 @@
 /* Power button and lid switch module for Chrome EC */
 
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
-#include "ec_commands.h"
 #include "eoption.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -651,12 +651,12 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 /*****************************************************************************/
 /* Host commands */
 
-int switch_command_enable_backlight(uint8_t *data, int *resp_size)
+int switch_command_enable_backlight(struct host_cmd_handler_args *args)
 {
-	struct ec_params_switch_enable_backlight *p =
-			(struct ec_params_switch_enable_backlight *)data;
+	const struct ec_params_switch_enable_backlight *p =
+		(const struct ec_params_switch_enable_backlight *)args->params;
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, p->enabled);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
-		switch_command_enable_backlight);
+		     switch_command_enable_backlight, 0);

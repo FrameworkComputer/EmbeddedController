@@ -20,13 +20,14 @@ static const char * const part_name[] = {"unknown", "RO", "A", "B"};
 enum ec_current_image get_version(enum ec_current_image *version_ptr)
 {
 	struct ec_response_get_version r;
-	struct ec_response_get_build_info r2;
+	char build_info[EC_PARAM_SIZE];
 	int res;
 
 	res = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
 	if (res < 0)
 		return res;
-	res = ec_command(EC_CMD_GET_BUILD_INFO, NULL, 0, &r2, sizeof(r2));
+	res = ec_command(EC_CMD_GET_BUILD_INFO, NULL, 0, build_info,
+			 sizeof(build_info));
 	if (res < 0)
 		return res;
 
@@ -34,7 +35,7 @@ enum ec_current_image get_version(enum ec_current_image *version_ptr)
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
 	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
-	r2.build_string[sizeof(r2.build_string) - 1] = '\0';
+	build_info[sizeof(build_info) - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
@@ -43,7 +44,7 @@ enum ec_current_image get_version(enum ec_current_image *version_ptr)
 	printf("Firmware copy: %s\n",
 	       (r.current_image < sizeof(part_name)/sizeof(part_name[0]) ?
 		part_name[r.current_image] : "?"));
-	printf("Build info:    %s\n", r2.build_string);
+	printf("Build info:    %s\n", build_info);
 
 	if (version_ptr)
 		*version_ptr = r.current_image;
@@ -58,7 +59,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	struct ec_params_flash_erase er_req;
 	struct ec_params_flash_write wr_req;
 	struct ec_params_flash_read rd_req;
-	struct ec_response_flash_read rd_resp;
+	uint8_t rd_resp[EC_PARAM_SIZE];
 	int res;
 	uint32_t i;
 	enum ec_current_image current = EC_IMAGE_UNKNOWN;
@@ -106,16 +107,16 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	printf("Verifying partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
 	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(rd_resp.data)) {
+	for (i = 0; i < size; i += sizeof(rd_resp)) {
 		rd_req.offset = offset + i;
-		rd_req.size = MIN(size - i, sizeof(rd_resp.data));
+		rd_req.size = MIN(size - i, sizeof(rd_resp));
 		res = ec_command(EC_CMD_FLASH_READ, &rd_req, sizeof(rd_req),
 				 &rd_resp, sizeof(rd_resp));
 		if (res < 0) {
 			fprintf(stderr, "Read error at 0x%08x : %d\n", i, res);
 			return -1;
 		}
-		if (memcmp(payload + i, rd_resp.data, rd_req.size))
+		if (memcmp(payload + i, rd_resp, rd_req.size))
 			fprintf(stderr, "ERR: @%08x->%08x\n",
 				offset + i, offset + i + size);
 	}

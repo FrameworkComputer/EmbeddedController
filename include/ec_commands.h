@@ -30,6 +30,9 @@
 /* Current version of this protocol */
 #define EC_PROTO_VERSION          0x00000002
 
+/* Command version mask */
+#define EC_VER_MASK(version) (1UL << (version))
+
 /* I/O addresses for LPC commands */
 #define EC_LPC_ADDR_ACPI_DATA  0x62
 #define EC_LPC_ADDR_ACPI_CMD   0x66
@@ -137,6 +140,8 @@ enum ec_status {
 	EC_RES_ERROR = 2,
 	EC_RES_INVALID_PARAM = 3,
 	EC_RES_ACCESS_DENIED = 4,
+	EC_RES_INVALID_RESPONSE = 5,
+	EC_RES_INVALID_VERSION = 6,
 };
 
 /*
@@ -246,12 +251,12 @@ struct ec_response_read_test {
 	uint32_t data[32];
 } __packed;
 
-/* Get build information */
+/*
+ * Get build information
+ *
+ * Response is null-terminated string.
+ */
 #define EC_CMD_GET_BUILD_INFO 0x04
-
-struct ec_response_get_build_info {
-	char build_string[EC_PARAM_SIZE];
-} __packed;
 
 /* Get chip info */
 #define EC_CMD_GET_CHIP_INFO 0x05
@@ -263,10 +268,10 @@ struct ec_response_get_chip_info {
 	char revision[32];  /* Mask version */
 } __packed;
 
-/* Get board HW version. */
+/* Get board HW version */
 #define EC_CMD_GET_BOARD_VERSION 0x06
 
-struct ec_params_board_version {
+struct ec_response_board_version {
 	uint16_t board_version;  /* A monotonously incrementing number. */
 } __packed;
 
@@ -275,16 +280,14 @@ struct ec_params_board_version {
  *
  * This is an alternate interface to memory-mapped data for bus protocols
  * which don't support direct-mapped memory - I2C, SPI, etc.
+ *
+ * Response is params.size bytes of data.
  */
 #define EC_CMD_READ_MEMMAP 0x07
 
 struct ec_params_read_memmap {
 	uint8_t offset;   /* Offset in memmap (EC_MEMMAP_*) */
 	uint8_t size;     /* Size to read in bytes */
-} __packed;
-
-struct ec_response_read_memmap {
-	uint32_t data[EC_PARAM_SIZE];
 } __packed;
 
 /*****************************************************************************/
@@ -313,16 +316,16 @@ struct ec_response_flash_info {
 	uint32_t protect_block_size;
 } __packed;
 
-/* Read flash */
+/*
+ * Read flash
+ *
+ * Response is params.size bytes of data.
+ */
 #define EC_CMD_FLASH_READ 0x11
 
 struct ec_params_flash_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __packed;
-
-struct ec_response_flash_read {
-	uint8_t data[EC_PARAM_SIZE];
 } __packed;
 
 /* Write flash */
@@ -346,7 +349,7 @@ struct ec_params_flash_erase {
 	uint32_t size;     /* Size to erase in bytes */
 } __packed;
 
-/* Flashmap offset */
+/* Get flashmap offset */
 #define EC_CMD_FLASH_GET_FLASHMAP 0x14
 
 struct ec_response_flash_flashmap {
@@ -387,6 +390,11 @@ struct ec_response_flash_wp_range {
 /* Read flash write protection GPIO pin */
 #define EC_CMD_FLASH_WP_GET_GPIO 0x19
 
+/*
+ * TODO: why does this pass in a pin number?  EC *KNOWS* what the pin is.
+ * Of course, the EC doesn't implement this message yet, so this is somewhat
+ * theoretical.
+ */
 struct ec_params_flash_wp_gpio {
 	uint32_t pin_no;
 } __packed;
@@ -398,8 +406,8 @@ struct ec_response_flash_wp_gpio {
 /*****************************************************************************/
 /* PWM commands */
 
-/* Get fan RPM */
-#define EC_CMD_PWM_GET_FAN_RPM 0x20
+/* Get fan target RPM */
+#define EC_CMD_PWM_GET_FAN_TARGET_RPM 0x20
 
 struct ec_response_pwm_get_fan_rpm {
 	uint32_t rpm;
@@ -582,16 +590,16 @@ struct ec_response_pstore_info {
 	uint32_t access_size;
 } __packed;
 
-/* Read persistent storage */
+/*
+ * Read persistent storage
+ *
+ * Response is params.size bytes of data.
+ */
 #define EC_CMD_PSTORE_READ 0x41
 
 struct ec_params_pstore_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __packed;
-
-struct ec_response_pstore_read {
-	uint8_t data[EC_PSTORE_SIZE_MAX];
 } __packed;
 
 /* Write persistent storage */
@@ -627,18 +635,19 @@ struct ec_response_thermal_get_threshold {
 	uint16_t value;
 } __packed;
 
-/* Toggling automatic fan control */
+/* Toggle automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
 /*****************************************************************************/
 /* MKBP - Matrix KeyBoard Protocol */
 
-/* Read key state */
+/*
+ * Read key state
+ *
+ * Returns raw data for keyboard cols; see ec_response_mkbp_info.cols for
+ * expected response size.
+ */
 #define EC_CMD_MKBP_STATE 0x60
-
-struct ec_response_mkbp_state {
-	uint8_t cols[32];
-} __packed;
 
 /* Provide information about the matrix : number of rows and columns */
 #define EC_CMD_MKBP_INFO 0x61

@@ -5,7 +5,7 @@
 
 /* Verified boot hash computing module for Chrome EC */
 
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "cryptolib.h"
 #include "hooks.h"
@@ -243,18 +243,18 @@ static void fill_response(struct ec_response_vboot_hash *r)
 		r->status = EC_VBOOT_HASH_STATUS_NONE;
 }
 
-
-static int host_command_vboot_hash(uint8_t *data, int *resp_size)
+static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 {
-	struct ec_params_vboot_hash *p = (struct ec_params_vboot_hash *)data;
+	const struct ec_params_vboot_hash *p =
+		(const struct ec_params_vboot_hash *)args->params;
 	struct ec_response_vboot_hash *r =
-		(struct ec_response_vboot_hash *)data;
+		(struct ec_response_vboot_hash *)args->response;
 	int rv;
 
 	switch (p->cmd) {
 	case EC_VBOOT_HASH_GET:
 		fill_response(r);
-		*resp_size = sizeof(struct ec_response_vboot_hash);
+		args->response_size = sizeof(*r);
 		return EC_RES_SUCCESS;
 
 	case EC_VBOOT_HASH_ABORT:
@@ -295,11 +295,13 @@ static int host_command_vboot_hash(uint8_t *data, int *resp_size)
 			usleep(1000);
 
 		fill_response(r);
-		*resp_size = sizeof(struct ec_response_vboot_hash);
+		args->response_size = sizeof(*r);
 		return EC_RES_SUCCESS;
 
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
 }
-DECLARE_HOST_COMMAND(EC_CMD_VBOOT_HASH, host_command_vboot_hash);
+DECLARE_HOST_COMMAND(EC_CMD_VBOOT_HASH,
+		     host_command_vboot_hash,
+		     EC_VER_MASK(0));

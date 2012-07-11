@@ -5,42 +5,40 @@
 
 /* Persistent storage commands for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "eeprom.h"
 #include "host_command.h"
 #include "util.h"
 
-
-int pstore_command_get_info(uint8_t *data, int *resp_size)
+int pstore_command_get_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pstore_info *r =
-			(struct ec_response_pstore_info *)data;
+			(struct ec_response_pstore_info *)args->response;
 
 	ASSERT(EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE <=
 	       eeprom_get_block_count());
 
 	r->pstore_size = EEPROM_BLOCK_COUNT_PSTORE * eeprom_get_block_size();
 	r->access_size = sizeof(uint32_t);
-	*resp_size = sizeof(struct ec_response_pstore_info);
+	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PSTORE_INFO, pstore_command_get_info);
+DECLARE_HOST_COMMAND(EC_CMD_PSTORE_INFO,
+		     pstore_command_get_info,
+		     EC_VER_MASK(0));
 
-
-int pstore_command_read(uint8_t *data, int *resp_size)
+int pstore_command_read(struct host_cmd_handler_args *args)
 {
-	struct ec_params_pstore_read *p =
-			(struct ec_params_pstore_read *)data;
-	struct ec_response_pstore_read *r =
-			(struct ec_response_pstore_read *)data;
-	char *dest = r->data;
+	const struct ec_params_pstore_read *p =
+			(const struct ec_params_pstore_read *)args->params;
+	char *dest = args->response;
 	int block_size = eeprom_get_block_size();
 	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
-	if (p->size > sizeof(r->data))
-		return EC_RES_ERROR;
+	if (p->size > sizeof(EC_PARAM_SIZE))
+		return EC_RES_INVALID_PARAM;
 
 	while (bytes_left) {
 		/* Read what we can from the current block */
@@ -60,16 +58,17 @@ int pstore_command_read(uint8_t *data, int *resp_size)
 		dest += bytes_this;
 	}
 
-	*resp_size = sizeof(struct ec_response_pstore_read);
+	args->response_size = p->size;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PSTORE_READ, pstore_command_read);
+DECLARE_HOST_COMMAND(EC_CMD_PSTORE_READ,
+		     pstore_command_read,
+		     EC_VER_MASK(0));
 
-
-int pstore_command_write(uint8_t *data, int *resp_size)
+int pstore_command_write(struct host_cmd_handler_args *args)
 {
-	struct ec_params_pstore_write *p =
-			(struct ec_params_pstore_write *)data;
+	const struct ec_params_pstore_write *p =
+			(const struct ec_params_pstore_write *)args->params;
 
 	const char *src = p->data;
 	int block_size = eeprom_get_block_size();
@@ -100,4 +99,6 @@ int pstore_command_write(uint8_t *data, int *resp_size)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PSTORE_WRITE, pstore_command_write);
+DECLARE_HOST_COMMAND(EC_CMD_PSTORE_WRITE,
+		     pstore_command_write,
+		     EC_VER_MASK(0));

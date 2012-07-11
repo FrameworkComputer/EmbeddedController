@@ -235,14 +235,14 @@ int cmd_version(int argc, char *argv[])
 {
   static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
 	struct ec_response_get_version r;
-	struct ec_response_get_build_info r2;
+	char build_string[EC_PARAM_SIZE];
 	int rv;
 
 	rv = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
 	rv = ec_command(EC_CMD_GET_BUILD_INFO,
-			NULL, 0, &r2, sizeof(r2));
+			NULL, 0, build_string, sizeof(build_string));
 	if (rv < 0)
 		return rv;
 
@@ -250,7 +250,7 @@ int cmd_version(int argc, char *argv[])
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
 	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
-	r2.build_string[sizeof(r2.build_string) - 1] = '\0';
+	build_string[sizeof(build_string) - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
@@ -259,7 +259,7 @@ int cmd_version(int argc, char *argv[])
 	printf("Firmware copy: %s\n",
 	       (r.current_image < ARRAY_SIZE(fw_copies) ?
 		fw_copies[r.current_image] : "?"));
-	printf("Build info:    %s\n", r2.build_string);
+	printf("Build info:    %s\n", build_string);
 
 	return 0;
 }
@@ -397,7 +397,7 @@ int cmd_flash_info(int argc, char *argv[])
 int cmd_flash_read(int argc, char *argv[])
 {
 	struct ec_params_flash_read p;
-	struct ec_response_flash_read r;
+	uint8_t rdata[EC_PARAM_SIZE];
 	int offset, size;
 	int rv;
 	int i;
@@ -428,17 +428,17 @@ int cmd_flash_read(int argc, char *argv[])
 	}
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(r.data)) {
+	for (i = 0; i < size; i += sizeof(rdata)) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, sizeof(r.data));
+		p.size = MIN(size - i, sizeof(rdata));
 		rv = ec_command(EC_CMD_FLASH_READ,
-				&p, sizeof(p), &r, sizeof(r));
+				&p, sizeof(p), rdata, sizeof(rdata));
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			free(buf);
 			return rv;
 		}
-		memcpy(buf + i, r.data, p.size);
+		memcpy(buf + i, rdata, p.size);
 	}
 
 	rv = write_file(argv[3], buf, size);
@@ -1131,7 +1131,7 @@ int cmd_pstore_info(int argc, char *argv[])
 int cmd_pstore_read(int argc, char *argv[])
 {
 	struct ec_params_pstore_read p;
-	struct ec_response_pstore_read r;
+	uint8_t rdata[EC_PARAM_SIZE];
 	int offset, size;
 	int rv;
 	int i;
@@ -1166,13 +1166,13 @@ int cmd_pstore_read(int argc, char *argv[])
 		p.offset = offset + i;
 		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
 		rv = ec_command(EC_CMD_PSTORE_READ,
-				&p, sizeof(p), &r, sizeof(r));
+				&p, sizeof(p), rdata, sizeof(rdata));
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			free(buf);
 			return rv;
 		}
-		memcpy(buf + i, r.data, p.size);
+		memcpy(buf + i, rdata, p.size);
 	}
 
 	rv = write_file(argv[3], buf, size);

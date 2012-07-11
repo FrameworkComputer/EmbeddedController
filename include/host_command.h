@@ -11,14 +11,33 @@
 #include "common.h"
 #include "ec_commands.h"
 
+/* Args for host command handler */
+struct host_cmd_handler_args {
+	uint8_t command;       /* Command (e.g., EC_CMD_FLASH_GET_INFO) */
+	uint8_t version;       /* Version of command (0-31) */
+	const uint8_t *params; /* Input parameters */
+	uint8_t params_size;   /* Size of input parameters in bytes */
+	/*
+	 * Pointer to output response data buffer.  On input to the handler,
+	 * points to a EC_PARAM_SIZE-byte buffer.  Command handler can change
+	 * this to point to a different location instead of memcpy()'ing data
+	 * into the provided buffer.
+	 */
+	uint8_t *response;
+	uint8_t response_size; /* Size of data pointed to by resp_ptr */
+};
+
 /* Host command */
 struct host_command {
-	/* Command code. */
+	/* Command code */
 	int command;
-	/* Handler for the command; data points to parameters/response.
-	 * returns negative error code if case of failure (using EC_LPC_STATUS
-	 * codes). sets <response_size> if it returns a payload to the host. */
-	int (*handler)(uint8_t *data, int *response_size);
+	/*
+	 * Handler for the command.  Args points to context for handler.
+	 * Returns result status (EC_RES_*).
+	 */
+	int (*handler)(struct host_cmd_handler_args *args);
+	/* Mask of supported versions */
+	int version_mask;
 };
 
 /**
@@ -94,9 +113,9 @@ void host_send_response(enum ec_status result, const uint8_t *data, int size);
 uint8_t *host_get_buffer(void);
 
 /* Register a host command handler */
-#define DECLARE_HOST_COMMAND(command, routine)				\
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
 	const struct host_command __host_cmd_##command			\
 	__attribute__((section(".rodata.hcmds")))			\
-	     = {command, routine}
+	     = {command, routine, version_mask}
 
 #endif  /* __CROS_EC_HOST_COMMAND_H */

@@ -684,10 +684,10 @@ DECLARE_CONSOLE_COMMAND(syslock, command_system_lock,
 /*****************************************************************************/
 /* Host commands */
 
-static int host_command_get_version(uint8_t *data, int *resp_size)
+static int host_command_get_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_version *r =
-			(struct ec_response_get_version *)data;
+		(struct ec_response_get_version *)args->response;
 
 	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
 		sizeof(r->version_string_ro));
@@ -711,55 +711,60 @@ static int host_command_get_version(uint8_t *data, int *resp_size)
 		break;
 	}
 
-	*resp_size = sizeof(struct ec_response_get_version);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION, host_command_get_version);
+DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION,
+		     host_command_get_version,
+		     EC_VER_MASK(0));
 
-
-static int host_command_build_info(uint8_t *data, int *resp_size)
+static int host_command_build_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_get_build_info *r =
-			(struct ec_response_get_build_info *)data;
+	const char *info = system_get_build_info();
 
-	strzcpy(r->build_string, system_get_build_info(),
-		sizeof(r->build_string));
+	args->response = (uint8_t *)info;
+	args->response_size = strlen(info) + 1;
 
-	*resp_size = sizeof(struct ec_response_get_build_info);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_BUILD_INFO, host_command_build_info);
+DECLARE_HOST_COMMAND(EC_CMD_GET_BUILD_INFO,
+		     host_command_build_info,
+		     EC_VER_MASK(0));
 
-
-static int host_command_get_chip_info(uint8_t *data, int *resp_size)
+static int host_command_get_chip_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_chip_info *r =
-			(struct ec_response_get_chip_info *)data;
+		(struct ec_response_get_chip_info *)args->response;
 
 	strzcpy(r->vendor, system_get_chip_vendor(), sizeof(r->vendor));
 	strzcpy(r->name, system_get_chip_name(), sizeof(r->name));
 	strzcpy(r->revision, system_get_chip_revision(), sizeof(r->revision));
 
-	*resp_size = sizeof(struct ec_response_get_chip_info);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO, host_command_get_chip_info);
+DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO,
+		     host_command_get_chip_info,
+		     EC_VER_MASK(0));
 
-
-int host_command_get_board_version(uint8_t *data, int *resp_size)
+int host_command_get_board_version(struct host_cmd_handler_args *args)
 {
-	struct ec_params_board_version *board_v =
-			(struct ec_params_board_version *) data;
+	struct ec_response_board_version *r =
+		(struct ec_response_board_version *)args->response;
 
-	board_v->board_version = (uint16_t) system_get_board_version();
+	r->board_version = (uint16_t) system_get_board_version();
 
-	*resp_size = sizeof(struct ec_params_board_version);
+	args->response_size = sizeof(*r);
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version);
+DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION,
+		     host_command_get_board_version,
+		     EC_VER_MASK(0));
 
-
-int host_command_reboot(uint8_t *data, int *resp_size)
+int host_command_reboot(struct host_cmd_handler_args *args)
 {
 	struct ec_params_reboot_ec p;
 
@@ -767,7 +772,7 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 	 * Ensure reboot parameters don't get clobbered when the response
 	 * is sent in case data argument points to the host tx/rx buffer.
 	 */
-	memcpy(&p, data, sizeof(p));
+	memcpy(&p, args->params, sizeof(p));
 
 	if (p.cmd == EC_REBOOT_CANCEL) {
 		/* Cancel pending reboot */
@@ -798,4 +803,6 @@ int host_command_reboot(uint8_t *data, int *resp_size)
 		return EC_RES_ERROR;
 	}
 }
-DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC, host_command_reboot);
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC,
+		     host_command_reboot,
+		     EC_VER_MASK(0));
