@@ -766,6 +766,7 @@ struct ec_response_host_event_mask {
 } __packed;
 
 /* These all use ec_response_host_event_mask */
+#define EC_CMD_HOST_EVENT_GET_B         0x87
 #define EC_CMD_HOST_EVENT_GET_SMI_MASK  0x88
 #define EC_CMD_HOST_EVENT_GET_SCI_MASK  0x89
 #define EC_CMD_HOST_EVENT_GET_WAKE_MASK 0x8d
@@ -775,6 +776,7 @@ struct ec_response_host_event_mask {
 #define EC_CMD_HOST_EVENT_SET_SCI_MASK  0x8b
 #define EC_CMD_HOST_EVENT_CLEAR         0x8c
 #define EC_CMD_HOST_EVENT_SET_WAKE_MASK 0x8e
+#define EC_CMD_HOST_EVENT_CLEAR_B       0x8f
 
 /*****************************************************************************/
 /* GPIO switch commands */

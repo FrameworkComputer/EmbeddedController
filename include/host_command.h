@@ -91,7 +91,7 @@ static inline void host_set_single_event(int event)
 void host_clear_events(uint32_t mask);
 
 /**
- * Return the raw SCI/SMI event state.
+ * Return the raw event state.
  */
 uint32_t host_get_events(void);
 
