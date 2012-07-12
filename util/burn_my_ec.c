@@ -23,10 +23,10 @@ enum ec_current_image get_version(enum ec_current_image *version_ptr)
 	char build_info[EC_HOST_PARAM_SIZE];
 	int res;
 
-	res = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
+	res = ec_command(EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r));
 	if (res < 0)
 		return res;
-	res = ec_command(EC_CMD_GET_BUILD_INFO, NULL, 0, build_info,
+	res = ec_command(EC_CMD_GET_BUILD_INFO, 0, NULL, 0, build_info,
 			 sizeof(build_info));
 	if (res < 0)
 		return res;
@@ -73,7 +73,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	if (current == part) {
 		rst_req.cmd = part == EC_IMAGE_RO ?
 			      EC_REBOOT_JUMP_RW_A : EC_REBOOT_JUMP_RO;
-		ec_command(EC_CMD_REBOOT_EC, &rst_req, sizeof(rst_req),
+		ec_command(EC_CMD_REBOOT_EC, 0, &rst_req, sizeof(rst_req),
 			   NULL, 0);
 		/* wait EC reboot */
 		usleep(500000);
@@ -83,7 +83,8 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	       part_name[part], size, offset);
 	er_req.size = size;
 	er_req.offset = offset;
-	res = ec_command(EC_CMD_FLASH_ERASE, &er_req, sizeof(er_req), NULL, 0);
+	res = ec_command(EC_CMD_FLASH_ERASE, 0,
+			 &er_req, sizeof(er_req), NULL, 0);
 	if (res < 0) {
 		fprintf(stderr, "Erase failed : %d\n", res);
 		return -1;
@@ -96,8 +97,8 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 		wr_req.offset = offset + i;
 		wr_req.size = MIN(size - i, sizeof(wr_req.data));
 		memcpy(wr_req.data, payload + i, wr_req.size);
-		res = ec_command(EC_CMD_FLASH_WRITE, &wr_req, sizeof(wr_req),
-				 NULL, 0);
+		res = ec_command(EC_CMD_FLASH_WRITE, 0,
+				 &wr_req, sizeof(wr_req), NULL, 0);
 		if (res < 0) {
 			fprintf(stderr, "Write error at 0x%08x : %d\n", i, res);
 			return -1;
@@ -110,7 +111,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	for (i = 0; i < size; i += sizeof(rd_resp)) {
 		rd_req.offset = offset + i;
 		rd_req.size = MIN(size - i, sizeof(rd_resp));
-		res = ec_command(EC_CMD_FLASH_READ, &rd_req, sizeof(rd_req),
+		res = ec_command(EC_CMD_FLASH_READ, 0, &rd_req, sizeof(rd_req),
 				 &rd_resp, sizeof(rd_resp));
 		if (res < 0) {
 			fprintf(stderr, "Read error at 0x%08x : %d\n", i, res);

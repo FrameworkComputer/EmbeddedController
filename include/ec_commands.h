@@ -73,6 +73,7 @@
 #define EC_MEMMAP_BATTERY_VERSION  0x24 /* Version of data in 0x40 - 0x7f */
 #define EC_MEMMAP_SWITCHES_VERSION 0x25 /* Version of data in 0x30 - 0x33 */
 #define EC_MEMMAP_EVENTS_VERSION   0x26 /* Version of data in 0x34 - 0x3f */
+#define EC_MEMMAP_HOST_CMD_FLAGS   0x27 /* Host command interface flags */
 #define EC_MEMMAP_SWITCHES         0x30
 #define EC_MEMMAP_HOST_EVENTS      0x34
 #define EC_MEMMAP_BATT_VOLT        0x40 /* Battery Present Voltage */
@@ -105,6 +106,10 @@
 #define EC_SWITCH_DEDICATED_RECOVERY     0x10
 /* Was fake developer mode switch; now unused.  Remove in next refactor. */
 #define EC_SWITCH_IGNORE0                0x20
+
+/* Host command interface flags */
+/* Host command interface supports LPC args (LPC interface only) */
+#define EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED  0x01
 
 /* Wireless switch flags */
 #define EC_WIRELESS_SWITCH_WLAN      0x01
@@ -149,7 +154,6 @@
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
 /* Host command response codes */
-/* TODO: move these so they don't overlap SCI/SMI data? */
 enum ec_status {
 	EC_RES_SUCCESS = 0,
 	EC_RES_INVALID_COMMAND = 1,
@@ -158,6 +162,7 @@ enum ec_status {
 	EC_RES_ACCESS_DENIED = 4,
 	EC_RES_INVALID_RESPONSE = 5,
 	EC_RES_INVALID_VERSION = 6,
+	EC_RES_INVALID_CHECKSUM = 7,
 };
 
 /*
@@ -198,6 +203,38 @@ enum host_event_code {
 };
 /* Host event mask */
 #define EC_HOST_EVENT_MASK(event_code) (1UL << ((event_code) - 1))
+
+/* Arguments at EC_LPC_ADDR_HOST_ARGS */
+struct ec_lpc_host_args {
+	uint8_t flags;
+	uint8_t command_version;
+	uint8_t data_size;
+	/*
+	 * Checksum; sum of command + flags + command_version + data_size +
+	 * all params/response data bytes.
+	 */
+	uint8_t checksum;
+} __packed;
+
+/* Flags for ec_lpc_host_args.flags */
+/*
+ * Args are from host.  Data area at EC_LPC_ADDR_HOST_PARAM contains command
+ * params.
+ *
+ * If EC gets a command and this flag is not set, this is an old-style command.
+ * Command version is 0 and params from host are at EC_LPC_ADDR_OLD_PARAM with
+ * unknown length.  EC must respond with an old-style response (that is,
+ * withouth setting EC_HOST_ARGS_FLAG_TO_HOST).
+ */
+#define EC_HOST_ARGS_FLAG_FROM_HOST 0x01
+/*
+ * Args are from EC.  Data area at EC_LPC_ADDR_HOST_PARAM contains response.
+ *
+ * If EC responds to a command and this flag is not set, this is an old-style
+ * response.  Command version is 0 and response data from EC is at
+ * EC_LPC_ADDR_OLD_PARAM with unknown length.
+ */
+#define EC_HOST_ARGS_FLAG_TO_HOST   0x02
 
 /*
  * Notes on commands:

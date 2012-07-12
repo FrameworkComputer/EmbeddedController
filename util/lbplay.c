@@ -47,7 +47,7 @@ static void lb_cmd_noargs(enum lightbar_command cmd)
 {
 	struct ec_params_lightbar_cmd param;
 	param.in.cmd = cmd;
-	ec_command(EC_CMD_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -72,7 +72,7 @@ void lightbar_brightness(int newval)
 	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_BRIGHTNESS;
 	param.in.brightness.num = newval;
-	ec_command(EC_CMD_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -82,7 +82,7 @@ void lightbar_sequence(enum lightbar_sequence num)
 	struct ec_params_lightbar_cmd param;
 	param.in.cmd = LIGHTBAR_CMD_SEQ;
 	param.in.seq.num = num;
-	ec_command(EC_CMD_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -94,7 +94,7 @@ void lightbar_reg(uint8_t ctrl, uint8_t reg, uint8_t val)
 	param.in.reg.ctrl = ctrl;
 	param.in.reg.reg = reg;
 	param.in.reg.value = val;
-	ec_command(EC_CMD_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -107,7 +107,7 @@ void lightbar_rgb(int led, int red, int green, int blue)
 	param.in.rgb.red = red;
 	param.in.rgb.green = green;
 	param.in.rgb.blue = blue;
-	ec_command(EC_CMD_LIGHTBAR_CMD,
+	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		   &param, lb_command_paramcount[param.in.cmd].insize,
 		   &param, lb_command_paramcount[param.in.cmd].outsize);
 }
@@ -121,7 +121,7 @@ void wait_for_ec_to_stop(void)
 	do {
 		usleep(100000);
 		param.in.cmd = LIGHTBAR_CMD_GET_SEQ;
-		r = ec_command(EC_CMD_LIGHTBAR_CMD,
+		r = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 			       &param,
 			       lb_command_paramcount[param.in.cmd].insize,
 			       &param,

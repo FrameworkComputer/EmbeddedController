@@ -75,7 +75,7 @@ int comm_init(void)
 
 /* Sends a command to the EC.  Returns the command status code, or
  * -1 if other error. */
-int ec_command(int command, const void *indata, int insize,
+int ec_command(int command, int version, const void *indata, int insize,
 	       void *outdata, int outsize)
 {
 	struct i2c_rdwr_ioctl_data data;
@@ -88,6 +88,11 @@ int ec_command(int command, const void *indata, int insize,
 	uint8_t *d;
 	uint8_t sum;
 	struct i2c_msg i2c_msg[2];
+
+	if (version > 0) {
+		fprintf(stderr, "Command versions >0 unsupported.\n");
+		return -EC_RES_ERROR;
+	}
 
 	if (i2c_fd < 0)
 		return -EC_RES_ERROR;
@@ -194,7 +199,7 @@ uint8_t read_mapped_mem8(uint8_t offset)
 	p.offset = offset;
 	p.size = sizeof(val);
 
-	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+	if (ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p),
 		       &val, sizeof(val)) < 0)
 		return 0xff;
 
@@ -209,7 +214,7 @@ uint16_t read_mapped_mem16(uint8_t offset)
 	p.offset = offset;
 	p.size = sizeof(val);
 
-	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+	if (ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p),
 		       &val, sizeof(val)) < 0)
 		return 0xffff;
 
@@ -224,7 +229,7 @@ uint32_t read_mapped_mem32(uint8_t offset)
 	p.offset = offset;
 	p.size = sizeof(val);
 
-	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+	if (ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p),
 		       &val, sizeof(val)) < 0)
 		return 0xffffffff;
 
@@ -239,7 +244,7 @@ int read_mapped_string(uint8_t offset, char *buf)
 	p.offset = offset;
 	p.size = EC_MEMMAP_TEXT_MAX;
 
-	if (ec_command(EC_CMD_READ_MEMMAP, &p, sizeof(p),
+	if (ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p),
 		       buf, EC_MEMMAP_TEXT_MAX) < 0) {
 		*buf = 0;
 		return -1;

@@ -220,7 +220,7 @@ int cmd_hello(int argc, char *argv[])
 
 	p.in_data = 0xa0b0c0d0;
 
-	rv = ec_command(EC_CMD_HELLO, &p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_CMD_HELLO, 0, &p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
 		return rv;
 
@@ -253,7 +253,8 @@ int cmd_cmdversions(int argc, char *argv[])
 	}
 
 	p.cmd = cmd;
-	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, &p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &p, sizeof(p),
+			&r, sizeof(r));
 	if (rv < 0) {
 		if (rv == -EC_RES_INVALID_PARAM)
 			printf("Command 0x%02x not supported by EC.\n", cmd);
@@ -273,10 +274,11 @@ int cmd_version(int argc, char *argv[])
 	char build_string[EC_HOST_PARAM_SIZE];
 	int rv;
 
-	rv = ec_command(EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_GET_VERSION, 0,
+			NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
-	rv = ec_command(EC_CMD_GET_BUILD_INFO,
+	rv = ec_command(EC_CMD_GET_BUILD_INFO, 0,
 			NULL, 0, build_string, sizeof(build_string));
 	if (rv < 0)
 		return rv;
@@ -334,7 +336,7 @@ int cmd_read_test(int argc, char *argv[])
 	for (i = 0; i < size; i += sizeof(r.data)) {
 		p.offset = offset + i / sizeof(uint32_t);
 		p.size = MIN(size - i, sizeof(r.data));
-		rv = ec_command(EC_CMD_READ_TEST, &p, sizeof(p),
+		rv = ec_command(EC_CMD_READ_TEST, 0, &p, sizeof(p),
 				&r, sizeof(r));
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -376,7 +378,7 @@ int cmd_reboot_ec(int argc, char *argv[])
 		 * That reboots the AP as well, so unlikely we'll be around
 		 * to see a return code from this...
 		 */
-		return ec_command(EC_CMD_REBOOT, NULL, 0, NULL, 0);
+		return ec_command(EC_CMD_REBOOT, 0, NULL, 0, NULL, 0);
 	}
 
 	/* Parse command */
@@ -408,7 +410,7 @@ int cmd_reboot_ec(int argc, char *argv[])
 		}
 	}
 
-	return ec_command(EC_CMD_REBOOT_EC, &p, sizeof(p), NULL, 0);
+	return ec_command(EC_CMD_REBOOT_EC, 0, &p, sizeof(p), NULL, 0);
 }
 
 
@@ -417,7 +419,7 @@ int cmd_flash_info(int argc, char *argv[])
 	struct ec_response_flash_info r;
 	int rv;
 
-	rv = ec_command(EC_CMD_FLASH_INFO, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_FLASH_INFO, 0, NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
 
@@ -466,7 +468,7 @@ int cmd_flash_read(int argc, char *argv[])
 	for (i = 0; i < size; i += sizeof(rdata)) {
 		p.offset = offset + i;
 		p.size = MIN(size - i, sizeof(rdata));
-		rv = ec_command(EC_CMD_FLASH_READ,
+		rv = ec_command(EC_CMD_FLASH_READ, 0,
 				&p, sizeof(p), rdata, sizeof(rdata));
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -517,7 +519,7 @@ int cmd_flash_write(int argc, char *argv[])
 		p.offset = offset + i;
 		p.size = MIN(size - i, sizeof(p.data));
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_CMD_FLASH_WRITE, &p, sizeof(p), NULL, 0);
+		rv = ec_command(EC_CMD_FLASH_WRITE, 0, &p, sizeof(p), NULL, 0);
 		if (rv < 0) {
 			fprintf(stderr, "Write error at offset %d\n", i);
 			free(buf);
@@ -552,7 +554,7 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	printf("Erasing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_FLASH_ERASE, &p, sizeof(p), NULL, 0) < 0)
+	if (ec_command(EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0) < 0)
 		return -1;
 
 	printf("done.\n");
@@ -639,7 +641,7 @@ int cmd_temp_sensor_info(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO,
+	rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0,
 			&p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -676,7 +678,7 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD,
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 0,
 			&p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -722,7 +724,8 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD, 0,
+			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
 
@@ -737,7 +740,7 @@ int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 {
 	int rv;
 
-	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, NULL, 0, NULL, 0);
+	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, 0, NULL, 0, NULL, 0);
 	if (rv < 0)
 		return rv;
 
@@ -780,7 +783,8 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_FAN_TARGET_RPM, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_PWM_SET_FAN_TARGET_RPM, 0,
+			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
 
@@ -794,7 +798,7 @@ int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 	struct ec_response_pwm_get_keyboard_backlight r;
 	int rv;
 
-	rv = ec_command(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
+	rv = ec_command(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT, 0,
 			NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -824,7 +828,7 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
+	rv = ec_command(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -850,7 +854,7 @@ int cmd_fanduty(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, 0, &p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
 
@@ -924,7 +928,7 @@ static int lb_do_cmd(enum lightbar_command cmd,
 {
 	int r;
 	ptr->in.cmd = cmd;
-	r = ec_command(EC_CMD_LIGHTBAR_CMD,
+	r = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
 		       ptr, lb_command_paramcount[cmd].insize,
 		       ptr, lb_command_paramcount[cmd].outsize);
 	return r;
@@ -1043,7 +1047,7 @@ static int cmd_vboot(int argc, char **argv)
 
 	if (argc == 1) {			/* no args = get */
 		param.in.cmd = VBOOT_CMD_GET_FLAGS;
-		r = ec_command(EC_CMD_VBOOT_CMD,
+		r = ec_command(EC_CMD_VBOOT_CMD, 0,
 			       &param,
 			       vb_command_paramcount[param.in.cmd].insize,
 			       &param,
@@ -1067,7 +1071,7 @@ static int cmd_vboot(int argc, char **argv)
 
 	param.in.cmd = VBOOT_CMD_SET_FLAGS;
 	param.in.set_flags.val = v;
-	r = ec_command(EC_CMD_VBOOT_CMD,
+	r = ec_command(EC_CMD_VBOOT_CMD, 0,
 		       &param,
 		       vb_command_paramcount[param.in.cmd].insize,
 		       &param,
@@ -1099,7 +1103,7 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 
 	printf("Setting port %d to mode %d...\n", p.usb_port_id, p.mode);
 
-	rv = ec_command(EC_CMD_USB_CHARGE_SET_MODE,
+	rv = ec_command(EC_CMD_USB_CHARGE_SET_MODE, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1140,7 +1144,7 @@ int cmd_kbpress(int argc, char *argv[])
 				      p.row,
 				      p.col);
 
-	rv = ec_command(EC_CMD_MKBP_SIMULATE_KEY,
+	rv = ec_command(EC_CMD_MKBP_SIMULATE_KEY, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1154,7 +1158,7 @@ int cmd_pstore_info(int argc, char *argv[])
 	struct ec_response_pstore_info r;
 	int rv;
 
-	rv = ec_command(EC_CMD_PSTORE_INFO, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_PSTORE_INFO, 0, NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
 
@@ -1200,7 +1204,7 @@ int cmd_pstore_read(int argc, char *argv[])
 	for (i = 0; i < size; i += EC_PSTORE_SIZE_MAX) {
 		p.offset = offset + i;
 		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
-		rv = ec_command(EC_CMD_PSTORE_READ,
+		rv = ec_command(EC_CMD_PSTORE_READ, 0,
 				&p, sizeof(p), rdata, sizeof(rdata));
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
@@ -1251,7 +1255,8 @@ int cmd_pstore_write(int argc, char *argv[])
 		p.offset = offset + i;
 		p.size = MIN(size - i, EC_PSTORE_SIZE_MAX);
 		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_CMD_PSTORE_WRITE, &p, sizeof(p), NULL, 0);
+		rv = ec_command(EC_CMD_PSTORE_WRITE, 0,
+				&p, sizeof(p), NULL, 0);
 		if (rv < 0) {
 			fprintf(stderr, "Write error at offset %d\n", i);
 			free(buf);
@@ -1284,7 +1289,7 @@ int cmd_host_event_get_smi_mask(int argc, char *argv[])
 	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_CMD_HOST_EVENT_GET_SMI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_SMI_MASK, 0,
 			NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -1299,7 +1304,7 @@ int cmd_host_event_get_sci_mask(int argc, char *argv[])
 	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_CMD_HOST_EVENT_GET_SCI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_SCI_MASK, 0,
 			NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -1314,7 +1319,7 @@ int cmd_host_event_get_wake_mask(int argc, char *argv[])
 	struct ec_response_host_event_mask r;
 	int rv;
 
-	rv = ec_command(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_WAKE_MASK, 0,
 			NULL, 0, &r, sizeof(r));
 	if (rv < 0)
 		return rv;
@@ -1340,7 +1345,7 @@ int cmd_host_event_set_smi_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_HOST_EVENT_SET_SMI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_SMI_MASK, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1366,7 +1371,7 @@ int cmd_host_event_set_sci_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_HOST_EVENT_SET_SCI_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_SCI_MASK, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1392,7 +1397,7 @@ int cmd_host_event_set_wake_mask(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_HOST_EVENT_SET_WAKE_MASK,
+	rv = ec_command(EC_CMD_HOST_EVENT_SET_WAKE_MASK, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1418,7 +1423,7 @@ int cmd_host_event_clear(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_HOST_EVENT_CLEAR,
+	rv = ec_command(EC_CMD_HOST_EVENT_CLEAR, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1465,7 +1470,7 @@ int cmd_wireless(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS,
+	rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1512,7 +1517,7 @@ int cmd_i2c_read(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_I2C_READ, &p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_CMD_I2C_READ, 0, &p, sizeof(p), &r, sizeof(r));
 
 	if (rv < 0)
 		return rv;
@@ -1566,7 +1571,7 @@ int cmd_i2c_write(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_I2C_WRITE, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_I2C_WRITE, 0, &p, sizeof(p), NULL, 0);
 
 	if (rv < 0)
 		return rv;
@@ -1593,7 +1598,7 @@ int cmd_lcd_backlight(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_SWITCH_ENABLE_BKLIGHT,
+	rv = ec_command(EC_CMD_SWITCH_ENABLE_BKLIGHT, 0,
 			&p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
@@ -1669,7 +1674,7 @@ int cmd_chipinfo(int argc, char *argv[])
 
 	printf("Chip info:\n");
 
-	rv = ec_command(EC_CMD_GET_CHIP_INFO, NULL, 0, &info, sizeof(info));
+	rv = ec_command(EC_CMD_GET_CHIP_INFO, 0, NULL, 0, &info, sizeof(info));
 	if (rv < 0)
 		return rv;
 	printf("  vendor:    %s\n", info.vendor);
@@ -1732,7 +1737,7 @@ int cmd_ec_hash(int argc, char *argv[])
 	if (argc < 2) {
 		/* Get hash status */
 		p.cmd = EC_VBOOT_HASH_GET;
-		if (ec_command(EC_CMD_VBOOT_HASH,
+		if (ec_command(EC_CMD_VBOOT_HASH, 0,
 			       &p, sizeof(p), &r, sizeof(r)) < 0)
 			return -1;
 
@@ -1742,7 +1747,7 @@ int cmd_ec_hash(int argc, char *argv[])
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
 		/* Abort hash calculation */
 		p.cmd = EC_VBOOT_HASH_ABORT;
-		if (ec_command(EC_CMD_VBOOT_HASH,
+		if (ec_command(EC_CMD_VBOOT_HASH, 0,
 			       &p, sizeof(p), &r, sizeof(r)) < 0)
 			return -1;
 		return 0;
@@ -1789,7 +1794,7 @@ int cmd_ec_hash(int argc, char *argv[])
 		p.nonce_size = 0;
 
 	printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_VBOOT_HASH, &p, sizeof(p), &r, sizeof(r)) < 0)
+	if (ec_command(EC_CMD_VBOOT_HASH, 0, &p, sizeof(p), &r, sizeof(r)) < 0)
 		return -1;
 
 	/* Start command doesn't wait for hashing to finish */

@@ -41,6 +41,8 @@ static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
 	EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
 static uint8_t * const old_params = (uint8_t *)LPC_POOL_CMD_DATA +
 	EC_LPC_ADDR_OLD_PARAM - EC_LPC_ADDR_HOST_ARGS;
+static struct ec_lpc_host_args * const lpc_host_args =
+	(struct ec_lpc_host_args *)LPC_POOL_CMD_DATA;
 
 /* Configure GPIOs for module */
 static void configure_gpio(void)
@@ -128,11 +130,47 @@ uint8_t *lpc_get_memmap_range(void)
 
 void host_send_response(enum ec_status result)
 {
+	uint8_t *out;
 	int size = host_cmd_args.response_size;
-	uint8_t *out = old_params;
+	int max_size;
+
+	/* Handle negative size */
+	if (size < 0) {
+		result = EC_RES_INVALID_RESPONSE;
+		size = 0;
+	}
+
+	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+		/* New-style response */
+		int csum;
+		int i;
+
+		lpc_host_args->flags =
+			(lpc_host_args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+			EC_HOST_ARGS_FLAG_TO_HOST;
+
+		out = cmd_params;
+		max_size = EC_HOST_PARAM_SIZE;
+
+		lpc_host_args->data_size = size;
+
+		csum = host_cmd_args.command + lpc_host_args->flags +
+			lpc_host_args->command_version +
+			lpc_host_args->data_size;
+
+		for (i = 0; i < size; i++)
+			csum += host_cmd_args.response[i];
+
+		lpc_host_args->checksum = (uint8_t)csum;
+	} else {
+		/* Old-style response */
+		lpc_host_args->flags = 0;
+		out = old_params;
+		max_size = EC_OLD_PARAM_SIZE;
+	}
 
 	/* Fail if response doesn't fit in the param buffer */
-	if (size < 0 || size > EC_OLD_PARAM_SIZE)
+	if (size > max_size)
 		result = EC_RES_INVALID_RESPONSE;
 	else if (host_cmd_args.response != out)
 		memcpy(out, host_cmd_args.response, size);
@@ -348,6 +386,56 @@ static void handle_acpi_command(void)
 	lpc_generate_sci();
 }
 
+/* Handle an incoming host command */
+static void handle_host_command(int cmd)
+{
+	host_cmd_args.command = cmd;
+
+	/* See if we have an old or new style command */
+	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+		/* New style command */
+		int size = lpc_host_args->data_size;
+		int csum, i;
+
+		host_cmd_args.version = lpc_host_args->command_version;
+		host_cmd_args.params = cmd_params;
+		host_cmd_args.params_size = size;
+		host_cmd_args.response = cmd_params;
+		host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
+		host_cmd_args.response_size = 0;
+
+		/* Verify params size */
+		if (size > EC_HOST_PARAM_SIZE) {
+			host_send_response(EC_RES_INVALID_PARAM);
+			return;
+		}
+
+		/* Verify checksum */
+		csum = host_cmd_args.command + lpc_host_args->flags +
+			lpc_host_args->command_version +
+			lpc_host_args->data_size;
+
+		for (i = 0; i < size; i++)
+			csum += cmd_params[i];
+
+		if ((uint8_t)csum != lpc_host_args->checksum) {
+			host_send_response(EC_RES_INVALID_CHECKSUM);
+			return;
+		}
+
+	} else {
+		/* Old style command */
+		host_cmd_args.version = 0;
+		host_cmd_args.params = old_params;
+		host_cmd_args.params_size = EC_OLD_PARAM_SIZE;
+		host_cmd_args.response = old_params;
+		host_cmd_args.response_max = EC_OLD_PARAM_SIZE;
+		host_cmd_args.response_size = 0;
+	}
+
+	/* Hand off to host command handler */
+	host_command_received(&host_cmd_args);
+}
 
 /* LPC interrupt handler */
 static void lpc_interrupt(void)
@@ -368,17 +456,10 @@ static void lpc_interrupt(void)
 		LM4_LPC_ST(LPC_CH_CMD) |= LPC_STATUS_MASK_BUSY;
 
 		/*
-		 * Read the command byte and pass to the host command handler.
-		 * This clears the FRMH bit in the status byte.
+		 * Read the command byte.  This clears the FRMH bit in the
+		 * status byte.
 		 */
-		host_cmd_args.command = LPC_POOL_CMD[0];
-		host_cmd_args.version = 0;
-		host_cmd_args.params = old_params;
-		host_cmd_args.params_size = EC_OLD_PARAM_SIZE;
-		host_cmd_args.response = old_params;
-		host_cmd_args.response_max = EC_OLD_PARAM_SIZE;
-		host_cmd_args.response_size = 0;
-		host_command_received(&host_cmd_args);
+		handle_host_command(LPC_POOL_CMD[0]);
 	}
 #endif
 
@@ -579,8 +660,13 @@ static int lpc_init(void)
 		*LPC_POOL_MEMMAP = *LPC_POOL_MEMMAP;
 	}
 
-	/* Initialize memory map to all zero */
+	/* Initialize host args and memory map to all zero */
+	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
 	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
+
+	/* We support LPC args */
+	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
+		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED;
 
 	/* Enable LPC interrupt */
 	task_enable_irq(LM4_IRQ_LPC);

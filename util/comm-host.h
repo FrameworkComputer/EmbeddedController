@@ -19,7 +19,7 @@ int comm_init(void);
  * none), or a negative number if error; errors are -EC_RES_* constants from
  * ec_commands.h.
  */
-int ec_command(int command, const void *indata, int insize,
+int ec_command(int command, int version, const void *indata, int insize,
 	       void *outdata, int outsize);
 
 /*
