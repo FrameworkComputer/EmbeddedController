@@ -4,6 +4,7 @@
  *
  */
 
+#include "power_led.h"
 #include "timer.h"
 
 #ifndef __CROS_EC_CHARGE_STATE_H
@@ -80,6 +81,7 @@ struct power_state_data {
 	enum power_state state;
 	uint32_t error;
 	timestamp_t ts;
+	enum powerled_color led_color;
 };
 
 /* State context
