@@ -12,41 +12,59 @@
 #include "lpc.h"
 #include "util.h"
 
-/* Copy B of current events mask.
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_EVENTS, outstr)
+#define CPRINTF(format, args...) cprintf(CC_EVENTS, format, ## args)
+
+/*
+ * Maintain two copies of the events that are set.
  *
- * This is separate from the main copy, which affects ACPI/SCI/SMI/wake.
+ * The primary copy is mirrored in mapped memory and used to trigger interrupts
+ * on the host via ACPI/SCI/SMI/GPIO.
  *
- * Setting an event sets both copies.  Copies are cleared separately. */
+ * The secondary (B) copy is used to track events at a non-interrupt level (for
+ * example, so a user-level process can find out what events have happened
+ * since the last call, even though a kernel-level process is consuming events
+ * from the first copy).
+ *
+ * Setting an event sets both copies.  Copies are cleared separately.
+ */
+static uint32_t events;
 static uint32_t events_copy_b;
 
 uint32_t host_get_events(void)
 {
-#ifdef CONFIG_LPC
-	return lpc_get_host_events();
-#else
-	uint32_t *mapped_raw_events =
-		(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
-	return *mapped_raw_events;
-#endif
+	return events;
 }
 
 void host_set_events(uint32_t mask)
 {
+	/* Only print if something's about to change */
+	if ((events & mask) != mask || (events_copy_b & mask) != mask)
+		CPRINTF("[%T event set 0x%08x]\n", mask);
+
+	atomic_or(&events, mask);
 	atomic_or(&events_copy_b, mask);
 
 #ifdef CONFIG_LPC
-	lpc_set_host_events(mask);
+	lpc_set_host_event_state(events);
 #else
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) |= mask;
+	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #endif
 }
 
 void host_clear_events(uint32_t mask)
 {
+	/* Only print if something's about to change */
+	if (events & mask)
+		CPRINTF("[%T event clear 0x%08x]\n", mask);
+
+	atomic_clear(&events, mask);
+
 #ifdef CONFIG_LPC
-	lpc_clear_host_events(mask);
+	lpc_set_host_event_state(events);
 #else
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) &= ~mask;
+	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #endif
 }
 
@@ -58,6 +76,10 @@ void host_clear_events(uint32_t mask)
  */
 static void host_clear_events_b(uint32_t mask)
 {
+	/* Only print if something's about to change */
+	if (events_copy_b & mask)
+		CPRINTF("[%T event clear B 0x%08x]\n", mask);
+
 	atomic_clear(&events_copy_b, mask);
 }
 

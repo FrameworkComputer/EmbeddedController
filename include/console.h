@@ -33,6 +33,7 @@ enum console_channel {
 	CC_CHARGER,
 	CC_CHIPSET,
 	CC_DMA,
+	CC_EVENTS,
 	CC_GPIO,
 	CC_HOSTCMD,
 	CC_I2C,

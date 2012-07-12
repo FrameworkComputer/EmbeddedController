@@ -248,15 +248,13 @@ void lpc_comx_put_char(int c)
 }
 
 
-/* Update the host event status.
- * Sends a pulse if masked event status becomes non-zero:
- *  SMI pulse via EC_SMIn GPIO
- *  SCI pulse via LPC0SCI
+/**
+ * Update the host event status.  Sends a pulse if masked event status becomes
+ * non-zero:
+ *   - SMI pulse via EC_SMIn GPIO
+ *   - SCI pulse via LPC0SCI
  */
 static void update_host_event_status(void) {
-	uint32_t *mapped_raw_events =
-		(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
-
 	int need_sci = 0;
 	int need_smi = 0;
 
@@ -279,7 +277,7 @@ static void update_host_event_status(void) {
 		LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_SCI;
 
 	/* Copy host events to mapped memory */
-	*mapped_raw_events = host_events;
+	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = host_events;
 
 	task_enable_irq(LM4_IRQ_LPC);
 
@@ -298,34 +296,13 @@ static void update_host_event_status(void) {
 		lpc_generate_sci();
 }
 
-
-void lpc_set_host_events(uint32_t mask)
+void lpc_set_host_event_state(uint32_t mask)
 {
-	if ((host_events & mask) == mask)
-		return;
-
-	host_events |= mask;
-	CPRINTF("[%T event set 0x%08x -> %08x]\n", mask, host_events);
-	update_host_event_status();
+	if (mask != host_events) {
+		host_events = mask;
+		update_host_event_status();
+	}
 }
-
-
-void lpc_clear_host_events(uint32_t mask)
-{
-	if (!(host_events & mask))
-		return;
-
-	host_events &= ~mask;
-	CPRINTF("[%T event clear 0x%08x -> %08x]\n", mask, host_events);
-	update_host_event_status();
-}
-
-
-uint32_t lpc_get_host_events(void)
-{
-	return host_events;
-}
-
 
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
@@ -333,12 +310,10 @@ void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 	update_host_event_status();
 }
 
-
 uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 {
 	return event_mask[type];
 }
-
 
 /* Handle an ACPI command */
 static void handle_acpi_command(void)
@@ -361,7 +336,7 @@ static void handle_acpi_command(void)
 	case EC_CMD_ACPI_QUERY_EVENT:
 		for (i = 0; i < 32; i++) {
 			if (host_events & (1 << i)) {
-				lpc_clear_host_events(1 << i);
+				host_clear_events(1 << i);
 				result = i + 1;  /* Events are 1-based */
 				break;
 			}

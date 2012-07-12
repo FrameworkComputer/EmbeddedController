@@ -10,13 +10,16 @@
 
 #include "common.h"
 
-/* Manually generate an IRQ to host.
+/*
+ * Manually generate an IRQ to host.
  * Note that the irq_num == 0 would set the AH bit (Active High).
  */
 void lpc_manual_irq(int irq_num);
 
-/* Return a pointer to the memory-mapped buffer.  This buffer is writable at
- * any time, and the host can read it at any time. */
+/*
+ * Return a pointer to the memory-mapped buffer.  This buffer is writable at
+ * any time, and the host can read it at any time.
+ */
 uint8_t *lpc_get_memmap_range(void);
 
 /* Return true if the TOH is still set */
@@ -40,6 +43,13 @@ int lpc_comx_get_char(void);
 /* Put a character to the COMx LPC interface. */
 void lpc_comx_put_char(int c);
 
+/*
+ * Low-level LPC interface for host events.
+ *
+ * For use by host_event_commands.c.  Other modules should use the methods
+ * provided in host_command.h.
+ */
+
 /* Types of host events */
 enum lpc_host_event_type {
 	LPC_HOST_EVENT_SMI = 0,
@@ -47,14 +57,8 @@ enum lpc_host_event_type {
 	LPC_HOST_EVENT_WAKE,
 };
 
-/* Set one or more SCI/SMI event bits. */
-void lpc_set_host_events(uint32_t mask);
-
-/* Clear one or more SCI/SMI event bits.  Write 1 to a bit to clear it. */
-void lpc_clear_host_events(uint32_t mask);
-
-/* Return the raw SCI/SMI event state. */
-uint32_t lpc_get_host_events(void);
+/* Set the event state */
+void lpc_set_host_event_state(uint32_t mask);
 
 /* Set the event mask for the specified event type. */
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask);
