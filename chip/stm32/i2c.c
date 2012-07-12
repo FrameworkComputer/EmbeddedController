@@ -122,8 +122,10 @@ static int i2c_write_raw(int port, void *buf, int len)
 	return len;
 }
 
-void host_send_response(enum ec_status result, const uint8_t *data, int size)
+void host_send_response(enum ec_status result)
 {
+	const uint8_t *data = host_cmd_args.response;
+	int size = host_cmd_args.response_size;
 	uint8_t *out = host_buffer;
 	int sum, i;
 

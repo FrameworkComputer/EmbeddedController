@@ -101,13 +101,14 @@ uint32_t host_get_events(void);
 void host_command_received(struct host_cmd_handler_args *args);
 
 /**
- * Send a successful result code along with response data to a host command.
+ * Send a successful result code to a host command.
+ *
+ * Response data, if any, has been stored in the args passed to
+ * host_command_received().
  *
  * @param result        Result code for the command (EC_RES_...)
- * @param data          Buffer with the response payload.
- * @param size          Size of the response buffer.
  */
-void host_send_response(enum ec_status result, const uint8_t *data, int size);
+void host_send_response(enum ec_status result);
 
 /* Register a host command handler */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\

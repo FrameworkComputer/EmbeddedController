@@ -126,15 +126,16 @@ uint8_t *lpc_get_memmap_range(void)
 	return (uint8_t *)LPC_POOL_MEMMAP;
 }
 
-void host_send_response(enum ec_status result, const uint8_t *data, int size)
+void host_send_response(enum ec_status result)
 {
+	int size = host_cmd_args.response_size;
 	uint8_t *out = old_params;
 
 	/* Fail if response doesn't fit in the param buffer */
 	if (size < 0 || size > EC_OLD_PARAM_SIZE)
 		result = EC_RES_INVALID_RESPONSE;
-	else if (data != out)
-		memcpy(out, data, size);
+	else if (host_cmd_args.response != out)
+		memcpy(out, host_cmd_args.response, size);
 
 	/*
 	 * Write result to the data byte.  This sets the TOH bit in the

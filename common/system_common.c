@@ -788,7 +788,7 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_TASK_HOSTCMD
 	/* Clean busy bits on host */
-	host_send_response(EC_RES_SUCCESS, NULL, 0);
+	host_send_response(EC_RES_SUCCESS);
 #endif
 
 	CPUTS("[Executing host reboot command]\n");

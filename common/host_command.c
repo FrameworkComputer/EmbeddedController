@@ -49,7 +49,7 @@ void host_command_received(struct host_cmd_handler_args *args)
 	if (args->command == EC_CMD_REBOOT) {
 		system_reset(1);
 		/* Reset should never return; if it does, post an error */
-		host_send_response(EC_RES_ERROR, NULL, 0);
+		host_send_response(EC_RES_ERROR);
 		return;
 	}
 
@@ -225,8 +225,7 @@ void host_command_task(void)
 		/* process it */
 		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
 			enum ec_status res = host_command_process(pending_args);
-			host_send_response(res, pending_args->response,
-					   pending_args->response_size);
+			host_send_response(res);
 		}
 	}
 }
