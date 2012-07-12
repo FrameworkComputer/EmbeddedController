@@ -39,8 +39,12 @@ const char help_str[] =
 	"      Various EC hash commands\n"
 	"  eventclear <mask>\n"
 	"      Clears EC host events flags where mask has bits set\n"
+	"  eventclearb <mask>\n"
+	"      Clears EC host events flags copy B where mask has bits set\n"
 	"  eventget\n"
 	"      Prints raw EC host event flags\n"
+	"  eventgetb\n"
+	"      Prints raw EC host event flags copy B\n"
 	"  eventgetscimask\n"
 	"      Prints SCI mask for EC host events\n"
 	"  eventgetsmimask\n"
@@ -1284,6 +1288,30 @@ int cmd_host_event_get_raw(int argc, char *argv[])
 }
 
 
+int cmd_host_event_get_b(int argc, char *argv[])
+{
+	struct ec_response_host_event_mask r;
+	int rv;
+
+	rv = ec_command(EC_CMD_HOST_EVENT_GET_B, 0,
+			NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+	if (rv < sizeof(r)) {
+		fprintf(stderr, "Insufficient data received.\n");
+		return -1;
+	}
+
+	if (r.mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID)) {
+		printf("Current host events-B: invalid\n");
+		return -1;
+	}
+
+	printf("Current host events-B: 0x%08x\n", r.mask);
+	return 0;
+}
+
+
 int cmd_host_event_get_smi_mask(int argc, char *argv[])
 {
 	struct ec_response_host_event_mask r;
@@ -1429,6 +1457,32 @@ int cmd_host_event_clear(int argc, char *argv[])
 		return rv;
 
 	printf("Host events cleared.\n");
+	return 0;
+}
+
+
+int cmd_host_event_clear_b(int argc, char *argv[])
+{
+	struct ec_params_host_event_mask p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
+		return -1;
+	}
+	p.mask = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad mask.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_HOST_EVENT_CLEAR_B, 0,
+			&p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Host events-B cleared.\n");
 	return 0;
 }
 
@@ -1820,7 +1874,9 @@ const struct command commands[] = {
 	{"cmdversions", cmd_cmdversions},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
+	{"eventclearb", cmd_host_event_clear_b},
 	{"eventget", cmd_host_event_get_raw},
+	{"eventgetb", cmd_host_event_get_b},
 	{"eventgetscimask", cmd_host_event_get_sci_mask},
 	{"eventgetsmimask", cmd_host_event_get_smi_mask},
 	{"eventgetwakemask", cmd_host_event_get_wake_mask},
