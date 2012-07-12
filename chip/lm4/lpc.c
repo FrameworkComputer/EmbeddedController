@@ -36,6 +36,7 @@
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
+static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
 	EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
@@ -257,6 +258,9 @@ void lpc_comx_put_char(int c)
 static void update_host_event_status(void) {
 	int need_sci = 0;
 	int need_smi = 0;
+
+	if (!init_done)
+		return;
 
 	/* Disable LPC interrupt while updating status register */
 	task_disable_irq(LM4_IRQ_LPC);
@@ -502,7 +506,6 @@ static void lpc_post_sysjump(void)
 		return;
 
 	memcpy(event_mask, prev_mask, sizeof(event_mask));
-	update_host_event_status();
 }
 
 
@@ -651,6 +654,12 @@ static int lpc_init(void)
 
 	/* Restore event masks if needed */
 	lpc_post_sysjump();
+
+	/* Sufficiently initialized */
+	init_done = 1;
+
+	/* Update host events now that we can copy them to memmap */
+	update_host_event_status();
 
 	return EC_SUCCESS;
 }

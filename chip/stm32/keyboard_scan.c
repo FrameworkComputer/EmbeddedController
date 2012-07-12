@@ -334,6 +334,9 @@ static int check_recovery_key(void)
 	}
 
 	CPRINTF("Keyboard RECOVERY detected !\n");
+
+	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+
 	return 1;
 }
 

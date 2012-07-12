@@ -192,6 +192,8 @@ enum host_event_code {
 	 * determine when the EC is ready to accept subsequent commands.
 	 */
 	EC_HOST_EVENT_INTERFACE_READY = 14,
+	/* Keyboard recovery combo has been pressed */
+	EC_HOST_EVENT_KEYBOARD_RECOVERY = 15,
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be

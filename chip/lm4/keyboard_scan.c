@@ -5,9 +5,9 @@
 
 /* Keyboard scanner module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
-#include "eoption.h"
+#include "host_command.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "keyboard_scan_stub.h"
@@ -277,6 +277,10 @@ int keyboard_scan_init(void)
 				break;
 			}
 		}
+
+		/* Trigger event if recovery key was pressed */
+		if (keyboard_scan_recovery_pressed())
+			host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 	}
 
 	return EC_SUCCESS;
