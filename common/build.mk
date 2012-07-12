@@ -14,6 +14,7 @@ common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o pmu_tps65090_charger.o
 common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_FLASH)+=flash_common.o flash_commands.o fmap.o
+common-$(CONFIG_I2C)+=i2c_commands.o
 common-$(CONFIG_IR357x)+=ir357x.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_POWER_LED)+=power_led.o

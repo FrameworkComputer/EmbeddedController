@@ -67,6 +67,10 @@ const char help_str[] =
 	"      Checks for basic communication with EC\n"
 	"  kbpress\n"
 	"      Simulate key press\n"
+	"  i2cread\n"
+	"      Read I2C bus\n"
+	"  i2cwrite\n"
+	"      Write I2C bus\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
 	"  pstoreinfo\n"
@@ -1471,6 +1475,108 @@ int cmd_wireless(int argc, char *argv[])
 }
 
 
+int cmd_i2c_read(int argc, char *argv[])
+{
+	struct ec_params_i2c_read p;
+	struct ec_response_i2c_read r;
+	char *e;
+	int rv;
+
+	if (argc != 5) {
+		fprintf(stderr, "Usage: %s <8 | 16> <port> <addr> <offset>\n",
+				argv[0]);
+		return -1;
+	}
+
+	p.read_size = strtol(argv[1], &e, 0);
+	if ((e && *e) || (p.read_size != 8 && p.read_size != 16)) {
+		fprintf(stderr, "Bad read size.\n");
+		return -1;
+	}
+
+	p.port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	p.addr = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad address.\n");
+		return -1;
+	}
+
+	p.offset = strtol(argv[4], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_I2C_READ, &p, sizeof(p), &r, sizeof(r));
+
+	if (rv < 0)
+		return rv;
+
+	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n",
+	       p.port, p.addr, p.offset, r.data);
+	return 0;
+}
+
+
+int cmd_i2c_write(int argc, char *argv[])
+{
+	struct ec_params_i2c_write p;
+	char *e;
+	int rv;
+
+	if (argc != 6) {
+		fprintf(stderr,
+			"Usage: %s <8 | 16> <port> <addr> <offset> <data>\n",
+			argv[0]);
+		return -1;
+	}
+
+	p.write_size = strtol(argv[1], &e, 0);
+	if ((e && *e) || (p.write_size != 8 && p.write_size != 16)) {
+		fprintf(stderr, "Bad write size.\n");
+		return -1;
+	}
+
+	p.port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	p.addr = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad address.\n");
+		return -1;
+	}
+
+	p.offset = strtol(argv[4], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+
+	p.data = strtol(argv[5], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad data.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_I2C_WRITE, &p, sizeof(p), NULL, 0);
+
+	if (rv < 0)
+		return rv;
+
+	printf("Wrote 0x%x to I2C port %d at 0x%x offset 0x%x.\n",
+	       p.data, p.port, p.addr, p.offset);
+	return 0;
+}
+
+
 int cmd_lcd_backlight(int argc, char *argv[])
 {
 	struct ec_params_switch_enable_backlight p;
@@ -1723,6 +1829,8 @@ const struct command commands[] = {
 	{"flashinfo", cmd_flash_info},
 	{"hello", cmd_hello},
 	{"kbpress", cmd_kbpress},
+	{"i2cread", cmd_i2c_read},
+	{"i2cwrite", cmd_i2c_write},
 	{"lightbar", cmd_lightbar},
 	{"vboot", cmd_vboot},
 	{"pstoreinfo", cmd_pstore_info},

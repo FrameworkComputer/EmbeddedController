@@ -741,6 +741,33 @@ struct ec_params_switch_enable_wireless {
 } __packed;
 
 /*****************************************************************************/
+/* I2C commands. Only available when flash write protect is unlocked. */
+
+/* Read I2C bus */
+#define EC_CMD_I2C_READ 0x94
+
+struct ec_params_i2c_read {
+	uint16_t addr;
+	uint8_t read_size; /* Either 8 or 16. */
+	uint8_t port;
+	uint8_t offset;
+} __packed;
+struct ec_response_i2c_read {
+	uint16_t data;
+} __packed;
+
+/* Write I2C bus */
+#define EC_CMD_I2C_WRITE 0x95
+
+struct ec_params_i2c_write {
+	uint16_t data;
+	uint16_t addr;
+	uint8_t write_size; /* Either 8 or 16. */
+	uint8_t port;
+	uint8_t offset;
+} __packed;
+
+/*****************************************************************************/
 /* System commands */
 
 /*
