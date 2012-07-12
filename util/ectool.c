@@ -31,6 +31,8 @@ const char help_str[] =
 	"      Enable/disable LCD backlight\n"
 	"  battery\n"
 	"      Prints battery info\n"
+	"  chargeforceidle\n"
+	"      Force charge state machine to stop in idle mode\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -1662,6 +1664,20 @@ int cmd_lcd_backlight(int argc, char *argv[])
 }
 
 
+int cmd_charge_force_idle(int argc, char *argv[])
+{
+	int rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE,
+			    0, NULL, 0, NULL, 0);
+	if (rv < 0) {
+		fprintf(stderr, "Is AC connected?\n");
+		return rv;
+	}
+
+	printf("Charge state machine force idle.\n");
+	return 0;
+}
+
+
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_MEMMAP_TEXT_MAX];
@@ -1870,6 +1886,7 @@ const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
+	{"chargeforceidle", cmd_charge_force_idle},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"echash", cmd_ec_hash},

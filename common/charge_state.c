@@ -32,6 +32,8 @@
 
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
+static int state_machine_force_idle = 0;
+
 /* Battery information used to fill ACPI _BIF and/or _BIX */
 static void update_battery_info(void)
 {
@@ -139,8 +141,11 @@ static int state_common(struct power_state_context *ctx)
 			charger_set_current(0);
 			curr->error |= F_CHARGER_CURRENT;
 		}
-	} else
+	} else {
 		*batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
+		/* AC disconnected should get us out of force idle mode. */
+		state_machine_force_idle = 0;
+	}
 
 	rv = battery_temperature(&batt->temperature);
 	if (rv) {
@@ -281,6 +286,10 @@ static enum power_state state_idle(struct power_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
 	const struct charger_info *c_info = ctx->charger;
+
+	/* If we are forcing idle mode, then just stay in IDLE. */
+	if (state_machine_force_idle)
+		return PWR_STATE_UNCHANGE;
 
 	if (!ctx->curr.ac)
 		return PWR_STATE_INIT;
@@ -449,6 +458,25 @@ static void charging_progress(struct power_state_context *ctx)
 	}
 }
 
+static int enter_force_idle_mode(void)
+{
+	if (!power_ac_present())
+		return EC_ERROR_UNKNOWN;
+	state_machine_force_idle = 1;
+	charger_post_init();
+	return EC_SUCCESS;
+}
+
+static enum powerled_color force_idle_led_blink(void)
+{
+	static enum powerled_color last = POWERLED_GREEN;
+	if (last == POWERLED_GREEN)
+		last = POWERLED_OFF;
+	else
+		last = POWERLED_GREEN;
+	return last;
+}
+
 /* Battery charging task */
 void charge_state_machine_task(void)
 {
@@ -502,6 +530,11 @@ void charge_state_machine_task(void)
 			new_state = PWR_STATE_ERROR;
 		}
 
+		if (state_machine_force_idle &&
+		    ctx.prev.state != PWR_STATE_IDLE &&
+		    ctx.prev.state != PWR_STATE_INIT)
+			new_state = PWR_STATE_INIT;
+
 		if (new_state) {
 			ctx.curr.state = new_state;
 			CPRINTF("[Charge state %s -> %s]\n",
@@ -550,7 +583,9 @@ void charge_state_machine_task(void)
 			break;
 		case PWR_STATE_UNCHANGE:
 			/* Don't change sleep duration */
-			if (rv_setled)
+			if (state_machine_force_idle)
+				powerled_set(force_idle_led_blink());
+			else if (rv_setled)
 				rv_setled = powerled_set(led_color);
 			break;
 		default:
@@ -574,3 +609,13 @@ void charge_state_machine_task(void)
 	}
 }
 
+static int charge_command_force_idle(struct host_cmd_handler_args *args)
+{
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+	if (enter_force_idle_mode() != EC_SUCCESS)
+		return EC_RES_ERROR;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_FORCE_IDLE, charge_command_force_idle,
+		     EC_VER_MASK(0));
