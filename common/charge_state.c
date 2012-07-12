@@ -30,9 +30,24 @@
 /* Stop charge when state of charge reaches this percentage */
 #define STOP_CHARGE_THRESHOLD 100
 
+/* Voltage debounce time */
+#define DEBOUNCE_TIME (10 * SECOND)
+
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
+
+static inline int is_charger_expired(
+	struct power_state_context *ctx, timestamp_t now)
+{
+	return now.val - ctx->charger_update_time.val > CHARGER_UPDATE_PERIOD;
+}
+
+static inline void update_charger_time(
+	struct power_state_context *ctx, timestamp_t now)
+{
+	ctx->charger_update_time.val = now.val;
+}
 
 /* Battery information used to fill ACPI _BIF and/or _BIX */
 static void update_battery_info(void)
@@ -321,7 +336,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 			    charger_set_current(batt->desired_current))
 				return PWR_STATE_ERROR;
 		}
-		ctx->charger_update_time = get_time();
+		update_charger_time(ctx, get_time());
 		return PWR_STATE_CHARGE;
 	}
 
@@ -334,39 +349,60 @@ static enum power_state state_idle(struct power_state_context *ctx)
  */
 static enum power_state state_charge(struct power_state_context *ctx)
 {
-	if (ctx->curr.error)
+	struct power_state_data *curr = &ctx->curr;
+	struct batt_params *batt = &ctx->curr.batt;
+	const struct charger_info *c_info = ctx->charger;
+	int debounce = 0;
+	timestamp_t now;
+
+	if (curr->error)
 		return PWR_STATE_ERROR;
 
-	if (ctx->curr.batt.desired_current < ctx->charger->current_min &&
-	    ctx->curr.batt.desired_current > 0)
+	if (batt->desired_current < c_info->current_min &&
+	    batt->desired_current > 0)
 		return trickle_charge(ctx);
 
 	/* Check charger reset */
-	if (ctx->curr.charging_voltage == 0 ||
-	    ctx->curr.charging_current == 0)
+	if (curr->charging_voltage == 0 ||
+	    curr->charging_current == 0)
 		return PWR_STATE_INIT;
 
-	if (!ctx->curr.ac)
+	if (!curr->ac)
 		return PWR_STATE_INIT;
 
-	if (ctx->curr.batt.state_of_charge >= STOP_CHARGE_THRESHOLD) {
+	if (batt->state_of_charge >= STOP_CHARGE_THRESHOLD) {
 		if (charger_set_voltage(0) || charger_set_current(0))
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
 	}
 
-	if ((ctx->curr.batt.desired_voltage != ctx->curr.charging_voltage) ||
-	    (ctx->curr.batt.desired_current != ctx->curr.charging_current) ||
-	    (ctx->curr.ts.val - ctx->charger_update_time.val >
-						CHARGER_UPDATE_PERIOD)) {
-		if (ctx->curr.batt.desired_current < ctx->charger->current_min)
-			return PWR_STATE_INIT;
+	now = get_time();
 
-		if (charger_set_voltage(ctx->curr.batt.desired_voltage) ||
-		    charger_set_current(ctx->curr.batt.desired_current))
+	if (batt->desired_voltage != curr->charging_voltage) {
+		if (charger_set_voltage(batt->desired_voltage))
 			return PWR_STATE_ERROR;
-		ctx->charger_update_time = get_time();
+		update_charger_time(ctx, now);
 	}
+
+	if (batt->desired_current == curr->charging_current) {
+		/* Tick charger watchdog */
+		if (!is_charger_expired(ctx, now))
+			return PWR_STATE_UNCHANGE;
+	} else if (batt->desired_current > curr->charging_current) {
+		if (!timestamp_expired(ctx->voltage_debounce_time, &now))
+			return PWR_STATE_UNCHANGE;
+	} else {
+		/* Debounce charging current on falling edge */
+		debounce = 1;
+	}
+
+	if (charger_set_current(batt->desired_current))
+		return PWR_STATE_ERROR;
+
+	/* Update charger watchdog timer and debounce timer */
+	update_charger_time(ctx, now);
+	if (debounce)
+		ctx->voltage_debounce_time.val = now.val + DEBOUNCE_TIME;
 
 	return PWR_STATE_UNCHANGE;
 }
