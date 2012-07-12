@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Battery pack vendor provided charging profile for ATL706486
+ * Battery pack vendor provided charging profile
  */
 
 #include "battery_pack.h"
@@ -114,6 +114,13 @@ void battery_vendor_params(struct batt_params *batt)
 		else
 			limit_value(desired_current, C_02);
 	}
+
+#ifndef CONFIG_SLOW_PRECHARGE
+	/* Trickle charging and pre-charging current should be 0.01 C */
+	if (*desired_current < info.precharge_current)
+		*desired_current = info.precharge_current;
+#endif /* CONFIG_SLOW_PRECHARGE */
+
 }
 
 
