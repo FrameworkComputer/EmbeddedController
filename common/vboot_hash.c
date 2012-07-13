@@ -30,9 +30,9 @@ struct vboot_hash_tag {
 #define VBOOT_HASH_SYSJUMP_VERSION 1
 #define CHUNK_SIZE 1024
 
-static int data_offset;
-static int data_size;
-static int curr_pos;
+static uint32_t data_offset;
+static uint32_t data_size;
+static uint32_t curr_pos;
 static const uint8_t *hash;   /* Hash, or NULL if not valid */
 static int want_abort;
 
@@ -53,8 +53,8 @@ static int vboot_hash_in_progress(void)
  * If nonce_size is non-zero, prefixes the <nonce> onto the data to be
  * hashed.  Returns non-zero if error.
  */
-static int vboot_hash_start(int offset, int size, const uint8_t *nonce,
-			    int nonce_size)
+static int vboot_hash_start(uint32_t offset, uint32_t size,
+			    const uint8_t *nonce, int nonce_size)
 {
 	/* Fail if hash computation is already in progress */
 	if (vboot_hash_in_progress())
@@ -65,7 +65,7 @@ static int vboot_hash_start(int offset, int size, const uint8_t *nonce,
 	 * command to peek at other memory.
 	 */
 	if (offset > CONFIG_FLASH_SIZE || size > CONFIG_FLASH_SIZE ||
-	    offset + size > CONFIG_FLASH_SIZE) {
+	    offset + size > CONFIG_FLASH_SIZE || nonce_size < 0) {
 		return EC_ERROR_INVAL;
 	}
 
@@ -187,8 +187,8 @@ DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
 
 static int command_hash(int argc, char **argv)
 {
-	int offset = CONFIG_FW_A_OFF - CONFIG_FLASH_BASE;
-	int size = CONFIG_FW_A_SIZE;
+	uint32_t offset = CONFIG_FW_A_OFF - CONFIG_FLASH_BASE;
+	uint32_t size = CONFIG_FW_A_SIZE;
 	char *e;
 
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
