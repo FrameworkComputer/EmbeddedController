@@ -7,6 +7,7 @@
 #define CONFIG_TASK_LIST \
   TASK(WATCHDOG, watchdog_task, NULL) \
   TASK(VBOOTHASH, vboot_hash_task, NULL) \
+  TASK(HOSTCMD, host_command_task, NULL) \
   TASK(CONSOLE, console_task, NULL) \
   TASK(TMRA, TaskTimer, (void *)1234) \
   TASK(TMRB, TaskTimer, (void *)5678) \

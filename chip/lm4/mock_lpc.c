@@ -6,24 +6,26 @@
 /* Mock LPC module for Chrome EC */
 
 #include "board.h"
+#include "common.h"
+#include "ec_commands.h"
 #include "lpc.h"
 #include "registers.h"
 #include "uart.h"
 
-void lpc_set_host_events(uint32_t mask)
+void lpc_set_host_event_state(uint32_t mask)
 {
 	uart_printf("Host event: %x\n", mask);
 }
 
 
-uint32_t lpc_get_host_events(void)
+uint32_t lpc_get_host_event_state(void)
 {
 	/* Not implemented */
 	return 0;
 }
 
 
-void lpc_clear_host_events(uint32_t mask)
+void lpc_clear_host_event_state(uint32_t mask)
 {
 	uart_printf("Clear host event: %x\n", mask);
 }
@@ -60,4 +62,23 @@ void lpc_comx_put_char(int c)
 {
 	/* Not implemented */
 	return;
+}
+
+
+void host_send_response(enum ec_status result, const uint8_t *data, int size)
+{
+	/* Not implemented */
+	return;
+}
+
+
+uint8_t *lpc_get_memmap_range(void)
+{
+	return (uint8_t *)LPC_POOL_CMD_DATA + EC_HOST_PARAM_SIZE * 2;
+}
+
+
+uint8_t *host_get_buffer(void)
+{
+	return (uint8_t *)LPC_POOL_CMD_DATA;
 }

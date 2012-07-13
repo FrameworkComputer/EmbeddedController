@@ -22,17 +22,25 @@ DECLARE_CONSOLE_COMMAND(rosize, ro_image_size,
 			"Report size of RO image",
 			NULL);
 
+/* TODO(victoryang@): We should introduce a function to send fake host command
+ *                    just like ec_command in ectool. See crosbug/p/11350 */
 static int hc_flash_info(int argc, char **argv)
 {
-	uint8_t data[EC_PARAM_SIZE];
+	uint8_t data[EC_HOST_PARAM_SIZE];
 	enum ec_status res;
-	int resp_size;
-	struct ec_response_flash_info *r =
-		(struct ec_response_flash_info *)data;
+	struct ec_response_flash_info *r;
+	struct host_cmd_handler_args args =
+		{ .command = EC_CMD_FLASH_INFO,
+		  .version = 0,
+		  .params = NULL,
+		  .params_size = 0,
+		  .response = data,
+		  .response_size = EC_HOST_PARAM_SIZE };
 
-	res = host_command_process(EC_CMD_FLASH_INFO, data, &resp_size);
+	res = host_command_process(&args);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
+	r = (struct ec_response_flash_info *)args.response;
 	uart_printf("flash_size = %d\n", r->flash_size);
 	uart_printf("write_block_size = %d\n", r->write_block_size);
 	uart_printf("erase_block_size = %d\n", r->erase_block_size);
@@ -45,13 +53,17 @@ DECLARE_CONSOLE_COMMAND(hcflashinfo, hc_flash_info,
 
 static int hc_flash_read(int argc, char **argv)
 {
-	uint8_t data[EC_PARAM_SIZE];
+	uint8_t data[EC_HOST_PARAM_SIZE];
 	enum ec_status res;
-	int resp_size;
 	struct ec_params_flash_read *p =
 		(struct ec_params_flash_read *)data;
-	struct ec_response_flash_read *r =
-		(struct ec_response_flash_read *)data;
+	struct host_cmd_handler_args args =
+		{ .command = EC_CMD_FLASH_READ,
+		  .version = 0,
+		  .params = data,
+		  .params_size = EC_HOST_PARAM_SIZE,
+		  .response = data,
+		  .response_size = EC_HOST_PARAM_SIZE };
 	char *e;
 	int i, size;
 
@@ -66,11 +78,11 @@ static int hc_flash_read(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	res = host_command_process(EC_CMD_FLASH_READ, data, &resp_size);
+	res = host_command_process(&args);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	for (i = 0; i < size; ++i) {
-		uart_printf("%02x", r->data[i]);
+		uart_printf("%02x", args.response[i]);
 		if ((i & 31) == 31)
 			uart_puts("\n");
 	}
@@ -81,11 +93,17 @@ DECLARE_CONSOLE_COMMAND(hcflashread, hc_flash_read,
 
 static int hc_flash_write(int argc, char **argv)
 {
-	uint8_t data[EC_PARAM_SIZE];
+	uint8_t data[EC_HOST_PARAM_SIZE];
 	enum ec_status res;
-	int resp_size;
 	struct ec_params_flash_write *p =
 		(struct ec_params_flash_write *)data;
+	struct host_cmd_handler_args args =
+		{ .command = EC_CMD_FLASH_WRITE,
+		  .version = 0,
+		  .params = data,
+		  .params_size = EC_HOST_PARAM_SIZE,
+		  .response = data,
+		  .response_size = EC_HOST_PARAM_SIZE };
 	char *e;
 	int i, size;
 	int seed, mult, add;
@@ -115,7 +133,7 @@ static int hc_flash_write(int argc, char **argv)
 		seed = seed * mult + add;
 	}
 
-	res = host_command_process(EC_CMD_FLASH_WRITE, data, &resp_size);
+	res = host_command_process(&args);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	return EC_SUCCESS;
@@ -125,11 +143,17 @@ DECLARE_CONSOLE_COMMAND(hcflashwrite, hc_flash_write,
 
 static int hc_flash_erase(int argc, char **argv)
 {
-	uint8_t data[EC_PARAM_SIZE];
+	uint8_t data[EC_HOST_PARAM_SIZE];
 	enum ec_status res;
-	int resp_size;
 	struct ec_params_flash_erase *p =
 		(struct ec_params_flash_erase *)data;
+	struct host_cmd_handler_args args =
+		{ .command = EC_CMD_FLASH_ERASE,
+		  .version = 0,
+		  .params = data,
+		  .params_size = EC_HOST_PARAM_SIZE,
+		  .response = data,
+		  .response_size = EC_HOST_PARAM_SIZE };
 	char *e;
 	int size;
 
@@ -144,7 +168,7 @@ static int hc_flash_erase(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	res = host_command_process(EC_CMD_FLASH_ERASE, data, &resp_size);
+	res = host_command_process(&args);
 	if (res != EC_RES_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 	return EC_SUCCESS;

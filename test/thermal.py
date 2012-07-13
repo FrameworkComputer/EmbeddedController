@@ -82,7 +82,11 @@ def test(helper):
       # Set CPU temperature to trigger warning and throttle CPU
       helper.ec_command("setcputemp %d" % config[CPU]['warning'])
       helper.wait_output("Throttle CPU.", timeout=11)
-      helper.wait_output("Host event: 200", timeout=2)
+      host_event = helper.wait_output("Host event: (?P<h>\d+)", use_re=True,
+                                      timeout=2)["h"]
+      if (int(host_event, 16) & 0x200) == 0:
+          helper.trace("Fail to get thermal overload event")
+          return False
 
       # Lower CPU temperature and check CPU is not throttled
       helper.ec_command("setcputemp %d" % (config[CPU]['warning']-5))

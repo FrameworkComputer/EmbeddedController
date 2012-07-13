@@ -23,4 +23,5 @@
 	TASK(I8042CMD, i8042_command_task, NULL) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL) \
 	TASK(POWERBTN, power_button_task, NULL) \
+	TASK(HOSTCMD, host_command_task, NULL) \
 	TASK(CONSOLE, console_task, NULL)

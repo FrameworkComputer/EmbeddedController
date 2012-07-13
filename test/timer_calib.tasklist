@@ -8,4 +8,5 @@
   TASK(WATCHDOG, watchdog_task, NULL) \
   TASK(VBOOTHASH, vboot_hash_task, NULL) \
   TASK(TESTTMR, timer_calib_task, (void *)'T')\
+  TASK(HOSTCMD, host_command_task, NULL) \
   TASK(CONSOLE, console_task, NULL)

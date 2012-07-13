@@ -11,15 +11,18 @@ DELAY = 5
 ERROR_MARGIN = 0.5
 
 def test(helper):
-      helper.wait_output("Console is enabled")
-      helper.ec_command("sysjump ro")
-      helper.wait_output("Console is enabled")
+      helper.wait_output("idle task started")
+      helper.ec_command("sysinfo")
+      copy = helper.wait_output("Copy:\s+(?P<c>\S+)", use_re=True)["c"]
+      if copy != "RO":
+          helper.ec_command("sysjump ro")
+          helper.wait_output("idle task started")
       helper.ec_command("gettime")
       ec_start_time = helper.wait_output("Time: 0x[0-9a-f]* = (?P<t>[\d\.]+) s",
                                          use_re=True)["t"]
       time.sleep(DELAY)
       helper.ec_command("sysjump a")
-      helper.wait_output("Console is enabled")
+      helper.wait_output("idle task started")
       helper.ec_command("gettime")
       ec_end_time = helper.wait_output("Time: 0x[0-9a-f]* = (?P<t>[\d\.]+) s",
                                        use_re=True)["t"]

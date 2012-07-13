@@ -6,6 +6,7 @@
 #
 
 import random
+import re
 
 # Fixed random seed.
 random.seed(1234)
@@ -30,15 +31,29 @@ def test_erase(helper, offset, size):
     helper.ec_command("hcflasherase %d %d" % (offset, size))
     helper.wait_output("Flash erase at %x size %x" % (offset, size))
 
-def test_read(helper, offset, size):
-    helper.ec_command("hcflashread %d %d" % (offset, size))
+def _get_read_ref(helper, offset, size):
+    ret = []
+    retsub = []
+    assert size % 4 == 0
     while size > 0:
-        cur_size = size if size <= 32 else 32
-        expect_str = ''.join([("%02x" % (x & 0xff)) for x in
-                range(offset, offset + cur_size)])
-        helper.wait_output(expect_str)
-        offset = offset + cur_size
-        size = size - cur_size
+        helper.ec_command("rw %d" % offset)
+        h = helper.wait_output("read.*=\s+0x(?P<h>[0-9a-f]+)", use_re=True)["h"]
+	# Change endianess here
+        retsub.append(re.sub('(..)(..)(..)(..)', r'\4\3\2\1', h))
+        if len(retsub) == 8:
+            ret.append(''.join(retsub))
+            retsub = []
+        size = size - 4
+        offset = offset + 4
+    if retsub:
+        ret.append(''.join(retsub))
+    return ret
+
+def test_read(helper, offset, size):
+    ref = _get_read_ref(helper, offset, size)
+    helper.ec_command("hcflashread %d %d" % (offset, size))
+    for line in ref:
+        helper.wait_output(line)
 
 def test_write(helper, offset, size, expect_fail=False):
     seed = random.randint(2, 10000)
