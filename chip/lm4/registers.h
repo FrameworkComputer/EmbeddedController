@@ -120,7 +120,7 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
 #define LM4_LPC_ADR(ch)        LM4LPCREG(ch, 0x008)
 #define LM4_LPC_POOL_BYTES     1024   /* Size of LPCPOOL in bytes */
-#define LM4_LPC_LPCPOOL        ((volatile unsigned char*)0x40080400)
+#define LM4_LPC_LPCPOOL        ((volatile unsigned char *)0x40080400)
 
 #define LM4_FAN_FANSTS         LM4REG(0x40084000)
 #define LM4_FAN_FANCTL         LM4REG(0x40084004)
@@ -187,7 +187,8 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_HIBERNATE_HIBIC    LM4REG(0x400fc020)
 #define LM4_HIBERNATE_HIBRTCT  LM4REG(0x400fc024)
 #define LM4_HIBERNATE_HIBRTCSS LM4REG(0x400fc028)
-#define LM4_HIBERNATE_HIBDATA  LM4REG(0x400fc030)
+#define LM4_HIBERNATE_HIBDATA_ENTRIES 16  /* Number of entries in HIBDATA[] */
+#define LM4_HIBERNATE_HIBDATA  ((volatile uint32_t *)0x400fc030)
 
 #define LM4_FLASH_FMA          LM4REG(0x400fd000)
 #define LM4_FLASH_FMD          LM4REG(0x400fd004)

@@ -3,14 +3,18 @@
  * found in the LICENSE file.
  */
 
-/* System module for Chrome EC : hardware specific implementation */
+/* System module for Chrome EC : LM4 hardware specific implementation */
 
-#include "board.h"
+#include "common.h"
 #include "cpu.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 
+/* Indices for hibernate data registers */
+enum hibdata_index {
+	HIBDATA_INDEX_SCRATCHPAD,  /* General-purpose scratchpad */
+};
 
 static int wait_for_hibctl_wc(void)
 {
@@ -23,6 +27,42 @@ static int wait_for_hibctl_wc(void)
 	return EC_ERROR_UNKNOWN;
 }
 
+/**
+ * Read hibernate register at specified index.
+ *
+ * @return The value of the register or 0 if invalid index.
+ */
+static uint32_t hibdata_read(enum hibdata_index index)
+{
+	if (index < 0 || index >= LM4_HIBERNATE_HIBDATA_ENTRIES)
+		return 0;
+
+	return LM4_HIBERNATE_HIBDATA[index];
+}
+
+/**
+ * Write hibernate register at specified index.
+ *
+ * @return nonzero if error.
+ */
+static int hibdata_write(enum hibdata_index index, uint32_t value)
+{
+	int rv;
+
+	if (index < 0 || index >= LM4_HIBERNATE_HIBDATA_ENTRIES)
+		return EC_ERROR_INVAL;
+
+	/* Wait for ok-to-write */
+	rv = wait_for_hibctl_wc();
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	/* Write register */
+	LM4_HIBERNATE_HIBDATA[index] = value;
+
+	/* Wait for write-complete */
+	return wait_for_hibctl_wc();
+}
 
 static void check_reset_cause(void)
 {
@@ -65,19 +105,19 @@ static void check_reset_cause(void)
 	system_set_reset_cause(reset_cause);
 }
 
-
-/* A3 and earlier chip stepping has a problem accessing flash during shutdown.
+/*
+ * A3 and earlier chip stepping has a problem accessing flash during shutdown.
  * To work around that, we jump to RAM before hibernating.  This function must
  * live in RAM.  It must be called with interrupts disabled, cannot call other
  * functions, and can't be declared static (or else the compiler optimizes it
- * into the main hibernate function. */
+ * into the main hibernate function.
+ */
 void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
 {
 	LM4_HIBERNATE_HIBCTL = hibctl;
 	while (1)
 		;
 }
-
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
@@ -100,7 +140,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	__enter_hibernate(0x5B);
 }
 
-
 int system_pre_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
@@ -110,8 +149,10 @@ int system_pre_init(void)
 	/* Wait 3 clock cycles before using the module */
 	scratch = LM4_SYSTEM_RCGCHIB;
 
-	/* Enable the hibernation oscillator, if it's not already enabled.  We
-	 * use this to hold our scratchpad value across reboots. */
+	/*
+	 * Enable the hibernation oscillator, if it's not already enabled.  We
+	 * use this to hold our scratchpad value across reboots.
+	 */
 	if (!(LM4_HIBERNATE_HIBCTL & 0x40)) {
 		int rv, i;
 		rv = wait_for_hibctl_wc();
@@ -153,7 +194,6 @@ int system_pre_init(void)
 	return EC_SUCCESS;
 }
 
-
 void system_reset(int is_hard)
 {
 	/* Disable interrupts to avoid task swaps during reboot */
@@ -172,39 +212,20 @@ void system_reset(int is_hard)
 		;
 }
 
-
 int system_set_scratchpad(uint32_t value)
 {
-	int rv;
-
-	/* Wait for ok-to-write */
-	rv = wait_for_hibctl_wc();
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	/* Write scratchpad */
-	/* TODO: (crosbug.com/p/7472) might be more elegant to have a
-	 * write_hibernate_reg() method which takes an address and
-	 * data and does the delays.  Then we could move the hibernate
-	 * register accesses to a separate module. */
-	LM4_HIBERNATE_HIBDATA = value;
-
-	/* Wait for write-complete */
-	return wait_for_hibctl_wc();
+	return hibdata_write(HIBDATA_INDEX_SCRATCHPAD, value);
 }
-
 
 uint32_t system_get_scratchpad(void)
 {
-	return LM4_HIBERNATE_HIBDATA;
+	return hibdata_read(HIBDATA_INDEX_SCRATCHPAD);
 }
-
 
 const char *system_get_chip_vendor(void)
 {
 	return "ti";
 }
-
 
 const char *system_get_chip_name(void)
 {
@@ -222,7 +243,6 @@ const char *system_get_chip_name(void)
 		return "";
 	}
 }
-
 
 const char *system_get_chip_revision(void)
 {
