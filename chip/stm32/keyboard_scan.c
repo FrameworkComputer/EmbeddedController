@@ -314,7 +314,7 @@ static int check_recovery_key(void)
 
 	/* check the recovery key only if we're booting due to a
 	 * reset-pin-caused reset. */
-	if (system_get_reset_cause() != SYSTEM_RESET_RESET_PIN)
+	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN))
 		return 0;
 
 	/* cold boot : Power + Refresh were pressed,

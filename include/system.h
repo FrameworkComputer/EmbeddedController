@@ -11,19 +11,18 @@
 #include "common.h"
 
 /* Reset causes */
-enum system_reset_cause_t {
-	SYSTEM_RESET_UNKNOWN = 0,  /* Unknown reset cause */
-	SYSTEM_RESET_OTHER,        /* System reset cause is known, but not one
-				    * of the causes listed below */
-	SYSTEM_RESET_BROWNOUT,     /* Brownout */
-	SYSTEM_RESET_POWER_ON,     /* Power-on reset */
-	SYSTEM_RESET_RESET_PIN,    /* Reset pin asserted */
-	SYSTEM_RESET_SOFT,         /* Soft reset trigger by core */
-	SYSTEM_RESET_WATCHDOG,     /* Watchdog timer reset */
-	SYSTEM_RESET_RTC_ALARM,    /* RTC alarm wake */
-	SYSTEM_RESET_WAKE_PIN,     /* Wake pin triggered wake */
-	SYSTEM_RESET_LOW_BATTERY,  /* Low battery triggered wake */
-};
+#define RESET_FLAG_OTHER       (1 << 0)   /* Other known reason */
+#define RESET_FLAG_RESET_PIN   (1 << 1)   /* Reset pin asserted */
+#define RESET_FLAG_BROWNOUT    (1 << 2)   /* Brownout */
+#define RESET_FLAG_POWER_ON    (1 << 3)   /* Power-on reset */
+#define RESET_FLAG_WATCHDOG    (1 << 4)   /* Watchdog timer reset */
+#define RESET_FLAG_SOFT        (1 << 5)   /* Soft reset trigger by core */
+#define RESET_FLAG_HIBERNATE   (1 << 6)   /* Wake from hibernate */
+#define RESET_FLAG_RTC_ALARM   (1 << 7)   /* RTC alarm wake */
+#define RESET_FLAG_WAKE_PIN    (1 << 8)   /* Wake pin triggered wake */
+#define RESET_FLAG_LOW_BATTERY (1 << 9)   /* Low battery triggered wake */
+#define RESET_FLAG_SYSJUMP     (1 << 10)  /* Jumped directly to this image */
+#define RESET_FLAG_HARD        (1 << 11)  /* Hard reset from software */
 
 /* System images */
 enum system_image_copy_t {
@@ -41,15 +40,31 @@ int system_pre_init(void);
  * system_pre_init(). */
 int system_common_pre_init(void);
 
-/* Returns the cause of the last reset, or SYSTEM_RESET_UNKNOWN if
- * the cause is not known. */
-enum system_reset_cause_t system_get_reset_cause(void);
+/**
+ * Get the reset flags.
+ *
+ * @return Reset flags (RESET_FLAG_*), or 0 if the cause is unknown.
+ */
+uint32_t system_get_reset_flags(void);
 
-/* Record the cause of the last reset. */
-void system_set_reset_cause(enum system_reset_cause_t cause);
+/**
+ * Set reset flags.
+ *
+ * @param flags        Flags to set in reset flags
+ */
+void system_set_reset_flags(uint32_t flags);
 
-/* Return a text description of the last reset cause. */
-const char *system_get_reset_cause_string(void);
+/**
+ * Clear reset flags.
+ *
+ * @param flags        Flags to clear in reset flags
+ */
+void system_clear_reset_flags(uint32_t flags);
+
+/**
+ * Print a description of the reset flags to the console.
+ */
+void system_print_reset_flags(void);
 
 /* Return non-zero if the system is locked down for normal consumer use.
  * Potentially-dangerous developer and/or factory commands must be disabled

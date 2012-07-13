@@ -84,8 +84,9 @@ int main(void)
 		uart_printf("[%T UART initialized after sysjump]\n");
 	else {
 		uart_puts("\n\n--- UART initialized after reboot ---\n");
-		uart_printf("[Reset cause: %s]\n",
-			    system_get_reset_cause_string());
+		uart_puts("[Reset cause: ");
+		system_print_reset_flags();
+		uart_puts("]\n");
 	}
 	uart_printf("[Image: %s, %s]\n",
 		    system_get_image_copy_string(),

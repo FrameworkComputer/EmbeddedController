@@ -32,29 +32,33 @@ struct jump_tag {
 };
 
 
-/* Data passed between the current image and the next one when jumping between
- * images. */
+/*
+ * Data passed between the current image and the next one when jumping between
+ * images.
+ */
 #define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
 #define JUMP_DATA_VERSION 3
 #define JUMP_DATA_SIZE_V2 16  /* Size of version 2 jump data struct */
 struct jump_data {
-	/* Add new fields to the _start_ of the struct, since we copy it to the
+	/*
+	 * Add new fields to the _start_ of the struct, since we copy it to the
 	 * _end_ of RAM between images.  This way, the magic number will always
-	 * be the last word in RAM regardless of how many fields are added. */
+	 * be the last word in RAM regardless of how many fields are added.
+	 */
 
 	/* Fields from version 3 */
-	uint8_t reserved0;   /* (used in proto1 to signal recovery mode) */
-	int struct_size;     /* Size of struct jump_data */
+	uint8_t reserved0;    /* (used in proto1 to signal recovery mode) */
+	int struct_size;      /* Size of struct jump_data */
 
 	/* Fields from version 2 */
-	int jump_tag_total;  /* Total size of all jump tags */
+	int jump_tag_total;   /* Total size of all jump tags */
 
 	/* Fields from version 1 */
-	int reset_cause;     /* Reset cause for the previous boot */
-	int version;         /* Version (JUMP_DATA_VERSION) */
-	int magic;           /* Magic number (JUMP_DATA_MAGIC).  If this
-			      * doesn't match at pre-init time, assume no valid
-			      * data from the previous image. */
+	uint32_t reset_flags; /* Reset flags from the previous boot */
+	int version;          /* Version (JUMP_DATA_VERSION) */
+	int magic;            /* Magic number (JUMP_DATA_MAGIC).  If this
+			       * doesn't match at pre-init time, assume no valid
+			       * data from the previous image. */
 };
 
 /* Jump data goes at the end of RAM */
@@ -62,8 +66,17 @@ static struct jump_data * const jdata =
 	(struct jump_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
 			     - sizeof(struct jump_data));
 
+/*
+ * Reset flag descriptions.  Must be in same order as bits of RESET_FLAG_
+ * constants.
+ */
+static const char * const reset_flag_descs[] = {
+	"other", "reset-pin", "brownout", "power-on", "watchdog", "soft",
+	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
+	"hard"};
+
 static const char * const image_names[] = {"unknown", "RO", "A", "B"};
-static enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
+static uint32_t reset_flags;
 static int jumped_to_image;
 static int disable_jump;  /* Disable ALL jumps if system is locked */
 static int force_locked;  /* Force system locked even if WP isn't enabled */
@@ -106,18 +119,45 @@ int system_usable_ram_end(void)
 	return (uint32_t)jdata - jdata->jump_tag_total;
 }
 
-
-enum system_reset_cause_t system_get_reset_cause(void)
+uint32_t system_get_reset_flags(void)
 {
-	return reset_cause;
+	return reset_flags;
 }
 
+void system_set_reset_flags(uint32_t flags)
+{
+	reset_flags |= flags;
+}
+
+void system_clear_reset_flags(uint32_t flags)
+{
+	reset_flags &= ~flags;
+}
+
+void system_print_reset_flags(void)
+{
+	int count = 0;
+	int i;
+
+	if (!reset_flags) {
+		uart_puts("unknown");
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(reset_flag_descs); i++) {
+		if (reset_flags & (1 << i)) {
+			if (count++)
+				uart_puts(" ");
+
+			uart_puts(reset_flag_descs[i]);
+		}
+	}
+}
 
 int system_jumped_to_this_image(void)
 {
 	return jumped_to_image;
 }
-
 
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 {
@@ -168,29 +208,10 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 	return NULL;
 }
 
-
-void system_set_reset_cause(enum system_reset_cause_t cause)
-{
-	reset_cause = cause;
-}
-
-
 void system_disable_jump(void)
 {
 	disable_jump = 1;
 }
-
-
-const char *system_get_reset_cause_string(void)
-{
-	static const char * const cause_descs[] = {
-		"unknown", "other", "brownout", "power-on", "reset pin",
-		"soft", "watchdog", "rtc alarm", "wake pin", "low battery"};
-
-	return reset_cause < ARRAY_SIZE(cause_descs) ?
-			cause_descs[reset_cause] : "?";
-}
-
 
 enum system_image_copy_t system_get_image_copy(void)
 {
@@ -278,7 +299,7 @@ static void jump_to_image(uint32_t init_addr)
 	jdata->reserved0 = 0;
 	jdata->magic = JUMP_DATA_MAGIC;
 	jdata->version = JUMP_DATA_VERSION;
-	jdata->reset_cause = reset_cause;
+	jdata->reset_flags = reset_flags;
 	jdata->jump_tag_total = 0;  /* Reset tags */
 	jdata->struct_size = sizeof(struct jump_data);
 
@@ -424,27 +445,30 @@ const char *system_get_build_info(void)
 	return build_info;
 }
 
-
 int system_common_pre_init(void)
 {
-	/* Check jump data if this is a jump between images.  Jumps all show up
+	/*
+	 * Check jump data if this is a jump between images.  Jumps all show up
 	 * as an unknown reset reason, because we jumped directly from one
-	 * image to another without actually triggering a chip reset. */
+	 * image to another without actually triggering a chip reset.
+	 */
 	if (jdata->magic == JUMP_DATA_MAGIC &&
 	    jdata->version >= 1 &&
-	    reset_cause == SYSTEM_RESET_UNKNOWN) {
+	    reset_flags == 0) {
 		int delta;       /* Change in jump data struct size between the
 				  * previous image and this one. */
 
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
-		/* Overwrite the reset cause with the real one */
-		reset_cause = jdata->reset_cause;
+		/* Restore the reset flags */
+		reset_flags = jdata->reset_flags | RESET_FLAG_SYSJUMP;
 
-		/* If the jump data structure isn't the same size as the
+		/*
+		 * If the jump data structure isn't the same size as the
 		 * current one, shift the jump tags to immediately before the
 		 * current jump data structure, to make room for initalizing
-		 * the new fields below. */
+		 * the new fields below.
+		 */
 		if (jdata->version == 1)
 			delta = 0;  /* No tags in v1, so no need for move */
 		else if (jdata->version == 2)
@@ -468,9 +492,11 @@ int system_common_pre_init(void)
 		/* Struct size is now the current struct size */
 		jdata->struct_size = sizeof(struct jump_data);
 
-		/* Clear the jump struct's magic number.  This prevents
+		/*
+		 * Clear the jump struct's magic number.  This prevents
 		 * accidentally detecting a jump when there wasn't one, and
-		 * disallows use of system_add_jump_tag(). */
+		 * disallows use of system_add_jump_tag().
+		 */
 		jdata->magic = 0;
 	} else {
 		/* Clear the whole jump_data struct */
@@ -518,9 +544,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
 
 static int command_sysinfo(int argc, char **argv)
 {
-	ccprintf("Last reset: %d (%s)\n",
-		    system_get_reset_cause(),
-		    system_get_reset_cause_string());
+	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
+	system_print_reset_flags();
+	ccprintf(")\n");
 	ccprintf("Copy:   %s\n", system_get_image_copy_string());
 	ccprintf("Jumped: %s\n", system_jumped_to_this_image() ? "yes" : "no");
 

@@ -14,25 +14,30 @@
 
 static void check_reset_cause(void)
 {
-	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
+	uint32_t flags = 0;
 	uint32_t raw_cause = STM32_RCC_CSR;
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
 
 	if (raw_cause & 0x60000000) {
-		/* IWDG pr WWDG */
-		reset_cause = SYSTEM_RESET_WATCHDOG;
-	} else if (raw_cause & 0x10000000) {
-		reset_cause = SYSTEM_RESET_SOFT;
-	} else if (raw_cause & 0x08000000) {
-		reset_cause = SYSTEM_RESET_POWER_ON;
-	} else if (raw_cause & 0x04000000) {
-		reset_cause = SYSTEM_RESET_RESET_PIN;
-	} else if (raw_cause & 0xFE000000) {
-		reset_cause = SYSTEM_RESET_OTHER;
+		/* IWDG or WWDG */
+		flags |= RESET_FLAG_WATCHDOG;
 	}
-	system_set_reset_cause(reset_cause);
+
+	if (raw_cause & 0x10000000)
+		flags |= RESET_FLAG_SOFT;
+
+	if (raw_cause & 0x08000000)
+		flags |= RESET_FLAG_POWER_ON;
+
+	if (raw_cause & 0x04000000)
+		flags |= RESET_FLAG_RESET_PIN;
+
+	if (!flags && (raw_cause & 0xfe000000))
+		flags |= RESET_FLAG_OTHER;
+
+	system_set_reset_flags(flags);
 }
 
 

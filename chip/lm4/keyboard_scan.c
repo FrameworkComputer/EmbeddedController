@@ -265,7 +265,7 @@ int keyboard_scan_init(void)
 	 * If we're booting due to a reset-pin-caused reset, check what other
 	 * single key is held down (if any).
 	 */
-	if ((system_get_reset_cause() == SYSTEM_RESET_RESET_PIN) &&
+	if ((system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
 	    !system_jumped_to_this_image()) {
 		const struct boot_key_entry *k = boot_key_list;
 		int i;

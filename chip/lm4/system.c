@@ -14,7 +14,13 @@
 /* Indices for hibernate data registers */
 enum hibdata_index {
 	HIBDATA_INDEX_SCRATCHPAD,  /* General-purpose scratchpad */
+	HIBDATA_INDEX_WAKE,        /* Wake reasons for hibernate */
 };
+
+/* Flags for HIBDATA_INDEX_WAKE */
+#define HIBDATA_WAKE_RTC        (1 << 0)  /* RTC alarm */
+#define HIBDATA_WAKE_HARD_RESET (1 << 1)  /* Hard reset via short RTC alarm */
+#define HIBDATA_WAKE_PIN        (1 << 2)  /* Wake pin */
 
 static int wait_for_hibctl_wc(void)
 {
@@ -67,42 +73,70 @@ static int hibdata_write(enum hibdata_index index, uint32_t value)
 static void check_reset_cause(void)
 {
 	uint32_t hib_status = LM4_HIBERNATE_HIBRIS;
-	enum system_reset_cause_t reset_cause = SYSTEM_RESET_UNKNOWN;
-	uint32_t raw_reset_cause;
+	uint32_t raw_reset_cause = LM4_SYSTEM_RESC;
+	uint32_t hib_wake_flags = hibdata_read(HIBDATA_INDEX_WAKE);
+	uint32_t flags = 0;
 
-	/* Read and clear the raw reset cause */
-	raw_reset_cause = LM4_SYSTEM_RESC;
+	/* Clear the reset causes now that we've read them */
 	LM4_SYSTEM_RESC = 0;
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBIC = hib_status;
+	hibdata_write(HIBDATA_INDEX_WAKE, 0);
 
-	if (hib_status & 0x0d) {
-		/* The hibernation module woke up the system */
-		if (hib_status & 0x8)
-			reset_cause = SYSTEM_RESET_WAKE_PIN;
-		else if (hib_status & 0x1)
-			/* Note that system_reset(1) also triggers this reset
-			 * cause, because it uses hibernate with a RTC wake to
-			 * trigger a power-on reset. */
-			reset_cause = SYSTEM_RESET_RTC_ALARM;
-		else if (hib_status & 0x4)
-			reset_cause = SYSTEM_RESET_LOW_BATTERY;
-		/* Clear the pending interrupt */
-		wait_for_hibctl_wc();
-		LM4_HIBERNATE_HIBIC = hib_status;
-	} else if (raw_reset_cause & 0x28) {
-		/* Watchdog timer 0 or 1 */
-		reset_cause = SYSTEM_RESET_WATCHDOG;
-	} else if (raw_reset_cause & 0x10) {
-		reset_cause = SYSTEM_RESET_SOFT;
-	} else if (raw_reset_cause & 0x04) {
-		reset_cause = SYSTEM_RESET_BROWNOUT;
-	} else if (raw_reset_cause & 0x02) {
-		reset_cause = SYSTEM_RESET_POWER_ON;
-	} else if (raw_reset_cause & 0x01) {
-		reset_cause = SYSTEM_RESET_RESET_PIN;
-	} else if (raw_reset_cause) {
-		reset_cause = SYSTEM_RESET_OTHER;
+	if (raw_reset_cause & 0x02) {
+		/*
+		 * Full power-on reset of chip.  This resets the flash
+		 * protection registers to their permanently-stored values.
+		 * Note that this is also triggered by hibernation, because
+		 * that de-powers the chip.
+		 */
+		flags |= RESET_FLAG_POWER_ON;
+	} else if (!flags && (raw_reset_cause & 0x01)) {
+		/*
+		 * LM4 signals the reset pin in RESC for all power-on resets,
+		 * even though the external pin wasn't asserted.  Make setting
+		 * this flag mutually-exclusive with power on flag, so we can
+		 * use it to indicate a keyboard-triggered reset.
+		 */
+		flags |= RESET_FLAG_RESET_PIN;
 	}
-	system_set_reset_cause(reset_cause);
+
+	if (raw_reset_cause & 0x04)
+		flags |= RESET_FLAG_BROWNOUT;
+
+	if (raw_reset_cause & 0x10)
+		flags |= RESET_FLAG_SOFT;
+
+	if (raw_reset_cause & 0x28) {
+		/* Watchdog timer 0 or 1 */
+		flags |= RESET_FLAG_WATCHDOG;
+	}
+
+	/* Handle other raw reset causes */
+	if (raw_reset_cause && !flags)
+		flags |= RESET_FLAG_OTHER;
+
+
+	if ((hib_status & 0x09) &&
+	    (hib_wake_flags & HIBDATA_WAKE_HARD_RESET)) {
+		/* Hibernation caused by software-triggered hard reset */
+		flags |= RESET_FLAG_HARD;
+
+		/* Consume the hibernate reasons so we don't see them below */
+		hib_status &= ~0x09;
+	}
+
+	if ((hib_status & 0x01) && (hib_wake_flags & HIBDATA_WAKE_RTC))
+		flags |= RESET_FLAG_RTC_ALARM;
+
+	if ((hib_status & 0x08) && (hib_wake_flags & HIBDATA_WAKE_PIN))
+		flags |= RESET_FLAG_WAKE_PIN;
+
+	if (hib_status & 0x04)
+		flags |= RESET_FLAG_LOW_BATTERY;
+
+
+	system_set_reset_flags(flags);
 }
 
 /*
@@ -119,11 +153,25 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
 		;
 }
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
+/**
+ * Internal hibernate function.
+ *
+ * @param seconds      Number of seconds to sleep before RTC alarm
+ * @param microseconds Number of microseconds to sleep before RTC alarm
+ * @param flags        Hibernate wake flags
+ */
+static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 {
+	/* Store hibernate flags */
+	hibdata_write(HIBDATA_INDEX_WAKE, flags);
+
 	/* Clear pending interrupt */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
+
+	/* TODO: PRESERVE RESET FLAGS */
+
+	/* TODO: If sleeping forever, only wake on wake pin. */
 
 	/* Set RTC alarm match */
 	wait_for_hibctl_wc();
@@ -140,6 +188,12 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	__enter_hibernate(0x5B);
 }
 
+
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	hibernate(seconds, microseconds, HIBDATA_WAKE_RTC | HIBDATA_WAKE_PIN);
+}
+
 int system_pre_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
@@ -154,13 +208,12 @@ int system_pre_init(void)
 	 * use this to hold our scratchpad value across reboots.
 	 */
 	if (!(LM4_HIBERNATE_HIBCTL & 0x40)) {
-		int rv, i;
-		rv = wait_for_hibctl_wc();
-		if (rv != EC_SUCCESS)
-			return rv;
+		int i;
 
 		/* Enable clock to hibernate module */
+		wait_for_hibctl_wc();
 		LM4_HIBERNATE_HIBCTL |= 0x40;
+
 		/* Wait for write-complete */
 		for (i = 0; i < 1000000; i++) {
 			if (LM4_HIBERNATE_HIBRIS & 0x10)
@@ -201,7 +254,7 @@ void system_reset(int is_hard)
 
 	if (is_hard) {
 		/* Bounce through hibernate to trigger a hard reboot */
-		system_hibernate(0, 50000);
+		hibernate(0, 50000, HIBDATA_WAKE_HARD_RESET);
 	} else {
 		/* Soft reboot */
 		CPU_NVIC_APINT = 0x05fa0004;

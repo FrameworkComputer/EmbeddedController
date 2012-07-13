@@ -300,7 +300,7 @@ static void set_initial_pwrbtn_state(void)
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 			set_pwrbtn_to_pch(0);
 		}
-	} else if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN &&
+	} else if ((system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
 		   keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW) {
 		/*
 		 * Reset triggered by keyboard-controlled reset, and down-arrow
@@ -330,7 +330,7 @@ static void set_initial_pwrbtn_state(void)
 		if (get_power_button_pressed()) {
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 
-			if (system_get_reset_cause() == SYSTEM_RESET_RESET_PIN)
+			if (system_get_reset_flags() & RESET_FLAG_RESET_PIN)
 				pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 			else
 				pwrbtn_state = PWRBTN_STATE_WAS_OFF;
