@@ -31,7 +31,11 @@ static int wp_pin_asserted(void)
 {
 #ifdef CHIP_stm32
 	/* TODO (vpalatin) : write protect scheme for stm32 */
-	return 0; /* always disable write protect */
+	return 1; /* Always enable write protect until we have WP pin.
+		   * For developer to unlock WP, please use stm32mon -u and
+		   * immediately re-program the pstate sector (so that
+		   * apply_pstate() has no chance to run).
+		   */
 #else
 	return gpio_get_level(GPIO_WRITE_PROTECT);
 #endif
@@ -41,7 +45,6 @@ static int wp_pin_asserted(void)
 /* Read persistent state into pstate. */
 static int read_pstate(void)
 {
-#ifndef CHIP_stm32
 	int i;
 	int rv = flash_physical_read(usable_flash_size, sizeof(pstate),
 				     (char *)&pstate);
@@ -58,7 +61,6 @@ static int read_pstate(void)
 	pstate.lock &= FLASH_PROTECT_LOCK_SET;
 	for (i = 0; i < MAX_BANKS; i++)
 		pstate.blocks[i] &= FLASH_PROTECT_PERSISTENT;
-#endif /* CHIP_stm32 */
 	return EC_SUCCESS;
 }
 
@@ -66,7 +68,6 @@ static int read_pstate(void)
 /* Write persistent state from pstate, erasing if necessary. */
 static int write_pstate(void)
 {
-#ifndef CHIP_stm32
 	int rv;
 
 	/* Erase top protection block.  Assumes pstate size is less than
@@ -86,9 +87,6 @@ static int write_pstate(void)
 	/* Rewrite the data */
 	return flash_physical_write(usable_flash_size, sizeof(pstate),
 				    (const char *)&pstate);
-#else
-	return EC_SUCCESS;
-#endif /* CHIP_stm32 */
 }
 
 
@@ -354,17 +352,12 @@ int flash_pre_init(void)
 	 */
 	flash_physical_pre_init();
 
-#ifdef CHIP_stm32
-	usable_flash_size = flash_physical_size();
-#else
 	/*
 	 * Calculate usable flash size.  Reserve one protection block
 	 * at the top to hold the "pretend SPI" write protect data.
 	 */
 	usable_flash_size = flash_physical_size() -
 		flash_get_protect_block_size();
-#endif
-
 
 	/* Apply write protect to blocks if needed */
 	return apply_pstate();
