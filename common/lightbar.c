@@ -31,12 +31,14 @@ static const uint8_t i2c_addr[] = { 0x54, 0x56 };
 
 static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 {
+	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
 	i2c_write8(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], reg, val);
 }
 
 static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 {
 	int val = 0;
+	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
 	i2c_read8(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], reg, &val);
 	return val;
 }
