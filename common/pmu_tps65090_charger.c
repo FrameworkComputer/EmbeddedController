@@ -296,5 +296,8 @@ void pmu_charger_task(void)
 				state_list[next_state]);
 			state = next_state;
 		}
+
+		/* TODO(sjg@chromium.org): root cause crosbug.com/p/11285 */
+		usleep(5000 * 1000);
 	}
 }
