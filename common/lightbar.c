@@ -594,7 +594,7 @@ void lightbar_task(void)
 /* Function to request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence num)
 {
-	if (num && num < LIGHTBAR_NUM_SEQUENCES) {
+	if (num > 0 && num < LIGHTBAR_NUM_SEQUENCES) {
 		CPRINTF("[%T LB_seq %d = %s]\n", num,
 			lightbar_cmds[num].string);
 		pending_msg = num;
