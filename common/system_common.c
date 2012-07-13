@@ -519,7 +519,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_JUMP_RW_B:
 		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 	case EC_REBOOT_COLD:
-		system_reset(1);
+		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
 	case EC_REBOOT_DISABLE_JUMP:
@@ -676,24 +676,28 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
 
 static int command_reboot(int argc, char **argv)
 {
-	int is_hard = 0;
+	int flags = 0;
 
-	if (argc == 2) {
+	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hard") ||
 		    !strcasecmp(argv[1], "cold")) {
 			ccputs("Hard-");
-			is_hard = 1;
+			flags |= SYSTEM_RESET_HARD;
+		} else if (!strcasecmp(argv[1], "soft")) {
+			/* No extra flags */
 		} else
 			return EC_ERROR_PARAM1;
 	}
+	if (argc >= 3 && !strcasecmp(argv[2], "preserve"))
+		flags |= SYSTEM_RESET_PRESERVE_FLAGS;
 
 	ccputs("Rebooting!\n\n\n");
 	cflush();
-	system_reset(is_hard);
+	system_reset(flags);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
-			"[hard]",
+			"[hard|soft] [preserve]",
 			"Reboot the EC",
 			NULL);
 

@@ -86,13 +86,13 @@ int system_pre_init(void)
 }
 
 
-void system_reset(int is_hard)
+void system_reset(int flags)
 {
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
 	/* TODO: (crosbug.com/p/7470) support hard boot; this is a
-	 * soft boot. */
+	 * soft boot.  And support preserving reset flags, too... */
 	CPU_NVIC_APINT = 0x05fa0004;
 
 	/* Spin and wait for reboot; should never return */

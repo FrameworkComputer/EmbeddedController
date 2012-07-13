@@ -47,7 +47,7 @@ void host_command_received(struct host_cmd_handler_args *args)
 	 * other command.
 	 */
 	if (args->command == EC_CMD_REBOOT) {
-		system_reset(1);
+		system_reset(SYSTEM_RESET_HARD);
 		/* Reset should never return; if it does, post an error */
 		host_send_response(EC_RES_ERROR);
 		return;

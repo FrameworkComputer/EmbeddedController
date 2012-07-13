@@ -13,8 +13,9 @@
 
 /* Indices for hibernate data registers */
 enum hibdata_index {
-	HIBDATA_INDEX_SCRATCHPAD,  /* General-purpose scratchpad */
-	HIBDATA_INDEX_WAKE,        /* Wake reasons for hibernate */
+	HIBDATA_INDEX_SCRATCHPAD,        /* General-purpose scratchpad */
+	HIBDATA_INDEX_WAKE,              /* Wake reasons for hibernate */
+	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
 };
 
 /* Flags for HIBDATA_INDEX_WAKE */
@@ -135,6 +136,9 @@ static void check_reset_cause(void)
 	if (hib_status & 0x04)
 		flags |= RESET_FLAG_LOW_BATTERY;
 
+	/* Restore then clear saved reset flags */
+	flags |= hibdata_read(HIBDATA_INDEX_SAVED_RESET_FLAGS);
+	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, 0);
 
 	system_set_reset_flags(flags);
 }
@@ -247,18 +251,23 @@ int system_pre_init(void)
 	return EC_SUCCESS;
 }
 
-void system_reset(int is_hard)
+void system_reset(int flags)
 {
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
-	if (is_hard) {
+	/* Save current reset reasons if necessary */
+	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
+		hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS,
+			      system_get_reset_flags());
+	else
+		hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, 0);
+
+	if (flags & SYSTEM_RESET_HARD) {
 		/* Bounce through hibernate to trigger a hard reboot */
 		hibernate(0, 50000, HIBDATA_WAKE_HARD_RESET);
-	} else {
-		/* Soft reboot */
+	} else
 		CPU_NVIC_APINT = 0x05fa0004;
-	}
 
 	/* Spin and wait for reboot; should never return */
 	while (1)

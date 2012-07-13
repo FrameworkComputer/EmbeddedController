@@ -124,10 +124,19 @@ int system_get_board_version(void);
  * user/machine which performed the build. */
 const char *system_get_build_info(void);
 
-/* Reset the system.  If is_hard, performs a hard reset, which cuts power to
- * the entire system; else performs a soft reset (which resets the core and
- * on-chip peripherals, without actually cutting power to the chip). */
-void system_reset(int is_hard);
+/* Flags for system_reset() */
+/*
+ * Hard reset.  Cuts power to the entire system.  If not present, does a soft
+ * reset which just resets the core and on-chip peripherals.
+ */
+#define SYSTEM_RESET_HARD           (1 << 0)
+/*
+ * Preserve existing reset flags.  Used by flash pre-init when it discovers it
+ * needs to do a hard reset to clear write protect registers.
+ */
+#define SYSTEM_RESET_PRESERVE_FLAGS (1 << 1)
+
+void system_reset(int flags);
 
 /* Set a scratchpad register to the specified value.  The scratchpad
  * register must maintain its contents across a software-requested
