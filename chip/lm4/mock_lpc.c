@@ -65,13 +65,6 @@ void lpc_comx_put_char(int c)
 }
 
 
-void host_send_response(enum ec_status result, const uint8_t *data, int size)
-{
-	/* Not implemented */
-	return;
-}
-
-
 uint8_t *lpc_get_memmap_range(void)
 {
 	return (uint8_t *)LPC_POOL_CMD_DATA + EC_HOST_PARAM_SIZE * 2;
