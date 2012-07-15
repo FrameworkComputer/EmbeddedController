@@ -129,18 +129,19 @@ uint8_t *lpc_get_memmap_range(void)
 	return (uint8_t *)LPC_POOL_MEMMAP;
 }
 
-void host_send_response(enum ec_status result)
+static void lpc_send_response(struct host_cmd_handler_args *args)
 {
 	uint8_t *out;
-	int size = host_cmd_args.response_size;
+	int size = args->response_size;
 	int max_size;
 
 	/* Handle negative size */
 	if (size < 0) {
-		result = EC_RES_INVALID_RESPONSE;
+		args->result = EC_RES_INVALID_RESPONSE;
 		size = 0;
 	}
 
+	/* TODO(sjg@chromium.org): Really shold put flags in args too */
 	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
 		/* New-style response */
 		int csum;
@@ -155,12 +156,12 @@ void host_send_response(enum ec_status result)
 
 		lpc_host_args->data_size = size;
 
-		csum = host_cmd_args.command + lpc_host_args->flags +
+		csum = args->command + lpc_host_args->flags +
 			lpc_host_args->command_version +
 			lpc_host_args->data_size;
 
 		for (i = 0; i < size; i++)
-			csum += host_cmd_args.response[i];
+			csum += args->response[i];
 
 		lpc_host_args->checksum = (uint8_t)csum;
 	} else {
@@ -172,9 +173,9 @@ void host_send_response(enum ec_status result)
 
 	/* Fail if response doesn't fit in the param buffer */
 	if (size > max_size)
-		result = EC_RES_INVALID_RESPONSE;
+		args->result = EC_RES_INVALID_RESPONSE;
 	else if (host_cmd_args.response != out)
-		memcpy(out, host_cmd_args.response, size);
+		memcpy(out, args->response, size);
 
 	/*
 	 * Write result to the data byte.  This sets the TOH bit in the
@@ -184,7 +185,7 @@ void host_send_response(enum ec_status result)
 	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
 	 * IRQs
 	 */
-	LPC_POOL_CMD[1] = result;
+	LPC_POOL_CMD[1] = args->result;
 
 	/* Clear the busy bit */
 	task_disable_irq(LM4_IRQ_LPC);
@@ -369,6 +370,8 @@ static void handle_acpi_command(void)
 static void handle_host_command(int cmd)
 {
 	host_cmd_args.command = cmd;
+	host_cmd_args.result = EC_RES_SUCCESS;
+	host_cmd_args.send_response = lpc_send_response;
 
 	/* See if we have an old or new style command */
 	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
@@ -385,23 +388,20 @@ static void handle_host_command(int cmd)
 
 		/* Verify params size */
 		if (size > EC_HOST_PARAM_SIZE) {
-			host_send_response(EC_RES_INVALID_PARAM);
-			return;
+			host_cmd_args.result = EC_RES_INVALID_PARAM;
+		} else {
+			/* Verify checksum */
+			csum = host_cmd_args.command +
+				lpc_host_args->flags +
+				lpc_host_args->command_version +
+				lpc_host_args->data_size;
+
+			for (i = 0; i < size; i++)
+				csum += cmd_params[i];
+
+			if ((uint8_t)csum != lpc_host_args->checksum)
+				host_cmd_args.result = EC_RES_INVALID_CHECKSUM;
 		}
-
-		/* Verify checksum */
-		csum = host_cmd_args.command + lpc_host_args->flags +
-			lpc_host_args->command_version +
-			lpc_host_args->data_size;
-
-		for (i = 0; i < size; i++)
-			csum += cmd_params[i];
-
-		if ((uint8_t)csum != lpc_host_args->checksum) {
-			host_send_response(EC_RES_INVALID_CHECKSUM);
-			return;
-		}
-
 	} else {
 		/* Old style command */
 		host_cmd_args.version = 0;
