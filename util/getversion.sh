@@ -28,6 +28,10 @@ if ghash=`git rev-parse --short --verify HEAD 2>/dev/null`; then
 else
 	ver="no_version"
 fi
+echo "#ifdef SHIFT_CODE_FOR_TEST"
+echo "#define VERSION \"${ver}_shift\""
+echo "#else"
 echo "#define VERSION \"${ver}\""
+echo "#endif"
 echo "#define DATE \"`date '+%F %T'`\""
 echo "#define BUILDER \"${USER}@`hostname`\""
