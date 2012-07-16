@@ -105,6 +105,8 @@ static void smi_sensor_failure_warning(void)
 static void overheated_action(void)
 {
 	if (overheated[THRESHOLD_POWER_DOWN]) {
+		cprintf(CC_CHIPSET,
+			"[%T critical temperature; shutting down]\n");
 		x86_power_force_shutdown();
 		return;
 	}

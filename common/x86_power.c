@@ -181,8 +181,10 @@ void x86_power_cpu_overheated(int too_hot)
 
 	if (too_hot) {
 		overheat_count++;
-		if (overheat_count > 3)
+		if (overheat_count > 3) {
+			CPRINTF("[%T overheated; shutting down]\n");
 			x86_power_force_shutdown();
+		}
 	} else {
 		overheat_count = 0;
 	}
@@ -190,6 +192,8 @@ void x86_power_cpu_overheated(int too_hot)
 
 void x86_power_force_shutdown(void)
 {
+	CPRINTF("[%T x86 power force shutdown]\n");
+
 	/*
 	 * Force x86 off. This condition will reset once the state machine
 	 * transitions to G3.
