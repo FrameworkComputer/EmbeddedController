@@ -272,9 +272,11 @@ int flash_lock_protect(int lock)
 
 const uint8_t *flash_get_protect_array(void)
 {
-	/* Return a copy of the current write protect state.  This is an array
+	/*
+	 * Return a copy of the current write protect state.  This is an array
 	 * of per-protect-block flags.  (This is NOT the actual array, so
-	 * attempting to change it will have no effect.) */
+	 * attempting to change it will have no effect.)
+	 */
 	int pbsize = flash_get_protect_block_size();
 	int banks = usable_flash_size / pbsize;
 	int i;
@@ -345,14 +347,24 @@ int flash_get_protect_lock(void)
 
 int flash_pre_init(void)
 {
+	/* Initialize the physical flash interface */
+	/*
+	 * TODO: track pre-init error so we can report it later.  Do at the
+	 * same time as new flash commands to get/set write protect status.
+	 */
+	flash_physical_pre_init();
+
 #ifdef CHIP_stm32
 	usable_flash_size = flash_physical_size();
 #else
-	/* Calculate usable flash size.  Reserve one protection block
-	 * at the top to hold the "pretend SPI" write protect data. */
+	/*
+	 * Calculate usable flash size.  Reserve one protection block
+	 * at the top to hold the "pretend SPI" write protect data.
+	 */
 	usable_flash_size = flash_physical_size() -
 		flash_get_protect_block_size();
 #endif
+
 
 	/* Apply write protect to blocks if needed */
 	return apply_pstate();

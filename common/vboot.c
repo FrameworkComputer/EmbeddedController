@@ -15,12 +15,6 @@
 #define CPUTS(outstr) cputs(CC_VBOOT, outstr)
 #define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
 
-int vboot_pre_init(void)
-{
-	/* FIXME(wfrichar): crosbug.com/p/7453: should protect flash */
-	return EC_SUCCESS;
-}
-
 /****************************************************************************/
 /* Host commands */
 

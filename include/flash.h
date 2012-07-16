@@ -14,6 +14,11 @@
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 
+/**
+ * Initialize the physical flash interface.
+ */
+int flash_physical_pre_init(void);
+
 /* Return the write / erase / protect block size, in bytes.  Operations must be
  * aligned to and multiples of the granularity.  For example, erase operations
  * must have offset and size which are multiples of the erase block size. */

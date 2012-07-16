@@ -317,3 +317,8 @@ void flash_physical_set_protect(int block)
 	write_optb(byte_off, val);
 	}
 }
+
+int flash_physical_pre_init(void)
+{
+	return EC_SUCCESS;
+}

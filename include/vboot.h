@@ -10,9 +10,6 @@
 
 #include "common.h"
 
-/* Pre-initialize the module.  This occurs before clocks or tasks are set up. */
-int vboot_pre_init(void);
-
 /*
  * Check verified boot signatures, and jump to one of the RW images if
  * necessary.

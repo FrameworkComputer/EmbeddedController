@@ -7,6 +7,7 @@
 
 #include "flash.h"
 #include "registers.h"
+#include "system.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
@@ -179,4 +180,44 @@ int flash_physical_get_protect(int block)
 void flash_physical_set_protect(int block)
 {
 	LM4_FLASH_FMPPE[F_BANK(block)] &= ~F_BIT(block);
+}
+
+int flash_physical_pre_init(void)
+{
+	int reset_flags = system_get_reset_flags();
+	int any_wp = 0;
+	int i;
+
+	/*
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection.  Nothing additional needs to be done.
+	 */
+	if (reset_flags & RESET_FLAG_SYSJUMP)
+		return EC_SUCCESS;
+
+	/* Check if any blocks are currently physically write-protected */
+	for (i = 0; i < (LM4_FLASH_FSIZE + 1) / 32; i++) {
+		if (LM4_FLASH_FMPPE[i] != 0xffffffff) {
+			any_wp = 1;
+			break;
+		}
+	}
+
+	/* If nothing is write-protected, done. */
+	if (!any_wp)
+		return EC_SUCCESS;
+
+	/*
+	 * If the last reboot was a power-on reset, it should have cleared
+	 * write-protect.  If it didn't, then the flash write protect registers
+	 * have been permanently committed and we can't fix that.
+	 */
+	if (reset_flags & RESET_FLAG_POWER_ON)
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Otherwise, do a hard boot to clear the flash protection registers */
+	system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+
+	/* That doesn't return, so if we're still here that's an error */
+	return EC_ERROR_UNKNOWN;
 }

@@ -6,8 +6,8 @@
  */
 
 #include "clock.h"
+#include "common.h"
 #include "cpu.h"
-#include "config.h"
 #include "eeprom.h"
 #include "eoption.h"
 #include "flash.h"
@@ -44,24 +44,20 @@ int main(void)
 	 */
 	task_pre_init();
 
-#ifdef CONFIG_FLASH
-	flash_pre_init();
-#endif
-
-#ifdef CONFIG_VBOOT
-	/*
-	 * Verified boot pre-init.  This write-protects flash if necessary.
-	 * Flash and GPIOs must be initialized first.
-	 */
-	vboot_pre_init();
-#endif
-
 	/*
 	 * Initialize the system module.  This enables the hibernate clock
 	 * source we need to calibrate the internal oscillator.
 	 */
 	system_pre_init();
 	system_common_pre_init();
+
+#ifdef CONFIG_FLASH
+	/*
+	 * Initialize flash and apply write protecte if necessary.  Requires
+	 * the reset flags calculated by system initialization.
+	 */
+	flash_pre_init();
+#endif
 
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();
