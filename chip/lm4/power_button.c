@@ -117,11 +117,6 @@ static void update_other_switches(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
 
-	if (keyboard_scan_recovery_pressed())
-		*memmap_switches |= EC_SWITCH_KEYBOARD_RECOVERY;
-	else
-		*memmap_switches &= ~EC_SWITCH_KEYBOARD_RECOVERY;
-
 	if (gpio_get_level(GPIO_RECOVERYn) == 0)
 		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 	else
