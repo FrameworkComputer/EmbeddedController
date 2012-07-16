@@ -380,7 +380,7 @@ int cmd_read_test(int argc, char *argv[])
 int cmd_reboot_ec(int argc, char *argv[])
 {
 	struct ec_params_reboot_ec p;
-	int i;
+	int rv, i;
 
 	if (argc < 2) {
 		/*
@@ -388,7 +388,8 @@ int cmd_reboot_ec(int argc, char *argv[])
 		 * That reboots the AP as well, so unlikely we'll be around
 		 * to see a return code from this...
 		 */
-		return ec_command(EC_CMD_REBOOT, 0, NULL, 0, NULL, 0);
+		rv = ec_command(EC_CMD_REBOOT, 0, NULL, 0, NULL, 0);
+		return (rv < 0 ? rv : 0);
 	}
 
 	/* Parse command */
@@ -420,7 +421,8 @@ int cmd_reboot_ec(int argc, char *argv[])
 		}
 	}
 
-	return ec_command(EC_CMD_REBOOT_EC, 0, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_REBOOT_EC, 0, &p, sizeof(p), NULL, 0);
+	return (rv < 0 ? rv : 0);
 }
 
 
@@ -547,6 +549,7 @@ int cmd_flash_erase(int argc, char *argv[])
 {
 	struct ec_params_flash_erase p;
 	char *e;
+	int rv;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s <offset> <size>\n", argv[0]);
@@ -564,8 +567,9 @@ int cmd_flash_erase(int argc, char *argv[])
 	}
 
 	printf("Erasing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0) < 0)
-		return -1;
+	rv = ec_command(EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
 
 	printf("done.\n");
 	return 0;
@@ -936,12 +940,12 @@ static uint8_t lb_find_msg_by_name(const char *str)
 static int lb_do_cmd(enum lightbar_command cmd,
 		     struct ec_params_lightbar_cmd *ptr)
 {
-	int r;
+	int rv;
 	ptr->in.cmd = cmd;
-	r = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		       ptr, lb_command_paramcount[cmd].insize,
-		       ptr, lb_command_paramcount[cmd].outsize);
-	return r;
+	rv = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
+			ptr, lb_command_paramcount[cmd].insize,
+			ptr, lb_command_paramcount[cmd].outsize);
+	return (rv < 0 ? rv : 0);
 }
 
 static void lb_show_msg_names(void)
@@ -1050,20 +1054,20 @@ static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 
 static int cmd_vboot(int argc, char **argv)
 {
-	int r;
+	int rv;
 	uint8_t v;
 	char *e;
 	struct ec_params_vboot_cmd param;
 
 	if (argc == 1) {			/* no args = get */
 		param.in.cmd = VBOOT_CMD_GET_FLAGS;
-		r = ec_command(EC_CMD_VBOOT_CMD, 0,
-			       &param,
-			       vb_command_paramcount[param.in.cmd].insize,
-			       &param,
-			       vb_command_paramcount[param.in.cmd].outsize);
-		if (r < 0)
-			return r;
+		rv = ec_command(EC_CMD_VBOOT_CMD, 0,
+				&param,
+				vb_command_paramcount[param.in.cmd].insize,
+				&param,
+				vb_command_paramcount[param.in.cmd].outsize);
+		if (rv < 0)
+			return rv;
 
 		v = param.out.get_flags.val;
 		printf("0x%02x image=%s\n", v,
@@ -1081,12 +1085,12 @@ static int cmd_vboot(int argc, char **argv)
 
 	param.in.cmd = VBOOT_CMD_SET_FLAGS;
 	param.in.set_flags.val = v;
-	r = ec_command(EC_CMD_VBOOT_CMD, 0,
-		       &param,
-		       vb_command_paramcount[param.in.cmd].insize,
-		       &param,
-		       vb_command_paramcount[param.in.cmd].outsize);
-	return r;
+	rv = ec_command(EC_CMD_VBOOT_CMD, 0,
+			&param,
+			vb_command_paramcount[param.in.cmd].insize,
+			&param,
+			vb_command_paramcount[param.in.cmd].outsize);
+	return (rv < 0 ? rv : 0);
 }
 
 int cmd_usb_charge_set_mode(int argc, char *argv[])
@@ -1670,8 +1674,7 @@ int cmd_lcd_backlight(int argc, char *argv[])
 
 int cmd_charge_force_idle(int argc, char *argv[])
 {
-	int rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE,
-			    0, NULL, 0, NULL, 0);
+	int rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE, 0, NULL, 0, NULL, 0);
 	if (rv < 0) {
 		fprintf(stderr, "Is AC connected?\n");
 		return rv;
@@ -1699,8 +1702,7 @@ int cmd_gpio_get(int argc, char *argv[])
 	}
 	strcpy(p.name, argv[1]);
 
-	rv = ec_command(EC_CMD_GPIO_GET, 0,
-			&p, sizeof(p), &r, sizeof(r));
+	rv = ec_command(EC_CMD_GPIO_GET, 0, &p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
 		return rv;
 
@@ -1732,8 +1734,7 @@ int cmd_gpio_set(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_GPIO_SET, 0,
-			&p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_GPIO_SET, 0, &p, sizeof(p), NULL, 0);
 	if (rv < 0)
 		return rv;
 
@@ -1867,13 +1868,15 @@ int cmd_ec_hash(int argc, char *argv[])
 	struct ec_params_vboot_hash p;
 	struct ec_response_vboot_hash r;
 	char *e;
+	int rv;
 
 	if (argc < 2) {
 		/* Get hash status */
 		p.cmd = EC_VBOOT_HASH_GET;
-		if (ec_command(EC_CMD_VBOOT_HASH, 0,
-			       &p, sizeof(p), &r, sizeof(r)) < 0)
-			return -1;
+		rv = ec_command(EC_CMD_VBOOT_HASH, 0,
+				&p, sizeof(p), &r, sizeof(r));
+		if (rv < 0)
+			return rv;
 
 		return ec_hash_print(&r);
 	}
@@ -1881,10 +1884,9 @@ int cmd_ec_hash(int argc, char *argv[])
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
 		/* Abort hash calculation */
 		p.cmd = EC_VBOOT_HASH_ABORT;
-		if (ec_command(EC_CMD_VBOOT_HASH, 0,
-			       &p, sizeof(p), &r, sizeof(r)) < 0)
-			return -1;
-		return 0;
+		rv = ec_command(EC_CMD_VBOOT_HASH, 0,
+				&p, sizeof(p), &r, sizeof(r));
+		return (rv < 0 ? rv : 0);
 	}
 
 	/* The only other commands are start and recalc */
@@ -1928,8 +1930,9 @@ int cmd_ec_hash(int argc, char *argv[])
 		p.nonce_size = 0;
 
 	printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
-	if (ec_command(EC_CMD_VBOOT_HASH, 0, &p, sizeof(p), &r, sizeof(r)) < 0)
-		return -1;
+	rv = ec_command(EC_CMD_VBOOT_HASH, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
 
 	/* Start command doesn't wait for hashing to finish */
 	if (p.cmd == EC_VBOOT_HASH_START)
