@@ -92,10 +92,12 @@ int system_is_locked(void)
 	return 0;
 
 #elif defined(BOARD_link) && defined(CONFIG_FLASH)
-	/* On link, unlocked if write protect pin deasserted or flash protect
-	 * lock not applied. */
-	if ((FLASH_PROTECT_PIN_ASSERTED | FLASH_PROTECT_LOCK_APPLIED) &
-	    ~flash_get_protect_lock())
+	/*
+	 * On link, unlocked if write protect pin deasserted or read-only
+	 * firmware is not protected.
+	 */
+	if ((FLASH_PROTECT_PIN_ASSERTED | FLASH_PROTECT_RO_NOW) &
+	    ~flash_get_protect())
 		return 0;
 
 	/* If WP pin is asserted and lock is applied, we're locked */

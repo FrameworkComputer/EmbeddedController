@@ -29,10 +29,15 @@
 			/ CONFIG_FLASH_BANK_SIZE)
 #define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
 
+
+/* Flags for persist_state.flags */
+/* Protect persist state and RO firmware at boot */
+#define PERSIST_FLAG_PROTECT_RO 0x02
+
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
-	uint8_t lock;               /* Lock flags */
+	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
 	uint8_t reserved[2];        /* Reserved; set 0 */
 };
 
@@ -76,10 +81,6 @@ static int read_pstate(void)
 		memset(&pstate, 0, sizeof(pstate));
 		pstate.version = PERSIST_STATE_VERSION;
 	}
-
-	/* Mask off currently-valid flags */
-	pstate.lock &= FLASH_PROTECT_LOCK_SET;
-
 #endif /* CHIP_stm32 */
 	return EC_SUCCESS;
 }
@@ -128,7 +129,7 @@ static int apply_pstate(void)
 		return rv;
 
 	/* If flash isn't locked, nothing to do */
-	if (!(pstate.lock & FLASH_PROTECT_LOCK_SET))
+	if (!(pstate.flags & PERSIST_FLAG_PROTECT_RO))
 		return EC_SUCCESS;
 
 	/* Lock the protection data first */
@@ -138,13 +139,6 @@ static int apply_pstate(void)
 	flash_physical_set_protect(RO_BANK_OFFSET, RO_BANK_COUNT);
 
 	return EC_SUCCESS;
-}
-
-/* Return non-zero if pstate block is already write-protected. */
-static int is_pstate_lock_applied(void)
-{
-	/* Fail if write protect block is already locked */
-	return flash_physical_get_protect(PSTATE_BANK);
 }
 
 int flash_dataptr(int offset, int size_req, int align, char **ptrp)
@@ -194,12 +188,12 @@ int flash_protect_until_reboot(void)
 	return EC_SUCCESS;
 }
 
-int flash_lock_protect(int lock)
+int flash_enable_protect(int enable)
 {
 	int rv;
 
 	/* Fail if write protect block is already locked */
-	if (is_pstate_lock_applied())
+	if (flash_physical_get_protect(PSTATE_BANK))
 		return EC_ERROR_UNKNOWN;
 
 	/* Read the current persist state from flash */
@@ -208,7 +202,7 @@ int flash_lock_protect(int lock)
 		return rv;
 
 	/* Set the new flag */
-	pstate.lock = lock ? FLASH_PROTECT_LOCK_SET : 0;
+	pstate.flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
 
 	/* Write the state back to flash */
 	rv = write_pstate();
@@ -216,28 +210,48 @@ int flash_lock_protect(int lock)
 		return rv;
 
 	/* If unlocking, done now */
-	if (!lock)
+	if (!enable)
 		return EC_SUCCESS;
 
-	/* Otherwise, we need to apply all locks NOW */
+	/* Otherwise, we need to protect RO code NOW */
 	return apply_pstate();
 }
 
-int flash_get_protect_lock(void)
+int flash_get_protect(void)
 {
-	int flags;
+	int flags = 0;
+	int i;
 
 	/* Read the current persist state from flash */
 	read_pstate();
-	flags = pstate.lock;
-
-	/* Check if lock has been applied */
-	if (is_pstate_lock_applied())
-		flags |= FLASH_PROTECT_LOCK_APPLIED;
+	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+		flags |= FLASH_PROTECT_RO_AT_BOOT;
 
 	/* Check if write protect pin is asserted now */
 	if (wp_pin_asserted())
 		flags |= FLASH_PROTECT_PIN_ASSERTED;
+
+	/* Scan flash protection */
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
+		/* Is this bank part of RO? */
+		int is_ro = ((i >= RO_BANK_OFFSET &&
+			      i < RO_BANK_OFFSET + RO_BANK_COUNT) ||
+			     i == PSTATE_BANK);
+		int bank_flag = (is_ro ? FLASH_PROTECT_RO_NOW :
+				 FLASH_PROTECT_RW_NOW);
+
+		if (flash_physical_get_protect(i)) {
+			/* At least one bank in the region is protected */
+			flags |= bank_flag;
+		} else if (flags & bank_flag) {
+			/* But not all banks in the region! */
+			flags |= FLASH_PROTECT_PARTIAL;
+		}
+	}
+
+	/* Check if any banks were stuck locked at boot */
+	if (stuck_locked)
+		flags |= FLASH_PROTECT_STUCK_LOCKED;
 
 	return flags;
 }
@@ -304,17 +318,21 @@ static int command_flash_info(int argc, char **argv)
 	ccprintf("Erase:   %4d B\n", flash_get_erase_block_size());
 	ccprintf("Protect: %4d B\n", flash_get_protect_block_size());
 
-	i = flash_get_protect_lock();
-	ccprintf("Lock:    %s",
-		 (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked");
-	if (i & FLASH_PROTECT_LOCK_APPLIED)
-		ccputs(",APPLIED");
-	if (stuck_locked)
-		ccputs(",STUCK");
+	i = flash_get_protect();
+	ccprintf("Flags:  ");
+	if (i & FLASH_PROTECT_PIN_ASSERTED)
+		ccputs(" wp_asserted");
+	if (i & FLASH_PROTECT_RO_AT_BOOT)
+		ccputs(" ro_at_boot");
+	if (i & FLASH_PROTECT_RO_NOW)
+		ccputs(" ro_now");
+	if (i & FLASH_PROTECT_RW_NOW)
+		ccputs(" rw_now");
+	if (i & FLASH_PROTECT_STUCK_LOCKED)
+		ccputs(" STUCK");
+	if (i & FLASH_PROTECT_PARTIAL)
+		ccputs(" PARTIAL");
 	ccputs("\n");
-
-	ccprintf("WP pin:  %sasserted\n",
-		 (i & FLASH_PROTECT_PIN_ASSERTED) ? "" : "de");
 
 	ccputs("Protected now:");
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
@@ -395,17 +413,17 @@ static int command_flash_wp(int argc, char **argv)
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[1], "lock"))
-		return flash_lock_protect(1);
-	else if (!strcasecmp(argv[1], "unlock"))
-		return flash_lock_protect(0);
+	if (!strcasecmp(argv[1], "enable"))
+		return flash_enable_protect(1);
+	else if (!strcasecmp(argv[1], "disable"))
+		return flash_enable_protect(0);
 	else if (!strcasecmp(argv[1], "now"))
 		return flash_protect_until_reboot();
 	else
 		return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
-			"<lock | unlock | now>",
+			"<enable | disable | now>",
 			"Modify flash write protect",
 			NULL);
 

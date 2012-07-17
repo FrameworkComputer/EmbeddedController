@@ -143,13 +143,17 @@ int flash_protect_until_reboot(void);
 
 /* Higher-level APIs to emulate SPI write protect */
 
-/* Lock or unlock the persistent write protect settings.  Once the write
- * protect settings are locked, they will STAY locked until the system is
- * cold-booted with the hardware write protect pin disabled.
+/**
+ * Enable write protect for the read-only code.
  *
- * If called with lock!=0, this will also immediately protect all
- * persistently-protected blocks. */
-int flash_lock_protect(int lock);
+ * Once write protect is enabled, it will STAY enabled until the system is
+ * hard-rebooted with the hardware write protect pin deasserted.  If the write
+ * protect pin is deasserted, the protect setting is ignored, and the entire
+ * flash will be writable.
+ *
+ * @param enable        Enable write protection
+ */
+int flash_enable_protect(int enable);
 
 /* Flags for flash_get_protect_lock() */
 /*
@@ -157,16 +161,22 @@ int flash_lock_protect(int lock);
  * deasserted at boot time, this simply indicates the state of the lock
  * setting, and not whether blocks are actually protected.
  */
-#define FLASH_PROTECT_LOCK_SET     0x01
+#define FLASH_PROTECT_RO_AT_BOOT   (1 << 0)
 /*
  * Flash protection lock has actually been applied. Read-only firmware is
  * protected, and flash protection cannot be unlocked.
  */
-#define FLASH_PROTECT_LOCK_APPLIED 0x02
+#define FLASH_PROTECT_RO_NOW       (1 << 1)
 /* Write protect pin is currently asserted */
-#define FLASH_PROTECT_PIN_ASSERTED 0x04
+#define FLASH_PROTECT_PIN_ASSERTED (1 << 2)
+/* Entire flash is protected until reboot */
+#define FLASH_PROTECT_RW_NOW       (1 << 3)
+/* At least one bank of flash is stuck locked, and cannot be unlocked */
+#define FLASH_PROTECT_STUCK_LOCKED (1 << 4)
+/* At least one bank of flash which should be protected is not protected */
+#define FLASH_PROTECT_PARTIAL      (1 << 5)
 
 /* Return the flash protect lock status. */
-int flash_get_protect_lock(void);
+int flash_get_protect(void);
 
 #endif  /* __CROS_EC_FLASH_H */
