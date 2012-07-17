@@ -596,10 +596,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 #ifdef CONFIG_TASK_X86POWER
 	case I8042_SYSTEM_RESET:
-		/* Trigger a cold reset, since that also resets the TPM.  If we
-		 * just trigger a warm reset, that doesn't assert PLTRST# and
-		 * the TPM is not reset.  See crosbug.com/p/8379. */
-		x86_power_reset(1);
+		x86_power_reset(0);
 		break;
 #endif
 
