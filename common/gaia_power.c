@@ -108,6 +108,16 @@ static timestamp_t pwron_deadline;
 /* force AP power on (used for recovery keypress) */
 static int auto_power_on;
 
+enum power_request_t {
+	POWER_REQ_NONE,
+	POWER_REQ_OFF,
+	POWER_REQ_ON,
+
+	POWER_REQ_COUNT,
+};
+
+static enum power_request_t power_request;
+
 /*
  * Wait for GPIO "signal" to reach level "value".
  * Returns EC_ERROR_TIMEOUT if timeout before reaching the desired state.
@@ -185,6 +195,12 @@ static int check_for_power_off_event(void)
 	/* XPSHOLD released by AP : shutdown immediately */
 	if (pwron_released && gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
 		return 3;
+
+	if (power_request == POWER_REQ_OFF) {
+		power_request = POWER_REQ_NONE;
+		return 4;
+	}
+
 	return 0;
 }
 
@@ -303,6 +319,11 @@ static int check_for_power_on_event(void)
 		udelay(KB_PWR_ON_DEBOUNCE);
 		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
 			return 1;
+	}
+
+	if (power_request == POWER_REQ_ON) {
+		power_request = POWER_REQ_NONE;
+		return 4;
 	}
 
 	return 0;
@@ -480,6 +501,12 @@ DECLARE_CONSOLE_COMMAND(forcepower, command_force_power,
 			"Force power on",
 			NULL);
 
+static const char *power_req_name[POWER_REQ_COUNT] = {
+	"none",
+	"off",
+	"on",
+};
+
 /* Power states that we can report */
 enum power_state_t {
 	PSTATE_UNKNOWN,
@@ -514,10 +541,18 @@ static int command_power(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
+	if (0 == strcasecmp(argv[1], "on"))
+		power_request = POWER_REQ_ON;
+	else if (0 == strcasecmp(argv[1], "off"))
+		power_request = POWER_REQ_OFF;
+
+	ccprintf("Requesting power %s\n", power_req_name[power_request]);
+	task_wake(TASK_ID_GAIAPOWER);
+
 	ccputs("Invalid args\n");
 	return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(power, command_power,
-			NULL,
-			"Check AP power state",
+			"on/off",
+			"Turn AP power on/off",
 			NULL);
