@@ -40,11 +40,13 @@
 /****************************************************************************/
 /* Define our flash layout. */
 
-/* The EC needs its own region for run-time vboot stuff. We can put
- * that up at the top */
-#define CONFIG_SECTION_ROLLBACK_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
-#define CONFIG_SECTION_ROLLBACK_OFF   (CONFIG_FLASH_SIZE \
-					- CONFIG_FLASH_ROLLBACK_SIZE)
+/*
+ * The EC uses the top bank of flash to emulate a SPI-like write protect
+ * register with persistent state.  Put that up at the top.
+ */
+#define CONFIG_SECTION_FLASH_PSTATE_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
+#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_SIZE \
+					   - CONFIG_FLASH_FLASH_PSTATE_SIZE)
 
 /* Then there are the two major sections. */
 /* TODO: Increase to 128KB, or shrink to 64KB? */
