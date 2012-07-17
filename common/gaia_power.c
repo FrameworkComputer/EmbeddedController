@@ -479,3 +479,45 @@ DECLARE_CONSOLE_COMMAND(forcepower, command_force_power,
 			NULL,
 			"Force power on",
 			NULL);
+
+/* Power states that we can report */
+enum power_state_t {
+	PSTATE_UNKNOWN,
+	PSTATE_OFF,
+	PSTATE_SUSPEND,
+	PSTATE_ON,
+
+	PSTATE_COUNT,
+};
+
+static const char * const state_name[] = {
+	"unknown",
+	"off",
+	"suspend",
+	"on",
+};
+
+static int command_power(int argc, char **argv)
+{
+	if (argc < 2) {
+		enum power_state_t state;
+
+		state = PSTATE_UNKNOWN;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			state = PSTATE_OFF;
+		if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+			state = PSTATE_SUSPEND;
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			state = PSTATE_ON;
+		ccprintf("%s\n", state_name[state]);
+
+		return EC_SUCCESS;
+	}
+
+	ccputs("Invalid args\n");
+	return EC_ERROR_INVAL;
+}
+DECLARE_CONSOLE_COMMAND(power, command_power,
+			NULL,
+			"Check AP power state",
+			NULL);
