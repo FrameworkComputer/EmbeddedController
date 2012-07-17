@@ -14,6 +14,16 @@
 #define PERSIST_STATE_VERSION 1
 #define MAX_BANKS (CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE)
 
+/* Persistent protection state flash offset / size / bank */
+#define PSTATE_OFFSET (CONFIG_SECTION_FLASH_PSTATE_OFF - CONFIG_FLASH_BASE)
+#define PSTATE_SIZE   CONFIG_SECTION_FLASH_PSTATE_SIZE
+#define PSTATE_BANK   (PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
+
+/* Read-only firmware offset and size in units of flash banks */
+#define RO_BANK_OFFSET ((CONFIG_SECTION_RO_OFF - CONFIG_FLASH_BASE) \
+			/ CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
@@ -22,7 +32,6 @@ struct persist_state {
 	uint8_t blocks[MAX_BANKS];  /* Per-block flags */
 };
 
-static int usable_flash_size;       /* Usable flash size, not counting pstate */
 static struct persist_state pstate; /* RAM copy of pstate data */
 
 
@@ -41,12 +50,15 @@ static int wp_pin_asserted(void)
 #endif
 }
 
-
 /* Read persistent state into pstate. */
 static int read_pstate(void)
 {
+#ifdef CHIP_stm32
+		memset(&pstate, 0, sizeof(pstate));
+		pstate.version = PERSIST_STATE_VERSION;
+#else
 	int i;
-	int rv = flash_physical_read(usable_flash_size, sizeof(pstate),
+	int rv = flash_physical_read(PSTATE_OFFSET, sizeof(pstate),
 				     (char *)&pstate);
 	if (rv)
 		return rv;
@@ -60,42 +72,40 @@ static int read_pstate(void)
 	/* Mask off currently-valid flags */
 	pstate.lock &= FLASH_PROTECT_LOCK_SET;
 	for (i = 0; i < MAX_BANKS; i++)
-		pstate.blocks[i] &= FLASH_PROTECT_PERSISTENT;
+		pstate.blocks[i] = 0;
+#endif /* CHIP_stm32 */
 	return EC_SUCCESS;
 }
-
 
 /* Write persistent state from pstate, erasing if necessary. */
 static int write_pstate(void)
 {
 	int rv;
 
-	/* Erase top protection block.  Assumes pstate size is less than
-	 * erase/protect block size, and protect block size is less than erase
-	 * block size. */
-	/* TODO: optimize based on current physical flash contents; we can
-	 * avoid the erase if we're only changing 1's into 0's. */
-	rv = flash_physical_erase(usable_flash_size,
-				  flash_get_protect_block_size());
+	/* Erase pstate */
+	/*
+	 * TODO: optimize based on current physical flash contents; we can
+	 * avoid the erase if we're only changing 1's into 0's.
+	 */
+	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
 	if (rv)
 		return rv;
 
-	/* Note that if we lose power in here, we'll lose the pstate contents.
+	/*
+	 * Note that if we lose power in here, we'll lose the pstate contents.
 	 * That's ok, because it's only possible to write the pstate before
-	 * it's protected. */
+	 * it's protected.
+	 */
 
 	/* Rewrite the data */
-	return flash_physical_write(usable_flash_size, sizeof(pstate),
+	return flash_physical_write(PSTATE_OFFSET, sizeof(pstate),
 				    (const char *)&pstate);
 }
-
 
 /* Apply write protect based on persistent state. */
 static int apply_pstate(void)
 {
-	int pbsize = flash_get_protect_block_size();
-	int banks = usable_flash_size / pbsize;
-	int rv, i;
+	int rv;
 
 	/* If write protect is disabled, nothing to do */
 	if (!wp_pin_asserted())
@@ -111,46 +121,37 @@ static int apply_pstate(void)
 		return EC_SUCCESS;
 
 	/* Lock the protection data first */
-	flash_physical_set_protect(banks);
+	flash_physical_set_protect(PSTATE_BANK, 1);
 
-	/* Then lock any banks necessary */
-	for (i = 0; i < banks; i++) {
-		if (pstate.blocks[i] & FLASH_PROTECT_PERSISTENT)
-			flash_physical_set_protect(i);
-	}
+	/* Lock the read-only section whenever pstate is locked */
+	flash_physical_set_protect(RO_BANK_OFFSET, RO_BANK_COUNT);
 
 	return EC_SUCCESS;
 }
 
-
 /* Return non-zero if pstate block is already write-protected. */
 static int is_pstate_lock_applied(void)
 {
-	int pstate_block = usable_flash_size / flash_get_protect_block_size();
-
 	/* Fail if write protect block is already locked */
-	return flash_physical_get_protect(pstate_block);
+	return flash_physical_get_protect(PSTATE_BANK);
 }
-
 
 int flash_get_size(void)
 {
-	return usable_flash_size;
+	return CONFIG_FLASH_SIZE;
 }
-
 
 int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 {
 	if (offset < 0 || size_req < 0 ||
-			offset + size_req > usable_flash_size ||
+			offset + size_req > CONFIG_FLASH_SIZE ||
 			(offset | size_req) & (align - 1))
 		return -1;  /* Invalid range */
 	if (ptrp)
 		*ptrp = flash_physical_dataptr(offset);
 
-	return usable_flash_size - offset;
+	return CONFIG_FLASH_SIZE - offset;
 }
-
 
 int flash_read(int offset, int size, char *data)
 {
@@ -160,19 +161,14 @@ int flash_read(int offset, int size, char *data)
 	return flash_physical_read(offset, size, data);
 }
 
-
 int flash_write(int offset, int size, const char *data)
 {
 	if (flash_dataptr(offset, size, flash_get_write_block_size(),
 			NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-	/* TODO (crosbug.com/p/7478) - safety check - don't allow writing to
-	 * the image we're running from */
-
 	return flash_physical_write(offset, size, data);
 }
-
 
 int flash_erase(int offset, int size)
 {
@@ -180,63 +176,17 @@ int flash_erase(int offset, int size)
 			NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-	/* TODO (crosbug.com/p/7478) - safety check - don't allow erasing the
-	 * image we're running from */
-
 	return flash_physical_erase(offset, size);
 }
 
-
-int flash_protect_until_reboot(int offset, int size)
+int flash_protect_until_reboot(void)
 {
-	int pbsize = flash_get_protect_block_size();
-	int i;
+	/* Protect the entire flash */
+	flash_physical_set_protect(0, CONFIG_FLASH_PHYSICAL_SIZE /
+				   CONFIG_FLASH_BANK_SIZE);
 
-	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
-		return EC_ERROR_INVAL;  /* Invalid range */
-
-	/* Convert offset and size to blocks */
-	offset /= pbsize;
-	size /= pbsize;
-
-	for (i = 0; i < size; i++)
-		flash_physical_set_protect(offset + i);
 	return EC_SUCCESS;
 }
-
-
-int flash_set_protect(int offset, int size, int enable)
-{
-	uint8_t newflag = enable ? FLASH_PROTECT_PERSISTENT : 0;
-	int pbsize = flash_get_protect_block_size();
-	int rv, i;
-
-	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
-		return EC_ERROR_INVAL;  /* Invalid range */
-
-	/* Fail if write protect block is already locked */
-	if (is_pstate_lock_applied())
-		return EC_ERROR_UNKNOWN;
-
-	/* Read the current persist state from flash */
-	rv = read_pstate();
-	if (rv)
-		return rv;
-
-	/* Convert offset and size to blocks */
-	offset /= pbsize;
-	size /= pbsize;
-
-	/* Set the new state */
-	for (i = 0; i < size; i++) {
-		pstate.blocks[offset + i] &= ~FLASH_PROTECT_PERSISTENT;
-		pstate.blocks[offset + i] |= newflag;
-	}
-
-	/* Write the state back to flash */
-	return write_pstate();
-}
-
 
 int flash_lock_protect(int lock)
 {
@@ -267,7 +217,6 @@ int flash_lock_protect(int lock)
 	return apply_pstate();
 }
 
-
 const uint8_t *flash_get_protect_array(void)
 {
 	/*
@@ -275,15 +224,13 @@ const uint8_t *flash_get_protect_array(void)
 	 * of per-protect-block flags.  (This is NOT the actual array, so
 	 * attempting to change it will have no effect.)
 	 */
-	int pbsize = flash_get_protect_block_size();
-	int banks = usable_flash_size / pbsize;
 	int i;
 
 	/* Read the current persist state from flash */
 	read_pstate();
 
 	/* Combine with current block protection state */
-	for (i = 0; i < banks; i++) {
+	for (i = 0; i < MAX_BANKS; i++) {
 		if (flash_physical_get_protect(i))
 			pstate.blocks[i] |= FLASH_PROTECT_UNTIL_REBOOT;
 	}
@@ -291,7 +238,6 @@ const uint8_t *flash_get_protect_array(void)
 	/* Return the block array */
 	return pstate.blocks;
 }
-
 
 int flash_get_protect(int offset, int size)
 {
@@ -319,7 +265,6 @@ int flash_get_protect(int offset, int size)
 
 	return minflags;
 }
-
 
 int flash_get_protect_lock(void)
 {
@@ -352,13 +297,6 @@ int flash_pre_init(void)
 	 */
 	flash_physical_pre_init();
 
-	/*
-	 * Calculate usable flash size.  Reserve one protection block
-	 * at the top to hold the "pretend SPI" write protect data.
-	 */
-	usable_flash_size = flash_physical_size() -
-		flash_get_protect_block_size();
-
-	/* Apply write protect to blocks if needed */
+	/* Read pstate and apply write protect to blocks if needed */
 	return apply_pstate();
 }

@@ -74,12 +74,6 @@ static int command_flash_info(int argc, char **argv)
 			ccputs(" ");
 		ccputs(wp[i] & FLASH_PROTECT_UNTIL_REBOOT ? "Y" : ".");
 	}
-	ccputs("\n  Persistent: ");
-	for (i = 0; i < banks; i++) {
-		if (!(i & 7))
-			ccputs(" ");
-		ccputs(wp[i] & FLASH_PROTECT_PERSISTENT ? "Y" : ".");
-	}
 	ccputs("\n");
 
 	return EC_SUCCESS;
@@ -151,36 +145,21 @@ DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
 
 static int command_flash_wp(int argc, char **argv)
 {
-	int offset = -1;
-	int size = flash_get_protect_block_size();
-	int rv;
-
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	/* Commands that don't need offset and size */
 	if (!strcasecmp(argv[1], "lock"))
 		return flash_lock_protect(1);
 	else if (!strcasecmp(argv[1], "unlock"))
 		return flash_lock_protect(0);
-
-	/* All remaining commands need offset and size */
-	rv = parse_offset_size(argc, argv, 2, &offset, &size);
-	if (rv)
-		return rv;
-
-	if (!strcasecmp(argv[1], "now"))
-		return flash_protect_until_reboot(offset, size);
-	else if (!strcasecmp(argv[1], "set"))
-		return flash_set_protect(offset, size, 1);
-	else if (!strcasecmp(argv[1], "clear"))
-		return flash_set_protect(offset, size, 0);
+	else if (!strcasecmp(argv[1], "now"))
+		return flash_protect_until_reboot();
 	else
 		return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
-			"<lock | unlock | now | set | clear> offset [size]",
-			"Print or modify flash write protect",
+			"<lock | unlock | now>",
+			"Modify flash write protect",
 			NULL);
 
 /*****************************************************************************/

@@ -46,7 +46,7 @@
  */
 #define CONFIG_SECTION_FLASH_PSTATE_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
 #define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_SIZE \
-					   - CONFIG_FLASH_FLASH_PSTATE_SIZE)
+					   - CONFIG_SECTION_FLASH_PSTATE_SIZE)
 
 /* Then there are the two major sections. */
 /* TODO: Increase to 128KB, or shrink to 64KB? */

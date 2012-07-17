@@ -171,15 +171,17 @@ int flash_physical_erase(int offset, int size)
 }
 
 
-int flash_physical_get_protect(int block)
+int flash_physical_get_protect(int bank)
 {
-	return (LM4_FLASH_FMPPE[F_BANK(block)] & F_BIT(block)) ? 0 : 1;
+	return (LM4_FLASH_FMPPE[F_BANK(bank)] & F_BIT(bank)) ? 0 : 1;
 }
 
 
-void flash_physical_set_protect(int block)
+void flash_physical_set_protect(int start_bank, int bank_count)
 {
-	LM4_FLASH_FMPPE[F_BANK(block)] &= ~F_BIT(block);
+	int bank;
+	for (bank = start_bank; bank < start_bank + bank_count; bank++)
+		LM4_FLASH_FMPPE[F_BANK(bank)] &= ~F_BIT(bank);
 }
 
 int flash_physical_pre_init(void)

@@ -5,7 +5,8 @@
 
 /* Memory mapping */
 #define CONFIG_FLASH_BASE       0x08000000
-#define CONFIG_FLASH_SIZE       0x00020000
+#define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
+#define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         0x00004000
@@ -23,12 +24,13 @@
 #define CONFIG_SECTION_RW_OFF    CONFIG_FW_RW_OFF
 #define CONFIG_SECTION_RW_SIZE   CONFIG_FW_RW_SIZE
 
-/* no keys for now */
-#define CONFIG_VBOOT_ROOTKEY_OFF    (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE)
-#define CONFIG_VBLOCK_RW_OFF        (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE)
-#define CONFIG_VBOOT_ROOTKEY_SIZE   0
-#define CONFIG_VBLOCK_SIZE          0
-
+/*
+ * The EC uses the top bank of flash to emulate a SPI-like write protect
+ * register with persistent state.  Put that up at the top.
+ */
+#define CONFIG_SECTION_FLASH_PSTATE_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
+#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_SIZE \
+					   - CONFIG_SECTION_FLASH_PSTATE_SIZE)
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 45

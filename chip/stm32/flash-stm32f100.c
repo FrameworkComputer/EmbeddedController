@@ -326,12 +326,15 @@ int flash_physical_get_protect(int block)
 	return !(val & (1 << (block % 8)));
 }
 
-
-void flash_physical_set_protect(int block)
+void flash_physical_set_protect(int start_bank, int bank_count)
 {
-	int byte_off = STM32_OPTB_WRP_OFF(block/8);
-	uint8_t val = read_optb(byte_off) & ~(1 << (block % 8));
-	write_optb(byte_off, val);
+	int block;
+
+	for (block = start_bank; block < start_bank + bank_count; block++) {
+		int byte_off = STM32_OPTB_WRP_OFF(block/8);
+		uint8_t val = read_optb(byte_off) | (1 << (block % 8));
+		write_optb(byte_off, val);
+	}
 }
 
 int flash_physical_pre_init(void)

@@ -55,11 +55,16 @@ int flash_physical_write(int offset, int size, const char *data);
 /* Erase <size> bytes of flash at byte offset <offset>. */
 int flash_physical_erase(int offset, int size);
 
-/* Return non-zero if block is protected until reboot. */
-int flash_physical_get_protect(int block);
+/* Return non-zero if bank is protected until reboot. */
+int flash_physical_get_protect(int bank);
 
-/* Protects the block until reboot. */
-void flash_physical_set_protect(int block);
+/**
+ * Protect the flash banks until reboot.
+ *
+ * @param start_bank    Start bank to protect
+ * @param bank_count    Number of banks to protect
+ */
+void flash_physical_set_protect(int start_bank, int bank_count);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */
@@ -131,17 +136,12 @@ int flash_erase(int offset, int size);
  * the system is rebooted with the write protect pin asserted - at which point,
  * protection is re-applied. */
 
-/* Write-protect <size> bytes of flash at byte offset <offset> until next
- * reboot. */
-int flash_protect_until_reboot(int offset, int size);
+/**
+ * Protect the entire flash until reboot.
+ */
+int flash_protect_until_reboot(void);
 
 /* Higher-level APIs to emulate SPI write protect */
-
-/* Set (enable=1) or clear (enable=0) the persistent write protect setting for
- * the specified range.  This will only succeed if write protect is unlocked.
- * This will take effect on the next boot, or when flash_lock_protect(1) is
- * called. */
-int flash_set_protect(int offset, int size, int enable);
 
 /* Lock or unlock the persistent write protect settings.  Once the write
  * protect settings are locked, they will STAY locked until the system is
@@ -152,16 +152,10 @@ int flash_set_protect(int offset, int size, int enable);
 int flash_lock_protect(int lock);
 
 /* Flags for flash_get_protect() and flash_get_protect_array(). */
-/* Protected persistently.  Note that if the write protect pin was deasserted
- * at boot time, a block may have the FLASH_PROTECT_PERSISTENT flag indicating
- * the block would be protected on a normal boot, but may not have the
- * FLASH_PROTECT_UNTIL_REBOOT flag indicating it's actually protected right
- * now. */
-#define FLASH_PROTECT_PERSISTENT   0x01
 /* Protected until reboot.  This will be set for persistently-protected blocks
  * as soon as the flash module protects them, and for non-persistent protection
  * after flash_protect_until_reboot() is called on a block. */
-#define FLASH_PROTECT_UNTIL_REBOOT 0x02
+#define FLASH_PROTECT_UNTIL_REBOOT 0x01
 
 /* Return a copy of the current write protect state.  This is an array of
  * per-protect-block flags.  The data is valid until the next call to a flash
