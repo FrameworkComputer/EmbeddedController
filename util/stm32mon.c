@@ -70,9 +70,10 @@ const char *output_filename;
 
 /* optional command flags */
 enum {
-	FLAG_UNPROTECT = 0x01,
-	FLAG_ERASE     = 0x02,
-	FLAG_GO        = 0x04,
+	FLAG_UNPROTECT      = 0x01,
+	FLAG_ERASE          = 0x02,
+	FLAG_GO             = 0x04,
+	FLAG_READ_UNPROTECT = 0x08,
 };
 
 typedef struct {
@@ -458,6 +459,30 @@ int command_erase(int fd, uint8_t count, uint8_t start)
 	return res;
 }
 
+int command_read_unprotect(int fd)
+{
+	int res;
+
+	res = send_command(fd, CMD_RU, NULL, 0, NULL, 0);
+	if (res < 0)
+		return -EIO;
+
+	/* Wait for the ACK */
+	if (wait_for_ack(fd) < 0) {
+		fprintf(stderr, "Failed to get read-protect ACK\n");
+		return -EINVAL;
+	}
+	printf("Flash read unprotected.\n");
+
+	/* This commands triggers a reset */
+	if (init_monitor(fd) < 0) {
+		fprintf(stderr, "Cannot recover after RP reset\n");
+		return -EIO;
+	}
+
+	return 0;
+}
+
 int command_write_unprotect(int fd)
 {
 	int res;
@@ -590,12 +615,13 @@ static const struct option longopts[] = {
 
 void display_usage(char *program)
 {
-	fprintf(stderr, "Usage: %s [-d <tty>] [-b <baudrate>] [-u] [-e]"
+	fprintf(stderr, "Usage: %s [-d <tty>] [-b <baudrate>] [-u] [-e] [-U]"
 		" [-r <file>] [-w <file>] [-g]\n", program);
 	fprintf(stderr, "--d[evice] <tty> : use <tty> as the serial port\n");
 	fprintf(stderr, "--b[audrate] <baudrate> : set serial port speed "
 			"to <baudrate> bauds\n");
 	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
+	fprintf(stderr, "--U[nprotect] : remove flash read protect\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
 	fprintf(stderr, "--r[ead] <file> : read the flash content and "
 			"write it into <file>\n");
@@ -633,7 +659,7 @@ int parse_parameters(int argc, char **argv)
 	int opt, idx;
 	int flags = 0;
 
-	while ((opt = getopt_long(argc, argv, "b:d:eghr:w:u?",
+	while ((opt = getopt_long(argc, argv, "b:d:eghr:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'b':
@@ -660,6 +686,9 @@ int parse_parameters(int argc, char **argv)
 			break;
 		case 'u':
 			flags |= FLAG_UNPROTECT;
+			break;
+		case 'U':
+			flags |= FLAG_READ_UNPROTECT;
 			break;
 		}
 	}
@@ -691,6 +720,8 @@ int main(int argc, char **argv)
 
 	command_get_commands(ser);
 
+	if (flags & FLAG_READ_UNPROTECT)
+		command_read_unprotect(ser);
 	if (flags & FLAG_UNPROTECT)
 		command_write_unprotect(ser);
 
