@@ -15,8 +15,9 @@
 #include "system.h"
 #include "util.h"
 
-#define PERSIST_STATE_VERSION 1
+#define PERSIST_STATE_VERSION 2
 #define MAX_BANKS (CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 /* Persistent protection state flash offset / size / bank */
 #define PSTATE_OFFSET (CONFIG_SECTION_FLASH_PSTATE_OFF - CONFIG_FLASH_BASE)
@@ -33,8 +34,9 @@ struct persist_state {
 	uint8_t version;            /* Version of this struct */
 	uint8_t lock;               /* Lock flags */
 	uint8_t reserved[2];        /* Reserved; set 0 */
-	uint8_t blocks[MAX_BANKS];  /* Per-block flags */
 };
+
+int stuck_locked;  /* Is physical flash stuck protected? */
 
 static struct persist_state pstate; /* RAM copy of pstate data */
 
@@ -61,7 +63,6 @@ static int read_pstate(void)
 		memset(&pstate, 0, sizeof(pstate));
 		pstate.version = PERSIST_STATE_VERSION;
 #else
-	int i;
 	int rv = flash_physical_read(PSTATE_OFFSET, sizeof(pstate),
 				     (char *)&pstate);
 	if (rv)
@@ -75,8 +76,7 @@ static int read_pstate(void)
 
 	/* Mask off currently-valid flags */
 	pstate.lock &= FLASH_PROTECT_LOCK_SET;
-	for (i = 0; i < MAX_BANKS; i++)
-		pstate.blocks[i] = 0;
+
 #endif /* CHIP_stm32 */
 	return EC_SUCCESS;
 }
@@ -84,6 +84,9 @@ static int read_pstate(void)
 /* Write persistent state from pstate, erasing if necessary. */
 static int write_pstate(void)
 {
+#ifdef CHIP_stm32
+	return EC_SUCCESS;
+#else
 	int rv;
 
 	/* Erase pstate */
@@ -104,6 +107,7 @@ static int write_pstate(void)
 	/* Rewrite the data */
 	return flash_physical_write(PSTATE_OFFSET, sizeof(pstate),
 				    (const char *)&pstate);
+#endif
 }
 
 /* Apply write protect based on persistent state. */
@@ -138,11 +142,6 @@ static int is_pstate_lock_applied(void)
 {
 	/* Fail if write protect block is already locked */
 	return flash_physical_get_protect(PSTATE_BANK);
-}
-
-int flash_get_size(void)
-{
-	return CONFIG_FLASH_SIZE;
 }
 
 int flash_dataptr(int offset, int size_req, int align, char **ptrp)
@@ -221,55 +220,6 @@ int flash_lock_protect(int lock)
 	return apply_pstate();
 }
 
-const uint8_t *flash_get_protect_array(void)
-{
-	/*
-	 * Return a copy of the current write protect state.  This is an array
-	 * of per-protect-block flags.  (This is NOT the actual array, so
-	 * attempting to change it will have no effect.)
-	 */
-	int i;
-
-	/* Read the current persist state from flash */
-	read_pstate();
-
-	/* Combine with current block protection state */
-	for (i = 0; i < MAX_BANKS; i++) {
-		if (flash_physical_get_protect(i))
-			pstate.blocks[i] |= FLASH_PROTECT_UNTIL_REBOOT;
-	}
-
-	/* Return the block array */
-	return pstate.blocks;
-}
-
-int flash_get_protect(int offset, int size)
-{
-	int pbsize = flash_get_protect_block_size();
-	uint8_t minflags = 0xff;
-	int i;
-
-	if (flash_dataptr(offset, size, pbsize, NULL) < 0)
-		return 0;  /* Invalid range; assume nothing protected */
-
-	/* Convert offset and size to blocks */
-	offset /= pbsize;
-	size /= pbsize;
-
-	/* Read the current persist state from flash */
-	read_pstate();
-
-	/* Combine with current block protection state */
-	for (i = 0; i < size; i++) {
-		int f = pstate.blocks[offset + i];
-		if (flash_physical_get_protect(offset + i))
-			f |= FLASH_PROTECT_UNTIL_REBOOT;
-		minflags &= f;
-	}
-
-	return minflags;
-}
-
 int flash_get_protect_lock(void)
 {
 	int flags;
@@ -295,13 +245,10 @@ int flash_get_protect_lock(void)
 int flash_pre_init(void)
 {
 	/* Initialize the physical flash interface */
-	/*
-	 * TODO: track pre-init error so we can report it later.  Do at the
-	 * same time as new flash commands to get/set write protect status.
-	 */
-	flash_physical_pre_init();
+	if (flash_physical_pre_init() == EC_ERROR_ACCESS_DENIED)
+		stuck_locked = 1;
 
-	/* Read pstate and apply write protect to blocks if needed */
+	/* Apply write protect to blocks if needed */
 	return apply_pstate();
 }
 
@@ -342,30 +289,35 @@ static int parse_offset_size(int argc, char **argv, int shift,
 
 static int command_flash_info(int argc, char **argv)
 {
-	const uint8_t *wp;
-	int banks = flash_get_size() / flash_get_protect_block_size();
 	int i;
 
-	ccprintf("Physical:%4d KB\n", flash_physical_size() / 1024);
-	ccprintf("Usable:  %4d KB\n", flash_get_size() / 1024);
+	ccprintf("Physical:%4d KB\n", CONFIG_FLASH_PHYSICAL_SIZE / 1024);
+	if (flash_physical_size() != CONFIG_FLASH_PHYSICAL_SIZE)
+		ccprintf("But chip claims %d KB!\n",
+			 flash_physical_size() / 1024);
+
+	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
 	ccprintf("Write:   %4d B\n", flash_get_write_block_size());
 	ccprintf("Erase:   %4d B\n", flash_get_erase_block_size());
 	ccprintf("Protect: %4d B\n", flash_get_protect_block_size());
 
 	i = flash_get_protect_lock();
-	ccprintf("Lock:    %s%s\n",
-		 (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked",
-		 (i & FLASH_PROTECT_LOCK_APPLIED) ? ",APPLIED" : "");
+	ccprintf("Lock:    %s",
+		 (i & FLASH_PROTECT_LOCK_SET) ? "LOCKED" : "unlocked");
+	if (i & FLASH_PROTECT_LOCK_APPLIED)
+		ccputs(",APPLIED");
+	if (stuck_locked)
+		ccputs(",STUCK");
+	ccputs("\n");
+
 	ccprintf("WP pin:  %sasserted\n",
 		 (i & FLASH_PROTECT_PIN_ASSERTED) ? "" : "de");
 
-	wp = flash_get_protect_array();
-
 	ccputs("Protected now:");
-	for (i = 0; i < banks; i++) {
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
 		if (!(i & 7))
 			ccputs(" ");
-		ccputs(wp[i] & FLASH_PROTECT_UNTIL_REBOOT ? "Y" : ".");
+		ccputs(flash_physical_get_protect(i) ? "Y" : ".");
 	}
 	ccputs("\n");
 
@@ -375,7 +327,6 @@ DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 			NULL,
 			"Print flash info",
 			NULL);
-
 
 static int command_flash_erase(int argc, char **argv)
 {
@@ -411,7 +362,7 @@ static int command_flash_write(int argc, char **argv)
 	if (size > shared_mem_size())
 		size = shared_mem_size();
 
-        /* Acquire the shared memory buffer */
+	/* Acquire the shared memory buffer */
 	rv = shared_mem_acquire(size, 0, &data);
 	if (rv) {
 		ccputs("Can't get shared mem\n");
@@ -463,7 +414,7 @@ static int flash_command_get_info(struct host_cmd_handler_args *args)
 	struct ec_response_flash_info *r =
 		(struct ec_response_flash_info *)args->response;
 
-	r->flash_size = flash_get_size();
+	r->flash_size = CONFIG_FLASH_SIZE;
 	r->write_block_size = flash_get_write_block_size();
 	r->erase_block_size = flash_get_erase_block_size();
 	r->protect_block_size = flash_get_protect_block_size();

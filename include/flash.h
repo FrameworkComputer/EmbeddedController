@@ -151,30 +151,17 @@ int flash_protect_until_reboot(void);
  * persistently-protected blocks. */
 int flash_lock_protect(int lock);
 
-/* Flags for flash_get_protect() and flash_get_protect_array(). */
-/* Protected until reboot.  This will be set for persistently-protected blocks
- * as soon as the flash module protects them, and for non-persistent protection
- * after flash_protect_until_reboot() is called on a block. */
-#define FLASH_PROTECT_UNTIL_REBOOT 0x01
-
-/* Return a copy of the current write protect state.  This is an array of
- * per-protect-block flags.  The data is valid until the next call to a flash
- * function. */
-const uint8_t *flash_get_protect_array(void);
-
-/* Return the lowest amount of protection for any flash block in the specified
- * range.  That is, if any byte in the range is not protected until reboot,
- * FLASH_PROTECT_UNTIL_REBOOT will not be set. */
-int flash_get_protect(int offset, int size);
-
 /* Flags for flash_get_protect_lock() */
-/* Flash protection lock has been set.  Note that if the write protect pin was
+/*
+ * Flash protection lock has been set.  Note that if the write protect pin was
  * deasserted at boot time, this simply indicates the state of the lock
- * setting, and not whether blocks are actually protected. */
+ * setting, and not whether blocks are actually protected.
+ */
 #define FLASH_PROTECT_LOCK_SET     0x01
-/* Flash protection lock has actually been applied.  All blocks with
-   FLASH_PROTECT_PERSISTENT have been protected, and flash protection cannot be
-   unlocked. */
+/*
+ * Flash protection lock has actually been applied. Read-only firmware is
+ * protected, and flash protection cannot be unlocked.
+ */
 #define FLASH_PROTECT_LOCK_APPLIED 0x02
 /* Write protect pin is currently asserted */
 #define FLASH_PROTECT_PIN_ASSERTED 0x04

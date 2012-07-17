@@ -45,7 +45,7 @@
  * register with persistent state.  Put that up at the top.
  */
 #define CONFIG_SECTION_FLASH_PSTATE_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
-#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_SIZE \
+#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_PHYSICAL_SIZE \
 					   - CONFIG_SECTION_FLASH_PSTATE_SIZE)
 
 /* Then there are the two major sections. */
