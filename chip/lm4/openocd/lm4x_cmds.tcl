@@ -23,12 +23,12 @@ proc flash_link_ro { } {
 	flash_lm4 ../../../build/link/ec.RO.flat 0 81920
 }
 
-proc flash_link_a { } {
-	flash_lm4 ../../../build/link/ec.A.bin 81920 81920
+proc flash_link_rw { } {
+	flash_lm4 ../../../build/link/ec.RW.bin 81920 81920
 }
 
-proc flash_link_b { } {
-	flash_lm4 ../../../build/link/ec.B.bin 163840 81920
+proc flash_link_rw_b { } {
+	flash_lm4 ../../../build/link/ec.RW_B.bin 163840 81920
 }
 
 proc flash_bds { } {

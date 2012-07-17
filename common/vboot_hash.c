@@ -113,8 +113,8 @@ static void vboot_hash_init(void)
 		data_size = tag->size;
 	} else {
 		/* Start computing the hash of firmware A */
-		vboot_hash_start(CONFIG_FW_A_OFF - CONFIG_FLASH_BASE,
-				 CONFIG_FW_A_SIZE, NULL, 0);
+		vboot_hash_start(CONFIG_FW_RW_OFF - CONFIG_FLASH_BASE,
+				 CONFIG_FW_RW_SIZE, NULL, 0);
 	}
 }
 
@@ -187,8 +187,8 @@ DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
 
 static int command_hash(int argc, char **argv)
 {
-	uint32_t offset = CONFIG_FW_A_OFF - CONFIG_FLASH_BASE;
-	uint32_t size = CONFIG_FW_A_SIZE;
+	uint32_t offset = CONFIG_FW_RW_OFF - CONFIG_FLASH_BASE;
+	uint32_t size = CONFIG_FW_RW_SIZE;
 	char *e;
 
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {

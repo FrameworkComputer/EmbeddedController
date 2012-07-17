@@ -141,11 +141,11 @@ int main(int argc, char *argv[])
 		return -3;
 
 #ifdef CONFIG_RW_B
-	flash_partition(EC_IMAGE_RW_B, data + CONFIG_FW_B_OFF,
-			CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
+	flash_partition(EC_IMAGE_RW_B, data + CONFIG_FW_RW_B_OFF,
+			CONFIG_FW_RW_B_OFF, CONFIG_FW_RW_B_SIZE);
 #endif /* CONFIG_RW_B */
-	flash_partition(EC_IMAGE_RW_A, data + CONFIG_FW_A_OFF,
-			CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
+	flash_partition(EC_IMAGE_RW_A, data + CONFIG_FW_RW_OFF,
+			CONFIG_FW_RW_OFF, CONFIG_FW_RW_SIZE);
 	flash_partition(EC_IMAGE_RO, data + CONFIG_FW_RO_OFF,
 			CONFIG_FW_RO_OFF, CONFIG_FW_RO_SIZE);
 

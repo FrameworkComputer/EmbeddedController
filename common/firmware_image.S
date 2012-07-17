@@ -18,11 +18,11 @@
 .incbin FW_IMAGE(RO)
 
 /* Read Write firmware copy A */
-.section .image.A, "ax"
-.incbin FW_IMAGE(A)
+.section .image.RW, "ax"
+.incbin FW_IMAGE(RW)
 
 #ifdef CONFIG_RW_B
 /* Read Write firmware copy B */
-.section .image.B, "ax"
-.incbin FW_IMAGE(B)
+.section .image.RW_B, "ax"
+.incbin FW_IMAGE(RW_B)
 #endif

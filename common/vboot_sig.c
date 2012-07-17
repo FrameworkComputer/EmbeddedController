@@ -134,8 +134,8 @@ int vboot_check_signature(void)
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
-		       (uint8_t *)CONFIG_VBLOCK_A_OFF, CONFIG_VBLOCK_SIZE,
-		       (uint8_t *)CONFIG_FW_A_OFF, CONFIG_FW_A_SIZE);
+		       (uint8_t *)CONFIG_VBLOCK_RW_OFF, CONFIG_VBLOCK_SIZE,
+		       (uint8_t *)CONFIG_FW_RW_OFF, CONFIG_FW_RW_SIZE);
 	ts2 = get_time();
 
 	CPRINTF("[%T Vboot result=%d, elapsed time=%ld us]\n",
@@ -160,8 +160,8 @@ int vboot_check_signature(void)
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
-		       (uint8_t *)CONFIG_VBLOCK_B_OFF, CONFIG_VBLOCK_SIZE,
-		       (uint8_t *)CONFIG_FW_B_OFF, CONFIG_FW_B_SIZE);
+		       (uint8_t *)CONFIG_VBLOCK_RW_B_OFF, CONFIG_VBLOCK_SIZE,
+		       (uint8_t *)CONFIG_FW_RW_B_OFF, CONFIG_FW_RW_B_SIZE);
 	ts2 = get_time();
 
 	CPRINTF("[%T Vboot result=%d, elapsed time=%ld us]\n",

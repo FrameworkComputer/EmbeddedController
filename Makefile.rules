@@ -50,18 +50,18 @@ cmd_sign = vbutil_ec --sign $@ \
 cmd_mv = mv $^ $@
 cmd_extractab-y = cd $(out) && \
 	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A $(silent) && \
-	mv RW_SECTION_A $(PROJECT).A.bin
+	mv RW_SECTION_A $(PROJECT).RW.bin
 cmd_extractab-$(CONFIG_RW_B) += && \
 	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_B $(silent) && \
-	mv RW_SECTION_B $(PROJECT).B.bin
-cmd_copyab-y = cd $(out) && cp $(PROJECT).A.flat $(PROJECT).A.bin
-cmd_copyab-$(CONFIG_RW_B) += && cp $(PROJECT).B.flat $(PROJECT).B.bin
+	mv RW_SECTION_B $(PROJECT).RW_B.bin
+cmd_copyab-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
+cmd_copyab-$(CONFIG_RW_B) += && cp $(PROJECT).RW_B.flat $(PROJECT).RW_B.bin
 
 .PHONY: all tests utils
 all: $(out)/$(PROJECT).bin utils
 
-dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).A.dis
-dis-$(CONFIG_RW_B) += $(out)/$(PROJECT).B.dis
+dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
+dis-$(CONFIG_RW_B) += $(out)/$(PROJECT).RW_B.dis
 dis: $(dis-y)
 
 utils: $(build-utils) $(host-utils)
@@ -96,8 +96,8 @@ $(out)/%.bin.tmp: $(out)/%.obj
 	$(if $(sign-y),$(call quiet,extractab-y,EXTR_AB), \
 			$(call quiet,copyab-y,COPY_AB))
 
-flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).A.flat
-flat-$(CONFIG_RW_B) += $(out)/$(PROJECT).B.flat
+flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).RW.flat
+flat-$(CONFIG_RW_B) += $(out)/$(PROJECT).RW_B.flat
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)
 	$(call quiet,flat_to_obj,CAT    )

@@ -221,12 +221,12 @@ enum system_image_copy_t system_get_image_copy(void)
 	    my_addr < (CONFIG_SECTION_RO_OFF + CONFIG_SECTION_RO_SIZE))
 		return SYSTEM_IMAGE_RO;
 
-	if (my_addr >= CONFIG_SECTION_A_OFF &&
-	    my_addr < (CONFIG_SECTION_A_OFF + CONFIG_SECTION_A_SIZE))
+	if (my_addr >= CONFIG_SECTION_RW_OFF &&
+	    my_addr < (CONFIG_SECTION_RW_OFF + CONFIG_SECTION_RW_SIZE))
 		return SYSTEM_IMAGE_RW_A;
 
-	if (my_addr >= CONFIG_SECTION_B_OFF &&
-	    my_addr < (CONFIG_SECTION_B_OFF + CONFIG_SECTION_B_SIZE))
+	if (my_addr >= CONFIG_SECTION_RW_B_OFF &&
+	    my_addr < (CONFIG_SECTION_RW_B_OFF + CONFIG_SECTION_RW_B_SIZE))
 		return SYSTEM_IMAGE_RW_B;
 
 	return SYSTEM_IMAGE_UNKNOWN;
@@ -247,12 +247,12 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 		r_size = CONFIG_FW_RO_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW_A:
-		r_offset = CONFIG_FW_A_OFF;
-		r_size = CONFIG_FW_A_SIZE;
+		r_offset = CONFIG_FW_RW_OFF;
+		r_size = CONFIG_FW_RW_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW_B:
-		r_offset = CONFIG_FW_B_OFF;
-		r_size = CONFIG_FW_B_SIZE;
+		r_offset = CONFIG_FW_RW_B_OFF;
+		r_size = CONFIG_FW_RW_B_SIZE;
 		break;
 	default:
 		return 0;
@@ -318,10 +318,10 @@ static uint32_t get_base(enum system_image_copy_t copy)
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
 	case SYSTEM_IMAGE_RW_A:
-		return CONFIG_FLASH_BASE + CONFIG_FW_A_OFF;
+		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
 #ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
-		return CONFIG_FLASH_BASE + CONFIG_FW_B_OFF;
+		return CONFIG_FLASH_BASE + CONFIG_FW_RW_B_OFF;
 #endif
 	default:
 		return 0xffffffff;
@@ -335,10 +335,10 @@ static uint32_t get_size(enum system_image_copy_t copy)
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_FW_RO_SIZE;
 	case SYSTEM_IMAGE_RW_A:
-		return CONFIG_FW_A_SIZE;
+		return CONFIG_FW_RW_SIZE;
 #ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
-		return CONFIG_FW_B_SIZE;
+		return CONFIG_FW_RW_B_SIZE;
 #endif
 	default:
 		return 0;

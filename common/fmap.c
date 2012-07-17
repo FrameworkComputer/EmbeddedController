@@ -110,9 +110,9 @@ const struct _ec_fmap {
 		{
 			/* The range for autoupdate to update A/B at once. */
 			.area_name = "EC_RW",
-			.area_offset = CONFIG_SECTION_A_OFF,
-			.area_size = CONFIG_SECTION_A_SIZE
-					+ CONFIG_SECTION_B_SIZE,
+			.area_offset = CONFIG_SECTION_RW_OFF,
+			.area_size = CONFIG_SECTION_RW_SIZE
+					+ CONFIG_SECTION_RW_B_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
@@ -127,19 +127,19 @@ const struct _ec_fmap {
 		/* Firmware A */
 		{
 			.area_name = "RW_SECTION_A",
-			.area_offset = CONFIG_SECTION_A_OFF,
-			.area_size = CONFIG_SECTION_A_SIZE,
+			.area_offset = CONFIG_SECTION_RW_OFF,
+			.area_size = CONFIG_SECTION_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
 			.area_name = "FW_MAIN_A",
-			.area_offset = CONFIG_FW_A_OFF,
-			.area_size = CONFIG_FW_A_SIZE,
+			.area_offset = CONFIG_FW_RW_OFF,
+			.area_size = CONFIG_FW_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
 			.area_name = "RW_FWID_A", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_A_OFF +
+			.area_offset = CONFIG_FW_RW_OFF +
 				(uint32_t)__version_struct_offset +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),
@@ -147,7 +147,7 @@ const struct _ec_fmap {
 		},
 		{
 			.area_name = "VBLOCK_A",
-			.area_offset = CONFIG_VBLOCK_A_OFF,
+			.area_offset = CONFIG_VBLOCK_RW_OFF,
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
@@ -156,19 +156,19 @@ const struct _ec_fmap {
 		/* Firmware B */
 		{
 			.area_name = "RW_SECTION_B",
-			.area_offset = CONFIG_SECTION_B_OFF,
-			.area_size = CONFIG_SECTION_B_SIZE,
+			.area_offset = CONFIG_SECTION_RW_B_OFF,
+			.area_size = CONFIG_SECTION_RW_B_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
 			.area_name = "FW_MAIN_B",
-			.area_offset = CONFIG_FW_B_OFF,
-			.area_size = CONFIG_FW_B_SIZE,
+			.area_offset = CONFIG_FW_RW_B_OFF,
+			.area_size = CONFIG_FW_RW_B_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
 			.area_name = "RW_FWID_B", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_B_OFF +
+			.area_offset = CONFIG_FW_RW_B_OFF +
 				(uint32_t)__version_struct_offset +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),
@@ -176,7 +176,7 @@ const struct _ec_fmap {
 		},
 		{
 			.area_name = "VBLOCK_B",
-			.area_offset = CONFIG_VBLOCK_B_OFF,
+			.area_offset = CONFIG_VBLOCK_RW_B_OFF,
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},

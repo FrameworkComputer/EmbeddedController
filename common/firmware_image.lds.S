@@ -19,14 +19,14 @@ SECTIONS
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
-    .image.A : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_A_OFF) {
-        *(.image.A)
+    .image.RW : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_RW_OFF) {
+        *(.image.RW)
         BYTE(0xEA)                      /* Mark end explicitly */
     } > FLASH =0xff
 #ifdef CONFIG_RW_B
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
-    .image.B : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_B_OFF) {
-        *(.image.B)
+    .image.RW_B : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_RW_B_OFF) {
+        *(.image.RW_B)
         BYTE(0xEB)                      /* Mark end explicitly */
     } > FLASH =0xff
 #endif
