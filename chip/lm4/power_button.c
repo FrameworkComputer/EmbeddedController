@@ -345,6 +345,11 @@ int power_lid_open_debounced(void)
 	return debounced_lid_open;
 }
 
+int write_protect_asserted(void)
+{
+	return gpio_get_level(GPIO_WRITE_PROTECT);
+}
+
 /*****************************************************************************/
 /* Task / state machine */
 

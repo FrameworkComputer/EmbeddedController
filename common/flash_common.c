@@ -8,8 +8,8 @@
 #include "config.h"
 #include "console.h"
 #include "flash.h"
-#include "gpio.h"
 #include "host_command.h"
+#include "power_button.h"
 #include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -40,19 +40,22 @@ int stuck_locked;  /* Is physical flash stuck protected? */
 
 static struct persist_state pstate; /* RAM copy of pstate data */
 
-
 /* Return non-zero if the write protect pin is asserted */
 static int wp_pin_asserted(void)
 {
-#ifdef CHIP_stm32
+#ifdef BOARD_link
+	return write_protect_asserted();
+#elif defined(CHIP_stm32)
 	/* TODO (vpalatin) : write protect scheme for stm32 */
-	return 1; /* Always enable write protect until we have WP pin.
-		   * For developer to unlock WP, please use stm32mon -u and
-		   * immediately re-program the pstate sector (so that
-		   * apply_pstate() has no chance to run).
-		   */
+	/*
+	 * Always enable write protect until we have WP pin.  For developer to
+	 * unlock WP, please use stm32mon -u and immediately re-program the
+	 * pstate sector (so that apply_pstate() has no chance to run).
+	 */
+	return 1;
 #else
-	return gpio_get_level(GPIO_WRITE_PROTECT);
+	/* Other boards don't have a WP pin */
+	return 0;
 #endif
 }
 
