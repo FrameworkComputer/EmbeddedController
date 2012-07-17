@@ -23,13 +23,6 @@ SECTIONS
         *(.image.RW)
         BYTE(0xEA)                      /* Mark end explicitly */
     } > FLASH =0xff
-#ifdef CONFIG_RW_B
-    . = ALIGN(CONFIG_FLASH_BANK_SIZE);
-    .image.RW_B : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_RW_B_OFF) {
-        *(.image.RW_B)
-        BYTE(0xEB)                      /* Mark end explicitly */
-    } > FLASH =0xff
-#endif
     .padding : AT(CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE - 1) {
         BYTE(0xff);
     } > FLASH =0xff

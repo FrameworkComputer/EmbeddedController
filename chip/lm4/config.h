@@ -46,17 +46,13 @@
 #define CONFIG_SECTION_ROLLBACK_OFF   (CONFIG_FLASH_SIZE \
 					- CONFIG_FLASH_ROLLBACK_SIZE)
 
-/* Then there are the three major sections. */
+/* Then there are the two major sections. */
 #define CONFIG_SECTION_RO_SIZE	    (40 * CONFIG_FLASH_BANK_SIZE)
 #define CONFIG_SECTION_RO_OFF       CONFIG_FLASH_BASE
 
 #define CONFIG_SECTION_RW_SIZE       (40 * CONFIG_FLASH_BANK_SIZE)
 #define CONFIG_SECTION_RW_OFF        (CONFIG_SECTION_RO_OFF \
 					+ CONFIG_SECTION_RO_SIZE)
-
-#define CONFIG_SECTION_RW_B_SIZE       (40 * CONFIG_FLASH_BANK_SIZE)
-#define CONFIG_SECTION_RW_B_OFF        (CONFIG_SECTION_RW_OFF \
-					+ CONFIG_SECTION_RW_SIZE)
 
 /* The top of each section will hold the vboot stuff, since the firmware vector
  * table has to go at the start. The root key will fit in 2K, but the vblocks
@@ -75,15 +71,6 @@
 #define CONFIG_FW_RW_SIZE            (CONFIG_SECTION_RW_SIZE \
 					- CONFIG_VBLOCK_SIZE)
 #define CONFIG_VBLOCK_RW_OFF         (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE)
-
-/* B: firmware, vblock */
-#define CONFIG_FW_RW_B_SIZE            (CONFIG_SECTION_RW_B_SIZE \
-					- CONFIG_VBLOCK_SIZE)
-#define CONFIG_FW_RW_B_OFF             (CONFIG_SECTION_RW_OFF \
-					+ CONFIG_SECTION_RW_SIZE)
-#define CONFIG_VBLOCK_RW_B_OFF         (CONFIG_FW_RW_B_OFF \
-					+ CONFIG_FW_RW_B_SIZE)
-
 
 /****************************************************************************/
 /* Customize the build */

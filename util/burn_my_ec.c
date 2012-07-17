@@ -34,13 +34,11 @@ enum ec_current_image get_version(enum ec_current_image *version_ptr)
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
-	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
 	build_info[sizeof(build_info) - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
-	printf("RW-A version:  %s\n", r.version_string_rw_a);
-	printf("RW-B version:  %s\n", r.version_string_rw_b);
+	printf("RW version:    %s\n", r.version_string_rw_a);
 	printf("Firmware copy: %s\n",
 	       (r.current_image < sizeof(part_name)/sizeof(part_name[0]) ?
 		part_name[r.current_image] : "?"));
@@ -140,10 +138,6 @@ int main(int argc, char *argv[])
 	if (comm_init() < 0)
 		return -3;
 
-#ifdef CONFIG_RW_B
-	flash_partition(EC_IMAGE_RW_B, data + CONFIG_FW_RW_B_OFF,
-			CONFIG_FW_RW_B_OFF, CONFIG_FW_RW_B_SIZE);
-#endif /* CONFIG_RW_B */
 	flash_partition(EC_IMAGE_RW_A, data + CONFIG_FW_RW_OFF,
 			CONFIG_FW_RW_OFF, CONFIG_FW_RW_SIZE);
 	flash_partition(EC_IMAGE_RO, data + CONFIG_FW_RO_OFF,

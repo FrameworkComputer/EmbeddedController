@@ -225,10 +225,6 @@ enum system_image_copy_t system_get_image_copy(void)
 	    my_addr < (CONFIG_SECTION_RW_OFF + CONFIG_SECTION_RW_SIZE))
 		return SYSTEM_IMAGE_RW_A;
 
-	if (my_addr >= CONFIG_SECTION_RW_B_OFF &&
-	    my_addr < (CONFIG_SECTION_RW_B_OFF + CONFIG_SECTION_RW_B_SIZE))
-		return SYSTEM_IMAGE_RW_B;
-
 	return SYSTEM_IMAGE_UNKNOWN;
 }
 
@@ -249,10 +245,6 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 	case SYSTEM_IMAGE_RW_A:
 		r_offset = CONFIG_FW_RW_OFF;
 		r_size = CONFIG_FW_RW_SIZE;
-		break;
-	case SYSTEM_IMAGE_RW_B:
-		r_offset = CONFIG_FW_RW_B_OFF;
-		r_size = CONFIG_FW_RW_B_SIZE;
 		break;
 	default:
 		return 0;
@@ -319,10 +311,6 @@ static uint32_t get_base(enum system_image_copy_t copy)
 		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
 	case SYSTEM_IMAGE_RW_A:
 		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
-#ifdef CONFIG_RW_B
-	case SYSTEM_IMAGE_RW_B:
-		return CONFIG_FLASH_BASE + CONFIG_FW_RW_B_OFF;
-#endif
 	default:
 		return 0xffffffff;
 	}
@@ -336,10 +324,6 @@ static uint32_t get_size(enum system_image_copy_t copy)
 		return CONFIG_FW_RO_SIZE;
 	case SYSTEM_IMAGE_RW_A:
 		return CONFIG_FW_RW_SIZE;
-#ifdef CONFIG_RW_B
-	case SYSTEM_IMAGE_RW_B:
-		return CONFIG_FW_RW_B_SIZE;
-#endif
 	default:
 		return 0;
 	}
@@ -364,7 +348,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Target image must be RW image */
-		if (copy != SYSTEM_IMAGE_RW_A && copy != SYSTEM_IMAGE_RW_B)
+		if (copy != SYSTEM_IMAGE_RW_A)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Can't have already jumped between images */
@@ -516,8 +500,6 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
 	case EC_REBOOT_JUMP_RW_A:
 		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
-	case EC_REBOOT_JUMP_RW_B:
-		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 	case EC_REBOOT_COLD:
 		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
@@ -623,8 +605,7 @@ static int command_version(int argc, char **argv)
 		 system_get_chip_name(), system_get_chip_revision());
 	ccprintf("Board: %d\n", system_get_board_version());
 	ccprintf("RO:    %s\n", system_get_version(SYSTEM_IMAGE_RO));
-	ccprintf("RW-A:  %s\n", system_get_version(SYSTEM_IMAGE_RW_A));
-	ccprintf("RW-B:  %s\n", system_get_version(SYSTEM_IMAGE_RW_B));
+	ccprintf("RW:    %s\n", system_get_version(SYSTEM_IMAGE_RW_A));
 	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
@@ -647,8 +628,6 @@ static int command_sysjump(int argc, char **argv)
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
 	else if (!strcasecmp(argv[1], "A"))
 		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
-	else if (!strcasecmp(argv[1], "B"))
-		return system_run_image_copy(SYSTEM_IMAGE_RW_B);
 	else if (!strcasecmp(argv[1], "disable")) {
 		system_disable_jump();
 		return EC_SUCCESS;
@@ -723,8 +702,6 @@ static int host_command_get_version(struct host_cmd_handler_args *args)
 		sizeof(r->version_string_ro));
 	strzcpy(r->version_string_rw_a, system_get_version(SYSTEM_IMAGE_RW_A),
 		sizeof(r->version_string_rw_a));
-	strzcpy(r->version_string_rw_b, system_get_version(SYSTEM_IMAGE_RW_B),
-		sizeof(r->version_string_rw_b));
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
@@ -732,9 +709,6 @@ static int host_command_get_version(struct host_cmd_handler_args *args)
 		break;
 	case SYSTEM_IMAGE_RW_A:
 		r->current_image = EC_IMAGE_RW_A;
-		break;
-	case SYSTEM_IMAGE_RW_B:
-		r->current_image = EC_IMAGE_RW_B;
 		break;
 	default:
 		r->current_image = EC_IMAGE_UNKNOWN;

@@ -155,35 +155,6 @@ int vboot_check_signature(void)
 		CPRINTF("[Image A is invalid]\n");
 	}
 
-#ifdef CONFIG_RW_B
-	CPRINTF("[%T Vboot check image B...]\n");
-
-	ts1 = get_time();
-	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
-		       (uint8_t *)CONFIG_VBLOCK_RW_B_OFF, CONFIG_VBLOCK_SIZE,
-		       (uint8_t *)CONFIG_FW_RW_B_OFF, CONFIG_FW_RW_B_SIZE);
-	ts2 = get_time();
-
-	CPRINTF("[%T Vboot result=%d, elapsed time=%ld us]\n",
-		r, ts2.val - ts1.val);
-
-	switch (r) {
-	case IMAGE_IS_GOOD:
-		CPRINTF("[Image B verified]\n");
-		system_run_image_copy(SYSTEM_IMAGE_RW_B);
-		CPRINTF("[ERROR: Unable to jump to image B]\n");
-		goto bad;
-	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
-		CPRINTF("[Image B verified]\n");
-		CPRINTF("[Staying in RO mode]\n");
-		return EC_SUCCESS;
-	default:
-		CPRINTF("[Image B is invalid]\n");
-	}
-#else  /* CONFIG_RW_B */
-	CPRINTF("[Vboot no image B to check]\n");
-#endif  /* CONFIG_RW_B */
-
 bad:
 	CPRINTF("[Staying in RO mode]\n");
 	CPRINTF("[FIXME: How to trigger recovery mode?]\n");

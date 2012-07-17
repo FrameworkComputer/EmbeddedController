@@ -99,8 +99,8 @@ const char help_str[] =
 	"      Set keyboard backlight in percent\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
-	"  reboot_ec <RO|A|B|disable-jump> [at-shutdown]\n"
-	"      Reboot EC to RO or RW A/B\n"
+	"  reboot_ec <RO|A|disable-jump> [at-shutdown]\n"
+	"      Reboot EC to RO or RW\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
 	"  switches\n"
@@ -296,13 +296,11 @@ int cmd_version(int argc, char *argv[])
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
-	r.version_string_rw_b[sizeof(r.version_string_rw_b) - 1] = '\0';
 	build_string[sizeof(build_string) - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
-	printf("RW-A version:  %s\n", r.version_string_rw_a);
-	printf("RW-B version:  %s\n", r.version_string_rw_b);
+	printf("RW version:    %s\n", r.version_string_rw_a);
 	printf("Firmware copy: %s\n",
 	       (r.current_image < ARRAY_SIZE(fw_copies) ?
 		fw_copies[r.current_image] : "?"));
@@ -399,8 +397,6 @@ int cmd_reboot_ec(int argc, char *argv[])
 		p.cmd = EC_REBOOT_JUMP_RO;
 	else if (!strcmp(argv[1], "A"))
 		p.cmd = EC_REBOOT_JUMP_RW_A;
-	else if (!strcmp(argv[1], "B"))
-		p.cmd = EC_REBOOT_JUMP_RW_B;
 	else if (!strcmp(argv[1], "cold"))
 		p.cmd = EC_REBOOT_COLD;
 	else if (!strcmp(argv[1], "disable-jump"))

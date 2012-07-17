@@ -15,7 +15,6 @@
 
 /* Optional features */
 #define CONFIG_CONSOLE_CMDHELP
-#define CONFIG_RW_B  /* RW firmware A *and* B */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_VBOOT
 #define CONFIG_VBOOT_SIG

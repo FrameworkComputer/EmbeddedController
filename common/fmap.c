@@ -40,7 +40,7 @@ typedef struct _FmapAreaHeader {
 } __packed FmapAreaHeader;
 
 
-#define NUM_EC_FMAP_AREAS 17
+#define NUM_EC_FMAP_AREAS 13
 const struct _ec_fmap {
 	FmapHeader header;
 	FmapAreaHeader area[NUM_EC_FMAP_AREAS];
@@ -108,11 +108,10 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* The range for autoupdate to update A/B at once. */
+			/* The range for autoupdate to update RW */
 			.area_name = "EC_RW",
 			.area_offset = CONFIG_SECTION_RW_OFF,
-			.area_size = CONFIG_SECTION_RW_SIZE
-					+ CONFIG_SECTION_RW_B_SIZE,
+			.area_size = CONFIG_SECTION_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
@@ -151,35 +150,5 @@ const struct _ec_fmap {
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
-
-#ifdef CONFIG_RW_B
-		/* Firmware B */
-		{
-			.area_name = "RW_SECTION_B",
-			.area_offset = CONFIG_SECTION_RW_B_OFF,
-			.area_size = CONFIG_SECTION_RW_B_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-		{
-			.area_name = "FW_MAIN_B",
-			.area_offset = CONFIG_FW_RW_B_OFF,
-			.area_size = CONFIG_FW_RW_B_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-		{
-			.area_name = "RW_FWID_B", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_RW_B_OFF +
-				(uint32_t)__version_struct_offset +
-				offsetof(struct version_struct,  version),
-			.area_size = sizeof(version_data.version),
-			.area_flags = FMAP_AREA_STATIC,
-		},
-		{
-			.area_name = "VBLOCK_B",
-			.area_offset = CONFIG_VBLOCK_RW_B_OFF,
-			.area_size = CONFIG_VBLOCK_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-#endif /* CONFIG_RW_B */
 	}
 };

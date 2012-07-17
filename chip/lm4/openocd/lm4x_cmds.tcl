@@ -27,10 +27,6 @@ proc flash_link_rw { } {
 	flash_lm4 ../../../build/link/ec.RW.bin 81920 81920
 }
 
-proc flash_link_rw_b { } {
-	flash_lm4 ../../../build/link/ec.RW_B.bin 163840 81920
-}
-
 proc flash_bds { } {
 	flash_lm4 ../../../build/bds/ec.bin 0 262144
 }

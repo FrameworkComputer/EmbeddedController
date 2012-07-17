@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -48,20 +48,15 @@ cmd_sign = vbutil_ec --sign $@ \
 		--signpubkey $(VBOOT_DEVKEYS)/ec_root_key.vbpubk \
 		$(silent)
 cmd_mv = mv $^ $@
-cmd_extractab-y = cd $(out) && \
+cmd_extractrw-y = cd $(out) && \
 	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A $(silent) && \
 	mv RW_SECTION_A $(PROJECT).RW.bin
-cmd_extractab-$(CONFIG_RW_B) += && \
-	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_B $(silent) && \
-	mv RW_SECTION_B $(PROJECT).RW_B.bin
-cmd_copyab-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
-cmd_copyab-$(CONFIG_RW_B) += && cp $(PROJECT).RW_B.flat $(PROJECT).RW_B.bin
+cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
 
 .PHONY: all tests utils
 all: $(out)/$(PROJECT).bin utils
 
 dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
-dis-$(CONFIG_RW_B) += $(out)/$(PROJECT).RW_B.dis
 dis: $(dis-y)
 
 utils: $(build-utils) $(host-utils)
@@ -93,11 +88,10 @@ $(out)/%.bin: $(out)/%.bin.tmp
 $(out)/%.bin.tmp: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)
 	$(if $(sign-y),$(call quiet,sign,SIGN   ),)
-	$(if $(sign-y),$(call quiet,extractab-y,EXTR_AB), \
-			$(call quiet,copyab-y,COPY_AB))
+	$(if $(sign-y),$(call quiet,extractrw-y,EXTR_RW), \
+			$(call quiet,copyrw-y,COPY_RW))
 
 flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).RW.flat
-flat-$(CONFIG_RW_B) += $(out)/$(PROJECT).RW_B.flat
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)
 	$(call quiet,flat_to_obj,CAT    )
