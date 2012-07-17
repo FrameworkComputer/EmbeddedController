@@ -39,8 +39,12 @@ typedef struct _FmapAreaHeader {
 	uint16_t area_flags;
 } __packed FmapAreaHeader;
 
-
+#ifdef CONFIG_VBOOT_SIG
 #define NUM_EC_FMAP_AREAS 13
+#else
+#define NUM_EC_FMAP_AREAS 11
+#endif
+
 const struct _ec_fmap {
 	FmapHeader header;
 	FmapAreaHeader area[NUM_EC_FMAP_AREAS];
@@ -80,12 +84,14 @@ const struct _ec_fmap {
 		},
 
 		/* Other RO stuff: FMAP, GBB, etc. */
+#ifdef CONFIG_VBOOT_SIG
 		{
 			.area_name = "ROOT_KEY",
 			.area_offset = CONFIG_VBOOT_ROOTKEY_OFF,
 			.area_size = CONFIG_VBOOT_ROOTKEY_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
+#endif
 		{
 			.area_name = "FMAP",
 			.area_offset = (uint32_t)&ec_fmap,
@@ -144,11 +150,13 @@ const struct _ec_fmap {
 			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
+#ifdef CONFIG_VBOOT_SIG
 		{
 			.area_name = "VBLOCK_A",
 			.area_offset = CONFIG_VBLOCK_RW_OFF,
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
+#endif
 	}
 };
