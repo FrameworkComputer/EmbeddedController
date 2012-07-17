@@ -426,59 +426,10 @@ struct ec_params_flash_erase {
 	uint32_t size;     /* Size to erase in bytes */
 } __packed;
 
-/* Get flashmap offset */
-#define EC_CMD_FLASH_GET_FLASHMAP 0x14
-
-struct ec_response_flash_flashmap {
-	uint32_t offset;   /* Flashmap offset */
-} __packed;
-
-/* Enable/disable flash write protect */
-#define EC_CMD_FLASH_WP_ENABLE 0x15
-
-struct ec_params_flash_wp_enable {
-	uint32_t enable_wp;
-} __packed;
-
-/* Get flash write protection commit state */
-#define EC_CMD_FLASH_WP_GET_STATE 0x16
-
-struct ec_response_flash_wp_enable {
-	uint32_t enable_wp;
-} __packed;
-
-/* Set/get flash write protection range */
-#define EC_CMD_FLASH_WP_SET_RANGE 0x17
-
-struct ec_params_flash_wp_range {
-	/* Byte offset aligned to info.protect_block_size */
-	uint32_t offset;
-	/* Size should be multiply of info.protect_block_size */
-	uint32_t size;
-} __packed;
-
-#define EC_CMD_FLASH_WP_GET_RANGE 0x18
-
-struct ec_response_flash_wp_range {
-	uint32_t offset;
-	uint32_t size;
-} __packed;
-
-/* Read flash write protection GPIO pin */
-#define EC_CMD_FLASH_WP_GET_GPIO 0x19
-
 /*
- * TODO: why does this pass in a pin number?  EC *KNOWS* what the pin is.
- * Of course, the EC doesn't implement this message yet, so this is somewhat
- * theoretical.
+ * Note: commands 0x14 - 0x19 version 0 were old commands to get/set flash
+ * write protect.  These commands may be reused with version > 0.
  */
-struct ec_params_flash_wp_gpio {
-	uint32_t pin_no;
-} __packed;
-
-struct ec_response_flash_wp_gpio {
-	uint32_t value;
-} __packed;
 
 /*****************************************************************************/
 /* PWM commands */
