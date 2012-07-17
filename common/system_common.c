@@ -796,7 +796,7 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 	host_send_response(EC_RES_SUCCESS);
 #endif
 
-	CPUTS("[Executing host reboot command]\n");
+	CPRINTF("[%T Executing host reboot command %d]\n", p.cmd);
 	switch (handle_pending_reboot(p.cmd)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;
