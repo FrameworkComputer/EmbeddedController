@@ -239,6 +239,13 @@ int gaia_power_init(void)
 
 int chipset_in_state(int state_mask)
 {
+	/*
+	 * TODO(rongchang): fix suspend signal
+	 * gaia_suspend_event() doesn't work. get ap_suspended
+	 * again.
+	 */
+	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
+
 	/* If AP is off, match any off state for now */
 	if ((state_mask & CHIPSET_STATE_ANY_OFF) && !ap_on)
 		return 1;
