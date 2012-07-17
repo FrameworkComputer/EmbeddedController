@@ -28,6 +28,7 @@ int i2c_command_read(struct host_cmd_handler_args *args)
 	if (rv)
 		return EC_RES_ERROR;
 	r->data = data;
+	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
