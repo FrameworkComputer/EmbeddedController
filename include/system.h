@@ -28,7 +28,7 @@
 enum system_image_copy_t {
 	SYSTEM_IMAGE_UNKNOWN = 0,
 	SYSTEM_IMAGE_RO,
-	SYSTEM_IMAGE_RW_A
+	SYSTEM_IMAGE_RW
 };
 
 /* Pre-initializes the module.  This occurs before clocks or tasks are

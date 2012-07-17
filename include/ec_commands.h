@@ -290,13 +290,13 @@ struct ec_response_hello {
 enum ec_current_image {
 	EC_IMAGE_UNKNOWN = 0,
 	EC_IMAGE_RO,
-	EC_IMAGE_RW_A
+	EC_IMAGE_RW
 };
 
 struct ec_response_get_version {
 	/* Null-terminated version strings for RO, RW */
 	char version_string_ro[32];
-	char version_string_rw_a[32];
+	char version_string_rw[32];
 	char reserved[32];       /* Was previously RW-B string */
 	uint32_t current_image;  /* One of ec_current_image */
 } __packed;
@@ -871,7 +871,7 @@ struct ec_params_i2c_write {
 enum ec_reboot_cmd {
 	EC_REBOOT_CANCEL = 0,        /* Cancel a pending reboot */
 	EC_REBOOT_JUMP_RO,           /* Jump to RO without rebooting */
-	EC_REBOOT_JUMP_RW_A,         /* Jump to RW-A without rebooting */
+	EC_REBOOT_JUMP_RW,           /* Jump to RW without rebooting */
 	/* (command 3 was jump to RW-B) */
 	EC_REBOOT_COLD = 4,          /* Cold-reboot */
 	EC_REBOOT_DISABLE_JUMP,      /* Disable jump until next reboot */

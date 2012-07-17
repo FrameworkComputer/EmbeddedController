@@ -130,7 +130,7 @@ int vboot_check_signature(void)
 	if (!maybe_jump_to_other_image())
 		return EC_SUCCESS;
 
-	CPRINTF("[%T Vboot check image A...]\n");
+	CPRINTF("[%T Vboot check RW image...]\n");
 
 	ts1 = get_time();
 	r = good_image((uint8_t *)CONFIG_VBOOT_ROOTKEY_OFF,
@@ -143,16 +143,16 @@ int vboot_check_signature(void)
 
 	switch (r) {
 	case IMAGE_IS_GOOD:
-		CPRINTF("[Image A verified]\n");
-		system_run_image_copy(SYSTEM_IMAGE_RW_A);
-		CPRINTF("[ERROR: Unable to jump to image A]\n");
+		CPRINTF("[RW image verified]\n");
+		system_run_image_copy(SYSTEM_IMAGE_RW);
+		CPRINTF("[ERROR: Unable to jump to RW image]\n");
 		goto bad;
 	case IMAGE_IS_GOOD_BUT_USE_RO_ANYWAY:
-		CPRINTF("[Image A verified]\n");
+		CPRINTF("[RW image verified]\n");
 		CPRINTF("[Staying in RO mode]\n");
 		return EC_SUCCESS;
 	default:
-		CPRINTF("[Image A is invalid]\n");
+		CPRINTF("[RW image is invalid]\n");
 	}
 
 bad:

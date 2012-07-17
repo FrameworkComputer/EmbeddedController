@@ -75,7 +75,7 @@ static const char * const reset_flag_descs[] = {
 	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
 	"hard"};
 
-static const char * const image_names[] = {"unknown", "RO", "A", "B"};
+static const char * const image_names[] = {"unknown", "RO", "RW"};
 static uint32_t reset_flags;
 static int jumped_to_image;
 static int disable_jump;  /* Disable ALL jumps if system is locked */
@@ -223,7 +223,7 @@ enum system_image_copy_t system_get_image_copy(void)
 
 	if (my_addr >= CONFIG_SECTION_RW_OFF &&
 	    my_addr < (CONFIG_SECTION_RW_OFF + CONFIG_SECTION_RW_SIZE))
-		return SYSTEM_IMAGE_RW_A;
+		return SYSTEM_IMAGE_RW;
 
 	return SYSTEM_IMAGE_UNKNOWN;
 }
@@ -242,7 +242,7 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 		r_offset = CONFIG_FW_RO_OFF;
 		r_size = CONFIG_FW_RO_SIZE;
 		break;
-	case SYSTEM_IMAGE_RW_A:
+	case SYSTEM_IMAGE_RW:
 		r_offset = CONFIG_FW_RW_OFF;
 		r_size = CONFIG_FW_RW_SIZE;
 		break;
@@ -309,7 +309,7 @@ static uint32_t get_base(enum system_image_copy_t copy)
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
-	case SYSTEM_IMAGE_RW_A:
+	case SYSTEM_IMAGE_RW:
 		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
 	default:
 		return 0xffffffff;
@@ -322,7 +322,7 @@ static uint32_t get_size(enum system_image_copy_t copy)
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_FW_RO_SIZE;
-	case SYSTEM_IMAGE_RW_A:
+	case SYSTEM_IMAGE_RW:
 		return CONFIG_FW_RW_SIZE;
 	default:
 		return 0;
@@ -348,7 +348,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Target image must be RW image */
-		if (copy != SYSTEM_IMAGE_RW_A)
+		if (copy != SYSTEM_IMAGE_RW)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Can't have already jumped between images */
@@ -498,8 +498,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		return EC_SUCCESS;
 	case EC_REBOOT_JUMP_RO:
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
-	case EC_REBOOT_JUMP_RW_A:
-		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
+	case EC_REBOOT_JUMP_RW:
+		return system_run_image_copy(SYSTEM_IMAGE_RW);
 	case EC_REBOOT_COLD:
 		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
@@ -605,7 +605,7 @@ static int command_version(int argc, char **argv)
 		 system_get_chip_name(), system_get_chip_revision());
 	ccprintf("Board: %d\n", system_get_board_version());
 	ccprintf("RO:    %s\n", system_get_version(SYSTEM_IMAGE_RO));
-	ccprintf("RW:    %s\n", system_get_version(SYSTEM_IMAGE_RW_A));
+	ccprintf("RW:    %s\n", system_get_version(SYSTEM_IMAGE_RW));
 	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
@@ -626,9 +626,10 @@ static int command_sysjump(int argc, char **argv)
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
-	else if (!strcasecmp(argv[1], "A"))
-		return system_run_image_copy(SYSTEM_IMAGE_RW_A);
-	else if (!strcasecmp(argv[1], "disable")) {
+	else if (!strcasecmp(argv[1], "RW") || !strcasecmp(argv[1], "A")) {
+		/* TODO: remove "A" once all scripts are updated to use "RW" */
+		return system_run_image_copy(SYSTEM_IMAGE_RW);
+	} else if (!strcasecmp(argv[1], "disable")) {
 		system_disable_jump();
 		return EC_SUCCESS;
 	}
@@ -648,7 +649,7 @@ static int command_sysjump(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
-			"[RO | A | B | addr | disable]",
+			"[RO | RW | addr | disable]",
 			"Jump to a system image or address",
 			NULL);
 
@@ -700,15 +701,15 @@ static int host_command_get_version(struct host_cmd_handler_args *args)
 
 	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
 		sizeof(r->version_string_ro));
-	strzcpy(r->version_string_rw_a, system_get_version(SYSTEM_IMAGE_RW_A),
-		sizeof(r->version_string_rw_a));
+	strzcpy(r->version_string_rw, system_get_version(SYSTEM_IMAGE_RW),
+		sizeof(r->version_string_rw));
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
 		r->current_image = EC_IMAGE_RO;
 		break;
-	case SYSTEM_IMAGE_RW_A:
-		r->current_image = EC_IMAGE_RW_A;
+	case SYSTEM_IMAGE_RW:
+		r->current_image = EC_IMAGE_RW;
 		break;
 	default:
 		r->current_image = EC_IMAGE_UNKNOWN;

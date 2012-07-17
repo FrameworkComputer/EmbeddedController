@@ -129,6 +129,8 @@ const char help_str[] =
 	"  pci_write16 0 0x1f 0 0x82 0x3d01\n"
 	"";
 
+/* Note: depends on enum system_image_copy_t */
+static const char * const image_names[] = {"unknown", "RO", "RW"};
 
 /* Write a buffer to the file.  Return non-zero if error. */
 static int write_file(const char *filename, const char *buf, int size)
@@ -279,7 +281,6 @@ int cmd_cmdversions(int argc, char *argv[])
 
 int cmd_version(int argc, char *argv[])
 {
-  static const char * const fw_copies[] = {"unknown", "RO", "A", "B"};
 	struct ec_response_get_version r;
 	char build_string[EC_HOST_PARAM_SIZE];
 	int rv;
@@ -295,15 +296,15 @@ int cmd_version(int argc, char *argv[])
 
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
-	r.version_string_rw_a[sizeof(r.version_string_rw_a) - 1] = '\0';
+	r.version_string_rw[sizeof(r.version_string_rw) - 1] = '\0';
 	build_string[sizeof(build_string) - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
-	printf("RW version:    %s\n", r.version_string_rw_a);
+	printf("RW version:    %s\n", r.version_string_rw);
 	printf("Firmware copy: %s\n",
-	       (r.current_image < ARRAY_SIZE(fw_copies) ?
-		fw_copies[r.current_image] : "?"));
+	       (r.current_image < ARRAY_SIZE(image_names) ?
+		image_names[r.current_image] : "?"));
 	printf("Build info:    %s\n", build_string);
 
 	return 0;
@@ -395,9 +396,10 @@ int cmd_reboot_ec(int argc, char *argv[])
 		p.cmd = EC_REBOOT_CANCEL;
 	else if (!strcmp(argv[1], "RO"))
 		p.cmd = EC_REBOOT_JUMP_RO;
-	else if (!strcmp(argv[1], "A"))
-		p.cmd = EC_REBOOT_JUMP_RW_A;
-	else if (!strcmp(argv[1], "cold"))
+	else if (!strcmp(argv[1], "RW") || !strcmp(argv[1], "A")) {
+		/* TODO: remove "A" once all scripts are updated to use "RW" */
+		p.cmd = EC_REBOOT_JUMP_RW;
+	} else if (!strcmp(argv[1], "cold"))
 		p.cmd = EC_REBOOT_COLD;
 	else if (!strcmp(argv[1], "disable-jump"))
 		p.cmd = EC_REBOOT_DISABLE_JUMP;
@@ -1044,9 +1046,6 @@ static const struct {
 	{ sizeof(((struct ec_params_vboot_cmd *)0)->in.set_flags),
 	  sizeof(((struct ec_params_vboot_cmd *)0)->out.set_flags) },
 };
-
-/* Note: depends on enum system_image_copy_t */
-static const char * const image_names[] = {"unknown", "RO", "A", "B"};
 
 static int cmd_vboot(int argc, char **argv)
 {
