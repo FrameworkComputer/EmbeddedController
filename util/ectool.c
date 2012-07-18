@@ -65,6 +65,8 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
+	"  flashprotect [now] [enable | disable]\n"
+	"      Prints or sets EC flash protection state\n"
 	"  flashread <offset> <size> <outfile>\n"
 	"      Reads from EC flash to a file\n"
 	"  flashwrite <offset> <infile>\n"
@@ -570,6 +572,78 @@ int cmd_flash_erase(int argc, char *argv[])
 		return rv;
 
 	printf("done.\n");
+	return 0;
+}
+
+
+static void print_flash_protect_flags(const char *desc, uint32_t flags)
+{
+	printf("%s 0x%08x", desc, flags);
+	if (flags & EC_FLASH_PROTECT_GPIO_ASSERTED)
+		printf(" wp_gpio_asserted");
+	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
+		printf(" ro_at_boot");
+	if (flags & EC_FLASH_PROTECT_RW_AT_BOOT)
+		printf(" rw_at_boot");
+	if (flags & EC_FLASH_PROTECT_RO_NOW)
+		printf(" ro_now");
+	if (flags & EC_FLASH_PROTECT_RW_NOW)
+		printf(" rw_now");
+	if (flags & EC_FLASH_PROTECT_ERROR_STUCK)
+		printf(" STUCK");
+	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
+		printf(" INCONSISTENT");
+	printf("\n");
+}
+
+
+int cmd_flash_protect(int argc, char *argv[])
+{
+	struct ec_params_flash_protect p;
+	struct ec_response_flash_protect r;
+	int rv, i;
+
+	/*
+	 * Set up requested flags.  If no flags were specified, p.mask will
+	 * be 0 and nothing will change.
+	 */
+	p.mask = p.flags = 0;
+	for (i = 1; i < argc; i++) {
+		if (!strcasecmp(argv[i], "now")) {
+			p.mask |= EC_FLASH_PROTECT_RW_NOW;
+			p.flags |= EC_FLASH_PROTECT_RW_NOW;
+		} else if (!strcasecmp(argv[i], "enable")) {
+			p.mask |= EC_FLASH_PROTECT_RO_AT_BOOT;
+			p.flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+		} else if (!strcasecmp(argv[i], "disable"))
+			p.mask |= EC_FLASH_PROTECT_RO_AT_BOOT;
+	}
+
+	rv = ec_command(EC_CMD_FLASH_PROTECT, EC_VER_FLASH_PROTECT,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+	if (rv < sizeof(r)) {
+		fprintf(stderr, "Too little data returned.\n");
+		return -1;
+	}
+
+	/* Print returned flags */
+	print_flash_protect_flags("Flash protect flags:", r.flags);
+	print_flash_protect_flags("Writable flags:     ", r.writable_flags);
+
+	/* Check if we got all the flags we asked for */
+	if ((r.flags & p.mask) != (p.flags & p.mask)) {
+		fprintf(stderr, "Unable to set requested flags "
+			"(wanted mask 0x%08x flags 0x%08x)\n",
+			p.mask, p.flags);
+		if (p.mask & ~r.writable_flags)
+			fprintf(stderr, "Which is expected, because writable "
+				"mask is 0x%08x.\n", r.writable_flags);
+
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -1964,6 +2038,7 @@ const struct command commands[] = {
 	{"eventsetwakemask", cmd_host_event_set_wake_mask},
 	{"fanduty", cmd_fanduty},
 	{"flasherase", cmd_flash_erase},
+	{"flashprotect", cmd_flash_protect},
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},

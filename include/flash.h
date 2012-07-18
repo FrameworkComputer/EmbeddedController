@@ -9,7 +9,7 @@
 #define __CROS_EC_FLASH_H
 
 #include "common.h"
-
+#include "ec_commands.h"  /* For EC_FLASH_PROTECT_* flags */
 
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
@@ -158,29 +158,10 @@ int flash_protect_until_reboot(void);
  */
 int flash_enable_protect(int enable);
 
-/* Flags for flash_get_protect() */
-/*
- * Flash protection lock has been set.  Note that if the write protect pin was
- * deasserted at boot time, this simply indicates the state of the lock
- * setting, and not whether blocks are actually protected.
- */
-#define FLASH_PROTECT_RO_AT_BOOT   (1 << 0)
-/*
- * Flash protection lock has actually been applied. Read-only firmware is
- * protected, and flash protection cannot be unlocked.
- */
-#define FLASH_PROTECT_RO_NOW       (1 << 1)
-/* Write protect pin is currently asserted */
-#define FLASH_PROTECT_PIN_ASSERTED (1 << 2)
-/* Entire flash is protected until reboot */
-#define FLASH_PROTECT_RW_NOW       (1 << 3)
-/* At least one bank of flash is stuck locked, and cannot be unlocked */
-#define FLASH_PROTECT_STUCK_LOCKED (1 << 4)
-/* At least one bank of flash which should be protected is not protected */
-#define FLASH_PROTECT_PARTIAL      (1 << 5)
-
 /**
  * Return the flash protect lock status.
+ *
+ * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
 int flash_get_protect(void);
 

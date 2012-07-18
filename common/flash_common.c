@@ -226,11 +226,11 @@ int flash_get_protect(void)
 	/* Read the current persist state from flash */
 	read_pstate();
 	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
-		flags |= FLASH_PROTECT_RO_AT_BOOT;
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	/* Check if write protect pin is asserted now */
 	if (wp_pin_asserted())
-		flags |= FLASH_PROTECT_PIN_ASSERTED;
+		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
@@ -238,21 +238,21 @@ int flash_get_protect(void)
 		int is_ro = ((i >= RO_BANK_OFFSET &&
 			      i < RO_BANK_OFFSET + RO_BANK_COUNT) ||
 			     i == PSTATE_BANK);
-		int bank_flag = (is_ro ? FLASH_PROTECT_RO_NOW :
-				 FLASH_PROTECT_RW_NOW);
+		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
+				 EC_FLASH_PROTECT_RW_NOW);
 
 		if (flash_physical_get_protect(i)) {
 			/* At least one bank in the region is protected */
 			flags |= bank_flag;
 		} else if (flags & bank_flag) {
 			/* But not all banks in the region! */
-			flags |= FLASH_PROTECT_PARTIAL;
+			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 		}
 	}
 
 	/* Check if any banks were stuck locked at boot */
 	if (stuck_locked)
-		flags |= FLASH_PROTECT_STUCK_LOCKED;
+		flags |= EC_FLASH_PROTECT_ERROR_STUCK;
 
 	return flags;
 }
@@ -321,18 +321,18 @@ static int command_flash_info(int argc, char **argv)
 
 	i = flash_get_protect();
 	ccprintf("Flags:  ");
-	if (i & FLASH_PROTECT_PIN_ASSERTED)
-		ccputs(" wp_asserted");
-	if (i & FLASH_PROTECT_RO_AT_BOOT)
+	if (i & EC_FLASH_PROTECT_GPIO_ASSERTED)
+		ccputs(" wp_gpio_asserted");
+	if (i & EC_FLASH_PROTECT_RO_AT_BOOT)
 		ccputs(" ro_at_boot");
-	if (i & FLASH_PROTECT_RO_NOW)
+	if (i & EC_FLASH_PROTECT_RO_NOW)
 		ccputs(" ro_now");
-	if (i & FLASH_PROTECT_RW_NOW)
+	if (i & EC_FLASH_PROTECT_RW_NOW)
 		ccputs(" rw_now");
-	if (i & FLASH_PROTECT_STUCK_LOCKED)
+	if (i & EC_FLASH_PROTECT_ERROR_STUCK)
 		ccputs(" STUCK");
-	if (i & FLASH_PROTECT_PARTIAL)
-		ccputs(" PARTIAL");
+	if (i & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
+		ccputs(" INCONSISTENT");
 	ccputs("\n");
 
 	ccputs("Protected now:");
@@ -501,3 +501,62 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE,
 		     flash_command_erase,
 		     EC_VER_MASK(0));
+
+static int flash_command_protect(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_flash_protect *p =
+		(const struct ec_params_flash_protect *)args->params;
+	struct ec_response_flash_protect *r =
+		(struct ec_response_flash_protect *)args->response;
+
+	/* Handle requesting new flags */
+	if (p->mask & EC_FLASH_PROTECT_RO_AT_BOOT)
+		flash_enable_protect(p->flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+
+	if ((p->mask & EC_FLASH_PROTECT_RW_NOW) &&
+	    (p->flags & EC_FLASH_PROTECT_RW_NOW))
+		flash_protect_until_reboot();
+
+	/* Ignore all other requested flags */
+
+	/*
+	 * Retrieve the current flags.  The caller can use this to determine
+	 * which of the requested flags could be set.  This is cleaner than
+	 * simply returning error, because it provides information to the
+	 * caller about the actual result.
+	 */
+	r->flags = flash_get_protect();
+
+	/* Indicate which flags are valid on this platform */
+	r->valid_flags = (EC_FLASH_PROTECT_RO_AT_BOOT |
+			  EC_FLASH_PROTECT_RO_NOW |
+			  EC_FLASH_PROTECT_RW_NOW |
+			  EC_FLASH_PROTECT_GPIO_ASSERTED |
+			  EC_FLASH_PROTECT_ERROR_STUCK |
+			  EC_FLASH_PROTECT_ERROR_INCONSISTENT);
+
+	/* Indicate which flags can be changed this boot */
+	r->writable_flags = 0;
+
+	/*
+	 * If RW protection isn't enabled this boot, it can be enabled if the *
+	 * WP GPIO is asserted.
+	 */
+	if (!(r->flags & EC_FLASH_PROTECT_RW_NOW) &&
+	    (r->flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
+		r->writable_flags |= EC_FLASH_PROTECT_RW_NOW;
+
+	/* If RO protection isn't enabled, its at-boot state can be changed. */
+	if (!(r->flags & EC_FLASH_PROTECT_RO_NOW))
+		r->writable_flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/* Other flags can't be written */
+
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT,
+		     flash_command_protect,
+		     EC_VER_MASK(1));

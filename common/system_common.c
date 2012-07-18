@@ -96,7 +96,7 @@ int system_is_locked(void)
 	 * On link, unlocked if write protect pin deasserted or read-only
 	 * firmware is not protected.
 	 */
-	if ((FLASH_PROTECT_PIN_ASSERTED | FLASH_PROTECT_RO_NOW) &
+	if ((EC_FLASH_PROTECT_GPIO_ASSERTED | EC_FLASH_PROTECT_RO_NOW) &
 	    ~flash_get_protect())
 		return 0;
 

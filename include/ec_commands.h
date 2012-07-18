@@ -427,6 +427,60 @@ struct ec_params_flash_erase {
 } __packed;
 
 /*
+ * Get/set flash protection.
+ *
+ * If mask!=0, sets/clear the requested bits of flags.  Depending on the
+ * firmware write protect GPIO, not all flags will take effect immediately;
+ * some flags require a subsequent hard reset to take effect.  Check the
+ * returned flags bits to see what actually happened.
+ *
+ * If mask=0, simply returns the current flags state.
+ */
+#define EC_CMD_FLASH_PROTECT 0x15
+#define EC_VER_FLASH_PROTECT 1  /* Command version 1 */
+
+/* Flags for flash protection */
+/* RO flash code protected when the EC boots */
+#define EC_FLASH_PROTECT_RO_AT_BOOT         (1 << 0)
+/*
+ * RO flash code protected now.  If this bit is set, at-boot status cannot
+ * be changed.
+ */
+#define EC_FLASH_PROTECT_RO_NOW             (1 << 1)
+/* RW flash code protected now, until reboot. */
+#define EC_FLASH_PROTECT_RW_NOW             (1 << 2)
+/* Flash write protect GPIO is asserted now */
+#define EC_FLASH_PROTECT_GPIO_ASSERTED      (1 << 3)
+/* Error - at least one bank of flash is stuck locked, and cannot be unlocked */
+#define EC_FLASH_PROTECT_ERROR_STUCK        (1 << 4)
+/*
+ * Error - flash protection is in inconsistent state.  At least one bank of
+ * flash which should be protected is not protected.  Usually fixed by
+ * re-requesting the desired flags, or by a hard reset if that fails.
+ */
+#define EC_FLASH_PROTECT_ERROR_INCONSISTENT (1 << 5)
+/* RW flash code protected when the EC boots */
+#define EC_FLASH_PROTECT_RW_AT_BOOT         (1 << 6)
+
+struct ec_params_flash_protect {
+	uint32_t mask;   /* Bits in flags to apply */
+	uint32_t flags;  /* New flags to apply */
+} __packed;
+
+struct ec_response_flash_protect {
+	/* Current value of flash protect flags */
+	uint32_t flags;
+	/*
+	 * Flags which are valid on this platform.  This allows the caller
+	 * to distinguish between flags which aren't set vs. flags which can't
+	 * be set on this platform.
+	 */
+	uint32_t valid_flags;
+	/* Flags which can be changed given the current protection state */
+	uint32_t writable_flags;
+} __packed;
+
+/*
  * Note: commands 0x14 - 0x19 version 0 were old commands to get/set flash
  * write protect.  These commands may be reused with version > 0.
  */
