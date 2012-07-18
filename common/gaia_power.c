@@ -27,6 +27,7 @@
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "keyboard_scan.h"
 #include "power_led.h"
 #include "task.h"
@@ -216,8 +217,11 @@ void gaia_suspend_event(enum gpio_signal signal)
 			powerled_set_state(POWERLED_STATE_SUSPEND);
 		else
 			powerled_set_state(POWERLED_STATE_OFF);
+		/* Call hooks here since we don't know it prior to AP suspend */
+		hook_notify(HOOK_CHIPSET_SUSPEND, 0);
 	} else {
 		powerled_set_state(POWERLED_STATE_ON);
+		hook_notify(HOOK_CHIPSET_RESUME, 0);
 	}
 }
 
@@ -365,6 +369,10 @@ static int power_on(void)
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	ap_on = 1;
 	powerled_set_state(POWERLED_STATE_ON);
+
+	/* Call hooks now that AP is running */
+	hook_notify(HOOK_CHIPSET_STARTUP, 0);
+
 	CPUTS("AP running ...\n");
 	return 0;
 }
@@ -393,6 +401,8 @@ static int wait_for_power_button_release(unsigned int timeout_us)
  */
 static void power_off(void)
 {
+	/* Call hooks before we drop power rails */
+	hook_notify(HOOK_CHIPSET_SHUTDOWN, 0);
 	/* switch off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
 	gpio_set_level(GPIO_EN_PP1350, 0);
