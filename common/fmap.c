@@ -40,9 +40,9 @@ typedef struct _FmapAreaHeader {
 } __packed FmapAreaHeader;
 
 #ifdef CONFIG_VBOOT_SIG
-#define NUM_EC_FMAP_AREAS 13
+#define NUM_EC_FMAP_AREAS (7 + 4)
 #else
-#define NUM_EC_FMAP_AREAS 11
+#define NUM_EC_FMAP_AREAS 7
 #endif
 
 const struct _ec_fmap {
@@ -63,19 +63,25 @@ const struct _ec_fmap {
 	{
 	/* RO Firmware */
 		{
-			.area_name = "RO_SECTION",
+			/* Range of RO firmware to be updated. Verified in
+			 * factory finalization by hash. Should not have
+			 * volatile data (ex, calibration results). */
+			.area_name = "EC_RO",
 			.area_offset = CONFIG_SECTION_RO_OFF,
 			.area_size = CONFIG_SECTION_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
+			/* (Optional) RO firmware boot execution code. */
 			.area_name = "BOOT_STUB",
 			.area_offset = CONFIG_FW_RO_OFF,
 			.area_size = CONFIG_FW_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			.area_name = "RO_FRID",	/* FIXME: Where is it? */
+			/* RO firmware version ID. Must be NULL terminated
+			 * ASCIIZ, and padded with \0. */
+			.area_name = "RO_FRID",
 			.area_offset = CONFIG_FW_RO_OFF +
 				(uint32_t)__version_struct_offset +
 				offsetof(struct version_struct,  version),
@@ -83,7 +89,22 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
-		/* Other RO stuff: FMAP, GBB, etc. */
+		/* Other RO stuff: FMAP, WP, KEYS, etc. */
+		{
+			.area_name = "FMAP",
+			.area_offset = (uint32_t)&ec_fmap,
+			.area_size = sizeof(ec_fmap),
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+		{
+			/* The range for write protection, for factory
+			 * finalization.  Should include (or identical to)
+			 * EC_RO and aligned to hardware specification. */
+			.area_name = "WP_RO",
+			.area_offset = CONFIG_SECTION_RO_OFF,
+			.area_size = CONFIG_SECTION_RO_SIZE,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
 #ifdef CONFIG_VBOOT_SIG
 		{
 			.area_name = "ROOT_KEY",
@@ -92,43 +113,27 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 #endif
+
+	/* RW Firmware */
 		{
-			.area_name = "FMAP",
-			.area_offset = (uint32_t)&ec_fmap,
-			.area_size = sizeof(ec_fmap),
-			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
-		},
-		{
-			/* A dummy region to identify it as EC firmware */
-			.area_name = "EC_IMAGE",
-			.area_offset = CONFIG_SECTION_RO_OFF,
-			.area_size = 0, /* Always zero */
-			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
-		},
-		{
-			/* The range for write protect, for lagecy firmware
-			 * updater. Should be identical to 'WP_RO'. */
-			.area_name = "EC_RO",
-			.area_offset = CONFIG_SECTION_RO_OFF,
-			.area_size = CONFIG_SECTION_RO_SIZE,
-			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
-		},
-		{
-			/* The range for autoupdate to update RW */
+			 /* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
 			.area_offset = CONFIG_SECTION_RW_OFF,
 			.area_size = CONFIG_SECTION_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* The range for write protect, for factory finalize
-			 * test case. Should be identical to 'EC_RO'. */
-			.area_name = "WP_RO",
-			.area_offset = CONFIG_SECTION_RO_OFF,
-			.area_size = CONFIG_SECTION_RO_SIZE,
-			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+			/* RW firmware version ID. Must be NULL terminated
+			 * ASCIIZ, and padded with \0. */
+			.area_name = "RW_FWID",
+			.area_offset = CONFIG_FW_RW_OFF +
+				(uint32_t)__version_struct_offset +
+				offsetof(struct version_struct,  version),
+			.area_size = sizeof(version_data.version),
+			.area_flags = FMAP_AREA_STATIC,
 		},
 
+#ifdef CONFIG_VBOOT_SIG
 		/* Firmware A */
 		{
 			.area_name = "RW_SECTION_A",
@@ -142,15 +147,6 @@ const struct _ec_fmap {
 			.area_size = CONFIG_FW_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
-		{
-			.area_name = "RW_FWID_A", /* FIXME: Where is it? */
-			.area_offset = CONFIG_FW_RW_OFF +
-				(uint32_t)__version_struct_offset +
-				offsetof(struct version_struct,  version),
-			.area_size = sizeof(version_data.version),
-			.area_flags = FMAP_AREA_STATIC,
-		},
-#ifdef CONFIG_VBOOT_SIG
 		{
 			.area_name = "VBLOCK_A",
 			.area_offset = CONFIG_VBLOCK_RW_OFF,
