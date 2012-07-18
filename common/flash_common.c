@@ -173,6 +173,10 @@ int flash_erase(int offset, int size)
 
 int flash_protect_until_reboot(void)
 {
+	/* Ignore if write protect is disabled */
+	if (!wp_pin_asserted())
+		return EC_SUCCESS;
+
 	/* Protect the entire flash */
 	flash_physical_set_protect(0, CONFIG_FLASH_PHYSICAL_SIZE /
 				   CONFIG_FLASH_BANK_SIZE);
@@ -182,26 +186,29 @@ int flash_protect_until_reboot(void)
 
 int flash_enable_protect(int enable)
 {
+	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
 	int rv;
-
-	/* Fail if write protect block is already locked */
-	/* TODO: and in the wrong state... if it's asking to enable and we're
-	 * already enabled, we can just succeed... */
-	if (flash_physical_get_protect(PSTATE_BANK))
-		return EC_ERROR_UNKNOWN;
 
 	/* Read the current persist state from flash */
 	rv = read_pstate();
 	if (rv)
 		return rv;
 
-	/* Set the new flag */
-	pstate.flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
+	/* Update state if necessary */
+	if (pstate.flags != new_flags) {
 
-	/* Write the state back to flash */
-	rv = write_pstate();
-	if (rv)
-		return rv;
+		/* Fail if write protect block is already locked */
+		if (flash_physical_get_protect(PSTATE_BANK))
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Set the new flag */
+		pstate.flags = new_flags;
+
+		/* Write the state back to flash */
+		rv = write_pstate();
+		if (rv)
+			return rv;
+	}
 
 	/* If unlocking, done now */
 	if (!enable)
@@ -330,7 +337,9 @@ static int command_flash_info(int argc, char **argv)
 
 	ccputs("Protected now:");
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
-		if (!(i & 7))
+		if (!(i & 31))
+			ccputs("\n    ");
+		else if (!(i & 7))
 			ccputs(" ");
 		ccputs(flash_physical_get_protect(i) ? "Y" : ".");
 	}
