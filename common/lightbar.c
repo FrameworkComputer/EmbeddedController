@@ -5,6 +5,9 @@
  * LED controls.
  */
 
+#include "battery.h"
+#include "battery_pack.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -12,6 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lightbar.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -56,7 +60,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
  * brightness when full on. That's still pretty bright and a lot of current
  * drain on the battery, so we'll probably rarely go that high. */
 #define MAX_RED   0x5c
-#define MAX_GREEN 0x38
+#define MAX_GREEN 0x30
 #define MAX_BLUE  0x67
 
 /* How many LEDs do we have? */
@@ -107,7 +111,7 @@ static inline uint8_t scale_abs(int val, int max)
 }
 
 /* It will often be simpler to provide an overall brightness control. */
-static int brightness = 0x40;
+int brightness = 0x80;
 
 /* So that we can make brightness changes happen instantly, we need to track
  * the current values. The values in the controllers aren't very helpful. */
@@ -175,7 +179,7 @@ static void lightbar_setrgb(int led, int red, int green, int blue)
 		setrgb(led, red, green, blue);
 }
 
-static inline void lightbar_brightness(int newval)
+static void lightbar_brightness(int newval)
 {
 	int i;
 	CPRINTF("[%T LB_bright 0x%02x]\n", newval);
@@ -206,6 +210,46 @@ static const struct {
 /* Now for the pretty patterns */
 /******************************************************************************/
 
+/* Here's some state that we might want to maintain across sysjumps, just to
+ * prevent the lightbar from flashing during normal boot as the EC jumps from
+ * RO to RW. FIXME: This doesn't quite stop the problems. */
+static struct {
+	/* What patterns are we showing? */
+	enum lightbar_sequence cur_seq;
+	enum lightbar_sequence prev_seq;
+
+	/* Quantized battery charge level: 0=low 1=med 2=high 3=full. */
+	int battery_level;
+
+	/* We'll pulse slightly faster when charging */
+	int battery_is_charging;
+} st;
+
+#define LB_SYSJUMP_TAG 0x4c42			/* "LB" */
+static int lb_preserve_state(void)
+{
+	system_add_jump_tag(LB_SYSJUMP_TAG, 0, sizeof(st), &st);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, lb_preserve_state, HOOK_PRIO_DEFAULT);
+
+static void lb_restore_state(void)
+{
+	const uint8_t *old_state = 0;
+	int size;
+
+	old_state = system_get_jump_tag(LB_SYSJUMP_TAG, 0, &size);
+	if (old_state && size == sizeof(st)) {
+		memcpy(&st, old_state, size);
+	} else {
+		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
+		st.battery_level = 2;
+	}
+	CPRINTF("[%T LB state: %d %d - %d/%d]\n",
+		st.cur_seq, st.prev_seq,
+		st.battery_is_charging, st.battery_level);
+}
+
 /* Here's where we keep messages waiting to be delivered to lightbar task. If
  * more than one is sent before the task responds, we only want to deliver the
  * latest one. */
@@ -213,12 +257,234 @@ static uint32_t pending_msg;
 /* And here's the task event that we use to trigger delivery. */
 #define PENDING_MSG 1
 
-
 /* Interruptible delay */
 #define WAIT_OR_RET(A) do { \
 	uint32_t msg = task_wait_event(A); \
 	if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) \
 		return PENDING_MSG; } while (0)
+
+/****************************************************************************/
+/* Demo sequence */
+
+struct rgb_s {
+	uint8_t r, g, b;
+};
+enum {
+	COLOR_RED, COLOR_YELLOW, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK,
+};
+static const struct rgb_s colors[] = {
+	{0xff, 0x00, 0x00},			/* red */
+	{0xff, 0xff, 0x00},			/* yellow */
+	{0x00, 0xff, 0x00},			/* green */
+	{0x00, 0x00, 0xff},			/* blue */
+	{0x00, 0x00, 0x00},			/* black */
+};
+
+static int last_battery_is_charging;
+static int last_battery_level;
+static void get_battery_level(void)
+{
+#ifdef CONFIG_TASK_POWERSTATE
+	int pct = charge_get_percent();
+
+	if (pct > LIGHTBAR_POWER_THRESHOLD_BLUE)
+		st.battery_level = COLOR_BLUE;
+	else if (pct > LIGHTBAR_POWER_THRESHOLD_GREEN)
+		st.battery_level = COLOR_GREEN;
+	else if (pct > LIGHTBAR_POWER_THRESHOLD_YELLOW)
+		st.battery_level = COLOR_YELLOW;
+	else
+		st.battery_level = COLOR_RED;
+
+	pct = charge_get_state();
+	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
+#endif
+}
+
+static struct {
+	timestamp_t start_time;
+	timestamp_t end_time;
+	struct rgb_s prev;
+	struct rgb_s next;
+} led_state[NUM_LEDS];
+
+#define MSECS(a) (a * 1000)
+#define SEC(a) (a * 1000000)
+
+static const uint64_t transition_time = SEC(3);
+static const uint64_t transition_stagger[NUM_LEDS] = {
+	MSECS(0), MSECS(200), MSECS(733), MSECS(450),
+};
+
+static const int pulse_period[2] = { SEC(20),	/* discharging */
+				     SEC(10) };	/* charging */
+
+static const int pulse_stagger[2][NUM_LEDS] = {
+	{ MSECS(0), MSECS(4800), MSECS(16000), MSECS(11000) }, /* discharging */
+	{ MSECS(0), MSECS(2400), MSECS(8000), MSECS(5500) } /* charging */
+};
+
+static struct rgb_s tmp_color;
+static int tmp_percent;
+static void interpolate(timestamp_t now, int i)
+{
+	int range, sofar;
+	if (now.val <= led_state[i].start_time.val) {
+		tmp_color = led_state[i].prev;
+		tmp_percent = 0;
+		return;
+	}
+
+	if (now.val >= led_state[i].end_time.val) {
+		tmp_percent = 100;
+		tmp_color = led_state[i].next;
+		return;
+	}
+
+	range = (int)(led_state[i].end_time.val - led_state[i].start_time.val);
+	sofar = (int)(now.val - led_state[i].start_time.val);
+
+	tmp_percent = (sofar * 100) / range;
+	tmp_color.r = ((100 - tmp_percent) * led_state[i].prev.r) / 100 +
+		(tmp_percent * led_state[i].next.r) / 100;
+	tmp_color.g = ((100 - tmp_percent) * led_state[i].prev.g) / 100 +
+		(tmp_percent * led_state[i].next.g) / 100;
+	tmp_color.b = ((100 - tmp_percent) * led_state[i].prev.b) / 100 +
+		(tmp_percent * led_state[i].next.b) / 100;
+}
+
+
+/* 8-bit fixed-point sin(x).  domain 0-PI == 0-127, range 0-1 == 0-255.
+ * This is just the first half cycle. */
+const uint8_t sin_table[] = {
+	0, 6, 13, 19, 25, 31, 37, 44, 50, 56, 62, 68, 74, 80, 86, 92, 98,
+	103, 109, 115, 120, 126, 131, 136, 142, 147, 152, 157, 162, 167,
+	171, 176, 180, 185, 189, 193, 197, 201, 205, 208, 212, 215, 219,
+	222, 225, 228, 231, 233, 236, 238, 240, 242, 244, 246, 247, 249,
+	250, 251, 252, 253, 254, 254, 255, 255, 255, 255, 255, 254, 254,
+	253, 252, 251, 250, 249, 247, 246, 244, 242, 240, 238, 236, 233,
+	231, 228, 225, 222, 219, 215, 212, 208, 205, 201, 197, 193, 189,
+	185, 180, 176, 171, 167, 162, 157, 152, 147, 142, 136, 131, 126,
+	120, 115, 109, 103, 98, 92, 86, 80, 74, 68, 62, 56, 50, 44, 37, 31,
+	25, 19, 13, 6
+};
+
+/* This provides the other half. */
+int sini(uint8_t i)
+{
+	if (i < 128)
+		return sin_table[i];
+	return -sin_table[i-128];
+}
+
+static void pulse(timestamp_t now, int period_offset)
+{
+	int t;
+	uint8_t i;
+	int j;
+
+	/* Bound time to one cycle */
+	t = (now.le.lo + period_offset) % pulse_period[st.battery_is_charging];
+	/* Convert phase to 0-255 */
+	i = ((t >> 8) / (pulse_period[st.battery_is_charging] >> 16));
+	/* Compute sinusoidal for phase, as [-255:255] */
+	j = sini(i);
+	j = j * sini((int)i * 3 / 2) / 255;
+	j = j * sini((int)i * 16 / 10) / 255;
+	/* Cut it down a bit */
+	j = j / 2;
+
+	/* Luminize current color using sinusoidal */
+	t = j + tmp_color.r;
+	if (t > 255)
+		tmp_color.r = 255;
+	else if (t < 0)
+		tmp_color.r = 0;
+	else
+		tmp_color.r = t;
+
+	t = j + tmp_color.g;
+	if (t > 255)
+		tmp_color.g = 255;
+	else if (t < 0)
+		tmp_color.g = 0;
+	else
+		tmp_color.g = t;
+
+	t = j + tmp_color.b;
+	if (t > 255)
+		tmp_color.b = 255;
+	else if (t < 0)
+		tmp_color.b = 0;
+	else
+		tmp_color.b = t;
+}
+
+
+/* CPU is fully on */
+static uint32_t sequence_S0(void)
+{
+	int i, tick, last_tick;
+	timestamp_t start, now;
+
+	start = get_time();
+	tick = last_tick = 0;
+
+	lightbar_on();
+
+	/* start black, we'll fade in first thing */
+	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
+	for (i = 0; i < NUM_LEDS; i++)
+		led_state[i].prev = colors[COLOR_BLACK];
+	last_battery_is_charging = !st.battery_is_charging; /* force update */
+
+	while (1) {
+		now = get_time();
+
+		/* Only check the battery state every so often. The battery
+		 * charging task doesn't update as quickly as we do, and isn't
+		 * always valid for a bit after jumping from RO->RW. */
+		tick = (now.le.lo - start.le.lo) / SEC(1);
+		if (tick % 4 == 3 && tick != last_tick) {
+			get_battery_level();
+			last_tick = tick;
+		}
+
+		/* Has something changed? */
+		if (st.battery_is_charging != last_battery_is_charging ||
+		    st.battery_level != last_battery_level) {
+
+			/* yes */
+			for (i = 0; i < NUM_LEDS; i++) {
+				led_state[i].start_time.val = now.val +
+					transition_stagger[i];
+				led_state[i].end_time.val =
+					led_state[i]. start_time.val +
+					transition_time;
+				led_state[i].prev = led_state[i].next;
+				led_state[i].next = colors[st.battery_level];
+			}
+			last_battery_is_charging = st.battery_is_charging;
+			last_battery_level = st.battery_level;
+		}
+
+		/* Figure out what colors to show now */
+		for (i = 0; i < NUM_LEDS; i++) {
+			/* Compute transition between prev and next colors. */
+			interpolate(now, i);
+
+			/* Pulse sinusoidally */
+			pulse(now, pulse_stagger[st.battery_is_charging][i]);
+
+			/* Show it */
+			lightbar_setrgb(i, tmp_color.r, tmp_color.g,
+					tmp_color.b);
+		}
+
+		WAIT_OR_RET(MSECS(15));
+	}
+	return 0;
+}
 
 /* CPU is off */
 static uint32_t sequence_S5(void)
@@ -242,17 +508,8 @@ static uint32_t sequence_S5S3(void)
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
 	lightbar_on();
-	lightbar_setrgb(NUM_LEDS, 0, 255, 0);
+	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 	WAIT_OR_RET(500000);
-	return 0;
-}
-
-/* CPU is fully on */
-static uint32_t sequence_S0(void)
-{
-	lightbar_on();
-	lightbar_setrgb(NUM_LEDS, 255, 255, 255);
-	WAIT_OR_RET(-1);
 	return 0;
 }
 
@@ -271,15 +528,33 @@ static uint32_t sequence_S0S3(void)
 /* CPU is sleeping */
 static uint32_t sequence_S3(void)
 {
+	int r, g, b;
+	int i;
+
 	lightbar_off();
 	lightbar_init_vals();
 	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 	while (1) {
-		WAIT_OR_RET(3000000);
+		WAIT_OR_RET(SEC(15));
+		get_battery_level();
 		lightbar_on();
-		/* FIXME: indicate battery level? */
-		lightbar_setrgb(NUM_LEDS, 255, 255, 255);
-		WAIT_OR_RET(100000);
+		r = colors[st.battery_level].r;
+		g = colors[st.battery_level].g;
+		b = colors[st.battery_level].b;
+		for (i = 0; i < 255; i += 5) {
+			lightbar_setrgb(NUM_LEDS,
+					(r * i) / 255,
+					(g * i) / 255,
+					(b * i) / 255);
+			WAIT_OR_RET(15000);
+		}
+		for (i = 255; i > 0; i -= 5) {
+			lightbar_setrgb(NUM_LEDS,
+					(r * i) / 255,
+					(g * i) / 255,
+					(b * i) / 255);
+			WAIT_OR_RET(15000);
+		}
 		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 		lightbar_off();
 	}
@@ -293,7 +568,7 @@ static uint32_t sequence_S3S0(void)
 	lightbar_init_vals();
 	lightbar_on();
 	for (i = 0; i < NUM_LEDS; i++) {
-		lightbar_setrgb(i, 255, 255, 255);
+		lightbar_setrgb(i, testy[i].r, testy[i].g, testy[i].b);
 		WAIT_OR_RET(200000);
 	}
 	return 0;
@@ -304,8 +579,7 @@ static uint32_t sequence_S3S5(void)
 {
 	/* For now, do something to indicate this transition.
 	 * We might see it. */
-	lightbar_on();
-	lightbar_setrgb(NUM_LEDS, 255, 0, 0);
+	lightbar_off();
 	WAIT_OR_RET(500000);
 	return 0;
 }
@@ -545,45 +819,45 @@ static struct lightbar_cmd_t lightbar_cmds[] = {
 };
 #undef LBMSG
 
-static enum lightbar_sequence current_state, previous_state;
 
 void lightbar_task(void)
 {
 	uint32_t msg;
 
-	current_state = LIGHTBAR_S5;
-	previous_state = LIGHTBAR_S5;
+	CPRINTF("[%T LB task starting]\n");
+
+	lb_restore_state();
 
 	while (1) {
 		CPRINTF("[%T LB task %d = %s]\n",
-			current_state, lightbar_cmds[current_state].string);
-		msg = lightbar_cmds[current_state].sequence();
+			st.cur_seq, lightbar_cmds[st.cur_seq].string);
+		msg = lightbar_cmds[st.cur_seq].sequence();
 		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) {
 			CPRINTF("[%T LB msg %d = %s]\n", pending_msg,
 				lightbar_cmds[pending_msg].string);
-			previous_state = current_state;
-			current_state = pending_msg;
+			st.prev_seq = st.cur_seq;
+			st.cur_seq = pending_msg;
 		} else {
 			CPRINTF("[%T LB msg 0x%x]\n", msg);
-			switch (current_state) {
+			switch (st.cur_seq) {
 			case LIGHTBAR_S5S3:
-				current_state = LIGHTBAR_S3;
+				st.cur_seq = LIGHTBAR_S3;
 				break;
 			case LIGHTBAR_S3S0:
-				current_state = LIGHTBAR_S0;
+				st.cur_seq = LIGHTBAR_S0;
 				break;
 			case LIGHTBAR_S0S3:
-				current_state = LIGHTBAR_S3;
+				st.cur_seq = LIGHTBAR_S3;
 				break;
 			case LIGHTBAR_S3S5:
-				current_state = LIGHTBAR_S5;
+				st.cur_seq = LIGHTBAR_S5;
 				break;
 			case LIGHTBAR_TEST:
 			case LIGHTBAR_STOP:
 			case LIGHTBAR_RUN:
 			case LIGHTBAR_ERROR:
 			case LIGHTBAR_KONAMI:
-				current_state = previous_state;
+				st.cur_seq = st.prev_seq;
 			default:
 				break;
 			}
@@ -726,7 +1000,7 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 			   ptr->in.rgb.blue);
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
-		ptr->out.get_seq.num = current_state;
+		ptr->out.get_seq.num = st.cur_seq;
 		args->response_size = sizeof(struct ec_params_lightbar_cmd);
 		break;
 	default:
@@ -781,8 +1055,8 @@ static void show_msg_names(void)
 	ccprintf("Sequences:");
 	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
 		ccprintf(" %s", lightbar_cmds[i].string);
-	ccprintf("\nCurrent = 0x%x %s\n", current_state,
-		 lightbar_cmds[current_state].string);
+	ccprintf("\nCurrent = 0x%x %s\n", st.cur_seq,
+		 lightbar_cmds[st.cur_seq].string);
 }
 
 static int command_lightbar(int argc, char **argv)

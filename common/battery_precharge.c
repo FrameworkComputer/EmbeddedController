@@ -18,9 +18,6 @@
 /* Buffer size for charging resistance calculation */
 #define LOG_BUFFER_SIZE  16
 
-/* Threshold for power led to turn green */
-#define POWERLED_GREEN_THRESHOLD 90
-
 static int log_index;
 static short log_volt[LOG_BUFFER_SIZE];
 static short log_curr[LOG_BUFFER_SIZE];

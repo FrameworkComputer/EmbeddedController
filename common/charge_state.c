@@ -27,9 +27,6 @@
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
-/* Stop charge when state of charge reaches this percentage */
-#define STOP_CHARGE_THRESHOLD 100
-
 /* Voltage debounce time */
 #define DEBOUNCE_TIME (10 * SECOND)
 
