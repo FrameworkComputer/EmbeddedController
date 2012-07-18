@@ -13,10 +13,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define FLASH_WRITE_BYTES     64
-#define FLASH_ERASE_BYTES   1024
-#define FLASH_PROTECT_BYTES 4096
-
 #define US_PER_SECOND 1000000
 
 /* the approximate number of CPU cycles per iteration of the loop when polling
@@ -44,23 +40,6 @@
 #define OPT_LOCK (1<<9)
 
 static void write_optb(int byte, uint8_t value);
-
-
-int flash_get_write_block_size(void)
-{
-	return FLASH_WRITE_BYTES;
-}
-
-int flash_get_erase_block_size(void)
-{
-	return FLASH_ERASE_BYTES;
-}
-
-int flash_get_protect_block_size(void)
-{
-	BUILD_ASSERT(FLASH_PROTECT_BYTES == CONFIG_FLASH_BANK_SIZE);
-	return FLASH_PROTECT_BYTES;
-}
 
 int flash_physical_size(void)
 {
@@ -262,8 +241,8 @@ int flash_physical_erase(int offset, int size)
 	STM32_FLASH_CR |= PER;
 
 	for (address = CONFIG_FLASH_BASE + offset ;
-	     size > 0; size -= FLASH_ERASE_BYTES,
-	     address += FLASH_ERASE_BYTES) {
+	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
+	     address += CONFIG_FLASH_ERASE_SIZE) {
 		timestamp_t deadline;
 
 		/* select page to erase */

@@ -11,33 +11,12 @@
 #include "uart.h"
 #include "util.h"
 
-#define FLASH_WRITE_BYTES      4
-#define FLASH_ERASE_BYTES   1024
-#define FLASH_PROTECT_BYTES 2048
 #define FLASH_FSIZE         0x7f
-#define PHYSICAL_SIZE ((FLASH_FSIZE + 1) * FLASH_PROTECT_BYTES)
-#define FLASH_MOCK_BEGIN (FLASH_FSIZE * FLASH_PROTECT_BYTES)
+#define PHYSICAL_SIZE ((FLASH_FSIZE + 1) * CONFIG_FLASH_BANK_SIZE)
+#define FLASH_MOCK_BEGIN (FLASH_FSIZE * CONFIG_FLASH_BANK_SIZE)
 
 char mock_protect[FLASH_FSIZE + 1];
-char pstate_space[FLASH_PROTECT_BYTES];
-
-int flash_get_write_block_size(void)
-{
-	return FLASH_WRITE_BYTES;
-}
-
-
-int flash_get_erase_block_size(void)
-{
-	return FLASH_ERASE_BYTES;
-}
-
-
-int flash_get_protect_block_size(void)
-{
-	return FLASH_PROTECT_BYTES;
-}
-
+char pstate_space[CONFIG_FLASH_BANK_SIZE];
 
 int flash_physical_size(void)
 {

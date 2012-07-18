@@ -8,6 +8,18 @@
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
 #define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
 #define CONFIG_FLASH_BANK_SIZE  0x1000
+#define CONFIG_FLASH_ERASE_SIZE 0x0100  /* erase bank size */
+
+/* crosbug.comb/p/9811 workaround 64-byte payload limitation */
+#define CONFIG_64B_WORKAROUND
+
+#ifdef CONFIG_64B_WORKAROUND
+#define CONFIG_FLASH_WRITE_SIZE      0x0040  /* claimed minimum write size */
+#define CONFIG_FLASH_REAL_WRITE_SIZE 0x0080  /* actual minimum write size */
+#else
+#define CONFIG_FLASH_WRITE_SIZE 0x0080
+#endif
+
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         0x00004000
 

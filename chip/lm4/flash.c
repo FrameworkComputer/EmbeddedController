@@ -12,11 +12,8 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define FLASH_WRITE_BYTES      4
-#define FLASH_FWB_WORDS       32
+#define FLASH_FWB_WORDS 32
 #define FLASH_FWB_BYTES (FLASH_FWB_WORDS * 4)
-#define FLASH_ERASE_BYTES   1024
-#define FLASH_PROTECT_BYTES 2048
 
 #define BANK_SHIFT 5 /* bank registers have 32bits each, 2^32 */
 #define BANK_MASK ((1 << BANK_SHIFT) - 1) /* 5 bits */
@@ -27,25 +24,9 @@
 #define ERASE_TIMEOUT_MS 200
 #define WRITE_TIMEOUT_US 300
 
-int flash_get_write_block_size(void)
-{
-	return FLASH_WRITE_BYTES;
-}
-
-int flash_get_erase_block_size(void)
-{
-	return FLASH_ERASE_BYTES;
-}
-
-int flash_get_protect_block_size(void)
-{
-	BUILD_ASSERT(FLASH_PROTECT_BYTES == CONFIG_FLASH_BANK_SIZE);
-	return FLASH_PROTECT_BYTES;
-}
-
 int flash_physical_size(void)
 {
-	return (LM4_FLASH_FSIZE + 1) * FLASH_PROTECT_BYTES;
+	return (LM4_FLASH_FSIZE + 1) * CONFIG_FLASH_BANK_SIZE;
 }
 
 /**
@@ -126,7 +107,7 @@ int flash_physical_erase(int offset, int size)
 	LM4_FLASH_FCMISC = LM4_FLASH_FCRIS;  /* Clear previous error status */
 	LM4_FLASH_FMA = offset;
 
-	for ( ; size > 0; size -= FLASH_ERASE_BYTES) {
+	for ( ; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
 		int t;
 
 #ifdef CONFIG_TASK_WATCHDOG
@@ -151,7 +132,7 @@ int flash_physical_erase(int offset, int size)
 		if (LM4_FLASH_FCRIS & 0x0a01)
 			return EC_ERROR_UNKNOWN;
 
-		LM4_FLASH_FMA += FLASH_ERASE_BYTES;
+		LM4_FLASH_FMA += CONFIG_FLASH_ERASE_SIZE;
 	}
 
 	return EC_SUCCESS;

@@ -13,13 +13,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-/* crosbug.com/p/9811 workaround 64-byte payload limitation */
-#define CONFIG_64B_WORKAROUND
-
-#define FLASH_WRITE_BYTES    128
-#define FLASH_ERASE_BYTES    256
-#define FLASH_PROTECT_BYTES 4096
-
 #define US_PER_SECOND 1000000
 
 /* the approximate number of CPU cycles per iteration of the loop when polling
@@ -46,33 +39,17 @@
 #define OPT_LOCK (1<<2)
 
 #ifdef CONFIG_64B_WORKAROUND
-/* used to buffer the write payload smaller than the half page size */
-static uint32_t write_buffer[FLASH_WRITE_BYTES / sizeof(uint32_t)];
+/*
+ * Use the real write buffer size inside the driver.  We only lie to the
+ * outside world so it'll feed data to us in smaller pieces.
+ */
+#undef CONFIG_FLASH_WRITE_SIZE
+#define CONFIG_FLASH_WRITE_SIZE CONFIG_FLASH_REAL_WRITE_SIZE
+
+/* Used to buffer the write payload smaller than the half page size */
+static uint32_t write_buffer[CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t)];
 static int buffered_off = -1;
 #endif
-
-int flash_get_write_block_size(void)
-{
-#ifdef CONFIG_64B_WORKAROUND
-	return 64;
-#else
-	return FLASH_WRITE_BYTES;
-#endif
-}
-
-
-int flash_get_erase_block_size(void)
-{
-	return FLASH_ERASE_BYTES;
-}
-
-
-int flash_get_protect_block_size(void)
-{
-	BUILD_ASSERT(FLASH_PROTECT_BYTES == CONFIG_FLASH_BANK_SIZE);
-	return FLASH_PROTECT_BYTES;
-}
-
 
 int flash_physical_size(void)
 {
@@ -152,7 +129,7 @@ void  __attribute__((section(".iram.text")))
 	STM32_FLASH_PECR |= (1<<3) | (1<<10);
 
 	/* send words for the half page */
-	for (i = 0; i < FLASH_WRITE_BYTES / sizeof(uint32_t); i++)
+	for (i = 0; i < CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t); i++)
 		*addr++ = *data++;
 
 	/* Wait for writes to complete */
@@ -176,7 +153,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	int res = EC_SUCCESS;
 
 #ifdef CONFIG_64B_WORKAROUND
-		if ((size < FLASH_WRITE_BYTES) || (offset & 64)) {
+		if ((size < CONFIG_FLASH_WRITE_SIZE) || (offset & 64)) {
 			if ((size != 64) ||
 			    ((offset & 64) && (buffered_off != offset - 64))) {
 				res = EC_ERROR_UNKNOWN;
@@ -207,7 +184,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	STM32_FLASH_SR = 0xf00;
 
 	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
-	     size > 0; size -= FLASH_WRITE_BYTES) {
+	     size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
@@ -216,8 +193,8 @@ int flash_physical_write(int offset, int size, const char *data)
 #endif
 		iram_flash_write(address, data32);
 
-		address += FLASH_WRITE_BYTES / sizeof(uint32_t);
-		data32 += FLASH_WRITE_BYTES / sizeof(uint32_t);
+		address += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
+		data32 += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
 		if (STM32_FLASH_SR & 1) {
 			res = EC_ERROR_TIMEOUT;
 			goto exit_wr;
@@ -253,8 +230,8 @@ int flash_physical_erase(int offset, int size)
 	STM32_FLASH_PECR |= (1<<3) | (1<<9);
 
 	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
-	     size > 0; size -= FLASH_ERASE_BYTES,
-	     address += FLASH_ERASE_BYTES/sizeof(uint32_t)) {
+	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
+	     address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
 		timestamp_t deadline;
 
 		/* Start erase */

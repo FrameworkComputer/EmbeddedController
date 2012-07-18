@@ -20,15 +20,6 @@
 int flash_physical_pre_init(void);
 
 /**
- * Return the write / erase / protect block size, in bytes.  Operations must be
- * aligned to and multiples of the granularity.  For example, erase operations
- * must have offset and size which are multiples of the erase block size.
- */
-int flash_get_write_block_size(void);
-int flash_get_erase_block_size(void);
-int flash_get_protect_block_size(void);
-
-/**
  * Return the physical size of flash in bytes as read from the flash chip
  * itself.
  *
@@ -53,14 +44,33 @@ static inline char *flash_physical_dataptr(int offset)
 	return (char *)offset;
 }
 
-/* Write <size> bytes of data to flash at byte offset <offset>.
- * <data> must be 32-bit aligned. */
+/**
+ * Write to physical flash.
+ *
+ * Offset and size must be a multiple of CONFIG_FLASH_WRITE_SIZE.
+ *
+ * @param offset	Flash offset to write.
+ * @param size	        Number of bytes to write.
+ * @param data          Data to write to flash.  Must be 32-bit aligned.
+ */
 int flash_physical_write(int offset, int size, const char *data);
 
-/* Erase <size> bytes of flash at byte offset <offset>. */
+/**
+ * Erase physical flash.
+ *
+ * Offset and size must be a multiple of CONFIG_FLASH_ERASE_SIZE.
+ *
+ * @param offset	Flash offset to erase.
+ * @param size	        Number of bytes to erase.
+ */
 int flash_physical_erase(int offset, int size);
 
-/* Return non-zero if bank is protected until reboot. */
+/**
+ * Read physical write protect setting for a flash bank.
+ *
+ * @param bank	        Bank index to check.
+ * @return non-zero if bank is protected until reboot.
+ */
 int flash_physical_get_protect(int bank);
 
 /**
@@ -111,18 +121,18 @@ int flash_dataptr(int offset, int size_req, int align, char **ptrp);
 /**
  * Write to flash.
  *
- * Offset and size must be a multiple of get_flash_write_block_size().
+ * Offset and size must be a multiple of CONFIG_FLASH_WRITE_SIZE.
  *
  * @param offset	Flash offset to write.
  * @param size	        Number of bytes to write.
- * @param data          Data to write to flash.
+ * @param data          Data to write to flash.  Must be 32-bit aligned.
  */
 int flash_write(int offset, int size, const char *data);
 
 /**
  * Erase flash.
  *
- * Offset and size must be a multiple of get_flash_erase_block_size().
+ * Offset and size must be a multiple of CONFIG_FLASH_ERASE_SIZE.
  *
  * @param offset	Flash offset to erase.
  * @param size	        Number of bytes to erase.

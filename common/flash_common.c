@@ -157,8 +157,7 @@ int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 
 int flash_write(int offset, int size, const char *data)
 {
-	if (flash_dataptr(offset, size, flash_get_write_block_size(),
-			NULL) < 0)
+	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	return flash_physical_write(offset, size, data);
@@ -166,8 +165,7 @@ int flash_write(int offset, int size, const char *data)
 
 int flash_erase(int offset, int size)
 {
-	if (flash_dataptr(offset, size, flash_get_erase_block_size(),
-			NULL) < 0)
+	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 	return flash_physical_erase(offset, size);
@@ -310,9 +308,9 @@ static int command_flash_info(int argc, char **argv)
 			 flash_physical_size() / 1024);
 
 	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
-	ccprintf("Write:   %4d B\n", flash_get_write_block_size());
-	ccprintf("Erase:   %4d B\n", flash_get_erase_block_size());
-	ccprintf("Protect: %4d B\n", flash_get_protect_block_size());
+	ccprintf("Write:   %4d B\n", CONFIG_FLASH_WRITE_SIZE);
+	ccprintf("Erase:   %4d B\n", CONFIG_FLASH_ERASE_SIZE);
+	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 
 	i = flash_get_protect();
 	ccprintf("Flags:  ");
@@ -348,7 +346,7 @@ DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 static int command_flash_erase(int argc, char **argv)
 {
 	int offset = -1;
-	int size = flash_get_erase_block_size();
+	int size = CONFIG_FLASH_ERASE_SIZE;
 	int rv;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
@@ -366,7 +364,7 @@ DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
 static int command_flash_write(int argc, char **argv)
 {
 	int offset = -1;
-	int size = flash_get_erase_block_size();
+	int size = CONFIG_FLASH_ERASE_SIZE;
 	int rv;
 	char *data;
 	int i;
@@ -432,9 +430,9 @@ static int flash_command_get_info(struct host_cmd_handler_args *args)
 		(struct ec_response_flash_info *)args->response;
 
 	r->flash_size = CONFIG_FLASH_SIZE;
-	r->write_block_size = flash_get_write_block_size();
-	r->erase_block_size = flash_get_erase_block_size();
-	r->protect_block_size = flash_get_protect_block_size();
+	r->write_block_size = CONFIG_FLASH_WRITE_SIZE;
+	r->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
+	r->protect_block_size = CONFIG_FLASH_BANK_SIZE;
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
