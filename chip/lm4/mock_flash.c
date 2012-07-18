@@ -45,19 +45,6 @@ int flash_physical_size(void)
 }
 
 
-int flash_physical_read(int offset, int size, char *data)
-{
-	int i;
-	if (offset >= FLASH_MOCK_BEGIN)
-		memcpy(data, pstate_space + offset - FLASH_MOCK_BEGIN, size);
-	else {
-		for (i = offset; i < offset + size; ++i)
-			*(data++) = (char)(i & 0xff);
-	}
-	return EC_SUCCESS;
-}
-
-
 int flash_physical_write(int offset, int size, const char* data)
 {
 	int i;

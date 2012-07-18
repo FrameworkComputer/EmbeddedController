@@ -68,21 +68,23 @@ static int wp_pin_asserted(void)
 static int read_pstate(void)
 {
 #ifdef CHIP_stm32
-		memset(&pstate, 0, sizeof(pstate));
-		pstate.version = PERSIST_STATE_VERSION;
+	memset(&pstate, 0, sizeof(pstate));
+	pstate.version = PERSIST_STATE_VERSION;
+	return EC_SUCCESS;
 #else
-	int rv = flash_physical_read(PSTATE_OFFSET, sizeof(pstate),
-				     (char *)&pstate);
-	if (rv)
-		return rv;
+	const char *flash_pstate = flash_physical_dataptr(PSTATE_OFFSET);
+
+	if (flash_pstate)
+		memcpy(&pstate, flash_pstate, sizeof(pstate));
 
 	/* Sanity-check data and initialize if necessary */
-	if (pstate.version != PERSIST_STATE_VERSION) {
+	if (pstate.version != PERSIST_STATE_VERSION || !flash_pstate) {
 		memset(&pstate, 0, sizeof(pstate));
 		pstate.version = PERSIST_STATE_VERSION;
 	}
+
+	return flash_pstate ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 #endif /* CHIP_stm32 */
-	return EC_SUCCESS;
 }
 
 /* Write persistent state from pstate, erasing if necessary. */
@@ -153,14 +155,6 @@ int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 	return CONFIG_FLASH_SIZE - offset;
 }
 
-int flash_read(int offset, int size, char *data)
-{
-	if (flash_dataptr(offset, size, 1, NULL) < 0)
-		return EC_ERROR_INVAL;  /* Invalid range */
-
-	return flash_physical_read(offset, size, data);
-}
-
 int flash_write(int offset, int size, const char *data)
 {
 	if (flash_dataptr(offset, size, flash_get_write_block_size(),
@@ -193,6 +187,8 @@ int flash_enable_protect(int enable)
 	int rv;
 
 	/* Fail if write protect block is already locked */
+	/* TODO: and in the wrong state... if it's asking to enable and we're
+	 * already enabled, we can just succeed... */
 	if (flash_physical_get_protect(PSTATE_BANK))
 		return EC_ERROR_UNKNOWN;
 

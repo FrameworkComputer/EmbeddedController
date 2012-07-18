@@ -79,15 +79,6 @@ int flash_physical_size(void)
 	return CONFIG_FLASH_SIZE;
 }
 
-
-int flash_physical_read(int offset, int size, char *data)
-{
-	/* Just read the flash from its memory window. */
-	/* TODO: (crosbug.com/p/7473) is this affected by data cache? */
-	memcpy(data, (char *)offset, size);
-	return EC_SUCCESS;
-}
-
 static int unlock(int locks)
 {
 	/* unlock PECR if needed */

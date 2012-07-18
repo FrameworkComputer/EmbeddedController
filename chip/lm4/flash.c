@@ -32,12 +32,10 @@ int flash_get_write_block_size(void)
 	return FLASH_WRITE_BYTES;
 }
 
-
 int flash_get_erase_block_size(void)
 {
 	return FLASH_ERASE_BYTES;
 }
-
 
 int flash_get_protect_block_size(void)
 {
@@ -45,26 +43,15 @@ int flash_get_protect_block_size(void)
 	return FLASH_PROTECT_BYTES;
 }
 
-
 int flash_physical_size(void)
 {
 	return (LM4_FLASH_FSIZE + 1) * FLASH_PROTECT_BYTES;
 }
 
-
-int flash_physical_read(int offset, int size, char *data)
-{
-	/* Just read the flash from its memory window. */
-	/* TODO: (crosbug.com/p/7473) is this affected by data cache?
-	 * That is, if we read a block, then alter it, then read it
-	 * again, do we get the old data? */
-	memcpy(data, (char *)offset, size);
-	return EC_SUCCESS;
-}
-
-
-/* Perform a write-buffer operation.  Buffer (FWB) and address (FMA) must be
- * pre-loaded. */
+/**
+ * Perform a write-buffer operation.  Buffer (FWB) and address (FMA) must be
+ * pre-loaded.
+ */
 static int write_buffer(void)
 {
 	int t;
