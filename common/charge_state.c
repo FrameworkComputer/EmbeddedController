@@ -37,6 +37,9 @@ static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
 
+/* Current power state context */
+static struct power_state_context task_ctx;
+
 static inline int is_charger_expired(
 	struct power_state_context *ctx, timestamp_t now)
 {
@@ -510,6 +513,16 @@ static void charging_progress(struct power_state_context *ctx)
 	}
 }
 
+enum power_state charge_get_state(void)
+{
+	return task_ctx.curr.state;
+}
+
+int charge_get_percent(void)
+{
+	return task_ctx.curr.batt.state_of_charge;
+}
+
 static int enter_force_idle_mode(void)
 {
 	if (!power_ac_present())
@@ -528,94 +541,94 @@ static int exit_force_idle_mode(void)
 /* Battery charging task */
 void charge_state_machine_task(void)
 {
-	struct power_state_context ctx;
+	struct power_state_context *ctx = &task_ctx;
 	timestamp_t ts;
 	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum power_state new_state;
 	uint8_t batt_flags;
 	int rv_setled = 0;
 
-	ctx.prev.state = PWR_STATE_INIT;
-	ctx.curr.state = PWR_STATE_INIT;
-	ctx.prev.led_color = POWERLED_OFF;
-	ctx.curr.led_color = POWERLED_OFF;
-	ctx.trickle_charging_time.val = 0;
-	ctx.battery = battery_get_info();
-	ctx.charger = charger_get_info();
+	ctx->prev.state = PWR_STATE_INIT;
+	ctx->curr.state = PWR_STATE_INIT;
+	ctx->prev.led_color = POWERLED_OFF;
+	ctx->curr.led_color = POWERLED_OFF;
+	ctx->trickle_charging_time.val = 0;
+	ctx->battery = battery_get_info();
+	ctx->charger = charger_get_info();
 
 	/* Setup LPC direct memmap */
-	ctx.memmap_batt_volt =
+	ctx->memmap_batt_volt =
 		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
-	ctx.memmap_batt_rate =
+	ctx->memmap_batt_rate =
 		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_RATE);
-	ctx.memmap_batt_cap =
+	ctx->memmap_batt_cap =
 		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
-	ctx.memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
+	ctx->memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 
 	while (1) {
 
-		state_common(&ctx);
+		state_common(ctx);
 
-		switch (ctx.prev.state) {
+		switch (ctx->prev.state) {
 		case PWR_STATE_INIT:
-			new_state = state_init(&ctx);
+			new_state = state_init(ctx);
 			break;
 		case PWR_STATE_IDLE:
-			new_state = state_idle(&ctx);
+			new_state = state_idle(ctx);
 			break;
 		case PWR_STATE_DISCHARGE:
-			new_state = state_discharge(&ctx);
+			new_state = state_discharge(ctx);
 			break;
 		case PWR_STATE_CHARGE:
-			new_state = state_charge(&ctx);
+			new_state = state_charge(ctx);
 			break;
 		case PWR_STATE_ERROR:
-			new_state = state_error(&ctx);
+			new_state = state_error(ctx);
 			break;
 		default:
 			CPRINTF("[Undefined charging state %d]\n",
-				ctx.curr.state);
-			ctx.curr.state = PWR_STATE_ERROR;
+				ctx->curr.state);
+			ctx->curr.state = PWR_STATE_ERROR;
 			new_state = PWR_STATE_ERROR;
 		}
 
 		if (state_machine_force_idle &&
-		    ctx.prev.state != PWR_STATE_IDLE &&
-		    ctx.prev.state != PWR_STATE_INIT)
+		    ctx->prev.state != PWR_STATE_IDLE &&
+		    ctx->prev.state != PWR_STATE_INIT)
 			new_state = PWR_STATE_INIT;
 
 		if (new_state) {
-			ctx.curr.state = new_state;
+			ctx->curr.state = new_state;
 			CPRINTF("[Charge state %s -> %s]\n",
-				state_name[ctx.prev.state],
+				state_name[ctx->prev.state],
 				state_name[new_state]);
 		}
 
-		if ((ctx.curr.led_color != ctx.prev.led_color || rv_setled) &&
+		if ((ctx->curr.led_color != ctx->prev.led_color || rv_setled) &&
 		    new_state != PWR_STATE_DISCHARGE)
-			rv_setled = powerled_set(ctx.curr.led_color);
+			rv_setled = powerled_set(ctx->curr.led_color);
 
 		switch (new_state) {
 		case PWR_STATE_IDLE:
-			batt_flags = *ctx.memmap_batt_flags;
+			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
-			*ctx.memmap_batt_flags = batt_flags;
+			*ctx->memmap_batt_flags = batt_flags;
 
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
 		case PWR_STATE_DISCHARGE:
-			batt_flags = *ctx.memmap_batt_flags;
+			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
 			batt_flags |= EC_BATT_FLAG_DISCHARGING;
-			*ctx.memmap_batt_flags = batt_flags;
+			*ctx->memmap_batt_flags = batt_flags;
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
 		case PWR_STATE_CHARGE:
-			batt_flags = *ctx.memmap_batt_flags;
+			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags |= EC_BATT_FLAG_CHARGING;
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
-			*ctx.memmap_batt_flags = batt_flags;
+			*ctx->memmap_batt_flags = batt_flags;
 
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
@@ -631,10 +644,10 @@ void charge_state_machine_task(void)
 		}
 
 		/* Show charging progress in console */
-		charging_progress(&ctx);
+		charging_progress(ctx);
 
 		ts = get_time();
-		diff_usec = (int)(ts.val - ctx.curr.ts.val);
+		diff_usec = (int)(ts.val - ctx->curr.ts.val);
 		sleep_next = sleep_usec - diff_usec;
 
 		if (sleep_next < MIN_SLEEP_USEC)

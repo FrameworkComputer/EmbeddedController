@@ -112,5 +112,15 @@ struct power_state_context {
  */
 enum power_state trickle_charge(struct power_state_context *ctx);
 
+/**
+ * Return current charge state.
+ */
+enum power_state charge_get_state(void);
+
+/**
+ * Return current battery charge percentage.
+ */
+int charge_get_percent(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_H */
 
