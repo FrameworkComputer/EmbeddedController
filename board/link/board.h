@@ -216,14 +216,28 @@ enum temp_sensor_id {
 	TEMP_SENSOR_EC_INTERNAL,
 	/* CPU die temperature via PECI */
 	TEMP_SENSOR_CPU_PECI,
-
-	/* TODO: I2C remote temperature sensors. */
+	/* Die temperature of U15 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U15_DIE,
+	/* Object temperature of U15 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U15_OBJECT,
+	/* Die temperature of U20 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U20_DIE,
+	/* Object temperature of U20 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U20_OBJECT,
+	/* Die temperature of U27 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U27_DIE,
+	/* Object temperature of U27 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U27_OBJECT,
+	/* Die temperature of U29 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U29_DIE,
+	/* Object temperature of U29 TMP006 temperature sensor */
+	TEMP_SENSOR_I2C_U29_OBJECT,
 
 	TEMP_SENSOR_COUNT
 };
 
 /* The number of TMP006 sensor chips on the board. */
-#define TMP006_COUNT 4
+#define TMP006_COUNT 8
 
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
  * pullup. If this signal is pulled to ground when the EC boots, the EC will get
