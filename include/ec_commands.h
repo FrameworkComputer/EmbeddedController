@@ -863,6 +863,10 @@ struct ec_params_i2c_write {
 /* Force charge state machine to stop in idle mode */
 #define EC_CMD_CHARGE_FORCE_IDLE 0x96
 
+struct ec_params_force_idle {
+	uint8_t enabled;
+} __packed;
+
 /*****************************************************************************/
 /* System commands */
 

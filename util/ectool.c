@@ -1743,13 +1743,31 @@ int cmd_lcd_backlight(int argc, char *argv[])
 
 int cmd_charge_force_idle(int argc, char *argv[])
 {
-	int rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE, 0, NULL, 0, NULL, 0);
+	struct ec_params_force_idle p;
+	int rv;
+	char *e;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <0|1>\n", argv[0]);
+		return -1;
+	}
+
+	p.enabled = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE, 0, &p, sizeof(p), NULL, 0);
 	if (rv < 0) {
 		fprintf(stderr, "Is AC connected?\n");
 		return rv;
 	}
 
-	printf("Charge state machine force idle.\n");
+	if (p.enabled)
+		printf("Charge state machine force idle.\n");
+	else
+		printf("Charge state machine normal mode.\n");
 	return 0;
 }
 

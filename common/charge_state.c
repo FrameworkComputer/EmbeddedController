@@ -519,6 +519,12 @@ static int enter_force_idle_mode(void)
 	return EC_SUCCESS;
 }
 
+static int exit_force_idle_mode(void)
+{
+	state_machine_force_idle = 0;
+	return EC_SUCCESS;
+}
+
 /* Battery charging task */
 void charge_state_machine_task(void)
 {
@@ -642,9 +648,19 @@ void charge_state_machine_task(void)
 
 static int charge_command_force_idle(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_force_idle *p =
+		(const struct ec_params_force_idle *)args->params;
+	int rv;
+
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
-	if (enter_force_idle_mode() != EC_SUCCESS)
+
+	if (p->enabled)
+		rv = enter_force_idle_mode();
+	else
+		rv = exit_force_idle_mode();
+
+	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
 	return EC_RES_SUCCESS;
 }
