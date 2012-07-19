@@ -11,6 +11,13 @@
 
 static const char error_str[] = "ERROR";
 
+#define MAX_FORMAT 1024  /* Maximum chars in a single format field */
+
+static int hexdigit(int c)
+{
+	return c > 9 ? (c + 'a' - 10) : (c + '0');
+}
+
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args)
 {
@@ -22,6 +29,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	int is_left;
 	int pad_zero;
 	int pad_width;
+	int precision;
 	char *vstr;
 	int vlen;
 
@@ -62,38 +70,72 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 		/* Count padding length */
 		pad_width = 0;
-		while (c >= '0' && c <= '9') {
-			pad_width = (10 * pad_width) + c - '0';
+		if (c == '*') {
+			pad_width = va_arg(args, int);
 			c = *format++;
+		} else {
+			while (c >= '0' && c <= '9') {
+				pad_width = (10 * pad_width) + c - '0';
+				c = *format++;
+			}
 		}
-		if (pad_width > 80) {
-			/* Sanity check for width failed */
+		if (pad_width < 0 || pad_width > MAX_FORMAT) {
+			/* Sanity check for precision failed */
 			format = error_str;
 			continue;
+		}
+
+		/* Count precision */
+		precision = 0;
+		if (c == '.') {
+			c = *format++;
+			if (c == '*') {
+				precision = va_arg(args, int);
+				c = *format++;
+			} else {
+				while (c >= '0' && c <= '9') {
+					precision = (10 * precision) + c - '0';
+					c = *format++;
+				}
+			}
+			if (precision < 0 || precision > MAX_FORMAT) {
+				/* Sanity check for precision failed */
+				format = error_str;
+				continue;
+			}
 		}
 
 		if (c == 's') {
 			vstr = va_arg(args, char *);
 			if (vstr == NULL)
 				vstr = "(NULL)";
+		} else if (c == 'h') {
+			/* Hex dump output */
+			vstr = va_arg(args, char *);
+
+			if (!precision) {
+				/* Hex dump requires precision */
+				format = error_str;
+				continue;
+			}
+
+			for ( ; precision; precision--, vstr++) {
+				dropped_chars |=
+					addchar(context,
+						hexdigit((*vstr >> 4) & 0x0f));
+				dropped_chars |=
+					addchar(context,
+						hexdigit(*vstr & 0x0f));
+			}
+
+			continue;
 		} else {
 			uint64_t v;
 			int is_negative = 0;
 			int is_64bit = 0;
 			int base = 10;
-			int fixed_point = 0;
 
-			/* Handle fixed point numbers */
-			if (c == '.') {
-				c = *format++;
-				if (c < '0' || c > '9') {
-					format = error_str;
-					continue;
-				}
-				fixed_point = c - '0';
-				c = *format++;
-			}
-
+			/* Handle length */
 			if (c == 'l') {
 				is_64bit = 1;
 				c = *format++;
@@ -103,7 +145,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			if (c == 'T') {
 				v = get_time().val;
 				is_64bit = 1;
-				fixed_point = 6;
+				precision = 6;
 			} else if (is_64bit) {
 				v = va_arg(args, uint64_t);
 			} else {
@@ -148,11 +190,20 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vstr = intbuf + sizeof(intbuf) - 1;
 			*(vstr) = '\0';
 
-			/* Handle digits to right of decimal for fixed point
-			 * numbers. */
-			for (vlen = 0; vlen < fixed_point; vlen++)
+			/*
+			 * Fixed-point precision must fit in our buffer.
+			 * Leave space for "0." and the terminating null.
+			 */
+			if (precision > sizeof(intbuf) - 3)
+				precision = sizeof(intbuf) - 3;
+
+			/*
+			 * Handle digits to right of decimal for fixed point
+			 * numbers.
+			 */
+			for (vlen = 0; vlen < precision; vlen++)
 				*(--vstr) = '0' + uint64divmod(&v, 10);
-			if (fixed_point)
+			if (precision)
 				*(--vstr) = '.';
 
 			if (!v)
@@ -170,15 +221,30 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			if (is_negative)
 				*(--vstr) = '-';
+
+			/*
+			 * Precision field was interpreted by fixed-point
+			 * logic, so clear it.
+			 */
+			precision = 0;
 		}
 
 		/* Copy string (or stringified integer) */
 		vlen = strlen(vstr);
+
+		/* No padding strings to wider than the precision */
+		if (precision > 0 && pad_width > precision)
+			pad_width = precision;
+
+		/* If precision is zero, print everything */
+		if (!precision)
+			precision = MAX(vlen, pad_width);
+
 		while (vlen < pad_width && !is_left) {
 			dropped_chars |= addchar(context, pad_zero ? '0' : ' ');
 			vlen++;
 		}
-		while (*vstr)
+		while (*vstr && --precision >= 0)
 			dropped_chars |= addchar(context, *vstr++);
 		while (vlen < pad_width && is_left) {
 			dropped_chars |= addchar(context, ' ');

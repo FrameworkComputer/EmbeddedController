@@ -143,14 +143,9 @@ void vboot_hash_task(void)
 				      size);
 			curr_pos += size;
 			if (curr_pos >= data_size) {
-				int i;
-
 				hash = SHA256_final(&ctx);
-
-				CPRINTF("[%T hash done ");
-				for (i = 0; i < SHA256_DIGEST_SIZE; i++)
-					CPRINTF("%02x", hash[i]);
-				CPUTS("]\n");
+				CPRINTF("[%T hash done %.*h]\n",
+					SHA256_DIGEST_SIZE, hash);
 			}
 
 			/*
@@ -196,14 +191,11 @@ static int command_hash(int argc, char **argv)
 		ccprintf("Offset: 0x%08x\n", data_offset);
 		ccprintf("Size:   0x%08x (%d)\n", data_size, data_size);
 		ccprintf("Digest: ");
-		if (vboot_hash_in_progress()) {
+		if (vboot_hash_in_progress())
 			ccprintf("(in progress)\n");
-		} else {
-			int i;
-			for (i = 0; i < SHA256_DIGEST_SIZE; i++)
-				ccprintf("%02x", hash[i]);
-			ccprintf("\n");
-		}
+		else
+			ccprintf("%.*h\n", SHA256_DIGEST_SIZE, hash);
+
 		return EC_SUCCESS;
 	}
 

@@ -11,31 +11,55 @@
 #include <stdarg.h>  /* For va_list */
 #include "common.h"
 
-/* SUPPORTED FORMAT CODES:
- *   char (%c)
- *   string (%s)
- *   native int (signed/unsigned) (%d / %u / %x / %X)
- *   int32_t / uint32_t (%d / %x / %X)
- *   int64_t / uint64_t (%ld / %lu / %lx / %lX)
- *   pointer (%p)
- * And the following special format codes:
- *   current time in sec (%T) - interpreted as "%.6T" for fixed-point format
- * including padding (%-5s, %8d, %08x, %016lx)
+/*
+ * Printf formatting: % [flags] [width] [.precision] [length] [type]
  *
- * Floating point output (%f / %g) is not supported, but there is a fixed-point
- * extension for integers; a padding option of .N (where N is a number) will
- * put a decimal before that many digits.  For example, printing 123 with
- * format code %.6d will result in "0.000123".  This is most useful for
- * printing times, voltages, and currents. */
+ * Flags may be any/all of the following, and must occur in the following
+ * order if present:
+ *   - '0' = prefixed with 0's instead of spaces (%08x)
+ *   - '-' = left-justify instead of right-justify (%-5s)
+ *
+ * Width is the minimum output width, and may be:
+ *   - A number ("0" - "255")
+ *   - '*' = use next integer argument as width
+ *
+ * Precision must be preceded by a decimal point, and may be:
+ *   - A number ("0" - "255")
+ *   - '*' = use next integer argument as precision
+ *
+ * For integers, precision will put a decimal point before that many digits.
+ * So snprintf(buf, size, "%.6d", 123) sets buf="0.000123".  This is most
+ * useful for printing times, voltages, and currents.
+ *
+ * Length may be:
+ *   - 'l' = integer is 64-bit instead of native 32-bit
+ *
+ * Type may be:
+ *   - 'c' - character
+ *   - 's' - null-terminated ASCII string
+ *   - 'h' - binary data, print as hex; precision is length of data in bytes.
+ *           So "%.8h" prints 8 bytes of binary data
+ *   - 'p' - pointer
+ *   - 'd' - signed integer
+ *   - 'u' - unsigned integer
+ *   - 'x' - unsigned integer, print as lower-case hexadecimal
+ *   - 'X' - unsigned integer, print as upper-case hexadecimal
+ *   - 'b' - unsigned integer, print as binary
+ *
+ * Special format codes:
+ *   - "%T" - current time in seconds - interpreted as "%.6T" for precision.
+ *           This does NOT use up any arguments.
+ */
 
-
-/* Print formatted output to a function, like vfprintf()
+/**
+ * Print formatted output to a function, like vfprintf()
  *
  * addchar() will be called for every character to be printed, with the context
  * pointer passed to vfnprintf().  addchar() should return 0 if the character
  * was accepted or non-zero if the character was dropped due to overflow.
  *
- * Returns error if output was truncated. */
+ * Returns error if output was truncated.
+ */
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args);
 
