@@ -359,6 +359,9 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 #define STM32_RTC_TAFCR             REG32(STM32_RTC_BASE + 0x40)
 #define STM32_RTC_BACKUP(n)         REG32(STM32_RTC_BASE + 0x50 + 4 * (n))
 
+#define STM32_BKP_DATA(n)           STM32_RTC_BACKUP(n)
+#define STM32_BKP_ENTRIES           20
+
 #elif defined(CHIP_VARIANT_stm32f100)
 #define STM32_RTC_CRH               REG32(STM32_RTC_BASE + 0x00)
 #define STM32_RTC_CRL               REG32(STM32_RTC_BASE + 0x04)
@@ -373,12 +376,14 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 
 /* --- Backup Registers --- */
 #define STM32_BKP_BASE              0x40006c00
-#define STM32_BKP_DATA(n)           REG16(STM32_BKP_BASE + 2 + 4 * (n))
-#define STM32_BKP_RTCCR             REG16(STm32F_BKP_BASE + 0x02)
-#define STM32_BKP_CR                REG16(STm32F_BKP_BASE + 0x30)
-#define STM32_BKP_CSR               REG16(STm32F_BKP_BASE + 0x34)
+#define STM32_BKP_DATA(n)           REG16(STM32_BKP_BASE + 4 + 4 * (n))
+#define STM32_BKP_RTCCR             REG16(STM32_BKP_BASE + 0x2c)
+#define STM32_BKP_CR                REG16(STM32_BKP_BASE + 0x30)
+#define STM32_BKP_CSR               REG16(STM32_BKP_BASE + 0x34)
 
 #define STM32_RTC_BACKUP(n)         STM32_BKP_DATA(n)
+
+#define STM32_BKP_ENTRIES           10
 
 #else
 #error Unsupported chip variant

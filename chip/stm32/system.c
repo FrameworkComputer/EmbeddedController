@@ -11,6 +11,37 @@
 #include "task.h"
 #include "version.h"
 
+enum bkpdata_index {
+	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
+	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
+};
+
+/**
+ * Read backup register at specified index.
+ *
+ * @return The value of the register or 0 if invalid index.
+ */
+static uint16_t bkpdata_read(enum bkpdata_index index)
+{
+	if (index < 0 || index >= STM32_BKP_ENTRIES)
+		return 0;
+
+	return STM32_BKP_DATA(index);
+}
+
+/**
+ * Write hibernate register at specified index.
+ *
+ * @return nonzero if error.
+ */
+static int bkpdata_write(enum bkpdata_index index, uint16_t value)
+{
+	if (index < 0 || index >= STM32_BKP_ENTRIES)
+		return EC_ERROR_INVAL;
+
+	STM32_BKP_DATA(index) = value;
+	return EC_SUCCESS;
+}
 
 static void check_reset_cause(void)
 {
@@ -37,6 +68,10 @@ static void check_reset_cause(void)
 	if (!flags && (raw_cause & 0xfe000000))
 		flags |= RESET_FLAG_OTHER;
 
+	/* Restore then clear saved reset flags */
+	flags |= bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
+
 	system_set_reset_flags(flags);
 }
 
@@ -53,6 +88,8 @@ int system_pre_init(void)
 {
 	/* enable clock on Power module */
 	STM32_RCC_APB1ENR |= 1 << 28;
+	/* enable backup registers */
+	STM32_RCC_APB1ENR |= 1 << 27;
 	/* Enable access to RCC CSR register and RTC backup registers */
 	STM32_PWR_CR |= 1 << 8;
 
@@ -91,8 +128,14 @@ void system_reset(int flags)
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
-	/* TODO: (crosbug.com/p/7470) support hard boot; this is a
-	 * soft boot.  And support preserving reset flags, too... */
+	/* Save current reset reason if necessary */
+	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
+		bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS,
+			      system_get_reset_flags());
+	else
+		bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
+
+	/* TODO: (crosbug.com/p/7470) support hard boot; this is a soft boot. */
 	CPU_NVIC_APINT = 0x05fa0004;
 
 	/* Spin and wait for reboot; should never return */
@@ -103,15 +146,16 @@ void system_reset(int flags)
 
 int system_set_scratchpad(uint32_t value)
 {
-	STM32_RTC_BACKUP(0) = value;
-
-	return EC_SUCCESS;
+	/* Check if value fits in 16 bits */
+	if (value & 0xffff0000)
+		return EC_ERROR_INVAL;
+	return bkpdata_write(BKPDATA_INDEX_SCRATCHPAD, (uint16_t)value);
 }
 
 
 uint32_t system_get_scratchpad(void)
 {
-	return STM32_RTC_BACKUP(0);
+	return (uint32_t)bkpdata_read(BKPDATA_INDEX_SCRATCHPAD);
 }
 
 
