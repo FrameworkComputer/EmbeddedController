@@ -10,6 +10,7 @@
 #include "system.h"
 #include "task.h"
 #include "version.h"
+#include "watchdog.h"
 
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
@@ -47,9 +48,12 @@ static void check_reset_cause(void)
 {
 	uint32_t flags = 0;
 	uint32_t raw_cause = STM32_RCC_CSR;
+	uint32_t pwr_status = STM32_PWR_CSR;
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
+	/* Clear SBF in PWR_CSR */
+	STM32_PWR_CR |= 1 << 3;
 
 	if (raw_cause & 0x60000000) {
 		/* IWDG or WWDG */
@@ -65,6 +69,9 @@ static void check_reset_cause(void)
 	if (raw_cause & 0x04000000)
 		flags |= RESET_FLAG_RESET_PIN;
 
+	if (pwr_status & 0x00000002)
+		flags |= RESET_FLAG_HIBERNATE;
+
 	if (!flags && (raw_cause & 0xfe000000))
 		flags |= RESET_FLAG_OTHER;
 
@@ -76,11 +83,78 @@ static void check_reset_cause(void)
 }
 
 
+#ifdef CHIP_VARIANT_stm32f100
+static inline void wait_for_RTOFF(void)
+{
+	while ((STM32_RTC_CRL & 0x20) == 0)
+		;
+}
+
+
+static void __enter_hibernate_stm32f100(uint32_t seconds, uint32_t milliseconds)
+{
+	/* Enter RTC configuration mode */
+	wait_for_RTOFF();
+	STM32_RTC_CRL |= 0x10;
+	wait_for_RTOFF();
+
+	/* Set signal period to 0.992 ms. We want 1 ms, but 0.8% error is
+	 * fine. */
+	STM32_RTC_PRLL = 0x20;
+	wait_for_RTOFF();
+
+	/* Setting the alarm register */
+	milliseconds = milliseconds + seconds * 1000;
+	STM32_RTC_ALRH = milliseconds >> 16;
+	wait_for_RTOFF();
+	STM32_RTC_ALRL = milliseconds & 0xffff;
+	wait_for_RTOFF();
+	STM32_RTC_CNTL = 0;
+	wait_for_RTOFF();
+	STM32_RTC_CNTH = 0;
+	wait_for_RTOFF();
+
+	/* Enable RTC alarm interrupt */
+	STM32_RTC_CRH |= 0x2;
+	wait_for_RTOFF();
+
+	/* Clear RTC alarm flag */
+	STM32_RTC_CRL &= ~0x2;
+	wait_for_RTOFF();
+
+	/* Exit RTC configuration mode */
+	STM32_RTC_CRL &= ~0x10;
+	wait_for_RTOFF();
+
+	/* Delay watchdog as long as possible. (~26s)
+	 * TODO: Find a way to disable watchdog, perhaps through reset? */
+	STM32_IWDG_KR = 0x5555;
+	STM32_IWDG_PR = 0x6;
+	STM32_IWDG_RLR = 0xfff;
+	STM32_IWDG_KR = 0xcccc;
+	watchdog_reload();
+
+	/* Set deep sleep bit */
+	CPU_SCB_SYSCTRL |= 0x4;
+	/* Set power down deep sleep bit and clear wakeup flag */
+	STM32_PWR_CR |= 0x6;
+	/* Wait for wakeup flag cleared */
+	while (STM32_PWR_CSR & 0x1)
+		;
+	asm volatile("wfi");
+}
+#endif
+
+
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* we are going to hibernate ... */
+#ifdef CHIP_VARIANT_stm32f100
+	__enter_hibernate_stm32f100(seconds, (microseconds + 999) / 1000);
+#else
 	while (1)
 		/* NOT IMPLEMENTED */;
+#endif
 }
 
 
