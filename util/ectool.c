@@ -630,6 +630,7 @@ int cmd_flash_protect(int argc, char *argv[])
 
 	/* Print returned flags */
 	print_flash_protect_flags("Flash protect flags:", r.flags);
+	print_flash_protect_flags("Valid flags:        ", r.valid_flags);
 	print_flash_protect_flags("Writable flags:     ", r.writable_flags);
 
 	/* Check if we got all the flags we asked for */

@@ -103,10 +103,6 @@ static int ec_command_old(int command, const void *indata, int insize,
 	uint8_t *d;
 	int i;
 
-	const int cmd_addr = EC_LPC_ADDR_HOST_CMD;
-	const int data_addr = EC_LPC_ADDR_HOST_DATA;
-	const int param_addr = EC_LPC_ADDR_OLD_PARAM;
-
 	if (insize > EC_OLD_PARAM_SIZE) {
 		fprintf(stderr, "Data size too big\n");
 		return -EC_RES_ERROR;
@@ -116,7 +112,7 @@ static int ec_command_old(int command, const void *indata, int insize,
 	if (outsize > EC_OLD_PARAM_SIZE)
 		outsize = EC_OLD_PARAM_SIZE;
 
-	if (wait_for_ec(cmd_addr, 1000000)) {
+	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC ready\n");
 		return -EC_RES_ERROR;
 	}
@@ -124,17 +120,17 @@ static int ec_command_old(int command, const void *indata, int insize,
 	/* Write data, if any */
 	/* TODO: optimized copy using outl() */
 	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++)
-		outb(*d, param_addr + i);
+		outb(*d, EC_LPC_ADDR_OLD_PARAM + i);
 
-	outb(command, cmd_addr);
+	outb(command, EC_LPC_ADDR_HOST_CMD);
 
-	if (wait_for_ec(cmd_addr, 1000000)) {
+	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC response\n");
 		return -EC_RES_ERROR;
 	}
 
 	/* Check result */
-	i = inb(data_addr);
+	i = inb(EC_LPC_ADDR_HOST_DATA);
 	if (i) {
 		fprintf(stderr, "EC returned error result code %d\n", i);
 		return -i;
@@ -143,7 +139,7 @@ static int ec_command_old(int command, const void *indata, int insize,
 	/* Read data, if any */
 	/* TODO: optimized copy using outl() */
 	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++)
-		*d = inb(param_addr + i);
+		*d = inb(EC_LPC_ADDR_OLD_PARAM + i);
 
 	/*
 	 * LPC protocol doesn't have a way to communicate the true output
@@ -154,11 +150,6 @@ static int ec_command_old(int command, const void *indata, int insize,
 
 int ec_command(int command, int version, const void *indata, int insize,
 	       void *outdata, int outsize) {
-
-	const int cmd_addr = EC_LPC_ADDR_HOST_CMD;
-	const int data_addr = EC_LPC_ADDR_HOST_DATA;
-	const int args_addr = EC_LPC_ADDR_HOST_ARGS;
-	const int param_addr = EC_LPC_ADDR_HOST_PARAM;
 
 	struct ec_lpc_host_args args;
 	const uint8_t *d;
@@ -176,31 +167,29 @@ int ec_command(int command, int version, const void *indata, int insize,
 	args.command_version = version;
 	args.data_size = insize;
 
-	/* Calculate checksum */
+	/* Initialize checksum */
 	csum = command + args.flags + args.command_version + args.data_size;
-	for (i = 0, d = (const uint8_t *)indata; i < insize; i++, d++)
+
+	/* Write data and update checksum */
+	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++) {
+		outb(*d, EC_LPC_ADDR_HOST_PARAM + i);
 		csum += *d;
+	}
 
+	/* Finalize checksum and write args */
 	args.checksum = (uint8_t)csum;
-
-	/* Write args */
 	for (i = 0, d = (const uint8_t *)&args; i < sizeof(args); i++, d++)
-		outb(*d, args_addr + i);
+		outb(*d, EC_LPC_ADDR_HOST_ARGS + i);
 
-	/* Write data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++)
-		outb(*d, param_addr + i);
+	outb(command, EC_LPC_ADDR_HOST_CMD);
 
-	outb(command, cmd_addr);
-
-	if (wait_for_ec(cmd_addr, 1000000)) {
+	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
 		fprintf(stderr, "Timeout waiting for EC response\n");
 		return -EC_RES_ERROR;
 	}
 
 	/* Check result */
-	i = inb(data_addr);
+	i = inb(EC_LPC_ADDR_HOST_DATA);
 	if (i) {
 		fprintf(stderr, "EC returned error result code %d\n", i);
 		return -i;
@@ -208,7 +197,7 @@ int ec_command(int command, int version, const void *indata, int insize,
 
 	/* Read back args */
 	for (i = 0, dout = (uint8_t *)&args; i < sizeof(args); i++, dout++)
-		*dout = inb(args_addr + i);
+		*dout = inb(EC_LPC_ADDR_HOST_ARGS + i);
 
 	/*
 	 * If EC didn't modify args flags, then somehow we sent a new-style
@@ -225,16 +214,17 @@ int ec_command(int command, int version, const void *indata, int insize,
 		return -EC_RES_INVALID_RESPONSE;
 	}
 
-	/* Read data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, dout = (uint8_t *)outdata; i < args.data_size; i++, dout++)
-		*dout = inb(param_addr + i);
+	/* Start calculating response checksum */
+	csum = command + args.flags + args.command_version + args.data_size;
+
+	/* Read response and update checksum */
+	for (i = 0, dout = (uint8_t *)outdata; i < args.data_size;
+	     i++, dout++) {
+		*dout = inb(EC_LPC_ADDR_HOST_PARAM + i);
+		csum += *dout;
+	}
 
 	/* Verify checksum */
-	csum = command + args.flags + args.command_version + args.data_size;
-	for (i = 0, d = (const uint8_t *)outdata; i < args.data_size; i++, d++)
-		csum += *d;
-
 	if (args.checksum != (uint8_t)csum) {
 		fprintf(stderr, "EC response has invalid checksum\n");
 		return -EC_RES_INVALID_CHECKSUM;
