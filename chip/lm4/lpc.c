@@ -662,7 +662,11 @@ static int lpc_init(void)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT);
+/*
+ * Set prio to higher than default so other inits can initialize their
+ * memmap data.
+ */
+DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_DEFAULT - 1);
 
 
 static int lpc_resume(void)

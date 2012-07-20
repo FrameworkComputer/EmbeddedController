@@ -684,25 +684,34 @@ int cmd_temperature(int argc, char *argv[])
 		return -1;
 	}
 
-	/* Currently we only store up to 16 temperature sensor data in
-	 * mapped memory. */
-	if (id >= 16) {
-		printf("Sensor with ID greater than 16 unsupported.\n");
+	if (id < 0 ||
+	    id >= EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES) {
+		printf("Sensor ID invalid.\n");
 		return -1;
 	}
 
 	printf("Reading temperature...");
-	rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
-	if (rv == 0xff) {
+	if (id < EC_TEMP_SENSOR_ENTRIES)
+		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
+	else if (read_mapped_mem8(EC_MEMMAP_THERMAL_VERSION) >= 2)
+		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR_B +
+				      id - EC_TEMP_SENSOR_ENTRIES);
+	else {
+		/* Sensor in second bank, but second bank isn't supported */
+		rv = EC_TEMP_SENSOR_NOT_PRESENT;
+	}
+
+	switch (rv) {
+	case EC_TEMP_SENSOR_NOT_PRESENT:
 		printf("Sensor not present\n");
 		return -1;
-	} else if (rv == 0xfe) {
+	case EC_TEMP_SENSOR_ERROR:
 		printf("Error\n");
 		return -1;
-	} else if (rv == 0xfd) {
+	case EC_TEMP_SENSOR_NOT_POWERED:
 		printf("Sensor disabled/unpowered\n");
 		return -1;
-	} else {
+	default:
 		printf("%d\n", rv + EC_TEMP_SENSOR_OFFSET);
 		return 0;
 	}
@@ -840,13 +849,16 @@ int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 	int rv;
 
 	rv = read_mapped_mem16(EC_MEMMAP_FAN);
-	if (rv == 0xffff)
+	switch (rv) {
+	case EC_FAN_SPEED_NOT_PRESENT:
 		return -1;
-
-	if (rv == 0xfffe)
+	case EC_FAN_SPEED_STALLED:
 		printf("Fan stalled!\n");
-	else
+		break;
+	default:
 		printf("Current fan RPM: %d\n", rv);
+		break;
+	}
 
 	return 0;
 }

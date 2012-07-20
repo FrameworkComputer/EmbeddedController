@@ -125,41 +125,36 @@ int pwm_set_keyboard_backlight(int percent)
 	return EC_SUCCESS;
 }
 
-static void update_mapped_memory(void)
+/**
+ * Return non-zero if fan is enabled but stalled
+ */
+static int fan_is_stalled(void)
 {
-	int i, r;
-	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+	/* Must be enabled with non-zero target to stall */
+	if (!pwm_get_fan_enabled() || pwm_get_fan_target_rpm() == 0)
+		return 0;
 
-	for (i = 0; i < 4; ++i)
-		mapped[i] = 0xffff;
-
-	r = pwm_get_fan_rpm();
-
-	/* Write fan speed. Or 0xFFFE for fan stalled. */
-	if (r)
-		mapped[0] = r;
-	else
-		mapped[0] = 0xfffe;
-}
-
-static void check_fan_failure(void)
-{
-	if (pwm_get_fan_target_rpm() != 0 && pwm_get_fan_enabled() &&
-	    ((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) {
-		/*
-		 * Fan enabled but stalled. Issues warning.  As we have thermal
-		 * shutdown protection, issuing warning here should be enough.
-		 */
-		host_set_single_event(EC_HOST_EVENT_THERMAL);
-		cputs(CC_PWM, "[Fan stalled!]\n");
-	}
+	/* Check for stall condition */
+	return (((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) ? 1 : 0;
 }
 
 void pwm_task(void)
 {
+	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+
 	while (1) {
-		check_fan_failure();
-		update_mapped_memory();
+		if (fan_is_stalled()) {
+			mapped[0] = EC_FAN_SPEED_STALLED;
+			/*
+			 * Issue warning.  As we have thermal shutdown
+			 * protection, issuing warning here should be enough.
+			 */
+			host_set_single_event(EC_HOST_EVENT_THERMAL);
+			cprintf(CC_PWM, "[%T Fan stalled!]\n");
+		} else
+			mapped[0] = pwm_get_fan_rpm();
+
+		/* Update about once a second */
 		usleep(1000000);
 	}
 }
@@ -299,7 +294,9 @@ static int pwm_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	const struct pwm_state *prev;
+	uint16_t *mapped;
 	int version, size;
+	int i;
 
 	/* Enable the fan module and delay a few clocks */
 	LM4_SYSTEM_RCGCFAN = 1;
@@ -358,6 +355,11 @@ static int pwm_init(void)
 		 */
 		pwm_enable_keyboard_backlight(1);
 	}
+
+	/* Initialize memory-mapped data */
+	mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
+		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
 
 	return EC_SUCCESS;
 }

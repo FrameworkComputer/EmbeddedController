@@ -65,8 +65,9 @@
 #define EC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
-#define EC_MEMMAP_TEMP_SENSOR      0x00
-#define EC_MEMMAP_FAN              0x10
+#define EC_MEMMAP_TEMP_SENSOR      0x00 /* Temp sensors */
+#define EC_MEMMAP_FAN              0x10 /* Fan speeds */
+#define EC_MEMMAP_TEMP_SENSOR_B    0x18 /* Temp sensors (second set) */
 #define EC_MEMMAP_ID               0x20 /* 'E' 'C' */
 #define EC_MEMMAP_ID_VERSION       0x22 /* Version of data in 0x20 - 0x2f */
 #define EC_MEMMAP_THERMAL_VERSION  0x23 /* Version of data in 0x00 - 0x1f */
@@ -88,6 +89,27 @@
 #define EC_MEMMAP_BATT_MODEL       0x68 /* Battery Model Number String */
 #define EC_MEMMAP_BATT_SERIAL      0x70 /* Battery Serial Number String */
 #define EC_MEMMAP_BATT_TYPE        0x78 /* Battery Type String */
+
+/* Number of temp sensors at EC_MEMMAP_TEMP_SENSOR */
+#define EC_TEMP_SENSOR_ENTRIES     16
+/*
+ * Number of temp sensors at EC_MEMMAP_TEMP_SENSOR_B.
+ *
+ * Valid only if EC_MEMMAP_THERMAL_VERSION returns >= 2.
+ */
+#define EC_TEMP_SENSOR_B_ENTRIES   8
+#define EC_TEMP_SENSOR_NOT_PRESENT 0xff
+#define EC_TEMP_SENSOR_ERROR       0xfe
+#define EC_TEMP_SENSOR_NOT_POWERED 0xfd
+/*
+ * The offset of temperature value stored in mapped memory.  This allows
+ * reporting a temperature range of 200K to 454K = -73C to 181C.
+ */
+#define EC_TEMP_SENSOR_OFFSET      200
+
+#define EC_FAN_SPEED_ENTRIES       4       /* Number of fans at EC_MEMMAP_FAN */
+#define EC_FAN_SPEED_NOT_PRESENT   0xffff  /* Entry not present */
+#define EC_FAN_SPEED_STALLED       0xfffe  /* Fan stalled */
 
 /* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
@@ -114,12 +136,6 @@
 /* Wireless switch flags */
 #define EC_WIRELESS_SWITCH_WLAN      0x01
 #define EC_WIRELESS_SWITCH_BLUETOOTH 0x02
-
-/*
- * The offset of temperature value stored in mapped memory.  This allows
- * reporting a temperature range of 200K to 454K = -73C to 181C.
- */
-#define EC_TEMP_SENSOR_OFFSET 200
 
 /*
  * This header file is used in coreboot both in C and ACPI code.  The ACPI code

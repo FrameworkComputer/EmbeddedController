@@ -76,20 +76,29 @@ static void poll_fast_sensors(void)
 static void update_mapped_memory(void)
 {
 	int i, t;
-	uint8_t *mapped = host_get_memmap(EC_MEMMAP_TEMP_SENSOR);
+	uint8_t *mptr = host_get_memmap(EC_MEMMAP_TEMP_SENSOR);
 
-	memset(mapped, 0xff, 16);
+	for (i = 0; i < TEMP_SENSOR_COUNT; i++, mptr++) {
+		/*
+		 * Switch to second range if first one is full, or stop if
+		 * second range is also full.
+		 */
+		if (i == EC_TEMP_SENSOR_ENTRIES)
+			mptr = host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B);
+		else if (i >= EC_TEMP_SENSOR_ENTRIES +
+			 EC_TEMP_SENSOR_B_ENTRIES)
+			break;
 
-	for (i = 0; i < TEMP_SENSOR_COUNT && i < 16; ++i) {
 		if (!temp_sensor_powered(i)) {
-			mapped[i] = 0xfd;
+			*mptr = EC_TEMP_SENSOR_NOT_POWERED;
 			continue;
 		}
+
 		t = temp_sensor_read(i);
-		if (t != -1)
-			mapped[i] = t - EC_TEMP_SENSOR_OFFSET;
+		if (t == -1)
+			*mptr = EC_TEMP_SENSOR_ERROR;
 		else
-			mapped[i] = 0xfe;
+			*mptr = t - EC_TEMP_SENSOR_OFFSET;
 	}
 }
 
@@ -98,8 +107,14 @@ void temp_sensor_task(void)
 {
 	int i;
 
-	/* Switch data is now present */
-	*host_get_memmap(EC_MEMMAP_THERMAL_VERSION) = 1;
+	/* Initialize memory-mapped data */
+	memset(host_get_memmap(EC_MEMMAP_TEMP_SENSOR),
+	       EC_TEMP_SENSOR_NOT_PRESENT, EC_TEMP_SENSOR_ENTRIES);
+	memset(host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B),
+	       EC_TEMP_SENSOR_NOT_PRESENT, EC_TEMP_SENSOR_B_ENTRIES);
+
+	/* Temp sensor data is present, with B range supported. */
+	*host_get_memmap(EC_MEMMAP_THERMAL_VERSION) = 2;
 
 	while (1) {
 		for (i = 0; i < 4; ++i) {
