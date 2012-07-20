@@ -40,7 +40,7 @@ typedef struct _FmapAreaHeader {
 } __packed FmapAreaHeader;
 
 #ifdef CONFIG_VBOOT_SIG
-#define NUM_EC_FMAP_AREAS (7 + 4)
+#define NUM_EC_FMAP_AREAS (7 + 3)
 #else
 #define NUM_EC_FMAP_AREAS 7
 #endif
@@ -72,8 +72,8 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* (Optional) RO firmware boot execution code. */
-			.area_name = "BOOT_STUB",
+			/* (Optional) RO firmware code. */
+			.area_name = "FR_MAIN",
 			.area_offset = CONFIG_FW_RO_OFF,
 			.area_size = CONFIG_FW_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
@@ -134,21 +134,14 @@ const struct _ec_fmap {
 		},
 
 #ifdef CONFIG_VBOOT_SIG
-		/* Firmware A */
 		{
-			.area_name = "RW_SECTION_A",
-			.area_offset = CONFIG_SECTION_RW_OFF,
-			.area_size = CONFIG_SECTION_RW_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-		{
-			.area_name = "FW_MAIN_A",
+			.area_name = "FW_MAIN",
 			.area_offset = CONFIG_FW_RW_OFF,
 			.area_size = CONFIG_FW_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
 		},
 		{
-			.area_name = "VBLOCK_A",
+			.area_name = "VBLOCK",
 			.area_offset = CONFIG_VBLOCK_RW_OFF,
 			.area_size = CONFIG_VBLOCK_SIZE,
 			.area_flags = FMAP_AREA_STATIC,
