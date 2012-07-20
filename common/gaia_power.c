@@ -245,6 +245,7 @@ int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_LID_OPEN);
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
+	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
 	/* auto power on if the recovery combination was pressed */
 	if (keyboard_scan_recovery_pressed())
