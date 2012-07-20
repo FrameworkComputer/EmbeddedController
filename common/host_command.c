@@ -234,3 +234,90 @@ void host_command_task(void)
 		}
 	}
 }
+
+/*****************************************************************************/
+/* Console commands*/
+
+static int parse_byte(char *b, uint8_t *out)
+{
+	int i;
+	*out = 0;
+	for (i = 0; i < 2; ++i) {
+		*out *= 16;
+		if (*b >= '0' && *b <= '9')
+			*out += *b - '0';
+		else if (*b >= 'a' && *b <= 'f')
+			*out += *b - 'a' + 10;
+		else if (*b >= 'A' && *b <= 'F')
+			*out += *b - 'A' + 10;
+		else
+			return EC_ERROR_INVAL;
+		++b;
+	}
+	return EC_SUCCESS;
+}
+
+static int parse_params(char *s, uint8_t *params)
+{
+	int len = 0;
+
+	while (*s) {
+		if (parse_byte(s, params))
+			return -1;
+		s += 2;
+		params++;
+		len++;
+	}
+	return len;
+}
+
+static void dump_hex(char *resp, int size)
+{
+	int i;
+	for (i = 0; i < size; ++i) {
+		ccprintf("%02x", (int)resp[i]);
+		if ((i & 15) == 15)
+			ccputs("\n");
+	}
+	ccputs("\n");
+}
+
+static int command_host_command(int argc, char **argv)
+{
+	struct host_cmd_handler_args args;
+	uint8_t cmd_params[EC_HOST_PARAM_SIZE];
+	enum ec_status res;
+	char *e;
+	int rv;
+
+	if (argc != 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	args.command = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+	args.version = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+	args.params = cmd_params;
+	rv = parse_params(argv[3], cmd_params);
+	if (rv < 0)
+		return EC_ERROR_PARAM3;
+	args.params_size = rv;
+	args.response = cmd_params;
+	args.response_max = EC_HOST_PARAM_SIZE;
+	args.response_size = 0;
+
+	res = host_command_process(&args);
+
+	if (res != EC_RES_SUCCESS)
+		ccprintf("Command returned %d\n", res);
+	else
+		dump_hex(cmd_params, args.response_size);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
+			"cmd ver param",
+			"Fake host command",
+			NULL);
