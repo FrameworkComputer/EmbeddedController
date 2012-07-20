@@ -9,6 +9,7 @@
 #define __CROS_EC_FLASH_H
 
 #include "common.h"
+#include "config.h"
 #include "ec_commands.h"  /* For EC_FLASH_PROTECT_* flags */
 
 /*****************************************************************************/
@@ -41,7 +42,7 @@ int flash_physical_size(void);
  */
 static inline char *flash_physical_dataptr(int offset)
 {
-	return (char *)offset;
+	return (char *)(CONFIG_FLASH_BASE + offset);
 }
 
 /**

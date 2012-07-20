@@ -8,6 +8,7 @@
 #include "console.h"
 #include "flash.h"
 #include "registers.h"
+#include "power_button.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -38,6 +39,10 @@
 #define CR_LOCK  (1<<7)
 #define PRG_LOCK 0
 #define OPT_LOCK (1<<9)
+
+/* Fake write protect switch for flash write protect development.
+ * TODO: Remove this when we have real write protect pin. */
+static int fake_write_protect;
 
 static void write_optb(int byte, uint8_t value);
 
@@ -123,7 +128,7 @@ static void preserve_optb(int byte)
 	uint8_t optb[8];
 
 	/* The byte has been reset, no need to run preserve. */
-	if (*(uint8_t *)(STM32_OPTB_BASE + byte) == 0xff)
+	if (*(uint16_t *)(STM32_OPTB_BASE + byte) == 0xffff)
 		return;
 
 	for (i = 0; i < ARRAY_SIZE(optb); ++i)
@@ -295,15 +300,61 @@ int flash_physical_get_protect(int block)
 void flash_physical_set_protect(int start_bank, int bank_count)
 {
 	int block;
+	int i;
+	int original_val[8], val[8];
+
+	for (i = 0; i < 8; ++i)
+		original_val[i] = val[i] = read_optb(i * 2);
 
 	for (block = start_bank; block < start_bank + bank_count; block++) {
-		int byte_off = STM32_OPTB_WRP_OFF(block/8);
-		uint8_t val = read_optb(byte_off) | (1 << (block % 8));
-		write_optb(byte_off, val);
+		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2;
+		val[byte_off] = val[byte_off] & (~(1 << (block % 8)));
 	}
+
+	for (i = 0; i < 8; ++i)
+		if (original_val[i] != val[i])
+			write_optb(i * 2, val[i]);
+}
+
+static void unprotect_all_blocks(void)
+{
+	int i;
+	for (i = 4; i < 8; ++i)
+		write_optb(i * 2, 0xff);
 }
 
 int flash_physical_pre_init(void)
 {
+	/* Drop write protect status here. If a block should be protected,
+	 * write protect for it will be set by pstate. */
+	unprotect_all_blocks();
+
 	return EC_SUCCESS;
 }
+
+int write_protect_asserted(void)
+{
+	return fake_write_protect;
+}
+
+static int command_set_fake_wp(int argc, char **argv)
+{
+	int val;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	val = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	fake_write_protect = val;
+	ccprintf("Fake write protect = %d\n", val);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fakewp, command_set_fake_wp,
+			"<0 | 1>",
+			"Set fake write protect pin",
+			NULL);
