@@ -668,6 +668,23 @@ int cmd_serial_test(int argc, char *argv[])
 }
 
 
+int read_mapped_temperature(int id)
+{
+	int rv;
+
+	if (id < EC_TEMP_SENSOR_ENTRIES)
+		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
+	else if (read_mapped_mem8(EC_MEMMAP_THERMAL_VERSION) >= 2)
+		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR_B +
+				      id - EC_TEMP_SENSOR_ENTRIES);
+	else {
+		/* Sensor in second bank, but second bank isn't supported */
+		rv = EC_TEMP_SENSOR_NOT_PRESENT;
+	}
+	return rv;
+}
+
+
 int cmd_temperature(int argc, char *argv[])
 {
 	int rv;
@@ -675,8 +692,30 @@ int cmd_temperature(int argc, char *argv[])
 	char *e;
 
 	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <sensorid>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <sensorid> | all\n", argv[0]);
 		return -1;
+	}
+
+	if (strcmp(argv[1], "all") == 0) {
+		for (id = 0;
+		     id < EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES;
+		     id++) {
+			rv = read_mapped_temperature(id);
+			switch (rv) {
+			case EC_TEMP_SENSOR_NOT_PRESENT:
+				break;
+			case EC_TEMP_SENSOR_ERROR:
+				fprintf(stderr, "Sensor %d error\n", id);
+				break;
+			case EC_TEMP_SENSOR_NOT_POWERED:
+				fprintf(stderr, "Sensor %d disabled\n", id);
+				break;
+			default:
+				printf("%d: %d\n", id,
+				       rv + EC_TEMP_SENSOR_OFFSET);
+			}
+		}
+		return 0;
 	}
 
 	id = strtol(argv[1], &e, 0);
@@ -692,15 +731,7 @@ int cmd_temperature(int argc, char *argv[])
 	}
 
 	printf("Reading temperature...");
-	if (id < EC_TEMP_SENSOR_ENTRIES)
-		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
-	else if (read_mapped_mem8(EC_MEMMAP_THERMAL_VERSION) >= 2)
-		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR_B +
-				      id - EC_TEMP_SENSOR_ENTRIES);
-	else {
-		/* Sensor in second bank, but second bank isn't supported */
-		rv = EC_TEMP_SENSOR_NOT_PRESENT;
-	}
+	rv = read_mapped_temperature(id);
 
 	switch (rv) {
 	case EC_TEMP_SENSOR_NOT_PRESENT:
@@ -727,8 +758,22 @@ int cmd_temp_sensor_info(int argc, char *argv[])
 	char *e;
 
 	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <sensorid>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <sensorid> | all\n", argv[0]);
 		return -1;
+	}
+
+	if (strcmp(argv[1], "all") == 0) {
+		for (p.id = 0;
+		     p.id < EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES;
+		     p.id++) {
+			rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0,
+					&p, sizeof(p), &r, sizeof(r));
+			if (rv < 0)
+				continue;
+			printf("%d: %d %s\n", p.id, r.sensor_type,
+			       r.sensor_name);
+		}
+		return 0;
 	}
 
 	p.id = strtol(argv[1], &e, 0);
