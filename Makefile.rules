@@ -28,7 +28,7 @@ silent = $(if $(V),,1>/dev/null)
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
           -D$(call section_is,$*) \
           -DSECTION=$(call section,$*) $< -o $@
-cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $@
+cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
 cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
@@ -41,13 +41,13 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $(filter %.c, $^) -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
 	   $(silent)
 cmd_version = ./util/getversion.sh > $@
-cmd_sign = vbutil_ec --sign $@ \
+cmd_sign = vbutil_ec --sign $(out)/$*.bin.tmp \
 		--version 1 \
 		--keyblock $(VBOOT_DEVKEYS)/ec.keyblock \
 		--signprivate $(VBOOT_DEVKEYS)/ec_data_key.vbprivk \
 		--signpubkey $(VBOOT_DEVKEYS)/ec_root_key.vbpubk \
 		$(silent)
-cmd_mv = mv $^ $@
+cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = cd $(out) && \
 	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A $(silent) && \
 	mv RW_SECTION_A $(PROJECT).RW.bin
@@ -82,14 +82,12 @@ $(out)/firmware_image.lds: common/firmware_image.lds.S
 $(out)/%.lds: core/$(CORE)/ec.lds.S
 	$(call quiet,lds,LDS    )
 
-$(out)/%.bin: $(out)/%.bin.tmp
-	$(call quiet,mv,MV     )
-
-$(out)/%.bin.tmp: $(out)/%.obj
+$(out)/%.bin: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)
 	$(if $(sign-y),$(call quiet,sign,SIGN   ),)
 	$(if $(sign-y),$(call quiet,extractrw-y,EXTR_RW), \
 			$(call quiet,copyrw-y,COPY_RW))
+	$(call quiet,mv_from_tmp,MV     )
 
 flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).RW.flat
 
