@@ -49,19 +49,15 @@ void host_command_received(struct host_cmd_handler_args *args)
 	if (args->command == EC_CMD_REBOOT) {
 		system_reset(SYSTEM_RESET_HARD);
 		/* Reset should never return; if it does, post an error */
-		args->result = EC_RES_ERROR;
+		host_send_response(EC_RES_ERROR);
+		return;
 	}
 
-	/* If the driver has signalled an error, send the response now */
-	if (args->result) {
-		args->send_response(args);
-	} else {
-		/* Save the command */
-		pending_args = args;
+	/* Save the command */
+	pending_args = args;
 
-		/* Wake up the task to handle the command */
-		task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
-	}
+	/* Wake up the task to handle the command */
+	task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
 }
 
 /*
@@ -228,9 +224,8 @@ void host_command_task(void)
 		int evt = task_wait_event(-1);
 		/* process it */
 		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
-			pending_args->result =
-					host_command_process(pending_args);
-			pending_args->send_response(pending_args);
+			enum ec_status res = host_command_process(pending_args);
+			host_send_response(res);
 		}
 	}
 }

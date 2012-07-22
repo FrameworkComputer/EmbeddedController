@@ -122,14 +122,14 @@ static int i2c_write_raw(int port, void *buf, int len)
 	return len;
 }
 
-static void i2c_send_response(struct host_cmd_handler_args *args)
+void host_send_response(enum ec_status result)
 {
-	const uint8_t *data = args->response;
-	int size = args->response_size;
+	const uint8_t *data = host_cmd_args.response;
+	int size = host_cmd_args.response_size;
 	uint8_t *out = host_buffer;
 	int sum, i;
 
-	*out++ = args->result;
+	*out++ = result;
 	for (i = 0, sum = 0; i < size; i++, data++, out++) {
 		if (data != out)
 			*out = *data;
@@ -176,9 +176,6 @@ static void i2c_event_handler(int port)
 			if (rx_index) {
 				/* we have an available command : execute it */
 				host_cmd_args.command = host_buffer[0];
-				host_cmd_args.result = EC_RES_SUCCESS;
-				host_cmd_args.send_response =
-					i2c_send_response;
 				host_cmd_args.version = 0;
 				host_cmd_args.params = host_buffer + 1;
 				host_cmd_args.params_size = EC_HOST_PARAM_SIZE;

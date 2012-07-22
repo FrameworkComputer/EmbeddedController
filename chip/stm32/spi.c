@@ -147,11 +147,6 @@ static void reply(int port, char *msg, int msg_len)
 	dma_start_tx(dmac, msg_len, (void *)&STM32_SPI_DR(port), out_msg);
 }
 
-/* dummy handler for SPI - will be filled in later */
-static void spi_send_response(struct host_cmd_handler_args *args)
-{
-}
-
 /**
  * Handles an interrupt on the specified port.
  *
@@ -192,8 +187,6 @@ static void spi_interrupt(int port)
 	 * current devel board.
 	 */
 	args.command = cmd;
-	args.result = EC_RES_SUCCESS;
-	args.send_response = spi_send_response;
 	args.version = 0;
 	args.params = out_msg + SPI_MSG_HEADER_BYTES + 1;
 	args.params_size = sizeof(out_msg) - SPI_MSG_PROTO_BYTES;

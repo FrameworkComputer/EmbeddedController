@@ -13,16 +13,10 @@
 
 /* Args for host command handler */
 struct host_cmd_handler_args {
-	/*
-	 * The driver that receives the command sets up the send_response()
-	 * handler. Once the command is processed this handler is called to
-	 * send the response back to the host.
-	 */
-	void (*send_response)(struct host_cmd_handler_args *args);
 	uint8_t command;       /* Command (e.g., EC_CMD_FLASH_GET_INFO) */
 	uint8_t version;       /* Version of command (0-31) */
-	uint8_t params_size;   /* Size of input parameters in bytes */
 	const uint8_t *params; /* Input parameters */
+	uint8_t params_size;   /* Size of input parameters in bytes */
 	/*
 	 * Pointer to output response data buffer.  On input to the handler,
 	 * points to a buffer of size response_max.  Command handler can change
@@ -37,17 +31,6 @@ struct host_cmd_handler_args {
 	 */
 	uint8_t response_max;
 	uint8_t response_size; /* Size of data pointed to by resp_ptr */
-
-	/*
-	 * This is the result returned by command and therefore the status to
-	 * be reported from the command execution to the host. The driver
-	 * should set this to EC_RES_SUCCESS on receipt of a valid command.
-	 * It is then passed back to the driver via send_response() when
-	 * command execution is complete. The driver may still override this
-	 * when sending the response back to the host if it detects an error
-	 * in the response or in its own operation.
-	 */
-	enum ec_status result;
 };
 
 /* Host command */
@@ -116,6 +99,16 @@ uint32_t host_get_events(void);
  * Called by host interface module when a command is received.
  */
 void host_command_received(struct host_cmd_handler_args *args);
+
+/**
+ * Send a successful result code to a host command.
+ *
+ * Response data, if any, has been stored in the args passed to
+ * host_command_received().
+ *
+ * @param result        Result code for the command (EC_RES_...)
+ */
+void host_send_response(enum ec_status result);
 
 /* Register a host command handler */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
