@@ -42,6 +42,9 @@
 /* Macro to calculate difference of pointers in the circular receive buffer. */
 #define RX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
+/* ASCII control character; for example, CTRL('C') = ^C */
+#define CTRL(c) ((c) - '@')
+
 /* Transmit and receive buffers */
 static volatile char tx_buf[CONFIG_UART_TX_BUF_SIZE];
 static volatile int tx_buf_head;
@@ -54,8 +57,16 @@ static volatile int rx_cur_buf_tail;
 static volatile int rx_cur_buf_head;
 static volatile int rx_cur_buf_ptr;
 static int last_rx_was_cr;
-static int in_escape;
-static char esc_seq_char;
+
+static enum {
+	ESC_OUTSIDE,   /* Not in escape code */
+	ESC_START,     /* Got ESC */
+	ESC_BAD,       /* Bad escape sequence */
+	ESC_BRACKET,   /* Got ESC [ */
+	ESC_BRACKET_1, /* Got ESC [ 1 */
+	ESC_BRACKET_3, /* Got ESC [ 3 */
+	ESC_O,         /* Got ESC O */
+} esc_state;
 
 /* Command history */
 struct cmd_history_t {
@@ -92,6 +103,23 @@ static int __tx_char(void *context, int c)
 }
 
 
+/**
+ * Write a number directly to the UART.
+ *
+ * @param val number to write; must be >1.
+ */
+static void uart_write_int(int val)
+{
+	if (val <= 0)
+		return;
+
+	if (val > 9)
+		uart_write_int(val / 10);
+
+	uart_write_char((val % 10) + '0');
+}
+
+
 static void move_rx_ptr_fwd(void)
 {
 	if (rx_cur_buf_ptr != rx_cur_buf_head) {
@@ -103,6 +131,18 @@ static void move_rx_ptr_fwd(void)
 	}
 }
 
+static void move_rx_ptr_end(void)
+{
+	if (rx_cur_buf_ptr == rx_cur_buf_head)
+		return;
+
+	uart_write_char(0x1B);
+	uart_write_char('[');
+	uart_write_int(rx_cur_buf_head - rx_cur_buf_ptr);
+	uart_write_char('C');
+
+	rx_cur_buf_ptr = rx_cur_buf_head;
+}
 
 static void move_rx_ptr_bwd(void)
 {
@@ -115,6 +155,18 @@ static void move_rx_ptr_bwd(void)
 	}
 }
 
+static void move_rx_ptr_begin(void)
+{
+	if (rx_cur_buf_ptr == 0)
+		return;
+
+	uart_write_char(0x1B);
+	uart_write_char('[');
+	uart_write_int(rx_cur_buf_ptr);
+	uart_write_char('D');
+
+	rx_cur_buf_ptr = 0;
+}
 
 static void repeat_char(char c, int cnt)
 {
@@ -122,31 +174,55 @@ static void repeat_char(char c, int cnt)
 		uart_write_char(c);
 }
 
-
 static void handle_backspace(void)
 {
-	if (rx_cur_buf_ptr != 0) {
-		/* Move texts after cursor and also update rx buffer. */
-		int ptr;
-		for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr) {
-			uart_write_char(rx_cur_buf[ptr]);
-			rx_cur_buf[ptr - 1] = rx_cur_buf[ptr];
-		}
+	int ptr;
 
-		/* Space over last character and move cursor back to correct
-		 * position.
-		 */
-		uart_write_char(' ');
-		repeat_char('\b', ptr - rx_cur_buf_ptr + 1);
+	if (!rx_cur_buf_ptr)
+		return;  /* Already at beginning of line */
 
-		--rx_cur_buf_head;
-		--rx_cur_buf_ptr;
+	/* Move cursor back */
+	uart_write_char('\b');
+
+	/* Move texts after cursor and also update rx buffer. */
+	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr) {
+		uart_write_char(rx_cur_buf[ptr]);
+		rx_cur_buf[ptr - 1] = rx_cur_buf[ptr];
 	}
-	else
-		/* Cursor moves pass the first character. Move it back. */
-		uart_write_char(' ');
+
+	/* Space over last character and move cursor to correct position */
+	uart_write_char(' ');
+	repeat_char('\b', ptr - rx_cur_buf_ptr + 1);
+
+	--rx_cur_buf_head;
+	--rx_cur_buf_ptr;
 }
 
+static void handle_kill(void)
+{
+	if (rx_cur_buf_ptr == rx_cur_buf_head)
+		return;
+
+	/* Space over all following characters */
+	repeat_char(' ', rx_cur_buf_head - rx_cur_buf_ptr);
+	repeat_char('\b', rx_cur_buf_head - rx_cur_buf_ptr);
+
+	rx_cur_buf_head = rx_cur_buf_ptr;
+}
+
+static void reprint_current(void)
+{
+	int ptr;
+
+	uart_write_char(CTRL('L'));
+	uart_write_char('>');
+	uart_write_char(' ');
+
+	for (ptr = 0; ptr < rx_cur_buf_head; ptr++)
+			uart_write_char(rx_cur_buf[ptr]);
+
+	repeat_char('\b', ptr - rx_cur_buf_ptr);
+}
 
 static void insert_char(char c)
 {
@@ -292,6 +368,127 @@ static void history_next(void)
 		cmd_history_head = cmd_history_ptr;
 }
 
+/**
+ * Escape code handler
+ *
+ * @param c             Next received character.
+ */
+static void handle_esc(int c)
+{
+	switch (esc_state) {
+	case ESC_START:
+		if (c == '[') {
+			esc_state = ESC_BRACKET;
+			return;
+		} else if (c == 'O') {
+			esc_state = ESC_O;
+			return;
+		}
+		break;
+
+	case ESC_BRACKET:
+		if (c == '1') {
+			esc_state = ESC_BRACKET_1;
+			return;
+		} else if (c == '3') {
+			esc_state = ESC_BRACKET_3;
+			return;
+		}
+
+		if (c == 'A') /* Up key */
+			history_prev();
+		else if (c == 'B') /* Down key */
+			history_next();
+		else if (c == 'C') /* Right key */
+			move_rx_ptr_fwd();
+		else if (c == 'D') /* Left key */
+			move_rx_ptr_bwd();
+		break;
+
+	case ESC_O:
+		if (c == 'F') /* End key */
+			move_rx_ptr_end();
+		break;
+
+	case ESC_BRACKET_1:
+		if (c == '~') /* Home key */
+			move_rx_ptr_begin();
+		break;
+
+	case ESC_BRACKET_3:
+		if (c == '~') { /* Del key */
+			if (rx_cur_buf_ptr != rx_cur_buf_head) {
+				move_rx_ptr_fwd();
+				handle_backspace();
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	/* Check if the escape code is done */
+	if (isalpha(c) || c == '~')
+		esc_state = ESC_OUTSIDE;
+	else
+		esc_state = ESC_BAD;
+}
+
+/**
+ * Handle next character of console input.
+ */
+static void handle_console_char(int c)
+{
+	/* Translate CR and CRLF to LF (newline) */
+	if (c == '\r') {
+		last_rx_was_cr = 1;
+		c = '\n';
+	} else if (c == '\n' && last_rx_was_cr) {
+		last_rx_was_cr = 0;
+		return;
+	} else {
+		last_rx_was_cr = 0;
+	}
+
+	/* Handle terminal escape sequences (ESC [ ...) */
+	if (c == 0x1B) {
+		esc_state = ESC_START;
+		return;
+	} else if (esc_state) {
+		handle_esc(c);
+		return;
+	}
+
+	/* Handle control characters */
+	if (c == '\b' || c == 0x7f) {
+		handle_backspace();
+	} else if (c == CTRL('A')) {
+		move_rx_ptr_begin();
+	} else if (c == CTRL('E')) {
+		move_rx_ptr_end();
+	} else if (c == CTRL('L')) {
+		reprint_current();
+	} else if (c == CTRL('K')) {
+		handle_kill();
+	} else if (c == CTRL('N')) {
+		history_next();
+	} else if (c == CTRL('P')) {
+		history_prev();
+	} else if (c == '\n') {  /* Newline */
+		uart_write_char('\r');
+		uart_write_char('\n');
+		insert_char(c);
+		console_has_input();
+	} else if (isprint(c)) {
+		/*
+		 * Normal printable character.  Echo directly to the transmit
+		 * FIFO so we don't interfere with the transmit buffer.
+		 */
+		uart_write_char(c);
+		insert_char(c);
+	}
+}
 
 /* Helper for UART processing */
 void uart_process(void)
@@ -300,70 +497,13 @@ void uart_process(void)
 	while (uart_rx_available()) {
 		int c = uart_read_char();
 
-		/* Handle console mode echoing and translation */
 		if (console_mode) {
-			/* Translate CR and CRLF to LF (newline) */
-			if (c == '\r') {
-				last_rx_was_cr = 1;
-				c = '\n';
-			} else if (c == '\n' && last_rx_was_cr) {
-				last_rx_was_cr = 0;
-				continue;
-			} else {
-				last_rx_was_cr = 0;
-			}
-
-			/* Handle left and right key, and eat other terminal
-			 * escape sequences (ESC [ ...).
-			 * Would be really cool if we used arrow keys to edit
-			 * command history, but for now it's sufficient just to
-			 * keep them from causing problems. */
-			if (c == 0x1B) {
-				in_escape = 1;
-				esc_seq_char = c;
-				continue;
-			} else if (in_escape) {
-				if (esc_seq_char == 0x1B && c == '[')
-					esc_seq_char = '[';
-				else if (esc_seq_char == '[') {
-					if (c == 'A') /* Up key */
-						history_prev();
-					else if (c == 'B') /* Down key */
-						history_next();
-					else if (c == 'C') /* Right key */
-						move_rx_ptr_fwd();
-					else if (c == 'D') /* Left key */
-						move_rx_ptr_bwd();
-					esc_seq_char = 0;
-				}
-				else
-					esc_seq_char = 0;
-
-				if (isalpha(c) || c == '~') {
-					esc_seq_char = 0;
-					in_escape = 0;
-				}
-				continue;
-			}
-
-			/* Echo characters directly to the transmit FIFO so we
-			 * don't interfere with the transmit buffer. */
-			if (c == '\n')
-				uart_write_char('\r');
-			uart_write_char(c == 0x7f ? '\b' : c);
-
-			/* Handle backspace if we can */
-			if (c == '\b' || c == 0x7f) {
-				handle_backspace();
-				continue;
-			}
+			/* Handle console mode echoing and translation */
+			handle_console_char(c);
+		} else {
+			/* Not in console mode, so simply store character */
+			insert_char(c);
 		}
-
-		insert_char(c);
-
-		/* Call console callback on newline, if in console mode */
-		if (console_mode && c == '\n')
-			console_has_input();
 	}
 
 	/* Copy output from buffer until TX fifo full or output buffer empty */
