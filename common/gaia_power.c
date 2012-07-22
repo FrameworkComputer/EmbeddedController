@@ -23,13 +23,14 @@
  *  - If XPSHOLD is dropped by the AP, then we power the AP off
  */
 
-#include "board.h"
 #include "chipset.h"  /* This module implements chipset functions too */
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "power_led.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -247,7 +248,11 @@ int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
-	/* auto power on if the recovery combination was pressed */
+	/* Leave power off if requested by reset flags */
+	if (system_get_reset_flags() & RESET_FLAG_AP_OFF)
+		auto_power_on = 0;
+
+	/* Auto power on if the recovery combination was pressed */
 	if (keyboard_scan_recovery_pressed())
 		auto_power_on = 1;
 

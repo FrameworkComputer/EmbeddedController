@@ -73,7 +73,7 @@ static struct jump_data * const jdata =
 static const char * const reset_flag_descs[] = {
 	"other", "reset-pin", "brownout", "power-on", "watchdog", "soft",
 	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
-	"hard"};
+	"hard", "ap-off", "preserved"};
 
 static const char * const image_names[] = {"unknown", "RO", "RW"};
 static uint32_t reset_flags;
@@ -545,6 +545,9 @@ static int command_sysinfo(int argc, char **argv)
 		ccputs(" unlocked");
 	ccputs("\n");
 
+	if (reboot_at_shutdown)
+		ccprintf("Reboot at shutdown: %d\n", reboot_at_shutdown);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
@@ -659,27 +662,34 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
 static int command_reboot(int argc, char **argv)
 {
 	int flags = 0;
+	int i;
 
-	if (argc >= 2) {
-		if (!strcasecmp(argv[1], "hard") ||
-		    !strcasecmp(argv[1], "cold")) {
-			ccputs("Hard-");
+	for (i = 1; i < argc; i++) {
+		if (!strcasecmp(argv[i], "hard") ||
+		    !strcasecmp(argv[i], "cold")) {
 			flags |= SYSTEM_RESET_HARD;
 		} else if (!strcasecmp(argv[1], "soft")) {
-			/* No extra flags */
+			flags &= ~SYSTEM_RESET_HARD;
+		} else if (!strcasecmp(argv[1], "ap-off")) {
+			flags |= SYSTEM_RESET_LEAVE_AP_OFF;
+		} else if (!strcasecmp(argv[1], "cancel")) {
+			reboot_at_shutdown = EC_REBOOT_CANCEL;
+			return EC_SUCCESS;
 		} else
-			return EC_ERROR_PARAM1;
+			return EC_ERROR_PARAM1 + i - 1;
 	}
 	if (argc >= 3 && !strcasecmp(argv[2], "preserve"))
 		flags |= SYSTEM_RESET_PRESERVE_FLAGS;
 
+	if (flags & SYSTEM_RESET_HARD)
+		ccputs("Hard-");
 	ccputs("Rebooting!\n\n\n");
 	cflush();
 	system_reset(flags);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
-			"[hard|soft] [preserve]",
+			"[hard|soft] [preserve] [ap-off] [cancel]",
 			"Reboot the EC",
 			NULL);
 

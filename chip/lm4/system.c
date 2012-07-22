@@ -253,15 +253,19 @@ int system_pre_init(void)
 
 void system_reset(int flags)
 {
+	uint32_t save_flags = 0;
+
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS,
-			      system_get_reset_flags());
-	else
-		hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, 0);
+		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+
+	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
+		save_flags |= RESET_FLAG_AP_OFF;
+
+	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
 		/* Bounce through hibernate to trigger a hard reboot */

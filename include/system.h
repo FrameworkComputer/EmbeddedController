@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -23,6 +23,9 @@
 #define RESET_FLAG_LOW_BATTERY (1 << 9)   /* Low battery triggered wake */
 #define RESET_FLAG_SYSJUMP     (1 << 10)  /* Jumped directly to this image */
 #define RESET_FLAG_HARD        (1 << 11)  /* Hard reset from software */
+#define RESET_FLAG_AP_OFF      (1 << 12)  /* Do not power on AP */
+#define RESET_FLAG_PRESERVED   (1 << 13)  /* Some reset flags preserved from
+					   * previous boot */
 
 /* System images */
 enum system_image_copy_t {
@@ -134,6 +137,11 @@ const char *system_get_build_info(void);
  * needs to do a hard reset to clear write protect registers.
  */
 #define SYSTEM_RESET_PRESERVE_FLAGS (1 << 1)
+/*
+ * Leave AP off on next reboot, instead of powering it on to do EC software
+ * sync.
+ */
+#define SYSTEM_RESET_LEAVE_AP_OFF   (1 << 2)
 
 void system_reset(int flags);
 

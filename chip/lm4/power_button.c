@@ -285,6 +285,8 @@ static void lid_switch_changed(uint64_t tnow)
 /* Set initial power button state */
 static void set_initial_pwrbtn_state(void)
 {
+	uint32_t reset_flags = system_get_reset_flags();
+
 	if (system_jumped_to_this_image() &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
 		/*
@@ -295,13 +297,16 @@ static void set_initial_pwrbtn_state(void)
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 			set_pwrbtn_to_pch(0);
 		}
-	} else if ((system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-		   keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW) {
+	} else if ((reset_flags & RESET_FLAG_AP_OFF) ||
+		   ((reset_flags & RESET_FLAG_RESET_PIN) &&
+		    keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW)) {
 		/*
 		 * Reset triggered by keyboard-controlled reset, and down-arrow
-		 * was held down.  Leave the main processor off.  This is a
-		 * fail-safe combination for debugging failures booting the
-		 * main processor.
+		 * was held down.  Or reset flags request AP off.
+		 *
+		 * Leave the main processor off.  This is a fail-safe
+		 * combination for debugging failures booting the main
+		 * processor.
 		 *
 		 * Don't let the PCH see that the power button was pressed.
 		 * Otherwise, it might power on.
@@ -325,7 +330,7 @@ static void set_initial_pwrbtn_state(void)
 		if (get_power_button_pressed()) {
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 
-			if (system_get_reset_flags() & RESET_FLAG_RESET_PIN)
+			if (reset_flags & RESET_FLAG_RESET_PIN)
 				pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 			else
 				pwrbtn_state = PWRBTN_STATE_WAS_OFF;
