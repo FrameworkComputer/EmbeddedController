@@ -41,8 +41,8 @@
 static uint16_t i2c_sr1[NUM_PORTS];
 static struct mutex i2c_mutex;
 
-/* buffer for host commands (including version, error code and checksum) */
-static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
+/* buffer for host commands (including error code and checksum) */
+static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 2];
 static struct host_cmd_handler_args host_cmd_args;
 
 /* current position in host buffer for reception */
@@ -127,14 +127,10 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 	const uint8_t *data = args->response;
 	int size = args->response_size;
 	uint8_t *out = host_buffer;
-	int sum = 0, i;
+	int sum, i;
 
 	*out++ = args->result;
-	if (!args->i2c_old_response) {
-		*out++ = size;
-		sum = args->result + size;
-	}
-	for (i = 0; i < size; i++, data++, out++) {
+	for (i = 0, sum = 0; i < size; i++, data++, out++) {
 		if (data != out)
 			*out = *data;
 		sum += *data;
@@ -148,43 +144,18 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 /* Process the command in the i2c host buffer */
 static void i2c_process_command(void)
 {
-	struct host_cmd_handler_args *args = &host_cmd_args;
-	char *buff = host_buffer;
-
-	args->command = *buff;
-	args->result = EC_RES_SUCCESS;
-	if (args->command >= EC_CMD_VERSION0) {
-		int csum, i;
-
-		/* Read version and data size */
-		args->version = args->command - EC_CMD_VERSION0;
-		args->command = buff[1];
-		args->params_size = buff[2];
-
-		/* Verify checksum */
-		for (csum = i = 0; i < args->params_size + 3; i++)
-			csum += buff[i];
-		if ((uint8_t)csum != buff[i])
-			args->result = EC_RES_INVALID_CHECKSUM;
-
-		buff += 3;
-		args->i2c_old_response = 0;
-	} else {
-		/* Old style command */
-		args->version = 0;
-		args->params_size = EC_HOST_PARAM_SIZE;	/* unknown */
-		buff++;
-		args->i2c_old_response = 1;
-	}
-
 	/* we have an available command : execute it */
-	args->send_response = i2c_send_response;
-	args->params = buff;
-	/* skip room for error code, arglen */
-	args->response = host_buffer + 2;
-	args->response_max = EC_HOST_PARAM_SIZE;
-	args->response_size = 0;
-	host_command_received(args);
+	host_cmd_args.command = host_buffer[0];
+	host_cmd_args.result = EC_RES_SUCCESS;
+	host_cmd_args.send_response = i2c_send_response;
+	host_cmd_args.version = 0;
+	host_cmd_args.params = host_buffer + 1;
+	host_cmd_args.params_size = EC_HOST_PARAM_SIZE;
+	/* skip room for error code */
+	host_cmd_args.response = host_buffer + 1;
+	host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
+	host_cmd_args.response_size = 0;
+	host_command_received(&host_cmd_args);
 }
 
 static void i2c_event_handler(int port)
