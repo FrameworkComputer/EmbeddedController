@@ -141,23 +141,6 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 	i2c_write_raw(I2C2, host_buffer, out - host_buffer);
 }
 
-/* Process the command in the i2c host buffer */
-static void i2c_process_command(void)
-{
-	/* we have an available command : execute it */
-	host_cmd_args.command = host_buffer[0];
-	host_cmd_args.result = EC_RES_SUCCESS;
-	host_cmd_args.send_response = i2c_send_response;
-	host_cmd_args.version = 0;
-	host_cmd_args.params = host_buffer + 1;
-	host_cmd_args.params_size = EC_HOST_PARAM_SIZE;
-	/* skip room for error code */
-	host_cmd_args.response = host_buffer + 1;
-	host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
-	host_cmd_args.response_size = 0;
-	host_command_received(&host_cmd_args);
-}
-
 static void i2c_event_handler(int port)
 {
 
@@ -191,7 +174,19 @@ static void i2c_event_handler(int port)
 	if (i2c_sr1[port] & (1 << 7)) {
 		if (port == I2C2) { /* AP is waiting for EC response */
 			if (rx_index) {
-				i2c_process_command();
+				/* we have an available command : execute it */
+				host_cmd_args.command = host_buffer[0];
+				host_cmd_args.result = EC_RES_SUCCESS;
+				host_cmd_args.send_response =
+					i2c_send_response;
+				host_cmd_args.version = 0;
+				host_cmd_args.params = host_buffer + 1;
+				host_cmd_args.params_size = EC_HOST_PARAM_SIZE;
+				/* skip room for error code */
+				host_cmd_args.response = host_buffer + 1;
+				host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
+				host_cmd_args.response_size = 0;
+				host_command_received(&host_cmd_args);
 				/* reset host buffer after end of transfer */
 				rx_index = 0;
 			} else {
