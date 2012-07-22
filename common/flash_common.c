@@ -47,7 +47,7 @@ static struct persist_state pstate; /* RAM copy of pstate data */
 /* Return non-zero if the write protect pin is asserted */
 static int wp_pin_asserted(void)
 {
-#ifdef BOARD_link
+#if defined(BOARD_link) && defined(CONFIG_TASK_POWERBTN)
 	return write_protect_asserted();
 #elif defined(CHIP_VARIANT_stm32f100)
 	/* Fake write protect pin */
