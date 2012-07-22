@@ -9,6 +9,7 @@
 #include "flash.h"
 #include "registers.h"
 #include "power_button.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -42,13 +43,38 @@
 
 #define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
 
+/* Persistent protection state flash offset / size / bank */
+#define PSTATE_OFFSET     CONFIG_SECTION_FLASH_PSTATE_OFF
+#define PSTATE_SIZE       CONFIG_SECTION_FLASH_PSTATE_SIZE
+#define PSTATE_BANK       (PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
+#define PSTATE_BANK_COUNT (PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 /* Read-only firmware offset and size in units of flash banks */
 #define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
 #define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
 
-/* Fake write protect switch for flash write protect development.
- * TODO: Remove this when we have real write protect pin. */
-static int fake_write_protect;
+/* Read-write firmware offset and size in units of flash banks */
+#define RW_BANK_OFFSET (CONFIG_SECTION_RW_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RW_BANK_COUNT  (CONFIG_SECTION_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Persistent protection state - emulates a SPI status register for flashrom */
+struct persist_state {
+	uint8_t version;            /* Version of this struct */
+	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
+	uint8_t reserved[2];        /* Reserved; set 0 */
+};
+
+#define PERSIST_STATE_VERSION 2  /* Expected persist_state.version */
+
+/* Flags for persist_state.flags */
+/* Protect persist state and RO firmware at boot */
+#define PERSIST_FLAG_PROTECT_RO 0x02
+
+/* Functions defined in system.c to access backup registers */
+int system_set_flash_rw_at_boot(int val);
+int system_get_flash_rw_at_boot(void);
+int system_set_fake_wp(int val);
+int system_get_fake_wp(void);
 
 static void write_optb(int byte, uint8_t value);
 
@@ -155,6 +181,10 @@ static void write_optb(int byte, uint8_t value)
 	/* Try to erase that byte back to 0xff. */
 	preserve_optb(byte);
 
+	/* The value is 0xff after erase. No need to write 0xff again. */
+	if (value == 0xff)
+		return;
+
 	if (unlock(OPT_LOCK) != EC_SUCCESS)
 		return;
 
@@ -169,6 +199,54 @@ static void write_optb(int byte, uint8_t value)
 	wait_busy();
 	lock();
 }
+
+/**
+ * Read persistent state into pstate.
+ */
+static int read_pstate(struct persist_state *pstate)
+{
+	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
+
+	/* Sanity-check data and initialize if necessary */
+	if (pstate->version != PERSIST_STATE_VERSION) {
+		memset(pstate, 0, sizeof(*pstate));
+		pstate->version = PERSIST_STATE_VERSION;
+	}
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Write persistent state from pstate, erasing if necessary.
+ */
+static int write_pstate(const struct persist_state *pstate)
+{
+	struct persist_state current_pstate;
+	int rv;
+
+	/* Check if pstate has actually changed */
+	if (!read_pstate(&current_pstate) &&
+	    !memcmp(&current_pstate, pstate, sizeof(*pstate)))
+		return EC_SUCCESS;
+
+	/* Erase pstate */
+	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
+	if (rv)
+		return rv;
+
+	/*
+	 * Note that if we lose power in here, we'll lose the pstate contents.
+	 * That's ok, because it's only possible to write the pstate before
+	 * it's protected.
+	 */
+
+	/* Rewrite the data */
+	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
+				    (const char *)pstate);
+}
+
+/*****************************************************************************/
+/* Physical layer APIs */
 
 int flash_physical_write(int offset, int size, const char *data)
 {
@@ -291,30 +369,114 @@ exit_er:
 	return res;
 }
 
-
 int flash_physical_get_protect(int block)
 {
-	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block/8));
-	return !(val & (1 << (block % 8)));
+	return !(STM32_FLASH_WRPR & (1 << block));
 }
 
-void flash_physical_set_protect(int start_bank, int bank_count)
+static int flash_physical_get_protect_at_boot(int block)
+{
+	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block/8));
+	return (!(val & (1 << (block % 8)))) ? 1 : 0;
+}
+
+static void flash_physical_set_protect_at_boot(int start_bank,
+					       int bank_count,
+					       int enable)
 {
 	int block;
 	int i;
-	int original_val[8], val[8];
+	int original_val[4], val[4];
 
-	for (i = 0; i < 8; ++i)
-		original_val[i] = val[i] = read_optb(i * 2);
+	for (i = 0; i < 4; ++i)
+		original_val[i] = val[i] = read_optb(i * 2 + 8);
 
 	for (block = start_bank; block < start_bank + bank_count; block++) {
-		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2;
-		val[byte_off] = val[byte_off] & (~(1 << (block % 8)));
+		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2 - 4;
+		if (enable)
+			val[byte_off] = val[byte_off] & (~(1 << (block % 8)));
+		else
+			val[byte_off] = val[byte_off] | (1 << (block % 8));
 	}
 
-	for (i = 0; i < 8; ++i)
+	for (i = 0; i < 4; ++i)
 		if (original_val[i] != val[i])
-			write_optb(i * 2, val[i]);
+			write_optb(i * 2 + 8, val[i]);
+}
+
+static int protect_ro_at_boot(int enable, int force)
+{
+	struct persist_state pstate;
+	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
+	int rv;
+
+	/* Read the current persist state from flash */
+	rv = read_pstate(&pstate);
+	if (rv)
+		return rv;
+
+	/* Update state if necessary */
+	if (pstate.flags != new_flags || force) {
+		/* Fail if write protect block is already locked */
+		if (flash_physical_get_protect(PSTATE_BANK))
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Set the new flag */
+		pstate.flags = new_flags;
+
+		/* Write the state back to flash */
+		rv = write_pstate(&pstate);
+		if (rv)
+			return rv;
+
+		/*
+		 * Write to write protect register.
+		 * Since we already wrote to pstate, ignore error here.
+		 */
+		flash_physical_set_protect_at_boot(RO_BANK_OFFSET,
+			RO_BANK_COUNT + PSTATE_BANK_COUNT, new_flags);
+	}
+
+	return EC_SUCCESS;
+}
+
+static int protect_rw_at_boot(int enable, int force)
+{
+	int old_flag = system_get_flash_rw_at_boot() ? 1 : 0;
+	int new_flag = enable ? 1 : 0;
+
+	/* Update state if necessary */
+	if (old_flag != new_flag || force) {
+		system_set_flash_rw_at_boot(new_flag);
+		flash_physical_set_protect_at_boot(RW_BANK_OFFSET,
+						   RW_BANK_COUNT,
+						   new_flag);
+	}
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Determine if write protect register is inconsistent with RO_AT_BOOT and
+ * RW_AT_BOOT state.
+ */
+static int register_need_reset(void)
+{
+	uint32_t flags = flash_get_protect();
+	int i;
+	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
+	int rw_at_boot = (flags & EC_FLASH_PROTECT_RW_AT_BOOT) ? 1 : 0;
+	int ro_wp_region_start = RO_BANK_OFFSET;
+	int ro_wp_region_end =
+		RO_BANK_OFFSET + RO_BANK_COUNT + PSTATE_BANK_COUNT;
+
+	for (i = ro_wp_region_start; i < ro_wp_region_end; i++)
+		if (flash_physical_get_protect_at_boot(i) != ro_at_boot)
+			return 1;
+	for (i = RW_BANK_OFFSET; i < RW_BANK_OFFSET + RW_BANK_COUNT; i++)
+		if (flash_physical_get_protect_at_boot(i) != rw_at_boot)
+			return 1;
+	return 0;
 }
 
 static void unprotect_all_blocks(void)
@@ -324,42 +486,102 @@ static void unprotect_all_blocks(void)
 		write_optb(i * 2, 0xff);
 }
 
+/*****************************************************************************/
+/* High-level APIs */
+
 int flash_pre_init(void)
 {
-	/* Drop write protect status here. If a block should be protected,
-	 * write protect for it will be set by pstate. */
-	unprotect_all_blocks();
+	uint32_t reset_flags = system_get_reset_flags();
+	uint32_t prot_flags = flash_get_protect();
+	int need_reset = 0;
 
 	/*
-	 * TODO: enable/disable write protect based on pstate (RO) and
-	 * RTC register (RW).
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection. Nothing additional needs to be done.
 	 */
+	if (reset_flags & RESET_FLAG_SYSJUMP)
+		return EC_SUCCESS;
+
+	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
+		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
+		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
+			/*
+			 * Pstate say "ro_at_boot". WP register says otherwise.
+			 * Listen to pstate.
+			 */
+			protect_ro_at_boot(1, 1);
+			need_reset = 1;
+		}
+
+		if (register_need_reset()) {
+			/*
+			 * Reset RO protect register to make sure this doesn't
+			 * happen again due to RO protect state inconsistency.
+			 */
+			protect_ro_at_boot(
+				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT, 1);
+			/* And reset RW protect register */
+			protect_rw_at_boot(
+				prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT, 1);
+			need_reset = 1;
+		}
+	}
+	else {
+		if ((prot_flags & EC_FLASH_PROTECT_RO_NOW) ||
+		    (prot_flags & EC_FLASH_PROTECT_RW_NOW)) {
+			/*
+			 * Write protect pin unasserted but some section is
+			 * protected. Drop it and reboot.
+			 */
+			unprotect_all_blocks();
+			need_reset = 1;
+		}
+	}
+
+	if (need_reset)
+		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+
 	return EC_SUCCESS;
 }
 
 uint32_t flash_get_protect(void)
 {
+	struct persist_state pstate;
 	uint32_t flags = 0;
 	int i;
+	int not_protected[2] = {0};
 
 	/* TODO (vpalatin) : write protect scheme for stm32 */
-	if (fake_write_protect)
+	if (system_get_fake_wp())
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+
+	/* Read the current persist state from flash */
+	read_pstate(&pstate);
+	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/* Read the current persist state from flash */
+	if (system_get_flash_rw_at_boot())
+		flags |= EC_FLASH_PROTECT_RW_AT_BOOT;
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
 		/* Is this bank part of RO? */
 		int is_ro = (i >= RO_BANK_OFFSET &&
-			     i < RO_BANK_OFFSET + RO_BANK_COUNT);
+			     i < RO_BANK_OFFSET + RO_BANK_COUNT +
+			     PSTATE_BANK_COUNT) ? 1 : 0;
 		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
 				 EC_FLASH_PROTECT_RW_NOW);
 
 		if (flash_physical_get_protect(i)) {
-			/* At least one bank in the region is protected */
 			flags |= bank_flag;
-		} else if (flags & bank_flag) {
-			/* But not all banks in the region! */
-			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+			if (not_protected[is_ro])
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		}
+		else {
+			not_protected[is_ro] = 1;
+			if (flags & bank_flag)
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 		}
 	}
 
@@ -368,8 +590,27 @@ uint32_t flash_get_protect(void)
 
 int flash_set_protect(uint32_t mask, uint32_t flags)
 {
-	/* TODO: implement! */
-	return EC_SUCCESS;
+	int retval = EC_SUCCESS;
+	int rv;
+
+	/*
+	 * Process flags we can set.  Track the most recent error, but process
+	 * all flags before returning.
+	 */
+
+	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
+		rv = protect_ro_at_boot(flags & EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+		if (rv)
+			retval = rv;
+	}
+
+	if (mask & EC_FLASH_PROTECT_RW_AT_BOOT) {
+		rv = protect_rw_at_boot(flags & EC_FLASH_PROTECT_RW_AT_BOOT, 0);
+		if (rv)
+			retval = rv;
+	}
+
+	return retval;
 }
 
 static int command_set_fake_wp(int argc, char **argv)
@@ -384,7 +625,7 @@ static int command_set_fake_wp(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM1;
 
-	fake_write_protect = val;
+	system_set_fake_wp(val);
 	ccprintf("Fake write protect = %d\n", val);
 
 	return EC_SUCCESS;

@@ -16,6 +16,11 @@ enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
 	BKPDATA_INDEX_WAKE,		/* Wake reasons for hibernate */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
+	BKPDATA_INDEX_FLASH_RW_AT_BOOT, /* Flash protect RW at boot flag */
+	BKPDATA_INDEX_FAKE_WP,		/* Fake write-protect pin */
+					/* TODO: Remove this when we have real
+					 *       write protect pin.
+					 */
 };
 
 /* Wake reason flags for hibernate */
@@ -269,12 +274,38 @@ const char *system_get_chip_vendor(void)
 	return "stm";
 }
 
+
 const char *system_get_chip_name(void)
 {
 	return STRINGIFY(CHIP_VARIANT);
 }
 
+
 const char *system_get_chip_revision(void)
 {
 	return "";
+}
+
+
+int system_set_fake_wp(int val)
+{
+	return bkpdata_write(BKPDATA_INDEX_FAKE_WP, (uint16_t)val);
+}
+
+
+int system_get_fake_wp(void)
+{
+	return bkpdata_read(BKPDATA_INDEX_FAKE_WP);
+}
+
+
+int system_set_flash_rw_at_boot(int val)
+{
+	return bkpdata_write(BKPDATA_INDEX_FLASH_RW_AT_BOOT, (uint16_t)val);
+}
+
+
+int system_get_flash_rw_at_boot(void)
+{
+	return bkpdata_read(BKPDATA_INDEX_FLASH_RW_AT_BOOT);
 }

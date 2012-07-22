@@ -93,6 +93,8 @@ static int command_flash_info(int argc, char **argv)
 		ccputs(" wp_gpio_asserted");
 	if (i & EC_FLASH_PROTECT_RO_AT_BOOT)
 		ccputs(" ro_at_boot");
+	if (i & EC_FLASH_PROTECT_RW_AT_BOOT)
+		ccputs(" rw_at_boot");
 	if (i & EC_FLASH_PROTECT_RO_NOW)
 		ccputs(" ro_now");
 	if (i & EC_FLASH_PROTECT_RW_NOW)
@@ -192,11 +194,15 @@ static int command_flash_wp(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "now"))
 		return flash_set_protect(EC_FLASH_PROTECT_RW_NOW |
 					 EC_FLASH_PROTECT_RO_NOW, -1);
+	else if (!strcasecmp(argv[1], "rw"))
+		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, -1);
+	else if (!strcasecmp(argv[1], "norw"))
+		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
 	else
 		return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
-			"<enable | disable | now>",
+			"<enable | disable | now | rw | norw>",
 			"Modify flash write protect",
 			NULL);
 
