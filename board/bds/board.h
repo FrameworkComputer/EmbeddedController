@@ -17,7 +17,7 @@
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_VBOOT
-#define CONFIG_VBOOT_SIG
+/* FIXME: This got broken.  #define CONFIG_VBOOT_SIG */
 
 #ifndef __ASSEMBLER__
 
