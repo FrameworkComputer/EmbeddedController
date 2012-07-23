@@ -942,6 +942,18 @@ struct ec_params_reboot_ec {
  */
 #define EC_CMD_REBOOT 0xd1  /* Think "die" */
 
+/*
+ * This header byte on a command indicate version 0. Any header byte less
+ * than this means that we are talking to an old EC which doesn't support
+ * versioning. In that case, we assume version 0.
+ *
+ * Header bytes greater than this indicate a later version. For example,
+ * EC_CMD_VERSION0 + 1 means we are using version 1.
+ *
+ * The old EC interface must not use commands 0dc or higher.
+ */
+#define EC_CMD_VERSION0 0xdc
+
 #endif  /* !__ACPI__ */
 
 #endif  /* __CROS_EC_COMMANDS_H */
