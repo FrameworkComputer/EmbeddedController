@@ -16,20 +16,6 @@
 /* Low-level methods, for use by flash_common. */
 
 /**
- * Initialize the physical flash interface.
- */
-int flash_physical_pre_init(void);
-
-/**
- * Return the physical size of flash in bytes as read from the flash chip
- * itself.
- *
- * Used during testing to confirm CONFIG_FLASH_PHYSICAL_SIZE is correct.
- * Most other code should use CONFIG_FLASH_PHYSICAL_SIZE.
- */
-int flash_physical_size(void);
-
-/**
  * Get the physical memory address of a flash offset
  *
  * This is used for direct flash access. We assume that the flash is
@@ -73,14 +59,6 @@ int flash_physical_erase(int offset, int size);
  * @return non-zero if bank is protected until reboot.
  */
 int flash_physical_get_protect(int bank);
-
-/**
- * Protect the flash banks until reboot.
- *
- * @param start_bank    Start bank to protect
- * @param bank_count    Number of banks to protect
- */
-void flash_physical_set_protect(int start_bank, int bank_count);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */
@@ -141,29 +119,18 @@ int flash_write(int offset, int size, const char *data);
 int flash_erase(int offset, int size);
 
 /**
- * Protect the entire flash until reboot.
- *
- * If the write protect pin is deasserted, this request is ignored.
- */
-int flash_protect_until_reboot(void);
-
-/**
- * Enable write protect for the read-only code.
- *
- * Once write protect is enabled, it will STAY enabled until the system is
- * hard-rebooted with the hardware write protect pin deasserted.  If the write
- * protect pin is deasserted, the protect setting is ignored, and the entire
- * flash will be writable.
- *
- * @param enable        Enable write protection
- */
-int flash_enable_protect(int enable);
-
-/**
- * Return the flash protect lock status.
+ * Return the flash protect state.
  *
  * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-int flash_get_protect(void);
+uint32_t flash_get_protect(void);
+
+/**
+ * Set the flash protect state.
+ *
+ * @param mask		Bits in flags to apply.
+ * @param flags		New values for flags.
+ */
+int flash_set_protect(uint32_t mask, uint32_t flags);
 
 #endif  /* __CROS_EC_FLASH_H */

@@ -38,6 +38,12 @@
 #define PRG_LOCK (1<<1)
 #define OPT_LOCK (1<<2)
 
+#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Read-only firmware offset and size in units of flash banks */
+#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 #ifdef CONFIG_64B_WORKAROUND
 /*
  * Use the real write buffer size inside the driver.  We only lie to the
@@ -50,11 +56,6 @@
 static uint32_t write_buffer[CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t)];
 static int buffered_off = -1;
 #endif
-
-int flash_physical_size(void)
-{
-	return CONFIG_FLASH_SIZE;
-}
 
 static int unlock(int locks)
 {
@@ -289,7 +290,46 @@ void flash_physical_set_protect(int start_bank, int bank_count)
 	}
 }
 
-int flash_physical_pre_init(void)
+uint32_t flash_get_protect(void)
+{
+	uint32_t flags = 0;
+	int i;
+
+	/* TODO (vpalatin) : write protect scheme for stm32 */
+	/*
+	 * Always enable write protect until we have WP pin.  For developer to
+	 * unlock WP, please use stm32mon -u and immediately re-program the
+	 * pstate sector.
+	 */
+	flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+
+	/* Scan flash protection */
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
+		/* Is this bank part of RO? */
+		int is_ro = (i >= RO_BANK_OFFSET &&
+			     i < RO_BANK_OFFSET + RO_BANK_COUNT);
+		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
+				 EC_FLASH_PROTECT_RW_NOW);
+
+		if (flash_physical_get_protect(i)) {
+			/* At least one bank in the region is protected */
+			flags |= bank_flag;
+		} else if (flags & bank_flag) {
+			/* But not all banks in the region! */
+			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		}
+	}
+
+	return flags;
+}
+
+int flash_set_protect(uint32_t mask, uint32_t flags)
+{
+	/* TODO: implement! */
+	return EC_SUCCESS;
+}
+
+int flash_pre_init(void)
 {
 	return EC_SUCCESS;
 }

@@ -139,6 +139,22 @@ int strtoi(const char *nptr, char **endptr, int base)
 }
 
 
+int memcmp(const void *s1, const void *s2, int len)
+{
+	const char *sa = s1;
+	const char *sb = s2;
+
+	int diff = 0;
+	while (len-- > 0) {
+		diff = *(sa++) - *(sb++);
+		if (diff)
+			return diff;
+	}
+
+	return 0;
+}
+
+
 void *memcpy(void *dest, const void *src, int len)
 {
 	/* TODO: optimized version using LDM/STM would be much faster */

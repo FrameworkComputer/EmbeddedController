@@ -67,6 +67,7 @@ int isdigit(int c);
 int isspace(int c);
 int isalpha(int c);
 int isprint(int c);
+int memcmp(const void *s1, const void *s2, int len);
 void *memcpy(void *dest, const void *src, int len);
 void *memset(void *dest, int c, int len);
 void *memmove(void *dest, const void *src, int len);

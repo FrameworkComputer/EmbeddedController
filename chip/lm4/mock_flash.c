@@ -57,12 +57,6 @@ int flash_physical_get_protect(int block)
 	return mock_protect[block];
 }
 
-void flash_physical_set_protect(int start_bank, int bank_count)
-{
-	for (; bank_count > 0; bank_count--)
-		mock_protect[start_bank++] = 1;
-}
-
 int flash_physical_pre_init(void)
 {
 	return EC_SUCCESS;

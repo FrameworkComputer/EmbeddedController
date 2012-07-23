@@ -40,16 +40,17 @@
 #define PRG_LOCK 0
 #define OPT_LOCK (1<<9)
 
+#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Read-only firmware offset and size in units of flash banks */
+#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 /* Fake write protect switch for flash write protect development.
  * TODO: Remove this when we have real write protect pin. */
 static int fake_write_protect;
 
 static void write_optb(int byte, uint8_t value);
-
-int flash_physical_size(void)
-{
-	return CONFIG_FLASH_SIZE;
-}
 
 static int wait_busy(void)
 {
@@ -323,18 +324,52 @@ static void unprotect_all_blocks(void)
 		write_optb(i * 2, 0xff);
 }
 
-int flash_physical_pre_init(void)
+int flash_pre_init(void)
 {
 	/* Drop write protect status here. If a block should be protected,
 	 * write protect for it will be set by pstate. */
 	unprotect_all_blocks();
 
+	/*
+	 * TODO: enable/disable write protect based on pstate (RO) and
+	 * RTC register (RW).
+	 */
 	return EC_SUCCESS;
 }
 
-int write_protect_asserted(void)
+uint32_t flash_get_protect(void)
 {
-	return fake_write_protect;
+	uint32_t flags = 0;
+	int i;
+
+	/* TODO (vpalatin) : write protect scheme for stm32 */
+	if (fake_write_protect)
+		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+
+	/* Scan flash protection */
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
+		/* Is this bank part of RO? */
+		int is_ro = (i >= RO_BANK_OFFSET &&
+			     i < RO_BANK_OFFSET + RO_BANK_COUNT);
+		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
+				 EC_FLASH_PROTECT_RW_NOW);
+
+		if (flash_physical_get_protect(i)) {
+			/* At least one bank in the region is protected */
+			flags |= bank_flag;
+		} else if (flags & bank_flag) {
+			/* But not all banks in the region! */
+			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		}
+	}
+
+	return flags;
+}
+
+int flash_set_protect(uint32_t mask, uint32_t flags)
+{
+	/* TODO: implement! */
+	return EC_SUCCESS;
 }
 
 static int command_set_fake_wp(int argc, char **argv)
