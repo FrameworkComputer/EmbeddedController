@@ -501,6 +501,32 @@ struct ec_response_flash_protect {
  * write protect.  These commands may be reused with version > 0.
  */
 
+/* Get the region offset/size */
+#define EC_CMD_FLASH_REGION_INFO 0x16
+#define EC_VER_FLASH_REGION_INFO 1
+
+enum ec_flash_region {
+	/* Region which holds read-only EC image */
+	EC_FLASH_REGION_RO,
+	/* Region which holds rewritable EC image */
+	EC_FLASH_REGION_RW,
+	/*
+	 * Region which should be write-protected in the factory (a superset of
+	 * EC_FLASH_REGION_RO)
+	 */
+	EC_FLASH_REGION_WP_RO,
+};
+
+struct ec_params_flash_region_info {
+	uint32_t region;  /* enum ec_flash_region */
+} __packed;
+
+struct ec_response_flash_region_info {
+	uint32_t offset;
+	uint32_t size;
+} __packed;
+
+
 /*****************************************************************************/
 /* PWM commands */
 

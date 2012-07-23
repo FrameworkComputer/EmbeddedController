@@ -332,3 +332,34 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT,
 		     flash_command_protect,
 		     EC_VER_MASK(1));
+
+static int flash_command_region_info(struct host_cmd_handler_args *args)
+{
+	struct ec_params_flash_region_info *p =
+		(struct ec_params_flash_region_info *)args->params;
+	struct ec_response_flash_region_info *r =
+		(struct ec_response_flash_region_info *)args->response;
+
+	switch (p->region) {
+	case EC_FLASH_REGION_RO:
+		r->offset = CONFIG_SECTION_RO_OFF;
+		r->size = CONFIG_SECTION_RO_SIZE;
+		break;
+	case EC_FLASH_REGION_RW:
+		r->offset = CONFIG_SECTION_RW_OFF;
+		r->size = CONFIG_SECTION_RW_SIZE;
+		break;
+	case EC_FLASH_REGION_WP_RO:
+		r->offset = CONFIG_SECTION_RO_OFF;
+		r->size = CONFIG_SECTION_RO_SIZE;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_REGION_INFO,
+		     flash_command_region_info,
+		     EC_VER_MASK(EC_VER_FLASH_REGION_INFO));
