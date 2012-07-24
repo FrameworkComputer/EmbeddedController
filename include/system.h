@@ -104,11 +104,22 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 /* Return the address just past the last usable byte in RAM. */
 int system_usable_ram_end(void);
 
-/* Returns true if the given range is overlapped with the active image. */
+/* Return true if the given range is overlapped with the active image. */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 
 /* Return a text description of the image copy which is currently running. */
 const char *system_get_image_copy_string(void);
+
+/**
+ * Return the number of bytes used in the specified image.
+ *
+ * This is the actual size of code+data in the image, as opposed to the
+ * amount of space reserved in flash for that image.
+ *
+ * @return actual image size in bytes, 0 if the image contains no content or
+ * error.
+ */
+int system_get_image_used(enum system_image_copy_t copy);
 
 /* Jump to the specified image copy. */
 int system_run_image_copy(enum system_image_copy_t copy);

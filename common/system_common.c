@@ -31,7 +31,6 @@ struct jump_tag {
 	uint8_t data_version;
 };
 
-
 /*
  * Data passed between the current image and the next one when jumping between
  * images.
@@ -230,6 +229,32 @@ enum system_image_copy_t system_get_image_copy(void)
 	return SYSTEM_IMAGE_UNKNOWN;
 }
 
+int system_get_image_used(enum system_image_copy_t copy)
+{
+	const uint8_t *image;
+	int size = 0;
+
+	if (copy == SYSTEM_IMAGE_RO) {
+		image = (const uint8_t *)CONFIG_SECTION_RO_OFF;
+		size = CONFIG_SECTION_RO_SIZE;
+	} else if (copy == SYSTEM_IMAGE_RW) {
+		image = (const uint8_t *)CONFIG_SECTION_RW_OFF;
+		size = CONFIG_SECTION_RW_SIZE;
+	}
+
+	if (size <= 0)
+		return 0;
+
+	/* If the last byte isn't 0xff, the image is completely full */
+	if (image[size - 1] != 0xff)
+		return size;
+
+	/* Scan backwards looking for 0xea byte */
+	for (size--; size > 0 && image[size] != 0xea; size--)
+		;
+
+	return size;
+}
 
 /* Returns true if the given range is overlapped with the active image.
  *
@@ -606,11 +631,11 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 
 static int command_version(int argc, char **argv)
 {
-	ccprintf("Chip:  %s %s %s\n", system_get_chip_vendor(),
+	ccprintf("Chip:    %s %s %s\n", system_get_chip_vendor(),
 		 system_get_chip_name(), system_get_chip_revision());
-	ccprintf("Board: %d\n", system_get_board_version());
-	ccprintf("RO:    %s\n", system_get_version(SYSTEM_IMAGE_RO));
-	ccprintf("RW:    %s\n", system_get_version(SYSTEM_IMAGE_RW));
+	ccprintf("Board:   %d\n", system_get_board_version());
+	ccprintf("RO:      %s\n", system_get_version(SYSTEM_IMAGE_RO));
+	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
 	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
