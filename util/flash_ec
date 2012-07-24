@@ -39,7 +39,7 @@ LOCAL_BUILD=${SRC_ROOT}/platform/ec/build/${BOARD}/${EC_FILE}
 function ec_image() {
 	# No image specified on the command line, try default ones
 	if [[ ! -z "${FLAGS_image}" ]] ; then
-		if [ ! -x "${FLAGS_image}" ]; then
+		if [ ! -r "${FLAGS_image}" ]; then
 			die "Invalid image path : ${FLAGS_image}"
 		fi
 		echo "${FLAGS_image}"
