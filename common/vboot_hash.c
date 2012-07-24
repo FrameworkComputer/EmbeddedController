@@ -191,6 +191,21 @@ static int command_hash(int argc, char **argv)
 	uint32_t size = CONFIG_FW_RW_SIZE;
 	char *e;
 
+	if (argc == 1) {
+		ccprintf("Offset: 0x%08x\n", data_offset);
+		ccprintf("Size:   0x%08x (%d)\n", data_size, data_size);
+		ccprintf("Digest: ");
+		if (vboot_hash_in_progress()) {
+			ccprintf("(in progress)\n");
+		} else {
+			int i;
+			for (i = 0; i < SHA256_DIGEST_SIZE; i++)
+				ccprintf("%02x", hash[i]);
+			ccprintf("\n");
+		}
+		return EC_SUCCESS;
+	}
+
 	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
 		vboot_hash_abort();
 		return EC_SUCCESS;
