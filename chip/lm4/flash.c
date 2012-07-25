@@ -326,8 +326,12 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 			retval = rv;
 	}
 
-	/* All subsequent flags only work if write protect is disabled */
-	if (!(flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED))
+	/*
+	 * All subsequent flags only work if write protect is enabled (that is,
+	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
+	 */
+	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
+				      EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
 
 	if ((mask & EC_FLASH_PROTECT_RO_NOW) &&
