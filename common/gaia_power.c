@@ -384,7 +384,7 @@ static int power_on(void)
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP, 0);
 
-	CPUTS("AP running ...\n");
+	CPRINTF("[%T AP running ...]\n");
 	return 0;
 }
 
@@ -566,12 +566,13 @@ static int command_power(int argc, char **argv)
 		power_request = POWER_REQ_ON;
 	else if (0 == strcasecmp(argv[1], "off"))
 		power_request = POWER_REQ_OFF;
+	else
+		return EC_ERROR_PARAM1;
 
-	ccprintf("Requesting power %s\n", power_req_name[power_request]);
+	ccprintf("[%T PB Requesting power %s]\n", power_req_name[power_request]);
 	task_wake(TASK_ID_GAIAPOWER);
 
-	ccputs("Invalid args\n");
-	return EC_ERROR_INVAL;
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(power, command_power,
 			"on/off",
