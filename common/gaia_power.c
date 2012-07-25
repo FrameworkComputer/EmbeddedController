@@ -174,6 +174,11 @@ static int check_for_power_off_event(void)
 			pressed = 1;
 	}
 
+	/* Dis/Enable keyboard scanning when the power button state changes */
+	if (pressed != power_button_was_pressed)
+		keyboard_enable_scanning(!pressed);
+
+
 	now = get_time();
 	if (pressed) {
 		gpio_set_level(GPIO_PMIC_PWRON_L, 0);

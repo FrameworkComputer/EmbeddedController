@@ -39,6 +39,8 @@ enum COL_INDEX {
 /* 15:14, 12:8, 2 */
 #define IRQ_MASK 0xdf04
 
+static struct mutex scanning_enabled;
+
 /* The keyboard state from the last read */
 static uint8_t raw_state[KB_OUTPUTS];
 
@@ -364,6 +366,7 @@ int keyboard_scan_init(void)
 void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
+	uint8_t keys_changed = 0;
 
 	/* Enable interrupts for keyboard matrix inputs */
 	gpio_enable_interrupt(GPIO_KB_IN00);
@@ -376,7 +379,10 @@ void keyboard_scan_task(void)
 	gpio_enable_interrupt(GPIO_KB_IN07);
 
 	while (1) {
+		mutex_lock(&scanning_enabled);
 		wait_for_interrupt();
+		mutex_unlock(&scanning_enabled);
+
 		task_wait_event(-1);
 
 		enter_polling_mode();
@@ -385,7 +391,12 @@ void keyboard_scan_task(void)
 			/* sleep for debounce. */
 			usleep(SCAN_LOOP_DELAY);
 			/* Check for keys down */
-			if (check_keys_changed()) {
+
+			mutex_lock(&scanning_enabled);
+			keys_changed = check_keys_changed();
+			mutex_unlock(&scanning_enabled);
+
+			if (keys_changed) {
 				key_press_timer = 0;
 			} else {
 				if (++key_press_timer >=
@@ -453,3 +464,14 @@ static int keyboard_get_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO,
 		     keyboard_get_info,
 		     EC_VER_MASK(0));
+
+void keyboard_enable_scanning(int enable)
+{
+	if (enable) {
+		mutex_unlock(&scanning_enabled);
+		task_wake(TASK_ID_KEYSCAN);
+	} else {
+		mutex_lock(&scanning_enabled);
+		select_column(COL_TRI_STATE_ALL);
+	}
+}
