@@ -475,3 +475,40 @@ void keyboard_enable_scanning(int enable)
 		select_column(COL_TRI_STATE_ALL);
 	}
 }
+
+static int command_keyboard_press(int argc, char **argv)
+{
+	int r, c, p;
+	char *e;
+
+	if (argc != 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	c = strtoi(argv[1], &e, 0);
+	if (*e || c < 0 || c >= KB_OUTPUTS)
+		return EC_ERROR_PARAM1;
+
+	r = strtoi(argv[2], &e, 0);
+	if (*e || r < 0 || r >= 8)
+		return EC_ERROR_PARAM2;
+
+	p = strtoi(argv[3], &e, 0);
+	if (*e || p < 0 || p > 1)
+		return EC_ERROR_PARAM3;
+
+	if (p)
+		raw_state[c] |= (1 << r);
+	else
+		raw_state[c] &= ~(1 << r);
+
+	if (kb_fifo_add(raw_state) == EC_SUCCESS)
+		board_interrupt_host(1);
+	else
+		ccprintf("dropped keystroke\n");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
+			"[col] [row] [0 | 1]",
+			"Simulate keypress",
+			NULL);
