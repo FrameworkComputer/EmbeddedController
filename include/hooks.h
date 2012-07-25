@@ -11,9 +11,16 @@
 #include "common.h"
 
 enum hook_priority {
+	/* Generic values across all hooks */
 	HOOK_PRIO_FIRST = 1,       /* Highest priority */
 	HOOK_PRIO_DEFAULT = 5000,  /* Default priority */
-	HOOK_PRIO_LAST = 9999      /* Lowest priority */
+	HOOK_PRIO_LAST = 9999,     /* Lowest priority */
+
+	/* Specific hook vales for HOOK_INIT */
+	/* LPC inits before modules which need memory-mapped I/O */
+	HOOK_PRIO_INIT_LPC = HOOK_PRIO_FIRST + 1,
+	/* Chipset inits before modules which need to know its initial state. */
+	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 2,
 };
 
 

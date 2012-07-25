@@ -397,7 +397,7 @@ static int x86_power_init(void)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_INIT_CHIPSET);
 
 /*****************************************************************************/
 /* Task function */

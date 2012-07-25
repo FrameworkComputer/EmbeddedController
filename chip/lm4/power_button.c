@@ -295,7 +295,10 @@ static void set_initial_pwrbtn_state(void)
 		 */
 		if (get_power_button_pressed()) {
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+			CPRINTF("[%T PB init-jumped-held]\n");
 			set_pwrbtn_to_pch(0);
+		} else {
+			CPRINTF("[%T PB init-jumped]\n");
 		}
 	} else if ((reset_flags & RESET_FLAG_AP_OFF) ||
 		   ((reset_flags & RESET_FLAG_RESET_PIN) &&
