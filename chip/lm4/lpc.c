@@ -366,6 +366,30 @@ static void handle_acpi_command(void)
 	lpc_generate_sci();
 }
 
+/**
+ * We have received an unexpected ACPI request on the normal command channel
+ * from an old firmware/kernel, try to somewhat answer it.
+ */
+static int acpi_on_bad_channel(struct host_cmd_handler_args *args)
+{
+	int i;
+	int result = 0;
+
+	for (i = 0; i < 32; i++) {
+		if (host_events & (1 << i)) {
+			host_clear_events(1 << i);
+			result = i + 1;  /* Events are 1-based */
+			break;
+		}
+	}
+
+	return result;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
+		     acpi_on_bad_channel,
+		     EC_VER_MASK(0));
+
+
 /* Handle an incoming host command */
 static void handle_host_command(int cmd)
 {
