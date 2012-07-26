@@ -733,8 +733,7 @@ DECLARE_CONSOLE_COMMAND(syslock, command_system_lock,
 
 static int host_command_get_version(struct host_cmd_handler_args *args)
 {
-	struct ec_response_get_version *r =
-		(struct ec_response_get_version *)args->response;
+	struct ec_response_get_version *r = args->response;
 
 	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
 		sizeof(r->version_string_ro));
@@ -776,8 +775,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BUILD_INFO,
 
 static int host_command_get_chip_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_get_chip_info *r =
-		(struct ec_response_get_chip_info *)args->response;
+	struct ec_response_get_chip_info *r = args->response;
 
 	strzcpy(r->vendor, system_get_chip_vendor(), sizeof(r->vendor));
 	strzcpy(r->name, system_get_chip_name(), sizeof(r->name));
@@ -793,8 +791,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO,
 
 int host_command_get_board_version(struct host_cmd_handler_args *args)
 {
-	struct ec_response_board_version *r =
-		(struct ec_response_board_version *)args->response;
+	struct ec_response_board_version *r = args->response;
 
 	r->board_version = (uint16_t) system_get_board_version();
 

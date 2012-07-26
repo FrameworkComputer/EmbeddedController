@@ -892,8 +892,7 @@ DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
 
 static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_mkbp_simulate_key *p =
-		(const struct ec_params_mkbp_simulate_key *)args->params;
+	const struct ec_params_mkbp_simulate_key *p = args->params;
 
 	/* Only available on unlocked systems */
 	if (system_is_locked())

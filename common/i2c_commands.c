@@ -11,10 +11,8 @@
 
 int i2c_command_read(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_i2c_read *p =
-		(const struct ec_params_i2c_read *)args->params;
-	struct ec_response_i2c_read *r =
-		(struct ec_response_i2c_read *)args->response;
+	const struct ec_params_i2c_read *p = args->params;
+	struct ec_response_i2c_read *r = args->response;
 	int data, rv = -1;
 
 	if (system_is_locked())
@@ -36,8 +34,7 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_READ, i2c_command_read, EC_VER_MASK(0));
 
 int i2c_command_write(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_i2c_write *p =
-		(const struct ec_params_i2c_write *)args->params;
+	const struct ec_params_i2c_write *p = args->params;
 	int rv = -1;
 
 	if (system_is_locked())

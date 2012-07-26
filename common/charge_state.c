@@ -658,8 +658,7 @@ void charge_state_machine_task(void)
 
 static int charge_command_force_idle(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_force_idle *p =
-		(const struct ec_params_force_idle *)args->params;
+	const struct ec_params_force_idle *p = args->params;
 	int rv;
 
 	if (system_is_locked())

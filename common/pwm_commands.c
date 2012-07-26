@@ -12,8 +12,7 @@
 
 int pwm_command_get_fan_target_rpm(struct host_cmd_handler_args *args)
 {
-	struct ec_response_pwm_get_fan_rpm *r =
-		(struct ec_response_pwm_get_fan_rpm *)args->response;
+	struct ec_response_pwm_get_fan_rpm *r = args->response;
 
 	r->rpm = pwm_get_fan_target_rpm();
 	args->response_size = sizeof(*r);
@@ -26,8 +25,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_FAN_TARGET_RPM,
 
 int pwm_command_set_fan_target_rpm(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_pwm_set_fan_target_rpm *p =
-		(const struct ec_params_pwm_set_fan_target_rpm *)args->params;
+	const struct ec_params_pwm_set_fan_target_rpm *p = args->params;
 
 #ifdef CONFIG_TASK_THERMAL
 	thermal_toggle_auto_fan_ctrl(0);
@@ -42,8 +40,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_TARGET_RPM,
 
 int pwm_command_fan_duty(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_pwm_set_fan_duty *p =
-			(const struct ec_params_pwm_set_fan_duty *)args->params;
+	const struct ec_params_pwm_set_fan_duty *p = args->params;
 	pwm_set_fan_duty(p->percent);
 
 	return EC_RES_SUCCESS;
@@ -54,8 +51,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY,
 
 int pwm_command_get_keyboard_backlight(struct host_cmd_handler_args *args)
 {
-	struct ec_response_pwm_get_keyboard_backlight *r =
-		(struct ec_response_pwm_get_keyboard_backlight *)args->response;
+	struct ec_response_pwm_get_keyboard_backlight *r = args->response;
 
 	r->percent = pwm_get_keyboard_backlight();
 	r->enabled = pwm_get_keyboard_backlight_enabled();
@@ -69,9 +65,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
 
 int pwm_command_set_keyboard_backlight(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_pwm_set_keyboard_backlight *p =
-		(const struct ec_params_pwm_set_keyboard_backlight *)
-		args->params;
+	const struct ec_params_pwm_set_keyboard_backlight *p = args->params;
 
 	pwm_set_keyboard_backlight(p->percent);
 

@@ -440,8 +440,7 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_STATE,
 
 static int keyboard_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_mkbp_info *r =
-		(struct ec_response_mkbp_info *)args->response;
+	struct ec_response_mkbp_info *r = args->response;
 
 	r->rows = 8;
 	r->cols = KB_OUTPUTS;

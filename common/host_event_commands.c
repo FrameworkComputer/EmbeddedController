@@ -138,8 +138,7 @@ DECLARE_CONSOLE_COMMAND(hostevent, command_host_event,
 
 static int host_event_get_smi_mask(struct host_cmd_handler_args *args)
 {
-	struct ec_response_host_event_mask *r =
-		(struct ec_response_host_event_mask *)args->response;
+	struct ec_response_host_event_mask *r = args->response;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
 	args->response_size = sizeof(*r);
@@ -152,8 +151,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_SMI_MASK,
 
 static int host_event_get_sci_mask(struct host_cmd_handler_args *args)
 {
-	struct ec_response_host_event_mask *r =
-		(struct ec_response_host_event_mask *)args->response;
+	struct ec_response_host_event_mask *r = args->response;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
 	args->response_size = sizeof(*r);
@@ -166,8 +164,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_SCI_MASK,
 
 static int host_event_get_wake_mask(struct host_cmd_handler_args *args)
 {
-	struct ec_response_host_event_mask *r =
-		(struct ec_response_host_event_mask *)args->response;
+	struct ec_response_host_event_mask *r = args->response;
 
 	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
 	args->response_size = sizeof(*r);
@@ -180,8 +177,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 
 static int host_event_set_smi_mask(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_host_event_mask *p =
-		(const struct ec_params_host_event_mask *)args->params;
+	const struct ec_params_host_event_mask *p = args->params;
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, p->mask);
 	return EC_RES_SUCCESS;
@@ -192,8 +188,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_SET_SMI_MASK,
 
 static int host_event_set_sci_mask(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_host_event_mask *p =
-		(const struct ec_params_host_event_mask *)args->params;
+	const struct ec_params_host_event_mask *p = args->params;
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, p->mask);
 	return EC_RES_SUCCESS;
@@ -204,8 +199,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_SET_SCI_MASK,
 
 static int host_event_set_wake_mask(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_host_event_mask *p =
-		(const struct ec_params_host_event_mask *)args->params;
+	const struct ec_params_host_event_mask *p = args->params;
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, p->mask);
 	return EC_RES_SUCCESS;
@@ -218,8 +212,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_SET_WAKE_MASK,
 
 static int host_event_get_b(struct host_cmd_handler_args *args)
 {
-	struct ec_response_host_event_mask *r =
-		(struct ec_response_host_event_mask *)args->response;
+	struct ec_response_host_event_mask *r = args->response;
 
 	r->mask = events_copy_b;
 	args->response_size = sizeof(*r);
@@ -232,8 +225,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_B,
 
 static int host_event_clear(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_host_event_mask *p =
-		(const struct ec_params_host_event_mask *)args->params;
+	const struct ec_params_host_event_mask *p = args->params;
 
 	host_clear_events(p->mask);
 	return EC_RES_SUCCESS;
@@ -244,8 +236,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_CLEAR,
 
 static int host_event_clear_b(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_host_event_mask *p =
-		(const struct ec_params_host_event_mask *)args->params;
+	const struct ec_params_host_event_mask *p = args->params;
 
 	host_clear_events_b(p->mask);
 	return EC_RES_SUCCESS;

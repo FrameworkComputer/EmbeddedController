@@ -678,10 +678,10 @@ DECLARE_CONSOLE_COMMAND(x86shutdown, command_x86shutdown,
 /*****************************************************************************/
 /* Host commands */
 
+/* TODO: belongs in power_button.c since it owns switches? */
 static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_switch_enable_wireless *p =
-		(const struct ec_params_switch_enable_wireless *)args->params;
+	const struct ec_params_switch_enable_wireless *p = args->params;
 
 	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
 		       p->enabled & EC_WIRELESS_SWITCH_WLAN);

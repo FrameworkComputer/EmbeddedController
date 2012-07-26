@@ -82,8 +82,7 @@ static const struct host_command *find_host_command(int command)
 
 static int host_command_proto_version(struct host_cmd_handler_args *args)
 {
-	struct ec_response_proto_version *r =
-		(struct ec_response_proto_version *)args->response;
+	struct ec_response_proto_version *r = args->response;
 
 	r->version = EC_PROTO_VERSION;
 	args->response_size = sizeof(*r);
@@ -96,10 +95,8 @@ DECLARE_HOST_COMMAND(EC_CMD_PROTO_VERSION,
 
 static int host_command_hello(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_hello *p =
-		(const struct ec_params_hello *)args->params;
-	struct ec_response_hello *r =
-		(struct ec_response_hello *)args->response;
+	const struct ec_params_hello *p = args->params;
+	struct ec_response_hello *r = args->response;
 	uint32_t d = p->in_data;
 
 	r->out_data = d + 0x01020304;
@@ -113,10 +110,8 @@ DECLARE_HOST_COMMAND(EC_CMD_HELLO,
 
 static int host_command_read_test(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_read_test *p =
-		(const struct ec_params_read_test *)args->params;
-	struct ec_response_read_test *r =
-		(struct ec_response_read_test *)args->response;
+	const struct ec_params_read_test *p = args->params;
+	struct ec_response_read_test *r = args->response;
 
 	int offset = p->offset;
 	int size = p->size / sizeof(uint32_t);
@@ -143,8 +138,7 @@ DECLARE_HOST_COMMAND(EC_CMD_READ_TEST,
  */
 static int host_command_read_memmap(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_read_memmap *p =
-		(const struct ec_params_read_memmap *)args->params;
+	const struct ec_params_read_memmap *p = args->params;
 
 	/* Copy params out of data before we overwrite it with output */
 	uint8_t offset = p->offset;
@@ -166,10 +160,8 @@ DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP,
 
 static int host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_get_cmd_versions *p =
-		(const struct ec_params_get_cmd_versions *)args->params;
-	struct ec_response_get_cmd_versions *r =
-		(struct ec_response_get_cmd_versions *)args->response;
+	const struct ec_params_get_cmd_versions *p = args->params;
+	struct ec_response_get_cmd_versions *r = args->response;
 
 	const struct host_command *cmd = find_host_command(p->cmd);
 

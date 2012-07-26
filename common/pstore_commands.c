@@ -12,8 +12,7 @@
 
 int pstore_command_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_pstore_info *r =
-			(struct ec_response_pstore_info *)args->response;
+	struct ec_response_pstore_info *r = args->response;
 
 	ASSERT(EEPROM_BLOCK_START_PSTORE + EEPROM_BLOCK_COUNT_PSTORE <=
 	       eeprom_get_block_count());
@@ -29,8 +28,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PSTORE_INFO,
 
 int pstore_command_read(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_pstore_read *p =
-			(const struct ec_params_pstore_read *)args->params;
+	const struct ec_params_pstore_read *p = args->params;
 	char *dest = args->response;
 	int block_size = eeprom_get_block_size();
 	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
@@ -67,8 +65,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PSTORE_READ,
 
 int pstore_command_write(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_pstore_write *p =
-			(const struct ec_params_pstore_write *)args->params;
+	const struct ec_params_pstore_write *p = args->params;
 
 	const char *src = p->data;
 	int block_size = eeprom_get_block_size();

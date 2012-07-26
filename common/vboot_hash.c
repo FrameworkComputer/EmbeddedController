@@ -261,10 +261,8 @@ static void fill_response(struct ec_response_vboot_hash *r)
 
 static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_vboot_hash *p =
-		(const struct ec_params_vboot_hash *)args->params;
-	struct ec_response_vboot_hash *r =
-		(struct ec_response_vboot_hash *)args->response;
+	const struct ec_params_vboot_hash *p = args->params;
+	struct ec_response_vboot_hash *r = args->response;
 	int rv;
 
 	switch (p->cmd) {

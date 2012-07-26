@@ -23,14 +23,14 @@ struct host_cmd_handler_args {
 	uint8_t version;       /* Version of command (0-31) */
 	uint8_t params_size;   /* Size of input parameters in bytes */
 	uint8_t i2c_old_response; /* (for I2C) send an old-style response */
-	const uint8_t *params; /* Input parameters */
+	const void *params; /* Input parameters */
 	/*
 	 * Pointer to output response data buffer.  On input to the handler,
 	 * points to a buffer of size response_max.  Command handler can change
 	 * this to point to a different location instead of memcpy()'ing data
 	 * into the provided buffer.
 	 */
-	uint8_t *response;
+	void *response;
 	/*
 	 * Maximum size of response buffer provided to command handler.  If the
 	 * handler changes response to point to its own larger buffer, it may

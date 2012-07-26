@@ -956,8 +956,7 @@ static void do_cmd_rgb(uint8_t led,
 
 static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 {
-	struct ec_params_lightbar_cmd *ptr =
-		(struct ec_params_lightbar_cmd *)args->response;
+	struct ec_params_lightbar_cmd *ptr = args->response;
 
 	/*
 	 * TODO: (crosbug.com/p/11277) Now that params and response are

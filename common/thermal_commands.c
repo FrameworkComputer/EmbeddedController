@@ -11,8 +11,7 @@
 
 int thermal_command_set_threshold(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_thermal_set_threshold *p =
-		(const struct ec_params_thermal_set_threshold *)args->params;
+	const struct ec_params_thermal_set_threshold *p = args->params;
 
 	if (thermal_set_threshold(p->sensor_type, p->threshold_id, p->value))
 		return EC_RES_ERROR;
@@ -25,10 +24,8 @@ DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
 
 int thermal_command_get_threshold(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_thermal_get_threshold *p =
-		(const struct ec_params_thermal_get_threshold *)args->params;
-	struct ec_response_thermal_get_threshold *r =
-		(struct ec_response_thermal_get_threshold *)args->response;
+	const struct ec_params_thermal_get_threshold *p = args->params;
+	struct ec_response_thermal_get_threshold *r = args->response;
 	int value = thermal_get_threshold(p->sensor_type, p->threshold_id);
 
 	if (value == -1)

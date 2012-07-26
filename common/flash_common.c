@@ -205,8 +205,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 
 static int flash_command_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_flash_info *r =
-		(struct ec_response_flash_info *)args->response;
+	struct ec_response_flash_info *r = args->response;
 
 	r->flash_size = CONFIG_FLASH_SIZE;
 	r->write_block_size = CONFIG_FLASH_WRITE_SIZE;
@@ -221,8 +220,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 
 static int flash_command_read(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_flash_read *p =
-		(const struct ec_params_flash_read *)args->params;
+	const struct ec_params_flash_read *p = args->params;
 
 	if (flash_dataptr(p->offset, p->size, 1, (char **)&args->response) < 0)
 		return EC_RES_ERROR;
@@ -237,8 +235,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ,
 
 static int flash_command_write(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_flash_write *p =
-		(const struct ec_params_flash_write *)args->params;
+	const struct ec_params_flash_write *p = args->params;
 
 	if (p->size > sizeof(p->data))
 		return EC_RES_INVALID_PARAM;
@@ -257,8 +254,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_flash_erase *p =
-		(const struct ec_params_flash_erase *)args->params;
+	const struct ec_params_flash_erase *p = args->params;
 
 	if (system_unsafe_to_overwrite(p->offset, p->size))
 		return EC_RES_ACCESS_DENIED;
@@ -274,10 +270,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE,
 
 static int flash_command_protect(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_flash_protect *p =
-		(const struct ec_params_flash_protect *)args->params;
-	struct ec_response_flash_protect *r =
-		(struct ec_response_flash_protect *)args->response;
+	const struct ec_params_flash_protect *p = args->params;
+	struct ec_response_flash_protect *r = args->response;
 
 	/*
 	 * Handle requesting new flags.  Note that we ignore the return code
@@ -335,10 +329,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT,
 
 static int flash_command_region_info(struct host_cmd_handler_args *args)
 {
-	struct ec_params_flash_region_info *p =
-		(struct ec_params_flash_region_info *)args->params;
-	struct ec_response_flash_region_info *r =
-		(struct ec_response_flash_region_info *)args->response;
+	const struct ec_params_flash_region_info *p = args->params;
+	struct ec_response_flash_region_info *r = args->response;
 
 	switch (p->region) {
 	case EC_FLASH_REGION_RO:

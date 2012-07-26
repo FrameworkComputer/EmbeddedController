@@ -141,7 +141,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 		size = 0;
 	}
 
-	/* TODO(sjg@chromium.org): Really shold put flags in args too */
+	/* TODO(sjg@chromium.org): put flags in args? */
 	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
 		/* New-style response */
 		int csum;
@@ -151,19 +151,20 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 			(lpc_host_args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
 			EC_HOST_ARGS_FLAG_TO_HOST;
 
-		out = cmd_params;
-		max_size = EC_HOST_PARAM_SIZE;
-
 		lpc_host_args->data_size = size;
 
 		csum = args->command + lpc_host_args->flags +
 			lpc_host_args->command_version +
 			lpc_host_args->data_size;
 
-		for (i = 0; i < size; i++)
-			csum += args->response[i];
+		for (i = 0, out = (uint8_t *)args->response; i < size;
+		     i++, out++)
+			csum += *out;
 
 		lpc_host_args->checksum = (uint8_t)csum;
+
+		out = cmd_params;
+		max_size = EC_HOST_PARAM_SIZE;
 	} else {
 		/* Old-style response */
 		lpc_host_args->flags = 0;

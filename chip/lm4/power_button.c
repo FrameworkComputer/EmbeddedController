@@ -664,8 +664,7 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 
 int switch_command_enable_backlight(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_switch_enable_backlight *p =
-		(const struct ec_params_switch_enable_backlight *)args->params;
+	const struct ec_params_switch_enable_backlight *p = args->params;
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, p->enabled);
 	return EC_RES_SUCCESS;
 }

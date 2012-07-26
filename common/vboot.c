@@ -20,10 +20,8 @@
 
 static int host_cmd_vboot(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_vboot_cmd *p =
-		(const struct ec_params_vboot_cmd *)args->params;
-	struct ec_params_vboot_cmd *r =
-		(struct ec_params_vboot_cmd *)args->response;
+	const struct ec_params_vboot_cmd *p = args->params;
+	struct ec_params_vboot_cmd *r = args->response;
 	uint8_t v;
 
 	switch (p->in.cmd) {

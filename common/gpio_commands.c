@@ -128,10 +128,8 @@ DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set,
 
 static int gpio_command_get(struct host_cmd_handler_args *args)
 {
-	struct ec_params_gpio_get *p =
-			(struct ec_params_gpio_get *)args->params;
-	struct ec_response_gpio_get *r =
-			(struct ec_response_gpio_get *)args->response;
+	const struct ec_params_gpio_get *p = args->params;
+	struct ec_response_gpio_get *r = args->response;
 	int i;
 
 	if (system_is_locked())
@@ -150,10 +148,9 @@ DECLARE_HOST_COMMAND(EC_CMD_GPIO_GET, gpio_command_get, EC_VER_MASK(0));
 
 static int gpio_command_set(struct host_cmd_handler_args *args)
 {
-	struct ec_params_gpio_set *p =
-			(struct ec_params_gpio_set *)args->params;
-	int i;
+	const struct ec_params_gpio_set *p = args->params;
 	const struct gpio_info *g;
+	int i;
 
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
