@@ -61,7 +61,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
 	/* Other inputs */
 	{"AC_PWRBTN_L", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
-	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_DEFAULT, NULL},
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_DEFAULT, spi_event},
 	/*
 	 * I2C pins should be configured as inputs until I2C module is
 	 * initialized. This will avoid driving the lines unintentionally.
@@ -108,6 +108,16 @@ void configure_board(void)
 	 * TODO: more fine-grained enabling for power saving
 	 */
 	STM32_RCC_APB2ENR |= 0x1fd;
+
+#ifdef CONFIG_SPI
+	/* Enable SPI */
+	STM32_RCC_APB2ENR |= (1<<12);
+
+	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
+	val = STM32_GPIO_CRL_OFF(GPIO_A) & ~0xffff0000;
+	val |= 0x99990000;
+	STM32_GPIO_CRL_OFF(GPIO_A) = val;
+#endif
 
 	/* remap OSC_IN/OSC_OUT to PD0/PD1 */
 	STM32_GPIO_AFIO_MAPR |= 1 << 15;
@@ -164,6 +174,9 @@ void configure_board_late(void)
 {
 #ifdef CONFIG_AC_POWER_STATUS
 	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
+#endif
+#ifdef CONFIG_SPI
+	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
 #endif
 }
 

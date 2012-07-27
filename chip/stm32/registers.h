@@ -397,6 +397,17 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
 #define STM32_SPI1_PORT             0
 #define STM32_SPI2_PORT             1
 
+/* The SPI controller registers */
+struct spi_ctlr {
+	unsigned ctrl1;
+	unsigned ctrl2;
+	unsigned stat;
+	unsigned data;
+	unsigned crcp;
+	unsigned rxcrc;
+	unsigned txcrc;
+};
+
 /*
  * TODO(vpalatin):
  * For whatever reason, our toolchain is substandard and generate a
@@ -404,19 +415,8 @@ static inline uint16_t *stm32_i2c_reg(int port, int offset)
  *
  * That's why I have not used inline stuff in the registers definition.
  */
-#define stm32_spi_addr(port, offset) \
-	((port == 0) ? \
-		(STM32_SPI1_BASE + offset) : \
-		(STM32_SPI2_BASE + offset))
-
-#define STM32_SPI_REG16(p, l)       REG16(stm32_spi_addr((p), l))
-#define STM32_SPI_CR1(p)            STM32_SPI_REG16((p), 0x00)
-#define STM32_SPI_CR2(p)            STM32_SPI_REG16((p), 0x04)
-#define STM32_SPI_SR(p)             STM32_SPI_REG16((p), 0x08)
-#define STM32_SPI_DR(p)             STM32_SPI_REG16((p), 0x0c)
-#define STM32_SPI_CRCPR(p)          STM32_SPI_REG16((p), 0x10)
-#define STM32_SPI_RXCRCR(p)         STM32_SPI_REG16((p), 0x14)
-#define STM32_SPI_TXCRCR(p)         STM32_SPI_REG16((p), 0x18)
+#define stm32_spi_addr(port) \
+	((struct spi_ctlr *)(port == 0 ? STM32_SPI1_BASE : STM32_SPI2_BASE))
 
 /* --- Debug --- */
 
