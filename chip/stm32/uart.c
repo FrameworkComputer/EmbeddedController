@@ -110,7 +110,7 @@ static void uart_interrupt(void)
 	if (!should_stop)
 		STM32_USART_CR1(UARTN) |= 0x80;
 }
-DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 2);
 
 int uart_init(void)
 {
