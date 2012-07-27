@@ -111,7 +111,8 @@ function flash_link() {
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
 	OCD_CMDS="init ; flash_lm4 ${IMG} 0 262144 ; exit"
 
-	dut_control jtag_buf_on_flex_en:on jtag_buf_en:on
+	dut_control jtag_buf_on_flex_en:on
+	dut_control jtag_buf_en:on
 
 	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}"
 }
