@@ -30,9 +30,17 @@
 #define CG_CTRL5 0x09
 #define CG_STATUS1 0x0a
 #define CG_STATUS2 0x0b
+#define TPSCHROME_VER 0x19
 
 /* Charger control */
 #define CG_CTRL0_EN   1
+
+/* Charger termination voltage/current */
+#define CG_VSET_SHIFT   3
+#define CG_VSET_MASK    (3 << CG_VSET_SHIFT)
+#define CG_ISET_SHIFT   0
+#define CG_ISET_MASK    (7 << CG_ISET_SHIFT)
+#define CG_NOITERM      (1 << 5)
 
 /* IRQ events */
 #define EVENT_VACG    (1 <<  1)
@@ -84,6 +92,16 @@ int pmu_write(int reg, int value)
 	return i2c_write8(I2C_PORT_CHARGER, TPS65090_I2C_ADDR, reg, value);
 }
 
+/**
+ * Read tpschrome version
+ *
+ * @param version       output value of tpschrome version
+ */
+int pmu_version(int *version)
+{
+	return pmu_read(TPSCHROME_VER, version);
+}
+
 int pmu_is_charger_alarm(void)
 {
 	int status;
@@ -127,6 +145,74 @@ int pmu_enable_charger(int enable)
 
 	return pmu_write(CG_CTRL0, enable ? (reg | CG_CTRL0_EN) :
 			(reg & ~CG_CTRL0));
+}
+
+/**
+ * Set termination current for temperature ranges
+ *
+ * @param range           T01 T12 T23 T34 T40
+ * @param current         enum termination current, I0250 == 25.0%:
+ *                        I0000 I0250 I0375 I0500 I0625 I0750 I0875 I1000
+ */
+int pmu_set_term_current(enum TPS_TEMPERATURE_RANGE range,
+		enum TPS_TERMINATION_CURRENT current)
+{
+	int rv;
+	int reg_val;
+
+	rv = pmu_read(CG_CTRL1 + range, &reg_val);
+	if (rv)
+		return rv;
+
+	reg_val &= ~CG_ISET_MASK;
+	reg_val |= current << CG_ISET_SHIFT;
+
+	return pmu_write(CG_CTRL1 + range, reg_val);
+}
+
+/**
+ * Set termination voltage for temperature ranges
+ *
+ * @param range           T01 T12 T23 T34 T40
+ * @param voltage         enum termination voltage, V2050 == 2.05V:
+ *                        V2000 V2050 V2075 V2100
+ */
+int pmu_set_term_voltage(enum TPS_TEMPERATURE_RANGE range,
+		enum TPS_TERMINATION_VOLTAGE voltage)
+{
+	int rv;
+	int reg_val;
+
+	rv = pmu_read(CG_CTRL1 + range, &reg_val);
+	if (rv)
+		return rv;
+
+	reg_val &= ~CG_VSET_MASK;
+	reg_val |= voltage << CG_VSET_SHIFT;
+
+	return pmu_write(CG_CTRL1 + range, reg_val);
+}
+
+/**
+ * Enable low current charging
+ *
+ * @param enable         enable/disable low current charging
+ */
+int pmu_low_current_charging(int enable)
+{
+	int rv;
+	int reg_val;
+
+	rv = pmu_read(CG_CTRL5, &reg_val);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg_val |= CG_NOITERM;
+	else
+		reg_val &= ~CG_NOITERM;
+
+	return pmu_write(CG_CTRL5, reg_val);
 }
 
 void pmu_init(void)
