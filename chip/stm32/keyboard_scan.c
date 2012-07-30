@@ -44,9 +44,6 @@ static struct mutex scanning_enabled;
 /* The keyboard state from the last read */
 static uint8_t raw_state[KB_OUTPUTS];
 
-/* status of keyboard related switches */
-static uint8_t switches;
-
 /* Mask with 1 bits only for keys that actually exist */
 static const uint8_t *actual_key_mask;
 
@@ -356,8 +353,7 @@ int keyboard_scan_init(void)
 	check_keys_changed();
 
 	/* is recovery key pressed on cold startup ? */
-	switches |= check_recovery_key() ?
-			EC_SWITCH_KEYBOARD_RECOVERY : 0;
+	check_recovery_key();
 
 	return EC_SUCCESS;
 }
@@ -432,7 +428,8 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 
 int keyboard_scan_recovery_pressed(void)
 {
-	return switches & EC_SWITCH_KEYBOARD_RECOVERY;
+	return host_get_events() &
+	EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 }
 
 static int keyboard_get_scan(struct host_cmd_handler_args *args)
@@ -455,7 +452,7 @@ static int keyboard_get_info(struct host_cmd_handler_args *args)
 
 	r->rows = 8;
 	r->cols = KB_OUTPUTS;
-	r->switches = switches;
+	r->switches = 0;
 
 	args->response_size = sizeof(*r);
 
