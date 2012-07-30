@@ -95,8 +95,9 @@ void *VbExMalloc(size_t size)
 	}
 
 	if (size % 8) {
-		int tmp = (size + 8) & ~0x7ULL;
+		size_t tmp = (size + 8) & ~0x7ULL;
 		DPRINTF("  %d -> %d\n", size, tmp);
+		ASSERT(tmp >= size);
 		size = tmp;
 	}
 
