@@ -13,6 +13,7 @@
 #include "i8042.h"
 #include "lpc.h"
 #include "port80.h"
+#include "pwm.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -26,12 +27,10 @@
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
-/* Bit masks for LPCCH?ST */
-#define LPC_STATUS_MASK_BUSY     (1 << 12)
-#define LPC_STATUS_MASK_SMI      (1 << 10)
-#define LPC_STATUS_MASK_SCI      (1 <<  9)
-#define LPC_STATUS_MASK_PRESENT  (1 <<  8)
-#define LPC_STATUS_MASK_TOH      (1 <<  0)  /* TO Host bit */
+static uint8_t acpi_cmd;         /* Last received ACPI command */
+static uint8_t acpi_addr;        /* First byte of data after ACPI command */
+static int acpi_data_count;      /* Number of data writes after command */
+static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
@@ -55,7 +54,6 @@ static void configure_gpio(void)
 	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
 	gpio_set_alternate_function(LM4_GPIO_M, 0x33, 0x0f);
 }
-
 
 static void wait_irq_sent(void)
 {
@@ -190,14 +188,14 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 
 	/* Clear the busy bit */
 	task_disable_irq(LM4_IRQ_LPC);
-	LM4_LPC_ST(LPC_CH_CMD) &= ~LPC_STATUS_MASK_BUSY;
+	LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_BUSY;
 	task_enable_irq(LM4_IRQ_LPC);
 }
 
 /* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void)
 {
-	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LPC_STATUS_MASK_TOH) ? 1 : 0;
+	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LM4_LPC_ST_TOH) ? 1 : 0;
 }
 
 
@@ -217,7 +215,7 @@ void lpc_keyboard_clear_buffer(void)
 	/* Make sure the previous TOH and IRQ has been sent out. */
 	wait_irq_sent();
 
-	LM4_LPC_ST(LPC_CH_KEYBOARD) &= ~LPC_STATUS_MASK_TOH;
+	LM4_LPC_ST(LPC_CH_KEYBOARD) &= ~LM4_LPC_ST_TOH;
 
 	/* Ensure there is no TOH set in this period. */
 	wait_irq_sent();
@@ -269,18 +267,18 @@ static void update_host_event_status(void) {
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
 		/* Only generate SMI for first event */
-		if (!(LM4_LPC_ST(LPC_CH_ACPI) & LPC_STATUS_MASK_SMI))
+		if (!(LM4_LPC_ST(LPC_CH_ACPI) & LM4_LPC_ST_SMI))
 			need_smi = 1;
-		LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_SMI;
+		LM4_LPC_ST(LPC_CH_ACPI) |= LM4_LPC_ST_SMI;
 	} else
-		LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_SMI;
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~LM4_LPC_ST_SMI;
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
 		/* Generate SCI for every event */
 		need_sci = 1;
-		LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_SCI;
+		LM4_LPC_ST(LPC_CH_ACPI) |= LM4_LPC_ST_SCI;
 	} else
-		LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_SCI;
+		LM4_LPC_ST(LPC_CH_ACPI) &= ~LM4_LPC_ST_SCI;
 
 	/* Copy host events to mapped memory */
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = host_events;
@@ -321,44 +319,99 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 	return event_mask[type];
 }
 
-/* Handle an ACPI command */
-static void handle_acpi_command(void)
+/**
+ * Handle command (is_cmd=1) or data (is_cmd=0) writes to ACPI I/O ports.
+ */
+static void handle_acpi_write(int is_cmd)
 {
-	int cmd;
-	int result = 0;
-	int i;
+	int data = 0;
 
 	/* Set the busy bit */
-	LM4_LPC_ST(LPC_CH_ACPI) |= LPC_STATUS_MASK_BUSY;
+	LM4_LPC_ST(LPC_CH_ACPI) |= LM4_LPC_ST_BUSY;
 
-	/*
-	 * Read the command byte and pass to the host command handler.
-	 * This clears the FRMH bit in the status byte.
-	 */
-	cmd = LPC_POOL_ACPI[0];
+	/* Read command/data; this clears the FRMH status bit. */
+	if (is_cmd) {
+		acpi_cmd = LPC_POOL_ACPI[0];
+		acpi_data_count = 0;
+	} else {
+		data = LPC_POOL_ACPI[0];
+		/*
+		 * The first data byte is the ACPI memory address for
+		 * read/write commands.
+		 */
+		if (!acpi_data_count++)
+			acpi_addr = data;
+	}
 
-	/* Process the command */
-	switch (cmd) {
-	case EC_CMD_ACPI_QUERY_EVENT:
+	/* Process complete commands */
+	if (acpi_cmd == EC_CMD_ACPI_READ && acpi_data_count == 1) {
+		/* ACPI read cmd + addr */
+		int result = 0;
+
+		switch (acpi_addr) {
+		case EC_ACPI_MEM_VERSION:
+			result = EC_ACPI_MEM_VERSION_CURRENT;
+			break;
+		case EC_ACPI_MEM_TEST:
+			result = acpi_mem_test;
+			break;
+		case EC_ACPI_MEM_TEST_COMPLIMENT:
+			result = 0xff - acpi_mem_test;
+			break;
+#ifdef CONFIG_TASK_PWM
+		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+			/*
+			 * TODO: not very satisfying that LPC knows directly
+			 * about the keyboard backlight, but for now this is
+			 * good enough and less code than defining a new
+			 * console command interface just for ACPI read/write.
+			 */
+			result = pwm_get_keyboard_backlight();
+			break;
+#endif
+		default:
+			break;
+		}
+
+		/* Send the result byte */
+		CPRINTF("[%T ACPI read 0x%02x = 0x%02x]\n", acpi_addr, result);
+		LPC_POOL_ACPI[1] = result;
+
+	} else if (acpi_cmd == EC_CMD_ACPI_WRITE && acpi_data_count == 2) {
+		/* ACPI write cmd + addr + data */
+		CPRINTF("[%T ACPI write 0x%02x = 0x%02x]\n", acpi_addr, data);
+		switch (acpi_addr) {
+		case EC_ACPI_MEM_TEST:
+			acpi_mem_test = data;
+			break;
+#ifdef CONFIG_TASK_PWM
+		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+			pwm_set_keyboard_backlight(data);
+			break;
+#endif
+		default:
+			break;
+		}
+
+	} else if (acpi_cmd == EC_CMD_ACPI_QUERY_EVENT && !acpi_data_count) {
+		/* Clear and return the lowest host event */
+		int evt_index = 0;
+		int i;
+
 		for (i = 0; i < 32; i++) {
 			if (host_events & (1 << i)) {
 				host_clear_events(1 << i);
-				result = i + 1;  /* Events are 1-based */
+				evt_index = i + 1; /* Events are 1-based */
 				break;
 			}
 		}
-		break;
 
-	default:
-		/* Something we don't handle; ignore it */
-		break;
+		CPRINTF("[%T ACPI query = %d]\n", evt_index);
+		LPC_POOL_ACPI[1] = evt_index;
 	}
 
-	/* Write the response */
-	LPC_POOL_ACPI[1] = result;
-
 	/* Clear the busy bit */
-	LM4_LPC_ST(LPC_CH_ACPI) &= ~LPC_STATUS_MASK_BUSY;
+	LM4_LPC_ST(LPC_CH_ACPI) &= ~LM4_LPC_ST_BUSY;
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
@@ -368,9 +421,11 @@ static void handle_acpi_command(void)
 }
 
 /**
- * We have received an unexpected ACPI request on the normal command channel
- * from an old firmware/kernel, try to somewhat answer it.
+ * Handle unexpected ACPI query request on the normal command channel from an
+ * old API firmware/kernel.  No need to handle other ACPI commands on the
+ * normal command channel, because old firmware/kernel only supported query.
  */
+/* TODO: remove when link EVT is deprecated. */
 static int acpi_on_bad_channel(struct host_cmd_handler_args *args)
 {
 	int i;
@@ -450,14 +505,16 @@ static void lpc_interrupt(void)
 	LM4_LPC_LPCIC = mis;
 
 #ifdef CONFIG_TASK_HOSTCMD
-	/* Handle ACPI command writes */
+	/* Handle ACPI command and data writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_ACPI, 4))
-		handle_acpi_command();
+		handle_acpi_write(1);
+	if (mis & LM4_LPC_INT_MASK(LPC_CH_ACPI, 2))
+		handle_acpi_write(0);
 
 	/* Handle user command writes */
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_CMD, 4)) {
 		/* Set the busy bit */
-		LM4_LPC_ST(LPC_CH_CMD) |= LPC_STATUS_MASK_BUSY;
+		LM4_LPC_ST(LPC_CH_CMD) |= LM4_LPC_ST_BUSY;
 
 		/*
 		 * Read the command byte.  This clears the FRMH bit in the
@@ -557,8 +614,8 @@ static int lpc_init(void)
 	LM4_LPC_ADR(LPC_CH_ACPI) = EC_LPC_ADDR_ACPI_DATA;
 	LM4_LPC_CTL(LPC_CH_ACPI) = (LPC_POOL_OFFS_ACPI << (5 - 1));
 	LM4_LPC_ST(LPC_CH_ACPI) = 0;
-	/* Unmask interrupt for host command writes */
-	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_ACPI, 4);
+	/* Unmask interrupt for host command and data writes */
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_ACPI, 6);
 
 	/*
 	 * Set LPC channel 1 to I/O address 0x80 (data), single endpoint,

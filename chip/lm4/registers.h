@@ -118,6 +118,12 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4LPCREG(ch, offset)  LM4REG(lm4_lpc_addr(ch, offset))
 #define LM4_LPC_CTL(ch)        LM4LPCREG(ch, 0x000)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
+#define LM4_LPC_ST_TOH         (1 << 0)  /* TO Host bit */
+#define LM4_LPC_ST_CMD         (1 << 3)  /* Last from-host byte was command */
+#define LM4_LPC_ST_PRESENT     (1 << 8)
+#define LM4_LPC_ST_SCI         (1 << 9)
+#define LM4_LPC_ST_SMI         (1 << 10)
+#define LM4_LPC_ST_BUSY        (1 << 12)
 #define LM4_LPC_ADR(ch)        LM4LPCREG(ch, 0x008)
 #define LM4_LPC_POOL_BYTES     1024   /* Size of LPCPOOL in bytes */
 #define LM4_LPC_LPCPOOL        ((volatile unsigned char *)0x40080400)

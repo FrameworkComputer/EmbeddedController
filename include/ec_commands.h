@@ -50,15 +50,14 @@
 #define EC_LPC_ADDR_OLD_PARAM  0x880
 #define EC_OLD_PARAM_SIZE      0x080  /* Size of param area in bytes */
 
-
 /* EC command register bit functions */
-#define EC_LPC_CMDR_DATA	(1 << 0)
-#define EC_LPC_CMDR_PENDING	(1 << 1)
-#define EC_LPC_CMDR_BUSY	(1 << 2)
-#define EC_LPC_CMDR_CMD		(1 << 3)
-#define EC_LPC_CMDR_ACPI_BRST	(1 << 4)
-#define EC_LPC_CMDR_SCI		(1 << 5)
-#define EC_LPC_CMDR_SMI		(1 << 6)
+#define EC_LPC_CMDR_DATA	(1 << 0)  /* Data ready for host to read */
+#define EC_LPC_CMDR_PENDING	(1 << 1)  /* Write pending to EC */
+#define EC_LPC_CMDR_BUSY	(1 << 2)  /* EC is busy processing a command */
+#define EC_LPC_CMDR_CMD		(1 << 3)  /* Last host write was a command */
+#define EC_LPC_CMDR_ACPI_BRST	(1 << 4)  /* Burst mode (not used) */
+#define EC_LPC_CMDR_SCI		(1 << 5)  /* SCI event is pending */
+#define EC_LPC_CMDR_SMI		(1 << 6)  /* SMI event is pending */
 
 #define EC_LPC_ADDR_MEMMAP       0x900
 #define EC_MEMMAP_SIZE         255 /* ACPI IO buffer max is 255 bytes */
@@ -807,6 +806,14 @@ struct ec_response_temp_sensor_get_info {
 } __packed;
 
 /*****************************************************************************/
+
+/*
+ * Note: host commands 0x80 - 0x87 are reserved to avoid conflict with ACPI
+ * commands accidentally sent to the wrong interface.  See the ACPI section
+ * below.
+ */
+
+/*****************************************************************************/
 /* Host event commands */
 
 /*
@@ -940,11 +947,40 @@ struct ec_params_reboot_ec {
 
 /*****************************************************************************/
 /*
- * Special commands
+ * ACPI commands
  *
- * These do not follow the normal rules for commands.  See each command for
- * details.
+ * These are valid ONLY on the ACPI command/data port.
  */
+
+/*
+ * ACPI Read Embedded Controller
+ *
+ * This reads from ACPI memory space on the EC (EC_ACPI_MEM_*).
+ *
+ * Use the following sequence:
+ *
+ *    - Write EC_CMD_ACPI_READ to EC_LPC_ADDR_ACPI_CMD
+ *    - Wait for EC_LPC_CMDR_PENDING bit to clear
+ *    - Write address to EC_LPC_ADDR_ACPI_DATA
+ *    - Wait for EC_LPC_CMDR_DATA bit to set
+ *    - Read value from EC_LPC_ADDR_ACPI_DATA
+ */
+#define EC_CMD_ACPI_READ 0x80
+
+/*
+ * ACPI Write Embedded Controller
+ *
+ * This reads from ACPI memory space on the EC (EC_ACPI_MEM_*).
+ *
+ * Use the following sequence:
+ *
+ *    - Write EC_CMD_ACPI_WRITE to EC_LPC_ADDR_ACPI_CMD
+ *    - Wait for EC_LPC_CMDR_PENDING bit to clear
+ *    - Write address to EC_LPC_ADDR_ACPI_DATA
+ *    - Wait for EC_LPC_CMDR_PENDING bit to clear
+ *    - Write value to EC_LPC_ADDR_ACPI_DATA
+ */
+#define EC_CMD_ACPI_WRITE 0x81
 
 /*
  * ACPI Query Embedded Controller
@@ -952,10 +988,33 @@ struct ec_params_reboot_ec {
  * This clears the lowest-order bit in the currently pending host events, and
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
  * event 0x80000000 = 32), or 0 if no event was pending.
- *
- * This command is valid ONLY on port 62/66.
  */
 #define EC_CMD_ACPI_QUERY_EVENT 0x84
+
+/* Valid addresses in ACPI memory space, for read/write commands */
+/* Memory space version; set to EC_ACPI_MEM_VERSION_CURRENT */
+#define EC_ACPI_MEM_VERSION            0x00
+/*
+ * Test location; writing value here updates test compliment byte to (0xff -
+ * value).
+ */
+#define EC_ACPI_MEM_TEST               0x01
+/* Test compliment; writes here are ignored. */
+#define EC_ACPI_MEM_TEST_COMPLIMENT    0x02
+/* Keyboard backlight brightness percent (0 - 100) */
+#define EC_ACPI_MEM_KEYBOARD_BACKLIGHT 0x03
+
+/* Current version of ACPI memory address space */
+#define EC_ACPI_MEM_VERSION_CURRENT 1
+
+
+/*****************************************************************************/
+/*
+ * Special commands
+ *
+ * These do not follow the normal rules for commands.  See each command for
+ * details.
+ */
 
 /*
  * Reboot NOW
