@@ -263,17 +263,6 @@ static int parse_params(char *s, uint8_t *params)
 	return len;
 }
 
-static void dump_hex(char *resp, int size)
-{
-	int i;
-	for (i = 0; i < size; ++i) {
-		ccprintf("%02x", (int)resp[i]);
-		if ((i & 15) == 15)
-			ccputs("\n");
-	}
-	ccputs("\n");
-}
-
 static int command_host_command(int argc, char **argv)
 {
 	struct host_cmd_handler_args args;
@@ -282,20 +271,31 @@ static int command_host_command(int argc, char **argv)
 	char *e;
 	int rv;
 
-	if (argc != 4)
+	/* Assume no version or params unless proven otherwise */
+	args.version = 0;
+	args.params_size = 0;
+	args.params = cmd_params;
+
+	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
 	args.command = strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM1;
-	args.version = strtoi(argv[2], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-	args.params = cmd_params;
-	rv = parse_params(argv[3], cmd_params);
-	if (rv < 0)
-		return EC_ERROR_PARAM3;
-	args.params_size = rv;
+
+	if (argc > 2) {
+		args.version = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+	}
+
+	if (argc > 3) {
+		rv = parse_params(argv[3], cmd_params);
+		if (rv < 0)
+			return EC_ERROR_PARAM3;
+		args.params_size = rv;
+	}
+
 	args.response = cmd_params;
 	args.response_max = EC_HOST_PARAM_SIZE;
 	args.response_size = 0;
@@ -304,8 +304,10 @@ static int command_host_command(int argc, char **argv)
 
 	if (res != EC_RES_SUCCESS)
 		ccprintf("Command returned %d\n", res);
+	else if (args.response_size)
+		ccprintf("Response: %.*h\n", args.response_size, cmd_params);
 	else
-		dump_hex(cmd_params, args.response_size);
+		ccprintf("Command succeeded; no response.\n");
 
 	return EC_SUCCESS;
 }
