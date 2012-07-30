@@ -229,7 +229,7 @@ static void insert_char(char c)
 	int ptr;
 
 	/* On overflow, discard input */
-	if (rx_cur_buf_head == RX_LINE_SIZE)
+	if (rx_cur_buf_head == RX_LINE_SIZE && c != '\n')
 		return;
 
 	/* Move buffer ptr to the end if 'c' is new line */
