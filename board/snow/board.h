@@ -47,8 +47,6 @@
 #define CONFIG_SMART_BATTERY
 #define CONFIG_PMU_TPS65090
 #define CONFIG_PMU_BOARD_INIT
-/* #define CONFIG_I2C_HOST_AUTO */
-/* #define I2C_PORT_HOST board_i2c_host_port() */
 #define I2C_PORT_HOST 1
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
@@ -111,9 +109,6 @@ void matrix_interrupt(enum gpio_signal signal);
 
 /* Signal to AP that data is waiting */
 void board_interrupt_host(int active);
-
-/* Auto detect EC i2c host port */
-int board_i2c_host_port(void);
 
 /* Initialize PMU registers using board settings */
 void board_pmu_init(void);
