@@ -175,7 +175,7 @@ static int check_for_power_off_event(void)
 	}
 
 	/* Dis/Enable keyboard scanning when the power button state changes */
-	if (pressed != power_button_was_pressed)
+	if (!pressed || pressed != power_button_was_pressed)
 		keyboard_enable_scanning(!pressed);
 
 
