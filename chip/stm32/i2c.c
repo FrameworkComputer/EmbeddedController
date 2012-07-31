@@ -27,6 +27,9 @@
 /* I2C bus frequency */
 #define I2C_FREQ 100000 /* Hz */
 
+/* I2C bit period in microseconds */
+#define I2C_PERIOD_US (1000000 / I2C_FREQ)
+
 /* Clock divider for I2C controller */
 #define I2C_CCR (CPU_CLOCK/(2 * I2C_FREQ))
 
@@ -37,6 +40,10 @@
 #define I2C1      STM32_I2C1_PORT
 #define I2C2      STM32_I2C2_PORT
 
+enum {
+	/* A stop condition should take 2 clocks, so allow 8 */
+	TIMEOUT_STOP_SENT_US	= I2C_PERIOD_US * 8,
+};
 
 static uint16_t i2c_sr1[NUM_PORTS];
 static struct mutex i2c_mutex;
@@ -439,6 +446,24 @@ static void master_stop(int port)
 	STM32_I2C_CR1(port) |= (1 << 9);
 }
 
+static int wait_until_stop_sent(int port)
+{
+	timestamp_t deadline;
+
+	deadline = get_time();
+	deadline.val += TIMEOUT_STOP_SENT_US;
+
+	while (STM32_I2C_CR1(port) & (1 << 9)) {
+		if (timestamp_expired(deadline, NULL)) {
+			ccprintf("Stop event deadline passed: CR1=%016b\n",
+				 STM32_I2C_CR1(port));
+			return EC_ERROR_TIMEOUT;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
 static void handle_i2c_error(int port, int rv)
 {
 	timestamp_t t1, t2;
@@ -581,7 +606,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		data[0] = STM32_I2C_DR(port);
 	}
 
-	return EC_SUCCESS;
+	return wait_until_stop_sent(port);
 }
 
 /**
