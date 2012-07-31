@@ -287,12 +287,14 @@ const char *system_get_chip_revision(void)
 }
 
 
+/* TODO: crosbug.com/p/12036 */
 int system_set_fake_wp(int val)
 {
 	return bkpdata_write(BKPDATA_INDEX_FAKE_WP, (uint16_t)val);
 }
 
 
+/* TODO: crosbug.com/p/12036 */
 int system_get_fake_wp(void)
 {
 	return bkpdata_read(BKPDATA_INDEX_FAKE_WP);

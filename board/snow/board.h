@@ -26,13 +26,6 @@
 #define CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 
-/* Allow dangerous commands all the time, since we don't have a write protect
- * switch. */
-/* TODO: (crosbug.com/p/9986) This is a serious security hole and should be
- * removed in mass production. We add this to allow manual firmware update.
- * Once we complete the vboot and autoupdate, we should remove this. */
-#define CONFIG_SYSTEM_UNLOCKED
-
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */
@@ -64,6 +57,7 @@ enum gpio_signal {
 	GPIO_CHARGER_INT,
 	GPIO_LID_OPEN,         /* LID switch detection */
 	GPIO_SUSPEND_L,        /* AP suspend/resume state */
+	GPIO_WRITE_PROTECTn,   /* Write protection pin (low active) */
 	/* Keyboard inputs */
 	GPIO_KB_IN00,
 	GPIO_KB_IN01,

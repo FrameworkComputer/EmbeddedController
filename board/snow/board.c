@@ -43,6 +43,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_RISING, NULL},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
 	{"SUSPEND_L",   GPIO_A, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
+	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN02",     GPIO_C, (1<<10), GPIO_KB_INPUT, matrix_interrupt},
@@ -260,4 +261,3 @@ void board_pmu_init(void)
 	}
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
-

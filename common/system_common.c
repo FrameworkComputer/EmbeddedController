@@ -90,10 +90,10 @@ int system_is_locked(void)
 	/* System is explicitly unlocked */
 	return 0;
 
-#elif defined(BOARD_link) && defined(CONFIG_FLASH)
+#elif defined(CONFIG_FLASH)
 	/*
-	 * On link, unlocked if write protect pin deasserted or read-only
-	 * firmware is not protected.
+	 * Unlocked if write protect pin deasserted or read-only firmware
+	 * is not protected.
 	 */
 	if ((EC_FLASH_PROTECT_GPIO_ASSERTED | EC_FLASH_PROTECT_RO_NOW) &
 	    ~flash_get_protect())

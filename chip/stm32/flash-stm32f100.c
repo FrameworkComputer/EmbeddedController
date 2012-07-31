@@ -551,8 +551,7 @@ uint32_t flash_get_protect(void)
 	int i;
 	int not_protected[2] = {0};
 
-	/* TODO (vpalatin) : write protect scheme for stm32 */
-	if (system_get_fake_wp())
+	if (system_get_fake_wp() || !gpio_get_level(GPIO_WRITE_PROTECTn))
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Read the current persist state from flash */
@@ -613,6 +612,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	return retval;
 }
 
+/* TODO: crosbug.com/p/12036 */
 static int command_set_fake_wp(int argc, char **argv)
 {
 	int val;
