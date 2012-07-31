@@ -287,13 +287,16 @@ static void set_initial_pwrbtn_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 
+	/* Set debounced power button state to initial button state */
+	debounced_power_pressed = get_power_button_pressed();
+
 	if (system_jumped_to_this_image() &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
 		/*
 		 * Jumped to this image while the chipset was already on, so
 		 * simply reflect the actual power button state.
 		 */
-		if (get_power_button_pressed()) {
+		if (debounced_power_pressed) {
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 			CPRINTF("[%T PB init-jumped-held]\n");
 			set_pwrbtn_to_pch(0);
@@ -316,7 +319,7 @@ static void set_initial_pwrbtn_state(void)
 		 */
 		CPRINTF("[%T PB init-off]\n");
 		set_pwrbtn_to_pch(1);
-		if (get_power_button_pressed())
+		if (debounced_power_pressed)
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		else
 			pwrbtn_state = PWRBTN_STATE_IDLE;
@@ -330,7 +333,7 @@ static void set_initial_pwrbtn_state(void)
 		set_pwrbtn_to_pch(0);
 		tnext_state = get_time().val + PWRBTN_INITIAL_US;
 
-		if (get_power_button_pressed()) {
+		if (debounced_power_pressed) {
 			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
 
 			if (reset_flags & RESET_FLAG_RESET_PIN)
