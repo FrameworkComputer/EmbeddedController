@@ -144,6 +144,13 @@ void board_interrupt_host(int active)
 	gpio_set_level(GPIO_EC_INT, !active);
 }
 
+void board_keyboard_suppress_noise(void)
+{
+	/* notify audio codec of keypress for noise suppression */
+	gpio_set_level(GPIO_CODEC_INT, 0);
+	gpio_set_level(GPIO_CODEC_INT, 1);
+}
+
 enum {
 	/* Time between requesting bus and deciding that we have it */
 	BUS_SLEW_DELAY_US	= 10,
