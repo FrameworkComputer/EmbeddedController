@@ -28,6 +28,8 @@ static struct host_cmd_handler_args *pending_args;
 static uint8_t host_memmap[EC_MEMMAP_SIZE];
 #endif
 
+static int hcdebug;  /* Enable extra host command debug output */
+
 uint8_t *host_get_memmap(int offset)
 {
 #ifdef CONFIG_LPC
@@ -181,16 +183,29 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 enum ec_status host_command_process(struct host_cmd_handler_args *args)
 {
 	const struct host_command *cmd = find_host_command(args->command);
+	enum ec_status rv;
 
-	CPRINTF("[%T hostcmd 0x%02x]\n", args->command);
+	if (hcdebug && args->params_size)
+		CPRINTF("[%T HC 0x%02x:%.*h]\n", args->command,
+			args->params_size, args->params);
+	else
+		CPRINTF("[%T HC 0x%02x]\n", args->command);
 
 	if (!cmd)
-		return EC_RES_INVALID_COMMAND;
+		rv = EC_RES_INVALID_COMMAND;
+	else if (!(EC_VER_MASK(args->version) & cmd->version_mask))
+		rv = EC_RES_INVALID_VERSION;
+	else
+		rv = cmd->handler(args);
 
-	if (!(EC_VER_MASK(args->version) & cmd->version_mask))
-		return EC_RES_INVALID_VERSION;
+	if (rv != EC_RES_SUCCESS) {
+		CPRINTF("[%T HC err %d]\n", rv);
+	} else if (hcdebug && args->response_size) {
+		CPRINTF("[%T HC resp:%.*h]\n",
+			args->response_size, args->response);
+	}
 
-	return cmd->handler(args);
+	return rv;
 }
 
 /*****************************************************************************/
@@ -314,4 +329,23 @@ static int command_host_command(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 			"cmd ver param",
 			"Fake host command",
+			NULL);
+
+static int command_hcdebug(int argc, char **argv)
+{
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "on"))
+			hcdebug = 1;
+		else if (!strcasecmp(argv[1], "off"))
+			hcdebug = 0;
+		else
+			return EC_ERROR_PARAM1;
+	}
+
+	ccprintf("Host command debug is %s\n", hcdebug ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hcdebug, command_hcdebug,
+			"hcdebug [on | off]",
+			"Toggle extra host command debug output",
 			NULL);
