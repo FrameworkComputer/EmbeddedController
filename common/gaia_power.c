@@ -420,6 +420,7 @@ static void power_off(void)
 	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	gpio_set_level(GPIO_EN_PP5000, 0);
 	ap_on = 0;
+	lid_changed = 0;
 	powerled_set_state(POWERLED_STATE_OFF);
 	CPUTS("Shutdown complete.\n");
 }
