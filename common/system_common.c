@@ -693,18 +693,18 @@ static int command_reboot(int argc, char **argv)
 		if (!strcasecmp(argv[i], "hard") ||
 		    !strcasecmp(argv[i], "cold")) {
 			flags |= SYSTEM_RESET_HARD;
-		} else if (!strcasecmp(argv[1], "soft")) {
+		} else if (!strcasecmp(argv[i], "soft")) {
 			flags &= ~SYSTEM_RESET_HARD;
-		} else if (!strcasecmp(argv[1], "ap-off")) {
+		} else if (!strcasecmp(argv[i], "ap-off")) {
 			flags |= SYSTEM_RESET_LEAVE_AP_OFF;
-		} else if (!strcasecmp(argv[1], "cancel")) {
+		} else if (!strcasecmp(argv[i], "cancel")) {
 			reboot_at_shutdown = EC_REBOOT_CANCEL;
 			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[i], "preserve")) {
+			flags |= SYSTEM_RESET_PRESERVE_FLAGS;
 		} else
 			return EC_ERROR_PARAM1 + i - 1;
 	}
-	if (argc >= 3 && !strcasecmp(argv[2], "preserve"))
-		flags |= SYSTEM_RESET_PRESERVE_FLAGS;
 
 	if (flags & SYSTEM_RESET_HARD)
 		ccputs("Hard-");
