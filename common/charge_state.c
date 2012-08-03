@@ -280,9 +280,6 @@ static int state_common(struct power_state_context *ctx)
  */
 static enum power_state state_init(struct power_state_context *ctx)
 {
-	/* Set LED to green first, other states should change it as desired. */
-	ctx->curr.led_color = POWERLED_GREEN;
-
 	/* Stop charger, unconditionally */
 	charger_set_current(0);
 	charger_set_voltage(0);
@@ -315,14 +312,8 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	const struct charger_info *c_info = ctx->charger;
 
 	/* If we are forcing idle mode, then just stay in IDLE. */
-	if (state_machine_force_idle) {
-		if (ctx->prev.led_color == POWERLED_GREEN)
-			ctx->curr.led_color = POWERLED_OFF;
-		else
-			ctx->curr.led_color = POWERLED_GREEN;
+	if (state_machine_force_idle)
 		return PWR_STATE_UNCHANGE;
-	}
-	ctx->curr.led_color = POWERLED_GREEN;
 
 	if (!ctx->curr.ac)
 		return PWR_STATE_INIT;
@@ -372,8 +363,6 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	const struct charger_info *c_info = ctx->charger;
 	int debounce = 0;
 	timestamp_t now;
-
-	curr->led_color = POWERLED_YELLOW;
 
 	if (curr->error)
 		return PWR_STATE_ERROR;
@@ -434,9 +423,6 @@ static enum power_state state_charge(struct power_state_context *ctx)
 static enum power_state state_discharge(struct power_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
-
-	ctx->curr.led_color = POWERLED_OFF;
-
 	if (ctx->curr.ac)
 		return PWR_STATE_INIT;
 
@@ -461,8 +447,6 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 static enum power_state state_error(struct power_state_context *ctx)
 {
 	static int logged_error;
-
-	ctx->curr.led_color = POWERLED_RED;
 
 	if (!ctx->curr.error) {
 		logged_error = 0;
@@ -544,6 +528,16 @@ static int exit_force_idle_mode(void)
 	return EC_SUCCESS;
 }
 
+static enum powerled_color force_idle_led_blink(void)
+{
+	static enum powerled_color last = POWERLED_GREEN;
+	if (last == POWERLED_GREEN)
+		last = POWERLED_OFF;
+	else
+		last = POWERLED_GREEN;
+	return last;
+}
+
 /* Battery charging task */
 void charge_state_machine_task(void)
 {
@@ -552,12 +546,11 @@ void charge_state_machine_task(void)
 	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum power_state new_state;
 	uint8_t batt_flags;
+	enum powerled_color led_color = POWERLED_OFF;
 	int rv_setled = 0;
 
 	ctx->prev.state = PWR_STATE_INIT;
 	ctx->curr.state = PWR_STATE_INIT;
-	ctx->prev.led_color = POWERLED_OFF;
-	ctx->curr.led_color = POWERLED_OFF;
 	ctx->trickle_charging_time.val = 0;
 	ctx->battery = battery_get_info();
 	ctx->charger = charger_get_info();
@@ -610,9 +603,6 @@ void charge_state_machine_task(void)
 				state_name[new_state]);
 		}
 
-		if ((ctx->curr.led_color != ctx->prev.led_color || rv_setled) &&
-		    new_state != PWR_STATE_DISCHARGE)
-			rv_setled = powerled_set(ctx->curr.led_color);
 
 		switch (new_state) {
 		case PWR_STATE_IDLE:
@@ -620,6 +610,10 @@ void charge_state_machine_task(void)
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
 			*ctx->memmap_batt_flags = batt_flags;
+
+			/* Charge done */
+			led_color = POWERLED_GREEN;
+			rv_setled = powerled_set(POWERLED_GREEN);
 
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
@@ -636,13 +630,25 @@ void charge_state_machine_task(void)
 			batt_flags &= ~EC_BATT_FLAG_DISCHARGING;
 			*ctx->memmap_batt_flags = batt_flags;
 
+			/* Charging */
+			led_color = POWERLED_YELLOW;
+			rv_setled = powerled_set(POWERLED_YELLOW);
+
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_ERROR:
+			/* Error */
+			led_color = POWERLED_RED;
+			rv_setled = powerled_set(POWERLED_RED);
+
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_UNCHANGE:
 			/* Don't change sleep duration */
+			if (state_machine_force_idle)
+				powerled_set(force_idle_led_blink());
+			else if (rv_setled)
+				rv_setled = powerled_set(led_color);
 			break;
 		default:
 			/* Other state; poll quickly and hope it goes away */

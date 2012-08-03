@@ -9,7 +9,6 @@
 #include "battery_pack.h"
 #include "charge_state.h"
 #include "charger.h"
-#include "power_led.h"
 #include "smart_battery.h"
 #include "timer.h"
 #include "uart.h"
@@ -100,11 +99,6 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	struct batt_params *batt      = &curr->batt;
 	const struct charger_info *cinfo    = ctx->charger;
 	const struct battery_info *binfo    = ctx->battery;
-
-	/* If battery is nearly full and we are trickle charging, we should
-	 * change the power led to green. */
-	if (batt->state_of_charge >= POWERLED_GREEN_THRESHOLD)
-		curr->led_color = POWERLED_GREEN;
 
 	/* Clear trickle charging duration on AC change */
 	if (curr->ac != ctx->prev.ac) {
