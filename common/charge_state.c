@@ -202,6 +202,15 @@ static int state_common(struct power_state_context *ctx)
 	if (rv)
 		curr->error |= F_BATTERY_STATE_OF_CHARGE;
 
+	if (batt->state_of_charge != prev->batt.state_of_charge) {
+		rv = battery_full_charge_capacity(&d);
+		if (!rv && d != *(int*)host_get_memmap(EC_MEMMAP_BATT_LFCC)) {
+			*(int*)host_get_memmap(EC_MEMMAP_BATT_LFCC) = d;
+			/* Notify host to re-read battery information */
+			host_set_single_event(EC_HOST_EVENT_BATTERY);
+		}
+	}
+
 	/* Prevent deep discharging */
 	if (!curr->ac)
 		if ((batt->state_of_charge < BATTERY_LEVEL_SHUTDOWN &&
