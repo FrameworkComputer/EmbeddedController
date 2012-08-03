@@ -98,6 +98,7 @@ static const char * const state_names[] = {
 static enum x86_state state = X86_G3;  /* Current state */
 static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
 static uint32_t in_want;      /* Input signal state we're waiting for */
+static uint32_t in_debug;     /* Signal values which print debug output */
 static int want_g3_exit;      /* Should we exit the G3 state? */
 static int throttle_cpu;      /* Throttle CPU? */
 
@@ -145,6 +146,9 @@ static void update_in_signals(void)
 		inew |= IN_PCH_SUSWARNn_DEASSERTED;
 	/* Copy SUSWARN# signal from PCH to SUSACK# */
 	gpio_set_level(GPIO_PCH_SUSACKn, v);
+
+	if ((in_signals & in_debug) != (inew & in_debug))
+		CPRINTF("[%T x86 in 0x%04x]\n", inew);
 
 	in_signals = inew;
 }
@@ -673,6 +677,29 @@ static int command_x86shutdown(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(x86shutdown, command_x86shutdown,
 			NULL,
 			"Force x86 shutdown",
+			NULL);
+
+static int command_x86indebug(int argc, char **argv)
+{
+	char *e;
+
+	/* If one arg, set the mask */
+	if (argc == 2) {
+		int m = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		in_debug = m;
+	}
+
+	/* Print the mask */
+	ccprintf("x86 in:     0x%04x\n", in_signals);
+	ccprintf("debug mask: 0x%04x\n", in_debug);
+	return EC_SUCCESS;
+};
+DECLARE_CONSOLE_COMMAND(x86indebug, command_x86indebug,
+			"[mask]",
+			"Get/set x86 input debug mask",
 			NULL);
 
 /*****************************************************************************/
