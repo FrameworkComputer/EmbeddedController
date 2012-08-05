@@ -405,9 +405,6 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 		r = STM32_I2C_SR1(port);
 	}
 
-	if (t2.val - t1.val > 1000)
-		CPRINTF("timeout=%dus\n", (unsigned)t2.val - (unsigned)t1.val);
-
 	return EC_SUCCESS;
 }
 
