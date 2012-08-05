@@ -8,6 +8,7 @@
 #include "console.h"
 #include "flash.h"
 #include "registers.h"
+#include "panic.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"
@@ -70,13 +71,14 @@ struct persist_state {
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
 
+/* Flag indicating whether we have locked down entire flash */
+static int entire_flash_locked;
+
 /* Functions defined in system.c to access backup registers */
-int system_set_flash_rw_at_boot(int val);
-int system_get_flash_rw_at_boot(void);
 int system_set_fake_wp(int val);
 int system_get_fake_wp(void);
 
-static void write_optb(int byte, uint8_t value);
+static int write_optb(int byte, uint8_t value);
 
 static int wait_busy(void)
 {
@@ -89,6 +91,12 @@ static int wait_busy(void)
 
 static int unlock(int locks)
 {
+	/*
+	 * We may have already locked the flash module and get a bus fault
+	 * in the attempt to unlock. Need to disable bus fault handler now.
+	 */
+	ignore_bus_fault(1);
+
 	/* unlock CR if needed */
 	if (STM32_FLASH_CR & CR_LOCK) {
 		STM32_FLASH_KEYR = KEY1;
@@ -99,6 +107,9 @@ static int unlock(int locks)
 		STM32_FLASH_OPTKEYR = KEY1;
 		STM32_FLASH_OPTKEYR = KEY2;
 	}
+
+	/* Re-enable bus fault handler */
+	ignore_bus_fault(0);
 
 	return ((STM32_FLASH_CR ^ OPT_LOCK) & (locks | CR_LOCK)) ?
 			EC_ERROR_UNKNOWN : EC_SUCCESS;
@@ -129,19 +140,28 @@ static uint8_t read_optb(int byte)
 	return *(uint8_t *)(STM32_OPTB_BASE + byte);
 }
 
-static void erase_optb(void)
+static int erase_optb(void)
 {
-	wait_busy();
+	int rv;
 
-	if (unlock(OPT_LOCK) != EC_SUCCESS)
-		return;
+	rv = wait_busy();
+	if (rv)
+		return rv;
+
+	rv = unlock(OPT_LOCK);
+	if (rv)
+		return rv;
 
 	/* Must be set in 2 separate lines. */
 	STM32_FLASH_CR |= OPTER;
 	STM32_FLASH_CR |= STRT;
 
-	wait_busy();
+	rv = wait_busy();
+	if (rv)
+		return rv;
 	lock();
+
+	return EC_SUCCESS;
 }
 
 /*
@@ -149,44 +169,57 @@ static void erase_optb(void)
  * rest of bytes, but make this byte 0xff.
  * Note that this could make a recursive call to write_optb().
  */
-static void preserve_optb(int byte)
+static int preserve_optb(int byte)
 {
-	int i;
+	int i, rv;
 	uint8_t optb[8];
 
 	/* The byte has been reset, no need to run preserve. */
 	if (*(uint16_t *)(STM32_OPTB_BASE + byte) == 0xffff)
-		return;
+		return EC_SUCCESS;;
 
 	for (i = 0; i < ARRAY_SIZE(optb); ++i)
 		optb[i] = read_optb(i * 2);
 
 	optb[byte / 2] = 0xff;
 
-	erase_optb();
-	for (i = 0; i < ARRAY_SIZE(optb); ++i)
-		write_optb(i * 2, optb[i]);
+	rv = erase_optb();
+	if (rv)
+		return rv;
+	for (i = 0; i < ARRAY_SIZE(optb); ++i) {
+		rv = write_optb(i * 2, optb[i]);
+		if (rv)
+			return rv;
+	}
+
+	return EC_SUCCESS;
 }
 
-static void write_optb(int byte, uint8_t value)
+static int write_optb(int byte, uint8_t value)
 {
 	volatile int16_t *hword = (uint16_t *)(STM32_OPTB_BASE + byte);
+	int rv;
 
-	wait_busy();
+	rv = wait_busy();
+	if (rv)
+		return rv;
 
 	/* The target byte is the value we want to write. */
 	if (*(uint8_t *)hword == value)
-		return;
+		return EC_SUCCESS;
 
 	/* Try to erase that byte back to 0xff. */
-	preserve_optb(byte);
+	rv = preserve_optb(byte);
+	if (rv)
+		return rv;
 
 	/* The value is 0xff after erase. No need to write 0xff again. */
 	if (value == 0xff)
-		return;
+		return EC_SUCCESS;
 
-	if (unlock(OPT_LOCK) != EC_SUCCESS)
-		return;
+	rv = unlock(OPT_LOCK);
+	if (rv)
+		return rv;
 
 	/* set OPTPG bit */
 	STM32_FLASH_CR |= OPTPG;
@@ -196,8 +229,12 @@ static void write_optb(int byte, uint8_t value)
 	/* reset OPTPG bit */
 	STM32_FLASH_CR &= ~OPTPG;
 
-	wait_busy();
+	rv = wait_busy();
+	if (rv)
+		return rv;
 	lock();
+
+	return EC_SUCCESS;
 }
 
 /**
@@ -371,7 +408,7 @@ exit_er:
 
 int flash_physical_get_protect(int block)
 {
-	return !(STM32_FLASH_WRPR & (1 << block));
+	return entire_flash_locked || !(STM32_FLASH_WRPR & (1 << block));
 }
 
 static int flash_physical_get_protect_at_boot(int block)
@@ -440,18 +477,17 @@ static int protect_ro_at_boot(int enable, int force)
 	return EC_SUCCESS;
 }
 
-static int protect_rw_at_boot(int enable, int force)
+static int protect_entire_flash_until_reboot(void)
 {
-	int old_flag = system_get_flash_rw_at_boot() ? 1 : 0;
-	int new_flag = enable ? 1 : 0;
+	/*
+	 * Lock by writing a wrong key to FLASH_KEYR. This triggers a bus
+	 * fault, so we need to disable bus fault handler while doing this.
+	 */
+	ignore_bus_fault(1);
+	STM32_FLASH_KEYR = 0xffffffff;
+	ignore_bus_fault(0);
 
-	/* Update state if necessary */
-	if (old_flag != new_flag || force) {
-		system_set_flash_rw_at_boot(new_flag);
-		flash_physical_set_protect_at_boot(RW_BANK_OFFSET,
-						   RW_BANK_COUNT,
-						   new_flag);
-	}
+	entire_flash_locked = 1;
 
 	return EC_SUCCESS;
 }
@@ -465,16 +501,12 @@ static int register_need_reset(void)
 	uint32_t flags = flash_get_protect();
 	int i;
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
-	int rw_at_boot = (flags & EC_FLASH_PROTECT_RW_AT_BOOT) ? 1 : 0;
 	int ro_wp_region_start = RO_BANK_OFFSET;
 	int ro_wp_region_end =
 		RO_BANK_OFFSET + RO_BANK_COUNT + PSTATE_BANK_COUNT;
 
 	for (i = ro_wp_region_start; i < ro_wp_region_end; i++)
 		if (flash_physical_get_protect_at_boot(i) != ro_at_boot)
-			return 1;
-	for (i = RW_BANK_OFFSET; i < RW_BANK_OFFSET + RW_BANK_COUNT; i++)
-		if (flash_physical_get_protect_at_boot(i) != rw_at_boot)
 			return 1;
 	return 0;
 }
@@ -520,15 +552,11 @@ int flash_pre_init(void)
 			 */
 			protect_ro_at_boot(
 				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT, 1);
-			/* And reset RW protect register */
-			protect_rw_at_boot(
-				prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT, 1);
 			need_reset = 1;
 		}
 	}
 	else {
-		if ((prot_flags & EC_FLASH_PROTECT_RO_NOW) ||
-		    (prot_flags & EC_FLASH_PROTECT_RW_NOW)) {
+		if (prot_flags & EC_FLASH_PROTECT_RO_NOW) {
 			/*
 			 * Write protect pin unasserted but some section is
 			 * protected. Drop it and reboot.
@@ -559,9 +587,8 @@ uint32_t flash_get_protect(void)
 	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-	/* Read the current persist state from flash */
-	if (system_get_flash_rw_at_boot())
-		flags |= EC_FLASH_PROTECT_RW_AT_BOOT;
+	if (entire_flash_locked)
+		flags |= EC_FLASH_PROTECT_RW_NOW;
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
@@ -603,8 +630,20 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 			retval = rv;
 	}
 
-	if (mask & EC_FLASH_PROTECT_RW_AT_BOOT) {
-		rv = protect_rw_at_boot(flags & EC_FLASH_PROTECT_RW_AT_BOOT, 0);
+	/*
+	 * All subsequent flags only work if write protect is enabled (that is,
+	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
+	 */
+	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
+				      EC_FLASH_PROTECT_RO_AT_BOOT))
+		return retval;
+
+	if (mask & EC_FLASH_PROTECT_RW_NOW) {
+		/*
+		 * Since RO is already protected, protecting entire flash
+		 * is effectively protecting RW.
+		 */
+		rv = protect_entire_flash_until_reboot();
 		if (rv)
 			retval = rv;
 	}

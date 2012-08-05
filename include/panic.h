@@ -85,4 +85,11 @@ void panic(const char *msg);
  */
 void report_panic(const char *msg, uint32_t *lregs);
 
+/**
+ * Enable/disable bus fault handler
+ *
+ * @param ignored	Non-zero if ignoring bus fault
+ */
+void ignore_bus_fault(int ignored);
+
 #endif

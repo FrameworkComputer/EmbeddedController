@@ -19,6 +19,9 @@
 /* This is the size of our private panic stack, if we have one */
 #define STACK_SIZE_WORDS	64
 
+/* Whether bus fault is ignored */
+static int bus_fault_ignored;
+
 /* We save registers here for display by report_panic() */
 static struct save_area
 {
@@ -358,6 +361,20 @@ void exception_panic(void)
 		"b report_panic" : :
 			[save_area] "r" (save_area.saved_regs)
 		);
+}
+
+
+void bus_fault_handler(void) __attribute__((naked));
+void bus_fault_handler(void)
+{
+	if (!bus_fault_ignored)
+		exception_panic();
+}
+
+
+void ignore_bus_fault(int ignored)
+{
+	bus_fault_ignored = ignored;
 }
 
 
