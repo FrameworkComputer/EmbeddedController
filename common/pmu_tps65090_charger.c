@@ -134,6 +134,9 @@ static int wait_t3_discharging(void)
 	return ST_DISCHARGING;
 }
 
+/*
+ * Turn off the host application processor
+ */
 static int system_off(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
@@ -152,6 +155,9 @@ static int system_off(void)
 	return wait_t1_idle();
 }
 
+/*
+ * Notify the host when battery remaining charge is lower than 10%
+ */
 static int notify_battery_low(void)
 {
 	static timestamp_t last_notify_time;
@@ -231,35 +237,62 @@ static int calc_next_state(int state)
 		return ST_PRE_CHARGING;
 
 	case ST_CHARGING:
+		/* Go back to idle state when AC is unplugged */
 		if (!get_ac())
 			break;
-		if (battery_temperature(&batt_temp) ||
-				!battery_charging_range(batt_temp)) {
-			CPUTS("[pmu] charging: battery hot\n");
+
+		/*
+		 * Disable charging on battery access error, or charging
+		 * temperature out of range.
+		 */
+		if (battery_temperature(&batt_temp)) {
+			CPUTS("[pmu] charging: unable to get battery "
+			      "temperature\n");
+			enable_charging(0);
+			break;
+		} else if (!battery_charging_range(batt_temp)) {
+			CPRINTF("[pmu] charging: temperature out of range "
+				"%dC\n",
+				battery_temperature_celsius(batt_temp));
 			enable_charging(0);
 			break;
 		}
+
+		/*
+		 * Disable charging on battery alarm events or access error:
+		 *   - over temperature
+		 *   - over current
+		 */
 		if (battery_status(&alarm) || (alarm & ALARM_CHARGING)) {
 			CPUTS("[pmu] charging: battery alarm\n");
 			enable_charging(0);
 			break;
 		}
+
+		/*
+		 * Disable charging on charger alarm events:
+		 *   - charger over current
+		 *   - charger over temperature
+		 */
 		if (pmu_is_charger_alarm()) {
 			CPUTS("[pmu] charging: charger alarm\n");
 			enable_charging(0);
 			break;
 		}
+
 		return wait_t2_charging();
 
 	case ST_DISCHARGING:
-
+		/* Go back to idle state when AC is plugged */
 		if (get_ac())
 			return wait_t1_idle();
 
 		/* Check battery discharging temperature range */
 		if (battery_temperature(&batt_temp) == 0) {
 			if (!battery_discharging_range(batt_temp)) {
-				CPUTS("[pmu] discharging: battery hot\n");
+				CPRINTF("[pmu] discharging: temperature out of"
+					"range %dC\n",
+					battery_temperature_celsius(batt_temp));
 				enable_charging(0);
 				return system_off();
 			}
