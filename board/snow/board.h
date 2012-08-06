@@ -26,6 +26,10 @@
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 
+/* compute RW firmware hash at startup */
+#define CONFIG_VBOOT
+#define CONFIG_VBOOT_HASH
+
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */
