@@ -102,6 +102,10 @@ const char help_str[] =
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|A|disable-jump> [at-shutdown]\n"
 	"      Reboot EC to RO or RW\n"
+	"  rtcget\n"
+	"      Print real-time clock\n"
+	"  rtcset <time>\n"
+	"      Set real-time clock\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
 	"  switches\n"
@@ -2030,6 +2034,45 @@ int cmd_ec_hash(int argc, char *argv[])
 }
 
 
+int cmd_rtc_get(int argc, char *argv[])
+{
+	struct ec_response_rtc r;
+	int rv;
+
+	rv = ec_command(EC_CMD_RTC_GET_VALUE, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("Current time: 0x%08x (%d)\n", r.time, r.time);
+	return 0;
+}
+
+
+int cmd_rtc_set(int argc, char *argv[])
+{
+	struct ec_params_rtc p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <time>\n", argv[0]);
+		return -1;
+	}
+	p.time = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad time.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_RTC_SET_VALUE, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Time set.\n");
+	return 0;
+}
+
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -2076,6 +2119,8 @@ const struct command commands[] = {
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
+	{"rtcget", cmd_rtc_get},
+	{"rtcset", cmd_rtc_set},
 	{"sertest", cmd_serial_test},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},

@@ -6,10 +6,13 @@
 /* System module for Chrome EC : LM4 hardware specific implementation */
 
 #include "common.h"
+#include "console.h"
 #include "cpu.h"
+#include "host_command.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "util.h"
 
 /* Indices for hibernate data registers */
 enum hibdata_index {
@@ -23,12 +26,17 @@ enum hibdata_index {
 #define HIBDATA_WAKE_HARD_RESET (1 << 1)  /* Hard reset via short RTC alarm */
 #define HIBDATA_WAKE_PIN        (1 << 2)  /* Wake pin */
 
+/*
+ * Time it takes wait_for_hibctl_wc() to return.  Experimentally verified to
+ * be ~200 us; the value below is somewhat conservative. */
+#define HIB_WAIT_USEC 1000
+
 static int wait_for_hibctl_wc(void)
 {
 	int i;
 	/* Wait for write-capable */
 	for (i = 0; i < 1000000; i++) {
-		if (LM4_HIBERNATE_HIBCTL & 0x80000000)
+		if (LM4_HIBERNATE_HIBCTL & LM4_HIBCTL_WRC)
 			return EC_SUCCESS;
 	}
 	return EC_ERROR_UNKNOWN;
@@ -158,6 +166,46 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
 }
 
 /**
+ * Read the real-time clock.
+ *
+ * @param ss_ptr       Destination for sub-seconds value, if not null.
+ *
+ * @return the real-time clock seconds value.
+ */
+uint32_t system_get_rtc(uint32_t *ss_ptr)
+{
+	uint32_t rtc, rtc2;
+	uint32_t rtcss;
+
+	/*
+	 * The hibernate module isn't synchronized, so need to read repeatedly
+	 * to guarantee a valid read.
+	 */
+	do {
+		rtc = LM4_HIBERNATE_HIBRTCC;
+		rtcss = LM4_HIBERNATE_HIBRTCSS & 0x7fff;
+		rtc2 = LM4_HIBERNATE_HIBRTCC;
+	} while (rtc != rtc2);
+
+	if (ss_ptr)
+		*ss_ptr = rtcss;
+
+	return rtc;
+}
+
+/**
+ * Set the real-time clock.
+ *
+ * @param seconds	New clock value.
+ */
+void system_set_rtc(uint32_t seconds)
+{
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBRTCLD = seconds;
+	wait_for_hibctl_wc();
+}
+
+/**
  * Internal hibernate function.
  *
  * @param seconds      Number of seconds to sleep before RTC alarm
@@ -166,6 +214,9 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
  */
 static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 {
+	uint32_t rtc, rtcss;
+	uint32_t hibctl;
+
 	/* Store hibernate flags */
 	hibdata_write(HIBDATA_INDEX_WAKE, flags);
 
@@ -177,19 +228,37 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 
 	/* TODO: If sleeping forever, only wake on wake pin. */
 
+	/* Add expected overhead for hibernate register writes */
+	microseconds += HIB_WAIT_USEC * 4;
+
+	/*
+	 * The code below must run uninterrupted to make sure we accurately
+	 * calculate the RTC match value.
+	 */
+	interrupt_disable();
+
+	/*
+	 * Calculate the wake match, compensating for additional delays caused
+	 * by writing to the hibernate register.
+	 */
+	rtc = system_get_rtc(&rtcss) + seconds;
+	rtcss += microseconds * (32768/64) / (1000000/64);
+	if (rtcss > 0x7fff) {
+		rtc += rtcss >> 15;
+		rtcss &= 0x7fff;
+	}
+
 	/* Set RTC alarm match */
 	wait_for_hibctl_wc();
-	LM4_HIBERNATE_HIBRTCM0 = seconds;
+	LM4_HIBERNATE_HIBRTCM0 = rtc;
 	wait_for_hibctl_wc();
-	LM4_HIBERNATE_HIBRTCSS = (microseconds * 512 / 15625) << 16;
-
-	/* Start counting toward the alarm */
-	wait_for_hibctl_wc();
-	LM4_HIBERNATE_HIBRTCLD = 0;
+	LM4_HIBERNATE_HIBRTCSS = rtcss << 16;
 
 	/* Go to hibernation and wake on RTC match or WAKE pin */
+	hibctl = (LM4_HIBERNATE_HIBCTL | LM4_HIBCTL_RTCWEN |
+		  LM4_HIBCTL_PINWEN | LM4_HIBCTL_HIBREQ);
 	wait_for_hibctl_wc();
-	__enter_hibernate(0x5B);
+	__enter_hibernate(hibctl);
 }
 
 
@@ -208,21 +277,27 @@ int system_pre_init(void)
 	scratch = LM4_SYSTEM_RCGCHIB;
 
 	/*
-	 * Enable the hibernation oscillator, if it's not already enabled.  We
-	 * use this to hold our scratchpad value across reboots.
+	 * Enable the hibernation oscillator, if it's not already enabled.
+	 * This should only need setting if the EC completely lost power (for
+	 * example, the battery was pulled).
 	 */
-	if (!(LM4_HIBERNATE_HIBCTL & 0x40)) {
+	if (!(LM4_HIBERNATE_HIBCTL & LM4_HIBCTL_CLK32EN)) {
 		int i;
 
 		/* Enable clock to hibernate module */
 		wait_for_hibctl_wc();
-		LM4_HIBERNATE_HIBCTL |= 0x40;
+		LM4_HIBERNATE_HIBCTL |= LM4_HIBCTL_CLK32EN;
 
 		/* Wait for write-complete */
 		for (i = 0; i < 1000000; i++) {
 			if (LM4_HIBERNATE_HIBRIS & 0x10)
 				break;
 		}
+
+		/* Enable and reset RTC */
+		wait_for_hibctl_wc();
+		LM4_HIBERNATE_HIBCTL |= LM4_HIBCTL_RTCEN;
+		system_set_rtc(0);
 	}
 
 	/*
@@ -321,3 +396,60 @@ const char *system_get_chip_revision(void)
 
 	return rev;
 }
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_system_rtc(int argc, char **argv)
+{
+	uint32_t rtc;
+	uint32_t rtcss;
+
+	if (argc == 3 && !strcasecmp(argv[1], "set")) {
+		char *e;
+		uint32_t t = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		system_set_rtc(t);
+	} else if (argc > 1) {
+		return EC_ERROR_INVAL;
+	}
+
+	rtc = system_get_rtc(&rtcss);
+	ccprintf("RTC: 0x%08x.%04x (%d.%06d s)\n",
+		 rtc, rtcss, rtc, (rtcss * (1000000/64)) / (32768/64));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
+			"[set <seconds>]",
+			"Get/set real-time clock",
+			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+static int system_rtc_get_value(struct host_cmd_handler_args *args)
+{
+	struct ec_response_rtc *r = args->response;
+
+	r->time = system_get_rtc(NULL);
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE,
+		     system_rtc_get_value,
+		     EC_VER_MASK(0));
+
+static int system_rtc_set_value(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rtc *p = args->params;
+
+	system_set_rtc(p->time);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
+		     system_rtc_set_value,
+		     EC_VER_MASK(0));

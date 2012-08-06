@@ -716,6 +716,26 @@ struct ec_params_pstore_write {
 } __packed;
 
 /*****************************************************************************/
+/* Real-time clock */
+
+/* RTC params and response structures */
+struct ec_params_rtc {
+	uint32_t time;
+} __packed;
+
+struct ec_response_rtc {
+	uint32_t time;
+} __packed;
+
+/* These use ec_response_rtc */
+#define EC_CMD_RTC_GET_VALUE 0x44
+#define EC_CMD_RTC_GET_ALARM 0x45
+
+/* These all use ec_params_rtc */
+#define EC_CMD_RTC_SET_VALUE 0x46
+#define EC_CMD_RTC_SET_ALARM 0x47
+
+/*****************************************************************************/
 /* Thermal engine commands */
 
 /* Set thershold value */
