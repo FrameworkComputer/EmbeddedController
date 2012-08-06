@@ -30,6 +30,9 @@
 /* Voltage debounce time */
 #define DEBOUNCE_TIME (10 * SECOND)
 
+/* Time period between setting power LED */
+#define SET_LED_PERIOD (10 * SECOND)
+
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
@@ -548,6 +551,7 @@ void charge_state_machine_task(void)
 	uint8_t batt_flags;
 	enum powerled_color led_color = POWERLED_OFF;
 	int rv_setled = 0;
+	uint64_t last_setled_time = 0;
 
 	ctx->prev.state = PWR_STATE_INIT;
 	ctx->curr.state = PWR_STATE_INIT;
@@ -614,6 +618,7 @@ void charge_state_machine_task(void)
 			/* Charge done */
 			led_color = POWERLED_GREEN;
 			rv_setled = powerled_set(POWERLED_GREEN);
+			last_setled_time = get_time().val;
 
 			sleep_usec = POLL_PERIOD_LONG;
 			break;
@@ -633,6 +638,7 @@ void charge_state_machine_task(void)
 			/* Charging */
 			led_color = POWERLED_YELLOW;
 			rv_setled = powerled_set(POWERLED_YELLOW);
+			last_setled_time = get_time().val;
 
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
@@ -640,6 +646,7 @@ void charge_state_machine_task(void)
 			/* Error */
 			led_color = POWERLED_RED;
 			rv_setled = powerled_set(POWERLED_RED);
+			last_setled_time = get_time().val;
 
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
@@ -647,8 +654,16 @@ void charge_state_machine_task(void)
 			/* Don't change sleep duration */
 			if (state_machine_force_idle)
 				powerled_set(force_idle_led_blink());
-			else if (rv_setled)
+			else if (rv_setled || get_time().val - last_setled_time
+					> SET_LED_PERIOD) {
+				/*
+				 * It is possible to make power LED go off
+				 * without disconnecting AC. Therefore we
+				 * need to reset power LED periodically.
+				 */
 				rv_setled = powerled_set(led_color);
+				last_setled_time = get_time().val;
+			}
 			break;
 		default:
 			/* Other state; poll quickly and hope it goes away */
