@@ -102,6 +102,11 @@ static uint32_t in_debug;     /* Signal values which print debug output */
 static int want_g3_exit;      /* Should we exit the G3 state? */
 static int throttle_cpu;      /* Throttle CPU? */
 
+/* When did we enter G3? */
+static uint64_t last_shutdown_time;
+/* Delay before go into hibernation in seconds*/
+static uint32_t hibernate_delay = 86400; /* 24 Hrs */
+
 /* Update input signal state */
 static void update_in_signals(void)
 {
@@ -330,6 +335,11 @@ static int x86_power_ac_change(void)
 	} else {
 		CPRINTF("[%T x86 AC off]\n");
 		/* TODO: (crosbug.com/p/9609) disable turbo */
+
+		if (state == X86_G3) {
+			last_shutdown_time = get_time().val;
+			task_wake(TASK_ID_X86POWER);
+		}
 	}
 
 	return EC_SUCCESS;
@@ -356,6 +366,9 @@ static int x86_power_init(void)
 	/* Update input state */
 	update_in_signals();
 	in_want = 0;
+
+	/* The initial state is G3. Set shut down timestamp to now. */
+	last_shutdown_time = get_time().val;
 
 	/*
 	 * If we're switching between images without rebooting, see if the x86
@@ -408,6 +421,8 @@ DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_INIT_CHIPSET);
 
 void x86_power_task(void)
 {
+	uint64_t time_now;
+
 	while (1) {
 		CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
 			state, state_names[state], in_signals);
@@ -420,9 +435,24 @@ void x86_power_task(void)
 				break;
 			}
 
-			/* Steady state; wait for a message */
 			in_want = 0;
-			task_wait_event(-1);
+			if (power_ac_present())
+				task_wait_event(-1);
+			else {
+				uint64_t target_time = last_shutdown_time +
+						hibernate_delay * 1000000ull;
+				time_now = get_time().val;
+				if (time_now > target_time) {
+					/* Time's up. Hibernate as long as
+					 * possible. */
+					system_hibernate(0xffffffff, 0);
+				}
+				else {
+					/* Wait for a message */
+					task_wait_event(target_time - time_now);
+				}
+			}
+
 			break;
 
 		case X86_S5:
@@ -625,6 +655,9 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 
+			/* Record the time we go into G3 */
+			last_shutdown_time = get_time().val;
+
 			state = X86_G3;
 			break;
 		}
@@ -700,6 +733,33 @@ static int command_x86indebug(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(x86indebug, command_x86indebug,
 			"[mask]",
 			"Get/set x86 input debug mask",
+			NULL);
+
+static int command_hibernation_delay(int argc, char **argv)
+{
+	char *e;
+	uint32_t time_g3 = ((uint32_t)(get_time().val - last_shutdown_time))
+				/ 1000000;
+
+	if (argc >= 2) {
+		uint32_t s = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		hibernate_delay = s;
+	}
+
+	/* Print the current setting */
+	ccprintf("Hibernation delay: %d s\n", hibernate_delay);
+	if (state == X86_G3 && !power_ac_present()) {
+		ccprintf("Time G3: %d s\n", time_g3);
+		ccprintf("Time left: %d s\n", hibernate_delay - time_g3);
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
+			"[sec]",
+			"Set the delay before going into hibernation",
 			NULL);
 
 /*****************************************************************************/
