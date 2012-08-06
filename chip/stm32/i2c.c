@@ -392,13 +392,7 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
 		if (t2.val - t1.val > I2C_TX_TIMEOUT) {
-#ifdef CONFIG_DEBUG_I2C
-			CPRINTF(" m %016b\n", mask);
-			CPRINTF(" - %016b\n", r);
-#endif /* CONFIG_DEBUG_I2C */
-			CPRINTF("i2c wait_status timeout type %d, %d us\n",
-				wait, (unsigned)t2.val - (unsigned)t1.val);
-			return EC_ERROR_TIMEOUT;
+			return EC_ERROR_TIMEOUT | (wait << 8);
 		} else if (t2.val - t1.val > 150) {
 			usleep(100);
 		}
@@ -470,6 +464,13 @@ static void handle_i2c_error(int port, int rv)
 	if (rv == EC_ERROR_BUSY)
 		return;
 
+	/* EC_ERROR_TIMEOUT may have a code specifying where the timeout was */
+	if ((rv & 0xff) == EC_ERROR_TIMEOUT) {
+#ifdef CONFIG_DEBUG_I2C
+		CPRINTF("Wait_status() timeout type: %d\n", (rv >> 8));
+#endif
+		rv = EC_ERROR_TIMEOUT;
+	}
 	if (rv)
 		dump_i2c_reg(port);
 
