@@ -42,6 +42,12 @@ uint32_t __hw_clock_source_read(void)
 }
 
 
+void __hw_clock_source_set(uint32_t ts)
+{
+	LM4_TIMER_TAV(6) = 0xffffffff - ts;
+}
+
+
 static void __hw_clock_source_irq(void)
 {
 	uint32_t status = LM4_TIMER_RIS(6);
@@ -99,7 +105,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	LM4_TIMER_CTL(6) |= 0x1;
 	/* Override the count with the start value now that counting has
 	 * started. */
-	LM4_TIMER_TAV(6) = 0xffffffff - start_t;
+	__hw_clock_source_set(start_t);
 
 	/* Enable interrupt */
 	task_enable_irq(LM4_IRQ_TIMERW0A);

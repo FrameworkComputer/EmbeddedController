@@ -169,6 +169,14 @@ timestamp_t get_time(void)
 }
 
 
+void force_time(timestamp_t ts)
+{
+	clksrc_high = ts.le.hi;
+	__hw_clock_source_set(ts.le.lo);
+	/* some timers might be already expired : process them */
+	task_trigger_irq(timer_irq);
+}
+
 void timer_print_info(void)
 {
 	uint64_t t = get_time().val;

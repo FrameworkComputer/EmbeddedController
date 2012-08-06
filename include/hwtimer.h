@@ -52,6 +52,9 @@ void __hw_clock_event_clear(void);
 /* Returns the value of the free-running counter used as clock. */
 uint32_t __hw_clock_source_read(void);
 
+/* Override the current value of the hardware counter */
+void __hw_clock_source_set(uint32_t ts);
+
 /**
  * Initializes the hardware timer used to provide clock services, using the
  * specified start timer value.

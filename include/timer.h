@@ -53,6 +53,14 @@ void usleep(unsigned us);
 /* Get the current timestamp from the system timer. */
 timestamp_t get_time(void);
 
+/* Force the current value of the system timer.
+ *
+ * This function is for the power management implementation which wants to fix
+ * the system time when waking up from a mode with clocks turned off.
+ * Note: must be called with interrupts disabled.
+ */
+void force_time(timestamp_t ts);
+
 /* Print the current timer information using the command output channel.  This
  * may be called from interrupt level. */
 void timer_print_info(void);

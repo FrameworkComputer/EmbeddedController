@@ -84,6 +84,12 @@ uint32_t __hw_clock_source_read(void)
 	return (hi << 16) | lo;
 }
 
+void __hw_clock_source_set(uint32_t ts)
+{
+	STM32_TIM_CNT(3) = ts >> 16;
+	STM32_TIM_CNT(4) = ts & 0xffff;
+}
+
 static void __hw_clock_source_irq(void)
 {
 	uint32_t stat_tim3 = STM32_TIM_SR(3);
@@ -147,8 +153,7 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	/* Override the count with the start value now that counting has
 	 * started. */
-	STM32_TIM_CNT(3) = start_t >> 16;
-	STM32_TIM_CNT(4) = start_t & 0xffff;
+	__hw_clock_source_set(start_t);
 
 	/* Enable timer interrupts */
 	task_enable_irq(STM32_IRQ_TIM3);
