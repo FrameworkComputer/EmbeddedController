@@ -298,6 +298,10 @@ int system_pre_init(void)
 		wait_for_hibctl_wc();
 		LM4_HIBERNATE_HIBCTL |= LM4_HIBCTL_RTCEN;
 		system_set_rtc(0);
+
+		/* Clear all hibernate data entries */
+		for (i = 0; i < LM4_HIBERNATE_HIBDATA_ENTRIES; i++)
+			hibdata_write(i, 0);
 	}
 
 	/*
