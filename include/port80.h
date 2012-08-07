@@ -10,7 +10,15 @@
 
 #include "common.h"
 
-/* Called by LPC module when a byte of data is written to port 80. */
+enum port_80_event {
+	PORT_80_EVENT_RESUME = 0x1001,  /* S3->S0 transition */
+};
+
+/**
+ * Store data from a LPC write to port 80, or a port_80_event code.
+ *
+ * @param data		Data written to port 80.
+ */
 void port_80_write(int data);
 
 #endif  /* __CROS_EC_PORT80_H */

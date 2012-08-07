@@ -12,12 +12,12 @@
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
 
-#define HISTORY_LEN 16
+#define HISTORY_LEN 256
 
-static uint8_t history[HISTORY_LEN];
+static uint16_t history[HISTORY_LEN];
 static int writes;  /* Number of port 80 writes so far */
 static int scroll;
-
+static int print_in_int = 1;
 
 void port_80_write(int data)
 {
@@ -27,7 +27,8 @@ void port_80_write(int data)
 	 * and print it from a task, because we're printing a small amount of
 	 * data and cprintf() doesn't block.
 	 */
-	CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
+	if (print_in_int)
+		CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
 
 	history[writes % ARRAY_SIZE(history)] = data;
 	writes++;
@@ -39,16 +40,29 @@ void port_80_write(int data)
 static int command_port80(int argc, char **argv)
 {
 	int head, tail;
+	int printed = 0;
 	int i;
 
 	/*
 	 * 'port80 scroll' toggles whether port 80 output begins with a newline
 	 * (scrolling) or CR (non-scrolling).
 	 */
-	if (argc > 1 && !strcasecmp(argv[1], "scroll")) {
-		scroll = !scroll;
-		ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
-		return EC_SUCCESS;
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "scroll")) {
+			scroll = !scroll;
+			ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "intprint")) {
+			print_in_int = !print_in_int;
+			ccprintf("printing in interrupt %sabled\n",
+				 print_in_int ? "en" : "dis");
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "flush")) {
+			writes = 0;
+			return EC_SUCCESS;
+		} else {
+			return EC_ERROR_PARAM1;
+		}
 	}
 
 	/*
@@ -65,12 +79,24 @@ static int command_port80(int argc, char **argv)
 	else
 		tail = 0;
 
-	for (i = tail; i < head; i++)
-		ccprintf(" %02x", history[i % ARRAY_SIZE(history)]);
+	ccputs("Port 80 writes:");
+	for (i = tail; i < head; i++) {
+		int e = history[i % ARRAY_SIZE(history)];
+		if (e == PORT_80_EVENT_RESUME) {
+			ccprintf("\n(S3->S0)");
+			printed = 0;
+		} else {
+			if (!(printed++ % 20)) {
+				ccputs("\n ");
+				cflush();
+			}
+			ccprintf(" %02x", e);
+		}
+	}
 	ccputs(" <--new\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80,
-			"[scroll]",
+			"[scroll | intprint | flush]",
 			"Print port80 writes or toggle port80 scrolling",
 			NULL);

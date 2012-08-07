@@ -758,6 +758,10 @@ static int lpc_resume(void)
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
+
+	/* Store port 80 event so we know where resume happened */
+	port_80_write(PORT_80_EVENT_RESUME);
+
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
