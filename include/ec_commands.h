@@ -623,34 +623,9 @@ struct ec_params_lightbar_cmd {
 /* Verified boot commands */
 
 /*
- * Verified boot uber-command.  Details still evolving.  Like the lightbar
- * command above, this takes sub-commands.
+ * Note: command code 0x29 version 0 was VBOOT_CMD in Link EVT; it may be
+ * reused for other purposes with version > 0.
  */
-#define EC_CMD_VBOOT_CMD 0x29
-
-struct ec_params_vboot_cmd {
-	union {
-		union {
-			uint8_t cmd;
-			struct {
-				uint8_t cmd;
-				/* no inputs */
-			} get_flags;
-			struct {
-				uint8_t cmd;
-				uint8_t val;
-			} set_flags;
-		} in;
-		union {
-			struct {
-				uint8_t val;
-			} get_flags;
-			struct {
-				/* no outputs */
-			} set_flags;
-		} out;
-	};
-} __packed;
 
 /* Verified boot hash command */
 #define EC_CMD_VBOOT_HASH 0x2A

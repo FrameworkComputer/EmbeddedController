@@ -239,11 +239,6 @@ void keyboard_scan_clear_boot_key(void)
 #endif
 }
 
-int keyboard_scan_recovery_pressed(void)
-{
-	return boot_key_value == BOOT_KEY_ESC ? 1 : 0;
-}
-
 int keyboard_scan_init(void)
 {
 	/* Configure GPIO */
@@ -279,7 +274,7 @@ int keyboard_scan_init(void)
 		}
 
 		/* Trigger event if recovery key was pressed */
-		if (keyboard_scan_recovery_pressed())
+		if (boot_key_value == BOOT_KEY_ESC)
 			host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 	}
 

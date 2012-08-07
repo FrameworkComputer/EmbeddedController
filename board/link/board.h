@@ -31,7 +31,6 @@
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
 #define CONFIG_VBOOT
-#define CONFIG_VBOOT_HASH
 
 #ifndef __ASSEMBLER__
 

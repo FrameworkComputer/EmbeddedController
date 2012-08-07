@@ -14,7 +14,6 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "lightbar.h"
-#include "vboot.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
@@ -117,8 +116,6 @@ const char help_str[] =
 	"      Set the threshold temperature value for thermal engine.\n"
 	"  usbchargemode <port> <mode>\n"
 	"      Set USB charging mode\n"
-	"  vboot [VAL]\n"
-	"      Get or set vboot flags\n"
 	"  version\n"
 	"      Prints EC version\n"
 	"  wireless <mask>\n"
@@ -1165,61 +1162,6 @@ static int cmd_lightbar(int argc, char **argv)
 }
 
 
-/* This needs to match the values defined in vboot.h. I'd like to
- * define this in one and only one place, but I can't think of a good way to do
- * that without adding bunch of complexity. This will do for now.
- */
-static const struct {
-	uint8_t insize;
-	uint8_t outsize;
-} vb_command_paramcount[] = {
-	{ sizeof(((struct ec_params_vboot_cmd *)0)->in.get_flags),
-	  sizeof(((struct ec_params_vboot_cmd *)0)->out.get_flags) },
-	{ sizeof(((struct ec_params_vboot_cmd *)0)->in.set_flags),
-	  sizeof(((struct ec_params_vboot_cmd *)0)->out.set_flags) },
-};
-
-static int cmd_vboot(int argc, char **argv)
-{
-	int rv;
-	uint8_t v;
-	char *e;
-	struct ec_params_vboot_cmd param;
-
-	if (argc == 1) {			/* no args = get */
-		param.in.cmd = VBOOT_CMD_GET_FLAGS;
-		rv = ec_command(EC_CMD_VBOOT_CMD, 0,
-				&param,
-				vb_command_paramcount[param.in.cmd].insize,
-				&param,
-				vb_command_paramcount[param.in.cmd].outsize);
-		if (rv < 0)
-			return rv;
-
-		v = param.out.get_flags.val;
-		printf("0x%02x image=%s\n", v,
-		       image_names[VBOOT_FLAGS_IMAGE_MASK & v]);
-		return 0;
-	}
-
-						/* else args => set values */
-
-	v = strtoul(argv[1], &e, 16) & 0xff;
-	if (e && *e) {
-		fprintf(stderr, "Bad value\n");
-		return -1;
-	}
-
-	param.in.cmd = VBOOT_CMD_SET_FLAGS;
-	param.in.set_flags.val = v;
-	rv = ec_command(EC_CMD_VBOOT_CMD, 0,
-			&param,
-			vb_command_paramcount[param.in.cmd].insize,
-			&param,
-			vb_command_paramcount[param.in.cmd].outsize);
-	return (rv < 0 ? rv : 0);
-}
-
 int cmd_usb_charge_set_mode(int argc, char *argv[])
 {
 	struct ec_params_usb_charge_set_mode p;
@@ -2125,7 +2067,6 @@ const struct command commands[] = {
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
 	{"lightbar", cmd_lightbar},
-	{"vboot", cmd_vboot},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},
@@ -2153,7 +2094,6 @@ int main(int argc, char *argv[])
 	const struct command *cmd;
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
-	BUILD_ASSERT(ARRAY_SIZE(vb_command_paramcount) == VBOOT_NUM_CMDS);
 
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
 	    !strcasecmp(argv[1], "help")) {

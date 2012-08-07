@@ -45,11 +45,7 @@ typedef struct _FmapAreaHeader {
 	uint16_t area_flags;
 } __packed FmapAreaHeader;
 
-#ifdef CONFIG_VBOOT_SIG
-#define NUM_EC_FMAP_AREAS (7 + 3)
-#else
 #define NUM_EC_FMAP_AREAS 7
-#endif
 
 const struct _ec_fmap {
 	FmapHeader header;
@@ -112,16 +108,8 @@ const struct _ec_fmap {
 			.area_size = CONFIG_SECTION_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
-#ifdef CONFIG_VBOOT_SIG
-		{
-			.area_name = "ROOT_KEY",
-			.area_offset = CONFIG_VBOOT_ROOTKEY_OFF,
-			.area_size = CONFIG_VBOOT_ROOTKEY_SIZE,
-			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
-		},
-#endif
 
-	/* RW Firmware */
+		/* RW Firmware */
 		{
 			 /* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
@@ -139,20 +127,5 @@ const struct _ec_fmap {
 			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
-
-#ifdef CONFIG_VBOOT_SIG
-		{
-			.area_name = "FW_MAIN",
-			.area_offset = CONFIG_FW_RW_OFF,
-			.area_size = CONFIG_FW_RW_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-		{
-			.area_name = "VBLOCK",
-			.area_offset = CONFIG_VBLOCK_RW_OFF,
-			.area_size = CONFIG_VBLOCK_SIZE,
-			.area_flags = FMAP_AREA_STATIC,
-		},
-#endif
 	}
 };

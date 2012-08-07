@@ -28,7 +28,6 @@
 
 /* compute RW firmware hash at startup */
 #define CONFIG_VBOOT
-#define CONFIG_VBOOT_HASH
 
 #ifndef __ASSEMBLER__
 

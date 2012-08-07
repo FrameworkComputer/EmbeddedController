@@ -20,7 +20,6 @@
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
-#include "vboot.h"
 #include "watchdog.h"
 
 int main(void)
@@ -113,25 +112,6 @@ int main(void)
 #endif
 #ifdef CONFIG_TASK_KEYSCAN
 	keyboard_scan_init();
-#endif
-
-#ifdef CONFIG_VBOOT_SIG
-	/*
-	 * Verified boot signature check.  This may jump to another image, which
-	 * will need to reconfigure / reinitialize the system, so as little as
-	 * possible should be done above this step.
-	 *
-	 * Note that steps above here may be done TWICE per boot, once in the
-	 * RO image and once in the RW image.
-	 */
-	vboot_check_signature();
-
-	/*
-	 * If system is locked, disable system jumps now that vboot has had its
-	 * chance to jump to a RW image.
-	 */
-	if (system_is_locked())
-		system_disable_jump();
 #endif
 
 	/*

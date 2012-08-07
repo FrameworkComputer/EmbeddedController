@@ -59,35 +59,10 @@
 #define CONFIG_SECTION_RW_OFF        (CONFIG_SECTION_RO_OFF \
 					+ CONFIG_SECTION_RO_SIZE)
 
-#ifdef CONFIG_VBOOT_SIG
-/*
- * The top of each section will hold the vboot stuff, since the firmware vector
- * table has to go at the start. The root key will fit in 2K, but the vblocks
- * need 4K.
- */
-#define CONFIG_VBOOT_ROOTKEY_SIZE   0x800
-#define CONFIG_VBLOCK_SIZE          0x1000
-
-/* RO: firmware (+ FMAP), root keys */
-#define CONFIG_FW_RO_OFF            CONFIG_SECTION_RO_OFF
-#define CONFIG_FW_RO_SIZE           (CONFIG_SECTION_RO_SIZE \
-					- CONFIG_VBOOT_ROOTKEY_SIZE)
-#define CONFIG_VBOOT_ROOTKEY_OFF    (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE)
-
-/* RW: firmware, vblock */
-#define CONFIG_FW_RW_OFF            CONFIG_SECTION_RW_OFF
-#define CONFIG_FW_RW_SIZE           (CONFIG_SECTION_RW_SIZE \
-				     - CONFIG_VBLOCK_SIZE)
-#define CONFIG_VBLOCK_RW_OFF        (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE)
-
-#else /* CONFIG_VBOOT_SIG */
-
 #define CONFIG_FW_RO_OFF            CONFIG_SECTION_RO_OFF
 #define CONFIG_FW_RO_SIZE           CONFIG_SECTION_RO_SIZE
 #define CONFIG_FW_RW_OFF            CONFIG_SECTION_RW_OFF
 #define CONFIG_FW_RW_SIZE           CONFIG_SECTION_RW_SIZE
-
-#endif /* CONFIG_VBOOT_SIG */
 
 /****************************************************************************/
 /* Customize the build */
