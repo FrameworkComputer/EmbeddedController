@@ -105,6 +105,7 @@ static void poweroff_wait_ac(void)
 		 */
 #ifdef CONFIG_TASK_X86POWER
 		x86_power_force_shutdown();
+		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 #endif /* CONFIG_TASK_X86POWER */
 	}
 }

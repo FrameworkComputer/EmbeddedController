@@ -110,6 +110,7 @@ static void overheated_action(void)
 		cprintf(CC_CHIPSET,
 			"[%T critical temperature; shutting down]\n");
 		x86_power_force_shutdown();
+		host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
 		return;
 	}
 

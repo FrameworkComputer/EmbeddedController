@@ -193,6 +193,7 @@ void x86_power_cpu_overheated(int too_hot)
 		if (overheat_count > 3) {
 			CPRINTF("[%T overheated; shutting down]\n");
 			x86_power_force_shutdown();
+			host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
 		}
 	} else {
 		overheat_count = 0;

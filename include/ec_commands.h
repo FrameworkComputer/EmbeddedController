@@ -217,6 +217,12 @@ enum host_event_code {
 	EC_HOST_EVENT_INTERFACE_READY = 14,
 	/* Keyboard recovery combo has been pressed */
 	EC_HOST_EVENT_KEYBOARD_RECOVERY = 15,
+
+	/* Shutdown due to thermal overload */
+	EC_HOST_EVENT_THERMAL_SHUTDOWN = 16,
+	/* Shutdown due to battery level too low */
+	EC_HOST_EVENT_BATTERY_SHUTDOWN = 17,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
