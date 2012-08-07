@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "dma.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -361,6 +362,9 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 #define SR1_OVR		(1 << 11)	/* Overrun/underrun */
 #define SR1_PECERR	(1 << 12)	/* PEC err in reception */
 #define SR1_TIMEOUT	(1 << 14)	/* Timeout : 25ms */
+#define CR2_DMAEN	(1 << 11)	/* DMA enable */
+#define CR2_LAST	(1 << 12)	/* Next EOT is last EOT */
+
 
 static inline void dump_i2c_reg(int port)
 {
@@ -391,6 +395,20 @@ enum wait_t {
 	WAIT_RX_NE_STOP_SIZE2,
 };
 
+/**
+ * Wait for a specific i2c event
+ *
+ * This function waits until the bit(s) corresponding to mask in
+ * the specified port's I2C SR1 register is/are set.  It may
+ * return a timeout or success.
+ *
+ * @param port Port to wait on
+ * @param mask A mask specifying which bits in SR1 to wait to be set
+ * @param wait A wait code to be returned with the timeout error code if that
+ *             occurs, to help with debugging.
+ * @return EC_SUCCESS, or EC_ERROR_TIMEOUT with the wait code OR'd onto the
+ *             bits 8-16 to indicate what it timed out waiting for.
+ */
 static int wait_status(int port, uint32_t mask, enum wait_t wait)
 {
 	uint32_t r;
@@ -512,23 +530,36 @@ cr_cleanup:
 static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	int size, int stop)
 {
-	int rv, i;
+	int rv;
+	struct dma_channel *chan;
 
 	disable_ack(port);
+
+	/* Configuring DMA1 channel DMAC_I2X_TX */
+	chan = dma_get_channel(DMAC_I2C_TX);
+	dma_prepare_tx(chan, size, (void *)&STM32_I2C_DR(port), data);
+	dma_go(chan);
+
+	/* Configuring i2c2 */
+	STM32_I2C_CR2(port) |= CR2_DMAEN;
+
+	/* Initialise i2c communication by sending START and ADDR */
 	rv = master_start(port, slave_addr);
 	if (rv)
 		return rv;
 
-	/* TODO: use common i2c_write_raw instead */
-	for (i = 0; i < size; i++) {
-		rv = wait_status(port, SR1_TxE, WAIT_XMIT_TXE);
-		if (rv)
-			return rv;
-		STM32_I2C_DR(port) = data[i];
-	}
-	rv = wait_status(port, SR1_TxE, WAIT_XMIT_FINAL_TXE);
+	/* Wait for the dma to transfer all the data */
+	rv = dma_wait(DMAC_I2C_TX);
 	if (rv)
-		return rv;
+		return WAIT_XMIT_TXE;
+
+	/* Disable, and clear the DMA transfer complete flag */
+	dma_disable(DMAC_I2C_TX);
+	dma_clear_isr(DMAC_I2C_TX);
+
+	/* Turn off i2c's DMA flag */
+	STM32_I2C_CR2(port) &= ~CR2_DMAEN;
+
 	rv = wait_status(port, SR1_BTF, WAIT_XMIT_BTF);
 	if (rv)
 		return rv;
@@ -544,68 +575,43 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	int size)
 {
-	/* Master receiver sequence
-	 *
-	 * 1 byte
-	 *   S   ADDR   ACK   D0   NACK   P
-	 *  -o- -oooo- -iii- -ii- -oooo- -o-
-	 *
-	 * multi bytes
-	 *   S   ADDR   ACK   D0   ACK   Dn-2   ACK   Dn-1   NACK   P
-	 *  -o- -oooo- -iii- -ii- -ooo- -iiii- -ooo- -iiii- -oooo- -o-
-	 *
-	 */
-	int rv, i;
+	int rv;
 
 	if (data == NULL || size < 1)
 		return EC_ERROR_INVAL;
 
-	/* Set ACK to high only on receiving more than 1 byte */
-	if (size > 1)
+	/* Master receive only supports DMA for payloads > 1 byte */
+	if (size > 1) {
 		enable_ack(port);
-	else
-		disable_ack(port);
+		dma_start_rx(DMAC_I2C_RX, size, (void *)&STM32_I2C_DR(port),
+			data);
 
-	/* Send START pulse, slave address, receive mode */
-	rv = master_start(port, slave_addr | 1);
-	if (rv)
-		return rv;
+		STM32_I2C_CR2(port) |= CR2_DMAEN;
+		STM32_I2C_CR2(port) |= CR2_LAST;
 
-	if (size >= 2) {
-		for (i = 0; i < (size - 2); i++) {
-			rv = wait_status(port, SR1_RxNE, WAIT_RX_NE);
-			if (rv)
-				return rv;
-
-			data[i] = STM32_I2C_DR(port);
-		}
-
-		/* Process last two bytes: data[n-2], data[n-1]
-		 *   => wait rx ready
-		 *   => [n-2] in data-reg, [n-1] in shift-reg
-		 *   => [n-2] ACK done
-		 *   => disable ACK to let [n-1] byte send NACK
-		 *   => set STOP high
-		 *   => read [n-2]
-		 *   => wait rx ready
-		 *   => read [n-1]
-		 */
-		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_FINAL);
+		rv = master_start(port, slave_addr | 1);
 		if (rv)
 			return rv;
 
+		/* Wait for the dma to transfer all the data */
+		rv = dma_wait(DMAC_I2C_RX);
+		if (rv)
+			return WAIT_RX_NE;
+
+		/* Disable, and clear the DMA transfer complete flag */
+		dma_disable(DMAC_I2C_RX);
+		dma_clear_isr(DMAC_I2C_RX);
+
+		/* Turn off i2c's DMA flag */
+		STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 		disable_ack(port);
 		master_stop(port);
+	} else {
+		disable_ack(port);
 
-		data[i] = STM32_I2C_DR(port);
-
-		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_STOP);
+		rv = master_start(port, slave_addr | 1);
 		if (rv)
 			return rv;
-
-		i++;
-		data[i] = STM32_I2C_DR(port);
-	} else {
 		master_stop(port);
 		rv = wait_status(port, SR1_RxNE, WAIT_RX_NE_STOP_SIZE2);
 		if (rv)

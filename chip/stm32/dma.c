@@ -14,7 +14,10 @@
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
 
-
+/*
+ * Note, you must decrement the channel value by 1 from what is specified
+ * in the datasheets, as they index from 1 and this indexes from 0!
+ */
 struct dma_channel *dma_get_channel(int channel)
 {
 	struct dma_channel *chan;
@@ -188,4 +191,44 @@ void dma_init(void)
 {
 	/* Enable DMA1, we don't support DMA2 yet */
 	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
+}
+
+int dma_wait(int channel)
+{
+	struct dma_ctlr *dma;
+	uint32_t mask;
+	timestamp_t deadline;
+
+	dma = dma_get_ctlr(channel);
+	mask = DMA_TCIF(channel);
+
+	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
+	while ((REG32(&dma->isr) & mask) != mask) {
+		if (deadline.val <= get_time().val)
+			return -1;
+		else
+			usleep(DMA_POLLING_INTERVAL_US);
+	}
+	return 0;
+}
+
+void dma_clear_isr(int channel)
+{
+	struct dma_ctlr *dma;
+
+	dma = dma_get_ctlr(channel);
+	/* Adjusting the channel number if it's from the second DMA */
+	if (channel > DMA1_NUM_CHANNELS)
+		channel -= DMA1_NUM_CHANNELS;
+
+	REG32(&dma->ifcr) |= 0xff << (4 * channel);
+}
+
+struct dma_ctlr *dma_get_ctlr(int channel)
+{
+	ASSERT(channel < DMA_NUM_CHANNELS);
+	if (channel < DMA1_NUM_CHANNELS)
+		return (struct dma_ctlr *)STM32_DMA1_BASE;
+	else
+		return (struct dma_ctlr *)STM32_DMA2_BASE;
 }
