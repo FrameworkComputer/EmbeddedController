@@ -34,11 +34,11 @@ struct boot_key_entry {
 	uint8_t mask_value;
 };
 const struct boot_key_entry boot_key_list[] = {
-	{0, 0x00},
-	{1, 0x02},
-	{2, 0x10},
-	{3, 0x10},
-	{11, 0x40},
+	{0, 0x00},  /* (none) */
+	{1, 0x02},  /* Esc */
+	{2, 0x10},  /* D */
+	{3, 0x10},  /* F */
+	{11, 0x40}, /* Down-arrow */
 };
 
 static uint8_t raw_state[KB_COLS];
@@ -62,7 +62,7 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 
 static void wait_for_interrupt(void)
 {
-	CPUTS("[KB wait]\n");
+	CPRINTF("[%T KB wait]\n");
 
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
@@ -74,7 +74,7 @@ static void wait_for_interrupt(void)
 
 static void enter_polling_mode(void)
 {
-	CPUTS("[KB poll]\n");
+	CPRINTF("[%T KB poll]\n");
 	lm4_disable_matrix_interrupt();
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
@@ -109,7 +109,7 @@ static void print_raw_state(const char *msg)
 {
 	int c;
 
-	CPRINTF("[KB %s:", msg);
+	CPRINTF("[%T KB %s:", msg);
 	for (c = 0; c < KB_COLS; c++) {
 		if (raw_state[c])
 			CPRINTF(" %02x", raw_state[c]);
@@ -189,7 +189,7 @@ static int check_keys_changed(void)
 	}
 
 	if (change)
-		print_raw_state("raw state");
+		print_raw_state("state");
 
 out:
 	/* Return non-zero if at least one key is pressed */
@@ -267,7 +267,7 @@ int keyboard_scan_init(void)
 
 		for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
 			if (check_key(k->mask_index, k->mask_value)) {
-				CPRINTF("[KB boot key %d]\n", i);
+				CPRINTF("[%T KB boot key %d]\n", i);
 				boot_key_value = i;
 				break;
 			}

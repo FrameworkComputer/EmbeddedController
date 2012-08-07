@@ -13,6 +13,10 @@
 #include "uart.h"
 #include "util.h"
 
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+
 /* 8-bit I2C address */
 #define IR357x_I2C_ADDR (0x8 << 1)
 
@@ -109,10 +113,10 @@ static void ir357x_write(uint8_t reg, uint8_t val)
 
 	res = i2c_write8(I2C_PORT_REGULATOR, IR357x_I2C_ADDR, reg, val);
 	if (res)
-		ccprintf("I2C write failed\n");
+		CPRINTF("[%T IR I2C write failed]\n");
 }
 
-int ir357x_get_version(void)
+static int ir357x_get_version(void)
 {
 	/* IR3571 on Link EVT */
 	if ((ir357x_read(0xfc) == 'I') && (ir357x_read(0xfd) == 'R') &&
@@ -139,7 +143,7 @@ struct ir_setting *ir357x_get_settings(void)
 		return NULL;
 }
 
-void ir357x_prog(void)
+static void ir357x_prog(void)
 {
 	struct ir_setting *settings = ir357x_get_settings();
 
@@ -147,15 +151,15 @@ void ir357x_prog(void)
 		for (; settings->reg; settings++)
 			ir357x_write(settings->reg, settings->value);
 	} else {
-		ccprintf("Unsupported chip IR %d. Skip writing settings !\n",
-			 ir357x_get_version());
+		CPRINTF("[%T IR%d chip unsupported. Skip writing settings!\n",
+			ir357x_get_version());
 		return;
 	}
 
-	ccprintf("IR%d registers UPDATED.\n", ir357x_get_version());
+	CPRINTF("[%T IR%d registers UPDATED]\n", ir357x_get_version());
 }
 
-void ir357x_dump(void)
+static void ir357x_dump(void)
 {
 	int i;
 
@@ -169,7 +173,7 @@ void ir357x_dump(void)
 	ccprintf("\n");
 }
 
-int ir357x_check(void)
+static int ir357x_check(void)
 {
 	uint8_t val;
 	int diff = 0;

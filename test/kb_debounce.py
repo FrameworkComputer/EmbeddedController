@@ -9,7 +9,7 @@ import time
 
 SHORTER_THAN_DEBOUNCE_TIME = 0.005 # 5ms
 LONGER_THAN_DEBOUNCE_TIME = 0.020 # 20ms
-KEYPRESS_REGEX = "\[KB raw state: (?P<km>[0-9\s-]*)\]"
+KEYPRESS_REGEX = "\[KB state: (?P<km>[0-9\s-]*)\]"
 
 def consume_output(helper, reg_ex):
     done = False

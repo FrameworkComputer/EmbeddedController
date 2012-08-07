@@ -20,7 +20,7 @@ static int usb_charge_command_set_mode(struct host_cmd_handler_args *args)
 	const struct ec_params_usb_charge_set_mode *p = args->params;
 	int rv;
 
-	CPRINTF("[Setting USB port %d to mode %d]\n",
+	CPRINTF("[%T USB setting port %d to mode %d]\n",
 		p->usb_port_id, p->mode);
 
 	rv = usb_charge_set_mode(p->usb_port_id, p->mode);

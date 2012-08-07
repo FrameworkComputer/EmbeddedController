@@ -169,7 +169,7 @@ static int wait_in_signals(uint32_t want)
 	while ((in_signals & in_want) != in_want) {
 		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
 			update_in_signals();
-			CPRINTF("[x86 power timeout on input; "
+			CPRINTF("[%T x86 power timeout on input; "
 				"wanted 0x%04x, got 0x%04x]\n",
 				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
@@ -378,11 +378,11 @@ static int x86_power_init(void)
 	 */
 	if (system_jumped_to_this_image()) {
 		if ((in_signals & IN_ALL_S0) == IN_ALL_S0) {
-			CPUTS("[x86 already in S0]\n");
+			CPRINTF("[%T x86 already in S0]\n");
 			state = X86_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPUTS("[x86 forcing G3]\n");
+			CPRINTF("[%T x86 forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
 			gpio_set_level(GPIO_ENABLE_VS, 0);

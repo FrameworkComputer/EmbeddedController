@@ -286,7 +286,7 @@ static int i2c_freq_changed(void)
 
 #ifdef PRINT_I2C_SPEEDS
 		const int f = freq / (2 * (1 + tpr) * (6 + 4));
-		CPRINTF("[I2C%d clk=%d tpr=%d freq=%d]\n",
+		CPRINTF("[%T I2C%d clk=%d tpr=%d freq=%d]\n",
 			i2c_ports[i].port, freq, tpr, f);
 #endif
 

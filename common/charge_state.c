@@ -459,7 +459,7 @@ static enum power_state state_error(struct power_state_context *ctx)
 
 	/* Debug output */
 	if (ctx->curr.error != logged_error) {
-		CPRINTF("[Charge error: flag[%08b -> %08b], ac %d, "
+		CPRINTF("[%T Charge error: flag[%08b -> %08b], ac %d, "
 			" charger %s, battery %s\n",
 			logged_error, ctx->curr.error, ctx->curr.ac,
 			(ctx->curr.error & F_CHARGER_MASK) ?
@@ -484,7 +484,7 @@ static void charging_progress(struct power_state_context *ctx)
 		else
 			battery_time_to_empty(&minutes);
 
-		CPRINTF("[Battery %3d%% / %dh:%d]\n",
+		CPRINTF("[%T Battery %3d%% / %dh:%d]\n",
 			ctx->curr.batt.state_of_charge,
 			minutes / 60, minutes % 60);
 		return;
@@ -500,7 +500,7 @@ static void charging_progress(struct power_state_context *ctx)
 		seconds = (int)(get_time().val -
 				ctx->trickle_charging_time.val) / (int)SECOND;
 		minutes = seconds / 60;
-		CPRINTF("[Precharge CHG(%dmV) BATT(%dmV %dmA) "
+		CPRINTF("[%T Precharge CHG(%dmV) BATT(%dmV %dmA) "
 			"%dh:%d]\n", ctx->curr.charging_voltage,
 			ctx->curr.batt.voltage, ctx->curr.batt.current,
 			minutes / 60, minutes % 60);
@@ -590,7 +590,7 @@ void charge_state_machine_task(void)
 			new_state = state_error(ctx);
 			break;
 		default:
-			CPRINTF("[Undefined charging state %d]\n",
+			CPRINTF("[%T Charge state %d undefined]\n",
 				ctx->curr.state);
 			ctx->curr.state = PWR_STATE_ERROR;
 			new_state = PWR_STATE_ERROR;
@@ -603,7 +603,7 @@ void charge_state_machine_task(void)
 
 		if (new_state) {
 			ctx->curr.state = new_state;
-			CPRINTF("[Charge state %s -> %s]\n",
+			CPRINTF("[%T Charge state %s -> %s]\n",
 				state_name[ctx->prev.state],
 				state_name[new_state]);
 		}
