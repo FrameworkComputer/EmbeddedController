@@ -33,8 +33,16 @@
 /* Clock divider for I2C controller */
 #define I2C_CCR (CPU_CLOCK/(2 * I2C_FREQ))
 
-/* Transmit timeout in microseconds */
-#define I2C_TX_TIMEOUT 10000 /* us */
+/*
+ * Transmit timeout in microseconds
+ *
+ * In theory we shouldn't have a timeout here (at least when we're in slave
+ * mode).  The slave is supposed to wait forever for the master to read bytes.
+ * ...but we're going to keep the timeout to make sure we're robust.  It may in
+ * fact be needed if the host resets itself mid-read.
+ */
+#define I2C_TX_TIMEOUT_SLAVE	100000 /* us */
+#define I2C_TX_TIMEOUT_MASTER	10000  /* us */
 
 #define NUM_PORTS 2
 #define I2C1      STM32_I2C1_PORT
@@ -95,11 +103,11 @@ void board_i2c_release(int port)
 	__attribute__((weak, alias("__board_i2c_release")));
 
 
-static int wait_tx(int port)
+static int wait_tx_slave(int port)
 {
 	static timestamp_t deadline;
 
-	deadline.val = get_time().val + I2C_TX_TIMEOUT;
+	deadline.val = get_time().val + I2C_TX_TIMEOUT_SLAVE;
 	/* wait for TxE or errors (Timeout, STOP, BERR, AF) */
 	while (!(STM32_I2C_SR1(port) & (1<<7)) && !abort_transaction &&
 	       (get_time().val < deadline.val))
@@ -107,7 +115,7 @@ static int wait_tx(int port)
 	return !(STM32_I2C_SR1(port) & (1 << 7));
 }
 
-static int i2c_write_raw(int port, void *buf, int len)
+static int i2c_write_raw_slave(int port, void *buf, int len)
 {
 	int i;
 	uint8_t *data = buf;
@@ -118,7 +126,7 @@ static int i2c_write_raw(int port, void *buf, int len)
 	abort_transaction = 0;
 	for (i = 0; i < len; i++) {
 		STM32_I2C_DR(port) = data[i];
-		if (wait_tx(port)) {
+		if (wait_tx_slave(port)) {
 			CPRINTF("TX failed\n");
 			break;
 		}
@@ -149,7 +157,7 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 	*out++ = sum & 0xff;
 
 	/* send the answer to the AP */
-	i2c_write_raw(I2C2, host_buffer, out - host_buffer);
+	i2c_write_raw_slave(I2C2, host_buffer, out - host_buffer);
 }
 
 /* Process the command in the i2c host buffer */
@@ -391,7 +399,7 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 	r = STM32_I2C_SR1(port);
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
-		if (t2.val - t1.val > I2C_TX_TIMEOUT) {
+		if (t2.val - t1.val > I2C_TX_TIMEOUT_MASTER) {
 			return EC_ERROR_TIMEOUT | (wait << 8);
 		} else if (t2.val - t1.val > 150) {
 			usleep(100);
@@ -483,7 +491,7 @@ static void handle_i2c_error(int port, int rv)
 	t1 = get_time();
 	while (r & 2) {
 		t2 = get_time();
-		if (t2.val - t1.val > I2C_TX_TIMEOUT) {
+		if (t2.val - t1.val > I2C_TX_TIMEOUT_MASTER) {
 			dump_i2c_reg(port);
 			goto cr_cleanup;
 		}
