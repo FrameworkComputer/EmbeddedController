@@ -88,7 +88,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"LIGHTBAR_RESETn",     LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_A20GATE",         LM4_GPIO_Q, (1<<6), GPIO_OUT_LOW, NULL},
 	{"PCH_DPWROK",          LM4_GPIO_G, (1<<0), GPIO_OUT_LOW, NULL},
-	{"PCH_HDA_SDO",         LM4_GPIO_G, (1<<1), GPIO_OUT_LOW, NULL},
+	/*
+	 * HDA_SDO is technically an output, but we need to leave it as an
+	 * input until we drive it high.  So can't use open-drain (HI_Z).
+	 */
+	{"PCH_HDA_SDO",         LM4_GPIO_G, (1<<1), GPIO_INPUT, NULL},
 	{"PCH_WAKEn",           LM4_GPIO_F, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_NMIn",            LM4_GPIO_M, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWRBTNn",         LM4_GPIO_G, (1<<7), GPIO_OUT_HIGH, NULL},
