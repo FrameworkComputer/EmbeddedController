@@ -9,7 +9,9 @@
 
 #include "common.h"
 #include "console.h"
+#include "host_command.h"
 #include "printf.h"
+#include "system.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
@@ -39,7 +41,8 @@
 #define CMD_HIST_NEXT(i) (((i) + 1) & (HISTORY_SIZE - 1))
 #define CMD_HIST_PREV(i) (((i) - 1) & (HISTORY_SIZE - 1))
 
-/* Macro to calculate difference of pointers in the circular receive buffer. */
+/* Macros to calculate difference of pointers in the circular buffers. */
+#define TX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_TX_BUF_SIZE - 1))
 #define RX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
 /* ASCII control character; for example, CTRL('C') = ^C */
@@ -57,6 +60,8 @@ static volatile int rx_cur_buf_tail;
 static volatile int rx_cur_buf_head;
 static volatile int rx_cur_buf_ptr;
 static int last_rx_was_cr;
+static int tx_snapshot_head;
+static int tx_snapshot_tail;
 
 static enum {
 	ESC_OUTSIDE,   /* Not in escape code */
@@ -748,3 +753,82 @@ int uart_gets(char *dest, int size)
 	/* Return the length we got */
 	return got;
 }
+
+/*****************************************************************************/
+/* Host commands */
+
+static int host_command_console_snapshot(struct host_cmd_handler_args *args)
+{
+	/*
+	 * Only allowed on unlocked system, since console output contains
+	 * keystroke data.
+	 */
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Assume the whole circular buffer is full */
+	tx_snapshot_head = tx_buf_head;
+	tx_snapshot_tail = TX_BUF_NEXT(tx_snapshot_head);
+
+	/*
+	 * Immediately skip any unused bytes.  This doesn't always work,
+	 * because a higher-priority task or interrupt handler can write to the
+	 * buffer while we're scanning it.  This is acceptable because this
+	 * command is only for debugging, and the failure mode is a bit of
+	 * garbage at the beginning of the saved output.  The saved buffer
+	 * could also be overwritten by the head coming completely back around
+	 * before we finish.  The alternative would be to make a full copy of
+	 * the transmit buffer, but that requires a lot of RAM.
+	 */
+	while (tx_snapshot_tail != tx_snapshot_head) {
+		if (tx_buf[tx_snapshot_tail])
+			break;
+		tx_snapshot_tail = TX_BUF_NEXT(tx_snapshot_tail);
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_SNAPSHOT,
+		     host_command_console_snapshot,
+		     EC_VER_MASK(0));
+
+static int host_command_console_read(struct host_cmd_handler_args *args)
+{
+	char *dest = (char *)args->response;
+
+	/*
+	 * Only allowed on unlocked system, since console output contains
+	 * keystroke data.
+	 */
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* If no snapshot data, return empty response */
+	if (tx_snapshot_head == tx_snapshot_tail)
+		return EC_RES_SUCCESS;
+
+	/* Copy data to response */
+	while (tx_snapshot_tail != tx_snapshot_head &&
+	       args->response_size < args->response_max - 1) {
+
+		/*
+		 * Copy only non-zero bytes, so that we don't copy unused
+		 * bytes if the buffer hasn't completely rolled at boot.
+		 */
+		if (tx_buf[tx_snapshot_tail]) {
+			*(dest++) = tx_buf[tx_snapshot_tail];
+			args->response_size++;
+		}
+
+		tx_snapshot_tail = TX_BUF_NEXT(tx_snapshot_tail);
+	}
+
+	/* Null-terminate */
+	*(dest++) = '\0';
+	args->response_size++;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_READ,
+		     host_command_console_read,
+		     EC_VER_MASK(0));

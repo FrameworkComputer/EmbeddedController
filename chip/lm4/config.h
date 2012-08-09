@@ -13,7 +13,7 @@
 #define CONFIG_IRQ_COUNT 132
 
 /* Use a bigger console output buffer */
-#define CONFIG_UART_TX_BUF_SIZE 1024
+#define CONFIG_UART_TX_BUF_SIZE 8192
 
 /****************************************************************************/
 /* Memory mapping */

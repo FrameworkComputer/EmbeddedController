@@ -36,6 +36,8 @@ const char help_str[] =
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
 	"      Prints supported version mask for a command number\n"
+	"  console\n"
+	"      Prints the last output to the EC debug console\n"
 	"  echash [CMDS]\n"
 	"      Various EC hash commands\n"
 	"  eventclear <mask>\n"
@@ -2072,6 +2074,34 @@ int cmd_rtc_set(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_console(int argc, char *argv[])
+{
+	char out[EC_HOST_PARAM_SIZE];
+	int rv;
+
+	/* Snapshot the EC console */
+	rv = ec_command(EC_CMD_CONSOLE_SNAPSHOT, 0, NULL, 0, NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	/* Loop and read from the snapshot until it's done */
+	while (1) {
+		rv = ec_command(EC_CMD_CONSOLE_READ, 0,
+				NULL, 0, out, sizeof(out));
+		if (rv < 0)
+			return rv;
+
+		if (rv == 0)
+			break;  /* Empty response means done */
+
+		/* Make sure output is null-terminated, then dump it */
+		out[sizeof(out) - 1] = '\0';
+		fputs(out, stdout);
+	}
+	printf("\n");
+	return 0;
+}
+
 
 struct command {
 	const char *name;
@@ -2086,6 +2116,7 @@ const struct command commands[] = {
 	{"chargeforceidle", cmd_charge_force_idle},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
+	{"console", cmd_console},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
 	{"eventclearb", cmd_host_event_clear_b},
