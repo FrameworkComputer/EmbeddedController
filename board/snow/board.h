@@ -87,6 +87,7 @@ enum gpio_signal {
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
 	GPIO_CODEC_INT,        /* To audio codec (KB noise cancellation) */
+	GPIO_LED_POWER_L,      /* Keyboard power LED */
 	GPIO_KB_OUT00,
 	GPIO_KB_OUT01,
 	GPIO_KB_OUT02,

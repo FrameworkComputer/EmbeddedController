@@ -25,6 +25,12 @@ enum powerled_state {
 	POWERLED_STATE_COUNT
 };
 
+enum powerled_config {
+	POWERLED_CONFIG_MANUAL_OFF,
+	POWERLED_CONFIG_MANUAL_ON,
+	POWERLED_CONFIG_PWM,
+};
+
 /* Set the power adapter LED to the specified color. */
 int powerled_set(enum powerled_color color);
 
