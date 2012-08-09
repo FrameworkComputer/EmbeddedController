@@ -20,6 +20,9 @@
 #include "timer.h"
 #include "util.h"
 
+/* Allow serial console to wake up the EC from STOP mode */
+/* #define CONFIG_FORCE_CONSOLE_RESUME */
+
 /**
  * minimum delay to enter stop mode
  * STOP mode wakeup time with regulator in low power mode is 5 us.
@@ -153,6 +156,36 @@ static void config_hispeed_clock(void)
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE
+
+#ifdef CONFIG_FORCE_CONSOLE_RESUME
+static void enable_serial_wakeup(int enable)
+{
+	static uint32_t save_crh, save_exticr;
+
+	if (enable) {
+		/**
+		 * allow to wake up from serial port (RX on pin PA10)
+		 * by setting it as a GPIO with an external interrupt.
+		 */
+		save_crh = STM32_GPIO_CRH_OFF(GPIO_A);
+		save_exticr = STM32_AFIO_EXTICR(10 / 4);
+		STM32_GPIO_CRH_OFF(GPIO_A) = (save_crh & ~0xf00) | 0x400;
+		STM32_AFIO_EXTICR(10 / 4) = (save_exticr & ~(0xf << 8));
+	} else {
+		/* serial port wake up : don't go back to sleep */
+		if (STM32_EXTI_PR & (1 << 10))
+			disable_sleep(SLEEP_MASK_FORCE);
+		/* restore keyboard external IT on PC10 */
+		STM32_GPIO_CRH_OFF(GPIO_A) = save_crh;
+		STM32_AFIO_EXTICR(10 / 4) = save_exticr;
+	}
+}
+#else
+static void enable_serial_wakeup(int enable)
+{
+}
+#endif
+
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
@@ -169,6 +202,8 @@ void __idle(void)
 		if (!sleep_mask && (next_delay > STOP_MODE_LATENCY)) {
 			/* deep-sleep in STOP mode */
 
+			enable_serial_wakeup(1);
+
 			/* set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
 
@@ -176,6 +211,9 @@ void __idle(void)
 			asm("wfi");
 
 			CPU_SCB_SYSCTRL &= ~0x4;
+
+			enable_serial_wakeup(0);
+
 			/* re-lock the PLL */
 			config_hispeed_clock();
 
