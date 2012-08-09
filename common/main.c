@@ -52,7 +52,7 @@ int main(void)
 
 #ifdef CONFIG_FLASH
 	/*
-	 * Initialize flash and apply write protecte if necessary.  Requires
+	 * Initialize flash and apply write protect if necessary.  Requires
 	 * the reset flags calculated by system initialization.
 	 */
 	flash_pre_init();
@@ -121,10 +121,6 @@ int main(void)
 	 */
 	hook_notify(HOOK_INIT, 0);
 
-#ifdef BOARD_link
-	/* Reduce core clock now that init is done */
-	clock_enable_pll(0);
-#endif
 	/*
 	 * Print the init time.  Not completely accurate because it can't take
 	 * into account the time before timer_init(), but it'll at least catch

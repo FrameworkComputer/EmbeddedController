@@ -64,7 +64,7 @@ static void enable_pll(void)
 }
 
 
-int clock_enable_pll(int enable)
+int clock_enable_pll(int enable, int notify)
 {
 	if (enable)
 		enable_pll();
@@ -72,7 +72,7 @@ int clock_enable_pll(int enable)
 		disable_pll();
 
 	/* Notify modules of frequency change */
-	return hook_notify(HOOK_FREQ_CHANGE, 0);
+	return notify ? hook_notify(HOOK_FREQ_CHANGE, 0) : EC_SUCCESS;
 }
 
 
@@ -211,9 +211,9 @@ static int command_pll(int argc, char **argv)
 	/* Toggle the PLL */
 	if (argc > 1) {
 		if (!strcasecmp(argv[1], "off"))
-			clock_enable_pll(0);
+			clock_enable_pll(0, 1);
 		else if (!strcasecmp(argv[1], "on"))
-			clock_enable_pll(1);
+			clock_enable_pll(1, 1);
 		else {
 			/* Disable PLL and set extra divider */
 			char *e;
@@ -279,8 +279,8 @@ int clock_init(void)
 	if (!system_jumped_to_this_image())
 		clock_wait_cycles(500000);
 
-	/* Start out with PLL enabled */
-	enable_pll();
+	/* Make sure PLL is disabled */
+	disable_pll();
 
 	return EC_SUCCESS;
 }

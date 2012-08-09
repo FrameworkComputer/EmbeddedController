@@ -6,6 +6,7 @@
 /* LM4-specific ADC module for Chrome EC */
 
 #include "adc.h"
+#include "clock.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -51,11 +52,6 @@ const uint32_t ain_port[24][2] = {
 static void configure_gpio(void)
 {
 	int i;
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable GPIOE module and delay a few clocks */
-	LM4_SYSTEM_RCGCGPIO |= 0x0010;
-	scratch = LM4_SYSTEM_RCGCGPIO;
 
 	/* Use analog function for AIN */
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
@@ -114,22 +110,22 @@ int lm4_adc_configure(enum lm4_adc_sequencer seq,
 		      int ain_id,
 		      int ssctl)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-	/* TODO: set up clock using ADCCC register? */
 	/* Configure sample sequencer */
 	LM4_ADC_ADCACTSS &= ~(0x01 << seq);
+
 	/* Trigger sequencer by processor request */
 	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & ~(0xf << (seq * 4))) | 0x00;
+
 	/* Sample internal temp sensor */
 	if (ain_id != LM4_AIN_NONE) {
 		LM4_ADC_SSMUX(seq) = ain_id & 0xf;
 		LM4_ADC_SSEMUX(seq) = ain_id >> 4;
-	}
-	else {
+	} else {
 		LM4_ADC_SSMUX(seq) = 0x00;
 		LM4_ADC_SSEMUX(seq) = 0x00;
 	}
 	LM4_ADC_SSCTL(seq) = ssctl;
+
 	/* Enable sample sequencer */
 	LM4_ADC_ADCACTSS |= 0x01 << seq;
 
@@ -214,19 +210,35 @@ static int adc_init(void)
 	int i;
 	const struct adc_t *adc;
 
-        /* Enable ADC0 module and delay a few clocks */
-	LM4_SYSTEM_RCGCADC |= 0x01;
-	udelay(1);
-
 	/* Configure GPIOs */
 	configure_gpio();
 
-	/* Use external voltage references (VREFA+, VREFA-) instead of
-	 * VDDA and GNDA. */
+	/*
+	 * Temporarily enable the PLL when turning on the clock to the ADC
+	 * module, to work around chip errata (10.4).  No need to notify
+	 * other modules; the PLL isn't enabled long enough to matter.
+	 */
+	clock_enable_pll(1, 0);
+
+	/* Enable ADC0 module and delay a few clocks. */
+	LM4_SYSTEM_RCGCADC = 1;
+	clock_wait_cycles(3);
+
+	/*
+	 * Use external voltage references (VREFA+, VREFA-) instead of
+	 * VDDA and GNDA.
+	 */
 	LM4_ADC_ADCCTL = 0x01;
 
 	/* Use internal oscillator */
 	LM4_ADC_ADCCC = 0x1;
+
+	/* Disable the PLL now that the ADC is using the internal oscillator */
+	clock_enable_pll(0, 0);
+
+	/* No tasks waiting yet */
+	for (i = 0; i < LM4_ADC_SEQ_COUNT; i++)
+		task_waiting_on_ss[i] = TASK_ID_INVALID;
 
 	/* Enable interrupt */
 	LM4_ADC_ADCIM = 0xF;
