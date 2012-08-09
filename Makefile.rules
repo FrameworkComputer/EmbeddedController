@@ -119,7 +119,8 @@ $(out)/ec_version.h: $(filter-out $(out)/common/version.o,$(objs))
 $(build-utils): $(out)/%:%.c
 	$(call quiet,c_to_build,BUILDCC)
 
-$(host-utils): $(out)/%:%.c $(foreach u,$(host-util-common),util/$(u).c)
+$(host-utils): $(out)/%:%.c $(foreach u,$(host-util-common),util/$(u).c) \
+			    $(foreach u,$(util-lock-objs),util/lock/$(u).c)
 	$(call quiet,c_to_host,HOSTCC )
 
 $(out)/util/burn_my_ec: $(out)/$(PROJECT).bin

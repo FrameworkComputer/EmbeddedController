@@ -37,6 +37,7 @@ include core/$(CORE)/build.mk
 include common/build.mk
 include test/build.mk
 include util/build.mk
+include util/lock/build.mk
 
 includes+=$(includes-y)
 

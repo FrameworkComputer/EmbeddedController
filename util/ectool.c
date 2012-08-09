@@ -14,6 +14,7 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "lightbar.h"
+#include "lock/gec_lock.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
@@ -21,6 +22,7 @@
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }
 
+#define GEC_LOCK_TIMEOUT_SECS	30  /* 30 secs */
 
 const char help_str[] =
 	"Commands:\n"
@@ -2168,6 +2170,7 @@ const struct command commands[] = {
 int main(int argc, char *argv[])
 {
 	const struct command *cmd;
+	int rv;
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
@@ -2177,17 +2180,28 @@ int main(int argc, char *argv[])
 		return -2;
 	}
 
+	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
+		fprintf(stderr, "Could not acquire GEC lock.\n");
+		return 1;
+	}
+
 	if (comm_init() < 0)
 		return -3;
 
 	/* Handle commands */
 	for (cmd = commands; cmd->name; cmd++) {
-		if (!strcasecmp(argv[1], cmd->name))
-			return cmd->handler(argc - 1, argv + 1);
+		if (!strcasecmp(argv[1], cmd->name)) {
+			rv = cmd->handler(argc - 1, argv + 1);
+			goto out;
+		}
 	}
 
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);
 	print_help(argv[0]);
-	return -2;
+	rv = -2;
+
+out:
+	release_gec_lock();
+	return rv;
 }
