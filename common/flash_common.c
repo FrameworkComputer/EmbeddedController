@@ -158,7 +158,7 @@ static int command_flash_write(int argc, char **argv)
 		size = shared_mem_size();
 
 	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire(size, 0, &data);
+	rv = shared_mem_acquire(size, &data);
 	if (rv) {
 		ccputs("Can't get shared mem\n");
 		return rv;

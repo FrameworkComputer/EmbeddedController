@@ -5,45 +5,61 @@
 
 /* Shared memory module for Chrome EC */
 
-#include "config.h"
+#include "common.h"
+#include "console.h"
 #include "link_defs.h"
 #include "shared_mem.h"
 #include "system.h"
+#include "util.h"
 
 static int buf_in_use;
-
+static int max_used;
 
 int shared_mem_size(void)
 {
-	/* Use all the RAM we can.  The shared memory buffer is the
-	 * last thing allocated from the start of RAM, so we can use
-	 * everything up to the jump data at the end of RAM. */
+	/*
+	 * Use all the RAM we can.  The shared memory buffer is the last thing
+	 * allocated from the start of RAM, so we can use everything up to the
+	 * jump data at the end of RAM.
+	 */
 	return system_usable_ram_end() - (uint32_t)__shared_mem_buf;
 }
 
-
-int shared_mem_acquire(int size, int wait, char **dest_ptr)
+int shared_mem_acquire(int size, char **dest_ptr)
 {
 	if (size > shared_mem_size() || size <= 0)
 		return EC_ERROR_INVAL;
 
-	/* TODO: if task_start() hasn't been called, fail immediately
-	 * if not available. */
-
-	/* TODO: wait if requested; for now, we fail immediately if
-	 * not available. */
 	if (buf_in_use)
 		return EC_ERROR_BUSY;
 
-	/* TODO: atomically acquire buf_in_use. */
-	buf_in_use = 1;
+	/*
+	 * We could guard buf_in_use with a mutex, but since shared memory is
+	 * currently only used by debug commands, that's overkill.
+	 */
+
+	buf_in_use = size;
 	*dest_ptr = __shared_mem_buf;
+
+	if (max_used < size)
+		max_used = size;
+
 	return EC_SUCCESS;
 }
 
-
 void shared_mem_release(void *ptr)
 {
-	/* TODO: use event to wake up a previously-blocking acquire */
 	buf_in_use = 0;
 }
+
+static int command_shmem(int argc, char **argv)
+{
+	ccprintf("Size:%6d\n", shared_mem_size());
+	ccprintf("Used:%6d\n", buf_in_use);
+	ccprintf("Max: %6d\n", max_used);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(shmem, command_shmem,
+			NULL,
+			"Print shared memory stats",
+			NULL);

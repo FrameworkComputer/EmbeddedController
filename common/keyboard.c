@@ -849,7 +849,7 @@ static int command_keyboard_log(int argc, char **argv)
 	} else if (argc == 2 && !strcasecmp("on", argv[1])) {
 		if (!kblog) {
 			int rv = shared_mem_acquire(sizeof(*kblog) * MAX_KBLOG,
-						    1, (char **)&kblog);
+						    (char **)&kblog);
 			if (rv != EC_SUCCESS)
 				kblog = NULL;
 			kblog_len = 0;
