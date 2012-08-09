@@ -66,6 +66,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
 
 	/* Outputs */
+	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_OUT_HIGH, NULL},
 	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},

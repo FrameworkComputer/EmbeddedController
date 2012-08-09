@@ -57,38 +57,6 @@ static void enable_charging(int enable)
 		gpio_set_level(GPIO_CHARGER_EN, enable);
 }
 
-
-/**
- * Get AC state through GPIO
- *
- * @return 0        AC off
- * @return 1        AC on
- *
- * TODO: This is a board specific function, should be moved to
- * system_common.c or board.c
- */
-static int get_ac(void)
-{
-	/*
-	 * Detect AC state using combined gpio pins
-	 *
-	 * On daisy and snow, there's no single gpio signal to detect AC.
-	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
-	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
-	 * Hence the ac state can be logical OR of these two signal line.
-	 *
-	 * One drawback of this detection is, when press-and-hold power
-	 * button. AC state will be unknown. The implementation below treats
-	 * that condition as AC off.
-	 *
-	 * TODO(rongchang): move board related function to board/ and common
-	 * interface to system_get_ac()
-	 */
-
-	return gpio_get_level(GPIO_AC_PWRBTN_L) &&
-			gpio_get_level(GPIO_KB_PWR_ON_L);
-}
-
 /*
  * TODO(rongchang): move battery vendor specific functions to battery pack
  * module
@@ -182,7 +150,7 @@ static int calc_next_state(int state)
 	case ST_IDLE:
 
 		/* Check AC and chiset state */
-		if (!get_ac()) {
+		if (!pmu_get_ac()) {
 			if (chipset_in_state(CHIPSET_STATE_ON))
 				return ST_DISCHARGING;
 
@@ -224,7 +192,7 @@ static int calc_next_state(int state)
 		return wait_t1_idle();
 
 	case ST_PRE_CHARGING:
-		if (!get_ac())
+		if (!pmu_get_ac())
 			return wait_t1_idle();
 
 		/* If the battery goes online after enable the charger,
@@ -238,7 +206,7 @@ static int calc_next_state(int state)
 
 	case ST_CHARGING:
 		/* Go back to idle state when AC is unplugged */
-		if (!get_ac())
+		if (!pmu_get_ac())
 			break;
 
 		/*
@@ -284,7 +252,7 @@ static int calc_next_state(int state)
 
 	case ST_DISCHARGING:
 		/* Go back to idle state when AC is plugged */
-		if (get_ac())
+		if (pmu_get_ac())
 			return wait_t1_idle();
 
 		/* Check battery discharging temperature range */
@@ -319,9 +287,9 @@ void pmu_charger_task(void)
 	int state = ST_IDLE;
 	int next_state;
 
-	pmu_init();
-
 	while (1) {
+		pmu_clear_irq();
+
 		next_state = calc_next_state(state);
 		if (next_state != state) {
 			CPRINTF("[batt] state %s -> %s\n",
@@ -331,6 +299,6 @@ void pmu_charger_task(void)
 		}
 
 		/* TODO(sjg@chromium.org): root cause crosbug.com/p/11285 */
-		usleep(5000 * 1000);
+		task_wait_event(5000 * 1000);
 	}
 }

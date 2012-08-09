@@ -8,8 +8,10 @@
 #include "board.h"
 #include "console.h"
 #include "common.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "pmu_tpschrome.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -49,12 +51,6 @@
 /* Charger alarm */
 #define CHARGER_ALARM 3
 
-/* Clear tps65090 irq */
-static inline int pmu_clear_irq(void)
-{
-	return pmu_write(IRQ1_REG, 0);
-}
-
 /* Read all tps65090 interrupt events */
 static int pmu_get_event(int *event)
 {
@@ -79,6 +75,12 @@ static int pmu_get_event(int *event)
 	}
 
 	return EC_SUCCESS;
+}
+
+/* Clear tps65090 irq */
+int pmu_clear_irq(void)
+{
+	return pmu_write(IRQ1_REG, 0);
 }
 
 /* Read/write tps65090 register */
@@ -215,6 +217,35 @@ int pmu_low_current_charging(int enable)
 	return pmu_write(CG_CTRL5, reg_val);
 }
 
+void pmu_irq_handler(enum gpio_signal signal)
+{
+	CPRINTF("Charger IRQ received.\n");
+	gpio_set_level(GPIO_AC_STATUS, pmu_get_ac());
+	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+}
+
+int pmu_get_ac(void)
+{
+	/*
+	 * Detect AC state using combined gpio pins
+	 *
+	 * On daisy and snow, there's no single gpio signal to detect AC.
+	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
+	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
+	 * Hence the ac state can be logical OR of these two signal line.
+	 *
+	 * One drawback of this detection is, when press-and-hold power
+	 * button. AC state will be unknown. The implementation below treats
+	 * that condition as AC off.
+	 *
+	 * TODO(rongchang): move board related function to board/ and common
+	 * interface to system_get_ac()
+	 */
+
+	return gpio_get_level(GPIO_AC_PWRBTN_L) &&
+			gpio_get_level(GPIO_KB_PWR_ON_L);
+}
+
 void pmu_init(void)
 {
 #ifdef CONFIG_PMU_BOARD_INIT
@@ -233,11 +264,20 @@ void pmu_init(void)
 	 */
 	pmu_write(CG_CTRL3, 0xbb);
 #endif
-	/* Enable interrupt mask */
+	/* Enable interrupts */
+	pmu_clear_irq();
 	pmu_write(IRQ1MASK, 0xff);
 	pmu_write(IRQ2MASK, 0xff);
-
 }
+
+/* Initializes PMU when power is turned on.  This is necessary because the TPS'
+ * 3.3V rail is not powered until the power is turned on. */
+static int pmu_chipset_startup(void)
+{
+	pmu_init();
+	return 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_startup, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_PMU
 static int print_pmu_info(void)

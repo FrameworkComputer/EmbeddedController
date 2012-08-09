@@ -73,6 +73,7 @@ enum gpio_signal {
 	GPIO_AC_PWRBTN_L,
 	GPIO_SPI1_NSS,
 	/* Outputs */
+	GPIO_AC_STATUS,
 	GPIO_SPI1_MISO,
 	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
 	GPIO_EN_PP5000,        /* 5.0v rail enable */

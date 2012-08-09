@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_TPSCHROME_H
 #define __CROS_EC_TPSCHROME_H
 
+#include "gpio.h"
+
 enum TPS_TEMPERATURE_RANGE {
 	RANGE_T01,
 	RANGE_T12,		/* low charging temperature range */
@@ -38,6 +40,14 @@ enum TPS_TERMINATION_CURRENT {
 
 #define FET_BACKLIGHT 1
 #define FET_LCD_PANEL 6
+
+
+/**
+ * Clear tps65090 IRQ register
+ *
+ * @return              return EC_SUCCESS on success, err code otherwise
+ */
+int pmu_clear_irq(void);
 
 /**
  * Read pmu register
@@ -125,6 +135,24 @@ int pmu_set_term_voltage(enum TPS_TEMPERATURE_RANGE range,
  * @param enable         enable/disable low current charging
  */
 int pmu_low_current_charging(int enable);
+
+/**
+ * Handles interrupts from tpschrome
+ *
+ * @param signal         Indicates signal type.
+ */
+void pmu_irq_handler(enum gpio_signal signal);
+
+/**
+ * Get AC state through GPIO
+ *
+ * @return 0        AC off
+ * @return 1        AC on
+ *
+ * TODO: This is a board specific function, should be moved to
+ * system_common.c or board.c
+ */
+int pmu_get_ac(void);
 
 /**
  *  * Initialize pmu
