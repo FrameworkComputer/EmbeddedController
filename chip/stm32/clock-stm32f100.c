@@ -39,7 +39,7 @@
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
 /* On-going actions preventing to go into deep-sleep mode */
-uint32_t sleep_mask = SLEEP_MASK_FORCE;
+uint32_t sleep_mask;
 
 void enable_sleep(uint32_t mask)
 {
