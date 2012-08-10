@@ -169,11 +169,21 @@ const char *system_get_chip_vendor(void);
 const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
 
-/* TODO: request sleep.  How do we want to handle transitioning
- * to/from low-power states? */
-
-/* Put the EC in hibernate (lowest EC power state) for the specified
- * duration.  Note that this is NOT the same as chipset S4/hibernate. */
+/**
+ * Put the EC in hibernate (lowest EC power state).
+ *
+ * @param seconds	Number of seconds to hibernate.
+ * @param microseconds	Number of microseconds to hibernate.
+ *
+ * The EC will hibernate until the wake pin is asserted.  If seconds and/or
+ * microseconds is non-zero, the EC will also automatically wake after that
+ * period.  If both are zero, the EC will only wake on a wake pin assert.  Very
+ * short hibernation delays do not work well; if non-zero, the delays must be
+ * at least SYSTEM_HIB_MINIMUM_DURATION.
+ *
+ * Note although the name is similar, EC hibernate is NOT the same as chipset
+ * S4/hibernate.
+ */
 void system_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /* Minimum duration to get proper hibernation */

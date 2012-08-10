@@ -607,24 +607,25 @@ DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 
 static int command_hibernate(int argc, char **argv)
 {
-	int seconds;
+	int seconds = 0;
 	int microseconds = 0;
 
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-	seconds = strtoi(argv[1], NULL, 0);
+	if (argc >= 2)
+		seconds = strtoi(argv[1], NULL, 0);
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
 
-	ccprintf("Hibernating for %d.%06d s\n", seconds, microseconds);
-	cflush();
+	if (seconds || microseconds)
+		ccprintf("Hibernating for %d.%06d s\n", seconds, microseconds);
+	else
+		ccprintf("Hibernating until wake pin asserted.\n");
 
 	system_hibernate(seconds, microseconds);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
-			"sec [usec]",
+			"[sec] [usec]",
 			"Hibernate the EC",
 			NULL);
 

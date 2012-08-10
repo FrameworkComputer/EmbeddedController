@@ -444,9 +444,10 @@ void x86_power_task(void)
 						hibernate_delay * 1000000ull;
 				time_now = get_time().val;
 				if (time_now > target_time) {
-					/* Time's up. Hibernate as long as
-					 * possible. */
-					system_hibernate(0xffffffff, 0);
+					/* Time's up.  Hibernate until wake pin
+					 * asserted. */
+					CPRINTF("[%T x86 hibernating]\n");
+					system_hibernate(0, 0);
 				}
 				else {
 					/* Wait for a message */

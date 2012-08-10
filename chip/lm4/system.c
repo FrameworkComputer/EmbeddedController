@@ -210,12 +210,25 @@ void system_set_rtc(uint32_t seconds)
  *
  * @param seconds      Number of seconds to sleep before RTC alarm
  * @param microseconds Number of microseconds to sleep before RTC alarm
- * @param flags        Hibernate wake flags
+ * @param flags        Additional hibernate wake flags
  */
 static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 {
 	uint32_t rtc, rtcss;
 	uint32_t hibctl;
+
+	/* Set up wake reasons and hibernate flags */
+	hibctl = LM4_HIBERNATE_HIBCTL | LM4_HIBCTL_PINWEN;
+	flags |= HIBDATA_WAKE_PIN;
+
+	if (seconds || microseconds) {
+		hibctl |= LM4_HIBCTL_RTCWEN;
+		flags |= HIBDATA_WAKE_RTC;
+	} else {
+		hibctl &= ~LM4_HIBCTL_RTCWEN;
+	}
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBCTL = hibctl;
 
 	/* Store hibernate flags */
 	hibdata_write(HIBDATA_INDEX_WAKE, flags);
@@ -223,10 +236,6 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 	/* Clear pending interrupt */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
-
-	/* TODO: PRESERVE RESET FLAGS */
-
-	/* TODO: If sleeping forever, only wake on wake pin. */
 
 	/* Add expected overhead for hibernate register writes */
 	microseconds += HIB_WAIT_USEC * 4;
@@ -254,17 +263,15 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBRTCSS = rtcss << 16;
 
-	/* Go to hibernation and wake on RTC match or WAKE pin */
-	hibctl = (LM4_HIBERNATE_HIBCTL | LM4_HIBCTL_RTCWEN |
-		  LM4_HIBCTL_PINWEN | LM4_HIBCTL_HIBREQ);
 	wait_for_hibctl_wc();
-	__enter_hibernate(hibctl);
+	__enter_hibernate(hibctl | LM4_HIBCTL_HIBREQ);
 }
-
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	hibernate(seconds, microseconds, HIBDATA_WAKE_RTC | HIBDATA_WAKE_PIN);
+	/* Flush console before hibernating */
+	cflush();
+	hibernate(seconds, microseconds, 0);
 }
 
 int system_pre_init(void)
