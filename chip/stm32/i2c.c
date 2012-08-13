@@ -62,11 +62,8 @@ static struct mutex i2c_mutex;
 static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
 static struct host_cmd_handler_args host_cmd_args;
 
-/* current position in host buffer for reception */
-static int rx_index;
-
-/* indicates if a wait loop should abort */
-static volatile int abort_transaction;
+/* Flag indicating if a command is currently in the buffer*/
+static uint8_t rx_pending;
 
 static inline void disable_i2c_interrupt(int port)
 {
@@ -104,35 +101,32 @@ void __board_i2c_release(int port)
 void board_i2c_release(int port)
 	__attribute__((weak, alias("__board_i2c_release")));
 
-
-static int wait_tx_slave(int port)
-{
-	static timestamp_t deadline;
-
-	deadline.val = get_time().val + I2C_TX_TIMEOUT_SLAVE;
-	/* wait for TxE or errors (Timeout, STOP, BERR, AF) */
-	while (!(STM32_I2C_SR1(port) & (1<<7)) && !abort_transaction &&
-	       (get_time().val < deadline.val))
-		;
-	return !(STM32_I2C_SR1(port) & (1 << 7));
-}
-
 static int i2c_write_raw_slave(int port, void *buf, int len)
 {
-	int i;
-	uint8_t *data = buf;
+	struct dma_channel *chan;
 
 	/* we don't want to race with TxE interrupt event */
 	disable_i2c_interrupt(port);
 
-	abort_transaction = 0;
-	for (i = 0; i < len; i++) {
-		STM32_I2C_DR(port) = data[i];
-		if (wait_tx_slave(port)) {
-			CPRINTF("TX failed\n");
-			break;
-		}
-	}
+	enable_ack(port);
+
+	/* Configuring DMA1 channel DMAC_I2X_TX */
+	chan = dma_get_channel(DMAC_I2C_TX);
+	dma_prepare_tx(chan, len, (void *)&STM32_I2C_DR(port), buf);
+	dma_go(chan);
+
+	/* Configuring i2c2 */
+	STM32_I2C_CR2(port) |= (1 << 11);
+
+	/* Wait for the dma to transfer all the data */
+	dma_wait(DMAC_I2C_TX);
+
+	/* Disable, and clear the DMA transfer complete flag */
+	dma_disable(DMAC_I2C_TX);
+	dma_clear_isr(DMAC_I2C_TX);
+
+	/* Turn off i2c's DMA flag */
+	STM32_I2C_CR2(port) &= ~(1 << 11);
 
 	enable_i2c_interrupt(port);
 
@@ -213,33 +207,40 @@ static void i2c_event_handler(int port)
 
 	/* transfer matched our slave address */
 	if (i2c_sr1[port] & (1 << 1)) {
+		/* If it's a receiver slave */
+		if (!(STM32_I2C_SR2(port) & (1 << 2))) {
+			dma_start_rx(DMAC_I2C_RX, sizeof(host_buffer),
+				(void *)&STM32_I2C_DR(port), host_buffer);
+
+			STM32_I2C_CR2(port) |= (1 << 11);
+			rx_pending = 1;
+		}
+
 		/* cleared by reading SR1 followed by reading SR2 */
 		STM32_I2C_SR1(port);
 		STM32_I2C_SR2(port);
 	} else if (i2c_sr1[port] & (1 << 4)) {
-		abort_transaction = 1;
+		/* If it's a receiver slave */
+		if (!(STM32_I2C_SR2(port) & (1 << 2))) {
+			/* Disable, and clear the DMA transfer complete flag */
+			dma_disable(DMAC_I2C_RX);
+			dma_clear_isr(DMAC_I2C_RX);
+
+			/* Turn off i2c's DMA flag */
+			STM32_I2C_CR2(port) &= ~(1 << 11);
+		}
 		/* clear STOPF bit by reading SR1 and then writing CR1 */
 		STM32_I2C_SR1(port);
 		STM32_I2C_CR1(port) = STM32_I2C_CR1(port);
 	}
 
-	/* RxNE event */
-	if (i2c_sr1[port] & (1 << 6)) {
-		if (port == I2C2) { /* AP issued write command */
-			if (rx_index >= sizeof(host_buffer) - 1) {
-				rx_index = 0;
-				CPRINTF("I2C message too large\n");
-			}
-			host_buffer[rx_index++] = STM32_I2C_DR(I2C2);
-		}
-	}
 	/* TxE event */
 	if (i2c_sr1[port] & (1 << 7)) {
 		if (port == I2C2) { /* AP is waiting for EC response */
-			if (rx_index) {
+			if (rx_pending) {
 				i2c_process_command();
 				/* reset host buffer after end of transfer */
-				rx_index = 0;
+				rx_pending = 0;
 			} else {
 				/* spurious read : return dummy value */
 				STM32_I2C_DR(port) = 0xec;
@@ -258,7 +259,6 @@ static void i2c_error_handler(int port)
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
 	} else {
-		abort_transaction = 1;
 		CPRINTF("%s: I2C_SR1(%s): 0x%04x\n",
 			__func__, port, i2c_sr1[port]);
 		CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
