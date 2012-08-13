@@ -558,6 +558,10 @@ static void lpc_interrupt(void)
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
+		/* Store port 80 event so we know where reset happened */
+		if (LM4_LPC_LPCSTS & (1 << 10))
+			port_80_write(PORT_80_EVENT_RESET);
+
 		CPRINTF("[%T LPC RESET# %sasserted]\n",
 			(LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
 	}

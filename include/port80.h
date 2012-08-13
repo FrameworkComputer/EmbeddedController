@@ -12,6 +12,7 @@
 
 enum port_80_event {
 	PORT_80_EVENT_RESUME = 0x1001,  /* S3->S0 transition */
+	PORT_80_EVENT_RESET = 0x1002,   /* RESET transition */
 };
 
 /**

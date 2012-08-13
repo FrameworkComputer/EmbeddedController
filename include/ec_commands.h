@@ -736,6 +736,16 @@ struct ec_response_rtc {
 #define EC_CMD_RTC_SET_ALARM 0x47
 
 /*****************************************************************************/
+/* Port80 log access */
+
+/* Get last port80 code from previous boot */
+#define EC_CMD_PORT80_LAST_BOOT 0x48
+
+struct ec_response_port80_last_boot {
+	uint16_t code;
+} __packed;
+
+/*****************************************************************************/
 /* Thermal engine commands */
 
 /* Set thershold value */
