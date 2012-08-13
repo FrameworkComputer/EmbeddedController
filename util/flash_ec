@@ -7,8 +7,6 @@
 COMMON_SH=/usr/lib/crosutils/common.sh
 . "${COMMON_SH}" || exit 1
 
-get_default_board
-
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
