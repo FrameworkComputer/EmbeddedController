@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "board.h"
+#include "hooks.h"
 #include "temp_sensor.h"
 
 static int last_val;
@@ -22,3 +23,11 @@ int chip_temp_sensor_get_val(int idx)
 {
 	return last_val;
 }
+
+static int chip_temp_sensor_init(void)
+{
+	/* Initialize temperature reading to a sane value. */
+	last_val = 300; /* 27 C */
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_INIT, chip_temp_sensor_init, HOOK_PRIO_DEFAULT);

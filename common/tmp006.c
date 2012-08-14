@@ -10,6 +10,7 @@
 #include "console.h"
 #include "fpu.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "math.h"
 #include "task.h"
@@ -272,6 +273,25 @@ int tmp006_poll(void)
 
 	return rv1;
 }
+
+static int tmp006_init(void)
+{
+	int i, j;
+
+	/*
+	 * Set temperature value to 27 C and we will update it later when
+	 * polled by temperature sensor module.
+	 */
+	for (i = 0; i < TMP006_COUNT; ++i) {
+		for (j = 0; j < 4; ++j)
+			tmp006_data[i].t[j] = 30000; /* 27 C */
+		tmp006_data[i].tidx = 0;
+		/* TODO(victoryang): Default value for V? */
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_INIT, tmp006_init, HOOK_PRIO_DEFAULT);
 
 
 /*****************************************************************************/

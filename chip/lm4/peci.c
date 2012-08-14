@@ -139,6 +139,7 @@ DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
 static int peci_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
+	int i;
 
 	/* Enable the PECI module and delay a few clocks */
 	LM4_SYSTEM_RCGCPECI = 1;
@@ -149,6 +150,10 @@ static int peci_init(void)
 
 	/* Set initial clock frequency */
 	peci_freq_changed();
+
+	/* Initialize temperature reading buffer to a sane value. */
+	for (i = 0; i < TEMP_AVG_LENGTH; ++i)
+		temp_vals[i] = 300; /* 27 C */
 
 	return EC_SUCCESS;
 }
