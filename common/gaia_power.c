@@ -357,8 +357,13 @@ static int power_on(void)
 	/* wait to have stable power */
 	usleep(DELAY_5V_SETUP);
 
-	/* Startup PMIC */
-	gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+	/*
+	 * Initiate PMIC power-on sequence only if cold booting AP to
+	 * avoid accidental reset (crosbug.com/p/12650).
+	 */
+	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
+		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+
 	/* wait for all PMIC regulators to be ready */
 	wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
