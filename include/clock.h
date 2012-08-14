@@ -45,6 +45,7 @@ enum {
 	SLEEP_MASK_AP_RUN = (1 << 0), /* the main CPU is running */
 	SLEEP_MASK_UART   = (1 << 1), /* UART communication on-going */
 	SLEEP_MASK_I2C    = (1 << 2), /* I2C master communication on-going */
+	SLEEP_MASK_CHARGING = (1 << 3), /* Charging loop on-going */
 
 	SLEEP_MASK_FORCE  = (1 << 31), /* Force disabling low power modes */
 };

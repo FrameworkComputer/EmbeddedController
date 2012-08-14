@@ -388,9 +388,6 @@ static int power_on(void)
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP, 0);
 
-	/* Enable charger interrupt. */
-	gpio_enable_interrupt(GPIO_CHARGER_INT);
-
 	CPRINTF("[%T AP running ...]\n");
 	return 0;
 }
