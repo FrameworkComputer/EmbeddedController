@@ -64,9 +64,12 @@ enum {
 	DMA_PL_VERY_HIGH,
 };
 
-#define DMA_MINC_MASK		(1 << 7)
-#define DMA_DIR_FROM_MEM_MASK	(1 << 4)
 #define DMA_EN			(1 << 0)
+#define DMA_TCIE		(1 << 1)
+#define DMA_HTIE		(1 << 2)
+#define DMA_TEIE		(1 << 3)
+#define DMA_DIR_FROM_MEM_MASK	(1 << 4)
+#define DMA_MINC_MASK		(1 << 7)
 #define DMA_TCIF(channel)	(1 << (1 + 4 * channel))
 
 #define DMA_POLLING_INTERVAL_US	100	/* us */
@@ -175,19 +178,25 @@ void dma_test(void);
 void dma_init(void);
 
 /**
- * Wait for the DMA transfer to complete
- *
- * @param channel	Channel number to wait on (DMAC_...)
- * @return -1 for timeout, 0 for sucess
- */
-int dma_wait(int channel);
-
-/**
  * Clear the DMA interrupt/event flags for a given channel
  *
  * @param channel	Which channel's isr to clear (DMAC_...)
  */
 void dma_clear_isr(int channel);
+
+/**
+ * Enable "Transfer Complete" interrupt for a DMA channel
+ *
+ * @param channel	Which channel's interrupts to change (DMAC_...)
+ */
+void dma_enable_tc_interrupt(int channel);
+
+/**
+ * Disable "Transfer Complete" interrupt for a DMA channel
+ *
+ * @param channel	Which channel's interrupts to change (DMAC_...)
+ */
+void dma_disable_tc_interrupt(int channel);
 
 /**
  * Get a pointer to the DMA peripheral controller that owns the channel

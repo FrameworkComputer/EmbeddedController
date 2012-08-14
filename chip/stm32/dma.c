@@ -7,12 +7,16 @@
 #include "console.h"
 #include "dma.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
+
+/* Task IDs for the interrupt handlers to wake up */
+static task_id_t id[DMA_NUM_CHANNELS];
 
 /*
  * Note, you must decrement the channel value by 1 from what is specified
@@ -193,23 +197,37 @@ void dma_init(void)
 	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
 }
 
-int dma_wait(int channel)
+int dma_get_irq(int channel)
 {
-	struct dma_ctlr *dma;
-	uint32_t mask;
-	timestamp_t deadline;
+	ASSERT(channel < DMA_NUM_CHANNELS);
+	if (channel < DMA1_NUM_CHANNELS)
+		return STM32_IRQ_DMA_CHANNEL_1 + channel;
+	else
+		return STM32_IRQ_DMA2_CHANNEL1 + channel -
+			DMA1_NUM_CHANNELS;
+}
 
-	dma = dma_get_ctlr(channel);
-	mask = DMA_TCIF(channel);
+void dma_enable_tc_interrupt(int channel)
+{
+	struct dma_channel *chan;
+	chan = dma_get_channel(channel);
 
-	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
-	while ((REG32(&dma->isr) & mask) != mask) {
-		if (deadline.val <= get_time().val)
-			return -1;
-		else
-			usleep(DMA_POLLING_INTERVAL_US);
-	}
-	return 0;
+	/* Storing task ID's so the ISRs knows which task to wake */
+	id[channel] = task_get_current();
+
+	REG32(&chan->ccr) |= DMA_TCIE;
+	task_enable_irq(dma_get_irq(channel));
+}
+
+void dma_disable_tc_interrupt(int channel)
+{
+	struct dma_channel *chan;
+	chan = dma_get_channel(channel);
+
+	id[channel] = TASK_ID_INVALID;
+
+	REG32(&chan->ccr) &= ~DMA_TCIE;
+	task_disable_irq(dma_get_irq(channel));
 }
 
 void dma_clear_isr(int channel)
@@ -220,8 +238,7 @@ void dma_clear_isr(int channel)
 	/* Adjusting the channel number if it's from the second DMA */
 	if (channel > DMA1_NUM_CHANNELS)
 		channel -= DMA1_NUM_CHANNELS;
-
-	REG32(&dma->ifcr) |= 0xff << (4 * channel);
+	REG32(&dma->ifcr) |= 0x0f << (4 * channel);
 }
 
 struct dma_ctlr *dma_get_ctlr(int channel)
@@ -232,3 +249,19 @@ struct dma_ctlr *dma_get_ctlr(int channel)
 	else
 		return (struct dma_ctlr *)STM32_DMA2_BASE;
 }
+
+static void dma_event_interrupt_channel_4(void)
+{
+	dma_clear_isr(DMAC_I2C_TX);
+	if (id[DMAC_I2C_TX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C_TX]);
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4, dma_event_interrupt_channel_4, 3);
+
+static void dma_event_interrupt_channel_5(void)
+{
+	dma_clear_isr(DMAC_I2C_RX);
+	if (id[DMAC_I2C_RX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C_RX]);
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_5, dma_event_interrupt_channel_5, 3);

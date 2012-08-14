@@ -108,24 +108,25 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 	/* we don't want to race with TxE interrupt event */
 	disable_i2c_interrupt(port);
 
-	enable_ack(port);
-
 	/* Configuring DMA1 channel DMAC_I2X_TX */
+	enable_ack(port);
 	chan = dma_get_channel(DMAC_I2C_TX);
 	dma_prepare_tx(chan, len, (void *)&STM32_I2C_DR(port), buf);
+
+	/* set up DMA interrupts to signal when the transfer is over */
+	dma_enable_tc_interrupt(DMAC_I2C_TX);
+
+	/* Start the DMA */
 	dma_go(chan);
 
-	/* Configuring i2c2 */
+	/* Configuring i2c2 to use DMA*/
 	STM32_I2C_CR2(port) |= (1 << 11);
 
-	/* Wait for the dma to transfer all the data */
-	dma_wait(DMAC_I2C_TX);
+	/* Wait for the transmission complete Interrupt */
+	task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
-	/* Disable, and clear the DMA transfer complete flag */
 	dma_disable(DMAC_I2C_TX);
-	dma_clear_isr(DMAC_I2C_TX);
-
-	/* Turn off i2c's DMA flag */
+	dma_disable_tc_interrupt(DMAC_I2C_TX);
 	STM32_I2C_CR2(port) &= ~(1 << 11);
 
 	enable_i2c_interrupt(port);
@@ -538,27 +539,27 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	/* Configuring DMA1 channel DMAC_I2X_TX */
 	chan = dma_get_channel(DMAC_I2C_TX);
 	dma_prepare_tx(chan, size, (void *)&STM32_I2C_DR(port), data);
+	dma_enable_tc_interrupt(DMAC_I2C_TX);
+
+	/* Start the DMA */
 	dma_go(chan);
 
-	/* Configuring i2c2 */
+	/* Configuring i2c2 to use DMA */
 	STM32_I2C_CR2(port) |= CR2_DMAEN;
 
 	/* Initialise i2c communication by sending START and ADDR */
 	rv = master_start(port, slave_addr);
-	if (rv)
-		return rv;
 
-	/* Wait for the dma to transfer all the data */
-	rv = dma_wait(DMAC_I2C_TX);
-	if (rv)
-		return WAIT_XMIT_TXE;
+	/* If it started, wait for the transmission complete Interrupt */
+	if (!rv)
+		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
-	/* Disable, and clear the DMA transfer complete flag */
 	dma_disable(DMAC_I2C_TX);
-	dma_clear_isr(DMAC_I2C_TX);
-
-	/* Turn off i2c's DMA flag */
+	dma_disable_tc_interrupt(DMAC_I2C_TX);
 	STM32_I2C_CR2(port) &= ~CR2_DMAEN;
+
+	if (rv && !(rv & TASK_EVENT_WAKE))
+		return rv;
 
 	rv = wait_status(port, SR1_BTF, WAIT_XMIT_BTF);
 	if (rv)
@@ -586,25 +587,23 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		dma_start_rx(DMAC_I2C_RX, size, (void *)&STM32_I2C_DR(port),
 			data);
 
+		dma_enable_tc_interrupt(DMAC_I2C_RX);
+
 		STM32_I2C_CR2(port) |= CR2_DMAEN;
 		STM32_I2C_CR2(port) |= CR2_LAST;
 
 		rv = master_start(port, slave_addr | 1);
-		if (rv)
-			return rv;
+		if (!rv)
+			rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
-		/* Wait for the dma to transfer all the data */
-		rv = dma_wait(DMAC_I2C_RX);
-		if (rv)
-			return WAIT_RX_NE;
-
-		/* Disable, and clear the DMA transfer complete flag */
 		dma_disable(DMAC_I2C_RX);
-		dma_clear_isr(DMAC_I2C_RX);
-
-		/* Turn off i2c's DMA flag */
+		dma_disable_tc_interrupt(DMAC_I2C_RX);
 		STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 		disable_ack(port);
+
+		if (rv && !(rv & TASK_EVENT_WAKE))
+			return rv;
+
 		master_stop(port);
 	} else {
 		disable_ack(port);
