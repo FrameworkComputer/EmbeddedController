@@ -136,7 +136,18 @@ SECTIONS
 	/* Shared memory buffer must be at the end of preallocated RAM, so it
 	 * can expand to use all the remaining RAM. */
 	__shared_mem_buf = .;
+
+	/* Tag at end of firmware image so that we can find the image size.
+	 * This may be overwritten by the shared memory buffer; that's ok
+	 * because we only use it to find the image size in flash. */
+        . = ALIGN(4);
+        BYTE(0x45);
+        BYTE(0x4e);
+        BYTE(0x44);
+        BYTE(0xea);
+	/* NOTHING MAY GO AFTER THIS! */
     } > IRAM
+
     /* The linker won't notice if the .data section is too big to fit,
      * apparently because we're sending it into IRAM, not FLASH. The following
      * symbol isn't used by the code, but running "objdump -t *.elf | grep hey"

@@ -245,15 +245,15 @@ int system_get_image_used(enum system_image_copy_t copy)
 	if (size <= 0)
 		return 0;
 
-	/* If the last byte isn't 0xff, the image is completely full */
-	if (image[size - 1] != 0xff)
-		return size;
-
-	/* Scan backwards looking for 0xea byte */
+	/*
+	 * Scan backwards looking for 0xea byte, which is by definition the
+	 * last byte of the image.  See ec.lds.S for how this is inserted at
+	 * the end of the image.
+	 */
 	for (size--; size > 0 && image[size] != 0xea; size--)
 		;
 
-	return size;
+	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
 }
 
 /* Returns true if the given range is overlapped with the active image.
