@@ -186,6 +186,7 @@ enum ec_status {
 	EC_RES_INVALID_RESPONSE = 5,
 	EC_RES_INVALID_VERSION = 6,
 	EC_RES_INVALID_CHECKSUM = 7,
+	EC_RES_IN_PROGRESS = 8,		/* Accepted, command in progress */
 };
 
 /*

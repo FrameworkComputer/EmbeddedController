@@ -133,6 +133,10 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	int size = args->response_size;
 	int max_size;
 
+	/* Ignore in-progress on LPC since interface is synchronous anyway */
+	if (args->result == EC_RES_IN_PROGRESS)
+		return;
+
 	/* Handle negative size */
 	if (size < 0) {
 		args->result = EC_RES_INVALID_RESPONSE;
