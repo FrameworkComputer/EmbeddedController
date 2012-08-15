@@ -197,6 +197,25 @@ void dma_init(void)
 	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
 }
 
+int dma_wait(int channel)
+{
+	struct dma_ctlr *dma;
+	uint32_t mask;
+	timestamp_t deadline;
+
+	dma = dma_get_ctlr(channel);
+	mask = DMA_TCIF(channel);
+
+	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
+	while ((REG32(&dma->isr) & mask) != mask) {
+		if (deadline.val <= get_time().val)
+			return -1;
+		else
+			usleep(DMA_POLLING_INTERVAL_US);
+	}
+	return 0;
+}
+
 int dma_get_irq(int channel)
 {
 	ASSERT(channel < DMA_NUM_CHANNELS);

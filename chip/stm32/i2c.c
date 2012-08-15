@@ -62,7 +62,7 @@ static struct mutex i2c_mutex;
 static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
 static struct host_cmd_handler_args host_cmd_args;
 
-/* Flag indicating if a command is currently in the buffer*/
+/* Flag indicating if a command is currently in the buffer */
 static uint8_t rx_pending;
 
 static inline void disable_i2c_interrupt(int port)
@@ -113,20 +113,24 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 	chan = dma_get_channel(DMAC_I2C_TX);
 	dma_prepare_tx(chan, len, (void *)&STM32_I2C_DR(port), buf);
 
-	/* set up DMA interrupts to signal when the transfer is over */
-	dma_enable_tc_interrupt(DMAC_I2C_TX);
-
 	/* Start the DMA */
 	dma_go(chan);
 
-	/* Configuring i2c2 to use DMA*/
+	/* Configuring i2c2 to use DMA */
 	STM32_I2C_CR2(port) |= (1 << 11);
 
-	/* Wait for the transmission complete Interrupt */
-	task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+	if (!in_interrupt_context()) {
+		/* Poll for the transmission complete flag */
+		dma_wait(DMAC_I2C_TX);
+		dma_clear_isr(DMAC_I2C_TX);
+	} else {
+		/* Wait for the transmission complete Interrupt */
+		dma_enable_tc_interrupt(DMAC_I2C_TX);
+		task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+		dma_disable_tc_interrupt(DMAC_I2C_TX);
+	}
 
 	dma_disable(DMAC_I2C_TX);
-	dma_disable_tc_interrupt(DMAC_I2C_TX);
 	STM32_I2C_CR2(port) &= ~(1 << 11);
 
 	enable_i2c_interrupt(port);

@@ -206,4 +206,12 @@ void dma_disable_tc_interrupt(int channel);
  */
 struct dma_ctlr *dma_get_ctlr(int channel);
 
+/**
+ * Wait for the DMA transfer to complete by polling the transfer complete flag
+ *
+ * @param channel»      Channel number to wait on (DMAC_...)
+ * @return -1 for timeout, 0 for sucess
+ */
+int dma_wait(int channel);
+
 #endif
