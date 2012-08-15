@@ -23,6 +23,12 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
+#ifdef DEBUG
+#define debug(f, a...) CPRINTF(f, ##a)
+#else
+#define debug(f, a...)
+#endif
+
 /* 8-bit I2C slave address */
 #define I2C_ADDRESS 0x3c
 
@@ -64,6 +70,12 @@ static struct host_cmd_handler_args host_cmd_args;
 
 /* Flag indicating if a command is currently in the buffer */
 static uint8_t rx_pending;
+
+/* Indicates that a command is in progress */
+static uint8_t command_pending;
+
+/* The result of the last 'slow' operation */
+static uint8_t saved_result = EC_RES_UNAVAILABLE;
 
 static inline void disable_i2c_interrupt(int port)
 {
@@ -143,7 +155,44 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 	const uint8_t *data = args->response;
 	int size = args->response_size;
 	uint8_t *out = host_buffer;
+	int watch_command_pending = !in_interrupt_context();
 	int sum = 0, i;
+
+	/*
+	 * TODO(sjg@chromium.org):
+	 * The logic here is a little painful since we are avoiding changing
+	 * host_command. If we got an 'in progress' previously, then this
+	 * must be the completion of that command, so stash the result
+	 * code. We can't send it back to the host now since we already sent
+	 * the in-progress response and the host is on to other things now.
+	 *
+	 * Of course, if we are in interrupt context, then we are just
+	 * handling a get_status response. We can't check that in
+	 * args->command of course because the original command value has
+	 * now been overwritten. This would be much easier to do in
+	 * host_command since it actually knows what is going on.
+	 *
+	 * When a EC_CMD_RESEND_RESPONSE arrives we will supply this response
+	 * to that command.
+	 *
+	 * We don't support stashing response data, so mark the response as
+	 * unavailable in that case.
+	 *
+	 * TODO(sjg@chromium): It would all be easier if drivers used a
+	 * stack variable for args and host_command was responsible for
+	 * saving the command before execution. Perhaps fast commands could
+	 * be executed in interrupt context anyway?
+	 */
+	if (command_pending && watch_command_pending) {
+		debug("pending complete, size=%d, result=%d\n",
+			args->response_size, args->result);
+		if (args->response_size != 0)
+			saved_result = EC_RES_UNAVAILABLE;
+		else
+			saved_result = args->result;
+		command_pending = 0;
+		return;
+	}
 
 	*out++ = args->result;
 	if (!args->i2c_old_response) {
@@ -159,6 +208,12 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 
 	/* send the answer to the AP */
 	i2c_write_raw_slave(I2C2, host_buffer, out - host_buffer);
+
+	if (watch_command_pending) {
+		command_pending = (args->result == EC_RES_IN_PROGRESS);
+		if (command_pending)
+			debug("Command pending\n");
+	}
 }
 
 /* Process the command in the i2c host buffer */
@@ -200,7 +255,21 @@ static void i2c_process_command(void)
 	args->response = host_buffer + 2;
 	args->response_max = EC_HOST_PARAM_SIZE;
 	args->response_size = 0;
-	host_command_received(args);
+
+	/*
+	 * Special handling for GET_STATUS, which happens entirely outside
+	 * host_command.
+	 */
+	if (args->command == EC_CMD_GET_COMMS_STATUS) {
+		/*
+		 * Could do this directly, but then we get no logging
+		 * args->result = host_command_get_comms_status(args);
+		 */
+		args->result = host_command_process(args);
+		args->send_response(args);
+	} else {
+		host_command_received(args);
+	}
 }
 
 static void i2c_event_handler(int port)
@@ -349,6 +418,38 @@ static int i2c_init(void)
 	return rc;
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+
+
+/* Returns current command status (busy or not) */
+static int host_command_get_comms_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_comms_status *r = args->response;
+
+	r->flags = command_pending ? EC_COMMS_STATUS_PROCESSING : 0;
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_GET_COMMS_STATUS,
+		     host_command_get_comms_status,
+		     EC_VER_MASK(0));
+
+/* Resend the last saved response */
+static int host_command_resend_response(struct host_cmd_handler_args *args)
+{
+	/* Handle resending response */
+	args->result = saved_result;
+	args->response_size = 0;
+
+	saved_result = EC_RES_UNAVAILABLE;
+
+	return EC_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE,
+		     host_command_resend_response,
+		     EC_VER_MASK(0));
 
 
 /*****************************************************************************/
