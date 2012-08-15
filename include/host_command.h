@@ -114,6 +114,16 @@ void host_clear_events(uint32_t mask);
 uint32_t host_get_events(void);
 
 /**
+ * Send a response to the relevent driver for transmission
+ *
+ * Once command processing is complete, this is used to send a response
+ * back to the host.
+ *
+ * @param args	Contains response to send
+ */
+void host_send_response(struct host_cmd_handler_args *args);
+
+/**
  * Called by host interface module when a command is received.
  */
 void host_command_received(struct host_cmd_handler_args *args);

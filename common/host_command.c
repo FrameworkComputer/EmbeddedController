@@ -39,6 +39,11 @@ uint8_t *host_get_memmap(int offset)
 #endif
 }
 
+void host_send_response(struct host_cmd_handler_args *args)
+{
+	args->send_response(args);
+}
+
 void host_command_received(struct host_cmd_handler_args *args)
 {
 	/* TODO: should warn if we already think we're in a command */
@@ -56,7 +61,7 @@ void host_command_received(struct host_cmd_handler_args *args)
 
 	/* If the driver has signalled an error, send the response now */
 	if (args->result) {
-		args->send_response(args);
+		host_send_response(args);
 	} else {
 		/* Save the command */
 		pending_args = args;
@@ -237,7 +242,7 @@ void host_command_task(void)
 		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
 			pending_args->result =
 					host_command_process(pending_args);
-			pending_args->send_response(pending_args);
+			host_send_response(pending_args);
 		}
 	}
 }
