@@ -535,7 +535,7 @@ cr_cleanup:
 static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	int size, int stop)
 {
-	int rv;
+	int rv, rv_start;
 	struct dma_channel *chan;
 
 	disable_ack(port);
@@ -552,17 +552,19 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	STM32_I2C_CR2(port) |= CR2_DMAEN;
 
 	/* Initialise i2c communication by sending START and ADDR */
-	rv = master_start(port, slave_addr);
+	rv_start = master_start(port, slave_addr);
 
 	/* If it started, wait for the transmission complete Interrupt */
-	if (!rv)
+	if (!rv_start)
 		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
 	dma_disable(DMAC_I2C_TX);
 	dma_disable_tc_interrupt(DMAC_I2C_TX);
 	STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 
-	if (rv && !(rv & TASK_EVENT_WAKE))
+	if (rv_start)
+		return rv_start;
+	if (!(rv & TASK_EVENT_WAKE))
 		return rv;
 
 	rv = wait_status(port, SR1_BTF, WAIT_XMIT_BTF);
@@ -580,7 +582,7 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	int size)
 {
-	int rv;
+	int rv, rv_start;
 
 	if (data == NULL || size < 1)
 		return EC_ERROR_INVAL;
@@ -596,8 +598,8 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		STM32_I2C_CR2(port) |= CR2_DMAEN;
 		STM32_I2C_CR2(port) |= CR2_LAST;
 
-		rv = master_start(port, slave_addr | 1);
-		if (!rv)
+		rv_start = master_start(port, slave_addr | 1);
+		if (!rv_start)
 			rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
 		dma_disable(DMAC_I2C_RX);
@@ -605,7 +607,9 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 		disable_ack(port);
 
-		if (rv && !(rv & TASK_EVENT_WAKE))
+		if (rv_start)
+			return rv_start;
+		if (!(rv & TASK_EVENT_WAKE))
 			return rv;
 
 		master_stop(port);

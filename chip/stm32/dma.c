@@ -193,8 +193,14 @@ void dma_test(void)
 
 void dma_init(void)
 {
+	int i;
+
 	/* Enable DMA1, we don't support DMA2 yet */
 	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
+
+	/* Initialize data for interrupt handlers */
+	for (i = 0; i < DMA_NUM_CHANNELS; i++)
+		id[i] = TASK_ID_INVALID;
 }
 
 int dma_wait(int channel)
