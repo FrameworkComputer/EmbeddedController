@@ -265,6 +265,11 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 	if (system_unsafe_to_overwrite(p->offset, p->size))
 		return EC_RES_ACCESS_DENIED;
 
+	/* Indicate that we might be a while */
+#ifdef CONFIG_TASK_HOSTCMD
+	args->result = EC_RES_IN_PROGRESS;
+	host_send_response(args);
+#endif
 	if (flash_erase(p->offset, p->size))
 		return EC_RES_ERROR;
 
