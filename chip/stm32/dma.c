@@ -217,7 +217,7 @@ int dma_wait(int channel)
 		if (deadline.val <= get_time().val)
 			return -1;
 		else
-			usleep(DMA_POLLING_INTERVAL_US);
+			udelay(DMA_POLLING_INTERVAL_US);
 	}
 	return 0;
 }

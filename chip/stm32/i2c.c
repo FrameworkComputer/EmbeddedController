@@ -131,7 +131,7 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 	/* Configuring i2c2 to use DMA */
 	STM32_I2C_CR2(port) |= (1 << 11);
 
-	if (!in_interrupt_context()) {
+	if (in_interrupt_context()) {
 		/* Poll for the transmission complete flag */
 		dma_wait(DMAC_I2C_TX);
 		dma_clear_isr(DMAC_I2C_TX);
