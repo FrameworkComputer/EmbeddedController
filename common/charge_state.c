@@ -104,6 +104,7 @@ static void poweroff_wait_ac(void)
 		 * TODO(rong): remove platform dependent code
 		 */
 #ifdef CONFIG_TASK_X86POWER
+		CPRINTF("[%T force shutdown to avoid damaging battery]\n");
 		x86_power_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 #endif /* CONFIG_TASK_X86POWER */
