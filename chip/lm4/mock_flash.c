@@ -57,7 +57,17 @@ int flash_physical_get_protect(int block)
 	return mock_protect[block];
 }
 
-int flash_physical_pre_init(void)
+uint32_t flash_get_protect(void)
+{
+	return 0;
+}
+
+int flash_set_protect(uint32_t mask, uint32_t flags)
+{
+	return 0;
+}
+
+int flash_pre_init(void)
 {
 	return EC_SUCCESS;
 }

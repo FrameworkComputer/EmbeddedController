@@ -23,12 +23,12 @@ def test(helper):
     rosize = get_ro_size(helper)
 
     # We are in RO now. Writing to RO should fail.
-    test_write(helper, rosize / 2, 0x30, expect_fail=True)
+    test_write(helper, rosize / 2, 0x10, expect_fail=True)
 
     # Writing to RW should succeed.
-    test_write(helper, rosize, 0x30) # begin of RW
-    test_write(helper, (rosize + flashsize) / 2, 0x30) # mid-point of RW
-    test_write(helper, flashsize - 0x30, 0x30) # end of flash
+    test_write(helper, rosize, 0x10) # begin of RW
+    test_write(helper, (rosize + flashsize) / 2, 0x10) # mid-point of RW
+    test_write(helper, flashsize - 0x10, 0x10) # end of flash
 
     # Jump to RW-A
     helper.ec_command("sysjump a")
@@ -36,11 +36,11 @@ def test(helper):
     time.sleep(0.5)
 
     # We are in RW now. Writing to RO should succeed.
-    test_write(helper, 0, 0x30) # begin of RO
-    test_write(helper, rosize / 2, 0x30) # mid-point of RO
-    test_write(helper, rosize - 0x30, 0x30) # end of RO
+    test_write(helper, 0, 0x10) # begin of RO
+    test_write(helper, rosize / 2, 0x10) # mid-point of RO
+    test_write(helper, rosize - 0x10, 0x10) # end of RO
 
     # Writing to RW-A should fail.
-    test_write(helper, rosize, 0x30, expect_fail=True)
+    test_write(helper, rosize, 0x10, expect_fail=True)
 
     return True
