@@ -101,11 +101,11 @@ const struct _ec_fmap {
 		},
 		{
 			/* The range for write protection, for factory
-			 * finalization.  Should include (or identical to)
+			 * finalization.  Should include (may be identical to)
 			 * EC_RO and aligned to hardware specification. */
 			.area_name = "WP_RO",
-			.area_offset = CONFIG_SECTION_RO_OFF,
-			.area_size = CONFIG_SECTION_RO_SIZE,
+			.area_offset = CONFIG_SECTION_WP_RO_OFF,
+			.area_size = CONFIG_SECTION_WP_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 

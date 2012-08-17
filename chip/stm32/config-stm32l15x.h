@@ -35,6 +35,8 @@
 #define CONFIG_SECTION_RO_SIZE   CONFIG_FW_RO_SIZE
 #define CONFIG_SECTION_RW_OFF    CONFIG_FW_RW_OFF
 #define CONFIG_SECTION_RW_SIZE   CONFIG_FW_RW_SIZE
+#define CONFIG_SECTION_WP_RO_OFF   CONFIG_FW_RO_OFF
+#define CONFIG_SECTION_WP_RO_SIZE  CONFIG_FW_RO_SIZE
 
 /*
  * The EC uses the top bank of flash to emulate a SPI-like write protect

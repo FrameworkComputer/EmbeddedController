@@ -348,8 +348,8 @@ static int flash_command_region_info(struct host_cmd_handler_args *args)
 		r->size = CONFIG_SECTION_RW_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
-		r->offset = CONFIG_SECTION_RO_OFF;
-		r->size = CONFIG_SECTION_RO_SIZE;
+		r->offset = CONFIG_SECTION_WP_RO_OFF;
+		r->size = CONFIG_SECTION_WP_RO_SIZE;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
