@@ -17,6 +17,12 @@
 #define CPUTS(outstr) cputs(CC_GPIO, outstr)
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 
+/*
+ * Special precautions must be taken in order to avoid accidentally rebooting
+ * the AP if we are warm rebooting the EC such as during sysjump.
+ */
+static int is_warm_boot;
+
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 
@@ -46,16 +52,74 @@ static void gpio_config_info(const struct gpio_info *g, uint32_t *addr,
 	*cnf = *mode << 2;
 }
 
+int gpio_set_flags(enum gpio_signal signal, int flags)
+{
+	const struct gpio_info *g = gpio_list + signal;
+	uint32_t addr, cnf, mode, mask;
+
+	gpio_config_info(g, &addr, &mode, &cnf);
+	mask = REG32(addr) & ~(cnf | mode);
+
+	/*
+	 * For STM32, the port configuration field changes meaning
+	 * depending on whether the port is an input, analog input,
+	 * output, or alternate function.
+	 */
+	if (flags & GPIO_OUTPUT) {
+		/* FIXME: This assumes output max speed of 10MHz */
+		mask |= 0x11111111 & mode;
+		if (flags & GPIO_OPEN_DRAIN)
+			mask |= 0x44444444 & cnf;
+	} else {
+		/* GPIOx_ODR determines which resistor to activate in
+		 * input mode, see Table 16 (datasheet rm0041) */
+		if (flags & GPIO_PULL_UP) {
+			mask |= 0x88888888 & cnf;
+			STM32_GPIO_BSRR_OFF(g->port) |= g->mask;
+			gpio_set_level(signal, 1);
+		} else if (flags & GPIO_PULL_DOWN) {
+			mask |= 0x88888888 & cnf;
+			gpio_set_level(signal, 0);
+		} else {
+			mask |= 0x44444444 & cnf;
+		}
+	}
+
+	/*
+	 * Set pin level after port has been set up as to avoid
+	 * potential damage, e.g. driving an open-drain output
+	 * high before it has been configured as such.
+	 */
+	if ((flags & GPIO_OUTPUT) && !is_warm_boot)
+		/* General purpose, MODE = 01
+		 *
+		 * If this is a cold boot, set the level.
+		 * On a warm reboot, leave things where they were
+		 * or we'll shut off the AP. */
+		gpio_set_level(signal, flags & GPIO_HIGH);
+
+	REG32(addr) = mask;
+
+	/* Set up interrupts if necessary */
+	ASSERT(!(flags & GPIO_INT_LEVEL));
+	if (flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
+		STM32_EXTI_RTSR |= g->mask;
+	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
+		STM32_EXTI_FTSR |= g->mask;
+	/* Interrupt is enabled by gpio_enable_interrupt() */
+
+	return EC_SUCCESS;
+}
+
+
 int gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
-	int is_warm = 0;
 	int i;
-	uint32_t addr, cnf, mode, mask;
 
 	if (STM32_RCC_APB1ENR & 1) {
 		/* This is a warm reboot : TIM2 is already active */
-		is_warm = 1;
+		is_warm_boot = 1;
 	} else {
 		/* Enable all GPIOs clocks
 		 * TODO: more fine-grained enabling for power saving
@@ -64,58 +128,8 @@ int gpio_pre_init(void)
 	}
 
 	/* Set all GPIOs to defaults */
-	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		gpio_config_info(g, &addr, &mode, &cnf);
-		mask = REG32(addr) & ~(cnf | mode);
-
-		/*
-		 * For STM32, the port configuration field changes meaning
-		 * depending on whether the port is an input, analog input,
-		 * output, or alternate function.
-		 */
-		if (g->flags & GPIO_OUTPUT) {
-			/* FIXME: This assumes output max speed of 10MHz */
-			mask |= 0x11111111 & mode;
-			if (g->flags & GPIO_OPEN_DRAIN)
-				mask |= 0x44444444 & cnf;
-		} else {
-			/* GPIOx_ODR determines which resistor to activate in
-			 * input mode, see Table 16 (datasheet rm0041) */
-			if (g->flags & GPIO_PULL_UP) {
-				mask |= 0x88888888 & cnf;
-				STM32_GPIO_BSRR_OFF(g->port) |= g->mask;
-				gpio_set_level(i, 1);
-			} else if (g->flags & GPIO_PULL_DOWN) {
-				mask |= 0x88888888 & cnf;
-				gpio_set_level(i, 0);
-			} else {
-				mask |= 0x44444444 & cnf;
-			}
-		}
-
-		/*
-		 * Set pin level after port has been set up as to avoid
-		 * potential damage, e.g. driving an open-drain output
-		 * high before it has been configured as such.
-		 */
-		if ((g->flags & GPIO_OUTPUT) && !is_warm)
-			/* General purpose, MODE = 01
-			 *
-			 * If this is a cold boot, set the level.
-			 * On a warm reboot, leave things where they were
-			 * or we'll shut off the AP. */
-			gpio_set_level(i, g->flags & GPIO_HIGH);
-
-		REG32(addr) = mask;
-
-		/* Set up interrupts if necessary */
-		ASSERT(!(g->flags & GPIO_INT_LEVEL));
-		if (g->flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
-			STM32_EXTI_RTSR |= g->mask;
-		if (g->flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
-			STM32_EXTI_FTSR |= g->mask;
-		/* Interrupt is enabled by gpio_enable_interrupt() */
-	}
+	for (i = 0; i < GPIO_COUNT; i++, g++)
+		gpio_set_flags(i, g->flags);
 
 	return EC_SUCCESS;
 }
