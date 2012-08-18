@@ -289,6 +289,9 @@ static enum power_state state_init(struct power_state_context *ctx)
 	charger_set_current(0);
 	charger_set_voltage(0);
 
+	/* Update static battery info */
+	update_battery_info();
+
 	/* If AC is not present, switch to discharging state */
 	if (!ctx->curr.ac)
 		return PWR_STATE_DISCHARGE;
@@ -296,9 +299,6 @@ static enum power_state state_init(struct power_state_context *ctx)
 	/* Check general error conditions */
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
-
-	/* Update static battery info */
-	update_battery_info();
 
 	/* Send battery event to host */
 	host_set_single_event(EC_HOST_EVENT_BATTERY);
