@@ -634,6 +634,30 @@ static void keyboard_special(uint16_t k)
 	static uint8_t s = 0;
 	static const uint16_t a[] = {0xe048, 0xe048, 0xe050, 0xe050, 0xe04b,
 				     0xe04d, 0xe04b, 0xe04d, 0x0030, 0x001e};
+#ifdef CONFIG_TASK_LIGHTBAR
+	/* Lightbar demo mode: keyboard can fake the battery state */
+	switch (k) {
+	case 0xe048:				/* up */
+		demo_battery_level(1);
+		break;
+	case 0xe050:				/* down */
+		demo_battery_level(-1);
+		break;
+	case 0xe04b:				/* left */
+		demo_is_charging(0);
+		break;
+	case 0xe04d:				/* right */
+		demo_is_charging(1);
+		break;
+	case 0x0040:				/* dim */
+		demo_brightness(-1);
+		break;
+	case 0x0041:				/* bright */
+		demo_brightness(1);
+		break;
+	}
+#endif
+
 	if (k == a[s])
 		s++;
 	else if (k != 0xe048)

@@ -36,7 +36,13 @@ enum lightbar_command {
 	LIGHTBAR_CMD_REG,
 	LIGHTBAR_CMD_RGB,
 	LIGHTBAR_CMD_GET_SEQ,
+	LIGHTBAR_CMD_DEMO,
 	LIGHTBAR_NUM_CMDS
 };
+
+/* These are used for demo purposes */
+extern void demo_battery_level(int inc);
+extern void demo_is_charging(int ischarge);
+extern void demo_brightness(int inc);
 
 #endif  /* __CROS_EC_LIGHTBAR_H */

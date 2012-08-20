@@ -612,7 +612,7 @@ struct ec_params_lightbar_cmd {
 			struct num {
 				uint8_t cmd;
 				uint8_t num;
-			} brightness, seq;
+			} brightness, seq, demo;
 
 			struct reg {
 				uint8_t cmd;
@@ -636,7 +636,7 @@ struct ec_params_lightbar_cmd {
 			} get_seq;
 			struct {
 				/* no return params */
-			} off, on, init, brightness, seq, reg, rgb;
+			} off, on, init, brightness, seq, reg, rgb, demo;
 		} out;
 	};
 } __packed;

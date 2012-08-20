@@ -40,6 +40,8 @@ static const struct {
 	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.rgb) },
 	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.get_seq),
 	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.get_seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.demo),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.demo) },
 };
 
 

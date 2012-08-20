@@ -24,6 +24,8 @@
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
 #define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
 
+#define CONSOLE_COMMAND_LIGHTBAR_HELP
+
 /******************************************************************************/
 /* How to talk to the controller */
 /******************************************************************************/
@@ -129,7 +131,6 @@ static void lightbar_init_vals(void)
 	set_from_array(init_vals, ARRAY_SIZE(init_vals));
 	memset(current, 0, sizeof(current));
 }
-
 
 /* Helper function. */
 static void setrgb(int led, int red, int green, int blue)
@@ -270,35 +271,75 @@ struct rgb_s {
 	uint8_t r, g, b;
 };
 enum {
-	COLOR_RED, COLOR_YELLOW, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK,
+	COLOR_LOW, COLOR_MEDIUM, COLOR_HIGH, COLOR_FULL, COLOR_BLACK,
 };
 static const struct rgb_s colors[] = {
-	{0xff, 0x00, 0x00},			/* red */
-	{0xff, 0xff, 0x00},			/* yellow */
-	{0x00, 0xff, 0x00},			/* green */
-	{0x00, 0x00, 0xff},			/* blue */
+	{0xff, 0x00, 0x00},			/* low = red */
+	{0xff, 0xff, 0x00},			/* med = yellow */
+	{0x00, 0x00, 0xff},			/* high = blue */
+	{0x00, 0xff, 0x00},			/* full = green */
 	{0x00, 0x00, 0x00},			/* black */
 };
+
+static int demo_mode;
+
+void demo_battery_level(int inc)
+{
+	if ((!demo_mode) ||
+	    (st.battery_level == COLOR_LOW && inc < 0) ||
+	    (st.battery_level == COLOR_FULL && inc > 0))
+		return;
+
+	st.battery_level += inc;
+
+	CPRINTF("[%T LB demo: battery_level=%d]\n", st.battery_level);
+}
+
+void demo_is_charging(int ischarge)
+{
+	if (!demo_mode)
+		return;
+	st.battery_is_charging = ischarge;
+	CPRINTF("[%T LB demo: battery_is_charging=%d]\n",
+		st.battery_is_charging);
+}
+
+void demo_brightness(int inc)
+{
+	int b;
+
+	if (!demo_mode)
+		return;
+
+	b = brightness + (inc * 16);
+	if (b > 0xff)
+		b = 0xff;
+	else if (b < 0)
+		b = 0;
+	lightbar_brightness(b);
+}
 
 static int last_battery_is_charging;
 static int last_battery_level;
 static void get_battery_level(void)
 {
+	int pct = 0;
+
+	if (demo_mode)
+		return;
+
 #ifdef CONFIG_TASK_POWERSTATE
-	int pct = charge_get_percent();
-
-	if (pct > LIGHTBAR_POWER_THRESHOLD_BLUE)
-		st.battery_level = COLOR_BLUE;
-	else if (pct > LIGHTBAR_POWER_THRESHOLD_GREEN)
-		st.battery_level = COLOR_GREEN;
-	else if (pct > LIGHTBAR_POWER_THRESHOLD_YELLOW)
-		st.battery_level = COLOR_YELLOW;
-	else
-		st.battery_level = COLOR_RED;
-
-	pct = charge_get_state();
+	pct = charge_get_percent();
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif
+	if (pct > LIGHTBAR_POWER_THRESHOLD_FULL)
+		st.battery_level = COLOR_FULL;
+	else if (pct > LIGHTBAR_POWER_THRESHOLD_HIGH)
+		st.battery_level = COLOR_HIGH;
+	else if (pct > LIGHTBAR_POWER_THRESHOLD_MEDIUM)
+		st.battery_level = COLOR_MEDIUM;
+	else
+		st.battery_level = COLOR_LOW;
 }
 
 static struct {
@@ -391,8 +432,8 @@ static void pulse(timestamp_t now, int period_offset)
 	j = sini(i);
 	j = j * sini((int)i * 3 / 2) / 255;
 	j = j * sini((int)i * 16 / 10) / 255;
-	/* Cut it down a bit */
-	j = j / 2;
+	/* Cut it down a bit if we're plugged in. */
+	j = j / (1 + st.battery_is_charging);
 
 	/* Luminize current color using sinusoidal */
 	t = j + tmp_color.r;
@@ -453,7 +494,6 @@ static uint32_t sequence_S0(void)
 		/* Has something changed? */
 		if (st.battery_is_charging != last_battery_is_charging ||
 		    st.battery_level != last_battery_level) {
-
 			/* yes */
 			for (i = 0; i < NUM_LEDS; i++) {
 				led_state[i].start_time.val = now.val +
@@ -1002,6 +1042,10 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		ptr->out.get_seq.num = st.cur_seq;
 		args->response_size = sizeof(struct ec_params_lightbar_cmd);
 		break;
+	case LIGHTBAR_CMD_DEMO:
+		demo_mode = ptr->in.demo.num ? 1 : 0;
+		CPRINTF("[%T LB_demo %d]\n", demo_mode);
+		break;
 	default:
 		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);
 		return EC_RES_INVALID_PARAM;
@@ -1034,6 +1078,7 @@ static int help(const char *cmd)
 	ccprintf("  %s CTRL REG VAL          - set LED controller regs\n", cmd);
 	ccprintf("  %s LED RED GREEN BLUE    - set color manually"
 		 " (LED=4 for all)\n", cmd);
+	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	return EC_SUCCESS;
 }
 #endif
@@ -1094,6 +1139,17 @@ static int command_lightbar(int argc, char **argv)
 		char *e;
 		num = 0xff & strtoi(argv[2], &e, 16);
 		lightbar_brightness(num);
+		return EC_SUCCESS;
+	}
+
+	if (argc == 3 && !strcasecmp(argv[1], "demo")) {
+		if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
+			demo_mode = 1;
+		else if (!strcasecmp(argv[2], "off") || argv[2][0] == '0')
+			demo_mode = 0;
+		else
+			return EC_ERROR_PARAM1;
+		ccprintf("demo mode is %s\n", demo_mode ? "on" : "off");
 		return EC_SUCCESS;
 	}
 

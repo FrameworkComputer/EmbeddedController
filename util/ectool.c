@@ -1044,6 +1044,8 @@ static const struct {
 	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.rgb) },
 	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.get_seq),
 	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.get_seq) },
+	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.demo),
+	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.demo) },
 };
 
 static int lb_help(const char *cmd)
@@ -1059,6 +1061,7 @@ static int lb_help(const char *cmd)
 	printf("  %s CTRL REG VAL          - set LED controller regs\n", cmd);
 	printf("  %s LED RED GREEN BLUE    - set color manually"
 		 " (LED=4 for all)\n", cmd);
+	printf("  %s demo 0|1              - turn demo mode on & off\n", cmd);
 	return 0;
 }
 
@@ -1129,6 +1132,18 @@ static int cmd_lightbar(int argc, char **argv)
 		char *e;
 		param.in.brightness.num = 0xff & strtoul(argv[2], &e, 16);
 		return lb_do_cmd(LIGHTBAR_CMD_BRIGHTNESS, &param);
+	}
+
+	if (argc == 3 && !strcasecmp(argv[1], "demo")) {
+		if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
+			param.in.demo.num = 1;
+		else if (!strcasecmp(argv[2], "off") || argv[2][0] == '0')
+			param.in.demo.num = 0;
+		else {
+			fprintf(stderr, "Invalid arg\n");
+			return -1;
+		}
+		return lb_do_cmd(LIGHTBAR_CMD_DEMO, &param);
 	}
 
 	if (argc >= 2 && !strcasecmp(argv[1], "seq")) {
