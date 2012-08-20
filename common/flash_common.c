@@ -26,6 +26,23 @@ int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 	return CONFIG_FLASH_SIZE - offset;
 }
 
+/* crosbug.com/p/13066 - not supported on STM32L */
+#ifndef CHIP_VARIANT_stm32l15x
+int flash_is_erased(uint32_t offset, int size)
+{
+	uint32_t *ptr;
+
+	if (flash_dataptr(offset, size, sizeof(uint32_t), (char **)&ptr) < 0)
+		return 0;
+
+	for (size /= sizeof(uint32_t); size > 0; size -= 4, ptr++)
+		if (*ptr != -1U)
+			return 0;
+
+	return 1;
+}
+#endif
+
 int flash_write(int offset, int size, const char *data)
 {
 	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)

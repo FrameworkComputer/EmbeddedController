@@ -227,10 +227,16 @@ int flash_physical_write(int offset, int size, const char *data)
 int flash_physical_erase(int offset, int size)
 {
 	LM4_FLASH_FCMISC = LM4_FLASH_FCRIS;  /* Clear previous error status */
-	LM4_FLASH_FMA = offset;
 
-	for ( ; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
+	for ( ; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
+			offset += CONFIG_FLASH_ERASE_SIZE) {
 		int t;
+
+		/* Do nothing if already erased */
+		if (flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
+			continue;
+
+		LM4_FLASH_FMA = offset;
 
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer, so that erasing many flash pages
@@ -253,8 +259,6 @@ int flash_physical_erase(int offset, int size)
 		 * protection error */
 		if (LM4_FLASH_FCRIS & 0x0a01)
 			return EC_ERROR_UNKNOWN;
-
-		LM4_FLASH_FMA += CONFIG_FLASH_ERASE_SIZE;
 	}
 
 	return EC_SUCCESS;

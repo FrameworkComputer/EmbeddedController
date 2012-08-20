@@ -349,7 +349,6 @@ exit_wr:
 
 int flash_physical_erase(int offset, int size)
 {
-	uint32_t address;
 	int res = EC_SUCCESS;
 
 	if (unlock(PRG_LOCK) != EC_SUCCESS)
@@ -361,13 +360,16 @@ int flash_physical_erase(int offset, int size)
 	/* set PER bit */
 	STM32_FLASH_CR |= PER;
 
-	for (address = CONFIG_FLASH_BASE + offset ;
-	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-	     address += CONFIG_FLASH_ERASE_SIZE) {
+	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
+	     offset += CONFIG_FLASH_ERASE_SIZE) {
 		timestamp_t deadline;
 
+		/* Do nothing if already erased */
+		if (flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
+			continue;
+
 		/* select page to erase */
-		STM32_FLASH_AR = address;
+		STM32_FLASH_AR = CONFIG_FLASH_BASE + offset;
 
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;
