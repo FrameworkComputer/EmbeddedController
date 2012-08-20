@@ -208,9 +208,8 @@ int board_i2c_claim(int port)
 	if (port != I2C_PORT_HOST)
 		return EC_SUCCESS;
 
-	/* If AP is off or suspended, we have the bus */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-				CHIPSET_STATE_SUSPEND)) {
+	/* If AP is off, we have the bus */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		gpio_set_level(GPIO_EC_CLAIM, 0);
 		return EC_SUCCESS;
 	}
@@ -253,12 +252,9 @@ int board_i2c_claim(int port)
 void board_i2c_release(int port)
 {
 	if (port == I2C_PORT_HOST) {
-		/* Release our claim when AP is on */
-		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF |
-					CHIPSET_STATE_SUSPEND)) {
-			gpio_set_level(GPIO_EC_CLAIM, 1);
-			usleep(BUS_SLEW_DELAY_US);
-		}
+		/* Release our claim */
+		gpio_set_level(GPIO_EC_CLAIM, 1);
+		usleep(BUS_SLEW_DELAY_US);
 	}
 }
 #endif /* CONFIG_ARBITRATE_I2C */
