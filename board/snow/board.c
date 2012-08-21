@@ -58,7 +58,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
 
 	/* Outputs */
-	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_OUT_HIGH, NULL},
+	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_DEFAULT, NULL},
 	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
@@ -142,6 +142,13 @@ void configure_board(void)
 	STM32_GPIO_CRH_OFF(GPIO_B) = val;
 	/* put GPIO in Hi-Z state */
 	gpio_set_level(GPIO_EC_INT, 1);
+}
+
+void configure_board_late(void)
+{
+#ifdef CONFIG_AC_POWER_STATUS
+	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
+#endif
 }
 
 void board_interrupt_host(int active)

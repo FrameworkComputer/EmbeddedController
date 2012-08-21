@@ -65,3 +65,10 @@ Build Options
 
 	Define this to call configure_board_late() after initial system init
 	is complete (and after GPIOs are set up).
+
+- CONFIG_AC_POWER_STATUS
+
+	Monitor the state of the AC power input and drive out a GPIO to
+	the AP indicating this state. The GPIO will be driven low when
+	AC power is not connected, and high when it is connected. This
+	uses GPIO_AC_STATUS for this purpose.
