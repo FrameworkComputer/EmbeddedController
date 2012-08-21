@@ -57,8 +57,16 @@
 #define I2C2      STM32_I2C2_PORT
 
 enum {
-	/* A stop condition should take 2 clocks, so allow 8 */
-	TIMEOUT_STOP_SENT_US	= I2C_PERIOD_US * 8,
+	/*
+	 * A stop condition should take 2 clocks, but the process may need more
+	 * time to notice if it is preempted, so we poll repeatedly for 8
+	 * clocks, before backing off and only check once every
+	 * STOP_SENT_RETRY_US for up to TIMEOUT_STOP_SENT clocks before
+	 * giving up.
+	 */
+	SLOW_STOP_SENT_US	= I2C_PERIOD_US * 8,
+	TIMEOUT_STOP_SENT_US	= I2C_PERIOD_US * 200,
+	STOP_SENT_RETRY_US	= 150,
 };
 
 static uint16_t i2c_sr1[NUM_PORTS];
@@ -333,9 +341,9 @@ static void i2c_error_handler(int port)
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
 	} else {
-		CPRINTF("%s: I2C_SR1(%s): 0x%04x\n",
+		CPRINTF("%s: I2C_SR1(%d): 0x%04x\n",
 			__func__, port, i2c_sr1[port]);
-		CPRINTF("%s: I2C_SR2(%s): 0x%04x\n",
+		CPRINTF("%s: I2C_SR2(%d): 0x%04x\n",
 			__func__, port, STM32_I2C_SR2(port));
 	}
 
@@ -573,15 +581,31 @@ static void master_stop(int port)
 static int wait_until_stop_sent(int port)
 {
 	timestamp_t deadline;
+	timestamp_t slow_cutoff;
+	uint8_t is_slow;
 
-	deadline = get_time();
+	deadline = slow_cutoff = get_time();
 	deadline.val += TIMEOUT_STOP_SENT_US;
+	slow_cutoff.val += SLOW_STOP_SENT_US;
 
 	while (STM32_I2C_CR1(port) & (1 << 9)) {
 		if (timestamp_expired(deadline, NULL)) {
-			ccprintf("Stop event deadline passed: CR1=%016b\n",
-				 STM32_I2C_CR1(port));
+			ccprintf("Stop event deadline passed:\ttask=%d"
+							"\tCR1=%016b\n",
+				(int)task_get_current(), STM32_I2C_CR1(port));
 			return EC_ERROR_TIMEOUT;
+		}
+
+		if (is_slow) {
+			/* If we haven't gotten a fast response, sleep */
+			usleep(STOP_SENT_RETRY_US);
+		} else {
+			/* Check to see if this request is taking a while */
+			if (timestamp_expired(slow_cutoff, NULL)) {
+				ccprintf("Stop event taking a while: task=%d",
+					(int)task_get_current());
+				is_slow = 1;
+			}
 		}
 	}
 
