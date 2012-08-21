@@ -123,9 +123,17 @@ void configure_board(void)
 
 	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
 
-	/* Select Alternate function for USART1 on pins PA9/PA10 */
+	/*
+	 * Set alternate function for USART1. For alt. function input
+	 * the port is configured in either floating or pull-up/down
+	 * input mode (ref. section 7.1.4 in datasheet RM0041):
+	 * PA9:  Tx, alt. function output
+	 * PA10: Rx, input with pull-down
+	 *
+	 * note: see crosbug.com/p/12223 for more info
+	 */
 	val = STM32_GPIO_CRH_OFF(GPIO_A) & ~0x00000ff0;
-	val |= 0x00000990;
+	val |= 0x00000890;
 	STM32_GPIO_CRH_OFF(GPIO_A) = val;
 
 	/* EC_INT is output, open-drain */

@@ -160,23 +160,20 @@ static void config_hispeed_clock(void)
 #ifdef CONFIG_FORCE_CONSOLE_RESUME
 static void enable_serial_wakeup(int enable)
 {
-	static uint32_t save_crh, save_exticr;
+	static uint32_t save_exticr;
 
 	if (enable) {
 		/**
 		 * allow to wake up from serial port (RX on pin PA10)
 		 * by setting it as a GPIO with an external interrupt.
 		 */
-		save_crh = STM32_GPIO_CRH_OFF(GPIO_A);
 		save_exticr = STM32_AFIO_EXTICR(10 / 4);
-		STM32_GPIO_CRH_OFF(GPIO_A) = (save_crh & ~0xf00) | 0x400;
 		STM32_AFIO_EXTICR(10 / 4) = (save_exticr & ~(0xf << 8));
 	} else {
 		/* serial port wake up : don't go back to sleep */
 		if (STM32_EXTI_PR & (1 << 10))
 			disable_sleep(SLEEP_MASK_FORCE);
 		/* restore keyboard external IT on PC10 */
-		STM32_GPIO_CRH_OFF(GPIO_A) = save_crh;
 		STM32_AFIO_EXTICR(10 / 4) = save_exticr;
 	}
 }
