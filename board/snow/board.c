@@ -55,11 +55,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
 	/* Other inputs */
 	{"AC_PWRBTN_L", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
-	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_DEFAULT, NULL},
 
 	/* Outputs */
 	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_DEFAULT, NULL},
-	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
+	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_DEFAULT, NULL},
 	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
@@ -149,6 +149,10 @@ void configure_board_late(void)
 #ifdef CONFIG_AC_POWER_STATUS
 	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
 #endif
+#ifdef CONFIG_ARBITRATE_I2C
+	gpio_set_flags(GPIO_AP_CLAIM, GPIO_PULL_UP);
+	gpio_set_flags(GPIO_EC_CLAIM, GPIO_OUT_HIGH);
+#endif
 }
 
 void board_interrupt_host(int active)
@@ -205,8 +209,6 @@ enum {
 };
 
 #ifdef CONFIG_ARBITRATE_I2C
-#define GPIO_AP_CLAIM	GPIO_SPI1_NSS
-#define GPIO_EC_CLAIM	GPIO_SPI1_MISO
 
 int board_i2c_claim(int port)
 {

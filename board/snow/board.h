@@ -54,6 +54,9 @@
 #define I2C_PORT_SLAVE 1
 #define CONFIG_ARBITRATE_I2C I2C_PORT_HOST
 
+#define GPIO_AP_CLAIM	GPIO_SPI1_NSS	/* AP claims bus */
+#define GPIO_EC_CLAIM	GPIO_SPI1_MISO	/* EC claims bus */
+
 #define CONFIG_CMD_PMU
 
 /* GPIO signal list */
