@@ -57,6 +57,8 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 	const struct gpio_info *g = gpio_list + signal;
 	uint32_t addr, cnf, mode, mask;
 
+	if (flags & GPIO_DEFAULT)
+		return EC_SUCCESS;
 	gpio_config_info(g, &addr, &mode, &cnf);
 	mask = REG32(addr) & ~(cnf | mode);
 

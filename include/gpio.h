@@ -25,7 +25,7 @@
 #define GPIO_INT_BOTH    0x0040  /* Interrupt on both edges */
 #define GPIO_INT_LOW     0x0080  /* Interrupt on low level */
 #define GPIO_INT_HIGH    0x0100  /* Interrupt on high level */
-
+#define GPIO_DEFAULT     0x0200  /* Don't set up on boot */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW     GPIO_OUTPUT

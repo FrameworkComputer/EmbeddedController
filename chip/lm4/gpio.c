@@ -180,6 +180,8 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
+	if (flags & GPIO_DEFAULT)
+		return EC_SUCCESS;
 	if (flags & GPIO_OUTPUT) {
 		/* Output */
 		/* Select open drain first, so that we don't glitch the signal
