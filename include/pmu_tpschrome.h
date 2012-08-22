@@ -10,6 +10,15 @@
 
 #include "gpio.h"
 
+/* JEITA temperature threshold */
+enum TPS_TEMPERATURE {
+	TSET_T1,
+	TSET_T2,
+	TSET_T3,
+	TSET_T4,
+};
+
+/* JEITA temperature range */
 enum TPS_TEMPERATURE_RANGE {
 	RANGE_T01,
 	RANGE_T12,		/* low charging temperature range */
@@ -153,6 +162,22 @@ void pmu_irq_handler(enum gpio_signal signal);
  * system_common.c or board.c
  */
 int pmu_get_ac(void);
+
+/**
+ * Set temperature threshold
+ *
+ * @param temp_n          TSET_T1 to TSET_T4
+ * @param value           0b000 ~ 0b111, temperature threshold
+ */
+int pmu_set_temp_threshold(enum TPS_TEMPERATURE temp_n, uint8_t value);
+
+/**
+ * Force charger into error state, turn off charging and blinks charging LED
+ *
+ * @param enable          true to turn off charging and blink LED
+ * @return                EC_SUCCESS if ok
+ */
+int pmu_blink_led(int enable);
 
 /**
  *  * Initialize pmu

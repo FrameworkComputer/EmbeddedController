@@ -44,6 +44,12 @@
 #define CG_ISET_SHIFT   0
 #define CG_ISET_MASK    (7 << CG_ISET_SHIFT)
 #define CG_NOITERM      (1 << 5)
+#define CG_TSET_SHIFT   5
+#define CG_TSET_MASK    (7 << CG_TSET_SHIFT)
+
+/* A temperature threshold to force charger hardware error */
+#define CG_TEMP_THRESHOLD_ERROR 0
+
 
 /* IRQ events */
 #define EVENT_VACG    (1 << 1) /* AC voltage good */
@@ -54,6 +60,14 @@
 
 /* Charger alarm */
 #define CHARGER_ALARM 3
+
+/* Charger temperature threshold table */
+static const uint8_t const pmu_temp_threshold[] = {
+	1, /* 0b001,  0 degree C */
+	2, /* 0b010, 10 degree C */
+	5, /* 0b101, 45 degree C */
+	7, /* 0b111, 60 degree C */
+};
 
 /* Read all tps65090 interrupt events */
 static int pmu_get_event(int *event)
@@ -197,6 +211,61 @@ int pmu_set_term_voltage(enum TPS_TEMPERATURE_RANGE range,
 	reg_val |= voltage << CG_VSET_SHIFT;
 
 	return pmu_write(CG_CTRL1 + range, reg_val);
+}
+
+/**
+ * Set temperature threshold
+ *
+ * @param temp_n          TSET_T1 to TSET_T4
+ * @param value           0b000 ~ 0b111, temperature threshold
+ */
+int pmu_set_temp_threshold(enum TPS_TEMPERATURE temp_n, uint8_t value)
+{
+	int rv;
+	int reg_val;
+
+	/*
+	 * Temperature threshold T1 to T4 are stored in TPSCHROME registers
+	 * CG_CTRL1 to CG_CTRL4.
+	 */
+	rv = pmu_read(CG_CTRL1 + temp_n, &reg_val);
+	if (rv)
+		return rv;
+
+	reg_val &= ~CG_TSET_MASK;
+	reg_val |= (value << CG_TSET_SHIFT) & CG_TSET_MASK;
+
+	return pmu_write(CG_CTRL1 + temp_n, reg_val);
+}
+
+/**
+ * Force charger into error state, turn off charging and blinks charging LED
+ *
+ * @param enable          true to turn off charging and blink LED
+ * @return                EC_SUCCESS for success
+ */
+int pmu_blink_led(int enable)
+{
+	int rv;
+	enum TPS_TEMPERATURE t;
+	uint8_t threshold;
+
+	for (t = TSET_T1; t <= TSET_T4; t++) {
+		if (enable)
+			threshold = CG_TEMP_THRESHOLD_ERROR;
+		else
+			threshold = pmu_temp_threshold[t];
+
+		rv = pmu_set_temp_threshold(t, threshold);
+		if (rv) {
+			/* Retry */
+			rv = pmu_set_temp_threshold(t, threshold);
+			if (rv)
+				return rv;
+		}
+	}
+
+	return EC_SUCCESS;
 }
 
 /**
