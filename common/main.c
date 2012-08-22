@@ -37,6 +37,9 @@ int main(void)
 	jtag_pre_init();
 	gpio_pre_init();
 
+#ifdef CONFIG_CONFIGURE_BOARD_LATE
+	configure_board_late();
+#endif
 	/*
 	 * Initialize interrupts, but don't enable any of them.  Note that
 	 * task scheduling is not enabled until task_start() below.
