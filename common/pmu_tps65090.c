@@ -223,7 +223,9 @@ int pmu_low_current_charging(int enable)
 
 void pmu_irq_handler(enum gpio_signal signal)
 {
+	/* TODO(rongchang): remove GPIO_AC_STATUS, we're not using it */
 	gpio_set_level(GPIO_AC_STATUS, pmu_get_ac());
+
 	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
 	CPRINTF("Charger IRQ received.\n");
 }
@@ -236,18 +238,31 @@ int pmu_get_ac(void)
 	 * On daisy and snow, there's no single gpio signal to detect AC.
 	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
 	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
-	 * Hence the ac state can be logical OR of these two signal line.
+	 *
+	 * When AC plugged, both GPIOs will be high.
 	 *
 	 * One drawback of this detection is, when press-and-hold power
-	 * button. AC state will be unknown. The implementation below treats
-	 * that condition as AC off.
+	 * button. AC state will be unknown. This function will fallback
+	 * to PMU VACG.
 	 *
 	 * TODO(rongchang): move board related function to board/ and common
 	 * interface to system_get_ac()
 	 */
 
-	return gpio_get_level(GPIO_AC_PWRBTN_L) &&
-			gpio_get_level(GPIO_KB_PWR_ON_L);
+	int ac_good = 1, battery_good;
+
+	if (gpio_get_level(GPIO_KB_PWR_ON_L))
+		return gpio_get_level(GPIO_AC_PWRBTN_L);
+
+	/* Check PMU VACG */
+	if (!in_interrupt_context())
+		pmu_get_power_source(&ac_good, &battery_good);
+
+	/*
+	 * Charging task only interacts with AP in discharging state. So
+	 * return 1 when AC status can not be detected by GPIO or VACG.
+	 */
+	return ac_good;
 }
 
 void pmu_init(void)
