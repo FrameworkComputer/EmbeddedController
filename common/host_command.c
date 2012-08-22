@@ -31,6 +31,17 @@ static uint8_t host_memmap[EC_MEMMAP_SIZE];
 
 static int hcdebug;  /* Enable extra host command debug output */
 
+#ifdef CONFIG_HOST_COMMAND_STATUS
+/*
+ * Indicates that a 'slow' command has sent EC_RES_IN_PROGRESS but hasn't
+ * sent a final status (i.e. it is in progress)
+ */
+static uint8_t command_pending;
+
+/* The result of the last 'slow' operation */
+static uint8_t saved_result = EC_RES_UNAVAILABLE;
+#endif
+
 uint8_t *host_get_memmap(int offset)
 {
 #ifdef CONFIG_LPC
@@ -42,6 +53,49 @@ uint8_t *host_get_memmap(int offset)
 
 void host_send_response(struct host_cmd_handler_args *args)
 {
+#ifdef CONFIG_HOST_COMMAND_STATUS
+	/*
+	 * TODO(sjg@chromium.org):
+	 * If we got an 'in progress' previously, then this
+	 * must be the completion of that command, so stash the result
+	 * code. We can't send it back to the host now since we already sent
+	 * the in-progress response and the host is on to other things now.
+	 *
+	 * If we are in interrupt context, then we are handling a
+	 * get_status response or an immediate error which prevented us
+	 * from processing the command. Note we can't check for the
+	 * GET_COMMS_STATUS command in args->command because the original
+	 * command value has now been overwritten.
+	 *
+	 * When a EC_CMD_RESEND_RESPONSE arrives we will supply this response
+	 * to that command.
+	 *
+	 * We don't support stashing response data, so mark the response as
+	 * unavailable in that case.
+	 *
+	 * TODO(sjg@chromium.org): If we stashed the command in host_command
+	 * before processing it, then it would not get overwritten by a
+	 * subsequent command and we could simplify the logic here by adding
+	 * a flag to host_cmd_handler_args to indicate that the command had
+	 * an interim response. We would have to make this stashing dependent
+	 * on CONFIG_HOST_COMMAND_STATUS also.
+	 */
+	if (!in_interrupt_context()) {
+		if (command_pending) {
+			CPRINTF("pending complete, size=%d, result=%d\n",
+				args->response_size, args->result);
+			if (args->response_size != 0)
+				saved_result = EC_RES_UNAVAILABLE;
+			else
+				saved_result = args->result;
+			command_pending = 0;
+			return;
+		} else if (args->result == EC_RES_IN_PROGRESS) {
+			command_pending = 1;
+			CPRINTF("Command pending\n");
+		}
+	}
+#endif
 	args->send_response(args);
 }
 
@@ -60,16 +114,23 @@ void host_command_received(struct host_cmd_handler_args *args)
 		args->result = EC_RES_ERROR;
 	}
 
-	/* If the driver has signalled an error, send the response now */
 	if (args->result) {
-		host_send_response(args);
+		; /* driver has signalled an error, respond now */
+#ifdef CONFIG_HOST_COMMAND_STATUS
+	} else if (args->command == EC_CMD_GET_COMMS_STATUS) {
+		args->result = host_command_process(args);
+#endif
 	} else {
 		/* Save the command */
 		pending_args = args;
 
 		/* Wake up the task to handle the command */
 		task_set_event(TASK_ID_HOSTCMD, TASK_EVENT_CMD_PENDING, 0);
+		return;
 	}
+
+	/* Send the response now */
+	host_send_response(args);
 }
 
 /*
@@ -213,6 +274,39 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 
 	return rv;
 }
+
+#ifdef CONFIG_HOST_COMMAND_STATUS
+/* Returns current command status (busy or not) */
+static int host_command_get_comms_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_comms_status *r = args->response;
+
+	r->flags = command_pending ? EC_COMMS_STATUS_PROCESSING : 0;
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_GET_COMMS_STATUS,
+		     host_command_get_comms_status,
+		     EC_VER_MASK(0));
+
+/* Resend the last saved response */
+static int host_command_resend_response(struct host_cmd_handler_args *args)
+{
+	/* Handle resending response */
+	args->result = saved_result;
+	args->response_size = 0;
+
+	saved_result = EC_RES_UNAVAILABLE;
+
+	return EC_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE,
+		     host_command_resend_response,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_HOST_COMMAND_STATUS */
 
 /*****************************************************************************/
 /* Initialization / task */
