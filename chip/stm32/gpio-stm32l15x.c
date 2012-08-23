@@ -42,9 +42,11 @@ int gpio_pre_init(void)
 		uint32_t val;
 
 		val = STM32_GPIO_PUPDR_OFF(g->port) & ~mask2;
-		if (g->flags & GPIO_PULL_UP) /* Pull Up = 01 */
+		if ((g->flags & GPIO_PULL_UP) == GPIO_PULL_UP)
+			/* Pull Up = 01 */
 			val |= 0x55555555 & mask2;
-		else if (g->flags & GPIO_PULL_DOWN) /* Pull Down = 10 */
+		else if ((g->flags & GPIO_PULL_DOWN) == GPIO_PULL_DOWN)
+			/* Pull Down = 10 */
 			val |= 0xaaaaaaaa & mask2;
 		STM32_GPIO_PUPDR_OFF(g->port) = val;
 
