@@ -16,7 +16,7 @@
  *  it off until pwron is released and pressed again
  *
  *  When powered on:
- *  - The PMIC PWRON signal is released one second after the power button is
+ *  - The PMIC PWRON signal is released <= 1 second after the power button is
  *  released (we expect that U-Boot as asserted XPSHOLD by then)
  *  - Holding pwron for 8s powers off the AP
  *  - Pressing and releasing pwron within that 8s is ignored
@@ -63,13 +63,14 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or XPSHOLD == 0).
  *
- * U-Boot updating: User presses and holds power button. EC does not
- *    check XPSHOLD, and waits up to 16sec for an event. If no event occurs
+ * U-Boot updating: User presses and holds power button. If EC does not
+ *    see XPSHOLD, it waits up to 16sec for an event. If no event occurs
  *    within 16sec, EC powers off AP.
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(16 * 1000000)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * 1000000)
+#define DELAY_SHUTDOWN_ON_USB_BOOT      (16 * 1000000)
 
-/* Delay after power button release before we release GPIO_PMIC_PWRON_L */
+/* Maximum delay after power button press before we release GPIO_PMIC_PWRON_L */
 #define DELAY_RELEASE_PWRON	1000000 /* 1s */
 
 /* debounce time to prevent accidental power-on after keyboard power off */
@@ -101,12 +102,6 @@ static char lid_changed;
 
 /* time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
-
-/* 1 if we have released GPIO_PMIC_PWRON_L */
-static int pwron_released;
-
-/* time where we will release GPIO_PMIC_PWRON_L */
-static timestamp_t pwron_deadline;
 
 /* force AP power on (used for recovery keypress) */
 static int auto_power_on;
@@ -198,10 +193,11 @@ static int check_for_power_off_event(void)
 		CPUTS("Cancel power off\n");
 		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	}
+
 	power_button_was_pressed = pressed;
 
 	/* XPSHOLD released by AP : shutdown immediately */
-	if (pwron_released && gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
+	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
 		return 3;
 
 	if (power_request == POWER_REQ_OFF) {
@@ -415,6 +411,26 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 }
 
 /**
+ * Wait for the XPSHOLD signal from the AP to be asserted within timeout_us
+ * and if asserted clear the PMIC_PWRON signal
+ *
+ * @return 0 if ok, -1 if power button failed to release
+ */
+static int react_to_xpshold(unsigned int timeout_us)
+{
+	/* wait for Power button release */
+	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
+
+	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
+		CPUTS("XPSHOLD not seen in time\n");
+		return -1;
+	}
+	CPRINTF("%T XPSHOLD seen\n");
+	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
+	return 0;
+}
+
+/**
  * Power off the AP
  */
 static void power_off(void)
@@ -433,26 +449,6 @@ static void power_off(void)
 	CPUTS("Shutdown complete.\n");
 }
 
-/**
- * Set a timer to release GPIO_PMIC_PWRON_L in the future
- */
-static void set_pwron_timer(void)
-{
-	pwron_deadline = get_time();
-	pwron_deadline.val += DELAY_RELEASE_PWRON;
-	CPRINTF("Setting pwron timer %d\n", pwron_deadline.val);
-	pwron_released = 0;
-}
-
-static void check_pwron_release(void)
-{
-	if (!pwron_released && timestamp_expired(pwron_deadline, NULL)) {
-		pwron_deadline.val = 0;
-		pwron_released = 1;
-		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-		CPRINTF("Releasing pwron\n");
-	}
-}
 
 /*
  * Calculates the delay in microseconds to the next time we have to check
@@ -462,15 +458,10 @@ static void check_pwron_release(void)
  */
 static int next_pwr_event(void)
 {
-	uint64_t next;
-
-	if (!pwron_deadline.val && !power_off_deadline.val)
+	if (!power_off_deadline.val)
 		return -1;
 
-	/* We know that pwron_deadline will be earlier, if it exists */
-	next = pwron_deadline.val ? pwron_deadline.val
-			: power_off_deadline.val;
-	return next - get_time().val;
+	return power_off_deadline.val - get_time().val;
 }
 
 
@@ -488,20 +479,27 @@ void gaia_power_task(void)
 		while (!check_for_power_on_event())
 			task_wait_event(-1);
 
-		/*
-		 * If we can power on, and the power button is released,
-		 * start running!
-		 */
-		if (!power_on() && !wait_for_power_button_release(
-					DELAY_SHUTDOWN_ON_POWER_HOLD)) {
-			/* Wait until we need to power off, then power off */
-			power_button_was_pressed = 0;
-			set_pwron_timer();
-			while (value = check_for_power_off_event(), !value) {
-				check_pwron_release();
-				task_wait_event(next_pwr_event());
+		if (!power_on()) {
+			int continue_power = 0;
+
+			if (!react_to_xpshold(DELAY_RELEASE_PWRON)) {
+				/* AP looks good */
+				if (!wait_for_power_button_release(
+					DELAY_SHUTDOWN_ON_POWER_HOLD))
+					continue_power = 1;
+			} else {
+				/* AP is possibly in bad shape */
+				/* allow USB boot in 16 secs */
+				if (!wait_for_power_button_release(
+					DELAY_SHUTDOWN_ON_USB_BOOT))
+					continue_power = 1;
 			}
-			CPRINTF("ending loop %d\n", value);
+			if (continue_power) {
+				power_button_was_pressed = 0;
+				while (!(value = check_for_power_off_event()))
+					task_wait_event(next_pwr_event());
+				CPRINTF("%T ending loop %d\n", value);
+			}
 		}
 		power_off();
 		wait_for_power_button_release(-1);
