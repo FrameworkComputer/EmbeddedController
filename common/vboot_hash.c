@@ -35,18 +35,9 @@ static uint32_t data_size;
 static uint32_t curr_pos;
 static const uint8_t *hash;   /* Hash, or NULL if not valid */
 static int want_abort;
+static int in_progress;
 
 static SHA256_CTX ctx;
-
-
-/* Return non-zero if a hash operation is in progress */
-static int vboot_hash_in_progress(void)
-{
-	if (hash)
-		return 0;  /* Already done */
-	return data_size ? 1 : 0;  /* Nothing to hash */
-}
-
 
 /*
  * Start computing a hash of <size> bytes of data at flash offset <offset>.
@@ -57,7 +48,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 			    const uint8_t *nonce, int nonce_size)
 {
 	/* Fail if hash computation is already in progress */
-	if (vboot_hash_in_progress())
+	if (in_progress)
 		return EC_ERROR_BUSY;
 
 	/*
@@ -92,7 +83,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 /* Abort hash currently in progress, if any. */
 static void vboot_hash_abort(void)
 {
-	if (vboot_hash_in_progress())
+	if (in_progress)
 		want_abort = 1;
 }
 
@@ -116,6 +107,7 @@ static void vboot_hash_init(void)
 		vboot_hash_start(CONFIG_FW_RW_OFF,
 				 system_get_image_used(SYSTEM_IMAGE_RW),
 				 NULL, 0);
+		in_progress = 1;
 	}
 }
 
@@ -125,7 +117,7 @@ void vboot_hash_task(void)
 	vboot_hash_init();
 
 	while (1) {
-		if (!vboot_hash_in_progress()) {
+		if (!in_progress) {
 			/* Nothing to do, so go back to sleep */
 			task_wait_event(-1);
 		} else if (want_abort) {
@@ -133,6 +125,7 @@ void vboot_hash_task(void)
 			CPRINTF("[%T hash abort]\n");
 			data_size = 0;
 			want_abort = 0;
+			in_progress = 0;
 		} else {
 			/* Compute the next chunk of hash */
 			int size = MIN(CHUNK_SIZE, data_size - curr_pos);
@@ -146,6 +139,7 @@ void vboot_hash_task(void)
 				hash = SHA256_final(&ctx);
 				CPRINTF("[%T hash done %.*h]\n",
 					SHA256_DIGEST_SIZE, hash);
+				in_progress = 0;
 			}
 
 			/*
@@ -191,7 +185,7 @@ static int command_hash(int argc, char **argv)
 		ccprintf("Offset: 0x%08x\n", data_offset);
 		ccprintf("Size:   0x%08x (%d)\n", data_size, data_size);
 		ccprintf("Digest: ");
-		if (vboot_hash_in_progress())
+		if (in_progress)
 			ccprintf("(in progress)\n");
 		else
 			ccprintf("%.*h\n", SHA256_DIGEST_SIZE, hash);
@@ -236,7 +230,7 @@ DECLARE_CONSOLE_COMMAND(hash, command_hash,
 /* Fill in the response with the current hash status */
 static void fill_response(struct ec_response_vboot_hash *r)
 {
-	if (vboot_hash_in_progress())
+	if (in_progress)
 		r->status = EC_VBOOT_HASH_STATUS_BUSY;
 	else if (hash) {
 		r->status = EC_VBOOT_HASH_STATUS_DONE;
@@ -297,7 +291,7 @@ static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 			return EC_RES_ERROR;
 
 		/* Wait for hash to finish */
-		while (vboot_hash_in_progress())
+		while (in_progress)
 			usleep(1000);
 
 		fill_response(r);
