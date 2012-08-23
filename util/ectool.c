@@ -588,12 +588,12 @@ static void print_flash_protect_flags(const char *desc, uint32_t flags)
 		printf(" wp_gpio_asserted");
 	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
 		printf(" ro_at_boot");
-	if (flags & EC_FLASH_PROTECT_RW_AT_BOOT)
-		printf(" rw_at_boot");
+	if (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
+		printf(" all_at_boot");
 	if (flags & EC_FLASH_PROTECT_RO_NOW)
 		printf(" ro_now");
-	if (flags & EC_FLASH_PROTECT_RW_NOW)
-		printf(" rw_now");
+	if (flags & EC_FLASH_PROTECT_ALL_NOW)
+		printf(" all_now");
 	if (flags & EC_FLASH_PROTECT_ERROR_STUCK)
 		printf(" STUCK");
 	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
@@ -615,8 +615,8 @@ int cmd_flash_protect(int argc, char *argv[])
 	p.mask = p.flags = 0;
 	for (i = 1; i < argc; i++) {
 		if (!strcasecmp(argv[i], "now")) {
-			p.mask |= EC_FLASH_PROTECT_RW_NOW;
-			p.flags |= EC_FLASH_PROTECT_RW_NOW;
+			p.mask |= EC_FLASH_PROTECT_ALL_NOW;
+			p.flags |= EC_FLASH_PROTECT_ALL_NOW;
 		} else if (!strcasecmp(argv[i], "enable")) {
 			p.mask |= EC_FLASH_PROTECT_RO_AT_BOOT;
 			p.flags |= EC_FLASH_PROTECT_RO_AT_BOOT;

@@ -496,7 +496,7 @@ static int protect_entire_flash_until_reboot(void)
 
 /**
  * Determine if write protect register is inconsistent with RO_AT_BOOT and
- * RW_AT_BOOT state.
+ * ALL_AT_BOOT state.
  */
 static int register_need_reset(void)
 {
@@ -589,8 +589,9 @@ uint32_t flash_get_protect(void)
 	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-	if (entire_flash_locked)
-		flags |= EC_FLASH_PROTECT_RW_NOW;
+	if (entire_flash_locked) {
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+	}
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
@@ -599,7 +600,7 @@ uint32_t flash_get_protect(void)
 			     i < RO_BANK_OFFSET + RO_BANK_COUNT +
 			     PSTATE_BANK_COUNT) ? 1 : 0;
 		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
-				 EC_FLASH_PROTECT_RW_NOW);
+				 EC_FLASH_PROTECT_ALL_NOW);
 
 		if (flash_physical_get_protect(i)) {
 			flags |= bank_flag;
@@ -640,7 +641,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 				      EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
 
-	if (mask & EC_FLASH_PROTECT_RW_NOW) {
+	if (mask & EC_FLASH_PROTECT_ALL_NOW) {
 		/*
 		 * Since RO is already protected, protecting entire flash
 		 * is effectively protecting RW.

@@ -110,12 +110,12 @@ static int command_flash_info(int argc, char **argv)
 		ccputs(" wp_gpio_asserted");
 	if (i & EC_FLASH_PROTECT_RO_AT_BOOT)
 		ccputs(" ro_at_boot");
-	if (i & EC_FLASH_PROTECT_RW_AT_BOOT)
-		ccputs(" rw_at_boot");
+	if (i & EC_FLASH_PROTECT_ALL_AT_BOOT)
+		ccputs(" all_at_boot");
 	if (i & EC_FLASH_PROTECT_RO_NOW)
 		ccputs(" ro_now");
-	if (i & EC_FLASH_PROTECT_RW_NOW)
-		ccputs(" rw_now");
+	if (i & EC_FLASH_PROTECT_ALL_NOW)
+		ccputs(" all_now");
 	if (i & EC_FLASH_PROTECT_ERROR_STUCK)
 		ccputs(" STUCK");
 	if (i & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
@@ -209,12 +209,12 @@ static int command_flash_wp(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "disable"))
 		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 	else if (!strcasecmp(argv[1], "now"))
-		return flash_set_protect(EC_FLASH_PROTECT_RW_NOW |
+		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW |
 					 EC_FLASH_PROTECT_RO_NOW, -1);
 	else if (!strcasecmp(argv[1], "rw"))
-		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, -1);
+		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
 	else if (!strcasecmp(argv[1], "norw"))
-		return flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
+		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, 0);
 	else
 		return EC_ERROR_PARAM1;
 }
@@ -324,7 +324,7 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 		EC_FLASH_PROTECT_ERROR_STUCK |
 		EC_FLASH_PROTECT_RO_AT_BOOT |
 		EC_FLASH_PROTECT_RO_NOW |
-		EC_FLASH_PROTECT_RW_NOW |
+		EC_FLASH_PROTECT_ALL_NOW |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 	r->writable_flags = 0;
 
@@ -334,17 +334,16 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 
 #ifdef CHIP_lm4
 	/*
-	 * If RW protection isn't enabled this boot, it can be enabled if the *
-	 * WP GPIO is asserted.
+	 * If entire flash isn't protected at this boot, it can be enabled if
+	 * the WP GPIO is asserted.
 	 */
-	if (!(r->flags & EC_FLASH_PROTECT_RW_NOW) &&
+	if (!(r->flags & EC_FLASH_PROTECT_ALL_NOW) &&
 	    (r->flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
-		r->writable_flags |= EC_FLASH_PROTECT_RW_NOW;
+		r->writable_flags |= EC_FLASH_PROTECT_ALL_NOW;
 
 #elif defined(CHIP_stm32)
-	/* RW protection can only be changed at boot */
-	r->valid_flags |= EC_FLASH_PROTECT_RW_AT_BOOT;
-	r->writable_flags |= EC_FLASH_PROTECT_RW_AT_BOOT;
+	r->valid_flags |= EC_FLASH_PROTECT_ALL_NOW;
+	r->writable_flags |= EC_FLASH_PROTECT_ALL_NOW;
 #endif
 
 	args->response_size = sizeof(*r);

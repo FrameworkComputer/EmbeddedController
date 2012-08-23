@@ -315,7 +315,7 @@ uint32_t flash_get_protect(void)
 		int is_ro = (i >= RO_BANK_OFFSET &&
 			     i < RO_BANK_OFFSET + RO_BANK_COUNT);
 		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
-				 EC_FLASH_PROTECT_RW_NOW);
+				 EC_FLASH_PROTECT_ALL_NOW);
 
 		if (flash_physical_get_protect(i)) {
 			/* At least one bank in the region is protected */
