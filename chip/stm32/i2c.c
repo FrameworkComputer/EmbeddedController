@@ -666,7 +666,7 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	if (rv_start)
 		return rv_start;
 	if (!(rv & TASK_EVENT_WAKE))
-		return rv;
+		return EC_ERROR_TIMEOUT;
 
 	rv = wait_status(port, SR1_BTF, WAIT_XMIT_BTF);
 	if (rv)
@@ -711,7 +711,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		if (rv_start)
 			return rv_start;
 		if (!(rv & TASK_EVENT_WAKE))
-			return rv;
+			return EC_ERROR_TIMEOUT;
 
 		master_stop(port);
 	} else {
