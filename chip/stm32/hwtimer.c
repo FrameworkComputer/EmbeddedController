@@ -35,17 +35,7 @@ void __hw_clock_event_set(uint32_t deadline)
 {
 	last_deadline = deadline;
 
-	if ((deadline >> 16) == STM32_TIM_CNT(3)) {
-		/* we can set a match on the LSB only */
-		STM32_TIM_CCR1(4) = deadline & 0xffff;
-		/* disable MSB match */
-		STM32_TIM_DIER(3) &= ~2;
-		/* Clear the match flags */
-		STM32_TIM_SR(3) = ~2;
-		STM32_TIM_SR(4) = ~2;
-		/* Set the match interrupt */
-		STM32_TIM_DIER(4) |= 2;
-	} else if ((deadline >> 16) > STM32_TIM_CNT(3)) {
+	if ((deadline >> 16) > STM32_TIM_CNT(3)) {
 		/* first set a match on the MSB */
 		STM32_TIM_CCR1(3) = deadline >> 16;
 		/* disable LSB match */
@@ -56,6 +46,29 @@ void __hw_clock_event_set(uint32_t deadline)
 		/* Set the match interrupt */
 		STM32_TIM_DIER(3) |= 2;
 	}
+	/*
+	 * In the unlikely case where the MSB on TIM3 has increased and
+	 * matched the deadline MSB before we set the match interrupt,
+	 * as the STM hardware timer won't trigger an interrupt, we fall back
+	 * to the following LSB event code to set another interrupt.
+	 */
+	if ((deadline >> 16) == STM32_TIM_CNT(3)) {
+		/* we can set a match on the LSB only */
+		STM32_TIM_CCR1(4) = deadline & 0xffff;
+		/* disable MSB match */
+		STM32_TIM_DIER(3) &= ~2;
+		/* Clear the match flags */
+		STM32_TIM_SR(3) = ~2;
+		STM32_TIM_SR(4) = ~2;
+		/* Set the match interrupt */
+		STM32_TIM_DIER(4) |= 2;
+	}
+	/*
+	 * if the LSB deadline is already in the past and won't trigger
+	 * an interrupt, the common code in process_timers will deal with
+	 * the expired timer and automatically set the next deadline, we
+	 * don't need to do anything here.
+	 */
 }
 
 uint32_t __hw_clock_event_get(void)
