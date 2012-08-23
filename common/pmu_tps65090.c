@@ -33,6 +33,19 @@
 #define CG_CTRL5 0x09
 #define CG_STATUS1 0x0a
 #define CG_STATUS2 0x0b
+#define DCDC1_CTRL 0x0c
+#define DCDC2_CTRL 0x0d
+#define DCDC3_CTRL 0x0e
+#define FET1_CTRL 0x0f
+#define FET2_CTRL 0x10
+#define FET3_CTRL 0x11
+#define FET4_CTRL 0x12
+#define FET5_CTRL 0x13
+#define FET6_CTRL 0x14
+#define FET7_CTRL 0x15
+#define AD_CTRL 0x16
+#define AD_OUT1 0x17
+#define AD_OUT2 0x18
 #define TPSCHROME_VER 0x19
 
 /* Charger control */
@@ -334,8 +347,64 @@ int pmu_get_ac(void)
 	return ac_good;
 }
 
+int pmu_shutdown(void)
+{
+	int offset, rv = 0;
+
+	/* Disable each of the DCDCs */
+	for (offset = DCDC1_CTRL; offset <= DCDC3_CTRL; offset++)
+		rv |= pmu_write(offset, 0x0e);
+	/* Disable each of the FETs */
+	for (offset = FET1_CTRL; offset <= FET7_CTRL; offset++)
+		rv |= pmu_write(offset, 0x02);
+	/* Clearing AD controls/status */
+	rv |= pmu_write(AD_CTRL, 0x00);
+
+	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+}
+
+/*
+ * Fill all of the pmu registers with known good values, this allows the
+ * pmu to recover by rebooting the system if its registers were trashed.
+ */
+static void pmu_init_registers(void)
+{
+	const struct {
+		uint8_t index;
+		uint8_t value;
+	} reg[] = {
+		{IRQ1MASK, 0x00},
+		{IRQ2MASK, 0x00},
+		{CG_CTRL0, 0x02},
+		{CG_CTRL1, 0x20},
+		{CG_CTRL2, 0x4b},
+		{CG_CTRL3, 0xbf},
+		{CG_CTRL4, 0xf3},
+		{CG_CTRL5, 0xc0},
+		{DCDC1_CTRL, 0x0e},
+		{DCDC2_CTRL, 0x0e},
+		{DCDC3_CTRL, 0x0e},
+		{FET1_CTRL, 0x02},
+		{FET2_CTRL, 0x02},
+		{FET3_CTRL, 0x02},
+		{FET4_CTRL, 0x02},
+		{FET5_CTRL, 0x02},
+		{FET6_CTRL, 0x02},
+		{FET7_CTRL, 0x02},
+		{AD_CTRL, 0x00},
+		{IRQ1_REG, 0x00}
+	};
+
+	uint8_t i;
+	for (i = 0; i < ARRAY_SIZE(reg); i++)
+		pmu_write(reg[i].index, reg[i].value);
+}
+
 void pmu_init(void)
 {
+	/* Reset everything to default, safe values */
+	pmu_init_registers();
+
 #ifdef CONFIG_PMU_BOARD_INIT
 	board_pmu_init();
 #else

@@ -31,6 +31,7 @@
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "power_led.h"
+#include "pmu_tpschrome.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -446,6 +447,7 @@ static void power_off(void)
 	lid_changed = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
+	pmu_shutdown();
 	CPUTS("Shutdown complete.\n");
 }
 

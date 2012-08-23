@@ -184,5 +184,11 @@ int pmu_blink_led(int enable);
  *   */
 void pmu_init(void);
 
+/**
+ * Shut down the pmu, by resetting it's registers to disable it's FETs,
+ * DCDCs and ADC.
+ */
+int pmu_shutdown(void);
+
 #endif /* __CROS_EC_TPSCHROME_H */
 
