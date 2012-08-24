@@ -1010,7 +1010,7 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 	switch (ptr->in.cmd) {
 	case LIGHTBAR_CMD_DUMP:
 		do_cmd_dump(ptr);
-		args->response_size = sizeof(struct ec_params_lightbar_cmd);
+		args->response_size = sizeof(ptr->out.dump);
 		break;
 	case LIGHTBAR_CMD_OFF:
 		lightbar_off();
@@ -1040,7 +1040,7 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
 		ptr->out.get_seq.num = st.cur_seq;
-		args->response_size = sizeof(struct ec_params_lightbar_cmd);
+		args->response_size = sizeof(ptr->out.get_seq);
 		break;
 	case LIGHTBAR_CMD_DEMO:
 		demo_mode = ptr->in.demo.num ? 1 : 0;
