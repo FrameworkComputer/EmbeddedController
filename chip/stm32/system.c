@@ -14,7 +14,6 @@
 
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
-	BKPDATA_INDEX_WAKE,		/* Wake reasons for hibernate */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
 	BKPDATA_INDEX_FAKE_WP,		/* Fake write-protect pin */
 					/* TODO: Remove this when we have real
@@ -22,9 +21,6 @@ enum bkpdata_index {
 					 */
 };
 
-/* Wake reason flags for hibernate */
-#define BKPDATA_WAKE_HIBERNATE		(1 << 0)  /* Hibernate */
-#define BKPDATA_WAKE_HARD_RESET		(1 << 1)  /* Hard reset */
 
 /**
  * Read backup register at specified index.
@@ -55,21 +51,23 @@ static int bkpdata_write(enum bkpdata_index index, uint16_t value)
 
 static void check_reset_cause(void)
 {
-	uint32_t flags = 0;
+	uint32_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
 	uint32_t raw_cause = STM32_RCC_CSR;
 	uint32_t pwr_status = STM32_PWR_CSR;
-	uint32_t bkp_wake_flags = bkpdata_read(BKPDATA_INDEX_WAKE);
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_CR |= 1 << 3;
-	/* Clear hibernate wake flags */
-	bkpdata_write(BKPDATA_INDEX_WAKE, 0);
+	/* Clear saved reset flags */
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
 
 	if (raw_cause & 0x60000000) {
-		/* IWDG or WWDG */
-		flags |= RESET_FLAG_WATCHDOG;
+		/* IWDG or WWDG
+		 * if the watchdog was not used as an hard reset mechanism
+		 */
+		if (!(flags & RESET_FLAG_HARD))
+			flags |= RESET_FLAG_WATCHDOG;
 	}
 
 	if (raw_cause & 0x10000000)
@@ -81,103 +79,21 @@ static void check_reset_cause(void)
 	if (raw_cause & 0x04000000)
 		flags |= RESET_FLAG_RESET_PIN;
 
-	if (pwr_status & 0x00000002) {
+	if (pwr_status & 0x00000002)
 		/* Hibernation and waked */
-		if (bkp_wake_flags & BKPDATA_WAKE_HIBERNATE)
-			flags |= RESET_FLAG_HIBERNATE;
-		/* Hibernation caused by software-triggered hard reset */
-		if (bkp_wake_flags & BKPDATA_WAKE_HARD_RESET)
-			flags |= RESET_FLAG_HARD;
-	}
+		flags |= RESET_FLAG_HIBERNATE;
 
 	if (!flags && (raw_cause & 0xfe000000))
 		flags |= RESET_FLAG_OTHER;
-
-	/* Restore then clear saved reset flags */
-	flags |= bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
 
 	system_set_reset_flags(flags);
 }
 
 
-#ifdef CHIP_VARIANT_stm32f100
-static inline void wait_for_RTOFF(void)
-{
-	while ((STM32_RTC_CRL & 0x20) == 0)
-		;
-}
-
-
-static void __enter_hibernate_stm32f100(uint32_t seconds, uint32_t milliseconds,
-					uint32_t flags)
-{
-	/* Store the hibernate flags */
-	bkpdata_write(BKPDATA_INDEX_WAKE, flags);
-
-	/* Enter RTC configuration mode */
-	wait_for_RTOFF();
-	STM32_RTC_CRL |= 0x10;
-	wait_for_RTOFF();
-
-	/* Set signal period to 0.992 ms. We want 1 ms, but 0.8% error is
-	 * fine. */
-	STM32_RTC_PRLL = 0x20;
-	wait_for_RTOFF();
-
-	/* Setting the alarm register */
-	milliseconds = milliseconds + seconds * 1000;
-	STM32_RTC_ALRH = milliseconds >> 16;
-	wait_for_RTOFF();
-	STM32_RTC_ALRL = milliseconds & 0xffff;
-	wait_for_RTOFF();
-	STM32_RTC_CNTL = 0;
-	wait_for_RTOFF();
-	STM32_RTC_CNTH = 0;
-	wait_for_RTOFF();
-
-	/* Enable RTC alarm interrupt */
-	STM32_RTC_CRH |= 0x2;
-	wait_for_RTOFF();
-
-	/* Clear RTC alarm flag */
-	STM32_RTC_CRL &= ~0x2;
-	wait_for_RTOFF();
-
-	/* Exit RTC configuration mode */
-	STM32_RTC_CRL &= ~0x10;
-	wait_for_RTOFF();
-
-	/* Delay watchdog as long as possible. (~26s)
-	 * TODO: Find a way to disable watchdog, perhaps through reset? */
-	STM32_IWDG_KR = 0x5555;
-	STM32_IWDG_PR = 0x6;
-	STM32_IWDG_RLR = 0xfff;
-	STM32_IWDG_KR = 0xcccc;
-	watchdog_reload();
-
-	/* Set deep sleep bit */
-	CPU_SCB_SYSCTRL |= 0x4;
-	/* Set power down deep sleep bit and clear wakeup flag */
-	STM32_PWR_CR |= 0x6;
-	/* Wait for wakeup flag cleared */
-	while (STM32_PWR_CSR & 0x1)
-		;
-	asm volatile("wfi");
-}
-#endif
-
-
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	/* we are going to hibernate ... */
-#ifdef CHIP_VARIANT_stm32f100
-	__enter_hibernate_stm32f100(seconds, (microseconds + 999) / 1000,
-				    BKPDATA_WAKE_HIBERNATE);
-#else
 	while (1)
 		/* NOT IMPLEMENTED */;
-#endif
 }
 
 
@@ -234,18 +150,23 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		save_flags |= RESET_FLAG_AP_OFF;
 
+	/* Remember that the software asked us to hard reboot */
+	if (flags & SYSTEM_RESET_HARD)
+		save_flags |= RESET_FLAG_HARD;
+
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
-#ifdef CHIP_VARIANT_stm32f100
-		/* Bounce through hibernate to trigger a hard reboot */
-		__enter_hibernate_stm32f100(0, 50, BKPDATA_WAKE_HARD_RESET);
-#else
-		/* Hard reset not supported yet. Using soft reset. */
+		/* Ask the watchdog to trigger a hard reboot */
+		STM32_IWDG_KR = 0x5555;
+		STM32_IWDG_RLR = 0x1;
+		STM32_IWDG_KR = 0xcccc;
+		/* wait for the watchdog */
+		while (1)
+			;
+	} else {
 		CPU_NVIC_APINT = 0x05fa0004;
-#endif
-	} else
-		CPU_NVIC_APINT = 0x05fa0004;
+	}
 
 	/* Spin and wait for reboot; should never return */
 	while (1)
