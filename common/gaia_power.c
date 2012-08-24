@@ -250,9 +250,9 @@ int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
-	/* Leave power off if requested by reset flags */
-	if (system_get_reset_flags() & RESET_FLAG_AP_OFF)
-		auto_power_on = 0;
+	/* Leave power off only if requested by reset flags */
+	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
+		auto_power_on = 1;
 
 	/* Auto power on if the recovery combination was pressed */
 	if (keyboard_scan_recovery_pressed())
