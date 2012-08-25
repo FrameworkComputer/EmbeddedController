@@ -156,6 +156,9 @@ const char *system_get_build_info(void);
 
 void system_reset(int flags);
 
+/* System warm reboot while keeping the RAM alive. */
+void system_warm_reboot(void);
+
 /* Set a scratchpad register to the specified value.  The scratchpad
  * register must maintain its contents across a software-requested
  * warm reset. */

@@ -64,6 +64,16 @@ static const uint8_t actual_key_masks[4][KB_OUTPUTS] = {
 #define MASK_INDEX_REFRESH 2
 #define MASK_VALUE_REFRESH 0x04
 
+/* Key masks and values for warm reboot combination */
+#define MASK_INDEX_KEYR		3
+#define MASK_VALUE_KEYR		0x80
+#define MASK_INDEX_VOL_UP	4
+#define MASK_VALUE_VOL_UP	0x01
+#define MASK_INDEX_RIGHT_ALT	10
+#define MASK_VALUE_RIGHT_ALT	0x01
+#define MASK_INDEX_LEFT_ALT	10
+#define MASK_VALUE_LEFT_ALT	0x40
+
 struct kbc_gpio {
 	int num;		/* logical row or column number */
 	uint32_t port;
@@ -217,6 +227,16 @@ void enter_polling_mode(void)
 	select_column(COL_TRI_STATE_ALL);
 }
 
+static int check_warm_reboot_keys(void)
+{
+	if (raw_state[MASK_INDEX_KEYR] == MASK_VALUE_KEYR &&
+		  raw_state[MASK_INDEX_VOL_UP] == MASK_VALUE_VOL_UP &&
+		  (raw_state[MASK_INDEX_RIGHT_ALT] == MASK_VALUE_RIGHT_ALT ||
+		  raw_state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT))
+		return 1;
+
+	return 0;
+}
 
 /* Returns 1 if any key is still pressed. 0 if no key is pressed. */
 static int check_keys_changed(void)
@@ -294,6 +314,11 @@ static int check_keys_changed(void)
 				CPUTS(" --");
 		}
 		CPUTS("]\n");
+
+		if (num_press == 3) {
+			if (check_warm_reboot_keys())
+				system_warm_reboot();
+		}
 
 		if (kb_fifo_add(raw_state) == EC_SUCCESS)
 			board_interrupt_host(1);

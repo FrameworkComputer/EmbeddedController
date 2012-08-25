@@ -588,3 +588,30 @@ DECLARE_CONSOLE_COMMAND(power, command_power,
 			"on/off",
 			"Turn AP power on/off",
 			NULL);
+
+void system_warm_reboot(void)
+{
+	CPRINTF("[%T EC triggered warm reboot ]\n");
+
+	/* This is a hack to do an AP warm reboot while still preserving
+	 * RAM contents. This is useful for looking at kernel log message
+	 * contents from previous boot in cases where the AP/OS is hard
+	 * hung. */
+	gpio_set_level(GPIO_EN_PP5000, 0);
+	gpio_set_level(GPIO_EN_PP3300, 0);
+
+	power_request = POWER_REQ_ON;
+	task_wake(TASK_ID_GAIAPOWER);
+
+	return;
+}
+
+static int command_warm_reboot(int argc, char **argv)
+{
+	system_warm_reboot();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(warm_reboot, command_warm_reboot,
+			NULL,
+			"EC triggered warm reboot",
+			NULL);
