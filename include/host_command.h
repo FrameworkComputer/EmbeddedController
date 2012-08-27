@@ -21,6 +21,7 @@ struct host_cmd_handler_args {
 	void (*send_response)(struct host_cmd_handler_args *args);
 	uint8_t command;       /* Command (e.g., EC_CMD_FLASH_GET_INFO) */
 	uint8_t version;       /* Version of command (0-31) */
+	uint8_t flags;         /* Flags (EC_HOST_ARGS_FLAG_*) */
 	uint8_t params_size;   /* Size of input parameters in bytes */
 	uint8_t i2c_old_response; /* (for I2C) send an old-style response */
 	const void *params; /* Input parameters */

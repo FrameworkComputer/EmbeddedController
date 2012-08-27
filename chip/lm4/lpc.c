@@ -35,6 +35,7 @@ static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
+static uint8_t params_copy[EC_HOST_PARAM_SIZE];
 static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
@@ -143,14 +144,13 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 		size = 0;
 	}
 
-	/* TODO(sjg@chromium.org): put flags in args? */
-	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+	if (args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
 		/* New-style response */
 		int csum;
 		int i;
 
 		lpc_host_args->flags =
-			(lpc_host_args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+			(args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
 			EC_HOST_ARGS_FLAG_TO_HOST;
 
 		lpc_host_args->data_size = size;
@@ -456,15 +456,16 @@ static void handle_host_command(int cmd)
 	host_cmd_args.command = cmd;
 	host_cmd_args.result = EC_RES_SUCCESS;
 	host_cmd_args.send_response = lpc_send_response;
+	host_cmd_args.flags = lpc_host_args->flags;
 
 	/* See if we have an old or new style command */
-	if (lpc_host_args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+	if (host_cmd_args.flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
 		/* New style command */
 		int size = lpc_host_args->data_size;
 		int csum, i;
 
 		host_cmd_args.version = lpc_host_args->command_version;
-		host_cmd_args.params = cmd_params;
+		host_cmd_args.params = params_copy;
 		host_cmd_args.params_size = size;
 		host_cmd_args.response = cmd_params;
 		host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
@@ -474,14 +475,24 @@ static void handle_host_command(int cmd)
 		if (size > EC_HOST_PARAM_SIZE) {
 			host_cmd_args.result = EC_RES_INVALID_PARAM;
 		} else {
-			/* Verify checksum */
-			csum = host_cmd_args.command +
-				lpc_host_args->flags +
-				lpc_host_args->command_version +
-				lpc_host_args->data_size;
+			const uint8_t *src = cmd_params;
+			uint8_t *copy = params_copy;
 
-			for (i = 0; i < size; i++)
-				csum += cmd_params[i];
+			/*
+			 * Verify checksum and copy params out of LPC space.
+			 * This ensures the data acted on by the host command
+			 * handler can't be changed by host writes after the
+			 * checksum is verified.
+			 */
+			csum = host_cmd_args.command +
+				host_cmd_args.flags +
+				host_cmd_args.version +
+				host_cmd_args.params_size;
+
+			for (i = 0; i < size; i++) {
+				csum += *src;
+				*(copy++) = *(src++);
+			}
 
 			if ((uint8_t)csum != lpc_host_args->checksum)
 				host_cmd_args.result = EC_RES_INVALID_CHECKSUM;
