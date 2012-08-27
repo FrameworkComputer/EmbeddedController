@@ -32,6 +32,8 @@ const char help_str[] =
 	"      Enable/disable LCD backlight\n"
 	"  battery\n"
 	"      Prints battery info\n"
+	"  batterycutoff\n"
+	"      Cut off battery output power\n"
 	"  chargeforceidle\n"
 	"      Force charge state machine to stop in idle mode\n"
 	"  chipinfo\n"
@@ -1912,6 +1914,30 @@ cmd_error:
 	return -1;
 }
 
+int cmd_battery_cut_off(int argc, char *argv[])
+{
+	int rv;
+
+	rv = ec_command(EC_CMD_BATTERY_CUT_OFF, 0, NULL, 0, NULL, 0);
+	rv = (rv < 0 ? rv : 0);
+
+	if (rv < 0) {
+		fprintf(stderr, "Failed to cut off battery, rv=%d\n", rv);
+		fprintf(stderr, "It is expected if the rv is -%d "
+				"(EC_RES_INVALID_COMMAND) if the battery "
+				"doesn't support cut-off function.\n",
+				EC_RES_INVALID_COMMAND);
+	} else {
+		printf("\n");
+		printf("SUCCESS. The battery has arranged a cut-off and\n");
+		printf("the system should be shutdown immediately.\n");
+		printf("\n");
+		printf("If the system is still alive, you could remove\n");
+		printf("the AC power and try again.\n");
+	}
+	return rv;
+}
+
 int cmd_chipinfo(int argc, char *argv[])
 {
 	struct ec_response_get_chip_info info;
@@ -2130,6 +2156,7 @@ const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
+	{"batterycutoff", cmd_battery_cut_off},
 	{"chargeforceidle", cmd_charge_force_idle},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},

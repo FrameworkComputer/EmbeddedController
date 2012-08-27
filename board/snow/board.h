@@ -59,6 +59,9 @@
 
 #define CONFIG_CMD_PMU
 
+/* Battery */
+#define CONFIG_BATTERY_BQ20Z453
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */

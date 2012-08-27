@@ -963,6 +963,14 @@ struct ec_params_force_idle {
  */
 #define EC_CMD_CONSOLE_READ 0x98
 
+/*
+ * Cut off battery power output if the battery supports.
+ *
+ * For unsupported battery, just don't implement this command and lets EC
+ * return EC_RES_INVALID_COMMAND.
+ */
+#define EC_CMD_BATTERY_CUT_OFF 0x99
+
 /*****************************************************************************/
 /* System commands */
 
