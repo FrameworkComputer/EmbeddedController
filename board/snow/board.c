@@ -10,6 +10,7 @@
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "pmu_tpschrome.h"
 #include "power_led.h"
@@ -20,6 +21,9 @@
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_OPEN_DRAIN)
+
+#define INT_BOTH_FLOATING	(GPIO_INPUT | GPIO_INT_BOTH)
+#define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
 /* GPIO interrupt handlers prototypes */
 #ifndef CONFIG_TASK_GAIAPOWER
@@ -43,7 +47,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, gaia_power_event},
 	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_FALLING, pmu_irq_handler},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
-	{"SUSPEND_L",   GPIO_A, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
+	{"SUSPEND_L",   GPIO_A, (1<<7),  INT_BOTH_FLOATING, gaia_suspend_event},
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT, matrix_interrupt},
@@ -196,6 +200,21 @@ void board_power_led_config(enum powerled_config config)
 		break;
 	}
 }
+
+static int board_startup_hook(void)
+{
+	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
+	return 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
+
+static int board_shutdown_hook(void)
+{
+	/* Disable pull-up on SUSPEND_L during shutdown to prevent leakage */
+	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
+	return 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
 
 enum {
 	/* Time between requesting bus and deciding that we have it */
