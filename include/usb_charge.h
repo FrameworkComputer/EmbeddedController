@@ -13,16 +13,12 @@
 enum usb_charge_mode {
 	/* Disable USB port. */
 	USB_CHARGE_MODE_DISABLED,
-	/* Set USB port to be dedicated charging port, auto selecting charging
-	 * schemes. */
-	USB_CHARGE_MODE_CHARGE_AUTO,
-	/* Set USB port to be dedicated charging port following USB Battery
-	 * Charging Specification 1.2. */
-	USB_CHARGE_MODE_CHARGE_BC12,
-	/* Set USB port to be standard downstream port, with current limit set
-	 * to 500mA or 1500mA. */
-	USB_CHARGE_MODE_DOWNSTREAM_500MA,
-	USB_CHARGE_MODE_DOWNSTREAM_1500MA,
+	/* Set USB port to Standard Downstream Port, USB 2.0 mode. */
+	USB_CHARGE_MODE_SDP2,
+	/* Set USB port to Charging Downstream Port, BC 1.2. */
+	USB_CHARGE_MODE_CDP,
+	/* Set USB port to Dedicated Charging Port, BC 1.2. */
+	USB_CHARGE_MODE_DCP_SHORT,
 
 	USB_CHARGE_MODE_COUNT
 };

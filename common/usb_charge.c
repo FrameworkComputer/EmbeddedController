@@ -62,8 +62,8 @@ static void usb_charge_set_ilim(int port_id, int sel)
 
 static int usb_charge_all_ports_on(void)
 {
-	usb_charge_set_mode(0, USB_CHARGE_MODE_DOWNSTREAM_500MA);
-	usb_charge_set_mode(1, USB_CHARGE_MODE_DOWNSTREAM_500MA);
+	usb_charge_set_mode(0, USB_CHARGE_MODE_SDP2);
+	usb_charge_set_mode(1, USB_CHARGE_MODE_SDP2);
 	return EC_SUCCESS;
 }
 
@@ -89,23 +89,19 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 		usb_charge_set_enabled(port_id, 1);
 
 	switch (mode) {
-		case USB_CHARGE_MODE_CHARGE_AUTO:
-			usb_charge_set_control_mode(port_id, 1);
-			usb_charge_set_ilim(port_id, 1);
-			break;
-		case USB_CHARGE_MODE_CHARGE_BC12:
-			usb_charge_set_control_mode(port_id, 4);
-			break;
-		case USB_CHARGE_MODE_DOWNSTREAM_500MA:
-			usb_charge_set_control_mode(port_id, 2);
-			usb_charge_set_ilim(port_id, 0);
-			break;
-		case USB_CHARGE_MODE_DOWNSTREAM_1500MA:
-			usb_charge_set_control_mode(port_id, 2);
-			usb_charge_set_ilim(port_id, 1);
-			break;
-		default:
-			return EC_ERROR_UNKNOWN;
+	case USB_CHARGE_MODE_SDP2:
+		usb_charge_set_control_mode(port_id, 7);
+		usb_charge_set_ilim(port_id, 0);
+		break;
+	case USB_CHARGE_MODE_CDP:
+		usb_charge_set_control_mode(port_id, 7);
+		usb_charge_set_ilim(port_id, 1);
+		break;
+	case USB_CHARGE_MODE_DCP_SHORT:
+		usb_charge_set_control_mode(port_id, 4);
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
 	}
 
 	charge_mode[port_id] = mode;
@@ -136,13 +132,12 @@ static int command_set_mode(int argc, char **argv)
 	return usb_charge_set_mode(port_id, mode);
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
-			"<port> <0 | 1 | 2 | 3 | 4>",
+			"<port> <0 | 1 | 2 | 3>",
 			"Set USB charge mode",
 			"Modes: 0=Disabled.\n"
-			"       1=Dedicated charging. Auto select.\n"
-			"       2=Dedicated charging. BC 1.2.\n"
-			"       3=Downstream. Max 500mA.\n"
-			"       4=Downstream. Max 1.5A.\n");
+			"       1=Standard downstream port.\n"
+			"	2=Charging downstream port, BC 1.2.\n"
+			"       3=Dedicated charging port, BC 1.2.\n");
 
 
 /*****************************************************************************/
