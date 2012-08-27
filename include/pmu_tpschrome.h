@@ -47,6 +47,18 @@ enum TPS_TERMINATION_CURRENT {
 	TERM_I1000,		/* 100  % */
 };
 
+/* Fast charge timeout */
+enum FASTCHARGE_TIMEOUT {
+	TIMEOUT_2HRS,
+	TIMEOUT_3HRS,
+	TIMEOUT_4HRS,
+	TIMEOUT_5HRS,
+	TIMEOUT_6HRS,
+	TIMEOUT_7HRS,
+	TIMEOUT_8HRS,
+	TIMEOUT_10HRS,          /* No 9 hours option */
+};
+
 #define FET_BACKLIGHT 1
 #define FET_LCD_PANEL 6
 
@@ -111,7 +123,7 @@ int pmu_get_power_source(int *ac_good, int *battery_good);
 int pmu_enable_fet(int fet_id, int enable, int *power_good);
 
 /**
- * Enable/disable pmu internal charger
+ * Enable/disable pmu internal charger force charging mode
  *
  * @param enable        0 to disable the charger, 1 to enable
  * @return              EC_SUCCESS if no I2C communication error
@@ -189,6 +201,21 @@ void pmu_init(void);
  * DCDCs and ADC.
  */
 int pmu_shutdown(void);
+
+/**
+ * Set external charge enable pin
+ *
+ * @param enable        boolean, set 1 to eanble external control
+ */
+int pmu_enable_ext_control(int enable);
+
+/**
+ * Set fast charge timeout
+ *
+ * @param timeout         enum FASTCHARGE_TIMEOUT
+ */
+int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout);
+
 
 #endif /* __CROS_EC_TPSCHROME_H */
 

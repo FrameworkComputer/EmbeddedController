@@ -279,11 +279,12 @@ void board_pmu_init(void)
 {
 	int ver;
 
-	/*
-	 * Set fast charging timeout to 3hr.
-	 * Enable gpio charge_en control.
-	 */
-	pmu_write(0x04, 0x06);
+	/* Set fast charging timeout to 6 hours*/
+	pmu_set_fastcharge(TIMEOUT_6HRS);
+	/* Enable external gpio CHARGER_EN control */
+	pmu_enable_ext_control(1);
+	/* Disable force charging */
+	pmu_enable_charger(0);
 
 	/* Set NOITERM bit */
 	pmu_low_current_charging(1);

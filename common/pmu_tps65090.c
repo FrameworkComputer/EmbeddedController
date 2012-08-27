@@ -49,7 +49,10 @@
 #define TPSCHROME_VER 0x19
 
 /* Charger control */
-#define CG_CTRL0_EN   1
+#define CG_EN               (1 << 0)
+#define CG_EXT_EN           (1 << 1)
+#define CG_FASTCHARGE_SHIFT 2
+#define CG_FASTCHARGE_MASK  (7 << CG_FASTCHARGE_SHIFT)
 
 /* Charger termination voltage/current */
 #define CG_VSET_SHIFT   3
@@ -164,6 +167,13 @@ int pmu_get_power_source(int *ac_good, int *battery_good)
 	return EC_SUCCESS;
 }
 
+/**
+ * Enable charger's charging function
+ *
+ * When enable, charger ignores external control and charge the
+ * battery directly. If EC wants to contorl charging, set the flag
+ * to 0.
+ */
 int pmu_enable_charger(int enable)
 {
 	int rv;
@@ -173,11 +183,54 @@ int pmu_enable_charger(int enable)
 	if (rv)
 		return rv;
 
-	if (reg & CG_CTRL0_EN)
-		return EC_SUCCESS;
+	if (enable)
+		reg |= CG_EN;
+	else
+		reg &= ~CG_EN;
 
-	return pmu_write(CG_CTRL0, enable ? (reg | CG_CTRL0_EN) :
-			(reg & ~CG_CTRL0));
+	return pmu_write(CG_CTRL0, reg);
+}
+
+/**
+ * Set external charge enable pin
+ *
+ * @param enable        boolean, set 1 to eanble external control
+ */
+int pmu_enable_ext_control(int enable)
+{
+	int rv;
+	int reg;
+
+	rv = pmu_read(CG_CTRL0, &reg);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg |= CG_EXT_EN;
+	else
+		reg &= ~CG_EXT_EN;
+
+	return pmu_write(CG_CTRL0, reg);
+}
+
+/**
+ * Set fast charge timeout
+ *
+ * @param timeout         enum FASTCHARGE_TIMEOUT
+ */
+int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout)
+{
+	int rv;
+	int reg;
+
+	rv = pmu_read(CG_CTRL0, &reg);
+	if (rv)
+		return rv;
+
+	reg &= ~CG_FASTCHARGE_MASK;
+	reg |= (timeout << CG_FASTCHARGE_SHIFT) & CG_FASTCHARGE_MASK;
+
+	return pmu_write(CG_CTRL0, reg);
 }
 
 /**
