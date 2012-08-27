@@ -447,7 +447,8 @@ static void power_off(void)
 	lid_changed = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
-	pmu_shutdown();
+	if (pmu_shutdown())
+		board_hard_reset();
 	CPUTS("Shutdown complete.\n");
 }
 

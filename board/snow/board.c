@@ -68,6 +68,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
+	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_D, (1<<0),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
@@ -287,41 +288,63 @@ void board_i2c_release(int port)
 }
 #endif /* CONFIG_ARBITRATE_I2C */
 
+/*
+ * Force the pmic to reset completely.  This forces an entire system reset,
+ * and therefore should never return
+ */
+void board_hard_reset(void)
+{
+	/* Force a hard reset of tps Chrome */
+	gpio_set_level(GPIO_PMIC_RESET, 1);
+	/* Hang until the power is cut */
+	while (1)
+		;
+}
+
 #ifdef CONFIG_PMU_BOARD_INIT
+
 /**
  * Initialize PMU register settings
  *
  * PMU init settings depend on board configuration. This function should be
  * called inside PMU init function.
  */
-void board_pmu_init(void)
+int board_pmu_init(void)
 {
-	int ver;
+	int ver, failure = 0;
 
 	/* Set fast charging timeout to 6 hours*/
-	pmu_set_fastcharge(TIMEOUT_6HRS);
+	if (!failure)
+		failure = pmu_set_fastcharge(TIMEOUT_6HRS);
 	/* Enable external gpio CHARGER_EN control */
-	pmu_enable_ext_control(1);
+	if (!failure)
+		failure = pmu_enable_ext_control(1);
 	/* Disable force charging */
-	pmu_enable_charger(0);
+	if (!failure)
+		failure = pmu_enable_charger(0);
 
 	/* Set NOITERM bit */
-	pmu_low_current_charging(1);
+	if (!failure)
+		failure = pmu_low_current_charging(1);
 
 	/*
 	 * High temperature charging
 	 *   termination voltage: 2.1V
 	 *   termination current: 100%
 	 */
-	pmu_set_term_voltage(RANGE_T34, TERM_V2100);
-	pmu_set_term_current(RANGE_T34, TERM_I1000);
+	if (!failure)
+		failure = pmu_set_term_voltage(RANGE_T34, TERM_V2100);
+	if (!failure)
+		failure = pmu_set_term_current(RANGE_T34, TERM_I1000);
 	/*
 	 * Standard temperature charging
 	 *   termination voltage: 2.1V
 	 *   termination current: 100%
 	 */
-	pmu_set_term_voltage(RANGE_T23, TERM_V2100);
-	pmu_set_term_current(RANGE_T23, TERM_I1000);
+	if (!failure)
+		failure = pmu_set_term_voltage(RANGE_T23, TERM_V2100);
+	if (!failure)
+		failure = pmu_set_term_current(RANGE_T23, TERM_I1000);
 
 	/*
 	 * Ignore TPSCHROME NTC reading in T40. This is snow board specific
@@ -329,15 +352,22 @@ void board_pmu_init(void)
 	 *   http://crosbug.com/p/12221
 	 *   http://crosbug.com/p/13171
 	 */
-	pmu_set_term_voltage(RANGE_T40, TERM_V2100);
-	pmu_set_term_current(RANGE_T40, TERM_I1000);
+	if (!failure)
+		failure = pmu_set_term_voltage(RANGE_T40, TERM_V2100);
+	if (!failure)
+		failure = pmu_set_term_current(RANGE_T40, TERM_I1000);
 
 	/* Workaround init values before ES3 */
 	if (pmu_version(&ver) || ver < 3) {
 		/* Termination current: 75% */
-		pmu_set_term_current(RANGE_T34, TERM_I0750);
-		pmu_set_term_current(RANGE_T23, TERM_I0750);
-		pmu_set_term_current(RANGE_T40, TERM_I0750);
+		if (!failure)
+			failure = pmu_set_term_current(RANGE_T34, TERM_I0750);
+		if (!failure)
+			failure = pmu_set_term_current(RANGE_T23, TERM_I0750);
+		if (!failure)
+			failure = pmu_set_term_current(RANGE_T40, TERM_I0750);
 	}
+
+	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 #endif /* CONFIG_BOARD_PMU_INIT */

@@ -216,6 +216,10 @@ int pmu_enable_ext_control(int enable);
  */
 int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout);
 
+/**
+ * Reset the entire board if it is capable
+ */
+void board_hard_reset(void);
 
 #endif /* __CROS_EC_TPSCHROME_H */
 

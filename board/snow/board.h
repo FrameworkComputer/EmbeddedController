@@ -91,6 +91,7 @@ enum gpio_signal {
 	GPIO_EN_PP5000,        /* 5.0v rail enable */
 	GPIO_EN_PP3300,        /* 3.3v rail enable */
 	GPIO_PMIC_PWRON_L,     /* 5v rail ready */
+	GPIO_PMIC_RESET,       /* Force hard reset of the pmic */
 	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
@@ -123,7 +124,10 @@ void matrix_interrupt(enum gpio_signal signal);
 void board_interrupt_host(int active);
 
 /* Initialize PMU registers using board settings */
-void board_pmu_init(void);
+int board_pmu_init(void);
+
+/* Force the pmu to reset everything on the board */
+void board_hard_reset(void);
 
 #endif /* !__ASSEMBLER__ */
 

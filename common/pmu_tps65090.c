@@ -77,6 +77,13 @@
 /* Charger alarm */
 #define CHARGER_ALARM 3
 
+void __board_hard_reset(void)
+{
+	CPRINTF("This board is not capable of a hard reset.\n");
+}
+void board_hard_reset(void)
+	__attribute__((weak, alias("__board_hard_reset")));
+
 /* Charger temperature threshold table */
 static const uint8_t const pmu_temp_threshold[] = {
 	1, /* 0b001,  0 degree C */
@@ -402,25 +409,30 @@ int pmu_get_ac(void)
 
 int pmu_shutdown(void)
 {
-	int offset, rv = 0;
+	int offset, failure = 0;
 
 	/* Disable each of the DCDCs */
-	for (offset = DCDC1_CTRL; offset <= DCDC3_CTRL; offset++)
-		rv |= pmu_write(offset, 0x0e);
+	for (offset = DCDC1_CTRL; offset <= DCDC3_CTRL; offset++) {
+		if (!failure)
+			failure = pmu_write(offset, 0x0e);
+	}
 	/* Disable each of the FETs */
-	for (offset = FET1_CTRL; offset <= FET7_CTRL; offset++)
-		rv |= pmu_write(offset, 0x02);
+	for (offset = FET1_CTRL; offset <= FET7_CTRL; offset++) {
+		if (!failure)
+			failure = pmu_write(offset, 0x02);
+	}
 	/* Clearing AD controls/status */
-	rv |= pmu_write(AD_CTRL, 0x00);
+	if (!failure)
+		failure = pmu_write(AD_CTRL, 0x00);
 
-	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 
 /*
  * Fill all of the pmu registers with known good values, this allows the
  * pmu to recover by rebooting the system if its registers were trashed.
  */
-static void pmu_init_registers(void)
+static int pmu_init_registers(void)
 {
 	const struct {
 		uint8_t index;
@@ -447,19 +459,28 @@ static void pmu_init_registers(void)
 		{AD_CTRL, 0x00},
 		{IRQ1_REG, 0x00}
 	};
+	uint8_t i, rv;
 
-	uint8_t i;
-	for (i = 0; i < ARRAY_SIZE(reg); i++)
-		pmu_write(reg[i].index, reg[i].value);
+	for (i = 0; i < ARRAY_SIZE(reg); i++) {
+		rv = pmu_write(reg[i].index, reg[i].value);
+		if (rv)
+			return rv;
+	}
+
+	return EC_SUCCESS;
 }
 
 void pmu_init(void)
 {
+	int failure = 0;
+
 	/* Reset everything to default, safe values */
-	pmu_init_registers();
+	if (!failure)
+		failure = pmu_init_registers();
 
 #ifdef CONFIG_PMU_BOARD_INIT
-	board_pmu_init();
+	if (!failure)
+		failure = board_pmu_init();
 #else
 	/* Init configuration
 	 *   Fast charge timer    : 2 hours
@@ -468,28 +489,39 @@ void pmu_init(void)
 	 *
 	 * TODO: move settings to battery pack specific init
 	 */
-	pmu_write(CG_CTRL0, 2);
+	if (!failure)
+		failure = pmu_write(CG_CTRL0, 2);
 	/* Limit full charge current to 50%
 	 * TODO: remove this temporary hack.
 	 */
-	pmu_write(CG_CTRL3, 0xbb);
+	if (!failure)
+		failure = pmu_write(CG_CTRL3, 0xbb);
 #endif
 	/* Enable interrupts */
-	pmu_write(IRQ1MASK,
-		EVENT_VACG  | /* AC voltage good */
-		EVENT_VSYSG | /* System voltage good */
-		EVENT_VBATG | /* Battery voltage good */
-		EVENT_CGACT | /* Charging status */
-		EVENT_CGCPL); /* Charging complete */
-	pmu_write(IRQ2MASK, 0);
-	pmu_clear_irq();
+	if (!failure) {
+		failure = pmu_write(IRQ1MASK,
+					EVENT_VACG  | /* AC voltage good */
+					EVENT_VSYSG | /* System voltage good */
+					EVENT_VBATG | /* Battery voltage good */
+					EVENT_CGACT | /* Charging status */
+					EVENT_CGCPL); /* Charging complete */
+	}
+	if (!failure)
+		failure = pmu_write(IRQ2MASK, 0);
+	if (!failure)
+		failure = pmu_clear_irq();
 
 	/* Enable charger interrupt. */
-	gpio_enable_interrupt(GPIO_CHARGER_INT);
+	if (!failure)
+		failure = gpio_enable_interrupt(GPIO_CHARGER_INT);
 
 #ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
+	if (!failure)
+		failure = gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
 #endif
+
+	if (failure)
+		board_hard_reset();
 }
 
 /* Initializes PMU when power is turned on.  This is necessary because the TPS'
@@ -532,6 +564,9 @@ static int command_pmu(int argc, char **argv)
 	if (argc > 1) {
 		repeat = strtoi(argv[1], &e, 0);
 		if (*e) {
+			if (strlen(argv[1]) >= 1 && argv[1][0] == 'r')
+				board_hard_reset();
+
 			ccputs("Invalid repeat count\n");
 			return EC_ERROR_INVAL;
 		}
@@ -554,7 +589,7 @@ static int command_pmu(int argc, char **argv)
 	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pmu, command_pmu,
-			"<repeat_count>",
-			"Print PMU info",
+			"<repeat_count|reset>",
+			"Print PMU info or force a hard reset",
 			NULL);
 #endif
