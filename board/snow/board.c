@@ -303,11 +303,21 @@ void board_pmu_init(void)
 	pmu_set_term_voltage(RANGE_T23, TERM_V2100);
 	pmu_set_term_current(RANGE_T23, TERM_I1000);
 
+	/*
+	 * Ignore TPSCHROME NTC reading in T40. This is snow board specific
+	 * setting. Check:
+	 *   http://crosbug.com/p/12221
+	 *   http://crosbug.com/p/13171
+	 */
+	pmu_set_term_voltage(RANGE_T40, TERM_V2100);
+	pmu_set_term_current(RANGE_T40, TERM_I1000);
+
 	/* Workaround init values before ES3 */
 	if (pmu_version(&ver) || ver < 3) {
 		/* Termination current: 75% */
 		pmu_set_term_current(RANGE_T34, TERM_I0750);
 		pmu_set_term_current(RANGE_T23, TERM_I0750);
+		pmu_set_term_current(RANGE_T40, TERM_I0750);
 	}
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
