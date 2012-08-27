@@ -641,7 +641,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 				      EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
 
-	if (mask & EC_FLASH_PROTECT_ALL_NOW) {
+	if (mask & flags & EC_FLASH_PROTECT_ALL_NOW) {
 		/*
 		 * Since RO is already protected, protecting entire flash
 		 * is effectively protecting RW.
