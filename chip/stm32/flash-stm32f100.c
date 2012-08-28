@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "flash.h"
+#include "hooks.h"
 #include "registers.h"
 #include "panic.h"
 #include "power_button.h"
@@ -73,6 +74,13 @@ struct persist_state {
 
 /* Flag indicating whether we have locked down entire flash */
 static int entire_flash_locked;
+
+#define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
+#define FLASH_HOOK_VERSION 1
+/* The previous write protect state before sys jump */
+struct flash_wp_state {
+	int entire_flash_locked;
+};
 
 /* Functions defined in system.c to access backup registers */
 int system_set_fake_wp(int val);
@@ -528,13 +536,21 @@ int flash_pre_init(void)
 	uint32_t reset_flags = system_get_reset_flags();
 	uint32_t prot_flags = flash_get_protect();
 	int need_reset = 0;
+	const struct flash_wp_state *prev;
+	int version, size;
 
 	/*
 	 * If we have already jumped between images, an earlier image could
 	 * have applied write protection. Nothing additional needs to be done.
 	 */
-	if (reset_flags & RESET_FLAG_SYSJUMP)
+	if (reset_flags & RESET_FLAG_SYSJUMP) {
+		prev = (const struct flash_wp_state *)system_get_jump_tag(
+				FLASH_SYSJUMP_TAG, &version, &size);
+		if (prev && version == FLASH_HOOK_VERSION &&
+		    size == sizeof(*prev))
+			entire_flash_locked = prev->entire_flash_locked;
 		return EC_SUCCESS;
+	}
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
@@ -676,3 +692,18 @@ DECLARE_CONSOLE_COMMAND(fakewp, command_set_fake_wp,
 			"<0 | 1>",
 			"Set fake write protect pin",
 			NULL);
+
+/*****************************************************************************/
+/* Hooks */
+
+static int flash_preserve_state(void)
+{
+	struct flash_wp_state state;
+
+	state.entire_flash_locked = entire_flash_locked;
+
+	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
+			    sizeof(state), &state);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
