@@ -153,43 +153,6 @@ int gpio_init(void)
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 
-void gpio_set_alternate_function(int port, int mask, int func)
-{
-	int i;
-	const struct gpio_info *g = gpio_list;
-	uint32_t addr, cnf, mode, val = 0;
-
-	/*
-	 * TODO(dhendrix): STM32 GPIO registers do not have free-form
-	 * alternate function setup like the STM32, where each pin can
-	 * be configured for any alternate function (though not necessarily
-	 * in a valid fashion). Instead, pre-determined sets of pins for a
-	 * a given alternate function are chosen via a remapping register.
-	 *
-	 * Consequently, this function becomes very simple and can (should?)
-	 * be merged into gpio_pre_init.
-	 */
-	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		if ((g->port != port) || (g->mask != mask))
-			continue;
-
-		gpio_config_info(g, &addr, &mode, &cnf);
-		val = REG32(addr) & ~cnf;
-
-		/* switch from general output to alternate output mode */
-		if (g->flags & GPIO_OUTPUT) {
-			if (g->flags & GPIO_OPEN_DRAIN)
-				val |= 0xcccccccc & cnf;
-			else
-				val |= 0x88888888 & cnf;
-		}
-
-		REG32(addr) = val ;
-		break;
-	}
-}
-
-
 uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
 {
 	*mask = gpio_list[signal].mask;
