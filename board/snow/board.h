@@ -84,6 +84,10 @@ enum gpio_signal {
 	/* Other inputs */
 	GPIO_AC_PWRBTN_L,
 	GPIO_SPI1_NSS,
+	GPIO_I2C1_SCL,
+	GPIO_I2C1_SDA,
+	GPIO_I2C2_SCL,
+	GPIO_I2C2_SDA,
 	/* Outputs */
 	GPIO_AC_STATUS,
 	GPIO_SPI1_MISO,

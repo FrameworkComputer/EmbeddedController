@@ -60,7 +60,14 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Other inputs */
 	{"AC_PWRBTN_L", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
 	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_DEFAULT, NULL},
-
+	/*
+	 * I2C pins should be configured as inputs until I2C module is
+	 * initialized. This will avoid driving the lines unintentionally.
+	 */
+	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_INPUT, NULL},
+	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_INPUT, NULL},
+	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
+	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
 	/* Outputs */
 	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_DEFAULT, NULL},
 	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_DEFAULT, NULL},
@@ -115,20 +122,6 @@ void configure_board(void)
 			       | (1 << 8);
 
 	/*
-	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,
-	 * initialized as hi-Z until alt. function is set
-	 */
-	val = STM32_GPIO_CRH_OFF(GPIO_B) & ~0x0000ff00;
-	val |= 0x0000dd00;
-	STM32_GPIO_CRH_OFF(GPIO_B) = val;
-
-	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0xff000000;
-	val |= 0xdd000000;
-	STM32_GPIO_CRL_OFF(GPIO_B) = val;
-
-	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
-
-	/*
 	 * Set alternate function for USART1. For alt. function input
 	 * the port is configured in either floating or pull-up/down
 	 * input mode (ref. section 7.1.4 in datasheet RM0041):
@@ -147,6 +140,25 @@ void configure_board(void)
 	STM32_GPIO_CRH_OFF(GPIO_B) = val;
 	/* put GPIO in Hi-Z state */
 	gpio_set_level(GPIO_EC_INT, 1);
+}
+
+/* GPIO configuration to be done after I2C module init */
+void board_i2c_post_init(int port)
+{
+	uint32_t val;
+
+	/* enable alt. function (open-drain) */
+	if (port == STM32_I2C1_PORT) {
+		/* I2C1 is on PB6-7 */
+		val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0xff000000;
+		val |= 0xdd000000;
+		STM32_GPIO_CRL_OFF(GPIO_B) = val;
+	} else if (port == STM32_I2C2_PORT) {
+		/* I2C2 is on PB10-11 */
+		val = STM32_GPIO_CRH_OFF(GPIO_B) & ~0x0000ff00;
+		val |= 0x0000dd00;
+		STM32_GPIO_CRH_OFF(GPIO_B) = val;
+	}
 }
 
 void configure_board_late(void)

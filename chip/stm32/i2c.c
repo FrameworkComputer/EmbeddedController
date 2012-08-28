@@ -352,6 +352,14 @@ static void i2c_error_handler(int port)
 static void i2c2_error_interrupt(void) { i2c_error_handler(I2C2); }
 DECLARE_IRQ(STM32_IRQ_I2C2_ER, i2c2_error_interrupt, 2);
 
+/* board-specific setup for post-I2C module init */
+void __board_i2c_post_init(int port)
+{
+}
+
+void board_i2c_post_init(int port)
+		__attribute__((weak, alias("__board_i2c_post_init")));
+
 static int i2c_init2(void)
 {
 	/* enable I2C2 clock */
@@ -380,6 +388,8 @@ static int i2c_init2(void)
 	/* enable event and error interrupts */
 	task_enable_irq(STM32_IRQ_I2C2_EV);
 	task_enable_irq(STM32_IRQ_I2C2_ER);
+
+	board_i2c_post_init(I2C2);
 
 	CPUTS("done\n");
 	return EC_SUCCESS;
@@ -410,6 +420,8 @@ static int i2c_init1(void)
 	/* enable event and error interrupts */
 	task_enable_irq(STM32_IRQ_I2C1_EV);
 	task_enable_irq(STM32_IRQ_I2C1_ER);
+
+	board_i2c_post_init(I2C1);
 
 	return EC_SUCCESS;
 
