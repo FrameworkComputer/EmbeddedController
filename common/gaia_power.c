@@ -214,6 +214,10 @@ void gaia_suspend_event(enum gpio_signal signal)
 	if (!ap_on) /* power on/off : not a real suspend / resume */
 		return;
 
+	/*
+	 * Note: For Snow, suspend state can only be reliably
+	 * determined when the AP is on (crosbug.com/p/13200).
+	 */
 	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
 
 	if (ap_suspended) {
@@ -268,13 +272,6 @@ int gaia_power_init(void)
 
 int chipset_in_state(int state_mask)
 {
-	/*
-	 * TODO(rongchang): fix suspend signal
-	 * gaia_suspend_event() doesn't work. get ap_suspended
-	 * again.
-	 */
-	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
-
 	/* If AP is off, match any off state for now */
 	if ((state_mask & CHIPSET_STATE_ANY_OFF) && !ap_on)
 		return 1;
@@ -444,6 +441,7 @@ static void power_off(void)
 	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	gpio_set_level(GPIO_EN_PP5000, 0);
 	ap_on = 0;
+	ap_suspended = 0;
 	lid_changed = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
