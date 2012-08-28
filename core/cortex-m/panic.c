@@ -6,6 +6,7 @@
 #include <stdarg.h>
 
 #include "config.h"
+#include "console.h"
 #include "cpu.h"
 #include "panic.h"
 #include "system.h"
@@ -22,15 +23,49 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-/* We save registers here for display by report_panic() */
-static struct save_area
-{
-#ifdef CONFIG_PANIC_NEW_STACK
-	uint32_t stack[STACK_SIZE_WORDS];
-#endif
-	uint32_t saved_regs[11];	/* psp, ipsr, lr, r4-r11 */
-} save_area __attribute__((aligned(8)));
+/* Data saved across reboots */
+struct panic_data {
+	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
+	uint8_t struct_version;   /* Structure version (currently 1) */
+	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
+	uint8_t reserved;         /* Reserved; set 0 */
 
+	uint32_t regs[11];        /* psp, ipsr, lr, r4-r11 */
+	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
+
+	uint32_t mmfs;
+	uint32_t bfar;
+	uint32_t mfar;
+	uint32_t shcsr;
+	uint32_t hfsr;
+	uint32_t dfsr;
+
+	/*
+	 * These fields go at the END of the struct so we can find it at the
+	 * end of memory.
+	 */
+	uint32_t struct_size;     /* Size of this struct */
+	uint32_t magic;           /* PANIC_SAVE_MAGIC if valid */
+};
+
+#define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
+
+#define PANIC_ARCH_CORTEX_M 1
+
+/* Flags for panic_data.flags */
+#define PANIC_DATA_FLAG_FRAME_VALID (1 << 0)  /* panic_data.frame is valid */
+
+/*
+ * Panic data goes at the end of RAM.  This is safe because we don't context
+ * switch away from the panic handler before rebooting, and stacks and data
+ * start at the beginning of RAM.
+ */
+static struct panic_data * const pdata_ptr =
+	(struct panic_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
+			     - sizeof(struct panic_data));
+/* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
+static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
+				     - sizeof(struct panic_data)) & ~7;
 
 void panic_putc(int ch)
 {
@@ -136,7 +171,7 @@ void panic_printf(const char *format, ...)
  * @param regs		Pointer to array holding the registers, or NULL
  * @param index		Index into array where the register value is present
  */
-static void print_reg(int regnum, uint32_t *regs, int index)
+static void print_reg(int regnum, const uint32_t *regs, int index)
 {
 	static const char regname[] = "r10r11r12sp lr pc ";
 	static char rname[3] = "r  ";
@@ -269,21 +304,18 @@ static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
  * We show fault register information, including the fault address registers
  * if valid.
  */
-static void panic_show_extra(void)
+static void panic_show_extra(const struct panic_data *pdata)
 {
-	uint32_t mmfs;
-
-	mmfs = CPU_NVIC_MMFS;
-	show_fault(mmfs, CPU_NVIC_HFSR, CPU_NVIC_DFSR);
-	if (mmfs & CPU_NVIC_MMFS_BFARVALID)
-		panic_printf(", bfar = %x", CPU_NVIC_BFAR);
-	if (mmfs & CPU_NVIC_MMFS_MFARVALID)
-		panic_printf(", mfar = %x", CPU_NVIC_MFAR);
+	show_fault(pdata->mmfs, pdata->hfsr, pdata->dfsr);
+	if (pdata->mmfs & CPU_NVIC_MMFS_BFARVALID)
+		panic_printf(", bfar = %x", pdata->bfar);
+	if (pdata->mmfs & CPU_NVIC_MMFS_MFARVALID)
+		panic_printf(", mfar = %x", pdata->mfar);
 	panic_putc('\n');
-	panic_printf("mmfs = %x, ", mmfs);
-	panic_printf("shcsr = %x, ", CPU_NVIC_SHCSR);
-	panic_printf("hfsr = %x, ", CPU_NVIC_HFSR);
-	panic_printf("dfsr = %x", CPU_NVIC_DFSR);
+	panic_printf("mmfs = %x, ", pdata->mmfs);
+	panic_printf("shcsr = %x, ", pdata->shcsr);
+	panic_printf("hfsr = %x, ", pdata->hfsr);
+	panic_printf("dfsr = %x", pdata->dfsr);
 }
 #endif /* CONFIG_PANIC_HELP */
 
@@ -297,37 +329,67 @@ static void panic_reboot(void)
 	system_reset(0);
 }
 
-
-void report_panic(const char *msg, uint32_t *lregs)
+/**
+ * Print panic data
+ */
+static void panic_print(const struct panic_data *pdata)
 {
-	if (msg) {
-		panic_printf("\n** PANIC: %s\n", msg);
-	} else if (lregs) {
-		uint32_t *sregs = NULL;
-		uint32_t psp;
+	const uint32_t *lregs = pdata->regs;
+	const uint32_t *sregs = NULL;
+	int i;
+
+	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
+		sregs = pdata->frame;
+
+	panic_printf("\n=== EXCEPTION: %2x ====== xPSR: %8x ===========\n",
+		     lregs[1] & 7, sregs ? sregs[7] : -1);
+	for (i = 0; i < 4; i++)
+		print_reg(i, sregs, i);
+	for (i = 4; i < 10; i++)
+		print_reg(i, lregs, i - 1);
+	print_reg(10, lregs, 9);
+	print_reg(11, lregs, 10);
+	print_reg(12, sregs, 4);
+	print_reg(13, lregs, 0);
+	print_reg(14, sregs, 5);
+	print_reg(15, sregs, 6);
+
+#ifdef CONFIG_PANIC_HELP
+	panic_show_extra(pdata);
+#endif
+}
+
+void report_panic(void)
+{
+	struct panic_data *pdata = pdata_ptr;
+	const uint32_t psp = pdata->regs[0];
+
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = sizeof(*pdata);
+	pdata->struct_version = 1;
+	pdata->arch = PANIC_ARCH_CORTEX_M;
+	pdata->flags = 0;
+
+	/* If stack is valid, save exception frame */
+	if (psp >= CONFIG_RAM_BASE &&
+	    psp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE + 8 * sizeof(uint32_t)) {
+		const uint32_t *sregs = (const uint32_t *)psp;
 		int i;
 
-		psp = lregs[0];
-		if (psp >= CONFIG_RAM_BASE
-				&& psp < CONFIG_RAM_BASE + CONFIG_RAM_SIZE)
-			sregs = (uint32_t *)psp;
-		panic_printf("\n=== EXCEPTION: %2x ====== xPSR: %8x "
-			"===========\n", lregs[1] & 7, sregs ? sregs[7] : -1);
-		for (i = 0; i < 4; i++)
-			print_reg(i, sregs, i);
-		for (i = 4; i < 10; i++)
-			print_reg(i, lregs, i - 1);
-		print_reg(10, lregs, 9);
-		print_reg(11, lregs, 10);
-		print_reg(12, sregs, 4);
-		print_reg(13, &psp, 0);
-		print_reg(14, sregs, 5);
-		print_reg(15, sregs, 6);
-#ifdef CONFIG_PANIC_HELP
-		panic_show_extra();
-#endif
+		for (i = 0; i < 8; i++)
+			pdata->frame[i] = sregs[i];
+		pdata->flags |= PANIC_DATA_FLAG_FRAME_VALID;
 	}
 
+	/* Save extra information */
+	pdata->mmfs = CPU_NVIC_MMFS;
+	pdata->bfar = CPU_NVIC_BFAR;
+	pdata->mfar = CPU_NVIC_MFAR;
+	pdata->shcsr = CPU_NVIC_SHCSR;
+	pdata->hfsr = CPU_NVIC_HFSR;
+	pdata->dfsr = CPU_NVIC_DFSR;
+
+	panic_print(pdata);
 	panic_reboot();
 }
 
@@ -336,6 +398,18 @@ void exception_panic(void) __attribute__((naked));
 void exception_panic(void)
 {
 	/* Naked call so we can extract raw LR and IPSR */
+
+#ifdef CONFIG_PANIC_NEW_STACK
+	asm volatile(
+		/*
+		 * This instruction will generate ldr rx, [pc, #offset]
+		 * followed by a mov sp, rx.  See below for more explanation.
+		 */
+		"mov sp, %[pstack]\n" : :
+			[pstack] "r" (pstack_addr)
+		);
+#endif
+
 	asm volatile(
 		/*
 		 * This instruction will generate ldr rx, [pc, #offset]
@@ -348,18 +422,13 @@ void exception_panic(void)
 		 * If you see a failure in the panic handler, please check
 		 * the final assembler output here.
 		 */
-		"mov r0, %[save_area]\n"
+		"mov r0, %[pregs]\n"
 		"mrs r1, psp\n"
 		"mrs r2, ipsr\n"
 		"mov r3, lr\n"
 		"stmia r0, {r1-r11}\n"
-#ifdef CONFIG_PANIC_NEW_STACK
-		"mov sp, r0\n"
-#endif
-		"mov r1, r0\n"
-		"mov r0, #0\n"
 		"b report_panic" : :
-			[save_area] "r" (save_area.saved_regs)
+			[pregs] "r" (pdata_ptr->regs)
 		);
 }
 
@@ -392,5 +461,35 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 
 void panic(const char *msg)
 {
-	report_panic(msg, NULL);
+	panic_printf("\n** PANIC: %s\n", msg);
+	panic_reboot();
 }
+
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_crash(int argc, char **argv)
+{
+	if (argc < 2)
+		return EC_ERROR_PARAM1;
+
+	if (!strcasecmp(argv[1], "divzero")) {
+		int a = 1, b = 0;
+
+		cflush();
+		ccprintf("%08x", a / b);
+	} else if (!strcasecmp(argv[1], "unaligned")) {
+		cflush();
+		ccprintf("%08x", *(int *)0xcdef);
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	/* Everything crashes, so shouldn't get back here */
+	return EC_ERROR_UNKNOWN;
+}
+DECLARE_CONSOLE_COMMAND(crash, command_crash,
+			"[divzero | unaligned]",
+			"Crash the system (for testing)",
+			NULL);

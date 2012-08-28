@@ -76,16 +76,6 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 void panic(const char *msg);
 
 /**
- * Report a panic to the panic reporting device
- *
- * This is exported only to permit use from assembler.
- *
- * @param msg		Panic message
- * @param lregs		Registers from the exception: psp, ipsr, lr, r4-r11
- */
-void report_panic(const char *msg, uint32_t *lregs);
-
-/**
  * Enable/disable bus fault handler
  *
  * @param ignored	Non-zero if ignoring bus fault
