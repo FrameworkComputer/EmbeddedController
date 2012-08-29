@@ -469,14 +469,11 @@ static int pmu_init_registers(void)
 
 	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmu_init_registers, HOOK_PRIO_DEFAULT);
 
 void pmu_init(void)
 {
 	int failure = 0;
-
-	/* Reset everything to default, safe values */
-	if (!failure)
-		failure = pmu_init_registers();
 
 #ifdef CONFIG_PMU_BOARD_INIT
 	if (!failure)
