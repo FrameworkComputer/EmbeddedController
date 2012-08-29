@@ -68,6 +68,10 @@ SECTIONS
         *(.rodata.HOOK_SYSJUMP)
         __hooks_sysjump_end = .;
 
+        __hooks_chipset_pre_init = .;
+        *(.rodata.HOOK_CHIPSET_PRE_INIT)
+        __hooks_chipset_pre_init_end = .;
+
         __hooks_chipset_startup = .;
         *(.rodata.HOOK_CHIPSET_STARTUP)
         __hooks_chipset_startup_end = .;

@@ -20,6 +20,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_init, __hooks_init_end},
 	{__hooks_freq_change, __hooks_freq_change_end},
 	{__hooks_sysjump, __hooks_sysjump_end},
+	{__hooks_chipset_pre_init, __hooks_chipset_pre_init_end},
 	{__hooks_chipset_startup, __hooks_chipset_startup_end},
 	{__hooks_chipset_resume, __hooks_chipset_resume_end},
 	{__hooks_chipset_suspend, __hooks_chipset_suspend_end},

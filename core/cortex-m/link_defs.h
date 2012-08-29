@@ -24,6 +24,8 @@ extern const struct hook_data __hooks_freq_change[];
 extern const struct hook_data __hooks_freq_change_end[];
 extern const struct hook_data __hooks_sysjump[];
 extern const struct hook_data __hooks_sysjump_end[];
+extern const struct hook_data __hooks_chipset_pre_init[];
+extern const struct hook_data __hooks_chipset_pre_init_end[];
 extern const struct hook_data __hooks_chipset_startup[];
 extern const struct hook_data __hooks_chipset_startup_end[];
 extern const struct hook_data __hooks_chipset_resume[];

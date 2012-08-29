@@ -34,6 +34,8 @@ enum hook_type {
 				*
 				* NOTE: This hook is called with interrupts
 				* disabled! */
+	HOOK_CHIPSET_PRE_INIT, /* Initialization for components such as PMU to
+				* be done before host chipset/AP starts up. */
 	HOOK_CHIPSET_STARTUP,  /* System is starting up.  All suspend rails are
 				* now on. */
 	HOOK_CHIPSET_RESUME,   /* System is resuming from suspend, or booting
