@@ -296,12 +296,17 @@ int cmd_version(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_GET_VERSION, 0,
 			NULL, 0, &r, sizeof(r));
-	if (rv < 0)
+	if (rv < 0) {
+		fprintf(stderr, "ERROR: EC_CMD_GET_VERSION failed: %d\n", rv);
 		return rv;
+	}
 	rv = ec_command(EC_CMD_GET_BUILD_INFO, 0,
 			NULL, 0, build_string, sizeof(build_string));
-	if (rv < 0)
+	if (rv < 0) {
+		fprintf(stderr, "ERROR: EC_CMD_GET_BUILD_INFO failed: %d\n",
+				rv);
 		return rv;
+	}
 
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
