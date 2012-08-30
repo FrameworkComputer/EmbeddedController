@@ -38,6 +38,7 @@ enum gpio_signal {
 	/* Signals which aren't implemented on BDS but we'll emulate anyway, to
 	 * make it more convenient to debug other code. */
 	GPIO_WRITE_PROTECT,       /* Write protect input */
+	GPIO_ENTERING_RW,         /* EC entering RW code */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

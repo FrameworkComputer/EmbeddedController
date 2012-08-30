@@ -96,7 +96,7 @@ enum gpio_signal {
 	GPIO_EN_PP3300,        /* 3.3v rail enable */
 	GPIO_PMIC_PWRON_L,     /* 5v rail ready */
 	GPIO_PMIC_RESET,       /* Force hard reset of the pmic */
-	GPIO_EC_ENTERING_RW,   /* EC is R/W mode for the kbc mux */
+	GPIO_ENTERING_RW,      /* EC is R/W mode for the kbc mux */
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
 	GPIO_CODEC_INT,        /* To audio codec (KB noise cancellation) */
