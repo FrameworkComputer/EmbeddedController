@@ -19,7 +19,6 @@
 
 /* Debug features */
 #define CONFIG_PANIC_HELP
-#define CONFIG_PANIC_NEW_STACK
 #define CONFIG_ASSERT_HELP
 
 /* compute RW firmware hash at startup */

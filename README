@@ -34,12 +34,6 @@ Build Options
 	This is needed on STM32, where the independent watchdog has no early
 	warning feature and the windowed watchdog has a very short period.
 
-- CONFIG_PANIC_NEW_STACK
-
-	When reporting a panic, change to a completely new stack. This might
-	help get a useful trace out a situation where the stack or stack
-	pointer has been corrupted.
-
 - CONFIG_PANIC_HELP
 
 	Report extra information about a panic, such as the fault address,

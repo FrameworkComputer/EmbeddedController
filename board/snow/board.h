@@ -21,7 +21,6 @@
 
 /* Debug features */
 #define CONFIG_PANIC_HELP
-#undef  CONFIG_PANIC_NEW_STACK
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
 

@@ -16,10 +16,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-
-/* This is the size of our private panic stack, if we have one */
-#define STACK_SIZE_WORDS	64
-
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
@@ -76,13 +72,11 @@ void panic_putc(int ch)
 	uart_tx_flush();
 }
 
-
 void panic_puts(const char *s)
 {
 	while (*s)
 		panic_putc(*s++);
 }
-
 
 void panic_vprintf(const char *format, va_list args)
 {
@@ -139,7 +133,6 @@ void panic_vprintf(const char *format, va_list args)
 	}
 }
 
-
 void panic_printf(const char *format, ...)
 {
 	va_list args;
@@ -148,7 +141,6 @@ void panic_printf(const char *format, ...)
 	panic_vprintf(format, args);
 	va_end(args);
 }
-
 
 /**
  * Print the name and value of a register
@@ -228,7 +220,6 @@ static const char * const mmfs_name[32] = {
 	NULL,
 };
 
-
 /* Names for the first 5 bits in the DFSR */
 static const char * const dfsr_name[] = {
 	"Halt request",
@@ -237,7 +228,6 @@ static const char * const dfsr_name[] = {
 	"Vector catch",
 	"External debug request",
 };
-
 
 /**
  * Helper function to display a separator after the previous item
@@ -253,7 +243,6 @@ static void do_separate(int *count)
 		panic_puts(", ");
 	(*count)++;
 }
-
 
 /**
  * Show a textual representaton of the fault registers
@@ -296,7 +285,6 @@ static void show_fault(uint32_t mmfs, uint32_t hfsr, uint32_t dfsr)
 		}
 	}
 }
-
 
 /**
  * Show extra information that might be useful to understand a panic()
@@ -399,17 +387,25 @@ void exception_panic(void)
 {
 	/* Naked call so we can extract raw LR and IPSR */
 
-#ifdef CONFIG_PANIC_NEW_STACK
+	/*
+	 * Set a new stack pointer at the end of RAM, before the saved
+	 * exception data.
+	 */
 	asm volatile(
 		/*
 		 * This instruction will generate ldr rx, [pc, #offset]
 		 * followed by a mov sp, rx.  See below for more explanation.
+		 *
+		 * Oddly, gcc is able to add 4 to the value loaded here to
+		 * compute [pregs] below if the asm blocks are separate, but if
+		 * they are merged it uses two temporary registers and two
+		 * immediate values.
 		 */
 		"mov sp, %[pstack]\n" : :
 			[pstack] "r" (pstack_addr)
 		);
-#endif
 
+	/* Save registers and branch directly to panic handler */
 	asm volatile(
 		/*
 		 * This instruction will generate ldr rx, [pc, #offset]
@@ -432,7 +428,6 @@ void exception_panic(void)
 		);
 }
 
-
 void bus_fault_handler(void) __attribute__((naked));
 void bus_fault_handler(void)
 {
@@ -440,12 +435,10 @@ void bus_fault_handler(void)
 		exception_panic();
 }
 
-
 void ignore_bus_fault(int ignored)
 {
 	bus_fault_ignored = ignored;
 }
-
 
 #ifdef CONFIG_ASSERT_HELP
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -458,12 +451,12 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 }
 #endif
 
-
 void panic(const char *msg)
 {
 	panic_printf("\n** PANIC: %s\n", msg);
 	panic_reboot();
 }
+
 
 
 /*****************************************************************************/
