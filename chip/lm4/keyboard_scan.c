@@ -17,6 +17,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "x86_power.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
@@ -59,6 +60,16 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 /* Key masks for special boot keys */
 #define MASK_INDEX_REFRESH 2
 #define MASK_VALUE_REFRESH 0x04
+
+/* Key masks and values for warm reboot combination */
+#define MASK_INDEX_KEYR		3
+#define MASK_VALUE_KEYR		0x80
+#define MASK_INDEX_VOL_UP	4
+#define MASK_VALUE_VOL_UP	0x01
+#define MASK_INDEX_RIGHT_ALT	10
+#define MASK_VALUE_RIGHT_ALT	0x01
+#define MASK_INDEX_LEFT_ALT	10
+#define MASK_VALUE_LEFT_ALT	0x40
 
 static void wait_for_interrupt(void)
 {
@@ -119,12 +130,24 @@ static void print_raw_state(const char *msg)
 	CPUTS("]\n");
 }
 
+static int check_warm_reboot_keys(void)
+{
+	if (raw_state[MASK_INDEX_KEYR] == MASK_VALUE_KEYR &&
+		  raw_state[MASK_INDEX_VOL_UP] == MASK_VALUE_VOL_UP &&
+		  (raw_state[MASK_INDEX_RIGHT_ALT] == MASK_VALUE_RIGHT_ALT ||
+		  raw_state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT))
+		return 1;
+
+	return 0;
+}
+
 /* Return 1 if any key is still pressed, 0 if no key is pressed. */
 static int check_keys_changed(void)
 {
 	int c, c2;
 	uint8_t r;
 	int change = 0;
+	int num_press = 0;
 	uint8_t keys[KB_COLS];
 
 	for (c = 0; c < KB_COLS; c++) {
@@ -188,8 +211,19 @@ static int check_keys_changed(void)
 		}
 	}
 
-	if (change)
+	/* Count number of key pressed */
+	for (c = 0; c < KB_COLS; c++) {
+		if (raw_state[c])
+			++num_press;
+	}
+
+	if (change) {
+		if (num_press == 3) {
+			if (check_warm_reboot_keys())
+				x86_power_reset(0);
+		}
 		print_raw_state("state");
+	}
 
 out:
 	/* Return non-zero if at least one key is pressed */
