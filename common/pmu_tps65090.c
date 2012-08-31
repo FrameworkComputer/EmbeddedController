@@ -160,7 +160,7 @@ int pmu_is_charger_alarm(void)
 
 int pmu_get_power_source(int *ac_good, int *battery_good)
 {
-	int rv, event;
+	int rv, event = 0;
 
 	rv = pmu_get_event(&event);
 	if (rv)
