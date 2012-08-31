@@ -9,16 +9,16 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "util.h"
 #include "version.h"
 #include "watchdog.h"
+
+/* TODO: Fake WP is stored at most significant bit of saved reset flags to save
+ * space.  Remove it when we have real write protect pin */
 
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
-	BKPDATA_INDEX_FAKE_WP,		/* Fake write-protect pin */
-					/* TODO: Remove this when we have real
-					 *       write protect pin.
-					 */
 };
 
 
@@ -55,12 +55,15 @@ static void check_reset_cause(void)
 	uint32_t raw_cause = STM32_RCC_CSR;
 	uint32_t pwr_status = STM32_PWR_CSR;
 
+	uint32_t fake_wp = flags & 0x8000;
+	flags &= ~0x8000;
+
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_CR |= 1 << 3;
 	/* Clear saved reset flags */
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0 | fake_wp);
 
 	if (raw_cause & 0x60000000) {
 		/* IWDG or WWDG
@@ -140,8 +143,15 @@ void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
 
+	uint32_t fake_wp =
+		bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & 0x8000;
+
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
+
+	/* TODO: Check if a collision between reset flags and fake wp occurred.
+	 * Remove this when we have real write protect pin. */
+	ASSERT(!(system_get_reset_flags() & 0x8000));
 
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
@@ -154,7 +164,7 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		save_flags |= RESET_FLAG_HARD;
 
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | fake_wp);
 
 	if (flags & SYSTEM_RESET_HARD) {
 		/* Ask the watchdog to trigger a hard reboot */
@@ -210,12 +220,22 @@ const char *system_get_chip_revision(void)
 /* TODO: crosbug.com/p/12036 */
 int system_set_fake_wp(int val)
 {
-	return bkpdata_write(BKPDATA_INDEX_FAKE_WP, (uint16_t)val);
+	uint16_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
+
+	if (val)
+		flags |= 0x8000;
+	else
+		flags &= ~0x8000;
+
+	return bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, flags);
 }
 
 
 /* TODO: crosbug.com/p/12036 */
 int system_get_fake_wp(void)
 {
-	return bkpdata_read(BKPDATA_INDEX_FAKE_WP);
+	if (bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & 0x8000)
+		return 1;
+	else
+		return 0;
 }
