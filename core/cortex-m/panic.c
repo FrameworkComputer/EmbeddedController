@@ -19,38 +19,6 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-/* Data saved across reboots */
-struct panic_data {
-	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
-	uint8_t struct_version;   /* Structure version (currently 1) */
-	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
-	uint8_t reserved;         /* Reserved; set 0 */
-
-	uint32_t regs[11];        /* psp, ipsr, lr, r4-r11 */
-	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
-
-	uint32_t mmfs;
-	uint32_t bfar;
-	uint32_t mfar;
-	uint32_t shcsr;
-	uint32_t hfsr;
-	uint32_t dfsr;
-
-	/*
-	 * These fields go at the END of the struct so we can find it at the
-	 * end of memory.
-	 */
-	uint32_t struct_size;     /* Size of this struct */
-	uint32_t magic;           /* PANIC_SAVE_MAGIC if valid */
-};
-
-#define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
-
-#define PANIC_ARCH_CORTEX_M 1
-
-/* Flags for panic_data.flags */
-#define PANIC_DATA_FLAG_FRAME_VALID (1 << 0)  /* panic_data.frame is valid */
-
 /*
  * Panic data goes at the end of RAM.  This is safe because we don't context
  * switch away from the panic handler before rebooting, and stacks and data
@@ -59,6 +27,7 @@ struct panic_data {
 static struct panic_data * const pdata_ptr =
 	(struct panic_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
 			     - sizeof(struct panic_data));
+
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
 static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
 				     - sizeof(struct panic_data)) & ~7;
@@ -303,7 +272,7 @@ static void panic_show_extra(const struct panic_data *pdata)
 	panic_printf("mmfs = %x, ", pdata->mmfs);
 	panic_printf("shcsr = %x, ", pdata->shcsr);
 	panic_printf("hfsr = %x, ", pdata->hfsr);
-	panic_printf("dfsr = %x", pdata->dfsr);
+	panic_printf("dfsr = %x\n", pdata->dfsr);
 }
 #endif /* CONFIG_PANIC_HELP */
 
@@ -457,7 +426,10 @@ void panic(const char *msg)
 	panic_reboot();
 }
 
-
+struct panic_data *panic_get_data(void)
+{
+	return pdata_ptr->magic == PANIC_DATA_MAGIC ? pdata_ptr : NULL;
+}
 
 /*****************************************************************************/
 /* Console commands */
@@ -485,4 +457,25 @@ static int command_crash(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(crash, command_crash,
 			"[divzero | unaligned]",
 			"Crash the system (for testing)",
+			NULL);
+
+static int command_panicinfo(int argc, char **argv)
+{
+	if (pdata_ptr->magic == PANIC_DATA_MAGIC) {
+		ccprintf("Saved panic data:%s\n",
+			 (pdata_ptr->flags & PANIC_DATA_FLAG_OLD_CONSOLE ?
+			  "" : " (NEW)"));
+
+		panic_print(pdata_ptr);
+
+		/* Data has now been printed */
+		pdata_ptr->flags |= PANIC_DATA_FLAG_OLD_CONSOLE;
+	} else {
+		ccprintf("No saved panic data available.\n");
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
+			NULL,
+			"Print info from a previous panic",
 			NULL);

@@ -15,6 +15,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
+#include "panic.h"
 #include "system.h"
 #include "task.h"
 #include "uart.h"
@@ -60,10 +61,8 @@ struct jump_data {
 			       * data from the previous image. */
 };
 
-/* Jump data goes at the end of RAM */
-static struct jump_data * const jdata =
-	(struct jump_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
-			     - sizeof(struct jump_data));
+/* Jump data (at end of RAM, or preceding panic data) */
+static struct jump_data *jdata;
 
 /*
  * Reset flag descriptions.  Must be in same order as bits of RESET_FLAG_
@@ -165,7 +164,7 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 	struct jump_tag *t;
 
 	/* Only allowed during a sysjump */
-	if (jdata->magic != JUMP_DATA_MAGIC)
+	if (!jdata || jdata->magic != JUMP_DATA_MAGIC)
 		return EC_ERROR_UNKNOWN;
 
 	/* Make room for the new tag */
@@ -187,6 +186,9 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 {
 	const struct jump_tag *t;
 	int used = 0;
+
+	if (!jdata)
+		return NULL;
 
 	/* Search through tag data for a match */
 	while (used < jdata->jump_tag_total) {
@@ -456,6 +458,18 @@ const char *system_get_build_info(void)
 
 int system_common_pre_init(void)
 {
+	uint32_t addr;
+
+	/*
+	 * Put the jump data before the panic data, or at the end of RAM if
+	 * panic data is not present.
+	 */
+	addr = (uint32_t)panic_get_data();
+	if (!addr)
+		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
+
+	jdata = (struct jump_data *)(addr - sizeof(struct jump_data));
+
 	/*
 	 * Check jump data if this is a jump between images.  Jumps all show up
 	 * as an unknown reset reason, because we jumped directly from one
