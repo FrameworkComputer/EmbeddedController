@@ -165,10 +165,6 @@ void configure_board_late(void)
 #ifdef CONFIG_AC_POWER_STATUS
 	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
 #endif
-#ifdef CONFIG_ARBITRATE_I2C
-	gpio_set_flags(GPIO_AP_CLAIM, GPIO_PULL_UP);
-	gpio_set_flags(GPIO_EC_CLAIM, GPIO_OUT_HIGH);
-#endif
 }
 
 void board_interrupt_host(int active)
@@ -213,6 +209,35 @@ void board_power_led_config(enum powerled_config config)
 	}
 }
 
+enum {
+	/* Time between requesting bus and deciding that we have it */
+	BUS_SLEW_DELAY_US	= 10,
+
+	/* Time between retrying to see if the AP has released the bus */
+	BUS_WAIT_RETRY_US	= 3000,
+
+	/* Time to wait until the bus becomes free */
+	BUS_WAIT_FREE_US	= 100 * 1000,
+};
+
+/*
+ * This reflects the desired value of GPIO_EC_CLAIM to ensure that the
+ * GPIO is driven correctly when re-enabled before AP power on.
+ */
+static char i2c_claimed_by_ec;
+
+static int board_pre_init_hook(void)
+{
+#ifdef CONFIG_ARBITRATE_I2C
+	gpio_set_flags(GPIO_AP_CLAIM, GPIO_PULL_UP);
+	gpio_set_level(GPIO_EC_CLAIM, i2c_claimed_by_ec ? 0 : 1);
+	gpio_set_flags(GPIO_EC_CLAIM, GPIO_OUTPUT);
+	usleep(BUS_SLEW_DELAY_US);
+#endif
+	return 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_pre_init_hook, HOOK_PRIO_DEFAULT);
+
 static int board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
@@ -224,20 +249,15 @@ static int board_shutdown_hook(void)
 {
 	/* Disable pull-up on SUSPEND_L during shutdown to prevent leakage */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
+
+#ifdef CONFIG_ARBITRATE_I2C
+	gpio_set_flags(GPIO_AP_CLAIM, GPIO_INPUT);
+	gpio_set_flags(GPIO_EC_CLAIM, GPIO_INPUT);
+#endif
 	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
 
-enum {
-	/* Time between requesting bus and deciding that we have it */
-	BUS_SLEW_DELAY_US	= 10,
-
-	/* Time between retrying to see if the AP has released the bus */
-	BUS_WAIT_RETRY_US	= 3000,
-
-	/* Time to wait until the bus becomes free */
-	BUS_WAIT_FREE_US	= 100 * 1000,
-};
 
 #ifdef CONFIG_ARBITRATE_I2C
 
@@ -250,7 +270,7 @@ int board_i2c_claim(int port)
 
 	/* If AP is off, we have the bus */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		gpio_set_level(GPIO_EC_CLAIM, 0);
+		i2c_claimed_by_ec = 1;
 		return EC_SUCCESS;
 	}
 
@@ -269,6 +289,7 @@ int board_i2c_claim(int port)
 		while (time_since32(start_retry) < BUS_WAIT_RETRY_US) {
 			if (gpio_get_level(GPIO_AP_CLAIM)) {
 				/* We got it, so return */
+				i2c_claimed_by_ec = 1;
 				return EC_SUCCESS;
 			}
 
@@ -284,6 +305,7 @@ int board_i2c_claim(int port)
 
 	gpio_set_level(GPIO_EC_CLAIM, 1);
 	usleep(BUS_SLEW_DELAY_US);
+	i2c_claimed_by_ec = 0;
 
 	panic_puts("Unable to access I2C bus (arbitration timeout)\n");
 	return EC_ERROR_BUSY;
@@ -295,6 +317,7 @@ void board_i2c_release(int port)
 		/* Release our claim */
 		gpio_set_level(GPIO_EC_CLAIM, 1);
 		usleep(BUS_SLEW_DELAY_US);
+		i2c_claimed_by_ec = 0;
 	}
 }
 #endif /* CONFIG_ARBITRATE_I2C */
