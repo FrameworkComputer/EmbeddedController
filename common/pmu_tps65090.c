@@ -561,8 +561,11 @@ static int command_pmu(int argc, char **argv)
 	if (argc > 1) {
 		repeat = strtoi(argv[1], &e, 0);
 		if (*e) {
-			if (strlen(argv[1]) >= 1 && argv[1][0] == 'r')
+			if (strlen(argv[1]) >= 1 && argv[1][0] == 'r') {
 				board_hard_reset();
+				/* If this returns, there was an error */
+				return EC_ERROR_UNKNOWN;
+			}
 
 			ccputs("Invalid repeat count\n");
 			return EC_ERROR_INVAL;
