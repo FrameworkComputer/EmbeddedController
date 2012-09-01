@@ -536,13 +536,16 @@ static int print_pmu_info(void)
 	int reg, ret;
 	int value;
 
-	for (reg = 0; reg < 0xc; reg++) {
+	ccprintf("     ");
+	for (reg = 0; reg <= 0x18; reg++)
+		ccprintf("%02x ", reg);
+	ccprintf("\n");
+
+	ccprintf("PMU: ");
+	for (reg = 0; reg <= 0x18; reg++) {
 		ret = pmu_read(reg, &value);
 		if (ret)
 			return ret;
-		if (!reg)
-			ccputs("PMU: ");
-
 		ccprintf("%02x ", value);
 	}
 	ccputs("\n");
