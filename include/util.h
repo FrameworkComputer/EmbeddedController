@@ -44,6 +44,9 @@
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
+#ifndef OFFSET_OF
+#define OFFSET_OF(struc, field) ((uint32_t)&(((const struc * const)0)->field))
+#endif
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif

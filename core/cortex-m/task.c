@@ -27,11 +27,18 @@ typedef union {
 		uint32_t sp;       /* saved stack pointer for context switch */
 		uint32_t events;   /* bitmaps of received events */
 		uint64_t runtime;  /* Time spent in task */
+		uint32_t reserved; /* Reserved (for padding) */
 		uint32_t guard;    /* Guard value to detect stack overflow */
-		uint8_t stack[0];  /* task stack */
+		uint32_t stack[0]; /* Task stack; must be 64-bit aligned */
 	};
 	uint32_t context[TASK_SIZE/4];
 } task_;
+
+/* Size of stack */
+#define STACK_SIZE (TASK_SIZE - OFFSET_OF(task_, stack))
+
+/* Value to store in unused stack */
+#define STACK_UNUSED_VALUE 0xdeadd00d
 
 /* declare task routine prototypes */
 #define TASK(n, r, d) int r(void *);
@@ -502,12 +509,22 @@ void mutex_unlock(struct mutex *mtx)
 void task_print_list(void)
 {
 	int i;
-	ccputs("Task Ready Name         Events      Time (s)\n");
+	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
-		ccprintf("%4d %c %-16s %08x %11.6ld\n", i, is_ready,
-			 task_names[i], tasks[i].events, tasks[i].runtime);
+		uint32_t *sp;
+
+		int stackused = STACK_SIZE;
+
+		for (sp = tasks[i].stack;
+		     sp < (uint32_t *)tasks[i].sp && *sp == STACK_UNUSED_VALUE;
+		     sp++)
+			stackused -= sizeof(uint32_t);
+
+		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
+			 task_names[i], tasks[i].events, tasks[i].runtime,
+			 stackused, STACK_SIZE);
 		if (in_interrupt_context())
 			uart_emergency_flush();
 		else
@@ -581,14 +598,20 @@ int task_pre_init(void)
 
 	/* fill the task memory with initial values */
 	for (i = 0; i < TASK_ID_COUNT; i++) {
+		uint32_t *sp;
+
 		tasks[i].sp = (uint32_t)(tasks + i + 1) - 64;
 		tasks[i].guard = GUARD_VALUE;
-		/* initial context on stack */
+		/* Initial context on stack */
 		tasks[i].context[TASK_SIZE/4 - 8/*r0*/] = tasks_init[i].r0;
 		tasks[i].context[TASK_SIZE/4 - 3/*lr*/] =
 			(uint32_t)task_exit_trap;
 		tasks[i].context[TASK_SIZE/4 - 2/*pc*/] = tasks_init[i].pc;
 		tasks[i].context[TASK_SIZE/4 - 1/*psr*/] = 0x01000000;
+
+		/* Fill unused stack */
+		for (sp = tasks[i].stack; sp < (uint32_t *)tasks[i].sp; sp++)
+			*sp = STACK_UNUSED_VALUE;
 	}
 
 	/* Fill in guard value in scratchpad to prevent stack overflow
