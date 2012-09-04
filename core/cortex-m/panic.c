@@ -8,6 +8,7 @@
 #include "config.h"
 #include "console.h"
 #include "cpu.h"
+#include "host_command.h"
 #include "panic.h"
 #include "system.h"
 #include "task.h"
@@ -326,6 +327,7 @@ void report_panic(void)
 	pdata->struct_version = 1;
 	pdata->arch = PANIC_ARCH_CORTEX_M;
 	pdata->flags = 0;
+	pdata->reserved = 0;
 
 	/* If stack is valid, save exception frame */
 	if (psp >= CONFIG_RAM_BASE &&
@@ -479,3 +481,23 @@ DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
 			NULL,
 			"Print info from a previous panic",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+int host_command_panic_info(struct host_cmd_handler_args *args)
+{
+	if (pdata_ptr->magic == PANIC_DATA_MAGIC) {
+		ASSERT(pdata_ptr->struct_size <= args->response_max);
+		memcpy(args->response, pdata_ptr, pdata_ptr->struct_size);
+		args->response_size = pdata_ptr->struct_size;
+
+		/* Data has now been returned */
+		pdata_ptr->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PANIC_INFO,
+		     host_command_panic_info,
+		     EC_VER_MASK(0));

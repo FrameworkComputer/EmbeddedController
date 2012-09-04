@@ -963,6 +963,8 @@ struct ec_params_force_idle {
  */
 #define EC_CMD_CONSOLE_READ 0x98
 
+/*****************************************************************************/
+
 /*
  * Cut off battery power output if the battery supports.
  *
@@ -999,6 +1001,14 @@ struct ec_params_reboot_ec {
 	uint8_t cmd;           /* enum ec_reboot_cmd */
 	uint8_t flags;         /* See EC_REBOOT_FLAG_* */
 } __packed;
+
+/*
+ * Get information on last EC panic.
+ *
+ * Returns variable-length platform-dependent panic information.  See panic.h
+ * for details.
+ */
+#define EC_CMD_GET_PANIC_INFO 0xd3
 
 /*****************************************************************************/
 /*
