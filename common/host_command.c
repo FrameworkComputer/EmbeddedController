@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -286,33 +287,47 @@ static int parse_params(char *s, uint8_t *params)
 static int command_host_command(int argc, char **argv)
 {
 	struct host_cmd_handler_args args;
-	uint8_t cmd_params[EC_HOST_PARAM_SIZE];
+	char *cmd_params;
 	enum ec_status res;
 	char *e;
 	int rv;
+
+	/* Use shared memory for command params space */
+	if (shared_mem_acquire(EC_HOST_PARAM_SIZE, &cmd_params)) {
+		ccputs("Can't acquire shared memory buffer.\n");
+		return EC_ERROR_UNKNOWN;
+	}
 
 	/* Assume no version or params unless proven otherwise */
 	args.version = 0;
 	args.params_size = 0;
 	args.params = cmd_params;
 
-	if (argc < 2)
+	if (argc < 2) {
+		shared_mem_release(cmd_params);
 		return EC_ERROR_PARAM_COUNT;
+	}
 
 	args.command = strtoi(argv[1], &e, 0);
-	if (*e)
+	if (*e) {
+		shared_mem_release(cmd_params);
 		return EC_ERROR_PARAM1;
+	}
 
 	if (argc > 2) {
 		args.version = strtoi(argv[2], &e, 0);
-		if (*e)
+		if (*e) {
+			shared_mem_release(cmd_params);
 			return EC_ERROR_PARAM2;
+		}
 	}
 
 	if (argc > 3) {
 		rv = parse_params(argv[3], cmd_params);
-		if (rv < 0)
+		if (rv < 0) {
+			shared_mem_release(cmd_params);
 			return EC_ERROR_PARAM3;
+		}
 		args.params_size = rv;
 	}
 
@@ -329,6 +344,7 @@ static int command_host_command(int argc, char **argv)
 	else
 		ccprintf("Command succeeded; no response.\n");
 
+	shared_mem_release(cmd_params);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
