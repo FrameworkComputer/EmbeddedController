@@ -20,6 +20,15 @@
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 
+int gpio_set_flags(enum gpio_signal signal, int flags)
+{
+	/*
+	 * TODO(dhendrix): Move GPIO setup code from gpio_pre_init
+	 * into here like we did for STM32F
+	 */
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 int gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
