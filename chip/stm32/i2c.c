@@ -801,12 +801,24 @@ static void handle_i2c_error(int port, int rv)
 	/* Clear busy state */
 	t1 = get_time();
 
-	/**
-	 * If the BUSY bit is faulty, send a stop bit just to be sure.  It
-	 * seems that this can be happen very briefly while sending a 1.
-	 * We've not actually seen this happen, but we just want to be safe.
-	 */
-	if (rv == EC_ERROR_TIMEOUT && !(r & 2)) {
+	if (rv == EC_ERROR_TIMEOUT && (STM32_I2C_CR1(port) & (1 << 8))) {
+		/*
+		 * If it failed while just trying to send the start bit then
+		 * something is wrong with the internal state of the i2c,
+		 * (Probably a stray pulse on the line got it out of sync with
+		 * the actual bytes) so reset it.
+		 */
+		CPRINTF("Unable to send START, resetting i2c.\n");
+		STM32_I2C_CR1(I2C2) = 0x8000;
+		STM32_I2C_CR1(I2C2) = 0x0000;
+		i2c_init2();
+		goto cr_cleanup;
+	} else if (rv == EC_ERROR_TIMEOUT && !(r & 2)) {
+		/*
+		 * If the BUSY bit is faulty, send a stop bit just to be sure.
+		 * It seems that this can be happen very briefly while sending
+		 * a 1. We've not actually seen this, but just to be safe.
+		 */
 		CPRINTF("Bad BUSY bit detected.\n");
 		master_stop(port);
 	}
