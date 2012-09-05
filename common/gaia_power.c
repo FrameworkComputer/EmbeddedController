@@ -312,7 +312,7 @@ static int check_for_power_on_event(void)
 	/* power on requested at EC startup for recovery */
 	if (auto_power_on) {
 		auto_power_on = 0;
-		return 1;
+		return 2;
 	}
 
 	/* to avoid false positives, check lid only if a change was detected */
@@ -320,7 +320,7 @@ static int check_for_power_on_event(void)
 		udelay(LID_SWITCH_DEBOUNCE);
 		if (gpio_get_level(GPIO_LID_OPEN) == 1) {
 			lid_changed = 0;
-			return 1;
+			return 3;
 		}
 	}
 
@@ -328,12 +328,12 @@ static int check_for_power_on_event(void)
 	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
 		udelay(KB_PWR_ON_DEBOUNCE);
 		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
-			return 1;
+			return 4;
 	}
 
 	if (power_request == POWER_REQ_ON) {
 		power_request = POWER_REQ_NONE;
-		return 4;
+		return 5;
 	}
 
 	return 0;
@@ -481,8 +481,9 @@ void gaia_power_task(void)
 
 	while (1) {
 		/* Wait until we need to power on, then power on */
-		while (!check_for_power_on_event())
+		while (value = check_for_power_on_event(), !value)
 			task_wait_event(-1);
+		CPRINTF("%T power on %d\n", value);
 
 		if (!power_on()) {
 			int continue_power = 0;
