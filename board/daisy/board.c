@@ -64,7 +64,14 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Other inputs */
 	{"AC_PWRBTN_L", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
 	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
-
+	/*
+	 * I2C pins should be configured as inputs until I2C module is
+	 * initialized. This will avoid driving the lines unintentionally.
+	 */
+	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_INPUT, NULL},
+	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_INPUT, NULL},
+	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
+	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
 	/* Outputs */
 	{"AC_STATUS",   GPIO_A, (1<<5), GPIO_OUT_HIGH, NULL},
 	{"SPI1_MISO",   GPIO_A, (1<<6), GPIO_OUT_HIGH, NULL},
