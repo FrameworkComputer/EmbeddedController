@@ -37,8 +37,6 @@ struct boot_key_entry {
 const struct boot_key_entry boot_key_list[] = {
 	{0, 0x00},  /* (none) */
 	{1, 0x02},  /* Esc */
-	{2, 0x10},  /* D */
-	{3, 0x10},  /* F */
 	{11, 0x40}, /* Down-arrow */
 };
 
@@ -61,15 +59,15 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 #define MASK_INDEX_REFRESH 2
 #define MASK_VALUE_REFRESH 0x04
 
-/* Key masks and values for warm reboot combination */
-#define MASK_INDEX_KEYR		3
-#define MASK_VALUE_KEYR		0x80
+/* Key masks for special runtime keys */
 #define MASK_INDEX_VOL_UP	4
 #define MASK_VALUE_VOL_UP	0x01
 #define MASK_INDEX_RIGHT_ALT	10
 #define MASK_VALUE_RIGHT_ALT	0x01
 #define MASK_INDEX_LEFT_ALT	10
 #define MASK_VALUE_LEFT_ALT	0x40
+#define MASK_INDEX_KEY_R	3
+#define MASK_VALUE_KEY_R	0x80
 
 static void wait_for_interrupt(void)
 {
@@ -130,15 +128,42 @@ static void print_raw_state(const char *msg)
 	CPUTS("]\n");
 }
 
-static int check_warm_reboot_keys(void)
+/**
+ * Check special runtime key combinations.
+ */
+static void check_runtime_keys(void)
 {
-	if (raw_state[MASK_INDEX_KEYR] == MASK_VALUE_KEYR &&
-		  raw_state[MASK_INDEX_VOL_UP] == MASK_VALUE_VOL_UP &&
-		  (raw_state[MASK_INDEX_RIGHT_ALT] == MASK_VALUE_RIGHT_ALT ||
-		  raw_state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT))
-		return 1;
+	int num_press = 0;
+	int c;
 
-	return 0;
+	/*
+	 * All runtime key combos are (right or left ) alt + volume up + (some
+	 * key NOT on the same col as alt or volume up )
+	 */
+	if (raw_state[MASK_INDEX_VOL_UP] != MASK_VALUE_VOL_UP)
+		return;
+	if (raw_state[MASK_INDEX_RIGHT_ALT] != MASK_VALUE_RIGHT_ALT &&
+	    raw_state[MASK_INDEX_LEFT_ALT] != MASK_VALUE_LEFT_ALT)
+		return;
+
+	/*
+	 * Count number of columns with keys pressed.  We know two columns are
+	 * pressed for volume up and alt, so if only one more key is pressed
+	 * there will be exactly 3 non-zero columns.
+	 */
+	for (c = 0; c < KB_COLS; c++) {
+		if (raw_state[c])
+			num_press++;
+	}
+	if (num_press != 3)
+		return;
+
+	/* Check individual keys */
+	if (raw_state[MASK_INDEX_KEY_R] == MASK_VALUE_KEY_R) {
+		/* R = reboot */
+		CPRINTF("[%T KB warm reboot]\n");
+		x86_power_reset(0);
+	}
 }
 
 /* Return 1 if any key is still pressed, 0 if no key is pressed. */
@@ -147,7 +172,6 @@ static int check_keys_changed(void)
 	int c, c2;
 	uint8_t r;
 	int change = 0;
-	int num_press = 0;
 	uint8_t keys[KB_COLS];
 
 	for (c = 0; c < KB_COLS; c++) {
@@ -211,18 +235,9 @@ static int check_keys_changed(void)
 		}
 	}
 
-	/* Count number of key pressed */
-	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c])
-			++num_press;
-	}
-
 	if (change) {
-		if (num_press == 3) {
-			if (check_warm_reboot_keys())
-				x86_power_reset(0);
-		}
 		print_raw_state("state");
+		check_runtime_keys();
 	}
 
 out:

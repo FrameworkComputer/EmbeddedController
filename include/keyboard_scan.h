@@ -17,8 +17,6 @@ int keyboard_scan_init(void);
 enum boot_key {
 	BOOT_KEY_NONE,  /* No keys other than keyboard-controlled reset keys */
 	BOOT_KEY_ESC,
-	BOOT_KEY_D,
-	BOOT_KEY_F,
 	BOOT_KEY_DOWN_ARROW,
 	BOOT_KEY_OTHER = -1,  /* None of the above */
 };
