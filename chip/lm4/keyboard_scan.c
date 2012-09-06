@@ -299,16 +299,6 @@ enum boot_key keyboard_scan_get_boot_key(void)
 	return boot_key_value;
 }
 
-void keyboard_scan_clear_boot_key(void)
-{
-	boot_key_value = BOOT_KEY_OTHER;
-
-#ifdef CONFIG_TASK_POWERBTN
-	/* Wake the power button task to update the recovery switch state */
-	task_wake(TASK_ID_POWERBTN);
-#endif
-}
-
 int keyboard_scan_init(void)
 {
 	/* Configure GPIO */

@@ -213,10 +213,8 @@ static void lid_switch_open(uint64_t tnow)
 	update_backlight();
 	host_set_single_event(EC_HOST_EVENT_LID_OPEN);
 
-	/* If the chipset is off, clear keyboard recovery and send a power
-	 * button pulse to wake up the chipset. */
+	/* If the chipset is off, send a power button pulse to wake it up */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		keyboard_scan_clear_boot_key();
 		chipset_exit_hard_off();
 		set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
@@ -376,8 +374,6 @@ static void state_machine(uint64_t tnow)
 	switch (pwrbtn_state) {
 	case PWRBTN_STATE_PRESSED:
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/* Clear keyboard recovery */
-			keyboard_scan_clear_boot_key();
 			/*
 			 * Chipset is off, so wake the chipset and send it a
 			 * long enough pulse to wake up.  After that we'll

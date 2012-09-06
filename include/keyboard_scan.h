@@ -31,9 +31,6 @@ enum boot_key {
  */
 enum boot_key keyboard_scan_get_boot_key(void);
 
-/* Clear the boot key state. */
-void keyboard_scan_clear_boot_key(void);
-
 /* Return non-zero if recovery key was pressed at boot. */
 int keyboard_scan_recovery_pressed(void);
 
