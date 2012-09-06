@@ -494,79 +494,46 @@ static void unwedge_i2c_bus(int port)
 	gpio_set_level(sda, 1);
 }
 
-static int i2c_init2(void)
+static int i2c_init_port(unsigned int port)
 {
-	if (!(STM32_RCC_APB1ENR & (1 << 22))) {
+	const int i2c_clock_bit[] = {21, 22};
+
+	ASSERT(port == I2C1 || port == I2C2);
+	ASSERT(port < 2);
+
+	if (!(STM32_RCC_APB1ENR & (1 << i2c_clock_bit[port]))) {
 		/* Only unwedge the bus if the clock is off */
-		if (board_i2c_claim(I2C2) == EC_SUCCESS) {
-			unwedge_i2c_bus(I2C2);
-			board_i2c_release(I2C2);
+		if (board_i2c_claim(port) == EC_SUCCESS) {
+			unwedge_i2c_bus(port);
+			board_i2c_release(port);
 		}
 
 		/* enable I2C2 clock */
-		STM32_RCC_APB1ENR |= 1 << 22;
+		STM32_RCC_APB1ENR |= 1 << i2c_clock_bit[port];
 	}
 
-	/* force reset if the bus is stuck in BUSY state */
-	if (STM32_I2C_SR2(I2C2) & 0x2) {
-		STM32_I2C_CR1(I2C2) = 0x8000;
-		STM32_I2C_CR1(I2C2) = 0x0000;
-	}
+	/* force reset of the i2c peripheral */
+	STM32_I2C_CR1(port) = 0x8000;
+	STM32_I2C_CR1(port) = 0x0000;
 
 	/* set clock configuration : standard mode (100kHz) */
-	STM32_I2C_CCR(I2C2) = I2C_CCR;
+	STM32_I2C_CCR(port) = I2C_CCR;
 
 	/* set slave address */
-	STM32_I2C_OAR1(I2C2) = I2C_ADDRESS;
+	if (port == I2C2)
+		STM32_I2C_OAR1(port) = I2C_ADDRESS;
 
 	/* configuration : I2C mode / Periphal enabled, ACK enabled */
-	STM32_I2C_CR1(I2C2) = (1 << 10) | (1 << 0);
+	STM32_I2C_CR1(port) = (1 << 10) | (1 << 0);
 	/* error and event interrupts enabled / input clock is 16Mhz */
-	STM32_I2C_CR2(I2C2) = (1 << 9) | (1 << 8) | 0x10;
+	STM32_I2C_CR2(port) = (1 << 9) | (1 << 8) | 0x10;
 
 	/* clear status */
-	STM32_I2C_SR1(I2C2) = 0;
+	STM32_I2C_SR1(port) = 0;
 
-	board_i2c_post_init(I2C2);
-
-	CPUTS("done\n");
-	return EC_SUCCESS;
-}
-
-static int i2c_init1(void)
-{
-	if (!(STM32_RCC_APB1ENR & (1 << 21))) {
-		/* Only unwedge the bus if the clock is off */
-		if (board_i2c_claim(I2C1) == EC_SUCCESS) {
-			unwedge_i2c_bus(I2C1);
-			board_i2c_release(I2C1);
-		}
-
-		/* enable clock */
-		STM32_RCC_APB1ENR |= 1 << 21;
-	}
-
-	/* force reset if the bus is stuck in BUSY state */
-	if (STM32_I2C_SR2(I2C1) & 0x2) {
-		STM32_I2C_CR1(I2C1) = 0x8000;
-		STM32_I2C_CR1(I2C1) = 0x0000;
-	}
-
-	/* set clock configuration : standard mode (100kHz) */
-	STM32_I2C_CCR(I2C1) = I2C_CCR;
-
-	/* configuration : I2C mode / Periphal enabled, ACK enabled */
-	STM32_I2C_CR1(I2C1) = (1 << 10) | (1 << 0);
-	/* error and event interrupts enabled / input clock is 16Mhz */
-	STM32_I2C_CR2(I2C1) = (1 << 9) | (1 << 8) | 0x10;
-
-	/* clear status */
-	STM32_I2C_SR1(I2C1) = 0;
-
-	board_i2c_post_init(I2C1);
+	board_i2c_post_init(port);
 
 	return EC_SUCCESS;
-
 }
 
 static int i2c_init(void)
@@ -574,8 +541,8 @@ static int i2c_init(void)
 	int rc = 0;
 
 	/* FIXME: Add #defines to determine which channels to init */
-	rc |= i2c_init2();
-	rc |= i2c_init1();
+	rc |= i2c_init_port(I2C1);
+	rc |= i2c_init_port(I2C2);
 
 	/* enable event and error interrupts */
 	if (!rc) {
@@ -809,9 +776,7 @@ static void handle_i2c_error(int port, int rv)
 		 * the actual bytes) so reset it.
 		 */
 		CPRINTF("Unable to send START, resetting i2c.\n");
-		STM32_I2C_CR1(I2C2) = 0x8000;
-		STM32_I2C_CR1(I2C2) = 0x0000;
-		i2c_init2();
+		i2c_init_port(port);
 		goto cr_cleanup;
 	} else if (rv == EC_ERROR_TIMEOUT && !(r & 2)) {
 		/*
@@ -829,10 +794,7 @@ static void handle_i2c_error(int port, int rv)
 		if (t2.val - t1.val > I2C_TX_TIMEOUT_MASTER) {
 			dump_i2c_reg(port);
 			/* Reset the i2c periph to get it back to slave mode */
-			if (port == I2C1)
-				i2c_init1();
-			else
-				i2c_init2();
+			i2c_init_port(port);
 			goto cr_cleanup;
 		}
 		/* Send stop */
