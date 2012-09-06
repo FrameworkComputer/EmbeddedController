@@ -258,6 +258,42 @@ static int check_key(int index, int mask)
 	return 1;
 }
 
+/**
+ * Check what boot key is down, if any.
+ *
+ * @return the key which is down, or BOOT_KEY_OTHER if an unrecognized
+ * key combination is down or this isn't the right type of boot to look at
+ * boot keys.
+ */
+static enum boot_key keyboard_scan_check_boot_key(void)
+{
+	const struct boot_key_entry *k = boot_key_list;
+	int i;
+
+	/*
+	 * If we jumped to this image, ignore boot keys.  This prevents
+	 * re-triggering events in RW firmware that were already processed by
+	 * RO firmware.
+	 */
+	if (system_jumped_to_this_image())
+		return BOOT_KEY_OTHER;
+
+	/* If reset was not caused by reset pin, refresh must be held down */
+	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
+	    !(raw_state[MASK_INDEX_REFRESH] & MASK_VALUE_REFRESH))
+		return BOOT_KEY_OTHER;
+
+	/* Check what single key is down */
+	for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
+		if (check_key(k->mask_index, k->mask_value)) {
+			CPRINTF("[%T KB boot key %d]\n", i);
+			return i;
+		}
+	}
+
+	return BOOT_KEY_OTHER;
+}
+
 enum boot_key keyboard_scan_get_boot_key(void)
 {
 	return boot_key_value;
@@ -290,27 +326,12 @@ int keyboard_scan_init(void)
 	/* Initialize raw state */
 	update_key_state();
 
-	/*
-	 * If we're booting due to a reset-pin-caused reset, check what other
-	 * single key is held down (if any).
-	 */
-	if ((system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-	    !system_jumped_to_this_image()) {
-		const struct boot_key_entry *k = boot_key_list;
-		int i;
+	/* Check for keys held down at boot */
+	boot_key_value = keyboard_scan_check_boot_key();
 
-		for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
-			if (check_key(k->mask_index, k->mask_value)) {
-				CPRINTF("[%T KB boot key %d]\n", i);
-				boot_key_value = i;
-				break;
-			}
-		}
-
-		/* Trigger event if recovery key was pressed */
-		if (boot_key_value == BOOT_KEY_ESC)
-			host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-	}
+	/* Trigger event if recovery key was pressed */
+	if (boot_key_value == BOOT_KEY_ESC)
+		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 
 	return EC_SUCCESS;
 }
