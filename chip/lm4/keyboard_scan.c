@@ -68,6 +68,8 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 #define MASK_VALUE_LEFT_ALT	0x40
 #define MASK_INDEX_KEY_R	3
 #define MASK_VALUE_KEY_R	0x80
+#define MASK_INDEX_KEY_H	6
+#define MASK_VALUE_KEY_H	0x02
 
 static void wait_for_interrupt(void)
 {
@@ -163,6 +165,10 @@ static void check_runtime_keys(void)
 		/* R = reboot */
 		CPRINTF("[%T KB warm reboot]\n");
 		x86_power_reset(0);
+	} else if (raw_state[MASK_INDEX_KEY_H] == MASK_VALUE_KEY_H) {
+		/* H = hibernate */
+		CPRINTF("[%T KB hibernate]\n");
+		system_hibernate(0, 0);
 	}
 }
 
