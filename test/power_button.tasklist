@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,19 +8,20 @@
  *
  * The first one has the lowest priority.
  *
- * For each task, use the macro TASK(n, r, d) where :
+ * For each task, use the macro TASK(n, r, d, s) where :
  * 'n' in the name of the task
  * 'r' in the main routine of the task
  * 'd' in an opaque parameter passed to the routine at startup
+ * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TASK_LIST \
-	TASK(WATCHDOG, watchdog_task, NULL) \
-	TASK(VBOOTHASH, vboot_hash_task, NULL) \
-	TASK(PWM, pwm_task, NULL) \
-	TASK(TYPEMATIC, keyboard_typematic_task, NULL) \
-	TASK(X86POWER, x86_power_task, NULL) \
-	TASK(I8042CMD, i8042_command_task, NULL) \
-	TASK(POWERBTN, power_button_task, NULL) \
-	TASK(KEYSCAN, keyboard_scan_task, NULL) \
-	TASK(HOSTCMD, host_command_task, NULL) \
-	TASK(CONSOLE, console_task, NULL)
+	TASK(WATCHDOG, watchdog_task, NULL, TASK_STACK_SIZE) \
+	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
+	TASK(PWM, pwm_task, NULL, TASK_STACK_SIZE) \
+	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \
+	TASK(X86POWER, x86_power_task, NULL, TASK_STACK_SIZE) \
+	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \
+	TASK(POWERBTN, power_button_task, NULL, TASK_STACK_SIZE) \
+	TASK(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
+	TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \
+	TASK(CONSOLE, console_task, NULL, TASK_STACK_SIZE)

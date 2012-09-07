@@ -20,7 +20,7 @@ include board/$(BOARD)/build.mk
 # Transform the configuration into make variables
 includes=include core/$(CORE)/include $(dirs) $(out)
 _tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P -Iboard/$(BOARD) -Itest \
-	  -D"TASK(n, r, d)=n" -imacros $(PROJECT).tasklist)
+	  -D"TASK(n, r, d, s)=n" -imacros $(PROJECT).tasklist)
 _tsk_cfg:=$(foreach t,$(_tsk_lst),CONFIG_TASK_$(t))
 _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dN chip/$(CHIP)/config.h | \
 		grep -o "CONFIG_.*") \

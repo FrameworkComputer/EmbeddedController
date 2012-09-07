@@ -23,7 +23,7 @@ typedef uint8_t task_id_t;
  * TASK_ID_<taskname> where <taskname> is the first parameter passed to the
  * TASK macro in the TASK_LIST file.
  */
-#define TASK(n, r, d) TASK_ID_##n,
+#define TASK(n, r, d, s) TASK_ID_##n,
 #include TASK_LIST
 enum {
 	TASK_ID_IDLE,

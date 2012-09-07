@@ -18,6 +18,12 @@
 /* System stack size */
 #define CONFIG_STACK_SIZE 1024
 
+/* Idle task stack size */
+#define IDLE_TASK_STACK_SIZE 256
+
+/* Default task stack size */
+#define TASK_STACK_SIZE 488
+
 /* support programming on-chip flash */
 #define CONFIG_FLASH
 

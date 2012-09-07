@@ -15,15 +15,6 @@
 #include "uart.h"
 #include "util.h"
 
-/**
- * Global memory size for a task : 512 bytes
- * including its contexts and its stack
- */
-#define TASK_SIZE 512
-
-/* Size of stack */
-#define STACK_SIZE 488
-
 typedef union {
 	struct {
 		/*
@@ -41,14 +32,14 @@ typedef union {
 #define STACK_UNUSED_VALUE 0xdeadd00d
 
 /* declare task routine prototypes */
-#define TASK(n, r, d) int r(void *);
+#define TASK(n, r, d, s) int r(void *);
 #include TASK_LIST
 void __idle(void);
 CONFIG_TASK_LIST
 #undef TASK
 
 /* Task names for easier debugging */
-#define TASK(n, r, d)  #n,
+#define TASK(n, r, d, s)  #n,
 #include TASK_LIST
 static const char * const task_names[] = {
 	"<< idle >>",
@@ -98,10 +89,10 @@ static void task_exit_trap(void)
 
 
 /* Startup parameters for all tasks. */
-#define TASK(n, r, d)  {	\
+#define TASK(n, r, d, s)  {	\
 	.r0 = (uint32_t)d,	\
 	.pc = (uint32_t)r,	\
-	.stack_size = STACK_SIZE,	\
+	.stack_size = s,	\
 },
 #include TASK_LIST
 static const struct {
@@ -109,7 +100,7 @@ static const struct {
 	uint32_t pc;
 	uint16_t stack_size;
 } const tasks_init[] = {
-	TASK(IDLE, __idle, 0)
+	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 	CONFIG_TASK_LIST
 };
 #undef TASK
@@ -119,10 +110,10 @@ static task_ tasks[TASK_ID_COUNT];
 
 /* Stacks for all tasks */
 /* TODO: variable-size stacks */
-#define TASK(n, r, d)  + STACK_SIZE
+#define TASK(n, r, d, s)  + s
 #include TASK_LIST
-uint8_t task_stacks[
-		    STACK_SIZE
+uint8_t task_stacks[0
+		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 		    CONFIG_TASK_LIST
 ] __attribute__((aligned(8)));
 

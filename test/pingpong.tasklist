@@ -1,15 +1,25 @@
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 /**
  * List of enabled tasks in the priority order
  *
  * The first one has the lowest priority.
+ *
+ * For each task, use the macro TASK(n, r, d, s) where :
+ * 'n' in the name of the task
+ * 'r' in the main routine of the task
+ * 'd' in an opaque parameter passed to the routine at startup
+ * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TASK_LIST \
-  TASK(WATCHDOG, watchdog_task, NULL) \
-  TASK(VBOOTHASH, vboot_hash_task, NULL) \
-  TASK(HOSTCMD, host_command_task, NULL) \
-  TASK(CONSOLE, console_task, NULL) \
-  TASK(TESTA, TaskAbc, (void *)'A') \
-  TASK(TESTB, TaskAbc, (void *)'B') \
-  TASK(TESTC, TaskAbc, (void *)'C') \
-  TASK(TESTT, TaskTick, (void *)'T')
+  TASK(WATCHDOG, watchdog_task, NULL, TASK_STACK_SIZE) \
+  TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
+  TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \
+  TASK(CONSOLE, console_task, NULL, TASK_STACK_SIZE) \
+  TASK(TESTA, TaskAbc, (void *)'A', TASK_STACK_SIZE) \
+  TASK(TESTB, TaskAbc, (void *)'B', TASK_STACK_SIZE) \
+  TASK(TESTC, TaskAbc, (void *)'C', TASK_STACK_SIZE) \
+  TASK(TESTT, TaskTick, (void *)'T', TASK_STACK_SIZE)
