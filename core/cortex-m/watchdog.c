@@ -34,7 +34,7 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	if ((excep_lr & 0xf) == 1)
 		uart_puts("(exc) ###\n");
 	else
-		uart_printf("(task %d) ###\n", task_from_addr(psp));
+		uart_printf("(task %d) ###\n", task_get_current());
 	/* Ensure this debug message is always flushed to the UART */
 	uart_emergency_flush();
 

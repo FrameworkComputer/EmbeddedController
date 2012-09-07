@@ -19,8 +19,7 @@
  * Global memory size for a task : 512 bytes
  * including its contexts and its stack
  */
-#define TASK_SIZE_LOG2 9
-#define TASK_SIZE      (1<<TASK_SIZE_LOG2)
+#define TASK_SIZE 512
 
 typedef union {
 	struct {
@@ -124,6 +123,8 @@ static task_ tasks[TASK_ID_COUNT] __attribute__((section(".bss.tasks")))
  * in its own section which immediately follows .bss.tasks in ec.lds.S. */
 uint32_t scratchpad[17] __attribute__((section(".bss.task_scratchpad")));
 
+static task_ *current_task = (task_ *)scratchpad;
+
 /* Should IRQs chain to svc_handler()?  This should be set if either of the
  * following is true:
  *
@@ -143,30 +144,6 @@ static int need_resched_or_profiling = 0;
 static uint32_t tasks_ready = (1<<TASK_ID_COUNT) - 1;
 
 static int start_called;  /* Has task swapping started */
-
-
-static task_ *__get_current(void)
-{
-	unsigned sp;
-
-	asm("mov %0, sp":"=r"(sp));
-	return (task_ *)((sp - 4) & ~(TASK_SIZE-1));
-}
-
-
-/**
- * Return a pointer to the task preempted by the current exception
- *
- * designed to be called from interrupt context.
- */
-static task_ *__get_task_scheduled(void)
-{
-	unsigned sp;
-
-	asm("mrs %0, psp":"=r"(sp));
-	return (task_ *)((sp - 16) & ~(TASK_SIZE-1));
-}
-
 
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
@@ -202,22 +179,10 @@ inline int get_interrupt_context(void)
 	return ret & 0x1ff;                /* exception bits are the 9 LSB */
 }
 
-
-task_id_t task_from_addr(uint32_t addr)
-{
-	task_id_t id = (addr - (uint32_t)tasks) >> TASK_SIZE_LOG2;
-	if (id >= TASK_ID_COUNT)
-		id = TASK_ID_INVALID;
-
-	return id;
-}
-
-
 task_id_t task_get_current(void)
 {
-	return task_from_addr((uint32_t)__get_current());
+	return current_task - tasks;
 }
-
 
 uint32_t *task_get_event_bitmap(task_id_t tskid)
 {
@@ -255,14 +220,17 @@ void svc_handler(int desched, task_id_t resched)
 	}
 #endif
 
-	current = __get_task_scheduled();
+	current = current_task;
 #ifdef CONFIG_OVERFLOW_DETECT
 	ASSERT(current->guard == GUARD_VALUE);
 #endif
 
 	if (desched && !current->events) {
-		/* Remove our own ready bit */
-		tasks_ready &= ~(1 << (current-tasks));
+		/*
+		 * Remove our own ready bit (current - tasks is same as
+		 * task_get_current())
+		 */
+		tasks_ready &= ~(1 << (current - tasks));
 	}
 	tasks_ready |= 1 << resched;
 
@@ -292,6 +260,7 @@ void svc_handler(int desched, task_id_t resched)
 #ifdef CONFIG_TASK_PROFILING
 	task_switches++;
 #endif
+	current_task = next;
 	__switchto(current, next);
 }
 
@@ -343,7 +312,7 @@ void task_resched_if_needed(void *excep_return)
 
 static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 {
-	task_ *tsk = __get_current();
+	task_ *tsk = current_task;
 	task_id_t me = tsk - tasks;
 	uint32_t evt;
 	int ret;
@@ -488,7 +457,7 @@ void mutex_lock(struct mutex *mtx)
 void mutex_unlock(struct mutex *mtx)
 {
 	uint32_t waiters;
-	task_ *tsk = __get_current();
+	task_ *tsk = current_task;
 
 	__asm__ __volatile__("   ldr     %0, [%2]\n"
 			     "   str     %3, [%1]\n"

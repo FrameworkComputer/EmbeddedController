@@ -50,15 +50,8 @@ static inline void task_wake(task_id_t tskid)
 	task_set_event(tskid, TASK_EVENT_WAKE, 0);
 }
 
-/* Return the identifier of the task currently running.
- *
- * When called in interrupt context, returns TASK_ID_INVALID. */
+/* Return the identifier of the task currently running. */
 task_id_t task_get_current(void);
-
-/* Convert an address to the corresponding task ID.  The address may be a stack
- * pointer or the task data for a task.  Returns TASK_ID_INVALID if the address
- * does not correspond to a task. */
-task_id_t task_from_addr(uint32_t addr);
 
 /* Return a pointer to the bitmap of events of the task. */
 uint32_t *task_get_event_bitmap(task_id_t tsk);
