@@ -21,20 +21,21 @@
  */
 #define TASK_SIZE 512
 
+/* Size of stack */
+#define STACK_SIZE 488
+
 typedef union {
 	struct {
-		uint32_t sp;       /* saved stack pointer for context switch */
-		uint32_t events;   /* bitmaps of received events */
+		/*
+		 * Note that sp must be the first element in the task struct
+		 * for __switchto() to work.
+		 */
+		uint32_t sp;       /* Saved stack pointer for context switch */
+		uint32_t events;   /* Bitmaps of received events */
 		uint64_t runtime;  /* Time spent in task */
-		uint32_t reserved; /* Reserved (for padding) */
-		uint32_t guard;    /* Guard value to detect stack overflow */
-		uint32_t stack[0]; /* Task stack; must be 64-bit aligned */
+		uint32_t *stack;   /* Start of stack */
 	};
-	uint32_t context[TASK_SIZE/4];
 } task_;
-
-/* Size of stack */
-#define STACK_SIZE (TASK_SIZE - OFFSET_OF(task_, stack))
 
 /* Value to store in unused stack */
 #define STACK_UNUSED_VALUE 0xdeadd00d
@@ -46,7 +47,7 @@ void __idle(void);
 CONFIG_TASK_LIST
 #undef TASK
 
-/* store the task names for easier debugging */
+/* Task names for easier debugging */
 #define TASK(n, r, d)  #n,
 #include TASK_LIST
 static const char * const task_names[] = {
@@ -54,7 +55,6 @@ static const char * const task_names[] = {
 	CONFIG_TASK_LIST
 };
 #undef TASK
-
 
 #ifdef CONFIG_TASK_PROFILING
 static uint64_t task_start_time; /* Time task scheduling started */
@@ -97,31 +97,39 @@ static void task_exit_trap(void)
 }
 
 
-#define GUARD_VALUE 0x12345678
-
 /* Startup parameters for all tasks. */
 #define TASK(n, r, d)  {	\
 	.r0 = (uint32_t)d,	\
 	.pc = (uint32_t)r,	\
+	.stack_size = STACK_SIZE,	\
 },
 #include TASK_LIST
 static const struct {
 	uint32_t r0;
 	uint32_t pc;
+	uint16_t stack_size;
 } const tasks_init[] = {
 	TASK(IDLE, __idle, 0)
 	CONFIG_TASK_LIST
 };
 #undef TASK
-/* Contexts and stacks for all tasks. */
-static task_ tasks[TASK_ID_COUNT] __attribute__((section(".bss.tasks")))
-		__attribute__((aligned(TASK_SIZE)));
-/* Reserve space to discard context on first context switch.  This must
- * immediately follow tasks, so that it is start-aligned to TASK_SIZE so that
- * __get_current(scratchpad) == scratchpad.  Note that aligned(TASK_SIZE) also
- * size-aligns it, which wastes (512 - 17*4) bytes of RAM, so we simply put it
- * in its own section which immediately follows .bss.tasks in ec.lds.S. */
-uint32_t scratchpad[17] __attribute__((section(".bss.task_scratchpad")));
+
+/* Contexts for all tasks */
+static task_ tasks[TASK_ID_COUNT];
+
+/* Stacks for all tasks */
+/* TODO: variable-size stacks */
+#define TASK(n, r, d)  + STACK_SIZE
+#include TASK_LIST
+uint8_t task_stacks[
+		    STACK_SIZE
+		    CONFIG_TASK_LIST
+] __attribute__((aligned(8)));
+
+#undef TASK
+
+/* Reserve space to discard context on first context switch. */
+uint32_t scratchpad[17];
 
 static task_ *current_task = (task_ *)scratchpad;
 
@@ -222,7 +230,7 @@ void svc_handler(int desched, task_id_t resched)
 
 	current = current_task;
 #ifdef CONFIG_OVERFLOW_DETECT
-	ASSERT(current->guard == GUARD_VALUE);
+	ASSERT(*current->stack == STACK_UNUSED_VALUE);
 #endif
 
 	if (desched && !current->events) {
@@ -474,17 +482,17 @@ void mutex_unlock(struct mutex *mtx)
 	atomic_clear(&tsk->events, TASK_EVENT_MUTEX);
 }
 
-
 void task_print_list(void)
 {
 	int i;
+
 	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
 		uint32_t *sp;
 
-		int stackused = STACK_SIZE;
+		int stackused = tasks_init[i].stack_size;
 
 		for (sp = tasks[i].stack;
 		     sp < (uint32_t *)tasks[i].sp && *sp == STACK_UNUSED_VALUE;
@@ -493,7 +501,7 @@ void task_print_list(void)
 
 		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
 			 task_names[i], tasks[i].events, tasks[i].runtime,
-			 stackused, STACK_SIZE);
+			 stackused, tasks_init[i].stack_size);
 		if (in_interrupt_context())
 			uart_emergency_flush();
 		else
@@ -563,31 +571,44 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 
 int task_pre_init(void)
 {
+	uint32_t *stack_next = (uint32_t *)task_stacks;
 	int i;
 
-	/* fill the task memory with initial values */
+	/* Fill the task memory with initial values */
 	for (i = 0; i < TASK_ID_COUNT; i++) {
 		uint32_t *sp;
+		/* Stack size in words */
+		uint32_t ssize = tasks_init[i].stack_size / 4;
 
-		tasks[i].sp = (uint32_t)(tasks + i + 1) - 64;
-		tasks[i].guard = GUARD_VALUE;
-		/* Initial context on stack */
-		tasks[i].context[TASK_SIZE/4 - 8/*r0*/] = tasks_init[i].r0;
-		tasks[i].context[TASK_SIZE/4 - 3/*lr*/] =
-			(uint32_t)task_exit_trap;
-		tasks[i].context[TASK_SIZE/4 - 2/*pc*/] = tasks_init[i].pc;
-		tasks[i].context[TASK_SIZE/4 - 1/*psr*/] = 0x01000000;
+		tasks[i].stack = stack_next;
 
-		/* Fill unused stack */
-		for (sp = tasks[i].stack; sp < (uint32_t *)tasks[i].sp; sp++)
+		/* Update stack used by first frame (16 uint32's) */
+		sp = stack_next + ssize - 16;
+		tasks[i].sp = (uint32_t)sp;
+
+		/* Initial context on stack (see __switchto()) */
+		sp[8] = tasks_init[i].r0;           /* r0 */
+		sp[13] = (uint32_t)task_exit_trap;  /* lr */
+		sp[14] = tasks_init[i].pc;          /* pc */
+		sp[15] = 0x01000000;                /* psr */
+
+		/* Fill unused stack; also used to detect stack overflow. */
+		for (sp = stack_next; sp < (uint32_t *)tasks[i].sp; sp++)
 			*sp = STACK_UNUSED_VALUE;
+
+		stack_next += ssize;
 	}
 
-	/* Fill in guard value in scratchpad to prevent stack overflow
-	 * detection failure on the first context switch. */
-	((task_ *)scratchpad)->guard = GUARD_VALUE;
+	/*
+	 * Fill in guard value in scratchpad to prevent stack overflow
+	 * detection failure on the first context switch.  This works because
+	 * the first word in the scratchpad is where the switcher will store
+	 * sp, so it's ok to blow away.
+	 */
+	((task_ *)scratchpad)->stack = (uint32_t *)scratchpad;
+	*(uint32_t *)scratchpad = STACK_UNUSED_VALUE;
 
-	/* sanity checks about static task invariants */
+	/* Sanity checks about static task invariants */
 	BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
 	BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
