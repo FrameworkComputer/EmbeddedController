@@ -76,13 +76,13 @@ static int battery_temperature_celsius(int t)
 static int battery_start_charging_range(int t)
 {
 	t = battery_temperature_celsius(t);
-	return (t > 5 && t < 45);
+	return (t >= 5 && t < 45);
 }
 
 static int battery_charging_range(int t)
 {
 	t = battery_temperature_celsius(t);
-	return (t > 5 && t < 60);
+	return (t >= 5 && t < 60);
 }
 
 static int battery_discharging_range(int t)
