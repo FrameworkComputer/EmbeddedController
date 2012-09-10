@@ -88,7 +88,7 @@ static int battery_charging_range(int t)
 static int battery_discharging_range(int t)
 {
 	t = battery_temperature_celsius(t);
-	return (t < 100);
+	return (t >= 0 && t < 100);
 }
 
 /*
