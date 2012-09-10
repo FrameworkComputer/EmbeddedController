@@ -623,10 +623,12 @@ struct ec_params_pwm_set_fan_duty {
 struct ec_params_lightbar_cmd {
 	union {
 		union {
-			uint8_t cmd;
+			uint8_t cmd;  /* Command (see enum lightbar_command) */
+
 			struct {
 				uint8_t cmd;
 			} dump, off, on, init, get_seq;
+
 			struct num {
 				uint8_t cmd;
 				uint8_t num;
@@ -636,11 +638,13 @@ struct ec_params_lightbar_cmd {
 				uint8_t cmd;
 				uint8_t ctrl, reg, value;
 			} reg;
+
 			struct rgb {
 				uint8_t cmd;
 				uint8_t led, red, green, blue;
 			} rgb;
 		} in;
+
 		union {
 			struct dump {
 				struct {
@@ -649,15 +653,32 @@ struct ec_params_lightbar_cmd {
 					uint8_t ic1;
 				} vals[23];
 			} dump;
+
 			struct get_seq {
 				uint8_t num;
 			} get_seq;
+
 			struct {
 				/* no return params */
 			} off, on, init, brightness, seq, reg, rgb, demo;
 		} out;
 	};
 } __packed;
+
+/* Lightbar commands */
+enum lightbar_command {
+	LIGHTBAR_CMD_DUMP = 0,
+	LIGHTBAR_CMD_OFF = 1,
+	LIGHTBAR_CMD_ON = 2,
+	LIGHTBAR_CMD_INIT = 3,
+	LIGHTBAR_CMD_BRIGHTNESS = 4,
+	LIGHTBAR_CMD_SEQ = 5,
+	LIGHTBAR_CMD_REG = 6,
+	LIGHTBAR_CMD_RGB = 7,
+	LIGHTBAR_CMD_GET_SEQ = 8,
+	LIGHTBAR_CMD_DEMO = 9,
+	LIGHTBAR_NUM_CMDS
+};
 
 /*****************************************************************************/
 /* Verified boot commands */

@@ -25,21 +25,6 @@ void lightbar_sequence(enum lightbar_sequence s);
 /****************************************************************************/
 /* External stuff */
 
-/* These are the commands available to the EC console or via LPC. */
-enum lightbar_command {
-	LIGHTBAR_CMD_DUMP,
-	LIGHTBAR_CMD_OFF,
-	LIGHTBAR_CMD_ON,
-	LIGHTBAR_CMD_INIT,
-	LIGHTBAR_CMD_BRIGHTNESS,
-	LIGHTBAR_CMD_SEQ,
-	LIGHTBAR_CMD_REG,
-	LIGHTBAR_CMD_RGB,
-	LIGHTBAR_CMD_GET_SEQ,
-	LIGHTBAR_CMD_DEMO,
-	LIGHTBAR_NUM_CMDS
-};
-
 /* These are used for demo purposes */
 extern void demo_battery_level(int inc);
 extern void demo_is_charging(int ischarge);

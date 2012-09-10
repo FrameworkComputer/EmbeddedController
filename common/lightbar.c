@@ -113,7 +113,7 @@ static inline uint8_t scale_abs(int val, int max)
 }
 
 /* It will often be simpler to provide an overall brightness control. */
-int brightness = 0x80;
+static int brightness = 0x80;
 
 /* So that we can make brightness changes happen instantly, we need to track
  * the current values. The values in the controllers aren't very helpful. */
