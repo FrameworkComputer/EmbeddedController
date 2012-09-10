@@ -193,48 +193,28 @@ enum gpio_signal {
 };
 
 enum temp_sensor_id {
-	/* I2C die temperature sensor near CPU */
-	TEMP_SENSOR_I2C_DIE_NEAR_CPU = 0,
-	/* I2C object temperature sensor near CPU */
-	TEMP_SENSOR_I2C_CPU,
-	/* I2C die temperature sensor near PCH */
-	TEMP_SENSOR_I2C_DIE_NEAR_PCH,
-	/* I2C object temperature sensor near PCH */
-	TEMP_SENSOR_I2C_PCH,
-	/* I2C die temperature sensor near DDR memory */
-	TEMP_SENSOR_I2C_DIE_NEAR_DDR,
-	/* I2C object temperature sensor near CPU */
-	TEMP_SENSOR_I2C_DDR,
-	/* I2C die temperature sensor near battery charger */
-	TEMP_SENSOR_I2C_DIE_NEAR_CHARGER,
-	/* I2C object temperature sensor near CPU */
-	TEMP_SENSOR_I2C_CHARGER,
+	/* TMP006 U20, die/object temperature near Mini-DP / USB connectors */
+	TEMP_SENSOR_I2C_U20_DIE = 0,
+	TEMP_SENSOR_I2C_U20_OBJECT,
+	/* TMP006 U11, die/object temperature near PCH */
+	TEMP_SENSOR_I2C_U11_DIE,
+	TEMP_SENSOR_I2C_U11_OBJECT,
+	/* TMP006 U27, die/object temperature near hinge */
+	TEMP_SENSOR_I2C_U27_DIE,
+	TEMP_SENSOR_I2C_U27_OBJECT,
+	/* TMP006 U14, die/object temperature near battery charger */
+	TEMP_SENSOR_I2C_U14_DIE,
+	TEMP_SENSOR_I2C_U14_OBJECT,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
 	/* CPU die temperature via PECI */
 	TEMP_SENSOR_CPU_PECI,
-	/* Die temperature of U15 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U15_DIE,
-	/* Object temperature of U15 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U15_OBJECT,
-	/* Die temperature of U20 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U20_DIE,
-	/* Object temperature of U20 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U20_OBJECT,
-	/* Die temperature of U27 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U27_DIE,
-	/* Object temperature of U27 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U27_OBJECT,
-	/* Die temperature of U29 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U29_DIE,
-	/* Object temperature of U29 TMP006 temperature sensor */
-	TEMP_SENSOR_I2C_U29_OBJECT,
 
 	TEMP_SENSOR_COUNT
 };
 
 /* The number of TMP006 sensor chips on the board. */
-#define TMP006_COUNT 8
+#define TMP006_COUNT 4
 
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
  * pullup. If this signal is pulled to ground when the EC boots, the EC will get
