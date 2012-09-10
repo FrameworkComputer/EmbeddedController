@@ -129,6 +129,39 @@ static int notify_battery_low(void)
 	return ST_DISCHARGING;
 }
 
+/*
+ * Calculate relative state of charge moving average
+ *
+ * The returned value will be rounded to the nearest integer, by set moving
+ * average init value to (0.5 * window_size).
+ *
+ */
+static int rsoc_moving_average(int state_of_charge)
+{
+	static uint8_t rsoc[4];
+	static int8_t index = -1;
+	int moving_average = sizeof(rsoc) / 2;
+	int i;
+
+	if (index < 0) {
+		for (i = 0; i < sizeof(rsoc); i++)
+			rsoc[i] = (uint8_t)state_of_charge;
+		index = 0;
+		return state_of_charge;
+	}
+
+	rsoc[index] = (uint8_t)state_of_charge;
+	index++;
+	index %= sizeof(rsoc);
+
+	for (i = 0; i < sizeof(rsoc); i++)
+		moving_average += (int)rsoc[i];
+	moving_average /= sizeof(rsoc);
+
+	return moving_average;
+}
+
+
 static int config_low_current_charging(int charge)
 {
 	/* Disable low current termination */
@@ -305,7 +338,11 @@ static int calc_next_state(int state)
 		}
 		/* Check remaining charge % */
 		if (battery_state_of_charge(&capacity) == 0) {
-			if (capacity < 3) {
+			/*
+			 * Shutdown AP when state of charge < 2.5%.
+			 * Moving average is rounded to integer.
+			 */
+			if (rsoc_moving_average(capacity) < 3) {
 				system_off();
 				return ST_IDLE;
 			} else if (capacity < 10) {
