@@ -992,6 +992,16 @@ struct ec_params_force_idle {
 #define EC_CMD_BATTERY_CUT_OFF 0x99
 
 /*****************************************************************************/
+/* Temporary debug commands. TODO: remove this crosbug.com/p/13849 */
+
+/*
+ * Dump charge state machine context.
+ *
+ * Response is a binary dump of charge state machine context.
+ */
+#define EC_CMD_CHARGE_DUMP 0xa0
+
+/*****************************************************************************/
 /* System commands */
 
 /*

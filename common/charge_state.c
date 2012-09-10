@@ -707,3 +707,20 @@ static int charge_command_force_idle(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_FORCE_IDLE, charge_command_force_idle,
 		     EC_VER_MASK(0));
+
+static int charge_command_dump(struct host_cmd_handler_args *args)
+{
+	char *dest = (char *)args->response;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	ASSERT(sizeof(task_ctx) <= args->response_max);
+
+	memcpy(dest, &task_ctx, sizeof(task_ctx));
+	args->response_size = sizeof(task_ctx);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_DUMP, charge_command_dump,
+		     EC_VER_MASK(0));

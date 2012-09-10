@@ -34,6 +34,8 @@ const char help_str[] =
 	"      Prints battery info\n"
 	"  batterycutoff\n"
 	"      Cut off battery output power\n"
+	"  chargedump\n"
+	"      Dump the context of charge state machine\n"
 	"  chargeforceidle\n"
 	"      Force charge state machine to stop in idle mode\n"
 	"  chipinfo\n"
@@ -1802,6 +1804,26 @@ int cmd_charge_force_idle(int argc, char *argv[])
 }
 
 
+int cmd_charge_dump(int argc, char *argv[])
+{
+	unsigned char out[EC_HOST_PARAM_SIZE];
+	int rv, i;
+
+	rv = ec_command(EC_CMD_CHARGE_DUMP, 0, NULL, 0, out, sizeof(out));
+
+	if (rv < 0)
+		return rv;
+
+	for (i = 0; i < rv; ++i) {
+		printf("%02X", out[i]);
+		if ((i & 31) == 31)
+			printf("\n");
+	}
+	printf("\n");
+	return 0;
+}
+
+
 int cmd_gpio_get(int argc, char *argv[])
 {
 	struct ec_params_gpio_get p;
@@ -2162,6 +2184,7 @@ const struct command commands[] = {
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"batterycutoff", cmd_battery_cut_off},
+	{"chargedump", cmd_charge_dump},
 	{"chargeforceidle", cmd_charge_force_idle},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
