@@ -132,6 +132,13 @@ static int notify_battery_low(void)
 /*
  * Calculate relative state of charge moving average
  *
+ * @param state_of_charge         Current battery state of charge reading,
+ *                                from 0 to 100. When state_of_charge < 0,
+ *                                resets the moving average window
+ * @return                        Average state of charge, rounded to nearest
+ *                                integer.
+ *                                -1 when window reset.
+ *
  * The returned value will be rounded to the nearest integer, by set moving
  * average init value to (0.5 * window_size).
  *
@@ -140,11 +147,16 @@ static int rsoc_moving_average(int state_of_charge)
 {
 	static uint8_t rsoc[4];
 	static int8_t index = -1;
-	int moving_average = sizeof(rsoc) / 2;
+	int moving_average = ARRAY_SIZE(rsoc) / 2;
 	int i;
 
+	if (state_of_charge < 0) {
+		index = -1;
+		return -1;
+	}
+
 	if (index < 0) {
-		for (i = 0; i < sizeof(rsoc); i++)
+		for (i = 0; i < ARRAY_SIZE(rsoc); i++)
 			rsoc[i] = (uint8_t)state_of_charge;
 		index = 0;
 		return state_of_charge;
@@ -154,9 +166,9 @@ static int rsoc_moving_average(int state_of_charge)
 	index++;
 	index %= sizeof(rsoc);
 
-	for (i = 0; i < sizeof(rsoc); i++)
+	for (i = 0; i < ARRAY_SIZE(rsoc); i++)
 		moving_average += (int)rsoc[i];
-	moving_average /= sizeof(rsoc);
+	moving_average /= ARRAY_SIZE(rsoc);
 
 	return moving_average;
 }
@@ -388,6 +400,9 @@ void pmu_charger_task(void)
 			calc_next_state(state);
 
 		if (next_state != state) {
+			/* Reset state of charge moving average window */
+			rsoc_moving_average(-1);
+
 			pre_charging_count = 0;
 			CPRINTF("[batt] state %s -> %s\n",
 				state_list[state],
