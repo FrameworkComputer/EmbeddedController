@@ -66,6 +66,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 	curr_pos = 0;
 	hash = NULL;
 	want_abort = 0;
+	in_progress = 1;
 
 	/* Restart the hash computation */
 	CPRINTF("[%T hash start 0x%08x 0x%08x]\n", offset, size);
@@ -107,7 +108,6 @@ static void vboot_hash_init(void)
 		vboot_hash_start(CONFIG_FW_RW_OFF,
 				 system_get_image_used(SYSTEM_IMAGE_RW),
 				 NULL, 0);
-		in_progress = 1;
 	}
 }
 
