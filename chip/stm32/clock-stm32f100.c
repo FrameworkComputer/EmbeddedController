@@ -187,7 +187,7 @@ static void enable_serial_wakeup(int enable)
 void __idle(void)
 {
 	timestamp_t t0, t1;
-	uint32_t next_delay;
+	int next_delay;
 	uint32_t rtc_t0, rtc_t1;
 
 	while (1) {
