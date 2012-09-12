@@ -1990,6 +1990,10 @@ static int ec_hash_help(const char *cmd)
 	printf("  %s abort                  - abort hashing\n", cmd);
 	printf("  %s start [<offset> <size> [<nonce>]] - start hashing\n", cmd);
 	printf("  %s recalc [<offset> <size> [<nonce>]] - sync rehash\n", cmd);
+	printf("\n"
+	       "If <offset> is RO or RW, offset and size are computed\n"
+	       "automatically for the EC-RO or EC-RW firmware image.\n");
+
 	return 0;
 }
 
@@ -2060,21 +2064,36 @@ int cmd_ec_hash(int argc, char *argv[])
 	else
 		return ec_hash_help(argv[0]);
 
-	if (argc < 4) {
-		fprintf(stderr, "Must specify offset and size\n");
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+
+	if (argc < 3) {
+		fprintf(stderr, "Must specify offset\n");
 		return -1;
 	}
 
-	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
-	p.offset = strtol(argv[2], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad offset.\n");
+	if (!strcasecmp(argv[2], "ro")) {
+		p.offset = EC_VBOOT_HASH_OFFSET_RO;
+		p.size = 0;
+		printf("Hashing EC-RO...\n");
+	} else if (!strcasecmp(argv[2], "rw")) {
+		p.offset = EC_VBOOT_HASH_OFFSET_RW;
+		p.size = 0;
+		printf("Hashing EC-RW...\n");
+	} else if (argc < 4) {
+		fprintf(stderr, "Must specify size\n");
 		return -1;
-	}
-	p.size = strtol(argv[3], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad size.\n");
-		return -1;
+	} else {
+		p.offset = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad offset.\n");
+			return -1;
+		}
+		p.size = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad size.\n");
+			return -1;
+		}
+		printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
 	}
 
 	if (argc == 5) {
@@ -2092,7 +2111,6 @@ int cmd_ec_hash(int argc, char *argv[])
 	} else
 		p.nonce_size = 0;
 
-	printf("Hashing %d bytes at offset %d...\n", p.size, p.offset);
 	rv = ec_command(EC_CMD_VBOOT_HASH, 0, &p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
 		return rv;

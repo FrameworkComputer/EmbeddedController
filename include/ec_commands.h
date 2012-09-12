@@ -712,21 +712,29 @@ struct ec_response_vboot_hash {
 } __packed;
 
 enum ec_vboot_hash_cmd {
-	EC_VBOOT_HASH_GET,     /* Get current hash status */
-	EC_VBOOT_HASH_ABORT,   /* Abort calculating current hash */
-	EC_VBOOT_HASH_START,   /* Start computing a new hash */
-	EC_VBOOT_HASH_RECALC,  /* Synchronously compute a new hash */
+	EC_VBOOT_HASH_GET = 0,       /* Get current hash status */
+	EC_VBOOT_HASH_ABORT = 1,     /* Abort calculating current hash */
+	EC_VBOOT_HASH_START = 2,     /* Start computing a new hash */
+	EC_VBOOT_HASH_RECALC = 3,    /* Synchronously compute a new hash */
 };
 
 enum ec_vboot_hash_type {
-	EC_VBOOT_HASH_TYPE_SHA256,  /* SHA-256 */
+	EC_VBOOT_HASH_TYPE_SHA256 = 0, /* SHA-256 */
 };
 
 enum ec_vboot_hash_status {
-	EC_VBOOT_HASH_STATUS_NONE,     /* No hash (not started, or aborted) */
-	EC_VBOOT_HASH_STATUS_DONE,     /* Finished computing a hash */
-	EC_VBOOT_HASH_STATUS_BUSY,     /* Busy computing a hash */
+	EC_VBOOT_HASH_STATUS_NONE = 0, /* No hash (not started, or aborted) */
+	EC_VBOOT_HASH_STATUS_DONE = 1, /* Finished computing a hash */
+	EC_VBOOT_HASH_STATUS_BUSY = 2, /* Busy computing a hash */
 };
+
+/*
+ * Special values for offset for EC_VBOOT_HASH_START and EC_VBOOT_HASH_RECALC.
+ * If one of these is specified, the EC will automatically update offset and
+ * size to the correct values for the specified image (RO or RW).
+ */
+#define EC_VBOOT_HASH_OFFSET_RO 0xfffffffe
+#define EC_VBOOT_HASH_OFFSET_RW 0xfffffffd
 
 /*****************************************************************************/
 /* USB charging control commands */

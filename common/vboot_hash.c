@@ -193,9 +193,21 @@ static int command_hash(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (argc == 2 && !strcasecmp(argv[1], "abort")) {
-		vboot_hash_abort();
-		return EC_SUCCESS;
+	if (argc == 2) {
+		if (!strcasecmp(argv[1], "abort")) {
+			vboot_hash_abort();
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "rw")) {
+			return vboot_hash_start(
+				CONFIG_FW_RW_OFF,
+				system_get_image_used(SYSTEM_IMAGE_RW),
+				NULL, 0);
+		} else if (!strcasecmp(argv[1], "ro")) {
+			return vboot_hash_start(
+				CONFIG_FW_RO_OFF,
+				system_get_image_used(SYSTEM_IMAGE_RO),
+				NULL, 0);
+		}
 	}
 
 	if (argc >= 3) {
@@ -220,7 +232,7 @@ static int command_hash(int argc, char **argv)
 		return vboot_hash_start(offset, size, NULL, 0);
 }
 DECLARE_CONSOLE_COMMAND(hash, command_hash,
-			"[abort] | [<offset> <size> [<nonce>]]",
+			"[abort | ro | rw] | [<offset> <size> [<nonce>]]",
 			"Request hash recomputation",
 			NULL);
 
@@ -245,6 +257,42 @@ static void fill_response(struct ec_response_vboot_hash *r)
 		r->status = EC_VBOOT_HASH_STATUS_NONE;
 }
 
+/**
+ * Start computing a hash, with sanity checking on params.
+ *
+ * @return EC_RES_SUCCESS if success, or other result code on error.
+ */
+static int host_start_hash(const struct ec_params_vboot_hash *p)
+{
+	int offset = p->offset;
+	int size = p->size;
+	int rv;
+
+	/* Sanity-check input params */
+	if (p->hash_type != EC_VBOOT_HASH_TYPE_SHA256)
+		return EC_RES_INVALID_PARAM;
+	if (p->nonce_size > sizeof(p->nonce_data))
+		return EC_RES_INVALID_PARAM;
+
+	/* Handle special offset values */
+	if (offset == EC_VBOOT_HASH_OFFSET_RO) {
+		offset = CONFIG_FW_RO_OFF;
+		size = system_get_image_used(SYSTEM_IMAGE_RO);
+	} else if (p->offset == EC_VBOOT_HASH_OFFSET_RW) {
+		offset = CONFIG_FW_RW_OFF;
+		size = system_get_image_used(SYSTEM_IMAGE_RW);
+	}
+
+	rv = vboot_hash_start(offset, size, p->nonce_data, p->nonce_size);
+
+	if (rv == EC_SUCCESS)
+		return EC_RES_SUCCESS;
+	else if (rv == EC_ERROR_INVAL)
+		return EC_RES_INVALID_PARAM;
+	else
+		return EC_RES_ERROR;
+}
+
 static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vboot_hash *p = args->params;
@@ -262,33 +310,12 @@ static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 
 	case EC_VBOOT_HASH_START:
-		if (p->hash_type != EC_VBOOT_HASH_TYPE_SHA256)
-			return EC_RES_INVALID_PARAM;
-		if (p->nonce_size > sizeof(p->nonce_data))
-			return EC_RES_INVALID_PARAM;
-
-		rv = vboot_hash_start(p->offset, p->size, p->nonce_data,
-				      p->nonce_size);
-
-		if (rv == EC_SUCCESS)
-			return EC_RES_SUCCESS;
-		else if (rv == EC_ERROR_INVAL)
-			return EC_RES_INVALID_PARAM;
-		else
-			return EC_RES_ERROR;
+		return host_start_hash(p);
 
 	case EC_VBOOT_HASH_RECALC:
-		if (p->hash_type != EC_VBOOT_HASH_TYPE_SHA256)
-			return EC_RES_INVALID_PARAM;
-		if (p->nonce_size > sizeof(p->nonce_data))
-			return EC_RES_INVALID_PARAM;
-
-		rv = vboot_hash_start(p->offset, p->size, p->nonce_data,
-				      p->nonce_size);
-		if (rv == EC_ERROR_INVAL)
-			return EC_RES_INVALID_PARAM;
-		else if (rv != EC_SUCCESS)
-			return EC_RES_ERROR;
+		rv = host_start_hash(p);
+		if (rv != EC_RES_SUCCESS)
+			return rv;
 
 		/* Wait for hash to finish */
 		while (in_progress)
