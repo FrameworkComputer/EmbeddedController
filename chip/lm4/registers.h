@@ -119,6 +119,7 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_LPC_CTL(ch)        LM4LPCREG(ch, 0x000)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
 #define LM4_LPC_ST_TOH         (1 << 0)  /* TO Host bit */
+#define LM4_LPC_ST_FRMH        (1 << 1)  /* FRoM Host bit */
 #define LM4_LPC_ST_CMD         (1 << 3)  /* Last from-host byte was command */
 #define LM4_LPC_ST_PRESENT     (1 << 8)
 #define LM4_LPC_ST_SCI         (1 << 9)

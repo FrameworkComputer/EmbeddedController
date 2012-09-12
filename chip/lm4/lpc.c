@@ -573,9 +573,19 @@ static void lpc_interrupt(void)
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
-		/* Store port 80 event so we know where reset happened */
-		if (LM4_LPC_LPCSTS & (1 << 10))
+		if (LM4_LPC_LPCSTS & (1 << 10)) {
+			int i;
+
+			/* Store port 80 reset event */
 			port_80_write(PORT_80_EVENT_RESET);
+
+			/*
+			 * Workaround for crosbug.com/p/12349; clear all FRMH
+			 * bits so host writes will trigger interrupts.
+			 */
+			for (i = 0; i < 8; i++)
+				LM4_LPC_ST(i) &= ~LM4_LPC_ST_FRMH;
+		}
 
 		CPRINTF("[%T LPC RESET# %sasserted]\n",
 			(LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");

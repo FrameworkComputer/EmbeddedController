@@ -92,6 +92,8 @@ const char help_str[] =
 	"      Write I2C bus\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  port80flood\n"
+	"      Rapidly write bytes to port 80\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -2190,6 +2192,15 @@ int cmd_console(int argc, char *argv[])
 	return 0;
 }
 
+/* Flood port 80 with byte writes */
+int cmd_port_80_flood(int argc, char *argv[])
+{
+	int i;
+
+	for (i = 0; i < 256; i++)
+		outb(i, 0x80);
+	return 0;
+}
 
 struct command {
 	const char *name;
@@ -2243,6 +2254,7 @@ const struct command commands[] = {
 	{"rtcget", cmd_rtc_get},
 	{"rtcset", cmd_rtc_set},
 	{"sertest", cmd_serial_test},
+	{"port80flood", cmd_port_80_flood},
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
 	{"tempsinfo", cmd_temp_sensor_info},
