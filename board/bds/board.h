@@ -16,6 +16,11 @@
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 
+/* LM4 modules we don't use on link but still want to keep compiling */
+#define CONFIG_EEPROM
+#define CONFIG_EOPTION
+#define CONFIG_PSTORE
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel
@@ -42,6 +47,11 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
+
+/* EEPROM blocks */
+#define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */
+#define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
+#define EEPROM_BLOCK_COUNT_PSTORE 16
 
 /* Target value for BOOTCFG.  This currently toggles the polarity bit without
  * enabling the boot loader, simply to prove we can program it. */

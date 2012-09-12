@@ -18,13 +18,11 @@
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24725
 #define CONFIG_CONSOLE_CMDHELP
-#define CONFIG_EOPTION
 #define CONFIG_IR357x
 #define CONFIG_LPC
 #define CONFIG_ONEWIRE
 #define CONFIG_PECI
 #define CONFIG_POWER_LED
-#define CONFIG_PSTORE
 #define CONFIG_TASK_PROFILING
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
@@ -92,11 +90,6 @@ enum adc_channel
  * The current constrant of all components on the charging path.
  */
 #define CONFIG_CHARGING_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
-
-/* EEPROM blocks */
-#define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */
-#define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
-#define EEPROM_BLOCK_COUNT_PSTORE 16
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
