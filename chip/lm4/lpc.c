@@ -539,8 +539,14 @@ static void lpc_interrupt(void)
 	}
 #endif
 
-	/* Handle port 80 writes (CH0MIS1) */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_PORT80, 2))
+	/*
+	 * Handle port 80 writes (CH0MIS1).  Due to crosbug.com/p/12349 the
+	 * interrupt status (mis & LM4_LPC_INT_MASK(LPC_CH_PORT80, 2))
+	 * apparently gets lost on back-to-back writes to port 80, so check the
+	 * FRMH bit in the channel status register to see if a write is
+	 * pending.  Loop to handle bursts of back-to-back writes.
+	 */
+	while (LM4_LPC_ST(LPC_CH_PORT80) & LM4_LPC_ST_FRMH)
 		port_80_write(LPC_POOL_PORT80[0]);
 
 #ifdef CONFIG_TASK_I8042CMD
