@@ -473,49 +473,56 @@ DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmu_init_registers, HOOK_PRIO_DEFAULT);
 
 void pmu_init(void)
 {
-	int failure = 0;
+	int failure = 0, retries_remaining = 3;
 
+	while (--retries_remaining >= 0) {
+		failure = 0;
 #ifdef CONFIG_PMU_BOARD_INIT
-	if (!failure)
-		failure = board_pmu_init();
+		if (!failure)
+			failure = board_pmu_init();
 #else
-	/* Init configuration
-	 *   Fast charge timer    : 2 hours
-	 *   Charger              : disable
-	 *   External pin control : enable
-	 *
-	 * TODO: move settings to battery pack specific init
-	 */
-	if (!failure)
-		failure = pmu_write(CG_CTRL0, 2);
-	/* Limit full charge current to 50%
-	 * TODO: remove this temporary hack.
-	 */
-	if (!failure)
-		failure = pmu_write(CG_CTRL3, 0xbb);
+		/* Init configuration
+		 *   Fast charge timer    : 2 hours
+		 *   Charger              : disable
+		 *   External pin control : enable
+		 *
+		 * TODO: move settings to battery pack specific init
+		 */
+		if (!failure)
+			failure = pmu_write(CG_CTRL0, 2);
+		/* Limit full charge current to 50%
+		 * TODO: remove this temporary hack.
+		 */
+		if (!failure)
+			failure = pmu_write(CG_CTRL3, 0xbb);
 #endif
-	/* Enable interrupts */
-	if (!failure) {
-		failure = pmu_write(IRQ1MASK,
+		/* Enable interrupts */
+		if (!failure) {
+			failure = pmu_write(IRQ1MASK,
 					EVENT_VACG  | /* AC voltage good */
 					EVENT_VSYSG | /* System voltage good */
 					EVENT_VBATG | /* Battery voltage good */
 					EVENT_CGACT | /* Charging status */
 					EVENT_CGCPL); /* Charging complete */
-	}
-	if (!failure)
-		failure = pmu_write(IRQ2MASK, 0);
-	if (!failure)
-		failure = pmu_clear_irq();
+		}
+		if (!failure)
+			failure = pmu_write(IRQ2MASK, 0);
+		if (!failure)
+			failure = pmu_clear_irq();
 
-	/* Enable charger interrupt. */
-	if (!failure)
-		failure = gpio_enable_interrupt(GPIO_CHARGER_INT);
+		/* Enable charger interrupt. */
+		if (!failure)
+			failure = gpio_enable_interrupt(GPIO_CHARGER_INT);
 
 #ifdef CONFIG_AC_POWER_STATUS
-	if (!failure)
-		failure = gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
+		if (!failure)
+			failure = gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
 #endif
+
+		/* Exit the retry loop if there was no failure */
+		if (!failure)
+			break;
+	}
 
 	if (failure)
 		board_hard_reset();
