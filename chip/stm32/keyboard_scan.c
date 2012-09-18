@@ -80,7 +80,7 @@ struct kbc_gpio {
 	int pin;
 };
 
-#if defined(BOARD_daisy) || defined(BOARD_snow)
+#if defined(BOARD_daisy) || defined(BOARD_snow) || defined(BOARD_spring)
 static const uint32_t ports[] = { GPIO_B, GPIO_C, GPIO_D };
 #else
 #error "Need to specify GPIO ports used by keyboard"

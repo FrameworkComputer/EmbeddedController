@@ -124,7 +124,7 @@ info "EC UART pty : ${EC_UART}"
 save="$(servo_save)"
 
 case "${BOARD}" in
-	daisy | snow ) flash_daisy ;;
+	daisy | snow | spring ) flash_daisy ;;
 	link ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
 esac
