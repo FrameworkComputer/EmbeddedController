@@ -80,7 +80,6 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 	return EC_SUCCESS;
 }
 
-
 /* Abort hash currently in progress, if any. */
 static void vboot_hash_abort(void)
 {
@@ -88,9 +87,9 @@ static void vboot_hash_abort(void)
 		want_abort = 1;
 }
 
-
 static void vboot_hash_init(void)
 {
+#ifdef CONFIG_SAVE_VBOOT_HASH
 	const struct vboot_hash_tag *tag;
 	int version, size;
 
@@ -103,14 +102,15 @@ static void vboot_hash_init(void)
 		hash = tag->hash;
 		data_offset = tag->offset;
 		data_size = tag->size;
-	} else {
-		/* Start computing the hash of firmware A */
+	} else
+#endif
+	{
+		/* Start computing the hash of RW firmware */
 		vboot_hash_start(CONFIG_FW_RW_OFF,
 				 system_get_image_used(SYSTEM_IMAGE_RW),
 				 NULL, 0);
 	}
 }
-
 
 void vboot_hash_task(void)
 {
@@ -154,6 +154,8 @@ void vboot_hash_task(void)
 /*****************************************************************************/
 /* Hooks */
 
+#ifdef CONFIG_SAVE_VBOOT_HASH
+
 static int vboot_hash_preserve_state(void)
 {
 	struct vboot_hash_tag tag;
@@ -171,6 +173,8 @@ static int vboot_hash_preserve_state(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
+
+#endif
 
 /****************************************************************************/
 /* Console commands */
