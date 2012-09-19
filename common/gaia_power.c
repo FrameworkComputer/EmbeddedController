@@ -256,12 +256,18 @@ int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
 	/* Leave power off only if requested by reset flags */
-	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
+	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
+		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
+			system_get_reset_flags());
 		auto_power_on = 1;
+	}
 
 	/* Auto power on if the recovery combination was pressed */
-	if (keyboard_scan_recovery_pressed())
+	if (keyboard_scan_recovery_pressed()) {
+		CPRINTF("[%T auto_power_on is set due to "
+			"keyboard_scan_recovery_pressed() ...]\n");
 		auto_power_on = 1;
+	}
 
 	return EC_SUCCESS;
 }
@@ -306,8 +312,11 @@ void chipset_exit_hard_off(void)
 static int check_for_power_on_event(void)
 {
 	/* the system is already ON */
-	if (gpio_get_level(GPIO_EN_PP3300))
+	if (gpio_get_level(GPIO_EN_PP3300)) {
+		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
+		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
+	}
 
 	/* power on requested at EC startup for recovery */
 	if (auto_power_on) {
@@ -424,10 +433,10 @@ static int react_to_xpshold(unsigned int timeout_us)
 	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
 
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
-		CPUTS("XPSHOLD not seen in time\n");
+		CPUTS("[%T XPSHOLD not seen in time]\n");
 		return -1;
 	}
-	CPRINTF("%T XPSHOLD seen\n");
+	CPRINTF("[%T XPSHOLD seen]\n");
 	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
 	return 0;
 }
