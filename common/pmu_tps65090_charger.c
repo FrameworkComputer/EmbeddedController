@@ -194,7 +194,7 @@ static int calc_next_state(int state)
 	switch (state) {
 	case ST_IDLE:
 		/* Check AC and chiset state */
-		if (!pmu_get_ac()) {
+		if (!board_get_ac()) {
 			if (chipset_in_state(CHIPSET_STATE_ON))
 				return ST_DISCHARGING;
 			return ST_IDLE;
@@ -231,7 +231,7 @@ static int calc_next_state(int state)
 		return ST_IDLE;
 
 	case ST_PRE_CHARGING:
-		if (!pmu_get_ac())
+		if (!board_get_ac())
 			return ST_IDLE;
 
 		/* If the battery goes online after enable the charger,
@@ -252,7 +252,7 @@ static int calc_next_state(int state)
 
 	case ST_CHARGING:
 		/* Go back to idle state when AC is unplugged */
-		if (!pmu_get_ac())
+		if (!board_get_ac())
 			return ST_IDLE;
 
 		/*
@@ -305,7 +305,7 @@ static int calc_next_state(int state)
 		 *   - battery temperature is in start charging range
 		 *   - no battery alarm
 		 */
-		if (pmu_get_ac()) {
+		if (board_get_ac()) {
 			if (battery_status(&alarm))
 				return ST_CHARGING_ERROR;
 
@@ -326,7 +326,7 @@ static int calc_next_state(int state)
 
 	case ST_DISCHARGING:
 		/* Go back to idle state when AC is plugged */
-		if (pmu_get_ac())
+		if (board_get_ac())
 			return ST_IDLE;
 
 		/* Prepare EC sleep after system stopped discharging */
@@ -453,7 +453,7 @@ void pmu_charger_task(void)
 				pre_charging_count++;
 			break;
 		default:
-			if (pmu_get_ac()) {
+			if (board_get_ac()) {
 				wait_time = T1_USEC;
 				break;
 			} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {

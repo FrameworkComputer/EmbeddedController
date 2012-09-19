@@ -165,17 +165,6 @@ int pmu_low_current_charging(int enable);
 void pmu_irq_handler(enum gpio_signal signal);
 
 /**
- * Get AC state through GPIO
- *
- * @return 0        AC off
- * @return 1        AC on
- *
- * TODO: This is a board specific function, should be moved to
- * system_common.c or board.c
- */
-int pmu_get_ac(void);
-
-/**
  * Set temperature threshold
  *
  * @param temp_n          TSET_T1 to TSET_T4
@@ -215,6 +204,17 @@ int pmu_enable_ext_control(int enable);
  * @param timeout         enum FASTCHARGE_TIMEOUT
  */
 int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout);
+
+/**
+ * Get AC state
+ *
+ * @return 0        AC off
+ * @return 1        AC on
+ *
+ * This is a board specific function as we get the PMU VACG signal
+ * through a GPIO.
+ */
+int board_get_ac(void);
 
 /**
  * Reset the entire board if it is capable

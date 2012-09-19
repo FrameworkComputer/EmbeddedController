@@ -16,6 +16,7 @@
 #include "power_led.h"
 #include "registers.h"
 #include "spi.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -421,3 +422,35 @@ int board_pmu_init(void)
 	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
+
+int board_get_ac(void)
+{
+	/*
+	 * Detect AC state using combined gpio pins
+	 *
+	 * On daisy and snow, there's no single gpio signal to detect AC.
+	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
+	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
+	 *
+	 * When AC plugged, both GPIOs will be high.
+	 *
+	 * One drawback of this detection is, when press-and-hold power
+	 * button. AC state will be unknown. This function will fallback
+	 * to PMU VACG.
+	 */
+
+	int ac_good = 1, battery_good;
+
+	if (gpio_get_level(GPIO_KB_PWR_ON_L))
+		return gpio_get_level(GPIO_AC_PWRBTN_L);
+
+	/* Check PMU VACG */
+	if (!in_interrupt_context())
+		pmu_get_power_source(&ac_good, &battery_good);
+
+	/*
+	 * Charging task only interacts with AP in discharging state. So
+	 * return 1 when AC status can not be detected by GPIO or VACG.
+	 */
+	return ac_good;
+}
