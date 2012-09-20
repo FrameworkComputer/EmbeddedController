@@ -211,7 +211,7 @@ void board_hard_reset(void)
  */
 int board_pmu_init(void)
 {
-	int ver, failure = 0;
+	int failure = 0;
 
 	/* Set fast charging timeout to 6 hours*/
 	if (!failure)
