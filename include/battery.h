@@ -18,6 +18,8 @@
 #define STOP_CHARGE_THRESHOLD 100
 /* Threshold for power led to turn green */
 #define POWERLED_GREEN_THRESHOLD 90
+/* Precharge only when state of charge is below this level */
+#define PRE_CHARGE_THRESHOLD 25
 
 /* Define the lightbar color thresholds */
 #define LIGHTBAR_POWER_THRESHOLD_FULL   99

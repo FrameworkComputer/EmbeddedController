@@ -331,14 +331,14 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	    ctx->curr.charging_current)
 		return PWR_STATE_INIT;
 
-	if (ctx->curr.batt.state_of_charge >= STOP_CHARGE_THRESHOLD)
+	if (batt->state_of_charge >= STOP_CHARGE_THRESHOLD)
 		return PWR_STATE_UNCHANGE;
 
 	/* Configure init charger state and switch to charge state */
-	if (ctx->curr.batt.desired_voltage &&
-	    ctx->curr.batt.desired_current) {
+	if (batt->desired_voltage && batt->desired_current) {
 		/* Set charger output constraints */
-		if (batt->desired_current < ctx->charger->current_min) {
+		if (batt->desired_current < ctx->charger->current_min &&
+		    batt->state_of_charge < PRE_CHARGE_THRESHOLD) {
 			/* Trickle charging */
 			if (charger_set_current(c_info->current_min) ||
 			    charger_set_voltage(batt->voltage))
@@ -373,7 +373,8 @@ static enum power_state state_charge(struct power_state_context *ctx)
 		return PWR_STATE_ERROR;
 
 	if (batt->desired_current < c_info->current_min &&
-	    batt->desired_current > 0)
+	    batt->desired_current > 0 &&
+	    batt->state_of_charge < PRE_CHARGE_THRESHOLD)
 		return trickle_charge(ctx);
 
 	/* Check charger reset */
