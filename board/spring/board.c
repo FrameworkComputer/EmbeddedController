@@ -184,12 +184,26 @@ void board_keyboard_suppress_noise(void)
 static int board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
+
+#ifdef CONFIG_PMU_FORCE_FET
+	/* Enable lcd panel power */
+	pmu_enable_fet(FET_LCD_PANEL, 1, NULL);
+	/* Enable backlight power */
+	pmu_enable_fet(FET_BACKLIGHT, 1, NULL);
 	return 0;
+#endif /* CONFIG_PMU_FORCE_FET */
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
 
 static int board_shutdown_hook(void)
 {
+#ifdef CONFIG_PMU_FORCE_FET
+	/* Power off backlight power */
+	pmu_enable_fet(FET_BACKLIGHT, 0, NULL);
+	/* Power off lcd panel */
+	pmu_enable_fet(FET_LCD_PANEL, 0, NULL);
+#endif /* CONFIG_PMU_FORCE_FET */
+
 	/* Disable pull-up on SUSPEND_L during shutdown to prevent leakage */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
 

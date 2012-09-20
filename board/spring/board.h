@@ -33,6 +33,9 @@
 /* DE-ACTIVATED: use STOP mode when we have nothing to do */
 #undef CONFIG_LOW_POWER_IDLE
 
+/* always enable LCD power rails */
+#define CONFIG_PMU_FORCE_FET
+
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */
