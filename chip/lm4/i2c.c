@@ -41,21 +41,37 @@ extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 static int wait_idle(int port)
 {
 	int i;
-	int event;
+	int event = 0;
 
 	i = LM4_I2C_MCS(port);
 	while (i & 0x01) {
 		/* Port is busy, so wait for the interrupt */
 		task_waiting_on_port[port] = task_get_current();
 		LM4_I2C_MIMR(port) = 0x03;
-		event = task_wait_event(1000000);
+		/* We want to wait here quietly until the I2C interrupt comes
+		 * along, but we don't want to lose any pending events that
+		 * will be needed by the task that started the I2C transaction
+		 * in the first place. So we save them up and restore them when
+		 * the I2C is either completed or timed out. Refer to the
+		 * implementation of usleep() for a similar situation.
+		 */
+		event |= (task_wait_event(1000000) & ~TASK_EVENT_I2C_IDLE);
 		LM4_I2C_MIMR(port) = 0x00;
 		task_waiting_on_port[port] = TASK_ID_INVALID;
-		if (event == TASK_EVENT_TIMER)
+		if (event & TASK_EVENT_TIMER) {
+			/* Restore any events that we saw while waiting */
+			task_set_event(task_get_current(),
+				       (event & ~TASK_EVENT_TIMER), 0);
 			return EC_ERROR_TIMEOUT;
+		}
 
 		i = LM4_I2C_MCS(port);
 	}
+
+	/* Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
+	 * one, because we've handled it above.
+	 */
+	task_set_event(task_get_current(), event, 0);
 
 	/* Check for errors */
 	if (i & 0x02)
@@ -308,9 +324,9 @@ static void handle_interrupt(int port)
 	/* Clear the interrupt status */
 	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
 
-	/* Wake up the task which was waiting on the interrupt, if any */
+	/* Wake up the task which was waiting on the I2C interrupt, if any. */
 	if (id != TASK_ID_INVALID)
-		task_wake(id);
+		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
 }
 
 

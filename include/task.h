@@ -13,7 +13,8 @@
 #include "task_id.h"
 
 /* Task event bitmasks */
-#define TASK_EVENT_CUSTOM(x) (x & 0x1fffffff)
+#define TASK_EVENT_CUSTOM(x) (x & 0x0fffffff)
+#define TASK_EVENT_I2C_IDLE (1 << 28) /* I2C interrupt handler event. */
 #define TASK_EVENT_WAKE   (1 << 29)  /* task_wake() called on task */
 #define TASK_EVENT_MUTEX  (1 << 30)  /* Mutex unlocking */
 #define TASK_EVENT_TIMER  (1 << 31)  /* Timer expired.  For example,
