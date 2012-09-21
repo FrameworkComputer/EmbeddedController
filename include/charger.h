@@ -44,6 +44,15 @@ int charger_get_status(int *status);
  */
 int charger_set_mode(int mode);
 
+/**
+ * Return the closest match the charger can supply to the requested current.
+ *
+ * @param current	Requested current in mA.
+ *
+ * @return Current the charger will actually supply if <current> is requested.
+ */
+int charger_closest_current(int current);
+
 /* Get/set charge current limit in mA */
 int charger_get_current(int *current);
 int charger_set_current(int current);

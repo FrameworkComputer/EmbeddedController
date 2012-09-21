@@ -346,8 +346,14 @@ static enum power_state state_idle(struct power_state_context *ctx)
 			ctx->trickle_charging_time = get_time();
 		} else {
 			/* Normal charging */
+			int want_current =
+				charger_closest_current(batt->desired_current);
+
+			CPRINTF("[%T Charge start %dmV %dmA]\n",
+				batt->desired_voltage, want_current);
+
 			if (charger_set_voltage(batt->desired_voltage) ||
-			    charger_set_current(batt->desired_current))
+			    charger_set_current(want_current))
 				return PWR_STATE_ERROR;
 		}
 		update_charger_time(ctx, get_time());
@@ -367,6 +373,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	struct batt_params *batt = &ctx->curr.batt;
 	const struct charger_info *c_info = ctx->charger;
 	int debounce = 0;
+	int want_current;
 	timestamp_t now;
 
 	if (curr->error)
@@ -394,24 +401,36 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	now = get_time();
 
 	if (batt->desired_voltage != curr->charging_voltage) {
+		CPRINTF("[%T Charge voltage %dmV]\n", batt->desired_voltage);
 		if (charger_set_voltage(batt->desired_voltage))
 			return PWR_STATE_ERROR;
 		update_charger_time(ctx, now);
 	}
 
-	if (batt->desired_current == curr->charging_current) {
+	/*
+	 * Adjust desired current to one the charger can actually supply before
+	 * we do debouncing, or else we'll keep asking for a current the
+	 * charger can't actually supply.
+	 */
+	want_current = charger_closest_current(batt->desired_current);
+
+	if (want_current == curr->charging_current) {
 		/* Tick charger watchdog */
 		if (!is_charger_expired(ctx, now))
 			return PWR_STATE_UNCHANGE;
-	} else if (batt->desired_current > curr->charging_current) {
+	} else if (want_current > curr->charging_current) {
 		if (!timestamp_expired(ctx->voltage_debounce_time, &now))
 			return PWR_STATE_UNCHANGE;
 	} else {
-		/* Debounce charging current on falling edge */
 		debounce = 1;
 	}
 
-	if (charger_set_current(batt->desired_current))
+	if (want_current != curr->charging_current) {
+		CPRINTF("[%T Charge current %dmA @ %dmV]\n",
+			want_current, batt->desired_voltage);
+	}
+
+	if (charger_set_current(want_current))
 		return PWR_STATE_ERROR;
 
 	/* Update charger watchdog timer and debounce timer */

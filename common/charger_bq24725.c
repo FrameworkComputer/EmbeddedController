@@ -134,17 +134,28 @@ int charger_get_current(int *current)
 	return EC_SUCCESS;
 }
 
+int charger_closest_current(int current)
+{
+	const struct charger_info * const info = charger_get_info();
+
+	/*
+	 * If the requested current is non-zero but below our minimum,
+	 * return the minimum.  See crosbug.com/p/8662.
+	 */
+	if (current > 0 && current < info->current_min)
+		return info->current_min;
+
+	/* Clip to max */
+	if (current > info->current_max)
+		return info->current_max;
+
+	/* Otherwise round down to nearest current step */
+	return current - (current % info->current_step);
+}
+
 int charger_set_current(int current)
 {
-	const struct charger_info *info = charger_get_info();
-
-	/* Clip the charge current to the range the charger can supply.  This
-	 * is a temporary workaround for the battery requesting a very small
-	 * current for trickle-charging.  See crosbug.com/p/8662. */
-	if (current > 0 && current < info->current_min)
-		current = info->current_min;
-	if (current > info->current_max)
-		current = info->current_max;
+	current = charger_closest_current(current);
 
 	return sbc_write(SB_CHARGING_CURRENT, CURRENT_TO_REG(current, R_SNS));
 }
