@@ -613,55 +613,51 @@ struct ec_params_pwm_set_fan_duty {
 
 /*****************************************************************************/
 /*
- * Lightbar commands. This looks worse than it is. Since we only use one LPC
+ * Lightbar commands. This looks worse than it is. Since we only use one HOST
  * command to say "talk to the lightbar", we put the "and tell it to do X" part
  * into a subcommand. We'll make separate structs for subcommands with
  * different input args, so that we know how much to expect.
  */
 #define EC_CMD_LIGHTBAR_CMD 0x28
 
-struct ec_params_lightbar_cmd {
+struct ec_params_lightbar {
+	uint8_t cmd;		      /* Command (see enum lightbar_command) */
 	union {
-		union {
-			uint8_t cmd;  /* Command (see enum lightbar_command) */
+		struct {
+			/* no args */
+		} dump, off, on, init, get_seq;
 
+		struct num {
+			uint8_t num;
+		} brightness, seq, demo;
+
+		struct reg {
+			uint8_t ctrl, reg, value;
+		} reg;
+
+		struct rgb {
+			uint8_t led, red, green, blue;
+		} rgb;
+	};
+} __packed;
+
+struct ec_response_lightbar {
+	union {
+		struct dump {
 			struct {
-				uint8_t cmd;
-			} dump, off, on, init, get_seq;
+				uint8_t reg;
+				uint8_t ic0;
+				uint8_t ic1;
+			} vals[23];
+		} dump;
 
-			struct num {
-				uint8_t cmd;
-				uint8_t num;
-			} brightness, seq, demo;
+		struct get_seq {
+			uint8_t num;
+		} get_seq;
 
-			struct reg {
-				uint8_t cmd;
-				uint8_t ctrl, reg, value;
-			} reg;
-
-			struct rgb {
-				uint8_t cmd;
-				uint8_t led, red, green, blue;
-			} rgb;
-		} in;
-
-		union {
-			struct dump {
-				struct {
-					uint8_t reg;
-					uint8_t ic0;
-					uint8_t ic1;
-				} vals[23];
-			} dump;
-
-			struct get_seq {
-				uint8_t num;
-			} get_seq;
-
-			struct {
-				/* no return params */
-			} off, on, init, brightness, seq, reg, rgb, demo;
-		} out;
+		struct {
+			/* no return params */
+		} off, on, init, brightness, seq, reg, rgb, demo;
 	};
 } __packed;
 

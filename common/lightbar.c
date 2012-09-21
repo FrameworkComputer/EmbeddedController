@@ -961,19 +961,19 @@ static const uint8_t dump_reglist[] = {
 	0x18, 0x19, 0x1a
 };
 
-static void do_cmd_dump(struct ec_params_lightbar_cmd *ptr)
+static void do_cmd_dump(struct ec_response_lightbar *out)
 {
 	int i;
 	uint8_t reg;
 
 	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) ==
-		     ARRAY_SIZE(ptr->out.dump.vals));
+		     ARRAY_SIZE(out->dump.vals));
 
 	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
 		reg = dump_reglist[i];
-		ptr->out.dump.vals[i].reg = reg;
-		ptr->out.dump.vals[i].ic0 = controller_read(0, reg);
-		ptr->out.dump.vals[i].ic1 = controller_read(1, reg);
+		out->dump.vals[i].reg = reg;
+		out->dump.vals[i].ic0 = controller_read(0, reg);
+		out->dump.vals[i].ic1 = controller_read(1, reg);
 	}
 }
 
@@ -996,21 +996,13 @@ static void do_cmd_rgb(uint8_t led,
 
 static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 {
-	struct ec_params_lightbar_cmd *ptr = args->response;
+	const struct ec_params_lightbar *in = args->params;
+	struct ec_response_lightbar *out = args->response;
 
-	/*
-	 * TODO: (crosbug.com/p/11277) Now that params and response are
-	 * separate pointers, they need to be propagated to the lightbar
-	 * sub-commands.  For now, just copy params to response so the
-	 * sub-commands above will work unchanged.
-	 */
-	if (args->params != args->response)
-		memcpy(args->response, args->params, args->params_size);
-
-	switch (ptr->in.cmd) {
+	switch (in->cmd) {
 	case LIGHTBAR_CMD_DUMP:
-		do_cmd_dump(ptr);
-		args->response_size = sizeof(ptr->out.dump);
+		do_cmd_dump(out);
+		args->response_size = sizeof(out->dump);
 		break;
 	case LIGHTBAR_CMD_OFF:
 		lightbar_off();
@@ -1022,32 +1014,32 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		lightbar_init_vals();
 		break;
 	case LIGHTBAR_CMD_BRIGHTNESS:
-		lightbar_brightness(ptr->in.brightness.num);
+		lightbar_brightness(in->brightness.num);
 		break;
 	case LIGHTBAR_CMD_SEQ:
-		lightbar_sequence(ptr->in.seq.num);
+		lightbar_sequence(in->seq.num);
 		break;
 	case LIGHTBAR_CMD_REG:
-		controller_write(ptr->in.reg.ctrl,
-				 ptr->in.reg.reg,
-				 ptr->in.reg.value);
+		controller_write(in->reg.ctrl,
+				 in->reg.reg,
+				 in->reg.value);
 		break;
 	case LIGHTBAR_CMD_RGB:
-		do_cmd_rgb(ptr->in.rgb.led,
-			   ptr->in.rgb.red,
-			   ptr->in.rgb.green,
-			   ptr->in.rgb.blue);
+		do_cmd_rgb(in->rgb.led,
+			   in->rgb.red,
+			   in->rgb.green,
+			   in->rgb.blue);
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
-		ptr->out.get_seq.num = st.cur_seq;
-		args->response_size = sizeof(ptr->out.get_seq);
+		out->get_seq.num = st.cur_seq;
+		args->response_size = sizeof(out->get_seq);
 		break;
 	case LIGHTBAR_CMD_DEMO:
-		demo_mode = ptr->in.demo.num ? 1 : 0;
+		demo_mode = in->demo.num ? 1 : 0;
 		CPRINTF("[%T LB_demo %d]\n", demo_mode);
 		break;
 	default:
-		CPRINTF("[%T LB bad cmd 0x%x]\n", ptr->in.cmd);
+		CPRINTF("[%T LB bad cmd 0x%x]\n", in->cmd);
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -1107,15 +1099,15 @@ static int command_lightbar(int argc, char **argv)
 {
 	int i;
 	uint8_t num;
-	struct ec_params_lightbar_cmd params;
+	struct ec_response_lightbar out;
 
 	if (1 == argc) {		/* no args = dump 'em all */
-		do_cmd_dump(&params);
+		do_cmd_dump(&out);
 		for (i = 0; i < ARRAY_SIZE(dump_reglist); i++)
 			ccprintf(" %02x     %02x     %02x\n",
-				 params.out.dump.vals[i].reg,
-				 params.out.dump.vals[i].ic0,
-				 params.out.dump.vals[i].ic1);
+				 out.dump.vals[i].reg,
+				 out.dump.vals[i].ic0,
+				 out.dump.vals[i].ic1);
 
 		return EC_SUCCESS;
 	}

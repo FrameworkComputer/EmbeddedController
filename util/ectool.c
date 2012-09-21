@@ -1033,31 +1033,26 @@ static const char const *lightbar_cmds[] = {
  * define this in one and only one place, but I can't think of a good way to do
  * that without adding bunch of complexity. This will do for now.
  */
+#define LB_SIZES(SUBCMD) { \
+		sizeof(((struct ec_params_lightbar *)0)->SUBCMD) \
+		+ sizeof(((struct ec_params_lightbar *)0)->cmd), \
+		sizeof(((struct ec_response_lightbar *)0)->SUBCMD) }
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
 } lb_command_paramcount[] = {
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.dump),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.dump) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.off),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.off) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.on),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.on) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.init),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.init) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.brightness),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.brightness) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.seq),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.seq) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.reg),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.reg) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.rgb),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.rgb) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.get_seq),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.get_seq) },
-	{ sizeof(((struct ec_params_lightbar_cmd *)0)->in.demo),
-	  sizeof(((struct ec_params_lightbar_cmd *)0)->out.demo) },
+	LB_SIZES(dump),
+	LB_SIZES(off),
+	LB_SIZES(on),
+	LB_SIZES(init),
+	LB_SIZES(brightness),
+	LB_SIZES(seq),
+	LB_SIZES(reg),
+	LB_SIZES(rgb),
+	LB_SIZES(get_seq),
+	LB_SIZES(demo)
 };
+#undef LB_SIZES
 
 static int lb_help(const char *cmd)
 {
@@ -1087,83 +1082,88 @@ static uint8_t lb_find_msg_by_name(const char *str)
 }
 
 static int lb_do_cmd(enum lightbar_command cmd,
-		     struct ec_params_lightbar_cmd *ptr)
+		     struct ec_params_lightbar *in,
+		     struct ec_response_lightbar *out)
 {
 	int rv;
-	ptr->in.cmd = cmd;
+	in->cmd = cmd;
 	rv = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-			ptr, lb_command_paramcount[cmd].insize,
-			ptr, lb_command_paramcount[cmd].outsize);
+			in, lb_command_paramcount[cmd].insize,
+			out, lb_command_paramcount[cmd].outsize);
 	return (rv < 0 ? rv : 0);
 }
 
-static void lb_show_msg_names(void)
+static int lb_show_msg_names(void)
 {
 	int i, current_state;
-	struct ec_params_lightbar_cmd param;
+	struct ec_params_lightbar param;
+	struct ec_response_lightbar resp;
 
-	(void)lb_do_cmd(LIGHTBAR_CMD_GET_SEQ, &param);
-	current_state = param.out.get_seq.num;
+	i = lb_do_cmd(LIGHTBAR_CMD_GET_SEQ, &param, &resp);
+	if (i < 0)
+		return i;
+	current_state = resp.get_seq.num;
 
 	printf("sequence names:");
 	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++)
 		printf(" %s", lightbar_cmds[i]);
 	printf("\nCurrent = 0x%x %s\n", current_state,
 	       lightbar_cmds[current_state]);
+
+	return 0;
 }
 
 static int cmd_lightbar(int argc, char **argv)
 {
 	int i, r;
-	struct ec_params_lightbar_cmd param;
+	struct ec_params_lightbar param;
+	struct ec_response_lightbar resp;
 
 	if (1 == argc) {		/* no args = dump 'em all */
-		r = lb_do_cmd(LIGHTBAR_CMD_DUMP, &param);
+		r = lb_do_cmd(LIGHTBAR_CMD_DUMP, &param, &resp);
 		if (r)
 			return r;
-		for (i = 0; i < ARRAY_SIZE(param.out.dump.vals); i++) {
+		for (i = 0; i < ARRAY_SIZE(resp.dump.vals); i++) {
 			printf(" %02x     %02x     %02x\n",
-			       param.out.dump.vals[i].reg,
-			       param.out.dump.vals[i].ic0,
-			       param.out.dump.vals[i].ic1);
+			       resp.dump.vals[i].reg,
+			       resp.dump.vals[i].ic0,
+			       resp.dump.vals[i].ic1);
 		}
 		return 0;
 	}
 
 	if (argc == 2 && !strcasecmp(argv[1], "init"))
-		return lb_do_cmd(LIGHTBAR_CMD_INIT, &param);
+		return lb_do_cmd(LIGHTBAR_CMD_INIT, &param, &resp);
 
 	if (argc == 2 && !strcasecmp(argv[1], "off"))
-		return lb_do_cmd(LIGHTBAR_CMD_OFF, &param);
+		return lb_do_cmd(LIGHTBAR_CMD_OFF, &param, &resp);
 
 	if (argc == 2 && !strcasecmp(argv[1], "on"))
-		return lb_do_cmd(LIGHTBAR_CMD_ON, &param);
+		return lb_do_cmd(LIGHTBAR_CMD_ON, &param, &resp);
 
 	if (argc == 3 && !strcasecmp(argv[1], "brightness")) {
 		char *e;
-		param.in.brightness.num = 0xff & strtoul(argv[2], &e, 16);
-		return lb_do_cmd(LIGHTBAR_CMD_BRIGHTNESS, &param);
+		param.brightness.num = 0xff & strtoul(argv[2], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_BRIGHTNESS, &param, &resp);
 	}
 
 	if (argc == 3 && !strcasecmp(argv[1], "demo")) {
 		if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
-			param.in.demo.num = 1;
+			param.demo.num = 1;
 		else if (!strcasecmp(argv[2], "off") || argv[2][0] == '0')
-			param.in.demo.num = 0;
+			param.demo.num = 0;
 		else {
 			fprintf(stderr, "Invalid arg\n");
 			return -1;
 		}
-		return lb_do_cmd(LIGHTBAR_CMD_DEMO, &param);
+		return lb_do_cmd(LIGHTBAR_CMD_DEMO, &param, &resp);
 	}
 
 	if (argc >= 2 && !strcasecmp(argv[1], "seq")) {
 		char *e;
 		uint8_t num;
-		if (argc == 2) {
-			lb_show_msg_names();
-			return 0;
-		}
+		if (argc == 2)
+			return lb_show_msg_names();
 		num = 0xff & strtoul(argv[2], &e, 16);
 		if (e && *e)
 			num = lb_find_msg_by_name(argv[2]);
@@ -1171,25 +1171,25 @@ static int cmd_lightbar(int argc, char **argv)
 			fprintf(stderr, "Invalid arg\n");
 			return -1;
 		}
-		param.in.seq.num = num;
-		return lb_do_cmd(LIGHTBAR_CMD_SEQ, &param);
+		param.seq.num = num;
+		return lb_do_cmd(LIGHTBAR_CMD_SEQ, &param, &resp);
 	}
 
 	if (argc == 4) {
 		char *e;
-		param.in.reg.ctrl = 0xff & strtoul(argv[1], &e, 16);
-		param.in.reg.reg = 0xff & strtoul(argv[2], &e, 16);
-		param.in.reg.value = 0xff & strtoul(argv[3], &e, 16);
-		return lb_do_cmd(LIGHTBAR_CMD_REG, &param);
+		param.reg.ctrl = 0xff & strtoul(argv[1], &e, 16);
+		param.reg.reg = 0xff & strtoul(argv[2], &e, 16);
+		param.reg.value = 0xff & strtoul(argv[3], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_REG, &param, &resp);
 	}
 
 	if (argc == 5) {
 		char *e;
-		param.in.rgb.led = strtoul(argv[1], &e, 16);
-		param.in.rgb.red = strtoul(argv[2], &e, 16);
-		param.in.rgb.green = strtoul(argv[3], &e, 16);
-		param.in.rgb.blue = strtoul(argv[4], &e, 16);
-		return lb_do_cmd(LIGHTBAR_CMD_RGB, &param);
+		param.rgb.led = strtoul(argv[1], &e, 16);
+		param.rgb.red = strtoul(argv[2], &e, 16);
+		param.rgb.green = strtoul(argv[3], &e, 16);
+		param.rgb.blue = strtoul(argv[4], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_RGB, &param, &resp);
 	}
 
 	return lb_help(argv[0]);
