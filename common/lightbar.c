@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lightbar.h"
+#include "pwm.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -244,7 +245,7 @@ static void lb_restore_state(void)
 		memcpy(&st, old_state, size);
 	} else {
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
-		st.battery_level = 2;
+		st.battery_level = 3;
 	}
 	CPRINTF("[%T LB state: %d %d - %d/%d]\n",
 		st.cur_seq, st.prev_seq,
@@ -276,8 +277,8 @@ enum {
 static const struct rgb_s colors[] = {
 	{0xff, 0x00, 0x00},			/* low = red */
 	{0xff, 0xff, 0x00},			/* med = yellow */
-	{0x00, 0x00, 0xff},			/* high = blue */
-	{0x00, 0xff, 0x00},			/* full = green */
+	{0x00, 0xff, 0x00},			/* high = green */
+	{0x00, 0x00, 0xff},			/* full = blue */
 	{0x00, 0x00, 0x00},			/* black */
 };
 
@@ -285,12 +286,13 @@ static int demo_mode;
 
 void demo_battery_level(int inc)
 {
-	if ((!demo_mode) ||
-	    (st.battery_level == COLOR_LOW && inc < 0) ||
-	    (st.battery_level == COLOR_FULL && inc > 0))
+	/* Only using two colors */
+	if (!demo_mode)
 		return;
-
-	st.battery_level += inc;
+	if (inc > 0)
+		st.battery_level = 3;
+	else
+		st.battery_level = 0;
 
 	CPRINTF("[%T LB demo: battery_level=%d]\n", st.battery_level);
 }
@@ -321,6 +323,10 @@ void demo_brightness(int inc)
 
 static int last_battery_is_charging;
 static int last_battery_level;
+#ifdef CONFIG_TASK_PWM
+static int last_backlight_level;
+#endif
+
 static void get_battery_level(void)
 {
 	int pct = 0;
@@ -328,16 +334,31 @@ static void get_battery_level(void)
 	if (demo_mode)
 		return;
 
+#ifdef CONFIG_TASK_PWM
+	/* With nothing else to go on, use the keyboard backlight level to
+	 * set the brightness. If the keyboard backlight is OFF (which it is
+	 * when ambient is bright), use max brightness for lightbar. If
+	 * keyboard backlight is ON, use keyboard backlight brightness.
+	 */
+	if (pwm_get_keyboard_backlight_enabled()) {
+		pct = pwm_get_keyboard_backlight();
+		if (pct != last_backlight_level) {
+			last_backlight_level = pct;
+			pct = (255 * pct) / 100;
+			lightbar_brightness(pct);
+		}
+	} else
+		lightbar_brightness(255);
+#endif
+
 #ifdef CONFIG_TASK_POWERSTATE
 	pct = charge_get_percent();
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif
-	if (pct > LIGHTBAR_POWER_THRESHOLD_FULL)
+
+	/* We're only using two of the four levels at the moment. */
+	if (pct > LIGHTBAR_POWER_THRESHOLD_MEDIUM)
 		st.battery_level = COLOR_FULL;
-	else if (pct > LIGHTBAR_POWER_THRESHOLD_HIGH)
-		st.battery_level = COLOR_HIGH;
-	else if (pct > LIGHTBAR_POWER_THRESHOLD_MEDIUM)
-		st.battery_level = COLOR_MEDIUM;
 	else
 		st.battery_level = COLOR_LOW;
 }
@@ -557,11 +578,15 @@ static uint32_t sequence_S5S3(void)
 static uint32_t sequence_S0S3(void)
 {
 	int i;
-	lightbar_on();
+	for (i = 0; i < NUM_LEDS; i++)
+		lightbar_setrgb(i, testy[i].r, testy[i].g, testy[i].b);
+
+	WAIT_OR_RET(200000);
 	for (i = 0; i < NUM_LEDS; i++) {
 		lightbar_setrgb(i, 0, 0, 0);
 		WAIT_OR_RET(200000);
 	}
+
 	return 0;
 }
 
@@ -617,10 +642,18 @@ static uint32_t sequence_S3S0(void)
 /* Sleep to off. */
 static uint32_t sequence_S3S5(void)
 {
-	/* For now, do something to indicate this transition.
+	int i;
+	/* Go ahead and do something to indicate this transition.
 	 * We might see it. */
-	lightbar_off();
-	WAIT_OR_RET(500000);
+	for (i = 0; i < NUM_LEDS; i++)
+		lightbar_setrgb(i, testy[i].r, testy[i].g, testy[i].b);
+
+	WAIT_OR_RET(200000);
+	for (i = 0; i < NUM_LEDS; i++) {
+		lightbar_setrgb(i, 0, 0, 0);
+		WAIT_OR_RET(200000);
+	}
+
 	return 0;
 }
 
