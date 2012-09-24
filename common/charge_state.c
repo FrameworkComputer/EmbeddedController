@@ -13,12 +13,14 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "power_button.h"
 #include "power_led.h"
 #include "printf.h"
 #include "smart_battery.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "x86_power.h"
@@ -699,14 +701,40 @@ void charge_state_machine_task(void)
 		diff_usec = (int)(ts.val - ctx->curr.ts.val);
 		sleep_next = sleep_usec - diff_usec;
 
-		if (sleep_next < MIN_SLEEP_USEC)
+		if (ctx->curr.state == PWR_STATE_DISCHARGE &&
+		    chipset_in_state(CHIPSET_STATE_ANY_OFF |
+				     CHIPSET_STATE_SUSPEND)) {
+			/*
+			 * Discharging and system is off or suspended, so no
+			 * need to poll frequently.  charge_hook() will wake us
+			 * up if anything important changes.
+			 */
+			sleep_next = POLL_PERIOD_VERY_LONG - diff_usec;
+		} else if (sleep_next < MIN_SLEEP_USEC) {
 			sleep_next = MIN_SLEEP_USEC;
-		if (sleep_next > MAX_SLEEP_USEC)
+		} else if (sleep_next > MAX_SLEEP_USEC) {
 			sleep_next = MAX_SLEEP_USEC;
+		}
 
-		usleep(sleep_next);
+		task_wait_event(sleep_next);
 	}
 }
+
+/**
+ * Charge notification hook.
+ *
+ * This is triggered when the AC state changes or the system boots, so that
+ * we can update our charging state.
+ */
+static int charge_hook(void)
+{
+	/* Wake up the task now */
+	task_wake(TASK_ID_POWERSTATE);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);
+
 
 static int charge_command_force_idle(struct host_cmd_handler_args *args)
 {

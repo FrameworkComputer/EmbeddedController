@@ -19,6 +19,7 @@
 #define CHARGER_UPDATE_PERIOD (SECOND * 10)
 
 /* Power state task polling period in usec */
+#define POLL_PERIOD_VERY_LONG   MINUTE
 #define POLL_PERIOD_LONG        (MSEC * 500)
 #define POLL_PERIOD_CHARGE      (MSEC * 250)
 #define POLL_PERIOD_SHORT       (MSEC * 100)
