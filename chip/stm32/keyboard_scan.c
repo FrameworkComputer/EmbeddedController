@@ -316,8 +316,11 @@ static int check_keys_changed(void)
 		CPUTS("]\n");
 
 		if (num_press == 3) {
-			if (check_warm_reboot_keys())
+			if (check_warm_reboot_keys()) {
+				keyboard_clear_state();
 				system_warm_reboot();
+				return 0;
+			}
 		}
 
 		if (kb_fifo_add(raw_state) == EC_SUCCESS)
