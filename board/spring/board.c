@@ -4,6 +4,7 @@
  */
 /* Spring board-specific configuration */
 
+#include "adc.h"
 #include "board.h"
 #include "chipset.h"
 #include "common.h"
@@ -14,6 +15,7 @@
 #include "i2c.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
+#include "stm32_adc.h"
 #include "timer.h"
 #include "util.h"
 
@@ -93,6 +95,16 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 	{"ILIM_1500",   GPIO_B, (1<<3),  GPIO_OUT_LOW, NULL},
 	{"ILIM_500",    GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
+};
+
+/* ADC channels */
+const struct adc_t adc_channels[ADC_CH_COUNT] = {
+	/* Micro USB ID pin. Raw ADC value. */
+	[ADC_CH_USB_ID] = {"USB_ID", 0, 1, 1, 0, STM32_AIN(5), 0},
+	/* Micro USB D+ sense pin. Raw ADC value. */
+	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 0, 1, 1, 0, STM32_AIN(2), 0},
+	/* Micro USB D- sense pin. Raw ADC value. */
+	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 0, 1, 1, 0, STM32_AIN(4), 0},
 };
 
 void configure_board(void)

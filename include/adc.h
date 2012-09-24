@@ -26,4 +26,7 @@ struct adc_t
 /* Read ADC channel. */
 int adc_read_channel(enum adc_channel ch);
 
+/* Read all ADC channels. Return non-zero on error. */
+int adc_read_all_channels(int *data);
+
 #endif  /* __CROS_EC_ADC_H */

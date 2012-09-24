@@ -486,11 +486,31 @@ struct spi_ctlr {
 #define STM32_EXTI_SWIER            REG32(STM32_EXTI_BASE + 0x10)
 #define STM32_EXTI_PR               REG32(STM32_EXTI_BASE + 0x14)
 
+/* --- ADC --- */
+
+#define STM32_ADC1_BASE             0x40012400
+#define STM32_ADC_BASE              0x40012700 /* STM32L15X only */
+
+#if defined(CHIP_VARIANT_stm32f100)
+#define STM32_ADC_SR               REG32(STM32_ADC1_BASE + 0x00)
+#define STM32_ADC_CR1              REG32(STM32_ADC1_BASE + 0x04)
+#define STM32_ADC_CR2              REG32(STM32_ADC1_BASE + 0x08)
+#define STM32_ADC_SMPR1            REG32(STM32_ADC1_BASE + 0x0C)
+#define STM32_ADC_SMPR2            REG32(STM32_ADC1_BASE + 0x10)
+#define STM32_ADC_JOFR(n)          REG32(STM32_ADC1_BASE + 0x14 + ((n)&3) * 4)
+#define STM32_ADC_HTR              REG32(STM32_ADC1_BASE + 0x24)
+#define STM32_ADC_LTR              REG32(STM32_ADC1_BASE + 0x28)
+#define STM32_ADC_SQR1             REG32(STM32_ADC1_BASE + 0x2C)
+#define STM32_ADC_SQR2             REG32(STM32_ADC1_BASE + 0x30)
+#define STM32_ADC_SQR3             REG32(STM32_ADC1_BASE + 0x34)
+#define STM32_ADC_JSQR             REG32(STM32_ADC1_BASE + 0x38)
+#define STM32_ADC_JDR(n)           REG32(STM32_ADC1_BASE + 0x3C + ((n)&3) * 4)
+#define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x4C)
+#endif
+
 /* --- MISC --- */
 
 #define STM32_RI_BASE               0x40007C04
-#define STM32_ADC1_BASE             0x40012400
-#define STM32_ADC_BASE              0x40012700 /* STM32L15X only */
 #define STM32_COMP_BASE             0x40007C00
 #define STM32_CEC_BASE              0x40007800 /* STM32F100 only */
 #define STM32_DAC_BASE              0x40007400

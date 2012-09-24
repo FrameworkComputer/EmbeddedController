@@ -55,6 +55,16 @@
 /* Battery */
 #define CONFIG_BATTERY_BQ20Z453
 
+/* ADC signal */
+#define CONFIG_ADC
+enum adc_channel {
+	ADC_CH_USB_ID = 0,
+	ADC_CH_USB_DP_SNS,
+	ADC_CH_USB_DN_SNS,
+
+	ADC_CH_COUNT
+};
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
