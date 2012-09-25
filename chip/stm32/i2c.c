@@ -72,6 +72,20 @@ enum {
 	STOP_SENT_RETRY_US	= 150,
 };
 
+static const struct dma_option dma_tx_option[NUM_PORTS] = {
+	{DMAC_I2C_TX, (void *)&STM32_I2C_DR(I2C1),
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{DMAC_I2C_TX, (void *)&STM32_I2C_DR(I2C2),
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+};
+
+static const struct dma_option dma_rx_option[NUM_PORTS] = {
+	{DMAC_I2C_RX, (void *)&STM32_I2C_DR(I2C1),
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{DMAC_I2C_RX, (void *)&STM32_I2C_DR(I2C2),
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+};
+
 static uint16_t i2c_sr1[NUM_PORTS];
 static struct mutex i2c_mutex;
 
@@ -128,7 +142,7 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 	/* Configuring DMA1 channel DMAC_I2X_TX */
 	enable_ack(port);
 	chan = dma_get_channel(DMAC_I2C_TX);
-	dma_prepare_tx(chan, len, (void *)&STM32_I2C_DR(port), buf);
+	dma_prepare_tx(dma_tx_option + port, len, buf);
 
 	/* Start the DMA */
 	dma_go(chan);
@@ -237,8 +251,8 @@ static void i2c_event_handler(int port)
 	if (i2c_sr1[port] & (1 << 1)) {
 		/* If it's a receiver slave */
 		if (!(STM32_I2C_SR2(port) & (1 << 2))) {
-			dma_start_rx(DMAC_I2C_RX, sizeof(host_buffer),
-				(void *)&STM32_I2C_DR(port), host_buffer);
+			dma_start_rx(dma_rx_option + port, sizeof(host_buffer),
+				     host_buffer);
 
 			STM32_I2C_CR2(port) |= (1 << 11);
 			rx_pending = 1;
@@ -714,17 +728,15 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 	int size, int stop)
 {
 	int rv, rv_start;
-	struct dma_channel *chan;
 
 	disable_ack(port);
 
 	/* Configuring DMA1 channel DMAC_I2X_TX */
-	chan = dma_get_channel(DMAC_I2C_TX);
-	dma_prepare_tx(chan, size, (void *)&STM32_I2C_DR(port), data);
+	dma_prepare_tx(dma_tx_option + port, size, data);
 	dma_enable_tc_interrupt(DMAC_I2C_TX);
 
 	/* Start the DMA */
-	dma_go(chan);
+	dma_go(dma_get_channel(DMAC_I2C_TX));
 
 	/* Configuring i2c2 to use DMA */
 	STM32_I2C_CR2(port) |= CR2_DMAEN;
@@ -768,8 +780,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	/* Master receive only supports DMA for payloads > 1 byte */
 	if (size > 1) {
 		enable_ack(port);
-		dma_start_rx(DMAC_I2C_RX, size, (void *)&STM32_I2C_DR(port),
-			data);
+		dma_start_rx(dma_rx_option + port, size, data);
 
 		dma_enable_tc_interrupt(DMAC_I2C_RX);
 

@@ -22,6 +22,21 @@
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
 
+/* DMA channel option */
+static const struct dma_option dma_tx_option[2] = {
+	{DMA_SPI1_TX, (void *)&stm32_spi_addr(STM32_SPI1_PORT)->data,
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{DMA_SPI2_TX, (void *)&stm32_spi_addr(STM32_SPI2_PORT)->data,
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+};
+
+static const struct dma_option dma_rx_option[2] = {
+	{DMA_SPI1_RX, (void *)&stm32_spi_addr(STM32_SPI1_PORT)->data,
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{DMA_SPI2_RX, (void *)&stm32_spi_addr(STM32_SPI2_PORT)->data,
+	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+};
+
 /* Status register flags that we use */
 enum {
 	SR_RXNE		= 1 << 0,
@@ -179,7 +194,7 @@ static void reply(struct spi_ctlr *spi, struct dma_channel *txdma,
 	/* Add the checksum and get ready to send */
 	msg[msg_len - 2] = sum & 0xff;
 	msg[msg_len - 1] = SPI_MSG_PREAMBLE_BYTE;
-	dma_prepare_tx(txdma, msg_len, (void *)&spi->data, msg);
+	dma_prepare_tx(dma_tx_option[stm32_spi_port(spi)], msg_len, msg);
 
 	/* Kick off the DMA to send the data */
 	dma_go(txdma);
@@ -206,7 +221,8 @@ static void setup_for_transaction(struct spi_ctlr *spi)
 	/* read a byte in case there is one, and the rx dma gets it */
 	dmac = REG16(&spi->data);
 	dmac = DMA_CHANNEL_FOR_SPI_RX(spi);
-	dma_start_rx(dmac, sizeof(in_msg), (void *)&spi->data, in_msg);
+	dma_start_rx(dma_rx_option[stm32_spi_port(spi)],
+		     sizeof(in_msg), in_msg);
 }
 
 /**

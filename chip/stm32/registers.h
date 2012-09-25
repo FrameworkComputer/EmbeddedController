@@ -253,10 +253,8 @@
 #define STM32_I2C1_PORT             0
 #define STM32_I2C2_PORT             1
 
-static inline uint16_t *stm32_i2c_reg(int port, int offset)
-{
-	return (uint16_t *)((STM32_I2C1_BASE + (port * 0x400)) + offset);
-}
+#define stm32_i2c_reg(port, offset) \
+	((uint16_t *)((STM32_I2C1_BASE + ((port) * 0x400)) + (offset)))
 
 #define STM32_I2C_CR1(n)            REG16(stm32_i2c_reg(n, 0x00))
 #define STM32_I2C_CR2(n)            REG16(stm32_i2c_reg(n, 0x04))
@@ -417,6 +415,8 @@ struct spi_ctlr {
  */
 #define stm32_spi_addr(port) \
 	((struct spi_ctlr *)(port == 0 ? STM32_SPI1_BASE : STM32_SPI2_BASE))
+#define stm32_spi_port(addr) \
+	((addr) == STM32_SPI1_BASE ? 0 : 1)
 
 /* --- Debug --- */
 

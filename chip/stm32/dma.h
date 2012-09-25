@@ -54,6 +54,14 @@ struct dma_ctlr {
 	struct dma_channel chan[DMA_NUM_CHANNELS];
 };
 
+/* DMA channel options */
+struct dma_option {
+	unsigned channel;	/* DMA channel */
+	void *periph;		/* Pointer to peripheral data register */
+	unsigned flags;		/* DMA flags for the control register. Normally
+				   used to select memory size. */
+};
+
 /* Defines for accessing DMA ccr */
 #define DMA_PL_SHIFT		12
 #define DMA_PL_MASK		(3 << DMA_PL_SHIFT)
@@ -71,6 +79,14 @@ enum {
 #define DMA_DIR_FROM_MEM_MASK	(1 << 4)
 #define DMA_MINC_MASK		(1 << 7)
 #define DMA_TCIF(channel)	(1 << (1 + 4 * channel))
+
+#define DMA_MSIZE_BYTE		(0 << 10)
+#define DMA_MSIZE_HALF_WORD	(1 << 10)
+#define DMA_MSIZE_WORD		(2 << 10)
+
+#define DMA_PSIZE_BYTE		(0 << 8)
+#define DMA_PSIZE_HALF_WORD	(1 << 8)
+#define DMA_PSIZE_WORD		(2 << 8)
 
 #define DMA_POLLING_INTERVAL_US	100	/* us */
 #define DMA_TRANSFER_TIMEOUT_US	100000	/* us */
@@ -103,24 +119,23 @@ struct dma_channel *dma_get_channel(int channel);
  *
  * Call dma_go() afterwards to actually start the transfer.
  *
- * @param chan		Channel to prepare (use dma_get_channel())
+ * @param option	DMA channel options
  * @param count		Number of bytes to transfer
- * @param periph	Pointer to peripheral data register
  * @param memory	Pointer to memory address
+ *
  * @return pointer to prepared channel
  */
-void dma_prepare_tx(struct dma_channel *chan, unsigned count,
-		    void *periph, const void *memory);
+void dma_prepare_tx(const struct dma_option *option, unsigned count,
+		    const void *memory);
 
 /**
  * Start a DMA transfer to receive data to memory from a peripheral
  *
- * @param channel	Channel number to read (DMAC_...)
+ * @param option	DMA channel options
  * @param count		Number of bytes to transfer
- * @param periph	Pointer to peripheral data register
  * @param memory	Pointer to memory address
  */
-int dma_start_rx(unsigned channel, unsigned count, void *periph,
+int dma_start_rx(const struct dma_option *option, unsigned count,
 		 const void *memory);
 
 /**
