@@ -865,12 +865,14 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	}
 
-	/* TODO: (crosbug.com/p/9040) handle EC_REBOOT_FLAG_POWER_ON */
-
 #ifdef CONFIG_TASK_HOSTCMD
-	/* Clean busy bits on host */
-	args->result = EC_RES_SUCCESS;
-	host_send_response(args);
+	if (p.cmd == EC_REBOOT_JUMP_RO ||
+	    p.cmd == EC_REBOOT_JUMP_RW ||
+	    p.cmd == EC_REBOOT_COLD) {
+		/* Clean busy bits on host for commands that won't return */
+		args->result = EC_RES_SUCCESS;
+		host_send_response(args);
+	}
 #endif
 
 	CPRINTF("[%T Executing host reboot command %d]\n", p.cmd);
