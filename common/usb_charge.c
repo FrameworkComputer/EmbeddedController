@@ -5,15 +5,18 @@
 
 /* USB charging control module for Chrome EC */
 
-#include "board.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "system.h"
 #include "usb_charge.h"
 #include "util.h"
 
+#define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
@@ -78,27 +81,28 @@ static int usb_charge_all_ports_off(void)
 
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
+	CPRINTF("[%T USB charge p%d m%d]\n", port_id, mode);
+
 	if (port_id >= USB_CHARGE_PORT_COUNT)
 		return EC_ERROR_INVAL;
 
-	if (mode == USB_CHARGE_MODE_DISABLED) {
-		usb_charge_set_enabled(port_id, 0);
-		return EC_SUCCESS;
-	}
-	else
-		usb_charge_set_enabled(port_id, 1);
-
 	switch (mode) {
+	case USB_CHARGE_MODE_DISABLED:
+		usb_charge_set_enabled(port_id, 0);
+		break;
 	case USB_CHARGE_MODE_SDP2:
 		usb_charge_set_control_mode(port_id, 7);
 		usb_charge_set_ilim(port_id, 0);
+		usb_charge_set_enabled(port_id, 1);
 		break;
 	case USB_CHARGE_MODE_CDP:
 		usb_charge_set_control_mode(port_id, 7);
 		usb_charge_set_ilim(port_id, 1);
+		usb_charge_set_enabled(port_id, 1);
 		break;
 	case USB_CHARGE_MODE_DCP_SHORT:
 		usb_charge_set_control_mode(port_id, 4);
+		usb_charge_set_enabled(port_id, 1);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -118,6 +122,12 @@ static int command_set_mode(int argc, char **argv)
 	int mode = -1;
 	char *e;
 
+	if (argc == 1) {
+		ccprintf("Port 0: %d\nPort 1: %d\n",
+			 charge_mode[0], charge_mode[1]);
+		return EC_SUCCESS;
+	}
+
 	if (argc != 3)
 		return EC_ERROR_PARAM_COUNT;
 
@@ -132,13 +142,28 @@ static int command_set_mode(int argc, char **argv)
 	return usb_charge_set_mode(port_id, mode);
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
-			"<port> <0 | 1 | 2 | 3>",
+			"[<port> <0 | 1 | 2 | 3>]",
 			"Set USB charge mode",
 			"Modes: 0=Disabled.\n"
 			"       1=Standard downstream port.\n"
 			"	2=Charging downstream port, BC 1.2.\n"
 			"       3=Dedicated charging port, BC 1.2.\n");
 
+/*****************************************************************************/
+/* Host commands */
+
+static int usb_charge_command_set_mode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_charge_set_mode *p = args->params;
+
+	if (usb_charge_set_mode(p->usb_port_id, p->mode) != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_CHARGE_SET_MODE,
+		     usb_charge_command_set_mode,
+		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Hooks */
@@ -175,13 +200,13 @@ static int usb_charge_init(void)
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 
 
-static int usb_charge_startup(void)
+static int usb_charge_resume(void)
 {
-	/* Turn on USB ports on as we go into S3 or S0. */
+	/* Turn on USB ports on as we go into S0 from S3 or S5. */
 	usb_charge_all_ports_on();
 	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_charge_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_charge_resume, HOOK_PRIO_DEFAULT);
 
 
 static int usb_charge_shutdown(void)

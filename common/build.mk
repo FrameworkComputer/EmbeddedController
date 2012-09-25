@@ -32,7 +32,7 @@ common-$(CONFIG_TASK_TEMPSENSOR)+=temp_sensor.o temp_sensor_commands.o
 common-$(CONFIG_TASK_THERMAL)+=thermal.o thermal_commands.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_TMP006)+=tmp006.o
-common-$(CONFIG_USB_CHARGE)+=usb_charge.o usb_charge_commands.o
+common-$(CONFIG_USB_CHARGE)+=usb_charge.o
 
 # verified boot stuff
 VBOOT_SOURCE?=/usr/src/vboot
