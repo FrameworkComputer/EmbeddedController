@@ -194,7 +194,6 @@ static void power_button_released(uint64_t tnow)
 	tnext_state = tnow;
 	*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 	keyboard_set_power_button(0);
-	keyboard_enable_scanning(1);
 }
 
 
@@ -262,7 +261,6 @@ static void power_button_changed(uint64_t tnow)
 			 * told the PCH the power button was released. */
 			CPRINTF("[%T PB ignoring release]\n");
 			pwrbtn_state = PWRBTN_STATE_IDLE;
-			keyboard_enable_scanning(1);
 			return;
 		}
 
@@ -420,12 +418,10 @@ static void state_machine(uint64_t tnow)
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
 		set_pwrbtn_to_pch(1);
-		if (get_power_button_pressed()) {
+		if (get_power_button_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
-		} else {
+		else
 			pwrbtn_state = PWRBTN_STATE_IDLE;
-			keyboard_enable_scanning(1);
-		}
 		break;
 	case PWRBTN_STATE_WAS_OFF:
 		/* Done stretching initial power button signal, so show the
@@ -464,6 +460,14 @@ void power_button_task(void)
 		/* Handle debounce timeouts for power button and lid switch */
 		if (tdebounce_pwr && t >= tdebounce_pwr) {
 			tdebounce_pwr = 0;
+
+			/*
+			 * Re-enable keyboard scanning if the power button is
+			 * no longer pressed.
+			 */
+			if (!get_power_button_pressed())
+				keyboard_enable_scanning(1);
+
 			if (get_power_button_pressed() !=
 			    debounced_power_pressed)
 				power_button_changed(t);
