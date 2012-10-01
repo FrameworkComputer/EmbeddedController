@@ -305,8 +305,12 @@ reset:
     /* Ensure we're in privileged mode with main stack.
      * Necessary if we've jumped directly here from another image
      * after task_start(). */
-    mov r0, #0
-    msr control, r0      @ use : priv. mode / main stack / no floating point
+#ifdef CONFIG_FPU
+    mov r0, #(1 << 2)    @ priv. mode / main stack / floating point on
+#else
+    mov r0, #0           @ priv. mode / main stack / no floating point
+#endif
+    msr control, r0
     isb                  @ ensure the write is done
     /* Set the vector table on our current code */
     ldr r1, =vectors

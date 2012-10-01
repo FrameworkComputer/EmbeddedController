@@ -8,7 +8,6 @@
 #include "board.h"
 #include "config.h"
 #include "console.h"
-#include "fpu.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -57,8 +56,6 @@ static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i, int S0_i)
 	float Tx, S, Vos, Vx, fv, Tobj, T4;
 	int Tobj_i;
 
-	enable_fpu();
-
 	Tdie = (float)Tdie_i * 1e-2f;
 	Vobj = (float)Vobj_i * 1e-9f;
 	S0 = (float)S0_i * 1e-17f;
@@ -76,8 +73,6 @@ static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i, int S0_i)
 	T4 = Tdie * Tdie * Tdie * Tdie + fv / S;
 	Tobj = sqrtf(sqrtf(T4));
 	Tobj_i = (int32_t)(Tobj * 100.0f);
-
-	disable_fpu(Tobj_i);
 
 	return Tobj_i;
 #else

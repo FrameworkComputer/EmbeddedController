@@ -24,11 +24,13 @@
 /* System stack size */
 #define CONFIG_STACK_SIZE           4096
 
-/* Idle task stack size */
-#define IDLE_TASK_STACK_SIZE        320
+/* non-standard task stack sizes */
+#define IDLE_TASK_STACK_SIZE        384
+#define WATCHDOG_TASK_STACK_SIZE    256
+#define LARGER_TASK_STACK_SIZE      640
 
 /* Default task stack size */
-#define TASK_STACK_SIZE             488
+#define TASK_STACK_SIZE             512
 
 #define CONFIG_FLASH_BASE           0x00000000
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */

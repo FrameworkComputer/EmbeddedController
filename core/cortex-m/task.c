@@ -120,7 +120,11 @@ uint8_t task_stacks[0
 #undef TASK
 
 /* Reserve space to discard context on first context switch. */
+#ifdef CONFIG_FPU
+uint32_t scratchpad[17+18];
+#else
 uint32_t scratchpad[17];
+#endif
 
 static task_ *current_task = (task_ *)scratchpad;
 
@@ -573,8 +577,16 @@ int task_pre_init(void)
 
 		tasks[i].stack = stack_next;
 
-		/* Update stack used by first frame (16 uint32's) */
+		/*
+		 * Update stack used by first frame: 8 words for the normal
+		 * stack, plus 8 for R4-R11. With FP enabled, we need another
+		 * 18 words for S0-S15 and FPCSR and to align to 64-bit.
+		 */
+#ifdef CONFIG_FPU
+		sp = stack_next + ssize - 16 - 18;
+#else
 		sp = stack_next + ssize - 16;
+#endif
 		tasks[i].sp = (uint32_t)sp;
 
 		/* Initial context on stack (see __switchto()) */

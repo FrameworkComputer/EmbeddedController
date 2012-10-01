@@ -35,8 +35,8 @@
 __switchto:
   mrs r3, psp            @ get the task stack where the context has been saved
   ldr r2, [r1]           @ get the new scheduled task stack pointer
-  stmdb r3!, {r4-r11}    @ save additional r4-r7 in the task stack
-  ldmia r2!, {r4-r11}    @ restore r4-r7 for the next task context
+  stmdb r3!, {r4-r11}    @ save additional r4-r11 in the task stack
+  ldmia r2!, {r4-r11}    @ restore r4-r11 for the next task context
   str r3, [r0]           @ save the task stack pointer in its context
   msr psp, r2            @ set the process stack pointer to exception context
   bx lr                  @ return from exception
@@ -49,13 +49,17 @@ __switchto:
 .thumb_func
 __task_start:
   ldr r2,=scratchpad     @ area used as dummy thread stack for the first switch
-  mov r3, #2
+#ifdef CONFIG_FPU
+  mov r3, #6             @ use : priv. mode / thread stack / floating point on
+#else
+  mov r3, #2             @ use : priv. mode / thread stack / no floating point
+#endif
   add r2, #17*4          @ put the pointer at the top of the stack
   mov r1, #0             @ __Schedule parameter : re-schedule nothing
   msr psp, r2            @ setup a thread stack up to the first context switch
   mov r2, #1
   isb                    @ ensure the write is done
-  msr control, r3        @ use : priv. mode / thread stack / no floating point
+  msr control, r3
   mov r3, r0
   mov r0, #0             @ __Schedule parameter : de-schedule nothing
   isb                    @ ensure the write is done
