@@ -50,6 +50,7 @@
 enum power_state {
 	PWR_STATE_UNCHANGE = 0,
 	PWR_STATE_INIT,
+	PWR_STATE_IDLE0,
 	PWR_STATE_IDLE,
 	PWR_STATE_DISCHARGE,
 	PWR_STATE_CHARGE,
@@ -63,6 +64,7 @@ enum power_state {
 	{			\
 		"unchange",	\
 		"init",		\
+		"idle0",	\
 		"idle",		\
 		"discharge",	\
 		"charge",	\

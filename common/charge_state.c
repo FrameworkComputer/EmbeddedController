@@ -305,7 +305,7 @@ static enum power_state state_init(struct power_state_context *ctx)
 	/* Send battery event to host */
 	host_set_single_event(EC_HOST_EVENT_BATTERY);
 
-	return PWR_STATE_IDLE;
+	return PWR_STATE_IDLE0;
 }
 
 /* Idle state handler
@@ -600,6 +600,11 @@ void charge_state_machine_task(void)
 		case PWR_STATE_INIT:
 			new_state = state_init(ctx);
 			break;
+		case PWR_STATE_IDLE0:
+			new_state = state_idle(ctx);
+			if (new_state == PWR_STATE_UNCHANGE)
+				new_state = PWR_STATE_IDLE;
+			break;
 		case PWR_STATE_IDLE:
 			new_state = state_idle(ctx);
 			break;
@@ -620,6 +625,7 @@ void charge_state_machine_task(void)
 		}
 
 		if (state_machine_force_idle &&
+		    ctx->prev.state != PWR_STATE_IDLE0 &&
 		    ctx->prev.state != PWR_STATE_IDLE &&
 		    ctx->prev.state != PWR_STATE_INIT)
 			new_state = PWR_STATE_INIT;
@@ -633,6 +639,15 @@ void charge_state_machine_task(void)
 
 
 		switch (new_state) {
+		case PWR_STATE_IDLE0:
+			/*
+			 * First time transitioning from init -> idle.  Don't
+			 * set the flags or LED yet because we may transition
+			 * to charging on the next call and we don't want to
+			 * blink the LED green.
+			 */
+			sleep_usec = POLL_PERIOD_SHORT;
+			break;
 		case PWR_STATE_IDLE:
 			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
