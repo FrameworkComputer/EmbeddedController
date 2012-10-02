@@ -1937,6 +1937,35 @@ int cmd_battery(int argc, char *argv[])
 		goto cmd_error;
 	printf("  Cycle count             %u\n", val);
 
+	val = read_mapped_mem32(EC_MEMMAP_BATT_VOLT);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Present voltage         %u mV\n", val);
+
+	val = read_mapped_mem32(EC_MEMMAP_BATT_RATE);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Present current         %u mA\n", val);
+
+	val = read_mapped_mem32(EC_MEMMAP_BATT_CAP);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Remaining capacity      %u mAh\n", val);
+
+	val = read_mapped_mem8(EC_MEMMAP_BATT_FLAG);
+	printf("  Flags                   0x%02x", val);
+	if (val & EC_BATT_FLAG_AC_PRESENT)
+		printf(" AC_PRESENT");
+	if (val & EC_BATT_FLAG_BATT_PRESENT)
+		printf(" BATT_PRESENT");
+	if (val & EC_BATT_FLAG_DISCHARGING)
+		printf(" DISCHARGING");
+	if (val & EC_BATT_FLAG_CHARGING)
+		printf(" CHARGING");
+	if (val & EC_BATT_FLAG_LEVEL_CRITICAL)
+		printf(" LEVEL_CRITICAL");
+	printf("\n");
+
 	return 0;
 cmd_error:
 	fprintf(stderr, "Bad battery info value. Check protocol version.");
