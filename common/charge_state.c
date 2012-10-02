@@ -359,7 +359,11 @@ static enum power_state state_idle(struct power_state_context *ctx)
 				return PWR_STATE_ERROR;
 		}
 		update_charger_time(ctx, get_time());
-		return PWR_STATE_CHARGE;
+
+		if (ctx->curr.batt.state_of_charge < NEAR_FULL_THRESHOLD)
+			return PWR_STATE_CHARGE;
+		else
+			return PWR_STATE_CHARGE_NEAR_FULL;
 	}
 
 	return PWR_STATE_UNCHANGE;
@@ -602,6 +606,7 @@ void charge_state_machine_task(void)
 			break;
 		case PWR_STATE_IDLE0:
 			new_state = state_idle(ctx);
+			/* If still idling, move from IDLE0 to IDLE */
 			if (new_state == PWR_STATE_UNCHANGE)
 				new_state = PWR_STATE_IDLE;
 			break;
@@ -613,6 +618,22 @@ void charge_state_machine_task(void)
 			break;
 		case PWR_STATE_CHARGE:
 			new_state = state_charge(ctx);
+			if (new_state == PWR_STATE_UNCHANGE &&
+			    (ctx->curr.batt.state_of_charge >=
+			     NEAR_FULL_THRESHOLD)) {
+				/* Almost done charging */
+				new_state = PWR_STATE_CHARGE_NEAR_FULL;
+			}
+			break;
+
+		case PWR_STATE_CHARGE_NEAR_FULL:
+			new_state = state_charge(ctx);
+			if (new_state == PWR_STATE_UNCHANGE &&
+			    (ctx->curr.batt.state_of_charge <
+			     NEAR_FULL_THRESHOLD)) {
+				/* Battery below almost-full threshold. */
+				new_state = PWR_STATE_CHARGE;
+			}
 			break;
 		case PWR_STATE_ERROR:
 			new_state = state_error(ctx);
@@ -648,6 +669,13 @@ void charge_state_machine_task(void)
 			 */
 			sleep_usec = POLL_PERIOD_SHORT;
 			break;
+		case PWR_STATE_CHARGE_NEAR_FULL:
+			/*
+			 * Battery is almost charged.  The last few percent
+			 * take a loooong time, so fall through and look like
+			 * we're charged.  This mirrors similar hacks at the
+			 * ACPI/kernel/UI level.
+			 */
 		case PWR_STATE_IDLE:
 			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
@@ -659,7 +687,8 @@ void charge_state_machine_task(void)
 			rv_setled = powerled_set(POWERLED_GREEN);
 			last_setled_time = get_time().val;
 
-			sleep_usec = POLL_PERIOD_LONG;
+			sleep_usec = (new_state == PWR_STATE_IDLE ?
+				      POLL_PERIOD_LONG : POLL_PERIOD_CHARGE);
 			break;
 		case PWR_STATE_DISCHARGE:
 			batt_flags = *ctx->memmap_batt_flags;

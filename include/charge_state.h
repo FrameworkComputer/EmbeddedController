@@ -48,19 +48,28 @@
 
 /* Power states */
 enum power_state {
+	/* Meta-state; unchanged from previous time through task loop */
 	PWR_STATE_UNCHANGE = 0,
+	/* (Re-)initalizing charge state machine */
 	PWR_STATE_INIT,
+	/* Just transitioned from init to idle */
 	PWR_STATE_IDLE0,
+	/* Idle; AC present */
 	PWR_STATE_IDLE,
+	/* Discharging */
 	PWR_STATE_DISCHARGE,
+	/* Charging */
 	PWR_STATE_CHARGE,
+	/* Charging, almost fully charged */
+	PWR_STATE_CHARGE_NEAR_FULL,
+	/* Charging state machine error */
 	PWR_STATE_ERROR
 };
 
 /* Debugging constants, in the same order as enum power_state. This string
  * table was moved here to sync with enum above.
  */
-#define POWER_STATE_NAME_TABLE \
+#define POWER_STATE_NAME_TABLE  \
 	{			\
 		"unchange",	\
 		"init",		\
@@ -68,6 +77,7 @@ enum power_state {
 		"idle",		\
 		"discharge",	\
 		"charge",	\
+		"charge_near_full",      \
 		"error"		\
 	}
 	/* End of POWER_STATE_NAME_TABLE macro */

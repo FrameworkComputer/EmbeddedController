@@ -16,8 +16,8 @@
 
 /* Stop charge when state of charge reaches this percentage */
 #define STOP_CHARGE_THRESHOLD 100
-/* Threshold for power led to turn green */
-#define POWERLED_GREEN_THRESHOLD 90
+/* Tell host we're charged at this percentage */
+#define NEAR_FULL_THRESHOLD 97
 /* Precharge only when state of charge is below this level */
 #define PRE_CHARGE_THRESHOLD 25
 
