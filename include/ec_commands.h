@@ -1038,11 +1038,12 @@ struct ec_params_force_idle {
 /* Command */
 enum ec_reboot_cmd {
 	EC_REBOOT_CANCEL = 0,        /* Cancel a pending reboot */
-	EC_REBOOT_JUMP_RO,           /* Jump to RO without rebooting */
-	EC_REBOOT_JUMP_RW,           /* Jump to RW without rebooting */
+	EC_REBOOT_JUMP_RO = 1,       /* Jump to RO without rebooting */
+	EC_REBOOT_JUMP_RW = 2,       /* Jump to RW without rebooting */
 	/* (command 3 was jump to RW-B) */
 	EC_REBOOT_COLD = 4,          /* Cold-reboot */
-	EC_REBOOT_DISABLE_JUMP,      /* Disable jump until next reboot */
+	EC_REBOOT_DISABLE_JUMP = 5,  /* Disable jump until next reboot */
+	EC_REBOOT_HIBERNATE = 6      /* Hibernate EC */
 };
 
 /* Flags for ec_params_reboot_ec.reboot_flags */

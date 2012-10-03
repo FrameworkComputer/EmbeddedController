@@ -546,6 +546,11 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_DISABLE_JUMP:
 		system_disable_jump();
 		return EC_SUCCESS;
+	case EC_REBOOT_HIBERNATE:
+		CPRINTF("[%T system hibernating]\n");
+		system_hibernate(0, 0);
+		/* That shouldn't return... */
+		return EC_ERROR_UNKNOWN;
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -868,7 +873,8 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 #ifdef CONFIG_TASK_HOSTCMD
 	if (p.cmd == EC_REBOOT_JUMP_RO ||
 	    p.cmd == EC_REBOOT_JUMP_RW ||
-	    p.cmd == EC_REBOOT_COLD) {
+	    p.cmd == EC_REBOOT_COLD ||
+	    p.cmd == EC_REBOOT_HIBERNATE) {
 		/* Clean busy bits on host for commands that won't return */
 		args->result = EC_RES_SUCCESS;
 		host_send_response(args);
