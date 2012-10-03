@@ -90,12 +90,15 @@ static void enter_polling_mode(void)
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
-/*
- * Update the raw key state without sending messages.  Used in pre-init, so
- * must not make task-switching-dependent calls; udelay() is ok because it's a
- * spin-loop.
+/**
+ * Update the raw key state from the gpios.
+ *
+ * Does not send messages.  Used in pre-init, so must not make
+ * task-switching-dependent calls; udelay() is ok because it's a spin-loop.
+ *
+ * @param state		Destination for new state (must be KB_COLS long).
  */
-static void update_key_state(void)
+static void update_key_state(uint8_t *state)
 {
 	int c;
 	uint8_t r;
@@ -110,20 +113,20 @@ static void update_key_state(void)
 		r ^= 0xff;
 		/* Mask off keys that don't exist so they never show
 		 * as pressed */
-		raw_state[c] = r & actual_key_mask[c];
+		state[c] = r & actual_key_mask[c];
 	}
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
-/* Print the raw keyboard state. */
-static void print_raw_state(const char *msg)
+/* Print the keyboard state. */
+static void print_state(const uint8_t *state, const char *msg)
 {
 	int c;
 
 	CPRINTF("[%T KB %s:", msg);
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c])
-			CPRINTF(" %02x", raw_state[c]);
+		if (state[c])
+			CPRINTF(" %02x", state[c]);
 		else
 			CPUTS(" --");
 	}
@@ -132,8 +135,10 @@ static void print_raw_state(const char *msg)
 
 /**
  * Check special runtime key combinations.
+ *
+ * @param state		Keyboard state to use when checking keys.
  */
-static void check_runtime_keys(void)
+static void check_runtime_keys(const uint8_t *state)
 {
 	int num_press = 0;
 	int c;
@@ -142,10 +147,10 @@ static void check_runtime_keys(void)
 	 * All runtime key combos are (right or left ) alt + volume up + (some
 	 * key NOT on the same col as alt or volume up )
 	 */
-	if (raw_state[MASK_INDEX_VOL_UP] != MASK_VALUE_VOL_UP)
+	if (state[MASK_INDEX_VOL_UP] != MASK_VALUE_VOL_UP)
 		return;
-	if (raw_state[MASK_INDEX_RIGHT_ALT] != MASK_VALUE_RIGHT_ALT &&
-	    raw_state[MASK_INDEX_LEFT_ALT] != MASK_VALUE_LEFT_ALT)
+	if (state[MASK_INDEX_RIGHT_ALT] != MASK_VALUE_RIGHT_ALT &&
+	    state[MASK_INDEX_LEFT_ALT] != MASK_VALUE_LEFT_ALT)
 		return;
 
 	/*
@@ -154,26 +159,32 @@ static void check_runtime_keys(void)
 	 * there will be exactly 3 non-zero columns.
 	 */
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c])
+		if (state[c])
 			num_press++;
 	}
 	if (num_press != 3)
 		return;
 
 	/* Check individual keys */
-	if (raw_state[MASK_INDEX_KEY_R] == MASK_VALUE_KEY_R) {
+	if (state[MASK_INDEX_KEY_R] == MASK_VALUE_KEY_R) {
 		/* R = reboot */
 		CPRINTF("[%T KB warm reboot]\n");
 		x86_power_reset(0);
-	} else if (raw_state[MASK_INDEX_KEY_H] == MASK_VALUE_KEY_H) {
+	} else if (state[MASK_INDEX_KEY_H] == MASK_VALUE_KEY_H) {
 		/* H = hibernate */
 		CPRINTF("[%T KB hibernate]\n");
 		system_hibernate(0, 0);
 	}
 }
 
-/* Return 1 if any key is still pressed, 0 if no key is pressed. */
-static int check_keys_changed(void)
+/**
+ * Updates keyboard state using low-level interface to read keyboard.
+ *
+ * @param state		Keyboard state to update.
+ *
+ * @return 1 if any key is still pressed, 0 if no key is pressed.
+ */
+static int check_keys_changed(uint8_t *state)
 {
 	int c, c2;
 	uint8_t r;
@@ -199,7 +210,7 @@ static int check_keys_changed(void)
 		 * KLUDGE - or current state in, so we can make sure
 		 * all the lines are hooked up.
 		 */
-		r |= raw_state[c];
+		r |= state[c];
 #endif
 
 		keys[c] = r;
@@ -228,28 +239,28 @@ static int check_keys_changed(void)
 	/* Check for changes */
 	for (c = 0; c < KB_COLS; c++) {
 		r = keys[c];
-		if (r != raw_state[c]) {
+		if (r != state[c]) {
 			int i;
 			for (i = 0; i < 8; i++) {
-				uint8_t prev = (raw_state[c] >> i) & 1;
+				uint8_t prev = (state[c] >> i) & 1;
 				uint8_t now = (r >> i) & 1;
 				if (prev != now && lm4_get_scanning_enabled())
 					keyboard_state_changed(i, c, now);
 			}
-			raw_state[c] = r;
+			state[c] = r;
 			change = 1;
 		}
 	}
 
 	if (change) {
-		print_raw_state("state");
-		check_runtime_keys();
+		print_state(state, "state");
+		check_runtime_keys(state);
 	}
 
 out:
 	/* Return non-zero if at least one key is pressed */
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c])
+		if (state[c])
 			return 1;
 	}
 	return 0;
@@ -259,13 +270,13 @@ out:
  * Return non-zero if the specified key is pressed, with at most the keys used
  * for keyboard-controlled reset also pressed.
  */
-static int check_key(int index, int mask)
+static int check_key(const uint8_t *state, int index, int mask)
 {
 	uint8_t allowed_mask[KB_COLS] = {0};
 	int c;
 
 	/* Check for the key */
-	if (mask && !(raw_state[index] & mask))
+	if (mask && !(state[index] & mask))
 		return 0;
 
 	/* Check for other allowed keys */
@@ -273,7 +284,7 @@ static int check_key(int index, int mask)
 	allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
 
 	for (c = 0; c < KB_COLS; c++) {
-		if (raw_state[c] & ~allowed_mask[c])
+		if (state[c] & ~allowed_mask[c])
 			return 0;  /* Disallowed key pressed */
 	}
 	return 1;
@@ -282,11 +293,13 @@ static int check_key(int index, int mask)
 /**
  * Check what boot key is down, if any.
  *
+ * @param state		Keyboard state at boot.
+ *
  * @return the key which is down, or BOOT_KEY_OTHER if an unrecognized
  * key combination is down or this isn't the right type of boot to look at
  * boot keys.
  */
-static enum boot_key keyboard_scan_check_boot_key(void)
+static enum boot_key keyboard_scan_check_boot_key(const uint8_t *state)
 {
 	const struct boot_key_entry *k = boot_key_list;
 	int i;
@@ -301,12 +314,12 @@ static enum boot_key keyboard_scan_check_boot_key(void)
 
 	/* If reset was not caused by reset pin, refresh must be held down */
 	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-	    !(raw_state[MASK_INDEX_REFRESH] & MASK_VALUE_REFRESH))
+	    !(state[MASK_INDEX_REFRESH] & MASK_VALUE_REFRESH))
 		return BOOT_KEY_OTHER;
 
 	/* Check what single key is down */
 	for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
-		if (check_key(k->mask_index, k->mask_value)) {
+		if (check_key(state, k->mask_index, k->mask_value)) {
 			CPRINTF("[%T KB boot key %d]\n", i);
 			return i;
 		}
@@ -335,10 +348,10 @@ int keyboard_scan_init(void)
 	actual_key_mask = actual_key_masks[0];
 
 	/* Initialize raw state */
-	update_key_state();
+	update_key_state(raw_state);
 
 	/* Check for keys held down at boot */
-	boot_key_value = keyboard_scan_check_boot_key();
+	boot_key_value = keyboard_scan_check_boot_key(raw_state);
 
 	/* Trigger event if recovery key was pressed */
 	if (boot_key_value == BOOT_KEY_ESC)
@@ -351,7 +364,7 @@ void keyboard_scan_task(void)
 {
 	int key_press_timer = 0;
 
-	print_raw_state("init state");
+	print_state(raw_state, "init state");
 
 	/* Enable interrupts */
 	task_enable_irq(KB_SCAN_ROW_IRQ);
@@ -371,7 +384,7 @@ void keyboard_scan_task(void)
 			/* sleep for debounce. */
 			usleep(SCAN_LOOP_DELAY);
 			/* Check for keys down */
-			if (check_keys_changed()) {
+			if (check_keys_changed(raw_state)) {
 				key_press_timer = 0;
 			} else {
 				if (++key_press_timer >=
