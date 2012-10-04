@@ -44,20 +44,6 @@ static struct mutex scanning_enabled;
 /* The keyboard state from the last read */
 static uint8_t raw_state[KB_OUTPUTS];
 
-/* Mask with 1 bits only for keys that actually exist */
-static const uint8_t *actual_key_mask;
-
-/* All actual key masks (todo: move to keyboard matrix definition) */
-/* TODO: (crosbug.com/p/7485) fill in real key mask with 0-bits for coords that
-   aren't keys */
-static const uint8_t actual_key_masks[4][KB_OUTPUTS] = {
-	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-	{0},
-	{0},
-	{0},
-	};
-
 /* Key masks for special boot keys */
 #define MASK_INDEX_ESC     1
 #define MASK_VALUE_ESC     0x02
@@ -279,9 +265,6 @@ static int check_keys_changed(void)
 
 		/* Invert it so 0=not pressed, 1=pressed */
 		r ^= 0xff;
-		/* Mask off keys that don't exist so they never show
-		 * as pressed */
-		r &= actual_key_mask[c];
 
 #ifdef OR_WITH_CURRENT_STATE_FOR_TESTING
 		/* KLUDGE - or current state in, so we can make sure
@@ -372,10 +355,6 @@ int keyboard_scan_init(void)
 {
 	/* Tri-state (put into Hi-Z) the outputs */
 	select_column(COL_TRI_STATE_ALL);
-
-	/* TODO: method to set which keyboard we have, so we set the actual
-	 * key mask properly */
-	actual_key_mask = actual_key_masks[0];
 
 	/* Initialize raw state */
 	check_keys_changed();
