@@ -1,7 +1,4 @@
 build/
 private/
-*.map
-*.bin
-*.elf
 *.swp
 *.pyc
