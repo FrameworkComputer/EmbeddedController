@@ -33,9 +33,6 @@ enum COL_INDEX {
 	/* 0 ~ 12 for the corresponding column */
 };
 
-#define POLLING_MODE_TIMEOUT 100000   /* 100 ms */
-#define SCAN_LOOP_DELAY 10000         /*  10 ms */
-
 /* 15:14, 12:8, 2 */
 #define IRQ_MASK 0xdf04
 
@@ -86,6 +83,23 @@ static uint32_t kb_fifo_end;			/* last entry */
 static uint32_t kb_fifo_entries;	/* number of existing entries */
 static uint8_t kb_fifo[KB_FIFO_DEPTH][KB_OUTPUTS];
 
+/*
+ * Our configuration. The debounce parameters are not yet supported.
+ */
+static struct ec_mkbp_config config = {
+	.valid_mask = EC_MKBP_VALID_SCAN_PERIOD | EC_MKBP_VALID_POLL_TIMEOUT |
+		EC_MKBP_VALID_MIN_POST_SCAN_DELAY |
+		EC_MKBP_VALID_OUTPUT_SETTLE | EC_MKBP_VALID_DEBOUNCE_DOWN |
+		EC_MKBP_VALID_DEBOUNCE_UP | EC_MKBP_VALID_FIFO_MAX_DEPTH,
+	.valid_flags = EC_MKBP_FLAGS_ENABLE,
+	.flags = EC_MKBP_FLAGS_ENABLE,
+	.scan_period_us = 10000,
+	.poll_timeout_us = 100 * 1000,
+	.min_post_scan_delay_us = 1000,
+	.output_settle_us = 50,
+	.fifo_max_depth = KB_FIFO_DEPTH,
+};
+
 /* clear keyboard state variables */
 void keyboard_clear_state(void)
 {
@@ -108,8 +122,9 @@ static int kb_fifo_add(uint8_t *buffp)
 {
 	int ret = EC_SUCCESS;
 
-	if (kb_fifo_entries == KB_FIFO_DEPTH) {
-		CPRINTF("%s: FIFO depth reached\n", __func__);
+	if (kb_fifo_entries >= config.fifo_max_depth) {
+		CPRINTF("%s: FIFO depth %d reached\n", __func__,
+			config.fifo_max_depth);
 		ret = EC_ERROR_OVERFLOW;
 		goto kb_fifo_push_done;
 	}
@@ -191,8 +206,8 @@ static void select_column(int col)
 	}
 }
 
-
-void wait_for_interrupt(void)
+/* Set up columns so that we will get an interrupt when any key changed */
+void setup_interrupts(void)
 {
 	uint32_t pr_before, pr_after;
 
@@ -237,7 +252,7 @@ static int check_keys_changed(void)
 
 		/* Select column, then wait a bit for it to settle */
 		select_column(c);
-		udelay(50);
+		udelay(config.output_settle_us);
 
 		r = 0;
 		tmp = STM32_GPIO_IDR(C);
@@ -365,12 +380,56 @@ int keyboard_scan_init(void)
 	return EC_SUCCESS;
 }
 
+/* Scan the keyboard until all keys are released */
+static void scan_keyboard(void)
+{
+	timestamp_t poll_deadline, start;
+	int keys_changed = 1;
+
+	mutex_lock(&scanning_enabled);
+	setup_interrupts();
+	mutex_unlock(&scanning_enabled);
+
+	/* Wait until we get an interrupt */
+	task_wait_event(-1);
+
+	enter_polling_mode();
+
+	/* Busy polling keyboard state. */
+	while (1) {
+		int wait_time;
+
+		if (!(config.flags & EC_MKBP_FLAGS_ENABLE))
+			break;
+
+		/* If we saw any keys pressed, reset deadline */
+		start = get_time();
+		if (keys_changed)
+			poll_deadline.val = start.val + config.poll_timeout_us;
+		else if (timestamp_expired(poll_deadline, &start))
+			break;
+
+		/* Scan immediately, with no delay */
+		mutex_lock(&scanning_enabled);
+		keys_changed = check_keys_changed();
+		mutex_unlock(&scanning_enabled);
+
+		/* Wait a bit before scanning again */
+		wait_time = config.scan_period_us -
+				(get_time().val - start.val);
+		if (wait_time < config.min_post_scan_delay_us)
+			wait_time = config.min_post_scan_delay_us;
+		task_wait_event(wait_time);
+	}
+	/*
+	 * TODO: (crosbug.com/p/7484) A race condition here.
+	 *       If a key state is changed here (before interrupt is
+	 *       enabled), it will be lost.
+	 */
+}
 
 void keyboard_scan_task(void)
 {
-	int key_press_timer = 0;
-	uint8_t keys_changed = 0;
-
 	/* Enable interrupts for keyboard matrix inputs */
 	gpio_enable_interrupt(GPIO_KB_IN00);
 	gpio_enable_interrupt(GPIO_KB_IN01);
@@ -382,37 +441,12 @@ void keyboard_scan_task(void)
 	gpio_enable_interrupt(GPIO_KB_IN07);
 
 	while (1) {
-		mutex_lock(&scanning_enabled);
-		wait_for_interrupt();
-		mutex_unlock(&scanning_enabled);
-
-		task_wait_event(-1);
-
-		enter_polling_mode();
-		/* Busy polling keyboard state. */
-		while (1) {
-			/* sleep for debounce. */
-			usleep(SCAN_LOOP_DELAY);
-			/* Check for keys down */
-
-			mutex_lock(&scanning_enabled);
-			keys_changed = check_keys_changed();
-			mutex_unlock(&scanning_enabled);
-
-			if (keys_changed) {
-				key_press_timer = 0;
-			} else {
-				if (++key_press_timer >=
-				    (POLLING_MODE_TIMEOUT / SCAN_LOOP_DELAY)) {
-					key_press_timer = 0;
-					break;  /* exit the while loop */
-				}
-			}
+		if (config.flags & EC_MKBP_FLAGS_ENABLE) {
+			scan_keyboard();
+		} else {
+			select_column(COL_TRI_STATE_ALL);
+			task_wait_event(-1);
 		}
-		/* TODO: (crosbug.com/p/7484) A race condition here.
-		 *       If a key state is changed here (before interrupt is
-		 *       enabled), it will be lost.
-		 */
 	}
 }
 
