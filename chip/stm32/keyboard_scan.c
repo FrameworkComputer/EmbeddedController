@@ -93,7 +93,7 @@ static struct ec_mkbp_config config = {
 		EC_MKBP_VALID_DEBOUNCE_UP | EC_MKBP_VALID_FIFO_MAX_DEPTH,
 	.valid_flags = EC_MKBP_FLAGS_ENABLE,
 	.flags = EC_MKBP_FLAGS_ENABLE,
-	.scan_period_us = 10000,
+	.scan_period_us = 3000,
 	.poll_timeout_us = 100 * 1000,
 	.min_post_scan_delay_us = 1000,
 	.output_settle_us = 50,
