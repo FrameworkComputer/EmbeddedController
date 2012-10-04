@@ -83,7 +83,7 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 #define MASK_INDEX_KEY_H	6
 #define MASK_VALUE_KEY_H	0x02
 
-static void wait_for_interrupt(void)
+static void enable_interrupt(void)
 {
 	CPRINTF("[%T KB wait]\n");
 
@@ -442,11 +442,19 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		/* Enable all outputs */
-		wait_for_interrupt();
+		enable_interrupt();
 
 		/* Wait for scanning enabled and key pressed. */
 		do {
-			task_wait_event(-1);
+			/*
+			 * Don't wait if scanning is enabled and a key is
+			 * already pressed.  This prevents a race between the
+			 * user pressing a key and enable_interrupt()
+			 * starting to pay attention to edges.
+			 */
+			if ((lm4_read_raw_row_state() == 0xff) ||
+			    !lm4_get_scanning_enabled())
+				task_wait_event(-1);
 		} while (!lm4_get_scanning_enabled());
 
 		enter_polling_mode();
@@ -487,8 +495,8 @@ void keyboard_enable_scanning(int enable)
 	if (enable) {
 		/*
 		 * A power button press had tri-stated all columns (see the
-		 * 'else' statement below), we need a wake-up to unlock the
-		 * task_wait_event() loop after wait_for_interrupt().
+		 * 'else' statement below); we need a wake-up to unlock the
+		 * task_wait_event() loop after enable_interrupt().
 		 */
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
