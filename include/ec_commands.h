@@ -866,6 +866,55 @@ struct ec_params_mkbp_simulate_key {
 	uint8_t pressed;
 } __packed;
 
+/* Configure keyboard scanning */
+#define EC_CMD_MKBP_SET_CONFIG 0x64
+#define EC_CMD_MKBP_GET_CONFIG 0x65
+
+/* flags */
+enum mkbp_config_flags {
+	EC_MKBP_FLAGS_ENABLE = 1,	/* Enable keyboard scanning */
+};
+
+enum mkbp_config_valid {
+	EC_MKBP_VALID_SCAN_PERIOD		= 1 << 0,
+	EC_MKBP_VALID_POLL_TIMEOUT		= 1 << 1,
+	EC_MKBP_VALID_MIN_POST_SCAN_DELAY	= 1 << 3,
+	EC_MKBP_VALID_OUTPUT_SETTLE		= 1 << 4,
+	EC_MKBP_VALID_DEBOUNCE_DOWN		= 1 << 5,
+	EC_MKBP_VALID_DEBOUNCE_UP		= 1 << 6,
+	EC_MKBP_VALID_FIFO_MAX_DEPTH		= 1 << 7,
+};
+
+/* Configuration for our key scanning algorithm */
+struct ec_mkbp_config {
+	uint32_t valid_mask;		/* valid fields */
+	uint8_t flags;		/* some flags (enum mkbp_config_flags) */
+	uint8_t valid_flags;		/* which flags are valid */
+	uint16_t scan_period_us;	/* period between start of scans */
+	/* revert to interrupt mode after no activity for this long */
+	uint32_t poll_timeout_us;
+	/*
+	 * minimum post-scan relax time. Once we finish a scan we check
+	 * the time until we are due to start the next one. If this time is
+	 * shorter this field, we use this instead.
+	 */
+	uint16_t min_post_scan_delay_us;
+	/* delay between setting up output and waiting for it to settle */
+	uint16_t output_settle_us;
+	uint16_t debounce_down_us;	/* time for debounce on key down */
+	uint16_t debounce_up_us;	/* time for debounce on key up */
+	/* maximum depth to allow for fifo (0 = no keyscan output) */
+	uint8_t fifo_max_depth;
+} __packed;
+
+struct ec_params_mkbp_set_config {
+	struct ec_mkbp_config config;
+} __packed;
+
+struct ec_response_mkbp_get_config {
+	struct ec_mkbp_config config;
+} __packed;
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 
