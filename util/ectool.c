@@ -2233,6 +2233,156 @@ int cmd_port_80_flood(int argc, char *argv[])
 	return 0;
 }
 
+struct param_info {
+	const char *name;	/* name of this parameter */
+	const char *help;	/* help message */
+	int size;		/* size in bytes */
+	int offset;		/* offset within structure */
+};
+
+#define FIELD(fname, field, help_str) \
+	{ \
+		.name = fname, \
+		.help = help_str, \
+		.size = sizeof(((struct ec_mkbp_config *)NULL)->field), \
+		.offset = __builtin_offsetof(struct ec_mkbp_config, field), \
+	}
+
+static const struct param_info keyconfig_params[] = {
+	FIELD("scan_period", scan_period_us, "period between scans"),
+	FIELD("poll_timeout", poll_timeout_us,
+	      "revert to irq mode after no activity for this long"),
+	FIELD("min_post_scan_delay", min_post_scan_delay_us,
+	      "minimum post-scan delay before starting a new scan"),
+	FIELD("output_settle", output_settle_us,
+	      "delay to wait for output to settle"),
+	FIELD("debounce_down", debounce_down_us,
+	      "time for debounce on key down"),
+	FIELD("debounce_up", debounce_up_us, "time for debounce on key up"),
+	FIELD("fifo_max_depth", fifo_max_depth,
+	      "maximum depth to allow for fifo (0 = disable)"),
+	FIELD("flags", flags, "0 to disable scanning, 1 to enable"),
+};
+
+static const struct param_info *find_field(const struct param_info *params,
+		int count, const char *name, unsigned int *nump)
+{
+	const struct param_info *param;
+	int i;
+
+	for (i = 0, param = params; i < count; i++, param++) {
+		if (0 == strcmp(param->name, name)) {
+			if (nump)
+				*nump = i;
+			return param;
+		}
+	}
+
+	fprintf(stderr, "Unknown parameter '%s'\n", name);
+	return NULL;
+}
+
+static int get_value(const struct param_info *param, const char *config)
+{
+	const char *field;
+
+	field = config + param->offset;
+	switch (param->size) {
+	case 1:
+		return *(uint8_t *)field;
+	case 2:
+		return *(uint16_t *)field;
+	case 4:
+		return *(uint32_t *)field;
+	default:
+		fprintf(stderr, "Internal error: unknown size %d\n",
+			param->size);
+	}
+
+	return -1;
+}
+
+static int show_fields(struct ec_mkbp_config *config, int argc, char *argv[])
+{
+	const struct param_info *param;
+	uint32_t mask ;
+	int i;
+
+	if (!argc) {
+		mask = -1U;	/* show all fields */
+	} else {
+		mask = 0;
+		while (argc > 0) {
+			unsigned int num;
+
+			param = find_field(keyconfig_params,
+					   ARRAY_SIZE(keyconfig_params),
+					   argv[0], &num);
+			if (!param)
+				return -1;
+			mask |= 1 << num;
+			argc--;
+			argv++;
+		}
+	}
+
+	param = keyconfig_params;
+	for (i = 0; i < ARRAY_SIZE(keyconfig_params); i++, param++) {
+		if (mask & (1 << i)) {
+			fprintf(stderr, "%-12s   %u\n", param->name,
+				get_value(param, (char *)config));
+		}
+	}
+
+	return 0;
+}
+
+static int cmd_keyconfig(int argc, char *argv[])
+{
+	struct ec_params_mkbp_set_config req;
+	int cmd;
+	int rv;
+
+	if (argc < 2) {
+		const struct param_info *param;
+		int i;
+
+		fprintf(stderr, "Usage: %s get [<param>] - print params\n"
+			"\t%s set [<param>> <value>]\n"
+			"   Available params are: (all time values are in us)",
+			argv[0], argv[0]);
+
+		param = keyconfig_params;
+		for (i = 0; i < ARRAY_SIZE(keyconfig_params); i++, param++) {
+			fprintf(stderr, "%-12s   %s\n", param->name,
+				param->name);
+		}
+		return -1;
+	}
+
+	/* Get the command */
+	if (0 == strcmp(argv[1], "get")) {
+		cmd = EC_CMD_MKBP_GET_CONFIG;
+	} else if (0 == strcmp(argv[1], "set")) {
+		cmd = EC_CMD_MKBP_SET_CONFIG;
+	} else {
+		fprintf(stderr, "Invalid command '%s\n", argv[1]);
+		return -1;
+	}
+
+	switch (cmd) {
+	case EC_CMD_MKBP_GET_CONFIG:
+		/* Read the existing config */
+		rv = ec_command(cmd, 0, NULL, 0, &req, sizeof(req));
+		if (rv < 0)
+			return rv;
+		show_fields(&req.config, argc - 2, argv + 2);
+		break;
+	}
+
+	return 0;
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -2273,6 +2423,7 @@ const struct command commands[] = {
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
 	{"lightbar", cmd_lightbar},
+	{"keyconfig", cmd_keyconfig},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},

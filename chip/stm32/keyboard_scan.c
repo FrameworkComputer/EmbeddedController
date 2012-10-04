@@ -550,3 +550,91 @@ DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
 			"[col] [row] [0 | 1]",
 			"Simulate keypress",
 			NULL);
+
+/**
+ * Copy keyscan configuration from one place to another according to flags
+ *
+ * This is like a structure copy, except that only selected fields are
+ * copied.
+ *
+ * TODO(sjg@chromium.org): Consider making this table drive as ectool.
+ *
+ * @param src		Source config
+ * @param dst		Destination config
+ * @param valid_mask	Bits representing which fields to copy - each bit is
+ *			from enum mkbp_config_valid
+ * @param valid_flags	Bit mask controlling flags to copy. Any 1 bit means
+ *			that the corresponding bit in src->flags is copied
+ *			over to dst->flags
+ */
+static void keyscan_copy_config(const struct ec_mkbp_config *src,
+				 struct ec_mkbp_config *dst,
+				 uint32_t valid_mask, uint8_t valid_flags)
+{
+	uint8_t new_flags;
+
+	if (valid_mask & EC_MKBP_VALID_SCAN_PERIOD)
+		dst->scan_period_us = src->scan_period_us;
+	if (valid_mask & EC_MKBP_VALID_POLL_TIMEOUT)
+		dst->poll_timeout_us = src->poll_timeout_us;
+	if (valid_mask & EC_MKBP_VALID_MIN_POST_SCAN_DELAY) {
+		/*
+		 * Key scanning is high priority, so we should require at
+		 * least 100us min delay here. Setting this to 0 will cause
+		 * watchdog events. Use 200 to be safe.
+		 */
+		dst->min_post_scan_delay_us =
+			MAX(src->min_post_scan_delay_us, 200);
+	}
+	if (valid_mask & EC_MKBP_VALID_OUTPUT_SETTLE)
+		dst->output_settle_us = src->output_settle_us;
+	if (valid_mask & EC_MKBP_VALID_DEBOUNCE_DOWN)
+		dst->debounce_down_us = src->debounce_down_us;
+	if (valid_mask & EC_MKBP_VALID_DEBOUNCE_UP)
+		dst->debounce_up_us = src->debounce_up_us;
+	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
+		/* Sanity check for fifo depth */
+		dst->fifo_max_depth = MIN(src->fifo_max_depth,
+					  KB_FIFO_DEPTH);
+	}
+	new_flags = dst->flags & ~valid_flags;
+	new_flags |= src->flags & valid_flags;
+	dst->flags = new_flags;
+
+	/*
+	 * If we just enabled key scanning, kick the task so that it will
+	 * fall out of the task_wait_event() in keyboard_scan_task().
+	 */
+	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
+			!(dst->flags & EC_MKBP_FLAGS_ENABLE))
+		task_wake(TASK_ID_KEYSCAN);
+}
+
+static int host_command_mkbp_set_config(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_mkbp_set_config *req = args->params;
+
+	keyscan_copy_config(&req->config, &config,
+			    config.valid_mask & req->config.valid_mask,
+			    config.valid_flags & req->config.valid_flags);
+
+	return EC_RES_SUCCESS;
+}
+
+static int host_command_mkbp_get_config(struct host_cmd_handler_args *args)
+{
+	struct ec_response_mkbp_get_config *resp = args->response;
+
+	memcpy(&resp->config, &config, sizeof(config));
+	args->response_size = sizeof(*resp);
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SET_CONFIG,
+		     host_command_mkbp_set_config,
+		     EC_VER_MASK(0));
+
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_GET_CONFIG,
+		     host_command_mkbp_get_config,
+		     EC_VER_MASK(0));
