@@ -98,7 +98,7 @@ static void update_battery_info(void)
 }
 
 /* Prevent battery from going into deep discharge state */
-static void poweroff_wait_ac(void)
+static void poweroff_wait_ac(int hibernate_ec)
 {
 	/* Shutdown the main processor */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
@@ -110,6 +110,12 @@ static void poweroff_wait_ac(void)
 		x86_power_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 #endif /* CONFIG_TASK_X86POWER */
+	}
+
+	/* If battery level is critical, hibernate the EC too */
+	if (hibernate_ec) {
+		CPRINTF("[%T force EC hibernate to avoid damaging battery]\n");
+		system_hibernate(0, 0);
 	}
 }
 
@@ -219,12 +225,14 @@ static int state_common(struct power_state_context *ctx)
 	}
 
 	/* Prevent deep discharging */
-	if (!curr->ac)
+	if (!curr->ac) {
 		if ((batt->state_of_charge < BATTERY_LEVEL_SHUTDOWN &&
 		    !(curr->error & F_BATTERY_STATE_OF_CHARGE)) ||
 		    (batt->voltage <= ctx->battery->voltage_min &&
 		    !(curr->error & F_BATTERY_VOLTAGE)))
-			poweroff_wait_ac();
+			poweroff_wait_ac(batt->state_of_charge <
+					 BATTERY_LEVEL_HIBERNATE_EC ? 1 : 0);
+	}
 
 	/* Check battery presence */
 	if (curr->error & F_BATTERY_MASK) {
@@ -465,7 +473,7 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 	 */
 	if (batt->temperature > ctx->battery->temp_discharge_max ||
 	    batt->temperature < ctx->battery->temp_discharge_min)
-		poweroff_wait_ac();
+		poweroff_wait_ac(0);
 
 	return PWR_STATE_UNCHANGE;
 }

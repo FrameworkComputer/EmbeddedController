@@ -12,7 +12,10 @@
 #define BATTERY_LEVEL_WARNING  15
 #define BATTERY_LEVEL_LOW      10
 #define BATTERY_LEVEL_CRITICAL 5
+/* Shut down main processor when battery level reaches this level */
 #define BATTERY_LEVEL_SHUTDOWN 3
+/* Hibernate EC immediately when battery level reaches this level */
+#define BATTERY_LEVEL_HIBERNATE_EC 2
 
 /* Stop charge when state of charge reaches this percentage */
 #define STOP_CHARGE_THRESHOLD 100
