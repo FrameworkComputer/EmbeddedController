@@ -28,8 +28,16 @@ enum hibdata_index {
 
 /*
  * Time it takes wait_for_hibctl_wc() to return.  Experimentally verified to
- * be ~200 us; the value below is somewhat conservative. */
+ * be ~200 us; the value below is somewhat conservative.
+ */
 #define HIB_WAIT_USEC 1000
+
+/*
+ * Time to hibernate to trigger a power-on reset.  50 ms is sufficient for the
+ * EC itself, but we need a longer delay to ensure the rest of the components
+ * on the same power rail are reset.
+ */
+#define HIB_RESET_USEC 100000
 
 static int wait_for_hibctl_wc(void)
 {
@@ -355,7 +363,7 @@ void system_reset(int flags)
 
 	if (flags & SYSTEM_RESET_HARD) {
 		/* Bounce through hibernate to trigger a hard reboot */
-		hibernate(0, 50000, HIBDATA_WAKE_HARD_RESET);
+		hibernate(0, HIB_RESET_USEC, HIBDATA_WAKE_HARD_RESET);
 	} else
 		CPU_NVIC_APINT = 0x05fa0004;
 
