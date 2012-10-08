@@ -178,14 +178,29 @@ static int state_common(struct power_state_context *ctx)
 	rv = battery_temperature(&batt->temperature);
 	if (rv) {
 		/* Check low battery condition and retry */
-		if (curr->ac && !(curr->error & F_CHARGER_MASK) &&
+		if (curr->ac && ctx->battery_present == 1 &&
+				!(curr->error & F_CHARGER_MASK) &&
 				(curr->charging_voltage == 0 ||
 				curr->charging_current == 0)) {
-			charger_set_voltage(ctx->battery->voltage_min);
+			ctx->battery_present = 0;
+			/*
+			 * Try to revive ultra low voltage pack.
+			 * Charge battery pack with minimum current
+			 * and maximum voltage for 30 seconds.
+			 */
+			charger_set_voltage(ctx->battery->voltage_max);
 			charger_set_current(ctx->charger->current_min);
-			usleep(SECOND);
-			rv = battery_temperature(&batt->temperature);
+			for (d = 0; d < 30; d++) {
+				usleep(SECOND);
+				rv = battery_temperature(&batt->temperature);
+				if (rv == 0) {
+					ctx->battery_present = 1;
+					break;
+				}
+			}
 		}
+	} else {
+		ctx->battery_present = 1;
 	}
 
 	if (rv)
@@ -594,6 +609,7 @@ void charge_state_machine_task(void)
 	ctx->trickle_charging_time.val = 0;
 	ctx->battery = battery_get_info();
 	ctx->charger = charger_get_info();
+	ctx->battery_present = 1;
 
 	/* Setup LPC direct memmap */
 	ctx->memmap_batt_volt =

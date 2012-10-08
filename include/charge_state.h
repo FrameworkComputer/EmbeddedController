@@ -114,6 +114,7 @@ struct power_state_context {
 	timestamp_t charger_update_time;
 	timestamp_t trickle_charging_time;
 	timestamp_t voltage_debounce_time;
+	int battery_present;
 };
 
 /* Trickle charging state handler.
