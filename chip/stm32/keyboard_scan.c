@@ -282,6 +282,44 @@ static void print_state(const uint8_t *state, const char *msg)
 	CPUTS("]\n");
 }
 
+static uint8_t read_raw_row_state(void)
+{
+	uint16_t tmp;
+	uint8_t r = 0;
+
+	/*
+	 * TODO(sjg@chromium.org): This code can be improved by doing
+	 * the job in 3 shift/or operations.
+	 */
+	tmp = STM32_GPIO_IDR(C);
+	/* KB_COL00:04 = PC8:12 */
+	if (tmp & (1 << 8))
+		r |= 1 << 0;
+	if (tmp & (1 << 9))
+		r |= 1 << 1;
+	if (tmp & (1 << 10))
+		r |= 1 << 2;
+	if (tmp & (1 << 11))
+		r |= 1 << 3;
+	if (tmp & (1 << 12))
+		r |= 1 << 4;
+	/* KB_COL05:06 = PC14:15 */
+	if (tmp & (1 << 14))
+		r |= 1 << 5;
+	if (tmp & (1 << 15))
+		r |= 1 << 6;
+
+	tmp = STM32_GPIO_IDR(D);
+	/* KB_COL07 = PD2 */
+	if (tmp & (1 << 2))
+		r |= 1 << 7;
+
+	/* Invert it so 0=not pressed, 1=pressed */
+	r ^= 0xff;
+
+	return r;
+}
+
 /**
  * Read the raw keyboard matrix state.
  *
@@ -299,42 +337,11 @@ static int read_matrix(uint8_t *state)
 	int pressed = 0;
 
 	for (c = 0; c < KB_OUTPUTS; c++) {
-		uint16_t tmp;
-
 		/* Select column, then wait a bit for it to settle */
 		select_column(c);
 		udelay(config.output_settle_us);
 
-		/*
-		 * TODO(sjg@chromium.org): This code can be improved by doing
-		 * the job in 3 shift/or operations.
-		 */
-		r = 0;
-		tmp = STM32_GPIO_IDR(C);
-		/* KB_COL00:04 = PC8:12 */
-		if (tmp & (1 << 8))
-			r |= 1 << 0;
-		if (tmp & (1 << 9))
-			r |= 1 << 1;
-		if (tmp & (1 << 10))
-			r |= 1 << 2;
-		if (tmp & (1 << 11))
-			r |= 1 << 3;
-		if (tmp & (1 << 12))
-			r |= 1 << 4;
-		/* KB_COL05:06 = PC14:15 */
-		if (tmp & (1 << 14))
-			r |= 1 << 5;
-		if (tmp & (1 << 15))
-			r |= 1 << 6;
-
-		tmp = STM32_GPIO_IDR(D);
-		/* KB_COL07 = PD2 */
-		if (tmp & (1 << 2))
-			r |= 1 << 7;
-
-		/* Invert it so 0=not pressed, 1=pressed */
-		r ^= 0xff;
+		r = read_raw_row_state();
 
 #ifdef OR_WITH_CURRENT_STATE_FOR_TESTING
 		/* KLUDGE - or current state in, so we can make sure
@@ -512,8 +519,13 @@ static void scan_keyboard(void)
 	setup_interrupts();
 	mutex_unlock(&scanning_enabled);
 
-	/* Wait until we get an interrupt */
-	task_wait_event(-1);
+	/*
+	 * if a key was pressed after the last polling,
+	 * re-start immediatly polling instead of waiting
+	 * for the next interrupt.
+	 */
+	if (!read_raw_row_state())
+		task_wait_event(-1);
 
 	enter_polling_mode();
 
@@ -543,11 +555,6 @@ static void scan_keyboard(void)
 			wait_time = config.min_post_scan_delay_us;
 		task_wait_event(wait_time);
 	}
-	/*
-	 * TODO: (crosbug.com/p/7484) A race condition here.
-	 *       If a key state is changed here (before interrupt is
-	 *       enabled), it will be lost.
-	 */
 }
 
 void keyboard_scan_task(void)
