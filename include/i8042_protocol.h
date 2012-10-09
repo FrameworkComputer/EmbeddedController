@@ -55,11 +55,15 @@
 #define I8042_TEST_KB_PORT      0xab
 #define I8042_DIS_KB            0xad
 #define I8042_ENA_KB            0xae
+#define I8042_READ_OUTPUT_PORT  0xd0
+#define I8042_WRITE_OUTPUT_PORT 0xd1
 #define I8042_ECHO_MOUSE        0xd3  /* expect a byte on port 0x60 */
 #define I8042_SEND_TO_MOUSE     0xd4  /* expect a byte on port 0x60 */
+#define I8042_DISABLE_A20       0xdd
+#define I8042_ENABLE_A20        0xdf
 #define I8042_PULSE_START       0xf0
-#define I8042_PULSE_END         0xfd
 #define I8042_SYSTEM_RESET      0xfe
+#define I8042_PULSE_END         0xff
 
 /* port 0x60 return value */
 #define I8042_RET_BAT           0xaa

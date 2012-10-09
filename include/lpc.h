@@ -23,6 +23,9 @@ uint8_t *lpc_get_memmap_range(void);
  */
 int lpc_keyboard_has_char(void);
 
+/* Return true if the FRMH is still set */
+int lpc_keyboard_input_pending(void);
+
 /**
  * Send a byte to host via keyboard port 0x60.
  *

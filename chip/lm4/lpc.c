@@ -214,6 +214,13 @@ int lpc_keyboard_has_char(void)
 	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LM4_LPC_ST_TOH) ? 1 : 0;
 }
 
+/* Return true if the FRMH is set */
+int lpc_keyboard_input_pending(void)
+{
+	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LM4_LPC_ST_FRMH) ? 1 : 0;
+}
+
+/* Put a char to host buffer and send IRQ if specified. */
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	LPC_POOL_KEYBOARD[1] = chr;

@@ -62,6 +62,7 @@ static uint8_t controller_ram[0x20] = {
 	I8042_XLATE | I8042_AUX_DIS | I8042_KBD_DIS,
 	/* 0x01 - 0x1f are controller RAM */
 };
+static uint8_t A20_status;
 static int power_button_pressed = 0;
 static void keyboard_special(uint16_t k);
 
@@ -355,6 +356,7 @@ static enum {
 	STATE_EX_SETLEDS_1,  /* expect 2-byte parameter coming */
 	STATE_EX_SETLEDS_2,
 	STATE_WRITE_CMD_BYTE,
+	STATE_WRITE_OUTPUT_PORT,
 	STATE_ECHO_MOUSE,
 	STATE_SETREP,
 	STATE_SEND_TO_MOUSE,
@@ -406,6 +408,13 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 		CPRINTF5("[%T KB eaten by STATE_WRITE_CMD_BYTE: 0x%02x]\n",
 			 data);
 		update_ctl_ram(controller_ram_address, data);
+		data_port_state = STATE_NORMAL;
+		break;
+
+	case STATE_WRITE_OUTPUT_PORT:
+		CPRINTF5("[%T KB eaten by STATE_WRITE_OUTPUT_PORT: 0x%02x]\n",
+			 data);
+		A20_status = (data & (1 << 1)) ? 1 : 0;
 		data_port_state = STATE_NORMAL;
 		break;
 
@@ -559,6 +568,18 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		update_ctl_ram(0, read_ctl_ram(0) & ~I8042_KBD_DIS);
 		break;
 
+	case I8042_READ_OUTPUT_PORT:
+		output[out_len++] =
+			(lpc_keyboard_input_pending() ? (1 << 5) : 0) |
+			(lpc_keyboard_has_char() ? (1 << 4) : 0) |
+			(A20_status ? (1 << 1) : 0) |
+			1;  /* Main processor in normal mode */
+		break;
+
+	case I8042_WRITE_OUTPUT_PORT:
+		data_port_state = STATE_WRITE_OUTPUT_PORT;
+		break;
+
 	case I8042_RESET_SELF_TEST:
 		output[out_len++] = 0x55;  /* Self test success */
 		break;
@@ -599,9 +620,17 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 			   command <= I8042_WRITE_CTL_RAM_END) {
 			data_port_state = STATE_WRITE_CMD_BYTE;
 			controller_ram_address = command - 0x60;
+		} else if (command == I8042_DISABLE_A20) {
+			A20_status = 0;
+		} else if (command == I8042_ENABLE_A20) {
+			A20_status = 1;
 		} else if (command >= I8042_PULSE_START &&
 			   command <= I8042_PULSE_END) {
-			/* Pulse Output Bit. Not implemented. Ignore it. */
+			/* Pulse Output Bits,
+			 *   b0=0 to reset CPU, see I8042_SYSTEM_RESET above
+			 *   b1=0 to disable A20 line
+			 */
+			A20_status = command & (1 << 1) ? 1 : 0;
 		} else {
 			CPRINTF("[%T KB unsupported cmd: 0x%02x]\n", command);
 			reset_rate_and_delay();
