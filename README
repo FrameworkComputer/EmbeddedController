@@ -73,3 +73,11 @@ Build Options
 	power rails during AP startup and shutdown sequences.
 	This is mainly useful for bringup when we don't have the corresponding
 	sequences in the AP code.
+
+- CONFIG_KEYBOARD_TEST
+
+	Turn on keyboard testing functionality. This enables a message which
+	received a list of keyscan events from the AP and processes them.
+	This will cause keypresses to appear on the AP through the same
+	mechanism as a normal keyboard press.
+
