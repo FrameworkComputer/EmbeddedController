@@ -10,6 +10,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "math.h"
 #include "task.h"
@@ -43,8 +44,8 @@ struct tmp006_data_t {
 	int t[4];  /* Circular buffer of last four die temperatures */
 	int tidx;  /* Index of the current value in t[] */
 	int fail;  /* Fail flags; non-zero if last read failed */
-	float S0;  /* Sensitivity factor */
-	float B0, B1, B2;  /* Coefficients for self-heating correction */
+	float s0;  /* Sensitivity factor */
+	float b0, b1, b2;  /* Coefficients for self-heating correction */
 };
 
 static struct tmp006_data_t tmp006_data[TMP006_COUNT];
@@ -93,9 +94,9 @@ static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i,
 	/* Calculate according to TMP006 users guide. */
 	Tx = Tdie - 298.15f;
 	/* S is the sensitivity */
-	S = tdata->S0 * (1.0f + A1 * Tx + A2 * Tx * Tx);
+	S = tdata->s0 * (1.0f + A1 * Tx + A2 * Tx * Tx);
 	/* Vos is the offset voltage */
-	Vos = tdata->B0 + tdata->B1 * Tx + tdata->B2 * Tx * Tx;
+	Vos = tdata->b0 + tdata->b1 * Tx + tdata->b2 * Tx * Tx;
 	Vx = Vobj - Vos;
 	/* fv is Seebeck coefficient f(Vobj) */
 	fv = Vx + C2 * Vx * Vx;
@@ -249,15 +250,66 @@ static int tmp006_init(void)
 		 * TODO: remove default calibration data; sensor should fail
 		 * until calibrated by host or console command.
 		 */
-		tdata->S0 = tmp006_sensors[i].S0;
-		tdata->B0 = B0;
-		tdata->B1 = B1;
-		tdata->B2 = B2;
+		tdata->s0 = tmp006_sensors[i].S0;
+		tdata->b0 = B0;
+		tdata->b1 = B1;
+		tdata->b2 = B2;
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, tmp006_init, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************/
+/* Host commands */
+
+int tmp006_get_calibration(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_tmp006_get_calibration *p = args->params;
+	struct ec_response_tmp006_get_calibration *r = args->response;
+	const struct tmp006_data_t *tdata;
+
+	if (p->index >= TMP006_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	tdata = tmp006_data + p->index;
+
+	r->s0 = tdata->s0;
+	r->b0 = tdata->b0;
+	r->b1 = tdata->b1;
+	r->b2 = tdata->b2;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_CALIBRATION,
+		     tmp006_get_calibration,
+		     EC_VER_MASK(0));
+
+/*****************************************************************************/
+/* Host commands */
+
+int tmp006_set_calibration(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_tmp006_set_calibration *p = args->params;
+	struct tmp006_data_t *tdata;
+
+	if (p->index >= TMP006_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	tdata = tmp006_data + p->index;
+
+	tdata->s0 = p->s0;
+	tdata->b0 = p->b0;
+	tdata->b1 = p->b1;
+	tdata->b2 = p->b2;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION,
+		     tmp006_set_calibration,
+		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Console commands */
@@ -330,17 +382,17 @@ static int command_t6cal(int argc, char **argv)
 	int i;
 
 	if (argc < 2) {
-		ccprintf("# Name            S0          B0"
-			 "         B1          B2\n");
+		ccprintf("# Name            S0          b0"
+			 "         b1          b2\n");
 		for (i = 0; i < TMP006_COUNT; i++) {
 			tdata = tmp006_data + i;
 			ccprintf("%d %-11s"
 				 "%7de-17 %7de-8 %7de-10 %7de-12\n",
 				 i, tmp006_sensors[i].name,
-				 (int)(tdata->S0 * 1e17f),
-				 (int)(tdata->B0 * 1e8f),
-				 (int)(tdata->B1 * 1e10f),
-				 (int)(tdata->B2 * 1e12f));
+				 (int)(tdata->s0 * 1e17f),
+				 (int)(tdata->b0 * 1e8f),
+				 (int)(tdata->b1 * 1e10f),
+				 (int)(tdata->b2 * 1e12f));
 		}
 
 		return EC_SUCCESS;
@@ -358,14 +410,14 @@ static int command_t6cal(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM3;
 
-	if (!strcasecmp(argv[2], "S0"))
-		tdata->S0 = (float)v * 1e-17f;
-	else if (!strcasecmp(argv[2], "B0"))
-		tdata->B0 = (float)v * 1e-8f;
-	else if (!strcasecmp(argv[2], "B1"))
-		tdata->B1 = (float)v * 1e-10f;
-	else if (!strcasecmp(argv[2], "B2"))
-		tdata->B2 = (float)v * 1e-12f;
+	if (!strcasecmp(argv[2], "s0"))
+		tdata->s0 = (float)v * 1e-17f;
+	else if (!strcasecmp(argv[2], "b0"))
+		tdata->b0 = (float)v * 1e-8f;
+	else if (!strcasecmp(argv[2], "b1"))
+		tdata->b1 = (float)v * 1e-10f;
+	else if (!strcasecmp(argv[2], "b2"))
+		tdata->b2 = (float)v * 1e-12f;
 	else
 		return EC_ERROR_PARAM2;
 

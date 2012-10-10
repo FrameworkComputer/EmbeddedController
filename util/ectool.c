@@ -128,6 +128,8 @@ const char help_str[] =
 	"      Get the threshold temperature value from thermal engine.\n"
 	"  thermalset <sensor_id> <threshold_id> <value>\n"
 	"      Set the threshold temperature value for thermal engine.\n"
+	"  tmp006cal <tmp006_index> [<S0> <b0> <b1> <b2>]\n"
+	"      Get/set TMP006 calibration\n"
 	"  usbchargemode <port> <mode>\n"
 	"      Set USB charging mode\n"
 	"  version\n"
@@ -2383,6 +2385,78 @@ static int cmd_keyconfig(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_tmp006cal(int argc, char *argv[])
+{
+	struct ec_params_tmp006_set_calibration p;
+	char *e;
+	int idx;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Must specify tmp006 index.\n");
+		return -1;
+	}
+
+	idx = strtol(argv[1], &e, 0);
+	if ((e && *e) || idx < 0 || idx > 255) {
+		fprintf(stderr, "Bad index.\n");
+		return -1;
+	}
+
+	if (argc == 2) {
+		struct ec_params_tmp006_get_calibration pg;
+		struct ec_response_tmp006_get_calibration r;
+
+		pg.index = idx;
+
+		rv = ec_command(EC_CMD_TMP006_GET_CALIBRATION, 0,
+				&pg, sizeof(pg), &r, sizeof(r));
+		if (rv < 0)
+			return rv;
+
+		printf("S0: %e\n", r.s0);
+		printf("b0: %e\n", r.b0);
+		printf("b1: %e\n", r.b1);
+		printf("b2: %e\n", r.b2);
+		return EC_SUCCESS;
+	}
+
+	if (argc != 6) {
+		fprintf(stderr, "Must specify all calibration params.\n");
+		return -1;
+	}
+
+	memset(&p, 0, sizeof(p));
+	p.index = idx;
+
+	p.s0 = strtod(argv[2], &e);
+	if (e && *e) {
+		fprintf(stderr, "Bad S0.\n");
+		return -1;
+	}
+
+	p.b0 = strtod(argv[3], &e);
+	if (e && *e) {
+		fprintf(stderr, "Bad b0.\n");
+		return -1;
+	}
+
+	p.b1 = strtod(argv[4], &e);
+	if (e && *e) {
+		fprintf(stderr, "Bad b1.\n");
+		return -1;
+	}
+
+	p.b2 = strtod(argv[5], &e);
+	if (e && *e) {
+		fprintf(stderr, "Bad b2.\n");
+		return -1;
+	}
+
+	return ec_command(EC_CMD_TMP006_SET_CALIBRATION, 0,
+			  &p, sizeof(p), NULL, 0);
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -2442,6 +2516,7 @@ const struct command commands[] = {
 	{"tempsinfo", cmd_temp_sensor_info},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
+	{"tmp006cal", cmd_tmp006cal},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"version", cmd_version},
 	{"wireless", cmd_wireless},

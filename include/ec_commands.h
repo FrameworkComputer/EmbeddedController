@@ -837,6 +837,32 @@ struct ec_response_thermal_get_threshold {
 /* Toggle automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
+/* Get TMP006 calibration data */
+#define EC_CMD_TMP006_GET_CALIBRATION 0x53
+
+struct ec_params_tmp006_get_calibration {
+	uint8_t index;
+} __packed;
+
+struct ec_response_tmp006_get_calibration {
+	float s0;
+	float b0;
+	float b1;
+	float b2;
+} __packed;
+
+/* Set TMP006 calibration data */
+#define EC_CMD_TMP006_SET_CALIBRATION 0x54
+
+struct ec_params_tmp006_set_calibration {
+	uint8_t index;
+	uint8_t reserved[3];  /* Reserved; set 0 */
+	float s0;
+	float b0;
+	float b1;
+	float b2;
+} __packed;
+
 /*****************************************************************************/
 /* MKBP - Matrix KeyBoard Protocol */
 
