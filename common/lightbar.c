@@ -365,7 +365,7 @@ static const struct rgb_s colors[] = {
 	{0x00, 0x00, 0xff},
 	{0x00, 0xff, 0xff},
 	{0xff, 0x00, 0xff},
-	{0x00, 0x00, 0x00},
+	{0xff, 0xff, 0xff},
 };
 
 /* Map battery_level to one of the google colors */
@@ -563,7 +563,7 @@ static uint32_t sequence_S0(void)
 
 		/* Continue ramping in if needed */
 		if (st.ramp < 0xff)
-			st.ramp++ ;
+			st.ramp++;
 	}
 	return 0;
 }
@@ -676,18 +676,18 @@ static uint32_t sequence_TEST_inner(void)
 			g = colors[i].g ? k : 0;
 			b = colors[i].b ? k : 0;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
+			WAIT_OR_RET(10000);
 		}
-		WAIT_OR_RET(10000);
-	}
-	for (k = kmax; k >= 0; k -= kstep) {
-		r = colors[i].r ? k : 0;
-		g = colors[i].g ? k : 0;
-		b = colors[i].b ? k : 0;
-		lightbar_setrgb(NUM_LEDS, r, g, b);
-		WAIT_OR_RET(10000);
+		for (k = kmax; k >= 0; k -= kstep) {
+			r = colors[i].r ? k : 0;
+			g = colors[i].g ? k : 0;
+			b = colors[i].b ? k : 0;
+			lightbar_setrgb(NUM_LEDS, r, g, b);
+			WAIT_OR_RET(10000);
+		}
 	}
 
-	lightbar_setrgb(NUM_LEDS, r, g, b);
+	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 	return 0;
 }
 
