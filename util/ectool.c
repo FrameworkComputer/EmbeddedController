@@ -14,6 +14,7 @@
 
 #include "battery.h"
 #include "comm-host.h"
+#include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
 
@@ -91,6 +92,8 @@ const char help_str[] =
 	"      Read I2C bus\n"
 	"  i2cwrite\n"
 	"      Write I2C bus\n"
+	"  keyscan <beat_us> <filename>\n"
+	"      Test low-level key scanning\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
 	"  port80flood\n"
@@ -2696,6 +2699,7 @@ const struct command commands[] = {
 	{"i2cwrite", cmd_i2c_write},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
+	{"keyscan", cmd_keyscan},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},
