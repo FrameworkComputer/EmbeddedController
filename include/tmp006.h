@@ -14,19 +14,25 @@
 
 struct tmp006_t {
 	const char* name;
-	/* I2C address formed by TMP006_ADDR macro. */
-	int addr;
-	/* Sensitivity factor, in 10^11. */
-	int sens;
+	int addr;          /* I2C address formed by TMP006_ADDR macro. */
+	float S0;          /* Sensitivity factor */
 };
 
-/* Poll all TMP006 sensors. Return 0 on success. */
+/**
+ * Poll all TMP006 sensors.
+ *
+ * @return 0 if successful, non-zero if error. */
 int tmp006_poll(void);
 
-/* Get the last polled value of a sensor. Return temperature in K.
- * The low bit in idx indicate whether to read die temperature or
- * object temperature. The other bits serve as internal index to tmp006
- * module. */
+/**
+ * Get the last polled value of a sensor.
+ *
+ * @param idx		Index to read.  The low bit in idx indicates whether
+ *			to read die temperature or object temperature.  The
+ *			other bits serve as internal index to tmp006 module.
+ *
+ * @return Temperature in K.
+ */
 int tmp006_get_val(int idx);
 
 #endif  /* __CROS_EC_TMP006_H */
