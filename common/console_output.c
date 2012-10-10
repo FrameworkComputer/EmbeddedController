@@ -37,6 +37,7 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"spi",
 	"system",
 	"task",
+	"thermal",
 	"usbcharge",
 	"vboot",
 };

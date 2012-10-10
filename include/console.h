@@ -48,6 +48,7 @@ enum console_channel {
 	CC_SPI,
 	CC_SYSTEM,
 	CC_TASK,
+	CC_THERMAL,
 	CC_USBCHARGE,
 	CC_VBOOT,
 	/* Channel count; not itself a channel */
