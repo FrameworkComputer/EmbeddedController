@@ -1,0 +1,50 @@
+# Key test sequence
+#
+# Format is <beat>[ <keys>]
+#
+# Note that there must be a single space between <beat> and <keys>, if present.
+# The time is in units of beats, where the beat can be selected according to
+# taste. A typical beat value would be 10ms, meaning that the beat counter
+# will move on every 10,000us.
+#
+# The format of keys is a list of ascii characters, or & followed by a numeric
+# ascii value, or * followed by a numeric keycode value. Spaces are ignored
+# (use '*32' for space).
+#
+# Examples:
+# abc      - press a, b and c
+# a &20    - press a and space
+# *58 &13  - press KEY_CAPSLOCK and return (ctrl-m)
+#
+# It is possible for the beat counter to move forward at a variable speed.
+# Provided that keyboard repeat does not occur, this should produce the same
+# result.
+
+test 2-key rollover abc
+expect abc
+# Press a, then b, then release a, then release b
+seq 0
+seq 1 a
+seq 3 ab
+seq 4 abc
+seq 5 b
+seq 8
+seq 9
+endtest
+
+test another
+expect a
+seq 0
+seq 5 a
+seq 10
+endtest
+
+test fast
+expect ab
+seq 0
+seq 10 a
+seq 20 ab
+seq 30 b
+seq 40
+endtest
+
