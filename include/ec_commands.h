@@ -190,6 +190,7 @@ enum ec_status {
 	EC_RES_IN_PROGRESS = 8,		/* Accepted, command in progress */
 	EC_RES_UNAVAILABLE = 9,		/* No response available */
 	EC_RES_TIMEOUT = 10,		/* We got a timeout */
+	EC_RES_OVERFLOW = 11,		/* Table / data overflow */
 };
 
 /*
@@ -987,6 +988,63 @@ struct ec_params_mkbp_set_config {
 
 struct ec_response_mkbp_get_config {
 	struct ec_mkbp_config config;
+} __packed;
+
+/* Run the key scan emulation */
+#define EC_CMD_KEYSCAN_SEQ_CTRL 0x66
+
+enum ec_keyscan_seq_cmd {
+	EC_KEYSCAN_SEQ_STATUS = 0,	/* Get status information */
+	EC_KEYSCAN_SEQ_CLEAR = 1,	/* Clear sequence */
+	EC_KEYSCAN_SEQ_ADD = 2,		/* Add item to sequence */
+	EC_KEYSCAN_SEQ_START = 3,	/* Start running sequence */
+	EC_KEYSCAN_SEQ_COLLECT = 4,	/* Collect sequence summary data */
+};
+
+enum ec_collect_flags {
+	/*
+	 * Indicates this scan was processed by the EC. Due to timing, some
+	 * scans may be skipped.
+	 */
+	EC_KEYSCAN_SEQ_FLAG_DONE	= 1 << 0,
+};
+
+struct ec_collect_item {
+	uint8_t flags;		/* some flags (enum ec_collect_flags) */
+};
+
+struct ec_params_keyscan_seq_ctrl {
+	uint8_t cmd;	/* Command to send (enum ec_keyscan_seq_cmd) */
+	union {
+		struct {
+			uint8_t active;		/* still active */
+			uint8_t num_items;	/* number of items */
+			/* Current item being presented */
+			uint8_t cur_item;
+		} status;
+		struct {
+			/*
+			 * Absolute time for this scan, measured from the
+			 * start of the sequence.
+			 */
+			uint32_t time_us;
+			uint8_t scan[0];	/* keyscan data */
+		} add;
+		struct {
+			uint8_t start_item;	/* First item to return */
+			uint8_t num_items;	/* Number of items to return */
+		} collect;
+	};
+} __packed;
+
+struct ec_result_keyscan_seq_ctrl {
+	union {
+		struct {
+			uint8_t num_items;	/* Number of items */
+			/* Data for each item */
+			struct ec_collect_item item[0];
+		} collect;
+	};
 } __packed;
 
 /*****************************************************************************/
