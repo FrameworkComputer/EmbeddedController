@@ -132,9 +132,12 @@ void __board_i2c_release(int port)
 void board_i2c_release(int port)
 	__attribute__((weak, alias("__board_i2c_release")));
 
+static int i2c_init_port(unsigned int port);
+
 static int i2c_write_raw_slave(int port, void *buf, int len)
 {
 	struct dma_channel *chan;
+	int rv;
 
 	/* we don't want to race with TxE interrupt event */
 	disable_i2c_interrupt(port);
@@ -157,8 +160,13 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 	} else {
 		/* Wait for the transmission complete Interrupt */
 		dma_enable_tc_interrupt(DMAC_I2C_TX);
-		task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 		dma_disable_tc_interrupt(DMAC_I2C_TX);
+
+		if (!(rv & TASK_EVENT_WAKE)) {
+			CPRINTF("[%T Slave timeout, resetting i2c]\n");
+			i2c_init_port(port);
+		}
 	}
 
 	dma_disable(DMAC_I2C_TX);
