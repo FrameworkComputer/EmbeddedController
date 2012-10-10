@@ -308,7 +308,7 @@ static int command_sensor_info(int argc, char **argv)
 	int rv, rv1;
 
 	rv1 = EC_SUCCESS;
-	for (i = 0; i < TMP006_COUNT; ++i) {
+	for (i = 0; i < TMP006_COUNT; i++) {
 		rv = tmp006_print(i);
 		if (rv != EC_SUCCESS)
 			rv1 = rv;
@@ -320,4 +320,58 @@ static int command_sensor_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info,
 			NULL,
 			"Print TMP006 sensors",
+			NULL);
+
+static int command_t6cal(int argc, char **argv)
+{
+	struct tmp006_data_t *tdata;
+	char *e;
+	int v;
+	int i;
+
+	if (argc < 2) {
+		ccprintf("# Name            S0          B0"
+			 "         B1          B2\n");
+		for (i = 0; i < TMP006_COUNT; i++) {
+			tdata = tmp006_data + i;
+			ccprintf("%d %-11s"
+				 "%7de-17 %7de-8 %7de-10 %7de-12\n",
+				 i, tmp006_sensors[i].name,
+				 (int)(tdata->S0 * 1e17f),
+				 (int)(tdata->B0 * 1e8f),
+				 (int)(tdata->B1 * 1e10f),
+				 (int)(tdata->B2 * 1e12f));
+		}
+
+		return EC_SUCCESS;
+	}
+
+	if (argc != 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	i = strtoi(argv[1], &e, 0);
+	if (*e || i < 0 || i >= TMP006_COUNT)
+		return EC_ERROR_PARAM1;
+	tdata = tmp006_data + i;
+
+	v = strtoi(argv[3], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM3;
+
+	if (!strcasecmp(argv[2], "S0"))
+		tdata->S0 = (float)v * 1e-17f;
+	else if (!strcasecmp(argv[2], "B0"))
+		tdata->B0 = (float)v * 1e-8f;
+	else if (!strcasecmp(argv[2], "B1"))
+		tdata->B1 = (float)v * 1e-10f;
+	else if (!strcasecmp(argv[2], "B2"))
+		tdata->B2 = (float)v * 1e-12f;
+	else
+		return EC_ERROR_PARAM2;
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(t6cal, command_t6cal,
+			"[<index> <coeff_name> <radix>]",
+			"Set/print TMP006 calibration",
 			NULL);
