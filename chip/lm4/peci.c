@@ -5,8 +5,9 @@
 
 /* PECI interface for Chrome EC */
 
-#include "board.h"
+#include "chipset.h"
 #include "clock.h"
+#include "config.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -74,6 +75,9 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 	int sum = 0;
 	int success_cnt = 0;
 	int i;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
 
 	for (i = 0; i < TEMP_AVG_LENGTH; ++i) {
 		if (temp_vals[i] >= 0) {

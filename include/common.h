@@ -41,10 +41,14 @@ enum ec_error_list {
 	EC_ERROR_TIMEOUT = 4,
 	/* Invalid argument */
 	EC_ERROR_INVAL = 5,
-	/* Already in use */
+	/* Already in use, or not ready yet */
 	EC_ERROR_BUSY = 6,
 	/* Access denied */
 	EC_ERROR_ACCESS_DENIED = 7,
+	/* Failed because component does not have power */
+	EC_ERROR_NOT_POWERED = 8,
+	/* Failed because component is not calibrated */
+	EC_ERROR_NOT_CALIBRATED = 9,
 	/* Invalid console command param (PARAMn means parameter n is bad) */
 	EC_ERROR_PARAM1 = 11,
 	EC_ERROR_PARAM2 = 12,

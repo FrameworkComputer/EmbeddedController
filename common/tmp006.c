@@ -217,7 +217,11 @@ int tmp006_get_val(int idx, int *temp_ptr)
 	 * Note: idx is a thermal sensor index, where the top N-1 bits are the
 	 * TMP006 index and the bottom bit is (0=die, 1=remote).
 	 */
-	const struct tmp006_data_t *tdata = tmp006_data + (idx >> 1);
+	int tidx = idx >> 1;
+	const struct tmp006_data_t *tdata = tmp006_data + tidx;
+
+	if (tdata->fail & FAIL_POWER)
+		return EC_ERROR_NOT_POWERED;
 
 	/* Check the low bit to determine which temperature to read. */
 	if ((idx & 0x1) == 0)

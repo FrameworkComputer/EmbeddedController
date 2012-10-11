@@ -36,21 +36,6 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 	return sensor->read(sensor->idx, temp_ptr);
 }
 
-int temp_sensor_powered(enum temp_sensor_id id)
-{
-	int flag = temp_sensors[id].power_flags;
-
-	if (flag & TEMP_SENSOR_POWER_VS &&
-	    gpio_get_level(GPIO_PGOOD_1_8VS) == 0)
-		return 0;
-
-	if (flag & TEMP_SENSOR_POWER_CPU &&
-	    !chipset_in_state(CHIPSET_STATE_ON))
-		return 0;
-
-	return 1;
-}
-
 void poll_slow_sensors(void)
 {
 	/* Poll every second */
@@ -86,15 +71,16 @@ static void update_mapped_memory(void)
 			 EC_TEMP_SENSOR_B_ENTRIES)
 			break;
 
-		if (!temp_sensor_powered(i)) {
+		switch (temp_sensor_read(i, &t)) {
+		case EC_ERROR_NOT_POWERED:
 			*mptr = EC_TEMP_SENSOR_NOT_POWERED;
-			continue;
-		}
-
-		if (temp_sensor_read(i, &t))
-			*mptr = EC_TEMP_SENSOR_ERROR;
-		else
+			break;
+		case EC_SUCCESS:
 			*mptr = t - EC_TEMP_SENSOR_OFFSET;
+			break;
+		default:
+			*mptr = EC_TEMP_SENSOR_ERROR;
+		}
 	}
 }
 

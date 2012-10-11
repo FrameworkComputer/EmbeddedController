@@ -173,6 +173,7 @@ static void thermal_process(void)
 	int i, j;
 	int cur_temp;
 	int flag;
+	int rv;
 
 	for (i = 0; i < THRESHOLD_COUNT + THERMAL_FAN_STEPS; ++i)
 		overheated[i] = 0;
@@ -185,11 +186,12 @@ static void thermal_process(void)
 
 		flag = thermal_config[type].config_flags;
 
-		if (!temp_sensor_powered(i))
+		rv = temp_sensor_read(i, &cur_temp);
+		if (rv == EC_ERROR_NOT_POWERED) {
+			/* Sensor not powered; ignore it */
 			continue;
-
-		if (temp_sensor_read(i, &cur_temp)) {
-			/* Sensor failure. */
+		} else if (rv) {
+			/* Other sensor failure */
 			if (flag & THERMAL_CONFIG_WARNING_ON_FAIL)
 				smi_sensor_failure_warning();
 			continue;
