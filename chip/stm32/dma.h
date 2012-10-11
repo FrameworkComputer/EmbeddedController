@@ -26,11 +26,13 @@ enum {
 	DMAC_SPI2_TX,
 
 	/*
-	 * The same channels are used for i2c and spi, you can't use them at
+	 * The same channels are used for i2c2 and spi, you can't use them at
 	 * the same time or it will cause dma to not work
 	 */
-	DMAC_I2C_RX = 4,
-	DMAC_I2C_TX = 3,
+	DMAC_I2C2_TX = 3,
+	DMAC_I2C2_RX = 4,
+	DMAC_I2C1_TX = 5,
+	DMAC_I2C1_RX = 6,
 
 	/* DMA1 has 7 channels, DMA2 has 5 */
 	DMA1_NUM_CHANNELS = 7,

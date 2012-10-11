@@ -278,16 +278,32 @@ struct dma_ctlr *dma_get_ctlr(int channel)
 
 static void dma_event_interrupt_channel_4(void)
 {
-	dma_clear_isr(DMAC_I2C_TX);
-	if (id[DMAC_I2C_TX] != TASK_ID_INVALID)
-		task_wake(id[DMAC_I2C_TX]);
+	dma_clear_isr(DMAC_I2C2_TX);
+	if (id[DMAC_I2C2_TX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C2_TX]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4, dma_event_interrupt_channel_4, 3);
 
 static void dma_event_interrupt_channel_5(void)
 {
-	dma_clear_isr(DMAC_I2C_RX);
-	if (id[DMAC_I2C_RX] != TASK_ID_INVALID)
-		task_wake(id[DMAC_I2C_RX]);
+	dma_clear_isr(DMAC_I2C2_RX);
+	if (id[DMAC_I2C2_RX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C2_RX]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_5, dma_event_interrupt_channel_5, 3);
+
+static void dma_event_interrupt_channel_6(void)
+{
+	dma_clear_isr(DMAC_I2C1_TX);
+	if (id[DMAC_I2C1_TX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C1_TX]);
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_6, dma_event_interrupt_channel_6, 3);
+
+static void dma_event_interrupt_channel_7(void)
+{
+	dma_clear_isr(DMAC_I2C1_RX);
+	if (id[DMAC_I2C1_RX] != TASK_ID_INVALID)
+		task_wake(id[DMAC_I2C1_RX]);
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_7, dma_event_interrupt_channel_7, 3);
