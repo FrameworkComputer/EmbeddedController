@@ -75,6 +75,9 @@ static void update_mapped_memory(void)
 		case EC_ERROR_NOT_POWERED:
 			*mptr = EC_TEMP_SENSOR_NOT_POWERED;
 			break;
+		case EC_ERROR_NOT_CALIBRATED:
+			*mptr = EC_TEMP_SENSOR_NOT_CALIBRATED;
+			break;
 		case EC_SUCCESS:
 			*mptr = t - EC_TEMP_SENSOR_OFFSET;
 			break;

@@ -730,6 +730,10 @@ int cmd_temperature(int argc, char *argv[])
 			case EC_TEMP_SENSOR_NOT_POWERED:
 				fprintf(stderr, "Sensor %d disabled\n", id);
 				break;
+			case EC_TEMP_SENSOR_NOT_CALIBRATED:
+				fprintf(stderr, "Sensor %d not calibrated\n",
+					id);
+				break;
 			default:
 				printf("%d: %d\n", id,
 				       rv + EC_TEMP_SENSOR_OFFSET);
@@ -762,6 +766,9 @@ int cmd_temperature(int argc, char *argv[])
 		return -1;
 	case EC_TEMP_SENSOR_NOT_POWERED:
 		printf("Sensor disabled/unpowered\n");
+		return -1;
+	case EC_TEMP_SENSOR_NOT_CALIBRATED:
+		fprintf(stderr, "Sensor not calibrated\n");
 		return -1;
 	default:
 		printf("%d\n", rv + EC_TEMP_SENSOR_OFFSET);

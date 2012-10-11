@@ -96,10 +96,11 @@
  *
  * Valid only if EC_MEMMAP_THERMAL_VERSION returns >= 2.
  */
-#define EC_TEMP_SENSOR_B_ENTRIES   8
-#define EC_TEMP_SENSOR_NOT_PRESENT 0xff
-#define EC_TEMP_SENSOR_ERROR       0xfe
-#define EC_TEMP_SENSOR_NOT_POWERED 0xfd
+#define EC_TEMP_SENSOR_B_ENTRIES      8
+#define EC_TEMP_SENSOR_NOT_PRESENT    0xff
+#define EC_TEMP_SENSOR_ERROR          0xfe
+#define EC_TEMP_SENSOR_NOT_POWERED    0xfd
+#define EC_TEMP_SENSOR_NOT_CALIBRATED 0xfc
 /*
  * The offset of temperature value stored in mapped memory.  This allows
  * reporting a temperature range of 200K to 454K = -73C to 181C.

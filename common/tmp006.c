@@ -135,6 +135,9 @@ static int tmp006_read_object_temp(const struct tmp006_data_t *tdata,
 	if (tdata->fail)
 		return EC_ERROR_UNKNOWN;
 
+	if (!tdata->s0)
+		return EC_ERROR_NOT_CALIBRATED;
+
 	v = tmp006_correct_object_voltage(
 		t,
 		tdata->t[(pidx + 3) & 3],
