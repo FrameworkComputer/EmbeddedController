@@ -42,7 +42,7 @@ DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
 
 int thermal_command_auto_fan_ctrl(struct host_cmd_handler_args *args)
 {
-	if (thermal_toggle_auto_fan_ctrl(1))
+	if (thermal_control_fan(1))
 		return EC_RES_ERROR;
 	return EC_RES_SUCCESS;
 }

@@ -205,7 +205,7 @@ static int command_fan_set(int argc, char **argv)
 
 #ifdef CONFIG_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
-	thermal_toggle_auto_fan_ctrl(0);
+	thermal_control_fan(0);
 #endif
 
 	return pwm_set_fan_target_rpm(rpm);
@@ -236,7 +236,7 @@ int pwm_set_fan_duty(int percent)
 
 #ifdef CONFIG_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
-	thermal_toggle_auto_fan_ctrl(0);
+	thermal_control_fan(0);
 #endif
 
         /* Set the duty cycle */

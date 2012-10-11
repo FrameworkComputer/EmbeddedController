@@ -46,13 +46,36 @@ struct thermal_config_t {
 	int16_t thresholds[THRESHOLD_COUNT + THERMAL_FAN_STEPS];
 };
 
-/* Set the threshold temperature value. Return -1 on error. */
-int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int value);
+/**
+ * Set a threshold temperature.
+ *
+ * @param type		Sensor type to set threshold for
+ * @param threshold_id	Threshold ID to set
+ * @param value		New threshold temperature in K, or
+ *			THERMAL_THRESHOLD_DISABLE to disable this threshold.
+ *
+ * @return EC_SUCCESS if success, non-zero if error.
+ */
+int thermal_set_threshold(enum temp_sensor_type type, int threshold_id,
+			  int value);
 
-/* Get the threshold temperature value. Return -1 on error. */
+/**
+ * Read a threshold temperature.
+ *
+ * @param type		Sensor type to get threshold for
+ * @param threshold_id	Threshold ID
+ *
+ * @return The threshold temperature in K, THERMAL_THRESHOLD_DISABLE if
+ * disabled, -1 if error.
+ */
 int thermal_get_threshold(enum temp_sensor_type type, int threshold_id);
 
-/* Toggle automatic fan speed control. Return -1 on error. */
-int thermal_toggle_auto_fan_ctrl(int auto_fan_on);
+/**
+ * Enable/disable automatic fan speed control
+ *
+ * @param enable	Enable (!=0) or disable (0) auto fan control
+ *
+ * @return EC_SUCCESS if successful, non-zero if error. */
+int thermal_control_fan(int enable);
 
 #endif  /* __CROS_EC_THERMAL_H */

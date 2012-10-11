@@ -28,7 +28,7 @@ int pwm_command_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_set_fan_target_rpm *p = args->params;
 
 #ifdef CONFIG_TASK_THERMAL
-	thermal_toggle_auto_fan_ctrl(0);
+	thermal_control_fan(0);
 #endif
 	pwm_set_fan_target_rpm(p->rpm);
 

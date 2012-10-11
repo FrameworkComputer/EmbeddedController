@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "pwm.h"
 #include "task.h"
@@ -55,22 +56,21 @@ static int8_t *fan_threshold_reached = overheated + THRESHOLD_COUNT;
 
 static int fan_ctrl_on = 1;
 
-
-int thermal_set_threshold(enum temp_sensor_type type, int threshold_id, int value)
+int thermal_set_threshold(enum temp_sensor_type type, int threshold_id,
+			  int value)
 {
 	if (type < 0 || type >= TEMP_SENSOR_TYPE_COUNT)
-		return -1;
+		return EC_ERROR_INVAL;
 	if (threshold_id < 0 ||
 	    threshold_id >= THRESHOLD_COUNT + THERMAL_FAN_STEPS)
-		return -1;
+		return EC_ERROR_INVAL;
 	if (value < 0)
-		return -1;
+		return EC_ERROR_INVAL;
 
 	thermal_config[type].thresholds[threshold_id] = value;
 
 	return EC_SUCCESS;
 }
-
 
 int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 {
@@ -83,10 +83,9 @@ int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 	return thermal_config[type].thresholds[threshold_id];
 }
 
-
-int thermal_toggle_auto_fan_ctrl(int auto_fan_on)
+int thermal_control_fan(int enable)
 {
-	fan_ctrl_on = auto_fan_on;
+	fan_ctrl_on = enable;
 	return EC_SUCCESS;
 }
 
@@ -99,7 +98,6 @@ static void smi_sensor_failure_warning(void)
 {
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
-
 
 /* TODO: When we need different overheated action for different boards,
  *       move these action to board-specific file. (e.g. board_thermal.c)
@@ -135,7 +133,6 @@ static void overheated_action(void)
 	}
 }
 
-
 /* Update counter and check if the counter has reached delay limit.
  * Note that we have various delay period to prevent one error value triggering
  * overheated action. */
@@ -166,7 +163,6 @@ static inline void update_and_check_stat(int temp,
 	} else
 		ot_count[sensor_id][threshold_id] = 0;
 }
-
 
 static void thermal_process(void)
 {
@@ -204,7 +200,6 @@ static void thermal_process(void)
 	overheated_action();
 }
 
-
 void thermal_task(void)
 {
 	while (1) {
@@ -212,6 +207,14 @@ void thermal_task(void)
 		usleep(1000000);
 	}
 }
+
+static int thermal_shutdown(void)
+{
+	/* Take back fan control when the processor shuts down */
+	thermal_control_fan(1);
+	return EC_SUCCESS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, thermal_shutdown, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
@@ -228,7 +231,6 @@ static void print_thermal_config(enum temp_sensor_type type)
 		 config->thresholds[THRESHOLD_POWER_DOWN]);
 }
 
-
 static void print_fan_stepping(enum temp_sensor_type type)
 {
 	const struct thermal_config_t *config = thermal_config + type;
@@ -241,7 +243,6 @@ static void print_fan_stepping(enum temp_sensor_type type)
 			 config->thresholds[THRESHOLD_COUNT + i],
 			 fan_speed[i+1]);
 }
-
 
 static int command_thermal_config(int argc, char **argv)
 {
@@ -278,7 +279,6 @@ DECLARE_CONSOLE_COMMAND(thermalconf, command_thermal_config,
 			"sensortype [threshold_id temp]",
 			"Get/set thermal threshold temp",
 			NULL);
-
 
 static int command_fan_config(int argc, char **argv)
 {
@@ -318,10 +318,9 @@ DECLARE_CONSOLE_COMMAND(thermalfan, command_fan_config,
 			"Get/set thermal threshold fan rpm",
 			NULL);
 
-
 static int command_thermal_auto_fan_ctrl(int argc, char **argv)
 {
-	return thermal_toggle_auto_fan_ctrl(1);
+	return thermal_control_fan(1);
 }
 DECLARE_CONSOLE_COMMAND(autofan, command_thermal_auto_fan_ctrl,
 			NULL,
