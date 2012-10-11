@@ -139,11 +139,22 @@ static int command_temps(int argc, char **argv)
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		ccprintf("  %-20s: ", temp_sensors[i].name);
 		rv = temp_sensor_read(i, &t);
-		if (rv) {
-			ccprintf("Error %d\n", rv);
+		if (rv)
 			rv1 = rv;
-		} else
+
+		switch (rv) {
+		case EC_SUCCESS:
 			ccprintf("%d K = %d C\n", t, t - 273);
+			break;
+		case EC_ERROR_NOT_POWERED:
+			ccprintf("Not powered\n");
+			break;
+		case EC_ERROR_NOT_CALIBRATED:
+			ccprintf("Not calibrated\n");
+			break;
+		default:
+			ccprintf("Error %d\n", rv);
+		}
 	}
 
 	return rv1;

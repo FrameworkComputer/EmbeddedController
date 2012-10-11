@@ -258,11 +258,7 @@ static int tmp006_init(void)
 		/* Report error until we actually read the sensor */
 		tdata->fail = FAIL_INIT;
 
-		/*
-		 * TODO: remove default calibration data; sensor should fail
-		 * until calibrated by host or console command.
-		 */
-		tdata->s0 = tmp006_sensors[i].S0;
+		/* Use defaults for Bn params */
 		tdata->b0 = B0;
 		tdata->b1 = B1;
 		tdata->b2 = B2;
