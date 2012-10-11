@@ -31,10 +31,16 @@ enum powerled_config {
 	POWERLED_CONFIG_PWM,
 };
 
+#if defined(CONFIG_TASK_POWERLED) || defined(CONFIG_POWER_LED)
 /* Set the power adapter LED to the specified color. */
 int powerled_set(enum powerled_color color);
 
 /* Set the power LED according to the specified state. */
 void powerled_set_state(enum powerled_state state);
+
+#else  /* CONFIG_TASK_POWERLED */
+static inline int powerled_set(enum powerled_color color) { return 0; }
+static inline void powerled_set_state(enum powerled_state state) {}
+#endif /* CONFIG_TASK_POWERLED */
 
 #endif  /* __CROS_EC_POWER_LED_H */

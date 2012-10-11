@@ -9,11 +9,12 @@
 # STM32 SoC family has a Cortex-M3 ARM core
 CORE:=cortex-m
 
-chip-y=dma.o gpio.o hwtimer.o power_led.o system.o uart.o
+chip-y=dma.o gpio.o hwtimer.o system.o uart.o
 chip-y+=jtag-$(CHIP_VARIANT).o clock-$(CHIP_VARIANT).o gpio-$(CHIP_VARIANT).o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_TASK_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o
+chip-$(CONFIG_TASK_POWERLED)+=power_led.o
 chip-$(CONFIG_FLASH)+=flash-$(CHIP_VARIANT).o
 chip-$(CONFIG_ADC)+=adc.o
