@@ -93,7 +93,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT11",    GPIO_C, (1<<6),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
-	{"ILIM_1500",   GPIO_B, (1<<3),  GPIO_OUT_LOW, NULL},
+	{"ILIM_1500",   GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
 	{"ILIM_500",    GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
 };
 
