@@ -17,7 +17,6 @@
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL, 256) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
-	TASK(POWERLED, power_led_task, NULL, 256) \
 	TASK(PMU_TPS65090_CHARGER, pmu_charger_task, NULL, TASK_STACK_SIZE) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL, 256) \
 	TASK(GAIAPOWER, gaia_power_task, NULL, TASK_STACK_SIZE) \
