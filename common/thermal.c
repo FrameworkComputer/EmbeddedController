@@ -188,14 +188,13 @@ static void thermal_process(void)
 		if (!temp_sensor_powered(i))
 			continue;
 
-		cur_temp = temp_sensor_read(i);
-
-		/* Sensor failure. */
-		if (cur_temp == -1) {
+		if (temp_sensor_read(i, &cur_temp)) {
+			/* Sensor failure. */
 			if (flag & THERMAL_CONFIG_WARNING_ON_FAIL)
 				smi_sensor_failure_warning();
 			continue;
 		}
+
 		for (j = 0; j < THRESHOLD_COUNT + THERMAL_FAN_STEPS; ++j)
 			update_and_check_stat(cur_temp, i, j);
 	}

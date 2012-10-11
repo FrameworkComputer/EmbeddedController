@@ -16,10 +16,15 @@
  * error, retry a bit later. */
 int peci_get_cpu_temp(void);
 
-/* Read the CPU temperature sensor via PECI.  This interface is for the
- * temperature sensor module.  Returns the temperature in degrees K, or -1 if
- * error. */
-int peci_temp_sensor_get_val(int idx);
+/**
+ * Get the last polled value of the PECI temp sensor.
+ *
+ * @param idx		Sensor index to read.
+ * @param temp_ptr	Destination for temperature in K.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
+int peci_temp_sensor_get_val(int idx, int *temp_ptr);
 
 /* Temperature polling of CPU temperature sensor via PECI. */
 int peci_temp_sensor_poll(void);

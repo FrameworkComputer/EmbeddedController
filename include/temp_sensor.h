@@ -38,8 +38,8 @@ struct temp_sensor_t {
 	int8_t power_flags;
 	/* Temperature sensor type. */
 	enum temp_sensor_type type;
-	/* Read sensor value and return temperature in K. */
-	int (*read)(int idx);
+	/* Read sensor value in K into temp_ptr; return non-zero if error. */
+	int (*read)(int idx, int *temp_ptr);
 	/* Index among the same kind of sensors. */
 	int idx;
 	/* Delay between reading temperature and taking action about it,
@@ -47,9 +47,15 @@ struct temp_sensor_t {
 	int action_delay_sec;
 };
 
-/* Return the most recently measured temperature for the sensor in K,
- * or -1 if error. */
-int temp_sensor_read(enum temp_sensor_id id);
+/**
+ * Get the most recently measured temperature for the sensor.
+ *
+ * @param id		Sensor ID
+ * @param temp_ptr	Destination for temperature
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr);
 
 /* Return non-zero if sensor is powered. */
 int temp_sensor_powered(enum temp_sensor_id id);

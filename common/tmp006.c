@@ -63,13 +63,15 @@ static int tmp006_has_power(int idx)
 	return gpio_get_level(GPIO_PGOOD_1_8VS);
 }
 
-static int tmp006_read_die_temp(const struct tmp006_data_t *tdata)
+static int tmp006_read_die_temp(const struct tmp006_data_t *tdata,
+				int *temp_ptr)
 {
 	if (tdata->fail)
-		return -1;
+		return EC_ERROR_UNKNOWN;
 
 	/* Return previous die temperature */
-	return tdata->t[(tdata->tidx - 1) & 0x3] / 100;
+	*temp_ptr = tdata->t[(tdata->tidx - 1) & 0x3] / 100;
+	return EC_SUCCESS;
 }
 
 /**
@@ -123,14 +125,15 @@ static int tmp006_correct_object_voltage(int T1, int T2, int T3, int T4,
 	return Vobj + 296 * Tslope;
 }
 
-static int tmp006_read_object_temp(const struct tmp006_data_t *tdata)
+static int tmp006_read_object_temp(const struct tmp006_data_t *tdata,
+				   int *temp_ptr)
 {
 	int pidx = (tdata->tidx - 1) & 0x3;
 	int t = tdata->t[pidx];
 	int v = tdata->v;
 
 	if (tdata->fail)
-		return -1;
+		return EC_ERROR_UNKNOWN;
 
 	v = tmp006_correct_object_voltage(
 		t,
@@ -139,7 +142,9 @@ static int tmp006_read_object_temp(const struct tmp006_data_t *tdata)
 		tdata->t[(pidx + 1) & 3],
 		v);
 
-	return tmp006_calculate_object_temp(t, v, tdata) / 100;
+	*temp_ptr = tmp006_calculate_object_temp(t, v, tdata) / 100;
+
+	return EC_SUCCESS;
 }
 
 static int tmp006_poll_sensor(int sensor_id)
@@ -206,7 +211,7 @@ static int tmp006_poll_sensor(int sensor_id)
 	return EC_SUCCESS;
 }
 
-int tmp006_get_val(int idx)
+int tmp006_get_val(int idx, int *temp_ptr)
 {
 	/*
 	 * Note: idx is a thermal sensor index, where the top N-1 bits are the
@@ -216,9 +221,9 @@ int tmp006_get_val(int idx)
 
 	/* Check the low bit to determine which temperature to read. */
 	if ((idx & 0x1) == 0)
-		return tmp006_read_die_temp(tdata);
+		return tmp006_read_die_temp(tdata, temp_ptr);
 	else
-		return tmp006_read_object_temp(tdata);
+		return tmp006_read_object_temp(tdata, temp_ptr);
 }
 
 int tmp006_poll(void)
@@ -286,9 +291,6 @@ int tmp006_get_calibration(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_CALIBRATION,
 		     tmp006_get_calibration,
 		     EC_VER_MASK(0));
-
-/*****************************************************************************/
-/* Host commands */
 
 int tmp006_set_calibration(struct host_cmd_handler_args *args)
 {

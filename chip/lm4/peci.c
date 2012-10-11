@@ -69,7 +69,7 @@ int peci_temp_sensor_poll(void)
 }
 
 
-int peci_temp_sensor_get_val(int idx)
+int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 {
 	int sum = 0;
 	int success_cnt = 0;
@@ -82,10 +82,11 @@ int peci_temp_sensor_get_val(int idx)
 		}
 	}
 
-	if (success_cnt)
-		return sum / success_cnt;
-	else
-		return -1;
+	if (!success_cnt)
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = sum / success_cnt;
+	return EC_SUCCESS;
 }
 
 

@@ -25,17 +25,16 @@
  */
 extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
 
-
-int temp_sensor_read(enum temp_sensor_id id)
+int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	const struct temp_sensor_t *sensor;
 
 	if (id < 0 || id >= TEMP_SENSOR_COUNT)
-		return -1;
+		return EC_ERROR_INVAL;
 	sensor = temp_sensors + id;
-	return sensor->read(sensor->idx);
-}
 
+	return sensor->read(sensor->idx, temp_ptr);
+}
 
 int temp_sensor_powered(enum temp_sensor_id id)
 {
@@ -51,7 +50,6 @@ int temp_sensor_powered(enum temp_sensor_id id)
 
 	return 1;
 }
-
 
 void poll_slow_sensors(void)
 {
@@ -71,7 +69,6 @@ static void poll_fast_sensors(void)
 	peci_temp_sensor_poll();
 #endif
 }
-
 
 static void update_mapped_memory(void)
 {
@@ -94,14 +91,12 @@ static void update_mapped_memory(void)
 			continue;
 		}
 
-		t = temp_sensor_read(i);
-		if (t == -1)
+		if (temp_sensor_read(i, &t))
 			*mptr = EC_TEMP_SENSOR_ERROR;
 		else
 			*mptr = t - EC_TEMP_SENSOR_OFFSET;
 	}
 }
-
 
 void temp_sensor_task(void)
 {
@@ -149,21 +144,20 @@ void temp_sensor_task(void)
 
 static int command_temps(int argc, char **argv)
 {
-	int i;
-	int rv = EC_SUCCESS;
-	int t;
+	int t, i;
+	int rv, rv1 = EC_SUCCESS;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		ccprintf("  %-20s: ", temp_sensors[i].name);
-		t = temp_sensor_read(i);
-		if (t < 0) {
-			ccprintf("Error\n");
-			rv = EC_ERROR_UNKNOWN;
+		rv = temp_sensor_read(i, &t);
+		if (rv) {
+			ccprintf("Error %d\n", rv);
+			rv1 = rv;
 		} else
 			ccprintf("%d K = %d C\n", t, t - 273);
 	}
 
-	return rv;
+	return rv1;
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps,
 			NULL,

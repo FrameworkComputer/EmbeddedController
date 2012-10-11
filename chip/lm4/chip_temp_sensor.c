@@ -6,8 +6,9 @@
 /* Temperature sensor module for Chrome EC */
 
 #include "adc.h"
-#include "board.h"
+#include "config.h"
 #include "hooks.h"
+#include "lm4_adc.h"
 #include "temp_sensor.h"
 
 static int last_val;
@@ -19,9 +20,14 @@ int chip_temp_sensor_poll(void)
 	return EC_SUCCESS;
 }
 
-int chip_temp_sensor_get_val(int idx)
+int chip_temp_sensor_get_val(int idx, int *temp_ptr)
 {
-	return last_val;
+	if (last_val == ADC_READ_ERROR)
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = last_val;
+
+	return EC_SUCCESS;
 }
 
 static int chip_temp_sensor_init(void)
