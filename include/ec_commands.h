@@ -621,12 +621,45 @@ struct ec_params_pwm_set_fan_duty {
  */
 #define EC_CMD_LIGHTBAR_CMD 0x28
 
+struct rgb_s {
+	uint8_t r, g, b;
+};
+
+/* List of tweakable parameters. NOTE: It's __packed so it can be sent in a
+ * host command, but the alignment is the same regardless. Keep it that way.
+ */
+struct lightbar_params {
+	/* Timing */
+	int google_ramp_up;
+	int google_ramp_down;
+	int s3s0_ramp_up;
+	int s0_tick_delay[2];			/* AC=0/1 */
+	int s0s3_ramp_down;
+	int s3_sleep_for;
+	int s3_tick_delay;
+
+	/* Phase shift */
+	uint8_t w_ofs;
+
+	/* Brightness limits based on the backlight and AC. */
+	uint8_t bright_bl_off_fixed[2];		/* AC=0/1 */
+	uint8_t bright_bl_on_min[2];		/* AC=0/1 */
+	uint8_t bright_bl_on_max[2];		/* AC=0/1 */
+
+	/* Map [AC][battery_level] to color index */
+	uint8_t s0_idx[2][4];			/* AP is running */
+	uint8_t s3_idx[2][4];			/* AP is sleeping */
+
+	/* Color palette */
+	struct rgb_s color[8];			/* 0-3 are Google colors */
+} __packed;
+
 struct ec_params_lightbar {
 	uint8_t cmd;		      /* Command (see enum lightbar_command) */
 	union {
 		struct {
 			/* no args */
-		} dump, off, on, init, get_seq;
+		} dump, off, on, init, get_seq, get_params;
 
 		struct num {
 			uint8_t num;
@@ -639,6 +672,8 @@ struct ec_params_lightbar {
 		struct rgb {
 			uint8_t led, red, green, blue;
 		} rgb;
+
+		struct lightbar_params set_params;
 	};
 } __packed;
 
@@ -656,9 +691,11 @@ struct ec_response_lightbar {
 			uint8_t num;
 		} get_seq;
 
+		struct lightbar_params get_params;
+
 		struct {
 			/* no return params */
-		} off, on, init, brightness, seq, reg, rgb, demo;
+		} off, on, init, brightness, seq, reg, rgb, demo, set_params;
 	};
 } __packed;
 
@@ -674,6 +711,8 @@ enum lightbar_command {
 	LIGHTBAR_CMD_RGB = 7,
 	LIGHTBAR_CMD_GET_SEQ = 8,
 	LIGHTBAR_CMD_DEMO = 9,
+	LIGHTBAR_CMD_GET_PARAMS = 10,
+	LIGHTBAR_CMD_SET_PARAMS = 11,
 	LIGHTBAR_NUM_CMDS
 };
 

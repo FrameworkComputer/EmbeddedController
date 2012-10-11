@@ -25,8 +25,6 @@
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
 #define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
 
-#define CONSOLE_COMMAND_LIGHTBAR_HELP
-
 /******************************************************************************/
 /* How to talk to the controller */
 /******************************************************************************/
@@ -157,7 +155,7 @@ static void setrgb(int led, int red, int green, int blue)
 /* Here's some state that we might want to maintain across sysjumps, just to
  * prevent the lightbar from flashing during normal boot as the EC jumps from
  * RO to RW. */
-static struct {
+static struct p_state {
 	/* What patterns are we showing? */
 	enum lightbar_sequence cur_seq;
 	enum lightbar_sequence prev_seq;
@@ -172,7 +170,46 @@ static struct {
 	uint8_t w0;				/* primary phase */
 	uint8_t amp;				/* amplitude */
 	uint8_t ramp;				/* ramp-in for S3->S0 */
+
+	uint8_t _pad0;				/* next item is __packed */
+
+	/* Tweakable parameters */
+	struct lightbar_params p;
 } st;
+
+static const struct lightbar_params default_params = {
+	.google_ramp_up = 2500,
+	.google_ramp_down = 10000,
+	.s3s0_ramp_up = 2000,
+	.s0_tick_delay = { 45000, 30000 },	/* battery, AC */
+	.s0s3_ramp_down = 2000,
+	.s3_sleep_for = 15000000,		/* between checks */
+	.s3_tick_delay = 15000,
+
+	.w_ofs = 24,				/* phase offset, 256 == 2*PI */
+
+	.bright_bl_off_fixed = {0x80, 0x80},	/* backlight off: battery, AC */
+	.bright_bl_on_min = {0x40, 0x40},	/* backlight on: battery, AC */
+	.bright_bl_on_max = {0xff, 0xff},	/* backlight on: battery, AC */
+	.s0_idx = {
+		{ 5, 4, 4, 4 },		/* battery: 0 = red, other = blue */
+		{ 5, 4, 4, 4 }		/* AC: 0 = red, other = blue */
+	},
+	.s3_idx = {
+		{ 5, 0xff, 0xff, 0xff },       /* battery: 0 = red, else off */
+		{ 0xff, 0xff, 0xff, 0xff }     /* AC: do nothing */
+	},
+	.color = {
+		{0x33, 0x69, 0xe8},		/* 0: Google blue */
+		{0xd5, 0x0f, 0x25},		/* 1: Google red */
+		{0xee, 0xb2, 0x11},		/* 2: Google yellow */
+		{0x00, 0x99, 0x25},		/* 3: Google green */
+		{0x00, 0x00, 0xff},		/* 4: full blue */
+		{0xff, 0x00, 0x00},		/* 5: full red */
+		{0xff, 0xff, 0x00},		/* 6: full yellow */
+		{0x00, 0xff, 0x00},		/* 7: full green */
+	},
+};
 
 #define LB_SYSJUMP_TAG 0x4c42			/* "LB" */
 static int lb_preserve_state(void)
@@ -190,16 +227,18 @@ static void lb_restore_state(void)
 	old_state = system_get_jump_tag(LB_SYSJUMP_TAG, 0, &size);
 	if (old_state && size == sizeof(st)) {
 		memcpy(&st, old_state, size);
+		CPRINTF("[%T LB state restored: %d %d - %d/%d]\n",
+			st.cur_seq, st.prev_seq,
+			st.battery_is_charging, st.battery_level);
 	} else {
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
 		st.battery_level = 3;
 		st.w0 = 0;
 		st.amp = 0;
 		st.ramp = 0;
+		memcpy(&st.p, &default_params, sizeof(st.p));
+		CPRINTF("[%T LB state initialized]\n");
 	}
-	CPRINTF("[%T LB state: %d %d - %d/%d]\n",
-		st.cur_seq, st.prev_seq,
-		st.battery_is_charging, st.battery_level);
 }
 
 /******************************************************************************/
@@ -223,6 +262,20 @@ static void get_battery_level(void)
 	if (demo_mode)
 		return;
 
+#ifdef CONFIG_TASK_POWERSTATE
+	pct = charge_get_percent();
+	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
+#endif
+
+	/* For some reason we only have four states */
+	st.battery_level = 0;
+	if (pct >= LIGHTBAR_POWER_THRESHOLD_MEDIUM)
+		st.battery_level = 1;
+	if (pct >= LIGHTBAR_POWER_THRESHOLD_HIGH)
+		st.battery_level = 2;
+	if (pct >= LIGHTBAR_POWER_THRESHOLD_FULL)
+		st.battery_level = 3;
+
 #ifdef CONFIG_TASK_PWM
 	/* With nothing else to go on, use the keyboard backlight level to
 	 * set the brightness. If the keyboard backlight is OFF (which it is
@@ -231,25 +284,19 @@ static void get_battery_level(void)
 	 */
 	if (pwm_get_keyboard_backlight_enabled()) {
 		pct = pwm_get_keyboard_backlight();
-		if (pct != last_backlight_level) {
-			last_backlight_level = pct;
-			pct = (255 * pct) / 100;
-			lightbar_brightness(pct);
-		}
+		pct = (255 * pct) / 100;  /* 00 - FF */
+		if (pct > st.p.bright_bl_on_max[st.battery_is_charging])
+			pct = st.p.bright_bl_on_max[st.battery_is_charging];
+		else if (pct < st.p.bright_bl_on_min[st.battery_is_charging])
+			pct = st.p.bright_bl_on_min[st.battery_is_charging];
 	} else
-		lightbar_brightness(255);
-#endif
+		pct = st.p.bright_bl_off_fixed[st.battery_is_charging];
 
-#ifdef CONFIG_TASK_POWERSTATE
-	pct = charge_get_percent();
-	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
+	if (pct != last_backlight_level) {
+		last_backlight_level = pct;
+		lightbar_brightness(pct);
+	}
 #endif
-
-	/* We're only using two of the four levels at the moment. */
-	if (pct > LIGHTBAR_POWER_THRESHOLD_MEDIUM)
-		st.battery_level = 3;
-	else
-		st.battery_level = 0;
 }
 
 
@@ -342,35 +389,6 @@ static void lightbar_brightness(int newval)
 /* Helper functions and data. */
 /******************************************************************************/
 
-struct rgb_s {
-	uint8_t r, g, b;
-};
-
-/* These are the official Google colors, in order. */
-enum { BLUE = 0, RED, YELLOW, GREEN, INVALID };
-static const struct rgb_s google[] = {
-	{0x33, 0x69, 0xe8},			/* blue */
-	{0xd5, 0x0f, 0x25},			/* red */
-	{0xee, 0xb2, 0x11},			/* yellow */
-	{0x00, 0x99, 0x25},			/* green */
-
-	{0xff, 0x00, 0xFF},			/* invalid */
-};
-
-/* These are used for test patterns. */
-static const struct rgb_s colors[] = {
-	{0xff, 0x00, 0x00},
-	{0xff, 0xff, 0x00},
-	{0x00, 0xff, 0x00},
-	{0x00, 0x00, 0xff},
-	{0x00, 0xff, 0xff},
-	{0xff, 0x00, 0xff},
-	{0xff, 0xff, 0xff},
-};
-
-/* Map battery_level to one of the google colors */
-static const int battery_color[] = { RED, YELLOW, GREEN, BLUE };
-
 const float _ramp_table[] = {
 	0.000000f, 0.000151f, 0.000602f, 0.001355f, 0.002408f, 0.003760f,
 	0.005412f, 0.007361f, 0.009607f, 0.012149f, 0.014984f, 0.018112f,
@@ -442,22 +460,22 @@ static uint32_t pulse_google_colors(void)
 	for (w = 0; w < 128; w += 2) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = google[i].r * f;
-			g = google[i].g * f;
-			b = google[i].b * f;
+			r = st.p.color[i].r * f;
+			g = st.p.color[i].g * f;
+			b = st.p.color[i].b * f;
 			lightbar_setrgb(i, r, g, b);
 		}
-		WAIT_OR_RET(2500);
+		WAIT_OR_RET(st.p.google_ramp_up);
 	}
 	for (w = 128; w <= 256; w++) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = google[i].r * f;
-			g = google[i].g * f;
-			b = google[i].b * f;
+			r = st.p.color[i].r * f;
+			g = st.p.color[i].g * f;
+			b = st.p.color[i].b * f;
 			lightbar_setrgb(i, r, g, b);
 		}
-		WAIT_OR_RET(10000);
+		WAIT_OR_RET(st.p.google_ramp_down);
 	}
 
 	return 0;
@@ -484,16 +502,18 @@ static uint32_t sequence_S3S0(void)
 	if (res)
 		return res;
 
-	/* Ramp up to base brightness. */
+	/* Ramp up to base brightness, using S0 colors */
 	get_battery_level();
-	ci = battery_color[st.battery_level];
+	ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
+	if (ci >= ARRAY_SIZE(st.p.color))
+		ci = 0;
 	for (w = 0; w <= 128; w++) {
 		f = cycle_010(w) * BASE_S0;
-		r = google[ci].r * f;
-		g = google[ci].g * f;
-		b = google[ci].b * f;
+		r = st.p.color[ci].r * f;
+		g = st.p.color[ci].g * f;
+		b = st.p.color[ci].b * f;
 		lightbar_setrgb(NUM_LEDS, r, g, b);
-		WAIT_OR_RET(2000);
+		WAIT_OR_RET(st.p.s3s0_ramp_up);
 	}
 
 	/* Initial conditions */
@@ -534,14 +554,16 @@ static uint32_t sequence_S0(void)
 		}
 
 		/* Calculate the colors */
-		ci = battery_color[st.battery_level];
+		ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
+		if (ci >= ARRAY_SIZE(st.p.color))
+			ci = 0;
 		ff = st.amp / 255.0f;
 		for (i = 0; i < NUM_LEDS; i++) {
-			w = st.w0 - i * 24 * st.ramp / 255;
+			w = st.w0 - i * st.p.w_ofs * st.ramp / 255;
 			f = BASE_S0 + OSC_S0 * cycle_0P0N0(w) * ff;
-			r = google[ci].r * f;
-			g = google[ci].g * f;
-			b = google[ci].b * f;
+			r = st.p.color[ci].r * f;
+			g = st.p.color[ci].g * f;
+			b = st.p.color[ci].b * f;
 			lightbar_setrgb(i, r, g, b);
 		}
 
@@ -553,17 +575,16 @@ static uint32_t sequence_S0(void)
 			st.amp++;
 
 		/* Increment the phase */
-		if (st.battery_is_charging) {
+		if (st.battery_is_charging)
 			st.w0--;
-			WAIT_OR_RET(MSECS(2 * 15));
-		} else {
+		else
 			st.w0++;
-			WAIT_OR_RET(MSECS(3 * 15));
-		}
 
 		/* Continue ramping in if needed */
 		if (st.ramp < 0xff)
 			st.ramp++;
+
+		WAIT_OR_RET(st.p.s0_tick_delay[st.battery_is_charging]);
 	}
 	return 0;
 }
@@ -587,7 +608,7 @@ static uint32_t sequence_S0S3(void)
 			b = drop[i][2] * f;
 			lightbar_setrgb(i, r, g, b);
 		}
-		WAIT_OR_RET(2000);
+		WAIT_OR_RET(st.p.s0s3_ramp_down);
 	}
 
 	/* pulse once and done */
@@ -606,23 +627,23 @@ static uint32_t sequence_S3(void)
 	lightbar_init_vals();
 	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 	while (1) {
-		WAIT_OR_RET(SEC(15));
+		WAIT_OR_RET(st.p.s3_sleep_for);
 		get_battery_level();
 
-		/* only pulse if we're off AC and the battery level is low */
-		if (st.battery_is_charging || st.battery_level > 0)
+		/* only pulse if we've been given a valid color index */
+		ci = st.p.s3_idx[st.battery_is_charging][st.battery_level];
+		if (ci >= ARRAY_SIZE(st.p.color))
 			continue;
 
 		/* pulse once */
-		ci = battery_color[st.battery_level];
 		lightbar_on();
 		for (w = 0; w < 255; w += 5) {
 			f = cycle_010(w);
-			r = google[ci].r * f;
-			g = google[ci].g * f;
-			b = google[ci].b * f;
+			r = st.p.color[ci].r * f;
+			g = st.p.color[ci].g * f;
+			b = st.p.color[ci].b * f;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(15000);
+			WAIT_OR_RET(st.p.s3_tick_delay);
 		}
 		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 		lightbar_off();
@@ -668,20 +689,30 @@ static uint32_t sequence_TEST_inner(void)
 	int kmax = 254;
 	int kstep = 8;
 
+	static const struct rgb_s testcolors[] = {
+		{0xff, 0x00, 0x00},
+		{0xff, 0xff, 0x00},
+		{0x00, 0xff, 0x00},
+		{0x00, 0x00, 0xff},
+		{0x00, 0xff, 0xff},
+		{0xff, 0x00, 0xff},
+		{0xff, 0xff, 0xff},
+	};
+
 	lightbar_init_vals();
 	lightbar_on();
-	for (i = 0; i < ARRAY_SIZE(colors); i++) {
+	for (i = 0; i < ARRAY_SIZE(testcolors); i++) {
 		for (k = 0; k <= kmax; k += kstep) {
-			r = colors[i].r ? k : 0;
-			g = colors[i].g ? k : 0;
-			b = colors[i].b ? k : 0;
+			r = testcolors[i].r ? k : 0;
+			g = testcolors[i].g ? k : 0;
+			b = testcolors[i].b ? k : 0;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(10000);
 		}
 		for (k = kmax; k >= 0; k -= kstep) {
-			r = colors[i].r ? k : 0;
-			g = colors[i].g ? k : 0;
-			b = colors[i].b ? k : 0;
+			r = testcolors[i].r ? k : 0;
+			g = testcolors[i].g ? k : 0;
+			b = testcolors[i].b ? k : 0;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(10000);
 		}
@@ -776,7 +807,7 @@ static uint32_t sequence_ERROR(void)
 	lightbar_setrgb(2, 0, 255, 255);
 	lightbar_setrgb(3, 255, 255, 255);
 
-	WAIT_OR_RET(10000000);
+	WAIT_OR_RET(SEC(10));
 	return 0;
 }
 
@@ -994,7 +1025,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, lightbar_shutdown, HOOK_PRIO_DEFAULT);
 
 static const uint8_t dump_reglist[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	0x08, 0x09, 0x0a,                         0x0f,
+	0x08, 0x09, 0x0a,			  0x0f,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 	0x18, 0x19, 0x1a
 };
@@ -1076,6 +1107,15 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		demo_mode = in->demo.num ? 1 : 0;
 		CPRINTF("[%T LB_demo %d]\n", demo_mode);
 		break;
+	case LIGHTBAR_CMD_GET_PARAMS:
+		CPRINTF("[%T LB_get_params]\n");
+		memcpy(&out->get_params, &st.p, sizeof(st.p));
+		args->response_size = sizeof(out->get_params);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS:
+		CPRINTF("[%T LB_set_params]\n");
+		memcpy(&st.p, &in->set_params, sizeof(st.p));
+		break;
 	default:
 		CPRINTF("[%T LB bad cmd 0x%x]\n", in->cmd);
 		return EC_RES_INVALID_PARAM;
@@ -1093,7 +1133,7 @@ DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD,
 /* EC console commands */
 /****************************************************************************/
 
-#ifdef CONSOLE_COMMAND_LIGHTBAR_HELP
+#ifdef CONFIG_CONSOLE_CMDHELP
 static int help(const char *cmd)
 {
 	ccprintf("Usage:\n");
@@ -1108,6 +1148,7 @@ static int help(const char *cmd)
 	ccprintf("  %s LED RED GREEN BLUE    - set color manually"
 		 " (LED=4 for all)\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
+	ccprintf("  %s params                - show current params\n", cmd);
 	return EC_SUCCESS;
 }
 #endif
@@ -1130,6 +1171,44 @@ static void show_msg_names(void)
 		ccprintf(" %s", lightbar_cmds[i].string);
 	ccprintf("\nCurrent = 0x%x %s\n", st.cur_seq,
 		 lightbar_cmds[st.cur_seq].string);
+}
+
+static void show_params(const struct lightbar_params *p)
+{
+	int i;
+
+	ccprintf("%d\t\t# .google_ramp_up\n", p->google_ramp_up);
+	ccprintf("%d\t\t# .google_ramp_down\n", p->google_ramp_down);
+	ccprintf("%d\t\t# .s3s0_ramp_up\n", p->s3s0_ramp_up);
+	ccprintf("%d\t\t# .s0_tick_delay (battery)\n", p->s0_tick_delay[0]);
+	ccprintf("%d\t\t# .s0_tick_delay (AC)\n", p->s0_tick_delay[1]);
+	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
+	ccprintf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
+	ccprintf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
+	ccprintf("%d\t\t# .w_ofs\n", p->w_ofs);
+	ccprintf("0x%02x 0x%02x\t# .bright_bl_off_fixed (battery, AC)\n",
+		 p->bright_bl_off_fixed[0], p->bright_bl_off_fixed[1]);
+	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_min (battery, AC)\n",
+		 p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
+	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
+		 p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
+	ccprintf("%d %d %d %d\t\t# .s0_idx[] (battery)\n",
+		 p->s0_idx[0][0], p->s0_idx[0][1],
+		 p->s0_idx[0][2], p->s0_idx[0][3]);
+	ccprintf("%d %d %d %d\t\t# .s0_idx[] (AC)\n",
+		 p->s0_idx[1][0], p->s0_idx[1][1],
+		 p->s0_idx[1][2], p->s0_idx[1][3]);
+	ccprintf("%d %d %d %d\t# .s3_idx[] (battery)\n",
+		 p->s3_idx[0][0], p->s3_idx[0][1],
+		 p->s3_idx[0][2], p->s3_idx[0][3]);
+	ccprintf("%d %d %d %d\t# .s3_idx[] (AC)\n",
+		 p->s3_idx[1][0], p->s3_idx[1][1],
+		 p->s3_idx[1][2], p->s3_idx[1][3]);
+	for (i = 0; i < ARRAY_SIZE(p->color); i++)
+		ccprintf("0x%02x 0x%02x 0x%02x\t# color[%d]\n",
+			 p->color[i].r,
+			 p->color[i].g,
+			 p->color[i].b, i);
 }
 
 static int command_lightbar(int argc, char **argv)
@@ -1161,6 +1240,11 @@ static int command_lightbar(int argc, char **argv)
 
 	if (!strcasecmp(argv[1], "on")) {
 		lightbar_on();
+		return EC_SUCCESS;
+	}
+
+	if (!strcasecmp(argv[1], "params")) {
+		show_params(&st.p);
 		return EC_SUCCESS;
 	}
 
@@ -1226,7 +1310,7 @@ static int command_lightbar(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-#ifdef CONSOLE_COMMAND_LIGHTBAR_HELP
+#ifdef CONFIG_CONSOLE_CMDHELP
 	help(argv[0]);
 #endif
 

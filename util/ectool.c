@@ -4,6 +4,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1061,7 +1062,9 @@ static const struct {
 	LB_SIZES(reg),
 	LB_SIZES(rgb),
 	LB_SIZES(get_seq),
-	LB_SIZES(demo)
+	LB_SIZES(demo),
+	LB_SIZES(get_params),
+	LB_SIZES(set_params),
 };
 #undef LB_SIZES
 
@@ -1079,6 +1082,8 @@ static int lb_help(const char *cmd)
 	printf("  %s LED RED GREEN BLUE    - set color manually"
 		 " (LED=4 for all)\n", cmd);
 	printf("  %s demo 0|1              - turn demo mode on & off\n", cmd);
+	printf("  %s params [setfile]      - get params"
+	       " (or set from file)\n", cmd);
 	return 0;
 }
 
@@ -1124,6 +1129,140 @@ static int lb_show_msg_names(void)
 	return 0;
 }
 
+static int lb_read_params_from_file(const char *filename,
+				    struct lightbar_params *p)
+{
+	FILE *fp;
+	char buf[80];
+	int val[4];
+	int r = 1;
+	int line = 0;
+	int want, got;
+	int i;
+
+	fp = fopen(filename, "rb");
+	if (!fp) {
+		fprintf(stderr, "Can't open %s: %s\n",
+			filename, strerror(errno));
+		return 1;
+	}
+
+	/* We must read the correct number of params from each line */
+#define READ(N) do {							\
+		line++;							\
+		want = (N);						\
+		got = -1;						\
+		if (!fgets(buf, sizeof(buf), fp))			\
+			goto done;					\
+		got = sscanf(buf, "%i %i %i %i",			\
+			     &val[0], &val[1], &val[2], &val[3]);	\
+		if (want != got)					\
+			goto done;					\
+	} while (0)
+
+
+	/* Do it */
+	READ(1); p->google_ramp_up = val[0];
+	READ(1); p->google_ramp_down = val[0];
+	READ(1); p->s3s0_ramp_up = val[0];
+	READ(1); p->s0_tick_delay[0] = val[0];
+	READ(1); p->s0_tick_delay[1] = val[0];
+	READ(1); p->s0s3_ramp_down = val[0];
+	READ(1); p->s3_sleep_for = val[0];
+	READ(1); p->s3_tick_delay = val[0];
+	READ(1); p->w_ofs = val[0];
+
+	READ(2);
+	p->bright_bl_off_fixed[0] = val[0];
+	p->bright_bl_off_fixed[1] = val[1];
+
+	READ(2);
+	p->bright_bl_on_min[0] = val[0];
+	p->bright_bl_on_min[1] = val[1];
+
+	READ(2);
+	p->bright_bl_on_max[0] = val[0];
+	p->bright_bl_on_max[1] = val[1];
+
+	READ(4);
+	p->s0_idx[0][0] = val[0];
+	p->s0_idx[0][1] = val[1];
+	p->s0_idx[0][2] = val[2];
+	p->s0_idx[0][3] = val[3];
+
+	READ(4);
+	p->s0_idx[1][0] = val[0];
+	p->s0_idx[1][1] = val[1];
+	p->s0_idx[1][2] = val[2];
+	p->s0_idx[1][3] = val[3];
+
+	READ(4);
+	p->s3_idx[0][0] = val[0];
+	p->s3_idx[0][1] = val[1];
+	p->s3_idx[0][2] = val[2];
+	p->s3_idx[0][3] = val[3];
+
+	READ(4);
+	p->s3_idx[1][0] = val[0];
+	p->s3_idx[1][1] = val[1];
+	p->s3_idx[1][2] = val[2];
+	p->s3_idx[1][3] = val[3];
+
+	for (i = 0; i < ARRAY_SIZE(p->color); i++) {
+		READ(3);
+		p->color[i].r = val[0];
+		p->color[i].g = val[1];
+		p->color[i].b = val[2];
+	}
+
+	/* Yay */
+	r = 0;
+done:
+	if (r)
+		fprintf(stderr, "problem with line %d: wanted %d, got %d\n",
+			line, want, got);
+	fclose(fp);
+	return r;
+}
+
+static void lb_show_params(const struct lightbar_params *p)
+{
+	int i;
+
+	printf("%d\t\t# .google_ramp_up\n", p->google_ramp_up);
+	printf("%d\t\t# .google_ramp_down\n", p->google_ramp_down);
+	printf("%d\t\t# .s3s0_ramp_up\n", p->s3s0_ramp_up);
+	printf("%d\t\t# .s0_tick_delay (battery)\n", p->s0_tick_delay[0]);
+	printf("%d\t\t# .s0_tick_delay (AC)\n", p->s0_tick_delay[1]);
+	printf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
+	printf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
+	printf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
+	printf("%d\t\t# .w_ofs\n", p->w_ofs);
+	printf("0x%02x 0x%02x\t# .bright_bl_off_fixed (battery, AC)\n",
+	       p->bright_bl_off_fixed[0], p->bright_bl_off_fixed[1]);
+	printf("0x%02x 0x%02x\t# .bright_bl_on_min (battery, AC)\n",
+	       p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
+	printf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
+	       p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
+	printf("%d %d %d %d\t\t# .s0_idx[] (battery)\n",
+	       p->s0_idx[0][0], p->s0_idx[0][1],
+	       p->s0_idx[0][2], p->s0_idx[0][3]);
+	printf("%d %d %d %d\t\t# .s0_idx[] (AC)\n",
+	       p->s0_idx[1][0], p->s0_idx[1][1],
+	       p->s0_idx[1][2], p->s0_idx[1][3]);
+	printf("%d %d %d %d\t# .s3_idx[] (battery)\n",
+	       p->s3_idx[0][0], p->s3_idx[0][1],
+	       p->s3_idx[0][2], p->s3_idx[0][3]);
+	printf("%d %d %d %d\t# .s3_idx[] (AC)\n",
+	       p->s3_idx[1][0], p->s3_idx[1][1],
+	       p->s3_idx[1][2], p->s3_idx[1][3]);
+	for (i = 0; i < ARRAY_SIZE(p->color); i++)
+		printf("0x%02x 0x%02x 0x%02x\t# color[%d]\n",
+		       p->color[i].r,
+		       p->color[i].g,
+		       p->color[i].b, i);
+}
+
 static int cmd_lightbar(int argc, char **argv)
 {
 	int i, r;
@@ -1151,6 +1290,21 @@ static int cmd_lightbar(int argc, char **argv)
 
 	if (argc == 2 && !strcasecmp(argv[1], "on"))
 		return lb_do_cmd(LIGHTBAR_CMD_ON, &param, &resp);
+
+	if (!strcasecmp(argv[1], "params")) {
+		if (argc > 2) {
+			r = lb_read_params_from_file(argv[2],
+						     &param.set_params);
+			if (r)
+				return r;
+			return lb_do_cmd(LIGHTBAR_CMD_SET_PARAMS,
+					 &param, &resp);
+		}
+		r = lb_do_cmd(LIGHTBAR_CMD_GET_PARAMS, &param, &resp);
+		if (!r)
+			lb_show_params(&resp.get_params);
+		return r;
+	}
 
 	if (argc == 3 && !strcasecmp(argv[1], "brightness")) {
 		char *e;
