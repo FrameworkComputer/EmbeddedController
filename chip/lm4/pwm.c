@@ -32,7 +32,6 @@
  */
 #define CPU_FAN_SCALE 2
 
-
 #define PWM_SYSJUMP_TAG 0x504d  /* "PM" */
 #define PWM_HOOK_VERSION 1
 /* the previous pwm state before reboot_ec. */
@@ -43,7 +42,6 @@ struct pwm_state {
 	uint8_t kblight_percent;
 	char pad; /* Pad to multiple of 4 bytes. */
 };
-
 
 /* Configures the GPIOs for the fan module. */
 static void configure_gpios(void)
@@ -67,6 +65,30 @@ int pwm_enable_fan(int enable)
 int pwm_get_fan_enabled(void)
 {
 	return (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) ? 1 : 0;
+}
+
+static int pwm_get_rpm_mode(void)
+{
+	return (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) ? 0 : 1;
+}
+
+void pwm_set_rpm_mode(int rpm_mode)
+{
+	int was_enabled = pwm_get_fan_enabled();
+	int was_rpm = pwm_get_rpm_mode();
+
+	if (!was_rpm && rpm_mode) {
+		/* Enable RPM control */
+		pwm_enable_fan(0);
+		LM4_FAN_FANCH(FAN_CH_CPU) &= ~0x0001;
+
+		pwm_enable_fan(was_enabled);
+	} else if (was_rpm && !rpm_mode) {
+		/* Disable RPM mode */
+		pwm_enable_fan(0);
+		LM4_FAN_FANCH(FAN_CH_CPU) |= 0x0001;
+		pwm_enable_fan(was_enabled);
+	}
 }
 
 int pwm_get_fan_rpm(void)
@@ -125,6 +147,34 @@ int pwm_set_keyboard_backlight(int percent)
 	return EC_SUCCESS;
 }
 
+int pwm_set_fan_duty(int percent)
+{
+	int pwm;
+
+	if (percent < 0)
+		percent = 0;
+	else if (percent > 100)
+		percent = 100;
+
+	pwm = (MAX_PWM * percent) / 100;
+
+	/* Move the fan to manual control */
+	pwm_set_rpm_mode(0);
+
+	/* Always enable the fan */
+	pwm_enable_fan(1);
+
+#ifdef CONFIG_TASK_THERMAL
+	/* Disable thermal engine automatic fan control. */
+	thermal_control_fan(0);
+#endif
+
+	/* Set the duty cycle */
+	LM4_FAN_FANCMD(FAN_CH_CPU) = pwm << 16;
+
+	return EC_SUCCESS;
+}
+
 /**
  * Return non-zero if fan is enabled but stalled
  */
@@ -171,8 +221,8 @@ static int command_fan_info(int argc, char **argv)
 		 ((LM4_FAN_FANCMD(FAN_CH_CPU) >> 16)) * 100 / MAX_PWM);
 	ccprintf("Status: %d\n",
 		 (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
-	ccprintf("Enable: %s\n",
-		 pwm_get_fan_enabled() ? "yes" : "no");
+	ccprintf("Mode:   %s\n", pwm_get_rpm_mode() ? "rpm" : "duty");
+	ccprintf("Enable: %s\n", pwm_get_fan_enabled() ? "yes" : "no");
 	ccprintf("Power:  %s\n",
 		 gpio_get_level(GPIO_PGOOD_5VALW) ? "yes" : "no");
 
@@ -196,10 +246,8 @@ static int command_fan_set(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
         /* Move the fan to automatic control */
-        if (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) {
-		pwm_enable_fan(0);
-		LM4_FAN_FANCH(FAN_CH_CPU) &= ~0x0001;
-        }
+	pwm_set_rpm_mode(1);
+
 	/* Always enable the fan */
 	pwm_enable_fan(1);
 
@@ -214,36 +262,6 @@ DECLARE_CONSOLE_COMMAND(fanset, command_fan_set,
 			"rpm",
 			"Set fan speed",
 			NULL);
-
-int pwm_set_fan_duty(int percent)
-{
-	int pwm;
-
-	if (percent < 0)
-		percent = 0;
-	else if (percent > 100)
-		percent = 100;
-
-	pwm = (MAX_PWM * percent) / 100;
-
-        /* Move the fan to manual control */
-        if (!(LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001)) {
-		pwm_enable_fan(0);
-		LM4_FAN_FANCH(FAN_CH_CPU) |= 0x0001;
-        }
-	/* Always enable the fan */
-	pwm_enable_fan(1);
-
-#ifdef CONFIG_TASK_THERMAL
-	/* Disable thermal engine automatic fan control. */
-	thermal_control_fan(0);
-#endif
-
-        /* Set the duty cycle */
-	LM4_FAN_FANCMD(FAN_CH_CPU) = pwm << 16;
-
-	return EC_SUCCESS;
-}
 
 static int ec_command_fan_duty(int argc, char **argv)
 {

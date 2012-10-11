@@ -83,6 +83,11 @@ int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 int thermal_control_fan(int enable)
 {
 	fan_ctrl_on = enable;
+
+	/* If controlling the fan, need it in RPM-control mode */
+	if (enable)
+		pwm_set_rpm_mode(1);
+
 	return EC_SUCCESS;
 }
 

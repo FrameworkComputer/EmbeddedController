@@ -14,6 +14,14 @@
  * enables the power supply to the fan. */
 int pwm_enable_fan(int enable);
 
+/**
+ * Enable/disable fan RPM control logic.
+ *
+ * @param rpm_mode	Enable (1) or disable (0) RPM control loop; when
+ *			disabled, fan duty cycle will be used.
+ */
+void pwm_set_rpm_mode(int enable);
+
 /* Get the current fan RPM. */
 int pwm_get_fan_rpm(void);
 
