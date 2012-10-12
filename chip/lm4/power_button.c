@@ -130,24 +130,32 @@ static void set_pwrbtn_to_pch(int high)
 	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
 
-
-/* Get raw power button signal state; 1 if power button is pressed, 0 if not
- * pressed. */
-static int get_power_button_pressed(void)
-{
-	if (simulate_power_pressed)
-		return 1;
-
-	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
-}
-
-
-/* Get raw lid switch state; 1 if lid is open, 0 if closed. */
+/**
+ * Get raw lid switch state.
+ *
+ * @return 1 if lid is open, 0 if closed.
+ */
 static int get_lid_open(void)
 {
 	return gpio_get_level(GPIO_LID_SWITCHn) ? 1 : 0;
 }
 
+/**
+ * Get raw power button signal state.
+ *
+ * @return 1 if power button is pressed, 0 if not pressed.
+ */
+static int get_power_button_pressed(void)
+{
+	if (simulate_power_pressed)
+		return 1;
+
+	/* Ignore power button if lid is closed */
+	if (!get_lid_open())
+		return 0;
+
+	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
+}
 
 static void update_backlight(void)
 {

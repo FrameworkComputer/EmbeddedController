@@ -102,6 +102,12 @@ static void enter_polling_mode(void)
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
 }
 
+static int is_scanning_enabled(void)
+{
+	/* Scan only if enabled AND lid is open. */
+	return lm4_get_scanning_enabled() && power_lid_open_debounced();
+}
+
 /**
  * Read the raw keyboard matrix state.
  *
@@ -311,7 +317,7 @@ static int check_keys_changed(uint8_t *state)
 			any_change = 1;
 
 			/* Inform keyboard module if scanning is enabled */
-			if (lm4_get_scanning_enabled())
+			if (is_scanning_enabled())
 				keyboard_state_changed(i, c, new_mask ? 1 : 0);
 		}
 	}
@@ -453,13 +459,13 @@ void keyboard_scan_task(void)
 			 * starting to pay attention to edges.
 			 */
 			if ((lm4_read_raw_row_state() == 0xff) ||
-			    !lm4_get_scanning_enabled())
+			    !is_scanning_enabled())
 				task_wait_event(-1);
-		} while (!lm4_get_scanning_enabled());
+		} while (!is_scanning_enabled());
 
 		enter_polling_mode();
 		/* Busy polling keyboard state. */
-		while (lm4_get_scanning_enabled()) {
+		while (is_scanning_enabled()) {
 			/* Check for keys down */
 			if (check_keys_changed(debounced_state)) {
 				key_press_timer = 0;
