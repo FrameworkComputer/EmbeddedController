@@ -24,20 +24,17 @@
  */
 extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
 
-/* Temperature threshold configuration. Must be in the same order as in
- * enum temp_sensor_type. Threshold values for overheated action first.
- * Followed by fan speed stepping thresholds. */
+/* Temperature threshold configuration. Must be in the same order as in enum
+ * temp_sensor_type. Threshold values for overheated action first (warning,
+ * prochot, power-down), followed by fan speed stepping thresholds. */
 static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
-	 {368, 373, 383, 327, 335, 343, 351, 359} } ,
+	 {373, 378, 383, 327, 335, 343, 351, 359} } ,
 	/* TEMP_SENSOR_TYPE_BOARD */
-	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL}},
+	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL} },
 	/* TEMP_SENSOR_TYPE_CASE */
-	{THERMAL_CONFIG_NO_FLAG, {341, THERMAL_THRESHOLD_DISABLE, 353,
-	 THERMAL_THRESHOLD_DISABLE, THERMAL_THRESHOLD_DISABLE,
-	 THERMAL_THRESHOLD_DISABLE, THERMAL_THRESHOLD_DISABLE,
-	 THERMAL_THRESHOLD_DISABLE} },
+	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL} },
 };
 
 /* Fan speed settings. */
