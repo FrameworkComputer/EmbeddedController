@@ -625,6 +625,7 @@ struct rgb_s {
 	uint8_t r, g, b;
 };
 
+#define LB_BATTERY_LEVELS 4
 /* List of tweakable parameters. NOTE: It's __packed so it can be sent in a
  * host command, but the alignment is the same regardless. Keep it that way.
  */
@@ -638,17 +639,22 @@ struct lightbar_params {
 	int s3_sleep_for;
 	int s3_tick_delay;
 
-	/* Phase shift */
-	uint8_t w_ofs;
+	/* Oscillation */
+	uint8_t osc_min[2];			/* AC=0/1 */
+	uint8_t osc_max[2];			/* AC=0/1 */
+	uint8_t w_ofs[2];			/* AC=0/1 */
 
 	/* Brightness limits based on the backlight and AC. */
 	uint8_t bright_bl_off_fixed[2];		/* AC=0/1 */
 	uint8_t bright_bl_on_min[2];		/* AC=0/1 */
 	uint8_t bright_bl_on_max[2];		/* AC=0/1 */
 
+	/* Battery level thresholds */
+	uint8_t battery_threshold[LB_BATTERY_LEVELS - 1];
+
 	/* Map [AC][battery_level] to color index */
-	uint8_t s0_idx[2][4];			/* AP is running */
-	uint8_t s3_idx[2][4];			/* AP is sleeping */
+	uint8_t s0_idx[2][LB_BATTERY_LEVELS];	/* AP is running */
+	uint8_t s3_idx[2][LB_BATTERY_LEVELS];	/* AP is sleeping */
 
 	/* Color palette */
 	struct rgb_s color[8];			/* 0-3 are Google colors */

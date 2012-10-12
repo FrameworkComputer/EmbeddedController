@@ -24,11 +24,5 @@
 /* Precharge only when state of charge is below this level */
 #define PRE_CHARGE_THRESHOLD 25
 
-/* Define the lightbar color thresholds, percentage */
-#define LIGHTBAR_POWER_THRESHOLD_FULL   99
-#define LIGHTBAR_POWER_THRESHOLD_HIGH   40
-#define LIGHTBAR_POWER_THRESHOLD_MEDIUM 25
-/* LOW is anything below MEDIUM */
-
 #endif /* __CROS_EC_BATTERY_H */
 

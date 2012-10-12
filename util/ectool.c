@@ -1170,7 +1170,16 @@ static int lb_read_params_from_file(const char *filename,
 	READ(1); p->s0s3_ramp_down = val[0];
 	READ(1); p->s3_sleep_for = val[0];
 	READ(1); p->s3_tick_delay = val[0];
-	READ(1); p->w_ofs = val[0];
+
+	READ(2);
+	p->osc_min[0] = val[0];
+	p->osc_min[1] = val[1];
+	READ(2);
+	p->osc_max[0] = val[0];
+	p->osc_max[1] = val[1];
+	READ(2);
+	p->w_ofs[0] = val[0];
+	p->w_ofs[1] = val[1];
 
 	READ(2);
 	p->bright_bl_off_fixed[0] = val[0];
@@ -1183,6 +1192,11 @@ static int lb_read_params_from_file(const char *filename,
 	READ(2);
 	p->bright_bl_on_max[0] = val[0];
 	p->bright_bl_on_max[1] = val[1];
+
+	READ(3);
+	p->battery_threshold[0] = val[0];
+	p->battery_threshold[1] = val[1];
+	p->battery_threshold[2] = val[2];
 
 	READ(4);
 	p->s0_idx[0][0] = val[0];
@@ -1237,13 +1251,22 @@ static void lb_show_params(const struct lightbar_params *p)
 	printf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
 	printf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
 	printf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
-	printf("%d\t\t# .w_ofs\n", p->w_ofs);
+	printf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
+	       p->osc_min[0], p->osc_min[1]);
+	printf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",
+	       p->osc_max[0], p->osc_max[1]);
+	printf("%d %d\t\t# .w_ofs (battery, AC)\n",
+	       p->w_ofs[0], p->w_ofs[1]);
 	printf("0x%02x 0x%02x\t# .bright_bl_off_fixed (battery, AC)\n",
 	       p->bright_bl_off_fixed[0], p->bright_bl_off_fixed[1]);
 	printf("0x%02x 0x%02x\t# .bright_bl_on_min (battery, AC)\n",
 	       p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
 	printf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
 	       p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
+	printf("%d %d %d\t\t# .battery_threshold\n",
+	       p->battery_threshold[0],
+	       p->battery_threshold[1],
+	       p->battery_threshold[2]);
 	printf("%d %d %d %d\t\t# .s0_idx[] (battery)\n",
 	       p->s0_idx[0][0], p->s0_idx[0][1],
 	       p->s0_idx[0][2], p->s0_idx[0][3]);

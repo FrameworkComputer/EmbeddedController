@@ -168,10 +168,10 @@ static struct p_state {
 
 	/* Pattern variables for state S0. */
 	uint8_t w0;				/* primary phase */
-	uint8_t amp;				/* amplitude */
 	uint8_t ramp;				/* ramp-in for S3->S0 */
 
 	uint8_t _pad0;				/* next item is __packed */
+	uint8_t _pad1;				/* next item is __packed */
 
 	/* Tweakable parameters */
 	struct lightbar_params p;
@@ -186,11 +186,15 @@ static const struct lightbar_params default_params = {
 	.s3_sleep_for = 15000000,		/* between checks */
 	.s3_tick_delay = 15000,
 
-	.w_ofs = 24,				/* phase offset, 256 == 2*PI */
+	.osc_min = { 0x40, 0x40 },		/* battery, AC */
+	.osc_max = { 0xff, 0xff },		/* battery, AC */
+	.w_ofs = {24, 24},			/* phase offset, 256 == 2*PI */
 
 	.bright_bl_off_fixed = {0x80, 0x80},	/* backlight off: battery, AC */
-	.bright_bl_on_min = {0x40, 0x40},	/* backlight on: battery, AC */
+	.bright_bl_on_min = {0x60, 0x60},	/* backlight on: battery, AC */
 	.bright_bl_on_max = {0xff, 0xff},	/* backlight on: battery, AC */
+
+	.battery_threshold = { 10, 40, 99 },	/* percent, lowest to highest */
 	.s0_idx = {
 		{ 5, 4, 4, 4 },		/* battery: 0 = red, other = blue */
 		{ 5, 4, 4, 4 }		/* AC: 0 = red, other = blue */
@@ -232,9 +236,8 @@ static void lb_restore_state(void)
 			st.battery_is_charging, st.battery_level);
 	} else {
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
-		st.battery_level = 3;
+		st.battery_level = LB_BATTERY_LEVELS - 1;
 		st.w0 = 0;
-		st.amp = 0;
 		st.ramp = 0;
 		memcpy(&st.p, &default_params, sizeof(st.p));
 		CPRINTF("[%T LB state initialized]\n");
@@ -258,6 +261,7 @@ static int demo_mode;
 static void get_battery_level(void)
 {
 	int pct = 0;
+	int i;
 
 	if (demo_mode)
 		return;
@@ -267,14 +271,11 @@ static void get_battery_level(void)
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif
 
-	/* For some reason we only have four states */
+	/* Find the current battery level */
 	st.battery_level = 0;
-	if (pct >= LIGHTBAR_POWER_THRESHOLD_MEDIUM)
-		st.battery_level = 1;
-	if (pct >= LIGHTBAR_POWER_THRESHOLD_HIGH)
-		st.battery_level = 2;
-	if (pct >= LIGHTBAR_POWER_THRESHOLD_FULL)
-		st.battery_level = 3;
+	for (i = 0; i < LB_BATTERY_LEVELS - 1; i++)
+		if (pct >= st.p.battery_threshold[i])
+			st.battery_level++;
 
 #ifdef CONFIG_TASK_PWM
 	/* With nothing else to go on, use the keyboard backlight level to
@@ -308,8 +309,8 @@ void demo_battery_level(int inc)
 		return;
 
 	st.battery_level += inc;
-	if (st.battery_level > 3)
-		st.battery_level = 3;
+	if (st.battery_level >= LB_BATTERY_LEVELS)
+		st.battery_level = LB_BATTERY_LEVELS - 1;
 	else if (st.battery_level < 0)
 		st.battery_level = 0;
 
@@ -481,17 +482,11 @@ static uint32_t pulse_google_colors(void)
 	return 0;
 }
 
-/* Constants */
-#define MIN_S0 0.25f
-#define MAX_S0 1.0f
-#define BASE_S0 ((MIN_S0 + MAX_S0) * 0.5f)
-#define OSC_S0 (MAX_S0 - MIN_S0)
-
 /* CPU is waking from sleep. */
 static uint32_t sequence_S3S0(void)
 {
 	int w, r, g, b;
-	float f;
+	float f, fmin, fmax, base_s0;
 	int ci;
 	uint32_t res;
 
@@ -507,8 +502,13 @@ static uint32_t sequence_S3S0(void)
 	ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
 	if (ci >= ARRAY_SIZE(st.p.color))
 		ci = 0;
+
+	fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
+	fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
+	base_s0 = (fmax + fmin) * 0.5f;
+
 	for (w = 0; w <= 128; w++) {
-		f = cycle_010(w) * BASE_S0;
+		f = cycle_010(w) * base_s0;
 		r = st.p.color[ci].r * f;
 		g = st.p.color[ci].g * f;
 		b = st.p.color[ci].b * f;
@@ -518,7 +518,6 @@ static uint32_t sequence_S3S0(void)
 
 	/* Initial conditions */
 	st.w0 = 0;
-	st.amp = 0;
 	st.ramp = 0;
 
 	/* Ready for S0 */
@@ -532,8 +531,8 @@ static uint32_t sequence_S0(void)
 	timestamp_t start, now;
 	uint32_t r, g, b;
 	int i, ci;
-	uint8_t w, target_amp;
-	float f, ff;
+	uint8_t w, w_ofs;
+	float f, fmin, fmax, base_s0, osc_s0;
 
 	start = get_time();
 	tick = last_tick = 0;
@@ -557,22 +556,20 @@ static uint32_t sequence_S0(void)
 		ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
 		if (ci >= ARRAY_SIZE(st.p.color))
 			ci = 0;
-		ff = st.amp / 255.0f;
+		w_ofs = st.p.w_ofs[st.battery_is_charging];
+		fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
+		fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
+		base_s0 = (fmax + fmin) * 0.5f;
+		osc_s0 = fmax - fmin;
+
 		for (i = 0; i < NUM_LEDS; i++) {
-			w = st.w0 - i * st.p.w_ofs * st.ramp / 255;
-			f = BASE_S0 + OSC_S0 * cycle_0P0N0(w) * ff;
+			w = st.w0 - i * w_ofs * st.ramp / 255;
+			f = base_s0 + osc_s0 * cycle_0P0N0(w);
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
 			lightbar_setrgb(i, r, g, b);
 		}
-
-		/* Move gradually towards the target amplitude */
-		target_amp = st.battery_is_charging ? 0xff : 0x80;
-		if (st.amp > target_amp)
-			st.amp--;
-		else if (st.amp < target_amp)
-			st.amp++;
 
 		/* Increment the phase */
 		if (st.battery_is_charging)
@@ -1185,13 +1182,22 @@ static void show_params(const struct lightbar_params *p)
 	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
 	ccprintf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
 	ccprintf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
-	ccprintf("%d\t\t# .w_ofs\n", p->w_ofs);
+	ccprintf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
+		 p->osc_min[0], p->osc_min[1]);
+	ccprintf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",
+		 p->osc_max[0], p->osc_max[1]);
+	ccprintf("%d %d\t\t# .w_ofs (battery, AC)\n",
+		 p->w_ofs[0], p->w_ofs[1]);
 	ccprintf("0x%02x 0x%02x\t# .bright_bl_off_fixed (battery, AC)\n",
 		 p->bright_bl_off_fixed[0], p->bright_bl_off_fixed[1]);
 	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_min (battery, AC)\n",
 		 p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
 	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
 		 p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
+	ccprintf("%d %d %d\t\t# .battery_threshold\n",
+		 p->battery_threshold[0],
+		 p->battery_threshold[1],
+		 p->battery_threshold[2]);
 	ccprintf("%d %d %d %d\t\t# .s0_idx[] (battery)\n",
 		 p->s0_idx[0][0], p->s0_idx[0][1],
 		 p->s0_idx[0][2], p->s0_idx[0][3]);
