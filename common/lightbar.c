@@ -167,11 +167,9 @@ static struct p_state {
 	int battery_is_charging;
 
 	/* Pattern variables for state S0. */
-	uint8_t w0;				/* primary phase */
-	uint8_t ramp;				/* ramp-in for S3->S0 */
+	uint16_t w0;				/* primary phase */
 
-	uint8_t _pad0;				/* next item is __packed */
-	uint8_t _pad1;				/* next item is __packed */
+	uint16_t _pad0;				/* next item is __packed */
 
 	/* Tweakable parameters */
 	struct lightbar_params p;
@@ -181,7 +179,7 @@ static const struct lightbar_params default_params = {
 	.google_ramp_up = 2500,
 	.google_ramp_down = 10000,
 	.s3s0_ramp_up = 2000,
-	.s0_tick_delay = { 45000, 30000 },	/* battery, AC */
+	.s0_tick_delay = { 5000, 3000 },	/* battery, AC */
 	.s0s3_ramp_down = 2000,
 	.s3_sleep_for = 15000000,		/* between checks */
 	.s3_tick_delay = 15000,
@@ -238,7 +236,6 @@ static void lb_restore_state(void)
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
 		st.battery_level = LB_BATTERY_LEVELS - 1;
 		st.w0 = 0;
-		st.ramp = 0;
 		memcpy(&st.p, &default_params, sizeof(st.p));
 		CPRINTF("[%T LB state initialized]\n");
 	}
@@ -422,11 +419,12 @@ static inline float cycle_010(uint8_t i)
 	return i < 128 ? _ramp_table[i] : _ramp_table[256-i];
 }
 
-/* This function provides a smooth oscillation between -0.5 and +0.5.
- * Zero starts at 0x00. */
-static inline float cycle_0P0N0(uint8_t i)
+/* This function provides a smooth oscillation between -0.5 and +0.5. */
+static inline float cycle_NPN(uint16_t i)
 {
-	return cycle_010(i+64) - 0.5f;
+	if ((i / 256) % 4)
+		return -0.5f;
+	return cycle_010(i) - 0.5f;
 }
 
 /******************************************************************************/
@@ -486,7 +484,7 @@ static uint32_t pulse_google_colors(void)
 static uint32_t sequence_S3S0(void)
 {
 	int w, r, g, b;
-	float f, fmin, fmax, base_s0;
+	float f, fmin;
 	int ci;
 	uint32_t res;
 
@@ -497,18 +495,16 @@ static uint32_t sequence_S3S0(void)
 	if (res)
 		return res;
 
-	/* Ramp up to base brightness, using S0 colors */
+	/* Ramp up to starting brightness, using S0 colors */
 	get_battery_level();
 	ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
 	if (ci >= ARRAY_SIZE(st.p.color))
 		ci = 0;
 
 	fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
-	fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
-	base_s0 = (fmax + fmin) * 0.5f;
 
 	for (w = 0; w <= 128; w++) {
-		f = cycle_010(w) * base_s0;
+		f = cycle_010(w) * fmin;
 		r = st.p.color[ci].r * f;
 		g = st.p.color[ci].g * f;
 		b = st.p.color[ci].b * f;
@@ -518,7 +514,6 @@ static uint32_t sequence_S3S0(void)
 
 	/* Initial conditions */
 	st.w0 = 0;
-	st.ramp = 0;
 
 	/* Ready for S0 */
 	return 0;
@@ -531,7 +526,8 @@ static uint32_t sequence_S0(void)
 	timestamp_t start, now;
 	uint32_t r, g, b;
 	int i, ci;
-	uint8_t w, w_ofs;
+	uint8_t w_ofs;
+	uint16_t w;
 	float f, fmin, fmax, base_s0, osc_s0;
 
 	start = get_time();
@@ -563,8 +559,8 @@ static uint32_t sequence_S0(void)
 		osc_s0 = fmax - fmin;
 
 		for (i = 0; i < NUM_LEDS; i++) {
-			w = st.w0 - i * w_ofs * st.ramp / 255;
-			f = base_s0 + osc_s0 * cycle_0P0N0(w);
+			w = st.w0 - i * w_ofs;
+			f = base_s0 + osc_s0 * cycle_NPN(w);
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
@@ -576,10 +572,6 @@ static uint32_t sequence_S0(void)
 			st.w0--;
 		else
 			st.w0++;
-
-		/* Continue ramping in if needed */
-		if (st.ramp < 0xff)
-			st.ramp++;
 
 		WAIT_OR_RET(st.p.s0_tick_delay[st.battery_is_charging]);
 	}
