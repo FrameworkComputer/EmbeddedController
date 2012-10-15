@@ -168,8 +168,9 @@ static struct p_state {
 
 	/* Pattern variables for state S0. */
 	uint16_t w0;				/* primary phase */
+	uint8_t ramp;				/* ramp-in for S3->S0 */
 
-	uint16_t _pad0;				/* next item is __packed */
+	uint8_t _pad0;				/* next item is __packed */
 
 	/* Tweakable parameters */
 	struct lightbar_params p;
@@ -179,10 +180,13 @@ static const struct lightbar_params default_params = {
 	.google_ramp_up = 2500,
 	.google_ramp_down = 10000,
 	.s3s0_ramp_up = 2000,
-	.s0_tick_delay = { 5000, 3000 },	/* battery, AC */
+	.s0_tick_delay = { 45000, 30000 },	/* battery, AC */
+	.s0a_tick_delay = { 5000, 3000 },	/* battery, AC */
 	.s0s3_ramp_down = 2000,
 	.s3_sleep_for = 15000000,		/* between checks */
 	.s3_tick_delay = 15000,
+
+	.new_s0 = 1,				/* 0=gentle, 1=pulse */
 
 	.osc_min = { 0x40, 0x40 },		/* battery, AC */
 	.osc_max = { 0xff, 0xff },		/* battery, AC */
@@ -236,6 +240,7 @@ static void lb_restore_state(void)
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
 		st.battery_level = LB_BATTERY_LEVELS - 1;
 		st.w0 = 0;
+		st.ramp = 0;
 		memcpy(&st.p, &default_params, sizeof(st.p));
 		CPRINTF("[%T LB state initialized]\n");
 	}
@@ -419,7 +424,15 @@ static inline float cycle_010(uint8_t i)
 	return i < 128 ? _ramp_table[i] : _ramp_table[256-i];
 }
 
-/* This function provides a smooth oscillation between -0.5 and +0.5. */
+/* This function provides a smooth oscillation between -0.5 and +0.5.
+ * Zero starts at 0x00. */
+static inline float cycle_0P0N0(uint16_t i)
+{
+	uint8_t i8 = i & 0x00FF;
+	return cycle_010(i8+64) - 0.5f;
+}
+
+/* This function provides a pulsing oscillation between -0.5 and +0.5. */
 static inline float cycle_NPN(uint16_t i)
 {
 	if ((i / 256) % 4)
@@ -484,7 +497,7 @@ static uint32_t pulse_google_colors(void)
 static uint32_t sequence_S3S0(void)
 {
 	int w, r, g, b;
-	float f, fmin;
+	float f, fmin, fmax, base_s0, goal;
 	int ci;
 	uint32_t res;
 
@@ -502,9 +515,12 @@ static uint32_t sequence_S3S0(void)
 		ci = 0;
 
 	fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
+	fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
+	base_s0 = (fmax + fmin) * 0.5f;
+	goal = st.p.new_s0 ? fmin : base_s0;
 
 	for (w = 0; w <= 128; w++) {
-		f = cycle_010(w) * fmin;
+		f = cycle_010(w) * goal;
 		r = st.p.color[ci].r * f;
 		g = st.p.color[ci].g * f;
 		b = st.p.color[ci].b * f;
@@ -514,6 +530,7 @@ static uint32_t sequence_S3S0(void)
 
 	/* Initial conditions */
 	st.w0 = 0;
+	st.ramp = 0;
 
 	/* Ready for S0 */
 	return 0;
@@ -524,11 +541,11 @@ static uint32_t sequence_S0(void)
 {
 	int tick, last_tick;
 	timestamp_t start, now;
-	uint32_t r, g, b;
+	uint8_t r, g, b;
 	int i, ci;
 	uint8_t w_ofs;
 	uint16_t w;
-	float f, fmin, fmax, base_s0, osc_s0;
+	float f, fmin, fmax, base_s0, osc_s0, f_ramp;
 
 	start = get_time();
 	tick = last_tick = 0;
@@ -557,10 +574,16 @@ static uint32_t sequence_S0(void)
 		fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
 		base_s0 = (fmax + fmin) * 0.5f;
 		osc_s0 = fmax - fmin;
+		f_ramp = st.ramp / 255.0f;
 
 		for (i = 0; i < NUM_LEDS; i++) {
-			w = st.w0 - i * w_ofs;
-			f = base_s0 + osc_s0 * cycle_NPN(w);
+			if (st.p.new_s0) {
+				w = st.w0 - i * w_ofs;
+				f = base_s0 + osc_s0 * cycle_NPN(w);
+			} else {
+				w = st.w0 - i * w_ofs * f_ramp;
+				f = base_s0 + osc_s0 * cycle_0P0N0(w) * f_ramp;
+			}
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
@@ -573,7 +596,13 @@ static uint32_t sequence_S0(void)
 		else
 			st.w0++;
 
-		WAIT_OR_RET(st.p.s0_tick_delay[st.battery_is_charging]);
+		/* Continue ramping in if needed */
+		if (st.ramp < 0xff)
+			st.ramp++;
+
+		i = st.p.new_s0 ? st.p.s0a_tick_delay[st.battery_is_charging]
+			: st.p.s0_tick_delay[st.battery_is_charging];
+		WAIT_OR_RET(i);
 	}
 	return 0;
 }
@@ -1171,9 +1200,12 @@ static void show_params(const struct lightbar_params *p)
 	ccprintf("%d\t\t# .s3s0_ramp_up\n", p->s3s0_ramp_up);
 	ccprintf("%d\t\t# .s0_tick_delay (battery)\n", p->s0_tick_delay[0]);
 	ccprintf("%d\t\t# .s0_tick_delay (AC)\n", p->s0_tick_delay[1]);
+	ccprintf("%d\t\t# .s0a_tick_delay (battery)\n", p->s0a_tick_delay[0]);
+	ccprintf("%d\t\t# .s0a_tick_delay (AC)\n", p->s0a_tick_delay[1]);
 	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
 	ccprintf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
 	ccprintf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
+	ccprintf("%d\t\t# .new_s0\n", p->new_s0);
 	ccprintf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
 		 p->osc_min[0], p->osc_min[1]);
 	ccprintf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",

@@ -635,11 +635,13 @@ struct lightbar_params {
 	int google_ramp_down;
 	int s3s0_ramp_up;
 	int s0_tick_delay[2];			/* AC=0/1 */
+	int s0a_tick_delay[2];			/* AC=0/1 */
 	int s0s3_ramp_down;
 	int s3_sleep_for;
 	int s3_tick_delay;
 
 	/* Oscillation */
+	uint8_t new_s0;
 	uint8_t osc_min[2];			/* AC=0/1 */
 	uint8_t osc_max[2];			/* AC=0/1 */
 	uint8_t w_ofs[2];			/* AC=0/1 */

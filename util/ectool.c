@@ -1167,9 +1167,12 @@ static int lb_read_params_from_file(const char *filename,
 	READ(1); p->s3s0_ramp_up = val[0];
 	READ(1); p->s0_tick_delay[0] = val[0];
 	READ(1); p->s0_tick_delay[1] = val[0];
+	READ(1); p->s0a_tick_delay[0] = val[0];
+	READ(1); p->s0a_tick_delay[1] = val[0];
 	READ(1); p->s0s3_ramp_down = val[0];
 	READ(1); p->s3_sleep_for = val[0];
 	READ(1); p->s3_tick_delay = val[0];
+	READ(1); p->new_s0 = val[0];
 
 	READ(2);
 	p->osc_min[0] = val[0];
@@ -1248,9 +1251,12 @@ static void lb_show_params(const struct lightbar_params *p)
 	printf("%d\t\t# .s3s0_ramp_up\n", p->s3s0_ramp_up);
 	printf("%d\t\t# .s0_tick_delay (battery)\n", p->s0_tick_delay[0]);
 	printf("%d\t\t# .s0_tick_delay (AC)\n", p->s0_tick_delay[1]);
+	printf("%d\t\t# .s0a_tick_delay (battery)\n", p->s0a_tick_delay[0]);
+	printf("%d\t\t# .s0a_tick_delay (AC)\n", p->s0a_tick_delay[1]);
 	printf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
 	printf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
 	printf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
+	printf("%d\t\t# .new_s0\n", p->new_s0);
 	printf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
 	       p->osc_min[0], p->osc_min[1]);
 	printf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",
