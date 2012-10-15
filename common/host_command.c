@@ -18,8 +18,8 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
+#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
 
 #define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
 
