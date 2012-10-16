@@ -112,7 +112,7 @@ static inline uint8_t scale_abs(int val, int max)
 }
 
 /* It will often be simpler to provide an overall brightness control. */
-static int brightness = 0xff;
+static int brightness = 0xc0;
 
 
 /* So that we can make brightness changes happen instantly, we need to track
@@ -183,23 +183,23 @@ static const struct lightbar_params default_params = {
 	.s0_tick_delay = { 45000, 30000 },	/* battery, AC */
 	.s0a_tick_delay = { 5000, 3000 },	/* battery, AC */
 	.s0s3_ramp_down = 2000,
-	.s3_sleep_for = 15000000,		/* between checks */
+	.s3_sleep_for = 5000000,		/* between checks */
 	.s3_tick_delay = 15000,
 
 	.new_s0 = 1,				/* 0=gentle, 1=pulse */
 
-	.osc_min = { 0x40, 0x40 },		/* battery, AC */
-	.osc_max = { 0xff, 0xff },		/* battery, AC */
+	.osc_min = { 0x60, 0x60 },		/* battery, AC */
+	.osc_max = { 0xd0, 0xd0 },		/* battery, AC */
 	.w_ofs = {24, 24},			/* phase offset, 256 == 2*PI */
 
-	.bright_bl_off_fixed = {0x80, 0x80},	/* backlight off: battery, AC */
-	.bright_bl_on_min = {0x60, 0x60},	/* backlight on: battery, AC */
-	.bright_bl_on_max = {0xff, 0xff},	/* backlight on: battery, AC */
+	.bright_bl_off_fixed = {0x80, 0xc0},	/* backlight off: battery, AC */
+	.bright_bl_on_min = {0x80, 0xc0},	/* backlight on: battery, AC */
+	.bright_bl_on_max = {0x80, 0xc0},	/* backlight on: battery, AC */
 
 	.battery_threshold = { 10, 40, 99 },	/* percent, lowest to highest */
 	.s0_idx = {
 		{ 5, 4, 4, 4 },		/* battery: 0 = red, other = blue */
-		{ 5, 4, 4, 4 }		/* AC: 0 = red, other = blue */
+		{ 4, 4, 4, 4 }		/* AC: always blue */
 	},
 	.s3_idx = {
 		{ 5, 0xff, 0xff, 0xff },       /* battery: 0 = red, else off */
@@ -263,7 +263,7 @@ static int demo_mode;
 static void get_battery_level(void)
 {
 	int pct = 0;
-	int i;
+	int i, bl;
 
 	if (demo_mode)
 		return;
@@ -273,11 +273,21 @@ static void get_battery_level(void)
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif
 
-	/* Find the current battery level */
-	st.battery_level = 0;
+
+	/* Find the new battery level */
+	bl = 0;
 	for (i = 0; i < LB_BATTERY_LEVELS - 1; i++)
 		if (pct >= st.p.battery_threshold[i])
-			st.battery_level++;
+			bl++;
+
+	/* Use some hysteresis to avoid flickering */
+	if (bl > st.battery_level
+	    && pct >= (st.p.battery_threshold[bl-1] + 1))
+		st.battery_level = bl;
+	else if (bl < st.battery_level &&
+		 pct <= (st.p.battery_threshold[bl] - 1))
+		st.battery_level = bl;
+
 
 #ifdef CONFIG_TASK_PWM
 	/* With nothing else to go on, use the keyboard backlight level to
@@ -503,13 +513,13 @@ static uint32_t sequence_S3S0(void)
 
 	lightbar_init_vals();
 	lightbar_on();
+	get_battery_level();
 
 	res = pulse_google_colors();
 	if (res)
 		return res;
 
 	/* Ramp up to starting brightness, using S0 colors */
-	get_battery_level();
 	ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
 	if (ci >= ARRAY_SIZE(st.p.color))
 		ci = 0;
@@ -529,7 +539,7 @@ static uint32_t sequence_S3S0(void)
 	}
 
 	/* Initial conditions */
-	st.w0 = 0;
+	st.w0 = -256;				/* start cycle_NPN() quietly */
 	st.ramp = 0;
 
 	/* Ready for S0 */
@@ -578,7 +588,7 @@ static uint32_t sequence_S0(void)
 
 		for (i = 0; i < NUM_LEDS; i++) {
 			if (st.p.new_s0) {
-				w = st.w0 - i * w_ofs;
+				w = st.w0 - i * w_ofs * f_ramp;
 				f = base_s0 + osc_s0 * cycle_NPN(w);
 			} else {
 				w = st.w0 - i * w_ofs * f_ramp;
@@ -655,14 +665,24 @@ static uint32_t sequence_S3(void)
 
 		/* pulse once */
 		lightbar_on();
-		for (w = 0; w < 255; w += 5) {
+
+		for (w = 0; w < 128; w += 2) {
 			f = cycle_010(w);
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(st.p.s3_tick_delay);
+			WAIT_OR_RET(st.p.google_ramp_up);
 		}
+		for (w = 128; w <= 256; w++) {
+			f = cycle_010(w);
+			r = st.p.color[ci].r * f;
+			g = st.p.color[ci].g * f;
+			b = st.p.color[ci].b * f;
+			lightbar_setrgb(NUM_LEDS, r, g, b);
+			WAIT_OR_RET(st.p.google_ramp_down);
+		}
+
 		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
 		lightbar_off();
 	}
