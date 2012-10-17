@@ -243,8 +243,9 @@ void enter_polling_mode(void)
  * Check special runtime key combinations.
  *
  * @param state		Keyboard state to use when checking keys.
+ * @return 1 if a special key was pressed, 0 if not
  */
-static void check_runtime_keys(const uint8_t *state)
+static int check_runtime_keys(const uint8_t *state)
 {
 	int num_press;
 	int c;
@@ -256,7 +257,7 @@ static void check_runtime_keys(const uint8_t *state)
 	}
 
 	if (num_press != 3)
-		return;
+		return 0;
 
 	if (state[MASK_INDEX_KEYR] == MASK_VALUE_KEYR &&
 			state[MASK_INDEX_VOL_UP] == MASK_VALUE_VOL_UP &&
@@ -264,7 +265,10 @@ static void check_runtime_keys(const uint8_t *state)
 			state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT)) {
 		keyboard_clear_state();
 		system_warm_reboot();
+		return 1;
 	}
+
+	return 0;
 }
 
 /* Print the keyboard state. */
@@ -441,9 +445,10 @@ static int check_keys_changed(uint8_t *state)
 		CPRINTF("\n");
 #endif
 
-		check_runtime_keys(state);
-
-		if (kb_fifo_add(state) == EC_SUCCESS)
+		/* Swallow special keys */
+		if (check_runtime_keys(state))
+			return 0;
+		else if (kb_fifo_add(state) == EC_SUCCESS)
 			board_interrupt_host(1);
 		else
 			CPRINTF("dropped keystroke\n");
