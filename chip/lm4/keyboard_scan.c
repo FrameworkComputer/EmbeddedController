@@ -67,6 +67,12 @@ static const uint8_t actual_key_masks[4][KB_COLS] = {
 	{0},
 	};
 
+/*
+ * Print all keyboard scan state changes?  Off by default because it generates
+ * a lot of debug output, which makes the saved EC console data less useful.
+ */
+static int print_state_changes;
+
 /* Key masks for special boot keys */
 #define MASK_INDEX_REFRESH 2
 #define MASK_VALUE_REFRESH 0x04
@@ -322,7 +328,7 @@ static int check_keys_changed(uint8_t *state)
 		}
 	}
 
-	if (any_change) {
+	if (any_change && print_state_changes) {
 		print_state(state, "state");
 
 #ifdef PRINT_SCAN_TIMES
@@ -510,3 +516,30 @@ void keyboard_enable_scanning(int enable)
 		keyboard_clear_underlying_buffer();
 	}
 }
+
+/*****************************************************************************/
+/* Console commands*/
+
+static int command_ksstate(int argc, char **argv)
+{
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "on"))
+			print_state_changes = 1;
+		else if (!strcasecmp(argv[1], "off"))
+			print_state_changes = 0;
+		else
+			return EC_ERROR_PARAM1;
+	} else {
+		print_state(debounced_state, "debounced ");
+		print_state(prev_state, "prev      ");
+		print_state(debouncing, "debouncing");
+	}
+
+	ccprintf("Keyboard scan state printing %s\n",
+		 print_state_changes ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate,
+			"ksstate [on | off]",
+			"Show or toggle printing keyboard scan state",
+			NULL);
