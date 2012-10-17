@@ -639,7 +639,8 @@ struct lightbar_params {
 	int s0a_tick_delay[2];			/* AC=0/1 */
 	int s0s3_ramp_down;
 	int s3_sleep_for;
-	int s3_tick_delay;
+	int s3_ramp_up;
+	int s3_ramp_down;
 
 	/* Oscillation */
 	uint8_t new_s0;

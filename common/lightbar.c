@@ -184,7 +184,8 @@ static const struct lightbar_params default_params = {
 	.s0a_tick_delay = { 5000, 3000 },	/* battery, AC */
 	.s0s3_ramp_down = 2000,
 	.s3_sleep_for = 5000000,		/* between checks */
-	.s3_tick_delay = 15000,
+	.s3_ramp_up = 2500,
+	.s3_ramp_down = 10000,
 
 	.new_s0 = 1,				/* 0=gentle, 1=pulse */
 
@@ -672,7 +673,7 @@ static uint32_t sequence_S3(void)
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(st.p.google_ramp_up);
+			WAIT_OR_RET(st.p.s3_ramp_up);
 		}
 		for (w = 128; w <= 256; w++) {
 			f = cycle_010(w);
@@ -680,7 +681,7 @@ static uint32_t sequence_S3(void)
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
 			lightbar_setrgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(st.p.google_ramp_down);
+			WAIT_OR_RET(st.p.s3_ramp_down);
 		}
 
 		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
@@ -1224,7 +1225,8 @@ static void show_params(const struct lightbar_params *p)
 	ccprintf("%d\t\t# .s0a_tick_delay (AC)\n", p->s0a_tick_delay[1]);
 	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
 	ccprintf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
-	ccprintf("%d\t\t# .s3_tick_delay\n", p->s3_tick_delay);
+	ccprintf("%d\t\t# .s3_ramp_up\n", p->s3_ramp_up);
+	ccprintf("%d\t\t# .s3_ramp_down\n", p->s3_ramp_down);
 	ccprintf("%d\t\t# .new_s0\n", p->new_s0);
 	ccprintf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
 		 p->osc_min[0], p->osc_min[1]);
