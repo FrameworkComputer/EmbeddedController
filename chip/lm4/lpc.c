@@ -236,7 +236,7 @@ void lpc_keyboard_resume_irq(void)
 
 int lpc_comx_has_char(void)
 {
-	return LM4_LPC_ST(LPC_CH_COMX) & 0x02;
+	return LM4_LPC_ST(LPC_CH_COMX) & LM4_LPC_ST_FRMH;
 }
 
 
@@ -450,10 +450,28 @@ DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
 		     EC_VER_MASK(0));
 
 
-/* Handle an incoming host command */
-static void handle_host_command(int cmd)
+/**
+ * Handle write to host command I/O ports.
+ *
+ * @param is_cmd	Is write command (1) or data (0)?
+ */
+static void handle_host_write(int is_cmd)
 {
-	host_cmd_args.command = cmd;
+	/* Ignore data writes */
+	if (!is_cmd) {
+		LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_FRMH;
+		return;
+	}
+
+	/* Set the busy bit */
+	LM4_LPC_ST(LPC_CH_CMD) |= LM4_LPC_ST_BUSY;
+
+	/*
+	 * Read the command byte.  This clears the FRMH bit in
+	 * the status byte.
+	 */
+	host_cmd_args.command = LPC_POOL_CMD[0];
+
 	host_cmd_args.result = EC_RES_SUCCESS;
 	host_cmd_args.send_response = lpc_send_response;
 	host_cmd_args.flags = lpc_host_args->flags;
@@ -515,28 +533,21 @@ static void handle_host_command(int cmd)
 static void lpc_interrupt(void)
 {
 	uint32_t mis = LM4_LPC_LPCMIS;
+	uint32_t st;
 
 	/* Clear the interrupt bits we're handling */
 	LM4_LPC_LPCIC = mis;
 
 #ifdef CONFIG_TASK_HOSTCMD
 	/* Handle ACPI command and data writes */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_ACPI, 4))
-		handle_acpi_write(1);
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_ACPI, 2))
-		handle_acpi_write(0);
+	st = LM4_LPC_ST(LPC_CH_ACPI);
+	if (st & LM4_LPC_ST_FRMH)
+		handle_acpi_write(st & LM4_LPC_ST_CMD);
 
 	/* Handle user command writes */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_CMD, 4)) {
-		/* Set the busy bit */
-		LM4_LPC_ST(LPC_CH_CMD) |= LM4_LPC_ST_BUSY;
-
-		/*
-		 * Read the command byte.  This clears the FRMH bit in the
-		 * status byte.
-		 */
-		handle_host_command(LPC_POOL_CMD[0]);
-	}
+	st = LM4_LPC_ST(LPC_CH_CMD);
+	if (st & LM4_LPC_ST_FRMH)
+		handle_host_write(st & LM4_LPC_ST_CMD);
 #endif
 
 	/*
@@ -550,31 +561,26 @@ static void lpc_interrupt(void)
 		port_80_write(LPC_POOL_PORT80[0]);
 
 #ifdef CONFIG_TASK_I8042CMD
-	/* Handle port 60 command (CH3MIS2) and data (CH3MIS1) */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 2)) {
-		/* Read the data byte and pass to the i8042 handler.
-		 * This clears the FRMH bit in the status byte. */
-		i8042_receives_data(LPC_POOL_KEYBOARD[0]);
+	/* Handle keyboard interface writes */
+	st = LM4_LPC_ST(LPC_CH_KEYBOARD);
+	if (st & LM4_LPC_ST_FRMH) {
+		if (st & LM4_LPC_ST_CMD)
+			i8042_receives_command(LPC_POOL_KEYBOARD[0]);
+		else
+			i8042_receives_data(LPC_POOL_KEYBOARD[0]);
 	}
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 4)) {
-		/* Read the command byte and pass to the i8042 handler.
-		 * This clears the FRMH bit in the status byte. */
-		i8042_receives_command(LPC_POOL_KEYBOARD[0]);
-	}
+
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 1)) {
-		/* Host picks up the data, try to send remaining bytes */
+		/* Host read data; wake up task to send remaining bytes */
 		task_wake(TASK_ID_I8042CMD);
 	}
 #endif
 
 	/* Handle COMx */
-	if (mis & LM4_LPC_INT_MASK(LPC_CH_COMX, 2)) {
-		/* Handle host writes */
-		if (lpc_comx_has_char()) {
-			/* Copy a character to the UART if there's space */
-			if (uart_comx_putc_ok())
-				uart_comx_putc(lpc_comx_get_char());
-		}
+	if (lpc_comx_has_char()) {
+		/* Copy a character to the UART if there's space */
+		if (uart_comx_putc_ok())
+			uart_comx_putc(lpc_comx_get_char());
 	}
 
 	/* Debugging: print changes to LPC0RESET */
@@ -800,3 +806,16 @@ static int lpc_resume(void)
 	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
+
+void lpc_task(void)
+{
+	while (1) {
+		usleep(250000);
+		/*
+		 * Make sure pending LPC interrupts have been processed.
+		 * This works around a LM4 bug where host writes sometimes
+		 * don't trigger interrupts.  See crosbug.com/p/13965.
+		 */
+		task_trigger_irq(LM4_IRQ_LPC);
+	}
+}

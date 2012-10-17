@@ -16,6 +16,7 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK(WATCHDOG, watchdog_task, NULL, WATCHDOG_TASK_STACK_SIZE) \
+	TASK(LPC, lpc_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK(LIGHTBAR, lightbar_task, NULL, TASK_STACK_SIZE) \
 	TASK(POWERSTATE, charge_state_machine_task, NULL, TASK_STACK_SIZE) \
