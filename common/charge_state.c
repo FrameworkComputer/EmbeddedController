@@ -179,9 +179,7 @@ static int state_common(struct power_state_context *ctx)
 	if (rv) {
 		/* Check low battery condition and retry */
 		if (curr->ac && ctx->battery_present == 1 &&
-				!(curr->error & F_CHARGER_MASK) &&
-				(curr->charging_voltage == 0 ||
-				curr->charging_current == 0)) {
+				!(curr->error & F_CHARGER_MASK)) {
 			ctx->battery_present = 0;
 			/*
 			 * Try to revive ultra low voltage pack.
