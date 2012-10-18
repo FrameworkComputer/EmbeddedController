@@ -37,7 +37,7 @@ enum hibdata_index {
  * EC itself, but we need a longer delay to ensure the rest of the components
  * on the same power rail are reset.
  */
-#define HIB_RESET_USEC 100000
+#define HIB_RESET_USEC 150000
 
 static int wait_for_hibctl_wc(void)
 {
