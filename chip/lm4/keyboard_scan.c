@@ -328,8 +328,9 @@ static int check_keys_changed(uint8_t *state)
 		}
 	}
 
-	if (any_change && print_state_changes) {
-		print_state(state, "state");
+	if (any_change) {
+		if (print_state_changes)
+			print_state(state, "state");
 
 #ifdef PRINT_SCAN_TIMES
 		/* Print delta times from now back to each previous scan */
