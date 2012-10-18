@@ -23,12 +23,12 @@
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
 /* Constants for calculating target object temperatures */
-const float A1 = 1.75e-3f;
-const float A2 = -1.678e-5f;
-const float B0 = -2.94e-5f;
-const float B1 = -5.7e-7f;
-const float B2 = 4.63e-9f;
-const float C2 = 13.4f;
+static const float A1 = 1.75e-3f;
+static const float A2 = -1.678e-5f;
+static const float B0 = -2.94e-5f;
+static const float B1 = -5.7e-7f;
+static const float B2 = 4.63e-9f;
+static const float C2 = 13.4f;
 
 /* Defined in board_temp_sensor.c. */
 extern const struct tmp006_t tmp006_sensors[TMP006_COUNT];
