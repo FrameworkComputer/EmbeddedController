@@ -35,7 +35,8 @@ static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
-static uint8_t params_copy[EC_HOST_PARAM_SIZE];
+/* Params must be 32-bit aligned */
+static uint8_t params_copy[EC_HOST_PARAM_SIZE] __attribute__((aligned(4)));
 static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
