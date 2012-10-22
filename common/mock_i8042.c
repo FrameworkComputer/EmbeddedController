@@ -9,20 +9,11 @@
 #include "timer.h"
 #include "uart.h"
 
-
-void i8042_receives_data(int data)
+void i8042_receive(int data, int is_cmd)
 {
 	/* Not implemented */
 	return;
 }
-
-
-void i8042_receives_command(int cmd)
-{
-	/* Not implemented */
-	return;
-}
-
 
 void i8042_command_task(void)
 {
@@ -30,7 +21,6 @@ void i8042_command_task(void)
 	while (1)
 		usleep(5000000);
 }
-
 
 enum ec_error_list i8042_send_to_host(int len, const uint8_t *bytes)
 {
@@ -42,18 +32,11 @@ enum ec_error_list i8042_send_to_host(int len, const uint8_t *bytes)
 	return EC_SUCCESS;
 }
 
-
-void i8042_enable_keyboard_irq(void) {
+void i8042_enable_keyboard_irq(int enable)
+{
 	/* Not implemented */
 	return;
 }
-
-
-void i8042_disable_keyboard_irq(void) {
-	/* Not implemented */
-	return;
-}
-
 
 void i8042_flush_buffer()
 {

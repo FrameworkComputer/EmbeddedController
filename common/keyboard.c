@@ -8,11 +8,11 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "ec_commands.h"
-#include "keyboard.h"
-#include "i8042.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "i8042.h"
+#include "i8042_protocol.h"
+#include "keyboard.h"
 #include "lightbar.h"
 #include "lpc.h"
 #include "registers.h"
@@ -345,7 +345,7 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 	if (addr == 0x00) {  /* the controller RAM */
 		/* Enable IRQ before enable keyboard (queue chars to host) */
 		if (!(orig & I8042_ENIRQ1) && (data & I8042_ENIRQ1))
-			i8042_enable_keyboard_irq();
+			i8042_enable_keyboard_irq(1);
 
 		/* Handle the I8042_KBD_DIS bit */
 		keyboard_enable(!(data & I8042_KBD_DIS));
@@ -353,7 +353,7 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 		/* Disable IRQ after disable keyboard so that every char
 		 * must have informed the host. */
 		if ((orig & I8042_ENIRQ1) && !(data & I8042_ENIRQ1))
-			i8042_disable_keyboard_irq();
+			i8042_enable_keyboard_irq(0);
 	}
 }
 
@@ -677,7 +677,6 @@ static void keyboard_special(uint16_t k)
 void keyboard_set_power_button(int pressed)
 {
 	enum scancode_set_list code_set;
-	enum ec_error_list ret;
 	uint8_t code[2][2][3] = {
 		{  /* set 1 */
 			{0xe0, 0xde},        /* break */
@@ -696,10 +695,9 @@ void keyboard_set_power_button(int pressed)
 
 	code_set = acting_code_set(scancode_set);
 	if (keyboard_enabled) {
-		ret = i8042_send_to_host(
+		i8042_send_to_host(
 			 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
 			 code[code_set - SCANCODE_SET_1][pressed]);
-		ASSERT(ret == EC_SUCCESS);
 	}
 }
 

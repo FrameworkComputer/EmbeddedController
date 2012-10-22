@@ -564,12 +564,8 @@ static void lpc_interrupt(void)
 #ifdef CONFIG_TASK_I8042CMD
 	/* Handle keyboard interface writes */
 	st = LM4_LPC_ST(LPC_CH_KEYBOARD);
-	if (st & LM4_LPC_ST_FRMH) {
-		if (st & LM4_LPC_ST_CMD)
-			i8042_receives_command(LPC_POOL_KEYBOARD[0]);
-		else
-			i8042_receives_data(LPC_POOL_KEYBOARD[0]);
-	}
+	if (st & LM4_LPC_ST_FRMH)
+		i8042_receive(LPC_POOL_KEYBOARD[0], st & LM4_LPC_ST_CMD);
 
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 1)) {
 		/* Host read data; wake up task to send remaining bytes */
