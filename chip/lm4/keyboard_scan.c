@@ -56,16 +56,10 @@ static uint8_t scan_edge_index[KB_COLS][8];
 enum boot_key boot_key_value = BOOT_KEY_OTHER;
 
 /* Mask with 1 bits only for keys that actually exist */
-static const uint8_t *actual_key_mask;
-
-/* All actual key masks (todo: move to keyboard matrix definition) */
-static const uint8_t actual_key_masks[4][KB_COLS] = {
-	{0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-	 0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8},  /* full set */
-	{0},
-	{0},
-	{0},
-	};
+static const uint8_t actual_key_mask[KB_COLS] = {
+	0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+	0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
+};
 
 /*
  * Print all keyboard scan state changes?  Off by default because it generates
@@ -416,19 +410,13 @@ enum boot_key keyboard_scan_get_boot_key(void)
 	return boot_key_value;
 }
 
-int keyboard_scan_init(void)
+void keyboard_scan_init(void)
 {
 	/* Configure GPIO */
 	lm4_configure_keyboard_gpio();
 
 	/* Tri-state the columns */
 	lm4_select_column(COLUMN_TRI_STATE_ALL);
-
-	/*
-	 * TODO: method to set which keyboard we have, so we set the actual
-	 * key mask properly.
-	 */
-	actual_key_mask = actual_key_masks[0];
 
 	/* Initialize raw state */
 	read_matrix(debounced_state);
@@ -440,8 +428,6 @@ int keyboard_scan_init(void)
 	/* Trigger event if recovery key was pressed */
 	if (boot_key_value == BOOT_KEY_ESC)
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-
-	return EC_SUCCESS;
 }
 
 void keyboard_scan_task(void)

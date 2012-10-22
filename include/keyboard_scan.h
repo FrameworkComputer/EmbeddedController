@@ -11,7 +11,7 @@
 #include "common.h"
 
 /* Initializes the module. */
-int keyboard_scan_init(void);
+void keyboard_scan_init(void);
 
 /* Key held down at keyboard-controlled reset boot time. */
 enum boot_key {

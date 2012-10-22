@@ -499,7 +499,7 @@ static int check_recovery_key(const uint8_t *state)
 }
 
 
-int keyboard_scan_init(void)
+void keyboard_scan_init(void)
 {
 	/* Tri-state (put into Hi-Z) the outputs */
 	select_column(COL_TRI_STATE_ALL);
@@ -510,8 +510,6 @@ int keyboard_scan_init(void)
 
 	/* is recovery key pressed on cold startup ? */
 	check_recovery_key(debounced_state);
-
-	return EC_SUCCESS;
 }
 
 /* Scan the keyboard until all keys are released */
