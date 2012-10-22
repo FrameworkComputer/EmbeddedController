@@ -111,7 +111,7 @@ const char help_str[] =
 	"      Set keyboard backlight in percent\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
-	"  reboot_ec <RO|RW|disable-jump> [at-shutdown]\n"
+	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
 	"      Reboot EC to RO or RW\n"
 	"  rtcget\n"
 	"      Print real-time clock\n"
