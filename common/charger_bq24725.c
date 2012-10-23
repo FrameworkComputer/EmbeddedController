@@ -5,7 +5,6 @@
  * TI bq24725 battery charger driver.
  */
 
-#include "board.h"
 #include "charger.h"
 #include "charger_bq24725.h"
 #include "console.h"
@@ -44,7 +43,7 @@ static const struct charger_info bq24725_charger_info = {
 static int charger_set_input_current(int input_current)
 {
 	return sbc_write(BQ24725_INPUT_CURRENT,
-		CURRENT_TO_REG(input_current, R_AC));
+			 CURRENT_TO_REG(input_current, R_AC));
 }
 
 static int charger_get_input_current(int *input_current)
@@ -81,7 +80,8 @@ static int charger_set_option(int option)
 	return sbc_write(BQ24725_CHARGE_OPTION, option);
 }
 
-/* charger interfaces */
+/* Charger interfaces */
+
 const struct charger_info *charger_get_info(void)
 {
 	return &bq24725_charger_info;
@@ -173,11 +173,12 @@ int charger_set_voltage(int voltage)
 /* Charging power state initialization */
 int charger_post_init(void)
 {
-	/* bq24725 power on reset state:
-	 * watch dog timer     = 175 sec
-	 * input current limit = ~1/2 maximum setting
-	 * charging voltage    = 0 mV
-	 * charging current    = 0 mA
+	/*
+	 * Note: bq24725 power on reset state is:
+	 *	watch dog timer     = 175 sec
+	 *	input current limit = ~1/2 maximum setting
+	 *	charging voltage    = 0 mV
+	 *	charging current    = 0 mA
 	 */
 
 	/* Set charger input current limit */
@@ -240,7 +241,6 @@ static int print_info(void)
 
 	return EC_SUCCESS;
 }
-
 
 static int command_charger(int argc, char **argv)
 {

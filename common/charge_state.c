@@ -54,7 +54,9 @@ static inline void update_charger_time(
 	ctx->charger_update_time.val = now.val;
 }
 
-/* Battery information used to fill ACPI _BIF and/or _BIX */
+/**
+ * Update memory-mapped battery information, used by ACPI _BIF and/or _BIX.
+ */
 static void update_battery_info(void)
 {
 	char *batt_str;
@@ -97,7 +99,11 @@ static void update_battery_info(void)
 	*host_get_memmap(EC_MEMMAP_BATTERY_VERSION) = 1;
 }
 
-/* Prevent battery from going into deep discharge state */
+/**
+ * Prevent battery from going into deep discharge state
+ *
+ * @param hibernate_ec	Also force EC into its lowest-power state?
+ */
 static void poweroff_wait_ac(int hibernate_ec)
 {
 	/* Shutdown the main processor */
@@ -119,10 +125,11 @@ static void poweroff_wait_ac(int hibernate_ec)
 	}
 }
 
-/* Common handler for charging states.
- * This handler gets battery charging parameters, charger state, ac state,
- * and timestamp. It also fills memory map and issues power events on state
- * change.
+/**
+ * Common handler for charging states.
+ *
+ * This handler gets battery charging parameters, charger state, ac state, and
+ * timestamp. It also fills memory map and issues power events on state change.
  */
 static int state_common(struct power_state_context *ctx)
 {
@@ -157,14 +164,12 @@ static int state_common(struct power_state_context *ctx)
 
 	if (curr->ac) {
 		*batt_flags |= EC_BATT_FLAG_AC_PRESENT;
-		rv = charger_get_voltage(&curr->charging_voltage);
-		if (rv) {
+		if (charger_get_voltage(&curr->charging_voltage)) {
 			charger_set_voltage(0);
 			charger_set_current(0);
 			curr->error |= F_CHARGER_VOLTAGE;
 		}
-		rv = charger_get_current(&curr->charging_current);
-		if (rv) {
+		if (charger_get_current(&curr->charging_current)) {
 			charger_set_voltage(0);
 			charger_set_current(0);
 			curr->error |= F_CHARGER_CURRENT;
@@ -179,12 +184,12 @@ static int state_common(struct power_state_context *ctx)
 	if (rv) {
 		/* Check low battery condition and retry */
 		if (curr->ac && ctx->battery_present == 1 &&
-				!(curr->error & F_CHARGER_MASK)) {
+		    !(curr->error & F_CHARGER_MASK)) {
 			ctx->battery_present = 0;
 			/*
-			 * Try to revive ultra low voltage pack.
-			 * Charge battery pack with minimum current
-			 * and maximum voltage for 30 seconds.
+			 * Try to revive ultra low voltage pack.  Charge
+			 * battery pack with minimum current and maximum
+			 * voltage for 30 seconds.
 			 */
 			charger_set_voltage(ctx->battery->voltage_max);
 			charger_set_current(ctx->charger->current_min);
@@ -197,41 +202,37 @@ static int state_common(struct power_state_context *ctx)
 				}
 			}
 		}
+
+		/* Set error if battery is still unresponsive */
+		if (rv)
+			curr->error |= F_BATTERY_TEMPERATURE;
 	} else {
 		ctx->battery_present = 1;
 	}
 
-	if (rv)
-		curr->error |= F_BATTERY_TEMPERATURE;
-
-	rv = battery_voltage(&batt->voltage);
-	if (rv)
+	if (battery_voltage(&batt->voltage))
 		curr->error |= F_BATTERY_VOLTAGE;
 	*ctx->memmap_batt_volt = batt->voltage;
 
-	rv = battery_current(&batt->current);
-	if (rv)
+	if (battery_current(&batt->current))
 		curr->error |= F_BATTERY_CURRENT;
 	/* Memory mapped value: discharge rate */
 	*ctx->memmap_batt_rate = batt->current < 0 ?
 		-batt->current : batt->current;
 
-	rv = battery_desired_voltage(&batt->desired_voltage);
-	if (rv)
+	if (battery_desired_voltage(&batt->desired_voltage))
 		curr->error |= F_DESIRED_VOLTAGE;
 
-	rv = battery_desired_current(&batt->desired_current);
-	if (rv)
+	if (battery_desired_current(&batt->desired_current))
 		curr->error |= F_DESIRED_CURRENT;
 
-	rv = battery_state_of_charge(&batt->state_of_charge);
-	if (rv)
+	if (battery_state_of_charge(&batt->state_of_charge))
 		curr->error |= F_BATTERY_STATE_OF_CHARGE;
 
 	if (batt->state_of_charge != prev->batt.state_of_charge) {
 		rv = battery_full_charge_capacity(&d);
-		if (!rv && d != *(int*)host_get_memmap(EC_MEMMAP_BATT_LFCC)) {
-			*(int*)host_get_memmap(EC_MEMMAP_BATT_LFCC) = d;
+		if (!rv && d != *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC)) {
+			*(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC) = d;
 			/* Notify host to re-read battery information */
 			host_set_single_event(EC_HOST_EVENT_BATTERY);
 		}
@@ -240,9 +241,9 @@ static int state_common(struct power_state_context *ctx)
 	/* Prevent deep discharging */
 	if (!curr->ac) {
 		if ((batt->state_of_charge < BATTERY_LEVEL_SHUTDOWN &&
-		    !(curr->error & F_BATTERY_STATE_OF_CHARGE)) ||
+		     !(curr->error & F_BATTERY_STATE_OF_CHARGE)) ||
 		    (batt->voltage <= ctx->battery->voltage_min &&
-		    !(curr->error & F_BATTERY_VOLTAGE)))
+		     !(curr->error & F_BATTERY_VOLTAGE)))
 			poweroff_wait_ac(batt->state_of_charge <
 					 BATTERY_LEVEL_HIBERNATE_EC ? 1 : 0);
 	}
@@ -257,7 +258,7 @@ static int state_common(struct power_state_context *ctx)
 
 	/* Battery charge level low */
 	if (batt->state_of_charge <= BATTERY_LEVEL_LOW &&
-			prev->batt.state_of_charge > BATTERY_LEVEL_LOW)
+	    prev->batt.state_of_charge > BATTERY_LEVEL_LOW)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
 
 	/* Battery charge level critical */
@@ -266,9 +267,9 @@ static int state_common(struct power_state_context *ctx)
 		/* Send battery critical host event */
 		if (prev->batt.state_of_charge > BATTERY_LEVEL_CRITICAL)
 			host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
-	} else
+	} else {
 		*ctx->memmap_batt_flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
-
+	}
 
 	/* Apply battery pack vendor charging method */
 	battery_vendor_params(batt);
@@ -278,22 +279,15 @@ static int state_common(struct power_state_context *ctx)
 		batt->desired_current = CONFIG_CHARGING_CURRENT_LIMIT;
 #endif
 
-	rv = battery_get_battery_mode(&d);
-	if (rv) {
+	if (battery_get_battery_mode(&d)) {
 		curr->error |= F_BATTERY_MODE;
-	} else {
-		if (d & MODE_CAPACITY) {
-			/* Battery capacity mode was set to mW
-			 * reset it back to mAh
-			 */
-			d &= ~MODE_CAPACITY;
-			rv = battery_set_battery_mode(d);
-			if (rv)
-				ctx->curr.error |= F_BATTERY_MODE;
-		}
+	} else if (d & MODE_CAPACITY) {
+		/* Battery capacity mode was set to mW; reset it back to mAh */
+		if (battery_set_battery_mode(d & ~MODE_CAPACITY))
+			ctx->curr.error |= F_BATTERY_MODE;
 	}
-	rv = battery_remaining_capacity(&d);
-	if (rv)
+
+	if (battery_remaining_capacity(&d))
 		ctx->curr.error |= F_BATTERY_CAPACITY;
 	else
 		*ctx->memmap_batt_cap = d;
@@ -301,7 +295,9 @@ static int state_common(struct power_state_context *ctx)
 	return ctx->curr.error;
 }
 
-/* Init state handler
+/**
+ * Init state handler
+ *
  *	- check ac, charger, battery and temperature
  *	- initialize charger
  *	- new states: DISCHARGE, IDLE
@@ -329,7 +325,9 @@ static enum power_state state_init(struct power_state_context *ctx)
 	return PWR_STATE_IDLE0;
 }
 
-/* Idle state handler
+/**
+ * Idle state handler
+ *
  *	- both charger and battery are online
  *	- detect charger and battery status change
  *	- new states: CHARGE, INIT
@@ -390,7 +388,9 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	return PWR_STATE_UNCHANGE;
 }
 
-/* Charge state handler
+/**
+ * Charge state handler
+ *
  *	- detect battery status change
  *	- new state: INIT
  */
@@ -468,7 +468,9 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	return PWR_STATE_UNCHANGE;
 }
 
-/* Discharge state handler
+/**
+ * Discharge state handler
+ *
  *	- detect ac status
  *	- new state: INIT
  */
@@ -481,9 +483,7 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
 
-	/* Overtemp in discharging state
-	 *   - poweroff host and ec
-	 */
+	/* Handle overtemp in discharging state by powering off host */
 	if (batt->temperature > ctx->battery->temp_discharge_max ||
 	    batt->temperature < ctx->battery->temp_discharge_min)
 		poweroff_wait_ac(0);
@@ -491,7 +491,9 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 	return PWR_STATE_UNCHANGE;
 }
 
-/* Error state handler
+/**
+ * Error state handler
+ *
  *	- check charger and battery communication
  *	- log error
  *	- new state: INIT
@@ -510,10 +512,8 @@ static enum power_state state_error(struct power_state_context *ctx)
 		CPRINTF("[%T Charge error: flag[%08b -> %08b], ac %d, "
 			" charger %s, battery %s\n",
 			logged_error, ctx->curr.error, ctx->curr.ac,
-			(ctx->curr.error & F_CHARGER_MASK) ?
-					"(err)" : "ok",
-			(ctx->curr.error & F_BATTERY_MASK) ?
-					"(err)" : "ok");
+			(ctx->curr.error & F_CHARGER_MASK) ? "(err)" : "ok",
+			(ctx->curr.error & F_BATTERY_MASK) ? "(err)" : "ok");
 
 		logged_error = ctx->curr.error;
 	}
@@ -521,12 +521,14 @@ static enum power_state state_error(struct power_state_context *ctx)
 	return PWR_STATE_UNCHANGE;
 }
 
+/**
+ * Print charging progress
+ */
 static void charging_progress(struct power_state_context *ctx)
 {
 	int seconds, minutes;
 
-	if (ctx->curr.batt.state_of_charge !=
-	    ctx->prev.batt.state_of_charge) {
+	if (ctx->curr.batt.state_of_charge != ctx->prev.batt.state_of_charge) {
 		if (ctx->curr.ac)
 			battery_time_to_full(&minutes);
 		else
@@ -539,11 +541,11 @@ static void charging_progress(struct power_state_context *ctx)
 	}
 
 	if (ctx->curr.charging_voltage != ctx->prev.charging_voltage &&
-			ctx->trickle_charging_time.val) {
-		/* Calculating minutes by dividing usec by 60 million
-		 * GNU toolchain generate architecture dependent calls
-		 * instead of machine code when the divisor is large.
-		 * Hence following calculation was broke into 2 lines.
+	    ctx->trickle_charging_time.val) {
+		/* Calculate minutes by dividing usec by 60 million.  GNU
+		 * toolchain generates architecture dependent calls instead of
+		 * machine code when the divisor is large, so break the
+		 * calculation into 2 lines.
 		 */
 		seconds = (int)(get_time().val -
 				ctx->trickle_charging_time.val) / (int)SECOND;
@@ -583,14 +585,18 @@ static int exit_force_idle_mode(void)
 static enum powerled_color force_idle_led_blink(void)
 {
 	static enum powerled_color last = POWERLED_GREEN;
+
 	if (last == POWERLED_GREEN)
 		last = POWERLED_OFF;
 	else
 		last = POWERLED_GREEN;
+
 	return last;
 }
 
-/* Battery charging task */
+/**
+ * Battery charging task
+ */
 void charge_state_machine_task(void)
 {
 	struct power_state_context *ctx = &task_ctx;
@@ -609,7 +615,7 @@ void charge_state_machine_task(void)
 	ctx->charger = charger_get_info();
 	ctx->battery_present = 1;
 
-	/* Setup LPC direct memmap */
+	/* Set up LPC direct memmap */
 	ctx->memmap_batt_volt =
 		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
 	ctx->memmap_batt_rate =
@@ -619,7 +625,6 @@ void charge_state_machine_task(void)
 	ctx->memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 
 	while (1) {
-
 		state_common(ctx);
 
 		switch (ctx->prev.state) {
@@ -679,7 +684,6 @@ void charge_state_machine_task(void)
 				state_name[ctx->prev.state],
 				state_name[new_state]);
 		}
-
 
 		switch (new_state) {
 		case PWR_STATE_IDLE0:
@@ -747,9 +751,11 @@ void charge_state_machine_task(void)
 			else if (rv_setled || get_time().val - last_setled_time
 					> SET_LED_PERIOD) {
 				/*
-				 * It is possible to make power LED go off
-				 * without disconnecting AC. Therefore we
-				 * need to reset power LED periodically.
+				 * Power LED may go off if AC adapter is
+				 * partially removed, even though AC power is
+				 * still provided.  Update the power LED
+				 * periodically so it will come back on in this
+				 * case.
 				 */
 				rv_setled = powerled_set(led_color);
 				last_setled_time = get_time().val;
@@ -786,6 +792,9 @@ void charge_state_machine_task(void)
 	}
 }
 
+/*****************************************************************************/
+/* Hooks */
+
 /**
  * Charge notification hook.
  *
@@ -800,6 +809,8 @@ static void charge_hook(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);
 
+/*****************************************************************************/
+/* Host commands */
 
 static int charge_command_force_idle(struct host_cmd_handler_args *args)
 {
