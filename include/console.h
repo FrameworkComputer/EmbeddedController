@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_CONSOLE_H
 #define __CROS_EC_CONSOLE_H
 
-#include "board.h"
 #include "common.h"
 
 /* Console command; used by DECLARE_CONSOLE_COMMAND macro. */
@@ -24,7 +23,6 @@ struct console_command {
 	const char *shorthelp;
 #endif
 };
-
 
 /* Console channels */
 enum console_channel {
@@ -61,16 +59,29 @@ enum console_channel {
 /* Mask to use to enable all channels */
 #define CC_ALL			0xffffffffUL
 
-
-/* Put a string to the console channel. */
+/**
+ * Put a string to the console channel.
+ *
+ * @param channel	Output chanel
+ * @param outstr	String to write
+ *
+ * @return non-zero if output was truncated.
+ */
 int cputs(enum console_channel channel, const char *outstr);
 
-/* Print formatted output to the console channel.
+/**
+ * Print formatted output to the console channel.
  *
- * See printf.h for valid formatting codes. */
+ * @param channel	Output chanel
+ * @param format	Format string; see printf.h for valid formatting codes
+ *
+ * @return non-zero if output was truncated.
+ */
 int cprintf(enum console_channel channel, const char *format, ...);
 
-/* Flush the console output for all channels. */
+/**
+ * Flush the console output for all channels.
+ */
 void cflush(void);
 
 /* Convenience macros for printing to the command channel.
@@ -82,14 +93,22 @@ void cflush(void);
  * http://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html */
 #define ccprintf(format, args...) cprintf(CC_COMMAND, format, ## args)
 
-
-/* Called by UART when a line of input is pending. */
+/**
+ * Called by UART when a line of input is pending.
+ */
 void console_has_input(void);
 
-
-/*
- * Register a console command handler. Note that `name' must never be a
- * beginning of another existing command name.
+/**
+ * Register a console command handler.
+ *
+ * @param name		Command name; must not be the beginning of another
+ *			existing command name.  Note this is NOT in quotes
+ *		        so it can be concatenated to form a struct name.
+ * @param routine	Command handling routine, of the form
+ *			int handler(int argc, char **argv)
+ * @param argdesc	String describing arguments to command; NULL if none.
+ * @param shorthelp	String with one-line description of command.
+ * @param longhelp	String with long description of command.
  */
 #ifdef CONFIG_CONSOLE_CMDHELP
 #define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \

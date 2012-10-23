@@ -17,11 +17,18 @@
 
 static char input_buf[80];  /* Current console command line */
 
-/* Splits a line of input into words.  Stores the count of words in
- * <argc>.  Stores pointers to the words in <argv>, which must be at
- * least <max_argc> long.  If more than <max_argc> words are found,
- * discards the excess and returns EC_ERROR_OVERFLOW. */
-static int split_words(char *input, int max_argc, int *argc, char **argv)
+/**
+ * Split a line of input into words.
+ *
+ * @param input		Input line; modified to add nulls after each word.
+ * @param argc		Destination for number of words.
+ * @param argv		Destination array for pointers to words; must be at
+ *			least MAX_ARGS_PER_COMMAND entries long.
+ *
+ * @return EC_SUCCESS.  If more than MAX_ARGS_PER_COMMAND words are found,
+ *	discards the excess and returns EC_ERROR_OVERFLOW.
+ */
+static int split_words(char *input, int *argc, char **argv)
 {
 	char *c;
 	int in_word = 0;
@@ -37,26 +44,31 @@ static int split_words(char *input, int max_argc, int *argc, char **argv)
 				in_word = 0;
 			}
 		} else if (*c == '#') {
-			/* After the hash sign is comment, ignored.
-			 * TODO: Need more logic to suuport escaping. */
+			/* Comments start with hash and go to end of line */
 			break;
-		} else {
-			if (!in_word) {
-				/* Starting a new word */
-				if (*argc >= max_argc)
-					return EC_ERROR_OVERFLOW;
+		} else if (!in_word) {
+			/* Starting a new word */
+			if (*argc >= MAX_ARGS_PER_COMMAND)
+				return EC_ERROR_OVERFLOW;
 
-				argv[*argc] = c;
-				in_word = 1;
-			}
+			argv[*argc] = c;
+			in_word = 1;
 		}
 	}
 	return EC_SUCCESS;
 }
 
-
-/* Find a command by name.  Returns the command structure, or NULL if no match
- * found. */
+/**
+ * Find a command by name.
+ *
+ * Allows partial matches, as long as the partial match is unique to one
+ * command.  So "foo" will match "foobar" as long as there isn't also a
+ * command "food".
+ *
+ * @param name		Command name to find.
+ *
+ * @return A pointer to the command structure, or NULL if no match found.
+ */
 static const struct console_command *find_command(char *name)
 {
 	const struct console_command *cmd, *match = NULL;
@@ -73,9 +85,13 @@ static const struct console_command *find_command(char *name)
 	return match;
 }
 
-
-/* Handle a line of input containing a single command.  Modifies the input
- * string during parsing. */
+/**
+ * Handle a line of input containing a single command.
+ *
+ * @param input		Input buffer; modified during parsing.
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
 static int handle_command(char *input)
 {
 	const struct console_command *cmd;
@@ -84,7 +100,7 @@ static int handle_command(char *input)
 	int rv;
 
 	/* Split input into words.  Ignore words past our limit. */
-	split_words(input, MAX_ARGS_PER_COMMAND, &argc, argv);
+	split_words(input, &argc, argv);
 
 	/* If no command, nothing to do */
 	if (!argc)
@@ -119,25 +135,20 @@ static int handle_command(char *input)
 	return rv;
 }
 
-
-static int console_init(void)
+static void console_init(void)
 {
 	*input_buf = '\0';
 	uart_set_console_mode(1);
 	ccprintf("Console is enabled; type HELP for help.\n");
 	ccputs(PROMPT);
-
-	/* TODO: restore channel list from EEPROM */
-
-	return EC_SUCCESS;
 }
 
-
-/* handle a console command */
 static void console_process(void)
 {
-	/* Process all the pending commands.  Need to do this all at once
-	 * since our interrupt may have been triggered multiple times. */
+	/*
+	 * Process all pending console commands.  Need to do this all at once
+	 * since our interrupt may have been triggered multiple times.
+	 */
 	while (uart_peek('\n') >= 0) {
 		uart_gets(input_buf, sizeof(input_buf));
 		handle_command(input_buf);
@@ -145,13 +156,11 @@ static void console_process(void)
 	}
 }
 
-
 void console_has_input(void)
 {
 	/* Wake up the console task */
 	task_wake(TASK_ID_CONSOLE);
 }
-
 
 void console_task(void)
 {
@@ -163,7 +172,6 @@ void console_task(void)
 		task_wait_event(-1);
 	}
 }
-
 
 /*****************************************************************************/
 /* Console commands */

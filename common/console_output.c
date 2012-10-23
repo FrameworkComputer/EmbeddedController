@@ -11,7 +11,7 @@
 
 /* Default to all channels active */
 #ifndef CC_DEFAULT
-#define CC_DEFAULT	CC_ALL
+#define CC_DEFAULT CC_ALL
 #endif
 static uint32_t channel_mask = CC_DEFAULT;
 
@@ -54,7 +54,6 @@ int cputs(enum console_channel channel, const char *outstr)
 	return uart_puts(outstr);
 }
 
-
 int cprintf(enum console_channel channel, const char *format, ...)
 {
 	int rv;
@@ -69,7 +68,6 @@ int cprintf(enum console_channel channel, const char *format, ...)
 	va_end(args);
 	return rv;
 }
-
 
 void cflush(void)
 {
