@@ -40,7 +40,8 @@ static inline void trickle_charging_init(void)
 	reset_data_log();
 }
 
-/* Adjust charging voltage with voltage value range checking.
+/**
+ * Adjust charging voltage with voltage value range checking.
  * Reset data log and charger watchdog timer.
  */
 static int set_voltage(struct power_state_context *ctx, int voltage)
@@ -55,26 +56,34 @@ static int set_voltage(struct power_state_context *ctx, int voltage)
 	return -1;
 }
 
-/* Increase/decrease the charging voltage one step */
+/**
+ * Increase the charging voltage one step.
+ */
 static int inc_voltage(struct power_state_context *ctx)
 {
 	return set_voltage(ctx, ctx->curr.charging_voltage +
-			ctx->charger->voltage_step);
+			   ctx->charger->voltage_step);
 }
 
+/**
+ * Decrease the charging voltage one step.
+ */
 static int dec_voltage(struct power_state_context *ctx)
 {
 	return set_voltage(ctx, ctx->curr.charging_voltage -
-			ctx->charger->voltage_step);
+			   ctx->charger->voltage_step);
 }
 
-/* Bump up the charging voltage baseline to one step higher. */
+/**
+ * Increase the charging voltage baseline one step.
+ */
 static enum power_state go_next_level(struct power_state_context *ctx)
 {
 	if (inc_voltage(ctx))
 		return PWR_STATE_ERROR;
 
-	/* Battery chemical reaction lags behind the charging voltage
+	/*
+	 * Battery chemical reaction lags behind the charging voltage
 	 * change. Delay the charging state machine 2 seconds.
 	 */
 	usleep(SECOND * 2);
@@ -83,7 +92,9 @@ static enum power_state go_next_level(struct power_state_context *ctx)
 	return PWR_STATE_UNCHANGE;
 }
 
-/* Trickle charging handler
+/**
+ * Trickle charging handler
+ *
  *     - check trickle charging timeout
  *     - new state: INIT
  *     - exit condition: when desired_current reaches current_min
@@ -96,9 +107,9 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	int desired_volt, desired_curr;
 
 	struct power_state_data *curr = &ctx->curr;
-	struct batt_params *batt      = &curr->batt;
-	const struct charger_info *cinfo    = ctx->charger;
-	const struct battery_info *binfo    = ctx->battery;
+	struct batt_params *batt = &curr->batt;
+	const struct charger_info *cinfo = ctx->charger;
+	const struct battery_info *binfo = ctx->battery;
 
 	/* Clear trickle charging duration on AC change */
 	if (curr->ac != ctx->prev.ac) {
@@ -119,7 +130,8 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 		return PWR_STATE_INIT;
 	}
 
-	/* 4 hours is *long* enough to pre-charge a large battery (8000mAh)
+	/*
+	 * 4 hours is long enough to pre-charge a large battery (8000mAh)
 	 * using minimal current (5mAh).
 	 */
 	if (time_after(curr->ts, ctx->trickle_charging_time, HOUR * 4))
@@ -128,8 +140,9 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	if (curr->error & F_BATTERY_MASK)
 		return PWR_STATE_UNCHANGE;
 
-	/* End of pre-charge condition. Battery desired a current higher
-	 * than the minimal charging cap.
+	/*
+	 * End of pre-charge condition; battery desired a current higher than
+	 * the minimal charging cap.
 	 */
 	if (batt->desired_current > cinfo->current_min) {
 		trickle_charging_init();
@@ -137,17 +150,19 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 		return PWR_STATE_INIT;
 	}
 
-	/* If the trickle charging current drops to zero, raise charging
+	/*
+	 * If the trickle charging current drops to zero, raise charging
 	 * voltage baseline to next level.
 	 */
 	if (batt->current == 0)
 		return go_next_level(ctx);
 
-	/* When the battery voltage reaches normal charging value (105% min),
+	/*
+	 * When the battery voltage reaches normal charging value (105% min),
 	 * try kicking the current up and see if it starts normal charging.
 	 */
 	if (kicking_count < 5 &&
-			batt->voltage > (binfo->voltage_min * 105 / 100)) {
+	    batt->voltage > (binfo->voltage_min * 105 / 100)) {
 		kicking_count++;
 		charger_set_voltage(batt->desired_voltage);
 		usleep(5 * SECOND);
@@ -166,7 +181,8 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 		return PWR_STATE_UNCHANGE;
 	}
 
-	/* Over current protection. Decrease charging voltage and baseline
+	/*
+	 * Over current protection.  Decrease charging voltage and baseline
 	 * voltage.
 	 */
 	if (batt->current > binfo->precharge_current) {
@@ -195,13 +211,12 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 
 	reset_data_log();
 
-	/* Estimate desired_voltage:
-	 * Although the target current to desired voltage function is a
-	 * monotonic function. To simplify the calculation, following
-	 * code use linear estimation when the current delta is small.
+	/*
+	 * Estimate desired_voltage.  The target current to desired voltage
+	 * function is a monotonic function.  To simplify the calculation, use
+	 * linear estimation when the current delta is small.
 	 *
-	 *   V_desired = I_target * ( avg(dV_batt) / avg(I_batt) ) +
-	 *                          V_batt
+	 * V_desired = I_target * ( avg(dV_batt) / avg(I_batt) ) + V_batt
 	 */
 	desired_volt = (1 + batt->desired_current) *
 		(curr->charging_voltage * LOG_BUFFER_SIZE - sum_volt) /
@@ -231,4 +246,3 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 
 	return PWR_STATE_UNCHANGE;
 }
-
