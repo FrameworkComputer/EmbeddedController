@@ -9,33 +9,39 @@
 
 /* Battery parameters */
 struct batt_params {
-	int temperature;
-	int state_of_charge;
-	int voltage;
-	int current;
-	int desired_voltage;
-	int desired_current;
+	int temperature;      /* Temperature in 0.1 K */
+	int state_of_charge;  /* State of charge (percent, 0-100) */
+	int voltage;          /* Battery voltage (mV) */
+	int current;          /* Battery current (mA) */
+	int desired_voltage;  /* Charging voltage desired by battery (mV) */
+	int desired_current;  /* Charging current desired by battery (mA) */
 };
 
 /* Battery constants */
 struct battery_info {
-	/* Design voltage */
+	/* Design voltage in mV */
 	int voltage_max;
 	int voltage_normal;
 	int voltage_min;
-	/* Working temperature */
+	/* Working temperature range in 0.1 K increments */
 	int temp_charge_min;
 	int temp_charge_max;
 	int temp_discharge_min;
 	int temp_discharge_max;
-	/* Pre-charge */
+	/* Pre-charge current in mA */
 	int precharge_current;
 };
 
-/* Vendor provided battery constants */
+/**
+ * Return vendor-provided battery constants.
+ */
 const struct battery_info *battery_get_info(void);
 
-/* Vendor provided parameters for battery charging */
+/**
+ * Modify battery parameters to match vendor charging profile.
+ *
+ * @param batt		Battery parameters to modify
+ */
 void battery_vendor_params(struct batt_params *batt);
 
 #endif
