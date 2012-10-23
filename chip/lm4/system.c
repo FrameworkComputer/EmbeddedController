@@ -424,6 +424,8 @@ const char *system_get_chip_name(void)
 		return "lm4fs1ah5bb";
 	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10ea0000) {
 		return "lm4fs1gh5bb";
+	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10ec0000) {
+		return "lm4fs1gh5bbfig";
 	} else {
 		return system_get_raw_chip_name();
 	}
