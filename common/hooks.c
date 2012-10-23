@@ -14,8 +14,10 @@ struct hook_ptrs {
 	const struct hook_data *end;
 };
 
-/* Hook data start and end pointers for each type of hook.  Must be in same
- * order as enum hook_type. */
+/*
+ * Hook data start and end pointers for each type of hook.  Must be in same
+ * order as enum hook_type.
+ */
 static const struct hook_ptrs hook_list[] = {
 	{__hooks_init, __hooks_init_end},
 	{__hooks_freq_change, __hooks_freq_change_end},
@@ -29,13 +31,11 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_lid_change, __hooks_lid_change_end},
 };
 
-
-int hook_notify(enum hook_type type, int stop_on_error)
+void hook_notify(enum hook_type type)
 {
 	const struct hook_data *start, *end, *p;
 	int count, called = 0;
 	int last_prio = HOOK_PRIO_FIRST - 1, prio;
-	int rv_error = EC_SUCCESS, rv;
 
 	start = hook_list[type].start;
 	end = hook_list[type].end;
@@ -54,17 +54,8 @@ int hook_notify(enum hook_type type, int stop_on_error)
 		for (p = start; p < end; p++) {
 			if (p->priority == prio) {
 				called++;
-				rv = p->routine();
-				if (rv != EC_SUCCESS) {
-					if (stop_on_error)
-						return rv;
-					else if (rv_error == EC_SUCCESS)
-						rv_error = rv;
-				}
+				p->routine();
 			}
 		}
 	}
-
-	/* Return the first error seen, if any */
-	return rv_error;
 }

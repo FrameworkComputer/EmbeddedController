@@ -7,7 +7,7 @@
 
 #include "chipset.h"
 #include "clock.h"
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -93,8 +93,7 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-
-static int peci_freq_changed(void)
+static void peci_freq_changed(void)
 {
 	int freq = clock_get_freq();
 	int baud;
@@ -115,8 +114,6 @@ static int peci_freq_changed(void)
 	LM4_PECI_CTL = ((PECI_TJMAX + 273) << 22) | 0x0001 |
 		       (PECI_RETRY_COUNT << 12) |
 		       (PECI_ERROR_BYPASS << 11);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT - 1);
 
@@ -141,7 +138,7 @@ DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
 /*****************************************************************************/
 /* Initialization */
 
-static int peci_init(void)
+static void peci_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	int i;
@@ -159,7 +156,5 @@ static int peci_init(void)
 	/* Initialize temperature reading buffer to a sane value. */
 	for (i = 0; i < TEMP_AVG_LENGTH; ++i)
 		temp_vals[i] = 300; /* 27 C */
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);

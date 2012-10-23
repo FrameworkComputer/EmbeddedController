@@ -63,7 +63,6 @@ static void enable_pll(void)
 	freq = PLL_CLOCK;
 }
 
-
 int clock_enable_pll(int enable, int notify)
 {
 	if (enable)
@@ -72,9 +71,11 @@ int clock_enable_pll(int enable, int notify)
 		disable_pll();
 
 	/* Notify modules of frequency change */
-	return notify ? hook_notify(HOOK_FREQ_CHANGE, 0) : EC_SUCCESS;
-}
+	if (notify)
+		hook_notify(HOOK_FREQ_CHANGE);
 
+	return EC_SUCCESS;
+}
 
 void clock_wait_cycles(uint32_t cycles)
 {
@@ -230,7 +231,7 @@ static int command_pll(int argc, char **argv)
 			freq = INTERNAL_CLOCK / div;
 
 			/* Notify modules of frequency change */
-			hook_notify(HOOK_FREQ_CHANGE, 0);
+			hook_notify(HOOK_FREQ_CHANGE);
 		}
 	}
 

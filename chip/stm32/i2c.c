@@ -3,13 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "board.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
-#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -496,7 +494,7 @@ static int i2c_init_port(unsigned int port)
 	return EC_SUCCESS;
 }
 
-static int i2c_init(void)
+static void i2c_init(void)
 {
 	int rc = 0;
 
@@ -511,8 +509,6 @@ static int i2c_init(void)
 		task_enable_irq(STM32_IRQ_I2C2_EV);
 		task_enable_irq(STM32_IRQ_I2C2_ER);
 	}
-
-	return rc;
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 

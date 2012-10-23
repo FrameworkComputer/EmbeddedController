@@ -5,7 +5,7 @@
  * IR357x driver.
  */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -239,11 +239,9 @@ DECLARE_CONSOLE_COMMAND(ir357x, command_ir357x,
 			"IR357x core regulator control",
 			NULL);
 
-static int ir357x_hot_settings(void)
+static void ir357x_hot_settings(void)
 {
 	/* dynamically apply settings to workaround issue */
 	ir357x_prog();
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, ir357x_hot_settings, HOOK_PRIO_DEFAULT);

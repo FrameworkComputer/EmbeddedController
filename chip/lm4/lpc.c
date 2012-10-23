@@ -607,13 +607,13 @@ static void lpc_interrupt(void)
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
 
 
-/* Preserve event masks across a sysjump */
-static int lpc_sysjump(void)
+/**
+ * Preserve event masks across a sysjump.
+ */
+static void lpc_sysjump(void)
 {
 	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
 			    sizeof(event_mask), event_mask);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
 
@@ -632,8 +632,7 @@ static void lpc_post_sysjump(void)
 	memcpy(event_mask, prev_mask, sizeof(event_mask));
 }
 
-
-static int lpc_init(void)
+static void lpc_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -784,8 +783,6 @@ static int lpc_init(void)
 
 	/* Update host events now that we can copy them to memmap */
 	update_host_event_status();
-
-	return EC_SUCCESS;
 }
 /*
  * Set prio to higher than default so other inits can initialize their
@@ -793,8 +790,7 @@ static int lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-
-static int lpc_resume(void)
+static void lpc_resume(void)
 {
 	/* Mask all host events until the host unmasks them itself.  */
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
@@ -803,8 +799,6 @@ static int lpc_resume(void)
 
 	/* Store port 80 event so we know where resume happened */
 	port_80_write(PORT_80_EVENT_RESUME);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
 

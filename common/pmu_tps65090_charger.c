@@ -5,9 +5,9 @@
  * TI TPS65090 PMU charging task.
  */
 
-#include "board.h"
 #include "clock.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "gpio.h"
@@ -482,10 +482,9 @@ void pmu_charger_task(void)
 }
 
 /* Wake charging task on chipset events */
-static int pmu_chipset_events(void)
+static void pmu_chipset_events(void)
 {
 	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pmu_chipset_events, HOOK_PRIO_DEFAULT);

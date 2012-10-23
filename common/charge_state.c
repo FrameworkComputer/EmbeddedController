@@ -792,11 +792,10 @@ void charge_state_machine_task(void)
  * This is triggered when the AC state changes or the system boots, so that
  * we can update our charging state.
  */
-static int charge_hook(void)
+static void charge_hook(void)
 {
 	/* Wake up the task now */
 	task_wake(TASK_ID_POWERSTATE);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);

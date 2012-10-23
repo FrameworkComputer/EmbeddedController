@@ -941,7 +941,8 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
 /*****************************************************************************/
 /* Hooks */
 
-/* Preserves the states of keyboard controller to keep the initialized states
+/**
+ * Preserve the states of keyboard controller to keep the initialized states
  * between reboot_ec commands. Saving info include:
  *
  *   - code set
@@ -950,7 +951,7 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
  *     - KB/TP disabled
  *     - KB/TP IRQ enabled
  */
-static int keyboard_preserve_state(void)
+static void keyboard_preserve_state(void)
 {
 	struct kb_state state;
 
@@ -959,14 +960,13 @@ static int keyboard_preserve_state(void)
 
 	system_add_jump_tag(KB_SYSJUMP_TAG, KB_HOOK_VERSION,
 	                    sizeof(state), &state);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, keyboard_preserve_state, HOOK_PRIO_DEFAULT);
 
-
-/* Restores the keyboard states after reboot_ec command. See above function. */
-static int keyboard_restore_state(void)
+/**
+ * Restore the keyboard states after reboot_ec command. See above function.
+ */
+static void keyboard_restore_state(void)
 {
 	const struct kb_state *prev;
 	int version, size;
@@ -978,7 +978,5 @@ static int keyboard_restore_state(void)
 		scancode_set = prev->codeset;
 		update_ctl_ram(0, prev->ctlram);
 	}
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);

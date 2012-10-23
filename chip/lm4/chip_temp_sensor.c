@@ -6,12 +6,12 @@
 /* Temperature sensor module for Chrome EC */
 
 #include "adc.h"
-#include "config.h"
-#include "hooks.h"
+#include "common.h"
 #include "lm4_adc.h"
 #include "temp_sensor.h"
 
-static int last_val;
+/* Initialize temperature reading to a sane value (27 C) */
+static int last_val = 300;
 
 int chip_temp_sensor_poll(void)
 {
@@ -29,11 +29,3 @@ int chip_temp_sensor_get_val(int idx, int *temp_ptr)
 
 	return EC_SUCCESS;
 }
-
-static int chip_temp_sensor_init(void)
-{
-	/* Initialize temperature reading to a sane value. */
-	last_val = 300; /* 27 C */
-	return EC_SUCCESS;
-}
-DECLARE_HOOK(HOOK_INIT, chip_temp_sensor_init, HOOK_PRIO_DEFAULT);

@@ -205,7 +205,7 @@ DECLARE_CONSOLE_COMMAND(adc, command_adc,
 /*****************************************************************************/
 /* Initialization */
 
-static int adc_init(void)
+static void adc_init(void)
 {
 	int i;
 	const struct adc_t *adc;
@@ -252,7 +252,5 @@ static int adc_init(void)
 		adc = adc_channels + i;
 		lm4_adc_configure(adc->sequencer, adc->channel, adc->flag);
 	}
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);

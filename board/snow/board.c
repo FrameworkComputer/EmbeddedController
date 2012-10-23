@@ -4,7 +4,6 @@
  */
 /* Snow board-specific configuration */
 
-#include "board.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -240,7 +239,7 @@ enum {
  */
 static char i2c_claimed_by_ec;
 
-static int board_pre_init_hook(void)
+static void board_pre_init_hook(void)
 {
 #ifdef CONFIG_ARBITRATE_I2C
 	gpio_set_flags(GPIO_AP_CLAIM, GPIO_PULL_UP);
@@ -248,18 +247,16 @@ static int board_pre_init_hook(void)
 	gpio_set_flags(GPIO_EC_CLAIM, GPIO_OUTPUT);
 	usleep(BUS_SLEW_DELAY_US);
 #endif
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_pre_init_hook, HOOK_PRIO_DEFAULT);
 
-static int board_startup_hook(void)
+static void board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
 
-static int board_shutdown_hook(void)
+static void board_shutdown_hook(void)
 {
 	/* Disable pull-up on SUSPEND_L during shutdown to prevent leakage */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
@@ -268,10 +265,8 @@ static int board_shutdown_hook(void)
 	gpio_set_flags(GPIO_AP_CLAIM, GPIO_INPUT);
 	gpio_set_flags(GPIO_EC_CLAIM, GPIO_INPUT);
 #endif
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
-
 
 #ifdef CONFIG_ARBITRATE_I2C
 

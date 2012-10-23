@@ -219,10 +219,9 @@ static const struct lightbar_params default_params = {
 };
 
 #define LB_SYSJUMP_TAG 0x4c42			/* "LB" */
-static int lb_preserve_state(void)
+static void lb_preserve_state(void)
 {
 	system_add_jump_tag(LB_SYSJUMP_TAG, 0, sizeof(st), &st);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, lb_preserve_state, HOOK_PRIO_DEFAULT);
 
@@ -1029,34 +1028,29 @@ void lightbar_sequence(enum lightbar_sequence num)
 /****************************************************************************/
 /* Get notifications from other parts of the system */
 
-static int lightbar_startup(void)
+static void lightbar_startup(void)
 {
 	lightbar_sequence(LIGHTBAR_S5S3);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, lightbar_startup, HOOK_PRIO_DEFAULT);
 
-static int lightbar_resume(void)
+static void lightbar_resume(void)
 {
 	lightbar_sequence(LIGHTBAR_S3S0);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lightbar_resume, HOOK_PRIO_DEFAULT);
 
-static int lightbar_suspend(void)
+static void lightbar_suspend(void)
 {
 	lightbar_sequence(LIGHTBAR_S0S3);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_suspend, HOOK_PRIO_DEFAULT);
 
-static int lightbar_shutdown(void)
+static void lightbar_shutdown(void)
 {
 	lightbar_sequence(LIGHTBAR_S3S5);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, lightbar_shutdown, HOOK_PRIO_DEFAULT);
-
 
 /****************************************************************************/
 /* Generic command-handling (should work the same for both console & LPC) */

@@ -168,7 +168,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_CHARGE_SET_MODE,
 /*****************************************************************************/
 /* Hooks */
 
-static int usb_charge_preserve_state(void)
+static void usb_charge_preserve_state(void)
 {
 	struct usb_state state;
 
@@ -177,11 +177,10 @@ static int usb_charge_preserve_state(void)
 
 	system_add_jump_tag(USB_SYSJUMP_TAG, USB_HOOK_VERSION,
 			    sizeof(state), &state);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, usb_charge_preserve_state, HOOK_PRIO_DEFAULT);
 
-static int usb_charge_init(void)
+static void usb_charge_init(void)
 {
 	const struct usb_state *prev;
 	int version, size;
@@ -194,25 +193,19 @@ static int usb_charge_init(void)
 	}
 	else
 		usb_charge_all_ports_off();
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 
-
-static int usb_charge_resume(void)
+static void usb_charge_resume(void)
 {
 	/* Turn on USB ports on as we go into S0 from S3 or S5. */
 	usb_charge_all_ports_on();
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_charge_resume, HOOK_PRIO_DEFAULT);
 
-
-static int usb_charge_shutdown(void)
+static void usb_charge_shutdown(void)
 {
 	/* Turn on USB ports off as we go back to S5. */
 	usb_charge_all_ports_off();
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_charge_shutdown, HOOK_PRIO_DEFAULT);

@@ -250,17 +250,13 @@ DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info,
 
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
 
-
 /* Preserve time across a sysjump */
-static int timer_sysjump(void)
+static void timer_sysjump(void)
 {
 	timestamp_t ts = get_time();
 	system_add_jump_tag(TIMER_SYSJUMP_TAG, 1, sizeof(ts), &ts);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
-
 
 int timer_init(void)
 {

@@ -308,7 +308,7 @@ DECLARE_CONSOLE_COMMAND(kblight, command_kblight,
 /*****************************************************************************/
 /* Initialization */
 
-static int pwm_init(void)
+static void pwm_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	const struct pwm_state *prev;
@@ -378,12 +378,10 @@ static int pwm_init(void)
 	mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
 	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
 		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
 
-static int pwm_preserve_state(void)
+static void pwm_preserve_state(void)
 {
 	struct pwm_state state;
 
@@ -394,30 +392,25 @@ static int pwm_preserve_state(void)
 
 	system_add_jump_tag(PWM_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(state), &state);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, pwm_preserve_state, HOOK_PRIO_DEFAULT);
 
-static int pwm_resume(void)
+static void pwm_resume(void)
 {
 	pwm_enable_fan(1);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_resume, HOOK_PRIO_DEFAULT);
 
-static int pwm_suspend(void)
+static void pwm_suspend(void)
 {
 	pwm_enable_fan(0);
 	pwm_set_fan_target_rpm(0);
 	pwm_set_keyboard_backlight(0);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_suspend, HOOK_PRIO_DEFAULT);
 
-static int pwm_shutdown(void)
+static void pwm_shutdown(void)
 {
 	pwm_set_keyboard_backlight(0);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_shutdown, HOOK_PRIO_DEFAULT);

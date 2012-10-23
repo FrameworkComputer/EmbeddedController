@@ -5,7 +5,6 @@
  * TI TPS65090 PMU driver.
  */
 
-#include "board.h"
 #include "clock.h"
 #include "console.h"
 #include "common.h"
@@ -433,7 +432,7 @@ int pmu_shutdown(void)
  * Fill all of the pmu registers with known good values, this allows the
  * pmu to recover by rebooting the system if its registers were trashed.
  */
-static int pmu_init_registers(void)
+static void pmu_init_registers(void)
 {
 	const struct {
 		uint8_t index;
@@ -460,15 +459,14 @@ static int pmu_init_registers(void)
 		{AD_CTRL, 0x00},
 		{IRQ1_REG, 0x00}
 	};
-	uint8_t i, rv;
+	uint8_t i;
 
-	for (i = 0; i < ARRAY_SIZE(reg); i++) {
-		rv = pmu_write(reg[i].index, reg[i].value);
-		if (rv)
-			return rv;
-	}
-
-	return EC_SUCCESS;
+	/*
+	 * Write all PMU registers.  Ignore return value from pmu_write()
+	 * because there's nothing we can reasonably do if it fails.
+	 */
+	for (i = 0; i < ARRAY_SIZE(reg); i++)
+		pmu_write(reg[i].index, reg[i].value);
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmu_init_registers, HOOK_PRIO_DEFAULT);
 
@@ -531,10 +529,9 @@ void pmu_init(void)
 
 /* Initializes PMU when power is turned on.  This is necessary because the TPS'
  * 3.3V rail is not powered until the power is turned on. */
-static int pmu_chipset_startup(void)
+static void pmu_chipset_startup(void)
 {
 	pmu_init();
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_startup, HOOK_PRIO_DEFAULT);
 

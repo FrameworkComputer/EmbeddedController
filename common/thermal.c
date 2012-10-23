@@ -210,11 +210,10 @@ void thermal_task(void)
 	}
 }
 
-static int thermal_shutdown(void)
+static void thermal_shutdown(void)
 {
 	/* Take back fan control when the processor shuts down */
 	thermal_control_fan(1);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, thermal_shutdown, HOOK_PRIO_DEFAULT);
 

@@ -23,7 +23,6 @@ enum hook_priority {
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 2,
 };
 
-
 enum hook_type {
 	HOOK_INIT = 0,         /* System init */
 	HOOK_FREQ_CHANGE,      /* System clock changed frequency */
@@ -50,26 +49,31 @@ enum hook_type {
 				* state, not raw lid GPIO input. */
 };
 
-
 struct hook_data {
-	/* Hook processing routine; returns EC error code. */
-	int (*routine)(void);
+	/* Hook processing routine. */
+	void (*routine)(void);
 	/* Priority; low numbers = higher priority. */
 	int priority;
 };
 
+/**
+ * Call all the hook routines of a specified type.
+ *
+ * @param type		Type of hook routines to call.
+ */
+void hook_notify(enum hook_type type);
 
-/* Call all the hook routines of a specified type.  If stop_on_error, stops on
- * the first non-EC_SUCCESS return code.  Returns the first non-EC_SUCCESS
- * return code, if any, or EC_SUCCESS if all hooks returned EC_SUCCESS. */
-int hook_notify(enum hook_type type, int stop_on_error);
-
-
-/* Register a hook routine.  <hooktype> should be one of enum hook_type.
- * <routine> should be int routine(void), and should return an error code or
- * EC_SUCCESS if no error.  <priority> should be between HOOK_PRIO_FIRST and
- * HOOK_PRIO_LAST, and should be HOOK_PRIO_DEFAULT unless there's a compelling
- * reason to care about the order in which hooks are called. */
+/**
+ * Register a hook routine.
+ *
+ * @param hooktype	Type of hook for routine (enum hook_type)
+ * @param routine	Hook routine, with prototype void routine(void)
+ * @param priority      Priority for determining when routine is called vs.
+ *			other hook routines; should be between HOOK_PRIO_FIRST
+ *                      and HOOK_PRIO_LAST, and should be HOOK_PRIO_DEFAULT
+ *			unless there's a compelling reason to care about the
+ *			order in which hooks are called.
+ */
 #define DECLARE_HOOK(hooktype, routine, priority)			\
 	const struct hook_data __hook_##hooktype##_##routine		\
 	__attribute__((section(".rodata." #hooktype)))			\

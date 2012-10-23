@@ -64,13 +64,11 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(LM4_IRQ_TIMERW0A, __hw_clock_source_irq, 1);
 
 
-static int update_prescaler(void)
+static void update_prescaler(void)
 {
 	/* Set the prescaler to increment every microsecond.  This takes
 	 * effect immediately, because the TAILD bit in TAMR is clear. */
 	LM4_TIMER_TAPR(6) = clock_get_freq() / US_PER_SECOND;
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 

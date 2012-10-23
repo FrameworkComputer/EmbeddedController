@@ -318,32 +318,31 @@ void chipset_throttle_cpu(int throttle)
 /*****************************************************************************/
 /* Hooks */
 
-/* Hook notified when lid state changes. */
-static int x86_lid_change(void)
+/**
+ * Hook notified when lid state changes.
+ */
+static void x86_lid_change(void)
 {
 	/* Wake up the task to update power state */
 	task_wake(TASK_ID_X86POWER);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
 
-/* Hook notified when AC state changes. */
-static int x86_power_ac_change(void)
+/**
+ * Hook notified when AC state changes.
+ */
+static void x86_power_ac_change(void)
 {
 	if (power_ac_present()) {
 		CPRINTF("[%T x86 AC on]\n");
-		/* TODO: (crosbug.com/p/9609) re-enable turbo? */
 	} else {
 		CPRINTF("[%T x86 AC off]\n");
-		/* TODO: (crosbug.com/p/9609) disable turbo */
 
 		if (state == X86_G3) {
 			last_shutdown_time = get_time().val;
 			task_wake(TASK_ID_X86POWER);
 		}
 	}
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, x86_power_ac_change, HOOK_PRIO_DEFAULT);
 
@@ -362,7 +361,7 @@ void x86_power_interrupt(enum gpio_signal signal)
 /*****************************************************************************/
 /* Initialization */
 
-static int x86_power_init(void)
+static void x86_power_init(void)
 {
 	/* Update input state */
 	update_in_signals();
@@ -412,8 +411,6 @@ static int x86_power_init(void)
 	gpio_enable_interrupt(GPIO_PGOOD_VCCP);
 	gpio_enable_interrupt(GPIO_PGOOD_VCCSA);
 	gpio_enable_interrupt(GPIO_PGOOD_VGFX_CORE);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_INIT_CHIPSET);
 
@@ -551,7 +548,7 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 
 			/* Call hooks now that rails are up */
-			hook_notify(HOOK_CHIPSET_STARTUP, 0);
+			hook_notify(HOOK_CHIPSET_STARTUP);
 
 			state = X86_S3;
 			break;
@@ -582,7 +579,7 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_ENABLE_VCORE, 1);
 
 			/* Call hooks now that rails are up */
-			hook_notify(HOOK_CHIPSET_RESUME, 0);
+			hook_notify(HOOK_CHIPSET_RESUME);
 
 			/* Wait 99ms after all voltages good */
 			usleep(99000);
@@ -601,7 +598,7 @@ void x86_power_task(void)
 
 		case X86_S0S3:
 			/* Call hooks before we remove power rails */
-			hook_notify(HOOK_CHIPSET_SUSPEND, 0);
+			hook_notify(HOOK_CHIPSET_SUSPEND);
 
 			/* Clear PCH_PWROK */
 			gpio_set_level(GPIO_PCH_PWROK, 0);
@@ -631,7 +628,7 @@ void x86_power_task(void)
 
 		case X86_S3S5:
 			/* Call hooks before we remove power rails */
-			hook_notify(HOOK_CHIPSET_SHUTDOWN, 0);
+			hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 			/* Disable touchpad power */
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);

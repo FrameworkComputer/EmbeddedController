@@ -5,7 +5,6 @@
 /* Spring board-specific configuration */
 
 #include "adc.h"
-#include "board.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -181,7 +180,7 @@ void board_keyboard_suppress_noise(void)
 	gpio_set_level(GPIO_CODEC_INT, 1);
 }
 
-static int board_startup_hook(void)
+static void board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
 
@@ -190,12 +189,11 @@ static int board_startup_hook(void)
 	pmu_enable_fet(FET_LCD_PANEL, 1, NULL);
 	/* Enable backlight power */
 	pmu_enable_fet(FET_BACKLIGHT, 1, NULL);
-	return 0;
 #endif /* CONFIG_PMU_FORCE_FET */
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
 
-static int board_shutdown_hook(void)
+static void board_shutdown_hook(void)
 {
 #ifdef CONFIG_PMU_FORCE_FET
 	/* Power off backlight power */
@@ -206,8 +204,6 @@ static int board_shutdown_hook(void)
 
 	/* Disable pull-up on SUSPEND_L during shutdown to prevent leakage */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
-
-	return 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
 

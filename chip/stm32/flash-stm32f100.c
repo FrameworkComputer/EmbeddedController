@@ -696,7 +696,7 @@ DECLARE_CONSOLE_COMMAND(fakewp, command_set_fake_wp,
 /*****************************************************************************/
 /* Hooks */
 
-static int flash_preserve_state(void)
+static void flash_preserve_state(void)
 {
 	struct flash_wp_state state;
 
@@ -704,6 +704,5 @@ static int flash_preserve_state(void)
 
 	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
 			    sizeof(state), &state);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);

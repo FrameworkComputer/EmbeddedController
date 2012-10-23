@@ -4,7 +4,7 @@
  */
 
 #include "adc.h"
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "dma.h"
 #include "hooks.h"
@@ -141,7 +141,7 @@ int adc_read_all_channels(int *data)
 	return EC_SUCCESS;
 }
 
-static int adc_init(void)
+static void adc_init(void)
 {
 	/*
 	 * Enable ADC clock.
@@ -174,8 +174,6 @@ static int adc_init(void)
 	 */
 	STM32_ADC_SMPR1 = 0;
 	STM32_ADC_SMPR2 = 0;
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
 

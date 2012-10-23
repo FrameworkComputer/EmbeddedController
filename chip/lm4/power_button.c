@@ -216,7 +216,7 @@ static void lid_switch_open(uint64_t tnow)
 	CPRINTF("[%T PB lid open]\n");
 	debounced_lid_open = 1;
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
-	hook_notify(HOOK_LID_CHANGE, 0);
+	hook_notify(HOOK_LID_CHANGE);
 	update_backlight();
 	host_set_single_event(EC_HOST_EVENT_LID_OPEN);
 
@@ -242,7 +242,7 @@ static void lid_switch_close(uint64_t tnow)
 	CPRINTF("[%T PB lid close]\n");
 	debounced_lid_open = 0;
 	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
-	hook_notify(HOOK_LID_CHANGE, 0);
+	hook_notify(HOOK_LID_CHANGE);
 	update_backlight();
 	host_set_single_event(EC_HOST_EVENT_LID_CLOSED);
 }
@@ -462,7 +462,7 @@ void power_button_task(void)
 		/* Handle AC state changes */
 		if (ac_changed) {
 			ac_changed = 0;
-			hook_notify(HOOK_AC_CHANGE, 0);
+			hook_notify(HOOK_AC_CHANGE);
 		}
 
 		/* Handle debounce timeouts for power button and lid switch */
@@ -522,7 +522,7 @@ void power_button_task(void)
 /*****************************************************************************/
 /* Hooks */
 
-static int power_button_init(void)
+static void power_button_init(void)
 {
 	/* Set up memory-mapped switch positions */
 	memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
@@ -545,11 +545,8 @@ static int power_button_init(void)
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_RECOVERYn);
 	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
-
 
 void power_button_interrupt(enum gpio_signal signal)
 {

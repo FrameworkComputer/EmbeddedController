@@ -5,7 +5,7 @@
 
 /* 1-wire interface module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -131,12 +131,9 @@ static void configure_gpio(void)
 	LM4_GPIO_ODR(LM4_GPIO_H) |= ONEWIRE_PIN;
 }
 
-
-static int onewire_init(void)
+static void onewire_init(void)
 {
 	/* Configure GPIOs */
 	configure_gpio();
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, onewire_init, HOOK_PRIO_DEFAULT);

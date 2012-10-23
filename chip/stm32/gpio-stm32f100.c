@@ -5,7 +5,7 @@
 
 /* GPIO module for Chrome EC */
 
-#include "board.h"
+#include "config.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -136,8 +136,7 @@ int gpio_pre_init(void)
 	return EC_SUCCESS;
 }
 
-
-int gpio_init(void)
+void gpio_init(void)
 {
 	/* Enable IRQs now that pins are set up */
 	task_enable_irq(STM32_IRQ_EXTI0);
@@ -147,11 +146,8 @@ int gpio_init(void)
 	task_enable_irq(STM32_IRQ_EXTI4);
 	task_enable_irq(STM32_IRQ_EXTI9_5);
 	task_enable_irq(STM32_IRQ_EXTI15_10);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
-
 
 uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
 {

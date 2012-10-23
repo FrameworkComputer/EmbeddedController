@@ -80,19 +80,15 @@ void watchdog_reload(void)
 	LM4_WATCHDOG_LOCK(0) = 0xdeaddead;
 }
 
-
-static int watchdog_freq_changed(void)
+static void watchdog_freq_changed(void)
 {
 	/* Set the timeout period */
 	watchdog_period = WATCHDOG_PERIOD_MS * (clock_get_freq() / 1000);
 
 	/* Reload the watchdog timer now */
 	watchdog_reload();
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, watchdog_freq_changed, HOOK_PRIO_DEFAULT);
-
 
 int watchdog_init(void)
 {

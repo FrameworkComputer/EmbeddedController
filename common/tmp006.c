@@ -5,8 +5,7 @@
 
 /* TMP006 temperature sensor module for Chrome EC */
 
-#include "board.h"
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -248,7 +247,10 @@ int tmp006_poll(void)
 	return rv1;
 }
 
-static int tmp006_init(void)
+/*****************************************************************************/
+/* Hooks */
+
+static void tmp006_init(void)
 {
 	int i;
 
@@ -263,8 +265,6 @@ static int tmp006_init(void)
 		tdata->b1 = B1;
 		tdata->b2 = B2;
 	}
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, tmp006_init, HOOK_PRIO_DEFAULT);
 

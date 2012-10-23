@@ -5,15 +5,15 @@
 
 /* I2C port module for Chrome EC */
 
-#include "board.h"
 #include "clock.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "registers.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
@@ -279,8 +279,7 @@ exit:
 	return rv;
 }
 
-
-static int i2c_freq_changed(void)
+static void i2c_freq_changed(void)
 {
 	int freq = clock_get_freq();
 	int i;
@@ -308,8 +307,6 @@ static int i2c_freq_changed(void)
 
 		LM4_I2C_MTPR(i2c_ports[i].port) = tpr;
 	}
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT + 1);
 
@@ -475,8 +472,7 @@ static void configure_gpio(void)
 #endif
 }
 
-
-static int i2c_init(void)
+static void i2c_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	uint32_t mask = 0;
@@ -510,7 +506,5 @@ static int i2c_init(void)
 	task_enable_irq(LM4_IRQ_I2C3);
 	task_enable_irq(LM4_IRQ_I2C4);
 	task_enable_irq(LM4_IRQ_I2C5);
-
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);

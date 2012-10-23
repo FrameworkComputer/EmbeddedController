@@ -5,9 +5,8 @@
 
 /* System module for Chrome EC : common functions */
 
-#include "board.h"
 #include "clock.h"
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "flash.h"
@@ -323,7 +322,7 @@ static void jump_to_image(uint32_t init_addr)
 	jdata->struct_size = sizeof(struct jump_data);
 
 	/* Call other hooks; these may add tags */
-	hook_notify(HOOK_SYSJUMP, 0);
+	hook_notify(HOOK_SYSJUMP);
 
 	/* Jump to the reset vector */
 	resetvec();
@@ -559,9 +558,9 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 /*****************************************************************************/
 /* Hooks */
 
-static int system_common_shutdown(void)
+static void system_common_shutdown(void)
 {
-	return handle_pending_reboot(reboot_at_shutdown);
+	handle_pending_reboot(reboot_at_shutdown);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
 

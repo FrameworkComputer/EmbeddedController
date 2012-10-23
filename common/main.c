@@ -122,7 +122,7 @@ int main(void)
 	 * Non-driver modules with tasks do their inits from their task
 	 * functions, not here.
 	 */
-	hook_notify(HOOK_INIT, 0);
+	hook_notify(HOOK_INIT);
 
 	/*
 	 * Print the init time.  Not completely accurate because it can't take
