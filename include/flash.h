@@ -9,7 +9,6 @@
 #define __CROS_EC_FLASH_H
 
 #include "common.h"
-#include "config.h"
 #include "ec_commands.h"  /* For EC_FLASH_PROTECT_* flags */
 
 /*****************************************************************************/

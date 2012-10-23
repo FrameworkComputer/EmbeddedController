@@ -15,8 +15,9 @@
 
 #define US_PER_SECOND 1000000
 
-/* the approximate number of CPU cycles per iteration of the loop when polling
- * the flash status
+/*
+ * Approximate number of CPU cycles per iteration of the loop when polling
+ * the flash status.
  */
 #define CYCLE_PER_FLASH_LOOP 10
 
@@ -57,6 +58,9 @@ static uint32_t write_buffer[CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t)];
 static int buffered_off = -1;
 #endif
 
+/* TODO: (crosbug.com/p/15613) Verify write protect on stm32l */
+#undef STM32L_WP_VERIFIED
+
 static int unlock(int locks)
 {
 	/* unlock PECR if needed */
@@ -90,6 +94,7 @@ static uint8_t read_optb(int byte)
 
 }
 
+#ifdef STM32L_WP_VERIFIED
 static void write_optb(int byte, uint8_t value)
 {
 	volatile int32_t *word = (uint32_t *)(STM32_OPTB_BASE + (byte & ~0x3));
@@ -107,12 +112,11 @@ static void write_optb(int byte, uint8_t value)
 
 	lock();
 }
+#endif
 
 /**
- * This function lives in internal RAM,
- * as we cannot read flash during writing.
- * You should neither call other function from this one,
- * nor declare it static.
+ * This function lives in internal RAM, as we cannot read flash during writing.
+ * You must not call other functions from this one or declare it static.
  */
 void  __attribute__((section(".iram.text")))
 	iram_flash_write(uint32_t *addr, uint32_t *data)
@@ -146,8 +150,9 @@ void  __attribute__((section(".iram.text")))
 
 int flash_physical_write(int offset, int size, const char *data)
 {
-	/* this is pretty nasty, we need to enforce alignment instead of this
-	 * wild cast : TODO crosbug.com/p/9526
+	/*
+	 * TODO: (crosbug.com/p/9526) Enforce alignment instead of blindly
+	 * casting data to uint32_t *.
 	 */
 	uint32_t *data32 = (uint32_t *)data;
 	uint32_t *address;
@@ -187,7 +192,8 @@ int flash_physical_write(int offset, int size, const char *data)
 	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
 	     size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
 #ifdef CONFIG_TASK_WATCHDOG
-		/* Reload the watchdog timer to avoid watchdog reset when doing
+		/*
+		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
 		 */
 		watchdog_reload();
@@ -201,8 +207,10 @@ int flash_physical_write(int offset, int size, const char *data)
 			goto exit_wr;
 		}
 
-		/* Check for error conditions - erase failed, voltage error,
-		 * protection error */
+		/*
+		 * Check for error conditions: erase failed, voltage error,
+		 * protection error
+		 */
 		if (STM32_FLASH_SR & 0xF00) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_wr;
@@ -214,7 +222,6 @@ exit_wr:
 
 	return res;
 }
-
 
 int flash_physical_erase(int offset, int size)
 {
@@ -238,15 +245,16 @@ int flash_physical_erase(int offset, int size)
 		/*
 		 * crosbug.com/p/13066
 		 * We can't do the flash_is_erased() trick on stm32l since
-		 * bits erase to 0, not 1. Will address later if needed.
+		 * bits erase to 0, not 1.  Will address later if needed.
 		 */
 
 		/* Start erase */
 		*address = 0x00000000;
 
 #ifdef CONFIG_TASK_WATCHDOG
-		/* Reload the watchdog timer in case the erase takes long time
-		 * so that erasing many flash pages
+		/*
+		 * Reload the watchdog timer to avoid watchdog reset during
+		 * multi-page erase operations.
 		 */
 		watchdog_reload();
 #endif
@@ -262,8 +270,10 @@ int flash_physical_erase(int offset, int size)
 			goto exit_er;
 		}
 
-		/* Check for error conditions - erase failed, voltage error,
-		 * protection error */
+		/*
+		 * Check for error conditions: erase failed, voltage error,
+		 * protection error
+		 */
 		if (STM32_FLASH_SR & 0xF00) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_er;
@@ -276,7 +286,6 @@ exit_er:
 	return res;
 }
 
-
 int flash_physical_get_protect(int block)
 {
 	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block/8));
@@ -285,7 +294,7 @@ int flash_physical_get_protect(int block)
 
 void flash_physical_set_protect(int start_bank, int bank_count)
 {
-	if (0) { /* TODO: crosbug.com/p/9849 verify WP */
+#ifdef STM32L_WP_VERIFIED
 	int block;
 
 	for (block = start_bank; block < start_bank + bank_count; block++) {
@@ -293,7 +302,7 @@ void flash_physical_set_protect(int start_bank, int bank_count)
 		uint8_t val = read_optb(byte_off) | (1 << (block % 8));
 		write_optb(byte_off, val);
 	}
-	}
+#endif
 }
 
 uint32_t flash_get_protect(void)
@@ -301,8 +310,9 @@ uint32_t flash_get_protect(void)
 	uint32_t flags = 0;
 	int i;
 
-	/* TODO (vpalatin) : write protect scheme for stm32 */
 	/*
+	 * TODO: (crosbug.com/p/15613) write protect scheme
+	 *
 	 * Always enable write protect until we have WP pin.  For developer to
 	 * unlock WP, please use stm32mon -u and immediately re-program the
 	 * pstate sector.
@@ -331,7 +341,7 @@ uint32_t flash_get_protect(void)
 
 int flash_set_protect(uint32_t mask, uint32_t flags)
 {
-	/* TODO: implement! */
+	/* TODO: (crosbug.com/p/15613) implement! */
 	return EC_SUCCESS;
 }
 

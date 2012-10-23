@@ -5,7 +5,7 @@
 
 /* Flash memory module for Chrome EC - common functions */
 
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "flash.h"
 #include "host_command.h"
@@ -62,7 +62,7 @@ int flash_erase(int offset, int size)
 /*****************************************************************************/
 /* Console commands */
 
-/*
+/**
  * Parse offset and size from command line argv[shift] and argv[shift+1]
  *
  * Default values: If argc<=shift, leaves offset unchanged, returning error if
@@ -165,7 +165,6 @@ static int command_flash_write(int argc, char **argv)
 	int rv;
 	char *data;
 	int i;
-
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
 	if (rv)

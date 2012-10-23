@@ -19,7 +19,8 @@
 
 #define US_PER_SECOND 1000000
 
-/* the approximate number of CPU cycles per iteration of the loop when polling
+/*
+ * Approximate number of CPU cycles per iteration of the loop when polling
  * the flash status
  */
 #define CYCLE_PER_FLASH_LOOP 10
@@ -95,7 +96,6 @@ static int wait_busy(void)
 		udelay(CYCLE_PER_FLASH_LOOP);
 	return (timeout > 0) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
 }
-
 
 static int unlock(int locks)
 {
@@ -247,6 +247,8 @@ static int write_optb(int byte, uint8_t value)
 
 /**
  * Read persistent state into pstate.
+ *
+ * @param pstate	Destination for persistent state
  */
 static int read_pstate(struct persist_state *pstate)
 {
@@ -263,6 +265,9 @@ static int read_pstate(struct persist_state *pstate)
 
 /**
  * Write persistent state from pstate, erasing if necessary.
+ *
+ * @param pstate	Source persistent state
+ * @return EC_SUCCESS, or nonzero if error.
  */
 static int write_pstate(const struct persist_state *pstate)
 {
@@ -310,7 +315,6 @@ int flash_physical_write(int offset, int size, const char *data)
 	/* set PG bit */
 	STM32_FLASH_CR |= PG;
 
-
 	for ( ; size > 0; size -= sizeof(uint16_t)) {
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer to avoid watchdog reset when doing
@@ -354,7 +358,6 @@ exit_wr:
 	return res;
 }
 
-
 int flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
@@ -381,9 +384,11 @@ int flash_physical_erase(int offset, int size)
 
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;
+
 #ifdef CONFIG_TASK_WATCHDOG
-		/* Reload the watchdog timer in case the erase takes long time
-		 * so that erasing many flash pages
+		/*
+		 * Reload the watchdog timer to avoid watchdog reset during a
+		 * long erase operation.
 		 */
 		watchdog_reload();
 #endif
@@ -399,8 +404,10 @@ int flash_physical_erase(int offset, int size)
 			goto exit_er;
 		}
 
-		/* Check for error conditions - erase failed, voltage error,
-		 * protection error */
+		/*
+		 * Check for error conditions - erase failed, voltage error,
+		 * protection error
+		 */
 		if (STM32_FLASH_SR & 0x14) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_er;
@@ -503,10 +510,12 @@ static int protect_entire_flash_until_reboot(void)
 }
 
 /**
- * Determine if write protect register is inconsistent with RO_AT_BOOT and
+ * Check if write protect register state is inconsistent with RO_AT_BOOT and
  * ALL_AT_BOOT state.
+ *
+ * @return zero if consistent, non-zero if inconsistent.
  */
-static int register_need_reset(void)
+static int registers_need_reset(void)
 {
 	uint32_t flags = flash_get_protect();
 	int i;
@@ -563,9 +572,9 @@ int flash_pre_init(void)
 			need_reset = 1;
 		}
 
-		if (register_need_reset()) {
+		if (registers_need_reset()) {
 			/*
-			 * Reset RO protect register to make sure this doesn't
+			 * Reset RO protect registers to make sure this doesn't
 			 * happen again due to RO protect state inconsistency.
 			 */
 			protect_ro_at_boot(
@@ -642,7 +651,6 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * Process flags we can set.  Track the most recent error, but process
 	 * all flags before returning.
 	 */
-
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
 		rv = protect_ro_at_boot(flags & EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 		if (rv)
@@ -670,7 +678,9 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	return retval;
 }
 
-/* TODO: crosbug.com/p/12036 */
+/*****************************************************************************/
+/* Console commands */
+
 static int command_set_fake_wp(int argc, char **argv)
 {
 	int val;

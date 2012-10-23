@@ -54,8 +54,10 @@ struct persist_state {
 
 /**
  * Read persistent state into pstate.
+ *
+ * @param pstate	Destination for persistent state
  */
-static int read_pstate(struct persist_state *pstate)
+static void read_pstate(struct persist_state *pstate)
 {
 	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
 
@@ -64,12 +66,13 @@ static int read_pstate(struct persist_state *pstate)
 		memset(pstate, 0, sizeof(*pstate));
 		pstate->version = PERSIST_STATE_VERSION;
 	}
-
-	return EC_SUCCESS;
 }
 
 /**
  * Write persistent state from pstate, erasing if necessary.
+ *
+ * @param pstate	Source persistent state
+ * @return EC_SUCCESS, or nonzero if error.
  */
 static int write_pstate(const struct persist_state *pstate)
 {
@@ -77,8 +80,8 @@ static int write_pstate(const struct persist_state *pstate)
 	int rv;
 
 	/* Check if pstate has actually changed */
-	if (!read_pstate(&current_pstate) &&
-	    !memcmp(&current_pstate, pstate, sizeof(*pstate)))
+	read_pstate(&current_pstate);
+	if (!memcmp(&current_pstate, pstate, sizeof(*pstate)))
 		return EC_SUCCESS;
 
 	/* Erase pstate */
@@ -106,6 +109,7 @@ static int write_pstate(const struct persist_state *pstate)
  * flash will be writable.
  *
  * @param enable        Enable write protection
+ * @return EC_SUCCESS, or nonzero if error.
  */
 static int protect_ro_at_boot(int enable)
 {
@@ -114,9 +118,7 @@ static int protect_ro_at_boot(int enable)
 	int rv;
 
 	/* Read the current persist state from flash */
-	rv = read_pstate(&pstate);
-	if (rv)
-		return rv;
+	read_pstate(&pstate);
 
 	/* Update state if necessary */
 	if (pstate.flags != new_flags) {
@@ -153,6 +155,8 @@ static void protect_banks(int start_bank, int bank_count)
 /**
  * Perform a write-buffer operation.  Buffer (FWB) and address (FMA) must be
  * pre-loaded.
+ *
+ * @return EC_SUCCESS, or nonzero if error.
  */
 static int write_buffer(void)
 {
@@ -216,11 +220,9 @@ int flash_physical_write(int offset, int size, const char *data)
 	}
 
 	/* Handle final partial page, if any */
-	if (i > 0) {
-		rv = write_buffer();
-		if (rv != EC_SUCCESS)
-			return rv;
-	}
+	if (i > 0)
+		return write_buffer();
+
 	return EC_SUCCESS;
 }
 
@@ -327,7 +329,6 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * Process flags we can set.  Track the most recent error, but process
 	 * all flags before returning.
 	 */
-
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
 		rv = protect_ro_at_boot(flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 		if (rv)
