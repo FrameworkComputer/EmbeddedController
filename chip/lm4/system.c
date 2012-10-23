@@ -387,6 +387,31 @@ const char *system_get_chip_vendor(void)
 	return "ti";
 }
 
+static char to_hex(int x)
+{
+	if (x >= 0 && x <= 9)
+		return '0' + x;
+	return 'a' + x - 10;
+}
+
+const char *system_get_raw_chip_name(void)
+{
+	static char str[15] = "Unknown-";
+	char *p = str + 8;
+	uint32_t did = LM4_SYSTEM_DID1 >> 16;
+
+	if (*p)
+		return (const char *)str;
+
+	*p = to_hex(did >> 12);
+	*(p + 1) = to_hex((did >> 8) & 0xf);
+	*(p + 2) = to_hex((did >> 4) & 0xf);
+	*(p + 3) = to_hex(did & 0xf);
+	*(p + 4) = '\0';
+
+	return (const char *)str;
+}
+
 const char *system_get_chip_name(void)
 {
 	if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e20000) {
@@ -400,7 +425,7 @@ const char *system_get_chip_name(void)
 	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10ea0000) {
 		return "lm4fs1gh5bb";
 	} else {
-		return "";
+		return system_get_raw_chip_name();
 	}
 }
 
