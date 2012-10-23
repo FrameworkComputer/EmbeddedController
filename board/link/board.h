@@ -26,7 +26,6 @@
 #define CONFIG_TASK_PROFILING
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
-#define CONFIG_VBOOT
 
 #ifndef __ASSEMBLER__
 

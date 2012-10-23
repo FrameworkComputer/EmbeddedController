@@ -28,9 +28,6 @@
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 
-/* compute RW firmware hash at startup */
-#define CONFIG_VBOOT
-
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE
 

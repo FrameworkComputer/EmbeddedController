@@ -38,18 +38,18 @@ common-$(CONFIG_USB_CHARGE)+=usb_charge.o
 VBOOT_SOURCE?=/usr/src/vboot
 VBOOT_DEVKEYS?=/usr/share/vboot/devkeys
 
-CFLAGS_$(CONFIG_VBOOT)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
-# CFLAGS_$(CONFIG_VBOOT)+= -DVBOOT_DEBUG
+CFLAGS_$(CONFIG_TASK_VBOOTHASH)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
+# CFLAGS_$(CONFIG_TASK_VBOOTHASH)+= -DVBOOT_DEBUG
 
-common-$(CONFIG_VBOOT)+=vboot_stub.o vboot_hash.o
+common-$(CONFIG_TASK_VBOOTHASH)+=vboot_stub.o vboot_hash.o
 
-includes-$(CONFIG_VBOOT)+= \
+includes-$(CONFIG_TASK_VBOOTHASH)+= \
 	$(VBOOT_SOURCE)/include \
 	$(VBOOT_SOURCE)/lib/include \
 	$(VBOOT_SOURCE)/lib/cryptolib/include
 
-dirs-$(CONFIG_VBOOT)+=vboot/lib vboot/lib/cryptolib
+dirs-$(CONFIG_TASK_VBOOTHASH)+=vboot/lib vboot/lib/cryptolib
 
-vboot-$(CONFIG_VBOOT)+= \
+vboot-$(CONFIG_TASK_VBOOTHASH)+= \
 	lib/cryptolib/padding.o \
 	lib/cryptolib/sha256.o
