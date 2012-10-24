@@ -5,7 +5,8 @@
 
 /* GPIO module for Chrome EC */
 
-#include "board.h"
+#include "clock.h"
+#include "common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "power_button.h"
@@ -14,8 +15,7 @@
 #include "timer.h"
 #include "util.h"
 
-
-/* 0-terminated list of GPIO bases */
+/* 0-terminated list of GPIO base addresses */
 static const uint32_t gpio_bases[] = {
 	LM4_GPIO_A, LM4_GPIO_B, LM4_GPIO_C, LM4_GPIO_D,
 	LM4_GPIO_E, LM4_GPIO_F, LM4_GPIO_G, LM4_GPIO_H,
@@ -23,9 +23,15 @@ static const uint32_t gpio_bases[] = {
 	LM4_GPIO_N, LM4_GPIO_P, LM4_GPIO_Q, 0
 };
 
-
-/* Find the index of a GPIO port base address (LM4_GPIO_[A-Q]); this is used by
- * the clock gating registers.  Returns the index, or -1 if no match. */
+/**
+ * Find the index of a GPIO port base address
+ *
+ * This is used by the clock gating registers.
+ *
+ * @param port_base	Base address to find (LM4_GPIO_[A-Q])
+ *
+ * @return The index, or -1 if no match.
+ */
 static int find_gpio_port_index(uint32_t port_base)
 {
 	int i;
@@ -36,8 +42,7 @@ static int find_gpio_port_index(uint32_t port_base)
 	return -1;
 }
 
-
-int gpio_pre_init(void)
+void gpio_pre_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 	const struct gpio_info *g = gpio_list;
@@ -84,8 +89,6 @@ int gpio_pre_init(void)
 		if ((g->flags & GPIO_OUTPUT) && !is_warm)
 			gpio_set_level(i, g->flags & GPIO_HIGH);
 	}
-
-	return EC_SUCCESS;
 }
 
 static void gpio_init(void)
@@ -104,6 +107,7 @@ static void gpio_init(void)
 	task_enable_irq(LM4_IRQ_GPIOL);
 	task_enable_irq(LM4_IRQ_GPIOM);
 #if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+	/* Don't enable interrupts for the keyboard input GPIO bank */
 	task_enable_irq(LM4_IRQ_GPION);
 #endif
 	task_enable_irq(LM4_IRQ_GPIOP);
@@ -122,11 +126,9 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	/* Enable the GPIO port if necessary */
 	cgmask = 1 << port_index;
 	if ((LM4_SYSTEM_RCGCGPIO & cgmask) != cgmask) {
-		volatile uint32_t scratch  __attribute__((unused));
 		LM4_SYSTEM_RCGCGPIO |= cgmask;
-		/* Delay a few clocks before accessing GPIO registers on that
-		 * port. */
-		scratch = LM4_SYSTEM_RCGCGPIO;
+		/* Delay a few clocks before accessing registers */
+		clock_wait_cycles(3);
 	}
 
 	if (func) {
@@ -148,12 +150,10 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	LM4_GPIO_DEN(port) |= mask;
 }
 
-
 const char *gpio_get_name(enum gpio_signal signal)
 {
 	return gpio_list[signal].name;
 }
-
 
 int gpio_get_level(enum gpio_signal signal)
 {
@@ -161,27 +161,28 @@ int gpio_get_level(enum gpio_signal signal)
 			     gpio_list[signal].mask) ? 1 : 0;
 }
 
-
-int gpio_set_level(enum gpio_signal signal, int value)
+void gpio_set_level(enum gpio_signal signal, int value)
 {
-	/* Ok to write 0xff becuase LM4_GPIO_DATA bit-masks only the bit
-	 * we care about. */
+	/*
+	 * Ok to write 0xff becuase LM4_GPIO_DATA bit-masks only the bit
+	 * we care about.
+	 */
 	LM4_GPIO_DATA(gpio_list[signal].port,
 		      gpio_list[signal].mask) = (value ? 0xff : 0);
-	return EC_SUCCESS;
 }
 
-
-int gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
 	if (flags & GPIO_DEFAULT)
-		return EC_SUCCESS;
+		return;
+
 	if (flags & GPIO_OUTPUT) {
-		/* Output */
-		/* Select open drain first, so that we don't glitch the signal
-		 * when changing the line to an output. */
+		/*
+		 * Select open drain first, so that we don't glitch the signal
+		 * when changing the line to an output.
+		 */
 		if (g->flags & GPIO_OPEN_DRAIN)
 			LM4_GPIO_ODR(g->port) |= g->mask;
 		else
@@ -220,10 +221,7 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 		LM4_GPIO_IBE(g->port) |= g->mask;
 	else
 		LM4_GPIO_IBE(g->port) &= ~g->mask;
-
-	return EC_SUCCESS;
 }
-
 
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
@@ -251,8 +249,10 @@ static void gpio_interrupt(int port, uint32_t mis)
 	}
 }
 
-/* Handlers for each GPIO port.  These read and clear the interrupt bits for
- * the port, then call the master handler above. */
+/**
+ * Handlers for each GPIO port.  These read and clear the interrupt bits for
+ * the port, then call the master handler above.
+ */
 #define GPIO_IRQ_FUNC(irqfunc, gpiobase)		\
 	static void irqfunc(void)			\
 	{						\
@@ -281,9 +281,10 @@ GPIO_IRQ_FUNC(__gpio_q_interrupt, LM4_GPIO_Q);
 
 #undef GPIO_IRQ_FUNC
 
-/* Declare IRQs */
-/* TODO: nesting this macro inside the GPIO_IRQ_FUNC macro works poorly because
- * DECLARE_IRQ() stringizes its inputs. */
+/*
+ * Declare IRQs.  Nesting this macro inside the GPIO_IRQ_FUNC macro works
+ * poorly because DECLARE_IRQ() stringizes its inputs.
+ */
 DECLARE_IRQ(LM4_IRQ_GPIOA, __gpio_a_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOB, __gpio_b_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOC, __gpio_c_interrupt, 1);

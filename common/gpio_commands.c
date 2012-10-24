@@ -12,12 +12,15 @@
 #include "system.h"
 #include "util.h"
 
-
 static uint8_t last_val[(GPIO_COUNT + 7) / 8];
 
-
-/* Find a GPIO signal by name.  Returns the signal index, or GPIO_COUNT if
- * no match. */
+/**
+ * Find a GPIO signal by name.
+ *
+ * @param name		Signal name to find
+ *
+ * @return the signal index, or GPIO_COUNT if no match.
+ */
 static enum gpio_signal find_signal_by_name(const char *name)
 {
 	const struct gpio_info *g = gpio_list;
@@ -34,9 +37,14 @@ static enum gpio_signal find_signal_by_name(const char *name)
 	return GPIO_COUNT;
 }
 
-
-/* If v is different from the last value for index i, updates the last value
- * and returns 1; else returns 0. */
+/**
+ * Update last_val
+ *
+ * @param i		Index of last_val[] to update
+ * @param v		New value for last_val[i]
+ *
+ * @return 1 if last_val[i] was updated, 0 if last_val[i]==v.
+ */
 static int last_val_changed(int i, int v)
 {
 	if (v && !(last_val[i / 8] & (1 << (i % 8)))) {
@@ -80,8 +88,7 @@ static int command_gpio_get(int argc, char **argv)
 		changed = last_val_changed(i, v);
 		ccprintf("  %d%c %s\n", v, (changed ? '*' : ' '), g->name);
 
-		/* We have enough GPIOs that we'll overflow the output buffer
-		 * without flushing */
+		/* Flush console to avoid truncating output */
 		cflush();
 	}
 	return EC_SUCCESS;
@@ -90,7 +97,6 @@ DECLARE_CONSOLE_COMMAND(gpioget, command_gpio_get,
 			"[name]",
 			"Read GPIO value(s)",
 			NULL);
-
 
 static int command_gpio_set(int argc, char **argv)
 {
@@ -116,7 +122,9 @@ static int command_gpio_set(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	return gpio_set_level(i, v);
+	gpio_set_level(i, v);
+
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set,
 			"name <0 | 1>",
@@ -145,7 +153,6 @@ static int gpio_command_get(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GPIO_GET, gpio_command_get, EC_VER_MASK(0));
 
-
 static int gpio_command_set(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_gpio_set *p = args->params;
@@ -166,8 +173,8 @@ static int gpio_command_set(struct host_cmd_handler_args *args)
 	if (!(g->flags & GPIO_OUTPUT))
 		return EC_RES_ERROR;
 
-	if (gpio_set_level(i, p->val) != EC_SUCCESS)
-		return EC_RES_ERROR;
+	gpio_set_level(i, p->val);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GPIO_SET, gpio_command_set, EC_VER_MASK(0));

@@ -5,7 +5,7 @@
 
 /* Common GPIO module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "gpio.h"
 
 

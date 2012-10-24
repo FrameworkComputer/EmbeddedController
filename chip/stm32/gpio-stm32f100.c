@@ -5,7 +5,7 @@
 
 /* GPIO module for Chrome EC */
 
-#include "config.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -32,7 +32,9 @@ struct port_config {
 	uint32_t cnf;
 };
 
-/* helper function for generating bitmasks for STM32 GPIO config registers */
+/**
+ * Helper function for generating bitmasks for STM32 GPIO config registers
+ */
 static void gpio_config_info(const struct gpio_info *g, uint32_t *addr,
 		uint32_t *mode, uint32_t *cnf) {
 	/*
@@ -52,13 +54,14 @@ static void gpio_config_info(const struct gpio_info *g, uint32_t *addr,
 	*cnf = *mode << 2;
 }
 
-int gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	const struct gpio_info *g = gpio_list + signal;
 	uint32_t addr, cnf, mode, mask;
 
 	if (flags & GPIO_DEFAULT)
-		return EC_SUCCESS;
+		return;
+
 	gpio_config_info(g, &addr, &mode, &cnf);
 	mask = REG32(addr) & ~(cnf | mode);
 
@@ -68,13 +71,15 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 	 * output, or alternate function.
 	 */
 	if (flags & GPIO_OUTPUT) {
-		/* FIXME: This assumes output max speed of 10MHz */
+		/* TODO: This assumes output max speed of 10MHz */
 		mask |= 0x11111111 & mode;
 		if (flags & GPIO_OPEN_DRAIN)
 			mask |= 0x44444444 & cnf;
 	} else {
-		/* GPIOx_ODR determines which resistor to activate in
-		 * input mode, see Table 16 (datasheet rm0041) */
+		/*
+		 * GPIOx_ODR determines which resistor to activate in
+		 * input mode, see Table 16 (datasheet rm0041)
+		 */
 		if ((flags & GPIO_PULL_UP) == GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
 			STM32_GPIO_BSRR_OFF(g->port) |= g->mask;
@@ -95,9 +100,9 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 	if ((flags & GPIO_OUTPUT) && !is_warm_boot)
 		/* General purpose, MODE = 01
 		 *
-		 * If this is a cold boot, set the level.
-		 * On a warm reboot, leave things where they were
-		 * or we'll shut off the AP. */
+		 * If this is a cold boot, set the level.  On a warm reboot,
+		 * leave things where they were or we'll shut off the AP.
+		 */
 		gpio_set_level(signal, flags & GPIO_HIGH);
 
 	REG32(addr) = mask;
@@ -109,12 +114,9 @@ int gpio_set_flags(enum gpio_signal signal, int flags)
 	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
 		STM32_EXTI_FTSR |= g->mask;
 	/* Interrupt is enabled by gpio_enable_interrupt() */
-
-	return EC_SUCCESS;
 }
 
-
-int gpio_pre_init(void)
+void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
 	int i;
@@ -123,7 +125,9 @@ int gpio_pre_init(void)
 		/* This is a warm reboot : TIM2 is already active */
 		is_warm_boot = 1;
 	} else {
-		/* Enable all GPIOs clocks
+		/*
+		 * Enable all GPIOs clocks
+		 *
 		 * TODO: more fine-grained enabling for power saving
 		 */
 		STM32_RCC_APB2ENR |= 0x1fd;
@@ -132,8 +136,6 @@ int gpio_pre_init(void)
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++)
 		gpio_set_flags(i, g->flags);
-
-	return EC_SUCCESS;
 }
 
 void gpio_init(void)
@@ -163,12 +165,10 @@ int gpio_get_level(enum gpio_signal signal)
 }
 
 
-int gpio_set_level(enum gpio_signal signal, int value)
+void gpio_set_level(enum gpio_signal signal, int value)
 {
 	STM32_GPIO_BSRR_OFF(gpio_list[signal].port) =
 			gpio_list[signal].mask << (value ? 0 : 16);
-
-	return EC_SUCCESS;
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)

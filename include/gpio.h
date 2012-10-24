@@ -8,9 +8,7 @@
 #ifndef __CROS_EC_GPIO_H
 #define __CROS_EC_GPIO_H
 
-#include "board.h"  /* For board-dependent enum gpio_signal list */
 #include "common.h"
-
 
 /* Flag definitions for gpio_info. */
 #define GPIO_INPUT       0x0000  /* Input */
@@ -45,9 +43,11 @@ struct gpio_info {
 	int mask;         /* Bitmask on that port (0x01 - 0x80; 0x00 =
 			   * signal not implemented) */
 	uint32_t flags;   /* Flags (GPIO_*) */
-	/* Interrupt handler.  If non-NULL, and the signal's interrupt is
+	/*
+	 * Interrupt handler.  If non-NULL, and the signal's interrupt is
 	 * enabled, this will be called in the context of the GPIO interrupt
-	 * handler. */
+	 * handler.
+	 */
 	void (*irq_handler)(enum gpio_signal signal);
 };
 
@@ -57,12 +57,19 @@ extern const struct gpio_info gpio_list[GPIO_COUNT];
 /* Macro for signals which don't exist */
 #define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0, 0, NULL}
 
+/**
+ * Pre-initializes the module.
+ *
+ * This occurs before clocks or tasks are set up.
+ */
+void gpio_pre_init(void);
 
-/* Pre-initializes the module.  This occurs before clocks or tasks are
- * set up. */
-int gpio_pre_init(void);
-
-/* Get the current value of a signal (0=low, 1=hi). */
+/**
+ * Get the current value of a signal
+ *
+ * @param signal	Signal to get
+ * @return 0 if low, 1 if high.
+ */
 int gpio_get_level(enum gpio_signal signal);
 
 /**
@@ -78,30 +85,53 @@ int gpio_get_level(enum gpio_signal signal);
 uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask);
 
 /**
- * Returns the name of a given GPIO signal.
+ * Return the name of a given GPIO signal.
  *
- * @param signal	Signal to return.
+ * @param signal	Signal to name
  * @returns name of the given signal
  */
 const char *gpio_get_name(enum gpio_signal signal);
 
-/* Set the flags for a signal.  Note that this does not set the signal level
- * based on the presence/absence of GPIO_HIGH; call gpio_set_level() afterwards
- * to do that if needed. */
-int gpio_set_flags(enum gpio_signal signal, int flags);
+/**
+ * Set the flags for a signal.
+ *
+ * Note that this does not set the signal level based on the presence/absence
+ * of GPIO_HIGH; call gpio_set_level() afterwards to do that if needed.
+ *
+ * @param signal	Signal to set flags for
+ * @param flags		New flags for the signal
+ */
+void gpio_set_flags(enum gpio_signal signal, int flags);
 
-/* Set the current value of a signal. */
-int gpio_set_level(enum gpio_signal signal, int value);
+/**
+ * Set the value of a signal.
+ *
+ * @param signal	Signal to set
+ * @param value		New value for signal (0 = low, != high */
+void gpio_set_level(enum gpio_signal signal, int value);
 
-/* Enable interrupts for the signal.  The signal must have been defined with
+/**
+ * Enable interrupts for the signal.
+ *
+ * The signal must have been defined with
  * an interrupt handler.  Normally called by the module which handles the
- * interrupt, once it's ready to start processing interrupts. */
+ * interrupt, once it's ready to start processing interrupts.
+ *
+ * @param signal	Signal to enable interrrupts for
+ * @return EC_SUCCESS, or non-zero if error.
+ */
 int gpio_enable_interrupt(enum gpio_signal signal);
 
-/* Set alternate function <func> for GPIO <port> (LM4_GPIO_*) and <mask>.  If
- * func==0, configures the specified GPIOs for normal GPIO operation.
+/**
+ * Set alternate function for GPIO(s).
  *
- * This is intended for use by other modules' configure_gpio() functions. */
+ * This is intended for use by other modules' configure_gpio() functions.
+ *
+ * @param port		GPIO port to set (LM4_GPIO_*)
+ * @param mask		Bitmask of pins on that port to affect
+ * @param func		Alternate function; if 0, configures the specified
+ *			GPIOs for normal GPIO operation.
+ */
 void gpio_set_alternate_function(int port, int mask, int func);
 
 #endif  /* __CROS_EC_GPIO_H */

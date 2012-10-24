@@ -20,16 +20,15 @@
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 
-int gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	/*
 	 * TODO(dhendrix): Move GPIO setup code from gpio_pre_init
 	 * into here like we did for STM32F
 	 */
-	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int gpio_pre_init(void)
+void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
 	int is_warm = 0;
@@ -73,9 +72,11 @@ int gpio_pre_init(void)
 		if (g->flags & GPIO_OUTPUT) { /* General purpose, MODE = 01 */
 			val |= 0x55555555 & mask2;
 			STM32_GPIO_MODER_OFF(g->port) = val;
-			/* If this is a cold boot, set the level.
-			 * On a warm reboot, leave things where they were
-			 * or we'll shut off the AP. */
+			/*
+			 * If this is a cold boot, set the level.  On a warm
+			 * reboot, leave things where they were or we'll shut
+			 * off the AP.
+			 */
 			if (!is_warm)
 				gpio_set_level(i, g->flags & GPIO_HIGH);
 		} else if (g->flags & GPIO_INPUT) { /* Input, MODE=00 */
@@ -90,8 +91,6 @@ int gpio_pre_init(void)
 			STM32_EXTI_FTSR |= g->mask;
 		/* Interrupt is enabled by gpio_enable_interrupt() */
 	}
-
-	return EC_SUCCESS;
 }
 
 static void gpio_init(void)
@@ -150,12 +149,10 @@ int gpio_get_level(enum gpio_signal signal)
 }
 
 
-int gpio_set_level(enum gpio_signal signal, int value)
+void gpio_set_level(enum gpio_signal signal, int value)
 {
 	STM32_GPIO_BSRR_OFF(gpio_list[signal].port) =
 			gpio_list[signal].mask << (value ? 0 : 16);
-
-	return EC_SUCCESS;
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
