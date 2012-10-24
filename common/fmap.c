@@ -6,9 +6,7 @@
 
 #include <stddef.h>
 
-#include "board.h"
 #include "common.h"
-#include "config.h"
 #include "version.h"
 
 /* FMAP structs. See http://code.google.com/p/flashmap/wiki/FmapSpec */
@@ -65,9 +63,11 @@ const struct _ec_fmap {
 	{
 	/* RO Firmware */
 		{
-			/* Range of RO firmware to be updated. Verified in
+			/*
+			 * Range of RO firmware to be updated. Verified in
 			 * factory finalization by hash. Should not have
-			 * volatile data (ex, calibration results). */
+			 * volatile data (ex, calibration results).
+			 */
 			.area_name = "EC_RO",
 			.area_offset = CONFIG_SECTION_RO_OFF,
 			.area_size = CONFIG_SECTION_RO_SIZE,
@@ -81,8 +81,10 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* RO firmware version ID. Must be NULL terminated
-			 * ASCIIZ, and padded with \0. */
+			/*
+			 * RO firmware version ID. Must be NULL terminated
+			 * ASCII, and padded with \0.
+			 */
 			.area_name = "RO_FRID",
 			.area_offset = CONFIG_FW_RO_OFF +
 				RELATIVE((uint32_t)__version_struct_offset) +
@@ -100,9 +102,11 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* The range for write protection, for factory
+			/*
+			 * The range for write protection, for factory
 			 * finalization.  Should include (may be identical to)
-			 * EC_RO and aligned to hardware specification. */
+			 * EC_RO and aligned to hardware specification.
+			 */
 			.area_name = "WP_RO",
 			.area_offset = CONFIG_SECTION_WP_RO_OFF,
 			.area_size = CONFIG_SECTION_WP_RO_SIZE,
@@ -118,8 +122,10 @@ const struct _ec_fmap {
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
-			/* RW firmware version ID. Must be NULL terminated
-			 * ASCIIZ, and padded with \0. */
+			/*
+			 * RW firmware version ID. Must be NULL terminated
+			 * ASCII, and padded with \0.
+			 */
 			.area_name = "RW_FWID",
 			.area_offset = CONFIG_FW_RW_OFF +
 				RELATIVE((uint32_t)__version_struct_offset) +
