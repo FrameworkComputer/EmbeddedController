@@ -27,7 +27,6 @@ common-$(CONFIG_TASK_HOSTCMD)+=host_command.o host_event_commands.o
 common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
 common-$(CONFIG_TASK_LIGHTBAR)+=lightbar.o
 common-$(CONFIG_TASK_POWERSTATE)+=charge_state.o battery_precharge.o
-common-$(CONFIG_TASK_PWM)+=pwm_commands.o
 common-$(CONFIG_TASK_TEMPSENSOR)+=temp_sensor.o temp_sensor_commands.o
 common-$(CONFIG_TASK_THERMAL)+=thermal.o thermal_commands.o
 common-$(CONFIG_TASK_VBOOTHASH)+=sha256.o vboot_hash.o
