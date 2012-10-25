@@ -319,7 +319,9 @@ DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION,
 /*****************************************************************************/
 /* Console commands */
 
-/* Print temperature info for a sensor; used by console command. */
+/**
+ * Print temperature info for a sensor; used by console command.
+ */
 static int tmp006_print(int idx)
 {
 	int vraw, v;

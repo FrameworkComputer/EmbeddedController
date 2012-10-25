@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -20,10 +20,8 @@
 #include "tmp006.h"
 #include "util.h"
 
-/* Defined in board_temp_sensor.c. Must be in the same order as
- * in enum temp_sensor_id.
- */
-extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
+/* Default temperature to report in mapped memory */
+#define MAPPED_TEMP_DEFAULT (296 - EC_TEMP_SENSOR_OFFSET)
 
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
@@ -93,17 +91,18 @@ void temp_sensor_task(void)
 	uint8_t *base, *base_b;
 
 	/*
-	 * Initialize memory-mapped data. We initialize valid sensors to 23 C
-	 * so that if a temperature value is read before we actually poll the
-	 * sensors, we don't end up with an insane value.
+	 * Initialize memory-mapped data so that if a temperature value is read
+	 * before we actually poll the sensors, we don't end up with an insane
+	 * value.
 	 */
 	base = host_get_memmap(EC_MEMMAP_TEMP_SENSOR);
 	base_b = host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B);
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		if (i < EC_TEMP_SENSOR_ENTRIES)
-			base[i] = 0x60; /* 23 C */
+			base[i] = MAPPED_TEMP_DEFAULT;
 		else
-			base_b[i - EC_TEMP_SENSOR_ENTRIES] = 0x60; /* 23 C */
+			base_b[i - EC_TEMP_SENSOR_ENTRIES] =
+				MAPPED_TEMP_DEFAULT;
 	}
 
 	/* Set the rest of memory region to SENSOR_NOT_PRESENT */
@@ -163,3 +162,26 @@ DECLARE_CONSOLE_COMMAND(temps, command_temps,
 			NULL,
 			"Print temp sensors",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+int temp_sensor_command_get_info(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_temp_sensor_get_info *p = args->params;
+	struct ec_response_temp_sensor_get_info *r = args->response;
+	int id = p->id;
+
+	if (id >= TEMP_SENSOR_COUNT)
+		return EC_RES_ERROR;
+
+	strzcpy(r->sensor_name, temp_sensors[id].name, sizeof(r->sensor_name));
+	r->sensor_type = temp_sensors[id].type;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TEMP_SENSOR_GET_INFO,
+		     temp_sensor_command_get_info,
+		     EC_VER_MASK(0));

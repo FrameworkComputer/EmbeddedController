@@ -41,6 +41,12 @@ struct temp_sensor_t {
 	int action_delay_sec;
 };
 
+/*
+ * Defined in board_temp_sensor.c. Must be in the same order as
+ * in enum temp_sensor_id.
+ */
+extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
+
 /**
  * Get the most recently measured temperature for the sensor.
  *

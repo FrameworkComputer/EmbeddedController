@@ -19,14 +19,11 @@
 #include "util.h"
 #include "x86_power.h"
 
-/* Defined in board_temp_sensor.c. Must be in the same order as
- * in enum temp_sensor_id.
- */
-extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
-
-/* Temperature threshold configuration. Must be in the same order as in enum
+/*
+ * Temperature threshold configuration. Must be in the same order as in enum
  * temp_sensor_type. Threshold values for overheated action first (warning,
- * prochot, power-down), followed by fan speed stepping thresholds. */
+ * prochot, power-down), followed by fan speed stepping thresholds.
+ */
 static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
@@ -37,17 +34,18 @@ static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL} },
 };
 
-/* Fan speed settings. */
-/* Real max RPM is about 9300. */
+/* Fan speed settings.  Real max RPM is about 9300. */
 static const int fan_speed[THERMAL_FAN_STEPS + 1] = {0, 3000, 4575, 6150,
 						     7725, -1};
 
 /* Number of consecutive overheated events for each temperature sensor. */
 static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT + THERMAL_FAN_STEPS];
 
-/* Flag that indicate if each threshold is reached.
- * Note that higher threshold reached does not necessarily mean lower thresholds
- * are reached (since we can disable any threshold.) */
+/*
+ * Flag that indicate if each threshold is reached.  Note that higher threshold
+ * reached does not necessarily mean lower thresholds are reached (since we can
+ * disable any threshold.)
+ */
 static int8_t overheated[THRESHOLD_COUNT + THERMAL_FAN_STEPS];
 static int8_t *fan_threshold_reached = overheated + THRESHOLD_COUNT;
 
@@ -80,15 +78,13 @@ int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
 	return thermal_config[type].thresholds[threshold_id];
 }
 
-int thermal_control_fan(int enable)
+void thermal_control_fan(int enable)
 {
 	fan_ctrl_on = enable;
 
 	/* If controlling the fan, need it in RPM-control mode */
 	if (enable)
 		pwm_set_rpm_mode(1);
-
-	return EC_SUCCESS;
 }
 
 static void smi_overheated_warning(void)
@@ -101,8 +97,9 @@ static void smi_sensor_failure_warning(void)
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
 
-/* TODO: When we need different overheated action for different boards,
- *       move these action to board-specific file. (e.g. board_thermal.c)
+/*
+ * TODO: When we need different overheated action for different boards, move
+ *       these actiona to a board-specific file. (e.g. board_thermal.c)
  */
 static void overheated_action(void)
 {
@@ -122,12 +119,13 @@ static void overheated_action(void)
 	if (overheated[THRESHOLD_WARNING]) {
 		smi_overheated_warning();
 		chipset_throttle_cpu(1);
-	}
-	else
+	} else {
 		chipset_throttle_cpu(0);
+	}
 
 	if (fan_ctrl_on) {
 		int i;
+
 		for (i = THERMAL_FAN_STEPS - 1; i >= 0; --i)
 			if (fan_threshold_reached[i])
 				break;
@@ -135,9 +133,12 @@ static void overheated_action(void)
 	}
 }
 
-/* Update counter and check if the counter has reached delay limit.
- * Note that we have various delay period to prevent one error value triggering
- * overheated action. */
+/**
+ * Update counter and check if the counter has reached delay limit.
+ *
+ * Note that we have various delay periods to prevent one error value
+ * triggering an overheated action.
+ */
 static inline void update_and_check_stat(int temp,
 					 int sensor_id,
 					 int threshold_id)
@@ -153,17 +154,18 @@ static inline void update_and_check_stat(int temp,
 			ot_count[sensor_id][threshold_id] = delay;
 			overheated[threshold_id] = 1;
 		}
-	}
-	else if (ot_count[sensor_id][threshold_id] >= delay &&
-		 temp >= threshold - 3) {
-		/* Once the threshold is reached, only if the temperature
-		 * drops to 3 degrees below threshold do we deassert
-		 * overheated signal. This is to prevent temperature
-		 * oscillating around the threshold causing threshold
-		 * keep being triggered. */
+	} else if (ot_count[sensor_id][threshold_id] >= delay &&
+		   temp >= threshold - 3) {
+		/*
+		 * Once the threshold is reached, only deassert overheated if
+		 * the temperature drops to 3 degrees below threshold.  This
+		 * hysteresis prevents a temperature oscillating around the
+		 * threshold causing overheated actions to trigger repeatedly.
+		 */
 		overheated[threshold_id] = 1;
-	} else
+	} else {
 		ot_count[sensor_id][threshold_id] = 0;
+	}
 }
 
 static void thermal_process(void)
@@ -321,9 +323,53 @@ DECLARE_CONSOLE_COMMAND(thermalfan, command_fan_config,
 
 static int command_thermal_auto_fan_ctrl(int argc, char **argv)
 {
-	return thermal_control_fan(1);
+	thermal_control_fan(1);
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(autofan, command_thermal_auto_fan_ctrl,
 			NULL,
 			"Enable thermal fan control",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+static int thermal_command_set_threshold(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_thermal_set_threshold *p = args->params;
+
+	if (thermal_set_threshold(p->sensor_type, p->threshold_id, p->value))
+		return EC_RES_ERROR;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
+		     thermal_command_set_threshold,
+		     EC_VER_MASK(0));
+
+static int thermal_command_get_threshold(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_thermal_get_threshold *p = args->params;
+	struct ec_response_thermal_get_threshold *r = args->response;
+	int value = thermal_get_threshold(p->sensor_type, p->threshold_id);
+
+	if (value == -1)
+		return EC_RES_ERROR;
+	r->value = value;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
+		     thermal_command_get_threshold,
+		     EC_VER_MASK(0));
+
+static int thermal_command_auto_fan_ctrl(struct host_cmd_handler_args *args)
+{
+	thermal_control_fan(1);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_AUTO_FAN_CTRL,
+		     thermal_command_auto_fan_ctrl,
+		     EC_VER_MASK(0));
