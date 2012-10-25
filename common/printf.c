@@ -13,6 +13,13 @@ static const char error_str[] = "ERROR";
 
 #define MAX_FORMAT 1024  /* Maximum chars in a single format field */
 
+/**
+ * Convert a single digit to hex
+ *
+ * @param c	Value of digit (0 - 0x0f)
+ *
+ * @return The corresponding ASCII character ('0' - 'f').
+ */
 static int hexdigit(int c)
 {
 	return c > 9 ? (c + 'a' - 10) : (c + '0');
@@ -21,10 +28,11 @@ static int hexdigit(int c)
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args)
 {
+	/*
+	 * Longest uint64 in decimal = 20
+	 * longest uint32 in binary  = 32
+	 */
 	char intbuf[34];
-		/* Longest uint64 in decimal = 20
-		 * longest uint32 in binary  = 32
-		 */
 	int dropped_chars = 0;
 	int is_left;
 	int pad_zero;
@@ -185,8 +193,10 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			if (format == error_str)
 				continue; /* Bad format specifier */
 
-			/* Convert integer to string, starting at end of
-			 * buffer and working backwards. */
+			/*
+			 * Convert integer to string, starting at end of
+			 * buffer and working backwards.
+			 */
 			vstr = intbuf + sizeof(intbuf) - 1;
 			*(vstr) = '\0';
 
@@ -256,15 +266,19 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	return dropped_chars ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
 
-
 /* Context for snprintf() */
 struct snprintf_context {
 	char *str;
 	int size;
 };
 
-
-/* Add a character to the string */
+/**
+ * Add a character to the string context.
+ *
+ * @param context	Context receiving character
+ * @param c		Character to add
+ * @return 0 if character added, 1 if character dropped because no space.
+ */
 static int snprintf_addchar(void *context, int c)
 {
 	struct snprintf_context *ctx = (struct snprintf_context *)context;
@@ -277,8 +291,6 @@ static int snprintf_addchar(void *context, int c)
 	return 0;
 }
 
-
-/* Print formatted outut to a string */
 int snprintf(char *str, int size, const char *format, ...)
 {
 	struct snprintf_context ctx;

@@ -54,18 +54,29 @@
 /**
  * Print formatted output to a function, like vfprintf()
  *
- * addchar() will be called for every character to be printed, with the context
- * pointer passed to vfnprintf().  addchar() should return 0 if the character
- * was accepted or non-zero if the character was dropped due to overflow.
- *
- * Returns error if output was truncated.
+ * @param addchar	Function to be called for each character added.
+ *			Will be passed the same context passed to vfnprintf(),
+ *			and the character to add.  Should return 0 if the
+ *			character was accepted or non-zero if the character
+ *			was dropped due to overflow.
+ * @param context	Context pointer to pass to addchar()
+ * @param format	Format string (see above for acceptable formats)
+ * @param args		Parameters
+ * @return EC_SUCCESS, or non-zero if output was truncated.
  */
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args);
 
-
-/* Print formatted outut to a string */
+/**
+ * Print formatted outut to a string.
+ *
+ * Guarantees null-termination if size!=0.
+ *
+ * @param str		Destination string
+ * @param size		Size of destination in bytes
+ * @param format	Format string
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
 int snprintf(char *str, int size, const char *format, ...);
-
 
 #endif  /* __CROS_EC_PRINTF_H */
