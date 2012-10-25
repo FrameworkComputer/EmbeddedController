@@ -37,11 +37,15 @@ void powerled_set_state(enum powerled_state new_state)
 	task_wake(TASK_ID_POWERLED);
 }
 
-/* set board-level power LED config options (e.g. manual off/on, PWM) */
+/**
+ * Set board-level power LED config options (e.g. manual off/on, PWM).
+ */
 void board_power_led_config(enum powerled_state config)
 		__attribute__((weak, alias("__board_power_led_config")));
 
-/* Provide a default function in case the board doesn't have one */
+/**
+ * Default config function in case the board doesn't have one.
+ */
 void __board_power_led_config(enum powerled_config config)
 {
 }
@@ -50,10 +54,10 @@ static void power_led_use_pwm(void)
 {
 	board_power_led_config(POWERLED_CONFIG_PWM);
 
-	/* enable TIM2 clock */
+	/* Enable TIM2 clock */
 	STM32_RCC_APB1ENR |= 0x1;
 
-	/* disable counter during setup */
+	/* Disable counter during setup */
 	STM32_TIM_CR1(2) = 0x0000;
 
 	/*
@@ -74,10 +78,10 @@ static void power_led_use_pwm(void)
 	/* CC2 output enable, active low */
 	STM32_TIM_CCER(2) = (1 << 4) | (1 << 5);
 
-	/* generate update event to force loading of shadow registers */
+	/* Generate update event to force loading of shadow registers */
 	STM32_TIM_EGR(2) |= 1;
 
-	/* enable auto-reload preload, start counting */
+	/* Enable auto-reload preload, start counting */
 	STM32_TIM_CR1(2) |= (1 << 7) | (1 << 0);
 
 	led_config = POWERLED_CONFIG_PWM;
@@ -102,7 +106,9 @@ static void power_led_set_duty(int percent)
 	STM32_TIM_CCR2(2) = (STM32_TIM_ARR(2) / 100) * percent;
 }
 
-/* returns the timeout period (in us) for current step */
+/**
+ * Return the timeout period (in us) for the current step.
+ */
 static int power_led_step(void)
 {
 	int state_timeout = 0;
@@ -152,13 +158,13 @@ void power_led_task(void)
 			state_timeout = -1;
 			break;
 		case POWERLED_STATE_OFF:
-			/* reconfigure GPIO to disable the LED */
+			/* Reconfigure GPIO to disable the LED */
 			if (led_config != POWERLED_CONFIG_MANUAL_OFF)
 				power_led_manual_off();
 			state_timeout = -1;
 			break;
 		case POWERLED_STATE_SUSPEND:
-			/* drive using PWM with variable duty cycle */
+			/* Drive using PWM with variable duty cycle */
 			if (led_config != POWERLED_CONFIG_PWM)
 				power_led_use_pwm();
 			state_timeout = power_led_step();

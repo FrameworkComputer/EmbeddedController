@@ -17,8 +17,13 @@ static const uint8_t led_masks[POWERLED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
 static const char * const color_names[POWERLED_COLOR_COUNT] = {
 	"off", "red", "yellow", "green"};
 
-
-/* Set the power LED GPIO controller outputs to the specified mask. */
+/**
+ * Set the power LED GPIO controller outputs
+ *
+ * @param mask		Mask of outputs to enable
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
 static int powerled_set_mask(int mask)
 {
 	int rv;
@@ -45,31 +50,33 @@ static int powerled_set_mask(int mask)
 	return EC_SUCCESS;
 }
 
-
 int powerled_set(enum powerled_color color)
 {
 	int rv = EC_SUCCESS;
 	int i;
 
-	/* 1-wire communication can fail for timing reasons in the current
+	/*
+	 * 1-wire communication can fail for timing reasons in the current
 	 * system.  We have a limited timing window to send/receive bits, but
 	 * we can't disable interrupts for the rest of the system to guarantee
 	 * we hit that window.  Instead, simply retry the low-level command a
-	 * few times. */
+	 * few times.
+	 */
 	for (i = 0; i < POWERLED_RETRIES; i++) {
 		rv = powerled_set_mask(led_masks[color]);
 		if (rv == EC_SUCCESS)
 			break;
 
-		/* Sleep for a bit between tries.  This gives the 1-wire GPIO
+		/*
+		 * Sleep for a bit between tries.  This gives the 1-wire GPIO
 		 * chip time to recover from the failed attempt, and allows
-		 * lower-priority tasks a chance to run. */
+		 * lower-priority tasks a chance to run.
+		 */
 		usleep(100);
 	}
 
 	return rv;
 }
-
 
 /*****************************************************************************/
 /* Console commands */

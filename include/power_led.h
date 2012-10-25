@@ -1,4 +1,4 @@
-/* Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+/* Interface for LM4-based boards */
+
 enum powerled_color {
 	POWERLED_OFF = 0,
 	POWERLED_RED,
@@ -17,6 +19,25 @@ enum powerled_color {
 	POWERLED_GREEN,
 	POWERLED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
+
+#ifdef CONFIG_POWER_LED
+
+/**
+ * Set the power adapter LED
+ *
+ * @param color		Color to set LED
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int powerled_set(enum powerled_color color);
+
+#else
+
+static inline int powerled_set(enum powerled_color color) { return 0; }
+
+#endif
+
+/* Interface for STM32-based boards */
 
 enum powerled_state {
 	POWERLED_STATE_OFF,
@@ -31,16 +52,19 @@ enum powerled_config {
 	POWERLED_CONFIG_PWM,
 };
 
-#if defined(CONFIG_TASK_POWERLED) || defined(CONFIG_POWER_LED)
-/* Set the power adapter LED to the specified color. */
-int powerled_set(enum powerled_color color);
+#ifdef CONFIG_TASK_POWERLED
 
-/* Set the power LED according to the specified state. */
+/**
+ * Set the power LED
+ *
+ * @param state		Target state
+ */
 void powerled_set_state(enum powerled_state state);
 
-#else  /* CONFIG_TASK_POWERLED */
-static inline int powerled_set(enum powerled_color color) { return 0; }
-static inline void powerled_set_state(enum powerled_state state) {}
-#endif /* CONFIG_TASK_POWERLED */
+#else
 
-#endif  /* __CROS_EC_POWER_LED_H */
+static inline void powerled_set_state(enum powerled_state state) {}
+
+#endif
+
+#endif /* __CROS_EC_POWER_LED_H */
