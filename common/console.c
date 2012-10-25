@@ -15,7 +15,8 @@
 
 #define PROMPT "> "
 
-static char input_buf[80];  /* Current console command line */
+/* Current console command line */
+static char input_buf[CONSOLE_INPUT_LINE_SIZE];
 
 /**
  * Split a line of input into words.
@@ -138,7 +139,6 @@ static int handle_command(char *input)
 static void console_init(void)
 {
 	*input_buf = '\0';
-	uart_set_console_mode(1);
 	ccprintf("Console is enabled; type HELP for help.\n");
 	ccputs(PROMPT);
 }

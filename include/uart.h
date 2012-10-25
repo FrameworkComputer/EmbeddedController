@@ -18,15 +18,6 @@ int uart_init(void);
 /* Return non-zero if UART init has completed. */
 int uart_init_done(void);
 
-/* Enables console mode if <enable>!=0.  In console mode:
- *    - Input is echoed
- *    - Input CRLF and CR are translated to LF
- *    - Input backspace will remove characters from the input buffer (which
- *      is pretty much only useful if the input handler is only triggered on
- *      newline)
- *    - Output LF is translated to CRLF */
-void uart_set_console_mode(int enable);
-
 /*****************************************************************************/
 /* Output functions
  *

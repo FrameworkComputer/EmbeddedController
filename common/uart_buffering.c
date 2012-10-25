@@ -25,14 +25,11 @@
 #endif
 
 #ifndef CONFIG_UART_RX_BUF_SIZE
-/* Must be larger than RX_LINE_SIZE to copy and paste scripts */
+/* Must be larger than CONSOLE_INPUT_LINE_SIZE to copy and paste scripts */
 #define CONFIG_UART_RX_BUF_SIZE 128
 #endif
 
 #define HISTORY_SIZE 8
-
-/* The size limit of single command */
-#define RX_LINE_SIZE 80
 
 /* Macros to advance in the circular buffers */
 #define TX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_TX_BUF_SIZE - 1))
@@ -55,7 +52,7 @@ static volatile int tx_buf_tail;
 static volatile char rx_buf[CONFIG_UART_RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
-static volatile char rx_cur_buf[RX_LINE_SIZE];
+static volatile char rx_cur_buf[CONSOLE_INPUT_LINE_SIZE];
 static volatile int rx_cur_buf_tail;
 static volatile int rx_cur_buf_head;
 static volatile int rx_cur_buf_ptr;
@@ -83,19 +80,21 @@ static volatile int cmd_history_head;
 static volatile int cmd_history_tail;
 static volatile int cmd_history_ptr;
 
-static int console_mode = 1;
-
-
-/* Put a single character into the transmit buffer.  Does not enable
- * the transmit interrupt; assumes that happens elsewhere.  Returns
- * zero if the character was transmitted, 1 if it was dropped.  We only
- * have a single transmit buffer, so context is ignored. */
+/**
+ * Put a single character into the transmit buffer.
+ *
+ * Does not enable the transmit interrupt; assumes that happens elsewhere.
+ *
+ * @param context	Context; ignored.
+ * @param c		Character to write.
+ * @return 0 if the character was transmitted, 1 if it was dropped.
+ */
 static int __tx_char(void *context, int c)
 {
 	int tx_buf_next;
 
 	/* Do newline to CRLF translation */
-	if (console_mode && c == '\n' && __tx_char(NULL, '\r'))
+	if (c == '\n' && __tx_char(NULL, '\r'))
 		return 1;
 
 	tx_buf_next = TX_BUF_NEXT(tx_buf_head);
@@ -106,7 +105,6 @@ static int __tx_char(void *context, int c)
 	tx_buf_head = tx_buf_next;
 	return 0;
 }
-
 
 /**
  * Write a number directly to the UART.
@@ -123,7 +121,6 @@ static void uart_write_int(int val)
 
 	uart_write_char((val % 10) + '0');
 }
-
 
 static void move_rx_ptr_fwd(void)
 {
@@ -189,7 +186,7 @@ static void handle_backspace(void)
 	/* Move cursor back */
 	uart_write_char('\b');
 
-	/* Move texts after cursor and also update rx buffer. */
+	/* Move text after cursor and also update rx buffer. */
 	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr) {
 		uart_write_char(rx_cur_buf[ptr]);
 		rx_cur_buf[ptr - 1] = rx_cur_buf[ptr];
@@ -234,7 +231,7 @@ static void insert_char(char c)
 	int ptr;
 
 	/* On overflow, discard input */
-	if (rx_cur_buf_head == RX_LINE_SIZE && c != '\n')
+	if (rx_cur_buf_head == CONSOLE_INPUT_LINE_SIZE && c != '\n')
 		return;
 
 	/* Move buffer ptr to the end if 'c' is new line */
@@ -245,25 +242,14 @@ static void insert_char(char c)
 	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr)
 		uart_write_char(rx_cur_buf[ptr]);
 
-	/* Insert character to rx buffer and move cursor to correct
-	 * position.
-	 */
+	/* Insert character and move cursor to correct position */
 	repeat_char('\b', ptr - rx_cur_buf_ptr);
 	for (ptr = rx_cur_buf_head; ptr > rx_cur_buf_ptr; --ptr)
 		rx_cur_buf[ptr] = rx_cur_buf[ptr - 1];
 	rx_cur_buf[rx_cur_buf_ptr] = c;
 	++rx_cur_buf_head;
 	++rx_cur_buf_ptr;
-
-	/* Insert character directly into rx_buf if not in console mode. */
-	if (!console_mode) {
-		rx_buf[rx_buf_head] = c;
-		rx_buf_head = RX_BUF_NEXT(rx_buf_head);
-		if (rx_buf_tail == rx_buf_head)
-			rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
-	}
 }
-
 
 static int rx_buf_space_available(void)
 {
@@ -273,15 +259,13 @@ static int rx_buf_space_available(void)
 			   cmd_history[CMD_HIST_PREV(cmd_history_head)].head);
 }
 
-
 static void history_save(void)
 {
 	int ptr;
 	int tail, head;
 	int hist_id;
 
-	/* If there is not enough space in rx buffer, discard the oldest
-	 * history. */
+	/* If not enough space in rx buffer, discard the oldest history */
 	while (rx_buf_space_available() < rx_cur_buf_head)
 		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
 
@@ -291,7 +275,7 @@ static void history_save(void)
 	if (cmd_history_head == cmd_history_tail)
 		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
 
-	/* Copy the current command, but we do not save the '\n' */
+	/* Copy the current command, but do not save the '\n' */
 	if (hist_id == cmd_history_tail)
 		tail = 0;
 	else
@@ -307,7 +291,6 @@ static void history_save(void)
 	cmd_history[hist_id].head = head;
 	cmd_history[hist_id].tail = tail;
 }
-
 
 static void history_load(int id)
 {
@@ -336,15 +319,16 @@ static void history_load(int id)
 	rx_cur_buf_head = rx_cur_buf_ptr;
 }
 
-
 static void history_prev(void)
 {
 	if (cmd_history_ptr == cmd_history_tail)
 		return;
 
-	/* Stash the current command if we are not currently using history.
+	/*
+	 * Stash the current command if we are not currently using history.
 	 * Prevent loading history if there is no space to stash current
-	 * command. */
+	 * command.
+	 */
 	if (cmd_history_ptr == cmd_history_head) {
 		int last_id = CMD_HIST_PREV(cmd_history_head);
 		int last_len = RX_BUF_DIFF(cmd_history[last_id].head,
@@ -358,7 +342,6 @@ static void history_prev(void)
 	cmd_history_ptr = CMD_HIST_PREV(cmd_history_ptr);
 	history_load(cmd_history_ptr);
 }
-
 
 static void history_next(void)
 {
@@ -495,21 +478,14 @@ static void handle_console_char(int c)
 	}
 }
 
-/* Helper for UART processing */
+/**
+ * Helper for UART processing.
+ */
 void uart_process(void)
 {
 	/* Copy input from buffer until RX fifo empty */
-	while (uart_rx_available()) {
-		int c = uart_read_char();
-
-		if (console_mode) {
-			/* Handle console mode echoing and translation */
-			handle_console_char(c);
-		} else {
-			/* Not in console mode, so simply store character */
-			insert_char(c);
-		}
-	}
+	while (uart_rx_available())
+		handle_console_char(uart_read_char());
 
 	/* Copy output from buffer until TX fifo full or output buffer empty */
 	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
@@ -521,16 +497,6 @@ void uart_process(void)
 	if (tx_buf_tail == tx_buf_head)
 		uart_tx_stop();
 }
-
-
-void uart_set_console_mode(int enable)
-{
-	console_mode = enable;
-
-	if (!enable)
-		rx_cur_buf_ptr = rx_cur_buf_head;
-}
-
 
 int uart_puts(const char *outstr)
 {
@@ -547,7 +513,6 @@ int uart_puts(const char *outstr)
 	return *outstr ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
 
-
 int uart_vprintf(const char *format, va_list args)
 {
 	int rv = vfnprintf(__tx_char, NULL, format, args);
@@ -557,7 +522,6 @@ int uart_vprintf(const char *format, va_list args)
 
 	return rv;
 }
-
 
 int uart_printf(const char *format, ...)
 {
@@ -570,8 +534,9 @@ int uart_printf(const char *format, ...)
 	return rv;
 }
 
-
-/* Add a character directly to the UART buffer */
+/**
+ * Add a character directly to the UART buffer.
+ */
 static int emergency_txchar(void *format, int c)
 {
 	/* Wait for space */
@@ -582,7 +547,6 @@ static int emergency_txchar(void *format, int c)
 	uart_write_char(c);
 	return 0;
 }
-
 
 int uart_emergency_printf(const char *format, ...)
 {
@@ -599,25 +563,19 @@ int uart_emergency_printf(const char *format, ...)
 	return rv;
 }
 
-
-/* For use when debugging verified boot. We could wrap it with a real function,
- * but it's rarely needed and this doesn't add any extra code. We have to
- * declare it here in order for this trick to work.  */
-void VbExDebug(const char *format, ...)
-	__attribute__((weak, alias("uart_printf")));
-
-
 void uart_flush_output(void)
 {
 	/* Wait for buffer to empty */
 	while (tx_buf_head != tx_buf_tail) {
-		/* It's possible we're in some other interrupt, and the
+		/*
+		 * It's possible we're in some other interrupt, and the
 		 * previous context was doing a printf() or puts() but hadn't
 		 * enabled the UART interrupt.  Check if the interrupt is
 		 * disabled, and if so, re-enable and trigger it.  Note that
 		 * this check is inside the while loop, so we'll be safe even
 		 * if the context switches away from us to another partial
-		 * printf() and back. */
+		 * printf() and back.
+		 */
 		if (uart_tx_stopped())
 			uart_tx_start();
 	}
@@ -629,8 +587,9 @@ void uart_flush_output(void)
 void uart_emergency_flush(void)
 {
 	do {
-		/* Copy output from buffer until TX fifo full
-		 * or output buffer empty
+		/*
+		 * Copy output from buffer until TX fifo full or output buffer
+		 * empty.
 		 */
 		while (uart_tx_ready() &&
 		       (tx_buf_head != tx_buf_tail)) {
@@ -641,7 +600,6 @@ void uart_emergency_flush(void)
 		uart_tx_flush();
 	} while (tx_buf_head != tx_buf_tail);
 }
-
 
 void uart_flush_input(void)
 {
@@ -659,19 +617,22 @@ void uart_flush_input(void)
 	uart_enable_interrupt();
 }
 
-
 int uart_peek(int c)
 {
 	int index = -1;
 	int i = 0;
 
-	/* Disable interrupts while we pull characters out, because the
-	 * interrupt handler can also modify the tail pointer. */
+	/*
+	 * Disable interrupts while we pull characters out, because the
+	 * interrupt handler can also modify the tail pointer.
+	 */
 	uart_disable_interrupt();
 
-	/* Call interrupt handler to empty the hardware FIFO.  The minimum
+	/*
+	 * Call interrupt handler to empty the hardware FIFO.  The minimum
 	 * FIFO trigger depth is 1/8 (2 chars), so this is the only way to
-	 * ensure we've pulled the very last character out of the FIFO. */
+	 * ensure we've pulled the very last character out of the FIFO.
+	 */
 	uart_process();
 
 	for (i = 0; i < rx_cur_buf_head; ++i) {
@@ -686,7 +647,6 @@ int uart_peek(int c)
 
 	return index;
 }
-
 
 int uart_getc(void)
 {
@@ -711,14 +671,15 @@ int uart_getc(void)
 	return c;
 }
 
-
 int uart_gets(char *dest, int size)
 {
 	int got = 0;
 	int c;
 
-	/* Disable interrupts while we pull characters out, because the
-	 * interrupt handler can also modify the tail pointer. */
+	/*
+	 * Disable interrupts while we pull characters out, because the
+	 * interrupt handler can also modify the tail pointer.
+	 */
 	uart_disable_interrupt();
 
 	/* Call interrupt handler to empty the hardware FIFO */
