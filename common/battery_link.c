@@ -123,12 +123,8 @@ void battery_vendor_params(struct batt_params *batt)
 	limit_value(desired_current, current_limit[temp_range][volt_range]);
 
 #ifndef CONFIG_SLOW_PRECHARGE
-	/* Always request some current for trickle charging and pre-charging */
-	/*
-	 * TODO: (crosbug.com/p/15573) Shouldn't we only do this if desired
-	 * current is non-zero?
-	 */
-	if (*desired_current < info.precharge_current)
+	/* If battery wants current, give it at least the precharge current */
+	if (*desired_current > 0 && *desired_current < info.precharge_current)
 		*desired_current = info.precharge_current;
 #endif /* CONFIG_SLOW_PRECHARGE */
 
