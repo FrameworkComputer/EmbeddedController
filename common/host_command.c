@@ -7,7 +7,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "ec_commands.h"
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
@@ -133,9 +132,11 @@ void host_command_received(struct host_cmd_handler_args *args)
 	host_send_response(args);
 }
 
-/*
- * Find a command by command number.  Returns the command structure, or NULL if
- * no match found.
+/**
+ * Find a command by command number.
+ *
+ * @param command	Command number to find
+ * @return The command structure, or NULL if no match found.
  */
 static const struct host_command *find_host_command(int command)
 {
@@ -148,6 +149,38 @@ static const struct host_command *find_host_command(int command)
 
 	return NULL;
 }
+
+static void host_command_init(void)
+{
+	/* Initialize memory map ID area */
+	host_get_memmap(EC_MEMMAP_ID)[0] = 'E';
+	host_get_memmap(EC_MEMMAP_ID)[1] = 'C';
+	*host_get_memmap(EC_MEMMAP_ID_VERSION) = 1;
+	*host_get_memmap(EC_MEMMAP_EVENTS_VERSION) = 1;
+
+	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
+	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
+}
+
+void host_command_task(void)
+{
+	host_command_init();
+
+	while (1) {
+		/* Wait for the next command event */
+		int evt = task_wait_event(-1);
+
+		/* Process it */
+		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
+			pending_args->result =
+					host_command_process(pending_args);
+			host_send_response(pending_args);
+		}
+	}
+}
+
+/*****************************************************************************/
+/* Host commands */
 
 static int host_command_proto_version(struct host_cmd_handler_args *args)
 {
@@ -309,41 +342,7 @@ DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE,
 #endif /* CONFIG_HOST_COMMAND_STATUS */
 
 /*****************************************************************************/
-/* Initialization / task */
-
-static int host_command_init(void)
-{
-	/* Initialize memory map ID area */
-	host_get_memmap(EC_MEMMAP_ID)[0] = 'E';
-	host_get_memmap(EC_MEMMAP_ID)[1] = 'C';
-	*host_get_memmap(EC_MEMMAP_ID_VERSION) = 1;
-	*host_get_memmap(EC_MEMMAP_EVENTS_VERSION) = 1;
-
-
-	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
-	CPRINTF("[%T hostcmd init 0x%x]\n", host_get_events());
-
-	return EC_SUCCESS;
-}
-
-void host_command_task(void)
-{
-	host_command_init();
-
-	while (1) {
-		/* wait for the next command event */
-		int evt = task_wait_event(-1);
-		/* process it */
-		if ((evt & TASK_EVENT_CMD_PENDING) && pending_args) {
-			pending_args->result =
-					host_command_process(pending_args);
-			host_send_response(pending_args);
-		}
-	}
-}
-
-/*****************************************************************************/
-/* Console commands*/
+/* Console commands */
 
 static int parse_byte(char *b, uint8_t *out)
 {
