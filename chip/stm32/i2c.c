@@ -57,7 +57,7 @@
 #define I2C1      STM32_I2C1_PORT
 #define I2C2      STM32_I2C2_PORT
 
-/* select the DMA channels matching the board configuration */
+/* Select the DMA channels matching the board configuration */
 #define DMAC_SLAVE_TX ((I2C_PORT_SLAVE) ? DMAC_I2C2_TX : DMAC_I2C1_TX)
 #define DMAC_SLAVE_RX ((I2C_PORT_SLAVE) ? DMAC_I2C2_RX : DMAC_I2C1_RX)
 #define DMAC_HOST_TX  ((I2C_PORT_HOST) ? DMAC_I2C2_TX : DMAC_I2C1_TX)
@@ -68,8 +68,8 @@ enum {
 	 * A stop condition should take 2 clocks, but the process may need more
 	 * time to notice if it is preempted, so we poll repeatedly for 8
 	 * clocks, before backing off and only check once every
-	 * STOP_SENT_RETRY_US for up to TIMEOUT_STOP_SENT clocks before
-	 * giving up.
+	 * STOP_SENT_RETRY_US for up to TIMEOUT_STOP_SENT clocks before giving
+	 * up.
 	 */
 	SLOW_STOP_SENT_US	= I2C_PERIOD_US * 8,
 	TIMEOUT_STOP_SENT_US	= I2C_PERIOD_US * 200,
@@ -93,7 +93,7 @@ static const struct dma_option dma_rx_option[NUM_PORTS] = {
 static uint16_t i2c_sr1[NUM_PORTS];
 static struct mutex i2c_mutex;
 
-/* buffer for host commands (including version, error code and checksum) */
+/* Buffer for host commands (including version, error code and checksum) */
 static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
 static struct host_cmd_handler_args host_cmd_args;
 
@@ -136,7 +136,7 @@ void __board_i2c_release(int port)
 void board_i2c_release(int port)
 	__attribute__((weak, alias("__board_i2c_release")));
 
-static int i2c_init_port(unsigned int port);
+static void i2c_init_port(unsigned int port);
 
 static int i2c_write_raw_slave(int port, void *buf, int len)
 {
@@ -452,7 +452,7 @@ static void unwedge_i2c_bus(int port)
 	gpio_set_level(sda, 1);
 }
 
-static int i2c_init_port(unsigned int port)
+static void i2c_init_port(unsigned int port)
 {
 	const int i2c_clock_bit[] = {21, 22};
 
@@ -490,28 +490,21 @@ static int i2c_init_port(unsigned int port)
 	STM32_I2C_SR1(port) = 0;
 
 	board_i2c_post_init(port);
-
-	return EC_SUCCESS;
 }
 
 static void i2c_init(void)
 {
-	int rc = 0;
+	/* TODO: Add #defines to determine which channels to init */
+	i2c_init_port(I2C1);
+	i2c_init_port(I2C2);
 
-	/* FIXME: Add #defines to determine which channels to init */
-	rc |= i2c_init_port(I2C1);
-	rc |= i2c_init_port(I2C2);
-
-	/* enable event and error interrupts */
-	if (!rc) {
-		task_enable_irq(STM32_IRQ_I2C1_EV);
-		task_enable_irq(STM32_IRQ_I2C1_ER);
-		task_enable_irq(STM32_IRQ_I2C2_EV);
-		task_enable_irq(STM32_IRQ_I2C2_ER);
-	}
+	/* Enable event and error interrupts */
+	task_enable_irq(STM32_IRQ_I2C1_EV);
+	task_enable_irq(STM32_IRQ_I2C1_ER);
+	task_enable_irq(STM32_IRQ_I2C2_EV);
+	task_enable_irq(STM32_IRQ_I2C2_ER);
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
-
 
 /*****************************************************************************/
 /* STM32 Host I2C */
@@ -531,7 +524,6 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 #define SR1_TIMEOUT	(1 << 14)	/* Timeout : 25ms */
 #define CR2_DMAEN	(1 << 11)	/* DMA enable */
 #define CR2_LAST	(1 << 12)	/* Next EOT is last EOT */
-
 
 static inline void dump_i2c_reg(int port)
 {
@@ -615,12 +607,14 @@ static int master_start(int port, int slave_addr)
 	rv = wait_status(port, SR1_SB, WAIT_MASTER_START);
 	if (rv)
 		return rv;
+
 	/* Send address */
 	STM32_I2C_DR(port) = slave_addr;
 	/* Wait for addr ready */
 	rv = wait_status(port, SR1_ADDR, WAIT_ADDR_READY);
 	if (rv)
 		return rv;
+
 	read_clear_status(port);
 
 	return EC_SUCCESS;
@@ -670,7 +664,7 @@ static void handle_i2c_error(int port, int rv)
 	timestamp_t t1, t2;
 	uint32_t r;
 
-	/* we have not used the bus, just exit */
+	/* We have not used the bus, just exit */
 	if (rv == EC_ERROR_BUSY)
 		return;
 
@@ -726,16 +720,17 @@ static void handle_i2c_error(int port, int rv)
 		usleep(1000);
 		r = STM32_I2C_SR2(port);
 	}
+
 cr_cleanup:
-	/**
-	 * reset control register to the default state :
+	/*
+	 * Reset control register to the default state :
 	 * I2C mode / Periphal enabled, ACK enabled
 	 */
 	STM32_I2C_CR1(port) = (1 << 10) | (1 << 0);
 }
 
 static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
-	int size, int stop)
+			       int size, int stop)
 {
 	int rv, rv_start;
 
@@ -780,7 +775,7 @@ static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
 }
 
 static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
-	int size)
+			      int size)
 {
 	int rv, rv_start;
 
@@ -840,7 +835,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
  * @return 0 if ok, else ER_ERROR...
  */
 static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
-	     uint8_t *in, int in_bytes)
+		    uint8_t *in, int in_bytes)
 {
 	int rv;
 
