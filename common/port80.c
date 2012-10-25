@@ -5,7 +5,7 @@
 
 /* Port 80 module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "host_command.h"
 #include "port80.h"
@@ -16,7 +16,7 @@
 #define HISTORY_LEN 256
 
 static uint16_t history[HISTORY_LEN];
-static int writes;  /* Number of port 80 writes so far */
+static int writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
 static int scroll;
 static int print_in_int = 1;
@@ -25,9 +25,7 @@ void port_80_write(int data)
 {
 	/*
 	 * Note that this currently prints from inside the LPC interrupt
-	 * itself.  Probably not worth the system overhead to buffer the data
-	 * and print it from a task, because we're printing a small amount of
-	 * data and cprintf() doesn't block.
+	 * itself.  If you're dropping events, turn print_in_int off.
 	 */
 	if (print_in_int)
 		CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);

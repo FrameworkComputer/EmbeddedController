@@ -27,16 +27,18 @@ enum block_offsets {
 	OFFSET_BOOL0,
 };
 
-
-/* Boolean options.  Must be in the same order as enum eoption_bool, and must
- * be terminated by an entry with a NULL name. */
+/*
+ * Boolean options.  Must be in the same order as enum eoption_bool, and must
+ * be terminated by an entry with a NULL name.
+ */
 static const struct eoption_bool_data bool_opts[] = {
 	{OFFSET_BOOL0, (1 << 0), "bool_test"},
 	{0, 0, NULL},
 };
 
-
-/* Read a uint32_t from the specified EEPROM *word* offset. */
+/**
+ * Read a uint32_t from the specified EEPROM word offset.
+ */
 static int read32(int offset, uint32_t *dest)
 {
 	return eeprom_read(EEPROM_BLOCK_EOPTION, offset * 4, sizeof(uint32_t),
@@ -44,13 +46,14 @@ static int read32(int offset, uint32_t *dest)
 }
 
 
-/* Write a uint32_t to the specified EEPROM *word* offset. */
+/**
+ * Write a uint32_t to the specified EEPROM word offset.
+ */
 static int write32(int offset, uint32_t v)
 {
 	return eeprom_write(EEPROM_BLOCK_EOPTION, offset * 4, sizeof(v),
 			    (char *)&v);
 }
-
 
 int eoption_get_bool(enum eoption_bool opt)
 {
@@ -60,7 +63,6 @@ int eoption_get_bool(enum eoption_bool opt)
 	read32(d->offset, &v);
 	return v & d->mask ? 1 : 0;
 }
-
 
 int eoption_set_bool(enum eoption_bool opt, int value)
 {
@@ -80,8 +82,11 @@ int eoption_set_bool(enum eoption_bool opt, int value)
 	return write32(d->offset, v);
 }
 
-
-/* Find an option by name.  Returns the option index, or -1 if no match. */
+/**
+ * Find an option by name.
+ *
+ * @return The option index, or -1 if no match.
+ */
 static int find_option_by_name(const char *name,
 			       const struct eoption_bool_data *d)
 {
@@ -98,10 +103,7 @@ static int find_option_by_name(const char *name,
 	return -1;
 }
 
-/*****************************************************************************/
-/* Initialization */
-
-int eoption_init(void)
+void eoption_init(void)
 {
 	uint32_t v;
 	int version;
@@ -115,10 +117,12 @@ int eoption_init(void)
 
 	version = (v >> 8) & 0xff;
 	if (version == EOPTION_VERSION_CURRENT)
-		return EC_SUCCESS;
+		return;
 
-	/* TODO: should have a CRC if we start using this for real
-	 * (non-debugging) options. */
+	/*
+	 * TODO: should have a CRC if we start using this for real
+	 * (non-debugging) options.
+	 */
 
 	/* Initialize fields which weren't set in previous versions */
 	if (version < 1)
@@ -126,7 +130,7 @@ int eoption_init(void)
 
 	/* Update the header */
 	v = (v & ~0xff00) | (EOPTION_VERSION_CURRENT << 8);
-	return write32(OFFSET_HEADER, v);
+	write32(OFFSET_HEADER, v);
 }
 
 /*****************************************************************************/
@@ -161,7 +165,6 @@ DECLARE_CONSOLE_COMMAND(optget, command_eoption_get,
 			"[name]",
 			"Print EC option(s)",
 			NULL);
-
 
 static int command_eoption_set(int argc, char **argv)
 {

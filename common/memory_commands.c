@@ -8,7 +8,6 @@
 #include "console.h"
 #include "util.h"
 
-
 static int command_write_word(int argc, char **argv)
 {
 	volatile uint32_t *address;
@@ -37,7 +36,6 @@ DECLARE_CONSOLE_COMMAND(ww, command_write_word,
 			"addr value",
 			"Write a word to memory",
 			NULL);
-
 
 static int command_read_word(int argc, char **argv)
 {
