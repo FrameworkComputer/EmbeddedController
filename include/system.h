@@ -34,13 +34,17 @@ enum system_image_copy_t {
 	SYSTEM_IMAGE_RW
 };
 
-/* Pre-initializes the module.  This occurs before clocks or tasks are
- * set up. */
-int system_pre_init(void);
+/**
+ * Pre-initializes the module.  This occurs before clocks or tasks are
+ * set up.
+ */
+void system_pre_init(void);
 
-/* System common pre-initialization; called after chip-specific
- * system_pre_init(). */
-int system_common_pre_init(void);
+/**
+ * System common pre-initialization; called after chip-specific
+ * system_pre_init().
+ */
+void system_common_pre_init(void);
 
 /**
  * Get the reset flags.
@@ -68,46 +72,77 @@ void system_clear_reset_flags(uint32_t flags);
  */
 void system_print_reset_flags(void);
 
-/* Return non-zero if the system is locked down for normal consumer use.
+/**
+ * Check if system is locked down for normal consumer use.
+ *
+ * @return non-zero if the system is locked down for normal consumer use.
  * Potentially-dangerous developer and/or factory commands must be disabled
  * unless this command returns 0.
  *
  * This should be controlled by the same mechanism which write-protects the
  * read-only image (so that the only way to unlock the system is to unprotect
- * the read-only image). */
+ * the read-only image).
+ */
 int system_is_locked(void);
 
-/* Disable jumping between images for the rest of this boot. */
+/**
+ * Disable jumping between images for the rest of this boot.
+ */
 void system_disable_jump(void);
 
-/* Return the image copy which is currently running. */
+/**
+ * Return the image copy which is currently running.
+ */
 enum system_image_copy_t system_get_image_copy(void);
 
-/* Return non-zero if the system has switched between image copies at least
- * once since the last real boot. */
+/**
+ * Return non-zero if the system has switched between image copies at least
+ * once since the last real boot.
+ */
 int system_jumped_to_this_image(void);
 
-/* Preserve data across a jump between images.  <tag> identifies the data
- * type.  <size> must be a multiple of 4 bytes, and less than 255 bytes.
- * <version> is the data version, so that tag data can evolve as firmware
- * is updated.  <data> points to the data to save.
+/**
+ * Preserve data across a jump between images.
  *
- * This may ONLY be called from within a HOOK_SYSJUMP handler. */
+ * This may ONLY be called from within a HOOK_SYSJUMP handler.
+ *
+ * @param tag		Data type
+ * @param size          Size of data; must be a multiple of 4 bytes, and less
+ *			than 255 bytes.
+ * @param version       Data version, so that tag data can evolve as firmware
+ *			is updated.
+ * @param data		Pointer to data to save
+ * @return EC_SUCCESS, or non-zero if error.
+ */
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
 
-/* Retrieve data stored by a previous image's call to
- * system_add_jump_tag().  If a matching tag is found, retrieves
- * <size> and <version>, and returns a pointer to the data.  Returns
- * NULL if no matching tag is found. */
+/**
+ * Retrieve previously stored jump data
+ *
+ * This retrieves data stored by a previous image's call to
+ * system_add_jump_tag().
+ *
+ * @param tag		Data type to retrieve
+ * @param version	Set to data version if successful
+ * @param size		Set to data size if successful
+ * @return		A pointer to the data, or NULL if no matching tag is
+ *			found.
+ */
 const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 
-/* Return the address just past the last usable byte in RAM. */
+/**
+ * Return the address just past the last usable byte in RAM.
+ */
 int system_usable_ram_end(void);
 
-/* Return true if the given range is overlapped with the active image. */
+/**
+ * Return non-zero if the given range is overlapped with the active image.
+ */
 int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 
-/* Return a text description of the image copy which is currently running. */
+/**
+ * Return a text description of the image copy which is currently running.
+ */
 const char *system_get_image_copy_string(void);
 
 /**
@@ -121,20 +156,31 @@ const char *system_get_image_copy_string(void);
  */
 int system_get_image_used(enum system_image_copy_t copy);
 
-/* Jump to the specified image copy. */
+/**
+ * Jump to the specified image copy.
+ */
 int system_run_image_copy(enum system_image_copy_t copy);
 
-/* Return the version string for an image copy, or an empty string if
- * error.  If copy==SYSTEM_IMAGE_UNKNOWN, returns the version for the
- * currently-running image. */
+/**
+ * Get the version string for an image
+ *
+ * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN
+ *			to get the version for the currently running image.
+ * @return The version string for the image copy, or an empty string if
+ * error.
+ */
 const char *system_get_version(enum system_image_copy_t copy);
 
-/* Return the board version number.  The meaning of this number is
- * board-dependent; see enum board_version in board.h for known versions. */
+/**
+ * Return the board version number.  The meaning of this number is
+ * board-dependent; see enum board_version in board.h for known versions.
+ */
 int system_get_board_version(void);
 
-/* Return information about the build including the version, build date and
- * user/machine which performed the build. */
+/**
+ * Return information about the build including the version, build date and
+ * user/machine which performed the build.
+ */
 const char *system_get_build_info(void);
 
 /* Flags for system_reset() */
@@ -154,20 +200,37 @@ const char *system_get_build_info(void);
  */
 #define SYSTEM_RESET_LEAVE_AP_OFF   (1 << 2)
 
+/**
+ * Reset the system.
+ *
+ * @param flags		Reset flags; see SYSTEM_RESET_* above.
+ */
 void system_reset(int flags);
 
-/* System warm reboot while keeping the RAM alive. */
+/**
+ * System warm reboot while keeping the RAM alive.
+ */
 void system_warm_reboot(void);
 
-/* Set a scratchpad register to the specified value.  The scratchpad
- * register must maintain its contents across a software-requested
- * warm reset. */
+/**
+ * Set a scratchpad register to the specified value.
+ *
+ * The scratchpad register must maintain its contents across a
+ * software-requested warm reset.
+ *
+ * @param value		Value to store.
+ * @return EC_SUCCESS, or non-zero if error.
+ */
 int system_set_scratchpad(uint32_t value);
 
-/* Return the current scratchpad register value. */
+/**
+ * Return the current scratchpad register value.
+ */
 uint32_t system_get_scratchpad(void);
 
-/* Return the chip info */
+/**
+ * Return the chip vendor/name/revision string.
+ */
 const char *system_get_chip_vendor(void);
 const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
@@ -200,6 +263,6 @@ int system_set_vbnvcontext(const uint8_t *block);
 void system_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /* Minimum duration to get proper hibernation */
-#define SYSTEM_HIB_MINIMUM_DURATION 0, 1000
+#define SYSTEM_HIB_MINIMUM_DURATION 0, 150000
 
 #endif  /* __CROS_EC_SYSTEM_H */

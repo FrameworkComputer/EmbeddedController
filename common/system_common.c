@@ -8,7 +8,6 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
-#include "ec_commands.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -104,7 +103,6 @@ int system_is_locked(void)
 	return 1;
 #endif
 }
-
 
 int system_usable_ram_end(void)
 {
@@ -257,11 +255,8 @@ int system_get_image_used(enum system_image_copy_t copy)
 	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
 }
 
-/* Returns true if the given range is overlapped with the active image.
- *
- * We only care the runtime code since the EC is running over it.
- * We don't care about the vector table, FMAP, and init code. */
-int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
+int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
+{
 	uint32_t r_offset;
 	uint32_t r_size;
 
@@ -285,16 +280,19 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size) {
 		return 0;
 }
 
-
 const char *system_get_image_copy_string(void)
 {
 	int copy = system_get_image_copy();
 	return copy < ARRAY_SIZE(image_names) ? image_names[copy] : "?";
 }
 
-
-/* Jump to what we hope is the init address of an image.  This function does
- * not return. */
+/**
+ * Jump to what we hope is the init address of an image.
+ *
+ * This function does not return.
+ *
+ * @param init_addr	Init address of target image
+ */
 static void jump_to_image(uint32_t init_addr)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
@@ -328,8 +326,9 @@ static void jump_to_image(uint32_t init_addr)
 	resetvec();
 }
 
-
-/* Return the base pointer for the image copy, or 0xffffffff if error. */
+/**
+ * Return the base pointer for the image copy, or 0xffffffff if error.
+ */
 static uint32_t get_base(enum system_image_copy_t copy)
 {
 	switch (copy) {
@@ -342,7 +341,9 @@ static uint32_t get_base(enum system_image_copy_t copy)
 	}
 }
 
-/* Return the size of the image copy, or 0 if error. */
+/**
+ * Return the size of the image copy, or 0 if error.
+ */
 static uint32_t get_size(enum system_image_copy_t copy)
 {
 	switch (copy) {
@@ -354,7 +355,6 @@ static uint32_t get_size(enum system_image_copy_t copy)
 		return 0;
 	}
 }
-
 
 int system_run_image_copy(enum system_image_copy_t copy)
 {
@@ -404,7 +404,6 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	return EC_ERROR_UNKNOWN;
 }
 
-
 const char *system_get_version(enum system_image_copy_t copy)
 {
 	uint32_t addr;
@@ -432,7 +431,6 @@ const char *system_get_version(enum system_image_copy_t copy)
 	return "";
 }
 
-
 int system_get_board_version(void)
 {
 	int v = 0;
@@ -449,13 +447,12 @@ int system_get_board_version(void)
 	return v;
 }
 
-
 const char *system_get_build_info(void)
 {
 	return build_info;
 }
 
-int system_common_pre_init(void)
+void system_common_pre_init(void)
 {
 	uint32_t addr;
 
@@ -477,8 +474,9 @@ int system_common_pre_init(void)
 	if (jdata->magic == JUMP_DATA_MAGIC &&
 	    jdata->version >= 1 &&
 	    reset_flags == 0) {
-		int delta;       /* Change in jump data struct size between the
-				  * previous image and this one. */
+		/* Change in jump data struct size between the previous image
+		 * and this one. */
+		int delta;
 
 		/* Yes, we jumped to this image */
 		jumped_to_image = 1;
@@ -524,11 +522,11 @@ int system_common_pre_init(void)
 		/* Clear the whole jump_data struct */
 		memset(jdata, 0, sizeof(struct jump_data));
 	}
-
-	return EC_SUCCESS;
 }
 
-/* Handle a pending reboot command */
+/**
+ * Handle a pending reboot command.
+ */
 static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 {
 	switch (cmd) {
@@ -596,7 +594,6 @@ DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			"Print system info",
 			NULL);
 
-
 #define CONFIG_CONSOLE_CMD_SCRATCHPAD
 #ifdef CONFIG_CONSOLE_CMD_SCRATCHPAD
 static int command_scratchpad(int argc, char **argv)
@@ -619,7 +616,6 @@ DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 			"Get or set scratchpad value",
 			NULL);
 #endif /* CONFIG_CONSOLE_CMD_SCRATCHPAD */
-
 
 static int command_hibernate(int argc, char **argv)
 {
@@ -645,7 +641,6 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 			"Hibernate the EC",
 			NULL);
 
-
 static int command_version(int argc, char **argv)
 {
 	ccprintf("Chip:    %s %s %s\n", system_get_chip_vendor(),
@@ -660,7 +655,6 @@ DECLARE_CONSOLE_COMMAND(version, command_version,
 			NULL,
 			"Print versions",
 			NULL);
-
 
 static int command_sysjump(int argc, char **argv)
 {
@@ -699,7 +693,6 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
 			"[RO | RW | addr | disable]",
 			"Jump to a system image or address",
 			NULL);
-
 
 static int command_reboot(int argc, char **argv)
 {

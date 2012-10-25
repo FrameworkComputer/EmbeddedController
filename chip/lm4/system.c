@@ -39,15 +39,21 @@ enum hibdata_index {
  */
 #define HIB_RESET_USEC 150000
 
+/**
+ * Wait for a write to commit to a hibernate register.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
 static int wait_for_hibctl_wc(void)
 {
 	int i;
+
 	/* Wait for write-capable */
 	for (i = 0; i < 1000000; i++) {
 		if (LM4_HIBERNATE_HIBCTL & LM4_HIBCTL_WRC)
 			return EC_SUCCESS;
 	}
-	return EC_ERROR_UNKNOWN;
+	return EC_ERROR_TIMEOUT;
 }
 
 /**
@@ -282,7 +288,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	hibernate(seconds, microseconds, 0);
 }
 
-int system_pre_init(void)
+void system_pre_init(void)
 {
 	volatile uint32_t scratch  __attribute__((unused));
 
@@ -341,8 +347,6 @@ int system_pre_init(void)
 
 	/* Brown-outs should trigger a reset */
 	LM4_SYSTEM_PBORCTL |= 0x02;
-
-	return EC_SUCCESS;
 }
 
 void system_reset(int flags)
