@@ -7,9 +7,9 @@
 
 #include "common.h"
 #include "console.h"
-#include "cryptolib.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "sha256.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -37,7 +37,7 @@ static const uint8_t *hash;   /* Hash, or NULL if not valid */
 static int want_abort;
 static int in_progress;
 
-static SHA256_CTX ctx;
+static struct sha256_ctx ctx;
 
 /*
  * Start computing a hash of <size> bytes of data at flash offset <offset>.

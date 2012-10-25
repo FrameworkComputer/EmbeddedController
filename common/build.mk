@@ -30,26 +30,7 @@ common-$(CONFIG_TASK_POWERSTATE)+=charge_state.o battery_precharge.o
 common-$(CONFIG_TASK_PWM)+=pwm_commands.o
 common-$(CONFIG_TASK_TEMPSENSOR)+=temp_sensor.o temp_sensor_commands.o
 common-$(CONFIG_TASK_THERMAL)+=thermal.o thermal_commands.o
+common-$(CONFIG_TASK_VBOOTHASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_TMP006)+=tmp006.o
 common-$(CONFIG_USB_CHARGE)+=usb_charge.o
-
-# verified boot stuff
-VBOOT_SOURCE?=/usr/src/vboot
-VBOOT_DEVKEYS?=/usr/share/vboot/devkeys
-
-CFLAGS_$(CONFIG_TASK_VBOOTHASH)+= -DCHROMEOS_ENVIRONMENT -DCHROMEOS_EC
-# CFLAGS_$(CONFIG_TASK_VBOOTHASH)+= -DVBOOT_DEBUG
-
-common-$(CONFIG_TASK_VBOOTHASH)+=vboot_stub.o vboot_hash.o
-
-includes-$(CONFIG_TASK_VBOOTHASH)+= \
-	$(VBOOT_SOURCE)/include \
-	$(VBOOT_SOURCE)/lib/include \
-	$(VBOOT_SOURCE)/lib/cryptolib/include
-
-dirs-$(CONFIG_TASK_VBOOTHASH)+=vboot/lib vboot/lib/cryptolib
-
-vboot-$(CONFIG_TASK_VBOOTHASH)+= \
-	lib/cryptolib/padding.o \
-	lib/cryptolib/sha256.o

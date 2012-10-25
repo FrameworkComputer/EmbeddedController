@@ -51,7 +51,6 @@ all-y+=$(call objs_from_dir,board/$(BOARD),board)
 all-y+=$(call objs_from_dir,private,private)
 all-y+=$(call objs_from_dir,common,common)
 all-y+=$(call objs_from_dir,test,$(PROJECT))
-all-y+=$(call objs_from_dir,vboot,vboot)
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common test util
 
 include Makefile.rules

@@ -41,12 +41,6 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $(filter %.c, $^) -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
 	   $(silent)
 cmd_version = ./util/getversion.sh > $@
-cmd_sign = vbutil_ec --sign $(out)/$*.bin.tmp \
-		--version 1 \
-		--keyblock $(VBOOT_DEVKEYS)/ec.keyblock \
-		--signprivate $(VBOOT_DEVKEYS)/ec_data_key.vbprivk \
-		--signpubkey $(VBOOT_DEVKEYS)/ec_root_key.vbpubk \
-		$(silent)
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = cd $(out) && \
 	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A $(silent) && \
