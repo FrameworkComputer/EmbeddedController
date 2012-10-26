@@ -497,10 +497,7 @@ void task_print_list(void)
 		ccprintf("%4d %c %-16s %08x %11.6ld  %3d/%3d\n", i, is_ready,
 			 task_names[i], tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
-		if (in_interrupt_context())
-			uart_emergency_flush();
-		else
-			cflush();
+		cflush();
 	}
 }
 

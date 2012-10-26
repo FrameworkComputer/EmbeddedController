@@ -479,6 +479,19 @@ static void handle_console_char(int c)
 }
 
 /**
+ * Copy output from buffer until TX fifo full or output buffer empty.
+ *
+ * May be called from interrupt context.
+ */
+static void fill_tx_fifo(void)
+{
+	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
+		uart_write_char(tx_buf[tx_buf_tail]);
+		tx_buf_tail = TX_BUF_NEXT(tx_buf_tail);
+	}
+}
+
+/**
  * Helper for UART processing.
  */
 void uart_process(void)
@@ -488,10 +501,7 @@ void uart_process(void)
 		handle_console_char(uart_read_char());
 
 	/* Copy output from buffer until TX fifo full or output buffer empty */
-	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
-		uart_write_char(tx_buf[tx_buf_tail]);
-		tx_buf_tail = TX_BUF_NEXT(tx_buf_tail);
-	}
+	fill_tx_fifo();
 
 	/* If output buffer is empty, disable transmit interrupt */
 	if (tx_buf_tail == tx_buf_head)
@@ -534,37 +544,23 @@ int uart_printf(const char *format, ...)
 	return rv;
 }
 
-/**
- * Add a character directly to the UART buffer.
- */
-static int emergency_txchar(void *format, int c)
-{
-	/* Wait for space */
-	while (!uart_tx_ready())
-		;
-
-	/* Write the character */
-	uart_write_char(c);
-	return 0;
-}
-
-int uart_emergency_printf(const char *format, ...)
-{
-	int rv;
-	va_list args;
-
-	va_start(args, format);
-	rv = vfnprintf(emergency_txchar, NULL, format, args);
-	va_end(args);
-
-	/* Wait for transmit FIFO empty */
-	uart_tx_flush();
-
-	return rv;
-}
-
 void uart_flush_output(void)
 {
+	/*
+	 * If we're in interrupt context, copy output explicitly, since the
+	 * UART interrupt may not be able to preempt this one.
+	 */
+	if (in_interrupt_context()) {
+		do {
+			/* Copy until TX fifo full or output buffer empty */
+			fill_tx_fifo();
+
+			/* Wait for transmit FIFO empty */
+			uart_tx_flush();
+		} while (tx_buf_head != tx_buf_tail);
+		return;
+	}
+
 	/* Wait for buffer to empty */
 	while (tx_buf_head != tx_buf_tail) {
 		/*
@@ -582,23 +578,6 @@ void uart_flush_output(void)
 
 	/* Wait for transmit FIFO empty */
 	uart_tx_flush();
-}
-
-void uart_emergency_flush(void)
-{
-	do {
-		/*
-		 * Copy output from buffer until TX fifo full or output buffer
-		 * empty.
-		 */
-		while (uart_tx_ready() &&
-		       (tx_buf_head != tx_buf_tail)) {
-			uart_write_char(tx_buf[tx_buf_tail]);
-			tx_buf_tail = TX_BUF_NEXT(tx_buf_tail);
-		}
-		/* Wait for transmit FIFO empty */
-		uart_tx_flush();
-	} while (tx_buf_head != tx_buf_tail);
 }
 
 void uart_flush_input(void)

@@ -188,19 +188,17 @@ void timer_print_info(void)
 		 "Deadline: 0x%016lx -> %11.6ld s from now\n"
 		 "Active timers:\n",
 		 t, deadline, deadline - t);
+	cflush();
+
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
 		if (timer_running & (1<<tskid)) {
 			ccprintf("  Tsk %2d  0x%016lx -> %11.6ld\n", tskid,
 				 timer_deadline[tskid].val,
 				 timer_deadline[tskid].val - t);
-			if (in_interrupt_context())
-				uart_emergency_flush();
-			else
-				cflush();
+			cflush();
 		}
 	}
 }
-
 
 static int command_wait(int argc, char **argv)
 {

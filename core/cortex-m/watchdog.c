@@ -5,15 +5,13 @@
 
 /* Watchdog common code */
 
-#include "board.h"
 #include "common.h"
-#include "config.h"
+#include "panic.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
-
 
 void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 {
@@ -29,21 +27,17 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 		stack = (uint32_t *)psp;
 	}
 
-	uart_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ",
-		    stack[6], stack[5], psp);
+	panic_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ",
+		     stack[6], stack[5], psp);
 	if ((excep_lr & 0xf) == 1)
-		uart_puts("(exc) ###\n");
+		panic_puts("(exc) ###\n");
 	else
-		uart_printf("(task %d) ###\n", task_get_current());
-	/* Ensure this debug message is always flushed to the UART */
-	uart_emergency_flush();
+		panic_printf("(task %d) ###\n", task_get_current());
 
 	/* If we are blocked in a high priority IT handler, the following debug
 	 * messages might not appear but they are useless in that situation. */
 	timer_print_info();
-	uart_emergency_flush();
 	task_print_list();
-	uart_emergency_flush();
 }
 
 

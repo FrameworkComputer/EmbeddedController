@@ -48,16 +48,6 @@ struct panic_data {
 #define PANIC_DATA_FLAG_OLD_HOSTCMD (1 << 2)
 
 /**
- * Write a character to the panic reporting device
- *
- * This function will not return until the character has left the UART
- * data register. Any previously queued UART traffic is displayed first.
- *
- * @param ch	Character to write
- */
-void panic_putc(int ch);
-
-/**
  * Write a string to the panic reporting device
  *
  * This function will not return until the string has left the UART
@@ -66,23 +56,6 @@ void panic_putc(int ch);
  * @param ch	Character to write
  */
 void panic_puts(const char *s);
-
-/**
- * Very basic vprintf() for use in panic situations
- *
- * We only support %s and %nx where n is the number of hex digits to display.
- * Currently we don't even support %d, and it is aimed at small code size.
- *
- * TODO(sjg@chromium.org): Really what we need is a vsnprintf() that is
- * shared between the console UART and panic (and is also available as an
- * snprintf()). The only downside is that we would then require a large
- * printf() implementation to be always present, whereas presumably now we
- * can turn it off.
- *
- * @param format	printf-style format string
- * @param args		List of arguments to process
- */
-void panic_vprintf(const char *format, va_list args);
 
 /**
  * Very basic printf() for use in panic situations
