@@ -18,12 +18,6 @@ struct tmp006_t {
 };
 
 /**
- * Poll all TMP006 sensors.
- *
- * @return 0 if successful, non-zero if error. */
-int tmp006_poll(void);
-
-/**
  * Get the last polled value of a sensor.
  *
  * @param idx		Index to read.  The low bit in idx indicates whether

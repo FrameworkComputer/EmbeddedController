@@ -8,11 +8,6 @@
 #ifndef __CROS_EC_CHIP_TEMP_SENSOR_H
 #define __CROS_EC_CHIP_TEMP_SENSOR_H
 
-struct temp_sensor_t;
-
-/* Temperature polling function. */
-int chip_temp_sensor_poll(void);
-
 /**
  * Get the last polled value of the sensor.
  *

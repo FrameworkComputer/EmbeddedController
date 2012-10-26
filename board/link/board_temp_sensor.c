@@ -35,7 +35,7 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 	{"I2C-Charger D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 6, 7},
 	{"I2C-Charger D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 7, 7},
 #endif
-#ifdef CONFIG_TASK_TEMPSENSOR
+#ifdef CONFIG_ADC
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
 #endif
 #ifdef CONFIG_PECI

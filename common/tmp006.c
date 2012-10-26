@@ -232,23 +232,17 @@ int tmp006_get_val(int idx, int *temp_ptr)
 		return tmp006_read_object_temp(tdata, temp_ptr);
 }
 
-int tmp006_poll(void)
-{
-	int i;
-	int rv;
-	int rv1 = EC_SUCCESS;
-
-	for (i = 0; i < TMP006_COUNT; ++i) {
-		rv = tmp006_poll_sensor(i);
-		if (rv != EC_SUCCESS)
-			rv1 = rv;
-	}
-
-	return rv1;
-}
-
 /*****************************************************************************/
 /* Hooks */
+
+static void tmp006_poll(void)
+{
+	int i;
+
+	for (i = 0; i < TMP006_COUNT; ++i)
+		tmp006_poll_sensor(i);
+}
+DECLARE_HOOK(HOOK_SECOND, tmp006_poll, HOOK_PRIO_DEFAULT);
 
 static void tmp006_init(void)
 {

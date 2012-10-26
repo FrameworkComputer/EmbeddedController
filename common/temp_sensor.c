@@ -11,6 +11,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "peci.h"
 #include "task.h"
@@ -32,25 +33,6 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 	sensor = temp_sensors + id;
 
 	return sensor->read(sensor->idx, temp_ptr);
-}
-
-void poll_slow_sensors(void)
-{
-	/* Poll every second */
-#ifdef CONFIG_TMP006
-	tmp006_poll();
-#endif
-#ifdef CHIP_lm4
-	chip_temp_sensor_poll();
-#endif
-}
-
-static void poll_fast_sensors(void)
-{
-	/* Poll every 1/4 second */
-#ifdef CONFIG_PECI
-	peci_temp_sensor_poll();
-#endif
 }
 
 static void update_mapped_memory(void)
@@ -84,8 +66,10 @@ static void update_mapped_memory(void)
 		}
 	}
 }
+/* Run after other tick tasks, so sensors will have updated first. */
+DECLARE_HOOK(HOOK_SECOND, update_mapped_memory, HOOK_PRIO_DEFAULT + 1);
 
-void temp_sensor_task(void)
+static void temp_sensor_init(void)
 {
 	int i;
 	uint8_t *base, *base_b;
@@ -116,16 +100,8 @@ void temp_sensor_task(void)
 
 	/* Temp sensor data is present, with B range supported. */
 	*host_get_memmap(EC_MEMMAP_THERMAL_VERSION) = 2;
-
-	while (1) {
-		for (i = 0; i < 4; ++i) {
-			msleep(250);
-			poll_fast_sensors();
-		}
-		poll_slow_sensors();
-		update_mapped_memory();
-	}
 }
+DECLARE_HOOK(HOOK_INIT, temp_sensor_init, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */

@@ -13,7 +13,7 @@ CORE:=cortex-m
 chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o
 
 # Optional chip modules
-chip-$(CONFIG_ADC)+=adc.o
+chip-$(CONFIG_ADC)+=adc.o chip_temp_sensor.o
 chip-$(CONFIG_EEPROM)+=eeprom.o
 chip-$(CONFIG_FLASH)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
@@ -24,5 +24,4 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o keyboard_scan_stub.o
 chip-$(CONFIG_TASK_SWITCH)+=switch.o
-chip-$(CONFIG_TASK_TEMPSENSOR)+=chip_temp_sensor.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o

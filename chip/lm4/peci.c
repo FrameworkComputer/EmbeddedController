@@ -40,7 +40,9 @@
 static int temp_vals[TEMP_AVG_LENGTH];
 static int temp_idx = 0;
 
-/* Configures the GPIOs for the PECI module. */
+/**
+ * Configure the GPIOs for the PECI module.
+ */
 static void configure_gpios(void)
 {
 	/* PJ6 alternate function 1 = PECI Tx */
@@ -49,7 +51,6 @@ static void configure_gpios(void)
 	/* PJ7 analog input = PECI Rx (comparator) */
 	LM4_GPIO_DEN(LM4_GPIO_J) &= ~0x80;
 }
-
 
 int peci_get_cpu_temp(void)
 {
@@ -60,15 +61,6 @@ int peci_get_cpu_temp(void)
 
 	return v >> 6;
 }
-
-
-int peci_temp_sensor_poll(void)
-{
-	temp_vals[temp_idx] = peci_get_cpu_temp();
-	temp_idx = (temp_idx + 1) & (TEMP_AVG_LENGTH - 1);
-	return EC_SUCCESS;
-}
-
 
 int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 {
@@ -93,6 +85,13 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+static void peci_temp_sensor_poll(void)
+{
+	temp_vals[temp_idx] = peci_get_cpu_temp();
+	temp_idx = (temp_idx + 1) & (TEMP_AVG_LENGTH - 1);
+}
+DECLARE_HOOK(HOOK_TICK, peci_temp_sensor_poll, HOOK_PRIO_DEFAULT);
+
 static void peci_freq_changed(void)
 {
 	int freq = clock_get_freq();
@@ -101,8 +100,10 @@ static void peci_freq_changed(void)
 	/* Disable polling while reconfiguring */
 	LM4_PECI_CTL = 0;
 
-	/* Calculate baud setting from desired rate, compensating for internal
-	 * and external delays. */
+	/*
+	 * Calculate baud setting from desired rate, compensating for internal
+	 * and external delays.
+	 */
 	baud = freq / (4 * PECI_BAUD_RATE) - 2;
 	baud -= (freq / 1000000) * (PECI_TD_FET_NS + PECI_TD_INT_NS) / 1000;
 
@@ -116,27 +117,6 @@ static void peci_freq_changed(void)
 		       (PECI_ERROR_BYPASS << 11);
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT - 1);
-
-/*****************************************************************************/
-/* Console commands */
-
-static int command_peci_temp(int argc, char **argv)
-{
-	int t = peci_get_cpu_temp();
-	if (t == -1) {
-		ccprintf("PECI error 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
-		return EC_ERROR_UNKNOWN;
-	}
-	ccprintf("CPU temp = %d K = %d C\n", t, t - 273);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
-			NULL,
-			"Print CPU temperature",
-			NULL);
-
-/*****************************************************************************/
-/* Initialization */
 
 static void peci_init(void)
 {
@@ -158,3 +138,21 @@ static void peci_init(void)
 		temp_vals[i] = 300; /* 27 C */
 }
 DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_peci_temp(int argc, char **argv)
+{
+	int t = peci_get_cpu_temp();
+	if (t == -1) {
+		ccprintf("PECI error 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
+		return EC_ERROR_UNKNOWN;
+	}
+	ccprintf("CPU temp = %d K = %d C\n", t, t - 273);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
+			NULL,
+			"Print CPU temperature",
+			NULL);

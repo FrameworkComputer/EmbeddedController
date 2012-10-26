@@ -7,18 +7,17 @@
 
 #include "adc.h"
 #include "common.h"
+#include "hooks.h"
 #include "lm4_adc.h"
-#include "temp_sensor.h"
 
 /* Initialize temperature reading to a sane value (27 C) */
 static int last_val = 300;
 
-int chip_temp_sensor_poll(void)
+static void chip_temp_sensor_poll(void)
 {
 	last_val = adc_read_channel(ADC_CH_EC_TEMP);
-
-	return EC_SUCCESS;
 }
+DECLARE_HOOK(HOOK_SECOND, chip_temp_sensor_poll, HOOK_PRIO_DEFAULT);
 
 int chip_temp_sensor_get_val(int idx, int *temp_ptr)
 {

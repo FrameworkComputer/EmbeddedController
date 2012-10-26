@@ -17,7 +17,6 @@
 #define CONFIG_TASK_LIST \
 	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
-	TASK(TEMPSENSOR, temp_sensor_task, NULL, TASK_STACK_SIZE) \
 	TASK(THERMAL, thermal_task, NULL, TASK_STACK_SIZE) \
 	TASK(X86POWER, x86_power_task, NULL, TASK_STACK_SIZE) \
 	TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \

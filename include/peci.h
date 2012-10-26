@@ -10,10 +10,14 @@
 
 #include "common.h"
 
-/* Return the current CPU temperature in degrees K, or -1 if error.
+/**
+ * Get the current CPU temperature.
  *
  * Note that the PECI interface is currently a little flaky; if you get an
- * error, retry a bit later. */
+ * error, retry a bit later.
+ *
+ * @return the CPU temperature in degrees K, or -1 if error.
+ */
 int peci_get_cpu_temp(void);
 
 /**
@@ -25,8 +29,5 @@ int peci_get_cpu_temp(void);
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int peci_temp_sensor_get_val(int idx, int *temp_ptr);
-
-/* Temperature polling of CPU temperature sensor via PECI. */
-int peci_temp_sensor_poll(void);
 
 #endif  /* __CROS_EC_PECI_H */
