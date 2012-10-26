@@ -5,8 +5,8 @@
 
 /* Task scheduling / events module for Chrome EC operating system */
 
-#include "config.h"
 #include "atomic.h"
+#include "common.h"
 #include "console.h"
 #include "cpu.h"
 #include "link_defs.h"
@@ -64,19 +64,22 @@ extern int __task_start(int *task_stack_ready);
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-	/* Print when the idle task starts.  This is the lowest priority task,
+	/*
+	 * Print when the idle task starts.  This is the lowest priority task,
 	 * so this only starts once all other tasks have gotten a chance to do
-	 * their task inits and have gone to sleep. */
+	 * their task inits and have gone to sleep.
+	 */
 	cprintf(CC_TASK, "[%T idle task started]\n");
 
 	while (1) {
-		/* Wait for the next irq event.  This stops the CPU clock
-		 * (sleep / deep sleep, depending on chip config). */
+		/*
+		 * Wait for the next irq event.  This stops the CPU clock
+		 * (sleep / deep sleep, depending on chip config).
+		 */
 		asm("wfi");
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */
-
 
 static void task_exit_trap(void)
 {
@@ -86,7 +89,6 @@ static void task_exit_trap(void)
 	while (1)
 		task_wait_event(-1);
 }
-
 
 /* Startup parameters for all tasks. */
 #define TASK(n, r, d, s)  {	\
@@ -109,7 +111,6 @@ static const struct {
 static task_ tasks[TASK_ID_COUNT];
 
 /* Stacks for all tasks */
-/* TODO: variable-size stacks */
 #define TASK(n, r, d, s)  + s
 #include TASK_LIST
 uint8_t task_stacks[0
@@ -128,7 +129,8 @@ uint32_t scratchpad[17];
 
 static task_ *current_task = (task_ *)scratchpad;
 
-/* Should IRQs chain to svc_handler()?  This should be set if either of the
+/*
+ * Should IRQs chain to svc_handler()?  This should be set if either of the
  * following is true:
  *
  * 1) Task scheduling has started, and task profiling is enabled.  Task
@@ -136,11 +138,12 @@ static task_ *current_task = (task_ *)scratchpad;
  *
  * 2) An event was set by an interrupt; this could result in a higher-priority
  * task unblocking.  After checking for a task switch, svc_handler() will clear
- * the flag (unless profiling is also enabled; then the flag remains set). */
+ * the flag (unless profiling is also enabled; then the flag remains set).
+ */
 static int need_resched_or_profiling = 0;
 
-/**
- * bitmap of all tasks ready to be run
+/*
+ * Bitmap of all tasks ready to be run.
  *
  * Currently all tasks are enabled at startup.
  */
@@ -153,18 +156,15 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 	return tasks + id;
 }
 
-
 void interrupt_disable(void)
 {
 	asm("cpsid i");
 }
 
-
 void interrupt_enable(void)
 {
 	asm("cpsie i");
 }
-
 
 inline int in_interrupt_context(void)
 {
@@ -174,12 +174,11 @@ inline int in_interrupt_context(void)
 	return ret;
 }
 
-
 inline int get_interrupt_context(void)
 {
 	int ret;
 	asm("mrs %0, ipsr \n":"=r"(ret)); /* read exception number */
-	return ret & 0x1ff;                /* exception bits are the 9 LSB */
+	return ret & 0x1ff;               /* exception bits are the 9 LSB */
 }
 
 task_id_t task_get_current(void)
@@ -193,14 +192,14 @@ uint32_t *task_get_event_bitmap(task_id_t tskid)
 	return &tsk->events;
 }
 
-
 int task_start_called(void)
 {
 	return start_called;
 }
 
-
-/* Scheduling system call */
+/**
+ * Scheduling system call
+ */
 void svc_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
@@ -209,14 +208,18 @@ void svc_handler(int desched, task_id_t resched)
 	uint64_t t;
 #endif
 
-	/* Push the priority to -1 until the return, to avoid being
-	 * interrupted */
+	/*
+	 * Push the priority to -1 until the return, to avoid being
+	 * interrupted.
+	 */
 	asm volatile("cpsid f\n"
 		     "isb\n");
 
 #ifdef CONFIG_TASK_PROFILING
-	/* SVCall isn't triggered via DECLARE_IRQ(), so it needs to track its
-	 * start time explicitly. */
+	/*
+	 * SVCall isn't triggered via DECLARE_IRQ(), so it needs to track its
+	 * start time explicitly.
+	 */
 	if (exc == 0xb) {
 		exc_start_time = get_time().val;
 		svc_calls++;
@@ -245,13 +248,17 @@ void svc_handler(int desched, task_id_t resched)
 	t = get_time().val;
 	exc_total_time += (t - exc_start_time);
 
-	/* Bill the current task for time between the end of the last interrupt
-	 * and the start of this one. */
+	/*
+	 * Bill the current task for time between the end of the last interrupt
+	 * and the start of this one.
+	 */
 	current->runtime += (exc_start_time - exc_end_time);
 	exc_end_time = t;
 #else
-	/* Don't chain here from interrupts until the next time an interrupt
-	 * sets an event. */
+	/*
+	 * Don't chain here from interrupts until the next time an interrupt
+	 * sets an event.
+	 */
 	need_resched_or_profiling = 0;
 #endif
 
@@ -267,13 +274,14 @@ void svc_handler(int desched, task_id_t resched)
 	__switchto(current, next);
 }
 
-
 void __schedule(int desched, int resched)
 {
 	register int p0 asm("r0") = desched;
 	register int p1 asm("r1") = resched;
-	/* TODO: remove hardcoded opcode.  SWI is not compiled properly for
-	 * ARMv7-M on our current chroot toolchain. */
+	/*
+	 * TODO: remove hardcoded opcode.  SWI is not compiled properly for
+	 * ARMv7-M on our current chroot toolchain.
+	 */
 	asm(".hword 0xdf00 @swi 0"::"r"(p0),"r"(p1));
 }
 
@@ -281,19 +289,25 @@ void __schedule(int desched, int resched)
 #ifdef CONFIG_TASK_PROFILING
 void task_start_irq_handler(void *excep_return)
 {
-	/* Get time before checking depth, in case this handler is
-	 * pre-empted */
+	/*
+	 * Get time before checking depth, in case this handler is
+	 * pre-empted.
+	 */
 	uint64_t t = get_time().val;
 	int irq = get_interrupt_context() - 16;
 
-	/* Track IRQ distribution.  No need for atomic add, because an IRQ
-	* can't pre-empt itself. */
+	/*
+	 * Track IRQ distribution.  No need for atomic add, because an IRQ
+	 * can't pre-empt itself.
+	 */
 	if (irq < ARRAY_SIZE(irq_dist))
 		irq_dist[irq]++;
 
-	/* Continue iff a rescheduling event happened or profiling is active,
+	/*
+	 * Continue iff a rescheduling event happened or profiling is active,
 	 * and we are not called from another exception (this must match the
-	 * logic for when we chain to svc_handler() below). */
+	 * logic for when we chain to svc_handler() below).
+	 */
 	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
 		return;
 
@@ -301,17 +315,17 @@ void task_start_irq_handler(void *excep_return)
 }
 #endif
 
-
 void task_resched_if_needed(void *excep_return)
 {
-	/* Continue iff a rescheduling event happened or profiling is active,
-	 * and we are not called from another exception. */
+	/*
+	 * Continue iff a rescheduling event happened or profiling is active,
+	 * and we are not called from another exception.
+	 */
 	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
 		return;
 
 	svc_handler(0, 0);
 }
-
 
 static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 {
@@ -339,7 +353,6 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-
 uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
@@ -365,39 +378,35 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	return 0;
 }
 
-
 uint32_t task_wait_event(int timeout_us)
 {
 	return __wait_evt(timeout_us, TASK_ID_IDLE);
 }
-
 
 void task_enable_irq(int irq)
 {
 	CPU_NVIC_EN(irq / 32) = 1 << (irq % 32);
 }
 
-
 void task_disable_irq(int irq)
 {
 	CPU_NVIC_DIS(irq / 32) = 1 << (irq % 32);
 }
-
 
 void task_clear_pending_irq(int irq)
 {
 	CPU_NVIC_UNPEND(irq / 32) = 1 << (irq % 32);
 }
 
-
 void task_trigger_irq(int irq)
 {
 	CPU_NVIC_SWTRIG = irq;
 }
 
-
-/* Initialize IRQs in the NVIC and set their priorities as defined by the
- * DECLARE_IRQ statements. */
+/*
+ * Initialize IRQs in the NVIC and set their priorities as defined by the
+ * DECLARE_IRQ statements.
+ */
 static void __nvic_init_irqs(void)
 {
 	/* Get the IRQ priorities section from the linker */
@@ -410,9 +419,11 @@ static void __nvic_init_irqs(void)
 		CPU_NVIC_UNPEND(i) = 0xffffffff;
 	}
 
-	/* Re-enable global interrupts in case they're disabled.  On a reboot,
+	/*
+	 * Re-enable global interrupts in case they're disabled.  On a reboot,
 	 * they're already enabled; if we've jumped here from another image,
-	 * they're not. */
+	 * they're not.
+	 */
 	interrupt_enable();
 
 	/* Set priorities */
@@ -427,7 +438,6 @@ static void __nvic_init_irqs(void)
 	}
 }
 
-
 void mutex_lock(struct mutex *mtx)
 {
 	uint32_t value;
@@ -437,25 +447,23 @@ void mutex_lock(struct mutex *mtx)
 	atomic_or(&mtx->waiters, id);
 
 	do {
-		/* try to get the lock (set 1 into the lock field) */
+		/* Try to get the lock (set 1 into the lock field) */
 		__asm__ __volatile__("   ldrex   %0, [%1]\n"
 				     "   teq     %0, #0\n"
 				     "   it eq\n"
 				     "   strexeq %0, %2, [%1]\n"
 				     : "=&r" (value)
 				     : "r" (&mtx->lock), "r" (2) : "cc");
-		/* "value" is equals to 1 if the store conditional failed,
+		/*
+		 * "value" is equals to 1 if the store conditional failed,
 		 * 2 if somebody else owns the mutex, 0 else.
 		 */
-		if (value == 2) {
-			/* contention on the mutex */
-			task_wait_event(0);
-		}
+		if (value == 2)
+			task_wait_event(0);  /* Contention on the mutex */
 	} while (value);
 
 	atomic_clear(&mtx->waiters, id);
 }
-
 
 void mutex_unlock(struct mutex *mtx)
 {
@@ -469,10 +477,12 @@ void mutex_unlock(struct mutex *mtx)
 			     : "cc");
 	while (waiters) {
 		task_id_t id = 31 - __builtin_clz(waiters);
-		/* somebody is waiting on the mutex */
+
+		/* Somebody is waiting on the mutex */
 		task_set_event(id, TASK_EVENT_MUTEX, 0);
 		waiters &= ~(1 << id);
 	}
+
 	/* Ensure no event is remaining from mutex wake-up */
 	atomic_clear(&tsk->events, TASK_EVENT_MUTEX);
 }
@@ -501,9 +511,7 @@ void task_print_list(void)
 	}
 }
 
-
 #ifdef CONFIG_DEBUG
-
 
 int command_task_info(int argc, char **argv)
 {
@@ -539,7 +547,6 @@ DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
 			"Print task info",
 			NULL);
 
-
 static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
@@ -557,11 +564,9 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"Print/set ready tasks",
 			NULL);
 
-
 #endif  /* CONFIG_DEBUG */
 
-
-int task_pre_init(void)
+void task_pre_init(void)
 {
 	uint32_t *stack_next = (uint32_t *)task_stacks;
 	int i;
@@ -614,10 +619,7 @@ int task_pre_init(void)
 
 	/* Initialize IRQs */
 	__nvic_init_irqs();
-
-	return EC_SUCCESS;
 }
-
 
 int task_start(void)
 {

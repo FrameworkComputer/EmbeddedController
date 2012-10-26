@@ -7,7 +7,6 @@
 
 #include "cpu.h"
 
-
 void cpu_init(void)
 {
 	/* Catch divide by 0 and unaligned access */
