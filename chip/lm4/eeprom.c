@@ -19,7 +19,6 @@
 /* Count of EEPROM blocks */
 static int block_count;
 
-
 /*
  * Wait for the current EEPROM operation to finish; all operations but write
  * should normally finish in 4 system clocks, but worst case is up to
@@ -32,7 +31,7 @@ static int wait_for_done(void)
 	int j;
 
 	for (j = 0; j < 20; j++) {  /* 20 * 100 ms = 2000 ms */
-		uint64_t tstop = get_time().val + 100000;  /* 100ms from now */
+		uint64_t tstop = get_time().val + 100 * MSEC;
 		while (get_time().val < tstop) {
 			if (!(LM4_EEPROM_EEDONE & 0x01))
 				return EC_SUCCESS;

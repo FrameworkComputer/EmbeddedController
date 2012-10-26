@@ -9,12 +9,6 @@
 #ifndef __CROS_EC_CHARGE_STATE_H
 #define __CROS_EC_CHARGE_STATE_H
 
-/* Time constants */
-#define MSEC    (1000ULL)
-#define SECOND  (MSEC * 1000)
-#define MINUTE  (SECOND * 60)
-#define HOUR    (MINUTE * 60)
-
 /* Update period to prevent charger watchdog timeout */
 #define CHARGER_UPDATE_PERIOD (SECOND * 10)
 

@@ -86,7 +86,7 @@ static enum power_state go_next_level(struct power_state_context *ctx)
 	 * Battery chemical reaction lags behind the charging voltage
 	 * change. Delay the charging state machine 2 seconds.
 	 */
-	usleep(SECOND * 2);
+	sleep(2);
 	charger_get_voltage(&baseline_voltage);
 
 	return PWR_STATE_UNCHANGE;
@@ -165,7 +165,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	    batt->voltage > (binfo->voltage_min * 105 / 100)) {
 		kicking_count++;
 		charger_set_voltage(batt->desired_voltage);
-		usleep(5 * SECOND);
+		sleep(5);
 		desired_curr = 0;
 		battery_desired_current(&desired_curr);
 		if (desired_curr >= cinfo->current_min) {
@@ -189,7 +189,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 		dec_voltage(ctx);
 		if (baseline_voltage > ctx->curr.charging_voltage)
 			baseline_voltage = ctx->curr.charging_voltage;
-		usleep(SECOND);
+		sleep(1);
 		reset_data_log();
 		return PWR_STATE_UNCHANGE;
 	}
@@ -225,14 +225,14 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	if (desired_volt > baseline_voltage) {
 		if (desired_volt > curr->charging_voltage) {
 			inc_voltage(ctx);
-			usleep(SECOND);
+			sleep(1);
 			return PWR_STATE_UNCHANGE;
 		}
 
 		if (desired_volt < (curr->charging_voltage -
 				cinfo->voltage_step)) {
 			dec_voltage(ctx);
-			usleep(SECOND);
+			sleep(1);
 			return PWR_STATE_UNCHANGE;
 		}
 	}

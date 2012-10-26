@@ -208,7 +208,7 @@ void thermal_task(void)
 {
 	while (1) {
 		thermal_process();
-		usleep(1000000);
+		usleep(SECOND);
 	}
 }
 

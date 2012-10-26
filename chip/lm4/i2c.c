@@ -61,7 +61,7 @@ static int wait_idle(int port)
 		 * the I2C is either completed or timed out. Refer to the
 		 * implementation of usleep() for a similar situation.
 		 */
-		event |= (task_wait_event(1000000) & ~TASK_EVENT_I2C_IDLE);
+		event |= (task_wait_event(SECOND) & ~TASK_EVENT_I2C_IDLE);
 		LM4_I2C_MIMR(port) = 0x00;
 		task_waiting_on_port[port] = TASK_ID_INVALID;
 		if (event & TASK_EVENT_TIMER) {

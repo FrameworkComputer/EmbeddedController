@@ -24,15 +24,15 @@
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
 /* Time constants */
-#define POLLING_MODE_TIMEOUT 1000000  /* Max time to poll if no keys are down */
-#define DEBOUNCE_UP_US         30000  /* Debounce time for key-up */
-#define DEBOUNCE_DOWN_US        6000  /* Debounce time for key-down */
-#define SCAN_LOOP_DELAY         1000  /* Delay in scan loop */
+#define POLLING_MODE_TIMEOUT  SECOND  /* Max time to poll if no keys are down */
+#define DEBOUNCE_UP_US   (30 * MSEC)  /* Debounce time for key-up */
+#define DEBOUNCE_DOWN_US  (6 * MSEC)  /* Debounce time for key-down */
+#define SCAN_LOOP_DELAY         MSEC  /* Delay in scan loop */
 #define COLUMN_CHARGE_US          40  /* Column charge time in usec */
 
 #define KB_COLS 13
 
-#define SCAN_TIME_COUNT 32
+#define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
 /* Boot key list.  Must be in same order as enum boot_key. */
 struct boot_key_entry {

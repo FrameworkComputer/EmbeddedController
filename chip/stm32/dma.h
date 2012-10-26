@@ -91,7 +91,7 @@ enum {
 #define DMA_PSIZE_WORD		(2 << 8)
 
 #define DMA_POLLING_INTERVAL_US	100	/* us */
-#define DMA_TRANSFER_TIMEOUT_US	100000	/* us */
+#define DMA_TRANSFER_TIMEOUT_US	(100 * MSEC) /* us */
 
 /*
  * Certain DMA channels must be used for certain peripherals and transfer

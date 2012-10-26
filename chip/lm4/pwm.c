@@ -199,7 +199,7 @@ void pwm_task(void)
 			mapped[0] = pwm_get_fan_rpm();
 
 		/* Update about once a second */
-		usleep(1000000);
+		sleep(1);
 	}
 }
 

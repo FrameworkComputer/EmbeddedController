@@ -41,17 +41,17 @@
  *     @S0   make code             break code
  */
 /* TODO: link to full power button / lid switch state machine description. */
-#define PWRBTN_DEBOUNCE_US 30000  /* Debounce time for power button */
-#define PWRBTN_DELAY_T0    32000  /* 32ms (PCH requires >16ms) */
-#define PWRBTN_DELAY_T1    (4000000 - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-#define PWRBTN_INITIAL_US  200000 /* Length of time to stretch initial power
-				   * button press to give chipset a chance to
-				   * wake up (~100ms) and react to the press
-				   * (~16ms).  Also used as pulse length for
-				   * simulated power button presses when the
-				   * system is off. */
+#define PWRBTN_DEBOUNCE_US (30 * MSEC)  /* Debounce time for power button */
+#define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
+#define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
+/*
+ * Length of time to stretch initial power button press to give chipset a
+ * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
+ * pulse length for simulated power button presses when the system is off.
+ */
+#define PWRBTN_INITIAL_US  (200 * MSEC)
 
-#define LID_DEBOUNCE_US    30000  /* Debounce time for lid switch */
+#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -591,7 +591,7 @@ void power_button_interrupt(enum gpio_signal signal)
 
 static int command_powerbtn(int argc, char **argv)
 {
-	int ms = PWRBTN_INITIAL_US / 1000;  /* Press duration in ms */
+	int ms = PWRBTN_INITIAL_US / MSEC;  /* Press duration in ms */
 	char *e;
 
 	if (argc > 1) {
@@ -605,7 +605,7 @@ static int command_powerbtn(int argc, char **argv)
 	tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
 	task_wake(TASK_ID_POWERBTN);
 
-	usleep(ms * 1000);
+	msleep(ms);
 
 	ccprintf("Simulating power button release.\n");
 	simulate_power_pressed = 0;

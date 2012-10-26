@@ -65,5 +65,5 @@ void pwm_task(void)
 {
 	/* Do nothing */
 	while (1)
-		usleep(5000000);
+		sleep(5);
 }

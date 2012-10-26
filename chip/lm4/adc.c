@@ -96,7 +96,7 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	LM4_ADC_ADCPSSI |= 0x01 << seq;
 
 	/* Wait for interrupt */
-	event = task_wait_event(1000000);
+	event = task_wait_event(SECOND);
 	task_waiting_on_ss[seq] = TASK_ID_INVALID;
 	if (event == TASK_EVENT_TIMER)
 		return ADC_READ_ERROR;

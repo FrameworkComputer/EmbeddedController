@@ -28,10 +28,10 @@
 #define I2C_FREQ 100000 /* Hz */
 
 /* I2C bit period in microseconds */
-#define I2C_PERIOD_US (1000000 / I2C_FREQ)
+#define I2C_PERIOD_US (SECOND / I2C_FREQ)
 
 /* Clock divider for I2C controller */
-#define I2C_CCR (CPU_CLOCK/(2 * I2C_FREQ))
+#define I2C_CCR (CPU_CLOCK / (2 * I2C_FREQ))
 
 /*
  * Transmit timeout in microseconds
@@ -41,8 +41,8 @@
  * ...but we're going to keep the timeout to make sure we're robust.  It may in
  * fact be needed if the host resets itself mid-read.
  */
-#define I2C_TX_TIMEOUT_SLAVE	100000 /* us */
-#define I2C_TX_TIMEOUT_MASTER	10000  /* us */
+#define I2C_TX_TIMEOUT_SLAVE	(100 * MSEC)
+#define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
 /*
  * We delay 5us in bitbang mode.  That gives us 5us low and 5us high or

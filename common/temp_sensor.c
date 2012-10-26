@@ -119,7 +119,7 @@ void temp_sensor_task(void)
 
 	while (1) {
 		for (i = 0; i < 4; ++i) {
-			usleep(250000);
+			msleep(250);
 			poll_fast_sensors();
 		}
 		poll_slow_sensors();

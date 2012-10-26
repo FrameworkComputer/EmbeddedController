@@ -183,7 +183,7 @@ static const struct lightbar_params default_params = {
 	.s0_tick_delay = { 45000, 30000 },	/* battery, AC */
 	.s0a_tick_delay = { 5000, 3000 },	/* battery, AC */
 	.s0s3_ramp_down = 2000,
-	.s3_sleep_for = 5000000,		/* between checks */
+	.s3_sleep_for = 5 * SECOND,		/* between checks */
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
 
@@ -464,11 +464,6 @@ static uint32_t pending_msg;
 	if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) \
 		return PENDING_MSG; } while (0)
 
-/* Handy conversions */
-#define MSECS(a) ((a) * 1000)
-#define SEC(a) ((a) * 1000000)
-
-
 /******************************************************************************/
 /* Here are the preprogrammed sequences. */
 /******************************************************************************/
@@ -569,7 +564,7 @@ static uint32_t sequence_S0(void)
 		/* Only check the battery state every few seconds. The battery
 		 * charging task doesn't update as quickly as we do, and isn't
 		 * always valid for a bit after jumping from RO->RW. */
-		tick = (now.le.lo - start.le.lo) / SEC(1);
+		tick = (now.le.lo - start.le.lo) / SECOND;
 		if (tick % 4 == 3 && tick != last_tick) {
 			get_battery_level();
 			last_tick = tick;
@@ -845,7 +840,7 @@ static uint32_t sequence_ERROR(void)
 	lightbar_setrgb(2, 0, 255, 255);
 	lightbar_setrgb(3, 255, 255, 255);
 
-	WAIT_OR_RET(SEC(10));
+	WAIT_OR_RET(10 * SECOND);
 	return 0;
 }
 

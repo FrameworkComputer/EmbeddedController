@@ -17,8 +17,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define US_PER_SECOND 1000000
-
 /*
  * Approximate number of CPU cycles per iteration of the loop when polling
  * the flash status
@@ -28,7 +26,7 @@
 /* Flash page programming timeout.  This is 2x the datasheet max. */
 #define FLASH_TIMEOUT_US 16000
 #define FLASH_TIMEOUT_LOOP \
-	(FLASH_TIMEOUT_US * (CPU_CLOCK / US_PER_SECOND) / CYCLE_PER_FLASH_LOOP)
+	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
 
 /* Flash unlocking keys */
 #define KEY1    0x45670123

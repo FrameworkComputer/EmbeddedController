@@ -801,7 +801,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
 void lpc_task(void)
 {
 	while (1) {
-		usleep(250000);
+		msleep(250);
 		/*
 		 * Make sure pending LPC interrupts have been processed.
 		 * This works around a LM4 bug where host writes sometimes

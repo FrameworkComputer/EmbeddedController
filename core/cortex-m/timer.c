@@ -15,24 +15,25 @@
 #include "task.h"
 #include "timer.h"
 
-/* high word of the 64-bit timestamp counter  */
+#define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
+
+/* High word of the 64-bit timestamp counter  */
 static volatile uint32_t clksrc_high;
 
-/* bitmap of currently running timers */
+/* Bitmap of currently running timers */
 static uint32_t timer_running = 0;
 
-/* deadlines of all timers */
+/* Deadlines of all timers */
 static timestamp_t timer_deadline[TASK_ID_COUNT];
 static uint32_t next_deadline = 0xffffffff;
 
 /* Hardware timer routine IRQ number */
 static int timer_irq;
 
-
 static void expire_timer(task_id_t tskid)
 {
 	/* we are done with this timer */
-	atomic_clear(&timer_running, 1<<tskid);
+	atomic_clear(&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
 	task_set_event(tskid, TASK_EVENT_TIMER, 0);
 }
@@ -59,7 +60,7 @@ void process_timers(int overflow)
 		clksrc_high++;
 
 	do {
-		next.val = 0xffffffffffffffff;
+		next.val = -1ull;
 		now = get_time();
 		do {
 			/* read atomically the current state of timer running */
@@ -93,7 +94,6 @@ void process_timers(int overflow)
 	} while (next.val <= get_time().val);
 }
 
-
 void udelay(unsigned us)
 {
 	timestamp_t deadline = get_time();
@@ -101,7 +101,6 @@ void udelay(unsigned us)
 	deadline.val += us;
 	while (get_time().val < deadline.val) {}
 }
-
 
 int timer_arm(timestamp_t tstamp, task_id_t tskid)
 {
@@ -113,7 +112,7 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid)
 	timer_deadline[tskid] = tstamp;
 	atomic_or(&timer_running, 1<<tskid);
 
-	/* modify the next event if needed */
+	/* Modify the next event if needed */
 	if ((tstamp.le.hi < clksrc_high) ||
 	    ((tstamp.le.hi == clksrc_high) && (tstamp.le.lo <= next_deadline)))
 		task_trigger_irq(timer_irq);
@@ -121,19 +120,16 @@ int timer_arm(timestamp_t tstamp, task_id_t tskid)
 	return EC_SUCCESS;
 }
 
-
-int timer_cancel(task_id_t tskid)
+void timer_cancel(task_id_t tskid)
 {
 	ASSERT(tskid < TASK_ID_COUNT);
 
-	atomic_clear(&timer_running, 1<<tskid);
-	/* don't bother about canceling the interrupt:
-	 * it would be slow, just do it on the next IT
+	atomic_clear(&timer_running, 1 << tskid);
+	/*
+	 * Don't need to cancel the interrupt: it would be slow, just do it on
+	 * the next IT
 	 */
-
-	return EC_SUCCESS;
 }
-
 
 void usleep(unsigned us)
 {
@@ -149,12 +145,12 @@ void usleep(unsigned us)
 	do {
 		evt |= task_wait_event(us);
 	} while (!(evt & TASK_EVENT_TIMER));
-	/* re-queue other events which happened in the meanwhile */
+
+	/* Re-queue other events which happened in the meanwhile */
 	if (evt)
 		atomic_or(task_get_event_bitmap(task_get_current()),
 			  evt & ~TASK_EVENT_TIMER);
 }
-
 
 timestamp_t get_time(void)
 {
@@ -167,7 +163,6 @@ timestamp_t get_time(void)
 	}
 	return ts;
 }
-
 
 void force_time(timestamp_t ts)
 {
@@ -200,6 +195,34 @@ void timer_print_info(void)
 	}
 }
 
+void timer_init(void)
+{
+	const timestamp_t *ts;
+	int size, version;
+
+	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
+
+	/* Restore time from before sysjump */
+	ts = (const timestamp_t *)system_get_jump_tag(TIMER_SYSJUMP_TAG,
+						      &version, &size);
+	if (ts && version == 1 && size == sizeof(timestamp_t)) {
+		clksrc_high = ts->le.hi;
+		timer_irq = __hw_clock_source_init(ts->le.lo);
+	} else {
+		clksrc_high = 0;
+		timer_irq = __hw_clock_source_init(0);
+	}
+}
+
+/* Preserve time across a sysjump */
+static void timer_sysjump(void)
+{
+	timestamp_t ts = get_time();
+
+	system_add_jump_tag(TIMER_SYSJUMP_TAG, 1, sizeof(ts), &ts);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
+
 static int command_wait(int argc, char **argv)
 {
 	char *e;
@@ -221,7 +244,6 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait,
 			"Busy-wait for msec",
 			NULL);
 
-
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
@@ -234,45 +256,13 @@ DECLARE_CONSOLE_COMMAND(gettime, command_get_time,
 			"Print current time",
 			NULL);
 
-
 int command_timer_info(int argc, char **argv)
 {
 	timer_print_info();
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info,
 			NULL,
 			"Print timer info",
 			NULL);
-
-
-#define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
-
-/* Preserve time across a sysjump */
-static void timer_sysjump(void)
-{
-	timestamp_t ts = get_time();
-	system_add_jump_tag(TIMER_SYSJUMP_TAG, 1, sizeof(ts), &ts);
-}
-DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
-
-int timer_init(void)
-{
-	const timestamp_t *ts;
-	int size, version;
-
-	BUILD_ASSERT(TASK_ID_COUNT < sizeof(timer_running) * 8);
-
-	/* Restore time from before sysjump */
-	ts = (const timestamp_t *)system_get_jump_tag(TIMER_SYSJUMP_TAG,
-						      &version, &size);
-	if (ts && version == 1 && size == sizeof(timestamp_t)) {
-		clksrc_high = ts->le.hi;
-		timer_irq = __hw_clock_source_init(ts->le.lo);
-	} else {
-		clksrc_high = 0;
-		timer_irq = __hw_clock_source_init(0);
-	}
-
-	return EC_SUCCESS;
-}

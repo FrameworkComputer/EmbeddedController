@@ -5,20 +5,16 @@
 
 /* Hardware timers driver */
 
-#include <stdint.h>
-
-#include "board.h"
 #include "common.h"
 #include "hwtimer.h"
 #include "panic.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "watchdog.h"
 
-#define US_PER_SECOND 1000000
-
 /* Divider to get microsecond for the clock */
-#define CLOCKSOURCE_DIVIDER (CPU_CLOCK/US_PER_SECOND)
+#define CLOCKSOURCE_DIVIDER (CPU_CLOCK / SECOND)
 
 #ifdef CHIP_VARIANT_stm32f100
 #define TIM_WD_IRQ	STM32_IRQ_TIM1_UP_TIM16
@@ -47,10 +43,10 @@ void __hw_clock_event_set(uint32_t deadline)
 		STM32_TIM_DIER(3) |= 2;
 	}
 	/*
-	 * In the unlikely case where the MSB on TIM3 has increased and
-	 * matched the deadline MSB before we set the match interrupt,
-	 * as the STM hardware timer won't trigger an interrupt, we fall back
-	 * to the following LSB event code to set another interrupt.
+	 * In the unlikely case where the MSB on TIM3 has increased and matched
+	 * the deadline MSB before we set the match interrupt, as the STM
+	 * hardware timer won't trigger an interrupt, we fall back to the
+	 * following LSB event code to set another interrupt.
 	 */
 	if ((deadline >> 16) == STM32_TIM_CNT(3)) {
 		/* we can set a match on the LSB only */
@@ -64,10 +60,10 @@ void __hw_clock_event_set(uint32_t deadline)
 		STM32_TIM_DIER(4) |= 2;
 	}
 	/*
-	 * if the LSB deadline is already in the past and won't trigger
-	 * an interrupt, the common code in process_timers will deal with
-	 * the expired timer and automatically set the next deadline, we
-	 * don't need to do anything here.
+	 * If the LSB deadline is already in the past and won't trigger an
+	 * interrupt, the common code in process_timers will deal with the
+	 * expired timer and automatically set the next deadline, we don't need
+	 * to do anything here.
 	 */
 }
 
@@ -88,7 +84,7 @@ uint32_t __hw_clock_source_read(void)
 	uint32_t hi;
 	uint32_t lo;
 
-	/* ensure the two half-words are coherent */
+	/* Ensure the two half-words are coherent */
 	do {
 		hi = STM32_TIM_CNT(3);
 		lo = STM32_TIM_CNT(4);
@@ -107,7 +103,7 @@ static void __hw_clock_source_irq(void)
 {
 	uint32_t stat_tim3 = STM32_TIM_SR(3);
 
-	/* clear status */
+	/* Clear status */
 	STM32_TIM_SR(4) = 0;
 	STM32_TIM_SR(3) = 0;
 
@@ -176,10 +172,9 @@ int __hw_clock_source_init(uint32_t start_t)
 }
 
 /*
- * We don't have TIM1 on STM32L, so don't support this function for now.
- * TIM5 doesn't appear to exist in either variant, and TIM9 cannot be
- * triggered as a slave from TIM4. We could perhaps use TIM9 as our
- * fast counter on STM32L.
+ * We don't have TIM1 on STM32L, so don't support this function for now.  TIM5
+ * doesn't appear to exist in either variant, and TIM9 cannot be triggered as a
+ * slave from TIM4. We could perhaps use TIM9 as our fast counter on STM32L.
  */
 #ifdef CHIP_VARIANT_stm32f100
 
@@ -233,11 +228,10 @@ void hwtimer_setup_watchdog(void)
 	timer->smcr = 0x0037;
 
 	/*
-	 * The auto-reload value is based on the period between rollovers
-	 * for TIM4. Since TIM4 runs at 1MHz, it will overflow in 65.536ms.
-	 * We divide our required watchdog period by this amount to obtain
-	 * the number of times TIM4 can overflow before we generate an
-	 * interrupt.
+	 * The auto-reload value is based on the period between rollovers for
+	 * TIM4. Since TIM4 runs at 1MHz, it will overflow in 65.536ms.  We
+	 * divide our required watchdog period by this amount to obtain the
+	 * number of times TIM4 can overflow before we generate an interrupt.
 	 */
 	timer->arr = timer->cnt = WATCHDOG_PERIOD_MS * 1000 / (1 << 16);
 

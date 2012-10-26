@@ -22,8 +22,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define LED_STATE_TIMEOUT_MIN	15000	/* minimum of 15ms per step */
-#define LED_HOLD_TIME		330000	/* hold for 330ms at min/max */
+#define LED_STATE_TIMEOUT_MIN	(15 * MSEC)  /* Minimum of 15ms per step */
+#define LED_HOLD_TIME		(330 * MSEC) /* Hold for 330ms at min/max */
 #define LED_STEP_PERCENT	4	/* incremental value of each step */
 
 static enum powerled_state led_state = POWERLED_STATE_ON;

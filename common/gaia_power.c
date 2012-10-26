@@ -42,13 +42,13 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5v regulator output to stabilize */
-#define DELAY_5V_SETUP        1000  /* 1ms */
+#define DELAY_5V_SETUP        MSEC  /* 1ms */
 
 /* Delay between 1.35v and 3.3v rails startup */
 #define DELAY_RAIL_STAGGERING 100  /* 100us */
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  8000000 /* 8s */
+#define DELAY_FORCE_SHUTDOWN  (8 * SECOND)
 
 /*
  * If the power key is pressed to turn on, then held for this long, we
@@ -68,11 +68,11 @@
  *    see XPSHOLD, it waits up to 16sec for an event. If no event occurs
  *    within 16sec, EC powers off AP.
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * 1000000)
-#define DELAY_SHUTDOWN_ON_USB_BOOT      (16 * 1000000)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
+#define DELAY_SHUTDOWN_ON_USB_BOOT      (16 * SECOND)
 
 /* Maximum delay after power button press before we release GPIO_PMIC_PWRON_L */
-#define DELAY_RELEASE_PWRON	1000000 /* 1s */
+#define DELAY_RELEASE_PWRON   SECOND /* 1s */
 
 /* debounce time to prevent accidental power-on after keyboard power off */
 #define KB_PWR_ON_DEBOUNCE    250    /* 250us */
@@ -81,10 +81,10 @@
 #define LID_SWITCH_DEBOUNCE   250    /* 250us */
 
 /* PMIC fails to set the LDO2 output */
-#define PMIC_TIMEOUT          100000  /* 100ms */
+#define PMIC_TIMEOUT          (100 * MSEC)  /* 100ms */
 
 /* Default timeout for input transition */
-#define FAIL_TIMEOUT          500000 /* 500ms */
+#define FAIL_TIMEOUT          (500 * MSEC) /* 500ms */
 
 
 /* Application processor power state */
@@ -538,9 +538,9 @@ static int command_force_power(int argc, char **argv)
 	force_value = 1;
 	/* Wake up the task */
 	task_wake(TASK_ID_GAIAPOWER);
-	/* wait 100 ms */
-	usleep(100000);
-	/* release power button */
+	/* Wait 100 ms */
+	msleep(100);
+	/* Release power button */
 	force_signal = -1;
 	force_value = 0;
 

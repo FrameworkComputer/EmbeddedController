@@ -44,7 +44,7 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 void watchdog_task(void)
 {
 	while (1) {
-		usleep(WATCHDOG_RELOAD_MS * 1000);
+		msleep(WATCHDOG_RELOAD_MS);
 		watchdog_reload();
 	}
 }

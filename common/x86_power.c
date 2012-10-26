@@ -26,10 +26,10 @@
  * Default timeout in us; if we've been waiting this long for an input
  * transition, just jump to the next state.
  */
-#define DEFAULT_TIMEOUT 1000000
+#define DEFAULT_TIMEOUT SECOND
 
 /* Timeout for dropping back from S5 to G3 */
-#define S5_INACTIVITY_TIMEOUT 10000000
+#define S5_INACTIVITY_TIMEOUT (10 * SECOND)
 
 enum x86_state {
 	X86_G3 = 0,                 /*
@@ -512,14 +512,14 @@ void x86_power_task(void)
 			 * Wait 10ms after +3VALW good, since that powers
 			 * VccDSW and VccSUS.
 			 */
-			usleep(10000);
+			msleep(10);
 
 			/* Assert DPWROK, deassert RSMRST# */
 			gpio_set_level(GPIO_PCH_DPWROK, 1);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 1);
 
 			/* Wait 5ms for SUSCLK to stabilize */
-			usleep(5000);
+			msleep(5);
 
 			state = X86_S5;
 			break;
@@ -581,7 +581,7 @@ void x86_power_task(void)
 			hook_notify(HOOK_CHIPSET_RESUME);
 
 			/* Wait 99ms after all voltages good */
-			usleep(99000);
+			msleep(99);
 
 			/*
 			 * Throttle CPU if necessary.  This should only be
@@ -737,7 +737,7 @@ static int command_hibernation_delay(int argc, char **argv)
 {
 	char *e;
 	uint32_t time_g3 = ((uint32_t)(get_time().val - last_shutdown_time))
-				/ 1000000;
+				/ SECOND;
 
 	if (argc >= 2) {
 		uint32_t s = strtoi(argv[1], &e, 0);

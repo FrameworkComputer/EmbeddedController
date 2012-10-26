@@ -243,7 +243,7 @@ int flash_physical_erase(int offset, int size)
 #ifdef CONFIG_TASK_WATCHDOG
 		/* Reload the watchdog timer, so that erasing many flash pages
 		 * doesn't cause a watchdog reset.  May not need this now that
-		 * we're using usleep() below. */
+		 * we're using msleep() below. */
 		watchdog_reload();
 #endif
 
@@ -254,7 +254,7 @@ int flash_physical_erase(int offset, int size)
 		for (t = 0; LM4_FLASH_FMC & 0x02; t++) {
 			if (t > ERASE_TIMEOUT_MS)
 				return EC_ERROR_TIMEOUT;
-			usleep(1000);
+			msleep(1);
 		}
 
 		/* Check for error conditions - erase failed, voltage error,

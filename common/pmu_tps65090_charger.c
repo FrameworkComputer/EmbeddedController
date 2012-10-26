@@ -30,10 +30,10 @@
 /* Maximum retry count to revive a extremely low charge battery */
 #define PRE_CHARGING_RETRY 3
 
-/* Time delay in usec for idle, charging and discharging.
- * Defined in battery charging flow.
+/*
+ * Time delay in usec for idle, charging and discharging.  Defined in battery
+ * charging flow.
  */
-#define SECOND          (1000 * 1000)
 #define T1_OFF_USEC     (60 * SECOND)
 #define T1_SUSPEND_USEC (60 * SECOND)
 #define T1_USEC         (5  * SECOND)
@@ -120,7 +120,7 @@ static int notify_battery_low(void)
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		now = get_time();
-		if (now.val - last_notify_time.val > 60000000) {
+		if (now.val - last_notify_time.val > MINUTE) {
 			CPUTS("[pmu] notify battery low (< 10%)\n");
 			last_notify_time = now;
 			/* TODO(rongchang): notify AP ? */
@@ -467,12 +467,11 @@ void pmu_charger_task(void)
 		}
 
 		/*
-		 * Throttle the charging loop. If previous loop was waked up
-		 * by an event, sleep 0.5 seconds instead of wait for next
-		 * event.
+		 * Throttle the charging loop. If previous loop awakened due to
+		 * an event, sleep 500 ms instead of waiting for next event.
 		 */
 		if (event & TASK_EVENT_WAKE) {
-			usleep(0.5 * SECOND);
+			msleep(500);
 			event = 0;
 		} else {
 			event = task_wait_event(wait_time);

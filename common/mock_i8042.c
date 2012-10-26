@@ -19,7 +19,7 @@ void i8042_command_task(void)
 {
 	/* Do nothing */
 	while (1)
-		usleep(5000000);
+		sleep(5);
 }
 
 enum ec_error_list i8042_send_to_host(int len, const uint8_t *bytes)

@@ -5,13 +5,14 @@
 
 /* Mock temperature sensor module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "temp_sensor.h"
 #include "timer.h"
 #include "util.h"
 
-/* Defined in board_temp_sensor.c. Must be in the same order as
+/*
+ * Defined in board_temp_sensor.c. Must be in the same order as
  * in enum temp_sensor_id.
  */
 extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
@@ -35,7 +36,7 @@ void temp_sensor_task(void)
 {
 	/* Do nothing */
 	while (1)
-		usleep(5000000);
+		sleep(5);
 }
 
 
