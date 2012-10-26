@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_USB_CHARGE_H
 #define __CROS_EC_USB_CHARGE_H
 
-#include "board.h"
+#include "common.h"
 
 enum usb_charge_mode {
 	/* Disable USB port. */
@@ -23,6 +23,13 @@ enum usb_charge_mode {
 	USB_CHARGE_MODE_COUNT
 };
 
-int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode);
+/**
+ * Set USB charge mode for the port.
+ *
+ * @param usb_port_id	Port to set.
+ * @param mode		New mode for port.
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode);
 
 #endif  /* __CROS_EC_USB_CHARGE_H */

@@ -20,30 +20,27 @@
 
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
+
 /* The previous USB port state before sys jump */
 struct usb_state {
 	uint8_t port_mode[USB_CHARGE_PORT_COUNT];
 	uint8_t pad[2]; /* Pad to 4 bytes for system_add_jump_tag(). */
 };
 
-
 static uint8_t charge_mode[USB_CHARGE_PORT_COUNT];
-
 
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
 	if (port_id == 0) {
-		gpio_set_level(GPIO_USB1_CTL1, (mode & 0x4) >> 2);
-		gpio_set_level(GPIO_USB1_CTL2, (mode & 0x2) >> 1);
+		gpio_set_level(GPIO_USB1_CTL1, mode & 0x4);
+		gpio_set_level(GPIO_USB1_CTL2, mode & 0x2);
 		gpio_set_level(GPIO_USB1_CTL3, mode & 0x1);
-	}
-	else if (port_id == 1) {
-		gpio_set_level(GPIO_USB2_CTL1, (mode & 0x4) >> 2);
-		gpio_set_level(GPIO_USB2_CTL2, (mode & 0x2) >> 1);
+	} else {
+		gpio_set_level(GPIO_USB2_CTL1, mode & 0x4);
+		gpio_set_level(GPIO_USB2_CTL2, mode & 0x2);
 		gpio_set_level(GPIO_USB2_CTL3, mode & 0x1);
 	}
 }
-
 
 static void usb_charge_set_enabled(int port_id, int en)
 {
@@ -53,7 +50,6 @@ static void usb_charge_set_enabled(int port_id, int en)
 		gpio_set_level(GPIO_USB2_ENABLE, en);
 }
 
-
 static void usb_charge_set_ilim(int port_id, int sel)
 {
 	if (port_id == 0)
@@ -62,22 +58,17 @@ static void usb_charge_set_ilim(int port_id, int sel)
 		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
 }
 
-
-static int usb_charge_all_ports_on(void)
+static void usb_charge_all_ports_on(void)
 {
 	usb_charge_set_mode(0, USB_CHARGE_MODE_SDP2);
 	usb_charge_set_mode(1, USB_CHARGE_MODE_SDP2);
-	return EC_SUCCESS;
 }
 
-
-static int usb_charge_all_ports_off(void)
+static void usb_charge_all_ports_off(void)
 {
 	usb_charge_set_mode(0, USB_CHARGE_MODE_DISABLED);
 	usb_charge_set_mode(1, USB_CHARGE_MODE_DISABLED);
-	return EC_SUCCESS;
 }
-
 
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
