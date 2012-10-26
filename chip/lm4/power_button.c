@@ -669,7 +669,7 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 /*****************************************************************************/
 /* Host commands */
 
-int switch_command_enable_backlight(struct host_cmd_handler_args *args)
+static int switch_command_enable_backlight(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_switch_enable_backlight *p = args->params;
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, p->enabled);
@@ -677,3 +677,18 @@ int switch_command_enable_backlight(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
 		     switch_command_enable_backlight, 0);
+
+static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_switch_enable_wireless *p = args->params;
+
+	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
+		       p->enabled & EC_WIRELESS_SWITCH_WLAN);
+	gpio_set_level(GPIO_RADIO_ENABLE_BT,
+		       p->enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
+		     switch_command_enable_wireless,
+		     EC_VER_MASK(0));

@@ -5,8 +5,8 @@
 
 /* X86 chipset power control module for Chrome EC */
 
-#include "board.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -107,7 +107,9 @@ static uint64_t last_shutdown_time;
 /* Delay before go into hibernation in seconds*/
 static uint32_t hibernate_delay = 86400; /* 24 Hrs */
 
-/* Update input signal state */
+/**
+ * Update input signal state.
+ */
 static void update_in_signals(void)
 {
 	uint32_t inew = 0;
@@ -158,9 +160,13 @@ static void update_in_signals(void)
 	in_signals = inew;
 }
 
-/*
- * Wait for all the inputs in <want> to be present.  Returns EC_ERROR_TIMEOUT
- * if timeout before reaching the desired state.
+/**
+ * Wait for inputs to be present
+ *
+ * @param want		Input flags which must be present (IN_*)
+ *
+ * @return EC_SUCCESS when all inputs are present, or ERROR_TIMEOUT if timeout
+ * before reaching the desired state.
  */
 static int wait_in_signals(uint32_t want)
 {
@@ -318,9 +324,6 @@ void chipset_throttle_cpu(int throttle)
 /*****************************************************************************/
 /* Hooks */
 
-/**
- * Hook notified when lid state changes.
- */
 static void x86_lid_change(void)
 {
 	/* Wake up the task to update power state */
@@ -328,9 +331,6 @@ static void x86_lid_change(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
 
-/**
- * Hook notified when AC state changes.
- */
 static void x86_power_ac_change(void)
 {
 	if (power_ac_present()) {
@@ -345,21 +345,6 @@ static void x86_power_ac_change(void)
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, x86_power_ac_change, HOOK_PRIO_DEFAULT);
-
-/*****************************************************************************/
-/* Interrupts */
-
-void x86_power_interrupt(enum gpio_signal signal)
-{
-	/* Shadow signals and compare with our desired signal state. */
-	update_in_signals();
-
-	/* Wake up the task */
-	task_wake(TASK_ID_X86POWER);
-}
-
-/*****************************************************************************/
-/* Initialization */
 
 static void x86_power_init(void)
 {
@@ -415,6 +400,18 @@ static void x86_power_init(void)
 DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_INIT_CHIPSET);
 
 /*****************************************************************************/
+/* Interrupts */
+
+void x86_power_interrupt(enum gpio_signal signal)
+{
+	/* Shadow signals and compare with our desired signal state. */
+	update_in_signals();
+
+	/* Wake up the task */
+	task_wake(TASK_ID_X86POWER);
+}
+
+/*****************************************************************************/
 /* Task function */
 
 void x86_power_task(void)
@@ -441,8 +438,10 @@ void x86_power_task(void)
 						hibernate_delay * 1000000ull;
 				time_now = get_time().val;
 				if (time_now > target_time) {
-					/* Time's up.  Hibernate until wake pin
-					 * asserted. */
+					/*
+					 * Time's up.  Hibernate until wake pin
+					 * asserted.
+					 */
 					CPRINTF("[%T x86 hibernating]\n");
 					system_hibernate(0, 0);
 				}
@@ -760,22 +759,3 @@ DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
 			"[sec]",
 			"Set the delay before going into hibernation",
 			NULL);
-
-/*****************************************************************************/
-/* Host commands */
-
-/* TODO: belongs in power_button.c since it owns switches? */
-static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_switch_enable_wireless *p = args->params;
-
-	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
-		       p->enabled & EC_WIRELESS_SWITCH_WLAN);
-	gpio_set_level(GPIO_RADIO_ENABLE_BT,
-		       p->enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
-		     switch_command_enable_wireless,
-		     EC_VER_MASK(0));
