@@ -5,6 +5,7 @@
 
 /* LPC module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -35,6 +36,7 @@ static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
+
 /* Params must be 32-bit aligned */
 static uint8_t params_copy[EC_HOST_PARAM_SIZE] __attribute__((aligned(4)));
 static int init_done;
@@ -49,22 +51,28 @@ static struct ec_lpc_host_args * const lpc_host_args =
 /* Configure GPIOs for module */
 static void configure_gpio(void)
 {
-	/* Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins. */
-	/* I/O: PL0:3 = command/address/data
+	/*
+	 * Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins.
+	 *
+	 * I/O: PL0:3 = command/address/data
 	 * inp: PL4 (frame), PL5 (reset), PM0 (powerdown), PM5 (clock)
-	 * out: PM1 (sci), PM4 (serirq) */
+	 * out: PM1 (sci), PM4 (serirq)
+	 */
 	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
 	gpio_set_alternate_function(LM4_GPIO_M, 0x33, 0x0f);
 }
 
 static void wait_irq_sent(void)
 {
-	/* TODO: udelay() is not graceful. Since the SIRQRIS is almost not
-	 *       cleared in continuous mode and EC has problem to file
-	 *       more than 1 frame in the quiet mode, this is the best way
-	 *       we can do right now. */
-	udelay(4);  /* 4 us is the time of 2 SERIRQ frames, which is long
-	             * enough to guarantee the IRQ has been sent out. */
+	/*
+	 * TODO(yjlou): udelay() is not graceful. Since the SIRQRIS is almost
+	 * not cleared in continuous mode and EC has problem to file more than
+	 * 1 frame in the quiet mode, this is the best way we can do right now.
+	 *
+	 * 4 us is the time of 2 SERIRQ frames, which is long enough to
+	 * guarantee the IRQ has been sent out.
+	 */
+	udelay(4);
 }
 
 static void wait_send_serirq(uint32_t lpcirqctl)
@@ -73,34 +81,37 @@ static void wait_send_serirq(uint32_t lpcirqctl)
 	wait_irq_sent();
 }
 
-/* Manually generates an IRQ to host (edge-trigger).
+/**
+ * Manually generate an IRQ to host (edge-trigger).
+ *
+ * @param irq_num	IRQ number to generate.  Pass 0 to set the AH
+ *			(active high) bit.
  *
  * For SERIRQ quite mode, we need to set LM4_LPC_LPCIRQCTL twice.
  * The first one is to assert IRQ (pull low), and then the second one is
  * to de-assert it. This generates a pulse (high-low-high) for an IRQ.
- *
- * Note that the irq_num == 0 would set the AH bit (Active High).
  */
-void lpc_manual_irq(int irq_num) {
+static void lpc_manual_irq(int irq_num)
+{
 	uint32_t common_bits =
 	    0x00000004 |  /* PULSE */
 	    0x00000002 |  /* ONCHG - for quiet mode */
 	    0x00000001;   /* SND - send immediately */
 
-	/* send out the IRQ first. */
+	/* Send out the IRQ first. */
 	wait_send_serirq((1 << (irq_num + 16)) | common_bits);
 
-	/* generate a all-high frame to simulate a rising edge. */
+	/* Generate a all-high frame to simulate a rising edge. */
 	wait_send_serirq(common_bits);
 }
 
-
-/* Generate SMI pulse to the host chipset via GPIO.
+/**
+ * Generate SMI pulse to the host chipset via GPIO.
  *
- * If the x86 is in S0, SMI# is sampled at 33MHz, so minimum
- * pulse length is 60ns.  If the x86 is in S3, SMI# is sampled
- * at 32.768KHz, so we need pulse length >61us.  Both are short
- * enough and events are infrequent, so just delay for 65us.
+ * If the x86 is in S0, SMI# is sampled at 33MHz, so minimum pulse length is
+ * 60ns.  If the x86 is in S3, SMI# is sampled at 32.768KHz, so we need pulse
+ * length >61us.  Both are short enough and events are infrequent, so just
+ * delay for 65us.
  */
 static void lpc_generate_smi(void)
 {
@@ -113,8 +124,9 @@ static void lpc_generate_smi(void)
 			host_events & event_mask[LPC_HOST_EVENT_SMI]);
 }
 
-
-/* Generate SCI pulse to the host chipset via LPC0SCI */
+/**
+ * Generate SCI pulse to the host chipset via LPC0SCI.
+ */
 static void lpc_generate_sci(void)
 {
 	LM4_LPC_LPCCTL |= LM4_LPC_SCI_START;
@@ -197,14 +209,11 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	task_enable_irq(LM4_IRQ_LPC);
 }
 
-/* Return true if the TOH is still set */
 int lpc_keyboard_has_char(void)
 {
 	return (LM4_LPC_ST(LPC_CH_KEYBOARD) & LM4_LPC_ST_TOH) ? 1 : 0;
 }
 
-
-/* Put a char to host buffer and send IRQ if specified. */
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	LPC_POOL_KEYBOARD[1] = chr;
@@ -213,8 +222,6 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	}
 }
 
-
-/* Clear the keyboard buffer. */
 void lpc_keyboard_clear_buffer(void)
 {
 	/* Make sure the previous TOH and IRQ has been sent out. */
@@ -226,26 +233,21 @@ void lpc_keyboard_clear_buffer(void)
 	wait_irq_sent();
 }
 
-/* Send an IRQ to host if there is a byte in buffer already. */
 void lpc_keyboard_resume_irq(void)
 {
-	if (lpc_keyboard_has_char()) {
-		lpc_manual_irq(1);  /* IRQ#1 */
-	}
+	if (lpc_keyboard_has_char())
+		lpc_manual_irq(1);
 }
-
 
 int lpc_comx_has_char(void)
 {
 	return LM4_LPC_ST(LPC_CH_COMX) & LM4_LPC_ST_FRMH;
 }
 
-
 int lpc_comx_get_char(void)
 {
 	return LPC_POOL_COMX[0];
 }
-
 
 void lpc_comx_put_char(int c)
 {
@@ -253,10 +255,10 @@ void lpc_comx_put_char(int c)
 	/* TODO: manually trigger IRQ, like we do for keyboard? */
 }
 
-
 /**
- * Update the host event status.  Sends a pulse if masked event status becomes
- * non-zero:
+ * Update the host event status.
+ *
+ * Sends a pulse if masked event status becomes non-zero:
  *   - SMI pulse via EC_SMIn GPIO
  *   - SCI pulse via LPC0SCI
  */
@@ -325,7 +327,9 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 }
 
 /**
- * Handle command (is_cmd=1) or data (is_cmd=0) writes to ACPI I/O ports.
+ * Handle write to ACPI I/O port
+ *
+ * @param is_cmd	Is write command (is_cmd=1) or data (is_cmd=0)
  */
 static void handle_acpi_write(int is_cmd)
 {
@@ -426,32 +430,6 @@ static void handle_acpi_write(int is_cmd)
 }
 
 /**
- * Handle unexpected ACPI query request on the normal command channel from an
- * old API firmware/kernel.  No need to handle other ACPI commands on the
- * normal command channel, because old firmware/kernel only supported query.
- */
-/* TODO: remove when link EVT is deprecated. */
-static int acpi_on_bad_channel(struct host_cmd_handler_args *args)
-{
-	int i;
-	int result = 0;
-
-	for (i = 0; i < 32; i++) {
-		if (host_events & (1 << i)) {
-			host_clear_events(1 << i);
-			result = i + 1;  /* Events are 1-based */
-			break;
-		}
-	}
-
-	return result;
-}
-DECLARE_HOST_COMMAND(EC_CMD_ACPI_QUERY_EVENT,
-		     acpi_on_bad_channel,
-		     EC_VER_MASK(0));
-
-
-/**
  * Handle write to host command I/O ports.
  *
  * @param is_cmd	Is write command (1) or data (0)?
@@ -530,7 +508,9 @@ static void handle_host_write(int is_cmd)
 	host_command_received(&host_cmd_args);
 }
 
-/* LPC interrupt handler */
+/**
+ * LPC interrupt handler
+ */
 static void lpc_interrupt(void)
 {
 	uint32_t mis = LM4_LPC_LPCMIS;
@@ -602,7 +582,6 @@ static void lpc_interrupt(void)
 }
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
 
-
 /**
  * Preserve event masks across a sysjump.
  */
@@ -613,8 +592,9 @@ static void lpc_sysjump(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
 
-
-/* Restore event masks after a sysjump */
+/**
+ * Restore event masks after a sysjump.
+ */
 static void lpc_post_sysjump(void)
 {
 	const uint32_t *prev_mask;
@@ -630,11 +610,9 @@ static void lpc_post_sysjump(void)
 
 static void lpc_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
 	/* Enable RGCGLPC then delay a few clocks. */
 	LM4_SYSTEM_RCGCLPC = 1;
-	scratch = LM4_SYSTEM_RCGCLPC;
+	clock_wait_cycles(6);
 
 	LM4_LPC_LPCIM = 0;
 	LM4_LPC_LPCCTL = 0;
@@ -781,8 +759,8 @@ static void lpc_init(void)
 	update_host_event_status();
 }
 /*
- * Set prio to higher than default so other inits can initialize their
- * memmap data.
+ * Set prio to higher than default; this way LPC memory mapped data is ready
+ * before other inits try to initialize their memmap data.
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
