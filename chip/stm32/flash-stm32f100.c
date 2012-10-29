@@ -7,10 +7,10 @@
 
 #include "console.h"
 #include "flash.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "panic.h"
-#include "power_button.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

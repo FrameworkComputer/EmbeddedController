@@ -9,34 +9,34 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "lm4_adc.h"
-#include "power_button.h"
 #include "registers.h"
+#include "switch.h"
 #include "util.h"
 #include "x86_power.h"
 
 #ifndef CONFIG_TASK_X86POWER
 #define x86_power_interrupt NULL
 #endif
-#ifndef CONFIG_TASK_POWERBTN
-#define power_button_interrupt NULL
+#ifndef CONFIG_TASK_SWITCH
+#define switch_interrupt NULL
 #endif
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTONn",       LM4_GPIO_K, (1<<7), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	{"LID_SWITCHn",         LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	/* Other inputs */
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	{"BOARD_VERSION1",      LM4_GPIO_H, (1<<6), 0, NULL},
 	{"BOARD_VERSION2",      LM4_GPIO_L, (1<<6), 0, NULL},
 	{"BOARD_VERSION3",      LM4_GPIO_L, (1<<7), 0, NULL},
 	{"PCH_BKLTEN",          LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	{"PCH_SLP_An",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,
 	 x86_power_interrupt},
 	{"PCH_SLP_ME_CSW_DEVn", LM4_GPIO_G, (1<<4), GPIO_INT_BOTH,
@@ -68,11 +68,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PGOOD_VGFX_CORE",     LM4_GPIO_D, (1<<2), GPIO_INT_BOTH,
 	 x86_power_interrupt},
 	{"RECOVERYn",           LM4_GPIO_H, (1<<7), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	{"USB1_STATUSn",        LM4_GPIO_E, (1<<7), 0, NULL},
 	{"USB2_STATUSn",        LM4_GPIO_E, (1<<1), 0, NULL},
 	{"WRITE_PROTECT",       LM4_GPIO_J, (1<<4), GPIO_INT_BOTH,
-	 power_button_interrupt},
+	 switch_interrupt},
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",         LM4_GPIO_F, (1<<2), GPIO_OUT_LOW, NULL},
 	{"ENABLE_1_5V_DDR",     LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},

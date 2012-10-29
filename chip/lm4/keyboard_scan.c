@@ -11,8 +11,8 @@
 #include "keyboard.h"
 #include "keyboard_scan.h"
 #include "keyboard_scan_stub.h"
-#include "power_button.h"
 #include "registers.h"
+#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -105,7 +105,7 @@ static void enter_polling_mode(void)
 static int is_scanning_enabled(void)
 {
 	/* Scan only if enabled AND lid is open. */
-	return lm4_get_scanning_enabled() && power_lid_open_debounced();
+	return lm4_get_scanning_enabled() && switch_get_lid_open();
 }
 
 /**

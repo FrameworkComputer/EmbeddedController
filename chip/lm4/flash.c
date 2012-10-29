@@ -6,8 +6,8 @@
 /* Flash memory module for Chrome EC */
 
 #include "flash.h"
-#include "power_button.h"
 #include "registers.h"
+#include "switch.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
@@ -285,9 +285,9 @@ uint32_t flash_get_protect(void)
 	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-#ifdef CONFIG_TASK_POWERBTN
+#ifdef CONFIG_TASK_SWITCH
 	/* Check if write protect pin is asserted now */
-	if (write_protect_asserted())
+	if (switch_get_write_protect())
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 #endif
 

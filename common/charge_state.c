@@ -15,10 +15,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "power_button.h"
 #include "power_led.h"
 #include "printf.h"
 #include "smart_battery.h"
+#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -146,7 +146,7 @@ static int state_common(struct power_state_context *ctx)
 	curr->error = 0;
 
 	/* Detect AC change */
-	curr->ac = power_ac_present();
+	curr->ac = switch_get_ac_present();
 	if (curr->ac != prev->ac) {
 		if (curr->ac) {
 			/* AC on
@@ -569,7 +569,7 @@ int charge_get_percent(void)
 
 static int enter_force_idle_mode(void)
 {
-	if (!power_ac_present())
+	if (!switch_get_ac_present())
 		return EC_ERROR_UNKNOWN;
 	state_machine_force_idle = 1;
 	charger_post_init();

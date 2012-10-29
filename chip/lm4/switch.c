@@ -13,16 +13,16 @@
 #include "host_command.h"
 #include "keyboard.h"
 #include "keyboard_scan.h"
-#include "power_button.h"
 #include "pwm.h"
+#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_POWERBTN, outstr)
-#define CPRINTF(format, args...) cprintf(CC_POWERBTN, format, ## args)
+#define CPUTS(outstr) cputs(CC_SWITCH, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
 
 /*
  * When chipset is on, we stretch the power button signal to it so chipset
@@ -140,7 +140,7 @@ static void set_pwrbtn_to_pch(int high)
  *
  * @return 1 if lid is open, 0 if closed.
  */
-static int get_lid_open(void)
+static int raw_lid_open(void)
 {
 	return gpio_get_level(GPIO_LID_SWITCHn) ? 1 : 0;
 }
@@ -150,13 +150,13 @@ static int get_lid_open(void)
  *
  * @return 1 if power button is pressed, 0 if not pressed.
  */
-static int get_power_button_pressed(void)
+static int raw_power_button_pressed(void)
 {
 	if (simulate_power_pressed)
 		return 1;
 
 	/* Ignore power button if lid is closed */
-	if (!get_lid_open())
+	if (!raw_lid_open())
 		return 0;
 
 	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
@@ -234,7 +234,7 @@ static void lid_switch_open(uint64_t tnow)
 		set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
 		tnext_state = tnow + PWRBTN_INITIAL_US;
-		task_wake(TASK_ID_POWERBTN);
+		task_wake(TASK_ID_SWITCH);
 	}
 }
 
@@ -269,7 +269,7 @@ static void power_button_changed(uint64_t tnow)
 		return;
 	}
 
-	if (get_power_button_pressed()) {
+	if (raw_power_button_pressed()) {
 		/* Power button pressed */
 		power_button_pressed(tnow);
 	} else {
@@ -293,7 +293,7 @@ static void power_button_changed(uint64_t tnow)
  */
 static void lid_switch_changed(uint64_t tnow)
 {
-	if (get_lid_open())
+	if (raw_lid_open())
 		lid_switch_open(tnow);
 	else
 		lid_switch_close(tnow);
@@ -307,7 +307,7 @@ static void set_initial_pwrbtn_state(void)
 	uint32_t reset_flags = system_get_reset_flags();
 
 	/* Set debounced power button state to initial button state */
-	debounced_power_pressed = get_power_button_pressed();
+	debounced_power_pressed = raw_power_button_pressed();
 
 	if (system_jumped_to_this_image() &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
@@ -364,17 +364,17 @@ static void set_initial_pwrbtn_state(void)
 	}
 }
 
-int power_ac_present(void)
+int switch_get_ac_present(void)
 {
 	return gpio_get_level(GPIO_AC_PRESENT);
 }
 
-int power_lid_open_debounced(void)
+int switch_get_lid_open(void)
 {
 	return debounced_lid_open;
 }
 
-int write_protect_asserted(void)
+int switch_get_write_protect(void)
 {
 	return gpio_get_level(GPIO_WRITE_PROTECT);
 }
@@ -445,7 +445,7 @@ static void state_machine(uint64_t tnow)
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
 		set_pwrbtn_to_pch(1);
-		if (get_power_button_pressed())
+		if (raw_power_button_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		else
 			pwrbtn_state = PWRBTN_STATE_IDLE;
@@ -453,7 +453,7 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_WAS_OFF:
 		/* Done stretching initial power button signal, so show the
 		 * true power button state to the PCH. */
-		if (get_power_button_pressed()) {
+		if (raw_power_button_pressed()) {
 			/* User is still holding the power button */
 			pwrbtn_state = PWRBTN_STATE_HELD;
 		} else {
@@ -469,7 +469,7 @@ static void state_machine(uint64_t tnow)
 	}
 }
 
-void power_button_task(void)
+void switch_task(void)
 {
 	uint64_t t;
 	uint64_t tsleep;
@@ -491,16 +491,16 @@ void power_button_task(void)
 			 * Re-enable keyboard scanning if the power button is
 			 * no longer pressed.
 			 */
-			if (!get_power_button_pressed())
+			if (!raw_power_button_pressed())
 				keyboard_enable_scanning(1);
 
-			if (get_power_button_pressed() !=
+			if (raw_power_button_pressed() !=
 			    debounced_power_pressed)
 				power_button_changed(t);
 		}
 		if (tdebounce_lid && t >= tdebounce_lid) {
 			tdebounce_lid = 0;
-			if (get_lid_open() != debounced_lid_open)
+			if (raw_lid_open() != debounced_lid_open)
 				lid_switch_changed(t);
 		}
 
@@ -542,12 +542,12 @@ void power_button_task(void)
 /*****************************************************************************/
 /* Hooks */
 
-static void power_button_init(void)
+static void switch_init(void)
 {
 	/* Set up memory-mapped switch positions */
 	memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	*memmap_switches = 0;
-	if (get_lid_open()) {
+	if (raw_lid_open()) {
 		debounced_lid_open = 1;
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	}
@@ -566,9 +566,9 @@ static void power_button_init(void)
 	gpio_enable_interrupt(GPIO_RECOVERYn);
 	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 }
-DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
 
-void power_button_interrupt(enum gpio_signal signal)
+void switch_interrupt(enum gpio_signal signal)
 {
 	/* Reset debounce time for the changed signal */
 	switch (signal) {
@@ -579,7 +579,7 @@ void power_button_interrupt(enum gpio_signal signal)
 	case GPIO_POWER_BUTTONn:
 		/* Reset power button debounce time */
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
-		if (get_power_button_pressed()) {
+		if (raw_power_button_pressed()) {
 			/*
 			 * Disable the matrix scan as soon as possible to
 			 * reduce the risk of false-reboot triggered by those
@@ -609,7 +609,7 @@ void power_button_interrupt(enum gpio_signal signal)
 	 * task wake up _every_ debounce_us on its own; that's less desirable
 	 * when the EC should be sleeping.
 	 */
-	task_wake(TASK_ID_POWERBTN);
+	task_wake(TASK_ID_SWITCH);
 }
 
 /*****************************************************************************/
@@ -629,14 +629,14 @@ static int command_powerbtn(int argc, char **argv)
 	ccprintf("Simulating %d ms power button press.\n", ms);
 	simulate_power_pressed = 1;
 	tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
-	task_wake(TASK_ID_POWERBTN);
+	task_wake(TASK_ID_SWITCH);
 
 	msleep(ms);
 
 	ccprintf("Simulating power button release.\n");
 	simulate_power_pressed = 0;
 	tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
-	task_wake(TASK_ID_POWERBTN);
+	task_wake(TASK_ID_SWITCH);
 
 	return EC_SUCCESS;
 }
