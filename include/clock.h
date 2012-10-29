@@ -13,7 +13,7 @@
 /**
  * Set the CPU clocks and PLLs.
  */
-int clock_init(void);
+void clock_init(void);
 
 /**
  * Return the current clock frequency in Hz.
@@ -28,7 +28,7 @@ int clock_get_freq(void);
  *			be 1 unless you're briefly turning on the PLL to work
  *			around a chip errata at init time.
  */
-int clock_enable_pll(int enable, int notify);
+void clock_enable_pll(int enable, int notify);
 
 /**
  * Wait for a number of clock cycles.

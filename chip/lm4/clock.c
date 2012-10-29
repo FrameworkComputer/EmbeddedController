@@ -5,11 +5,10 @@
 
 /* Clocks and power management settings */
 
-#include "board.h"
 #include "clock.h"
-#include "cpu.h"
-#include "config.h"
+#include "common.h"
 #include "console.h"
+#include "cpu.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -23,7 +22,9 @@
 
 static int freq;
 
-/* Disable the PLL; run off internal oscillator. */
+/**
+ * Disable the PLL; run off internal oscillator.
+ */
 static void disable_pll(void)
 {
 	/* Switch to 16MHz internal oscillator and power down the PLL */
@@ -37,15 +38,18 @@ static void disable_pll(void)
 	freq = INTERNAL_CLOCK;
 }
 
-
-/* Enable the PLL to run at full clock speed. */
+/**
+ * Enable the PLL to run at full clock speed.
+ */
 static void enable_pll(void)
 {
 	/* Disable the PLL so we can reconfigure it */
 	disable_pll();
 
-	/* Enable the PLL (PWRDN is no longer set) and set divider.  PLL is
-	 * still bypassed, since it hasn't locked yet. */
+	/*
+	 * Enable the PLL (PWRDN is no longer set) and set divider.  PLL is
+	 * still bypassed, since it hasn't locked yet.
+	 */
 	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(2) |
 		LM4_SYSTEM_RCC_USESYSDIV |
 		LM4_SYSTEM_RCC_BYPASS |
@@ -63,7 +67,7 @@ static void enable_pll(void)
 	freq = PLL_CLOCK;
 }
 
-int clock_enable_pll(int enable, int notify)
+void clock_enable_pll(int enable, int notify)
 {
 	if (enable)
 		enable_pll();
@@ -73,8 +77,6 @@ int clock_enable_pll(int enable, int notify)
 	/* Notify modules of frequency change */
 	if (notify)
 		hook_notify(HOOK_FREQ_CHANGE);
-
-	return EC_SUCCESS;
 }
 
 void clock_wait_cycles(uint32_t cycles)
@@ -83,17 +85,57 @@ void clock_wait_cycles(uint32_t cycles)
 	    "   bne 1b\n" :: "r"(cycles));
 }
 
-
 int clock_get_freq(void)
 {
 	return freq;
 }
 
+void clock_init(void)
+{
+
+#ifdef BOARD_bds
+	/*
+	 * Perform an auto calibration of the internal oscillator using the
+	 * 32.768KHz hibernate clock, unless we've already done so.  This is
+	 * only necessary on A2 silicon as on BDS; A3 silicon is all
+	 * factory-trimmed.
+	 */
+	if ((LM4_SYSTEM_PIOSCSTAT & 0x300) != 0x100) {
+		/* Start calibration */
+		LM4_SYSTEM_PIOSCCAL = 0x80000000;
+		LM4_SYSTEM_PIOSCCAL = 0x80000200;
+		/* Wait for result */
+		clock_wait_cycles(16);
+		while (!(LM4_SYSTEM_PIOSCSTAT & 0x300))
+			;
+	}
+#else
+	/*
+	 * Only BDS has an external crystal; other boards don't have one, and
+	 * can disable main oscillator control to reduce power consumption.
+	 */
+	LM4_SYSTEM_MOSCCTL = 0x04;
+#endif
+
+	/*
+	 * TODO: UART seems to glitch unless we wait 500k cycles before
+	 * enabling the PLL, but only if this is a cold boot.  Why?  UART
+	 * doesn't even use the PLL'd system clock.  I've heard rumors the
+	 * Stellaris ROM library does this too, but why?
+	 */
+	if (!system_jumped_to_this_image())
+		clock_wait_cycles(500000);
+
+	/* Make sure PLL is disabled */
+	disable_pll();
+}
 
 /*****************************************************************************/
 /* Console commands */
 
-/* Function to measure baseline for power consumption.
+#ifdef CONFIG_CMD_SLEEP
+/**
+ * Measure baseline for power consumption.
  *
  * Levels :
  *   0 : CPU running in tight loop
@@ -101,7 +143,8 @@ int clock_get_freq(void)
  *   2 : CPU in sleep mode
  *   3 : CPU in sleep mode and peripherals gated
  *   4 : CPU in deep sleep mode
- *   5 : CPU in deep sleep mode and peripherals gated */
+ *   5 : CPU in deep sleep mode and peripherals gated
+ */
 static int command_sleep(int argc, char **argv)
 {
 	int level = 0;
@@ -203,7 +246,9 @@ DECLARE_CONSOLE_COMMAND(sleep, command_sleep,
 			"[level [clock]]",
 			"Drop into sleep",
 			NULL);
+#endif /* CONFIG_CMD_SLEEP */
 
+#ifdef CONFIG_CMD_PLL
 
 static int command_pll(int argc, char **argv)
 {
@@ -247,41 +292,4 @@ DECLARE_CONSOLE_COMMAND(pll, command_pll,
 			"Get/set PLL state",
 			NULL);
 
-/*****************************************************************************/
-/* Initialization */
-
-int clock_init(void)
-{
-
-#ifdef BOARD_bds
-	/* Perform an auto calibration of the internal oscillator using the
-	 * 32.768KHz hibernate clock, unless we've already done so.  This is
-	 * only necessary on A2 silicon as on BDS; A3 silicon is all
-	 * factory-trimmed. */
-	if ((LM4_SYSTEM_PIOSCSTAT & 0x300) != 0x100) {
-		/* Start calibration */
-		LM4_SYSTEM_PIOSCCAL = 0x80000000;
-		LM4_SYSTEM_PIOSCCAL = 0x80000200;
-		/* Wait for result */
-		clock_wait_cycles(16);
-		while (!(LM4_SYSTEM_PIOSCSTAT & 0x300))
-			;
-	}
-#else
-	/* Only BDS has an external crystal; other boards don't have one, and
-	 * can disable main oscillator control to reduce power consumption. */
-	LM4_SYSTEM_MOSCCTL = 0x04;
-#endif
-
-	/* TODO: UART seems to glitch unless we wait 500k cycles before
-	 * enabling the PLL, but only if this is a cold boot.  Why?  UART
-	 * doesn't even use the PLL'd system clock.  I've heard rumors the
-	 * Stellaris ROM library does this too, but why? */
-	if (!system_jumped_to_this_image())
-		clock_wait_cycles(500000);
-
-	/* Make sure PLL is disabled */
-	disable_pll();
-
-	return EC_SUCCESS;
-}
+#endif /* CONFIG_CMD_PLL */

@@ -5,9 +5,6 @@
 
 /* Clocks and power management settings */
 
-#include <stdint.h>
-
-#include "board.h"
 #include "clock.h"
 #include "common.h"
 #include "registers.h"
@@ -23,7 +20,7 @@ void disable_sleep(uint32_t mask)
 	/* low power mode not implemented */
 }
 
-int clock_init(void)
+void clock_init(void)
 {
 	uint32_t tmp_acr;
 
@@ -75,6 +72,4 @@ int clock_init(void)
 	/* wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0xc)
 		;
-
-	return EC_SUCCESS;
 }

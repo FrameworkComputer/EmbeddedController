@@ -5,10 +5,7 @@
 
 /* Clocks and power management settings */
 
-#include <stdint.h>
-
 #include "atomic.h"
-#include "board.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -23,14 +20,14 @@
 /* Allow serial console to wake up the EC from STOP mode */
 /* #define CONFIG_FORCE_CONSOLE_RESUME */
 
-/**
+/*
  * minimum delay to enter stop mode
  * STOP mode wakeup time with regulator in low power mode is 5 us.
  * PLL locking time is 200us.
  */
 #define STOP_MODE_LATENCY 300 /* us */
 
-/**
+/*
  * RTC clock frequency (connected to LSI clock)
  *
  * TODO: crosbug.com/p/12281 calibrate LSI frequency
@@ -39,7 +36,7 @@
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
 /* On-going actions preventing to go into deep-sleep mode */
-uint32_t sleep_mask;
+static uint32_t sleep_mask;
 
 void enable_sleep(uint32_t mask)
 {
@@ -227,7 +224,7 @@ void __idle(void)
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
 
-int clock_init(void)
+void clock_init(void)
 {
 	/*
 	 * The initial state :
@@ -257,8 +254,6 @@ int clock_init(void)
 	/* Enable RTC interrupts */
 	task_enable_irq(STM32_IRQ_RTC_WAKEUP);
 	task_enable_irq(STM32_IRQ_RTC_ALARM);
-
-	return EC_SUCCESS;
 }
 
 /*****************************************************************************/
