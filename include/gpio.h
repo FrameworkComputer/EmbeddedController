@@ -58,14 +58,14 @@ extern const struct gpio_info gpio_list[GPIO_COUNT];
 #define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0, 0, NULL}
 
 /**
- * Pre-initializes the module.
+ * Pre-initialize GPIOs.
  *
  * This occurs before clocks or tasks are set up.
  */
 void gpio_pre_init(void);
 
 /**
- * Get the current value of a signal
+ * Get the current value of a signal.
  *
  * @param signal	Signal to get
  * @return 0 if low, 1 if high.
@@ -73,7 +73,7 @@ void gpio_pre_init(void);
 int gpio_get_level(enum gpio_signal signal);
 
 /**
- * Get faster access to a GPIO level
+ * Get faster access to a GPIO level.
  *
  * Use this function to find out the register address and mask for a GPIO
  * value. Then you can just check that instead of calling gpio_get_level().

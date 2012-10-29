@@ -98,7 +98,8 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	 * high before it has been configured as such.
 	 */
 	if ((flags & GPIO_OUTPUT) && !is_warm_boot)
-		/* General purpose, MODE = 01
+		/*
+		 * General purpose, MODE = 01
 		 *
 		 * If this is a cold boot, set the level.  On a warm reboot,
 		 * leave things where they were or we'll shut off the AP.

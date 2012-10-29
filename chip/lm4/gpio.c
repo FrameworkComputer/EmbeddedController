@@ -42,79 +42,6 @@ static int find_gpio_port_index(uint32_t port_base)
 	return -1;
 }
 
-void gpio_pre_init(void)
-{
-	volatile uint32_t scratch  __attribute__((unused));
-	const struct gpio_info *g = gpio_list;
-	int is_warm = 0;
-	int i;
-
-	if (LM4_SYSTEM_RCGCGPIO == 0x7fff) {
-		/* This is a warm reboot */
-		is_warm = 1;
-	} else {
-		/* Enable clocks to all the GPIO blocks (since we use all of
-		 * them as GPIOs) */
-		LM4_SYSTEM_RCGCGPIO |= 0x7fff;
-		scratch = LM4_SYSTEM_RCGCGPIO;  /* Delay a few clocks */
-	}
-
-	/* Disable GPIO commit control for PD7 and PF0, since we don't use the
-	 * NMI pin function. */
-	LM4_GPIO_LOCK(LM4_GPIO_D) = LM4_GPIO_LOCK_UNLOCK;
-	LM4_GPIO_CR(LM4_GPIO_D) |= 0x80;
-	LM4_GPIO_LOCK(LM4_GPIO_D) = 0;
-	LM4_GPIO_LOCK(LM4_GPIO_F) = LM4_GPIO_LOCK_UNLOCK;
-	LM4_GPIO_CR(LM4_GPIO_F) |= 0x01;
-	LM4_GPIO_LOCK(LM4_GPIO_F) = 0;
-
-	/* Clear SSI0 alternate function on PA2:5 */
-	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~0x3c;
-
-	/* Mask all GPIO interrupts */
-	for (i = 0; gpio_bases[i]; i++)
-		LM4_GPIO_IM(gpio_bases[i]) = 0;
-
-	/* Set all GPIOs to defaults */
-	for (i = 0; i < GPIO_COUNT; i++, g++) {
-
-		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, 0);
-
-		/* Set up GPIO based on flags */
-		gpio_set_flags(i, g->flags);
-
-		/* If this is a cold boot, set the level.  On a warm reboot,
-		 * leave things where they were or we'll shut off the x86. */
-		if ((g->flags & GPIO_OUTPUT) && !is_warm)
-			gpio_set_level(i, g->flags & GPIO_HIGH);
-	}
-}
-
-static void gpio_init(void)
-{
-	/* Enable IRQs now that pins are set up */
-	task_enable_irq(LM4_IRQ_GPIOA);
-	task_enable_irq(LM4_IRQ_GPIOB);
-	task_enable_irq(LM4_IRQ_GPIOC);
-	task_enable_irq(LM4_IRQ_GPIOD);
-	task_enable_irq(LM4_IRQ_GPIOE);
-	task_enable_irq(LM4_IRQ_GPIOF);
-	task_enable_irq(LM4_IRQ_GPIOG);
-	task_enable_irq(LM4_IRQ_GPIOH);
-	task_enable_irq(LM4_IRQ_GPIOJ);
-	task_enable_irq(LM4_IRQ_GPIOK);
-	task_enable_irq(LM4_IRQ_GPIOL);
-	task_enable_irq(LM4_IRQ_GPIOM);
-#if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
-	/* Don't enable interrupts for the keyboard input GPIO bank */
-	task_enable_irq(LM4_IRQ_GPION);
-#endif
-	task_enable_irq(LM4_IRQ_GPIOP);
-	task_enable_irq(LM4_IRQ_GPIOQ);
-}
-DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
-
 void gpio_set_alternate_function(int port, int mask, int func)
 {
 	int port_index = find_gpio_port_index(port);
@@ -235,9 +162,91 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+void gpio_pre_init(void)
+{
+	const struct gpio_info *g = gpio_list;
+	int is_warm = 0;
+	int i;
+
+	if (LM4_SYSTEM_RCGCGPIO == 0x7fff) {
+		/* This is a warm reboot */
+		is_warm = 1;
+	} else {
+		/*
+		 * Enable clocks to all the GPIO blocks since we use all of
+		 * them as GPIOs.
+		 */
+		LM4_SYSTEM_RCGCGPIO |= 0x7fff;
+		clock_wait_cycles(6);  /* Delay a few clocks */
+	}
+
+	/*
+	 * Disable GPIO commit control for PD7 and PF0, since we don't use the
+	 * NMI pin function.
+	 */
+	LM4_GPIO_LOCK(LM4_GPIO_D) = LM4_GPIO_LOCK_UNLOCK;
+	LM4_GPIO_CR(LM4_GPIO_D) |= 0x80;
+	LM4_GPIO_LOCK(LM4_GPIO_D) = 0;
+	LM4_GPIO_LOCK(LM4_GPIO_F) = LM4_GPIO_LOCK_UNLOCK;
+	LM4_GPIO_CR(LM4_GPIO_F) |= 0x01;
+	LM4_GPIO_LOCK(LM4_GPIO_F) = 0;
+
+	/* Clear SSI0 alternate function on PA2:5 */
+	LM4_GPIO_AFSEL(LM4_GPIO_A) &= ~0x3c;
+
+	/* Mask all GPIO interrupts */
+	for (i = 0; gpio_bases[i]; i++)
+		LM4_GPIO_IM(gpio_bases[i]) = 0;
+
+	/* Set all GPIOs to defaults */
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
+		/* Use as GPIO, not alternate function */
+		gpio_set_alternate_function(g->port, g->mask, 0);
+
+		/* Set up GPIO based on flags */
+		gpio_set_flags(i, g->flags);
+
+		/*
+		 * If this is a cold boot, set the level.  On a warm reboot,
+		 * leave things where they were or we'll shut off the main
+		 * chipset.
+		 */
+		if ((g->flags & GPIO_OUTPUT) && !is_warm)
+			gpio_set_level(i, g->flags & GPIO_HIGH);
+	}
+}
+
+/* List of GPIO IRQs to enable */
+static const uint8_t gpio_irqs[] = {
+	LM4_IRQ_GPIOA, LM4_IRQ_GPIOB, LM4_IRQ_GPIOC, LM4_IRQ_GPIOD,
+	LM4_IRQ_GPIOE, LM4_IRQ_GPIOF, LM4_IRQ_GPIOG, LM4_IRQ_GPIOH,
+	LM4_IRQ_GPIOJ, LM4_IRQ_GPIOK, LM4_IRQ_GPIOL, LM4_IRQ_GPIOM,
+#if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
+	/* Don't enable interrupts for the keyboard input GPIO bank */
+	LM4_IRQ_GPION,
+#endif
+	LM4_IRQ_GPIOP, LM4_IRQ_GPIOQ
+};
+
+static void gpio_init(void)
+{
+	int i;
+
+	/* Enable IRQs now that pins are set up */
+	for (i = 0; i < ARRAY_SIZE(gpio_irqs); i++)
+		task_enable_irq(gpio_irqs[i]);
+}
+DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
+
 /*****************************************************************************/
 /* Interrupt handlers */
 
+/**
+ * Handle a GPIO interrupt.
+ *
+ * @param port		GPIO port (LM4_GPIO_*)
+ * @param mis		Masked interrupt status value for that port
+ */
 static void gpio_interrupt(int port, uint32_t mis)
 {
 	int i = 0;

@@ -38,7 +38,8 @@ void gpio_pre_init(void)
 		/* This is a warm reboot */
 		is_warm = 1;
 	} else {
-		/* Enable all GPIOs clocks
+		/*
+		 * Enable all GPIOs clocks
 		 * TODO: more fine-grained enabling for power saving
 		 */
 		STM32_RCC_AHBENR |= 0x3f;
@@ -141,13 +142,11 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	STM32_GPIO_MODER_OFF(port) = moder;
 }
 
-
 int gpio_get_level(enum gpio_signal signal)
 {
 	return !!(STM32_GPIO_IDR_OFF(gpio_list[signal].port) &
 		  gpio_list[signal].mask);
 }
-
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
