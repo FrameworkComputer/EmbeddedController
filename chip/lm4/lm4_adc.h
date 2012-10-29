@@ -14,11 +14,25 @@ enum lm4_adc_sequencer
 	LM4_ADC_SEQ1,
 	LM4_ADC_SEQ2,
 	LM4_ADC_SEQ3,
-
 	LM4_ADC_SEQ_COUNT
 };
 
-/* Minimum and maximum values returned by lm4_adc_flush_and_read(). */
+/* Data structure to define ADC channels. */
+struct adc_t {
+	const char *name;
+	enum lm4_adc_sequencer sequencer;
+	int factor_mul;
+	int factor_div;
+	int shift;
+	int channel;
+	int flag;
+	uint32_t gpio_port;
+	uint8_t gpio_mask;
+};
+
+extern const struct adc_t adc_channels[ADC_CH_COUNT];
+
+/* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0
 #define ADC_READ_MAX 4095
 
@@ -30,13 +44,5 @@ enum lm4_adc_sequencer
 
 /* Dummy value for "channel" in adc_t if we don't have an external channel. */
 #define LM4_AIN_NONE (-1)
-
-/* Flush an ADC sequencer and initiate a read. Return raw ADC value. */
-int lm4_adc_flush_and_read(enum lm4_adc_sequencer);
-
-/* Configure an ADC sequencer to be dedicated for an ADC input "ain_id".
- * Value in "ssctl" field is passed to sampler sequencer control register.
- */
-int lm4_adc_configure(enum lm4_adc_sequencer, int ain_id, int ssctl);
 
 #endif /* __CROS_EC_LM4_ADC_H */

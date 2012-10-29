@@ -99,11 +99,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 /* ADC channels */
 const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	/* Micro USB ID pin. Raw ADC value. */
-	[ADC_CH_USB_ID] = {"USB_ID", 0, 1, 1, 0, STM32_AIN(5), 0},
+	[ADC_CH_USB_ID] = {"USB_ID", 1, 1, 0, STM32_AIN(5)},
 	/* Micro USB D+ sense pin. Raw ADC value. */
-	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 0, 1, 1, 0, STM32_AIN(2), 0},
+	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 1, 1, 0, STM32_AIN(2)},
 	/* Micro USB D- sense pin. Raw ADC value. */
-	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 0, 1, 1, 0, STM32_AIN(4), 0},
+	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 1, 1, 0, STM32_AIN(4)},
 };
 
 void configure_board(void)

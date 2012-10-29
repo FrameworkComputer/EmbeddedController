@@ -5,8 +5,7 @@
 /* EC for Link board configuration */
 
 #include "adc.h"
-#include "board.h"
-#include "config.h"
+#include "common.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "lm4_adc.h"
@@ -21,7 +20,6 @@
 #ifndef CONFIG_TASK_POWERBTN
 #define power_button_interrupt NULL
 #endif
-
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
@@ -126,13 +124,13 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
 	 */
 	{"ECTemp", LM4_ADC_SEQ0, -225, ADC_READ_MAX, 420,
-	 LM4_AIN_NONE, 0x0e /* TS0 | IE0 | END0 */},
+	 LM4_AIN_NONE, 0x0e /* TS0 | IE0 | END0 */, 0, 0},
 
 	/* Charger current is mapped from 0~4000mA to 0~1.6V.
 	 * And ADC maps 0~3.3V to ADC_READ_MAX.
 	 */
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
-	 LM4_AIN(11), 0x06 /* IE0 | END0 */},
+	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 };
 
 /* I2C ports */

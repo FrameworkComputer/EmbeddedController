@@ -8,6 +8,15 @@
 #ifndef __CROS_EC_STM32_ADC_H
 #define __CROS_EC_STM32_ADC_H
 
+/* Data structure to define ADC channels. */
+struct adc_t {
+	const char *name;
+	int factor_mul;
+	int factor_div;
+	int shift;
+	int channel;
+};
+
 extern const struct adc_t adc_channels[ADC_CH_COUNT];
 
 /* Minimum and maximum values returned by adc_read_channel(). */

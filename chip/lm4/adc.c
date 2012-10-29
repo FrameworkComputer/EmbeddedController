@@ -16,38 +16,7 @@
 #include "timer.h"
 #include "util.h"
 
-extern const struct adc_t adc_channels[ADC_CH_COUNT];
-
 static task_id_t task_waiting_on_ss[LM4_ADC_SEQ_COUNT];
-
-/* GPIO port and mask for AINs. */
-const uint32_t ain_port[24][2] = {
-	{LM4_GPIO_E, (1<<3)},
-	{LM4_GPIO_E, (1<<2)},
-	{LM4_GPIO_E, (1<<1)},
-	{LM4_GPIO_E, (1<<0)},
-	{LM4_GPIO_D, (1<<7)},
-	{LM4_GPIO_D, (1<<6)},
-	{LM4_GPIO_D, (1<<5)},
-	{LM4_GPIO_D, (1<<4)},
-	{LM4_GPIO_E, (1<<5)},
-	{LM4_GPIO_E, (1<<4)},
-	{LM4_GPIO_B, (1<<4)},
-	{LM4_GPIO_B, (1<<5)},
-	{LM4_GPIO_D, (1<<3)},
-	{LM4_GPIO_D, (1<<2)},
-	{LM4_GPIO_D, (1<<1)},
-	{LM4_GPIO_D, (1<<0)},
-	{LM4_GPIO_K, (1<<0)},
-	{LM4_GPIO_K, (1<<1)},
-	{LM4_GPIO_K, (1<<2)},
-	{LM4_GPIO_K, (1<<3)},
-	{LM4_GPIO_E, (1<<7)},
-	{LM4_GPIO_E, (1<<6)},
-	{LM4_GPIO_N, (1<<1)},
-	{LM4_GPIO_N, (1<<0)},
-};
-
 
 static void configure_gpio(void)
 {
@@ -55,29 +24,36 @@ static void configure_gpio(void)
 
 	/* Use analog function for AIN */
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		int id = adc_channels[i].channel;
-		if (id != LM4_AIN_NONE)
-			gpio_set_alternate_function(ain_port[id][0],
-						    ain_port[id][1],
+		if (adc_channels[i].gpio_mask) {
+			gpio_set_alternate_function(adc_channels[i].gpio_port,
+						    adc_channels[i].gpio_mask,
 						    1);
+		}
 	}
 }
 
-
-int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
+/**
+ * Flush an ADC sequencer and initiate a read.
+ *
+ * @param seq		Sequencer to read
+ * @return Raw ADC value.
+ */
+static int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 {
-	/* TODO: right now we have only a single channel so this is
-	 * simple.  When we have multiple channels, should we...
+	/*
+	 * TODO: right now we have only a single channel so this is simple.
+	 * When we have multiple channels, should we...
 	 *
-	 * 1) Read them all using a timer interrupt, and then return
-	 * the most recent value?  This is lowest-latency for the
-	 * caller, but won't return accurate data if read frequently.
+	 * 1) Read them all using a timer interrupt, and then return the most
+	 * recent value?  This is lowest-latency for the caller, but won't
+	 * return accurate data if read frequently.
 	 *
-	 * 2) Reserve SS3 for reading a single value, and configure it
-	 * on each read?  Needs mutex if we could have multiple
-	 * callers; doesn't matter if just used for debugging.
+	 * 2) Reserve SS3 for reading a single value, and configure it on each
+	 * read?  Needs mutex if we could have multiple callers; doesn't matter
+	 * if just used for debugging.
 	 *
-	 * 3) Both? */
+	 * 3) Both?
+	 */
 	volatile uint32_t scratch  __attribute__((unused));
 	int event;
 
@@ -85,8 +61,10 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	while (!(LM4_ADC_SSFSTAT(seq) & 0x100))
 		scratch = LM4_ADC_SSFIFO(seq);
 
-	/* TODO: This assumes we don't have multiple tasks accessing
-	 * the same sequencer. Add mutex lock if needed. */
+	/*
+	 * This assumes we don't have multiple tasks accessing the same
+	 * sequencer. Add mutex lock if needed.
+	 */
 	task_waiting_on_ss[seq] = task_get_current();
 
 	/* Clear the interrupt status */
@@ -105,11 +83,18 @@ int lm4_adc_flush_and_read(enum lm4_adc_sequencer seq)
 	return LM4_ADC_SSFIFO(seq);
 }
 
-
-int lm4_adc_configure(enum lm4_adc_sequencer seq,
-		      int ain_id,
-		      int ssctl)
+/**
+ * Configure an ADC sequencer to be dedicated for an ADC input.
+ *
+ * @param seq		Sequencer to configure
+ * @param ain_id	ADC input to use
+ * @param ssctl		Value for sampler sequencer control register
+ *
+ */
+static void lm4_adc_configure(const struct adc_t *adc)
 {
+	const enum lm4_adc_sequencer seq = adc->sequencer;
+
 	/* Configure sample sequencer */
 	LM4_ADC_ADCACTSS &= ~(0x01 << seq);
 
@@ -117,21 +102,18 @@ int lm4_adc_configure(enum lm4_adc_sequencer seq,
 	LM4_ADC_ADCEMUX = (LM4_ADC_ADCEMUX & ~(0xf << (seq * 4))) | 0x00;
 
 	/* Sample internal temp sensor */
-	if (ain_id != LM4_AIN_NONE) {
-		LM4_ADC_SSMUX(seq) = ain_id & 0xf;
-		LM4_ADC_SSEMUX(seq) = ain_id >> 4;
-	} else {
+	if (adc->channel == LM4_AIN_NONE) {
 		LM4_ADC_SSMUX(seq) = 0x00;
 		LM4_ADC_SSEMUX(seq) = 0x00;
+	} else {
+		LM4_ADC_SSMUX(seq) = adc->channel & 0xf;
+		LM4_ADC_SSEMUX(seq) = adc->channel >> 4;
 	}
-	LM4_ADC_SSCTL(seq) = ssctl;
+	LM4_ADC_SSCTL(seq) = adc->flag;
 
 	/* Enable sample sequencer */
 	LM4_ADC_ADCACTSS |= 0x01 << seq;
-
-	return EC_SUCCESS;
 }
-
 
 int adc_read_channel(enum adc_channel ch)
 {
@@ -146,7 +128,9 @@ int adc_read_channel(enum adc_channel ch)
 /*****************************************************************************/
 /* Interrupt handlers */
 
-/* Handles an interrupt on the specified sample sequencer. */
+/**
+ * Handle an interrupt on the specified sample sequencer.
+ */
 static void handle_interrupt(int ss)
 {
 	int id = task_waiting_on_ss[ss];
@@ -158,7 +142,6 @@ static void handle_interrupt(int ss)
 	if (id != TASK_ID_INVALID)
 		task_wake(id);
 }
-
 
 static void ss0_interrupt(void) { handle_interrupt(0); }
 static void ss1_interrupt(void) { handle_interrupt(1); }
@@ -173,7 +156,7 @@ DECLARE_IRQ(LM4_IRQ_ADC0_SS3, ss3_interrupt, 2);
 /*****************************************************************************/
 /* Console commands */
 
-#ifdef CONSOLE_COMMAND_ECTEMP
+#ifdef CONFIG_CMD_ECTEMP
 static int command_ectemp(int argc, char **argv)
 {
 	int t = adc_read_channel(ADC_CH_EC_TEMP);
@@ -185,7 +168,6 @@ DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp,
 			"Print EC temperature",
 			NULL);
 #endif
-
 
 static int command_adc(int argc, char **argv)
 {
@@ -208,7 +190,6 @@ DECLARE_CONSOLE_COMMAND(adc, command_adc,
 static void adc_init(void)
 {
 	int i;
-	const struct adc_t *adc;
 
 	/* Configure GPIOs */
 	configure_gpio();
@@ -248,9 +229,7 @@ static void adc_init(void)
 	task_enable_irq(LM4_IRQ_ADC0_SS3);
 
 	/* Initialize ADC sequencer */
-	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		adc = adc_channels + i;
-		lm4_adc_configure(adc->sequencer, adc->channel, adc->flag);
-	}
+	for (i = 0; i < ADC_CH_COUNT; ++i)
+		lm4_adc_configure(adc_channels + i);
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
