@@ -7,6 +7,7 @@
 
 #include "clock.h"
 #include "common.h"
+#include "console.h"
 #include "cpu.h"
 #include "eeprom.h"
 #include "eoption.h"
@@ -21,6 +22,10 @@
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 int main(void)
 {
@@ -76,20 +81,19 @@ int main(void)
 	/* Main initialization stage.  Modules may enable interrupts here. */
 	cpu_init();
 
-	/* Initialize UART.  uart_printf(), etc. may now be used. */
+	/* Initialize UART.  Console output functions may now be used. */
 	uart_init();
-	if (system_jumped_to_this_image())
-		uart_printf("[%T UART initialized after sysjump]\n");
-	else {
-		uart_puts("\n\n--- UART initialized after reboot ---\n");
-		uart_puts("[Reset cause: ");
-		system_print_reset_flags();
-		uart_puts("]\n");
-	}
-	uart_printf("[Image: %s, %s]\n",
-		    system_get_image_copy_string(),
-		    system_get_build_info());
 
+	if (system_jumped_to_this_image()) {
+		CPRINTF("[%T UART initialized after sysjump]\n");
+	} else {
+		CPUTS("\n\n--- UART initialized after reboot ---\n");
+		CPUTS("[Reset cause: ");
+		system_print_reset_flags();
+		CPUTS("]\n");
+	}
+	CPRINTF("[Image: %s, %s]\n",
+		 system_get_image_copy_string(), system_get_build_info());
 
 #ifdef CONFIG_TASK_WATCHDOG
 	/*
@@ -129,7 +133,7 @@ int main(void)
 	 * into account the time before timer_init(), but it'll at least catch
 	 * the majority of the time.
 	 */
-	uart_printf("[%T Inits done]\n");
+	CPRINTF("[%T Inits done]\n");
 
 	/* Launch task scheduling (never returns) */
 	return task_start();

@@ -137,16 +137,16 @@ void system_print_reset_flags(void)
 	int i;
 
 	if (!reset_flags) {
-		uart_puts("unknown");
+		CPUTS("unknown");
 		return;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(reset_flag_descs); i++) {
 		if (reset_flags & (1 << i)) {
 			if (count++)
-				uart_puts(" ");
+				CPUTS(" ");
 
-			uart_puts(reset_flag_descs[i]);
+			CPUTS(reset_flag_descs[i]);
 		}
 	}
 }

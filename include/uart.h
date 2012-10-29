@@ -11,60 +11,90 @@
 #include <stdarg.h>  /* For va_list */
 #include "common.h"
 
+/**
+ * Initialize the UART module.
+ */
+void uart_init(void);
 
-/* Initializes the UART module. */
-int uart_init(void);
-
-/* Return non-zero if UART init has completed. */
+/**
+ * Return non-zero if UART init has completed.
+ */
 int uart_init_done(void);
 
-/*****************************************************************************/
-/* Output functions
+/*
+ * Output functions
  *
  * Output is buffered.  If the buffer overflows, subsequent output is
- * discarded. */
-
-/* Put a null-terminated string to the UART, like fputs().
+ * discarded.
  *
- * Returns error if output was truncated. */
+ * Modules should use the output functions in console.h in preference to these
+ * routines, so that output can be filtered on a module-by-module basis.
+ */
+
+/**
+ * Put a null-terminated string to the UART, like fputs().
+ *
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
 int uart_puts(const char *outstr);
 
-/* Print formatted output to the UART, like printf().
+/**
+ * Print formatted output to the UART, like printf().
  *
- * See printf.h for valid formatting codes. */
+ * See printf.h for valid formatting codes.
+ *
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
 int uart_printf(const char *format, ...);
 
-/* Print formatted output to the UART, like vprintf().
+/**
+ * Print formatted output to the UART, like vprintf().
  *
- * See printf.h for valid formatting codes. */
+ * See printf.h for valid formatting codes.
+ *
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
 int uart_vprintf(const char *format, va_list args);
 
-/* Flushes output.  Blocks until UART has transmitted all output. */
+/**
+ * Flush output.  Blocks until UART has transmitted all output.
+ */
 void uart_flush_output(void);
 
-/*****************************************************************************/
-/* Input functions
+/*
+ * Input functions
  *
  * Input is buffered.  If the buffer overflows, the oldest input in
  * the buffer is discarded to make room for the new input.
  *
  * Input lines may be terminated by CR ('\r'), LF ('\n'), or CRLF; all
- * are translated to newline. */
+ * are translated to newline.
+ */
 
-/* Flushes input buffer, discarding all input. */
+/**
+ * Flush input buffer, discarding all input.
+ */
 void uart_flush_input(void);
 
-/* Non-destructively checks for a character in the input buffer.
+/**
+ * Non-destructively check for a character in the input buffer.
  *
- * Returns the offset into the input buffer of character <c>, or -1 if
- * it is not in the input buffer. */
+ * @param c		Character to search for
+ *
+ * @return the offset into the input buffer of the first match, or -1 if no
+ * match found in the input buffer.
+ */
 int uart_peek(int c);
 
-/* Reads a single character of input, similar to fgetc().  Returns the
- * character, or -1 if no input waiting. */
+/**
+ * Read a single character of input, similar to fgetc().
+ *
+ * @return the character, or -1 if no input waiting.
+ */
 int uart_getc(void);
 
-/* Reads characters from the UART, similar to fgets().
+/**
+ * Read characters from the UART, similar to fgets().
  *
  * Reads input until one of the following conditions is met:
  *    (1)  <size-1> characters have been read.
@@ -73,9 +103,9 @@ int uart_getc(void);
  *
  * Condition (3) means this call never blocks.  This is important
  * because it prevents a race condition where the caller calls
- * UartPeek() to see if input is waiting, or is notified by the
+ * uart_peek() to see if input is waiting, or is notified by the
  * callack that input is waiting, but then the input buffer overflows
- * or someone else grabs the input before UartGets() is called.
+ * or someone else grabs the input before uart_gets() is called.
  *
  * Characters are stored in <dest> and are null-terminated.
  * Characters include the newline if present, so that the caller can
@@ -83,83 +113,105 @@ int uart_getc(void);
  * input buffer is empty, a null-terminated empty string ("") is
  * returned.
  *
- * Returns the number of characters read (not counting the terminating
- * null). */
+ * @param dest		Destination for input
+ * @param size		Size of buffer pointed to by dest
+ *
+ * @return the number of characters read, not counting the terminating null.
+ */
 int uart_gets(char *dest, int size);
 
-/* TODO: getc(), putc() equivalents? */
+/*
+ * Hardware UART driver functions
+ */
 
-/*****************************************************************************/
-/* Hardware UART driver functions */
-
-/* Flushes the transmit FIFO. */
+/**
+ * Flush the transmit FIFO.
+ */
 void uart_tx_flush(void);
 
-/* Returns true if there is room to transmit a character immediatly. */
+/**
+ * Return non-zero if there is room to transmit a character immediately.
+ */
 int uart_tx_ready(void);
 
-/* Returns true if the UART has character available. */
+/**
+ * Return non-zero if the UART has a character available to read.
+ */
 int uart_rx_available(void);
 
 /**
- * Sends a character to the UART data register.
- * If the transmit FIFO is full, this function blocks until there is space.
+ * Send a character to the UART data register.
  *
- * c : byte to send.
+ * If the transmit FIFO is full, blocks until there is space.
+ *
+ * @param c		Character to send.
  */
 void uart_write_char(char c);
 
 /**
- * Reads and returns one char from the UART data register.
+ * Read one char from the UART data register.
  *
- * Called when uart_rx_available once returns true.
+ * @return		The character read.
  */
 int uart_read_char(void);
 
 /**
- * Disables all UART related IRQs.
+ * Disable all UART related IRQs.
  *
- * To avoid concurrent accesses on UART management variables.
+ * Used to avoid concurrent accesses on UART management variables.
  */
 void uart_disable_interrupt(void);
 
-/* Re-enables UART IRQs. */
+/**
+ * Re-enable UART IRQs.
+ */
 void uart_enable_interrupt(void);
 
 /**
- * Re-enables the UART transmit interrupt.
+ * Re-enable the UART transmit interrupt.
  *
- * It also forces triggering an interrupt if the hardware doesn't automatically
- * trigger it when the transmit buffer was filled beforehand.
+ * This also forces triggering an interrupt if the hardware doesn't
+ * automatically trigger it when the transmit buffer was filled beforehand.
  */
 void uart_tx_start(void);
 
-/* Disables the UART transmit interrupt. */
+/**
+ * Disable the UART transmit interrupt.
+ */
 void uart_tx_stop(void);
 
-/* Returns true if the UART transmit interrupt is disabled */
+/**
+ * Return non-zero if the UART transmit interrupt is disabled.
+ */
 int uart_tx_stopped(void);
 
 /**
  * Helper for UART processing.
- * Read the input FIFO until empty, then fill the output FIFO until the transmit
- * buffer is empty or the FIFO full.
+ *
+ * Reads the input FIFO until empty, then fills the output FIFO until the
+ * transmit buffer is empty or the FIFO full.
  *
  * Designed to be called from the driver interrupt handler.
  */
 void uart_process(void);
 
+/*
+ * COMx functions
+ */
 
-/*****************************************************************************/
-/* COMx functions */
-
-/* Enables comx interrupts */
+/**
+ * Enable COMx interrupts
+ */
 void uart_comx_enable(void);
 
-/* Returns non-zero if ok to put a character via uart_comx_putc(). */
+/**
+ * Return non-zero if ok to put a character via uart_comx_putc().
+ */
 int uart_comx_putc_ok(void);
 
-/* Puts a character to the COMx UART interface. */
+/**
+ * Write a character to the COMx UART interface.
+ */
 void uart_comx_putc(int c);
 
 #endif  /* __CROS_EC_UART_H */

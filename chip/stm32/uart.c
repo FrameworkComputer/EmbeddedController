@@ -112,7 +112,7 @@ static void uart_interrupt(void)
 }
 DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 2);
 
-int uart_init(void)
+void uart_init(void)
 {
 	/* Enable USART clock */
 	if (UARTN == 1)
@@ -146,6 +146,4 @@ int uart_init(void)
 	task_enable_irq(STM32_IRQ_USART(UARTN));
 
 	init_done = 1;
-
-	return EC_SUCCESS;
 }
