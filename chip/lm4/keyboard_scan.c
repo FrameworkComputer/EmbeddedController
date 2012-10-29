@@ -5,6 +5,7 @@
 
 /* Keyboard scanner module for Chrome EC */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
@@ -17,7 +18,6 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "x86_power.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
@@ -202,7 +202,7 @@ static void check_runtime_keys(const uint8_t *state)
 	if (state[MASK_INDEX_KEY_R] == MASK_VALUE_KEY_R) {
 		/* R = reboot */
 		CPRINTF("[%T KB warm reboot]\n");
-		x86_power_reset(0);
+		chipset_reset(0);
 	} else if (state[MASK_INDEX_KEY_H] == MASK_VALUE_KEY_H) {
 		/* H = hibernate */
 		CPRINTF("[%T KB hibernate]\n");

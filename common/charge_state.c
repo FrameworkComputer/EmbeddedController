@@ -23,7 +23,6 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "x86_power.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -108,14 +107,9 @@ static void poweroff_wait_ac(int hibernate_ec)
 {
 	/* Shutdown the main processor */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		/* chipset_force_state(CHIPSET_STATE_SOFT_OFF);
-		 * TODO(rong): remove platform dependent code
-		 */
-#ifdef CONFIG_TASK_X86POWER
 		CPRINTF("[%T force shutdown to avoid damaging battery]\n");
-		x86_power_force_shutdown();
+		chipset_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
-#endif /* CONFIG_TASK_X86POWER */
 	}
 
 	/* If battery level is critical, hibernate the EC too */

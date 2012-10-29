@@ -17,7 +17,10 @@
 #include "thermal.h"
 #include "timer.h"
 #include "util.h"
-#include "x86_power.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_THERMAL, outstr)
+#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
 /*
  * Temperature threshold configuration. Must be in the same order as in enum
@@ -103,18 +106,26 @@ static void smi_sensor_failure_warning(void)
  */
 static void overheated_action(void)
 {
+	static int cpu_down_count;
+
 	if (overheated[THRESHOLD_POWER_DOWN]) {
 		cprintf(CC_CHIPSET,
 			"[%T critical temperature; shutting down]\n");
-		x86_power_force_shutdown();
+		chipset_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
 		return;
 	}
 
-	if (overheated[THRESHOLD_CPU_DOWN])
-		x86_power_cpu_overheated(1);
-	else
-		x86_power_cpu_overheated(0);
+	if (overheated[THRESHOLD_CPU_DOWN]) {
+		cpu_down_count++;
+		if (cpu_down_count > 3) {
+			CPRINTF("[%T overheated; shutting down]\n");
+			chipset_force_shutdown();
+			host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
+		}
+	} else {
+		cpu_down_count = 0;
+	}
 
 	if (overheated[THRESHOLD_WARNING]) {
 		smi_overheated_warning();

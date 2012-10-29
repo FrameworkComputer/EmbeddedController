@@ -21,7 +21,6 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "x86_power.h"
 
 #define KEYBOARD_DEBUG 1
 
@@ -262,19 +261,10 @@ void keyboard_clear_underlying_buffer(void)
 	i8042_flush_buffer();
 }
 
-
-/*
- * TODO: Move this implementation to platform-dependent files.
- *       We don't do it now because not every board implement x86_power.c
- *         bds: no CONFIG_LPC and no CONFIG_TASK_X86POWER
- *         daisy(variants): no CONFIG_LPC and no CONFIG_TASK_X86POWER
- *       crosbug.com/p/8523
- */
 static void keyboard_wakeup(void)
 {
 	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
-
 
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
@@ -597,11 +587,9 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		data_port_state = STATE_SEND_TO_MOUSE;
 		break;
 
-#ifdef CONFIG_TASK_X86POWER
 	case I8042_SYSTEM_RESET:
-		x86_power_reset(0);
+		chipset_reset(0);
 		break;
-#endif
 
 	default:
 		if (command >= I8042_READ_CTL_RAM &&
