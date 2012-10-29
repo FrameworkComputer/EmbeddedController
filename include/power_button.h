@@ -11,21 +11,27 @@
 #include "common.h"
 #include "gpio.h"
 
-/*
- * Interrupt handler for the power button and lid switch.  Passed the signal
- * which triggered the interrupt.
+/**
+ * Interrupt handler for the power button and lid switch.
+ *
+ * @param signal	Signal which triggered the interrupt.
  */
 void power_button_interrupt(enum gpio_signal signal);
 
-/* Power button task */
+/**
+ * Power button task.
+ */
 void power_button_task(void);
 
-/* Return non-zero if AC power is present. */
+/**
+ * Return non-zero if AC power is present.
+ */
 int power_ac_present(void);
 
-/*
- * Return non-zero if lid is open.  Uses the debounced lid state, not the raw
- * signal from the GPIO.
+/**
+ * Return non-zero if lid is open.
+ *
+ * Uses the debounced lid state, not the raw signal from the GPIO.
  */
 int power_lid_open_debounced(void);
 
