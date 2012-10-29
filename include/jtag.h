@@ -10,7 +10,9 @@
 
 #include "common.h"
 
-/* Pre-initializes the module. */
-int jtag_pre_init(void);
+/**
+ * Pre-initialize the JTAG module.
+ */
+void jtag_pre_init(void);
 
 #endif  /* __CROS_EC_JTAG_H */

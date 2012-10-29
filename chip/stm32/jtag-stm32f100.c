@@ -7,10 +7,8 @@
 #include "jtag.h"
 #include "registers.h"
 
-int jtag_pre_init(void)
+void jtag_pre_init(void)
 {
 	/* stop TIM1-4 and watchdogs when the JTAG stops the CPU */
 	STM32_DBGMCU_CR |= 0x00003f00;
-
-	return EC_SUCCESS;
 }
