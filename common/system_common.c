@@ -594,8 +594,7 @@ DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			"Print system info",
 			NULL);
 
-#define CONFIG_CONSOLE_CMD_SCRATCHPAD
-#ifdef CONFIG_CONSOLE_CMD_SCRATCHPAD
+#ifdef CONFIG_CMD_SCRATCHPAD
 static int command_scratchpad(int argc, char **argv)
 {
 	int rv = EC_SUCCESS;
@@ -615,7 +614,7 @@ DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 			"[val]",
 			"Get or set scratchpad value",
 			NULL);
-#endif /* CONFIG_CONSOLE_CMD_SCRATCHPAD */
+#endif /* CONFIG_CMD_SCRATCHPAD */
 
 static int command_hibernate(int argc, char **argv)
 {
