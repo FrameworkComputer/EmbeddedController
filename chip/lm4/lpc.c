@@ -798,15 +798,13 @@ static void lpc_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
 
-void lpc_task(void)
+static void lpc_tick(void)
 {
-	while (1) {
-		msleep(250);
-		/*
-		 * Make sure pending LPC interrupts have been processed.
-		 * This works around a LM4 bug where host writes sometimes
-		 * don't trigger interrupts.  See crosbug.com/p/13965.
-		 */
-		task_trigger_irq(LM4_IRQ_LPC);
-	}
+	/*
+	 * Make sure pending LPC interrupts have been processed.
+	 * This works around a LM4 bug where host writes sometimes
+	 * don't trigger interrupts.  See crosbug.com/p/13965.
+	 */
+	task_trigger_irq(LM4_IRQ_LPC);
 }
+DECLARE_HOOK(HOOK_TICK, lpc_tick, HOOK_PRIO_DEFAULT);
