@@ -8,16 +8,15 @@
 #ifndef __CROS_EC_WATCHDOG_H
 #define __CROS_EC_WATCHDOG_H
 
-#define WATCHDOG_PERIOD_MS 1100  /* Watchdog period in ms */
+/* Watchdog period in ms; must be at least twice HOOK_TICK_INTERVAL */
+#define WATCHDOG_PERIOD_MS 1100
 
-/*
- * Interval in ms between reloads of the watchdog timer.  Should be less
- * than half of the watchdog period.
+/**
+ * Initialize the watchdog.
+ *
+ * This will cause the CPU to reboot if it has been more than 2 watchdog
+ * periods since watchdog_reload() has been called.
  */
-#define WATCHDOG_RELOAD_MS 500
-
-/* Initialize the watchdog.  This will cause the CPU to reboot if it has been
- * more than 2 watchdog periods since watchdog_reload() has been called. */
 int watchdog_init(void);
 
 /**

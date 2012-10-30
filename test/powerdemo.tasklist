@@ -15,5 +15,6 @@
  * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TASK_LIST \
+	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(CONSOLE, console_task, NULL, TASK_STACK_SIZE) \
 	TASK(POWERDEMO, power_demo_task, NULL, TASK_STACK_SIZE)

@@ -95,7 +95,7 @@ int main(void)
 	CPRINTF("[Image: %s, %s]\n",
 		 system_get_image_copy_string(), system_get_build_info());
 
-#ifdef CONFIG_TASK_WATCHDOG
+#ifdef CONFIG_WATCHDOG
 	/*
 	 * Intialize watchdog timer.  All lengthy operations between now and
 	 * task_start() must periodically call watchdog_reload() to avoid

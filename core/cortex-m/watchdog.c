@@ -39,12 +39,3 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	timer_print_info();
 	task_print_list();
 }
-
-/* Low priority task to reload the watchdog */
-void watchdog_task(void)
-{
-	while (1) {
-		msleep(WATCHDOG_RELOAD_MS);
-		watchdog_reload();
-	}
-}

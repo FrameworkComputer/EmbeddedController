@@ -14,7 +14,7 @@
  * 'd' in an opaque parameter passed to the routine at startup
  */
 #define CONFIG_TASK_LIST \
-	TASK(WATCHDOG, watchdog_task, NULL, TASK_STACK_SIZE) \
+	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
 	TASK(PWM, pwm_task, NULL, TASK_STACK_SIZE) \
 	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \

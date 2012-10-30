@@ -5,10 +5,8 @@
 
 /* Watchdog driver */
 
-#include "board.h"
 #include "clock.h"
 #include "common.h"
-#include "config.h"
 #include "registers.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -79,6 +77,7 @@ void watchdog_reload(void)
 	/* Re-lock watchdog registers */
 	LM4_WATCHDOG_LOCK(0) = 0xdeaddead;
 }
+DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
 static void watchdog_freq_changed(void)
 {

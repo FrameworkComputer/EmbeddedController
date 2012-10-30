@@ -33,6 +33,9 @@
 /* build with assertions and debug messages */
 #define CONFIG_DEBUG
 
+/* Enable watchdog timer */
+#define CONFIG_WATCHDOG
+
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */
 

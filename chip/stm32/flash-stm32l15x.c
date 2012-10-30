@@ -189,7 +189,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
 	     size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
-#ifdef CONFIG_TASK_WATCHDOG
+#ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
@@ -249,7 +249,7 @@ int flash_physical_erase(int offset, int size)
 		/* Start erase */
 		*address = 0x00000000;
 
-#ifdef CONFIG_TASK_WATCHDOG
+#ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset during
 		 * multi-page erase operations.

@@ -16,7 +16,6 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
-	TASK(WATCHDOG, watchdog_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
 	TASK(POWERLED, power_led_task, NULL, TASK_STACK_SIZE) \
 	TASK(PMU_TPS65090_CHARGER, pmu_charger_task, NULL, TASK_STACK_SIZE) \
