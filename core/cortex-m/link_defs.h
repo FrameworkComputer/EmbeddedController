@@ -38,6 +38,8 @@ extern const struct hook_data __hooks_ac_change[];
 extern const struct hook_data __hooks_ac_change_end[];
 extern const struct hook_data __hooks_lid_change[];
 extern const struct hook_data __hooks_lid_change_end[];
+extern const struct hook_data __hooks_tick[];
+extern const struct hook_data __hooks_tick_end[];
 
 /* Host commands */
 extern const struct host_command __hcmds[];

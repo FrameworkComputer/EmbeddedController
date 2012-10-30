@@ -15,6 +15,9 @@
 /* Use a bigger console output buffer */
 #define CONFIG_UART_TX_BUF_SIZE 8192
 
+/* Interval between HOOK_TICK notifications */
+#define HOOK_TICK_INTERVAL (250 * MSEC)
+
 /****************************************************************************/
 /* Memory mapping */
 

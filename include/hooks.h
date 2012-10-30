@@ -47,6 +47,7 @@ enum hook_type {
 	HOOK_AC_CHANGE,        /* AC power plugged in or removed */
 	HOOK_LID_CHANGE,       /* Lid opened or closed.  Based on debounced lid
 				* state, not raw lid GPIO input. */
+	HOOK_TICK,             /* Periodic tick, every HOOK_TICK_INTERVAL */
 };
 
 struct hook_data {

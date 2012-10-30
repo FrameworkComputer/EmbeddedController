@@ -7,6 +7,7 @@
 
 #include "hooks.h"
 #include "link_defs.h"
+#include "timer.h"
 #include "util.h"
 
 struct hook_ptrs {
@@ -29,6 +30,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_chipset_shutdown, __hooks_chipset_shutdown_end},
 	{__hooks_ac_change, __hooks_ac_change_end},
 	{__hooks_lid_change, __hooks_lid_change_end},
+	{__hooks_tick, __hooks_tick_end},
 };
 
 void hook_notify(enum hook_type type)
@@ -57,5 +59,19 @@ void hook_notify(enum hook_type type)
 				p->routine();
 			}
 		}
+	}
+}
+
+void hook_task(void)
+{
+	while (1) {
+		uint64_t t = get_time().val;
+
+		hook_notify(HOOK_TICK);
+
+		/* Use up the rest of our hook tick interval */
+		t = get_time().val - t;
+		if (t < HOOK_TICK_INTERVAL)
+			usleep(HOOK_TICK_INTERVAL - t);
 	}
 }

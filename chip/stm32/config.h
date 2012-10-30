@@ -24,6 +24,9 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE 488
 
+/* Interval between HOOK_TICK notifications */
+#define HOOK_TICK_INTERVAL (500 * MSEC)
+
 /* support programming on-chip flash */
 #define CONFIG_FLASH
 
