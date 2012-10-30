@@ -48,6 +48,7 @@ enum hook_type {
 	HOOK_LID_CHANGE,       /* Lid opened or closed.  Based on debounced lid
 				* state, not raw lid GPIO input. */
 	HOOK_TICK,             /* Periodic tick, every HOOK_TICK_INTERVAL */
+	HOOK_SECOND,           /* Periodic tick, every second */
 };
 
 struct hook_data {

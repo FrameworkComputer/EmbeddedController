@@ -100,6 +100,10 @@ SECTIONS
         *(.rodata.HOOK_TICK)
         __hooks_tick_end = .;
 
+        __hooks_second = .;
+        *(.rodata.HOOK_SECOND)
+        __hooks_second_end = .;
+
         . = ALIGN(4);
         *(.rodata*)
 

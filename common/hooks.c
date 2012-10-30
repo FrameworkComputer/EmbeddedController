@@ -31,6 +31,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_ac_change, __hooks_ac_change_end},
 	{__hooks_lid_change, __hooks_lid_change_end},
 	{__hooks_tick, __hooks_tick_end},
+	{__hooks_second, __hooks_second_end},
 };
 
 void hook_notify(enum hook_type type)
@@ -64,10 +65,18 @@ void hook_notify(enum hook_type type)
 
 void hook_task(void)
 {
+	/* Per-second hook will be called first time through the loop */
+	static uint64_t last_second = -SECOND;
+
 	while (1) {
 		uint64_t t = get_time().val;
 
 		hook_notify(HOOK_TICK);
+
+		if (t - last_second >= SECOND) {
+			hook_notify(HOOK_SECOND);
+			last_second = t;
+		}
 
 		/* Use up the rest of our hook tick interval */
 		t = get_time().val - t;
