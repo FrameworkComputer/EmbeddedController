@@ -21,7 +21,6 @@
 	TASK(CHARGER, charge_state_machine_task, NULL, TASK_STACK_SIZE) \
 	TASK(TEMPSENSOR, temp_sensor_task, NULL, TASK_STACK_SIZE) \
 	TASK(THERMAL, thermal_task, NULL, TASK_STACK_SIZE) \
-	TASK(PWM, pwm_task, NULL, TASK_STACK_SIZE) \
 	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \
 	TASK(X86POWER, x86_power_task, NULL, TASK_STACK_SIZE) \
 	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \

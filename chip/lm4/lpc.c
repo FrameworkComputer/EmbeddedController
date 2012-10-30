@@ -367,7 +367,7 @@ static void handle_acpi_write(int is_cmd)
 		case EC_ACPI_MEM_TEST_COMPLIMENT:
 			result = 0xff - acpi_mem_test;
 			break;
-#ifdef CONFIG_TASK_PWM
+#ifdef CONFIG_PWM
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			/*
 			 * TODO: not very satisfying that LPC knows directly
@@ -393,7 +393,7 @@ static void handle_acpi_write(int is_cmd)
 		case EC_ACPI_MEM_TEST:
 			acpi_mem_test = data;
 			break;
-#ifdef CONFIG_TASK_PWM
+#ifdef CONFIG_PWM
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			pwm_set_keyboard_backlight(data);
 			break;

@@ -182,27 +182,6 @@ static int fan_is_stalled(void)
 	return (((LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03) == 0) ? 1 : 0;
 }
 
-void pwm_task(void)
-{
-	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
-
-	while (1) {
-		if (fan_is_stalled()) {
-			mapped[0] = EC_FAN_SPEED_STALLED;
-			/*
-			 * Issue warning.  As we have thermal shutdown
-			 * protection, issuing warning here should be enough.
-			 */
-			host_set_single_event(EC_HOST_EVENT_THERMAL);
-			cprintf(CC_PWM, "[%T Fan stalled!]\n");
-		} else
-			mapped[0] = pwm_get_fan_rpm();
-
-		/* Update about once a second */
-		sleep(1);
-	}
-}
-
 /*****************************************************************************/
 /* Console commands */
 
@@ -442,6 +421,24 @@ static void pwm_init(void)
 		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
 }
 DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+
+static void pwm_second(void)
+{
+	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+
+	if (fan_is_stalled()) {
+		mapped[0] = EC_FAN_SPEED_STALLED;
+		/*
+		 * Issue warning.  As we have thermal shutdown
+		 * protection, issuing warning here should be enough.
+		 */
+		host_set_single_event(EC_HOST_EVENT_THERMAL);
+		cprintf(CC_PWM, "[%T Fan stalled!]\n");
+	} else {
+		mapped[0] = pwm_get_fan_rpm();
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, pwm_second, HOOK_PRIO_DEFAULT);
 
 static void pwm_preserve_state(void)
 {

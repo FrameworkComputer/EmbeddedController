@@ -253,7 +253,7 @@ static void lb_restore_state(void)
  * state by calling the demo_* functions directly. */
 /******************************************************************************/
 
-#ifdef CONFIG_TASK_PWM
+#ifdef CONFIG_PWM
 static int last_backlight_level;
 #endif
 
@@ -289,7 +289,7 @@ static void get_battery_level(void)
 		st.battery_level = bl;
 
 
-#ifdef CONFIG_TASK_PWM
+#ifdef CONFIG_PWM
 	/* With nothing else to go on, use the keyboard backlight level to
 	 * set the brightness. If the keyboard backlight is OFF (which it is
 	 * when ambient is bright), use max brightness for lightbar. If

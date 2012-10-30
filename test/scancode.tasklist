@@ -17,7 +17,6 @@
 #define CONFIG_TASK_LIST \
 	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
-	TASK(PWM, pwm_task, NULL, TASK_STACK_SIZE) \
 	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \
 	TASK(X86POWER, x86_power_task, NULL, TASK_STACK_SIZE) \
 	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \
