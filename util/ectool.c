@@ -2085,6 +2085,12 @@ int cmd_battery(int argc, char *argv[])
 	char batt_text[EC_MEMMAP_TEXT_MAX];
 	int rv, val;
 
+	val = read_mapped_mem8(EC_MEMMAP_BATTERY_VERSION);
+	if (val < 1) {
+		printf("Command not supported\n");
+		return -1;
+	}
+
 	printf("Battery info:\n");
 
 	rv = read_mapped_string(EC_MEMMAP_BATT_MFGR, batt_text);
