@@ -446,8 +446,12 @@ void x86_power_task(void)
 					system_hibernate(0, 0);
 				}
 				else {
+					uint64_t wait = target_time - time_now;
+					if (wait > TASK_MAX_WAIT_US)
+						wait = TASK_MAX_WAIT_US;
+
 					/* Wait for a message */
-					task_wait_event(target_time - time_now);
+					task_wait_event(wait);
 				}
 			}
 

@@ -26,6 +26,9 @@
  */
 #define TASK_EVENT_TIMER	(1U << 31)
 
+/* Maximum time for task_wait_event() */
+#define TASK_MAX_WAIT_US 0x7fffffff
+
 /**
  * Disable CPU interrupt bit.
  *
