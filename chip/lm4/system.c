@@ -233,7 +233,11 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 
 	/* Set up wake reasons and hibernate flags */
 	hibctl = LM4_HIBERNATE_HIBCTL | LM4_HIBCTL_PINWEN;
-	flags |= HIBDATA_WAKE_PIN;
+
+	if (flags & HIBDATA_WAKE_PIN)
+		hibctl |= LM4_HIBCTL_PINWEN;
+	else
+		hibctl &= ~LM4_HIBCTL_PINWEN;
 
 	if (seconds || microseconds) {
 		hibctl |= LM4_HIBCTL_RTCWEN;
@@ -285,7 +289,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Flush console before hibernating */
 	cflush();
-	hibernate(seconds, microseconds, 0);
+	hibernate(seconds, microseconds, HIBDATA_WAKE_PIN);
 }
 
 void system_pre_init(void)
@@ -366,7 +370,10 @@ void system_reset(int flags)
 	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
-		/* Bounce through hibernate to trigger a hard reboot */
+		/*
+		 * Bounce through hibernate to trigger a hard reboot.  Do
+		 * not wake on wake pin, since we need the full duration.
+		 */
 		hibernate(0, HIB_RESET_USEC, HIBDATA_WAKE_HARD_RESET);
 	} else
 		CPU_NVIC_APINT = 0x05fa0004;
