@@ -14,12 +14,28 @@ DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
+DEFINE_string offset "0" \
+	"Offset where to program the image from."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 check_flags_only_and_allow_null_arg "$@" && set --
+
+set -e
+
+cleanup() {
+	if [ -n "${save}" ]; then
+		info "Restoring servo settings..."
+		servo_restore "$save"
+	fi
+
+	# reset the EC
+        dut_control cold_reset:on
+        dut_control cold_reset:off
+}
+trap cleanup EXIT
 
 BOARD=${FLAGS_board}
 BOARD_ROOT=/build/${BOARD}
@@ -36,18 +52,18 @@ LOCAL_BUILD=${SRC_ROOT}/platform/ec/build/${BOARD}/${EC_FILE}
 # Find the EC image to use
 function ec_image() {
 	# No image specified on the command line, try default ones
-	if [[ ! -z "${FLAGS_image}" ]] ; then
-		if [ ! -r "${FLAGS_image}" ]; then
-			die "Invalid image path : ${FLAGS_image}"
+	if [[ -n "${FLAGS_image}" ]] ; then
+		if [ -f "${FLAGS_image}" ]; then
+			echo "${FLAGS_image}"
+			return
 		fi
-		echo "${FLAGS_image}"
-		return
+		die "Invalid image path : ${FLAGS_image}"
 	else
-		if [ -x "${LOCAL_BUILD}" ]; then
+		if [ -f "${LOCAL_BUILD}" ]; then
 			echo "${LOCAL_BUILD}"
 			return
 		fi
-		if [ -x "${EMERGE_BUILD}" ]; then
+		if [ -f "${EMERGE_BUILD}" ]; then
 			echo "${EMERGE_BUILD}"
 			return
 		fi
@@ -104,15 +120,15 @@ function flash_daisy() {
 }
 
 function flash_link() {
-	IMG_SIZE=262144
 	OCD_CFG="servo_v2_slower.cfg"
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
-	OCD_CMDS="init ; flash_lm4 ${IMG} 0 262144 ; exit"
+	OCD_CMDS="init ; flash_lm4 ${IMG} ${FLAGS_offset}; shutdown;"
 
 	dut_control jtag_buf_on_flex_en:on
 	dut_control jtag_buf_en:on
 
-	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}"
+	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
+          die "Failed to program ${IMG}"
 }
 
 IMG="$(ec_image)"
@@ -130,10 +146,3 @@ case "${BOARD}" in
 esac
 
 info "Flashing done."
-
-# Restore servo settings
-servo_restore "$save"
-
-# reset the EC
-dut_control cold_reset:on
-dut_control cold_reset:off

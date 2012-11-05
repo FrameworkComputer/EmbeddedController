@@ -6,7 +6,7 @@
 
 # Program internal flash
 
-proc flash_lm4 {path offset size} {
+proc flash_lm4 {path offset} {
 	#set firstsect [expr {$offset / 1024}];
 	#set lastsect [expr {($offset + $size) / 1024 - 1}];
 	reset halt;
@@ -16,19 +16,19 @@ proc flash_lm4 {path offset size} {
 
 # Link proto0 has 128KB flash; proto1+ have 256KB
 proc flash_link { } {
-	flash_lm4 ../../../build/link/ec.bin 0 262144
+	flash_lm4 ../../../build/link/ec.bin 0
 }
 
 proc flash_link_ro { } {
-	flash_lm4 ../../../build/link/ec.RO.flat 0 81920
+	flash_lm4 ../../../build/link/ec.RO.flat 0
 }
 
 proc flash_link_rw { } {
-	flash_lm4 ../../../build/link/ec.RW.bin 81920 81920
+	flash_lm4 ../../../build/link/ec.RW.bin 81920
 }
 
 proc flash_bds { } {
-	flash_lm4 ../../../build/bds/ec.bin 0 262144
+	flash_lm4 ../../../build/bds/ec.bin 0
 }
 
 # Boot a software using internal RAM only
@@ -51,5 +51,5 @@ proc ramboot_bds { } {
 proc flash_emerged_link { } {
 	set firmware_image ../../../../../../chroot/build/link/firmware/ec.bin
 
-	flash_lm4 $firmware_image 0 262144
+	flash_lm4 $firmware_image 0
 }
