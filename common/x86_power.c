@@ -105,7 +105,7 @@ static int throttle_cpu;      /* Throttle CPU? */
 /* When did we enter G3? */
 static uint64_t last_shutdown_time;
 /* Delay before go into hibernation in seconds*/
-static uint32_t hibernate_delay = 86400; /* 24 Hrs */
+static uint32_t hibernate_delay = 3600; /* 1 Hour */
 
 /**
  * Update input signal state.
