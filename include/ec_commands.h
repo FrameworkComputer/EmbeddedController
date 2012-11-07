@@ -1208,6 +1208,15 @@ struct ec_params_force_idle {
  */
 #define EC_CMD_CHARGE_DUMP 0xa0
 
+/*
+ * Set maximum battery charging current.
+ */
+#define EC_CMD_CHARGE_CURRENT_LIMIT 0xa1
+
+struct ec_params_current_limit {
+	uint32_t limit;
+} __packed;
+
 /*****************************************************************************/
 /* System commands */
 

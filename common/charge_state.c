@@ -38,6 +38,8 @@ static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
 
+static unsigned user_current_limit = -1U;
+
 /* Current power state context */
 static struct power_state_context task_ctx;
 
@@ -272,6 +274,8 @@ static int state_common(struct power_state_context *ctx)
 	if (batt->desired_current > CONFIG_CHARGING_CURRENT_LIMIT)
 		batt->desired_current = CONFIG_CHARGING_CURRENT_LIMIT;
 #endif
+	if (batt->desired_current > user_current_limit)
+		batt->desired_current = user_current_limit;
 
 	if (battery_get_battery_mode(&d)) {
 		curr->error |= F_BATTERY_MODE;
@@ -841,4 +845,22 @@ static int charge_command_dump(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_DUMP, charge_command_dump,
+		     EC_VER_MASK(0));
+
+static void reset_current_limit(void)
+{
+	user_current_limit = -1;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, reset_current_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_current_limit, HOOK_PRIO_DEFAULT);
+
+static int charge_command_current_limit(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_current_limit *p = args->params;
+
+	user_current_limit = p->limit;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CURRENT_LIMIT, charge_command_current_limit,
 		     EC_VER_MASK(0));
