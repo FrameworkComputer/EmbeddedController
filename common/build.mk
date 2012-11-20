@@ -33,4 +33,5 @@ common-$(CONFIG_TASK_VBOOTHASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_TASK_X86POWER)+=x86_power.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 common-$(CONFIG_TMP006)+=tmp006.o
+common-$(CONFIG_TSU6721)+=tsu6721.o
 common-$(CONFIG_USB_CHARGE)+=usb_charge.o

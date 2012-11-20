@@ -55,6 +55,9 @@
 /* Battery */
 #define CONFIG_BATTERY_BQ20Z453
 
+/* Charger/accessories detection */
+#define CONFIG_TSU6721
+
 /* Timer selection */
 #define TIM_CLOCK_MSB 2
 #define TIM_CLOCK_LSB 4
