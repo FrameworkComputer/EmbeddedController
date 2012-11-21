@@ -21,12 +21,23 @@
 
 #define NUM_PORTS 6  /* Number of physical ports */
 
+/* Flags for writes to MCS */
 #define LM4_I2C_MCS_RUN   (1 << 0)
 #define LM4_I2C_MCS_START (1 << 1)
 #define LM4_I2C_MCS_STOP  (1 << 2)
 #define LM4_I2C_MCS_ACK   (1 << 3)
 #define LM4_I2C_MCS_HS    (1 << 4)
 #define LM4_I2C_MCS_QCMD  (1 << 5)
+
+/* Flags for reads from MCS */
+#define LM4_I2C_MCS_BUSY   (1 << 0)
+#define LM4_I2C_MCS_ERROR  (1 << 1)
+#define LM4_I2C_MCS_ADRACK (1 << 2)
+#define LM4_I2C_MCS_DATACK (1 << 3)
+#define LM4_I2C_MCS_ARBLST (1 << 4)
+#define LM4_I2C_MCS_IDLE   (1 << 5)
+#define LM4_I2C_MCS_BUSBSY (1 << 6)
+#define LM4_I2C_MCS_CLKTO  (1 << 7)
 
 #define START 1
 #define STOP  1
@@ -49,7 +60,7 @@ static int wait_idle(int port)
 	int event = 0;
 
 	i = LM4_I2C_MCS(port);
-	while (i & 0x01) {
+	while (i & LM4_I2C_MCS_BUSY) {
 		/* Port is busy, so wait for the interrupt */
 		task_waiting_on_port[port] = task_get_current();
 		LM4_I2C_MIMR(port) = 0x03;
@@ -81,7 +92,7 @@ static int wait_idle(int port)
 	task_set_event(task_get_current(), event, 0);
 
 	/* Check for errors */
-	if (i & 0x02)
+	if (i & LM4_I2C_MCS_ERROR)
 		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
@@ -109,6 +120,17 @@ static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
+
+	if (!started && (LM4_I2C_MCS(port) &
+			 (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_BUSBSY))) {
+		/*
+		 * Previous clock timeout or bus-busy.  Bounce the master to
+		 * clear these error states.
+		 */
+		LM4_I2C_MCR(port) = 0;
+		usleep(100000);
+		LM4_I2C_MCR(port) = 0x10;
+	}
 
 	if (out) {
 		LM4_I2C_MSA(port) = slave_addr & 0xff;
@@ -174,6 +196,11 @@ static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			in[i] = LM4_I2C_MDR(port) & 0xff;
 		}
 	}
+
+	/* Check for error conditions */
+	if (LM4_I2C_MCS(port) & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_BUSBSY |
+				 LM4_I2C_MCS_ERROR))
+		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }

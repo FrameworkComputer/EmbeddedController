@@ -169,7 +169,10 @@ static int tmp006_poll_sensor(int sensor_id)
 	 */
 	if (tdata->fail && (FAIL_POWER | FAIL_INIT)) {
 		rv = i2c_read16(TMP006_PORT(addr), TMP006_REG(addr), 0x02, &v);
-		if (!(v & 0x80)) {
+		if (rv) {
+			tdata->fail |= FAIL_I2C;
+			return EC_ERROR_UNKNOWN;
+		} else if (!(v & 0x80)) {
 			tdata->fail |= FAIL_NOT_READY;
 			return EC_ERROR_UNKNOWN;
 		}
@@ -222,8 +225,16 @@ int tmp006_get_val(int idx, int *temp_ptr)
 	int tidx = idx >> 1;
 	const struct tmp006_data_t *tdata = tmp006_data + tidx;
 
-	if (tdata->fail & FAIL_POWER)
-		return EC_ERROR_NOT_POWERED;
+	if (tdata->fail & FAIL_POWER) {
+		/*
+		 * Sensor isn't powered, or hasn't successfully provided data
+		 * since being powered.  Keep reporting not-powered until
+		 * we get good data (which will clear FAIL_POWER) or there is
+		 * an I2C error.
+		 */
+		return (tdata->fail & FAIL_I2C) ? EC_ERROR_UNKNOWN :
+			EC_ERROR_NOT_POWERED;
+	}
 
 	/* Check the low bit to determine which temperature to read. */
 	if ((idx & 0x1) == 0)
