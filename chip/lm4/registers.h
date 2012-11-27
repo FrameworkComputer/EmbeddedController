@@ -254,6 +254,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 /* Note: USER_REG3 is used to hold pre-programming process data and should not
  * be modified by EC code.  See crosbug.com/p/8889. */
 #define LM4_SYSTEM_USER_REG3   LM4REG(0x400fe1ec)
+#define LM4_SYSTEM_SRI2C       LM4REG(0x400fe520)
 #define LM4_SYSTEM_SREEPROM    LM4REG(0x400fe558)
 #define LM4_SYSTEM_RCGCWD      LM4REG(0x400fe600)
 #define LM4_SYSTEM_RCGCTIMER   LM4REG(0x400fe604)
