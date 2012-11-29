@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 
 #define ONEWIRE_PIN (1<<2)  /* One-wire pin mask (on GPIO H) */
@@ -56,6 +57,12 @@ static int readbit(void)
 {
 	int bit;
 
+	/*
+	 * The delay between sending the output pulse and reading the bit is
+	 * extremely timing sensitive, so disable interrupts.
+	 */
+	interrupt_disable();
+
 	/* Output low */
 	output0(T_RL);
 
@@ -64,6 +71,13 @@ static int readbit(void)
 
 	/* Read bit */
 	bit = readline();
+
+	/*
+	 * Enable interrupt as soon as we've read the bit.  The delay to the
+	 * end of the timeslot is a lower bound, so additional latency here is
+	 * harmless.
+	 */
+	interrupt_enable();
 
 	/* Delay to end of timeslot */
 	udelay(T_SLOT - T_MSR);
@@ -75,13 +89,25 @@ static int readbit(void)
  */
 static void writebit(int bit)
 {
+	/*
+	 * The delays in the output-low signal for sending 0 and 1 bits are
+	 * extremely timing sensitive, so disable interrupts during that time.
+	 * Interrupts can be enabled again as soon as the output is switched
+	 * back to open-drain, since the delay for the rest of the timeslot is
+	 * a lower bound.
+	 */
 	if (bit) {
+		interrupt_disable();
 		output0(T_W1L);
+		interrupt_enable();
 		udelay(T_SLOT - T_W1L);
 	} else {
+		interrupt_disable();
 		output0(T_W0L);
+		interrupt_enable();
 		udelay(T_SLOT - T_W0L);
 	}
+
 }
 
 int onewire_reset(void)
