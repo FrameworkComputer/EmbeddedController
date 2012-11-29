@@ -96,10 +96,20 @@ void process_timers(int overflow)
 
 void udelay(unsigned us)
 {
-	timestamp_t deadline = get_time();
+	unsigned t0 = __hw_clock_source_read();
 
-	deadline.val += us;
-	while (get_time().val < deadline.val) {}
+	/*
+	 * udelay() may be called with interrupts disabled, so we can't rely on
+	 * process_timers() updating the top 32 bits.  So handle wraparound
+	 * ourselves rather than calling get_time() and comparing with a
+	 * deadline.
+	 *
+	 * This may fail for delays close to 2^32 us (~4000 sec), because the
+	 * subtraction below can overflow.  That's acceptable, because the
+	 * watchdog timer would have tripped long before that anyway.
+	 */
+	while (__hw_clock_source_read() - t0 < us)
+		;
 }
 
 int timer_arm(timestamp_t tstamp, task_id_t tskid)
