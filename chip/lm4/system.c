@@ -35,9 +35,9 @@ enum hibdata_index {
 /*
  * Time to hibernate to trigger a power-on reset.  50 ms is sufficient for the
  * EC itself, but we need a longer delay to ensure the rest of the components
- * on the same power rail are reset.
+ * on the same power rail are reset and 5VALW has dropped.
  */
-#define HIB_RESET_USEC 150000
+#define HIB_RESET_USEC 200000
 
 /**
  * Wait for a write to commit to a hibernate register.
