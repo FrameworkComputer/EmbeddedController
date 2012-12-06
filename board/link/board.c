@@ -76,7 +76,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",         LM4_GPIO_F, (1<<2), GPIO_OUT_LOW, NULL},
 	{"ENABLE_1_5V_DDR",     LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
-	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_LOW, NULL},
+	{"ENABLE_5VALW",        LM4_GPIO_K, (1<<4), GPIO_OUT_HIGH, NULL},
 	{"ENABLE_BACKLIGHT",    LM4_GPIO_H, (1<<4), GPIO_OUT_LOW, NULL},
 	{"ENABLE_TOUCHPAD",     LM4_GPIO_C, (1<<6), GPIO_OUT_LOW, NULL},
 	{"ENABLE_VCORE",        LM4_GPIO_F, (1<<7), GPIO_OUT_LOW, NULL},

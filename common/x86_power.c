@@ -359,7 +359,6 @@ static void x86_power_init(void)
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
 			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
-			gpio_set_level(GPIO_ENABLE_5VALW, 0);
 		}
 	}
 
@@ -513,8 +512,6 @@ void x86_power_task(void)
 			break;
 
 		case X86_S5S3:
-			/* Switch on +5V always-on */
-			gpio_set_level(GPIO_ENABLE_5VALW, 1);
 			/* Wait for the always-on rails to be good */
 			wait_in_signals(IN_PGOOD_ALWAYS_ON);
 
@@ -625,13 +622,16 @@ void x86_power_task(void)
 
 			/*
 			 * Put touchscreen and lightbar in reset, so we won't
-			 * leak +3VALW through the reset line.
+			 * leak +3VALW through the reset line to chips powered
+			 * by +5VALW.
+			 *
+			 * (Note that we're no longer powering down +5VALW due
+			 * to crosbug.com/p/16600, but to minimize side effects
+			 * of that change we'll still reset these components in
+			 * S5.)
 			 */
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
 			gpio_set_level(GPIO_LIGHTBAR_RESETn, 0);
-
-			/* Switch off +5V always-on */
-			gpio_set_level(GPIO_ENABLE_5VALW, 0);
 
 			state = X86_S5;
 			break;
