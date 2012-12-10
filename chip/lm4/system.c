@@ -405,7 +405,7 @@ static char to_hex(int x)
 	return 'a' + x - 10;
 }
 
-const char *system_get_raw_chip_name(void)
+const char *system_get_chip_id_string(void)
 {
 	static char str[15] = "Unknown-";
 	char *p = str + 8;
@@ -423,7 +423,7 @@ const char *system_get_raw_chip_name(void)
 	return (const char *)str;
 }
 
-const char *system_get_chip_name(void)
+const char *system_get_raw_chip_name(void)
 {
 	if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e20000) {
 		return "lm4fsxhh5bb";
@@ -436,7 +436,27 @@ const char *system_get_chip_name(void)
 	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10ea0000) {
 		return "lm4fs1gh5bb";
 	} else {
-		return system_get_raw_chip_name();
+		return system_get_chip_id_string();
+	}
+}
+
+const char *system_get_chip_name(void)
+{
+	const char *postfix = "-tm"; /* test mode */
+	static char str[20];
+	const char *raw_chip_name = system_get_raw_chip_name();
+	char *p = str;
+
+	if (LM4REG(0x400fdff0)) {
+		/* Debug mode is enabled. Postfix chip name. */
+		while (*raw_chip_name)
+			*(p++) = *(raw_chip_name++);
+		while (*postfix)
+			*(p++) = *(postfix++);
+		*p = '\0';
+		return (const char *)str;
+	} else {
+		return raw_chip_name;
 	}
 }
 
