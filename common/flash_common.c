@@ -155,6 +155,9 @@ static int command_flash_erase(int argc, char **argv)
 	int size = CONFIG_FLASH_ERASE_SIZE;
 	int rv;
 
+	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+		return EC_ERROR_ACCESS_DENIED;
+
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
 	if (rv)
 		return rv;
@@ -174,6 +177,9 @@ static int command_flash_write(int argc, char **argv)
 	int rv;
 	char *data;
 	int i;
+
+	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+		return EC_ERROR_ACCESS_DENIED;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
 	if (rv)
@@ -268,6 +274,9 @@ static int flash_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_write *p = args->params;
 
+	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+		return EC_RES_ACCESS_DENIED;
+
 	if (p->size > sizeof(p->data))
 		return EC_RES_INVALID_PARAM;
 
@@ -286,6 +295,9 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
+
+	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+		return EC_RES_ACCESS_DENIED;
 
 	if (system_unsafe_to_overwrite(p->offset, p->size))
 		return EC_RES_ACCESS_DENIED;

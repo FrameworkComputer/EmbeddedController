@@ -38,6 +38,7 @@
 #define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 int stuck_locked;  /* Is physical flash stuck protected? */
+int all_protected; /* Has all-flash protection been requested? */
 
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
@@ -162,6 +163,9 @@ static int write_buffer(void)
 {
 	int t;
 
+	if (all_protected)
+		return EC_ERROR_ACCESS_DENIED;
+
 	if (!LM4_FLASH_FWBVAL)
 		return EC_SUCCESS;  /* Nothing to do */
 
@@ -201,6 +205,9 @@ int flash_physical_write(int offset, int size, const char *data)
 	int rv;
 	int i;
 
+	if (all_protected)
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Get initial write buffer index and page */
 	LM4_FLASH_FMA = offset & ~(FLASH_FWB_BYTES - 1);
 	i = (offset >> 2) & (FLASH_FWB_WORDS - 1);
@@ -228,6 +235,9 @@ int flash_physical_write(int offset, int size, const char *data)
 
 int flash_physical_erase(int offset, int size)
 {
+	if (all_protected)
+		return EC_ERROR_ACCESS_DENIED;
+
 	LM4_FLASH_FCMISC = LM4_FLASH_FCRIS;  /* Clear previous error status */
 
 	for ( ; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
@@ -279,6 +289,10 @@ uint32_t flash_get_protect(void)
 	struct persist_state pstate;
 	uint32_t flags = 0;
 	int i;
+
+	/* Read all-protected state from our shadow copy */
+	if (all_protected)
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
 
 	/* Read the current persist state from flash */
 	read_pstate(&pstate);
@@ -355,6 +369,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	if ((mask & EC_FLASH_PROTECT_ALL_NOW) &&
 	    (flags & EC_FLASH_PROTECT_ALL_NOW)) {
 		/* Protect the entire flash */
+		all_protected = 1;
 		protect_banks(0, CONFIG_FLASH_PHYSICAL_SIZE /
 			      CONFIG_FLASH_BANK_SIZE);
 	}
@@ -391,6 +406,11 @@ int flash_pre_init(void)
 			/* Re-read flags */
 			prot_flags = flash_get_protect();
 		}
+
+		/* Update all-now flag if all flash is protected */
+		if (prot_flags & EC_FLASH_PROTECT_ALL_NOW)
+			all_protected = 1;
+
 	} else {
 		/* Don't want RO flash protected */
 		unwanted_prot_flags |= EC_FLASH_PROTECT_RO_NOW;
