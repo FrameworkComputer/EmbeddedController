@@ -13,6 +13,7 @@
 #include "shared_mem.h"
 #include "system.h"
 #include "util.h"
+#include "vboot_hash.h"
 
 int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 {
@@ -48,6 +49,10 @@ int flash_write(int offset, int size, const char *data)
 	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
+#ifdef CONFIG_TASK_VBOOTHASH
+	vboot_hash_invalidate(offset, size);
+#endif
+
 	return flash_physical_write(offset, size, data);
 }
 
@@ -55,6 +60,10 @@ int flash_erase(int offset, int size)
 {
 	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
+
+#ifdef CONFIG_TASK_VBOOTHASH
+	vboot_hash_invalidate(offset, size);
+#endif
 
 	return flash_physical_erase(offset, size);
 }
