@@ -121,8 +121,7 @@ enum gpio_signal {
 	GPIO_KB_OUT10,
 	GPIO_KB_OUT11,
 	GPIO_KB_OUT12,
-	GPIO_ILIM_1500,        /* max charging current : 1500 mA */
-	GPIO_ILIM_500,         /* max charging current :  500 mA */
+	GPIO_BOOST_EN,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
@@ -139,6 +138,12 @@ int board_pmu_init(void);
 
 /* Force the pmu to reset everything on the board */
 void board_hard_reset(void);
+
+/* Set up PWM for ILIM */
+void board_configure_pwm(void);
+
+/* Set PWM duty cycle */
+void board_pwm_duty_cycle(int percent);
 
 #endif /* !__ASSEMBLER__ */
 

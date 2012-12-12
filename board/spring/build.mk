@@ -8,4 +8,4 @@
 CHIP:=stm32
 CHIP_VARIANT:=stm32f100
 
-board-y=board.o
+board-y=board.o usb_charging.o
