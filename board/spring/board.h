@@ -55,6 +55,10 @@
 /* Battery */
 #define CONFIG_BATTERY_BQ20Z453
 
+/* Timer selection */
+#define TIM_CLOCK_MSB 2
+#define TIM_CLOCK_LSB 4
+
 /* ADC signal */
 #define CONFIG_ADC
 enum adc_channel {

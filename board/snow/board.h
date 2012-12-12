@@ -59,6 +59,10 @@
 /* Battery */
 #define CONFIG_BATTERY_BQ20Z453
 
+/* Timer selection */
+#define TIM_CLOCK_MSB 3
+#define TIM_CLOCK_LSB 4
+
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
