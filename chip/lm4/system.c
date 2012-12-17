@@ -189,7 +189,7 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
 uint32_t system_get_rtc(uint32_t *ss_ptr)
 {
 	uint32_t rtc, rtc2;
-	uint32_t rtcss;
+	uint32_t rtcss, rtcss2;
 
 	/*
 	 * The hibernate module isn't synchronized, so need to read repeatedly
@@ -198,8 +198,9 @@ uint32_t system_get_rtc(uint32_t *ss_ptr)
 	do {
 		rtc = LM4_HIBERNATE_HIBRTCC;
 		rtcss = LM4_HIBERNATE_HIBRTCSS & 0x7fff;
+		rtcss2 = LM4_HIBERNATE_HIBRTCSS & 0x7fff;
 		rtc2 = LM4_HIBERNATE_HIBRTCC;
-	} while (rtc != rtc2);
+	} while (rtc != rtc2 || rtcss != rtcss2);
 
 	if (ss_ptr)
 		*ss_ptr = rtcss;
