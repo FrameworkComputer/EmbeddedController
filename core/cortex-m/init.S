@@ -302,88 +302,90 @@ vector_irq 254                    @ IRQ 254 handler
 .global reset
 .thumb_func
 reset:
-    /* Ensure we're in privileged mode with main stack.
-     * Necessary if we've jumped directly here from another image
-     * after task_start(). */
+	/*
+	 * Ensure we're in privileged mode with main stack.  Necessary if
+	 * we've jumped directly here from another image after task_start().
+	 */
 #ifdef CONFIG_FPU
-    mov r0, #(1 << 2)    @ priv. mode / main stack / floating point on
+	mov r0, #(1 << 2)    @ priv. mode / main stack / floating point on
 #else
-    mov r0, #0           @ priv. mode / main stack / no floating point
+	mov r0, #0           @ priv. mode / main stack / no floating point
 #endif
-    msr control, r0
-    isb                  @ ensure the write is done
-    /* Set the vector table on our current code */
-    ldr r1, =vectors
-    ldr r2, =0xE000ED08   /* VTABLE register in SCB*/
-    str r1, [r2]
-    /* Clear BSS */
-    mov r0, #0
-    ldr r1,_bss_start
-    ldr r2,_bss_end
+	msr control, r0
+	isb                  @ ensure the write is done
+
+	/* Set the vector table on our current code */
+	ldr r1, =vectors
+	ldr r2, =0xE000ED08   /* VTABLE register in SCB*/
+	str r1, [r2]
+
+	/* Clear BSS */
+	mov r0, #0
+	ldr r1,_bss_start
+	ldr r2,_bss_end
 bss_loop:
-    cmp r1, r2
-    it lt
-    strlt r0, [r1], #4
-    blt bss_loop
+	cmp r1, r2
+	it lt
+	strlt r0, [r1], #4
+	blt bss_loop
 
 #ifndef COMPILE_FOR_RAM
-    /* Copy initialized data to Internal RAM */
-    ldr r0,_ro_end
-    ldr r1,_data_start
-    ldr r2,_data_end
+	/* Copy initialized data to Internal RAM */
+	ldr r0,_ro_end
+	ldr r1,_data_start
+	ldr r2,_data_end
 data_loop:
-    ldr r3, [r0], #4
-    cmp r1, r2
-    it lt
-    strlt r3, [r1], #4
-    blt data_loop
+	ldr r3, [r0], #4
+	cmp r1, r2
+	it lt
+	strlt r3, [r1], #4
+	blt data_loop
 #endif
 
-    /**
-     * Set stack pointer
-     * already done my Cortex-M hardware but this allows software to
-     * jump directly to reset function or to run on other ARM
-     */
-    ldr r0, =stack_end
-    mov sp, r0
+	/*
+	 * Set stack pointer.  Already done by Cortex-M hardware, but re-doing
+	 * this here allows software to jump directly to the reset vector.
+	 */
+	ldr r0, =stack_end
+	mov sp, r0
 
 #ifdef CONFIG_FPU
-    /* Enable FPU */
-    /* CPACR is located at address 0xE000ED88 */
-    ldr r0, =0xE000ED88
-    /* Read CPACR */
-    ldr r1, [r0]
-    /* Set bits 20-23 to enable CP10 and CP11 coprocessors */
-    orr r1, r1, #(0xF << 20)
-    /* Write back the modified value to the CPACR */
-    str r1, [r0] /* wait for store to complete */
-    dsb
-    /* reset pipeline now the FPU is enabled */
-    isb
+	/* Enable FPU */
+	/* CPACR is located at address 0xE000ED88 */
+	ldr r0, =0xE000ED88
+	/* Read CPACR */
+	ldr r1, [r0]
+	/* Set bits 20-23 to enable CP10 and CP11 coprocessors */
+	orr r1, r1, #(0xF << 20)
+	/* Write back the modified value to the CPACR */
+	str r1, [r0] /* wait for store to complete */
+	dsb
+	/* reset pipeline now the FPU is enabled */
+	isb
 #endif /* CONFIG_FPU */
 
-    /* jump to C code */
-    bl main
-    /* we should not return here */
-    /* TODO check error code ? */
-fini_loop:
-    b fini_loop
+	/* Jump to C code */
+	bl main
 
-/* default exception handler */
+	/* That should not return.  If it does, loop forever. */
+fini_loop:
+	b fini_loop
+
+/* Default exception handler */
 .thumb_func
 default_handler:
-    b exception_panic
+	b exception_panic
 
 _bss_start:
-    .long __bss_start
+.long __bss_start
 _bss_end:
-    .long __bss_end
+.long __bss_end
 _data_start:
-    .long __data_start
+.long __data_start
 _data_end:
-    .long __data_end
+.long __data_end
 _ro_end:
-    .long __ro_end
+.long __ro_end
 
 /* Dummy functions to avoid linker complaints */
 .global __aeabi_unwind_cpp_pr0
@@ -392,12 +394,12 @@ _ro_end:
 __aeabi_unwind_cpp_pr0:
 __aeabi_unwind_cpp_pr1:
 __aeabi_unwind_cpp_pr2:
-    bx lr
+	bx lr
 
 /* Reserve space for system stack */
 .section .bss.system_stack
 stack_start:
-  .space CONFIG_STACK_SIZE, 0
+.space CONFIG_STACK_SIZE, 0
 stack_end:
-  .global stack_end
+.global stack_end
 
