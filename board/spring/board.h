@@ -122,8 +122,16 @@ enum gpio_signal {
 	GPIO_KB_OUT11,
 	GPIO_KB_OUT12,
 	GPIO_BOOST_EN,
+	GPIO_ILIM,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
+};
+
+/* ILIM pin control */
+enum ilim_config {
+	ILIM_CONFIG_MANUAL_OFF,
+	ILIM_CONFIG_MANUAL_ON,
+	ILIM_CONFIG_PWM,
 };
 
 void configure_board(void);
@@ -139,8 +147,8 @@ int board_pmu_init(void);
 /* Force the pmu to reset everything on the board */
 void board_hard_reset(void);
 
-/* Set up PWM for ILIM */
-void board_configure_pwm(void);
+/* Set ILIM pin control type */
+void board_ilim_config(enum ilim_config config);
 
 /* Set PWM duty cycle */
 void board_pwm_duty_cycle(int percent);

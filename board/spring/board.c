@@ -93,6 +93,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT11",    GPIO_C, (1<<6),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 	{"BOOST_EN",    GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
+	{"ILIM",	GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
 };
 
 /* ADC channels */
@@ -129,9 +130,6 @@ void configure_board(void)
 	/* remap TIM3_CH1 to PB4 */
 	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x3 << 10))
 			       | (2 << 10);
-
-	/* Set up PWM on TIM3 */
-	board_configure_pwm();
 
 	/*
 	 * Set alternate function for USART1. For alt. function input
