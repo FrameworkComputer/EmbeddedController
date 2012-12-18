@@ -395,17 +395,25 @@ static void handle_acpi_write(int is_cmd)
 
 	} else if (acpi_cmd == EC_CMD_ACPI_WRITE && acpi_data_count == 2) {
 		/* ACPI write cmd + addr + data */
-		CPRINTF("[%T ACPI write 0x%02x = 0x%02x]\n", acpi_addr, data);
 		switch (acpi_addr) {
 		case EC_ACPI_MEM_TEST:
+			CPRINTF("[%T ACPI mem test 0x%02x]\n", data);
 			acpi_mem_test = data;
 			break;
 #ifdef CONFIG_PWM
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+			/*
+			 * Debug output with CR not newline, because the host
+			 * does a lot of keyboard backlights and it scrolls the
+			 * debug console.
+			 */
+			CPRINTF("\r[%T ACPI kblight %d]", data);
 			pwm_set_keyboard_backlight(data);
 			break;
 #endif
 		default:
+			CPRINTF("[%T ACPI write 0x%02x = 0x%02x]\n",
+				acpi_addr, data);
 			break;
 		}
 
