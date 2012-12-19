@@ -153,6 +153,9 @@ void board_ilim_config(enum ilim_config config);
 /* Set PWM duty cycle */
 void board_pwm_duty_cycle(int percent);
 
+/* Update USB port status */
+void board_usb_charge_update(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

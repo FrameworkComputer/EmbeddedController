@@ -16,6 +16,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "tsu6721.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -388,9 +389,25 @@ void pmu_charger_task(void)
 	enable_charging(0);
 	disable_sleep(SLEEP_MASK_CHARGING);
 
+#ifdef CONFIG_TSU6721
+	/*
+	 * Somehow TSU6721 comes up slowly. Let's wait for a moment before
+	 * accessing it.
+	 * TODO(victoryang): Investigate slow init issue.
+	 */
+	msleep(500);
+
+	tsu6721_init(); /* Init here until we can do with HOOK_INIT */
+	gpio_enable_interrupt(GPIO_USB_CHG_INT);
+#endif
+
 	while (1) {
 		last_waken = get_time();
 		pmu_clear_irq();
+
+#ifdef CONFIG_TSU6721
+		board_usb_charge_update();
+#endif
 
 		/*
 		 * When battery is extremely low, the internal voltage can not

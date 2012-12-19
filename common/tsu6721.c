@@ -110,6 +110,11 @@ void tsu6721_init(void)
 	settings = tsu6721_read(TSU6721_REG_TIMER);
 	settings = (settings & ~0x38);
 	tsu6721_write(TSU6721_REG_TIMER, settings);
+
+	tsu6721_enable_interrupts(TSU6721_INT_ATTACH |
+				  TSU6721_INT_DETACH |
+				  TSU6721_INT_ADC_CHANGE |
+				  TSU6721_INT_VBUS);
 }
 /*
  * TODO(vpalatin): using the I2C early in the HOOK_INIT

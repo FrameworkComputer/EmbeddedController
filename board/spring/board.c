@@ -39,6 +39,7 @@ void gaia_lid_event(enum gpio_signal signal);
 #ifndef CONFIG_TASK_KEYSCAN
 #define matrix_interrupt NULL
 #endif
+void usb_charge_interrupt(enum gpio_signal signal);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
@@ -58,7 +59,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN05",     GPIO_C, (1<<14), GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT, matrix_interrupt},
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
-	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING, NULL},
+	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING,
+		usb_charge_interrupt},
 	/* Other inputs */
 	{"BCHGR_VACG",  GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
 	/*
