@@ -42,6 +42,33 @@ void tsu6721_write(uint8_t reg, uint8_t val)
 		CPRINTF("[%T TSU6721 I2C write failed]\n");
 }
 
+void tsu6721_enable_interrupts(int mask)
+{
+	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
+	tsu6721_write(TSU6721_REG_INT_MASK1, (~mask) & 0xff);
+	tsu6721_write(TSU6721_REG_INT_MASK2, ((~mask) >> 8) & 0xff);
+	tsu6721_write(TSU6721_REG_CONTROL, ctrl & 0x1e);
+}
+
+void tsu6721_disable_interrupt(void)
+{
+	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
+	tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
+}
+
+int tsu6721_get_interrupts(void)
+{
+	return (tsu6721_read(TSU6721_REG_INT1) << 8) |
+	       (tsu6721_read(TSU6721_REG_INT2));
+}
+
+int tsu6721_get_device_type(void)
+{
+	return (tsu6721_read(TSU6721_REG_DEV_TYPE3) << 16) |
+	       (tsu6721_read(TSU6721_REG_DEV_TYPE2) << 8) |
+	       (tsu6721_read(TSU6721_REG_DEV_TYPE1));
+}
+
 int tsu6721_mux(enum tsu6721_mux sel)
 {
 	uint8_t id = tsu6721_read(TSU6721_REG_ADC);
@@ -69,13 +96,7 @@ int tsu6721_mux(enum tsu6721_mux sel)
 	return EC_SUCCESS;
 }
 
-/*
- * TODO(vpalatin): using the I2C early in the HOOK_INIT
- * currently triggers all sort of badness, I need to debug
- * this before re-activatin this initialization.
- */
-#if 0
-static void tsu6721_init(void)
+void tsu6721_init(void)
 {
 	uint8_t settings;
 	uint8_t dev_id = tsu6721_read(TSU6721_REG_DEV_ID);
@@ -90,6 +111,12 @@ static void tsu6721_init(void)
 	settings = (settings & ~0x38);
 	tsu6721_write(TSU6721_REG_TIMER, settings);
 }
+/*
+ * TODO(vpalatin): using the I2C early in the HOOK_INIT
+ * currently triggers all sort of badness, I need to debug
+ * this before re-activatin this initialization.
+ */
+#if 0
 DECLARE_HOOK(HOOK_INIT, tsu6721_init, HOOK_PRIO_DEFAULT);
 #endif
 

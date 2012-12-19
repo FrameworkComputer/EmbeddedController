@@ -38,7 +38,61 @@ enum tsu6721_mux {
 	TSU6721_MUX_UART  = 0x6C,
 };
 
+#define TSU6721_INT_ATTACH		0x0001
+#define TSU6721_INT_DETACH		0x0002
+#define TSU6721_INT_KP			0x0004
+#define TSU6721_INT_LKP			0x0008
+#define TSU6721_INT_LKR			0x0010
+#define TSU6721_INT_OVP_EN		0x0020
+#define TSU6721_INT_OCP_EN		0x0040
+#define TSU6721_INT_OVP_OCP_OTP_DIS	0x0080
+#define TSU6721_INT_AV_CHANGE		0x0100
+#define TSU6721_INT_RES_ATTACH		0x0200
+#define TSU6721_INT_ADC_CHANGE		0x0400
+#define TSU6721_INT_STUCK_KEY		0x0800
+#define TSU6721_INT_STUCK_KEY_RCV	0x1000
+#define TSU6721_INT_CONNECT		0x2000
+#define TSU6721_INT_OTP_EN		0x4000
+#define TSU6721_INT_VBUS		0x8000
+
+#define TSU6721_TYPE_NONE		0x000000
+#define TSU6721_TYPE_OTG		0x000080
+#define TSU6721_TYPE_DCP		0x000040
+#define TSU6721_TYPE_CDP		0x000020
+#define TSU6721_TYPE_CHG12		0x000010
+#define TSU6721_TYPE_UART		0x000008
+#define TSU6721_TYPE_USB_HOST		0x000004
+#define TSU6721_TYPE_AUDIO2		0x000002
+#define TSU6721_TYPE_AUDIO1		0x000001
+#define TSU6721_TYPE_AUDIO3		0x008000
+#define TSU6721_TYPE_U200_CHG		0x400000
+#define TSU6721_TYPE_APPLE_CHG		0x200000
+#define TSU6721_TYPE_NON_STD_CHG	0x040000
+/* VBUS_DEBOUNCED might show up together with other type */
+#define TSU6721_TYPE_VBUS_DEBOUNCED	0x020000
+
+/* Initialize TSU6721. */
+void tsu6721_init(void);
+
+/* Read TSU6721 register. */
 uint8_t tsu6721_read(uint8_t reg);
+
+/* Write TSU6721 register. */
 void tsu6721_write(uint8_t reg, uint8_t val);
+
+/* Enable interrupt(s). The parameter 'mask' can be one or a combination of
+ * TSU6721_INT_* */
+void tsu6721_enable_interrupts(int mask);
+
+/* Disable all interrupts. */
+void tsu6721_disable_interrupts(void);
+
+/* Get and clear current interrupt status. Return value is a combination of
+ * TSU6721_INT_* */
+int tsu6721_get_interrupts(void);
+
+/* Get attached device type. Return value is one or a combination of
+ * TSU6721_TYPE_* */
+int tsu6721_get_device_type(void);
 
 #endif /* TSU6721_H */
