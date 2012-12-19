@@ -1,0 +1,31 @@
+2500            # .google_ramp_up
+10000           # .google_ramp_down
+2000            # .s3s0_ramp_up
+45000           # .s0_tick_delay (battery)
+30000           # .s0_tick_delay (AC)
+5000            # .s0a_tick_delay (battery)
+3000            # .s0a_tick_delay (AC)
+2000            # .s0s3_ramp_down
+5000000 # .s3_sleep_for
+2500            # .s3_ramp_up
+10000           # .s3_ramp_down
+1               # .new_s0
+0x60 0x60       # .osc_min (battery, AC)
+0xd0 0xd0       # .osc_max (battery, AC)
+24 24           # .w_ofs (battery, AC)
+0xcc 0xff       # .bright_bl_off_fixed (battery, AC)
+0xcc 0xff       # .bright_bl_on_min (battery, AC)
+0xcc 0xff       # .bright_bl_on_max (battery, AC)
+10 40 99                # .battery_threshold
+5 4 4 4         # .s0_idx[] (battery)
+4 4 4 4         # .s0_idx[] (AC)
+5 255 255 255   # .s3_idx[] (battery)
+255 255 255 255 # .s3_idx[] (AC)
+0x33 0x69 0xe8  # color[0]
+0xd5 0x0f 0x25  # color[1]
+0xee 0xb2 0x11  # color[2]
+0x00 0x99 0x25  # color[3]
+0x00 0x00 0xff  # color[4]
+0xff 0x00 0x00  # color[5]
+0xff 0xff 0x00  # color[6]
+0x00 0xff 0x00  # color[7]

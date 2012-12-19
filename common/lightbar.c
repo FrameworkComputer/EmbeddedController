@@ -193,9 +193,9 @@ static const struct lightbar_params default_params = {
 	.osc_max = { 0xd0, 0xd0 },		/* battery, AC */
 	.w_ofs = {24, 24},			/* phase offset, 256 == 2*PI */
 
-	.bright_bl_off_fixed = {0x80, 0xc0},	/* backlight off: battery, AC */
-	.bright_bl_on_min = {0x80, 0xc0},	/* backlight on: battery, AC */
-	.bright_bl_on_max = {0x80, 0xc0},	/* backlight on: battery, AC */
+	.bright_bl_off_fixed = {0xcc, 0xff},	/* backlight off: battery, AC */
+	.bright_bl_on_min = {0xcc, 0xff},	/* backlight on: battery, AC */
+	.bright_bl_on_max = {0xcc, 0xff},	/* backlight on: battery, AC */
 
 	.battery_threshold = { 10, 40, 99 },	/* percent, lowest to highest */
 	.s0_idx = {
