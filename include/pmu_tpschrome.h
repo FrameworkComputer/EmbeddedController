@@ -224,5 +224,8 @@ int board_get_ac(void);
  */
 void board_hard_reset(void);
 
+/* Wake TPS65090 charger task, but throttled to at most one call per tick. */
+void pmu_task_throttled_wake(void);
+
 #endif /* __CROS_EC_TPSCHROME_H */
 

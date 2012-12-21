@@ -403,7 +403,7 @@ void pmu_irq_handler(enum gpio_signal signal)
 #ifdef CONFIG_AC_POWER_STATUS
 	gpio_set_level(GPIO_AC_STATUS, board_get_ac());
 #endif
-	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	pmu_task_throttled_wake();
 	CPRINTF("Charger IRQ received.\n");
 }
 

@@ -57,6 +57,10 @@ static const char * const state_list[] = {
 	"discharging"
 };
 
+/* States for throttling PMU task */
+static timestamp_t last_waken; /* Initialized to 0 */
+static int has_pending_event;
+
 static void enable_charging(int enable)
 {
 	enable = enable ? 1 : 0;
@@ -372,7 +376,6 @@ void pmu_charger_task(void)
 {
 	int state = ST_IDLE;
 	int next_state;
-	int event = 0;
 	int wait_time = T1_USEC;
 	unsigned int pre_charging_count = 0;
 
@@ -386,6 +389,7 @@ void pmu_charger_task(void)
 	disable_sleep(SLEEP_MASK_CHARGING);
 
 	while (1) {
+		last_waken = get_time();
 		pmu_clear_irq();
 
 		/*
@@ -466,24 +470,39 @@ void pmu_charger_task(void)
 			}
 		}
 
-		/*
-		 * Throttle the charging loop. If previous loop awakened due to
-		 * an event, sleep 500 ms instead of waiting for next event.
-		 */
-		if (event & TASK_EVENT_WAKE) {
-			msleep(500);
-			event = 0;
-		} else {
-			event = task_wait_event(wait_time);
+		if (!has_pending_event) {
+			task_wait_event(wait_time);
 			disable_sleep(SLEEP_MASK_CHARGING);
+		} else {
+			has_pending_event = 0;
 		}
 	}
 }
 
+void pmu_task_throttled_wake(void)
+{
+	timestamp_t now = get_time();
+	if (now.val - last_waken.val >= HOOK_TICK_INTERVAL) {
+		has_pending_event = 0;
+		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	} else {
+		has_pending_event = 1;
+	}
+}
+
+static void wake_pmu_task_if_necessary(void)
+{
+	if (has_pending_event) {
+		has_pending_event = 0;
+		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	}
+}
+DECLARE_HOOK(HOOK_TICK, wake_pmu_task_if_necessary, HOOK_PRIO_DEFAULT);
+
 /* Wake charging task on chipset events */
 static void pmu_chipset_events(void)
 {
-	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	pmu_task_throttled_wake();
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pmu_chipset_events, HOOK_PRIO_DEFAULT);
