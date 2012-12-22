@@ -98,8 +98,12 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 /* ADC channels */
 const struct adc_t adc_channels[ADC_CH_COUNT] = {
-	/* Micro USB ID pin. Raw ADC value. */
-	[ADC_CH_USB_ID] = {"USB_ID", 1, 1, 0, STM32_AIN(5)},
+	/*
+	 * VBUS voltage sense pin.
+	 * Sense pin 3.3V is converted to 4096. Accounting for the 2x
+	 * voltage divider, the conversion factor is 6600mV/4096.
+	 */
+	[ADC_CH_USB_VBUS_SNS] = {"USB_VBUS_SNS", 6600, 4096, 0, STM32_AIN(5)},
 	/* Micro USB D+ sense pin. Raw ADC value. */
 	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 1, 1, 0, STM32_AIN(2)},
 	/* Micro USB D- sense pin. Raw ADC value. */

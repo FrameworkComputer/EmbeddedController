@@ -65,7 +65,7 @@
 /* ADC signal */
 #define CONFIG_ADC
 enum adc_channel {
-	ADC_CH_USB_ID = 0,
+	ADC_CH_USB_VBUS_SNS = 0,
 	ADC_CH_USB_DP_SNS,
 	ADC_CH_USB_DN_SNS,
 
