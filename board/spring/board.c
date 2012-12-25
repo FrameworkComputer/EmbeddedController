@@ -106,10 +106,10 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	 * voltage divider, the conversion factor is 6600mV/4096.
 	 */
 	[ADC_CH_USB_VBUS_SNS] = {"USB_VBUS_SNS", 6600, 4096, 0, STM32_AIN(5)},
-	/* Micro USB D+ sense pin. Raw ADC value. */
-	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 1, 1, 0, STM32_AIN(2)},
-	/* Micro USB D- sense pin. Raw ADC value. */
-	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 1, 1, 0, STM32_AIN(4)},
+	/* Micro USB D+ sense pin. Converted to mV (3300mV/4096). */
+	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 3300, 4096, 0, STM32_AIN(2)},
+	/* Micro USB D- sense pin. Converted to mV (3300mV/4096). */
+	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 3300, 4096, 0, STM32_AIN(4)},
 };
 
 void configure_board(void)
@@ -136,6 +136,9 @@ void configure_board(void)
 	/* remap TIM3_CH1 to PB4 */
 	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x3 << 10))
 			       | (2 << 10);
+
+	/* Analog input for ADC pins (PA2, PA4, PA5) */
+	STM32_GPIO_CRL_OFF(GPIO_A) &= ~0x00ff0f00;
 
 	/*
 	 * Set alternate function for USART1. For alt. function input
