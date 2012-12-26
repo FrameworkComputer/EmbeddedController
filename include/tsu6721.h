@@ -32,7 +32,7 @@
 #define TSU6721_CTRL_AUTO     (1 << 2)
 
 enum tsu6721_mux {
-	TSU6721_MUX_NONE  = 0x00,
+	TSU6721_MUX_AUTO  = 0x00,
 	TSU6721_MUX_USB   = 0x24,
 	TSU6721_MUX_AUDIO = 0x48,
 	TSU6721_MUX_UART  = 0x6C,
@@ -81,12 +81,14 @@ uint8_t tsu6721_read(uint8_t reg);
 /* Write TSU6721 register. */
 void tsu6721_write(uint8_t reg, uint8_t val);
 
-/* Enable interrupt(s). The parameter 'mask' can be one or a combination of
- * TSU6721_INT_* */
-void tsu6721_enable_interrupts(int mask);
+/* Enable interrupts. */
+void tsu6721_enable_interrupts(void);
 
 /* Disable all interrupts. */
 void tsu6721_disable_interrupts(void);
+
+/* Set interrupt mask. */
+void tsu6721_set_interrupt_mask(uint16_t mask);
 
 /* Get and clear current interrupt status. Return value is a combination of
  * TSU6721_INT_* */
@@ -95,5 +97,8 @@ int tsu6721_get_interrupts(void);
 /* Get attached device type. Return value is one or a combination of
  * TSU6721_TYPE_* */
 int tsu6721_get_device_type(void);
+
+/* Control TSU6721 mux. */
+int tsu6721_mux(enum tsu6721_mux sel);
 
 #endif /* TSU6721_H */

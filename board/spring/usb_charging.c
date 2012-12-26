@@ -5,11 +5,13 @@
 
 /* USB charging control for spring board */
 
+#include "adc.h"
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
 #include "lp5562.h"
 #include "registers.h"
+#include "stm32_adc.h"
 #include "task.h"
 #include "timer.h"
 #include "tsu6721.h"
@@ -27,12 +29,18 @@
 
 /* PWM controlled current limit */
 #define I_LIMIT_500MA   85
-#define I_LIMIT_1000MA  70
+#define I_LIMIT_1000MA  75
 #define I_LIMIT_1500MA  50
 #define I_LIMIT_2000MA  35
+#define I_LIMIT_2400MA  25
 #define I_LIMIT_3000MA  0
 
 static enum ilim_config current_ilim_config = ILIM_CONFIG_MANUAL_OFF;
+
+static const int apple_charger_type[4] = {I_LIMIT_500MA,
+					  I_LIMIT_1000MA,
+					  I_LIMIT_2000MA,
+					  I_LIMIT_2400MA};
 
 static void board_ilim_use_gpio(void)
 {
@@ -107,6 +115,31 @@ void board_ilim_config(enum ilim_config config)
 	}
 }
 
+/* Returns Apple charger current limit */
+static int board_apple_charger_current(void)
+{
+	int vp, vn;
+	int type = 0;
+	int data[ADC_CH_COUNT];
+
+	/* TODO(victoryang): Handle potential race condition. */
+	tsu6721_disable_interrupts();
+	tsu6721_mux(TSU6721_MUX_USB);
+	/* Wait 20ms for signal to stablize */
+	msleep(20);
+	adc_read_all_channels(data);
+	vp = data[ADC_CH_USB_DP_SNS];
+	vn = data[ADC_CH_USB_DN_SNS];
+	tsu6721_mux(TSU6721_MUX_AUTO);
+	tsu6721_enable_interrupts();
+	if (vp > 1200)
+		type |= 0x2;
+	if (vn > 1200)
+		type |= 0x1;
+
+	return apple_charger_type[type];
+}
+
 void board_pwm_duty_cycle(int percent)
 {
 	if (current_ilim_config != ILIM_CONFIG_PWM)
@@ -143,8 +176,7 @@ static void usb_device_change(int dev_type)
 		if (dev_type & TSU6721_TYPE_CHG12)
 			current_limit = I_LIMIT_3000MA;
 		else if (dev_type & TSU6721_TYPE_APPLE_CHG) {
-			/* TODO: Distinguish 1A/2A chargers. */
-			current_limit = I_LIMIT_1000MA;
+			current_limit = board_apple_charger_current();
 		} else if ((dev_type & TSU6721_TYPE_CDP) ||
 			   (dev_type & TSU6721_TYPE_DCP))
 			current_limit = I_LIMIT_1500MA;
@@ -154,6 +186,7 @@ static void usb_device_change(int dev_type)
 		/* Turns on battery LED */
 		lp5562_poweron();
 	} else {
+		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
 		lp5562_poweroff();
 	}
 

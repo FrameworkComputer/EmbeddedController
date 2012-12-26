@@ -45,18 +45,22 @@ void tsu6721_write(uint8_t reg, uint8_t val)
 		CPRINTF("[%T TSU6721 I2C write failed]\n");
 }
 
-void tsu6721_enable_interrupts(int mask)
+void tsu6721_enable_interrupts(void)
 {
 	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
-	tsu6721_write(TSU6721_REG_INT_MASK1, (~mask) & 0xff);
-	tsu6721_write(TSU6721_REG_INT_MASK2, ((~mask) >> 8) & 0xff);
 	tsu6721_write(TSU6721_REG_CONTROL, ctrl & 0x1e);
 }
 
-void tsu6721_disable_interrupt(void)
+void tsu6721_disable_interrupts(void)
 {
 	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
 	tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
+}
+
+void tsu6721_set_interrupt_mask(uint16_t mask)
+{
+	tsu6721_write(TSU6721_REG_INT_MASK1, (~mask) & 0xff);
+	tsu6721_write(TSU6721_REG_INT_MASK2, ((~mask) >> 8) & 0xff);
 }
 
 int tsu6721_get_interrupts(void)
@@ -89,7 +93,7 @@ int tsu6721_mux(enum tsu6721_mux sel)
 		return EC_ERROR_INVAL;
 	}
 
-	if (sel == TSU6721_MUX_NONE) {
+	if (sel == TSU6721_MUX_AUTO) {
 		tsu6721_write(TSU6721_REG_CONTROL, ctrl | TSU6721_CTRL_AUTO);
 	} else {
 		tsu6721_write(TSU6721_REG_MANUAL1, sel);
@@ -114,10 +118,11 @@ void tsu6721_init(void)
 	settings = (settings & ~0x38);
 	tsu6721_write(TSU6721_REG_TIMER, settings);
 
-	tsu6721_enable_interrupts(TSU6721_INT_ATTACH |
-				  TSU6721_INT_DETACH |
-				  TSU6721_INT_ADC_CHANGE |
-				  TSU6721_INT_VBUS);
+	tsu6721_set_interrupt_mask(TSU6721_INT_ATTACH |
+				   TSU6721_INT_DETACH |
+				   TSU6721_INT_ADC_CHANGE |
+				   TSU6721_INT_VBUS);
+	tsu6721_enable_interrupts();
 }
 /*
  * TODO(vpalatin): using the I2C early in the HOOK_INIT
@@ -165,7 +170,7 @@ static int command_usbmux(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "uart2")) {
 			tsu6721_mux(TSU6721_MUX_AUDIO);
 		} else if (!strcasecmp(argv[1], "auto")) {
-			tsu6721_mux(TSU6721_MUX_NONE);
+			tsu6721_mux(TSU6721_MUX_AUTO);
 		} else { /* read one register */
 			ccprintf("Invalid mux value: %s\n", argv[1]);
 			return EC_ERROR_INVAL;
@@ -191,7 +196,7 @@ static int usb_command_mux(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 
 	/* Safety check */
-	if (p->mux != TSU6721_MUX_NONE &&
+	if (p->mux != TSU6721_MUX_AUTO &&
 	    p->mux != TSU6721_MUX_USB &&
 	    p->mux != TSU6721_MUX_UART &&
 	    p->mux != TSU6721_MUX_AUDIO)
