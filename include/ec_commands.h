@@ -1199,6 +1199,18 @@ struct ec_params_force_idle {
 #define EC_CMD_BATTERY_CUT_OFF 0x99
 
 /*****************************************************************************/
+/* USB port mux control. */
+
+/*
+ * Switch USB mux or return to automatic switching.
+ */
+#define EC_CMD_USB_MUX 0x9a
+
+struct ec_params_usb_mux {
+	uint8_t mux;
+} __packed;
+
+/*****************************************************************************/
 /* Temporary debug commands. TODO: remove this crosbug.com/p/13849 */
 
 /*

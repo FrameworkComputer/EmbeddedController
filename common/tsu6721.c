@@ -7,8 +7,11 @@
 
 #include "board.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
+#include "system.h"
 #include "timer.h"
 #include "tsu6721.h"
 #include "uart.h"
@@ -146,6 +149,9 @@ static void tsu6721_dump(void)
 	ccprintf("\n");
 }
 
+/*****************************************************************************/
+/* Console commands */
+
 static int command_usbmux(int argc, char **argv)
 {
 	if (1 == argc) { /* dump all registers */
@@ -173,3 +179,26 @@ DECLARE_CONSOLE_COMMAND(usbmux, command_usbmux,
 			"[usb|uart1|uart2|auto]",
 			"TSU6721 USB mux control",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+static int usb_command_mux(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_mux *p = args->params;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	/* Safety check */
+	if (p->mux != TSU6721_MUX_NONE &&
+	    p->mux != TSU6721_MUX_USB &&
+	    p->mux != TSU6721_MUX_UART &&
+	    p->mux != TSU6721_MUX_AUDIO)
+		return EC_RES_ERROR;
+
+	if (tsu6721_mux(p->mux))
+		return EC_RES_ERROR;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_MUX, usb_command_mux, EC_VER_MASK(0));

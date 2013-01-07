@@ -138,6 +138,8 @@ const char help_str[] =
 	"      Get/set TMP006 calibration\n"
 	"  usbchargemode <port> <mode>\n"
 	"      Set USB charging mode\n"
+	"  usbmux <mux>\n"
+	"      Set USB mux switch state\n"
 	"  version\n"
 	"      Prints EC version\n"
 	"  wireless <mask>\n"
@@ -1427,6 +1429,34 @@ int cmd_usb_charge_set_mode(int argc, char *argv[])
 		return rv;
 
 	printf("USB charging mode set.\n");
+	return 0;
+}
+
+
+int cmd_usb_mux(int argc, char *argv[])
+{
+	struct ec_params_usb_mux p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <mux>\n", argv[0]);
+		return -1;
+	}
+
+	p.mux = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad mux value.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_USB_MUX, 0,
+			&p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Set USB mux to 0x%x.\n", p.mux);
+
 	return 0;
 }
 
@@ -2746,6 +2776,7 @@ const struct command commands[] = {
 	{"thermalset", cmd_thermal_set_threshold},
 	{"tmp006cal", cmd_tmp006cal},
 	{"usbchargemode", cmd_usb_charge_set_mode},
+	{"usbmux", cmd_usb_mux},
 	{"version", cmd_version},
 	{"wireless", cmd_wireless},
 	{NULL, NULL}
