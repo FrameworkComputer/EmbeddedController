@@ -30,8 +30,8 @@
 /* DE-ACTIVATED: use STOP mode when we have nothing to do */
 #undef CONFIG_LOW_POWER_IDLE
 
-/* always enable LCD power rails */
-#define CONFIG_PMU_FORCE_FET
+/* Smart battery and TPSchrome are on a private I2C bus behind the EC */
+#define CONFIG_I2C_PASSTHROUGH
 
 #ifndef __ASSEMBLER__
 
