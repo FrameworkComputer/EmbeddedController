@@ -6,6 +6,7 @@
  */
 
 #include "console.h"
+#include "host_command.h"
 #include "smart_battery.h"
 #include "timer.h"
 #include "util.h"
@@ -278,3 +279,79 @@ DECLARE_CONSOLE_COMMAND(sb, command_sb,
 			"Read/write smart battery data",
 			NULL);
 
+/*****************************************************************************/
+/* Smart battery pass-through
+ */
+#ifdef CONFIG_I2C_PASSTHROUGH
+static int host_command_sb_read_word(struct host_cmd_handler_args *args)
+{
+	int rv;
+	int val;
+	const struct ec_params_sb_rd *p = args->params;
+	struct ec_response_sb_rd_word *r = args->response;
+
+	if (p->reg > 0x1c)
+		return EC_RES_INVALID_PARAM;
+	rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, p->reg, &val);
+	if (rv)
+		return EC_RES_ERROR;
+
+	r->value = val;
+	args->response_size = sizeof(struct ec_response_sb_rd_word);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SB_READ_WORD,
+		     host_command_sb_read_word,
+		     EC_VER_MASK(0));
+
+static int host_command_sb_write_word(struct host_cmd_handler_args *args)
+{
+	int rv;
+	const struct ec_params_sb_wr_word *p = args->params;
+
+	if (p->reg > 0x1c)
+		return EC_RES_INVALID_PARAM;
+	rv = i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, p->reg, p->value);
+	if (rv)
+		return EC_RES_ERROR;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_WORD,
+		     host_command_sb_write_word,
+		     EC_VER_MASK(0));
+
+static int host_command_sb_read_block(struct host_cmd_handler_args *args)
+{
+	int rv;
+	const struct ec_params_sb_rd *p = args->params;
+	struct ec_response_sb_rd_block *r = args->response;
+
+	if ((p->reg != SB_MANUFACTURER_NAME) &&
+	    (p->reg != SB_DEVICE_NAME) &&
+	    (p->reg != SB_DEVICE_CHEMISTRY) &&
+	    (p->reg != SB_MANUFACTURER_DATA))
+		return EC_RES_INVALID_PARAM;
+	rv = i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR, p->reg,
+			     r->data, 32);
+	if (rv)
+		return EC_RES_ERROR;
+
+	args->response_size = sizeof(struct ec_response_sb_rd_block);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SB_READ_BLOCK,
+		     host_command_sb_read_block,
+		     EC_VER_MASK(0));
+
+static int host_command_sb_write_block(struct host_cmd_handler_args *args)
+{
+	/* Not implemented */
+	return EC_RES_INVALID_COMMAND;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_BLOCK,
+		     host_command_sb_write_block,
+		     EC_VER_MASK(0));
+#endif

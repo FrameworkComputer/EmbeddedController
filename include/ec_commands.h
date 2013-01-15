@@ -1261,6 +1261,41 @@ struct ec_params_current_limit {
 } __packed;
 
 /*****************************************************************************/
+/* Smart battery pass-through */
+
+/* Get / Set 16-bit smart battery registers */
+#define EC_CMD_SB_READ_WORD   0xb0
+#define EC_CMD_SB_WRITE_WORD  0xb1
+
+/* Get / Set string smart battery parameters
+ * formatted as SMBUS "block".
+ */
+#define EC_CMD_SB_READ_BLOCK  0xb2
+#define EC_CMD_SB_WRITE_BLOCK 0xb3
+
+struct ec_params_sb_rd {
+	uint8_t reg;
+} __packed;
+
+struct ec_response_sb_rd_word {
+	uint16_t value;
+} __packed;
+
+struct ec_params_sb_wr_word {
+	uint8_t reg;
+	uint16_t value;
+} __packed;
+
+struct ec_response_sb_rd_block {
+	uint8_t data[32];
+} __packed;
+
+struct ec_params_sb_wr_block {
+	uint8_t reg;
+	uint16_t data[32];
+} __packed;
+
+/*****************************************************************************/
 /* System commands */
 
 /*
