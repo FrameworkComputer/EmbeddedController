@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "console.h"
 #include "common.h"
+#include "host_command.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "pmu_tpschrome.h"
@@ -600,4 +601,49 @@ DECLARE_CONSOLE_COMMAND(pmu, command_pmu,
 			"<repeat_count|reset>",
 			"Print PMU info or force a hard reset",
 			NULL);
+#endif
+
+/*****************************************************************************/
+/* TPSchrome LDO pass-through
+ */
+#ifdef CONFIG_I2C_PASSTHROUGH
+static int host_command_ldo_get(struct host_cmd_handler_args *args)
+{
+	int rv;
+	int val;
+	const struct ec_params_ldo_get *p = args->params;
+	struct ec_response_ldo_get *r = args->response;
+
+	/* is this an existing TPSchrome FET ? */
+	if ((p->index < 1) || (p->index > 7))
+		return EC_RES_ERROR;
+
+	rv = pmu_read(FET_CTRL_BASE + p->index, &val);
+	if (rv)
+		return EC_RES_ERROR;
+
+	r->state = !!(val & FET_CTRL_PGFET);
+	args->response_size = sizeof(struct ec_response_ldo_get);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_LDO_GET,
+		     host_command_ldo_get,
+		     EC_VER_MASK(0));
+
+static int host_command_ldo_set(struct host_cmd_handler_args *args)
+{
+	int rv;
+	const struct ec_params_ldo_set *p = args->params;
+
+	/* is this an existing TPSchrome FET ? */
+	if ((p->index < 1) || (p->index > 7))
+		return EC_RES_ERROR;
+	rv = pmu_enable_fet(p->index, p->state & EC_LDO_STATE_ON, NULL);
+
+	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_LDO_SET,
+		     host_command_ldo_set,
+		     EC_VER_MASK(0));
 #endif

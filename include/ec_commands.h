@@ -1211,6 +1211,37 @@ struct ec_params_usb_mux {
 } __packed;
 
 /*****************************************************************************/
+/* LDOs / FETs control. */
+
+enum ec_ldo_state {
+	EC_LDO_STATE_OFF = 0,	/* the LDO / FET is shut down */
+	EC_LDO_STATE_ON = 1,	/* the LDO / FET is ON / providing power */
+};
+
+/*
+ * Switch on/off a LDO.
+ */
+#define EC_CMD_LDO_SET 0x9b
+
+struct ec_params_ldo_set {
+	uint8_t index;
+	uint8_t state;
+} __packed;
+
+/*
+ * Get LDO state.
+ */
+#define EC_CMD_LDO_GET 0x9c
+
+struct ec_params_ldo_get {
+	uint8_t index;
+} __packed;
+
+struct ec_response_ldo_get {
+	uint8_t state;
+} __packed;
+
+/*****************************************************************************/
 /* Temporary debug commands. TODO: remove this crosbug.com/p/13849 */
 
 /*
