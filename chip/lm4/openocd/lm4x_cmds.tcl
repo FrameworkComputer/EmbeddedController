@@ -31,6 +31,12 @@ proc flash_bds { } {
 	flash_lm4 ../../../build/bds/ec.bin 0
 }
 
+proc unprotect_link { } {
+	reset halt
+	flash erase_sector 0 254 255
+	reset
+}
+
 # Boot a software using internal RAM only
 
 proc ramboot_lm4 {path} {

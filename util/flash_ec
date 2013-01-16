@@ -16,6 +16,8 @@ DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
 DEFINE_string offset "0" \
 	"Offset where to program the image from."
+DEFINE_boolean unprotect "${FLAGS_FALSE}" \
+	"Clear the protect flag."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -32,8 +34,8 @@ cleanup() {
 	fi
 
 	# reset the EC
-        dut_control cold_reset:on
-        dut_control cold_reset:off
+	dut_control cold_reset:on
+	dut_control cold_reset:off
 }
 trap cleanup EXIT
 
@@ -106,6 +108,10 @@ function flash_daisy() {
 		die "no stm32mon util found."
 	fi
 
+	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
+		die "--unprotect not supported for this board."
+	fi
+
 	info "Using serial flasher : ${STM32MON}"
 
 	dut_control uart1_en:on
@@ -122,13 +128,18 @@ function flash_daisy() {
 function flash_link() {
 	OCD_CFG="servo_v2_slower.cfg"
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
-	OCD_CMDS="init ; flash_lm4 ${IMG} ${FLAGS_offset}; shutdown;"
+	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
+	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
+		info "Clearing write protect flag."
+		OCD_CMDS="${OCD_CMDS} unprotect_link;"
+	fi
+	OCD_CMDS="${OCD_CMDS} shutdown;"
 
 	dut_control jtag_buf_on_flex_en:on
 	dut_control jtag_buf_en:on
 
 	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
-          die "Failed to program ${IMG}"
+	die "Failed to program ${IMG}"
 }
 
 IMG="$(ec_image)"
