@@ -18,6 +18,7 @@ common-$(CONFIG_FLASH)+=flash_common.o fmap.o
 common-$(CONFIG_I2C)+=i2c_commands.o
 common-$(CONFIG_IR357x)+=ir357x.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
+common-$(CONFIG_LP5562)+=lp5562.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_POWER_LED)+=power_led.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o

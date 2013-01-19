@@ -1,0 +1,86 @@
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * TI LP5562 driver.
+ */
+
+#include "board.h"
+#include "console.h"
+#include "i2c.h"
+#include "lp5562.h"
+#include "timer.h"
+#include "uart.h"
+#include "util.h"
+
+/* 8-bit I2C address */
+#define LP5562_I2C_ADDR (0x30 << 1)
+
+inline int lp5562_write(uint8_t reg, uint8_t val)
+{
+	return i2c_write8(I2C_PORT_HOST, LP5562_I2C_ADDR, reg, val);
+}
+
+int lp5562_set_color(uint8_t red, uint8_t green, uint8_t blue)
+{
+	int ret = 0;
+
+	ret |= lp5562_write(LP5562_REG_B_PWM, blue);
+	ret |= lp5562_write(LP5562_REG_G_PWM, green);
+	ret |= lp5562_write(LP5562_REG_R_PWM, red);
+
+	return ret;
+}
+
+int lp5562_poweron(void)
+{
+	int ret = 0;
+
+	ret |= lp5562_write(LP5562_REG_ENABLE, 0x40);
+	udelay(500); /* start-up delay */
+
+	ret |= lp5562_write(LP5562_REG_CONFIG, 0x1);
+	ret |= lp5562_write(LP5562_REG_LED_MAP, 0x0);
+
+	return ret;
+}
+
+int lp5562_poweroff(void)
+{
+	return lp5562_write(LP5562_REG_ENABLE, 0x0);
+}
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_lp5562(int argc, char **argv)
+{
+	if (argc == 4) {
+		char *e;
+		uint8_t red, green, blue;
+
+		red = strtoi(argv[1], &e, 0);
+		if (e && *e)
+			return EC_ERROR_PARAM1;
+		green = strtoi(argv[2], &e, 0);
+		if (e && *e)
+			return EC_ERROR_PARAM2;
+		blue = strtoi(argv[3], &e, 0);
+		if (e && *e)
+			return EC_ERROR_PARAM3;
+
+		return lp5562_set_color(red, green, blue);
+	} else if (argc == 2) {
+		if (!strcasecmp(argv[1], "on"))
+			return lp5562_poweron();
+		else if (!strcasecmp(argv[1], "off"))
+			return lp5562_poweroff();
+		return EC_ERROR_PARAM1;
+	}
+
+	return EC_ERROR_INVAL;
+}
+DECLARE_CONSOLE_COMMAND(lp5562, command_lp5562,
+			"on | off | <red> <green> <blue>",
+			"Set the color of the LED",
+			NULL);

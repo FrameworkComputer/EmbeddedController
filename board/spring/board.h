@@ -58,6 +58,9 @@
 /* Charger/accessories detection */
 #define CONFIG_TSU6721
 
+/* LED driver */
+#define CONFIG_LP5562
+
 /* Timer selection */
 #define TIM_CLOCK_MSB 2
 #define TIM_CLOCK_LSB 4
