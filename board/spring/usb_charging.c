@@ -14,7 +14,7 @@
 #include "tsu6721.h"
 #include "util.h"
 
-#define PWM_FREQUENCY 100 /* Hz */
+#define PWM_FREQUENCY 10000 /* Hz */
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
