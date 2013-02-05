@@ -26,13 +26,20 @@
 #define LP5562_REG_W_CURRENT	0x0f
 #define LP5562_REG_LED_MAP	0x70
 
+#define LP5562_COLOR_RED	0x800000
+#define LP5562_COLOR_GREEN	0x008000
+#define LP5562_COLOR_BLUE	0x000080
+
 /* Power on and initialize LP5562. */
 int lp5562_poweron(void);
 
 /* Power off LP5562. */
 int lp5562_poweroff(void);
 
-/* Set LED color. */
-int lp5562_set_color(uint8_t red, uint8_t green, uint8_t blue);
+/*
+ * Set LED color.
+ * The parameter 'rgb' is in the format 0x00RRGGBB.
+ */
+int lp5562_set_color(uint32_t rgb);
 
 #endif /* LP5562_H */

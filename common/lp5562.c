@@ -21,13 +21,13 @@ inline int lp5562_write(uint8_t reg, uint8_t val)
 	return i2c_write8(I2C_PORT_HOST, LP5562_I2C_ADDR, reg, val);
 }
 
-int lp5562_set_color(uint8_t red, uint8_t green, uint8_t blue)
+int lp5562_set_color(uint32_t rgb)
 {
 	int ret = 0;
 
-	ret |= lp5562_write(LP5562_REG_B_PWM, blue);
-	ret |= lp5562_write(LP5562_REG_G_PWM, green);
-	ret |= lp5562_write(LP5562_REG_R_PWM, red);
+	ret |= lp5562_write(LP5562_REG_B_PWM, rgb & 0xff);
+	ret |= lp5562_write(LP5562_REG_G_PWM, (rgb >> 8) & 0xff);
+	ret |= lp5562_write(LP5562_REG_R_PWM, (rgb >> 16) & 0xff);
 
 	return ret;
 }
@@ -69,7 +69,7 @@ static int command_lp5562(int argc, char **argv)
 		if (e && *e)
 			return EC_ERROR_PARAM3;
 
-		return lp5562_set_color(red, green, blue);
+		return lp5562_set_color((red << 16) | (green << 8) | blue);
 	} else if (argc == 2) {
 		if (!strcasecmp(argv[1], "on"))
 			return lp5562_poweron();
