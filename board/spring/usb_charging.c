@@ -25,6 +25,13 @@
 #define POWERED_DEVICE_TYPE (TSU6721_TYPE_OTG | \
 			     TSU6721_TYPE_JIG_UART_ON)
 
+/* PWM controlled current limit */
+#define I_LIMIT_500MA   85
+#define I_LIMIT_1000MA  70
+#define I_LIMIT_1500MA  50
+#define I_LIMIT_2000MA  35
+#define I_LIMIT_3000MA  0
+
 static enum ilim_config current_ilim_config = ILIM_CONFIG_MANUAL_OFF;
 
 static void board_ilim_use_gpio(void)
@@ -130,10 +137,25 @@ static void usb_device_change(int dev_type)
 	else
 		gpio_set_level(GPIO_BOOST_EN, 1);
 
-	if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED)
+	if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
+		/* Limit USB port current. 500mA for not listed types. */
+		int current_limit = I_LIMIT_500MA;
+		if (dev_type & TSU6721_TYPE_CHG12)
+			current_limit = I_LIMIT_3000MA;
+		else if (dev_type & TSU6721_TYPE_APPLE_CHG) {
+			/* TODO: Distinguish 1A/2A chargers. */
+			current_limit = I_LIMIT_1000MA;
+		} else if ((dev_type & TSU6721_TYPE_CDP) ||
+			   (dev_type & TSU6721_TYPE_DCP))
+			current_limit = I_LIMIT_1500MA;
+
+		board_pwm_duty_cycle(current_limit);
+
+		/* Turns on battery LED */
 		lp5562_poweron();
-	else
+	} else {
 		lp5562_poweroff();
+	}
 
 	/* Log to console */
 	CPRINTF("[%T USB Attached: ");
