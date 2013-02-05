@@ -10,6 +10,15 @@
 
 #include "gpio.h"
 
+/* Non-SBS charging states */
+enum charging_state {
+	ST_IDLE,
+	ST_PRE_CHARGING,
+	ST_CHARGING,
+	ST_CHARGING_ERROR,
+	ST_DISCHARGING,
+};
+
 /* JEITA temperature threshold */
 enum TPS_TEMPERATURE {
 	TSET_T1,
@@ -224,7 +233,14 @@ int board_get_ac(void);
  */
 void board_hard_reset(void);
 
-/* Wake TPS65090 charger task, but throttled to at most one call per tick. */
+/**
+ * Update battery LED according to charger state.
+ */
+int board_battery_led(enum charging_state state);
+
+/**
+ * Wake TPS65090 charger task, but throttled to at most one call per tick
+ */
 void pmu_task_throttled_wake(void);
 
 #endif /* __CROS_EC_TPSCHROME_H */

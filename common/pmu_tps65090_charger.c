@@ -5,6 +5,7 @@
  * TI TPS65090 PMU charging task.
  */
 
+#include "board.h"
 #include "clock.h"
 #include "chipset.h"
 #include "common.h"
@@ -40,15 +41,6 @@
 #define T1_USEC         (5  * SECOND)
 #define T2_USEC         (10 * SECOND)
 #define T3_USEC         (10 * SECOND)
-
-/* Non-SBS charging states */
-enum charging_state {
-	ST_IDLE,
-	ST_PRE_CHARGING,
-	ST_CHARGING,
-	ST_CHARGING_ERROR,
-	ST_DISCHARGING,
-};
 
 static const char * const state_list[] = {
 	"idle",
@@ -373,6 +365,14 @@ static int calc_next_state(int state)
 	return ST_IDLE;
 }
 
+int __board_battery_led(enum charging_state state)
+{
+	return EC_SUCCESS;
+}
+
+int board_battery_led(enum charging_state state)
+	__attribute__((weak, alias("__board_battery_led")));
+
 void pmu_charger_task(void)
 {
 	int state = ST_IDLE;
@@ -399,6 +399,7 @@ void pmu_charger_task(void)
 
 	tsu6721_init(); /* Init here until we can do with HOOK_INIT */
 	gpio_enable_interrupt(GPIO_USB_CHG_INT);
+	board_usb_charge_update(1);
 #endif
 
 	while (1) {
@@ -406,7 +407,7 @@ void pmu_charger_task(void)
 		pmu_clear_irq();
 
 #ifdef CONFIG_TSU6721
-		board_usb_charge_update();
+		board_usb_charge_update(0);
 #endif
 
 		/*
@@ -417,8 +418,7 @@ void pmu_charger_task(void)
 		 * failed.
 		 */
 		next_state = pre_charging_count > PRE_CHARGING_RETRY ?
-			calc_next_state(ST_IDLE) :
-			calc_next_state(state);
+			ST_CHARGING_ERROR : calc_next_state(state);
 
 		if (next_state != state) {
 			/* Reset state of charge moving average window */
@@ -457,6 +457,8 @@ void pmu_charger_task(void)
 				break;
 			}
 		}
+
+		board_battery_led(state);
 
 		switch (state) {
 		case ST_CHARGING:

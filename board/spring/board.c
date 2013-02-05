@@ -12,8 +12,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "lp5562.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
+#include "smart_battery.h"
 #include "stm32_adc.h"
 #include "timer.h"
 #include "util.h"
@@ -25,6 +27,11 @@
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
 #define HARD_RESET_TIMEOUT_MS 5
+
+/* We use yellow LED instead of blue LED. Re-map colors here. */
+#define LED_COLOR_GREEN  LP5562_COLOR_GREEN
+#define LED_COLOR_YELLOW LP5562_COLOR_BLUE
+#define LED_COLOR_RED    LP5562_COLOR_RED
 
 /* GPIO interrupt handlers prototypes */
 #ifndef CONFIG_TASK_GAIAPOWER
@@ -289,4 +296,40 @@ int board_get_ac(void)
 {
 	/* use TPSChrome VACG signal to detect AC state */
 	return gpio_get_level(GPIO_BCHGR_VACG);
+}
+
+int board_battery_led(enum charging_state state)
+{
+	int current;
+	uint32_t color = LED_COLOR_RED;
+
+	/*
+	 * LED power is controlled by accessory detection. We only
+	 * set color here.
+	 */
+	switch (state) {
+	case ST_IDLE:
+		color = LED_COLOR_GREEN;
+		break;
+	case ST_DISCHARGING: /* Battery assist */
+	case ST_PRE_CHARGING:
+		color = LED_COLOR_YELLOW;
+		break;
+	case ST_CHARGING:
+		if (battery_desired_current(&current)) {
+			/* Cannot talk to the battery. Set LED to red. */
+			color = LED_COLOR_RED;
+			break;
+		}
+		if (current)
+			color = LED_COLOR_YELLOW;
+		else
+			color = LED_COLOR_GREEN;
+		break;
+	case ST_CHARGING_ERROR:
+		color = LED_COLOR_RED;
+		break;
+	}
+
+	return lp5562_set_color(color);
 }

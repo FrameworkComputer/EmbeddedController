@@ -58,7 +58,7 @@
 /* Charger/accessories detection */
 #define CONFIG_TSU6721
 
-/* LED driver */
+/* Battery LED driver */
 #define CONFIG_LP5562
 
 /* Timer selection */
@@ -137,6 +137,9 @@ enum ilim_config {
 	ILIM_CONFIG_PWM,
 };
 
+/* Forward declaration */
+enum charging_state;
+
 void configure_board(void);
 
 void matrix_interrupt(enum gpio_signal signal);
@@ -157,7 +160,10 @@ void board_ilim_config(enum ilim_config config);
 void board_pwm_duty_cycle(int percent);
 
 /* Update USB port status */
-void board_usb_charge_update(void);
+void board_usb_charge_update(int force_update);
+
+/* Update battery LED color */
+int board_battery_led(enum charging_state state);
 
 #endif /* !__ASSEMBLER__ */
 

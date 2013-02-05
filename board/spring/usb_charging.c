@@ -8,6 +8,7 @@
 #include "board.h"
 #include "console.h"
 #include "gpio.h"
+#include "lp5562.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -129,6 +130,11 @@ static void usb_device_change(int dev_type)
 	else
 		gpio_set_level(GPIO_BOOST_EN, 1);
 
+	if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED)
+		lp5562_poweron();
+	else
+		lp5562_poweroff();
+
 	/* Log to console */
 	CPRINTF("[%T USB Attached: ");
 	if (dev_type == TSU6721_TYPE_NONE)
@@ -157,13 +163,13 @@ static void usb_device_change(int dev_type)
 		CPRINTF("Unknown]\n");
 }
 
-void board_usb_charge_update(void)
+void board_usb_charge_update(int force_update)
 {
 	int int_val = tsu6721_get_interrupts();
 
 	if (int_val & TSU6721_INT_DETACH)
 		usb_device_change(TSU6721_TYPE_NONE);
-	else if (int_val)
+	else if (int_val || force_update)
 		usb_device_change(tsu6721_get_device_type());
 }
 
