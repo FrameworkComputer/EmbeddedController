@@ -21,6 +21,9 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
+/* Maximum transfer of a SMBUS block transfer */
+#define SMBUS_MAX_BLOCK 32
+
 /* 8-bit I2C slave address */
 #define I2C_ADDRESS 0x3c
 
@@ -919,10 +922,23 @@ int i2c_write8(int port, int slave_addr, int offset, int data)
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	int len)
 {
-	/* TODO: implement i2c_read_block and i2c_read_string */
+	int rv;
+	uint8_t reg, block_length;
+	uint8_t buffer[SMBUS_MAX_BLOCK + 1];
 
-	if (len && data)
-		*data = 0;
+	if ((len <= 0) || (len > SMBUS_MAX_BLOCK))
+		return EC_ERROR_INVAL;
+
+	reg = offset;
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buffer, SMBUS_MAX_BLOCK + 1);
+	if (rv)
+		return rv;
+
+	/* the length of the block is the first byte of the returned buffer */
+	block_length = MIN(buffer[0], len - 1);
+	buffer[block_length + 1] = 0;
+
+	memcpy(data, buffer+1, block_length + 1);
 
 	return EC_SUCCESS;
 }
