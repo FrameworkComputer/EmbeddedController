@@ -371,9 +371,10 @@ int command_get_commands(int fd)
 
 static int windex;
 static const char wheel[] = {'|', '/', '-', '\\' };
-static void draw_spinner(void)
+static void draw_spinner(uint32_t remaining, uint32_t size)
 {
-	printf("%c%c", 8, wheel[windex++]);
+	int percent = (size - remaining)*100/size;
+	printf("\r%c%3d%%", wheel[windex++], percent);
 	windex %= sizeof(wheel);
 }
 
@@ -392,7 +393,7 @@ int command_read_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE - 1 : remaining - 1;
 		addr_be = htonl(address);
 
-		draw_spinner();
+		draw_spinner(remaining, size);
 		fflush(stdout);
 		res = send_command(fd, CMD_READMEM, loads, 2, buffer, cnt + 1);
 		if (res < 0)
@@ -425,7 +426,7 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 		loads[1].size = cnt + 1;
 		memcpy(outbuf + 1, buffer, cnt);
 
-		draw_spinner();
+		draw_spinner(remaining, size);
 		fflush(stdout);
 		res = send_command(fd, CMD_WRITEMEM, loads, 2, NULL, 0);
 		if (res < 0)
@@ -590,13 +591,13 @@ int read_flash(int fd, struct stm32_def *chip, const char *filename,
 	if (!size)
 		size = chip->flash_size;
 	offset += chip->flash_start;
-	printf("Reading %d bytes at 0x%08x  ", size, offset);
+	printf("Reading %d bytes at 0x%08x\n", size, offset);
 	res = command_read_mem(fd, offset, size, buffer);
 	if (res > 0) {
 		if (fwrite(buffer, res, 1, hnd) != 1)
 			fprintf(stderr, "Cannot write %s\n", filename);
 	}
-	printf("   %d bytes read.\n", res);
+	printf("\r   %d bytes read.\n", res);
 
 	fclose(hnd);
 	free(buffer);
@@ -631,14 +632,14 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 	fclose(hnd);
 
 	offset += chip->flash_start;
-	printf("Writing %d bytes at 0x%08x  ", res, offset);
+	printf("Writing %d bytes at 0x%08x\n", res, offset);
 	written = command_write_mem(fd, offset, res, buffer);
 	if (written != res) {
 		fprintf(stderr, "Error writing to flash\n");
 		free(buffer);
 		return -EIO;
 	}
-	printf("Done.\n");
+	printf("\rDone.\n");
 
 	free(buffer);
 	return 0;
