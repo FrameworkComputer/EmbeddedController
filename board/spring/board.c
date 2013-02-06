@@ -301,6 +301,7 @@ int board_get_ac(void)
 int board_battery_led(enum charging_state state)
 {
 	int current;
+	int desired_current;
 	uint32_t color = LED_COLOR_RED;
 
 	/*
@@ -316,12 +317,13 @@ int board_battery_led(enum charging_state state)
 		color = LED_COLOR_YELLOW;
 		break;
 	case ST_CHARGING:
-		if (battery_desired_current(&current)) {
+		if (battery_current(&current) ||
+		    battery_desired_current(&desired_current)) {
 			/* Cannot talk to the battery. Set LED to red. */
 			color = LED_COLOR_RED;
 			break;
 		}
-		if (current)
+		if (current && desired_current)
 			color = LED_COLOR_YELLOW;
 		else
 			color = LED_COLOR_GREEN;
