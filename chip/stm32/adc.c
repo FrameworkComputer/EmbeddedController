@@ -169,11 +169,11 @@ static void adc_init(void)
 	STM32_ADC_CR2 &= ~(1 << 11);
 
 	/*
-	 * Set sample time of all channels to 1.5 cycles.
-	 * Conversion takes 1.75 us.
+	 * Set sample time of all channels to 7.5 cycles.
+	 * Conversion takes 8.75 us.
 	 */
-	STM32_ADC_SMPR1 = 0;
-	STM32_ADC_SMPR2 = 0;
+	STM32_ADC_SMPR1 = 0x00249249;
+	STM32_ADC_SMPR2 = 0x09249249;
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
 
