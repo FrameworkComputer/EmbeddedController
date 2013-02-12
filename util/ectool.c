@@ -2184,14 +2184,6 @@ int cmd_battery(int argc, char *argv[])
 		goto cmd_error;
 	printf("  Design output voltage   %u mV\n", val);
 
-	val = read_mapped_mem32(EC_MEMMAP_BATT_DCAP);
-	if (!is_battery_range(val))
-		goto cmd_error;
-	printf("  Design capacity warning %u mAh\n",
-		val * BATTERY_LEVEL_WARNING / 100);
-	printf("  Design capacity low     %u mAh\n",
-		val * BATTERY_LEVEL_LOW / 100);
-
 	val = read_mapped_mem32(EC_MEMMAP_BATT_CCNT);
 	if (!is_battery_range(val))
 		goto cmd_error;

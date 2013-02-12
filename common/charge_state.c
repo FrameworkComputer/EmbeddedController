@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -350,14 +350,14 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	    ctx->curr.charging_current)
 		return PWR_STATE_INIT;
 
-	if (batt->state_of_charge >= STOP_CHARGE_THRESHOLD)
+	if (batt->state_of_charge >= BATTERY_LEVEL_FULL)
 		return PWR_STATE_UNCHANGE;
 
 	/* Configure init charger state and switch to charge state */
 	if (batt->desired_voltage && batt->desired_current) {
 		/* Set charger output constraints */
 		if (batt->desired_current < ctx->charger->current_min &&
-		    batt->state_of_charge < PRE_CHARGE_THRESHOLD) {
+		    batt->state_of_charge < BATTERY_LEVEL_PRE_CHARGE) {
 			/* Trickle charging */
 			if (charger_set_current(c_info->current_min) ||
 			    charger_set_voltage(batt->voltage))
@@ -377,7 +377,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 		}
 		update_charger_time(ctx, get_time());
 
-		if (ctx->curr.batt.state_of_charge < NEAR_FULL_THRESHOLD)
+		if (ctx->curr.batt.state_of_charge < BATTERY_LEVEL_NEAR_FULL)
 			return PWR_STATE_CHARGE;
 		else
 			return PWR_STATE_CHARGE_NEAR_FULL;
@@ -406,7 +406,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 
 	if (batt->desired_current < c_info->current_min &&
 	    batt->desired_current > 0 &&
-	    batt->state_of_charge < PRE_CHARGE_THRESHOLD)
+	    batt->state_of_charge < BATTERY_LEVEL_PRE_CHARGE)
 		return trickle_charge(ctx);
 
 	/* Check charger reset */
@@ -417,7 +417,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	if (!curr->ac)
 		return PWR_STATE_INIT;
 
-	if (batt->state_of_charge >= STOP_CHARGE_THRESHOLD) {
+	if (batt->state_of_charge >= BATTERY_LEVEL_FULL) {
 		if (charger_set_voltage(0) || charger_set_current(0))
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
@@ -645,7 +645,7 @@ void charge_state_machine_task(void)
 			new_state = state_charge(ctx);
 			if (new_state == PWR_STATE_UNCHANGE &&
 			    (ctx->curr.batt.state_of_charge >=
-			     NEAR_FULL_THRESHOLD)) {
+			     BATTERY_LEVEL_NEAR_FULL)) {
 				/* Almost done charging */
 				new_state = PWR_STATE_CHARGE_NEAR_FULL;
 			}
@@ -655,7 +655,7 @@ void charge_state_machine_task(void)
 			new_state = state_charge(ctx);
 			if (new_state == PWR_STATE_UNCHANGE &&
 			    (ctx->curr.batt.state_of_charge <
-			     NEAR_FULL_THRESHOLD)) {
+			     BATTERY_LEVEL_NEAR_FULL)) {
 				/* Battery below almost-full threshold. */
 				new_state = PWR_STATE_CHARGE;
 			}
