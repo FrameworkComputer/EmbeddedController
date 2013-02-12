@@ -86,6 +86,11 @@ static const char * const state_names[] = {
 			      IN_PGOOD_1_8VS | IN_PGOOD_VCCP | IN_PGOOD_VCCSA)
 /* All core power rails */
 #define IN_PGOOD_ALL_CORE    (IN_PGOOD_CPU_CORE | IN_PGOOD_VGFX_CORE)
+/* Rails required for S3 */
+#define IN_PGOOD_S3          (IN_PGOOD_ALWAYS_ON | IN_PGOOD_1_5V_DDR)
+/* Rails required for S0 */
+#define IN_PGOOD_S0          (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE)
+
 /* All PM_SLP signals from PCH deasserted */
 #define IN_ALL_PM_SLP_DEASSERTED (IN_PCH_SLP_S3n_DEASSERTED |		\
 				  IN_PCH_SLP_S4n_DEASSERTED |		\
@@ -158,6 +163,24 @@ static void update_in_signals(void)
 		CPRINTF("[%T x86 in 0x%04x]\n", inew);
 
 	in_signals = inew;
+}
+
+/**
+ * Check for required inputs
+ *
+ * @param want		Input flags which must be present (IN_*)
+ *
+ * @return Non-zero if all present; zero if a required signal is missing.
+ */
+static int have_all_in_signals(uint32_t want)
+{
+	if ((in_signals & want) == want)
+		return 1;
+
+	CPRINTF("[%T x86 power lost input; wanted 0x%04x, got 0x%04x]\n",
+		want, in_signals & want);
+
+	return 0;
 }
 
 /**
@@ -467,7 +490,12 @@ void x86_power_task(void)
 				       switch_get_lid_open());
 
 			/* Check for state transitions */
-			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
+			if (!have_all_in_signals(IN_PGOOD_S3)) {
+				/* Required rail went away */
+				chipset_force_shutdown();
+				state = X86_S3S5;
+				break;
+			} else if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
 				/* Power up to next state */
 				state = X86_S3S0;
 				break;
@@ -483,7 +511,12 @@ void x86_power_task(void)
 			break;
 
 		case X86_S0:
-			if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
+			if (!have_all_in_signals(IN_PGOOD_S0)) {
+				/* Required rail went away */
+				chipset_force_shutdown();
+				state = X86_S0S3;
+				break;
+			} else if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
 				/* Power down to next state */
 				state = X86_S0S3;
 				break;
@@ -513,7 +546,10 @@ void x86_power_task(void)
 
 		case X86_S5S3:
 			/* Wait for the always-on rails to be good */
-			wait_in_signals(IN_PGOOD_ALWAYS_ON);
+			if (wait_in_signals(IN_PGOOD_ALWAYS_ON)) {
+				chipset_force_shutdown();
+				state = X86_S5;
+			}
 
 			/*
 			 * Take lightbar out of reset, now that +5VALW is
@@ -524,6 +560,10 @@ void x86_power_task(void)
 
 			/* Turn on power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
+			if (wait_in_signals(IN_PGOOD_S3)) {
+				chipset_force_shutdown();
+				state = X86_S5;
+			}
 
 			/*
 			 * Enable touchpad power so it can wake the system from
@@ -554,7 +594,15 @@ void x86_power_task(void)
 			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
 
 			/* Wait for non-core power rails good */
-			wait_in_signals(IN_PGOOD_ALL_NONCORE);
+			if (wait_in_signals(IN_PGOOD_S0)) {
+				chipset_force_shutdown();
+				gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+				gpio_set_level(GPIO_ENABLE_WLAN, 0);
+				gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
+				gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
+				gpio_set_level(GPIO_ENABLE_VS, 0);
+				state = X86_S3;
+			}
 
 			/*
 			 * Enable +CPU_CORE and +VGFX_CORE regulator.  The CPU
