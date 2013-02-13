@@ -33,6 +33,9 @@
 /* Smart battery and TPSchrome are on a private I2C bus behind the EC */
 #define CONFIG_I2C_PASSTHROUGH
 
+/* always enable the 3G modem power rail */
+#define CONFIG_PMU_FORCE_FET
+
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */
