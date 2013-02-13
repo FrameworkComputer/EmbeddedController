@@ -80,6 +80,7 @@
 /* FET control register bits */
 #define FET_CTRL_ENFET   (1 << 0)
 #define FET_CTRL_ADENFET (1 << 1)
+#define FET_CTRL_WAIT    (3 << 2) /* Overcurrent timeout max : 3200 us */
 #define FET_CTRL_PGFET   (1 << 4)
 
 #define FET_CTRL_BASE (FET1_CTRL - 1)
@@ -380,8 +381,9 @@ int pmu_enable_fet(int fet_id, int enable, int *power_good)
 	rv = pmu_read(reg_offset, &reg);
 	if (rv)
 		return rv;
+	reg |= FET_CTRL_ADENFET | FET_CTRL_WAIT;
 	if (enable)
-		reg |= FET_CTRL_ADENFET | FET_CTRL_ENFET;
+		reg |= FET_CTRL_ENFET;
 	else
 		reg &= ~FET_CTRL_ENFET;
 
