@@ -128,5 +128,10 @@ enum power_state charge_get_state(void);
  */
 int charge_get_percent(void);
 
+/**
+ * Return non-zero if discharging and battery so low we should shut down.
+ */
+int charge_want_shutdown(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_H */
 

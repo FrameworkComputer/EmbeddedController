@@ -40,6 +40,8 @@ static int state_machine_force_idle = 0;
 
 static unsigned user_current_limit = -1U;
 
+static int fake_state_of_charge = -1;
+
 /* Current power state context */
 static struct power_state_context task_ctx;
 
@@ -222,7 +224,9 @@ static int state_common(struct power_state_context *ctx)
 	if (battery_desired_current(&batt->desired_current))
 		curr->error |= F_DESIRED_CURRENT;
 
-	if (battery_state_of_charge(&batt->state_of_charge))
+	if (fake_state_of_charge >= 0)
+		batt->state_of_charge = fake_state_of_charge;
+	else if (battery_state_of_charge(&batt->state_of_charge))
 		curr->error |= F_BATTERY_STATE_OF_CHARGE;
 
 	if (batt->state_of_charge != prev->batt.state_of_charge) {
@@ -285,7 +289,11 @@ static int state_common(struct power_state_context *ctx)
 			ctx->curr.error |= F_BATTERY_MODE;
 	}
 
-	if (battery_remaining_capacity(&d))
+	if (fake_state_of_charge >= 0)
+		*ctx->memmap_batt_cap =
+			fake_state_of_charge *
+			*(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC) / 100;
+	else if (battery_remaining_capacity(&d))
 		ctx->curr.error |= F_BATTERY_CAPACITY;
 	else
 		*ctx->memmap_batt_cap = d;
@@ -563,6 +571,12 @@ enum power_state charge_get_state(void)
 int charge_get_percent(void)
 {
 	return task_ctx.curr.batt.state_of_charge;
+}
+
+int charge_want_shutdown(void)
+{
+	return (charge_get_state() == PWR_STATE_DISCHARGE) &&
+		charge_get_percent() < BATTERY_LEVEL_SHUTDOWN;
 }
 
 static int enter_force_idle_mode(void)
@@ -864,3 +878,31 @@ static int charge_command_current_limit(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CURRENT_LIMIT, charge_command_current_limit,
 		     EC_VER_MASK(0));
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_battfake(int argc, char **argv)
+{
+	char *e;
+	int v;
+
+	if (argc == 2) {
+		v = strtoi(argv[1], &e, 0);
+		if (*e || v < -1 || v > 100)
+			return EC_ERROR_PARAM1;
+
+		fake_state_of_charge = v;
+	}
+
+	if (fake_state_of_charge < 0)
+		ccprintf("Reporting real battery level\n");
+	else
+		ccprintf("Reporting fake battery level %d%%\n",
+			 fake_state_of_charge);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
+			"percent (-1 = use real level)",
+			"Set fake battery level",
+			NULL);
