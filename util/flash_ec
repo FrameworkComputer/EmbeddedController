@@ -12,10 +12,12 @@ DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
-DEFINE_boolean ro "${FLAGS_FALSE}" \
-	"Write only the read-only partition"
 DEFINE_string offset "0" \
 	"Offset where to program the image from."
+DEFINE_integer port 9999 \
+	"Port to communicate to servo on."
+DEFINE_boolean ro "${FLAGS_FALSE}" \
+	"Write only the read-only partition"
 DEFINE_boolean unprotect "${FLAGS_FALSE}" \
 	"Clear the protect flag."
 
@@ -76,7 +78,8 @@ function ec_image() {
 # Find the EC UART on the servo v2
 function ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	(dut-control uart1_pty || die "${SERVOD_FAIL}") | cut -d: -f2
+	(dut-control --port=${FLAGS_port} uart1_pty || \
+            die "${SERVOD_FAIL}") | cut -d: -f2
 }
 
 # Servo variables management
@@ -85,7 +88,7 @@ SERVO_VARS="uart1_en uart1_parity uart1_baudrate \
 jtag_buf_on_flex_en jtag_buf_en spi1_vref"
 
 function dut_control() {
-	dut-control "$1" >/dev/null
+	dut-control --port=${FLAGS_port} "$1" >/dev/null
 }
 
 function servo_save() {
