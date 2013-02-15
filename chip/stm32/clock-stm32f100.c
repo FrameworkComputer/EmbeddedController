@@ -123,6 +123,25 @@ static void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
+#if defined(BOARD_daisy) || defined(BOARD_snow) || defined(BOARD_spring)
+/*
+ * stays on HSI (8MHz), no prescaler, PLLSRC = HSI/2, PLLMUL = x4
+ * no MCO                      => PLLCLK = 16 Mhz
+ */
+#define DESIRED_CPU_CLOCK 16000000
+#define RCC_CFGR 0x00080000
+#elif defined(BOARD_mccroskey)
+/*
+ * HSI = 8MHz, no prescaler, no MCO
+ * PLLSRC = HSI/2, PLLMUL = x12 => PLLCLK = 48MHz
+ * USB clock = PLLCLK
+ */
+#define DESIRED_CPU_CLOCK 48000000
+#define RCC_CFGR 0x00680000
+#else
+#error "Need board-specific clock settings"
+#endif
+
 static void config_hispeed_clock(void)
 {
 	/* Ensure that HSI is ON */
@@ -134,19 +153,16 @@ static void config_hispeed_clock(void)
 			;
 	}
 
-	/*
-	 * stays on HSI (8MHz), no prescaler, PLLSRC = HSI/2, PLLMUL = x4
-	 * no MCO                      => PLLCLK = 16 Mhz
-	 */
-	BUILD_ASSERT(CPU_CLOCK == 16000000);
-	STM32_RCC_CFGR = 0x00080000;
+	BUILD_ASSERT(CPU_CLOCK == DESIRED_CPU_CLOCK);
+	STM32_RCC_CFGR = RCC_CFGR;
 	/* Enable the PLL */
 	STM32_RCC_CR |= 1 << 24;
 	/* Wait for the PLL to lock */
 	while (!(STM32_RCC_CR & (1 << 25)))
 		;
 	/* switch to SYSCLK to the PLL */
-	STM32_RCC_CFGR = 0x00080002;
+	STM32_RCC_CFGR = RCC_CFGR | 0x02;
+
 	/* wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
