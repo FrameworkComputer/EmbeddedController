@@ -16,10 +16,8 @@
 /* Divider to get microsecond for the clock */
 #define CLOCKSOURCE_DIVIDER (CPU_CLOCK / SECOND)
 
-#ifdef CHIP_VARIANT_stm32f100
 #define TIM_WD_IRQ	STM32_IRQ_TIM1_UP_TIM16
 #define TIM_WD		1	/* Timer to use for watchdog */
-#endif
 
 /*
  * TIM_CLOCK_MSB and TIM_CLOCK_LSB must be defined per board. The available
@@ -191,7 +189,7 @@ int __hw_clock_source_init(uint32_t start_t)
  * doesn't appear to exist in either variant, and TIM9 cannot be triggered as a
  * slave from TIM4. We could perhaps use TIM9 as our fast counter on STM32L.
  */
-#ifdef CHIP_VARIANT_stm32f100
+#ifndef CHIP_VARIANT_stm32l15x
 
 void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {

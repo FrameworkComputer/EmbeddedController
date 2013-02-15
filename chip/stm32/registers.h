@@ -36,20 +36,25 @@
 #define STM32_IRQ_DMA_CHANNEL_5   15
 #define STM32_IRQ_DMA_CHANNEL_6   16
 #define STM32_IRQ_DMA_CHANNEL_7   17
-#define STM32_IRQ_ADC_1           18
+#define STM32_IRQ_ADC_1           18 /* ADC1 and ADC2 interrupt on STM32F10x */
 #define STM32_IRQ_USB_HP          19
+#define STM32_IRQ_CAN_TX          19 /* STM32F10x only */
 #define STM32_IRQ_USB_LP          20
+#define STM32_IRQ_USB_LP_CAN_RX   20 /* STM32F10x only */
 #define STM32_IRQ_DAC             21
+#define STM32_IRQ_CAN_RX1         21 /* STM32F10x only */
 #define STM32_IRQ_COMP            22
+#define STM32_IRQ_CAN_SCE         22 /* STM32F10x only */
 #define STM32_IRQ_EXTI9_5         23
 #define STM32_IRQ_LCD             24 /* STM32L15X only */
-#define STM32_IRQ_TIM1_BRK_TIM15  24 /* STM32F100 only */
+#define STM32_IRQ_TIM1_BRK_TIM15  24 /* TIM15 interrupt on STM32F100 only */
 #define STM32_IRQ_TIM9            25 /* STM32L15X only */
-#define STM32_IRQ_TIM1_UP_TIM16   25 /* STM32F100 only */
+#define STM32_IRQ_TIM1_UP_TIM16   25 /* TIM16 interrupt on STM32F100 only */
 #define STM32_IRQ_TIM10           26 /* STM32L15X only */
 #define STM32_IRQ_TIM1_TRG_TIM17  26 /* STM32F100 only */
+#define STM32_IRQ_TIM1_TRG_COM    26 /* STM32F10x only */
 #define STM32_IRQ_TIM11           27 /* STM32L15X only */
-#define STM32_IRQ_TIM1_CC         27 /* STM32F100 only */
+#define STM32_IRQ_TIM1_CC         27 /* STM32F100 and STM32F10x */
 #define STM32_IRQ_TIM2            28
 #define STM32_IRQ_TIM3            29
 #define STM32_IRQ_TIM4            30
@@ -64,26 +69,31 @@
 #define STM32_IRQ_USART3          39
 #define STM32_IRQ_EXTI15_10       40
 #define STM32_IRQ_RTC_ALARM       41
-#define STM32_IRQ_USB_FS_WAKEUP   42 /* STM32L15X only */
-#define STM32_IRQ_TIM6_BASIC      43 /* STM32L15X only */
-#define STM32_IRQ_TIM7_BASIC      44 /* STM32L15X only */
+#define STM32_IRQ_USB_FS_WAKEUP   42 /* STM32L15X and STM32F10x */
 #define STM32_IRQ_CEC             42 /* STM32F100 only */
+#define STM32_IRQ_TIM6_BASIC      43 /* STM32L15X only */
 #define STM32_IRQ_TIM12           43 /* STM32F100 only */
+#define STM32_IRQ_TIM8_BRK        43 /* STM32F10x only */
+#define STM32_IRQ_TIM7_BASIC      44 /* STM32L15X only */
 #define STM32_IRQ_TIM13           44 /* STM32F100 only */
+#define STM32_IRQ_TIM8_UP         44 /* STM32F10x only */
 #define STM32_IRQ_TIM14           45 /* STM32F100 only */
-/* positions 46-47 are reserved on STM32 */
-#define STM32_IRQ_FSMC            48 /* STM32F100 only */
-/* position 49 is reserved on STM32 */
-#define STM32_IRQ_TIM5            50 /* STM32F100 only */
-#define STM32_IRQ_SPI3            51 /* STM32F100 only */
-#define STM32_IRQ_UART4           52 /* STM32F100 only */
-#define STM32_IRQ_UART5           53 /* STM32F100 only */
+#define STM32_IRQ_TIM8_TRG_COM    45 /* STM32F10x only */
+#define STM32_IRQ_TIM8_CC         46 /* STM32F10x only */
+#define STM32_IRQ_ADC3            47 /* STM32F10x only */
+#define STM32_IRQ_FSMC            48 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_SDIO            49 /* STM32F10x only */
+#define STM32_IRQ_TIM5            50 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_SPI3            51 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_UART4           52 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_UART5           53 /* STM32F100 and STM32F10x */
 #define STM32_IRQ_TIM6_DAC        54 /* STM32F100 only */
-#define STM32_IRQ_TIM7            55 /* STM32F100 only */
-#define STM32_IRQ_DMA2_CHANNEL1   56 /* STM32F100 only */
-#define STM32_IRQ_DMA2_CHANNEL2   57 /* STM32F100 only */
-#define STM32_IRQ_DMA2_CHANNEL3   58 /* STM32F100 only */
-#define STM32_IRQ_DMA2_CHANNEL4_5 59 /* STM32F100 only */
+#define STM32_IRQ_TIM6            54 /* STM32F10x only */
+#define STM32_IRQ_TIM7            55 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_DMA2_CHANNEL1   56 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_DMA2_CHANNEL2   57 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_DMA2_CHANNEL3   58 /* STM32F100 and STM32F10x */
+#define STM32_IRQ_DMA2_CHANNEL4_5 59 /* STM32F100 and STM32F10x */
 /* if MISC_REMAP bits are set */
 #define STM32_IRQ_DMA2_CHANNEL5   60 /* STM32F100 only */
 
@@ -91,8 +101,8 @@
 #define STM32_USART1_BASE          0x40013800
 #define STM32_USART2_BASE          0x40004400
 #define STM32_USART3_BASE          0x40004800
-#define STM32_UART4_BASE           0x40004c00 /* STM32F100 only */
-#define STM32_UART5_BASE           0x40005000 /* STM32F100 only */
+#define STM32_UART4_BASE           0x40004c00 /* STM32F100 and STM32F10x */
+#define STM32_UART5_BASE           0x40005000 /* STM32F100 and STM32F10x */
 
 #define STM32_USART_BASE(n)        STM32_CAT(STM32_USART, n, _BASE)
 
@@ -110,19 +120,26 @@
 #define STM32_IRQ_USART(n)         STM32_CAT(STM32_IRQ_USART, n, )
 
 /* --- TIMERS --- */
-#define STM32_TIM1_BASE            0x40012c00 /* STM32F100 only */
+#define STM32_TIM1_BASE            0x40012c00 /* STM32F100 and STM32F10x */
 #define STM32_TIM2_BASE            0x40000000
 #define STM32_TIM3_BASE            0x40000400
 #define STM32_TIM4_BASE            0x40000800
-#define STM32_TIM5_BASE            0x40000c00 /* STM32F100 only */
+#define STM32_TIM5_BASE            0x40000c00 /* STM32F100 and STM32F10x */
 #define STM32_TIM6_BASE            0x40001000
 #define STM32_TIM7_BASE            0x40001400
+#define STM32_TIM8_BASE            0x40013400 /* STM32F10x only */
+#if defined(CHIP_VARIANT_stm32l15x)
 #define STM32_TIM9_BASE            0x40010800 /* STM32L15X only */
 #define STM32_TIM10_BASE           0x40010C00 /* STM32L15X only */
 #define STM32_TIM11_BASE           0x40011000 /* STM32L15X only */
-#define STM32_TIM12_BASE           0x40001800 /* STM32F100 only */
-#define STM32_TIM13_BASE           0x40001c00 /* STM32F100 only */
-#define STM32_TIM14_BASE           0x40002000 /* STM32F100 only */
+#elif defined(CHIP_VARIANT_stm32f10x)
+#define STM32_TIM9_BASE            0x40014C00 /* STM32F10x only */
+#define STM32_TIM10_BASE           0x40015000 /* STM32F10x only */
+#define STM32_TIM11_BASE           0x40015400 /* STM32F10x only */
+#endif	/* TIM9-11 */
+#define STM32_TIM12_BASE           0x40001800 /* STM32F100 and STM32F10x */
+#define STM32_TIM13_BASE           0x40001c00 /* STM32F100 and STM32F10x */
+#define STM32_TIM14_BASE           0x40002000 /* STM32F100 and STM32F10x */
 #define STM32_TIM15_BASE           0x40014000 /* STM32F100 only */
 #define STM32_TIM16_BASE           0x40014400 /* STM32F100 only */
 #define STM32_TIM17_BASE           0x40014800 /* STM32F100 only */
@@ -142,6 +159,7 @@
 #define STM32_TIM_CNT(n)           STM32_TIM_REG(n, 0x24)
 #define STM32_TIM_PSC(n)           STM32_TIM_REG(n, 0x28)
 #define STM32_TIM_ARR(n)           STM32_TIM_REG(n, 0x2C)
+#define STM32_TIM_RCR(n)           STM32_TIM_REG(n, 0x30)
 #define STM32_TIM_CCR1(n)          STM32_TIM_REG(n, 0x34)
 #define STM32_TIM_CCR2(n)          STM32_TIM_REG(n, 0x38)
 #define STM32_TIM_CCR3(n)          STM32_TIM_REG(n, 0x3C)
@@ -208,7 +226,7 @@
 #define GPIO_ALT_RI                  0xE
 #define GPIO_ALT_EVENTOUT            0xF
 
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 #define STM32_GPIOA_BASE            0x40010800
 #define STM32_GPIOB_BASE            0x40010c00
 #define STM32_GPIOC_BASE            0x40011000
@@ -298,7 +316,7 @@
 #define STM32_SYSCFG_PMC            REG32(STM32_SYSCFG_BASE + 0x04)
 #define STM32_SYSCFG_EXTICR(n)      REG32(STM32_SYSCFG_BASE + 8 + 4 * (n))
 
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 #define STM32_RCC_BASE              0x40021000
 
 #define STM32_RCC_CR                REG32(STM32_RCC_BASE + 0x00)
@@ -311,7 +329,7 @@
 #define STM32_RCC_APB1ENR           REG32(STM32_RCC_BASE + 0x1c)
 #define STM32_RCC_BDCR              REG32(STM32_RCC_BASE + 0x20)
 #define STM32_RCC_CSR               REG32(STM32_RCC_BASE + 0x24)
-#define STM32_RCC_CFGR2             REG32(STM32_RCC_BASE + 0x2c)
+#define STM32_RCC_CFGR2             REG32(STM32_RCC_BASE + 0x2c) /* STM32F100 */
 
 #define RCC_AHBENR_DMA1EN           (1 << 0)
 
@@ -360,7 +378,7 @@
 #define STM32_BKP_DATA(n)           STM32_RTC_BACKUP(n)
 #define STM32_BKP_ENTRIES           20
 
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 #define STM32_RTC_CRH               REG32(STM32_RTC_BASE + 0x00)
 #define STM32_RTC_CRL               REG32(STM32_RTC_BASE + 0x04)
 #define STM32_RTC_PRLH              REG32(STM32_RTC_BASE + 0x08)
@@ -374,14 +392,21 @@
 
 /* --- Backup Registers --- */
 #define STM32_BKP_BASE              0x40006c00
-#define STM32_BKP_DATA(n)           REG16(STM32_BKP_BASE + 4 + 4 * (n))
+
+#if defined(CHIP_VARIANT_stm32f10x)
+#define STM32_BKP_ENTRIES           42
+#define STM32_BKP_DATA(n)	\
+		REG16(STM32_BKP_BASE + (n < 11 ? 0x4 : 0x40) + 4 * (n))
+#else
+#define STM32_BKP_ENTRIES           10
+#define STM32_BKP_DATA(n)           REG16(STM32_BKP_BASE + 0x4 + 4 * (n))
+#endif
+
 #define STM32_BKP_RTCCR             REG16(STM32_BKP_BASE + 0x2c)
 #define STM32_BKP_CR                REG16(STM32_BKP_BASE + 0x30)
 #define STM32_BKP_CSR               REG16(STM32_BKP_BASE + 0x34)
 
 #define STM32_RTC_BACKUP(n)         STM32_BKP_DATA(n)
-
-#define STM32_BKP_ENTRIES           10
 
 #else
 #error Unsupported chip variant
@@ -404,6 +429,8 @@ struct spi_ctlr {
 	unsigned crcp;
 	unsigned rxcrc;
 	unsigned txcrc;
+	unsigned i2scfgr;	/* STM32F10x only */
+	unsigned i2spr;		/* STM32F10x only */
 };
 
 /*
@@ -451,7 +478,7 @@ struct spi_ctlr {
 
 #define STM32_OPTB_COMPL_SHIFT      16
 
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 #define STM32_FLASH_REGS_BASE       0x40022000
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
@@ -490,6 +517,8 @@ struct spi_ctlr {
 
 #define STM32_ADC1_BASE             0x40012400
 #define STM32_ADC_BASE              0x40012700 /* STM32L15X only */
+#define STM32_ADC2_BASE             0x40012800 /* STM32F10x only */
+#define STM32_ADC3_BASE             0x40013C00 /* STM32F10x only */
 
 #if defined(CHIP_VARIANT_stm32f100)
 #define STM32_ADC_SR               REG32(STM32_ADC1_BASE + 0x00)
@@ -519,7 +548,7 @@ struct spi_ctlr {
 #if defined(CHIP_VARIANT_stm32l15x)
 #define STM32_DMA1_BASE             0x40026000
 #define STM32_DMA2_BASE             0x40026400
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 #define STM32_DMA1_BASE             0x40020000
 /* FIXME: DMA2 is only available on high-density devices, but is used as part
  * of a sanity check in dma.c */
@@ -527,5 +556,14 @@ struct spi_ctlr {
 #else
 #error Unsupported chip variant
 #endif
+
+#define STM32_FSMC_BASE             0xA0000000 /* STM32F10x only */
+#define STM32_USB_OTG_FS_BASE       0x50000000 /* STM32F10x only */
+#define STM32_ETHERNET_BASE         0x40028000 /* STM32F10x only */
+#define STM32_SDIO_BASE             0x40018000 /* STM32F10x only */
+#define STM32_BXCAN1_BASE           0x40006400 /* STM32F10x only */
+#define STM32_BXCAN2_BASE           0x40006800 /* STM32F10x only */
+#define STM32_USB_CAN_SRAM_BASE     0x40006000 /* STM32F10x only */
+#define STM32_USB_FS_BASE           0x40005C00 /* STM32F10x only */
 
 #endif /* __STM32_REGISTERS */
