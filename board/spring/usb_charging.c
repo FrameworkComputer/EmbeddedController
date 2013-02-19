@@ -8,9 +8,12 @@
 #include "adc.h"
 #include "board.h"
 #include "console.h"
+#include "hooks.h"
 #include "gpio.h"
 #include "lp5562.h"
+#include "pmu_tpschrome.h"
 #include "registers.h"
+#include "smart_battery.h"
 #include "stm32_adc.h"
 #include "task.h"
 #include "timer.h"
@@ -35,7 +38,15 @@
 #define I_LIMIT_2400MA  25
 #define I_LIMIT_3000MA  0
 
+/* PWM control loop parameters */
+#define PWM_CTRL_BEGIN_OFFSET	30
+#define PWM_CTRL_STEP_DOWN	1
+#define PWM_CTRL_STEP_UP	5
+#define PWM_CTRL_VBUS_LOW	4500
+#define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
+
 static int current_dev_type = TSU6721_TYPE_NONE;
+static int nominal_pwm_duty;
 static int current_pwm_duty;
 
 static enum ilim_config current_ilim_config = ILIM_CONFIG_MANUAL_OFF;
@@ -155,6 +166,43 @@ void board_pwm_duty_cycle(int percent)
 	current_pwm_duty = percent;
 }
 
+static void board_pwm_tweak(void)
+{
+	int vbus, current;
+
+	if (current_ilim_config != ILIM_CONFIG_PWM)
+		return;
+
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	if (battery_current(&current))
+		return;
+	/*
+	 * If VBUS voltage is too low:
+	 *   - If battery is discharging, throttling more is going to draw
+	 *     more current from the battery, so do nothing in this case.
+	 *   - Otherwise, throttle input current to raise VBUS voltage.
+	 * If VBUS voltage is high enough, allow more current until we hit
+	 * current limit target.
+	 */
+	if (vbus < PWM_CTRL_VBUS_LOW &&
+	    current_pwm_duty < 100 &&
+	    current >= 0) {
+		board_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
+		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
+	} else if (vbus > PWM_CTRL_VBUS_HIGH &&
+		   current_pwm_duty > nominal_pwm_duty) {
+		board_pwm_duty_cycle(current_pwm_duty - PWM_CTRL_STEP_DOWN);
+		CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, board_pwm_tweak, HOOK_PRIO_DEFAULT);
+
+void board_pwm_nominal_duty_cycle(int percent)
+{
+	board_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
+	nominal_pwm_duty = percent;
+}
+
 void usb_charge_interrupt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
@@ -183,7 +231,7 @@ static void usb_device_change(int dev_type)
 			   (dev_type & TSU6721_TYPE_DCP))
 			current_limit = I_LIMIT_1500MA;
 
-		board_pwm_duty_cycle(current_limit);
+		board_pwm_nominal_duty_cycle(current_limit);
 
 		/* Turns on battery LED */
 		lp5562_poweron();
@@ -242,7 +290,7 @@ int board_get_usb_current_limit(void)
 }
 
 /*
- * Console command for debugging.
+ * Console commands for debugging.
  * TODO(victoryang): Remove after charging control is done.
  */
 static int command_ilim(int argc, char **argv)
@@ -276,3 +324,21 @@ DECLARE_CONSOLE_COMMAND(ilim, command_ilim,
 		"[percent | on | off]",
 		"Set or show ILIM duty cycle/GPIO value",
 		NULL);
+
+static int command_batdebug(int argc, char **argv)
+{
+	int val;
+	ccprintf("VBUS = %d mV\n", adc_read_channel(ADC_CH_USB_VBUS_SNS));
+	ccprintf("VAC = %d mV\n", pmu_adc_read(ADC_VAC) * 17000 / 1024);
+	ccprintf("IAC = %d mA\n", pmu_adc_read(ADC_IAC) * 20 * 33 / 1024);
+	ccprintf("VBAT = %d mV\n", pmu_adc_read(ADC_VBAT) * 17000 / 1024);
+	ccprintf("IBAT = %d mA\n", pmu_adc_read(ADC_IBAT) * 50 * 40 / 1024);
+	ccprintf("PWM = %d%%\n", STM32_TIM_CCR1(3));
+	battery_current(&val);
+	ccprintf("Battery Current = %d mA\n", val);
+	battery_voltage(&val);
+	ccprintf("Battery Voltage= %d mV\n", val);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(batdebug, command_batdebug,
+			NULL, NULL, NULL);
