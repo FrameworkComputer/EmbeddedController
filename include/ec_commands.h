@@ -1242,6 +1242,22 @@ struct ec_response_ldo_get {
 } __packed;
 
 /*****************************************************************************/
+/* Power info. */
+
+/*
+ * Get power info.
+ */
+#define EC_CMD_POWER_INFO 0x9d
+
+struct ec_response_power_info {
+	uint32_t usb_dev_type;
+	uint16_t voltage_ac;
+	uint16_t voltage_system;
+	uint16_t current_system;
+	uint16_t usb_current_limit;
+} __packed;
+
+/*****************************************************************************/
 /* Temporary debug commands. TODO: remove this crosbug.com/p/13849 */
 
 /*

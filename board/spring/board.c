@@ -9,8 +9,10 @@
 #include "common.h"
 #include "console.h"
 #include "dma.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "lp5562.h"
 #include "pmu_tpschrome.h"
@@ -333,3 +335,21 @@ int board_battery_led(enum charging_state state)
 
 	return lp5562_set_color(color);
 }
+
+/*****************************************************************************/
+/* Host commands */
+
+static int power_command_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_power_info *r = args->response;
+
+	r->voltage_ac = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	r->voltage_system = pmu_adc_read(ADC_VAC) * 17000 / 1024;
+	r->current_system = pmu_adc_read(ADC_IAC) * 20 * 33 / 1024;
+	r->usb_dev_type = board_get_usb_dev_type();
+	r->usb_current_limit = board_get_usb_current_limit();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_POWER_INFO, power_command_info, EC_VER_MASK(0));

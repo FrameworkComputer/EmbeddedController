@@ -85,6 +85,11 @@
 
 #define FET_CTRL_BASE (FET1_CTRL - 1)
 
+/* AD control register bits */
+#define AD_CTRL_ENADREF  (1 << 4)
+#define AD_CTRL_ADEOC    (1 << 5)
+#define AD_CTRL_ADSTART  (1 << 6)
+
 void __board_hard_reset(void)
 {
 	CPRINTF("This board is not capable of a hard reset.\n");
@@ -399,6 +404,48 @@ int pmu_enable_fet(int fet_id, int enable, int *power_good)
 	}
 
 	return EC_SUCCESS;
+}
+
+int pmu_adc_read(int adc_idx)
+{
+	int ctrl;
+	int val1, val2;
+	int rv;
+
+	rv = pmu_read(AD_CTRL, &ctrl);
+	if (rv)
+		return rv;
+	ctrl |= AD_CTRL_ENADREF;
+	rv = pmu_write(AD_CTRL, ctrl);
+	if (rv)
+		return rv;
+	msleep(20);
+
+	ctrl = (ctrl & ~0xf) | adc_idx;
+	rv = pmu_write(AD_CTRL, ctrl);
+	if (rv)
+		return rv;
+	udelay(150);
+
+	ctrl |= AD_CTRL_ADSTART;
+	rv = pmu_write(AD_CTRL, ctrl);
+	if (rv)
+		return rv;
+	udelay(200);
+
+	do {
+		rv = pmu_read(AD_CTRL, &ctrl);
+		if (rv)
+			return rv;
+	} while (!(ctrl & AD_CTRL_ADEOC));
+
+	rv = pmu_read(AD_OUT1, &val1) | pmu_read(AD_OUT2, &val2);
+	if (rv)
+		return rv;
+
+	rv = pmu_write(AD_CTRL, ctrl & ~AD_CTRL_ENADREF);
+
+	return (val2 << 8) | val1;
 }
 
 void pmu_irq_handler(enum gpio_signal signal)

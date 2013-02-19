@@ -100,6 +100,8 @@ const char help_str[] =
 	"      Various lightbar control commands\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
+	"  powerinfo\n"
+	"	Prints power-related information\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -1501,6 +1503,24 @@ int cmd_kbpress(int argc, char *argv[])
 }
 
 
+int cmd_power_info(int argc, char *argv[])
+{
+	struct ec_response_power_info r;
+	int rv;
+
+	rv = ec_command(EC_CMD_POWER_INFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("AC Voltage: %d mV\n", r.voltage_ac);
+	printf("System Voltage: %d mV\n", r.voltage_system);
+	printf("System Current: %d mA\n", r.current_system);
+	printf("USB Device Type: 0x%x\n", r.usb_dev_type);
+	printf("USB Current Limit: %d mA\n", r.usb_current_limit);
+	return 0;
+}
+
+
 int cmd_pstore_info(int argc, char *argv[])
 {
 	struct ec_response_pstore_info r;
@@ -2748,6 +2768,7 @@ const struct command commands[] = {
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"powerinfo", cmd_power_info},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},

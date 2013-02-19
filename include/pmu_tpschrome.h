@@ -74,6 +74,21 @@ enum FASTCHARGE_TIMEOUT {
 #define FET_LCD_PANEL 6
 #define FET_TS        7
 
+#define ADC_VAC		0
+#define ADC_VBAT	1
+#define ADC_IAC		2
+#define ADC_IBAT	3
+#define ADC_IDCDC1	4
+#define ADC_IDCDC2	5
+#define ADC_IDCDC3	6
+#define ADC_IFET1	7
+#define ADC_IFET2	8
+#define ADC_IFET3	9
+#define ADC_IFET4	10
+#define ADC_IFET5	11
+#define ADC_IFET6	12
+#define ADC_IFET7	13
+
 
 /**
  * Clear tps65090 IRQ register
@@ -168,6 +183,13 @@ int pmu_set_term_voltage(enum TPS_TEMPERATURE_RANGE range,
  * @param enable         enable/disable low current charging
  */
 int pmu_low_current_charging(int enable);
+
+/**
+ * Read ADC channel
+ *
+ * @param adc_idx        Index of ADC channel
+ */
+int pmu_adc_read(int adc_idx);
 
 /**
  * Handles interrupts from tpschrome

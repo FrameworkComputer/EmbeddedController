@@ -168,6 +168,12 @@ void board_usb_charge_update(int force_update);
 /* Update battery LED color */
 int board_battery_led(enum charging_state state);
 
+/* Get USB port device type */
+int board_get_usb_dev_type(void);
+
+/* Get USB port current limit */
+int board_get_usb_current_limit(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

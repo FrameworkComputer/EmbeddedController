@@ -35,6 +35,9 @@
 #define I_LIMIT_2400MA  25
 #define I_LIMIT_3000MA  0
 
+static int current_dev_type = TSU6721_TYPE_NONE;
+static int current_pwm_duty;
+
 static enum ilim_config current_ilim_config = ILIM_CONFIG_MANUAL_OFF;
 
 static const int apple_charger_type[4] = {I_LIMIT_500MA,
@@ -149,6 +152,7 @@ void board_pwm_duty_cycle(int percent)
 	if (percent > 100)
 		percent = 100;
 	STM32_TIM_CCR1(3) = (percent * STM32_TIM_ARR(3)) / 100;
+	current_pwm_duty = percent;
 }
 
 void usb_charge_interrupt(enum gpio_signal signal)
@@ -158,11 +162,9 @@ void usb_charge_interrupt(enum gpio_signal signal)
 
 static void usb_device_change(int dev_type)
 {
-	static int last_dev_type;
-
-	if (last_dev_type == dev_type)
+	if (current_dev_type == dev_type)
 		return;
-	last_dev_type = dev_type;
+	current_dev_type = dev_type;
 
 	/* Supply VBUS if needed */
 	if (dev_type & POWERED_DEVICE_TYPE)
@@ -226,6 +228,17 @@ void board_usb_charge_update(int force_update)
 		usb_device_change(TSU6721_TYPE_NONE);
 	else if (int_val || force_update)
 		usb_device_change(tsu6721_get_device_type());
+}
+
+int board_get_usb_dev_type(void)
+{
+	return current_dev_type;
+}
+
+int board_get_usb_current_limit(void)
+{
+	/* Approximate value by PWM duty cycle */
+	return 3012 - 29 * current_pwm_duty;
 }
 
 /*
