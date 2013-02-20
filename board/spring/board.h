@@ -174,6 +174,9 @@ int board_get_usb_dev_type(void);
 /* Get USB port current limit */
 int board_get_usb_current_limit(void);
 
+/* Properly limit input power on EC boot */
+void board_pwm_init_limit(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
