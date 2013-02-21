@@ -31,11 +31,11 @@
 			     TSU6721_TYPE_JIG_UART_ON)
 
 /* PWM controlled current limit */
-#define I_LIMIT_500MA   85
+#define I_LIMIT_500MA   90
 #define I_LIMIT_1000MA  75
-#define I_LIMIT_1500MA  50
-#define I_LIMIT_2000MA  35
-#define I_LIMIT_2400MA  25
+#define I_LIMIT_1500MA  60
+#define I_LIMIT_2000MA  50
+#define I_LIMIT_2400MA  35
 #define I_LIMIT_3000MA  0
 
 /* PWM control loop parameters */
@@ -146,9 +146,9 @@ static int board_apple_charger_current(void)
 	vn = data[ADC_CH_USB_DN_SNS];
 	tsu6721_mux(TSU6721_MUX_AUTO);
 	tsu6721_enable_interrupts();
-	if (vp > 1200)
+	if (vp > 1215)
 		type |= 0x2;
-	if (vn > 1200)
+	if (vn > 1215)
 		type |= 0x1;
 
 	return apple_charger_type[type];
