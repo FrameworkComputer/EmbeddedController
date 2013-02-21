@@ -239,7 +239,8 @@ static void usb_device_change(int dev_type)
 	else
 		gpio_set_level(GPIO_BOOST_EN, 1);
 
-	if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
+	if ((dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) &&
+	    !(dev_type & POWERED_DEVICE_TYPE)) {
 		/* Limit USB port current. 500mA for not listed types. */
 		int current_limit = I_LIMIT_500MA;
 		if (dev_type & TSU6721_TYPE_CHG12)
