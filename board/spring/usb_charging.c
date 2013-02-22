@@ -229,15 +229,28 @@ void usb_charge_interrupt(enum gpio_signal signal)
 
 static void usb_device_change(int dev_type)
 {
+	int need_boost;
+	int retry_limit = 3;
+
 	if (current_dev_type == dev_type)
 		return;
-	current_dev_type = dev_type;
 
-	/* Supply VBUS if needed */
-	if (dev_type & POWERED_DEVICE_TYPE)
-		gpio_set_level(GPIO_BOOST_EN, 0);
-	else
-		gpio_set_level(GPIO_BOOST_EN, 1);
+	/*
+	 * Supply VBUS if needed. If we toggle power output, wait for a moment,
+	 * and then update device type. To avoid race condition, check if power
+	 * requirement changes during this time.
+	 */
+	do {
+		if (retry_limit-- <= 0)
+			break;
+
+		need_boost = !(dev_type & POWERED_DEVICE_TYPE);
+		if (need_boost != gpio_get_level(GPIO_BOOST_EN)) {
+			gpio_set_level(GPIO_BOOST_EN, need_boost);
+			msleep(20);
+			dev_type = tsu6721_get_device_type();
+		}
+	} while (need_boost == !!(dev_type & POWERED_DEVICE_TYPE));
 
 	if ((dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) &&
 	    !(dev_type & POWERED_DEVICE_TYPE)) {
@@ -286,6 +299,8 @@ static void usb_device_change(int dev_type)
 		CPRINTF("Unknown with power]\n");
 	else
 		CPRINTF("Unknown]\n");
+
+	current_dev_type = dev_type;
 }
 
 void board_usb_charge_update(int force_update)
