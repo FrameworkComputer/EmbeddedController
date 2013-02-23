@@ -492,6 +492,10 @@ void pmu_charger_task(void)
 			}
 		}
 
+#ifdef CONFIG_TSU6721
+		has_pending_event |= tsu6721_peek_interrupts();
+#endif
+
 		if (!has_pending_event) {
 			task_wait_event(wait_time);
 			disable_sleep(SLEEP_MASK_CHARGING);

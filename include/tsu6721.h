@@ -94,6 +94,10 @@ void tsu6721_set_interrupt_mask(uint16_t mask);
  * TSU6721_INT_* */
 int tsu6721_get_interrupts(void);
 
+/* Get but keep interrupt status. Return value is a combination of
+ * TSU6721_INT_* */
+int tsu6721_peek_interrupts(void);
+
 /* Get attached device type. Return value is one or a combination of
  * TSU6721_TYPE_* */
 int tsu6721_get_device_type(void);

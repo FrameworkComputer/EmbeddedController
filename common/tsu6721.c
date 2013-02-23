@@ -24,6 +24,8 @@
 /* 8-bit I2C address */
 #define TSU6721_I2C_ADDR (0x25 << 1)
 
+static int saved_interrupts;
+
 uint8_t tsu6721_read(uint8_t reg)
 {
 	int res;
@@ -65,8 +67,16 @@ void tsu6721_set_interrupt_mask(uint16_t mask)
 
 int tsu6721_get_interrupts(void)
 {
-	return (tsu6721_read(TSU6721_REG_INT1) << 8) |
-	       (tsu6721_read(TSU6721_REG_INT2));
+	int ret = tsu6721_peek_interrupts();
+	saved_interrupts = 0;
+	return ret;
+}
+
+int tsu6721_peek_interrupts(void)
+{
+	saved_interrupts |= (tsu6721_read(TSU6721_REG_INT1) << 8) |
+			    (tsu6721_read(TSU6721_REG_INT2));
+	return saved_interrupts;
 }
 
 int tsu6721_get_device_type(void)
