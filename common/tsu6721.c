@@ -98,7 +98,7 @@ int tsu6721_mux(enum tsu6721_mux sel)
 	 * activate manual mode if it is not detecting either a VBUS or
 	 * something known on the ID pin
 	 */
-	if ((id == 0x1f) && !vbus1 && !vbus3) {
+	if (sel != TSU6721_MUX_AUTO && (id == 0x1f) && !vbus1 && !vbus3) {
 		CPRINTF("TSU6721 cannot use manual mode: no VBUS or ID\n");
 		return EC_ERROR_INVAL;
 	}
