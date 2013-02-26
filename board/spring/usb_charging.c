@@ -426,10 +426,14 @@ static int command_batdebug(int argc, char **argv)
 {
 	int val;
 	ccprintf("VBUS = %d mV\n", adc_read_channel(ADC_CH_USB_VBUS_SNS));
-	ccprintf("VAC = %d mV\n", pmu_adc_read(ADC_VAC) * 17000 / 1024);
-	ccprintf("IAC = %d mA\n", pmu_adc_read(ADC_IAC) * 20 * 33 / 1024);
-	ccprintf("VBAT = %d mV\n", pmu_adc_read(ADC_VBAT) * 17000 / 1024);
-	ccprintf("IBAT = %d mA\n", pmu_adc_read(ADC_IBAT) * 50 * 40 / 1024);
+	ccprintf("VAC = %d mV\n", pmu_adc_read(ADC_VAC, ADC_FLAG_KEEP_ON)
+				  * 17000 / 1024);
+	ccprintf("IAC = %d mA\n", pmu_adc_read(ADC_IAC, ADC_FLAG_KEEP_ON)
+				  * 20 * 33 / 1024);
+	ccprintf("VBAT = %d mV\n", pmu_adc_read(ADC_VBAT, ADC_FLAG_KEEP_ON)
+				  * 17000 / 1024);
+	ccprintf("IBAT = %d mA\n", pmu_adc_read(ADC_IBAT, 0)
+				  * 50 * 40 / 1024);
 	ccprintf("PWM = %d%%\n", STM32_TIM_CCR1(3));
 	battery_current(&val);
 	ccprintf("Battery Current = %d mA\n", val);

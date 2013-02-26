@@ -406,7 +406,7 @@ int pmu_enable_fet(int fet_id, int enable, int *power_good)
 	return EC_SUCCESS;
 }
 
-int pmu_adc_read(int adc_idx)
+int pmu_adc_read(int adc_idx, int flags)
 {
 	int ctrl;
 	int val1, val2;
@@ -415,11 +415,14 @@ int pmu_adc_read(int adc_idx)
 	rv = pmu_read(AD_CTRL, &ctrl);
 	if (rv)
 		return rv;
-	ctrl |= AD_CTRL_ENADREF;
-	rv = pmu_write(AD_CTRL, ctrl);
-	if (rv)
-		return rv;
-	msleep(20);
+	if (!(ctrl & AD_CTRL_ENADREF)) {
+		ctrl |= AD_CTRL_ENADREF;
+		rv = pmu_write(AD_CTRL, ctrl);
+		if (rv)
+			return rv;
+		/* wait for reference voltage stabilization */
+		msleep(10);
+	}
 
 	ctrl = (ctrl & ~0xf) | adc_idx;
 	rv = pmu_write(AD_CTRL, ctrl);
@@ -443,7 +446,8 @@ int pmu_adc_read(int adc_idx)
 	if (rv)
 		return rv;
 
-	rv = pmu_write(AD_CTRL, ctrl & ~AD_CTRL_ENADREF);
+	if (!(flags & ADC_FLAG_KEEP_ON))
+		rv = pmu_write(AD_CTRL, ctrl & ~AD_CTRL_ENADREF);
 
 	return (val2 << 8) | val1;
 }

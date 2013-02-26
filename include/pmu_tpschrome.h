@@ -89,6 +89,8 @@ enum FASTCHARGE_TIMEOUT {
 #define ADC_IFET6	12
 #define ADC_IFET7	13
 
+/* do not turn off voltage reference */
+#define ADC_FLAG_KEEP_ON	0x1
 
 /**
  * Clear tps65090 IRQ register
@@ -188,8 +190,9 @@ int pmu_low_current_charging(int enable);
  * Read ADC channel
  *
  * @param adc_idx        Index of ADC channel
+ * @param flags          combination of ADC_FLAG_* constants
  */
-int pmu_adc_read(int adc_idx);
+int pmu_adc_read(int adc_idx, int flags);
 
 /**
  * Handles interrupts from tpschrome
