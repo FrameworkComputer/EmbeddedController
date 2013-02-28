@@ -23,10 +23,11 @@
  * level.
  */
 #define BATTERY_LEVEL_CRITICAL		  5
-/* Shut down main processor when discharging and battery level < this level */
+/*
+ * Shut down main processor and/or hibernate EC when discharging and battery
+ * level < this level.
+ */
 #define BATTERY_LEVEL_SHUTDOWN		  3
-/* Hibernate EC immediately when discharging and battery level < this level */
-#define BATTERY_LEVEL_HIBERNATE_EC	  2
 
 #endif /* __CROS_EC_BATTERY_H */
 
