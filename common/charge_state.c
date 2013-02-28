@@ -348,7 +348,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 		return PWR_STATE_UNCHANGE;
 
 	if (!ctx->curr.ac)
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
@@ -356,7 +356,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 	/* Prevent charging in idle mode */
 	if (ctx->curr.charging_voltage ||
 	    ctx->curr.charging_current)
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 
 	if (batt->state_of_charge >= BATTERY_LEVEL_FULL)
 		return PWR_STATE_UNCHANGE;
@@ -420,10 +420,10 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	/* Check charger reset */
 	if (curr->charging_voltage == 0 ||
 	    curr->charging_current == 0)
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 
 	if (!curr->ac)
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 
 	if (batt->state_of_charge >= BATTERY_LEVEL_FULL) {
 		if (charger_set_voltage(0) || charger_set_current(0))
@@ -484,7 +484,7 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
 	if (ctx->curr.ac)
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 
 	if (ctx->curr.error)
 		return PWR_STATE_ERROR;
@@ -510,7 +510,7 @@ static enum power_state state_error(struct power_state_context *ctx)
 
 	if (!ctx->curr.error) {
 		logged_error = 0;
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 	}
 
 	/* Debug output */
@@ -620,27 +620,12 @@ void charge_state_machine_task(void)
 	int rv_setled = 0;
 	uint64_t last_setled_time = 0;
 
-	ctx->prev.state = PWR_STATE_INIT;
-	ctx->curr.state = PWR_STATE_INIT;
-	ctx->trickle_charging_time.val = 0;
-	ctx->battery = battery_get_info();
-	ctx->charger = charger_get_info();
-	ctx->battery_present = 1;
-
-	/* Set up LPC direct memmap */
-	ctx->memmap_batt_volt =
-		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
-	ctx->memmap_batt_rate =
-		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_RATE);
-	ctx->memmap_batt_cap =
-		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
-	ctx->memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
-
 	while (1) {
 		state_common(ctx);
 
 		switch (ctx->prev.state) {
 		case PWR_STATE_INIT:
+		case PWR_STATE_REINIT:
 			new_state = state_init(ctx);
 			break;
 		case PWR_STATE_IDLE0:
@@ -687,8 +672,9 @@ void charge_state_machine_task(void)
 		if (state_machine_force_idle &&
 		    ctx->prev.state != PWR_STATE_IDLE0 &&
 		    ctx->prev.state != PWR_STATE_IDLE &&
-		    ctx->prev.state != PWR_STATE_INIT)
-			new_state = PWR_STATE_INIT;
+		    ctx->prev.state != PWR_STATE_INIT &&
+		    ctx->prev.state != PWR_STATE_REINIT)
+			new_state = PWR_STATE_REINIT;
 
 		if (new_state) {
 			ctx->curr.state = new_state;
@@ -820,6 +806,28 @@ static void charge_hook(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);
+
+static void charge_init(void)
+{
+	struct power_state_context *ctx = &task_ctx;
+
+	ctx->prev.state = PWR_STATE_INIT;
+	ctx->curr.state = PWR_STATE_INIT;
+	ctx->trickle_charging_time.val = 0;
+	ctx->battery = battery_get_info();
+	ctx->charger = charger_get_info();
+	ctx->battery_present = 1;
+
+	/* Set up LPC direct memmap */
+	ctx->memmap_batt_volt =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
+	ctx->memmap_batt_rate =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_RATE);
+	ctx->memmap_batt_cap =
+		(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	ctx->memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
+}
+DECLARE_HOOK(HOOK_INIT, charge_init, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Host commands */

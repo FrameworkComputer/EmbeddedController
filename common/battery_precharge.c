@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -115,7 +115,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	if (curr->ac != ctx->prev.ac) {
 		ctx->trickle_charging_time.val = 0;
 		if (!curr->ac)
-			return PWR_STATE_INIT;
+			return PWR_STATE_REINIT;
 	}
 
 	/* Start timer */
@@ -127,7 +127,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	/* Check charger reset */
 	if (curr->charging_voltage == 0 || curr->charging_current == 0) {
 		ctx->trickle_charging_time.val = 0;
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 	}
 
 	/*
@@ -147,7 +147,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 	if (batt->desired_current > cinfo->current_min) {
 		trickle_charging_init();
 		ctx->trickle_charging_time.val = 0;
-		return PWR_STATE_INIT;
+		return PWR_STATE_REINIT;
 	}
 
 	/*
@@ -172,7 +172,7 @@ enum power_state trickle_charge(struct power_state_context *ctx)
 			/* Exit trickle charging state */
 			trickle_charging_init();
 			ctx->trickle_charging_time.val = 0;
-			return PWR_STATE_INIT;
+			return PWR_STATE_REINIT;
 		}
 		charger_set_voltage(curr->charging_voltage);
 		ctx->charger_update_time = get_time();
