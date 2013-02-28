@@ -5,6 +5,7 @@
 
 /* Power button and lid switch module for Chrome EC */
 
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -70,6 +71,11 @@ enum power_button_state {
 	PWRBTN_STATE_RELEASED,
 	/* Ignore next button release */
 	PWRBTN_STATE_EAT_RELEASE,
+	/*
+	 * Need to power on system after init, but waiting to find out if
+	 * sufficient battery power.
+	 */
+	PWRBTN_STATE_INIT_ON,
 	/* Forced pulse at EC boot due to keyboard controlled reset */
 	PWRBTN_STATE_BOOT_KB_RESET,
 	/* Power button pressed when chipset was off; stretching pulse */
@@ -86,6 +92,7 @@ static const char * const state_names[] = {
 	"lid-open",
 	"released",
 	"eat-release",
+	"init-on",
 	"recovery",
 	"was-off",
 };
@@ -131,6 +138,15 @@ static void update_other_switches(void)
 
 static void set_pwrbtn_to_pch(int high)
 {
+	/*
+	 * If the battery is discharging and low enough we'd shut down the
+	 * system, don't press the power button.
+	 */
+	if (!high && charge_want_shutdown()) {
+		CPRINTF("[%T PB PCH pwrbtn ignored due to battery level\n");
+		high = 1;
+	}
+
 	CPRINTF("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
 	gpio_set_level(GPIO_PCH_PWRBTNn, high);
 }
@@ -262,6 +278,7 @@ static void lid_switch_close(uint64_t tnow)
 static void power_button_changed(uint64_t tnow)
 {
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_KB_RESET ||
+	    pwrbtn_state == PWRBTN_STATE_INIT_ON ||
 	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
 	    pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
 		/* Ignore all power button changes during an initial pulse */
@@ -347,20 +364,7 @@ static void set_initial_pwrbtn_state(void)
 		 * it can verify the EC.
 		 */
 		CPRINTF("[%T PB init-on]\n");
-		chipset_exit_hard_off();
-		set_pwrbtn_to_pch(0);
-		tnext_state = get_time().val + PWRBTN_INITIAL_US;
-
-		if (debounced_power_pressed) {
-			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
-
-			if (reset_flags & RESET_FLAG_RESET_PIN)
-				pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
-			else
-				pwrbtn_state = PWRBTN_STATE_WAS_OFF;
-		} else {
-			pwrbtn_state = PWRBTN_STATE_RELEASED;
-		}
+		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 	}
 }
 
@@ -439,6 +443,36 @@ static void state_machine(uint64_t tnow)
 		set_pwrbtn_to_pch(1);
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
+	case PWRBTN_STATE_INIT_ON:
+		/*
+		 * Don't do anything until the charger knows the battery level.
+		 * Otherwise we could power on the AP only to shut it right
+		 * back down due to insufficient battery.
+		 */
+		if (charge_get_state() == PWR_STATE_INIT)
+			break;
+
+		/*
+		 * Power the system on if possible.  Gating due to insufficient
+		 * battery is handled inside set_pwrbtn_to_pch().
+		 */
+		chipset_exit_hard_off();
+		set_pwrbtn_to_pch(0);
+		tnext_state = get_time().val + PWRBTN_INITIAL_US;
+
+		if (debounced_power_pressed) {
+			*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+
+			if (system_get_reset_flags() & RESET_FLAG_RESET_PIN)
+				pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
+			else
+				pwrbtn_state = PWRBTN_STATE_WAS_OFF;
+		} else {
+			pwrbtn_state = PWRBTN_STATE_RELEASED;
+		}
+
+		break;
+
 	case PWRBTN_STATE_BOOT_KB_RESET:
 		/* Initial forced pulse is done.  Ignore the actual power
 		 * button until it's released, so that holding down the

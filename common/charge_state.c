@@ -683,6 +683,14 @@ void charge_state_machine_task(void)
 				state_name[new_state]);
 		}
 
+		/*
+		 * After first init, wake the switch task so it can
+		 * power on the AP if necessary.
+		 */
+		if (ctx->prev.state == PWR_STATE_INIT &&
+		    new_state != PWR_STATE_INIT)
+			task_wake(TASK_ID_SWITCH);
+
 		switch (new_state) {
 		case PWR_STATE_IDLE0:
 			/*
