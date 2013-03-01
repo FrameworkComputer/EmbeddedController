@@ -111,6 +111,7 @@ struct power_state_context {
 	timestamp_t charger_update_time;
 	timestamp_t trickle_charging_time;
 	timestamp_t voltage_debounce_time;
+	timestamp_t shutdown_warning_time;
 	int battery_present;
 };
 

@@ -34,6 +34,9 @@
 /* Time period between setting power LED */
 #define SET_LED_PERIOD (10 * SECOND)
 
+/* Timeout after AP battery shutdown warning before we kill the AP */
+#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
+
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
@@ -104,23 +107,23 @@ static void update_battery_info(void)
 
 /**
  * Prevent battery from going into deep discharge state
- *
- * @param hibernate_ec	Also force EC into its lowest-power state?
  */
-static void poweroff_wait_ac(int hibernate_ec)
+static void low_battery_shutdown(struct power_state_context *ctx)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		/*
-		 * Shut down the AP.  The EC will hibernate after the AP shuts
-		 * down.
-		 */
-		CPRINTF("[%T charge force shutdown due to low battery]\n");
-		chipset_force_shutdown();
-		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
-	} else if (hibernate_ec) {
-		/* If battery level is critical, hibernate the EC */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		/* AP is off, so shut down the EC now */
 		CPRINTF("[%T charge force EC hibernate due to low battery]\n");
 		system_hibernate(0, 0);
+	} else if (!ctx->shutdown_warning_time.val) {
+		/* Warn AP battery level is so low we'll shut down */
+		CPRINTF("[%T charge warn shutdown due to low battery]\n");
+		ctx->shutdown_warning_time = get_time();
+		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+	} else if (get_time().val > ctx->shutdown_warning_time.val +
+		   LOW_BATTERY_SHUTDOWN_TIMEOUT_US) {
+		/* Timeout waiting for AP to shut down, so kill it */
+		CPRINTF("[%T charge force shutdown due to low battery]\n");
+		chipset_force_shutdown();
 	}
 }
 
@@ -245,7 +248,7 @@ static int state_common(struct power_state_context *ctx)
 		     !(curr->error & F_BATTERY_STATE_OF_CHARGE)) ||
 		    (batt->voltage <= ctx->battery->voltage_min &&
 		     !(curr->error & F_BATTERY_VOLTAGE)))
-			poweroff_wait_ac(1);
+			low_battery_shutdown(ctx);
 	}
 
 	/* Check battery presence */
@@ -316,6 +319,9 @@ static enum power_state state_init(struct power_state_context *ctx)
 
 	/* Update static battery info */
 	update_battery_info();
+
+	/* Clear shutdown timer */
+	ctx->shutdown_warning_time.val = 0;
 
 	/* If AC is not present, switch to discharging state */
 	if (!ctx->curr.ac)
@@ -490,10 +496,13 @@ static enum power_state state_discharge(struct power_state_context *ctx)
 		return PWR_STATE_ERROR;
 
 	/* Handle overtemp in discharging state by powering off host */
-	if (batt->temperature > ctx->battery->temp_discharge_max ||
-	    batt->temperature < ctx->battery->temp_discharge_min)
-		poweroff_wait_ac(0);
-
+	if ((batt->temperature > ctx->battery->temp_discharge_max ||
+	     batt->temperature < ctx->battery->temp_discharge_min) &&
+	    chipset_in_state(CHIPSET_STATE_ON)) {
+		CPRINTF("[%T charge force shutdown due to battery temp]\n");
+		chipset_force_shutdown();
+		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+	}
 	return PWR_STATE_UNCHANGE;
 }
 
