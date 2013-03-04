@@ -31,9 +31,19 @@
 #define HARD_RESET_TIMEOUT_MS 5
 
 /* We use yellow LED instead of blue LED. Re-map colors here. */
+#define LED_COLOR_NONE   LP5562_COLOR_NONE
 #define LED_COLOR_GREEN  LP5562_COLOR_GREEN
 #define LED_COLOR_YELLOW LP5562_COLOR_BLUE
 #define LED_COLOR_RED    LP5562_COLOR_RED
+
+/* LED breathing program */
+uint8_t breathing_prog[] = {0x41, 0xff,  /* 0x80 -> 0x0 */
+			    0x41, 0x7f,  /* 0x0 -> 0x80 */
+			    0x7f, 0x00,  /* Wait ~4s */
+			    0x7f, 0x00,
+			    0x7f, 0x00,
+			    0x7f, 0x00,
+			    0x00, 0x00}; /* Repeat */
 
 /* GPIO interrupt handlers prototypes */
 #ifndef CONFIG_TASK_GAIAPOWER
@@ -299,11 +309,38 @@ int board_get_ac(void)
 	       adc_read_channel(ADC_CH_USB_VBUS_SNS) >= 4300;
 }
 
+int board_led_breathing(int enabled)
+{
+	int ret = 0;
+
+	if (!enabled) {
+		return lp5562_engine_control(LP5562_ENG_HOLD,
+					     LP5562_ENG_HOLD,
+					     LP5562_ENG_HOLD);
+	}
+
+	ret |= lp5562_engine_load(LP5562_ENG_SEL_1,
+				  breathing_prog,
+				  sizeof(breathing_prog));
+	ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
+				 LP5562_ENG_SEL_NONE,
+				 LP5562_ENG_SEL_1);
+	ret |= lp5562_engine_control(LP5562_ENG_RUN,
+				     LP5562_ENG_HOLD,
+				     LP5562_ENG_HOLD);
+
+	return ret;
+}
+
 int board_battery_led(enum charging_state state)
 {
 	int current;
 	int desired_current;
-	uint32_t color = LED_COLOR_RED;
+	static uint32_t color = LED_COLOR_RED;
+	static int breathing;
+	int new_color = LED_COLOR_RED;
+	int new_breathing = 0;
+	int ret = 0;
 
 	/*
 	 * LED power is controlled by accessory detection. We only
@@ -311,30 +348,47 @@ int board_battery_led(enum charging_state state)
 	 */
 	switch (state) {
 	case ST_IDLE:
-		color = LED_COLOR_GREEN;
+		new_color = LED_COLOR_GREEN;
 		break;
-	case ST_DISCHARGING: /* Battery assist */
+	case ST_DISCHARGING:
+		new_color = LED_COLOR_NONE;
+		break;
 	case ST_PRE_CHARGING:
-		color = LED_COLOR_YELLOW;
+		new_color = LED_COLOR_YELLOW;
 		break;
 	case ST_CHARGING:
 		if (battery_current(&current) ||
 		    battery_desired_current(&desired_current)) {
 			/* Cannot talk to the battery. Set LED to red. */
-			color = LED_COLOR_RED;
+			new_color = LED_COLOR_RED;
 			break;
 		}
+
+		if (current < 0 && desired_current > 0) { /* Battery assist */
+			new_breathing = 1;
+			new_color = LED_COLOR_NONE;
+			break;
+		}
+
 		if (current && desired_current)
-			color = LED_COLOR_YELLOW;
+			new_color = LED_COLOR_YELLOW;
 		else
-			color = LED_COLOR_GREEN;
+			new_color = LED_COLOR_GREEN;
 		break;
 	case ST_CHARGING_ERROR:
-		color = LED_COLOR_RED;
+		new_color = LED_COLOR_RED;
 		break;
 	}
 
-	return lp5562_set_color(color);
+	if (new_breathing != breathing) {
+		ret |= board_led_breathing(new_breathing);
+		breathing = new_breathing;
+	}
+	if (new_color != color) {
+		ret |= lp5562_set_color(new_color);
+		color = new_color;
+	}
+	return ret;
 }
 
 /*****************************************************************************/

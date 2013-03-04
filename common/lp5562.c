@@ -21,6 +21,11 @@ inline int lp5562_write(uint8_t reg, uint8_t val)
 	return i2c_write8(I2C_PORT_HOST, LP5562_I2C_ADDR, reg, val);
 }
 
+inline int lp5562_read(uint8_t reg, int *val)
+{
+	return i2c_read8(I2C_PORT_HOST, LP5562_I2C_ADDR, reg, val);
+}
+
 int lp5562_set_color(uint32_t rgb)
 {
 	int ret = 0;
@@ -30,6 +35,51 @@ int lp5562_set_color(uint32_t rgb)
 	ret |= lp5562_write(LP5562_REG_R_PWM, (rgb >> 16) & 0xff);
 
 	return ret;
+}
+
+int lp5562_set_engine(uint8_t r, uint8_t g, uint8_t b)
+{
+	return lp5562_write(LP5562_REG_LED_MAP, (r << 4) | (g << 2) | b);
+}
+
+int lp5562_engine_load(int engine, uint8_t *program, int size)
+{
+	int prog_addr = LP5562_REG_ENG_PROG(engine);
+	int i, ret, val;
+	int shift = 6 - engine * 2;
+
+	ret = lp5562_read(LP5562_REG_OP_MODE, &val);
+	if (ret)
+		return ret;
+	val &= ~(0x3 << shift);
+	val |= 0x1 << shift;
+	ret = lp5562_write(LP5562_REG_OP_MODE, val);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < size; ++i) {
+		ret = lp5562_write(prog_addr + i, program[i]);
+		if (ret)
+			return ret;
+	}
+
+	val &= ~(0x3 << shift);
+	val |= 0x2 << shift;
+	ret = lp5562_write(LP5562_REG_OP_MODE, val);
+
+	return ret;
+}
+
+int lp5562_engine_control(int eng1, int eng2, int eng3)
+{
+	int ret, val;
+
+	ret = lp5562_read(LP5562_REG_ENABLE, &val);
+	if (ret)
+		return ret;
+	val &= 0xc0;
+	val |= (eng1 << 4) | (eng2 << 2) | eng3;
+	return lp5562_write(LP5562_REG_ENABLE, val);
 }
 
 int lp5562_poweron(void)
