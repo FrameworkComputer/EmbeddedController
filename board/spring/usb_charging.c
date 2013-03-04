@@ -39,6 +39,7 @@
 #define I_LIMIT_3000MA  0
 
 /* PWM control loop parameters */
+#define PWM_CTRL_MAX_DUTY	96 /* Minimum current for dead battery */
 #define PWM_CTRL_BEGIN_OFFSET	30
 #define PWM_CTRL_OC_MARGIN	15
 #define PWM_CTRL_OC_DETECT_TIME	(800 * MSEC)
@@ -249,6 +250,8 @@ void board_pwm_nominal_duty_cycle(int percent)
 
 	if (battery_current(&dummy))
 		board_pwm_duty_cycle(percent);
+	else if (percent + PWM_CTRL_BEGIN_OFFSET > PWM_CTRL_MAX_DUTY)
+		board_pwm_duty_cycle(PWM_CTRL_MAX_DUTY);
 	else
 		board_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
 	nominal_pwm_duty = percent;
