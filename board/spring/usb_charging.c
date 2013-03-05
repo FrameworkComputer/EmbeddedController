@@ -56,7 +56,7 @@ static int current_pwm_duty;
 static enum {
 	LIMIT_NORMAL,
 	LIMIT_AGGRESSIVE,
-} current_limit_mode;
+} current_limit_mode = LIMIT_AGGRESSIVE;
 
 /*
  * Last time we see a power source removed. Also records the power source
