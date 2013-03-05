@@ -304,9 +304,22 @@ int board_pmu_init(void)
 
 int board_get_ac(void)
 {
-	/* UVLO is 4.1V. We consider AC bad when its voltage drops below 4.3V */
-	return gpio_get_level(GPIO_BOOST_EN) &&
-	       adc_read_channel(ADC_CH_USB_VBUS_SNS) >= 4300;
+	static int last_vbus;
+	int vbus, vbus_good;
+
+	if (!gpio_get_level(GPIO_BOOST_EN))
+		return 0;
+
+	/*
+	 * UVLO is 4.1V. We consider AC bad when its voltage drops below 4.2V
+	 * for two consecutive samples. This is to give PWM a chance to bring
+	 * voltage up.
+	 */
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	vbus_good = (vbus >= 4200 || last_vbus >= 4200);
+	last_vbus = vbus;
+
+	return vbus_good;
 }
 
 int board_led_breathing(int enabled)

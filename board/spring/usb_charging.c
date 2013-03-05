@@ -46,6 +46,7 @@
 #define PWM_CTRL_OC_BACK_OFF	3
 #define PWM_CTRL_STEP_DOWN	2
 #define PWM_CTRL_STEP_UP	5
+#define PWM_CTRL_VBUS_HARD_LOW	4400
 #define PWM_CTRL_VBUS_LOW	4500
 #define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
 
@@ -214,6 +215,14 @@ static int board_pwm_check_lower_bound(void)
 			current_pwm_duty > 0);
 }
 
+static int board_pwm_check_vbus_low(int vbus, int battery_current)
+{
+	if (battery_current >= 0)
+		return vbus < PWM_CTRL_VBUS_LOW && current_pwm_duty < 100;
+	else
+		return vbus < PWM_CTRL_VBUS_HARD_LOW && current_pwm_duty < 100;
+}
+
 static void board_pwm_tweak(void)
 {
 	int vbus, current;
@@ -227,14 +236,13 @@ static void board_pwm_tweak(void)
 	/*
 	 * If VBUS voltage is too low:
 	 *   - If battery is discharging, throttling more is going to draw
-	 *     more current from the battery, so do nothing in this case.
+	 *     more current from the battery, so do nothing unless VBUS is
+	 *     about to be lower than AC good threshold.
 	 *   - Otherwise, throttle input current to raise VBUS voltage.
 	 * If VBUS voltage is high enough, allow more current until we hit
 	 * current limit target.
 	 */
-	if (vbus < PWM_CTRL_VBUS_LOW &&
-	    current_pwm_duty < 100 &&
-	    current >= 0) {
+	if (board_pwm_check_vbus_low(vbus, current)) {
 		board_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
 		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
 	} else if (vbus > PWM_CTRL_VBUS_HIGH && board_pwm_check_lower_bound()) {
