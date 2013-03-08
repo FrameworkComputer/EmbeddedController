@@ -69,6 +69,7 @@ enum FASTCHARGE_TIMEOUT {
 };
 
 #define FET_BACKLIGHT 1
+#define FET_VIDEO     2
 #define FET_WWAN      3
 #define FET_CAMERA    5
 #define FET_LCD_PANEL 6
