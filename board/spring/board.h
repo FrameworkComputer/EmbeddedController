@@ -41,7 +41,8 @@
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 
-/* EC drives 13 outputs to keyboard matrix */
+/* EC drives 13 outputs to the keyboard matrix and reads 8 inputs/interrupts */
+#define KB_INPUTS 8
 #define KB_OUTPUTS 13
 
 /* Charging */

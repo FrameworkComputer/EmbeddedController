@@ -32,8 +32,6 @@ enum {
 	/* 0 ~ 12 for the corresponding output */
 };
 
-#define KB_INPUTS 8
-
 /* Mask of external interrupts on input lines */
 static unsigned int irq_mask;
 
