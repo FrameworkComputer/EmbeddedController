@@ -36,10 +36,10 @@ enum COL_INDEX {
 
 #define KB_INPUTS 8
 
-#define SCAN_TIME_COUNT 32
+/* Mask of external interrupts on input lines */
+static unsigned int irq_mask;
 
-/* 15:14, 12:8, 2 */
-#define IRQ_MASK 0xdf04
+#define SCAN_TIME_COUNT 32
 
 static struct mutex scanning_enabled;
 
@@ -228,15 +228,15 @@ void setup_interrupts(void)
 	pr_before = STM32_EXTI_PR;
 	select_column(COL_ASSERT_ALL);
 	pr_after = STM32_EXTI_PR;
-	STM32_EXTI_PR |= ((pr_after & ~pr_before) & IRQ_MASK);
+	STM32_EXTI_PR |= ((pr_after & ~pr_before) & irq_mask);
 
-	STM32_EXTI_IMR |= IRQ_MASK;	/* 1: unmask interrupt */
+	STM32_EXTI_IMR |= irq_mask;	/* 1: unmask interrupt */
 }
 
 
 void enter_polling_mode(void)
 {
-	STM32_EXTI_IMR &= ~IRQ_MASK;	/* 0: mask interrupts */
+	STM32_EXTI_IMR &= ~irq_mask;	/* 0: mask interrupts */
 	select_column(COL_TRI_STATE_ALL);
 }
 
@@ -579,6 +579,14 @@ static void scan_keyboard(void)
 	}
 }
 
+static void set_irq_mask(void)
+{
+	int i;
+
+	for (i = GPIO_KB_IN00; i < GPIO_KB_IN00 + KB_INPUTS; i++)
+		irq_mask |= gpio_list[i].mask;
+}
+
 void keyboard_scan_task(void)
 {
 	/* Enable interrupts for keyboard matrix inputs */
@@ -590,6 +598,9 @@ void keyboard_scan_task(void)
 	gpio_enable_interrupt(GPIO_KB_IN05);
 	gpio_enable_interrupt(GPIO_KB_IN06);
 	gpio_enable_interrupt(GPIO_KB_IN07);
+
+	/* Determine EXTI_PR mask to use for the board */
+	set_irq_mask();
 
 	print_state(debounced_state, "init state");
 
