@@ -5,8 +5,6 @@
 
 /*
  * Keyboard scanner module for Chrome EC
- *
- * TODO: Finish cleaning up nomenclature (cols/rows/inputs/outputs),
  */
 
 #include "atomic.h"
@@ -27,11 +25,11 @@
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
-/* used for select_column() */
-enum COL_INDEX {
-	COL_ASSERT_ALL = -2,
-	COL_TRI_STATE_ALL = -1,
-	/* 0 ~ 12 for the corresponding column */
+/* used for assert_output() */
+enum {
+	OUTPUT_ASSERT_ALL = -2,
+	OUTPUT_TRI_STATE_ALL = -1,
+	/* 0 ~ 12 for the corresponding output */
 };
 
 #define KB_INPUTS 8
@@ -179,7 +177,7 @@ static int kb_fifo_remove(uint8_t *buffp)
 	return EC_SUCCESS;
 }
 
-static void select_column(int col)
+static void assert_output(int out)
 {
 	int i, done = 0;
 
@@ -191,18 +189,18 @@ static void select_column(int col)
 			if (gpio_list[j].port != ports[i])
 				continue;
 
-			if (col == COL_ASSERT_ALL) {
-				/* drive low (clear output data) */
+			if (out == OUTPUT_ASSERT_ALL) {
+				/* drive low (clear bit) */
 				bsrr |= gpio_list[j].mask << 16;
-			} else if (col == COL_TRI_STATE_ALL) {
-				/* put column in hi-Z state (set output data) */
+			} else if (out == OUTPUT_TRI_STATE_ALL) {
+				/* put output in hi-Z state (set bit) */
 				bsrr |= gpio_list[j].mask;
 			} else {
-				/* drive specified column low, others => hi-Z */
-				if (j - GPIO_KB_OUT00 == col) {
+				/* drive specified output low, others => hi-Z */
+				if (j - GPIO_KB_OUT00 == out) {
 					/* to avoid conflict, tri-state all
-					 * columns first, then assert column */
-					select_column(COL_TRI_STATE_ALL);
+					 * outputs first, then assert output */
+					assert_output(OUTPUT_TRI_STATE_ALL);
 					bsrr |= gpio_list[j].mask << 16;
 					done = 1;
 					break;
@@ -218,7 +216,7 @@ static void select_column(int col)
 	}
 }
 
-/* Set up columns so that we will get an interrupt when any key changed */
+/* Set up outputs so that we will get an interrupt when any key changed */
 void setup_interrupts(void)
 {
 	uint32_t pr_before, pr_after;
@@ -226,7 +224,7 @@ void setup_interrupts(void)
 	/* Assert all outputs would trigger un-wanted interrupts.
 	 * Clear them before enable interrupt. */
 	pr_before = STM32_EXTI_PR;
-	select_column(COL_ASSERT_ALL);
+	assert_output(OUTPUT_ASSERT_ALL);
 	pr_after = STM32_EXTI_PR;
 	STM32_EXTI_PR |= ((pr_after & ~pr_before) & irq_mask);
 
@@ -237,7 +235,7 @@ void setup_interrupts(void)
 void enter_polling_mode(void)
 {
 	STM32_EXTI_IMR &= ~irq_mask;	/* 0: mask interrupts */
-	select_column(COL_TRI_STATE_ALL);
+	assert_output(OUTPUT_TRI_STATE_ALL);
 }
 
 /**
@@ -288,14 +286,14 @@ static void print_state(const uint8_t *state, const char *msg)
 }
 
 /**
- * Read the raw row state for the currently selected column
+ * Read the raw input state for the currently selected output
  *
- * It is assumed that the column is already selected by the scanning
- * hardware. The column number is only used by test code.
+ * It is assumed that the output is already selected by the scanning
+ * hardware. The output number is only used by test code.
  *
- * @return row state, one bit for each row
+ * @return input state, one bit for each input
  */
-static uint8_t read_raw_row_state(void)
+static uint8_t read_raw_input_state(void)
 {
 	uint16_t tmp;
 	uint8_t r = 0;
@@ -305,7 +303,7 @@ static uint8_t read_raw_row_state(void)
 	 * the job in 3 shift/or operations.
 	 */
 	tmp = STM32_GPIO_IDR(C);
-	/* KB_COL00:04 = PC8:12 */
+	/* KB_OUT00:04 = PC8:12 */
 	if (tmp & (1 << 8))
 		r |= 1 << 0;
 	if (tmp & (1 << 9))
@@ -316,14 +314,14 @@ static uint8_t read_raw_row_state(void)
 		r |= 1 << 3;
 	if (tmp & (1 << 12))
 		r |= 1 << 4;
-	/* KB_COL05:06 = PC14:15 */
+	/* KB_OUT05:06 = PC14:15 */
 	if (tmp & (1 << 14))
 		r |= 1 << 5;
 	if (tmp & (1 << 15))
 		r |= 1 << 6;
 
 	tmp = STM32_GPIO_IDR(D);
-	/* KB_COL07 = PD2 */
+	/* KB_OUT07 = PD2 */
 	if (tmp & (1 << 2))
 		r |= 1 << 7;
 
@@ -350,11 +348,11 @@ static int read_matrix(uint8_t *state)
 	int pressed = 0;
 
 	for (c = 0; c < KB_OUTPUTS; c++) {
-		/* Select column, then wait a bit for it to settle */
-		select_column(c);
+		/* Assert output, then wait a bit for it to settle */
+		assert_output(c);
 		udelay(config.output_settle_us);
 
-		r = read_raw_row_state();
+		r = read_raw_input_state();
 
 #ifdef CONFIG_KEYBOARD_TEST
 		/* Use simulated keyscan sequence instead if testing active */
@@ -370,7 +368,7 @@ static int read_matrix(uint8_t *state)
 		state[c] = r;
 		pressed |= r;
 	}
-	select_column(COL_TRI_STATE_ALL);
+	assert_output(OUTPUT_TRI_STATE_ALL);
 
 	return pressed ? 1 : 0;
 }
@@ -516,7 +514,7 @@ static int check_recovery_key(const uint8_t *state)
 void keyboard_scan_init(void)
 {
 	/* Tri-state (put into Hi-Z) the outputs */
-	select_column(COL_TRI_STATE_ALL);
+	assert_output(OUTPUT_TRI_STATE_ALL);
 
 	/* Initialize raw state */
 	read_matrix(debounced_state);
@@ -541,7 +539,7 @@ static void scan_keyboard(void)
 	 * re-start immediatly polling instead of waiting
 	 * for the next interrupt.
 	 */
-	if (!read_raw_row_state()) {
+	if (!read_raw_input_state()) {
 #ifdef CONFIG_KEYBOARD_TEST
 		task_wait_event(keyscan_seq_next_event_delay());
 #else
@@ -608,7 +606,7 @@ void keyboard_scan_task(void)
 		if (config.flags & EC_MKBP_FLAGS_ENABLE) {
 			scan_keyboard();
 		} else {
-			select_column(COL_TRI_STATE_ALL);
+			assert_output(OUTPUT_TRI_STATE_ALL);
 			task_wait_event(-1);
 		}
 	}
@@ -674,7 +672,7 @@ void keyboard_enable_scanning(int enable)
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
 		mutex_lock(&scanning_enabled);
-		select_column(COL_TRI_STATE_ALL);
+		assert_output(OUTPUT_TRI_STATE_ALL);
 	}
 }
 
