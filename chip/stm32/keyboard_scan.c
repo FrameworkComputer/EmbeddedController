@@ -5,6 +5,12 @@
 
 /*
  * Keyboard scanner module for Chrome EC
+ *
+ * To make this code portable, we rely heavily on looping over the keyboard
+ * input and output entries in the board's gpio_list[]. Each set of inputs or
+ * outputs must be listed in consecutive, increasing order so that scan loops
+ * can iterate beginning at KB_IN00 or KB_OUT00 for however many GPIOs are
+ * utilized (KB_INPUTS or KB_OUTPUTS).
  */
 
 #include "atomic.h"
