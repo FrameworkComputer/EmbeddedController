@@ -289,40 +289,26 @@ static void print_state(const uint8_t *state, const char *msg)
  */
 static uint8_t read_raw_input_state(void)
 {
-	uint16_t tmp;
-	uint8_t r = 0;
+	int i;
+	unsigned int port, prev_port = 0;
+	uint8_t state = 0;
+	uint16_t port_val = 0;
 
-	/*
-	 * TODO(sjg@chromium.org): This code can be improved by doing
-	 * the job in 3 shift/or operations.
-	 */
-	tmp = STM32_GPIO_IDR(C);
-	/* KB_OUT00:04 = PC8:12 */
-	if (tmp & (1 << 8))
-		r |= 1 << 0;
-	if (tmp & (1 << 9))
-		r |= 1 << 1;
-	if (tmp & (1 << 10))
-		r |= 1 << 2;
-	if (tmp & (1 << 11))
-		r |= 1 << 3;
-	if (tmp & (1 << 12))
-		r |= 1 << 4;
-	/* KB_OUT05:06 = PC14:15 */
-	if (tmp & (1 << 14))
-		r |= 1 << 5;
-	if (tmp & (1 << 15))
-		r |= 1 << 6;
+	for (i = 0; i < KB_INPUTS; i++) {
+		port = gpio_list[GPIO_KB_IN00 + i].port;
+		if (port != prev_port) {
+			port_val = STM32_GPIO_IDR_OFF(port);
+			prev_port = port;
+		}
 
-	tmp = STM32_GPIO_IDR(D);
-	/* KB_OUT07 = PD2 */
-	if (tmp & (1 << 2))
-		r |= 1 << 7;
+		if (port_val & gpio_list[GPIO_KB_IN00 + i].mask)
+			state |= 1 << i;
+	}
 
 	/* Invert it so 0=not pressed, 1=pressed */
-	r ^= 0xff;
+	state ^= 0xff;
 
-	return r;
+	return state;
 }
 
 /**
