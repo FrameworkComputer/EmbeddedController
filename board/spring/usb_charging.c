@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "gpio.h"
 #include "lp5562.h"
+#include "keyboard_scan.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
 #include "smart_battery.h"
@@ -419,6 +420,8 @@ static void usb_device_change(int dev_type)
 		CPRINTF("Unknown with power]\n");
 	else
 		CPRINTF("Unknown]\n");
+
+	keyboard_send_battery_key();
 
 	current_dev_type = dev_type;
 }

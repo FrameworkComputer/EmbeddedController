@@ -38,4 +38,7 @@ void keyboard_clear_state(void);
 /* Enables/disables keyboard matrix scan. */
 void keyboard_enable_scanning(int enable);
 
+/* Sends KEY_BATTERY keystroke */
+void keyboard_send_battery_key(void);
+
 #endif  /* __CROS_EC_KEYBOARD_SCAN_H */
