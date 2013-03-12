@@ -12,11 +12,11 @@
 
 #include "comm-host.h"
 #include "lightbar.h"
+#include "lock/gec_lock.h"
 
 /* Handy tricks */
 #define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
 
 #define LB_SIZES(SUBCMD) { \
 		sizeof(((struct ec_params_lightbar *)0)->SUBCMD) \
@@ -40,6 +40,16 @@ static const struct {
 	LB_SIZES(set_params)
 };
 #undef LB_SIZES
+
+
+#define GEC_LOCK_TIMEOUT_SECS	30  /* 30 secs */
+#define LOCK do { \
+	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) { \
+		fprintf(stderr, "Could not acquire GEC lock.\n"); \
+		exit(1); \
+	} } while (0)
+
+#define UNLOCK do { release_gec_lock(); } while (0)
 
 
 static void lb_cmd_noargs(enum lightbar_command cmd)
@@ -133,6 +143,7 @@ void wait_for_ec_to_stop(void)
 			       lb_command_paramcount[param.cmd].outsize);
 		if (count++ > 10) {
 			fprintf(stderr, "EC isn't responding\n");
+			UNLOCK;
 			exit(1);
 		}
 	} while (r < 0 && resp.get_seq.num != LIGHTBAR_STOP);
@@ -144,13 +155,18 @@ int main(int argc, char **argv)
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
-	if (comm_init() < 0)
-		return -3;
+	LOCK;
+
+	if (comm_init() < 0) {
+		fprintf(stderr, "comm_init() failed\n");
+		UNLOCK;
+		return 2;
+	}
 
 	/* Tell the EC to let us drive. */
 	lightbar_sequence(LIGHTBAR_STOP);
 
-	/* Wait until it's listening */
+	/* Wait until it's listening (or die trying) */
 	wait_for_ec_to_stop();
 
 	/* Initialize it */
@@ -159,20 +175,26 @@ int main(int argc, char **argv)
 	lightbar_brightness(0xff);
 	lightbar_on();
 
-	/* Play a bit */
+	UNLOCK;
 
+	/* Play a bit */
 	for (i = 0; i <= 255; i += 4) {
+		LOCK;
 		lightbar_rgb(4, 0, i, 0);
+		UNLOCK;
 		usleep(100000);
 	}
 
 	for (; i >= 0; i -= 4) {
+		LOCK;
 		lightbar_rgb(4, i, 0, 0);
+		UNLOCK;
 		usleep(100000);
 	}
 
 	/* Let the EC drive again */
+	LOCK;
 	lightbar_sequence(LIGHTBAR_RUN);
-
+	UNLOCK;
 	return 0;
 }
