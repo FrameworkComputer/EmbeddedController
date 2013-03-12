@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_VERSION_H
 #define __CROS_EC_VERSION_H
 
+#include "common.h"
+
 #define CROS_EC_VERSION_COOKIE1 0xce112233
 #define CROS_EC_VERSION_COOKIE2 0xce445566
 
