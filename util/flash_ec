@@ -104,6 +104,14 @@ function servo_restore() {
 	done
 }
 
+function free_pty() {
+	pids=$(lsof -F p 2>/dev/null -- $1 | cut -d'p' -f2)
+	if [ "${pids}" != "" ]; then
+		kill -9 ${pids}
+		info "You'll need to re-launch console on $1"
+	fi
+}
+
 # Board specific flashing scripts
 
 function flash_daisy() {
@@ -118,6 +126,7 @@ function flash_daisy() {
 	fi
 
 	info "Using serial flasher : ${STM32MON}"
+	free_pty ${EC_UART}
 
 	dut_control uart1_en:on
 	dut_control uart1_parity:even
