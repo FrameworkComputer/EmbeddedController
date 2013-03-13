@@ -29,4 +29,24 @@ int adc_read_channel(enum adc_channel ch);
  */
 int adc_read_all_channels(int *data);
 
+/**
+ * Enable ADC watchdog. Note that interrupts might come in repeatedly very
+ * quickly when ADC output goes out of the accepted range.
+ *
+ * @param ain_id	The AIN to be watched by the watchdog.
+ * @param high		The high threshold that the watchdog would trigger
+ *			an interrupt when exceeded.
+ * @param low		The low threshold.
+ *
+ * @return		EC_SUCCESS, or non-zero if any error.
+ */
+int adc_enable_watchdog(int ain_id, int high, int low);
+
+/**
+ * Disable ADC watchdog.
+ *
+ * @return		EC_SUCCESS, or non-zero if any error.
+ */
+int adc_disable_watchdog(void);
+
 #endif  /* __CROS_EC_ADC_H */

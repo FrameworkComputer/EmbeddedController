@@ -16,6 +16,8 @@
 
 struct mutex adc_lock;
 
+static int watchdog_ain_id;
+
 static const struct dma_option dma_adc_option = {
 	DMAC_ADC, (void *)&STM32_ADC_DR,
 	DMA_MSIZE_HALF_WORD | DMA_PSIZE_HALF_WORD
@@ -81,15 +83,98 @@ static inline int adc_conversion_ended(void)
 	return STM32_ADC_SR & (1 << 1);
 }
 
-int adc_read_channel(enum adc_channel ch)
+static int adc_watchdog_enabled(void)
 {
-	const struct adc_t *adc = adc_channels + ch;
-	int value;
+	return STM32_ADC_CR1 & (1 << 23);
+}
+
+static int adc_enable_watchdog_no_lock(void)
+{
+	/* Fail if watchdog already enabled */
+	if (adc_watchdog_enabled())
+		return EC_ERROR_UNKNOWN;
+
+	/* Set channel */
+	STM32_ADC_CR1 = (STM32_ADC_CR1 & ~0x1f) | watchdog_ain_id;
+
+	/* AWDSGL=1, SCAN=1, AWDIE=1, AWDEN=1 */
+	STM32_ADC_CR1 |= (1 << 9) | (1 << 8) | (1 << 6) | (1 << 23);
+
+	/* Disable DMA */
+	STM32_ADC_CR2 &= ~(1 << 8);
+
+	/* CONT=1 */
+	STM32_ADC_CR2 |= (1 << 1);
+
+	/* Start conversion */
+	STM32_ADC_CR2 |= (1 << 0);
+
+	return EC_SUCCESS;
+}
+
+int adc_enable_watchdog(int ain_id, int high, int low)
+{
+	int ret;
 
 	if (!adc_powered())
 		return EC_ERROR_UNKNOWN;
 
 	mutex_lock(&adc_lock);
+
+	watchdog_ain_id = ain_id;
+
+	/* Set thresholds */
+	STM32_ADC_HTR = high & 0xfff;
+	STM32_ADC_LTR = low & 0xfff;
+
+	ret = adc_enable_watchdog_no_lock();
+	mutex_unlock(&adc_lock);
+	return ret;
+}
+
+static int adc_disable_watchdog_no_lock(void)
+{
+	/* Fail if watchdog not running */
+	if (!adc_watchdog_enabled())
+		return EC_ERROR_UNKNOWN;
+
+	/* AWDEN=0 */
+	STM32_ADC_CR1 &= ~(1 << 23);
+
+	/* CONT=0 */
+	STM32_ADC_CR2 &= ~(1 << 1);
+
+	return EC_SUCCESS;
+}
+
+int adc_disable_watchdog(void)
+{
+	int ret;
+
+	if (!adc_powered())
+		return EC_ERROR_UNKNOWN;
+
+	mutex_lock(&adc_lock);
+	ret = adc_disable_watchdog_no_lock();
+	mutex_unlock(&adc_lock);
+	return ret;
+}
+
+int adc_read_channel(enum adc_channel ch)
+{
+	const struct adc_t *adc = adc_channels + ch;
+	int value;
+	int restore_watchdog = 0;
+
+	if (!adc_powered())
+		return EC_ERROR_UNKNOWN;
+
+	mutex_lock(&adc_lock);
+
+	if (adc_watchdog_enabled()) {
+		restore_watchdog = 1;
+		adc_disable_watchdog_no_lock();
+	}
 
 	adc_configure(adc->channel);
 
@@ -104,6 +189,9 @@ int adc_read_channel(enum adc_channel ch)
 		;
 	value = STM32_ADC_DR & ADC_READ_MAX;
 
+	if (restore_watchdog)
+		adc_enable_watchdog_no_lock();
+
 	mutex_unlock(&adc_lock);
 	return value * adc->factor_mul / adc->factor_div + adc->shift;
 }
@@ -113,11 +201,18 @@ int adc_read_all_channels(int *data)
 	int i;
 	int16_t raw_data[ADC_CH_COUNT];
 	const struct adc_t *adc;
+	int restore_watchdog = 0;
+	int ret = EC_SUCCESS;
 
 	if (!adc_powered())
 		return EC_ERROR_UNKNOWN;
 
 	mutex_lock(&adc_lock);
+
+	if (adc_watchdog_enabled()) {
+		restore_watchdog = 1;
+		adc_disable_watchdog_no_lock();
+	}
 
 	adc_configure_all();
 
@@ -127,8 +222,8 @@ int adc_read_all_channels(int *data)
 	STM32_ADC_CR2 |= (1 << 0); /* ADON */
 
 	if (dma_wait(DMAC_ADC)) {
-		mutex_unlock(&adc_lock);
-		return EC_ERROR_UNKNOWN;
+		ret = EC_ERROR_UNKNOWN;
+		goto exit_all_channels;
 	}
 
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
@@ -137,8 +232,12 @@ int adc_read_all_channels(int *data)
 			  adc->shift;
 	}
 
+exit_all_channels:
+	if (restore_watchdog)
+		adc_enable_watchdog_no_lock();
+
 	mutex_unlock(&adc_lock);
-	return EC_SUCCESS;
+	return ret;
 }
 
 static void adc_init(void)
