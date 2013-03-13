@@ -69,11 +69,7 @@ struct kbc_gpio {
 	int pin;
 };
 
-#if defined(BOARD_daisy) || defined(BOARD_snow) || defined(BOARD_spring)
-static const uint32_t ports[] = { GPIO_B, GPIO_C, GPIO_D };
-#else
-#error "Need to specify GPIO ports used by keyboard"
-#endif
+static const uint32_t kb_out_ports[] = { KB_OUT_PORT_LIST };
 
 /* Provide a default function in case the board doesn't have one */
 void __board_keyboard_suppress_noise(void)
@@ -179,12 +175,12 @@ static void assert_output(int out)
 {
 	int i, done = 0;
 
-	for (i = 0; i < ARRAY_SIZE(ports); i++) {
+	for (i = 0; i < ARRAY_SIZE(kb_out_ports); i++) {
 		uint32_t bsrr = 0;
 		int j;
 
 		for (j = GPIO_KB_OUT00; j <= GPIO_KB_OUT12; j++) {
-			if (gpio_list[j].port != ports[i])
+			if (gpio_list[j].port != kb_out_ports[i])
 				continue;
 
 			if (out == OUTPUT_ASSERT_ALL) {
@@ -207,7 +203,7 @@ static void assert_output(int out)
 		}
 
 		if (bsrr)
-			STM32_GPIO_BSRR_OFF(ports[i]) = bsrr;
+			STM32_GPIO_BSRR_OFF(kb_out_ports[i]) = bsrr;
 
 		if (done)
 			break;

@@ -41,6 +41,7 @@
 /* EC drives 13 outputs to the keyboard matrix and reads 8 inputs/interrupts */
 #define KB_INPUTS 8
 #define KB_OUTPUTS 13
+#define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
 #define CONFIG_SMART_BATTERY
