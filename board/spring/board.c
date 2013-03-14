@@ -319,21 +319,24 @@ int board_led_breathing(int enabled)
 {
 	int ret = 0;
 
-	if (!enabled) {
-		return lp5562_engine_control(LP5562_ENG_HOLD,
+	if (enabled) {
+		ret |= lp5562_engine_load(LP5562_ENG_SEL_1,
+					  breathing_prog,
+					  sizeof(breathing_prog));
+		ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_1);
+		ret |= lp5562_engine_control(LP5562_ENG_RUN,
 					     LP5562_ENG_HOLD,
 					     LP5562_ENG_HOLD);
+	} else {
+		ret |= lp5562_engine_control(LP5562_ENG_HOLD,
+					     LP5562_ENG_HOLD,
+					     LP5562_ENG_HOLD);
+		ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_NONE);
 	}
-
-	ret |= lp5562_engine_load(LP5562_ENG_SEL_1,
-				  breathing_prog,
-				  sizeof(breathing_prog));
-	ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
-				 LP5562_ENG_SEL_NONE,
-				 LP5562_ENG_SEL_1);
-	ret |= lp5562_engine_control(LP5562_ENG_RUN,
-				     LP5562_ENG_HOLD,
-				     LP5562_ENG_HOLD);
 
 	return ret;
 }
