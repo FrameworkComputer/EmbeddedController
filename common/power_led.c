@@ -1,17 +1,27 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Power LED control for Chrome EC */
 
+#include "charge_state.h"
 #include "console.h"
+#include "hooks.h"
 #include "onewire.h"
-#include "power_led.h"
+#include "switch.h"
 #include "timer.h"
 #include "util.h"
 
 #define POWERLED_RETRIES 10
+
+enum powerled_color {
+	POWERLED_OFF = 0,
+	POWERLED_RED,
+	POWERLED_YELLOW,
+	POWERLED_GREEN,
+	POWERLED_COLOR_COUNT  /* Number of colors, not a color itself */
+};
 
 static const uint8_t led_masks[POWERLED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
 static const char * const color_names[POWERLED_COLOR_COUNT] = {
@@ -50,7 +60,7 @@ static int powerled_set_mask(int mask)
 	return EC_SUCCESS;
 }
 
-int powerled_set(enum powerled_color color)
+static int powerled_set(enum powerled_color color)
 {
 	int rv = EC_SUCCESS;
 	int i;
@@ -77,6 +87,64 @@ int powerled_set(enum powerled_color color)
 
 	return rv;
 }
+
+/*****************************************************************************/
+/* Hooks */
+
+static void powerled_tick(void)
+{
+	static enum powerled_color current_color = POWERLED_COLOR_COUNT;
+	static int tick_count;
+	enum powerled_color new_color = POWERLED_OFF;
+
+	tick_count++;
+
+	if (!switch_get_ac_present()) {
+		/* AC isn't present, so the power LED on the AC plug is off */
+		current_color = POWERLED_OFF;
+		return;
+	}
+
+	/* Translate charge state to LED color */
+	switch (charge_get_state()) {
+	case PWR_STATE_IDLE:
+		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
+			new_color = ((tick_count & 1) ?
+				     POWERLED_GREEN : POWERLED_OFF);
+		else
+			new_color = POWERLED_GREEN;
+		break;
+	case PWR_STATE_CHARGE:
+		new_color = POWERLED_YELLOW;
+		break;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		new_color = POWERLED_GREEN;
+		break;
+	case PWR_STATE_ERROR:
+		new_color = POWERLED_RED;
+		break;
+	default:
+		/* Other states don't change LED color */
+		break;
+	}
+
+	/*
+	 * The power adapter on link can partially unplug and lose its LED
+	 * state.  There's no way to detect this, so just assume it forgets its
+	 * state every 10 seconds.
+	 */
+	if (!(tick_count % 10))
+		current_color = POWERLED_COLOR_COUNT;
+
+	/* If current color is still correct, leave now */
+	if (new_color == current_color)
+		return;
+
+	/* Update LED */
+	if (!powerled_set(new_color))
+		current_color = new_color;
+}
+DECLARE_HOOK(HOOK_SECOND, powerled_tick, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */

@@ -15,7 +15,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "power_led.h"
 #include "printf.h"
 #include "smart_battery.h"
 #include "switch.h"
@@ -30,9 +29,6 @@
 
 /* Voltage debounce time */
 #define DEBOUNCE_TIME (10 * SECOND)
-
-/* Time period between setting power LED */
-#define SET_LED_PERIOD (10 * SECOND)
 
 /* Timeout after AP battery shutdown warning before we kill the AP */
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
@@ -577,6 +573,16 @@ enum power_state charge_get_state(void)
 	return task_ctx.curr.state;
 }
 
+uint32_t charge_get_flags(void)
+{
+	uint32_t flags = 0;
+
+	if (state_machine_force_idle)
+		flags |= CHARGE_FLAG_FORCE_IDLE;
+
+	return flags;
+}
+
 int charge_get_percent(void)
 {
 	return task_ctx.curr.batt.state_of_charge;
@@ -603,18 +609,6 @@ static int exit_force_idle_mode(void)
 	return EC_SUCCESS;
 }
 
-static enum powerled_color force_idle_led_blink(void)
-{
-	static enum powerled_color last = POWERLED_GREEN;
-
-	if (last == POWERLED_GREEN)
-		last = POWERLED_OFF;
-	else
-		last = POWERLED_GREEN;
-
-	return last;
-}
-
 /**
  * Battery charging task
  */
@@ -625,9 +619,6 @@ void charge_state_machine_task(void)
 	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum power_state new_state;
 	uint8_t batt_flags;
-	enum powerled_color led_color = POWERLED_OFF;
-	int rv_setled = 0;
-	uint64_t last_setled_time = 0;
 
 	while (1) {
 		state_common(ctx);
@@ -724,10 +715,6 @@ void charge_state_machine_task(void)
 			*ctx->memmap_batt_flags = batt_flags;
 
 			/* Charge done */
-			led_color = POWERLED_GREEN;
-			rv_setled = powerled_set(POWERLED_GREEN);
-			last_setled_time = get_time().val;
-
 			sleep_usec = (new_state == PWR_STATE_IDLE ?
 				      POLL_PERIOD_LONG : POLL_PERIOD_CHARGE);
 			break;
@@ -745,36 +732,14 @@ void charge_state_machine_task(void)
 			*ctx->memmap_batt_flags = batt_flags;
 
 			/* Charging */
-			led_color = POWERLED_YELLOW;
-			rv_setled = powerled_set(POWERLED_YELLOW);
-			last_setled_time = get_time().val;
-
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_ERROR:
 			/* Error */
-			led_color = POWERLED_RED;
-			rv_setled = powerled_set(POWERLED_RED);
-			last_setled_time = get_time().val;
-
 			sleep_usec = POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_UNCHANGE:
 			/* Don't change sleep duration */
-			if (state_machine_force_idle)
-				powerled_set(force_idle_led_blink());
-			else if (rv_setled || get_time().val - last_setled_time
-					> SET_LED_PERIOD) {
-				/*
-				 * Power LED may go off if AC adapter is
-				 * partially removed, even though AC power is
-				 * still provided.  Update the power LED
-				 * periodically so it will come back on in this
-				 * case.
-				 */
-				rv_setled = powerled_set(led_color);
-				last_setled_time = get_time().val;
-			}
 			break;
 		default:
 			/* Other state; poll quickly and hope it goes away */

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,33 +9,6 @@
 #define __CROS_EC_POWER_LED_H
 
 #include "common.h"
-
-/* Interface for LM4-based boards */
-
-enum powerled_color {
-	POWERLED_OFF = 0,
-	POWERLED_RED,
-	POWERLED_YELLOW,
-	POWERLED_GREEN,
-	POWERLED_COLOR_COUNT  /* Number of colors, not a color itself */
-};
-
-#ifdef CONFIG_POWER_LED
-
-/**
- * Set the power adapter LED
- *
- * @param color		Color to set LED
- *
- * @return EC_SUCCESS, or non-zero if error.
- */
-int powerled_set(enum powerled_color color);
-
-#else
-
-static inline int powerled_set(enum powerled_color color) { return 0; }
-
-#endif
 
 /* Interface for STM32-based boards */
 

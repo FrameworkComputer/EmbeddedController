@@ -62,6 +62,10 @@ enum power_state {
 	PWR_STATE_ERROR
 };
 
+/* Charge state flags */
+/* Forcing idle state */
+#define CHARGE_FLAG_FORCE_IDLE (1 << 0)
+
 /* Debugging constants, in the same order as enum power_state. This string
  * table was moved here to sync with enum above.
  */
@@ -126,6 +130,11 @@ enum power_state trickle_charge(struct power_state_context *ctx);
  * Return current charge state.
  */
 enum power_state charge_get_state(void);
+
+/**
+ * Return current charge state flags (CHARGE_FLAG_*)
+ */
+uint32_t charge_get_flags(void);
 
 /**
  * Return current battery charge percentage.
