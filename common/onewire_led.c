@@ -9,7 +9,6 @@
 #include "console.h"
 #include "hooks.h"
 #include "onewire.h"
-#include "switch.h"
 #include "timer.h"
 #include "util.h"
 
@@ -95,11 +94,13 @@ static void powerled_tick(void)
 {
 	static enum powerled_color current_color = POWERLED_COLOR_COUNT;
 	static int tick_count;
+
 	enum powerled_color new_color = POWERLED_OFF;
+	uint32_t chflags = charge_get_flags();
 
 	tick_count++;
 
-	if (!switch_get_ac_present()) {
+	if (!(chflags & CHARGE_FLAG_EXTERNAL_POWER)) {
 		/* AC isn't present, so the power LED on the AC plug is off */
 		current_color = POWERLED_OFF;
 		return;
@@ -108,7 +109,7 @@ static void powerled_tick(void)
 	/* Translate charge state to LED color */
 	switch (charge_get_state()) {
 	case PWR_STATE_IDLE:
-		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
 			new_color = ((tick_count & 1) ?
 				     POWERLED_GREEN : POWERLED_OFF);
 		else

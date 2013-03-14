@@ -144,7 +144,7 @@ static int state_common(struct power_state_context *ctx)
 	curr->error = 0;
 
 	/* Detect AC change */
-	curr->ac = switch_get_ac_present();
+	curr->ac = charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER;
 	if (curr->ac != prev->ac) {
 		if (curr->ac) {
 			/* AC on
@@ -579,6 +579,8 @@ uint32_t charge_get_flags(void)
 
 	if (state_machine_force_idle)
 		flags |= CHARGE_FLAG_FORCE_IDLE;
+	if (switch_get_ac_present())
+		flags |= CHARGE_FLAG_EXTERNAL_POWER;
 
 	return flags;
 }
@@ -596,7 +598,11 @@ int charge_want_shutdown(void)
 
 static int enter_force_idle_mode(void)
 {
-	if (!switch_get_ac_present())
+	/*
+	 * Force-idle state is only meaningful if external power is present.
+	 * If it's not present we can't charge anyway...
+	 */
+	if (!(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER))
 		return EC_ERROR_UNKNOWN;
 	state_machine_force_idle = 1;
 	charger_post_init();
