@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -6,6 +6,7 @@
 
 #include "adc.h"
 #include "common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "lm4_adc.h"
@@ -31,7 +32,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Other inputs */
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
-	 switch_interrupt},
+	 extpower_interrupt},
 	{"BOARD_VERSION1",      LM4_GPIO_H, (1<<6), 0, NULL},
 	{"BOARD_VERSION2",      LM4_GPIO_L, (1<<6), 0, NULL},
 	{"BOARD_VERSION3",      LM4_GPIO_L, (1<<7), 0, NULL},

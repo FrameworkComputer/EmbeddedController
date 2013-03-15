@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -113,7 +113,6 @@ static uint64_t tdebounce_pwr;
 static uint8_t *memmap_switches;
 static int debounced_lid_open;
 static int debounced_power_pressed;
-static int ac_changed;
 static int simulate_power_pressed;
 
 /**
@@ -368,11 +367,6 @@ static void set_initial_pwrbtn_state(void)
 	}
 }
 
-int switch_get_ac_present(void)
-{
-	return gpio_get_level(GPIO_AC_PRESENT);
-}
-
 int switch_get_lid_open(void)
 {
 	return debounced_lid_open;
@@ -511,12 +505,6 @@ void switch_task(void)
 	while (1) {
 		t = get_time().val;
 
-		/* Handle AC state changes */
-		if (ac_changed) {
-			ac_changed = 0;
-			hook_notify(HOOK_AC_CHANGE);
-		}
-
 		/* Handle debounce timeouts for power button and lid switch */
 		if (tdebounce_pwr && t >= tdebounce_pwr) {
 			tdebounce_pwr = 0;
@@ -624,9 +612,6 @@ void switch_interrupt(enum gpio_signal signal)
 		break;
 	case GPIO_PCH_BKLTEN:
 		update_backlight();
-		break;
-	case GPIO_AC_PRESENT:
-		ac_changed = 1;
 		break;
 	default:
 		/*

@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -340,7 +341,7 @@ DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
 
 static void x86_power_ac_change(void)
 {
-	if (switch_get_ac_present()) {
+	if (extpower_is_present()) {
 		CPRINTF("[%T x86 AC on]\n");
 	} else {
 		CPRINTF("[%T x86 AC off]\n");
@@ -437,7 +438,7 @@ void x86_power_task(void)
 			}
 
 			in_want = 0;
-			if (switch_get_ac_present())
+			if (extpower_is_present())
 				task_wait_event(-1);
 			else {
 				uint64_t target_time = last_shutdown_time +
@@ -785,7 +786,7 @@ static int command_hibernation_delay(int argc, char **argv)
 
 	/* Print the current setting */
 	ccprintf("Hibernation delay: %d s\n", hibernate_delay);
-	if (state == X86_G3 && !switch_get_ac_present()) {
+	if (state == X86_G3 && !extpower_is_present()) {
 		ccprintf("Time G3: %d s\n", time_g3);
 		ccprintf("Time left: %d s\n", hibernate_delay - time_g3);
 	}

@@ -12,12 +12,12 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
 #include "smart_battery.h"
-#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -153,10 +153,6 @@ static int state_common(struct power_state_context *ctx)
 			rv = charger_post_init();
 			if (rv)
 				curr->error |= F_CHARGER_INIT;
-			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
-		} else {
-			/* AC off */
-			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
 		}
 	}
 
@@ -579,7 +575,7 @@ uint32_t charge_get_flags(void)
 
 	if (state_machine_force_idle)
 		flags |= CHARGE_FLAG_FORCE_IDLE;
-	if (switch_get_ac_present())
+	if (extpower_is_present())
 		flags |= CHARGE_FLAG_EXTERNAL_POWER;
 
 	return flags;

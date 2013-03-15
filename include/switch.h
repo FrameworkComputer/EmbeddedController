@@ -24,11 +24,6 @@ void switch_interrupt(enum gpio_signal signal);
 void switch_task(void);
 
 /**
- * Return non-zero if AC power is present.
- */
-int switch_get_ac_present(void);
-
-/**
  * Return non-zero if lid is open.
  *
  * Uses the debounced lid state, not the raw signal from the GPIO.
