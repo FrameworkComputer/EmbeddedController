@@ -260,14 +260,14 @@ int board_get_ac(void);
 void board_hard_reset(void);
 
 /**
- * Update battery LED according to charger state.
- */
-int board_battery_led(enum charging_state state);
-
-/**
  * Wake TPS65090 charger task, but throttled to at most one call per tick
  */
 void pmu_task_throttled_wake(void);
+
+/**
+ * Get current charge state
+ */
+enum charging_state charge_get_state(void);
 
 #endif /* __CROS_EC_TPSCHROME_H */
 

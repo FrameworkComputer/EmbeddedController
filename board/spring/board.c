@@ -330,12 +330,12 @@ int board_led_breathing(int enabled)
 		ret |= lp5562_engine_load(LP5562_ENG_SEL_1,
 					  breathing_prog,
 					  sizeof(breathing_prog));
-		ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
-					 LP5562_ENG_SEL_NONE,
-					 LP5562_ENG_SEL_1);
 		ret |= lp5562_engine_control(LP5562_ENG_RUN,
 					     LP5562_ENG_HOLD,
 					     LP5562_ENG_HOLD);
+		ret |= lp5562_set_engine(LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_NONE,
+					 LP5562_ENG_SEL_1);
 	} else {
 		ret |= lp5562_engine_control(LP5562_ENG_HOLD,
 					     LP5562_ENG_HOLD,
@@ -348,26 +348,49 @@ int board_led_breathing(int enabled)
 	return ret;
 }
 
-int board_battery_led(enum charging_state state)
+static void board_battery_led_update(void)
 {
 	int current;
 	int desired_current;
+
+	/* Current states and next states */
 	static uint32_t color = LED_COLOR_RED;
 	static int breathing;
+	static int led_power;
 	int new_color = LED_COLOR_RED;
 	int new_breathing = 0;
-	int ret = 0;
+	int new_led_power;
+
+	/* Determine LED power */
+	new_led_power = board_get_ac();
+	if (new_led_power != led_power) {
+		led_power = new_led_power;
+		if (new_led_power) {
+			lp5562_poweron();
+		} else {
+			color = LED_COLOR_NONE;
+			if (breathing) {
+				board_led_breathing(0);
+				breathing = 0;
+			}
+			lp5562_poweroff();
+		}
+	}
+	if (!new_led_power)
+		return;
 
 	/*
 	 * LED power is controlled by accessory detection. We only
 	 * set color here.
 	 */
-	switch (state) {
+	switch (charge_get_state()) {
 	case ST_IDLE:
 		new_color = LED_COLOR_GREEN;
 		break;
 	case ST_DISCHARGING:
-		new_color = LED_COLOR_NONE;
+		/* Discharging with AC, must be battery assist */
+		new_color = LED_COLOR_YELLOW;
+		new_breathing = 1;
 		break;
 	case ST_PRE_CHARGING:
 		new_color = LED_COLOR_YELLOW;
@@ -382,7 +405,7 @@ int board_battery_led(enum charging_state state)
 
 		if (current < 0 && desired_current > 0) { /* Battery assist */
 			new_breathing = 1;
-			new_color = LED_COLOR_NONE;
+			new_color = LED_COLOR_YELLOW;
 			break;
 		}
 
@@ -396,16 +419,16 @@ int board_battery_led(enum charging_state state)
 		break;
 	}
 
-	if (new_breathing != breathing) {
-		ret |= board_led_breathing(new_breathing);
-		breathing = new_breathing;
-	}
 	if (new_color != color) {
-		ret |= lp5562_set_color(new_color);
+		lp5562_set_color(new_color);
 		color = new_color;
 	}
-	return ret;
+	if (new_breathing != breathing) {
+		board_led_breathing(new_breathing);
+		breathing = new_breathing;
+	}
 }
+DECLARE_HOOK(HOOK_SECOND, board_battery_led_update, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Host commands */

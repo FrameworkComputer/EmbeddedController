@@ -386,12 +386,8 @@ static void usb_device_change(int dev_type)
 			current_limit = I_LIMIT_1500MA;
 
 		board_pwm_nominal_duty_cycle(current_limit);
-
-		/* Turns on battery LED */
-		lp5562_poweron();
 	} else {
 		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
-		lp5562_poweroff();
 	}
 
 	/* Log to console */

@@ -54,6 +54,8 @@ static const char * const state_list[] = {
 static timestamp_t last_waken; /* Initialized to 0 */
 static int has_pending_event;
 
+static enum charging_state current_state = ST_IDLE;
+
 static void enable_charging(int enable)
 {
 	enable = enable ? 1 : 0;
@@ -365,17 +367,14 @@ static int calc_next_state(int state)
 	return ST_IDLE;
 }
 
-int __board_battery_led(enum charging_state state)
+/* TODO: Merge charge_state.h and unify charge interface */
+enum charging_state charge_get_state(void)
 {
-	return EC_SUCCESS;
+	return current_state;
 }
-
-int board_battery_led(enum charging_state state)
-	__attribute__((weak, alias("__board_battery_led")));
 
 void pmu_charger_task(void)
 {
-	int state = ST_IDLE;
 	int next_state;
 	int wait_time = T1_USEC;
 	unsigned int pre_charging_count = 0;
@@ -421,20 +420,20 @@ void pmu_charger_task(void)
 		 * failed.
 		 */
 		next_state = pre_charging_count > PRE_CHARGING_RETRY ?
-			ST_CHARGING_ERROR : calc_next_state(state);
+			ST_CHARGING_ERROR : calc_next_state(current_state);
 
-		if (next_state != state) {
+		if (next_state != current_state) {
 			/* Reset state of charge moving average window */
 			rsoc_moving_average(-1);
 
 			pre_charging_count = 0;
 			CPRINTF("[batt] state %s -> %s\n",
-				state_list[state],
+				state_list[current_state],
 				state_list[next_state]);
 
-			state = next_state;
+			current_state = next_state;
 
-			switch (state) {
+			switch (current_state) {
 			case ST_PRE_CHARGING:
 			case ST_CHARGING:
 				if (pmu_blink_led(0))
@@ -461,9 +460,7 @@ void pmu_charger_task(void)
 			}
 		}
 
-		board_battery_led(state);
-
-		switch (state) {
+		switch (current_state) {
 		case ST_CHARGING:
 		case ST_CHARGING_ERROR:
 			wait_time = T2_USEC;

@@ -164,9 +164,6 @@ void board_pwm_duty_cycle(int percent);
 /* Update USB port status */
 void board_usb_charge_update(int force_update);
 
-/* Update battery LED color */
-int board_battery_led(enum charging_state state);
-
 /* Get USB port device type */
 int board_get_usb_dev_type(void);
 
