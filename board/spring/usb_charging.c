@@ -21,7 +21,7 @@
 #include "tsu6721.h"
 #include "util.h"
 
-#define PWM_FREQUENCY 10000 /* Hz */
+#define PWM_FREQUENCY 32000 /* Hz */
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
@@ -116,14 +116,14 @@ static void board_ilim_use_pwm(void)
 	STM32_TIM_CR1(3) = 0x0000;
 
 	/*
-	 * CPU_CLOCK / PSC determines how fast the counter operates.
+	 * CPU_CLOCK / (PSC + 1) determines how fast the counter operates.
 	 * ARR determines the wave period, CCRn determines duty cycle.
-	 * Thus, frequency = CPU_CLOCK / PSC / ARR.
+	 * Thus, frequency = CPU_CLOCK / (PSC + 1) / ARR.
 	 *
 	 * Assuming 16MHz clock and ARR=100, PSC needed to achieve PWM_FREQUENCY
-	 * is: PSC = CPU_CLOCK / PWM_FREQUENCY / ARR
+	 * is: PSC = CPU_CLOCK / PWM_FREQUENCY / ARR - 1
 	 */
-	STM32_TIM_PSC(3) = CPU_CLOCK / PWM_FREQUENCY / 100; /* pre-scaler */
+	STM32_TIM_PSC(3) = CPU_CLOCK / PWM_FREQUENCY / 100 - 1; /* pre-scaler */
 	STM32_TIM_ARR(3) = 100;			/* auto-reload value */
 	STM32_TIM_CCR1(3) = 100;		/* duty cycle */
 
