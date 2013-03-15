@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "board.h"
 #include "chipset.h"
+#include "clock.h"
 #include "console.h"
 #include "hooks.h"
 #include "gpio.h"
@@ -494,6 +495,10 @@ static void usb_device_change(int dev_type)
 	keyboard_send_battery_key();
 
 	current_dev_type = dev_type;
+	if (dev_type)
+		disable_sleep(SLEEP_MASK_USB_PWR);
+	else
+		enable_sleep(SLEEP_MASK_USB_PWR);
 }
 
 /*
