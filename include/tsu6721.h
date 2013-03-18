@@ -105,4 +105,7 @@ int tsu6721_get_device_type(void);
 /* Control TSU6721 mux. */
 int tsu6721_mux(enum tsu6721_mux sel);
 
+/* Reset TSU6721. */
+void tsu6721_reset(void);
+
 #endif /* TSU6721_H */

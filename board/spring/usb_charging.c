@@ -31,6 +31,9 @@
 #define POWERED_5000_DEVICE_TYPE (TSU6721_TYPE_OTG)
 #define POWERED_3300_DEVICE_TYPE (TSU6721_TYPE_JIG_UART_ON)
 
+/* Toad cable */
+#define TOAD_DEVICE_TYPE (TSU6721_TYPE_UART | TSU6721_TYPE_AUDIO3)
+
 /* Voltage threshold of D+ for video */
 #define VIDEO_ID_THRESHOLD	1335
 
@@ -63,10 +66,17 @@ static int current_dev_type = TSU6721_TYPE_NONE;
 static int nominal_pwm_duty;
 static int current_pwm_duty;
 
+static int pending_tsu6721_reset;
+
 static enum {
 	LIMIT_NORMAL,
 	LIMIT_AGGRESSIVE,
 } current_limit_mode = LIMIT_AGGRESSIVE;
+
+static enum {
+	ADC_WATCH_NONE,
+	ADC_WATCH_TOAD,
+} current_watchdog = ADC_WATCH_NONE;
 
 /*
  * Last time we see a power source removed. Also records the power source
@@ -299,6 +309,25 @@ void usb_charge_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
 }
 
+static void board_adc_watch_toad(void)
+{
+	/* Watch VBUS and interrupt if voltage goes under 3V. */
+	adc_enable_watchdog(STM32_AIN(5), 4095, 1800);
+	task_clear_pending_irq(STM32_IRQ_ADC_1);
+	task_enable_irq(STM32_IRQ_ADC_1);
+	current_watchdog = ADC_WATCH_TOAD;
+}
+
+static void board_adc_watchdog_interrupt(void)
+{
+	if (current_watchdog == ADC_WATCH_TOAD) {
+		pending_tsu6721_reset = 1;
+		task_disable_irq(STM32_IRQ_ADC_1);
+		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	}
+}
+DECLARE_IRQ(STM32_IRQ_ADC_1, board_adc_watchdog_interrupt, 2);
+
 static int usb_has_power_input(int dev_type)
 {
 	if (dev_type & TSU6721_TYPE_JIG_UART_ON)
@@ -390,6 +419,10 @@ static void usb_device_change(int dev_type)
 		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
 	}
 
+	if ((dev_type & TOAD_DEVICE_TYPE) &&
+	    (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED))
+		board_adc_watch_toad();
+
 	/* Log to console */
 	CPRINTF("[%T USB Attached: ");
 	if (dev_type == TSU6721_TYPE_NONE)
@@ -412,6 +445,10 @@ static void usb_device_change(int dev_type)
 		CPRINTF("Apple charger]\n");
 	else if (dev_type & TSU6721_TYPE_JIG_UART_ON)
 		CPRINTF("JIG UART ON]\n");
+	else if (dev_type & TSU6721_TYPE_AUDIO3)
+		CPRINTF("Audio 3]\n");
+	else if (dev_type & TSU6721_TYPE_UART)
+		CPRINTF("UART]\n");
 	else if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED)
 		CPRINTF("Unknown with power]\n");
 	else
@@ -443,7 +480,16 @@ DECLARE_HOOK(HOOK_SECOND, board_usb_monitor_detach, HOOK_PRIO_DEFAULT);
 
 void board_usb_charge_update(int force_update)
 {
-	int int_val = tsu6721_get_interrupts();
+	int int_val = 0;
+
+	if (pending_tsu6721_reset) {
+		current_watchdog = ADC_WATCH_NONE;
+		adc_disable_watchdog();
+		tsu6721_reset();
+		force_update = 1;
+		pending_tsu6721_reset = 0;
+	} else
+		int_val = tsu6721_get_interrupts();
 
 	if (int_val & TSU6721_INT_DETACH)
 		usb_device_change(TSU6721_TYPE_NONE);

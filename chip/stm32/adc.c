@@ -97,6 +97,9 @@ static int adc_enable_watchdog_no_lock(void)
 	/* Set channel */
 	STM32_ADC_CR1 = (STM32_ADC_CR1 & ~0x1f) | watchdog_ain_id;
 
+	/* Clear interrupt bit */
+	STM32_ADC_SR &= ~0x1;
+
 	/* AWDSGL=1, SCAN=1, AWDIE=1, AWDEN=1 */
 	STM32_ADC_CR1 |= (1 << 9) | (1 << 8) | (1 << 6) | (1 << 23);
 
@@ -138,8 +141,8 @@ static int adc_disable_watchdog_no_lock(void)
 	if (!adc_watchdog_enabled())
 		return EC_ERROR_UNKNOWN;
 
-	/* AWDEN=0 */
-	STM32_ADC_CR1 &= ~(1 << 23);
+	/* AWDEN=0, AWDIE=0 */
+	STM32_ADC_CR1 &= ~(1 << 23) & ~(1 << 6);
 
 	/* CONT=0 */
 	STM32_ADC_CR2 &= ~(1 << 1);

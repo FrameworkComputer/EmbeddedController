@@ -24,6 +24,9 @@
 /* 8-bit I2C address */
 #define TSU6721_I2C_ADDR (0x25 << 1)
 
+/* Delay values */
+#define TSU6721_SW_RESET_DELAY 15
+
 static int saved_interrupts;
 
 uint8_t tsu6721_read(uint8_t reg)
@@ -84,6 +87,14 @@ int tsu6721_get_device_type(void)
 	return (tsu6721_read(TSU6721_REG_DEV_TYPE3) << 16) |
 	       (tsu6721_read(TSU6721_REG_DEV_TYPE2) << 8) |
 	       (tsu6721_read(TSU6721_REG_DEV_TYPE1));
+}
+
+void tsu6721_reset(void)
+{
+	tsu6721_write(TSU6721_REG_RESET, 0x1);
+	/* TSU6721 reset takes ~10ms. Let's wait for 15ms to be safe. */
+	msleep(TSU6721_SW_RESET_DELAY);
+	tsu6721_init();
 }
 
 int tsu6721_mux(enum tsu6721_mux sel)
