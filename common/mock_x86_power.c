@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -66,7 +66,7 @@ void x86_power_interrupt(enum gpio_signal signal)
 }
 
 
-void x86_power_task(void)
+void chipset_task(void)
 {
 	/* Do nothing */
 	while (1)

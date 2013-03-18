@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -60,7 +60,7 @@
  *
  * So after power button is pressed:
 
- * Normal case: User releases power button and gaia_power_task() goes
+ * Normal case: User releases power button and chipset_task() goes
  *    into the inner loop, waiting for next event to occur (power button
  *    press or XPSHOLD == 0).
  *
@@ -236,14 +236,14 @@ void gaia_suspend_event(enum gpio_signal signal)
 void gaia_power_event(enum gpio_signal signal)
 {
 	/* Wake up the task */
-	task_wake(TASK_ID_GAIAPOWER);
+	task_wake(TASK_ID_CHIPSET);
 }
 
 void gaia_lid_event(enum gpio_signal signal)
 {
 	/* inform power task that lid switch has changed */
 	lid_changed = 1;
-	task_wake(TASK_ID_GAIAPOWER);
+	task_wake(TASK_ID_CHIPSET);
 }
 
 int gaia_power_init(void)
@@ -488,7 +488,7 @@ static int next_pwr_event(void)
 
 /*****************************************************************************/
 
-void gaia_power_task(void)
+void chipset_task(void)
 {
 	int value;
 
@@ -537,7 +537,7 @@ static int command_force_power(int argc, char **argv)
 	force_signal = GPIO_KB_PWR_ON_L;
 	force_value = 1;
 	/* Wake up the task */
-	task_wake(TASK_ID_GAIAPOWER);
+	task_wake(TASK_ID_CHIPSET);
 	/* Wait 100 ms */
 	msleep(100);
 	/* Release power button */
@@ -599,7 +599,7 @@ static int command_power(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	ccprintf("[%T PB Requesting power %s]\n", power_req_name[power_request]);
-	task_wake(TASK_ID_GAIAPOWER);
+	task_wake(TASK_ID_CHIPSET);
 
 	return EC_SUCCESS;
 }
@@ -620,7 +620,7 @@ void system_warm_reboot(void)
 	gpio_set_level(GPIO_EN_PP3300, 0);
 
 	power_request = POWER_REQ_ON;
-	task_wake(TASK_ID_GAIAPOWER);
+	task_wake(TASK_ID_CHIPSET);
 
 	return;
 }

@@ -15,7 +15,7 @@
 #include "util.h"
 #include "x86_power.h"
 
-#ifndef CONFIG_TASK_X86POWER
+#ifndef CONFIG_CHIPSET_X86
 #define x86_power_interrupt NULL
 #endif
 #ifndef CONFIG_TASK_SWITCH

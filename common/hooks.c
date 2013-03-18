@@ -75,7 +75,7 @@ void hook_notify(enum hook_type type)
 	if (type == HOOK_AC_CHANGE) {
 		/* Store deferred hook and wake task */
 		atomic_or(&pending_hooks, 1 << type);
-		task_wake(TASK_ID_TICK);
+		task_wake(TASK_ID_HOOKS);
 	} else {
 		/* Notify now */
 		notify(type);

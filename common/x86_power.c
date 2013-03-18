@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -317,7 +317,7 @@ void chipset_exit_hard_off(void)
 	want_g3_exit = 1;
 
 	if (task_start_called())
-		task_wake(TASK_ID_X86POWER);
+		task_wake(TASK_ID_CHIPSET);
 }
 
 void chipset_throttle_cpu(int throttle)
@@ -335,7 +335,7 @@ void chipset_throttle_cpu(int throttle)
 static void x86_lid_change(void)
 {
 	/* Wake up the task to update power state */
-	task_wake(TASK_ID_X86POWER);
+	task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
 
@@ -348,7 +348,7 @@ static void x86_power_ac_change(void)
 
 		if (state == X86_G3) {
 			last_shutdown_time = get_time().val;
-			task_wake(TASK_ID_X86POWER);
+			task_wake(TASK_ID_CHIPSET);
 		}
 	}
 }
@@ -415,13 +415,13 @@ void x86_power_interrupt(enum gpio_signal signal)
 	update_in_signals();
 
 	/* Wake up the task */
-	task_wake(TASK_ID_X86POWER);
+	task_wake(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
 /* Task function */
 
-void x86_power_task(void)
+void chipset_task(void)
 {
 	uint64_t time_now;
 

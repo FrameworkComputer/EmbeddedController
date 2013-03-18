@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,12 +14,13 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
-/* use I2C for host communication */
-#define CONFIG_I2C
-
 /* Debug features */
 #define CONFIG_PANIC_HELP
 #define CONFIG_ASSERT_HELP
+
+/* Optional features */
+#define CONFIG_CHIPSET_GAIA
+#define CONFIG_I2C
 
 /* Allow dangerous commands all the time, since we don't have a write protect
  * switch. */

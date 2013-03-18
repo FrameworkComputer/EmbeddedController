@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -17,6 +17,7 @@
 #define CONFIG_BATTERY_LINK
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24725
+#define CONFIG_CHIPSET_X86
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_LPC

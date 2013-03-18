@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -28,15 +28,16 @@
 #define HARD_RESET_TIMEOUT_MS 5
 
 /* GPIO interrupt handlers prototypes */
-#ifndef CONFIG_TASK_GAIAPOWER
-#define gaia_power_event NULL
-#define gaia_suspend_event NULL
-#define gaia_lid_event NULL
-#else
+#ifdef CONFIG_CHIPSET_GAIA
 void gaia_power_event(enum gpio_signal signal);
 void gaia_suspend_event(enum gpio_signal signal);
 void gaia_lid_event(enum gpio_signal signal);
+#else
+#define gaia_power_event NULL
+#define gaia_suspend_event NULL
+#define gaia_lid_event NULL
 #endif
+
 #ifndef CONFIG_TASK_KEYSCAN
 #define matrix_interrupt NULL
 #endif

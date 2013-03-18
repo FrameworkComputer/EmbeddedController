@@ -14,16 +14,15 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
-/* use I2C for host communication */
-#define CONFIG_I2C
-
-#define CONFIG_HOST_COMMAND_STATUS
-
 /* Debug features */
 #define CONFIG_PANIC_HELP
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
 
+/* Optional features */
+#define CONFIG_CHIPSET_GAIA
+#define CONFIG_HOST_COMMAND_STATUS
+#define CONFIG_I2C
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,9 +15,9 @@
  * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TASK_LIST \
-	TASK(TICK, hook_task, NULL, TASK_STACK_SIZE) \
+	TASK(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
 	TASK(THERMAL, thermal_task, NULL, TASK_STACK_SIZE) \
-	TASK(X86POWER, x86_power_task, NULL, TASK_STACK_SIZE) \
+	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \
 	TASK(CONSOLE, console_task, NULL, TASK_STACK_SIZE)
