@@ -1,10 +1,12 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* System hooks for Chrome EC */
 
+#include "atomic.h"
+#include "console.h"
 #include "hooks.h"
 #include "link_defs.h"
 #include "timer.h"
@@ -34,7 +36,12 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_second, __hooks_second_end},
 };
 
-void hook_notify(enum hook_type type)
+static uint32_t pending_hooks;
+
+/**
+ * Actual notification function
+ */
+static void notify(enum hook_type type)
 {
 	const struct hook_data *start, *end, *p;
 	int count, called = 0;
@@ -63,18 +70,46 @@ void hook_notify(enum hook_type type)
 	}
 }
 
+void hook_notify(enum hook_type type)
+{
+	if (type == HOOK_AC_CHANGE) {
+		/* Store deferred hook and wake task */
+		atomic_or(&pending_hooks, 1 << type);
+		task_wake(TASK_ID_TICK);
+	} else {
+		/* Notify now */
+		notify(type);
+	}
+}
+
 void hook_task(void)
 {
-	/* Per-second hook will be called first time through the loop */
+	/* Periodic hooks will be called first time through the loop */
 	static uint64_t last_second = -SECOND;
+	static uint64_t last_tick = -HOOK_TICK_INTERVAL;
 
 	while (1) {
 		uint64_t t = get_time().val;
+		uint32_t pending = atomic_read_clear(&pending_hooks);
+		int i;
 
-		hook_notify(HOOK_TICK);
+		/* Call pending hooks, if any */
+		for (i = 0; pending && i < 32; i++) {
+			const uint32_t mask = 1 << i;
+
+			if (pending & mask) {
+				notify(i);
+				pending ^= mask;
+			}
+		}
+
+		if (t - last_tick >= HOOK_TICK_INTERVAL) {
+			notify(HOOK_TICK);
+			last_tick = t;
+		}
 
 		if (t - last_second >= SECOND) {
-			hook_notify(HOOK_SECOND);
+			notify(HOOK_SECOND);
 			last_second = t;
 		}
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,31 +24,96 @@ enum hook_priority {
 };
 
 enum hook_type {
-	HOOK_INIT = 0,         /* System init */
-	HOOK_FREQ_CHANGE,      /* System clock changed frequency */
-	HOOK_SYSJUMP,          /* About to jump to another image.  Modules
-				* which need to preserve data across such a
-				* jump should save it here and restore it in
-				* HOOK_INIT.
-				*
-				* NOTE: This hook is called with interrupts
-				* disabled! */
-	HOOK_CHIPSET_PRE_INIT, /* Initialization for components such as PMU to
-				* be done before host chipset/AP starts up. */
-	HOOK_CHIPSET_STARTUP,  /* System is starting up.  All suspend rails are
-				* now on. */
-	HOOK_CHIPSET_RESUME,   /* System is resuming from suspend, or booting
-				* and has reached the point where all voltage
-				* rails are on */
-	HOOK_CHIPSET_SUSPEND,  /* System is suspending, or shutting down; all
-				* voltage rails are still on */
-	HOOK_CHIPSET_SHUTDOWN, /* System is shutting down.  All suspend rails
-				* are still on. */
-	HOOK_AC_CHANGE,        /* AC power plugged in or removed */
-	HOOK_LID_CHANGE,       /* Lid opened or closed.  Based on debounced lid
-				* state, not raw lid GPIO input. */
-	HOOK_TICK,             /* Periodic tick, every HOOK_TICK_INTERVAL */
-	HOOK_SECOND,           /* Periodic tick, every second */
+	/*
+	 * System initialization.
+	 *
+	 * Hook routines are called from main(), after all hard-coded inits,
+	 * before task scheduling is enabled.
+	 */
+	HOOK_INIT = 0,
+
+	/*
+	 * System clock changed frequency.
+	 *
+	 * Hook routines are called from the context which initiates the
+	 * frequency change.
+	 */
+	HOOK_FREQ_CHANGE,
+
+	/*
+	 * About to jump to another image.  Modules which need to preserve data
+	 * across such a jump should save it here and restore it in HOOK_INIT.
+	 *
+	 * Hook routines are called from the context which initiates the jump,
+	 * WITH INTERRUPTS DISABLED.
+	 */
+	HOOK_SYSJUMP,
+
+	/*
+	 * Initialization for components such as PMU to be done before host
+	 * chipset/AP starts up.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_PRE_INIT,
+
+	/* System is starting up.  All suspend rails are now on.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_STARTUP,
+
+	/*
+	 * System is resuming from suspend, or booting and has reached the
+	 * point where all voltage rails are on.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_RESUME,
+
+	/*
+	 * System is suspending, or shutting down; all voltage rails are still
+	 * on.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_SUSPEND,
+
+	/*
+	 * System is shutting down.  All suspend rails are still on.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_SHUTDOWN,
+
+	/*
+	 * AC power plugged in or removed.
+	 *
+	 * Hook routines are called from the TICK task.
+	 */
+	HOOK_AC_CHANGE,
+
+	/*
+	 * Lid opened or closed.  Based on debounced lid state, not raw lid
+	 * GPIO input.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_LID_CHANGE,
+
+	/*
+	 * Periodic tick, every HOOK_TICK_INTERVAL.
+	 *
+	 * Hook routines will be called from the TICK task.
+	 */
+	HOOK_TICK,
+
+	/*
+	 * Periodic tick, every second.
+	 *
+	 * Hook routines will be called from the TICK task.
+	 */
+	HOOK_SECOND,
 };
 
 struct hook_data {
