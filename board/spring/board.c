@@ -179,12 +179,6 @@ void board_i2c_post_init(int port)
 	}
 }
 
-void board_interrupt_host(int active)
-{
-	/* interrupt host by using active low EC_INT signal */
-	gpio_set_level(GPIO_EC_INT, !active);
-}
-
 static void board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);

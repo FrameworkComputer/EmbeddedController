@@ -113,9 +113,6 @@ void configure_board(void);
 /* Signal to the AP that keyboard scan data is available */
 void board_keyboard_suppress_noise(void);
 
-/* Signal to AP that data is waiting */
-void board_interrupt_host(int active);
-
 /* Auto detect EC i2c host port */
 int board_i2c_host_port(void);
 

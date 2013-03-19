@@ -210,6 +210,15 @@ static void assert_output(int out)
 	}
 }
 
+/**
+ * Assert host keyboard interrupt line.
+ */
+static void set_host_interrupt(int active)
+{
+	/* interrupt host by using active low EC_INT signal */
+	gpio_set_level(GPIO_EC_INT, !active);
+}
+
 /* Set up outputs so that we will get an interrupt when any key changed */
 void setup_interrupts(void)
 {
@@ -441,7 +450,7 @@ static int check_keys_changed(uint8_t *state)
 		if (check_runtime_keys(state))
 			return 0;
 		else if (kb_fifo_add(state) == EC_SUCCESS)
-			board_interrupt_host(1);
+			set_host_interrupt(1);
 		else
 			CPRINTF("dropped keystroke\n");
 	}
@@ -619,7 +628,7 @@ static int keyboard_get_scan(struct host_cmd_handler_args *args)
 {
 	kb_fifo_remove(args->response);
 	if (!kb_fifo_entries)
-		board_interrupt_host(0);
+		set_host_interrupt(0);
 
 	args->response_size = KB_OUTPUTS;
 
@@ -668,7 +677,7 @@ void keyboard_send_battery_key()
 	mutex_lock(&scanning_enabled);
 	debounced_state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
 	if (kb_fifo_add(debounced_state) == EC_SUCCESS)
-		board_interrupt_host(1);
+		set_host_interrupt(1);
 	else
 		CPRINTF("dropped battery keystroke\n");
 	mutex_unlock(&scanning_enabled);
@@ -704,7 +713,7 @@ static int command_keyboard_press(int argc, char **argv)
 		debounced_state[c] &= ~(1 << r);
 
 	if (kb_fifo_add(debounced_state) == EC_SUCCESS)
-		board_interrupt_host(1);
+		set_host_interrupt(1);
 	else
 		ccprintf("dropped keystroke\n");
 

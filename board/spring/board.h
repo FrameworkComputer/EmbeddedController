@@ -146,9 +146,6 @@ enum charging_state;
 
 void configure_board(void);
 
-/* Signal to AP that data is waiting */
-void board_interrupt_host(int active);
-
 /* Initialize PMU registers using board settings */
 int board_pmu_init(void);
 

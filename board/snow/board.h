@@ -124,9 +124,6 @@ void configure_board(void);
 
 void configure_board_late(void);
 
-/* Signal to AP that data is waiting */
-void board_interrupt_host(int active);
-
 /* Initialize PMU registers using board settings */
 int board_pmu_init(void);
 

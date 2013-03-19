@@ -177,12 +177,6 @@ void configure_board_late(void)
 #endif
 }
 
-void board_interrupt_host(int active)
-{
-	/* interrupt host by using active low EC_INT signal */
-	gpio_set_level(GPIO_EC_INT, !active);
-}
-
 void board_keyboard_suppress_noise(void)
 {
 	/* notify audio codec of keypress for noise suppression */

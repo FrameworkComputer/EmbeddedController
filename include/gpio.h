@@ -55,7 +55,11 @@ struct gpio_info {
 extern const struct gpio_info gpio_list[GPIO_COUNT];
 
 /* Macro for signals which don't exist */
+#ifdef CHIP_lm4
 #define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, LM4_GPIO_A, 0, 0, NULL}
+#else
+#define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, GPIO_A, 0, 0, NULL}
+#endif
 
 /**
  * Pre-initialize GPIOs.

@@ -100,6 +100,10 @@ enum gpio_signal {
 
 	/* FIXME: this will be an alt. function GPIO, so remove it from here */
 	GPIO_BL_PWM,
+
+	/* Unimplemented GPIOs */
+	GPIO_EC_INT,
+
 #if 0
 	GPIO_STM_USBDM,
 	GPIO_STM_USBDP,
@@ -114,9 +118,6 @@ enum gpio_signal {
 };
 
 void configure_board(void);
-
-/* FIXME: this should not be needed on mccroskey. */
-void board_interrupt_host(int active);
 
 #endif /* !__ASSEMBLER__ */
 

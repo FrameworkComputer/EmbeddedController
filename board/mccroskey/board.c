@@ -81,6 +81,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 	/* FIXME: make this alt. function */
 	{"BL_PWM",         GPIO_A, (1<<1),  GPIO_OUTPUT, NULL},
+
+	/* Unimplemented signals which we need to emulate for now */
+	GPIO_SIGNAL_NOT_IMPLEMENTED("EC_INT"),
+
 #if 0
 	/* Other GPIOs (probably need to be set up below as alt. function) */
 	{"STM_USBDM",      GPIO_A, (1<<11), GPIO_DEFAULT, NULL},
@@ -165,6 +169,3 @@ void kbd_power_on(enum gpio_signal signal)
 {
 	/* FIXME: this is just a stub for now... */
 }
-
-/* FIXME: this should not be needed on mccroskey. */
-void board_interrupt_host(int active) { }
