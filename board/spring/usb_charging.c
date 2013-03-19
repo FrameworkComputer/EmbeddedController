@@ -78,6 +78,23 @@ static enum {
 	ADC_WATCH_TOAD,
 } current_watchdog = ADC_WATCH_NONE;
 
+struct {
+	int type;
+	const char *name;
+} const known_dev_types[] = {
+	{TSU6721_TYPE_OTG, "OTG"},
+	{TSU6721_TYPE_USB_HOST, "USB"},
+	{TSU6721_TYPE_CHG12, "Type-1/2-Chg"},
+	{TSU6721_TYPE_NON_STD_CHG, "Non-Std-Chg"},
+	{TSU6721_TYPE_DCP, "DCP"},
+	{TSU6721_TYPE_CDP, "CDP"},
+	{TSU6721_TYPE_U200_CHG, "U200-Chg"},
+	{TSU6721_TYPE_APPLE_CHG, "Apple-Chg"},
+	{TSU6721_TYPE_JIG_UART_ON, "Video"},
+	{TSU6721_TYPE_AUDIO3, "Audio-3"},
+	{TSU6721_TYPE_UART, "UART"},
+	{TSU6721_TYPE_VBUS_DEBOUNCED, "Power"} };
+
 /*
  * Last time we see a power source removed. Also records the power source
  * type and PWM duty cycle at that moment.
@@ -356,29 +373,14 @@ static void usb_boost_pwr_off_hook(void) { usb_boost_power_hook(0); }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, usb_boost_pwr_on_hook, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
 
-static void usb_device_change(int dev_type)
+/*
+ * When a power source is removed, record time, power source type,
+ * and PWM duty cycle. Then when we see a power source, compare type
+ * and calculate time difference to determine if we have just
+ * encountered an over current event.
+ */
+static void usb_detect_overcurrent(int dev_type)
 {
-	int need_boost;
-	int retry_limit = 3;
-
-	if (current_dev_type == dev_type)
-		return;
-
-	over_current_pwm_duty = 0;
-
-	/*
-	 * Video output is recognized incorrectly as USB host. When we see
-	 * USB host, probe for video output.
-	 */
-	if (dev_type & TSU6721_TYPE_USB_HOST)
-		dev_type = board_probe_video(dev_type);
-
-	/*
-	 * When a power source is removed, record time, power source type,
-	 * and PWM duty cycle. Then when we see a power source, compare type
-	 * and calculate time difference to determine if we have just
-	 * encountered an over current event.
-	 */
 	if ((current_dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) &&
 	    (dev_type == TSU6721_TYPE_NONE)) {
 		int idx = !(current_dev_type == TSU6721_TYPE_VBUS_DEBOUNCED);
@@ -400,12 +402,18 @@ static void usb_device_change(int dev_type)
 						PWM_CTRL_OC_BACK_OFF;
 		}
 	}
+}
 
-	/*
-	 * Supply 5V VBUS if needed. If we toggle power output, wait for a
-	 * moment, and then update device type. To avoid race condition, check
-	 * if power requirement changes during this time.
-	 */
+/*
+ * Supply 5V VBUS if needed. If we toggle power output, wait for a
+ * moment, and then update device type. To avoid race condition, check
+ * if power requirement changes during this time.
+ */
+static int usb_manage_boost(int dev_type)
+{
+	int need_boost;
+	int retry_limit = 3;
+
 	do {
 		if (retry_limit-- <= 0)
 			break;
@@ -418,11 +426,12 @@ static void usb_device_change(int dev_type)
 		}
 	} while (need_boost == !usb_need_boost(dev_type));
 
-	/* Supply 3.3V VBUS if needed. */
-	if (dev_type & POWERED_3300_DEVICE_TYPE) {
-		pmu_enable_fet(FET_VIDEO, 1, NULL);
-	}
+	return dev_type;
+}
 
+/* Updates ILIM current limit according to device type. */
+static void usb_update_ilim(int dev_type)
+{
 	if (usb_has_power_input(dev_type)) {
 		/* Limit USB port current. 500mA for not listed types. */
 		int current_limit = I_LIMIT_500MA;
@@ -438,41 +447,49 @@ static void usb_device_change(int dev_type)
 	} else {
 		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
 	}
+}
+
+static void usb_log_dev_type(int dev_type)
+{
+	int i = sizeof(known_dev_types) / sizeof(known_dev_types[0]);
+
+	CPRINTF("[%T USB: 0x%06x", dev_type);
+	for (--i; i >= 0; --i)
+		if (dev_type & known_dev_types[i].type)
+			CPRINTF(" %s", known_dev_types[i].name);
+	CPRINTF("]\n");
+}
+
+static void usb_device_change(int dev_type)
+{
+
+	if (current_dev_type == dev_type)
+		return;
+
+	over_current_pwm_duty = 0;
+
+	/*
+	 * Video output is recognized incorrectly as USB host. When we see
+	 * USB host, probe for video output.
+	 */
+	if (dev_type & TSU6721_TYPE_USB_HOST)
+		dev_type = board_probe_video(dev_type);
+
+	usb_detect_overcurrent(dev_type);
+
+	dev_type = usb_manage_boost(dev_type);
+
+	/* Supply 3.3V VBUS if needed. */
+	if (dev_type & POWERED_3300_DEVICE_TYPE)
+		pmu_enable_fet(FET_VIDEO, 1, NULL);
+
+	usb_update_ilim(dev_type);
 
 	if ((dev_type & TOAD_DEVICE_TYPE) &&
 	    (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED))
 		board_adc_watch_toad();
 
-	/* Log to console */
-	CPRINTF("[%T USB Attached: ");
-	if (dev_type == TSU6721_TYPE_NONE)
-		CPRINTF("Nothing]\n");
-	else if (dev_type & TSU6721_TYPE_OTG)
-		CPRINTF("OTG]\n");
-	else if (dev_type & TSU6721_TYPE_USB_HOST)
-		CPRINTF("USB Host]\n");
-	else if (dev_type & TSU6721_TYPE_CHG12)
-		CPRINTF("Type 1/2 Charger]\n");
-	else if (dev_type & TSU6721_TYPE_NON_STD_CHG)
-		CPRINTF("Non standard charger]\n");
-	else if (dev_type & TSU6721_TYPE_DCP)
-		CPRINTF("DCP]\n");
-	else if (dev_type & TSU6721_TYPE_CDP)
-		CPRINTF("CDP]\n");
-	else if (dev_type & TSU6721_TYPE_U200_CHG)
-		CPRINTF("U200]\n");
-	else if (dev_type & TSU6721_TYPE_APPLE_CHG)
-		CPRINTF("Apple charger]\n");
-	else if (dev_type & TSU6721_TYPE_JIG_UART_ON)
-		CPRINTF("JIG UART ON]\n");
-	else if (dev_type & TSU6721_TYPE_AUDIO3)
-		CPRINTF("Audio 3]\n");
-	else if (dev_type & TSU6721_TYPE_UART)
-		CPRINTF("UART]\n");
-	else if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED)
-		CPRINTF("Unknown with power]\n");
-	else
-		CPRINTF("Unknown]\n");
+	usb_log_dev_type(dev_type);
 
 	keyboard_send_battery_key();
 
