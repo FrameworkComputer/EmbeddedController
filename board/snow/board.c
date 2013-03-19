@@ -9,6 +9,7 @@
 #include "console.h"
 #include "dma.h"
 #include "extpower.h"
+#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -28,17 +29,6 @@
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
 #define HARD_RESET_TIMEOUT_MS 5
-
-/* GPIO interrupt handlers prototypes */
-#ifdef CONFIG_CHIPSET_GAIA
-void gaia_power_event(enum gpio_signal signal);
-void gaia_suspend_event(enum gpio_signal signal);
-void gaia_lid_event(enum gpio_signal signal);
-#else
-#define gaia_power_event NULL
-#define gaia_suspend_event NULL
-#define gaia_lid_event NULL
-#endif
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {

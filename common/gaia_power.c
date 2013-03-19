@@ -27,6 +27,7 @@
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "common.h"
 #include "console.h"
+#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"

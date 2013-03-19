@@ -10,6 +10,7 @@
 #include "console.h"
 #include "dma.h"
 #include "extpower.h"
+#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -45,17 +46,6 @@ uint8_t breathing_prog[] = {0x41, 0xff,  /* 0x80 -> 0x0 */
 			    0x7f, 0x00,
 			    0x7f, 0x00,
 			    0x00, 0x00}; /* Repeat */
-
-/* GPIO interrupt handlers prototypes */
-#ifdef CONFIG_CHIPSET_GAIA
-void gaia_power_event(enum gpio_signal signal);
-void gaia_suspend_event(enum gpio_signal signal);
-void gaia_lid_event(enum gpio_signal signal);
-#else
-#define gaia_power_event NULL
-#define gaia_suspend_event NULL
-#define gaia_lid_event NULL
-#endif
 
 void usb_charge_interrupt(enum gpio_signal signal);
 
