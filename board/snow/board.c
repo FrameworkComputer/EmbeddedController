@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "dma.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -419,7 +420,7 @@ int board_pmu_init(void)
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
 
-int board_get_ac(void)
+int extpower_is_present(void)
 {
 	/*
 	 * Detect AC state using combined gpio pins

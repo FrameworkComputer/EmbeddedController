@@ -1,15 +1,15 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * TI TPS65090 PMU charging task.
  */
 
-#include "board.h"
 #include "clock.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "hooks.h"
 #include "gpio.h"
 #include "pmu_tpschrome.h"
@@ -191,7 +191,7 @@ static int calc_next_state(int state)
 	switch (state) {
 	case ST_IDLE:
 		/* Check AC and chiset state */
-		if (!board_get_ac()) {
+		if (!extpower_is_present()) {
 			if (chipset_in_state(CHIPSET_STATE_ON))
 				return ST_DISCHARGING;
 			return ST_IDLE;
@@ -228,7 +228,7 @@ static int calc_next_state(int state)
 		return ST_IDLE;
 
 	case ST_PRE_CHARGING:
-		if (!board_get_ac())
+		if (!extpower_is_present())
 			return ST_IDLE;
 
 		/* If the battery goes online after enable the charger,
@@ -249,7 +249,7 @@ static int calc_next_state(int state)
 
 	case ST_CHARGING:
 		/* Go back to idle state when AC is unplugged */
-		if (!board_get_ac())
+		if (!extpower_is_present())
 			return ST_IDLE;
 
 		/*
@@ -302,7 +302,7 @@ static int calc_next_state(int state)
 		 *   - battery temperature is in start charging range
 		 *   - no battery alarm
 		 */
-		if (board_get_ac()) {
+		if (extpower_is_present()) {
 			if (battery_status(&alarm))
 				return ST_CHARGING_ERROR;
 
@@ -323,7 +323,7 @@ static int calc_next_state(int state)
 
 	case ST_DISCHARGING:
 		/* Go back to idle state when AC is plugged */
-		if (board_get_ac())
+		if (extpower_is_present())
 			return ST_IDLE;
 
 		/* Prepare EC sleep after system stopped discharging */
@@ -479,7 +479,7 @@ void pmu_charger_task(void)
 				pre_charging_count++;
 			break;
 		default:
-			if (board_get_ac()) {
+			if (extpower_is_present()) {
 				wait_time = T1_USEC;
 				break;
 			} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {

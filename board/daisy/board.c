@@ -4,11 +4,11 @@
  */
 /* Daisy board-specific configuration */
 
-#include "board.h"
 #include "common.h"
 #include "dma.h"
-#include "i2c.h"
+#include "extpower.h"
 #include "gpio.h"
+#include "i2c.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
 #include "spi.h"
@@ -198,7 +198,7 @@ void board_keyboard_suppress_noise(void)
 	gpio_set_level(GPIO_CODEC_INT, 1);
 }
 
-int board_get_ac(void)
+int extpower_is_present(void)
 {
 	/*
 	 * Detect AC state using combined gpio pins

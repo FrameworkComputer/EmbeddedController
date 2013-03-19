@@ -9,7 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "dma.h"
-#include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -297,7 +297,7 @@ int board_pmu_init(void)
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
 
-int board_get_ac(void)
+int extpower_is_present(void)
 {
 	static int last_vbus;
 	int vbus, vbus_good;

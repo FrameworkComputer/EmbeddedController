@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "console.h"
 #include "common.h"
+#include "extpower.h"
 #include "host_command.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -455,7 +456,7 @@ int pmu_adc_read(int adc_idx, int flags)
 void pmu_irq_handler(enum gpio_signal signal)
 {
 #ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_level(GPIO_AC_STATUS, board_get_ac());
+	gpio_set_level(GPIO_AC_STATUS, extpower_is_present());
 #endif
 	pmu_task_throttled_wake();
 	CPRINTF("Charger IRQ received.\n");
@@ -643,7 +644,7 @@ static int command_pmu(int argc, char **argv)
 	if (rv)
 		return rv;
 	CPRINTF("pmu events b%08b\n", value);
-	CPRINTF("ac gpio    %d\n", board_get_ac());
+	CPRINTF("ac gpio    %d\n", extpower_is_present());
 
 	if (rv)
 		ccprintf("Failed - error %d\n", rv);
