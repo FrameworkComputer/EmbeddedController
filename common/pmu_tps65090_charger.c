@@ -42,6 +42,10 @@
 #define T2_USEC         (10 * SECOND)
 #define T3_USEC         (10 * SECOND)
 
+#ifndef BATTERY_AP_OFF_LEVEL
+#define BATTERY_AP_OFF_LEVEL 0
+#endif
+
 static const char * const state_list[] = {
 	"idle",
 	"pre-charging",
@@ -371,6 +375,19 @@ static int calc_next_state(int state)
 enum charging_state charge_get_state(void)
 {
 	return current_state;
+}
+
+int charge_keep_power_off(void)
+{
+	int charge;
+
+	if (BATTERY_AP_OFF_LEVEL == 0)
+		return 0;
+
+	if (battery_remaining_capacity(&charge))
+		return current_state != ST_CHARGING_ERROR;
+
+	return charge <= BATTERY_AP_OFF_LEVEL;
 }
 
 void pmu_charger_task(void)

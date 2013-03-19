@@ -506,6 +506,28 @@ static int next_pwr_event(void)
 
 /*****************************************************************************/
 
+static int wait_for_power_on(void)
+{
+	int value;
+	while (1) {
+		value = check_for_power_on_event();
+		if (!value) {
+			task_wait_event(-1);
+			continue;
+		}
+
+		if (charge_keep_power_off()) {
+			CPRINTF("%T battery low. ignoring power on event.\n");
+			if (value == 1) /* System already on */
+				power_off();
+			continue;
+		}
+
+		CPRINTF("%T power on %d\n", value);
+		return value;
+	}
+}
+
 void chipset_task(void)
 {
 	int value;
@@ -515,9 +537,7 @@ void chipset_task(void)
 
 	while (1) {
 		/* Wait until we need to power on, then power on */
-		while (value = check_for_power_on_event(), !value)
-			task_wait_event(-1);
-		CPRINTF("%T power on %d\n", value);
+		wait_for_power_on();
 
 		if (!power_on()) {
 			int continue_power = 0;

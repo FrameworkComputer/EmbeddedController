@@ -59,6 +59,9 @@
 /* Battery */
 #define CONFIG_BATTERY_BQ20Z453
 
+/* Low battery threshold. In mAh. */
+#define BATTERY_AP_OFF_LEVEL 1
+
 /* Charger/accessories detection */
 #define CONFIG_TSU6721
 

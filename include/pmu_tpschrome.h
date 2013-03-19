@@ -269,5 +269,10 @@ void pmu_task_throttled_wake(void);
  */
 enum charging_state charge_get_state(void);
 
+/**
+ * Return non-zero if battery is so low we want to keep AP off.
+ */
+int charge_keep_power_off(void);
+
 #endif /* __CROS_EC_TPSCHROME_H */
 
