@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "board.h"
+#include "chipset.h"
 #include "console.h"
 #include "hooks.h"
 #include "gpio.h"
@@ -335,6 +336,26 @@ static int usb_has_power_input(int dev_type)
 	       !(dev_type & POWERED_5000_DEVICE_TYPE);
 }
 
+static int usb_need_boost(int dev_type)
+{
+	if (dev_type & POWERED_5000_DEVICE_TYPE)
+		return 0;
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		return 1;
+	return (dev_type != TSU6721_TYPE_NONE);
+}
+
+static void usb_boost_power_hook(int power_on)
+{
+	if (current_dev_type == TSU6721_TYPE_NONE)
+		gpio_set_level(GPIO_BOOST_EN, power_on);
+}
+
+static void usb_boost_pwr_on_hook(void) { usb_boost_power_hook(1); }
+static void usb_boost_pwr_off_hook(void) { usb_boost_power_hook(0); }
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, usb_boost_pwr_on_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
+
 static void usb_device_change(int dev_type)
 {
 	int need_boost;
@@ -389,13 +410,13 @@ static void usb_device_change(int dev_type)
 		if (retry_limit-- <= 0)
 			break;
 
-		need_boost = !(dev_type & POWERED_5000_DEVICE_TYPE);
+		need_boost = usb_need_boost(dev_type);
 		if (need_boost != gpio_get_level(GPIO_BOOST_EN)) {
 			gpio_set_level(GPIO_BOOST_EN, need_boost);
 			msleep(DELAY_POWER_MS);
 			dev_type = tsu6721_get_device_type();
 		}
-	} while (need_boost == !!(dev_type & POWERED_5000_DEVICE_TYPE));
+	} while (need_boost == !usb_need_boost(dev_type));
 
 	/* Supply 3.3V VBUS if needed. */
 	if (dev_type & POWERED_3300_DEVICE_TYPE) {
