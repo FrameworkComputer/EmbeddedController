@@ -14,7 +14,7 @@
  */
 
 #include "atomic.h"
-#include "board.h"
+#include "chipset.h"
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -257,7 +257,7 @@ static int check_runtime_keys(const uint8_t *state)
 			(state[MASK_INDEX_RIGHT_ALT] == MASK_VALUE_RIGHT_ALT ||
 			state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT)) {
 		keyboard_clear_state();
-		system_warm_reboot();
+		chipset_reset(0);
 		return 1;
 	}
 

@@ -156,7 +156,7 @@ void board_i2c_post_init(int port)
 	}
 }
 
-void system_warm_reboot(void)
+void chipset_reset(int is_cold)
 {
 	/* FIXME: this is just a stub for now... */
 }

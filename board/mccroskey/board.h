@@ -118,8 +118,6 @@ void configure_board(void);
 /* FIXME: this should not be needed on mccroskey. */
 void board_interrupt_host(int active);
 
-void system_warm_reboot(void);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

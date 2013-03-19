@@ -246,7 +246,7 @@ void gaia_lid_event(enum gpio_signal signal)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-int gaia_power_init(void)
+static int gaia_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
@@ -297,6 +297,23 @@ int chipset_in_state(int state_mask)
 void chipset_exit_hard_off(void)
 {
 	/* TODO: implement, if/when we take the AP down to a hard-off state */
+}
+
+void chipset_reset(int is_cold)
+{
+	/* TODO: implement cold reset.  For now, all resets are warm resets. */
+	CPRINTF("[%T EC triggered warm reboot]\n");
+
+	/*
+	 * This is a hack to do an AP warm reboot while still preserving RAM
+	 * contents. This is useful for looking at kernel log message contents
+	 * from previous boot in cases where the AP/OS is hard hung.
+	 */
+	gpio_set_level(GPIO_EN_PP5000, 0);
+	gpio_set_level(GPIO_EN_PP3300, 0);
+
+	power_request = POWER_REQ_ON;
+	task_wake(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
@@ -608,26 +625,9 @@ DECLARE_CONSOLE_COMMAND(power, command_power,
 			"Turn AP power on/off",
 			NULL);
 
-void system_warm_reboot(void)
-{
-	CPRINTF("[%T EC triggered warm reboot ]\n");
-
-	/* This is a hack to do an AP warm reboot while still preserving
-	 * RAM contents. This is useful for looking at kernel log message
-	 * contents from previous boot in cases where the AP/OS is hard
-	 * hung. */
-	gpio_set_level(GPIO_EN_PP5000, 0);
-	gpio_set_level(GPIO_EN_PP3300, 0);
-
-	power_request = POWER_REQ_ON;
-	task_wake(TASK_ID_CHIPSET);
-
-	return;
-}
-
 static int command_warm_reboot(int argc, char **argv)
 {
-	system_warm_reboot();
+	chipset_reset(0);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(warm_reboot, command_warm_reboot,
