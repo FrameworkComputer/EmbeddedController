@@ -110,8 +110,6 @@ enum gpio_signal {
 
 void configure_board(void);
 
-void matrix_interrupt(enum gpio_signal signal);
-
 /* Signal to the AP that keyboard scan data is available */
 void board_keyboard_suppress_noise(void);
 

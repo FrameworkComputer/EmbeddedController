@@ -115,8 +115,6 @@ enum gpio_signal {
 
 void configure_board(void);
 
-void matrix_interrupt(enum gpio_signal signal);
-
 /* FIXME: this should not be needed on mccroskey. */
 void board_interrupt_host(int active);
 

@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lp5562.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
@@ -56,10 +57,6 @@ void gaia_lid_event(enum gpio_signal signal);
 #define gaia_lid_event NULL
 #endif
 
-#ifndef CONFIG_TASK_KEYSCAN
-#define matrix_interrupt NULL
-#endif
-
 void usb_charge_interrupt(enum gpio_signal signal);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
@@ -72,14 +69,22 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
 	{"SUSPEND_L",   GPIO_A, (1<<7),  INT_BOTH_FLOATING, gaia_suspend_event},
 	{"WP_L",        GPIO_A, (1<<13), GPIO_INPUT, NULL},
-	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN02",     GPIO_C, (1<<10), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN03",     GPIO_C, (1<<11), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN04",     GPIO_C, (1<<12), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN05",     GPIO_C, (1<<14), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT, matrix_interrupt},
+	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN02",     GPIO_C, (1<<10), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN03",     GPIO_C, (1<<11), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN04",     GPIO_C, (1<<12), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN05",     GPIO_C, (1<<14), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
 	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING,
 		usb_charge_interrupt},
 	/* Other inputs */

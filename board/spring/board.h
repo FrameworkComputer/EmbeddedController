@@ -146,8 +146,6 @@ enum charging_state;
 
 void configure_board(void);
 
-void matrix_interrupt(enum gpio_signal signal);
-
 /* Signal to AP that data is waiting */
 void board_interrupt_host(int active);
 

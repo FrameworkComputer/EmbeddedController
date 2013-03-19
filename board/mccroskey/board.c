@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -28,14 +29,22 @@ static void kbd_power_on(enum gpio_signal signal);
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_IN00",        GPIO_B, (1<<8),  GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN01",        GPIO_B, (1<<9),  GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN02",        GPIO_B, (1<<10), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN03",        GPIO_B, (1<<11), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN04",        GPIO_B, (1<<12), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN05",        GPIO_B, (1<<13), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN06",        GPIO_B, (1<<14), GPIO_KB_INPUT, matrix_interrupt},
-	{"KB_IN07",        GPIO_B, (1<<15), GPIO_KB_INPUT, matrix_interrupt},
+	{"KB_IN00",        GPIO_B, (1<<8),  GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN01",        GPIO_B, (1<<9),  GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN02",        GPIO_B, (1<<10), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN03",        GPIO_B, (1<<11), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN04",        GPIO_B, (1<<12), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN05",        GPIO_B, (1<<13), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN06",        GPIO_B, (1<<14), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
+	{"KB_IN07",        GPIO_B, (1<<15), GPIO_KB_INPUT,
+	 keyboard_scan_interrupt},
 	{"KBD_PWR_BUTTON", GPIO_B, (1<<2),  GPIO_INPUT, kbd_power_on},
 
 	{"OMZO_RDY_L",     GPIO_A, (1<<0),  GPIO_INPUT, NULL},	/* PA0_WKUP */

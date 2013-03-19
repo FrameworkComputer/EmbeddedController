@@ -593,7 +593,7 @@ void keyboard_scan_task(void)
 }
 
 
-void matrix_interrupt(enum gpio_signal signal)
+void keyboard_scan_interrupt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_KEYSCAN);
 }
