@@ -10,7 +10,6 @@
 #include "console.h"
 #include "hooks.h"
 #include "gpio.h"
-#include "lp5562.h"
 #include "keyboard_scan.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"

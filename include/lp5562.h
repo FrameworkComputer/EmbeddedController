@@ -57,7 +57,7 @@ int lp5562_set_color(uint32_t rgb);
 int lp5562_set_engine(uint8_t r, uint8_t g, uint8_t b);
 
 /* Load lighting engine program */
-int lp5562_engine_load(int engine, uint8_t *program, int size);
+int lp5562_engine_load(int engine, const uint8_t *program, int size);
 
 /* Control lighting engine execution state */
 int lp5562_engine_control(int eng1, int eng2, int eng3);

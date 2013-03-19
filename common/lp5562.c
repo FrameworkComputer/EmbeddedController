@@ -42,7 +42,7 @@ int lp5562_set_engine(uint8_t r, uint8_t g, uint8_t b)
 	return lp5562_write(LP5562_REG_LED_MAP, (r << 4) | (g << 2) | b);
 }
 
-int lp5562_engine_load(int engine, uint8_t *program, int size)
+int lp5562_engine_load(int engine, const uint8_t *program, int size)
 {
 	int prog_addr = LP5562_REG_ENG_PROG(engine);
 	int i, ret, val;
