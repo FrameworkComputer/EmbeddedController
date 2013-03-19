@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "i2c_arbitration.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -122,22 +123,6 @@ static inline void disable_ack(int port)
 {
 	STM32_I2C_CR1(port) &= ~(1 << 10);
 }
-
-int __board_i2c_claim(int port)
-{
-	return 0;
-}
-
-int board_i2c_claim(int port)
-	__attribute__((weak, alias("__board_i2c_claim")));
-
-
-void __board_i2c_release(int port)
-{
-}
-
-void board_i2c_release(int port)
-	__attribute__((weak, alias("__board_i2c_release")));
 
 static void i2c_init_port(unsigned int port);
 
@@ -464,9 +449,9 @@ static void i2c_init_port(unsigned int port)
 
 	if (!(STM32_RCC_APB1ENR & (1 << i2c_clock_bit[port]))) {
 		/* Only unwedge the bus if the clock is off */
-		if (board_i2c_claim(port) == EC_SUCCESS) {
+		if (i2c_claim(port) == EC_SUCCESS) {
 			unwedge_i2c_bus(port);
-			board_i2c_release(port);
+			i2c_release(port);
 		}
 
 		/* enable I2C2 clock */
@@ -848,7 +833,7 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 	disable_sleep(SLEEP_MASK_I2C);
 	mutex_lock(&i2c_mutex);
 
-	if (board_i2c_claim(port)) {
+	if (i2c_claim(port)) {
 		rv = EC_ERROR_BUSY;
 		goto err_claim;
 	}
@@ -863,7 +848,7 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 
 	enable_i2c_interrupt(port);
 
-	board_i2c_release(port);
+	i2c_release(port);
 
 err_claim:
 	mutex_unlock(&i2c_mutex);

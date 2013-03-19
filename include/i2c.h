@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -47,33 +47,5 @@ int i2c_write8(int port, int slave_addr, int offset, int data);
  */
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 			int len);
-
-/**
- * Claim an I2C port for use in master mode
- *
- * If this function succeed, then you must later call board_i2c_release()
- * to release the claim.
- *
- * This function may optionally be implemented by a board file. If provided
- * then it should check the port number and arbitrate as needed.
- *
- * This function will not be called to claim an already-claimed port.
- *
- * @param port	Port to claim (0 for first, 1 for second, etc.)
- * @return 0 if claimed successfully, -1 if it is in use
- */
-int board_i2c_claim(int port);
-
-/**
- * Release an I2C port (after previously being claimed)
- *
- * This function may optionally be implemented by a board file. If provided
- * then it should check the port number and arbitrate as needed.
- *
- * This function will not be called to release an already-released port.
- *
- * @param port	Port to claim (0 for first, 1 for second, etc.)
- */
-void board_i2c_release(int port);
 
 #endif  /* __CROS_EC_I2C_H */

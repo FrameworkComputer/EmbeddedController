@@ -19,6 +19,7 @@ common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_FLASH)+=flash_common.o fmap.o
 common-$(CONFIG_I2C)+=i2c_commands.o
+common-$(CONFIG_I2C_ARBITRATION)+=i2c_arbitration.o
 common-$(CONFIG_IR357x)+=ir357x.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LP5562)+=lp5562.o
