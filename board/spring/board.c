@@ -362,7 +362,7 @@ static void board_battery_led_update(void)
 	int new_led_power;
 
 	/* Determine LED power */
-	new_led_power = board_get_ac();
+	new_led_power = extpower_is_present();
 	if (new_led_power != led_power) {
 		led_power = new_led_power;
 		if (new_led_power) {
