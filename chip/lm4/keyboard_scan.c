@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,9 +10,8 @@
 #include "console.h"
 #include "host_command.h"
 #include "keyboard.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
-#include "keyboard_scan_stub.h"
-#include "registers.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -83,29 +82,29 @@ static int print_state_changes;
 #define MASK_INDEX_KEY_H	6
 #define MASK_VALUE_KEY_H	0x02
 
+static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
+
 static void enable_interrupt(void)
 {
 	CPRINTF("[%T KB wait]\n");
 
-	/* Assert all outputs would trigger un-wanted interrupts.
-	 * Clear them before enable interrupt. */
-	lm4_select_column(COLUMN_ASSERT_ALL);
-	lm4_clear_matrix_interrupt_status();
+	if (enable_scanning)
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 
-	lm4_enable_matrix_interrupt();
+	keyboard_raw_enable_interrupt(1);
 }
 
 static void enter_polling_mode(void)
 {
 	CPRINTF("[%T KB poll]\n");
-	lm4_disable_matrix_interrupt();
-	lm4_select_column(COLUMN_TRI_STATE_ALL);
+	keyboard_raw_enable_interrupt(0);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 }
 
 static int is_scanning_enabled(void)
 {
 	/* Scan only if enabled AND lid is open. */
-	return lm4_get_scanning_enabled() && switch_get_lid_open();
+	return enable_scanning && switch_get_lid_open();
 }
 
 /**
@@ -125,14 +124,16 @@ static int read_matrix(uint8_t *state)
 	int pressed = 0;
 
 	for (c = 0; c < KB_COLS; c++) {
+		/* Stop if scanning becomes disabled */
+		if (!enable_scanning)
+			break;
+
 		/* Select column, then wait a bit for it to settle */
-		lm4_select_column(c);
+		keyboard_raw_drive_column(c);
 		udelay(COLUMN_CHARGE_US);
 
 		/* Read the row state */
-		r = lm4_read_raw_row_state();
-		/* Invert it so 0=not pressed, 1=pressed */
-		r ^= 0xff;
+		r = keyboard_raw_read_rows();
 		/* Mask off keys that don't exist so they never show
 		 * as pressed */
 		r &= actual_key_mask[c];
@@ -141,7 +142,7 @@ static int read_matrix(uint8_t *state)
 		pressed |= r;
 	}
 
-	lm4_select_column(COLUMN_TRI_STATE_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	return pressed ? 1 : 0;
 }
@@ -413,10 +414,10 @@ enum boot_key keyboard_scan_get_boot_key(void)
 void keyboard_scan_init(void)
 {
 	/* Configure GPIO */
-	lm4_configure_keyboard_gpio();
+	keyboard_raw_init();
 
 	/* Tri-state the columns */
-	lm4_select_column(COLUMN_TRI_STATE_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	/* Initialize raw state */
 	read_matrix(debounced_state);
@@ -436,8 +437,7 @@ void keyboard_scan_task(void)
 
 	print_state(debounced_state, "init state");
 
-	/* Enable interrupts */
-	task_enable_irq(KB_SCAN_ROW_IRQ);
+	keyboard_raw_task_start();
 
 	while (1) {
 		/* Enable all outputs */
@@ -451,8 +451,7 @@ void keyboard_scan_task(void)
 			 * user pressing a key and enable_interrupt()
 			 * starting to pay attention to edges.
 			 */
-			if ((lm4_read_raw_row_state() == 0xff) ||
-			    !is_scanning_enabled())
+			if (!keyboard_raw_read_rows() || !is_scanning_enabled())
 				task_wait_event(-1);
 		} while (!is_scanning_enabled());
 
@@ -475,22 +474,10 @@ void keyboard_scan_task(void)
 	}
 }
 
-static void matrix_interrupt(void)
-{
-	uint32_t ris = lm4_clear_matrix_interrupt_status();
-
-	if (ris)
-		task_wake(TASK_ID_KEYSCAN);
-}
-DECLARE_IRQ(KB_SCAN_ROW_IRQ, matrix_interrupt, 3);
-
-/*
- * The actual implementation is controlling the enable_scanning variable, then
- * that controls whether lm4_select_column() can pull-down columns or not.
- */
 void keyboard_enable_scanning(int enable)
 {
-	lm4_set_scanning_enabled(enable);
+	enable_scanning = enable;
+
 	if (enable) {
 		/*
 		 * A power button press had tri-stated all columns (see the
@@ -499,13 +486,13 @@ void keyboard_enable_scanning(int enable)
 		 */
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
-		lm4_select_column(COLUMN_TRI_STATE_ALL);
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 		keyboard_clear_underlying_buffer();
 	}
 }
 
 /*****************************************************************************/
-/* Console commands*/
+/* Console commands */
 
 static int command_ksstate(int argc, char **argv)
 {

@@ -1,14 +1,14 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Mock functions for keyboard scanner module for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
-#include "keyboard_scan_stub.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
@@ -20,55 +20,7 @@ static int selected_column = -1;
 static int interrupt_enabled = 0;
 static uint8_t matrix_status[MOCK_COLUMN_COUNT];
 
-
-void lm4_set_scanning_enabled(int enabled)
-{
-	enable_scanning = enabled;
-	uart_printf("%s keyboard scanning\n", enabled ? "Enable" : "Disable");
-}
-
-
-int lm4_get_scanning_enabled(void)
-{
-	return enable_scanning;
-}
-
-
-void lm4_select_column(int col)
-{
-	selected_column = col;
-}
-
-
-uint32_t lm4_clear_matrix_interrupt_status(void)
-{
-	/* Not implemented */
-	return 0;
-}
-
-
-void lm4_enable_matrix_interrupt(void)
-{
-	interrupt_enabled = 1;
-}
-
-
-void lm4_disable_matrix_interrupt(void)
-{
-	interrupt_enabled = 0;
-}
-
-
-int lm4_read_raw_row_state(void)
-{
-	if (selected_column >= 0)
-		return matrix_status[selected_column];
-	else
-		return 0;
-}
-
-
-void lm4_configure_keyboard_gpio(void)
+void keyboard_raw_init(void)
 {
 	/* Init matrix status to release all */
 	int i;
@@ -76,6 +28,27 @@ void lm4_configure_keyboard_gpio(void)
 		matrix_status[i] = 0xff;
 }
 
+void keyboard_raw_task_start(void)
+{
+}
+
+void keyboard_raw_drive_column(int col)
+{
+	selected_column = col;
+}
+
+int keyboard_raw_read_rows(void)
+{
+	if (selected_column >= 0)
+		return matrix_status[selected_column] ^ 0xff;
+	else
+		return 0;
+}
+
+void keyboard_raw_enable_interrupt(int enable)
+{
+	interrupt_enabled = enable;
+}
 
 static int command_mock_matrix(int argc, char **argv)
 {

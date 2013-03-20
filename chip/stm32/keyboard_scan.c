@@ -1,16 +1,8 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- */
-
-/*
- * Keyboard scanner module for Chrome EC
  *
- * To make this code portable, we rely heavily on looping over the keyboard
- * input and output entries in the board's gpio_list[]. Each set of inputs or
- * outputs must be listed in consecutive, increasing order so that scan loops
- * can iterate beginning at KB_IN00 or KB_OUT00 for however many GPIOs are
- * utilized (KB_INPUTS or KB_OUTPUTS).
+ * Keyboard scanner module for Chrome EC STM32
  */
 
 #include "atomic.h"
@@ -19,9 +11,9 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "keyboard.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
-#include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -30,16 +22,6 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
-
-/* used for assert_output() */
-enum {
-	OUTPUT_ASSERT_ALL = -2,
-	OUTPUT_TRI_STATE_ALL = -1,
-	/* 0 ~ 12 for the corresponding output */
-};
-
-/* Mask of external interrupts on input lines */
-static unsigned int irq_mask;
 
 #define SCAN_TIME_COUNT 32
 
@@ -69,7 +51,7 @@ static uint8_t scan_edge_index[KB_OUTPUTS][KB_INPUTS];
 #define MASK_INDEX_LEFT_ALT	10
 #define MASK_VALUE_LEFT_ALT	0x40
 
-static const uint32_t kb_out_ports[] = { KB_OUT_PORT_LIST };
+/*****************************************************************************/
 
 /* Provide a default function in case the board doesn't have one */
 void __board_keyboard_suppress_noise(void)
@@ -171,45 +153,6 @@ static int kb_fifo_remove(uint8_t *buffp)
 	return EC_SUCCESS;
 }
 
-static void assert_output(int out)
-{
-	int i, done = 0;
-
-	for (i = 0; i < ARRAY_SIZE(kb_out_ports); i++) {
-		uint32_t bsrr = 0;
-		int j;
-
-		for (j = GPIO_KB_OUT00; j <= GPIO_KB_OUT12; j++) {
-			if (gpio_list[j].port != kb_out_ports[i])
-				continue;
-
-			if (out == OUTPUT_ASSERT_ALL) {
-				/* drive low (clear bit) */
-				bsrr |= gpio_list[j].mask << 16;
-			} else if (out == OUTPUT_TRI_STATE_ALL) {
-				/* put output in hi-Z state (set bit) */
-				bsrr |= gpio_list[j].mask;
-			} else {
-				/* drive specified output low, others => hi-Z */
-				if (j - GPIO_KB_OUT00 == out) {
-					/* to avoid conflict, tri-state all
-					 * outputs first, then assert output */
-					assert_output(OUTPUT_TRI_STATE_ALL);
-					bsrr |= gpio_list[j].mask << 16;
-					done = 1;
-					break;
-				}
-			}
-		}
-
-		if (bsrr)
-			STM32_GPIO_BSRR_OFF(kb_out_ports[i]) = bsrr;
-
-		if (done)
-			break;
-	}
-}
-
 /**
  * Assert host keyboard interrupt line.
  */
@@ -217,28 +160,6 @@ static void set_host_interrupt(int active)
 {
 	/* interrupt host by using active low EC_INT signal */
 	gpio_set_level(GPIO_EC_INT, !active);
-}
-
-/* Set up outputs so that we will get an interrupt when any key changed */
-void setup_interrupts(void)
-{
-	uint32_t pr_before, pr_after;
-
-	/* Assert all outputs would trigger un-wanted interrupts.
-	 * Clear them before enable interrupt. */
-	pr_before = STM32_EXTI_PR;
-	assert_output(OUTPUT_ASSERT_ALL);
-	pr_after = STM32_EXTI_PR;
-	STM32_EXTI_PR |= ((pr_after & ~pr_before) & irq_mask);
-
-	STM32_EXTI_IMR |= irq_mask;	/* 1: unmask interrupt */
-}
-
-
-void enter_polling_mode(void)
-{
-	STM32_EXTI_IMR &= ~irq_mask;	/* 0: mask interrupts */
-	assert_output(OUTPUT_TRI_STATE_ALL);
 }
 
 /**
@@ -289,38 +210,6 @@ static void print_state(const uint8_t *state, const char *msg)
 }
 
 /**
- * Read the raw input state for the currently selected output
- *
- * It is assumed that the output is already selected by the scanning
- * hardware. The output number is only used by test code.
- *
- * @return input state, one bit for each input
- */
-static uint8_t read_raw_input_state(void)
-{
-	int i;
-	unsigned int port, prev_port = 0;
-	uint8_t state = 0;
-	uint16_t port_val = 0;
-
-	for (i = 0; i < KB_INPUTS; i++) {
-		port = gpio_list[GPIO_KB_IN00 + i].port;
-		if (port != prev_port) {
-			port_val = STM32_GPIO_IDR_OFF(port);
-			prev_port = port;
-		}
-
-		if (port_val & gpio_list[GPIO_KB_IN00 + i].mask)
-			state |= 1 << i;
-	}
-
-	/* Invert it so 0=not pressed, 1=pressed */
-	state ^= 0xff;
-
-	return state;
-}
-
-/**
  * Read the raw keyboard matrix state.
  *
  * Used in pre-init, so must not make task-switching-dependent calls; udelay()
@@ -338,10 +227,10 @@ static int read_matrix(uint8_t *state)
 
 	for (c = 0; c < KB_OUTPUTS; c++) {
 		/* Assert output, then wait a bit for it to settle */
-		assert_output(c);
+		keyboard_raw_drive_column(c);
 		udelay(config.output_settle_us);
 
-		r = read_raw_input_state();
+		r = keyboard_raw_read_rows();
 
 #ifdef CONFIG_KEYBOARD_TEST
 		/* Use simulated keyscan sequence instead if testing active */
@@ -357,7 +246,7 @@ static int read_matrix(uint8_t *state)
 		state[c] = r;
 		pressed |= r;
 	}
-	assert_output(OUTPUT_TRI_STATE_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	return pressed ? 1 : 0;
 }
@@ -499,11 +388,12 @@ static int check_recovery_key(const uint8_t *state)
 	return 1;
 }
 
-
 void keyboard_scan_init(void)
 {
+	keyboard_raw_init();
+
 	/* Tri-state (put into Hi-Z) the outputs */
-	assert_output(OUTPUT_TRI_STATE_ALL);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	/* Initialize raw state */
 	read_matrix(debounced_state);
@@ -520,7 +410,8 @@ static void scan_keyboard(void)
 	int keys_changed = 1;
 
 	mutex_lock(&scanning_enabled);
-	setup_interrupts();
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+	keyboard_raw_enable_interrupt(1);
 	mutex_unlock(&scanning_enabled);
 
 	/*
@@ -528,7 +419,7 @@ static void scan_keyboard(void)
 	 * re-start immediatly polling instead of waiting
 	 * for the next interrupt.
 	 */
-	if (!read_raw_input_state()) {
+	if (!keyboard_raw_read_rows()) {
 #ifdef CONFIG_KEYBOARD_TEST
 		task_wait_event(keyscan_seq_next_event_delay());
 #else
@@ -536,7 +427,8 @@ static void scan_keyboard(void)
 #endif
 	}
 
-	enter_polling_mode();
+	keyboard_raw_enable_interrupt(0);
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	/* Busy polling keyboard state. */
 	while (1) {
@@ -566,45 +458,20 @@ static void scan_keyboard(void)
 	}
 }
 
-static void set_irq_mask(void)
-{
-	int i;
-
-	for (i = GPIO_KB_IN00; i < GPIO_KB_IN00 + KB_INPUTS; i++)
-		irq_mask |= gpio_list[i].mask;
-}
-
 void keyboard_scan_task(void)
 {
-	/* Enable interrupts for keyboard matrix inputs */
-	gpio_enable_interrupt(GPIO_KB_IN00);
-	gpio_enable_interrupt(GPIO_KB_IN01);
-	gpio_enable_interrupt(GPIO_KB_IN02);
-	gpio_enable_interrupt(GPIO_KB_IN03);
-	gpio_enable_interrupt(GPIO_KB_IN04);
-	gpio_enable_interrupt(GPIO_KB_IN05);
-	gpio_enable_interrupt(GPIO_KB_IN06);
-	gpio_enable_interrupt(GPIO_KB_IN07);
-
-	/* Determine EXTI_PR mask to use for the board */
-	set_irq_mask();
-
 	print_state(debounced_state, "init state");
+
+	keyboard_raw_task_start();
 
 	while (1) {
 		if (config.flags & EC_MKBP_FLAGS_ENABLE) {
 			scan_keyboard();
 		} else {
-			assert_output(OUTPUT_TRI_STATE_ALL);
+			keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 			task_wait_event(-1);
 		}
 	}
-}
-
-
-void keyboard_scan_interrupt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_KEYSCAN);
 }
 
 int keyboard_has_char(void)
@@ -660,8 +527,16 @@ void keyboard_enable_scanning(int enable)
 		mutex_unlock(&scanning_enabled);
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
+		/*
+		 * TODO: using a mutex to control scanning isn't very
+		 * responsive.  If we just started scanning the matrix, the
+		 * mutex will already be locked, and we'll finish the entire
+		 * matrix scan before we stop driving columns.  We should
+		 * instead do something like link, where disabling scanning
+		 * immediately stops driving the columns.
+		 */
 		mutex_lock(&scanning_enabled);
-		assert_output(OUTPUT_TRI_STATE_ALL);
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 	}
 }
 

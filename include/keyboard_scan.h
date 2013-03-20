@@ -9,7 +9,6 @@
 #define __CROS_EC_KEYBOARD_SCAN_H
 
 #include "common.h"
-#include "gpio.h"
 
 /**
  * Initializes the module.
@@ -51,16 +50,5 @@ void keyboard_enable_scanning(int enable);
  * Sends KEY_BATTERY keystroke.
  */
 void keyboard_send_battery_key(void);
-
-#ifdef CONFIG_TASK_KEYSCAN
-
-/**
- * Keyboard scan GPIO interrupt.
- */
-void keyboard_scan_interrupt(enum gpio_signal signal);
-
-#else
-#define keyboard_scan_interrupt NULL
-#endif
 
 #endif  /* __CROS_EC_KEYBOARD_SCAN_H */
