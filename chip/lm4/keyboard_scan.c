@@ -10,6 +10,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "keyboard.h"
+#include "keyboard_config.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "switch.h"
@@ -29,8 +30,6 @@
 #define SCAN_LOOP_DELAY         MSEC  /* Delay in scan loop */
 #define COLUMN_CHARGE_US          40  /* Column charge time in usec */
 
-#define KB_COLS 13
-
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
 /* Boot key list.  Must be in same order as enum boot_key. */
@@ -40,22 +39,22 @@ struct boot_key_entry {
 };
 const struct boot_key_entry boot_key_list[] = {
 	{0, 0x00},  /* (none) */
-	{1, 0x02},  /* Esc */
-	{11, 0x40}, /* Down-arrow */
+	{KEYBOARD_COL_ESC, KEYBOARD_MASK_ESC},   /* Esc */
+	{KEYBOARD_COL_DOWN, KEYBOARD_MASK_DOWN}, /* Down-arrow */
 };
 
-static uint8_t debounced_state[KB_COLS];     /* Debounced key matrix */
-static uint8_t prev_state[KB_COLS];          /* Matrix from previous scan */
-static uint8_t debouncing[KB_COLS];          /* Mask of keys being debounced */
+static uint8_t debounced_state[KEYBOARD_COLS]; /* Debounced key matrix */
+static uint8_t prev_state[KEYBOARD_COLS];    /* Matrix from previous scan */
+static uint8_t debouncing[KEYBOARD_COLS];    /* Mask of keys being debounced */
 static uint32_t scan_time[SCAN_TIME_COUNT];  /* Times of last scans */
 static int scan_time_index;                  /* Current scan_time[] index */
 /* Index into scan_time[] when each key started debouncing */
-static uint8_t scan_edge_index[KB_COLS][8];
+static uint8_t scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
 
 enum boot_key boot_key_value = BOOT_KEY_OTHER;
 
 /* Mask with 1 bits only for keys that actually exist */
-static const uint8_t actual_key_mask[KB_COLS] = {
+static const uint8_t actual_key_mask[KEYBOARD_COLS] = {
 	0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 	0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 };
@@ -65,22 +64,6 @@ static const uint8_t actual_key_mask[KB_COLS] = {
  * a lot of debug output, which makes the saved EC console data less useful.
  */
 static int print_state_changes;
-
-/* Key masks for special boot keys */
-#define MASK_INDEX_REFRESH 2
-#define MASK_VALUE_REFRESH 0x04
-
-/* Key masks for special runtime keys */
-#define MASK_INDEX_VOL_UP	4
-#define MASK_VALUE_VOL_UP	0x01
-#define MASK_INDEX_RIGHT_ALT	10
-#define MASK_VALUE_RIGHT_ALT	0x01
-#define MASK_INDEX_LEFT_ALT	10
-#define MASK_VALUE_LEFT_ALT	0x40
-#define MASK_INDEX_KEY_R	3
-#define MASK_VALUE_KEY_R	0x80
-#define MASK_INDEX_KEY_H	6
-#define MASK_VALUE_KEY_H	0x02
 
 static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 
@@ -113,7 +96,7 @@ static int is_scanning_enabled(void)
  * Used in pre-init, so must not make task-switching-dependent calls; udelay()
  * is ok because it's a spin-loop.
  *
- * @param state		Destination for new state (must be KB_COLS long).
+ * @param state		Destination for new state (must be KEYBOARD_COLS long).
  *
  * @return 1 if at least one key is pressed, else zero.
  */
@@ -123,7 +106,7 @@ static int read_matrix(uint8_t *state)
 	uint8_t r;
 	int pressed = 0;
 
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		/* Stop if scanning becomes disabled */
 		if (!enable_scanning)
 			break;
@@ -158,7 +141,7 @@ static void print_state(const uint8_t *state, const char *msg)
 	int c;
 
 	CPRINTF("[%T KB %s:", msg);
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c])
 			CPRINTF(" %02x", state[c]);
 		else
@@ -181,10 +164,10 @@ static void check_runtime_keys(const uint8_t *state)
 	 * All runtime key combos are (right or left ) alt + volume up + (some
 	 * key NOT on the same col as alt or volume up )
 	 */
-	if (state[MASK_INDEX_VOL_UP] != MASK_VALUE_VOL_UP)
+	if (state[KEYBOARD_COL_VOL_UP] != KEYBOARD_MASK_VOL_UP)
 		return;
-	if (state[MASK_INDEX_RIGHT_ALT] != MASK_VALUE_RIGHT_ALT &&
-	    state[MASK_INDEX_LEFT_ALT] != MASK_VALUE_LEFT_ALT)
+	if (state[KEYBOARD_COL_RIGHT_ALT] != KEYBOARD_MASK_RIGHT_ALT &&
+	    state[KEYBOARD_COL_LEFT_ALT] != KEYBOARD_MASK_LEFT_ALT)
 		return;
 
 	/*
@@ -192,7 +175,7 @@ static void check_runtime_keys(const uint8_t *state)
 	 * pressed for volume up and alt, so if only one more key is pressed
 	 * there will be exactly 3 non-zero columns.
 	 */
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c])
 			num_press++;
 	}
@@ -200,11 +183,11 @@ static void check_runtime_keys(const uint8_t *state)
 		return;
 
 	/* Check individual keys */
-	if (state[MASK_INDEX_KEY_R] == MASK_VALUE_KEY_R) {
+	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
 		CPRINTF("[%T KB warm reboot]\n");
 		chipset_reset(0);
-	} else if (state[MASK_INDEX_KEY_H] == MASK_VALUE_KEY_H) {
+	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
 		CPRINTF("[%T KB hibernate]\n");
 		system_hibernate(0, 0);
@@ -222,11 +205,11 @@ static int has_ghosting(const uint8_t *state)
 {
 	int c, c2;
 
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (!state[c])
 			continue;
 
-		for (c2 = c + 1; c2 < KB_COLS; c2++) {
+		for (c2 = c + 1; c2 < KEYBOARD_COLS; c2++) {
 			/*
 			 * A little bit of cleverness here.  Ghosting happens
 			 * if 2 columns share at least 2 keys.  So we OR the
@@ -256,7 +239,7 @@ static int check_keys_changed(uint8_t *state)
 	int any_pressed = 0;
 	int c, i;
 	int any_change = 0;
-	uint8_t new_state[KB_COLS];
+	uint8_t new_state[KEYBOARD_COLS];
 	uint32_t tnow = get_time().le.lo;
 
 	/* Save the current scan time */
@@ -277,12 +260,12 @@ static int check_keys_changed(uint8_t *state)
 		return any_pressed;
 
 	/* Check for changes between previous scan and this one */
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int diff = new_state[c] ^ prev_state[c];
 		if (!diff)
 			continue;
 
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < KEYBOARD_ROWS; i++) {
 			if (diff & (1 << i))
 				scan_edge_index[c][i] = scan_time_index;
 		}
@@ -292,12 +275,12 @@ static int check_keys_changed(uint8_t *state)
 	}
 
 	/* Check for keys which are done debouncing */
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int debc = debouncing[c];
 		if (!debc)
 			continue;
 
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < KEYBOARD_ROWS; i++) {
 			int mask = 1 << i;
 			int new_mask = new_state[c] & mask;
 
@@ -350,7 +333,7 @@ static int check_keys_changed(uint8_t *state)
  */
 static int check_key(const uint8_t *state, int index, int mask)
 {
-	uint8_t allowed_mask[KB_COLS] = {0};
+	uint8_t allowed_mask[KEYBOARD_COLS] = {0};
 	int c;
 
 	/* Check for the key */
@@ -359,9 +342,9 @@ static int check_key(const uint8_t *state, int index, int mask)
 
 	/* Check for other allowed keys */
 	allowed_mask[index] |= mask;
-	allowed_mask[MASK_INDEX_REFRESH] |= MASK_VALUE_REFRESH;
+	allowed_mask[KEYBOARD_COL_REFRESH] |= KEYBOARD_MASK_REFRESH;
 
-	for (c = 0; c < KB_COLS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c] & ~allowed_mask[c])
 			return 0;  /* Disallowed key pressed */
 	}
@@ -392,7 +375,7 @@ static enum boot_key keyboard_scan_check_boot_key(const uint8_t *state)
 
 	/* If reset was not caused by reset pin, refresh must be held down */
 	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-	    !(state[MASK_INDEX_REFRESH] & MASK_VALUE_REFRESH))
+	    !(state[KEYBOARD_COL_REFRESH] & KEYBOARD_MASK_REFRESH))
 		return BOOT_KEY_OTHER;
 
 	/* Check what single key is down */

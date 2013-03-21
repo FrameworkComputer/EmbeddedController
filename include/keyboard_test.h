@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,7 +19,7 @@ struct keyscan_item {
 	timestamp_t abs_time;	/* absolute timestamp to present this item */
 	uint32_t time_us;	/* time for this item relative to test start */
 	uint8_t done;		/* 1 if we managed to present this */
-	uint8_t scan[KB_OUTPUTS];
+	uint8_t scan[KEYBOARD_COLS];
 };
 
 /**

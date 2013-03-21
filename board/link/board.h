@@ -102,7 +102,7 @@ enum adc_channel
 /* There are only 3 I2C ports used because battery and charger share a port */
 #define I2C_PORTS_USED 3
 
-/* Keyboard scanner uses an entire GPIO bank for row inputs */
+/* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION
 #define KB_SCAN_ROW_GPIO LM4_GPIO_N
 

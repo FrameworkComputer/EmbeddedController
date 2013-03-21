@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "comm-host.h"
+#include "keyboard_config.h"
 #include "ectool.h"
 
 enum {
@@ -20,13 +21,6 @@ enum {
 	KEYSCAN_MAX_TESTS	= 10,	/* Maximum number of tests supported */
 	KEYSCAN_MAX_INPUT_LEN	= 20,	/* Maximum characters we can receive */
 };
-
-#ifdef KB_OUTPUTS
-#define KEYSCAN_OUTPUTS 	KB_OUTPUTS
-#else
-/* Use a suitable default */
-#define KEYSCAN_OUTPUTS 	13
-#endif
 
 /* A single entry of the key matrix */
 struct matrix_entry {
@@ -37,7 +31,7 @@ struct matrix_entry {
 
 struct keyscan_test_item {
 	uint32_t beat;			/* Beat number */
-	uint8_t scan[KEYSCAN_OUTPUTS];	/* Scan data */
+	uint8_t scan[KEYBOARD_COLS];	/* Scan data */
 };
 
 /* A single test, consisting of a list of key scans and expected ascii input */
@@ -107,7 +101,8 @@ static int keyscan_read_fdt_matrix(struct keyscan_info *keyscan,
 		matrix->keycode = word & 0xffff;
 
 		/* Hard-code some sanity limits for now */
-		if (matrix->row >= 8 || matrix->col >= 13) {
+		if (matrix->row >= KEYBOARD_ROWS ||
+		    matrix->col >= KEYBOARD_COLS) {
 			fprintf(stderr, "Matrix pos out of range (%d,%d)\n",
 				matrix->row, matrix->col);
 			return -1;

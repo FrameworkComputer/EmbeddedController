@@ -8,10 +8,11 @@
  * input and output entries in the board's gpio_list[]. Each set of inputs or
  * outputs must be listed in consecutive, increasing order so that scan loops
  * can iterate beginning at KB_IN00 or KB_OUT00 for however many GPIOs are
- * utilized (KB_INPUTS or KB_OUTPUTS).
+ * utilized (KEYBOARD_ROWS or KEYBOARD_COLS).
  */
 
 #include "gpio.h"
+#include "keyboard_config.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "registers.h"
@@ -27,7 +28,7 @@ static void set_irq_mask(void)
 {
 	int i;
 
-	for (i = GPIO_KB_IN00; i < GPIO_KB_IN00 + KB_INPUTS; i++)
+	for (i = GPIO_KB_IN00; i < GPIO_KB_IN00 + KEYBOARD_ROWS; i++)
 		irq_mask |= gpio_list[i].mask;
 }
 
@@ -100,7 +101,7 @@ int keyboard_raw_read_rows(void)
 	int state = 0;
 	uint16_t port_val = 0;
 
-	for (i = 0; i < KB_INPUTS; i++) {
+	for (i = 0; i < KEYBOARD_ROWS; i++) {
 		port = gpio_list[GPIO_KB_IN00 + i].port;
 		if (port != prev_port) {
 			port_val = STM32_GPIO_IDR_OFF(port);

@@ -13,6 +13,7 @@
 #include "i8042.h"
 #include "i8042_protocol.h"
 #include "keyboard.h"
+#include "keyboard_config.h"
 #include "lightbar.h"
 #include "lpc.h"
 #include "registers.h"
@@ -107,9 +108,7 @@ struct kb_state {
 
 
 /* The standard Chrome OS keyboard matrix table. */
-#define CROS_ROW_NUM 8  /* TODO: +1 for power button. */
-#define CROS_COL_NUM 13
-static const uint16_t scancode_set1[CROS_ROW_NUM][CROS_COL_NUM] = {
+static const uint16_t scancode_set1[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	{0x0000, 0xe05b, 0x003b, 0x0030, 0x0044, 0x0073, 0x0031, 0x0000, 0x000d,
 	 0x0000, 0xe038, 0x0000, 0x0000},
 	{0x0000, 0x0001, 0x003e, 0x0022, 0x0041, 0x0000, 0x0023, 0x0000, 0x0028,
@@ -128,7 +127,7 @@ static const uint16_t scancode_set1[CROS_ROW_NUM][CROS_COL_NUM] = {
 	 0x0018, 0x0000, 0xe048, 0xe04b},
 };
 
-static const uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
+static const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	{0x0000, 0xe01f, 0x0005, 0x0032, 0x0009, 0x0051, 0x0031, 0x0000, 0x0055,
 	 0x0000, 0xe011, 0x0000, 0x0000},
 	{0x0000, 0x0076, 0x000c, 0x0034, 0x0083, 0x0000, 0x0033, 0x0000, 0x0052,
@@ -149,7 +148,7 @@ static const uint16_t scancode_set2[CROS_ROW_NUM][CROS_COL_NUM] = {
 
 
 /* Recording which key is being simulated pressed. */
-static uint8_t simulated_key[CROS_COL_NUM];
+static uint8_t simulated_key[KEYBOARD_COLS];
 
 
 /* Log the traffic between EC and host -- for debug only */
@@ -184,7 +183,7 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	ASSERT(scan_code);
 	ASSERT(len);
 
-	if (row > CROS_ROW_NUM || col > CROS_COL_NUM)
+	if (row > KEYBOARD_ROWS || col > KEYBOARD_COLS)
 		return EC_ERROR_INVAL;
 
 	if (pressed)
@@ -842,10 +841,10 @@ static int command_keyboard_press(int argc, char **argv)
 		int i, j;
 
 		ccputs("Simulated key:\n");
-		for (i = 0; i < CROS_COL_NUM; ++i) {
+		for (i = 0; i < KEYBOARD_COLS; ++i) {
 			if (simulated_key[i] == 0)
 				continue;
-			for (j = 0; j < CROS_ROW_NUM; ++j)
+			for (j = 0; j < KEYBOARD_ROWS; ++j)
 				if (simulated_key[i] & (1 << j))
 					ccprintf("\t%d %d\n", i, j);
 		}
@@ -855,11 +854,11 @@ static int command_keyboard_press(int argc, char **argv)
 		char *e;
 
 		c = strtoi(argv[1], &e, 0);
-		if (*e || c < 0 || c >= CROS_COL_NUM)
+		if (*e || c < 0 || c >= KEYBOARD_COLS)
 			return EC_ERROR_PARAM1;
 
 		r = strtoi(argv[2], &e, 0);
-		if (*e || r < 0 || r >= CROS_ROW_NUM)
+		if (*e || r < 0 || r >= KEYBOARD_ROWS)
 			return EC_ERROR_PARAM2;
 
 		p = strtoi(argv[3], &e, 0);

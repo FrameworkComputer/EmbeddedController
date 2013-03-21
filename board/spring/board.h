@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -40,9 +40,7 @@
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 
-/* EC drives 13 outputs to the keyboard matrix and reads 8 inputs/interrupts */
-#define KB_INPUTS 8
-#define KB_OUTPUTS 13
+/* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */

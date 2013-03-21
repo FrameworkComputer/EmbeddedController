@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "keyboard.h"
+#include "keyboard_config.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
@@ -27,29 +28,13 @@
 
 static struct mutex scanning_enabled;
 
-static uint8_t debounced_state[KB_OUTPUTS];   /* Debounced key matrix */
-static uint8_t prev_state[KB_OUTPUTS];        /* Matrix from previous scan */
-static uint8_t debouncing[KB_OUTPUTS];        /* Mask of keys being debounced */
+static uint8_t debounced_state[KEYBOARD_COLS];   /* Debounced key matrix */
+static uint8_t prev_state[KEYBOARD_COLS];    /* Matrix from previous scan */
+static uint8_t debouncing[KEYBOARD_COLS];    /* Mask of keys being debounced */
 static uint32_t scan_time[SCAN_TIME_COUNT];  /* Times of last scans */
 static int scan_time_index;                  /* Current scan_time[] index */
 /* Index into scan_time[] when each key started debouncing */
-static uint8_t scan_edge_index[KB_OUTPUTS][KB_INPUTS];
-
-/* Key masks for special boot keys */
-#define MASK_INDEX_ESC     1
-#define MASK_VALUE_ESC     0x02
-#define MASK_INDEX_REFRESH 2
-#define MASK_VALUE_REFRESH 0x04
-
-/* Key masks and values for warm reboot combination */
-#define MASK_INDEX_KEYR		3
-#define MASK_VALUE_KEYR		0x80
-#define MASK_INDEX_VOL_UP	4
-#define MASK_VALUE_VOL_UP	0x01
-#define MASK_INDEX_RIGHT_ALT	10
-#define MASK_VALUE_RIGHT_ALT	0x01
-#define MASK_INDEX_LEFT_ALT	10
-#define MASK_VALUE_LEFT_ALT	0x40
+static uint8_t scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
 
 /*****************************************************************************/
 
@@ -65,7 +50,7 @@ void board_keyboard_suppress_noise(void)
 static uint32_t kb_fifo_start;		/* first entry */
 static uint32_t kb_fifo_end;			/* last entry */
 static uint32_t kb_fifo_entries;	/* number of existing entries */
-static uint8_t kb_fifo[KB_FIFO_DEPTH][KB_OUTPUTS];
+static uint8_t kb_fifo[KB_FIFO_DEPTH][KEYBOARD_COLS];
 
 /*
  * Our configuration. The debounce parameters are not yet supported.
@@ -86,7 +71,9 @@ static struct ec_mkbp_config config = {
 	.fifo_max_depth = KB_FIFO_DEPTH,
 };
 
-/* clear keyboard state variables */
+/**
+ * Clear keyboard state variables.
+ */
 void keyboard_clear_state(void)
 {
 	int i;
@@ -96,7 +83,7 @@ void keyboard_clear_state(void)
 	kb_fifo_end = 0;
 	kb_fifo_entries = 0;
 	for (i = 0; i < KB_FIFO_DEPTH; i++)
-		memset(kb_fifo[i], 0, KB_OUTPUTS);
+		memset(kb_fifo[i], 0, KEYBOARD_COLS);
 }
 
 /**
@@ -115,7 +102,7 @@ static int kb_fifo_add(uint8_t *buffp)
 		goto kb_fifo_push_done;
 	}
 
-	memcpy(kb_fifo[kb_fifo_end], buffp, KB_OUTPUTS);
+	memcpy(kb_fifo[kb_fifo_end], buffp, KEYBOARD_COLS);
 
 	kb_fifo_end = (kb_fifo_end + 1) % KB_FIFO_DEPTH;
 
@@ -135,7 +122,7 @@ static int kb_fifo_remove(uint8_t *buffp)
 	if (!kb_fifo_entries) {
 		/* no entry remaining in FIFO : return last known state */
 		int last = (kb_fifo_start + KB_FIFO_DEPTH - 1) % KB_FIFO_DEPTH;
-		memcpy(buffp, kb_fifo[last], KB_OUTPUTS);
+		memcpy(buffp, kb_fifo[last], KEYBOARD_COLS);
 
 		/*
 		 * Bail out without changing any FIFO indices and let the
@@ -144,7 +131,7 @@ static int kb_fifo_remove(uint8_t *buffp)
 		 */
 		return EC_ERROR_UNKNOWN;
 	}
-	memcpy(buffp, kb_fifo[kb_fifo_start], KB_OUTPUTS);
+	memcpy(buffp, kb_fifo[kb_fifo_start], KEYBOARD_COLS);
 
 	kb_fifo_start = (kb_fifo_start + 1) % KB_FIFO_DEPTH;
 
@@ -174,7 +161,7 @@ static int check_runtime_keys(const uint8_t *state)
 	int c;
 
 	/* Count number of key pressed */
-	for (c = num_press = 0; c < KB_OUTPUTS; c++) {
+	for (c = num_press = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c])
 			++num_press;
 	}
@@ -182,10 +169,10 @@ static int check_runtime_keys(const uint8_t *state)
 	if (num_press != 3)
 		return 0;
 
-	if (state[MASK_INDEX_KEYR] == MASK_VALUE_KEYR &&
-			state[MASK_INDEX_VOL_UP] == MASK_VALUE_VOL_UP &&
-			(state[MASK_INDEX_RIGHT_ALT] == MASK_VALUE_RIGHT_ALT ||
-			state[MASK_INDEX_LEFT_ALT] == MASK_VALUE_LEFT_ALT)) {
+	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R &&
+	    state[KEYBOARD_COL_VOL_UP] == KEYBOARD_MASK_VOL_UP &&
+	    (state[KEYBOARD_COL_RIGHT_ALT] == KEYBOARD_MASK_RIGHT_ALT ||
+	     state[KEYBOARD_COL_LEFT_ALT] == KEYBOARD_MASK_LEFT_ALT)) {
 		keyboard_clear_state();
 		chipset_reset(0);
 		return 1;
@@ -200,7 +187,7 @@ static void print_state(const uint8_t *state, const char *msg)
 	int c;
 
 	CPRINTF("[%T KB %s:", msg);
-	for (c = 0; c < KB_OUTPUTS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c])
 			CPRINTF(" %02x", state[c]);
 		else
@@ -215,7 +202,7 @@ static void print_state(const uint8_t *state, const char *msg)
  * Used in pre-init, so must not make task-switching-dependent calls; udelay()
  * is ok because it's a spin-loop.
  *
- * @param state		Destination for new state (must be KB_OUTPUTS long).
+ * @param state		Destination for new state (must be KEYBOARD_COLS long).
  *
  * @return 1 if at least one key is pressed, else zero.
  */
@@ -225,7 +212,7 @@ static int read_matrix(uint8_t *state)
 	uint8_t r;
 	int pressed = 0;
 
-	for (c = 0; c < KB_OUTPUTS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		/* Assert output, then wait a bit for it to settle */
 		keyboard_raw_drive_column(c);
 		udelay(config.output_settle_us);
@@ -263,7 +250,7 @@ static int check_keys_changed(uint8_t *state)
 	int any_pressed = 0;
 	int c, i;
 	int any_change = 0;
-	uint8_t new_state[KB_OUTPUTS];
+	uint8_t new_state[KEYBOARD_COLS];
 	uint32_t tnow = get_time().le.lo;
 
 	/* Save the current scan time */
@@ -275,13 +262,13 @@ static int check_keys_changed(uint8_t *state)
 	any_pressed = read_matrix(new_state);
 
 	/* Check for changes between previous scan and this one */
-	for (c = 0; c < KB_OUTPUTS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int diff = new_state[c] ^ prev_state[c];
 
 		if (!diff)
 			continue;
 
-		for (i = 0; i < KB_INPUTS; i++) {
+		for (i = 0; i < KEYBOARD_ROWS; i++) {
 			if (diff & (1 << i))
 				scan_edge_index[c][i] = scan_time_index;
 		}
@@ -291,13 +278,13 @@ static int check_keys_changed(uint8_t *state)
 	}
 
 	/* Check for keys which are done debouncing */
-	for (c = 0; c < KB_OUTPUTS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int debc = debouncing[c];
 
 		if (!debc)
 			continue;
 
-		for (i = 0; i < KB_INPUTS; i++) {
+		for (i = 0; i < KEYBOARD_ROWS; i++) {
 			int mask = 1 << i;
 			int new_mask = new_state[c] & mask;
 
@@ -367,17 +354,18 @@ static int check_recovery_key(const uint8_t *state)
 
 	/* cold boot : Power + Refresh were pressed,
 	 * check if ESC is also pressed for recovery. */
-	if (!(state[MASK_INDEX_ESC] & MASK_VALUE_ESC))
+	if (!(state[KEYBOARD_COL_ESC] & KEYBOARD_MASK_ESC))
 		return 0;
 
 	/* Make sure only other allowed keys are pressed.  This protects
 	 * against accidentally triggering the special key when a cat sits on
 	 * your keyboard.  Currently, only the requested key and ESC are
 	 * allowed. */
-	for (c = 0; c < KB_OUTPUTS; c++) {
+	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c] &&
-		(c != MASK_INDEX_ESC || state[c] != MASK_VALUE_ESC) &&
-		(c != MASK_INDEX_REFRESH || state[c] != MASK_VALUE_REFRESH))
+		(c != KEYBOARD_COL_ESC || state[c] != KEYBOARD_MASK_ESC) &&
+		(c != KEYBOARD_COL_REFRESH ||
+		 state[c] != KEYBOARD_MASK_REFRESH))
 			return 0;  /* Additional disallowed key pressed */
 	}
 
@@ -497,7 +485,7 @@ static int keyboard_get_scan(struct host_cmd_handler_args *args)
 	if (!kb_fifo_entries)
 		set_host_interrupt(0);
 
-	args->response_size = KB_OUTPUTS;
+	args->response_size = KEYBOARD_COLS;
 
 	return EC_RES_SUCCESS;
 }
@@ -509,8 +497,8 @@ static int keyboard_get_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_mkbp_info *r = args->response;
 
-	r->rows = KB_INPUTS;
-	r->cols = KB_OUTPUTS;
+	r->rows = KEYBOARD_ROWS;
+	r->cols = KEYBOARD_COLS;
 	r->switches = 0;
 
 	args->response_size = sizeof(*r);
@@ -567,11 +555,11 @@ static int command_keyboard_press(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	c = strtoi(argv[1], &e, 0);
-	if (*e || c < 0 || c >= KB_OUTPUTS)
+	if (*e || c < 0 || c >= KEYBOARD_COLS)
 		return EC_ERROR_PARAM1;
 
 	r = strtoi(argv[2], &e, 0);
-	if (*e || r < 0 || r >= 8)
+	if (*e || r < 0 || r >= KEYBOARD_ROWS)
 		return EC_ERROR_PARAM2;
 
 	p = strtoi(argv[3], &e, 0);

@@ -14,11 +14,11 @@
 #include "common.h"
 #include "gpio.h"
 
-/* used for select_column() */
+/* Column values for keyboard_raw_drive_column() */
 enum keyboard_column_index {
 	KEYBOARD_COLUMN_ALL = -2,  /* Drive all columns */
 	KEYBOARD_COLUMN_NONE = -1, /* Drive no columns (tri-state all) */
-	/* 0 ~ 12 for the corresponding column */
+	/* 0 ~ KEYBOARD_COLS-1 for the corresponding column */
 };
 
 /**

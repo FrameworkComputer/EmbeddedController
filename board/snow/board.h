@@ -38,9 +38,7 @@
 
 #define USB_CHARGE_PORT_COUNT 0
 
-/* EC drives 13 outputs to the keyboard matrix and reads 8 inputs/interrupts */
-#define KB_INPUTS 8
-#define KB_OUTPUTS 13
+/* Keyboard output ports */
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */

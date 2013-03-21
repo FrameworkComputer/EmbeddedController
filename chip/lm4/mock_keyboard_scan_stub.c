@@ -7,24 +7,23 @@
 
 #include "common.h"
 #include "console.h"
+#include "keyboard_config.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
 
-#define MOCK_COLUMN_COUNT 13
-
 static int enable_scanning = 1;
 static int selected_column = -1;
 static int interrupt_enabled = 0;
-static uint8_t matrix_status[MOCK_COLUMN_COUNT];
+static uint8_t matrix_status[KEYBOARD_COLS];
 
 void keyboard_raw_init(void)
 {
 	/* Init matrix status to release all */
 	int i;
-	for (i = 0; i < MOCK_COLUMN_COUNT; ++i)
+	for (i = 0; i < KEYBOARD_COLS; ++i)
 		matrix_status[i] = 0xff;
 }
 
@@ -59,11 +58,11 @@ static int command_mock_matrix(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	c = strtoi(argv[1], &e, 0);
-	if (*e || c < 0 || c >= MOCK_COLUMN_COUNT)
+	if (*e || c < 0 || c >= KEYBOARD_COLS)
 		return EC_ERROR_PARAM1;
 
 	r = strtoi(argv[2], &e, 0);
-	if (*e || r < 0 || r >= 8)
+	if (*e || r < 0 || r >= KEYBOARD_ROWS)
 		return EC_ERROR_PARAM2;
 
 	p = strtoi(argv[3], &e, 0);
