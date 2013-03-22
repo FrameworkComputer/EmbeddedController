@@ -146,11 +146,6 @@ static const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	 0x0044, 0x0000, 0xe075, 0xe06b},
 };
 
-
-/* Recording which key is being simulated pressed. */
-static uint8_t simulated_key[KEYBOARD_COLS];
-
-
 /* Log the traffic between EC and host -- for debug only */
 #define MAX_KBLOG 512  /* Max events in keyboard log */
 struct kblog_t {
@@ -834,53 +829,6 @@ DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram,
 			"Get/set keyboard controller RAM",
 			NULL);
 
-
-static int command_keyboard_press(int argc, char **argv)
-{
-	if (argc == 1) {
-		int i, j;
-
-		ccputs("Simulated key:\n");
-		for (i = 0; i < KEYBOARD_COLS; ++i) {
-			if (simulated_key[i] == 0)
-				continue;
-			for (j = 0; j < KEYBOARD_ROWS; ++j)
-				if (simulated_key[i] & (1 << j))
-					ccprintf("\t%d %d\n", i, j);
-		}
-
-	} else if (argc == 4) {
-		int r, c, p;
-		char *e;
-
-		c = strtoi(argv[1], &e, 0);
-		if (*e || c < 0 || c >= KEYBOARD_COLS)
-			return EC_ERROR_PARAM1;
-
-		r = strtoi(argv[2], &e, 0);
-		if (*e || r < 0 || r >= KEYBOARD_ROWS)
-			return EC_ERROR_PARAM2;
-
-		p = strtoi(argv[3], &e, 0);
-		if (*e || p < 0 || p > 1)
-			return EC_ERROR_PARAM3;
-
-		if ((simulated_key[c] & (1 << r)) == (p << r))
-			return EC_SUCCESS;
-
-		simulated_key[c] = (simulated_key[c] & ~(1 << r)) | (p << r);
-
-		keyboard_state_changed(r, c, p);
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
-			"[col] [row] [0 | 1]",
-			"Simulate keypress",
-			NULL);
-
-
 static int command_keyboard_log(int argc, char **argv)
 {
 	int i;
@@ -938,30 +886,6 @@ DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
 			"[enable | disable]",
 			"Print or toggle keyboard info",
 			NULL);
-
-/*****************************************************************************/
-/* Host commands */
-
-static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_mkbp_simulate_key *p = args->params;
-
-	/* Only available on unlocked systems */
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
-	if (p->col >= ARRAY_SIZE(simulated_key))
-		return EC_RES_INVALID_PARAM;
-
-	simulated_key[p->col] = (simulated_key[p->col] & ~(1 << p->row)) |
-				(p->pressed << p->row);
-
-	keyboard_state_changed(p->row, p->col, p->pressed);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
-		     mkbp_command_simulate_key,
-		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Hooks */

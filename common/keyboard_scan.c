@@ -23,41 +23,51 @@
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
-/* Time constants */
-#define POLLING_MODE_TIMEOUT  SECOND  /* Max time to poll if no keys are down */
-#define DEBOUNCE_UP_US   (30 * MSEC)  /* Debounce time for key-up */
-#define DEBOUNCE_DOWN_US  (6 * MSEC)  /* Debounce time for key-down */
-#define SCAN_LOOP_DELAY         MSEC  /* Delay in scan loop */
-#define COLUMN_CHARGE_US          40  /* Column charge time in usec */
-
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
+
+static struct keyboard_scan_config config = {
+#ifdef BOARD_link
+	.output_settle_us = 40,
+	.debounce_down_us = 6 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 1500,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = SECOND,
+#else
+	.output_settle_us = 50,
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+#endif
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
+	},
+};
 
 /* Boot key list.  Must be in same order as enum boot_key. */
 struct boot_key_entry {
 	uint8_t mask_index;
 	uint8_t mask_value;
 };
-const struct boot_key_entry boot_key_list[] = {
+static const struct boot_key_entry boot_key_list[] = {
 	{0, 0x00},  /* (none) */
 	{KEYBOARD_COL_ESC, KEYBOARD_MASK_ESC},   /* Esc */
 	{KEYBOARD_COL_DOWN, KEYBOARD_MASK_DOWN}, /* Down-arrow */
 };
+static enum boot_key boot_key_value = BOOT_KEY_OTHER;
 
 static uint8_t debounced_state[KEYBOARD_COLS]; /* Debounced key matrix */
 static uint8_t prev_state[KEYBOARD_COLS];    /* Matrix from previous scan */
 static uint8_t debouncing[KEYBOARD_COLS];    /* Mask of keys being debounced */
+static uint8_t simulated_key[KEYBOARD_COLS]; /* Keys simulated-pressed */
+
 static uint32_t scan_time[SCAN_TIME_COUNT];  /* Times of last scans */
 static int scan_time_index;                  /* Current scan_time[] index */
 /* Index into scan_time[] when each key started debouncing */
 static uint8_t scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
-
-enum boot_key boot_key_value = BOOT_KEY_OTHER;
-
-/* Mask with 1 bits only for keys that actually exist */
-static const uint8_t actual_key_mask[KEYBOARD_COLS] = {
-	0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-	0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
-};
 
 /*
  * Print all keyboard scan state changes?  Off by default because it generates
@@ -67,67 +77,16 @@ static int print_state_changes;
 
 static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 
-static void enable_interrupt(void)
-{
-	CPRINTF("[%T KB wait]\n");
-
-	if (enable_scanning)
-		keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
-
-	keyboard_raw_enable_interrupt(1);
-}
-
-static void enter_polling_mode(void)
-{
-	CPRINTF("[%T KB poll]\n");
-	keyboard_raw_enable_interrupt(0);
-	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-}
-
 static int is_scanning_enabled(void)
 {
-	/* Scan only if enabled AND lid is open. */
-	return enable_scanning && switch_get_lid_open();
-}
+#ifdef BOARD_link
+	/* TODO: should apply to ARM too, but need standard lid API */
+	/* Scanning is never enabled when lid is closed */
+	if (!switch_get_lid_open())
+		return 0;
+#endif
 
-/**
- * Read the raw keyboard matrix state.
- *
- * Used in pre-init, so must not make task-switching-dependent calls; udelay()
- * is ok because it's a spin-loop.
- *
- * @param state		Destination for new state (must be KEYBOARD_COLS long).
- *
- * @return 1 if at least one key is pressed, else zero.
- */
-static int read_matrix(uint8_t *state)
-{
-	int c;
-	uint8_t r;
-	int pressed = 0;
-
-	for (c = 0; c < KEYBOARD_COLS; c++) {
-		/* Stop if scanning becomes disabled */
-		if (!enable_scanning)
-			break;
-
-		/* Select column, then wait a bit for it to settle */
-		keyboard_raw_drive_column(c);
-		udelay(COLUMN_CHARGE_US);
-
-		/* Read the row state */
-		r = keyboard_raw_read_rows();
-		/* Mask off keys that don't exist so they never show
-		 * as pressed */
-		r &= actual_key_mask[c];
-
-		state[c] = r;
-		pressed |= r;
-	}
-
-	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-
-	return pressed ? 1 : 0;
+	return enable_scanning;
 }
 
 /**
@@ -151,11 +110,83 @@ static void print_state(const uint8_t *state, const char *msg)
 }
 
 /**
+ * Simulate a keypress.
+ *
+ * @param row		Row of key
+ * @param col		Column of key
+ * @param pressed	Non-zero if pressed, zero if released
+ */
+static void simulate_key(int row, int col, int pressed)
+{
+	if ((simulated_key[col] & (1 << row)) == ((pressed ? 1 : 0) << row))
+		return;  /* No change */
+
+	simulated_key[col] ^= (1 << row);
+
+	print_state(simulated_key, "simulated ");
+
+	/* Wake the task to handle changes in simulated keys */
+	task_wake(TASK_ID_KEYSCAN);
+}
+
+/**
+ * Read the raw keyboard matrix state.
+ *
+ * Used in pre-init, so must not make task-switching-dependent calls; udelay()
+ * is ok because it's a spin-loop.
+ *
+ * @param state		Destination for new state (must be KEYBOARD_COLS long).
+ *
+ * @return 1 if at least one key is pressed, else zero.
+ */
+static int read_matrix(uint8_t *state)
+{
+	int c;
+	uint8_t r;
+	int pressed = 0;
+
+	for (c = 0; c < KEYBOARD_COLS; c++) {
+		/*
+		 * Stop if scanning becomes disabled.  Check enable_cscanning
+		 * instead of is_scanning_enabled() so that we can scan the
+		 * matrix at boot time before the lid switch is readable.
+		 */
+		if (!enable_scanning)
+			break;
+
+		/* Select column, then wait a bit for it to settle */
+		keyboard_raw_drive_column(c);
+		udelay(config.output_settle_us);
+
+		/* Read the row state */
+		r = keyboard_raw_read_rows();
+		/* Mask off keys that don't exist on the actual keyboard */
+		r &= config.actual_key_mask[c];
+		/* Add in simulated keypresses */
+		r |= simulated_key[c];
+
+#ifdef CONFIG_KEYBOARD_TEST
+		/* Use simulated keyscan sequence instead if testing active */
+		r = keyscan_seq_get_scan(c, r);
+#endif
+
+		state[c] = r;
+		pressed |= r;
+	}
+
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+
+	return pressed ? 1 : 0;
+}
+
+/**
  * Check special runtime key combinations.
  *
  * @param state		Keyboard state to use when checking keys.
+ *
+ * @return 1 if a special key was pressed, 0 if not
  */
-static void check_runtime_keys(const uint8_t *state)
+static int check_runtime_keys(const uint8_t *state)
 {
 	int num_press = 0;
 	int c;
@@ -165,10 +196,11 @@ static void check_runtime_keys(const uint8_t *state)
 	 * key NOT on the same col as alt or volume up )
 	 */
 	if (state[KEYBOARD_COL_VOL_UP] != KEYBOARD_MASK_VOL_UP)
-		return;
+		return 0;
+
 	if (state[KEYBOARD_COL_RIGHT_ALT] != KEYBOARD_MASK_RIGHT_ALT &&
 	    state[KEYBOARD_COL_LEFT_ALT] != KEYBOARD_MASK_LEFT_ALT)
-		return;
+		return 0;
 
 	/*
 	 * Count number of columns with keys pressed.  We know two columns are
@@ -179,23 +211,33 @@ static void check_runtime_keys(const uint8_t *state)
 		if (state[c])
 			num_press++;
 	}
+
 	if (num_press != 3)
-		return;
+		return 0;
 
 	/* Check individual keys */
 	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
 		CPRINTF("[%T KB warm reboot]\n");
+		keyboard_clear_buffer();
 		chipset_reset(0);
+		return 1;
 	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
 		CPRINTF("[%T KB hibernate]\n");
 		system_hibernate(0, 0);
+		return 1;
 	}
+
+	return 0;
 }
 
 /**
  * Check for ghosting in the keyboard state.
+ *
+ * Assumes that the state has already been masked with the actual key mask, so
+ * that coords which don't correspond with actual keys don't trigger ghosting
+ * detection.
  *
  * @param state		Keyboard state to check.
  *
@@ -262,6 +304,7 @@ static int check_keys_changed(uint8_t *state)
 	/* Check for changes between previous scan and this one */
 	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int diff = new_state[c] ^ prev_state[c];
+
 		if (!diff)
 			continue;
 
@@ -277,6 +320,7 @@ static int check_keys_changed(uint8_t *state)
 	/* Check for keys which are done debouncing */
 	for (c = 0; c < KEYBOARD_COLS; c++) {
 		int debc = debouncing[c];
+
 		if (!debc)
 			continue;
 
@@ -288,7 +332,8 @@ static int check_keys_changed(uint8_t *state)
 			if (!(debc & mask))
 				continue;  /* Not debouncing this key */
 			if (tnow - scan_time[scan_edge_index[c][i]] <
-			    (new_mask ? DEBOUNCE_DOWN_US : DEBOUNCE_UP_US))
+			    (new_mask ? config.debounce_down_us :
+					config.debounce_up_us))
 				continue;  /* Not done debouncing */
 
 			debouncing[c] &= ~mask;
@@ -300,13 +345,21 @@ static int check_keys_changed(uint8_t *state)
 			state[c] ^= mask;
 			any_change = 1;
 
+#ifdef CONFIG_KEYBOARD_PROTOCOL_8042
 			/* Inform keyboard module if scanning is enabled */
 			if (is_scanning_enabled())
 				keyboard_state_changed(i, c, new_mask ? 1 : 0);
+#endif
 		}
 	}
 
 	if (any_change) {
+
+#ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
+		/* Suppress keyboard noise */
+		keyboard_suppress_noise();
+#endif
+
 		if (print_state_changes)
 			print_state(state, "state");
 
@@ -321,7 +374,13 @@ static int check_keys_changed(uint8_t *state)
 		CPRINTF("\n");
 #endif
 
-		check_runtime_keys(state);
+		/* Swallow special keys */
+		if (check_runtime_keys(state))
+			return 0;
+
+#ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
+		keyboard_fifo_add(state);
+#endif
 	}
 
 	return any_pressed;
@@ -360,7 +419,7 @@ static int check_key(const uint8_t *state, int index, int mask)
  * key combination is down or this isn't the right type of boot to look at
  * boot keys.
  */
-static enum boot_key keyboard_scan_check_boot_key(const uint8_t *state)
+static enum boot_key check_boot_key(const uint8_t *state)
 {
 	const struct boot_key_entry *k = boot_key_list;
 	int i;
@@ -389,9 +448,22 @@ static enum boot_key keyboard_scan_check_boot_key(const uint8_t *state)
 	return BOOT_KEY_OTHER;
 }
 
+/*****************************************************************************/
+/* Interface */
+
+struct keyboard_scan_config *keyboard_scan_get_config(void)
+{
+	return &config;
+}
+
 enum boot_key keyboard_scan_get_boot_key(void)
 {
 	return boot_key_value;
+}
+
+const uint8_t *keyboard_scan_get_state(void)
+{
+	return debounced_state;
 }
 
 void keyboard_scan_init(void)
@@ -407,7 +479,7 @@ void keyboard_scan_init(void)
 	memcpy(prev_state, debounced_state, sizeof(prev_state));
 
 	/* Check for keys held down at boot */
-	boot_key_value = keyboard_scan_check_boot_key(debounced_state);
+	boot_key_value = check_boot_key(debounced_state);
 
 	/* Trigger event if recovery key was pressed */
 	if (boot_key_value == BOOT_KEY_ESC)
@@ -416,7 +488,8 @@ void keyboard_scan_init(void)
 
 void keyboard_scan_task(void)
 {
-	int key_press_timer = 0;
+	timestamp_t poll_deadline, start;
+	int wait_time;
 
 	print_state(debounced_state, "init state");
 
@@ -424,7 +497,10 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		/* Enable all outputs */
-		enable_interrupt();
+		CPRINTF("[%T KB wait]\n");
+		if (is_scanning_enabled())
+			keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+		keyboard_raw_enable_interrupt(1);
 
 		/* Wait for scanning enabled and key pressed. */
 		do {
@@ -438,21 +514,31 @@ void keyboard_scan_task(void)
 				task_wait_event(-1);
 		} while (!is_scanning_enabled());
 
-		enter_polling_mode();
+		/* Enter polling mode */
+		CPRINTF("[%T KB poll]\n");
+		keyboard_raw_enable_interrupt(0);
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+
 		/* Busy polling keyboard state. */
 		while (is_scanning_enabled()) {
+			start = get_time();
+
 			/* Check for keys down */
 			if (check_keys_changed(debounced_state)) {
-				key_press_timer = 0;
-			} else if (++key_press_timer >=
-				   (POLLING_MODE_TIMEOUT / SCAN_LOOP_DELAY)) {
-				/* Stop polling */
-				key_press_timer = 0;
+				poll_deadline.val = start.val
+					+ config.poll_timeout_us;
+			} else if (timestamp_expired(poll_deadline, &start)) {
 				break;
 			}
 
 			/* Delay between scans */
-			usleep(SCAN_LOOP_DELAY);
+			wait_time = config.scan_period_us -
+				(get_time().val - start.val);
+
+			if (wait_time < config.min_post_scan_delay_us)
+				wait_time = config.min_post_scan_delay_us;
+
+			usleep(wait_time);
 		}
 	}
 }
@@ -473,6 +559,28 @@ void keyboard_scan_enable(int enable)
 		keyboard_clear_buffer();
 	}
 }
+
+/*****************************************************************************/
+/* Host commands */
+
+static int mkbp_command_simulate_key(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_mkbp_simulate_key *p = args->params;
+
+	/* Only available on unlocked systems */
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	if (p->col >= KEYBOARD_COLS || p->row >= KEYBOARD_ROWS)
+		return EC_RES_INVALID_PARAM;
+
+	simulate_key(p->row, p->col, p->pressed);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
+		     mkbp_command_simulate_key,
+		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Console commands */
@@ -499,4 +607,44 @@ static int command_ksstate(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate,
 			"ksstate [on | off]",
 			"Show or toggle printing keyboard scan state",
+			NULL);
+
+static int command_keyboard_press(int argc, char **argv)
+{
+	if (argc == 1) {
+		int i, j;
+
+		ccputs("Simulated keys:\n");
+		for (i = 0; i < KEYBOARD_COLS; ++i) {
+			if (simulated_key[i] == 0)
+				continue;
+			for (j = 0; j < KEYBOARD_ROWS; ++j)
+				if (simulated_key[i] & (1 << j))
+					ccprintf("\t%d %d\n", i, j);
+		}
+
+	} else if (argc == 4) {
+		int r, c, p;
+		char *e;
+
+		c = strtoi(argv[1], &e, 0);
+		if (*e || c < 0 || c >= KEYBOARD_COLS)
+			return EC_ERROR_PARAM1;
+
+		r = strtoi(argv[2], &e, 0);
+		if (*e || r < 0 || r >= KEYBOARD_ROWS)
+			return EC_ERROR_PARAM2;
+
+		p = strtoi(argv[3], &e, 0);
+		if (*e || p < 0 || p > 1)
+			return EC_ERROR_PARAM3;
+
+		simulate_key(r, c, p);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
+			"[col] [row] [0 | 1]",
+			"Simulate keypress",
 			NULL);

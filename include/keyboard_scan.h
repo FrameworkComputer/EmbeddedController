@@ -9,11 +9,39 @@
 #define __CROS_EC_KEYBOARD_SCAN_H
 
 #include "common.h"
+#include "keyboard_config.h"
+
+struct keyboard_scan_config {
+	/* Delay between setting up output and waiting for it to settle */
+	uint16_t output_settle_us;
+	/* Times for debouncing key-down and key-up */
+	uint16_t debounce_down_us;
+	uint16_t debounce_up_us;
+	/* Time between start of scans when in polling mode */
+	uint16_t scan_period_us;
+	/*
+	 * Minimum time between end of one scan and start of the next one.
+	 * This ensures keyboard scanning doesn't starve the rest of the system
+	 * if the scan period is set too short, or if other higher-priority
+	 * system activity is starving the keyboard scan task too.
+	 */
+	uint16_t min_post_scan_delay_us;
+
+	/* Revert to interrupt mode after no keyboard activity for this long */
+	uint32_t poll_timeout_us;
+	/* Mask with 1 bits only for keys that actually exist */
+	uint8_t actual_key_mask[KEYBOARD_COLS];
+};
 
 /**
  * Initializes the module.
  */
 void keyboard_scan_init(void);
+
+/**
+ * Return a pointer to the keyboard scan config.
+ */
+struct keyboard_scan_config *keyboard_scan_get_config(void);
 
 /* Key held down at keyboard-controlled reset boot time. */
 enum boot_key {
@@ -29,6 +57,12 @@ enum boot_key {
  * was pressed, or reset was not caused by a keyboard-controlled reset.
  */
 enum boot_key keyboard_scan_get_boot_key(void);
+
+/**
+ * Return a pointer to the current debounced keyboard matrix state, which is
+ * KEYBOARD_COLS bytes long.
+ */
+const uint8_t *keyboard_scan_get_state(void);
 
 /**
  * Enables/disables keyboard matrix scan.
