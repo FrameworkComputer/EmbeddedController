@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : hardware specific implementation */
 
+#include "console.h"
 #include "cpu.h"
 #include "registers.h"
 #include "system.h"
@@ -104,8 +105,14 @@ static void check_reset_cause(void)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	while (1)
-		/* NOT IMPLEMENTED */;
+	/*
+	 * TODO: implement hibernate.
+	 *
+	 * Until then, treat this as a request to hard-reboot.
+	 */
+	cprintf(CC_SYSTEM, "[%T hibernate not supported, so rebooting]\n");
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
 }
 
 void system_pre_init(void)
