@@ -177,7 +177,7 @@ void configure_board_late(void)
 #endif
 }
 
-void board_keyboard_suppress_noise(void)
+void keyboard_suppress_noise(void)
 {
 	/* notify audio codec of keypress for noise suppression */
 	gpio_set_level(GPIO_CODEC_INT, 0);

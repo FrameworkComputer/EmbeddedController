@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -11,7 +11,7 @@
 #include "config.h"
 #include "console.h"
 #include "i8042.h"
-#include "keyboard.h"
+#include "keyboard_protocol.h"
 #include "lpc.h"
 #include "queue.h"
 #include "task.h"
@@ -19,7 +19,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_I8042, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
 static int i8042_irq_enabled;
 

@@ -12,7 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "keyboard.h"
+#include "keyboard_protocol.h"
 #include "keyboard_scan.h"
 #include "pwm.h"
 #include "switch.h"
@@ -514,7 +514,7 @@ void switch_task(void)
 			 * no longer pressed.
 			 */
 			if (!raw_power_button_pressed())
-				keyboard_enable_scanning(1);
+				keyboard_scan_enable(1);
 
 			if (raw_power_button_pressed() !=
 			    debounced_power_pressed)
@@ -607,7 +607,7 @@ void switch_interrupt(enum gpio_signal signal)
 			 * reduce the risk of false-reboot triggered by those
 			 * keys on the same column with refresh key.
 			 */
-			keyboard_enable_scanning(0);
+			keyboard_scan_enable(0);
 		}
 		break;
 	case GPIO_PCH_BKLTEN:

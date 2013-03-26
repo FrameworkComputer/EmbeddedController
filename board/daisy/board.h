@@ -21,6 +21,8 @@
 /* Optional features */
 #define CONFIG_CHIPSET_GAIA
 #define CONFIG_I2C
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_KEYBOARD_SUPPRESS_NOISE
 
 /* Allow dangerous commands all the time, since we don't have a write protect
  * switch. */
@@ -107,9 +109,6 @@ enum gpio_signal {
 };
 
 void configure_board(void);
-
-/* Signal to the AP that keyboard scan data is available */
-void board_keyboard_suppress_noise(void);
 
 /* Auto detect EC i2c host port */
 int board_i2c_host_port(void);

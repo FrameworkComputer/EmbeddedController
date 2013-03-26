@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -12,8 +12,8 @@
 #include "host_command.h"
 #include "i8042.h"
 #include "i8042_protocol.h"
-#include "keyboard.h"
 #include "keyboard_config.h"
+#include "keyboard_protocol.h"
 #include "lightbar.h"
 #include "lpc.h"
 #include "registers.h"
@@ -54,10 +54,10 @@ enum scancode_set_list {
 /*
  * i8042 global settings.
  */
-static int keyboard_enabled = 0;  /* default the keyboard is disabled. */
-static int keystroke_enabled;  /* output keystrokes */
+static int keyboard_enabled;	/* default the keyboard is disabled. */
+static int keystroke_enabled;	/* output keystrokes */
 static uint8_t resend_command[MAX_SCAN_CODE_LEN];
-static uint8_t resend_command_len = 0;
+static uint8_t resend_command_len;
 static uint8_t controller_ram_address;
 static uint8_t controller_ram[0x20] = {
 	/* the so called "command byte" */
@@ -65,7 +65,7 @@ static uint8_t controller_ram[0x20] = {
 	/* 0x01 - 0x1f are controller RAM */
 };
 static uint8_t A20_status;
-static int power_button_pressed = 0;
+static int power_button_pressed;
 static void keyboard_special(uint16_t k);
 
 /*
@@ -93,7 +93,7 @@ static uint8_t typematic_value_from_host = DEFAULT_TYPEMATIC_VALUE;
 static int refill_first_delay = DEFAULT_FIRST_DELAY;  /* unit: ms */
 static int refill_inter_delay = DEFAULT_INTER_DELAY;  /* unit: ms */
 static int typematic_delay;                           /* unit: us */
-static int typematic_len = 0;  /* length of typematic_scan_code */
+static int typematic_len;  /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 
 
@@ -257,7 +257,7 @@ static void reset_rate_and_delay(void)
 }
 
 
-void keyboard_clear_underlying_buffer(void)
+void keyboard_clear_buffer(void)
 {
 	i8042_flush_buffer();
 }
@@ -493,25 +493,25 @@ int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case I8042_CMD_ENABLE:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(1);
-			keyboard_clear_underlying_buffer();
+			keyboard_clear_buffer();
 			break;
 
 		case I8042_CMD_RESET_DIS:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(0);
 			reset_rate_and_delay();
-			keyboard_clear_underlying_buffer();
+			keyboard_clear_buffer();
 			break;
 
 		case I8042_CMD_RESET_DEF:
 			output[out_len++] = I8042_RET_ACK;
 			reset_rate_and_delay();
-			keyboard_clear_underlying_buffer();
+			keyboard_clear_buffer();
 			break;
 
 		case I8042_CMD_RESET_BAT:
 			reset_rate_and_delay();
-			keyboard_clear_underlying_buffer();
+			keyboard_clear_buffer();
 			output[out_len++] = I8042_RET_ACK;
 			output[out_len++] = I8042_RET_BAT;
 			output[out_len++] = I8042_RET_BAT;
@@ -644,7 +644,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 		} else {
 			CPRINTF("[%T KB unsupported cmd: 0x%02x]\n", command);
 			reset_rate_and_delay();
-			keyboard_clear_underlying_buffer();
+			keyboard_clear_buffer();
 			output[out_len++] = I8042_RET_NAK;
 			data_port_state = STATE_NORMAL;
 		}
@@ -658,7 +658,7 @@ int handle_keyboard_command(uint8_t command, uint8_t *output)
 /* U U D D L R L R b a */
 static void keyboard_special(uint16_t k)
 {
-	static uint8_t s = 0;
+	static uint8_t s;
 	static const uint16_t a[] = {0xe048, 0xe048, 0xe050, 0xe050, 0xe04b,
 				     0xe04d, 0xe04b, 0xe04d, 0x0030, 0x001e};
 #ifdef CONFIG_TASK_LIGHTBAR
@@ -984,7 +984,7 @@ static void keyboard_preserve_state(void)
 	state.ctlram = controller_ram[0];
 
 	system_add_jump_tag(KB_SYSJUMP_TAG, KB_HOOK_VERSION,
-	                    sizeof(state), &state);
+			    sizeof(state), &state);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, keyboard_preserve_state, HOOK_PRIO_DEFAULT);
 
@@ -997,7 +997,7 @@ static void keyboard_restore_state(void)
 	int version, size;
 
 	prev = (const struct kb_state *)system_get_jump_tag(KB_SYSJUMP_TAG,
-	                                                    &version, &size);
+							    &version, &size);
 	if (prev && version == KB_HOOK_VERSION && size == sizeof(*prev)) {
 		/* Coming back from a sysjump, so restore settings. */
 		scancode_set = prev->codeset;

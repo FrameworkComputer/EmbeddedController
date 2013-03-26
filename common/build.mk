@@ -21,6 +21,10 @@ common-$(CONFIG_FLASH)+=flash_common.o fmap.o
 common-$(CONFIG_I2C)+=i2c_commands.o
 common-$(CONFIG_I2C_ARBITRATION)+=i2c_arbitration.o
 common-$(CONFIG_IR357x)+=ir357x.o
+# TODO: combine common bits of keyboard_scan into one file
+# (coming in a follow-up CL)
+common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
+common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_scan.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LP5562)+=lp5562.o lp5562_battery_led.o
 common-$(CONFIG_LPC)+=port80.o
@@ -30,7 +34,7 @@ common-$(CONFIG_SMART_BATTERY)+=smart_battery.o smart_battery_stub.o
 common-$(CONFIG_TASK_CHARGER)+=charge_state.o battery_precharge.o
 common-$(CONFIG_TASK_CONSOLE)+=console.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o host_event_commands.o
-common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard.o
+common-$(CONFIG_TASK_I8042CMD)+=i8042.o keyboard_8042.o
 common-$(CONFIG_TASK_LIGHTBAR)+=lightbar.o
 common-$(CONFIG_TASK_THERMAL)+=thermal.o
 common-$(CONFIG_TASK_VBOOTHASH)+=sha256.o vboot_hash.o

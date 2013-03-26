@@ -35,7 +35,6 @@ enum console_channel {
 	CC_GPIO,
 	CC_HOSTCMD,
 	CC_I2C,
-	CC_I8042,
 	CC_KEYBOARD,
 	CC_KEYSCAN,
 	CC_LIGHTBAR,

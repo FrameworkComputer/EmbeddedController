@@ -26,29 +26,22 @@ enum boot_key {
 /**
  * Return the key held down at boot time in addition to the keyboard-controlled
  * reset keys.  Returns BOOT_KEY_OTHER if none of the keys specifically checked
- * was pressed, or reset was not caused by a keyboard-controlled reset, or if
- * the state has been cleared by keyboard_scan_clear_boot_key().
+ * was pressed, or reset was not caused by a keyboard-controlled reset.
  */
 enum boot_key keyboard_scan_get_boot_key(void);
 
 /**
- * Return non-zero if recovery key was pressed at boot.
- */
-int keyboard_scan_recovery_pressed(void);
-
-/**
- * Clear any saved keyboard state (empty FIFO, etc).
- */
-void keyboard_clear_state(void);
-
-/**
  * Enables/disables keyboard matrix scan.
  */
-void keyboard_enable_scanning(int enable);
+void keyboard_scan_enable(int enable);
 
+#ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
 /**
- * Sends KEY_BATTERY keystroke.
+ * Indicate to audio codec that a key has been pressed.
+ *
+ * Boards may supply this function to suppress audio noise.
  */
-void keyboard_send_battery_key(void);
+void keyboard_suppress_noise(void);
+#endif
 
 #endif  /* __CROS_EC_KEYBOARD_SCAN_H */

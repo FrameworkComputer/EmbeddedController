@@ -10,8 +10,8 @@
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
-#include "keyboard.h"
 #include "keyboard_config.h"
+#include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
@@ -38,14 +38,6 @@ static uint8_t scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
 
 /*****************************************************************************/
 
-/* Provide a default function in case the board doesn't have one */
-void __board_keyboard_suppress_noise(void)
-{
-}
-
-void board_keyboard_suppress_noise(void)
-		__attribute__((weak, alias("__board_keyboard_suppress_noise")));
-
 #define KB_FIFO_DEPTH		16	/* FIXME: this is pretty huge */
 static uint32_t kb_fifo_start;		/* first entry */
 static uint32_t kb_fifo_end;			/* last entry */
@@ -71,9 +63,6 @@ static struct ec_mkbp_config config = {
 	.fifo_max_depth = KB_FIFO_DEPTH,
 };
 
-/**
- * Clear keyboard state variables.
- */
 void keyboard_clear_state(void)
 {
 	int i;
@@ -86,12 +75,7 @@ void keyboard_clear_state(void)
 		memset(kb_fifo[i], 0, KEYBOARD_COLS);
 }
 
-/**
-  * Add keyboard state into FIFO
-  *
-  * @return EC_SUCCESS if entry added, EC_ERROR_OVERFLOW if FIFO is full
-  */
-static int kb_fifo_add(uint8_t *buffp)
+int keyboard_fifo_add(const uint8_t *buffp)
 {
 	int ret = EC_SUCCESS;
 
@@ -308,7 +292,9 @@ static int check_keys_changed(uint8_t *state)
 	}
 
 	if (any_change) {
-		board_keyboard_suppress_noise();
+#ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
+		keyboard_suppress_noise();
+#endif
 		print_state(state, "state");
 
 #ifdef PRINT_SCAN_TIMES
@@ -325,7 +311,7 @@ static int check_keys_changed(uint8_t *state)
 		/* Swallow special keys */
 		if (check_runtime_keys(state))
 			return 0;
-		else if (kb_fifo_add(state) == EC_SUCCESS)
+		else if (keyboard_fifo_add(state) == EC_SUCCESS)
 			set_host_interrupt(1);
 		else
 			CPRINTF("dropped keystroke\n");
@@ -473,12 +459,6 @@ void keyboard_put_char(uint8_t chr, int send_irq)
 	/* TODO: needs to be implemented */
 }
 
-int keyboard_scan_recovery_pressed(void)
-{
-	return host_get_events() &
-	EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-}
-
 static int keyboard_get_scan(struct host_cmd_handler_args *args)
 {
 	kb_fifo_remove(args->response);
@@ -509,7 +489,7 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO,
 		     keyboard_get_info,
 		     EC_VER_MASK(0));
 
-void keyboard_enable_scanning(int enable)
+void keyboard_scan_enable(int enable)
 {
 	if (enable) {
 		mutex_unlock(&scanning_enabled);
@@ -535,11 +515,11 @@ void keyboard_enable_scanning(int enable)
 #define BATTERY_KEY_ROW 7
 #define BATTERY_KEY_ROW_MASK (1 << BATTERY_KEY_ROW)
 
-void keyboard_send_battery_key()
+void keyboard_send_battery_key(void)
 {
 	mutex_lock(&scanning_enabled);
 	debounced_state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
-	if (kb_fifo_add(debounced_state) == EC_SUCCESS)
+	if (keyboard_fifo_add(debounced_state) == EC_SUCCESS)
 		set_host_interrupt(1);
 	else
 		CPRINTF("dropped battery keystroke\n");
@@ -575,7 +555,7 @@ static int command_keyboard_press(int argc, char **argv)
 	else
 		debounced_state[c] &= ~(1 << r);
 
-	if (kb_fifo_add(debounced_state) == EC_SUCCESS)
+	if (keyboard_fifo_add(debounced_state) == EC_SUCCESS)
 		set_host_interrupt(1);
 	else
 		ccprintf("dropped keystroke\n");

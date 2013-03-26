@@ -26,7 +26,6 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"gpio",
 	"hostcmd",
 	"i2c",
-	"i8042",
 	"keyboard",
 	"keyscan",
 	"lightbar",

@@ -174,7 +174,7 @@ static int check_for_power_off_event(void)
 
 	/* Dis/Enable keyboard scanning when the power button state changes */
 	if (!pressed || pressed != power_button_was_pressed)
-		keyboard_enable_scanning(!pressed);
+		keyboard_scan_enable(!pressed);
 
 
 	now = get_time();
@@ -260,13 +260,6 @@ static int gaia_power_init(void)
 	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
 		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
 			system_get_reset_flags());
-		auto_power_on = 1;
-	}
-
-	/* Auto power on if the recovery combination was pressed */
-	if (keyboard_scan_recovery_pressed()) {
-		CPRINTF("[%T auto_power_on is set due to "
-			"keyboard_scan_recovery_pressed() ...]\n");
 		auto_power_on = 1;
 	}
 

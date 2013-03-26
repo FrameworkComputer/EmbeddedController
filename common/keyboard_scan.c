@@ -9,8 +9,8 @@
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
-#include "keyboard.h"
 #include "keyboard_config.h"
+#include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "switch.h"
@@ -457,7 +457,7 @@ void keyboard_scan_task(void)
 	}
 }
 
-void keyboard_enable_scanning(int enable)
+void keyboard_scan_enable(int enable)
 {
 	enable_scanning = enable;
 
@@ -470,7 +470,7 @@ void keyboard_enable_scanning(int enable)
 		task_wake(TASK_ID_KEYSCAN);
 	} else {
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-		keyboard_clear_underlying_buffer();
+		keyboard_clear_buffer();
 	}
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -21,12 +21,14 @@
 #define CONFIG_CONSOLE_UART 1
 
 /* Debug features */
-#define CONFIG_PANIC_HELP
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
-
+#define CONFIG_PANIC_HELP
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
+
+/* Optional features */
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 
 /* use STOP mode when we have nothing to do */
 /*

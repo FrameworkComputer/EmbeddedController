@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -22,6 +22,6 @@ chip-$(CONFIG_ONEWIRE)+=onewire.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
-chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o keyboard_raw.o
+chip-$(CONFIG_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(CONFIG_TASK_SWITCH)+=switch.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
