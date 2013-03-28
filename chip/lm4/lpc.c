@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "i8042.h"
+#include "keyboard_protocol.h"
 #include "lpc.h"
 #include "port80.h"
 #include "pwm.h"
@@ -560,7 +560,7 @@ static void lpc_interrupt(void)
 	/* Handle keyboard interface writes */
 	st = LM4_LPC_ST(LPC_CH_KEYBOARD);
 	if (st & LM4_LPC_ST_FRMH)
-		i8042_receive(LPC_POOL_KEYBOARD[0], st & LM4_LPC_ST_CMD);
+		keyboard_host_write(LPC_POOL_KEYBOARD[0], st & LM4_LPC_ST_CMD);
 
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 1)) {
 		/* Host read data; wake up task to send remaining bytes */

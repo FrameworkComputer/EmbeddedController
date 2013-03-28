@@ -10,22 +10,15 @@
 
 #include "common.h"
 
-#define MAX_SCAN_CODE_LEN 4
-
 /**
- * Handle the port 0x60 writes from host.
+ * Notify the keyboard module when a byte is written by the host.
  *
- * This functions returns the number of bytes stored in *output buffer.
- */
-int handle_keyboard_data(uint8_t data, uint8_t *output);
-
-/**
- * Handle the port 0x64 writes from host.
+ * Note: This is called in interrupt context by the LPC interrupt handler.
  *
- * This functions returns the number of bytes stored in *output buffer.
- * BUT theose bytes will appear at port 0x60.
+ * @param data		Byte written by host
+ * @param is_cmd        Is byte command (!=0) or data (0)
  */
-int handle_keyboard_command(uint8_t command, uint8_t *output);
+void keyboard_host_write(int data, int is_cmd);
 
 /**
  * Called by keyboard scan code once any key state change (after de-bounce),
@@ -38,10 +31,5 @@ void keyboard_state_changed(int row, int col, int is_pressed);
  * Send make/break code of power button to host.
  */
 void keyboard_set_power_button(int pressed);
-
-/**
- * Log the keyboard-related information
- */
-void kblog_put(char type, uint8_t byte);
 
 #endif  /* __CROS_EC_KEYBOARD_8042_H */

@@ -1,15 +1,15 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Mock EC i8042 interface code.
  */
 
-#include "i8042.h"
+#include "keyboard_i8042.h"
 #include "timer.h"
 #include "uart.h"
 
-void i8042_receive(int data, int is_cmd)
+void keyboard_receive(int data, int is_cmd)
 {
 	/* Not implemented */
 	return;
