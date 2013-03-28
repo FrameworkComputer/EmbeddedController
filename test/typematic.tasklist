@@ -17,7 +17,6 @@
 #define CONFIG_TASK_LIST \
 	TASK(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
-	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \

@@ -20,7 +20,6 @@
 	TASK(LIGHTBAR, lightbar_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHARGER, charge_state_machine_task, NULL, TASK_STACK_SIZE) \
 	TASK(THERMAL, thermal_task, NULL, TASK_STACK_SIZE) \
-	TASK(TYPEMATIC, keyboard_typematic_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \
 	TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \

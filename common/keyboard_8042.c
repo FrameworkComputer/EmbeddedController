@@ -411,7 +411,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 		memcpy(typematic_scan_code, scan_code, len);
 		typematic_len = len;
-		task_wake(TASK_ID_TYPEMATIC);
+		task_wake(TASK_ID_I8042CMD);
 	} else {
 		typematic_len = 0;
 	}
@@ -861,12 +861,34 @@ void keyboard_set_power_button(int pressed)
 
 void i8042_command_task(void)
 {
+	int wait = -1;
+
+	reset_rate_and_delay();
+
 	while (1) {
 		/* Wait for next host read/write */
-		task_wait_event(-1);
+		task_wait_event(wait);
 
 		while (1) {
+			timestamp_t t = get_time();
 			uint8_t chr;
+
+			/* Handle typematic */
+			if (!typematic_len) {
+				/* Typematic disabled; wait for enable */
+				wait = -1;
+			} else if (timestamp_expired(typematic_deadline, &t)) {
+				/* Ready for next typematic keystroke */
+				if (keystroke_enabled)
+					i8042_send_to_host(typematic_len,
+							   typematic_scan_code);
+				typematic_deadline.val = t.val +
+					typematic_inter_delay;
+				wait = typematic_inter_delay;
+			} else {
+				/* Wait for remaining interval */
+				wait = typematic_deadline.val - t.val;
+			}
 
 			/* Handle command/data write from host */
 			i8042_handle_from_host();
@@ -886,35 +908,6 @@ void i8042_command_task(void)
 
 			/* Write to host. */
 			lpc_keyboard_put_char(chr, i8042_irq_enabled);
-		}
-	}
-}
-
-void keyboard_typematic_task(void)
-{
-	timestamp_t t;
-	int wait = -1;
-
-	reset_rate_and_delay();
-
-	while (1) {
-		task_wait_event(wait);
-
-		t = get_time();
-
-		if (!typematic_len) {
-			/* Typematic disabled; wait for enable */
-			wait = -1;
-		} else if (timestamp_expired(typematic_deadline, &t)) {
-			/* Ready for next typematic keystroke */
-			if (keystroke_enabled)
-				i8042_send_to_host(typematic_len,
-						   typematic_scan_code);
-			typematic_deadline.val = t.val + typematic_inter_delay;
-			wait = typematic_inter_delay;
-		} else {
-			/* Woke up too soon; wait for remaining interval */
-			wait = typematic_deadline.val - t.val;
 		}
 	}
 }
