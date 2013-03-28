@@ -129,7 +129,7 @@ void tsu6721_init(void)
 	uint8_t settings;
 	uint8_t dev_id = tsu6721_read(TSU6721_REG_DEV_ID);
 
-	if (dev_id != 0x0a) {
+	if ((dev_id != 0x0a) && (dev_id != 0x12)) {
 		CPRINTF("TSU6721 invalid device ID 0x%02x\n", dev_id);
 		return;
 	}
