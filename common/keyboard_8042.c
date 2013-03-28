@@ -123,16 +123,13 @@ static enum scancode_set_list scancode_set = SCANCODE_SET_2;
  *   the inter-char delay = (2 ** B) * (D + 8) / 240 (sec)
  * Default: 500ms delay, 10.9 chars/sec.
  */
-#define DEFAULT_TYPEMATIC_VALUE ((1 << 5) || (1 << 3) || (3 << 0))
-#define DEFAULT_FIRST_DELAY 500
-#define DEFAULT_INTER_DELAY 91
-#define TYPEMATIC_DELAY_UNIT MSEC
-static uint8_t typematic_value_from_host = DEFAULT_TYPEMATIC_VALUE;
-static int refill_first_delay = DEFAULT_FIRST_DELAY;  /* unit: ms */
-static int refill_inter_delay = DEFAULT_INTER_DELAY;  /* unit: ms */
-static int typematic_delay;                           /* unit: us */
+#define DEFAULT_TYPEMATIC_VALUE ((1 << 5) | (1 << 3) | (3 << 0))
+static uint8_t typematic_value_from_host;
+static int typematic_first_delay;
+static int typematic_inter_delay;
 static int typematic_len;  /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
+static timestamp_t typematic_deadline;
 
 #define KB_SYSJUMP_TAG 0x4b42  /* "KB" */
 #define KB_HOOK_VERSION 1
@@ -222,17 +219,6 @@ static void kblog_put(char type, uint8_t byte)
 
 /*****************************************************************************/
 
-/**
- * Flush and reset all i8042 keyboard buffers.
- */
-static void i8042_flush_buffer(void)
-{
-	mutex_lock(&to_host_mutex);
-	queue_reset(&to_host);
-	mutex_unlock(&to_host_mutex);
-	lpc_keyboard_clear_buffer();
-}
-
 void keyboard_host_write(int data, int is_cmd)
 {
 	struct host_byte h;
@@ -287,11 +273,10 @@ static void i8042_send_to_host(int len, const uint8_t *bytes)
 /* Change to set 1 if the I8042_XLATE flag is set. */
 static enum scancode_set_list acting_code_set(enum scancode_set_list set)
 {
-	if (controller_ram[0] & I8042_XLATE) {
-		/* If the keyboard translation is enabled, then always
-		 * generates set 1. */
+	/* Always generate set 1 if keyboard translation is enabled */
+	if (controller_ram[0] & I8042_XLATE)
 		return SCANCODE_SET_1;
-	}
+
 	return set;
 }
 
@@ -372,16 +357,30 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	return EC_SUCCESS;
 }
 
+/**
+ * Set typematic delays based on host data byte.
+ */
+static void set_typematic_delays(uint8_t data)
+{
+	typematic_value_from_host = data;
+	typematic_first_delay = MSEC *
+		(((typematic_value_from_host & 0x60) >> 5) + 1) * 250;
+	typematic_inter_delay = SECOND *
+		(1 << ((typematic_value_from_host & 0x18) >> 3)) *
+		((typematic_value_from_host & 0x7) + 8) / 240;
+}
+
 static void reset_rate_and_delay(void)
 {
-	typematic_value_from_host = DEFAULT_TYPEMATIC_VALUE;
-	refill_first_delay = DEFAULT_FIRST_DELAY;
-	refill_inter_delay = DEFAULT_INTER_DELAY;
+	set_typematic_delays(DEFAULT_TYPEMATIC_VALUE);
 }
 
 void keyboard_clear_buffer(void)
 {
-	i8042_flush_buffer();
+	mutex_lock(&to_host_mutex);
+	queue_reset(&to_host);
+	mutex_unlock(&to_host_mutex);
+	lpc_keyboard_clear_buffer();
 }
 
 static void keyboard_wakeup(void)
@@ -408,7 +407,8 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	if (is_pressed) {
 		keyboard_wakeup();
 
-		typematic_delay = refill_first_delay * MSEC;
+		typematic_deadline.val = get_time().val + typematic_first_delay;
+
 		memcpy(typematic_scan_code, scan_code, len);
 		typematic_len = len;
 		task_wake(TASK_ID_TYPEMATIC);
@@ -551,13 +551,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 
 	case STATE_SETREP:
 		CPRINTF5("[%T KB eaten by STATE_SETREP: 0x%02x]\n", data);
-		typematic_value_from_host = data;
-		refill_first_delay =
-			(((typematic_value_from_host & 0x60) >> 5) + 1) * 250;
-		refill_inter_delay = MSEC *
-			(1 << ((typematic_value_from_host & 0x18) >> 3)) *
-			((typematic_value_from_host & 0x7) + 8) /
-			240;
+		set_typematic_delays(data);
 
 		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_NORMAL;
@@ -898,20 +892,29 @@ void i8042_command_task(void)
 
 void keyboard_typematic_task(void)
 {
+	timestamp_t t;
+	int wait = -1;
+
+	reset_rate_and_delay();
+
 	while (1) {
-		task_wait_event(-1);
+		task_wait_event(wait);
 
-		while (typematic_len) {
-			usleep(TYPEMATIC_DELAY_UNIT);
-			typematic_delay -= TYPEMATIC_DELAY_UNIT;
+		t = get_time();
 
-			if (typematic_delay <= 0) {
-				/* re-send to host */
-				if (keystroke_enabled)
-					i8042_send_to_host(typematic_len,
-							   typematic_scan_code);
-				typematic_delay = refill_inter_delay * MSEC;
-			}
+		if (!typematic_len) {
+			/* Typematic disabled; wait for enable */
+			wait = -1;
+		} else if (timestamp_expired(typematic_deadline, &t)) {
+			/* Ready for next typematic keystroke */
+			if (keystroke_enabled)
+				i8042_send_to_host(typematic_len,
+						   typematic_scan_code);
+			typematic_deadline.val = t.val + typematic_inter_delay;
+			wait = typematic_inter_delay;
+		} else {
+			/* Woke up too soon; wait for remaining interval */
+			wait = typematic_deadline.val - t.val;
 		}
 	}
 }
@@ -924,14 +927,15 @@ static int command_typematic(int argc, char **argv)
 	int i;
 
 	if (argc == 3) {
-		refill_first_delay = strtoi(argv[1], NULL, 0);
-		refill_inter_delay = strtoi(argv[2], NULL, 0);
+		typematic_first_delay = strtoi(argv[1], NULL, 0) * MSEC;
+		typematic_inter_delay = strtoi(argv[2], NULL, 0) * MSEC;
 	}
 
 	ccprintf("From host:    0x%02x\n", typematic_value_from_host);
-	ccprintf("First delay: %d ms\n", refill_first_delay);
-	ccprintf("Inter delay: %d ms\n", refill_inter_delay);
-	ccprintf("Current:     %d ms\n", typematic_delay / 1000);
+	ccprintf("First delay: %d ms\n", typematic_first_delay / 1000);
+	ccprintf("Inter delay: %d ms\n", typematic_inter_delay / 1000);
+	ccprintf("Now:         %.6ld\n", get_time().val);
+	ccprintf("Deadline:    %.6ld\n", typematic_deadline.val);
 
 	ccputs("Repeat scan code:");
 	for (i = 0; i < typematic_len; ++i)
