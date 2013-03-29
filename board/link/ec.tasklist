@@ -18,7 +18,7 @@
 	TASK(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK(LIGHTBAR, lightbar_task, NULL, TASK_STACK_SIZE) \
-	TASK(CHARGER, charge_state_machine_task, NULL, TASK_STACK_SIZE) \
+	TASK(CHARGER, charger_task, NULL, TASK_STACK_SIZE) \
 	TASK(THERMAL, thermal_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE) \

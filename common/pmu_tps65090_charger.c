@@ -390,7 +390,7 @@ int charge_keep_power_off(void)
 	return charge <= BATTERY_AP_OFF_LEVEL;
 }
 
-void pmu_charger_task(void)
+void charger_task(void)
 {
 	int next_state;
 	int wait_time = T1_USEC;
@@ -527,7 +527,7 @@ void pmu_task_throttled_wake(void)
 	timestamp_t now = get_time();
 	if (now.val - last_waken.val >= HOOK_TICK_INTERVAL) {
 		has_pending_event = 0;
-		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+		task_wake(TASK_ID_CHARGER);
 	} else {
 		has_pending_event = 1;
 	}
@@ -537,7 +537,7 @@ static void wake_pmu_task_if_necessary(void)
 {
 	if (has_pending_event) {
 		has_pending_event = 0;
-		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+		task_wake(TASK_ID_CHARGER);
 	}
 }
 DECLARE_HOOK(HOOK_TICK, wake_pmu_task_if_necessary, HOOK_PRIO_DEFAULT);

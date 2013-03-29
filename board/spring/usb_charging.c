@@ -324,7 +324,7 @@ void board_pwm_nominal_duty_cycle(int percent)
 
 void usb_charge_interrupt(enum gpio_signal signal)
 {
-	task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+	task_wake(TASK_ID_CHARGER);
 }
 
 static void board_adc_watch_toad(void)
@@ -341,7 +341,7 @@ static void board_adc_watchdog_interrupt(void)
 	if (current_watchdog == ADC_WATCH_TOAD) {
 		pending_tsu6721_reset = 1;
 		task_disable_irq(STM32_IRQ_ADC_1);
-		task_wake(TASK_ID_PMU_TPS65090_CHARGER);
+		task_wake(TASK_ID_CHARGER);
 	}
 }
 DECLARE_IRQ(STM32_IRQ_ADC_1, board_adc_watchdog_interrupt, 2);

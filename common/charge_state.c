@@ -614,7 +614,7 @@ static int exit_force_idle_mode(void)
 /**
  * Battery charging task
  */
-void charge_state_machine_task(void)
+void charger_task(void)
 {
 	struct power_state_context *ctx = &task_ctx;
 	timestamp_t ts;
