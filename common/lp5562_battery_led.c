@@ -61,7 +61,7 @@ static void battery_led_update(void)
 	/* Current states and next states */
 	static uint32_t color = LED_COLOR_RED;
 	static int breathing;
-	static int led_power;
+	static int led_power = -1;
 	int new_color = LED_COLOR_RED;
 	int new_breathing = 0;
 	int new_led_power;
