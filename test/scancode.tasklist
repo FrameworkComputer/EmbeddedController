@@ -18,7 +18,7 @@
 	TASK(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
-	TASK(I8042CMD, i8042_command_task, NULL, TASK_STACK_SIZE) \
+	TASK(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
 	TASK(SWITCH, switch_task, NULL, TASK_STACK_SIZE) \
 	TASK(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \

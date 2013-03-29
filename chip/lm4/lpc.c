@@ -556,7 +556,7 @@ static void lpc_interrupt(void)
 	while (LM4_LPC_ST(LPC_CH_PORT80) & LM4_LPC_ST_FRMH)
 		port_80_write(LPC_POOL_PORT80[0]);
 
-#ifdef CONFIG_TASK_I8042CMD
+#ifdef CONFIG_TASK_KEYPROTO
 	/* Handle keyboard interface writes */
 	st = LM4_LPC_ST(LPC_CH_KEYBOARD);
 	if (st & LM4_LPC_ST_FRMH)
@@ -564,7 +564,7 @@ static void lpc_interrupt(void)
 
 	if (mis & LM4_LPC_INT_MASK(LPC_CH_KEYBOARD, 1)) {
 		/* Host read data; wake up task to send remaining bytes */
-		task_wake(TASK_ID_I8042CMD);
+		task_wake(TASK_ID_KEYPROTO);
 	}
 #endif
 

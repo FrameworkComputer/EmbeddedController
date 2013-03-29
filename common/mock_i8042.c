@@ -15,7 +15,7 @@ void keyboard_receive(int data, int is_cmd)
 	return;
 }
 
-void i8042_command_task(void)
+void keyboard_protocol_task(void)
 {
 	/* Do nothing */
 	while (1)

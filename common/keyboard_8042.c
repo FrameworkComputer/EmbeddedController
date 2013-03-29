@@ -226,7 +226,7 @@ void keyboard_host_write(int data, int is_cmd)
 	h.type = is_cmd ? HOST_COMMAND : HOST_DATA;
 	h.byte = data;
 	queue_add_units(&from_host, &h, 1);
-	task_wake(TASK_ID_I8042CMD);
+	task_wake(TASK_ID_KEYPROTO);
 }
 
 /**
@@ -267,7 +267,7 @@ static void i8042_send_to_host(int len, const uint8_t *bytes)
 	mutex_unlock(&to_host_mutex);
 
 	/* Wake up the task to move from queue to host */
-	task_wake(TASK_ID_I8042CMD);
+	task_wake(TASK_ID_KEYPROTO);
 }
 
 /* Change to set 1 if the I8042_XLATE flag is set. */
@@ -411,7 +411,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 		memcpy(typematic_scan_code, scan_code, len);
 		typematic_len = len;
-		task_wake(TASK_ID_I8042CMD);
+		task_wake(TASK_ID_KEYPROTO);
 	} else {
 		typematic_len = 0;
 	}
@@ -859,7 +859,7 @@ void keyboard_set_power_button(int pressed)
 	}
 }
 
-void i8042_command_task(void)
+void keyboard_protocol_task(void)
 {
 	int wait = -1;
 
