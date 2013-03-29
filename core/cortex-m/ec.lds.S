@@ -104,6 +104,10 @@ SECTIONS
         *(.rodata.HOOK_SECOND)
         __hooks_second_end = .;
 
+        __deferred_funcs = .;
+        *(.rodata.deferred)
+        __deferred_funcs_end = .;
+
         . = ALIGN(4);
         *(.rodata*)
 

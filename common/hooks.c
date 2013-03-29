@@ -12,6 +12,19 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef HOOK_DEBUG
+#define CPUTS(outstr) cputs(CC_HOOK, outstr)
+#define CPRINTF(format, args...) cprintf(CC_HOOK, format, ## args)
+#else
+#define CPUTS(outstr)
+#define CPRINTF(format, args...)
+#endif
+
+/* Maximum number of deferrable functions */
+#ifndef DEFERRABLE_MAX_COUNT
+#define DEFERRABLE_MAX_COUNT 8
+#endif
+
 struct hook_ptrs {
 	const struct hook_data *start;
 	const struct hook_data *end;
@@ -36,16 +49,17 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_second, __hooks_second_end},
 };
 
-static uint32_t pending_hooks;
+/* Times for deferrable functions */
+static uint64_t defer_until[DEFERRABLE_MAX_COUNT];
+static int defer_count;
 
-/**
- * Actual notification function
- */
-static void notify(enum hook_type type)
+void hook_notify(enum hook_type type)
 {
 	const struct hook_data *start, *end, *p;
 	int count, called = 0;
 	int last_prio = HOOK_PRIO_FIRST - 1, prio;
+
+	CPRINTF("[%T hook notify %d]\n", type);
 
 	start = hook_list[type].start;
 	end = hook_list[type].end;
@@ -70,16 +84,45 @@ static void notify(enum hook_type type)
 	}
 }
 
-void hook_notify(enum hook_type type)
+void hook_init(void)
 {
-	if (type == HOOK_AC_CHANGE) {
-		/* Store deferred hook and wake task */
-		atomic_or(&pending_hooks, 1 << type);
-		task_wake(TASK_ID_HOOKS);
-	} else {
-		/* Notify now */
-		notify(type);
+	defer_count = __deferred_funcs_end - __deferred_funcs;
+	ASSERT(defer_count <= DEFERRABLE_MAX_COUNT);
+
+	hook_notify(HOOK_INIT);
+}
+
+int hook_call_deferred(void (*routine)(void), int us)
+{
+	const struct deferred_data *p;
+	int i;
+
+	/* Find the index of the routine */
+	for (p = __deferred_funcs; p < __deferred_funcs_end; p++) {
+		if (p->routine == routine)
+			break;
 	}
+	if (p >= __deferred_funcs_end)
+		return EC_ERROR_INVAL;  /* Routine not registered */
+
+	/* Convert to index */
+	i = p - __deferred_funcs;
+	if (i >= DEFERRABLE_MAX_COUNT)
+		return EC_ERROR_UNKNOWN;  /* No space to hold time */
+
+	if (us == -1) {
+		/* Cancel */
+		defer_until[i] = 0;
+	} else {
+		/*
+		 * Set alarm, and wake task so it can re-sleep for the
+		 * proper time.
+		 */
+		defer_until[i] = get_time().val + us;
+		task_wake(TASK_ID_HOOKS);
+	}
+
+	return EC_SUCCESS;
 }
 
 void hook_task(void)
@@ -90,32 +133,51 @@ void hook_task(void)
 
 	while (1) {
 		uint64_t t = get_time().val;
-		uint32_t pending = atomic_read_clear(&pending_hooks);
+		int next = 0;
 		int i;
 
-		/* Call pending hooks, if any */
-		for (i = 0; pending && i < 32; i++) {
-			const uint32_t mask = 1 << i;
-
-			if (pending & mask) {
-				notify(i);
-				pending ^= mask;
+		/* Handle deferred routines */
+		for (i = 0; i < defer_count; i++) {
+			if (defer_until[i] && defer_until[i] < t) {
+				CPRINTF("[%T hook call deferred 0x%p]\n",
+					__deferred_funcs[i].routine);
+				/*
+				 * Call deferred function.  Clear timer first,
+				 * so it can request itself be called later.
+				 */
+				defer_until[i] = 0;
+				__deferred_funcs[i].routine();
 			}
 		}
 
 		if (t - last_tick >= HOOK_TICK_INTERVAL) {
-			notify(HOOK_TICK);
+			hook_notify(HOOK_TICK);
 			last_tick = t;
 		}
 
 		if (t - last_second >= SECOND) {
-			notify(HOOK_SECOND);
+			hook_notify(HOOK_SECOND);
 			last_second = t;
 		}
 
-		/* Use up the rest of our hook tick interval */
-		t = get_time().val - t;
-		if (t < HOOK_TICK_INTERVAL)
-			usleep(HOOK_TICK_INTERVAL - t);
+		/* Calculate when next tick needs to occur */
+		t = get_time().val;
+		if (last_tick + HOOK_TICK_INTERVAL > t)
+			next = last_tick + HOOK_TICK_INTERVAL - t;
+
+		/* Wake earlier if needed by a deferred routine */
+		for (i = 0; i < defer_count && next > 0; i++) {
+			if (!defer_until[i])
+				continue;
+
+			if (defer_until[i] < t)
+				next = 0;
+			else if (defer_until[i] - t < next)
+				next = defer_until[i] - t;
+		}
+
+		/* Sleep until the next event */
+		if (next > 0)
+			task_wait_event(next);
 	}
 }

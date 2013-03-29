@@ -120,12 +120,8 @@ int main(void)
 	keyboard_scan_init();
 #endif
 
-	/*
-	 * Initialize other driver modules.  These can occur in any order.
-	 * Non-driver modules with tasks do their inits from their task
-	 * functions, not here.
-	 */
-	hook_notify(HOOK_INIT);
+	/* Initialize the hook library.  This calls HOOK_INIT hooks. */
+	hook_init();
 
 	/*
 	 * Print the init time.  Not completely accurate because it can't take

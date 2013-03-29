@@ -124,11 +124,33 @@ struct hook_data {
 };
 
 /**
+ * Initialize the hooks library.
+ */
+void hook_init(void);
+
+/**
  * Call all the hook routines of a specified type.
  *
  * @param type		Type of hook routines to call.
  */
 void hook_notify(enum hook_type type);
+
+/**
+ * Start a timer to call a deferred routine.
+ *
+ * The routine will be called after at least the specified delay, in the
+ * context of the hook task.
+ *
+ * @param routine	Routine to call; must have been declared with
+ *			DECLARE_DEFERRED().
+ * @param us		Delay in microseconds until routine will be called.
+ *			If the routine is already pending, subsequent calls
+ *			will change the delay.  Pass us=0 to call as soon as
+ *			possible, or -1 to cancel the deferred call.
+ *
+ * @return non-zero if error.
+ */
+int hook_call_deferred(void (*routine)(void), int us);
 
 /**
  * Register a hook routine.
@@ -145,5 +167,24 @@ void hook_notify(enum hook_type type);
 	const struct hook_data __hook_##hooktype##_##routine		\
 	__attribute__((section(".rodata." #hooktype)))			\
 	     = {routine, priority}
+
+
+struct deferred_data {
+	/* Deferred function pointer */
+	void (*routine)(void);
+};
+
+/**
+ * Register a deferred function call.
+ *
+ * Note that if you declare a bunch of these, you may need to override
+ * DEFERRABLE_MAX_COUNT in your board.h.
+ *
+ * @param routine	Function pointer, with prototype void routine(void)
+ */
+#define DECLARE_DEFERRED(routine)					\
+	const struct deferred_data __deferred_##routine			\
+	__attribute__((section(".rodata.deferred")))			\
+	     = {routine}
 
 #endif  /* __CROS_EC_HOOKS_H */
