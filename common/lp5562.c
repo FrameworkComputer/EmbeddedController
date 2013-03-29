@@ -121,11 +121,15 @@ static int command_lp5562(int argc, char **argv)
 
 		return lp5562_set_color((red << 16) | (green << 8) | blue);
 	} else if (argc == 2) {
-		if (!strcasecmp(argv[1], "on"))
+		int v;
+
+		if (!parse_bool(argv[1], &v))
+			return EC_ERROR_PARAM1;
+
+		if (v)
 			return lp5562_poweron();
-		else if (!strcasecmp(argv[1], "off"))
+		else
 			return lp5562_poweroff();
-		return EC_ERROR_PARAM1;
 	}
 
 	return EC_ERROR_INVAL;

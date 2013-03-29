@@ -252,28 +252,26 @@ DECLARE_CONSOLE_COMMAND(sleep, command_sleep,
 
 static int command_pll(int argc, char **argv)
 {
-	int div = 1;
+	int v;
 
 	/* Toggle the PLL */
 	if (argc > 1) {
-		if (!strcasecmp(argv[1], "off"))
-			clock_enable_pll(0, 1);
-		else if (!strcasecmp(argv[1], "on"))
-			clock_enable_pll(1, 1);
-		else {
+		if (parse_bool(argv[1], &v)) {
+			clock_enable_pll(v, 1);
+		} else {
 			/* Disable PLL and set extra divider */
 			char *e;
-			div = strtoi(argv[1], &e, 10);
+			v = strtoi(argv[1], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM1;
 
-			LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(div - 1) |
+			LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(v - 1) |
 				LM4_SYSTEM_RCC_BYPASS |
 				LM4_SYSTEM_RCC_PWRDN |
 				LM4_SYSTEM_RCC_OSCSRC(1) |
 				LM4_SYSTEM_RCC_MOSCDIS;
 
-			freq = INTERNAL_CLOCK / div;
+			freq = INTERNAL_CLOCK / v;
 
 			/* Notify modules of frequency change */
 			hook_notify(HOOK_FREQ_CHANGE);

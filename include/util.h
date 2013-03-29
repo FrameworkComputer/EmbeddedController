@@ -84,6 +84,25 @@ int strtoi(const char *nptr, char **endptr, int base);
 /* Like strncpy(), but guarantees null termination. */
 char *strzcpy(char *dest, const char *src, int len);
 
+/**
+ * Parses a boolean option from a string.
+ *
+ * Strings that set *dest=0 and return 1 (all case-insensitive):
+ *   "off"
+ *   "dis*"
+ *   "n*"
+ *   "f*"
+ *
+ * Strings that set *dest=1 and return 1 (all case-insensitive):
+ *   "on"
+ *   "ena*"
+ *   "y*"
+ *   "t*"
+ *
+ * Other strings return 0 and leave *dest unchanged.
+ */
+int parse_bool(const char *s, int *dest);
+
 int tolower(int c);
 
 /* 64-bit divide-and-modulo.  Does the equivalent of:

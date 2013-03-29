@@ -557,18 +557,17 @@ int board_get_usb_current_limit(void)
 static int command_ilim(int argc, char **argv)
 {
 	char *e;
-	int percent;
+	int v;
 
 	if (argc >= 2) {
-		if (strcasecmp(argv[1], "on") == 0)
-			board_ilim_config(ILIM_CONFIG_MANUAL_ON);
-		else if (strcasecmp(argv[1], "off") == 0)
-			board_ilim_config(ILIM_CONFIG_MANUAL_OFF);
-		else {
-			percent = strtoi(argv[1], &e, 0);
+		if (parse_bool(argv[1], &v)) {
+			board_ilim_config(v ? ILIM_CONFIG_MANUAL_ON :
+					  ILIM_CONFIG_MANUAL_OFF);
+		} else {
+			v = strtoi(argv[1], &e, 0);
 			if (*e)
 				return EC_ERROR_PARAM1;
-			board_pwm_duty_cycle(percent);
+			board_pwm_duty_cycle(v);
 		}
 	}
 

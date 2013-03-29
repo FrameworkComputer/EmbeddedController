@@ -447,14 +447,8 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 
 static int command_hcdebug(int argc, char **argv)
 {
-	if (argc > 1) {
-		if (!strcasecmp(argv[1], "on"))
-			hcdebug = 1;
-		else if (!strcasecmp(argv[1], "off"))
-			hcdebug = 0;
-		else
-			return EC_ERROR_PARAM1;
-	}
+	if (argc > 1 && !parse_bool(argv[1], &hcdebug))
+		return EC_ERROR_PARAM1;
 
 	ccprintf("Host command debug is %s\n", hcdebug ? "on" : "off");
 	return EC_SUCCESS;

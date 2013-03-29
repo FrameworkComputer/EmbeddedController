@@ -138,6 +138,20 @@ int strtoi(const char *nptr, char **endptr, int base)
 	return neg ? -result : result;
 }
 
+int parse_bool(const char *s, int *dest)
+{
+	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
+	    tolower(*s) == 'f' || tolower(*s) == 'n') {
+		*dest = 0;
+		return 1;
+	} else if (!strcasecmp(s, "on") || !strncasecmp(s, "ena", 3) ||
+	    tolower(*s) == 't' || tolower(*s) == 'y') {
+		*dest = 1;
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 int memcmp(const void *s1, const void *s2, int len)
 {

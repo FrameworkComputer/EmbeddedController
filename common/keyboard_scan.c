@@ -587,18 +587,12 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
 
 static int command_ksstate(int argc, char **argv)
 {
-	if (argc > 1) {
-		if (!strcasecmp(argv[1], "on"))
-			print_state_changes = 1;
-		else if (!strcasecmp(argv[1], "off"))
-			print_state_changes = 0;
-		else
-			return EC_ERROR_PARAM1;
-	} else {
-		print_state(debounced_state, "debounced ");
-		print_state(prev_state, "prev      ");
-		print_state(debouncing, "debouncing");
-	}
+	if (argc > 1 && !parse_bool(argv[1], &print_state_changes))
+		return EC_ERROR_PARAM1;
+
+	print_state(debounced_state, "debounced ");
+	print_state(prev_state, "prev      ");
+	print_state(debouncing, "debouncing");
 
 	ccprintf("Keyboard scan state printing %s\n",
 		 print_state_changes ? "on" : "off");

@@ -607,6 +607,8 @@ static const char * const state_name[] = {
 
 static int command_power(int argc, char **argv)
 {
+	int v;
+
 	if (argc < 2) {
 		enum power_state_t state;
 
@@ -622,14 +624,12 @@ static int command_power(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (0 == strcasecmp(argv[1], "on"))
-		power_request = POWER_REQ_ON;
-	else if (0 == strcasecmp(argv[1], "off"))
-		power_request = POWER_REQ_OFF;
-	else
+	if (!parse_bool(argv[1], &v))
 		return EC_ERROR_PARAM1;
 
-	ccprintf("[%T PB Requesting power %s]\n", power_req_name[power_request]);
+	power_request = v ? POWER_REQ_ON : POWER_REQ_OFF;
+	ccprintf("[%T PB Requesting power %s]\n",
+		 power_req_name[power_request]);
 	task_wake(TASK_ID_CHIPSET);
 
 	return EC_SUCCESS;

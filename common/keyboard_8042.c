@@ -992,6 +992,7 @@ static int command_keyboard_log(int argc, char **argv)
 {
 	int i;
 
+	/* If no args, print log */
 	if (argc == 1) {
 		ccprintf("KBC log (len=%d):\n", kblog_len);
 		for (i = 0; kblog_buf && i < kblog_len; ++i) {
@@ -1003,7 +1004,14 @@ static int command_keyboard_log(int argc, char **argv)
 			}
 		}
 		ccputs("\n");
-	} else if (argc == 2 && !strcasecmp("on", argv[1])) {
+		return EC_SUCCESS;
+	}
+
+	/* Otherwise, enable/disable */
+	if (!parse_bool(argv[1], &i))
+		return EC_ERROR_PARAM1;
+
+	if (i) {
 		if (!kblog_buf) {
 			int rv = shared_mem_acquire(
 				sizeof(*kblog_buf) * MAX_KBLOG,
@@ -1013,13 +1021,11 @@ static int command_keyboard_log(int argc, char **argv)
 			kblog_len = 0;
 			return rv;
 		}
-	} else if (argc == 2 && !strcasecmp("off", argv[1])) {
+	} else {
 		kblog_len = 0;
 		if (kblog_buf)
 			shared_mem_release(kblog_buf);
 		kblog_buf = NULL;
-	} else {
-		return EC_ERROR_PARAM1;
 	}
 
 	return EC_SUCCESS;
@@ -1032,20 +1038,20 @@ DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
 
 static int command_keyboard(int argc, char **argv)
 {
+	int ena;
+
 	if (argc > 1) {
-		if (!strcasecmp(argv[1], "enable"))
-			keyboard_enable(1);
-		else if (!strcasecmp(argv[1], "disable"))
-			keyboard_enable(0);
-		else
+		if (!parse_bool(argv[1], &ena))
 			return EC_ERROR_PARAM1;
+
+		keyboard_enable(ena);
 	}
 
 	ccprintf("Enabled: %d\n", keyboard_enabled);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
-			"[enable | disable]",
+			"[0 | 1]",
 			"Print or toggle keyboard info",
 			NULL);
 

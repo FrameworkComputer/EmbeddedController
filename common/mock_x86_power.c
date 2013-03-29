@@ -79,13 +79,7 @@ static int command_mock_power(int argc, char **argv)
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[1], "on")) {
-		mock_power_on = 1;
-	}
-	else if (!strcasecmp(argv[1], "off")) {
-		mock_power_on = 0;
-	}
-	else
+	if (!parse_bool(argv[1], &mock_power_on))
 		return EC_ERROR_PARAM1;
 
 	return EC_SUCCESS;
