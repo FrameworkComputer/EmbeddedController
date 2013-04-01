@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,24 +11,16 @@
 #include "common.h"
 #include "gpio.h"
 
+#ifdef CONFIG_TASK_SWITCH
 /**
  * Interrupt handler for switch inputs.
  *
  * @param signal	Signal which triggered the interrupt.
  */
 void switch_interrupt(enum gpio_signal signal);
-
-/**
- * Switch task.
- */
-void switch_task(void);
-
-/**
- * Return non-zero if lid is open.
- *
- * Uses the debounced lid state, not the raw signal from the GPIO.
- */
-int switch_get_lid_open(void);
+#else
+#define switch_interrupt NULL
+#endif  /* CONFIG_TASK_SWITCH */
 
 /**
  * Return non-zero if write protect signal is asserted.

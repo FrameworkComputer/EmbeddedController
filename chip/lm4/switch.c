@@ -14,6 +14,7 @@
 #include "host_command.h"
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
 #include "pwm.h"
 #include "switch.h"
 #include "system.h"
@@ -51,8 +52,6 @@
  * pulse length for simulated power button presses when the system is off.
  */
 #define PWRBTN_INITIAL_US  (200 * MSEC)
-
-#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -104,14 +103,12 @@ static const char * const state_names[] = {
 static uint64_t tnext_state;
 
 /*
- * Debounce timeouts for power button and lid switch.  0 means the signal is
- * stable (not being debounced).
+ * Debounce timeout for power button.  0 means the signal is stable (not being
+ * debounced).
  */
-static uint64_t tdebounce_lid;
 static uint64_t tdebounce_pwr;
 
 static uint8_t *memmap_switches;
-static int debounced_lid_open;
 static int debounced_power_pressed;
 static int simulate_power_pressed;
 
@@ -151,16 +148,6 @@ static void set_pwrbtn_to_pch(int high)
 }
 
 /**
- * Get raw lid switch state.
- *
- * @return 1 if lid is open, 0 if closed.
- */
-static int raw_lid_open(void)
-{
-	return gpio_get_level(GPIO_LID_SWITCHn) ? 1 : 0;
-}
-
-/**
  * Get raw power button signal state.
  *
  * @return 1 if power button is pressed, 0 if not pressed.
@@ -171,7 +158,7 @@ static int raw_power_button_pressed(void)
 		return 1;
 
 	/* Ignore power button if lid is closed */
-	if (!raw_lid_open())
+	if (!lid_is_open())
 		return 0;
 
 	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
@@ -180,13 +167,13 @@ static int raw_power_button_pressed(void)
 static void update_backlight(void)
 {
 	/* Only enable the backlight if the lid is open */
-	if (gpio_get_level(GPIO_PCH_BKLTEN) && debounced_lid_open)
+	if (gpio_get_level(GPIO_PCH_BKLTEN) && lid_is_open())
 		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 	else
 		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 
 	/* Same with keyboard backlight */
-	pwm_enable_keyboard_backlight(debounced_lid_open);
+	pwm_enable_keyboard_backlight(lid_is_open());
 }
 
 /**
@@ -227,51 +214,6 @@ static void power_button_released(uint64_t tnow)
 }
 
 /**
- * Handle lid open.
- */
-static void lid_switch_open(uint64_t tnow)
-{
-	if (debounced_lid_open) {
-		CPRINTF("[%T PB lid already open]\n");
-		return;
-	}
-
-	CPRINTF("[%T PB lid open]\n");
-	debounced_lid_open = 1;
-	*memmap_switches |= EC_SWITCH_LID_OPEN;
-	hook_notify(HOOK_LID_CHANGE);
-	update_backlight();
-	host_set_single_event(EC_HOST_EVENT_LID_OPEN);
-
-	/* If the chipset is off, send a power button pulse to wake it up */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		chipset_exit_hard_off();
-		set_pwrbtn_to_pch(0);
-		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
-		tnext_state = tnow + PWRBTN_INITIAL_US;
-		task_wake(TASK_ID_SWITCH);
-	}
-}
-
-/**
- * Handle lid close.
- */
-static void lid_switch_close(uint64_t tnow)
-{
-	if (!debounced_lid_open) {
-		CPRINTF("[%T PB lid already closed]\n");
-		return;
-	}
-
-	CPRINTF("[%T PB lid close]\n");
-	debounced_lid_open = 0;
-	*memmap_switches &= ~EC_SWITCH_LID_OPEN;
-	hook_notify(HOOK_LID_CHANGE);
-	update_backlight();
-	host_set_single_event(EC_HOST_EVENT_LID_CLOSED);
-}
-
-/**
  * Handle debounced power button changing state.
  */
 static void power_button_changed(uint64_t tnow)
@@ -302,17 +244,6 @@ static void power_button_changed(uint64_t tnow)
 
 		power_button_released(tnow);
 	}
-}
-
-/**
- * Handle debounced lid switch changing state.
- */
-static void lid_switch_changed(uint64_t tnow)
-{
-	if (raw_lid_open())
-		lid_switch_open(tnow);
-	else
-		lid_switch_close(tnow);
 }
 
 /**
@@ -365,11 +296,6 @@ static void set_initial_pwrbtn_state(void)
 		CPRINTF("[%T PB init-on]\n");
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 	}
-}
-
-int switch_get_lid_open(void)
-{
-	return debounced_lid_open;
 }
 
 int switch_get_write_protect(void)
@@ -505,7 +431,7 @@ void switch_task(void)
 	while (1) {
 		t = get_time().val;
 
-		/* Handle debounce timeouts for power button and lid switch */
+		/* Handle debounce timeout for power button */
 		if (tdebounce_pwr && t >= tdebounce_pwr) {
 			tdebounce_pwr = 0;
 
@@ -519,11 +445,6 @@ void switch_task(void)
 			if (raw_power_button_pressed() !=
 			    debounced_power_pressed)
 				power_button_changed(t);
-		}
-		if (tdebounce_lid && t >= tdebounce_lid) {
-			tdebounce_lid = 0;
-			if (raw_lid_open() != debounced_lid_open)
-				lid_switch_changed(t);
 		}
 
 		/* Handle non-debounced switches */
@@ -539,8 +460,6 @@ void switch_task(void)
 		tsleep = -1;
 		if (tdebounce_pwr && tdebounce_pwr < tsleep)
 			tsleep = tdebounce_pwr;
-		if (tdebounce_lid && tdebounce_lid < tsleep)
-			tsleep = tdebounce_lid;
 		if (tnext_state && tnext_state < tsleep)
 			tsleep = tnext_state;
 		t = get_time().val;
@@ -569,34 +488,53 @@ static void switch_init(void)
 	/* Set up memory-mapped switch positions */
 	memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
 	*memmap_switches = 0;
-	if (raw_lid_open()) {
-		debounced_lid_open = 1;
+
+	if (lid_is_open())
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
-	}
+
 	update_other_switches();
 	update_backlight();
-
 	set_initial_pwrbtn_state();
 
 	/* Switch data is now present */
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_LID_SWITCHn);
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_RECOVERYn);
 	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
 
+/**
+ * Handle switch changes based on lid event.
+ */
+static void switch_lid_change(void)
+{
+	update_backlight();
+
+	if (lid_is_open()) {
+		*memmap_switches |= EC_SWITCH_LID_OPEN;
+
+		/* If the chipset is off, pulse the power button to wake it. */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			chipset_exit_hard_off();
+			set_pwrbtn_to_pch(0);
+			pwrbtn_state = PWRBTN_STATE_LID_OPEN;
+			tnext_state = get_time().val + PWRBTN_INITIAL_US;
+			task_wake(TASK_ID_SWITCH);
+		}
+
+	} else {
+		*memmap_switches &= ~EC_SWITCH_LID_OPEN;
+	}
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, switch_lid_change, HOOK_PRIO_DEFAULT);
+
 void switch_interrupt(enum gpio_signal signal)
 {
 	/* Reset debounce time for the changed signal */
 	switch (signal) {
-	case GPIO_LID_SWITCHn:
-		/* Reset lid debounce time */
-		tdebounce_lid = get_time().val + LID_DEBOUNCE_US;
-		break;
 	case GPIO_POWER_BUTTONn:
 		/* Reset power button debounce time */
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
@@ -661,26 +599,6 @@ static int command_powerbtn(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
 			"[msec]",
 			"Simulate power button press",
-			NULL);
-
-static int command_lidopen(int argc, char **argv)
-{
-	lid_switch_open(get_time().val);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen,
-			NULL,
-			"Simulate lid open",
-			NULL);
-
-static int command_lidclose(int argc, char **argv)
-{
-	lid_switch_close(get_time().val);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
-			NULL,
-			"Simulate lid close",
 			NULL);
 
 static int command_mmapinfo(int argc, char **argv)

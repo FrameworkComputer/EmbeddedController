@@ -9,6 +9,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "lid_switch.h"
 #include "lm4_adc.h"
 #include "registers.h"
 #include "switch.h"
@@ -18,9 +19,6 @@
 #ifndef CONFIG_CHIPSET_X86
 #define x86_power_interrupt NULL
 #endif
-#ifndef CONFIG_TASK_SWITCH
-#define switch_interrupt NULL
-#endif
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
@@ -28,7 +26,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"POWER_BUTTONn",       LM4_GPIO_K, (1<<7), GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"LID_SWITCHn",         LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
-	 switch_interrupt},
+	 lid_interrupt},
 	/* Other inputs */
 	{"THERMAL_DATA_READYn", LM4_GPIO_B, (1<<4), 0, NULL},
 	{"AC_PRESENT",          LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,

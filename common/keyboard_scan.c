@@ -13,6 +13,7 @@
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -79,10 +80,9 @@ static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 
 static int is_scanning_enabled(void)
 {
-#ifdef BOARD_link
-	/* TODO: should apply to ARM too, but need standard lid API */
+#ifdef CONFIG_LID_SWITCH
 	/* Scanning is never enabled when lid is closed */
-	if (!switch_get_lid_open())
+	if (!lid_is_open())
 		return 0;
 #endif
 

@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_switch.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -487,8 +488,7 @@ void chipset_task(void)
 			 * power usage.  If lid is open, take touchscreen out
 			 * of reset so it can wake the processor.
 			 */
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn,
-				       switch_get_lid_open());
+			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, lid_is_open());
 
 			/* Check for state transitions */
 			if (!have_all_in_signals(IN_PGOOD_S3)) {

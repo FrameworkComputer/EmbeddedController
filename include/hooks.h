@@ -21,6 +21,8 @@ enum hook_priority {
 	HOOK_PRIO_INIT_LPC = HOOK_PRIO_FIRST + 1,
 	/* Chipset inits before modules which need to know its initial state. */
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 2,
+	/* Lid switch inits before power button */
+	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 3,
 };
 
 enum hook_type {
