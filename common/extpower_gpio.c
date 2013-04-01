@@ -36,3 +36,10 @@ void extpower_interrupt(enum gpio_signal signal)
 	/* Trigger deferred notification of external power change */
 	hook_call_deferred(extpower_deferred, 0);
 }
+
+static void extpower_init(void)
+{
+	/* Enable interrupts, now that we've initialized */
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
+}
+DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_DEFAULT);

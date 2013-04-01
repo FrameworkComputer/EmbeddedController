@@ -582,7 +582,6 @@ static void switch_init(void)
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_AC_PRESENT);
 	gpio_enable_interrupt(GPIO_LID_SWITCHn);
 	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
 	gpio_enable_interrupt(GPIO_RECOVERYn);
