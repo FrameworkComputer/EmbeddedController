@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -122,8 +122,8 @@
 #define EC_SWITCH_LID_OPEN               0x01
 #define EC_SWITCH_POWER_BUTTON_PRESSED   0x02
 #define EC_SWITCH_WRITE_PROTECT_DISABLED 0x04
-/* Recovery requested via keyboard */
-#define EC_SWITCH_KEYBOARD_RECOVERY      0x08
+/* Was recovery requested via keyboard; now unused. */
+#define EC_SWITCH_IGNORE1		 0x08
 /* Recovery requested via dedicated signal (from servo board) */
 #define EC_SWITCH_DEDICATED_RECOVERY     0x10
 /* Was fake developer mode switch; now unused.  Remove in next refactor. */

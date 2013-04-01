@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -1861,8 +1861,6 @@ int cmd_switches(int argc, char *argv[])
 	       (s & EC_SWITCH_POWER_BUTTON_PRESSED ? "DOWN" : "UP"));
 	printf("Write protect:      %sABLED\n",
 	       (s & EC_SWITCH_WRITE_PROTECT_DISABLED ? "DIS" : "EN"));
-	printf("Keyboard recovery:  %sABLED\n",
-	       (s & EC_SWITCH_KEYBOARD_RECOVERY ? "EN" : "DIS"));
 	printf("Dedicated recovery: %sABLED\n",
 	       (s & EC_SWITCH_DEDICATED_RECOVERY ? "EN" : "DIS"));
 
