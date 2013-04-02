@@ -1,11 +1,12 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "dma.h"
+#include "hooks.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -192,7 +193,7 @@ void dma_test(void)
 }
 #endif /* CONFIG_DMA_HELP */
 
-void dma_init(void)
+static void dma_init(void)
 {
 	int i;
 
@@ -203,6 +204,7 @@ void dma_init(void)
 	for (i = 0; i < DMA_NUM_CHANNELS; i++)
 		id[i] = TASK_ID_INVALID;
 }
+DECLARE_HOOK(HOOK_INIT, dma_init, HOOK_PRIO_INIT_DMA);
 
 int dma_wait(int channel)
 {

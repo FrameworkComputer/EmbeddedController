@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -188,11 +188,6 @@ void dma_dump(unsigned channel);
  * Testing: Test that DMA works correctly for memory to memory transfers
  */
 void dma_test(void);
-
-/**
- * Init DMA peripheral ready for use
- */
-void dma_init(void);
 
 /**
  * Clear the DMA interrupt/event flags for a given channel

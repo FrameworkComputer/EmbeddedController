@@ -17,6 +17,8 @@ enum hook_priority {
 	HOOK_PRIO_LAST = 9999,     /* Lowest priority */
 
 	/* Specific hook vales for HOOK_INIT */
+	/* DMA inits before ADC, I2C, SPI */
+	HOOK_PRIO_INIT_DMA = HOOK_PRIO_FIRST + 1,
 	/* LPC inits before modules which need memory-mapped I/O */
 	HOOK_PRIO_INIT_LPC = HOOK_PRIO_FIRST + 1,
 	/* Chipset inits before modules which need to know its initial state. */

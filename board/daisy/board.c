@@ -5,7 +5,6 @@
 /* Daisy board-specific configuration */
 
 #include "common.h"
-#include "dma.h"
 #include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
@@ -139,8 +138,6 @@ int board_i2c_host_port(void)
 
 void configure_board(void)
 {
-	dma_init();
-
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
 	 */

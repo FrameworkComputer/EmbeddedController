@@ -8,7 +8,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "dma.h"
 #include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
@@ -114,8 +113,6 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 void configure_board(void)
 {
 	uint32_t val;
-
-	dma_init();
 
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving

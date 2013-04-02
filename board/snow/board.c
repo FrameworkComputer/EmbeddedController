@@ -7,7 +7,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "dma.h"
 #include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
@@ -98,8 +97,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 void configure_board(void)
 {
 	uint32_t val;
-
-	dma_init();
 
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving
