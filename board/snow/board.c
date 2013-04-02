@@ -243,14 +243,7 @@ void board_hard_reset(void)
 }
 
 #ifdef CONFIG_PMU_BOARD_INIT
-
-/**
- * Initialize PMU register settings
- *
- * PMU init settings depend on board configuration. This function should be
- * called inside PMU init function.
- */
-int board_pmu_init(void)
+int pmu_board_init(void)
 {
 	int ver, failure = 0;
 

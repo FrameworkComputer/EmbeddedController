@@ -244,17 +244,6 @@ int pmu_enable_ext_control(int enable);
 int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout);
 
 /**
- * Get AC state
- *
- * @return 0        AC off
- * @return 1        AC on
- *
- * This is a board specific function as we get the PMU VACG signal
- * through a GPIO.
- */
-int board_get_ac(void);
-
-/**
  * Reset the entire board if it is capable
  */
 void board_hard_reset(void);
@@ -273,6 +262,16 @@ enum charging_state charge_get_state(void);
  * Return non-zero if battery is so low we want to keep AP off.
  */
 int charge_keep_power_off(void);
+
+#ifdef CONFIG_PMU_BOARD_INIT
+/**
+ * Initialize PMU registers using board settings.
+ *
+ * Boards may supply this function if needed.  This will be called from
+ * pmu_init().
+ */
+int pmu_board_init(void);
+#endif
 
 #endif /* __CROS_EC_TPSCHROME_H */
 

@@ -533,7 +533,7 @@ void pmu_init(void)
 		failure = 0;
 #ifdef CONFIG_PMU_BOARD_INIT
 		if (!failure)
-			failure = board_pmu_init();
+			failure = pmu_board_init();
 #else
 		/* Init configuration
 		 *   Fast charge timer    : 2 hours

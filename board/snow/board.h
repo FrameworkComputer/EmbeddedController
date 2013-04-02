@@ -15,20 +15,25 @@
 #define CONFIG_CONSOLE_UART 1
 
 /* Debug features */
-#define CONFIG_PANIC_HELP
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
+#define CONFIG_PANIC_HELP
+#define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
+#define CONFIG_BATTERY_BQ20Z453
 #define CONFIG_CHIPSET_GAIA
+#define CONFIG_CMD_PMU
 #define CONFIG_CONFIGURE_BOARD_LATE
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
 #define CONFIG_I2C_ARBITRATION
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
+#define CONFIG_PMU_BOARD_INIT
+#define CONFIG_PMU_TPS65090
+#define CONFIG_SMART_BATTERY
 #undef  CONFIG_TASK_PROFILING
-#define CONFIG_WATCHDOG_HELP
 
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE
@@ -44,9 +49,6 @@
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
-#define CONFIG_SMART_BATTERY
-#define CONFIG_PMU_TPS65090
-#define CONFIG_PMU_BOARD_INIT
 #define I2C_PORT_HOST 1
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
@@ -54,11 +56,6 @@
 
 #define GPIO_AP_CLAIM	GPIO_SPI1_NSS	/* AP claims bus */
 #define GPIO_EC_CLAIM	GPIO_SPI1_MISO	/* EC claims bus */
-
-#define CONFIG_CMD_PMU
-
-/* Battery */
-#define CONFIG_BATTERY_BQ20Z453
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
@@ -123,12 +120,6 @@ enum gpio_signal {
 void configure_board(void);
 
 void configure_board_late(void);
-
-/* Initialize PMU registers using board settings */
-int board_pmu_init(void);
-
-/* Force the pmu to reset everything on the board */
-void board_hard_reset(void);
 
 #endif /* !__ASSEMBLER__ */
 

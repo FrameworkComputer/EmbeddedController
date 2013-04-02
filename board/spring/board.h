@@ -148,12 +148,6 @@ enum charging_state;
 
 void configure_board(void);
 
-/* Initialize PMU registers using board settings */
-int board_pmu_init(void);
-
-/* Force the pmu to reset everything on the board */
-void board_hard_reset(void);
-
 /* Set ILIM pin control type */
 void board_ilim_config(enum ilim_config config);
 
