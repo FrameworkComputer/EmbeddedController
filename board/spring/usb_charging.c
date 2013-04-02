@@ -52,6 +52,7 @@
 #define PWM_CTRL_OC_MARGIN	15
 #define PWM_CTRL_OC_DETECT_TIME	(800 * MSEC)
 #define PWM_CTRL_OC_BACK_OFF	3
+#define PWM_CTRL_OC_RETRY	1
 #define PWM_CTRL_STEP_DOWN	2
 #define PWM_CTRL_STEP_UP	5
 #define PWM_CTRL_VBUS_HARD_LOW	4400
@@ -105,6 +106,7 @@ struct {
 static timestamp_t power_removed_time[2];
 static uint32_t power_removed_type[2];
 static int power_removed_pwm_duty[2];
+static int oc_detect_retry[2] = {PWM_CTRL_OC_RETRY, PWM_CTRL_OC_RETRY};
 
 /* PWM duty cycle limit based on over current event */
 static int over_current_pwm_duty;
@@ -397,8 +399,15 @@ static void usb_detect_overcurrent(int dev_type)
 		int idx = !(dev_type == TSU6721_TYPE_VBUS_DEBOUNCED);
 		timestamp_t now = get_time();
 		now.val -= power_removed_time[idx].val;
-		if (power_removed_type[idx] == dev_type &&
-		    now.val < PWM_CTRL_OC_DETECT_TIME) {
+		if (now.val >= PWM_CTRL_OC_DETECT_TIME) {
+			oc_detect_retry[idx] = PWM_CTRL_OC_RETRY;
+			return;
+		}
+		if (power_removed_type[idx] == dev_type) {
+			if (oc_detect_retry[idx] > 0) {
+				oc_detect_retry[idx]--;
+				return;
+			}
 			over_current_pwm_duty = power_removed_pwm_duty[idx] +
 						PWM_CTRL_OC_BACK_OFF;
 		}
