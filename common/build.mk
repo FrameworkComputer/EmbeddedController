@@ -17,6 +17,7 @@ common-$(CONFIG_CHIPSET_X86)+=x86_power.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o pmu_tps65090_charger.o
 common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
+common-$(CONFIG_EXTPOWER_SNOW)+=extpower_snow.o
 common-$(CONFIG_FLASH)+=flash_common.o fmap.o
 common-$(CONFIG_I2C)+=i2c_commands.o
 common-$(CONFIG_I2C_ARBITRATION)+=i2c_arbitration.o
