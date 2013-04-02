@@ -1273,7 +1273,16 @@ struct ec_response_power_info {
 #define EC_CMD_CHARGE_CURRENT_LIMIT 0xa1
 
 struct ec_params_current_limit {
-	uint32_t limit;
+	uint32_t limit; /* in mA */
+} __packed;
+
+/*
+ * Set maximum external power current.
+ */
+#define EC_CMD_EXT_POWER_CURRENT_LIMIT 0xa2
+
+struct ec_params_ext_power_current_limit {
+	uint32_t limit; /* in mA */
 } __packed;
 
 /*****************************************************************************/

@@ -10,13 +10,15 @@
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"
-#include "hooks.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "host_command.h"
 #include "keyboard_protocol.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
 #include "smart_battery.h"
 #include "stm32_adc.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "tsu6721.h"
@@ -64,9 +66,17 @@
 #define DELAY_USB_DP_DN_MS	20
 #define DELAY_ID_MUX_MS		30
 
+/*
+ * Mapping from PWM duty to current:
+ *   Current = A + B * PWM_Duty
+ */
+#define PWM_MAPPING_A 3012
+#define PWM_MAPPING_B (-29)
+
 static int current_dev_type = TSU6721_TYPE_NONE;
 static int nominal_pwm_duty;
 static int current_pwm_duty;
+static int user_pwm_duty = -1;
 
 static int pending_tsu6721_reset;
 
@@ -292,6 +302,13 @@ static void board_pwm_tweak(void)
 	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
 	if (battery_current(&current))
 		return;
+
+	if (user_pwm_duty >= 0) {
+		if (current_pwm_duty != user_pwm_duty)
+			board_pwm_duty_cycle(user_pwm_duty);
+		return;
+	}
+
 	/*
 	 * If VBUS voltage is too low:
 	 *   - If battery is discharging, throttling more is going to draw
@@ -556,7 +573,7 @@ int board_get_usb_dev_type(void)
 int board_get_usb_current_limit(void)
 {
 	/* Approximate value by PWM duty cycle */
-	return 3012 - 29 * current_pwm_duty;
+	return PWM_MAPPING_A + PWM_MAPPING_B * current_pwm_duty;
 }
 
 /*
@@ -639,3 +656,21 @@ DECLARE_CONSOLE_COMMAND(limitmode, command_current_limit_mode,
 			"[normal | aggressive]",
 			"Set current limit mode",
 			NULL);
+
+/*****************************************************************************/
+/* Host commands */
+
+static int ext_power_command_current_limit(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ext_power_current_limit *p = args->params;
+
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	user_pwm_duty = ((int)(p->limit) - PWM_MAPPING_A) / PWM_MAPPING_B;
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_EXT_POWER_CURRENT_LIMIT,
+		     ext_power_command_current_limit,
+		     EC_VER_MASK(0));
