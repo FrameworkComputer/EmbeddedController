@@ -162,9 +162,20 @@ SECTIONS
         __data_start = .;
         *(.data.tasks)
         *(.data)
+#ifdef CONFIG_MPU
+        /* It has to be aligned by 32 bytes to be a valid MPU region. */
+        . = ALIGN(32);
+        __iram_text_start = .;
+#else
         . = ALIGN(4);
+#endif
         *(.iram.text)
+#ifdef CONFIG_MPU
+        . = ALIGN(32);
+        __iram_text_end = .;
+#else
         . = ALIGN(4);
+#endif
         __data_end = .;
 
 	/* Shared memory buffer must be at the end of preallocated RAM, so it
