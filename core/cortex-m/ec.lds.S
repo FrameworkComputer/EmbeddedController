@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -122,6 +122,12 @@ SECTIONS
     } > FLASH
 #endif
     __ro_end = . ;
+
+    __deferred_funcs_count =
+		(__deferred_funcs_end - __deferred_funcs) / 4;
+    ASSERT(__deferred_funcs_count <= DEFERRABLE_MAX_COUNT,
+           "Increase DEFERRABLE_MAX_COUNT")
+
     .bss : {
 	/* Stacks must be 64-bit aligned */
         . = ALIGN(8);

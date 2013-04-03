@@ -44,9 +44,8 @@ extern const struct hook_data __hooks_second[];
 extern const struct hook_data __hooks_second_end[];
 
 /* Deferrable functions */
-static const struct deferred_data __deferred_funcs[];
-static const struct deferred_data __deferred_funcs_end[];
-
+extern const struct deferred_data __deferred_funcs[];
+extern const struct deferred_data __deferred_funcs_end[];
 
 /* Host commands */
 extern const struct host_command __hcmds[];

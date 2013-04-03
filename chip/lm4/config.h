@@ -18,6 +18,9 @@
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL (250 * MSEC)
 
+/* Maximum number of deferrable functions */
+#define DEFERRABLE_MAX_COUNT 8
+
 /****************************************************************************/
 /* Memory mapping */
 

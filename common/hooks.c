@@ -20,10 +20,7 @@
 #define CPRINTF(format, args...)
 #endif
 
-/* Maximum number of deferrable functions */
-#ifndef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 8
-#endif
+#define DEFERRED_FUNCS_COUNT (__deferred_funcs_end - __deferred_funcs)
 
 struct hook_ptrs {
 	const struct hook_data *start;
@@ -51,7 +48,7 @@ static const struct hook_ptrs hook_list[] = {
 
 /* Times for deferrable functions */
 static uint64_t defer_until[DEFERRABLE_MAX_COUNT];
-static int defer_count;
+static int defer_new_call;
 
 void hook_notify(enum hook_type type)
 {
@@ -86,9 +83,6 @@ void hook_notify(enum hook_type type)
 
 void hook_init(void)
 {
-	defer_count = __deferred_funcs_end - __deferred_funcs;
-	ASSERT(defer_count <= DEFERRABLE_MAX_COUNT);
-
 	hook_notify(HOOK_INIT);
 }
 
@@ -105,20 +99,21 @@ int hook_call_deferred(void (*routine)(void), int us)
 	if (p >= __deferred_funcs_end)
 		return EC_ERROR_INVAL;  /* Routine not registered */
 
-	/* Convert to index */
 	i = p - __deferred_funcs;
-	if (i >= DEFERRABLE_MAX_COUNT)
-		return EC_ERROR_UNKNOWN;  /* No space to hold time */
 
 	if (us == -1) {
 		/* Cancel */
 		defer_until[i] = 0;
 	} else {
-		/*
-		 * Set alarm, and wake task so it can re-sleep for the
-		 * proper time.
-		 */
+		/* Set alarm */
 		defer_until[i] = get_time().val + us;
+		/*
+		 * Flag that hook_call_deferred() has been called.  If the hook
+		 * task is already active, this will allow it to go through the
+		 * loop one more time before sleeping.
+		 */
+		defer_new_call = 1;
+		/* Wake task so it can re-sleep for the proper time */
 		task_wake(TASK_ID_HOOKS);
 	}
 
@@ -137,7 +132,7 @@ void hook_task(void)
 		int i;
 
 		/* Handle deferred routines */
-		for (i = 0; i < defer_count; i++) {
+		for (i = 0; i < DEFERRED_FUNCS_COUNT; i++) {
 			if (defer_until[i] && defer_until[i] < t) {
 				CPRINTF("[%T hook call deferred 0x%p]\n",
 					__deferred_funcs[i].routine);
@@ -166,7 +161,8 @@ void hook_task(void)
 			next = last_tick + HOOK_TICK_INTERVAL - t;
 
 		/* Wake earlier if needed by a deferred routine */
-		for (i = 0; i < defer_count && next > 0; i++) {
+		defer_new_call = 0;
+		for (i = 0; i < DEFERRED_FUNCS_COUNT && next > 0; i++) {
 			if (!defer_until[i])
 				continue;
 
@@ -176,8 +172,12 @@ void hook_task(void)
 				next = defer_until[i] - t;
 		}
 
-		/* Sleep until the next event */
-		if (next > 0)
+		/*
+		 * If nothing is immediately pending, and hook_call_deferred()
+		 * hasn't been called since we started calculating next, sleep
+		 * until the next event.
+		 */
+		if (next > 0 && !defer_new_call)
 			task_wait_event(next);
 	}
 }

@@ -31,6 +31,9 @@
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL (500 * MSEC)
 
+/* Maximum number of deferrable functions */
+#define DEFERRABLE_MAX_COUNT 8
+
 /* support programming on-chip flash */
 #define CONFIG_FLASH
 
