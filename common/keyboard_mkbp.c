@@ -152,8 +152,9 @@ void keyboard_send_battery_key(void)
 	memcpy(state, keyboard_scan_get_state(), sizeof(state));
 	state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
 
-	/* Add to FIFO */
-	keyboard_fifo_add(state);
+	/* Add to FIFO only if AP is on or else it will wake from suspend */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		keyboard_fifo_add(state);
 }
 
 /*****************************************************************************/
