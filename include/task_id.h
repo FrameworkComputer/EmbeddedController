@@ -8,10 +8,27 @@
 #ifndef __TASK_ID_H
 #define __TASK_ID_H
 
+/* excludes non-base tasks for test build */
+#ifdef TEST_BUILD
+#define TASK_NOTEST(n, r, d, s)
+#define TASK_TEST TASK
+#else
+#define TASK_NOTEST TASK
+#define CONFIG_TEST_TASK_LIST
+#endif
+
+#define TASK_ALWAYS TASK
+
 /* define the name of the header containing the list of tasks */
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
-#define TASK_LIST STRINGIFY(TASKFILE)
+#define TEST_TASK_LIST STRINGIFY(TEST_TASKFILE)
+#define BOARD_TASK_LIST STRINGIFY(BOARD_TASKFILE)
+
+#include BOARD_TASK_LIST
+#ifdef TEST_BUILD
+#include TEST_TASK_LIST
+#endif
 
 /* Task identifier (8 bits) */
 typedef uint8_t task_id_t;
@@ -24,11 +41,12 @@ typedef uint8_t task_id_t;
  * TASK macro in the TASK_LIST file.
  */
 #define TASK(n, r, d, s) TASK_ID_##n,
-#include TASK_LIST
 enum {
 	TASK_ID_IDLE,
-	/* CONFIG_TASK_LIST is a macro coming from the TASK_LIST file */
+	/* CONFIG_TASK_LIST is a macro coming from the BOARD_TASK_LIST file */
 	CONFIG_TASK_LIST
+	/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file */
+	CONFIG_TEST_TASK_LIST
 	/* Number of tasks */
 	TASK_ID_COUNT,
 	/* Special task identifiers */

@@ -19,9 +19,18 @@ include board/$(BOARD)/build.mk
 
 # Transform the configuration into make variables
 includes=include core/$(CORE)/include $(dirs) $(out)
-_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P -Iboard/$(BOARD) -Itest \
-	  -D"TASK(n, r, d, s)=n" -imacros $(PROJECT).tasklist)
-_tsk_cfg:=$(foreach t,$(_tsk_lst),CONFIG_TASK_$(t))
+ifeq "$(TEST_BUILD)" "y"
+	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
+		    $(CPP) -P -Iboard/$(BOARD) -Itest \
+		    -D"TASK_NOTEST(n, r, d, s)=" -D"TASK_ALWAYS(n, r, d, s)=n" \
+		    -D"TASK_TEST(n, r, d, s)=n" -imacros ec.tasklist \
+		    -imacros $(PROJECT).tasklist)
+else
+	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
+		    -Iboard/$(BOARD) -D"TASK_NOTEST(n, r, d, s)=n" \
+		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros ec.tasklist)
+endif
+_tsk_cfg:=$(foreach t,$(_tsk_lst) ,CONFIG_TASK_$(t))
 _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dN chip/$(CHIP)/config.h | \
 		grep -o "CONFIG_.*") \
 	   $(shell $(CPP) $(CPPFLAGS) -P -dN board/$(BOARD)/board.h | \

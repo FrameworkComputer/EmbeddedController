@@ -25,11 +25,13 @@ CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
             -Wno-pointer-sign -fno-strict-overflow -fconserve-stack
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
-CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DTASKFILE=$(PROJECT).tasklist \
-              -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE) -DCHIP_$(CHIP) \
-              -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_VARIANT_$(CHIP_VARIANT) \
-              -DPROJECT=$(PROJECT)
-CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(EXTRA_CFLAGS)
+CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
+                               -DTEST_TASKFILE=$(PROJECT).tasklist,)
+CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
+              -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE)            \
+              -DCHIP_$(CHIP) -DCHIP_VARIANT=$(CHIP_VARIANT)               \
+              -DCHIP_VARIANT_$(CHIP_VARIANT) -DPROJECT=$(PROJECT)
+CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) $(EXTRA_CFLAGS)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
 BUILD_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
