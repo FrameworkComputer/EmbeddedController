@@ -91,12 +91,7 @@
 #define AD_CTRL_ADEOC    (1 << 5)
 #define AD_CTRL_ADSTART  (1 << 6)
 
-void __board_hard_reset(void)
-{
-	CPRINTF("This board is not capable of a hard reset.\n");
-}
-void board_hard_reset(void)
-	__attribute__((weak, alias("__board_hard_reset")));
+#define HARD_RESET_TIMEOUT_MS 5
 
 /* Charger temperature threshold table */
 static const uint8_t const pmu_temp_threshold[] = {
@@ -105,6 +100,33 @@ static const uint8_t const pmu_temp_threshold[] = {
 	5, /* 0b101, 45 degree C */
 	7, /* 0b111, 60 degree C */
 };
+
+#ifdef CONFIG_PMU_HARD_RESET
+/**
+ * Force the pmic to reset completely.
+ *
+ * This forces an entire system reset, and therefore should never return.  The
+ * implementation is rather hacky; it simply shorts out the 3.3V rail to force
+ * the PMIC to panic.  We need this unfortunate hack because it's the only way
+ * to reset the I2C engine inside the PMU.
+ */
+static void pmu_hard_reset(void)
+{
+	/* Short out the 3.3V rail to force a hard reset of tps Chrome */
+	gpio_set_level(GPIO_PMIC_RESET, 1);
+
+	/* Delay while the power is cut */
+	udelay(HARD_RESET_TIMEOUT_MS * 1000);
+
+	/* Shouldn't get here unless the board doesn't have this capability */
+	panic_puts("pmu hard reset failed! (this board may not be capable)\n");
+}
+#else
+static void pmu_hard_reset(void)
+{
+	panic_puts("pmu hard reset unsupported!\n");
+}
+#endif
 
 /* Read all tps65090 interrupt events */
 static int pmu_get_event(int *event)
@@ -462,25 +484,48 @@ void pmu_irq_handler(enum gpio_signal signal)
 	CPRINTF("Charger IRQ received.\n");
 }
 
-int pmu_shutdown(void)
+/**
+ * Attempt shutdown.
+ */
+static int pmu_try_shutdown(void)
 {
-	int offset, failure = 0;
+	int offset;
 
 	/* Disable each of the DCDCs */
 	for (offset = DCDC1_CTRL; offset <= DCDC3_CTRL; offset++) {
-		if (!failure)
-			failure = pmu_write(offset, 0x0e);
+		if (pmu_write(offset, 0x0e))
+			return EC_ERROR_UNKNOWN;
 	}
 	/* Disable each of the FETs */
 	for (offset = FET1_CTRL; offset <= FET7_CTRL; offset++) {
-		if (!failure)
-			failure = pmu_write(offset, 0x02);
+		if (pmu_write(offset, 0x02))
+			return EC_ERROR_UNKNOWN;
 	}
-	/* Clearing AD controls/status */
-	if (!failure)
-		failure = pmu_write(AD_CTRL, 0x00);
 
-	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+	/* Clear AD controls/status */
+	if (pmu_write(AD_CTRL, 0x00))
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
+int pmu_shutdown(void)
+{
+	int pmu_shutdown_retries = 3;
+
+	/* Attempt shutdown */
+	while (--pmu_shutdown_retries >= 0) {
+		if (!pmu_try_shutdown())
+			return EC_SUCCESS;
+	}
+
+#ifdef CONFIG_PMU_HARD_RESET
+	/* We ran out of tries, so reset the board */
+	pmu_hard_reset();
+#endif
+
+	/* If we're still here, we couldn't shutdown OR reset */
+	return EC_ERROR_UNKNOWN;
 }
 
 /*
@@ -579,7 +624,7 @@ void pmu_init(void)
 	}
 
 	if (failure)
-		board_hard_reset();
+		pmu_hard_reset();
 }
 
 /* Initializes PMU when power is turned on.  This is necessary because the TPS'
@@ -625,7 +670,7 @@ static int command_pmu(int argc, char **argv)
 		repeat = strtoi(argv[1], &e, 0);
 		if (*e) {
 			if (strlen(argv[1]) >= 1 && argv[1][0] == 'r') {
-				board_hard_reset();
+				pmu_hard_reset();
 				/* If this returns, there was an error */
 				return EC_ERROR_UNKNOWN;
 			}

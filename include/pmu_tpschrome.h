@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -242,11 +242,6 @@ int pmu_enable_ext_control(int enable);
  * @param timeout         enum FASTCHARGE_TIMEOUT
  */
 int pmu_set_fastcharge(enum FASTCHARGE_TIMEOUT timeout);
-
-/**
- * Reset the entire board if it is capable
- */
-void board_hard_reset(void);
 
 /**
  * Wake TPS65090 charger task, but throttled to at most one call per tick

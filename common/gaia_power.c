@@ -457,8 +457,6 @@ static int react_to_xpshold(unsigned int timeout_us)
  */
 static void power_off(void)
 {
-	int pmu_shutdown_retries = 3;
-
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
@@ -471,13 +469,7 @@ static void power_off(void)
 	lid_changed = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
-
-	while (--pmu_shutdown_retries >= 0) {
-		if (!pmu_shutdown())
-			break;
-	}
-	if (pmu_shutdown_retries < 0)
-		board_hard_reset();
+	pmu_shutdown();
 	CPUTS("Shutdown complete.\n");
 }
 

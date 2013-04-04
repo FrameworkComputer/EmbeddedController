@@ -27,8 +27,6 @@
 #define INT_BOTH_FLOATING	(GPIO_INPUT | GPIO_INT_BOTH)
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
-#define HARD_RESET_TIMEOUT_MS 5
-
 void usb_charge_interrupt(enum gpio_signal signal);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
@@ -200,22 +198,6 @@ static void board_shutdown_hook(void)
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_FLOATING);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
-
-/*
- * Force the pmic to reset completely.  This forces an entire system reset,
- * and therefore should never return
- */
-void board_hard_reset(void)
-{
-	/* Force a hard reset of tps Chrome */
-	gpio_set_level(GPIO_PMIC_RESET, 1);
-
-	/* Delay while the power is cut */
-	udelay(HARD_RESET_TIMEOUT_MS * 1000);
-
-	/* Shouldn't get here unless the board doesn't have this capability */
-	panic_puts("Hard reset failed! (this board may not be capable)\n");
-}
 
 #ifdef CONFIG_PMU_BOARD_INIT
 int pmu_board_init(void)
