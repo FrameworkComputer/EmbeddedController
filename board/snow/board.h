@@ -18,13 +18,15 @@
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_PANIC_HELP
+#undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
+#define CONFIG_BOARD_PRE_INIT
+#define CONFIG_BOARD_POST_GPIO_INIT
 #define CONFIG_CHIPSET_GAIA
 #define CONFIG_CMD_PMU
-#define CONFIG_CONFIGURE_BOARD_LATE
 #define CONFIG_EXTPOWER_SNOW
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
@@ -35,7 +37,6 @@
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
 #define CONFIG_SMART_BATTERY
-#undef  CONFIG_TASK_PROFILING
 
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE
@@ -118,10 +119,6 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
-
-void configure_board(void);
-
-void configure_board_late(void);
 
 #endif /* !__ASSEMBLER__ */
 

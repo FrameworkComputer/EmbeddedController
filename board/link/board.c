@@ -16,10 +16,6 @@
 #include "util.h"
 #include "x86_power.h"
 
-#ifndef CONFIG_CHIPSET_X86
-#define x86_power_interrupt NULL
-#endif
-
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
@@ -140,7 +136,3 @@ const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 	{"thermal",  I2C_PORT_THERMAL,  100},
 };
-
-void configure_board(void)
-{
-}

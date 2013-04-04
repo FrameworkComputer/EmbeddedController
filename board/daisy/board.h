@@ -19,17 +19,24 @@
 #define CONFIG_ASSERT_HELP
 
 /* Optional features */
+#define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CHIPSET_GAIA
 #define CONFIG_EXTPOWER_SNOW
 #define CONFIG_I2C
+#define CONFIG_I2C_HOST_AUTO
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
+#define CONFIG_PMU_TPS65090
+#define CONFIG_SMART_BATTERY
 
-/* Allow dangerous commands all the time, since we don't have a write protect
- * switch. */
-/* TODO: (crosbug.com/p/9986) This is a serious security hole and should be
- * removed in mass production. We add this to allow manual firmware update.
- * Once we complete the vboot and autoupdate, we should remove this. */
+/*
+ * Allow dangerous commands all the time, since we don't have a write protect
+ * switch.
+ *
+ * TODO: (crosbug.com/p/9986) This is a serious security hole and should be
+ * removed in mass production.  Acceptable here only because daisy isn't a
+ * production board.
+ */
 #define CONFIG_SYSTEM_UNLOCKED
 
 #ifndef __ASSEMBLER__
@@ -43,9 +50,6 @@
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
-#define CONFIG_SMART_BATTERY
-#define CONFIG_PMU_TPS65090
-#define CONFIG_I2C_HOST_AUTO
 #define I2C_PORT_HOST board_i2c_host_port()
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
@@ -108,8 +112,6 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
-
-void configure_board(void);
 
 /* Auto detect EC i2c host port */
 int board_i2c_host_port(void);

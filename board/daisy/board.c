@@ -135,7 +135,7 @@ int board_i2c_host_port(void)
 }
 #endif /* CONFIG_I2C_HOST_AUTO */
 
-void configure_board(void)
+void board_config_pre_init(void)
 {
 	/* Enable all GPIOs clocks
 	 * TODO: more fine-grained enabling for power saving

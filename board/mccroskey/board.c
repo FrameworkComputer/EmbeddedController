@@ -97,7 +97,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 #endif
 };
 
-void configure_board(void)
+void board_config_pre_init(void)
 {
 	uint32_t val;
 

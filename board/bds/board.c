@@ -46,8 +46,3 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WRITE_PROTECT"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 };
-
-
-void configure_board(void)
-{
-}

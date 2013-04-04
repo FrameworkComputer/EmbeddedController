@@ -4,6 +4,7 @@
  */
 /* Snow board-specific configuration */
 
+#include "board_config.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -91,7 +92,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 };
 
-void configure_board(void)
+void board_config_pre_init(void)
 {
 	uint32_t val;
 
@@ -161,7 +162,7 @@ void board_i2c_post_init(int port)
 	}
 }
 
-void configure_board_late(void)
+void board_config_post_gpio_init(void)
 {
 #ifdef CONFIG_AC_POWER_STATUS
 	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);

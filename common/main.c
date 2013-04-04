@@ -5,6 +5,7 @@
  * Main routine for Chrome EC
  */
 
+#include "board_config.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -35,14 +36,16 @@ int main(void)
 	 * initialization.  In particular, modules should NOT enable
 	 * interrupts.
 	 */
+#ifdef CONFIG_BOARD_PRE_INIT
+	board_config_pre_init();
+#endif
 
 	/* Configure the pin multiplexers and GPIOs */
-	configure_board();
 	jtag_pre_init();
 	gpio_pre_init();
 
-#ifdef CONFIG_CONFIGURE_BOARD_LATE
-	configure_board_late();
+#ifdef CONFIG_BOARD_POST_GPIO_INIT
+	board_config_post_gpio_init();
 #endif
 	/*
 	 * Initialize interrupts, but don't enable any of them.  Note that

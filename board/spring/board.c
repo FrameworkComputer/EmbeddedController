@@ -5,6 +5,7 @@
 /* Spring board-specific configuration */
 
 #include "adc.h"
+#include "board_config.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -108,7 +109,7 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 3300, 4096, 0, STM32_AIN(4)},
 };
 
-void configure_board(void)
+void board_config_pre_init(void)
 {
 	uint32_t val;
 

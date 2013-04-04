@@ -9,13 +9,7 @@
 #define __BOARD_H
 
 /* 48 MHz SYSCLK clock frequency */
-/*
- * FIXME(dhendrix): We'll eventually switch to the HSE instead of HSI.
- * Also, I2C is limited to 2-36MHz, so for now let's just use 16MHz until
- * we're ready to switch to the HSE. FREQ in I2C1 CR2 also must be set
- * appropriately.
- */
-#define CPU_CLOCK 48000000	/* should be 48000000 */
+#define CPU_CLOCK 48000000
 
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
@@ -23,21 +17,21 @@
 /* Debug features */
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
+#define CONFIG_DEBUG_I2C	/* FIXME(dhendrix): remove this eventually */
 #define CONFIG_PANIC_HELP
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
+#define CONFIG_BOARD_PRE_INIT
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_I2C
 
-/* use STOP mode when we have nothing to do */
 /*
- * FIXME(dhendrix): This causes the UART to drop characters and likely
+ * TODO(dhendrix): Stop mode causes the UART to drop characters and likely
  * other bad side-effects. Disable for now.
  */
-#if 0
-#define CONFIG_LOW_POWER_IDLE
-#endif
+#undef   CONFIG_LOW_POWER_IDLE
 
 #ifndef __ASSEMBLER__
 
@@ -50,10 +44,8 @@
 #define KB_OUT_PORT_LIST GPIO_C
 
 /* EC is I2C master */
-#define CONFIG_I2C
 #define I2C_PORT_HOST 0
 #define I2C_PORT_SLAVE 0	/* needed for DMAC macros (ugh) */
-#define CONFIG_DEBUG_I2C	/* FIXME(dhendrix): remove this eventually */
 #define GPIO_I2C2_SCL 0		/* unused, but must be defined anyway */
 #define GPIO_I2C2_SDA 0		/* unused, but must be defined anyway */
 
@@ -116,8 +108,6 @@ enum gpio_signal {
 #endif
 	GPIO_COUNT
 };
-
-void configure_board(void);
 
 #endif /* !__ASSEMBLER__ */
 

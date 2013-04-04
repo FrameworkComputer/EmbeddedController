@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -56,8 +56,6 @@ enum gpio_signal {
 /* Target value for BOOTCFG.  This currently toggles the polarity bit without
  * enabling the boot loader, simply to prove we can program it. */
 #define BOOTCFG_VALUE 0xfffffdfe
-
-void configure_board(void);
 
 #endif /* !__ASSEMBLER__ */
 

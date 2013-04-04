@@ -9,8 +9,10 @@
 #define __BOARD_H
 
 /* Debug features */
-#define CONFIG_PANIC_HELP
 #define CONFIG_ASSERT_HELP
+#define CONFIG_CONSOLE_CMDHELP
+#define CONFIG_PANIC_HELP
+#define CONFIG_TASK_PROFILING
 
 /* Optional features */
 #define CONFIG_SMART_BATTERY
@@ -18,7 +20,6 @@
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24725
 #define CONFIG_CHIPSET_X86
-#define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LID_SWITCH
@@ -27,7 +28,6 @@
 #define CONFIG_ONEWIRE_LED
 #define CONFIG_PECI
 #define CONFIG_PWM
-#define CONFIG_TASK_PROFILING
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TMP006
 #define CONFIG_USB_CHARGE
@@ -224,8 +224,6 @@ enum board_version {
 	BOARD_VERSION_EVT = 1,
 };
 
-
-void configure_board(void);
 
 #endif /* !__ASSEMBLER__ */
 

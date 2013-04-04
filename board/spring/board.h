@@ -22,20 +22,23 @@
 #define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
+#define CONFIG_ADC
+#define CONFIG_BATTERY_BQ20Z453
+#define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CHIPSET_GAIA
+#define CONFIG_CMD_PMU
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_PMU_HARD_RESET
-
-/* use STOP mode when we have nothing to do */
-#define CONFIG_LOW_POWER_IDLE
-
-/* Smart battery and TPSchrome are on a private I2C bus behind the EC */
 #define CONFIG_I2C_PASSTHROUGH
-
-/* always enable the 3G modem power rail */
-#define CONFIG_PMU_FORCE_FET
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_LOW_POWER_IDLE	/* Use STOP mode when we have nothing to do */
+#define CONFIG_LP5562
+#define CONFIG_PMU_BOARD_INIT
+#define CONFIG_PMU_FORCE_FET	/* Always enable 3G modem power rail */
+#define CONFIG_PMU_HARD_RESET
+#define CONFIG_PMU_TPS65090
+#define CONFIG_SMART_BATTERY
+#define CONFIG_TSU6721
 
 #ifndef __ASSEMBLER__
 
@@ -46,39 +49,24 @@
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
-#define CONFIG_SMART_BATTERY
-#define CONFIG_PMU_TPS65090
-#define CONFIG_PMU_BOARD_INIT
 #define I2C_PORT_HOST 0
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
 
-#define CONFIG_CMD_PMU
-
-/* Battery */
-#define CONFIG_BATTERY_BQ20Z453
-
 /* Low battery threshold. In mAh. */
 #define BATTERY_AP_OFF_LEVEL 1
-
-/* Charger/accessories detection */
-#define CONFIG_TSU6721
-
-/* Battery LED driver */
-#define CONFIG_LP5562
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 2
 #define TIM_CLOCK_LSB 4
 
 /* ADC signal */
-#define CONFIG_ADC
 enum adc_channel {
 	ADC_CH_USB_VBUS_SNS = 0,
 	ADC_CH_USB_DP_SNS,
 	ADC_CH_USB_DN_SNS,
-
+	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
 
@@ -143,11 +131,6 @@ enum ilim_config {
 	ILIM_CONFIG_MANUAL_ON,
 	ILIM_CONFIG_PWM,
 };
-
-/* Forward declaration */
-enum charging_state;
-
-void configure_board(void);
 
 /* Set ILIM pin control type */
 void board_ilim_config(enum ilim_config config);
