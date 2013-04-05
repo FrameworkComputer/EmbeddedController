@@ -12,28 +12,28 @@
 #include "timer.h"
 #include "util.h"
 
-#define POWERLED_RETRIES 10
+#define ONEWIRE_RETRIES 10
 
-enum powerled_color {
-	POWERLED_OFF = 0,
-	POWERLED_RED,
-	POWERLED_YELLOW,
-	POWERLED_GREEN,
-	POWERLED_COLOR_COUNT  /* Number of colors, not a color itself */
+enum led_color {
+	LED_OFF = 0,
+	LED_RED,
+	LED_YELLOW,
+	LED_GREEN,
+	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
-static const uint8_t led_masks[POWERLED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
-static const char * const color_names[POWERLED_COLOR_COUNT] = {
+static const uint8_t led_masks[LED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
+static const char * const color_names[LED_COLOR_COUNT] = {
 	"off", "red", "yellow", "green"};
 
 /**
- * Set the power LED GPIO controller outputs
+ * Set the onewire LED GPIO controller outputs
  *
  * @param mask		Mask of outputs to enable
  *
  * @return EC_SUCCESS, or non-zero if error.
  */
-static int powerled_set_mask(int mask)
+static int led_set_mask(int mask)
 {
 	int rv;
 
@@ -59,7 +59,7 @@ static int powerled_set_mask(int mask)
 	return EC_SUCCESS;
 }
 
-static int powerled_set(enum powerled_color color)
+static int led_set(enum led_color color)
 {
 	int rv = EC_SUCCESS;
 	int i;
@@ -71,8 +71,8 @@ static int powerled_set(enum powerled_color color)
 	 * we hit that window.  Instead, simply retry the low-level command a
 	 * few times.
 	 */
-	for (i = 0; i < POWERLED_RETRIES; i++) {
-		rv = powerled_set_mask(led_masks[color]);
+	for (i = 0; i < ONEWIRE_RETRIES; i++) {
+		rv = led_set_mask(led_masks[color]);
 		if (rv == EC_SUCCESS)
 			break;
 
@@ -90,19 +90,19 @@ static int powerled_set(enum powerled_color color)
 /*****************************************************************************/
 /* Hooks */
 
-static void powerled_tick(void)
+static void onewire_led_tick(void)
 {
-	static enum powerled_color current_color = POWERLED_COLOR_COUNT;
+	static enum led_color current_color = LED_COLOR_COUNT;
 	static int tick_count;
 
-	enum powerled_color new_color = POWERLED_OFF;
+	enum led_color new_color = LED_OFF;
 	uint32_t chflags = charge_get_flags();
 
 	tick_count++;
 
 	if (!(chflags & CHARGE_FLAG_EXTERNAL_POWER)) {
 		/* AC isn't present, so the power LED on the AC plug is off */
-		current_color = POWERLED_OFF;
+		current_color = LED_OFF;
 		return;
 	}
 
@@ -110,19 +110,18 @@ static void powerled_tick(void)
 	switch (charge_get_state()) {
 	case PWR_STATE_IDLE:
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			new_color = ((tick_count & 1) ?
-				     POWERLED_GREEN : POWERLED_OFF);
+			new_color = (tick_count & 1) ? LED_GREEN : LED_OFF;
 		else
-			new_color = POWERLED_GREEN;
+			new_color = LED_GREEN;
 		break;
 	case PWR_STATE_CHARGE:
-		new_color = POWERLED_YELLOW;
+		new_color = LED_YELLOW;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		new_color = POWERLED_GREEN;
+		new_color = LED_GREEN;
 		break;
 	case PWR_STATE_ERROR:
-		new_color = POWERLED_RED;
+		new_color = LED_RED;
 		break;
 	default:
 		/* Other states don't change LED color */
@@ -135,17 +134,17 @@ static void powerled_tick(void)
 	 * state every 10 seconds.
 	 */
 	if (!(tick_count % 10))
-		current_color = POWERLED_COLOR_COUNT;
+		current_color = LED_COLOR_COUNT;
 
 	/* If current color is still correct, leave now */
 	if (new_color == current_color)
 		return;
 
 	/* Update LED */
-	if (!powerled_set(new_color))
+	if (!led_set(new_color))
 		current_color = new_color;
 }
-DECLARE_HOOK(HOOK_SECOND, powerled_tick, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, onewire_led_tick, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
@@ -155,9 +154,9 @@ static int command_powerled(int argc, char **argv)
 	int i;
 
 	/* Pick a color, any color... */
-	for (i = 0; i < POWERLED_COLOR_COUNT; i++) {
+	for (i = 0; i < LED_COLOR_COUNT; i++) {
 		if (!strcasecmp(argv[1], color_names[i]))
-			return powerled_set(i);
+			return led_set(i);
 	}
 	return EC_ERROR_PARAM1;
 }
