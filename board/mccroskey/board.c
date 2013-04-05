@@ -107,9 +107,6 @@ void board_config_pre_init(void)
 	STM32_RCC_APB2ENR |= 0x1fd;
 
 #ifdef CONFIG_SPI
-	/* Enable SPI */
-	STM32_RCC_APB2ENR |= (1<<12);
-
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
 	/* FIXME: Connected device SPI freq is fxo/2 in master mode, fxo/4
 	 * in slave mode. fxo ranges from 12-40MHz */

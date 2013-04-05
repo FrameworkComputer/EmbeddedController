@@ -135,31 +135,9 @@ int board_i2c_host_port(void)
 }
 #endif /* CONFIG_I2C_HOST_AUTO */
 
-void board_config_pre_init(void)
+void board_config_post_gpio_init(void)
 {
-	/* Enable all GPIOs clocks
-	 * TODO: more fine-grained enabling for power saving
-	 */
-	STM32_RCC_AHBENR |= 0x3f;
-	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
-	/* FIXME: This seems to break USB download in U-Boot (?!?) */
-	STM32_RCC_APB2ENR |= 1 << 0;
-
-	/* Enable SPI */
-	STM32_RCC_APB2ENR |= (1<<12);
-
-	/*
-	 * I2C SCL/SDA on PB10-11 and PB6-7, bi-directional, no pull-up/down,
-	 * initialized as hi-Z until alt. function is set
-	 */
-	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)) |
-					(3 << (7*2)) | (3 << (6*2)));
-	STM32_GPIO_MODER_OFF(GPIO_B) &= ~((3 << (11*2)) | (3 << (10*2)) |
-					(3 << (7*2)) | (3 << (6*2)));
-	STM32_GPIO_MODER_OFF(GPIO_B) |= (1 << (11*2)) | (1 << (10*2)) |
-					(1 << (7*2)) | (1 << (6*2));
-	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
-	STM32_GPIO_BSRR_OFF(GPIO_B) |= (1<<11) | (1<<10) | (1<<7) | (1<<6);
+	/* I2C SCL/SDA on PB10-11 and PB6-7 */
 	gpio_set_alternate_function(GPIO_B, (1<<11) |
 					(1<<10) |
 					(1<<7)  |
@@ -167,14 +145,6 @@ void board_config_pre_init(void)
 
 	/* Select Alternate function for USART1 on pins PA9/PA10 */
 	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
-
-	/* EC_INT is output, open-drain */
-	STM32_GPIO_OTYPER_OFF(GPIO_B) |= (1<<9);
-	STM32_GPIO_PUPDR_OFF(GPIO_B) &= ~(0x3 << (2*9));
-	STM32_GPIO_MODER_OFF(GPIO_B) &= ~(0x3 << (2*9));
-	STM32_GPIO_MODER_OFF(GPIO_B) |= 0x1 << (2*9);
-	/* put GPIO in Hi-Z state */
-	gpio_set_level(GPIO_EC_INT, 1);
 }
 
 void keyboard_suppress_noise(void)

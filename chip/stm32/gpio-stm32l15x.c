@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -33,6 +33,10 @@ void gpio_pre_init(void)
 	const struct gpio_info *g = gpio_list;
 	int is_warm = 0;
 	int i;
+
+	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
+	/* FIXME: This seems to break USB download in U-Boot (?!?) */
+	STM32_RCC_APB2ENR |= 1 << 0;
 
 	if ((STM32_RCC_AHBENR & 0x3f) == 0x3f) {
 		/* This is a warm reboot */

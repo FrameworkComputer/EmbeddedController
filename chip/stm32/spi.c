@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -325,6 +325,9 @@ void spi_event(enum gpio_signal signal)
 static int spi_init(void)
 {
 	struct spi_ctlr *spi;
+
+	/* Enable clocks to SPI module */
+	STM32_RCC_APB2ENR |= 1 << 12;
 
 	/**
 	 * SPI1

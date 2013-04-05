@@ -102,9 +102,6 @@ void board_config_pre_init(void)
 	STM32_RCC_APB2ENR |= 0x1fd;
 
 #ifdef CONFIG_SPI
-	/* Enable SPI */
-	STM32_RCC_APB2ENR |= (1<<12);
-
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
 	val = STM32_GPIO_CRL_OFF(GPIO_A) & ~0xffff0000;
 	val |= 0x99990000;

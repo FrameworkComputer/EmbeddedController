@@ -19,7 +19,7 @@
 #define CONFIG_ASSERT_HELP
 
 /* Optional features */
-#define CONFIG_BOARD_PRE_INIT
+#define CONFIG_BOARD_POST_GPIO_INIT
 #define CONFIG_CHIPSET_GAIA
 #define CONFIG_EXTPOWER_SNOW
 #define CONFIG_I2C
