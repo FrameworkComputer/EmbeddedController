@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -16,6 +16,7 @@
  */
 
 #include "console.h"
+#include "gpio.h"
 #include "power_led.h"
 #include "registers.h"
 #include "task.h"
@@ -24,11 +25,11 @@
 
 #define LED_STATE_TIMEOUT_MIN	(15 * MSEC)  /* Minimum of 15ms per step */
 #define LED_HOLD_TIME		(330 * MSEC) /* Hold for 330ms at min/max */
-#define LED_STEP_PERCENT	4	/* incremental value of each step */
+#define LED_STEP_PERCENT	4	/* Incremental value of each step */
 
 static enum powerled_state led_state = POWERLED_STATE_ON;
-static enum powerled_config led_config = POWERLED_CONFIG_MANUAL_OFF;
 static int power_led_percent = 100;
+static int using_pwm;
 
 void powerled_set_state(enum powerled_state new_state)
 {
@@ -37,22 +38,14 @@ void powerled_set_state(enum powerled_state new_state)
 	task_wake(TASK_ID_POWERLED);
 }
 
-/**
- * Set board-level power LED config options (e.g. manual off/on, PWM).
- */
-void board_power_led_config(enum powerled_state config)
-		__attribute__((weak, alias("__board_power_led_config")));
-
-/**
- * Default config function in case the board doesn't have one.
- */
-void __board_power_led_config(enum powerled_config config)
-{
-}
-
 static void power_led_use_pwm(void)
 {
-	board_power_led_config(POWERLED_CONFIG_PWM);
+	uint32_t val;
+
+	/* Configure power LED GPIO for TIM2/PWM alternate function */
+	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0x0000f000;
+	val |= 0x00009000;	/* alt. function (TIM2/PWM) */
+	STM32_GPIO_CRL_OFF(GPIO_B) = val;
 
 	/* Enable TIM2 clock */
 	STM32_RCC_APB1ENR |= 0x1;
@@ -84,7 +77,7 @@ static void power_led_use_pwm(void)
 	/* Enable auto-reload preload, start counting */
 	STM32_TIM_CR1(2) |= (1 << 7) | (1 << 0);
 
-	led_config = POWERLED_CONFIG_PWM;
+	using_pwm = 1;
 }
 
 static void power_led_manual_off(void)
@@ -95,8 +88,15 @@ static void power_led_manual_off(void)
 	/* disable TIM2 clock */
 	STM32_RCC_APB1ENR &= ~0x1;
 
-	board_power_led_config(POWERLED_CONFIG_MANUAL_OFF);
-	led_config = POWERLED_CONFIG_MANUAL_OFF;
+	/*
+	 * Reconfigure GPIO as a floating input. Alternatively we could
+	 * configure it as an open-drain output and set it to high impedence,
+	 * but reconfiguring as an input had better results in testing.
+	 */
+	gpio_set_flags(GPIO_LED_POWER_L, GPIO_INPUT);
+	gpio_set_level(GPIO_LED_POWER_L, 1);
+
+	using_pwm = 0;
 }
 
 static void power_led_set_duty(int percent)
@@ -123,7 +123,7 @@ static int power_led_step(void)
 	} else {
 		/*
 		 * Decreases timeout as duty cycle percentage approaches
-		 * 0%, increase as it appraoches 100%.
+		 * 0%, increase as it approaches 100%.
 		 */
 		state_timeout = LED_STATE_TIMEOUT_MIN +
 			LED_STATE_TIMEOUT_MIN * (power_led_percent / 33);
@@ -152,20 +152,20 @@ void power_led_task(void)
 			 * duty duty cycle of 100%. This produces a softer
 			 * brightness than setting the GPIO to solid ON.
 			 */
-			if (led_config != POWERLED_CONFIG_PWM)
+			if (!using_pwm)
 				power_led_use_pwm();
 			power_led_set_duty(100);
 			state_timeout = -1;
 			break;
 		case POWERLED_STATE_OFF:
 			/* Reconfigure GPIO to disable the LED */
-			if (led_config != POWERLED_CONFIG_MANUAL_OFF)
+			if (using_pwm)
 				power_led_manual_off();
 			state_timeout = -1;
 			break;
 		case POWERLED_STATE_SUSPEND:
 			/* Drive using PWM with variable duty cycle */
-			if (led_config != POWERLED_CONFIG_PWM)
+			if (!using_pwm)
 				power_led_use_pwm();
 			state_timeout = power_led_step();
 			break;
@@ -180,7 +180,7 @@ void power_led_task(void)
 #ifdef CONFIG_CMD_POWERLED
 static int command_powerled(int argc, char **argv)
 {
-	enum powerled_state state = POWERLED_STATE_OFF;
+	enum powerled_state state;
 
 	if (argc != 2)
 		return EC_ERROR_INVAL;
@@ -198,7 +198,7 @@ static int command_powerled(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
-		"[off | on | suspend ]",
+		"[off | on | suspend]",
 		"Change power LED state",
 		NULL);
 #endif

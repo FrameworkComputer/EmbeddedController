@@ -179,35 +179,6 @@ void keyboard_suppress_noise(void)
 	gpio_set_level(GPIO_CODEC_INT, 1);
 }
 
-void board_power_led_config(enum powerled_config config)
-{
-	uint32_t val;
-
-	switch (config) {
-	case POWERLED_CONFIG_PWM:
-		val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0x0000f000;
-		val |= 0x00009000;	/* alt. function (TIM2/PWM) */
-		STM32_GPIO_CRL_OFF(GPIO_B) = val;
-		break;
-	case POWERLED_CONFIG_MANUAL_OFF:
-		/*
-		 * Re-configure GPIO as a floating input. Alternatively we could
-		 * configure it as an open-drain output and set it to high
-		 * impedence, but reconfiguring as an input had better results
-		 * in testing.
-		 */
-		gpio_set_flags(GPIO_LED_POWER_L, GPIO_INPUT);
-		gpio_set_level(GPIO_LED_POWER_L, 1);
-		break;
-	case POWERLED_CONFIG_MANUAL_ON:
-		gpio_set_flags(GPIO_LED_POWER_L, GPIO_OUTPUT | GPIO_OPEN_DRAIN);
-		gpio_set_level(GPIO_LED_POWER_L, 0);
-		break;
-	default:
-		break;
-	}
-}
-
 static void board_startup_hook(void)
 {
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);

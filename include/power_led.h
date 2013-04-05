@@ -3,26 +3,18 @@
  * found in the LICENSE file.
  */
 
-/* Power LED control for Chrome EC */
+/* Power button LED control for Chrome EC */
 
 #ifndef __CROS_EC_POWER_LED_H
 #define __CROS_EC_POWER_LED_H
 
 #include "common.h"
 
-/* Interface for STM32-based boards */
-
 enum powerled_state {
 	POWERLED_STATE_OFF,
 	POWERLED_STATE_ON,
 	POWERLED_STATE_SUSPEND,
 	POWERLED_STATE_COUNT
-};
-
-enum powerled_config {
-	POWERLED_CONFIG_MANUAL_OFF,
-	POWERLED_CONFIG_MANUAL_ON,
-	POWERLED_CONFIG_PWM,
 };
 
 #ifdef CONFIG_TASK_POWERLED

@@ -17,7 +17,6 @@
 #define CONFIG_TASK_LIST \
 	TASK(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK(VBOOTHASH, vboot_hash_task, NULL, TASK_STACK_SIZE) \
-	TASK(POWERLED, power_led_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHARGER, charger_task, NULL, TASK_STACK_SIZE) \
 	TASK(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
 	TASK(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
