@@ -66,4 +66,16 @@ enum ec_error_list {
 	EC_ERROR_INTERNAL_LAST =  0x1FFFF
 };
 
+/*
+ * Define test_mockable and test_mockable_static for mocking
+ * functions.
+ */
+#ifdef TEST_BUILD
+#define test_mockable __attribute__((weak))
+#define test_mockable_static __attribute__((weak))
+#else
+#define test_mockable
+#define test_mockable_static static
+#endif
+
 #endif  /* __CROS_EC_COMMON_H */
