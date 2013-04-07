@@ -148,8 +148,12 @@ void keyboard_send_battery_key(void)
 {
 	uint8_t state[KEYBOARD_COLS];
 
+#ifdef CONFIG_TASK_KEYSCAN
 	/* Copy debounced state and add battery pseudo-key */
 	memcpy(state, keyboard_scan_get_state(), sizeof(state));
+#else
+	memset(state, 0, sizeof(state));
+#endif
 	state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
 
 	/* Add to FIFO only if AP is on or else it will wake from suspend */
@@ -190,28 +194,12 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO,
 		     keyboard_get_info,
 		     EC_VER_MASK(0));
 
-/**
- * Copy keyscan configuration from one place to another according to flags
- *
- * This is like a structure copy, except that only selected fields are
- * copied.
- *
- * TODO(sjg@chromium.org): Consider making this table driven as ectool.
- *
- * @param src		Source config
- * @param dst		Destination config
- * @param valid_mask	Bits representing which fields to copy - each bit is
- *			from enum mkbp_config_valid
- * @param valid_flags	Bit mask controlling flags to copy. Any 1 bit means
- *			that the corresponding bit in src->flags is copied
- *			over to dst->flags
- */
-static void keyscan_copy_config(const struct ec_mkbp_config *src,
-				 struct ec_mkbp_protocol_config *dst,
-				 uint32_t valid_mask, uint8_t valid_flags)
+static void set_keyscan_config(const struct ec_mkbp_config *src,
+			       struct ec_mkbp_protocol_config *dst,
+			       uint32_t valid_mask, uint8_t new_flags)
 {
+#ifdef CONFIG_TASK_KEYSCAN
 	struct keyboard_scan_config *ksc = keyboard_scan_get_config();
-	uint8_t new_flags;
 
 	if (valid_mask & EC_MKBP_VALID_SCAN_PERIOD)
 		ksc->scan_period_us = src->scan_period_us;
@@ -238,6 +226,53 @@ static void keyscan_copy_config(const struct ec_mkbp_config *src,
 	if (valid_mask & EC_MKBP_VALID_DEBOUNCE_UP)
 		ksc->debounce_up_us = src->debounce_up_us;
 
+	/*
+	 * If we just enabled key scanning, kick the task so that it will
+	 * fall out of the task_wait_event() in keyboard_scan_task().
+	 */
+	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
+			!(dst->flags & EC_MKBP_FLAGS_ENABLE))
+		task_wake(TASK_ID_KEYSCAN);
+#endif
+}
+
+static void get_keyscan_config(struct ec_mkbp_config *dst)
+{
+#ifdef CONFIG_TASK_KEYSCAN
+	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
+
+	/* Copy fields from keyscan config to mkbp config */
+	dst->output_settle_us = ksc->output_settle_us;
+	dst->debounce_down_us = ksc->debounce_down_us;
+	dst->debounce_up_us = ksc->debounce_up_us;
+	dst->scan_period_us = ksc->scan_period_us;
+	dst->min_post_scan_delay_us = ksc->min_post_scan_delay_us;
+	dst->poll_timeout_us = ksc->poll_timeout_us;
+#endif
+}
+
+/**
+ * Copy keyscan configuration from one place to another according to flags
+ *
+ * This is like a structure copy, except that only selected fields are
+ * copied.
+ *
+ * TODO(sjg@chromium.org): Consider making this table driven as ectool.
+ *
+ * @param src		Source config
+ * @param dst		Destination config
+ * @param valid_mask	Bits representing which fields to copy - each bit is
+ *			from enum mkbp_config_valid
+ * @param valid_flags	Bit mask controlling flags to copy. Any 1 bit means
+ *			that the corresponding bit in src->flags is copied
+ *			over to dst->flags
+ */
+static void keyscan_copy_config(const struct ec_mkbp_config *src,
+				 struct ec_mkbp_protocol_config *dst,
+				 uint32_t valid_mask, uint8_t valid_flags)
+{
+	uint8_t new_flags;
+
 	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
 		/* Sanity check for fifo depth */
 		dst->fifo_max_depth = MIN(src->fifo_max_depth,
@@ -246,15 +281,9 @@ static void keyscan_copy_config(const struct ec_mkbp_config *src,
 
 	new_flags = dst->flags & ~valid_flags;
 	new_flags |= src->flags & valid_flags;
-	dst->flags = new_flags;
 
-	/*
-	 * If we just enabled key scanning, kick the task so that it will
-	 * fall out of the task_wait_event() in keyboard_scan_task().
-	 */
-	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
-			!(dst->flags & EC_MKBP_FLAGS_ENABLE))
-		task_wake(TASK_ID_KEYSCAN);
+	set_keyscan_config(src, dst, valid_mask, new_flags);
+	dst->flags = new_flags;
 }
 
 static int host_command_mkbp_set_config(struct host_cmd_handler_args *args)
@@ -273,7 +302,6 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SET_CONFIG,
 
 static int host_command_mkbp_get_config(struct host_cmd_handler_args *args)
 {
-	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 	struct ec_response_mkbp_get_config *resp = args->response;
 	struct ec_mkbp_config *dst = &resp->config;
 
@@ -285,13 +313,7 @@ static int host_command_mkbp_get_config(struct host_cmd_handler_args *args)
 	dst->valid_flags = config.valid_flags;
 	dst->fifo_max_depth = config.fifo_max_depth;
 
-	/* Copy fields from keyscan config to mkbp config */
-	dst->output_settle_us = ksc->output_settle_us;
-	dst->debounce_down_us = ksc->debounce_down_us;
-	dst->debounce_up_us = ksc->debounce_up_us;
-	dst->scan_period_us = ksc->scan_period_us;
-	dst->min_post_scan_delay_us = ksc->min_post_scan_delay_us;
-	dst->poll_timeout_us = ksc->poll_timeout_us;
+	get_keyscan_config(dst);
 
 	args->response_size = sizeof(*resp);
 
