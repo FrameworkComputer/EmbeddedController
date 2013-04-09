@@ -38,8 +38,6 @@
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL)
 
-#define USB_CHARGE_PORT_COUNT 0
-
 /* Keyboard output ports */
 #define KB_OUT_PORT_LIST GPIO_C
 
