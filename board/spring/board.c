@@ -28,8 +28,6 @@
 #define INT_BOTH_FLOATING	(GPIO_INPUT | GPIO_INT_BOTH)
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
-void usb_charge_interrupt(enum gpio_signal signal);
-
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
@@ -56,8 +54,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 keyboard_raw_gpio_interrupt},
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
-	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING,
-		usb_charge_interrupt},
+	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING, extpower_interrupt},
 	/* Other inputs */
 	{"BCHGR_VACG",  GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
 	/*
@@ -241,42 +238,3 @@ int pmu_board_init(void)
 	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 #endif /* CONFIG_BOARD_PMU_INIT */
-
-int extpower_is_present(void)
-{
-	static int last_vbus;
-	int vbus, vbus_good;
-
-	if (!gpio_get_level(GPIO_BOOST_EN))
-		return 0;
-
-	/*
-	 * UVLO is 4.1V. We consider AC bad when its voltage drops below 4.2V
-	 * for two consecutive samples. This is to give PWM a chance to bring
-	 * voltage up.
-	 */
-	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
-	vbus_good = (vbus >= 4200 || last_vbus >= 4200);
-	last_vbus = vbus;
-
-	return vbus_good;
-}
-/*****************************************************************************/
-/* Host commands */
-
-static int power_command_info(struct host_cmd_handler_args *args)
-{
-	struct ec_response_power_info *r = args->response;
-
-	r->voltage_ac = adc_read_channel(ADC_CH_USB_VBUS_SNS);
-	r->voltage_system = pmu_adc_read(ADC_VAC, ADC_FLAG_KEEP_ON)
-			  * 17000 / 1024;
-	r->current_system = pmu_adc_read(ADC_IAC, 0)
-			  * 20 * 33 / 1024;
-	r->usb_dev_type = board_get_usb_dev_type();
-	r->usb_current_limit = board_get_usb_current_limit();
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_POWER_INFO, power_command_info, EC_VER_MASK(0));

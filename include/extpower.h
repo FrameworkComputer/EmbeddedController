@@ -10,6 +10,11 @@
 
 #include "common.h"
 
+#ifdef CONFIG_EXTPOWER_USB
+/* USB-power-specific methods */
+#include "extpower_usb.h"
+#endif
+
 /**
  * Return non-zero if external power is present.
  */

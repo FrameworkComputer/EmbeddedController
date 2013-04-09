@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -29,6 +30,13 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+/* ILIM pin control */
+enum ilim_config {
+	ILIM_CONFIG_MANUAL_OFF,
+	ILIM_CONFIG_MANUAL_ON,
+	ILIM_CONFIG_PWM,
+};
 
 /* Devices that need VBUS power */
 #define POWERED_5000_DEVICE_TYPE (TSU6721_TYPE_OTG)
@@ -141,7 +149,7 @@ static void set_video_power(int enabled)
 	video_power_enabled = enabled;
 }
 
-static void board_ilim_use_gpio(void)
+static void ilim_use_gpio(void)
 {
 	/* Disable counter */
 	STM32_TIM_CR1(3) &= ~0x1;
@@ -153,7 +161,7 @@ static void board_ilim_use_gpio(void)
 	gpio_set_flags(GPIO_ILIM, GPIO_OUTPUT);
 }
 
-static void board_ilim_use_pwm(void)
+static void ilim_use_pwm(void)
 {
 	uint32_t val;
 
@@ -193,7 +201,10 @@ static void board_ilim_use_pwm(void)
 	STM32_TIM_CR1(3) |= (1 << 7) | (1 << 0);
 }
 
-void board_ilim_config(enum ilim_config config)
+/**
+ * Set ILIM pin control type.
+ */
+static void ilim_config(enum ilim_config config)
 {
 	if (config == current_ilim_config)
 		return;
@@ -202,20 +213,22 @@ void board_ilim_config(enum ilim_config config)
 	switch (config) {
 	case ILIM_CONFIG_MANUAL_OFF:
 	case ILIM_CONFIG_MANUAL_ON:
-		board_ilim_use_gpio();
+		ilim_use_gpio();
 		gpio_set_level(GPIO_ILIM,
 			       config == ILIM_CONFIG_MANUAL_ON ? 1 : 0);
 		break;
 	case ILIM_CONFIG_PWM:
-		board_ilim_use_pwm();
+		ilim_use_pwm();
 		break;
 	default:
 		break;
 	}
 }
 
-/* Returns Apple charger current limit */
-static int board_apple_charger_current(void)
+/**
+ * Return Apple charger current limit.
+ */
+static int apple_charger_current(void)
 {
 	int vp, vn;
 	int type = 0;
@@ -239,7 +252,7 @@ static int board_apple_charger_current(void)
 	return apple_charger_type[type];
 }
 
-static int board_probe_video(int device_type)
+static int probe_video(int device_type)
 {
 	tsu6721_disable_interrupts();
 	gpio_set_level(GPIO_ID_MUX, 1);
@@ -259,10 +272,13 @@ static int board_probe_video(int device_type)
 	}
 }
 
-void board_pwm_duty_cycle(int percent)
+/**
+ * Set PWM duty cycle.
+ */
+static void set_pwm_duty_cycle(int percent)
 {
 	if (current_ilim_config != ILIM_CONFIG_PWM)
-		board_ilim_config(ILIM_CONFIG_PWM);
+		ilim_config(ILIM_CONFIG_PWM);
 	if (percent < 0)
 		percent = 0;
 	if (percent > 100)
@@ -271,21 +287,7 @@ void board_pwm_duty_cycle(int percent)
 	current_pwm_duty = percent;
 }
 
-void board_pwm_init_limit(void)
-{
-	int dummy;
-
-	/*
-	 * Shut off power input if battery is good. Otherwise, leave
-	 * 500mA to sustain the system.
-	 */
-	if (battery_current(&dummy))
-		board_pwm_duty_cycle(I_LIMIT_500MA);
-	else
-		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
-}
-
-static int board_pwm_check_lower_bound(void)
+static int pwm_check_lower_bound(void)
 {
 	if (current_limit_mode == LIMIT_AGGRESSIVE)
 		return (current_pwm_duty > nominal_pwm_duty -
@@ -297,7 +299,7 @@ static int board_pwm_check_lower_bound(void)
 			current_pwm_duty > 0);
 }
 
-static int board_pwm_check_vbus_low(int vbus, int battery_current)
+static int pwm_check_vbus_low(int vbus, int battery_current)
 {
 	if (battery_current >= 0)
 		return vbus < PWM_CTRL_VBUS_LOW && current_pwm_duty < 100;
@@ -305,61 +307,20 @@ static int board_pwm_check_vbus_low(int vbus, int battery_current)
 		return vbus < PWM_CTRL_VBUS_HARD_LOW && current_pwm_duty < 100;
 }
 
-static void board_pwm_tweak(void)
-{
-	int vbus, current;
-
-	if (current_ilim_config != ILIM_CONFIG_PWM)
-		return;
-
-	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
-	if (battery_current(&current))
-		return;
-
-	if (user_pwm_duty >= 0) {
-		if (current_pwm_duty != user_pwm_duty)
-			board_pwm_duty_cycle(user_pwm_duty);
-		return;
-	}
-
-	/*
-	 * If VBUS voltage is too low:
-	 *   - If battery is discharging, throttling more is going to draw
-	 *     more current from the battery, so do nothing unless VBUS is
-	 *     about to be lower than AC good threshold.
-	 *   - Otherwise, throttle input current to raise VBUS voltage.
-	 * If VBUS voltage is high enough, allow more current until we hit
-	 * current limit target.
-	 */
-	if (board_pwm_check_vbus_low(vbus, current)) {
-		board_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
-		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
-	} else if (vbus > PWM_CTRL_VBUS_HIGH && board_pwm_check_lower_bound()) {
-		board_pwm_duty_cycle(current_pwm_duty - PWM_CTRL_STEP_DOWN);
-		CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
-	}
-}
-DECLARE_HOOK(HOOK_SECOND, board_pwm_tweak, HOOK_PRIO_DEFAULT);
-
-void board_pwm_nominal_duty_cycle(int percent)
+static void pwm_nominal_duty_cycle(int percent)
 {
 	int dummy;
 
 	if (battery_current(&dummy))
-		board_pwm_duty_cycle(percent);
+		set_pwm_duty_cycle(percent);
 	else if (percent + PWM_CTRL_BEGIN_OFFSET > PWM_CTRL_MAX_DUTY)
-		board_pwm_duty_cycle(PWM_CTRL_MAX_DUTY);
+		set_pwm_duty_cycle(PWM_CTRL_MAX_DUTY);
 	else
-		board_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
+		set_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
 	nominal_pwm_duty = percent;
 }
 
-void usb_charge_interrupt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_CHARGER);
-}
-
-static void board_adc_watch_toad(void)
+static void adc_watch_toad(void)
 {
 	/* Watch VBUS and interrupt if voltage goes under 3V. */
 	adc_enable_watchdog(STM32_AIN(5), 4095, 1800);
@@ -367,16 +328,6 @@ static void board_adc_watch_toad(void)
 	task_enable_irq(STM32_IRQ_ADC_1);
 	current_watchdog = ADC_WATCH_TOAD;
 }
-
-static void board_adc_watchdog_interrupt(void)
-{
-	if (current_watchdog == ADC_WATCH_TOAD) {
-		pending_tsu6721_reset = 1;
-		task_disable_irq(STM32_IRQ_ADC_1);
-		task_wake(TASK_ID_CHARGER);
-	}
-}
-DECLARE_IRQ(STM32_IRQ_ADC_1, board_adc_watchdog_interrupt, 2);
 
 static int usb_has_power_input(int dev_type)
 {
@@ -403,16 +354,12 @@ static void usb_boost_power_hook(int power_on)
 		set_video_power(power_on);
 }
 
-static void usb_boost_pwr_on_hook(void) { usb_boost_power_hook(1); }
-static void usb_boost_pwr_off_hook(void) { usb_boost_power_hook(0); }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, usb_boost_pwr_on_hook, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
-
-/*
- * When a power source is removed, record time, power source type,
- * and PWM duty cycle. Then when we see a power source, compare type
- * and calculate time difference to determine if we have just
- * encountered an over current event.
+/**
+ * Detect over-current events.
+ *
+ * When a power source is removed, record time, power source type, and PWM duty
+ * cycle. Then when we see a power source, compare type and calculate time
+ * difference to determine if we have just encountered an over current event.
  */
 static void usb_detect_overcurrent(int dev_type)
 {
@@ -446,10 +393,12 @@ static void usb_detect_overcurrent(int dev_type)
 	}
 }
 
-/*
- * Supply 5V VBUS if needed. If we toggle power output, wait for a
- * moment, and then update device type. To avoid race condition, check
- * if power requirement changes during this time.
+/**
+ * Supply 5V VBUS if needed.
+ *
+ * If we toggle power output, wait for a moment, and then update device
+ * type. To avoid race condition, check if power requirement changes during
+ * this time.
  */
 static int usb_manage_boost(int dev_type)
 {
@@ -471,7 +420,9 @@ static int usb_manage_boost(int dev_type)
 	return dev_type;
 }
 
-/* Updates ILIM current limit according to device type. */
+/**
+ * Update ILIM current limit according to device type.
+ */
 static void usb_update_ilim(int dev_type)
 {
 	if (usb_has_power_input(dev_type)) {
@@ -480,14 +431,14 @@ static void usb_update_ilim(int dev_type)
 		if (dev_type & TSU6721_TYPE_CHG12)
 			current_limit = I_LIMIT_3000MA;
 		else if (dev_type & TSU6721_TYPE_APPLE_CHG) {
-			current_limit = board_apple_charger_current();
+			current_limit = apple_charger_current();
 		} else if ((dev_type & TSU6721_TYPE_CDP) ||
 			   (dev_type & TSU6721_TYPE_DCP))
 			current_limit = I_LIMIT_1500MA;
 
-		board_pwm_nominal_duty_cycle(current_limit);
+		pwm_nominal_duty_cycle(current_limit);
 	} else {
-		board_ilim_config(ILIM_CONFIG_MANUAL_ON);
+		ilim_config(ILIM_CONFIG_MANUAL_ON);
 	}
 }
 
@@ -515,7 +466,7 @@ static void usb_device_change(int dev_type)
 	 * USB host, probe for video output.
 	 */
 	if (dev_type & TSU6721_TYPE_USB_HOST)
-		dev_type = board_probe_video(dev_type);
+		dev_type = probe_video(dev_type);
 
 	usb_detect_overcurrent(dev_type);
 
@@ -529,7 +480,7 @@ static void usb_device_change(int dev_type)
 
 	if ((dev_type & TOAD_DEVICE_TYPE) &&
 	    (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED))
-		board_adc_watch_toad();
+		adc_watch_toad();
 
 	usb_log_dev_type(dev_type);
 
@@ -542,11 +493,155 @@ static void usb_device_change(int dev_type)
 		enable_sleep(SLEEP_MASK_USB_PWR);
 }
 
+/*****************************************************************************/
+/* External API */
+
+/*
+ * TODO: Init here until we can do with HOOK_INIT.  Just need to set prio so we
+ * init before the charger task does.
+ */
+void extpower_charge_init(void)
+{
+	int dummy;
+
+	/*
+	 * Shut off power input if battery is good. Otherwise, leave
+	 * 500mA to sustain the system.
+	 */
+	if (battery_current(&dummy))
+		set_pwm_duty_cycle(I_LIMIT_500MA);
+	else
+		ilim_config(ILIM_CONFIG_MANUAL_ON);
+
+	/*
+	 * Somehow TSU6721 comes up slowly. Let's wait for a moment before
+	 * accessing it.
+	 * TODO(victoryang): Investigate slow init issue.
+	 */
+	msleep(500);
+
+	tsu6721_init();
+	gpio_enable_interrupt(GPIO_USB_CHG_INT);
+	msleep(100); /* TSU6721 doesn't work properly right away. */
+
+	extpower_charge_update(1);
+}
+
+void extpower_charge_update(int force_update)
+{
+	int int_val = 0;
+
+	if (pending_tsu6721_reset) {
+		current_watchdog = ADC_WATCH_NONE;
+		adc_disable_watchdog();
+		tsu6721_reset();
+		force_update = 1;
+		pending_tsu6721_reset = 0;
+	} else
+		int_val = tsu6721_get_interrupts();
+
+	if (int_val & TSU6721_INT_DETACH)
+		usb_device_change(TSU6721_TYPE_NONE);
+	else if (int_val || force_update)
+		usb_device_change(tsu6721_get_device_type());
+}
+
+int extpower_charge_needs_update(void)
+{
+	return tsu6721_peek_interrupts();
+}
+
+int extpower_is_present(void)
+{
+	static int last_vbus;
+	int vbus, vbus_good;
+
+	if (!gpio_get_level(GPIO_BOOST_EN))
+		return 0;
+
+	/*
+	 * UVLO is 4.1V. We consider AC bad when its voltage drops below 4.2V
+	 * for two consecutive samples. This is to give PWM a chance to bring
+	 * voltage up.
+	 */
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	vbus_good = (vbus >= 4200 || last_vbus >= 4200);
+	last_vbus = vbus;
+
+	return vbus_good;
+}
+
+void extpower_interrupt(enum gpio_signal signal)
+{
+	task_wake(TASK_ID_CHARGER);
+}
+
+/*****************************************************************************/
+/* Hooks */
+
+static void adc_watchdog_interrupt(void)
+{
+	if (current_watchdog == ADC_WATCH_TOAD) {
+		pending_tsu6721_reset = 1;
+		task_disable_irq(STM32_IRQ_ADC_1);
+		task_wake(TASK_ID_CHARGER);
+	}
+}
+DECLARE_IRQ(STM32_IRQ_ADC_1, adc_watchdog_interrupt, 2);
+
+static void usb_boost_pwr_on_hook(void)
+{
+	usb_boost_power_hook(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, usb_boost_pwr_on_hook, HOOK_PRIO_DEFAULT);
+
+static void usb_boost_pwr_off_hook(void)
+{
+	usb_boost_power_hook(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
+
+static void pwm_tweak(void)
+{
+	int vbus, current;
+
+	if (current_ilim_config != ILIM_CONFIG_PWM)
+		return;
+
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	if (battery_current(&current))
+		return;
+
+	if (user_pwm_duty >= 0) {
+		if (current_pwm_duty != user_pwm_duty)
+			set_pwm_duty_cycle(user_pwm_duty);
+		return;
+	}
+
+	/*
+	 * If VBUS voltage is too low:
+	 *   - If battery is discharging, throttling more is going to draw
+	 *     more current from the battery, so do nothing unless VBUS is
+	 *     about to be lower than AC good threshold.
+	 *   - Otherwise, throttle input current to raise VBUS voltage.
+	 * If VBUS voltage is high enough, allow more current until we hit
+	 * current limit target.
+	 */
+	if (pwm_check_vbus_low(vbus, current)) {
+		set_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
+		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
+	} else if (vbus > PWM_CTRL_VBUS_HIGH && pwm_check_lower_bound()) {
+		set_pwm_duty_cycle(current_pwm_duty - PWM_CTRL_STEP_DOWN);
+		CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, pwm_tweak, HOOK_PRIO_DEFAULT);
+
 /*
  * TODO(victoryang): Get rid of polling loop when ADC watchdog is ready.
  *                   See crosbug.com/p/18171
  */
-static void board_usb_monitor_detach(void)
+static void usb_monitor_detach(void)
 {
 	int vbus;
 
@@ -568,42 +663,14 @@ static void board_usb_monitor_detach(void)
 	else if (!get_video_power() && vbus <= 4000)
 		set_video_power(1);
 }
-DECLARE_HOOK(HOOK_SECOND, board_usb_monitor_detach, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, usb_monitor_detach, HOOK_PRIO_DEFAULT);
 
-void board_usb_charge_update(int force_update)
-{
-	int int_val = 0;
-
-	if (pending_tsu6721_reset) {
-		current_watchdog = ADC_WATCH_NONE;
-		adc_disable_watchdog();
-		tsu6721_reset();
-		force_update = 1;
-		pending_tsu6721_reset = 0;
-	} else
-		int_val = tsu6721_get_interrupts();
-
-	if (int_val & TSU6721_INT_DETACH)
-		usb_device_change(TSU6721_TYPE_NONE);
-	else if (int_val || force_update)
-		usb_device_change(tsu6721_get_device_type());
-}
-
-int board_get_usb_dev_type(void)
-{
-	return current_dev_type;
-}
-
-int board_get_usb_current_limit(void)
-{
-	/* Approximate value by PWM duty cycle */
-	return PWM_MAPPING_A + PWM_MAPPING_B * current_pwm_duty;
-}
-
+/*****************************************************************************/
 /*
  * Console commands for debugging.
- * TODO(victoryang): Remove after charging control is done.
+ * TODO(victoryang): Gate with CONFIG flag after charging control is done.
  */
+
 static int command_ilim(int argc, char **argv)
 {
 	char *e;
@@ -611,13 +678,13 @@ static int command_ilim(int argc, char **argv)
 
 	if (argc >= 2) {
 		if (parse_bool(argv[1], &v)) {
-			board_ilim_config(v ? ILIM_CONFIG_MANUAL_ON :
+			ilim_config(v ? ILIM_CONFIG_MANUAL_ON :
 					  ILIM_CONFIG_MANUAL_OFF);
 		} else {
 			v = strtoi(argv[1], &e, 0);
 			if (*e)
 				return EC_ERROR_PARAM1;
-			board_pwm_duty_cycle(v);
+			set_pwm_duty_cycle(v);
 		}
 	}
 
@@ -698,3 +765,23 @@ static int ext_power_command_current_limit(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_EXT_POWER_CURRENT_LIMIT,
 		     ext_power_command_current_limit,
 		     EC_VER_MASK(0));
+
+static int power_command_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_power_info *r = args->response;
+
+	r->voltage_ac = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	r->voltage_system = pmu_adc_read(ADC_VAC, ADC_FLAG_KEEP_ON)
+			  * 17000 / 1024;
+	r->current_system = pmu_adc_read(ADC_IAC, 0)
+			  * 20 * 33 / 1024;
+	r->usb_dev_type = current_dev_type;
+
+	/* Approximate value by PWM duty cycle */
+	r->usb_current_limit = PWM_MAPPING_A + PWM_MAPPING_B * current_pwm_duty;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_POWER_INFO, power_command_info, EC_VER_MASK(0));

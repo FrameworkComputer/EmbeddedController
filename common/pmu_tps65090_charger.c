@@ -17,7 +17,6 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "tsu6721.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
@@ -405,28 +404,16 @@ void charger_task(void)
 	enable_charging(0);
 	disable_sleep(SLEEP_MASK_CHARGING);
 
-#ifdef CONFIG_TSU6721
-	board_pwm_init_limit();
-
-	/*
-	 * Somehow TSU6721 comes up slowly. Let's wait for a moment before
-	 * accessing it.
-	 * TODO(victoryang): Investigate slow init issue.
-	 */
-	msleep(500);
-
-	tsu6721_init(); /* Init here until we can do with HOOK_INIT */
-	gpio_enable_interrupt(GPIO_USB_CHG_INT);
-	msleep(100); /* TSU6721 doesn't work properly right away. */
-	board_usb_charge_update(1);
+#ifdef CONFIG_EXTPOWER_USB
+	extpower_charge_init();
 #endif
 
 	while (1) {
 		last_waken = get_time();
 		pmu_clear_irq();
 
-#ifdef CONFIG_TSU6721
-		board_usb_charge_update(0);
+#ifdef CONFIG_EXTPOWER_USB
+		extpower_charge_update(0);
 #endif
 
 		/*
@@ -509,8 +496,8 @@ void charger_task(void)
 			}
 		}
 
-#ifdef CONFIG_TSU6721
-		has_pending_event |= tsu6721_peek_interrupts();
+#ifdef CONFIG_EXTPOWER_USB
+		has_pending_event |= extpower_charge_needs_update();
 #endif
 
 		if (!has_pending_event) {
