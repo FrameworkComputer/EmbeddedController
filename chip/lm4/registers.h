@@ -1,17 +1,14 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
  * Register map for LM4x processor
  */
 
-#ifndef __LM4_REGISTERS
-#define __LM4_REGISTERS
+#ifndef __CROS_EC_REGISTERS_H
+#define __CROS_EC_REGISTERS_H
 
-#include <stdint.h>
-
-/* Macro to access 32-bit registers */
-#define LM4REG(addr) (*(volatile uint32_t*)(addr))
+#include "common.h"
 
 #define LM4_UART_CH0_BASE      0x4000c000
 #define LM4_UART_CH1_BASE      0x4000d000
@@ -20,7 +17,7 @@ static inline int lm4_uart_addr(int ch, int offset)
 {
 	return offset + LM4_UART_CH0_BASE + LM4_UART_CH_SEP * ch;
 }
-#define LM4UARTREG(ch, offset) LM4REG(lm4_uart_addr(ch, offset))
+#define LM4UARTREG(ch, offset) REG32(lm4_uart_addr(ch, offset))
 #define LM4_UART_DR(ch)        LM4UARTREG(ch, 0x000)
 #define LM4_UART_FR(ch)        LM4UARTREG(ch, 0x018)
 #define LM4_UART_IBRD(ch)      LM4UARTREG(ch, 0x024)
@@ -39,7 +36,7 @@ static inline int lm4_spi_addr(int ch, int offset)
 {
 	return offset + LM4_SSI_BASE + LM4_SSI_CH_SEP * ch;
 }
-#define LM4SSIREG(ch, offset)  LM4REG(lm4_spi_addr(ch, offset))
+#define LM4SSIREG(ch, offset)  REG32(lm4_spi_addr(ch, offset))
 #define LM4_SSI_CR0(ch)        LM4SSIREG(ch, 0x000)
 #define LM4_SSI_CR1(ch)        LM4SSIREG(ch, 0x004)
 #define LM4_SSI_DR(ch)         LM4SSIREG(ch, 0x008)
@@ -57,19 +54,19 @@ static inline int lm4_spi_addr(int ch, int offset)
 #define LM4_SSI_DMACTL(ch)     LM4SSIREG(ch, 0x024)
 #define LM4_SSI_CC(ch)         LM4SSIREG(ch, 0xfc8)
 
-#define LM4_ADC_ADCACTSS       LM4REG(0x40038000)
-#define LM4_ADC_ADCRIS         LM4REG(0x40038004)
-#define LM4_ADC_ADCIM          LM4REG(0x40038008)
-#define LM4_ADC_ADCISC         LM4REG(0x4003800c)
-#define LM4_ADC_ADCOSTAT       LM4REG(0x40038010)
-#define LM4_ADC_ADCEMUX        LM4REG(0x40038014)
-#define LM4_ADC_ADCUSTAT       LM4REG(0x40038018)
-#define LM4_ADC_ADCSSPRI       LM4REG(0x40038020)
-#define LM4_ADC_ADCSPC         LM4REG(0x40038024)
-#define LM4_ADC_ADCPSSI        LM4REG(0x40038028)
-#define LM4_ADC_ADCSAC         LM4REG(0x40038030)
-#define LM4_ADC_ADCCTL         LM4REG(0x40038038)
-#define LM4_ADC_ADCCC          LM4REG(0x40038fc8)
+#define LM4_ADC_ADCACTSS       REG32(0x40038000)
+#define LM4_ADC_ADCRIS         REG32(0x40038004)
+#define LM4_ADC_ADCIM          REG32(0x40038008)
+#define LM4_ADC_ADCISC         REG32(0x4003800c)
+#define LM4_ADC_ADCOSTAT       REG32(0x40038010)
+#define LM4_ADC_ADCEMUX        REG32(0x40038014)
+#define LM4_ADC_ADCUSTAT       REG32(0x40038018)
+#define LM4_ADC_ADCSSPRI       REG32(0x40038020)
+#define LM4_ADC_ADCSPC         REG32(0x40038024)
+#define LM4_ADC_ADCPSSI        REG32(0x40038028)
+#define LM4_ADC_ADCSAC         REG32(0x40038030)
+#define LM4_ADC_ADCCTL         REG32(0x40038038)
+#define LM4_ADC_ADCCC          REG32(0x40038fc8)
 #define LM4_ADC_SS0_BASE       0x40038040
 #define LM4_ADC_SS1_BASE       0x40038060
 #define LM4_ADC_SS2_BASE       0x40038080
@@ -79,7 +76,7 @@ static inline int lm4_adc_addr(int ss, int offset)
 {
 	return offset + LM4_ADC_SS0_BASE + LM4_ADC_SS_SEP * ss;
 }
-#define LM4ADCREG(ss, offset)  LM4REG(lm4_adc_addr(ss, offset))
+#define LM4ADCREG(ss, offset)  REG32(lm4_adc_addr(ss, offset))
 #define LM4_ADC_SSMUX(ss)      LM4ADCREG(ss, 0x000)
 #define LM4_ADC_SSCTL(ss)      LM4ADCREG(ss, 0x004)
 #define LM4_ADC_SSFIFO(ss)     LM4ADCREG(ss, 0x008)
@@ -87,21 +84,21 @@ static inline int lm4_adc_addr(int ss, int offset)
 #define LM4_ADC_SSOP(ss)       LM4ADCREG(ss, 0x010)
 #define LM4_ADC_SSEMUX(ss)     LM4ADCREG(ss, 0x018)
 
-#define LM4_LPC_LPCCTL         LM4REG(0x40080000)
+#define LM4_LPC_LPCCTL         REG32(0x40080000)
 #define LM4_LPC_SCI_START      (1 << 9)  /* Start a pulse on LPC0SCI signal */
 #define LM4_LPC_SCI_CLK_1      (0 << 10) /* SCI asserted for 1 clock period */
 #define LM4_LPC_SCI_CLK_2      (1 << 10) /* SCI asserted for 2 clock periods */
 #define LM4_LPC_SCI_CLK_4      (2 << 10) /* SCI asserted for 4 clock periods */
 #define LM4_LPC_SCI_CLK_8      (3 << 10) /* SCI asserted for 8 clock periods */
-#define LM4_LPC_LPCSTS         LM4REG(0x40080004)
-#define LM4_LPC_LPCIRQCTL      LM4REG(0x40080008)
-#define LM4_LPC_LPCIRQST       LM4REG(0x4008000c)
-#define LM4_LPC_LPCIM          LM4REG(0x40080100)
-#define LM4_LPC_LPCRIS         LM4REG(0x40080104)
-#define LM4_LPC_LPCMIS         LM4REG(0x40080108)
-#define LM4_LPC_LPCIC          LM4REG(0x4008010c)
+#define LM4_LPC_LPCSTS         REG32(0x40080004)
+#define LM4_LPC_LPCIRQCTL      REG32(0x40080008)
+#define LM4_LPC_LPCIRQST       REG32(0x4008000c)
+#define LM4_LPC_LPCIM          REG32(0x40080100)
+#define LM4_LPC_LPCRIS         REG32(0x40080104)
+#define LM4_LPC_LPCMIS         REG32(0x40080108)
+#define LM4_LPC_LPCIC          REG32(0x4008010c)
 #define LM4_LPC_INT_MASK(ch, bits) ((bits) << (4 * (ch)))
-#define LM4_LPC_LPCDMACX       LM4REG(0x40080120)
+#define LM4_LPC_LPCDMACX       REG32(0x40080120)
 #define LM4_LPC_CH0_BASE       0x40080010
 #define LM4_LPC_CH1_BASE       0x40080020
 #define LM4_LPC_CH2_BASE       0x40080030
@@ -115,7 +112,7 @@ static inline int lm4_lpc_addr(int ch, int offset)
 {
 	return offset + LM4_LPC_CH0_BASE + LM4_LPC_CH_SEP * ch;
 }
-#define LM4LPCREG(ch, offset)  LM4REG(lm4_lpc_addr(ch, offset))
+#define LM4LPCREG(ch, offset)  REG32(lm4_lpc_addr(ch, offset))
 #define LM4_LPC_CTL(ch)        LM4LPCREG(ch, 0x000)
 #define LM4_LPC_ST(ch)         LM4LPCREG(ch, 0x004)
 #define LM4_LPC_ST_TOH         (1 << 0)  /* TO Host bit */
@@ -129,8 +126,8 @@ static inline int lm4_lpc_addr(int ch, int offset)
 #define LM4_LPC_POOL_BYTES     1024   /* Size of LPCPOOL in bytes */
 #define LM4_LPC_LPCPOOL        ((volatile unsigned char *)0x40080400)
 
-#define LM4_FAN_FANSTS         LM4REG(0x40084000)
-#define LM4_FAN_FANCTL         LM4REG(0x40084004)
+#define LM4_FAN_FANSTS         REG32(0x40084000)
+#define LM4_FAN_FANCTL         REG32(0x40084004)
 #define LM4_FAN_CH0_BASE       0x40084010
 #define LM4_FAN_CH1_BASE       0x40084020
 #define LM4_FAN_CH2_BASE       0x40084030
@@ -142,94 +139,94 @@ static inline int lm4_fan_addr(int ch, int offset)
 {
 	return offset + LM4_FAN_CH0_BASE + LM4_FAN_CH_SEP * ch;
 }
-#define LM4FANREG(ch, offset)  LM4REG(lm4_fan_addr(ch, offset))
+#define LM4FANREG(ch, offset)  REG32(lm4_fan_addr(ch, offset))
 #define LM4_FAN_FANCH(ch)      LM4FANREG(ch, 0x000)
 #define LM4_FAN_FANCMD(ch)     LM4FANREG(ch, 0x004)
 #define LM4_FAN_FANCST(ch)     LM4FANREG(ch, 0x008)
 
-#define LM4_EEPROM_EESIZE      LM4REG(0x400af000)
-#define LM4_EEPROM_EEBLOCK     LM4REG(0x400af004)
-#define LM4_EEPROM_EEOFFSET    LM4REG(0x400af008)
-#define LM4_EEPROM_EERDWR      LM4REG(0x400af010)
-#define LM4_EEPROM_EERDWRINC   LM4REG(0x400af014)
-#define LM4_EEPROM_EEDONE      LM4REG(0x400af018)
-#define LM4_EEPROM_EESUPP      LM4REG(0x400af01c)
-#define LM4_EEPROM_EEUNLOCK    LM4REG(0x400af020)
-#define LM4_EEPROM_EEPROT      LM4REG(0x400af030)
-#define LM4_EEPROM_EEPASS0     LM4REG(0x400af034)
-#define LM4_EEPROM_EEPASS1     LM4REG(0x400af038)
-#define LM4_EEPROM_EEPASS2     LM4REG(0x400af03c)
-#define LM4_EEPROM_EEINT       LM4REG(0x400af040)
-#define LM4_EEPROM_EEHIDE      LM4REG(0x400af050)
+#define LM4_EEPROM_EESIZE      REG32(0x400af000)
+#define LM4_EEPROM_EEBLOCK     REG32(0x400af004)
+#define LM4_EEPROM_EEOFFSET    REG32(0x400af008)
+#define LM4_EEPROM_EERDWR      REG32(0x400af010)
+#define LM4_EEPROM_EERDWRINC   REG32(0x400af014)
+#define LM4_EEPROM_EEDONE      REG32(0x400af018)
+#define LM4_EEPROM_EESUPP      REG32(0x400af01c)
+#define LM4_EEPROM_EEUNLOCK    REG32(0x400af020)
+#define LM4_EEPROM_EEPROT      REG32(0x400af030)
+#define LM4_EEPROM_EEPASS0     REG32(0x400af034)
+#define LM4_EEPROM_EEPASS1     REG32(0x400af038)
+#define LM4_EEPROM_EEPASS2     REG32(0x400af03c)
+#define LM4_EEPROM_EEINT       REG32(0x400af040)
+#define LM4_EEPROM_EEHIDE      REG32(0x400af050)
 
-#define LM4_PECI_CTL           LM4REG(0x400b0000)
-#define LM4_PECI_DIV           LM4REG(0x400b0004)
-#define LM4_PECI_CMP           LM4REG(0x400b0008)
-#define LM4_PECI_M0D0C         LM4REG(0x400b0010)
-#define LM4_PECI_M0D1C         LM4REG(0x400b0014)
-#define LM4_PECI_M1D0C         LM4REG(0x400b0018)
-#define LM4_PECI_M1D1C         LM4REG(0x400b001c)
-#define LM4_PECI_M0D0          LM4REG(0x400b0040)
-#define LM4_PECI_M0D1          LM4REG(0x400b0044)
-#define LM4_PECI_M1D0          LM4REG(0x400b0048)
-#define LM4_PECI_M1D1          LM4REG(0x400b004c)
-#define LM4_PECI_IM            LM4REG(0x400b0080)
-#define LM4_PECI_RIS           LM4REG(0x400b0084)
-#define LM4_PECI_MIS           LM4REG(0x400b0088)
-#define LM4_PECI_IC            LM4REG(0x400b008c)
-#define LM4_PECI_ACADDR        LM4REG(0x400b0100)
-#define LM4_PECI_ACARG         LM4REG(0x400b0104)
-#define LM4_PECI_ACRDWR0       LM4REG(0x400b0108)
-#define LM4_PECI_ACRDWR1       LM4REG(0x400b010c)
-#define LM4_PECI_ACCMD         LM4REG(0x400b0110)
-#define LM4_PECI_ACCODE        LM4REG(0x400b0114)
+#define LM4_PECI_CTL           REG32(0x400b0000)
+#define LM4_PECI_DIV           REG32(0x400b0004)
+#define LM4_PECI_CMP           REG32(0x400b0008)
+#define LM4_PECI_M0D0C         REG32(0x400b0010)
+#define LM4_PECI_M0D1C         REG32(0x400b0014)
+#define LM4_PECI_M1D0C         REG32(0x400b0018)
+#define LM4_PECI_M1D1C         REG32(0x400b001c)
+#define LM4_PECI_M0D0          REG32(0x400b0040)
+#define LM4_PECI_M0D1          REG32(0x400b0044)
+#define LM4_PECI_M1D0          REG32(0x400b0048)
+#define LM4_PECI_M1D1          REG32(0x400b004c)
+#define LM4_PECI_IM            REG32(0x400b0080)
+#define LM4_PECI_RIS           REG32(0x400b0084)
+#define LM4_PECI_MIS           REG32(0x400b0088)
+#define LM4_PECI_IC            REG32(0x400b008c)
+#define LM4_PECI_ACADDR        REG32(0x400b0100)
+#define LM4_PECI_ACARG         REG32(0x400b0104)
+#define LM4_PECI_ACRDWR0       REG32(0x400b0108)
+#define LM4_PECI_ACRDWR1       REG32(0x400b010c)
+#define LM4_PECI_ACCMD         REG32(0x400b0110)
+#define LM4_PECI_ACCODE        REG32(0x400b0114)
 
 
-#define LM4_HIBERNATE_HIBRTCC  LM4REG(0x400fc000)
-#define LM4_HIBERNATE_HIBRTCM0 LM4REG(0x400fc004)
-#define LM4_HIBERNATE_HIBRTCLD LM4REG(0x400fc00c)
-#define LM4_HIBERNATE_HIBCTL   LM4REG(0x400fc010)
+#define LM4_HIBERNATE_HIBRTCC  REG32(0x400fc000)
+#define LM4_HIBERNATE_HIBRTCM0 REG32(0x400fc004)
+#define LM4_HIBERNATE_HIBRTCLD REG32(0x400fc00c)
+#define LM4_HIBERNATE_HIBCTL   REG32(0x400fc010)
 #define LM4_HIBCTL_WRC         (1 << 31)
 #define LM4_HIBCTL_CLK32EN     (1 << 6)
 #define LM4_HIBCTL_PINWEN      (1 << 4)
 #define LM4_HIBCTL_RTCWEN      (1 << 3)
 #define LM4_HIBCTL_HIBREQ      (1 << 1)
 #define LM4_HIBCTL_RTCEN       (1 << 0)
-#define LM4_HIBERNATE_HIBIM    LM4REG(0x400fc014)
-#define LM4_HIBERNATE_HIBRIS   LM4REG(0x400fc018)
-#define LM4_HIBERNATE_HIBIC    LM4REG(0x400fc020)
-#define LM4_HIBERNATE_HIBRTCT  LM4REG(0x400fc024)
-#define LM4_HIBERNATE_HIBRTCSS LM4REG(0x400fc028)
+#define LM4_HIBERNATE_HIBIM    REG32(0x400fc014)
+#define LM4_HIBERNATE_HIBRIS   REG32(0x400fc018)
+#define LM4_HIBERNATE_HIBIC    REG32(0x400fc020)
+#define LM4_HIBERNATE_HIBRTCT  REG32(0x400fc024)
+#define LM4_HIBERNATE_HIBRTCSS REG32(0x400fc028)
 #define LM4_HIBERNATE_HIBDATA_ENTRIES 16  /* Number of entries in HIBDATA[] */
 #define LM4_HIBERNATE_HIBDATA  ((volatile uint32_t *)0x400fc030)
 
-#define LM4_FLASH_FMA          LM4REG(0x400fd000)
-#define LM4_FLASH_FMD          LM4REG(0x400fd004)
-#define LM4_FLASH_FMC          LM4REG(0x400fd008)
-#define LM4_FLASH_FCRIS        LM4REG(0x400fd00c)
-#define LM4_FLASH_FCMISC       LM4REG(0x400fd014)
-#define LM4_FLASH_FMC2         LM4REG(0x400fd020)
-#define LM4_FLASH_FWBVAL       LM4REG(0x400fd030)
+#define LM4_FLASH_FMA          REG32(0x400fd000)
+#define LM4_FLASH_FMD          REG32(0x400fd004)
+#define LM4_FLASH_FMC          REG32(0x400fd008)
+#define LM4_FLASH_FCRIS        REG32(0x400fd00c)
+#define LM4_FLASH_FCMISC       REG32(0x400fd014)
+#define LM4_FLASH_FMC2         REG32(0x400fd020)
+#define LM4_FLASH_FWBVAL       REG32(0x400fd030)
 /* FWB size is 32 words = 128 bytes */
 #define LM4_FLASH_FWB          ((volatile uint32_t*)0x400fd100)
-#define LM4_FLASH_FSIZE        LM4REG(0x400fdfc0)
-#define LM4_FLASH_FMPRE0       LM4REG(0x400fe200)
-#define LM4_FLASH_FMPRE1       LM4REG(0x400fe204)
-#define LM4_FLASH_FMPRE2       LM4REG(0x400fe208)
-#define LM4_FLASH_FMPRE3       LM4REG(0x400fe20c)
+#define LM4_FLASH_FSIZE        REG32(0x400fdfc0)
+#define LM4_FLASH_FMPRE0       REG32(0x400fe200)
+#define LM4_FLASH_FMPRE1       REG32(0x400fe204)
+#define LM4_FLASH_FMPRE2       REG32(0x400fe208)
+#define LM4_FLASH_FMPRE3       REG32(0x400fe20c)
 #define LM4_FLASH_FMPPE        ((volatile uint32_t*)0x400fe400)
-#define LM4_FLASH_FMPPE0       LM4REG(0x400fe400)
-#define LM4_FLASH_FMPPE1       LM4REG(0x400fe404)
-#define LM4_FLASH_FMPPE2       LM4REG(0x400fe408)
-#define LM4_FLASH_FMPPE3       LM4REG(0x400fe40c)
+#define LM4_FLASH_FMPPE0       REG32(0x400fe400)
+#define LM4_FLASH_FMPPE1       REG32(0x400fe404)
+#define LM4_FLASH_FMPPE2       REG32(0x400fe408)
+#define LM4_FLASH_FMPPE3       REG32(0x400fe40c)
 
-#define LM4_SYSTEM_DID0        LM4REG(0x400fe000)
-#define LM4_SYSTEM_DID1        LM4REG(0x400fe004)
-#define LM4_SYSTEM_PBORCTL     LM4REG(0x400fe030)
-#define LM4_SYSTEM_RIS         LM4REG(0x400fe050)
-#define LM4_SYSTEM_MISC        LM4REG(0x400fe058)
-#define LM4_SYSTEM_RESC        LM4REG(0x400fe05c)
-#define LM4_SYSTEM_RCC         LM4REG(0x400fe060)
+#define LM4_SYSTEM_DID0        REG32(0x400fe000)
+#define LM4_SYSTEM_DID1        REG32(0x400fe004)
+#define LM4_SYSTEM_PBORCTL     REG32(0x400fe030)
+#define LM4_SYSTEM_RIS         REG32(0x400fe050)
+#define LM4_SYSTEM_MISC        REG32(0x400fe058)
+#define LM4_SYSTEM_RESC        REG32(0x400fe05c)
+#define LM4_SYSTEM_RCC         REG32(0x400fe060)
 #define LM4_SYSTEM_RCC_SYSDIV(x)  (((x) & 0xf) << 23)
 #define LM4_SYSTEM_RCC_USESYSDIV  (1 << 22)
 #define LM4_SYSTEM_RCC_PWRDN      (1 << 13)
@@ -238,7 +235,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_RCC_OSCSRC(x)  (((x) & 0x3) << 4)
 #define LM4_SYSTEM_RCC_IOSCDIS    (1 << 1)
 #define LM4_SYSTEM_RCC_MOSCDIS    (1 << 0)
-#define LM4_SYSTEM_RCC2        LM4REG(0x400fe070)
+#define LM4_SYSTEM_RCC2        REG32(0x400fe070)
 #define LM4_SYSTEM_RCC2_USERCC2     (1 << 31)
 #define LM4_SYSTEM_RCC2_DIV400      (1 << 30)
 #define LM4_SYSTEM_RCC2_SYSDIV2(x)  (((x) & 0x3f) << 23)
@@ -246,38 +243,38 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_RCC2_PWRDN2      (1 << 13)
 #define LM4_SYSTEM_RCC2_BYPASS2     (1 << 11)
 #define LM4_SYSTEM_RCC2_OSCSRC2(x)  (((x) & 0x7) << 4)
-#define LM4_SYSTEM_MOSCCTL     LM4REG(0x400fe07c)
-#define LM4_SYSTEM_PIOSCCAL    LM4REG(0x400fe150)
-#define LM4_SYSTEM_PIOSCSTAT   LM4REG(0x400fe154)
-#define LM4_SYSTEM_PLLSTAT     LM4REG(0x400fe168)
-#define LM4_SYSTEM_BOOTCFG     LM4REG(0x400fe1d0)
+#define LM4_SYSTEM_MOSCCTL     REG32(0x400fe07c)
+#define LM4_SYSTEM_PIOSCCAL    REG32(0x400fe150)
+#define LM4_SYSTEM_PIOSCSTAT   REG32(0x400fe154)
+#define LM4_SYSTEM_PLLSTAT     REG32(0x400fe168)
+#define LM4_SYSTEM_BOOTCFG     REG32(0x400fe1d0)
 /* Note: USER_REG3 is used to hold pre-programming process data and should not
  * be modified by EC code.  See crosbug.com/p/8889. */
-#define LM4_SYSTEM_USER_REG3   LM4REG(0x400fe1ec)
-#define LM4_SYSTEM_SRI2C       LM4REG(0x400fe520)
-#define LM4_SYSTEM_SREEPROM    LM4REG(0x400fe558)
-#define LM4_SYSTEM_RCGCWD      LM4REG(0x400fe600)
-#define LM4_SYSTEM_RCGCTIMER   LM4REG(0x400fe604)
-#define LM4_SYSTEM_RCGCGPIO    LM4REG(0x400fe608)
-#define LM4_SYSTEM_RCGCDMA     LM4REG(0x400fe60c)
-#define LM4_SYSTEM_RCGCHIB     LM4REG(0x400fe614)
-#define LM4_SYSTEM_RCGCUART    LM4REG(0x400fe618)
-#define LM4_SYSTEM_RCGCSSI     LM4REG(0x400fe61c)
-#define LM4_SYSTEM_RCGCI2C     LM4REG(0x400fe620)
-#define LM4_SYSTEM_RCGCADC     LM4REG(0x400fe638)
-#define LM4_SYSTEM_RCGCLPC     LM4REG(0x400fe648)
-#define LM4_SYSTEM_RCGCPECI    LM4REG(0x400fe650)
-#define LM4_SYSTEM_RCGCFAN     LM4REG(0x400fe654)
-#define LM4_SYSTEM_RCGCEEPROM  LM4REG(0x400fe658)
-#define LM4_SYSTEM_RCGCWTIMER  LM4REG(0x400fe65c)
-#define LM4_SYSTEM_PREEPROM    LM4REG(0x400fea58)
+#define LM4_SYSTEM_USER_REG3   REG32(0x400fe1ec)
+#define LM4_SYSTEM_SRI2C       REG32(0x400fe520)
+#define LM4_SYSTEM_SREEPROM    REG32(0x400fe558)
+#define LM4_SYSTEM_RCGCWD      REG32(0x400fe600)
+#define LM4_SYSTEM_RCGCTIMER   REG32(0x400fe604)
+#define LM4_SYSTEM_RCGCGPIO    REG32(0x400fe608)
+#define LM4_SYSTEM_RCGCDMA     REG32(0x400fe60c)
+#define LM4_SYSTEM_RCGCHIB     REG32(0x400fe614)
+#define LM4_SYSTEM_RCGCUART    REG32(0x400fe618)
+#define LM4_SYSTEM_RCGCSSI     REG32(0x400fe61c)
+#define LM4_SYSTEM_RCGCI2C     REG32(0x400fe620)
+#define LM4_SYSTEM_RCGCADC     REG32(0x400fe638)
+#define LM4_SYSTEM_RCGCLPC     REG32(0x400fe648)
+#define LM4_SYSTEM_RCGCPECI    REG32(0x400fe650)
+#define LM4_SYSTEM_RCGCFAN     REG32(0x400fe654)
+#define LM4_SYSTEM_RCGCEEPROM  REG32(0x400fe658)
+#define LM4_SYSTEM_RCGCWTIMER  REG32(0x400fe65c)
+#define LM4_SYSTEM_PREEPROM    REG32(0x400fea58)
 
-#define LM4_DMA_DMACFG         LM4REG(0x400ff004)
-#define LM4_DMA_DMACTLBASE     LM4REG(0x400ff008)
-#define LM4_DMA_DMACHMAP0      LM4REG(0x400ff510)
-#define LM4_DMA_DMACHMAP1      LM4REG(0x400ff514)
-#define LM4_DMA_DMACHMAP2      LM4REG(0x400ff518)
-#define LM4_DMA_DMACHMAP3      LM4REG(0x400ff51c)
+#define LM4_DMA_DMACFG         REG32(0x400ff004)
+#define LM4_DMA_DMACTLBASE     REG32(0x400ff008)
+#define LM4_DMA_DMACHMAP0      REG32(0x400ff510)
+#define LM4_DMA_DMACHMAP1      REG32(0x400ff514)
+#define LM4_DMA_DMACHMAP2      REG32(0x400ff518)
+#define LM4_DMA_DMACHMAP3      REG32(0x400ff51c)
 
 /* IRQ numbers */
 #define LM4_IRQ_GPIOA            0
@@ -424,7 +421,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_N LM4_GPIO_PORTN_BASE
 #define LM4_GPIO_P LM4_GPIO_PORTP_BASE
 #define LM4_GPIO_Q LM4_GPIO_PORTQ_BASE
-#define LM4GPIOREG(port, offset)      LM4REG((port) + (offset))
+#define LM4GPIOREG(port, offset)      REG32((port) + (offset))
 #define LM4_GPIO_DATA(port, mask)     LM4GPIOREG(port, ((mask) << 2))
 #define LM4_GPIO_DIR(port)            LM4GPIOREG(port, 0x400)
 #define LM4_GPIO_IS(port)             LM4GPIOREG(port, 0x404)
@@ -467,7 +464,7 @@ static inline int lm4_i2c_addr(int port, int offset)
 			 LM4_I2C0_BASE + LM4_I2C_BASESEP * port :
 			 LM4_I2C4_BASE + LM4_I2C_BASESEP * (port - 4));
 }
-#define LM4I2CREG(port, offset)       LM4REG(lm4_i2c_addr(port, offset))
+#define LM4I2CREG(port, offset)       REG32(lm4_i2c_addr(port, offset))
 #define LM4_I2C_MSA(port)             LM4I2CREG(port, 0x000)
 #define LM4_I2C_MCS(port)             LM4I2CREG(port, 0x004)
 #define LM4_I2C_MDR(port)             LM4I2CREG(port, 0x008)
@@ -504,7 +501,7 @@ static inline int lm4_timer_addr(int timer, int offset)
 	else
 		return offset + LM4_TIMERW2_BASE + LM4_TIMER_SEP * (timer - 8);
 }
-#define LM4TIMERREG(timer, offset)      LM4REG(lm4_timer_addr(timer, offset))
+#define LM4TIMERREG(timer, offset)      REG32(lm4_timer_addr(timer, offset))
 #define LM4_TIMER_CFG(tmr)              LM4TIMERREG(tmr, 0x00)
 #define LM4_TIMER_TAMR(tmr)             LM4TIMERREG(tmr, 0x04)
 #define LM4_TIMER_TBMR(tmr)             LM4TIMERREG(tmr, 0x08)
@@ -532,9 +529,9 @@ static inline int lm4_timer_addr(int timer, int offset)
 #define LM4_TIMER_TAPV(tmr)             LM4TIMERREG(tmr, 0x64)
 #define LM4_TIMER_TBPV(tmr)             LM4TIMERREG(tmr, 0x68)
 
-#define LM4_SYSTICK_CTRL                LM4REG(0xe000e010)
-#define LM4_SYSTICK_RELOAD              LM4REG(0xe000e014)
-#define LM4_SYSTICK_CURRENT             LM4REG(0xe000e018)
+#define LM4_SYSTICK_CTRL                REG32(0xe000e010)
+#define LM4_SYSTICK_RELOAD              REG32(0xe000e014)
+#define LM4_SYSTICK_CURRENT             REG32(0xe000e018)
 
 /* Watchdogs */
 #define LM4_WATCHDOG0_BASE              0x40000000
@@ -543,7 +540,7 @@ static inline int lm4_watchdog_addr(int num, int offset)
 {
 	return offset + (num ? LM4_WATCHDOG1_BASE : LM4_WATCHDOG0_BASE);
 }
-#define LM4WDTREG(num, offset) LM4REG(lm4_watchdog_addr(num, offset))
+#define LM4WDTREG(num, offset)		REG32(lm4_watchdog_addr(num, offset))
 #define LM4_WATCHDOG_LOAD(n)            LM4WDTREG(n, 0x000)
 #define LM4_WATCHDOG_VALUE(n)           LM4WDTREG(n, 0x004)
 #define LM4_WATCHDOG_CTL(n)             LM4WDTREG(n, 0x008)
@@ -552,4 +549,6 @@ static inline int lm4_watchdog_addr(int num, int offset)
 #define LM4_WATCHDOG_TEST(n)            LM4WDTREG(n, 0x418)
 #define LM4_WATCHDOG_LOCK(n)            LM4WDTREG(n, 0xc00)
 
-#endif /* __LM4_REGISTERS */
+#define LM4_TEST_MODE_ENABLED		REG32(0x400fdff0)
+
+#endif /* __CROS_EC_REGISTERS_H */

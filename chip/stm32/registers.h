@@ -5,17 +5,13 @@
  * Register map for STM32 processor
  */
 
-#ifndef __STM32_REGISTERS
-#define __STM32_REGISTERS
+#ifndef __CROS_EC_REGISTERS_H
+#define __CROS_EC_REGISTERS_H
 
-#include <stdint.h>
+#include "common.h"
 
 /* concatenation helper */
 #define STM32_CAT(prefix, n, suffix) prefix ## n ## suffix
-
-/* Macros to access registers */
-#define REG32(addr) (*(volatile uint32_t*)(addr))
-#define REG16(addr) (*(volatile uint16_t*)(addr))
 
 /* IRQ numbers */
 #define STM32_IRQ_WWDG             0
@@ -566,4 +562,4 @@ struct spi_ctlr {
 #define STM32_USB_CAN_SRAM_BASE     0x40006000 /* STM32F10x only */
 #define STM32_USB_FS_BASE           0x40005C00 /* STM32F10x only */
 
-#endif /* __STM32_REGISTERS */
+#endif /* __CROS_EC_REGISTERS_H */

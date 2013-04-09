@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,6 +9,10 @@
 #define __CROS_EC_COMMON_H
 
 #include <stdint.h>
+
+/* Macros to access registers */
+#define REG32(addr) (*(volatile uint32_t *)(addr))
+#define REG16(addr) (*(volatile uint16_t *)(addr))
 
 /*
  * Define __packed if someone hasn't beat us to it.  Linux kernel style

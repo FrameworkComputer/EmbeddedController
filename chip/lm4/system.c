@@ -448,7 +448,7 @@ const char *system_get_chip_name(void)
 	const char *raw_chip_name = system_get_raw_chip_name();
 	char *p = str;
 
-	if (LM4REG(0x400fdff0)) {
+	if (LM4_TEST_MODE_ENABLED) {
 		/* Debug mode is enabled. Postfix chip name. */
 		while (*raw_chip_name)
 			*(p++) = *(raw_chip_name++);
