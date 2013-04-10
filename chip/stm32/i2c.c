@@ -482,8 +482,6 @@ static void i2c_init(void)
 	i2c_init_port(I2C2);
 
 	/* Enable event and error interrupts */
-	task_enable_irq(STM32_IRQ_I2C1_EV);
-	task_enable_irq(STM32_IRQ_I2C1_ER);
 	task_enable_irq(STM32_IRQ_I2C2_EV);
 	task_enable_irq(STM32_IRQ_I2C2_ER);
 }
