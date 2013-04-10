@@ -128,6 +128,19 @@ static const int apple_charger_type[4] = {I_LIMIT_500MA,
 					  I_LIMIT_2000MA,
 					  I_LIMIT_2400MA};
 
+static int video_power_enabled;
+
+static int get_video_power(void)
+{
+	return video_power_enabled;
+}
+
+static void set_video_power(int enabled)
+{
+	pmu_enable_fet(FET_VIDEO, enabled, NULL);
+	video_power_enabled = enabled;
+}
+
 static void board_ilim_use_gpio(void)
 {
 	/* Disable counter */
@@ -386,6 +399,8 @@ static void usb_boost_power_hook(int power_on)
 {
 	if (current_dev_type == TSU6721_TYPE_NONE)
 		gpio_set_level(GPIO_BOOST_EN, power_on);
+	else if (current_dev_type & TSU6721_TYPE_JIG_UART_ON)
+		set_video_power(power_on);
 }
 
 static void usb_boost_pwr_on_hook(void) { usb_boost_power_hook(1); }
@@ -508,7 +523,7 @@ static void usb_device_change(int dev_type)
 
 	/* Supply 3.3V VBUS if needed. */
 	if (dev_type & POWERED_3300_DEVICE_TYPE)
-		pmu_enable_fet(FET_VIDEO, 1, NULL);
+		set_video_power(1);
 
 	usb_update_ilim(dev_type);
 
@@ -533,16 +548,25 @@ static void usb_device_change(int dev_type)
  */
 static void board_usb_monitor_detach(void)
 {
+	int vbus;
+
 	if (!(current_dev_type & TSU6721_TYPE_JIG_UART_ON))
 		return;
 
 	if (adc_read_channel(ADC_CH_USB_DP_SNS) > VIDEO_ID_THRESHOLD) {
-		pmu_enable_fet(FET_VIDEO, 0, NULL);
+		set_video_power(0);
 		gpio_set_level(GPIO_ID_MUX, 0);
 		msleep(DELAY_ID_MUX_MS);
 		tsu6721_enable_interrupts();
 		usb_device_change(TSU6721_TYPE_NONE);
 	}
+
+	/* Check if there is external power */
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	if (get_video_power() && vbus > 4000)
+		set_video_power(0);
+	else if (!get_video_power() && vbus <= 4000)
+		set_video_power(1);
 }
 DECLARE_HOOK(HOOK_SECOND, board_usb_monitor_detach, HOOK_PRIO_DEFAULT);
 
