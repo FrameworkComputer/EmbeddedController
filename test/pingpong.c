@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -6,24 +6,39 @@
  */
 
 #include "common.h"
-#include "uart.h"
+#include "console.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
+
+#define TEST_COUNT 3000
+
+static int wake_count[3];
 
 int TaskAbc(void *data)
 {
-	char letter = (char)(unsigned)data;
-	char string[2] = {letter, '\0' };
+	int myid = task_get_current() - TASK_ID_TESTA;
 	task_id_t next = task_get_current() + 1;
 	if (next > TASK_ID_TESTC)
 		next = TASK_ID_TESTA;
 
-	uart_printf("\n[starting Task %c]\n", letter);
+	task_wait_event(-1);
+
+	ccprintf("\n[starting Task %c]\n", ('A' + myid));
 
 	while (1) {
-		uart_puts(string);
-		uart_flush_output();
-		task_set_event(next, TASK_EVENT_WAKE, 1);
+		wake_count[myid]++;
+		if (myid == 2 && wake_count[myid] == TEST_COUNT) {
+			if (wake_count[0] == TEST_COUNT &&
+			    wake_count[1] == TEST_COUNT)
+				ccputs("Pass!\n");
+			else
+				ccputs("Fail!\n");
+			wake_count[0] = wake_count[1] = wake_count[2] = 0;
+			task_wait_event(-1);
+		} else {
+			task_set_event(next, TASK_EVENT_WAKE, 1);
+		}
 	}
 
 	return EC_SUCCESS;
@@ -31,12 +46,23 @@ int TaskAbc(void *data)
 
 int TaskTick(void *data)
 {
-	uart_set_console_mode(1);
-	uart_printf("\n[starting Task T]\n");
-	/* Print T every tick */
+	task_wait_event(-1);
+	ccprintf("\n[starting Task T]\n");
+
+	/* Wake up every tick */
 	while (1) {
 		/* Wait for timer interrupt message */
 		usleep(3000);
-		uart_puts("T\n");
 	}
+
+	return EC_SUCCESS;
 }
+
+static int command_run_test(int argc, char **argv)
+{
+	task_wake(TASK_ID_TICK);
+	task_wake(TASK_ID_TESTA);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
+			NULL, NULL, NULL);
