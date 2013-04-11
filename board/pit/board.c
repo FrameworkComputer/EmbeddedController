@@ -88,13 +88,16 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 void board_config_post_gpio_init(void)
 {
 	/* I2C SCL/SDA on PB10-11 and PB6-7 */
-	gpio_set_alternate_function(GPIO_B, (1<<11) |
-					(1<<10) |
-					(1<<7)  |
-					(1<<6), GPIO_ALT_I2C);
+	gpio_set_alternate_function(GPIO_B,
+				    (1 << 11) | (1 << 10) | (1 << 7) | (1 << 6),
+				    GPIO_ALT_I2C);
 
-	/* Select Alternate function for USART1 on pins PA9/PA10 */
-	gpio_set_alternate_function(GPIO_A, (1<<9) | (1<<10), GPIO_ALT_USART);
+	/* USART1 on pins PA9/PA10 */
+	gpio_set_alternate_function(GPIO_A, (1 << 9) | (1 << 10),
+				    GPIO_ALT_USART);
+
+	/* TIM2_CH2 on PB3 */
+	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
 
 #ifdef CONFIG_SPI
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
@@ -105,21 +108,6 @@ void board_config_post_gpio_init(void)
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
 #endif
 
-	/* TODO: which of these are necessary on pit? */
-#ifdef PORT_TO_PIT
-
-	/* remap OSC_IN/OSC_OUT to PD0/PD1 */
-	STM32_GPIO_AFIO_MAPR |= 1 << 15;
-
-	/* use PB3 as a GPIO, so disable JTAG and keep only SWD */
-	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x7 << 24))
-			       | (2 << 24);
-
-	/* remap TIM2_CH2 to PB3 */
-	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x3 << 8))
-			       | (1 << 8);
-
-#endif /* PORT_TO_PIT */
 }
 
 #ifdef CONFIG_PMU_BOARD_INIT
