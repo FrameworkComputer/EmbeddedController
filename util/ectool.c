@@ -478,7 +478,7 @@ int cmd_flash_info(int argc, char *argv[])
 int cmd_flash_read(int argc, char *argv[])
 {
 	struct ec_params_flash_read p;
-	uint8_t rdata[EC_OLD_PARAM_SIZE];
+	uint8_t rdata[EC_HOST_PARAM_SIZE];
 	int offset, size;
 	int rv;
 	int i;

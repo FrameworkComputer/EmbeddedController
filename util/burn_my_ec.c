@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -57,7 +57,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	struct ec_params_flash_erase er_req;
 	struct ec_params_flash_write wr_req;
 	struct ec_params_flash_read rd_req;
-	uint8_t rd_resp[EC_OLD_PARAM_SIZE];
+	uint8_t rd_resp[EC_HOST_PARAM_SIZE];
 	int res;
 	uint32_t i;
 	enum ec_current_image current = EC_IMAGE_UNKNOWN;

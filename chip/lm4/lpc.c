@@ -43,8 +43,6 @@ static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
 	EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
-static uint8_t * const old_params = (uint8_t *)LPC_POOL_CMD_DATA +
-	EC_LPC_ADDR_OLD_PARAM - EC_LPC_ADDR_HOST_ARGS;
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)LPC_POOL_CMD_DATA;
 
@@ -145,7 +143,8 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 {
 	uint8_t *out;
 	int size = args->response_size;
-	int max_size;
+	int csum;
+	int i;
 
 	/* Ignore in-progress on LPC since interface is synchronous anyway */
 	if (args->result == EC_RES_IN_PROGRESS)
@@ -157,41 +156,27 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 		size = 0;
 	}
 
-	if (args->flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
-		/* New-style response */
-		int csum;
-		int i;
+	/* New-style response */
+	lpc_host_args->flags =
+		(args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+		EC_HOST_ARGS_FLAG_TO_HOST;
 
-		lpc_host_args->flags =
-			(args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
-			EC_HOST_ARGS_FLAG_TO_HOST;
+	lpc_host_args->data_size = size;
 
-		lpc_host_args->data_size = size;
+	csum = args->command + lpc_host_args->flags +
+		lpc_host_args->command_version +
+		lpc_host_args->data_size;
 
-		csum = args->command + lpc_host_args->flags +
-			lpc_host_args->command_version +
-			lpc_host_args->data_size;
+	for (i = 0, out = (uint8_t *)args->response; i < size; i++, out++)
+		csum += *out;
 
-		for (i = 0, out = (uint8_t *)args->response; i < size;
-		     i++, out++)
-			csum += *out;
-
-		lpc_host_args->checksum = (uint8_t)csum;
-
-		out = cmd_params;
-		max_size = EC_HOST_PARAM_SIZE;
-	} else {
-		/* Old-style response */
-		lpc_host_args->flags = 0;
-		out = old_params;
-		max_size = EC_OLD_PARAM_SIZE;
-	}
+	lpc_host_args->checksum = (uint8_t)csum;
 
 	/* Fail if response doesn't fit in the param buffer */
-	if (size > max_size)
+	if (size > EC_HOST_PARAM_SIZE)
 		args->result = EC_RES_INVALID_RESPONSE;
-	else if (host_cmd_args.response != out)
-		memcpy(out, args->response, size);
+	else if (host_cmd_args.response != cmd_params)
+		memcpy(cmd_params, args->response, size);
 
 	/*
 	 * Write result to the data byte.  This sets the TOH bit in the
@@ -510,13 +495,8 @@ static void handle_host_write(int is_cmd)
 				host_cmd_args.result = EC_RES_INVALID_CHECKSUM;
 		}
 	} else {
-		/* Old style command */
-		host_cmd_args.version = 0;
-		host_cmd_args.params = old_params;
-		host_cmd_args.params_size = EC_OLD_PARAM_SIZE;
-		host_cmd_args.response = old_params;
-		host_cmd_args.response_max = EC_OLD_PARAM_SIZE;
-		host_cmd_args.response_size = 0;
+		/* Old style command, now unsupported */
+		host_cmd_args.result = EC_RES_INVALID_COMMAND;
 	}
 
 	/* Hand off to host command handler */

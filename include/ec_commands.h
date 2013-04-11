@@ -46,10 +46,6 @@
 #define EC_LPC_ADDR_HOST_PARAM 0x804
 #define EC_HOST_PARAM_SIZE     0x0fc  /* Size of param area in bytes */
 
-/* I/O addresses for host command params, old interface */
-#define EC_LPC_ADDR_OLD_PARAM  0x880
-#define EC_OLD_PARAM_SIZE      0x080  /* Size of param area in bytes */
-
 /* EC command register bit functions */
 #define EC_LPC_CMDR_DATA	(1 << 0)  /* Data ready for host to read */
 #define EC_LPC_CMDR_PENDING	(1 << 1)  /* Write pending to EC */

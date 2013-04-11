@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,8 +13,6 @@
 
 #define INITIAL_UDELAY 5     /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
-
-static int lpc_cmd_args_supported;
 
 int comm_init(void)
 {
@@ -38,13 +36,13 @@ int comm_init(void)
 	 */
 	byte &= inb(EC_LPC_ADDR_HOST_CMD);
 	byte &= inb(EC_LPC_ADDR_HOST_DATA);
-	for (i = 0; i < EC_OLD_PARAM_SIZE && byte == 0xff; ++i)
-		byte &= inb(EC_LPC_ADDR_OLD_PARAM + i);
+	for (i = 0; i < EC_HOST_PARAM_SIZE && byte == 0xff; ++i)
+		byte &= inb(EC_LPC_ADDR_HOST_PARAM + i);
 	if (byte == 0xff) {
 		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
 			EC_LPC_ADDR_HOST_CMD, EC_LPC_ADDR_HOST_DATA,
-			EC_LPC_ADDR_OLD_PARAM,
-			EC_LPC_ADDR_OLD_PARAM + EC_OLD_PARAM_SIZE - 1);
+			EC_LPC_ADDR_HOST_PARAM,
+			EC_LPC_ADDR_HOST_PARAM + EC_HOST_PARAM_SIZE - 1);
 		fprintf(stderr,
 			"Very likely this board doesn't have a Chromium EC.\n");
 		return -4;
@@ -58,11 +56,13 @@ int comm_init(void)
 	 * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
 	 * in args when it responds.
 	 */
-	if (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) == 'E' &&
-	    inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) == 'C' &&
-	    (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_HOST_CMD_FLAGS) &
-	     EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED))
-		lpc_cmd_args_supported = 1;
+	if (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) != 'E' ||
+	    inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) != 'C' ||
+	    !(inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_HOST_CMD_FLAGS) &
+	      EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED)) {
+		fprintf(stderr, "EC doesn't support command args.\n");
+		return -5;
+	}
 
 	return 0;
 }
@@ -97,57 +97,6 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 	return -1;  /* Timeout */
 }
 
-/* Old-style command interface, without args */
-static int ec_command_old(int command, const void *indata, int insize,
-			  void *outdata, int outsize) {
-	uint8_t *d;
-	int i;
-
-	if (insize > EC_OLD_PARAM_SIZE) {
-		fprintf(stderr, "Data size too big\n");
-		return -EC_RES_ERROR;
-	}
-
-	/* Clip output buffer to the size we can actually use */
-	if (outsize > EC_OLD_PARAM_SIZE)
-		outsize = EC_OLD_PARAM_SIZE;
-
-	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
-		fprintf(stderr, "Timeout waiting for EC ready\n");
-		return -EC_RES_ERROR;
-	}
-
-	/* Write data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++)
-		outb(*d, EC_LPC_ADDR_OLD_PARAM + i);
-
-	outb(command, EC_LPC_ADDR_HOST_CMD);
-
-	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
-		fprintf(stderr, "Timeout waiting for EC response\n");
-		return -EC_RES_ERROR;
-	}
-
-	/* Check result */
-	i = inb(EC_LPC_ADDR_HOST_DATA);
-	if (i) {
-		fprintf(stderr, "EC returned error result code %d\n", i);
-		return -i;
-	}
-
-	/* Read data, if any */
-	/* TODO: optimized copy using outl() */
-	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++)
-		*d = inb(EC_LPC_ADDR_OLD_PARAM + i);
-
-	/*
-	 * LPC protocol doesn't have a way to communicate the true output
-	 * size, so assume we got everything we asked for.
-	 */
-	return outsize;
-}
-
 int ec_command(int command, int version, const void *indata, int insize,
 	       void *outdata, int outsize) {
 
@@ -156,11 +105,6 @@ int ec_command(int command, int version, const void *indata, int insize,
 	uint8_t *dout;
 	int csum;
 	int i;
-
-	/* Fall back to old-style command interface if args aren't supported */
-	if (!lpc_cmd_args_supported)
-		return ec_command_old(command, indata, insize,
-				      outdata, outsize);
 
 	/* Fill in args */
 	args.flags = EC_HOST_ARGS_FLAG_FROM_HOST;
