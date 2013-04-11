@@ -19,8 +19,11 @@
 #endif
 
 #include <fcntl.h>
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #include <ftdi.h>
+#pragma GCC diagnostic pop
 #include <getopt.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
