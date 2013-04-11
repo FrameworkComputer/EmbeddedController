@@ -20,7 +20,9 @@
 
 /* Optional features */
 #define CONFIG_BOARD_POST_GPIO_INIT
+#ifdef CONFIG_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
+#endif
 #define CONFIG_EXTPOWER_SNOW
 #define CONFIG_I2C
 #define CONFIG_I2C_HOST_AUTO
