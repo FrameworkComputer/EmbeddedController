@@ -8,7 +8,7 @@
 
 common-y=main.o util.o console_output.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
-common-y+=gpio_commands.o version.o printf.o queue.o
+common-y+=gpio_common.o version.o printf.o queue.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_LINK)+=battery_link.o charge_state.o battery_precharge.o
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o

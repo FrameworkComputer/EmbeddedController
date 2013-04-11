@@ -1,11 +1,11 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* GPIO console commands for Chrome EC */
+/* GPIO common functionality for Chrome EC */
 
-#include "board.h"
+#include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -56,6 +56,14 @@ static int last_val_changed(int i, int v)
 	} else {
 		return 0;
 	}
+}
+
+/*****************************************************************************/
+/* GPIO API */
+
+const char *gpio_get_name(enum gpio_signal signal)
+{
+	return gpio_list[signal].name;
 }
 
 /*****************************************************************************/
