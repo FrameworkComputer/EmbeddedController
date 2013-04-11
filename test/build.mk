@@ -11,6 +11,7 @@ test-list+=power_button kb_deghost kb_debounce scancode typematic charging
 test-list+=flash_overwrite flash_rw_erase
 #disable: powerdemo
 
+kb_deghost-y=kb_deghost.o
 pingpong-y=pingpong.o
 powerdemo-y=powerdemo.o
 timer_calib-y=timer_calib.o

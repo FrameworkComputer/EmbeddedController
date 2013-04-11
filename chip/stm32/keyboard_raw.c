@@ -54,7 +54,7 @@ void keyboard_raw_task_start(void)
 	gpio_enable_interrupt(GPIO_KB_IN07);
 }
 
-void keyboard_raw_drive_column(int out)
+test_mockable void keyboard_raw_drive_column(int out)
 {
 	int i, done = 0;
 
@@ -94,7 +94,7 @@ void keyboard_raw_drive_column(int out)
 	}
 }
 
-int keyboard_raw_read_rows(void)
+test_mockable int keyboard_raw_read_rows(void)
 {
 	int i;
 	unsigned int port, prev_port = 0;

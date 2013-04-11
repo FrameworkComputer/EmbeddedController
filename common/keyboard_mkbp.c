@@ -112,7 +112,7 @@ void keyboard_clear_buffer(void)
 		memset(kb_fifo[i], 0, KEYBOARD_COLS);
 }
 
-int keyboard_fifo_add(const uint8_t *buffp)
+test_mockable int keyboard_fifo_add(const uint8_t *buffp)
 {
 	int ret = EC_SUCCESS;
 
