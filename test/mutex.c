@@ -6,10 +6,11 @@
  * Tasks for mutexes basic tests.
  */
 
+#include "console.h"
 #include "common.h"
-#include "uart.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 static struct mutex mtx;
 
@@ -31,11 +32,11 @@ int mutex_random_task(void *unused)
 
 	while (1) {
 		task_wait_event(0);
-		uart_printf("%c+\n", letter);
+		ccprintf("%c+\n", letter);
 		mutex_lock(&mtx);
-		uart_printf("%c=\n", letter);
+		ccprintf("%c=\n", letter);
 		task_wait_event(0);
-		uart_printf("%c-\n", letter);
+		ccprintf("%c-\n", letter);
 		mutex_unlock(&mtx);
 	}
 
@@ -48,14 +49,14 @@ int mutex_second_task(void *unused)
 {
 	task_id_t id = task_get_current();
 
-	uart_printf("\n[Mutex second task %d]\n", id);
+	ccprintf("\n[Mutex second task %d]\n", id);
 
 	task_wait_event(0);
-	uart_printf("MTX2: locking...");
+	ccprintf("MTX2: locking...");
 	mutex_lock(&mtx);
-	uart_printf("done\n");
+	ccprintf("done\n");
 	task_wake(TASK_ID_MTX1);
-	uart_printf("MTX2: unlocking...\n");
+	ccprintf("MTX2: unlocking...\n");
 	mutex_unlock(&mtx);
 
 	task_wait_event(0);
@@ -70,30 +71,32 @@ int mutex_main_task(void *unused)
 	uint32_t rtask = (uint32_t)0x1a4e1dea;
 	int i;
 
-	uart_printf("\n[Mutex main task %d]\n", id);
+	ccprintf("\n[Mutex main task %d]\n", id);
+
+	task_wait_event(0);
 
 	/* --- Lock/Unlock without contention --- */
-	uart_printf("No contention :");
+	ccprintf("No contention :");
 	mutex_lock(&mtx);
 	mutex_unlock(&mtx);
 	mutex_lock(&mtx);
 	mutex_unlock(&mtx);
 	mutex_lock(&mtx);
 	mutex_unlock(&mtx);
-	uart_printf("done.\n");
+	ccprintf("done.\n");
 
 	/* --- Serialization to test simple contention --- */
-	uart_printf("Simple contention :\n");
+	ccprintf("Simple contention :\n");
 	/* lock the mutex from the other task */
 	task_set_event(TASK_ID_MTX2, TASK_EVENT_WAKE, 1);
 	/* block on the mutex */
-	uart_printf("MTX1: blocking...\n");
+	ccprintf("MTX1: blocking...\n");
 	mutex_lock(&mtx);
-	uart_printf("MTX1: get lock\n");
+	ccprintf("MTX1: get lock\n");
 	mutex_unlock(&mtx);
 
 	/* --- mass lock-unlocking from several tasks --- */
-	uart_printf("Massive locking/unlocking :\n");
+	ccprintf("Massive locking/unlocking :\n");
 	for (i = 0; i < 500; i++) {
 		/* Wake up a random task */
 		task_wake(RANDOM_TASK(rtask));
@@ -105,8 +108,16 @@ int mutex_main_task(void *unused)
 		rdelay = prng(rdelay);
 	}
 
-	uart_printf("Test done.\n");
+	ccprintf("Pass!\n");
 	task_wait_event(0);
 
 	return EC_SUCCESS;
 }
+
+static int command_run_test(int argc, char **argv)
+{
+	task_wake(TASK_ID_MTX1);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
+			NULL, NULL, NULL);
