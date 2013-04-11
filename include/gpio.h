@@ -133,7 +133,7 @@ int gpio_enable_interrupt(enum gpio_signal signal);
  *
  * @param port		GPIO port to set (LM4_GPIO_*)
  * @param mask		Bitmask of pins on that port to affect
- * @param func		Alternate function; if 0, configures the specified
+ * @param func		Alternate function; if <0, configures the specified
  *			GPIOs for normal GPIO operation.
  */
 void gpio_set_alternate_function(int port, int mask, int func);

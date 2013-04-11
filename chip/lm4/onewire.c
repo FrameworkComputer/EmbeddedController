@@ -158,7 +158,7 @@ void onewire_write(int data)
 static void onewire_init(void)
 {
 	/* Configure 1-wire pin as open-drain GPIO */
-	gpio_set_alternate_function(LM4_GPIO_H, ONEWIRE_PIN, 0);
+	gpio_set_alternate_function(LM4_GPIO_H, ONEWIRE_PIN, -1);
 	LM4_GPIO_ODR(LM4_GPIO_H) |= ONEWIRE_PIN;
 }
 DECLARE_HOOK(HOOK_INIT, onewire_init, HOOK_PRIO_DEFAULT);

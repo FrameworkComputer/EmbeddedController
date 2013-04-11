@@ -118,6 +118,17 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	uint32_t afr;
 	uint32_t moder = STM32_GPIO_MODER_OFF(port);
 
+	if (func < 0) {
+		/* Return to normal GPIO function, defaulting to input. */
+		while (mask) {
+			bit = 31 - __builtin_clz(mask);
+			moder &= ~(0x3 << (bit * 2 + 16));
+			mask &= ~(1 << bit);
+		}
+		STM32_GPIO_MODER_OFF(port) = moder;
+		return;
+	}
+
 	/* Low half of the GPIO bank */
 	half = mask & 0xff;
 	afr = STM32_GPIO_AFRL_OFF(port);

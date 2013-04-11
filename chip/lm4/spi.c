@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -41,7 +41,7 @@ int spi_enable(int enable)
 		gpio_set_flags(GPIO_SPI_CSn, GPIO_HI_Z);
 
 		/* PA2,4,5 normal function (high-Z GPIOs) */
-		gpio_set_alternate_function(LM4_GPIO_A, 0x34, 0);
+		gpio_set_alternate_function(LM4_GPIO_A, 0x34, -1);
 	}
 
 	return EC_SUCCESS;

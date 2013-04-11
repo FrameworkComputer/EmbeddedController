@@ -58,7 +58,7 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		clock_wait_cycles(3);
 	}
 
-	if (func) {
+	if (func >= 0) {
 		int pctlmask = 0;
 		int i;
 		/* Expand mask from bits to nibbles */
@@ -196,7 +196,7 @@ void gpio_pre_init(void)
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, 0);
+		gpio_set_alternate_function(g->port, g->mask, -1);
 
 		/* Set up GPIO based on flags */
 		gpio_set_flags(i, g->flags);
