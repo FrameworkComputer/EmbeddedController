@@ -123,7 +123,7 @@ static void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
-#if defined(BOARD_daisy) || defined(BOARD_snow) || defined(BOARD_spring)
+#if defined(BOARD_snow) || defined(BOARD_spring)
 /*
  * stays on HSI (8MHz), no prescaler, PLLSRC = HSI/2, PLLMUL = x4
  * no MCO                      => PLLCLK = 16 Mhz
