@@ -22,10 +22,55 @@ static const struct gpio_info *exti_events[16];
 
 void gpio_set_flags(enum gpio_signal signal, int flags)
 {
+	const struct gpio_info *g = gpio_list + signal;
+
+	/* Bitmask for registers with 2 bits per GPIO pin */
+	const uint32_t mask2 = (g->mask * g->mask) | (g->mask * g->mask * 2);
+	uint32_t val;
+
+	/* Set up pullup / pulldown */
+	val = STM32_GPIO_PUPDR_OFF(g->port) & ~mask2;
+	if (flags & GPIO_PULL_UP)
+		val |= 0x55555555 & mask2;	/* Pull Up = 01 */
+	else if (flags & GPIO_PULL_DOWN)
+		val |= 0xaaaaaaaa & mask2;	/* Pull Down = 10 */
+	STM32_GPIO_PUPDR_OFF(g->port) = val;
+
 	/*
-	 * TODO(dhendrix): Move GPIO setup code from gpio_pre_init
-	 * into here like we did for STM32F
+	 * Select open drain first, so that we don't glitch the signal when
+	 * changing the line to an output.
 	 */
+	if (flags & GPIO_OPEN_DRAIN)
+		STM32_GPIO_OTYPER_OFF(g->port) |= g->mask;
+
+	val = STM32_GPIO_MODER_OFF(g->port) & ~mask2;
+	if (flags & GPIO_OUTPUT) {
+		/*
+		 * Set pin level first to avoid glitching.  This is harmless on
+		 * STM32L because the set/reset register isn't connected to the
+		 * output drivers until the pin is made an output.
+		 */
+		if (flags & GPIO_HIGH)
+			gpio_set_level(signal, 1);
+		else if (flags & GPIO_LOW)
+			gpio_set_level(signal, 0);
+
+		/* General purpose, MODE = 01 */
+		val |= 0x55555555 & mask2;
+		STM32_GPIO_MODER_OFF(g->port) = val;
+
+	} else if (flags & GPIO_INPUT) {
+		/* Input, MODE=00 */
+		STM32_GPIO_MODER_OFF(g->port) = val;
+	}
+
+	/* Set up interrupts if necessary */
+	ASSERT(!(flags & GPIO_INT_LEVEL));
+	if (flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
+		STM32_EXTI_RTSR |= g->mask;
+	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
+		STM32_EXTI_FTSR |= g->mask;
+	/* Interrupt is enabled by gpio_enable_interrupt() */
 }
 
 void gpio_pre_init(void)
@@ -49,52 +94,22 @@ void gpio_pre_init(void)
 		STM32_RCC_AHBENR |= 0x3f;
 	}
 
+	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		/* bitmask for registers with 2 bits per GPIO pin */
-		uint32_t mask2 = (g->mask * g->mask) | (g->mask * g->mask * 2);
-		uint32_t val;
+		int flags = g->flags;
 
-		if (g->mask & GPIO_DEFAULT)
+		if (flags & GPIO_DEFAULT)
 			continue;
-		val = STM32_GPIO_PUPDR_OFF(g->port) & ~mask2;
-		if ((g->flags & GPIO_PULL_UP) == GPIO_PULL_UP)
-			/* Pull Up = 01 */
-			val |= 0x55555555 & mask2;
-		else if ((g->flags & GPIO_PULL_DOWN) == GPIO_PULL_DOWN)
-			/* Pull Down = 10 */
-			val |= 0xaaaaaaaa & mask2;
-		STM32_GPIO_PUPDR_OFF(g->port) = val;
-
-		if (g->flags & GPIO_OPEN_DRAIN)
-			STM32_GPIO_OTYPER_OFF(g->port) |= g->mask;
 
 		/*
-		 * Set pin level after port has been set up as to avoid
-		 * potential damage, e.g. driving an open-drain output
-		 * high before it has been configured as such.
+		 * If this is a warm reboot, don't set the output levels or
+		 * we'll shut off the AP.
 		 */
-		val = STM32_GPIO_MODER_OFF(g->port) & ~mask2;
-		if (g->flags & GPIO_OUTPUT) { /* General purpose, MODE = 01 */
-			val |= 0x55555555 & mask2;
-			STM32_GPIO_MODER_OFF(g->port) = val;
-			/*
-			 * If this is a cold boot, set the level.  On a warm
-			 * reboot, leave things where they were or we'll shut
-			 * off the AP.
-			 */
-			if (!is_warm)
-				gpio_set_level(i, g->flags & GPIO_HIGH);
-		} else if (g->flags & GPIO_INPUT) { /* Input, MODE=00 */
-			STM32_GPIO_MODER_OFF(g->port) = val;
-		}
+		if (is_warm)
+			flags &= ~(GPIO_LOW | GPIO_HIGH);
 
-		/* Set up interrupts if necessary */
-		ASSERT(!(g->flags & GPIO_INT_LEVEL));
-		if (g->flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
-			STM32_EXTI_RTSR |= g->mask;
-		if (g->flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
-			STM32_EXTI_FTSR |= g->mask;
-		/* Interrupt is enabled by gpio_enable_interrupt() */
+		/* Set up GPIO based on flags */
+		gpio_set_flags(i, flags);
 	}
 }
 

@@ -97,9 +97,6 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
-	if (flags & GPIO_DEFAULT)
-		return;
-
 	if (flags & GPIO_OUTPUT) {
 		/*
 		 * Select open drain first, so that we don't glitch the signal
@@ -111,21 +108,26 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 			LM4_GPIO_ODR(g->port) &= ~g->mask;
 
 		LM4_GPIO_DIR(g->port) |= g->mask;
+
+		/* Set level if necessary */
+		if (flags & GPIO_HIGH)
+			gpio_set_level(signal, 1);
+		else if (flags & GPIO_LOW)
+			gpio_set_level(signal, 0);
 	} else {
 		/* Input */
 		LM4_GPIO_DIR(g->port) &= ~g->mask;
+	}
 
-		if (g->flags & GPIO_PULL) {
-			/* With pull up/down */
-			if (g->flags & GPIO_HIGH)
-				LM4_GPIO_PUR(g->port) |= g->mask;
-			else
-				LM4_GPIO_PDR(g->port) |= g->mask;
-		} else {
-			/* No pull up/down */
-			LM4_GPIO_PUR(g->port) &= ~g->mask;
-			LM4_GPIO_PDR(g->port) &= ~g->mask;
-		}
+	/* Handle pullup / pulldown */
+	if (g->flags & GPIO_PULL_UP) {
+		LM4_GPIO_PUR(g->port) |= g->mask;
+	} else if (g->flags & GPIO_PULL_DOWN) {
+		LM4_GPIO_PDR(g->port) |= g->mask;
+	} else {
+		/* No pull up/down */
+		LM4_GPIO_PUR(g->port) &= ~g->mask;
+		LM4_GPIO_PDR(g->port) &= ~g->mask;
 	}
 
 	/* Set up interrupt type */
@@ -195,19 +197,23 @@ void gpio_pre_init(void)
 
 	/* Set all GPIOs to defaults */
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		/* Use as GPIO, not alternate function */
-		gpio_set_alternate_function(g->port, g->mask, -1);
+		int flags = g->flags;
 
-		/* Set up GPIO based on flags */
-		gpio_set_flags(i, g->flags);
+		if (flags & GPIO_DEFAULT)
+			continue;
 
 		/*
-		 * If this is a cold boot, set the level.  On a warm reboot,
-		 * leave things where they were or we'll shut off the main
-		 * chipset.
+		 * If this is a warm reboot, don't set the output levels or
+		 * we'll shut off the main chipset.
 		 */
-		if ((g->flags & GPIO_OUTPUT) && !is_warm)
-			gpio_set_level(i, g->flags & GPIO_HIGH);
+		if (is_warm)
+			flags &= ~(GPIO_LOW | GPIO_HIGH);
+
+		/* Set up GPIO based on flags */
+		gpio_set_flags(i, flags);
+
+		/* Use as GPIO, not alternate function */
+		gpio_set_alternate_function(g->port, g->mask, -1);
 	}
 }
 

@@ -23,7 +23,7 @@
 #include "util.h"
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_OPEN_DRAIN)
+#define GPIO_KB_OUTPUT GPIO_HI_Z
 
 #define INT_BOTH_FLOATING	(GPIO_INPUT | GPIO_INT_BOTH)
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
@@ -56,7 +56,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 keyboard_raw_gpio_interrupt},
 	{"USB_CHG_INT", GPIO_A, (1<<6),  GPIO_INT_FALLING, extpower_interrupt},
 	/* Other inputs */
-	{"BCHGR_VACG",  GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
+	{"BCHGR_VACG",  GPIO_A, (1<<0),  GPIO_INT_BOTH, NULL},
 	/*
 	 * I2C pins should be configured as inputs until I2C module is
 	 * initialized. This will avoid driving the lines unintentionally.
@@ -67,7 +67,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
 	/* Outputs */
 	{"EN_PP1350",   GPIO_A, (1<<14), GPIO_OUT_LOW, NULL},
-	{"EN_PP5000",   GPIO_A, (1<<11),  GPIO_OUT_LOW, NULL},
+	{"EN_PP5000",   GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},

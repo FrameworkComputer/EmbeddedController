@@ -379,14 +379,9 @@ static void unwedge_i2c_bus(int port)
 	/*
 	 * Reconfigure ports as general purpose open-drain outputs, initted
 	 * to high.
-	 *
-	 * We manually set the level first in addition to using GPIO_HIGH
-	 * since gpio_set_flags() behaves strangely in the case of a warm boot.
 	 */
-	gpio_set_level(scl, 1);
-	gpio_set_level(sda, 1);
-	gpio_set_flags(scl, GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH);
-	gpio_set_flags(sda, GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH);
+	gpio_set_flags(scl, GPIO_HI_Z);
+	gpio_set_flags(sda, GPIO_HI_Z);
 
 	/* Try to send out pseudo-stop bit.  See function description */
 	if (gpio_get_level(scl) && gpio_get_level(sda)) {

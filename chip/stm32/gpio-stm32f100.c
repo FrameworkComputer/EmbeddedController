@@ -59,9 +59,6 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	const struct gpio_info *g = gpio_list + signal;
 	uint32_t addr, cnf, mode, mask;
 
-	if (flags & GPIO_DEFAULT)
-		return;
-
 	gpio_config_info(g, &addr, &mode, &cnf);
 	mask = REG32(addr) & ~(cnf | mode);
 
@@ -75,16 +72,17 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		mask |= 0x11111111 & mode;
 		if (flags & GPIO_OPEN_DRAIN)
 			mask |= 0x44444444 & cnf;
+
 	} else {
 		/*
 		 * GPIOx_ODR determines which resistor to activate in
 		 * input mode, see Table 16 (datasheet rm0041)
 		 */
-		if ((flags & GPIO_PULL_UP) == GPIO_PULL_UP) {
+		if (flags & GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
 			STM32_GPIO_BSRR_OFF(g->port) |= g->mask;
 			gpio_set_level(signal, 1);
-		} else if ((flags & GPIO_PULL_DOWN) == GPIO_PULL_DOWN) {
+		} else if (flags & GPIO_PULL_DOWN) {
 			mask |= 0x88888888 & cnf;
 			gpio_set_level(signal, 0);
 		} else {
@@ -92,21 +90,19 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		}
 	}
 
-	/*
-	 * Set pin level after port has been set up as to avoid
-	 * potential damage, e.g. driving an open-drain output
-	 * high before it has been configured as such.
-	 */
-	if ((flags & GPIO_OUTPUT) && !is_warm_boot)
-		/*
-		 * General purpose, MODE = 01
-		 *
-		 * If this is a cold boot, set the level.  On a warm reboot,
-		 * leave things where they were or we'll shut off the AP.
-		 */
-		gpio_set_level(signal, flags & GPIO_HIGH);
-
 	REG32(addr) = mask;
+
+	if (flags & GPIO_OUTPUT) {
+		/*
+		 * Set pin level after port has been set up as to avoid
+		 * potential damage, e.g. driving an open-drain output high
+		 * before it has been configured as such.
+		 */
+		if (flags & GPIO_HIGH)
+			gpio_set_level(signal, 1);
+		else if (flags & GPIO_LOW)
+			gpio_set_level(signal, 0);
+	}
 
 	/* Set up interrupts if necessary */
 	ASSERT(!(flags & GPIO_INT_LEVEL));
@@ -135,8 +131,22 @@ void gpio_pre_init(void)
 	}
 
 	/* Set all GPIOs to defaults */
-	for (i = 0; i < GPIO_COUNT; i++, g++)
-		gpio_set_flags(i, g->flags);
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
+		int flags = g->flags;
+
+		if (flags & GPIO_DEFAULT)
+			continue;
+
+		/*
+		 * If this is a warm reboot, don't set the output levels or
+		 * we'll shut off the AP.
+		 */
+		if (is_warm_boot)
+			flags &= ~(GPIO_LOW | GPIO_HIGH);
+
+		/* Set up GPIO based on flags */
+		gpio_set_flags(i, flags);
+	}
 }
 
 void gpio_init(void)

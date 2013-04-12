@@ -17,9 +17,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define GPIO_OUTPUT_OD (GPIO_OUTPUT | GPIO_OPEN_DRAIN)
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_OUTPUT_OD
+#define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_OUT_LOW)
 
 #define HARD_RESET_TIMEOUT_MS 5
 
@@ -47,7 +46,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KBD_PWR_BUTTON", GPIO_B, (1<<2),  GPIO_INPUT, kbd_power_on},
 
 	{"OMZO_RDY_L",     GPIO_A, (1<<0),  GPIO_INPUT, NULL},	/* PA0_WKUP */
-	{"OZMO_RST_L",     GPIO_A, (1<<2),  GPIO_OUTPUT_OD, NULL},
+	{"OZMO_RST_L",     GPIO_A, (1<<2),  GPIO_HI_Z, NULL},
 	{"VBUS_UP_DET",    GPIO_A, (1<<3),  GPIO_INPUT, NULL},
 	{"OZMO_REQ_L",     GPIO_A, (1<<8),  GPIO_INPUT, NULL},
 	{"CHARGE_ZERO",    GPIO_B, (1<<0),  GPIO_INPUT, NULL},
@@ -74,8 +73,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT10",       GPIO_C, (1<<10), GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT11",       GPIO_C, (1<<11), GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",       GPIO_C, (1<<12), GPIO_KB_OUTPUT, NULL},
-	{"USB_VBUS_CTRL",  GPIO_C, (1<<13), GPIO_OUTPUT, NULL},
-	{"HUB_RESET",      GPIO_C, (1<<14), GPIO_OUTPUT_OD, NULL},
+	{"USB_VBUS_CTRL",  GPIO_C, (1<<13), GPIO_OUT_LOW, NULL},
+	{"HUB_RESET",      GPIO_C, (1<<14), GPIO_HI_Z, NULL},
 	{"WP_L",           GPIO_D, (1<<2),  GPIO_INPUT, NULL},
 
 	/* FIXME: make this alt. function */

@@ -13,23 +13,21 @@
 /* Flag definitions for gpio_info. */
 #define GPIO_INPUT       0x0000  /* Input */
 #define GPIO_OUTPUT      0x0001  /* Output */
-#define GPIO_PULL        0x0002  /* Input with on-chip pullup/pulldown */
-#define GPIO_HIGH        0x0004  /* If GPIO_OUTPUT, default high; if GPIO_PULL,
-				  * pull up (otherwise default low / pull
-				  * down) */
-#define GPIO_OPEN_DRAIN  0x0008  /* Output type is open-drain */
-#define GPIO_INT_RISING  0x0010  /* Interrupt on rising edge */
-#define GPIO_INT_FALLING 0x0020  /* Interrupt on falling edge */
-#define GPIO_INT_BOTH    0x0040  /* Interrupt on both edges */
-#define GPIO_INT_LOW     0x0080  /* Interrupt on low level */
-#define GPIO_INT_HIGH    0x0100  /* Interrupt on high level */
-#define GPIO_DEFAULT     0x0200  /* Don't set up on boot */
+#define GPIO_OPEN_DRAIN  0x0002  /* Output type is open-drain */
+#define GPIO_PULL_UP     0x0004  /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN   0x0008  /* Enable on-chip pulldown */
+#define GPIO_LOW         0x0010  /* If GPIO_OUTPUT, set level low */
+#define GPIO_HIGH        0x0020  /* If GPIO_OUTPUT, set level high */
+#define GPIO_INT_RISING  0x0040  /* Interrupt on rising edge */
+#define GPIO_INT_FALLING 0x0080  /* Interrupt on falling edge */
+#define GPIO_INT_BOTH    0x0100  /* Interrupt on both edges */
+#define GPIO_INT_LOW     0x0200  /* Interrupt on low level */
+#define GPIO_INT_HIGH    0x0400  /* Interrupt on high level */
+#define GPIO_DEFAULT     0x0800  /* Don't set up on boot */
 
 /* Common flag combinations */
-#define GPIO_OUT_LOW     GPIO_OUTPUT
+#define GPIO_OUT_LOW     (GPIO_OUTPUT | GPIO_LOW)
 #define GPIO_OUT_HIGH    (GPIO_OUTPUT | GPIO_HIGH)
-#define GPIO_PULL_DOWN   GPIO_PULL
-#define GPIO_PULL_UP     (GPIO_PULL | GPIO_HIGH)
 #define GPIO_HI_Z        (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH)
 #define GPIO_INT_EDGE    (GPIO_INT_RISING | GPIO_INT_FALLING | GPIO_INT_BOTH)
 #define GPIO_INT_LEVEL   (GPIO_INT_LOW | GPIO_INT_HIGH)
@@ -98,9 +96,6 @@ const char *gpio_get_name(enum gpio_signal signal);
 
 /**
  * Set the flags for a signal.
- *
- * Note that this does not set the signal level based on the presence/absence
- * of GPIO_HIGH; call gpio_set_level() afterwards to do that if needed.
  *
  * @param signal	Signal to set flags for
  * @param flags		New flags for the signal
