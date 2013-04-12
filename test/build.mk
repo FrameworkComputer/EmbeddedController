@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -32,10 +32,6 @@ chip-mock-power_button-gpio.o=mock_gpio.o
 chip-mock-power_button-pwm.o=mock_pwm.o
 common-mock-power_button-x86_power.o=mock_x86_power.o
 common-mock-power_button-i8042.o=mock_i8042.o
-
-# Mock modules for 'kb_deghost'
-chip-mock-kb_deghost-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
-common-mock-kb_deghost-i8042.o=mock_i8042.o
 
 # Mock modules for 'scancode'
 chip-mock-scancode-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
