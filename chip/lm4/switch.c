@@ -191,7 +191,9 @@ static void power_button_pressed(uint64_t tnow)
 	pwrbtn_state = PWRBTN_STATE_PRESSED;
 	tnext_state = tnow;
 	*memmap_switches |= EC_SWITCH_POWER_BUTTON_PRESSED;
+#ifdef CONFIG_TASK_KEYPROTO
 	keyboard_set_power_button(1);
+#endif
 	host_set_single_event(EC_HOST_EVENT_POWER_BUTTON);
 }
 
@@ -210,7 +212,9 @@ static void power_button_released(uint64_t tnow)
 	pwrbtn_state = PWRBTN_STATE_RELEASED;
 	tnext_state = tnow;
 	*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
+#ifdef CONFIG_TASK_KEYPROTO
 	keyboard_set_power_button(0);
+#endif
 }
 
 /**

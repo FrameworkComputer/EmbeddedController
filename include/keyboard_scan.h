@@ -51,12 +51,19 @@ enum boot_key {
 	BOOT_KEY_OTHER = -1,  /* None of the above */
 };
 
+#ifdef CONFIG_TASK_KEYSCAN
 /**
  * Return the key held down at boot time in addition to the keyboard-controlled
  * reset keys.  Returns BOOT_KEY_OTHER if none of the keys specifically checked
  * was pressed, or reset was not caused by a keyboard-controlled reset.
  */
 enum boot_key keyboard_scan_get_boot_key(void);
+#else
+static inline enum boot_key keyboard_scan_get_boot_key(void)
+{
+	return BOOT_KEY_NONE;
+}
+#endif
 
 /**
  * Return a pointer to the current debounced keyboard matrix state, which is
@@ -64,10 +71,14 @@ enum boot_key keyboard_scan_get_boot_key(void);
  */
 const uint8_t *keyboard_scan_get_state(void);
 
+#ifdef CONFIG_TASK_KEYSCAN
 /**
  * Enables/disables keyboard matrix scan.
  */
 void keyboard_scan_enable(int enable);
+#else
+static inline void keyboard_scan_enable(int enable) { }
+#endif
 
 #ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
 /**

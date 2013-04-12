@@ -51,7 +51,7 @@ static inline int chipset_in_state(int state_mask)
 }
 #endif
 
-
+#ifdef CONFIG_TASK_CHIPSET
 /**
  * Ask the chipset to exit the hard off state.
  *
@@ -59,6 +59,9 @@ static inline int chipset_in_state(int state_mask)
  * state to begin with.
  */
 void chipset_exit_hard_off(void);
+#else
+static inline void chipset_exit_hard_off(void) { }
+#endif
 
 /**
  * Enable/disable CPU throttling.
@@ -67,6 +70,7 @@ void chipset_exit_hard_off(void);
  */
 void chipset_throttle_cpu(int throttle);
 
+#ifdef CONFIG_TASK_CHIPSET
 /**
  * Immedaitely shut off power to main processor and chipset.
  *
@@ -74,6 +78,9 @@ void chipset_throttle_cpu(int throttle);
  * critical.
  */
 void chipset_force_shutdown(void);
+#else
+static inline void chipset_force_shutdown(void) { }
+#endif
 
 /**
  * Reset the CPU and/or chipset.

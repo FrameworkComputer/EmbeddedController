@@ -51,7 +51,7 @@ void keyboard_raw_task_start(void)
 	task_enable_irq(KB_SCAN_ROW_IRQ);
 }
 
-void keyboard_raw_drive_column(int col)
+test_mockable void keyboard_raw_drive_column(int col)
 {
 	if (col == KEYBOARD_COLUMN_NONE) {
 		/* Tri-state all outputs */
@@ -72,7 +72,7 @@ void keyboard_raw_drive_column(int col)
 	}
 }
 
-int keyboard_raw_read_rows(void)
+test_mockable int keyboard_raw_read_rows(void)
 {
 	/* Bits are active-low, so invert returned levels */
 	return LM4_GPIO_DATA(KB_SCAN_ROW_GPIO, 0xff) ^ 0xff;
