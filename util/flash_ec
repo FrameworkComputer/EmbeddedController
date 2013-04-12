@@ -29,15 +29,43 @@ check_flags_only_and_allow_null_arg "$@" && set --
 
 set -e
 
+SERVO_TYPE=servo
+
+# reset the EC
+toad_hard_reset() {
+	info "you probably need to hard-reset your EC with Refresh+Power"
+}
+
+servo_hard_reset() {
+	dut_control cold_reset:on
+	dut_control cold_reset:off
+}
+
+ec_reset() {
+	eval ${SERVO_TYPE}_hard_reset
+}
+
+# force the EC to boot in serial monitor mode
+toad_boot0() {
+	dut_control boot_mode:yes
+}
+
+servo_boot0() {
+	dut_control spi1_vref:pp3300
+}
+
+ec_enable_boot0() {
+	eval ${SERVO_TYPE}_boot0
+}
+
+# Put back the servo and the system in a clean state at exit
 cleanup() {
 	if [ -n "${save}" ]; then
 		info "Restoring servo settings..."
 		servo_restore "$save"
 	fi
 
-	# reset the EC
-	dut_control cold_reset:on
-	dut_control cold_reset:off
+	ec_reset
 }
 trap cleanup EXIT
 
@@ -80,21 +108,23 @@ DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
 # Find the EC UART on the servo v2
 function ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	($DUT_CONTROL_CMD uart1_pty || \
+	($DUT_CONTROL_CMD ec_uart_pty || \
             die "${SERVOD_FAIL}") | cut -d: -f2
 }
 
 # Servo variables management
 
-SERVO_VARS="uart1_en uart1_parity uart1_baudrate \
+servo_VARS="ec_uart_en ec_uart_parity ec_uart_baudrate \
 jtag_buf_on_flex_en jtag_buf_en spi1_vref"
+toad_VARS="ec_uart_parity ec_uart_baudrate boot_mode"
 
 function dut_control() {
 	$DUT_CONTROL_CMD "$1" >/dev/null
 }
 
 function servo_save() {
-	$DUT_CONTROL_CMD ${SERVO_VARS}
+	SERVO_VARS_NAME=${SERVO_TYPE}_VARS
+	$DUT_CONTROL_CMD ${!SERVO_VARS_NAME}
 }
 
 function servo_restore() {
@@ -128,14 +158,15 @@ function flash_daisy() {
 	info "Using serial flasher : ${STM32MON}"
 	free_pty ${EC_UART}
 
-	dut_control uart1_en:on
-	dut_control uart1_parity:even
-	dut_control uart1_baudrate:115200
+	if [ "${SERVO_TYPE}" = "servo" ] ; then
+		dut_control ec_uart_en:on
+	fi
+	dut_control ec_uart_parity:even
+	dut_control ec_uart_baudrate:115200
 	# force the EC to boot in serial monitor mode
-	dut_control spi1_vref:pp3300
+	ec_enable_boot0
 	# reset the EC
-	dut_control cold_reset:on
-	dut_control cold_reset:off
+	ec_reset
 	${STM32MON} -d ${EC_UART} -e -w ${IMG}
 }
 
@@ -161,6 +192,11 @@ info "Using EC image : ${IMG}"
 
 EC_UART="$(ec_uart)"
 info "EC UART pty : ${EC_UART}"
+
+if dut_control uart_mux 2>/dev/null ; then
+	SERVO_TYPE=toad
+	info "Using a TOAD cable"
+fi
 
 save="$(servo_save)"
 
