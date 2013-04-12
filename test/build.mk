@@ -7,18 +7,18 @@
 #
 
 test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
-test-list+=power_button kb_deghost kb_debounce scancode typematic charging
+test-list+=power_button kb_scan scancode typematic charging
 test-list+=flash_overwrite flash_rw_erase utils
 #disable: powerdemo
 
-kb_deghost-y=kb_deghost.o
+flash_overwrite-y=flash.o
+flash_rw_erase-y=flash.o
+kb_scan-y=kb_scan.o
+mutex-y=mutex.o
 pingpong-y=pingpong.o
 powerdemo-y=powerdemo.o
 timer_calib-y=timer_calib.o
 timer_dos-y=timer_dos.o
-mutex-y=mutex.o
-flash_overwrite-y=flash.o
-flash_rw_erase-y=flash.o
 utils-y=utils.o
 
 # Mock modules for 'thermal'
@@ -40,10 +40,6 @@ common-mock-scancode-i8042.o=mock_i8042.o
 # Mock modules for 'typematic'
 chip-mock-typematic-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
 common-mock-typematic-i8042.o=mock_i8042.o
-
-# Mock modules for 'kb_debounce'
-chip-mock-kb_debounce-keyboard_scan_stub.o=mock_keyboard_scan_stub.o
-common-mock-kb_debounce-i8042.o=mock_i8042.o
 
 # Mock modules for 'charging'
 chip-mock-charging-gpio.o=mock_gpio.o
