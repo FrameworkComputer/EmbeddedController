@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -175,11 +175,6 @@
 #define GPIO_G                       STM32_GPIOG_BASE
 #define GPIO_H                       STM32_GPIOH_BASE
 
-#define STM32_GPIO_REG32(l, offset) \
-		REG32(STM32_CAT(STM32_GPIO, l, _BASE) + (offset))
-#define STM32_GPIO_REG16(l, offset) \
-		REG16(STM32_CAT(STM32_GPIO, l, _BASE) + (offset))
-
 #if defined(CHIP_VARIANT_stm32l15x)
 #define STM32_GPIOA_BASE            0x40020000
 #define STM32_GPIOB_BASE            0x40020400
@@ -187,17 +182,6 @@
 #define STM32_GPIOD_BASE            0x40020C00
 #define STM32_GPIOE_BASE            0x40021000
 #define STM32_GPIOH_BASE            0x40021400
-
-#define STM32_GPIO_MODER(l)         STM32_GPIO_REG32(l, 0x00)
-#define STM32_GPIO_OTYPER(l)        STM32_GPIO_REG16(l, 0x04)
-#define STM32_GPIO_OSPEEDR(l)       STM32_GPIO_REG32(l, 0x08)
-#define STM32_GPIO_PUPDR(l)         STM32_GPIO_REG32(l, 0x0C)
-#define STM32_GPIO_IDR(l)           STM32_GPIO_REG16(l, 0x10)
-#define STM32_GPIO_ODR(l)           STM32_GPIO_REG16(l, 0x14)
-#define STM32_GPIO_BSRR(l)          STM32_GPIO_REG32(l, 0x18)
-#define STM32_GPIO_LCKR(l)          STM32_GPIO_REG32(l, 0x1C)
-#define STM32_GPIO_AFRL(l)          STM32_GPIO_REG32(l, 0x20)
-#define STM32_GPIO_AFRH(l)          STM32_GPIO_REG32(l, 0x24)
 
 #define STM32_GPIO_MODER_OFF(b)     REG32((b) + 0x00)
 #define STM32_GPIO_OTYPER_OFF(b)    REG16((b) + 0x04)
@@ -230,14 +214,6 @@
 #define STM32_GPIOE_BASE            0x40011800
 #define STM32_GPIOF_BASE            0x4001c000
 #define STM32_GPIOG_BASE            0x40012000
-
-#define STM32_GPIO_CRL(l)           STM32_GPIO_REG32(l, 0x00)
-#define STM32_GPIO_CRH(l)           STM32_GPIO_REG32(l, 0x04)
-#define STM32_GPIO_IDR(l)           STM32_GPIO_REG16(l, 0x08)
-#define STM32_GPIO_ODR(l)           STM32_GPIO_REG16(l, 0x0c)
-#define STM32_GPIO_BSRR(l)          STM32_GPIO_REG32(l, 0x10)
-#define STM32_GPIO_BRR(l)           STM32_GPIO_REG16(l, 0x14)
-#define STM32_GPIO_LCKR(l)          STM32_GPIO_REG16(l, 0x18)
 
 #define STM32_GPIO_CRL_OFF(b)       REG32((b) + 0x00)
 #define STM32_GPIO_CRH_OFF(b)       REG32((b) + 0x04)
