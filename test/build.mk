@@ -8,7 +8,7 @@
 
 test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
 test-list+=power_button kb_deghost kb_debounce scancode typematic charging
-test-list+=flash_overwrite flash_rw_erase
+test-list+=flash_overwrite flash_rw_erase utils
 #disable: powerdemo
 
 kb_deghost-y=kb_deghost.o
@@ -19,6 +19,7 @@ timer_dos-y=timer_dos.o
 mutex-y=mutex.o
 flash_overwrite-y=flash.o
 flash_rw_erase-y=flash.o
+utils-y=utils.o
 
 # Mock modules for 'thermal'
 chip-mock-thermal-lpc.o=mock_lpc.o
