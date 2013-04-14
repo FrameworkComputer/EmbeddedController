@@ -50,7 +50,7 @@ uint8_t *host_get_memmap(int offset)
 #endif
 }
 
-void host_send_response(struct host_cmd_handler_args *args)
+test_mockable void host_send_response(struct host_cmd_handler_args *args)
 {
 #ifdef CONFIG_HOST_COMMAND_STATUS
 	/*

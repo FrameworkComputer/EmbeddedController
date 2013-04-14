@@ -7,12 +7,10 @@
 #
 
 test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
-test-list+=power_button kb_scan scancode typematic charging
-test-list+=flash_overwrite flash_rw_erase utils
+test-list+=power_button kb_scan scancode typematic charging flash
 #disable: powerdemo
 
-flash_overwrite-y=flash.o
-flash_rw_erase-y=flash.o
+flash-y=flash.o
 kb_scan-y=kb_scan.o
 mutex-y=mutex.o
 pingpong-y=pingpong.o
@@ -46,10 +44,3 @@ chip-mock-charging-gpio.o=mock_gpio.o
 common-mock-charging-x86_power.o=mock_x86_power.o
 common-mock-charging-smart_battery_stub.o=mock_smart_battery_stub.o
 common-mock-charging-charger_bq24725.o=mock_charger.o
-
-# Mock modules for 'flash_overwrite'
-chip-mock-flash_overwrite-flash.o=mock_flash.o
-chip-mock-flash_overwrite-gpio.o=mock_gpio.o
-
-# Mock modules for 'flash_rw_erase'
-chip-mock-flash_rw_erase-flash.o=mock_flash.o
