@@ -6,9 +6,10 @@
  */
 
 #include "common.h"
-#include "uart.h"
+#include "console.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 /* Linear congruential pseudo random number generator*/
 static uint32_t prng(uint32_t x)
@@ -19,20 +20,39 @@ static uint32_t prng(uint32_t x)
 /* period between 500us and 128ms */
 #define PERIOD_US(num) (((num % 256) + 1) * 500)
 
+#define TEST_TIME (3 * SECOND)
+
 int TaskTimer(void *seed)
 {
 	uint32_t num = (uint32_t)seed;
 	task_id_t id = task_get_current();
-
-	uart_printf("\n[Timer task %d]\n", id);
+	timestamp_t start;
 
 	while (1) {
-		/* Wait for a "random" period */
-		task_wait_event(PERIOD_US(num));
-		uart_printf("%01d\n", id);
-		/* next pseudo random delay */
-		num = prng(num);
+		task_wait_event(-1);
+
+		ccprintf("\n[Timer task %d]\n", id);
+		start = get_time();
+
+		while (get_time().val - start.val < TEST_TIME) {
+			/* Wait for a "random" period */
+			task_wait_event(PERIOD_US(num));
+			ccprintf("%01d\n", id);
+			/* next pseudo random delay */
+			num = prng(num);
+		}
 	}
 
 	return EC_SUCCESS;
 }
+
+static int command_run_test(int argc, char **argv)
+{
+	task_wake(TASK_ID_TMRD);
+	task_wake(TASK_ID_TMRC);
+	task_wake(TASK_ID_TMRB);
+	task_wake(TASK_ID_TMRA);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
+			NULL, NULL, NULL);
