@@ -109,9 +109,9 @@ void board_config_pre_init(void)
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
 	/* FIXME: Connected device SPI freq is fxo/2 in master mode, fxo/4
 	 * in slave mode. fxo ranges from 12-40MHz */
-	val = STM32_GPIO_CRL_OFF(GPIO_A) & ~0xffff0000;
+	val = STM32_GPIO_CRL(GPIO_A) & ~0xffff0000;
 	val |= 0x99990000;
-	STM32_GPIO_CRL_OFF(GPIO_A) = val;
+	STM32_GPIO_CRL(GPIO_A) = val;
 #endif
 
 	/* remap OSC_IN/OSC_OUT to PD0/PD1 */
@@ -134,9 +134,9 @@ void board_config_pre_init(void)
 	 *
 	 * note: see crosbug.com/p/12223 for more info
 	 */
-	val = STM32_GPIO_CRH_OFF(GPIO_A) & ~0x00000ff0;
+	val = STM32_GPIO_CRH(GPIO_A) & ~0x00000ff0;
 	val |= 0x00000890;
-	STM32_GPIO_CRH_OFF(GPIO_A) = val;
+	STM32_GPIO_CRH(GPIO_A) = val;
 }
 
 /* GPIO configuration to be done after I2C module init */
@@ -147,9 +147,9 @@ void board_i2c_post_init(int port)
 	/* enable alt. function (open-drain) */
 	if (port == STM32_I2C1_PORT) {
 		/* I2C1 is on PB6-7 */
-		val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0xff000000;
+		val = STM32_GPIO_CRL(GPIO_B) & ~0xff000000;
 		val |= 0xdd000000;
-		STM32_GPIO_CRL_OFF(GPIO_B) = val;
+		STM32_GPIO_CRL(GPIO_B) = val;
 	}
 }
 

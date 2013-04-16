@@ -29,21 +29,21 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	uint32_t val;
 
 	/* Set up pullup / pulldown */
-	val = STM32_GPIO_PUPDR_OFF(g->port) & ~mask2;
+	val = STM32_GPIO_PUPDR(g->port) & ~mask2;
 	if (flags & GPIO_PULL_UP)
 		val |= 0x55555555 & mask2;	/* Pull Up = 01 */
 	else if (flags & GPIO_PULL_DOWN)
 		val |= 0xaaaaaaaa & mask2;	/* Pull Down = 10 */
-	STM32_GPIO_PUPDR_OFF(g->port) = val;
+	STM32_GPIO_PUPDR(g->port) = val;
 
 	/*
 	 * Select open drain first, so that we don't glitch the signal when
 	 * changing the line to an output.
 	 */
 	if (flags & GPIO_OPEN_DRAIN)
-		STM32_GPIO_OTYPER_OFF(g->port) |= g->mask;
+		STM32_GPIO_OTYPER(g->port) |= g->mask;
 
-	val = STM32_GPIO_MODER_OFF(g->port) & ~mask2;
+	val = STM32_GPIO_MODER(g->port) & ~mask2;
 	if (flags & GPIO_OUTPUT) {
 		/*
 		 * Set pin level first to avoid glitching.  This is harmless on
@@ -57,11 +57,11 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 
 		/* General purpose, MODE = 01 */
 		val |= 0x55555555 & mask2;
-		STM32_GPIO_MODER_OFF(g->port) = val;
+		STM32_GPIO_MODER(g->port) = val;
 
 	} else if (flags & GPIO_INPUT) {
 		/* Input, MODE=00 */
-		STM32_GPIO_MODER_OFF(g->port) = val;
+		STM32_GPIO_MODER(g->port) = val;
 	}
 
 	/* Set up interrupts if necessary */
@@ -131,7 +131,7 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	int bit;
 	uint8_t half;
 	uint32_t afr;
-	uint32_t moder = STM32_GPIO_MODER_OFF(port);
+	uint32_t moder = STM32_GPIO_MODER(port);
 
 	if (func < 0) {
 		/* Return to normal GPIO function, defaulting to input. */
@@ -140,13 +140,13 @@ void gpio_set_alternate_function(int port, int mask, int func)
 			moder &= ~(0x3 << (bit * 2 + 16));
 			mask &= ~(1 << bit);
 		}
-		STM32_GPIO_MODER_OFF(port) = moder;
+		STM32_GPIO_MODER(port) = moder;
 		return;
 	}
 
 	/* Low half of the GPIO bank */
 	half = mask & 0xff;
-	afr = STM32_GPIO_AFRL_OFF(port);
+	afr = STM32_GPIO_AFRL(port);
 	while (half) {
 		bit = 31 - __builtin_clz(half);
 		afr &= ~(0xf << (bit * 4));
@@ -155,11 +155,11 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		moder |= 0x2 << (bit * 2 + 0);
 		half &= ~(1 << bit);
 	}
-	STM32_GPIO_AFRL_OFF(port) = afr;
+	STM32_GPIO_AFRL(port) = afr;
 
 	/* High half of the GPIO bank */
 	half = mask >> 8;
-	afr = STM32_GPIO_AFRH_OFF(port);
+	afr = STM32_GPIO_AFRH(port);
 	while (half) {
 		bit = 31 - __builtin_clz(half);
 		afr &= ~(0xf << (bit * 4));
@@ -168,19 +168,19 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		moder |= 0x2 << (bit * 2 + 16);
 		half &= ~(1 << bit);
 	}
-	STM32_GPIO_AFRH_OFF(port) = afr;
-	STM32_GPIO_MODER_OFF(port) = moder;
+	STM32_GPIO_AFRH(port) = afr;
+	STM32_GPIO_MODER(port) = moder;
 }
 
 int gpio_get_level(enum gpio_signal signal)
 {
-	return !!(STM32_GPIO_IDR_OFF(gpio_list[signal].port) &
+	return !!(STM32_GPIO_IDR(gpio_list[signal].port) &
 		  gpio_list[signal].mask);
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
-	STM32_GPIO_BSRR_OFF(gpio_list[signal].port) =
+	STM32_GPIO_BSRR(gpio_list[signal].port) =
 			gpio_list[signal].mask << (value ? 0 : 16);
 }
 

@@ -130,7 +130,7 @@ void board_config_pre_init(void)
 			       | (2 << 10);
 
 	/* Analog input for ADC pins (PA2, PA4, PA5) */
-	STM32_GPIO_CRL_OFF(GPIO_A) &= ~0x00ff0f00;
+	STM32_GPIO_CRL(GPIO_A) &= ~0x00ff0f00;
 
 	/*
 	 * Set alternate function for USART1. For alt. function input
@@ -141,14 +141,14 @@ void board_config_pre_init(void)
 	 *
 	 * note: see crosbug.com/p/12223 for more info
 	 */
-	val = STM32_GPIO_CRH_OFF(GPIO_A) & ~0x00000ff0;
+	val = STM32_GPIO_CRH(GPIO_A) & ~0x00000ff0;
 	val |= 0x00000890;
-	STM32_GPIO_CRH_OFF(GPIO_A) = val;
+	STM32_GPIO_CRH(GPIO_A) = val;
 
 	/* EC_INT is output, open-drain */
-	val = STM32_GPIO_CRH_OFF(GPIO_B) & ~0xf0;
+	val = STM32_GPIO_CRH(GPIO_B) & ~0xf0;
 	val |= 0x50;
-	STM32_GPIO_CRH_OFF(GPIO_B) = val;
+	STM32_GPIO_CRH(GPIO_B) = val;
 	/* put GPIO in Hi-Z state */
 	gpio_set_level(GPIO_EC_INT, 1);
 }
@@ -161,14 +161,14 @@ void board_i2c_post_init(int port)
 	/* enable alt. function (open-drain) */
 	if (port == STM32_I2C1_PORT) {
 		/* I2C1 is on PB6-7 */
-		val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0xff000000;
+		val = STM32_GPIO_CRL(GPIO_B) & ~0xff000000;
 		val |= 0xdd000000;
-		STM32_GPIO_CRL_OFF(GPIO_B) = val;
+		STM32_GPIO_CRL(GPIO_B) = val;
 	} else if (port == STM32_I2C2_PORT) {
 		/* I2C2 is on PB10-11 */
-		val = STM32_GPIO_CRH_OFF(GPIO_B) & ~0x0000ff00;
+		val = STM32_GPIO_CRH(GPIO_B) & ~0x0000ff00;
 		val |= 0x0000dd00;
-		STM32_GPIO_CRH_OFF(GPIO_B) = val;
+		STM32_GPIO_CRH(GPIO_B) = val;
 	}
 }
 

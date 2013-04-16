@@ -183,16 +183,16 @@
 #define STM32_GPIOE_BASE            0x40021000
 #define STM32_GPIOH_BASE            0x40021400
 
-#define STM32_GPIO_MODER_OFF(b)     REG32((b) + 0x00)
-#define STM32_GPIO_OTYPER_OFF(b)    REG16((b) + 0x04)
-#define STM32_GPIO_OSPEEDR_OFF(b)   REG32((b) + 0x08)
-#define STM32_GPIO_PUPDR_OFF(b)     REG32((b) + 0x0C)
-#define STM32_GPIO_IDR_OFF(b)       REG16((b) + 0x10)
-#define STM32_GPIO_ODR_OFF(b)       REG16((b) + 0x14)
-#define STM32_GPIO_BSRR_OFF(b)      REG32((b) + 0x18)
-#define STM32_GPIO_LCKR_OFF(b)      REG32((b) + 0x1C)
-#define STM32_GPIO_AFRL_OFF(b)      REG32((b) + 0x20)
-#define STM32_GPIO_AFRH_OFF(b)      REG32((b) + 0x24)
+#define STM32_GPIO_MODER(b)     REG32((b) + 0x00)
+#define STM32_GPIO_OTYPER(b)    REG16((b) + 0x04)
+#define STM32_GPIO_OSPEEDR(b)   REG32((b) + 0x08)
+#define STM32_GPIO_PUPDR(b)     REG32((b) + 0x0C)
+#define STM32_GPIO_IDR(b)       REG16((b) + 0x10)
+#define STM32_GPIO_ODR(b)       REG16((b) + 0x14)
+#define STM32_GPIO_BSRR(b)      REG32((b) + 0x18)
+#define STM32_GPIO_LCKR(b)      REG32((b) + 0x1C)
+#define STM32_GPIO_AFRL(b)      REG32((b) + 0x20)
+#define STM32_GPIO_AFRH(b)      REG32((b) + 0x24)
 
 #define GPIO_ALT_SYS                 0x0
 #define GPIO_ALT_TIM2                0x1
@@ -215,13 +215,13 @@
 #define STM32_GPIOF_BASE            0x4001c000
 #define STM32_GPIOG_BASE            0x40012000
 
-#define STM32_GPIO_CRL_OFF(b)       REG32((b) + 0x00)
-#define STM32_GPIO_CRH_OFF(b)       REG32((b) + 0x04)
-#define STM32_GPIO_IDR_OFF(b)       REG16((b) + 0x08)
-#define STM32_GPIO_ODR_OFF(b)       REG16((b) + 0x0c)
-#define STM32_GPIO_BSRR_OFF(b)      REG32((b) + 0x10)
-#define STM32_GPIO_BRR_OFF(b)       REG32((b) + 0x14)
-#define STM32_GPIO_LCKR_OFF(b)      REG32((b) + 0x18)
+#define STM32_GPIO_CRL(b)       REG32((b) + 0x00)
+#define STM32_GPIO_CRH(b)       REG32((b) + 0x04)
+#define STM32_GPIO_IDR(b)       REG16((b) + 0x08)
+#define STM32_GPIO_ODR(b)       REG16((b) + 0x0c)
+#define STM32_GPIO_BSRR(b)      REG32((b) + 0x10)
+#define STM32_GPIO_BRR(b)       REG32((b) + 0x14)
+#define STM32_GPIO_LCKR(b)      REG32((b) + 0x18)
 
 #define STM32_AFIO_BASE             0x40010000
 #define STM32_AFIO_EXTICR(n)        REG32(STM32_AFIO_BASE + 8 + 4 * (n))

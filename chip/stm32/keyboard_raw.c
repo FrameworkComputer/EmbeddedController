@@ -87,7 +87,7 @@ test_mockable void keyboard_raw_drive_column(int out)
 		}
 
 		if (bsrr)
-			STM32_GPIO_BSRR_OFF(kb_out_ports[i]) = bsrr;
+			STM32_GPIO_BSRR(kb_out_ports[i]) = bsrr;
 
 		if (done)
 			break;
@@ -104,7 +104,7 @@ test_mockable int keyboard_raw_read_rows(void)
 	for (i = 0; i < KEYBOARD_ROWS; i++) {
 		port = gpio_list[GPIO_KB_IN00 + i].port;
 		if (port != prev_port) {
-			port_val = STM32_GPIO_IDR_OFF(port);
+			port_val = STM32_GPIO_IDR(port);
 			prev_port = port;
 		}
 

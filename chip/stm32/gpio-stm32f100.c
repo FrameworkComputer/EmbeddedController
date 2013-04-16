@@ -80,7 +80,7 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		 */
 		if (flags & GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
-			STM32_GPIO_BSRR_OFF(g->port) |= g->mask;
+			STM32_GPIO_BSRR(g->port) |= g->mask;
 			gpio_set_level(signal, 1);
 		} else if (flags & GPIO_PULL_DOWN) {
 			mask |= 0x88888888 & cnf;
@@ -165,20 +165,20 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
 {
 	*mask = gpio_list[signal].mask;
-	return (uint16_t *)&STM32_GPIO_IDR_OFF(gpio_list[signal].port);
+	return (uint16_t *)&STM32_GPIO_IDR(gpio_list[signal].port);
 }
 
 
 int gpio_get_level(enum gpio_signal signal)
 {
-	return !!(STM32_GPIO_IDR_OFF(gpio_list[signal].port) &
+	return !!(STM32_GPIO_IDR(gpio_list[signal].port) &
 		  gpio_list[signal].mask);
 }
 
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
-	STM32_GPIO_BSRR_OFF(gpio_list[signal].port) =
+	STM32_GPIO_BSRR(gpio_list[signal].port) =
 			gpio_list[signal].mask << (value ? 0 : 16);
 }
 

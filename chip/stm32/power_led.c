@@ -43,9 +43,9 @@ static void power_led_use_pwm(void)
 	uint32_t val;
 
 	/* Configure power LED GPIO for TIM2/PWM alternate function */
-	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0x0000f000;
+	val = STM32_GPIO_CRL(GPIO_B) & ~0x0000f000;
 	val |= 0x00009000;	/* alt. function (TIM2/PWM) */
-	STM32_GPIO_CRL_OFF(GPIO_B) = val;
+	STM32_GPIO_CRL(GPIO_B) = val;
 
 	/* Enable TIM2 clock */
 	STM32_RCC_APB1ENR |= 0x1;

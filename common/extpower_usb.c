@@ -166,9 +166,9 @@ static void ilim_use_pwm(void)
 	uint32_t val;
 
 	/* Config alt. function (TIM3/PWM) */
-	val = STM32_GPIO_CRL_OFF(GPIO_B) & ~0x000f0000;
+	val = STM32_GPIO_CRL(GPIO_B) & ~0x000f0000;
 	val |= 0x00090000;
-	STM32_GPIO_CRL_OFF(GPIO_B) = val;
+	STM32_GPIO_CRL(GPIO_B) = val;
 
 	/* Enable TIM3 clock */
 	STM32_RCC_APB1ENR |= 0x2;

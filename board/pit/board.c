@@ -101,9 +101,9 @@ void board_config_post_gpio_init(void)
 
 #ifdef CONFIG_SPI
 	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
-	val = STM32_GPIO_CRL_OFF(GPIO_A) & ~0xffff0000;
+	val = STM32_GPIO_CRL(GPIO_A) & ~0xffff0000;
 	val |= 0x99990000;
-	STM32_GPIO_CRL_OFF(GPIO_A) = val;
+	STM32_GPIO_CRL(GPIO_A) = val;
 
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
 #endif
