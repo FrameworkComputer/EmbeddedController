@@ -72,7 +72,7 @@
 #define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
 #define DELAY_SHUTDOWN_ON_USB_BOOT      (16 * SECOND)
 
-/* Maximum delay after power button press before we release GPIO_PMIC_PWRON_L */
+/* Maximum delay after power button press before we deassert GPIO_PMIC_PWRON */
 #define DELAY_RELEASE_PWRON   SECOND /* 1s */
 
 /* debounce time to prevent accidental power-on after keyboard power off */
@@ -118,7 +118,7 @@ enum power_request_t {
 
 static enum power_request_t power_request;
 
-/*
+/**
  * Wait for GPIO "signal" to reach level "value".
  * Returns EC_ERROR_TIMEOUT if timeout before reaching the desired state.
  *
@@ -152,7 +152,25 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 	return EC_SUCCESS;
 }
 
-/*
+/**
+ * Set the PMIC PWROK signal.
+ *
+ * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
+ *			logical level of the pin, not the physical level.
+ */
+static void set_pmic_pwrok(int asserted)
+{
+#ifdef BOARD_pit
+	/* Signal is active-high */
+	gpio_set_level(GPIO_PMIC_PWRON, asserted);
+#else
+	/* Signal is active-low */
+	gpio_set_level(GPIO_PMIC_PWRON_L, asserted ? 0 : 1);
+#endif
+}
+
+
+/**
  * Check for some event triggering the shutdown.
  *
  * It can be either a long power button press or a shutdown triggered from the
@@ -181,7 +199,7 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
-		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+		set_pmic_pwrok(1);
 
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
@@ -195,7 +213,7 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPUTS("Cancel power off\n");
-		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
+		set_pmic_pwrok(0);
 	}
 
 	power_button_was_pressed = pressed;
@@ -312,6 +330,15 @@ void chipset_reset(int is_cold)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+void chipset_force_shutdown(void)
+{
+	/* Turn off all rails */
+	gpio_set_level(GPIO_EN_PP3300, 0);
+	gpio_set_level(GPIO_EN_PP1350, 0);
+	set_pmic_pwrok(0);
+	gpio_set_level(GPIO_EN_PP5000, 0);
+}
+
 /*****************************************************************************/
 
 /**
@@ -381,7 +408,7 @@ static int power_on(void)
 		 * Initiate PMIC power-on sequence only if cold booting AP to
 		 * avoid accidental reset (crosbug.com/p/12650).
 		 */
-		gpio_set_level(GPIO_PMIC_PWRON_L, 0);
+		set_pmic_pwrok(1);
 	}
 
 	/* wait for all PMIC regulators to be ready */
@@ -450,7 +477,7 @@ static int react_to_xpshold(unsigned int timeout_us)
 		return -1;
 	}
 	CPRINTF("[%T XPSHOLD seen]\n");
-	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
+	set_pmic_pwrok(0);
 	return 0;
 }
 
@@ -462,10 +489,7 @@ static void power_off(void)
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
-	gpio_set_level(GPIO_EN_PP3300, 0);
-	gpio_set_level(GPIO_EN_PP1350, 0);
-	gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-	gpio_set_level(GPIO_EN_PP5000, 0);
+	chipset_force_shutdown();
 	ap_on = 0;
 	ap_suspended = 0;
 	lid_changed = 0;

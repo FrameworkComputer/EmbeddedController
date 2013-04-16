@@ -70,7 +70,6 @@ static inline void chipset_exit_hard_off(void) { }
  */
 void chipset_throttle_cpu(int throttle);
 
-#ifdef CONFIG_TASK_CHIPSET
 /**
  * Immedaitely shut off power to main processor and chipset.
  *
@@ -78,9 +77,6 @@ void chipset_throttle_cpu(int throttle);
  * critical.
  */
 void chipset_force_shutdown(void);
-#else
-static inline void chipset_force_shutdown(void) { }
-#endif
 
 /**
  * Reset the CPU and/or chipset.

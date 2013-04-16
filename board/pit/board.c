@@ -64,7 +64,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
 	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
 	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
-	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
+	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 #ifndef CONFIG_SPI
 	{"SPI1_MISO",   GPIO_A, (1<<6),  GPIO_OUT_HIGH, NULL},

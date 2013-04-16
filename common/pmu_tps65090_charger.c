@@ -100,13 +100,7 @@ static int system_off(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		CPUTS("[pmu] turn system off\n");
-		/* TODO(rongchang): need chipset_force_hard_off(),
-		 * and remove these gpio hack
-		 */
-		gpio_set_level(GPIO_EN_PP3300, 0);
-		gpio_set_level(GPIO_EN_PP1350, 0);
-		gpio_set_level(GPIO_PMIC_PWRON_L, 1);
-		gpio_set_level(GPIO_EN_PP5000, 0);
+		chipset_force_shutdown();
 	}
 
 	return ST_IDLE;
