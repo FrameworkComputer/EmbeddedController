@@ -6,7 +6,7 @@
 # on-board test binaries build
 #
 
-test-list=hello pingpong timer_calib timer_dos timer_jump mutex thermal
+test-list=pingpong timer_calib timer_dos timer_jump mutex thermal
 test-list+=power_button kb_scan scancode typematic charging flash
 #disable: powerdemo
 
