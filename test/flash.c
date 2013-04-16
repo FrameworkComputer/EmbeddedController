@@ -8,6 +8,8 @@
 #include "board.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 #include "timer.h"
@@ -21,6 +23,8 @@ static char last_write_data[64];
 
 static int last_erase_offset;
 static int last_erase_size;
+
+static int mock_wp;
 
 /*****************************************************************************/
 /* Mock functions */
@@ -42,6 +46,21 @@ int flash_erase(int offset, int size)
 	last_erase_offset = offset;
 	last_erase_size = size;
 	return EC_SUCCESS;
+}
+
+int gpio_get_level(enum gpio_signal signal)
+{
+	const char *name = gpio_list[signal].name;
+
+	if (strcasecmp(name, "WRITE_PROTECTn") == 0 ||
+	    strcasecmp(name, "WP_L") == 0)
+		return !mock_wp;
+	if (strcasecmp(name, "WRITE_PROTECT") == 0 ||
+	    strcasecmp(name, "WP") == 0)
+		return mock_wp;
+
+	/* Signal other than write protect. Just return 0. */
+	return 0;
 }
 
 /*****************************************************************************/
@@ -80,36 +99,60 @@ static int verify_write(int offset, int size, const char *data)
 	return EC_SUCCESS;
 }
 
+
+#define TEST_ASSERT(x) \
+	do { \
+		if (!(x)) \
+			return EC_ERROR_UNKNOWN; \
+	} while (0)
+
 #define VERIFY_NO_WRITE(off, sz, d) \
 	do { \
 		begin_verify(); \
 		host_command_write(off, sz, d); \
-		if (last_write_offset != -1 || last_write_size != -1) \
-			return EC_ERROR_UNKNOWN; \
+		TEST_ASSERT(last_write_offset == -1 && last_write_size == -1); \
 	} while (0)
 
 #define VERIFY_NO_ERASE(off, sz) \
 	do { \
 		begin_verify(); \
 		host_command_erase(off, sz); \
-		if (last_erase_offset != -1 || last_erase_size != -1) \
-			return EC_ERROR_UNKNOWN; \
+		TEST_ASSERT(last_erase_offset == -1 && last_erase_size == -1); \
 	} while (0)
 
 #define VERIFY_WRITE(off, sz, d) \
 	do { \
 		begin_verify(); \
 		host_command_write(off, sz, d); \
-		if (verify_write(off, sz, d) != EC_SUCCESS) \
-			return EC_ERROR_UNKNOWN; \
+		TEST_ASSERT(verify_write(off, sz, d) == EC_SUCCESS); \
 	} while (0)
 
 #define VERIFY_ERASE(off, sz) \
 	do { \
 		begin_verify(); \
 		host_command_erase(off, sz); \
-		if (last_erase_offset != off || last_erase_size != sz) \
-			return EC_ERROR_UNKNOWN; \
+		TEST_ASSERT(last_erase_offset == off && \
+			    last_erase_size == sz); \
+	} while (0)
+
+#define SET_WP_FLAGS(m, f) \
+	TEST_ASSERT(host_command_protect(m, ((f) ? m : 0), \
+				NULL, NULL, NULL) == EC_RES_SUCCESS)
+
+#define ASSERT_WP_FLAGS(f) \
+	do { \
+		uint32_t flags; \
+		TEST_ASSERT(host_command_protect(0, 0, &flags, NULL, NULL) == \
+			    EC_RES_SUCCESS); \
+		TEST_ASSERT(flags & (f)); \
+	} while (0)
+
+#define ASSERT_WP_NO_FLAGS(f) \
+	do { \
+		uint32_t flags; \
+		TEST_ASSERT(host_command_protect(0, 0, &flags, NULL, NULL) == \
+			    EC_RES_SUCCESS); \
+		TEST_ASSERT((flags & (f)) == 0); \
 	} while (0)
 
 int host_command_write(int offset, int size, const char *data)
@@ -149,6 +192,41 @@ int host_command_erase(int offset, int size)
 	args.response_size = 0;
 
 	return host_command_process(&args);
+}
+
+int host_command_protect(uint32_t mask, uint32_t flags,
+			 uint32_t *flags_out, uint32_t *valid_out,
+			 uint32_t *writable_out)
+{
+	struct host_cmd_handler_args args;
+	struct ec_params_flash_protect params;
+	struct ec_response_flash_protect *r =
+		(struct ec_response_flash_protect *)&params;
+	int res;
+
+	params.mask = mask;
+	params.flags = flags;
+
+	args.version = 1;
+	args.command = EC_CMD_FLASH_PROTECT;
+	args.params = &params;
+	args.params_size = sizeof(params);
+	args.response = &params;
+	args.response_max = EC_HOST_PARAM_SIZE;
+	args.response_size = 0;
+
+	res = host_command_process(&args);
+
+	if (res == EC_RES_SUCCESS) {
+		if (flags_out)
+			*flags_out = r->flags;
+		if (valid_out)
+			*valid_out = r->valid_flags;
+		if (writable_out)
+			*writable_out = r->writable_flags;
+	}
+
+	return res;
 }
 
 /*****************************************************************************/
@@ -197,20 +275,62 @@ static int test_overwrite_other(void)
 	return EC_SUCCESS;
 }
 
+static int test_write_protect(void)
+{
+	/* Test we can control write protect GPIO */
+	mock_wp = 0;
+	ASSERT_WP_NO_FLAGS(EC_FLASH_PROTECT_GPIO_ASSERTED);
+
+	mock_wp = 1;
+	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_GPIO_ASSERTED);
+
+	/* Test software WP can be disable if nothing is actually protected */
+	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 1);
+	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+	ASSERT_WP_NO_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT);
+
+	/* Actually protect flash and test software WP cannot be disabled */
+	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 1);
+	SET_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW, 1);
+	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
+
+	return EC_SUCCESS;
+}
+
+static int clear_wp(void)
+{
+	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+	return EC_SUCCESS;
+}
+
+static void test_setup(void)
+{
+	clear_wp();
+}
+DECLARE_HOOK(HOOK_INIT, test_setup, HOOK_PRIO_LAST);
+
 static int command_run_test(int argc, char **argv)
 {
 	error_count = 0;
+	mock_wp = 0;
 
 	RUN_TEST(test_overwrite_current);
 	RUN_TEST(test_overwrite_other);
+	RUN_TEST(test_write_protect);
 
 	if (error_count) {
 		ccprintf("Failed %d tests!\n", error_count);
-		return EC_ERROR_UNKNOWN;
 	} else {
 		ccprintf("Pass!\n");
-		return EC_SUCCESS;
 	}
+
+	ccprintf("Rebooting to clear WP...\n");
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
+
+	/* Never reaches here */
+	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
 			NULL, NULL, NULL);

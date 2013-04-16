@@ -169,7 +169,7 @@ uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
 }
 
 
-int gpio_get_level(enum gpio_signal signal)
+test_mockable int gpio_get_level(enum gpio_signal signal)
 {
 	return !!(STM32_GPIO_IDR(gpio_list[signal].port) &
 		  gpio_list[signal].mask);

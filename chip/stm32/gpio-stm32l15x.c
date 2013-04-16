@@ -172,7 +172,7 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	STM32_GPIO_MODER(port) = moder;
 }
 
-int gpio_get_level(enum gpio_signal signal)
+test_mockable int gpio_get_level(enum gpio_signal signal)
 {
 	return !!(STM32_GPIO_IDR(gpio_list[signal].port) &
 		  gpio_list[signal].mask);

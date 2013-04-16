@@ -77,7 +77,7 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	LM4_GPIO_DEN(port) |= mask;
 }
 
-int gpio_get_level(enum gpio_signal signal)
+test_mockable int gpio_get_level(enum gpio_signal signal)
 {
 	return LM4_GPIO_DATA(gpio_list[signal].port,
 			     gpio_list[signal].mask) ? 1 : 0;
