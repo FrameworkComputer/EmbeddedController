@@ -24,7 +24,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_RISING, gaia_power_event},
-	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_RISING, pmu_irq_handler},
+	{"CHARGER_INT", GPIO_C, (1<<6),  GPIO_INT_RISING, pmu_irq_handler},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
 	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
@@ -51,7 +51,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_HI_Z, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
-	{"EN_PP1350",   GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
+	{"EN_PP1350",   GPIO_H, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
@@ -63,7 +63,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_INPUT, NULL},
 	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
 	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
-	{"LED_POWER_L", GPIO_A, (1<<14), GPIO_OUT_HIGH, NULL},
+	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PMIC_PWRON_L",GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 #ifndef CONFIG_SPI
@@ -81,7 +81,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT08",    GPIO_C, (1<<2),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT09",    GPIO_B, (1<<1),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT11",    GPIO_C, (1<<6),  GPIO_KB_OUTPUT, NULL},
+	{"KB_OUT11",    GPIO_C, (1<<4),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_A, (1<<13),  GPIO_KB_OUTPUT, NULL},
 };
 
