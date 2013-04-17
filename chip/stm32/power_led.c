@@ -38,14 +38,33 @@ void powerled_set_state(enum powerled_state new_state)
 	task_wake(TASK_ID_POWERLED);
 }
 
+static void power_led_set_duty(int percent)
+{
+	ASSERT((percent >= 0) && (percent <= 100));
+	power_led_percent = percent;
+	/*
+	 * Set the duty cycle.  CCRx = percent * ARR / 100.  Since we set
+	 * ARR=100, this is just percent.
+	 */
+#ifdef BOARD_pit
+	STM32_TIM_CCR3(2) = percent;
+#else
+	STM32_TIM_CCR2(2) = percent;
+#endif
+}
+
 static void power_led_use_pwm(void)
 {
-	uint32_t val;
-
 	/* Configure power LED GPIO for TIM2/PWM alternate function */
-	val = STM32_GPIO_CRL(GPIO_B) & ~0x0000f000;
+#ifdef BOARD_pit
+	/* PA2 = TIM2_CH3 */
+	gpio_set_alternate_function(GPIO_A, (1 << 2), GPIO_ALT_TIM2);
+#else
+	/* PB3 = TIM2_CH2 */
+	uint32_t val = STM32_GPIO_CRL(GPIO_B) & ~0x0000f000;
 	val |= 0x00009000;	/* alt. function (TIM2/PWM) */
 	STM32_GPIO_CRL(GPIO_B) = val;
+#endif
 
 	/* Enable TIM2 clock */
 	STM32_RCC_APB1ENR |= 0x1;
@@ -63,13 +82,22 @@ static void power_led_use_pwm(void)
 	 */
 	STM32_TIM_PSC(2) = CPU_CLOCK / 10000;	/* pre-scaler */
 	STM32_TIM_ARR(2) = 100;			/* auto-reload value */
-	STM32_TIM_CCR2(2) = 100;		/* duty cycle */
 
+	power_led_set_duty(100);
+
+#ifdef BOARD_PIT
+	/* CC3 configured as output, PWM mode 1, preload enable */
+	STM32_TIM_CCMR2(2) = (6 << 4) | (1 << 3);
+
+	/* CC3 output enable, active low */
+	STM32_TIM_CCER(2) = (1 << 8) | (1 << 9);
+#else
 	/* CC2 configured as output, PWM mode 1, preload enable */
 	STM32_TIM_CCMR1(2) = (6 << 12) | (1 << 11);
 
 	/* CC2 output enable, active low */
 	STM32_TIM_CCER(2) = (1 << 4) | (1 << 5);
+#endif
 
 	/* Generate update event to force loading of shadow registers */
 	STM32_TIM_EGR(2) |= 1;
@@ -97,13 +125,6 @@ static void power_led_manual_off(void)
 	gpio_set_level(GPIO_LED_POWER_L, 1);
 
 	using_pwm = 0;
-}
-
-static void power_led_set_duty(int percent)
-{
-	ASSERT((percent >= 0) && (percent <= 100));
-	power_led_percent = percent;
-	STM32_TIM_CCR2(2) = (STM32_TIM_ARR(2) / 100) * percent;
 }
 
 /**
