@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,35 +7,6 @@
 
 #ifndef __CROS_EC_HWTIMER_H
 #define __CROS_EC_HWTIMER_H
-
-struct timer_ctlr {
-	unsigned cr1;
-	unsigned cr2;
-	unsigned smcr;
-	unsigned dier;
-
-	unsigned sr;
-	unsigned egr;
-	unsigned ccmr1;
-	unsigned ccmr2;
-
-	unsigned ccer;
-	unsigned cnt;
-	unsigned psc;
-	unsigned arr;
-
-	unsigned reserved30;
-	unsigned ccr1;
-	unsigned ccr2;
-	unsigned ccr3;
-
-	unsigned ccr4;
-	unsigned reserved44;
-	unsigned dcr;
-	unsigned dmar;
-
-	unsigned or;
-};
 
 /**
  * Programs when the next timer should fire an interrupt.

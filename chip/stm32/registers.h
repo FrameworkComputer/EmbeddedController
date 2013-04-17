@@ -164,6 +164,36 @@
 #define STM32_TIM_DMAR(n)          STM32_TIM_REG(n, 0x4C)
 #define STM32_TIM_OR(n)            STM32_TIM_REG(n, 0x50)
 
+/* Timer registers as struct */
+struct timer_ctlr {
+	unsigned cr1;
+	unsigned cr2;
+	unsigned smcr;
+	unsigned dier;
+
+	unsigned sr;
+	unsigned egr;
+	unsigned ccmr1;
+	unsigned ccmr2;
+
+	unsigned ccer;
+	unsigned cnt;
+	unsigned psc;
+	unsigned arr;
+
+	unsigned reserved30;
+	unsigned ccr1;
+	unsigned ccr2;
+	unsigned ccr3;
+
+	unsigned ccr4;
+	unsigned reserved44;
+	unsigned dcr;
+	unsigned dmar;
+
+	unsigned or;
+};
+
 /* --- GPIO --- */
 
 #define GPIO_A                       STM32_GPIOA_BASE
