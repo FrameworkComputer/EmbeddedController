@@ -126,7 +126,7 @@ static void update_other_switches(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
 
-	if (gpio_get_level(GPIO_RECOVERYn) == 0)
+	if (gpio_get_level(GPIO_RECOVERY_L) == 0)
 		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 	else
 		*memmap_switches &= ~EC_SWITCH_DEDICATED_RECOVERY;
@@ -144,7 +144,7 @@ static void set_pwrbtn_to_pch(int high)
 	}
 
 	CPRINTF("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
-	gpio_set_level(GPIO_PCH_PWRBTNn, high);
+	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
 /**
@@ -161,7 +161,7 @@ static int raw_power_button_pressed(void)
 	if (!lid_is_open())
 		return 0;
 
-	return gpio_get_level(GPIO_POWER_BUTTONn) ? 0 : 1;
+	return gpio_get_level(GPIO_POWER_BUTTON_L) ? 0 : 1;
 }
 
 static void update_backlight(void)
@@ -504,8 +504,8 @@ static void switch_init(void)
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_POWER_BUTTONn);
-	gpio_enable_interrupt(GPIO_RECOVERYn);
+	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_enable_interrupt(GPIO_RECOVERY_L);
 	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
@@ -539,7 +539,7 @@ void switch_interrupt(enum gpio_signal signal)
 {
 	/* Reset debounce time for the changed signal */
 	switch (signal) {
-	case GPIO_POWER_BUTTONn:
+	case GPIO_POWER_BUTTON_L:
 		/* Reset power button debounce time */
 		tdebounce_pwr = get_time().val + PWRBTN_DEBOUNCE_US;
 		if (raw_power_button_pressed()) {

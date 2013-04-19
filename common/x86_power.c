@@ -141,25 +141,25 @@ static void update_in_signals(void)
 	if (gpio_get_level(GPIO_PGOOD_VGFX_CORE))
 		inew |= IN_PGOOD_VGFX_CORE;
 
-	if (gpio_get_level(GPIO_PCH_SLP_An))
+	if (gpio_get_level(GPIO_PCH_SLP_A_L))
 		inew |= IN_PCH_SLP_An_DEASSERTED;
-	if (gpio_get_level(GPIO_PCH_SLP_S3n))
+	if (gpio_get_level(GPIO_PCH_SLP_S3_L))
 		inew |= IN_PCH_SLP_S3n_DEASSERTED;
-	if (gpio_get_level(GPIO_PCH_SLP_S4n))
+	if (gpio_get_level(GPIO_PCH_SLP_S4_L))
 		inew |= IN_PCH_SLP_S4n_DEASSERTED;
-	if (gpio_get_level(GPIO_PCH_SLP_S5n))
+	if (gpio_get_level(GPIO_PCH_SLP_S5_L))
 		inew |= IN_PCH_SLP_S5n_DEASSERTED;
 
-	if (gpio_get_level(GPIO_PCH_SLP_SUSn))
+	if (gpio_get_level(GPIO_PCH_SLP_SUS_L))
 		inew |= IN_PCH_SLP_SUSn_DEASSERTED;
-	if (gpio_get_level(GPIO_PCH_SLP_ME_CSW_DEVn))
+	if (gpio_get_level(GPIO_PCH_SLP_ME_CSW_DEV_L))
 		inew |= IN_PCH_SLP_MEn_DEASSERTED;
 
-	v = gpio_get_level(GPIO_PCH_SUSWARNn);
+	v = gpio_get_level(GPIO_PCH_SUSWARN_L);
 	if (v)
 		inew |= IN_PCH_SUSWARNn_DEASSERTED;
 	/* Copy SUSWARN# signal from PCH to SUSACK# */
-	gpio_set_level(GPIO_PCH_SUSACKn, v);
+	gpio_set_level(GPIO_PCH_SUSACK_L, v);
 
 	if ((in_signals & in_debug) != (inew & in_debug))
 		CPRINTF("[%T x86 in 0x%04x]\n", inew);
@@ -227,7 +227,7 @@ void chipset_force_shutdown(void)
 	 * transitions to G3.
 	 */
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
-	gpio_set_level(GPIO_PCH_RSMRSTn, 0);
+	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 }
 
 void chipset_reset(int cold_reset)
@@ -258,9 +258,9 @@ void chipset_reset(int cold_reset)
 		 */
 
 		/* Pulse must be at least 16 PCI clocks long = 500 ns */
-		gpio_set_level(GPIO_PCH_RCINn, 0);
+		gpio_set_level(GPIO_PCH_RCIN_L, 0);
 		udelay(10);
-		gpio_set_level(GPIO_PCH_RCINn, 1);
+		gpio_set_level(GPIO_PCH_RCIN_L, 1);
 	}
 }
 
@@ -380,22 +380,22 @@ static void x86_power_init(void)
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
 			gpio_set_level(GPIO_ENABLE_VS, 0);
 			gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 0);
-			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
+			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 		}
 	}
 
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_PCH_BKLTEN);
-	gpio_enable_interrupt(GPIO_PCH_SLP_An);
-	gpio_enable_interrupt(GPIO_PCH_SLP_ME_CSW_DEVn);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S3n);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S4n);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S5n);
-	gpio_enable_interrupt(GPIO_PCH_SLP_SUSn);
-	gpio_enable_interrupt(GPIO_PCH_SUSWARNn);
+	gpio_enable_interrupt(GPIO_PCH_SLP_A_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_ME_CSW_DEV_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_S4_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_S5_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_SUS_L);
+	gpio_enable_interrupt(GPIO_PCH_SUSWARN_L);
 	gpio_enable_interrupt(GPIO_PGOOD_1_5V_DDR);
 	gpio_enable_interrupt(GPIO_PGOOD_1_5V_PCH);
 	gpio_enable_interrupt(GPIO_PGOOD_1_8VS);
@@ -466,7 +466,7 @@ void chipset_task(void)
 			break;
 
 		case X86_S5:
-			if (gpio_get_level(GPIO_PCH_SLP_S5n) == 1) {
+			if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 1) {
 				/* Power up to next state */
 				state = X86_S5S3;
 				break;
@@ -488,7 +488,7 @@ void chipset_task(void)
 			 * power usage.  If lid is open, take touchscreen out
 			 * of reset so it can wake the processor.
 			 */
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, lid_is_open());
+			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, lid_is_open());
 
 			/* Check for state transitions */
 			if (!have_all_in_signals(IN_PGOOD_S3)) {
@@ -496,11 +496,11 @@ void chipset_task(void)
 				chipset_force_shutdown();
 				state = X86_S3S5;
 				break;
-			} else if (gpio_get_level(GPIO_PCH_SLP_S3n) == 1) {
+			} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
 				/* Power up to next state */
 				state = X86_S3S0;
 				break;
-			} else if (gpio_get_level(GPIO_PCH_SLP_S5n) == 0) {
+			} else if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 0) {
 				/* Power down to next state */
 				state = X86_S3S5;
 				break;
@@ -517,7 +517,7 @@ void chipset_task(void)
 				chipset_force_shutdown();
 				state = X86_S0S3;
 				break;
-			} else if (gpio_get_level(GPIO_PCH_SLP_S3n) == 0) {
+			} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
 				/* Power down to next state */
 				state = X86_S0S3;
 				break;
@@ -537,7 +537,7 @@ void chipset_task(void)
 
 			/* Assert DPWROK, deassert RSMRST# */
 			gpio_set_level(GPIO_PCH_DPWROK, 1);
-			gpio_set_level(GPIO_PCH_RSMRSTn, 1);
+			gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 			/* Wait 5ms for SUSCLK to stabilize */
 			msleep(5);
@@ -557,7 +557,7 @@ void chipset_task(void)
 			 * available and we won't leak +3VALW through the reset
 			 * line.
 			 */
-			gpio_set_level(GPIO_LIGHTBAR_RESETn, 1);
+			gpio_set_level(GPIO_LIGHTBAR_RESET_L, 1);
 
 			/* Turn on power to RAM */
 			gpio_set_level(GPIO_ENABLE_1_5V_DDR, 1);
@@ -592,12 +592,12 @@ void chipset_task(void)
 			 * lid is still closed); it may have been turned off if
 			 * the lid was closed in S3.
 			 */
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 1);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 1);
 
 			/* Wait for non-core power rails good */
 			if (wait_in_signals(IN_PGOOD_S0)) {
 				chipset_force_shutdown();
-				gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
+				gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 				gpio_set_level(GPIO_ENABLE_WLAN, 0);
 				gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
 				gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
@@ -679,8 +679,8 @@ void chipset_task(void)
 			 * of that change we'll still reset these components in
 			 * S5.)
 			 */
-			gpio_set_level(GPIO_TOUCHSCREEN_RESETn, 0);
-			gpio_set_level(GPIO_LIGHTBAR_RESETn, 0);
+			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
+			gpio_set_level(GPIO_LIGHTBAR_RESET_L, 0);
 
 			state = X86_S5;
 			break;
@@ -688,7 +688,7 @@ void chipset_task(void)
 		case X86_S5G3:
 			/* Deassert DPWROK, assert RSMRST# */
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
-			gpio_set_level(GPIO_PCH_RSMRSTn, 0);
+			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
 			/* Record the time we go into G3 */
 			last_shutdown_time = get_time().val;

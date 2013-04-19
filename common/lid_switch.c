@@ -28,7 +28,7 @@ static int debounced_lid_open;		/* Debounced lid state */
  */
 static int raw_lid_open(void)
 {
-	return gpio_get_level(GPIO_LID_SWITCHn) ? 1 : 0;
+	return gpio_get_level(GPIO_LID_SWITCH_L) ? 1 : 0;
 }
 
 /**
@@ -77,7 +77,7 @@ static void lid_init(void)
 		debounced_lid_open = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_LID_SWITCHn);
+	gpio_enable_interrupt(GPIO_LID_SWITCH_L);
 }
 DECLARE_HOOK(HOOK_INIT, lid_init, HOOK_PRIO_INIT_LID);
 

@@ -113,9 +113,9 @@ static void lpc_manual_irq(int irq_num)
  */
 static void lpc_generate_smi(void)
 {
-	gpio_set_level(GPIO_PCH_SMIn, 0);
+	gpio_set_level(GPIO_PCH_SMI_L, 0);
 	udelay(65);
-	gpio_set_level(GPIO_PCH_SMIn, 1);
+	gpio_set_level(GPIO_PCH_SMI_L, 1);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
 		CPRINTF("[%T smi 0x%08x]\n",
@@ -251,7 +251,7 @@ void lpc_comx_put_char(int c)
  * Update the host event status.
  *
  * Sends a pulse if masked event status becomes non-zero:
- *   - SMI pulse via EC_SMIn GPIO
+ *   - SMI pulse via EC_SMI_L GPIO
  *   - SCI pulse via LPC0SCI
  */
 static void update_host_event_status(void) {
@@ -286,9 +286,9 @@ static void update_host_event_status(void) {
 
 	/* Update level-sensitive wake signal */
 	if (host_events & event_mask[LPC_HOST_EVENT_WAKE])
-		gpio_set_level(GPIO_PCH_WAKEn, 0);
+		gpio_set_level(GPIO_PCH_WAKE_L, 0);
 	else
-		gpio_set_level(GPIO_PCH_WAKEn, 1);
+		gpio_set_level(GPIO_PCH_WAKE_L, 1);
 
 	/* Send pulse on SMI signal if needed */
 	if (need_smi)
