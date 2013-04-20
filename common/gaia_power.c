@@ -42,8 +42,11 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
-/* Time necessary for the 5v regulator output to stabilize */
-#define DELAY_5V_SETUP        MSEC  /* 1ms */
+/* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
+#define DELAY_5V_SETUP		MSEC
+#ifdef BOARD_pit
+#define DELAY_3V_SETUP		MSEC
+#endif
 
 /* Delay between 1.35v and 3.3v rails startup */
 #define DELAY_RAIL_STAGGERING 100  /* 100us */
@@ -352,6 +355,7 @@ void chipset_force_shutdown(void)
 static int check_for_power_on_event(void)
 {
 	/* the system is already ON */
+	/* TODO: this isn't the right check for pit */
 	if (gpio_get_level(GPIO_EN_PP3300)) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */
@@ -397,8 +401,17 @@ static int power_on(void)
 {
 	/* Enable 5v power rail */
 	gpio_set_level(GPIO_EN_PP5000, 1);
-	/* wait to have stable power */
+	/* Wait for it to stabilize */
 	usleep(DELAY_5V_SETUP);
+
+#ifdef BOARD_pit
+	/*
+	 * 3.3V rail must come up right after 5V, because it sources power to
+	 * various buck supplies.
+	 */
+	gpio_set_level(GPIO_EN_PP3300, 1);
+	usleep(DELAY_3V_SETUP);
+#endif
 
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
 		/* Initialize non-AP components */
@@ -416,10 +429,11 @@ static int power_on(void)
 
 	/*
 	 * If PP1800_LDO2 did not come up (e.g. PMIC_TIMEOUT was reached),
-	 * turn off 5v rail and start over.
+	 * turn off 5V rail (and 3.3V, if turned on above) and start over.
 	 */
 	if (gpio_get_level(GPIO_PP1800_LDO2) == 0) {
 		gpio_set_level(GPIO_EN_PP5000, 0);
+		gpio_set_level(GPIO_EN_PP3300, 0);
 		usleep(DELAY_5V_SETUP);
 		CPUTS("Fatal error: PMIC failed to enable\n");
 		return -1;
@@ -427,10 +441,12 @@ static int power_on(void)
 
 	/* Enable DDR 1.35v power rail */
 	gpio_set_level(GPIO_EN_PP1350, 1);
-	/* wait to avoid large inrush current */
+	/* Wait to avoid large inrush current */
 	usleep(DELAY_RAIL_STAGGERING);
-	/* Enable 3.3v power rail */
+
+	/* Enable 3.3v power rail, if it's not already on */
 	gpio_set_level(GPIO_EN_PP3300, 1);
+
 	ap_on = 1;
 	disable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_ON);
