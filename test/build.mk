@@ -8,7 +8,7 @@
 
 test-list=pingpong timer_calib timer_dos timer_jump mutex thermal
 test-list+=power_button kb_scan scancode typematic charging flash
-test-list+=stress
+test-list+=stress utils
 #disable: powerdemo
 
 flash-y=flash.o
