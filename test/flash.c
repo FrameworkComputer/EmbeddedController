@@ -8,6 +8,7 @@
 #include "board.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -24,7 +25,16 @@ static char last_write_data[64];
 static int last_erase_offset;
 static int last_erase_size;
 
-static int mock_wp;
+static int mock_wp = -1;
+
+#define TEST_STATE_CLEAN_UP    (1 << 0)
+#define TEST_STATE_STEP_2      (1 << 1)
+#define TEST_STATE_STEP_3      (1 << 2)
+#define TEST_STATE_BOOT_WP_ON  (1 << 3)
+#define TEST_STATE_PASSED      (1 << 4)
+
+#define CLEAN_UP_FLAG_PASSED TEST_STATE_PASSED
+#define CLEAN_UP_FLAG_FAILED 0
 
 /*****************************************************************************/
 /* Mock functions */
@@ -51,6 +61,9 @@ int flash_erase(int offset, int size)
 int gpio_get_level(enum gpio_signal signal)
 {
 	const char *name = gpio_list[signal].name;
+
+	if (mock_wp == -1)
+		mock_wp = !!(system_get_scratchpad() & TEST_STATE_BOOT_WP_ON);
 
 	if (strcasecmp(name, "WRITE_PROTECTn") == 0 ||
 	    strcasecmp(name, "WP_L") == 0)
@@ -293,24 +306,61 @@ static int test_write_protect(void)
 	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 1);
 	SET_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW, 1);
 	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+	SET_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW, 0);
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
+
+	/* Check we cannot erase anything */
+	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RO_OFF,
+			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
+	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RW_OFF,
+			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
 
-static int clear_wp(void)
+static int test_boot_write_protect(void)
 {
+	/* Check write protect state persists through reboot */
+	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
+	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RO_OFF,
+			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
+static int test_boot_no_write_protect(void)
+{
+	/* Check write protect is not enabled if WP GPIO is deasserted */
+	ASSERT_WP_NO_FLAGS(EC_FLASH_PROTECT_RO_NOW);
+	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT);
+
+	return EC_SUCCESS;
+}
+
+static int clean_up(void)
+{
+	system_set_scratchpad(0);
 	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 	return EC_SUCCESS;
 }
 
-static void test_setup(void)
+static void reboot_to_clean_up(uint32_t flags)
 {
-	clear_wp();
+	ccprintf("Rebooting to clear WP...\n");
+	cflush();
+	system_set_scratchpad(TEST_STATE_CLEAN_UP | flags);
+	system_reset(SYSTEM_RESET_HARD);
 }
-DECLARE_HOOK(HOOK_INIT, test_setup, HOOK_PRIO_LAST);
 
-static int command_run_test(int argc, char **argv)
+static void reboot_to_next_step(uint32_t step)
+{
+	ccprintf("Rebooting to next test step...\n");
+	cflush();
+	system_set_scratchpad(step);
+	system_reset(SYSTEM_RESET_HARD);
+}
+
+static void run_test_step1(void)
 {
 	error_count = 0;
 	mock_wp = 0;
@@ -321,15 +371,56 @@ static int command_run_test(int argc, char **argv)
 
 	if (error_count) {
 		ccprintf("Failed %d tests!\n", error_count);
+		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
 	} else {
-		ccprintf("Pass!\n");
+		reboot_to_next_step(TEST_STATE_STEP_2 | TEST_STATE_BOOT_WP_ON);
 	}
+}
 
-	ccprintf("Rebooting to clear WP...\n");
-	cflush();
-	system_reset(SYSTEM_RESET_HARD);
+static void run_test_step2(void)
+{
+	RUN_TEST(test_boot_write_protect);
 
-	/* Never reaches here */
+	if (error_count) {
+		ccprintf("Failed %d tests!\n", error_count);
+		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
+	} else {
+		reboot_to_next_step(TEST_STATE_STEP_3);
+	}
+}
+
+static void run_test_step3(void)
+{
+	RUN_TEST(test_boot_no_write_protect);
+
+	if (error_count) {
+		ccprintf("Failed %d tests!\n", error_count);
+		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
+	} else {
+		reboot_to_clean_up(CLEAN_UP_FLAG_PASSED);
+	}
+}
+
+int TaskTest(void *data)
+{
+	uint32_t state = system_get_scratchpad();
+
+	if (state & TEST_STATE_PASSED)
+		ccprintf("Pass!\n");
+
+	if (state & TEST_STATE_STEP_2)
+		run_test_step2();
+	else if (state & TEST_STATE_STEP_3)
+		run_test_step3();
+	else if (state & TEST_STATE_CLEAN_UP)
+		clean_up();
+
+	return EC_SUCCESS;
+}
+
+static int command_run_test(int argc, char **argv)
+{
+	run_test_step1(); /* Never returns */
 	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
