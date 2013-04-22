@@ -82,6 +82,15 @@ int lp5562_engine_control(int eng1, int eng2, int eng3)
 	return lp5562_write(LP5562_REG_ENABLE, val);
 }
 
+int lp5562_get_engine_state(int engine)
+{
+	int val;
+
+	if (lp5562_read(LP5562_REG_ENABLE, &val))
+		return 0xee;
+	return (val >> (6 - engine * 2)) & 0x3;
+}
+
 int lp5562_poweron(void)
 {
 	int ret = 0;
@@ -98,6 +107,19 @@ int lp5562_poweron(void)
 int lp5562_poweroff(void)
 {
 	return lp5562_write(LP5562_REG_ENABLE, 0x0);
+}
+
+int lp5562_get_pc(int engine)
+{
+	int ret;
+	if (lp5562_read(LP5562_REG_ENG1_PC + engine - 1, &ret))
+		return 0xee;
+	return ret;
+}
+
+int lp5562_set_pc(int engine, int val)
+{
+	return lp5562_write(LP5562_REG_ENG1_PC + engine - 1, val);
 }
 
 /*****************************************************************************/

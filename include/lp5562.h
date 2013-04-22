@@ -39,6 +39,7 @@
 #define LP5562_ENG_SEL_3	0x3
 
 #define LP5562_ENG_HOLD		0x0
+#define LP5562_ENG_STEP		0x1
 #define LP5562_ENG_RUN		0x2
 
 /* Power on and initialize LP5562. */
@@ -61,5 +62,14 @@ int lp5562_engine_load(int engine, const uint8_t *program, int size);
 
 /* Control lighting engine execution state */
 int lp5562_engine_control(int eng1, int eng2, int eng3);
+
+/* Get engine execution state. Return 0xee on error. */
+int lp5562_get_engine_state(int engine);
+
+/* Get current program counter. Return 0xee on error. */
+int lp5562_get_pc(int engine);
+
+/* Set program counter */
+int lp5562_set_pc(int engine, int val);
 
 #endif /* LP5562_H */
