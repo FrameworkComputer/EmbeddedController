@@ -16,7 +16,7 @@
 0xcc 0xff       # .bright_bl_off_fixed (battery, AC)
 0xcc 0xff       # .bright_bl_on_min (battery, AC)
 0xcc 0xff       # .bright_bl_on_max (battery, AC)
-10 40 99                # .battery_threshold
+14 40 99        # .battery_threshold
 5 4 4 4         # .s0_idx[] (battery)
 4 4 4 4         # .s0_idx[] (AC)
 5 255 255 255   # .s3_idx[] (battery)

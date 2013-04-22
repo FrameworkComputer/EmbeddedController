@@ -197,7 +197,7 @@ static const struct lightbar_params default_params = {
 	.bright_bl_on_min = {0xcc, 0xff},	/* backlight on: battery, AC */
 	.bright_bl_on_max = {0xcc, 0xff},	/* backlight on: battery, AC */
 
-	.battery_threshold = { 10, 40, 99 },	/* percent, lowest to highest */
+	.battery_threshold = { 14, 40, 99 },	/* percent, lowest to highest */
 	.s0_idx = {
 		{ 5, 4, 4, 4 },		/* battery: 0 = red, other = blue */
 		{ 4, 4, 4, 4 }		/* AC: always blue */
