@@ -59,6 +59,7 @@ static volatile int rx_cur_buf_ptr;
 static int last_rx_was_cr;
 static int tx_snapshot_head;
 static int tx_snapshot_tail;
+static int uart_suspended;
 
 static enum {
 	ESC_OUTSIDE,   /* Not in escape code */
@@ -463,6 +464,13 @@ static void handle_console_char(int c)
 		history_next();
 	} else if (c == CTRL('P')) {
 		history_prev();
+	} else if (c == CTRL('Q')) {
+		uart_suspended = 1;
+		uart_tx_stop();
+	} else if (c == CTRL('S')) {
+		uart_suspended = 0;
+		if (uart_tx_stopped())
+			uart_tx_start();
 	} else if (c == '\n') {  /* Newline */
 		uart_write_char('\r');
 		uart_write_char('\n');
@@ -500,6 +508,9 @@ void uart_process(void)
 	while (uart_rx_available())
 		handle_console_char(uart_read_char());
 
+	if (uart_suspended)
+		return;
+
 	/* Copy output from buffer until TX fifo full or output buffer empty */
 	fill_tx_fifo();
 
@@ -516,7 +527,7 @@ int uart_puts(const char *outstr)
 			break;
 	}
 
-	if (uart_tx_stopped())
+	if (!uart_suspended && uart_tx_stopped())
 		uart_tx_start();
 
 	/* Successful if we consumed all output */
@@ -527,7 +538,7 @@ int uart_vprintf(const char *format, va_list args)
 {
 	int rv = vfnprintf(__tx_char, NULL, format, args);
 
-	if (uart_tx_stopped())
+	if (!uart_suspended && uart_tx_stopped())
 		uart_tx_start();
 
 	return rv;
@@ -546,6 +557,10 @@ int uart_printf(const char *format, ...)
 
 void uart_flush_output(void)
 {
+	/* If UART is suspended, ignore flush request. */
+	if (uart_suspended)
+		return;
+
 	/*
 	 * If we're in interrupt context, copy output explicitly, since the
 	 * UART interrupt may not be able to preempt this one.
