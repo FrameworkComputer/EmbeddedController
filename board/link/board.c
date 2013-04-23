@@ -25,7 +25,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTON_L",       LM4_GPIO_K, (1<<7), GPIO_INT_BOTH,
 	 switch_interrupt},
-	{"LID_SWITCH_L",         LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
+	{"LID_OPEN",             LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
 	 lid_interrupt},
 	/* Other inputs */
 	{"THERMAL_DATA_READY_L", LM4_GPIO_B, (1<<4), 0, NULL},

@@ -122,7 +122,7 @@ enum adc_channel
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_POWER_BUTTON_L = 0,   /* Power button */
-	GPIO_LID_SWITCH_L,         /* Lid switch */
+	GPIO_LID_OPEN,             /* Lid switch */
 	GPIO_THERMAL_DATA_READY_L, /* Data ready from I2C thermal sensor */
 	/* Other inputs */
 	GPIO_AC_PRESENT,           /* AC power present */
