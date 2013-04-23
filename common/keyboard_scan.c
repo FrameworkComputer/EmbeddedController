@@ -26,27 +26,20 @@
 
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
-static struct keyboard_scan_config config = {
-#ifdef BOARD_link
-	.output_settle_us = 40,
-	.debounce_down_us = 6 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 1500,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = SECOND,
-#else
+#ifndef CONFIG_CUSTOM_KEYSCAN
+struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
-#endif
 	.actual_key_mask = {
 		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
+#endif
 
 /* Boot key list.  Must be in same order as enum boot_key. */
 struct boot_key_entry {
@@ -156,12 +149,12 @@ static int read_matrix(uint8_t *state)
 
 		/* Select column, then wait a bit for it to settle */
 		keyboard_raw_drive_column(c);
-		udelay(config.output_settle_us);
+		udelay(keyscan_config.output_settle_us);
 
 		/* Read the row state */
 		r = keyboard_raw_read_rows();
 		/* Mask off keys that don't exist on the actual keyboard */
-		r &= config.actual_key_mask[c];
+		r &= keyscan_config.actual_key_mask[c];
 		/* Add in simulated keypresses */
 		r |= simulated_key[c];
 
@@ -332,8 +325,8 @@ static int check_keys_changed(uint8_t *state)
 			if (!(debc & mask))
 				continue;  /* Not debouncing this key */
 			if (tnow - scan_time[scan_edge_index[c][i]] <
-			    (new_mask ? config.debounce_down_us :
-					config.debounce_up_us))
+			    (new_mask ? keyscan_config.debounce_down_us :
+					keyscan_config.debounce_up_us))
 				continue;  /* Not done debouncing */
 
 			debouncing[c] &= ~mask;
@@ -453,7 +446,7 @@ static enum boot_key check_boot_key(const uint8_t *state)
 
 struct keyboard_scan_config *keyboard_scan_get_config(void)
 {
-	return &config;
+	return &keyscan_config;
 }
 
 enum boot_key keyboard_scan_get_boot_key(void)
@@ -526,17 +519,18 @@ void keyboard_scan_task(void)
 			/* Check for keys down */
 			if (check_keys_changed(debounced_state)) {
 				poll_deadline.val = start.val
-					+ config.poll_timeout_us;
+					+ keyscan_config.poll_timeout_us;
 			} else if (timestamp_expired(poll_deadline, &start)) {
 				break;
 			}
 
 			/* Delay between scans */
-			wait_time = config.scan_period_us -
+			wait_time = keyscan_config.scan_period_us -
 				(get_time().val - start.val);
 
-			if (wait_time < config.min_post_scan_delay_us)
-				wait_time = config.min_post_scan_delay_us;
+			if (wait_time < keyscan_config.min_post_scan_delay_us)
+				wait_time =
+					keyscan_config.min_post_scan_delay_us;
 
 			usleep(wait_time);
 		}

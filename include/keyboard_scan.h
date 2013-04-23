@@ -42,6 +42,10 @@ void keyboard_scan_init(void);
  * Return a pointer to the keyboard scan config.
  */
 struct keyboard_scan_config *keyboard_scan_get_config(void);
+/*
+ * Which is probably this.
+ */
+extern struct keyboard_scan_config keyscan_config;
 
 /* Key held down at keyboard-controlled reset boot time. */
 enum boot_key {

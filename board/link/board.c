@@ -10,12 +10,14 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "lm4_adc.h"
 #include "peci.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
+#include "timer.h"
 #include "tmp006.h"
 #include "util.h"
 #include "x86_power.h"
@@ -176,4 +178,17 @@ const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
 	{"PCH D", TEMP_PCH_ADDR},
 	{"Hinge C", TEMP_HINGE_ADDR},
 	{"Charger D", TEMP_CHARGER_ADDR},
+};
+
+struct keyboard_scan_config keyscan_config = {
+	.output_settle_us = 40,
+	.debounce_down_us = 6 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 1500,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = SECOND,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
+	},
 };
