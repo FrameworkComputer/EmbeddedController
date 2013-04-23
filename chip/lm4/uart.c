@@ -145,16 +145,17 @@ DECLARE_IRQ(LM4_IRQ_UART1, uart_1_interrupt, 2);
  */
 static void configure_gpio(void)
 {
-#ifdef BOARD_link
 	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
 	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
+
+#if defined(CONFIG_UART1_GPIOS_PC4_5)
 	/* UART1 RX and TX are GPIO PC4:5 alternate function 2 */
 	gpio_set_alternate_function(LM4_GPIO_C, 0x30, 2);
-#else
-	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
-	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
+#elif defined(CONFIG_UART1_GPIOS_PB0_1)
 	/* UART1 RX and TX are GPIO PB0:1 alternate function 1*/
 	gpio_set_alternate_function(LM4_GPIO_B, 0x03, 1);
+#else
+#error "Must put UART1 GPIOs somewhere"
 #endif
 }
 

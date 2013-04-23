@@ -35,6 +35,9 @@ enum adc_channel
 /* Number of I2C ports used */
 #define I2C_PORTS_USED 1
 
+/* GPIOs for second UART port */
+#define CONFIG_UART1_GPIOS_PB0_1
+
 /* GPIO signal list */
 enum gpio_signal {
 	GPIO_RECOVERYn = 0,       /* Recovery signal from DOWN button */

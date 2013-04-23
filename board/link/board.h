@@ -119,6 +119,9 @@ enum adc_channel
 /* USB charge port */
 #define USB_CHARGE_PORT_COUNT 2
 
+/* GPIOs for second UART port */
+#define CONFIG_UART1_GPIOS_PC4_5
+
 /* GPIO signal definitions. */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
