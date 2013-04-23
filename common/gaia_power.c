@@ -673,13 +673,3 @@ DECLARE_CONSOLE_COMMAND(power, command_power,
 			"on/off",
 			"Turn AP power on/off",
 			NULL);
-
-static int command_warm_reboot(int argc, char **argv)
-{
-	chipset_reset(0);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(warm_reboot, command_warm_reboot,
-			NULL,
-			"EC triggered warm reboot",
-			NULL);

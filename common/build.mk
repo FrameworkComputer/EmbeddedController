@@ -32,6 +32,7 @@ common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_SMART_BATTERY)+=smart_battery.o smart_battery_stub.o
+common-$(CONFIG_TASK_CHIPSET)+=chipset.o
 common-$(CONFIG_TASK_CONSOLE)+=console.o
 common-$(CONFIG_TASK_HOSTCMD)+=host_command.o host_event_commands.o
 common-$(CONFIG_TASK_KEYSCAN)+=keyboard_scan.o

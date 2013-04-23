@@ -702,25 +702,6 @@ void chipset_task(void)
 /*****************************************************************************/
 /* Console commands */
 
-static int command_x86reset(int argc, char **argv)
-{
-	int is_cold = 1;
-
-	if (argc > 1 && !strcasecmp(argv[1], "cold"))
-		is_cold = 1;
-	else if (argc > 1 && !strcasecmp(argv[1], "warm"))
-		is_cold = 0;
-
-	/* Force the x86 to reset */
-	ccprintf("Issuing x86 %s reset...\n", is_cold ? "cold" : "warm");
-	chipset_reset(is_cold);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(x86reset, command_x86reset,
-			"[warm | cold]",
-			"Issue x86 reset",
-			NULL);
-
 static int command_powerinfo(int argc, char **argv)
 {
 	/*
@@ -735,16 +716,6 @@ static int command_powerinfo(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 			NULL,
 			"Show current x86 power state",
-			NULL);
-
-static int command_x86shutdown(int argc, char **argv)
-{
-	chipset_force_shutdown();
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(x86shutdown, command_x86shutdown,
-			NULL,
-			"Force x86 shutdown",
 			NULL);
 
 static int command_x86indebug(int argc, char **argv)
