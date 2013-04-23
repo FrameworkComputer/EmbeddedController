@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "task.h"
@@ -49,6 +50,14 @@ static uint8_t mock_state[KEYBOARD_COLS];
 static int column_driven;
 static int fifo_add_count;
 static int error_count;
+static int lid_open;
+
+int gpio_get_level(enum gpio_signal signal)
+{
+	if (signal == GPIO_LID_OPEN)
+		return lid_open;
+	return 0;
+}
 
 void keyboard_raw_drive_column(int out)
 {
@@ -227,12 +236,31 @@ int debounce_test(void)
 	return EC_SUCCESS;
 }
 
+int lid_test(void)
+{
+	lid_open = 0;
+	mock_key(1, 1, 1);
+	TEST_ASSERT(expect_no_keychange);
+	mock_key(1, 1, 0);
+	TEST_ASSERT(expect_no_keychange);
+
+	lid_open = 1;
+	mock_key(1, 1, 1);
+	TEST_ASSERT(expect_keychange);
+	mock_key(1, 1, 0);
+	TEST_ASSERT(expect_keychange);
+
+	return EC_SUCCESS;
+}
+
 static int command_run_test(int argc, char **argv)
 {
 	error_count = 0;
+	lid_open = 1;
 
 	RUN_TEST(deghost_test);
 	RUN_TEST(debounce_test);
+	RUN_TEST(lid_test);
 
 	if (error_count == 0) {
 		ccprintf("Pass!\n");
