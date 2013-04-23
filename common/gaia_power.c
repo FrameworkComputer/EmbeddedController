@@ -30,6 +30,7 @@
 #include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "lid_switch.h"
 #include "keyboard_scan.h"
 #include "power_led.h"
 #include "pmu_tpschrome.h"
@@ -102,8 +103,8 @@ static int force_value;
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
 
-/* 1 if a change in lid switch state has been detected */
-static char lid_changed;
+/* 1 if lid-open event has been detected */
+static char lid_opened;
 
 /* time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
@@ -245,7 +246,7 @@ void gaia_suspend_event(enum gpio_signal signal)
 	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
 
 	if (ap_suspended) {
-		if (gpio_get_level(GPIO_LID_OPEN))
+		if (lid_is_open())
 			powerled_set_state(POWERLED_STATE_SUSPEND);
 		else
 			powerled_set_state(POWERLED_STATE_OFF);
@@ -263,18 +264,21 @@ void gaia_power_event(enum gpio_signal signal)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-void gaia_lid_event(enum gpio_signal signal)
+static void gaia_lid_event(void)
 {
-	/* inform power task that lid switch has changed */
-	lid_changed = 1;
+	/* Power task only cares about lid-open events */
+	if (!lid_is_open())
+		return;
+
+	lid_opened = 1;
 	task_wake(TASK_ID_CHIPSET);
 }
+DECLARE_HOOK(HOOK_LID_CHANGE, gaia_lid_event, HOOK_PRIO_DEFAULT);
 
 static int gaia_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
-	gpio_enable_interrupt(GPIO_LID_OPEN);
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
@@ -347,10 +351,10 @@ void chipset_force_shutdown(void)
 /**
  * Check if there has been a power-on event
  *
- * This checks all power-on event signals and returns boolean 0 or 1 to
- * indicate if any have been triggered (with debounce taken into account).
+ * This checks all power-on event signals and returns non-zero if any have been
+ * triggered (with debounce taken into account).
  *
- * @return 1 if there has been a power-on event, 0 if not
+ * @return non-zero if there has been a power-on event, 0 if not.
  */
 static int check_for_power_on_event(void)
 {
@@ -368,13 +372,10 @@ static int check_for_power_on_event(void)
 		return 2;
 	}
 
-	/* to avoid false positives, check lid only if a change was detected */
-	if (lid_changed) {
-		udelay(LID_SWITCH_DEBOUNCE);
-		if (gpio_get_level(GPIO_LID_OPEN) == 1) {
-			lid_changed = 0;
-			return 3;
-		}
+	/* Check lid open */
+	if (lid_opened) {
+		lid_opened = 0;
+		return 3;
 	}
 
 	/* check for power button press */
@@ -508,7 +509,7 @@ static void power_off(void)
 	chipset_force_shutdown();
 	ap_on = 0;
 	ap_suspended = 0;
-	lid_changed = 0;
+	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
 	pmu_shutdown();

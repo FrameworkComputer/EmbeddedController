@@ -16,14 +16,12 @@
  * Interrupt handlers for Gaia chipset GPIOs.
  */
 void gaia_power_event(enum gpio_signal signal);
-void gaia_lid_event(enum gpio_signal signal);
 void gaia_suspend_event(enum gpio_signal signal);
 
 #else
 
 #define gaia_power_event NULL
 #define gaia_suspend_event NULL
-#define gaia_lid_event NULL
 
 #endif
 

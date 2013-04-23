@@ -16,6 +16,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
+#include "lid_switch.h"
 #include "pmu_tpschrome.h"
 #include "registers.h"
 #include "stm32_adc.h"
@@ -35,7 +36,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, gaia_power_event},
 	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_FALLING, pmu_irq_handler},
-	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_RISING, gaia_lid_event},
+	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
 	{"SUSPEND_L",   GPIO_A, (1<<7),  INT_BOTH_FLOATING, gaia_suspend_event},
 	{"WP_L",        GPIO_A, (1<<13), GPIO_INPUT, NULL},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
