@@ -373,8 +373,10 @@ static void state_machine(uint64_t tnow)
 		 * Otherwise we could power on the AP only to shut it right
 		 * back down due to insufficient battery.
 		 */
+#ifdef CONFIG_TASK_CHARGER
 		if (charge_get_state() == PWR_STATE_INIT)
 			break;
+#endif
 
 		/*
 		 * Power the system on if possible.  Gating due to insufficient
