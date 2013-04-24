@@ -632,6 +632,21 @@ void pmu_init(void)
 static void pmu_chipset_startup(void)
 {
 	pmu_init();
+
+#ifdef BOARD_pit
+	/* Enable all FETs.
+	 *
+	 * TODO: This is temporary code; remove when I2C passthru is working
+	 * (crosbug.com/p/18778).
+	 */
+	{
+		int i;
+		int pgood;
+
+		for (i = 1; i <= 7; i++)
+			pmu_enable_fet(i, 1, &pgood);
+	}
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_startup, HOOK_PRIO_DEFAULT);
 
