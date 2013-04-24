@@ -85,7 +85,7 @@ static void power_led_use_pwm(void)
 
 	power_led_set_duty(100);
 
-#ifdef BOARD_PIT
+#ifdef BOARD_pit
 	/* CC3 configured as output, PWM mode 1, preload enable */
 	STM32_TIM_CCMR2(2) = (6 << 4) | (1 << 3);
 
