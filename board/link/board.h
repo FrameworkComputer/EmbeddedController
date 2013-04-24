@@ -44,35 +44,6 @@
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
 #define FAN_CH_POWER_LED 5  /* Power adapter LED */
 
-/* TODO: these should really only be used inside lpc.c; once they are, remove
- * from board header files. */
-/* LPC channels */
-#define LPC_CH_ACPI     0  /* ACPI commands */
-#define LPC_CH_PORT80   1  /* Port 80 debug output */
-#define LPC_CH_CMD_DATA 2  /* Data for host commands (args/params/response) */
-#define LPC_CH_KEYBOARD 3  /* 8042 keyboard emulation */
-#define LPC_CH_CMD      4  /* Host commands */
-#define LPC_CH_MEMMAP   5  /* Memory-mapped data */
-#define LPC_CH_COMX     7  /* UART emulation */
-/* LPC pool offsets */
-#define LPC_POOL_OFFS_ACPI       0  /* ACPI commands - 0=in, 1=out */
-#define LPC_POOL_OFFS_PORT80     4  /* Port 80 - 4=in, 5=out */
-#define LPC_POOL_OFFS_COMX       8  /* UART emulation range - 8-15 */
-#define LPC_POOL_OFFS_KEYBOARD  16  /* Keyboard - 16=in, 17=out */
-#define LPC_POOL_OFFS_CMD       20  /* Host commands - 20=in, 21=out */
-#define LPC_POOL_OFFS_CMD_DATA 512  /* Data range for host commands - 512-767 */
-#define LPC_POOL_OFFS_MEMMAP   768  /* Memory-mapped data - 768-1023 */
-/* LPC pool data pointers */
-#define LPC_POOL_ACPI     (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_ACPI)
-#define LPC_POOL_PORT80   (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_PORT80)
-#define LPC_POOL_COMX     (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_COMX)
-#define LPC_POOL_KEYBOARD (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_KEYBOARD)
-#define LPC_POOL_CMD      (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_CMD)
-#define LPC_POOL_CMD_DATA (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_CMD_DATA)
-#define LPC_POOL_MEMMAP   (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_MEMMAP)
-/* LPC COMx I/O address (in x86 I/O address space) */
-#define LPC_COMX_ADDR 0x3f8  /* COM1 */
-
 enum adc_channel
 {
 	/* EC internal die temperature in degrees K. */

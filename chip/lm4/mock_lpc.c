@@ -12,6 +12,7 @@
 #include "registers.h"
 #include "uart.h"
 
+
 void lpc_set_host_event_state(uint32_t mask)
 {
 	uart_printf("Host event: %x\n", mask);
@@ -64,6 +65,8 @@ void lpc_comx_put_char(int c)
 	return;
 }
 
+#define LPC_POOL_OFFS_CMD_DATA 512  /* Data range for host commands - 512-767 */
+#define LPC_POOL_CMD_DATA (LM4_LPC_LPCPOOL + LPC_POOL_OFFS_CMD_DATA)
 
 uint8_t *lpc_get_memmap_range(void)
 {
