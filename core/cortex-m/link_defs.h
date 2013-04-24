@@ -38,6 +38,8 @@ extern const struct hook_data __hooks_ac_change[];
 extern const struct hook_data __hooks_ac_change_end[];
 extern const struct hook_data __hooks_lid_change[];
 extern const struct hook_data __hooks_lid_change_end[];
+extern const struct hook_data __hooks_pwrbtn_change[];
+extern const struct hook_data __hooks_pwrbtn_change_end[];
 extern const struct hook_data __hooks_tick[];
 extern const struct hook_data __hooks_tick_end[];
 extern const struct hook_data __hooks_second[];

@@ -25,6 +25,8 @@ enum hook_priority {
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 2,
 	/* Lid switch inits before power button */
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 3,
+	/* Power button inits before chipset and switch */
+	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 4,
 };
 
 enum hook_type {
@@ -104,6 +106,14 @@ enum hook_type {
 	 * Hook routines are called from the chipset task.
 	 */
 	HOOK_LID_CHANGE,
+
+	/*
+	 * Power button pressed or released.  Based on debounced power button
+	 * state, not raw GPIO input.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_POWER_BUTTON_CHANGE,
 
 	/*
 	 * Periodic tick, every HOOK_TICK_INTERVAL.

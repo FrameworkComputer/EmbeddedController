@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_switch.h"
 #include "timer.h"
 #include "util.h"
 

@@ -27,9 +27,4 @@ void keyboard_host_write(int data, int is_cmd);
  */
 void keyboard_state_changed(int row, int col, int is_pressed);
 
-/**
- * Send make/break code of power button to host.
- */
-void keyboard_set_power_button(int pressed);
-
 #endif  /* __CROS_EC_KEYBOARD_8042_H */

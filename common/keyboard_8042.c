@@ -15,6 +15,7 @@
 #include "keyboard_protocol.h"
 #include "lightbar.h"
 #include "lpc.h"
+#include "power_button.h"
 #include "queue.h"
 #include "registers.h"
 #include "shared_mem.h"
@@ -831,34 +832,6 @@ static void keyboard_special(uint16_t k)
 	}
 }
 
-
-void keyboard_set_power_button(int pressed)
-{
-	enum scancode_set_list code_set;
-	uint8_t code[2][2][3] = {
-		{  /* set 1 */
-			{0xe0, 0xde},        /* break */
-			{0xe0, 0x5e},        /* make */
-		}, {  /* set 2 */
-			{0xe0, 0xf0, 0x37},  /* break */
-			{0xe0, 0x37},        /* make */
-		}
-	};
-
-	power_button_pressed = pressed;
-
-	/* Only send the scan code if main chipset is fully awake */
-	if (!chipset_in_state(CHIPSET_STATE_ON))
-		return;
-
-	code_set = acting_code_set(scancode_set);
-	if (keystroke_enabled) {
-		i8042_send_to_host(
-			 (code_set == SCANCODE_SET_2 && !pressed) ? 3 : 2,
-			 code[code_set - SCANCODE_SET_1][pressed]);
-	}
-}
-
 void keyboard_protocol_task(void)
 {
 	int wait = -1;
@@ -1097,3 +1070,36 @@ static void keyboard_restore_state(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);
+
+/**
+ * Handle power button changing state.
+ */
+static void keyboard_power_button(void)
+{
+	enum scancode_set_list code_set;
+	uint8_t code[2][2][3] = {
+		{  /* set 1 */
+			{0xe0, 0xde},        /* break */
+			{0xe0, 0x5e},        /* make */
+		}, {  /* set 2 */
+			{0xe0, 0xf0, 0x37},  /* break */
+			{0xe0, 0x37},        /* make */
+		}
+	};
+
+	power_button_pressed = power_button_is_pressed();
+
+	/*
+	 * Only send the scan code if main chipset is fully awake and
+	 * keystrokes are enabled.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
+		return;
+
+	code_set = acting_code_set(scancode_set);
+	i8042_send_to_host(
+		(code_set == SCANCODE_SET_2 && !power_button_pressed) ? 3 : 2,
+		code[code_set - SCANCODE_SET_1][power_button_pressed]);
+}
+DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
+	     HOOK_PRIO_DEFAULT);

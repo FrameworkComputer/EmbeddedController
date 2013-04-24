@@ -30,6 +30,7 @@ common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LP5562)+=lp5562.o lp5562_battery_led.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
+common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_SMART_BATTERY)+=smart_battery.o smart_battery_stub.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o

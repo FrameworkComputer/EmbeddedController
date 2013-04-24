@@ -14,6 +14,7 @@
 #include "lid_switch.h"
 #include "lm4_adc.h"
 #include "peci.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -26,7 +27,7 @@
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTON_L",       LM4_GPIO_K, (1<<7), GPIO_INT_BOTH,
-	 switch_interrupt},
+	 power_button_interrupt},
 	{"LID_OPEN",             LM4_GPIO_K, (1<<5), GPIO_INT_BOTH,
 	 lid_interrupt},
 	/* Other inputs */
