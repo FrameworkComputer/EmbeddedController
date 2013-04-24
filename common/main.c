@@ -119,7 +119,7 @@ int main(void)
 #ifdef CONFIG_EOPTION
 	eoption_init();
 #endif
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
 

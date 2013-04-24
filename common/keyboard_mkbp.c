@@ -148,7 +148,7 @@ void keyboard_send_battery_key(void)
 {
 	uint8_t state[KEYBOARD_COLS];
 
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 	/* Copy debounced state and add battery pseudo-key */
 	memcpy(state, keyboard_scan_get_state(), sizeof(state));
 #else
@@ -198,7 +198,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 			       struct ec_mkbp_protocol_config *dst,
 			       uint32_t valid_mask, uint8_t new_flags)
 {
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 	struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	if (valid_mask & EC_MKBP_VALID_SCAN_PERIOD)
@@ -238,7 +238,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 
 static void get_keyscan_config(struct ec_mkbp_config *dst)
 {
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	/* Copy fields from keyscan config to mkbp config */

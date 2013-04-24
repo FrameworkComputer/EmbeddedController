@@ -160,7 +160,7 @@ void pwm_set_fan_duty(int percent)
 	/* Always enable the fan */
 	pwm_enable_fan(1);
 
-#ifdef CONFIG_TASK_THERMAL
+#ifdef HAS_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
 	thermal_control_fan(0);
 #endif
@@ -223,7 +223,7 @@ static int command_fan_set(int argc, char **argv)
 	/* Always enable the fan */
 	pwm_enable_fan(1);
 
-#ifdef CONFIG_TASK_THERMAL
+#ifdef HAS_TASK_THERMAL
 	/* Disable thermal engine automatic fan control. */
 	thermal_control_fan(0);
 #endif
@@ -297,7 +297,7 @@ int pwm_command_set_fan_target_rpm(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_fan_target_rpm *p = args->params;
 
-#ifdef CONFIG_TASK_THERMAL
+#ifdef HAS_TASK_THERMAL
 	thermal_control_fan(0);
 #endif
 	pwm_set_rpm_mode(1);

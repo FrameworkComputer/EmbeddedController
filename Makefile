@@ -30,7 +30,7 @@ else
 		    -Iboard/$(BOARD) -D"TASK_NOTEST(n, r, d, s)=n" \
 		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros ec.tasklist)
 endif
-_tsk_cfg:=$(foreach t,$(_tsk_lst) ,CONFIG_TASK_$(t))
+_tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dN chip/$(CHIP)/config.h | \
 		grep -o "CONFIG_.*") \

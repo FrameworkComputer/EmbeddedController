@@ -514,7 +514,7 @@ static void lpc_interrupt(void)
 	/* Clear the interrupt bits we're handling */
 	LM4_LPC_LPCIC = mis;
 
-#ifdef CONFIG_TASK_HOSTCMD
+#ifdef HAS_TASK_HOSTCMD
 	/* Handle ACPI command and data writes */
 	st = LM4_LPC_ST(LPC_CH_ACPI);
 	if (st & LM4_LPC_ST_FRMH)
@@ -536,7 +536,7 @@ static void lpc_interrupt(void)
 	while (LM4_LPC_ST(LPC_CH_PORT80) & LM4_LPC_ST_FRMH)
 		port_80_write(LPC_POOL_PORT80[0]);
 
-#ifdef CONFIG_TASK_KEYPROTO
+#ifdef HAS_TASK_KEYPROTO
 	/* Handle keyboard interface writes */
 	st = LM4_LPC_ST(LPC_CH_KEYBOARD);
 	if (st & LM4_LPC_ST_FRMH)

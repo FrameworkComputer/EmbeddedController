@@ -34,7 +34,7 @@ enum chipset_state_mask {
 				 CHIPSET_STATE_SOFT_OFF),  /* Any off state */
 };
 
-#ifdef CONFIG_TASK_CHIPSET
+#ifdef HAS_TASK_CHIPSET
 /**
  * Check if chipset is in a given state.
  *
@@ -51,7 +51,7 @@ static inline int chipset_in_state(int state_mask)
 }
 #endif
 
-#ifdef CONFIG_TASK_CHIPSET
+#ifdef HAS_TASK_CHIPSET
 /**
  * Ask the chipset to exit the hard off state.
  *

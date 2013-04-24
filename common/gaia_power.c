@@ -194,7 +194,7 @@ static int check_for_power_off_event(void)
 			pressed = 1;
 	}
 
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 	/* Dis/Enable keyboard scanning when the power button state changes */
 	if (!pressed || pressed != power_button_was_pressed)
 		keyboard_scan_enable(!pressed);

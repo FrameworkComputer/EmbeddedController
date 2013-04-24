@@ -268,7 +268,7 @@ static void get_battery_level(void)
 	if (demo_mode)
 		return;
 
-#ifdef CONFIG_TASK_CHARGER
+#ifdef HAS_TASK_CHARGER
 	pct = charge_get_percent();
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif

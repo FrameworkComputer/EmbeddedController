@@ -792,7 +792,7 @@ static void keyboard_special(uint16_t k)
 	static uint8_t s;
 	static const uint16_t a[] = {0xe048, 0xe048, 0xe050, 0xe050, 0xe04b,
 				     0xe04d, 0xe04b, 0xe04d, 0x0030, 0x001e};
-#ifdef CONFIG_TASK_LIGHTBAR
+#ifdef HAS_TASK_LIGHTBAR
 	/* Lightbar demo mode: keyboard can fake the battery state */
 	switch (k) {
 	case 0xe048:				/* up */
@@ -825,7 +825,7 @@ static void keyboard_special(uint16_t k)
 
 	if (s == ARRAY_SIZE(a)) {
 		s = 0;
-#ifdef CONFIG_TASK_LIGHTBAR
+#ifdef HAS_TASK_LIGHTBAR
 		lightbar_sequence(LIGHTBAR_KONAMI);
 #endif
 	}

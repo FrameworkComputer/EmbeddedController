@@ -20,7 +20,7 @@
 
 /* Optional features */
 #define CONFIG_BOARD_POST_GPIO_INIT
-#ifdef CONFIG_TASK_CHIPSET
+#ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
 #endif
 #define CONFIG_EXTPOWER_SNOW

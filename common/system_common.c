@@ -863,7 +863,7 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	}
 
-#ifdef CONFIG_TASK_HOSTCMD
+#ifdef HAS_TASK_HOSTCMD
 	if (p.cmd == EC_REBOOT_JUMP_RO ||
 	    p.cmd == EC_REBOOT_JUMP_RW ||
 	    p.cmd == EC_REBOOT_COLD ||

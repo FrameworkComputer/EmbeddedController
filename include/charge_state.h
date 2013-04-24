@@ -146,7 +146,7 @@ int charge_get_percent(void);
 /**
  * Return non-zero if discharging and battery so low we should shut down.
  */
-#ifdef CONFIG_TASK_CHARGER
+#ifdef HAS_TASK_CHARGER
 int charge_want_shutdown(void);
 #else
 static inline int charge_want_shutdown(void) { return 0; }

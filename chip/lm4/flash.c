@@ -299,7 +299,7 @@ uint32_t flash_get_protect(void)
 	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-#ifdef CONFIG_TASK_SWITCH
+#ifdef HAS_TASK_SWITCH
 	/* Check if write protect pin is asserted now */
 	if (switch_get_write_protect())
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;

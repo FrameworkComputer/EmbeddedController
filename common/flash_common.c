@@ -49,7 +49,7 @@ test_mockable int flash_write(int offset, int size, const char *data)
 	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-#ifdef CONFIG_TASK_VBOOTHASH
+#ifdef HAS_TASK_VBOOTHASH
 	vboot_hash_invalidate(offset, size);
 #endif
 
@@ -61,7 +61,7 @@ test_mockable int flash_erase(int offset, int size)
 	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-#ifdef CONFIG_TASK_VBOOTHASH
+#ifdef HAS_TASK_VBOOTHASH
 	vboot_hash_invalidate(offset, size);
 #endif
 
@@ -303,7 +303,7 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 
 	/* Indicate that we might be a while */
-#ifdef CONFIG_TASK_HOSTCMD
+#ifdef HAS_TASK_HOSTCMD
 	args->result = EC_RES_IN_PROGRESS;
 	host_send_response(args);
 #endif

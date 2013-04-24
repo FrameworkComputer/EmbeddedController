@@ -60,7 +60,7 @@ int keyboard_raw_read_rows(void);
  */
 void keyboard_raw_enable_interrupt(int enable);
 
-#ifdef CONFIG_TASK_KEYSCAN
+#ifdef HAS_TASK_KEYSCAN
 
 /**
  * GPIO interrupt for raw keyboard input
