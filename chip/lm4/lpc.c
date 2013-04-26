@@ -386,7 +386,7 @@ static void handle_acpi_write(int is_cmd)
 		case EC_ACPI_MEM_TEST_COMPLIMENT:
 			result = 0xff - acpi_mem_test;
 			break;
-#ifdef CONFIG_PWM
+#ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			/*
 			 * TODO: not very satisfying that LPC knows directly
@@ -412,7 +412,7 @@ static void handle_acpi_write(int is_cmd)
 			CPRINTF("[%T ACPI mem test 0x%02x]\n", data);
 			acpi_mem_test = data;
 			break;
-#ifdef CONFIG_PWM
+#ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			/*
 			 * Debug output with CR not newline, because the host

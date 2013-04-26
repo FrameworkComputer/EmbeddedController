@@ -1,10 +1,11 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* PWM control module for Chrome EC */
+/* PWM control module for Chromebook fans */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -32,24 +33,21 @@
  */
 #define CPU_FAN_SCALE 2
 
-#define PWM_SYSJUMP_TAG 0x504d  /* "PM" */
+#define PWMFAN_SYSJUMP_TAG 0x5046  /* "PF" */
 #define PWM_HOOK_VERSION 1
 /* Saved PWM state across sysjumps */
-struct pwm_state {
+struct pwm_fan_state {
 	uint16_t fan_rpm;
 	uint8_t fan_en;
-	uint8_t kblight_en;
-	uint8_t kblight_percent;
 	char pad; /* Pad to multiple of 4 bytes. */
 };
 
 /**
  * Configure the GPIOs for the pwm module.
  */
-static void configure_gpios(void)
+static void configure_fan_gpios(void)
 {
-	/* PK6 alternate function 1 = channel 1 PWM */
-	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
+	/* HEY: this is Link only */
 	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
 	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
 }
@@ -72,7 +70,7 @@ static int pwm_get_rpm_mode(void)
 	return (LM4_FAN_FANCH(FAN_CH_CPU) & 0x0001) ? 0 : 1;
 }
 
-void pwm_set_rpm_mode(int rpm_mode)
+void pwm_set_fan_rpm_mode(int rpm_mode)
 {
 	int was_enabled = pwm_get_fan_enabled();
 	int was_rpm = pwm_get_rpm_mode();
@@ -114,35 +112,6 @@ void pwm_set_fan_target_rpm(int rpm)
 	LM4_FAN_FANCMD(FAN_CH_CPU) = rpm;
 }
 
-void pwm_enable_keyboard_backlight(int enable)
-{
-	if (enable)
-		LM4_FAN_FANCTL |= (1 << FAN_CH_KBLIGHT);
-	else
-		LM4_FAN_FANCTL &= ~(1 << FAN_CH_KBLIGHT);
-}
-
-int pwm_get_keyboard_backlight_enabled(void)
-{
-	return (LM4_FAN_FANCTL & (1 << FAN_CH_KBLIGHT)) ? 1 : 0;
-}
-
-int pwm_get_keyboard_backlight(void)
-{
-	return ((LM4_FAN_FANCMD(FAN_CH_KBLIGHT) >> 16) * 100 +
-		MAX_PWM / 2) / MAX_PWM;
-}
-
-void pwm_set_keyboard_backlight(int percent)
-{
-	if (percent < 0)
-		percent = 0;
-	else if (percent > 100)
-		percent = 100;
-
-	LM4_FAN_FANCMD(FAN_CH_KBLIGHT) = ((percent * MAX_PWM + 50) / 100) << 16;
-}
-
 void pwm_set_fan_duty(int percent)
 {
 	int pwm;
@@ -155,7 +124,7 @@ void pwm_set_fan_duty(int percent)
 	pwm = (MAX_PWM * percent) / 100;
 
 	/* Move the fan to manual control */
-	pwm_set_rpm_mode(0);
+	pwm_set_fan_rpm_mode(0);
 
 	/* Always enable the fan */
 	pwm_enable_fan(1);
@@ -217,8 +186,8 @@ static int command_fan_set(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM1;
 
-        /* Move the fan to automatic control */
-	pwm_set_rpm_mode(1);
+	/* Move the fan to automatic control */
+	pwm_set_fan_rpm_mode(1);
 
 	/* Always enable the fan */
 	pwm_enable_fan(1);
@@ -259,24 +228,6 @@ DECLARE_CONSOLE_COMMAND(fanduty, ec_command_fan_duty,
 			"Set fan duty cycle",
 			NULL);
 
-static int command_kblight(int argc, char **argv)
-{
-	if (argc >= 2) {
-		char *e;
-		int i = strtoi(argv[1], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
-		pwm_set_keyboard_backlight(i);
-	}
-
-	ccprintf("Keyboard backlight: %d%%\n", pwm_get_keyboard_backlight());
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(kblight, command_kblight,
-			"percent",
-			"Set keyboard backlight",
-			NULL);
-
 /*****************************************************************************/
 /* Host commands */
 
@@ -300,7 +251,7 @@ int pwm_command_set_fan_target_rpm(struct host_cmd_handler_args *args)
 #ifdef HAS_TASK_THERMAL
 	thermal_control_fan(0);
 #endif
-	pwm_set_rpm_mode(1);
+	pwm_set_fan_rpm_mode(1);
 	pwm_set_fan_target_rpm(p->rpm);
 
 	return EC_RES_SUCCESS;
@@ -320,49 +271,22 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY,
 		     pwm_command_fan_duty,
 		     EC_VER_MASK(0));
 
-int pwm_command_get_keyboard_backlight(struct host_cmd_handler_args *args)
-{
-	struct ec_response_pwm_get_keyboard_backlight *r = args->response;
-
-	r->percent = pwm_get_keyboard_backlight();
-	r->enabled = pwm_get_keyboard_backlight_enabled();
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
-		     pwm_command_get_keyboard_backlight,
-		     EC_VER_MASK(0));
-
-int pwm_command_set_keyboard_backlight(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_pwm_set_keyboard_backlight *p = args->params;
-
-	pwm_set_keyboard_backlight(p->percent);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT,
-		     pwm_command_set_keyboard_backlight,
-		     EC_VER_MASK(0));
-
 /*****************************************************************************/
 /* Hooks */
 
-static void pwm_init(void)
+static void pwm_fan_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-	const struct pwm_state *prev;
+	const struct pwm_fan_state *prev;
 	uint16_t *mapped;
 	int version, size;
 	int i;
 
 	/* Enable the fan module and delay a few clocks */
 	LM4_SYSTEM_RCGCFAN = 1;
-	scratch = LM4_SYSTEM_RCGCFAN;
+	clock_wait_cycles(3);
 
 	/* Configure GPIOs */
-	configure_gpios();
+	configure_fan_gpios();
 
 	/* Disable all fans */
 	LM4_FAN_FANCTL = 0;
@@ -381,38 +305,15 @@ static void pwm_init(void)
 	 */
 	LM4_FAN_FANCH(FAN_CH_CPU) = 0x802c;
 
-	/*
-	 * Configure keyboard backlight:
-	 * 0x0000 = bit 15     = auto-restart
-	 * 0x0000 = bit 14     = slow acceleration
-	 * 0x0000 = bits 13:11 = no hysteresis
-	 * 0x0000 = bits 10:8  = start period (2<<0) edges
-	 * 0x0000 = bits 7:6   = no fast start
-	 * 0x0000 = bits 5:4   = average 4 edges when calculating RPM
-	 * 0x0000 = bits 3:2   = 4 pulses per revolution
-	 * 0x0001 = bit 0      = manual control
-	 */
-	LM4_FAN_FANCH(FAN_CH_KBLIGHT) = 0x0001;
-
-	prev = (const struct pwm_state *)system_get_jump_tag(PWM_SYSJUMP_TAG,
-							     &version, &size);
+	prev = (const struct pwm_fan_state *)
+		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
 		/* Restore previous state. */
 		pwm_enable_fan(prev->fan_en);
 		pwm_set_fan_target_rpm(prev->fan_rpm);
-		pwm_enable_keyboard_backlight(prev->kblight_en);
-		pwm_set_keyboard_backlight(prev->kblight_percent);
-	}
-	else {
-		/* Set initial fan speed to maximum, backlight off */
+	} else {
+		/* Set initial fan speed to maximum */
 		pwm_set_fan_target_rpm(-1);
-		pwm_set_keyboard_backlight(0);
-
-		/*
-		 * Enable keyboard backlight.  Fan will be enabled later by
-		 * whatever controls the fan power supply.
-		 */
-		pwm_enable_keyboard_backlight(1);
 	}
 
 	/* Initialize memory-mapped data */
@@ -420,9 +321,9 @@ static void pwm_init(void)
 	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
 		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
 }
-DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT);
 
-static void pwm_second(void)
+static void pwm_fan_second(void)
 {
 	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
 
@@ -438,38 +339,29 @@ static void pwm_second(void)
 		mapped[0] = pwm_get_fan_rpm();
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, pwm_second, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, pwm_fan_second, HOOK_PRIO_DEFAULT);
 
-static void pwm_preserve_state(void)
+static void pwm_fan_preserve_state(void)
 {
-	struct pwm_state state;
+	struct pwm_fan_state state;
 
 	state.fan_en = pwm_get_fan_enabled();
 	state.fan_rpm = pwm_get_fan_target_rpm();
-	state.kblight_en = pwm_get_keyboard_backlight_enabled();
-	state.kblight_percent = pwm_get_keyboard_backlight();
 
-	system_add_jump_tag(PWM_SYSJUMP_TAG, PWM_HOOK_VERSION,
+	system_add_jump_tag(PWMFAN_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(state), &state);
 }
-DECLARE_HOOK(HOOK_SYSJUMP, pwm_preserve_state, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SYSJUMP, pwm_fan_preserve_state, HOOK_PRIO_DEFAULT);
 
-static void pwm_resume(void)
+static void pwm_fan_resume(void)
 {
 	pwm_enable_fan(1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
 
-static void pwm_suspend(void)
+static void pwm_fan_suspend(void)
 {
 	pwm_enable_fan(0);
 	pwm_set_fan_target_rpm(0);
-	pwm_set_keyboard_backlight(0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_suspend, HOOK_PRIO_DEFAULT);
-
-static void pwm_shutdown(void)
-{
-	pwm_set_keyboard_backlight(0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_suspend, HOOK_PRIO_DEFAULT);

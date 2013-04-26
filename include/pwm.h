@@ -23,7 +23,7 @@ void pwm_enable_fan(int enable);
  * @param rpm_mode	Enable (1) or disable (0) RPM control loop; when
  *			disabled, fan duty cycle will be used.
  */
-void pwm_set_rpm_mode(int enable);
+void pwm_set_fan_rpm_mode(int enable);
 
 /**
  * Get the current fan RPM.
