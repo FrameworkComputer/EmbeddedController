@@ -57,7 +57,7 @@ static const char * const state_list[] = {
 static timestamp_t last_waken; /* Initialized to 0 */
 static int has_pending_event;
 
-static enum charging_state current_state = ST_IDLE;
+static enum charging_state current_state = ST_REINIT;
 
 static void enable_charging(int enable)
 {
@@ -103,7 +103,7 @@ static int system_off(void)
 		chipset_force_shutdown();
 	}
 
-	return ST_IDLE;
+	return ST_REINIT;
 }
 
 /*
@@ -188,6 +188,8 @@ static int calc_next_state(int state)
 	int batt_temp, alarm, capacity, charge;
 
 	switch (state) {
+	case ST_REINIT:
+	case ST_BAD_COND:
 	case ST_IDLE:
 		/* Check AC and chiset state */
 		if (!extpower_is_present()) {
@@ -198,12 +200,12 @@ static int calc_next_state(int state)
 
 		/* Stay in idle mode if charger overtemp */
 		if (pmu_is_charger_alarm())
-			return ST_IDLE;
+			return ST_BAD_COND;
 
 		/* Enable charging when battery doesn't respond */
 		if (battery_temperature(&batt_temp)) {
 			if (config_low_current_charging(0))
-				return ST_IDLE;
+				return ST_BAD_COND;
 			return ST_PRE_CHARGING;
 		}
 
@@ -211,11 +213,11 @@ static int calc_next_state(int state)
 		 * of the start charging range.
 		 */
 		if (!battery_start_charging_range(batt_temp))
-			return ST_IDLE;
+			return ST_BAD_COND;
 
 		/* Turn off charger on battery charging alarm */
 		if (battery_status(&alarm) || (alarm & ALARM_CHARGING))
-			return ST_IDLE;
+			return ST_BAD_COND;
 
 		/* Start charging only when battery charge lower than 100% */
 		if (!battery_state_of_charge(&charge)) {
@@ -228,18 +230,18 @@ static int calc_next_state(int state)
 
 	case ST_PRE_CHARGING:
 		if (!extpower_is_present())
-			return ST_IDLE;
+			return ST_REINIT;
 
 		/* If the battery goes online after enable the charger,
 		 * go into charging state.
 		 */
 		if (battery_temperature(&batt_temp) == EC_SUCCESS) {
 			if (!battery_start_charging_range(batt_temp))
-				return ST_IDLE;
+				return ST_REINIT;
 			if (!battery_state_of_charge(&charge)) {
 				config_low_current_charging(charge);
 				if (charge >= 100)
-					return ST_IDLE;
+					return ST_REINIT;
 			}
 			return ST_CHARGING;
 		}
@@ -249,7 +251,7 @@ static int calc_next_state(int state)
 	case ST_CHARGING:
 		/* Go back to idle state when AC is unplugged */
 		if (!extpower_is_present())
-			return ST_IDLE;
+			return ST_REINIT;
 
 		/*
 		 * Disable charging on battery access error, or charging
@@ -258,7 +260,7 @@ static int calc_next_state(int state)
 		if (battery_temperature(&batt_temp)) {
 			CPUTS("[pmu] charging: unable to get battery "
 			      "temperature\n");
-			return ST_IDLE;
+			return ST_REINIT;
 		} else if (!battery_charging_range(batt_temp)) {
 			CPRINTF("[pmu] charging: temperature out of range "
 				"%dC\n",
@@ -272,13 +274,13 @@ static int calc_next_state(int state)
 		 *   - over current
 		 */
 		if (battery_status(&alarm))
-			return ST_IDLE;
+			return ST_REINIT;
 
 		if (alarm & ALARM_CHARGING) {
 			CPUTS("[pmu] charging: battery alarm\n");
 			if (alarm & ALARM_OVER_TEMP)
 				return ST_CHARGING_ERROR;
-			return ST_IDLE;
+			return ST_REINIT;
 		}
 
 		/*
@@ -288,7 +290,7 @@ static int calc_next_state(int state)
 		 */
 		if (pmu_is_charger_alarm()) {
 			CPUTS("[pmu] charging: charger alarm\n");
-			return ST_IDLE;
+			return ST_REINIT;
 		}
 
 		return ST_CHARGING;
@@ -317,17 +319,17 @@ static int calc_next_state(int state)
 			return ST_CHARGING;
 		}
 
-		return ST_IDLE;
+		return ST_REINIT;
 
 
 	case ST_DISCHARGING:
 		/* Go back to idle state when AC is plugged */
 		if (extpower_is_present())
-			return ST_IDLE;
+			return ST_REINIT;
 
 		/* Prepare EC sleep after system stopped discharging */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			return ST_IDLE;
+			return ST_REINIT;
 
 		/* Check battery discharging temperature range */
 		if (battery_temperature(&batt_temp) == 0) {
@@ -351,8 +353,7 @@ static int calc_next_state(int state)
 			 * Moving average is rounded to integer.
 			 */
 			if (rsoc_moving_average(capacity) < 3) {
-				system_off();
-				return ST_IDLE;
+				return system_off();
 			} else if (capacity < 10) {
 				notify_battery_low();
 			}
@@ -361,7 +362,7 @@ static int calc_next_state(int state)
 		return ST_DISCHARGING;
 	}
 
-	return ST_IDLE;
+	return ST_REINIT;
 }
 
 /* TODO: Merge charge_state.h and unify charge interface */
@@ -454,6 +455,8 @@ void charger_task(void)
 					enable_charging(1);
 				break;
 			case ST_IDLE:
+			case ST_REINIT:
+			case ST_BAD_COND:
 			case ST_DISCHARGING:
 				enable_charging(0);
 				/* Ignore charger error when discharging */

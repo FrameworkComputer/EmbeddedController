@@ -13,6 +13,8 @@
 /* Non-SBS charging states */
 enum charging_state {
 	ST_IDLE,
+	ST_REINIT,
+	ST_BAD_COND,
 	ST_PRE_CHARGING,
 	ST_CHARGING,
 	ST_CHARGING_ERROR,
