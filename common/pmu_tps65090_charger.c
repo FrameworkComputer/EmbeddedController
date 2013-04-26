@@ -47,6 +47,8 @@
 
 static const char * const state_list[] = {
 	"idle",
+	"reinit",
+	"bad cond",
 	"pre-charging",
 	"charging",
 	"charging error",
