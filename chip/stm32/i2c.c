@@ -57,7 +57,6 @@
  */
 #define I2C_BITBANG_DELAY_US	5
 
-#define NUM_PORTS 2
 #define I2C1      STM32_I2C1_PORT
 #define I2C2      STM32_I2C2_PORT
 
@@ -80,22 +79,21 @@ enum {
 	STOP_SENT_RETRY_US	= 150,
 };
 
-static const struct dma_option dma_tx_option[NUM_PORTS] = {
+static const struct dma_option dma_tx_option[I2C_PORT_COUNT] = {
 	{DMAC_I2C1_TX, (void *)&STM32_I2C_DR(I2C1),
 	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
 	{DMAC_I2C2_TX, (void *)&STM32_I2C_DR(I2C2),
 	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
 };
 
-static const struct dma_option dma_rx_option[NUM_PORTS] = {
+static const struct dma_option dma_rx_option[I2C_PORT_COUNT] = {
 	{DMAC_I2C1_RX, (void *)&STM32_I2C_DR(I2C1),
 	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
 	{DMAC_I2C2_RX, (void *)&STM32_I2C_DR(I2C2),
 	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
 };
 
-static uint16_t i2c_sr1[NUM_PORTS];
-static struct mutex i2c_mutex;
+static uint16_t i2c_sr1[I2C_PORT_COUNT];
 
 /* Buffer for host commands (including version, error code and checksum) */
 static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
@@ -710,7 +708,7 @@ cr_cleanup:
 	STM32_I2C_CR1(port) = (1 << 10) | (1 << 0);
 }
 
-static int i2c_master_transmit(int port, int slave_addr, uint8_t *data,
+static int i2c_master_transmit(int port, int slave_addr, const uint8_t *data,
 			       int size, int stop)
 {
 	int rv, rv_start;
@@ -804,32 +802,18 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 	return wait_until_stop_sent(port);
 }
 
-/**
- * Perform an I2C transaction, involve a write, and optional read.
- *
- * @param port		I2C port to use (e.g. I2C_PORT_HOST)
- * @param slave_addr	Slave address of chip to access on I2C bus
- * @param out		Buffer containing bytes to output
- * @param out_bytes	Number of bytes to send (must be >0)
- * @param in		Buffer to place input bytes
- * @param in_bytes	Number of bytse to receive
- * @return 0 if ok, else ER_ERROR...
- */
-static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
-		    uint8_t *in, int in_bytes)
+int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
+	     uint8_t *in, int in_bytes, int flags)
 {
 	int rv;
 
-	ASSERT(out && out_bytes);
+	/* TODO: support start/stop flags */
+
+	ASSERT(out || !out_bytes);
 	ASSERT(in || !in_bytes);
 
-	disable_sleep(SLEEP_MASK_I2C);
-	mutex_lock(&i2c_mutex);
-
-	if (i2c_claim(port)) {
-		rv = EC_ERROR_BUSY;
-		goto err_claim;
-	}
+	if (i2c_claim(port))
+		return EC_ERROR_BUSY;
 
 	disable_i2c_interrupt(port);
 
@@ -843,58 +827,25 @@ static int i2c_xfer(int port, int slave_addr, uint8_t *out, int out_bytes,
 
 	i2c_release(port);
 
-err_claim:
-	mutex_unlock(&i2c_mutex);
-	enable_sleep(SLEEP_MASK_I2C);
-
 	return rv;
 }
 
-int i2c_read16(int port, int slave_addr, int offset, int *data)
+int i2c_get_line_levels(int port)
 {
-	uint8_t reg, buf[2];
-	int rv;
+	enum gpio_signal sda, scl;
 
-	reg = offset & 0xff;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2);
+	ASSERT(port == I2C1 || port == I2C2);
 
-	*data = (buf[1] << 8) | buf[0];
+	if (port == I2C1) {
+		sda = GPIO_I2C1_SDA;
+		scl = GPIO_I2C1_SCL;
+	} else {
+		sda = GPIO_I2C2_SDA;
+		scl = GPIO_I2C2_SCL;
+	}
 
-	return rv;
-}
-
-int i2c_write16(int port, int slave_addr, int offset, int data)
-{
-	uint8_t buf[3];
-
-	buf[0] = offset & 0xff;
-	buf[1] = data & 0xff;
-	buf[2] = (data >> 8) & 0xff;
-
-	return i2c_xfer(port, slave_addr, buf, sizeof(buf), NULL, 0);
-}
-
-int i2c_read8(int port, int slave_addr, int offset, int *data)
-{
-	uint8_t reg, buf[1];
-	int rv;
-
-	reg = offset & 0xff;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 1);
-
-	*data = buf[0];
-
-	return rv;
-}
-
-int i2c_write8(int port, int slave_addr, int offset, int data)
-{
-	uint8_t buf[2];
-
-	buf[0] = offset & 0xff;
-	buf[1] = data & 0xff;
-
-	return i2c_xfer(port, slave_addr, buf, sizeof(buf), NULL, 0);
+	return (gpio_get_level(sda) ? I2C_LINE_SDA_HIGH : 0) |
+		(gpio_get_level(scl) ? I2C_LINE_SCL_HIGH : 0);
 }
 
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
@@ -902,23 +853,32 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 {
 	int rv;
 	uint8_t reg, block_length;
+
+	/*
+	 * TODO: when i2c_xfer() supports start/stop bits, won't need a temp
+	 * buffer, and this code can merge with the LM4 implementation and
+	 * move to i2c_common.c.
+	 */
 	uint8_t buffer[SMBUS_MAX_BLOCK + 1];
 
 	if ((len <= 0) || (len > SMBUS_MAX_BLOCK))
 		return EC_ERROR_INVAL;
 
+	i2c_lock(port, 1);
+
 	reg = offset;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buffer, SMBUS_MAX_BLOCK + 1);
-	if (rv)
-		return rv;
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buffer, SMBUS_MAX_BLOCK + 1,
+		      I2C_XFER_SINGLE);
+	if (rv == EC_SUCCESS) {
+		/* Block length is the first byte of the returned buffer */
+		block_length = MIN(buffer[0], len - 1);
+		buffer[block_length + 1] = 0;
 
-	/* the length of the block is the first byte of the returned buffer */
-	block_length = MIN(buffer[0], len - 1);
-	buffer[block_length + 1] = 0;
+		memcpy(data, buffer+1, block_length + 1);
+	}
 
-	memcpy(data, buffer+1, block_length + 1);
-
-	return EC_SUCCESS;
+	i2c_lock(port, 0);
+	return rv;
 }
 
 /*****************************************************************************/

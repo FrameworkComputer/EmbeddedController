@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -33,6 +33,9 @@
 
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
+
+/* Number of I2C ports */
+#define I2C_PORT_COUNT 2
 
 /* support programming on-chip flash */
 #define CONFIG_FLASH

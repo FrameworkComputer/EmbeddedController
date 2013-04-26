@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,8 +19,6 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-#define NUM_PORTS 6  /* Number of physical ports */
-
 /* Flags for writes to MCS */
 #define LM4_I2C_MCS_RUN   (1 << 0)
 #define LM4_I2C_MCS_START (1 << 1)
@@ -39,13 +37,7 @@
 #define LM4_I2C_MCS_BUSBSY (1 << 6)
 #define LM4_I2C_MCS_CLKTO  (1 << 7)
 
-#define START 1
-#define STOP  1
-#define NO_START 0
-#define NO_STOP  0
-
-static task_id_t task_waiting_on_port[NUM_PORTS];
-static struct mutex port_mutex[NUM_PORTS];
+static task_id_t task_waiting_on_port[I2C_PORT_COUNT];
 extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 
 /**
@@ -98,24 +90,17 @@ static int wait_idle(int port)
 	return EC_SUCCESS;
 }
 
-/**
- * Transmit one block of raw data, then receive one block of raw data.
- *
- * @param port		Port to access
- * @param slave_addr	Slave device address
- * @param out		Data to send
- * @param out_size	Number of bytes to send
- * @param in		Destination buffer for received data
- * @param in_size	Number of bytes to receive
- * @param start		Did smbus session started from idle state?
- * @param stop		Can session be terminated with smbus stop bit?
- * @return EC_SUCCESS, or non-zero if error.
- */
-static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
-		    uint8_t *in, int in_size, int start, int stop)
+int i2c_get_line_levels(int port)
+{
+	/* Conveniently, MBMON bit (1 << 1) is SDA and (1 << 0) is SCL. */
+	return LM4_I2C_MBMON(port) & 0x03;
+}
+
+int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+	     uint8_t *in, int in_size, int flags)
 {
 	int rv, i;
-	int started = start ? 0 : 1;
+	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	uint32_t reg_mcs;
 
 	if (out_size == 0 && in_size == 0)
@@ -165,7 +150,8 @@ static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			 * Send stop bit if the stop flag is on, and caller
 			 * doesn't expect to receive data.
 			 */
-			if (stop && in_size == 0 && i == (out_size - 1))
+			if ((flags & I2C_XFER_STOP) && in_size == 0 &&
+			    i == (out_size - 1))
 				reg_mcs |= LM4_I2C_MCS_STOP;
 
 			LM4_I2C_MCS(port) = reg_mcs;
@@ -196,7 +182,7 @@ static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 				reg_mcs |= LM4_I2C_MCS_START;
 			}
 			/* ACK all bytes except the last one */
-			if (stop && i == (in_size - 1))
+			if ((flags & I2C_XFER_STOP) && i == (in_size - 1))
 				reg_mcs |= LM4_I2C_MCS_STOP;
 			else
 				reg_mcs |= LM4_I2C_MCS_ACK;
@@ -217,89 +203,13 @@ static int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	return EC_SUCCESS;
 }
 
-int i2c_read16(int port, int slave_addr, int offset, int *data)
-{
-	int rv;
-	uint8_t reg, buf[2];
-
-	reg = offset & 0xff;
-	/* I2C read 16-bit word: transmit 8-bit offset, and read 16bits */
-	mutex_lock(port_mutex + port);
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2, START, STOP);
-	mutex_unlock(port_mutex + port);
-
-	if (rv)
-		return rv;
-
-	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
-		*data = ((int)buf[0] << 8) | buf[1];
-	else
-		*data = ((int)buf[1] << 8) | buf[0];
-
-	return EC_SUCCESS;
-}
-
-int i2c_write16(int port, int slave_addr, int offset, int data)
-{
-	int rv;
-	uint8_t buf[3];
-
-	buf[0] = offset & 0xff;
-
-	if (slave_addr & I2C_FLAG_BIG_ENDIAN) {
-		buf[1] = (data >> 8) & 0xff;
-		buf[2] = data & 0xff;
-	} else {
-		buf[1] = data & 0xff;
-		buf[2] = (data >> 8) & 0xff;
-	}
-
-	mutex_lock(port_mutex + port);
-	rv = i2c_xfer(port, slave_addr, buf, 3, 0, 0, START, STOP);
-	mutex_unlock(port_mutex + port);
-
-	return rv;
-}
-
-int i2c_read8(int port, int slave_addr, int offset, int* data)
-{
-	int rv;
-	uint8_t reg, val;
-
-	reg = offset;
-
-	mutex_lock(port_mutex + port);
-	rv = i2c_xfer(port, slave_addr, &reg, 1, &val, 1, START, STOP);
-	mutex_unlock(port_mutex + port);
-
-	if (!rv)
-		*data = val;
-
-	return rv;
-}
-
-int i2c_write8(int port, int slave_addr, int offset, int data)
-{
-	int rv;
-	uint8_t buf[2];
-
-	buf[0] = offset;
-	buf[1] = data;
-
-	mutex_lock(port_mutex + port);
-	rv = i2c_xfer(port, slave_addr, buf, 2, 0, 0, START, STOP);
-	mutex_unlock(port_mutex + port);
-
-	return rv;
-}
-
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 		    int len)
 {
 	int rv;
 	uint8_t reg, block_length;
 
-	mutex_lock(port_mutex + port);
+	i2c_lock(port, 1);
 
 	reg = offset;
 	/*
@@ -307,7 +217,7 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	 * session open without a stop.
 	 */
 	rv = i2c_xfer(port, slave_addr, &reg, 1, &block_length, 1,
-		      START, NO_STOP);
+		      I2C_XFER_START);
 	if (rv)
 		goto exit;
 
@@ -315,11 +225,11 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 		block_length = len - 1;
 
 	rv = i2c_xfer(port, slave_addr, 0, 0, data, block_length,
-		      NO_START, STOP);
+		      I2C_XFER_STOP);
 	data[block_length] = 0;
 
 exit:
-	mutex_unlock(port_mutex + port);
+	i2c_lock(port, 0);
 	return rv;
 }
 
@@ -398,7 +308,7 @@ static void i2c_init(void)
 	configure_gpio();
 
 	/* No tasks are waiting on ports */
-	for (i = 0; i < NUM_PORTS; i++)
+	for (i = 0; i < I2C_PORT_COUNT; i++)
 		task_waiting_on_port[i] = TASK_ID_INVALID;
 
 	/* Initialize ports as master, with interrupts enabled */
@@ -452,39 +362,6 @@ DECLARE_IRQ(LM4_IRQ_I2C5, i2c5_interrupt, 2);
 /*****************************************************************************/
 /* Console commands */
 
-static void scan_bus(int port, const char *desc)
-{
-	int rv;
-	int a;
-
-	ccprintf("Scanning %d %s", port, desc);
-
-	/* Don't scan a busy port, since reads will just fail / time out */
-	a = LM4_I2C_MBMON(port);
-	if ((a & 0x03) != 0x03) {
-		ccprintf(": port busy (SDA=%d, SCL=%d)\n",
-		 (LM4_I2C_MBMON(port) & 0x02) ? 1 : 0,
-		 (LM4_I2C_MBMON(port) & 0x01) ? 1 : 0);
-		return;
-	}
-
-	mutex_lock(port_mutex + port);
-
-	for (a = 0; a < 0x100; a += 2) {
-		ccputs(".");
-
-		/* Do a single read */
-		LM4_I2C_MSA(port) = a | 0x01;
-		LM4_I2C_MCS(port) = 0x07;
-		rv = wait_idle(port);
-		if (rv == EC_SUCCESS)
-			ccprintf("\n  0x%02x", a);
-	}
-
-	mutex_unlock(port_mutex + port);
-	ccputs("\n");
-}
-
 static int command_i2cread(int argc, char **argv)
 {
 	int port, addr, count = 1;
@@ -515,7 +392,7 @@ static int command_i2cread(int argc, char **argv)
 	}
 
 	ccprintf("Reading %d bytes from %d:0x%02x:", count, port, addr);
-	mutex_lock(port_mutex + port);
+	i2c_lock(port, 1);
 	LM4_I2C_MSA(port) = addr | 0x01;
 	for (i = 0; i < count; i++) {
 		if (i == 0)
@@ -524,13 +401,13 @@ static int command_i2cread(int argc, char **argv)
 			LM4_I2C_MCS(port) = (i == count - 1 ? 0x05 : 0x09);
 		rv = wait_idle(port);
 		if (rv != EC_SUCCESS) {
-			mutex_unlock(port_mutex + port);
+			i2c_lock(port, 0);
 			return rv;
 		}
 		d = LM4_I2C_MDR(port) & 0xff;
 		ccprintf(" 0x%02x", d);
 	}
-	mutex_unlock(port_mutex + port);
+	i2c_lock(port, 0);
 	ccputs("\n");
 	return EC_SUCCESS;
 }
@@ -539,15 +416,3 @@ DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread,
 			"Read from I2C",
 			NULL);
 
-static int command_scan(int argc, char **argv)
-{
-	int i;
-
-	for (i = 0; i < I2C_PORTS_USED; i++)
-		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
-			NULL,
-			"Scan I2C ports for devices",
-			NULL);

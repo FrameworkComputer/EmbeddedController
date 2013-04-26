@@ -107,6 +107,11 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 3300, 4096, 0, STM32_AIN(4)},
 };
 
+/* I2C ports */
+const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+	{"host", I2C_PORT_HOST, 100},
+};
+
 void board_config_pre_init(void)
 {
 	uint32_t val;

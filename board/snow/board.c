@@ -93,6 +93,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 };
 
+/* I2C ports */
+const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+	{"host", I2C_PORT_HOST, 100},
+};
+
 void board_config_pre_init(void)
 {
 	uint32_t val;

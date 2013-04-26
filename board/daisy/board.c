@@ -96,6 +96,12 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 };
 
+/* I2C ports */
+const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+	{"0", 0, 100},
+	{"1", 1, 100},
+};
+
 /* Auto detect I2C host port
  * Daisy board has two I2C ports, I2C1(0) and I2C2(1), that can be configured
  * as host. PMU chip is connected directly to the EC, and hence can be used
