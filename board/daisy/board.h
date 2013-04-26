@@ -20,6 +20,7 @@
 
 /* Optional features */
 #define CONFIG_BOARD_POST_GPIO_INIT
+#define CONFIG_CHARGER_TPS65090
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
 #endif

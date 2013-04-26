@@ -544,12 +544,14 @@ static int wait_for_power_on(void)
 			continue;
 		}
 
+#ifdef HAS_TASK_CHARGER
 		if (charge_keep_power_off()) {
 			CPRINTF("%T battery low. ignoring power on event.\n");
 			if (value == 1) /* System already on */
 				power_off();
 			continue;
 		}
+#endif
 
 		CPRINTF("%T power on %d\n", value);
 		return value;

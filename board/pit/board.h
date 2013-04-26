@@ -23,6 +23,9 @@
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
 #define CONFIG_BOARD_POST_GPIO_INIT
+#ifdef HAS_TASK_CHARGER
+#define CONFIG_CHARGER_TPS65090
+#endif
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
 #endif
