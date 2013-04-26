@@ -119,6 +119,16 @@ $(host-utils): $(out)/%:%.c $(foreach u,$(host-util-common),util/$(u).c) \
 
 $(out)/util/burn_my_ec: $(out)/$(PROJECT).bin
 
+.PHONY: FORCE
+cscope.files: FORCE
+	@-rm -f cscope.out
+	@find chip/${CHIP} board/${BOARD} common core include -name '*.[chS]' \
+		-not -name '*test*' -not -name '*mock*' -not -name '*~*' \
+		> cscope.files
+
+TAGS tags: cscope.files
+	@etags $(shell cat cscope.files)
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
