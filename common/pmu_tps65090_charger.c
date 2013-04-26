@@ -535,3 +535,13 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pmu_chipset_events, HOOK_PRIO_DEFAULT);
+
+void pmu_irq_handler(enum gpio_signal signal)
+{
+#ifdef CONFIG_AC_POWER_STATUS
+	gpio_set_level(GPIO_AC_STATUS, extpower_is_present());
+#endif
+	pmu_task_throttled_wake();
+	CPRINTF("Charger IRQ received.\n");
+}
+

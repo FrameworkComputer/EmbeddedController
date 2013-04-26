@@ -197,12 +197,16 @@ int pmu_low_current_charging(int enable);
  */
 int pmu_adc_read(int adc_idx, int flags);
 
+#ifdef HAS_TASK_CHARGER
 /**
- * Handles interrupts from tpschrome
+ * Handles charger interrupts from tpschrome
  *
  * @param signal         Indicates signal type.
  */
 void pmu_irq_handler(enum gpio_signal signal);
+#else
+#define pmu_irq_handler NULL
+#endif
 
 /**
  * Set temperature threshold

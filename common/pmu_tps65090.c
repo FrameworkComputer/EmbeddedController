@@ -475,15 +475,6 @@ int pmu_adc_read(int adc_idx, int flags)
 	return (val2 << 8) | val1;
 }
 
-void pmu_irq_handler(enum gpio_signal signal)
-{
-#ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_level(GPIO_AC_STATUS, extpower_is_present());
-#endif
-	pmu_task_throttled_wake();
-	CPRINTF("Charger IRQ received.\n");
-}
-
 /**
  * Attempt shutdown.
  */
