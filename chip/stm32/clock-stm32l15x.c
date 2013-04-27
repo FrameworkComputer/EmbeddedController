@@ -10,6 +10,8 @@
 #include "registers.h"
 #include "util.h"
 
+BUILD_ASSERT(CPU_CLOCK == 16000000);
+
 void enable_sleep(uint32_t mask)
 {
 	/* low power mode not implemented */
@@ -60,7 +62,6 @@ void clock_init(void)
 	 * stays on HSI, no prescaler, PLLSRC = HSI, PLLMUL = x3, PLLDIV = /3,
 	 * no MCO                      => PLLVCO = 48 MHz and PLLCLK = 16 Mhz
 	 */
-	BUILD_ASSERT(CPU_CLOCK == 16000000);
 	STM32_RCC_CFGR = 0x00800001;
 	/* Enable the PLL */
 	STM32_RCC_CR |= 1 << 24;

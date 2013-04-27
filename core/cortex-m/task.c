@@ -109,6 +109,10 @@ static const struct {
 
 /* Contexts for all tasks */
 static task_ tasks[TASK_ID_COUNT];
+/* Sanity checks about static task invariants */
+BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
+BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
+
 
 /* Stacks for all tasks */
 #define TASK(n, r, d, s)  + s
@@ -612,10 +616,6 @@ void task_pre_init(void)
 	 */
 	((task_ *)scratchpad)->stack = (uint32_t *)scratchpad;
 	*(uint32_t *)scratchpad = STACK_UNUSED_VALUE;
-
-	/* Sanity checks about static task invariants */
-	BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
-	BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
 	/* Initialize IRQs */
 	__nvic_init_irqs();

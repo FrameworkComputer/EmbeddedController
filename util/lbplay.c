@@ -11,12 +11,9 @@
 #include <unistd.h>
 
 #include "comm-host.h"
+#include "compile_time_macros.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
-
-/* Handy tricks */
-#define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define LB_SIZES(SUBCMD) { \
 		sizeof(((struct ec_params_lightbar *)0)->SUBCMD) \

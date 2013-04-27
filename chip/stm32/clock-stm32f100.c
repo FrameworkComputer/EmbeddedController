@@ -141,6 +141,7 @@ DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 #else
 #error "Need board-specific clock settings"
 #endif
+BUILD_ASSERT(CPU_CLOCK == DESIRED_CPU_CLOCK);
 
 static void config_hispeed_clock(void)
 {
@@ -153,7 +154,6 @@ static void config_hispeed_clock(void)
 			;
 	}
 
-	BUILD_ASSERT(CPU_CLOCK == DESIRED_CPU_CLOCK);
 	STM32_RCC_CFGR = RCC_CFGR;
 	/* Enable the PLL */
 	STM32_RCC_CR |= 1 << 24;

@@ -14,13 +14,11 @@
 
 #include "battery.h"
 #include "comm-host.h"
+#include "compile_time_macros.h"
 #include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
 
-/* Handy tricks */
-#define BUILD_ASSERT(cond) ((void)sizeof(char[1 - 2*!(cond)]))
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }
 
