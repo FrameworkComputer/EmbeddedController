@@ -55,8 +55,8 @@ dis: $(dis-y)
 
 utils: $(build-utils) $(host-utils)
 
-test-targets=$(foreach t,$(test-list),test-$(t))
-qemu-test-targets=$(foreach t,$(test-list),qemu-$(t))
+test-targets=$(foreach t,$(test-list-y),test-$(t))
+qemu-test-targets=$(foreach t,$(test-list-y),qemu-$(t))
 .PHONY: $(qemu-test-target) $(test-targets)
 
 $(test-targets): test-%:

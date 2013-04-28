@@ -37,6 +37,7 @@ _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dN chip/$(CHIP)/config.h | \
 	   $(shell $(CPP) $(CPPFLAGS) -P -dN board/$(BOARD)/board.h | \
 		grep -o "CONFIG_.*")
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
+$(eval BOARD_$(BOARD)=y)
 
 # Get build configuration from sub-directories
 -include private/build.mk

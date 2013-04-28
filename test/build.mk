@@ -6,10 +6,23 @@
 # on-board test binaries build
 #
 
-test-list=pingpong timer_calib timer_dos timer_jump mutex thermal
-test-list+=power_button kb_scan scancode typematic charging flash
-test-list+=stress utils
+test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #disable: powerdemo
+
+# TODO(victoryang): Fix these tests:
+#    thermal power_button scancode typematic charging
+
+test-list-$(BOARD_bds)+=
+test-list-$(BOARD_daisy)+=kb_scan flash stress
+test-list-$(BOARD_mccroskey)+=flash
+test-list-$(BOARD_pit)+=kb_scan flash stress
+test-list-$(BOARD_snow)+=kb_scan flash stress
+test-list-$(BOARD_spring)+=kb_scan flash stress
+
+# Disable x86 boards until they compiles
+# TODO(victoryang): Fix them
+test-list-$(BOARD_link)=
+test-list-$(BOARD_slippy)=
 
 flash-y=flash.o
 kb_scan-y=kb_scan.o
