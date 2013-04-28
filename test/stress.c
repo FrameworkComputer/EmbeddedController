@@ -5,13 +5,16 @@
 
 /* Peripheral stress tests */
 
-#include "adc.h"
 #include "board.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "i2c.h"
 #include "timer.h"
 #include "util.h"
+
+#ifdef CONFIG_ADC
+#include "adc.h"
+#endif
 
 static int error_count;
 
@@ -32,9 +35,22 @@ struct i2c_test_param_t {
 	{8, 0, 0x60, 0x0, -1},
 	{8, 0, 0x60, 0x0, 0x40},
 	{8, 0, 0x4a, 0x1, -1},
+#elif defined(BOARD_daisy)
+	{8, 1, 0x90, 0x19, -1},
+#elif defined(BOARD_link)
+	{8, 0, 0x16, 0x8, -1},
+	{8, 0, 0x16, 0x9, -1},
+	{8, 0, 0x16, 0xa, -1},
+#elif defined(BOARD_pit)
+	{8, 0, 0x90, 0x19, -1},
+#elif defined(BOARD_snow)
+	{8, 1, 0x90, 0x19, -1},
 #endif
-	/* TODO(victoryang): Add parameters for other boards */
 };
+/* Disable I2C test for boards without test configuration */
+#if defined(BOARD_bds) || defined(BOARD_mccroskey) || defined(BOARD_slippy)
+#undef CONFIG_I2C
+#endif
 
 /* ADC test */
 #define ADC_TEST_ITERATION 2000
