@@ -52,12 +52,14 @@ static int fifo_add_count;
 static int error_count;
 static int lid_open;
 
+#ifdef CONFIG_LID_SWITCH
 int gpio_get_level(enum gpio_signal signal)
 {
 	if (signal == GPIO_LID_OPEN)
 		return lid_open;
 	return 0;
 }
+#endif
 
 void keyboard_raw_drive_column(int out)
 {
@@ -236,6 +238,7 @@ int debounce_test(void)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_LID_SWITCH
 int lid_test(void)
 {
 	lid_open = 0;
@@ -252,6 +255,7 @@ int lid_test(void)
 
 	return EC_SUCCESS;
 }
+#endif
 
 static int command_run_test(int argc, char **argv)
 {
@@ -260,7 +264,9 @@ static int command_run_test(int argc, char **argv)
 
 	RUN_TEST(deghost_test);
 	RUN_TEST(debounce_test);
+#ifdef CONFIG_LID_SWITCH
 	RUN_TEST(lid_test);
+#endif
 
 	if (error_count == 0) {
 		ccprintf("Pass!\n");
