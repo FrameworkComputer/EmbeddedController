@@ -147,8 +147,8 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 		} else if (timestamp_expired(deadline, &now) ||
 				(task_wait_event(deadline.val - now.val) ==
 					TASK_EVENT_TIMER)) {
-			CPRINTF("Timeout waiting for GPIO %d/%s\n", signal,
-				    gpio_get_name(signal));
+			CPRINTF("[%T power timeout waiting for GPIO %d/%s]\n",
+				signal, gpio_get_name(signal));
 			return EC_ERROR_TIMEOUT;
 		}
 	}
@@ -207,16 +207,16 @@ static int check_for_power_off_event(void)
 
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
-			CPRINTF("Waiting for long power press %u\n",
+			CPRINTF("[%T power waiting for long press %u]\n",
 				power_off_deadline.le.lo);
 		} else if (timestamp_expired(power_off_deadline, &now)) {
 			power_off_deadline.val = 0;
-			CPRINTF("Power off after long press now=%u, %u\n",
+			CPRINTF("[%T power off after long press now=%u, %u]\n",
 				now.le.lo, power_off_deadline.le.lo);
 			return 2;
 		}
 	} else if (power_button_was_pressed) {
-		CPUTS("Cancel power off\n");
+		CPRINTF("[%T power off cancel]\n");
 		set_pmic_pwrok(0);
 	}
 
@@ -436,7 +436,7 @@ static int power_on(void)
 		gpio_set_level(GPIO_EN_PP5000, 0);
 		gpio_set_level(GPIO_EN_PP3300, 0);
 		usleep(DELAY_5V_SETUP);
-		CPUTS("Fatal error: PMIC failed to enable\n");
+		CPRINTF("[%T power error: PMIC failed to enable]\n");
 		return -1;
 	}
 
@@ -471,10 +471,10 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 
 	udelay(KB_PWR_ON_DEBOUNCE);
 	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
-		CPUTS("Power button was not released in time\n");
+		CPRINTF("[%T power button not released in time]\n");
 		return -1;
 	}
-	CPUTS("Power button released\n");
+	CPRINTF("[%T power button released]\n");
 	return 0;
 }
 
@@ -490,7 +490,7 @@ static int react_to_xpshold(unsigned int timeout_us)
 	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
 
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
-		CPUTS("[%T XPSHOLD not seen in time]\n");
+		CPRINTF("[%T XPSHOLD not seen in time]\n");
 		return -1;
 	}
 	CPRINTF("[%T XPSHOLD seen]\n");
@@ -513,7 +513,7 @@ static void power_off(void)
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
 	pmu_shutdown();
-	CPUTS("Shutdown complete.\n");
+	CPRINTF("[%T power shutdown complete]\n");
 }
 
 
@@ -546,14 +546,14 @@ static int wait_for_power_on(void)
 
 #ifdef HAS_TASK_CHARGER
 		if (charge_keep_power_off()) {
-			CPRINTF("%T battery low. ignoring power on event.\n");
+			CPRINTF("[%T power on ignored due to low battery]\n");
 			if (value == 1) /* System already on */
 				power_off();
 			continue;
 		}
 #endif
 
-		CPRINTF("%T power on %d\n", value);
+		CPRINTF("[%T power on %d]\n", value);
 		return value;
 	}
 }
@@ -588,7 +588,7 @@ void chipset_task(void)
 				power_button_was_pressed = 0;
 				while (!(value = check_for_power_off_event()))
 					task_wait_event(next_pwr_event());
-				CPRINTF("%T ending loop %d\n", value);
+				CPRINTF("[%T power ending loop %d]\n", value);
 			}
 		}
 		power_off();
@@ -665,8 +665,7 @@ static int command_power(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	power_request = v ? POWER_REQ_ON : POWER_REQ_OFF;
-	ccprintf("[%T PB Requesting power %s]\n",
-		 power_req_name[power_request]);
+	ccprintf("Requesting power %s\n", power_req_name[power_request]);
 	task_wake(TASK_ID_CHIPSET);
 
 	return EC_SUCCESS;
