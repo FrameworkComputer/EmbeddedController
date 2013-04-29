@@ -24,9 +24,7 @@
 
 /* Charging and discharging alarms */
 #define ALARM_DISCHARGING (ALARM_TERMINATE_DISCHARGE | ALARM_OVER_TEMP)
-#define ALARM_CHARGING (ALARM_TERMINATE_CHARGE | \
-		ALARM_OVER_CHARGED | \
-		ALARM_OVER_TEMP)
+#define ALARM_CHARGED (ALARM_OVER_CHARGED | ALARM_TERMINATE_CHARGE)
 
 /* Maximum time allowed to revive a extremely low charge battery */
 #define PRE_CHARGING_TIMEOUT (15 * SECOND)
@@ -217,9 +215,13 @@ static int calc_next_state(int state)
 		if (!battery_start_charging_range(batt_temp))
 			return ST_BAD_COND;
 
-		/* Turn off charger on battery charging alarm */
-		if (battery_status(&alarm) || (alarm & ALARM_CHARGING))
+		/* Turn off charger on battery over temperature alarm */
+		if (battery_status(&alarm) || (alarm & ALARM_OVER_TEMP))
 			return ST_BAD_COND;
+
+		/* Stop charging if the battery says it's charged */
+		if (alarm & ALARM_CHARGED)
+			return ST_IDLE;
 
 		/* Start charging only when battery charge lower than 100% */
 		if (!battery_state_of_charge(&charge)) {
@@ -278,12 +280,14 @@ static int calc_next_state(int state)
 		if (battery_status(&alarm))
 			return ST_REINIT;
 
-		if (alarm & ALARM_CHARGING) {
-			CPUTS("[pmu] charging: battery alarm\n");
-			if (alarm & ALARM_OVER_TEMP)
-				return ST_CHARGING_ERROR;
-			return ST_REINIT;
+		if (alarm & ALARM_OVER_TEMP) {
+			CPUTS("[pmu] charging: battery over temp\n");
+			return ST_CHARGING_ERROR;
 		}
+
+		/* Go to idle state if battery is fully charged */
+		if (alarm & ALARM_CHARGED)
+			return ST_IDLE;
 
 		/*
 		 * Disable charging on charger alarm events:
