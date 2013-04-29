@@ -600,15 +600,6 @@ void pmu_init(void)
 		if (!failure)
 			failure = pmu_clear_irq();
 
-		/* Enable charger interrupt. */
-		if (!failure)
-			failure = gpio_enable_interrupt(GPIO_CHARGER_INT);
-
-#ifdef CONFIG_AC_POWER_STATUS
-		if (!failure)
-			failure = gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
-#endif
-
 		/* Exit the retry loop if there was no failure */
 		if (!failure)
 			break;

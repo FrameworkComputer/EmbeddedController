@@ -393,6 +393,14 @@ void charger_task(void)
 	timestamp_t pre_chg_start = get_time();
 
 	pmu_init();
+
+	/* Enable charger interrupt */
+	gpio_enable_interrupt(GPIO_CHARGER_INT);
+
+#ifdef CONFIG_AC_POWER_STATUS
+	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
+#endif
+
 	/*
 	 * EC STOP mode support
 	 *   The charging loop can be stopped in idle state with AC unplugged.
