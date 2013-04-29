@@ -3,3 +3,4 @@ private/
 *.swp
 *.pyc
 tags
+cscope.out
