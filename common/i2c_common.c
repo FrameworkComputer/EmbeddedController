@@ -185,10 +185,7 @@ static void scan_bus(int port, const char *desc)
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
 		ccputs(".");
 
-#ifdef CHIP_lm4
-		/* Do a single read */
-		if (!i2c_xfer(port, a, NULL, 0, &tmp, 1, I2C_XFER_SINGLE))
-#else
+#if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
 		/*
 		 * Hope that address 0 exists, because the i2c_xfer()
 		 * implementation on STM32 can't read a byte without writing
@@ -198,6 +195,9 @@ static void scan_bus(int port, const char *desc)
 		 */
 		tmp = 0;
 		if (!i2c_xfer(port, a, &tmp, 1, &tmp, 1, I2C_XFER_SINGLE))
+#else
+		/* Do a single read */
+		if (!i2c_xfer(port, a, NULL, 0, &tmp, 1, I2C_XFER_SINGLE))
 #endif
 			ccprintf("\n  0x%02x", a);
 	}
