@@ -63,7 +63,8 @@ $(test-targets): test-%:
 	@set -e ; \
 	echo "  BUILD   $(out)/$*" ; \
 	$(MAKE) --no-print-directory BOARD=$(BOARD) PROJECT=$* \
-	        V=$(V) out=$(out)/$* TEST_BUILD=y
+	        V=$(V) out=$(out)/$* TEST_BUILD=y; \
+	cp $(out)/$*/$*.bin $(out)/test-$*.bin
 
 $(qemu-test-targets): qemu-%: test-%
 	$(call quiet,qemu,TEST   )
