@@ -28,6 +28,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"CHARGER_INT", GPIO_C, (1<<6),  GPIO_INT_RISING, pmu_irq_handler},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
 	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
+	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
+	 spi_event},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
 	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT,
@@ -65,7 +67,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 #ifndef CONFIG_SPI
 	{"SPI1_MISO",   GPIO_A, (1<<6),  GPIO_OUT_HIGH, NULL},
-	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_PULL_UP, NULL},
 #endif
  	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
@@ -102,14 +103,14 @@ void board_config_post_gpio_init(void)
 	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
 
 #ifdef CONFIG_SPI
-	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
-	val = STM32_GPIO_CRL(GPIO_A) & ~0xffff0000;
-	val |= 0x99990000;
-	STM32_GPIO_CRL(GPIO_A) = val;
-
-	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
+	/* SPI1 on pins PA4-7 */
+	gpio_set_alternate_function(GPIO_A,
+				    (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7),
+				    GPIO_ALT_SPI);
+	/* 10 MHz pin speed */
+	STM32_GPIO_OSPEEDR(GPIO_A) = (STM32_GPIO_OSPEEDR(GPIO_A) & ~0xff00) |
+		0xaa00;
 #endif
-
 }
 
 #ifdef CONFIG_PMU_BOARD_INIT

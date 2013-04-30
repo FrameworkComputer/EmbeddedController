@@ -39,15 +39,13 @@
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
 #define CONFIG_SMART_BATTERY
-
+#define CONFIG_SPI
 
 #ifdef PORT_TO_PIT
 /* TODO(rspangler): enable these features when they compile */
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_SPI
 #define CONFIG_WATCHDOG_HELP
 #endif
-
 
 #ifndef __ASSEMBLER__
 
@@ -57,7 +55,17 @@
 /* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C
 
-/* Charging */
+/*
+ * Charging.
+ *
+ * "HOST" means the port where the EC is the master, which has the battery,
+ * charger and PMU.
+ *
+ * "SLAVE" means the port where the EC is the slave, which has the AP (host
+ * processor).
+ *
+ * TODO: In this context, "host" is badly overloaded and confusing.
+ */
 #define I2C_PORT_HOST 0
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
@@ -77,6 +85,7 @@ enum gpio_signal {
 	GPIO_CHARGER_INT,
 	GPIO_LID_OPEN,
 	GPIO_SUSPEND_L,
+	GPIO_SPI1_NSS,
 	/* Keyboard inputs */
 	GPIO_KB_IN00,
 	GPIO_KB_IN01,
@@ -107,7 +116,6 @@ enum gpio_signal {
 	GPIO_PMIC_RESET,
 #ifndef CONFIG_SPI
 	GPIO_SPI1_MISO,
-	GPIO_SPI1_NSS,
 #endif
 	GPIO_KB_OUT00,
 	GPIO_KB_OUT01,

@@ -193,6 +193,8 @@ struct timer_ctlr {
 
 	unsigned or;
 };
+/* Must be volatile, or compiler optimizes out repeated accesses */
+typedef volatile struct timer_ctlr timer_ctlr_t;
 
 /* --- GPIO --- */
 
@@ -437,29 +439,24 @@ struct timer_ctlr {
 #define STM32_SPI2_PORT             1
 
 /* The SPI controller registers */
-struct spi_ctlr {
-	unsigned ctrl1;
-	unsigned ctrl2;
+struct stm32_spi_regs {
+	uint16_t ctrl1;
+	uint16_t _pad0;
+	uint16_t ctrl2;
+	uint16_t _pad1;
 	unsigned stat;
-	unsigned data;
+	uint16_t data;
+	uint16_t _pad2;
 	unsigned crcp;
 	unsigned rxcrc;
 	unsigned txcrc;
 	unsigned i2scfgr;	/* STM32F10x only */
 	unsigned i2spr;		/* STM32F10x only */
 };
+/* Must be volatile, or compiler optimizes out repeated accesses */
+typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
-/*
- * TODO(vpalatin):
- * For whatever reason, our toolchain is substandard and generate a
- * function every time you are using this inline function.
- *
- * That's why I have not used inline stuff in the registers definition.
- */
-#define stm32_spi_addr(port) \
-	((struct spi_ctlr *)(port == 0 ? STM32_SPI1_BASE : STM32_SPI2_BASE))
-#define stm32_spi_port(addr) \
-	((addr) == STM32_SPI1_BASE ? 0 : 1)
+#define STM32_SPI1_REGS ((stm32_spi_regs_t *)STM32_SPI1_BASE)
 
 /* --- Debug --- */
 

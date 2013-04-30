@@ -23,18 +23,14 @@
 #define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
 
 /* DMA channel option */
-static const struct dma_option dma_tx_option[2] = {
-	{DMA_SPI1_TX, (void *)&stm32_spi_addr(STM32_SPI1_PORT)->data,
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
-	{DMA_SPI2_TX, (void *)&stm32_spi_addr(STM32_SPI2_PORT)->data,
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+static const struct dma_option dma_tx_option = {
+	DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->data,
+	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
 };
 
-static const struct dma_option dma_rx_option[2] = {
-	{DMA_SPI1_RX, (void *)&stm32_spi_addr(STM32_SPI1_PORT)->data,
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
-	{DMA_SPI2_RX, (void *)&stm32_spi_addr(STM32_SPI2_PORT)->data,
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+static const struct dma_option dma_rx_option = {
+	DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->data,
+	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
 };
 
 /* Status register flags that we use */
@@ -155,14 +151,13 @@ static int wait_for_bytes(struct dma_channel *rxdma, int needed,
  * We keep an eye on the NSS line - if this goes high then the transaction is
  * over so there is no point in trying to send the reply.
  *
- * @param spi		SPI controller to send data on
  * @param txdma		TX DMA channel to send on
  * @param status	Status result to send
  * @param msg_ptr	Message payload to send, which normally starts
  *			SPI_MSG_HEADER_LEN bytes into out_msg
  * @param msg_len	Number of message bytes to send
  */
-static void reply(struct spi_ctlr *spi, struct dma_channel *txdma,
+static void reply(struct dma_channel *txdma,
 		  enum ec_status status, char *msg_ptr, int msg_len)
 {
 	char *msg;
@@ -194,7 +189,7 @@ static void reply(struct spi_ctlr *spi, struct dma_channel *txdma,
 	/* Add the checksum and get ready to send */
 	msg[msg_len - 2] = sum & 0xff;
 	msg[msg_len - 1] = SPI_MSG_PREAMBLE_BYTE;
-	dma_prepare_tx(dma_tx_option[stm32_spi_port(spi)], msg_len, msg);
+	dma_prepare_tx(&dma_tx_option, msg_len, msg);
 
 	/* Kick off the DMA to send the data */
 	dma_go(txdma);
@@ -206,23 +201,22 @@ static void reply(struct spi_ctlr *spi, struct dma_channel *txdma,
  * Set up our RX DMA and disable our TX DMA. Set up the data output so that
  * we will send preamble bytes.
  */
-static void setup_for_transaction(struct spi_ctlr *spi)
+static void setup_for_transaction(void)
 {
-	int dmac;
+	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+	int dmac __attribute__((unused));
 
 	/* We are no longer actively processing a transaction */
 	active = 0;
 
 	/* write 0xfd which will be our default output value */
-	REG16(&spi->data) = 0xfd;
-	dma_disable(DMA_CHANNEL_FOR_SPI_TX(spi));
+	spi->data = 0xfd;
+	dma_disable(DMAC_SPI1_TX);
 	*in_msg = 0xff;
 
 	/* read a byte in case there is one, and the rx dma gets it */
-	dmac = REG16(&spi->data);
-	dmac = DMA_CHANNEL_FOR_SPI_RX(spi);
-	dma_start_rx(dma_rx_option[stm32_spi_port(spi)],
-		     sizeof(in_msg), in_msg);
+	dmac = spi->data;
+	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
 }
 
 /**
@@ -234,7 +228,6 @@ static void setup_for_transaction(struct spi_ctlr *spi)
  */
 static void spi_send_response(struct host_cmd_handler_args *args)
 {
-	struct spi_ctlr *spi;
 	enum ec_status result = args->result;
 	struct dma_channel *txdma;
 
@@ -242,7 +235,6 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	if (!active)
 		return;
 
-	spi = (struct spi_ctlr *)stm32_spi_addr(SPI_PORT_HOST);
 	if (args->response_size > EC_HOST_PARAM_SIZE)
 		result = EC_RES_INVALID_RESPONSE;
 
@@ -251,8 +243,8 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 		ASSERT(args->response == out_msg + SPI_MSG_HEADER_LEN);
 
 	/* Transmit the reply */
-	txdma = dma_get_channel(DMA_CHANNEL_FOR_SPI_TX(spi));
-	reply(spi, txdma, result, args->response, args->response_size);
+	txdma = dma_get_channel(DMAC_SPI1_TX);
+	reply(txdma, result, args->response, args->response_size);
 }
 
 /**
@@ -266,11 +258,8 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 void spi_event(enum gpio_signal signal)
 {
 	struct dma_channel *rxdma;
-	struct spi_ctlr *spi;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
-
-	spi = (struct spi_ctlr *)stm32_spi_addr(SPI_PORT_HOST);
 
 	/*
 	 * If NSS is rising, we have finished the transaction, so prepare
@@ -278,16 +267,17 @@ void spi_event(enum gpio_signal signal)
 	 */
 	nss_reg = gpio_get_level_reg(GPIO_SPI1_NSS, &nss_mask);
 	if (REG16(nss_reg) & nss_mask) {
-		setup_for_transaction(spi);
+		setup_for_transaction();
 		return;
 	}
 
+	/* Otherwise, NSS is low and we're now inside a transaction */
 	active = 1;
-	rxdma = dma_get_channel(DMA_CHANNEL_FOR_SPI_RX(spi));
+	rxdma = dma_get_channel(DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
 	if (wait_for_bytes(rxdma, 3, nss_reg, nss_mask)) {
-		setup_for_transaction(spi);
+		setup_for_transaction();
 		return;
 	}
 
@@ -306,7 +296,7 @@ void spi_event(enum gpio_signal signal)
 
 	/* Wait for parameters */
 	if (wait_for_bytes(rxdma, 3 + args.params_size, nss_reg, nss_mask)) {
-		setup_for_transaction(spi);
+		setup_for_transaction();
 		return;
 	}
 
@@ -322,33 +312,21 @@ void spi_event(enum gpio_signal signal)
 	host_command_received(&args);
 }
 
-static int spi_init(void)
+static void spi_init(void)
 {
-	struct spi_ctlr *spi;
+	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
-	/* Enable clocks to SPI module */
+	/* Enable clocks to SPI1 module */
 	STM32_RCC_APB2ENR |= 1 << 12;
 
-	/**
-	 * SPI1
-	 * PA7: SPI1_MOSI
-	 * PA6: SPI1_MISO
-	 * PA5: SPI1_SCK
-	 * PA4: SPI1_NSS
-	 *
-	 * 8-bit data, master mode, full-duplex, clock is fpclk / 2
-	 */
-	spi = (struct spi_ctlr *)stm32_spi_addr(SPI_PORT_HOST);
-
 	/* Enable rx DMA and get ready to receive our first transaction */
-	REG16(&spi->ctrl2) = CR2_RXDMAEN | CR2_TXDMAEN;
+	spi->ctrl2 = CR2_RXDMAEN | CR2_TXDMAEN;
 
-	/* enable the SPI peripheral */
-	REG16(&spi->ctrl1) |= CR1_SPE;
+	/* Enable the SPI peripheral */
+	spi->ctrl1 |= CR1_SPE;
 
-	setup_for_transaction(spi);
+	setup_for_transaction();
 
 	gpio_enable_interrupt(GPIO_SPI1_NSS);
-	return EC_SUCCESS;
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
