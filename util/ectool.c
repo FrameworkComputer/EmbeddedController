@@ -94,6 +94,8 @@ const char help_str[] =
 	"      Read I2C bus\n"
 	"  i2cwrite\n"
 	"      Write I2C bus\n"
+	"  i2cxfer <port> <slave_addr> <read_count> [write bytes...]\n"
+	"      Perform I2C transfer on EC's I2C bus\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
 	"  lightbar [CMDS]\n"
@@ -1933,6 +1935,10 @@ int cmd_i2c_read(int argc, char *argv[])
 		return -1;
 	}
 
+	/*
+	 * TODO: use I2C_XFER command if supported, then fall back to I2C_READ
+	 */
+
 	rv = ec_command(EC_CMD_I2C_READ, 0, &p, sizeof(p), &r, sizeof(r));
 
 	if (rv < 0)
@@ -1987,6 +1993,10 @@ int cmd_i2c_write(int argc, char *argv[])
 		return -1;
 	}
 
+	/*
+	 * TODO: use I2C_XFER command if supported, then fall back to I2C_WRITE
+	 */
+
 	rv = ec_command(EC_CMD_I2C_WRITE, 0, &p, sizeof(p), NULL, 0);
 
 	if (rv < 0)
@@ -1997,6 +2007,116 @@ int cmd_i2c_write(int argc, char *argv[])
 	return 0;
 }
 
+
+int cmd_i2c_xfer(int argc, char *argv[])
+{
+	union {
+		struct ec_params_i2c_passthru p;
+		uint8_t outbuf[EC_HOST_PARAM_SIZE];
+	} params;
+	union {
+		struct ec_response_i2c_passthru r;
+		uint8_t inbuf[EC_HOST_PARAM_SIZE];
+	} response;
+	struct ec_params_i2c_passthru *p = &params.p;
+	struct ec_response_i2c_passthru *r = &response.r;
+	struct ec_params_i2c_passthru_msg *msg = p->msg;
+	unsigned int addr;
+	uint8_t *pdata;
+	char *e;
+	int read_len, write_len;
+	int size;
+	int rv, i;
+
+	if (argc < 4) {
+		fprintf(stderr,
+			"Usage: %s <port> <slave_addr> <read_count> "
+			"[write bytes...]\n", argv[0]);
+		return -1;
+	}
+
+	p->port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	addr = strtol(argv[2], &e, 0) & 0x7f;
+	if (e && *e) {
+		fprintf(stderr, "Bad slave address.\n");
+		return -1;
+	}
+
+	read_len = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad read length.\n");
+		return -1;
+	}
+
+	/* Skip over params to bytes to write */
+	argc -= 4;
+	argv += 4;
+	write_len = argc;
+	p->num_msgs = (read_len != 0) + (write_len != 0);
+
+	size = sizeof(*p) + p->num_msgs * sizeof(*msg);
+	if (size + write_len > sizeof(params)) {
+		fprintf(stderr, "Params too large for buffer\n");
+		return -1;
+	}
+	if (sizeof(*r) + read_len > sizeof(response)) {
+		fprintf(stderr, "Read length too big for buffer\n");
+		return -1;
+	}
+
+	pdata = (uint8_t *)p + size;
+	if (write_len) {
+		msg->addr_flags = addr;
+		msg->len = write_len;
+
+		for (i = 0; i < write_len; i++) {
+			pdata[i] = strtol(argv[i], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad write byte %d\n", i);
+				return -1;
+			}
+		}
+		msg++;
+	}
+
+	if (read_len) {
+		msg->addr_flags = addr | EC_I2C_FLAG_READ;
+		msg->len = read_len;
+	}
+
+	rv = ec_command(EC_CMD_I2C_PASSTHRU, 0, p, size + write_len,
+			r, sizeof(*r) + read_len);
+	if (rv < 0)
+		return rv;
+
+	/* Parse response */
+	if (r->i2c_status & (EC_I2C_STATUS_NAK | EC_I2C_STATUS_TIMEOUT)) {
+		fprintf(stderr, "Transfer failed with status=0x%x\n",
+			r->i2c_status);
+		return -1;
+	}
+
+	if (rv < sizeof(*r) + read_len) {
+		fprintf(stderr, "Truncated read response\n");
+		return -1;
+	}
+
+	if (read_len) {
+		printf("Read bytes:");
+		for (i = 0; i < read_len; i++)
+			printf(" %#02x", r->data[i]);
+		printf("\n");
+	} else {
+		printf("Write successful.\n");
+	}
+
+	return 0;
+}
 
 int cmd_lcd_backlight(int argc, char *argv[])
 {
@@ -2787,6 +2907,7 @@ const struct command commands[] = {
 	{"kbpress", cmd_kbpress},
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
+	{"i2cxfer", cmd_i2c_xfer},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
