@@ -11,6 +11,7 @@ common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
 common-y+=gpio_common.o version.o printf.o queue.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_LINK)+=battery_link.o charge_state.o battery_precharge.o
+common-$(CONFIG_BATTERY_SPRING)+=battery_spring.o
 common-$(CONFIG_CHARGER_BQ24725)+=charger_bq24725.o
 common-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
 common-$(CONFIG_CHIPSET_GAIA)+=gaia_power.o
