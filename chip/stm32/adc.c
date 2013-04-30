@@ -95,6 +95,8 @@ static int adc_enable_watchdog_no_lock(void)
 		return EC_ERROR_UNKNOWN;
 
 	/* Set channel */
+	STM32_ADC_SQR3 = watchdog_ain_id;
+	STM32_ADC_SQR1 = 0;
 	STM32_ADC_CR1 = (STM32_ADC_CR1 & ~0x1f) | watchdog_ain_id;
 
 	/* Clear interrupt bit */
@@ -271,11 +273,11 @@ static void adc_init(void)
 	STM32_ADC_CR2 &= ~(1 << 11);
 
 	/*
-	 * Set sample time of all channels to 7.5 cycles.
-	 * Conversion takes 8.75 us.
+	 * Set sample time of all channels to 13.5 cycles.
+	 * Conversion takes 15.75 us.
 	 */
-	STM32_ADC_SMPR1 = 0x00249249;
-	STM32_ADC_SMPR2 = 0x09249249;
+	STM32_ADC_SMPR1 = 0x00492492;
+	STM32_ADC_SMPR2 = 0x12492492;
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
 
