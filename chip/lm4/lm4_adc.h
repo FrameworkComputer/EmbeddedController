@@ -36,9 +36,6 @@ extern const struct adc_t adc_channels[ADC_CH_COUNT];
 #define ADC_READ_MIN 0
 #define ADC_READ_MAX 4095
 
-/* Value returned if the read failed. */
-#define ADC_READ_ERROR -1
-
 /* Just plain id mapping for code readability */
 #define LM4_AIN(x) (x)
 

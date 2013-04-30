@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#define ADC_READ_ERROR -1
+
 /**
  * Read an ADC channel.
  *
