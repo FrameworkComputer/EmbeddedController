@@ -10,13 +10,9 @@
 
 #include "gpio.h"
 
-#ifdef CONFIG_CHIPSET_X86
 /**
  * Interrupt handler for x86 chipset GPIOs.
  */
 void x86_power_interrupt(enum gpio_signal signal);
-#else
-#define x86_power_interrupt NULL
-#endif
 
 #endif  /* __CROS_EC_X86_POWER_H */

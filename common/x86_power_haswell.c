@@ -452,8 +452,7 @@ void chipset_task(void)
 					 */
 					CPRINTF("[%T x86 hibernating]\n");
 					system_hibernate(0, 0);
-				}
-				else {
+				} else {
 					uint64_t wait = target_time - time_now;
 					if (wait > TASK_MAX_WAIT_US)
 						wait = TASK_MAX_WAIT_US;
