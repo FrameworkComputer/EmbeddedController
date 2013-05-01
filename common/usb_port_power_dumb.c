@@ -181,9 +181,9 @@ static void usb_charge_init(void)
 	if (prev && version == USB_HOOK_VERSION && size == sizeof(*prev)) {
 		usb_charge_set_mode(0, prev->port_mode[0]);
 		usb_charge_set_mode(1, prev->port_mode[1]);
-	}
-	else
+	} else {
 		usb_charge_all_ports_off();
+	}
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 

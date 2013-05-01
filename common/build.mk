@@ -46,4 +46,5 @@ common-$(HAS_TASK_VBOOTHASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 common-$(CONFIG_TMP006)+=tmp006.o
 common-$(CONFIG_TSU6721)+=tsu6721.o
-common-$(CONFIG_USB_CHARGE)+=usb_charge.o
+common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
+common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
