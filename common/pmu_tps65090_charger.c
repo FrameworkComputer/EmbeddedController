@@ -43,21 +43,13 @@
 #define BATTERY_AP_OFF_LEVEL 0
 #endif
 
-static const char * const state_list[] = {
-	"idle",
-	"reinit",
-	"bad cond",
-	"pre-charging",
-	"charging",
-	"charging error",
-	"discharging"
-};
+static const char * const state_list[] = POWER_STATE_NAME_TABLE;
 
 /* States for throttling PMU task */
 static timestamp_t last_waken; /* Initialized to 0 */
 static int has_pending_event;
 
-static enum charging_state current_state = ST_REINIT;
+static enum charging_state current_state = ST_IDLE0;
 
 static void enable_charging(int enable)
 {
@@ -103,7 +95,7 @@ static int system_off(void)
 		chipset_force_shutdown();
 	}
 
-	return ST_REINIT;
+	return ST_IDLE0;
 }
 
 /*
@@ -188,7 +180,7 @@ static int calc_next_state(int state)
 	int batt_temp, alarm, capacity, charge;
 
 	switch (state) {
-	case ST_REINIT:
+	case ST_IDLE0:
 	case ST_BAD_COND:
 	case ST_IDLE:
 		/* Check AC and chiset state */
@@ -234,18 +226,18 @@ static int calc_next_state(int state)
 
 	case ST_PRE_CHARGING:
 		if (!extpower_is_present())
-			return ST_REINIT;
+			return ST_IDLE0;
 
 		/* If the battery goes online after enable the charger,
 		 * go into charging state.
 		 */
 		if (battery_temperature(&batt_temp) == EC_SUCCESS) {
 			if (!battery_start_charging_range(batt_temp))
-				return ST_REINIT;
+				return ST_IDLE0;
 			if (!battery_state_of_charge(&charge)) {
 				config_low_current_charging(charge);
 				if (charge >= 100)
-					return ST_REINIT;
+					return ST_IDLE0;
 			}
 			return ST_CHARGING;
 		}
@@ -255,7 +247,7 @@ static int calc_next_state(int state)
 	case ST_CHARGING:
 		/* Go back to idle state when AC is unplugged */
 		if (!extpower_is_present())
-			return ST_REINIT;
+			return ST_IDLE0;
 
 		/*
 		 * Disable charging on battery access error, or charging
@@ -264,7 +256,7 @@ static int calc_next_state(int state)
 		if (battery_temperature(&batt_temp)) {
 			CPUTS("[pmu] charging: unable to get battery "
 			      "temperature\n");
-			return ST_REINIT;
+			return ST_IDLE0;
 		} else if (!battery_charging_range(batt_temp)) {
 			CPRINTF("[pmu] charging: temperature out of range "
 				"%dC\n",
@@ -278,7 +270,7 @@ static int calc_next_state(int state)
 		 *   - over current
 		 */
 		if (battery_status(&alarm))
-			return ST_REINIT;
+			return ST_IDLE0;
 
 		if (alarm & ALARM_OVER_TEMP) {
 			CPUTS("[pmu] charging: battery over temp\n");
@@ -296,7 +288,7 @@ static int calc_next_state(int state)
 		 */
 		if (pmu_is_charger_alarm()) {
 			CPUTS("[pmu] charging: charger alarm\n");
-			return ST_REINIT;
+			return ST_IDLE0;
 		}
 
 		return ST_CHARGING;
@@ -325,17 +317,17 @@ static int calc_next_state(int state)
 			return ST_CHARGING;
 		}
 
-		return ST_REINIT;
+		return ST_IDLE0;
 
 
 	case ST_DISCHARGING:
 		/* Go back to idle state when AC is plugged */
 		if (extpower_is_present())
-			return ST_REINIT;
+			return ST_IDLE0;
 
 		/* Prepare EC sleep after system stopped discharging */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			return ST_REINIT;
+			return ST_IDLE0;
 
 		/* Check battery discharging temperature range */
 		if (battery_temperature(&batt_temp) == 0) {
@@ -368,7 +360,7 @@ static int calc_next_state(int state)
 		return ST_DISCHARGING;
 	}
 
-	return ST_REINIT;
+	return ST_IDLE0;
 }
 
 /* TODO: Merge charge_state.h and unify charge interface */
@@ -469,7 +461,7 @@ void charger_task(void)
 					enable_charging(1);
 				break;
 			case ST_IDLE:
-			case ST_REINIT:
+			case ST_IDLE0:
 			case ST_BAD_COND:
 			case ST_DISCHARGING:
 				enable_charging(0);

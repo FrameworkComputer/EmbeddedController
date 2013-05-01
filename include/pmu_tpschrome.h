@@ -12,14 +12,29 @@
 
 /* Non-SBS charging states */
 enum charging_state {
+	ST_IDLE0,
 	ST_IDLE,
-	ST_REINIT,
 	ST_BAD_COND,
 	ST_PRE_CHARGING,
 	ST_CHARGING,
 	ST_CHARGING_ERROR,
 	ST_DISCHARGING,
 };
+
+/* Debugging constants, in the same order as enum power_state. This string
+ * table was moved here to sync with enum above.
+ */
+#define POWER_STATE_NAME_TABLE  \
+	{			\
+		"idle0",	\
+		"idle",		\
+		"bad cond",	\
+		"pre-charging",	\
+		"charging",	\
+		"charging error", \
+		"discharging"	\
+	}
+	/* End of POWER_STATE_NAME_TABLE macro */
 
 /* JEITA temperature threshold */
 enum TPS_TEMPERATURE {

@@ -196,7 +196,7 @@ static void battery_led_update(void)
 		/* Discharging with AC, must be battery assist */
 		state = LED_STATE_BREATHING;
 		break;
-	case ST_REINIT:
+	case ST_IDLE0:
 	case ST_BAD_COND:
 	case ST_PRE_CHARGING:
 		state = LED_STATE_SOLID_YELLOW;
