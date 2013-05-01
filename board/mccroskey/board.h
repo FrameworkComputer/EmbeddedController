@@ -25,7 +25,6 @@
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_I2C
 
 /*
  * TODO(dhendrix): Stop mode causes the UART to drop characters and likely
