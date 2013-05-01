@@ -27,7 +27,8 @@ CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
-                               -DTEST_TASKFILE=$(PROJECT).tasklist,)
+                               -DTEST_TASKFILE=$(PROJECT).tasklist,) \
+            $(if $(EMU_BUILD),-DEMU_BUILD)
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
               -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE)            \
               -DCHIP_$(CHIP) -DCHIP_VARIANT=$(CHIP_VARIANT)               \
@@ -49,3 +50,6 @@ BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
+# For EC emulation on host environment, we need to force 32-bit binary.
+# TODO: Fix this. See crosbug.com/p/19257
+HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -m32 -lrt -pthread

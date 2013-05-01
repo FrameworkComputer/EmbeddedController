@@ -27,7 +27,7 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-int main(void)
+test_mockable int main(void)
 {
 	/*
 	 * Pre-initialization (pre-verified boot) stage.  Initialization at

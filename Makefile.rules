@@ -34,12 +34,14 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
 cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf = $(LD) $(LDFLAGS) $(objs) -o $@ -T $< -Map $(out)/$*.map
+cmd_exe = $(CC) $(HOST_TEST_LDFLAGS) $(objs) -o $@
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
 	         -MMD -MF $@.d $< -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $(filter %.c, $^) -o $@
 cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
 	   $(silent)
+cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = cd $(out) && \
@@ -47,7 +49,7 @@ cmd_extractrw-y = cd $(out) && \
 	mv RW_SECTION_A $(PROJECT).RW.bin
 cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
 
-.PHONY: all tests utils
+.PHONY: all tests utils hosttests
 all: $(out)/$(PROJECT).bin utils
 
 dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
@@ -55,9 +57,10 @@ dis: $(dis-y)
 
 utils: $(build-utils) $(host-utils)
 
+# On board test binaries
 test-targets=$(foreach t,$(test-list-y),test-$(t))
 qemu-test-targets=$(foreach t,$(test-list-y),qemu-$(t))
-.PHONY: $(qemu-test-target) $(test-targets)
+.PHONY: $(qemu-test-targets) $(test-targets)
 
 $(test-targets): test-%:
 	@set -e ; \
@@ -71,6 +74,24 @@ $(qemu-test-targets): qemu-%: test-%
 
 tests: $(test-targets)
 qemu-tests: $(qemu-test-targets)
+
+# Emulator test executables
+host-test-targets=$(foreach t,$(test-list-host),host-$(t))
+run-test-targets=$(foreach t,$(test-list-host),run-$(t))
+.PHONY: $(host-test-targets) $(run-test-targets)
+
+$(host-test-targets): host-%:
+	@set -e ; \
+	echo "  BUILD   host - build/host/$*" ; \
+	$(MAKE) --no-print-directory BOARD=host PROJECT=$* \
+	        V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y \
+		CROSS_COMPILE= build/host/$*/$*.exe
+
+$(run-test-targets): run-%: host-%
+	$(call quiet,host_test,TEST   )
+
+hosttests: $(host-test-targets)
+runtests: $(run-test-targets)
 
 $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )
@@ -97,6 +118,9 @@ $(out)/%.flat: $(out)/%.elf
 
 $(out)/%.elf: $(out)/%.lds $(objs)
 	$(call quiet,elf,LD     )
+
+$(out)/$(PROJECT).exe: $(objs)
+	$(call quiet,exe,EXE    )
 
 $(out)/%.o:%.c
 	$(call quiet,c_to_o,CC     )

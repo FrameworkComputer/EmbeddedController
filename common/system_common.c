@@ -104,7 +104,7 @@ int system_is_locked(void)
 #endif
 }
 
-int system_usable_ram_end(void)
+test_mockable int system_usable_ram_end(void)
 {
 	/* Leave space at the end of RAM for jump data and tags.
 	 *

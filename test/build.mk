@@ -24,6 +24,9 @@ test-list-$(BOARD_spring)+=kb_scan flash stress
 test-list-$(BOARD_link)=
 test-list-$(BOARD_slippy)=
 
+# Emulator tests
+test-list-host=mutex pingpong utils kb_scan
+
 flash-y=flash.o
 kb_mkbp-y=kb_mkbp.o
 kb_scan-y=kb_scan.o

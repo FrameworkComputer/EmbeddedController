@@ -89,7 +89,7 @@ static int test_shared_mem(void)
 	for (i = 0; i < 256; ++i) {
 		memset(mem, i, sz);
 		for (j = 0; j < sz; ++j)
-			TEST_ASSERT(mem[j] == i);
+			TEST_ASSERT(mem[j] == (char)i);
 
 		if ((i & 0xf) == 0)
 			msleep(20); /* Yield to other tasks */
@@ -100,7 +100,7 @@ static int test_shared_mem(void)
 	return EC_SUCCESS;
 }
 
-static int command_run_test(int argc, char **argv)
+void run_test(void)
 {
 	error_count = 0;
 
@@ -111,13 +111,16 @@ static int command_run_test(int argc, char **argv)
 	RUN_TEST(test_uint64divmod);
 	RUN_TEST(test_shared_mem);
 
-	if (error_count) {
+	if (error_count)
 		ccprintf("Failed %d tests!\n", error_count);
-		return EC_ERROR_UNKNOWN;
-	} else {
+	else
 		ccprintf("Pass!\n");
-		return EC_SUCCESS;
-	}
+}
+
+static int command_run_test(int argc, char **argv)
+{
+	run_test();
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
 			NULL, NULL, NULL);
