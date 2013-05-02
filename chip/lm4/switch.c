@@ -153,8 +153,10 @@ static void update_backlight(void)
 	else
 		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 
+#ifdef CONFIG_PWM_KBLIGHT
 	/* Same with keyboard backlight */
 	pwm_enable_keyboard_backlight(lid_is_open());
+#endif
 }
 
 /**
