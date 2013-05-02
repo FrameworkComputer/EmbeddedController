@@ -54,8 +54,8 @@
 /* Host connects to keyboard controller module via LPC */
 #define HOST_KB_BUS_LPC
 
-/* USB charge port */
-#define USB_CHARGE_PORT_COUNT 2
+/* USB ports */
+#define USB_PORT_COUNT 2
 
 /* GPIOs for second UART port */
 #define CONFIG_UART1_GPIOS_PC4_5

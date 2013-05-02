@@ -19,6 +19,8 @@ enum usb_charge_mode {
 	USB_CHARGE_MODE_CDP,
 	/* Set USB port to Dedicated Charging Port, BC 1.2. */
 	USB_CHARGE_MODE_DCP_SHORT,
+	/* Enable USB port (for dumb ports). */
+	USB_CHARGE_MODE_ENABLED,
 
 	USB_CHARGE_MODE_COUNT
 };
