@@ -56,14 +56,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
-	/*
-	 * I2C pins should be configured as inputs until I2C module is
-	 * initialized. This will avoid driving the lines unintentionally.
-	 */
-	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_INPUT, NULL},
-	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_INPUT, NULL},
-	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
-	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
+	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_HI_Z, NULL},
+	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_HI_Z, NULL},
+	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_HI_Z, NULL},
+	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_HI_Z, NULL},
 	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},

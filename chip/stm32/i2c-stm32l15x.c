@@ -77,8 +77,10 @@ static int wait_sr1(int port, int mask)
 
 		/* Check for errors */
 		if (sr1 & (STM32_I2C_SR1_ARLO | STM32_I2C_SR1_BERR |
-			   STM32_I2C_SR1_AF))
+			   STM32_I2C_SR1_AF)) {
+			dump_i2c_reg(port, "wait_sr1 failed");
 			return EC_ERROR_UNKNOWN;
+		}
 
 		/* I2C is slow, so let other things run while we wait */
 		usleep(100);
@@ -134,6 +136,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	ASSERT(out || !out_bytes);
 	ASSERT(in || !in_bytes);
 
+	dump_i2c_reg(port, "xfer start");
+
 	/* Clear status */
 	/*
 	 * TODO: should check for any leftover error status, and reset the
@@ -147,13 +151,11 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	/* Clear start and stop bits */
 	STM32_I2C_CR1(port) &= ~(STM32_I2C_CR1_START | STM32_I2C_CR1_STOP);
 
-	dump_i2c_reg(port, "xfer start");
-
 	if (out_bytes) {
 		if (!started) {
 			rv = send_start(port, slave_addr);
 			if (rv)
-				return rv;
+				goto xfer_exit;
 		}
 
 		/* Write data, if any */
@@ -164,7 +166,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 
 			rv = wait_sr1(port, STM32_I2C_SR1_BTF);
 			if (rv)
-				return rv;
+				goto xfer_exit;
 		}
 
 		/* Need repeated start condition before reading */
@@ -179,7 +181,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		if (!started) {
 			rv = send_start(port, slave_addr | 0x01);
 			if (rv)
-				return rv;
+				goto xfer_exit;
 		}
 
 		/* Read data, if any */
@@ -200,8 +202,14 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		}
 	}
 
-	/* Success */
-	return EC_SUCCESS;
+ xfer_exit:
+	/* On error, queue a stop condition */
+	if (rv) {
+		STM32_I2C_CR1(port) |= STM32_I2C_CR1_STOP;
+		dump_i2c_reg(port, "stop after error");
+	}
+
+	return rv;
 }
 
 int i2c_get_line_levels(int port)
