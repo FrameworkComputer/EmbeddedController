@@ -238,7 +238,7 @@ exit:
  */
 static void configure_gpio(void)
 {
-#ifdef BOARD_link
+#ifdef BOARD_link				/* HEY: Slippy? */
 	/* PA6:7 = I2C1 SCL/SDA; PB2:3 = I2C0 SCL/SDA; PB6:7 = I2C5 SCL/SDA */
 	gpio_set_alternate_function(LM4_GPIO_A, 0xc0, 3);
 	gpio_set_alternate_function(LM4_GPIO_B, 0xcc, 3);

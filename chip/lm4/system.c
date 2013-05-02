@@ -341,6 +341,8 @@ void system_pre_init(void)
 
 	check_reset_cause();
 
+	/* HEY: read LM4_SYSTEM_BOOTCFG bit 4 to determine WRKEY value */
+
 	/* Initialize bootcfg if needed */
 	if (LM4_SYSTEM_BOOTCFG != BOOTCFG_VALUE) {
 		LM4_FLASH_FMD = BOOTCFG_VALUE;

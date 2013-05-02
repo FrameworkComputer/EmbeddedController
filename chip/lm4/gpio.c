@@ -217,13 +217,18 @@ void gpio_pre_init(void)
 	}
 }
 
-/* List of GPIO IRQs to enable */
+/* List of GPIO IRQs to enable. Don't automatically enable interrupts for
+ * the keyboard input GPIO bank - that's handled separately. Of course the
+ * bank is different for different systems. */
 static const uint8_t gpio_irqs[] = {
 	LM4_IRQ_GPIOA, LM4_IRQ_GPIOB, LM4_IRQ_GPIOC, LM4_IRQ_GPIOD,
 	LM4_IRQ_GPIOE, LM4_IRQ_GPIOF, LM4_IRQ_GPIOG, LM4_IRQ_GPIOH,
-	LM4_IRQ_GPIOJ, LM4_IRQ_GPIOK, LM4_IRQ_GPIOL, LM4_IRQ_GPIOM,
+	LM4_IRQ_GPIOJ,
+#if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPIOK)
+	LM4_IRQ_GPIOK,
+#endif
+	LM4_IRQ_GPIOL, LM4_IRQ_GPIOM,
 #if defined(KB_SCAN_ROW_IRQ) && (KB_SCAN_ROW_IRQ != LM4_IRQ_GPION)
-	/* Don't enable interrupts for the keyboard input GPIO bank */
 	LM4_IRQ_GPION,
 #endif
 	LM4_IRQ_GPIOP, LM4_IRQ_GPIOQ
@@ -280,7 +285,9 @@ GPIO_IRQ_FUNC(__gpio_f_interrupt, LM4_GPIO_F);
 GPIO_IRQ_FUNC(__gpio_g_interrupt, LM4_GPIO_G);
 GPIO_IRQ_FUNC(__gpio_h_interrupt, LM4_GPIO_H);
 GPIO_IRQ_FUNC(__gpio_j_interrupt, LM4_GPIO_J);
+#if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_K)
 GPIO_IRQ_FUNC(__gpio_k_interrupt, LM4_GPIO_K);
+#endif
 GPIO_IRQ_FUNC(__gpio_l_interrupt, LM4_GPIO_L);
 GPIO_IRQ_FUNC(__gpio_m_interrupt, LM4_GPIO_M);
 #if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_N)
@@ -304,7 +311,9 @@ DECLARE_IRQ(LM4_IRQ_GPIOF, __gpio_f_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOG, __gpio_g_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOH, __gpio_h_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOJ, __gpio_j_interrupt, 1);
+#if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_K)
 DECLARE_IRQ(LM4_IRQ_GPIOK, __gpio_k_interrupt, 1);
+#endif
 DECLARE_IRQ(LM4_IRQ_GPIOL, __gpio_l_interrupt, 1);
 DECLARE_IRQ(LM4_IRQ_GPIOM, __gpio_m_interrupt, 1);
 #if defined(KB_SCAN_ROW_GPIO) && (KB_SCAN_ROW_GPIO != LM4_GPIO_N)

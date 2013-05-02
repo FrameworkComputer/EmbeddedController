@@ -47,7 +47,7 @@ struct pwm_fan_state {
  */
 static void configure_fan_gpios(void)
 {
-	/* HEY: this is Link only */
+	/* HEY: this is Link only. Slippy is PM2:3 */
 	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
 	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
 }
@@ -164,8 +164,10 @@ static int command_fan_info(int argc, char **argv)
 		 (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03);
 	ccprintf("Mode:   %s\n", pwm_get_rpm_mode() ? "rpm" : "duty");
 	ccprintf("Enable: %s\n", pwm_get_fan_enabled() ? "yes" : "no");
+#ifdef BOARD_link				/* HEY: Slippy? */
 	ccprintf("Power:  %s\n",
 		 gpio_get_level(GPIO_PGOOD_5VALW) ? "yes" : "no");
+#endif
 
 	return EC_SUCCESS;
 }
