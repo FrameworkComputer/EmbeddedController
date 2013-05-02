@@ -32,54 +32,24 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
-#define CONFIG_TMP006
 #define CONFIG_USB_PORT_POWER_DUMB
 
 #ifndef __ASSEMBLER__
 
-/* Fan PWM channels */
-#define FAN_CH_CPU       0  /* CPU fan */
-#define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
-#define FAN_CH_POWER_LED 5  /* Power adapter LED */
-
-enum adc_channel {
-	/* EC internal die temperature in degrees K. */
-	ADC_CH_EC_TEMP = 0,
-	/* Charger current in mA. */
-	ADC_CH_CHARGER_CURRENT,
-
-	ADC_CH_COUNT
-};
-
-/* Charger module */
-/* Set charger input current limit
- * Note - this value should depend on external power adapter,
- *        designed charging voltage, and the maximum power of
- *        a running system.
- *        Following value 4032 mA is the maximum input limit
- *        on Link's design.
- */
-#define CONFIG_CHARGER_INPUT_CURRENT 4032
-#define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
-#define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
-
-/* Board specific charging current limit
- * The current constrant of all components on the charging path.
- */
-#define CONFIG_CHARGING_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
+/* PWM channels */
+#define FAN_CH_CPU         2  /* CPU fan */
+#define FAN_CH_BL_DISPLAY  4  /* LVDS backlight (from PCH, cleaned by EC) */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
-#define I2C_PORT_CHARGER 0  /* Note: proto0 used port 1 */
-#define I2C_PORT_THERMAL 5
-#define I2C_PORT_LIGHTBAR 1
-#define I2C_PORT_REGULATOR 0
-/* There are only 3 I2C ports used because battery and charger share a port */
-#define I2C_PORTS_USED 3
+#define I2C_PORT_CHARGER 0
+#define I2C_PORT_THERMAL 2
+/* There are only two I2C ports used because battery and charger share a port */
+#define I2C_PORTS_USED 2
 
 /* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */
-#define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION
-#define KB_SCAN_ROW_GPIO LM4_GPIO_N
+#define KB_SCAN_ROW_IRQ  LM4_IRQ_GPIOK
+#define KB_SCAN_ROW_GPIO LM4_GPIO_K
 
 /* Host connects to keyboard controller module via LPC */
 #define HOST_KB_BUS_LPC
@@ -165,19 +135,25 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
+enum adc_channel {
+	/* EC internal die temperature in degrees K. */
+	ADC_CH_EC_TEMP = 0,
+
+	/* HEY: Slippy MB has only one discrete thermal sensor, but it has two
+	 * values (one internal and one external). Both should be here.
+	 * HEY: There may be a BAT_TEMP sensor on the battery pack too.
+	 */
+
+	/* HEY: Be prepared to read this (ICMNT). */
+	/* Charger current in mA. */
+	ADC_CH_CHARGER_CURRENT,
+
+	ADC_CH_COUNT
+};
+
 enum temp_sensor_id {
-	/* TMP006 U20, die/object temperature near Mini-DP / USB connectors */
-	TEMP_SENSOR_I2C_U20_DIE = 0,
-	TEMP_SENSOR_I2C_U20_OBJECT,
-	/* TMP006 U11, die/object temperature near PCH */
-	TEMP_SENSOR_I2C_U11_DIE,
-	TEMP_SENSOR_I2C_U11_OBJECT,
-	/* TMP006 U27, die/object temperature near hinge */
-	TEMP_SENSOR_I2C_U27_DIE,
-	TEMP_SENSOR_I2C_U27_OBJECT,
-	/* TMP006 U14, die/object temperature near battery charger */
-	TEMP_SENSOR_I2C_U14_DIE,
-	TEMP_SENSOR_I2C_U14_OBJECT,
+	/* HEY - need two I2C sensor values */
+
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
 	/* CPU die temperature via PECI */
@@ -186,9 +162,7 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-/* The number of TMP006 sensor chips on the board. */
-#define TMP006_COUNT 4
-
+/* HEY: The below stuff is for Link. Pick a different pin for Slippy */
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
  * pullup. If this signal is pulled to ground when the EC boots, the EC will get
  * into the boot loader and we can recover bricked EC. */
