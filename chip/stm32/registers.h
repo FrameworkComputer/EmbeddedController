@@ -283,6 +283,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_I2C_CR1_START	(1 << 8)
 #define STM32_I2C_CR1_STOP	(1 << 9)
 #define STM32_I2C_CR1_ACK	(1 << 10)
+#define STM32_I2C_CR1_POS	(1 << 11)
 #define STM32_I2C_CR1_SWRST	(1 << 15)
 #define STM32_I2C_CR2(n)            REG16(stm32_i2c_reg(n, 0x04))
 #define STM32_I2C_OAR1(n)           REG16(stm32_i2c_reg(n, 0x08))
