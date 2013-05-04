@@ -373,7 +373,7 @@ static int usb_need_boost(int dev_type)
 {
 	if (dev_type & POWERED_5000_DEVICE_TYPE)
 		return 0;
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_SUSPEND))
 		return 1;
 	return (dev_type != TSU6721_TYPE_NONE);
 }
