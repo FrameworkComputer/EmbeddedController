@@ -25,6 +25,7 @@ test-list-$(BOARD_link)=
 test-list-$(BOARD_slippy)=
 
 flash-y=flash.o
+kb_mkbp-y=kb_mkbp.o
 kb_scan-y=kb_scan.o
 mutex-y=mutex.o
 pingpong-y=pingpong.o
