@@ -257,6 +257,14 @@ static int apple_charger_current(void)
 	return apple_charger_type[type];
 }
 
+static int dcp_current_limit(void)
+{
+	if (current_limit_mode == LIMIT_AGGRESSIVE)
+		return I_LIMIT_1500MA - PWM_CTRL_OC_MARGIN;
+	else
+		return I_LIMIT_1500MA;
+}
+
 static int probe_video(int device_type)
 {
 	tsu6721_disable_interrupts();
@@ -475,11 +483,12 @@ static void usb_update_ilim(int dev_type)
 		int current_limit = I_LIMIT_500MA;
 		if (dev_type & TSU6721_TYPE_CHG12)
 			current_limit = I_LIMIT_3000MA;
-		else if (dev_type & TSU6721_TYPE_APPLE_CHG) {
+		else if (dev_type & TSU6721_TYPE_APPLE_CHG)
 			current_limit = apple_charger_current();
-		} else if ((dev_type & TSU6721_TYPE_CDP) ||
-			   (dev_type & TSU6721_TYPE_DCP))
+		else if (dev_type & TSU6721_TYPE_CDP)
 			current_limit = I_LIMIT_1500MA;
+		else if (dev_type & TSU6721_TYPE_DCP)
+			current_limit = dcp_current_limit();
 
 		pwm_nominal_duty_cycle(current_limit);
 	} else {
