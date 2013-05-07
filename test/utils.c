@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "shared_mem.h"
+#include "system.h"
 #include "timer.h"
 #include "util.h"
 
@@ -100,6 +101,14 @@ static int test_shared_mem(void)
 	return EC_SUCCESS;
 }
 
+static int test_scratchpad(void)
+{
+	system_set_scratchpad(0xfeedfeed);
+	TEST_ASSERT(system_get_scratchpad() == 0xfeedfeed);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	error_count = 0;
@@ -110,6 +119,7 @@ void run_test(void)
 	RUN_TEST(test_atoi);
 	RUN_TEST(test_uint64divmod);
 	RUN_TEST(test_shared_mem);
+	RUN_TEST(test_scratchpad);
 
 	if (error_count)
 		ccprintf("Failed %d tests!\n", error_count);

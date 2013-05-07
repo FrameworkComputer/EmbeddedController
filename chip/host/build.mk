@@ -8,5 +8,5 @@
 
 CORE:=host
 
-chip-y=system.o gpio.o uart.o
+chip-y=system.o gpio.o uart.o persistence.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

@@ -9,6 +9,7 @@
 
 #include "host_test.h"
 #include "system.h"
+#include "persistence.h"
 
 #define SHARED_MEM_SIZE 512 /* bytes */
 char __shared_mem_buf[SHARED_MEM_SIZE];
@@ -61,6 +62,34 @@ int system_get_vbnvcontext(uint8_t *block)
 int system_set_vbnvcontext(const uint8_t *block)
 {
 	return EC_ERROR_UNIMPLEMENTED;
+}
+
+int system_set_scratchpad(uint32_t value)
+{
+	FILE *f = get_persistent_storage("scratchpad", "w");
+
+	fprintf(f, "%lu", value);
+	release_persistent_storage(f);
+
+	return EC_SUCCESS;
+}
+
+uint32_t system_get_scratchpad(void)
+{
+	FILE *f = get_persistent_storage("scratchpad", "r");
+	uint32_t value;
+	int success;
+
+	if (f == NULL)
+		return 0;
+
+	success = fscanf(f, "%lu", &value);
+	release_persistent_storage(f);
+
+	if (success)
+		return value;
+	else
+		return 0;
 }
 
 int system_usable_ram_end(void)
