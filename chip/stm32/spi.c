@@ -184,7 +184,7 @@ static void reply(struct dma_channel *txdma,
 			msg[i + SPI_MSG_HEADER_LEN] = ch;
 	}
 	msg_len += SPI_MSG_PROTO_LEN;
-	ASSERT(msg_len < sizeof(out_msg));
+	ASSERT(msg_len <= sizeof(out_msg));
 
 	/* Add the checksum and get ready to send */
 	msg[msg_len - 2] = sum & 0xff;
