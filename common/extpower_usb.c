@@ -58,13 +58,14 @@ enum ilim_config {
 
 /* PWM control loop parameters */
 #define PWM_CTRL_MAX_DUTY	96 /* Minimum current for dead battery */
-#define PWM_CTRL_BEGIN_OFFSET	30
+#define PWM_CTRL_BEGIN_OFFSET	90
 #define PWM_CTRL_OC_MARGIN	15
 #define PWM_CTRL_OC_DETECT_TIME	(800 * MSEC)
 #define PWM_CTRL_OC_BACK_OFF	3
-#define PWM_CTRL_OC_RETRY	1
-#define PWM_CTRL_STEP_DOWN	2
+#define PWM_CTRL_OC_RETRY	2
+#define PWM_CTRL_STEP_DOWN	3
 #define PWM_CTRL_STEP_UP	5
+#define PWM_CTRL_STEP_FAST_DOWN 15
 #define PWM_CTRL_VBUS_HARD_LOW	4400
 #define PWM_CTRL_VBUS_LOW	4500
 #define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
@@ -291,16 +292,29 @@ static void set_pwm_duty_cycle(int percent)
 	current_pwm_duty = percent;
 }
 
-static int pwm_check_lower_bound(void)
+/**
+ * Returns next lower PWM duty cycle, or -1 for unchanged duty cycle.
+ */
+static int pwm_get_next_lower(void)
 {
-	if (current_limit_mode == LIMIT_AGGRESSIVE)
-		return (current_pwm_duty > nominal_pwm_duty -
-					   PWM_CTRL_OC_MARGIN &&
-			current_pwm_duty > over_current_pwm_duty &&
-			current_pwm_duty > 0);
-	else
-		return (current_pwm_duty > nominal_pwm_duty &&
-			current_pwm_duty > 0);
+	int fast_next = current_pwm_duty - PWM_CTRL_STEP_FAST_DOWN;
+
+	if (current_limit_mode == LIMIT_AGGRESSIVE) {
+		if (fast_next >= nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
+		    fast_next >= over_current_pwm_duty)
+			return MAX(fast_next, 0);
+		if (current_pwm_duty > nominal_pwm_duty -
+				       PWM_CTRL_OC_MARGIN &&
+		    current_pwm_duty > over_current_pwm_duty &&
+		    current_pwm_duty > 0)
+			return MAX(current_pwm_duty - PWM_CTRL_STEP_DOWN, 0);
+		return -1;
+	} else {
+		if (current_pwm_duty > nominal_pwm_duty && current_pwm_duty > 0)
+			return MAX(current_pwm_duty - PWM_CTRL_STEP_DOWN, 0);
+		else
+			return -1;
+	}
 }
 
 static int pwm_check_vbus_low(int vbus, int battery_current)
@@ -401,11 +415,10 @@ static void usb_detect_overcurrent(int dev_type)
 		power_removed_time[idx] = get_time();
 		power_removed_type[idx] = current_dev_type;
 		/*
-		 * Considering user may plug/unplug the charger too fast, we
-		 * don't limit current to lower than nominal current limit.
+		 * TODO(victoryang): Record the maximum current seen during
+		 * retry?
 		 */
-		power_removed_pwm_duty[idx] = MIN(current_pwm_duty,
-						  nominal_pwm_duty);
+		power_removed_pwm_duty[idx] = current_pwm_duty;
 	} else if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
 		int idx = !(dev_type == TSU6721_TYPE_VBUS_DEBOUNCED);
 		timestamp_t now = get_time();
@@ -656,6 +669,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
 static void power_tweak(void)
 {
 	int vbus, current;
+	int next;
 
 	if (current_ilim_config != ILIM_CONFIG_PWM)
 		return;
@@ -691,9 +705,12 @@ static void power_tweak(void)
 	if (pwm_check_vbus_low(vbus, current)) {
 		set_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
 		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
-	} else if (vbus > PWM_CTRL_VBUS_HIGH && pwm_check_lower_bound()) {
-		set_pwm_duty_cycle(current_pwm_duty - PWM_CTRL_STEP_DOWN);
-		CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
+	} else if (vbus > PWM_CTRL_VBUS_HIGH) {
+		next = pwm_get_next_lower();
+		if (next >= 0) {
+			set_pwm_duty_cycle(next);
+			CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
+		}
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, power_tweak, HOOK_PRIO_DEFAULT);
