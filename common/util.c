@@ -196,8 +196,8 @@ void *memset(void *dest, int c, int len)
 
 void *memmove(void *dest, const void *src, int len)
 {
-	if ((uint32_t)dest <= (uint32_t)src ||
-	    (uint32_t)dest >= (uint32_t)src + len) {
+	if ((uintptr_t)dest <= (uintptr_t)src ||
+	    (uintptr_t)dest >= (uintptr_t)src + len) {
 		/* Start of destination doesn't overlap source, so just use
 		 * memcpy(). */
 		return memcpy(dest, src, len);

@@ -104,7 +104,7 @@ int system_is_locked(void)
 #endif
 }
 
-test_mockable int system_usable_ram_end(void)
+test_mockable uintptr_t system_usable_ram_end(void)
 {
 	/* Leave space at the end of RAM for jump data and tags.
 	 *
@@ -113,7 +113,7 @@ test_mockable int system_usable_ram_end(void)
 	 * tags after a sysjump.  When verified boot runs after a reboot, it'll
 	 * have as much RAM as we can give it; after verified boot jumps to
 	 * another image there'll be less RAM, but we'll care less too. */
-	return (uint32_t)jdata - jdata->jump_tag_total;
+	return (uintptr_t)jdata - jdata->jump_tag_total;
 }
 
 uint32_t system_get_reset_flags(void)
@@ -215,7 +215,8 @@ void system_disable_jump(void)
 
 enum system_image_copy_t system_get_image_copy(void)
 {
-	uint32_t my_addr = (uint32_t)system_get_image_copy - CONFIG_FLASH_BASE;
+	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
+			    CONFIG_FLASH_BASE;
 
 	if (my_addr >= CONFIG_SECTION_RO_OFF &&
 	    my_addr < (CONFIG_SECTION_RO_OFF + CONFIG_SECTION_RO_SIZE))
@@ -293,7 +294,7 @@ const char *system_get_image_copy_string(void)
  *
  * @param init_addr	Init address of target image
  */
-static void jump_to_image(uint32_t init_addr)
+static void jump_to_image(uintptr_t init_addr)
 {
 	void (*resetvec)(void) = (void(*)(void))init_addr;
 
@@ -360,8 +361,8 @@ static uint32_t get_size(enum system_image_copy_t copy)
 
 int system_run_image_copy(enum system_image_copy_t copy)
 {
-	uint32_t base;
-	uint32_t init_addr;
+	uintptr_t base;
+	uintptr_t init_addr;
 
 	/* If system is already running the requested image, done */
 	if (system_get_image_copy() == copy)
@@ -408,7 +409,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-	uint32_t addr;
+	uintptr_t addr;
 	const struct version_struct *v;
 
 	/* Handle version of current image */
@@ -421,7 +422,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 	/* The version string is always located after the reset vectors, so
 	 * it's the same as in the current image. */
-	addr += ((uint32_t)&version_data - get_base(system_get_image_copy()));
+	addr += ((uintptr_t)&version_data - get_base(system_get_image_copy()));
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
@@ -456,13 +457,13 @@ const char *system_get_build_info(void)
 
 void system_common_pre_init(void)
 {
-	uint32_t addr;
+	uintptr_t addr;
 
 	/*
 	 * Put the jump data before the panic data, or at the end of RAM if
 	 * panic data is not present.
 	 */
-	addr = (uint32_t)panic_get_data();
+	addr = (uintptr_t)panic_get_data();
 	if (!addr)
 		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
 

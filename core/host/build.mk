@@ -6,6 +6,6 @@
 # emulator specific files build
 #
 
-CFLAGS_CPU=-fno-builtin -m32
+CFLAGS_CPU=-fno-builtin
 
 core-y=main.o task.o timer.o panic.o disabled.o

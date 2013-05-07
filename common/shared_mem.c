@@ -22,7 +22,7 @@ int shared_mem_size(void)
 	 * allocated from the start of RAM, so we can use everything up to the
 	 * jump data at the end of RAM.
 	 */
-	return system_usable_ram_end() - (uint32_t)__shared_mem_buf;
+	return system_usable_ram_end() - (uintptr_t)__shared_mem_buf;
 }
 
 int shared_mem_acquire(int size, char **dest_ptr)

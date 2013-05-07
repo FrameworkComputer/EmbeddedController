@@ -27,7 +27,7 @@
  */
 static inline char *flash_physical_dataptr(int offset)
 {
-	return (char *)(CONFIG_FLASH_BASE + offset);
+	return (char *)((uintptr_t)CONFIG_FLASH_BASE + offset);
 }
 
 /**

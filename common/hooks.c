@@ -61,7 +61,7 @@ void hook_notify(enum hook_type type)
 
 	start = hook_list[type].start;
 	end = hook_list[type].end;
-	count = ((uint32_t)end - (uint32_t)start) / sizeof(struct hook_data);
+	count = end - start;
 
 	/* Call all the hooks in priority order */
 	while (called < count) {

@@ -50,6 +50,4 @@ BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
-# For EC emulation on host environment, we need to force 32-bit binary.
-# TODO: Fix this. See crosbug.com/p/19257
-HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -m32 -lrt -pthread
+HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread

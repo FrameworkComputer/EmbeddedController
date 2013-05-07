@@ -198,7 +198,7 @@ int task_start(void)
 		tasks[i].wake_time.val = ~0ull;
 		pthread_cond_init(&tasks[i].resume, NULL);
 		pthread_create(&tasks[i].thread, NULL, _task_start_impl,
-			       (void *)(size_t)i);
+			       (void *)(uintptr_t)i);
 		pthread_cond_wait(&scheduler_cond, &run_lock);
 	}
 

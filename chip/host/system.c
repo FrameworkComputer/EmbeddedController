@@ -92,9 +92,9 @@ uint32_t system_get_scratchpad(void)
 		return 0;
 }
 
-int system_usable_ram_end(void)
+uintptr_t system_usable_ram_end(void)
 {
-	return (int)(__shared_mem_buf + SHARED_MEM_SIZE);
+	return (uintptr_t)(__shared_mem_buf + SHARED_MEM_SIZE);
 }
 
 void system_pre_init(void)

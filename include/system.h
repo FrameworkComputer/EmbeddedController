@@ -133,7 +133,7 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 /**
  * Return the address just past the last usable byte in RAM.
  */
-int system_usable_ram_end(void);
+uintptr_t system_usable_ram_end(void);
 
 /**
  * Return non-zero if the given range is overlapped with the active image.

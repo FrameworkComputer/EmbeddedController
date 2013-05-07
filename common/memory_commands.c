@@ -17,7 +17,7 @@ static int command_write_word(int argc, char **argv)
 	if (argc != 3)
 		return EC_ERROR_PARAM_COUNT;
 
-	address = (uint32_t *)strtoi(argv[1], &e, 0);
+	address = (uint32_t *)(uintptr_t)strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM1;
 
@@ -46,7 +46,7 @@ static int command_read_word(int argc, char **argv)
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	address = (uint32_t *)strtoi(argv[1], &e, 0);
+	address = (uint32_t *)(uintptr_t)strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM1;
 
