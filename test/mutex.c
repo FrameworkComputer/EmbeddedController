@@ -20,8 +20,8 @@ static uint32_t prng(uint32_t x)
 	return 22695477 * x + 1;
 }
 
-/* period between 50us and 12.8ms */
-#define PERIOD_US(num) (((num % 256) + 1) * 50)
+/* period between 50us and 3.2ms */
+#define PERIOD_US(num) (((num % 64) + 1) * 50)
 /* one of the 3 MTX3x tasks */
 #define RANDOM_TASK(num) (TASK_ID_MTX3C + (num % 3))
 

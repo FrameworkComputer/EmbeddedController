@@ -18,7 +18,7 @@
 
 #define KEYDOWN_DELAY_MS     10
 #define KEYDOWN_RETRY        10
-#define NO_KEYDOWN_DELAY_MS  200
+#define NO_KEYDOWN_DELAY_MS  100
 
 #define TEST_ASSERT(n) \
 	do { \
