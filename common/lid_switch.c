@@ -64,7 +64,7 @@ static void lid_switch_close(void)
 	host_set_single_event(EC_HOST_EVENT_LID_CLOSED);
 }
 
-int lid_is_open(void)
+test_mockable int lid_is_open(void)
 {
 	return debounced_lid_open;
 }

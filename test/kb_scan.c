@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -53,11 +54,9 @@ static int error_count;
 static int lid_open;
 
 #ifdef CONFIG_LID_SWITCH
-int gpio_get_level(enum gpio_signal signal)
+int lid_is_open(void)
 {
-	if (signal == GPIO_LID_OPEN)
-		return lid_open;
-	return 0;
+	return lid_open;
 }
 #endif
 

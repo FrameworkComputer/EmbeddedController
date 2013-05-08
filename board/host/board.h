@@ -11,9 +11,11 @@
 #define CONFIG_HOST_EMU
 #define CONFIG_HOSTCMD
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_LID_SWITCH
 
 enum gpio_signal {
 	GPIO_EC_INT,
+	GPIO_LID_OPEN,
 
 	GPIO_COUNT
 };

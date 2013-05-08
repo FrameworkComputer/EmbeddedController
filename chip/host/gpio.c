@@ -22,3 +22,8 @@ test_mockable void gpio_set_level(enum gpio_signal signal, int value)
 {
 	/* Nothing */
 }
+
+test_mockable int gpio_enable_interrupt(enum gpio_signal signal)
+{
+	return EC_SUCCESS;
+}

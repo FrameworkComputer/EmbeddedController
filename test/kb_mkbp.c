@@ -36,6 +36,11 @@ void gpio_set_level(enum gpio_signal signal, int level)
 		ec_int_level = !!level;
 }
 
+int lid_is_open(void)
+{
+	return 1;
+}
+
 /*****************************************************************************/
 /* Test utilities */
 
