@@ -54,13 +54,13 @@ struct host_cmd_handler_args {
 
 /* Host command */
 struct host_command {
-	/* Command code */
-	int command;
 	/*
 	 * Handler for the command.  Args points to context for handler.
 	 * Returns result status (EC_RES_*).
 	 */
 	int (*handler)(struct host_cmd_handler_args *args);
+	/* Command code */
+	int command;
 	/* Mask of supported versions */
 	int version_mask;
 };
@@ -133,6 +133,6 @@ void host_command_received(struct host_cmd_handler_args *args);
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
 	const struct host_command __host_cmd_##command			\
 	__attribute__((section(".rodata.hcmds")))			\
-	     = {command, routine, version_mask}
+	     = {routine, command, version_mask}
 
 #endif  /* __CROS_EC_HOST_COMMAND_H */

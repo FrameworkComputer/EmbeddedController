@@ -9,17 +9,17 @@ SECTIONS {
     *(.rodata.irqprio)
     __irqprio_end = .;
 
-    . = ALIGN(4);
+    . = ALIGN(8);
     __cmds = .;
     *(SORT(.rodata.cmds*))
     __cmds_end = .;
 
-    . = ALIGN(4);
+    . = ALIGN(8);
     __hcmds = .;
     *(.rodata.hcmds)
     __hcmds_end = .;
 
-    . = ALIGN(4);
+    . = ALIGN(8);
     __hooks_init = .;
     *(.rodata.HOOK_INIT)
     __hooks_init_end = .;
