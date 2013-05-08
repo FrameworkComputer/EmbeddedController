@@ -8,14 +8,16 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#define CONFIG_HOST_EMU
 #define CONFIG_HOSTCMD
+#define CONFIG_HOST_EMU
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LID_SWITCH
+#define CONFIG_POWER_BUTTON
 
 enum gpio_signal {
 	GPIO_EC_INT,
 	GPIO_LID_OPEN,
+	GPIO_POWER_BUTTON_L,
 
 	GPIO_COUNT
 };

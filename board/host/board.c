@@ -10,4 +10,5 @@
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"EC_INT", 0, 0, 0, 0},
 	{"LID_OPEN", 0, 0, 0, 0},
+	{"POWER_BUTTON_L", 0, 0, 0, 0},
 };
