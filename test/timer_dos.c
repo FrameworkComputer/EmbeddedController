@@ -53,11 +53,3 @@ void run_test(void)
 	task_wake(TASK_ID_TMRB);
 	task_wake(TASK_ID_TMRA);
 }
-
-static int command_run_test(int argc, char **argv)
-{
-	run_test();
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

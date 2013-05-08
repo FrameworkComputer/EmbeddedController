@@ -13,32 +13,13 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
 #define KEYDOWN_DELAY_MS     10
 #define KEYDOWN_RETRY        10
 #define NO_KEYDOWN_DELAY_MS  100
-
-#define TEST_ASSERT(n) \
-	do { \
-		if (n() != EC_SUCCESS) { \
-			ccprintf("%s failed.\n", #n); \
-			return EC_ERROR_UNKNOWN; \
-		} \
-	} while (0)
-
-#define RUN_TEST(n) \
-	do { \
-		ccprintf("Running %s...", #n); \
-		cflush(); \
-		if (n() == EC_SUCCESS) { \
-			ccputs("OK\n"); \
-		} else { \
-			ccputs("Fail\n"); \
-			error_count++; \
-		} \
-	} while (0)
 
 #define CHECK_KEY_COUNT(old, expected) \
 	do { \
@@ -50,7 +31,6 @@
 static uint8_t mock_state[KEYBOARD_COLS];
 static int column_driven;
 static int fifo_add_count;
-static int error_count;
 static int lid_open;
 
 #ifdef CONFIG_LID_SWITCH
@@ -138,41 +118,41 @@ int deghost_test(void)
 {
 	/* Test we can detect a keypress */
 	mock_key(1, 1, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	/* (1, 1) (1, 2) (2, 1) (2, 2) form ghosting keys */
 	mock_key(1, 1, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(2, 2, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 2, 1);
 	mock_key(2, 1, 1);
-	TEST_ASSERT(expect_no_keychange);
+	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(2, 1, 0);
 	mock_key(1, 2, 0);
-	TEST_ASSERT(expect_no_keychange);
+	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(2, 2, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	/* (1, 1) (2, 0) (2, 1) don't form ghosting keys */
 	mock_key(1, 1, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(2, 0, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 0, 1);
 	mock_key(2, 1, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 0, 0);
 	mock_key(2, 1, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(2, 0, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -242,15 +222,15 @@ int lid_test(void)
 {
 	lid_open = 0;
 	mock_key(1, 1, 1);
-	TEST_ASSERT(expect_no_keychange);
+	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
-	TEST_ASSERT(expect_no_keychange);
+	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 
 	lid_open = 1;
 	mock_key(1, 1, 1);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
-	TEST_ASSERT(expect_keychange);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -258,8 +238,8 @@ int lid_test(void)
 
 void run_test(void)
 {
-	error_count = 0;
 	lid_open = 1;
+	test_reset();
 
 	RUN_TEST(deghost_test);
 	RUN_TEST(debounce_test);
@@ -267,16 +247,5 @@ void run_test(void)
 	RUN_TEST(lid_test);
 #endif
 
-	if (error_count == 0)
-		ccprintf("Pass!\n");
-	else
-		ccprintf("Fail!\n");
+	test_print_result();
 }
-
-static int command_run_test(int argc, char **argv)
-{
-	run_test();
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

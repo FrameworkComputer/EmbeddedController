@@ -13,6 +13,7 @@
 #include "common.h"
 #include "task.h"
 #include "task_id.h"
+#include "test_util.h"
 #include "timer.h"
 
 struct emu_task_t {
@@ -44,9 +45,6 @@ void __idle(void *d)
 	while (1)
 		task_wait_event(-1);
 }
-
-/* Weak reference function as an entry point for unit test */
-test_mockable void run_test(void) { }
 
 void _run_test(void *d)
 {

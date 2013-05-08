@@ -9,6 +9,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "i2c.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
@@ -147,9 +148,9 @@ static int test_adc(void)
 }
 #endif
 
-static int command_run_test(int argc, char **argv)
+void run_test(void)
 {
-	error_count = 0;
+	test_reset();
 
 #ifdef CONFIG_I2C
 	RUN_STRESS_TEST("I2C Stress Test", test_i2c, I2C_TEST_ITERATION);
@@ -158,13 +159,5 @@ static int command_run_test(int argc, char **argv)
 	RUN_STRESS_TEST("ADC Stress Test", test_adc, ADC_TEST_ITERATION);
 #endif
 
-	if (error_count) {
-		ccprintf("Failed %d tests!\n", error_count);
-		return EC_ERROR_UNKNOWN;
-	} else {
-		ccprintf("Pass!\n");
-		return EC_SUCCESS;
-	}
+	test_print_result();
 }
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

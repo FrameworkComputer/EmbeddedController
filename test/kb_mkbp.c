@@ -13,9 +13,8 @@
 #include "keyboard_mkbp.h"
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
+#include "test_util.h"
 #include "util.h"
-
-static int error_count;
 
 static uint8_t state[KEYBOARD_COLS];
 static int ec_int_level;
@@ -43,24 +42,6 @@ int lid_is_open(void)
 
 /*****************************************************************************/
 /* Test utilities */
-
-#define RUN_TEST(n) \
-	do { \
-		ccprintf("Running %s...", #n); \
-		cflush(); \
-		if (n() == EC_SUCCESS) { \
-			ccputs("OK\n"); \
-		} else { \
-			ccputs("Fail\n"); \
-			error_count++; \
-		} \
-	} while (0)
-
-#define TEST_ASSERT(n) \
-	do { \
-		if (!(n)) \
-			return EC_ERROR_UNKNOWN; \
-	} while (0)
 
 #define FIFO_EMPTY()     (ec_int_level == 1)
 #define FIFO_NOT_EMPTY() (ec_int_level == 0)
@@ -227,24 +208,13 @@ int fifo_underrun(void)
 
 void run_test(void)
 {
-	error_count = 0;
 	ec_int_level = 1;
+	test_reset();
 
 	RUN_TEST(single_key_press);
 	RUN_TEST(test_fifo_size);
 	RUN_TEST(test_enable);
 	RUN_TEST(fifo_underrun);
 
-	if (error_count == 0)
-		ccprintf("Pass!\n");
-	else
-		ccprintf("Fail!\n");
+	test_print_result();
 }
-
-static int command_run_test(int argc, char **argv)
-{
-	run_test();
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

@@ -10,31 +10,12 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
-static int error_count;
-
 static int mock_lid;
 static int lid_hook_count;
-
-#define RUN_TEST(n) \
-	do { \
-		ccprintf("Running %s...", #n); \
-		cflush(); \
-		if (n() == EC_SUCCESS) { \
-			ccputs("OK\n"); \
-		} else { \
-			ccputs("Fail\n"); \
-			error_count++; \
-		} \
-	} while (0)
-
-#define TEST_ASSERT(n) \
-	do { \
-		if (!(n)) \
-			return EC_ERROR_UNKNOWN; \
-	} while (0)
 
 int gpio_get_level(enum gpio_signal signal)
 {
@@ -107,21 +88,10 @@ static int test_debounce(void)
 
 void run_test(void)
 {
-	error_count = 0;
+	test_reset();
 
 	RUN_TEST(test_hook);
 	RUN_TEST(test_debounce);
 
-	if (error_count)
-		ccprintf("Fail!\n", error_count);
-	else
-		ccprintf("Pass!\n");
+	test_print_result();
 }
-
-static int command_run_test(int argc, char **argv)
-{
-	run_test();
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

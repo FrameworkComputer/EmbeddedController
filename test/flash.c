@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
@@ -78,17 +79,6 @@ int gpio_get_level(enum gpio_signal signal)
 
 /*****************************************************************************/
 /* Test utilities */
-#define RUN_TEST(n) \
-	do { \
-		ccprintf("Running %s...", #n); \
-		cflush(); \
-		if (n() == EC_SUCCESS) { \
-			ccputs("OK\n"); \
-		} else { \
-			ccputs("Fail\n"); \
-			error_count++; \
-		} \
-	} while (0)
 
 static void begin_verify(void)
 {
@@ -112,12 +102,6 @@ static int verify_write(int offset, int size, const char *data)
 	return EC_SUCCESS;
 }
 
-
-#define TEST_ASSERT(x) \
-	do { \
-		if (!(x)) \
-			return EC_ERROR_UNKNOWN; \
-	} while (0)
 
 #define VERIFY_NO_WRITE(off, sz, d) \
 	do { \
@@ -418,10 +402,7 @@ int TaskTest(void *data)
 	return EC_SUCCESS;
 }
 
-static int command_run_test(int argc, char **argv)
+void run_test(void)
 {
-	run_test_step1(); /* Never returns */
-	return EC_ERROR_UNKNOWN;
+	run_test_step1();
 }
-DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);

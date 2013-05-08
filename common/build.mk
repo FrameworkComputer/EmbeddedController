@@ -48,3 +48,4 @@ common-$(CONFIG_TMP006)+=tmp006.o
 common-$(CONFIG_TSU6721)+=tsu6721.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
+common-$(TEST_BUILD)+=test_util.o
