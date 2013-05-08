@@ -44,9 +44,11 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
-#define DELAY_5V_SETUP		MSEC
 #ifdef BOARD_pit
-#define DELAY_3V_SETUP		MSEC
+#define DELAY_5V_SETUP		(2 * MSEC)
+#define DELAY_3V_SETUP		(2 * MSEC)
+#else
+#define DELAY_5V_SETUP		MSEC
 #endif
 
 /* Delay between 1.35v and 3.3v rails startup */
@@ -413,7 +415,6 @@ static int power_on(void)
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	usleep(DELAY_3V_SETUP);
 #endif
-
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
 		/* Initialize non-AP components */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
