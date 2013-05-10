@@ -295,6 +295,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_pre_init(void)
 {
+#ifndef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
 	volatile uint32_t scratch  __attribute__((unused));
 
 	/* Enable clocks to the hibernation module */
@@ -338,11 +339,13 @@ void system_pre_init(void)
 	LM4_HIBERNATE_HIBRTCT = 0x7fff;
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIM = 0;
+#endif
 
 	check_reset_cause();
 
 	/* HEY: read LM4_SYSTEM_BOOTCFG bit 4 to determine WRKEY value */
 
+#ifndef BOARD_slippy			     /* FIXME: crosbug.com/p/19366 */
 	/* Initialize bootcfg if needed */
 	if (LM4_SYSTEM_BOOTCFG != BOOTCFG_VALUE) {
 		LM4_FLASH_FMD = BOOTCFG_VALUE;
@@ -351,6 +354,7 @@ void system_pre_init(void)
 		while (LM4_FLASH_FMC & 0x08)
 			;
 	}
+#endif
 
 	/* Brown-outs should trigger a reset */
 	LM4_SYSTEM_PBORCTL |= 0x02;

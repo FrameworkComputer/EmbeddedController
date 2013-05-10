@@ -202,7 +202,7 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	daisy | snow | spring | pit ) flash_daisy ;;
-	link ) flash_link ;;
+	link | slippy ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
 esac
 

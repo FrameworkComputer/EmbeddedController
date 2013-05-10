@@ -163,6 +163,10 @@ static int write_buffer(void)
 {
 	int t;
 
+#ifdef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
+	return EC_ERROR_UNKNOWN;
+#endif
+
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 
@@ -235,6 +239,9 @@ int flash_physical_write(int offset, int size, const char *data)
 
 int flash_physical_erase(int offset, int size)
 {
+#ifdef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
+	return EC_ERROR_UNKNOWN;
+#endif
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 

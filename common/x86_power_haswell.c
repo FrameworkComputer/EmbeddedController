@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
+#include "power_button.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -89,7 +90,7 @@ void chipset_exit_hard_off(void)
 
 void chipset_throttle_cpu(int throttle)
 {
-	CPRINTF("[%T %s(%d)]\n", __func__, throttle);
+	/* FIXME CPRINTF("[%T %s(%d)]\n", __func__, throttle);*/
 }
 
 /*****************************************************************************/
@@ -151,8 +152,44 @@ void chipset_task(void)
 {
 	while (1) {
 		CPRINTF("[%T %s()]\n", __func__);
-		/* do NOTHING until we know what we should do. */
-		task_wait_event(-1);
+
+		/* for wait power button */
+		while (gpio_get_level(GPIO_POWER_BUTTON_L) == 1)
+			usleep(200000);
+
+		CPRINTF("[%T %s() PWRBTN is pressed.]\n", __func__);
+
+		gpio_set_level(GPIO_PP5000_EN, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PCH_DPWROK, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_SUSP_VR_EN, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PCH_PWRBTN_L, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PP1350_EN, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_PCH_PWROK, 1);
+		usleep(200000);
+
+		gpio_set_level(GPIO_SYS_PWROK, 1);
+		usleep(200000);
+
+		CPRINTF("[%T %s() boot seq done.]\n", __func__);
+
+		while (1)
+			task_wait_event(-1);
 	}
 }
 

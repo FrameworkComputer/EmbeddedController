@@ -31,6 +31,10 @@ proc flash_bds { } {
 	flash_lm4 ../../../build/bds/ec.bin 0
 }
 
+proc flash_slippy { } {
+	flash_lm4 ../../../build/slippy/ec.bin 0
+}
+
 proc unprotect_link { } {
 	reset halt
 	flash erase_sector 0 254 255
