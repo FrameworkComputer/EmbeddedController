@@ -108,18 +108,18 @@ static int command_set_mode(int argc, char **argv)
 		usb_port_set_enabled(port_id, mode);
 		/* fallthrough */
 	case 1:
-		ccprintf("Port 0: %d\nPort 1: %d\n",
-			 state.en[0], state.en[1]);
+		ccprintf("Port 0: %s\nPort 1: %s\n",
+			 state.en[0] ? "on" : "off",
+			 state.en[1] ? "on" : "off");
 		return EC_SUCCESS;
 	}
 
 	return EC_ERROR_PARAM_COUNT;
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
-			"[<port> <0 | 1>]",
+			"[<port> <on | off>]",
 			"Set USB charge mode",
-			"Modes: 0=Disabled\n"
-			"       1=Enabled\n");
+			NULL);
 
 
 /*****************************************************************************/
