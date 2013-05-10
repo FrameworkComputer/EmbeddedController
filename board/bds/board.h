@@ -36,7 +36,9 @@ enum adc_channel
 #define I2C_PORTS_USED 1
 
 /* GPIOs for second UART port */
-#define CONFIG_UART1_GPIOS_PB0_1
+#define CONFIG_HOST_UART 1
+#define CONFIG_HOST_UART_IRQ LM4_IRQ_UART1
+#define CONFIG_HOST_UART1_GPIOS_PB0_1
 
 /* GPIO signal list */
 enum gpio_signal {

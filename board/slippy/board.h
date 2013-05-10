@@ -58,7 +58,9 @@
 #define USB_PORT_COUNT 2
 
 /* GPIOs for second UART port */
-#define CONFIG_UART1_GPIOS_PC4_5
+#define CONFIG_HOST_UART 2
+#define CONFIG_HOST_UART_IRQ LM4_IRQ_UART2
+#define CONFIG_HOST_UART2_GPIOS_PG4_5
 
 /* GPIO signal definitions. */
 enum gpio_signal {
