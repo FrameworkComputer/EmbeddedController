@@ -26,7 +26,18 @@
 #define TEST_ASSERT(n) \
 	do { \
 		if (!(n)) { \
-			ccprintf("ASSERTION failed: %s\n", #n); \
+			ccprintf("%d: ASSERTION failed: %s\n", __LINE__, #n); \
+			return EC_ERROR_UNKNOWN; \
+		} \
+	} while (0)
+
+#define __ABS(n) ((n) > 0 ? (n) : -(n))
+
+#define TEST_ASSERT_ABS_LESS(n, t) \
+	do { \
+		if (__ABS(n) >= t) { \
+			ccprintf("%d: ASSERT_ABS_LESS failed: abs(%d) is " \
+				 "not less than %d\n", __LINE__, n, t); \
 			return EC_ERROR_UNKNOWN; \
 		} \
 	} while (0)

@@ -5,12 +5,15 @@
 
 /* Entry point of unit test executable */
 
+#include "hooks.h"
 #include "task.h"
 #include "timer.h"
 
 int main(void)
 {
 	timer_init();
+
+	hook_init();
 
 	task_start();
 
