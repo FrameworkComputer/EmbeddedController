@@ -1275,20 +1275,20 @@ struct ec_response_power_info {
 
 struct ec_params_i2c_passthru_msg {
 	uint16_t addr_flags;	/* I2C slave address (7 or 10 bits) and flags */
-	uint16_t len;		/* Number of bytes to write*/
+	uint16_t len;		/* Number of bytes to read or write */
 } __packed;
 
 struct ec_params_i2c_passthru {
 	uint8_t port;		/* I2C port number */
 	uint8_t num_msgs;	/* Number of messages */
 	struct ec_params_i2c_passthru_msg msg[];
-	/* Data for all messages is concatenated here */
+	/* Data to write for all messages is concatenated here */
 } __packed;
 
 struct ec_response_i2c_passthru {
 	uint8_t i2c_status;	/* Status flags (EC_I2C_STATUS_...) */
 	uint8_t num_msgs;	/* Number of messages processed */
-	uint8_t data[];		/* Data for all messages concatenated here */
+	uint8_t data[];		/* Data read by messages concatenated here */
 } __packed;
 
 
