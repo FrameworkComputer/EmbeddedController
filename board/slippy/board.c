@@ -55,7 +55,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 x86_power_interrupt},
 	{"PCH_EDP_VDD_EN",       LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
 	 x86_power_interrupt},
-	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_INT_BOTH,
+	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_PULL_UP|GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"WRITE_PROTECT",        LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
