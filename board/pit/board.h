@@ -99,7 +99,6 @@ enum gpio_signal {
 	GPIO_AC_PWRBTN_L,
 	GPIO_WP_L,
 	/* Outputs */
-	GPIO_AC_STATUS,
 	GPIO_AP_RESET_L,
 	GPIO_CHARGER_EN,
 	GPIO_EC_INT,
@@ -114,9 +113,6 @@ enum gpio_signal {
 	GPIO_LED_POWER_L,
 	GPIO_PMIC_PWRON,
 	GPIO_PMIC_RESET,
-#ifndef CONFIG_SPI
-	GPIO_SPI1_MISO,
-#endif
 	GPIO_KB_OUT00,
 	GPIO_KB_OUT01,
 	GPIO_KB_OUT02,

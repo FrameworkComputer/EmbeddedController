@@ -50,7 +50,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"AC_PWRBTN_L", GPIO_A, (1<<0),  GPIO_INT_BOTH, NULL},
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	/* Outputs */
-	{"AC_STATUS",   GPIO_A, (1<<5),  GPIO_OUT_HIGH, NULL},
 	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_HI_Z, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
@@ -65,9 +64,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
-#ifndef CONFIG_SPI
-	{"SPI1_MISO",   GPIO_A, (1<<6),  GPIO_OUT_HIGH, NULL},
-#endif
  	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT02",    GPIO_B, (1<<12), GPIO_KB_OUTPUT, NULL},
@@ -102,15 +98,12 @@ void board_config_post_gpio_init(void)
 	/* TIM2_CH2 on PB3 */
 	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
 
-#ifdef CONFIG_SPI
 	/* SPI1 on pins PA4-7 */
 	gpio_set_alternate_function(GPIO_A,
 				    (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7),
 				    GPIO_ALT_SPI);
-	/* 10 MHz pin speed */
-	STM32_GPIO_OSPEEDR(GPIO_A) = (STM32_GPIO_OSPEEDR(GPIO_A) & ~0xff00) |
-		0xaa00;
-#endif
+	/* 40 MHz pin speed */
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
 }
 
 #ifdef CONFIG_PMU_BOARD_INIT

@@ -393,10 +393,6 @@ void charger_task(void)
 	/* Enable charger interrupt */
 	gpio_enable_interrupt(GPIO_CHARGER_INT);
 
-#ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
-#endif
-
 	/*
 	 * EC STOP mode support
 	 *   The charging loop can be stopped in idle state with AC unplugged.
@@ -544,9 +540,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 
 void pmu_irq_handler(enum gpio_signal signal)
 {
-#ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_level(GPIO_AC_STATUS, extpower_is_present());
-#endif
 	pmu_task_throttled_wake();
 	CPRINTF("Charger IRQ received.\n");
 }
