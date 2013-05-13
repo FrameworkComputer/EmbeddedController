@@ -265,6 +265,12 @@ static int hard_current_limit(int limit)
 		return limit;
 }
 
+static int video_dev_type(int device_type)
+{
+	return (device_type & ~TSU6721_TYPE_USB_HOST) |
+	       TSU6721_TYPE_JIG_UART_ON;
+}
+
 static int probe_video(int device_type)
 {
 	tsu6721_disable_interrupts();
@@ -279,8 +285,7 @@ static int probe_video(int device_type)
 		return device_type;
 	} else {
 		/* Not USB host but video */
-		device_type = (device_type & ~TSU6721_TYPE_USB_HOST) |
-			      TSU6721_TYPE_JIG_UART_ON;
+		device_type = video_dev_type(device_type);
 		return device_type;
 	}
 }
@@ -467,6 +472,8 @@ static int usb_manage_boost(int dev_type)
 			gpio_set_level(GPIO_BOOST_EN, need_boost);
 			msleep(DELAY_POWER_MS);
 			dev_type = tsu6721_get_device_type();
+			if (gpio_get_level(GPIO_ID_MUX))
+				dev_type = video_dev_type(dev_type);
 		}
 	} while (need_boost == !usb_need_boost(dev_type));
 
