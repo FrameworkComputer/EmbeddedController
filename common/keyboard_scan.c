@@ -274,7 +274,7 @@ static int check_keys_changed(uint8_t *state)
 	int any_pressed = 0;
 	int c, i;
 	int any_change = 0;
-	uint8_t new_state[KEYBOARD_COLS];
+	static uint8_t new_state[KEYBOARD_COLS];
 	uint32_t tnow = get_time().le.lo;
 
 	/* Save the current scan time */
