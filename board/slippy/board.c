@@ -14,6 +14,7 @@
 #include "lid_switch.h"
 #include "lm4_adc.h"
 #include "peci.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -26,7 +27,7 @@
 const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTON_L",       LM4_GPIO_A, (1<<2), GPIO_INT_BOTH,
-	 switch_interrupt},
+	 power_button_interrupt},
 	{"LID_OPEN",             LM4_GPIO_A, (1<<3), GPIO_INT_BOTH,
 	 lid_interrupt},
 	{"AC_PRESENT",           LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
@@ -50,8 +51,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PP5000_PGOOD",         LM4_GPIO_N, (1<<0), GPIO_INT_BOTH,
 	 x86_power_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
-	 x86_power_interrupt},
-	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_INT_BOTH,
 	 x86_power_interrupt},
 	{"PCH_EDP_VDD_EN",       LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
 	 x86_power_interrupt},
@@ -81,6 +80,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"SYS_PWROK",            LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
 	{"WLAN_OFF_L",           LM4_GPIO_J, (1<<4), GPIO_OUT_LOW, NULL},
 	{"CHARGE_L",             LM4_GPIO_E, (1<<6), GPIO_OUT_LOW, NULL},
+	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_OUT_LOW, NULL},
 
 	{"ENABLE_BACKLIGHT",     LM4_GPIO_M, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_TOUCHPAD",      LM4_GPIO_N, (1<<1), GPIO_OUT_LOW, NULL},
@@ -105,10 +105,9 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"USB1_ENABLE",          LM4_GPIO_E, (1<<4), GPIO_OUT_LOW, NULL},
 	{"USB2_ENABLE",          LM4_GPIO_D, (1<<5), GPIO_OUT_LOW, NULL},
 
-	/* {"PCH_SUSACK_L",         LM4_GPIO_F, (1<<3), GPIO_INPUT, NULL}, */
-	{"PCH_CATERR_L",         LM4_GPIO_F, (1<<3), GPIO_INPUT, NULL},
-	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_INPUT, NULL},
-	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_INPUT, NULL},
+	{"PCH_SUSACK_L",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
+	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_HI_Z, NULL},
+	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_HI_Z, NULL},
 };
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */

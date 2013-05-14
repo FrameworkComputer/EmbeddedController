@@ -78,7 +78,6 @@ enum gpio_signal {
 	GPIO_PP1350_PGOOD,         /* Power good on 1.35V (DRAM) */
 	GPIO_PP5000_PGOOD,         /* Power good on 5V */
 	GPIO_VCORE_PGOOD,          /* Power good on core VR */
-	GPIO_CPU_PGOOD,            /* Power good on CPU */
 	GPIO_PCH_EDP_VDD_EN,       /* PCH wants EDP enabled */
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
 	GPIO_WRITE_PROTECT,        /* Write protect input */
@@ -104,6 +103,7 @@ enum gpio_signal {
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi chip? Or just the radio? */
 	GPIO_CHARGE_L,             /* Allow battery to charge when on AC */
+	GPIO_CPU_PGOOD,            /* Power good to the CPU */
 
 	GPIO_ENABLE_BACKLIGHT,     /* Enable backlight power */
 	GPIO_ENABLE_TOUCHPAD,      /* Enable touchpad power */
@@ -126,7 +126,7 @@ enum gpio_signal {
 	GPIO_USB1_ENABLE,          /* USB port 1 output power enable */
 	GPIO_USB2_ENABLE,          /* USB port 2 output power enable */
 
-	GPIO_PCH_CATERR_L,         /* Wanted CATERR# from PCH, probably NC */
+	GPIO_PCH_SUSACK_L,         /* Acknowledge PCH SUSWARN# signal */
 	GPIO_PCH_RTCRST_L,         /* Not supposed to be here */
 	GPIO_PCH_SRTCRST_L,        /* Not supposed to be here */
 
