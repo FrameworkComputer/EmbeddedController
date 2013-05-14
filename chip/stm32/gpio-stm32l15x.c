@@ -137,7 +137,7 @@ void gpio_set_alternate_function(int port, int mask, int func)
 		/* Return to normal GPIO function, defaulting to input. */
 		while (mask) {
 			bit = 31 - __builtin_clz(mask);
-			moder &= ~(0x3 << (bit * 2 + 16));
+			moder &= ~(0x3 << (bit * 2));
 			mask &= ~(1 << bit);
 		}
 		STM32_GPIO_MODER(port) = moder;

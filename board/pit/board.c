@@ -97,13 +97,6 @@ void board_config_post_gpio_init(void)
 
 	/* TIM2_CH2 on PB3 */
 	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
-
-	/* SPI1 on pins PA4-7 */
-	gpio_set_alternate_function(GPIO_A,
-				    (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7),
-				    GPIO_ALT_SPI);
-	/* 40 MHz pin speed */
-	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
 }
 
 #ifdef CONFIG_PMU_BOARD_INIT

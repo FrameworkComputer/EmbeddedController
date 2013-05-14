@@ -83,6 +83,7 @@ enum {
 static uint8_t out_msg[EC_HOST_PARAM_SIZE + SPI_MSG_PROTO_LEN];
 static uint8_t in_msg[EC_HOST_PARAM_SIZE + SPI_MSG_PROTO_LEN];
 static uint8_t active;
+static uint8_t enabled;
 static struct host_cmd_handler_args args;
 
 /**
@@ -261,6 +262,10 @@ void spi_event(enum gpio_signal signal)
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
 
+	/* If not enabled, ignore glitches on NSS */
+	if (!enabled)
+		return;
+
 	/*
 	 * If NSS is rising, we have finished the transaction, so prepare
 	 * for the next.
@@ -316,6 +321,9 @@ static void spi_init(void)
 {
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
+	/* 40 MHz pin speed */
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
+
 	/* Enable clocks to SPI1 module */
 	STM32_RCC_APB2ENR |= 1 << 12;
 
@@ -325,8 +333,33 @@ static void spi_init(void)
 	/* Enable the SPI peripheral */
 	spi->ctrl1 |= CR1_SPE;
 
-	setup_for_transaction();
-
 	gpio_enable_interrupt(GPIO_SPI1_NSS);
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
+
+static void spi_chipset_startup(void)
+{
+	/* Enable pullup and interrupts on NSS */
+	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH | GPIO_PULL_UP);
+
+	/* Set SPI pins to alternate function */
+	gpio_set_alternate_function(GPIO_A, 0xf0, GPIO_ALT_SPI);
+
+	/* Set up for next transaction */
+	setup_for_transaction();
+
+	enabled = 1;
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, spi_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void spi_chipset_shutdown(void)
+{
+	enabled = active = 0;
+
+	/* Disable pullup and interrupts on NSS */
+	gpio_set_flags(GPIO_SPI1_NSS, 0);
+
+	/* Set SPI pins to inputs so we don't leak power when AP is off */
+	gpio_set_alternate_function(GPIO_A, 0xf0, -1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
