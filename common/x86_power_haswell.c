@@ -390,6 +390,10 @@ void x86_power_interrupt(enum gpio_signal signal)
 	/* Shadow signals and compare with our desired signal state. */
 	update_in_signals();
 
+	/* Pass through eDP VDD enable from PCH */
+	if (gpio_get_level(GPIO_PCH_EDP_VDD_EN))
+		gpio_set_level(GPIO_EC_EDP_VDD_EN, 1);
+
 	/* Wake up the task */
 	task_wake(TASK_ID_CHIPSET);
 }
@@ -502,6 +506,20 @@ void chipset_task(void)
 				break;
 			}
 
+			/*
+			 * Wait 10ms after +3VALW good, since that powers
+			 * VccDSW and VccSUS.
+			 */
+			msleep(10);
+
+			/* Assert DPWROK */
+			gpio_set_level(GPIO_PCH_DPWROK, 1);
+			if (wait_in_signals(IN_PCH_SLP_SUSn_DEASSERTED)) {
+				chipset_force_shutdown();
+				state = X86_G3;
+				break;
+			}
+
 			gpio_set_level(GPIO_SUSP_VR_EN, 1);
 			if (wait_in_signals(IN_PGOOD_PP1050)) {
 				chipset_force_shutdown();
@@ -509,14 +527,7 @@ void chipset_task(void)
 				break;
 			}
 
-			/*
-			 * Wait 10ms after +3VALW good, since that powers
-			 * VccDSW and VccSUS.
-			 */
-			msleep(10);
-
-			/* Assert DPWROK, deassert RSMRST# */
-			gpio_set_level(GPIO_PCH_DPWROK, 1);
+			/* Deassert RSMRST# */
 			gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 			/* Wait 5ms for SUSCLK to stabilize */
@@ -604,6 +615,7 @@ void chipset_task(void)
 
 			/* Disable +CPU_CORE */
 			gpio_set_level(GPIO_VCORE_EN, 0);
+			gpio_set_level(GPIO_CPU_PGOOD, 0);
 
 			/* Disable WLAN */
 			gpio_set_level(GPIO_WLAN_OFF_L, 0);
