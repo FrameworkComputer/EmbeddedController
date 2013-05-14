@@ -7,6 +7,7 @@
 from cStringIO import StringIO
 import pexpect
 import sys
+import time
 
 TIMEOUT=10
 
@@ -24,19 +25,23 @@ class Tee(object):
 
 log = StringIO()
 test_name = sys.argv[1]
+start_time = time.time()
 child = pexpect.spawn('build/host/{0}/{0}.exe'.format(test_name),
                       timeout=TIMEOUT)
 child.logfile = Tee(log)
 result_id = child.expect([pexpect.TIMEOUT, 'Pass!', 'Fail!'])
+elapsed_time = time.time() - start_time
 failed = False
 if result_id == 0:
   sys.stderr.write('Test %s timed out after %d seconds!\n' %
                    (test_name, TIMEOUT))
   failed = True
 elif result_id == 1:
-  sys.stderr.write('Test %s passed!\n' % test_name)
+  sys.stderr.write('Test %s passed! (%.3f seconds)\n' %
+                   (test_name, elapsed_time))
 elif result_id == 2:
-  sys.stderr.write('Test %s failed!\n' % test_name)
+  sys.stderr.write('Test %s failed! (%.3f seconds)\n' %
+                   (test_name, elapsed_time))
   failed = True
 
 if failed:
