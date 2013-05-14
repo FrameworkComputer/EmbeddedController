@@ -4,23 +4,45 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from cStringIO import StringIO
 import pexpect
 import sys
 
 TIMEOUT=10
 
+class Tee(object):
+  def __init__(self, target):
+    self._target = target
+
+  def write(self, data):
+    sys.stdout.write(data)
+    self._target.write(data)
+
+  def flush(self):
+    sys.stdout.flush()
+    self._target.flush()
+
+log = StringIO()
 test_name = sys.argv[1]
 child = pexpect.spawn('build/host/{0}/{0}.exe'.format(test_name),
                       timeout=TIMEOUT)
-child.logfile = sys.stdout
+child.logfile = Tee(log)
 result_id = child.expect([pexpect.TIMEOUT, 'Pass!', 'Fail!'])
+failed = False
 if result_id == 0:
   sys.stderr.write('Test %s timed out after %d seconds!\n' %
                    (test_name, TIMEOUT))
-  sys.exit(1)
+  failed = True
 elif result_id == 1:
   sys.stderr.write('Test %s passed!\n' % test_name)
-  sys.exit(0)
 elif result_id == 2:
   sys.stderr.write('Test %s failed!\n' % test_name)
+  failed = True
+
+if failed:
+  sys.stderr.write('\n====== Emulator output ======\n')
+  sys.stderr.write(log.getvalue())
+  sys.stderr.write('\n=============================\n')
   sys.exit(1)
+else:
+  sys.exit(0)
