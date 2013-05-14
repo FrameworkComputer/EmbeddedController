@@ -14,10 +14,7 @@
 #include "version.h"
 #include "watchdog.h"
 
-/*
- * TODO: Fake WP is stored at most significant bit of saved reset flags to save
- * space.  Remove it when we have real write protect pin
- */
+#define CONSOLE_BIT_MASK 0x8000
 
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
@@ -65,15 +62,15 @@ static void check_reset_cause(void)
 	uint32_t raw_cause = STM32_RCC_CSR;
 	uint32_t pwr_status = STM32_PWR_CSR;
 
-	uint32_t fake_wp = flags & 0x8000;
-	flags &= ~0x8000;
+	uint32_t console_en = flags & CONSOLE_BIT_MASK;
+	flags &= ~CONSOLE_BIT_MASK;
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_CR |= 1 << 3;
 	/* Clear saved reset flags */
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0 | fake_wp);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0 | console_en);
 
 	if (raw_cause & 0x60000000) {
 		/*
@@ -155,8 +152,8 @@ void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
 
-	uint32_t fake_wp =
-		bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & 0x8000;
+	uint32_t console_en = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) &
+			      CONSOLE_BIT_MASK;
 
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
@@ -178,7 +175,7 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		save_flags |= RESET_FLAG_HARD;
 
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | fake_wp);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | console_en);
 
 	if (flags & SYSTEM_RESET_HARD) {
 		/* Ask the watchdog to trigger a hard reboot */
@@ -217,7 +214,10 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	return STRINGIFY(CHIP_VARIANT);
+	if (system_get_console_force_enabled())
+		return STRINGIFY(CHIP_VARIANT-unsafe);
+	else
+		return STRINGIFY(CHIP_VARIANT);
 }
 
 const char *system_get_chip_revision(void)
@@ -258,23 +258,21 @@ int system_set_vbnvcontext(const uint8_t *block)
 	return EC_SUCCESS;
 }
 
-/* TODO: crosbug.com/p/12036 */
-int system_set_fake_wp(int val)
+int system_set_console_force_enabled(int val)
 {
 	uint16_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
 
 	if (val)
-		flags |= 0x8000;
+		flags |= CONSOLE_BIT_MASK;
 	else
-		flags &= ~0x8000;
+		flags &= ~CONSOLE_BIT_MASK;
 
 	return bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, flags);
 }
 
-/* TODO: crosbug.com/p/12036 */
-int system_get_fake_wp(void)
+int system_get_console_force_enabled(void)
 {
-	if (bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & 0x8000)
+	if (bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & CONSOLE_BIT_MASK)
 		return 1;
 	else
 		return 0;

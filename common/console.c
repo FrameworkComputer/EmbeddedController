@@ -167,7 +167,7 @@ void console_task(void)
 {
 #ifdef CONFIG_CONSOLE_RESTRICTED_INPUT
 	/* the console is not available due to security restrictions */
-	if (system_is_locked()) {
+	if (system_is_locked() && !system_get_console_force_enabled()) {
 		ccprintf("Console is DISABLED (WP is ON).\n");
 		while (1)
 			task_wait_event(-1);
@@ -246,3 +246,25 @@ DECLARE_CONSOLE_COMMAND(help, command_help,
 			"[ list | <name> ]",
 			"Print command help",
 			NULL);
+
+#ifdef CONFIG_CONSOLE_RESTRICTED_INPUT
+static int command_force_enabled(int argc, char **argv)
+{
+	int val;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!parse_bool(argv[1], &val))
+		return EC_ERROR_PARAM1;
+
+	system_set_console_force_enabled(val);
+	ccprintf("Console force enabled = %s\n", val ? "on" : "off");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(forceen, command_force_enabled,
+			"<on | off>",
+			"Force enable console",
+			NULL);
+#endif

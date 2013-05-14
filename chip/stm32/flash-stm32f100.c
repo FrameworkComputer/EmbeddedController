@@ -81,10 +81,6 @@ struct flash_wp_state {
 	int entire_flash_locked;
 };
 
-/* Functions defined in system.c to access backup registers */
-int system_set_fake_wp(int val);
-int system_get_fake_wp(void);
-
 static int write_optb(int byte, uint8_t value);
 
 static int wait_busy(void)
@@ -604,7 +600,7 @@ uint32_t flash_get_protect(void)
 	int i;
 	int not_protected[2] = {0};
 
-	if (system_get_fake_wp() || !gpio_get_level(GPIO_WRITE_PROTECTn))
+	if (!gpio_get_level(GPIO_WRITE_PROTECTn))
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Read the current persist state from flash */
@@ -675,31 +671,6 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 
 	return retval;
 }
-
-/*****************************************************************************/
-/* Console commands */
-
-static int command_set_fake_wp(int argc, char **argv)
-{
-	int val;
-	char *e;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	val = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM1;
-
-	system_set_fake_wp(val);
-	ccprintf("Fake write protect = %d\n", val);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(fakewp, command_set_fake_wp,
-			"<0 | 1>",
-			"Set fake write protect pin",
-			NULL);
 
 /*****************************************************************************/
 /* Hooks */

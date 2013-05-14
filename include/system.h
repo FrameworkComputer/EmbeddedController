@@ -260,4 +260,11 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds);
 /* Minimum duration to get proper hibernation */
 #define SYSTEM_HIB_MINIMUM_DURATION 0, 150000
 
+/**
+ * Get/Set console force enable status. This is only supported/used on platform
+ * with CONFIG_CONSOLE_RESTRICTED_INPUT defined.
+ */
+int system_get_console_force_enabled(void);
+int system_set_console_force_enabled(int enabled);
+
 #endif  /* __CROS_EC_SYSTEM_H */
