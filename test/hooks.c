@@ -94,13 +94,13 @@ static int test_deferred(void)
 {
 	deferred_call_count = 0;
 	hook_call_deferred(deferred_func, 10 * MSEC);
-	usleep(11 * MSEC);
+	usleep(20 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
 	hook_call_deferred(deferred_func, 10 * MSEC);
 	usleep(5 * MSEC);
 	hook_call_deferred(deferred_func, -1);
-	usleep(10 * MSEC);
+	usleep(15 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
 	hook_call_deferred(deferred_func, 10 * MSEC);
