@@ -499,13 +499,6 @@ void chipset_task(void)
 			break;
 
 		case X86_G3S5:
-			gpio_set_level(GPIO_PP5000_EN, 1);
-			if (wait_in_signals(IN_PGOOD_PP5000)) {
-				chipset_force_shutdown();
-				state = X86_G3;
-				break;
-			}
-
 			/*
 			 * Wait 10ms after +3VALW good, since that powers
 			 * VccDSW and VccSUS.
@@ -537,6 +530,14 @@ void chipset_task(void)
 			break;
 
 		case X86_S5S3:
+			/* Enable PP5000 (5V) rail. */
+			gpio_set_level(GPIO_PP5000_EN, 1);
+			if (wait_in_signals(IN_PGOOD_PP5000)) {
+				chipset_force_shutdown();
+				state = X86_G3;
+				break;
+			}
+
 			/* Wait for the always-on rails to be good */
 			if (wait_in_signals(IN_PGOOD_ALWAYS_ON)) {
 				chipset_force_shutdown();
@@ -640,6 +641,9 @@ void chipset_task(void)
 			/* Turn off power to RAM */
 			gpio_set_level(GPIO_PP1350_EN, 0);
 
+			/* Disable PP5000 (5V) rail. */
+			gpio_set_level(GPIO_PP5000_EN, 0);
+
 			state = X86_S5;
 			break;
 
@@ -648,7 +652,6 @@ void chipset_task(void)
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
-			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);
 
 			/* Record the time we go into G3 */
