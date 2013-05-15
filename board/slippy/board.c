@@ -66,6 +66,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
 	{"BOARD_VERSION2",       LM4_GPIO_Q, (1<<6), GPIO_INPUT, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
+	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_INPUT, NULL},
 
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
@@ -80,7 +81,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"SYS_PWROK",            LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
 	{"WLAN_OFF_L",           LM4_GPIO_J, (1<<4), GPIO_OUT_LOW, NULL},
 	{"CHARGE_L",             LM4_GPIO_E, (1<<6), GPIO_OUT_LOW, NULL},
-	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_OUT_LOW, NULL},
 
 	{"ENABLE_BACKLIGHT",     LM4_GPIO_M, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_TOUCHPAD",      LM4_GPIO_N, (1<<1), GPIO_OUT_LOW, NULL},

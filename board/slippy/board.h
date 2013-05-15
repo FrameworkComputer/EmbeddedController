@@ -89,6 +89,7 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
+	GPIO_CPU_PGOOD,            /* Power good to the CPU */
 
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
@@ -103,7 +104,6 @@ enum gpio_signal {
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi chip? Or just the radio? */
 	GPIO_CHARGE_L,             /* Allow battery to charge when on AC */
-	GPIO_CPU_PGOOD,            /* Power good to the CPU */
 
 	GPIO_ENABLE_BACKLIGHT,     /* Enable backlight power */
 	GPIO_ENABLE_TOUCHPAD,      /* Enable touchpad power */

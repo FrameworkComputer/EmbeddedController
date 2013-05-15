@@ -564,7 +564,6 @@ void chipset_task(void)
 
 		case X86_S3S0:
 			/* Turn on power rails */
-			gpio_set_level(GPIO_CPU_PGOOD, 1);
 			gpio_set_level(GPIO_PP3300_DX_EN, 1);
 
 			/* Enable WLAN */
@@ -615,7 +614,6 @@ void chipset_task(void)
 
 			/* Disable +CPU_CORE */
 			gpio_set_level(GPIO_VCORE_EN, 0);
-			gpio_set_level(GPIO_CPU_PGOOD, 0);
 
 			/* Disable WLAN */
 			gpio_set_level(GPIO_WLAN_OFF_L, 0);
