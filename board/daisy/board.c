@@ -94,6 +94,9 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT11",    GPIO_C, (1<<6),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
+
+	/* Unimplemented signals which we need to emulate for now */
+	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
 };
 
 /* I2C ports */

@@ -112,6 +112,8 @@ enum gpio_signal {
 	GPIO_KB_OUT10,
 	GPIO_KB_OUT11,
 	GPIO_KB_OUT12,
+	/* Unimplemented signals we emulate */
+	GPIO_WP_L,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };

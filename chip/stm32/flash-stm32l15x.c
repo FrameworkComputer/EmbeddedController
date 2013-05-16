@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "flash.h"
+#include "gpio.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -309,14 +310,9 @@ uint32_t flash_get_protect(void)
 	int not_protected[2] = {0};
 	int i;
 
-	/*
-	 * TODO: (crosbug.com/p/15613) write protect scheme
-	 *
-	 * Always enable write protect until we have WP pin.  For developer to
-	 * unlock WP, please use stm32mon -u and immediately re-program the
-	 * pstate sector.
-	 */
-	flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+	/* Check write protect GPIO */
+	if (gpio_get_level(GPIO_WP_L) == 0)
+		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
