@@ -24,7 +24,7 @@
 /* Default temperature to report in mapped memory */
 #define MAPPED_TEMP_DEFAULT (296 - EC_TEMP_SENSOR_OFFSET)
 
-test_mockable int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
+int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	const struct temp_sensor_t *sensor;
 

@@ -27,8 +27,7 @@
  * temp_sensor_type. Threshold values for overheated action first (warning,
  * prochot, power-down), followed by fan speed stepping thresholds.
  */
-test_export_static struct thermal_config_t
-		thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
+static struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
 	/* TEMP_SENSOR_TYPE_CPU */
 	{THERMAL_CONFIG_WARNING_ON_FAIL,
 	 {373, 378, 383, 327, 335, 343, 351, 359} } ,
@@ -39,8 +38,8 @@ test_export_static struct thermal_config_t
 };
 
 /* Fan speed settings.  Real max RPM is about 9300. */
-test_export_static const int fan_speed[THERMAL_FAN_STEPS + 1] =
-	{0, 3000, 4575, 6150, 7725, -1};
+static const int fan_speed[THERMAL_FAN_STEPS + 1] = {0, 3000, 4575, 6150,
+						     7725, -1};
 
 /* Number of consecutive overheated events for each temperature sensor. */
 static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT + THERMAL_FAN_STEPS];
@@ -160,9 +159,7 @@ static inline void update_and_check_stat(int temp,
 	const int16_t threshold = config->thresholds[threshold_id];
 	const int delay = temp_sensors[sensor_id].action_delay_sec;
 
-	if (threshold <= 0) {
-		ot_count[sensor_id][threshold_id] = 0;
-	} else if (temp >= threshold) {
+	if (threshold > 0 && temp >= threshold) {
 		++ot_count[sensor_id][threshold_id];
 		if (ot_count[sensor_id][threshold_id] >= delay) {
 			ot_count[sensor_id][threshold_id] = delay;
@@ -177,6 +174,8 @@ static inline void update_and_check_stat(int temp,
 		 * threshold causing overheated actions to trigger repeatedly.
 		 */
 		overheated[threshold_id] = 1;
+	} else {
+		ot_count[sensor_id][threshold_id] = 0;
 	}
 }
 

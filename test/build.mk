@@ -10,7 +10,7 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #disable: powerdemo
 
 # TODO(victoryang): Fix these tests:
-#    scancode typematic charging
+#    thermal scancode typematic charging
 
 test-list-$(BOARD_bds)+=
 test-list-$(BOARD_daisy)+=kb_scan flash stress
@@ -26,7 +26,6 @@ test-list-$(BOARD_slippy)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
-test-list-host+=thermal
 
 flash-y=flash.o
 hooks-y=hooks.o
@@ -38,8 +37,6 @@ pingpong-y=pingpong.o
 power_button-y=power_button.o
 powerdemo-y=powerdemo.o
 stress-y=stress.o
-thermal-y=thermal.o
-thermal-scale=200
 timer_calib-y=timer_calib.o
 timer_dos-y=timer_dos.o
 utils-y=utils.o
