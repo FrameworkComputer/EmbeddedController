@@ -356,6 +356,7 @@ static void x86_power_init(void)
 			gpio_set_level(GPIO_VCORE_EN, 0);
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);
 			gpio_set_level(GPIO_PP1350_EN, 0);
+			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
 			gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
@@ -391,9 +392,11 @@ void x86_power_interrupt(enum gpio_signal signal)
 	/* Shadow signals and compare with our desired signal state. */
 	update_in_signals();
 
-	/* Pass through eDP VDD enable from PCH */
+	/* Pass through eDP VDD enable from PCH. Put this on own interrupt? */
 	if (gpio_get_level(GPIO_PCH_EDP_VDD_EN))
 		gpio_set_level(GPIO_EC_EDP_VDD_EN, 1);
+	else
+		gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 
 	/* Wake up the task */
 	task_wake(TASK_ID_CHIPSET);
@@ -577,8 +580,10 @@ void chipset_task(void)
 				chipset_force_shutdown();
 				gpio_set_level(GPIO_WLAN_OFF_L, 0);
 				gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
+				gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 				gpio_set_level(GPIO_PP3300_DX_EN, 0);
 				state = X86_S3;
+				break;
 			}
 
 			/*
@@ -631,6 +636,7 @@ void chipset_task(void)
 			gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 			/* Turn off power rails */
+			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
 
 			state = X86_S3;
