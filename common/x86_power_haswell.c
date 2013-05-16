@@ -357,6 +357,7 @@ static void x86_power_init(void)
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);
 			gpio_set_level(GPIO_PP1350_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
+			gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
@@ -568,12 +569,15 @@ void chipset_task(void)
 			gpio_set_level(GPIO_PP3300_DX_EN, 1);
 
 			/* Enable WLAN */
+			gpio_set_level(GPIO_PP3300_WLAN_EN, 1);
 			gpio_set_level(GPIO_WLAN_OFF_L, 1);
 
 			/* Wait for non-core power rails good */
 			if (wait_in_signals(IN_PGOOD_S0)) {
 				chipset_force_shutdown();
 				gpio_set_level(GPIO_WLAN_OFF_L, 0);
+				gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
+				gpio_set_level(GPIO_PP3300_DX_EN, 0);
 				state = X86_S3;
 			}
 
@@ -618,6 +622,7 @@ void chipset_task(void)
 
 			/* Disable WLAN */
 			gpio_set_level(GPIO_WLAN_OFF_L, 0);
+			gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 
 			/*
 			 * Deassert prochot since CPU is off and we're about
