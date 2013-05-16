@@ -67,4 +67,9 @@ int pwm_get_keyboard_backlight(void);
  */
 void pwm_set_keyboard_backlight(int percent);
 
+/**
+ * Configure the GPIOs for the pwm module -- board-specific.
+ */
+void configure_fan_gpios(void);
+
 #endif  /* __CROS_EC_PWM_H */

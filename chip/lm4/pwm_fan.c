@@ -42,16 +42,6 @@ struct pwm_fan_state {
 	char pad; /* Pad to multiple of 4 bytes. */
 };
 
-/**
- * Configure the GPIOs for the pwm module.
- */
-static void configure_fan_gpios(void)
-{
-	/* HEY: this is Link only. Slippy is PM2:3 */
-	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
-	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
-}
-
 void pwm_enable_fan(int enable)
 {
 	if (enable)

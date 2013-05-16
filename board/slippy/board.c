@@ -157,3 +157,12 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
+
+/**
+ * Configure the GPIOs for the pwm module.
+ */
+void configure_fan_gpios(void)
+{
+	/* PN2:3 alternate function 1 = channel 0 PWM/tach */
+	gpio_set_alternate_function(LM4_GPIO_N, 0x0c, 1);
+}
