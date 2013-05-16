@@ -306,6 +306,7 @@ void flash_physical_set_protect(int start_bank, int bank_count)
 uint32_t flash_get_protect(void)
 {
 	uint32_t flags = 0;
+	int not_protected[2] = {0};
 	int i;
 
 	/*
@@ -328,9 +329,13 @@ uint32_t flash_get_protect(void)
 		if (flash_physical_get_protect(i)) {
 			/* At least one bank in the region is protected */
 			flags |= bank_flag;
-		} else if (flags & bank_flag) {
+			if (not_protected[is_ro])
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		} else {
 			/* But not all banks in the region! */
-			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+			not_protected[is_ro] = 1;
+			if (flags & bank_flag)
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 		}
 	}
 
