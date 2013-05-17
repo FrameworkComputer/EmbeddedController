@@ -9,6 +9,7 @@
 #include "flash.h"
 #include "gpio.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -24,19 +25,6 @@
 #define FLASH_TIMEOUT_US 16000
 #define FLASH_TIMEOUT_LOOP \
 	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
-
-/* Flash unlocking keys */
-#define PEKEY1  0x89ABCDEF
-#define PEKEY2  0x02030405
-#define PRGKEY1 0x8C9DAEBF
-#define PRGKEY2 0x13141516
-#define OPTKEY1 0xFBEAD9C8
-#define OPTKEY2 0x24252627
-
-/* Lock bits*/
-#define PE_LOCK  (1<<0)
-#define PRG_LOCK (1<<1)
-#define OPT_LOCK (1<<2)
 
 #define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
 
@@ -57,63 +45,117 @@ static uint32_t write_buffer[CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t)];
 static int buffered_off = -1;
 #endif
 
-/* TODO: (crosbug.com/p/15613) Verify write protect on stm32l */
-#undef STM32L_WP_VERIFIED
-
-static int unlock(int locks)
+/**
+ * Lock all the locks.
+ *
+ * @param until_next_boot	If non-zero, prevent unlocking until next boot.
+ */
+static void lock(int until_next_boot)
 {
-	/* unlock PECR if needed */
-	if (STM32_FLASH_PECR & PE_LOCK) {
-		STM32_FLASH_PEKEYR = PEKEY1;
-		STM32_FLASH_PEKEYR = PEKEY2;
-	}
-	/* unlock program memory if required */
-	if ((locks & PRG_LOCK) && (STM32_FLASH_PECR & PRG_LOCK)) {
-		STM32_FLASH_PRGKEYR = PRGKEY1;
-		STM32_FLASH_PRGKEYR = PRGKEY2;
-	}
-	/* unlock option memory if required */
-	if ((locks & OPT_LOCK) && (STM32_FLASH_PECR & 4)) {
-		STM32_FLASH_OPTKEYR = OPTKEY1;
-		STM32_FLASH_OPTKEYR = OPTKEY2;
-	}
+	ignore_bus_fault(1);
 
-	return (STM32_FLASH_PECR & (locks | PE_LOCK)) ?
-			EC_ERROR_UNKNOWN : EC_SUCCESS;
+	/* Re-enable the locks */
+	STM32_FLASH_PECR = STM32_FLASH_PECR_PE_LOCK |
+		STM32_FLASH_PECR_PRG_LOCK | STM32_FLASH_PECR_OPT_LOCK;
+
+	/* If we need to lock until next boot, write a bad value to PEKEYR */
+	if (until_next_boot)
+		STM32_FLASH_PEKEYR = 0;
+
+	ignore_bus_fault(0);
 }
-
-static void lock(void)
-{
-	STM32_FLASH_PECR = 0x7;
-}
-
-static uint8_t read_optb(int byte)
-{
-	return *(uint8_t *)(STM32_OPTB_BASE + byte);
-
-}
-
-#ifdef STM32L_WP_VERIFIED
-static void write_optb(int byte, uint8_t value)
-{
-	volatile int32_t *word = (uint32_t *)(STM32_OPTB_BASE + (byte & ~0x3));
-	uint32_t val = *word;
-	int shift = (byte & 0x3) * 8;
-
-	if (unlock(OPT_LOCK) != EC_SUCCESS)
-		return;
-
-	val &= ~((0xff << shift) | (0xff << (shift + STM32_OPTB_COMPL_SHIFT)));
-	val |= (value << shift) | (~value << (shift + STM32_OPTB_COMPL_SHIFT));
-	*word = val;
-
-	/* TODO reboot by writing OBL_LAUNCH bit ? */
-
-	lock();
-}
-#endif
 
 /**
+ * Unlock the specified locks.
+ */
+static int unlock(int locks)
+{
+	/*
+	 * We may have already locked the flash module and get a bus fault
+	 * in the attempt to unlock. Need to disable bus fault handler now.
+	 */
+	ignore_bus_fault(1);
+
+	/* Unlock PECR if needed */
+	if (STM32_FLASH_PECR & STM32_FLASH_PECR_PE_LOCK) {
+		STM32_FLASH_PEKEYR = STM32_FLASH_PEKEYR_KEY1;
+		STM32_FLASH_PEKEYR = STM32_FLASH_PEKEYR_KEY2;
+	}
+
+	/* Fail if it didn't unlock */
+	if (STM32_FLASH_PECR & STM32_FLASH_PECR_PE_LOCK) {
+		ignore_bus_fault(0);
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
+	/* Unlock program memory if required */
+	if ((locks & STM32_FLASH_PECR_PRG_LOCK) &&
+	    (STM32_FLASH_PECR & STM32_FLASH_PECR_PRG_LOCK)) {
+		STM32_FLASH_PRGKEYR = STM32_FLASH_PRGKEYR_KEY1;
+		STM32_FLASH_PRGKEYR = STM32_FLASH_PRGKEYR_KEY2;
+	}
+
+	/* Unlock option memory if required */
+	if ((locks & STM32_FLASH_PECR_OPT_LOCK) &&
+	    (STM32_FLASH_PECR & STM32_FLASH_PECR_OPT_LOCK)) {
+		STM32_FLASH_OPTKEYR = STM32_FLASH_OPTKEYR_KEY1;
+		STM32_FLASH_OPTKEYR = STM32_FLASH_OPTKEYR_KEY2;
+	}
+
+	ignore_bus_fault(0);
+
+	/* Successful if we unlocked everything we wanted */
+	if (!(STM32_FLASH_PECR & (locks | STM32_FLASH_PECR_PE_LOCK)))
+		return EC_SUCCESS;
+
+	/* Otherwise relock everything and return error */
+	lock(0);
+	return EC_ERROR_ACCESS_DENIED;
+}
+
+/**
+ * Read an option byte word.
+ *
+ * Option bytes are stored in pairs in 32-bit registers; the upper 16 bits is
+ * the 1's compliment of the lower 16 bits.
+ */
+static uint16_t read_optb(int offset)
+{
+	return REG16(STM32_OPTB_BASE + offset);
+}
+
+/**
+ * Write an option byte word.
+ *
+ * Requires OPT_LOCK unlocked.
+ */
+static void write_optb(int offset, uint16_t value)
+{
+	REG32(STM32_OPTB_BASE + offset) =
+		(uint32_t)value | ((uint32_t)(~value) << 16);
+}
+
+/**
+ * Read the at-boot protection option bits.
+ */
+static uint32_t read_optb_wrp(void)
+{
+	return read_optb(STM32_OPTB_WRP01) |
+		((uint32_t)read_optb(STM32_OPTB_WRP23) << 16);
+}
+
+/**
+ * Write the at-boot protection option bits.
+ */
+static void write_optb_wrp(uint32_t value)
+{
+	write_optb(STM32_OPTB_WRP01, (uint16_t)value);
+	write_optb(STM32_OPTB_WRP23, value >> 16);
+}
+
+/**
+ * Write data to flash.
+ *
  * This function lives in internal RAM, as we cannot read flash during writing.
  * You must not call other functions from this one or declare it static.
  */
@@ -124,15 +166,15 @@ void  __attribute__((section(".iram.text")))
 
 	interrupt_disable();
 
-	/* wait to be ready  */
+	/* Wait for ready  */
 	for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
 	     i++)
 		;
 
-	/* set PROG and FPRG bits */
-	STM32_FLASH_PECR |= (1<<3) | (1<<10);
+	/* Set PROG and FPRG bits */
+	STM32_FLASH_PECR |= STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_FPRG;
 
-	/* send words for the half page */
+	/* Send words for the half page */
 	for (i = 0; i < CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t); i++)
 		*addr++ = *data++;
 
@@ -142,7 +184,7 @@ void  __attribute__((section(".iram.text")))
 		;
 
 	/* Disable PROG and FPRG bits */
-	STM32_FLASH_PECR &= ~((1<<3) | (1<<10));
+	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_FPRG);
 
 	interrupt_enable();
 }
@@ -158,32 +200,31 @@ int flash_physical_write(int offset, int size, const char *data)
 	int res = EC_SUCCESS;
 
 #ifdef CONFIG_64B_WORKAROUND
-		if ((size < CONFIG_FLASH_WRITE_SIZE) || (offset & 64)) {
-			if ((size != 64) ||
-			    ((offset & 64) && (buffered_off != offset - 64))) {
-				res = EC_ERROR_UNKNOWN;
-				goto exit_wr;
-
-			}
-			if (offset & 64) {
-				/* second 64B packet : flash ! */
-				memcpy(write_buffer + 16, data32, 64);
-				offset -= 64;
-				size += 64;
-				data32 = write_buffer;
-			} else {
-				/* first 64B packet : just store it */
-				buffered_off = offset;
-				memcpy(write_buffer, data32, 64);
-				return EC_SUCCESS;
-			}
+	if ((size < CONFIG_FLASH_WRITE_SIZE) || (offset & 64)) {
+		if ((size != 64) ||
+		    ((offset & 64) && (buffered_off != offset - 64))) {
+			res = EC_ERROR_UNKNOWN;
+			goto exit_wr;
 		}
+		if (offset & 64) {
+			/* second 64B packet : flash ! */
+			memcpy(write_buffer + 16, data32, 64);
+			offset -= 64;
+			size += 64;
+			data32 = write_buffer;
+		} else {
+			/* first 64B packet : just store it */
+			buffered_off = offset;
+			memcpy(write_buffer, data32, 64);
+			return EC_SUCCESS;
+		}
+	}
 #endif
 
-	if (unlock(PRG_LOCK) != EC_SUCCESS) {
-		res = EC_ERROR_UNKNOWN;
+	/* Unlock program area */
+	res = unlock(STM32_FLASH_PECR_PRG_LOCK);
+	if (res)
 		goto exit_wr;
-	}
 
 	/* Clear previous error status */
 	STM32_FLASH_SR = 0xf00;
@@ -217,7 +258,8 @@ int flash_physical_write(int offset, int size, const char *data)
 	}
 
 exit_wr:
-	lock();
+	/* Relock program lock */
+	lock(0);
 
 	return res;
 }
@@ -227,14 +269,15 @@ int flash_physical_erase(int offset, int size)
 	uint32_t *address;
 	int res = EC_SUCCESS;
 
-	if (unlock(PRG_LOCK) != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
+	res = unlock(STM32_FLASH_PECR_PRG_LOCK);
+	if (res)
+		return res;
 
 	/* Clear previous error status */
 	STM32_FLASH_SR = 0xf00;
 
-	/* set PROG and ERASE bits */
-	STM32_FLASH_PECR |= (1<<3) | (1<<9);
+	/* Set PROG and ERASE bits */
+	STM32_FLASH_PECR |= STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_ERASE;
 
 	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
 	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
@@ -280,39 +323,97 @@ int flash_physical_erase(int offset, int size)
 	}
 
 exit_er:
-	lock();
+	/* Disable program and erase, and relock PECR */
+	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_ERASE);
+	lock(0);
 
 	return res;
 }
 
 int flash_physical_get_protect(int block)
 {
-	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block/8));
-	return val & (1 << (block % 8));
+	/* Check the active write protect status */
+	return STM32_FLASH_WRPR & (1 << block);
 }
 
-void flash_physical_set_protect(int start_bank, int bank_count)
+static int flash_physical_set_protect(int start_bank, int bank_count,
+				      int enable)
 {
-#ifdef STM32L_WP_VERIFIED
-	int block;
+	uint32_t prot;
+	uint32_t mask = ((1 << bank_count) - 1) << start_bank;
+	int rv;
 
-	for (block = start_bank; block < start_bank + bank_count; block++) {
-		int byte_off = STM32_OPTB_WRP_OFF(block/8);
-		uint8_t val = read_optb(byte_off) | (1 << (block % 8));
-		write_optb(byte_off, val);
-	}
-#endif
+	/* Read the current protection status */
+	prot = read_optb_wrp();
+
+	/* Set/clear bits */
+	if (enable)
+		prot |= mask;
+	else
+		prot &= ~mask;
+
+	if (prot == read_optb_wrp())
+		return EC_SUCCESS;  /* No bits changed */
+
+	/* Unlock option bytes */
+	rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
+	if (rv)
+		return rv;
+
+	/* Update them */
+	write_optb_wrp(prot);
+
+	/* Relock */
+	lock(0);
+
+	/*
+	 * Note that on STM32L, the flash protection bits are only read from
+	 * the option bytes at power-on or if OBL_LAUNCH is set in PECR (which
+	 * causes a reboot).  Until then, the previous protection bits apply.
+	 * We take care of the reboot in flash_pre_init().
+	 */
+
+	return EC_SUCCESS;
+}
+
+int flash_physical_force_reload(void)
+{
+	int rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
+
+	if (rv)
+		return rv;
+
+	/* Force a reboot; this should never return. */
+	STM32_FLASH_PECR = STM32_FLASH_PECR_OBL_LAUNCH;
+	while (1)
+		;
+
+	return EC_ERROR_UNKNOWN;
 }
 
 uint32_t flash_get_protect(void)
 {
 	uint32_t flags = 0;
+	uint32_t prot;
+	uint32_t prot_ro_mask = ((1 << RO_BANK_COUNT) - 1) << RO_BANK_OFFSET;
 	int not_protected[2] = {0};
 	int i;
 
 	/* Check write protect GPIO */
 	if (gpio_get_level(GPIO_WP_L) == 0)
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+
+	/* Check RO at-boot protection */
+	prot = read_optb_wrp() & prot_ro_mask;
+	if (prot) {
+		/* At least one RO bank will be protected at boot */
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+		if (prot != prot_ro_mask) {
+			/* But not all RO banks! */
+			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		}
+	}
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
@@ -335,16 +436,64 @@ uint32_t flash_get_protect(void)
 		}
 	}
 
+	/* If we can't unlock, all flash is protected now */
+	if (unlock(STM32_FLASH_PECR_PE_LOCK))
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+	lock(0);
+
 	return flags;
 }
 
 int flash_set_protect(uint32_t mask, uint32_t flags)
 {
-	/* TODO: (crosbug.com/p/15613) implement! */
-	return EC_SUCCESS;
+	int retval = EC_SUCCESS;
+	int rv;
+
+	/*
+	 * Note that we process flags we can set.  Track the most recent error,
+	 * but process all flags before returning.
+	 *
+	 * Start with the persistent state of at-boot protection.
+	 */
+	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
+		rv = flash_physical_set_protect(RO_BANK_OFFSET, RO_BANK_COUNT,
+					flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+		if (rv)
+			retval = rv;
+	}
+
+	/*
+	 * All subsequent flags only work if write protect is enabled (that is,
+	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
+	 */
+	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
+				      EC_FLASH_PROTECT_RO_AT_BOOT))
+		return retval;
+
+	/*
+	 * No way to protect just RO now if it wasn't protected at boot, so
+	 * ignore setting EC_FLASH_PROTECT_RO_NOW.
+	 *
+	 * ALL_NOW works, though.
+	 */
+	if ((mask & EC_FLASH_PROTECT_ALL_NOW) &&
+	    (flags & EC_FLASH_PROTECT_ALL_NOW)) {
+		/* Protect the entire flash */
+		lock(1);
+	}
+
+	return retval;
 }
 
 int flash_pre_init(void)
 {
+	/*
+	 * Check if the active protection matches the desired protection.  If
+	 * it doesn't, force a hard reboot so that the chip re-reads the
+	 * protection bits from the option bytes.
+	 */
+	if (STM32_FLASH_WRPR != read_optb_wrp())
+		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+
 	return EC_SUCCESS;
 }

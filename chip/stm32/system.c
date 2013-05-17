@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "cpu.h"
+#include "flash.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -178,6 +179,17 @@ void system_reset(int flags)
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | console_en);
 
 	if (flags & SYSTEM_RESET_HARD) {
+
+#ifdef CHIP_VARIANT_stm32l15x
+		/*
+		 * Ask the flash module to reboot, so that we reload the
+		 * option bytes.
+		 */
+		flash_physical_force_reload();
+
+		/* Fall through to watchdog if that fails */
+#endif
+
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = 0x5555;
 		STM32_IWDG_RLR = 0x1;

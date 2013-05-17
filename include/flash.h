@@ -70,6 +70,17 @@ int flash_physical_erase(int offset, int size);
  */
 int flash_physical_get_protect(int bank);
 
+/**
+ * Force reload of flash protection bits.
+ *
+ * Some EC architectures (STM32L) only load the bits from option bytes at
+ * power-on reset or via a special command.  This issues that command if
+ * possible, which triggers a power-on reboot.
+ *
+ * Only returns (with EC_ERROR_ACCESS_DENIED) if the command is locked.
+ */
+int flash_physical_force_reload(void);
+
 /*****************************************************************************/
 /* High-level interface for use by other modules. */
 
