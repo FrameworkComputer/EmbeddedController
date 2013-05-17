@@ -431,7 +431,6 @@ void exception_panic(void)
 		);
 }
 
-void bus_fault_handler(void) __attribute__((naked));
 void bus_fault_handler(void)
 {
 	if (!bus_fault_ignored)
