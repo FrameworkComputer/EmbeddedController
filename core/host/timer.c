@@ -12,6 +12,15 @@
 #include "task.h"
 #include "timer.h"
 
+/*
+ * For test that need to test for longer than 10 seconds, adjust
+ * its time scale in test/build.mk by specifying
+ * <test_name>-scale=<new scale>.
+ */
+#ifndef TEST_TIME_SCALE
+#define TEST_TIME_SCALE 1
+#endif
+
 static timestamp_t boot_time;
 
 void usleep(unsigned us)
@@ -24,7 +33,8 @@ timestamp_t _get_time(void)
 	struct timespec ts;
 	timestamp_t ret;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
-	ret.val = 1000000 * (uint64_t)ts.tv_sec + ts.tv_nsec / 1000;
+	ret.val = (1000000000 * (uint64_t)ts.tv_sec + ts.tv_nsec) *
+		  TEST_TIME_SCALE / 1000;
 	return ret;
 }
 

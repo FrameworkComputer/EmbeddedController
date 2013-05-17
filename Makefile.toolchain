@@ -28,7 +28,8 @@ CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
-            $(if $(EMU_BUILD),-DEMU_BUILD)
+            $(if $(EMU_BUILD),-DEMU_BUILD) \
+            $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale))
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
               -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE)            \
               -DCHIP_$(CHIP) -DCHIP_VARIANT=$(CHIP_VARIANT)               \
