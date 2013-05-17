@@ -67,7 +67,12 @@ static int test_ticks(void)
 	uint64_t interval;
 	int error_pct;
 
-	usleep(1500 * MSEC);
+	/*
+	 * HOOK_SECOND must have been fired at least once when HOOK
+	 * task starts. We only need to wait for just more than a second
+	 * to allow it fires for the second time.
+	 */
+	usleep(1300 * MSEC);
 
 	interval = tick_time[1].val - tick_time[0].val;
 	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 /
@@ -93,22 +98,22 @@ static int test_priority(void)
 static int test_deferred(void)
 {
 	deferred_call_count = 0;
-	hook_call_deferred(deferred_func, 10 * MSEC);
-	usleep(20 * MSEC);
+	hook_call_deferred(deferred_func, 50 * MSEC);
+	usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
-	hook_call_deferred(deferred_func, 10 * MSEC);
-	usleep(5 * MSEC);
+	hook_call_deferred(deferred_func, 50 * MSEC);
+	usleep(25 * MSEC);
+	hook_call_deferred(deferred_func, -1);
+	usleep(75 * MSEC);
+	TEST_ASSERT(deferred_call_count == 1);
+
+	hook_call_deferred(deferred_func, 50 * MSEC);
+	usleep(25 * MSEC);
 	hook_call_deferred(deferred_func, -1);
 	usleep(15 * MSEC);
-	TEST_ASSERT(deferred_call_count == 1);
-
-	hook_call_deferred(deferred_func, 10 * MSEC);
-	usleep(5 * MSEC);
-	hook_call_deferred(deferred_func, -1);
-	usleep(3 * MSEC);
-	hook_call_deferred(deferred_func, 5 * MSEC);
-	usleep(10 * MSEC);
+	hook_call_deferred(deferred_func, 25 * MSEC);
+	usleep(50 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);
 
 	return EC_SUCCESS;
