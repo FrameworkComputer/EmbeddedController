@@ -13,6 +13,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LID_SWITCH
 #define CONFIG_POWER_BUTTON
+#define CONFIG_TEMP_SENSOR
 
 enum gpio_signal {
 	GPIO_EC_INT,
@@ -20,6 +21,14 @@ enum gpio_signal {
 	GPIO_POWER_BUTTON_L,
 
 	GPIO_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_CPU = 0,
+	TEMP_SENSOR_BOARD,
+	TEMP_SENSOR_CASE,
+
+	TEMP_SENSOR_COUNT
 };
 
 #endif /* __BOARD_H */

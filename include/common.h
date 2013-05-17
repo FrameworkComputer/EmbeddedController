@@ -77,9 +77,11 @@ enum ec_error_list {
 #ifdef TEST_BUILD
 #define test_mockable __attribute__((weak))
 #define test_mockable_static __attribute__((weak))
+#define test_export_static
 #else
 #define test_mockable
 #define test_mockable_static static
+#define test_export_static static
 #endif
 
 #endif  /* __CROS_EC_COMMON_H */
