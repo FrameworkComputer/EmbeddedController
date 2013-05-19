@@ -16,7 +16,7 @@
 #include "uart.h"
 #include "util.h"
 
-static int stopped;
+static int stopped = 1;
 static int int_disabled;
 static int init_done;
 

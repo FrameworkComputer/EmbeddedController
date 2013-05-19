@@ -169,6 +169,7 @@ static int test_hostcmd_invalid_checksum(void)
 
 void run_test(void)
 {
+	wait_for_task_started();
 	test_reset();
 
 	RUN_TEST(test_hostcmd_ok);

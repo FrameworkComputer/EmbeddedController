@@ -53,7 +53,10 @@ enum {
 	/* Number of tasks */
 	TASK_ID_COUNT,
 	/* Special task identifiers */
-	TASK_ID_INVALID = 0xff  /* unable to find the task */
+#ifdef EMU_BUILD
+	TASK_ID_INT_GEN = 0xfe, /* interrupt generator */
+#endif
+	TASK_ID_INVALID = 0xff, /* unable to find the task */
 };
 #undef TASK
 

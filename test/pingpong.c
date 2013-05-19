@@ -61,6 +61,7 @@ int task_tick(void *data)
 
 void run_test(void)
 {
+	wait_for_task_started();
 	task_wake(TASK_ID_TICK);
 	task_wake(TASK_ID_TESTA);
 }

@@ -10,7 +10,9 @@
 #include <time.h>
 
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
+#include "util.h"
 
 /*
  * For test that need to test for longer than 10 seconds, adjust
@@ -26,6 +28,8 @@ static int time_set;
 
 void usleep(unsigned us)
 {
+	ASSERT(!in_interrupt_context() &&
+	       task_get_current() != TASK_ID_INT_GEN);
 	task_wait_event(us);
 }
 
@@ -55,8 +59,14 @@ void force_time(timestamp_t ts)
 
 void udelay(unsigned us)
 {
-	timestamp_t deadline = get_time();
-	deadline.val += us;
+	timestamp_t deadline;
+
+	if (!in_interrupt_context() && task_get_current() == TASK_ID_INT_GEN) {
+		interrupt_generator_udelay(us);
+		return;
+	}
+
+	deadline.val = get_time().val + us;
 	while (get_time().val < deadline.val)
 		;
 }

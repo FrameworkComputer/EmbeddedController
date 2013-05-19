@@ -111,5 +111,6 @@ int mutex_main_task(void *unused)
 
 void run_test(void)
 {
+	wait_for_task_started();
 	task_wake(TASK_ID_MTX1);
 }

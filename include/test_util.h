@@ -109,6 +109,28 @@ int test_get_error_count(void);
 int test_send_host_command(int command, int version, const void *params,
 			   int params_size, void *resp, int resp_size);
 
+/* Optionally defined interrupt generator entry point */
+void interrupt_generator(void);
+
+/*
+ * Trigger an interrupt. This function must only be called by interrupt
+ * generator.
+ */
+void task_trigger_test_interrupt(void (*isr)(void));
+
+/*
+ * Special implementation of udelay() for interrupt generator. Calls
+ * to udelay() from interrupt generator are delegated to this function
+ * automatically.
+ */
+void interrupt_generator_udelay(unsigned us);
+
+#ifdef EMU_BUILD
+void wait_for_task_started(void);
+#else
+static inline void wait_for_task_started(void) { }
+#endif
+
 uint32_t prng(uint32_t seed);
 
 uint32_t prng_no_seed(void);
