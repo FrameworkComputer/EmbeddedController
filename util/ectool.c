@@ -1517,6 +1517,8 @@ int cmd_power_info(int argc, char *argv[])
 	printf("AC Voltage: %d mV\n", r.voltage_ac);
 	printf("System Voltage: %d mV\n", r.voltage_system);
 	printf("System Current: %d mA\n", r.current_system);
+	printf("System Power: %d mW\n",
+			r.voltage_system * r.current_system / 1000);
 	printf("USB Device Type: 0x%x\n", r.usb_dev_type);
 	printf("USB Current Limit: %d mA\n", r.usb_current_limit);
 	return 0;
