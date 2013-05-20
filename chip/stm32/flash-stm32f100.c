@@ -42,35 +42,6 @@
 #define PRG_LOCK 0
 #define OPT_LOCK (1<<9)
 
-#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Persistent protection state flash offset / size / bank */
-#define PSTATE_OFFSET     CONFIG_SECTION_FLASH_PSTATE_OFF
-#define PSTATE_SIZE       CONFIG_SECTION_FLASH_PSTATE_SIZE
-#define PSTATE_BANK       (PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
-#define PSTATE_BANK_COUNT (PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Read-only firmware offset and size in units of flash banks */
-#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Read-write firmware offset and size in units of flash banks */
-#define RW_BANK_OFFSET (CONFIG_SECTION_RW_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RW_BANK_COUNT  (CONFIG_SECTION_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Persistent protection state - emulates a SPI status register for flashrom */
-struct persist_state {
-	uint8_t version;            /* Version of this struct */
-	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
-	uint8_t reserved[2];        /* Reserved; set 0 */
-};
-
-#define PERSIST_STATE_VERSION 2  /* Expected persist_state.version */
-
-/* Flags for persist_state.flags */
-/* Protect persist state and RO firmware at boot */
-#define PERSIST_FLAG_PROTECT_RO 0x02
-
 /* Flag indicating whether we have locked down entire flash */
 static int entire_flash_locked;
 
@@ -239,56 +210,6 @@ static int write_optb(int byte, uint8_t value)
 	return EC_SUCCESS;
 }
 
-/**
- * Read persistent state into pstate.
- *
- * @param pstate	Destination for persistent state
- */
-static int read_pstate(struct persist_state *pstate)
-{
-	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
-
-	/* Sanity-check data and initialize if necessary */
-	if (pstate->version != PERSIST_STATE_VERSION) {
-		memset(pstate, 0, sizeof(*pstate));
-		pstate->version = PERSIST_STATE_VERSION;
-	}
-
-	return EC_SUCCESS;
-}
-
-/**
- * Write persistent state from pstate, erasing if necessary.
- *
- * @param pstate	Source persistent state
- * @return EC_SUCCESS, or nonzero if error.
- */
-static int write_pstate(const struct persist_state *pstate)
-{
-	struct persist_state current_pstate;
-	int rv;
-
-	/* Check if pstate has actually changed */
-	if (!read_pstate(&current_pstate) &&
-	    !memcmp(&current_pstate, pstate, sizeof(*pstate)))
-		return EC_SUCCESS;
-
-	/* Erase pstate */
-	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
-	if (rv)
-		return rv;
-
-	/*
-	 * Note that if we lose power in here, we'll lose the pstate contents.
-	 * That's ok, because it's only possible to write the pstate before
-	 * it's protected.
-	 */
-
-	/* Rewrite the data */
-	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
-				    (const char *)pstate);
-}
-
 /*****************************************************************************/
 /* Physical layer APIs */
 
@@ -428,9 +349,8 @@ static int flash_physical_get_protect_at_boot(int block)
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
-static void flash_physical_set_protect_at_boot(int start_bank,
-					       int bank_count,
-					       int enable)
+int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
+				       int enable)
 {
 	int block;
 	int i;
@@ -450,40 +370,6 @@ static void flash_physical_set_protect_at_boot(int start_bank,
 	for (i = 0; i < 4; ++i)
 		if (original_val[i] != val[i])
 			write_optb(i * 2 + 8, val[i]);
-}
-
-static int protect_ro_at_boot(int enable, int force)
-{
-	struct persist_state pstate;
-	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
-	int rv;
-
-	/* Read the current persist state from flash */
-	rv = read_pstate(&pstate);
-	if (rv)
-		return rv;
-
-	/* Update state if necessary */
-	if (pstate.flags != new_flags || force) {
-		/* Fail if write protect block is already locked */
-		if (flash_physical_get_protect(PSTATE_BANK))
-			return EC_ERROR_ACCESS_DENIED;
-
-		/* Set the new flag */
-		pstate.flags = new_flags;
-
-		/* Write the state back to flash */
-		rv = write_pstate(&pstate);
-		if (rv)
-			return rv;
-
-		/*
-		 * Write to write protect register.
-		 * Since we already wrote to pstate, ignore error here.
-		 */
-		flash_physical_set_protect_at_boot(RO_BANK_OFFSET,
-			RO_BANK_COUNT + PSTATE_BANK_COUNT, new_flags);
-	}
 
 	return EC_SUCCESS;
 }
@@ -559,20 +445,25 @@ int flash_pre_init(void)
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
 			/*
-			 * Pstate say "ro_at_boot". WP register says otherwise.
-			 * Listen to pstate.
+			 * Pstate wants RO protected at boot, but the write
+			 * protect register wasn't set to protect it.  Force an
+			 * update to the write protect register and reboot so
+			 * it takes effect.
 			 */
-			protect_ro_at_boot(1, 1);
+			flash_protect_ro_at_boot(1);
 			need_reset = 1;
 		}
 
 		if (registers_need_reset()) {
 			/*
-			 * Reset RO protect registers to make sure this doesn't
-			 * happen again due to RO protect state inconsistency.
+			 * Write protect register was in an inconsistent state.
+			 * Set it back to a good state and reboot.
+			 *
+			 * TODO: this seems really similar to the check above.
+			 * One of them should be able to go away.
 			 */
-			protect_ro_at_boot(
-				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT, 1);
+			flash_protect_ro_at_boot(
+				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	}
@@ -595,7 +486,6 @@ int flash_pre_init(void)
 
 uint32_t flash_get_protect(void)
 {
-	struct persist_state pstate;
 	uint32_t flags = 0;
 	int i;
 	int not_protected[2] = {0};
@@ -604,8 +494,7 @@ uint32_t flash_get_protect(void)
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Read the current persist state from flash */
-	read_pstate(&pstate);
-	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+	if (flash_get_protect_ro_at_boot())
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	if (entire_flash_locked) {
@@ -646,7 +535,8 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * all flags before returning.
 	 */
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = protect_ro_at_boot(flags & EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+		rv = flash_protect_ro_at_boot(
+				flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 		if (rv)
 			retval = rv;
 	}

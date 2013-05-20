@@ -46,6 +46,9 @@
 /* Enable watchdog timer */
 #define CONFIG_WATCHDOG
 
+/* Flash protection applies to the next boot, not the current one */
+#define CONFIG_FLASH_PROTECT_NEXT_BOOT
+
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */
 

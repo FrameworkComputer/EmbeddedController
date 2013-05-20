@@ -25,120 +25,8 @@
 #define ERASE_TIMEOUT_MS 200
 #define WRITE_TIMEOUT_US 300
 
-/* Number of physical banks of flash */
-#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Persistent protection state flash offset / size / bank */
-#define PSTATE_OFFSET CONFIG_SECTION_FLASH_PSTATE_OFF
-#define PSTATE_SIZE   CONFIG_SECTION_FLASH_PSTATE_SIZE
-#define PSTATE_BANK   (PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
-
-/* Read-only firmware offset and size in units of flash banks */
-#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
-
 int stuck_locked;  /* Is physical flash stuck protected? */
 int all_protected; /* Has all-flash protection been requested? */
-
-/* Persistent protection state - emulates a SPI status register for flashrom */
-struct persist_state {
-	uint8_t version;            /* Version of this struct */
-	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
-	uint8_t reserved[2];        /* Reserved; set 0 */
-};
-
-#define PERSIST_STATE_VERSION 2  /* Expected persist_state.version */
-
-/* Flags for persist_state.flags */
-/* Protect persist state and RO firmware at boot */
-#define PERSIST_FLAG_PROTECT_RO 0x02
-
-/**
- * Read persistent state into pstate.
- *
- * @param pstate	Destination for persistent state
- */
-static void read_pstate(struct persist_state *pstate)
-{
-	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
-
-	/* Sanity-check data and initialize if necessary */
-	if (pstate->version != PERSIST_STATE_VERSION) {
-		memset(pstate, 0, sizeof(*pstate));
-		pstate->version = PERSIST_STATE_VERSION;
-	}
-}
-
-/**
- * Write persistent state from pstate, erasing if necessary.
- *
- * @param pstate	Source persistent state
- * @return EC_SUCCESS, or nonzero if error.
- */
-static int write_pstate(const struct persist_state *pstate)
-{
-	struct persist_state current_pstate;
-	int rv;
-
-	/* Check if pstate has actually changed */
-	read_pstate(&current_pstate);
-	if (!memcmp(&current_pstate, pstate, sizeof(*pstate)))
-		return EC_SUCCESS;
-
-	/* Erase pstate */
-	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
-	if (rv)
-		return rv;
-
-	/*
-	 * Note that if we lose power in here, we'll lose the pstate contents.
-	 * That's ok, because it's only possible to write the pstate before
-	 * it's protected.
-	 */
-
-	/* Rewrite the data */
-	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
-				    (const char *)pstate);
-}
-
-/**
- * Enable write protect for the read-only code.
- *
- * Once write protect is enabled, it will STAY enabled until the system is
- * hard-rebooted with the hardware write protect pin deasserted.  If the write
- * protect pin is deasserted, the protect setting is ignored, and the entire
- * flash will be writable.
- *
- * @param enable        Enable write protection
- * @return EC_SUCCESS, or nonzero if error.
- */
-static int protect_ro_at_boot(int enable)
-{
-	struct persist_state pstate;
-	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
-	int rv;
-
-	/* Read the current persist state from flash */
-	read_pstate(&pstate);
-
-	/* Update state if necessary */
-	if (pstate.flags != new_flags) {
-
-		/* Fail if write protect block is already locked */
-		if (flash_physical_get_protect(PSTATE_BANK))
-			return EC_ERROR_ACCESS_DENIED;
-
-		/* Set the new flag */
-		pstate.flags = new_flags;
-
-		/* Write the state back to flash */
-		rv = write_pstate(&pstate);
-		if (rv)
-			return rv;
-	}
-
-	return EC_SUCCESS;
-}
 
 /**
  * Protect flash banks until reboot.
@@ -293,7 +181,6 @@ int flash_physical_get_protect(int bank)
 
 uint32_t flash_get_protect(void)
 {
-	struct persist_state pstate;
 	uint32_t flags = 0;
 	int not_protected[2] = {0};
 	int i;
@@ -303,8 +190,7 @@ uint32_t flash_get_protect(void)
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
 
 	/* Read the current persist state from flash */
-	read_pstate(&pstate);
-	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+	if (flash_get_protect_ro_at_boot())
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 #ifdef HAS_TASK_SWITCH
@@ -356,7 +242,8 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * all flags before returning.
 	 */
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = protect_ro_at_boot(flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+		rv = flash_protect_ro_at_boot(
+			      flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 		if (rv)
 			retval = rv;
 	}

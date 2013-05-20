@@ -15,6 +15,67 @@
 #include "util.h"
 #include "vboot_hash.h"
 
+/* Persistent protection state - emulates a SPI status register for flashrom */
+struct persist_state {
+	uint8_t version;            /* Version of this struct */
+	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
+	uint8_t reserved[2];        /* Reserved; set 0 */
+};
+
+#define PERSIST_STATE_VERSION 2  /* Expected persist_state.version */
+
+/* Flags for persist_state.flags */
+/* Protect persist state and RO firmware at boot */
+#define PERSIST_FLAG_PROTECT_RO 0x02
+
+/**
+ * Read persistent state into pstate.
+ *
+ * @param pstate	Destination for persistent state
+ */
+static void flash_read_pstate(struct persist_state *pstate)
+{
+	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
+
+	/* Sanity-check data and initialize if necessary */
+	if (pstate->version != PERSIST_STATE_VERSION) {
+		memset(pstate, 0, sizeof(*pstate));
+		pstate->version = PERSIST_STATE_VERSION;
+	}
+}
+
+/**
+ * Write persistent state from pstate, erasing if necessary.
+ *
+ * @param pstate	Source persistent state
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+static int flash_write_pstate(const struct persist_state *pstate)
+{
+	struct persist_state current_pstate;
+	int rv;
+
+	/* Check if pstate has actually changed */
+	flash_read_pstate(&current_pstate);
+	if (!memcmp(&current_pstate, pstate, sizeof(*pstate)))
+		return EC_SUCCESS;
+
+	/* Erase pstate */
+	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
+	if (rv)
+		return rv;
+
+	/*
+	 * Note that if we lose power in here, we'll lose the pstate contents.
+	 * That's ok, because it's only possible to write the pstate before
+	 * it's protected.
+	 */
+
+	/* Rewrite the data */
+	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
+				    (const char *)pstate);
+}
+
 int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 {
 	if (offset < 0 || size_req < 0 ||
@@ -66,6 +127,57 @@ test_mockable int flash_erase(int offset, int size)
 #endif
 
 	return flash_physical_erase(offset, size);
+}
+
+int flash_get_protect_ro_at_boot(void)
+{
+	struct persist_state pstate;
+
+	flash_read_pstate(&pstate);
+
+	return (pstate.flags & PERSIST_FLAG_PROTECT_RO) ? 1 : 0;
+}
+
+int flash_protect_ro_at_boot(int enable)
+{
+	struct persist_state pstate;
+	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
+
+	/* Read the current persist state from flash */
+	flash_read_pstate(&pstate);
+
+	if (pstate.flags != new_flags) {
+		/* Need to update pstate */
+		int rv;
+
+		/* Fail if write protect block is already locked */
+		if (flash_physical_get_protect(PSTATE_BANK))
+			return EC_ERROR_ACCESS_DENIED;
+
+		/* Set the new flag */
+		pstate.flags = new_flags;
+
+		/* Write the state back to flash */
+		rv = flash_write_pstate(&pstate);
+		if (rv)
+			return rv;
+	}
+
+#ifdef CONFIG_FLASH_PROTECT_NEXT_BOOT
+	/*
+	 * Try updating at-boot protection state, if on a platform where write
+	 * protection only changes after a reboot.  Otherwise we wouldn't
+	 * update it until after the next reboot, and we'd need to reboot
+	 * again.  Ignore errors, because the protection registers might
+	 * already be locked this boot, and we'll still apply the correct state
+	 * again on the next boot.
+	 */
+	flash_physical_set_protect_at_boot(RO_BANK_OFFSET,
+					   RO_BANK_COUNT + PSTATE_BANK_COUNT,
+					   new_flags);
+#endif
+
+	return EC_SUCCESS;
 }
 
 /*****************************************************************************/

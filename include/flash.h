@@ -11,6 +11,23 @@
 #include "common.h"
 #include "ec_commands.h"  /* For EC_FLASH_PROTECT_* flags */
 
+/* Number of physical flash banks */
+#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Read-only firmware offset and size in units of flash banks */
+#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Read-write firmware offset and size in units of flash banks */
+#define RW_BANK_OFFSET (CONFIG_SECTION_RW_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RW_BANK_COUNT  (CONFIG_SECTION_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
+
+/* Persistent protection state flash offset / size / bank */
+#define PSTATE_OFFSET     CONFIG_SECTION_FLASH_PSTATE_OFF
+#define PSTATE_SIZE       CONFIG_SECTION_FLASH_PSTATE_SIZE
+#define PSTATE_BANK       (PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
+#define PSTATE_BANK_COUNT (PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
+
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 
@@ -71,6 +88,17 @@ int flash_physical_erase(int offset, int size);
 int flash_physical_get_protect(int bank);
 
 /**
+ * Set physical write protect status for the next boot.
+ *
+ * @param start_bank	Start bank
+ * @param bank_count	Number of banks to protect
+ * @param enable	Enable (non-zero) or disable (zero) protection
+ * @return non-zero if error.
+ */
+int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
+				       int enable);
+
+/**
  * Force reload of flash protection bits.
  *
  * Some EC architectures (STM32L) only load the bits from option bytes at
@@ -80,6 +108,27 @@ int flash_physical_get_protect(int bank);
  * Only returns (with EC_ERROR_ACCESS_DENIED) if the command is locked.
  */
 int flash_physical_force_reload(void);
+
+/*****************************************************************************/
+/* Low-level persistent state code for use by flash modules. */
+
+/**
+ * Return non-zero if RO flash should be protected at boot.
+ */
+int flash_get_protect_ro_at_boot(void);
+
+/**
+ * Enable write protect for the read-only code.
+ *
+ * Once write protect is enabled, it will STAY enabled until the system is
+ * hard-rebooted with the hardware write protect pin deasserted.  If the write
+ * protect pin is deasserted, the protect setting is ignored, and the entire
+ * flash will be writable.
+ *
+ * @param enable        Enable write protection
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+int flash_protect_ro_at_boot(int enable);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */

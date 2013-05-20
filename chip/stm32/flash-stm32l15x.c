@@ -26,12 +26,6 @@
 #define FLASH_TIMEOUT_LOOP \
 	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
 
-#define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
-
-/* Read-only firmware offset and size in units of flash banks */
-#define RO_BANK_OFFSET (CONFIG_SECTION_RO_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RO_BANK_COUNT  (CONFIG_SECTION_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
-
 #ifdef CONFIG_64B_WORKAROUND
 /*
  * Use the real write buffer size inside the driver.  We only lie to the
@@ -336,8 +330,8 @@ int flash_physical_get_protect(int block)
 	return STM32_FLASH_WRPR & (1 << block);
 }
 
-static int flash_physical_set_protect(int start_bank, int bank_count,
-				      int enable)
+int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
+				       int enable)
 {
 	uint32_t prot;
 	uint32_t mask = ((1 << bank_count) - 1) << start_bank;
@@ -365,13 +359,6 @@ static int flash_physical_set_protect(int start_bank, int bank_count,
 
 	/* Relock */
 	lock(0);
-
-	/*
-	 * Note that on STM32L, the flash protection bits are only read from
-	 * the option bytes at power-on or if OBL_LAUNCH is set in PECR (which
-	 * causes a reboot).  Until then, the previous protection bits apply.
-	 * We take care of the reboot in flash_pre_init().
-	 */
 
 	return EC_SUCCESS;
 }
@@ -456,7 +443,9 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 * Start with the persistent state of at-boot protection.
 	 */
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = flash_physical_set_protect(RO_BANK_OFFSET, RO_BANK_COUNT,
+		rv = flash_physical_set_protect_at_boot(
+					RO_BANK_OFFSET,
+					RO_BANK_COUNT,
 					flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 		if (rv)
 			retval = rv;

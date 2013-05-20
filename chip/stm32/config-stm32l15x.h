@@ -27,7 +27,8 @@
 #define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
 
 #define CONFIG_FW_RO_OFF         0
-#define CONFIG_FW_RO_SIZE        CONFIG_FW_IMAGE_SIZE
+#define CONFIG_FW_RO_SIZE        (CONFIG_FW_IMAGE_SIZE			\
+				  - CONFIG_SECTION_FLASH_PSTATE_SIZE)
 #define CONFIG_FW_RW_OFF         CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_RW_SIZE        CONFIG_FW_IMAGE_SIZE
 
@@ -39,12 +40,11 @@
 #define CONFIG_SECTION_WP_RO_SIZE  CONFIG_FW_RO_SIZE
 
 /*
- * The EC uses the top bank of flash to emulate a SPI-like write protect
- * register with persistent state.  Put that up at the top.
+ * Put this after RO to give RW more space. This also makes RO write protect
+ * region contiguous.
  */
 #define CONFIG_SECTION_FLASH_PSTATE_SIZE  (1 * CONFIG_FLASH_BANK_SIZE)
-#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FLASH_SIZE \
-					   - CONFIG_SECTION_FLASH_PSTATE_SIZE)
+#define CONFIG_SECTION_FLASH_PSTATE_OFF   (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE)
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 45
