@@ -91,8 +91,7 @@ static int nominal_pwm_duty;
 static int current_pwm_duty;
 static int user_pwm_duty = -1;
 
-static int pending_toad_redetect;
-static int pending_video_detach;
+static int pending_tsu6721_reset;
 
 static enum {
 	LIMIT_NORMAL,
@@ -102,7 +101,6 @@ static enum {
 static enum {
 	ADC_WATCH_NONE,
 	ADC_WATCH_TOAD,
-	ADC_WATCH_VIDEO,
 } current_watchdog = ADC_WATCH_NONE;
 
 struct {
@@ -364,34 +362,6 @@ static void adc_watch_toad(void)
 	current_watchdog = ADC_WATCH_TOAD;
 }
 
-static void adc_watch_video(void)
-{
-	int retry_count = 10;
-
-	/*
-	 * Let DP_SNS voltage settle so that we don't trigger watchdog
-	 * unintentionally.
-	 */
-	while (retry_count-- &&
-	       adc_read_channel(ADC_CH_USB_DP_SNS) > VIDEO_ID_THRESHOLD)
-		msleep(20);
-
-	/* DP_SNS kept high. Assuming dongle detached already. */
-	if (retry_count <= 0) {
-		pending_video_detach = 1;
-		return;
-	}
-
-	/*
-	 * Watch DP_SNS and interrupt if voltage goes above
-	 * VIDEO_ID_THRESHOLD
-	 */
-	adc_enable_watchdog(STM32_AIN(2), VIDEO_ID_THRESHOLD * 4096 / 3300, 0);
-	task_clear_pending_irq(STM32_IRQ_ADC_1);
-	task_enable_irq(STM32_IRQ_ADC_1);
-	current_watchdog = ADC_WATCH_VIDEO;
-}
-
 static int usb_has_power_input(int dev_type)
 {
 	if (dev_type & TSU6721_TYPE_JIG_UART_ON)
@@ -522,6 +492,7 @@ static void usb_log_dev_type(int dev_type)
 
 static void usb_device_change(int dev_type)
 {
+
 	if (current_dev_type == dev_type)
 		return;
 
@@ -547,8 +518,6 @@ static void usb_device_change(int dev_type)
 	if ((dev_type & TOAD_DEVICE_TYPE) &&
 	    (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED))
 		adc_watch_toad();
-	else if (dev_type & TSU6721_TYPE_JIG_UART_ON)
-		adc_watch_video();
 
 	usb_log_dev_type(dev_type);
 
@@ -598,33 +567,15 @@ void extpower_charge_init(void)
 void extpower_charge_update(int force_update)
 {
 	int int_val = 0;
-	int want_reset = 0;
 
-	if (pending_video_detach || pending_toad_redetect) {
+	if (pending_tsu6721_reset) {
 		current_watchdog = ADC_WATCH_NONE;
 		adc_disable_watchdog();
-		want_reset = 1;
-	}
-
-	if (pending_video_detach) {
-		set_video_power(0);
-		gpio_set_level(GPIO_ID_MUX, 0);
-		msleep(DELAY_ID_MUX_MS);
-		tsu6721_enable_interrupts();
-	}
-
-	pending_video_detach = 0;
-	pending_toad_redetect = 0;
-
-	if (!want_reset) {
-		int_val = tsu6721_get_interrupts();
-		want_reset = (int_val & TSU6721_INT_DETACH);
-	}
-
-	if (want_reset) {
 		tsu6721_reset();
 		force_update = 1;
-	}
+		pending_tsu6721_reset = 0;
+	} else
+		int_val = tsu6721_get_interrupts();
 
 	if (int_val & TSU6721_INT_DETACH)
 		usb_device_change(TSU6721_TYPE_NONE);
@@ -667,12 +618,11 @@ void extpower_interrupt(enum gpio_signal signal)
 
 static void adc_watchdog_interrupt(void)
 {
-	if (current_watchdog == ADC_WATCH_TOAD)
-		pending_toad_redetect = 1;
-	else if (current_watchdog == ADC_WATCH_VIDEO)
-		pending_video_detach = 1;
-	task_disable_irq(STM32_IRQ_ADC_1);
-	task_wake(TASK_ID_CHARGER);
+	if (current_watchdog == ADC_WATCH_TOAD) {
+		pending_tsu6721_reset = 1;
+		task_disable_irq(STM32_IRQ_ADC_1);
+		task_wake(TASK_ID_CHARGER);
+	}
 }
 DECLARE_IRQ(STM32_IRQ_ADC_1, adc_watchdog_interrupt, 2);
 
@@ -688,7 +638,7 @@ static void usb_boost_pwr_off_hook(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_boost_pwr_off_hook, HOOK_PRIO_DEFAULT);
 
-static void power_tweak(void)
+static void pwm_tweak(void)
 {
 	int vbus, current;
 	int next;
@@ -697,17 +647,6 @@ static void power_tweak(void)
 		return;
 
 	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
-
-	/* Check video power input change */
-	if (current_dev_type & TSU6721_TYPE_JIG_UART_ON) {
-		if (get_video_power() && vbus > 4000) {
-			set_video_power(0);
-		} else if (!get_video_power() && vbus <= 4000) {
-			set_pwm_duty_cycle(100);
-			set_video_power(1);
-		}
-	}
-
 	if (battery_current(&current))
 		return;
 
@@ -737,7 +676,37 @@ static void power_tweak(void)
 		}
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, power_tweak, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, pwm_tweak, HOOK_PRIO_DEFAULT);
+
+/*
+ * TODO(victoryang): Get rid of polling loop when ADC watchdog is ready.
+ *                   See crosbug.com/p/18171
+ */
+static void usb_monitor_detach(void)
+{
+	int vbus;
+
+	if (!(current_dev_type & TSU6721_TYPE_JIG_UART_ON))
+		return;
+
+	if (adc_read_channel(ADC_CH_USB_DP_SNS) > VIDEO_ID_THRESHOLD) {
+		set_video_power(0);
+		gpio_set_level(GPIO_ID_MUX, 0);
+		msleep(DELAY_ID_MUX_MS);
+		tsu6721_enable_interrupts();
+		usb_device_change(TSU6721_TYPE_NONE);
+	}
+
+	/* Check if there is external power */
+	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
+	if (get_video_power() && vbus > 4000) {
+		set_video_power(0);
+	} else if (!get_video_power() && vbus <= 4000) {
+		set_pwm_duty_cycle(100);
+		set_video_power(1);
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, usb_monitor_detach, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /*
