@@ -152,6 +152,13 @@ int pmu_version(int *version);
 int pmu_is_charger_alarm(void);
 
 /**
+ * Check pmu charge timeout
+ *
+ * @return 1 if charge timed out
+ */
+int pmu_is_charge_timeout(void);
+
+/**
  * Get pmu power source
  *
  * @param ac_good	pointer to output value of ac voltage good

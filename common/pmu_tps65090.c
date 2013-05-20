@@ -67,6 +67,10 @@
 /* A temperature threshold to force charger hardware error */
 #define CG_TEMP_THRESHOLD_ERROR 0
 
+/* Timeout indication */
+#define STATUS_TIMEOUT_MASK       0xc
+#define STATUS_PRECHARGE_TIMEOUT  0x4
+#define STATUS_FASTCHARGE_TIMEOUT 0x8
 
 /* IRQ events */
 #define EVENT_VACG    (1 << 1) /* AC voltage good */
@@ -192,6 +196,18 @@ int pmu_is_charger_alarm(void)
 	if (!pmu_read(CG_STATUS1, &status) && (status & CHARGER_ALARM))
 		return 1;
 	return 0;
+}
+
+int pmu_is_charge_timeout(void)
+{
+	int status;
+
+	if (pmu_read(CG_STATUS1, &status))
+		return 0;
+
+	status &= STATUS_TIMEOUT_MASK;
+	return (status == STATUS_PRECHARGE_TIMEOUT) ||
+	       (status == STATUS_FASTCHARGE_TIMEOUT);
 }
 
 int pmu_get_power_source(int *ac_good, int *battery_good)

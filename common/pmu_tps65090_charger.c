@@ -291,6 +291,14 @@ static int calc_next_state(int state)
 			return ST_IDLE0;
 		}
 
+#ifdef CONFIG_EXTPOWER_USB
+		/* Re-init on charger timeout. */
+		if (pmu_is_charge_timeout()) {
+			CPUTS("[pmu] charging: timeout\n");
+			return ST_IDLE0;
+		}
+#endif
+
 		return ST_CHARGING;
 
 	case ST_CHARGING_ERROR:
