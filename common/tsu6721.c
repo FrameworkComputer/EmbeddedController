@@ -77,8 +77,8 @@ int tsu6721_get_interrupts(void)
 
 int tsu6721_peek_interrupts(void)
 {
-	saved_interrupts |= (tsu6721_read(TSU6721_REG_INT1) << 8) |
-			    (tsu6721_read(TSU6721_REG_INT2));
+	saved_interrupts |= (tsu6721_read(TSU6721_REG_INT2) << 8) |
+			    (tsu6721_read(TSU6721_REG_INT1));
 	return saved_interrupts;
 }
 
