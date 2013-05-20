@@ -23,6 +23,7 @@ test-list-$(BOARD_spring)+=kb_scan flash stress
 # TODO(victoryang): Fix them
 test-list-$(BOARD_link)=
 test-list-$(BOARD_slippy)=
+test-list-$(BOARD_falco)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks

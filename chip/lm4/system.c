@@ -295,7 +295,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_pre_init(void)
 {
-#ifndef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
+#ifdef BOARD_link			       /* FIXME: crosbug.com/p/19366 */
 	volatile uint32_t scratch  __attribute__((unused));
 
 	/* Enable clocks to the hibernation module */
@@ -345,7 +345,7 @@ void system_pre_init(void)
 
 	/* HEY: read LM4_SYSTEM_BOOTCFG bit 4 to determine WRKEY value */
 
-#ifndef BOARD_slippy			     /* FIXME: crosbug.com/p/19366 */
+#ifdef BOARD_link			     /* FIXME: crosbug.com/p/19366 */
 	/* Initialize bootcfg if needed */
 	if (LM4_SYSTEM_BOOTCFG != BOOTCFG_VALUE) {
 		LM4_FLASH_FMD = BOOTCFG_VALUE;

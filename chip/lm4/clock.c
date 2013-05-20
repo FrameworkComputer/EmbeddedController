@@ -27,7 +27,7 @@ static int freq;
  */
 static void disable_pll(void)
 {
-#ifndef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
+#ifdef BOARD_link			       /* FIXME: crosbug.com/p/19366 */
 	/* Switch to 16MHz internal oscillator and power down the PLL */
 	LM4_SYSTEM_RCC = LM4_SYSTEM_RCC_SYSDIV(0) |
 		LM4_SYSTEM_RCC_BYPASS |
@@ -48,7 +48,7 @@ static void enable_pll(void)
 	/* Disable the PLL so we can reconfigure it */
 	disable_pll();
 
-#ifndef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
+#ifdef BOARD_link			       /* FIXME: crosbug.com/p/19366 */
 	/*
 	 * Enable the PLL (PWRDN is no longer set) and set divider.  PLL is
 	 * still bypassed, since it hasn't locked yet.
@@ -95,8 +95,6 @@ int clock_get_freq(void)
 
 void clock_init(void)
 {
-
-#ifndef BOARD_slippy			       /* FIXME: crosbug.com/p/19366 */
 #ifdef BOARD_bds
 	/*
 	 * Perform an auto calibration of the internal oscillator using the
@@ -119,7 +117,6 @@ void clock_init(void)
 	 * can disable main oscillator control to reduce power consumption.
 	 */
 	LM4_SYSTEM_MOSCCTL = 0x04;
-#endif
 #endif
 
 	/*
