@@ -69,6 +69,7 @@ enum ilim_config {
 #define PWM_CTRL_VBUS_HARD_LOW	4400
 #define PWM_CTRL_VBUS_LOW	4500
 #define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
+#define PWM_CTRL_VBUS_HIGH_500MA 4550
 
 /* Delay for signals to settle */
 #define DELAY_POWER_MS		20
@@ -90,6 +91,7 @@ static int current_dev_type = TSU6721_TYPE_NONE;
 static int nominal_pwm_duty;
 static int current_pwm_duty;
 static int user_pwm_duty = -1;
+static int pwm_fast_mode;
 
 static int pending_tsu6721_reset;
 
@@ -315,7 +317,8 @@ static int pwm_get_next_lower(void)
 	int fast_next = current_pwm_duty - PWM_CTRL_STEP_FAST_DOWN;
 
 	if (current_limit_mode == LIMIT_AGGRESSIVE) {
-		if (fast_next >= nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
+		if (pwm_fast_mode &&
+		    fast_next >= nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
 		    fast_next >= over_current_pwm_duty)
 			return MAX(fast_next, 0);
 		if (current_pwm_duty > nominal_pwm_duty -
@@ -340,6 +343,15 @@ static int pwm_check_vbus_low(int vbus, int battery_current)
 		return vbus < PWM_CTRL_VBUS_HARD_LOW && current_pwm_duty < 100;
 }
 
+static int pwm_check_vbus_high(int vbus)
+{
+	if (vbus > PWM_CTRL_VBUS_HIGH)
+		return 1;
+	if (vbus > PWM_CTRL_VBUS_HIGH_500MA && current_pwm_duty > I_LIMIT_500MA)
+		return 1;
+	return 0;
+}
+
 static void pwm_nominal_duty_cycle(int percent)
 {
 	int dummy;
@@ -351,6 +363,7 @@ static void pwm_nominal_duty_cycle(int percent)
 	else
 		set_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
 	nominal_pwm_duty = percent;
+	pwm_fast_mode = 1;
 }
 
 static void adc_watch_toad(void)
@@ -667,8 +680,9 @@ static void pwm_tweak(void)
 	 */
 	if (pwm_check_vbus_low(vbus, current)) {
 		set_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
+		pwm_fast_mode = 0;
 		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
-	} else if (vbus > PWM_CTRL_VBUS_HIGH) {
+	} else if (pwm_check_vbus_high(vbus)) {
 		next = pwm_get_next_lower();
 		if (next >= 0) {
 			set_pwm_duty_cycle(next);
