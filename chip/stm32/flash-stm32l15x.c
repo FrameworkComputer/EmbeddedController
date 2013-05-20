@@ -140,8 +140,8 @@ static void write_optb(int offset, uint16_t value)
  */
 static uint32_t read_optb_wrp(void)
 {
-	return read_optb(STM32_OPTB_WRP01) |
-		((uint32_t)read_optb(STM32_OPTB_WRP23) << 16);
+	return read_optb(STM32_OPTB_WRP1L) |
+		((uint32_t)read_optb(STM32_OPTB_WRP1H) << 16);
 }
 
 /**
@@ -149,8 +149,8 @@ static uint32_t read_optb_wrp(void)
  */
 static void write_optb_wrp(uint32_t value)
 {
-	write_optb(STM32_OPTB_WRP01, (uint16_t)value);
-	write_optb(STM32_OPTB_WRP23, value >> 16);
+	write_optb(STM32_OPTB_WRP1L, (uint16_t)value);
+	write_optb(STM32_OPTB_WRP1H, value >> 16);
 }
 
 /**
