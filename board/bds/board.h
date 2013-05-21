@@ -21,6 +21,9 @@
 #define CONFIG_EOPTION
 #define CONFIG_PSTORE
 
+/* Write protect is active high */
+#define CONFIG_WP_ACTIVE_HIGH
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel
@@ -46,7 +49,7 @@ enum gpio_signal {
 	GPIO_DEBUG_LED,           /* Debug LED */
 	/* Signals which aren't implemented on BDS but we'll emulate anyway, to
 	 * make it more convenient to debug other code. */
-	GPIO_WRITE_PROTECT,       /* Write protect input */
+	GPIO_WP,                  /* Write protect input */
 	GPIO_ENTERING_RW,         /* EC entering RW code */
 
 	/* Number of GPIOs; not an actual GPIO */

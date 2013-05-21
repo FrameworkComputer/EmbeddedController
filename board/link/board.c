@@ -73,7 +73,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 switch_interrupt},
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<7), 0, NULL},
 	{"USB2_STATUS_L",        LM4_GPIO_E, (1<<1), 0, NULL},
-	{"WRITE_PROTECT",        LM4_GPIO_J, (1<<4), GPIO_INT_BOTH,
+	{"WP",                   LM4_GPIO_J, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_F, (1<<2), GPIO_OUT_LOW, NULL},

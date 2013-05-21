@@ -378,6 +378,17 @@ int flash_physical_force_reload(void)
 	return EC_ERROR_UNKNOWN;
 }
 
+int flash_physical_get_all_protect_now(void)
+{
+	int rv = 0;
+
+	if (unlock(STM32_FLASH_PECR_PE_LOCK))
+		rv = 1;
+	lock(0);
+
+	return rv;
+}
+
 uint32_t flash_get_protect(void)
 {
 	uint32_t flags = 0;
@@ -424,7 +435,7 @@ uint32_t flash_get_protect(void)
 	}
 
 	/* If we can't unlock, all flash is protected now */
-	if (unlock(STM32_FLASH_PECR_PE_LOCK))
+	if (flash_physical_get_all_protect_now())
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
 	lock(0);
 

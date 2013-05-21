@@ -6,6 +6,7 @@
 /* Flash memory module for Chrome EC */
 
 #include "flash.h"
+#include "gpio.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
@@ -176,6 +177,11 @@ int flash_physical_get_protect(int bank)
 	return (LM4_FLASH_FMPPE[F_BANK(bank)] & F_BIT(bank)) ? 0 : 1;
 }
 
+int flash_physical_get_all_protect_now(void)
+{
+	return all_protected;
+}
+
 /*****************************************************************************/
 /* High-level APIs */
 
@@ -186,18 +192,16 @@ uint32_t flash_get_protect(void)
 	int i;
 
 	/* Read all-protected state from our shadow copy */
-	if (all_protected)
+	if (flash_physical_get_all_protect_now())
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
 
 	/* Read the current persist state from flash */
 	if (flash_get_protect_ro_at_boot())
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-#ifdef HAS_TASK_SWITCH
 	/* Check if write protect pin is asserted now */
-	if (switch_get_write_protect())
+	if (gpio_get_level(GPIO_WP))
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#endif
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {

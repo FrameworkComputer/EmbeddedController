@@ -39,6 +39,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TMP006
 #define CONFIG_USB_PORT_POWER_SMART
+#define CONFIG_WP_ACTIVE_HIGH
 
 #ifndef __ASSEMBLER__
 
@@ -128,7 +129,7 @@ enum gpio_signal {
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_STATUS_L,        /* USB charger port 2 status output */
-	GPIO_WRITE_PROTECT,        /* Write protect input */
+	GPIO_WP,                   /* Write protect input */
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
 	GPIO_ENABLE_1_5V_DDR,      /* Enable +1.5V_DDR supply */

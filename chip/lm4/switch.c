@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -119,7 +120,7 @@ static void update_other_switches(void)
 	if (!memmap_switches)
 		return;
 
-	if (gpio_get_level(GPIO_WRITE_PROTECT) == 0)
+	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
@@ -228,11 +229,6 @@ static void set_initial_pwrbtn_state(void)
 		CPRINTF("[%T PB init-on]\n");
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 	}
-}
-
-int switch_get_write_protect(void)
-{
-	return gpio_get_level(GPIO_WRITE_PROTECT);
 }
 
 /*****************************************************************************/
@@ -420,7 +416,7 @@ static void switch_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
-	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
+	gpio_enable_interrupt(GPIO_WP);
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
 

@@ -383,8 +383,6 @@ static void x86_power_init(void)
 	gpio_enable_interrupt(GPIO_PP5000_PGOOD);
 	gpio_enable_interrupt(GPIO_VCORE_PGOOD);
 	gpio_enable_interrupt(GPIO_PCH_EDP_VDD_EN);
-	gpio_enable_interrupt(GPIO_RECOVERY_L);
-	gpio_enable_interrupt(GPIO_WRITE_PROTECT);
 }
 DECLARE_HOOK(HOOK_INIT, x86_power_init, HOOK_PRIO_INIT_CHIPSET);
 

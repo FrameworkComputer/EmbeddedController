@@ -66,11 +66,9 @@ int gpio_get_level(enum gpio_signal signal)
 	if (mock_wp == -1)
 		mock_wp = !!(system_get_scratchpad() & TEST_STATE_BOOT_WP_ON);
 
-	if (strcasecmp(name, "WRITE_PROTECTn") == 0 ||
-	    strcasecmp(name, "WP_L") == 0)
+	if (strcasecmp(name, "WP_L") == 0)
 		return !mock_wp;
-	if (strcasecmp(name, "WRITE_PROTECT") == 0 ||
-	    strcasecmp(name, "WP") == 0)
+	if (strcasecmp(name, "WP") == 0)
 		return mock_wp;
 
 	/* Signal other than write protect. Just return 0. */

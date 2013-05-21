@@ -76,7 +76,7 @@ enum gpio_signal {
 	GPIO_CHARGER_INT,
 	GPIO_LID_OPEN,         /* LID switch detection */
 	GPIO_SUSPEND_L,        /* AP suspend/resume state */
-	GPIO_WRITE_PROTECTn,   /* Write protection pin (low active) */
+	GPIO_WP_L,             /* Write protection pin (low active) */
 	/* Keyboard inputs */
 	GPIO_KB_IN00,
 	GPIO_KB_IN01,

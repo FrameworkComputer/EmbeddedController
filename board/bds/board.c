@@ -43,6 +43,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"RECOVERYn",   LM4_GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
 	{"DEBUG_LED",    LM4_GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
 	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WRITE_PROTECT"),
+	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 };

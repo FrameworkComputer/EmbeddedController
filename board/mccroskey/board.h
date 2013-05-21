@@ -85,7 +85,7 @@ enum gpio_signal {
 	GPIO_KB_OUT12,
 	GPIO_USB_VBUS_CTRL,
 	GPIO_HUB_RESET,
-	GPIO_WRITE_PROTECTn,
+	GPIO_WP_L,
 
 	/* FIXME: this will be an alt. function GPIO, so remove it from here */
 	GPIO_BL_PWM,

@@ -88,6 +88,11 @@ int flash_physical_erase(int offset, int size);
 int flash_physical_get_protect(int bank);
 
 /**
+ * Return non-zero if entire flash is locked for the current boot.
+ */
+int flash_physical_get_all_protect_now(void);
+
+/**
  * Set physical write protect status for the next boot.
  *
  * @param start_bank	Start bank

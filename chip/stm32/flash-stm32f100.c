@@ -349,6 +349,11 @@ static int flash_physical_get_protect_at_boot(int block)
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
+int flash_physical_get_all_protect_now(void)
+{
+	return entire_flash_locked;
+}
+
 int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
 				       int enable)
 {
@@ -490,16 +495,15 @@ uint32_t flash_get_protect(void)
 	int i;
 	int not_protected[2] = {0};
 
-	if (!gpio_get_level(GPIO_WRITE_PROTECTn))
+	if (!gpio_get_level(GPIO_WP_L))
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 
 	/* Read the current persist state from flash */
 	if (flash_get_protect_ro_at_boot())
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-	if (entire_flash_locked) {
+	if (flash_physical_get_all_protect_now())
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
-	}
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
