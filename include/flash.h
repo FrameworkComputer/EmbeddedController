@@ -32,33 +32,6 @@
 /* Low-level methods, for use by flash_common. */
 
 /**
- * Get the physical memory address of a flash offset
- *
- * This is used for direct flash access. We assume that the flash is
- * contiguous from this start address through to the end of the usable
- * flash.
- *
- * @param offset	Flash offset to get address of
- * @param dataptrp	Returns pointer to memory address of flash offset
- * @return pointer to flash memory offset, if ok, else NULL
- */
-static inline char *flash_physical_dataptr(int offset)
-{
-	return (char *)((uintptr_t)CONFIG_FLASH_BASE + offset);
-}
-
-/**
- * Check if a region of flash is erased
- *
- * It is assumed that an erased region has all bits set to 1.
- *
- * @param offset	Flash offset to check
- * @param size		Number of bytes to check (word-aligned)
- * @return 1 if erased, 0 if not erased
- */
-int flash_is_erased(uint32_t offset, int size);
-
-/**
  * Write to physical flash.
  *
  * Offset and size must be a multiple of CONFIG_FLASH_WRITE_SIZE.
@@ -97,15 +70,12 @@ int flash_physical_get_protect(int bank);
 uint32_t flash_physical_get_protect_flags(void);
 
 /**
- * Set physical write protect status for the next boot.
+ * Enable/disable protecting RO firmware and pstate at boot.
  *
- * @param start_bank	Start bank
- * @param bank_count	Number of banks to protect
  * @param enable	Enable (non-zero) or disable (zero) protection
  * @return non-zero if error.
  */
-int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
-				       int enable);
+int flash_physical_protect_ro_at_boot(int enable);
 
 /**
  * Protect flash now.
@@ -127,7 +97,18 @@ int flash_physical_protect_now(int all);
 int flash_physical_force_reload(void);
 
 /*****************************************************************************/
-/* Low-level persistent state code for use by flash modules. */
+/* Low-level common code for use by flash modules. */
+
+/**
+ * Check if a region of flash is erased
+ *
+ * It is assumed that an erased region has all bits set to 1.
+ *
+ * @param offset	Flash offset to check
+ * @param size		Number of bytes to check (word-aligned)
+ * @return 1 if erased, 0 if not erased
+ */
+int flash_is_erased(uint32_t offset, int size);
 
 /**
  * Enable write protect for the read-only code.
@@ -177,7 +158,7 @@ int flash_get_size(void);
  *			in memory, unless function fails, iwc it is unset.
  * @return size of flash region available at *ptrp, or -1 on error
  */
-int flash_dataptr(int offset, int size_req, int align, char **ptrp);
+int flash_dataptr(int offset, int size_req, int align, const char **ptrp);
 
 /**
  * Write to flash.

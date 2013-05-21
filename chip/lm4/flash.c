@@ -225,7 +225,7 @@ int flash_pre_init(void)
 	if (reset_flags & RESET_FLAG_SYSJUMP)
 		return EC_SUCCESS;
 
-	if ((prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		/*
 		 * Write protect is asserted.  If we want RO flash protected,
 		 * protect it now.

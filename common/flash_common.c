@@ -30,6 +30,22 @@ struct persist_state {
 #define PERSIST_FLAG_PROTECT_RO 0x02
 
 /**
+ * Get the physical memory address of a flash offset
+ *
+ * This is used for direct flash access. We assume that the flash is
+ * contiguous from this start address through to the end of the usable
+ * flash.
+ *
+ * @param offset	Flash offset to get address of
+ * @param dataptrp	Returns pointer to memory address of flash offset
+ * @return pointer to flash memory offset, if ok, else NULL
+ */
+static const char *flash_physical_dataptr(int offset)
+{
+	return (char *)((uintptr_t)CONFIG_FLASH_BASE + offset);
+}
+
+/**
  * Read persistent state into pstate.
  *
  * @param pstate	Destination for persistent state
@@ -77,7 +93,7 @@ static int flash_write_pstate(const struct persist_state *pstate)
 				    (const char *)pstate);
 }
 
-int flash_dataptr(int offset, int size_req, int align, char **ptrp)
+int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 {
 	if (offset < 0 || size_req < 0 ||
 			offset + size_req > CONFIG_FLASH_SIZE ||
@@ -93,9 +109,10 @@ int flash_dataptr(int offset, int size_req, int align, char **ptrp)
 #ifndef CHIP_VARIANT_stm32l15x
 int flash_is_erased(uint32_t offset, int size)
 {
-	uint32_t *ptr;
+	const uint32_t *ptr;
 
-	if (flash_dataptr(offset, size, sizeof(uint32_t), (char **)&ptr) < 0)
+	if (flash_dataptr(offset, size, sizeof(uint32_t),
+			  (const char **)&ptr) < 0)
 		return 0;
 
 	for (size /= sizeof(uint32_t); size > 0; size -= 4, ptr++)
@@ -167,9 +184,7 @@ int flash_protect_ro_at_boot(int enable)
 	 * This assumes PSTATE immediately follows RO, which it does on
 	 * all STM32 platforms (which are the only ones with this config).
 	 */
-	flash_physical_set_protect_at_boot(RO_BANK_OFFSET,
-					   RO_BANK_COUNT + PSTATE_BANK_COUNT,
-					   new_flags);
+	flash_physical_protect_ro_at_boot(new_flags);
 #endif
 
 	return EC_SUCCESS;
@@ -469,7 +484,8 @@ static int flash_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_read *p = args->params;
 
-	if (flash_dataptr(p->offset, p->size, 1, (char **)&args->response) < 0)
+	if (flash_dataptr(p->offset, p->size, 1,
+			  (const char **)&args->response) < 0)
 		return EC_RES_ERROR;
 
 	args->response_size = p->size;

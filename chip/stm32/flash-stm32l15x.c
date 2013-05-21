@@ -312,11 +312,11 @@ int flash_physical_get_protect(int block)
 	return STM32_FLASH_WRPR & (1 << block);
 }
 
-int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
-				       int enable)
+int flash_physical_protect_ro_at_boot(int enable)
 {
 	uint32_t prot;
-	uint32_t mask = ((1 << bank_count) - 1) << start_bank;
+	uint32_t mask = ((1 << (RO_BANK_COUNT + PSTATE_BANK_COUNT)) - 1)
+			<< RO_BANK_OFFSET;
 	int rv;
 
 	/* Read the current protection status */

@@ -47,6 +47,10 @@ static int entire_flash_locked;
 #define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
 #define FLASH_HOOK_VERSION 1
 /* The previous write protect state before sys jump */
+/*
+ * TODO: check if STM32L code works here too - that is, check if entire flash
+ * is locked by attempting to lock it rather than keeping a global variable.
+ */
 struct flash_wp_state {
 	int entire_flash_locked;
 };
@@ -359,8 +363,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
-				       int enable)
+int flash_physical_protect_ro_at_boot(int enable)
 {
 	int block;
 	int i;
@@ -369,7 +372,9 @@ int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
 	for (i = 0; i < 4; ++i)
 		original_val[i] = val[i] = read_optb(i * 2 + 8);
 
-	for (block = start_bank; block < start_bank + bank_count; block++) {
+	for (block = RO_BANK_OFFSET;
+	     block < RO_BANK_OFFSET + RO_BANK_COUNT + PSTATE_BANK_COUNT;
+	     block++) {
 		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2 - 4;
 		if (enable)
 			val[byte_off] = val[byte_off] & (~(1 << (block % 8)));
@@ -466,7 +471,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_protect_ro_at_boot(1);
+			flash_physical_protect_ro_at_boot(1);
 			need_reset = 1;
 		}
 
