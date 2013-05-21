@@ -88,9 +88,13 @@ int flash_physical_erase(int offset, int size);
 int flash_physical_get_protect(int bank);
 
 /**
- * Return non-zero if entire flash is locked for the current boot.
+ * Return flash protect state flags from the physical layer.
+ *
+ * This should only be called by flash_get_protect().
+ *
+ * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-int flash_physical_get_all_protect_now(void);
+uint32_t flash_physical_get_protect_flags(void);
 
 /**
  * Set physical write protect status for the next boot.
@@ -102,6 +106,14 @@ int flash_physical_get_all_protect_now(void);
  */
 int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
 				       int enable);
+
+/**
+ * Protect flash now.
+ *
+ * @param all		Protect all (=1) or just read-only and pstate (=0).
+ * @return non-zero if error.
+ */
+int flash_physical_protect_now(int all);
 
 /**
  * Force reload of flash protection bits.
@@ -116,11 +128,6 @@ int flash_physical_force_reload(void);
 
 /*****************************************************************************/
 /* Low-level persistent state code for use by flash modules. */
-
-/**
- * Return non-zero if RO flash should be protected at boot.
- */
-int flash_get_protect_ro_at_boot(void);
 
 /**
  * Enable write protect for the read-only code.

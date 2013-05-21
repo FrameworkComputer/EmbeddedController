@@ -7,7 +7,6 @@
 
 #include "console.h"
 #include "flash.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "panic.h"
@@ -349,9 +348,15 @@ static int flash_physical_get_protect_at_boot(int block)
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
-int flash_physical_get_all_protect_now(void)
+uint32_t flash_physical_get_protect_flags(void)
 {
-	return entire_flash_locked;
+	uint32_t flags = 0;
+
+	/* Read all-protected state from our shadow copy */
+	if (entire_flash_locked)
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+
+	return flags;
 }
 
 int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
@@ -379,19 +384,25 @@ int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
 	return EC_SUCCESS;
 }
 
-static int protect_entire_flash_until_reboot(void)
+int flash_physical_protect_now(int all)
 {
-	/*
-	 * Lock by writing a wrong key to FLASH_KEYR. This triggers a bus
-	 * fault, so we need to disable bus fault handler while doing this.
-	 */
-	ignore_bus_fault(1);
-	STM32_FLASH_KEYR = 0xffffffff;
-	ignore_bus_fault(0);
+	if (all) {
+		/*
+		 * Lock by writing a wrong key to FLASH_KEYR. This triggers a
+		 * bus fault, so we need to disable bus fault handler while
+		 * doing this.
+		 */
+		ignore_bus_fault(1);
+		STM32_FLASH_KEYR = 0xffffffff;
+		ignore_bus_fault(0);
 
-	entire_flash_locked = 1;
+		entire_flash_locked = 1;
 
-	return EC_SUCCESS;
+		return EC_SUCCESS;
+	} else {
+		/* No way to protect just the RO flash until next boot */
+		return EC_ERROR_INVAL;
+	}
 }
 
 /**
@@ -487,83 +498,6 @@ int flash_pre_init(void)
 		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
 
 	return EC_SUCCESS;
-}
-
-uint32_t flash_get_protect(void)
-{
-	uint32_t flags = 0;
-	int i;
-	int not_protected[2] = {0};
-
-	if (!gpio_get_level(GPIO_WP_L))
-		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-
-	/* Read the current persist state from flash */
-	if (flash_get_protect_ro_at_boot())
-		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
-
-	if (flash_physical_get_all_protect_now())
-		flags |= EC_FLASH_PROTECT_ALL_NOW;
-
-	/* Scan flash protection */
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
-		/* Is this bank part of RO? */
-		int is_ro = (i >= RO_BANK_OFFSET &&
-			     i < RO_BANK_OFFSET + RO_BANK_COUNT +
-			     PSTATE_BANK_COUNT) ? 1 : 0;
-		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
-				 EC_FLASH_PROTECT_ALL_NOW);
-
-		if (flash_physical_get_protect(i)) {
-			flags |= bank_flag;
-			if (not_protected[is_ro])
-				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-		}
-		else {
-			not_protected[is_ro] = 1;
-			if (flags & bank_flag)
-				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-		}
-	}
-
-	return flags;
-}
-
-int flash_set_protect(uint32_t mask, uint32_t flags)
-{
-	int retval = EC_SUCCESS;
-	int rv;
-
-	/*
-	 * Process flags we can set.  Track the most recent error, but process
-	 * all flags before returning.
-	 */
-	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = flash_protect_ro_at_boot(
-				flags & EC_FLASH_PROTECT_RO_AT_BOOT);
-		if (rv)
-			retval = rv;
-	}
-
-	/*
-	 * All subsequent flags only work if write protect is enabled (that is,
-	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
-	 */
-	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
-				      EC_FLASH_PROTECT_RO_AT_BOOT))
-		return retval;
-
-	if (mask & flags & EC_FLASH_PROTECT_ALL_NOW) {
-		/*
-		 * Since RO is already protected, protecting entire flash
-		 * is effectively protecting RW.
-		 */
-		rv = protect_entire_flash_until_reboot();
-		if (rv)
-			retval = rv;
-	}
-
-	return retval;
 }
 
 /*****************************************************************************/

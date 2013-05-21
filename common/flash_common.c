@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "flash.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "registers.h"
 #include "shared_mem.h"
@@ -129,15 +130,6 @@ test_mockable int flash_erase(int offset, int size)
 	return flash_physical_erase(offset, size);
 }
 
-int flash_get_protect_ro_at_boot(void)
-{
-	struct persist_state pstate;
-
-	flash_read_pstate(&pstate);
-
-	return (pstate.flags & PERSIST_FLAG_PROTECT_RO) ? 1 : 0;
-}
-
 int flash_protect_ro_at_boot(int enable)
 {
 	struct persist_state pstate;
@@ -171,6 +163,9 @@ int flash_protect_ro_at_boot(int enable)
 	 * again.  Ignore errors, because the protection registers might
 	 * already be locked this boot, and we'll still apply the correct state
 	 * again on the next boot.
+	 *
+	 * This assumes PSTATE immediately follows RO, which it does on
+	 * all STM32 platforms (which are the only ones with this config).
 	 */
 	flash_physical_set_protect_at_boot(RO_BANK_OFFSET,
 					   RO_BANK_COUNT + PSTATE_BANK_COUNT,
@@ -178,6 +173,110 @@ int flash_protect_ro_at_boot(int enable)
 #endif
 
 	return EC_SUCCESS;
+}
+
+uint32_t flash_get_protect(void)
+{
+	struct persist_state pstate;
+	uint32_t flags = 0;
+	int not_protected[2] = {0};
+	int i;
+
+	/* Read write protect GPIO */
+#ifdef CONFIG_WP_ACTIVE_HIGH
+	if (gpio_get_level(GPIO_WP))
+		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+#else
+	if (!gpio_get_level(GPIO_WP_L))
+		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+#endif
+
+	/* Read persistent state of RO-at-boot flag */
+	flash_read_pstate(&pstate);
+	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/* Scan flash protection */
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
+		/*
+		 * Is this bank part of RO?  Needs to handle PSTATE not
+		 * immediately following RO code, since it doesn't on link.
+		 */
+		int is_ro = ((i >= RO_BANK_OFFSET &&
+			      i < RO_BANK_OFFSET + RO_BANK_COUNT) ||
+			     (i >= PSTATE_BANK &&
+			      i < PSTATE_BANK + PSTATE_BANK_COUNT)) ? 1 : 0;
+		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
+				 EC_FLASH_PROTECT_ALL_NOW);
+
+		if (flash_physical_get_protect(i)) {
+			/* At least one bank in the region is protected */
+			flags |= bank_flag;
+			if (not_protected[is_ro])
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		} else {
+			/* At least one bank in the region is NOT protected */
+			not_protected[is_ro] = 1;
+			if (flags & bank_flag)
+				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+		}
+	}
+
+	/*
+	 * If the RW banks are protected but the RO banks aren't, that's
+	 * inconsistent.
+	 *
+	 * Note that we check this before adding in the physical flags below,
+	 * since some chips can also protect ALL_NOW for the current boot by
+	 * locking up the flash program-erase registers.
+	 */
+	if ((flags & EC_FLASH_PROTECT_ALL_NOW) &&
+	    !(flags & EC_FLASH_PROTECT_RO_NOW))
+		flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+
+	/* Add in flags from physical layer */
+	return flags | flash_physical_get_protect_flags();
+}
+
+int flash_set_protect(uint32_t mask, uint32_t flags)
+{
+	int retval = EC_SUCCESS;
+	int rv;
+
+	/*
+	 * Process flags we can set.  Track the most recent error, but process
+	 * all flags before returning.
+	 */
+	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
+		rv = flash_protect_ro_at_boot(
+			      flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+		if (rv)
+			retval = rv;
+	}
+
+	/*
+	 * All subsequent flags only work if write protect is enabled (that is,
+	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
+	 */
+	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
+				      EC_FLASH_PROTECT_RO_AT_BOOT))
+		return retval;
+
+	if ((mask & EC_FLASH_PROTECT_RO_NOW) &&
+	    (flags & EC_FLASH_PROTECT_RO_NOW)) {
+		rv = flash_physical_protect_now(0);
+		if (rv)
+			retval = rv;
+	}
+
+	if ((mask & EC_FLASH_PROTECT_ALL_NOW) &&
+	    (flags & EC_FLASH_PROTECT_ALL_NOW)) {
+		rv = flash_physical_protect_now(1);
+		if (rv)
+			retval = rv;
+	}
+
+	return retval;
 }
 
 /*****************************************************************************/
@@ -335,8 +434,7 @@ static int command_flash_wp(int argc, char **argv)
 	else if (!strcasecmp(argv[1], "disable"))
 		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 	else if (!strcasecmp(argv[1], "now"))
-		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW |
-					 EC_FLASH_PROTECT_RO_NOW, -1);
+		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
 	else if (!strcasecmp(argv[1], "rw"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
 	else if (!strcasecmp(argv[1], "norw"))
@@ -465,6 +563,10 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 		r->writable_flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 #if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+	/*
+	 * TODO: ignore all-now on STM32F if WP isn't asserted; this is left
+	 * over from limitations in early snow.
+	 */
 	r->valid_flags |= EC_FLASH_PROTECT_ALL_NOW;
 	r->writable_flags |= EC_FLASH_PROTECT_ALL_NOW;
 #else

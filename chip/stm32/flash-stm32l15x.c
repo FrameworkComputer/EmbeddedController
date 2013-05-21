@@ -7,7 +7,6 @@
 
 #include "console.h"
 #include "flash.h"
-#include "gpio.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -28,20 +27,13 @@
 
 /**
  * Lock all the locks.
- *
- * @param until_next_boot	If non-zero, prevent unlocking until next boot.
  */
-static void lock(int until_next_boot)
+static void lock(void)
 {
 	ignore_bus_fault(1);
 
-	/* Re-enable the locks */
 	STM32_FLASH_PECR = STM32_FLASH_PECR_PE_LOCK |
 		STM32_FLASH_PECR_PRG_LOCK | STM32_FLASH_PECR_OPT_LOCK;
-
-	/* If we need to lock until next boot, write a bad value to PEKEYR */
-	if (until_next_boot)
-		STM32_FLASH_PEKEYR = 0;
 
 	ignore_bus_fault(0);
 }
@@ -90,7 +82,7 @@ static int unlock(int locks)
 		return EC_SUCCESS;
 
 	/* Otherwise relock everything and return error */
-	lock(0);
+	lock();
 	return EC_ERROR_ACCESS_DENIED;
 }
 
@@ -243,7 +235,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 exit_wr:
 	/* Relock program lock */
-	lock(0);
+	lock();
 
 	return res;
 }
@@ -309,7 +301,7 @@ int flash_physical_erase(int offset, int size)
 exit_er:
 	/* Disable program and erase, and relock PECR */
 	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_ERASE);
-	lock(0);
+	lock();
 
 	return res;
 }
@@ -348,7 +340,7 @@ int flash_physical_set_protect_at_boot(int start_bank, int bank_count,
 	write_optb_wrp(prot);
 
 	/* Relock */
-	lock(0);
+	lock();
 
 	return EC_SUCCESS;
 }
@@ -368,121 +360,87 @@ int flash_physical_force_reload(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-int flash_physical_get_all_protect_now(void)
-{
-	int rv = 0;
-
-	if (unlock(STM32_FLASH_PECR_PE_LOCK))
-		rv = 1;
-	lock(0);
-
-	return rv;
-}
-
-uint32_t flash_get_protect(void)
+uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
-	uint32_t prot;
-	uint32_t prot_ro_mask = ((1 << RO_BANK_COUNT) - 1) << RO_BANK_OFFSET;
-	int not_protected[2] = {0};
-	int i;
 
-	/* Check write protect GPIO */
-	if (gpio_get_level(GPIO_WP_L) == 0)
-		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-
-	/* Check RO at-boot protection */
-	prot = read_optb_wrp() & prot_ro_mask;
-	if (prot) {
-		/* At least one RO bank will be protected at boot */
-		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
-
-		if (prot != prot_ro_mask) {
-			/* But not all RO banks! */
-			flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-		}
-	}
-
-	/* Scan flash protection */
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
-		/* Is this bank part of RO? */
-		int is_ro = (i >= RO_BANK_OFFSET &&
-			     i < RO_BANK_OFFSET + RO_BANK_COUNT);
-		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
-				 EC_FLASH_PROTECT_ALL_NOW);
-
-		if (flash_physical_get_protect(i)) {
-			/* At least one bank in the region is protected */
-			flags |= bank_flag;
-			if (not_protected[is_ro])
-				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-		} else {
-			/* But not all banks in the region! */
-			not_protected[is_ro] = 1;
-			if (flags & bank_flag)
-				flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-		}
-	}
-
-	/* If we can't unlock, all flash is protected now */
-	if (flash_physical_get_all_protect_now())
+	/*
+	 * Try to unlock PECR; if that fails, then all flash is protected for
+	 * the current boot.
+	 */
+	if (unlock(STM32_FLASH_PECR_PE_LOCK))
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
-	lock(0);
+	lock();
 
 	return flags;
 }
 
-int flash_set_protect(uint32_t mask, uint32_t flags)
+int flash_physical_protect_now(int all)
 {
-	int retval = EC_SUCCESS;
-	int rv;
+	if (all) {
+		/* Re-lock the registers if they're unlocked */
+		lock();
 
-	/*
-	 * Note that we process flags we can set.  Track the most recent error,
-	 * but process all flags before returning.
-	 *
-	 * Start with the persistent state of at-boot protection.
-	 */
-	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = flash_physical_set_protect_at_boot(
-					RO_BANK_OFFSET,
-					RO_BANK_COUNT,
-					flags & EC_FLASH_PROTECT_RO_AT_BOOT);
-		if (rv)
-			retval = rv;
+		/* Prevent unlocking until reboot */
+		ignore_bus_fault(1);
+		STM32_FLASH_PEKEYR = 0;
+		ignore_bus_fault(0);
+
+		return EC_SUCCESS;
+	} else {
+		/* No way to protect just the RO flash until next boot */
+		return EC_ERROR_INVAL;
 	}
-
-	/*
-	 * All subsequent flags only work if write protect is enabled (that is,
-	 * hardware WP flag) *and* RO is protected at boot (software WP flag).
-	 */
-	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
-				      EC_FLASH_PROTECT_RO_AT_BOOT))
-		return retval;
-
-	/*
-	 * No way to protect just RO now if it wasn't protected at boot, so
-	 * ignore setting EC_FLASH_PROTECT_RO_NOW.
-	 *
-	 * ALL_NOW works, though.
-	 */
-	if ((mask & EC_FLASH_PROTECT_ALL_NOW) &&
-	    (flags & EC_FLASH_PROTECT_ALL_NOW)) {
-		/* Protect the entire flash */
-		lock(1);
-	}
-
-	return retval;
 }
 
 int flash_pre_init(void)
 {
+	uint32_t reset_flags = system_get_reset_flags();
+	uint32_t prot_flags = flash_get_protect();
+	int need_reset = 0;
+
 	/*
-	 * Check if the active protection matches the desired protection.  If
-	 * it doesn't, force a hard reboot so that the chip re-reads the
-	 * protection bits from the option bytes.
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection. Nothing additional needs to be done.
 	 */
-	if (STM32_FLASH_WRPR != read_optb_wrp())
+	if (reset_flags & RESET_FLAG_SYSJUMP)
+		return EC_SUCCESS;
+
+	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
+		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
+		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
+			/*
+			 * Pstate wants RO protected at boot, but the write
+			 * protect register wasn't set to protect it.  Force an
+			 * update to the write protect register and reboot so
+			 * it takes effect.
+			 */
+			flash_protect_ro_at_boot(1);
+			need_reset = 1;
+		}
+
+		if (prot_flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT) {
+			/*
+			 * Write protect register was in an inconsistent state.
+			 * Set it back to a good state and reboot.
+			 */
+			flash_protect_ro_at_boot(
+				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+			need_reset = 1;
+		}
+	} else if (prot_flags & (EC_FLASH_PROTECT_RO_NOW |
+				 EC_FLASH_PROTECT_ERROR_INCONSISTENT)) {
+		/*
+		 * Write protect pin unasserted but some section is
+		 * protected. Drop it and reboot.
+		 */
+		unlock(STM32_FLASH_PECR_OPT_LOCK);
+		write_optb_wrp(0);
+		lock();
+		need_reset = 1;
+	}
+
+	if (need_reset)
 		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
 
 	return EC_SUCCESS;
