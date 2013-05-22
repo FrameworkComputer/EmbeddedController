@@ -237,10 +237,14 @@ void chipset_reset(int cold_reset)
 		 * PLTRST# to reset the rest of the system.
 		 */
 
-		/* Pulse must be at least 16 PCI clocks long = 500 ns */
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
-		udelay(10);
+		/*
+		 * Pulse must be at least 16 PCI clocks long = 500 ns. The gpio
+		 * pin used by the EC is configured as open drain. Therefore,
+		 * the driving RCIN# low needs to the level 1 to enable the
+		 * FET and 0 to disable the FET. */
 		gpio_set_level(GPIO_PCH_RCIN_L, 1);
+		udelay(10);
+		gpio_set_level(GPIO_PCH_RCIN_L, 0);
 	}
 }
 
