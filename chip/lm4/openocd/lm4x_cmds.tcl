@@ -39,6 +39,10 @@ proc flash_falco { } {
 	flash_lm4 ../../../build/falco/ec.bin 0
 }
 
+proc flash_peppy { } {
+	flash_lm4 ../../../build/peppy/ec.bin 0
+}
+
 proc unprotect_link { } {
 	reset halt
 	flash erase_sector 0 254 255
