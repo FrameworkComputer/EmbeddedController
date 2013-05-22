@@ -158,6 +158,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_port_resume, HOOK_PRIO_DEFAULT);
 static void usb_port_shutdown(void)
 {
 	/* Turn on USB ports off as we go back to S5. */
-	usb_port_all_ports_on();
+	usb_port_all_ports_off();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_port_shutdown, HOOK_PRIO_DEFAULT);
