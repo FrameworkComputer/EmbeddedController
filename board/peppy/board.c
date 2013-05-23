@@ -110,6 +110,12 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_SUSACK_L",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
 	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_HI_Z, NULL},
 	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_HI_Z, NULL},
+
+	/* HEY: LED GPIOs need to sync up to 9mA. Leave off for now. */
+	{"BAT_LED0",             LM4_GPIO_D, (1<<0), GPIO_HI_Z, NULL},
+	{"BAT_LED1",             LM4_GPIO_N, (1<<4), GPIO_HI_Z, NULL},
+	{"PWR_LED0",             LM4_GPIO_D, (1<<1), GPIO_HI_Z, NULL},
+	{"PWR_LED1",             LM4_GPIO_N, (1<<6), GPIO_HI_Z, NULL},
 };
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
