@@ -26,19 +26,6 @@
 #define FLASH_TIMEOUT_LOOP \
 	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
 
-#ifdef CONFIG_64B_WORKAROUND
-/*
- * Use the real write buffer size inside the driver.  We only lie to the
- * outside world so it'll feed data to us in smaller pieces.
- */
-#undef CONFIG_FLASH_WRITE_SIZE
-#define CONFIG_FLASH_WRITE_SIZE CONFIG_FLASH_REAL_WRITE_SIZE
-
-/* Used to buffer the write payload smaller than the half page size */
-static uint32_t write_buffer[CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t)];
-static int buffered_off = -1;
-#endif
-
 /**
  * Lock all the locks.
  *
@@ -185,35 +172,15 @@ void  __attribute__((section(".iram.text")))
 
 int flash_physical_write(int offset, int size, const char *data)
 {
-	/*
-	 * TODO: (crosbug.com/p/9526) Enforce alignment instead of blindly
-	 * casting data to uint32_t *.
-	 */
 	uint32_t *data32 = (uint32_t *)data;
-	uint32_t *address;
+	uint32_t *address = (uint32_t *)(CONFIG_FLASH_BASE + offset);
 	int res = EC_SUCCESS;
+	int word_mode = 0;
+	int i;
 
-#ifdef CONFIG_64B_WORKAROUND
-	if ((size < CONFIG_FLASH_WRITE_SIZE) || (offset & 64)) {
-		if ((size != 64) ||
-		    ((offset & 64) && (buffered_off != offset - 64))) {
-			res = EC_ERROR_UNKNOWN;
-			goto exit_wr;
-		}
-		if (offset & 64) {
-			/* second 64B packet : flash ! */
-			memcpy(write_buffer + 16, data32, 64);
-			offset -= 64;
-			size += 64;
-			data32 = write_buffer;
-		} else {
-			/* first 64B packet : just store it */
-			buffered_off = offset;
-			memcpy(write_buffer, data32, 64);
-			return EC_SUCCESS;
-		}
-	}
-#endif
+	/* Fail if offset, size, and data aren't at least word-aligned */
+	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
+		return EC_ERROR_INVAL;
 
 	/* Unlock program area */
 	res = unlock(STM32_FLASH_PECR_PRG_LOCK);
@@ -223,8 +190,16 @@ int flash_physical_write(int offset, int size, const char *data)
 	/* Clear previous error status */
 	STM32_FLASH_SR = 0xf00;
 
-	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
-	     size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
+	/*
+	 * If offset and size aren't on word boundaries, do word writes.  This
+	 * is slower, but since we claim to the outside world that writes must
+	 * be half-page size, the only code which hits this path is writing
+	 * pstate (which is just writing one word).
+	 */
+	if ((offset | size) & (CONFIG_FLASH_WRITE_SIZE - 1))
+		word_mode = 1;
+
+	while (size > 0) {
 #ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
@@ -232,10 +207,25 @@ int flash_physical_write(int offset, int size, const char *data)
 		 */
 		watchdog_reload();
 #endif
-		iram_flash_write(address, data32);
 
-		address += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
-		data32 += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
+		if (word_mode) {
+			/* Word write */
+			*address++ = *data32++;
+
+			/* Wait for writes to complete */
+			for (i = 0; ((STM32_FLASH_SR & 9) != 8) &&
+				     (i < FLASH_TIMEOUT_LOOP) ; i++)
+				;
+
+			size -= sizeof(uint32_t);
+		} else {
+			/* Half page write */
+			iram_flash_write(address, data32);
+			address += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
+			data32 += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
+			size -= CONFIG_FLASH_WRITE_SIZE;
+		}
+
 		if (STM32_FLASH_SR & 1) {
 			res = EC_ERROR_TIMEOUT;
 			goto exit_wr;
@@ -245,7 +235,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		 * Check for error conditions: erase failed, voltage error,
 		 * protection error
 		 */
-		if (STM32_FLASH_SR & 0xF00) {
+		if (STM32_FLASH_SR & 0xf00) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_wr;
 		}
