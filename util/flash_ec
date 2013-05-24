@@ -152,8 +152,8 @@ function flash_daisy() {
 	fi
 
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
-		# Unprotect exists, but isn't needed because it's implicit
-		# in writing the entire image
+		# Unprotect exists, but isn't needed because erasing pstate is
+		# implicit in writing the entire image
 		die "--unprotect not supported for this board."
 	fi
 
@@ -169,10 +169,8 @@ function flash_daisy() {
 	ec_enable_boot0
 	# Reset the EC
 	ec_reset
-	# TODO: add -u flag to unprotect the flash so that writes will succeed
-	# on a chip which has temporarily protected itself via the WRPx option
-	# bytes.
-	${STM32MON} -d ${EC_UART} -e -w ${IMG}
+	# Unprotect flash, erase, and write
+	${STM32MON} -d ${EC_UART} -u -e -w ${IMG}
 }
 
 function flash_link() {
@@ -197,8 +195,8 @@ function flash_slippy() {
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
-		# Unprotect exists, but isn't needed because it's implicit
-		# in writing the entire image
+		# Unprotect exists, but isn't needed because erasing pstate is
+		# implicit in writing the entire image
 		die "--unprotect not supported for this board."
 	fi
 	OCD_CMDS="${OCD_CMDS} shutdown;"
