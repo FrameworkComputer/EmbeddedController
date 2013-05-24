@@ -69,8 +69,8 @@ const struct _ec_fmap {
 			 * volatile data (ex, calibration results).
 			 */
 			.area_name = "EC_RO",
-			.area_offset = CONFIG_SECTION_RO_OFF,
-			.area_size = CONFIG_SECTION_RO_SIZE,
+			.area_offset = CONFIG_FW_RO_OFF,
+			.area_size = CONFIG_FW_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
@@ -108,8 +108,8 @@ const struct _ec_fmap {
 			 * EC_RO and aligned to hardware specification.
 			 */
 			.area_name = "WP_RO",
-			.area_offset = CONFIG_SECTION_WP_RO_OFF,
-			.area_size = CONFIG_SECTION_WP_RO_SIZE,
+			.area_offset = CONFIG_FW_WP_RO_OFF,
+			.area_size = CONFIG_FW_WP_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
@@ -117,8 +117,8 @@ const struct _ec_fmap {
 		{
 			 /* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
-			.area_offset = CONFIG_SECTION_RW_OFF,
-			.area_size = CONFIG_SECTION_RW_SIZE,
+			.area_offset = CONFIG_FW_RW_OFF,
+			.area_size = CONFIG_FW_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{

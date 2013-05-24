@@ -218,12 +218,12 @@ enum system_image_copy_t system_get_image_copy(void)
 	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
 			    CONFIG_FLASH_BASE;
 
-	if (my_addr >= CONFIG_SECTION_RO_OFF &&
-	    my_addr < (CONFIG_SECTION_RO_OFF + CONFIG_SECTION_RO_SIZE))
+	if (my_addr >= CONFIG_FW_RO_OFF &&
+	    my_addr < (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE))
 		return SYSTEM_IMAGE_RO;
 
-	if (my_addr >= CONFIG_SECTION_RW_OFF &&
-	    my_addr < (CONFIG_SECTION_RW_OFF + CONFIG_SECTION_RW_SIZE))
+	if (my_addr >= CONFIG_FW_RW_OFF &&
+	    my_addr < (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE))
 		return SYSTEM_IMAGE_RW;
 
 	return SYSTEM_IMAGE_UNKNOWN;
@@ -235,11 +235,11 @@ int system_get_image_used(enum system_image_copy_t copy)
 	int size = 0;
 
 	if (copy == SYSTEM_IMAGE_RO) {
-		image = (const uint8_t *)CONFIG_SECTION_RO_OFF;
-		size = CONFIG_SECTION_RO_SIZE;
+		image = (const uint8_t *)CONFIG_FW_RO_OFF;
+		size = CONFIG_FW_RO_SIZE;
 	} else if (copy == SYSTEM_IMAGE_RW) {
-		image = (const uint8_t *)CONFIG_SECTION_RW_OFF;
-		size = CONFIG_SECTION_RW_SIZE;
+		image = (const uint8_t *)CONFIG_FW_RW_OFF;
+		size = CONFIG_FW_RW_SIZE;
 	}
 
 	if (size <= 0)

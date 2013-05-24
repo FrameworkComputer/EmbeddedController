@@ -292,9 +292,9 @@ static int test_write_protect(void)
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
 
 	/* Check we cannot erase anything */
-	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RO_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_FW_RO_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
-	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RW_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_FW_RW_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	return EC_SUCCESS;
@@ -304,7 +304,7 @@ static int test_boot_write_protect(void)
 {
 	/* Check write protect state persists through reboot */
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
-	TEST_ASSERT(flash_physical_erase(CONFIG_SECTION_RO_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_FW_RO_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	return EC_SUCCESS;

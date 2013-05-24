@@ -15,11 +15,11 @@ MEMORY
 SECTIONS
 {
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
-    .image.RO : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_RO_OFF) {
+    .image.RO : AT(CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF) {
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
-    .image.RW : AT(CONFIG_FLASH_BASE + CONFIG_SECTION_RW_OFF) {
+    .image.RW : AT(CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF) {
         *(.image.RW)
         BYTE(0xEA)                      /* Mark end explicitly */
     } > FLASH =0xff

@@ -14,7 +14,6 @@ proc flash_lm4 {path offset} {
 	reset
 }
 
-# Link proto0 has 128KB flash; proto1+ have 256KB
 proc flash_link { } {
 	flash_lm4 ../../../build/link/ec.bin 0
 }
@@ -23,6 +22,7 @@ proc flash_link_ro { } {
 	flash_lm4 ../../../build/link/ec.RO.flat 0
 }
 
+# Link has 80KB images
 proc flash_link_rw { } {
 	flash_lm4 ../../../build/link/ec.RW.bin 81920
 }
@@ -35,6 +35,11 @@ proc flash_slippy { } {
 	flash_lm4 ../../../build/slippy/ec.bin 0
 }
 
+# Slippy/falco/peppy have 128KB images
+proc flash_slippy_rw { } {
+	flash_lm4 ../../../build/slippy/ec.RW.bin 131072
+}
+
 proc flash_falco { } {
 	flash_lm4 ../../../build/falco/ec.bin 0
 }
@@ -43,9 +48,17 @@ proc flash_peppy { } {
 	flash_lm4 ../../../build/peppy/ec.bin 0
 }
 
+# link has pstate in last sector
 proc unprotect_link { } {
 	reset halt
 	flash erase_sector 0 254 255
+	reset
+}
+
+# Slippy/peppy/falco have pstate following RO
+proc unprotect_slippy { } {
+	reset halt
+	flash erase_sector 0 126 127
 	reset
 }
 

@@ -152,6 +152,8 @@ function flash_daisy() {
 	fi
 
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
+		# Unprotect exists, but isn't needed because it's implicit
+		# in writing the entire image
 		die "--unprotect not supported for this board."
 	fi
 
@@ -163,10 +165,13 @@ function flash_daisy() {
 	fi
 	dut_control ec_uart_parity:even
 	dut_control ec_uart_baudrate:115200
-	# force the EC to boot in serial monitor mode
+	# Force the EC to boot in serial monitor mode
 	ec_enable_boot0
-	# reset the EC
+	# Reset the EC
 	ec_reset
+	# TODO: add -u flag to unprotect the flash so that writes will succeed
+	# on a chip which has temporarily protected itself via the WRPx option
+	# bytes.
 	${STM32MON} -d ${EC_UART} -e -w ${IMG}
 }
 
@@ -177,6 +182,24 @@ function flash_link() {
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		info "Clearing write protect flag."
 		OCD_CMDS="${OCD_CMDS} unprotect_link;"
+	fi
+	OCD_CMDS="${OCD_CMDS} shutdown;"
+
+	dut_control jtag_buf_on_flex_en:on
+	dut_control jtag_buf_en:on
+
+	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
+	die "Failed to program ${IMG}"
+}
+
+function flash_slippy() {
+	OCD_CFG="servo_v2_slower.cfg"
+	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
+	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
+	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
+		# Unprotect exists, but isn't needed because it's implicit
+		# in writing the entire image
+		die "--unprotect not supported for this board."
 	fi
 	OCD_CMDS="${OCD_CMDS} shutdown;"
 
@@ -202,7 +225,8 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	daisy | snow | spring | pit ) flash_daisy ;;
-	link | slippy | falco | peppy ) flash_link ;;
+	link ) flash_link ;;
+	slippy | falco | peppy ) flash_slippy ;;
 	*) die "board ${BOARD} not supported" ;;
 esac
 
