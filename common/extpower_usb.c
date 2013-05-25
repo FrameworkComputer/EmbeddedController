@@ -318,8 +318,8 @@ static int pwm_get_next_lower(void)
 
 	if (current_limit_mode == LIMIT_AGGRESSIVE) {
 		if (pwm_fast_mode &&
-		    fast_next >= nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
-		    fast_next >= over_current_pwm_duty)
+		    fast_next > nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
+		    fast_next > over_current_pwm_duty)
 			return MAX(fast_next, 0);
 		if (current_pwm_duty > nominal_pwm_duty -
 				       PWM_CTRL_OC_MARGIN &&
