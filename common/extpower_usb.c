@@ -692,10 +692,6 @@ static void pwm_tweak(void)
 }
 DECLARE_HOOK(HOOK_SECOND, pwm_tweak, HOOK_PRIO_DEFAULT);
 
-/*
- * TODO(victoryang): Get rid of polling loop when ADC watchdog is ready.
- *                   See crosbug.com/p/18171
- */
 static void usb_monitor_detach(void)
 {
 	int vbus;
@@ -709,6 +705,7 @@ static void usb_monitor_detach(void)
 		msleep(DELAY_ID_MUX_MS);
 		tsu6721_enable_interrupts();
 		usb_device_change(TSU6721_TYPE_NONE);
+		return;
 	}
 
 	/* Check if there is external power */
