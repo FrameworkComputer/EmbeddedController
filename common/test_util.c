@@ -27,6 +27,11 @@ void test_print_result(void)
 		ccprintf("Pass!\n");
 }
 
+int test_get_error_count(void)
+{
+	return __test_error_count;
+}
+
 static int command_run_test(int argc, char **argv)
 {
 	run_test();

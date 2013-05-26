@@ -9,14 +9,16 @@
 #define __CONFIG_H
 
 /* Memory mapping */
-#define CONFIG_FLASH_BASE       0x08000000
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
 #define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
+extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
+
+#define CONFIG_FLASH_BASE       ((uintptr_t)__host_flash)
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 #define CONFIG_FLASH_ERASE_SIZE 0x0400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE 0x0002  /* minimum write size */
-#define CONFIG_RAM_BASE         0x20000000
-#define CONFIG_RAM_SIZE         0x00002000
+#define CONFIG_RAM_BASE         0x0 /* Not supported */
+#define CONFIG_RAM_SIZE         0x0 /* Not supported */
 
 /* Size of one firmware image in flash */
 #define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
@@ -27,6 +29,9 @@
 #define CONFIG_FW_RW_SIZE       CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_WP_RO_OFF     CONFIG_FW_RO_OFF
 #define CONFIG_FW_WP_RO_SIZE    CONFIG_FW_IMAGE_SIZE
+
+/* Features */
+#define CONFIG_FLASH
 
 /*
  * Put this after RO to give RW more space and make RO write protect region

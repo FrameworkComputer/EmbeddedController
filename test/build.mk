@@ -28,7 +28,7 @@ test-list-$(BOARD_peppy)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
-test-list-host+=thermal
+test-list-host+=thermal flash
 
 flash-y=flash.o
 hooks-y=hooks.o

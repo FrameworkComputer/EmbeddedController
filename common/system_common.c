@@ -256,7 +256,7 @@ int system_get_image_used(enum system_image_copy_t copy)
 	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
 }
 
-int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
+test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 {
 	uint32_t r_offset;
 	uint32_t r_size;

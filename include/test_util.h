@@ -56,6 +56,8 @@ void test_reset(void);
 
 void test_print_result(void);
 
+int test_get_error_count(void);
+
 extern int __test_error_count;
 
 #endif /* __CROS_EC_TEST_UTIL_H */

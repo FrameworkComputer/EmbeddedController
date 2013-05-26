@@ -5,12 +5,15 @@
 
 /* Entry point of unit test executable */
 
+#include "flash.h"
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"
 
 int main(void)
 {
+	flash_pre_init();
+
 	timer_init();
 
 	hook_init();

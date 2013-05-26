@@ -17,8 +17,6 @@
 #include "timer.h"
 #include "util.h"
 
-static int error_count;
-
 static int last_write_offset;
 static int last_write_size;
 static char last_write_data[64];
@@ -33,9 +31,21 @@ static int mock_wp = -1;
 #define TEST_STATE_STEP_3      (1 << 2)
 #define TEST_STATE_BOOT_WP_ON  (1 << 3)
 #define TEST_STATE_PASSED      (1 << 4)
+#define TEST_STATE_FAILED      (1 << 5)
 
 #define CLEAN_UP_FLAG_PASSED TEST_STATE_PASSED
-#define CLEAN_UP_FLAG_FAILED 0
+#define CLEAN_UP_FLAG_FAILED TEST_STATE_FAILED
+
+/*****************************************************************************/
+/* Emulator-only mock functions */
+#ifdef EMU_BUILD
+static int mock_is_running_img;
+
+int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
+{
+	return mock_is_running_img;
+}
+#endif
 
 /*****************************************************************************/
 /* Mock functions */
@@ -240,6 +250,10 @@ static int test_overwrite_current(void)
 		size = CONFIG_FW_RW_SIZE;
 	}
 
+#ifdef EMU_BUILD
+	mock_is_running_img = 1;
+#endif
+
 	VERIFY_NO_ERASE(offset, sizeof(d));
 	VERIFY_NO_ERASE(offset + size - sizeof(d), sizeof(d));
 	VERIFY_NO_WRITE(offset, sizeof(d), d);
@@ -261,6 +275,10 @@ static int test_overwrite_other(void)
 		offset = CONFIG_FW_RW_OFF;
 		size = CONFIG_FW_RW_SIZE;
 	}
+
+#ifdef EMU_BUILD
+	mock_is_running_img = 0;
+#endif
 
 	VERIFY_ERASE(offset, sizeof(d));
 	VERIFY_ERASE(offset + size - sizeof(d), sizeof(d));
@@ -344,43 +362,37 @@ static void reboot_to_next_step(uint32_t step)
 
 static void run_test_step1(void)
 {
-	error_count = 0;
+	test_reset();
 	mock_wp = 0;
 
 	RUN_TEST(test_overwrite_current);
 	RUN_TEST(test_overwrite_other);
 	RUN_TEST(test_write_protect);
 
-	if (error_count) {
-		ccprintf("Failed %d tests!\n", error_count);
+	if (test_get_error_count())
 		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
-	} else {
+	else
 		reboot_to_next_step(TEST_STATE_STEP_2 | TEST_STATE_BOOT_WP_ON);
-	}
 }
 
 static void run_test_step2(void)
 {
 	RUN_TEST(test_boot_write_protect);
 
-	if (error_count) {
-		ccprintf("Failed %d tests!\n", error_count);
+	if (test_get_error_count())
 		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
-	} else {
+	else
 		reboot_to_next_step(TEST_STATE_STEP_3);
-	}
 }
 
 static void run_test_step3(void)
 {
 	RUN_TEST(test_boot_no_write_protect);
 
-	if (error_count) {
-		ccprintf("Failed %d tests!\n", error_count);
+	if (test_get_error_count())
 		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
-	} else {
+	else
 		reboot_to_clean_up(CLEAN_UP_FLAG_PASSED);
-	}
 }
 
 int TaskTest(void *data)
@@ -389,6 +401,8 @@ int TaskTest(void *data)
 
 	if (state & TEST_STATE_PASSED)
 		ccprintf("Pass!\n");
+	else if (state & TEST_STATE_FAILED)
+		ccprintf("Fail!\n");
 
 	if (state & TEST_STATE_STEP_2)
 		run_test_step2();
@@ -396,11 +410,17 @@ int TaskTest(void *data)
 		run_test_step3();
 	else if (state & TEST_STATE_CLEAN_UP)
 		clean_up();
+#ifdef EMU_BUILD
+	else
+		run_test_step1();
+#endif
 
 	return EC_SUCCESS;
 }
 
+#ifndef EMU_BUILD
 void run_test(void)
 {
 	run_test_step1();
 }
+#endif
