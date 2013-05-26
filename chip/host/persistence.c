@@ -14,8 +14,10 @@
 static void get_storage_path(char *out)
 {
 	char buf[BUF_SIZE];
+	int sz;
 
-	readlink("/proc/self/exe", buf, BUF_SIZE);
+	sz = readlink("/proc/self/exe", buf, BUF_SIZE);
+	buf[sz] = '\0';
 	if (snprintf(out, BUF_SIZE, "%s_persist", buf) >= BUF_SIZE)
 		out[BUF_SIZE - 1] = '\0';
 }
