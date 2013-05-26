@@ -8,6 +8,11 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+/* Assertion support */
+#define CONFIG_DEBUG
+#define CONFIG_ASSERT_HELP
+
+/* Optional features */
 #define CONFIG_HOSTCMD
 #define CONFIG_HOST_EMU
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
