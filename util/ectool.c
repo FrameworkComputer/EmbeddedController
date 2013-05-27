@@ -98,6 +98,8 @@ const char help_str[] =
 	"      Perform I2C transfer on EC's I2C bus\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
+	"  led <auto | red | green | blue | <R> <G> <B>>\n"
+	"      Set the color of LED\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
 	"  port80flood\n"
@@ -1400,6 +1402,55 @@ static int cmd_lightbar(int argc, char **argv)
 	}
 
 	return lb_help(argv[0]);
+}
+
+
+int cmd_led(int argc, char *argv[])
+{
+	struct ec_params_led_set p;
+	char *e;
+	int rv;
+
+	if (argc == 1) {
+		fprintf(stderr,
+			"Usage: %s <auto | red | green | blue | "
+			"<R> <G> <B>>\n", argv[0]);
+		return -1;
+	}
+
+	p.r = p.g = p.b = p.flags = 0;
+
+	if (!strcasecmp(argv[1], "auto")) {
+		p.flags = EC_LED_FLAGS_AUTO;
+	} else if (!strcasecmp(argv[1], "red")) {
+		p.r = 0xff;
+	} else if (!strcasecmp(argv[1], "green")) {
+		p.g = 0xff;
+	} else if (!strcasecmp(argv[1], "blue")) {
+		p.b = 0xff;
+	} else if (argc != 4) {
+		fprintf(stderr, "Incorrect number of arguments\n");
+		return -1;
+	} else {
+		p.r = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad R value.\n");
+			return -1;
+		}
+		p.g = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad G value.\n");
+			return -1;
+		}
+		p.b = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad B value.\n");
+			return -1;
+		}
+		p.flags = 0;
+	}
+	rv = ec_command(EC_CMD_LED_SET, 0, &p, sizeof(p), NULL, 0);
+	return (rv < 0 ? rv : 0);
 }
 
 
@@ -2910,6 +2961,7 @@ const struct command commands[] = {
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
 	{"i2cxfer", cmd_i2c_xfer},
+	{"led", cmd_led},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},

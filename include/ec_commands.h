@@ -723,6 +723,20 @@ enum lightbar_command {
 };
 
 /*****************************************************************************/
+/* LED control commands */
+
+#define EC_CMD_LED_SET 0x29
+
+#define EC_LED_FLAGS_AUTO (1 << 1)
+
+struct ec_params_led_set {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b; /* Used as yellow if there is no blue LED */
+	uint8_t flags;
+} __packed;
+
+/*****************************************************************************/
 /* Verified boot commands */
 
 /*
