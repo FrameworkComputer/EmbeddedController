@@ -67,20 +67,33 @@ static int stop_led_engine(void)
 
 static int set_led_color(enum led_state_t state)
 {
+	static enum led_state_t last_state = LED_STATE_OFF;
+	int rv;
+
 	ASSERT(state != LED_STATE_TRANSITION_ON &&
 	       state != LED_STATE_TRANSITION_OFF);
 
+	if (state == last_state)
+		return EC_SUCCESS;
+
 	switch (state) {
 	case LED_STATE_SOLID_RED:
-		return lp5562_set_color(LED_COLOR_RED);
+		rv = lp5562_set_color(LED_COLOR_RED);
+		break;
 	case LED_STATE_SOLID_GREEN:
-		return lp5562_set_color(LED_COLOR_GREEN);
+		rv = lp5562_set_color(LED_COLOR_GREEN);
+		break;
 	case LED_STATE_SOLID_YELLOW:
 	case LED_STATE_BREATHING:
-		return lp5562_set_color(LED_COLOR_YELLOW);
+		rv = lp5562_set_color(LED_COLOR_YELLOW);
+		break;
 	default:
-		return EC_ERROR_UNKNOWN;
+		rv = EC_ERROR_UNKNOWN;
 	}
+
+	if (rv == EC_SUCCESS)
+		last_state = state;
+	return rv;
 }
 
 static void stablize_led(enum led_state_t desired_state)
