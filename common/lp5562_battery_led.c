@@ -26,56 +26,17 @@ enum led_state_t {
 	LED_STATE_SOLID_RED,
 	LED_STATE_SOLID_GREEN,
 	LED_STATE_SOLID_YELLOW,
-	LED_STATE_TRANSITION_ON,  /* Solid yellow -> breathing */
-	LED_STATE_TRANSITION_OFF, /* Breathing -> solid yellow */
-	LED_STATE_BREATHING,
 
 	/* Not an actual state */
 	LED_STATE_OFF,
 };
 
-/* LED breathing program */
-static const uint8_t breathing_prog[] = {0x41, 0xff,  /* 0x80 -> 0x0 */
-					 0x41, 0x7f,  /* 0x0 -> 0x80 */
-					 0x7f, 0x00,  /* Wait ~4s */
-					 0x7f, 0x00,
-					 0x7f, 0x00,
-					 0x7f, 0x00,
-					 0x00, 0x00,  /* Go to start */
-					 0x40, 0x80,  /* Set PWM = 0x80 */
-					 0x00, 0x00}; /* Go to start */
-#define BREATHING_PROG_ENTRY 7
-
 static enum led_state_t last_state = LED_STATE_OFF;
 static int led_auto_control = 1;
 
-static int stop_led_engine(void)
-{
-	int pc;
-	if (lp5562_get_engine_state(LP5562_ENG_SEL_1) == LP5562_ENG_STEP)
-		return 0; /* Not stopped */
-	pc = lp5562_get_pc(LP5562_ENG_SEL_1);
-	if (pc == 1) {
-		/* LED currently off. Ramp up. */
-		lp5562_engine_control(LP5562_ENG_STEP,
-				      LP5562_ENG_HOLD,
-				      LP5562_ENG_HOLD);
-		return 0;
-	}
-
-	lp5562_set_engine(LP5562_ENG_SEL_NONE,
-			  LP5562_ENG_SEL_NONE,
-			  LP5562_ENG_SEL_NONE);
-	lp5562_set_color(LED_COLOR_YELLOW);
-	return 1;
-}
-
 static int set_led_color(enum led_state_t state)
 {
-	int rv;
-
-	ASSERT(state != LED_STATE_TRANSITION_ON &&
-	       state != LED_STATE_TRANSITION_OFF);
+	int rv = EC_SUCCESS;
 
 	if (!led_auto_control || state == last_state)
 		return EC_SUCCESS;
@@ -88,90 +49,15 @@ static int set_led_color(enum led_state_t state)
 		rv = lp5562_set_color(LED_COLOR_GREEN);
 		break;
 	case LED_STATE_SOLID_YELLOW:
-	case LED_STATE_BREATHING:
 		rv = lp5562_set_color(LED_COLOR_YELLOW);
 		break;
-	default:
-		rv = EC_ERROR_UNKNOWN;
+	case LED_STATE_OFF:
+		break;
 	}
 
 	if (rv == EC_SUCCESS)
 		last_state = state;
 	return rv;
-}
-
-static void stablize_led(enum led_state_t desired_state)
-{
-	static enum led_state_t current_state = LED_STATE_OFF;
-	enum led_state_t next_state = LED_STATE_OFF;
-
-	/* TRANSITIONs are internal states */
-	ASSERT(desired_state != LED_STATE_TRANSITION_ON &&
-	       desired_state != LED_STATE_TRANSITION_OFF);
-
-	if (desired_state == LED_STATE_OFF) {
-		current_state = LED_STATE_OFF;
-		return;
-	}
-
-	/* Determine next state */
-	switch (current_state) {
-	case LED_STATE_OFF:
-	case LED_STATE_SOLID_RED:
-	case LED_STATE_SOLID_GREEN:
-		if (desired_state == LED_STATE_BREATHING)
-			next_state = LED_STATE_SOLID_YELLOW;
-		else
-			next_state = desired_state;
-		set_led_color(next_state);
-		break;
-	case LED_STATE_SOLID_YELLOW:
-		if (desired_state == LED_STATE_BREATHING) {
-			next_state = LED_STATE_TRANSITION_ON;
-			lp5562_set_pc(LP5562_ENG_SEL_1, BREATHING_PROG_ENTRY);
-			lp5562_engine_control(LP5562_ENG_STEP,
-					      LP5562_ENG_HOLD,
-					      LP5562_ENG_HOLD);
-		} else {
-			next_state = desired_state;
-			set_led_color(next_state);
-		}
-		break;
-	case LED_STATE_BREATHING:
-		if (desired_state != LED_STATE_BREATHING) {
-			next_state = LED_STATE_TRANSITION_OFF;
-			lp5562_engine_control(LP5562_ENG_STEP,
-					      LP5562_ENG_HOLD,
-					      LP5562_ENG_HOLD);
-		} else {
-			next_state = LED_STATE_BREATHING;
-		}
-		break;
-	case LED_STATE_TRANSITION_ON:
-		if (desired_state == LED_STATE_BREATHING) {
-			next_state = LED_STATE_BREATHING;
-			lp5562_set_engine(LP5562_ENG_SEL_NONE,
-					  LP5562_ENG_SEL_NONE,
-					  LP5562_ENG_SEL_1);
-			lp5562_engine_control(LP5562_ENG_RUN,
-					      LP5562_ENG_HOLD,
-					      LP5562_ENG_HOLD);
-		} else {
-			next_state = LED_STATE_SOLID_YELLOW;
-			lp5562_engine_control(LP5562_ENG_HOLD,
-					      LP5562_ENG_HOLD,
-					      LP5562_ENG_HOLD);
-		}
-		break;
-	case LED_STATE_TRANSITION_OFF:
-		if (stop_led_engine())
-			next_state = LED_STATE_SOLID_YELLOW;
-		else
-			next_state = LED_STATE_TRANSITION_OFF;
-		break;
-	}
-
-	current_state = next_state;
 }
 
 /*****************************************************************************/
@@ -219,12 +105,9 @@ static void battery_led_update(void)
 		led_power = new_led_power;
 		if (new_led_power) {
 			lp5562_poweron();
-			lp5562_engine_load(LP5562_ENG_SEL_1,
-					   breathing_prog,
-					   sizeof(breathing_prog));
 		} else {
 			lp5562_poweroff();
-			stablize_led(LED_STATE_OFF);
+			set_led_color(LED_STATE_OFF);
 		}
 	}
 	if (!new_led_power)
@@ -240,7 +123,7 @@ static void battery_led_update(void)
 		break;
 	case ST_DISCHARGING:
 		/* Discharging with AC, must be battery assist */
-		state = LED_STATE_BREATHING;
+		state = LED_STATE_SOLID_YELLOW;
 		break;
 	case ST_IDLE0:
 	case ST_BAD_COND:
@@ -256,7 +139,7 @@ static void battery_led_update(void)
 		}
 
 		if (current < 0 && desired_current > 0) { /* Battery assist */
-			state = LED_STATE_BREATHING;
+			state = LED_STATE_SOLID_YELLOW;
 			break;
 		}
 
@@ -271,6 +154,6 @@ static void battery_led_update(void)
 		break;
 	}
 
-	stablize_led(state);
+	set_led_color(state);
 }
 DECLARE_HOOK(HOOK_SECOND, battery_led_update, HOOK_PRIO_DEFAULT);
