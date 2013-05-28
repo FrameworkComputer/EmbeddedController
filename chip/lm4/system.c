@@ -295,7 +295,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_pre_init(void)
 {
-#ifdef BOARD_link			       /* FIXME: crosbug.com/p/19366 */
 	volatile uint32_t scratch  __attribute__((unused));
 
 	/* Enable clocks to the hibernation module */
@@ -339,7 +338,6 @@ void system_pre_init(void)
 	LM4_HIBERNATE_HIBRTCT = 0x7fff;
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIM = 0;
-#endif
 
 	check_reset_cause();
 
