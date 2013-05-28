@@ -136,7 +136,7 @@ void tsu6721_init(void)
 
 	/* set USB charger detection timeout to 600ms */
 	settings = tsu6721_read(TSU6721_REG_TIMER);
-	settings = (settings & ~0x38);
+	settings = (settings & ~0x38) | 0x28;
 	tsu6721_write(TSU6721_REG_TIMER, settings);
 
 	tsu6721_set_interrupt_mask(TSU6721_INT_ATTACH |
