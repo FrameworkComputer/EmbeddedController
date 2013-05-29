@@ -215,3 +215,15 @@ void board_enable_wireless(uint8_t enabled)
 	gpio_set_level(GPIO_RADIO_ENABLE_BT,
 		       enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
 }
+
+/**
+ * Perform necessary actions on host events.
+ */
+void board_process_wake_events(uint32_t active_wake_events)
+{
+	/* Update level-sensitive wake signal */
+	if (active_wake_events)
+		gpio_set_level(GPIO_PCH_WAKE_L, 0);
+	else
+		gpio_set_level(GPIO_PCH_WAKE_L, 1);
+}

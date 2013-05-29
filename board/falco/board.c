@@ -11,6 +11,7 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -178,4 +179,21 @@ void board_enable_wireless(uint8_t enabled)
 		       enabled & EC_WIRELESS_SWITCH_WLAN);
 	gpio_set_level(GPIO_PP3300_LTE_EN,
 		       enabled & EC_WIRELESS_SWITCH_WWAN);
+}
+
+/**
+ * Perform necessary actions on host wake events.
+ */
+void board_process_wake_events(uint32_t active_wake_events)
+{
+	uint32_t power_button_mask;
+
+	power_button_mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
+
+	/* If there are other events aside from the power button press drive
+	 * the wake pin. Otherwise ensure it is high. */
+	if (active_wake_events & ~power_button_mask)
+		gpio_set_level(GPIO_PCH_WAKE_L, 0);
+	else
+		gpio_set_level(GPIO_PCH_WAKE_L, 1);
 }

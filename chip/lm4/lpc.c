@@ -284,6 +284,7 @@ void lpc_comx_put_char(int c)
 static void update_host_event_status(void) {
 	int need_sci = 0;
 	int need_smi = 0;
+	uint32_t active_wake_events;
 
 	if (!init_done)
 		return;
@@ -311,11 +312,9 @@ static void update_host_event_status(void) {
 
 	task_enable_irq(LM4_IRQ_LPC);
 
-	/* Update level-sensitive wake signal */
-	if (host_events & event_mask[LPC_HOST_EVENT_WAKE])
-		gpio_set_level(GPIO_PCH_WAKE_L, 0);
-	else
-		gpio_set_level(GPIO_PCH_WAKE_L, 1);
+	/* Process the wake events. */
+	active_wake_events = host_events & event_mask[LPC_HOST_EVENT_WAKE];
+	board_process_wake_events(active_wake_events);
 
 	/* Send pulse on SMI signal if needed */
 	if (need_smi)

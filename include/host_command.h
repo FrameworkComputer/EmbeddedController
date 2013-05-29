@@ -115,6 +115,11 @@ void host_clear_events(uint32_t mask);
 uint32_t host_get_events(void);
 
 /**
+ * Perform necessary actions on host wake events.
+ */
+void board_process_wake_events(uint32_t active_wake_events);
+
+/**
  * Send a response to the relevent driver for transmission
  *
  * Once command processing is complete, this is used to send a response
