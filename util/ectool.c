@@ -161,6 +161,10 @@ const char help_str[] =
 /* Note: depends on enum system_image_copy_t */
 static const char * const image_names[] = {"unknown", "RO", "RW"};
 
+/* Note: depends on enum ec_led_colors */
+static const char * const led_color_names[EC_LED_COLOR_COUNT] = {
+	"red", "green", "blue", "yellow", "white"};
+
 /* Write a buffer to the file.  Return non-zero if error. */
 static int write_file(const char *filename, const char *buf, int size)
 {
@@ -1405,51 +1409,81 @@ static int cmd_lightbar(int argc, char **argv)
 }
 
 
+static int find_led_color_by_name(const char *color)
+{
+	int i;
+
+	for (i = 0; i < EC_LED_COLOR_COUNT; ++i)
+		if (!strcasecmp(color, led_color_names[i]))
+			return i;
+	return -1;
+}
+
 int cmd_led(int argc, char *argv[])
 {
-	struct ec_params_led_set p;
-	char *e;
-	int rv;
+	struct ec_params_led_control p;
+	struct ec_response_led_control r;
+	char *e, *ptr;
+	int rv, i, j;
 
-	if (argc == 1) {
+	memset(p.brightness, 0, sizeof(p.brightness));
+	p.flags = 0;
+
+	if (argc < 3) {
 		fprintf(stderr,
-			"Usage: %s <auto | red | green | blue | "
-			"<R> <G> <B>>\n", argv[0]);
+			"Usage: %s <ID> <query | auto | "
+			"<color>=<brightness>...>\n", argv[0]);
 		return -1;
 	}
 
-	p.r = p.g = p.b = p.flags = 0;
+	p.led_id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad LED ID.\n");
+		return -1;
+	}
 
-	if (!strcasecmp(argv[1], "auto")) {
+	if (!strcasecmp(argv[2], "query")) {
+		p.flags = EC_LED_FLAGS_QUERY;
+		rv = ec_command(EC_CMD_LED_CONTROL, 1, &p, sizeof(p),
+				&r, sizeof(r));
+		printf("Brightness range for LED %d:\n", p.led_id);
+		if (rv < 0) {
+			fprintf(stderr, "Error. Not existing LED?\n");
+			return rv;
+		}
+		for (i = 0; i < 5; ++i)
+			printf("\t%s\t: 0x%x\n",
+			       led_color_names[i],
+			       r.brightness_range[i]);
+		return 0;
+	}
+
+	if (!strcasecmp(argv[2], "auto")) {
 		p.flags = EC_LED_FLAGS_AUTO;
-	} else if (!strcasecmp(argv[1], "red")) {
-		p.r = 0xff;
-	} else if (!strcasecmp(argv[1], "green")) {
-		p.g = 0xff;
-	} else if (!strcasecmp(argv[1], "blue")) {
-		p.b = 0xff;
-	} else if (argc != 4) {
-		fprintf(stderr, "Incorrect number of arguments\n");
-		return -1;
+	} else if ((i = find_led_color_by_name(argv[2])) != -1) {
+		p.brightness[i] = 0xff;
 	} else {
-		p.r = strtol(argv[1], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad R value.\n");
-			return -1;
+		for (i = 2; i < argc; ++i) {
+			ptr = strtok(argv[i], "=");
+			j = find_led_color_by_name(ptr);
+			if (j == -1) {
+				fprintf(stderr, "Bad color name: %s\n", ptr);
+				return -1;
+			}
+			ptr = strtok(NULL, "=");
+			if (ptr == NULL) {
+				fprintf(stderr, "Missing brightness value\n");
+				return -1;
+			}
+			p.brightness[j] = strtol(ptr, &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad brightness: %s\n", ptr);
+				return -1;
+			}
 		}
-		p.g = strtol(argv[2], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad G value.\n");
-			return -1;
-		}
-		p.b = strtol(argv[3], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad B value.\n");
-			return -1;
-		}
-		p.flags = 0;
 	}
-	rv = ec_command(EC_CMD_LED_SET, 0, &p, sizeof(p), NULL, 0);
+
+	rv = ec_command(EC_CMD_LED_CONTROL, 1, &p, sizeof(p), &r, sizeof(r));
 	return (rv < 0 ? rv : 0);
 }
 

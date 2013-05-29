@@ -726,15 +726,44 @@ enum lightbar_command {
 /*****************************************************************************/
 /* LED control commands */
 
-#define EC_CMD_LED_SET 0x29
+#define EC_CMD_LED_CONTROL 0x29
 
-#define EC_LED_FLAGS_AUTO (1 << 1)
+enum ec_led_id {
+	EC_LED_ID_BATTERY_LED = 0,
+	EC_LED_ID_POWER_BUTTON_LED,
+	EC_LED_ID_ADAPTER_LED,
+};
 
-struct ec_params_led_set {
-	uint8_t r;
-	uint8_t g;
-	uint8_t b; /* Used as yellow if there is no blue LED */
-	uint8_t flags;
+/* LED control flags */
+#define EC_LED_FLAGS_QUERY (1 << 0) /* Query LED capability only */
+#define EC_LED_FLAGS_AUTO  (1 << 1) /* Switch LED back to automatic control */
+
+enum ec_led_colors {
+	EC_LED_COLOR_RED = 0,
+	EC_LED_COLOR_GREEN,
+	EC_LED_COLOR_BLUE,
+	EC_LED_COLOR_YELLOW,
+	EC_LED_COLOR_WHITE,
+
+	EC_LED_COLOR_COUNT
+};
+
+struct ec_params_led_control {
+	uint8_t led_id;     /* Which LED to control */
+	uint8_t flags;      /* Control flags */
+
+	uint8_t brightness[EC_LED_COLOR_COUNT];
+} __packed;
+
+struct ec_response_led_control {
+	/*
+	 * Available brightness value range.
+	 *
+	 * Range 0 means color channel not present.
+	 * Range 1 means on/off control.
+	 * Other values means the LED is control by PWM.
+	 */
+	uint8_t brightness_range[EC_LED_COLOR_COUNT];
 } __packed;
 
 /*****************************************************************************/
