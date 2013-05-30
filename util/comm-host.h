@@ -1,6 +1,9 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * For hysterical raisins, there are several mechanisms for communicating with
+ * the EC. This abstracts them.
  */
 
 #ifndef COMM_HOST_H
@@ -16,24 +19,18 @@ int comm_init(void);
 
 /*
  * Send a command to the EC.  Returns the length of output data returned (0 if
- * none), or a negative number if error; errors are -EC_RES_* constants from
- * ec_commands.h.
+ * none), or negative on error.
  */
-int ec_command(int command, int version, const void *indata, int insize,
-	       void *outdata, int outsize);
+extern int (*ec_command)(int command, int version,
+			 const void *outdata, int outsize, /* to the EC */
+			 void *indata, int insize);	   /* from the EC */
 
 /*
  * Return the content of the EC information area mapped as "memory".
- * The offsets are defined by the EC_MEMMAP_ constants.
+ * The offsets are defined by the EC_MEMMAP_ constants. Returns the number
+ * of bytes read, or negative on error. Specifying bytes=0 will read a
+ * string (always including the trailing '\0').
  */
-uint8_t read_mapped_mem8(uint8_t offset);
-uint16_t read_mapped_mem16(uint8_t offset);
-uint32_t read_mapped_mem32(uint8_t offset);
-/*
- * Read a memory-mapped string at the specified offset and store into buf,
- * which must be at least size EC_MEMMAP_TEXT_MAX.  Returns the length of
- * the copied string, not counting the terminating '\0', or <0 if error.
- */
-int read_mapped_string(uint8_t offset, char *buf);
+extern int (*ec_readmem)(int offset, int bytes, void *dest);
 
 #endif /* COMM_HOST_H */

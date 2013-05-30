@@ -42,9 +42,15 @@
 #define EC_LPC_ADDR_HOST_CMD   0x204
 
 /* I/O addresses for host command args and params */
-#define EC_LPC_ADDR_HOST_ARGS  0x800
+#define EC_LPC_ADDR_HOST_ARGS  0x800    /* and 0x801, 0x802, 0x803 */
 #define EC_LPC_ADDR_HOST_PARAM 0x804
 #define EC_HOST_PARAM_SIZE     0x0fc  /* Size of param area in bytes */
+
+/* The actual block is 0x800-0x8ff, but some BIOSes think it's 0x880-0x8ff
+ * and they tell the kernel that so we have to think of it as two parts. */
+#define EC_HOST_CMD_REGION0    0x800
+#define EC_HOST_CMD_REGION1    0x880
+#define EC_HOST_CMD_REGION_SIZE 0x80
 
 /* EC command register bit functions */
 #define EC_LPC_CMDR_DATA	(1 << 0)  /* Data ready for host to read */

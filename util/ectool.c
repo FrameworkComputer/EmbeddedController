@@ -256,6 +256,56 @@ void print_help(const char *prog)
 	puts(help_str);
 }
 
+static uint8_t read_mapped_mem8(uint8_t offset)
+{
+	int ret;
+	uint8_t val;
+
+	ret = ec_readmem(offset, sizeof(val), &val);
+	if (ret <= 0) {
+		fprintf(stderr, "failure in %s(): %d\n", __func__, ret);
+		exit(1);
+	}
+	return val;
+}
+
+static uint16_t read_mapped_mem16(uint8_t offset)
+{
+	int ret;
+	uint16_t val;
+
+	ret = ec_readmem(offset, sizeof(val), &val);
+	if (ret <= 0) {
+		fprintf(stderr, "failure in %s(): %d\n", __func__, ret);
+		exit(1);
+	}
+	return val;
+}
+
+static uint32_t read_mapped_mem32(uint8_t offset)
+{
+	int ret;
+	uint32_t val;
+
+	ret = ec_readmem(offset, sizeof(val), &val);
+	if (ret <= 0) {
+		fprintf(stderr, "failure in %s(): %d\n", __func__, ret);
+		exit(1);
+	}
+	return val;
+}
+
+static int read_mapped_string(uint8_t offset, char *buffer)
+{
+	int ret;
+
+	ret = ec_readmem(offset, 0, buffer);
+	if (ret <= 0) {
+		fprintf(stderr, "failure in %s(): %d\n", __func__, ret);
+		exit(1);
+	}
+	return ret;
+}
 
 int cmd_hello(int argc, char *argv[])
 {
@@ -2394,7 +2444,7 @@ int cmd_battery(int argc, char *argv[])
 
 	val = read_mapped_mem8(EC_MEMMAP_BATTERY_VERSION);
 	if (val < 1) {
-		printf("Command not supported\n");
+		fprintf(stderr, "Battery version %d is not supported\n", val);
 		return -1;
 	}
 
@@ -2469,7 +2519,7 @@ int cmd_battery(int argc, char *argv[])
 
 	return 0;
 cmd_error:
-	fprintf(stderr, "Bad battery info value. Check protocol version.");
+	fprintf(stderr, "Bad battery info value. Check protocol version.\n");
 	return -1;
 }
 
@@ -3031,23 +3081,25 @@ const struct command commands[] = {
 int main(int argc, char *argv[])
 {
 	const struct command *cmd;
-	int rv;
+	int rv = 1;
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
 	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
 	    !strcasecmp(argv[1], "help")) {
 		print_help(argv[0]);
-		return -2;
+		exit(1);
 	}
 
 	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
 		fprintf(stderr, "Could not acquire GEC lock.\n");
-		return 1;
+		exit(1);
 	}
 
-	if (comm_init() < 0)
-		return -3;
+	if (comm_init() < 0) {
+		fprintf(stderr, "Couldn't find EC\n");
+		goto out;
+	}
 
 	/* Handle commands */
 	for (cmd = commands; cmd->name; cmd++) {
@@ -3060,9 +3112,8 @@ int main(int argc, char *argv[])
 	/* If we're still here, command was unknown */
 	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);
 	print_help(argv[0]);
-	rv = -2;
 
 out:
 	release_gec_lock();
-	return rv;
+	return !!rv;
 }

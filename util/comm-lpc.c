@@ -14,7 +14,144 @@
 #define INITIAL_UDELAY 5     /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
 
-int comm_init(void)
+/*
+ * Wait for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
+ * timeout.
+ */
+static int wait_for_ec(int status_addr, int timeout_usec)
+{
+	int i;
+	int delay = INITIAL_UDELAY;
+
+	for (i = 0; i < timeout_usec; i += delay) {
+		/*
+		 * Delay first, in case we just sent out a command but the EC
+		 * hasn't raise the busy flag. However, I think this doesn't
+		 * happen since the LPC commands are executed in order and the
+		 * busy flag is set by hardware.
+		 *
+		 * TODO: move this delay after inb(status).
+		 */
+		usleep(MIN(delay, timeout_usec - i));
+
+		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
+			return 0;
+
+		/* Increase the delay interval after a few rapid checks */
+		if (i > 20)
+			delay = MIN(delay * 2, MAXIMUM_UDELAY);
+	}
+	return -1;  /* Timeout */
+}
+
+static int ec_command_lpc(int command, int version,
+			  const void *outdata, int outsize,
+			  void *indata, int insize)
+{
+	struct ec_lpc_host_args args;
+	const uint8_t *d;
+	uint8_t *dout;
+	int csum;
+	int i;
+
+	/* Fill in args */
+	args.flags = EC_HOST_ARGS_FLAG_FROM_HOST;
+	args.command_version = version;
+	args.data_size = outsize;
+
+	/* Initialize checksum */
+	csum = command + args.flags + args.command_version + args.data_size;
+
+	/* Write data and update checksum */
+	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++) {
+		outb(*d, EC_LPC_ADDR_HOST_PARAM + i);
+		csum += *d;
+	}
+
+	/* Finalize checksum and write args */
+	args.checksum = (uint8_t)csum;
+	for (i = 0, d = (const uint8_t *)&args; i < sizeof(args); i++, d++)
+		outb(*d, EC_LPC_ADDR_HOST_ARGS + i);
+
+	outb(command, EC_LPC_ADDR_HOST_CMD);
+
+	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
+		fprintf(stderr, "Timeout waiting for EC response\n");
+		return -EC_RES_ERROR;
+	}
+
+	/* Check result */
+	i = inb(EC_LPC_ADDR_HOST_DATA);
+	if (i) {
+		fprintf(stderr, "EC returned error result code %d\n", i);
+		return -i;
+	}
+
+	/* Read back args */
+	for (i = 0, dout = (uint8_t *)&args; i < sizeof(args); i++, dout++)
+		*dout = inb(EC_LPC_ADDR_HOST_ARGS + i);
+
+	/*
+	 * If EC didn't modify args flags, then somehow we sent a new-style
+	 * command to an old EC, which means it would have read its params
+	 * from the wrong place.
+	 */
+	if (!(args.flags & EC_HOST_ARGS_FLAG_TO_HOST)) {
+		fprintf(stderr, "EC protocol mismatch\n");
+		return -EC_RES_INVALID_RESPONSE;
+	}
+
+	if (args.data_size > insize) {
+		fprintf(stderr, "EC returned too much data\n");
+		return -EC_RES_INVALID_RESPONSE;
+	}
+
+	/* Start calculating response checksum */
+	csum = command + args.flags + args.command_version + args.data_size;
+
+	/* Read response and update checksum */
+	for (i = 0, dout = (uint8_t *)indata; i < args.data_size;
+	     i++, dout++) {
+		*dout = inb(EC_LPC_ADDR_HOST_PARAM + i);
+		csum += *dout;
+	}
+
+	/* Verify checksum */
+	if (args.checksum != (uint8_t)csum) {
+		fprintf(stderr, "EC response has invalid checksum\n");
+		return -EC_RES_INVALID_CHECKSUM;
+	}
+
+	/* Return actual amount of data received */
+	return args.data_size;
+}
+
+
+static int ec_readmem_lpc(int offset, int bytes, void *dest)
+{
+	int i = offset;
+	char *s = dest;
+	int cnt = 0;
+
+	if (offset >= EC_MEMMAP_SIZE - bytes)
+		return -1;
+
+	if (bytes) {				/* fixed length */
+		for (; cnt < bytes; i++, s++, cnt++)
+			*s = inb(EC_LPC_ADDR_MEMMAP + i);
+	} else {				/* string */
+		for (; i < EC_MEMMAP_SIZE; i++, s++) {
+			*s = inb(EC_LPC_ADDR_MEMMAP + i);
+			cnt++;
+			if (!*s)
+				break;
+		}
+	}
+
+	return cnt;
+}
+
+int comm_init_lpc(void)
 {
 	int i;
 	int byte = 0xff;
@@ -64,146 +201,8 @@ int comm_init(void)
 		return -5;
 	}
 
+	/* Okay, this works */
+	ec_command = ec_command_lpc;
+	ec_readmem = ec_readmem_lpc;
 	return 0;
-}
-
-/*
- * Wait for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
- * timeout.
- */
-static int wait_for_ec(int status_addr, int timeout_usec)
-{
-	int i;
-	int delay = INITIAL_UDELAY;
-
-	for (i = 0; i < timeout_usec; i += delay) {
-		/*
-		 * Delay first, in case we just sent out a command but the EC
-		 * hasn't raise the busy flag. However, I think this doesn't
-		 * happen since the LPC commands are executed in order and the
-		 * busy flag is set by hardware.
-		 *
-		 * TODO: move this delay after inb(status).
-		 */
-		usleep(MIN(delay, timeout_usec - i));
-
-		if (!(inb(status_addr) & EC_LPC_STATUS_BUSY_MASK))
-			return 0;
-
-		/* Increase the delay interval after a few rapid checks */
-		if (i > 20)
-			delay = MIN(delay * 2, MAXIMUM_UDELAY);
-	}
-	return -1;  /* Timeout */
-}
-
-int ec_command(int command, int version, const void *indata, int insize,
-	       void *outdata, int outsize) {
-
-	struct ec_lpc_host_args args;
-	const uint8_t *d;
-	uint8_t *dout;
-	int csum;
-	int i;
-
-	/* Fill in args */
-	args.flags = EC_HOST_ARGS_FLAG_FROM_HOST;
-	args.command_version = version;
-	args.data_size = insize;
-
-	/* Initialize checksum */
-	csum = command + args.flags + args.command_version + args.data_size;
-
-	/* Write data and update checksum */
-	for (i = 0, d = (uint8_t *)indata; i < insize; i++, d++) {
-		outb(*d, EC_LPC_ADDR_HOST_PARAM + i);
-		csum += *d;
-	}
-
-	/* Finalize checksum and write args */
-	args.checksum = (uint8_t)csum;
-	for (i = 0, d = (const uint8_t *)&args; i < sizeof(args); i++, d++)
-		outb(*d, EC_LPC_ADDR_HOST_ARGS + i);
-
-	outb(command, EC_LPC_ADDR_HOST_CMD);
-
-	if (wait_for_ec(EC_LPC_ADDR_HOST_CMD, 1000000)) {
-		fprintf(stderr, "Timeout waiting for EC response\n");
-		return -EC_RES_ERROR;
-	}
-
-	/* Check result */
-	i = inb(EC_LPC_ADDR_HOST_DATA);
-	if (i) {
-		fprintf(stderr, "EC returned error result code %d\n", i);
-		return -i;
-	}
-
-	/* Read back args */
-	for (i = 0, dout = (uint8_t *)&args; i < sizeof(args); i++, dout++)
-		*dout = inb(EC_LPC_ADDR_HOST_ARGS + i);
-
-	/*
-	 * If EC didn't modify args flags, then somehow we sent a new-style
-	 * command to an old EC, which means it would have read its params
-	 * from the wrong place.
-	 */
-	if (!(args.flags & EC_HOST_ARGS_FLAG_TO_HOST)) {
-		fprintf(stderr, "EC protocol mismatch\n");
-		return -EC_RES_INVALID_RESPONSE;
-	}
-
-	if (args.data_size > outsize) {
-		fprintf(stderr, "EC returned too much data\n");
-		return -EC_RES_INVALID_RESPONSE;
-	}
-
-	/* Start calculating response checksum */
-	csum = command + args.flags + args.command_version + args.data_size;
-
-	/* Read response and update checksum */
-	for (i = 0, dout = (uint8_t *)outdata; i < args.data_size;
-	     i++, dout++) {
-		*dout = inb(EC_LPC_ADDR_HOST_PARAM + i);
-		csum += *dout;
-	}
-
-	/* Verify checksum */
-	if (args.checksum != (uint8_t)csum) {
-		fprintf(stderr, "EC response has invalid checksum\n");
-		return -EC_RES_INVALID_CHECKSUM;
-	}
-
-	/* Return actual amount of data received */
-	return args.data_size;
-}
-
-
-uint8_t read_mapped_mem8(uint8_t offset)
-{
-	return inb(EC_LPC_ADDR_MEMMAP + offset);
-}
-
-uint16_t read_mapped_mem16(uint8_t offset)
-{
-	return inw(EC_LPC_ADDR_MEMMAP + offset);
-}
-
-uint32_t read_mapped_mem32(uint8_t offset)
-{
-	return inl(EC_LPC_ADDR_MEMMAP + offset);
-}
-
-int read_mapped_string(uint8_t offset, char *buf)
-{
-	int c;
-
-	for (c = 0; c < EC_MEMMAP_TEXT_MAX; c++) {
-		buf[c] = inb(EC_LPC_ADDR_MEMMAP + offset + c);
-		if (buf[c] == 0)
-			return c;
-	}
-
-	buf[EC_MEMMAP_TEXT_MAX - 1] = 0;
-	return EC_MEMMAP_TEXT_MAX - 1;
 }
