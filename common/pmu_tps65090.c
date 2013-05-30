@@ -528,6 +528,8 @@ int pmu_shutdown(void)
 
 #ifdef CONFIG_PMU_HARD_RESET
 	/* We ran out of tries, so reset the board */
+	CPUTS("PMU shutdown failed. Hard-resetting.\n");
+	cflush();
 	pmu_hard_reset();
 #endif
 
@@ -621,8 +623,11 @@ void pmu_init(void)
 			break;
 	}
 
-	if (failure)
+	if (failure) {
+		CPUTS("Failed to initialize PMU. Hard-resetting.\n");
+		cflush();
 		pmu_hard_reset();
+	}
 }
 
 /* Initializes PMU when power is turned on.  This is necessary because the TPS'
