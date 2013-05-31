@@ -546,15 +546,8 @@ DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
 
 static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
 {
-#ifdef BOARD_link				/* HEY: Slippy? */
 	const struct ec_params_switch_enable_wireless *p = args->params;
-
-	gpio_set_level(GPIO_RADIO_ENABLE_WLAN,
-		       p->enabled & EC_WIRELESS_SWITCH_WLAN);
-	gpio_set_level(GPIO_RADIO_ENABLE_BT,
-		       p->enabled & EC_WIRELESS_SWITCH_BLUETOOTH);
-#endif
-
+	board_enable_wireless(p->enabled);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,

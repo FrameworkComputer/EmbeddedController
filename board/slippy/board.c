@@ -2,11 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* EC for Link board configuration */
+/* EC for Slippy board configuration */
 
 #include "adc.h"
+#include "board.h"
 #include "chip_temp_sensor.h"
 #include "common.h"
+#include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -165,4 +167,15 @@ void configure_fan_gpios(void)
 {
 	/* PN2:3 alternate function 1 = channel 0 PWM/tach */
 	gpio_set_alternate_function(LM4_GPIO_N, 0x0c, 1);
+}
+
+/**
+ * Set wireless switch state.
+ */
+void board_enable_wireless(uint8_t enabled)
+{
+	gpio_set_level(GPIO_WLAN_OFF_L,
+		       enabled & EC_WIRELESS_SWITCH_WLAN);
+	gpio_set_level(GPIO_PP3300_LTE_EN,
+		       enabled & EC_WIRELESS_SWITCH_WWAN);
 }

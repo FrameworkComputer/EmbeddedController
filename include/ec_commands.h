@@ -132,6 +132,7 @@
 /* Wireless switch flags */
 #define EC_WIRELESS_SWITCH_WLAN      0x01
 #define EC_WIRELESS_SWITCH_BLUETOOTH 0x02
+#define EC_WIRELESS_SWITCH_WWAN      0x04
 
 /*
  * This header file is used in coreboot both in C and ACPI code.  The ACPI code

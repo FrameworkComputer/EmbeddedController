@@ -98,12 +98,12 @@ enum gpio_signal {
 	GPIO_PP3300_DSW_GATED_EN,  /* Enable DSW rails */
 	GPIO_PP3300_DX_EN,         /* Enable power to lots of peripherals */
 	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
-	GPIO_PP3300_WLAN_EN,       /* Enable WiFi radio */
+	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
 	GPIO_SUSP_VR_EN,           /* Enable 1.05V regulator */
 	GPIO_VCORE_EN,             /* Stuffing option - not connected */
 	GPIO_PP5000_EN,            /* Enable 5V supply */
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
-	GPIO_WLAN_OFF_L,           /* Disable WiFi chip? Or just the radio? */
+	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 	GPIO_CHARGE_L,             /* Allow battery to charge when on AC */
 
 	GPIO_ENABLE_BACKLIGHT,     /* Enable backlight power */
