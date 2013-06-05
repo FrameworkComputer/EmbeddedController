@@ -570,7 +570,7 @@ void extpower_charge_init(void)
 	 */
 	msleep(500);
 
-	tsu6721_init();
+	tsu6721_reset();
 	gpio_enable_interrupt(GPIO_USB_CHG_INT);
 	msleep(100); /* TSU6721 doesn't work properly right away. */
 
