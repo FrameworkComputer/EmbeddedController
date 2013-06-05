@@ -712,9 +712,13 @@ static void usb_monitor_detach(void)
 	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
 	if (get_video_power() && vbus > 4000) {
 		set_video_power(0);
+		current_dev_type |= TSU6721_TYPE_VBUS_DEBOUNCED;
+		keyboard_send_battery_key();
 	} else if (!get_video_power() && vbus <= 4000) {
 		set_pwm_duty_cycle(100);
 		set_video_power(1);
+		current_dev_type &= ~TSU6721_TYPE_VBUS_DEBOUNCED;
+		keyboard_send_battery_key();
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, usb_monitor_detach, HOOK_PRIO_DEFAULT);
