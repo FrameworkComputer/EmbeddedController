@@ -61,5 +61,13 @@ int charger_set_current(int current);
 int charger_get_voltage(int *voltage);
 int charger_set_voltage(int voltage);
 
+/* Other parameters that may be charger-specific, but are common so far. */
+int charger_set_input_current(int input_current);
+int charger_get_input_current(int *input_current);
+int charger_manufacturer_id(int *id);
+int charger_device_id(int *id);
+int charger_get_option(int *option);
+int charger_set_option(int option);
+
 #endif /* __CROS_EC_CHARGER_H */
 

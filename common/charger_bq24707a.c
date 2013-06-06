@@ -2,47 +2,48 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * TI bq24725 battery charger driver.
+ * TI bq24707A battery charger driver.
  */
 
 #include "charger.h"
-#include "charger_bq24725.h"
+#include "charger_bq24707a.h"
 #include "console.h"
 #include "common.h"
 #include "i2c.h"
 #include "smart_battery.h"
 #include "util.h"
+#include "printf.h"
 
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
-#define R_SNS CONFIG_BQ24725_R_SNS
-#define R_AC  CONFIG_BQ24725_R_AC
+#define R_SNS CONFIG_BQ24707A_R_SNS
+#define R_AC  CONFIG_BQ24707A_R_AC
 #define REG_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS))
 #define CURRENT_TO_REG(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR)
 
-/* Charger infomation
+/*
  * charge voltage bitmask: 0111 1111 1111 0000
- * charge current bitmask: 0001 1111 1000 0000
- * input current bitmask : 0000 0000 1000 0000
+ * charge current bitmask: 0001 1111 1100 0000
+ * input current bitmask : 0001 1111 1000 0000
  */
-static const struct charger_info bq24725_charger_info = {
-	.name         = "bq24725",
+static const struct charger_info bq24707a_charger_info = {
+	.name         = "bq24707A",
 	.voltage_max  = 19200,
 	.voltage_min  = 1024,
 	.voltage_step = 16,
-	.current_max  = REG_TO_CURRENT(8128, R_SNS),
-	.current_min  = REG_TO_CURRENT(128, R_SNS),
-	.current_step = REG_TO_CURRENT(128, R_SNS),
-	.input_current_max  = REG_TO_CURRENT(8064, R_AC),
-	.input_current_min  = REG_TO_CURRENT(128, R_AC),
-	.input_current_step = REG_TO_CURRENT(128, R_AC),
+	.current_max  = REG_TO_CURRENT(0x1fc0, R_SNS),
+	.current_min  = REG_TO_CURRENT(0x40, R_SNS),
+	.current_step = REG_TO_CURRENT(0x40, R_SNS),
+	.input_current_max  = REG_TO_CURRENT(0x1F80, R_AC),
+	.input_current_min  = REG_TO_CURRENT(0x80, R_AC),
+	.input_current_step = REG_TO_CURRENT(0x80, R_AC),
 };
 
-/* bq24725 specific interfaces */
+/* bq24707a specific interfaces */
 
 int charger_set_input_current(int input_current)
 {
-	return sbc_write(BQ24725_INPUT_CURRENT,
+	return sbc_write(BQ24707_INPUT_CURRENT,
 			 CURRENT_TO_REG(input_current, R_AC));
 }
 
@@ -51,7 +52,7 @@ int charger_get_input_current(int *input_current)
 	int rv;
 	int reg;
 
-	rv = sbc_read(BQ24725_INPUT_CURRENT, &reg);
+	rv = sbc_read(BQ24707_INPUT_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -62,29 +63,29 @@ int charger_get_input_current(int *input_current)
 
 int charger_manufacturer_id(int *id)
 {
-	return sbc_read(BQ24725_MANUFACTURE_ID, id);
+	return sbc_read(BQ24707_MANUFACTURE_ID, id);
 }
 
 int charger_device_id(int *id)
 {
-	return sbc_read(BQ24725_DEVICE_ID, id);
+	return sbc_read(BQ24707_DEVICE_ID, id);
 }
 
 int charger_get_option(int *option)
 {
-	return sbc_read(BQ24725_CHARGE_OPTION, option);
+	return sbc_read(BQ24707_CHARGE_OPTION, option);
 }
 
 int charger_set_option(int option)
 {
-	return sbc_write(BQ24725_CHARGE_OPTION, option);
+	return sbc_write(BQ24707_CHARGE_OPTION, option);
 }
 
 /* Charger interfaces */
 
 const struct charger_info *charger_get_info(void)
 {
-	return &bq24725_charger_info;
+	return &bq24707a_charger_info;
 }
 
 int charger_get_status(int *status)
