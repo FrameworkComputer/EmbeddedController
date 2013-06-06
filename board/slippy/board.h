@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Configuration for Link mainboard */
+/* Configuration for Slippy mainboard */
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -15,9 +15,10 @@
 #define CONFIG_TASK_PROFILING
 
 /* Optional features */
-/*HEY #define CONFIG_SMART_BATTERY */
-/*HEY #define CONFIG_BATTERY_LINK */
-/*HEY #define CONFIG_CHARGER_BQ24725 */
+#define CONFIG_SMART_BATTERY
+#define CONFIG_BATTERY_SLIPPY
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24707A
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_X86_HASWELL
 #endif
@@ -44,7 +45,7 @@
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
-#define I2C_PORT_THERMAL 2
+#define I2C_PORT_THERMAL 5
 /* There are only two I2C ports used because battery and charger share a port */
 #define I2C_PORTS_USED 2
 
@@ -138,6 +139,19 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
+/* Charger module */
+/* Set charger input current limit
+ * Note - this value should depend on external power adapter,
+ *        designed charging voltage, and the maximum power of
+ *        a running system.
+ *        Following value 4032 mA is the maximum input limit
+ *        on Link's design.
+ */
+#define CONFIG_BQ24707A_R_SNS 10 /* 10 mOhm charge sense resistor */
+#define CONFIG_BQ24707A_R_AC  10 /* 10 mOhm input current sense resistor */
+#define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
+
+
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
@@ -145,6 +159,7 @@ enum adc_channel {
 	/* HEY: Slippy MB has only one discrete thermal sensor, but it has two
 	 * values (one internal and one external). Both should be here.
 	 * HEY: There may be a BAT_TEMP sensor on the battery pack too.
+	 * On Slippy, that's PB4/AIN10
 	 */
 
 	/* HEY: Be prepared to read this (ICMNT). */

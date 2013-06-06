@@ -7,6 +7,8 @@
 #ifndef __CROS_EC_BATTERY_PACK_H
 #define __CROS_EC_BATTERY_PACK_H
 
+#define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
+
 /* Battery parameters */
 struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */

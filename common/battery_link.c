@@ -14,8 +14,6 @@
  */
 #define DESIGN_CAPACITY 8200
 
-#define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
-
 enum {
 	TEMP_RANGE_10,
 	TEMP_RANGE_23,
