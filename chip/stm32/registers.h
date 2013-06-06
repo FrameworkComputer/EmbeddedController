@@ -46,6 +46,7 @@
 #define STM32_IRQ_USB             31
 /* aliases for easier code sharing */
 #define STM32_IRQ_COMP STM32_IRQ_ADC_COMP
+#define STM32_IRQ_USB_LP STM32_IRQ_USB
 
 #else /* !CHIP_FAMILY_STM32F0 */
 #define STM32_IRQ_WWDG             0
@@ -526,6 +527,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB2_TIM9		(1 << 2)
 #define STM32_RCC_PB2_TIM10		(1 << 3)
 #define STM32_RCC_PB2_TIM11		(1 << 4)
+#define STM32_RCC_PB1_USB		(1 << 23)
 
 #define STM32_SYSCFG_BASE           0x40010000
 
@@ -558,6 +560,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB2_PMAD		(1 << 11) /* STM32TS */
 #define STM32_RCC_PB2_PMSE		(1 << 13) /* STM32TS */
 #define STM32_RCC_PB1_TIM14		(1 << 8)  /* STM32F0XX */
+#define STM32_RCC_PB1_USB		(1 << 23)
 
 #define STM32_SYSCFG_BASE           0x40010000
 
@@ -1212,6 +1215,41 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_PMSE_MRCR             REG32(STM32_PMSE_BASE + 0x100)
 #define STM32_PMSE_MCCR             REG32(STM32_PMSE_BASE + 0x104)
 
+/* --- USB --- */
+#define STM32_USB_CAN_SRAM_BASE     0x40006000
+#define STM32_USB_FS_BASE           0x40005C00
+
+#define STM32_USB_EP(n)            REG16(STM32_USB_FS_BASE + (n) * 4)
+
+#define STM32_USB_CNTR             REG16(STM32_USB_FS_BASE + 0x40)
+#define STM32_USB_ISTR             REG16(STM32_USB_FS_BASE + 0x44)
+#define STM32_USB_FNR              REG16(STM32_USB_FS_BASE + 0x48)
+#define STM32_USB_DADDR            REG16(STM32_USB_FS_BASE + 0x4C)
+#define STM32_USB_BTABLE           REG16(STM32_USB_FS_BASE + 0x50)
+#define STM32_USB_LPMCSR           REG16(STM32_USB_FS_BASE + 0x54)
+#define STM32_USB_BCDR             REG16(STM32_USB_FS_BASE + 0x58)
+
+#define EP_MASK     0x0F0F
+#define EP_TX_MASK  0x0030
+#define EP_TX_VALID 0x0030
+#define EP_TX_NAK   0x0020
+#define EP_TX_STALL 0x0010
+#define EP_TX_DISAB 0x0000
+#define EP_RX_MASK  0x3000
+#define EP_RX_VALID 0x3000
+#define EP_RX_NAK   0x2000
+#define EP_RX_STALL 0x1000
+#define EP_RX_DISAB 0x0000
+
+#define EP_STATUS_OUT 0x0100
+
+#define EP_TX_RX_MASK (EP_TX_MASK | EP_RX_MASK)
+#define EP_TX_RX_VALID (EP_TX_VALID | EP_RX_VALID)
+
+#define STM32_TOGGLE_EP(n, mask, val, flags) \
+	STM32_USB_EP(n) = (((STM32_USB_EP(n) & (EP_MASK | (mask))) \
+			^ (val)) | (flags))
+
 /* --- MISC --- */
 
 #define STM32_CEC_BASE              0x40007800 /* STM32F100 only */
@@ -1222,7 +1260,5 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_SDIO_BASE             0x40018000 /* STM32F10x only */
 #define STM32_BXCAN1_BASE           0x40006400 /* STM32F10x only */
 #define STM32_BXCAN2_BASE           0x40006800 /* STM32F10x only */
-#define STM32_USB_CAN_SRAM_BASE     0x40006000 /* STM32F10x only */
-#define STM32_USB_FS_BASE           0x40005C00 /* STM32F10x only */
 
 #endif /* __CROS_EC_REGISTERS_H */

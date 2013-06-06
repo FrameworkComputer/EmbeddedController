@@ -85,4 +85,8 @@
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */
 
+/* Dedicated SRAM region for USB transfers */
+#define CONFIG_USB_RAM_BASE 0x40006000
+#define CONFIG_USB_RAM_SIZE 512
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */

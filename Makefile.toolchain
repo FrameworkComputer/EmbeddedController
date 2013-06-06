@@ -40,7 +40,7 @@ CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
 CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
-CFLAGS+= -ffunction-sections
+CFLAGS+= -ffunction-sections -fshort-wchar
 
 FTDIVERSION=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
 ifneq ($(FTDIVERSION),)

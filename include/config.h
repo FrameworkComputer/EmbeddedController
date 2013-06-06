@@ -879,6 +879,9 @@
 /* USB PD minimum battery charge to negotiate for more power */
 #define CONFIG_USB_PD_MIN_BATT_CHARGE 1
 
+/* Compile chip support for the USB device controller */
+#undef CONFIG_USB
+
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
 
