@@ -232,11 +232,11 @@ DECLARE_CONSOLE_COMMAND(battery, command_battery,
 			NULL);
 
 
-/* Usage:sb <r/w> cmd [uint16_t w_word]
- *     sb r 0x14 // desired charging current
- *     sb r 0x15 // desired charging voltage
- *     sb r 0x3  // battery mode
- *     sb w 0x3 0xe001 // set battery mode
+/* Usage:sb reg [value]
+ *     sb 0x14       // read desired charging current
+ *     sb 0x15       // read desired charging voltage
+ *     sb 0x3        // read battery mode
+ *     sb 0x3 0xe001 // set battery mode to 0xe001
  */
 static int command_sb(int argc, char **argv)
 {
@@ -244,40 +244,66 @@ static int command_sb(int argc, char **argv)
 	int cmd, d;
 	char *e;
 
-	if (argc < 3)
+	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	cmd = strtoi(argv[2], &e, 0);
+	cmd = strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM2;
 
-	if (argv[1][0] == 'r') {
-		rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, &d);
-		if (rv)
-			return rv;
-
-		ccprintf("R SBCMD[%04x] 0x%04x (%d)\n", cmd, d, d);
-		return EC_SUCCESS;
-	} else if (argc >= 4 && argv[1][0] == 'w') {
-		d = strtoi(argv[3], &e, 0);
+	if (argc > 2) {
+		d = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM3;
-
-		ccprintf("W SBCMD[%04x] 0x%04x (%d)\n", cmd, d, d);
-		rv = i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, d);
-		if (rv)
-			return rv;
-		return EC_SUCCESS;
+		return sb_write(cmd, d);
 	}
 
-	return EC_ERROR_INVAL;
+	rv = sb_read(cmd, &d);
+	if (rv)
+		return rv;
 
-
+	ccprintf("0x%04x (%d)\n", d, d);
+	return EC_SUCCESS;
 }
+
 DECLARE_CONSOLE_COMMAND(sb, command_sb,
-			"[r addr | w addr value]",
-			"Read/write smart battery data",
+			"reg [value]",
+			"Read/write smart battery registers",
 			NULL);
+
+static int command_sbc(int argc, char **argv)
+{
+	int rv;
+	int cmd, d;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	cmd = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	if (argc > 2) {
+		d = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM3;
+		return sbc_write(cmd, d);
+	}
+
+	rv = sbc_read(cmd, &d);
+	if (rv)
+		return rv;
+
+	ccprintf("0x%04x (%d)\n", d, d);
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND(sbc, command_sbc,
+			"reg [value]",
+			"Read/write smart battery controller registers",
+			NULL);
+
 
 /*****************************************************************************/
 /* Smart battery pass-through
