@@ -157,8 +157,10 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			LM4_I2C_MCS(port) = reg_mcs;
 
 			rv = wait_idle(port);
-			if (rv)
+			if (rv) {
+				LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
 				return rv;
+			}
 		}
 	}
 
@@ -189,8 +191,10 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 			LM4_I2C_MCS(port) = reg_mcs;
 			rv = wait_idle(port);
-			if (rv)
+			if (rv) {
+				LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
 				return rv;
+			}
 			in[i] = LM4_I2C_MDR(port) & 0xff;
 		}
 	}
@@ -401,6 +405,7 @@ static int command_i2cread(int argc, char **argv)
 			LM4_I2C_MCS(port) = (i == count - 1 ? 0x05 : 0x09);
 		rv = wait_idle(port);
 		if (rv != EC_SUCCESS) {
+			LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
 			i2c_lock(port, 0);
 			return rv;
 		}
