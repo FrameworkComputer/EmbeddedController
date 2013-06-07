@@ -73,12 +73,12 @@ static void finalize_rtc_write(void)
 		;
 }
 
-uint32_t set_rtc_alarm(unsigned delay_us)
+uint32_t set_rtc_alarm(unsigned delay_s, unsigned delay_us)
 {
 	unsigned rtc_t0, rtc_t1;
 
 	rtc_t0 = ((uint32_t)STM32_RTC_CNTH << 16) | STM32_RTC_CNTL;
-	rtc_t1 = rtc_t0 + delay_us / US_PER_RTC_TICK;
+	rtc_t1 = rtc_t0 + delay_us / US_PER_RTC_TICK + delay_s * RTC_FREQ;
 
 	prepare_rtc_write();
 	/* set RTC alarm timestamp (using the 40kHz counter ) */
@@ -168,6 +168,26 @@ static void config_hispeed_clock(void)
 		;
 }
 
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	if (seconds || microseconds)
+		set_rtc_alarm(seconds, microseconds);
+
+	/* interrupts off now */
+	asm volatile("cpsid i");
+
+	/* enable the wake up pin */
+	STM32_PWR_CSR |= (1<<8);
+	STM32_PWR_CR |= 0xe;
+	CPU_SCB_SYSCTRL |= 0x4;
+	/* go to Standby mode */
+	asm("wfi");
+
+	/* we should never reach that point */
+	while (1)
+		;
+}
+
 #ifdef CONFIG_LOW_POWER_IDLE
 
 #ifdef CONFIG_FORCE_CONSOLE_RESUME
@@ -217,7 +237,8 @@ void __idle(void)
 			/* set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
 
-			rtc_t0 = set_rtc_alarm(next_delay - STOP_MODE_LATENCY);
+			rtc_t0 = set_rtc_alarm(0,
+					       next_delay - STOP_MODE_LATENCY);
 			asm("wfi");
 
 			CPU_SCB_SYSCTRL &= ~0x4;

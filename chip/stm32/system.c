@@ -57,6 +57,29 @@ static int bkpdata_write(enum bkpdata_index index, uint16_t value)
 	return EC_SUCCESS;
 }
 
+void __no_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	/*
+	 * Hibernate not implemented on this platform.
+	 *
+	 * Until then, treat this as a request to hard-reboot.
+	 */
+	cprintf(CC_SYSTEM, "[%T hibernate not supported, so rebooting]\n");
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
+}
+
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
+	__attribute__((weak, alias("__no_hibernate")));
+
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	/* Flush console before hibernating */
+	cflush();
+	/* chip specific standby mode */
+	__enter_hibernate(seconds, microseconds);
+}
+
 static void check_reset_cause(void)
 {
 	uint32_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
@@ -98,19 +121,19 @@ static void check_reset_cause(void)
 	if (!flags && (raw_cause & 0xfe000000))
 		flags |= RESET_FLAG_OTHER;
 
-	system_set_reset_flags(flags);
-}
-
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
-{
 	/*
-	 * TODO: implement hibernate.
-	 *
-	 * Until then, treat this as a request to hard-reboot.
+	 * WORKAROUND: as we cannot de-activate the watchdog during
+	 * long hibernation, we are woken-up once by the watchdog and
+	 * go back to hibernate if we detect that condition, without
+	 * watchdog initialized this time.
+	 * The RTC deadline (if any) is already set.
 	 */
-	cprintf(CC_SYSTEM, "[%T hibernate not supported, so rebooting]\n");
-	cflush();
-	system_reset(SYSTEM_RESET_HARD);
+	if ((flags & (RESET_FLAG_HIBERNATE | RESET_FLAG_WATCHDOG)) ==
+		     (RESET_FLAG_HIBERNATE | RESET_FLAG_WATCHDOG)) {
+		__enter_hibernate(0, 0);
+	}
+
+	system_set_reset_flags(flags);
 }
 
 void system_pre_init(void)
