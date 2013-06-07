@@ -180,6 +180,7 @@ int charger_post_init(void)
 	 *	input current limit = ~1/2 maximum setting
 	 *	charging voltage    = 0 mV
 	 *	charging current    = 0 mA
+	 *      IOUT                = 20x adapter current sense
 	 */
 
 	/* Set charger input current limit */
