@@ -197,8 +197,10 @@ static void board_startup_hook(void)
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
 
 #ifdef CONFIG_PMU_FORCE_FET
-	/* Enable 3G modem power */
-	pmu_enable_fet(FET_WWAN, 1, NULL);
+	/* Enable lcd panel power */
+	pmu_enable_fet(FET_LCD_PANEL, 1, NULL);
+	/* Enable backlight power */
+	pmu_enable_fet(FET_BACKLIGHT, 1, NULL);
 #endif /* CONFIG_PMU_FORCE_FET */
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
