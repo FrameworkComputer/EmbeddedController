@@ -9,6 +9,7 @@
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"
+#include "uart.h"
 
 int main(void)
 {
@@ -17,6 +18,8 @@ int main(void)
 	timer_init();
 
 	hook_init();
+
+	uart_init();
 
 	task_start();
 
