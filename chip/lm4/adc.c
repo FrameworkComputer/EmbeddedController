@@ -20,14 +20,15 @@ static task_id_t task_waiting_on_ss[LM4_ADC_SEQ_COUNT];
 
 static void configure_gpio(void)
 {
-	int i;
+	int i, port, mask;
 
 	/* Use analog function for AIN */
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
 		if (adc_channels[i].gpio_mask) {
-			gpio_set_alternate_function(adc_channels[i].gpio_port,
-						    adc_channels[i].gpio_mask,
-						    1);
+			mask = adc_channels[i].gpio_mask;
+			port = adc_channels[i].gpio_port;
+			LM4_GPIO_DEN(port) &= ~mask;
+			LM4_GPIO_AMSEL(port) |= mask;
 		}
 	}
 }
