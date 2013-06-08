@@ -15,6 +15,8 @@
 #include "smart_battery.h"
 #include "util.h"
 
+#define GREEN_LED_THRESHOLD 94
+
 /* We use yellow LED instead of blue LED. Re-map colors here. */
 #define LED_COLOR_NONE   LP5562_COLOR_NONE
 #define LED_COLOR_GREEN  LP5562_COLOR_GREEN
@@ -112,6 +114,7 @@ static void battery_led_update(void)
 	int current;
 	int desired_current;
 	int rv;
+	int state_of_charge;
 	enum led_state_t state = LED_STATE_OFF;
 
 	/* Current states and next states */
@@ -152,7 +155,8 @@ static void battery_led_update(void)
 		break;
 	case ST_CHARGING:
 		if (battery_current(&current) ||
-		    battery_desired_current(&desired_current)) {
+		    battery_desired_current(&desired_current) ||
+		    battery_state_of_charge(&state_of_charge)) {
 			/* Cannot talk to the battery. Set LED to red. */
 			state = LED_STATE_SOLID_RED;
 			break;
@@ -164,7 +168,7 @@ static void battery_led_update(void)
 		}
 
 		/* If battery doesn't want any current, it's considered full. */
-		if (desired_current)
+		if (state_of_charge < GREEN_LED_THRESHOLD)
 			state = LED_STATE_SOLID_YELLOW;
 		else
 			state = LED_STATE_SOLID_GREEN;
