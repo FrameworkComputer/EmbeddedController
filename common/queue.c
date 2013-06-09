@@ -19,8 +19,12 @@ int queue_is_empty(const struct queue *q)
 
 int queue_has_space(const struct queue *q, int unit_count)
 {
-	return (q->tail + unit_count * q->unit_bytes) <=
-	       (q->head + q->buf_bytes - q->unit_bytes);
+	if (q->tail >= q->head)
+		return (q->tail + unit_count * q->unit_bytes) <=
+		       (q->head + q->buf_bytes - q->unit_bytes);
+	else
+		return (q->tail + unit_count * q->unit_bytes) <=
+		       (q->head - q->unit_bytes);
 }
 
 void queue_add_units(struct queue *q, const void *src, int unit_count)
