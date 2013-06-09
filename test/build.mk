@@ -28,7 +28,7 @@ test-list-$(BOARD_peppy)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
-test-list-host+=thermal flash
+test-list-host+=thermal flash queue
 
 flash-y=flash.o
 hooks-y=hooks.o
@@ -39,6 +39,7 @@ mutex-y=mutex.o
 pingpong-y=pingpong.o
 power_button-y=power_button.o
 powerdemo-y=powerdemo.o
+queue-y=queue.o
 stress-y=stress.o
 thermal-y=thermal.o
 thermal-scale=200

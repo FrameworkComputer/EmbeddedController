@@ -42,6 +42,18 @@
 		} \
 	} while (0)
 
+#define TEST_ASSERT_ARRAY_EQ(s, d, n) \
+	do { \
+		int i; \
+		for (i = 0; i < n; ++i) \
+			if ((s)[i] != (d)[i]) { \
+				ccprintf("%d: ASSERT_ARRAY_EQ failed at " \
+					 "index=%d: %d != %d\n", __LINE__, i, \
+					 (int)(s)[i], (int)(d)[i]); \
+				return EC_ERROR_UNKNOWN; \
+			} \
+	} while (0)
+
 #define TEST_CHECK(n) \
 	do { \
 		if (n) \
