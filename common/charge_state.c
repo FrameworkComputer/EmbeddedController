@@ -176,7 +176,6 @@ static int state_common(struct power_state_context *ctx)
 
 	rv = battery_temperature(&batt->temperature);
 	if (rv) {
-		CPRINTF("[%T Can't communicate with battery!]\n");
 		/* Check low battery condition and retry */
 		if (curr->ac && ctx->battery_present == 1 &&
 		    !(curr->error & F_CHARGER_MASK)) {
@@ -186,16 +185,12 @@ static int state_common(struct power_state_context *ctx)
 			 * battery pack with minimum current and maximum
 			 * voltage for 30 seconds.
 			 */
-			CPRINTF("[%T Trickle charge battery at %dmV, %dmA]\n",
-				ctx->battery->voltage_max,
-				ctx->charger->current_min);
 			charger_set_voltage(ctx->battery->voltage_max);
 			charger_set_current(ctx->charger->current_min);
 			for (d = 0; d < 30; d++) {
 				sleep(1);
 				rv = battery_temperature(&batt->temperature);
 				if (rv == 0) {
-					CPRINTF("[%T Battery is responding]\n");
 					ctx->battery_present = 1;
 					break;
 				}
@@ -203,10 +198,8 @@ static int state_common(struct power_state_context *ctx)
 		}
 
 		/* Set error if battery is still unresponsive */
-		if (rv) {
-			CPRINTF("[%T Battery still not responding]\n");
+		if (rv)
 			curr->error |= F_BATTERY_TEMPERATURE;
-		}
 	} else {
 		ctx->battery_present = 1;
 	}
