@@ -21,10 +21,10 @@ int queue_has_space(const struct queue *q, int unit_count)
 {
 	if (q->tail >= q->head)
 		return (q->tail + unit_count * q->unit_bytes) <=
-		       (q->head + q->buf_bytes - q->unit_bytes);
+		       (q->head + q->buf_bytes - 1);
 	else
 		return (q->tail + unit_count * q->unit_bytes) <=
-		       (q->head - q->unit_bytes);
+		       (q->head - 1);
 }
 
 void queue_add_units(struct queue *q, const void *src, int unit_count)
