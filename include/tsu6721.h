@@ -73,22 +73,22 @@ enum tsu6721_mux {
 #define TSU6721_TYPE_VBUS_DEBOUNCED	0x020000
 
 /* Initialize TSU6721. */
-void tsu6721_init(void);
+int tsu6721_init(void);
 
 /* Read TSU6721 register. */
 uint8_t tsu6721_read(uint8_t reg);
 
 /* Write TSU6721 register. */
-void tsu6721_write(uint8_t reg, uint8_t val);
+int tsu6721_write(uint8_t reg, uint8_t val);
 
 /* Enable interrupts. */
-void tsu6721_enable_interrupts(void);
+int tsu6721_enable_interrupts(void);
 
 /* Disable all interrupts. */
-void tsu6721_disable_interrupts(void);
+int tsu6721_disable_interrupts(void);
 
 /* Set interrupt mask. */
-void tsu6721_set_interrupt_mask(uint16_t mask);
+int tsu6721_set_interrupt_mask(uint16_t mask);
 
 /* Get and clear current interrupt status. Return value is a combination of
  * TSU6721_INT_* */

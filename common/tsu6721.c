@@ -27,6 +27,9 @@
 /* Delay values */
 #define TSU6721_SW_RESET_DELAY 15
 
+/* Number of retries when reset fails */
+#define TSU6721_SW_RESET_RETRY 3
+
 static int saved_interrupts;
 
 uint8_t tsu6721_read(uint8_t reg)
@@ -41,31 +44,32 @@ uint8_t tsu6721_read(uint8_t reg)
 	return val;
 }
 
-void tsu6721_write(uint8_t reg, uint8_t val)
+int tsu6721_write(uint8_t reg, uint8_t val)
 {
 	int res;
 
 	res = i2c_write8(I2C_PORT_HOST, TSU6721_I2C_ADDR, reg, val);
 	if (res)
 		CPRINTF("[%T TSU6721 I2C write failed]\n");
+	return res;
 }
 
-void tsu6721_enable_interrupts(void)
+int tsu6721_enable_interrupts(void)
 {
 	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
-	tsu6721_write(TSU6721_REG_CONTROL, ctrl & 0x1e);
+	return tsu6721_write(TSU6721_REG_CONTROL, ctrl & 0x1e);
 }
 
-void tsu6721_disable_interrupts(void)
+int  tsu6721_disable_interrupts(void)
 {
 	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
-	tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
+	return tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
 }
 
-void tsu6721_set_interrupt_mask(uint16_t mask)
+int  tsu6721_set_interrupt_mask(uint16_t mask)
 {
-	tsu6721_write(TSU6721_REG_INT_MASK1, (~mask) & 0xff);
-	tsu6721_write(TSU6721_REG_INT_MASK2, ((~mask) >> 8) & 0xff);
+	return tsu6721_write(TSU6721_REG_INT_MASK1, (~mask) & 0xff) |
+	       tsu6721_write(TSU6721_REG_INT_MASK2, ((~mask) >> 8) & 0xff);
 }
 
 int tsu6721_get_interrupts(void)
@@ -91,10 +95,20 @@ int tsu6721_get_device_type(void)
 
 void tsu6721_reset(void)
 {
-	tsu6721_write(TSU6721_REG_RESET, 0x1);
-	/* TSU6721 reset takes ~10ms. Let's wait for 15ms to be safe. */
-	msleep(TSU6721_SW_RESET_DELAY);
-	tsu6721_init();
+	int i;
+
+	for (i = 0; i < TSU6721_SW_RESET_RETRY; ++i) {
+		if (i != 0) {
+			CPRINTF("[%T TSU6721 init failed. Retrying.]\n");
+			msleep(500);
+		}
+		if (tsu6721_write(TSU6721_REG_RESET, 0x1))
+			continue;
+		/* TSU6721 reset takes ~10ms. Let's wait for 15ms to be safe. */
+		msleep(TSU6721_SW_RESET_DELAY);
+		if (tsu6721_init() == EC_SUCCESS)
+			break;
+	}
 }
 
 int tsu6721_mux(enum tsu6721_mux sel)
@@ -124,26 +138,31 @@ int tsu6721_mux(enum tsu6721_mux sel)
 	return EC_SUCCESS;
 }
 
-void tsu6721_init(void)
+int tsu6721_init(void)
 {
 	uint8_t settings;
 	uint8_t dev_id = tsu6721_read(TSU6721_REG_DEV_ID);
+	int res = 0;
 
 	if ((dev_id != 0x0a) && (dev_id != 0x12)) {
 		CPRINTF("TSU6721 invalid device ID 0x%02x\n", dev_id);
-		return;
+		return EC_ERROR_UNKNOWN;
 	}
 
 	/* set USB charger detection timeout to 600ms */
 	settings = tsu6721_read(TSU6721_REG_TIMER);
+	if (settings == 0xee)
+		return EC_ERROR_UNKNOWN;
 	settings = (settings & ~0x38) | 0x28;
-	tsu6721_write(TSU6721_REG_TIMER, settings);
+	res |= tsu6721_write(TSU6721_REG_TIMER, settings);
 
-	tsu6721_set_interrupt_mask(TSU6721_INT_ATTACH |
-				   TSU6721_INT_DETACH |
-				   TSU6721_INT_ADC_CHANGE |
-				   TSU6721_INT_VBUS);
-	tsu6721_enable_interrupts();
+	res |= tsu6721_set_interrupt_mask(TSU6721_INT_ATTACH |
+					  TSU6721_INT_DETACH |
+					  TSU6721_INT_ADC_CHANGE |
+					  TSU6721_INT_VBUS);
+	res |= tsu6721_enable_interrupts();
+
+	return res ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 /*
  * TODO(vpalatin): using the I2C early in the HOOK_INIT
