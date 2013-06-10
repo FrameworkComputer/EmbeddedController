@@ -189,7 +189,7 @@ int __hw_clock_source_init(uint32_t start_t)
  * doesn't appear to exist in either variant, and TIM9 cannot be triggered as a
  * slave from TIM4. We could perhaps use TIM9 as our fast counter on STM32L.
  */
-#ifndef CHIP_VARIANT_stm32l15x
+#if defined(CONFIG_WATCHDOG) && !defined(CHIP_VARIANT_stm32l15x)
 
 void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
@@ -271,4 +271,5 @@ void hwtimer_reset_watchdog(void)
 
 	timer->cnt = timer->arr;
 }
-#endif
+
+#endif  /* defined(CONFIG_WATCHDOG) && !defined(CHIP_VARIANT_stm32l15x) */

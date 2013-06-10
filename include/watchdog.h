@@ -32,6 +32,10 @@ int watchdog_init(void);
 void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp);
 
 /* Reload the watchdog counter */
+#ifdef CONFIG_WATCHDOG
 void watchdog_reload(void);
+#else
+static inline void watchdog_reload(void) { }
+#endif
 
 #endif /* __CROS_EC_WATCHDOG_H */

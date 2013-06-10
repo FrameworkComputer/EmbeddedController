@@ -234,12 +234,12 @@ int flash_physical_write(int offset, int size, const char *data)
 	STM32_FLASH_CR |= PG;
 
 	for ( ; size > 0; size -= sizeof(uint16_t)) {
-#ifdef CONFIG_WATCHDOG
-		/* Reload the watchdog timer to avoid watchdog reset when doing
+		/*
+		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
 		 */
 		watchdog_reload();
-#endif
+
 		/* wait to be ready  */
 		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
 		     i++)
@@ -303,13 +303,11 @@ int flash_physical_erase(int offset, int size)
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;
 
-#ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset during a
 		 * long erase operation.
 		 */
 		watchdog_reload();
-#endif
 
 		deadline.val = get_time().val + FLASH_TIMEOUT_US;
 		/* Wait for erase to complete */

@@ -192,13 +192,11 @@ int flash_physical_write(int offset, int size, const char *data)
 		word_mode = 1;
 
 	while (size > 0) {
-#ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
 		 */
 		watchdog_reload();
-#endif
 
 		if (word_mode) {
 			/* Word write */
@@ -269,13 +267,11 @@ int flash_physical_erase(int offset, int size)
 		/* Start erase */
 		*address = 0x00000000;
 
-#ifdef CONFIG_WATCHDOG
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset during
 		 * multi-page erase operations.
 		 */
 		watchdog_reload();
-#endif
 
 		deadline.val = get_time().val + FLASH_TIMEOUT_US;
 		/* Wait for erase to complete */

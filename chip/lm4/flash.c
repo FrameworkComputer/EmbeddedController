@@ -63,11 +63,11 @@ static int write_buffer(void)
 	/* Start write operation at page boundary */
 	LM4_FLASH_FMC2 = 0xa4420001;
 
-#ifdef CONFIG_WATCHDOG
-	/* Reload the watchdog timer, so that writing a large amount of flash
-	 * doesn't cause a watchdog reset. */
+	/*
+	 * Reload the watchdog timer, so that writing a large amount of flash
+	 * doesn't cause a watchdog reset.
+	 */
 	watchdog_reload();
-#endif
 
 	/* Wait for write to complete */
 	for (t = 0; LM4_FLASH_FMC2 & 0x01; t += 10) {
@@ -138,12 +138,12 @@ int flash_physical_erase(int offset, int size)
 
 		LM4_FLASH_FMA = offset;
 
-#ifdef CONFIG_WATCHDOG
-		/* Reload the watchdog timer, so that erasing many flash pages
+		/*
+		 * Reload the watchdog timer, so that erasing many flash pages
 		 * doesn't cause a watchdog reset.  May not need this now that
-		 * we're using msleep() below. */
+		 * we're using msleep() below.
+		 */
 		watchdog_reload();
-#endif
 
 		/* Start erase */
 		LM4_FLASH_FMC = 0xa4420002;
