@@ -48,12 +48,22 @@ enum ilim_config {
 /* Voltage threshold of D+ for video */
 #define VIDEO_ID_THRESHOLD	1335
 
+/*
+ * Mapping from PWM duty to current:
+ *   Current = A + B * PWM_Duty
+ */
+#define PWM_MAPPING_A 2958
+#define PWM_MAPPING_B (-29)
+
+/* Map current in milli-amps to PWM duty cycle percentage */
+#define MA_TO_PWM(curr) (((curr) - PWM_MAPPING_A) / PWM_MAPPING_B)
+
 /* PWM controlled current limit */
-#define I_LIMIT_500MA   90
-#define I_LIMIT_1000MA  75
-#define I_LIMIT_1500MA  60
-#define I_LIMIT_2000MA  50
-#define I_LIMIT_2400MA  35
+#define I_LIMIT_500MA   MA_TO_PWM(500)
+#define I_LIMIT_1000MA  MA_TO_PWM(1000)
+#define I_LIMIT_1500MA  MA_TO_PWM(1500)
+#define I_LIMIT_2000MA  MA_TO_PWM(2000)
+#define I_LIMIT_2400MA  MA_TO_PWM(2400)
 #define I_LIMIT_3000MA  0
 
 /* PWM control loop parameters */
@@ -75,13 +85,6 @@ enum ilim_config {
 #define DELAY_POWER_MS		20
 #define DELAY_USB_DP_DN_MS	20
 #define DELAY_ID_MUX_MS		30
-
-/*
- * Mapping from PWM duty to current:
- *   Current = A + B * PWM_Duty
- */
-#define PWM_MAPPING_A 3012
-#define PWM_MAPPING_B (-29)
 
 /* Current sense resistor values */
 #define R_INPUT_MOHM 20 /* mOhm */
