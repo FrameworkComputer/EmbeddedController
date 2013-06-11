@@ -62,9 +62,15 @@
 			return EC_ERROR_UNKNOWN; \
 	} while (0)
 
+void register_test_end_hook(void);
+
 void run_test(void);
 
 void test_reset(void);
+
+void test_pass(void);
+
+void test_fail(void);
 
 void test_print_result(void);
 

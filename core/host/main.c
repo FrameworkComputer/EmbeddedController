@@ -8,11 +8,14 @@
 #include "flash.h"
 #include "hooks.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "uart.h"
 
 int main(void)
 {
+	register_test_end_hook();
+
 	flash_pre_init();
 
 	timer_init();

@@ -30,11 +30,14 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
             $(if $(EMU_BUILD),-DEMU_BUILD) \
             $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale))
+CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
+				      -DTEST_COVERAGE,)
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
               -DBOARD=$(BOARD) -DBOARD_$(BOARD) -DCORE=$(CORE)            \
               -DCHIP_$(CHIP) -DCHIP_VARIANT=$(CHIP_VARIANT)               \
               -DCHIP_VARIANT_$(CHIP_VARIANT) -DPROJECT=$(PROJECT)
-CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) $(EXTRA_CFLAGS)
+CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
+	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
 
 FTDIVERSION=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
@@ -51,4 +54,5 @@ BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
-HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread
+HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread \
+		  $(if $(TEST_COVERAGE),-fprofile-arcs,)

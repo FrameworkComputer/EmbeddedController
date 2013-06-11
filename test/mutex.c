@@ -9,6 +9,7 @@
 #include "console.h"
 #include "common.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
@@ -108,7 +109,7 @@ int mutex_main_task(void *unused)
 		rdelay = prng(rdelay);
 	}
 
-	ccprintf("Pass!\n");
+	test_pass();
 	task_wait_event(0);
 
 	return EC_SUCCESS;

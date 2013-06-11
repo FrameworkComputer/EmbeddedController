@@ -5,6 +5,9 @@
  * Test utilities.
  */
 
+#include <signal.h>
+#include <stdlib.h>
+
 #include "console.h"
 #include "test_util.h"
 #include "util.h"
@@ -14,9 +17,38 @@ int __test_error_count;
 /* Weak reference function as an entry point for unit test */
 test_mockable void run_test(void) { }
 
+#ifdef TEST_COVERAGE
+extern void __gcov_flush(void);
+
+void test_end_hook(int sig)
+{
+	__gcov_flush();
+	exit(0);
+}
+
+void register_test_end_hook(void)
+{
+	signal(SIGTERM, test_end_hook);
+}
+#else
+void register_test_end_hook(void)
+{
+}
+#endif
+
 void test_reset(void)
 {
 	__test_error_count = 0;
+}
+
+void test_pass(void)
+{
+	ccprintf("Pass!\n");
+}
+
+void test_fail(void)
+{
+	ccprintf("Fail!\n");
 }
 
 void test_print_result(void)

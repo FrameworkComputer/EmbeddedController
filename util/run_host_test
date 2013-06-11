@@ -45,6 +45,8 @@ def RunOnce(test_name, log, timeout_secs):
       return RESULT_ID_REBOOT
     else:
       raise
+  finally:
+    child.kill(15)
 
 log = StringIO()
 tee_log = Tee(log)

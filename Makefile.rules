@@ -84,7 +84,7 @@ $(host-test-targets): host-%:
 	@set -e ; \
 	echo "  BUILD   host - build/host/$*" ; \
 	$(MAKE) --no-print-directory BOARD=host PROJECT=$* \
-	        V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y \
+	        V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y $(TEST_FLAG) \
 		CROSS_COMPILE= build/host/$*/$*.exe
 
 $(run-test-targets): run-%: host-%
@@ -92,6 +92,24 @@ $(run-test-targets): run-%: host-%
 
 hosttests: $(host-test-targets)
 runtests: $(run-test-targets)
+
+cov-test-targets=$(foreach t,$(test-list-host),build/host/$(t).info)
+bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P)
+
+# lcov fails when multiple instances run at the same time.
+# We need to run them sequentially by using flock
+cmd_lcov=flock .lcov_lock -c "lcov -q -o $@ -c -d build/host/$*"
+cmd_report_cov=genhtml -q -o build/host/coverage_rpt -t \
+	       "EC Unittest "$(bldversion) $^
+
+build/host/%.info: run-%
+	$(call quiet,lcov,COV    )
+
+coverage: TEST_FLAG=TEST_COVERAGE=y
+coverage: $(cov-test-targets)
+	$(call quiet,report_cov,REPORT )
+
+.PHONY: coverage
 
 $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )

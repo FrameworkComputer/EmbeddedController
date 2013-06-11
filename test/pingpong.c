@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
@@ -31,9 +32,9 @@ int TaskAbc(void *data)
 		if (myid == 2 && wake_count[myid] == TEST_COUNT) {
 			if (wake_count[0] == TEST_COUNT &&
 			    wake_count[1] == TEST_COUNT)
-				ccputs("Pass!\n");
+				test_pass();
 			else
-				ccputs("Fail!\n");
+				test_fail();
 			wake_count[0] = wake_count[1] = wake_count[2] = 0;
 			task_wait_event(-1);
 		} else {
