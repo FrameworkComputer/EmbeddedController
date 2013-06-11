@@ -142,9 +142,9 @@ const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
 	/* Note: battery and charger share a port.  Only include it once in
 	 * this list so we don't double-initialize it. */
 	{"batt_chg", I2C_PORT_BATTERY,  100},
+	{"lvds",     I2C_PORT_LVDS,     100},
 	{"thermal",  I2C_PORT_THERMAL,  100},
 };
-
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
