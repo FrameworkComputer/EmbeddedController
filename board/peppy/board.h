@@ -131,10 +131,10 @@ enum gpio_signal {
 	GPIO_PCH_RTCRST_L,         /* Not supposed to be here */
 	GPIO_PCH_SRTCRST_L,        /* Not supposed to be here */
 
-	GPIO_BAT_LED0,             /* Battery charging LED - green */
-	GPIO_BAT_LED1,             /* Battery charging LED - red */
-	GPIO_PWR_LED0,             /* Power LED - green */
-	GPIO_PWR_LED1,             /* Power LED - red */
+	GPIO_BAT_LED0_L,           /* Battery charging LED - blue */
+	GPIO_BAT_LED1_L,           /* Battery charging LED - orange */
+	GPIO_PWR_LED0_L,           /* Power LED - blue */
+	GPIO_PWR_LED1_L,           /* Power LED - orange */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
