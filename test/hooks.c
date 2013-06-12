@@ -56,6 +56,11 @@ static void deferred_func(void)
 }
 DECLARE_DEFERRED(deferred_func);
 
+static void non_deferred_func(void)
+{
+	deferred_call_count++;
+}
+
 static int test_init(void)
 {
 	TEST_ASSERT(init_hook_count == 1);
@@ -114,6 +119,11 @@ static int test_deferred(void)
 	usleep(15 * MSEC);
 	hook_call_deferred(deferred_func, 25 * MSEC);
 	usleep(50 * MSEC);
+	TEST_ASSERT(deferred_call_count == 2);
+
+	TEST_ASSERT(hook_call_deferred(non_deferred_func, 50 * MSEC) !=
+		    EC_SUCCESS);
+	usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);
 
 	return EC_SUCCESS;
