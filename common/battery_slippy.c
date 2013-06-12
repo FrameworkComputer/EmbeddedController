@@ -10,9 +10,9 @@
 /* FIXME: We need REAL values for all this stuff */
 static const struct battery_info info = {
 
-	.voltage_max    = 12600,
-	.voltage_normal = 11100,
-	.voltage_min    = 6000,
+	.voltage_max    = 16800,
+	.voltage_normal = 14800,
+	.voltage_min    = 10800,
 
 	/*
 	 * Operational temperature range
