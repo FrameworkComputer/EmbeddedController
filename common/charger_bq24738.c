@@ -173,8 +173,22 @@ int charger_set_voltage(int voltage)
 /* Charging power state initialization */
 int charger_post_init(void)
 {
-	/* Accept POR defaults, plus... */
+	int rv;
+
+/* FIXME(crosbug.com/p/19868): Do we want this or not? */
+#if 0
+	int val;
+
+	rv = charger_get_option(&val);
+	if (rv)
+		return rv;
+	val &= ~OPTION_IFAULT_HI_ENABLE;
+	rv = charger_set_option(val);
+	if (rv)
+		return rv;
+#endif
 
 	/* Set charger input current limit */
-	return charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+	return rv;
 }
