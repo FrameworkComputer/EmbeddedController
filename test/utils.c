@@ -13,6 +13,90 @@
 #include "timer.h"
 #include "util.h"
 
+static int test_isalpha(void)
+{
+	TEST_CHECK(isalpha('a') && isalpha('z') && isalpha('A') &&
+		   isalpha('Z') && !isalpha('0') && !isalpha('~') &&
+		   !isalpha(' ') && !isalpha('\0') && !isalpha('\n'));
+}
+
+static int test_isprint(void)
+{
+	TEST_CHECK(isprint('a') && isprint('z') && isprint('A') &&
+		   isprint('Z') && isprint('0') && isprint('~') &&
+		   isprint(' ') && !isprint('\0') && !isprint('\n'));
+}
+
+static int test_strtoi(void)
+{
+	char *e;
+
+	TEST_ASSERT(strtoi("10", &e, 0) == 10);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoi("0x1f z", &e, 0) == 31);
+	TEST_ASSERT(e && (*e == ' '));
+	TEST_ASSERT(strtoi("10a", &e, 16) == 266);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoi("0x02C", &e, 16) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoi("   -12", &e, 0) == -12);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoi("!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+
+	return EC_SUCCESS;
+}
+
+static int test_parse_bool(void)
+{
+	int v;
+
+	TEST_ASSERT(parse_bool("on", &v) == 1);
+	TEST_ASSERT(v == 1);
+	TEST_ASSERT(parse_bool("off", &v) == 1);
+	TEST_ASSERT(v == 0);
+	TEST_ASSERT(parse_bool("enable", &v) == 1);
+	TEST_ASSERT(v == 1);
+	TEST_ASSERT(parse_bool("disable", &v) == 1);
+	TEST_ASSERT(v == 0);
+	TEST_ASSERT(parse_bool("di", &v) == 0);
+	TEST_ASSERT(parse_bool("en", &v) == 0);
+	TEST_ASSERT(parse_bool("of", &v) == 0);
+
+	return EC_SUCCESS;
+}
+
+static int test_memmove(void)
+{
+	char buf[100];
+	int i;
+
+	for (i = 0; i < 100; ++i)
+		buf[i] = 0;
+	for (i = 0; i < 30; ++i)
+		buf[i] = i;
+	memmove(buf + 60, buf, 30);
+	TEST_ASSERT_ARRAY_EQ(buf, buf + 60, 30);
+	memmove(buf + 10, buf, 30);
+	TEST_ASSERT_ARRAY_EQ(buf + 10, buf + 60, 30);
+
+	return EC_SUCCESS;
+}
+
+static int test_strzcpy(void)
+{
+	char dest[10];
+
+	strzcpy(dest, "test", 10);
+	TEST_ASSERT_ARRAY_EQ("test", dest, 5);
+	strzcpy(dest, "testtesttest", 10);
+	TEST_ASSERT_ARRAY_EQ("testtestt", dest, 10);
+	strzcpy(dest, "aaaa", -1);
+	TEST_ASSERT_ARRAY_EQ("testtestt", dest, 10);
+
+	return EC_SUCCESS;
+}
+
 static int test_strlen(void)
 {
 	TEST_CHECK(strlen("this is a string") == 16);
@@ -31,7 +115,8 @@ static int test_strncasecmp(void)
 		   (strncasecmp("test string", "TEST str", 8) == 0) &&
 		   (strncasecmp("test123!@#", "TesT321!@#", 5) != 0) &&
 		   (strncasecmp("test123!@#", "TesT321!@#", 4) == 0) &&
-		   (strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0));
+		   (strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0) &&
+		   (strncasecmp("1test123", "teststr", 0) == 0));
 }
 
 static int test_atoi(void)
@@ -42,13 +127,31 @@ static int test_atoi(void)
 		   (atoi("\t111") == 111));
 }
 
-static int test_uint64divmod(void)
+static int test_uint64divmod_0(void)
 {
 	uint64_t n = 8567106442584750ULL;
 	int d = 54870071;
 	int r = uint64divmod(&n, d);
 
 	TEST_CHECK(r == 5991285 && n == 156134415ULL);
+}
+
+static int test_uint64divmod_1(void)
+{
+	uint64_t n = 8567106442584750ULL;
+	int d = 2;
+	int r = uint64divmod(&n, d);
+
+	TEST_CHECK(r == 0 && n == 4283553221292375ULL);
+}
+
+static int test_uint64divmod_2(void)
+{
+	uint64_t n = 8567106442584750ULL;
+	int d = 0;
+	int r = uint64divmod(&n, d);
+
+	TEST_CHECK(r == 0 && n == 0ULL);
 }
 
 static int test_shared_mem(void)
@@ -86,11 +189,19 @@ void run_test(void)
 {
 	test_reset();
 
+	RUN_TEST(test_isalpha);
+	RUN_TEST(test_isprint);
+	RUN_TEST(test_strtoi);
+	RUN_TEST(test_parse_bool);
+	RUN_TEST(test_memmove);
+	RUN_TEST(test_strzcpy);
 	RUN_TEST(test_strlen);
 	RUN_TEST(test_strcasecmp);
 	RUN_TEST(test_strncasecmp);
 	RUN_TEST(test_atoi);
-	RUN_TEST(test_uint64divmod);
+	RUN_TEST(test_uint64divmod_0);
+	RUN_TEST(test_uint64divmod_1);
+	RUN_TEST(test_uint64divmod_2);
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
 
