@@ -39,6 +39,7 @@ static int test_queue6_empty(void)
 
 	queue_reset(&test_queue6);
 	TEST_ASSERT(queue_is_empty(&test_queue6));
+	TEST_ASSERT(!queue_remove_unit(&test_queue6, &dummy));
 	queue_add_units(&test_queue6, &dummy, 1);
 	TEST_ASSERT(!queue_is_empty(&test_queue6));
 
