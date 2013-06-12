@@ -112,7 +112,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_HI_Z, NULL},
 	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_HI_Z, NULL},
 
-	{"PWR_LED_L",            LM4_GPIO_N, (1<<6), GPIO_HI_Z, NULL},
+	{"PWR_LED_L",            LM4_GPIO_N, (1<<6), GPIO_OUT_HIGH, NULL},
 	{"KB_LED_EN",            LM4_GPIO_D, (1<<4), GPIO_OUT_LOW, NULL},
 	{"BAT_LED0",             LM4_GPIO_D, (1<<0), GPIO_OUT_LOW, NULL},
 	{"BAT_LED1",             LM4_GPIO_D, (1<<1), GPIO_OUT_LOW, NULL},
@@ -134,7 +134,9 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
 
-	/* HEY: Falco will have AD_TYPE on PB5/AIN11 */
+	/* AC Adapter ID voltage (mv) */
+	{"AdapterIDVoltage", LM4_ADC_SEQ2, 3300, ADC_READ_MAX, 0,
+	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 };
 
 /* I2C ports */

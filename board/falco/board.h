@@ -145,14 +145,15 @@ enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
 
-	/* HEY: Falco MB has only one discrete thermal sensor, but it has two
-	 * values (one internal and one external). Both should be here.
-	 * HEY: There may be a BAT_TEMP sensor on the battery pack too.
-	 */
-
-	/* HEY: Be prepared to read this (ICMNT). */
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
+
+	/* AC Adapter ID voltage in mV */
+	ADC_AC_ADAPTER_ID_VOLTAGE,
+
+	/* HEY: Falco MB has only one discrete thermal sensor, but it has two
+	 * values (one internal and one external). Both should be here.
+	 */
 
 	ADC_CH_COUNT
 };
