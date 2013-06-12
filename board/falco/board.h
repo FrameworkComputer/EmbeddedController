@@ -15,9 +15,10 @@
 #define CONFIG_TASK_PROFILING
 
 /* Optional features */
-/*HEY #define CONFIG_SMART_BATTERY */
-/*HEY #define CONFIG_BATTERY_LINK */
-/*HEY #define CONFIG_CHARGER_BQ24725 */
+#define CONFIG_SMART_BATTERY
+#define CONFIG_BATTERY_FALCO
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24738
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_X86_HASWELL
 #endif
@@ -140,6 +141,16 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
+
+/* Charger module */
+/* Set charger input current limit
+ * Note - this value should depend on external power adapter,
+ *        designed charging voltage, and the maximum power of
+ *        a running system.
+ */
+#define CONFIG_BQ24738_R_SNS 10 /* 10 mOhm charge sense resistor */
+#define CONFIG_BQ24738_R_AC  10 /* 10 mOhm input current sense resistor */
+#define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
 
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
