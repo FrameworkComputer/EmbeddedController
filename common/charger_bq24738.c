@@ -174,11 +174,9 @@ int charger_set_voltage(int voltage)
 int charger_post_init(void)
 {
 	int rv;
-
-/* FIXME(crosbug.com/p/19868): Do we want this or not? */
-#if 0
 	int val;
 
+	/* Disable IFAULT_HI. See crosbug.com/p/19868 */
 	rv = charger_get_option(&val);
 	if (rv)
 		return rv;
@@ -186,7 +184,6 @@ int charger_post_init(void)
 	rv = charger_set_option(val);
 	if (rv)
 		return rv;
-#endif
 
 	/* Set charger input current limit */
 	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
