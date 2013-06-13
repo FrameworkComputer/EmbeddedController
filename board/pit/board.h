@@ -30,7 +30,7 @@
 #define CONFIG_CHIPSET_GAIA
 #endif
 #define CONFIG_CMD_PMU
-#define CONFIG_EXTPOWER_SNOW
+#define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
@@ -86,6 +86,7 @@ enum gpio_signal {
 	GPIO_LID_OPEN,
 	GPIO_SUSPEND_L,
 	GPIO_SPI1_NSS,
+	GPIO_AC_PRESENT,
 	/* Keyboard inputs */
 	GPIO_KB_IN00,
 	GPIO_KB_IN01,
@@ -96,7 +97,6 @@ enum gpio_signal {
 	GPIO_KB_IN06,
 	GPIO_KB_IN07,
 	/* Other inputs */
-	GPIO_AC_PWRBTN_L,
 	GPIO_WP_L,
 	/* Outputs */
 	GPIO_AP_RESET_L,

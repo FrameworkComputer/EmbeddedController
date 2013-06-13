@@ -5,6 +5,7 @@
 /* Pit board-specific configuration */
 
 #include "common.h"
+#include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -30,6 +31,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
 	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
 	 spi_event},
+	{"AC_PRESENT",  GPIO_A, (1<<0),  GPIO_INT_BOTH, extpower_interrupt},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
 	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT,
@@ -47,7 +49,6 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
 	/* Other inputs */
-	{"AC_PWRBTN_L", GPIO_A, (1<<0),  GPIO_INT_BOTH, NULL},
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	/* Outputs */
 	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_HI_Z, NULL},
