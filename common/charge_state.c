@@ -186,7 +186,7 @@ static int state_common(struct power_state_context *ctx)
 			 * voltage for 30 seconds.
 			 */
 			charger_set_voltage(ctx->battery->voltage_max);
-			charger_set_current(ctx->charger->current_min);
+			charger_set_current(ctx->battery->precharge_current);
 			for (d = 0; d < 30; d++) {
 				sleep(1);
 				rv = battery_temperature(&batt->temperature);

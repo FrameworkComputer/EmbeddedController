@@ -14,14 +14,10 @@ static const struct battery_info info = {
 	.voltage_normal = 7400,
 	.voltage_min    = 6000,
 
-	/*
-	 * Operational temperature range
-	 *   0 <= T_charge    <= 50 deg C
-	 * -20 <= T_discharge <= 60 deg C
-	 */
+	/* Operational temperature range */
 	.temp_charge_min    = CELSIUS_TO_DECI_KELVIN(0),
-	.temp_charge_max    = CELSIUS_TO_DECI_KELVIN(50),
-	.temp_discharge_min = CELSIUS_TO_DECI_KELVIN(-20),
+	.temp_charge_max    = CELSIUS_TO_DECI_KELVIN(45),
+	.temp_discharge_min = CELSIUS_TO_DECI_KELVIN(-10),
 	.temp_discharge_max = CELSIUS_TO_DECI_KELVIN(60),
 
 	/* Pre-charge values. */

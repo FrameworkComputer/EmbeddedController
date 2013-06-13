@@ -69,7 +69,7 @@ static const struct battery_info info = {
 	.temp_discharge_max = CELSIUS_TO_DECI_KELVIN(60),
 
 	/* Pre-charge current: I <= 0.01C */
-	.precharge_current  = (int)(DESIGN_CAPACITY * 0.01),
+	.precharge_current  = 64, /* mA */
 };
 
 static inline void limit_value(int *val, int limit)
