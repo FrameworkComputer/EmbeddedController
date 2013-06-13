@@ -18,7 +18,7 @@
 #include "util.h"
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_HI_Z
+#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
@@ -51,17 +51,17 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Other inputs */
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	/* Outputs */
-	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_HI_Z, NULL},
+	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_ODR_HIGH, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
+	{"EC_INT",      GPIO_B, (1<<9),  GPIO_ODR_HIGH, NULL},
 	{"EN_PP1350",   GPIO_H, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"EN_PP5000",   GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
-	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_HI_Z, NULL},
-	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_HI_Z, NULL},
-	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_HI_Z, NULL},
-	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_HI_Z, NULL},
+	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_ODR_HIGH, NULL},
+	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_ODR_HIGH, NULL},
+	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_ODR_HIGH, NULL},
+	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
 	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},

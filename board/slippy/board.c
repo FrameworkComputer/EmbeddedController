@@ -98,7 +98,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_HI_Z_OPEN, NULL},
+	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_ODR_LOW, NULL},
 	{"PCH_RSMRST_L",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
@@ -109,11 +109,11 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"USB2_ENABLE",          LM4_GPIO_D, (1<<5), GPIO_OUT_LOW, NULL},
 
 	{"PCH_SUSACK_L",         LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
-	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_HI_Z, NULL},
-	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_HI_Z, NULL},
+	{"PCH_RTCRST_L",         LM4_GPIO_F, (1<<6), GPIO_ODR_HIGH, NULL},
+	{"PCH_SRTCRST_L",        LM4_GPIO_F, (1<<7), GPIO_ODR_HIGH, NULL},
 
-	{"BAT_LED0_L",           LM4_GPIO_N, (1<<6), GPIO_HI_Z, NULL},
-	{"BAT_LED1_L",           LM4_GPIO_N, (1<<4), GPIO_HI_Z, NULL},
+	{"BAT_LED0_L",           LM4_GPIO_N, (1<<6), GPIO_ODR_HIGH, NULL},
+	{"BAT_LED1_L",           LM4_GPIO_N, (1<<4), GPIO_ODR_HIGH, NULL},
 };
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */

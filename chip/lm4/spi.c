@@ -38,7 +38,7 @@ int spi_enable(int enable)
 
 		/* Make sure CS# is deselected */
 		gpio_set_level(GPIO_SPI_CSn, 1);
-		gpio_set_flags(GPIO_SPI_CSn, GPIO_HI_Z);
+		gpio_set_flags(GPIO_SPI_CSn, GPIO_ODR_HIGH);
 
 		/* PA2,4,5 normal function (high-Z GPIOs) */
 		gpio_set_alternate_function(LM4_GPIO_A, 0x34, -1);

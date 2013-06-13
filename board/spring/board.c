@@ -24,7 +24,7 @@
 #include "util.h"
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_HI_Z
+#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
 #define INT_BOTH_FLOATING	(GPIO_INPUT | GPIO_INT_BOTH)
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
@@ -74,7 +74,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW", GPIO_D, (1<<0),  GPIO_OUT_LOW, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"EC_INT",      GPIO_B, (1<<9),  GPIO_HI_Z, NULL},
+	{"EC_INT",      GPIO_B, (1<<9),  GPIO_ODR_HIGH, NULL},
 	{"ID_MUX",      GPIO_D, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
