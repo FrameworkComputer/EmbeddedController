@@ -102,7 +102,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 * 0 makes the signal high, and setting it to 1 makes the signal low. */
 	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_ODR_LOW, NULL},
 	{"PCH_RSMRST_L",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
-	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},
+	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
 	{"EC_EDP_VDD_EN",        LM4_GPIO_J, (1<<5), GPIO_OUT_LOW, NULL},
 
