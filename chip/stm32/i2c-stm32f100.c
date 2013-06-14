@@ -98,6 +98,7 @@ static uint16_t i2c_sr1[I2C_PORT_COUNT];
 /* Buffer for host commands (including version, error code and checksum) */
 static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
 static struct host_cmd_handler_args host_cmd_args;
+static uint8_t i2c_old_response;  /* Send an old-style response */
 
 /* Flag indicating if a command is currently in the buffer */
 static uint8_t rx_pending;
@@ -175,7 +176,7 @@ static void i2c_send_response(struct host_cmd_handler_args *args)
 	int sum = 0, i;
 
 	*out++ = args->result;
-	if (!args->i2c_old_response) {
+	if (!i2c_old_response) {
 		*out++ = size;
 		sum = args->result + size;
 	}
@@ -213,13 +214,13 @@ static void i2c_process_command(void)
 			args->result = EC_RES_INVALID_CHECKSUM;
 
 		buff += 3;
-		args->i2c_old_response = 0;
+		i2c_old_response = 0;
 	} else {
 		/* Old style command */
 		args->version = 0;
 		args->params_size = EC_HOST_PARAM_SIZE;	/* unknown */
 		buff++;
-		args->i2c_old_response = 1;
+		i2c_old_response = 1;
 	}
 
 	/* we have an available command : execute it */
