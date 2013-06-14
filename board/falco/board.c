@@ -98,6 +98,8 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
+	/* FIXME: Why is PL6 act like it is inverted. Setting value to
+	 * 0 makes the signal high, and setting it to 1 makes the signal low. */
 	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_ODR_LOW, NULL},
 	{"PCH_RSMRST_L",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_OUT_HIGH, NULL},

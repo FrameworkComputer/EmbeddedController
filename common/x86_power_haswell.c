@@ -239,9 +239,10 @@ void chipset_reset(int cold_reset)
 
 		/*
 		 * Pulse must be at least 16 PCI clocks long = 500 ns. The gpio
-		 * pin used by the EC is configured as open drain. Therefore,
-		 * the driving RCIN# low needs to the level 1 to enable the
-		 * FET and 0 to disable the FET. */
+		 * pin used by the EC is configured as open drain. However,
+		 * empirically it was deteremined the polarity of the pin is
+		 * inverted. No idea why. Therefore, the driving RCIN# low
+		 * needs to be set to level 1. FIXME: why? */
 		gpio_set_level(GPIO_PCH_RCIN_L, 1);
 		udelay(10);
 		gpio_set_level(GPIO_PCH_RCIN_L, 0);
