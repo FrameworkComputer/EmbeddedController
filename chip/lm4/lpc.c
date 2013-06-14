@@ -63,6 +63,7 @@ static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_cmd_handler_args host_cmd_args;
+static uint8_t host_cmd_flags;   /* Flags from host command */
 
 /* Params must be 32-bit aligned */
 static uint8_t params_copy[EC_HOST_PARAM_SIZE] __attribute__((aligned(4)));
@@ -185,7 +186,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 
 	/* New-style response */
 	lpc_host_args->flags =
-		(args->flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+		(host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
 		EC_HOST_ARGS_FLAG_TO_HOST;
 
 	lpc_host_args->data_size = size;
@@ -479,10 +480,10 @@ static void handle_host_write(int is_cmd)
 
 	host_cmd_args.result = EC_RES_SUCCESS;
 	host_cmd_args.send_response = lpc_send_response;
-	host_cmd_args.flags = lpc_host_args->flags;
+	host_cmd_flags = lpc_host_args->flags;
 
 	/* See if we have an old or new style command */
-	if (host_cmd_args.flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+	if (host_cmd_flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
 		/* New style command */
 		int size = lpc_host_args->data_size;
 		int csum, i;
@@ -508,7 +509,7 @@ static void handle_host_write(int is_cmd)
 			 * checksum is verified.
 			 */
 			csum = host_cmd_args.command +
-				host_cmd_args.flags +
+				host_cmd_flags +
 				host_cmd_args.version +
 				host_cmd_args.params_size;
 
