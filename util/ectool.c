@@ -3096,7 +3096,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (comm_init() < 0) {
+	if (comm_init()) {
 		fprintf(stderr, "Couldn't find EC\n");
 		goto out;
 	}
