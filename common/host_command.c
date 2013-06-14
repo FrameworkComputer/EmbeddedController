@@ -132,6 +132,189 @@ void host_command_received(struct host_cmd_handler_args *args)
 	host_send_response(args);
 }
 
+/* TODO(rspangler): less awful names. */
+static struct host_cmd_handler_args args0;
+static struct host_packet *pkt0;
+
+void host_packet_respond(struct host_cmd_handler_args *args)
+{
+	struct ec_host_response *r = (struct ec_host_response *)pkt0->response;
+	uint8_t *out = (uint8_t *)pkt0->response;
+	int csum = 0;
+	int i;
+
+	/* Clip result size to what we can accept */
+	if (args->result) {
+		/* Error results don't have data */
+		args->response_size = 0;
+	} else if (args->response_size > pkt0->response_max - sizeof(*r)) {
+		/* Too much data */
+		args->result = EC_RES_RESPONSE_TOO_BIG;
+		args->response_size = 0;
+	}
+
+	/* Fill in response struct */
+	r->struct_version = EC_HOST_RESPONSE_VERSION;
+	r->checksum = 0;
+	r->result = args->result;
+	r->data_len = args->response_size;
+	r->reserved = 0;
+
+	/* Start checksum; this also advances *out to end of response */
+	for (i = sizeof(*r); i > 0; i--)
+		csum += *out++;
+
+	/* Checksum and copy response data, if any */
+	if (!args->response_size) {
+		/* No data to copy */
+	} else if (args->response != out) {
+		/* Copy and checksum */
+		const uint8_t *outr = (const uint8_t *)args->response;
+
+		for (i = args->response_size; i > 0; i--) {
+			*out = *outr++;
+			csum += *out++;
+		}
+	} else {
+		/* Response already in right place; just checksum it */
+		for (i = args->response_size; i > 0; i--)
+			csum += *out++;
+	}
+
+	/* Write checksum field so the entire packet sums to 0 */
+	r->checksum = (uint8_t)(-csum);
+
+	pkt0->response_size = sizeof(*r) + r->data_len;
+	pkt0->driver_result = args->result;
+	pkt0->send_response(pkt0);
+}
+
+int host_request_expected_size(const struct ec_host_request *r)
+{
+	/* Check host request version */
+	if (r->struct_version != EC_HOST_REQUEST_VERSION)
+		return 0;
+
+	/* Reserved byte should be 0 */
+	/* TODO: maybe we should have a header checksum instead? */
+	if (r->reserved)
+		return 0;
+
+	return sizeof(*r) + r->data_len;
+}
+
+void host_packet_receive(struct host_packet *pkt)
+{
+	const struct ec_host_request *r =
+		(const struct ec_host_request *)pkt->request;
+	const uint8_t *in = (const uint8_t *)pkt->request;
+	uint8_t *itmp = (uint8_t *)pkt->request_temp;
+	int csum = 0;
+	int i;
+
+	/* Track the packet we're handling */
+	pkt0 = pkt;
+
+	/* If driver indicates error, don't even look at the data */
+	if (pkt->driver_result) {
+		args0.result = pkt->driver_result;
+		goto host_packet_bad;
+	}
+
+	if (pkt->request_size < sizeof(*r)) {
+		/* Packet too small for even a header */
+		args0.result = EC_RES_REQUEST_TRUNCATED;
+		goto host_packet_bad;
+	}
+
+	if (pkt->request_size > pkt->request_max) {
+		/* Got a bigger request than the interface can handle */
+		args0.result = EC_RES_REQUEST_TRUNCATED;
+		goto host_packet_bad;
+	}
+
+	/*
+	 * Response buffer needs to be big enough for a header.  If it's not
+	 * we can't even return an error packet.
+	 */
+	ASSERT(pkt->response_max >= sizeof(struct ec_host_response));
+
+	/* Start checksum and copy request header if necessary */
+	if (pkt->request_temp) {
+		/* Copy to temp buffer and checksum */
+		for (i = sizeof(*r); i > 0; i--) {
+			*itmp = *in++;
+			csum += *itmp++;
+		}
+		r = (const struct ec_host_request *)pkt->request_temp;
+	} else {
+		/* Just checksum */
+		for (i = sizeof(*r); i > 0; i--)
+			csum += *in++;
+	}
+
+	if (r->struct_version != EC_HOST_REQUEST_VERSION) {
+		/* Request header we don't know how to handle */
+		args0.result = EC_RES_INVALID_HEADER;
+		goto host_packet_bad;
+	}
+
+	if (pkt->request_size < sizeof(*r) + r->data_len) {
+		/*
+		 * Packet too small for expected params.  Note that it's ok if
+		 * the received packet data is too big; some interfaces may pad
+		 * the data at the end (SPI) or may not know how big the
+		 * received data is (LPC).
+		 */
+		args0.result = EC_RES_REQUEST_TRUNCATED;
+		goto host_packet_bad;
+	}
+
+	/* Copy request data and validate checksum */
+	if (pkt->request_temp) {
+		/* Params go in temporary buffer */
+		args0.params = itmp;
+
+		/* Copy request data and checksum */
+		for (i = r->data_len; i > 0; i--) {
+			*itmp = *in++;
+			csum += *itmp++;
+		}
+	} else {
+		/* Params read directly from request */
+		args0.params = in;
+
+		/* Just checksum */
+		for (i = r->data_len; i > 0; i--)
+			csum += *in++;
+	}
+
+	/* Validate checksum */
+	if ((uint8_t)csum) {
+		args0.result = EC_RES_INVALID_CHECKSUM;
+		goto host_packet_bad;
+	}
+
+	/* Set up host command handler args */
+	args0.send_response = host_packet_respond;
+	args0.command = r->command;
+	args0.version = r->command_version;
+	args0.params_size = r->data_len;
+	args0.response = (struct ec_host_response *)(pkt->response) + 1;
+	args0.response_max = pkt->response_max -
+		sizeof(struct ec_host_response);
+	args0.response_size = 0;
+	args0.result = EC_RES_SUCCESS;
+
+	/* Chain to host command received */
+	host_command_received(&args0);
+	return;
+
+host_packet_bad:
+	/* Improperly formed packet from host, so send an error response */
+	host_packet_respond(&args0);
+}
+
 /**
  * Find a command by command number.
  *

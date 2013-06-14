@@ -62,11 +62,12 @@ static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
+static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
 static uint8_t host_cmd_flags;   /* Flags from host command */
 
 /* Params must be 32-bit aligned */
-static uint8_t params_copy[EC_HOST_PARAM_SIZE] __attribute__((aligned(4)));
+static uint8_t params_copy[EC_HOST_PACKET_SIZE] __attribute__((aligned(4)));
 static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
@@ -215,6 +216,28 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	 * IRQs
 	 */
 	LPC_POOL_CMD[1] = args->result;
+
+	/* Clear the busy bit */
+	task_disable_irq(LM4_IRQ_LPC);
+	LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_BUSY;
+	task_enable_irq(LM4_IRQ_LPC);
+}
+
+static void lpc_send_response_packet(struct host_packet *pkt)
+{
+	/* Ignore in-progress on LPC since interface is synchronous anyway */
+	if (pkt->driver_result == EC_RES_IN_PROGRESS)
+		return;
+
+	/*
+	 * Write result to the data byte.  This sets the TOH bit in the
+	 * status byte and triggers an IRQ on the host so the host can read
+	 * the result.
+	 *
+	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
+	 * IRQs
+	 */
+	LPC_POOL_CMD[1] = pkt->driver_result;
 
 	/* Clear the busy bit */
 	task_disable_irq(LM4_IRQ_LPC);
@@ -483,8 +506,25 @@ static void handle_host_write(int is_cmd)
 	host_cmd_flags = lpc_host_args->flags;
 
 	/* See if we have an old or new style command */
-	if (host_cmd_flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
-		/* New style command */
+	if (host_cmd_args.command == EC_COMMAND_PROTOCOL_3) {
+		lpc_packet.send_response = lpc_send_response_packet;
+
+		lpc_packet.request = (const void *)LPC_POOL_CMD_DATA;
+		lpc_packet.request_temp = params_copy;
+		lpc_packet.request_max = sizeof(params_copy);
+		/* Don't know the request size so pass in the entire buffer */
+		lpc_packet.request_size = EC_HOST_PACKET_SIZE;
+
+		lpc_packet.response = (void *)LPC_POOL_CMD_DATA;
+		lpc_packet.response_max = EC_HOST_PACKET_SIZE;
+		lpc_packet.response_size = 0;
+
+		lpc_packet.driver_result = EC_RES_SUCCESS;
+		host_packet_receive(&lpc_packet);
+		return;
+
+	} else if (host_cmd_flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
+		/* Version 2 (link) style command */
 		int size = lpc_host_args->data_size;
 		int csum, i;
 
@@ -761,9 +801,10 @@ static void lpc_init(void)
 	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
 	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
 
-	/* We support LPC args */
+	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
-		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED;
+		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
+		EC_HOST_CMD_FLAG_VERSION_3;
 
 	/* Enable LPC interrupt */
 	task_enable_irq(LM4_IRQ_LPC);

@@ -52,6 +52,8 @@ enum {
  * We allow a preamble and a header byte so that SPI can function at all.
  * We also add an 8-bit length so that we can tell that we got the whole
  * message, since the master decides how many bytes to read.
+ *
+ * TODO: move these constants to ec_commands.h
  */
 enum {
 	/* The bytes which appear before the header in a message */
@@ -85,6 +87,24 @@ static uint8_t in_msg[EC_HOST_PARAM_SIZE + SPI_MSG_PROTO_LEN];
 static uint8_t active;
 static uint8_t enabled;
 static struct host_cmd_handler_args args;
+static struct host_packet spi_packet;
+
+/*
+ * The AP blindly clocks back bytes over the SPI interface looking for the
+ * header bytes.  So this preamble must always precede the actual response
+ * packet.  The preamble must be 32-bit aligned so that the response buffer is
+ * also 32-bit aligned.
+ *
+ * Really, only HEADER_BYTE2 matters, since the SPI driver ignores everything
+ * until it sees that byte code.  Search for "spi-frame-header" in U-boot to
+ * see how that's implemented.
+ */
+static const uint8_t out_preamble[4] = {
+	SPI_MSG_PREAMBLE_BYTE,
+	SPI_MSG_PREAMBLE_BYTE,
+	SPI_MSG_HEADER_BYTE1,
+	SPI_MSG_HEADER_BYTE2,  /* This is the byte which matters */
+};
 
 /**
  * Wait until we have received a certain number of bytes
@@ -249,6 +269,28 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 }
 
 /**
+ * Called to send a response back to the host.
+ *
+ * Some commands can continue for a while. This function is called by
+ * host_command when it completes.
+ *
+ */
+static void spi_send_response_packet(struct host_packet *pkt)
+{
+	struct dma_channel *txdma;
+
+	/* If we are too late, don't bother */
+	if (!active)
+		return;
+
+	/* Transmit the reply */
+	txdma = dma_get_channel(DMAC_SPI1_TX);
+	dma_prepare_tx(&dma_tx_option,
+		       sizeof(out_preamble) + pkt->response_size, out_msg);
+	dma_go(txdma);
+}
+
+/**
  * Handle an event on the NSS pin
  *
  * A falling edge of NSS indicates that the master is starting a new
@@ -286,17 +328,73 @@ void spi_event(enum gpio_signal signal)
 		return;
 	}
 
-	if (in_msg[0] >= EC_CMD_VERSION0) {
+	if (in_msg[0] == EC_HOST_REQUEST_VERSION) {
+		/* Protocol version 3 */
+		struct ec_host_request *r = (struct ec_host_request *)in_msg;
+		int pkt_size;
+
+		/* Wait for the rest of the command header */
+		if (wait_for_bytes(rxdma, sizeof(*r), nss_reg, nss_mask)) {
+			setup_for_transaction();
+			return;
+		}
+
+		/*
+		 * Check how big the packet should be.  We can't just wait to
+		 * see how much data the host sends, because it will keep
+		 * sending dummy data until we respond.
+		 */
+		pkt_size = host_request_expected_size(r);
+		if (pkt_size == 0 || pkt_size > sizeof(in_msg)) {
+			setup_for_transaction();
+			return;
+		}
+
+		/* Wait for the packet data */
+		if (wait_for_bytes(rxdma, pkt_size, nss_reg, nss_mask)) {
+			setup_for_transaction();
+			return;
+		}
+
+		spi_packet.send_response = spi_send_response_packet;
+
+		spi_packet.request = in_msg;
+		spi_packet.request_temp = NULL;
+		spi_packet.request_max = sizeof(in_msg);
+		spi_packet.request_size = pkt_size;
+
+		/* Response must start with the preamble */
+		memcpy(out_msg, out_preamble, sizeof(out_preamble));
+		spi_packet.response = out_msg + sizeof(out_preamble);
+		spi_packet.response_max =
+			sizeof(out_msg) - sizeof(out_preamble);
+		spi_packet.response_size = 0;
+
+		spi_packet.driver_result = EC_RES_SUCCESS;
+
+		host_packet_receive(&spi_packet);
+		return;
+
+	} else if (in_msg[0] >= EC_CMD_VERSION0) {
+		/*
+		 * Protocol version 2
+		 *
+		 * TODO: remove once all systems upgraded to version 3 */
 		args.version = in_msg[0] - EC_CMD_VERSION0;
 		args.command = in_msg[1];
 		args.params_size = in_msg[2];
 		args.params = in_msg + 3;
 	} else {
+		/*
+		 * Protocol version 1
+		 *
+		 * TODO: remove; nothing sends this.  Ignore this packet?
+		 * Send back an error response?
+		 */
 		args.version = 0;
 		args.command = in_msg[0];
 		args.params = in_msg + 1;
 		args.params_size = 0;
-		args.version = 0;
 	}
 
 	/* Wait for parameters */
