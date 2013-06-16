@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -32,6 +33,10 @@ static uint8_t mock_state[KEYBOARD_COLS];
 static int column_driven;
 static int fifo_add_count;
 static int lid_open;
+#ifdef EMU_BUILD
+static int hibernated;
+static int reset_called;
+#endif
 
 #ifdef CONFIG_LID_SWITCH
 int lid_is_open(void)
@@ -67,7 +72,23 @@ int keyboard_fifo_add(const uint8_t *buffp)
 	return EC_SUCCESS;
 }
 
-void mock_key(int r, int c, int keydown)
+#ifdef EMU_BUILD
+void system_hibernate(uint32_t s, uint32_t us)
+{
+	hibernated = 1;
+}
+
+void chipset_reset(int cold_reset)
+{
+	reset_called = 1;
+}
+#endif
+
+#define mock_defined_key(k, p) mock_key(KEYBOARD_ROW_ ## k, \
+					KEYBOARD_COL_ ## k, \
+					p)
+
+static void mock_key(int r, int c, int keydown)
 {
 	ccprintf("%s (%d, %d)\n", keydown ? "Pressing" : "Releasing", r, c);
 	if (keydown)
@@ -76,7 +97,7 @@ void mock_key(int r, int c, int keydown)
 		mock_state[c] &= ~(1 << r);
 }
 
-int expect_keychange(void)
+static int expect_keychange(void)
 {
 	int old_count = fifo_add_count;
 	int retry = KEYDOWN_RETRY;
@@ -89,7 +110,7 @@ int expect_keychange(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-int expect_no_keychange(void)
+static int expect_no_keychange(void)
 {
 	int old_count = fifo_add_count;
 	task_wake(TASK_ID_KEYSCAN);
@@ -97,7 +118,19 @@ int expect_no_keychange(void)
 	return (fifo_add_count == old_count) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
-int verify_key_presses(int old, int expected)
+static int host_command_simulate(int r, int c, int keydown)
+{
+	struct ec_params_mkbp_simulate_key params;
+
+	params.col = c;
+	params.row = r;
+	params.pressed = keydown;
+
+	return test_send_host_command(EC_CMD_MKBP_SIMULATE_KEY, 0, &params,
+				      sizeof(params), NULL, 0);
+}
+
+static int verify_key_presses(int old, int expected)
 {
 	int retry = KEYDOWN_RETRY;
 
@@ -114,7 +147,7 @@ int verify_key_presses(int old, int expected)
 	}
 }
 
-int deghost_test(void)
+static int deghost_test(void)
 {
 	/* Test we can detect a keypress */
 	mock_key(1, 1, 1);
@@ -157,7 +190,7 @@ int deghost_test(void)
 	return EC_SUCCESS;
 }
 
-int debounce_test(void)
+static int debounce_test(void)
 {
 	int old_count = fifo_add_count;
 	mock_key(1, 1, 1);
@@ -217,8 +250,79 @@ int debounce_test(void)
 	return EC_SUCCESS;
 }
 
+static int simulate_key_test(void)
+{
+	host_command_simulate(1, 1, 1);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+	host_command_simulate(1, 1, 0);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
+#ifdef EMU_BUILD
+static int wait_variable_set(int *var)
+{
+	int retry = KEYDOWN_RETRY;
+	*var = 0;
+	task_wake(TASK_ID_KEYSCAN);
+	while (retry--) {
+		msleep(KEYDOWN_DELAY_MS);
+		if (*var == 1)
+			return EC_SUCCESS;
+	}
+	return EC_ERROR_UNKNOWN;
+}
+
+static int verify_variable_not_set(int *var)
+{
+	*var = 0;
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(NO_KEYDOWN_DELAY_MS);
+	return *var ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+}
+
+static int runtime_key_test(void)
+{
+	/* Alt-VolUp-H triggers system hibernation */
+	mock_defined_key(LEFT_ALT, 1);
+	mock_defined_key(VOL_UP, 1);
+	mock_defined_key(KEY_H, 1);
+	TEST_ASSERT(wait_variable_set(&hibernated) == EC_SUCCESS);
+	mock_defined_key(LEFT_ALT, 0);
+	mock_defined_key(VOL_UP, 0);
+	mock_defined_key(KEY_H, 0);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+
+	/* Alt-VolUp-R triggers chipset reset */
+	mock_defined_key(RIGHT_ALT, 1);
+	mock_defined_key(VOL_UP, 1);
+	mock_defined_key(KEY_R, 1);
+	TEST_ASSERT(wait_variable_set(&reset_called) == EC_SUCCESS);
+	mock_defined_key(RIGHT_ALT, 0);
+	mock_defined_key(VOL_UP, 0);
+	mock_defined_key(KEY_R, 0);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+
+	/* Must press exactly 3 keys to trigger runtime keys */
+	mock_defined_key(LEFT_ALT, 1);
+	mock_defined_key(KEY_H, 1);
+	mock_defined_key(KEY_R, 1);
+	mock_defined_key(VOL_UP, 1);
+	TEST_ASSERT(verify_variable_not_set(&hibernated) == EC_SUCCESS);
+	TEST_ASSERT(verify_variable_not_set(&reset_called) == EC_SUCCESS);
+	mock_defined_key(VOL_UP, 0);
+	mock_defined_key(KEY_R, 0);
+	mock_defined_key(KEY_H, 0);
+	mock_defined_key(LEFT_ALT, 0);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_LID_SWITCH
-int lid_test(void)
+static int lid_test(void)
 {
 	lid_open = 0;
 	mock_key(1, 1, 1);
@@ -243,6 +347,10 @@ void run_test(void)
 
 	RUN_TEST(deghost_test);
 	RUN_TEST(debounce_test);
+	RUN_TEST(simulate_key_test);
+#ifdef EMU_BUILD
+	RUN_TEST(runtime_key_test);
+#endif
 #ifdef CONFIG_LID_SWITCH
 	RUN_TEST(lid_test);
 #endif
