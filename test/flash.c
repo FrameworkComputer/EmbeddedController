@@ -162,73 +162,48 @@ static int verify_write(int offset, int size, const char *data)
 
 int host_command_write(int offset, int size, const char *data)
 {
-	struct host_cmd_handler_args args;
 	struct ec_params_flash_write params;
 
 	params.offset = offset;
 	params.size = size;
 	memcpy(params.data, data, size);
 
-	args.version = 0;
-	args.command = EC_CMD_FLASH_WRITE;
-	args.params = &params;
-	args.params_size = sizeof(params);
-	args.response = NULL;
-	args.response_max = 0;
-	args.response_size = 0;
-
-	return host_command_process(&args);
+	return test_send_host_command(EC_CMD_FLASH_WRITE, 0, &params,
+				      sizeof(params), NULL, 0);
 }
 
 int host_command_erase(int offset, int size)
 {
-	struct host_cmd_handler_args args;
 	struct ec_params_flash_write params;
 
 	params.offset = offset;
 	params.size = size;
 
-	args.version = 0;
-	args.command = EC_CMD_FLASH_ERASE;
-	args.params = &params;
-	args.params_size = sizeof(params);
-	args.response = NULL;
-	args.response_max = 0;
-	args.response_size = 0;
-
-	return host_command_process(&args);
+	return test_send_host_command(EC_CMD_FLASH_ERASE, 0, &params,
+				      sizeof(params), NULL, 0);
 }
 
 int host_command_protect(uint32_t mask, uint32_t flags,
 			 uint32_t *flags_out, uint32_t *valid_out,
 			 uint32_t *writable_out)
 {
-	struct host_cmd_handler_args args;
 	struct ec_params_flash_protect params;
-	struct ec_response_flash_protect *r =
-		(struct ec_response_flash_protect *)&params;
+	struct ec_response_flash_protect resp;
 	int res;
 
 	params.mask = mask;
 	params.flags = flags;
 
-	args.version = 1;
-	args.command = EC_CMD_FLASH_PROTECT;
-	args.params = &params;
-	args.params_size = sizeof(params);
-	args.response = &params;
-	args.response_max = EC_HOST_PARAM_SIZE;
-	args.response_size = 0;
-
-	res = host_command_process(&args);
+	res = test_send_host_command(EC_CMD_FLASH_PROTECT, 1, &params,
+				     sizeof(params), &resp, sizeof(resp));
 
 	if (res == EC_RES_SUCCESS) {
 		if (flags_out)
-			*flags_out = r->flags;
+			*flags_out = resp.flags;
 		if (valid_out)
-			*valid_out = r->valid_flags;
+			*valid_out = resp.valid_flags;
 		if (writable_out)
-			*writable_out = r->writable_flags;
+			*writable_out = resp.writable_flags;
 	}
 
 	return res;
