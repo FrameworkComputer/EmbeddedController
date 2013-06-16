@@ -26,6 +26,10 @@ static int last_erase_size;
 
 static int mock_wp = -1;
 
+static int mock_flash_op_fail = EC_SUCCESS;
+
+const char *testdata = "TestData0000000"; /* 16 bytes */
+
 #define TEST_STATE_CLEAN_UP    (1 << 0)
 #define TEST_STATE_STEP_2      (1 << 1)
 #define TEST_STATE_STEP_3      (1 << 2)
@@ -56,6 +60,8 @@ void host_send_response(struct host_cmd_handler_args *args)
 
 int flash_write(int offset, int size, const char *data)
 {
+	if (mock_flash_op_fail != EC_SUCCESS)
+		return mock_flash_op_fail;
 	last_write_offset = offset;
 	last_write_size = size;
 	memcpy(last_write_data, data, size);
@@ -64,6 +70,8 @@ int flash_write(int offset, int size, const char *data)
 
 int flash_erase(int offset, int size)
 {
+	if (mock_flash_op_fail != EC_SUCCESS)
+		return mock_flash_op_fail;
 	last_erase_offset = offset;
 	last_erase_size = size;
 	return EC_SUCCESS;
@@ -114,28 +122,28 @@ static int verify_write(int offset, int size, const char *data)
 #define VERIFY_NO_WRITE(off, sz, d) \
 	do { \
 		begin_verify(); \
-		host_command_write(off, sz, d); \
+		TEST_ASSERT(host_command_write(off, sz, d) != EC_SUCCESS); \
 		TEST_ASSERT(last_write_offset == -1 && last_write_size == -1); \
 	} while (0)
 
 #define VERIFY_NO_ERASE(off, sz) \
 	do { \
 		begin_verify(); \
-		host_command_erase(off, sz); \
+		TEST_ASSERT(host_command_erase(off, sz) != EC_SUCCESS); \
 		TEST_ASSERT(last_erase_offset == -1 && last_erase_size == -1); \
 	} while (0)
 
 #define VERIFY_WRITE(off, sz, d) \
 	do { \
 		begin_verify(); \
-		host_command_write(off, sz, d); \
+		TEST_ASSERT(host_command_write(off, sz, d) == EC_SUCCESS); \
 		TEST_ASSERT(verify_write(off, sz, d) == EC_SUCCESS); \
 	} while (0)
 
 #define VERIFY_ERASE(off, sz) \
 	do { \
 		begin_verify(); \
-		host_command_erase(off, sz); \
+		TEST_ASSERT(host_command_erase(off, sz) == EC_SUCCESS); \
 		TEST_ASSERT(last_erase_offset == off && \
 			    last_erase_size == sz); \
 	} while (0)
@@ -158,6 +166,15 @@ static int verify_write(int offset, int size, const char *data)
 		TEST_ASSERT(host_command_protect(0, 0, &flags, NULL, NULL) == \
 			    EC_RES_SUCCESS); \
 		TEST_ASSERT((flags & (f)) == 0); \
+	} while (0)
+
+#define VERIFY_REGION_INFO(r, o, s) \
+	do { \
+		uint32_t offset, size; \
+		TEST_ASSERT(host_command_region_info(r, &offset, &size) == \
+			    EC_RES_SUCCESS); \
+		TEST_ASSERT(offset == (o)); \
+		TEST_ASSERT(size == (s)); \
 	} while (0)
 
 int host_command_write(int offset, int size, const char *data)
@@ -209,12 +226,29 @@ int host_command_protect(uint32_t mask, uint32_t flags,
 	return res;
 }
 
+int host_command_region_info(enum ec_flash_region reg, uint32_t *offset,
+				 uint32_t *size)
+{
+	struct ec_params_flash_region_info params;
+	struct ec_response_flash_region_info resp;
+	int res;
+
+	params.region = reg;
+
+	res = test_send_host_command(EC_CMD_FLASH_REGION_INFO, 1, &params,
+				     sizeof(params), &resp, sizeof(resp));
+
+	*offset = resp.offset;
+	*size = resp.size;
+
+	return res;
+}
+
 /*****************************************************************************/
 /* Tests */
 static int test_overwrite_current(void)
 {
 	uint32_t offset, size;
-	const char *d = "TestData0000000"; /* 16 bytes */
 
 	/* Test that we cannot overwrite current image */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
@@ -229,10 +263,11 @@ static int test_overwrite_current(void)
 	mock_is_running_img = 1;
 #endif
 
-	VERIFY_NO_ERASE(offset, sizeof(d));
-	VERIFY_NO_ERASE(offset + size - sizeof(d), sizeof(d));
-	VERIFY_NO_WRITE(offset, sizeof(d), d);
-	VERIFY_NO_WRITE(offset + size - sizeof(d), sizeof(d), d);
+	VERIFY_NO_ERASE(offset, sizeof(testdata));
+	VERIFY_NO_ERASE(offset + size - sizeof(testdata), sizeof(testdata));
+	VERIFY_NO_WRITE(offset, sizeof(testdata), testdata);
+	VERIFY_NO_WRITE(offset + size - sizeof(testdata), sizeof(testdata),
+			testdata);
 
 	return EC_SUCCESS;
 }
@@ -240,7 +275,6 @@ static int test_overwrite_current(void)
 static int test_overwrite_other(void)
 {
 	uint32_t offset, size;
-	const char *d = "TestData0000000"; /* 16 bytes */
 
 	/* Test that we can overwrite the other image */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
@@ -255,10 +289,48 @@ static int test_overwrite_other(void)
 	mock_is_running_img = 0;
 #endif
 
-	VERIFY_ERASE(offset, sizeof(d));
-	VERIFY_ERASE(offset + size - sizeof(d), sizeof(d));
-	VERIFY_WRITE(offset, sizeof(d), d);
-	VERIFY_WRITE(offset + size - sizeof(d), sizeof(d), d);
+	VERIFY_ERASE(offset, sizeof(testdata));
+	VERIFY_ERASE(offset + size - sizeof(testdata), sizeof(testdata));
+	VERIFY_WRITE(offset, sizeof(testdata), testdata);
+	VERIFY_WRITE(offset + size - sizeof(testdata), sizeof(testdata),
+		     testdata);
+
+	return EC_SUCCESS;
+}
+
+static int test_op_failure(void)
+{
+	mock_flash_op_fail = EC_ERROR_UNKNOWN;
+	VERIFY_NO_WRITE(CONFIG_FW_RO_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_WRITE(CONFIG_FW_RW_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_ERASE(CONFIG_FW_RO_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_ERASE(CONFIG_FW_RW_OFF, CONFIG_FLASH_ERASE_SIZE);
+	mock_flash_op_fail = EC_SUCCESS;
+
+	return EC_SUCCESS;
+}
+
+static int test_flash_info(void)
+{
+	struct ec_response_flash_info resp;
+
+	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 0, NULL, 0,
+		    &resp, sizeof(resp)) == EC_RES_SUCCESS);
+
+	TEST_CHECK((resp.flash_size == CONFIG_FLASH_SIZE) &&
+		   (resp.write_block_size == CONFIG_FLASH_WRITE_SIZE) &&
+		   (resp.erase_block_size == CONFIG_FLASH_ERASE_SIZE) &&
+		   (resp.protect_block_size == CONFIG_FLASH_BANK_SIZE));
+}
+
+static int test_region_info(void)
+{
+	VERIFY_REGION_INFO(EC_FLASH_REGION_RO,
+			   CONFIG_FW_RO_OFF, CONFIG_FW_RO_SIZE);
+	VERIFY_REGION_INFO(EC_FLASH_REGION_RW,
+			   CONFIG_FW_RW_OFF, CONFIG_FW_RW_SIZE);
+	VERIFY_REGION_INFO(EC_FLASH_REGION_WP_RO,
+			   CONFIG_FW_WP_RO_OFF, CONFIG_FW_WP_RO_SIZE);
 
 	return EC_SUCCESS;
 }
@@ -289,6 +361,12 @@ static int test_write_protect(void)
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 	TEST_ASSERT(flash_physical_erase(CONFIG_FW_RW_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
+
+	/* We should not even try to write/erase */
+	VERIFY_NO_ERASE(CONFIG_FW_RO_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_ERASE(CONFIG_FW_RW_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_WRITE(CONFIG_FW_RO_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_WRITE(CONFIG_FW_RW_OFF, sizeof(testdata), testdata);
 
 	return EC_SUCCESS;
 }
@@ -342,6 +420,9 @@ static void run_test_step1(void)
 
 	RUN_TEST(test_overwrite_current);
 	RUN_TEST(test_overwrite_other);
+	RUN_TEST(test_op_failure);
+	RUN_TEST(test_flash_info);
+	RUN_TEST(test_region_info);
 	RUN_TEST(test_write_protect);
 
 	if (test_get_error_count())
