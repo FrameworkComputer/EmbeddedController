@@ -97,6 +97,8 @@ static int user_pwm_duty = -1;
 static int pwm_fast_mode;
 
 static int pending_tsu6721_reset;
+static int pending_adc_watchdog_disable;
+static int pending_dev_type_update;
 static int restore_id_mux;
 
 static enum {
@@ -149,6 +151,14 @@ static const int apple_charger_type[4] = {I_LIMIT_500MA,
 					  I_LIMIT_2400MA};
 
 static int video_power_enabled;
+
+#define NON_STD_CHARGER_REDETECT_DELAY (4 * SECOND)
+static enum {
+	NO_REDETECT,
+	REDETECT_SCHEDULED,
+	REDETECTED,
+} charger_need_redetect = NO_REDETECT;
+static timestamp_t charger_redetection_time;
 
 static int get_video_power(void)
 {
@@ -566,6 +576,19 @@ static void usb_device_change(int dev_type)
 	if (dev_type != current_dev_type) {
 		usb_log_dev_type(dev_type);
 		keyboard_send_battery_key();
+		if ((dev_type & TSU6721_TYPE_NON_STD_CHG ||
+		     dev_type == TSU6721_TYPE_VBUS_DEBOUNCED) &&
+		    charger_need_redetect == NO_REDETECT) {
+			/* Schedule redetection */
+			charger_need_redetect = REDETECT_SCHEDULED;
+			charger_redetection_time = get_time();
+			charger_redetection_time.val +=
+				NON_STD_CHARGER_REDETECT_DELAY;
+		} else if (dev_type != TSU6721_TYPE_VBUS_DEBOUNCED &&
+			   !(dev_type & TSU6721_TYPE_NON_STD_CHG)) {
+			/* Not non-std charger. Disarm redetection timer. */
+			charger_need_redetect = NO_REDETECT;
+		}
 		current_dev_type = dev_type;
 	}
 
@@ -619,13 +642,24 @@ void extpower_charge_update(int force_update)
 		restore_id_mux = 0;
 	}
 
-	if (pending_tsu6721_reset) {
+	if (pending_adc_watchdog_disable) {
 		current_watchdog = ADC_WATCH_NONE;
 		adc_disable_watchdog();
+		pending_adc_watchdog_disable = 0;
+	}
+
+	if (pending_tsu6721_reset) {
 		tsu6721_reset();
 		force_update = 1;
 		pending_tsu6721_reset = 0;
-	} else
+	}
+
+	if (pending_dev_type_update) {
+		force_update = 1;
+		pending_dev_type_update = 0;
+	}
+
+	if (!force_update)
 		int_val = tsu6721_get_interrupts();
 
 	if (int_val & TSU6721_INT_DETACH)
@@ -675,6 +709,7 @@ static void adc_watchdog_interrupt(void)
 		/* Fall through */
 	case ADC_WATCH_TOAD:
 		pending_tsu6721_reset = 1;
+		pending_adc_watchdog_disable = 1;
 		task_disable_irq(STM32_IRQ_ADC_1);
 		task_wake(TASK_ID_CHARGER);
 		break;
@@ -785,6 +820,28 @@ static void usb_monitor_cable_det(void)
 		adc_watchdog_interrupt();
 }
 DECLARE_HOOK(HOOK_SECOND, usb_monitor_cable_det, HOOK_PRIO_DEFAULT);
+
+static void usb_charger_redetect(void)
+{
+	if (charger_need_redetect != REDETECT_SCHEDULED)
+		return;
+
+	if (timestamp_expired(charger_redetection_time, NULL)) {
+		CPRINTF("[%T USB Redetecting]\n");
+		/*
+		 * TSU6721 doesn't update device type if power or ID pin
+		 * is present. Therefore, if the device type is the same,
+		 * we need to reset TSU6721 to force a redetection.
+		 */
+		if (tsu6721_get_device_type() == current_dev_type)
+			pending_tsu6721_reset = 1;
+		else
+			pending_dev_type_update = 1;
+		charger_need_redetect = REDETECTED;
+		task_wake(TASK_ID_CHARGER);
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, usb_charger_redetect, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /*
