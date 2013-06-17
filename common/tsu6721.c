@@ -153,7 +153,7 @@ int tsu6721_init(void)
 	settings = tsu6721_read(TSU6721_REG_TIMER);
 	if (settings == 0xee)
 		return EC_ERROR_UNKNOWN;
-	settings = (settings & ~0x38) | 0x28;
+	settings = (settings & ~0x38);
 	res |= tsu6721_write(TSU6721_REG_TIMER, settings);
 
 	res |= tsu6721_set_interrupt_mask(TSU6721_INT_ATTACH |
