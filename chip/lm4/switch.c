@@ -416,7 +416,11 @@ static void switch_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
+#ifdef CONFIG_WP_ACTIVE_HIGH
 	gpio_enable_interrupt(GPIO_WP);
+#else
+	gpio_enable_interrupt(GPIO_WP_L);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
 

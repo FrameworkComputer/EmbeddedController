@@ -34,7 +34,6 @@
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_USB_PORT_POWER_DUMB
-#define CONFIG_WP_ACTIVE_HIGH
 
 #ifndef __ASSEMBLER__
 
@@ -83,7 +82,7 @@ enum gpio_signal {
 	GPIO_VCORE_PGOOD,          /* Power good on core VR */
 	GPIO_PCH_EDP_VDD_EN,       /* PCH wants EDP enabled */
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
-	GPIO_WP,                   /* Write protect input */
+	GPIO_WP_L,                 /* Write protect input */
 
 	/* Other inputs */
 	GPIO_FAN_ALERT_L,          /* From thermal sensor */
