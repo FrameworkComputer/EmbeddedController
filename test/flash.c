@@ -177,6 +177,17 @@ static int verify_write(int offset, int size, const char *data)
 		TEST_ASSERT(size == (s)); \
 	} while (0)
 
+int host_command_read(int offset, int size, char *out)
+{
+	struct ec_params_flash_read params;
+
+	params.offset = offset;
+	params.size = size;
+
+	return test_send_host_command(EC_CMD_FLASH_READ, 0, &params,
+				      sizeof(params), out, size);
+}
+
 int host_command_write(int offset, int size, const char *data)
 {
 	uint8_t buf[256];
@@ -248,6 +259,26 @@ int host_command_region_info(enum ec_flash_region reg, uint32_t *offset,
 
 /*****************************************************************************/
 /* Tests */
+static int test_read(void)
+{
+	char buf[16];
+
+#ifdef EMU_BUILD
+	int i;
+	/* Fill in some numbers so they are not all 0xff */
+	for (i = 0; i < sizeof(buf); ++i)
+		__host_flash[i] = i * i + i;
+#endif
+
+	/* The first few bytes in the flash should always contain some code */
+	TEST_ASSERT(!flash_is_erased(0, sizeof(buf)));
+
+	TEST_ASSERT(host_command_read(0, sizeof(buf), buf) == EC_RES_SUCCESS);
+	TEST_ASSERT_ARRAY_EQ(buf, (char *)CONFIG_FLASH_BASE, sizeof(buf));
+
+	return EC_SUCCESS;
+}
+
 static int test_overwrite_current(void)
 {
 	uint32_t offset, size;
@@ -420,6 +451,7 @@ static void run_test_step1(void)
 	test_reset();
 	mock_wp = 0;
 
+	RUN_TEST(test_read);
 	RUN_TEST(test_overwrite_current);
 	RUN_TEST(test_overwrite_other);
 	RUN_TEST(test_op_failure);
