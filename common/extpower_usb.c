@@ -575,7 +575,6 @@ static void usb_device_change(int dev_type)
 
 	if (dev_type != current_dev_type) {
 		usb_log_dev_type(dev_type);
-		keyboard_send_battery_key();
 		if ((dev_type & TSU6721_TYPE_NON_STD_CHG ||
 		     dev_type == TSU6721_TYPE_VBUS_DEBOUNCED) &&
 		    charger_need_redetect == NO_REDETECT) {
@@ -590,6 +589,7 @@ static void usb_device_change(int dev_type)
 			charger_need_redetect = NO_REDETECT;
 		}
 		current_dev_type = dev_type;
+		keyboard_send_battery_key();
 	}
 
 	if (dev_type)
