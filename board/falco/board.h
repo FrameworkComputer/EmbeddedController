@@ -27,6 +27,7 @@
 #ifdef HAS_TASK_KEYPROTO
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
+#define CONFIG_LED_FALCO
 #define CONFIG_LID_SWITCH
 #define CONFIG_LPC
 #define CONFIG_PECI
@@ -190,7 +191,6 @@ enum board_version {
 	BOARD_VERSION_PROTO1 = 0,
 	BOARD_VERSION_EVT = 1,
 };
-
 
 #endif /* !__ASSEMBLER__ */
 
