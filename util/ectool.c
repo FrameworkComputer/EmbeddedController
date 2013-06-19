@@ -329,6 +329,39 @@ int cmd_hello(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_test(int argc, char *argv[])
+{
+	struct ec_params_test_protocol p = {
+		.buf = "0123456789abcdef0123456789ABCDEF"
+	};
+	struct ec_response_test_protocol r;
+	int rv;
+	char *e;
+
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s result length\n", argv[0]);
+		return -1;
+	}
+
+	p.ec_result = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "invalid param (result)\n");
+		return -1;
+	}
+	p.ret_len = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "invalid param (length)\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TEST_PROTOCOL, 0, &p, sizeof(p), &r, sizeof(r));
+	printf("rv = %d\n", rv);
+
+	return rv;
+}
+
+
+
 int cmd_cmdversions(int argc, char *argv[])
 {
 	struct ec_params_get_cmd_versions p;
@@ -3067,6 +3100,7 @@ const struct command commands[] = {
 	{"switches", cmd_switches},
 	{"temps", cmd_temperature},
 	{"tempsinfo", cmd_temp_sensor_info},
+	{"test", cmd_test},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
 	{"tmp006cal", cmd_tmp006cal},

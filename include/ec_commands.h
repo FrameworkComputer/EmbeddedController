@@ -484,6 +484,23 @@ struct ec_response_get_comms_status {
 	uint32_t flags;		/* Mask of enum ec_comms_status */
 } __packed;
 
+/*
+ * Fake a variety of responses, purely for testing purposes.
+ * FIXME: Would be nice to force checksum errors.
+ */
+#define EC_CMD_TEST_PROTOCOL		0x0a
+
+/* Tell the EC what to send back to us. */
+struct ec_params_test_protocol {
+	uint32_t ec_result;
+	uint32_t ret_len;
+	uint8_t buf[32];
+} __packed;
+
+/* Here it comes... */
+struct ec_response_test_protocol {
+	uint8_t buf[32];
+} __packed;
 
 /*****************************************************************************/
 /* Flash commands */

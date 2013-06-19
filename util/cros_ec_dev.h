@@ -19,7 +19,7 @@
  * @outdata: Outgoing data to EC
  * @outsize: Outgoing length in bytes
  * @indata: Where to put the incoming data from EC
- * @insize: Incoming length in bytes (filled in by EC)
+ * @insize: On call, how much we can accept. On return, how much we got.
  * @result: EC's response to the command (separate from communication failure)
  * ioctl returns zero on success, negative on error
  */

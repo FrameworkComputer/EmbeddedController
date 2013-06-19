@@ -525,6 +525,23 @@ DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOST_COMMAND_STATUS */
 
+/* Returns what we tell it to. */
+static int host_command_test_protocol(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_test_protocol *p = args->params;
+	struct ec_response_test_protocol *r = args->response;
+	int copy_len = MIN(p->ret_len, sizeof(r->buf)); /* p,r bufs same size */
+
+	memset(r->buf, 0, sizeof(r->buf));
+	memcpy(r->buf, p->buf, copy_len);
+	args->response_size = p->ret_len;
+
+	return p->ec_result;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TEST_PROTOCOL,
+		     host_command_test_protocol,
+		     EC_VER_MASK(0));
+
 /*****************************************************************************/
 /* Console commands */
 

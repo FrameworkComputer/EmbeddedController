@@ -24,6 +24,7 @@ static int ec_command_dev(int command, int version,
 			  void *indata, int insize)
 {
 	struct cros_ec_command s_cmd;
+	int r;
 
 	s_cmd.command = command;
 	s_cmd.version = version;
@@ -33,8 +34,14 @@ static int ec_command_dev(int command, int version,
 	s_cmd.insize = insize;
 	s_cmd.indata = indata;
 
-	if (ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd))
-		return -1;
+	r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
+	if (r < 0) {
+		fprintf(stderr, "ioctl %d, errno %d (%s), EC result %d\n",
+			r, errno, strerror(errno), s_cmd.result);
+		return r;
+	}
+	if (s_cmd.result != EC_RES_SUCCESS)
+		fprintf(stderr, "EC result %d\n", s_cmd.result);
 
 	return s_cmd.insize;
 }
