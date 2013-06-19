@@ -286,7 +286,8 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 	enum ec_status rv;
 
 	if (hcdebug && args->params_size)
-		CPRINTF("[%T HC 0x%02x:%.*h]\n", args->command,
+		CPRINTF("[%T HC V:%d VM:%d 0x%02x:%.*h]\n", args->version,
+			cmd->version_mask, args->command,
 			args->params_size, args->params);
 	else
 		CPRINTF("[%T HC 0x%02x]\n", args->command);
