@@ -85,6 +85,7 @@ enum ilim_config {
 #define DELAY_POWER_MS		20
 #define DELAY_USB_DP_DN_MS	20
 #define DELAY_ID_MUX_MS		30
+#define DELAY_CABLE_DET_MS	80
 
 /* Current sense resistor values */
 #define R_INPUT_MOHM 20 /* mOhm */
@@ -301,7 +302,7 @@ static int probe_video(int device_type)
 {
 	tsu6721_disable_interrupts();
 	gpio_set_level(GPIO_ID_MUX, 1);
-	msleep(DELAY_ID_MUX_MS);
+	msleep(DELAY_ID_MUX_MS + DELAY_CABLE_DET_MS);
 
 	if (adc_read_channel(ADC_CH_USB_DP_SNS) < VIDEO_ID_THRESHOLD) {
 		if (device_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
