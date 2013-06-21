@@ -16,21 +16,59 @@
 /* Divider to get microsecond for the clock */
 #define CLOCKSOURCE_DIVIDER (CPU_CLOCK / SECOND)
 
-#define TIM_WD_IRQ	STM32_IRQ_TIM1_UP_TIM16
-#define TIM_WD		1	/* Timer to use for watchdog */
+/*
+ * Trigger select mapping for slave timer from master timer.  This is
+ * unfortunately not very straightforward; there's no tidy way to do this
+ * algorithmically.  To avoid burning memory for a lookup table, use macros to
+ * compute the offset.  This also has the benefit that compilation will fail if
+ * an unsupported master/slave pairing is used.
+ *
+ * Slave        Master
+ *     1    15  2  3  4  (STM32F100 only)
+ *     2     9 10  3  4
+ *     3     9  2 11  4
+ *     4    10  2  3  9
+ *     9     2  3 10 11  (STM32L15x only)
+ *     --------------------
+ *     ts =  0  1  2  3
+ */
+#define STM32_TIM_TS_SLAVE_1_MASTER_15 0
+#define STM32_TIM_TS_SLAVE_1_MASTER_2  1
+#define STM32_TIM_TS_SLAVE_1_MASTER_3  2
+#define STM32_TIM_TS_SLAVE_1_MASTER_4  3
+#define STM32_TIM_TS_SLAVE_2_MASTER_9  0
+#define STM32_TIM_TS_SLAVE_2_MASTER_10 1
+#define STM32_TIM_TS_SLAVE_2_MASTER_3  2
+#define STM32_TIM_TS_SLAVE_2_MASTER_4  3
+#define STM32_TIM_TS_SLAVE_3_MASTER_9  0
+#define STM32_TIM_TS_SLAVE_3_MASTER_2  1
+#define STM32_TIM_TS_SLAVE_3_MASTER_11 2
+#define STM32_TIM_TS_SLAVE_3_MASTER_4  3
+#define STM32_TIM_TS_SLAVE_4_MASTER_10 0
+#define STM32_TIM_TS_SLAVE_4_MASTER_2  1
+#define STM32_TIM_TS_SLAVE_4_MASTER_3  2
+#define STM32_TIM_TS_SLAVE_4_MASTER_9  3
+#define STM32_TIM_TS_SLAVE_9_MASTER_2  0
+#define STM32_TIM_TS_SLAVE_9_MASTER_3  1
+#define STM32_TIM_TS_SLAVE_9_MASTER_10 2
+#define STM32_TIM_TS_SLAVE_9_MASTER_11 3
+#define TSMAP1(slave, master) STM32_TIM_TS_SLAVE_ ## slave ## _MASTER_ ## master
+#define TSMAP(slave, master) TSMAP1(slave, master)
 
 /*
- * TIM_CLOCK_MSB and TIM_CLOCK_LSB must be defined per board. The available
- * values are 2, 3, and 4. This gives us flexibility to make any of the three
- * timer as a PWM source.
+ * Timers are defined per board.  This gives us flexibility to work around
+ * timers which are dedicated to board-specific PWM sources.
  */
 #define IRQ_TIM(n) STM32_CAT(STM32_IRQ_TIM, n, )
 #define IRQ_MSB IRQ_TIM(TIM_CLOCK_MSB)
 #define IRQ_LSB IRQ_TIM(TIM_CLOCK_LSB)
+#define IRQ_WD  IRQ_TIM(TIM_WATCHDOG)
 
-enum {
-	TIM_WD_BASE	= STM32_TIM1_BASE,
-};
+/* TIM1 has fancy names for its IRQs; remap count-up IRQ for the macro above */
+#define STM32_IRQ_TIM1 STM32_IRQ_TIM1_UP_TIM16
+
+#define TIM_BASE(n) STM32_CAT(STM32_TIM, n, _BASE)
+#define TIM_WD_BASE TIM_BASE(TIM_WATCHDOG)
 
 static uint32_t last_deadline;
 
@@ -123,6 +161,16 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(IRQ_MSB, __hw_clock_source_irq, 1);
 DECLARE_IRQ(IRQ_LSB, __hw_clock_source_irq, 1);
 
+void __hw_timer_enable_clock(int n)
+{
+	if (n == 1)  /* STM32F only */
+		STM32_RCC_APB2ENR |= 1 << 11;
+	else if (n >= 2 && n <= 7)
+		STM32_RCC_APB1ENR |= 1 << (n - 2);
+	else if (n >= 9 && n <= 11)  /* STM32L only */
+		STM32_RCC_APB2ENR |= 1 << (n - 7);
+}
+
 int __hw_clock_source_init(uint32_t start_t)
 {
 	/*
@@ -132,8 +180,8 @@ int __hw_clock_source_init(uint32_t start_t)
 	 */
 
 	/* Enable TIM_CLOCK_MSB and TIM_CLOCK_LSB clocks */
-	STM32_RCC_APB1ENR |= (1 << (TIM_CLOCK_MSB - 2)) |
-			     (1 << (TIM_CLOCK_LSB - 2));
+	__hw_timer_enable_clock(TIM_CLOCK_MSB);
+	__hw_timer_enable_clock(TIM_CLOCK_LSB);
 
 	/*
 	 * Timer configuration : Upcounter, counter disabled, update event only
@@ -147,9 +195,11 @@ int __hw_clock_source_init(uint32_t start_t)
 	 */
 	STM32_TIM_CR2(TIM_CLOCK_MSB) = 0x0000;
 	STM32_TIM_CR2(TIM_CLOCK_LSB) = 0x0020;
-	/* TIM_CLOCK_MSB (slave mode) uses TIM_CLOCK_LSB as internal trigger */
-	STM32_TIM_SMCR(TIM_CLOCK_MSB) = 0x0007 | ((TIM_CLOCK_LSB - 1) << 4);
+
+	STM32_TIM_SMCR(TIM_CLOCK_MSB) = 0x0007 |
+		(TSMAP(TIM_CLOCK_MSB, TIM_CLOCK_LSB) << 4);
 	STM32_TIM_SMCR(TIM_CLOCK_LSB) = 0x0000;
+
 	/* Auto-reload value : 16-bit free-running counters */
 	STM32_TIM_ARR(TIM_CLOCK_MSB) = 0xffff;
 	STM32_TIM_ARR(TIM_CLOCK_LSB) = 0xffff;
@@ -184,12 +234,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	return IRQ_LSB;
 }
 
-/*
- * We don't have TIM1 on STM32L, so don't support this function for now.  TIM5
- * doesn't appear to exist in either variant, and TIM9 cannot be triggered as a
- * slave from TIM4. We could perhaps use TIM9 as our fast counter on STM32L.
- */
-#if defined(CONFIG_WATCHDOG) && !defined(CHIP_VARIANT_stm32l15x)
+#ifdef CONFIG_WATCHDOG_HELP
 
 void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
@@ -201,8 +246,8 @@ void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	watchdog_trace(excep_lr, excep_sp);
 }
 
-void IRQ_HANDLER(TIM_WD_IRQ)(void) __attribute__((naked));
-void IRQ_HANDLER(TIM_WD_IRQ)(void)
+void IRQ_HANDLER(IRQ_WD)(void) __attribute__((naked));
+void IRQ_HANDLER(IRQ_WD)(void)
 {
 	/* Naked call so we can extract raw LR and SP */
 	asm volatile("mov r0, lr\n"
@@ -215,9 +260,9 @@ void IRQ_HANDLER(TIM_WD_IRQ)(void)
 		     "pop {r0, lr}\n"
 		     "b task_resched_if_needed\n");
 }
-const struct irq_priority IRQ_BUILD_NAME(prio_, TIM_WD_IRQ, )
+const struct irq_priority IRQ_BUILD_NAME(prio_, IRQ_WD, )
 	__attribute__((section(".rodata.irqprio")))
-		= {TIM_WD_IRQ, 0}; /* put the watchdog at the highest
+		= {IRQ_WD, 0}; /* put the watchdog at the highest
 					    priority */
 
 void hwtimer_setup_watchdog(void)
@@ -225,11 +270,7 @@ void hwtimer_setup_watchdog(void)
 	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
 
 	/* Enable clock */
-#if TIM_WD == 1
-	STM32_RCC_APB2ENR |= 1 << 11;
-#else
-	STM32_RCC_APB1ENR |= 1 << (TIM_WD - 2);
-#endif
+	__hw_timer_enable_clock(TIM_WATCHDOG);
 
 	/*
 	 * Timer configuration : Down counter, counter disabled, update
@@ -238,7 +279,7 @@ void hwtimer_setup_watchdog(void)
 	timer->cr1 = 0x0014 | (1 << 7);
 
 	/* TIM (slave mode) uses TIM_CLOCK_LSB as internal trigger */
-	timer->smcr = 0x0007 | ((TIM_CLOCK_LSB - 1) << 4);
+	timer->smcr = 0x0007 | (TSMAP(TIM_WATCHDOG, TIM_CLOCK_LSB) << 4);
 
 	/*
 	 * The auto-reload value is based on the period between rollovers for
@@ -247,7 +288,7 @@ void hwtimer_setup_watchdog(void)
 	 * to obtain the number of times TIM_CLOCK_LSB can overflow before we
 	 * generate an interrupt.
 	 */
-	timer->arr = timer->cnt = WATCHDOG_PERIOD_MS * 1000 / (1 << 16);
+	timer->arr = timer->cnt = WATCHDOG_PERIOD_MS * MSEC / (1 << 16);
 
 	/* count on every TIM_CLOCK_LSB overflow */
 	timer->psc = 0;
@@ -262,7 +303,7 @@ void hwtimer_setup_watchdog(void)
 	timer->cr1 |= 1;
 
 	/* Enable timer interrupts */
-	task_enable_irq(TIM_WD_IRQ);
+	task_enable_irq(IRQ_WD);
 }
 
 void hwtimer_reset_watchdog(void)
@@ -272,4 +313,4 @@ void hwtimer_reset_watchdog(void)
 	timer->cnt = timer->arr;
 }
 
-#endif  /* defined(CONFIG_WATCHDOG) && !defined(CHIP_VARIANT_stm32l15x) */
+#endif  /* defined(CONFIG_WATCHDOG) */

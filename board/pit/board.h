@@ -18,7 +18,8 @@
 #define CONFIG_ASSERT_HELP
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_PANIC_HELP
-#define  CONFIG_TASK_PROFILING
+#define CONFIG_TASK_PROFILING
+#define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
@@ -44,7 +45,6 @@
 #ifdef PORT_TO_PIT
 /* TODO(rspangler): enable these features when they compile */
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_WATCHDOG_HELP
 #endif
 
 #ifndef __ASSEMBLER__
@@ -74,7 +74,8 @@
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
-#define TIM_CLOCK_LSB 4
+#define TIM_CLOCK_LSB 9
+#define TIM_WATCHDOG  4
 
 /* GPIO signal list */
 enum gpio_signal {

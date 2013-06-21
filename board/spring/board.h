@@ -67,6 +67,7 @@
 /* Timer selection */
 #define TIM_CLOCK_MSB 2
 #define TIM_CLOCK_LSB 4
+#define TIM_WATCHDOG  1
 
 /* ADC signal */
 enum adc_channel {
