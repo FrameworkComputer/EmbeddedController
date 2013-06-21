@@ -63,7 +63,11 @@ int tsu6721_enable_interrupts(void)
 int  tsu6721_disable_interrupts(void)
 {
 	int ctrl = tsu6721_read(TSU6721_REG_CONTROL);
-	return tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
+	int rv;
+
+	rv = tsu6721_write(TSU6721_REG_CONTROL, ctrl | 0x1);
+	tsu6721_get_interrupts();
+	return rv;
 }
 
 int  tsu6721_set_interrupt_mask(uint16_t mask)
