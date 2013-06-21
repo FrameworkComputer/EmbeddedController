@@ -5,6 +5,7 @@
 
 /* Flash memory module for Chrome EC */
 
+#include "clock.h"
 #include "console.h"
 #include "flash.h"
 #include "registers.h"
@@ -21,9 +22,9 @@
 #define CYCLE_PER_FLASH_LOOP 10
 
 /* Flash page programming timeout.  This is 2x the datasheet max. */
-#define FLASH_TIMEOUT_US 16000
-#define FLASH_TIMEOUT_LOOP \
-	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
+#define FLASH_TIMEOUT_MS 16
+
+static int flash_timeout_loop;
 
 /**
  * Lock all the locks.
@@ -140,7 +141,7 @@ void  __attribute__((section(".iram.text")))
 	interrupt_disable();
 
 	/* Wait for ready  */
-	for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
+	for (i = 0; (STM32_FLASH_SR & 1) && (i < flash_timeout_loop) ;
 	     i++)
 		;
 
@@ -152,7 +153,7 @@ void  __attribute__((section(".iram.text")))
 		*addr++ = *data++;
 
 	/* Wait for writes to complete */
-	for (i = 0; ((STM32_FLASH_SR & 9) != 8) && (i < FLASH_TIMEOUT_LOOP) ;
+	for (i = 0; ((STM32_FLASH_SR & 9) != 8) && (i < flash_timeout_loop) ;
 	     i++)
 		;
 
@@ -191,6 +192,10 @@ int flash_physical_write(int offset, int size, const char *data)
 	if ((offset | size) & (CONFIG_FLASH_WRITE_SIZE - 1))
 		word_mode = 1;
 
+	/* Update flash timeout based on current clock speed */
+	flash_timeout_loop = FLASH_TIMEOUT_MS * (clock_get_freq() / MSEC) /
+		CYCLE_PER_FLASH_LOOP;
+
 	while (size > 0) {
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
@@ -204,7 +209,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 			/* Wait for writes to complete */
 			for (i = 0; ((STM32_FLASH_SR & 9) != 8) &&
-				     (i < FLASH_TIMEOUT_LOOP) ; i++)
+				     (i < flash_timeout_loop) ; i++)
 				;
 
 			size -= sizeof(uint32_t);
@@ -273,7 +278,7 @@ int flash_physical_erase(int offset, int size)
 		 */
 		watchdog_reload();
 
-		deadline.val = get_time().val + FLASH_TIMEOUT_US;
+		deadline.val = get_time().val + FLASH_TIMEOUT_MS * MSEC;
 		/* Wait for erase to complete */
 		while ((STM32_FLASH_SR & 1) &&
 		       (get_time().val < deadline.val)) {

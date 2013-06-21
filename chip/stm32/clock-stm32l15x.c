@@ -7,10 +7,16 @@
 
 #include "clock.h"
 #include "common.h"
+#include "console.h"
+#include "cpu.h"
+#include "hooks.h"
 #include "registers.h"
 #include "util.h"
 
-BUILD_ASSERT(CPU_CLOCK == 16000000);
+/* High-speed oscillator is 16MHz */
+#define HSI_CLOCK 16000000
+
+static int freq = HSI_CLOCK;
 
 void enable_sleep(uint32_t mask)
 {
@@ -20,6 +26,11 @@ void enable_sleep(uint32_t mask)
 void disable_sleep(uint32_t mask)
 {
 	/* low power mode not implemented */
+}
+
+int clock_get_freq(void)
+{
+	return freq;
 }
 
 void clock_init(void)
@@ -81,3 +92,51 @@ void clock_init(void)
 	STM32_RCC_CFGR = 0x00000001;
 #endif
 }
+
+static int command_clock(int argc, char **argv)
+{
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "hsi")) {
+		/* Switch to 16MHz HSI */
+		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_HSI;
+		freq = HSI_CLOCK;
+		/* Disable LPSDSR */
+		STM32_PWR_CR &= ~STM32_PWR_CR_LPSDSR;
+
+	} else if (!strcasecmp(argv[1], "msi2")) {
+		/* Switch to 2.097MHz MSI */
+		STM32_RCC_ICSCR =
+			(STM32_RCC_ICSCR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
+			STM32_RCC_ICSCR_MSIRANGE_2MHZ;
+		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_MSI;
+		freq = 1 << 21;
+
+	} else if (!strcasecmp(argv[1], "msi1")) {
+		/* Switch to 1.049MHz MSI */
+		STM32_RCC_ICSCR =
+			(STM32_RCC_ICSCR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
+			STM32_RCC_ICSCR_MSIRANGE_1MHZ;
+		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_MSI;
+		freq = 1 << 20;
+
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	/*
+	 * TODO(rspangler): try enabling LPSDSR in low power modes as well:
+	 *      STM32_PWR_CR |= STM32_PWR_CR_LPSDSR;
+	 */
+
+	/* Notify modules of frequency change */
+	hook_notify(HOOK_FREQ_CHANGE);
+
+	ccprintf("Clock frequency is now %d Hz\n", freq);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(clock, command_clock,
+			"hsi | msi2 | msi1",
+			"Set clock frequency",
+			NULL);

@@ -5,16 +5,15 @@
 
 /* Hardware timers driver */
 
+#include "clock.h"
 #include "common.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "panic.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "watchdog.h"
-
-/* Divider to get microsecond for the clock */
-#define CLOCKSOURCE_DIVIDER (CPU_CLOCK / SECOND)
 
 /*
  * Trigger select mapping for slave timer from master timer.  This is
@@ -171,6 +170,21 @@ void __hw_timer_enable_clock(int n)
 		STM32_RCC_APB2ENR |= 1 << (n - 7);
 }
 
+static void update_prescaler(void)
+{
+	/*
+	 * Pre-scaler value :
+	 * TIM_CLOCK_LSB is counting microseconds;
+	 * TIM_CLOCK_MSB is counting every TIM_CLOCK_LSB overflow.
+	 *
+	 * This will take effect at the next update event (when the current
+	 * prescaler counter ticks down, or if forced via EGR).
+	 */
+	STM32_TIM_PSC(TIM_CLOCK_MSB) = 0;
+	STM32_TIM_PSC(TIM_CLOCK_LSB) = (clock_get_freq() / SECOND) - 1;
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
+
 int __hw_clock_source_init(uint32_t start_t)
 {
 	/*
@@ -203,19 +217,15 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Auto-reload value : 16-bit free-running counters */
 	STM32_TIM_ARR(TIM_CLOCK_MSB) = 0xffff;
 	STM32_TIM_ARR(TIM_CLOCK_LSB) = 0xffff;
-	/*
-	 * Pre-scaler value :
-	 * TIM_CLOCK_LSB is counting microseconds, TIM_CLOCK_MSB is counting
-	 * every TIM_CLOCK_LSB overflow.
-	 */
-	STM32_TIM_PSC(TIM_CLOCK_MSB) = 0;
-	STM32_TIM_PSC(TIM_CLOCK_LSB) = CLOCKSOURCE_DIVIDER - 1;
+
+	/* Update prescaler */
+	update_prescaler();
 
 	/* Reload the pre-scaler */
 	STM32_TIM_EGR(TIM_CLOCK_MSB) = 0x0001;
 	STM32_TIM_EGR(TIM_CLOCK_LSB) = 0x0001;
 
-	/* setup the overflow interrupt on TIM_CLOCK_MSB */
+	/* Set up the overflow interrupt on TIM_CLOCK_MSB */
 	STM32_TIM_DIER(TIM_CLOCK_MSB) = 0x0001;
 	STM32_TIM_DIER(TIM_CLOCK_LSB) = 0x0000;
 

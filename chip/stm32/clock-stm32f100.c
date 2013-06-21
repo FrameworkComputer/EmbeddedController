@@ -261,6 +261,11 @@ void __idle(void)
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
 
+int clock_get_freq(void)
+{
+	return CPU_CLOCK;
+}
+
 void clock_init(void)
 {
 	/*

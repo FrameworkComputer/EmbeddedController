@@ -15,8 +15,10 @@
  * results in a breathing effect. It takes about 2sec for a full cycle.
  */
 
+#include "clock.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "power_led.h"
 #include "registers.h"
 #include "task.h"
@@ -73,14 +75,13 @@ static void power_led_use_pwm(void)
 	STM32_TIM_CR1(2) = 0x0000;
 
 	/*
-	 * CPU_CLOCK / PSC determines how fast the counter operates.
+	 * CPU clock / PSC determines how fast the counter operates.
 	 * ARR determines the wave period, CCRn determines duty cycle.
-	 * Thus, frequency = CPU_CLOCK / PSC / ARR.
+	 * Thus, frequency = cpu_freq / PSC / ARR. so:
 	 *
-	 * Assuming 16MHz clock, the following yields:
-	 * 16MHz / 1600 / 100 = 100Hz.
+	 *     frequency = cpu_freq / (cpu_freq/10000) / 100 = 100 Hz.
 	 */
-	STM32_TIM_PSC(2) = CPU_CLOCK / 10000;	/* pre-scaler */
+	STM32_TIM_PSC(2) = clock_get_freq() / 10000;	/* pre-scaler */
 	STM32_TIM_ARR(2) = 100;			/* auto-reload value */
 
 	power_led_set_duty(100);
@@ -160,6 +161,17 @@ static int power_led_step(void)
 
 	return state_timeout;
 }
+
+/**
+ * Handle clock frequency change
+ */
+static void power_led_freq_change(void)
+{
+	/* If we're using PWM, re-initialize to adjust timer divisor */
+	if (using_pwm)
+		power_led_use_pwm();
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, power_led_freq_change, HOOK_PRIO_DEFAULT);
 
 void power_led_task(void)
 {

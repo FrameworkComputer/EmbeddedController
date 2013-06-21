@@ -5,18 +5,18 @@
 
 /* USART driver for Chrome EC */
 
-#include <stdarg.h>
-
-#include "board.h"
-#include "config.h"
+#include "common.h"
 #include "clock.h"
+#include "hooks.h"
 #include "registers.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"
 
 /* Baud rate for UARTs */
-#define BAUD_RATE 115200
+#ifndef CONFIG_UART_BAUD_RATE
+#define CONFIG_UART_BAUD_RATE 115200
+#endif
 
 /* Console USART index */
 #define UARTN CONFIG_CONSOLE_UART
@@ -112,6 +112,37 @@ static void uart_interrupt(void)
 }
 DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 2);
 
+/**
+ * Handle clock frequency changes
+ */
+static void uart_freq_change(void)
+{
+	int div = DIV_ROUND_NEAREST(clock_get_freq(), CONFIG_UART_BAUD_RATE);
+
+#ifdef CHIP_VARIANT_stm32l15x
+	if (div / 16 > 0) {
+		/*
+		 * CPU clock is high enough to support x16 oversampling.
+		 * BRR = (div mantissa)<<4 | (4-bit div fraction)
+		 */
+		STM32_USART_CR1(UARTN) &= ~(1 << 15);  /* OVER8 = 0 */
+		STM32_USART_BRR(UARTN) = div;
+	} else {
+		/*
+		 * CPU clock is low; use x8 oversampling.
+		 * BRR = (div mantissa)<<4 | (3-bit div fraction)
+		 */
+		STM32_USART_BRR(UARTN) = ((div / 8) << 4) | (div & 7);
+		STM32_USART_CR1(UARTN) |= (1 << 15);  /* OVER8 = 1 */
+	}
+#else
+	/* STM32F only supports x16 oversampling */
+	STM32_USART_BRR(UARTN) = div;
+#endif
+
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
+
 void uart_init(void)
 {
 	/* Enable USART clock */
@@ -126,7 +157,8 @@ void uart_init(void)
 	else if (UARTN == 5)
 		STM32_RCC_APB1ENR |= 1 << 20; /* USART5 */
 
-	/* UART enabled, 8 Data bits, oversampling x16, no parity,
+	/*
+	 * UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * RXNE interrupt, TX and RX enabled.
 	 */
 	STM32_USART_CR1(UARTN) = 0x202C;
@@ -137,10 +169,13 @@ void uart_init(void)
 	/* DMA disabled, special modes disabled, error interrupt disabled */
 	STM32_USART_CR3(UARTN) = 0x0000;
 
-	/* Select the baud rate
-	 * using x16 oversampling (OVER8 == 0)
-	 */
-	STM32_USART_BRR(UARTN) = DIV_ROUND_NEAREST(CPU_CLOCK, BAUD_RATE);
+#ifdef CHIP_VARIANT_stm32l15x
+	/* Use single-bit sampling */
+	STM32_USART_CR3(UARTN) |= (1 << 11);
+#endif
+
+	/* Set initial baud rate */
+	uart_freq_change();
 
 	/* Enable interrupts */
 	task_enable_irq(STM32_IRQ_USART(UARTN));

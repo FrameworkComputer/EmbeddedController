@@ -26,31 +26,11 @@
 #define IWDG_PRESCALER 6
 #define IWDG_PRESCALER_DIV (1 << ((IWDG_PRESCALER) + 2))
 
-/*
- * We use the WWDG as an early warning for the real watchdog, which just
- * resets. Since it has a very short period, we need to allow several cycles
- * of this to make up one IWDG cycle. The WWDG's early warning kicks in
- * half way through the cycle, with a maximum time of 65.54ms at 32 MHz.
- */
-#define WATCHDOG_CYCLES_BEFORE_RESET \
-	(WATCHDOG_PERIOD_MS / (65540 * 32000 / CPU_CLOCK))
-
-/* Keep a track of how many WWDG cycles we have had */
-static unsigned int watchdog_count;
-
-
-static void watchdog_reset_count(void)
-{
-	watchdog_count = WATCHDOG_CYCLES_BEFORE_RESET;
-}
-
-
 void watchdog_reload(void)
 {
 	/* Reload the watchdog */
 	STM32_IWDG_KR = 0xaaaa;
 
-	watchdog_reset_count();
 #ifdef CONFIG_WATCHDOG_HELP
 	hwtimer_reset_watchdog();
 #endif
@@ -75,8 +55,6 @@ int watchdog_init(void)
 
 	/* Start the watchdog (and re-lock registers) */
 	STM32_IWDG_KR = 0xcccc;
-
-	watchdog_reset_count();
 
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Use a harder timer to warn about an impending watchdog reset */

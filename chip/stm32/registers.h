@@ -307,14 +307,22 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_PWR_BASE              0x40007000
 
 #define STM32_PWR_CR                REG32(STM32_PWR_BASE + 0x00)
+#define STM32_PWR_CR_LPSDSR		(1 << 0)
 #define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x04)
 
 #if defined(CHIP_VARIANT_stm32l15x)
 #define STM32_RCC_BASE              0x40023800
 
 #define STM32_RCC_CR                REG32(STM32_RCC_BASE + 0x00)
-#define STM32_RCC_ICSR              REG32(STM32_RCC_BASE + 0x04)
+#define STM32_RCC_ICSCR             REG32(STM32_RCC_BASE + 0x04)
+#define STM32_RCC_ICSCR_MSIRANGE(n)	((n) << 13)
+#define STM32_RCC_ICSCR_MSIRANGE_1MHZ	STM32_RCC_ICSCR_MSIRANGE(4)
+#define STM32_RCC_ICSCR_MSIRANGE_2MHZ	STM32_RCC_ICSCR_MSIRANGE(5)
+#define STM32_RCC_ICSCR_MSIRANGE_MASK	STM32_RCC_ICSCR_MSIRANGE(7)
 #define STM32_RCC_CFGR              REG32(STM32_RCC_BASE + 0x08)
+#define STM32_RCC_CFGR_SW_MSI		(0 << 0)
+#define STM32_RCC_CFGR_SW_HSI		(1 << 0)
+#define STM32_RCC_CFGR_SW_MASK		(3 << 0)
 #define STM32_RCC_CIR               REG32(STM32_RCC_BASE + 0x0C)
 #define STM32_RCC_AHBRSTR           REG32(STM32_RCC_BASE + 0x10)
 #define STM32_RCC_APB2RSTR          REG32(STM32_RCC_BASE + 0x14)

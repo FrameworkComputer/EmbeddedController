@@ -316,6 +316,31 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 /*****************************************************************************/
 /* Hooks */
 
+/* Handle CPU clock changing frequency */
+static void i2c_freq_change(void)
+{
+	const struct i2c_port_t *p = i2c_ports;
+	int freq = clock_get_freq();
+	int i;
+
+	for (i = 0; i < I2C_PORTS_USED; i++, p++) {
+		int port = p->port;
+
+		/* Force peripheral reset and disable port */
+		STM32_I2C_CR1(port) = STM32_I2C_CR1_SWRST;
+		STM32_I2C_CR1(port) = 0;
+
+		/* Set clock frequency */
+		STM32_I2C_CCR(port) = freq / (2 * MSEC * p->kbps);
+		STM32_I2C_CR2(port) = freq / SECOND;
+		STM32_I2C_TRISE(port) = freq / SECOND + 1;
+
+		/* Enable port */
+		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
+	}
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change, HOOK_PRIO_DEFAULT);
+
 static void i2c_init(void)
 {
 	const struct i2c_port_t *p = i2c_ports;
@@ -324,26 +349,17 @@ static void i2c_init(void)
 	for (i = 0; i < I2C_PORTS_USED; i++, p++) {
 		int port = p->port;
 
-		/* Enable clock if necessary */
+		/* Enable clocks to I2C modules if necessary */
 		if (!(STM32_RCC_APB1ENR & (1 << (21 + port)))) {
 			/* TODO: unwedge bus if necessary */
 			STM32_RCC_APB1ENR |= 1 << (21 + port);
 		}
-
-		/* Force peripheral reset and disable port */
-		STM32_I2C_CR1(port) = STM32_I2C_CR1_SWRST;
-		STM32_I2C_CR1(port) = 0;
-
-		/* Set clock frequency */
-		STM32_I2C_CCR(port) = CPU_CLOCK / (2 * 1000 * p->kbps);
-		STM32_I2C_CR2(port) = CPU_CLOCK / 1000000;
-		STM32_I2C_TRISE(port) = CPU_CLOCK / 1000000 + 1;
-
-		/* Enable port */
-		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
-
-		/* TODO: enable interrupts using I2C_CR2 bits 8,9 */
 	}
+
+	/* Set up initial bus frequencies */
+	i2c_freq_change();
+
+	/* TODO: enable interrupts using I2C_CR2 bits 8,9 */
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 
