@@ -673,6 +673,17 @@ void extpower_charge_update(int force_update)
 		pending_dev_type_update = 0;
 	}
 
+	/*
+	 * Check device type except when:
+	 *   1. Current device type is non-standard charger or undetermined
+	 *      charger type. This is handled by charger re-detection.
+	 *   2. ID_MUX=1. This is handled by ADC watchdog.
+	 */
+	if (current_dev_type != TSU6721_TYPE_VBUS_DEBOUNCED &&
+	    !(current_dev_type & TSU6721_TYPE_NON_STD_CHG) &&
+	    gpio_get_level(GPIO_ID_MUX) == 0)
+		force_update |= (tsu6721_get_device_type() != current_dev_type);
+
 	if (!force_update)
 		int_val = tsu6721_get_interrupts();
 
