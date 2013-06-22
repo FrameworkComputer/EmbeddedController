@@ -37,6 +37,7 @@ common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LED_FALCO)+=led_falco.o
+common-$(CONFIG_LED_PEPPY)+=led_peppy.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LP5562)+=lp5562.o lp5562_battery_led.o
 common-$(CONFIG_LPC)+=port80.o
