@@ -55,12 +55,26 @@ static int ec_command_dev(int command, int version,
 static int ec_readmem_dev(int offset, int bytes, void *dest)
 {
 	struct cros_ec_readmem s_mem;
+	struct ec_params_read_memmap r_mem;
+	int r;
+	static int fake_it;
 
-	s_mem.offset = offset;
-	s_mem.bytes = bytes;
-	s_mem.buffer = dest;
+	if (!fake_it) {
+		s_mem.offset = offset;
+		s_mem.bytes = bytes;
+		s_mem.buffer = dest;
+		r = ioctl(fd, CROS_EC_DEV_IOCRDMEM, &s_mem);
+		if (r < 0 && errno == ENOTTY)
+			fake_it = 1;
+		else
+			return r;
+	}
 
-	return ioctl(fd, CROS_EC_DEV_IOCRDMEM, &s_mem);
+	r_mem.offset = offset;
+	r_mem.size = bytes;
+	return ec_command_dev(EC_CMD_READ_MEMMAP, 0,
+			      &r_mem, sizeof(r_mem),
+			      dest, bytes);
 }
 
 int comm_init_dev(void)
@@ -88,7 +102,8 @@ int comm_init_dev(void)
 	}
 
 	ec_command = ec_command_dev;
-	if (ec_readmem_dev(EC_MEMMAP_ID, 2, version) == 2)
+	if (ec_readmem_dev(EC_MEMMAP_ID, 2, version) == 2 &&
+	    version[0] == 'E' && version[1] == 'C')
 		ec_readmem = ec_readmem_dev;
 
 	/*
