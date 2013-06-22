@@ -38,12 +38,18 @@ static int ec_command_dev(int command, int version,
 	if (r < 0) {
 		fprintf(stderr, "ioctl %d, errno %d (%s), EC result %d\n",
 			r, errno, strerror(errno), s_cmd.result);
-		return r;
-	}
-	if (s_cmd.result != EC_RES_SUCCESS)
+		if (errno == EAGAIN && s_cmd.result == EC_RES_IN_PROGRESS) {
+			s_cmd.command = EC_CMD_RESEND_RESPONSE;
+			r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
+			fprintf(stderr,
+				"ioctl %d, errno %d (%s), EC result %d\n",
+				r, errno, strerror(errno), s_cmd.result);
+		}
+	} else if (s_cmd.result != EC_RES_SUCCESS) {
 		fprintf(stderr, "EC result %d\n", s_cmd.result);
+	}
 
-	return s_cmd.insize;
+	return r ? r : s_cmd.insize;
 }
 
 static int ec_readmem_dev(int offset, int bytes, void *dest)
