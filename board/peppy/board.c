@@ -59,7 +59,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	 x86_power_interrupt},
 	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_PULL_UP|GPIO_INT_BOTH,
 	 switch_interrupt},
-	{"WP",                   LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
+	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
 
 	/* Other inputs */
