@@ -39,11 +39,6 @@
 #define CONFIG_SMART_BATTERY
 #define CONFIG_SPI
 
-#ifdef PORT_TO_PIT
-/* TODO(rspangler): enable these features when they compile */
-#define CONFIG_LOW_POWER_IDLE
-#endif
-
 #ifndef __ASSEMBLER__
 
 /* By default, enable all console messages except keyboard */

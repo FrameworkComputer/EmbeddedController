@@ -314,6 +314,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_BASE              0x40023800
 
 #define STM32_RCC_CR                REG32(STM32_RCC_BASE + 0x00)
+#define STM32_RCC_CR_HSION		(1 << 0)
+#define STM32_RCC_CR_HSIRDY		(1 << 1)
 #define STM32_RCC_ICSCR             REG32(STM32_RCC_BASE + 0x04)
 #define STM32_RCC_ICSCR_MSIRANGE(n)	((n) << 13)
 #define STM32_RCC_ICSCR_MSIRANGE_1MHZ	STM32_RCC_ICSCR_MSIRANGE(4)
@@ -482,6 +484,9 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_REGS_BASE       0x40023c00
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
+#define STM32_FLASH_ACR_LATENCY		(1 << 0)
+#define STM32_FLASH_ACR_PRFTEN		(1 << 1)
+#define STM32_FLASH_ACR_ACC64		(1 << 2)
 #define STM32_FLASH_PECR            REG32(STM32_FLASH_REGS_BASE + 0x04)
 #define STM32_FLASH_PECR_PE_LOCK	(1 << 0)
 #define STM32_FLASH_PECR_PRG_LOCK	(1 << 1)
