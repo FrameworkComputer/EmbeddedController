@@ -133,12 +133,13 @@ static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 static timestamp_t typematic_deadline;
 
 #define KB_SYSJUMP_TAG 0x4b42  /* "KB" */
-#define KB_HOOK_VERSION 1
+#define KB_HOOK_VERSION 2
 /* the previous keyboard state before reboot_ec. */
 struct kb_state {
 	uint8_t codeset;
 	uint8_t ctlram;
-	uint8_t pad[2];  /* Pad to 4 bytes for system_add_jump_tag(). */
+	uint8_t keystroke_enabled;
+	uint8_t pad;	/* Pad to 4 bytes for system_add_jump_tag(). */
 };
 
 /* The standard Chrome OS keyboard matrix table. */
@@ -1047,6 +1048,7 @@ static void keyboard_preserve_state(void)
 
 	state.codeset = scancode_set;
 	state.ctlram = controller_ram[0];
+	state.keystroke_enabled = keystroke_enabled;
 
 	system_add_jump_tag(KB_SYSJUMP_TAG, KB_HOOK_VERSION,
 			    sizeof(state), &state);
@@ -1067,6 +1069,7 @@ static void keyboard_restore_state(void)
 		/* Coming back from a sysjump, so restore settings. */
 		scancode_set = prev->codeset;
 		update_ctl_ram(0, prev->ctlram);
+		keystroke_enabled = prev->keystroke_enabled;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);
