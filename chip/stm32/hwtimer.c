@@ -160,14 +160,35 @@ static void __hw_clock_source_irq(void)
 DECLARE_IRQ(IRQ_MSB, __hw_clock_source_irq, 1);
 DECLARE_IRQ(IRQ_LSB, __hw_clock_source_irq, 1);
 
-void __hw_timer_enable_clock(int n)
+void __hw_timer_enable_clock(int n, int enable)
 {
-	if (n == 1)  /* STM32F only */
-		STM32_RCC_APB2ENR |= 1 << 11;
-	else if (n >= 2 && n <= 7)
-		STM32_RCC_APB1ENR |= 1 << (n - 2);
-	else if (n >= 9 && n <= 11)  /* STM32L only */
-		STM32_RCC_APB2ENR |= 1 << (n - 7);
+	volatile uint32_t *reg;
+	uint32_t mask = 0;
+
+#if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+	if (n == 1) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = 1 << 11;
+	}
+#elif defined(CHIP_VARIANT_stm32l15x)
+	if (n >= 9 && n <= 11) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = 1 << (n - 7);
+	}
+#endif
+
+	if (n >= 2 && n <= 7) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = 1 << (n - 2);
+	}
+
+	if (!mask)
+		return;
+
+	if (enable)
+		*reg |= mask;
+	else
+		*reg &= ~mask;
 }
 
 static void update_prescaler(void)
@@ -194,8 +215,8 @@ int __hw_clock_source_init(uint32_t start_t)
 	 */
 
 	/* Enable TIM_CLOCK_MSB and TIM_CLOCK_LSB clocks */
-	__hw_timer_enable_clock(TIM_CLOCK_MSB);
-	__hw_timer_enable_clock(TIM_CLOCK_LSB);
+	__hw_timer_enable_clock(TIM_CLOCK_MSB, 1);
+	__hw_timer_enable_clock(TIM_CLOCK_LSB, 1);
 
 	/*
 	 * Timer configuration : Upcounter, counter disabled, update event only
@@ -280,7 +301,7 @@ void hwtimer_setup_watchdog(void)
 	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
 
 	/* Enable clock */
-	__hw_timer_enable_clock(TIM_WATCHDOG);
+	__hw_timer_enable_clock(TIM_WATCHDOG, 1);
 
 	/*
 	 * Timer configuration : Down counter, counter disabled, update

@@ -67,6 +67,7 @@
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 9
+#define TIM_POWER_LED 2
 #define TIM_WATCHDOG  4
 
 /* GPIO signal list */

@@ -29,9 +29,10 @@ void __hw_clock_source_set(uint32_t ts);
 /**
  * Enable clock to a timer.
  *
- * @param n		Timer number to enable
+ * @param n		Timer number to enable/disable
+ * @param enable	Enable (!=0) or disable (=0) clock to timer
  */
-void __hw_timer_enable_clock(int n);
+void __hw_timer_enable_clock(int n, int enable);
 
 /**
  * Initializes the hardware timer used to provide clock services, using the

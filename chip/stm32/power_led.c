@@ -6,8 +6,8 @@
 /*
  * Keyboard power button LED state machine.
  *
- * This sets up TIM2 to drive the power button LED so that the duty cycle
- * can range from 0-100%. When the lid is closed or turned off, then the
+ * This sets up TIM_POWER_LED to drive the power button LED so that the duty
+ * cycle can range from 0-100%. When the lid is closed or turned off, then the
  * PWM is disabled and the GPIO is reconfigured to minimize leakage voltage.
  *
  * In suspend mode, duty cycle transitions progressively slower from 0%
@@ -19,6 +19,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "power_led.h"
 #include "registers.h"
 #include "task.h"
@@ -49,9 +50,9 @@ static void power_led_set_duty(int percent)
 	 * ARR=100, this is just percent.
 	 */
 #ifdef BOARD_pit
-	STM32_TIM_CCR3(2) = percent;
+	STM32_TIM_CCR3(TIM_POWER_LED) = percent;
 #else
-	STM32_TIM_CCR2(2) = percent;
+	STM32_TIM_CCR2(TIM_POWER_LED) = percent;
 #endif
 }
 
@@ -68,11 +69,11 @@ static void power_led_use_pwm(void)
 	STM32_GPIO_CRL(GPIO_B) = val;
 #endif
 
-	/* Enable TIM2 clock */
-	STM32_RCC_APB1ENR |= 0x1;
+	/* Enable timer */
+	__hw_timer_enable_clock(TIM_POWER_LED, 1);
 
 	/* Disable counter during setup */
-	STM32_TIM_CR1(2) = 0x0000;
+	STM32_TIM_CR1(TIM_POWER_LED) = 0x0000;
 
 	/*
 	 * CPU clock / PSC determines how fast the counter operates.
@@ -81,41 +82,41 @@ static void power_led_use_pwm(void)
 	 *
 	 *     frequency = cpu_freq / (cpu_freq/10000) / 100 = 100 Hz.
 	 */
-	STM32_TIM_PSC(2) = clock_get_freq() / 10000;	/* pre-scaler */
-	STM32_TIM_ARR(2) = 100;			/* auto-reload value */
+	STM32_TIM_PSC(TIM_POWER_LED) = clock_get_freq() / 10000;
+	STM32_TIM_ARR(TIM_POWER_LED) = 100;
 
 	power_led_set_duty(100);
 
 #ifdef BOARD_pit
 	/* CC3 configured as output, PWM mode 1, preload enable */
-	STM32_TIM_CCMR2(2) = (6 << 4) | (1 << 3);
+	STM32_TIM_CCMR2(TIM_POWER_LED) = (6 << 4) | (1 << 3);
 
 	/* CC3 output enable, active low */
-	STM32_TIM_CCER(2) = (1 << 8) | (1 << 9);
+	STM32_TIM_CCER(TIM_POWER_LED) = (1 << 8) | (1 << 9);
 #else
 	/* CC2 configured as output, PWM mode 1, preload enable */
-	STM32_TIM_CCMR1(2) = (6 << 12) | (1 << 11);
+	STM32_TIM_CCMR1(TIM_POWER_LED) = (6 << 12) | (1 << 11);
 
 	/* CC2 output enable, active low */
-	STM32_TIM_CCER(2) = (1 << 4) | (1 << 5);
+	STM32_TIM_CCER(TIM_POWER_LED) = (1 << 4) | (1 << 5);
 #endif
 
 	/* Generate update event to force loading of shadow registers */
-	STM32_TIM_EGR(2) |= 1;
+	STM32_TIM_EGR(TIM_POWER_LED) |= 1;
 
 	/* Enable auto-reload preload, start counting */
-	STM32_TIM_CR1(2) |= (1 << 7) | (1 << 0);
+	STM32_TIM_CR1(TIM_POWER_LED) |= (1 << 7) | (1 << 0);
 
 	using_pwm = 1;
 }
 
 static void power_led_manual_off(void)
 {
-	/* disable counter */
-	STM32_TIM_CR1(2) &= ~0x1;
+	/* Disable counter */
+	STM32_TIM_CR1(TIM_POWER_LED) &= ~0x1;
 
-	/* disable TIM2 clock */
-	STM32_RCC_APB1ENR &= ~0x1;
+	/* Disable timer clock */
+	__hw_timer_enable_clock(TIM_POWER_LED, 0);
 
 	/*
 	 * Reconfigure GPIO as a floating input. Alternatively we could
