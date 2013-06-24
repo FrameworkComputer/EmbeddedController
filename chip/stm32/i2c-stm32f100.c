@@ -127,7 +127,7 @@ static void i2c_init_port(unsigned int port);
 
 static int i2c_write_raw_slave(int port, void *buf, int len)
 {
-	struct dma_channel *chan;
+	dma_channel_t *chan;
 	int rv;
 
 	/* we don't want to race with TxE interrupt event */

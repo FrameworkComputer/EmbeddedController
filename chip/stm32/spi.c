@@ -121,7 +121,7 @@ static const uint8_t out_preamble[4] = {
  * @param nss_mask	Bit to check in GPIO register (when high, we abort)
  * @return 0 if bytes received, -1 if we hit a timeout or NSS went high
  */
-static int wait_for_bytes(struct dma_channel *rxdma, int needed,
+static int wait_for_bytes(dma_channel_t *rxdma, int needed,
 			  uint16_t *nss_reg, uint32_t nss_mask)
 {
 	timestamp_t deadline;
@@ -178,7 +178,7 @@ static int wait_for_bytes(struct dma_channel *rxdma, int needed,
  *			SPI_MSG_HEADER_LEN bytes into out_msg
  * @param msg_len	Number of message bytes to send
  */
-static void reply(struct dma_channel *txdma,
+static void reply(dma_channel_t *txdma,
 		  enum ec_status status, char *msg_ptr, int msg_len)
 {
 	char *msg;
@@ -250,7 +250,7 @@ static void setup_for_transaction(void)
 static void spi_send_response(struct host_cmd_handler_args *args)
 {
 	enum ec_status result = args->result;
-	struct dma_channel *txdma;
+	dma_channel_t *txdma;
 
 	/* If we are too late, don't bother */
 	if (!active)
@@ -277,7 +277,7 @@ static void spi_send_response(struct host_cmd_handler_args *args)
  */
 static void spi_send_response_packet(struct host_packet *pkt)
 {
-	struct dma_channel *txdma;
+	dma_channel_t *txdma;
 
 	/* If we are too late, don't bother */
 	if (!active)
@@ -300,7 +300,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
  */
 void spi_event(enum gpio_signal signal)
 {
-	struct dma_channel *rxdma;
+	dma_channel_t *rxdma;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
 

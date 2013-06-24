@@ -11,37 +11,43 @@
 #include "common.h"
 
 /*
- * Available DMA channels, numbered from 0
+ * Available DMA channels, numbered from 0.
  *
  * Note: The STM datasheet tends to number things from 1. We should ask
  * the European elevator engineers to talk to MCU engineer counterparts
  * about this.  This means that if the datasheet refers to channel n,
- * you need to use n-1 in the code.
+ * you need to use DMAC_CHn (=n-1) in the code.
+ *
+ * Also note that channels are overloaded; obviously you can only use one
+ * function on each channel at a time.
  */
-enum {
-	DMAC_ADC,
-	DMAC_SPI1_RX,
-	DMAC_SPI1_TX,
-	DMAC_SPI2_RX,
-	DMAC_SPI2_TX,
+enum dma_channel {
+	/* Channel numbers */
+	DMAC_CH1 = 0,
+	DMAC_CH2 = 1,
+	DMAC_CH3 = 2,
+	DMAC_CH4 = 3,
+	DMAC_CH5 = 4,
+	DMAC_CH6 = 5,
+	DMAC_CH7 = 6,
 
-	/*
-	 * The same channels are used for i2c2 and spi, you can't use them at
-	 * the same time or it will cause dma to not work
-	 */
-	DMAC_I2C2_TX = 3,
-	DMAC_I2C2_RX = 4,
-	DMAC_I2C1_TX = 5,
-	DMAC_I2C1_RX = 6,
+	/* Channel functions */
+	DMAC_ADC = DMAC_CH1,
+	DMAC_SPI1_RX = DMAC_CH2,
+	DMAC_SPI1_TX = DMAC_CH3,
+	DMAC_I2C2_TX = DMAC_CH4,
+	DMAC_I2C2_RX = DMAC_CH5,
+	DMAC_USART1_TX = DMAC_CH4,
+	DMAC_USART1_RX = DMAC_CH5,
+	DMAC_I2C1_TX = DMAC_CH6,
+	DMAC_I2C1_RX = DMAC_CH7,
 
-	/* DMA1 has 7 channels, DMA2 has 5 */
-	DMA1_NUM_CHANNELS = 7,
-	DMA2_NUM_CHANNELS = 5,
-	DMA_NUM_CHANNELS = DMA1_NUM_CHANNELS + DMA2_NUM_CHANNELS,
+	/* Only DMA1 (with 7 channels) is present on STM32F100 and STM32L151x */
+	DMA_NUM_CHANNELS = 7,
 };
 
-/* A single channel of the DMA controller */
-struct dma_channel {
+/* Registers for a single channel of the DMA controller */
+struct dma_channel_regs {
 	uint32_t	ccr;		/* Control */
 	uint32_t	cndtr;		/* Number of data to transfer */
 	uint32_t	cpar;		/* Peripheral address */
@@ -49,16 +55,12 @@ struct dma_channel {
 	uint32_t	reserved;
 };
 
-/* Registers for the DMA controller */
-struct dma_ctlr {
-	uint32_t	isr;
-	uint32_t	ifcr;
-	struct dma_channel chan[DMA_NUM_CHANNELS];
-};
+/* Always use dma_channel_t so volatile keyword is included! */
+typedef volatile struct dma_channel_regs dma_channel_t;
 
 /* DMA channel options */
 struct dma_option {
-	unsigned channel;	/* DMA channel */
+	enum dma_channel channel;	/* DMA channel */
 	void *periph;		/* Pointer to peripheral data register */
 	unsigned flags;		/* DMA flags for the control register. Normally
 				   used to select memory size. */
@@ -93,28 +95,13 @@ enum {
 #define DMA_POLLING_INTERVAL_US	100	/* us */
 #define DMA_TRANSFER_TIMEOUT_US	(100 * MSEC) /* us */
 
-/*
- * Certain DMA channels must be used for certain peripherals and transfer
- * directions. We provide an easy way for drivers to select the correct
- * channel.
- */
-
-/**
- * @param spi	SPI port to request: STM32_SPI1_PORT or STM32_SPI2_PORT
- * @return DMA channel to use for rx / tx on that port
- */
-#define DMA_CHANNEL_FOR_SPI_RX(spi) \
-	((spi) == STM32_SPI1_PORT ? DMAC_SPI1_RX : DMAC_SPI2_RX)
-#define DMA_CHANNEL_FOR_SPI_TX(spi) \
-	((spi) == STM32_SPI1_PORT ? DMAC_SPI1_TX : DMAC_SPI2_TX)
-
 /**
  * Get a pointer to a DMA channel.
  *
- * @param channel	Channel number to read (DMAC_...)
+ * @param channel	Channel to read
  * @return pointer to DMA channel registers
  */
-struct dma_channel *dma_get_channel(int channel);
+dma_channel_t *dma_get_channel(enum dma_channel channel);
 
 /**
  * Prepare a DMA transfer to transmit data from memory to a peripheral
@@ -137,17 +124,17 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
  * @param count		Number of bytes to transfer
  * @param memory	Pointer to memory address
  */
-int dma_start_rx(const struct dma_option *option, unsigned count,
-		 const void *memory);
+void dma_start_rx(const struct dma_option *option, unsigned count,
+		  void *memory);
 
 /**
  * Stop a DMA transfer on a channel
  *
  * Disable the DMA channel and immediate stop all transfers on it.
  *
- * @param channel	Channel number to stop (DMAC_...)
+ * @param channel	Channel to stop
  */
-void dma_disable(unsigned channel);
+void dma_disable(enum dma_channel channel);
 
 /**
  * Get the number of bytes available to read, or number of bytes written
@@ -155,75 +142,69 @@ void dma_disable(unsigned channel);
  * Since the DMA controller counts downwards, if we know the starting value
  * we can work out how many bytes have been completed so far.
  *
- * @param chan		DMA channel to check (use dma_get_channel())
+ * @param chan		DMA channel to check, from dma_get_channel()
  * @param orig_count	Original number of bytes requested on channel
  * @return number of bytes completed on a channel, or 0 if this channel is
  *		not enabled
  */
-int dma_bytes_done(struct dma_channel *chan, int orig_count);
+int dma_bytes_done(dma_channel_t *chan, int orig_count);
 
 /**
  * Start a previously-prepared dma channel
  *
- * @param chan	Channel to start (returned from dma_prepare...())
+ * @param chan	Channel to start, from dma_get_channel()
  */
-void dma_go(struct dma_channel *chan);
+void dma_go(dma_channel_t *chan);
 
+#ifdef CONFIG_DMA_HELP
 /**
  * Testing: Print out the data transferred by a channel
  *
- * @param channel	Channel number to read (DMAC_...)
+ * @param channel	Channel to read
  * @param buff		Start of DMA buffer
  */
-void dma_check(int channel, char *buff);
+void dma_check(enum dma_channel channel, char *buf);
 
 /**
  * Dump out imformation about a dma channel
  *
- * @param channel	Channel number to read (DMAC_...)
+ * @param channel	Channel to read
  */
-void dma_dump(unsigned channel);
+void dma_dump(enum dma_channel channel);
 
 /**
  * Testing: Test that DMA works correctly for memory to memory transfers
  */
 void dma_test(void);
+#endif  /* CONFIG_DMA_HELP */
 
 /**
  * Clear the DMA interrupt/event flags for a given channel
  *
- * @param channel	Which channel's isr to clear (DMAC_...)
+ * @param channel	Which channel's isr to clear
  */
-void dma_clear_isr(int channel);
+void dma_clear_isr(enum dma_channel channel);
 
 /**
  * Enable "Transfer Complete" interrupt for a DMA channel
  *
- * @param channel	Which channel's interrupts to change (DMAC_...)
+ * @param channel	Which channel's interrupts to change
  */
-void dma_enable_tc_interrupt(int channel);
+void dma_enable_tc_interrupt(enum dma_channel channel);
 
 /**
  * Disable "Transfer Complete" interrupt for a DMA channel
  *
- * @param channel	Which channel's interrupts to change (DMAC_...)
+ * @param channel	Which channel's interrupts to change
  */
-void dma_disable_tc_interrupt(int channel);
-
-/**
- * Get a pointer to the DMA peripheral controller that owns the channel
- *
- * @param channel	Channel number to get the controller for (DMAC_...)
- * @return pointer to DMA channel registers
- */
-struct dma_ctlr *dma_get_ctlr(int channel);
+void dma_disable_tc_interrupt(enum dma_channel channel);
 
 /**
  * Wait for the DMA transfer to complete by polling the transfer complete flag
  *
- * @param channel»      Channel number to wait on (DMAC_...)
- * @return -1 for timeout, 0 for sucess
+ * @param channel	Channel number to wait on
+ * @return EC_ERROR_TIMEOUT for timeout, EC_SUCCESS for success
  */
-int dma_wait(int channel);
+int dma_wait(enum dma_channel channel);
 
 #endif
