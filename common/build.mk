@@ -57,6 +57,7 @@ common-$(HAS_TASK_LIGHTBAR)+=lightbar.o
 common-$(HAS_TASK_THERMAL)+=thermal.o
 common-$(HAS_TASK_VBOOTHASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
+common-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor_g781.o
 common-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor_tmp006.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o

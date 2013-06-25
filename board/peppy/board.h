@@ -36,6 +36,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_USB_PORT_POWER_DUMB
 #define CONFIG_WIRELESS
 
@@ -48,7 +49,7 @@
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
-#define I2C_PORT_THERMAL 2
+#define I2C_PORT_THERMAL 5
 /* There are only two I2C ports used because battery and charger share a port */
 #define I2C_PORTS_USED 2
 
@@ -187,15 +188,26 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	/* HEY - need two I2C sensor values */
-
+#ifdef CONFIG_PECI
+	/* CPU die temperature via PECI */
+	TEMP_SENSOR_CPU_PECI = 0,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
-	/* CPU die temperature via PECI */
-	TEMP_SENSOR_CPU_PECI,
+#else
+	/* EC internal temperature sensor */
+	TEMP_SENSOR_EC_INTERNAL = 0,
+#endif
+	/* G781 internal and external sensors */
+	TEMP_SENSOR_I2C_G781_INTERNAL,
+	TEMP_SENSOR_I2C_G781_EXTERNAL,
 
 	TEMP_SENSOR_COUNT
 };
+
+/**
+ * Board-specific g781 power state.
+ */
+int board_g781_has_power(void);
 
 /* HEY: The below stuff is for Link. Pick a different pin for Peppy */
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
