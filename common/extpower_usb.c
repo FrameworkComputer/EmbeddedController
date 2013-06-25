@@ -81,6 +81,9 @@ enum ilim_config {
 #define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
 #define PWM_CTRL_VBUS_HIGH_500MA 4550
 
+/* Delay before notifying kernel of device type change */
+#define BATTERY_KEY_DELAY (PWM_CTRL_OC_DETECT_TIME + 400 * MSEC)
+
 /* Delay for signals to settle */
 #define DELAY_POWER_MS		20
 #define DELAY_USB_DP_DN_MS	20
@@ -552,6 +555,19 @@ static void usb_log_dev_type(int dev_type)
 	CPRINTF("]\n");
 }
 
+static void send_battery_key_deferred(void)
+{
+	keyboard_send_battery_key();
+}
+DECLARE_DEFERRED(send_battery_key_deferred);
+
+static void notify_dev_type_change(int dev_type)
+{
+	usb_log_dev_type(dev_type);
+	current_dev_type = dev_type;
+	hook_call_deferred(send_battery_key_deferred, BATTERY_KEY_DELAY);
+}
+
 static void usb_device_change(int dev_type)
 {
 
@@ -584,7 +600,6 @@ static void usb_device_change(int dev_type)
 		adc_watch_usb();
 
 	if (dev_type != current_dev_type) {
-		usb_log_dev_type(dev_type);
 		if ((dev_type & TSU6721_TYPE_NON_STD_CHG ||
 		     dev_type == TSU6721_TYPE_VBUS_DEBOUNCED) &&
 		    charger_need_redetect == NO_REDETECT) {
@@ -598,8 +613,7 @@ static void usb_device_change(int dev_type)
 			/* Not non-std charger. Disarm redetection timer. */
 			charger_need_redetect = NO_REDETECT;
 		}
-		current_dev_type = dev_type;
-		keyboard_send_battery_key();
+		notify_dev_type_change(dev_type);
 	}
 
 	if (dev_type)
@@ -826,13 +840,13 @@ static void usb_monitor_detach(void)
 	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
 	if (get_video_power() && vbus > 4000) {
 		set_video_power(0);
-		current_dev_type |= TSU6721_TYPE_VBUS_DEBOUNCED;
-		keyboard_send_battery_key();
+		notify_dev_type_change(current_dev_type |
+				       TSU6721_TYPE_VBUS_DEBOUNCED);
 	} else if (!get_video_power() && vbus <= 4000) {
 		set_pwm_duty_cycle(100);
 		set_video_power(1);
-		current_dev_type &= ~TSU6721_TYPE_VBUS_DEBOUNCED;
-		keyboard_send_battery_key();
+		notify_dev_type_change(current_dev_type &
+				       ~TSU6721_TYPE_VBUS_DEBOUNCED);
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, usb_monitor_detach, HOOK_PRIO_DEFAULT);
