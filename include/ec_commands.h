@@ -47,7 +47,7 @@
 #define EC_LPC_ADDR_HOST_PARAM 0x804
 #define EC_HOST_PARAM_SIZE     0x0fc   /* Size of param area in bytes */
 #define EC_LPC_ADDR_HOST_PACKET 0x800  /* Offset of version 3 packet */
-#define EC_HOST_PACKET_SIZE     0x100  /* Max size of version 3 packet */
+#define EC_LPC_HOST_PACKET_SIZE 0x100  /* Max size of version 3 packet */
 
 /* The actual block is 0x800-0x8ff, but some BIOSes think it's 0x880-0x8ff
  * and they tell the kernel that so we have to think of it as two parts. */

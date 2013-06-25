@@ -138,7 +138,7 @@ static int ec_command_lpc_3(int command, int version,
 	int i;
 
 	/* Fail if output size is too big */
-	if (outsize + sizeof(rq) > EC_HOST_PACKET_SIZE)
+	if (outsize + sizeof(rq) > EC_LPC_HOST_PACKET_SIZE)
 		return -EC_RES_REQUEST_TRUNCATED;
 
 	/* Fill in request packet */

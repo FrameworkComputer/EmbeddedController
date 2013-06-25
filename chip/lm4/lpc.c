@@ -67,7 +67,7 @@ static struct host_cmd_handler_args host_cmd_args;
 static uint8_t host_cmd_flags;   /* Flags from host command */
 
 /* Params must be 32-bit aligned */
-static uint8_t params_copy[EC_HOST_PACKET_SIZE] __attribute__((aligned(4)));
+static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __attribute__((aligned(4)));
 static int init_done;
 
 static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
@@ -513,10 +513,10 @@ static void handle_host_write(int is_cmd)
 		lpc_packet.request_temp = params_copy;
 		lpc_packet.request_max = sizeof(params_copy);
 		/* Don't know the request size so pass in the entire buffer */
-		lpc_packet.request_size = EC_HOST_PACKET_SIZE;
+		lpc_packet.request_size = EC_LPC_HOST_PACKET_SIZE;
 
 		lpc_packet.response = (void *)LPC_POOL_CMD_DATA;
-		lpc_packet.response_max = EC_HOST_PACKET_SIZE;
+		lpc_packet.response_max = EC_LPC_HOST_PACKET_SIZE;
 		lpc_packet.response_size = 0;
 
 		lpc_packet.driver_result = EC_RES_SUCCESS;
