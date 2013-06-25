@@ -88,7 +88,8 @@ enum ilim_config {
 #define DELAY_POWER_MS		20
 #define DELAY_USB_DP_DN_MS	20
 #define DELAY_ID_MUX_MS		30
-#define DELAY_CABLE_DET_MS	80
+#define CABLE_DET_POLL_MS	100
+#define CABLE_DET_POLL_COUNT	10
 
 /* Current sense resistor values */
 #define R_INPUT_MOHM 20 /* mOhm */
@@ -301,14 +302,34 @@ static int video_dev_type(int device_type)
 	       TSU6721_TYPE_JIG_UART_ON;
 }
 
+static int usb_video_id_present(void)
+{
+	return adc_read_channel(ADC_CH_USB_DP_SNS) > VIDEO_ID_THRESHOLD;
+}
+
+static int usb_poll_video_id(void)
+{
+	int i;
+	for (i = 0; i < CABLE_DET_POLL_COUNT; ++i) {
+		msleep(CABLE_DET_POLL_MS);
+		if (usb_video_id_present())
+			return 1;
+	}
+	return 0;
+}
+
 static int probe_video(int device_type)
 {
 	tsu6721_disable_interrupts();
 	gpio_set_level(GPIO_ID_MUX, 1);
-	msleep(DELAY_ID_MUX_MS + DELAY_CABLE_DET_MS);
+	msleep(DELAY_ID_MUX_MS);
 
-	if (adc_read_channel(ADC_CH_USB_DP_SNS) < VIDEO_ID_THRESHOLD) {
-		if (device_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
+	if (usb_poll_video_id()) {
+		/* Not USB host but video */
+		device_type = video_dev_type(device_type);
+		return device_type;
+	} else {
+		if (adc_read_channel(ADC_CH_USB_VBUS_SNS) > 3500) {
 			/*
 			 * Either USB host or video dongle.
 			 * Leave ID_MUX high so we see the change on
@@ -325,10 +346,6 @@ static int probe_video(int device_type)
 			tsu6721_enable_interrupts();
 			return TSU6721_TYPE_NONE;
 		}
-	} else {
-		/* Not USB host but video */
-		device_type = video_dev_type(device_type);
-		return device_type;
 	}
 }
 
@@ -831,7 +848,7 @@ static void usb_monitor_detach(void)
 	if (!(current_dev_type & TSU6721_TYPE_JIG_UART_ON))
 		return;
 
-	if (adc_read_channel(ADC_CH_USB_DP_SNS) < VIDEO_ID_THRESHOLD) {
+	if (!usb_video_id_present()) {
 		usb_detach_video();
 		return;
 	}
@@ -856,7 +873,7 @@ static void usb_monitor_cable_det(void)
 	if (!(current_dev_type & TSU6721_TYPE_USB_HOST))
 		return;
 
-	if (adc_read_channel(ADC_CH_USB_DP_SNS) < VIDEO_ID_THRESHOLD)
+	if (usb_video_id_present())
 		adc_watchdog_interrupt();
 }
 DECLARE_HOOK(HOOK_SECOND, usb_monitor_cable_det, HOOK_PRIO_DEFAULT);
