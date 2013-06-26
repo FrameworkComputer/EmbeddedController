@@ -63,18 +63,15 @@ enum {
 	 * for a 1MHz clock which is as slow as we would reasonably want it.
 	 */
 	SPI_CMD_RX_TIMEOUT_US	= 8192,
-};
 
-/*
- * Our input and output buffers. These must be large enough for our largest
- * message, including protocol overhead.
- */
-static uint8_t out_msg[EC_HOST_PARAM_SIZE + SPI_MSG_PROTO_LEN];
-static uint8_t in_msg[EC_HOST_PARAM_SIZE + SPI_MSG_PROTO_LEN];
-static uint8_t active;
-static uint8_t enabled;
-static struct host_cmd_handler_args args;
-static struct host_packet spi_packet;
+	/*
+	 * Max data size for request/response packet.  This is big enough
+	 * to handle a request/respose header, flash write offset/size, and
+	 * 512 bytes of flash data.
+	 */
+	SPI_MAX_REQUEST_SIZE = 0x220,
+	SPI_MAX_RESPONSE_SIZE = 0x220,
+};
 
 /*
  * The AP blindly clocks back bytes over the SPI interface looking for the
@@ -92,6 +89,17 @@ static const uint8_t out_preamble[4] = {
 	SPI_MSG_HEADER_BYTE1,
 	SPI_MSG_HEADER_BYTE2,  /* This is the byte which matters */
 };
+
+/*
+ * Our input and output buffers. These must be large enough for our largest
+ * message, including protocol overhead.
+ */
+static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)];
+static uint8_t in_msg[SPI_MAX_REQUEST_SIZE];
+static uint8_t active;
+static uint8_t enabled;
+static struct host_cmd_handler_args args;
+static struct host_packet spi_packet;
 
 /**
  * Wait until we have received a certain number of bytes
@@ -228,7 +236,7 @@ static void setup_for_transaction(void)
 }
 
 /**
- * Called to indicate that a command has completed
+ * Called for V2 protocol to indicate that a command has completed
  *
  * Some commands can continue for a while. This function is called by
  * host_command when it completes.
@@ -450,3 +458,24 @@ static void spi_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+/**
+ * Get protocol information
+ */
+static int spi_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->response;
+
+	memset(r, 0, sizeof(*r));
+	r->protocol_versions = (1 << 2) | (1 << 3);
+	r->max_request_packet_size = SPI_MAX_REQUEST_SIZE;
+	r->max_response_packet_size = SPI_MAX_RESPONSE_SIZE;
+	r->flags = EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED;
+
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
+		     spi_get_protocol_info,
+		     EC_VER_MASK(0));

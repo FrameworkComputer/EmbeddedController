@@ -108,6 +108,8 @@ const char help_str[] =
 	"      Rapidly write bytes to port 80\n"
 	"  powerinfo\n"
 	"	Prints power-related information\n"
+	"  protoinfo\n"
+	"       Prints EC host protocol information\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -2561,6 +2563,36 @@ int cmd_chipinfo(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_proto_info(int argc, char *argv[])
+{
+	struct ec_response_get_protocol_info info;
+	int rv;
+	int i;
+
+	printf("Protocol info:\n");
+
+	rv = ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0,
+			&info, sizeof(info));
+	if (rv < 0) {
+		fprintf(stderr, "Protocol info unavailable.  EC probably only "
+				"supports protocol version 2.\n");
+		return rv;
+	}
+
+	printf("  protocol versions:");
+	for (i = 0; i < 32; i++) {
+		if (info.protocol_versions & (1 << i))
+			printf(" %d", i);
+	}
+	printf("\n");
+
+	printf("  max request:  %4d bytes\n", info.max_request_packet_size);
+	printf("  max response: %4d bytes\n", info.max_response_packet_size);
+	printf("  flags: 0x%08x\n", info.flags);
+	if (info.flags & EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED)
+		printf("    EC_RES_IN_PROGRESS supported\n");
+	return 0;
+}
 
 static int ec_hash_help(const char *cmd)
 {
@@ -3049,6 +3081,7 @@ const struct command commands[] = {
 	{"keyscan", cmd_keyscan},
 	{"panicinfo", cmd_panic_info},
 	{"powerinfo", cmd_power_info},
+	{"protoinfo", cmd_proto_info},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},

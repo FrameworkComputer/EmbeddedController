@@ -502,6 +502,29 @@ struct ec_response_test_protocol {
 	uint8_t buf[32];
 } __packed;
 
+/* Get prococol information */
+#define EC_CMD_GET_PROTOCOL_INFO	0x0b
+
+/* Flags for ec_response_get_protocol_info.flags */
+/* EC_RES_IN_PROGRESS may be returned if a command is slow */
+#define EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED (1 << 0)
+
+struct ec_response_get_protocol_info {
+	/* Fields which exist if at least protocol version 3 supported */
+
+	/* Bitmask of protocol versions supported (1 << n means version n)*/
+	uint32_t protocol_versions;
+
+	/* Maximum request packet size, in bytes */
+	uint16_t max_request_packet_size;
+
+	/* Maximum response packet size, in bytes */
+	uint16_t max_response_packet_size;
+
+	/* Flags; see EC_PROTOCOL_INFO_* */
+	uint32_t flags;
+} __packed;
+
 /*****************************************************************************/
 /* Flash commands */
 
