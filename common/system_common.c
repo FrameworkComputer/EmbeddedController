@@ -774,13 +774,8 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION,
 
 static int host_command_build_info(struct host_cmd_handler_args *args)
 {
-	const char *info = system_get_build_info();
-	int len;
-
-	len = MIN(strlen(info), args->response_max - 1);
-	args->response_size = args->response_max;
-	memcpy(args->response, info, len);
-	memset(args->response + len, 0, args->response_size - len);
+	strzcpy(args->response, system_get_build_info(), args->response_max);
+	args->response_size = strlen(args->response) + 1;
 
 	return EC_RES_SUCCESS;
 }
