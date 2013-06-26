@@ -894,6 +894,8 @@ static void usb_charger_redetect(void)
 			pending_tsu6721_reset = 1;
 		else
 			pending_dev_type_update = 1;
+		if (gpio_get_level(GPIO_ID_MUX))
+			restore_id_mux = 1;
 		charger_need_redetect = REDETECTED;
 		task_wake(TASK_ID_CHARGER);
 	}
