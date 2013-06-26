@@ -542,15 +542,15 @@ struct ec_params_flash_read {
 
 /* Write flash */
 #define EC_CMD_FLASH_WRITE 0x12
+#define EC_VER_FLASH_WRITE 1
+
+/* Version 0 of the flash command supported only 64 bytes of data */
+#define EC_FLASH_WRITE_VER0_SIZE 64
 
 struct ec_params_flash_write {
 	uint32_t offset;   /* Byte offset to write */
 	uint32_t size;     /* Size to write in bytes */
-	/*
-	 * Data to write.  Could really use EC_PARAM_SIZE - 8, but tidiest to
-	 * use a power of 2 so writes stay aligned.
-	 */
-	uint8_t data[64];
+	/* Followed by data to write */
 } __packed;
 
 /* Erase flash */

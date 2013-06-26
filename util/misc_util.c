@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "comm-host.h"
 #include "misc_util.h"
 
 int write_file(const char *filename, const char *buf, int size)
@@ -80,4 +81,48 @@ int is_string_printable(const char *buf)
 	}
 
 	return 1;
+}
+
+/**
+ * Get the versions of the command supported by the EC.
+ *
+ * @param cmd		Command
+ * @param pmask		Destination for version mask; will be set to 0 on
+ *			error.
+ * @return 0 if success, <0 if error
+ */
+int ec_get_cmd_versions(int cmd, uint32_t *pmask)
+{
+	struct ec_params_get_cmd_versions pver;
+	struct ec_response_get_cmd_versions rver;
+	int rv;
+
+	*pmask = 0;
+
+	pver.cmd = cmd;
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &pver, sizeof(pver),
+			&rver, sizeof(rver));
+
+	if (rv < 0)
+		return rv;
+
+	*pmask = rver.version_mask;
+	return 0;
+}
+
+/**
+ * Return non-zero if the EC supports the command and version
+ *
+ * @param cmd		Command to check
+ * @param ver		Version to check
+ * @return non-zero if command version supported; 0 if not.
+ */
+int ec_cmd_version_supported(int cmd, int ver)
+{
+	uint32_t mask = 0;
+
+	if (ec_get_cmd_versions(cmd, &mask))
+		return 0;
+
+	return (mask & EC_VER_MASK(ver)) ? 1 : 0;
 }

@@ -37,4 +37,23 @@ char *read_file(const char *filename, int *size);
  */
 int is_string_printable(const char *buf);
 
+/**
+ * Get the versions of the command supported by the EC.
+ *
+ * @param cmd		Command
+ * @param pmask		Destination for version mask; will be set to 0 on
+ *			error.
+ * @return 0 if success, <0 if error
+ */
+int ec_get_cmd_versions(int cmd, uint32_t *pmask);
+
+/**
+ * Return non-zero if the EC supports the command and version
+ *
+ * @param cmd		Command to check
+ * @param ver		Version to check
+ * @return non-zero if command version supported; 0 if not.
+ */
+int ec_cmd_version_supported(int cmd, int ver);
+
 #endif

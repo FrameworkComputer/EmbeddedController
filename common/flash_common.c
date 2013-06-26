@@ -496,6 +496,12 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ,
 		     flash_command_read,
 		     EC_VER_MASK(0));
 
+/**
+ * Flash write command
+ *
+ * Version 0 and 1 are equivalent from the EC-side; the only difference is
+ * that the host can only send 64 bytes of data at a time in version 0.
+ */
 static int flash_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_write *p = args->params;
@@ -503,20 +509,20 @@ static int flash_command_write(struct host_cmd_handler_args *args)
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
 
-	if (p->size > sizeof(p->data))
+	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
 
 	if (system_unsafe_to_overwrite(p->offset, p->size))
 		return EC_RES_ACCESS_DENIED;
 
-	if (flash_write(p->offset, p->size, p->data))
+	if (flash_write(p->offset, p->size, (const uint8_t *)(p + 1)))
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 		     flash_command_write,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(EC_VER_FLASH_WRITE));
 
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {

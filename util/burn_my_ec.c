@@ -65,12 +65,29 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 	}
 
 	if (current == part) {
+		printf("Jumping EC to %s partition\n",
+		       part == EC_IMAGE_RO ? "RW" : "RO");
 		rst_req.cmd = part == EC_IMAGE_RO ?
 			      EC_REBOOT_JUMP_RW : EC_REBOOT_JUMP_RO;
 		ec_command(EC_CMD_REBOOT_EC, 0, &rst_req, sizeof(rst_req),
 			   NULL, 0);
-		/* wait EC reboot */
-		usleep(1000000);
+
+		/*
+		 * Wait for EC to reboot; this may take a while if EC is
+		 * flushing large amounts of debug output.
+		 */
+		usleep(2000000);
+
+		/* Check partition */
+		res = get_version(&current);
+		if (res < 0) {
+			fprintf(stderr, "Get version failed : %d\n", res);
+			return -1;
+		}
+		if (current == part) {
+			fprintf(stderr, "Jump failed!\n");
+			return -1;
+		}
 	}
 
 	printf("Erasing partition %s : 0x%x bytes at 0x%08x\n",

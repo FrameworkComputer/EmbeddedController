@@ -179,14 +179,16 @@ static int verify_write(int offset, int size, const char *data)
 
 int host_command_write(int offset, int size, const char *data)
 {
-	struct ec_params_flash_write params;
+	uint8_t buf[256];
+	struct ec_params_flash_write *params =
+		(struct ec_params_flash_write *)buf;
 
-	params.offset = offset;
-	params.size = size;
-	memcpy(params.data, data, size);
+	params->offset = offset;
+	params->size = size;
+	memcpy(params + 1, data, size);
 
-	return test_send_host_command(EC_CMD_FLASH_WRITE, 0, &params,
-				      sizeof(params), NULL, 0);
+	return test_send_host_command(EC_CMD_FLASH_WRITE, EC_VER_FLASH_WRITE,
+				      buf, size + sizeof(*params), NULL, 0);
 }
 
 int host_command_erase(int offset, int size)
