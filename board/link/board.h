@@ -41,10 +41,6 @@
 #define CONFIG_USB_PORT_POWER_SMART
 #define CONFIG_WP_ACTIVE_HIGH
 
-/* Link uses 2 80KB images, with PSTATE at the end instead of following RO */
-#define CONFIG_FW_IMAGE_SIZE (80 * 1024)
-#define CONFIG_PSTATE_AT_END
-
 #ifndef __ASSEMBLER__
 
 /* Fan PWM channels */

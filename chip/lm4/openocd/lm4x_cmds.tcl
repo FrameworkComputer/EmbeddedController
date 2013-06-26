@@ -22,9 +22,9 @@ proc flash_link_ro { } {
 	flash_lm4 ../../../build/link/ec.RO.flat 0
 }
 
-# Link has 80KB images
+# Link originally had 80KB images, but TOT builds 128KB images
 proc flash_link_rw { } {
-	flash_lm4 ../../../build/link/ec.RW.bin 81920
+	flash_lm4 ../../../build/link/ec.RW.bin 131072
 }
 
 proc flash_bds { } {
