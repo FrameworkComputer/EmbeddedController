@@ -24,26 +24,13 @@
 
 /* DMA channel option */
 static const struct dma_option dma_tx_option = {
-	DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->data,
+	DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
 	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
 };
 
 static const struct dma_option dma_rx_option = {
-	DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->data,
+	DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
 	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
-};
-
-/* Status register flags that we use */
-enum {
-	SR_RXNE		= 1 << 0,
-	SR_TXE		= 1 << 1,
-	SR_BSY		= 1 << 7,
-
-	CR1_SPE		= 1 << 6,
-
-	CR2_RXDMAEN	= 1 << 0,
-	CR2_TXDMAEN	= 1 << 1,
-	CR2_RXNEIE	= 1 << 6,
 };
 
 /*
@@ -231,12 +218,12 @@ static void setup_for_transaction(void)
 	active = 0;
 
 	/* write 0xfd which will be our default output value */
-	spi->data = 0xfd;
+	spi->dr = 0xfd;
 	dma_disable(DMAC_SPI1_TX);
 	*in_msg = 0xff;
 
 	/* read a byte in case there is one, and the rx dma gets it */
-	dmac = spi->data;
+	dmac = spi->dr;
 	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
 }
 
@@ -423,13 +410,13 @@ static void spi_init(void)
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
 
 	/* Enable clocks to SPI1 module */
-	STM32_RCC_APB2ENR |= 1 << 12;
+	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 
 	/* Enable rx DMA and get ready to receive our first transaction */
-	spi->ctrl2 = CR2_RXDMAEN | CR2_TXDMAEN;
+	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN;
 
 	/* Enable the SPI peripheral */
-	spi->ctrl1 |= CR1_SPE;
+	spi->cr1 |= STM32_SPI_CR1_SPE;
 
 	gpio_enable_interrupt(GPIO_SPI1_NSS);
 }
