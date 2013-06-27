@@ -15,6 +15,7 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "compile_time_macros.h"
+#include "ec_flash.h"
 #include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
@@ -487,14 +488,10 @@ int cmd_flash_info(int argc, char *argv[])
 	return 0;
 }
 
-
 int cmd_flash_read(int argc, char *argv[])
 {
-	struct ec_params_flash_read p;
-	uint8_t rdata[EC_HOST_PARAM_SIZE];
 	int offset, size;
 	int rv;
-	int i;
 	char *e;
 	char *buf;
 
@@ -522,17 +519,10 @@ int cmd_flash_read(int argc, char *argv[])
 	}
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(rdata)) {
-		p.offset = offset + i;
-		p.size = MIN(size - i, sizeof(rdata));
-		rv = ec_command(EC_CMD_FLASH_READ, 0,
-				&p, sizeof(p), rdata, sizeof(rdata));
-		if (rv < 0) {
-			fprintf(stderr, "Read error at offset %d\n", i);
-			free(buf);
-			return rv;
-		}
-		memcpy(buf + i, rdata, p.size);
+	rv = ec_flash_read(buf, offset, size);
+	if (rv < 0) {
+		free(buf);
+		return rv;
 	}
 
 	rv = write_file(argv[3], buf, size);
@@ -544,13 +534,10 @@ int cmd_flash_read(int argc, char *argv[])
 	return 0;
 }
 
-
 int cmd_flash_write(int argc, char *argv[])
 {
-	struct ec_params_flash_write p;
 	int offset, size;
 	int rv;
-	int i;
 	char *e;
 	char *buf;
 
@@ -558,6 +545,7 @@ int cmd_flash_write(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s <offset> <filename>\n", argv[0]);
 		return -1;
 	}
+
 	offset = strtol(argv[1], &e, 0);
 	if ((e && *e) || offset < 0 || offset > 0x100000) {
 		fprintf(stderr, "Bad offset.\n");
@@ -572,27 +560,20 @@ int cmd_flash_write(int argc, char *argv[])
 	printf("Writing to offset %d...\n", offset);
 
 	/* Write data in chunks */
-	for (i = 0; i < size; i += sizeof(p.data)) {
-		p.offset = offset + i;
-		p.size = MIN(size - i, sizeof(p.data));
-		memcpy(p.data, buf + i, p.size);
-		rv = ec_command(EC_CMD_FLASH_WRITE, 0, &p, sizeof(p), NULL, 0);
-		if (rv < 0) {
-			fprintf(stderr, "Write error at offset %d\n", i);
-			free(buf);
-			return rv;
-		}
-	}
+	rv = ec_flash_write(buf, offset, size);
 
 	free(buf);
+
+	if (rv < 0)
+		return rv;
+
 	printf("done.\n");
 	return 0;
 }
 
-
 int cmd_flash_erase(int argc, char *argv[])
 {
-	struct ec_params_flash_erase p;
+	int offset, size;
 	char *e;
 	int rv;
 
@@ -600,19 +581,21 @@ int cmd_flash_erase(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s <offset> <size>\n", argv[0]);
 		return -1;
 	}
-	p.offset = strtol(argv[1], &e, 0);
-	if ((e && *e) || p.offset < 0 || p.offset > 0x100000) {
+
+	offset = strtol(argv[1], &e, 0);
+	if ((e && *e) || offset < 0 || offset > 0x100000) {
 		fprintf(stderr, "Bad offset.\n");
 		return -1;
 	}
-	p.size = strtol(argv[2], &e, 0);
-	if ((e && *e) || p.size <= 0 || p.size > 0x100000) {
+
+	size = strtol(argv[2], &e, 0);
+	if ((e && *e) || size <= 0 || size > 0x100000) {
 		fprintf(stderr, "Bad size.\n");
 		return -1;
 	}
 
-	printf("Erasing %d bytes at offset %d...\n", p.size, p.offset);
-	rv = ec_command(EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0);
+	printf("Erasing %d bytes at offset %d...\n", size, offset);
+	rv = ec_flash_erase(offset, size);
 	if (rv < 0)
 		return rv;
 

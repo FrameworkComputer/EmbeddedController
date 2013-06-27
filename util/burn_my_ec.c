@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "comm-host.h"
+#include "ec_flash.h"
 
 #define STR0(name)  #name
 #define STR(name)   STR0(name)
@@ -54,12 +55,7 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 		    uint32_t offset, uint32_t size)
 {
 	struct ec_params_reboot_ec rst_req;
-	struct ec_params_flash_erase er_req;
-	struct ec_params_flash_write wr_req;
-	struct ec_params_flash_read rd_req;
-	uint8_t rd_resp[EC_HOST_PARAM_SIZE];
 	int res;
-	uint32_t i;
 	enum ec_current_image current = EC_IMAGE_UNKNOWN;
 
 	res = get_version(&current);
@@ -74,15 +70,12 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 		ec_command(EC_CMD_REBOOT_EC, 0, &rst_req, sizeof(rst_req),
 			   NULL, 0);
 		/* wait EC reboot */
-		usleep(500000);
+		usleep(1000000);
 	}
 
 	printf("Erasing partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
-	er_req.size = size;
-	er_req.offset = offset;
-	res = ec_command(EC_CMD_FLASH_ERASE, 0,
-			 &er_req, sizeof(er_req), NULL, 0);
+	res = ec_flash_erase(offset, size);
 	if (res < 0) {
 		fprintf(stderr, "Erase failed : %d\n", res);
 		return -1;
@@ -90,35 +83,20 @@ int flash_partition(enum ec_current_image part, const uint8_t *payload,
 
 	printf("Writing partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
-	/* Write data in chunks */
-	for (i = 0; i < size; i += sizeof(wr_req.data)) {
-		wr_req.offset = offset + i;
-		wr_req.size = MIN(size - i, sizeof(wr_req.data));
-		memcpy(wr_req.data, payload + i, wr_req.size);
-		res = ec_command(EC_CMD_FLASH_WRITE, 0,
-				 &wr_req, sizeof(wr_req), NULL, 0);
-		if (res < 0) {
-			fprintf(stderr, "Write error at 0x%08x : %d\n", i, res);
-			return -1;
-		}
+	res = ec_flash_write(payload, offset, size);
+	if (res < 0) {
+		fprintf(stderr, "Write failed : %d\n", res);
+		return -1;
 	}
 
 	printf("Verifying partition %s : 0x%x bytes at 0x%08x\n",
 	       part_name[part], size, offset);
-	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(rd_resp)) {
-		rd_req.offset = offset + i;
-		rd_req.size = MIN(size - i, sizeof(rd_resp));
-		res = ec_command(EC_CMD_FLASH_READ, 0, &rd_req, sizeof(rd_req),
-				 &rd_resp, sizeof(rd_resp));
-		if (res < 0) {
-			fprintf(stderr, "Read error at 0x%08x : %d\n", i, res);
-			return -1;
-		}
-		if (memcmp(payload + i, rd_resp, rd_req.size))
-			fprintf(stderr, "ERR: @%08x->%08x\n",
-				offset + i, offset + i + size);
+	res = ec_flash_verify(payload, offset, size);
+	if (res < 0) {
+		fprintf(stderr, "Verify failed : %d\n", res);
+		return -1;
 	}
+
 	printf("Done.\n");
 
 	return get_version(NULL);
