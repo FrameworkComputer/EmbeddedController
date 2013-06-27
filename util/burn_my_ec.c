@@ -21,21 +21,21 @@ static const char * const part_name[] = {"unknown", "RO", "RW"};
 enum ec_current_image get_version(enum ec_current_image *version_ptr)
 {
 	struct ec_response_get_version r;
-	char build_info[EC_HOST_PARAM_SIZE];
+	char *build_info = (char *)ec_inbuf;
 	int res;
 
 	res = ec_command(EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r));
 	if (res < 0)
 		return res;
-	res = ec_command(EC_CMD_GET_BUILD_INFO, 0, NULL, 0, build_info,
-			 sizeof(build_info));
+	res = ec_command(EC_CMD_GET_BUILD_INFO, 0, NULL, 0,
+			 ec_inbuf, ec_max_insize);
 	if (res < 0)
 		return res;
 
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw[sizeof(r.version_string_rw) - 1] = '\0';
-	build_info[sizeof(build_info) - 1] = '\0';
+	build_info[ec_max_insize - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);

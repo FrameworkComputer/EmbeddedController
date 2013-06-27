@@ -15,22 +15,20 @@
 int ec_flash_read(uint8_t *buf, int offset, int size)
 {
 	struct ec_params_flash_read p;
-	/* TODO(rspangler): need better way to determine max read size */
-	uint8_t rdata[EC_HOST_PARAM_SIZE - sizeof(struct ec_host_response)];
 	int rv;
 	int i;
 
 	/* Read data in chunks */
-	for (i = 0; i < size; i += sizeof(rdata)) {
+	for (i = 0; i < size; i += ec_max_insize) {
 		p.offset = offset + i;
-		p.size = MIN(size - i, sizeof(rdata));
+		p.size = MIN(size - i, ec_max_insize);
 		rv = ec_command(EC_CMD_FLASH_READ, 0,
-				&p, sizeof(p), rdata, sizeof(rdata));
+				&p, sizeof(p), ec_inbuf, p.size);
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			return rv;
 		}
-		memcpy(buf + i, rdata, p.size);
+		memcpy(buf + i, ec_inbuf, p.size);
 	}
 
 	return 0;

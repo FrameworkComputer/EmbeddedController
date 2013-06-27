@@ -85,5 +85,11 @@ int comm_init_dev(void)
 	if (ec_readmem_dev(EC_MEMMAP_ID, 2, version) == 2)
 		ec_readmem = ec_readmem_dev;
 
+	/*
+	 * TODO: need a way to get this from the driver and EC.  For now,
+	 * pick a magic lowest common denominator value.
+	 */
+	ec_max_outsize = EC_HOST_PARAM_SIZE - 8;
+
 	return 0;
 }

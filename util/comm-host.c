@@ -17,6 +17,10 @@ int (*ec_command)(int command, int version,
 
 int (*ec_readmem)(int offset, int bytes, void *dest);
 
+int ec_max_outsize, ec_max_insize;
+void *ec_outbuf;
+void *ec_inbuf;
+
 int comm_init_dev(void) __attribute__((weak));
 int comm_init_lpc(void) __attribute__((weak));
 int comm_init_i2c(void) __attribute__((weak));
@@ -61,17 +65,29 @@ int comm_init(void)
 
 	/* Prefer new /dev method */
 	if (comm_init_dev && !comm_init_dev())
-		return 0;
+		goto init_ok;
 
 	/* Fallback to direct LPC on x86 */
 	if (comm_init_lpc && !comm_init_lpc())
-		return 0;
+		goto init_ok;
 
 	/* Fallback to direct i2c on ARM */
 	if (comm_init_i2c && !comm_init_i2c())
-		return 0;
+		goto init_ok;
 
 	/* Give up */
 	fprintf(stderr, "Unable to establish host communication\n");
 	return 1;
+
+ init_ok:
+	/* Allocate shared I/O buffers */
+	ec_outbuf = malloc(ec_max_outsize);
+	ec_inbuf = malloc(ec_max_insize);
+	if (!ec_outbuf || !ec_inbuf) {
+		fprintf(stderr, "Unable to allocate buffers\n");
+		return 1;
+	}
+
+	return 0;
+
 }

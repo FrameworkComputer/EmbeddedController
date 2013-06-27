@@ -323,17 +323,16 @@ int cmd_cmdversions(int argc, char *argv[])
 int cmd_version(int argc, char *argv[])
 {
 	struct ec_response_get_version r;
-	char build_string[EC_HOST_PARAM_SIZE];
+	char *build_string = (char *)ec_inbuf;
 	int rv;
 
-	rv = ec_command(EC_CMD_GET_VERSION, 0,
-			NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r));
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_GET_VERSION failed: %d\n", rv);
 		return rv;
 	}
 	rv = ec_command(EC_CMD_GET_BUILD_INFO, 0,
-			NULL, 0, build_string, sizeof(build_string));
+			NULL, 0, ec_inbuf, ec_max_insize);
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_GET_BUILD_INFO failed: %d\n",
 				rv);
@@ -343,7 +342,7 @@ int cmd_version(int argc, char *argv[])
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw[sizeof(r.version_string_rw) - 1] = '\0';
-	build_string[sizeof(build_string) - 1] = '\0';
+	build_string[ec_max_insize - 1] = '\0';
 
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
@@ -1599,15 +1598,15 @@ static void print_panic_reg(int regnum, const uint32_t *regs, int index)
 
 int cmd_panic_info(int argc, char *argv[])
 {
-	char out[EC_HOST_PARAM_SIZE];
 	int rv;
-	struct panic_data *pdata = (struct panic_data *)out;
+	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
 	const uint32_t *lregs = pdata->regs;
 	const uint32_t *sregs = NULL;
 	int in_handler;
 	int i;
 
-	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, out, sizeof(out));
+	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0,
+			ec_inbuf, ec_max_insize);
 	if (rv < 0)
 		return rv;
 
@@ -2151,16 +2150,10 @@ int cmd_i2c_write(int argc, char *argv[])
 
 int cmd_i2c_xfer(int argc, char *argv[])
 {
-	union {
-		struct ec_params_i2c_passthru p;
-		uint8_t outbuf[EC_HOST_PARAM_SIZE];
-	} params;
-	union {
-		struct ec_response_i2c_passthru r;
-		uint8_t inbuf[EC_HOST_PARAM_SIZE];
-	} response;
-	struct ec_params_i2c_passthru *p = &params.p;
-	struct ec_response_i2c_passthru *r = &response.r;
+	struct ec_params_i2c_passthru *p =
+		(struct ec_params_i2c_passthru *)ec_outbuf;
+	struct ec_response_i2c_passthru *r =
+		(struct ec_response_i2c_passthru *)ec_inbuf;
 	struct ec_params_i2c_passthru_msg *msg = p->msg;
 	unsigned int addr;
 	uint8_t *pdata;
@@ -2201,11 +2194,11 @@ int cmd_i2c_xfer(int argc, char *argv[])
 	p->num_msgs = (read_len != 0) + (write_len != 0);
 
 	size = sizeof(*p) + p->num_msgs * sizeof(*msg);
-	if (size + write_len > sizeof(params)) {
+	if (size + write_len > ec_max_outsize) {
 		fprintf(stderr, "Params too large for buffer\n");
 		return -1;
 	}
-	if (sizeof(*r) + read_len > sizeof(response)) {
+	if (sizeof(*r) + read_len > ec_max_insize) {
 		fprintf(stderr, "Read length too big for buffer\n");
 		return -1;
 	}
@@ -2364,10 +2357,11 @@ int cmd_charge_force_idle(int argc, char *argv[])
 
 int cmd_charge_dump(int argc, char *argv[])
 {
-	unsigned char out[EC_HOST_PARAM_SIZE];
+	unsigned char *out = ec_inbuf;
 	int rv, i;
 
-	rv = ec_command(EC_CMD_CHARGE_DUMP, 0, NULL, 0, out, sizeof(out));
+	rv = ec_command(EC_CMD_CHARGE_DUMP, 0, NULL, 0,
+			ec_inbuf, ec_max_insize);
 
 	if (rv < 0)
 		return rv;
@@ -2749,7 +2743,7 @@ int cmd_rtc_set(int argc, char *argv[])
 
 int cmd_console(int argc, char *argv[])
 {
-	char out[EC_HOST_PARAM_SIZE];
+	char *out = (char *)ec_inbuf;
 	int rv;
 
 	/* Snapshot the EC console */
@@ -2760,7 +2754,7 @@ int cmd_console(int argc, char *argv[])
 	/* Loop and read from the snapshot until it's done */
 	while (1) {
 		rv = ec_command(EC_CMD_CONSOLE_READ, 0,
-				NULL, 0, out, sizeof(out));
+				NULL, 0, ec_inbuf, ec_max_insize);
 		if (rv < 0)
 			return rv;
 
@@ -2768,7 +2762,7 @@ int cmd_console(int argc, char *argv[])
 			break;  /* Empty response means done */
 
 		/* Make sure output is null-terminated, then dump it */
-		out[sizeof(out) - 1] = '\0';
+		out[ec_max_insize - 1] = '\0';
 		fputs(out, stdout);
 	}
 	printf("\n");

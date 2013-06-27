@@ -297,14 +297,21 @@ int comm_init_lpc(void)
 
 	if (i & EC_HOST_CMD_FLAG_VERSION_3) {
 		ec_command = ec_command_lpc_3;
+		ec_max_outsize = EC_LPC_HOST_PACKET_SIZE -
+			sizeof(struct ec_host_request);
+		ec_max_insize = EC_LPC_HOST_PACKET_SIZE -
+			sizeof(struct ec_host_response);
+
 	} else if (i & EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED) {
 		ec_command = ec_command_lpc;
+		ec_max_outsize = ec_max_insize = EC_HOST_PARAM_SIZE;
+
 	} else {
 		fprintf(stderr, "EC doesn't support protocols we need.\n");
 		return -5;
 	}
 
-	/* Either one supports reading mapped memory directly */
+	/* Either one supports reading mapped memory directly. */
 	ec_readmem = ec_readmem_lpc;
 	return 0;
 }
