@@ -346,7 +346,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_APB1LPENR         REG32(STM32_RCC_BASE + 0x30)
 #define STM32_RCC_CSR               REG32(STM32_RCC_BASE + 0x34)
 
-#define RCC_AHBENR_DMA1EN           (1 << 24)
+#define STM32_RCC_HB_DMA1		(1 << 24)
 
 #define STM32_SYSCFG_BASE           0x40010000
 
@@ -369,7 +369,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_CSR               REG32(STM32_RCC_BASE + 0x24)
 #define STM32_RCC_CFGR2             REG32(STM32_RCC_BASE + 0x2c) /* STM32F100 */
 
-#define RCC_AHBENR_DMA1EN           (1 << 0)
+#define STM32_RCC_HB_DMA1		(1 << 0)
 
 #else
 #error Unsupported chip variant
@@ -599,6 +599,105 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x4C)
 #endif
 
+/* --- DMA --- */
+
+#if defined(CHIP_VARIANT_stm32l15x)
+#define STM32_DMA1_BASE             0x40026000
+#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+#define STM32_DMA1_BASE             0x40020000
+#else
+#error Unsupported chip variant
+#endif
+
+/*
+ * Available DMA channels, numbered from 0.
+ *
+ * Note: The STM datasheet tends to number things from 1. We should ask
+ * the European elevator engineers to talk to MCU engineer counterparts
+ * about this.  This means that if the datasheet refers to channel n,
+ * you need to use STM32_DMAC_CHn (=n-1) in the code.
+ *
+ * Also note that channels are overloaded; obviously you can only use one
+ * function on each channel at a time.
+ */
+enum dma_channel {
+	/* Channel numbers */
+	STM32_DMAC_CH1 = 0,
+	STM32_DMAC_CH2 = 1,
+	STM32_DMAC_CH3 = 2,
+	STM32_DMAC_CH4 = 3,
+	STM32_DMAC_CH5 = 4,
+	STM32_DMAC_CH6 = 5,
+	STM32_DMAC_CH7 = 6,
+
+	/* Channel functions */
+	STM32_DMAC_ADC = STM32_DMAC_CH1,
+	STM32_DMAC_SPI1_RX = STM32_DMAC_CH2,
+	STM32_DMAC_SPI1_TX = STM32_DMAC_CH3,
+	STM32_DMAC_I2C2_TX = STM32_DMAC_CH4,
+	STM32_DMAC_I2C2_RX = STM32_DMAC_CH5,
+	STM32_DMAC_USART1_TX = STM32_DMAC_CH4,
+	STM32_DMAC_USART1_RX = STM32_DMAC_CH5,
+	STM32_DMAC_I2C1_TX = STM32_DMAC_CH6,
+	STM32_DMAC_I2C1_RX = STM32_DMAC_CH7,
+
+	/* Only DMA1 (with 7 channels) is present on STM32F100 and STM32L151x */
+	STM32_DMAC_COUNT = 7,
+};
+
+/* Registers for a single channel of the DMA controller */
+struct stm32_dma_chan {
+	uint32_t	ccr;		/* Control */
+	uint32_t	cndtr;		/* Number of data to transfer */
+	uint32_t	cpar;		/* Peripheral address */
+	uint32_t	cmar;		/* Memory address */
+	uint32_t	reserved;
+};
+
+/* Always use stm32_dma_chan_t so volatile keyword is included! */
+typedef volatile struct stm32_dma_chan stm32_dma_chan_t;
+
+/* Registers for the DMA controller */
+struct stm32_dma_regs {
+	uint32_t	isr;
+	uint32_t	ifcr;
+	stm32_dma_chan_t chan[STM32_DMAC_COUNT];
+};
+
+/* Always use stm32_dma_regs_t so volatile keyword is included! */
+typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
+
+#define STM32_DMA1_REGS ((stm32_dma_regs_t *)STM32_DMA1_BASE)
+
+/* Bits for DMA controller regs (isr and ifcr) */
+#define STM32_DMA_ISR_MASK(channel, mask) ((mask) << (4 * (channel)))
+#define STM32_DMA_ISR_GIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 0)
+#define STM32_DMA_ISR_TCIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 1)
+#define STM32_DMA_ISR_HTIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 2)
+#define STM32_DMA_ISR_TEIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 3)
+#define STM32_DMA_ISR_ALL(channel)	STM32_DMA_ISR_MASK(channel, 0x0f)
+
+/* Bits for DMA channel regs */
+#define STM32_DMA_CCR_EN		(1 << 0)
+#define STM32_DMA_CCR_TCIE		(1 << 1)
+#define STM32_DMA_CCR_HTIE		(1 << 2)
+#define STM32_DMA_CCR_TEIE		(1 << 3)
+#define STM32_DMA_CCR_DIR		(1 << 4)
+#define STM32_DMA_CCR_CIRC		(1 << 5)
+#define STM32_DMA_CCR_PINC		(1 << 6)
+#define STM32_DMA_CCR_MINC		(1 << 7)
+#define STM32_DMA_CCR_PSIZE_8_BIT	(0 << 8)
+#define STM32_DMA_CCR_PSIZE_16_BIT	(1 << 8)
+#define STM32_DMA_CCR_PSIZE_32_BIT	(2 << 8)
+#define STM32_DMA_CCR_MSIZE_8_BIT	(0 << 10)
+#define STM32_DMA_CCR_MSIZE_16_BIT	(1 << 10)
+#define STM32_DMA_CCR_MSIZE_32_BIT	(2 << 10)
+#define STM32_DMA_CCR_PL_LOW		(0 << 12)
+#define STM32_DMA_CCR_PL_MEDIUM		(1 << 12)
+#define STM32_DMA_CCR_PL_HIGH		(2 << 12)
+#define STM32_DMA_CCR_PL_VERY_HIGH	(3 << 12)
+#define STM32_DMA_CCR_MEM2MEM		(1 << 14)
+
 /* --- MISC --- */
 
 #define STM32_RI_BASE               0x40007C04
@@ -607,18 +706,6 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_DAC_BASE              0x40007400
 #define STM32_CRC_BASE              0x40023000
 #define STM32_LCD_BASE              0x40002400
-#if defined(CHIP_VARIANT_stm32l15x)
-#define STM32_DMA1_BASE             0x40026000
-#define STM32_DMA2_BASE             0x40026400
-#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
-#define STM32_DMA1_BASE             0x40020000
-/* FIXME: DMA2 is only available on high-density devices, but is used as part
- * of a sanity check in dma.c */
-#define STM32_DMA2_BASE             0x40020400
-#else
-#error Unsupported chip variant
-#endif
-
 #define STM32_FSMC_BASE             0xA0000000 /* STM32F10x only */
 #define STM32_USB_OTG_FS_BASE       0x50000000 /* STM32F10x only */
 #define STM32_ETHERNET_BASE         0x40028000 /* STM32F10x only */

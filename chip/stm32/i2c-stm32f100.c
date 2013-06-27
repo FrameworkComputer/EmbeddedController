@@ -61,10 +61,14 @@
 #define I2C2      STM32_I2C2_PORT
 
 /* Select the DMA channels matching the board configuration */
-#define DMAC_SLAVE_TX ((I2C_PORT_SLAVE) ? DMAC_I2C2_TX : DMAC_I2C1_TX)
-#define DMAC_SLAVE_RX ((I2C_PORT_SLAVE) ? DMAC_I2C2_RX : DMAC_I2C1_RX)
-#define DMAC_HOST_TX  ((I2C_PORT_HOST) ? DMAC_I2C2_TX : DMAC_I2C1_TX)
-#define DMAC_HOST_RX  ((I2C_PORT_HOST) ? DMAC_I2C2_RX : DMAC_I2C1_RX)
+#define DMAC_SLAVE_TX \
+	((I2C_PORT_SLAVE) ? STM32_DMAC_I2C2_TX : STM32_DMAC_I2C1_TX)
+#define DMAC_SLAVE_RX \
+	((I2C_PORT_SLAVE) ? STM32_DMAC_I2C2_RX : STM32_DMAC_I2C1_RX)
+#define DMAC_HOST_TX \
+	((I2C_PORT_HOST) ? STM32_DMAC_I2C2_TX : STM32_DMAC_I2C1_TX)
+#define DMAC_HOST_RX \
+	((I2C_PORT_HOST) ? STM32_DMAC_I2C2_RX : STM32_DMAC_I2C1_RX)
 
 enum {
 	/*
@@ -80,17 +84,17 @@ enum {
 };
 
 static const struct dma_option dma_tx_option[I2C_PORT_COUNT] = {
-	{DMAC_I2C1_TX, (void *)&STM32_I2C_DR(I2C1),
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
-	{DMAC_I2C2_TX, (void *)&STM32_I2C_DR(I2C2),
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{STM32_DMAC_I2C1_TX, (void *)&STM32_I2C_DR(I2C1),
+	 STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT},
+	{STM32_DMAC_I2C2_TX, (void *)&STM32_I2C_DR(I2C2),
+	 STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT},
 };
 
 static const struct dma_option dma_rx_option[I2C_PORT_COUNT] = {
-	{DMAC_I2C1_RX, (void *)&STM32_I2C_DR(I2C1),
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
-	{DMAC_I2C2_RX, (void *)&STM32_I2C_DR(I2C2),
-	 DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD},
+	{STM32_DMAC_I2C1_RX, (void *)&STM32_I2C_DR(I2C1),
+	 STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT},
+	{STM32_DMAC_I2C2_RX, (void *)&STM32_I2C_DR(I2C2),
+	 STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT},
 };
 
 static uint16_t i2c_sr1[I2C_PORT_COUNT];
@@ -127,7 +131,7 @@ static void i2c_init_port(unsigned int port);
 
 static int i2c_write_raw_slave(int port, void *buf, int len)
 {
-	dma_channel_t *chan;
+	stm32_dma_chan_t *chan;
 	int rv;
 
 	/* we don't want to race with TxE interrupt event */
@@ -716,7 +720,7 @@ static int i2c_master_transmit(int port, int slave_addr, const uint8_t *data,
 
 	disable_ack(port);
 
-	/* Configuring DMA1 channel DMAC_I2X_TX */
+	/* Configure DMA channel for TX to host */
 	dma_prepare_tx(dma_tx_option + port, size, data);
 	dma_enable_tc_interrupt(DMAC_HOST_TX);
 

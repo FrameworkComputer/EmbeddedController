@@ -21,8 +21,8 @@ struct mutex adc_lock;
 static int watchdog_ain_id;
 
 static const struct dma_option dma_adc_option = {
-	DMAC_ADC, (void *)&STM32_ADC_DR,
-	DMA_MSIZE_HALF_WORD | DMA_PSIZE_HALF_WORD
+	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
+	STM32_DMA_CCR_MSIZE_16_BIT | STM32_DMA_CCR_PSIZE_16_BIT,
 };
 
 static inline void adc_set_channel(int sample_id, int channel)
@@ -235,7 +235,7 @@ int adc_read_all_channels(int *data)
 	/* Start conversion */
 	STM32_ADC_CR2 |= (1 << 0); /* ADON */
 
-	if (dma_wait(DMAC_ADC)) {
+	if (dma_wait(STM32_DMAC_ADC)) {
 		ret = EC_ERROR_UNKNOWN;
 		goto exit_all_channels;
 	}

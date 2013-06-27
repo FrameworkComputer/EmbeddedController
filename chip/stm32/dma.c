@@ -17,17 +17,7 @@
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
 
 /* Task IDs for the interrupt handlers to wake up */
-static task_id_t id[DMA_NUM_CHANNELS];
-
-/* Registers for the DMA controller */
-struct dma_ctlr {
-	uint32_t	isr;
-	uint32_t	ifcr;
-	dma_channel_t chan[DMA_NUM_CHANNELS];
-};
-
-/* Always use dma_ctlr_t so volatile keyword is included! */
-typedef volatile struct dma_ctlr dma_ctlr_t;
+static task_id_t id[STM32_DMAC_COUNT];
 
 /**
  * Return the IRQ for the DMA channel
@@ -40,101 +30,86 @@ static int dma_get_irq(enum dma_channel channel)
 	return STM32_IRQ_DMA_CHANNEL_1 + channel;
 }
 
-/**
- * Get a pointer to the DMA peripheral controller that owns the channel
- *
- * @param channel	Channel number to get the controller for (DMAC_...)
- * @return pointer to DMA channel registers
- */
-static dma_ctlr_t *dma_get_ctlr(void)
-{
-	return (dma_ctlr_t *)STM32_DMA1_BASE;
-}
-
 /*
  * Note, you must decrement the channel value by 1 from what is specified
  * in the datasheets, as they index from 1 and this indexes from 0!
  */
-dma_channel_t *dma_get_channel(enum dma_channel channel)
+stm32_dma_chan_t *dma_get_channel(enum dma_channel channel)
 {
-	dma_ctlr_t *dma = dma_get_ctlr();
-
-	/* Get a pointer to the correct controller and channel */
-	ASSERT(channel < DMA_NUM_CHANNELS);
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
 
 	return &dma->chan[channel];
 }
 
 void dma_disable(enum dma_channel channel)
 {
-	dma_channel_t *chan = dma_get_channel(channel);
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
-	if (chan->ccr & DMA_EN)
-		chan->ccr &= ~DMA_EN;
+	if (chan->ccr & STM32_DMA_CCR_EN)
+		chan->ccr &= ~STM32_DMA_CCR_EN;
 }
 
 /**
  * Prepare a channel for use and start it
  *
- * @param chan		Channel number to read (DMAC_...)
+ * @param chan		Channel to read
  * @param count		Number of bytes to transfer
  * @param periph	Pointer to peripheral data register
  * @param memory	Pointer to memory address for receive/transmit
  * @param flags		DMA flags for the control register, normally:
-				DMA_MINC_MASK |
- *				(DMA_DIR_FROM_MEM_MASK for tx
- *				0 for rx)
+ *				STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR for tx
+ *				0 for rx
  */
-static void prepare_channel(dma_channel_t *chan, unsigned count,
+static void prepare_channel(stm32_dma_chan_t *chan, unsigned count,
 		void *periph, void *memory, unsigned flags)
 {
-	uint32_t ctrl = DMA_PL_VERY_HIGH << DMA_PL_SHIFT;
+	uint32_t ccr = STM32_DMA_CCR_PL_VERY_HIGH;
 
-	if (chan->ccr & DMA_EN)
-		chan->ccr &= ~DMA_EN;
+	if (chan->ccr & STM32_DMA_CCR_EN)
+		chan->ccr &= ~STM32_DMA_CCR_EN;
 
 	/* Following the order in Doc ID 15965 Rev 5 p194 */
 	chan->cpar = (uint32_t)periph;
 	chan->cmar = (uint32_t)memory;
 	chan->cndtr = count;
-	chan->ccr = ctrl;
-
-	ctrl |= flags;
-	chan->ccr = ctrl;
+	chan->ccr = ccr;
+	ccr |= flags;
+	chan->ccr = ccr;
 }
 
-void dma_go(dma_channel_t *chan)
+void dma_go(stm32_dma_chan_t *chan)
 {
 	/* Fire it up */
-	chan->ccr |= DMA_EN;
+	chan->ccr |= STM32_DMA_CCR_EN;
 }
 
 void dma_prepare_tx(const struct dma_option *option, unsigned count,
 		    const void *memory)
 {
-	dma_channel_t *chan = dma_get_channel(option->channel);
+	stm32_dma_chan_t *chan = dma_get_channel(option->channel);
 
 	/*
 	 * Cast away const for memory pointer; this is ok because we know
 	 * we're preparing the channel for transmit.
 	 */
 	prepare_channel(chan, count, option->periph, (void *)memory,
-			DMA_MINC_MASK | DMA_DIR_FROM_MEM_MASK | option->flags);
+			STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR |
+			option->flags);
 }
 
 void dma_start_rx(const struct dma_option *option, unsigned count,
 		  void *memory)
 {
-	dma_channel_t *chan = dma_get_channel(option->channel);
+	stm32_dma_chan_t *chan = dma_get_channel(option->channel);
 
 	prepare_channel(chan, count, option->periph, memory,
-			DMA_MINC_MASK | option->flags);
+			STM32_DMA_CCR_MINC | option->flags);
 	dma_go(chan);
 }
 
-int dma_bytes_done(dma_channel_t *chan, int orig_count)
+int dma_bytes_done(stm32_dma_chan_t *chan, int orig_count)
 {
-	if (!(chan->ccr & DMA_EN))
+	if (!(chan->ccr & STM32_DMA_CCR_EN))
 		return 0;
 	return orig_count - chan->cndtr;
 }
@@ -142,8 +117,8 @@ int dma_bytes_done(dma_channel_t *chan, int orig_count)
 #ifdef CONFIG_DMA_HELP
 void dma_dump(enum dma_channel channel)
 {
-	dma_ctlr_t *dma = dma_get_ctlr();
-	dma_channel_t *chan = dma_get_channel(channel);
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
 	CPRINTF("ccr=%x, cndtr=%x, cpar=%x, cmar=%x\n", chan->ccr,
 		chan->cndtr, chan->cpar, chan->cmar);
@@ -155,7 +130,7 @@ void dma_dump(enum dma_channel channel)
 
 void dma_check(enum dma_channel channel, char *buf)
 {
-	dma_channel_t *chan;
+	stm32_dma_chan_t *chan;
 	int count;
 	int i;
 
@@ -175,8 +150,8 @@ void dma_check(enum dma_channel channel, char *buf)
 /* Run a check of memory-to-memory DMA */
 void dma_test(void)
 {
-	dma_channel_t *chan = dma_get_channel(channel);
-	unsigned channel = 3;
+	enum dma_channel channel = STM32_DMAC_CH4;
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 	uint32_t ctrl;
 	char periph[16], memory[16];
 	unsigned count = sizeof(periph);
@@ -190,18 +165,17 @@ void dma_test(void)
 	chan->cpar = (uint32_t)periph;
 	chan->cmar = (uint32_t)memory;
 	chan->cndtr = count;
-	ctrl = DMA_PL_MEDIUM << DMA_PL_SHIFT;
+	ctrl = STM32_DMA_CCR_PL_MEDIUM;
 	chan->ccr = ctrl;
 
-	ctrl |= DMA_MINC_MASK; /* | DMA_DIR_FROM_MEM_MASK */;
-	ctrl |= 1 << 14; /* MEM2MEM */
-	ctrl |= 1 << 6;  /* PINC */
-/*	ctrl |= 2 << 10; */
-/*	ctrl |= 2 << 8; */
+	ctrl |= STM32_DMA_CCR_MINC; /* | STM32_DMA_CCR_DIR */;
+	ctrl |= STM32_DMA_CCR_MEM2MEM;
+	ctrl |= STM32_DMA_CCR_PINC;
+/*	ctrl |= STM32_DMA_CCR_MSIZE_32_BIT; */
+/*	ctrl |= STM32_DMA_CCR_PSIZE_32_BIT; */
 	chan->ccr = ctrl;
+	chan->ccr = ctrl | STM32_DMA_CCR_EN;
 
-	ctrl |= DMA_EN;
-	chan->ccr = ctrl;
 	for (i = 0; i < count; i++)
 		CPRINTF("%d/%d ", periph[i], memory[i]);
 	CPRINTF("\ncount=%d\n", chan->cndtr);
@@ -213,86 +187,86 @@ static void dma_init(void)
 	int i;
 
 	/* Enable DMA1; current chips don't have DMA2 */
-	STM32_RCC_AHBENR |= RCC_AHBENR_DMA1EN;
+	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
 
 	/* Initialize data for interrupt handlers */
-	for (i = 0; i < DMA_NUM_CHANNELS; i++)
+	for (i = 0; i < STM32_DMAC_COUNT; i++)
 		id[i] = TASK_ID_INVALID;
 }
 DECLARE_HOOK(HOOK_INIT, dma_init, HOOK_PRIO_INIT_DMA);
 
 int dma_wait(enum dma_channel channel)
 {
-	dma_ctlr_t *dma = dma_get_ctlr();
-	uint32_t mask = DMA_TCIF(channel);
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	const uint32_t mask = STM32_DMA_ISR_TCIF(channel);
 	timestamp_t deadline;
 
 	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
 	while ((dma->isr & mask) != mask) {
 		if (deadline.val <= get_time().val)
 			return EC_ERROR_TIMEOUT;
-		else
-			udelay(DMA_POLLING_INTERVAL_US);
+
+		udelay(DMA_POLLING_INTERVAL_US);
 	}
 	return EC_SUCCESS;
 }
 
 void dma_enable_tc_interrupt(enum dma_channel channel)
 {
-	dma_channel_t *chan = dma_get_channel(channel);
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
 	/* Store task ID so the ISR knows which task to wake */
 	id[channel] = task_get_current();
 
-	chan->ccr |= DMA_TCIE;
+	chan->ccr |= STM32_DMA_CCR_TCIE;
 	task_enable_irq(dma_get_irq(channel));
 }
 
 void dma_disable_tc_interrupt(enum dma_channel channel)
 {
-	dma_channel_t *chan = dma_get_channel(channel);
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
 	id[channel] = TASK_ID_INVALID;
 
-	chan->ccr &= ~DMA_TCIE;
+	chan->ccr &= ~STM32_DMA_CCR_TCIE;
 	task_disable_irq(dma_get_irq(channel));
 }
 
 void dma_clear_isr(enum dma_channel channel)
 {
-	dma_ctlr_t *dma = dma_get_ctlr();
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
 
-	dma->ifcr |= 0x0f << (4 * channel);
+	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
 }
 
 static void dma_event_interrupt_channel_4(void)
 {
-	dma_clear_isr(DMAC_CH4);
-	if (id[DMAC_CH4] != TASK_ID_INVALID)
-		task_wake(id[DMAC_CH4]);
+	dma_clear_isr(STM32_DMAC_CH4);
+	if (id[STM32_DMAC_CH4] != TASK_ID_INVALID)
+		task_wake(id[STM32_DMAC_CH4]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4, dma_event_interrupt_channel_4, 3);
 
 static void dma_event_interrupt_channel_5(void)
 {
-	dma_clear_isr(DMAC_CH5);
-	if (id[DMAC_CH5] != TASK_ID_INVALID)
-		task_wake(id[DMAC_CH5]);
+	dma_clear_isr(STM32_DMAC_CH5);
+	if (id[STM32_DMAC_CH5] != TASK_ID_INVALID)
+		task_wake(id[STM32_DMAC_CH5]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_5, dma_event_interrupt_channel_5, 3);
 
 static void dma_event_interrupt_channel_6(void)
 {
-	dma_clear_isr(DMAC_CH6);
-	if (id[DMAC_CH6] != TASK_ID_INVALID)
-		task_wake(id[DMAC_CH6]);
+	dma_clear_isr(STM32_DMAC_CH6);
+	if (id[STM32_DMAC_CH6] != TASK_ID_INVALID)
+		task_wake(id[STM32_DMAC_CH6]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_6, dma_event_interrupt_channel_6, 3);
 
 static void dma_event_interrupt_channel_7(void)
 {
-	dma_clear_isr(DMAC_CH7);
-	if (id[DMAC_CH7] != TASK_ID_INVALID)
-		task_wake(id[DMAC_CH7]);
+	dma_clear_isr(STM32_DMAC_CH7);
+	if (id[STM32_DMAC_CH7] != TASK_ID_INVALID)
+		task_wake(id[STM32_DMAC_CH7]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_7, dma_event_interrupt_channel_7, 3);

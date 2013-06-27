@@ -24,13 +24,13 @@
 
 /* DMA channel option */
 static const struct dma_option dma_tx_option = {
-	DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
-	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
+	STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
 };
 
 static const struct dma_option dma_rx_option = {
-	DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
-	DMA_MSIZE_BYTE | DMA_PSIZE_HALF_WORD
+	STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
 };
 
 /*
@@ -108,7 +108,7 @@ static const uint8_t out_preamble[4] = {
  * @param nss_mask	Bit to check in GPIO register (when high, we abort)
  * @return 0 if bytes received, -1 if we hit a timeout or NSS went high
  */
-static int wait_for_bytes(dma_channel_t *rxdma, int needed,
+static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
 			  uint16_t *nss_reg, uint32_t nss_mask)
 {
 	timestamp_t deadline;
@@ -165,7 +165,7 @@ static int wait_for_bytes(dma_channel_t *rxdma, int needed,
  *			SPI_MSG_HEADER_LEN bytes into out_msg
  * @param msg_len	Number of message bytes to send
  */
-static void reply(dma_channel_t *txdma,
+static void reply(stm32_dma_chan_t *txdma,
 		  enum ec_status status, char *msg_ptr, int msg_len)
 {
 	char *msg;
@@ -219,7 +219,7 @@ static void setup_for_transaction(void)
 
 	/* write 0xfd which will be our default output value */
 	spi->dr = 0xfd;
-	dma_disable(DMAC_SPI1_TX);
+	dma_disable(STM32_DMAC_SPI1_TX);
 	*in_msg = 0xff;
 
 	/* read a byte in case there is one, and the rx dma gets it */
@@ -237,7 +237,7 @@ static void setup_for_transaction(void)
 static void spi_send_response(struct host_cmd_handler_args *args)
 {
 	enum ec_status result = args->result;
-	dma_channel_t *txdma;
+	stm32_dma_chan_t *txdma;
 
 	/* If we are too late, don't bother */
 	if (!active)
@@ -251,7 +251,7 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 		ASSERT(args->response == out_msg + SPI_MSG_HEADER_LEN);
 
 	/* Transmit the reply */
-	txdma = dma_get_channel(DMAC_SPI1_TX);
+	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
 	reply(txdma, result, args->response, args->response_size);
 }
 
@@ -264,14 +264,14 @@ static void spi_send_response(struct host_cmd_handler_args *args)
  */
 static void spi_send_response_packet(struct host_packet *pkt)
 {
-	dma_channel_t *txdma;
+	stm32_dma_chan_t *txdma;
 
 	/* If we are too late, don't bother */
 	if (!active)
 		return;
 
 	/* Transmit the reply */
-	txdma = dma_get_channel(DMAC_SPI1_TX);
+	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
 	dma_prepare_tx(&dma_tx_option,
 		       sizeof(out_preamble) + pkt->response_size, out_msg);
 	dma_go(txdma);
@@ -287,7 +287,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
  */
 void spi_event(enum gpio_signal signal)
 {
-	dma_channel_t *rxdma;
+	stm32_dma_chan_t *rxdma;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
 
@@ -307,7 +307,7 @@ void spi_event(enum gpio_signal signal)
 
 	/* Otherwise, NSS is low and we're now inside a transaction */
 	active = 1;
-	rxdma = dma_get_channel(DMAC_SPI1_RX);
+	rxdma = dma_get_channel(STM32_DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
 	if (wait_for_bytes(rxdma, 3, nss_reg, nss_mask)) {
