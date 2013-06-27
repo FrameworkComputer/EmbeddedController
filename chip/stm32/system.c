@@ -151,14 +151,14 @@ void system_pre_init(void)
 	while (!(STM32_RCC_CSR & (1 << 1)))
 		;
 	/* re-configure RTC if needed */
-#if defined(CHIP_VARIANT_stm32l15x)
+#ifdef CHIP_FAMILY_stm32l
 	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_CSR |= 0x00800000;
 		/* Enable RTC and use LSI as clock source */
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
-#elif defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+#elif defined(CHIP_FAMILY_stm32f)
 	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_BDCR |= 0x00010000;
@@ -166,7 +166,7 @@ void system_pre_init(void)
 		STM32_RCC_BDCR = (STM32_RCC_BDCR & ~0x00018300) | 0x00008200;
 	}
 #else
-#error "Unsupported chip variant"
+#error "Unsupported chip family"
 #endif
 
 	check_reset_cause();
@@ -203,7 +203,7 @@ void system_reset(int flags)
 
 	if (flags & SYSTEM_RESET_HARD) {
 
-#ifdef CHIP_VARIANT_stm32l15x
+#ifdef CHIP_FAMILY_stm32l
 		/*
 		 * Ask the flash module to reboot, so that we reload the
 		 * option bytes.

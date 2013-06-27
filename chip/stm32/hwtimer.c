@@ -165,12 +165,12 @@ void __hw_timer_enable_clock(int n, int enable)
 	volatile uint32_t *reg;
 	uint32_t mask = 0;
 
-#if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+#if defined(CHIP_FAMILY_stm32f)
 	if (n == 1) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = 1 << 11;
 	}
-#elif defined(CHIP_VARIANT_stm32l15x)
+#elif defined(CHIP_FAMILY_stm32l)
 	if (n >= 9 && n <= 11) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = 1 << (n - 7);

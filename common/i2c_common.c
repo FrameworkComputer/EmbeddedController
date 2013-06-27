@@ -345,10 +345,10 @@ static void scan_bus(int port, const char *desc)
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
 		ccputs(".");
 
-#if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+#ifdef CHIP_FAMILY_stm32f
 		/*
 		 * Hope that address 0 exists, because the i2c_xfer()
-		 * implementation on STM32 can't read a byte without writing
+		 * implementation on STM32F can't read a byte without writing
 		 * one first.
 		 *
 		 * TODO: remove when that limitation is fixed.

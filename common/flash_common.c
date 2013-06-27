@@ -106,7 +106,7 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 }
 
 /* crosbug.com/p/13066 - not supported on STM32L */
-#ifndef CHIP_VARIANT_stm32l15x
+#ifndef CHIP_FAMILY_stm32l
 int flash_is_erased(uint32_t offset, int size)
 {
 	const uint32_t *ptr;
@@ -578,7 +578,7 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 	if (!(r->flags & EC_FLASH_PROTECT_RO_NOW))
 		r->writable_flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
-#if defined(CHIP_VARIANT_stm32f100) || defined(CHIP_VARIANT_stm32f10x)
+#ifdef CHIP_FAMILY_stm32f
 	/*
 	 * TODO: ignore all-now on STM32F if WP isn't asserted; this is left
 	 * over from limitations in early snow.

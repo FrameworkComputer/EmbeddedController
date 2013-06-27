@@ -7,6 +7,7 @@
 
 # the IC is STmicro STM32F100R8
 CHIP:=stm32
+CHIP_FAMILY:=stm32f
 CHIP_VARIANT:=stm32f100
 
 board-y=board.o
