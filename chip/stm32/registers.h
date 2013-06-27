@@ -106,11 +106,20 @@
 		REG16(STM32_CAT(STM32_USART, n, _BASE) + (offset))
 
 #define STM32_USART_SR(n)          STM32_USART_REG(n, 0x00)
+#define STM32_USART_SR_RXNE		(1 << 5)
+#define STM32_USART_SR_TXE		(1 << 7)
 #define STM32_USART_DR(n)          STM32_USART_REG(n, 0x04)
 #define STM32_USART_BRR(n)         STM32_USART_REG(n, 0x08)
 #define STM32_USART_CR1(n)         STM32_USART_REG(n, 0x0C)
+#define STM32_USART_CR1_RE		(1 << 2)
+#define STM32_USART_CR1_TE		(1 << 3)
+#define STM32_USART_CR1_RXNEIE		(1 << 5)
+#define STM32_USART_CR1_TXEIE		(1 << 7)
+#define STM32_USART_CR1_UE		(1 << 13)
+#define STM32_USART_CR1_OVER8		(1 << 15) /* STM32L only */
 #define STM32_USART_CR2(n)         STM32_USART_REG(n, 0x10)
 #define STM32_USART_CR3(n)         STM32_USART_REG(n, 0x14)
+#define STM32_USART_CR3_ONEBIT		(1 << 11) /* STM32L only */
 #define STM32_USART_GTPR(n)        STM32_USART_REG(n, 0x18)
 
 #define STM32_IRQ_USART(n)         STM32_CAT(STM32_IRQ_USART, n, )
@@ -365,6 +374,13 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #else
 #error Unsupported chip variant
 #endif
+
+/* Enable bits for RCC_APB/AHB regs */
+#define STM32_RCC_PB1_USART2		(1 << 17)
+#define STM32_RCC_PB1_USART3		(1 << 18)
+#define STM32_RCC_PB1_USART4		(1 << 19)
+#define STM32_RCC_PB1_USART5		(1 << 20)
+#define STM32_RCC_PB2_USART1		(1 << 14)
 
 /* --- Watchdogs --- */
 
