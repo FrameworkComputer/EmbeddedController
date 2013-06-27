@@ -18,6 +18,7 @@
 #include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
+#include "panic.h"
 
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }
@@ -102,6 +103,8 @@ const char help_str[] =
 	"      Set the color of LED\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  panicinfo\n"
+	"      Prints saved panic info\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
 	"  powerinfo\n"
@@ -1673,6 +1676,69 @@ int cmd_kbpress(int argc, char *argv[])
 }
 
 
+static void print_panic_reg(int regnum, const uint32_t *regs, int index)
+{
+	static const char * const regname[] = {
+		"r0 ", "r1 ", "r2 ", "r3 ", "r4 ",
+		"r5 ", "r6 ", "r7 ", "r8 ", "r9 ",
+		"r10", "r11", "r12", "sp ", "lr ",
+		"pc "};
+
+	printf("%s:", regname[regnum]);
+	if (regs)
+		printf("%08x", regs[index]);
+	else
+		printf("        ");
+	printf((regnum & 3) == 3 ? "\n" : " ");
+}
+
+
+int cmd_panic_info(int argc, char *argv[])
+{
+	char out[EC_HOST_PARAM_SIZE];
+	int rv;
+	struct panic_data *pdata = (struct panic_data *)out;
+	const uint32_t *lregs = pdata->regs;
+	const uint32_t *sregs = NULL;
+	int in_handler;
+	int i;
+
+	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, out, sizeof(out));
+	if (rv < 0)
+		return rv;
+
+	if (rv == 0) {
+		printf("No panic data.\n");
+		return 0;
+	}
+
+	printf("Saved panic data:%s\n",
+	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
+
+	in_handler = ((pdata->regs[11] & 0xf) == 1 ||
+		      (pdata->regs[11] & 0xf) == 9);
+
+	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
+		sregs = pdata->frame;
+
+	printf("=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
+	       in_handler ? "HANDLER" : "PROCESS",
+	       lregs[1] & 0xff, sregs ? sregs[7] : -1);
+	for (i = 0; i < 4; ++i)
+		print_panic_reg(i, sregs, i);
+	for (i = 4; i < 10; ++i)
+		print_panic_reg(i, lregs, i - 1);
+	print_panic_reg(10, lregs, 9);
+	print_panic_reg(11, lregs, 10);
+	print_panic_reg(12, sregs, 4);
+	print_panic_reg(13, lregs, in_handler ? 2 : 0);
+	print_panic_reg(14, sregs, 5);
+	print_panic_reg(15, sregs, 6);
+
+	return 0;
+}
+
+
 int cmd_power_info(int argc, char *argv[])
 {
 	struct ec_response_power_info r;
@@ -3083,6 +3149,7 @@ const struct command commands[] = {
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"panicinfo", cmd_panic_info},
 	{"powerinfo", cmd_power_info},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
