@@ -7,7 +7,7 @@
 #
 
 host-util-bin=ectool lbplay burn_my_ec
-host-util-common=ectool_keyscan comm-host comm-dev
+host-util-common=ectool_keyscan comm-host comm-dev misc_util
 ifeq ($(CONFIG_LPC),y)
 host-util-common+=comm-lpc
 else

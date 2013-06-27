@@ -18,10 +18,8 @@
 #include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
+#include "misc_util.h"
 #include "panic.h"
-
-/* Don't use a macro where an inline will do... */
-static inline int MIN(int a, int b) { return a < b ? a : b; }
 
 #define GEC_LOCK_TIMEOUT_SECS	30  /* 30 secs */
 
@@ -167,83 +165,6 @@ static const char * const image_names[] = {"unknown", "RO", "RW"};
 /* Note: depends on enum ec_led_colors */
 static const char * const led_color_names[EC_LED_COLOR_COUNT] = {
 	"red", "green", "blue", "yellow", "white"};
-
-/* Write a buffer to the file.  Return non-zero if error. */
-static int write_file(const char *filename, const char *buf, int size)
-{
-	FILE *f;
-	int i;
-
-	/* Write to file */
-	f = fopen(filename, "wb");
-	if (!f) {
-		perror("Error opening output file");
-		return -1;
-	}
-	i = fwrite(buf, 1, size, f);
-	fclose(f);
-	if (i != size) {
-		perror("Error writing to file");
-		return -1;
-	}
-
-	return 0;
-}
-
-
-/* Read a file into a buffer.  Sets *size to the size of the buffer.  Returns
- * the buffer, which must be freed with free() by the caller.  Returns NULL if
- * error. */
-static char *read_file(const char *filename, int *size)
-{
-	FILE *f = fopen(filename, "rb");
-	char *buf;
-	int i;
-
-	if (!f) {
-		perror("Error opening input file");
-		return NULL;
-	}
-
-	fseek(f, 0, SEEK_END);
-	*size = ftell(f);
-	rewind(f);
-	if (*size > 0x100000) {
-		fprintf(stderr, "File seems unreasonably large\n");
-		fclose(f);
-		return NULL;
-	}
-
-	buf = (char *)malloc(*size);
-	if (!buf) {
-		fprintf(stderr, "Unable to allocate buffer.\n");
-		fclose(f);
-		return NULL;
-	}
-
-	printf("Reading %d bytes from %s...\n", *size, filename);
-	i = fread(buf, 1, *size, f);
-	fclose(f);
-	if (i != *size) {
-		perror("Error reading file");
-		free(buf);
-		return NULL;
-	}
-
-	return buf;
-}
-
-
-int is_string_printable(const char *buf)
-{
-	while (*buf) {
-		if (!isprint(*buf))
-			return 0;
-		buf++;
-	}
-
-	return 1;
-}
 
 
 /* Check SBS numerical value range */
