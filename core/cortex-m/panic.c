@@ -372,7 +372,7 @@ void report_panic(void)
 
 	pdata->magic = PANIC_DATA_MAGIC;
 	pdata->struct_size = sizeof(*pdata);
-	pdata->struct_version = 1;
+	pdata->struct_version = 2;
 	pdata->arch = PANIC_ARCH_CORTEX_M;
 	pdata->flags = 0;
 	pdata->reserved = 0;

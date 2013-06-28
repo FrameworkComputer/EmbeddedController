@@ -14,11 +14,14 @@
 /* Data saved across reboots */
 struct panic_data {
 	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
-	uint8_t struct_version;   /* Structure version (currently 1) */
+	uint8_t struct_version;   /* Structure version (currently 2) */
 	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
 	uint8_t reserved;         /* Reserved; set 0 */
 
-	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return) */
+	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return).
+				   * In version 1, that was uint32_t regs[11] =
+				   * psp, ipsr, lr, r4-r11
+				   */
 	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
 
 	uint32_t mmfs;

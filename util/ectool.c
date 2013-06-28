@@ -1604,8 +1604,13 @@ int cmd_panic_info(int argc, char *argv[])
 	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
 	const uint32_t *lregs = pdata->regs;
 	const uint32_t *sregs = NULL;
-	int in_handler;
+	enum {
+		ORIG_UNKNOWN = 0,
+		ORIG_PROCESS,
+		ORIG_HANDLER
+	} origin = ORIG_UNKNOWN;
 	int i;
+	const char *panic_origins[3] = {"", "PROCESS", "HANDLER"};
 
 	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0,
 			ec_inbuf, ec_max_insize);
@@ -1617,17 +1622,34 @@ int cmd_panic_info(int argc, char *argv[])
 		return 0;
 	}
 
+	/*
+	 * We only understand panic data with version <= 2. Warn the user
+	 * of higher versions.
+	 */
+	if (pdata->struct_version > 2)
+		fprintf(stderr,
+			"Unknown panic data version (%d). "
+			"Following data may be incorrect!\n",
+			pdata->struct_version);
+
 	printf("Saved panic data:%s\n",
 	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
 
-	in_handler = ((pdata->regs[11] & 0xf) == 1 ||
-		      (pdata->regs[11] & 0xf) == 9);
+	if (pdata->struct_version == 2)
+		origin = ((lregs[11] & 0xf) == 1 || (lregs[11] & 0xf) == 9) ?
+			 ORIG_HANDLER : ORIG_PROCESS;
 
+	/*
+	 * In pdata struct, 'regs', which is allocated before 'frame', has
+	 * one less elements in version 1. Therefore, if the data is from
+	 * version 1, shift 'sregs' by one element to align with 'frame' in
+	 * version 1.
+	 */
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
-		sregs = pdata->frame;
+		sregs = pdata->frame - (pdata->struct_version == 1 ? 1 : 0);
 
 	printf("=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
-	       in_handler ? "HANDLER" : "PROCESS",
+	       panic_origins[origin],
 	       lregs[1] & 0xff, sregs ? sregs[7] : -1);
 	for (i = 0; i < 4; ++i)
 		print_panic_reg(i, sregs, i);
@@ -1636,7 +1658,7 @@ int cmd_panic_info(int argc, char *argv[])
 	print_panic_reg(10, lregs, 9);
 	print_panic_reg(11, lregs, 10);
 	print_panic_reg(12, sregs, 4);
-	print_panic_reg(13, lregs, in_handler ? 2 : 0);
+	print_panic_reg(13, lregs, origin == ORIG_HANDLER ? 2 : 0);
 	print_panic_reg(14, sregs, 5);
 	print_panic_reg(15, sregs, 6);
 
