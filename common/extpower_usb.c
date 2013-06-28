@@ -70,7 +70,7 @@ enum ilim_config {
 #define PWM_CTRL_MAX_DUTY	96 /* Minimum current for dead battery */
 #define PWM_CTRL_BEGIN_OFFSET	90
 #define PWM_CTRL_OC_MARGIN	15
-#define PWM_CTRL_OC_DETECT_TIME	(800 * MSEC)
+#define PWM_CTRL_OC_DETECT_TIME	(1200 * MSEC)
 #define PWM_CTRL_OC_BACK_OFF	3
 #define PWM_CTRL_OC_RETRY	2
 #define PWM_CTRL_STEP_DOWN	3
