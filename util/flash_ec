@@ -222,7 +222,7 @@ fi
 save="$(servo_save)"
 
 case "${BOARD}" in
-	daisy | snow | spring | pit ) flash_daisy ;;
+	puppy | daisy | snow | spring | pit ) flash_daisy ;;
 	link ) flash_link ;;
 	slippy | falco | peppy ) flash_slippy ;;
 	*) die "board ${BOARD} not supported" ;;
