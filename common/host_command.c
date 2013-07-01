@@ -22,13 +22,27 @@
 
 #define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
 
+/* Maximum delay to skip printing repeated host command debug output */
+#define HCDEBUG_MAX_REPEAT_DELAY (50 * MSEC)
+
 static struct host_cmd_handler_args *pending_args;
 
 #ifndef CONFIG_LPC
 static uint8_t host_memmap[EC_MEMMAP_SIZE];
 #endif
 
-static int hcdebug;  /* Enable extra host command debug output */
+static enum {
+	HCDEBUG_OFF,     /* No host command debug output */
+	HCDEBUG_NORMAL,  /* Normal output mode; skips repeated commands */
+	HCDEBUG_EVERY,   /* Print every command */
+	HCDEBUG_PARAMS,  /* ... and print params for request/response */
+
+	/* Number of host command debug modes */
+	HCDEBUG_MODES
+} hcdebug = HCDEBUG_NORMAL;
+
+static const char * const hcdebug_mode_names[HCDEBUG_MODES] = {
+	"off", "normal", "every", "params"};
 
 #ifdef CONFIG_HOST_COMMAND_STATUS
 /*
@@ -463,17 +477,47 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 		     host_command_get_cmd_versions,
 		     EC_VER_MASK(0));
 
+/**
+ * Print debug output for the host command request, before it's processed.
+ *
+ * @param args		Host command args
+ */
+static void host_command_debug_request(struct host_cmd_handler_args *args)
+{
+	static int hc_prev_cmd;
+	static uint64_t hc_prev_time;
+
+	/*
+	 * In normal output mode, skip printing repeats of the same command
+	 * that occur in rapid succession - such as flash commands during
+	 * software sync.
+	 */
+	if (hcdebug == HCDEBUG_NORMAL) {
+		uint64_t t = get_time().val;
+		if (args->command == hc_prev_cmd &&
+		    t - hc_prev_time < HCDEBUG_MAX_REPEAT_DELAY) {
+			hc_prev_time = t;
+			CPUTS("+");
+			return;
+		}
+		hc_prev_time = t;
+		hc_prev_cmd = args->command;
+	}
+
+	if (hcdebug >= HCDEBUG_PARAMS && args->params_size)
+		CPRINTF("[%T HC 0x%02x.%d:%.*h]\n", args->command,
+			args->version, args->params_size, args->params);
+	else
+		CPRINTF("[%T HC 0x%02x]\n", args->command);
+}
+
 enum ec_status host_command_process(struct host_cmd_handler_args *args)
 {
 	const struct host_command *cmd = find_host_command(args->command);
 	enum ec_status rv;
 
-	if (hcdebug && args->params_size)
-		CPRINTF("[%T HC V:%d VM:%d 0x%02x:%.*h]\n", args->version,
-			cmd->version_mask, args->command,
-			args->params_size, args->params);
-	else
-		CPRINTF("[%T HC 0x%02x]\n", args->command);
+	if (hcdebug)
+		host_command_debug_request(args);
 
 	if (!cmd)
 		rv = EC_RES_INVALID_COMMAND;
@@ -484,7 +528,7 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 
 	if (rv != EC_RES_SUCCESS) {
 		CPRINTF("[%T HC err %d]\n", rv);
-	} else if (hcdebug && args->response_size) {
+	} else if (hcdebug >= HCDEBUG_PARAMS && args->response_size) {
 		CPRINTF("[%T HC resp:%.*h]\n",
 			args->response_size, args->response);
 	}
@@ -648,13 +692,25 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 
 static int command_hcdebug(int argc, char **argv)
 {
-	if (argc > 1 && !parse_bool(argv[1], &hcdebug))
-		return EC_ERROR_PARAM1;
+	if (argc > 1) {
+		int i;
 
-	ccprintf("Host command debug is %s\n", hcdebug ? "on" : "off");
+		for (i = 0; i < HCDEBUG_MODES; i++) {
+			if (!strcasecmp(argv[1], hcdebug_mode_names[i])) {
+				hcdebug = i;
+				break;
+			}
+		}
+		if (i == HCDEBUG_MODES)
+			return EC_ERROR_PARAM1;
+	}
+
+	ccprintf("Host command debug mode is %s\n",
+		 hcdebug_mode_names[hcdebug]);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(hcdebug, command_hcdebug,
-			"hcdebug [on | off]",
-			"Toggle extra host command debug output",
+			"hcdebug [off | normal | every | params]",
+			"Set host command debug output mode",
 			NULL);
