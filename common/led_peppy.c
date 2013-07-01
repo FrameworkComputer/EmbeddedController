@@ -73,8 +73,10 @@ static void led_tick(void)
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-	case PWR_STATE_CHARGE_NEAR_FULL:
 		bat_led_set_color(LED_AMBER);
+		break;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		bat_led_set_color(LED_BLUE);
 		break;
 	case PWR_STATE_DISCHARGE:
 		bat_led_set_color(LED_OFF);

@@ -76,20 +76,19 @@ static void led_tick(void)
 	bat_led_set_color(extpower_is_present() ? LED_WHITE : LED_OFF);
 
 	switch (charge_get_state()) {
-	case PWR_STATE_IDLE:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			bat_led_set_color((ticks & 0x4) ? LED_AMBER : LED_OFF);
-		else if (charge_get_percent() <= BATTERY_LEVEL_LOW)
-			bat_led_set_color((ticks & 0x4) ? LED_WHITE : LED_OFF);
-		else
-			bat_led_set_color(LED_WHITE);
-		break;
 	case PWR_STATE_CHARGE:
-	case PWR_STATE_CHARGE_NEAR_FULL:
 		bat_led_set_color(LED_AMBER);
+		break;
+	case PWR_STATE_DISCHARGE:
+		if (charge_get_percent() <= BATTERY_LEVEL_LOW)
+			bat_led_set_color((ticks & 0x4) ? LED_WHITE : LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		bat_led_set_color((ticks & 0x2) ? LED_WHITE : LED_OFF);
+		break;
+	case PWR_STATE_IDLE:
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+			bat_led_set_color((ticks & 0x4) ? LED_AMBER : LED_OFF);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
