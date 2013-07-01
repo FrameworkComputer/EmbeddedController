@@ -636,7 +636,7 @@ static void pmu_chipset_startup(void)
 {
 	pmu_init();
 
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 	/* Enable all FETs.
 	 *
 	 * TODO: This is temporary code; remove when I2C passthru is working

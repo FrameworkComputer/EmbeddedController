@@ -49,7 +49,7 @@ static void power_led_set_duty(int percent)
 	 * Set the duty cycle.  CCRx = percent * ARR / 100.  Since we set
 	 * ARR=100, this is just percent.
 	 */
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 	STM32_TIM_CCR3(TIM_POWER_LED) = percent;
 #else
 	STM32_TIM_CCR2(TIM_POWER_LED) = percent;
@@ -59,7 +59,7 @@ static void power_led_set_duty(int percent)
 static void power_led_use_pwm(void)
 {
 	/* Configure power LED GPIO for TIM2/PWM alternate function */
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 	/* PA2 = TIM2_CH3 */
 	gpio_set_alternate_function(GPIO_A, (1 << 2), GPIO_ALT_TIM2);
 #else
@@ -87,7 +87,7 @@ static void power_led_use_pwm(void)
 
 	power_led_set_duty(100);
 
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 	/* CC3 configured as output, PWM mode 1, preload enable */
 	STM32_TIM_CCMR2(TIM_POWER_LED) = (6 << 4) | (1 << 3);
 

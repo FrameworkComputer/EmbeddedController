@@ -44,7 +44,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 #define DELAY_5V_SETUP		(2 * MSEC)
 #define DELAY_3V_SETUP		(2 * MSEC)
 #else
@@ -407,7 +407,7 @@ static int power_on(void)
 	/* Wait for it to stabilize */
 	usleep(DELAY_5V_SETUP);
 
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_puppy)
 	/*
 	 * 3.3V rail must come up right after 5V, because it sources power to
 	 * various buck supplies.
