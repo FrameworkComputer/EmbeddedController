@@ -15,21 +15,26 @@
 #include "util.h"
 #include "watchdog.h"
 
-/* LSI oscillator frequency is typically 38 kHz
- * but might vary from 28 to 56kHz.
- * So let's pick 56kHz to ensure we reload
- * early enough.
+/*
+ * LSI oscillator frequency is typically 38 kHz, but it may be between 28-56
+ * kHz and we don't calibrate it to know.  Use 56 kHz so that we pick a counter
+ * value large enough that we reload before the worst-case watchdog delay
+ * (fastest LSI clock).
  */
 #define LSI_CLOCK 56000
 
-/* Prescaler divider = /256 */
+/*
+ * Use largest prescaler divider = /256.  This gives a worst-case watchdog
+ * clock of 56000/256 = 218 Hz, and a maximum timeout period of (4095/218 Hz) =
+ * 18.7 sec.
+ */
 #define IWDG_PRESCALER 6
-#define IWDG_PRESCALER_DIV (1 << ((IWDG_PRESCALER) + 2))
+#define IWDG_PRESCALER_DIV (4 << IWDG_PRESCALER)
 
 void watchdog_reload(void)
 {
 	/* Reload the watchdog */
-	STM32_IWDG_KR = 0xaaaa;
+	STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 
 #ifdef CONFIG_WATCHDOG_HELP
 	hwtimer_reset_watchdog();
@@ -39,22 +44,18 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
 int watchdog_init(void)
 {
-	uint32_t watchdog_period;
-
-	/* set the time-out period */
-	watchdog_period = WATCHDOG_PERIOD_MS *
-			(LSI_CLOCK / IWDG_PRESCALER_DIV) / 1000;
-
 	/* Unlock watchdog registers */
-	STM32_IWDG_KR = 0x5555;
+	STM32_IWDG_KR = STM32_IWDG_KR_UNLOCK;
 
 	/* Set the prescaler between the LSI clock and the watchdog counter */
 	STM32_IWDG_PR = IWDG_PRESCALER & 7;
+
 	/* Set the reload value of the watchdog counter */
-	STM32_IWDG_RLR = watchdog_period & 0x7FF ;
+	STM32_IWDG_RLR = MIN(STM32_IWDG_RLR_MAX, WATCHDOG_PERIOD_MS *
+			     (LSI_CLOCK / IWDG_PRESCALER_DIV) / 1000);
 
 	/* Start the watchdog (and re-lock registers) */
-	STM32_IWDG_KR = 0xcccc;
+	STM32_IWDG_KR = STM32_IWDG_KR_START;
 
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Use a harder timer to warn about an impending watchdog reset */
