@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "battery_pack.h"
+#include "board.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -575,22 +576,18 @@ int charge_want_shutdown(void)
 		charge_get_percent() < BATTERY_LEVEL_SHUTDOWN;
 }
 
-static int enter_force_idle_mode(void)
+static int charge_force_idle(int enable)
 {
-	/*
-	 * Force-idle state is only meaningful if external power is present.
-	 * If it's not present we can't charge anyway...
-	 */
-	if (!(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER))
-		return EC_ERROR_UNKNOWN;
-	state_machine_force_idle = 1;
-	charger_post_init();
-	return EC_SUCCESS;
-}
-
-static int exit_force_idle_mode(void)
-{
-	state_machine_force_idle = 0;
+	if (enable) {
+		/*
+		 * Force-idle state is only meaningful if external power is
+		 * present. If it's not present we can't charge anyway...
+		 */
+		if (!(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER))
+			return EC_ERROR_UNKNOWN;
+		charger_post_init();
+	}
+	state_machine_force_idle = enable;
 	return EC_SUCCESS;
 }
 
@@ -820,25 +817,33 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charge_shutdown, HOOK_PRIO_LAST);
 /*****************************************************************************/
 /* Host commands */
 
-static int charge_command_force_idle(struct host_cmd_handler_args *args)
+static int charge_command_charge_control(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_force_idle *p = args->params;
+	const struct ec_params_charge_control *p = args->params;
 	int rv;
 
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
 
-	if (p->enabled)
-		rv = enter_force_idle_mode();
-	else
-		rv = exit_force_idle_mode();
-
+	rv = charge_force_idle(p->mode != CHARGE_CONTROL_NORMAL);
 	if (rv != EC_SUCCESS)
-		return EC_RES_ERROR;
+		return rv;
+
+#ifdef CONFIG_CMD_DISCHARGE_ON_AC
+	rv = board_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
+	if (rv != EC_SUCCESS)
+		return rv;
+#endif /* CONFIG_CMD_DISCHARGE_ON_AC */
+
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_CHARGE_FORCE_IDLE, charge_command_force_idle,
-		     EC_VER_MASK(0));
+/*
+ * TODO(crbug.com/239197) : Adding both versions to the version mask is a
+ * temporary workaround for a problem in the cros_ec driver. Drop
+ * EC_VER_MASK(0) once cros_ec driver can send the correct version.
+ */
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, charge_command_charge_control,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static int charge_command_dump(struct host_cmd_handler_args *args)
 {

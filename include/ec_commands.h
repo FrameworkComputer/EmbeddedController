@@ -1396,11 +1396,20 @@ struct ec_params_i2c_write {
 /*****************************************************************************/
 /* Charge state commands. Only available when flash write protect unlocked. */
 
-/* Force charge state machine to stop in idle mode */
-#define EC_CMD_CHARGE_FORCE_IDLE 0x96
+/* Force charge state machine to stop charging the battery or force it to
+ * discharge the battery.
+ */
+#define EC_CMD_CHARGE_CONTROL 0x96
+#define EC_VER_CHARGE_CONTROL 1
 
-struct ec_params_force_idle {
-	uint8_t enabled;
+enum ec_charge_control_mode {
+	CHARGE_CONTROL_NORMAL = 0,
+	CHARGE_CONTROL_IDLE,
+	CHARGE_CONTROL_DISCHARGE,
+};
+
+struct ec_params_charge_control {
+	uint32_t mode;  /* enum charge_control_mode */
 } __packed;
 
 /*****************************************************************************/

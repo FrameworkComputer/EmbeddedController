@@ -216,3 +216,15 @@ int board_g781_has_power(void)
 {
 	return gpio_get_level(GPIO_PP3300_DX_EN);
 }
+
+/**
+ * Discharge battery when on AC power for factory test.
+ */
+int board_discharge_on_ac(int enable)
+{
+	if (enable)
+		gpio_set_level(GPIO_CHARGE_L, 1);
+	else
+		gpio_set_level(GPIO_CHARGE_L, 0);
+	return EC_SUCCESS;
+}

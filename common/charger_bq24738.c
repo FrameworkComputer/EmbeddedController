@@ -189,3 +189,20 @@ int charger_post_init(void)
 	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
 	return rv;
 }
+
+int charger_discharge_on_ac(int enable)
+{
+	int rv;
+	int option;
+
+	rv = charger_get_option(&option);
+	if (rv)
+		return rv;
+
+	if (enable)
+		rv = charger_set_option(option | OPTION_LEARN_ENABLE);
+	else
+		rv = charger_set_option(option & ~OPTION_LEARN_ENABLE);
+
+	return rv;
+}

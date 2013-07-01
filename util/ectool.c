@@ -40,8 +40,8 @@ const char help_str[] =
 	"      Set the maximum battery charging current\n"
 	"  chargedump\n"
 	"      Dump the context of charge state machine\n"
-	"  chargeforceidle\n"
-	"      Force charge state machine to stop in idle mode\n"
+	"  chargecontrol\n"
+	"      Force the battery to stop charging or discharge\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -2375,33 +2375,47 @@ int cmd_charge_current_limit(int argc, char *argv[])
 }
 
 
-int cmd_charge_force_idle(int argc, char *argv[])
+int cmd_charge_control(int argc, char *argv[])
 {
-	struct ec_params_force_idle p;
+	struct ec_params_charge_control p;
 	int rv;
-	char *e;
 
 	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <0|1>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <normal | idle | discharge>\n",
+			argv[0]);
 		return -1;
 	}
 
-	p.enabled = strtol(argv[1], &e, 0);
-	if (e && *e) {
+	if (!strcasecmp(argv[1], "normal")) {
+		p.mode = CHARGE_CONTROL_NORMAL;
+	} else if (!strcasecmp(argv[1], "idle")) {
+		p.mode = CHARGE_CONTROL_IDLE;
+	} else if (!strcasecmp(argv[1], "discharge")) {
+		p.mode = CHARGE_CONTROL_DISCHARGE;
+	} else {
 		fprintf(stderr, "Bad value.\n");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_CHARGE_FORCE_IDLE, 0, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_CHARGE_CONTROL, 1, &p, sizeof(p), NULL, 0);
 	if (rv < 0) {
 		fprintf(stderr, "Is AC connected?\n");
 		return rv;
 	}
 
-	if (p.enabled)
-		printf("Charge state machine force idle.\n");
-	else
+	switch (p.mode) {
+	case CHARGE_CONTROL_NORMAL:
 		printf("Charge state machine normal mode.\n");
+		break;
+	case CHARGE_CONTROL_IDLE:
+		printf("Charge state machine force idle.\n");
+		break;
+	case CHARGE_CONTROL_DISCHARGE:
+		printf("Charge state machine force discharge.\n");
+		break;
+	default:
+		break;
+	}
 	return 0;
 }
 
@@ -3097,7 +3111,7 @@ const struct command commands[] = {
 	{"batterycutoff", cmd_battery_cut_off},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargedump", cmd_charge_dump},
-	{"chargeforceidle", cmd_charge_force_idle},
+	{"chargecontrol", cmd_charge_control},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"console", cmd_console},

@@ -24,6 +24,7 @@
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_HASWELL
 #endif
+#define CONFIG_CMD_DISCHARGE_ON_AC
 #define CONFIG_CUSTOM_KEYSCAN
 #define CONFIG_EXTPOWER_GPIO
 #ifdef HAS_TASK_KEYPROTO
@@ -220,6 +221,9 @@ int board_g781_has_power(void);
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
+
+/* Discharge battery when on AC power for factory test. */
+int board_discharge_on_ac(int enable);
 
 #endif /* !__ASSEMBLER__ */
 

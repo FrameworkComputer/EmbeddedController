@@ -6,6 +6,8 @@
 
 #include "adc.h"
 #include "backlight.h"
+#include "board.h"
+#include "charger_bq24738.h"
 #include "chip_temp_sensor.h"
 #include "chipset_haswell.h"
 #include "chipset_x86_common.h"
@@ -221,4 +223,12 @@ void board_process_wake_events(uint32_t active_wake_events)
 int board_g781_has_power(void)
 {
 	return gpio_get_level(GPIO_PP3300_DX_EN);
+}
+
+/**
+ * Discharge battery when on AC power for factory test.
+ */
+int board_discharge_on_ac(int enable)
+{
+	return charger_discharge_on_ac(enable);
 }
