@@ -75,7 +75,6 @@ enum ilim_config {
 #define PWM_CTRL_OC_RETRY	2
 #define PWM_CTRL_STEP_DOWN	3
 #define PWM_CTRL_STEP_UP	5
-#define PWM_CTRL_STEP_FAST_DOWN 15
 #define PWM_CTRL_VBUS_HARD_LOW	4400
 #define PWM_CTRL_VBUS_LOW	4500
 #define PWM_CTRL_VBUS_HIGH	4700 /* Must be higher than 4.5V */
@@ -99,7 +98,6 @@ static int current_dev_type = TSU6721_TYPE_NONE;
 static int nominal_pwm_duty;
 static int current_pwm_duty;
 static int user_pwm_duty = -1;
-static int pwm_fast_mode;
 
 static int pending_tsu6721_reset;
 static int pending_adc_watchdog_disable;
@@ -371,13 +369,7 @@ static void set_pwm_duty_cycle(int percent)
  */
 static int pwm_get_next_lower(void)
 {
-	int fast_next = current_pwm_duty - PWM_CTRL_STEP_FAST_DOWN;
-
 	if (current_limit_mode == LIMIT_AGGRESSIVE) {
-		if (pwm_fast_mode &&
-		    fast_next > nominal_pwm_duty - PWM_CTRL_OC_MARGIN &&
-		    fast_next > over_current_pwm_duty)
-			return MAX(fast_next, 0);
 		if (current_pwm_duty > nominal_pwm_duty -
 				       PWM_CTRL_OC_MARGIN &&
 		    current_pwm_duty > over_current_pwm_duty &&
@@ -425,7 +417,6 @@ static void pwm_nominal_duty_cycle(int percent)
 
 	set_pwm_duty_cycle(new_percent);
 	nominal_pwm_duty = percent;
-	pwm_fast_mode = 1;
 }
 
 static void adc_watch_vbus(int high, int low)
@@ -503,11 +494,15 @@ static void usb_detect_overcurrent(int dev_type)
 		}
 		if (power_removed_type[idx] == dev_type) {
 			if (oc_detect_retry[idx] > 0) {
+				CPRINTF("[%T USB overcurrent: Retry (%d)]\n",
+					oc_detect_retry[idx]);
 				oc_detect_retry[idx]--;
 				return;
 			}
 			over_current_pwm_duty = power_removed_pwm_duty[idx] +
 						PWM_CTRL_OC_BACK_OFF;
+			CPRINTF("[%T USB overcurrent: Limited to %d%%]\n",
+				over_current_pwm_duty);
 		}
 	}
 }
@@ -824,7 +819,6 @@ static void pwm_tweak(void)
 	 */
 	if (pwm_check_vbus_low(vbus, current)) {
 		set_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
-		pwm_fast_mode = 0;
 		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
 	} else if (pwm_check_vbus_high(vbus)) {
 		next = pwm_get_next_lower();
