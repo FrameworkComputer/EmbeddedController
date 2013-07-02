@@ -32,14 +32,7 @@
 #define debug(...)
 #endif
 
-/* v2 protocol bytes
- *   OUT: (version, command, size, ... request ..., checksum) */
-#define PROTO_V2_IN    4
-/*   IN:  (command, size, ... response ..., checkcum) */
-#define PROTO_V2_OUT   3
-
 static int i2c_fd = -1;
-
 
 /*
  * Sends a command to the EC (protocol v2).  Returns the command status code, or
@@ -90,7 +83,7 @@ static int ec_command_i2c(int command, int version,
 	 * allocate larger packet
 	 * (version, command, size, ..., checksum)
 	 */
-	req_len = outsize + PROTO_V2_IN;
+	req_len = outsize + EC_PROTO2_REQUEST_OVERHEAD;
 	req_buf = calloc(1, req_len);
 	if (!req_buf)
 		goto done;
@@ -115,7 +108,7 @@ static int ec_command_i2c(int command, int version,
 	 * allocate larger packet
 	 * (result, size, ..., checksum)
 	 */
-	resp_len = insize + PROTO_V2_OUT;
+	resp_len = insize + EC_PROTO2_RESPONSE_OVERHEAD;
 	resp_buf = calloc(1, resp_len);
 	if (!resp_buf)
 		goto done;
@@ -213,7 +206,7 @@ int comm_init_i2c(void)
 	free(file_path);
 
 	ec_command = ec_command_i2c;
-	ec_max_outsize = ec_max_insize = EC_HOST_PARAM_SIZE;
+	ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	return 0;
 }

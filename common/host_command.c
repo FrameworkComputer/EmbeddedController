@@ -631,7 +631,7 @@ static int command_host_command(int argc, char **argv)
 	int rv;
 
 	/* Use shared memory for command params space */
-	if (shared_mem_acquire(EC_HOST_PARAM_SIZE, &cmd_params)) {
+	if (shared_mem_acquire(EC_PROTO2_MAX_PARAM_SIZE, &cmd_params)) {
 		ccputs("Can't acquire shared memory buffer.\n");
 		return EC_ERROR_UNKNOWN;
 	}
@@ -670,7 +670,7 @@ static int command_host_command(int argc, char **argv)
 	}
 
 	args.response = cmd_params;
-	args.response_max = EC_HOST_PARAM_SIZE;
+	args.response_max = EC_PROTO2_MAX_PARAM_SIZE;
 	args.response_size = 0;
 
 	res = host_command_process(&args);

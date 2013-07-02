@@ -202,7 +202,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	lpc_host_args->checksum = (uint8_t)csum;
 
 	/* Fail if response doesn't fit in the param buffer */
-	if (size > EC_HOST_PARAM_SIZE)
+	if (size > EC_PROTO2_MAX_PARAM_SIZE)
 		args->result = EC_RES_INVALID_RESPONSE;
 	else if (host_cmd_args.response != cmd_params)
 		memcpy(cmd_params, args->response, size);
@@ -532,11 +532,11 @@ static void handle_host_write(int is_cmd)
 		host_cmd_args.params = params_copy;
 		host_cmd_args.params_size = size;
 		host_cmd_args.response = cmd_params;
-		host_cmd_args.response_max = EC_HOST_PARAM_SIZE;
+		host_cmd_args.response_max = EC_PROTO2_MAX_PARAM_SIZE;
 		host_cmd_args.response_size = 0;
 
 		/* Verify params size */
-		if (size > EC_HOST_PARAM_SIZE) {
+		if (size > EC_PROTO2_MAX_PARAM_SIZE) {
 			host_cmd_args.result = EC_RES_INVALID_PARAM;
 		} else {
 			const uint8_t *src = cmd_params;

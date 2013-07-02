@@ -33,61 +33,49 @@ static const struct dma_option dma_rx_option = {
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
 };
 
+/* Special byte values */
+#define SPI_STALL_BYTE   0xfd  /* Bytes sent when EC isn't ready to respond */
+#define SPI_PAD_BYTE     0xff  /* Bytes which precede the framing byte */
+#define SPI_FRAMING_BYTE 0xec  /* Used by AP to find response start */
+
 /*
- * Since message.c no longer supports our protocol, we must do it all here.
+ * Timeout to wait for SPI request packet
  *
- * We allow a preamble and a header byte so that SPI can function at all.
- * We also add an 8-bit length so that we can tell that we got the whole
- * message, since the master decides how many bytes to read.
- *
- * TODO: move these constants to ec_commands.h
+ * TODO(sjg@chromium.org): Support much slower SPI clocks. For 4096 we have a
+ * delay of 4ms. For the largest message (68 bytes) this is 130KhZ, assuming
+ * that the master starts sending bytes as soon as it drops NSS. In practice,
+ * this timeout seems adequately high for a 1MHz clock which is as slow as we
+ * would reasonably want it.
  */
-enum {
-	/* The bytes which appear before the header in a message */
-	SPI_MSG_PREAMBLE_BYTE	= 0xff,
+#define SPI_CMD_RX_TIMEOUT_US 8192
 
-	/* The header byte, which follows the preamble */
-	SPI_MSG_HEADER_BYTE1	= 0xfe,
-	SPI_MSG_HEADER_BYTE2	= 0xec,
-
-	SPI_MSG_HEADER_LEN	= 4,
-	SPI_MSG_TRAILER_LEN	= 2,
-	SPI_MSG_PROTO_LEN	= SPI_MSG_HEADER_LEN + SPI_MSG_TRAILER_LEN,
-
-	/*
-	 * Timeout to wait for SPI command
-	 * TODO(sjg@chromium.org): Support much slower SPI clocks. For 4096
-	 * we have a delay of 4ms. For the largest message (68 bytes) this
-	 * is 130KhZ, assuming that the master starts sending bytes as soon
-	 * as it drops NSS. In practice, this timeout seems adequately high
-	 * for a 1MHz clock which is as slow as we would reasonably want it.
-	 */
-	SPI_CMD_RX_TIMEOUT_US	= 8192,
-
-	/*
-	 * Max data size for request/response packet.  This is big enough
-	 * to handle a request/respose header, flash write offset/size, and
-	 * 512 bytes of flash data.
-	 */
-	SPI_MAX_REQUEST_SIZE = 0x220,
-	SPI_MAX_RESPONSE_SIZE = 0x220,
-};
+/* Offset of output parameters needs to account for pad and framing bytes */
+#define SPI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 2)
+#define SPI_PROTO2_OVERHEAD (SPI_PROTO2_OFFSET +		\
+			     EC_PROTO2_RESPONSE_TRAILER_BYTES)
 
 /*
- * The AP blindly clocks back bytes over the SPI interface looking for the
- * header bytes.  So this preamble must always precede the actual response
- * packet.  The preamble must be 32-bit aligned so that the response buffer is
- * also 32-bit aligned.
+ * Max data size for a version 3 request/response packet.  This is big enough
+ * to handle a request/response header, flash write offset/size, and 512 bytes
+ * of flash data.
+ */
+#define SPI_MAX_REQUEST_SIZE 0x220
+#define SPI_MAX_RESPONSE_SIZE 0x220
+
+/*
+ * The AP blindly clocks back bytes over the SPI interface looking for a
+ * framing byte.  So this preamble must always precede the actual response
+ * packet.  Search for "spi-frame-header" in U-boot to see how that's
+ * implemented.
  *
- * Really, only HEADER_BYTE2 matters, since the SPI driver ignores everything
- * until it sees that byte code.  Search for "spi-frame-header" in U-boot to
- * see how that's implemented.
+ * The preamble must be 32-bit aligned so that the response buffer is also
+ * 32-bit aligned.
  */
 static const uint8_t out_preamble[4] = {
-	SPI_MSG_PREAMBLE_BYTE,
-	SPI_MSG_PREAMBLE_BYTE,
-	SPI_MSG_HEADER_BYTE1,
-	SPI_MSG_HEADER_BYTE2,  /* This is the byte which matters */
+	SPI_PAD_BYTE,
+	SPI_PAD_BYTE,
+	SPI_PAD_BYTE,
+	SPI_FRAMING_BYTE,  /* This is the byte which matters */
 };
 
 /*
@@ -123,7 +111,7 @@ static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
 
 	ASSERT(needed <= sizeof(in_msg));
 	deadline.val = 0;
-	for (;;) {
+	while (1) {
 		if (dma_bytes_done(rxdma, sizeof(in_msg)) >= needed)
 			return 0;
 		if (REG16(nss_reg) & nss_mask)
@@ -170,42 +158,40 @@ static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
  * @param txdma		TX DMA channel to send on
  * @param status	Status result to send
  * @param msg_ptr	Message payload to send, which normally starts
- *			SPI_MSG_HEADER_LEN bytes into out_msg
+ *			SPI_PROTO2_OFFSET bytes into out_msg
  * @param msg_len	Number of message bytes to send
  */
 static void reply(stm32_dma_chan_t *txdma,
 		  enum ec_status status, char *msg_ptr, int msg_len)
 {
-	char *msg;
+	char *msg = out_msg;
+	int need_copy = msg_ptr != msg + SPI_PROTO2_OFFSET;
 	int sum, i;
-	int copy;
 
-	msg = out_msg;
-	copy = msg_ptr != msg + SPI_MSG_HEADER_LEN;
+	ASSERT(msg_len + SPI_PROTO2_OVERHEAD <= sizeof(out_msg));
 
 	/* Add our header bytes - the first one might not actually be sent */
-	msg[0] = SPI_MSG_HEADER_BYTE1;
-	msg[1] = SPI_MSG_HEADER_BYTE2;
+	msg[0] = SPI_PAD_BYTE;
+	msg[1] = SPI_FRAMING_BYTE;
 	msg[2] = status;
 	msg[3] = msg_len & 0xff;
+
+	/*
+	 * Calculate the checksum; includes the status and message length bytes
+	 * but not the pad and framing bytes since those are stripped by the AP
+	 * driver.
+	 */
 	sum = status + msg_len;
-
-	/* Calculate the checksum */
 	for (i = 0; i < msg_len; i++) {
-		int ch;
-
-		ch = msg_ptr[i];
+		int ch = msg_ptr[i];
 		sum += ch;
-		if (copy)
-			msg[i + SPI_MSG_HEADER_LEN] = ch;
+		if (need_copy)
+			msg[i + SPI_PROTO2_OFFSET] = ch;
 	}
-	msg_len += SPI_MSG_PROTO_LEN;
-	ASSERT(msg_len <= sizeof(out_msg));
 
 	/* Add the checksum and get ready to send */
-	msg[msg_len - 2] = sum & 0xff;
-	msg[msg_len - 1] = SPI_MSG_PREAMBLE_BYTE;
-	dma_prepare_tx(&dma_tx_option, msg_len, msg);
+	msg[SPI_PROTO2_OFFSET + msg_len] = sum & 0xff;
+	dma_prepare_tx(&dma_tx_option, msg_len + SPI_PROTO2_OVERHEAD, msg);
 
 	/* Kick off the DMA to send the data */
 	dma_go(txdma);
@@ -225,10 +211,10 @@ static void setup_for_transaction(void)
 	/* We are no longer actively processing a transaction */
 	active = 0;
 
-	/* write 0xfd which will be our default output value */
-	spi->dr = 0xfd;
+	/* Output stall byte by default */
+	spi->dr = SPI_STALL_BYTE;
 	dma_disable(STM32_DMAC_SPI1_TX);
-	*in_msg = 0xff;
+	*in_msg = SPI_PAD_BYTE;
 
 	/* read a byte in case there is one, and the rx dma gets it */
 	dmac = spi->dr;
@@ -251,12 +237,12 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	if (!active)
 		return;
 
-	if (args->response_size > EC_HOST_PARAM_SIZE)
+	if (args->response_size > EC_PROTO2_MAX_PARAM_SIZE)
 		result = EC_RES_INVALID_RESPONSE;
 
 	if ((uint8_t *)args->response >= out_msg &&
 			(uint8_t *)args->response < out_msg + sizeof(out_msg))
-		ASSERT(args->response == out_msg + SPI_MSG_HEADER_LEN);
+		ASSERT(args->response == out_msg + SPI_PROTO2_OFFSET);
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
@@ -308,20 +294,16 @@ void spi_event(enum gpio_signal signal)
 	 * for the next.
 	 */
 	nss_reg = gpio_get_level_reg(GPIO_SPI1_NSS, &nss_mask);
-	if (REG16(nss_reg) & nss_mask) {
-		setup_for_transaction();
-		return;
-	}
+	if (REG16(nss_reg) & nss_mask)
+		goto spi_event_error;
 
 	/* Otherwise, NSS is low and we're now inside a transaction */
 	active = 1;
 	rxdma = dma_get_channel(STM32_DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
-	if (wait_for_bytes(rxdma, 3, nss_reg, nss_mask)) {
-		setup_for_transaction();
-		return;
-	}
+	if (wait_for_bytes(rxdma, 3, nss_reg, nss_mask))
+		goto spi_event_error;
 
 	if (in_msg[0] == EC_HOST_REQUEST_VERSION) {
 		/* Protocol version 3 */
@@ -329,10 +311,8 @@ void spi_event(enum gpio_signal signal)
 		int pkt_size;
 
 		/* Wait for the rest of the command header */
-		if (wait_for_bytes(rxdma, sizeof(*r), nss_reg, nss_mask)) {
-			setup_for_transaction();
-			return;
-		}
+		if (wait_for_bytes(rxdma, sizeof(*r), nss_reg, nss_mask))
+			goto spi_event_error;
 
 		/*
 		 * Check how big the packet should be.  We can't just wait to
@@ -340,16 +320,12 @@ void spi_event(enum gpio_signal signal)
 		 * sending dummy data until we respond.
 		 */
 		pkt_size = host_request_expected_size(r);
-		if (pkt_size == 0 || pkt_size > sizeof(in_msg)) {
-			setup_for_transaction();
-			return;
-		}
+		if (pkt_size == 0 || pkt_size > sizeof(in_msg))
+			goto spi_event_error;
 
 		/* Wait for the packet data */
-		if (wait_for_bytes(rxdma, pkt_size, nss_reg, nss_mask)) {
-			setup_for_transaction();
-			return;
-		}
+		if (wait_for_bytes(rxdma, pkt_size, nss_reg, nss_mask))
+			goto spi_event_error;
 
 		spi_packet.send_response = spi_send_response_packet;
 
@@ -374,40 +350,40 @@ void spi_event(enum gpio_signal signal)
 		/*
 		 * Protocol version 2
 		 *
-		 * TODO: remove once all systems upgraded to version 3 */
+		 * TODO: remove once all systems upgraded to version 3
+		 */
 		args.version = in_msg[0] - EC_CMD_VERSION0;
 		args.command = in_msg[1];
 		args.params_size = in_msg[2];
 		args.params = in_msg + 3;
-	} else {
-		/*
-		 * Protocol version 1
-		 *
-		 * TODO: remove; nothing sends this.  Ignore this packet?
-		 * Send back an error response?
-		 */
-		args.version = 0;
-		args.command = in_msg[0];
-		args.params = in_msg + 1;
-		args.params_size = 0;
-	}
 
-	/* Wait for parameters */
-	if (wait_for_bytes(rxdma, 3 + args.params_size, nss_reg, nss_mask)) {
-		setup_for_transaction();
+		/* Wait for parameters */
+		if (wait_for_bytes(rxdma, 3 + args.params_size,
+				   nss_reg, nss_mask))
+			goto spi_event_error;
+
+		/*
+		 * TODO: params are not 32-bit aligned in protocol version 2.
+		 * As a workaround, memmove them to the beginning of the input
+		 * buffer so they are aligned.
+		 */
+
+		/* Process the command and send the reply */
+		args.send_response = spi_send_response;
+
+		/* Allow room for the header bytes */
+		args.response = out_msg + SPI_PROTO2_OFFSET;
+		args.response_max = sizeof(out_msg) - SPI_PROTO2_OVERHEAD;
+		args.response_size = 0;
+		args.result = EC_RES_SUCCESS;
+
+		host_command_received(&args);
 		return;
 	}
 
-	/* Process the command and send the reply */
-	args.send_response = spi_send_response;
-
-	/* Allow room for the header bytes */
-	args.response = out_msg + SPI_MSG_HEADER_LEN;
-	args.response_max = sizeof(out_msg) - SPI_MSG_PROTO_LEN;
-	args.response_size = 0;
-	args.result = EC_RES_SUCCESS;
-
-	host_command_received(&args);
+ spi_event_error:
+	/* Error, or protocol we can't handle.  Set up for next transaction */
+	setup_for_transaction();
 }
 
 static void spi_init(void)

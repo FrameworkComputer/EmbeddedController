@@ -43,11 +43,13 @@
 #define EC_LPC_ADDR_HOST_CMD   0x204
 
 /* I/O addresses for host command args and params */
-#define EC_LPC_ADDR_HOST_ARGS  0x800    /* and 0x801, 0x802, 0x803 */
-#define EC_LPC_ADDR_HOST_PARAM 0x804
-#define EC_HOST_PARAM_SIZE     0x0fc   /* Size of param area in bytes */
-#define EC_LPC_ADDR_HOST_PACKET 0x800  /* Offset of version 3 packet */
-#define EC_LPC_HOST_PACKET_SIZE 0x100  /* Max size of version 3 packet */
+/* Protocol version 2 */
+#define EC_LPC_ADDR_HOST_ARGS    0x800  /* And 0x801, 0x802, 0x803 */
+#define EC_LPC_ADDR_HOST_PARAM   0x804  /* For version 2 params; size is
+					 * EC_PROTO2_MAX_PARAM_SIZE */
+/* Protocol version 3 */
+#define EC_LPC_ADDR_HOST_PACKET  0x800  /* Offset of version 3 packet */
+#define EC_LPC_HOST_PACKET_SIZE  0x100  /* Max size of version 3 packet */
 
 /* The actual block is 0x800-0x8ff, but some BIOSes think it's 0x880-0x8ff
  * and they tell the kernel that so we have to think of it as two parts. */
@@ -282,6 +284,43 @@ struct ec_lpc_host_args {
  * EC_LPC_ADDR_OLD_PARAM with unknown length.
  */
 #define EC_HOST_ARGS_FLAG_TO_HOST   0x02
+
+/*****************************************************************************/
+
+/*
+ * Protocol version 2 for I2C and SPI send a request this way:
+ *
+ *	0	EC_CMD_VERSION0 + (command version)
+ *	1	Command number
+ *	2	Length of params = N
+ *	3..N+2	Params, if any
+ *	N+3	8-bit checksum of bytes 0..N+2
+ *
+ * The corresponding response is:
+ *
+ *	0	Result code (EC_RES_*)
+ *	1	Length of params = M
+ *	2..M+1	Params, if any
+ *	M+2	8-bit checksum of bytes 0..M+1
+ */
+#define EC_PROTO2_REQUEST_HEADER_BYTES 3
+#define EC_PROTO2_REQUEST_TRAILER_BYTES 1
+#define EC_PROTO2_REQUEST_OVERHEAD (EC_PROTO2_REQUEST_HEADER_BYTES +	\
+				    EC_PROTO2_REQUEST_TRAILER_BYTES)
+
+#define EC_PROTO2_RESPONSE_HEADER_BYTES 2
+#define EC_PROTO2_RESPONSE_TRAILER_BYTES 1
+#define EC_PROTO2_RESPONSE_OVERHEAD (EC_PROTO2_RESPONSE_HEADER_BYTES +	\
+				     EC_PROTO2_RESPONSE_TRAILER_BYTES)
+
+/* Parameter length was limited by the LPC interface */
+#define EC_PROTO2_MAX_PARAM_SIZE 0xfc
+
+/* Maximum request and response packet sizes for protocol version 2 */
+#define EC_PROTO2_MAX_REQUEST_SIZE (EC_PROTO2_REQUEST_OVERHEAD +	\
+				    EC_PROTO2_MAX_PARAM_SIZE)
+#define EC_PROTO2_MAX_RESPONSE_SIZE (EC_PROTO2_RESPONSE_OVERHEAD +	\
+				     EC_PROTO2_MAX_PARAM_SIZE)
 
 /*****************************************************************************/
 

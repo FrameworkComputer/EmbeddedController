@@ -266,13 +266,13 @@ int comm_init_lpc(void)
 	 */
 	byte &= inb(EC_LPC_ADDR_HOST_CMD);
 	byte &= inb(EC_LPC_ADDR_HOST_DATA);
-	for (i = 0; i < EC_HOST_PARAM_SIZE && byte == 0xff; ++i)
+	for (i = 0; i < EC_PROTO2_MAX_PARAM_SIZE && byte == 0xff; ++i)
 		byte &= inb(EC_LPC_ADDR_HOST_PARAM + i);
 	if (byte == 0xff) {
 		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
 			EC_LPC_ADDR_HOST_CMD, EC_LPC_ADDR_HOST_DATA,
 			EC_LPC_ADDR_HOST_PARAM,
-			EC_LPC_ADDR_HOST_PARAM + EC_HOST_PARAM_SIZE - 1);
+			EC_LPC_ADDR_HOST_PARAM + EC_PROTO2_MAX_PARAM_SIZE - 1);
 		fprintf(stderr,
 			"Very likely this board doesn't have a Chromium EC.\n");
 		return -4;
@@ -296,6 +296,7 @@ int comm_init_lpc(void)
 	i = inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_HOST_CMD_FLAGS);
 
 	if (i & EC_HOST_CMD_FLAG_VERSION_3) {
+		/* Protocol version 3 */
 		ec_command = ec_command_lpc_3;
 		ec_max_outsize = EC_LPC_HOST_PACKET_SIZE -
 			sizeof(struct ec_host_request);
@@ -303,8 +304,9 @@ int comm_init_lpc(void)
 			sizeof(struct ec_host_response);
 
 	} else if (i & EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED) {
+		/* Protocol version 2*/
 		ec_command = ec_command_lpc;
-		ec_max_outsize = ec_max_insize = EC_HOST_PARAM_SIZE;
+		ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	} else {
 		fprintf(stderr, "EC doesn't support protocols we need.\n");

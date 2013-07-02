@@ -100,7 +100,7 @@ static const struct dma_option dma_rx_option[I2C_PORT_COUNT] = {
 static uint16_t i2c_sr1[I2C_PORT_COUNT];
 
 /* Buffer for host commands (including version, error code and checksum) */
-static uint8_t host_buffer[EC_HOST_PARAM_SIZE + 4];
+static uint8_t host_buffer[EC_PROTO2_MAX_REQUEST_SIZE];
 static struct host_cmd_handler_args host_cmd_args;
 static uint8_t i2c_old_response;  /* Send an old-style response */
 
@@ -220,9 +220,15 @@ static void i2c_process_command(void)
 		buff += 3;
 		i2c_old_response = 0;
 	} else {
-		/* Old style command */
+		/*
+		 * Old style (version 1) command.
+		 *
+		 * TODO(rspangler): Nothing sends these anymore, since this was
+		 * superseded by version 2 before snow launched.  This code
+		 * should be safe to remove.
+		 */
 		args->version = 0;
-		args->params_size = EC_HOST_PARAM_SIZE;	/* unknown */
+		args->params_size = EC_PROTO2_MAX_PARAM_SIZE;	/* unknown */
 		buff++;
 		i2c_old_response = 1;
 	}
@@ -232,7 +238,7 @@ static void i2c_process_command(void)
 	args->params = buff;
 	/* skip room for error code, arglen */
 	args->response = host_buffer + 2;
-	args->response_max = EC_HOST_PARAM_SIZE;
+	args->response_max = EC_PROTO2_MAX_PARAM_SIZE;
 	args->response_size = 0;
 
 	host_command_received(args);
