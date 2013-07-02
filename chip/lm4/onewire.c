@@ -12,7 +12,9 @@
 #include "task.h"
 #include "timer.h"
 
-#define ONEWIRE_PIN (1<<2)  /* One-wire pin mask (on GPIO H) */
+#if !defined(ONEWIRE_BANK) || !defined(ONEWIRE_PIN)
+#error Unsupported board. ONEWIRE_BANK and ONEWIRE_PIN need to be defined.
+#endif
 
 /*
  * Standard speed; all timings padded by 2 usec for safety.
@@ -36,10 +38,10 @@
  */
 static void output0(int usec)
 {
-	LM4_GPIO_DIR(LM4_GPIO_H) |= ONEWIRE_PIN;
-	LM4_GPIO_DATA(LM4_GPIO_H, ONEWIRE_PIN) = 0;
+	LM4_GPIO_DIR(ONEWIRE_BANK) |= ONEWIRE_PIN;
+	LM4_GPIO_DATA(ONEWIRE_BANK, ONEWIRE_PIN) = 0;
 	udelay(usec);
-	LM4_GPIO_DIR(LM4_GPIO_H) &= ~ONEWIRE_PIN;
+	LM4_GPIO_DIR(ONEWIRE_BANK) &= ~ONEWIRE_PIN;
 }
 
 /**
@@ -47,7 +49,7 @@ static void output0(int usec)
  */
 static int readline(void)
 {
-	return LM4_GPIO_DATA(LM4_GPIO_H, ONEWIRE_PIN) ? 1 : 0;
+	return LM4_GPIO_DATA(ONEWIRE_BANK, ONEWIRE_PIN) ? 1 : 0;
 }
 
 /**
@@ -158,7 +160,7 @@ void onewire_write(int data)
 static void onewire_init(void)
 {
 	/* Configure 1-wire pin as open-drain GPIO */
-	gpio_set_alternate_function(LM4_GPIO_H, ONEWIRE_PIN, -1);
-	LM4_GPIO_ODR(LM4_GPIO_H) |= ONEWIRE_PIN;
+	gpio_set_alternate_function(ONEWIRE_BANK, ONEWIRE_PIN, -1);
+	LM4_GPIO_ODR(ONEWIRE_BANK) |= ONEWIRE_PIN;
 }
 DECLARE_HOOK(HOOK_INIT, onewire_init, HOOK_PRIO_DEFAULT);
