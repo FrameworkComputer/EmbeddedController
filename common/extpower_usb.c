@@ -412,13 +412,18 @@ static int pwm_check_vbus_high(int vbus)
 static void pwm_nominal_duty_cycle(int percent)
 {
 	int dummy;
+	int new_percent = percent;
 
+	new_percent += PWM_CTRL_BEGIN_OFFSET;
+
+	/*
+	 * If the battery is dead, leave a minimum amount of current
+	 * input to sustain the system.
+	 */
 	if (battery_current(&dummy))
-		set_pwm_duty_cycle(percent);
-	else if (percent + PWM_CTRL_BEGIN_OFFSET > PWM_CTRL_MAX_DUTY)
-		set_pwm_duty_cycle(PWM_CTRL_MAX_DUTY);
-	else
-		set_pwm_duty_cycle(percent + PWM_CTRL_BEGIN_OFFSET);
+		new_percent = MIN(new_percent, PWM_CTRL_MAX_DUTY);
+
+	set_pwm_duty_cycle(new_percent);
 	nominal_pwm_duty = percent;
 	pwm_fast_mode = 1;
 }
