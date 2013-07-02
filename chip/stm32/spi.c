@@ -80,10 +80,11 @@ static const uint8_t out_preamble[4] = {
 
 /*
  * Our input and output buffers. These must be large enough for our largest
- * message, including protocol overhead.
+ * message, including protocol overhead, and must be 32-bit aligned.
  */
-static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)];
-static uint8_t in_msg[SPI_MAX_REQUEST_SIZE];
+static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)]
+	__attribute__((aligned(4)));
+static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __attribute__((aligned(4)));
 static uint8_t active;
 static uint8_t enabled;
 static struct host_cmd_handler_args args;
@@ -355,7 +356,6 @@ void spi_event(enum gpio_signal signal)
 		args.version = in_msg[0] - EC_CMD_VERSION0;
 		args.command = in_msg[1];
 		args.params_size = in_msg[2];
-		args.params = in_msg + 3;
 
 		/* Wait for parameters */
 		if (wait_for_bytes(rxdma, 3 + args.params_size,
@@ -363,10 +363,14 @@ void spi_event(enum gpio_signal signal)
 			goto spi_event_error;
 
 		/*
-		 * TODO: params are not 32-bit aligned in protocol version 2.
-		 * As a workaround, memmove them to the beginning of the input
-		 * buffer so they are aligned.
+		 * Params are not 32-bit aligned in protocol version 2.  As a
+		 * workaround, move them to the beginning of the input buffer
+		 * so they are aligned.
 		 */
+		if (args.params_size)
+			memmove(in_msg, in_msg + 3, args.params_size);
+
+		args.params = in_msg;
 
 		/* Process the command and send the reply */
 		args.send_response = spi_send_response;
