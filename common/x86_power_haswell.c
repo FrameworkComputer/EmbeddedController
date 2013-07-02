@@ -239,13 +239,14 @@ void chipset_reset(int cold_reset)
 
 		/*
 		 * Pulse must be at least 16 PCI clocks long = 500 ns. The gpio
-		 * pin used by the EC is configured as open drain. However,
-		 * empirically it was deteremined the polarity of the pin is
-		 * inverted. No idea why. Therefore, the driving RCIN# low
-		 * needs to be set to level 1. FIXME: why? */
-		gpio_set_level(GPIO_PCH_RCIN_L, 1);
+		 * pin used by the EC (PL6) does not behave in the correct
+		 * manner when configured as open drain. In order to mimic
+		 * open drain, the pin is initially configured as an input.
+		 * When it is needed to drive low, the flags are updated which
+		 * changes the pin to an output and drives the pin low.  */
+		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_OUT_LOW);
 		udelay(10);
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
+		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_INPUT);
 	}
 }
 
