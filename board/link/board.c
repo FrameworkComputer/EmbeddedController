@@ -158,7 +158,6 @@ const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-#ifdef CONFIG_TMP006
 	{"I2C-USB C-Die", TEMP_SENSOR_TYPE_IGNORED, tmp006_get_val, 0, 7},
 	{"I2C-USB C-Object", TEMP_SENSOR_TYPE_IGNORED, tmp006_get_val, 1, 7},
 	{"I2C-PCH D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 2, 7},
@@ -167,13 +166,8 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 	{"I2C-Hinge C-Object", TEMP_SENSOR_TYPE_IGNORED, tmp006_get_val, 5, 7},
 	{"I2C-Charger D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 6, 7},
 	{"I2C-Charger D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 7, 7},
-#endif
-#ifdef CONFIG_ADC
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
-#endif
-#ifdef CONFIG_PECI
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
-#endif
 };
 
 const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {

@@ -38,13 +38,13 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE	/* Use STOP mode when we have nothing to do */
-#define CONFIG_LP5562
+#define CONFIG_LED_DRIVER_LP5562
 #define CONFIG_PMU_BOARD_INIT
 #define CONFIG_PMU_FORCE_FET	/* Always enable 3G modem power rail */
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
 #define CONFIG_SMART_BATTERY
-#define CONFIG_TSU6721
+#define CONFIG_USB_SWITCH_TSU6721
 
 #ifndef __ASSEMBLER__
 
