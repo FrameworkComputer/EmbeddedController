@@ -173,9 +173,11 @@ static int get_video_power(void)
 
 static void set_video_power(int enabled)
 {
-	/* TODO(victoryang): Drop VFET2. See crosbug.com/p/18186 */
-	pmu_enable_fet(FET_VIDEO, enabled, NULL);
-	pmu_enable_fet(FET_VIDEO2, enabled, NULL);
+	int power_good;
+
+	pmu_enable_fet(FET_VIDEO, enabled, enabled ? &power_good : NULL);
+	if (enabled && !power_good)
+		pmu_enable_fet(FET_VIDEO, 0, NULL);
 	video_power_enabled = enabled;
 }
 

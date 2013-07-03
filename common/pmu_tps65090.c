@@ -90,6 +90,8 @@
 
 #define FET_CTRL_BASE (FET1_CTRL - 1)
 
+#define POWER_GOOD_DELAY_US 3500
+
 /* AD control register bits */
 #define AD_CTRL_ENADREF  (1 << 4)
 #define AD_CTRL_ADEOC    (1 << 5)
@@ -436,6 +438,7 @@ int pmu_enable_fet(int fet_id, int enable, int *power_good)
 		return rv;
 
 	if (power_good) {
+		usleep(POWER_GOOD_DELAY_US);
 		rv = pmu_read(reg_offset, &reg);
 		if (rv)
 			return rv;
