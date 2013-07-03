@@ -165,21 +165,25 @@ void __hw_timer_enable_clock(int n, int enable)
 	volatile uint32_t *reg;
 	uint32_t mask = 0;
 
+	/*
+	 * Mapping of timers to reg/mask is split into a few different ranges,
+	 * some specific to individual chips.
+	 */
 #if defined(CHIP_FAMILY_stm32f)
 	if (n == 1) {
 		reg = &STM32_RCC_APB2ENR;
-		mask = 1 << 11;
+		mask = STM32_RCC_PB2_TIM1;
 	}
 #elif defined(CHIP_FAMILY_stm32l)
 	if (n >= 9 && n <= 11) {
 		reg = &STM32_RCC_APB2ENR;
-		mask = 1 << (n - 7);
+		mask = STM32_RCC_PB2_TIM9 << (n - 9);
 	}
 #endif
 
 	if (n >= 2 && n <= 7) {
 		reg = &STM32_RCC_APB1ENR;
-		mask = 1 << (n - 2);
+		mask = STM32_RCC_PB1_TIM2 << (n - 2);
 	}
 
 	if (!mask)

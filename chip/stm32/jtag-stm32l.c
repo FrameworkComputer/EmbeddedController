@@ -9,6 +9,13 @@
 
 void jtag_pre_init(void)
 {
-	/* stop TIM2-4 and watchdogs when the JTAG stops the CPU */
-	STM32_DBGMCU_APB1FZ |= 0x00001807;
+	/*
+	 * Stop all timers we might use (TIM2-4,9-11) and watchdogs when
+	 * the JTAG stops the CPU.
+	 */
+	STM32_DBGMCU_APB1FZ |=
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
+		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	STM32_DBGMCU_APB2FZ |= STM32_RCC_PB2_TIM9 | STM32_RCC_PB2_TIM10 |
+		STM32_RCC_PB2_TIM11;
 }

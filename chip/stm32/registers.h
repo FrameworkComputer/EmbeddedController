@@ -347,6 +347,9 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_CSR               REG32(STM32_RCC_BASE + 0x34)
 
 #define STM32_RCC_HB_DMA1		(1 << 24)
+#define STM32_RCC_PB2_TIM9		(1 << 2)
+#define STM32_RCC_PB2_TIM10		(1 << 3)
+#define STM32_RCC_PB2_TIM11		(1 << 4)
 
 #define STM32_SYSCFG_BASE           0x40010000
 
@@ -370,12 +373,22 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_CFGR2             REG32(STM32_RCC_BASE + 0x2c) /* STM32F100 */
 
 #define STM32_RCC_HB_DMA1		(1 << 0)
+#define STM32_RCC_PB2_TIM1		(1 << 11)
 
 #else
 #error Unsupported chip variant
 #endif
 
-/* Peripheral bits for RCC_APB/AHB regs */
+/* Peripheral bits for RCC_APB/AHB and DBGMCU regs */
+#define STM32_RCC_PB1_TIM2		(1 << 0)
+#define STM32_RCC_PB1_TIM3		(1 << 1)
+#define STM32_RCC_PB1_TIM4		(1 << 2)
+#define STM32_RCC_PB1_TIM5		(1 << 3)
+#define STM32_RCC_PB1_TIM6		(1 << 4)
+#define STM32_RCC_PB1_TIM7		(1 << 5)
+#define STM32_RCC_PB1_RTC		(1 << 10) /* DBGMCU only */
+#define STM32_RCC_PB1_WWDG		(1 << 11)
+#define STM32_RCC_PB1_IWDG		(1 << 12) /* DBGMCU only */
 #define STM32_RCC_PB1_USART2		(1 << 17)
 #define STM32_RCC_PB1_USART3		(1 << 18)
 #define STM32_RCC_PB1_USART4		(1 << 19)
