@@ -6,12 +6,12 @@
 /* Mock X86 chipset power control module for Chrome EC */
 
 #include "chipset.h"
+#include "chipset_x86_common.h"
 #include "console.h"
 #include "lpc.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "x86_power.h"
 
 static int mock_power_on = 0;
 
@@ -59,7 +59,7 @@ int chipset_in_state(int state_mask)
 }
 
 
-void x86_power_interrupt(enum gpio_signal signal)
+void x86_interrupt(enum gpio_signal signal)
 {
 	/* Not implemented */
 	return;

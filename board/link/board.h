@@ -177,6 +177,27 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
+/* x86 signal definitions */
+enum x86_signal {
+	X86_PGOOD_5VALW = 0,
+	X86_PGOOD_1_5V_DDR,
+	X86_PGOOD_1_5V_PCH,
+	X86_PGOOD_1_8VS,
+	X86_PGOOD_VCCP,
+	X86_PGOOD_VCCSA,
+	X86_PGOOD_CPU_CORE,
+	X86_PGOOD_VGFX_CORE,
+	X86_PCH_SLP_S3n_DEASSERTED,
+	X86_PCH_SLP_S4n_DEASSERTED,
+	X86_PCH_SLP_S5n_DEASSERTED,
+	X86_PCH_SLP_An_DEASSERTED,
+	X86_PCH_SLP_SUSn_DEASSERTED,
+	X86_PCH_SLP_MEn_DEASSERTED,
+
+	/* Number of X86 signals */
+	X86_SIGNAL_COUNT
+};
+
 enum temp_sensor_id {
 	/* TMP006 U20, die/object temperature near Mini-DP / USB connectors */
 	TEMP_SENSOR_I2C_U20_DIE = 0,

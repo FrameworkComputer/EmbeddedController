@@ -76,7 +76,6 @@ enum gpio_signal {
 	GPIO_PCH_SLP_S3_L,         /* SLP_S3# signal from PCH */
 	GPIO_PCH_SLP_S5_L,         /* SLP_S5# signal from PCH */
 	GPIO_PCH_SLP_SUS_L,        /* SLP_SUS# signal from PCH */
-	GPIO_PCH_SUSWARN_L,        /* SUSWARN# signal from PCH */
 	GPIO_PP1050_PGOOD,         /* Power good on 1.05V */
 	GPIO_PP1350_PGOOD,         /* Power good on 1.35V (DRAM) */
 	GPIO_PP5000_PGOOD,         /* Power good on 5V */
@@ -87,6 +86,7 @@ enum gpio_signal {
 
 	/* Other inputs */
 	GPIO_FAN_ALERT_L,          /* From thermal sensor */
+	GPIO_PCH_SUSWARN_L,        /* SUSWARN# signal from PCH */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
@@ -138,6 +138,21 @@ enum gpio_signal {
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
+};
+
+/* x86 signal definitions */
+enum x86_signal {
+	X86_PGOOD_PP5000 = 0,
+	X86_PGOOD_PP1350,
+	X86_PGOOD_PP1050,
+	X86_PGOOD_VCORE,
+	X86_PCH_SLP_S0n_DEASSERTED,
+	X86_PCH_SLP_S3n_DEASSERTED,
+	X86_PCH_SLP_S5n_DEASSERTED,
+	X86_PCH_SLP_SUSn_DEASSERTED,
+
+	/* Number of X86 signals */
+	X86_SIGNAL_COUNT
 };
 
 /* Charger module */

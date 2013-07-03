@@ -7,6 +7,8 @@
 #include "adc.h"
 #include "board.h"
 #include "chip_temp_sensor.h"
+#include "chipset_haswell.h"
+#include "chipset_x86_common.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -24,7 +26,6 @@
 #include "timer.h"
 #include "tmp006.h"
 #include "util.h"
-#include "x86_power.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[GPIO_COUNT] = {
@@ -38,25 +39,23 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"PCH_BKLTEN",           LM4_GPIO_M, (1<<3), GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"PCH_SLP_S0_L",         LM4_GPIO_G, (1<<6), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PCH_SLP_S3_L",         LM4_GPIO_G, (1<<7), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PCH_SLP_S5_L",         LM4_GPIO_H, (1<<1), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PCH_SLP_SUS_L",        LM4_GPIO_G, (1<<3), GPIO_INT_BOTH,
-	 x86_power_interrupt},
-	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PP1350_PGOOD",         LM4_GPIO_H, (1<<6), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PP5000_PGOOD",         LM4_GPIO_N, (1<<0), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 x86_interrupt},
 	{"PCH_EDP_VDD_EN",       LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
-	 x86_power_interrupt},
+	 haswell_interrupt},
 	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_PULL_UP|GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
@@ -64,6 +63,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 	/* Other inputs */
 	{"FAN_ALERT_L",          LM4_GPIO_B, (1<<0), GPIO_INPUT, NULL},
+	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
@@ -120,6 +120,18 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"BAT_LED1_L",           LM4_GPIO_N, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"PWR_LED0_L",           LM4_GPIO_D, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PWR_LED1_L",           LM4_GPIO_N, (1<<6), GPIO_ODR_HIGH, NULL},
+};
+
+/* x86 signal list.  Must match order of enum x86_signal. */
+const struct x86_signal_info x86_signal_list[X86_SIGNAL_COUNT] = {
+	{GPIO_PP5000_PGOOD,  1, "PGOOD_PP5000"},
+	{GPIO_PP1350_PGOOD,  1, "PGOOD_PP1350"},
+	{GPIO_PP1050_PGOOD,  1, "PGOOD_PP1050"},
+	{GPIO_VCORE_PGOOD,   1, "PGOOD_VCORE"},
+	{GPIO_PCH_SLP_S0_L,  1, "SLP_S0#_DEASSERTED"},
+	{GPIO_PCH_SLP_S3_L,  1, "SLP_S3#_DEASSERTED"},
+	{GPIO_PCH_SLP_S5_L,  1, "SLP_S5#_DEASSERTED"},
+	{GPIO_PCH_SLP_SUS_L, 1, "SLP_SUS#_DEASSERTED"},
 };
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */

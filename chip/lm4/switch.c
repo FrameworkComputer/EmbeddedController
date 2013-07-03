@@ -409,6 +409,7 @@ static void switch_init(void)
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
 	/* Enable interrupts, now that we've initialized */
+	gpio_enable_interrupt(GPIO_PCH_BKLTEN);
 	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
 #ifdef CONFIG_WP_ACTIVE_HIGH
