@@ -81,4 +81,8 @@ int test_send_host_command(int command, int version, const void *params,
 
 extern int __test_error_count;
 
+void uart_inject_char(char *s, int sz);
+
+#define UART_INJECT(s) uart_inject_char(s, strlen(s));
+
 #endif /* __CROS_EC_TEST_UTIL_H */

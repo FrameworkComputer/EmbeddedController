@@ -15,6 +15,7 @@
 #include "queue.h"
 #include "task.h"
 #include "uart.h"
+#include "util.h"
 
 static int stopped;
 static int int_disabled;
@@ -102,6 +103,21 @@ void uart_enable_interrupt(void)
 	int_disabled = 0;
 }
 
+void uart_inject_char(char *s, int sz)
+{
+	int i;
+	int num_char;
+
+	for (i = 0; i < sz; i += INPUT_BUFFER_SIZE - 1) {
+		num_char = MIN(INPUT_BUFFER_SIZE - 1, sz - i);
+		if (!queue_has_space(&cached_char, num_char))
+			return;
+		queue_add_units(&cached_char, s + i, num_char);
+		char_available = num_char;
+		trigger_interrupt();
+	}
+}
+
 void *uart_monitor_stdin(void *d)
 {
 	struct termios org_settings, new_settings;
@@ -118,9 +134,10 @@ void *uart_monitor_stdin(void *d)
 	while (1) {
 		tcsetattr(0, TCSANOW, &new_settings);
 		rv = read(0, buf, INPUT_BUFFER_SIZE);
-		if (queue_has_space(&cached_char, rv))
+		if (queue_has_space(&cached_char, rv)) {
 			queue_add_units(&cached_char, buf, rv);
-		char_available = rv;
+			char_available = rv;
+		}
 		tcsetattr(0, TCSANOW, &org_settings);
 		/*
 		 * TODO: Trigger emulated interrupt when we have
