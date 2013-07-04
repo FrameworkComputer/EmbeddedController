@@ -44,12 +44,12 @@
 
 #define TEST_ASSERT_ARRAY_EQ(s, d, n) \
 	do { \
-		int i; \
-		for (i = 0; i < n; ++i) \
-			if ((s)[i] != (d)[i]) { \
+		int __i; \
+		for (__i = 0; __i < n; ++__i) \
+			if ((s)[__i] != (d)[__i]) { \
 				ccprintf("%d: ASSERT_ARRAY_EQ failed at " \
-					 "index=%d: %d != %d\n", __LINE__, i, \
-					 (int)(s)[i], (int)(d)[i]); \
+					 "index=%d: %d != %d\n", __LINE__, \
+					 __i, (int)(s)[__i], (int)(d)[__i]); \
 				return EC_ERROR_UNKNOWN; \
 			} \
 	} while (0)
