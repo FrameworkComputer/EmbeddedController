@@ -6,6 +6,11 @@
  */
 
 #include "battery_pack.h"
+#include "host_command.h"
+#include "smart_battery.h"
+
+#define SB_SHIP_MODE_ADDR	0x3a
+#define SB_SHIP_MODE_DATA	0xc574
 
 /* Values for 54Wh 3UPF656790-1-T1001 battery */
 static const struct battery_info info = {
@@ -50,3 +55,10 @@ void battery_vendor_params(struct batt_params *batt)
 	}
 #endif
 }
+
+int battery_command_cut_off(struct host_cmd_handler_args *args)
+{
+	return sb_write(SB_SHIP_MODE_ADDR, SB_SHIP_MODE_DATA);
+}
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
+		     EC_VER_MASK(0));
