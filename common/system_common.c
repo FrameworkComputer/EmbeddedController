@@ -438,7 +438,7 @@ int system_get_board_version(void)
 {
 	int v = 0;
 
-#ifdef BOARD_link				/* HEY: Slippy? */
+#ifdef CONFIG_BOARD_VERSION
 	if (gpio_get_level(GPIO_BOARD_VERSION1))
 		v |= 0x01;
 	if (gpio_get_level(GPIO_BOARD_VERSION2))
