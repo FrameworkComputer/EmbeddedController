@@ -15,10 +15,16 @@
 /* Optional features */
 #define CONFIG_HOSTCMD
 #define CONFIG_HOST_EMU
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LID_SWITCH
 #define CONFIG_POWER_BUTTON
 #define CONFIG_TEMP_SENSOR
+
+/* Keyboard protocol */
+#ifdef KB_8042
+#define CONFIG_KEYBOARD_PROTOCOL_8042
+#else
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#endif
 
 #define CONFIG_WP_ACTIVE_HIGH
 

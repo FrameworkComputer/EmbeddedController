@@ -17,6 +17,9 @@ include Makefile.toolchain
 # Get CHIP name
 include board/$(BOARD)/build.mk
 
+# Get test configuration
+include test/test_config.mk
+
 # Transform the configuration into make variables
 includes=include core/$(CORE)/include $(dirs) $(out)
 ifeq "$(TEST_BUILD)" "y"

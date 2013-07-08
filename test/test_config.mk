@@ -3,10 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# emulator specific files build
+# per-test configuration
 #
 
-CORE:=host
-
-chip-y=system.o gpio.o uart.o persistence.o flash.o lpc.o
-chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
+CFLAGS-kb_8042=-DKB_8042
