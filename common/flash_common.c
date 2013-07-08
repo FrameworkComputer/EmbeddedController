@@ -16,6 +16,14 @@
 #include "util.h"
 #include "vboot_hash.h"
 
+/*
+ * Contents of erased flash, as a 32-bit value.  Most platforms erase flash
+ * bits to 1.
+ */
+#ifndef CONFIG_FLASH_ERASED_VALUE32
+#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
+#endif
+
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
@@ -105,8 +113,6 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 	return CONFIG_FLASH_SIZE - offset;
 }
 
-/* crosbug.com/p/13066 - not supported on STM32L */
-#ifndef CHIP_FAMILY_stm32l
 int flash_is_erased(uint32_t offset, int size)
 {
 	const uint32_t *ptr;
@@ -116,12 +122,11 @@ int flash_is_erased(uint32_t offset, int size)
 		return 0;
 
 	for (size /= sizeof(uint32_t); size > 0; size -= 4, ptr++)
-		if (*ptr != -1U)
+		if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
 			return 0;
 
 	return 1;
 }
-#endif
 
 test_mockable int flash_write(int offset, int size, const char *data)
 {

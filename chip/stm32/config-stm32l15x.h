@@ -36,3 +36,6 @@
 
 /* Lots of RAM, so use bigger UART buffer */
 #define CONFIG_UART_TX_BUF_SIZE 2048
+
+/* Flash erases to 0, not 1 */
+#define CONFIG_FLASH_ERASED_VALUE32 0
