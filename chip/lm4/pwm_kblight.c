@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_switch.h"
 #include "pwm.h"
 #include "registers.h"
 #include "system.h"
@@ -188,3 +189,9 @@ static void pwm_kblight_shutdown(void)
 	pwm_set_keyboard_backlight(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_kblight_shutdown, HOOK_PRIO_DEFAULT);
+
+static void pwm_kblight_lid_change(void)
+{
+	pwm_enable_keyboard_backlight(lid_is_open());
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, pwm_kblight_lid_change, HOOK_PRIO_DEFAULT);
