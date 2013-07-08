@@ -49,24 +49,24 @@ static void power_led_set_duty(int percent)
 	 * Set the duty cycle.  CCRx = percent * ARR / 100.  Since we set
 	 * ARR=100, this is just percent.
 	 */
-#if defined(BOARD_pit) || defined(BOARD_puppy)
-	STM32_TIM_CCR3(TIM_POWER_LED) = percent;
-#else
+#ifdef BOARD_snow
 	STM32_TIM_CCR2(TIM_POWER_LED) = percent;
+#else
+	STM32_TIM_CCR3(TIM_POWER_LED) = percent;
 #endif
 }
 
 static void power_led_use_pwm(void)
 {
 	/* Configure power LED GPIO for TIM2/PWM alternate function */
-#if defined(BOARD_pit) || defined(BOARD_puppy)
-	/* PA2 = TIM2_CH3 */
-	gpio_set_alternate_function(GPIO_A, (1 << 2), GPIO_ALT_TIM2);
-#else
+#ifdef BOARD_snow
 	/* PB3 = TIM2_CH2 */
 	uint32_t val = STM32_GPIO_CRL(GPIO_B) & ~0x0000f000;
 	val |= 0x00009000;	/* alt. function (TIM2/PWM) */
 	STM32_GPIO_CRL(GPIO_B) = val;
+#else
+	/* PA2 = TIM2_CH3 */
+	gpio_set_alternate_function(GPIO_A, (1 << 2), GPIO_ALT_TIM2);
 #endif
 
 	/* Enable timer */
@@ -87,18 +87,18 @@ static void power_led_use_pwm(void)
 
 	power_led_set_duty(100);
 
-#if defined(BOARD_pit) || defined(BOARD_puppy)
-	/* CC3 configured as output, PWM mode 1, preload enable */
-	STM32_TIM_CCMR2(TIM_POWER_LED) = (6 << 4) | (1 << 3);
-
-	/* CC3 output enable, active low */
-	STM32_TIM_CCER(TIM_POWER_LED) = (1 << 8) | (1 << 9);
-#else
+#ifdef BOARD_snow
 	/* CC2 configured as output, PWM mode 1, preload enable */
 	STM32_TIM_CCMR1(TIM_POWER_LED) = (6 << 12) | (1 << 11);
 
 	/* CC2 output enable, active low */
 	STM32_TIM_CCER(TIM_POWER_LED) = (1 << 4) | (1 << 5);
+#else
+	/* CC3 configured as output, PWM mode 1, preload enable */
+	STM32_TIM_CCMR2(TIM_POWER_LED) = (6 << 4) | (1 << 3);
+
+	/* CC3 output enable, active low */
+	STM32_TIM_CCER(TIM_POWER_LED) = (1 << 8) | (1 << 9);
 #endif
 
 	/* Generate update event to force loading of shadow registers */
