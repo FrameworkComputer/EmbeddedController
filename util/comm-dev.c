@@ -110,7 +110,7 @@ int comm_init_dev(void)
 	 * TODO: need a way to get this from the driver and EC.  For now,
 	 * pick a magic lowest common denominator value.
 	 */
-	ec_max_outsize = EC_PROTO2_MAX_PARAM_SIZE - 8;
+	ec_max_insize = ec_max_outsize = EC_PROTO2_MAX_PARAM_SIZE - 8;
 
 	return 0;
 }
