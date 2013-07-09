@@ -303,9 +303,7 @@ static void jump_to_image(uintptr_t init_addr)
 	 * EC is not in read-only firmware.  (This is not technically true if
 	 * jumping from RO -> RO, but that's not a meaningful use case...)
 	 */
-#ifdef GPIO_ENTERING_RW
 	gpio_set_level(GPIO_ENTERING_RW, 1);
-#endif
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())

@@ -82,6 +82,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("EC_INT"),
+	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 
 #if 0
 	/* Other GPIOs (probably need to be set up below as alt. function) */

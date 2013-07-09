@@ -93,6 +93,7 @@ enum gpio_signal {
 
 	/* Unimplemented GPIOs */
 	GPIO_EC_INT,
+	GPIO_ENTERING_RW,
 
 #if 0
 	GPIO_STM_USBDM,

@@ -27,6 +27,7 @@ enum gpio_signal {
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 	GPIO_WP,
+	GPIO_ENTERING_RW,
 
 	GPIO_COUNT
 };

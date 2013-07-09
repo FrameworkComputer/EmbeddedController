@@ -13,6 +13,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"LID_OPEN", 0, 0, 0, 0},
 	{"POWER_BUTTON_L", 0, 0, 0, 0},
 	{"WP", 0, 0, 0, 0},
+	{"ENTERING_RW", 0, 0, 0, 0},
 };
 
 static int dummy_temp_get_val(int idx, int *temp_ptr)
