@@ -229,6 +229,9 @@ static void adc_init(void)
 	task_enable_irq(LM4_IRQ_ADC0_SS2);
 	task_enable_irq(LM4_IRQ_ADC0_SS3);
 
+	/* 2**6 = 64x oversampling */
+	LM4_ADC_ADCSAC = 6;
+
 	/* Initialize ADC sequencer */
 	for (i = 0; i < ADC_CH_COUNT; ++i)
 		lm4_adc_configure(adc_channels + i);
