@@ -6,6 +6,10 @@
  */
 
 #include "battery_pack.h"
+#include "host_command.h"
+#include "smart_battery.h"
+
+#define SB_SHIP_MODE_DATA	0x0010
 
 /* FIXME: We need REAL values for all this stuff */
 static const struct battery_info info = {
@@ -46,3 +50,17 @@ void battery_vendor_params(struct batt_params *batt)
 	}
 #endif
 }
+
+int battery_command_cut_off(struct host_cmd_handler_args *args)
+{
+	int rv;
+
+	/* Ship mode command must be sent twice. */
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHIP_MODE_DATA);
+	if (rv != EC_SUCCESS)
+		return rv;
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHIP_MODE_DATA);
+	return rv;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
+		     EC_VER_MASK(0));
