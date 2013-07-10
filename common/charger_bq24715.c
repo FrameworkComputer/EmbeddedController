@@ -26,12 +26,12 @@ static const struct charger_info bq24725_charger_info = {
 	.voltage_max  = CHARGE_V_MAX,
 	.voltage_min  = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS);
-	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS);
-	.current_step = REG_TO_CURRENT(CHARGE_I_STEP, R_SNS);
-	.input_current_max  = REG_TO_CURRENT(INPUT_I_MAX, R_AC);
-	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC);
-	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC);
+	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
+	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
+	.current_step = REG_TO_CURRENT(CHARGE_I_STEP, R_SNS),
+	.input_current_max  = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
+	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
+	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
 
 int charger_set_input_current(int input_current)
