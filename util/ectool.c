@@ -2041,9 +2041,10 @@ int cmd_wireless(int argc, char *argv[])
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
-		fprintf(stderr, "  0x1 = WLAN\n"
-				"  0x2 = Bluetooth\n"
-				"  0x4 = WWAN\n");
+		fprintf(stderr, "  0x1 = WLAN radio\n"
+				"  0x2 = Bluetooth radio\n"
+				"  0x4 = WWAN power\n"
+				"  0x8 = WLAN power\n");
 		return -1;
 	}
 	p.enabled = strtol(argv[1], &e, 0);

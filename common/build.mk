@@ -48,6 +48,7 @@ common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 common-$(CONFIG_SMART_BATTERY)+=smart_battery.o smart_battery_stub.o
+common-$(CONFIG_WIRELESS)+=wireless.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
 common-$(HAS_TASK_CONSOLE)+=console.o
 common-$(HAS_TASK_HOSTCMD)+=host_command.o host_event_commands.o

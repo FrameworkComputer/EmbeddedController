@@ -15,6 +15,7 @@
 #include "system.h"
 #include "timer.h"
 #include "util.h"
+#include "wireless.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -131,11 +132,10 @@ enum x86_state x86_chipset_init(void)
 			gpio_set_level(GPIO_PP1350_EN, 0);
 			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
-			gpio_set_level(GPIO_PP3300_LTE_EN, 0);
-			gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
+			wireless_enable(0);
 		}
 	}
 
@@ -242,19 +242,13 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Turn on power rails */
 		gpio_set_level(GPIO_PP3300_DX_EN, 1);
 
-		/* Enable WLAN */
-		gpio_set_level(GPIO_PP3300_WLAN_EN, 1);
-		gpio_set_level(GPIO_WLAN_OFF_L, 1);
-
-		/* Enable LTE/WWAN */
-		gpio_set_level(GPIO_PP3300_LTE_EN, 1);
+		/* Enable wireless */
+		wireless_enable(1);
 
 		/* Wait for non-core power rails good */
 		if (x86_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
-			gpio_set_level(GPIO_WLAN_OFF_L, 0);
-			gpio_set_level(GPIO_PP3300_LTE_EN, 0);
-			gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
+			wireless_enable(0);
 			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
 			return X86_S3;
@@ -297,12 +291,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Disable +CPU_CORE */
 		gpio_set_level(GPIO_VCORE_EN, 0);
 
-		/* Disable WLAN */
-		gpio_set_level(GPIO_WLAN_OFF_L, 0);
-		gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
-
-		/* Disable LTE/WWAN */
-		gpio_set_level(GPIO_PP3300_LTE_EN, 0);
+		/* Disable wireless */
+		wireless_enable(0);
 
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop

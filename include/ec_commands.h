@@ -143,9 +143,10 @@
 #define EC_HOST_CMD_FLAG_VERSION_3   0x02
 
 /* Wireless switch flags */
-#define EC_WIRELESS_SWITCH_WLAN      0x01
-#define EC_WIRELESS_SWITCH_BLUETOOTH 0x02
-#define EC_WIRELESS_SWITCH_WWAN      0x04
+#define EC_WIRELESS_SWITCH_WLAN      0x01  /* WLAN radio */
+#define EC_WIRELESS_SWITCH_BLUETOOTH 0x02  /* Bluetooth radio */
+#define EC_WIRELESS_SWITCH_WWAN      0x04  /* WWAN power */
+#define EC_WIRELESS_SWITCH_WLAN_POWER 0x08 /* WLAN power */
 
 /*
  * This header file is used in coreboot both in C and ACPI code.  The ACPI code

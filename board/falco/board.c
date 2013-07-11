@@ -198,17 +198,6 @@ void configure_fan_gpios(void)
 }
 
 /**
- * Set wireless switch state.
- */
-void board_enable_wireless(uint8_t enabled)
-{
-	gpio_set_level(GPIO_WLAN_OFF_L,
-		       enabled & EC_WIRELESS_SWITCH_WLAN);
-	gpio_set_level(GPIO_PP3300_LTE_EN,
-		       enabled & EC_WIRELESS_SWITCH_WWAN);
-}
-
-/**
  * Perform necessary actions on host wake events.
  */
 void board_process_wake_events(uint32_t active_wake_events)

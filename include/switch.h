@@ -27,9 +27,4 @@ void switch_interrupt(enum gpio_signal signal);
  */
 int switch_get_write_protect(void);
 
-/**
- * Set wireless switch state.
- */
-void board_enable_wireless(uint8_t enabled);
-
 #endif  /* __CROS_EC_SWITCH_H */

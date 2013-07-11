@@ -500,15 +500,3 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 			"Print memmap switch state",
 			NULL);
 
-/*****************************************************************************/
-/* Host commands */
-
-static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_switch_enable_wireless *p = args->params;
-	board_enable_wireless(p->enabled);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_WIRELESS,
-		     switch_command_enable_wireless,
-		     EC_VER_MASK(0));

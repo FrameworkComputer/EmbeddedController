@@ -15,6 +15,7 @@
 #include "system.h"
 #include "timer.h"
 #include "util.h"
+#include "wireless.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -237,10 +238,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Turn on power rails */
 		gpio_set_level(GPIO_ENABLE_VS, 1);
 
-		/* Enable WLAN */
-		gpio_set_level(GPIO_ENABLE_WLAN, 1);
-		gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 1);
-		gpio_set_level(GPIO_RADIO_ENABLE_BT, 1);
+		/* Enable wireless */
+		wireless_enable(1);
 
 		/*
 		 * Make sure touchscreen is out if reset (even if the lid is
@@ -253,9 +252,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		if (x86_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
 			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
-			gpio_set_level(GPIO_ENABLE_WLAN, 0);
-			gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
-			gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
+			wireless_enable(0);
 			gpio_set_level(GPIO_ENABLE_VS, 0);
 			return X86_S3;
 		}
@@ -295,10 +292,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Disable +CPU_CORE and +VGFX_CORE */
 		gpio_set_level(GPIO_ENABLE_VCORE, 0);
 
-		/* Disable WLAN */
-		gpio_set_level(GPIO_ENABLE_WLAN, 0);
-		gpio_set_level(GPIO_RADIO_ENABLE_WLAN, 0);
-		gpio_set_level(GPIO_RADIO_ENABLE_BT, 0);
+		/* Disable wireless */
+		wireless_enable(0);
 
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop

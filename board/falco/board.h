@@ -38,6 +38,7 @@
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_USB_PORT_POWER_DUMB
+#define CONFIG_WIRELESS
 
 #ifndef __ASSEMBLER__
 
@@ -209,6 +210,11 @@ enum board_version {
 	BOARD_VERSION_PROTO1 = 0,
 	BOARD_VERSION_EVT = 1,
 };
+
+/* Wireless signals */
+#define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
+#define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
+#define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
 
 #endif /* !__ASSEMBLER__ */
 
