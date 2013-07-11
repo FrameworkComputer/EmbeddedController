@@ -8,12 +8,15 @@
 #include "gpio.h"
 #include "temp_sensor.h"
 
+#define MOCK_GPIO(x) {#x, 0, 0, 0, 0}
+
 const struct gpio_info gpio_list[GPIO_COUNT] = {
-	{"EC_INT", 0, 0, 0, 0},
-	{"LID_OPEN", 0, 0, 0, 0},
-	{"POWER_BUTTON_L", 0, 0, 0, 0},
-	{"WP", 0, 0, 0, 0},
-	{"ENTERING_RW", 0, 0, 0, 0},
+	MOCK_GPIO(EC_INT),
+	MOCK_GPIO(LID_OPEN),
+	MOCK_GPIO(POWER_BUTTON_L),
+	MOCK_GPIO(WP),
+	MOCK_GPIO(ENTERING_RW),
+	MOCK_GPIO(AC_PRESENT),
 };
 
 static int dummy_temp_get_val(int idx, int *temp_ptr)

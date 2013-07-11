@@ -29,8 +29,9 @@ test-list-$(BOARD_wolf)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
-test-list-host+=thermal flash queue kb_8042
+test-list-host+=thermal flash queue kb_8042 extpwr_gpio
 
+extpwr_gpio-y=extpwr_gpio.o
 flash-y=flash.o
 hooks-y=hooks.o
 kb_8042-y=kb_8042.o

@@ -13,6 +13,7 @@
 #define CONFIG_ASSERT_HELP
 
 /* Optional features */
+#define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HOSTCMD
 #define CONFIG_HOST_EMU
 #define CONFIG_LID_SWITCH
@@ -34,6 +35,7 @@ enum gpio_signal {
 	GPIO_POWER_BUTTON_L,
 	GPIO_WP,
 	GPIO_ENTERING_RW,
+	GPIO_AC_PRESENT,
 
 	GPIO_COUNT
 };
