@@ -26,6 +26,7 @@ common-$(CONFIG_CHIPSET_HASWELL)+=chipset_haswell.o chipset_x86_common.o
 common-$(CONFIG_CHIPSET_IVYBRIDGE)+=chipset_ivybridge.o chipset_x86_common.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o
 common-$(CONFIG_EOPTION)+=eoption.o
+common-$(CONFIG_EXTPOWER_FALCO)+=extpower_falco.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_EXTPOWER_SNOW)+=extpower_snow.o
 common-$(CONFIG_EXTPOWER_USB)+=extpower_usb.o
