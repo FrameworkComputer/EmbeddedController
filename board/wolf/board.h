@@ -15,6 +15,7 @@
 #define CONFIG_TASK_PROFILING
 
 /* Optional features */
+#define CONFIG_BACKLIGHT_X86
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_HASWELL
 #endif

@@ -5,7 +5,7 @@
 /* EC for Link board configuration */
 
 #include "adc.h"
-#include "board.h"
+#include "backlight.h"
 #include "chip_temp_sensor.h"
 #include "chipset_ivybridge.h"
 #include "chipset_x86_common.h"
@@ -41,7 +41,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"BOARD_VERSION2",       LM4_GPIO_L, (1<<6), 0, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_L, (1<<7), 0, NULL},
 	{"PCH_BKLTEN",           LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
-	 switch_interrupt},
+	 backlight_interrupt},
 	{"PCH_SLP_A_L",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PCH_SLP_ME_CSW_DEV_L", LM4_GPIO_G, (1<<4), GPIO_INT_BOTH,

@@ -16,6 +16,7 @@
 
 /* Optional features */
 #define CONFIG_SMART_BATTERY
+#define CONFIG_BACKLIGHT_X86
 #define CONFIG_BATTERY_FALCO
 #define CONFIG_EXTPOWER_FALCO
 #define CONFIG_BOARD_VERSION

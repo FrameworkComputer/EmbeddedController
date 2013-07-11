@@ -146,15 +146,6 @@ static void set_pwrbtn_to_pch(int high)
 	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
-static void update_backlight(void)
-{
-	/* Only enable the backlight if the lid is open */
-	if (gpio_get_level(GPIO_PCH_BKLTEN) && lid_is_open())
-		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
-	else
-		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
-}
-
 /**
  * Handle debounced power button down.
  */
@@ -402,14 +393,12 @@ static void switch_init(void)
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 
 	update_other_switches();
-	update_backlight();
 	set_initial_pwrbtn_state();
 
 	/* Switch data is now present */
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_PCH_BKLTEN);
 	gpio_enable_interrupt(GPIO_POWER_BUTTON_L);
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
 #ifdef CONFIG_WP_ACTIVE_HIGH
@@ -425,8 +414,6 @@ DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
  */
 static void switch_lid_change(void)
 {
-	update_backlight();
-
 	if (lid_is_open()) {
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 
@@ -484,26 +471,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
 
 void switch_interrupt(enum gpio_signal signal)
 {
-	/* Reset debounce time for the changed signal */
-	switch (signal) {
-	case GPIO_PCH_BKLTEN:
-		update_backlight();
-		break;
-	default:
-		/*
-		 * Change in non-debounced switches; we'll update their state
-		 * automatically the next time through the task loop.
-		 */
-		break;
-	}
-
-	/*
-	 * We don't have a way to tell the task to wake up at the end of the
-	 * debounce interval; wake it up now so it can go back to sleep for the
-	 * remainder of the interval.  The alternative would be to have the
-	 * task wake up _every_ debounce_us on its own; that's less desirable
-	 * when the EC should be sleeping.
-	 */
+	/* Wake task to handle change in non-debounced switches */
 	task_wake(TASK_ID_SWITCH);
 }
 
@@ -534,15 +502,6 @@ DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 
 /*****************************************************************************/
 /* Host commands */
-
-static int switch_command_enable_backlight(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_switch_enable_backlight *p = args->params;
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, p->enabled);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
-		     switch_command_enable_backlight, 0);
 
 static int switch_command_enable_wireless(struct host_cmd_handler_args *args)
 {
