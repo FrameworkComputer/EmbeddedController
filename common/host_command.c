@@ -526,12 +526,12 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 	else
 		rv = cmd->handler(args);
 
-	if (rv != EC_RES_SUCCESS) {
+	if (rv != EC_RES_SUCCESS)
 		CPRINTF("[%T HC err %d]\n", rv);
-	} else if (hcdebug >= HCDEBUG_PARAMS && args->response_size) {
-		CPRINTF("[%T HC resp:%.*h]\n",
-			args->response_size, args->response);
-	}
+
+	if (hcdebug >= HCDEBUG_PARAMS && args->response_size)
+		CPRINTF("[%T HC resp:%.*h]\n", args->response_size,
+			args->response);
 
 	return rv;
 }
