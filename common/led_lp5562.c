@@ -23,9 +23,9 @@
 
 /* We use yellow LED instead of blue LED. Re-map colors here. */
 #define LED_COLOR_NONE   LP5562_COLOR_NONE
-#define LED_COLOR_GREEN  LP5562_COLOR_GREEN
-#define LED_COLOR_YELLOW LP5562_COLOR_BLUE
-#define LED_COLOR_RED    LP5562_COLOR_RED
+#define LED_COLOR_GREEN  LP5562_COLOR_GREEN(0x10)
+#define LED_COLOR_YELLOW LP5562_COLOR_BLUE(0x40)
+#define LED_COLOR_RED    LP5562_COLOR_RED(0x80)
 
 /* LED states */
 enum led_state_t {

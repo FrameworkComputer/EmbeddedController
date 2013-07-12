@@ -28,10 +28,11 @@
 
 #define LP5562_REG_ENG_PROG(n)	(0x10 + ((n)-1) * 0x20)
 
+/* Brightness range: 0x00 - 0xff */
 #define LP5562_COLOR_NONE	0x000000
-#define LP5562_COLOR_RED	0x800000
-#define LP5562_COLOR_GREEN	0x008000
-#define LP5562_COLOR_BLUE	0x000080
+#define LP5562_COLOR_RED(b)	(0x010000 * (b))
+#define LP5562_COLOR_GREEN(b)	(0x000100 * (b))
+#define LP5562_COLOR_BLUE(b)	(0x000001 * (b))
 
 #define LP5562_ENG_SEL_NONE	0x0
 #define LP5562_ENG_SEL_1	0x1
