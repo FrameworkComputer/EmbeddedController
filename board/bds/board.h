@@ -21,6 +21,9 @@
 #define CONFIG_EOPTION
 #define CONFIG_PSTORE
 
+/* LM4 modules we want to exclude */
+#undef CONFIG_SWITCH
+
 /* Write protect is active high */
 #define CONFIG_WP_ACTIVE_HIGH
 

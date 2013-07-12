@@ -11,7 +11,7 @@
 #include "common.h"
 #include "gpio.h"
 
-#ifdef HAS_TASK_SWITCH
+#ifdef CONFIG_SWITCH
 /**
  * Interrupt handler for switch inputs.
  *
@@ -20,11 +20,6 @@
 void switch_interrupt(enum gpio_signal signal);
 #else
 #define switch_interrupt NULL
-#endif  /* HAS_TASK_SWITCH */
-
-/**
- * Return non-zero if write protect signal is asserted.
- */
-int switch_get_write_protect(void);
+#endif  /* CONFIG_SWITCH */
 
 #endif  /* __CROS_EC_SWITCH_H */

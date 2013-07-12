@@ -45,6 +45,7 @@ common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
+common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 common-$(CONFIG_SMART_BATTERY)+=smart_battery.o smart_battery_stub.o
