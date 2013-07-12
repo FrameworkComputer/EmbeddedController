@@ -339,7 +339,6 @@ static enum power_state state_init(struct power_state_context *ctx)
 static enum power_state state_idle(struct power_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
-	const struct charger_info *c_info = ctx->charger;
 
 	/* If we are forcing idle mode, then just stay in IDLE. */
 	if (state_machine_force_idle)
@@ -361,26 +360,16 @@ static enum power_state state_idle(struct power_state_context *ctx)
 
 	/* Configure init charger state and switch to charge state */
 	if (batt->desired_voltage && batt->desired_current) {
-		/* Set charger output constraints */
-		if (batt->desired_current < ctx->charger->current_min &&
-		    batt->state_of_charge < BATTERY_LEVEL_PRE_CHARGE) {
-			/* Trickle charging */
-			if (charger_set_current(c_info->current_min) ||
-			    charger_set_voltage(batt->voltage))
-				return PWR_STATE_ERROR;
-			ctx->trickle_charging_time = get_time();
-		} else {
-			/* Normal charging */
-			int want_current =
-				charger_closest_current(batt->desired_current);
+		int want_current =
+			charger_closest_current(batt->desired_current);
 
-			CPRINTF("[%T Charge start %dmV %dmA]\n",
-				batt->desired_voltage, want_current);
+		CPRINTF("[%T Charge start %dmV %dmA]\n",
+			batt->desired_voltage, want_current);
 
-			if (charger_set_voltage(batt->desired_voltage) ||
-			    charger_set_current(want_current))
-				return PWR_STATE_ERROR;
-		}
+		if (charger_set_voltage(batt->desired_voltage) ||
+		    charger_set_current(want_current))
+			return PWR_STATE_ERROR;
+
 		update_charger_time(ctx, get_time());
 
 		if (ctx->curr.batt.state_of_charge < BATTERY_LEVEL_NEAR_FULL)
@@ -402,18 +391,12 @@ static enum power_state state_charge(struct power_state_context *ctx)
 {
 	struct power_state_data *curr = &ctx->curr;
 	struct batt_params *batt = &ctx->curr.batt;
-	const struct charger_info *c_info = ctx->charger;
 	int debounce = 0;
 	int want_current;
 	timestamp_t now;
 
 	if (curr->error)
 		return PWR_STATE_ERROR;
-
-	if (batt->desired_current < c_info->current_min &&
-	    batt->desired_current > 0 &&
-	    batt->state_of_charge < BATTERY_LEVEL_PRE_CHARGE)
-		return trickle_charge(ctx);
 
 	/* Check charger reset */
 	if (curr->charging_voltage == 0 ||

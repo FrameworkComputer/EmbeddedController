@@ -10,19 +10,21 @@
 
 /* Stop charge when charging and battery level >= this percentage */
 #define BATTERY_LEVEL_FULL		100
+
 /* Tell host we're charged when battery level >= this percentage */
 #define BATTERY_LEVEL_NEAR_FULL		 97
-/* Precharge only when charging and battery level < this level */
-#define BATTERY_LEVEL_PRE_CHARGE	 25
+
 /*
  * Send battery-low host event when discharging and battery level <= this level
  */
 #define BATTERY_LEVEL_LOW		 10
+
 /*
  * Send battery-critical host event when discharging and battery level <= this
  * level.
  */
 #define BATTERY_LEVEL_CRITICAL		  5
+
 /*
  * Shut down main processor and/or hibernate EC when discharging and battery
  * level < this level.
