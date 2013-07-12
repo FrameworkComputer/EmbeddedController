@@ -32,16 +32,6 @@ struct pwm_kbd_state {
 	uint8_t pad0, pad1; /* Pad to multiple of 4 bytes. */
 };
 
-/**
- * Configure the GPIOs for the pwm module.
- */
-static void configure_kblight_gpios(void)
-{
-	/* HEY: This for Link only */
-	/* PK6 alternate function 1 = channel 1 PWM */
-	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
-}
-
 void pwm_enable_keyboard_backlight(int enable)
 {
 	if (enable)

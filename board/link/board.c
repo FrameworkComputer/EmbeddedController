@@ -19,6 +19,7 @@
 #include "lm4_adc.h"
 #include "peci.h"
 #include "power_button.h"
+#include "pwm.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -228,4 +229,13 @@ void board_process_wake_events(uint32_t active_wake_events)
 		gpio_set_level(GPIO_PCH_WAKE_L, 0);
 	else
 		gpio_set_level(GPIO_PCH_WAKE_L, 1);
+}
+
+/**
+ * Configure the GPIOs for the pwm module.
+ */
+void configure_kblight_gpios(void)
+{
+	/* PK6 alternate function 1 = channel 1 PWM */
+	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
 }

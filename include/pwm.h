@@ -48,6 +48,11 @@ void pwm_set_fan_target_rpm(int rpm);
 void pwm_set_fan_duty(int percent);
 
 /**
+ * Set up the keyboard gpios.
+ */
+void configure_kblight_gpios(void);
+
+/**
  * Enable/disable the keyboard backlight.
  */
 void pwm_enable_keyboard_backlight(int enable);
