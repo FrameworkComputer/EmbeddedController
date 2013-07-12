@@ -243,7 +243,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_PP3300_DX_EN, 1);
 
 		/* Enable wireless */
-		wireless_enable(1);
+		wireless_enable(EC_WIRELESS_SWITCH_ALL);
 
 		/* Wait for non-core power rails good */
 		if (x86_wait_signals(IN_PGOOD_S0)) {

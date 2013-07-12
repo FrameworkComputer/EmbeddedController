@@ -239,7 +239,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_ENABLE_VS, 1);
 
 		/* Enable wireless */
-		wireless_enable(1);
+		wireless_enable(EC_WIRELESS_SWITCH_ALL);
 
 		/*
 		 * Make sure touchscreen is out if reset (even if the lid is
