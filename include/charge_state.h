@@ -32,11 +32,14 @@
 #define F_BATTERY_MODE        (1 << 8) /* Battery mode */
 #define F_BATTERY_CAPACITY    (1 << 9) /* Battery capacity */
 #define F_BATTERY_STATE_OF_CHARGE (1 << 10) /* State of charge, percentage */
+#define F_BATTERY_UNRESPONSIVE    (1 << 11) /* Battery not responding */
+#define F_BATTERY_NOT_CONNECTED   (1 << 12) /* Battery not connected */
 
 #define F_BATTERY_MASK (F_BATTERY_VOLTAGE | F_BATTERY_CURRENT |  \
 			F_DESIRED_VOLTAGE | F_DESIRED_CURRENT |  \
 			F_BATTERY_TEMPERATURE | F_BATTERY_MODE | \
-			F_BATTERY_CAPACITY | F_BATTERY_STATE_OF_CHARGE)
+			F_BATTERY_CAPACITY | F_BATTERY_STATE_OF_CHARGE | \
+			F_BATTERY_UNRESPONSIVE | F_BATTERY_NOT_CONNECTED)
 #define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | \
 			F_CHARGER_INIT)
 
@@ -118,7 +121,7 @@ struct power_state_context {
 	timestamp_t trickle_charging_time;
 	timestamp_t voltage_debounce_time;
 	timestamp_t shutdown_warning_time;
-	int battery_present;
+	int battery_responsive;
 };
 
 /* Trickle charging state handler.

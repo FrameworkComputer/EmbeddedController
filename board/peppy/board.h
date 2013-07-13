@@ -17,6 +17,7 @@
 /* Optional features */
 #define CONFIG_SMART_BATTERY
 #define CONFIG_BACKLIGHT_X86
+#define CONFIG_BATTERY_CHECK_CONNECTED
 #define CONFIG_BATTERY_PEPPY
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHARGER
@@ -98,6 +99,7 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
 	GPIO_CPU_PGOOD,            /* Power good to the CPU */
+	GPIO_BAT_DETECT_L,         /* Battery detect. Repurposed BAT_TEMP */
 
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
