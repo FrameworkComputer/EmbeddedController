@@ -5,7 +5,6 @@
 
 /* Console commands to trigger flash host commands */
 
-#include "board.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "flash.h"

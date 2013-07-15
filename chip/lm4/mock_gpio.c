@@ -5,7 +5,6 @@
 
 /* Mock GPIO module for Chrome EC */
 
-#include "board.h"
 #include "console.h"
 #include "gpio.h"
 #include "util.h"

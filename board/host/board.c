@@ -4,7 +4,6 @@
  */
 /* Emulator board-specific configuration */
 
-#include "board.h"
 #include "gpio.h"
 #include "temp_sensor.h"
 

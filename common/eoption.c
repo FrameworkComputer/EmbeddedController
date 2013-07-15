@@ -5,7 +5,6 @@
 
 /* Persistent EC options stored in EEPROM */
 
-#include "board.h"
 #include "console.h"
 #include "eeprom.h"
 #include "eoption.h"

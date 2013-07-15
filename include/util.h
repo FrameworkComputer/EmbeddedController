@@ -10,7 +10,6 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
-#include "config.h"
 #include "panic.h"
 
 /**

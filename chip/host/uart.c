@@ -10,8 +10,7 @@
 #include <termio.h>
 #include <unistd.h>
 
-#include "board.h"
-#include "config.h"
+#include "common.h"
 #include "queue.h"
 #include "task.h"
 #include "uart.h"

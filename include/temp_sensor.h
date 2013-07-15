@@ -9,7 +9,6 @@
 #define __CROS_EC_TEMP_SENSOR_H
 
 #include "common.h"
-#include "board.h"
 
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 enum temp_sensor_id;

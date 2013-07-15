@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_SMART_BATTERY_H
 #define __CROS_EC_SMART_BATTERY_H
 
-#include "board.h"
 #include "common.h"
 #include "i2c.h"
 #include "smart_battery_stub.h"

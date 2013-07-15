@@ -5,7 +5,6 @@
 
 /* Peripheral stress tests */
 
-#include "board.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "i2c.h"

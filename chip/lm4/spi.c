@@ -5,7 +5,6 @@
 
 /* SPI module for Chrome EC */
 
-#include "board.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"

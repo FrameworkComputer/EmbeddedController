@@ -6,7 +6,6 @@
  */
 
 #include "battery.h"
-#include "board.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "extpower.h"

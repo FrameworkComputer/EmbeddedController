@@ -5,7 +5,6 @@
 
 /* G781 temperature sensor module for Chrome EC */
 
-#include "board.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"

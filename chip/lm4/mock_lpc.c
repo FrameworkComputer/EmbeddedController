@@ -5,7 +5,6 @@
 
 /* Mock LPC module for Chrome EC */
 
-#include "board.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "lpc.h"

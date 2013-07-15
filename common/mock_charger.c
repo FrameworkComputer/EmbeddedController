@@ -5,7 +5,6 @@
  * Mock battery charger driver.
  */
 
-#include "board.h"
 #include "charger.h"
 #include "console.h"
 #include "common.h"

@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "config.h"
+#include "common.h"
 #include "flash.h"
 #include "persistence.h"
 #include "util.h"

@@ -5,7 +5,6 @@
  * TI TSU6721 USB port switch driver.
  */
 
-#include "board.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"

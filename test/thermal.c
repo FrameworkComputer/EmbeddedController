@@ -5,7 +5,6 @@
  * Test thermal engine.
  */
 
-#include "board.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"

@@ -5,7 +5,6 @@
  * TI LP5562 driver.
  */
 
-#include "board.h"
 #include "console.h"
 #include "i2c.h"
 #include "lp5562.h"
