@@ -262,11 +262,12 @@ int cmd_test(int argc, char *argv[])
 		.buf = "0123456789abcdef0123456789ABCDEF"
 	};
 	struct ec_response_test_protocol r;
-	int rv;
+	int rv, version = 0;
 	char *e;
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: %s result length\n", argv[0]);
+		fprintf(stderr, "Usage: %s result length [version]\n",
+			argv[0]);
 		return -1;
 	}
 
@@ -281,7 +282,16 @@ int cmd_test(int argc, char *argv[])
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_TEST_PROTOCOL, 0, &p, sizeof(p), &r, sizeof(r));
+	if (argc > 3) {
+		version = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "invalid param (version)\n");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_TEST_PROTOCOL, version,
+			&p, sizeof(p), &r, sizeof(r));
 	printf("rv = %d\n", rv);
 
 	return rv;
