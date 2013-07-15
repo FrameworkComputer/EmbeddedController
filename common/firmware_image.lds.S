@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "board.h"
 #include "config.h"
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")

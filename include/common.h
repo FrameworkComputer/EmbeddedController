@@ -22,13 +22,7 @@
 #define __packed __attribute__((packed))
 #endif
 
-/*
- * Include board and core configs, since those hold the CONFIG_ constants for a
- * given configuration.  This guarantees they get included everywhere, and
- * fixes a fairly common bug where we gate out code with #ifndef
- * CONFIG_SOMETHING and but forget to include both of these.
- */
-#include "board.h"
+/* Include top-level configuration file */
 #include "config.h"
 
 /* List of common error codes that can be returned */

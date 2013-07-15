@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_CHIP_CONFIG_H
-#define __CROS_EC_CHIP_CONFIG_H
+#ifndef __CROS_EC_CONFIG_CHIP_H
+#define __CROS_EC_CONFIG_CHIP_H
 
 /* use variant specific configuration for flash / UART / IRQ */
 #if defined(CHIP_VARIANT_stm32l15x)
@@ -53,4 +53,4 @@
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */
 
-#endif /* __CROS_EC_CHIP_CONFIG_H */
+#endif /* __CROS_EC_CONFIG_CHIP_H */

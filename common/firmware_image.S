@@ -5,7 +5,6 @@
  * Build the full image with up to 3 copies (Read only, A, B) of the program
  */
 
-#include "board.h"
 #include "config.h"
 
 #define FW_FILE(builddir,proj,sect) builddir##/##proj##.##sect##.flat

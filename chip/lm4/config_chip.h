@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_CHIP_CONFIG_H
-#define __CROS_EC_CHIP_CONFIG_H
+#ifndef __CROS_EC_CONFIG_CHIP_H
+#define __CROS_EC_CONFIG_CHIP_H
 
 /* 16.000 Mhz internal oscillator frequency (PIOSC) */
 #define INTERNAL_CLOCK 16000000
@@ -109,4 +109,4 @@
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */
 
-#endif  /* __CROS_EC_CHIP_CONFIG_H */
+#endif  /* __CROS_EC_CONFIG_CHIP_H */

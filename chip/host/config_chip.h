@@ -5,8 +5,8 @@
 
 /* Chip config header file */
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#ifndef __CROS_EC_CONFIG_CHIP_H
+#define __CROS_EC_CONFIG_CHIP_H
 
 /* Memory mapping */
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
@@ -46,5 +46,5 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL (250 * MSEC)
 
-#endif /* __CONFIG_H */
+#endif /* __CROS_EC_CONFIG_CHIP_H */
 
