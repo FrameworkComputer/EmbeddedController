@@ -204,12 +204,6 @@ enum temp_sensor_id {
  * into the boot loader and we can recover bricked EC. */
 #define BOOTCFG_VALUE 0x7fff88fe
 
-/* Known board versions for system_get_board_version(). */
-enum board_version {
-	BOARD_VERSION_PROTO1 = 0,
-	BOARD_VERSION_EVT = 1,
-};
-
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN

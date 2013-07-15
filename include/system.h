@@ -173,7 +173,8 @@ const char *system_get_version(enum system_image_copy_t copy);
 
 /**
  * Return the board version number.  The meaning of this number is
- * board-dependent; see enum board_version in board.h for known versions.
+ * board-dependent; boards where the code actually cares about this should
+ * declare enum board_version in board.h.
  */
 int system_get_board_version(void);
 

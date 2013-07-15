@@ -161,7 +161,6 @@ enum x86_signal {
 #define CONFIG_BQ24707A_R_AC  10 /* 10 mOhm input current sense resistor */
 #define CONFIG_CHARGER_INPUT_CURRENT 3078 /* mA, 90% of a 65W adapter at 19V */
 
-
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
@@ -188,12 +187,6 @@ enum temp_sensor_id {
  * pullup. If this signal is pulled to ground when the EC boots, the EC will get
  * into the boot loader and we can recover bricked EC. */
 #define BOOTCFG_VALUE 0x7fff88fe
-
-/* Known board versions for system_get_board_version(). */
-enum board_version {
-	BOARD_VERSION_PROTO1 = 0,
-	BOARD_VERSION_EVT = 1,
-};
 
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
