@@ -26,6 +26,7 @@ test-list-$(BOARD_slippy)=
 test-list-$(BOARD_falco)=
 test-list-$(BOARD_peppy)=
 test-list-$(BOARD_wolf)=
+test-list-$(BOARD_bolt)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks

@@ -35,7 +35,19 @@ proc flash_slippy { } {
 	flash_lm4 ../../../build/slippy/ec.bin 0
 }
 
-# Slippy/falco/peppy/wolf have 128KB images
+# Bolt/slippy/falco/peppy/wolf have 128KB images
+proc flash_bolt { } {
+	flash_lm4 ../../../build/bolt/ec.bin 0
+}
+
+proc flash_bolt_ro { } {
+	flash_lm4 ../../../build/bolt/ec.RO.flat 0
+}
+
+proc flash_bolt_rw { } {
+	flash_lm4 ../../../build/bolt/ec.RW.bin 131072
+}
+
 proc flash_slippy_rw { } {
 	flash_lm4 ../../../build/slippy/ec.RW.bin 131072
 }
