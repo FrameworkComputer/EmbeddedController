@@ -35,8 +35,10 @@ else
 endif
 _tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
-_flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dN -Ichip/$(CHIP) -Iboard/$(BOARD) \
-	include/config.h | grep -o "CONFIG_.*")
+_flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -Iboard/$(BOARD) \
+	include/config.h | grep -o "\#define CONFIG_[A-Za-z0-9_]*" | \
+	cut -c9- | sort)
+
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 $(eval BOARD_$(BOARD)=y)
 
