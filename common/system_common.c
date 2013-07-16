@@ -16,6 +16,7 @@
 #include "panic.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 #include "version.h"
@@ -301,9 +302,15 @@ static void jump_to_image(uintptr_t init_addr)
 	/*
 	 * Jumping to any image asserts the signal to the Silego chip that that
 	 * EC is not in read-only firmware.  (This is not technically true if
-	 * jumping from RO -> RO, but that's not a meaningful use case...)
+	 * jumping from RO -> RO, but that's not a meaningful use case...).
+	 *
+	 * Pulse the signal long enough to set the latch in the Silego, then
+	 * drop it again so we don't leak power through the pulldown in the
+	 * Silego.
 	 */
 	gpio_set_level(GPIO_ENTERING_RW, 1);
+	usleep(MSEC);
+	gpio_set_level(GPIO_ENTERING_RW, 0);
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())
