@@ -138,8 +138,6 @@ void  __attribute__((section(".iram.text")))
 {
 	int i;
 
-	interrupt_disable();
-
 	/* Wait for ready  */
 	for (i = 0; (STM32_FLASH_SR & 1) && (i < flash_timeout_loop) ;
 	     i++)
@@ -159,8 +157,6 @@ void  __attribute__((section(".iram.text")))
 
 	/* Disable PROG and FPRG bits */
 	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_FPRG);
-
-	interrupt_enable();
 }
 
 int flash_physical_write(int offset, int size, const char *data)
@@ -215,7 +211,9 @@ int flash_physical_write(int offset, int size, const char *data)
 			size -= sizeof(uint32_t);
 		} else {
 			/* Half page write */
+			interrupt_disable();
 			iram_flash_write(address, data32);
+			interrupt_enable();
 			address += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
 			data32 += CONFIG_FLASH_WRITE_SIZE / sizeof(uint32_t);
 			size -= CONFIG_FLASH_WRITE_SIZE;
