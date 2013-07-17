@@ -53,6 +53,15 @@ int charger_set_mode(int mode);
  */
 int charger_closest_current(int current);
 
+/**
+ * Return the closest match the charger can supply to the requested voltage.
+ *
+ * @param voltage	Requested voltage in mV.
+ *
+ * @return Voltage the charger will actually supply if <voltage> is requested.
+ */
+int charger_closest_voltage(int voltage);
+
 /* Get/set charge current limit in mA */
 int charger_get_current(int *current);
 int charger_set_current(int current);

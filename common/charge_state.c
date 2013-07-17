@@ -404,6 +404,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	struct batt_params *batt = &ctx->curr.batt;
 	int debounce = 0;
 	int want_current;
+	int want_voltage;
 	timestamp_t now;
 
 	if (curr->error)
@@ -425,9 +426,16 @@ static enum power_state state_charge(struct power_state_context *ctx)
 
 	now = get_time();
 
-	if (batt->desired_voltage != curr->charging_voltage) {
-		CPRINTF("[%T Charge voltage %dmV]\n", batt->desired_voltage);
-		if (charger_set_voltage(batt->desired_voltage))
+	/*
+	 * Adjust desired voltage to one the charger can actually supply
+	 * or else we'll keep asking for a voltage the charger can't actually
+	 * supply.
+	 */
+	want_voltage = charger_closest_voltage(batt->desired_voltage);
+
+	if (want_voltage != curr->charging_voltage) {
+		CPRINTF("[%T Charge voltage %dmV]\n", want_voltage);
+		if (charger_set_voltage(want_voltage))
 			return PWR_STATE_ERROR;
 		update_charger_time(ctx, now);
 	}

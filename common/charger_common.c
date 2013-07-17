@@ -17,6 +17,14 @@
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+int charger_closest_voltage(int voltage)
+{
+	const struct charger_info *info;
+
+	info = charger_get_info();
+	return voltage - (voltage % info->voltage_step);
+}
+
 static int print_info(void)
 {
 	int rv;
