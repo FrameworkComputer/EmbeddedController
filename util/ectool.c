@@ -485,16 +485,32 @@ int cmd_reboot_ec(int argc, char *argv[])
 
 int cmd_flash_info(int argc, char *argv[])
 {
-	struct ec_response_flash_info r;
+	struct ec_response_flash_info_1 r;
+	int cmdver = 1;
+	int rsize = sizeof(r);
 	int rv;
 
-	rv = ec_command(EC_CMD_FLASH_INFO, 0, NULL, 0, &r, sizeof(r));
+	memset(&r, 0, sizeof(r));
+
+	if (!ec_cmd_version_supported(EC_CMD_FLASH_INFO, cmdver)) {
+		/* Fall back to version 0 command */
+		cmdver = 0;
+		rsize = sizeof(struct ec_response_flash_info);
+	}
+
+	rv = ec_command(EC_CMD_FLASH_INFO, cmdver, NULL, 0, &r, rsize);
 	if (rv < 0)
 		return rv;
 
 	printf("FlashSize %d\nWriteSize %d\nEraseSize %d\nProtectSize %d\n",
 	       r.flash_size, r.write_block_size, r.erase_block_size,
 	       r.protect_block_size);
+
+	if (cmdver >= 1) {
+		/* Fields added in ver.1 available */
+		printf("WriteIdealSize %d\nFlags 0x%x\n",
+		       r.write_ideal_size, r.flags);
+	}
 
 	return 0;
 }

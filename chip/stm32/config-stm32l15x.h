@@ -9,7 +9,19 @@
 #define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 #define CONFIG_FLASH_ERASE_SIZE 0x0100  /* erase bank size */
+
+/*
+ * TODO(rspangler): Technically we can write in word-mode (4 bytes at a time),
+ * but that's really slow, and older host interfaces which can't ask about the
+ * ideal size would then end up writing in that mode instead of the faster page
+ * mode.  So lie about the write size for now.  Once all software (flashrom,
+ * u-boot, ectool) which cares has been updated to know about ver.1 of
+ * EC_CMD_GET_FLASH_INFO, we can remove this workaround.
+ */
 #define CONFIG_FLASH_WRITE_SIZE 0x0080
+
+/* Ideal write size in page-mode */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0080
 
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         0x00004000

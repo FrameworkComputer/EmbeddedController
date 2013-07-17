@@ -340,8 +340,10 @@ static int command_flash_info(int argc, char **argv)
 
 	ccprintf("Physical:%4d KB\n", CONFIG_FLASH_PHYSICAL_SIZE / 1024);
 	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
-	ccprintf("Write:   %4d B\n", CONFIG_FLASH_WRITE_SIZE);
-	ccprintf("Erase:   %4d B\n", CONFIG_FLASH_ERASE_SIZE);
+	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
+		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
+	ccprintf("Erase:   %4d B (to %d-bits)\n", CONFIG_FLASH_ERASE_SIZE,
+		 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 
 	i = flash_get_protect();
@@ -472,18 +474,50 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 
 static int flash_command_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_flash_info *r = args->response;
+	struct ec_response_flash_info_1 *r = args->response;
 
 	r->flash_size = CONFIG_FLASH_SIZE;
 	r->write_block_size = CONFIG_FLASH_WRITE_SIZE;
 	r->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
 	r->protect_block_size = CONFIG_FLASH_BANK_SIZE;
-	args->response_size = sizeof(*r);
+
+	if (args->version == 0) {
+		/* Only version 0 fields returned */
+		args->response_size = sizeof(struct ec_response_flash_info);
+	} else {
+		/* Fill in full version 1 struct */
+
+		/*
+		 * Compute the ideal amount of data for the host to send us,
+		 * based on the maximum response size and the ideal write size.
+		 */
+		r->write_ideal_size =
+			(args->response_max -
+			 sizeof(struct ec_params_flash_write)) &
+			~(CONFIG_FLASH_WRITE_IDEAL_SIZE - 1);
+		/*
+		 * If we can't get at least one ideal block, then just want
+		 * as high a multiple of the minimum write size as possible.
+		 */
+		if (!r->write_ideal_size)
+			r->write_ideal_size =
+				(args->response_max -
+				 sizeof(struct ec_params_flash_write)) &
+				~(CONFIG_FLASH_WRITE_SIZE - 1);
+
+		r->flags = 0;
+
+#if (CONFIG_FLASH_ERASED_VALUE32 == 0)
+		r->flags |= EC_FLASH_INFO_ERASE_TO_0;
+#endif
+
+		args->response_size = sizeof(*r);
+	}
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 		     flash_command_get_info,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static int flash_command_read(struct host_cmd_handler_args *args)
 {

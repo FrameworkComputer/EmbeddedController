@@ -10,6 +10,10 @@
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 #define CONFIG_FLASH_ERASE_SIZE 0x0400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE 0x0002  /* minimum write size */
+
+/* No page mode on STM32F, so no benefit to larger write sizes */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0002
+
 #define CONFIG_RAM_BASE         0x20000000
 #define CONFIG_RAM_SIZE         (10 * 1024)
 
