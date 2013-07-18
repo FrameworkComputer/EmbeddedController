@@ -120,10 +120,7 @@ void battery_vendor_params(struct batt_params *batt)
 
 	limit_value(desired_current, current_limit[temp_range][volt_range]);
 
-#ifndef CONFIG_SLOW_PRECHARGE
 	/* If battery wants current, give it at least the precharge current */
 	if (*desired_current > 0 && *desired_current < info.precharge_current)
 		*desired_current = info.precharge_current;
-#endif /* CONFIG_SLOW_PRECHARGE */
-
 }

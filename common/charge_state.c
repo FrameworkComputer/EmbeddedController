@@ -280,9 +280,9 @@ static int state_common(struct power_state_context *ctx)
 	/* Apply battery pack vendor charging method */
 	battery_vendor_params(batt);
 
-#ifdef CONFIG_CHARGING_CURRENT_LIMIT
-	if (batt->desired_current > CONFIG_CHARGING_CURRENT_LIMIT)
-		batt->desired_current = CONFIG_CHARGING_CURRENT_LIMIT;
+#ifdef CONFIG_CHARGER_CURRENT_LIMIT
+	if (batt->desired_current > CONFIG_CHARGER_CURRENT_LIMIT)
+		batt->desired_current = CONFIG_CHARGER_CURRENT_LIMIT;
 #endif
 	if (batt->desired_current > user_current_limit)
 		batt->desired_current = user_current_limit;

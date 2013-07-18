@@ -163,15 +163,8 @@ enum x86_signal {
 };
 
 /* Charger module */
-/* Set charger input current limit
- * Note - this value should depend on external power adapter,
- *        designed charging voltage, and the maximum power of
- *        a running system.
- *        Following value 4032 mA is the maximum input limit
- *        on Link's design.
- */
-#define CONFIG_BQ24707A_R_SNS 10 /* 10 mOhm charge sense resistor */
-#define CONFIG_BQ24707A_R_AC  10 /* 10 mOhm input current sense resistor */
+#define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
 #define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
 
 

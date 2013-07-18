@@ -283,4 +283,4 @@ DECLARE_CONSOLE_COMMAND(comxtest, command_comxtest,
 			"Write test data to COMx uart",
 			NULL);
 
-#endif /* CONFIG_COMX_TEST */
+#endif /* CONFIG_CMD_COMX_TEST */

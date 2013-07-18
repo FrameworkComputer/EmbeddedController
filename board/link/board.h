@@ -65,21 +65,10 @@ enum adc_channel
 };
 
 /* Charger module */
-/* Set charger input current limit
- * Note - this value should depend on external power adapter,
- *        designed charging voltage, and the maximum power of
- *        a running system.
- *        Following value 4032 mA is the maximum input limit
- *        on Link's design.
- */
-#define CONFIG_CHARGER_INPUT_CURRENT 4032
-#define CONFIG_BQ24725_R_SNS 10 /* 10 mOhm charge sense resistor */
-#define CONFIG_BQ24725_R_AC  20 /* 20 mOhm input current sense resistor */
-
-/* Board specific charging current limit
- * The current constrant of all components on the charging path.
- */
-#define CONFIG_CHARGING_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
+#define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* Input sensor resistor, mOhm */
+#define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, based on Link HW design */
+#define CONFIG_CHARGER_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
