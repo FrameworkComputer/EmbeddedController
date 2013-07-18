@@ -115,8 +115,6 @@ DECLARE_HOST_COMMAND(EC_CMD_LED_CONTROL,
 
 static void battery_led_update(void)
 {
-	int current;
-	int desired_current;
 	int rv;
 	int state_of_charge;
 	enum led_state_t state = LED_STATE_OFF;
@@ -155,30 +153,19 @@ static void battery_led_update(void)
 	case ST_IDLE:
 		state = LED_STATE_SOLID_GREEN;
 		break;
-	case ST_DISCHARGING:
-		/* Discharging with AC, must be battery assist */
-		state = LED_STATE_SOLID_YELLOW;
-		break;
 	case ST_IDLE0:
 	case ST_BAD_COND:
 	case ST_PRE_CHARGING:
 		state = LED_STATE_SOLID_YELLOW;
 		break;
+	case ST_DISCHARGING:
 	case ST_CHARGING:
-		if (battery_current(&current) ||
-		    battery_desired_current(&desired_current) ||
-		    battery_state_of_charge(&state_of_charge)) {
+		if (battery_state_of_charge(&state_of_charge)) {
 			/* Cannot talk to the battery. Set LED to red. */
 			state = LED_STATE_SOLID_RED;
 			break;
 		}
 
-		if (current < 0 && desired_current > 0) { /* Battery assist */
-			state = LED_STATE_SOLID_YELLOW;
-			break;
-		}
-
-		/* If battery doesn't want any current, it's considered full. */
 		if (state_of_charge < GREEN_LED_THRESHOLD)
 			state = LED_STATE_SOLID_YELLOW;
 		else
