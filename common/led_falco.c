@@ -27,12 +27,12 @@ static int bat_led_set_color(enum led_color color)
 		gpio_set_level(GPIO_BAT_LED1, 1);
 		break;
 	case LED_WHITE:
-		gpio_set_level(GPIO_BAT_LED0, 0);
-		gpio_set_level(GPIO_BAT_LED1, 1);
-		break;
-	case LED_AMBER:
 		gpio_set_level(GPIO_BAT_LED0, 1);
 		gpio_set_level(GPIO_BAT_LED1, 0);
+		break;
+	case LED_AMBER:
+		gpio_set_level(GPIO_BAT_LED0, 0);
+		gpio_set_level(GPIO_BAT_LED1, 1);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
