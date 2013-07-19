@@ -8,14 +8,8 @@
 #ifndef __CROS_EC_VERSION_H
 #define __CROS_EC_VERSION_H
 
-#define STRINGIFY0(name)  #name
-#define STRINGIFY(name)  STRINGIFY0(name)
-
 #define CROS_EC_VERSION_COOKIE1 0xce112233
 #define CROS_EC_VERSION_COOKIE2 0xce445566
-
-#define CROS_EC_VERSION STRINGIFY(BOARD) "_" VERSION
-#define CROS_EC_BUILD_INFO CROS_EC_VERSION " " DATE " " BUILDER
 
 struct version_struct {
 	uint32_t cookie1;
