@@ -28,6 +28,9 @@ by Google. See below diagram for architecture.
 Build Options
 =============
 
+NOTE: see include/config.h for the current list.  The information
+below will be moved there over time.
+
 - CONFIG_WATCHDOG_HELP
 
 	Try to detect a watchdog that is about to fire, and print a trace.
@@ -61,13 +64,6 @@ Build Options
 	the AP indicating this state. The GPIO will be driven low when
 	AC power is not connected, and high when it is connected. This
 	uses GPIO_AC_STATUS for this purpose.
-
-- CONFIG_PMU_FORCE_FET
-
-	Force switching on and off the FETs on the PMU controlling various
-	power rails during AP startup and shutdown sequences.
-	This is mainly useful for bringup when we don't have the corresponding
-	sequences in the AP code.
 
 - CONFIG_KEYBOARD_TEST
 

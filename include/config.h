@@ -63,7 +63,6 @@
 
 /*****************************************************************************/
 
-#undef CONFIG_BOARD_PMU_INIT
 #undef CONFIG_BOARD_POST_GPIO_INIT
 #undef CONFIG_BOARD_PRE_INIT
 #undef CONFIG_BOARD_VERSION
@@ -108,6 +107,7 @@
 #undef CONFIG_CHIPSET_IVYBRIDGE
 
 #undef CONFIG_CMD_COMXTEST
+#undef CONFIG_CMD_DISCHARGE_ON_AC /* TODO(rspangler): poorly named */
 #undef CONFIG_CMD_ECTEMP
 #undef CONFIG_CMD_PLL
 #undef CONFIG_CMD_PMU
@@ -193,10 +193,30 @@
 #undef CONFIG_PANIC_HELP
 #undef CONFIG_PECI
 
-#undef CONFIG_PMU_BOARD_INIT
+/*****************************************************************************/
+/* PMU config */
+
+/*
+ * Force switching on and off the FETs on the PMU controlling various power
+ * rails during AP startup and shutdown sequences.  This is mainly useful for
+ * bringup when we don't have the corresponding sequences in the AP code.
+ *
+ * Currently supported only on spring platform.
+ */
 #undef CONFIG_PMU_FORCE_FET
+
+/*
+ * Enable hard-resetting the PMU from the EC.  The implementation is rather
+ * hacky; it simply shorts out the 3.3V rail to force the PMIC to panic.  We
+ * need this unfortunate hack because it's the only way to reset the I2C engine
+ * inside the PMU.
+ */
 #undef CONFIG_PMU_HARD_RESET
+
+/* Compile support for TPS65090 PMU */
 #undef CONFIG_PMU_TPS65090
+
+/*****************************************************************************/
 
 #undef CONFIG_POWER_BUTTON
 #undef CONFIG_POWER_BUTTON_X86
@@ -207,7 +227,6 @@
 #undef CONFIG_RAM_BASE
 #undef CONFIG_RAM_SIZE
 #undef CONFIG_SAVE_VBOOT_HASH
-#undef CONFIG_SOMETHING
 #undef CONFIG_SPI
 #undef CONFIG_STACK_SIZE
 #undef CONFIG_SWITCH

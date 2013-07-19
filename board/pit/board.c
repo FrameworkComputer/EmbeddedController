@@ -100,7 +100,6 @@ void board_config_post_gpio_init(void)
 	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
 }
 
-#ifdef CONFIG_PMU_BOARD_INIT
 int pmu_board_init(void)
 {
 	int ver, failure = 0;
@@ -162,4 +161,3 @@ int pmu_board_init(void)
 
 	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
-#endif /* CONFIG_BOARD_PMU_INIT */

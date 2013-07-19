@@ -40,7 +40,6 @@
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE	/* Use STOP mode when we have nothing to do */
 #define CONFIG_LED_DRIVER_LP5562
-#define CONFIG_PMU_BOARD_INIT
 #define CONFIG_PMU_FORCE_FET	/* Always enable 3G modem power rail */
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090

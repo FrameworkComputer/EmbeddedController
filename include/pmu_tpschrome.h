@@ -286,15 +286,14 @@ enum charging_state charge_get_state(void);
  */
 int charge_keep_power_off(void);
 
-#ifdef CONFIG_PMU_BOARD_INIT
 /**
  * Initialize PMU registers using board settings.
  *
- * Boards may supply this function if needed.  This will be called from
- * pmu_init().
+ * Boards must supply this function.  This will be called from pmu_init().
+ *
+ * @return EC_SUCCESS, or non-zero if error.
  */
 int pmu_board_init(void);
-#endif
 
 #endif /* __CROS_EC_TPSCHROME_H */
 

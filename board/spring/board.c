@@ -203,7 +203,6 @@ static void board_shutdown_hook(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
 
-#ifdef CONFIG_PMU_BOARD_INIT
 int pmu_board_init(void)
 {
 	int failure = 0;
@@ -239,4 +238,3 @@ int pmu_board_init(void)
 
 	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
-#endif /* CONFIG_BOARD_PMU_INIT */

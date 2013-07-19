@@ -163,3 +163,32 @@ void keyboard_suppress_noise(void)
 	gpio_set_level(GPIO_CODEC_INT, 0);
 	gpio_set_level(GPIO_CODEC_INT, 1);
 }
+
+/**
+ * Board-specific PMU init.
+ */
+
+#define CG_CTRL0 0x04
+#define CG_CTRL3 0x07
+
+int pmu_board_init(void)
+{
+	int failure = 0;
+
+	/* Init configuration
+	 *   Fast charge timer    : 2 hours
+	 *   Charger              : disable
+	 *   External pin control : enable
+	 *
+	 * TODO: move settings to battery pack specific init
+	 */
+	if (!failure)
+		failure = pmu_write(CG_CTRL0, 2);
+	/* Limit full charge current to 50%
+	 * TODO: remove this temporary hack.
+	 */
+	if (!failure)
+		failure = pmu_write(CG_CTRL3, 0xbb);
+
+	return failure ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+}
