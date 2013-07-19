@@ -25,6 +25,7 @@
 /* Optional features */
 #define CONFIG_ADC
 #define CONFIG_BATTERY_SPRING
+#define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CHARGER_TPS65090
 #ifdef HAS_TASK_CHIPSET
@@ -43,7 +44,6 @@
 #define CONFIG_PMU_FORCE_FET	/* Always enable 3G modem power rail */
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
-#define CONFIG_SMART_BATTERY
 #define CONFIG_USB_SWITCH_TSU6721
 
 #ifndef __ASSEMBLER__

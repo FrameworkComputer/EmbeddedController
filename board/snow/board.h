@@ -23,6 +23,7 @@
 
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
+#define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_POST_GPIO_INIT
 #define CONFIG_CHARGER_TPS65090
@@ -40,7 +41,6 @@
 #define CONFIG_PMU_BOARD_INIT
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
-#define CONFIG_SMART_BATTERY
 
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE

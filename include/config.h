@@ -36,12 +36,32 @@
 #undef CONFIG_ASSERT_HELP
 #undef CONFIG_BACKLIGHT_X86
 
+/*****************************************************************************/
+/* Battery config */
+
+/* Compile battery-specific code for these batteries (pick at most one) */
 #undef CONFIG_BATTERY_BQ20Z453
 #undef CONFIG_BATTERY_FALCO
 #undef CONFIG_BATTERY_LINK
 #undef CONFIG_BATTERY_PEPPY
 #undef CONFIG_BATTERY_SLIPPY
 #undef CONFIG_BATTERY_SPRING
+
+/*
+ * Battery can check if it's connected.  If defined, charger will check for
+ * battery presence before attempting to communicate with it.
+ */
+#undef CONFIG_BATTERY_CHECK_CONNECTED
+
+/*
+ * Compile smart battery support
+ *
+ * For batteries which support this specification:
+ * http://sbs-forum.org/specs/sbdat110.pdf)
+ */
+#undef CONFIG_BATTERY_SMART
+
+/*****************************************************************************/
 
 #undef CONFIG_BOARD_PMU_INIT
 #undef CONFIG_BOARD_POST_GPIO_INIT
@@ -187,7 +207,6 @@
 #undef CONFIG_RAM_BASE
 #undef CONFIG_RAM_SIZE
 #undef CONFIG_SAVE_VBOOT_HASH
-#undef CONFIG_SMART_BATTERY
 #undef CONFIG_SOMETHING
 #undef CONFIG_SPI
 #undef CONFIG_STACK_SIZE

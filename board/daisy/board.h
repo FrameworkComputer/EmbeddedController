@@ -19,6 +19,7 @@
 #define CONFIG_ASSERT_HELP
 
 /* Optional features */
+#define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_POST_GPIO_INIT
 #define CONFIG_CHARGER_TPS65090
 #ifdef HAS_TASK_CHIPSET
@@ -31,7 +32,6 @@
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
 #define CONFIG_LID_SWITCH
 #define CONFIG_PMU_TPS65090
-#define CONFIG_SMART_BATTERY
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
