@@ -23,8 +23,8 @@
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
+#include "temp_sensor_g781.h"
 #include "timer.h"
-#include "tmp006.h"
 #include "util.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
@@ -162,11 +162,12 @@ const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-/* HEY: Need correct I2C addresses and read function for external sensor */
-	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
 #ifdef CONFIG_PECI
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
 #endif
+	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
+	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g781_get_val, 0, 4},
+	{"G781External", TEMP_SENSOR_TYPE_BOARD, g781_get_val, 1, 4},
 };
 
 struct keyboard_scan_config keyscan_config = {
@@ -206,4 +207,12 @@ void board_process_wake_events(uint32_t active_wake_events)
 		gpio_set_level(GPIO_PCH_WAKE_L, 0);
 	else
 		gpio_set_level(GPIO_PCH_WAKE_L, 1);
+}
+
+/**
+ * Board-specific g781 power state.
+ */
+int board_g781_has_power(void)
+{
+	return gpio_get_level(GPIO_PP3300_DX_EN);
 }

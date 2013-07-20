@@ -37,6 +37,7 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_USB_PORT_POWER_DUMB
 #define CONFIG_WIRELESS
 #define CONFIG_WP_ACTIVE_HIGH
@@ -176,12 +177,6 @@ enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
 
-	/* HEY: Slippy MB has only one discrete thermal sensor, but it has two
-	 * values (one internal and one external). Both should be here.
-	 * HEY: There may be a BAT_TEMP sensor on the battery pack too.
-	 * On Slippy, that's PB4/AIN10
-	 */
-
 	/* HEY: Be prepared to read this (ICMNT). */
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
@@ -190,15 +185,26 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	/* HEY - need two I2C sensor values */
-
+#ifdef CONFIG_PECI
+	/* CPU die temperature via PECI */
+	TEMP_SENSOR_CPU_PECI = 0,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
-	/* CPU die temperature via PECI */
-	TEMP_SENSOR_CPU_PECI,
+#else
+	/* EC internal temperature sensor */
+	TEMP_SENSOR_EC_INTERNAL = 0,
+#endif
+	/* G781 internal and external sensors */
+	TEMP_SENSOR_I2C_G781_INTERNAL,
+	TEMP_SENSOR_I2C_G781_EXTERNAL,
 
 	TEMP_SENSOR_COUNT
 };
+
+/**
+ * Board-specific g781 power state.
+ */
+int board_g781_has_power(void);
 
 /* HEY: The below stuff is for Link. Pick a different pin for Slippy */
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
