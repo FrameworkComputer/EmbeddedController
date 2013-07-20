@@ -6,6 +6,7 @@
  */
 
 #include "battery_pack.h"
+#include "gpio.h"
 
 /* FIXME: We need REAL values for all this stuff */
 static const struct battery_info info = {
@@ -49,4 +50,12 @@ void battery_vendor_params(struct batt_params *batt)
 		batt->desired_current = 0;
 	}
 #endif
+}
+
+/**
+ * Physical detection of battery connection.
+ */
+int battery_is_connected(void)
+{
+	return (gpio_get_level(GPIO_BAT_DETECT_L) == 0);
 }
