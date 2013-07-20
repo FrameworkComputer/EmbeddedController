@@ -29,6 +29,7 @@
 #ifdef HAS_TASK_KEYPROTO
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
+#define CONFIG_LED_SLIPPY
 #define CONFIG_LID_SWITCH
 #define CONFIG_LPC
 #define CONFIG_PECI
@@ -136,8 +137,8 @@ enum gpio_signal {
 	GPIO_PCH_RTCRST_L,         /* Not supposed to be here */
 	GPIO_PCH_SRTCRST_L,        /* Not supposed to be here */
 
-	BAT_LED0_L,                /* Battery charging LED - Blue */
-	BAT_LED1_L,                /* Battery charging LED - Amber */
+	GPIO_BAT_LED0_L,           /* Battery charging LED - Blue */
+	GPIO_BAT_LED1_L,           /* Battery charging LED - Amber */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

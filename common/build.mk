@@ -41,6 +41,7 @@ common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LED_DRIVER_LP5562)+=led_driver_lp5562.o led_lp5562.o
 common-$(CONFIG_LED_FALCO)+=led_falco.o
 common-$(CONFIG_LED_PEPPY)+=led_peppy.o
+common-$(CONFIG_LED_SLIPPY)+=led_slippy.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
