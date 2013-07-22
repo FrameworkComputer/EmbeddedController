@@ -62,27 +62,43 @@
 			return EC_ERROR_UNKNOWN; \
 	} while (0)
 
+/* Hooks gcov_flush() for test coverage report generation */
 void register_test_end_hook(void);
 
+/* Test entry point */
 void run_test(void);
 
+/* Resets test error count */
 void test_reset(void);
 
+/* Reports test pass */
 void test_pass(void);
 
+/* Reports test failure */
 void test_fail(void);
 
+/* Prints test result, including number of failed tests */
 void test_print_result(void);
 
+/* Returns the number of failed tests */
 int test_get_error_count(void);
 
+/* Simulates host command sent from the host */
 int test_send_host_command(int command, int version, const void *params,
 			   int params_size, void *resp, int resp_size);
 
+/* Number of failed tests */
 extern int __test_error_count;
 
+/* Simulates UART input */
 void uart_inject_char(char *s, int sz);
 
 #define UART_INJECT(s) uart_inject_char(s, strlen(s));
+
+/* Simulates chipset power on */
+void test_chipset_on(void);
+
+/* Simulates chipset power off */
+void test_chipset_off(void);
 
 #endif /* __CROS_EC_TEST_UTIL_H */

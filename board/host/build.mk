@@ -8,4 +8,5 @@
 
 CHIP:=host
 
-board-y=board.o chipset.o
+board-y=board.o
+board-$(HAS_TASK_CHIPSET)+=chipset.o
