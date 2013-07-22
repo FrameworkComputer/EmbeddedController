@@ -42,3 +42,15 @@ void release_persistent_storage(FILE *ps)
 {
 	fclose(ps);
 }
+
+void remove_persistent_storage(const char *tag)
+{
+	char buf[BUF_SIZE];
+	char path[BUF_SIZE];
+
+	get_storage_path(buf);
+	if (snprintf(path, BUF_SIZE, "%s_%s", buf, tag) >= BUF_SIZE)
+		path[BUF_SIZE - 1] = '\0';
+
+	unlink(path);
+}

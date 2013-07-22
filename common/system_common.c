@@ -213,7 +213,7 @@ void system_disable_jump(void)
 	disable_jump = 1;
 }
 
-enum system_image_copy_t system_get_image_copy(void)
+test_mockable enum system_image_copy_t system_get_image_copy(void)
 {
 	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
 			    CONFIG_FLASH_BASE;
@@ -345,6 +345,7 @@ static uint32_t get_base(enum system_image_copy_t copy)
 /**
  * Return the size of the image copy, or 0 if error.
  */
+#ifndef EMU_BUILD
 static uint32_t get_size(enum system_image_copy_t copy)
 {
 	switch (copy) {
@@ -356,6 +357,7 @@ static uint32_t get_size(enum system_image_copy_t copy)
 		return 0;
 	}
 }
+#endif
 
 int system_run_image_copy(enum system_image_copy_t copy)
 {
@@ -393,9 +395,11 @@ int system_run_image_copy(enum system_image_copy_t copy)
 		return EC_ERROR_INVAL;
 
 	/* Make sure the reset vector is inside the destination image */
-	init_addr = *(uint32_t *)(base + 4);
+	init_addr = *(uintptr_t *)(base + 4);
+#ifndef EMU_BUILD
 	if (init_addr < base || init_addr >= base + get_size(copy))
 		return EC_ERROR_UNKNOWN;
+#endif
 
 	CPRINTF("[%T Jumping to image %s]\n", image_names[copy]);
 

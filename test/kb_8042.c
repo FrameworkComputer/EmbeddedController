@@ -14,6 +14,7 @@
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
+#include "system.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
@@ -193,14 +194,47 @@ static int test_scancode_set2(void)
 	return EC_SUCCESS;
 }
 
+static int test_sysjump(void)
+{
+	set_scancode(2);
+	enable_keystroke(1);
+
+	system_run_image_copy(SYSTEM_IMAGE_RW);
+
+	/* Shouldn't reach here */
+	return EC_ERROR_UNKNOWN;
+}
+
+static int test_sysjump_cont(void)
+{
+	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
+	press_key(1, 1, 1);
+	VERIFY_LPC_CHAR("\x01");
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\x81");
+
+	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+	press_key(1, 1, 1);
+	VERIFY_LPC_CHAR("\x76");
+	press_key(1, 1, 0);
+	VERIFY_LPC_CHAR("\xf0\x76");
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
 
-	RUN_TEST(test_single_key_press);
-	RUN_TEST(test_disable_keystroke);
-	RUN_TEST(test_typematic);
-	RUN_TEST(test_scancode_set2);
+	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
+		RUN_TEST(test_single_key_press);
+		RUN_TEST(test_disable_keystroke);
+		RUN_TEST(test_typematic);
+		RUN_TEST(test_scancode_set2);
+		RUN_TEST(test_sysjump);
+	} else {
+		RUN_TEST(test_sysjump_cont);
+	}
 
 	test_print_result();
 }

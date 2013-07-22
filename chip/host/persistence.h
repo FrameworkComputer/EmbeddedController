@@ -14,4 +14,6 @@ FILE *get_persistent_storage(const char *tag, const char *mode);
 
 void release_persistent_storage(FILE *ps);
 
+void remove_persistent_storage(const char *tag);
+
 #endif /* _PERSISTENCE_H */

@@ -10,11 +10,6 @@
 #include "panic.h"
 #include "util.h"
 
-struct panic_data *panic_get_data(void)
-{
-	return NULL;
-}
-
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum)
 {
