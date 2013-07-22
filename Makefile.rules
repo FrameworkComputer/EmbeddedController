@@ -98,7 +98,7 @@ bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P)
 
 # lcov fails when multiple instances run at the same time.
 # We need to run them sequentially by using flock
-cmd_lcov=flock .lcov_lock -c "lcov -q -o $@ -c -d build/host/$*"
+cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov -q -o $@ -c -d build/host/$*"
 cmd_report_cov=genhtml -q -o build/host/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) $^
 
