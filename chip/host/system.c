@@ -152,7 +152,17 @@ test_mockable void system_reset(int flags)
 
 test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	exit(EXIT_CODE_HIBERNATE);
+	uint32_t i;
+
+	save_reset_flags(RESET_FLAG_HIBERNATE);
+
+	if (!seconds && !microseconds)
+		exit(EXIT_CODE_HIBERNATE);
+
+	for (i = 0; i < seconds; ++i)
+		udelay(SECOND);
+	udelay(microseconds);
+	emulator_reboot();
 }
 
 test_mockable int system_is_locked(void)
