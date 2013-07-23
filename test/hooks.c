@@ -82,11 +82,11 @@ static int test_ticks(void)
 	interval = tick_time[1].val - tick_time[0].val;
 	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 /
 		    HOOK_TICK_INTERVAL;
-	TEST_ASSERT_ABS_LESS(error_pct, 3);
+	TEST_ASSERT_ABS_LESS(error_pct, 10);
 
 	interval = second_time[1].val - second_time[0].val;
-	error_pct = (interval - 1000 * MSEC) * 100 / (1000 * MSEC);
-	TEST_ASSERT_ABS_LESS(error_pct, 3);
+	error_pct = (interval - SECOND) * 100 / SECOND;
+	TEST_ASSERT_ABS_LESS(error_pct, 10);
 
 	return EC_SUCCESS;
 }
