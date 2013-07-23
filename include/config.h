@@ -27,13 +27,16 @@
  * To get a list current list, run this command:
  *    git grep " CONFIG_" | grep -o "CONFIG_[A-Za-z0-9_]\+" | sort | uniq
  *
+ * Some options are #defined here to enable them by default.  Chips or boards
+ * may override this by #undef'ing them in config_chip.h or board.h,
+ * respectively.
+ *
  * TODO(rspangler): describe all of these.  Also describe the HAS_TASK_* macro
  * and how/when it should be used vs. a config define.
  */
 
 #undef CONFIG_AC_POWER_STATUS
 #undef CONFIG_ADC
-#undef CONFIG_ASSERT_HELP
 #undef CONFIG_BACKLIGHT_X86
 
 /*****************************************************************************/
@@ -115,13 +118,76 @@
 #undef CONFIG_CMD_SCRATCHPAD
 #undef CONFIG_CMD_SLEEP
 
-#undef CONFIG_CONSOLE_CMDHELP
+/*****************************************************************************/
+
+/*
+ * Provide additional help on console commands, such as the supported
+ * options/usage.
+ *
+ * Boards may #undef this to reduce image size.
+ */
+#define CONFIG_CONSOLE_CMDHELP
+
 #undef CONFIG_CONSOLE_RESTRICTED_INPUT
 #undef CONFIG_CONSOLE_UART
 
 #undef CONFIG_CUSTOM_KEYSCAN
-#undef CONFIG_DEBUG
-#undef CONFIG_DEBUG_I2C
+
+/*****************************************************************************/
+/*
+ * Debugging config
+ *
+ * Note that these options are enabled by default, because they're really
+ * handy for debugging systems during bringup and even at factory time.
+ *
+ * A board may undefine any or all of these to reduce image size and RAM usage,
+ * at the cost of debuggability.
+ */
+
+/*
+ * ASSERT() macros are checked at runtime.  See CONFIG_DEBUG_ASSERT_REBOOTS
+ * to see what happens if one fails.
+ *
+ * Boards may #undef this to reduce image size.
+ */
+#define CONFIG_DEBUG_ASSERT
+
+/*
+ * Prints a message and reboots if an ASSERT() macro fails at runtime.  When
+ * enabled, an ASSERT() which fails will produce a message of the form:
+ *
+ * ASSERTION FAILURE '<expr>' in function() at file:line
+ *
+ * If this is not defined, failing ASSERT() will trigger a BKPT instruction
+ * instead.
+ *
+ * Ignored if CONFIG_DEBUG_ASSERT is not defined.
+ *
+ * Boards may #undef this to reduce image size.
+ */
+#define CONFIG_DEBUG_ASSERT_REBOOTS
+
+/*
+ * Print additional information when exceptions are triggered, such as the
+ * fault address, here shown as bfar. This shows the reason for the fault
+ * and may help to determine the cause.
+ *
+ *	=== EXCEPTION: 03 ====== xPSR: 01000000 ===========
+ *	r0 :0000000b r1 :00000047 r2 :60000000 r3 :200013dd
+ *	r4 :00000000 r5 :080053f4 r6 :200013d0 r7 :00000002
+ *	r8 :00000000 r9 :200013de r10:00000000 r11:00000000
+ *	r12:00000000 sp :200009a0 lr :08002b85 pc :08003a8a
+ *	Precise data bus error, Forced hard fault, Vector catch, bfar = 60000000
+ *	mmfs = 00008200, shcsr = 00000000, hfsr = 40000000, dfsr = 00000008
+ *
+ * If this is not defined, only a register dump will be printed.
+ *
+ * Boards may #undef this to reduce image size.
+ */
+#define CONFIG_DEBUG_EXCEPTIONS
+
+/*****************************************************************************/
+
 #undef CONFIG_DMA_HELP
 #undef CONFIG_EEPROM
 #undef CONFIG_EOPTION
@@ -167,6 +233,7 @@
 
 #undef CONFIG_I2C
 #undef CONFIG_I2C_ARBITRATION
+#undef CONFIG_I2C_DEBUG
 #undef CONFIG_I2C_DEBUG_PASSTHRU
 #undef CONFIG_I2C_HOST_AUTO
 #undef CONFIG_I2C_PASSTHROUGH
@@ -190,7 +257,6 @@
 #undef CONFIG_ONEWIRE
 #undef CONFIG_ONEWIRE_LED
 #undef CONFIG_OVERFLOW_DETECT
-#undef CONFIG_PANIC_HELP
 #undef CONFIG_PECI
 
 /*****************************************************************************/
@@ -231,8 +297,27 @@
 #undef CONFIG_STACK_SIZE
 #undef CONFIG_SWITCH
 #undef CONFIG_SYSTEM_UNLOCKED
+
+/*
+ * List of enabled tasks in ascending priority order.  This is normally
+ * defined in each board's ec.tasklist file.
+ *
+ * For each task, use the macro TASK_ALWAYS(n, r, d, s) for base tasks and
+ * TASK_NOTEST(n, r, d, s) for tasks that can be excluded in test binaries,
+ * where :
+ * 'n' is the name of the task
+ * 'r' is the main routine of the task
+ * 'd' is an opaque parameter passed to the routine at startup
+ * 's' is the stack size in bytes; must be a multiple of 8
+ */
 #undef CONFIG_TASK_LIST
-#undef CONFIG_TASK_PROFILING
+
+/*
+ * Enable task profiling.
+ *
+ * Boards may #undef this to reduce image size and RAM usage.
+ */
+#define CONFIG_TASK_PROFILING
 
 #undef CONFIG_TEMP_SENSOR
 #undef CONFIG_TEMP_SENSOR_G781

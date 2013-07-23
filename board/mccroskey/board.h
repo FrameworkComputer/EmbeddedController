@@ -15,10 +15,7 @@
 #define CONFIG_CONSOLE_UART 1
 
 /* Debug features */
-#define CONFIG_ASSERT_HELP
-#define CONFIG_CONSOLE_CMDHELP
-#define CONFIG_DEBUG_I2C	/* FIXME(dhendrix): remove this eventually */
-#define CONFIG_PANIC_HELP
+#define CONFIG_I2C_DEBUG	/* FIXME(dhendrix): remove this eventually */
 #undef  CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 

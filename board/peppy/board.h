@@ -8,12 +8,6 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/* Debug features */
-#define CONFIG_ASSERT_HELP
-#define CONFIG_CONSOLE_CMDHELP
-#define CONFIG_PANIC_HELP
-#define CONFIG_TASK_PROFILING
-
 /* Optional features */
 #define CONFIG_BACKLIGHT_X86
 #define CONFIG_BATTERY_CHECK_CONNECTED

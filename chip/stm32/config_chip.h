@@ -41,9 +41,6 @@
 #define CONFIG_FLASH
 #define CONFIG_FMAP
 
-/* build with assertions and debug messages */
-#define CONFIG_DEBUG
-
 /* Enable watchdog timer */
 #define CONFIG_WATCHDOG
 

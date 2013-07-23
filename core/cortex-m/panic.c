@@ -130,7 +130,7 @@ static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 	return (exc_return & 0xf) == 1 || (exc_return & 0xf) == 9;
 }
 
-#ifdef CONFIG_PANIC_HELP
+#ifdef CONFIG_DEBUG_EXCEPTIONS
 /* Names for each of the bits in the mmfs register, starting at bit 0 */
 static const char * const mmfs_name[32] = {
 	"Instruction access violation",
@@ -322,7 +322,7 @@ static void panic_show_process_stack(const struct panic_data *pdata)
 		panic_printf("\nBad psp");
 	}
 }
-#endif /* CONFIG_PANIC_HELP */
+#endif /* CONFIG_DEBUG_EXCEPTIONS */
 
 /**
  * Display a message and reboot
@@ -360,7 +360,7 @@ static void panic_print(const struct panic_data *pdata)
 	print_reg(14, sregs, 5);
 	print_reg(15, sregs, 6);
 
-#ifdef CONFIG_PANIC_HELP
+#ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_show_extra(pdata);
 #endif
 }
@@ -400,7 +400,7 @@ void report_panic(void)
 	pdata->dfsr = CPU_NVIC_DFSR;
 
 	panic_print(pdata);
-#ifdef CONFIG_PANIC_HELP
+#ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_show_process_stack(pdata);
 	/* TODO: Dump main stack contents as well if the exception happened
 	 * in a handler's context. */
@@ -442,7 +442,7 @@ void ignore_bus_fault(int ignored)
 	bus_fault_ignored = ignored;
 }
 
-#ifdef CONFIG_ASSERT_HELP
+#ifdef CONFIG_DEBUG_ASSERT_REBOOTS
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum)
 {

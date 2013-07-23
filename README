@@ -37,27 +37,6 @@ below will be moved there over time.
 	This is needed on STM32, where the independent watchdog has no early
 	warning feature and the windowed watchdog has a very short period.
 
-- CONFIG_PANIC_HELP
-
-	Report extra information about a panic, such as the fault address,
-	here shown as bfar. This shows the reason for the fault and may help
-	to determine the cause.
-
-	=== EXCEPTION: 03 ====== xPSR: 01000000 ===========
-	r0 :0000000b r1 :00000047 r2 :60000000 r3 :200013dd
-	r4 :00000000 r5 :080053f4 r6 :200013d0 r7 :00000002
-	r8 :00000000 r9 :200013de r10:00000000 r11:00000000
-	r12:00000000 sp :200009a0 lr :08002b85 pc :08003a8a
-	Precise data bus error, Forced hard fault, Vector catch, bfar = 60000000
-	mmfs = 00008200, shcsr = 00000000, hfsr = 40000000, dfsr = 00000008
-
-- CONFIG_ASSERT_HELP
-
-	Report assertion failures in a vebose manner to aid debugging. When
-	enabled an ASSERT() which fails will produce message in the form:
-
-		ASSERTION FAILURE '<expr>' in function() at file:line
-
 - CONFIG_AC_POWER_STATUS
 
 	Monitor the state of the AC power input and drive out a GPIO to

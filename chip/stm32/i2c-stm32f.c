@@ -517,7 +517,7 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 
 static inline void dump_i2c_reg(int port)
 {
-#ifdef CONFIG_DEBUG_I2C
+#ifdef CONFIG_I2C_DEBUG
 	CPRINTF("CR1  : %016b\n", STM32_I2C_CR1(port));
 	CPRINTF("CR2  : %016b\n", STM32_I2C_CR2(port));
 	CPRINTF("SR2  : %016b\n", STM32_I2C_SR2(port));
@@ -527,7 +527,7 @@ static inline void dump_i2c_reg(int port)
 	CPRINTF("DR   : %016b\n", STM32_I2C_DR(port));
 	CPRINTF("CCR  : %016b\n", STM32_I2C_CCR(port));
 	CPRINTF("TRISE: %016b\n", STM32_I2C_TRISE(port));
-#endif /* CONFIG_DEBUG_I2C */
+#endif /* CONFIG_I2C_DEBUG */
 }
 
 enum wait_t {
@@ -660,7 +660,7 @@ static void handle_i2c_error(int port, int rv)
 
 	/* EC_ERROR_TIMEOUT may have a code specifying where the timeout was */
 	if ((rv & 0xff) == EC_ERROR_TIMEOUT) {
-#ifdef CONFIG_DEBUG_I2C
+#ifdef CONFIG_I2C_DEBUG
 		CPRINTF("Wait_status() timeout type: %d\n", (rv >> 8));
 #endif
 		rv = EC_ERROR_TIMEOUT;

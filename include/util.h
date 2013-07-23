@@ -16,19 +16,19 @@
  * Trigger a debug exception if the condition
  * is not verified at runtime.
  */
-#ifdef CONFIG_DEBUG
-# ifdef CONFIG_ASSERT_HELP
-#  define ASSERT(cond) do {			\
+#ifdef CONFIG_DEBUG_ASSERT
+#ifdef CONFIG_DEBUG_ASSERT_REBOOTS
+#define ASSERT(cond) do {			\
 		if (!(cond))			\
 			panic_assert_fail(#cond, __func__, __FILE__, \
 				__LINE__);	\
-	} while (0);
-# else
-#  define ASSERT(cond) do {			\
+	} while (0)
+#else
+#define ASSERT(cond) do {			\
 		if (!(cond))			\
 			__asm("bkpt");		\
-	} while (0);
-# endif
+	} while (0)
+#endif
 #else
 #define ASSERT(cond)
 #endif

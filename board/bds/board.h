@@ -8,12 +8,7 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/* Debug features */
-#define CONFIG_PANIC_HELP
-#define CONFIG_ASSERT_HELP
-
 /* Optional features */
-#define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 
 /* LM4 modules we don't use on link but still want to keep compiling */

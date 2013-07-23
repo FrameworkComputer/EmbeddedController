@@ -98,9 +98,6 @@
 /****************************************************************************/
 /* Customize the build */
 
-/* Build with assertions and debug messages */
-#define CONFIG_DEBUG
-
 /* Optional features present on this chip */
 #define CONFIG_ADC
 #define CONFIG_FLASH

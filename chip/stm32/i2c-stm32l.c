@@ -18,8 +18,6 @@
 #include "timer.h"
 #include "util.h"
 
-/* #define CONFIG_DEBUG_I2C */
-
 extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 
 /* Console output macros */
@@ -42,7 +40,7 @@ extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
  */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
-#ifdef CONFIG_DEBUG_I2C
+#ifdef CONFIG_I2C_DEBUG
 static void dump_i2c_reg(int port, const char *what)
 {
 	CPRINTF("[%T i2c CR1=%04x CR2=%04x SR1=%04x SR2=%04x %s]\n",

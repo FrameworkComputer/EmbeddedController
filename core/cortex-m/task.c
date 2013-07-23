@@ -515,8 +515,6 @@ void task_print_list(void)
 	}
 }
 
-#ifdef CONFIG_DEBUG
-
 int command_task_info(int argc, char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
@@ -567,8 +565,6 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"[setmask]",
 			"Print/set ready tasks",
 			NULL);
-
-#endif  /* CONFIG_DEBUG */
 
 void task_pre_init(void)
 {

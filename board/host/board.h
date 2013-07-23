@@ -8,10 +8,6 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/* Assertion support */
-#define CONFIG_DEBUG
-#define CONFIG_ASSERT_HELP
-
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HOSTCMD

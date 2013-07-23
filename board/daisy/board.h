@@ -14,10 +14,6 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
-/* Debug features */
-#define CONFIG_PANIC_HELP
-#define CONFIG_ASSERT_HELP
-
 /* Optional features */
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_POST_GPIO_INIT
