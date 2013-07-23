@@ -11,6 +11,7 @@
 #include "host_test.h"
 #include "panic.h"
 #include "persistence.h"
+#include "reboot.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
@@ -146,7 +147,7 @@ test_mockable void system_reset(int flags)
 		save_flags |= RESET_FLAG_HARD;
 	if (save_flags)
 		save_reset_flags(save_flags);
-	exit(EXIT_CODE_RESET);
+	emulator_reboot();
 }
 
 test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -226,7 +227,7 @@ static void __jump_resetvec(void)
 {
 	save_time(get_time());
 	ramdata_set_persistent();
-	exit(EXIT_CODE_RESET);
+	emulator_reboot();
 }
 
 static void __ro_jump_resetvec(void)

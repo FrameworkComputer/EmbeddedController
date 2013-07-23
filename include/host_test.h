@@ -9,7 +9,9 @@
 #define __CROS_EC_HOST_TEST_H
 
 /* Emulator exit codes */
-#define EXIT_CODE_RESET     (1 << 6) /* Leave six bits for SYSTEM_RESET_* */
 #define EXIT_CODE_HIBERNATE (1 << 7)
+
+/* Get emulator executable name */
+const char *__get_prog_name(void);
 
 #endif  /* __CROS_EC_HOST_TEST_H */

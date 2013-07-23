@@ -18,8 +18,17 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-int main(void)
+const char *__prog_name;
+
+const char *__get_prog_name(void)
 {
+	return __prog_name;
+}
+
+int main(int argc, char **argv)
+{
+	__prog_name = argv[0];
+
 	register_test_end_hook();
 
 	flash_pre_init();

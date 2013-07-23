@@ -11,12 +11,9 @@ import time
 
 TIMEOUT=10
 
-EXIT_CODE_REBOOT = (1 << 6)
-
 RESULT_ID_TIMEOUT = 0
 RESULT_ID_PASS = 1
 RESULT_ID_FAIL = 2
-RESULT_ID_REBOOT = 3
 
 EXPECT_LIST = [pexpect.TIMEOUT, 'Pass!', 'Fail!']
 
@@ -40,11 +37,7 @@ def RunOnce(test_name, log, timeout_secs):
     return child.expect(EXPECT_LIST)
   except pexpect.EOF:
     child.close()
-    if child.exitstatus & EXIT_CODE_REBOOT:
-      sys.stderr.write('System rebooting\n')
-      return RESULT_ID_REBOOT
-    else:
-      raise
+    raise
   finally:
     child.kill(15)
 
@@ -53,9 +46,7 @@ tee_log = Tee(log)
 test_name = sys.argv[1]
 start_time = time.time()
 
-result_id = RESULT_ID_REBOOT
-while result_id == RESULT_ID_REBOOT:
-  result_id = RunOnce(test_name, tee_log, start_time + TIMEOUT - time.time())
+result_id = RunOnce(test_name, tee_log, start_time + TIMEOUT - time.time())
 
 elapsed_time = time.time() - start_time
 failed = False
