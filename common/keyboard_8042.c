@@ -28,7 +28,7 @@
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
-#ifdef CONFIG_KEYBOARD_DEBUG_MORE
+#ifdef CONFIG_KEYBOARD_DEBUG
 #define CPUTS5(outstr) cputs(CC_KEYBOARD, outstr)
 #define CPRINTF5(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 #else

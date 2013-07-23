@@ -26,7 +26,8 @@
 
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
-#ifndef CONFIG_CUSTOM_KEYSCAN
+#ifndef CONFIG_KEYBOARD_BOARD_CONFIG
+/* Use default keyboard scan config, because board didn't supply one */
 struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,

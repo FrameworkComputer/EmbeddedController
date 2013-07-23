@@ -131,8 +131,6 @@
 #undef CONFIG_CONSOLE_RESTRICTED_INPUT
 #undef CONFIG_CONSOLE_UART
 
-#undef CONFIG_CUSTOM_KEYSCAN
-
 /*****************************************************************************/
 /*
  * Debugging config
@@ -241,11 +239,43 @@
 
 #undef CONFIG_IRQ_COUNT
 
-#undef CONFIG_KEYBOARD_DEBUG_MORE
+/*****************************************************************************/
+/* Keyboard config */
+
+/* Enable extra debugging output from keyboard modules */
+#undef CONFIG_KEYBOARD_DEBUG
+
+/* Compile code for 8042 keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
+
+/* Compile code for MKBP keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
+
+/*
+ * Keyboard config (struct keyboard_scan_config) is in board.c.  If this is
+ * not defined, default values from common/keyboard_scan.c will be used.
+ */
+#undef CONFIG_KEYBOARD_BOARD_CONFIG
+
+/*
+ * Call board-supplied keyboard_suppress_noise() function when the debounced
+ * keyboard state changes.  Some boards use this to send a signal to the audio
+ * codec to suppress typing noise picked up by the microphone.
+ */
 #undef CONFIG_KEYBOARD_SUPPRESS_NOISE
+
+/*
+ * Enable keyboard testing functionality. This enables a message which receives
+ * a list of keyscan events from the AP and processes them.  This will cause
+ * keypresses to appear on the AP through the same mechanism as a normal
+ * keyboard press.
+ *
+ * This can be used to spoof keyboard events, so is not normally defined,
+ * except during internal testing.
+ */
 #undef CONFIG_KEYBOARD_TEST
+
+/*****************************************************************************/
 
 #undef CONFIG_LED_DRIVER_LP5562
 #undef CONFIG_LED_FALCO

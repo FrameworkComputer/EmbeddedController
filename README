@@ -43,11 +43,3 @@ below will be moved there over time.
 	the AP indicating this state. The GPIO will be driven low when
 	AC power is not connected, and high when it is connected. This
 	uses GPIO_AC_STATUS for this purpose.
-
-- CONFIG_KEYBOARD_TEST
-
-	Turn on keyboard testing functionality. This enables a message which
-	received a list of keyscan events from the AP and processes them.
-	This will cause keypresses to appear on the AP through the same
-	mechanism as a normal keyboard press.
-
