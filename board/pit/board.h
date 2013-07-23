@@ -11,9 +11,6 @@
 /* Use USART1 as console serial port */
 #define CONFIG_CONSOLE_UART 1
 
-/* Debug features */
-#define CONFIG_WATCHDOG_HELP
-
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
 #define CONFIG_BATTERY_SMART

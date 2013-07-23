@@ -17,7 +17,6 @@
 /* Debug features */
 #define CONFIG_I2C_DEBUG	/* FIXME(dhendrix): remove this eventually */
 #undef  CONFIG_TASK_PROFILING
-#define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT

@@ -28,6 +28,7 @@
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
 #define CONFIG_LID_SWITCH
 #define CONFIG_PMU_TPS65090
+#undef  CONFIG_WATCHDOG_HELP
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

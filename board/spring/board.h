@@ -17,7 +17,6 @@
 
 /* Debug features */
 #undef  CONFIG_TASK_PROFILING
-#define CONFIG_WATCHDOG_HELP
 
 /* Optional features */
 #define CONFIG_ADC

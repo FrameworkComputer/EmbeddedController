@@ -35,7 +35,6 @@
  * and how/when it should be used vs. a config define.
  */
 
-#undef CONFIG_AC_POWER_STATUS
 #undef CONFIG_ADC
 #undef CONFIG_BACKLIGHT_X86
 
@@ -90,6 +89,12 @@
 #undef CONFIG_CHARGER_CURRENT_LIMIT
 
 /*
+ * Board supports discharge mode.  In this mode, the battery will discharge
+ * even if AC is present.  Used for testing.
+ */
+#undef CONFIG_CHARGER_DISCHARGE_ON_AC
+
+/*
  * Maximum amount of input current the charger can receive, in mA.
  *
  * This value should depend on external power adapter, designed charging
@@ -110,7 +115,6 @@
 #undef CONFIG_CHIPSET_IVYBRIDGE
 
 #undef CONFIG_CMD_COMXTEST
-#undef CONFIG_CMD_DISCHARGE_ON_AC /* TODO(rspangler): poorly named */
 #undef CONFIG_CMD_ECTEMP
 #undef CONFIG_CMD_PLL
 #undef CONFIG_CMD_PMU
@@ -328,6 +332,9 @@
 #undef CONFIG_SWITCH
 #undef CONFIG_SYSTEM_UNLOCKED
 
+/*****************************************************************************/
+/* Task config */
+
 /*
  * List of enabled tasks in ascending priority order.  This is normally
  * defined in each board's ec.tasklist file.
@@ -343,17 +350,24 @@
 #undef CONFIG_TASK_LIST
 
 /*
+ * List of test tasks.  Same format as CONFIG_TASK_LIST, but used to define
+ * additional tasks for a unit test.  Normally defined in
+ * test/{testname}.tasklist.
+ */
+#undef CONFIG_TEST_TASK_LIST
+
+/*
  * Enable task profiling.
  *
  * Boards may #undef this to reduce image size and RAM usage.
  */
 #define CONFIG_TASK_PROFILING
 
+/*****************************************************************************/
+
 #undef CONFIG_TEMP_SENSOR
 #undef CONFIG_TEMP_SENSOR_G781
 #undef CONFIG_TEMP_SENSOR_TMP006
-
-#undef CONFIG_TEST_TASK_LIST
 
 #undef CONFIG_UART_BAUD_RATE
 #undef CONFIG_UART_RX_BUF_SIZE
@@ -365,8 +379,26 @@
 
 #undef CONFIG_USE_CPCIDVI
 #undef CONFIG_USE_PLL
-#undef CONFIG_WATCHDOG
+
+/*****************************************************************************/
+/* Watchdog config */
+
+/*
+ * Compile watchdog timer support.  The watchdog timer will reboot the system
+ * if the hook task (which is the lowest-priority task on the system) gets
+ * starved for CPU time and isn't able to fire its HOOK_TICK event.
+ */
+#define CONFIG_WATCHDOG
+
+/*
+ * Try to detect a watchdog that is about to fire, and print a trace.  This is
+ * required on chips such as STM32 where the watchdog timer simply reboots the
+ * system without any early warning.
+ */
 #undef CONFIG_WATCHDOG_HELP
+
+/*****************************************************************************/
+
 #undef CONFIG_WIRELESS
 #undef CONFIG_WP_ACTIVE_HIGH
 

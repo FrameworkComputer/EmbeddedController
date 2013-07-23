@@ -105,7 +105,6 @@
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_SWITCH
-#define CONFIG_WATCHDOG
 
 /* Compile for running from RAM instead of flash */
 /* #define COMPILE_FOR_RAM */

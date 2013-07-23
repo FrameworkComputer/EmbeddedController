@@ -848,11 +848,11 @@ static int charge_command_charge_control(struct host_cmd_handler_args *args)
 	if (rv != EC_SUCCESS)
 		return rv;
 
-#ifdef CONFIG_CMD_DISCHARGE_ON_AC
+#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
 	rv = board_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
 	if (rv != EC_SUCCESS)
 		return rv;
-#endif /* CONFIG_CMD_DISCHARGE_ON_AC */
+#endif
 
 	return EC_RES_SUCCESS;
 }

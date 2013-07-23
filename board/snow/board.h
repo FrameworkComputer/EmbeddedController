@@ -15,8 +15,7 @@
 #define CONFIG_CONSOLE_UART 1
 
 /* Debug features */
-#undef  CONFIG_TASK_PROFILING
-#define CONFIG_WATCHDOG_HELP
+#undef CONFIG_TASK_PROFILING
 
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453

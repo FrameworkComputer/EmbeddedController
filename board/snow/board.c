@@ -167,9 +167,6 @@ void board_i2c_post_init(int port)
 
 void board_config_post_gpio_init(void)
 {
-#ifdef CONFIG_AC_POWER_STATUS
-	gpio_set_flags(GPIO_AC_STATUS, GPIO_OUT_HIGH);
-#endif
 #ifdef CONFIG_SPI
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
 #endif

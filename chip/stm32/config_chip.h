@@ -37,12 +37,16 @@
 /* Number of I2C ports */
 #define I2C_PORT_COUNT 2
 
-/* support programming on-chip flash */
+/* Support programming on-chip flash */
 #define CONFIG_FLASH
 #define CONFIG_FMAP
 
-/* Enable watchdog timer */
-#define CONFIG_WATCHDOG
+/*
+ * Use a timer to print a watchdog warning event before the actual watchdog
+ * timer fires.  This is needed on STM32, where the independent watchdog has no
+ * early warning feature and the windowed watchdog has a very short period.
+ */
+#define CONFIG_WATCHDOG_HELP
 
 /* Flash protection applies to the next boot, not the current one */
 #define CONFIG_FLASH_PROTECT_NEXT_BOOT
