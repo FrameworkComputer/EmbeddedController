@@ -9,9 +9,10 @@
 
 #include "common.h"
 #include "host_test.h"
-#include "system.h"
 #include "panic.h"
 #include "persistence.h"
+#include "system.h"
+#include "timer.h"
 #include "util.h"
 
 #define SHARED_MEM_SIZE 512 /* bytes */
@@ -73,12 +74,59 @@ static uint32_t get_image_copy(void)
 	uint32_t ret;
 
 	if (f == NULL)
-		return SYSTEM_IMAGE_RO;
+		return SYSTEM_IMAGE_UNKNOWN;
 	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("image_copy");
 
 	return ret;
+}
+
+static void save_reset_flags(uint32_t flags)
+{
+	FILE *f = get_persistent_storage("reset_flags", "wb");
+
+	ASSERT(f != NULL);
+	ASSERT(fwrite(&flags, sizeof(flags), 1, f) == 1);
+
+	release_persistent_storage(f);
+}
+
+static uint32_t load_reset_flags(void)
+{
+	FILE *f = get_persistent_storage("reset_flags", "rb");
+	uint32_t ret;
+
+	if (f == NULL)
+		return RESET_FLAG_POWER_ON;
+	fread(&ret, sizeof(ret), 1, f);
+	release_persistent_storage(f);
+	remove_persistent_storage("reset_flags");
+
+	return ret;
+}
+
+static void save_time(timestamp_t t)
+{
+	FILE *f = get_persistent_storage("time", "wb");
+
+	ASSERT(f != NULL);
+	ASSERT(fwrite(&t, sizeof(t), 1, f) == 1);
+
+	release_persistent_storage(f);
+}
+
+static int load_time(timestamp_t *t)
+{
+	FILE *f = get_persistent_storage("time", "rb");
+
+	if (f == NULL)
+		return 0;
+	fread(t, sizeof(*t), 1, f);
+	release_persistent_storage(f);
+	remove_persistent_storage("time");
+
+	return 1;
 }
 
 test_mockable struct panic_data *panic_get_data(void)
@@ -89,7 +137,16 @@ test_mockable struct panic_data *panic_get_data(void)
 
 test_mockable void system_reset(int flags)
 {
-	exit(EXIT_CODE_RESET | flags);
+	uint32_t save_flags = 0;
+	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
+		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
+		save_flags |= RESET_FLAG_AP_OFF;
+	if (flags & SYSTEM_RESET_HARD)
+		save_flags |= RESET_FLAG_HARD;
+	if (save_flags)
+		save_reset_flags(save_flags);
+	exit(EXIT_CODE_RESET);
 }
 
 test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -100,16 +157,6 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 test_mockable int system_is_locked(void)
 {
 	return 0;
-}
-
-test_mockable int system_jumped_to_this_image(void)
-{
-	return 0;
-}
-
-test_mockable uint32_t system_get_reset_flags(void)
-{
-	return RESET_FLAG_POWER_ON;
 }
 
 const char *system_get_chip_vendor(void)
@@ -177,6 +224,7 @@ uintptr_t system_usable_ram_end(void)
 
 static void __jump_resetvec(void)
 {
+	save_time(get_time());
 	ramdata_set_persistent();
 	exit(EXIT_CODE_RESET);
 }
@@ -195,8 +243,17 @@ static void __rw_jump_resetvec(void)
 
 void system_pre_init(void)
 {
+	timestamp_t t;
+
+	if (load_time(&t))
+		force_time(t);
+
 	ramdata_get_persistent();
 	__running_copy = get_image_copy();
+	if (__running_copy == SYSTEM_IMAGE_UNKNOWN) {
+		__running_copy = SYSTEM_IMAGE_RO;
+		system_set_reset_flags(load_reset_flags());
+	}
 
 	*(uintptr_t *)(__host_flash + CONFIG_FW_RO_OFF + 4) =
 		(uintptr_t)__ro_jump_resetvec;

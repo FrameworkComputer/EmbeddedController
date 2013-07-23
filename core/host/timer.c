@@ -22,6 +22,7 @@
 #endif
 
 static timestamp_t boot_time;
+static int time_set;
 
 void usleep(unsigned us)
 {
@@ -43,6 +44,13 @@ timestamp_t get_time(void)
 	timestamp_t ret = _get_time();
 	ret.val -= boot_time.val;
 	return ret;
+}
+
+void force_time(timestamp_t ts)
+{
+	timestamp_t now = _get_time();
+	boot_time.val = now.val - ts.val;
+	time_set = 1;
 }
 
 void udelay(unsigned us)
@@ -67,5 +75,6 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 
 void timer_init(void)
 {
-	boot_time = _get_time();
+	if (!time_set)
+		boot_time = _get_time();
 }
