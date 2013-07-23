@@ -82,8 +82,18 @@ struct host_byte {
 	uint8_t byte;
 };
 
-/* 4 is big enough for all i8042 commands */
-static uint8_t from_host_buffer[4 * sizeof(struct host_byte)];
+/*
+ * The buffer for i8042 command from host. So far the largest command
+ * we see from kernel is:
+ *
+ *   d1 -> i8042 (command)    # enable A20 in i8042_platform_init() of
+ *   df -> i8042 (parameter)  # serio/i8042-x86ia64io.h file.
+ *   ff -> i8042 (command)
+ *   20 -> i8042 (command)    # read CTR
+ *
+ * Hence, 5 (actually 4 plus one spare) is large enough, but use 8 for safety.
+ */
+static uint8_t from_host_buffer[8 * sizeof(struct host_byte)];
 static struct queue from_host = {
 	.buf_bytes  = sizeof(from_host_buffer),
 	.unit_bytes = sizeof(struct host_byte),
@@ -419,18 +429,6 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	}
 }
 
-static void keyboard_enable(int enable)
-{
-	if (!keyboard_enabled && enable) {
-		CPRINTF("[%T KB enable]\n");
-	} else if (keyboard_enabled && !enable) {
-		CPRINTF("[%T KB disable]\n");
-		reset_rate_and_delay();
-		typematic_len = 0;  /* stop typematic */
-	}
-	keyboard_enabled = enable;
-}
-
 static void keystroke_enable(int enable)
 {
 	if (!keystroke_enabled && enable)
@@ -439,6 +437,27 @@ static void keystroke_enable(int enable)
 		CPRINTF("[%T KS disable]\n");
 
 	keystroke_enabled = enable;
+}
+
+static void keyboard_enable(int enable)
+{
+	if (!keyboard_enabled && enable) {
+		CPRINTF("[%T KB enable]\n");
+	} else if (keyboard_enabled && !enable) {
+		CPRINTF("[%T KB disable]\n");
+		reset_rate_and_delay();
+		typematic_len = 0;  /* stop typematic */
+
+		/* Disable keystroke as well in case the BIOS doesn't
+		 * disable keystroke where repeated strokes are queued
+		 * before kernel initializes keyboard. Hence the kernel
+		 * is unable to get stable CTR read (get key codes
+		 * instead).
+		 */
+		keystroke_enable(0);
+		keyboard_clear_buffer();
+	}
+	keyboard_enabled = enable;
 }
 
 static uint8_t read_ctl_ram(uint8_t addr)
