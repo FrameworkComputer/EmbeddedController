@@ -14,6 +14,7 @@
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
+#include "power_button.h"
 #include "system.h"
 #include "test_util.h"
 #include "timer.h"
@@ -28,6 +29,8 @@ static unsigned int lpc_char_cnt;
 /*****************************************************************************/
 /* Mock functions */
 
+static int mock_power_button = 1;
+
 int lid_is_open(void)
 {
 	return 1;
@@ -36,6 +39,13 @@ int lid_is_open(void)
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	lpc_char_buf[lpc_char_cnt++] = chr;
+}
+
+int gpio_get_level(enum gpio_signal signal)
+{
+	if (signal == GPIO_POWER_BUTTON_L)
+		return mock_power_button;
+	return 0;
 }
 
 /*****************************************************************************/
@@ -194,6 +204,43 @@ static int test_scancode_set2(void)
 	return EC_SUCCESS;
 }
 
+static int test_power_button(void)
+{
+	set_scancode(1);
+	test_chipset_on();
+
+	mock_power_button = 0;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_LPC_CHAR_DELAY("\xe0\x5e", 100);
+
+	mock_power_button = 1;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_LPC_CHAR_DELAY("\xe0\xde", 100);
+
+	set_scancode(2);
+	write_cmd_byte(read_cmd_byte() & ~I8042_XLATE);
+
+	mock_power_button = 0;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_LPC_CHAR_DELAY("\xe0\x37", 100);
+
+	mock_power_button = 1;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_LPC_CHAR_DELAY("\xe0\xf0\x37", 100);
+
+	test_chipset_off();
+
+	mock_power_button = 0;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_NO_CHAR();
+
+	mock_power_button = 1;
+	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	VERIFY_NO_CHAR();
+
+	return EC_SUCCESS;
+}
+
 static int test_sysjump(void)
 {
 	set_scancode(2);
@@ -231,6 +278,7 @@ void run_test(void)
 		RUN_TEST(test_disable_keystroke);
 		RUN_TEST(test_typematic);
 		RUN_TEST(test_scancode_set2);
+		RUN_TEST(test_power_button);
 		RUN_TEST(test_sysjump);
 	} else {
 		RUN_TEST(test_sysjump_cont);
