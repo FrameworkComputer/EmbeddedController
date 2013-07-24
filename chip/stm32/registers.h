@@ -10,9 +10,6 @@
 
 #include "common.h"
 
-/* concatenation helper */
-#define STM32_CAT(prefix, n, suffix) prefix ## n ## suffix
-
 /* IRQ numbers */
 #define STM32_IRQ_WWDG             0
 #define STM32_IRQ_PVD              1
@@ -100,10 +97,9 @@
 #define STM32_UART4_BASE           0x40004c00 /* STM32F100 and STM32F10x */
 #define STM32_UART5_BASE           0x40005000 /* STM32F100 and STM32F10x */
 
-#define STM32_USART_BASE(n)        STM32_CAT(STM32_USART, n, _BASE)
+#define STM32_USART_BASE(n)        CONCAT3(STM32_USART, n, _BASE)
 
-#define STM32_USART_REG(n, offset) \
-		REG16(STM32_CAT(STM32_USART, n, _BASE) + (offset))
+#define STM32_USART_REG(n, offset) REG16(STM32_USART_BASE(n) + (offset))
 
 #define STM32_USART_SR(n)          STM32_USART_REG(n, 0x00)
 #define STM32_USART_SR_RXNE		(1 << 5)
@@ -122,7 +118,7 @@
 #define STM32_USART_CR3_ONEBIT		(1 << 11) /* STM32L only */
 #define STM32_USART_GTPR(n)        STM32_USART_REG(n, 0x18)
 
-#define STM32_IRQ_USART(n)         STM32_CAT(STM32_IRQ_USART, n, )
+#define STM32_IRQ_USART(n)         CONCAT2(STM32_IRQ_USART, n)
 
 /* --- TIMERS --- */
 #define STM32_TIM1_BASE            0x40012c00 /* STM32F100 and STM32F10x */
@@ -150,7 +146,7 @@
 #define STM32_TIM17_BASE           0x40014800 /* STM32F100 only */
 
 #define STM32_TIM_REG(n, offset) \
-		REG16(STM32_CAT(STM32_TIM, n, _BASE) + (offset))
+		REG16(CONCAT3(STM32_TIM, n, _BASE) + (offset))
 
 #define STM32_TIM_CR1(n)           STM32_TIM_REG(n, 0x00)
 #define STM32_TIM_CR2(n)           STM32_TIM_REG(n, 0x04)

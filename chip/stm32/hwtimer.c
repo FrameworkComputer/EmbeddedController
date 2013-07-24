@@ -51,14 +51,14 @@
 #define STM32_TIM_TS_SLAVE_9_MASTER_3  1
 #define STM32_TIM_TS_SLAVE_9_MASTER_10 2
 #define STM32_TIM_TS_SLAVE_9_MASTER_11 3
-#define TSMAP1(slave, master) STM32_TIM_TS_SLAVE_ ## slave ## _MASTER_ ## master
-#define TSMAP(slave, master) TSMAP1(slave, master)
+#define TSMAP(slave, master) \
+	CONCAT4(STM32_TIM_TS_SLAVE_, slave, _MASTER_, master)
 
 /*
  * Timers are defined per board.  This gives us flexibility to work around
  * timers which are dedicated to board-specific PWM sources.
  */
-#define IRQ_TIM(n) STM32_CAT(STM32_IRQ_TIM, n, )
+#define IRQ_TIM(n) CONCAT2(STM32_IRQ_TIM, n)
 #define IRQ_MSB IRQ_TIM(TIM_CLOCK_MSB)
 #define IRQ_LSB IRQ_TIM(TIM_CLOCK_LSB)
 #define IRQ_WD  IRQ_TIM(TIM_WATCHDOG)
@@ -66,7 +66,7 @@
 /* TIM1 has fancy names for its IRQs; remap count-up IRQ for the macro above */
 #define STM32_IRQ_TIM1 STM32_IRQ_TIM1_UP_TIM16
 
-#define TIM_BASE(n) STM32_CAT(STM32_TIM, n, _BASE)
+#define TIM_BASE(n) CONCAT3(STM32_TIM, n, _BASE)
 #define TIM_WD_BASE TIM_BASE(TIM_WATCHDOG)
 
 static uint32_t last_deadline;
@@ -295,7 +295,7 @@ void IRQ_HANDLER(IRQ_WD)(void)
 		     "pop {r0, lr}\n"
 		     "b task_resched_if_needed\n");
 }
-const struct irq_priority IRQ_BUILD_NAME(prio_, IRQ_WD, )
+const struct irq_priority IRQ_PRIORITY(IRQ_WD)
 	__attribute__((section(".rodata.irqprio")))
 		= {IRQ_WD, 0}; /* put the watchdog at the highest
 					    priority */

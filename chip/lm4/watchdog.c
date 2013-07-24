@@ -48,7 +48,7 @@ void IRQ_HANDLER(LM4_IRQ_WATCHDOG)(void)
 		     "b task_resched_if_needed\n"
 			: : [irq] "i" (LM4_IRQ_WATCHDOG));
 }
-const struct irq_priority IRQ_BUILD_NAME(prio_, LM4_IRQ_WATCHDOG, )
+const struct irq_priority IRQ_PRIORITY(LM4_IRQ_WATCHDOG)
 	__attribute__((section(".rodata.irqprio")))
 		= {LM4_IRQ_WATCHDOG, 0}; /* put the watchdog at the highest
 					    priority */
