@@ -49,8 +49,10 @@
 /*****************************************************************************/
 /* Battery config */
 
-/* Compile battery-specific code for these batteries (pick at most one) */
+/* Compile support for the BS20Z453 battery used on some of the ARM laptops */
 #undef CONFIG_BATTERY_BQ20Z453
+
+/* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
 
 /*
@@ -124,12 +126,26 @@
 #undef CONFIG_CHARGER_SENSE_RESISTOR_AC
 
 /*****************************************************************************/
+/* Chipset config */
 
-#undef CONFIG_CHIPSET_GAIA
-#undef CONFIG_CHIPSET_HASWELL
-#undef CONFIG_CHIPSET_IVYBRIDGE
-/* Common x86 chipset infrastructure. */
+/* Compile support for the AP chipset; pick at most one */
+#undef CONFIG_CHIPSET_GAIA	/* Gaia and Ares (ARM) */
+#undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
+#undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
+
+/*
+ * Compile common x86 chipset infrastructure.  Required for
+ * CONFIG_CHIPSET_HASWELL and CONFIG_CHIPSET_IVYBRIDGE.
+ */
 #undef CONFIG_CHIPSET_X86
+
+/*****************************************************************************/
+/*
+ * Optional console commands
+ *
+ * Defining these options will enable the corresponding command on the EC
+ * console.
+ */
 
 #undef CONFIG_CMD_COMXTEST
 #undef CONFIG_CMD_ECTEMP
@@ -214,11 +230,28 @@
 
 /*****************************************************************************/
 
+/* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
+
+/* Compile support for EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
+
+/*
+ * Compile the eoption module, which provides a higher-level interface to
+ * options stored in internal data EEPROM.
+ */
 #undef CONFIG_EOPTION
 
+/* Compile support for detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
+
+/*
+ * Compile support for providing power to the device via USB.
+ *
+ * Note that this is NOT the same as providing power FROM the device to USB
+ * peripherals such as mice, phones, memory sticks, etc.  That's controlled
+ * via the CONFIG_USB_PORT options below.
+ */
 #undef CONFIG_EXTPOWER_USB
 
 /*****************************************************************************/
@@ -242,10 +275,14 @@
 /* Include a flashmap in the compiled firmware image */
 #define CONFIG_FMAP
 
+/* Allow EC serial console input to wake up the EC from STOP mode */
 #undef CONFIG_FORCE_CONSOLE_RESUME
 
 /* Enable support for floating point unit */
 #undef CONFIG_FPU
+
+/*****************************************************************************/
+/* Firmware region configuration */
 
 #undef CONFIG_FW_IMAGE_SIZE
 #undef CONFIG_FW_PSTATE_OFF
@@ -257,7 +294,24 @@
 #undef CONFIG_FW_WP_RO_OFF
 #undef CONFIG_FW_WP_RO_SIZE
 
+/*****************************************************************************/
+
+/*
+ * Support the host asking the EC about the status of the most recent host
+ * command.
+ *
+ * When the AP is attached to the EC via a serialized bus such as I2C or SPI,
+ * it needs a way to minimize the length of time an EC command will tie up the
+ * bus (and the kernel driver on the AP).  If this config is defined, the EC
+ * may return an in-progress result code for slow commands such as flash
+ * erase/write instead of stalling until the command finishes processing, and
+ * the AP may then inquire the status of the current command and/or the result
+ * of the previous command.
+ */
 #undef CONFIG_HOST_COMMAND_STATUS
+
+/*****************************************************************************/
+/* I2C configuration */
 
 #undef CONFIG_I2C
 #undef CONFIG_I2C_ARBITRATION
@@ -267,6 +321,9 @@
 #undef CONFIG_I2C_PASSTHROUGH
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 
+/*****************************************************************************/
+
+/* Number of IRQs supported on the EC chip */
 #undef CONFIG_IRQ_COUNT
 
 /*****************************************************************************/
@@ -307,8 +364,9 @@
 
 /*****************************************************************************/
 
-#undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413 */
-#undef CONFIG_LED_DRIVER_LP5562
+/* Compile support for LED driver chip(s) */
+#undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
+#undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 
 /*
  * Compile lid switch support.
@@ -332,6 +390,7 @@
 /* Pin mask for one-wire interface */
 #undef CONFIG_ONEWIRE_PIN
 
+/* Check for stack overflows on every context switch */
 #undef CONFIG_OVERFLOW_DETECT
 
 /* Compile support for PECI interface to x86 processor */
@@ -362,18 +421,62 @@
 
 /*****************************************************************************/
 
+/* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
+
+/* Compile support for sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
+
+/*
+ * The EC stores persistent state information for flash write protect in a
+ * block of flash.  If this option is defined, the information is in the last
+ * bank of flash, instead of the last bank in the nominally read-only section
+ * of flash.
+ */
 #undef CONFIG_PSTATE_AT_END
+
+/*
+ * Compile support for using part of the EC's data EEPROM to hold persistent
+ * storage for the AP.
+ */
 #undef CONFIG_PSTORE
+
+/* Compile support for PWM control of cooling fans */
 #undef CONFIG_PWM_FAN
+
+/* Compile support for PWM output to keyboard backlight */
 #undef CONFIG_PWM_KBLIGHT
+
+/* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
+
+/* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
+
+/*
+ * If defined, the hash module will save its last computed hash when jumping
+ * between EC images.
+ */
 #undef CONFIG_SAVE_VBOOT_HASH
+
+/* Compile support for SPI interfaces */
 #undef CONFIG_SPI
+
+/* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
+
+/*
+ * Compile common code to handle simple switch inputs such as the recovery
+ * button input from the servo debug interface.
+ */
 #undef CONFIG_SWITCH
+
+/*
+ * System should remain unlocked even if write protect is enabled.
+ *
+ * NOTE: This should ONLY be defined during bringup, and should never be
+ * defined on a shipping / released platform.
+ */
 #undef CONFIG_SYSTEM_UNLOCKED
 
 /*****************************************************************************/
@@ -408,10 +511,14 @@
 #define CONFIG_TASK_PROFILING
 
 /*****************************************************************************/
+/* Temperature sensor config */
 
+/* Compile common code for temperature sensor support */
 #undef CONFIG_TEMP_SENSOR
-#undef CONFIG_TEMP_SENSOR_G781
-#undef CONFIG_TEMP_SENSOR_TMP006
+
+/* Compile support for particular temperature sensor chips */
+#undef CONFIG_TEMP_SENSOR_G781		/* G781 sensor, on I2C bus */
+#undef CONFIG_TEMP_SENSOR_TMP006	/* TI TMP006 sensor, on I2C bus */
 
 /*****************************************************************************/
 /* UART config */
@@ -445,8 +552,17 @@
 
 /*****************************************************************************/
 
+/* Compile support for simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB
+
+/*
+ * Compile support for smart power control to the device's USB ports, using
+ * dedicated power control chips.  This potentially enables automatic
+ * negotiation of supplying more power to peripherals.
+ */
 #undef CONFIG_USB_PORT_POWER_SMART
+
+/* Compile support for the TSU6721 I2C smart switch */
 #undef CONFIG_USB_SWITCH_TSU6721
 
 /*****************************************************************************/
@@ -468,6 +584,10 @@
 
 /*****************************************************************************/
 
+/*
+ * Compile support for controlling power to WiFi, WWAN (3G/LTE), and/or
+ * bluetooth modules.
+ */
 #undef CONFIG_WIRELESS
 
 /*
