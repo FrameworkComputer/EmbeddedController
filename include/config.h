@@ -113,6 +113,8 @@
 #undef CONFIG_CHIPSET_GAIA
 #undef CONFIG_CHIPSET_HASWELL
 #undef CONFIG_CHIPSET_IVYBRIDGE
+/* Common x86 chipset infrastructure. */
+#undef CONFIG_CHIPSET_X86
 
 #undef CONFIG_CMD_COMXTEST
 #undef CONFIG_CMD_ECTEMP
