@@ -17,6 +17,13 @@
 #define CONFIG_TEMP_SENSOR
 #undef CONFIG_WATCHDOG
 
+/* Host test config */
+#ifdef SMART_BATTERY_CHARGER
+#define CONFIG_CHARGER
+#define CONFIG_MOCK_BATTERY
+#define CONFIG_CHARGER_INPUT_CURRENT 4032
+#endif
+
 /* Keyboard protocol */
 #ifdef KB_8042
 #define CONFIG_KEYBOARD_PROTOCOL_8042

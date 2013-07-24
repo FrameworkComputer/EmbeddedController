@@ -5,6 +5,7 @@
 /* Spring board-specific configuration */
 
 #include "adc.h"
+#include "battery_pack.h"
 #include "board_config.h"
 #include "chipset.h"
 #include "common.h"
@@ -91,6 +92,16 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT12",    GPIO_C, (1<<7),  GPIO_KB_OUTPUT, NULL},
 	{"BOOST_EN",    GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
 	{"ILIM",	GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
+};
+
+/* Battery temperature ranges in degrees C */
+const struct battery_temperature_ranges bat_temp_ranges = {
+	.start_charging_min_c = 5,
+	.start_charging_max_c = 45,
+	.charging_min_c       = 5,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 100,
 };
 
 /* ADC channels */

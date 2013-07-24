@@ -10,6 +10,7 @@
 #include "common.h"
 
 #define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) ((temp_dk - 2731) / 10)
 
 /* Battery parameters */
 struct batt_params {
@@ -21,17 +22,23 @@ struct batt_params {
 	int desired_current;  /* Charging current desired by battery (mA) */
 };
 
+/* Working temperature ranges in degrees C */
+struct battery_temperature_ranges {
+	int8_t start_charging_min_c;
+	int8_t start_charging_max_c;
+	int8_t charging_min_c;
+	int8_t charging_max_c;
+	int8_t discharging_min_c;
+	int8_t discharging_max_c;
+};
+extern const struct battery_temperature_ranges bat_temp_ranges;
+
 /* Battery constants */
 struct battery_info {
 	/* Design voltage in mV */
 	int voltage_max;
 	int voltage_normal;
 	int voltage_min;
-	/* Working temperature range in 0.1 K increments */
-	int temp_charge_min;
-	int temp_charge_max;
-	int temp_discharge_min;
-	int temp_discharge_max;
 	/* Pre-charge current in mA */
 	int precharge_current;
 };

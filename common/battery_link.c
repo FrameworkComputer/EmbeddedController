@@ -47,6 +47,20 @@ static const int const current_limit[TEMP_RANGE_MAX][VOLT_RANGE_MAX] = {
 	{ 800, 1600,  800},
 };
 
+const struct battery_temperature_ranges bat_temp_ranges = {
+	/*
+	 * Operational temperature range
+	 *   0 <= T_charge    <= 50 deg C
+	 * -20 <= T_discharge <= 60 deg C
+	 */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c       = 0,
+	.charging_max_c       = 50,
+	.discharging_min_c    = -20,
+	.discharging_max_c    = 60,
+};
+
 static const struct battery_info info = {
 	/*
 	 * Design voltage
@@ -57,16 +71,6 @@ static const struct battery_info info = {
 	.voltage_max    = 8400,
 	.voltage_normal = 7400,
 	.voltage_min    = 6000,
-
-	/*
-	 * Operational temperature range
-	 *   0 <= T_charge    <= 50 deg C
-	 * -20 <= T_discharge <= 60 deg C
-	 */
-	.temp_charge_min    = CELSIUS_TO_DECI_KELVIN(0),
-	.temp_charge_max    = CELSIUS_TO_DECI_KELVIN(50),
-	.temp_discharge_min = CELSIUS_TO_DECI_KELVIN(-20),
-	.temp_discharge_max = CELSIUS_TO_DECI_KELVIN(60),
 
 	/* Pre-charge current: I <= 0.01C */
 	.precharge_current  = 64, /* mA */
@@ -87,26 +91,27 @@ void battery_vendor_params(struct batt_params *batt)
 {
 	int *desired_current = &batt->desired_current;
 	int temp_range, volt_range;
+	int bat_temp_c = DECI_KELVIN_TO_CELSIUS(batt->temperature);
 
 	/* Limit charging voltage */
 	if (batt->desired_voltage > info.voltage_max)
 		batt->desired_voltage = info.voltage_max;
 
 	/* Don't charge if outside of allowable temperature range */
-	if (batt->temperature >= info.temp_charge_max ||
-	    batt->temperature <= info.temp_charge_min) {
+	if (bat_temp_c >= bat_temp_ranges.charging_max_c ||
+	    bat_temp_c < bat_temp_ranges.charging_min_c) {
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
 		return;
 	}
 
-	if (batt->temperature <= CELSIUS_TO_DECI_KELVIN(10))
+	if (bat_temp_c <= 10)
 		temp_range = TEMP_RANGE_10;
-	else if (batt->temperature <= CELSIUS_TO_DECI_KELVIN(23))
+	else if (bat_temp_c <= 23)
 		temp_range = TEMP_RANGE_23;
-	else if (batt->temperature <= CELSIUS_TO_DECI_KELVIN(35))
+	else if (bat_temp_c <= 35)
 		temp_range = TEMP_RANGE_35;
-	else if (batt->temperature <= CELSIUS_TO_DECI_KELVIN(45))
+	else if (bat_temp_c <= 45)
 		temp_range = TEMP_RANGE_45;
 	else
 		temp_range = TEMP_RANGE_50;

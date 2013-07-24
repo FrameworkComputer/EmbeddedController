@@ -106,6 +106,27 @@ int battery_manufacturer_date(int *year, int *month, int *day)
 	return EC_SUCCESS;
 }
 
+/* Read manufacturer name */
+int battery_manufacturer_name(char *manufacturer_name, int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_MANUFACTURER_NAME, manufacturer_name, buf_size);
+}
+
+/* Read device name */
+int battery_device_name(char *device_name, int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_DEVICE_NAME, device_name, buf_size);
+}
+
+/* Read battery type/chemistry */
+int battery_device_chemistry(char *device_chemistry, int buf_size)
+{
+	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+		SB_DEVICE_CHEMISTRY, device_chemistry, buf_size);
+}
+
 /*****************************************************************************/
 /* Console commands */
 

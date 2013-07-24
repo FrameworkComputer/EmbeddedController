@@ -4,6 +4,7 @@
  */
 /* Pit board-specific configuration */
 
+#include "battery_pack.h"
 #include "common.h"
 #include "extpower.h"
 #include "gaia_power.h"
@@ -78,6 +79,16 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT11",    GPIO_C, (1<<4),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_A, (1<<13),  GPIO_KB_OUTPUT, NULL},
+};
+
+/* Battery temperature ranges in degrees C */
+const struct battery_temperature_ranges bat_temp_ranges = {
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 45,
+	.charging_min_c       = 0,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 100,
 };
 
 /* I2C ports */

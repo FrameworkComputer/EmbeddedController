@@ -4,6 +4,7 @@
  */
 /* Daisy board-specific configuration */
 
+#include "battery_pack.h"
 #include "common.h"
 #include "gaia_power.h"
 #include "gpio.h"
@@ -97,6 +98,16 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
+};
+
+/* Battery temperature ranges in degrees C */
+const struct battery_temperature_ranges bat_temp_ranges = {
+	.start_charging_min_c = 5,
+	.start_charging_max_c = 45,
+	.charging_min_c       = 5,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 100,
 };
 
 /* I2C ports */

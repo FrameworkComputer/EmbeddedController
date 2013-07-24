@@ -1,105 +1,124 @@
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Smart battery driver.
+ */
+
+#include "battery_pack.h"
+#include "common.h"
 #include "console.h"
 #include "smart_battery.h"
 #include "smart_battery_stub.h"
 #include "uart.h"
 #include "util.h"
 
-static int mock_temperature = 2981;
-static int mock_desire_voltage = 7000;
-static int mock_desire_current = 3000;
-static int mock_voltage = 6000;
-static int mock_current = 3000;
+static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];
 
 int sb_read(int cmd, int *param)
 {
-	switch (cmd)
-	{
-	case SB_TEMPERATURE:
-		*param = mock_temperature;
-		break;
-	case SB_VOLTAGE:
-		*param = mock_voltage;
-		break;
-	case SB_CURRENT:
-		*param = mock_current;
-		break;
-	case SB_RELATIVE_STATE_OF_CHARGE:
-	case SB_ABSOLUTE_STATE_OF_CHARGE:
-		*param = 70; /* 70% charged */
-		break;
-	case SB_REMAINING_CAPACITY:
-		*param = 7000; /* 7000 mAh */
-		break;
-	case SB_FULL_CHARGE_CAPACITY:
-	case SB_DESIGN_CAPACITY:
-		*param = 10000; /* 10000 mAh */
-		break;
-	case SB_AVERAGE_TIME_TO_EMPTY:
-	case SB_RUN_TIME_TO_EMPTY:
-		*param = 60; /* 60 min to empty */
-		break;
-	case SB_AVERAGE_TIME_TO_FULL:
-		*param = 30; /* 30 min to full */
-		break;
-	case SB_CHARGING_CURRENT:
-		*param = mock_desire_current;
-		break;
-	case SB_CHARGING_VOLTAGE:
-		*param = mock_desire_voltage;
-		break;
-	case SB_CYCLE_COUNT:
-		*param = 10;
-		break;
-	case SB_DESIGN_VOLTAGE:
-		*param = 7400; /* 7.4 V */
-		break;
-	case SB_SERIAL_NUMBER:
-		*param = 112233;
-		break;
-	default:
-		*param = 0;
-		break;
-	}
-
+	if (cmd >= ARRAY_SIZE(mock_smart_battery))
+		return EC_ERROR_UNIMPLEMENTED;
+	if (cmd < 0 || param == NULL)
+		return EC_ERROR_INVAL;
+	*param = mock_smart_battery[cmd];
 	return EC_SUCCESS;
 }
-
 
 int sb_write(int cmd, int param)
 {
-	uart_printf("sb_write: cmd = %d, param = %d\n", cmd, param);
+	if (cmd >= ARRAY_SIZE(mock_smart_battery))
+		return EC_ERROR_UNIMPLEMENTED;
+	if (cmd < 0)
+		return EC_ERROR_INVAL;
+	mock_smart_battery[cmd] = param;
 	return EC_SUCCESS;
 }
 
-
-static int command_sb_mock(int argc, char **argv)
+int battery_manufacturer_name(char *manufacturer_name, int buf_size)
 {
-	char *e;
-	int v;
-
-	if (argc < 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	v = strtoi(argv[2], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	if (!strcasecmp(argv[1], "temperature"))
-		mock_temperature = v;
-	else if (!strcasecmp(argv[1], "desire_voltage"))
-		mock_desire_voltage = v;
-	else if (!strcasecmp(argv[1], "desire_current"))
-		mock_desire_current = v;
-	else if (!strcasecmp(argv[1], "voltage"))
-		mock_voltage = v;
-	else if (!strcasecmp(argv[1], "current"))
-		mock_current = v;
-	else
-		return EC_ERROR_PARAM1;
-
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sbmock, command_sb_mock,
-			"name value",
-			"Mock smart battery attribute",
-			NULL);
+
+int battery_device_name(char *device_name, int buf_size)
+{
+	return EC_SUCCESS;
+}
+
+int battery_device_chemistry(char *device_chemistry, int buf_size)
+{
+	return EC_SUCCESS;
+}
+
+int battery_current(int *current)
+{
+	int rv, d;
+
+	rv = sb_read(SB_CURRENT, &d);
+	if (rv)
+		return rv;
+
+	*current = (int16_t)d;
+	return EC_SUCCESS;
+}
+
+int battery_average_current(int *current)
+{
+	int rv, d;
+
+	rv = sb_read(SB_AVERAGE_CURRENT, &d);
+	if (rv)
+		return rv;
+
+	*current = (int16_t)d;
+	return EC_SUCCESS;
+}
+
+int battery_time_at_rate(int rate, int *minutes)
+{
+	return EC_SUCCESS;
+}
+
+int battery_manufacturer_date(int *year, int *month, int *day)
+{
+	return EC_SUCCESS;
+}
+
+/* Fake battery */
+const struct battery_temperature_ranges bat_temp_ranges = {
+	/*
+	 * Operational temperature range
+	 *   0 <= T_charge    <= 50 deg C
+	 * -20 <= T_discharge <= 60 deg C
+	 */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c       = 0,
+	.charging_max_c       = 50,
+	.discharging_min_c    = -20,
+	.discharging_max_c    = 60,
+};
+
+static const struct battery_info bat_info = {
+	/*
+	 * Design voltage
+	 *   max    = 8.4V
+	 *   normal = 7.4V
+	 *   min    = 6.0V
+	 */
+	.voltage_max    = 8400,
+	.voltage_normal = 7400,
+	.voltage_min    = 6000,
+
+	/* Pre-charge current: I <= 0.01C */
+	.precharge_current  = 64, /* mA */
+};
+
+const struct battery_info *battery_get_info(void)
+{
+	return &bat_info;
+}
+
+void battery_vendor_params(struct batt_params *batt)
+{
+}

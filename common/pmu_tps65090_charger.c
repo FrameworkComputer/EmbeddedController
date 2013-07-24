@@ -5,6 +5,7 @@
  * TI TPS65090 PMU charging task.
  */
 
+#include "battery_pack.h"
 #include "clock.h"
 #include "chipset.h"
 #include "common.h"
@@ -58,31 +59,30 @@ static void enable_charging(int enable)
 		gpio_set_level(GPIO_CHARGER_EN, enable);
 }
 
-/*
- * TODO(rongchang): move battery vendor specific functions to battery pack
- * module
- */
-static int battery_temperature_celsius(int t)
+static int battery_temperature_celsius(int deci_k)
 {
-	return (t - 2731) / 10;
+	return (deci_k - 2731) / 10;
 }
 
-static int battery_start_charging_range(int t)
+static int battery_start_charging_range(int deci_k)
 {
-	t = battery_temperature_celsius(t);
-	return (t >= 5 && t < 45);
+	int8_t temp_c = battery_temperature_celsius(deci_k);
+	return (temp_c >= bat_temp_ranges.start_charging_min_c &&
+		temp_c < bat_temp_ranges.start_charging_max_c);
 }
 
-static int battery_charging_range(int t)
+static int battery_charging_range(int deci_k)
 {
-	t = battery_temperature_celsius(t);
-	return (t >= 5 && t < 60);
+	int8_t temp_c = battery_temperature_celsius(deci_k);
+	return (temp_c >= bat_temp_ranges.charging_min_c &&
+		temp_c < bat_temp_ranges.charging_max_c);
 }
 
-static int battery_discharging_range(int t)
+static int battery_discharging_range(int deci_k)
 {
-	t = battery_temperature_celsius(t);
-	return (t >= 0 && t < 100);
+	int8_t temp_c = battery_temperature_celsius(deci_k);
+	return (temp_c >= bat_temp_ranges.discharging_min_c &&
+		temp_c < bat_temp_ranges.discharging_max_c);
 }
 
 /*

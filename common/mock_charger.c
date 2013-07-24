@@ -78,7 +78,6 @@ int charger_set_current(int current)
 	return EC_SUCCESS;
 }
 
-
 int charger_get_voltage(int *voltage)
 {
 	*voltage = mock_voltage;
@@ -91,6 +90,48 @@ int charger_set_voltage(int voltage)
 	mock_voltage = voltage;
 	uart_printf("Charger set voltage: %d\n", voltage);
 	return EC_SUCCESS;
+}
+
+
+int charger_get_option(int *option)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_set_option(int option)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_manufacturer_id(int *id)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_device_id(int *id)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_get_input_current(int *input_current)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_set_input_current(int input_current)
+{
+	return EC_SUCCESS;
+}
+
+
+int charger_closest_current(int current)
+{
+	return current;
 }
 
 

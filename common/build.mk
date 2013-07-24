@@ -46,6 +46,7 @@ common-$(CONFIG_LED_PEPPY)+=led_peppy.o
 common-$(CONFIG_LED_SLIPPY)+=led_slippy.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
+common-$(CONFIG_MOCK_BATTERY)+=mock_smart_battery_stub.o mock_charger.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
