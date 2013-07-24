@@ -6,7 +6,10 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
-/* use variant specific configuration for flash / UART / IRQ */
+/* Default to UART 1 for EC console */
+#define CONFIG_UART_CONSOLE 1
+
+/* Use variant specific configuration for flash / UART / IRQ */
 #if defined(CHIP_VARIANT_stm32l15x)
 #include "config-stm32l15x.h"
 #elif defined(CHIP_VARIANT_stm32f100)

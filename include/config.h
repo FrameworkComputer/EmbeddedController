@@ -129,8 +129,10 @@
  */
 #define CONFIG_CONSOLE_CMDHELP
 
+/* Max length of a single line of input */
+#define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
+
 #undef CONFIG_CONSOLE_RESTRICTED_INPUT
-#undef CONFIG_CONSOLE_UART
 
 /*****************************************************************************/
 /*
@@ -222,11 +224,6 @@
 #undef CONFIG_HOSTCMD
 #undef CONFIG_HOST_COMMAND_STATUS
 #undef CONFIG_HOST_EMU
-#undef CONFIG_HOST_UART
-#undef CONFIG_HOST_UART1_GPIOS_PB0_1
-#undef CONFIG_HOST_UART1_GPIOS_PC4_5
-#undef CONFIG_HOST_UART2_GPIOS_PG4_5
-#undef CONFIG_HOST_UART_IRQ
 
 #undef CONFIG_I2C
 #undef CONFIG_I2C_ARBITRATION
@@ -362,9 +359,37 @@
 #undef CONFIG_TEMP_SENSOR_G781
 #undef CONFIG_TEMP_SENSOR_TMP006
 
-#undef CONFIG_UART_BAUD_RATE
-#undef CONFIG_UART_RX_BUF_SIZE
-#undef CONFIG_UART_TX_BUF_SIZE
+/*****************************************************************************/
+/* UART config */
+
+/* Baud rate for UARTs */
+#define CONFIG_UART_BAUD_RATE 115200
+
+/* UART index (number) for EC console */
+#undef CONFIG_UART_CONSOLE
+
+/* UART index (number) for host UART, if present */
+#undef CONFIG_UART_HOST
+
+/* GPIOs used by host UART.  Choose at most one. */
+#undef CONFIG_UART_HOST_GPIOS_PB0_1
+#undef CONFIG_UART_HOST_GPIOS_PC4_5
+#undef CONFIG_UART_HOST_GPIOS_PG4_5
+
+/*
+ * UART transmit buffer size in bytes.  Must be a power of 2 for macros in
+ * common/uart_buffering.c to work properly.
+ */
+#define CONFIG_UART_TX_BUF_SIZE 512
+
+/*
+ * UART receive buffer size in bytes.  Must be a power of 2 for macros in
+ * common/uart_buffering.c to work properly.  Must be larger than
+ * CONFIG_CONSOLE_INPUT_LINE_SIZE to copy and paste scripts.
+ */
+#define CONFIG_UART_RX_BUF_SIZE 128
+
+/*****************************************************************************/
 
 #undef CONFIG_USB_PORT_POWER_DUMB
 #undef CONFIG_USB_PORT_POWER_SMART

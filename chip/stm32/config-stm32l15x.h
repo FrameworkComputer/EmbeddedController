@@ -47,6 +47,7 @@
 #define CONFIG_IRQ_COUNT 45
 
 /* Lots of RAM, so use bigger UART buffer */
+#undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 2048
 
 /* Flash erases to 0, not 1 */

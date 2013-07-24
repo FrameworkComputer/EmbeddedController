@@ -11,9 +11,6 @@
 /* 16 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 16000000
 
-/* Use USART1 as console serial port */
-#define CONFIG_CONSOLE_UART 1
-
 /* Optional features */
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_POST_GPIO_INIT

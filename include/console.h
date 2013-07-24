@@ -58,9 +58,6 @@ enum console_channel {
 /* Mask to use to enable all channels */
 #define CC_ALL			0xffffffffUL
 
-/* Max length of a single line of input */
-#define CONSOLE_INPUT_LINE_SIZE	80
-
 /**
  * Put a string to the console channel.
  *

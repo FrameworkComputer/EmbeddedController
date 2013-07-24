@@ -8,9 +8,6 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-/* Use USART1 as console serial port */
-#define CONFIG_CONSOLE_UART 1
-
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
 #define CONFIG_BATTERY_SMART

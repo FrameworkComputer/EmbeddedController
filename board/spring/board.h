@@ -11,9 +11,6 @@
 /* 16 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 16000000
 
-/* Use USART1 as console serial port */
-#define CONFIG_CONSOLE_UART 1
-#define CONFIG_CONSOLE_RESTRICTED_INPUT
 
 /* Debug features */
 #undef  CONFIG_TASK_PROFILING
@@ -27,6 +24,7 @@
 #define CONFIG_CHIPSET_GAIA
 #endif
 #define CONFIG_CMD_PMU
+#define CONFIG_CONSOLE_RESTRICTED_INPUT
 #define CONFIG_EXTPOWER_USB
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C

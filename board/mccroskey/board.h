@@ -11,9 +11,6 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
-/* Use USART1 as console serial port */
-#define CONFIG_CONSOLE_UART 1
-
 /* Debug features */
 #define CONFIG_I2C_DEBUG	/* FIXME(dhendrix): remove this eventually */
 #undef  CONFIG_TASK_PROFILING

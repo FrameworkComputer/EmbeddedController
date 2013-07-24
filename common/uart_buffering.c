@@ -16,19 +16,6 @@
 #include "uart.h"
 #include "util.h"
 
-/*
- * Transmit and receive buffer sizes must be power of 2 for the macros below
- * to work properly.
- */
-#ifndef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 512
-#endif
-
-#ifndef CONFIG_UART_RX_BUF_SIZE
-/* Must be larger than CONSOLE_INPUT_LINE_SIZE to copy and paste scripts */
-#define CONFIG_UART_RX_BUF_SIZE 128
-#endif
-
 #define HISTORY_SIZE 8
 
 /* Macros to advance in the circular buffers */
@@ -52,7 +39,7 @@ static volatile int tx_buf_tail;
 static volatile char rx_buf[CONFIG_UART_RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
-static volatile char rx_cur_buf[CONSOLE_INPUT_LINE_SIZE];
+static volatile char rx_cur_buf[CONFIG_CONSOLE_INPUT_LINE_SIZE];
 static volatile int rx_cur_buf_tail;
 static volatile int rx_cur_buf_head;
 static volatile int rx_cur_buf_ptr;
@@ -232,7 +219,7 @@ static void insert_char(char c)
 	int ptr;
 
 	/* On overflow, discard input */
-	if (rx_cur_buf_head == CONSOLE_INPUT_LINE_SIZE && c != '\n')
+	if (rx_cur_buf_head == CONFIG_CONSOLE_INPUT_LINE_SIZE && c != '\n')
 		return;
 
 	/* Move buffer ptr to the end if 'c' is new line */

@@ -13,13 +13,8 @@
 #include "uart.h"
 #include "util.h"
 
-/* Baud rate for UARTs */
-#ifndef CONFIG_UART_BAUD_RATE
-#define CONFIG_UART_BAUD_RATE 115200
-#endif
-
 /* Console USART index */
-#define UARTN CONFIG_CONSOLE_UART
+#define UARTN CONFIG_UART_CONSOLE
 
 static int init_done;    /* Initialization done? */
 static int should_stop;  /* Last TX control action */

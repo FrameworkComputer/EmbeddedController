@@ -17,7 +17,7 @@
 #define PROMPT "> "
 
 /* Current console command line */
-static char input_buf[CONSOLE_INPUT_LINE_SIZE];
+static char input_buf[CONFIG_CONSOLE_INPUT_LINE_SIZE];
 
 /**
  * Split a line of input into words.
