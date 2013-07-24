@@ -307,6 +307,7 @@
 
 /*****************************************************************************/
 
+#undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413 */
 #undef CONFIG_LED_DRIVER_LP5562
 
 /*
@@ -322,8 +323,15 @@
 /* Compile support for LPC interface */
 #undef CONFIG_LPC
 
+/* Compile support for one-wire interface */
 #undef CONFIG_ONEWIRE
-#undef CONFIG_ONEWIRE_LED
+
+/* GPIO bank for one-wire interface */
+#undef CONFIG_ONEWIRE_BANK
+
+/* Pin mask for one-wire interface */
+#undef CONFIG_ONEWIRE_PIN
+
 #undef CONFIG_OVERFLOW_DETECT
 
 /* Compile support for PECI interface to x86 processor */

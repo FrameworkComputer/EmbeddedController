@@ -12,8 +12,8 @@
 #include "task.h"
 #include "timer.h"
 
-#if !defined(ONEWIRE_BANK) || !defined(ONEWIRE_PIN)
-#error Unsupported board. ONEWIRE_BANK and ONEWIRE_PIN need to be defined.
+#if !defined(CONFIG_ONEWIRE_BANK) || !defined(CONFIG_ONEWIRE_PIN)
+#error Unsupported board. CONFIG_ONEWIRE_BANK/PIN need to be defined.
 #endif
 
 /*
@@ -38,10 +38,10 @@
  */
 static void output0(int usec)
 {
-	LM4_GPIO_DIR(ONEWIRE_BANK) |= ONEWIRE_PIN;
-	LM4_GPIO_DATA(ONEWIRE_BANK, ONEWIRE_PIN) = 0;
+	LM4_GPIO_DIR(CONFIG_ONEWIRE_BANK) |= CONFIG_ONEWIRE_PIN;
+	LM4_GPIO_DATA(CONFIG_ONEWIRE_BANK, CONFIG_ONEWIRE_PIN) = 0;
 	udelay(usec);
-	LM4_GPIO_DIR(ONEWIRE_BANK) &= ~ONEWIRE_PIN;
+	LM4_GPIO_DIR(CONFIG_ONEWIRE_BANK) &= ~CONFIG_ONEWIRE_PIN;
 }
 
 /**
@@ -49,7 +49,7 @@ static void output0(int usec)
  */
 static int readline(void)
 {
-	return LM4_GPIO_DATA(ONEWIRE_BANK, ONEWIRE_PIN) ? 1 : 0;
+	return LM4_GPIO_DATA(CONFIG_ONEWIRE_BANK, CONFIG_ONEWIRE_PIN) ? 1 : 0;
 }
 
 /**
@@ -160,7 +160,8 @@ void onewire_write(int data)
 static void onewire_init(void)
 {
 	/* Configure 1-wire pin as open-drain GPIO */
-	gpio_set_alternate_function(ONEWIRE_BANK, ONEWIRE_PIN, -1);
-	LM4_GPIO_ODR(ONEWIRE_BANK) |= ONEWIRE_PIN;
+	gpio_set_alternate_function(CONFIG_ONEWIRE_BANK,
+				    CONFIG_ONEWIRE_PIN, -1);
+	LM4_GPIO_ODR(CONFIG_ONEWIRE_BANK) |= CONFIG_ONEWIRE_PIN;
 }
 DECLARE_HOOK(HOOK_INIT, onewire_init, HOOK_PRIO_DEFAULT);
