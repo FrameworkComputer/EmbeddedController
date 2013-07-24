@@ -21,6 +21,7 @@ common-$(BOARD_spring)+=battery_spring.o
 
 common-$(CONFIG_BACKLIGHT_X86)+=backlight_x86.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
+common-$(CONFIG_BATTERY_MOCK)+=mock_smart_battery_stub.o mock_charger.o
 common-$(CONFIG_BATTERY_SMART)+=smart_battery.o smart_battery_stub.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger_common.o
 common-$(CONFIG_CHARGER_BQ24715)+=charger_bq24715.o
@@ -46,7 +47,6 @@ common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LED_DRIVER_LP5562)+=led_driver_lp5562.o led_lp5562.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
-common-$(CONFIG_MOCK_BATTERY)+=mock_smart_battery_stub.o mock_charger.o
 common-$(CONFIG_ONEWIRE_LED)+=onewire_led.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o

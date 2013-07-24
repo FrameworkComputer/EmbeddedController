@@ -654,11 +654,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 
 		case 0x60: /* fall-thru */
 		case 0x45:
-			/*
-			 * U-boot hack.  See CONFIG_USE_CPCIDVI in
-			 * third_party/u-boot/files/drivers/input/i8042.c.
-			 * Just ignore; don't reply.
-			 */
+			/* U-boot hack.  Just ignore; don't reply. */
 			break;
 
 		case I8042_CMD_SETALL_MB:  /* fall-thru */

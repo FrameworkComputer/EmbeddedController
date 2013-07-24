@@ -90,28 +90,9 @@ static void clock_set_osc(enum clock_osc osc)
 		/* Flash 1 wait state */
 		tmp_acr |= STM32_FLASH_ACR_LATENCY;
 		STM32_FLASH_ACR = tmp_acr;
-
-#ifdef CONFIG_USE_PLL
-		/*
-		 * Switch to HSI, no prescaler, PLLSRC = HSI, PLLMUL = x3,
-		 * PLLDIV = /3, no MCO => PLLVCO = 48 MHz and PLLCLK = 16 Mhz.
-		 */
-		STM32_RCC_CFGR = 0x00800001;
-
-		/* Enable the PLL */
-		STM32_RCC_CR |= 1 << 24;
-		/* Wait for the PLL to lock */
-		while (!(STM32_RCC_CR & (1 << 25)))
-			;
-		/* Switch to SYSCLK to the PLL */
-		STM32_RCC_CFGR = 0x00800003;
-		/* Wait until the PLL is the clock source */
-		while ((STM32_RCC_CFGR & 0xc) != 0xc)
-			;
-#else
 		/* Switch to HSI */
 		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_HSI;
-#endif
+
 		freq = HSI_CLOCK;
 		break;
 

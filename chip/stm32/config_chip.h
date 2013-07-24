@@ -40,10 +40,6 @@
 /* Number of I2C ports */
 #define I2C_PORT_COUNT 2
 
-/* Support programming on-chip flash */
-#define CONFIG_FLASH
-#define CONFIG_FMAP
-
 /*
  * Use a timer to print a watchdog warning event before the actual watchdog
  * timer fires.  This is needed on STM32, where the independent watchdog has no

@@ -32,10 +32,18 @@
  * respectively.
  *
  * TODO(rspangler): describe all of these.  Also describe the HAS_TASK_* macro
- * and how/when it should be used vs. a config define.
+ * and how/when it should be used vs. a config define.  And BOARD_*, CHIP_*,
+ * and CHIP_FAMILY_*.
  */
 
+/* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
+
+/*
+ * Compile support for passing backlight-enable signal from x86 chipset through
+ * EC.  This allows the EC to gate the backlight-enable signal with the lid
+ * switch.
+ */
 #undef CONFIG_BACKLIGHT_X86
 
 /*****************************************************************************/
@@ -43,6 +51,7 @@
 
 /* Compile battery-specific code for these batteries (pick at most one) */
 #undef CONFIG_BATTERY_BQ20Z453
+#undef CONFIG_BATTERY_MOCK
 
 /*
  * Battery can check if it's connected.  If defined, charger will check for
@@ -60,8 +69,19 @@
 
 /*****************************************************************************/
 
+/*
+ * Call board_config_post_gpio_init() after GPIOs are initialized.  See
+ * include/board_config.h for more information.
+ */
 #undef CONFIG_BOARD_POST_GPIO_INIT
+
+/*
+ * Call board_config_pre_init() before any inits are called.  See
+ * include/board_config.h for more information.
+ */
 #undef CONFIG_BOARD_PRE_INIT
+
+/* EC has GPIOs attached to board version stuffing resistors */
 #undef CONFIG_BOARD_VERSION
 
 /*****************************************************************************/
@@ -132,6 +152,11 @@
 /* Max length of a single line of input */
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
 
+/*
+ * Disable EC console input if the system is locked.  This is needed for
+ * security on platforms where the EC console is accessible from outside the
+ * case - for example, via a special USB dongle.
+ */
 #undef CONFIG_CONSOLE_RESTRICTED_INPUT
 
 /*****************************************************************************/
@@ -196,7 +221,12 @@
 #undef CONFIG_EXTPOWER_GPIO
 #undef CONFIG_EXTPOWER_USB
 
-#undef CONFIG_FLASH
+/*****************************************************************************/
+/* Flash configuration */
+
+/* Compile support for programming on-chip flash */
+#define CONFIG_FLASH
+
 #undef CONFIG_FLASH_BANK_SIZE
 #undef CONFIG_FLASH_BASE
 #undef CONFIG_FLASH_ERASED_VALUE32
@@ -207,8 +237,14 @@
 #undef CONFIG_FLASH_WRITE_IDEAL_SIZE
 #undef CONFIG_FLASH_WRITE_SIZE
 
-#undef CONFIG_FMAP
+/*****************************************************************************/
+
+/* Include a flashmap in the compiled firmware image */
+#define CONFIG_FMAP
+
 #undef CONFIG_FORCE_CONSOLE_RESUME
+
+/* Enable support for floating point unit */
 #undef CONFIG_FPU
 
 #undef CONFIG_FW_IMAGE_SIZE
@@ -222,7 +258,6 @@
 #undef CONFIG_FW_WP_RO_SIZE
 
 #undef CONFIG_HOST_COMMAND_STATUS
-#undef CONFIG_HOST_EMU
 
 #undef CONFIG_I2C
 #undef CONFIG_I2C_ARBITRATION
@@ -405,9 +440,6 @@
 #undef CONFIG_USB_PORT_POWER_DUMB
 #undef CONFIG_USB_PORT_POWER_SMART
 #undef CONFIG_USB_SWITCH_TSU6721
-
-#undef CONFIG_USE_CPCIDVI
-#undef CONFIG_USE_PLL
 
 /*****************************************************************************/
 /* Watchdog config */

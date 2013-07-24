@@ -31,9 +31,6 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 #define CONFIG_FW_WP_RO_OFF     CONFIG_FW_RO_OFF
 #define CONFIG_FW_WP_RO_SIZE    CONFIG_FW_IMAGE_SIZE
 
-/* Features */
-#define CONFIG_FLASH
-
 /*
  * Put this after RO to give RW more space and make RO write protect region
  * contiguous.

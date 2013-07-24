@@ -10,15 +10,15 @@
 
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
-#define CONFIG_HOST_EMU
+#undef CONFIG_FMAP
 #define CONFIG_POWER_BUTTON
 #define CONFIG_TEMP_SENSOR
 #undef CONFIG_WATCHDOG
 
 /* Host test config */
 #ifdef SMART_BATTERY_CHARGER
+#define CONFIG_BATTERY_MOCK
 #define CONFIG_CHARGER
-#define CONFIG_MOCK_BATTERY
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #endif
 
