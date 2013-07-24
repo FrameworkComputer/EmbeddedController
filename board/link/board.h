@@ -10,7 +10,6 @@
 
 /* Optional features */
 #define CONFIG_BACKLIGHT_X86
-#define CONFIG_BATTERY_LINK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHARGER

@@ -43,11 +43,6 @@
 
 /* Compile battery-specific code for these batteries (pick at most one) */
 #undef CONFIG_BATTERY_BQ20Z453
-#undef CONFIG_BATTERY_FALCO
-#undef CONFIG_BATTERY_LINK
-#undef CONFIG_BATTERY_PEPPY
-#undef CONFIG_BATTERY_SLIPPY
-#undef CONFIG_BATTERY_SPRING
 
 /*
  * Battery can check if it's connected.  If defined, charger will check for
@@ -196,9 +191,7 @@
 #undef CONFIG_EEPROM
 #undef CONFIG_EOPTION
 
-#undef CONFIG_EXTPOWER_FALCO
 #undef CONFIG_EXTPOWER_GPIO
-#undef CONFIG_EXTPOWER_SNOW
 #undef CONFIG_EXTPOWER_USB
 
 #undef CONFIG_FLASH
@@ -284,8 +277,6 @@
 /*****************************************************************************/
 
 #undef CONFIG_LED_DRIVER_LP5562
-#undef CONFIG_LED_FALCO
-#undef CONFIG_LED_PEPPY
 
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_LOW_POWER_IDLE

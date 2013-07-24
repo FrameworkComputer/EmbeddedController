@@ -44,7 +44,6 @@
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 /* External Charger maximum current. */
 #define   CONFIG_CHARGER_INPUT_CURRENT 5000
-#define CONFIG_BATTERY_LINK
 #define CONFIG_PWM_FAN
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_TEMP_SENSOR
