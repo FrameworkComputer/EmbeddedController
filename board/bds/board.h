@@ -16,7 +16,10 @@
 #define CONFIG_EOPTION
 #define CONFIG_PSTORE
 
-/* LM4 modules we want to exclude */
+/* Modules we want to exclude */
+#undef CONFIG_LID_SWITCH
+#undef CONFIG_LPC
+#undef CONFIG_PECI
 #undef CONFIG_SWITCH
 
 /* Write protect is active high */

@@ -221,7 +221,6 @@
 #undef CONFIG_FW_WP_RO_OFF
 #undef CONFIG_FW_WP_RO_SIZE
 
-#undef CONFIG_HOSTCMD
 #undef CONFIG_HOST_COMMAND_STATUS
 #undef CONFIG_HOST_EMU
 
@@ -275,12 +274,24 @@
 
 #undef CONFIG_LED_DRIVER_LP5562
 
-#undef CONFIG_LID_SWITCH
+/*
+ * Compile lid switch support.
+ *
+ * This is enabled by default because all boards other than reference boards
+ * are for laptops with lid switchs.  Reference boards #undef it.
+ */
+#define CONFIG_LID_SWITCH
+
 #undef CONFIG_LOW_POWER_IDLE
+
+/* Compile support for LPC interface */
 #undef CONFIG_LPC
+
 #undef CONFIG_ONEWIRE
 #undef CONFIG_ONEWIRE_LED
 #undef CONFIG_OVERFLOW_DETECT
+
+/* Compile support for PECI interface to x86 processor */
 #undef CONFIG_PECI
 
 /*****************************************************************************/
@@ -418,6 +429,11 @@
 /*****************************************************************************/
 
 #undef CONFIG_WIRELESS
+
+/*
+ * Write protect signal is active-high.  If this is defined, there must be a
+ * GPIO named GPIO_WP; if not defined, there must be a GPIO names GPIO_WP_L.
+ */
 #undef CONFIG_WP_ACTIVE_HIGH
 
 /*

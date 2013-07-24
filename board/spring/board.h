@@ -30,7 +30,6 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_PASSTHROUGH
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE	/* Use STOP mode when we have nothing to do */
 #define CONFIG_LED_DRIVER_LP5562
 #define CONFIG_PMU_FORCE_FET	/* Always enable 3G modem power rail */

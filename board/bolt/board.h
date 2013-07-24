@@ -24,13 +24,10 @@
 #ifdef HAS_TASK_KEYPROTO
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
-#define CONFIG_LID_SWITCH
-#define CONFIG_LPC
 #define CONFIG_ONEWIRE
 #define  ONEWIRE_BANK LM4_GPIO_F
 #define  ONEWIRE_PIN (1 << 7)
 #define CONFIG_ONEWIRE_LED
-#define CONFIG_PECI
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_WP_ACTIVE_HIGH
@@ -186,7 +183,7 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	/* HEY - need two I2C sensor values */
+	/* HEY - need two I2C sensor values, and put PECI first */
 
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,

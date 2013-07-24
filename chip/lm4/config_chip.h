@@ -105,6 +105,8 @@
 #define CONFIG_FMAP
 #define CONFIG_FPU
 #define CONFIG_I2C
+#define CONFIG_LPC
+#define CONFIG_PECI
 #define CONFIG_SWITCH
 
 /* Compile for running from RAM instead of flash */

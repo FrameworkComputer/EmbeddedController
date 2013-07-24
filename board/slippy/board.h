@@ -26,9 +26,6 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
 #define CONFIG_LED_SLIPPY
-#define CONFIG_LID_SWITCH
-#define CONFIG_LPC
-#define CONFIG_PECI
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_PWM_FAN
@@ -173,15 +170,10 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-#ifdef CONFIG_PECI
 	/* CPU die temperature via PECI */
 	TEMP_SENSOR_CPU_PECI = 0,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
-#else
-	/* EC internal temperature sensor */
-	TEMP_SENSOR_EC_INTERNAL = 0,
-#endif
 	/* G781 internal and external sensors */
 	TEMP_SENSOR_I2C_G781_INTERNAL,
 	TEMP_SENSOR_I2C_G781_EXTERNAL,

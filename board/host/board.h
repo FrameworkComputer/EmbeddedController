@@ -10,9 +10,7 @@
 
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
-#define CONFIG_HOSTCMD
 #define CONFIG_HOST_EMU
-#define CONFIG_LID_SWITCH
 #define CONFIG_POWER_BUTTON
 #define CONFIG_TEMP_SENSOR
 #undef CONFIG_WATCHDOG
