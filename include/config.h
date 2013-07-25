@@ -422,6 +422,9 @@
 /* Compile support for TPS65090 PMU */
 #undef CONFIG_PMU_TPS65090
 
+/* Compile support for PMU powerinfo host command */
+#undef CONFIG_PMU_POWERINFO
+
 /*****************************************************************************/
 
 /* Compile common code to support power button debouncing */

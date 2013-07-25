@@ -33,6 +33,7 @@ common-$(CONFIG_CHIPSET_GAIA)+=chipset_gaia.o
 common-$(CONFIG_CHIPSET_HASWELL)+=chipset_haswell.o
 common-$(CONFIG_CHIPSET_IVYBRIDGE)+=chipset_ivybridge.o
 common-$(CONFIG_CHIPSET_X86)+=chipset_x86_common.o
+common-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o
 common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_EXTPOWER_FALCO)+=extpower_falco.o
