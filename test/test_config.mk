@@ -6,5 +6,5 @@
 # per-test configuration
 #
 
-CFLAGS-kb_8042=-DKB_8042
-CFLAGS-sbs_charging=-DSMART_BATTERY_CHARGER
+CFLAGS-kb_8042=-DTEST_KB_8042
+CFLAGS-sbs_charging=-DTEST_SMART_BATTERY_CHARGER

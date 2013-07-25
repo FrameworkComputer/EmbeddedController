@@ -16,14 +16,14 @@
 #undef CONFIG_WATCHDOG
 
 /* Host test config */
-#ifdef SMART_BATTERY_CHARGER
+#ifdef TEST_SMART_BATTERY_CHARGER
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #endif
 
 /* Keyboard protocol */
-#ifdef KB_8042
+#ifdef TEST_KB_8042
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #else
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
