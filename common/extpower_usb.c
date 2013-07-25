@@ -45,7 +45,7 @@ enum ilim_config {
 #define TOAD_DEVICE_TYPE (TSU6721_TYPE_UART | TSU6721_TYPE_AUDIO3)
 
 /* Voltage threshold of D+ for video */
-#define VIDEO_ID_THRESHOLD	250
+#define VIDEO_ID_THRESHOLD	1300
 
 /*
  * Mapping from PWM duty to current:
