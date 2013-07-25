@@ -29,6 +29,11 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #endif
 
+/* Turbo-mode charger tests */
+#ifdef TEST_EXTPOWER_FALCO
+#define CONFIG_EXTPOWER_FALCO
+#endif
+
 #define CONFIG_WP_ACTIVE_HIGH
 
 enum gpio_signal {
@@ -48,6 +53,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_CASE,
 
 	TEMP_SENSOR_COUNT
+};
+
+enum adc_channel {
+	ADC_CH_CHARGER_CURRENT,
+	ADC_AC_ADAPTER_ID_VOLTAGE,
+
+	ADC_CH_COUNT
 };
 
 #endif /* __BOARD_H */

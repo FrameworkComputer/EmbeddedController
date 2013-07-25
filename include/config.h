@@ -242,6 +242,9 @@
  */
 #undef CONFIG_EOPTION
 
+/* Compile support for handling turbo-mode chargers */
+#undef CONFIG_EXTPOWER_FALCO
+
 /* Compile support for detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
 

@@ -27,4 +27,9 @@ int extpower_is_present(void);
  */
 void extpower_interrupt(enum gpio_signal signal);
 
+#ifdef CONFIG_EXTPOWER_FALCO
+/* Adapter-specific logic */
+#include "extpower_falco.h"
+#endif
+
 #endif  /* __CROS_EC_EXTPOWER_H */
