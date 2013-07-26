@@ -150,14 +150,12 @@ static void battery_led_update(void)
 	 * set color here.
 	 */
 	switch (charge_get_state()) {
-	case ST_IDLE:
-		state = LED_STATE_SOLID_GREEN;
-		break;
 	case ST_IDLE0:
 	case ST_BAD_COND:
 	case ST_PRE_CHARGING:
 		state = LED_STATE_SOLID_YELLOW;
 		break;
+	case ST_IDLE:
 	case ST_DISCHARGING:
 	case ST_CHARGING:
 		if (battery_state_of_charge(&state_of_charge)) {
