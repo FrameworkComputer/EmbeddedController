@@ -49,7 +49,7 @@ static int ec_command_dev(int command, int version,
 		fprintf(stderr, "EC result %d\n", s_cmd.result);
 	}
 
-	return r ? r : s_cmd.insize;
+	return r;
 }
 
 static int ec_readmem_dev(int offset, int bytes, void *dest)
@@ -108,9 +108,13 @@ int comm_init_dev(void)
 
 	/*
 	 * TODO: need a way to get this from the driver and EC.  For now,
-	 * pick a magic lowest common denominator value.
+	 * pick a magic lowest common denominator value. The ec_max_outsize
+	 * is set to handle v3 EC protocol. The ec_max_insize needs to be
+	 * set to the largest value that can be returned from the EC,
+	 * EC_PROTO2_MAX_PARAM_SIZE.
 	 */
-	ec_max_insize = ec_max_outsize = EC_PROTO2_MAX_PARAM_SIZE - 8;
+	ec_max_outsize = EC_PROTO2_MAX_PARAM_SIZE - 8;
+	ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	return 0;
 }
