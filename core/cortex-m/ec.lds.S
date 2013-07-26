@@ -100,6 +100,10 @@ SECTIONS
         *(.rodata.HOOK_POWER_BUTTON_CHANGE)
         __hooks_pwrbtn_change_end = .;
 
+        __hooks_charge_state_change = .;
+        *(.rodata.HOOK_CHARGE_STATE_CHANGE)
+        __hooks_charge_state_change_end = .;
+
         __hooks_tick = .;
         *(.rodata.HOOK_TICK)
         __hooks_tick_end = .;

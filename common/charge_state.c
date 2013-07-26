@@ -689,6 +689,7 @@ void charger_task(void)
 			CPRINTF("[%T Charge state %s -> %s]\n",
 				state_name[ctx->prev.state],
 				state_name[new_state]);
+			hook_notify(HOOK_CHARGE_STATE_CHANGE);
 		}
 
 #ifdef HAS_TASK_POWERBTN
