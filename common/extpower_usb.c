@@ -671,16 +671,7 @@ static void usb_device_change(int dev_type)
  */
 void extpower_charge_init(void)
 {
-	int dummy;
-
-	/*
-	 * Shut off power input if battery is good. Otherwise, leave
-	 * 500mA to sustain the system.
-	 */
-	if (battery_current(&dummy))
-		set_pwm_duty_cycle(I_LIMIT_500MA);
-	else
-		ilim_config(ILIM_CONFIG_MANUAL_ON);
+	set_pwm_duty_cycle(I_LIMIT_500MA);
 
 	/*
 	 * Somehow TSU6721 comes up slowly. Let's wait for a moment before
@@ -821,7 +812,7 @@ static void pwm_tweak(void)
 
 	vbus = adc_read_channel(ADC_CH_USB_VBUS_SNS);
 	if (battery_current(&current))
-		return;
+		current = 0;
 
 	if (user_pwm_duty >= 0) {
 		if (current_pwm_duty != user_pwm_duty)
