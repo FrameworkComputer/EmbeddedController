@@ -156,7 +156,7 @@ static const int apple_charger_type[4] = {I_LIMIT_500MA,
 
 static int video_power_enabled;
 
-#define NON_STD_CHARGER_REDETECT_DELAY (4 * SECOND)
+#define NON_STD_CHARGER_REDETECT_DELAY (600 * MSEC)
 static enum {
 	NO_REDETECT,
 	REDETECT_SCHEDULED,
