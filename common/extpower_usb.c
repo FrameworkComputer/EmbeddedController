@@ -67,7 +67,7 @@ enum ilim_config {
 #define I_LIMIT_3000MA  0
 
 /* PWM control loop parameters */
-#define PWM_CTRL_MAX_DUTY	96 /* Minimum current for dead battery */
+#define PWM_CTRL_MAX_DUTY	I_LIMIT_100MA /* Minimum current */
 #define PWM_CTRL_BEGIN_OFFSET	90
 #define PWM_CTRL_OC_MARGIN	15
 #define PWM_CTRL_OC_DETECT_TIME	(1200 * MSEC)
@@ -403,17 +403,10 @@ static int pwm_check_vbus_high(int vbus)
 
 static void pwm_nominal_duty_cycle(int percent)
 {
-	int dummy;
 	int new_percent = percent;
 
 	new_percent += PWM_CTRL_BEGIN_OFFSET;
-
-	/*
-	 * If the battery is dead, leave a minimum amount of current
-	 * input to sustain the system.
-	 */
-	if (battery_current(&dummy))
-		new_percent = MIN(new_percent, PWM_CTRL_MAX_DUTY);
+	new_percent = MIN(new_percent, PWM_CTRL_MAX_DUTY);
 
 	set_pwm_duty_cycle(new_percent);
 	nominal_pwm_duty = percent;
