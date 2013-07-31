@@ -30,7 +30,7 @@
 #include "util.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTON_L",       LM4_GPIO_A, (1<<2), GPIO_INT_BOTH,
 	 power_button_interrupt},
@@ -124,9 +124,10 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"USB2_ENABLE",          LM4_GPIO_D, (1<<5), GPIO_OUT_HIGH, NULL},
 	{"USB2_ILIM_SEL",        LM4_GPIO_D, (1<<6), GPIO_OUT_LOW, NULL},
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* x86 signal list.  Must match order of enum x86_signal. */
-const struct x86_signal_info x86_signal_list[X86_SIGNAL_COUNT] = {
+const struct x86_signal_info x86_signal_list[] = {
 	{GPIO_PP5000_PGOOD,  1, "PGOOD_PP5000"},
 	{GPIO_PP1350_PGOOD,  1, "PGOOD_PP1350"},
 	{GPIO_PP1050_PGOOD,  1, "PGOOD_PP1050"},
@@ -136,9 +137,10 @@ const struct x86_signal_info x86_signal_list[X86_SIGNAL_COUNT] = {
 	{GPIO_PCH_SLP_S5_L,  1, "SLP_S5#_DEASSERTED"},
 	{GPIO_PCH_SLP_SUS_L, 1, "SLP_SUS#_DEASSERTED"},
 };
+BUILD_ASSERT(ARRAY_SIZE(x86_signal_list) == X86_SIGNAL_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
-const struct adc_t adc_channels[ADC_CH_COUNT] = {
+const struct adc_t adc_channels[] = {
 	/* EC internal temperature is calculated by
 	 * 273 + (295 - 450 * ADC_VALUE / ADC_READ_MAX) / 2
 	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
@@ -155,23 +157,26 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 2, 0,
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+const struct i2c_port_t i2c_ports[] = {
 	/* Note: battery and charger share a port.  Only include it once in
 	 * this list so we don't double-initialize it. */
 	{"batt_chg", I2C_PORT_BATTERY,  100},
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 	{"thermal",  I2C_PORT_THERMAL,  100},
 };
+BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
-const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
+const struct temp_sensor_t temp_sensors[] = {
 /* HEY: Need correct I2C addresses and read function for external sensor */
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
 };
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 40,

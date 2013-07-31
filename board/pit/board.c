@@ -22,7 +22,7 @@
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
@@ -80,6 +80,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"KB_OUT11",    GPIO_C, (1<<4),  GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",    GPIO_A, (1<<13),  GPIO_KB_OUTPUT, NULL},
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* Battery temperature ranges in degrees C */
 const struct battery_temperature_ranges bat_temp_ranges = {
@@ -92,9 +93,10 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 };
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+const struct i2c_port_t i2c_ports[] = {
 	{"host", I2C_PORT_HOST, 100},
 };
+BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 void board_config_post_gpio_init(void)
 {

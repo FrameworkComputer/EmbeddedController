@@ -25,7 +25,7 @@
 static void kbd_power_on(enum gpio_signal signal);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"KB_IN00",        GPIO_B, (1<<8),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
@@ -96,6 +96,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"OSC32_OUT",      GPIO_C, (1<<15), GPIO_DEFAULT, NULL},
 #endif
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 void board_config_pre_init(void)
 {

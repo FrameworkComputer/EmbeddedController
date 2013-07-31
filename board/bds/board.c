@@ -12,7 +12,7 @@
 #include "util.h"
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
-const struct adc_t adc_channels[ADC_CH_COUNT] = {
+const struct adc_t adc_channels[] = {
 	/* EC internal temperature is calculated by
 	 * 273 + (295 - 450 * ADC_VALUE / ADC_READ_MAX) / 2
 	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
@@ -29,19 +29,22 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	{"BDSPot", LM4_ADC_SEQ1, 33 * 4000, ADC_READ_MAX * 16, 0,
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+const struct i2c_port_t i2c_ports[] = {
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 };
+BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	{"RECOVERYn",   LM4_GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
 	{"DEBUG_LED",    LM4_GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);

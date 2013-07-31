@@ -17,7 +17,7 @@ struct adc_t {
 	int channel;
 };
 
-extern const struct adc_t adc_channels[ADC_CH_COUNT];
+extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by adc_read_channel(). */
 #define ADC_READ_MIN 0

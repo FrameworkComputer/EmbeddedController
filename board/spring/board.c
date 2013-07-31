@@ -31,7 +31,7 @@
 #define INT_BOTH_PULL_UP	(GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
@@ -93,6 +93,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	{"BOOST_EN",    GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
 	{"ILIM",	GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* Battery temperature ranges in degrees C */
 const struct battery_temperature_ranges bat_temp_ranges = {
@@ -105,7 +106,7 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 };
 
 /* ADC channels */
-const struct adc_t adc_channels[ADC_CH_COUNT] = {
+const struct adc_t adc_channels[] = {
 	/*
 	 * VBUS voltage sense pin.
 	 * Sense pin 3.3V is converted to 4096. Accounting for the 2x
@@ -117,11 +118,13 @@ const struct adc_t adc_channels[ADC_CH_COUNT] = {
 	/* Micro USB D- sense pin. Converted to mV (3300mV/4096). */
 	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 3300, 4096, 0, STM32_AIN(4)},
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+const struct i2c_port_t i2c_ports[] = {
 	{"host", I2C_PORT_HOST, 100},
 };
+BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 void board_config_pre_init(void)
 {

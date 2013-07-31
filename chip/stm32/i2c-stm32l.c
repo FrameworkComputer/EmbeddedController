@@ -18,8 +18,6 @@
 #include "timer.h"
 #include "util.h"
 
-extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
-
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)

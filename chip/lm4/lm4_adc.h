@@ -30,7 +30,7 @@ struct adc_t {
 	uint8_t gpio_mask;
 };
 
-extern const struct adc_t adc_channels[ADC_CH_COUNT];
+extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0

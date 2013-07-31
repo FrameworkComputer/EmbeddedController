@@ -20,6 +20,8 @@ struct i2c_port_t {
 	int kbps;          /* Speed in kbps */
 };
 
+extern const struct i2c_port_t i2c_ports[];
+
 /* Flags for i2c_xfer() */
 #define I2C_XFER_START (1 << 0)  /* Start smbus session from idle state */
 #define I2C_XFER_STOP (1 << 1)  /* Terminate smbus session with stop bit */

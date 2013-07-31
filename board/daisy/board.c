@@ -35,7 +35,7 @@
 #define GPIO_KB_OUTPUT (GPIO_OUTPUT | GPIO_PULL_UP | GPIO_OPEN_DRAIN)
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[GPIO_COUNT] = {
+const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
@@ -99,6 +99,7 @@ const struct gpio_info gpio_list[GPIO_COUNT] = {
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
 };
+BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* Battery temperature ranges in degrees C */
 const struct battery_temperature_ranges bat_temp_ranges = {
@@ -111,10 +112,11 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 };
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[I2C_PORTS_USED] = {
+const struct i2c_port_t i2c_ports[] = {
 	{"0", 0, 100},
 	{"1", 1, 100},
 };
+BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 /* Auto detect I2C host port
  * Daisy board has two I2C ports, I2C1(0) and I2C2(1), that can be configured

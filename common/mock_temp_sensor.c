@@ -11,12 +11,6 @@
 #include "timer.h"
 #include "util.h"
 
-/*
- * Defined in board_temp_sensor.c. Must be in the same order as
- * in enum temp_sensor_id.
- */
-extern const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT];
-
 static int temp_val[TEMP_SENSOR_TYPE_COUNT];
 
 int temp_sensor_powered(enum temp_sensor_id id)

@@ -17,8 +17,6 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
-
 static struct mutex port_mutex[I2C_PORT_COUNT];
 
 void i2c_lock(int port, int lock)

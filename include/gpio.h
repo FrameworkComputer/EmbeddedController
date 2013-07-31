@@ -51,7 +51,7 @@ struct gpio_info {
 };
 
 /* Signal information from board.c.  Must match order from enum gpio_signal. */
-extern const struct gpio_info gpio_list[GPIO_COUNT];
+extern const struct gpio_info gpio_list[];
 
 /* Macro for signals which don't exist */
 #ifdef CHIP_lm4

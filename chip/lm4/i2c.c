@@ -38,7 +38,6 @@
 #define LM4_I2C_MCS_CLKTO  (1 << 7)
 
 static task_id_t task_waiting_on_port[I2C_PORT_COUNT];
-extern const struct i2c_port_t i2c_ports[I2C_PORTS_USED];
 
 /**
  * Wait for port to go idle
