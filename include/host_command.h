@@ -204,4 +204,12 @@ void host_packet_receive(struct host_packet *pkt);
 	__attribute__((section(".rodata.hcmds")))			\
 	     = {routine, command, version_mask}
 
+
+/**
+ * Politely ask the CPU to enable/disable its own throttling.
+ *
+ * @param throttle	Enable (!=0) or disable(0) throttling
+ */
+void host_throttle_cpu(int throttle);
+
 #endif  /* __CROS_EC_HOST_COMMAND_H */

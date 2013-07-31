@@ -83,6 +83,21 @@ static void host_clear_events_b(uint32_t mask)
 	atomic_clear(&events_copy_b, mask);
 }
 
+/**
+ * Politely ask the CPU to enable/disable its own throttling.
+ *
+ * @param throttle	Enable (!=0) or disable(0) throttling
+ */
+void host_throttle_cpu(int throttle)
+{
+	if (throttle)
+		host_set_events(EC_HOST_EVENT_MASK(
+					EC_HOST_EVENT_THROTTLE_START));
+	else
+		host_set_events(EC_HOST_EVENT_MASK(
+					EC_HOST_EVENT_THROTTLE_STOP));
+}
+
 /*****************************************************************************/
 /* Console commands */
 

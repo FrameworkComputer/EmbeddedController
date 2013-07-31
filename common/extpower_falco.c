@@ -185,19 +185,10 @@ bad:
 	CPRINTF("[%T ERROR: can't talk to charger: %d]\n", r);
 }
 
-/* FIXME: There's already a chipset_throttle_cpu() function. However, it's a
- * fairly large hammer - on x86, it just asserts PROCHOT.  That's less than
- * ideal for the turbo boost charger stuff. We might want to make this
- * function generic enough to use from other places. For now, meh. */
 test_export_static int ap_is_throttled;
 static void set_throttle(int on)
 {
-	if (on)
-		host_set_events(EC_HOST_EVENT_MASK(
-					EC_HOST_EVENT_THROTTLE_START));
-	else
-		host_set_events(EC_HOST_EVENT_MASK(
-					EC_HOST_EVENT_THROTTLE_STOP));
+	host_throttle_cpu(on);
 	ap_is_throttled = on;
 }
 
