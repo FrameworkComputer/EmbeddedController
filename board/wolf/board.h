@@ -10,6 +10,10 @@
 
 /* Optional features */
 #define CONFIG_BACKLIGHT_X86
+#define CONFIG_BATTERY_SMART
+#define CONFIG_BOARD_VERSION
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24707A
 #define CONFIG_CHIPSET_HASWELL
 #define CONFIG_CHIPSET_X86
 #define CONFIG_EXTPOWER_GPIO
@@ -20,6 +24,7 @@
 #define CONFIG_PWM_FAN
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_UART_HOST 2
+#define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_USB_PORT_POWER_DUMB
 #define CONFIG_WIRELESS
 
@@ -124,8 +129,8 @@ enum gpio_signal {
 	GPIO_PCH_RTCRST_L,         /* Not supposed to be here */
 	GPIO_PCH_SRTCRST_L,        /* Not supposed to be here */
 
-	BAT_LED0_L,                /* Battery charging LED - Blue */
-	BAT_LED1_L,                /* Battery charging LED - Amber */
+	GPIO_BAT_LED0_L,           /* Battery charging LED - Blue */
+	GPIO_BAT_LED1_L,           /* Battery charging LED - Amber */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
@@ -149,11 +154,13 @@ enum x86_signal {
 /* Charger module */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
-#define CONFIG_CHARGER_INPUT_CURRENT 3078 /* mA, 90% of a 65W adapter at 19V */
+/*FIXME needed to be checked, use the same as Peppy*/
+#define CONFIG_CHARGER_INPUT_CURRENT 3078 /* mA, need be checked */
 
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
+
 	/* HEY: Be prepared to read this (ICMNT). */
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
@@ -162,17 +169,22 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	/* HEY - need two I2C sensor values, and PECI should really be first */
-
+	/* CPU die temperature via PECI */
+	TEMP_SENSOR_CPU_PECI = 0,
 	/* EC internal temperature sensor */
 	TEMP_SENSOR_EC_INTERNAL,
-	/* CPU die temperature via PECI */
-	TEMP_SENSOR_CPU_PECI,
+	/* G781 internal and external sensors */
+	TEMP_SENSOR_I2C_G781_INTERNAL,
+	TEMP_SENSOR_I2C_G781_EXTERNAL,
 
 	TEMP_SENSOR_COUNT
 };
 
-/* HEY: The below stuff is for Link. Pick a different pin for Wolf */
+/**
+ * Board-specific g781 power state.
+ */
+int board_g781_has_power(void);
+
 /* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
  * pullup. If this signal is pulled to ground when the EC boots, the EC will get
  * into the boot loader and we can recover bricked EC. */
@@ -182,6 +194,7 @@ enum temp_sensor_id {
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
+
 
 #endif /* !__ASSEMBLER__ */
 
