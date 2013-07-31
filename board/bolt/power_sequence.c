@@ -127,11 +127,13 @@ enum x86_state x86_chipset_init(void)
 			/* Force all signals to their G3 states */
 			CPRINTF("[%T x86 forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
+			gpio_set_level(GPIO_SYS_PWROK, 0);
 			gpio_set_level(GPIO_VCORE_EN, 0);
 			gpio_set_level(GPIO_PP1050_EN, 0);
 			gpio_set_level(GPIO_PP1350_EN, 0);
 			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
+			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			wireless_enable(0);
