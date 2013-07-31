@@ -11,7 +11,7 @@
 #include "lm4_adc.h"
 
 /* Initialize temperature reading to a sane value (27 C) */
-static int last_val = 300;
+static int last_val = C_TO_K(27);
 
 static void chip_temp_sensor_poll(void)
 {

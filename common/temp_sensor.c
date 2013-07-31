@@ -119,7 +119,7 @@ static int command_temps(int argc, char **argv)
 
 		switch (rv) {
 		case EC_SUCCESS:
-			ccprintf("%d K = %d C\n", t, t - 273);
+			ccprintf("%d K = %d C\n", t, K_TO_C(t));
 			break;
 		case EC_ERROR_NOT_POWERED:
 			ccprintf("Not powered\n");

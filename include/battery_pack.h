@@ -9,9 +9,6 @@
 
 #include "common.h"
 
-#define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
-#define DECI_KELVIN_TO_CELSIUS(temp_dk) ((temp_dk - 2731) / 10)
-
 /* Battery parameters */
 struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */

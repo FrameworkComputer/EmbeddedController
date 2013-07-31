@@ -136,7 +136,7 @@ static int command_peci_temp(int argc, char **argv)
 		ccprintf("PECI error 0x%04x\n", LM4_PECI_M0D0 & 0xffff);
 		return EC_ERROR_UNKNOWN;
 	}
-	ccprintf("CPU temp = %d K = %d C\n", t, t - 273);
+	ccprintf("CPU temp = %d K = %d C\n", t, K_TO_C(t));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,

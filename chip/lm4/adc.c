@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "clock.h"
 #include "console.h"
+#include "common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lm4_adc.h"
@@ -161,7 +162,7 @@ DECLARE_IRQ(LM4_IRQ_ADC0_SS3, ss3_interrupt, 2);
 static int command_ectemp(int argc, char **argv)
 {
 	int t = adc_read_channel(ADC_CH_EC_TEMP);
-	ccprintf("EC temperature is %d K = %d C\n", t, t-273);
+	ccprintf("EC temperature is %d K = %d C\n", t, K_TO_C(t));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp,

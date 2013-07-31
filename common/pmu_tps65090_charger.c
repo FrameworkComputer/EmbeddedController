@@ -59,28 +59,23 @@ static void enable_charging(int enable)
 		gpio_set_level(GPIO_CHARGER_EN, enable);
 }
 
-static int battery_temperature_celsius(int deci_k)
-{
-	return (deci_k - 2731) / 10;
-}
-
 static int battery_start_charging_range(int deci_k)
 {
-	int8_t temp_c = battery_temperature_celsius(deci_k);
+	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
 	return (temp_c >= bat_temp_ranges.start_charging_min_c &&
 		temp_c < bat_temp_ranges.start_charging_max_c);
 }
 
 static int battery_charging_range(int deci_k)
 {
-	int8_t temp_c = battery_temperature_celsius(deci_k);
+	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
 	return (temp_c >= bat_temp_ranges.charging_min_c &&
 		temp_c < bat_temp_ranges.charging_max_c);
 }
 
 static int battery_discharging_range(int deci_k)
 {
-	int8_t temp_c = battery_temperature_celsius(deci_k);
+	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
 	return (temp_c >= bat_temp_ranges.discharging_min_c &&
 		temp_c < bat_temp_ranges.discharging_max_c);
 }
@@ -260,7 +255,7 @@ static int calc_next_state(int state)
 		} else if (!battery_charging_range(batt_temp)) {
 			CPRINTF("[pmu] charging: temperature out of range "
 				"%dC\n",
-				battery_temperature_celsius(batt_temp));
+				DECI_KELVIN_TO_CELSIUS(batt_temp));
 			return ST_CHARGING_ERROR;
 		}
 
@@ -342,7 +337,7 @@ static int calc_next_state(int state)
 			if (!battery_discharging_range(batt_temp)) {
 				CPRINTF("[pmu] discharging: temperature out of"
 					"range %dC\n",
-					battery_temperature_celsius(batt_temp));
+					DECI_KELVIN_TO_CELSIUS(batt_temp));
 				return system_off();
 			}
 		}

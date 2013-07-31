@@ -44,6 +44,12 @@
 #define __packed __attribute__((packed))
 #endif
 
+/* There isn't really a better place for this */
+#define C_TO_K(temp_c) ((temp_c) + 273)
+#define K_TO_C(temp_c) ((temp_c) - 273)
+#define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) ((temp_dk - 2731) / 10)
+
 /* Include top-level configuration file */
 #include "config.h"
 

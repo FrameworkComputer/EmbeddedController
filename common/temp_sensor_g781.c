@@ -40,6 +40,6 @@ int g781_get_val(int idx, int *temp_ptr)
 		temp_raw = ~(~temp_raw & 0xff) + 1;
 
 	/* Temperature from sensor is in degrees Celsius */
-	*temp_ptr = temp_raw + 273;
+	*temp_ptr = C_TO_K(temp_raw);
 	return EC_SUCCESS;
 }
