@@ -15,7 +15,7 @@ common-$(BOARD_daisy)+=extpower_snow.o
 common-$(BOARD_falco)+=battery_falco.o led_falco.o
 common-$(BOARD_link)+=battery_link.o
 common-$(BOARD_peppy)+=battery_peppy.o led_peppy.o
-common-$(BOARD_slippy)+=battery_slippy.o
+common-$(BOARD_slippy)+=battery_slippy.o led_slippy.o
 common-$(BOARD_snow)+=extpower_snow.o
 common-$(BOARD_spring)+=battery_spring.o
 
