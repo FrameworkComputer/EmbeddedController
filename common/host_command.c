@@ -28,7 +28,11 @@
 static struct host_cmd_handler_args *pending_args;
 
 #ifndef CONFIG_LPC
-static uint8_t host_memmap[EC_MEMMAP_SIZE];
+/*
+ * Simulated memory map.  Must be word-aligned, because some of the elements
+ * in the memory map are words.
+ */
+static uint8_t host_memmap[EC_MEMMAP_SIZE] __aligned(4);
 #endif
 
 static enum {

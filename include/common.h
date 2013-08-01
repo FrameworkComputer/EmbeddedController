@@ -32,9 +32,14 @@
 #define REG16(addr) (*(volatile uint16_t *)(addr))
 
 /*
- * Define __packed if someone hasn't beat us to it.  Linux kernel style
- * checking prefers __packed over __attribute__((packed)).
+ * Define __aligned(n) and __packed if someone hasn't beat us to it.  Linux
+ * kernel style checking prefers these over __attribute__((packed)) and
+ * __attribute__((aligned(n))).
  */
+#ifndef __aligned
+#define __aligned(n) __attribute__((aligned(n)))
+#endif
+
 #ifndef __packed
 #define __packed __attribute__((packed))
 #endif
