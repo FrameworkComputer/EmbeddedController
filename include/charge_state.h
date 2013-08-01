@@ -108,6 +108,7 @@ struct power_state_data {
 struct power_state_context {
 	struct power_state_data curr;
 	struct power_state_data prev;
+	timestamp_t power_state_updated_time;
 	uint32_t *memmap_batt_volt;
 	/* TODO(rong): check endianness of EC and memmap*/
 	uint32_t *memmap_batt_rate;
