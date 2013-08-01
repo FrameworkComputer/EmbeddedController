@@ -16,8 +16,48 @@
 
 #define PROMPT "> "
 
+/* ASCII control character; for example, CTRL('C') = ^C */
+#define CTRL(c) ((c) - '@')
+
+#ifdef CONFIG_CONSOLE_HISTORY
+/* History buffers */
+static char history[CONFIG_CONSOLE_HISTORY][CONFIG_CONSOLE_INPUT_LINE_SIZE];
+static int history_next, history_pos;
+#endif
+
 /* Current console command line */
 static char input_buf[CONFIG_CONSOLE_INPUT_LINE_SIZE];
+
+/* Length of current line */
+static int input_len;
+
+/* Cursor position in current line */
+static int input_pos;
+
+/* Was last received character a carriage return? */
+static int last_rx_was_cr;
+
+/* State of input escape code */
+static enum {
+	ESC_OUTSIDE,   /* Not in escape code */
+	ESC_START,     /* Got ESC */
+	ESC_BAD,       /* Bad escape sequence */
+	ESC_BRACKET,   /* Got ESC [ */
+	ESC_BRACKET_1, /* Got ESC [ 1 */
+	ESC_BRACKET_3, /* Got ESC [ 3 */
+	ESC_O,         /* Got ESC O */
+} esc_state;
+
+/* Extended key code values, from multi-byte escape sequences */
+enum extended_key_code {
+	KEY_UP_ARROW = 0x100,
+	KEY_DOWN_ARROW,
+	KEY_RIGHT_ARROW,
+	KEY_LEFT_ARROW,
+	KEY_END,
+	KEY_HOME,
+	KEY_DEL
+};
 
 /**
  * Split a line of input into words.
@@ -34,11 +74,14 @@ static int split_words(char *input, int *argc, char **argv)
 {
 	char *c;
 	int in_word = 0;
+	int in_line = 1;
 
 	/* Parse input into words */
 	*argc = 0;
-	for (c = input; *c; c++) {
-		if (isspace(*c)) {
+	for (c = input; in_line; c++) {
+		if (!*c)
+			in_line = 0;
+		if (isspace(*c) || !*c) {
 			if (in_word) {
 				/* Ending a word */
 				*c = '\0';
@@ -150,16 +193,327 @@ static void console_init(void)
 	ccputs(PROMPT);
 }
 
-static void console_process(void)
+static void move_cursor_right(void)
 {
-	/*
-	 * Process all pending console commands.  Need to do this all at once
-	 * since our interrupt may have been triggered multiple times.
-	 */
-	while (uart_peek('\n') >= 0) {
-		uart_gets(input_buf, sizeof(input_buf));
+	if (input_pos == input_len)
+		return;
+
+	ccputs("\x1b[1C");
+	input_pos++;
+}
+
+static void move_cursor_end(void)
+{
+	if (input_pos == input_len)
+		return;
+
+	ccprintf("\x1b[%dC", input_len - input_pos);
+	input_pos = input_len;
+}
+
+static void move_cursor_left(void)
+{
+	if (input_pos == 0)
+		return;
+
+	ccputs("\x1b[1D");
+	input_pos--;
+}
+
+static void move_cursor_begin(void)
+{
+	if (input_pos == 0)
+		return;
+
+	ccprintf("\x1b[%dD", input_pos);
+	input_pos = 0;
+}
+
+static void repeat_char(char c, int cnt)
+{
+	while (cnt--)
+		uart_putc(c);
+}
+
+#ifdef CONFIG_CONSOLE_HISTORY
+
+/**
+ * Load input history
+ *
+ * @param idx		History index to load
+ */
+static void load_history(int idx)
+{
+	/* Copy history */
+	strzcpy(input_buf, history[idx], CONFIG_CONSOLE_INPUT_LINE_SIZE);
+
+	/* Print history */
+	move_cursor_begin();
+	ccputs(input_buf);
+
+	/* Clear everything past end of history */
+	input_pos = strlen(input_buf);
+	if (input_len > input_pos) {
+		repeat_char(' ', input_len - input_pos);
+		repeat_char('\b', input_len - input_pos);
+	}
+	input_len = input_pos;
+}
+
+/**
+ * Save line to the next history slot
+ */
+static void save_history(void)
+{
+	strzcpy(history[history_next], input_buf,
+		CONFIG_CONSOLE_INPUT_LINE_SIZE);
+}
+
+#endif /* CONFIG_CONSOLE_HISTORY */
+
+static void handle_backspace(void)
+{
+	if (!input_pos)
+		return;  /* Already at beginning of line */
+
+	/* Move cursor back */
+	uart_putc('\b');
+
+	/* Print and move anything following the cursor position */
+	if (input_pos != input_len) {
+		ccputs(input_buf + input_pos);
+		memmove(input_buf + input_pos - 1,
+			input_buf + input_pos,
+			input_len - input_pos + 1);
+	} else {
+		input_buf[input_len - 1] = '\0';
+	}
+
+	/* Space over last character and move cursor to correct position */
+	uart_putc(' ');
+	repeat_char('\b', input_len - input_pos + 1);
+
+	input_len--;
+	input_pos--;
+}
+
+/**
+ * Escape code handler
+ *
+ * @param c             Next received character.
+ * @return		Key code, or -1 if character was eaten
+ */
+static int handle_esc(int c)
+{
+	switch (esc_state) {
+	case ESC_START:
+		if (c == '[') {
+			esc_state = ESC_BRACKET;
+			return -1;
+		} else if (c == 'O') {
+			esc_state = ESC_O;
+			return -1;
+		}
+		break;
+
+	case ESC_BRACKET:
+		if (c == '1') {
+			esc_state = ESC_BRACKET_1;
+			return -1;
+		} else if (c == '3') {
+			esc_state = ESC_BRACKET_3;
+			return -1;
+		}
+
+		if (c == 'A')
+			return KEY_UP_ARROW;
+		else if (c == 'B')
+			return KEY_DOWN_ARROW;
+		else if (c == 'C')
+			return KEY_RIGHT_ARROW;
+		else if (c == 'D')
+			return KEY_LEFT_ARROW;
+		break;
+
+	case ESC_O:
+		if (c == 'F')
+			return KEY_END;
+		break;
+
+	case ESC_BRACKET_1:
+		if (c == '~')
+			return KEY_HOME;
+		break;
+
+	case ESC_BRACKET_3:
+		if (c == '~')
+			return KEY_DEL;
+		break;
+
+	default:
+		break;
+	}
+
+	/* Check if the escape code is done */
+	if (isalpha(c) || c == '~')
+		esc_state = ESC_OUTSIDE;
+	else
+		esc_state = ESC_BAD;
+
+	return -1;
+}
+
+static void console_handle_char(int c)
+{
+	/* Translate CR and CRLF to LF (newline) */
+	if (c == '\r') {
+		last_rx_was_cr = 1;
+		c = '\n';
+	} else if (c == '\n' && last_rx_was_cr) {
+		last_rx_was_cr = 0;
+		return;
+	} else {
+		last_rx_was_cr = 0;
+	}
+
+	/* Handle terminal escape sequences (ESC [ ...) */
+	if (c == 0x1B) {
+		esc_state = ESC_START;
+		return;
+	} else if (esc_state) {
+		c = handle_esc(c);
+		if (c != -1)
+			esc_state = ESC_OUTSIDE;
+	}
+
+	switch (c) {
+	case KEY_DEL:
+		if (input_pos == input_len)
+			break;  /* Already at end */
+
+		move_cursor_right();
+
+		/* Drop through to backspace handling */
+	case '\b':
+	case 0x7f:
+		handle_backspace();
+		break;
+
+	case '\n':
+		/* Terminate this line */
+		uart_puts("\r\n");
+
+#ifdef CONFIG_CONSOLE_HISTORY
+		/* Save command in history buffer */
+		if (input_len) {
+			save_history();
+			history_next = (history_next + 1) %
+				CONFIG_CONSOLE_HISTORY;
+			history_pos = history_next;
+		}
+#endif
+
+		/* Handle command */
 		handle_command(input_buf);
+
+		/* Start new line */
+		input_pos = input_len = 0;
+		input_buf[0] = '\0';
+
+		/* Reprint prompt */
 		ccputs(PROMPT);
+		break;
+
+	case CTRL('A'):
+	case KEY_HOME:
+		move_cursor_begin();
+		break;
+
+	case CTRL('B'):
+	case KEY_LEFT_ARROW:
+		move_cursor_left();
+		break;
+
+	case CTRL('E'):
+	case KEY_END:
+		move_cursor_end();
+		break;
+
+	case CTRL('F'):
+	case KEY_RIGHT_ARROW:
+		move_cursor_right();
+		break;
+
+	case CTRL('K'):
+		/* Kill to end of line */
+		if (input_pos == input_len)
+			break;
+
+		repeat_char(' ', input_len - input_pos);
+		repeat_char('\b', input_len - input_pos);
+		input_len = input_pos;
+		input_buf[input_len] = '\0';
+		break;
+
+	case CTRL('L'):
+		/* Reprint current */
+		ccputs("\x0c" PROMPT);
+		ccputs(input_buf);
+		repeat_char('\b', input_len - input_pos);
+		break;
+
+#ifdef CONFIG_CONSOLE_HISTORY
+
+	case CTRL('P'):
+	case KEY_UP_ARROW:
+		/* History previous */
+		if (history_pos == history_next)
+			save_history();
+
+		if (--history_pos < 0)
+			history_pos = CONFIG_CONSOLE_HISTORY - 1;
+
+		load_history(history_pos);
+		break;
+
+	case CTRL('N'):
+	case KEY_DOWN_ARROW:
+		/* History next */
+		if (history_pos == history_next)
+			save_history();
+
+		if (++history_pos >= CONFIG_CONSOLE_HISTORY)
+			history_pos = 0;
+
+		load_history(history_pos);
+		break;
+
+#endif /* CONFIG_CONSOLE_HISTORY */
+
+	default:
+		/* Ignore non-printing characters */
+		if (!isprint(c))
+			break;
+
+		/* Ignore if line is full (leaving room for terminating null) */
+		if (input_len >= sizeof(input_buf) - 1)
+			break;
+
+		/* Print character */
+		uart_putc(c);
+
+		/* If not at end of line, print rest of line and move it down */
+		if (input_pos != input_len) {
+			ccputs(input_buf + input_pos);
+			memmove(input_buf + input_pos + 1,
+				input_buf + input_pos,
+				input_len - input_pos + 1);
+			repeat_char('\b', input_len - input_pos);
+		}
+
+		/* Add character to buffer and terminate it */
+		input_buf[input_pos++] = c;
+		input_buf[++input_len] = '\0';
 	}
 }
 
@@ -183,9 +537,12 @@ void console_task(void)
 	console_init();
 
 	while (1) {
-		console_process();
-		/* Wait for the next command message */
-		task_wait_event(-1);
+		int c = uart_getc();
+
+		if (c == -1)
+			task_wait_event(-1);  /* Wait for more input */
+		else
+			console_handle_char(c);
 	}
 }
 
@@ -272,5 +629,24 @@ static int command_force_enabled(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(forceen, command_force_enabled,
 			"<on | off>",
 			"Force enable console",
+			NULL);
+#endif
+
+#ifdef CONFIG_CONSOLE_HISTORY
+static int command_history(int argc, char **argv)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_CONSOLE_HISTORY; i++) {
+		int idx = (history_next + i) % CONFIG_CONSOLE_HISTORY;
+		if (history[idx][0])
+			ccprintf("%s\n", history[idx]);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(history, command_history,
+			NULL,
+			"Print console history",
 			NULL);
 #endif

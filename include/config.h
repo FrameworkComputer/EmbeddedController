@@ -174,6 +174,13 @@
  */
 #define CONFIG_CONSOLE_CMDHELP
 
+/*
+ * Number of entries in console history buffer.
+ *
+ * Boards may #undef this to reduce memory usage.
+ */
+#define CONFIG_CONSOLE_HISTORY 8
+
 /* Max length of a single line of input */
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
 

@@ -32,6 +32,14 @@ int uart_init_done(void);
  */
 
 /**
+ * Put a single character to the UART, like putchar().
+ *
+ * @param c		Character to put
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
+int uart_putc(int c);
+
+/**
  * Put a null-terminated string to the UART, like fputs().
  *
  * @return EC_SUCCESS, or non-zero if output was truncated.
@@ -77,16 +85,6 @@ void uart_flush_output(void);
 void uart_flush_input(void);
 
 /**
- * Non-destructively check for a character in the input buffer.
- *
- * @param c		Character to search for
- *
- * @return the offset into the input buffer of the first match, or -1 if no
- * match found in the input buffer.
- */
-int uart_peek(int c);
-
-/**
  * Read a single character of input, similar to fgetc().
  *
  * @return the character, or -1 if no input waiting.
@@ -99,13 +97,7 @@ int uart_getc(void);
  * Reads input until one of the following conditions is met:
  *    (1)  <size-1> characters have been read.
  *    (2)  A newline ('\n') has been read.
- *    (3)  The input buffer is empty.
- *
- * Condition (3) means this call never blocks.  This is important
- * because it prevents a race condition where the caller calls
- * uart_peek() to see if input is waiting, or is notified by the
- * callack that input is waiting, but then the input buffer overflows
- * or someone else grabs the input before uart_gets() is called.
+ *    (3)  The input buffer is empty (this keeps the call from blocking).
  *
  * Characters are stored in <dest> and are null-terminated.
  * Characters include the newline if present, so that the caller can

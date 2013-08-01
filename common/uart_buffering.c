@@ -16,14 +16,10 @@
 #include "uart.h"
 #include "util.h"
 
-#define HISTORY_SIZE 8
-
 /* Macros to advance in the circular buffers */
 #define TX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_TX_BUF_SIZE - 1))
 #define RX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
 #define RX_BUF_PREV(i) (((i) - 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
-#define CMD_HIST_NEXT(i) (((i) + 1) & (HISTORY_SIZE - 1))
-#define CMD_HIST_PREV(i) (((i) - 1) & (HISTORY_SIZE - 1))
 
 /* Macros to calculate difference of pointers in the circular buffers. */
 #define TX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_TX_BUF_SIZE - 1))
@@ -39,34 +35,9 @@ static volatile int tx_buf_tail;
 static volatile char rx_buf[CONFIG_UART_RX_BUF_SIZE];
 static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
-static volatile char rx_cur_buf[CONFIG_CONSOLE_INPUT_LINE_SIZE];
-static volatile int rx_cur_buf_tail;
-static volatile int rx_cur_buf_head;
-static volatile int rx_cur_buf_ptr;
-static int last_rx_was_cr;
 static int tx_snapshot_head;
 static int tx_snapshot_tail;
 static int uart_suspended;
-
-static enum {
-	ESC_OUTSIDE,   /* Not in escape code */
-	ESC_START,     /* Got ESC */
-	ESC_BAD,       /* Bad escape sequence */
-	ESC_BRACKET,   /* Got ESC [ */
-	ESC_BRACKET_1, /* Got ESC [ 1 */
-	ESC_BRACKET_3, /* Got ESC [ 3 */
-	ESC_O,         /* Got ESC O */
-} esc_state;
-
-/* Command history */
-struct cmd_history_t {
-	volatile int head;
-	volatile int tail;
-};
-static struct cmd_history_t cmd_history[HISTORY_SIZE];
-static volatile int cmd_history_head;
-static volatile int cmd_history_tail;
-static volatile int cmd_history_ptr;
 
 /**
  * Put a single character into the transmit buffer.
@@ -95,385 +66,6 @@ static int __tx_char(void *context, int c)
 }
 
 /**
- * Write a number directly to the UART.
- *
- * @param val number to write; must be >1.
- */
-static void uart_write_int(int val)
-{
-	if (val <= 0)
-		return;
-
-	if (val > 9)
-		uart_write_int(val / 10);
-
-	uart_write_char((val % 10) + '0');
-}
-
-static void move_rx_ptr_fwd(void)
-{
-	if (rx_cur_buf_ptr != rx_cur_buf_head) {
-		++rx_cur_buf_ptr;
-		uart_write_char(0x1B);
-		uart_write_char('[');
-		uart_write_char('1');
-		uart_write_char('C');
-	}
-}
-
-static void move_rx_ptr_end(void)
-{
-	if (rx_cur_buf_ptr == rx_cur_buf_head)
-		return;
-
-	uart_write_char(0x1B);
-	uart_write_char('[');
-	uart_write_int(rx_cur_buf_head - rx_cur_buf_ptr);
-	uart_write_char('C');
-
-	rx_cur_buf_ptr = rx_cur_buf_head;
-}
-
-static void move_rx_ptr_bwd(void)
-{
-	if (rx_cur_buf_ptr != 0) {
-		--rx_cur_buf_ptr;
-		uart_write_char(0x1B);
-		uart_write_char('[');
-		uart_write_char('1');
-		uart_write_char('D');
-	}
-}
-
-static void move_rx_ptr_begin(void)
-{
-	if (rx_cur_buf_ptr == 0)
-		return;
-
-	uart_write_char(0x1B);
-	uart_write_char('[');
-	uart_write_int(rx_cur_buf_ptr);
-	uart_write_char('D');
-
-	rx_cur_buf_ptr = 0;
-}
-
-static void repeat_char(char c, int cnt)
-{
-	while (cnt--)
-		uart_write_char(c);
-}
-
-static void handle_backspace(void)
-{
-	int ptr;
-
-	if (!rx_cur_buf_ptr)
-		return;  /* Already at beginning of line */
-
-	/* Move cursor back */
-	uart_write_char('\b');
-
-	/* Move text after cursor and also update rx buffer. */
-	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr) {
-		uart_write_char(rx_cur_buf[ptr]);
-		rx_cur_buf[ptr - 1] = rx_cur_buf[ptr];
-	}
-
-	/* Space over last character and move cursor to correct position */
-	uart_write_char(' ');
-	repeat_char('\b', ptr - rx_cur_buf_ptr + 1);
-
-	--rx_cur_buf_head;
-	--rx_cur_buf_ptr;
-}
-
-static void handle_kill(void)
-{
-	if (rx_cur_buf_ptr == rx_cur_buf_head)
-		return;
-
-	/* Space over all following characters */
-	repeat_char(' ', rx_cur_buf_head - rx_cur_buf_ptr);
-	repeat_char('\b', rx_cur_buf_head - rx_cur_buf_ptr);
-
-	rx_cur_buf_head = rx_cur_buf_ptr;
-}
-
-static void reprint_current(void)
-{
-	int ptr;
-
-	uart_write_char(CTRL('L'));
-	uart_write_char('>');
-	uart_write_char(' ');
-
-	for (ptr = 0; ptr < rx_cur_buf_head; ptr++)
-			uart_write_char(rx_cur_buf[ptr]);
-
-	repeat_char('\b', ptr - rx_cur_buf_ptr);
-}
-
-static void insert_char(char c)
-{
-	int ptr;
-
-	/* On overflow, discard input */
-	if (rx_cur_buf_head == CONFIG_CONSOLE_INPUT_LINE_SIZE && c != '\n')
-		return;
-
-	/* Move buffer ptr to the end if 'c' is new line */
-	if (c == '\n')
-		rx_cur_buf_ptr = rx_cur_buf_head;
-
-	/* Move text after cursor. */
-	for (ptr = rx_cur_buf_ptr; ptr < rx_cur_buf_head; ++ptr)
-		uart_write_char(rx_cur_buf[ptr]);
-
-	/* Insert character and move cursor to correct position */
-	repeat_char('\b', ptr - rx_cur_buf_ptr);
-	for (ptr = rx_cur_buf_head; ptr > rx_cur_buf_ptr; --ptr)
-		rx_cur_buf[ptr] = rx_cur_buf[ptr - 1];
-	rx_cur_buf[rx_cur_buf_ptr] = c;
-	++rx_cur_buf_head;
-	++rx_cur_buf_ptr;
-}
-
-static int rx_buf_space_available(void)
-{
-	if (cmd_history_head == cmd_history_tail)
-		return CONFIG_UART_RX_BUF_SIZE;
-	return RX_BUF_DIFF(cmd_history[cmd_history_tail].tail,
-			   cmd_history[CMD_HIST_PREV(cmd_history_head)].head);
-}
-
-static void history_save(void)
-{
-	int ptr;
-	int tail, head;
-	int hist_id;
-
-	/* If not enough space in rx buffer, discard the oldest history */
-	while (rx_buf_space_available() < rx_cur_buf_head)
-		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
-
-	/* If history buffer is full, discard the oldest one */
-	hist_id = cmd_history_head;
-	cmd_history_head = CMD_HIST_NEXT(cmd_history_head);
-	if (cmd_history_head == cmd_history_tail)
-		cmd_history_tail = CMD_HIST_NEXT(cmd_history_tail);
-
-	/* Copy the current command, but do not save the '\n' */
-	if (hist_id == cmd_history_tail)
-		tail = 0;
-	else
-		tail = RX_BUF_NEXT(cmd_history[CMD_HIST_PREV(hist_id)].head);
-	head = tail;
-	for (ptr = 0; ptr < rx_cur_buf_head; ++ptr, head = RX_BUF_NEXT(head))
-		rx_buf[head] = rx_cur_buf[ptr];
-	if (rx_buf[RX_BUF_PREV(head)] == '\n') {
-		head = RX_BUF_PREV(head);
-		rx_buf[head] = '\0';
-	}
-
-	cmd_history[hist_id].head = head;
-	cmd_history[hist_id].tail = tail;
-}
-
-static void history_load(int id)
-{
-	int head = cmd_history[id].head;
-	int tail = cmd_history[id].tail;
-	int ptr;
-
-	cmd_history_ptr = id;
-
-	/* Move cursor back to begin of the line. */
-	repeat_char('\b', rx_cur_buf_ptr);
-
-	/* Load command and print it. */
-	for (ptr = tail, rx_cur_buf_ptr = 0; ptr != head;
-			ptr = RX_BUF_NEXT(ptr), ++rx_cur_buf_ptr) {
-		rx_cur_buf[rx_cur_buf_ptr] = rx_buf[ptr];
-		uart_write_char(rx_buf[ptr]);
-	}
-
-	/* If needed, space over the remaining text. */
-	if (rx_cur_buf_ptr < rx_cur_buf_head) {
-		repeat_char(' ', rx_cur_buf_head - rx_cur_buf_ptr);
-		repeat_char('\b', rx_cur_buf_head - rx_cur_buf_ptr);
-	}
-
-	rx_cur_buf_head = rx_cur_buf_ptr;
-}
-
-static void history_prev(void)
-{
-	if (cmd_history_ptr == cmd_history_tail)
-		return;
-
-	/*
-	 * Stash the current command if we are not currently using history.
-	 * Prevent loading history if there is no space to stash current
-	 * command.
-	 */
-	if (cmd_history_ptr == cmd_history_head) {
-		int last_id = CMD_HIST_PREV(cmd_history_head);
-		int last_len = RX_BUF_DIFF(cmd_history[last_id].head,
-					   cmd_history[last_id].tail);
-		if (last_len + rx_cur_buf_head > CONFIG_UART_RX_BUF_SIZE)
-			return;
-
-		history_save();
-	}
-
-	cmd_history_ptr = CMD_HIST_PREV(cmd_history_ptr);
-	history_load(cmd_history_ptr);
-}
-
-static void history_next(void)
-{
-	if (cmd_history_ptr == cmd_history_head)
-		return;
-
-	cmd_history_ptr = CMD_HIST_NEXT(cmd_history_ptr);
-	history_load(cmd_history_ptr);
-
-	/* Remove the stashed command if we just loaded it. */
-	if (cmd_history_ptr == CMD_HIST_PREV(cmd_history_head))
-		cmd_history_head = cmd_history_ptr;
-}
-
-/**
- * Escape code handler
- *
- * @param c             Next received character.
- */
-static void handle_esc(int c)
-{
-	switch (esc_state) {
-	case ESC_START:
-		if (c == '[') {
-			esc_state = ESC_BRACKET;
-			return;
-		} else if (c == 'O') {
-			esc_state = ESC_O;
-			return;
-		}
-		break;
-
-	case ESC_BRACKET:
-		if (c == '1') {
-			esc_state = ESC_BRACKET_1;
-			return;
-		} else if (c == '3') {
-			esc_state = ESC_BRACKET_3;
-			return;
-		}
-
-		if (c == 'A') /* Up key */
-			history_prev();
-		else if (c == 'B') /* Down key */
-			history_next();
-		else if (c == 'C') /* Right key */
-			move_rx_ptr_fwd();
-		else if (c == 'D') /* Left key */
-			move_rx_ptr_bwd();
-		break;
-
-	case ESC_O:
-		if (c == 'F') /* End key */
-			move_rx_ptr_end();
-		break;
-
-	case ESC_BRACKET_1:
-		if (c == '~') /* Home key */
-			move_rx_ptr_begin();
-		break;
-
-	case ESC_BRACKET_3:
-		if (c == '~') { /* Del key */
-			if (rx_cur_buf_ptr != rx_cur_buf_head) {
-				move_rx_ptr_fwd();
-				handle_backspace();
-			}
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	/* Check if the escape code is done */
-	if (isalpha(c) || c == '~')
-		esc_state = ESC_OUTSIDE;
-	else
-		esc_state = ESC_BAD;
-}
-
-/**
- * Handle next character of console input.
- */
-static void handle_console_char(int c)
-{
-	/* Translate CR and CRLF to LF (newline) */
-	if (c == '\r') {
-		last_rx_was_cr = 1;
-		c = '\n';
-	} else if (c == '\n' && last_rx_was_cr) {
-		last_rx_was_cr = 0;
-		return;
-	} else {
-		last_rx_was_cr = 0;
-	}
-
-	/* Handle terminal escape sequences (ESC [ ...) */
-	if (c == 0x1B) {
-		esc_state = ESC_START;
-		return;
-	} else if (esc_state) {
-		handle_esc(c);
-		return;
-	}
-
-	/* Handle control characters */
-	if (c == '\b' || c == 0x7f) {
-		handle_backspace();
-	} else if (c == CTRL('A')) {
-		move_rx_ptr_begin();
-	} else if (c == CTRL('E')) {
-		move_rx_ptr_end();
-	} else if (c == CTRL('L')) {
-		reprint_current();
-	} else if (c == CTRL('K')) {
-		handle_kill();
-	} else if (c == CTRL('N')) {
-		history_next();
-	} else if (c == CTRL('P')) {
-		history_prev();
-	} else if (c == CTRL('Q')) {
-		uart_suspended = 1;
-		uart_tx_stop();
-	} else if (c == CTRL('S')) {
-		uart_suspended = 0;
-		if (uart_tx_stopped())
-			uart_tx_start();
-	} else if (c == '\n') {  /* Newline */
-		uart_write_char('\r');
-		uart_write_char('\n');
-		insert_char(c);
-		console_has_input();
-	} else if (isprint(c)) {
-		/*
-		 * Normal printable character.  Echo directly to the transmit
-		 * FIFO so we don't interfere with the transmit buffer.
-		 */
-		uart_write_char(c);
-		insert_char(c);
-	}
-}
-
-/**
  * Copy output from buffer until TX fifo full or output buffer empty.
  *
  * May be called from interrupt context.
@@ -491,9 +83,33 @@ static void fill_tx_fifo(void)
  */
 void uart_process(void)
 {
+	int got_input = 0;
+
 	/* Copy input from buffer until RX fifo empty */
-	while (uart_rx_available())
-		handle_console_char(uart_read_char());
+	while (uart_rx_available()) {
+		int c = uart_read_char();
+		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
+
+		if (c == CTRL('Q')) {
+			/* Software flow control - XOFF */
+			uart_suspended = 1;
+			uart_tx_stop();
+		} else if (c == CTRL('S')) {
+			/* Software flow control - XON */
+			uart_suspended = 0;
+			if (uart_tx_stopped())
+				uart_tx_start();
+		} else if (rx_buf_next != rx_buf_tail) {
+			/* Buffer all other input */
+			rx_buf[rx_buf_head] = c;
+			rx_buf_head = rx_buf_next;
+		}
+
+		got_input = 1;
+	}
+
+	if (got_input)
+		console_has_input();
 
 	if (uart_suspended)
 		return;
@@ -504,6 +120,16 @@ void uart_process(void)
 	/* If output buffer is empty, disable transmit interrupt */
 	if (tx_buf_tail == tx_buf_head)
 		uart_tx_stop();
+}
+
+int uart_putc(int c)
+{
+	int rv = __tx_char(NULL, c);
+
+	if (!uart_suspended && uart_tx_stopped())
+		uart_tx_start();
+
+	return rv ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
 
 int uart_puts(const char *outstr)
@@ -591,42 +217,10 @@ void uart_flush_input(void)
 	uart_process();
 
 	/* Clear the input buffer */
-	rx_cur_buf_head = 0;
 	rx_buf_tail = rx_buf_head;
 
 	/* Re-enable interrupts */
 	uart_enable_interrupt();
-}
-
-int uart_peek(int c)
-{
-	int index = -1;
-	int i = 0;
-
-	/*
-	 * Disable interrupts while we pull characters out, because the
-	 * interrupt handler can also modify the tail pointer.
-	 */
-	uart_disable_interrupt();
-
-	/*
-	 * Call interrupt handler to empty the hardware FIFO.  The minimum
-	 * FIFO trigger depth is 1/8 (2 chars), so this is the only way to
-	 * ensure we've pulled the very last character out of the FIFO.
-	 */
-	uart_process();
-
-	for (i = 0; i < rx_cur_buf_head; ++i) {
-		if (rx_cur_buf[i] == c) {
-			index = i;
-			break;
-		}
-	}
-
-	/* Re-enable interrupts */
-	uart_enable_interrupt();
-
-	return index;
 }
 
 int uart_getc(void)
@@ -657,37 +251,20 @@ int uart_gets(char *dest, int size)
 	int got = 0;
 	int c;
 
-	/*
-	 * Disable interrupts while we pull characters out, because the
-	 * interrupt handler can also modify the tail pointer.
-	 */
-	uart_disable_interrupt();
-
-	/* Call interrupt handler to empty the hardware FIFO */
-	uart_process();
-
-	/* Remove the stashed command if any. */
-	if (cmd_history_ptr != cmd_history_head)
-		cmd_history_head = CMD_HIST_PREV(cmd_history_head);
-
-	/* Record last command. */
-	if (!(rx_cur_buf_head == 1 && rx_cur_buf[0] == '\n'))
-		history_save();
-	cmd_history_ptr = cmd_history_head;
-
 	/* Read characters */
-	while (got < size - 1 && got < rx_cur_buf_head) {
-		c = rx_cur_buf[got];
-		dest[got++] = c;
-		if (c == '\n')
-			break;  /* Stop on newline */
-	}
-	rx_cur_buf_ptr = 0;
-	rx_cur_buf_head = 0;
-	rx_cur_buf_tail = rx_cur_buf_head;
+	while (got < size - 1) {
+		c = uart_getc();
 
-	/* Re-enable interrupts */
-	uart_enable_interrupt();
+		/* Stop on input buffer empty */
+		if (c == -1)
+			break;
+
+		dest[got++] = c;
+
+		/* Stop after newline */
+		if (c == '\n')
+			break;
+	}
 
 	/* Null-terminate */
 	dest[got] = '\0';

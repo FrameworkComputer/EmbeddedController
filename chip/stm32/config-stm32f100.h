@@ -36,3 +36,7 @@
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 61
+
+/* Reduced history because of limited RAM */
+#undef CONFIG_CONSOLE_HISTORY
+#define CONFIG_CONSOLE_HISTORY 3
