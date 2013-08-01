@@ -10,7 +10,7 @@
 boards=$(ls -1 board | grep -v host)
 for b in $boards; do
     echo ======== building $b
-    make BOARD=$b
+    make BOARD=$b $*
 done
 
 # Run unit tests
