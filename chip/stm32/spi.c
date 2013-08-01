@@ -33,11 +33,6 @@ static const struct dma_option dma_rx_option = {
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
 };
 
-/* Special byte values */
-#define SPI_STALL_BYTE   0xfd  /* Bytes sent when EC isn't ready to respond */
-#define SPI_PAD_BYTE     0xff  /* Bytes which precede the framing byte */
-#define SPI_FRAMING_BYTE 0xec  /* Used by AP to find response start */
-
 /*
  * Timeout to wait for SPI request packet
  *
@@ -49,10 +44,14 @@ static const struct dma_option dma_rx_option = {
  */
 #define SPI_CMD_RX_TIMEOUT_US 8192
 
-/* Offset of output parameters needs to account for pad and framing bytes */
+/*
+ * Offset of output parameters needs to account for pad and framing bytes and
+ * one last past-end byte at the end so any additional bytes clocked out by
+ * the AP will have a known and identifiable value.
+ */
 #define SPI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 2)
 #define SPI_PROTO2_OVERHEAD (SPI_PROTO2_OFFSET +		\
-			     EC_PROTO2_RESPONSE_TRAILER_BYTES)
+			     EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
 
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
@@ -72,10 +71,10 @@ static const struct dma_option dma_rx_option = {
  * 32-bit aligned.
  */
 static const uint8_t out_preamble[4] = {
-	SPI_PAD_BYTE,
-	SPI_PAD_BYTE,
-	SPI_PAD_BYTE,
-	SPI_FRAMING_BYTE,  /* This is the byte which matters */
+	EC_SPI_PROCESSING,
+	EC_SPI_PROCESSING,
+	EC_SPI_PROCESSING,
+	EC_SPI_FRAME_START,  /* This is the byte which matters */
 };
 
 /*
@@ -85,10 +84,36 @@ static const uint8_t out_preamble[4] = {
 static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)]
 	__attribute__((aligned(4)));
 static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __attribute__((aligned(4)));
-static uint8_t active;
 static uint8_t enabled;
 static struct host_cmd_handler_args args;
 static struct host_packet spi_packet;
+
+enum spi_state {
+	/* SPI not enabled (initial state, and when chipset is off) */
+	SPI_STATE_DISABLED = 0,
+
+	/* Setting up receive DMA */
+	SPI_STATE_PREPARE_RX,
+
+	/* Ready to receive next request */
+	SPI_STATE_READY_TO_RX,
+
+	/* Receiving request */
+	SPI_STATE_RECEIVING,
+
+	/* Processing request */
+	SPI_STATE_PROCESSING,
+
+	/* Sending response */
+	SPI_STATE_SENDING,
+
+	/*
+	 * Received bad data - transaction started before we were ready, or
+	 * packet header from host didn't parse properly.  Ignoring received
+	 * data.
+	 */
+	SPI_STATE_RX_BAD,
+} state;
 
 /**
  * Wait until we have received a certain number of bytes
@@ -172,8 +197,8 @@ static void reply(stm32_dma_chan_t *txdma,
 	ASSERT(msg_len + SPI_PROTO2_OVERHEAD <= sizeof(out_msg));
 
 	/* Add our header bytes - the first one might not actually be sent */
-	msg[0] = SPI_PAD_BYTE;
-	msg[1] = SPI_FRAMING_BYTE;
+	msg[0] = EC_SPI_PROCESSING;
+	msg[1] = EC_SPI_FRAME_START;
 	msg[2] = status;
 	msg[3] = msg_len & 0xff;
 
@@ -192,6 +217,7 @@ static void reply(stm32_dma_chan_t *txdma,
 
 	/* Add the checksum and get ready to send */
 	msg[SPI_PROTO2_OFFSET + msg_len] = sum & 0xff;
+	msg[SPI_PROTO2_OFFSET + msg_len + 1] = EC_SPI_PAST_END;
 	dma_prepare_tx(&dma_tx_option, msg_len + SPI_PROTO2_OVERHEAD, msg);
 
 	/* Kick off the DMA to send the data */
@@ -207,19 +233,28 @@ static void reply(stm32_dma_chan_t *txdma,
 static void setup_for_transaction(void)
 {
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
-	int dmac __attribute__((unused));
+
+	/* Not ready to receive yet */
+	spi->dr = EC_SPI_NOT_READY;
 
 	/* We are no longer actively processing a transaction */
-	active = 0;
+	state = SPI_STATE_PREPARE_RX;
 
-	/* Output stall byte by default */
-	spi->dr = SPI_STALL_BYTE;
+	/* Stop sending response, if any */
 	dma_disable(STM32_DMAC_SPI1_TX);
-	*in_msg = SPI_PAD_BYTE;
 
-	/* read a byte in case there is one, and the rx dma gets it */
-	dmac = spi->dr;
+	/*
+	 * Read a byte in case there is one pending; this prevents the receive
+	 * DMA from getting that byte right when we start it
+	 */
+	*in_msg = spi->dr;
+
+	/* Start DMA */
 	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
+
+	/* Ready to receive */
+	state = SPI_STATE_READY_TO_RX;
+	spi->dr = EC_SPI_OLD_READY;
 }
 
 /**
@@ -234,8 +269,11 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	enum ec_status result = args->result;
 	stm32_dma_chan_t *txdma;
 
-	/* If we are too late, don't bother */
-	if (!active)
+	/*
+	 * If we're not processing, then the AP has already terminated the
+	 * transaction, and won't be listening for a response.
+	 */
+	if (state != SPI_STATE_PROCESSING)
 		return;
 
 	if (args->response_size > args->response_max)
@@ -257,14 +295,20 @@ static void spi_send_response_packet(struct host_packet *pkt)
 {
 	stm32_dma_chan_t *txdma;
 
-	/* If we are too late, don't bother */
-	if (!active)
+	/*
+	 * If we're not processing, then the AP has already terminated the
+	 * transaction, and won't be listening for a response.
+	 */
+	if (state != SPI_STATE_PROCESSING)
 		return;
+
+	/* Append our past-end byte, which we reserved space for. */
+	((uint8_t *)pkt->response)[pkt->response_size] = EC_SPI_PAST_END;
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
 	dma_prepare_tx(&dma_tx_option,
-		       sizeof(out_preamble) + pkt->response_size, out_msg);
+		       sizeof(out_preamble) + pkt->response_size + 1, out_msg);
 	dma_go(txdma);
 }
 
@@ -278,6 +322,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
  */
 void spi_event(enum gpio_signal signal)
 {
+	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 	stm32_dma_chan_t *rxdma;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
@@ -286,16 +331,29 @@ void spi_event(enum gpio_signal signal)
 	if (!enabled)
 		return;
 
-	/*
-	 * If NSS is rising, we have finished the transaction, so prepare
-	 * for the next.
-	 */
+	/* Check chip select.  If it's high, the AP ended a tranaction. */
 	nss_reg = gpio_get_level_reg(GPIO_SPI1_NSS, &nss_mask);
-	if (REG16(nss_reg) & nss_mask)
-		goto spi_event_error;
+	if (REG16(nss_reg) & nss_mask) {
+		/* Set up for the next transaction */
+		setup_for_transaction();
+		return;
+	}
 
-	/* Otherwise, NSS is low and we're now inside a transaction */
-	active = 1;
+	/* Chip select is low = asserted */
+	if (state != SPI_STATE_READY_TO_RX) {
+		/*
+		 * AP started a transaction but we weren't ready for it.
+		 * Tell AP we weren't ready, and ignore the received data.
+		 */
+		CPRINTF("[%T SPI not ready]\n");
+		spi->dr = EC_SPI_NOT_READY;
+		state = SPI_STATE_RX_BAD;
+		return;
+	}
+
+	/* We're now inside a transaction */
+	state = SPI_STATE_RECEIVING;
+	spi->dr = EC_SPI_RECEIVING;
 	rxdma = dma_get_channel(STM32_DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
@@ -334,11 +392,16 @@ void spi_event(enum gpio_signal signal)
 		/* Response must start with the preamble */
 		memcpy(out_msg, out_preamble, sizeof(out_preamble));
 		spi_packet.response = out_msg + sizeof(out_preamble);
+		/* Reserve space for the preamble and trailing past-end byte */
 		spi_packet.response_max =
-			sizeof(out_msg) - sizeof(out_preamble);
+			sizeof(out_msg) - sizeof(out_preamble) - 1;
 		spi_packet.response_size = 0;
 
 		spi_packet.driver_result = EC_RES_SUCCESS;
+
+		/* Move to processing state */
+		state = SPI_STATE_PROCESSING;
+		spi->dr = EC_SPI_PROCESSING;
 
 		host_packet_receive(&spi_packet);
 		return;
@@ -367,8 +430,6 @@ void spi_event(enum gpio_signal signal)
 			memmove(in_msg, in_msg + 3, args.params_size);
 
 		args.params = in_msg;
-
-		/* Process the command and send the reply */
 		args.send_response = spi_send_response;
 
 		/* Allow room for the header bytes */
@@ -377,13 +438,19 @@ void spi_event(enum gpio_signal signal)
 		args.response_size = 0;
 		args.result = EC_RES_SUCCESS;
 
+		/* Move to processing state */
+		state = SPI_STATE_PROCESSING;
+		spi->dr = EC_SPI_PROCESSING;
+
 		host_command_received(&args);
 		return;
 	}
 
  spi_event_error:
-	/* Error, or protocol we can't handle.  Set up for next transaction */
-	setup_for_transaction();
+	/* Error, timeout, or protocol we can't handle.  Ignore data. */
+	spi->dr = EC_SPI_RX_BAD_DATA;
+	state = SPI_STATE_RX_BAD;
+	CPRINTF("[%T SPI rx bad data\n]");
 }
 
 static void spi_init(void)
@@ -424,7 +491,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, spi_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void spi_chipset_shutdown(void)
 {
-	enabled = active = 0;
+	enabled = 0;
+	state = SPI_STATE_DISABLED;
 
 	/* Disable pullup and interrupts on NSS */
 	gpio_set_flags(GPIO_SPI1_NSS, 0);

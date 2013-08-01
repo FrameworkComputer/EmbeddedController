@@ -8,25 +8,6 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
-/*
- * Protocol overview
- *
- * request:  CMD [ P0 P1 P2 ... Pn S ]
- * response: ERR [ P0 P1 P2 ... Pn S ]
- *
- * where the bytes are defined as follow :
- *      - CMD is the command code. (defined by EC_CMD_ constants)
- *      - ERR is the error code. (defined by EC_RES_ constants)
- *      - Px is the optional payload.
- *        it is not sent if the error code is not success.
- *        (defined by ec_params_ and ec_response_ structures)
- *      - S is the checksum which is the sum of all payload bytes.
- *
- * On LPC, CMD and ERR are sent/received at EC_LPC_ADDR_KERNEL|USER_CMD
- * and the payloads are sent/received at EC_LPC_ADDR_KERNEL|USER_PARAM.
- * On I2C, all bytes are sent serially in the same message.
- */
-
 /* Current version of this protocol */
 /* TODO: This is effectively useless; protocol is determined in other ways */
 #define EC_PROTO_VERSION          0x00000002
@@ -291,6 +272,89 @@ struct ec_lpc_host_args {
  * EC_LPC_ADDR_OLD_PARAM with unknown length.
  */
 #define EC_HOST_ARGS_FLAG_TO_HOST   0x02
+
+/*****************************************************************************/
+/*
+ * Byte codes returned by EC over SPI interface.
+ *
+ * These can be used by the AP to debug the EC interface, and to determine
+ * when the EC is not in a state where it will ever get around to responding
+ * to the AP.
+ *
+ * Example of sequence of bytes read from EC for a current good transfer:
+ *   1. -                  - AP asserts chip select (CS#)
+ *   2. EC_SPI_OLD_READY   - AP sends first byte(s) of request
+ *   3. -                  - EC starts handling CS# interrupt
+ *   4. EC_SPI_RECEIVING   - AP sends remaining byte(s) of request
+ *   5. EC_SPI_PROCESSING  - EC starts processing request; AP is clocking in
+ *                           bytes looking for EC_SPI_FRAME_START
+ *   6. -                  - EC finishes processing and sets up response
+ *   7. EC_SPI_FRAME_START - AP reads frame byte
+ *   8. (response packet)  - AP reads response packet
+ *   9. EC_SPI_PAST_END    - Any additional bytes read by AP
+ *   10 -                  - AP deasserts chip select
+ *   11 -                  - EC processes CS# interrupt and sets up DMA for
+ *                           next request
+ *
+ * If the AP is waiting for EC_SPI_FRAME_START and sees any value other than
+ * the following byte values:
+ *   EC_SPI_OLD_READY
+ *   EC_SPI_RX_READY
+ *   EC_SPI_RECEIVING
+ *   EC_SPI_PROCESSING
+ *
+ * Then the EC found an error in the request, or was not ready for the request
+ * and lost data.  The AP should give up waiting for EC_SPI_FRAME_START,
+ * because the EC is unable to tell when the AP is done sending its request.
+ */
+
+/*
+ * Framing byte which precedes a response packet from the EC.  After sending a
+ * request, the AP will clock in bytes until it sees the framing byte, then
+ * clock in the response packet.
+ */
+#define EC_SPI_FRAME_START    0xec
+
+/*
+ * Padding bytes which are clocked out after the end of a response packet.
+ */
+#define EC_SPI_PAST_END       0xed
+
+/*
+ * EC is ready to receive, and has ignored the byte sent by the AP.  EC expects
+ * that the AP will send a valid packet header (starting with
+ * EC_COMMAND_PROTOCOL_3) in the next 32 bytes.
+ */
+#define EC_SPI_RX_READY       0xf8
+
+/*
+ * EC has started receiving the request from the AP, but hasn't started
+ * processing it yet.
+ */
+#define EC_SPI_RECEIVING      0xf9
+
+/* EC has received the entire request from the AP and is processing it. */
+#define EC_SPI_PROCESSING     0xfa
+
+/*
+ * EC received bad data from the AP, such as a packet header with an invalid
+ * length.  EC will ignore all data until chip select deasserts.
+ */
+#define EC_SPI_RX_BAD_DATA    0xfb
+
+/*
+ * EC received data from the AP before it was ready.  That is, the AP asserted
+ * chip select and started clocking data before the EC was ready to receive it.
+ * EC will ignore all data until chip select deasserts.
+ */
+#define EC_SPI_NOT_READY      0xfc
+
+/*
+ * EC was ready to receive a request from the AP.  EC has treated the byte sent
+ * by the AP as part of a request packet, or (for old-style ECs) is processing
+ * a fully received packet but is not ready to respond yet.
+ */
+#define EC_SPI_OLD_READY      0xfd
 
 /*****************************************************************************/
 
