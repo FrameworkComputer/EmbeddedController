@@ -27,18 +27,18 @@ struct host_cmd_handler_args {
 
 	/*
 	 * Pointer to output response data buffer.  On input to the handler,
-	 * points to a buffer of size response_max.  Command handler can change
-	 * this to point to a different location instead of memcpy()'ing data
-	 * into the provided buffer.
+	 * points to a buffer of size response_max.
 	 */
 	void *response;
-	/*
-	 * Maximum size of response buffer provided to command handler.  If the
-	 * handler changes response to point to its own larger buffer, it may
-	 * return a response_size greater than response_max.
-	 */
+
+	/* Maximum size of response buffer provided to command handler */
 	uint16_t response_max;
-	uint16_t response_size; /* Size of data pointed to by response */
+
+	/*
+	 * Size of data pointed to by response.  Defaults to 0, so commands
+	 * which do not produce response data do not need to set this.
+	 */
+	uint16_t response_size;
 
 	/*
 	 * This is the result returned by command and therefore the status to

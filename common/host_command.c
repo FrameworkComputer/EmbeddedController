@@ -182,22 +182,9 @@ void host_packet_respond(struct host_cmd_handler_args *args)
 	for (i = sizeof(*r); i > 0; i--)
 		csum += *out++;
 
-	/* Checksum and copy response data, if any */
-	if (!args->response_size) {
-		/* No data to copy */
-	} else if (args->response != out) {
-		/* Copy and checksum */
-		const uint8_t *outr = (const uint8_t *)args->response;
-
-		for (i = args->response_size; i > 0; i--) {
-			*out = *outr++;
-			csum += *out++;
-		}
-	} else {
-		/* Response already in right place; just checksum it */
-		for (i = args->response_size; i > 0; i--)
-			csum += *out++;
-	}
+	/* Checksum response data, if any */
+	for (i = args->response_size; i > 0; i--)
+		csum += *out++;
 
 	/* Write checksum field so the entire packet sums to 0 */
 	r->checksum = (uint8_t)(-csum);
@@ -451,7 +438,7 @@ static int host_command_read_memmap(struct host_cmd_handler_args *args)
 	    offset + size > EC_MEMMAP_SIZE)
 		return EC_RES_INVALID_PARAM;
 
-	args->response = host_get_memmap(offset);
+	memcpy(args->response, host_get_memmap(offset), size);
 	args->response_size = size;
 
 	return EC_RES_SUCCESS;

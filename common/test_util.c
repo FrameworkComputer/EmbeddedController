@@ -70,7 +70,6 @@ int test_send_host_command(int command, int version, const void *params,
 			   int params_size, void *resp, int resp_size)
 {
 	struct host_cmd_handler_args args;
-	int rv;
 
 	args.version = version;
 	args.command = command;
@@ -80,12 +79,7 @@ int test_send_host_command(int command, int version, const void *params,
 	args.response_max = resp_size;
 	args.response_size = 0;
 
-	rv = host_command_process(&args);
-
-	if (args.response != resp)
-		memcpy(resp, args.response, args.response_size);
-
-	return rv;
+	return host_command_process(&args);
 }
 #endif  /* TASK_HAS_HOSTCMD */
 

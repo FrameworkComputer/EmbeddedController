@@ -204,8 +204,6 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	/* Fail if response doesn't fit in the param buffer */
 	if (size > EC_PROTO2_MAX_PARAM_SIZE)
 		args->result = EC_RES_INVALID_RESPONSE;
-	else if (host_cmd_args.response != cmd_params)
-		memcpy(cmd_params, args->response, size);
 
 	/*
 	 * Write result to the data byte.  This sets the TOH bit in the

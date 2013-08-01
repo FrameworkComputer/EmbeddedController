@@ -238,12 +238,8 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	if (!active)
 		return;
 
-	if (args->response_size > EC_PROTO2_MAX_PARAM_SIZE)
+	if (args->response_size > args->response_max)
 		result = EC_RES_INVALID_RESPONSE;
-
-	if ((uint8_t *)args->response >= out_msg &&
-			(uint8_t *)args->response < out_msg + sizeof(out_msg))
-		ASSERT(args->response == out_msg + SPI_PROTO2_OFFSET);
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);

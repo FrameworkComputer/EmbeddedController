@@ -522,11 +522,15 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 static int flash_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_read *p = args->params;
+	const char *src;
 
-	if (flash_dataptr(p->offset, p->size, 1,
-			  (const char **)&args->response) < 0)
+	if (flash_dataptr(p->offset, p->size, 1, &src) < 0)
 		return EC_RES_ERROR;
 
+	if (p->size > args->response_max)
+		return EC_RES_OVERFLOW;
+
+	memcpy(args->response, src, p->size);
 	args->response_size = p->size;
 
 	return EC_RES_SUCCESS;
