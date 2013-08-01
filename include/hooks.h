@@ -103,7 +103,7 @@ enum hook_type {
 	 * Lid opened or closed.  Based on debounced lid state, not raw lid
 	 * GPIO input.
 	 *
-	 * Hook routines are called from the chipset task.
+	 * Hook routines are called from the TICK task.
 	 */
 	HOOK_LID_CHANGE,
 
@@ -111,7 +111,7 @@ enum hook_type {
 	 * Power button pressed or released.  Based on debounced power button
 	 * state, not raw GPIO input.
 	 *
-	 * Hook routines are called from the chipset task.
+	 * Hook routines are called from the TICK task.
 	 */
 	HOOK_POWER_BUTTON_CHANGE,
 
