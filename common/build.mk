@@ -50,6 +50,7 @@ common-$(CONFIG_LED_DRIVER_DS2413)+=led_driver_ds2413.o
 common-$(CONFIG_LED_DRIVER_LP5562)+=led_driver_lp5562.o led_lp5562.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
+common-$(CONFIG_ONEWIRE)+=onewire.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o

@@ -18,7 +18,6 @@ chip-$(CONFIG_EEPROM)+=eeprom.o
 chip-$(CONFIG_FLASH)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=lpc.o
-chip-$(CONFIG_ONEWIRE)+=onewire.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_PWM_FAN)+=pwm_fan.o
 chip-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
