@@ -10,7 +10,6 @@
 #include "flash.h"
 #include "gpio.h"
 #include "host_command.h"
-#include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
 #include "util.h"

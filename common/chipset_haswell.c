@@ -11,7 +11,6 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "registers.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"

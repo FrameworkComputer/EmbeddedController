@@ -7,7 +7,6 @@
 
 #include "common.h"
 #include "panic.h"
-#include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"

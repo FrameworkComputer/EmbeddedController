@@ -17,7 +17,6 @@
 #include "lpc.h"
 #include "power_button.h"
 #include "queue.h"
-#include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
 #include "task.h"
