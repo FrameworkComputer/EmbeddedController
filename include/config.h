@@ -623,5 +623,6 @@
  */
 #include "config_chip.h"
 #include "board.h"
+#include "test_config.h"
 
 #endif  /* __CROS_EC_CONFIG_H */

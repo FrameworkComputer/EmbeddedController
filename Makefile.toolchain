@@ -30,7 +30,7 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
             $(if $(EMU_BUILD),-DEMU_BUILD) \
             $(if $($(PROJECT)-scale),-DTEST_TIME_SCALE=$($(PROJECT)-scale)) \
-            $(CFLAGS-$(PROJECT))
+            -DTEST_$(PROJECT)
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE,)
 CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \

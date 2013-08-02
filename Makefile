@@ -17,11 +17,8 @@ include Makefile.toolchain
 # Get CHIP name
 include board/$(BOARD)/build.mk
 
-# Get test configuration
-include test/test_config.mk
-
 # Transform the configuration into make variables
-includes=include core/$(CORE)/include $(dirs) $(out)
+includes=include core/$(CORE)/include $(dirs) $(out) test
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
 		    $(CPP) -P -Iboard/$(BOARD) -Itest \
