@@ -403,12 +403,6 @@
 /* Compile support for one-wire interface */
 #undef CONFIG_ONEWIRE
 
-/* GPIO bank for one-wire interface */
-#undef CONFIG_ONEWIRE_BANK
-
-/* Pin mask for one-wire interface */
-#undef CONFIG_ONEWIRE_PIN
-
 /* Check for stack overflows on every context switch */
 #undef CONFIG_OVERFLOW_DETECT
 

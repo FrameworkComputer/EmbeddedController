@@ -41,6 +41,7 @@ const struct gpio_info gpio_list[] = {
 	{"BOARD_VERSION1",       LM4_GPIO_H, (1<<6), 0, NULL},
 	{"BOARD_VERSION2",       LM4_GPIO_L, (1<<6), 0, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_L, (1<<7), 0, NULL},
+	{"ONEWIRE",              LM4_GPIO_H, (1<<2), 0, NULL},
 	{"PCH_BKLTEN",           LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
 	 backlight_interrupt},
 	{"PCH_SLP_A_L",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,

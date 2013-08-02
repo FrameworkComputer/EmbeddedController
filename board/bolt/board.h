@@ -26,8 +26,6 @@
 #endif
 #define CONFIG_LED_DRIVER_DS2413
 #define CONFIG_ONEWIRE
-#define CONFIG_ONEWIRE_BANK LM4_GPIO_F
-#define CONFIG_ONEWIRE_PIN (1 << 7)
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_WP_ACTIVE_HIGH
@@ -104,6 +102,7 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
 	GPIO_CPU_PGOOD,            /* Power good to the CPU */
+	GPIO_ONEWIRE,              /* One-wire bus to adapter LED */
 	GPIO_PCH_CATERR_L,         /* Catastrophic error signal from PCH */
 	GPIO_THERMAL_DATA_READY_L, /* From thermal sensor */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */

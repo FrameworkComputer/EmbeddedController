@@ -70,6 +70,7 @@ const struct gpio_info gpio_list[] = {
 	{"BOARD_VERSION2",       LM4_GPIO_Q, (1<<6), GPIO_INPUT, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
 	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_INPUT, NULL},
+	{"ONEWIRE",              LM4_GPIO_F, (1<<7), GPIO_INPUT, NULL},
 	{"PCH_CATERR_L",         LM4_GPIO_F, (1<<3), GPIO_INPUT, NULL},
 	{"THERMAL_DATA_READY_L", LM4_GPIO_B, (1<<0), GPIO_INPUT, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},

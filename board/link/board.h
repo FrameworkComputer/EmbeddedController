@@ -26,8 +26,6 @@
 #endif
 #define CONFIG_LED_DRIVER_DS2413
 #define CONFIG_ONEWIRE
-#define CONFIG_ONEWIRE_BANK LM4_GPIO_H
-#define CONFIG_ONEWIRE_PIN (1 << 2)
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_PWM_FAN
@@ -95,6 +93,7 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
+	GPIO_ONEWIRE,              /* One-wire bus to adapter LED */
 	GPIO_PCH_BKLTEN,           /* Backlight enable signal from PCH */
 	GPIO_PCH_SLP_A_L,          /* SLP_A# signal from PCH */
 	GPIO_PCH_SLP_ME_CSW_DEV_L, /* SLP_ME_CSW_DEV# signal from PCH */
