@@ -705,19 +705,6 @@ void charger_task(void)
 			hook_notify(HOOK_CHARGE_STATE_CHANGE);
 		}
 
-#ifdef HAS_TASK_POWERBTN
-		/*
-		 * After first init, wake the power button task so it can
-		 * power on the AP if necessary.
-		 *
-		 * TODO(rspangler): API, instead of assuming power button task
-		 * exists
-		 */
-		if (ctx->prev.state == PWR_STATE_INIT &&
-		    new_state != PWR_STATE_INIT)
-			task_wake(TASK_ID_POWERBTN);
-#endif
-
 		switch (new_state) {
 		case PWR_STATE_IDLE0:
 			/*

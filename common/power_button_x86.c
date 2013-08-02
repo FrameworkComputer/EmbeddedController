@@ -397,3 +397,17 @@ static void powerbtn_x86_changed(void)
 	task_wake(TASK_ID_POWERBTN);
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_x86_changed, HOOK_PRIO_DEFAULT);
+
+/**
+ * Handle charge state changes
+ */
+static void powerbtn_x86_charge(void)
+{
+	/*
+	 * If we were waiting for the charge state machine to init before we
+	 * powered on the chipset, we can stop waiting.
+	 */
+	if (pwrbtn_state == PWRBTN_STATE_INIT_ON)
+		task_wake(TASK_ID_POWERBTN);
+}
+DECLARE_HOOK(HOOK_CHARGE_STATE_CHANGE, powerbtn_x86_charge, HOOK_PRIO_DEFAULT);
