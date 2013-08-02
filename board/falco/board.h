@@ -157,6 +157,7 @@ enum x86_signal {
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
 #define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
+#define CONFIG_CHARGER_TIMEOUT_HOURS 10 /* Max time to charge battery, hours */
 
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */

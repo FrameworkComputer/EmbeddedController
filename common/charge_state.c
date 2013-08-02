@@ -631,6 +631,16 @@ void charger_task(void)
 	while (1) {
 		state_common(ctx);
 
+#ifdef CONFIG_CHARGER_TIMEOUT_HOURS
+		if (ctx->curr.state == PWR_STATE_CHARGE &&
+		    ctx->power_state_updated_time.val +
+		    CONFIG_CHARGER_TIMEOUT_HOURS * HOUR < ctx->curr.ts.val) {
+			CPRINTF("[%T Charge timed out after %d hours]\n",
+				CONFIG_CHARGER_TIMEOUT_HOURS);
+			charge_force_idle(1);
+		}
+#endif /* CONFIG_CHARGER_TIMEOUT_HOURS */
+
 		switch (ctx->prev.state) {
 		case PWR_STATE_INIT:
 		case PWR_STATE_REINIT:

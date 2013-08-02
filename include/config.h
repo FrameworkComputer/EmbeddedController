@@ -125,6 +125,15 @@
 /* Value of the input current sense resistor, in mOhms */
 #undef CONFIG_CHARGER_SENSE_RESISTOR_AC
 
+/*
+ * Maximum time to charge the battery, in hours.
+ *
+ * If this timeout is reached, the charger will enter force-idle state.
+ * If not defined, charger will provide current until the battery asks it to
+ * stop.
+ */
+#undef CONFIG_CHARGER_TIMEOUT_HOURS
+
 /*****************************************************************************/
 /* Chipset config */
 
