@@ -139,28 +139,6 @@ static void uart_host_interrupt(void)
 /* Must be same prio as LPC interrupt handler so they don't preempt */
 DECLARE_IRQ(CONFIG_UART_HOST_IRQ, uart_host_interrupt, 2);
 
-/**
- * Configure GPIOs for the UART module.
- */
-static void configure_gpio(void)
-{
-	/* UART0 RX and TX are GPIO PA0:1 alternate function 1 */
-	gpio_set_alternate_function(LM4_GPIO_A, 0x03, 1);
-
-#if (CONFIG_UART_HOST == 1) && defined(CONFIG_UART_HOST_GPIOS_PC4_5)
-	/* UART1 RX and TX are GPIO PC4:5 alternate function 2 */
-	gpio_set_alternate_function(LM4_GPIO_C, 0x30, 2);
-#elif (CONFIG_UART_HOST == 1) && defined(CONFIG_UART_HOST_GPIOS_PB0_1)
-	/* UART1 RX and TX are GPIO PB0:1 alternate function 1 */
-	gpio_set_alternate_function(LM4_GPIO_B, 0x03, 1);
-#elif (CONFIG_UART_HOST == 2) && defined(CONFIG_UART_HOST_GPIOS_PG4_5)
-	/* UART2 RX and TX are GPIO PG4:5 alternate function 1 */
-	gpio_set_alternate_function(LM4_GPIO_G, 0x30, 1);
-#else
-#error "Must put Host UART GPIOs somewhere"
-#endif
-}
-
 static void uart_config(int port)
 {
 	/* Disable the port */
@@ -201,8 +179,7 @@ void uart_init(void)
 	LM4_SYSTEM_RCGCUART |= (1 << CONFIG_UART_HOST) | 1;
 	scratch = LM4_SYSTEM_RCGCUART;
 
-	/* Configure GPIOs */
-	configure_gpio();
+	gpio_config_module(MODULE_UART, 1);
 
 	/* Configure UARTs (identically) */
 	uart_config(0);

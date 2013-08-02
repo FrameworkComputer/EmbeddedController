@@ -20,30 +20,28 @@
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 
-void gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
-	const struct gpio_info *g = gpio_list + signal;
-
 	/* Bitmask for registers with 2 bits per GPIO pin */
-	const uint32_t mask2 = (g->mask * g->mask) | (g->mask * g->mask * 2);
+	const uint32_t mask2 = (mask * mask) | (mask * mask * 2);
 	uint32_t val;
 
 	/* Set up pullup / pulldown */
-	val = STM32_GPIO_PUPDR(g->port) & ~mask2;
+	val = STM32_GPIO_PUPDR(port) & ~mask2;
 	if (flags & GPIO_PULL_UP)
 		val |= 0x55555555 & mask2;	/* Pull Up = 01 */
 	else if (flags & GPIO_PULL_DOWN)
 		val |= 0xaaaaaaaa & mask2;	/* Pull Down = 10 */
-	STM32_GPIO_PUPDR(g->port) = val;
+	STM32_GPIO_PUPDR(port) = val;
 
 	/*
 	 * Select open drain first, so that we don't glitch the signal when
 	 * changing the line to an output.
 	 */
 	if (flags & GPIO_OPEN_DRAIN)
-		STM32_GPIO_OTYPER(g->port) |= g->mask;
+		STM32_GPIO_OTYPER(port) |= mask;
 
-	val = STM32_GPIO_MODER(g->port) & ~mask2;
+	val = STM32_GPIO_MODER(port) & ~mask2;
 	if (flags & GPIO_OUTPUT) {
 		/*
 		 * Set pin level first to avoid glitching.  This is harmless on
@@ -51,25 +49,25 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		 * output drivers until the pin is made an output.
 		 */
 		if (flags & GPIO_HIGH)
-			gpio_set_level(signal, 1);
+			STM32_GPIO_BSRR(port) = mask;
 		else if (flags & GPIO_LOW)
-			gpio_set_level(signal, 0);
+			STM32_GPIO_BSRR(port) = mask << 16;
 
 		/* General purpose, MODE = 01 */
 		val |= 0x55555555 & mask2;
-		STM32_GPIO_MODER(g->port) = val;
+		STM32_GPIO_MODER(port) = val;
 
 	} else if (flags & GPIO_INPUT) {
 		/* Input, MODE=00 */
-		STM32_GPIO_MODER(g->port) = val;
+		STM32_GPIO_MODER(port) = val;
 	}
 
 	/* Set up interrupts if necessary */
 	ASSERT(!(flags & GPIO_INT_LEVEL));
 	if (flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
-		STM32_EXTI_RTSR |= g->mask;
+		STM32_EXTI_RTSR |= mask;
 	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
-		STM32_EXTI_FTSR |= g->mask;
+		STM32_EXTI_FTSR |= mask;
 	/* Interrupt is enabled by gpio_enable_interrupt() */
 }
 
@@ -109,7 +107,7 @@ void gpio_pre_init(void)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
 
 		/* Set up GPIO based on flags */
-		gpio_set_flags(i, flags);
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
 	}
 }
 

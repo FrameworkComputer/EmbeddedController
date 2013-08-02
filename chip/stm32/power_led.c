@@ -65,8 +65,7 @@ static void power_led_use_pwm(void)
 	val |= 0x00009000;	/* alt. function (TIM2/PWM) */
 	STM32_GPIO_CRL(GPIO_B) = val;
 #else
-	/* PA2 = TIM2_CH3 */
-	gpio_set_alternate_function(GPIO_A, (1 << 2), GPIO_ALT_TIM2);
+	gpio_config_module(MODULE_POWER_LED, 1);
 #endif
 
 	/* Enable timer */
@@ -123,8 +122,12 @@ static void power_led_manual_off(void)
 	 * configure it as an open-drain output and set it to high impedence,
 	 * but reconfiguring as an input had better results in testing.
 	 */
+#ifdef BOARD_snow
 	gpio_set_flags(GPIO_LED_POWER_L, GPIO_INPUT);
 	gpio_set_level(GPIO_LED_POWER_L, 1);
+#else
+	gpio_config_module(MODULE_POWER_LED, 0);
+#endif
 
 	using_pwm = 0;
 }

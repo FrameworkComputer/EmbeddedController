@@ -36,6 +36,12 @@
 
 #define CONFIG_WP_ACTIVE_HIGH
 
+/* Module IDs */
+enum module_id {
+	MODULE_I2C,
+	MODULE_UART,
+};
+
 enum gpio_signal {
 	GPIO_EC_INT,
 	GPIO_LID_OPEN,

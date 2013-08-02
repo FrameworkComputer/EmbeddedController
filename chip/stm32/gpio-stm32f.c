@@ -35,31 +35,30 @@ struct port_config {
 /**
  * Helper function for generating bitmasks for STM32 GPIO config registers
  */
-static void gpio_config_info(const struct gpio_info *g, uint32_t *addr,
+static void gpio_config_info(uint32_t port, uint32_t mask, uint32_t *addr,
 		uint32_t *mode, uint32_t *cnf) {
 	/*
 	 * 2-bit config followed by 2-bit mode for each pin, each
 	 * successive pin raises the exponent for the lowest bit
 	 * set by an order of 4, e.g. 2^0, 2^4, 2^8, etc.
 	 */
-	if (g->mask & 0xff) {
-		*addr = g->port;	/* GPIOx_CRL */
-		*mode = g->mask;
+	if (mask & 0xff) {
+		*addr = port;	/* GPIOx_CRL */
+		*mode = mask;
 	} else {
-		*addr = g->port + 0x04;	/* GPIOx_CRH */
-		*mode = g->mask >> 8;
+		*addr = port + 0x04;	/* GPIOx_CRH */
+		*mode = mask >> 8;
 	}
 	*mode = *mode * *mode * *mode * *mode;
 	*mode |= *mode << 1;
 	*cnf = *mode << 2;
 }
 
-void gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags_by_mask(uint32_t port, uint32_t pmask, uint32_t flags)
 {
-	const struct gpio_info *g = gpio_list + signal;
 	uint32_t addr, cnf, mode, mask;
 
-	gpio_config_info(g, &addr, &mode, &cnf);
+	gpio_config_info(port, pmask, &addr, &mode, &cnf);
 	mask = REG32(addr) & ~(cnf | mode);
 
 	/*
@@ -80,10 +79,10 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		 */
 		if (flags & GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
-			gpio_set_level(signal, 1);
+			STM32_GPIO_BSRR(port) = pmask;
 		} else if (flags & GPIO_PULL_DOWN) {
 			mask |= 0x88888888 & cnf;
-			gpio_set_level(signal, 0);
+			STM32_GPIO_BSRR(port) = pmask << 16;
 		} else {
 			mask |= 0x44444444 & cnf;
 		}
@@ -98,18 +97,23 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		 * before it has been configured as such.
 		 */
 		if (flags & GPIO_HIGH)
-			gpio_set_level(signal, 1);
+			STM32_GPIO_BSRR(port) = pmask;
 		else if (flags & GPIO_LOW)
-			gpio_set_level(signal, 0);
+			STM32_GPIO_BSRR(port) = pmask << 16;
 	}
 
 	/* Set up interrupts if necessary */
 	ASSERT(!(flags & GPIO_INT_LEVEL));
 	if (flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
-		STM32_EXTI_RTSR |= g->mask;
+		STM32_EXTI_RTSR |= pmask;
 	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
-		STM32_EXTI_FTSR |= g->mask;
+		STM32_EXTI_FTSR |= pmask;
 	/* Interrupt is enabled by gpio_enable_interrupt() */
+}
+
+void gpio_set_alternate_function(int port, int mask, int func)
+{
+	/* TODO(rspangler): implement me! */
 }
 
 void gpio_pre_init(void)

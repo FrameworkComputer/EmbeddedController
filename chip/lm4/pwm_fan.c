@@ -278,7 +278,7 @@ static void pwm_fan_init(void)
 	clock_wait_cycles(3);
 
 	/* Configure GPIOs */
-	configure_fan_gpios();
+	gpio_config_module(MODULE_PWM_FAN, 1);
 
 	/* Disable all fans */
 	LM4_FAN_FANCTL = 0;

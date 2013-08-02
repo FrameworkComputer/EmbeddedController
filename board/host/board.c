@@ -20,6 +20,11 @@ const struct gpio_info gpio_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
+/* Pins with alternate functions; not on simulated host platform */
+const struct gpio_alt_func gpio_alt_funcs[] = {
+};
+const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
+
 static int dummy_temp_get_val(int idx, int *temp_ptr)
 {
 	*temp_ptr = 0;

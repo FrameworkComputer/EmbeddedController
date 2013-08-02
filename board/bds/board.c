@@ -41,10 +41,19 @@ BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
-	{"RECOVERYn",   LM4_GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
-	{"DEBUG_LED",    LM4_GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
+	{"RECOVERYn", GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
+	{"DEBUG_LED", GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+
+/* Pins with alternate functions */
+const struct gpio_alt_func gpio_alt_funcs[] = {
+	{GPIO_A, 0x03, 1, MODULE_UART},		/* UART0 */
+	{GPIO_G, 0x40, 3, MODULE_I2C},		/* I2C5 SCL */
+	{GPIO_G, 0x80, 3, GPIO_OPEN_DRAIN},	/* I2C5 SDA */
+	{GPIO_B, 0x03, 1, MODULE_UART},		/* UART1 */
+};
+const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);

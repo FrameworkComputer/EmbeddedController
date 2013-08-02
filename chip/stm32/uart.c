@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "clock.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
@@ -145,6 +146,9 @@ void uart_init(void)
 #else
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_USART ## UARTN;
 #endif
+
+	/* Configure GPIOs */
+	gpio_config_module(MODULE_UART, 1);
 
 	/*
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,

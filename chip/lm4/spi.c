@@ -22,8 +22,7 @@
 int spi_enable(int enable)
 {
 	if (enable) {
-		/* SSI0 on PA2(CLK), PA4(RX), PA5(TX) alternate function 2 */
-		gpio_set_alternate_function(LM4_GPIO_A, 0x34, 2);
+		gpio_config_module(MODULE_SPI, 1);
 		/* Don't use the SSI0 frame output.  CS# is a GPIO so we can
 		 * keep it low during an entire transaction. */
 		gpio_set_flags(GPIO_SPI_CSn, GPIO_OUTPUT);
@@ -39,8 +38,7 @@ int spi_enable(int enable)
 		gpio_set_level(GPIO_SPI_CSn, 1);
 		gpio_set_flags(GPIO_SPI_CSn, GPIO_ODR_HIGH);
 
-		/* PA2,4,5 normal function (high-Z GPIOs) */
-		gpio_set_alternate_function(LM4_GPIO_A, 0x34, -1);
+		gpio_config_module(MODULE_SPI, 0);
 	}
 
 	return EC_SUCCESS;

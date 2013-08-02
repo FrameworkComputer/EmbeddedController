@@ -27,3 +27,14 @@ test_mockable int gpio_enable_interrupt(enum gpio_signal signal)
 {
 	return EC_SUCCESS;
 }
+
+test_mockable void gpio_set_flags_by_mask(uint32_t port, uint32_t mask,
+					  uint32_t flags)
+{
+	/* Nothing */
+}
+
+test_mockable void gpio_set_alternate_function(int port, int mask, int func)
+{
+	/* Nothing */
+}

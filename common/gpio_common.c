@@ -61,6 +61,34 @@ static int last_val_changed(int i, int v)
 /*****************************************************************************/
 /* GPIO API */
 
+void gpio_config_module(enum module_id id, int enable)
+{
+	const struct gpio_alt_func *af = gpio_alt_funcs;
+	int i;
+
+	/* Set module's pins to alternate functions */
+	for (i = 0; i < gpio_alt_funcs_count; i++, af++) {
+		if (id != af->module_id)
+			continue;  /* Pins for some other module */
+
+		if (enable) {
+			gpio_set_flags_by_mask(af->port, af->mask, af->flags);
+			gpio_set_alternate_function(af->port, af->mask,
+						    af->func);
+		} else {
+			gpio_set_flags_by_mask(af->port, af->mask, GPIO_INPUT);
+			gpio_set_alternate_function(af->port, af->mask, -1);
+		}
+	}
+}
+
+void gpio_set_flags(enum gpio_signal signal, int flags)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	gpio_set_flags_by_mask(g->port, g->mask, flags);
+}
+
 const char *gpio_get_name(enum gpio_signal signal)
 {
 	return gpio_list[signal].name;

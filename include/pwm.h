@@ -48,11 +48,6 @@ void pwm_set_fan_target_rpm(int rpm);
 void pwm_set_fan_duty(int percent);
 
 /**
- * Set up the keyboard gpios.
- */
-void configure_kblight_gpios(void);
-
-/**
  * Enable/disable the keyboard backlight.
  */
 void pwm_enable_keyboard_backlight(int enable);
@@ -71,10 +66,5 @@ int pwm_get_keyboard_backlight(void);
  * Set the keyboard backlight percentage (0=off, 100=max).
  */
 void pwm_set_keyboard_backlight(int percent);
-
-/**
- * Configure the GPIOs for the pwm module -- board-specific.
- */
-void configure_fan_gpios(void);
 
 #endif  /* __CROS_EC_PWM_H */

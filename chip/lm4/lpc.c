@@ -75,20 +75,6 @@ static uint8_t * const cmd_params = (uint8_t *)LPC_POOL_CMD_DATA +
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)LPC_POOL_CMD_DATA;
 
-/* Configure GPIOs for module */
-static void configure_gpio(void)
-{
-	/*
-	 * Set digital alternate function 15 for PL0:5, PM0:2, PM4:5 pins.
-	 *
-	 * I/O: PL0:3 = command/address/data
-	 * inp: PL4 (frame), PL5 (reset), PM0 (powerdown), PM5 (clock)
-	 * out: PM1 (sci), PM4 (serirq)
-	 */
-	gpio_set_alternate_function(LM4_GPIO_L, 0x3f, 0x0f);
-	gpio_set_alternate_function(LM4_GPIO_M, 0x33, 0x0f);
-}
-
 static void wait_irq_sent(void)
 {
 	/*
@@ -679,7 +665,7 @@ static void lpc_init(void)
 	LM4_LPC_LPCIRQCTL = 0;
 
 	/* Configure GPIOs */
-	configure_gpio();
+	gpio_config_module(MODULE_LPC, 1);
 
 	/*
 	 * Set LPC channel 0 to I/O address 0x62 (data) / 0x66 (command),

@@ -82,6 +82,15 @@ const struct gpio_info gpio_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
+/* Pins with alternate functions */
+const struct gpio_alt_func gpio_alt_funcs[] = {
+	{GPIO_A, 0x0004, GPIO_ALT_TIM2,  MODULE_POWER_LED},
+	{GPIO_A, 0x00f0, GPIO_ALT_SPI,   MODULE_SPI},
+	{GPIO_A, 0x0600, GPIO_ALT_USART, MODULE_UART},
+	{GPIO_B, 0x0cc0, GPIO_ALT_I2C,	 MODULE_I2C},
+};
+const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
+
 /* Battery temperature ranges in degrees C */
 const struct battery_temperature_ranges bat_temp_ranges = {
 	.start_charging_min_c = 0,
@@ -97,18 +106,6 @@ const struct i2c_port_t i2c_ports[] = {
 	{"host", I2C_PORT_HOST, 100},
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
-
-void board_config_post_gpio_init(void)
-{
-	/* I2C SCL/SDA on PB10-11 and PB6-7 */
-	gpio_set_alternate_function(GPIO_B,
-				    (1 << 11) | (1 << 10) | (1 << 7) | (1 << 6),
-				    GPIO_ALT_I2C);
-
-	/* USART1 on pins PA9/PA10 */
-	gpio_set_alternate_function(GPIO_A, (1 << 9) | (1 << 10),
-				    GPIO_ALT_USART);
-}
 
 int pmu_board_init(void)
 {

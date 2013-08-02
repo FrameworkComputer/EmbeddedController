@@ -548,11 +548,6 @@
 /* UART index (number) for host UART, if present */
 #undef CONFIG_UART_HOST
 
-/* GPIOs used by host UART.  Choose at most one. */
-#undef CONFIG_UART_HOST_GPIOS_PB0_1
-#undef CONFIG_UART_HOST_GPIOS_PC4_5
-#undef CONFIG_UART_HOST_GPIOS_PG4_5
-
 /*
  * UART transmit buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.

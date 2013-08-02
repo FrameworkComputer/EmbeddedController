@@ -36,6 +36,14 @@
 
 #ifndef __ASSEMBLER__
 
+/* Module IDs */
+/* TODO(rspangler): use this in place of enum console_channel as well */
+enum module_id {
+	MODULE_I2C,
+	MODULE_POWER_LED,
+	MODULE_UART,
+};
+
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
 

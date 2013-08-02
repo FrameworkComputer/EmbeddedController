@@ -11,7 +11,6 @@
 /* Optional features */
 #define CONFIG_BATTERY_BQ20Z453
 #define CONFIG_BATTERY_SMART
-#define CONFIG_BOARD_POST_GPIO_INIT
 #ifdef HAS_TASK_CHARGER
 #define CONFIG_CHARGER_TPS65090
 #endif
@@ -29,6 +28,15 @@
 #define CONFIG_SPI
 
 #ifndef __ASSEMBLER__
+
+/* Module IDs */
+/* TODO(rspangler): use this in place of enum console_channel as well */
+enum module_id {
+	MODULE_I2C,
+	MODULE_POWER_LED,
+	MODULE_SPI,
+	MODULE_UART,
+};
 
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))

@@ -10,20 +10,24 @@
 
 #include "common.h"
 
-/* Flag definitions for gpio_info. */
-#define GPIO_INPUT       0x0000  /* Input */
-#define GPIO_OUTPUT      0x0001  /* Output */
-#define GPIO_OPEN_DRAIN  0x0002  /* Output type is open-drain */
-#define GPIO_PULL_UP     0x0004  /* Enable on-chip pullup */
-#define GPIO_PULL_DOWN   0x0008  /* Enable on-chip pulldown */
-#define GPIO_LOW         0x0010  /* If GPIO_OUTPUT, set level low */
-#define GPIO_HIGH        0x0020  /* If GPIO_OUTPUT, set level high */
-#define GPIO_INT_RISING  0x0040  /* Interrupt on rising edge */
-#define GPIO_INT_FALLING 0x0080  /* Interrupt on falling edge */
-#define GPIO_INT_BOTH    0x0100  /* Interrupt on both edges */
-#define GPIO_INT_LOW     0x0200  /* Interrupt on low level */
-#define GPIO_INT_HIGH    0x0400  /* Interrupt on high level */
-#define GPIO_DEFAULT     0x0800  /* Don't set up on boot */
+/* Flag definitions for gpio_info and gpio_alt_func */
+/* The following are valid for both gpio_info and gpio_alt_func: */
+#define GPIO_OPEN_DRAIN  (1 << 0)  /* Output type is open-drain */
+#define GPIO_PULL_UP     (1 << 1)  /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN   (1 << 2)  /* Enable on-chip pulldown */
+/* The following are valid for gpio_alt_func only */
+#define GPIO_ANALOG      (1 << 3)  /* Set pin to analog-mode */
+/* The following are valid for gpio_info only */
+#define GPIO_INPUT       0         /* Input */
+#define GPIO_OUTPUT      (1 << 4)  /* Output */
+#define GPIO_LOW         (1 << 5)  /* If GPIO_OUTPUT, set level low */
+#define GPIO_HIGH        (1 << 6)  /* If GPIO_OUTPUT, set level high */
+#define GPIO_INT_RISING  (1 << 7)  /* Interrupt on rising edge */
+#define GPIO_INT_FALLING (1 << 8)  /* Interrupt on falling edge */
+#define GPIO_INT_BOTH    (1 << 9)  /* Interrupt on both edges */
+#define GPIO_INT_LOW     (1 << 10) /* Interrupt on low level */
+#define GPIO_INT_HIGH    (1 << 11) /* Interrupt on high level */
+#define GPIO_DEFAULT     (1 << 12) /* Don't set up on boot */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW     (GPIO_OUTPUT | GPIO_LOW)
@@ -37,11 +41,18 @@
 
 /* GPIO signal definition structure, for use by board.c */
 struct gpio_info {
+	/* Signal name */
 	const char *name;
-	int port;         /* Port (LM4_GPIO_*) */
-	int mask;         /* Bitmask on that port (0x01 - 0x80; 0x00 =
-			   * signal not implemented) */
-	uint32_t flags;   /* Flags (GPIO_*) */
+
+	/* Port base address */
+	uint32_t port;
+
+	/* Bitmask on that port (1 << N; 0 = signal not implemented) */
+	int mask;
+
+	/* Flags (GPIO_*; see above) */
+	uint32_t flags;
+
 	/*
 	 * Interrupt handler.  If non-NULL, and the signal's interrupt is
 	 * enabled, this will be called in the context of the GPIO interrupt
@@ -60,12 +71,41 @@ extern const struct gpio_info gpio_list[];
 #define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, GPIO_A, 0, 0, NULL}
 #endif
 
+/* GPIO alternate function structure, for use by board.c */
+struct gpio_alt_func {
+	/* Port base address */
+	uint32_t port;
+
+	/* Bitmask on that port (multiple bits allowed) */
+	uint32_t mask;
+
+	/* Alternate function number */
+	int8_t func;
+
+	/* Module ID (as uint8_t, since enum would be 32-bit) */
+	uint8_t module_id;
+
+	/* Flags (GPIO_*; see above). */
+	uint16_t flags;
+};
+
+extern const struct gpio_alt_func gpio_alt_funcs[];
+extern const int gpio_alt_funcs_count;
+
 /**
  * Pre-initialize GPIOs.
  *
  * This occurs before clocks or tasks are set up.
  */
 void gpio_pre_init(void);
+
+/**
+ * Configure GPIO pin functions for a module.
+ *
+ * @param id		Module ID to initialize
+ * @param enable	Enable alternate functions if 1; high-Z pins if 0.
+ */
+void gpio_config_module(enum module_id id, int enable);
 
 /**
  * Get the current value of a signal.
@@ -123,11 +163,28 @@ void gpio_set_level(enum gpio_signal signal, int value);
 int gpio_enable_interrupt(enum gpio_signal signal);
 
 /**
+ * Set flags for GPIO(s) by port and mask.
+ *
+ * Use gpio_set_flags() to set flags for an individual GPIO by id.
+ *
+ * Note that modules should usually declare their GPIO alternate functions in
+ * gpio_alt_funcs[] and call gpio_init_module() instead of calling this
+ * directly.
+ *
+ * @param port		GPIO port to set (GPIO_*)
+ * @param mask		Bitmask of pins on that port to affect
+ * @param flags		Flags (GPIO_*; see above)
+ */
+void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
+
+/**
  * Set alternate function for GPIO(s).
  *
- * This is intended for use by other modules' configure_gpio() functions.
+ * Note that modules should usually declare their GPIO alternate functions in
+ * gpio_alt_funcs[] and call gpio_init_module() instead of calling this
+ * directly.
  *
- * @param port		GPIO port to set (LM4_GPIO_*)
+ * @param port		GPIO port to set (GPIO_*)
  * @param mask		Bitmask of pins on that port to affect
  * @param func		Alternate function; if <0, configures the specified
  *			GPIOs for normal GPIO operation.

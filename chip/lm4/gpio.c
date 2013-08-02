@@ -74,7 +74,6 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	} else {
 		LM4_GPIO_AFSEL(port) &= ~mask;
 	}
-	LM4_GPIO_DEN(port) |= mask;
 }
 
 test_mockable int gpio_get_level(enum gpio_signal signal)
@@ -93,58 +92,59 @@ void gpio_set_level(enum gpio_signal signal, int value)
 		      gpio_list[signal].mask) = (value ? 0xff : 0);
 }
 
-void gpio_set_flags(enum gpio_signal signal, int flags)
+void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
-	const struct gpio_info *g = gpio_list + signal;
+	/*
+	 * Select open drain first, so that we don't glitch the signal
+	 * when changing the line to an output.
+	 */
+	if (flags & GPIO_OPEN_DRAIN)
+		LM4_GPIO_ODR(port) |= mask;
+	else
+		LM4_GPIO_ODR(port) &= ~mask;
 
-	if (flags & GPIO_OUTPUT) {
-		/*
-		 * Select open drain first, so that we don't glitch the signal
-		 * when changing the line to an output.
-		 */
-		if (g->flags & GPIO_OPEN_DRAIN)
-			LM4_GPIO_ODR(g->port) |= g->mask;
-		else
-			LM4_GPIO_ODR(g->port) &= ~g->mask;
-
-		LM4_GPIO_DIR(g->port) |= g->mask;
-
-		/* Set level if necessary */
-		if (flags & GPIO_HIGH)
-			gpio_set_level(signal, 1);
-		else if (flags & GPIO_LOW)
-			gpio_set_level(signal, 0);
-	} else {
-		/* Input */
-		LM4_GPIO_DIR(g->port) &= ~g->mask;
-	}
+	if (flags & GPIO_OUTPUT)
+		LM4_GPIO_DIR(port) |= mask;
+	else
+		LM4_GPIO_DIR(port) &= ~mask;
 
 	/* Handle pullup / pulldown */
-	if (g->flags & GPIO_PULL_UP) {
-		LM4_GPIO_PUR(g->port) |= g->mask;
-	} else if (g->flags & GPIO_PULL_DOWN) {
-		LM4_GPIO_PDR(g->port) |= g->mask;
+	if (flags & GPIO_PULL_UP) {
+		LM4_GPIO_PUR(port) |= mask;
+	} else if (flags & GPIO_PULL_DOWN) {
+		LM4_GPIO_PDR(port) |= mask;
 	} else {
 		/* No pull up/down */
-		LM4_GPIO_PUR(g->port) &= ~g->mask;
-		LM4_GPIO_PDR(g->port) &= ~g->mask;
+		LM4_GPIO_PUR(port) &= ~mask;
+		LM4_GPIO_PDR(port) &= ~mask;
 	}
 
 	/* Set up interrupt type */
-	if (g->flags & GPIO_INT_LEVEL)
-		LM4_GPIO_IS(g->port) |= g->mask;
+	if (flags & GPIO_INT_LEVEL)
+		LM4_GPIO_IS(port) |= mask;
 	else
-		LM4_GPIO_IS(g->port) &= ~g->mask;
+		LM4_GPIO_IS(port) &= ~mask;
 
-	if (g->flags & (GPIO_INT_RISING | GPIO_INT_HIGH))
-		LM4_GPIO_IEV(g->port) |= g->mask;
+	if (flags & (GPIO_INT_RISING | GPIO_INT_HIGH))
+		LM4_GPIO_IEV(port) |= mask;
 	else
-		LM4_GPIO_IEV(g->port) &= ~g->mask;
+		LM4_GPIO_IEV(port) &= ~mask;
 
-	if (g->flags & GPIO_INT_BOTH)
-		LM4_GPIO_IBE(g->port) |= g->mask;
+	if (flags & GPIO_INT_BOTH)
+		LM4_GPIO_IBE(port) |= mask;
 	else
-		LM4_GPIO_IBE(g->port) &= ~g->mask;
+		LM4_GPIO_IBE(port) &= ~mask;
+
+	if (flags & GPIO_ANALOG)
+		LM4_GPIO_DEN(port) &= ~mask;
+	else
+		LM4_GPIO_DEN(port) |= mask;
+
+	/* Set level */
+	if (flags & GPIO_HIGH)
+		LM4_GPIO_DATA(port, mask) = 0xff;
+	else if (flags & GPIO_LOW)
+		LM4_GPIO_DATA(port, mask) = 0;
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
@@ -210,7 +210,7 @@ void gpio_pre_init(void)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
 
 		/* Set up GPIO based on flags */
-		gpio_set_flags(i, flags);
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
 
 		/* Use as GPIO, not alternate function */
 		gpio_set_alternate_function(g->port, g->mask, -1);

@@ -40,18 +40,6 @@
 static int temp_vals[TEMP_AVG_LENGTH];
 static int temp_idx = 0;
 
-/**
- * Configure the GPIOs for the PECI module.
- */
-static void configure_gpios(void)
-{
-	/* PJ6 alternate function 1 = PECI Tx */
-	gpio_set_alternate_function(LM4_GPIO_J, 0x40, 1);
-
-	/* PJ7 analog input = PECI Rx (comparator) */
-	LM4_GPIO_DEN(LM4_GPIO_J) &= ~0x80;
-}
-
 int peci_get_cpu_temp(void)
 {
 	int v = LM4_PECI_M0D0 & 0xffff;
@@ -120,15 +108,14 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT - 1);
 
 static void peci_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
 	int i;
 
 	/* Enable the PECI module and delay a few clocks */
 	LM4_SYSTEM_RCGCPECI = 1;
-	scratch = LM4_SYSTEM_RCGCPECI;
+	clock_wait_cycles(3);
 
 	/* Configure GPIOs */
-	configure_gpios();
+	gpio_config_module(MODULE_PECI, 1);
 
 	/* Set initial clock frequency */
 	peci_freq_changed();

@@ -479,7 +479,7 @@ static void spi_chipset_startup(void)
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH | GPIO_PULL_UP);
 
 	/* Set SPI pins to alternate function */
-	gpio_set_alternate_function(GPIO_A, 0xf0, GPIO_ALT_SPI);
+	gpio_config_module(MODULE_SPI, 1);
 
 	/* Set up for next transaction */
 	setup_for_transaction();
@@ -498,7 +498,7 @@ static void spi_chipset_shutdown(void)
 	gpio_set_flags(GPIO_SPI1_NSS, 0);
 
 	/* Set SPI pins to inputs so we don't leak power when AP is off */
-	gpio_set_alternate_function(GPIO_A, 0xf0, -1);
+	gpio_config_module(MODULE_SPI, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);

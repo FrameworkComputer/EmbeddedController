@@ -32,19 +32,30 @@
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP006
+#define CONFIG_UART_HOST 1
 #define CONFIG_USB_PORT_POWER_SMART
 #define CONFIG_WIRELESS
 #define CONFIG_WP_ACTIVE_HIGH
 
 #ifndef __ASSEMBLER__
 
+/* Module IDs */
+/* TODO(rspangler): use this in place of enum console_channel as well */
+enum module_id {
+	MODULE_I2C,
+	MODULE_LPC,
+	MODULE_PECI,
+	MODULE_PWM_FAN,
+	MODULE_PWM_KBLIGHT,
+	MODULE_UART,
+};
+
 /* Fan PWM channels */
 #define FAN_CH_CPU       0  /* CPU fan */
 #define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
 #define FAN_CH_POWER_LED 5  /* Power adapter LED */
 
-enum adc_channel
-{
+enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
 	/* Charger current in mA. */
@@ -77,10 +88,6 @@ enum adc_channel
 
 /* USB charge port */
 #define USB_CHARGE_PORT_COUNT 2
-
-/* GPIOs for second UART port */
-#define CONFIG_UART_HOST 1
-#define CONFIG_UART_HOST_GPIOS_PC4_5
 
 /* GPIO signal definitions. */
 enum gpio_signal {

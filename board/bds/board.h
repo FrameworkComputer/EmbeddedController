@@ -27,8 +27,14 @@
 
 #ifndef __ASSEMBLER__
 
-enum adc_channel
-{
+/* Module IDs */
+/* TODO(rspangler): use this in place of enum console_channel as well */
+enum module_id {
+	MODULE_I2C,
+	MODULE_UART,
+};
+
+enum adc_channel {
 	ADC_CH_EC_TEMP = 0,  /* EC internal die temperature in degrees K. */
 	ADC_CH_BDS_POT,      /* BDS pot input. */
 	ADC_CH_COUNT
@@ -39,9 +45,8 @@ enum adc_channel
 /* Number of I2C ports used */
 #define I2C_PORTS_USED 1
 
-/* GPIOs for second UART port */
+/* Second UART port */
 #define CONFIG_UART_HOST 1
-#define CONFIG_UART_HOST_GPIOS_PB0_1
 
 /* GPIO signal list */
 enum gpio_signal {

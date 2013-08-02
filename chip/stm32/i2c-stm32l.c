@@ -352,6 +352,9 @@ static void i2c_init(void)
 		}
 	}
 
+	/* Configure GPIOs */
+	gpio_config_module(MODULE_I2C, 1);
+
 	/* Set up initial bus frequencies */
 	i2c_freq_change();
 

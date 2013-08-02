@@ -445,6 +445,23 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_GPIO_AMSEL(port)          LM4GPIOREG(port, 0x528)
 #define LM4_GPIO_PCTL(port)           LM4GPIOREG(port, 0x52c)
 
+/* Chip-independent aliases for port base addresses */
+#define GPIO_A LM4_GPIO_A
+#define GPIO_B LM4_GPIO_B
+#define GPIO_C LM4_GPIO_C
+#define GPIO_D LM4_GPIO_D
+#define GPIO_E LM4_GPIO_E
+#define GPIO_F LM4_GPIO_F
+#define GPIO_G LM4_GPIO_G
+#define GPIO_H LM4_GPIO_H
+#define GPIO_J LM4_GPIO_J
+#define GPIO_K LM4_GPIO_K
+#define GPIO_L LM4_GPIO_L
+#define GPIO_M LM4_GPIO_M
+#define GPIO_N LM4_GPIO_N
+#define GPIO_P LM4_GPIO_P
+#define GPIO_Q LM4_GPIO_Q
+
 /* Value to write to LM4_GPIO_LOCK to unlock writes */
 #define LM4_GPIO_LOCK_UNLOCK          0x4c4f434b
 

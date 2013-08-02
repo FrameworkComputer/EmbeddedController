@@ -125,6 +125,25 @@ const struct gpio_info gpio_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
+/* Pins with alternate functions */
+const struct gpio_alt_func gpio_alt_funcs[] = {
+	{GPIO_A, 0x03, 1, MODULE_UART},			/* UART0 */
+	{GPIO_A, 0x40, 3, MODULE_I2C},			/* I2C1 SCL */
+	{GPIO_A, 0x80, 3, MODULE_I2C, GPIO_OPEN_DRAIN},	/* I2C1 SDA */
+	{GPIO_B, 0x04, 3, MODULE_I2C},			/* I2C0 SCL */
+	{GPIO_B, 0x08, 3, MODULE_I2C, GPIO_OPEN_DRAIN},	/* I2C0 SDA */
+	{GPIO_B, 0x40, 3, MODULE_I2C},			/* I2C5 SCL */
+	{GPIO_B, 0x80, 3, MODULE_I2C, GPIO_OPEN_DRAIN},	/* I2C5 SDA */
+	{GPIO_C, 0x30, 2, MODULE_UART},			/* UART1 */
+	{GPIO_J, 0x40, 1, MODULE_PECI},			/* PECI Tx */
+	{GPIO_J, 0x80, 0, MODULE_PECI, GPIO_ANALOG},	/* PECI Rx */
+	{GPIO_K, 0x40, 1, MODULE_PWM_KBLIGHT},		/* Fan1 PWM */
+	{GPIO_L, 0x3f, 15, MODULE_LPC},			/* LPC */
+	{GPIO_M, 0x33, 15, MODULE_LPC},			/* LPC */
+	{GPIO_M, 0xc0, 1, MODULE_PWM_FAN},		/* Fan0 PWM/tach */
+};
+const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
+
 /* x86 signal list.  Must match order of enum x86_signal. */
 const struct x86_signal_info x86_signal_list[] = {
 	{GPIO_PGOOD_5VALW,		1, "PGOOD_5VALW"},
@@ -217,15 +236,6 @@ struct keyboard_scan_config keyscan_config = {
 };
 
 /**
- * Configure the GPIOs for the pwm module.
- */
-void configure_fan_gpios(void)
-{
-	/* PM6:7 alternate function 1 = channel 0 PWM/tach */
-	gpio_set_alternate_function(LM4_GPIO_M, 0xc0, 1);
-}
-
-/**
  * Perform necessary actions on host events.
  */
 void board_process_wake_events(uint32_t active_wake_events)
@@ -235,13 +245,4 @@ void board_process_wake_events(uint32_t active_wake_events)
 		gpio_set_level(GPIO_PCH_WAKE_L, 0);
 	else
 		gpio_set_level(GPIO_PCH_WAKE_L, 1);
-}
-
-/**
- * Configure the GPIOs for the pwm module.
- */
-void configure_kblight_gpios(void)
-{
-	/* PK6 alternate function 1 = channel 1 PWM */
-	gpio_set_alternate_function(LM4_GPIO_K, 0x40, 1);
 }

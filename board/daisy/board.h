@@ -13,7 +13,6 @@
 
 /* Optional features */
 #define CONFIG_BATTERY_SMART
-#define CONFIG_BOARD_POST_GPIO_INIT
 #define CONFIG_CHARGER_TPS65090
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
@@ -36,6 +35,14 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 #ifndef __ASSEMBLER__
+
+/* Module IDs */
+/* TODO(rspangler): use this in place of enum console_channel as well */
+enum module_id {
+	MODULE_I2C,
+	MODULE_POWER_LED,
+	MODULE_UART,
+};
 
 /* By default, enable all console messages except keyboard */
 #define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
