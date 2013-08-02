@@ -166,7 +166,7 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
  */
 static void set_pmic_pwrok(int asserted)
 {
-#ifdef BOARD_pit
+#if defined(BOARD_pit) || defined(BOARD_kirby)
 	/* Signal is active-high */
 	gpio_set_level(GPIO_PMIC_PWRON, asserted);
 #else
@@ -281,9 +281,11 @@ static int gaia_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
-	gpio_enable_interrupt(GPIO_PP1800_LDO2);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
+#ifndef BOARD_kirby
+	gpio_enable_interrupt(GPIO_PP1800_LDO2);
+#endif
 
 	/* Leave power off only if requested by reset flags */
 	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
@@ -332,7 +334,9 @@ void chipset_reset(int is_cold)
 	 * contents. This is useful for looking at kernel log message contents
 	 * from previous boot in cases where the AP/OS is hard hung.
 	 */
+#ifndef BOARD_kirby
 	gpio_set_level(GPIO_EN_PP5000, 0);
+#endif
 	gpio_set_level(GPIO_EN_PP3300, 0);
 
 	power_request = POWER_REQ_ON;
@@ -343,9 +347,13 @@ void chipset_force_shutdown(void)
 {
 	/* Turn off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
+#ifndef BOARD_kirby
 	gpio_set_level(GPIO_EN_PP1350, 0);
+#endif
 	set_pmic_pwrok(0);
+#ifndef BOARD_kirby
 	gpio_set_level(GPIO_EN_PP5000, 0);
+#endif
 }
 
 /*****************************************************************************/
@@ -402,10 +410,12 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
+#ifndef BOARD_kirby
 	/* Enable 5v power rail */
 	gpio_set_level(GPIO_EN_PP5000, 1);
 	/* Wait for it to stabilize */
 	usleep(DELAY_5V_SETUP);
+#endif
 
 #if defined(BOARD_pit) || defined(BOARD_puppy)
 	/*
@@ -426,6 +436,7 @@ static int power_on(void)
 		set_pmic_pwrok(1);
 	}
 
+#ifndef BOARD_kirby
 	/* wait for all PMIC regulators to be ready */
 	wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
@@ -445,6 +456,7 @@ static int power_on(void)
 	gpio_set_level(GPIO_EN_PP1350, 1);
 	/* Wait to avoid large inrush current */
 	usleep(DELAY_RAIL_STAGGERING);
+#endif
 
 	/* Enable 3.3v power rail, if it's not already on */
 	gpio_set_level(GPIO_EN_PP3300, 1);
@@ -513,7 +525,9 @@ static void power_off(void)
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
+#ifndef BOARD_kirby
 	pmu_shutdown();
+#endif
 	CPRINTF("[%T power shutdown complete]\n");
 }
 
