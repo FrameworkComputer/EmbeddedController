@@ -98,8 +98,8 @@ const char help_str[] =
 	"      Perform I2C transfer on EC's I2C bus\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
-	"  led <auto | red | green | blue | <R> <G> <B>>\n"
-	"      Set the color of LED\n"
+	"  led <name> <query | auto | off | <color> | <color>=<value>...>\n"
+	"      Set the color of an LED or query brightness range\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
 	"  panicinfo\n"
@@ -169,6 +169,9 @@ static const char * const image_names[] = {"unknown", "RO", "RW"};
 static const char * const led_color_names[EC_LED_COLOR_COUNT] = {
 	"red", "green", "blue", "yellow", "white"};
 
+/* Note: depends on enum ec_led_id */
+static const char * const led_names[EC_LED_ID_COUNT] = {
+	"battery", "power", "adapter"};
 
 /* Check SBS numerical value range */
 int is_battery_range(int val)
@@ -1425,7 +1428,6 @@ static int cmd_lightbar(int argc, char **argv)
 	return lb_help(argv[0]);
 }
 
-
 static int find_led_color_by_name(const char *color)
 {
 	int i;
@@ -1433,6 +1435,18 @@ static int find_led_color_by_name(const char *color)
 	for (i = 0; i < EC_LED_COLOR_COUNT; ++i)
 		if (!strcasecmp(color, led_color_names[i]))
 			return i;
+
+	return -1;
+}
+
+static int find_led_id_by_name(const char *led)
+{
+	int i;
+
+	for (i = 0; i < EC_LED_ID_COUNT; ++i)
+		if (!strcasecmp(led, led_names[i]))
+			return i;
+
 	return -1;
 }
 
@@ -1448,14 +1462,18 @@ int cmd_led(int argc, char *argv[])
 
 	if (argc < 3) {
 		fprintf(stderr,
-			"Usage: %s <ID> <query | auto | "
-			"<color>=<brightness>...>\n", argv[0]);
+			"Usage: %s <name> <query | auto | "
+			"off | <color> | <color>=<value>...>\n", argv[0]);
 		return -1;
 	}
 
-	p.led_id = strtol(argv[1], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad LED ID.\n");
+	p.led_id = find_led_id_by_name(argv[1]);
+	if (p.led_id == (uint8_t)-1) {
+		fprintf(stderr, "Bad LED name: %s\n", argv[1]);
+		fprintf(stderr, "Valid LED names: ");
+		for (i = 0; i < EC_LED_ID_COUNT; i++)
+			fprintf(stderr, "%s ", led_names[i]);
+		fprintf(stderr, "\n");
 		return -1;
 	}
 
@@ -1465,17 +1483,19 @@ int cmd_led(int argc, char *argv[])
 				&r, sizeof(r));
 		printf("Brightness range for LED %d:\n", p.led_id);
 		if (rv < 0) {
-			fprintf(stderr, "Error. Not existing LED?\n");
+			fprintf(stderr, "Error: Unsupported LED.\n");
 			return rv;
 		}
-		for (i = 0; i < 5; ++i)
+		for (i = 0; i < EC_LED_COLOR_COUNT; ++i)
 			printf("\t%s\t: 0x%x\n",
 			       led_color_names[i],
 			       r.brightness_range[i]);
 		return 0;
 	}
 
-	if (!strcasecmp(argv[2], "auto")) {
+	if (!strcasecmp(argv[2], "off")) {
+		/* Brightness initialized to 0 for each color. */
+	} else if (!strcasecmp(argv[2], "auto")) {
 		p.flags = EC_LED_FLAGS_AUTO;
 	} else if ((i = find_led_color_by_name(argv[2])) != -1) {
 		p.brightness[i] = 0xff;
@@ -1485,6 +1505,11 @@ int cmd_led(int argc, char *argv[])
 			j = find_led_color_by_name(ptr);
 			if (j == -1) {
 				fprintf(stderr, "Bad color name: %s\n", ptr);
+				fprintf(stderr, "Valid colors: ");
+				for (j = 0; j < EC_LED_COLOR_COUNT; j++)
+					fprintf(stderr, "%s ",
+						led_color_names[j]);
+				fprintf(stderr, "\n");
 				return -1;
 			}
 			ptr = strtok(NULL, "=");

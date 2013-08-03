@@ -989,9 +989,17 @@ enum lightbar_command {
 #define EC_CMD_LED_CONTROL 0x29
 
 enum ec_led_id {
+	/* LED to indicate battery state of charge */
 	EC_LED_ID_BATTERY_LED = 0,
-	EC_LED_ID_POWER_BUTTON_LED,
+	/*
+	 * LED to indicate system power state (on or in suspend).
+	 * May be on power button or on C-panel.
+	 */
+	EC_LED_ID_POWER_LED,
+	/* LED on power adapter or its plug */
 	EC_LED_ID_ADAPTER_LED,
+
+	EC_LED_ID_COUNT
 };
 
 /* LED control flags */
