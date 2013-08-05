@@ -120,13 +120,6 @@ void board_config_pre_init(void)
 	 */
 	STM32_RCC_APB2ENR |= 0x1fd;
 
-#ifdef CONFIG_SPI
-	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
-	val = STM32_GPIO_CRL(GPIO_A) & ~0xffff0000;
-	val |= 0x99990000;
-	STM32_GPIO_CRL(GPIO_A) = val;
-#endif
-
 	/* remap OSC_IN/OSC_OUT to PD0/PD1 */
 	STM32_GPIO_AFIO_MAPR |= 1 << 15;
 
@@ -176,13 +169,6 @@ void board_i2c_post_init(int port)
 		val |= 0x0000dd00;
 		STM32_GPIO_CRH(GPIO_B) = val;
 	}
-}
-
-void board_config_post_gpio_init(void)
-{
-#ifdef CONFIG_SPI
-	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INT_BOTH);
-#endif
 }
 
 void keyboard_suppress_noise(void)
