@@ -108,9 +108,6 @@ void board_config_post_gpio_init(void)
 	/* USART1 on pins PA9/PA10 */
 	gpio_set_alternate_function(GPIO_A, (1 << 9) | (1 << 10),
 				    GPIO_ALT_USART);
-
-	/* TIM2_CH2 on PB3 */
-	gpio_set_alternate_function(GPIO_B, (1 << 3), GPIO_ALT_TIM2);
 }
 
 int pmu_board_init(void)
