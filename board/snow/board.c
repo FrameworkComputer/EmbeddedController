@@ -17,6 +17,8 @@
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
 #include "power_led.h"
+#include "pwm.h"
+#include "pwm_data.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -119,6 +121,13 @@ const struct i2c_port_t i2c_ports[] = {
 	{"host", I2C_PORT_HOST, 100},
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+
+/* PWM channels */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_POWER_LED] = {STM32_TIM(2), STM32_TIM_CH(2),
+			      PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 void board_config_pre_init(void)
 {

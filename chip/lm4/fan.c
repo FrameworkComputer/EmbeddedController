@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "pwm.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -37,15 +38,12 @@
 
 static int fan_get_enabled(void)
 {
-	return (LM4_FAN_FANCTL & (1 << FAN_CH_CPU)) ? 1 : 0;
+	return pwm_get_enabled(PWM_CH_FAN);
 }
 
 static void fan_set_enabled(int enable)
 {
-	if (enable)
-		LM4_FAN_FANCTL |= (1 << FAN_CH_CPU);
-	else
-		LM4_FAN_FANCTL &= ~(1 << FAN_CH_CPU);
+	pwm_enable(PWM_CH_FAN, enable);
 
 #ifdef CONFIG_PWM_FAN_EN_GPIO
 	gpio_set_level(CONFIG_PWM_FAN_EN_GPIO, enable);
@@ -98,16 +96,6 @@ static void fan_set_rpm_target(int rpm)
 	LM4_FAN_FANCMD(FAN_CH_CPU) = rpm;
 }
 
-static int fan_get_duty_raw(void)
-{
-	return (LM4_FAN_FANCMD(FAN_CH_CPU) >> 16) & MAX_PWM;
-}
-
-static void fan_set_duty_raw(int pwm)
-{
-	LM4_FAN_FANCMD(FAN_CH_CPU) = pwm << 16;
-}
-
 static int fan_get_status(void)
 {
 	return (LM4_FAN_FANSTS >> (2 * FAN_CH_CPU)) & 0x03;
@@ -158,22 +146,8 @@ void pwm_fan_set_percent_needed(int pct)
 	fan_set_rpm_target(rpm);
 }
 
-static int fan_get_duty_cycle(void)
-{
-	return fan_get_duty_raw() * 100 / MAX_PWM;
-}
-
 static void fan_set_duty_cycle(int percent)
 {
-	int pwm;
-
-	if (percent < 0)
-		percent = 0;
-	else if (percent > 100)
-		percent = 100;
-
-	pwm = (MAX_PWM * percent) / 100;
-
 	/* Move the fan to manual control */
 	fan_set_rpm_mode(0);
 
@@ -184,7 +158,12 @@ static void fan_set_duty_cycle(int percent)
 	fan_set_thermal_control_enabled(0);
 
 	/* Set the duty cycle */
-	fan_set_duty_raw(pwm);
+	pwm_set_duty(PWM_CH_FAN, percent);
+}
+
+static int fan_get_duty_cycle(void)
+{
+	return pwm_get_duty(PWM_CH_FAN);
 }
 
 /*****************************************************************************/
@@ -360,29 +339,7 @@ static void pwm_fan_init(void)
 	int version, size;
 	int i;
 
-	/* Enable the fan module and delay a few clocks */
-	LM4_SYSTEM_RCGCFAN = 1;
-	clock_wait_cycles(3);
-
-	/* Configure GPIOs */
 	gpio_config_module(MODULE_PWM_FAN, 1);
-
-	/* Disable all fans */
-	LM4_FAN_FANCTL = 0;
-
-	/*
-	 * Configure CPU fan:
-	 * 0x8000 = bit 15     = auto-restart
-	 * 0x0000 = bit 14     = slow acceleration
-	 * 0x0000 = bits 13:11 = no hysteresis
-	 * 0x0000 = bits 10:8  = start period (2<<0) edges
-	 * 0x0000 = bits 7:6   = no fast start
-	 * 0x0020 = bits 5:4   = average 4 edges when calculating RPM
-	 * 0x000c = bits 3:2   = 8 pulses per revolution
-	 *                       (see note at top of file)
-	 * 0x0000 = bit 0      = automatic control
-	 */
-	LM4_FAN_FANCH(FAN_CH_CPU) = 0x802c;
 
 	prev = (const struct pwm_fan_state *)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
@@ -402,7 +359,7 @@ static void pwm_fan_init(void)
 	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
 		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
 }
-DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT + 1);
 
 static void pwm_fan_second(void)
 {
@@ -449,7 +406,6 @@ static void pwm_fan_S3_S5(void)
 	 */
 	fan_set_rpm_target(0);
 	fan_set_enabled(0);			/* crosbug.com/p/8097 */
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);

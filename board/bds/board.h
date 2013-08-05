@@ -40,6 +40,10 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+enum pwm_channel {
+	PWM_CH_COUNT
+};
+
 /* I2C ports */
 #define I2C_PORT_LIGHTBAR 5  // port 5 / PA6:7 on link, but PG6:7 on badger
 /* Number of I2C ports used */

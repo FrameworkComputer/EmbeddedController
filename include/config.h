@@ -283,6 +283,30 @@
 #undef CONFIG_EXTPOWER_USB
 
 /*****************************************************************************/
+/* Compile support for PWM control of cooling fans */
+#undef CONFIG_FAN
+
+/* Name of active high GPIO to control power to the cooling fan */
+#undef CONFIG_FAN_EN_GPIO
+
+/* Fan speeds corresponding to 1% and 100% cooling (0% == off). */
+#undef CONFIG_FAN_RPM_MIN
+#undef CONFIG_FAN_RPM_MAX
+
+/* Alternately, define this to replace the default mapping with your own
+ * board-specific function in board.c:
+ *
+ *   int pwm_fan_percent_to_rpm(int pct);
+ *
+ */
+#undef CONFIG_FAN_RPM_CUSTOM
+
+/* If you define this, the "faninfo" console command will read the GPIO to
+ * display the state of the fan's power rail.
+ */
+#undef CONFIG_FAN_POWER_GOOD
+
+/*****************************************************************************/
 /* Flash configuration */
 
 /* Compile support for programming on-chip flash */
@@ -466,28 +490,8 @@
 #undef CONFIG_PSTORE
 
 /*****************************************************************************/
-/* Compile support for PWM control of cooling fans */
-#undef CONFIG_PWM_FAN
-
-/* Name of active high GPIO to control power to the cooling fan */
-#undef CONFIG_PWM_FAN_EN_GPIO
-
-/* Fan speeds corresponding to 1% and 100% cooling (0% == off). */
-#undef CONFIG_PWM_FAN_RPM_MIN
-#undef CONFIG_PWM_FAN_RPM_MAX
-
-/* Alternately, define this to replace the default mapping with your own
- * board-specific function in board.c:
- *
- *   int pwm_fan_percent_to_rpm(int pct);
- *
- */
-#undef CONFIG_PWM_FAN_RPM_CUSTOM
-
-/* If you define this, the "faninfo" console command will read the GPIO to
- * display the state of the fan's power rail.
- */
-#undef CONFIG_PWM_FAN_POWER_GOOD
+/* Compile support for PWM control */
+#undef CONFIG_PWM
 
 /*****************************************************************************/
 /* Compile support for PWM output to keyboard backlight */

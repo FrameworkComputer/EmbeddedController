@@ -6,7 +6,7 @@
 #include "common.h"
 #include "fan.h"
 
-#ifndef CONFIG_PWM_FAN_RPM_CUSTOM
+#ifndef CONFIG_FAN_RPM_CUSTOM
 /* This is the default implementation. It's only called over [0,100].
  * Convert the percentage to a target RPM. We can't simply scale all
  * the way down to zero because most fans won't turn that slowly, so
@@ -19,8 +19,8 @@ int pwm_fan_percent_to_rpm(int pct)
 	if (!pct)
 		rpm = 0;
 	else
-		rpm = ((pct - 1) * CONFIG_PWM_FAN_RPM_MAX +
-		       (100 - pct) * CONFIG_PWM_FAN_RPM_MIN) / 99;
+		rpm = ((pct - 1) * CONFIG_FAN_RPM_MAX +
+		       (100 - pct) * CONFIG_FAN_RPM_MIN) / 99;
 
 	return rpm;
 }

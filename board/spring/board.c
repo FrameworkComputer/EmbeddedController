@@ -19,6 +19,8 @@
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
+#include "pwm.h"
+#include "pwm_data.h"
 #include "registers.h"
 #include "stm32_adc.h"
 #include "timer.h"
@@ -128,6 +130,13 @@ const struct adc_t adc_channels[] = {
 	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 3300, 4096, 0, STM32_AIN(4)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* PWM channels */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_ILIM] = {STM32_TIM(3), STM32_TIM_CH(1), 0,
+			 GPIO_ILIM},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

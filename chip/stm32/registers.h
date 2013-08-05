@@ -145,8 +145,10 @@
 #define STM32_TIM16_BASE           0x40014400 /* STM32F100 only */
 #define STM32_TIM17_BASE           0x40014800 /* STM32F100 only */
 
+#define STM32_TIM_BASE(n)          CONCAT3(STM32_TIM, n, _BASE)
+
 #define STM32_TIM_REG(n, offset) \
-		REG16(CONCAT3(STM32_TIM, n, _BASE) + (offset))
+		REG16(STM32_TIM_BASE(n) + (offset))
 
 #define STM32_TIM_CR1(n)           STM32_TIM_REG(n, 0x00)
 #define STM32_TIM_CR2(n)           STM32_TIM_REG(n, 0x04)
@@ -186,12 +188,8 @@ struct timer_ctlr {
 	unsigned psc;
 	unsigned arr;
 
-	unsigned reserved30;
-	unsigned ccr1;
-	unsigned ccr2;
-	unsigned ccr3;
+	unsigned ccr[5]; /* ccr[0] = reserved30 */
 
-	unsigned ccr4;
 	unsigned reserved44;
 	unsigned dcr;
 	unsigned dmar;
@@ -235,6 +233,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_ALT_TIM2                0x1
 #define GPIO_ALT_TIM3_4              0x2
 #define GPIO_ALT_TIM9_11             0x3
+#define GPIO_ALT_TIM(x)              (((x) > 5) ? 0x3 : ((x) / 3 + 1))
 #define GPIO_ALT_I2C                 0x4
 #define GPIO_ALT_SPI                 0x5
 #define GPIO_ALT_USART               0x7

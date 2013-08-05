@@ -23,6 +23,8 @@
 #include "lm4_adc.h"
 #include "peci.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_data.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -181,6 +183,12 @@ const struct adc_t adc_channels[] = {
 	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* PWM channels */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_FAN] = {FAN_CH_CPU, PWM_CONFIG_HAS_RPM_MODE},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

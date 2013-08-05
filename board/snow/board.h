@@ -28,6 +28,7 @@
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
+#define CONFIG_PWM
 
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE
@@ -118,6 +119,12 @@ enum gpio_signal {
 	GPIO_KB_OUT12,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_POWER_LED = 0,
+	/* Number of PWM channels */
+	PWM_CH_COUNT
 };
 
 #endif /* !__ASSEMBLER__ */

@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "keyboard_protocol.h"
 #include "pmu_tpschrome.h"
+#include "pwm.h"
 #include "registers.h"
 #include "smart_battery.h"
 #include "stm32_adc.h"
@@ -181,54 +182,8 @@ static void set_video_power(int enabled)
 
 static void ilim_use_gpio(void)
 {
-	/* Disable counter */
-	STM32_TIM_CR1(3) &= ~0x1;
-
-	/* Disable TIM3 clock */
-	STM32_RCC_APB1ENR &= ~0x2;
-
-	/* Switch to GPIO */
+	pwm_enable(PWM_CH_ILIM, 0);
 	gpio_set_flags(GPIO_ILIM, GPIO_OUTPUT);
-}
-
-static void ilim_use_pwm(void)
-{
-	uint32_t val;
-
-	/* Config alt. function (TIM3/PWM) */
-	val = STM32_GPIO_CRL(GPIO_B) & ~0x000f0000;
-	val |= 0x00090000;
-	STM32_GPIO_CRL(GPIO_B) = val;
-
-	/* Enable TIM3 clock */
-	STM32_RCC_APB1ENR |= 0x2;
-
-	/* Disable counter during setup */
-	STM32_TIM_CR1(3) = 0x0000;
-
-	/*
-	 * CPU_CLOCK / (PSC + 1) determines how fast the counter operates.
-	 * ARR determines the wave period, CCRn determines duty cycle.
-	 * Thus, frequency = CPU_CLOCK / (PSC + 1) / ARR.
-	 *
-	 * Assuming 16MHz clock and ARR=100, PSC needed to achieve PWM_FREQUENCY
-	 * is: PSC = CPU_CLOCK / PWM_FREQUENCY / ARR - 1
-	 */
-	STM32_TIM_PSC(3) = CPU_CLOCK / PWM_FREQUENCY / 100 - 1; /* pre-scaler */
-	STM32_TIM_ARR(3) = 100;			/* auto-reload value */
-	STM32_TIM_CCR1(3) = 100;		/* duty cycle */
-
-	/* CC1 configured as output, PWM mode 1, preload enable */
-	STM32_TIM_CCMR1(3) = (6 << 4) | (1 << 3);
-
-	/* CC1 output enable, active high */
-	STM32_TIM_CCER(3) = (1 << 0);
-
-	/* Generate update event to force loading of shadow registers */
-	STM32_TIM_EGR(3) |= 1;
-
-	/* Enable auto-reload preload, start counting */
-	STM32_TIM_CR1(3) |= (1 << 7) | (1 << 0);
 }
 
 /**
@@ -248,7 +203,7 @@ static void ilim_config(enum ilim_config config)
 			       config == ILIM_CONFIG_MANUAL_ON ? 1 : 0);
 		break;
 	case ILIM_CONFIG_PWM:
-		ilim_use_pwm();
+		pwm_enable(PWM_CH_ILIM, 1);
 		break;
 	default:
 		break;
@@ -360,7 +315,7 @@ static void set_pwm_duty_cycle(int percent)
 		percent = 0;
 	if (percent > 100)
 		percent = 100;
-	STM32_TIM_CCR1(3) = (percent * STM32_TIM_ARR(3)) / 100;
+	pwm_set_duty(PWM_CH_ILIM, percent);
 	current_pwm_duty = percent;
 }
 
@@ -936,7 +891,8 @@ static int command_ilim(int argc, char **argv)
 	else if (current_ilim_config == ILIM_CONFIG_MANUAL_OFF)
 		ccprintf("ILIM is GPIO low\n");
 	else
-		ccprintf("ILIM is PWM duty cycle %d%%\n", STM32_TIM_CCR1(3));
+		ccprintf("ILIM is PWM duty cycle %d%%\n",
+			 pwm_get_duty(PWM_CH_ILIM));
 
 	return EC_SUCCESS;
 }
@@ -957,7 +913,7 @@ static int command_batdebug(int argc, char **argv)
 				  * 17000 / 1024);
 	ccprintf("IBAT = %d mA\n", pmu_adc_read(ADC_IBAT, 0)
 				  * (1000 / R_BATTERY_MOHM) * 40 / 1024);
-	ccprintf("PWM = %d%%\n", STM32_TIM_CCR1(3));
+	ccprintf("PWM = %d%%\n", pwm_get_duty(PWM_CH_ILIM));
 	battery_current(&val);
 	ccprintf("Battery Current = %d mA\n", val);
 	battery_voltage(&val);

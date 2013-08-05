@@ -295,8 +295,8 @@ static void get_battery_level(void)
 	 * when ambient is bright), use max brightness for lightbar. If
 	 * keyboard backlight is ON, use keyboard backlight brightness.
 	 */
-	if (pwm_get_keyboard_backlight_enabled()) {
-		pct = pwm_get_keyboard_backlight();
+	if (pwm_get_enabled(PWM_CH_KBLIGHT)) {
+		pct = pwm_get_duty(PWM_CH_KBLIGHT);
 		pct = (255 * pct) / 100;  /* 00 - FF */
 		if (pct > st.p.bright_bl_on_max[st.battery_is_charging])
 			pct = st.p.bright_bl_on_max[st.battery_is_charging];

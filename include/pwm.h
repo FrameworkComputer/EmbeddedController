@@ -7,28 +7,36 @@
 #define __CROS_EC_PWM_H
 
 /**
- * Set the fan PWM duty cycle (0-100), disabling the automatic control.
+ * Enable/disable a PWM channel.
  */
-void pwm_set_fan_duty(int percent);
+void pwm_enable(enum pwm_channel ch, int enabled);
 
 /**
- * Enable/disable the keyboard backlight.
+ * Get PWM channel enabled status.
  */
-void pwm_enable_keyboard_backlight(int enable);
+int pwm_get_enabled(enum pwm_channel ch);
 
 /**
- * Get the keyboard backlight enable/disable status (1=enabled, 0=disabled).
+ * Set PWM channel duty cycle (0-100).
  */
-int pwm_get_keyboard_backlight_enabled(void);
+void pwm_set_duty(enum pwm_channel ch, int percent);
 
 /**
- * Get the keyboard backlight percentage (0=off, 100=max).
+ * Get PWM channel duty cycle.
  */
-int pwm_get_keyboard_backlight(void);
+int pwm_get_duty(enum pwm_channel ch);
+
+
+/* Flags for PWM config table */
 
 /**
- * Set the keyboard backlight percentage (0=off, 100=max).
+ * PWM output signal is inverted, so 100% duty means always low
  */
-void pwm_set_keyboard_backlight(int percent);
+#define PWM_CONFIG_ACTIVE_LOW   (1 << 0)
+/**
+ * PWM channel has a fan controller with a tach input and can auto-adjust
+ * its duty cycle to produce a given fan RPM.
+ */
+#define PWM_CONFIG_HAS_RPM_MODE (1 << 1)
 
 #endif  /* __CROS_EC_PWM_H */

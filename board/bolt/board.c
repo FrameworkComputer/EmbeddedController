@@ -22,6 +22,7 @@
 #include "peci.h"
 #include "power_button.h"
 #include "pwm.h"
+#include "pwm_data.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -178,6 +179,13 @@ const struct adc_t adc_channels[] = {
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* PWM channels */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_FAN] = {FAN_CH_CPU, PWM_CONFIG_HAS_RPM_MODE},
+	[PWM_CH_KBLIGHT] = {FAN_CH_KBLIGHT, 0},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
