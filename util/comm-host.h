@@ -12,6 +12,9 @@
 #include "common.h"
 #include "ec_commands.h"
 
+/* ec_command return value for non-success result from EC */
+#define EECRESULT 1000
+
 /* Maximum output and input sizes for EC command, in bytes */
 extern int ec_max_outsize, ec_max_insize;
 

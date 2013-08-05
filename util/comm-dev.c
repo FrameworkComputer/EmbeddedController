@@ -47,6 +47,7 @@ static int ec_command_dev(int command, int version,
 		}
 	} else if (s_cmd.result != EC_RES_SUCCESS) {
 		fprintf(stderr, "EC result %d\n", s_cmd.result);
+		return -EECRESULT - s_cmd.result;
 	}
 
 	return r;
