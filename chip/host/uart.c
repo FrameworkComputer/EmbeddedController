@@ -32,6 +32,37 @@ static struct queue cached_char = {
 	.buf        = cached_char_buf,
 };
 
+#define CONSOLE_CAPTURE_SIZE 2048
+static char capture_buf[CONSOLE_CAPTURE_SIZE];
+static int capture_size;
+static int capture_enabled;
+
+void test_capture_console(int enabled)
+{
+	if (enabled == capture_enabled)
+		return;
+
+	if (enabled)
+		capture_size = 0;
+	else
+		capture_buf[capture_size] = '\0';
+
+	capture_enabled = enabled;
+}
+
+static void test_capture_char(char c)
+{
+	if (capture_size == CONSOLE_CAPTURE_SIZE)
+		return;
+	capture_buf[capture_size++] = c;
+}
+
+
+const char *test_get_captured_console(void)
+{
+	return (const char *)capture_buf;
+}
+
 static void trigger_interrupt(void)
 {
 	/*
@@ -80,6 +111,8 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
+	if (capture_enabled)
+		test_capture_char(c);
 	printf("%c", c);
 	fflush(stdout);
 }

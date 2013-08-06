@@ -68,6 +68,26 @@ static void ctrl_key(char c)
 	UART_INJECT(seq);
 }
 
+/*
+ * Helper function to compare multiline strings. When comparing, CR's are
+ * ignored.
+ */
+static int compare_multiline_string(const char *s1, const char *s2)
+{
+	do {
+		while (*s1 == '\r')
+			++s1;
+		while (*s2 == '\r')
+			++s2;
+		if (*s1 != *s2)
+			return 1;
+		++s1;
+		++s2;
+	} while (*s1 || *s2);
+
+	return 0;
+}
+
 /*****************************************************************************/
 /* Tests */
 
@@ -156,8 +176,7 @@ static int test_history_up_up(void)
 	arrow_key(ARROW_UP, 2);
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 2);
-	TEST_CHECK(cmd_2_call_cnt == 1);
+	TEST_CHECK(cmd_1_call_cnt == 2 && cmd_2_call_cnt == 1);
 }
 
 static int test_history_up_up_down(void)
@@ -172,8 +191,7 @@ static int test_history_up_up_down(void)
 	arrow_key(ARROW_DOWN, 1);
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
-	TEST_CHECK(cmd_2_call_cnt == 2);
+	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 2);
 }
 
 static int test_history_edit(void)
@@ -185,8 +203,7 @@ static int test_history_edit(void)
 	arrow_key(ARROW_UP, 1);
 	UART_INJECT("\b2\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
-	TEST_CHECK(cmd_2_call_cnt == 1);
+	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
 }
 
 static int test_history_stash(void)
@@ -200,8 +217,32 @@ static int test_history_stash(void)
 	arrow_key(ARROW_DOWN, 1);
 	UART_INJECT("2\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
-	TEST_CHECK(cmd_2_call_cnt == 1);
+	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
+}
+
+static int test_history_list(void)
+{
+	const char *exp_output = "history\n" /* Input command */
+				 "test3\n"   /* Output 4 last commands */
+				 "test4\n"
+				 "test5\n"
+				 "history\n"
+				 "> ";
+
+	UART_INJECT("test1\n");
+	UART_INJECT("test2\n");
+	UART_INJECT("test3\n");
+	UART_INJECT("test4\n");
+	UART_INJECT("test5\n");
+	msleep(30);
+	test_capture_console(1);
+	UART_INJECT("history\n");
+	msleep(30);
+	test_capture_console(0);
+	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
+					     exp_output) == 0);
+
+	return EC_SUCCESS;
 }
 
 void run_test(void)
@@ -219,6 +260,7 @@ void run_test(void)
 	RUN_TEST(test_history_up_up_down);
 	RUN_TEST(test_history_edit);
 	RUN_TEST(test_history_stash);
+	RUN_TEST(test_history_list);
 
 	test_print_result();
 }

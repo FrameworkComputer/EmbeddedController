@@ -101,4 +101,10 @@ void test_chipset_on(void);
 /* Simulates chipset power off */
 void test_chipset_off(void);
 
+/* Start/stop capturing console output */
+void test_capture_console(int enabled);
+
+/* Get captured console output */
+const char *test_get_captured_console(void);
+
 #endif /* __CROS_EC_TEST_UTIL_H */
