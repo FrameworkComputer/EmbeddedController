@@ -80,7 +80,6 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 		 */
 		if (flags & GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
-			STM32_GPIO_BSRR(g->port) |= g->mask;
 			gpio_set_level(signal, 1);
 		} else if (flags & GPIO_PULL_DOWN) {
 			mask |= 0x88888888 & cnf;
