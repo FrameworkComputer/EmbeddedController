@@ -10,9 +10,6 @@
 
 /* Optional features */
 #define CONFIG_BOARD_POST_GPIO_INIT
-#ifdef HAS_TASK_CHARGER
-#define CONFIG_CHARGER_TPS65090
-#endif
 #ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
 #endif
@@ -47,7 +44,7 @@
 #define I2C_PORTS_USED 1
 
 /* Timer selection */
-#define TIM_CLOCK_MSB 3
+#define TIM_CLOCK_MSB 2
 #define TIM_CLOCK_LSB 9
 #define TIM_WATCHDOG  4
 
