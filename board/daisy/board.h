@@ -18,7 +18,6 @@
 #define CONFIG_CHIPSET_GAIA
 #endif
 #define CONFIG_I2C
-#define CONFIG_I2C_HOST_AUTO
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_SUPPRESS_NOISE
 #define CONFIG_PMU_TPS65090
@@ -51,11 +50,11 @@ enum module_id {
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
-#define I2C_PORT_HOST board_i2c_host_port()
+#define I2C_PORT_HOST 0  /* Note: some Daisy systems used port 1 */
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
-#define I2C_PORTS_USED 2  /* Since host could be on either 0 or 1 */
+#define I2C_PORTS_USED 2
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
@@ -116,9 +115,6 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
-
-/* Auto detect EC i2c host port */
-int board_i2c_host_port(void);
 
 #endif /* !__ASSEMBLER__ */
 
