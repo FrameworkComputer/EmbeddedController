@@ -306,6 +306,13 @@ exit_er:
 
 int flash_physical_get_protect(int block)
 {
+	/*
+	 * If the entire flash interface is locked, then all blocks are
+	 * protected until reboot.
+	 */
+	if (flash_physical_get_protect_flags() & EC_FLASH_PROTECT_ALL_NOW)
+		return 1;
+
 	/* Check the active write protect status */
 	return STM32_FLASH_WRPR & (1 << block);
 }
