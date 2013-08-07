@@ -97,7 +97,7 @@
 #undef CONFIG_CHARGER_BQ24715
 #undef CONFIG_CHARGER_BQ24725
 #undef CONFIG_CHARGER_BQ24738
-#undef CONFIG_CHARGER_TPS65090
+#undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
  * Board specific charging current limit, in mA.  If defined, the charge state
@@ -606,6 +606,7 @@
  */
 #undef CONFIG_WP_ACTIVE_HIGH
 
+/*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a
  * given configuration.  This guarantees they get included everywhere, and
@@ -617,6 +618,45 @@
  */
 #include "config_chip.h"
 #include "board.h"
+
+/*****************************************************************************/
+/*
+ * Handle task-dependent configs.
+ *
+ * This prevent sub-modules from being compiled when the task and parent module
+ * are not present.
+ */
+
+#ifndef HAS_TASK_CHARGER
+#undef CONFIG_CHARGER
+#undef CONFIG_CHARGER_BQ24707A
+#undef CONFIG_CHARGER_BQ24715
+#undef CONFIG_CHARGER_BQ24725
+#undef CONFIG_CHARGER_BQ24738
+#undef CONFIG_CHARGER_TPS65090
+#endif
+
+#ifndef HAS_TASK_CHIPSET
+#undef CONFIG_CHIPSET_GAIA
+#undef CONFIG_CHIPSET_HASWELL
+#undef CONFIG_CHIPSET_IVYBRIDGE
+#undef CONFIG_CHIPSET_X86
+#endif
+
+#ifndef HAS_TASK_KEYPROTO
+#undef CONFIG_KEYBOARD_PROTOCOL_8042
+/*
+ * Note that we don't undef CONFIG_KEYBOARD_PROTOCOL_MKBP, because it doesn't
+ * have its own task.
+ */
+#endif
+
+/*****************************************************************************/
+/*
+ * Apply test config overrides last, since tests need to override some of the
+ * config flags in non-standard ways to mock only parts of the system.
+ */
 #include "test_config.h"
+
 
 #endif  /* __CROS_EC_CONFIG_H */

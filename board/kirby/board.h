@@ -9,9 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
-#ifdef HAS_TASK_CHIPSET
 #define CONFIG_CHIPSET_GAIA
-#endif
 /* #define CONFIG_EXTPOWER_USB */
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
