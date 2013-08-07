@@ -17,7 +17,7 @@ static void chip_temp_sensor_poll(void)
 {
 	last_val = adc_read_channel(ADC_CH_EC_TEMP);
 }
-DECLARE_HOOK(HOOK_SECOND, chip_temp_sensor_poll, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, chip_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 int chip_temp_sensor_get_val(int idx, int *temp_ptr)
 {

@@ -14,6 +14,7 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
@@ -26,6 +27,7 @@
 #include "switch.h"
 #include "temp_sensor.h"
 #include "temp_sensor_g781.h"
+#include "thermal.h"
 #include "timer.h"
 #include "util.h"
 
@@ -201,6 +203,18 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+/* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
+ * same order as enum temp_sensor_id. To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	/* Only the AP affects the thermal limits and fan speed. */
+	{ {C_TO_K(100), C_TO_K(114), C_TO_K(110)}, C_TO_K(60), C_TO_K(90)},
+	{ {0, 0, 0}, 0, 0},
+	{ {0, 0, 0}, 0, 0},
+	{ {0, 0, 0}, 0, 0},
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
 struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 40,
 	.debounce_down_us = 6 * MSEC,
@@ -246,3 +260,22 @@ int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
 }
+
+
+/*
+ * Take a nice smooth ramp and make it all chunky.
+ * And never turn it off. Bah. That'll do wonders for battery life.
+ */
+#ifdef CONFIG_PWM_FAN_RPM_CUSTOM
+int pwm_fan_percent_to_rpm(int pct)
+{
+	const int FAN_MAX = 5050;
+	const int FAN_MIN = 2700;
+	const int NUM_STEPS = 7;
+	const int m = 100 * 100 / NUM_STEPS;
+	const int m0 = m / 200;
+
+	int chunky = 100 * (pct + m0) / m;
+	return FAN_MIN + (FAN_MAX - FAN_MIN) * m * chunky / 10000;
+}
+#endif	/* CONFIG_PWM_FAN_RPM_CUSTOM */

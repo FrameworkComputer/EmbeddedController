@@ -253,7 +253,7 @@ static void tmp006_poll(void)
 	for (i = 0; i < TMP006_COUNT; ++i)
 		tmp006_poll_sensor(i);
 }
-DECLARE_HOOK(HOOK_SECOND, tmp006_poll, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, tmp006_poll, HOOK_PRIO_TEMP_SENSOR);
 
 static void tmp006_init(void)
 {

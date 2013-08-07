@@ -78,7 +78,7 @@ static void peci_temp_sensor_poll(void)
 	temp_vals[temp_idx] = peci_get_cpu_temp();
 	temp_idx = (temp_idx + 1) & (TEMP_AVG_LENGTH - 1);
 }
-DECLARE_HOOK(HOOK_TICK, peci_temp_sensor_poll, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, peci_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 static void peci_freq_changed(void)
 {

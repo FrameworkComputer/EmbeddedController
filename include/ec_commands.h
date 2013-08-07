@@ -1169,20 +1169,27 @@ struct ec_response_port80_last_boot {
 } __packed;
 
 /*****************************************************************************/
-/* Thermal engine commands */
+/* Thermal engine commands. Note that there are two implementations. We'll
+ * reuse the command number, but the data and behavior is incompatible.
+ * Version 0 is what originally shipped on Link.
+ * Version 1 separates the CPU thermal limits from the fan control.
+ */
 
-/* Set thershold value */
 #define EC_CMD_THERMAL_SET_THRESHOLD 0x50
+#define EC_CMD_THERMAL_GET_THRESHOLD 0x51
 
+/* The version 0 structs are opaque. You have to know what they are for
+ * the get/set commands to make any sense.
+ */
+
+/* Version 0 - set */
 struct ec_params_thermal_set_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
 	uint16_t value;
 } __packed;
 
-/* Get threshold value */
-#define EC_CMD_THERMAL_GET_THRESHOLD 0x51
-
+/* Version 0 - get */
 struct ec_params_thermal_get_threshold {
 	uint8_t sensor_type;
 	uint8_t threshold_id;
@@ -1191,6 +1198,41 @@ struct ec_params_thermal_get_threshold {
 struct ec_response_thermal_get_threshold {
 	uint16_t value;
 } __packed;
+
+
+/* The version 1 structs are visible. */
+enum ec_temp_thresholds {
+	EC_TEMP_THRESH_WARN = 0,
+	EC_TEMP_THRESH_HIGH,
+	EC_TEMP_THRESH_HALT,
+
+	EC_TEMP_THRESH_COUNT
+};
+
+/* Thermal configuration for one temperature sensor. Temps are in degrees K.
+ * Zero values will be silently ignored by the thermal task.
+ */
+struct ec_thermal_config {
+	uint32_t temp_host[EC_TEMP_THRESH_COUNT]; /* levels of hotness */
+	uint32_t temp_fan_off;		/* no active cooling needed */
+	uint32_t temp_fan_max;		/* max active cooling needed */
+} __packed;
+
+/* Version 1 - get config for one sensor. */
+struct ec_params_thermal_get_threshold_v1 {
+	uint32_t sensor_num;
+} __packed;
+/* This returns a struct ec_thermal_config */
+
+/* Version 1 - set config for one sensor.
+ * Use read-modify-write for best results! */
+struct ec_params_thermal_set_threshold_v1 {
+	uint32_t sensor_num;
+	struct ec_thermal_config cfg;
+} __packed;
+/* This returns no data */
+
+/****************************************************************************/
 
 /* Toggle automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52

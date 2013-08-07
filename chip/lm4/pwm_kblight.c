@@ -16,7 +16,6 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "thermal.h"
 #include "timer.h"
 #include "util.h"
 

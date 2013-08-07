@@ -23,4 +23,8 @@
 #define CONFIG_EXTPOWER_FALCO
 #endif
 
+#ifdef TEST_thermal
+#define CONFIG_TEMP_SENSOR
+#endif
+
 #endif  /* __CROS_EC_TEST_CONFIG_H */

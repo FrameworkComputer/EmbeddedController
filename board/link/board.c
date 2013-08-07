@@ -24,6 +24,7 @@
 #include "switch.h"
 #include "temp_sensor.h"
 #include "timer.h"
+#include "thermal.h"
 #include "tmp006.h"
 #include "util.h"
 
@@ -214,6 +215,24 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
+ * same order as enum temp_sensor_id. To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	/* Only the AP affects the thermal limits and fan speed. */
+	{{C_TO_K(100), C_TO_K(114), C_TO_K(110)}, C_TO_K(60), C_TO_K(90)},
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
 	{"USB C", TEMP_USB_ADDR},

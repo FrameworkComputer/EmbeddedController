@@ -3,44 +3,8 @@
  * found in the LICENSE file.
  */
 
-/* PWM module for Chrome EC */
-
 #ifndef __CROS_EC_PWM_H
 #define __CROS_EC_PWM_H
-
-#include "common.h"
-
-/**
- * Enable/disable the fan.
- *
- * Should be called by whatever function enables the power supply to the fan.
- */
-void pwm_enable_fan(int enable);
-
-/**
- * Enable/disable fan RPM control logic.
- *
- * @param rpm_mode	Enable (1) or disable (0) RPM control loop; when
- *			disabled, fan duty cycle will be used.
- */
-void pwm_set_fan_rpm_mode(int enable);
-
-/**
- * Get the current fan RPM.
- */
-int pwm_get_fan_rpm(void);
-
-/**
- * Get the target fan RPM.
- */
-int pwm_get_fan_target_rpm(void);
-
-/**
- * Set the target fan RPM.
- *
- * @param rpm   Target RPM; pass -1 to set fan to maximum.
- */
-void pwm_set_fan_target_rpm(int rpm);
 
 /**
  * Set the fan PWM duty cycle (0-100), disabling the automatic control.

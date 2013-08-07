@@ -140,10 +140,10 @@ const char help_str[] =
 	"      Print temperature.\n"
 	"  tempsinfo <sensorid>\n"
 	"      Print temperature sensor info.\n"
-	"  thermalget <sensor_id> <threshold_id>\n"
-	"      Get the threshold temperature value from thermal engine.\n"
-	"  thermalset <sensor_id> <threshold_id> <value>\n"
-	"      Set the threshold temperature value for thermal engine.\n"
+	"  thermalget <platform-specific args>\n"
+	"      Get the threshold temperature values from the thermal engine.\n"
+	"  thermalset <platform-specific args>\n"
+	"      Set the threshold temperature values for the thermal engine.\n"
 	"  tmp006cal <tmp006_index> [<S0> <b0> <b1> <b2>]\n"
 	"      Get/set TMP006 calibration\n"
 	"  usbchargemode <port> <mode>\n"
@@ -859,7 +859,7 @@ int cmd_temp_sensor_info(int argc, char *argv[])
 }
 
 
-int cmd_thermal_get_threshold(int argc, char *argv[])
+int cmd_thermal_get_threshold_v0(int argc, char *argv[])
 {
 	struct ec_params_thermal_get_threshold p;
 	struct ec_response_thermal_get_threshold r;
@@ -899,7 +899,7 @@ int cmd_thermal_get_threshold(int argc, char *argv[])
 }
 
 
-int cmd_thermal_set_threshold(int argc, char *argv[])
+int cmd_thermal_set_threshold_v0(int argc, char *argv[])
 {
 	struct ec_params_thermal_set_threshold p;
 	char *e;
@@ -939,6 +939,164 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 			p.threshold_id, p.sensor_type, p.value);
 
 	return 0;
+}
+
+
+int cmd_thermal_get_threshold_v1(int argc, char *argv[])
+{
+	struct ec_params_thermal_get_threshold_v1 p;
+	struct ec_thermal_config r;
+	struct ec_params_temp_sensor_get_info pi;
+	struct ec_response_temp_sensor_get_info ri;
+	int rv;
+	int i;
+
+	printf("sensor  warn  high  halt   fan_off fan_max   name\n");
+	for (i = 0; i < 99; i++) {	/* number of sensors is unknown */
+
+		/* ask for one */
+		p.sensor_num = i;
+		rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1,
+				&p, sizeof(p), &r, sizeof(r));
+		if (rv <= 0)		/* stop on first failure */
+			break;
+
+		/* ask for its name, too */
+		pi.id = i;
+		rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0,
+				&pi, sizeof(pi), &ri, sizeof(ri));
+
+		/* print what we know */
+		printf(" %2d      %3d   %3d    %3d    %3d     %3d     %s\n",
+		       i,
+		       r.temp_host[EC_TEMP_THRESH_WARN],
+		       r.temp_host[EC_TEMP_THRESH_HIGH],
+		       r.temp_host[EC_TEMP_THRESH_HALT],
+		       r.temp_fan_off, r.temp_fan_max,
+		       rv > 0 ? ri.sensor_name : "?");
+	}
+	if (i)
+		printf("(all temps in degrees Kelvin)\n");
+
+	return 0;
+}
+
+int cmd_thermal_set_threshold_v1(int argc, char *argv[])
+{
+	struct ec_params_thermal_get_threshold_v1 p;
+	struct ec_thermal_config r;
+	struct ec_params_thermal_set_threshold_v1 s;
+	int i, n, val, rv;
+	char *e;
+
+	if (argc < 3 || argc > 7) {
+		printf("Usage: %s"
+		       " sensor warn [high [shutdown [fan_off [fan_max]]]]\n",
+		       argv[0]);
+		return 1;
+	}
+
+	n = strtod(argv[1], &e);
+	if (e && *e) {
+		printf("arg %d is invalid\n", 1);
+		return 1;
+	}
+
+	p.sensor_num = n;
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1,
+			&p, sizeof(p), &r, sizeof(r));
+	if (rv <= 0)
+		return rv;
+
+	s.sensor_num = n;
+	s.cfg = r;
+
+	for (i = 2; i < argc; i++) {
+		val = strtod(argv[i], &e);
+		if (e && *e) {
+			printf("arg %d is invalid\n", i);
+			return 1;
+		}
+
+		if (val < 0)
+			continue;
+		switch (i) {
+		case 2:
+		case 3:
+		case 4:
+			s.cfg.temp_host[i-2] = val;
+			break;
+		case 5:
+			s.cfg.temp_fan_off = val;
+			break;
+		case 6:
+			s.cfg.temp_fan_max = val;
+			break;
+		}
+	}
+
+	rv = ec_command(EC_CMD_THERMAL_SET_THRESHOLD, 1,
+			&s, sizeof(s), NULL, 0);
+
+	return rv;
+}
+
+
+static int thermal_threshold_version(void)
+{
+	struct ec_params_thermal_get_threshold v0_p;
+	struct ec_response_thermal_get_threshold v0_r;
+	struct ec_params_thermal_get_threshold_v1 v1_p;
+	struct ec_thermal_config v1_r;
+	int rv;
+
+	v1_p.sensor_num = 0;
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1,
+			&v1_p, sizeof(v1_p), &v1_r, sizeof(v1_r));
+	/* FIXME: Verson 1 will only return these responses */
+	/* FIXME: if (??? == EC_RES_SUCCESS || ??? == EC_RES_INVALID_PARAM) */
+	if (rv > 0)
+		return 1;
+
+	v0_p.sensor_type = 0;
+	v0_p.threshold_id = 0;
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 0,
+			&v0_p, sizeof(v0_p), &v0_r, sizeof(v0_r));
+	/* FIXME: Verson 0 will only return these responses */
+	/* FIXME: if (??? == EC_RES_SUCCESS || ??? == EC_RES_ERROR) */
+	if (rv > 0)
+		return 0;
+
+	/* Anything else is most likely EC_RES_INVALID_COMMAND,
+	 * but we don't care because it's nothing we can use.
+	 */
+	return -1;
+}
+
+int cmd_thermal_get_threshold(int argc, char *argv[])
+{
+	switch (thermal_threshold_version()) {
+	case 0:
+		return cmd_thermal_get_threshold_v0(argc, argv);
+	case 1:
+		return cmd_thermal_get_threshold_v1(argc, argv);
+	default:
+		printf("I got nuthin.\n");
+		return -1;
+	}
+}
+
+int cmd_thermal_set_threshold(int argc, char *argv[])
+{
+	switch (thermal_threshold_version()) {
+	case 0:
+		return cmd_thermal_set_threshold_v0(argc, argv);
+	case 1:
+		return cmd_thermal_set_threshold_v1(argc, argv);
+	default:
+		printf("I got nuthin.\n");
+		return -1;
+	}
 }
 
 

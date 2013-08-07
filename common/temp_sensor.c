@@ -16,7 +16,6 @@
 #include "peci.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "timer.h"
 #include "tmp006.h"
 #include "util.h"
@@ -66,8 +65,8 @@ static void update_mapped_memory(void)
 		}
 	}
 }
-/* Run after other tick tasks, so sensors will have updated first. */
-DECLARE_HOOK(HOOK_SECOND, update_mapped_memory, HOOK_PRIO_DEFAULT + 1);
+/* Run after other TEMP tasks, so sensors will have updated first. */
+DECLARE_HOOK(HOOK_SECOND, update_mapped_memory, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 static void temp_sensor_init(void)
 {

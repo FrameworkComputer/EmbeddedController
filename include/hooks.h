@@ -16,8 +16,6 @@ enum hook_priority {
 	HOOK_PRIO_DEFAULT = 5000,  /* Default priority */
 	HOOK_PRIO_LAST = 9999,     /* Lowest priority */
 
-	/* Specific values to lump related hooks together */
-	HOOK_PRIO_TEMP_SENSOR = 6000,
 	/* Specific hook vales for HOOK_INIT */
 	/* DMA inits before ADC, I2C, SPI */
 	HOOK_PRIO_INIT_DMA = HOOK_PRIO_FIRST + 1,
@@ -29,6 +27,11 @@ enum hook_priority {
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 3,
 	/* Power button inits before chipset and switch */
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 4,
+
+	/* Specific values to lump temperature-related hooks together */
+	HOOK_PRIO_TEMP_SENSOR = 6000,
+	/* After all sensors have been polled */
+	HOOK_PRIO_TEMP_SENSOR_DONE = HOOK_PRIO_TEMP_SENSOR + 1,
 };
 
 enum hook_type {

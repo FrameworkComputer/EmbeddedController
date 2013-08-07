@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
@@ -16,41 +17,39 @@
 #include "timer.h"
 #include "util.h"
 
-static int mock_temp[TEMP_SENSOR_COUNT];
-static int fan_rpm;
-static int fan_rpm_mode = 1;
-static int cpu_throttled;
-static int cpu_down;
 
-extern struct thermal_config_t thermal_config[TEMP_SENSOR_TYPE_COUNT];
-extern const int fan_speed[THERMAL_FAN_STEPS + 1];
+/*****************************************************************************/
+/* Exported data */
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+/* The tests below make some assumptions. */
+BUILD_ASSERT(TEMP_SENSOR_COUNT == 4);
+BUILD_ASSERT(EC_TEMP_THRESH_COUNT == 3);
 
 /*****************************************************************************/
 /* Mock functions */
+
+static int mock_temp[TEMP_SENSOR_COUNT];
+static int host_throttled;
+static int cpu_throttled;
+static int cpu_shutdown;
+static int fan_pct;
+static int no_temps_read;
 
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
 	if (mock_temp[id] >= 0) {
 		*temp_ptr = mock_temp[id];
 		return EC_SUCCESS;
-	} else {
-		return -mock_temp[id];
 	}
-}
 
-void pwm_set_fan_rpm_mode(int rpm_mode)
-{
-	fan_rpm_mode = rpm_mode;
-}
-
-void pwm_set_fan_target_rpm(int rpm)
-{
-	fan_rpm = rpm;
+	return EC_ERROR_NOT_POWERED;
 }
 
 void chipset_force_shutdown(void)
 {
-	cpu_down = 1;
+	cpu_shutdown = 1;
 }
 
 void chipset_throttle_cpu(int throttled)
@@ -58,369 +57,440 @@ void chipset_throttle_cpu(int throttled)
 	cpu_throttled = throttled;
 }
 
+void host_throttle_cpu(int throttled)
+{
+	host_throttled = throttled;
+}
+
+void pwm_fan_set_percent_needed(int pct)
+{
+	fan_pct = pct;
+}
+
+void smi_sensor_failure_warning(void)
+{
+	no_temps_read = 1;
+}
+
 /*****************************************************************************/
 /* Test utilities */
 
-/* Test shorthands */
-#define T_CPU TEMP_SENSOR_CPU
-#define T_BOARD TEMP_SENSOR_BOARD
-#define T_CASE TEMP_SENSOR_CASE
-#define THRESHOLD(x, y) (thermal_config[x].thresholds[y])
-#define FAN_THRESHOLD(x, y) THRESHOLD(x, THRESHOLD_COUNT + (y))
-
-static void reset_mock_temp(void)
+static void set_temps(int t0, int t1, int t2, int t3)
 {
-	int i;
-	enum temp_sensor_type type;
-	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		type = temp_sensors[i].type;
-		mock_temp[i] = FAN_THRESHOLD(type, 0) - 1;
-	}
+	mock_temp[0] = t0;
+	mock_temp[1] = t1;
+	mock_temp[2] = t2;
+	mock_temp[3] = t3;
 }
 
-static int wait_fan_rpm(int rpm, int timeout_secs)
+static void all_temps(int t)
 {
-	do {
-		if (fan_rpm == rpm)
-			return 1;
-		usleep(SECOND);
-	} while (timeout_secs--);
-
-	return 0;
+	set_temps(t, t, t, t);
 }
 
-static int wait_value(int *v, int target, int timeout_secs)
+static void reset_mocks(void)
 {
-	do {
-		if (*v == target)
-			return 1;
-		usleep(SECOND);
-	} while (timeout_secs--);
+	/* Ignore all sensors */
+	memset(thermal_params, 0, sizeof(thermal_params));
 
-	return 0;
+	/* All sensors report error anyway */
+	set_temps(-1, -1 , -1, -1);
+
+	/* Reset expectations */
+	host_throttled = 0;
+	cpu_throttled = 0;
+	cpu_shutdown = 0;
+	fan_pct = 0;
+	no_temps_read = 0;
 }
 
-static int wait_set(int *v, int timeout_secs)
-{
-	return wait_value(v, 1, timeout_secs);
-}
-
-static int wait_clear(int *v, int timeout_secs)
-{
-	return wait_value(v, 0, timeout_secs);
-}
 
 /*****************************************************************************/
 /* Tests */
 
 static int test_init_val(void)
 {
-	/* Initial mock temperature values are all zero. */
+	reset_mocks();
+	sleep(2);
+
+	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
-	TEST_ASSERT(cpu_down == 0);
-	TEST_ASSERT(!(host_get_events() &
-		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_OVERLOAD)));
-	TEST_ASSERT(!(host_get_events() &
-		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_SHUTDOWN)));
+	TEST_ASSERT(cpu_shutdown == 0);
+	TEST_ASSERT(fan_pct == 0);
+	TEST_ASSERT(no_temps_read);
+
+	sleep(2);
+
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
+	TEST_ASSERT(fan_pct == 0);
+	TEST_ASSERT(no_temps_read);
 
 	return EC_SUCCESS;
 }
 
-static int test_cpu_fan(void)
+static int test_sensors_can_be_read(void)
 {
-	reset_mock_temp();
+	reset_mocks();
+	mock_temp[2] = 100;
 
-	/*
-	 * Increase CPU temperature to first fan step and check if
-	 * the fan comes up.
-	 */
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 0);
-	TEST_ASSERT(wait_fan_rpm(fan_speed[1], 11));
+	sleep(2);
 
-	/* Increase CPU temperature to second fan step */
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 1);
-	TEST_ASSERT(wait_fan_rpm(fan_speed[2], 11));
-
-	/* Test threshold hysteresis */
-	mock_temp[T_CPU]--;
-	usleep(15 * SECOND);
-	TEST_ASSERT(fan_rpm == fan_speed[2]);
-
-	/* Test action delay */
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 4);
-	usleep((temp_sensors[T_CPU].action_delay_sec - 1) * SECOND);
-	TEST_ASSERT(fan_rpm == fan_speed[2]);
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 0);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
+	TEST_ASSERT(fan_pct == 0);
+	TEST_ASSERT(no_temps_read == 0);
 
 	return EC_SUCCESS;
 }
 
-static int test_safety(void)
+
+static int test_one_fan(void)
 {
-	reset_mock_temp();
+	reset_mocks();
+	thermal_params[2].temp_fan_off = 100;
+	thermal_params[2].temp_fan_max = 200;
 
-	/* Trigger CPU throttling */
-	mock_temp[T_CPU] = THRESHOLD(T_CPU, THRESHOLD_WARNING);
-	TEST_ASSERT(wait_set(&cpu_throttled, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_OVERLOAD));
+	all_temps(50);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
 
-	/* Lower temperature. CPU not throttled anymore. */
-	mock_temp[T_CPU] = THRESHOLD(T_CPU, THRESHOLD_WARNING) - 5;
-	TEST_ASSERT(wait_clear(&cpu_throttled, 2));
+	all_temps(100);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
 
-	/* Thermal shutdown */
-	mock_temp[T_CPU] = THRESHOLD(T_CPU, THRESHOLD_CPU_DOWN);
-	TEST_ASSERT(wait_set(&cpu_down, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_SHUTDOWN));
+	all_temps(101);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 1);
 
-	mock_temp[T_CPU] = 0;
-	usleep(SECOND);
-	cpu_down = 0;
+	all_temps(130);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 30);
 
-	mock_temp[T_CPU] = THRESHOLD(T_CPU, THRESHOLD_POWER_DOWN);
-	TEST_ASSERT(wait_set(&cpu_down, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_SHUTDOWN));
+	all_temps(150);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
 
-	mock_temp[T_CPU] = 0;
-	cpu_down = 0;
+	all_temps(170);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 70);
+
+	all_temps(200);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	all_temps(300);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
 }
 
-static int test_sensor_failure(void)
+static int test_two_fans(void)
 {
-	reset_mock_temp();
+	reset_mocks();
 
-	/* Failure due to sensor not powered should be ignored */
-	mock_temp[T_CPU] = -EC_ERROR_NOT_POWERED;
-	usleep(5 * SECOND);
-	TEST_ASSERT(!(host_get_events() &
-		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL)));
+	thermal_params[1].temp_fan_off = 120;
+	thermal_params[1].temp_fan_max = 160;
+	thermal_params[2].temp_fan_off = 100;
+	thermal_params[2].temp_fan_max = 200;
 
-	/* Other failure should be pumped up to host */
-	mock_temp[T_CPU] = -EC_ERROR_UNKNOWN;
-	usleep(5 * SECOND);
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL));
+	all_temps(50);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
+
+	all_temps(100);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
+
+	all_temps(101);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 1);
+
+	all_temps(130);
+	sleep(2);
+	/* fan 2 is still higher */
+	TEST_ASSERT(fan_pct == 30);
+
+	all_temps(150);
+	sleep(2);
+	/* now fan 1 is higher: 150 = 75% of [120-160] */
+	TEST_ASSERT(fan_pct == 75);
+
+	all_temps(170);
+	sleep(2);
+	/* fan 1 is maxed now */
+	TEST_ASSERT(fan_pct == 100);
+
+	all_temps(200);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	all_temps(300);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
 }
 
-static int test_sensor_info(void)
+static int test_all_fans(void)
 {
-	struct ec_params_temp_sensor_get_info params;
-	struct ec_response_temp_sensor_get_info resp;
-	int i;
+	reset_mocks();
 
-	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		params.id = i;
-		TEST_ASSERT(test_send_host_command(
-				EC_CMD_TEMP_SENSOR_GET_INFO,
-				0, &params, sizeof(params),
-				&resp, sizeof(resp)) == EC_RES_SUCCESS);
-		TEST_ASSERT_ARRAY_EQ(resp.sensor_name,
-				     temp_sensors[i].name,
-				     strlen(resp.sensor_name));
-		TEST_ASSERT(resp.sensor_type == temp_sensors[i].type);
-	}
+	thermal_params[0].temp_fan_off = 20;
+	thermal_params[0].temp_fan_max = 60;
+	thermal_params[1].temp_fan_off = 120;
+	thermal_params[1].temp_fan_max = 160;
+	thermal_params[2].temp_fan_off = 100;
+	thermal_params[2].temp_fan_max = 200;
+	thermal_params[3].temp_fan_off = 300;
+	thermal_params[3].temp_fan_max = 500;
 
-	params.id = TEMP_SENSOR_COUNT;
-	TEST_ASSERT(test_send_host_command(
-			EC_CMD_TEMP_SENSOR_GET_INFO,
-			0, &params, sizeof(params),
-			&resp, sizeof(resp)) != EC_RES_SUCCESS);
+	set_temps(1, 1, 1, 1);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
+
+	/* Each sensor has its own range */
+	set_temps(40, 0, 0, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
+
+	set_temps(0, 140, 0, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
+
+	set_temps(0, 0, 150, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
+
+	set_temps(0, 0, 0, 400);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
+
+	set_temps(60, 0, 0, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	set_temps(0, 160, 0, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	set_temps(0, 0, 200, 0);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	set_temps(0, 0, 0, 500);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	/* But sensor 0 needs the most cooling */
+	all_temps(20);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 0);
+
+	all_temps(21);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 2);
+
+	all_temps(30);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 25);
+
+	all_temps(40);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 50);
+
+	all_temps(50);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 75);
+
+	all_temps(60);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
+
+	all_temps(65);
+	sleep(2);
+	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
 }
 
-static int set_threshold(int type, int threshold_id, int val)
+static int test_one_limit(void)
 {
-	struct ec_params_thermal_set_threshold params;
+	reset_mocks();
+	thermal_params[2].temp_host[EC_TEMP_THRESH_WARN] = 100;
+	thermal_params[2].temp_host[EC_TEMP_THRESH_HIGH] = 200;
+	thermal_params[2].temp_host[EC_TEMP_THRESH_HALT] = 300;
 
-	params.sensor_type = type;
-	params.threshold_id = threshold_id;
-	params.value = val;
+	all_temps(50);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	return test_send_host_command(EC_CMD_THERMAL_SET_THRESHOLD, 0, &params,
-				      sizeof(params), NULL, 0);
-}
+	all_temps(100);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-static int get_threshold(int type, int threshold_id, int *val)
-{
-	struct ec_params_thermal_get_threshold params;
-	struct ec_response_thermal_get_threshold resp;
-	int rv;
+	all_temps(101);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	params.sensor_type = type;
-	params.threshold_id = threshold_id;
+	all_temps(100);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	rv = test_send_host_command(EC_CMD_THERMAL_GET_THRESHOLD, 0, &params,
-				    sizeof(params), &resp, sizeof(resp));
-	if (rv != EC_RES_SUCCESS)
-		return rv;
+	all_temps(99);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	*val = resp.value;
-	return EC_RES_SUCCESS;
-}
+	all_temps(199);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-static int verify_threshold(int type, int threshold_id, int val)
-{
-	int actual_val;
+	all_temps(200);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	if (get_threshold(type, threshold_id, &actual_val) != EC_RES_SUCCESS)
-		return 0;
-	return val == actual_val;
-}
+	all_temps(201);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-static int test_threshold_hostcmd(void)
-{
-	reset_mock_temp();
+	all_temps(200);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	/* Verify thresholds */
-	TEST_ASSERT(verify_threshold(T_CPU, THRESHOLD_WARNING,
-				     THRESHOLD(T_CPU, THRESHOLD_WARNING)));
-	TEST_ASSERT(verify_threshold(T_BOARD, THRESHOLD_WARNING,
-				     THRESHOLD(T_BOARD, THRESHOLD_WARNING)));
-	TEST_ASSERT(verify_threshold(T_CPU, THRESHOLD_CPU_DOWN,
-				     THRESHOLD(T_CPU, THRESHOLD_CPU_DOWN)));
+	all_temps(199);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	/* Lower CPU throttling threshold and trigger */
-	TEST_ASSERT(set_threshold(T_CPU, THRESHOLD_WARNING, 350) ==
-		    EC_RES_SUCCESS);
-	mock_temp[T_CPU] = 355;
-	TEST_ASSERT(wait_set(&cpu_throttled, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_OVERLOAD));
+	all_temps(99);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	/* Lower thermal shutdown threshold */
-	TEST_ASSERT(set_threshold(T_CPU, THRESHOLD_CPU_DOWN, 353) ==
-		    EC_RES_SUCCESS);
-	TEST_ASSERT(wait_set(&cpu_down, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_SHUTDOWN));
+	all_temps(201);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	/* Clear */
-	mock_temp[T_CPU] = 0;
-	TEST_ASSERT(wait_clear(&cpu_throttled, 2));
-	cpu_down = 0;
+	all_temps(99);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
+
+	all_temps(301);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 1);
+
+	/* We probably won't be able to read the CPU temp while shutdown,
+	 * so nothing will change. */
+	all_temps(-1);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	/* cpu_shutdown is only set for testing purposes. The thermal task
+	 * doesn't do anything that could clear it. */
+
+	all_temps(50);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
 
 	return EC_SUCCESS;
 }
 
-static int test_threshold_console_cmd(void)
+static int test_several_limits(void)
 {
-	char buf[100];
+	reset_mocks();
 
-	reset_mock_temp();
+	thermal_params[1].temp_host[EC_TEMP_THRESH_WARN] = 150;
+	thermal_params[1].temp_host[EC_TEMP_THRESH_HIGH] = 200;
+	thermal_params[1].temp_host[EC_TEMP_THRESH_HALT] = 250;
 
-	/* Lower CPU threshold and trigger */
-	snprintf(buf, 100, "thermalconf %d %d 330\n", T_CPU, THRESHOLD_WARNING);
-	UART_INJECT(buf);
-	msleep(100);
-	mock_temp[T_CPU] = 335;
-	TEST_ASSERT(wait_set(&cpu_throttled, 11));
-	TEST_ASSERT(host_get_events() &
-		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_THERMAL_OVERLOAD));
+	thermal_params[2].temp_host[EC_TEMP_THRESH_WARN] = 100;
+	thermal_params[2].temp_host[EC_TEMP_THRESH_HIGH] = 200;
+	thermal_params[2].temp_host[EC_TEMP_THRESH_HALT] = 300;
 
-	/* Set first fan step to 280 K */
-	snprintf(buf, 100, "thermalfan %d 0 280\n", T_CPU);
-	UART_INJECT(buf);
-	msleep(100);
-	mock_temp[T_CPU] = 280;
-	TEST_ASSERT(wait_fan_rpm(fan_speed[1], 11));
+	thermal_params[3].temp_host[EC_TEMP_THRESH_WARN] = 20;
+	thermal_params[3].temp_host[EC_TEMP_THRESH_HIGH] = 30;
+	thermal_params[3].temp_host[EC_TEMP_THRESH_HALT] = 40;
 
-	return EC_SUCCESS;
-}
+	set_temps(500, 100, 150, 10);
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1); /* 1=low, 2=warn, 3=low */
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-static int test_invalid_hostcmd(void)
-{
-	int dummy;
+	set_temps(500, 50, -1, 10);	/* 1=low, 2=X, 3=low */
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	TEST_ASSERT(set_threshold(TEMP_SENSOR_TYPE_COUNT, THRESHOLD_WARNING,
-				  100) != EC_RES_SUCCESS);
-	TEST_ASSERT(set_threshold(T_CPU, THRESHOLD_COUNT + THERMAL_FAN_STEPS,
-				  100) != EC_RES_SUCCESS);
-	TEST_ASSERT(get_threshold(TEMP_SENSOR_TYPE_COUNT, THRESHOLD_WARNING,
-				  &dummy) != EC_RES_SUCCESS);
-	TEST_ASSERT(get_threshold(T_CPU, THRESHOLD_COUNT + THERMAL_FAN_STEPS,
-				  &dummy) != EC_RES_SUCCESS);
+	set_temps(500, 170, 210, 10);	/* 1=warn, 2=high, 3=low */
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-	return EC_SUCCESS;
-}
+	set_temps(500, 100, 50, 40);	/* 1=low, 2=low, 3=high */
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 0);
 
-static int test_auto_fan_ctrl(void)
-{
-	reset_mock_temp();
+	set_temps(500, 100, 50, 41);	/* 1=low, 2=low, 3=shutdown */
+	sleep(2);
+	TEST_ASSERT(host_throttled == 1);
+	TEST_ASSERT(cpu_throttled == 1);
+	TEST_ASSERT(cpu_shutdown == 1);
 
-	/* Disable fan control */
-	pwm_set_fan_rpm_mode(0);
-	thermal_control_fan(0);
-
-	/*
-	 * Increase CPU temperature to first fan step and check the fan
-	 * doesn't come up.
-	 */
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 0);
-	TEST_ASSERT(!wait_fan_rpm(fan_speed[1], 11));
-
-	/* Enable fan control */
-	TEST_ASSERT(test_send_host_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, 0,
-					   NULL, 0, NULL, 0) == EC_RES_SUCCESS);
-	TEST_ASSERT(fan_rpm_mode == 1);
-	TEST_ASSERT(wait_fan_rpm(fan_speed[1], 11));
-
-	/* Disable fan control */
-	pwm_set_fan_rpm_mode(0);
-	thermal_control_fan(0);
-
-	/* Increase CPU temperature to second fan step */
-	mock_temp[T_CPU] = FAN_THRESHOLD(T_CPU, 1);
-	TEST_ASSERT(!wait_fan_rpm(fan_speed[2], 11));
-
-	/* Enable fan control by console command */
-	UART_INJECT("autofan\n");
-	msleep(100);
-	TEST_ASSERT(fan_rpm_mode == 1);
-	TEST_ASSERT(wait_fan_rpm(fan_speed[2], 11));
+	all_temps(0);			/* reset from shutdown */
+	sleep(2);
+	TEST_ASSERT(host_throttled == 0);
+	TEST_ASSERT(cpu_throttled == 0);
 
 
 	return EC_SUCCESS;
 }
 
-static int check_assumption(void)
-{
-	TEST_ASSERT((int)TEMP_SENSOR_CPU == (int)TEMP_SENSOR_TYPE_CPU);
-	TEST_ASSERT((int)TEMP_SENSOR_BOARD == (int)TEMP_SENSOR_TYPE_BOARD);
-	TEST_ASSERT((int)TEMP_SENSOR_CASE == (int)TEMP_SENSOR_TYPE_CASE);
-
-	TEST_ASSERT(temp_sensors[T_CPU].action_delay_sec != 0);
-
-	TEST_ASSERT(thermal_config[T_CPU].config_flags &
-		    THERMAL_CONFIG_WARNING_ON_FAIL);
-
-	return EC_SUCCESS;
-}
 
 void run_test(void)
 {
-	test_reset();
-
-	/* Test assumptions */
-	RUN_TEST(check_assumption);
-
 	RUN_TEST(test_init_val);
-	RUN_TEST(test_cpu_fan);
-	/* No tests for board and case temp sensors as they are ignored. */
-	RUN_TEST(test_safety);
-	RUN_TEST(test_sensor_failure);
-	RUN_TEST(test_auto_fan_ctrl);
-	RUN_TEST(test_sensor_info);
-	RUN_TEST(test_threshold_hostcmd);
-	RUN_TEST(test_invalid_hostcmd);
-	RUN_TEST(test_threshold_console_cmd);
+	RUN_TEST(test_sensors_can_be_read);
+	RUN_TEST(test_one_fan);
+	RUN_TEST(test_two_fans);
+	RUN_TEST(test_all_fans);
+
+	RUN_TEST(test_one_limit);
+	RUN_TEST(test_several_limits);
 
 	test_print_result();
 }

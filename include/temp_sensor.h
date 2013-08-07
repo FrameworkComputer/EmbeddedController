@@ -49,7 +49,7 @@ extern const struct temp_sensor_t temp_sensors[];
 #endif
 
 /**
- * Get the most recently measured temperature for the sensor.
+ * Get the most recently measured temperature (in degrees K) for the sensor.
  *
  * @param id		Sensor ID
  * @param temp_ptr	Destination for temperature

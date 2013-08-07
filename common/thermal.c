@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-/* Thermal engine module for Chrome EC */
+/* NEW thermal engine module for Chrome EC. This is a completely different
+ * implementation from the original version that shipped on Link.
+ */
 
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "gpio.h"
+#include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "pwm.h"
-#include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "timer.h"
@@ -22,366 +22,246 @@
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
-/*
- * Temperature threshold configuration. Must be in the same order as in enum
- * temp_sensor_type. Threshold values for overheated action first (warning,
- * prochot, power-down), followed by fan speed stepping thresholds.
- */
-test_export_static struct thermal_config_t
-		thermal_config[TEMP_SENSOR_TYPE_COUNT] = {
-	/* TEMP_SENSOR_TYPE_CPU */
-	{THERMAL_CONFIG_WARNING_ON_FAIL,
-	 {373, 378, 383, 327, 335, 343, 351, 359} } ,
-	/* TEMP_SENSOR_TYPE_BOARD */
-	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL} },
-	/* TEMP_SENSOR_TYPE_CASE */
-	{THERMAL_CONFIG_NO_FLAG, {THERMAL_THRESHOLD_DISABLE_ALL} },
-};
-
-/* Fan speed settings.  Real max RPM is about 9300. */
-test_export_static const int fan_speed[THERMAL_FAN_STEPS + 1] =
-	{0, 3000, 4575, 6150, 7725, -1};
-
-/* Number of consecutive overheated events for each temperature sensor. */
-static int8_t ot_count[TEMP_SENSOR_COUNT][THRESHOLD_COUNT + THERMAL_FAN_STEPS];
-
-/*
- * Flag that indicate if each threshold is reached.  Note that higher threshold
- * reached does not necessarily mean lower thresholds are reached (since we can
- * disable any threshold.)
- */
-static int8_t overheated[THRESHOLD_COUNT + THERMAL_FAN_STEPS];
-static int8_t *fan_threshold_reached = overheated + THRESHOLD_COUNT;
-
-static int fan_ctrl_on = 1;
-
-int thermal_set_threshold(enum temp_sensor_type type, int threshold_id,
-			  int value)
+test_mockable_static void smi_sensor_failure_warning(void)
 {
-	if (type < 0 || type >= TEMP_SENSOR_TYPE_COUNT)
-		return EC_ERROR_INVAL;
-	if (threshold_id < 0 ||
-	    threshold_id >= THRESHOLD_COUNT + THERMAL_FAN_STEPS)
-		return EC_ERROR_INVAL;
-	if (value < 0)
-		return EC_ERROR_INVAL;
-
-	thermal_config[type].thresholds[threshold_id] = value;
-
-	return EC_SUCCESS;
-}
-
-int thermal_get_threshold(enum temp_sensor_type type, int threshold_id)
-{
-	if (type < 0 || type >= TEMP_SENSOR_TYPE_COUNT)
-		return -1;
-	if (threshold_id < 0 ||
-	    threshold_id >= THRESHOLD_COUNT + THERMAL_FAN_STEPS)
-		return -1;
-
-	return thermal_config[type].thresholds[threshold_id];
-}
-
-void thermal_control_fan(int enable)
-{
-	fan_ctrl_on = enable;
-
-	/* If controlling the fan, need it in RPM-control mode */
-	if (enable)
-		pwm_set_fan_rpm_mode(1);
-}
-
-static void smi_overheated_warning(void)
-{
-	host_set_single_event(EC_HOST_EVENT_THERMAL_OVERLOAD);
-}
-
-static void smi_sensor_failure_warning(void)
-{
+	CPRINTF("[%T can't read any temp sensors!]\n");
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
 
-/*
- * TODO: When we need different overheated action for different boards, move
- *       these actiona to a board-specific file. (e.g. board_thermal.c)
- */
-static void overheated_action(void)
+static int fan_percent(int low, int high, int cur)
 {
-	static int cpu_down_count;
+	if (cur < low)
+		return 0;
+	if (cur > high)
+		return 100;
+	return 100 * (cur - low) / (high - low);
+}
 
-	if (overheated[THRESHOLD_POWER_DOWN]) {
-		cprintf(CC_CHIPSET,
-			"[%T critical temperature; shutting down]\n");
-		chipset_force_shutdown();
-		host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
+/* The logic below is hard-coded for only three thresholds: WARN, HIGH, HALT.
+ * This is just a sanity check to be sure we catch any changes in thermal.h
+ */
+BUILD_ASSERT(EC_TEMP_THRESH_COUNT == 3);
+
+/* Keep track of which thresholds have triggered */
+static cond_t cond_hot[EC_TEMP_THRESH_COUNT];
+
+static void thermal_control(void)
+{
+	int i, j, t, rv, f;
+	int count_over[EC_TEMP_THRESH_COUNT];
+	int count_under[EC_TEMP_THRESH_COUNT];
+	int num_valid_limits[EC_TEMP_THRESH_COUNT];
+	int num_sensors_read;
+	int fmax;
+
+	/* Get ready to count things */
+	memset(count_over, 0, sizeof(count_over));
+	memset(count_under, 0, sizeof(count_under));
+	memset(num_valid_limits, 0, sizeof(num_valid_limits));
+	num_sensors_read = 0;
+	fmax = 0;
+
+	/* go through all the sensors */
+	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+
+		/* read one */
+		rv = temp_sensor_read(i, &t);
+		if (rv != EC_SUCCESS)
+			continue;
+		else
+			num_sensors_read++;
+
+		/* check all the limits */
+		for (j = 0; j < EC_TEMP_THRESH_COUNT; j++) {
+			int limit = thermal_params[i].temp_host[j];
+			if (limit) {
+				num_valid_limits[j]++;
+				if (t > limit)
+					count_over[j]++;
+				else if (t < limit)
+					count_under[j]++;
+			}
+		}
+
+		/* figure out the max fan needed, too */
+		if (thermal_params[i].temp_fan_off &&
+		    thermal_params[i].temp_fan_max) {
+			f = fan_percent(thermal_params[i].temp_fan_off,
+					thermal_params[i].temp_fan_max,
+					t);
+			if (f > fmax)
+				fmax = f;
+		}
+	}
+
+	if (!num_sensors_read) {
+		/* If we can't read any sensors, do nothing and hope
+		 * it gets better.
+		 * FIXME: What *should* we do?
+		 */
+		smi_sensor_failure_warning();
 		return;
 	}
 
-	if (overheated[THRESHOLD_CPU_DOWN]) {
-		cpu_down_count++;
-		if (cpu_down_count > 3) {
-			CPRINTF("[%T overheated; shutting down]\n");
-			chipset_force_shutdown();
-			host_set_single_event(EC_HOST_EVENT_THERMAL_SHUTDOWN);
-		}
-	} else {
-		cpu_down_count = 0;
+	/* See what the aggregated limits are. Any temp over the limit
+	 * means it's hot, but all temps have to be under the limit to
+	 * be cool again.
+	 */
+	for (j = 0; j < EC_TEMP_THRESH_COUNT; j++) {
+		if (count_over[j])
+			cond_set_true(&cond_hot[j]);
+		else if (count_under[j] == num_valid_limits[j])
+			cond_set_false(&cond_hot[j]);
 	}
 
-	if (overheated[THRESHOLD_WARNING]) {
-		smi_overheated_warning();
+
+	/* What do we do about it? (note hard-coded logic). */
+
+	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HALT])) {
+		CPRINTF("[%T thermal SHUTDOWN]\n");
+		chipset_force_shutdown();
+	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HALT])) {
+		/* We don't reboot automatically - the user has to push
+		 * the power button. It's likely that we can't even
+		 * detect this sensor transition until then, but we
+		 * do have to check in order to clear the cond_t.
+		 */
+		CPRINTF("[%T thermal no longer shutdown]\n");
+	}
+
+	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HIGH])) {
+		CPRINTF("[%T thermal HIGH]\n");
 		chipset_throttle_cpu(1);
-	} else {
+	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HIGH])) {
+		CPRINTF("[%T thermal no longer high]\n");
 		chipset_throttle_cpu(0);
 	}
 
-	if (fan_ctrl_on) {
-		int i;
-
-		for (i = THERMAL_FAN_STEPS - 1; i >= 0; --i)
-			if (fan_threshold_reached[i])
-				break;
-		pwm_set_fan_target_rpm(fan_speed[i + 1]);
-	}
-}
-
-/**
- * Update counter and check if the counter has reached delay limit.
- *
- * Note that we have various delay periods to prevent one error value
- * triggering an overheated action.
- */
-static inline void update_and_check_stat(int temp,
-					 int sensor_id,
-					 int threshold_id)
-{
-	enum temp_sensor_type type = temp_sensors[sensor_id].type;
-	const struct thermal_config_t *config = thermal_config + type;
-	const int16_t threshold = config->thresholds[threshold_id];
-	const int delay = temp_sensors[sensor_id].action_delay_sec;
-
-	if (threshold <= 0) {
-		ot_count[sensor_id][threshold_id] = 0;
-	} else if (temp >= threshold) {
-		++ot_count[sensor_id][threshold_id];
-		if (ot_count[sensor_id][threshold_id] >= delay) {
-			ot_count[sensor_id][threshold_id] = delay;
-			overheated[threshold_id] = 1;
-		}
-	} else if (ot_count[sensor_id][threshold_id] >= delay &&
-		   temp >= threshold - 3) {
-		/*
-		 * Once the threshold is reached, only deassert overheated if
-		 * the temperature drops to 3 degrees below threshold.  This
-		 * hysteresis prevents a temperature oscillating around the
-		 * threshold causing overheated actions to trigger repeatedly.
-		 */
-		overheated[threshold_id] = 1;
-	}
-}
-
-static void thermal_process(void)
-{
-	int i, j;
-	int cur_temp;
-	int flag;
-	int rv;
-
-	for (i = 0; i < THRESHOLD_COUNT + THERMAL_FAN_STEPS; ++i)
-		overheated[i] = 0;
-
-	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		enum temp_sensor_type type = temp_sensors[i].type;
-
-		if (type == TEMP_SENSOR_TYPE_IGNORED)
-			continue;
-
-		flag = thermal_config[type].config_flags;
-
-		rv = temp_sensor_read(i, &cur_temp);
-		if (rv == EC_ERROR_NOT_POWERED) {
-			/* Sensor not powered; ignore it */
-			continue;
-		} else if (rv) {
-			/* Other sensor failure */
-			if (flag & THERMAL_CONFIG_WARNING_ON_FAIL)
-				smi_sensor_failure_warning();
-			continue;
-		}
-
-		for (j = 0; j < THRESHOLD_COUNT + THERMAL_FAN_STEPS; ++j)
-			update_and_check_stat(cur_temp, i, j);
+	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN])) {
+		CPRINTF("[%T thermal WARN]\n");
+		host_throttle_cpu(1);
+	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_WARN])) {
+		CPRINTF("[%T thermal no longer warn]\n");
+		host_throttle_cpu(0);
 	}
 
-	overheated_action();
+	/* Max fan needed is what's needed. */
+	pwm_fan_set_percent_needed(fmax);
 }
 
-void thermal_task(void)
-{
-	while (1) {
-		thermal_process();
-		usleep(SECOND);
-	}
-}
-
-static void thermal_shutdown(void)
-{
-	/* Take back fan control when the processor shuts down */
-	thermal_control_fan(1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, thermal_shutdown, HOOK_PRIO_DEFAULT);
+/* Wait until after the sensors have been read */
+DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR + 1);
 
 /*****************************************************************************/
 /* Console commands */
 
-static void print_thermal_config(enum temp_sensor_type type)
+static int command_thermalget(int argc, char **argv)
 {
-	const struct thermal_config_t *config = thermal_config + type;
-	ccprintf("Sensor Type %d:\n", type);
-	ccprintf("\tWarning: %d K\n",
-		 config->thresholds[THRESHOLD_WARNING]);
-	ccprintf("\tCPU Down: %d K\n",
-		 config->thresholds[THRESHOLD_CPU_DOWN]);
-	ccprintf("\tPower Down: %d K\n",
-		 config->thresholds[THRESHOLD_POWER_DOWN]);
-}
-
-static void print_fan_stepping(enum temp_sensor_type type)
-{
-	const struct thermal_config_t *config = thermal_config + type;
 	int i;
 
-	ccprintf("Sensor Type %d:\n", type);
-	ccprintf("\tLowest speed: %d RPM\n", fan_speed[0]);
-	for (i = 0; i < THERMAL_FAN_STEPS; ++i)
-		ccprintf("\t%3d K:        %d RPM\n",
-			 config->thresholds[THRESHOLD_COUNT + i],
-			 fan_speed[i+1]);
-}
-
-static int command_thermal_config(int argc, char **argv)
-{
-	char *e;
-	int sensor_type, threshold_id, value;
-
-	if (argc != 2 && argc != 4)
-		return EC_ERROR_PARAM_COUNT;
-
-	sensor_type = strtoi(argv[1], &e, 0);
-	if (*e || sensor_type < 0 || sensor_type >= TEMP_SENSOR_TYPE_COUNT)
-		return EC_ERROR_PARAM1;
-
-	if (argc == 2) {
-		print_thermal_config(sensor_type);
-		return EC_SUCCESS;
+	ccprintf("sensor  warn  high  halt   fan_off fan_max   name\n");
+	for (i = 0; i < TEMP_SENSOR_COUNT; i++) {
+		ccprintf(" %2d      %3d   %3d    %3d    %3d     %3d     %s\n",
+			 i,
+			 thermal_params[i].temp_host[EC_TEMP_THRESH_WARN],
+			 thermal_params[i].temp_host[EC_TEMP_THRESH_HIGH],
+			 thermal_params[i].temp_host[EC_TEMP_THRESH_HALT],
+			 thermal_params[i].temp_fan_off,
+			 thermal_params[i].temp_fan_max,
+			 temp_sensors[i].name);
 	}
 
-	threshold_id = strtoi(argv[2], &e, 0);
-	if (*e || threshold_id < 0 || threshold_id >= THRESHOLD_COUNT)
-		return EC_ERROR_PARAM2;
-
-	value = strtoi(argv[3], &e, 0);
-	if (*e || value < 0)
-		return EC_ERROR_PARAM3;
-
-	thermal_config[sensor_type].thresholds[threshold_id] = value;
-	ccprintf("Setting threshold %d of sensor type %d to %d\n",
-		 threshold_id, sensor_type, value);
-
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(thermalconf, command_thermal_config,
-			"sensortype [threshold_id temp]",
-			"Get/set thermal threshold temp",
-			NULL);
-
-static int command_fan_config(int argc, char **argv)
-{
-	char *e;
-	int sensor_type, stepping_id, value;
-
-	if (argc != 2 && argc != 4)
-		return EC_ERROR_PARAM_COUNT;
-
-	sensor_type = strtoi(argv[1], &e, 0);
-	if ((e && *e) || sensor_type < 0 ||
-	    sensor_type >= TEMP_SENSOR_TYPE_COUNT)
-		return EC_ERROR_PARAM1;
-
-	if (argc == 2) {
-		print_fan_stepping(sensor_type);
-		return EC_SUCCESS;
-	}
-
-	stepping_id = strtoi(argv[2], &e, 0);
-	if ((e && *e) || stepping_id < 0 || stepping_id >= THERMAL_FAN_STEPS)
-		return EC_ERROR_PARAM2;
-
-	value = strtoi(argv[3], &e, 0);
-	if (*e || value < 0)
-		return EC_ERROR_PARAM3;
-
-	thermal_config[sensor_type].thresholds[THRESHOLD_COUNT + stepping_id] =
-		value;
-	ccprintf("Setting fan step %d of sensor type %d to %d K\n",
-		 stepping_id, sensor_type, value);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(thermalfan, command_fan_config,
-			"sensortype [threshold_id rpm]",
-			"Get/set thermal threshold fan rpm",
-			NULL);
-
-static int command_thermal_auto_fan_ctrl(int argc, char **argv)
-{
-	thermal_control_fan(1);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(autofan, command_thermal_auto_fan_ctrl,
+DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget,
 			NULL,
-			"Enable thermal fan control",
+			"Print thermal parameters (degrees Kelvin)",
 			NULL);
+
+
+static int command_thermalset(int argc, char **argv)
+{
+	unsigned int n;
+	int i, val;
+	char *e;
+
+	if (argc < 3 || argc > 7)
+		return EC_ERROR_PARAM_COUNT;
+
+	n = (unsigned int)strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	for (i = 2; i < argc; i++) {
+		val = strtoi(argv[i], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1 + i - 1;
+		if (val < 0)
+			continue;
+		switch (i) {
+		case 2:
+			thermal_params[n].temp_host[EC_TEMP_THRESH_WARN] = val;
+			break;
+		case 3:
+			thermal_params[n].temp_host[EC_TEMP_THRESH_HIGH] = val;
+			break;
+		case 4:
+			thermal_params[n].temp_host[EC_TEMP_THRESH_HALT] = val;
+			break;
+		case 5:
+			thermal_params[n].temp_fan_off = val;
+			break;
+		case 6:
+			thermal_params[n].temp_fan_max = val;
+			break;
+		}
+	}
+
+	command_thermalget(0, 0);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(thermalset, command_thermalset,
+			"sensor warn [high [shutdown [fan_off [fan_max]]]]",
+			"Set thermal parameters (degrees Kelvin)."
+			" Use -1 to skip.",
+			NULL);
+
+
+
 
 /*****************************************************************************/
-/* Host commands */
+/* Host commands. We'll reuse the host command number, but this is version 1,
+ * not version 0. Different structs, different meanings.
+ */
 
 static int thermal_command_set_threshold(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_thermal_set_threshold *p = args->params;
+	const struct ec_params_thermal_set_threshold_v1 *p = args->params;
 
-	if (thermal_set_threshold(p->sensor_type, p->threshold_id, p->value))
-		return EC_RES_ERROR;
+	if (p->sensor_num >= TEMP_SENSOR_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	thermal_params[p->sensor_num] = p->cfg;
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
 		     thermal_command_set_threshold,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(1));
 
 static int thermal_command_get_threshold(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_thermal_get_threshold *p = args->params;
-	struct ec_response_thermal_get_threshold *r = args->response;
-	int value = thermal_get_threshold(p->sensor_type, p->threshold_id);
+	const struct ec_params_thermal_get_threshold_v1 *p = args->params;
+	struct ec_thermal_config *r = args->response;
 
-	if (value == -1)
-		return EC_RES_ERROR;
-	r->value = value;
+	if (p->sensor_num >= TEMP_SENSOR_COUNT)
+		return EC_RES_INVALID_PARAM;
 
+	*r = thermal_params[p->sensor_num];
 	args->response_size = sizeof(*r);
-
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
 		     thermal_command_get_threshold,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(1));
 
-static int thermal_command_auto_fan_ctrl(struct host_cmd_handler_args *args)
-{
-	thermal_control_fan(1);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_THERMAL_AUTO_FAN_CTRL,
-		     thermal_command_auto_fan_ctrl,
-		     EC_VER_MASK(0));
