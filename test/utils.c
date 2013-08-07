@@ -185,6 +185,103 @@ static int test_scratchpad(void)
 	return EC_SUCCESS;
 }
 
+static int test_cond_t(void)
+{
+	cond_t c;
+
+	/* one-shot? */
+	cond_init_false(&c);
+	cond_set_true(&c);
+	TEST_ASSERT(cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	cond_set_false(&c);
+	TEST_ASSERT(cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+
+	/* one-shot when initially true? */
+	cond_init_true(&c);
+	cond_set_false(&c);
+	TEST_ASSERT(cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	cond_set_true(&c);
+	TEST_ASSERT(cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+
+	/* still one-shot even if set multiple times? */
+	cond_init_false(&c);
+	cond_set_true(&c);
+	cond_set_true(&c);
+	cond_set_true(&c);
+	cond_set_true(&c);
+	cond_set_true(&c);
+	cond_set_true(&c);
+	TEST_ASSERT(cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	cond_set_true(&c);
+	cond_set_false(&c);
+	cond_set_false(&c);
+	cond_set_false(&c);
+	cond_set_false(&c);
+	cond_set_false(&c);
+	TEST_ASSERT(cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+
+	/* only the detected transition direction resets it */
+	cond_set_true(&c);
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(cond_went_true(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	cond_set_false(&c);
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+
+	/* multiple transitions between checks should notice both edges */
+	cond_set_true(&c);
+	cond_set_false(&c);
+	cond_set_true(&c);
+	cond_set_false(&c);
+	cond_set_true(&c);
+	cond_set_false(&c);
+	TEST_ASSERT(cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_true(&c));
+	TEST_ASSERT(!cond_went_false(&c));
+
+	/* Still has last value? */
+	cond_set_true(&c);
+	cond_set_false(&c);
+	cond_set_true(&c);
+	cond_set_false(&c);
+	TEST_ASSERT(cond_is_false(&c));
+	cond_set_false(&c);
+	cond_set_true(&c);
+	cond_set_false(&c);
+	cond_set_true(&c);
+	TEST_ASSERT(cond_is_true(&c));
+
+	/* well okay then */
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -204,6 +301,7 @@ void run_test(void)
 	RUN_TEST(test_uint64divmod_2);
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
+	RUN_TEST(test_cond_t);
 
 	test_print_result();
 }

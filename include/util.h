@@ -101,4 +101,51 @@ int tolower(int c);
  */
 int uint64divmod(uint64_t *v, int by);
 
+
+/****************************************************************************/
+/* Conditional stuff.
+ *
+ * We often need to watch for transitions between one state and another, so
+ * that we can issue warnings or take action ONCE. This abstracts that "have I
+ * already reacted to this" stuff into a single set of functions.
+ *
+ * For example:
+ *
+ *     cond_t c;
+ *
+ *     cond_init_false(&c);
+ *
+ *     while(1) {
+ *         int val = read_some_gpio();
+ *         cond_set(&c, val);
+ *
+ *         if (cond_went_true(&c))
+ *             host_event(SOMETHING_HAPPENED);
+ *     }
+ *
+ */
+typedef uint8_t cond_t;
+
+/* Initialize a conditional to a specific state. Do this first. */
+void cond_init(cond_t *c, int boolean);
+static inline void cond_init_false(cond_t *c) { cond_init(c, 0); }
+static inline void cond_init_true(cond_t *c) { cond_init(c, 1); }
+
+/* Set the current state. Do this as often as you like. */
+void cond_set(cond_t *c, int boolean);
+static inline void cond_set_false(cond_t *c) { cond_set(c, 0); }
+static inline void cond_set_true(cond_t *c) { cond_set(c, 1); }
+
+/* Get the current state. Do this as often as you like. */
+int cond_is(cond_t *c, int boolean);
+static inline int cond_is_false(cond_t *c) { return cond_is(c, 0); }
+static inline int cond_is_true(cond_t *c) { return cond_is(c, 1); }
+
+/* See if the state has transitioned. If it has, the corresponding function
+ * will return true ONCE only, until it's changed back.
+ */
+int cond_went(cond_t *c, int boolean);
+static inline int cond_went_false(cond_t *c) { return cond_went(c, 0); }
+static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
+
 #endif  /* __CROS_EC_UTIL_H */

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -271,4 +271,60 @@ int uint64divmod(uint64_t *n, int d)
 	}
 	*n = q;
 	return r;
+}
+
+
+/****************************************************************************/
+/* stateful conditional stuff */
+
+enum cond_internal_bits {
+	COND_CURR_MASK = (1 << 0),		/* current value */
+	COND_RISE_MASK = (1 << 1),		/* set if 0->1 */
+	COND_FALL_MASK = (1 << 2),		/* set if 1->0 */
+};
+
+void cond_init(cond_t *c, int val)
+{
+	if (val)
+		*c = COND_CURR_MASK;
+	else
+		*c = 0;
+}
+
+int cond_is(cond_t *c, int val)
+{
+	if (val)
+		return *c & COND_CURR_MASK;
+	else
+		return !(*c & COND_CURR_MASK);
+}
+
+
+void cond_set(cond_t *c, int val)
+{
+	if (val && cond_is(c, 0))
+		*c |= COND_RISE_MASK;
+	else if (!val && cond_is(c, 1))
+		*c |= COND_FALL_MASK;
+	if (val)
+		*c |= COND_CURR_MASK;
+	else
+		*c &= ~COND_CURR_MASK;
+}
+
+
+int cond_went(cond_t *c, int val)
+{
+	int ret;
+
+	if (val) {
+		ret = *c & COND_RISE_MASK;
+		*c &= ~COND_RISE_MASK;
+	}
+	else {
+		ret = *c & COND_FALL_MASK;
+		*c &= ~COND_FALL_MASK;
+	}
+
+	return ret;
 }
