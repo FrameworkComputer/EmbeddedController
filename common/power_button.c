@@ -67,6 +67,10 @@ static void power_button_change_deferred(void)
 {
 	const int new_pressed = raw_power_button_pressed();
 
+	/* Re-enable keyboard scanning if power button is no longer pressed */
+	if (!new_pressed)
+		keyboard_scan_enable(1);
+
 	/* If power button hasn't changed state, nothing to do */
 	if (new_pressed == debounced_power_pressed)
 		return;
@@ -74,10 +78,6 @@ static void power_button_change_deferred(void)
 	debounced_power_pressed = new_pressed;
 
 	CPRINTF("[%T power button %s]\n", new_pressed ? "pressed" : "released");
-
-	/* Re-enable keyboard scanning if power button is no longer pressed */
-	if (!new_pressed)
-		keyboard_scan_enable(1);
 
 	/* Call hooks */
 	hook_notify(HOOK_POWER_BUTTON_CHANGE);
