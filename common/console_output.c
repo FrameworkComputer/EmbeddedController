@@ -14,6 +14,7 @@
 #define CC_DEFAULT CC_ALL
 #endif
 static uint32_t channel_mask = CC_DEFAULT;
+static uint32_t channel_mask_saved = CC_DEFAULT;
 
 /* List of channel names; must match enum console_channel. */
 /* TODO: move this to board.c */
@@ -82,18 +83,28 @@ static int command_ch(int argc, char **argv)
 	int i;
 	char *e;
 
-	/* If one arg, set the mask */
+	/* If one arg, save / restore, or set the mask */
 	if (argc == 2) {
-		int m = strtoi(argv[1], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
+		if (strcasecmp(argv[1], "save") == 0) {
+			channel_mask_saved = channel_mask;
+			return EC_SUCCESS;
+		} else if (strcasecmp(argv[1], "restore") == 0) {
+			channel_mask = channel_mask_saved;
+			return EC_SUCCESS;
 
-		/* No disabling the command output channel */
-		channel_mask = m | CC_MASK(CC_COMMAND);
+		} else {
+			/* Set the mask */
+			int m = strtoi(argv[1], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM1;
 
-		/* TODO: save channel list to EEPROM */
+			/* No disabling the command output channel */
+			channel_mask = m | CC_MASK(CC_COMMAND);
 
-		return EC_SUCCESS;
+			/* TODO: save channel list to EEPROM */
+
+			return EC_SUCCESS;
+		}
 	}
 
 	/* Print the list of channels */
@@ -108,6 +119,6 @@ static int command_ch(int argc, char **argv)
 	return EC_SUCCESS;
 };
 DECLARE_CONSOLE_COMMAND(chan, command_ch,
-			"[mask]",
-			"Get or set console channel mask",
+			"[ save | restore | <mask> ]",
+			"Save, restore, get or set console channel mask",
 			NULL);
