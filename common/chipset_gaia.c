@@ -348,7 +348,13 @@ void chipset_force_shutdown(void)
 	/* Turn off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
 #ifndef BOARD_kirby
-	gpio_set_level(GPIO_EN_PP1350, 0);
+	/*
+	 * Turn off PP1350 unless we're immediately waking back up.  This
+	 * works with the hack in chipset_reset() to preserve the contents of
+	 * RAM across a reset.
+	 */
+	if (power_request != POWER_REQ_ON)
+		gpio_set_level(GPIO_EN_PP1350, 0);
 #endif
 	set_pmic_pwrok(0);
 #ifndef BOARD_kirby
