@@ -118,7 +118,3 @@ const struct battery_info *battery_get_info(void)
 {
 	return &bat_info;
 }
-
-void battery_vendor_params(struct batt_params *batt)
-{
-}

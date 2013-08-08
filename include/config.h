@@ -69,6 +69,12 @@
  */
 #undef CONFIG_BATTERY_SMART
 
+/*
+ * Charger should call battery_vendor_params() to limit/correct the voltage and
+ * current requested by the battery pack before acting on the request.
+ */
+#undef CONFIG_BATTERY_VENDOR_PARAMS
+
 /*****************************************************************************/
 
 /*

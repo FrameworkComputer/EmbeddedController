@@ -284,8 +284,10 @@ static int state_common(struct power_state_context *ctx)
 		*ctx->memmap_batt_flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
 	}
 
+#ifdef CONFIG_BATTERY_VENDOR_PARAMS
 	/* Apply battery pack vendor charging method */
 	battery_vendor_params(batt);
+#endif
 
 #ifdef CONFIG_CHARGER_CURRENT_LIMIT
 	if (batt->desired_current > CONFIG_CHARGER_CURRENT_LIMIT)

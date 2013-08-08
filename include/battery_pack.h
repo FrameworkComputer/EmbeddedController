@@ -45,12 +45,14 @@ struct battery_info {
  */
 const struct battery_info *battery_get_info(void);
 
+#ifdef CONFIG_BATTERY_VENDOR_PARAMS
 /**
  * Modify battery parameters to match vendor charging profile.
  *
  * @param batt		Battery parameters to modify
  */
 void battery_vendor_params(struct batt_params *batt);
+#endif
 
 #ifdef CONFIG_BATTERY_CHECK_CONNECTED
 /**
