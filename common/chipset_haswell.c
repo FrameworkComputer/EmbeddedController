@@ -150,7 +150,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 	case X86_S5:
 		if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 1)
 			return X86_S5S3; /* Power up to next state */
-
 		break;
 
 	case X86_S3:
@@ -217,14 +216,14 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Wait for the always-on rails to be good */
 		if (x86_wait_signals(IN_PGOOD_ALWAYS_ON)) {
 			chipset_force_shutdown();
-			return X86_S5;
+			return X86_S5G3;
 		}
 
 		/* Turn on power to RAM */
 		gpio_set_level(GPIO_PP1350_EN, 1);
 		if (x86_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
-			return X86_S5;
+			return X86_S5G3;
 		}
 
 		/*
@@ -316,7 +315,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Disable PP5000 (5V) rail. */
 		gpio_set_level(GPIO_PP5000_EN, 0);
-		return X86_S5;
+		return X86_S5G3;
 
 	case X86_S5G3:
 		/* Deassert DPWROK, assert RSMRST# */
