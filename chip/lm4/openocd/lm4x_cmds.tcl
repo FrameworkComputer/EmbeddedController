@@ -35,7 +35,7 @@ proc flash_slippy { } {
 	flash_lm4 ../../../build/slippy/ec.bin 0
 }
 
-# Bolt/slippy/falco/peppy/wolf have 128KB images
+# Bolt/slippy/falco/peppy have 128KB images
 proc flash_bolt { } {
 	flash_lm4 ../../../build/bolt/ec.bin 0
 }
@@ -60,10 +60,6 @@ proc flash_peppy { } {
 	flash_lm4 ../../../build/peppy/ec.bin 0
 }
 
-proc flash_wolf { } {
-	flash_lm4 ../../../build/wolf/ec.bin 0
-}
-
 # link has pstate in last sector
 proc unprotect_link { } {
 	reset halt
@@ -71,7 +67,7 @@ proc unprotect_link { } {
 	reset
 }
 
-# Slippy/peppy/falco/wolf have pstate following RO
+# Slippy/peppy/falco have pstate following RO
 proc unprotect_slippy { } {
 	reset halt
 	flash erase_sector 0 126 127
