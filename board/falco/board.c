@@ -194,8 +194,10 @@ BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 const struct temp_sensor_t temp_sensors[] = {
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
-	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g781_get_val, 0, 4},
-	{"G781External", TEMP_SENSOR_TYPE_BOARD, g781_get_val, 1, 4},
+	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
+		G781_IDX_INTERNAL, 4},
+	{"G781External", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
+		G781_IDX_EXTERNAL, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 

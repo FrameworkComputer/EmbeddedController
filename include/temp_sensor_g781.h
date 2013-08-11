@@ -10,6 +10,9 @@
 
 #define G781_I2C_ADDR		0x98 /* 7-bit address is 0x4C */
 
+#define G781_IDX_INTERNAL	0
+#define G781_IDX_EXTERNAL	1
+
 /* Chip-specific commands */
 #define G781_TEMP_LOCAL			0x00
 #define G781_TEMP_REMOTE		0x01

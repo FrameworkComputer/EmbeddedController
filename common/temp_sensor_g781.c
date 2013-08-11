@@ -8,8 +8,12 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "hooks.h"
 #include "temp_sensor_g781.h"
 #include "util.h"
+
+static int g781_temp_val_local;
+static int g781_temp_val_remote;
 
 static int g781_read8(const int offset, int *data_ptr)
 {
@@ -44,31 +48,35 @@ static int g781_set_temp(const int offset, int temp)
 
 int g781_get_val(int idx, int *temp_ptr)
 {
-	int offset;
-	int rv;
-
 	if (!board_g781_has_power())
 		return EC_ERROR_NOT_POWERED;
 
 	switch (idx) {
-	case 0:
-		offset = G781_TEMP_LOCAL;
+	case G781_IDX_INTERNAL:
+		*temp_ptr = g781_temp_val_local;
 		break;
-	case 1:
-		offset = G781_TEMP_REMOTE;
+	case G781_IDX_EXTERNAL:
+		*temp_ptr = g781_temp_val_remote;
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
 
-	rv = g781_get_temp(offset, temp_ptr);
-	if (rv < 0)
-		return rv;
-
-	/* Temperature from sensor is in degrees Celsius */
-	*temp_ptr = C_TO_K(*temp_ptr);
 	return EC_SUCCESS;
 }
+
+static void g781_temp_sensor_poll(void)
+{
+	if (!board_g781_has_power())
+		return;
+
+	g781_get_temp(G781_TEMP_LOCAL, &g781_temp_val_local);
+	g781_temp_val_local = C_TO_K(g781_temp_val_local);
+
+	g781_get_temp(G781_TEMP_REMOTE, &g781_temp_val_remote);
+	g781_temp_val_remote = C_TO_K(g781_temp_val_remote);
+}
+DECLARE_HOOK(HOOK_SECOND, g781_temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 static int g781_show_status(void)
 {

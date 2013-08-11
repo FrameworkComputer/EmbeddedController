@@ -16,6 +16,8 @@ enum hook_priority {
 	HOOK_PRIO_DEFAULT = 5000,  /* Default priority */
 	HOOK_PRIO_LAST = 9999,     /* Lowest priority */
 
+	/* Specific values to lump related hooks together */
+	HOOK_PRIO_TEMP_SENSOR = 6000,
 	/* Specific hook vales for HOOK_INIT */
 	/* DMA inits before ADC, I2C, SPI */
 	HOOK_PRIO_INIT_DMA = HOOK_PRIO_FIRST + 1,
