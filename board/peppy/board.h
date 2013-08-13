@@ -24,6 +24,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_PWM_FAN
+#define CONFIG_PWM_FAN_EN_GPIO GPIO_PP5000_FAN_EN
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_UART_HOST 2
@@ -96,13 +97,13 @@ enum gpio_signal {
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
 	GPIO_PP1350_EN,            /* Enable 1.35V supply */
-	GPIO_PP3300_DSW_GATED_EN,  /* Enable DSW rails */
 	GPIO_PP3300_DX_EN,         /* Enable power to lots of peripherals */
 	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
 	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
 	GPIO_SUSP_VR_EN,           /* Enable 1.05V regulator */
 	GPIO_VCORE_EN,             /* Stuffing option - not connected */
 	GPIO_PP5000_EN,            /* Enable 5V supply */
+	GPIO_PP5000_FAN_EN,        /* Enable fan power rail */
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 	GPIO_CHARGE_L,             /* Allow battery to charge when on AC */

@@ -465,6 +465,9 @@
 /* Compile support for PWM control of cooling fans */
 #undef CONFIG_PWM_FAN
 
+/* Name of active high GPIO to control power to the cooling fan */
+#undef CONFIG_PWM_FAN_EN_GPIO
+
 /* Compile support for PWM output to keyboard backlight */
 #undef CONFIG_PWM_KBLIGHT
 
