@@ -621,7 +621,7 @@ static void pmu_chipset_startup(void)
 {
 	pmu_init();
 
-#if defined(BOARD_pit) || defined(BOARD_puppy)
+#if defined(BOARD_puppy)
 	/* Enable all FETs.
 	 *
 	 * TODO: This is temporary code; remove when I2C passthru is working
@@ -633,6 +633,12 @@ static void pmu_chipset_startup(void)
 
 		for (i = 1; i <= 7; i++)
 			pmu_enable_fet(i, 1, &pgood);
+	}
+#elif defined(BOARD_pit)
+	/* Enable FET4 by default which allows for SD Card booting */
+	{
+		int pgood;
+		pmu_enable_fet(4, 1, &pgood);
 	}
 #endif
 }
