@@ -28,6 +28,8 @@
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK 32
 
+#define I2C_ERROR_FAILED_START EC_ERROR_INTERNAL_FIRST
+
 /*
  * Transmit timeout in microseconds
  *
@@ -37,6 +39,12 @@
  * fact be needed if the host resets itself mid-read.
  */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
+
+/*
+ * Delay 5us in bitbang mode.  That gives us roughly 5us low and 5us high or
+ * a frequency of 100kHz.
+ */
+#define I2C_BITBANG_HALF_CYCLE_US    5
 
 #ifdef CONFIG_I2C_DEBUG
 static void dump_i2c_reg(int port, const char *what)
@@ -82,8 +90,6 @@ static int wait_sr1(int port, int mask)
 		usleep(100);
 	}
 
-	/* TODO: on error or timeout, reset port */
-
 	return EC_ERROR_TIMEOUT;
 }
 
@@ -104,7 +110,7 @@ static int send_start(int port, int slave_addr)
 	dump_i2c_reg(port, "sent start");
 	rv = wait_sr1(port, STM32_I2C_SR1_SB);
 	if (rv)
-		return rv;
+		return I2C_ERROR_FAILED_START;
 
 	/* Write slave address */
 	STM32_I2C_DR(port) = slave_addr & 0xff;
@@ -118,6 +124,140 @@ static int send_start(int port, int slave_addr)
 	dump_i2c_reg(port, "wrote addr");
 
 	return EC_SUCCESS;
+}
+
+static void i2c_set_freq_port(const struct i2c_port_t *p)
+{
+	int port = p->port;
+	int freq = clock_get_freq();
+
+	/* Force peripheral reset and disable port */
+	STM32_I2C_CR1(port) = STM32_I2C_CR1_SWRST;
+	STM32_I2C_CR1(port) = 0;
+
+	/* Set clock frequency */
+	STM32_I2C_CCR(port) = freq / (2 * MSEC * p->kbps);
+	STM32_I2C_CR2(port) = freq / SECOND;
+	STM32_I2C_TRISE(port) = freq / SECOND + 1;
+
+	/* Enable port */
+	STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
+}
+
+/*
+ * Try to pull up SCL. If clock is stretched, we will wait for a few cycles
+ * for the slave to get ready.
+ *
+ * @param scl		the SCL gpio pin
+ * @return 0 when success; -1 if SCL is still low
+ */
+static int try_pull_up_scl(enum gpio_signal scl)
+{
+	int i;
+	for (i = 0; i < 3; ++i) {
+		gpio_set_level(scl, 1);
+		if (gpio_get_level(scl))
+			return 0;
+		udelay(I2C_BITBANG_HALF_CYCLE_US);
+	}
+	CPRINTF("[%T I2C clock stretched too long?]\n");
+	return -1;
+}
+
+/*
+ * Try to unwedge the bus.
+ *
+ * The implementation is based on unwedge_i2c_bus() in i2c-stm32f.c.
+ * Or refer to https://gerrit.chromium.org/gerrit/#/c/32168 for details.
+ *
+ * @param port		I2C port
+ * @param force_unwedge	perform unwedge without checking if wedged
+ */
+static void i2c_try_unwedge(int port, int force_unwedge)
+{
+	enum gpio_signal scl, sda;
+	int i;
+
+	if (port == I2C1) {
+		sda = GPIO_I2C1_SDA;
+		scl = GPIO_I2C1_SCL;
+	} else {
+		sda = GPIO_I2C2_SDA;
+		scl = GPIO_I2C2_SCL;
+	}
+
+	if (!force_unwedge) {
+		if (gpio_get_level(scl) && gpio_get_level(sda))
+			/* Everything seems ok; no need to unwedge */
+			return;
+		CPRINTF("[%T I2C wedge detected; fixing]\n");
+	}
+
+	gpio_set_flags(scl, GPIO_ODR_HIGH);
+	gpio_set_flags(sda, GPIO_ODR_HIGH);
+
+	if (!gpio_get_level(scl)) {
+		/*
+		 * Clock is low, wait for a while in case of clock stretched
+		 * by a slave.
+		 */
+		if (try_pull_up_scl(scl))
+			return;
+	}
+
+	/*
+	 * SCL is high. No matter whether SDA is 0 or 1, we generate at most
+	 * 9 clocks with SDA released and then send a STOP. If a slave is in the
+	 * middle of writing, one of the cycles should be a NACK.
+	 * If it's in reading, then this should finish the transaction.
+	 */
+	udelay(I2C_BITBANG_HALF_CYCLE_US);
+	for (i = 0; i < 9; ++i) {
+		if (try_pull_up_scl(scl))
+			return;
+		udelay(I2C_BITBANG_HALF_CYCLE_US);
+		gpio_set_level(scl, 0);
+		udelay(I2C_BITBANG_HALF_CYCLE_US);
+		if (gpio_get_level(sda))
+			break;
+	}
+
+	/* Issue a STOP */
+	gpio_set_level(sda, 0);
+	udelay(I2C_BITBANG_HALF_CYCLE_US);
+	if (try_pull_up_scl(scl))
+		return;
+	udelay(I2C_BITBANG_HALF_CYCLE_US);
+	gpio_set_level(sda, 1);
+	if (gpio_get_level(sda) == 0)
+		CPRINTF("[%T sda is still low]\n");
+	udelay(I2C_BITBANG_HALF_CYCLE_US);
+}
+
+/**
+ * Initialize on the specified I2C port.
+ *
+ * @param p		the I2c port
+ * @param force_unwedge	perform unwedge without checking if wedged
+ */
+static void i2c_init_port(const struct i2c_port_t *p, int force_unwedge)
+{
+	int port = p->port;
+
+	/* Unwedge the bus if it seems wedged */
+	i2c_try_unwedge(port, force_unwedge);
+
+	/* Enable clocks to I2C modules if necessary */
+	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
+		STM32_RCC_APB1ENR |= 1 << (21 + port);
+
+	/* Configure GPIOs */
+	gpio_config_module(MODULE_I2C, 1);
+
+	/* Set up initial bus frequencies */
+	i2c_set_freq_port(p);
+
+	/* TODO: enable interrupts using I2C_CR2 bits 8,9 */
 }
 
 /*****************************************************************************/
@@ -253,6 +393,23 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		flags |= I2C_XFER_STOP;
 		STM32_I2C_CR1(port) |= STM32_I2C_CR1_STOP;
 		dump_i2c_reg(port, "stop after error");
+
+		/*
+		 * If failed at sending start, try resetting the port
+		 * to unwedge the bus.
+		 */
+		if (rv == I2C_ERROR_FAILED_START) {
+			const struct i2c_port_t *p = i2c_ports;
+			CPRINTF("[%T i2c_xfer start error; "
+				"try resetting i2c%d to unwedge.\n", port);
+			for (i = 0; i < I2C_PORTS_USED; i++, p++) {
+				if (p->port == port) {
+					i2c_init_port(p, 1); /* force unwedge */
+					break;
+				}
+			}
+			CPRINTF("[%T I2C done resetting.\n");
+		}
 	}
 
 	/* If a stop condition is queued, wait for it to take effect */
@@ -333,24 +490,10 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 static void i2c_freq_change(void)
 {
 	const struct i2c_port_t *p = i2c_ports;
-	int freq = clock_get_freq();
 	int i;
 
-	for (i = 0; i < I2C_PORTS_USED; i++, p++) {
-		int port = p->port;
-
-		/* Force peripheral reset and disable port */
-		STM32_I2C_CR1(port) = STM32_I2C_CR1_SWRST;
-		STM32_I2C_CR1(port) = 0;
-
-		/* Set clock frequency */
-		STM32_I2C_CCR(port) = freq / (2 * MSEC * p->kbps);
-		STM32_I2C_CR2(port) = freq / SECOND;
-		STM32_I2C_TRISE(port) = freq / SECOND + 1;
-
-		/* Enable port */
-		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
-	}
+	for (i = 0; i < I2C_PORTS_USED; i++, p++)
+		i2c_set_freq_port(p);
 }
 
 static void i2c_pre_freq_change_hook(void)
@@ -381,23 +524,8 @@ static void i2c_init(void)
 	const struct i2c_port_t *p = i2c_ports;
 	int i;
 
-	for (i = 0; i < I2C_PORTS_USED; i++, p++) {
-		int port = p->port;
-
-		/* Enable clocks to I2C modules if necessary */
-		if (!(STM32_RCC_APB1ENR & (1 << (21 + port)))) {
-			/* TODO: unwedge bus if necessary */
-			STM32_RCC_APB1ENR |= 1 << (21 + port);
-		}
-	}
-
-	/* Configure GPIOs */
-	gpio_config_module(MODULE_I2C, 1);
-
-	/* Set up initial bus frequencies */
-	i2c_freq_change();
-
-	/* TODO: enable interrupts using I2C_CR2 bits 8,9 */
+	for (i = 0; i < I2C_PORTS_USED; i++, p++)
+		i2c_init_port(p, 0); /* do not force unwedged */
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 
