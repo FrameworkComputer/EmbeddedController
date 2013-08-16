@@ -27,6 +27,7 @@ common-$(CONFIG_CHARGER)+=charge_state.o charger.o
 # TODO(crosbug.com/p/23815): This is really the charge state machine
 # for ARM, not the charger driver for the tps65090.  Rename.
 common-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
+common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
