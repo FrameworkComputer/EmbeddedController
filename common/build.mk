@@ -22,8 +22,9 @@ common-$(BOARD_spring)+=battery_spring.o
 
 common-$(CONFIG_BACKLIGHT_X86)+=backlight_x86.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
-common-$(CONFIG_BATTERY_MOCK)+=mock_smart_battery_stub.o mock_charger.o
-common-$(CONFIG_BATTERY_SMART)+=smart_battery.o smart_battery_stub.o
+common-$(CONFIG_BATTERY_BQ27541)+=battery.o battery_bq27541.o
+common-$(CONFIG_BATTERY_MOCK)+=mock_smart_battery.o mock_charger.o
+common-$(CONFIG_BATTERY_SMART)+=battery.o smart_battery.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger_common.o
 common-$(CONFIG_CHARGER_BQ24192)+=charger_bq24192.o
 common-$(CONFIG_CHARGER_BQ24715)+=charger_bq24715.o

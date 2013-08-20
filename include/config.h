@@ -55,8 +55,11 @@
 /*****************************************************************************/
 /* Battery config */
 
-/* Compile support for the BS20Z453 battery used on some of the ARM laptops */
+/* Compile support for the BQ20Z453 battery used on some of the ARM laptops */
 #undef CONFIG_BATTERY_BQ20Z453
+
+/* Compile support for the BQ27541 battery */
+#undef CONFIG_BATTERY_BQ27541
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK

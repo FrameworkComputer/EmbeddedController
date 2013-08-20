@@ -50,30 +50,6 @@ int battery_device_chemistry(char *device_chemistry, int buf_size)
 	return EC_SUCCESS;
 }
 
-int battery_current(int *current)
-{
-	int rv, d;
-
-	rv = sb_read(SB_CURRENT, &d);
-	if (rv)
-		return rv;
-
-	*current = (int16_t)d;
-	return EC_SUCCESS;
-}
-
-int battery_average_current(int *current)
-{
-	int rv, d;
-
-	rv = sb_read(SB_AVERAGE_CURRENT, &d);
-	if (rv)
-		return rv;
-
-	*current = (int16_t)d;
-	return EC_SUCCESS;
-}
-
 int battery_time_at_rate(int rate, int *minutes)
 {
 	return EC_SUCCESS;

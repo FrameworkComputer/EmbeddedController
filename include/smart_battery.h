@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_SMART_BATTERY_H
 #define __CROS_EC_SMART_BATTERY_H
 
+#include "battery.h"
 #include "common.h"
 #include "i2c.h"
 #include "smart_battery_stub.h"
@@ -127,116 +128,6 @@
 /* Charger specification info */
 #define INFO_CHARGER_SPEC(INFO)         ((INFO) & 0xf)
 #define INFO_SELECTOR_SUPPORT(INFO)     (((INFO) >> 4) & 1)
-
-/* Get/set battery mode */
-static inline int battery_get_battery_mode(int *mode)
-	{ return sb_read(SB_BATTERY_MODE, mode); }
-
-static inline int battery_set_battery_mode(int mode)
-	{ return sb_write(SB_BATTERY_MODE, mode); }
-
-/* Read battery temperature
- * unit: 0.1 K
- */
-static inline int battery_temperature(int *deci_kelvin)
-	{ return sb_read(SB_TEMPERATURE, deci_kelvin); }
-
-/* Read battery voltage
- * unit: mV
- */
-static inline int battery_voltage(int *voltage)
-	{ return sb_read(SB_VOLTAGE, voltage); }
-
-/* Relative state of charge in percent */
-static inline int battery_state_of_charge(int *percent)
-	{ return sb_read(SB_RELATIVE_STATE_OF_CHARGE, percent); }
-
-/* Absolute state of charge in percent */
-static inline int battery_state_of_charge_abs(int *percent)
-	{ return sb_read(SB_ABSOLUTE_STATE_OF_CHARGE, percent); }
-
-/* Battery remaining capacity
- * unit: mAh or 10mW, depends on battery mode
- */
-static inline int battery_remaining_capacity(int *capacity)
-	{ return sb_read(SB_REMAINING_CAPACITY, capacity); }
-
-/* Battery full charge capacity */
-static inline int battery_full_charge_capacity(int *capacity)
-	{ return sb_read(SB_FULL_CHARGE_CAPACITY, capacity); }
-
-/* Time in minutes left when discharging */
-static inline int battery_time_to_empty(int *minutes)
-	{ return sb_read(SB_AVERAGE_TIME_TO_EMPTY, minutes); }
-
-static inline int battery_run_time_to_empty(int *minutes)
-	{ return sb_read(SB_RUN_TIME_TO_EMPTY, minutes); }
-
-/* Time in minutes to full when charging */
-static inline int battery_time_to_full(int *minutes)
-	{ return sb_read(SB_AVERAGE_TIME_TO_FULL, minutes); }
-
-/* The current battery desired to charge
- * unit: mA
- */
-static inline int battery_desired_current(int *current)
-	{ return sb_read(SB_CHARGING_CURRENT, current); }
-
-/* The voltage battery desired to charge
- * unit: mV
- */
-static inline int battery_desired_voltage(int *voltage)
-	{ return sb_read(SB_CHARGING_VOLTAGE, voltage); }
-
-/* Read battery status */
-static inline int battery_status(int *status)
-	{ return sb_read(SB_BATTERY_STATUS, status); }
-
-/* Battery charge cycle count */
-static inline int battery_cycle_count(int *count)
-	{ return sb_read(SB_CYCLE_COUNT, count); }
-
-/* Designed battery capacity
- * unit: mAh or 10mW depends on battery mode
- */
-static inline int battery_design_capacity(int *capacity)
-	{ return sb_read(SB_DESIGN_CAPACITY, capacity); }
-
-/* Designed battery output voltage
- * unit: mV
- */
-static inline int battery_design_voltage(int *voltage)
-	{ return sb_read(SB_DESIGN_VOLTAGE, voltage); }
-
-/* Read serial number */
-static inline int battery_serial_number(int *serial)
-	{ return sb_read(SB_SERIAL_NUMBER, serial); }
-
-/* Read manufacturer name */
-int battery_manufacturer_name(char *manufacturer_name, int buf_size);
-
-/* Read device name */
-int battery_device_name(char *device_name, int buf_size);
-
-/* Read battery type/chemistry */
-int battery_device_chemistry(char *device_chemistry, int buf_size);
-
-/* Read battery discharging current
- * unit: mA
- * negative value: charging
- */
-int battery_current(int *current);
-int battery_average_current(int *current);
-
-/* Calculate battery time in minutes, under a charging rate
- * rate >  0: charging, negative time to full
- * rate <  0: discharging, positive time to empty
- * rate == 0: invalid input, time = 0
- */
-int battery_time_at_rate(int rate, int *minutes);
-
-/* Read manufacturer date */
-int battery_manufacturer_date(int *year, int *month, int *day);
 
 #endif /* __CROS_EC_SMART_BATTERY_H */
 

@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_BATTERY_BQ27541
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24192
 #define CONFIG_ADC

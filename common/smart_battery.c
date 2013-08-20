@@ -11,6 +11,153 @@
 #include "timer.h"
 #include "util.h"
 
+test_mockable int sbc_read(int cmd, int *param)
+{
+	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
+
+test_mockable int sbc_write(int cmd, int param)
+{
+	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
+
+test_mockable int sb_read(int cmd, int *param)
+{
+	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
+}
+
+test_mockable int sb_write(int cmd, int param)
+{
+	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
+}
+
+/* Get/set battery mode */
+int battery_get_battery_mode(int *mode)
+{
+	return sb_read(SB_BATTERY_MODE, mode);
+}
+
+int battery_set_battery_mode(int mode)
+{
+	return sb_write(SB_BATTERY_MODE, mode);
+}
+
+int battery_is_in_10mw_mode(void)
+{
+	int val;
+	battery_get_battery_mode(&val);
+	return val & MODE_CAPACITY;
+}
+
+/* Read battery temperature
+ * unit: 0.1 K
+ */
+int battery_temperature(int *deci_kelvin)
+{
+	return sb_read(SB_TEMPERATURE, deci_kelvin);
+}
+
+/* Read battery voltage
+ * unit: mV
+ */
+int battery_voltage(int *voltage)
+{
+	return sb_read(SB_VOLTAGE, voltage);
+}
+
+/* Relative state of charge in percent */
+int battery_state_of_charge(int *percent)
+{
+	return sb_read(SB_RELATIVE_STATE_OF_CHARGE, percent);
+}
+
+/* Absolute state of charge in percent */
+int battery_state_of_charge_abs(int *percent)
+{
+	return sb_read(SB_ABSOLUTE_STATE_OF_CHARGE, percent);
+}
+
+/* Battery remaining capacity
+ * unit: mAh or 10mW, depends on battery mode
+ */
+int battery_remaining_capacity(int *capacity)
+{
+	return sb_read(SB_REMAINING_CAPACITY, capacity);
+}
+
+/* Battery full charge capacity */
+int battery_full_charge_capacity(int *capacity)
+{
+	return sb_read(SB_FULL_CHARGE_CAPACITY, capacity);
+}
+
+/* Time in minutes left when discharging */
+int battery_time_to_empty(int *minutes)
+{
+	return sb_read(SB_AVERAGE_TIME_TO_EMPTY, minutes);
+}
+
+int battery_run_time_to_empty(int *minutes)
+{
+	return sb_read(SB_RUN_TIME_TO_EMPTY, minutes);
+}
+
+/* Time in minutes to full when charging */
+int battery_time_to_full(int *minutes)
+{
+	return sb_read(SB_AVERAGE_TIME_TO_FULL, minutes);
+}
+
+/* The current battery desired to charge
+ * unit: mA
+ */
+int battery_desired_current(int *current)
+{
+	return sb_read(SB_CHARGING_CURRENT, current);
+}
+
+/* The voltage battery desired to charge
+ * unit: mV
+ */
+int battery_desired_voltage(int *voltage)
+{
+	return sb_read(SB_CHARGING_VOLTAGE, voltage);
+}
+
+/* Read battery status */
+int battery_status(int *status)
+{
+	return sb_read(SB_BATTERY_STATUS, status);
+}
+
+/* Battery charge cycle count */
+int battery_cycle_count(int *count)
+{
+	return sb_read(SB_CYCLE_COUNT, count);
+}
+
+/* Designed battery capacity
+ * unit: mAh or 10mW depends on battery mode
+ */
+int battery_design_capacity(int *capacity)
+{
+	return sb_read(SB_DESIGN_CAPACITY, capacity);
+}
+
+/* Designed battery output voltage
+ * unit: mV
+ */
+int battery_design_voltage(int *voltage)
+{
+	return sb_read(SB_DESIGN_VOLTAGE, voltage);
+}
+
+/* Read serial number */
+int battery_serial_number(int *serial)
+{
+	return sb_read(SB_SERIAL_NUMBER, serial);
+}
+
 /* Read battery discharging current
  * unit: mA
  * negative value: charging
@@ -45,7 +192,7 @@ int battery_average_current(int *current)
  * rate <  0: discharging, positive time to empty
  * rate == 0: invalid input, time = 0
  */
-int battery_time_at_rate(int rate, int *minutes)
+test_mockable int battery_time_at_rate(int rate, int *minutes)
 {
 	int rv;
 	int ok, time;
@@ -87,7 +234,7 @@ int battery_time_at_rate(int rate, int *minutes)
 }
 
 /* Read manufacturer date */
-int battery_manufacturer_date(int *year, int *month, int *day)
+test_mockable int battery_manufacturer_date(int *year, int *month, int *day)
 {
 	int rv;
 	int ymd;
@@ -107,21 +254,21 @@ int battery_manufacturer_date(int *year, int *month, int *day)
 }
 
 /* Read manufacturer name */
-int battery_manufacturer_name(char *manufacturer_name, int buf_size)
+test_mockable int battery_manufacturer_name(char *name, int buf_size)
 {
 	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
-		SB_MANUFACTURER_NAME, manufacturer_name, buf_size);
+		SB_MANUFACTURER_NAME, name, buf_size);
 }
 
 /* Read device name */
-int battery_device_name(char *device_name, int buf_size)
+test_mockable int battery_device_name(char *device_name, int buf_size)
 {
 	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 		SB_DEVICE_NAME, device_name, buf_size);
 }
 
 /* Read battery type/chemistry */
-int battery_device_chemistry(char *device_chemistry, int buf_size)
+test_mockable int battery_device_chemistry(char *device_chemistry, int buf_size)
 {
 	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 		SB_DEVICE_CHEMISTRY, device_chemistry, buf_size);
@@ -129,145 +276,6 @@ int battery_device_chemistry(char *device_chemistry, int buf_size)
 
 /*****************************************************************************/
 /* Console commands */
-
-static int print_battery_info(void)
-{
-	int value;
-	int hour, minute;
-	char text[32];
-	const char *unit;
-	int rv;
-
-	rv = battery_temperature(&value);
-	if (rv)
-		return rv;
-
-	ccprintf("  Temp:      0x%04x = %.1d K (%.1d C)\n",
-		 value, value, value - 2731);
-
-	ccprintf("  Manuf:     %s\n",
-		 battery_manufacturer_name(text, sizeof(text)) == EC_SUCCESS ?
-		 text : "(error)");
-
-	ccprintf("  Device:    %s\n",
-		 battery_device_name(text, sizeof(text)) == EC_SUCCESS ?
-		 text : "(error)");
-
-	ccprintf("  Chem:      %s\n",
-		 battery_device_chemistry(text, sizeof(text)) == EC_SUCCESS ?
-		 text : "(error)");
-
-	battery_serial_number(&value);
-	ccprintf("  Serial:    0x%04x\n", value);
-
-	battery_voltage(&value);
-	ccprintf("  V:         0x%04x = %d mV\n", value, value);
-
-	battery_desired_voltage(&value);
-	ccprintf("  V-desired: 0x%04x = %d mV\n", value, value);
-
-	battery_design_voltage(&value);
-	ccprintf("  V-design:  0x%04x = %d mV\n", value, value);
-
-	battery_current(&value);
-	ccprintf("  I:         0x%04x = %d mA",
-		value & 0xffff, value);
-	if (value > 0)
-		ccputs("(CHG)");
-	else if (value < 0)
-		ccputs("(DISCHG)");
-	ccputs("\n");
-
-
-	battery_desired_current(&value);
-	ccprintf("  I-desired: 0x%04x = %d mA\n", value, value);
-
-	battery_get_battery_mode(&value);
-	ccprintf("  Mode:      0x%04x\n", value);
-	unit = (value & MODE_CAPACITY) ? "0 mW" : " mAh";
-
-	battery_state_of_charge(&value);
-	ccprintf("  Charge:    %d %%\n", value);
-
-	battery_state_of_charge_abs(&value);
-	ccprintf("    Abs:     %d %%\n", value);
-
-	battery_remaining_capacity(&value);
-	ccprintf("  Remaining: %d%s\n", value, unit);
-
-	battery_full_charge_capacity(&value);
-	ccprintf("  Cap-full:  %d%s\n", value, unit);
-
-	battery_design_capacity(&value);
-	ccprintf("    Design:  %d%s\n", value, unit);
-
-	battery_time_to_full(&value);
-	if (value == 65535) {
-		hour   = 0;
-		minute = 0;
-	} else {
-		hour   = value / 60;
-		minute = value % 60;
-	}
-	ccprintf("  Time-full: %dh:%d\n", hour, minute);
-
-	battery_time_to_empty(&value);
-	if (value == 65535) {
-		hour   = 0;
-		minute = 0;
-	} else {
-		hour   = value / 60;
-		minute = value % 60;
-	}
-	ccprintf("    Empty:   %dh:%d\n", hour, minute);
-
-	return 0;
-}
-
-static int command_battery(int argc, char **argv)
-{
-	int repeat = 1;
-	int rv = 0;
-	int loop;
-	int sleep_ms = 0;
-	char *e;
-
-	if (argc > 1) {
-		repeat = strtoi(argv[1], &e, 0);
-		if (*e) {
-			ccputs("Invalid repeat count\n");
-			return EC_ERROR_INVAL;
-		}
-	}
-
-	if (argc > 2) {
-		sleep_ms = strtoi(argv[2], &e, 0);
-		if (*e) {
-			ccputs("Invalid sleep ms\n");
-			return EC_ERROR_INVAL;
-		}
-	}
-
-	for (loop = 0; loop < repeat; loop++) {
-		rv = print_battery_info();
-
-		if (sleep_ms)
-			msleep(sleep_ms);
-
-		if (rv)
-			break;
-	}
-
-	if (rv)
-		ccprintf("Failed - error %d\n", rv);
-
-	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(battery, command_battery,
-			"<repeat_count> <sleep_ms>",
-			"Print battery info",
-			NULL);
-
 
 /* Usage:sb reg [value]
  *     sb 0x14       // read desired charging current
