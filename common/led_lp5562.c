@@ -35,6 +35,9 @@ enum led_state_t {
 
 	/* Not an actual state */
 	LED_STATE_OFF,
+
+	/* Used to force next LED color update */
+	LED_STATE_INVALID,
 };
 
 static enum led_state_t last_state = LED_STATE_OFF;
@@ -57,12 +60,14 @@ static int set_led_color(enum led_state_t state)
 	case LED_STATE_SOLID_YELLOW:
 		rv = lp5562_set_color(LED_COLOR_YELLOW);
 		break;
-	case LED_STATE_OFF:
+	default:
 		break;
 	}
 
 	if (rv == EC_SUCCESS)
 		last_state = state;
+	else
+		last_state = LED_STATE_INVALID;
 	return rv;
 }
 
