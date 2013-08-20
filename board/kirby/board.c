@@ -12,6 +12,8 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
+#include "pwm.h"
+#include "pwm_data.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -95,7 +97,7 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_C, 0x00e0, GPIO_ALT_TIM3_4, MODULE_LED_KIRBY},
+	{GPIO_C, 0x01c0, GPIO_ALT_TIM3_4, MODULE_LED_KIRBY},
 	{GPIO_A, 0x00f0, GPIO_ALT_SPI,    MODULE_SPI},
 	{GPIO_A, 0x0600, GPIO_ALT_USART,  MODULE_UART},
 	{GPIO_B, 0x00c0, GPIO_ALT_I2C,	  MODULE_I2C},
@@ -111,6 +113,17 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 	.discharging_min_c    = 0,
 	.discharging_max_c    = 100,
 };
+
+/* PWM channels */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_CHG_Y] = {STM32_TIM(3), STM32_TIM_CH(1), PWM_CONFIG_ACTIVE_LOW,
+			  GPIO_CHG_LED_Y},
+	[PWM_CH_CHG_G] = {STM32_TIM(3), STM32_TIM_CH(2), PWM_CONFIG_ACTIVE_LOW,
+			  GPIO_CHG_LED_G},
+	[PWM_CH_CHG_R] = {STM32_TIM(3), STM32_TIM_CH(3), PWM_CONFIG_ACTIVE_LOW,
+			  GPIO_CHG_LED_R},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
