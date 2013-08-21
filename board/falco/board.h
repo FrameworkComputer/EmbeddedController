@@ -191,12 +191,6 @@ enum temp_sensor_id {
  */
 int board_g781_has_power(void);
 
-/* HEY: The below stuff is for Link. Pick a different pin for Falco */
-/* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
- * pullup. If this signal is pulled to ground when the EC boots, the EC will get
- * into the boot loader and we can recover bricked EC. */
-#define BOOTCFG_VALUE 0x7fff88fe
-
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN

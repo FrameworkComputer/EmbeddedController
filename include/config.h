@@ -92,6 +92,9 @@
 /* EC has GPIOs attached to board version stuffing resistors */
 #undef CONFIG_BOARD_VERSION
 
+/* Permanent LM4 boot configuration */
+#undef CONFIG_BOOTCFG_VALUE
+
 /*****************************************************************************/
 /* Charger config */
 

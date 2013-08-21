@@ -248,6 +248,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_PIOSCSTAT   REG32(0x400fe154)
 #define LM4_SYSTEM_PLLSTAT     REG32(0x400fe168)
 #define LM4_SYSTEM_BOOTCFG     REG32(0x400fe1d0)
+#define LM4_SYSTEM_BOOTCFG_MASK 0x7fff00ec /* Reserved bits of BOOTCFG reg */
 /* Note: USER_REG3 is used to hold pre-programming process data and should not
  * be modified by EC code.  See crosbug.com/p/8889. */
 #define LM4_SYSTEM_USER_REG3   REG32(0x400fe1ec)

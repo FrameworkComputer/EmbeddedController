@@ -97,6 +97,17 @@
 #define CONFIG_FW_WP_RO_SIZE		CONFIG_FW_RO_SIZE
 
 /****************************************************************************/
+/* Lock the boot configuration to prevent brickage. */
+
+/*
+ * No GPIO trigger for ROM bootloader.
+ * Keep JTAG debugging enabled.
+ * Use 0xA442 flash write key.
+ * Lock it this way.
+ */
+#define CONFIG_BOOTCFG_VALUE 0x7ffffffe
+
+/****************************************************************************/
 /* Customize the build */
 
 /* Optional features present on this chip */

@@ -207,11 +207,6 @@ enum temp_sensor_id {
 /* The number of TMP006 sensor chips on the board. */
 #define TMP006_COUNT 4
 
-/* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
- * pullup. If this signal is pulled to ground when the EC boots, the EC will get
- * into the boot loader and we can recover bricked EC. */
-#define BOOTCFG_VALUE 0x7fff88fe
-
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_RADIO_ENABLE_WLAN
 #define WIRELESS_GPIO_BLUETOOTH GPIO_RADIO_ENABLE_BT

@@ -66,10 +66,6 @@ enum gpio_signal {
 #define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
 #define EEPROM_BLOCK_COUNT_PSTORE 16
 
-/* Target value for BOOTCFG.  This currently toggles the polarity bit without
- * enabling the boot loader, simply to prove we can program it. */
-#define BOOTCFG_VALUE 0xfffffdfe
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

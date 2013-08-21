@@ -196,13 +196,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-/* HEY: The below stuff is for Link. Pick a different pin for bolt */
-/* Target value for BOOTCFG. This is set to PE2/USB1_CTL1, which has an external
- * pullup. If this signal is pulled to ground when the EC boots, the EC will get
- * into the boot loader and we can recover bricked EC. */
-/* #define BOOTCFG_VALUE 0x7fff88fe -- as used on slippy */
-#define BOOTCFG_VALUE 0xfffffffe  /* TODO: not configured */
-
 /* Known board versions for system_get_board_version(). */
 enum board_version {
 	BOARD_VERSION_PROTO1 = 0,
