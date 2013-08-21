@@ -34,13 +34,6 @@
 /* Timeout after AP battery shutdown warning before we kill the AP */
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
 
-#ifndef TASK_ID_CHARGER
-#define TASK_ID_CHARGER TASK_ID_INVALID
-#endif
-#ifndef TASK_ID_SWITCH
-#define TASK_ID_SWITCH TASK_ID_INVALID
-#endif
-
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
