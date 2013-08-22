@@ -38,6 +38,7 @@ struct adapter_limits {
 /* Number of special states */
 #define NUM_AC_TURBO_STATES 2
 #define NUM_AC_THRESHOLDS 2
+#define NUM_BATT_THRESHOLDS 2
 
 /* Change turbo mode or throttle the AP depending on the adapter state. */
 void watch_adapter_closely(struct power_state_context *ctx);

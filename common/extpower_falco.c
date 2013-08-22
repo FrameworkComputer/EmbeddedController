@@ -120,6 +120,15 @@ struct adapter_limits ad_limits[][NUM_AC_TURBO_STATES][NUM_AC_THRESHOLDS] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ad_limits) == NUM_ADAPTER_TYPES);
 
+/* The battery current limits are independent of Turbo or adapter rating.
+ * hi_val and lo_val are DISCHARGE current in mA.
+ */
+test_export_static
+struct adapter_limits batt_limits[] = {
+	{ 7500, 7000, 16, 50, },
+	{ 8000, 7500, 1, 50, },
+};
+BUILD_ASSERT(ARRAY_SIZE(batt_limits) == NUM_BATT_THRESHOLDS);
 
 static int last_mv;
 static enum adapter_type identify_adapter(void)
@@ -220,9 +229,37 @@ void check_threshold(int current, struct adapter_limits *lim)
 	}
 }
 
+
+test_export_static
+void watch_battery_closely(struct power_state_context *ctx)
+{
+	int i;
+	int current = ctx->curr.batt.current;
+
+	/* NB: The values in batt_limits[] indicate DISCHARGE current (mA).
+	 * However, the value returned from battery_current() is CHARGE
+	 * current: postive for charging and negative for discharging.
+	 *
+	 * Turbo mode can discharge the battery even while connected to the
+	 * charger. The spec says not to turn throttling off until the battery
+	 * drain has been below the threshold for 5 seconds. That means we
+	 * still need to check while on AC, or else just plugging the adapter
+	 * in and out would mess up that 5-second timeout. Since the threshold
+	 * logic uses signed numbers to compare the limits, everything Just
+	 * Works.
+	*/
+
+	/* Check limits against DISCHARGE current, not CHARGE current! */
+	for (i = 0; i < NUM_BATT_THRESHOLDS; i++)
+		check_threshold(-current, &batt_limits[i]); /* invert sign! */
+}
+
 void watch_adapter_closely(struct power_state_context *ctx)
 {
 	int current, i;
+
+	/* We always watch the battery current drain, even when on AC. */
+	watch_battery_closely(ctx);
 
 	/* We can only talk to the charger if we're on AC. If there are no
 	 * errors and we recognize the adapter, enable Turbo at 15% charge,

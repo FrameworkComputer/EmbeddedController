@@ -15,5 +15,7 @@ extern struct adapter_limits
 extern int ac_turbo;
 extern int ap_is_throttled;
 extern void check_threshold(int current, struct adapter_limits *lim);
+extern struct adapter_limits batt_limits[NUM_BATT_THRESHOLDS];
+extern void watch_battery_closely(struct power_state_context *ctx);
 
 #endif	/* __ADAPTER_EXTERNS_H */
