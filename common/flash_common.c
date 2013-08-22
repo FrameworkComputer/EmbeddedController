@@ -577,7 +577,7 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 
 	/* Indicate that we might be a while */
-#ifdef HAS_TASK_HOSTCMD
+#if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
 	args->result = EC_RES_IN_PROGRESS;
 	host_send_response(args);
 #endif
