@@ -51,8 +51,8 @@ const struct gpio_info gpio_list[] = {
 	 x86_interrupt},
 	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH,
 	 x86_interrupt},
-	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_INT_BOTH,
-	 x86_interrupt},
+	/* EC needs to control PP1050_PGOOD as it goes to VCCST_PGOOD. */
+	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_ODR_LOW, NULL },
 	{"PP1350_PGOOD",         LM4_GPIO_H, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PP5000_PGOOD",         LM4_GPIO_N, (1<<0), GPIO_INT_BOTH,
@@ -151,7 +151,6 @@ const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 const struct x86_signal_info x86_signal_list[] = {
 	{GPIO_PP5000_PGOOD,  1, "PGOOD_PP5000"},
 	{GPIO_PP1350_PGOOD,  1, "PGOOD_PP1350"},
-	{GPIO_PP1050_PGOOD,  1, "PGOOD_PP1050"},
 	{GPIO_VCORE_PGOOD,   1, "PGOOD_VCORE"},
 	{GPIO_PCH_SLP_S0_L,  1, "SLP_S0#_DEASSERTED"},
 	{GPIO_PCH_SLP_S3_L,  1, "SLP_S3#_DEASSERTED"},
