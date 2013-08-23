@@ -224,7 +224,7 @@ save="$(servo_save)"
 case "${BOARD}" in
 	puppy | daisy | snow | spring | pit | kirby ) flash_daisy ;;
 	link ) flash_link ;;
-	slippy | falco | peppy ) flash_slippy ;;
+	slippy | falco | peppy | bolt ) flash_slippy ;;
 	*) die "board ${BOARD} not supported" ;;
 esac
 
