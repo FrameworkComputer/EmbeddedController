@@ -11,30 +11,12 @@
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
 #undef CONFIG_FMAP
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_POWER_BUTTON
 #undef CONFIG_WATCHDOG
 
 #undef CONFIG_CONSOLE_HISTORY
 #define CONFIG_CONSOLE_HISTORY 4
-
-/* Host test config */
-#ifdef TEST_SMART_BATTERY_CHARGER
-#define CONFIG_BATTERY_MOCK
-#define CONFIG_CHARGER
-#define CONFIG_CHARGER_INPUT_CURRENT 4032
-#endif
-
-/* Keyboard protocol */
-#ifdef TEST_KB_8042
-#define CONFIG_KEYBOARD_PROTOCOL_8042
-#else
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#endif
-
-/* Turbo-mode charger tests */
-#ifdef TEST_EXTPOWER_FALCO
-#define CONFIG_EXTPOWER_FALCO
-#endif
 
 #define CONFIG_WP_ACTIVE_HIGH
 
