@@ -135,13 +135,11 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 
 	dump_i2c_reg(port, "xfer start");
 
-	/* Clear status */
 	/*
+	 * Clear status
+	 *
 	 * TODO: should check for any leftover error status, and reset the
 	 * port if present.
-	 *
-	 * Also, may need to wait a bit if a previous STOP hasn't finished
-	 * sending yet.
 	 */
 	STM32_I2C_SR1(port) = 0;
 
@@ -252,8 +250,26 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
  xfer_exit:
 	/* On error, queue a stop condition */
 	if (rv) {
+		flags |= I2C_XFER_STOP;
 		STM32_I2C_CR1(port) |= STM32_I2C_CR1_STOP;
 		dump_i2c_reg(port, "stop after error");
+	}
+
+	/* If a stop condition is queued, wait for it to take effect */
+	if (flags & I2C_XFER_STOP) {
+		/* Wait up to 100 us for bus idle */
+		for (i = 0; i < 10; i++) {
+			if (!(STM32_I2C_SR2(port) & STM32_I2C_SR2_BUSY))
+				break;
+			udelay(10);
+		}
+
+		/*
+		 * Allow bus to idle for at least one 100KHz clock = 10 us.
+		 * This allows slaves on the bus to detect bus-idle before
+		 * the next start condition.
+		 */
+		udelay(10);
 	}
 
 	return rv;
