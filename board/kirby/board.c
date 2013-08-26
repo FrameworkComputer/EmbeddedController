@@ -61,7 +61,7 @@ const struct gpio_info gpio_list[] = {
 	{"EC_INT2",       GPIO_B, (1<<4),  GPIO_ODR_HIGH, NULL},
 	{"ID_MUX",        GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
 	{"BCHGR_OTG",     GPIO_B, (1<<12), GPIO_OUT_LOW, NULL},
-	{"BCHGR_PSEL",    GPIO_B, (1<<14), GPIO_OUT_HIGH, NULL},
+	{"BCHGR_PSEL",    GPIO_B, (1<<14), GPIO_OUT_LOW, NULL},
 	{"EN_PP3300",     GPIO_C, (1<<11), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW",   GPIO_B, (1<<15), GPIO_OUT_LOW, NULL},
 	{"BST_LED_EN",    GPIO_C, (1<<10), GPIO_OUT_LOW, NULL},
