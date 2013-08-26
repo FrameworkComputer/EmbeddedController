@@ -108,13 +108,14 @@ static int send_start(int port, int slave_addr)
 
 	/* Write slave address */
 	STM32_I2C_DR(port) = slave_addr & 0xff;
-	dump_i2c_reg(port, "wrote addr");
 	rv = wait_sr1(port, STM32_I2C_SR1_ADDR);
 	if (rv)
 		return rv;
 
 	/* Read SR2 to clear ADDR bit */
 	rv = STM32_I2C_SR2(port);
+
+	dump_i2c_reg(port, "wrote addr");
 
 	return EC_SUCCESS;
 }
