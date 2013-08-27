@@ -20,6 +20,8 @@ extern const struct console_command __cmds_end[];
 /* Hooks */
 extern const struct hook_data __hooks_init[];
 extern const struct hook_data __hooks_init_end[];
+extern const struct hook_data __hooks_pre_freq_change[];
+extern const struct hook_data __hooks_pre_freq_change_end[];
 extern const struct hook_data __hooks_freq_change[];
 extern const struct hook_data __hooks_freq_change_end[];
 extern const struct hook_data __hooks_sysjump[];

@@ -46,9 +46,14 @@ enum hook_type {
 	/*
 	 * System clock changed frequency.
 	 *
-	 * Hook routines are called from the context which initiates the
-	 * frequency change.
+	 * The "pre" frequency hook is called before we change the frequency.
+	 * There is no way to cancel.  Hook routines are always called from
+	 * a task, so it's OK to lock a mutex here.  However, they may be called
+	 * from a deferred task on some platforms so callbacks must make sure
+	 * not to do anything that would require some other deferred task to
+	 * run.
 	 */
+	HOOK_PRE_FREQ_CHANGE,
 	HOOK_FREQ_CHANGE,
 
 	/*

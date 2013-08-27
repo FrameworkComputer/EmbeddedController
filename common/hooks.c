@@ -33,6 +33,7 @@ struct hook_ptrs {
  */
 static const struct hook_ptrs hook_list[] = {
 	{__hooks_init, __hooks_init_end},
+	{__hooks_pre_freq_change, __hooks_pre_freq_change_end},
 	{__hooks_freq_change, __hooks_freq_change_end},
 	{__hooks_sysjump, __hooks_sysjump_end},
 	{__hooks_chipset_pre_init, __hooks_chipset_pre_init_end},

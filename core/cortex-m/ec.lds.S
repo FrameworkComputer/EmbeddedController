@@ -60,6 +60,10 @@ SECTIONS
         *(.rodata.HOOK_INIT)
         __hooks_init_end = .;
 
+        __hooks_pre_freq_change = .;
+        *(.rodata.HOOK_PRE_FREQ_CHANGE)
+        __hooks_pre_freq_change_end = .;
+
         __hooks_freq_change = .;
         *(.rodata.HOOK_FREQ_CHANGE)
         __hooks_freq_change_end = .;

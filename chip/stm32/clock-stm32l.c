@@ -59,6 +59,9 @@ static void clock_set_osc(enum clock_osc osc)
 	if (osc == current_osc)
 		return;
 
+	if (current_osc != OSC_INIT)
+		hook_notify(HOOK_PRE_FREQ_CHANGE);
+
 	switch (osc) {
 	case OSC_HSI:
 		/* Ensure that HSI is ON */
