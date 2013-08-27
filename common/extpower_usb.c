@@ -107,11 +107,6 @@ static int pending_video_power_off;
 static int restore_id_mux;
 
 static enum {
-	LIMIT_NORMAL,
-	LIMIT_AGGRESSIVE,
-} current_limit_mode = LIMIT_AGGRESSIVE;
-
-static enum {
 	ADC_WATCH_NONE,
 	ADC_WATCH_TOAD,
 	ADC_WATCH_USB,
@@ -240,15 +235,12 @@ static int apple_charger_current(void)
 static int hard_current_limit(int limit)
 {
 	/*
-	 * In aggressive mode, the PWM duty cycle goes lower than the nominal
+	 * The PWM duty cycle goes lower than the nominal
 	 * cycle for PWM_CTRL_OC_MARGIN. Therefore, increase duty cycle by
 	 * PWM_CTRL_OC_MARGIN avoids going over the hard limit.
 	 * (Note that lower PWM cycle translates to higher current)
 	 */
-	if (current_limit_mode == LIMIT_AGGRESSIVE)
-		return MIN(limit + PWM_CTRL_OC_MARGIN, 100);
-	else
-		return limit;
+	return MIN(limit + PWM_CTRL_OC_MARGIN, 100);
 }
 
 static int video_dev_type(int device_type)
@@ -324,19 +316,12 @@ static void set_pwm_duty_cycle(int percent)
  */
 static int pwm_get_next_lower(void)
 {
-	if (current_limit_mode == LIMIT_AGGRESSIVE) {
-		if (current_pwm_duty > nominal_pwm_duty -
-				       PWM_CTRL_OC_MARGIN &&
-		    current_pwm_duty > over_current_pwm_duty &&
-		    current_pwm_duty > 0)
-			return MAX(current_pwm_duty - PWM_CTRL_STEP_DOWN, 0);
-		return -1;
-	} else {
-		if (current_pwm_duty > nominal_pwm_duty && current_pwm_duty > 0)
-			return MAX(current_pwm_duty - PWM_CTRL_STEP_DOWN, 0);
-		else
-			return -1;
-	}
+	if (current_pwm_duty > nominal_pwm_duty -
+			       PWM_CTRL_OC_MARGIN &&
+	    current_pwm_duty > over_current_pwm_duty &&
+	    current_pwm_duty > 0)
+		return MAX(current_pwm_duty - PWM_CTRL_STEP_DOWN, 0);
+	return -1;
 }
 
 static int pwm_check_vbus_low(int vbus, int battery_current)
@@ -922,30 +907,6 @@ static int command_batdebug(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(batdebug, command_batdebug,
 			NULL, NULL, NULL);
-
-static int command_current_limit_mode(int argc, char **argv)
-{
-	if (1 == argc) {
-		if (current_limit_mode == LIMIT_NORMAL)
-			ccprintf("Normal mode\n");
-		else
-			ccprintf("Aggressive mode\n");
-		return EC_SUCCESS;
-	} else if (2 == argc) {
-		if (!strcasecmp(argv[1], "normal"))
-			current_limit_mode = LIMIT_NORMAL;
-		else if (!strcasecmp(argv[1], "aggressive"))
-			current_limit_mode = LIMIT_AGGRESSIVE;
-		else
-			return EC_ERROR_INVAL;
-		return EC_SUCCESS;
-	}
-	return EC_ERROR_INVAL;
-}
-DECLARE_CONSOLE_COMMAND(limitmode, command_current_limit_mode,
-			"[normal | aggressive]",
-			"Set current limit mode",
-			NULL);
 
 /*****************************************************************************/
 /* Host commands */
