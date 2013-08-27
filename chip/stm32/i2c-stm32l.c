@@ -352,7 +352,29 @@ static void i2c_freq_change(void)
 		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
 	}
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change, HOOK_PRIO_DEFAULT);
+
+static void i2c_pre_freq_change_hook(void)
+{
+	const struct i2c_port_t *p = i2c_ports;
+	int i;
+
+	/* Lock I2C ports so freq change can't interrupt an I2C transaction */
+	for (i = 0; i < I2C_PORTS_USED; i++, p++)
+		i2c_lock(p->port, 1);
+}
+DECLARE_HOOK(HOOK_PRE_FREQ_CHANGE, i2c_pre_freq_change_hook, HOOK_PRIO_DEFAULT);
+static void i2c_freq_change_hook(void)
+{
+	const struct i2c_port_t *p = i2c_ports;
+	int i;
+
+	i2c_freq_change();
+
+	/* Unlock I2C ports we locked in pre-freq change hook */
+	for (i = 0; i < I2C_PORTS_USED; i++, p++)
+		i2c_lock(p->port, 0);
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change_hook, HOOK_PRIO_DEFAULT);
 
 static void i2c_init(void)
 {
