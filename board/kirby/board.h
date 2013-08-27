@@ -9,6 +9,8 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24192
 #define CONFIG_CHIPSET_GAIA
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C

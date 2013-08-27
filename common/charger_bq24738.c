@@ -134,25 +134,6 @@ int charger_get_current(int *current)
 	return EC_SUCCESS;
 }
 
-int charger_closest_current(int current)
-{
-	const struct charger_info * const info = charger_get_info();
-
-	/*
-	 * If the requested current is non-zero but below our minimum,
-	 * return the minimum.  See crosbug.com/p/8662.
-	 */
-	if (current > 0 && current < info->current_min)
-		return info->current_min;
-
-	/* Clip to max */
-	if (current > info->current_max)
-		return info->current_max;
-
-	/* Otherwise round down to nearest current step */
-	return current - (current % info->current_step);
-}
-
 int charger_set_current(int current)
 {
 	current = charger_closest_current(current);

@@ -129,12 +129,6 @@ int charger_set_input_current(int input_current)
 }
 
 
-int charger_closest_current(int current)
-{
-	return current;
-}
-
-
 int charger_post_init(void)
 {
 	mock_current = CONFIG_CHARGER_INPUT_CURRENT;
