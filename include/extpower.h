@@ -10,9 +10,9 @@
 
 #include "common.h"
 
-#ifdef CONFIG_EXTPOWER_USB
-/* USB-power-specific methods */
-#include "extpower_usb.h"
+#ifdef CONFIG_EXTPOWER_SPRING
+/* Spring-USB-power-specific methods */
+#include "extpower_spring.h"
 #endif
 
 /**

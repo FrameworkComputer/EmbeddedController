@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* External power via USB for Chrome EC */
+/* External power via USB on Spring for Chrome EC */
 
-#ifndef __CROS_EC_EXTPOWER_USB_H
-#define __CROS_EC_EXTPOWER_USB_H
+#ifndef __CROS_EC_EXTPOWER_SPRING_H
+#define __CROS_EC_EXTPOWER_SPRING_H
 
 #include "common.h"
 
@@ -36,4 +36,4 @@ void extpower_charge_update(int force_update);
  */
 int extpower_charge_needs_update(void);
 
-#endif  /* __CROS_EC_EXTPOWER_USB_H */
+#endif  /* __CROS_EC_EXTPOWER_SPRING_H */

@@ -286,7 +286,7 @@ static int calc_next_state(int state)
 			return ST_IDLE0;
 		}
 
-#ifdef CONFIG_EXTPOWER_USB
+#ifdef CONFIG_EXTPOWER_SPRING
 		/* Re-init on charger timeout. */
 		if (pmu_is_charge_timeout()) {
 			CPUTS("[pmu] charging: timeout\n");
@@ -404,7 +404,7 @@ void charger_task(void)
 	enable_charging(0);
 	disable_sleep(SLEEP_MASK_CHARGING);
 
-#ifdef CONFIG_EXTPOWER_USB
+#ifdef CONFIG_EXTPOWER_SPRING
 	extpower_charge_init();
 #endif
 
@@ -412,7 +412,7 @@ void charger_task(void)
 		last_waken = get_time();
 		pmu_clear_irq();
 
-#ifdef CONFIG_EXTPOWER_USB
+#ifdef CONFIG_EXTPOWER_SPRING
 		extpower_charge_update(0);
 #endif
 
@@ -498,7 +498,7 @@ void charger_task(void)
 			}
 		}
 
-#ifdef CONFIG_EXTPOWER_USB
+#ifdef CONFIG_EXTPOWER_SPRING
 		has_pending_event |= extpower_charge_needs_update();
 #endif
 

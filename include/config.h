@@ -273,14 +273,8 @@
 /* Compile support for detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
 
-/*
- * Compile support for providing power to the device via USB.
- *
- * Note that this is NOT the same as providing power FROM the device to USB
- * peripherals such as mice, phones, memory sticks, etc.  That's controlled
- * via the CONFIG_USB_PORT options below.
- */
-#undef CONFIG_EXTPOWER_USB
+/* Compile support for providing power to the device via USB on Spring. */
+#undef CONFIG_EXTPOWER_SPRING
 
 /*****************************************************************************/
 /* Compile support for PWM control of cooling fans */

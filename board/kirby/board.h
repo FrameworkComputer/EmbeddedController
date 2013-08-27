@@ -10,7 +10,6 @@
 
 /* Optional features */
 #define CONFIG_CHIPSET_GAIA
-/* #define CONFIG_EXTPOWER_USB */
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_I2C
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
