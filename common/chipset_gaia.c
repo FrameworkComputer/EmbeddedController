@@ -236,8 +236,10 @@ static int check_for_power_off_event(void)
 	return 0;
 }
 
-void gaia_suspend_event(enum gpio_signal signal)
+void gaia_suspend_deferred(void)
 {
+	int new_ap_suspended;
+
 	if (!ap_on) /* power on/off : not a real suspend / resume */
 		return;
 
@@ -245,7 +247,13 @@ void gaia_suspend_event(enum gpio_signal signal)
 	 * Note: For Snow, suspend state can only be reliably
 	 * determined when the AP is on (crosbug.com/p/13200).
 	 */
-	ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
+	new_ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
+
+	/* We never want to call two suspend or two resumes in a row */
+	if (ap_suspended == new_ap_suspended)
+		return;
+
+	ap_suspended = new_ap_suspended;
 
 	if (ap_suspended) {
 		if (lid_is_open())
@@ -258,6 +266,13 @@ void gaia_suspend_event(enum gpio_signal signal)
 		powerled_set_state(POWERLED_STATE_ON);
 		hook_notify(HOOK_CHIPSET_RESUME);
 	}
+
+}
+DECLARE_DEFERRED(gaia_suspend_deferred);
+
+void gaia_suspend_event(enum gpio_signal signal)
+{
+	hook_call_deferred(gaia_suspend_deferred, 0);
 }
 
 void gaia_power_event(enum gpio_signal signal)
