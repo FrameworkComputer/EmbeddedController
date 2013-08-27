@@ -229,6 +229,7 @@ static int command_battery(int argc, char **argv)
 	int repeat = 1;
 	int rv = 0;
 	int loop;
+	int sleep_ms = 0;
 	char *e;
 
 	if (argc > 1) {
@@ -239,8 +240,23 @@ static int command_battery(int argc, char **argv)
 		}
 	}
 
-	for (loop = 0; loop < repeat; loop++)
+	if (argc > 2) {
+		sleep_ms = strtoi(argv[2], &e, 0);
+		if (*e) {
+			ccputs("Invalid sleep ms\n");
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	for (loop = 0; loop < repeat; loop++) {
 		rv = print_battery_info();
+
+		if (sleep_ms)
+			msleep(sleep_ms);
+
+		if (rv)
+			break;
+	}
 
 	if (rv)
 		ccprintf("Failed - error %d\n", rv);
@@ -248,7 +264,7 @@ static int command_battery(int argc, char **argv)
 	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery,
-			"<repeat_count>",
+			"<repeat_count> <sleep_ms>",
 			"Print battery info",
 			NULL);
 
