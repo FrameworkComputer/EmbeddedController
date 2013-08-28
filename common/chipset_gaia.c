@@ -364,7 +364,7 @@ void chipset_reset(int is_cold)
 	 * contents. This is useful for looking at kernel log message contents
 	 * from previous boot in cases where the AP/OS is hard hung.
 	 */
-#ifndef BOARD_kirby
+#ifdef CONFIG_CHIPSET_HAS_PP5000
 	gpio_set_level(GPIO_EN_PP5000, 0);
 #endif
 	gpio_set_level(GPIO_EN_PP3300, 0);
@@ -377,7 +377,7 @@ void chipset_force_shutdown(void)
 {
 	/* Turn off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
-#ifndef BOARD_kirby
+#ifdef CONFIG_CHIPSET_HAS_PP1350
 	/*
 	 * Turn off PP1350 unless we're immediately waking back up.  This
 	 * works with the hack in chipset_reset() to preserve the contents of
@@ -387,7 +387,7 @@ void chipset_force_shutdown(void)
 		gpio_set_level(GPIO_EN_PP1350, 0);
 #endif
 	set_pmic_pwrok(0);
-#ifndef BOARD_kirby
+#ifdef CONFIG_CHIPSET_HAS_PP5000
 	gpio_set_level(GPIO_EN_PP5000, 0);
 #endif
 
@@ -456,7 +456,7 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
-#ifndef BOARD_kirby
+#ifdef CONFIG_CHIPSET_HAS_PP5000
 	/* Enable 5v power rail */
 	gpio_set_level(GPIO_EN_PP5000, 1);
 	/* Wait for it to stabilize */
@@ -571,7 +571,7 @@ static void power_off(void)
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
-#ifndef BOARD_kirby
+#ifdef CONFIG_PMU_TPS65090
 	pmu_shutdown();
 #endif
 	CPRINTF("[%T power shutdown complete]\n");

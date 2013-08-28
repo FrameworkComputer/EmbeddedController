@@ -157,6 +157,10 @@
  */
 #undef CONFIG_CHIPSET_X86
 
+/* Compile support for power rail control */
+#define CONFIG_CHIPSET_HAS_PP1350
+#define CONFIG_CHIPSET_HAS_PP5000
+
 /*****************************************************************************/
 /*
  * Optional console commands
