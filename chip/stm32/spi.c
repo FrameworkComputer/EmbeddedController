@@ -495,7 +495,7 @@ static void spi_chipset_shutdown(void)
 	state = SPI_STATE_DISABLED;
 
 	/* Disable pullup and interrupts on NSS */
-	gpio_set_flags(GPIO_SPI1_NSS, 0);
+	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INPUT);
 
 	/* Set SPI pins to inputs so we don't leak power when AP is off */
 	gpio_config_module(MODULE_SPI, 0);

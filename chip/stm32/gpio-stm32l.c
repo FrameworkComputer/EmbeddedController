@@ -63,10 +63,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	}
 
 	/* Set up interrupts if necessary */
-	ASSERT(!(flags & GPIO_INT_LEVEL));
-	if (flags & (GPIO_INT_RISING | GPIO_INT_BOTH))
+	ASSERT(!(flags & (GPIO_INT_F_LOW | GPIO_INT_F_HIGH)));
+	if (flags & (GPIO_INT_F_RISING | GPIO_INT_F_BOTH))
 		STM32_EXTI_RTSR |= mask;
-	if (flags & (GPIO_INT_FALLING | GPIO_INT_BOTH))
+	if (flags & (GPIO_INT_F_FALLING | GPIO_INT_F_BOTH))
 		STM32_EXTI_FTSR |= mask;
 	/* Interrupt is enabled by gpio_enable_interrupt() */
 }

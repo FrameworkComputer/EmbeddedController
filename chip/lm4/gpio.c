@@ -120,17 +120,17 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	}
 
 	/* Set up interrupt type */
-	if (flags & GPIO_INT_LEVEL)
+	if (flags & (GPIO_INT_F_LOW | GPIO_INT_F_HIGH))
 		LM4_GPIO_IS(port) |= mask;
 	else
 		LM4_GPIO_IS(port) &= ~mask;
 
-	if (flags & (GPIO_INT_RISING | GPIO_INT_HIGH))
+	if (flags & (GPIO_INT_F_RISING | GPIO_INT_F_HIGH))
 		LM4_GPIO_IEV(port) |= mask;
 	else
 		LM4_GPIO_IEV(port) &= ~mask;
 
-	if (flags & GPIO_INT_BOTH)
+	if (flags & GPIO_INT_F_BOTH)
 		LM4_GPIO_IBE(port) |= mask;
 	else
 		LM4_GPIO_IBE(port) &= ~mask;

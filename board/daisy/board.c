@@ -61,7 +61,7 @@ const struct gpio_info gpio_list[] = {
 	 keyboard_raw_gpio_interrupt},
 	/* Other inputs */
 	{"AC_PWRBTN_L", GPIO_A, (1<<0), GPIO_INT_BOTH, NULL},
-	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_PULL_UP, NULL},
+	{"SPI1_NSS",    GPIO_A, (1<<4), GPIO_INPUT | GPIO_PULL_UP, NULL},
 	/*
 	 * I2C pins should be configured as inputs until I2C module is
 	 * initialized. This will avoid driving the lines unintentionally.
