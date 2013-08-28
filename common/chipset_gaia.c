@@ -309,6 +309,21 @@ static int gaia_power_init(void)
 		auto_power_on = 1;
 	}
 
+#ifdef BOARD_pit
+       /*
+        * Force the AP into reset unless we're doing a sysjump.  Otherwise a
+        * suspended AP may still be in a strange state from the last reboot,
+        * and will hold XPSHOLD for a long time if it's in a low power state.
+        * See crosbug.com/p/22233.
+        */
+       if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
+               CPRINTF("[%T not sysjump; forcing AP reset]\n");
+               gpio_set_level(GPIO_AP_RESET_L, 0);
+               udelay(1000);
+               gpio_set_level(GPIO_AP_RESET_L, 1);
+       }
+#endif
+
 	return EC_SUCCESS;
 }
 
@@ -374,6 +389,16 @@ void chipset_force_shutdown(void)
 	set_pmic_pwrok(0);
 #ifndef BOARD_kirby
 	gpio_set_level(GPIO_EN_PP5000, 0);
+#endif
+
+#ifdef BOARD_pit
+       /*
+        * Force the AP into reset.  Otherwise it will hold XPSHOLD for a long
+        * time if it's in a low power state.  See crosbug.com/p/22233.
+        */
+       gpio_set_level(GPIO_AP_RESET_L, 0);
+       udelay(1000);
+       gpio_set_level(GPIO_AP_RESET_L, 1);
 #endif
 }
 
