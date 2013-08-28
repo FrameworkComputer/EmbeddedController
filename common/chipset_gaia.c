@@ -57,6 +57,9 @@
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  (8 * SECOND)
 
+/* Time necessary for pulling down XPSHOLD to shutdown PMIC power */
+#define DELAY_XPSHOLD_PULL (2 * MSEC)
+
 /*
  * If the power key is pressed to turn on, then held for this long, we
  * power off.
@@ -375,6 +378,12 @@ void chipset_reset(int is_cold)
 
 void chipset_force_shutdown(void)
 {
+#ifdef BOARD_kirby
+	gpio_set_flags(GPIO_SOC1V8_XPSHOLD, GPIO_ODR_LOW);
+	udelay(DELAY_XPSHOLD_PULL);
+	gpio_set_flags(GPIO_SOC1V8_XPSHOLD, GPIO_INT_RISING | GPIO_INPUT);
+#endif
+
 	/* Turn off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
 #ifdef CONFIG_CHIPSET_HAS_PP1350
