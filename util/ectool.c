@@ -1260,6 +1260,7 @@ static const struct {
 	LB_SIZES(demo),
 	LB_SIZES(get_params),
 	LB_SIZES(set_params),
+	LB_SIZES(version),
 };
 #undef LB_SIZES
 
@@ -1529,6 +1530,15 @@ static int cmd_lightbar(int argc, char **argv)
 		r = lb_do_cmd(LIGHTBAR_CMD_GET_PARAMS, &param, &resp);
 		if (!r)
 			lb_show_params(&resp.get_params);
+		return r;
+	}
+
+	if (!strcasecmp(argv[1], "version")) {
+		r = lb_do_cmd(LIGHTBAR_CMD_VERSION, &param, &resp);
+		if (!r) {
+			printf("num:   %d\n", resp.version.num);
+			printf("flags: 0x%x\n", resp.version.flags);
+		}
 		return r;
 	}
 

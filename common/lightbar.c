@@ -21,6 +21,13 @@
 #include "timer.h"
 #include "util.h"
 
+
+/* The Link lightbar had no specific version. Any new ones should, especially
+ * if they are different in any way. If anything changes, update these.
+ */
+#define LIGHTBAR_IMPLEMENTATION_VERSION 1
+#define LIGHTBAR_IMPLEMENTATION_FLAGS   0x00000000
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
 #define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
@@ -1143,6 +1150,12 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 	case LIGHTBAR_CMD_SET_PARAMS:
 		CPRINTF("[%T LB_set_params]\n");
 		memcpy(&st.p, &in->set_params, sizeof(st.p));
+		break;
+	case LIGHTBAR_CMD_VERSION:
+		CPRINTF("[%T LB_version]\n");
+		out->version.num = LIGHTBAR_IMPLEMENTATION_VERSION;
+		out->version.flags = LIGHTBAR_IMPLEMENTATION_FLAGS;
+		args->response_size = sizeof(out->version);
 		break;
 	default:
 		CPRINTF("[%T LB bad cmd 0x%x]\n", in->cmd);

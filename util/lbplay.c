@@ -34,7 +34,8 @@ static const struct {
 	LB_SIZES(get_seq),
 	LB_SIZES(demo),
 	LB_SIZES(get_params),
-	LB_SIZES(set_params)
+	LB_SIZES(set_params),
+	LB_SIZES(version)
 };
 #undef LB_SIZES
 

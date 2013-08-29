@@ -926,7 +926,7 @@ struct ec_params_lightbar {
 	union {
 		struct {
 			/* no args */
-		} dump, off, on, init, get_seq, get_params;
+		} dump, off, on, init, get_seq, get_params, version;
 
 		struct num {
 			uint8_t num;
@@ -960,6 +960,11 @@ struct ec_response_lightbar {
 
 		struct lightbar_params get_params;
 
+		struct version {
+			uint32_t num;
+			uint32_t flags;
+		} version;
+
 		struct {
 			/* no return params */
 		} off, on, init, brightness, seq, reg, rgb, demo, set_params;
@@ -980,6 +985,7 @@ enum lightbar_command {
 	LIGHTBAR_CMD_DEMO = 9,
 	LIGHTBAR_CMD_GET_PARAMS = 10,
 	LIGHTBAR_CMD_SET_PARAMS = 11,
+	LIGHTBAR_CMD_VERSION = 12,
 	LIGHTBAR_NUM_CMDS
 };
 
