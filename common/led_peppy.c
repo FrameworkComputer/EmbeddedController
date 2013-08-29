@@ -109,22 +109,42 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	brightness_range[EC_LED_COLOR_YELLOW] = 1;
 }
 
-static void peppy_led_set_power(int ticks)
+static void peppy_led_set_power(void)
 {
+	static int power_ticks;
+	static int previous_state_suspend;
+
+	power_ticks++;
+
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		/* Reset ticks if entering suspend so LED turns amber
+		 * as soon as possible. */
+		if (!previous_state_suspend)
+			power_ticks = 0;
+
+		/* Blink once every four seconds. */
+		peppy_led_set_color_power(
+			(power_ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
+			LED_AMBER : LED_OFF);
+
+		previous_state_suspend = 1;
+		return;
+	}
+
+	previous_state_suspend = 0;
+
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		peppy_led_set_color_power(LED_OFF);
 	else if (chipset_in_state(CHIPSET_STATE_ON))
 		peppy_led_set_color_power(LED_BLUE);
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-		/* Blink once every four seconds. */
-		peppy_led_set_color_power(
-			(ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
-			LED_AMBER : LED_OFF);
 }
 
-static void peppy_led_set_battery(int ticks)
+static void peppy_led_set_battery(void)
 {
+	static int battery_ticks;
 	uint32_t chflags = charge_get_flags();
+
+	battery_ticks++;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
@@ -138,13 +158,13 @@ static void peppy_led_set_battery(int ticks)
 		break;
 	case PWR_STATE_ERROR:
 		peppy_led_set_color_battery(
-			(ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
+			(battery_ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
 			LED_AMBER : LED_OFF);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
 			peppy_led_set_color_battery(
-				(ticks & 0x4) ? LED_BLUE : LED_OFF);
+				(battery_ticks & 0x4) ? LED_BLUE : LED_OFF);
 		else
 			peppy_led_set_color_battery(LED_BLUE);
 		break;
@@ -157,14 +177,10 @@ static void peppy_led_set_battery(int ticks)
 /* Called by hook task every 250mSec */
 static void led_tick(void)
 {
-	static int ticks;
-
-	ticks++;
-
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		peppy_led_set_power(ticks);
+		peppy_led_set_power();
 
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		peppy_led_set_battery(ticks);
+		peppy_led_set_battery();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
