@@ -11,6 +11,8 @@
 /* Optional features */
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24192
+#define CONFIG_ADC
+#define CONFIG_ADC_CLOCK
 #define CONFIG_CHIPSET_GAIA
 #undef CONFIG_CHIPSET_HAS_PP1350
 #undef CONFIG_CHIPSET_HAS_PP5000
@@ -69,6 +71,15 @@ enum pwm_channel {
 
 	/* Number of PWM channels */
 	PWM_CH_COUNT
+};
+
+/* ADC signals */
+enum adc_channel {
+	ADC_CH_USB_VBUS_SNS = 0,
+	ADC_CH_USB_DP_SNS,
+	ADC_CH_USB_DN_SNS,
+	/* Number of ADC channels */
+	ADC_CH_COUNT
 };
 
 /* GPIO signal list */

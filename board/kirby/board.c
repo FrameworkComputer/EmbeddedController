@@ -4,6 +4,7 @@
  */
 /* Pit board-specific configuration */
 
+#include "adc.h"
 #include "battery_pack.h"
 #include "common.h"
 #include "extpower.h"
@@ -16,6 +17,7 @@
 #include "pwm_data.h"
 #include "registers.h"
 #include "spi.h"
+#include "stm32_adc.h"
 #include "task.h"
 #include "util.h"
 
@@ -124,6 +126,24 @@ const struct pwm_t pwm_channels[] = {
 			  GPIO_CHG_LED_R},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/*
+	 * VBUS voltage sense pin.
+	 * Sense pin 1.8V is converted to 4096. Accounting for the 3x
+	 * voltage divider, the conversion factor is 5400mV/4096.
+	 */
+	[ADC_CH_USB_VBUS_SNS] = {"USB_VBUS_SNS", 5400, 4096, 0, STM32_AIN(12)},
+	/*
+	 * Micro USB D+ sense pin. Voltage divider = 2/3.
+	 * Converted to mV (2700mV/4096).
+	 */
+	[ADC_CH_USB_DP_SNS] = {"USB_DP_SNS", 2700, 4096, 0, STM32_AIN(10)},
+	/* Micro USB D- sense pin. Same scale as for D+. */
+	[ADC_CH_USB_DN_SNS] = {"USB_DN_SNS", 2700, 4096, 0, STM32_AIN(11)},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
