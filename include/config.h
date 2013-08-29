@@ -40,6 +40,12 @@
 #undef CONFIG_ADC
 
 /*
+ * ADC module has certain clock requirement. If this is defined, the ADC module
+ * should call clock_enable_module() to configure clock for ADC.
+ */
+#undef CONFIG_ADC_CLOCK
+
+/*
  * Compile support for passing backlight-enable signal from x86 chipset through
  * EC.  This allows the EC to gate the backlight-enable signal with the lid
  * switch.

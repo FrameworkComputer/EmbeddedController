@@ -32,6 +32,7 @@ enum module_id {
 	MODULE_POWER_LED,
 	MODULE_SPI,
 	MODULE_UART,
+	MODULE_CHIPSET,
 };
 
 /* By default, enable all console messages except keyboard */

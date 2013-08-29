@@ -21,6 +21,22 @@ void clock_init(void);
 int clock_get_freq(void);
 
 /**
+ * Enable or disable clock for a module.
+ *
+ * Note that if the module requires a higher system clock speed than the
+ * current system clock speed, the entire system clock will be increased
+ * to allow the module to operate.
+ *
+ * When a module is disabled, the system clock will be reduced to the highest
+ * clock required by the remaining enabled modules.
+ *
+ * @param module        The module for which we need to enable/disable its
+ *                      clock.
+ * @param enable	Enable clock if non-zero; disable if zero.
+ */
+void clock_enable_module(enum module_id module, int enable);
+
+/**
  * Enable or disable the PLL.
  *
  * @param enable	Enable PLL if non-zero; disable if zero.

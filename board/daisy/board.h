@@ -39,6 +39,7 @@ enum module_id {
 	MODULE_I2C,
 	MODULE_POWER_LED,
 	MODULE_UART,
+	MODULE_CHIPSET,
 };
 
 /* By default, enable all console messages except keyboard */

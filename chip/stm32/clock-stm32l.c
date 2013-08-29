@@ -5,6 +5,7 @@
 
 /* Clocks and power management settings */
 
+#include "chipset.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -146,6 +147,22 @@ static void clock_set_osc(enum clock_osc osc)
 	}
 }
 
+void clock_enable_module(enum module_id module, int enable)
+{
+	static uint32_t clock_mask;
+	int new_mask;
+
+	if (enable)
+		new_mask = clock_mask | (1 << module);
+	else
+		new_mask = clock_mask & ~(1 << module);
+
+	/* Only change clock if needed */
+	if ((!!new_mask) != (!!clock_mask))
+		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI);
+	clock_mask = new_mask;
+}
+
 void clock_init(void)
 {
 	/*
@@ -161,15 +178,15 @@ void clock_init(void)
 static void clock_chipset_startup(void)
 {
 	/* Return to full speed */
-	clock_set_osc(OSC_HSI);
+	clock_enable_module(MODULE_CHIPSET, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, clock_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, clock_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void clock_chipset_shutdown(void)
 {
-	/* Drop to lower clock speed */
-	clock_set_osc(OSC_MSI);
+	/* Drop to lower clock speed if no other module requires full speed */
+	clock_enable_module(MODULE_CHIPSET, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
