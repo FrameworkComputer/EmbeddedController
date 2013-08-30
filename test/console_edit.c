@@ -81,9 +81,11 @@ static int compare_multiline_string(const char *s1, const char *s2)
 			++s2;
 		if (*s1 != *s2)
 			return 1;
+		if (*s1 == 0 && *s2 == 0)
+			break;
 		++s1;
 		++s2;
-	} while (*s1 || *s2);
+	} while (1);
 
 	return 0;
 }
@@ -245,6 +247,32 @@ static int test_history_list(void)
 	return EC_SUCCESS;
 }
 
+static int test_output_channel(void)
+{
+	UART_INJECT("chan save\n");
+	msleep(30);
+	UART_INJECT("chan 0\n");
+	msleep(30);
+	test_capture_console(1);
+	cprintf(CC_CHARGER, "shouldn't see this\n");
+	cputs(CC_CHIPSET, "shouldn't see this either\n");
+	cflush();
+	test_capture_console(0);
+	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
+					     "") == 0);
+	UART_INJECT("chan restore\n");
+	msleep(30);
+	test_capture_console(1);
+	cprintf(CC_CHARGER, "see me\n");
+	cputs(CC_CHIPSET, "me as well\n");
+	cflush();
+	test_capture_console(0);
+	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
+					     "see me\nme as well\n") == 0);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -261,6 +289,7 @@ void run_test(void)
 	RUN_TEST(test_history_edit);
 	RUN_TEST(test_history_stash);
 	RUN_TEST(test_history_list);
+	RUN_TEST(test_output_channel);
 
 	test_print_result();
 }
