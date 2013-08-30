@@ -51,6 +51,11 @@
 #define DELAY_5V_SETUP		MSEC
 #endif
 
+/* Delay between PMIC_PWRON and enabling 3.3V */
+#ifdef BOARD_kirby
+#define DELAY_PRE_3V_ENABLE     16620
+#endif
+
 /* Delay between 1.35v and 3.3v rails startup */
 #define DELAY_RAIL_STAGGERING 100  /* 100us */
 
@@ -491,7 +496,13 @@ static int power_on(void)
 		set_pmic_pwrok(1);
 	}
 
-#ifndef BOARD_kirby
+#ifdef BOARD_kirby
+	/*
+	 * There is no input signal for PMIC ready for 3.3V power. We can only
+	 * for a pre-defined amount of time.
+	 */
+	udelay(DELAY_PRE_3V_ENABLE);
+#else
 	/* wait for all PMIC regulators to be ready */
 	wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
