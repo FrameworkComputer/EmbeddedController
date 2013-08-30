@@ -9,6 +9,9 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "ec_commands.h"
+#include "hooks.h"
+#include "host_command.h"
 #include "smart_battery.h"
 #include "task.h"
 #include "test_util.h"
@@ -19,6 +22,8 @@
 static int mock_ac_present = 1;
 static int mock_chipset_state = CHIPSET_STATE_ON;
 static int is_shutdown;
+static int is_force_discharge;
+static int is_hibernated;
 
 /* Mock GPIOs */
 int gpio_get_level(enum gpio_signal signal)
@@ -36,6 +41,17 @@ void chipset_force_shutdown(void)
 int chipset_in_state(int state_mask)
 {
 	return state_mask & mock_chipset_state;
+}
+
+int board_discharge_on_ac(int enabled)
+{
+	is_force_discharge = enabled;
+	return EC_SUCCESS;
+}
+
+void system_hibernate(int sec, int usec)
+{
+	is_hibernated = 1;
 }
 
 /* Setup init condition */
@@ -68,6 +84,14 @@ static int wait_charging_state(void)
 	return state;
 }
 
+static int charge_control(enum ec_charge_control_mode mode)
+{
+	struct ec_params_charge_control params;
+	params.mode = mode;
+	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 1, &params,
+				      sizeof(params), NULL, 0);
+}
+
 static int test_charge_state(void)
 {
 	enum power_state state;
@@ -98,6 +122,104 @@ static int test_charge_state(void)
 	state = wait_charging_state();
 	TEST_ASSERT(is_shutdown);
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
+
+	/* Force idle */
+	ccprintf("[CHARGING TEST] AC on, force idle\n");
+	mock_ac_present = 1;
+	sb_write(SB_CURRENT, 1000);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	charge_control(CHARGE_CONTROL_IDLE);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_IDLE);
+	charge_control(CHARGE_CONTROL_NORMAL);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_CHARGE);
+
+	/* Force discharge */
+	ccprintf("[CHARGING TEST] AC on, force discharge\n");
+	mock_ac_present = 1;
+	sb_write(SB_CURRENT, 1000);
+	charge_control(CHARGE_CONTROL_DISCHARGE);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_IDLE);
+	TEST_ASSERT(is_force_discharge);
+	charge_control(CHARGE_CONTROL_NORMAL);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_CHARGE);
+	TEST_ASSERT(!is_force_discharge);
+
+	return EC_SUCCESS;
+}
+
+static int test_low_battery(void)
+{
+	ccprintf("[CHARGING TEST] Low battery with AC\n");
+	mock_ac_present = 1;
+	is_hibernated = 0;
+	sb_write(SB_CURRENT, 1000);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
+	wait_charging_state();
+	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	TEST_ASSERT(!is_hibernated);
+
+	ccprintf("[CHARGING TEST] Low battery shutdown S0->S5\n");
+	mock_chipset_state = CHIPSET_STATE_ON;
+	hook_notify(HOOK_CHIPSET_PRE_INIT);
+	hook_notify(HOOK_CHIPSET_STARTUP);
+	mock_ac_present = 0;
+	is_hibernated = 0;
+	sb_write(SB_CURRENT, -1000);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
+	wait_charging_state();
+	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	TEST_ASSERT(is_hibernated);
+
+	ccprintf("[CHARGING TEST] Low battery shutdown S5\n");
+	is_hibernated = 0;
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 10);
+	wait_charging_state();
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
+	wait_charging_state();
+	TEST_ASSERT(is_hibernated);
+
+	ccprintf("[CHARGING TEST] Low battery AP shutdown\n");
+	is_shutdown = 0;
+	mock_chipset_state = CHIPSET_STATE_ON;
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 10);
+	mock_ac_present = 1;
+	sb_write(SB_CURRENT, 1000);
+	wait_charging_state();
+	mock_ac_present = 0;
+	sb_write(SB_CURRENT, -1000);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
+	wait_charging_state();
+	usleep(32 * SECOND);
+	wait_charging_state();
+	TEST_ASSERT(is_shutdown);
+
+	return EC_SUCCESS;
+}
+
+static int test_batt_fake(void)
+{
+	ccprintf("[CHARGING TEST] Fake battery command\n");
+	mock_chipset_state = CHIPSET_STATE_ON;
+	hook_notify(HOOK_CHIPSET_PRE_INIT);
+	hook_notify(HOOK_CHIPSET_STARTUP);
+	mock_ac_present = 0;
+	is_hibernated = 0;
+	sb_write(SB_CURRENT, -1000);
+	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 30);
+	wait_charging_state();
+	UART_INJECT("battfake 2\n");
+	msleep(50);
+	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	TEST_ASSERT(is_hibernated);
 
 	return EC_SUCCESS;
 }
@@ -107,6 +229,8 @@ void run_test(void)
 	test_setup();
 
 	RUN_TEST(test_charge_state);
+	RUN_TEST(test_low_battery);
+	RUN_TEST(test_batt_fake);
 
 	test_print_result();
 }

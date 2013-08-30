@@ -47,6 +47,7 @@ pingpong-y=pingpong.o
 power_button-y=power_button.o
 powerdemo-y=powerdemo.o
 queue-y=queue.o
+sbs_charging-scale=20
 sbs_charging-y=sbs_charging.o
 stress-y=stress.o
 system-y=system.o

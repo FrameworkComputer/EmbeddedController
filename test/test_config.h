@@ -17,6 +17,8 @@
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
+int board_discharge_on_ac(int enabled);
 #endif
 
 #ifdef TEST_adapter
