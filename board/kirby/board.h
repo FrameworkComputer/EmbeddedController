@@ -93,7 +93,7 @@ enum gpio_signal {
 	GPIO_LID_OPEN,
 	GPIO_SUSPEND_L,
 	GPIO_SPI1_NSS,
-	GPIO_AC_PRESENT,
+	GPIO_AC_PRESENT_L,
 	/* Keyboard inputs */
 	GPIO_KB_IN00,
 	GPIO_KB_IN01,

@@ -39,7 +39,7 @@ const struct gpio_info gpio_list[] = {
 	{"SUSPEND_L",     GPIO_E, (1<<3),  GPIO_INT_BOTH, gaia_suspend_event},
 	{"SPI1_NSS",      GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
 	 spi_event},
-	{"AC_PRESENT",    GPIO_A, (1<<1),  GPIO_INT_BOTH,
+	{"AC_PRESENT_L",  GPIO_A, (1<<1),  GPIO_INT_BOTH,
 	 NULL /*extpower_interrupt*/},
 	{"KB_IN00",       GPIO_E, (1<<7),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
