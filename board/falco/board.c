@@ -61,7 +61,7 @@ const struct gpio_info gpio_list[] = {
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PCH_EDP_VDD_EN",       LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
-	 haswell_interrupt},
+	 lcdvcc_interrupt},
 	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_PULL_UP|GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,

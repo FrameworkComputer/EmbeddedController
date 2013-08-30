@@ -199,6 +199,11 @@ enum temp_sensor_id {
 };
 
 /**
+ * LCD VCC enable interrupt.
+ */
+void lcdvcc_interrupt(enum gpio_signal signal);
+
+/**
  * Board-specific g781 power state.
  */
 int board_g781_has_power(void);
