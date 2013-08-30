@@ -30,7 +30,7 @@ static const struct battery_info info = {
 	.voltage_min    =  9000,
 
 	/* Pre-charge values. */
-	.precharge_current  = 256,	/* mA */
+	.precharge_current  = 392,	/* mA */
 };
 
 const struct battery_info *battery_get_info(void)
