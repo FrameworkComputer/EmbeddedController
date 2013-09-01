@@ -25,7 +25,7 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
-static int dummy_temp_get_val(int idx, int *temp_ptr)
+test_mockable_static int dummy_temp_get_val(int idx, int *temp_ptr)
 {
 	*temp_ptr = 0;
 	return EC_SUCCESS;
@@ -33,8 +33,8 @@ static int dummy_temp_get_val(int idx, int *temp_ptr)
 
 const struct temp_sensor_t temp_sensors[] = {
 	{"CPU", TEMP_SENSOR_TYPE_CPU, dummy_temp_get_val, 0, 3},
-	{"Board", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 0, 3},
-	{"Case", TEMP_SENSOR_TYPE_CASE, dummy_temp_get_val, 0, 0},
-	{"Battery", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 0, 0},
+	{"Board", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 1, 3},
+	{"Case", TEMP_SENSOR_TYPE_CASE, dummy_temp_get_val, 2, 0},
+	{"Battery", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 3, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);

@@ -37,10 +37,10 @@ static int cpu_shutdown;
 static int fan_pct;
 static int no_temps_read;
 
-int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
+int dummy_temp_get_val(int idx, int *temp_ptr)
 {
-	if (mock_temp[id] >= 0) {
-		*temp_ptr = mock_temp[id];
+	if (mock_temp[idx] >= 0) {
+		*temp_ptr = mock_temp[idx];
 		return EC_SUCCESS;
 	}
 
