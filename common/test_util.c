@@ -21,9 +21,14 @@ test_mockable void run_test(void) { }
 #ifdef TEST_COVERAGE
 extern void __gcov_flush(void);
 
-void test_end_hook(int sig)
+void emulator_flush(void)
 {
 	__gcov_flush();
+}
+
+void test_end_hook(int sig)
+{
+	emulator_flush();
 	exit(0);
 }
 
@@ -32,6 +37,10 @@ void register_test_end_hook(void)
 	signal(SIGTERM, test_end_hook);
 }
 #else
+void emulator_flush(void)
+{
+}
+
 void register_test_end_hook(void)
 {
 }

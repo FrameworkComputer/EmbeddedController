@@ -10,9 +10,11 @@
 
 #include "host_test.h"
 #include "reboot.h"
+#include "test_util.h"
 
 void emulator_reboot(void)
 {
 	char *argv[] = {strdup(__get_prog_name()), NULL};
+	emulator_flush();
 	execv(__get_prog_name(), argv);
 }

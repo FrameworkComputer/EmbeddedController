@@ -107,4 +107,10 @@ void test_capture_console(int enabled);
 /* Get captured console output */
 const char *test_get_captured_console(void);
 
+/*
+ * Flush emulator status. Must be called before emulator reboots or
+ * exits.
+ */
+void emulator_flush(void);
+
 #endif /* __CROS_EC_TEST_UTIL_H */
