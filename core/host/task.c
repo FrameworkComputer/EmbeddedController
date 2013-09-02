@@ -148,6 +148,23 @@ task_id_t task_get_current(void)
 	return my_task_id;
 }
 
+static task_id_t task_get_next_wake(void)
+{
+	int i;
+	timestamp_t min_time;
+	int which_task = TASK_ID_INVALID;
+
+	min_time.val = ~0ull;
+
+	for (i = TASK_ID_COUNT - 1; i >= 0; --i)
+		if (min_time.val >= tasks[i].wake_time.val) {
+			min_time.val = tasks[i].wake_time.val;
+			which_task = i;
+		}
+
+	return which_task;
+}
+
 void task_scheduler(void)
 {
 	int i;
@@ -161,8 +178,23 @@ void task_scheduler(void)
 				break;
 			--i;
 		}
-		if (i < 0)
-			i = TASK_ID_IDLE;
+		if (i < 0) {
+			/*
+			 * No task has event pending, and thus we are only
+			 * waiting for the next wake-up timer to fire. Let's
+			 * just find out which timer is the next and fast
+			 * forward the system time to its deadline.
+			 *
+			 * Note that once we have interrupt support, we need
+			 * to take into account the fact that an interrupt
+			 * might set an event before the next timer fires.
+			 */
+			i = task_get_next_wake();
+			if (i == TASK_ID_INVALID)
+				i = TASK_ID_IDLE;
+			else
+				force_time(tasks[i].wake_time);
+		}
 
 		tasks[i].wake_time.val = ~0ull;
 		pthread_cond_signal(&tasks[i].resume);
