@@ -9,6 +9,7 @@
 #include "charger_bq24192.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "printf.h"
@@ -55,6 +56,18 @@ static int bq24192_watchdog_reset(void)
 	val |= (1 << 6);
 	return bq24192_write(BQ24192_REG_POWER_ON_CFG, val) ||
 	       bq24192_write(BQ24192_REG_POWER_ON_CFG, val);
+}
+
+int charger_enable_otg_power(int enabled)
+{
+	int val, rv;
+
+	gpio_set_level(GPIO_BCHGR_OTG, enabled);
+	rv = bq24192_read(BQ24192_REG_POWER_ON_CFG, &val);
+	if (rv)
+		return rv;
+	val = (val & ~0x30) | (enabled ? 0x20 : 0x10);
+	return bq24192_write(BQ24192_REG_POWER_ON_CFG, val);
 }
 
 int charger_set_input_current(int input_current)

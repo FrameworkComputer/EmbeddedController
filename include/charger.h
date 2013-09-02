@@ -45,6 +45,12 @@ int charger_get_status(int *status);
 int charger_set_mode(int mode);
 
 /**
+ * For chargers that are able to supply 5V output power for OTG dongle, this
+ * function enables or disables 5V power output.
+ */
+int charger_enable_otg_power(int enabled);
+
+/**
  * Return the closest match the charger can supply to the requested current.
  *
  * @param current	Requested current in mA.
