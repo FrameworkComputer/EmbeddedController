@@ -8,6 +8,7 @@
 #include "console.h"
 #include "flash.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
@@ -35,7 +36,12 @@ int main(int argc, char **argv)
 	system_pre_init();
 	system_common_pre_init();
 
+	test_init();
+
 	timer_init();
+#ifdef HAS_TASK_KEYSCAN
+	keyboard_scan_init();
+#endif
 	hook_init();
 	uart_init();
 

@@ -81,6 +81,12 @@ enum test_state_t {
 /* Hooks gcov_flush() for test coverage report generation */
 void register_test_end_hook(void);
 
+/*
+ * Test initialization. This is called after all _pre_init() calls and before
+ * all _init() calls.
+ */
+void test_init(void);
+
 /* Test entry point */
 void run_test(void);
 

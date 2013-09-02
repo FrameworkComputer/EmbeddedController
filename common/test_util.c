@@ -20,6 +20,9 @@ int __test_error_count;
 /* Weak reference function as an entry point for unit test */
 test_mockable void run_test(void) { }
 
+/* Default dummy test init */
+test_mockable void test_init(void) { }
+
 #ifdef TEST_COVERAGE
 extern void __gcov_flush(void);
 

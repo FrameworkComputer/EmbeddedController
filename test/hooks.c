@@ -61,7 +61,7 @@ static void non_deferred_func(void)
 	deferred_call_count++;
 }
 
-static int test_init(void)
+static int test_init_hook(void)
 {
 	TEST_ASSERT(init_hook_count == 1);
 	return EC_SUCCESS;
@@ -133,7 +133,7 @@ void run_test(void)
 {
 	test_reset();
 
-	RUN_TEST(test_init);
+	RUN_TEST(test_init_hook);
 	RUN_TEST(test_ticks);
 	RUN_TEST(test_priority);
 	RUN_TEST(test_deferred);

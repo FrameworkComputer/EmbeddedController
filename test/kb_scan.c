@@ -13,6 +13,7 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "system.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -340,7 +341,34 @@ static int lid_test(void)
 }
 #endif
 
-void run_test(void)
+static int test_check_boot_esc(void)
+{
+	TEST_CHECK(keyboard_scan_get_boot_key() == BOOT_KEY_ESC);
+}
+
+static int test_check_boot_down(void)
+{
+	TEST_CHECK(keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW);
+}
+
+void test_init(void)
+{
+	uint32_t state = system_get_scratchpad();
+
+	if (state & TEST_STATE_MASK(TEST_STATE_STEP_2)) {
+		/* Power-F3-ESC */
+		system_set_reset_flags(system_get_reset_flags() |
+				       RESET_FLAG_RESET_PIN);
+		mock_key(1, 1, 1);
+	} else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3)) {
+		/* Power-F3-Down */
+		system_set_reset_flags(system_get_reset_flags() |
+				       RESET_FLAG_RESET_PIN);
+		mock_key(6, 11, 1);
+	}
+}
+
+static void run_test_step1(void)
 {
 	lid_open = 1;
 	test_reset();
@@ -355,5 +383,56 @@ void run_test(void)
 	RUN_TEST(lid_test);
 #endif
 
-	test_print_result();
+	if (test_get_error_count())
+		test_reboot_to_next_step(TEST_STATE_FAILED);
+	else
+		test_reboot_to_next_step(TEST_STATE_STEP_2);
+}
+
+static void run_test_step2(void)
+{
+	lid_open = 1;
+	test_reset();
+
+	RUN_TEST(test_check_boot_esc);
+
+	if (test_get_error_count())
+		test_reboot_to_next_step(TEST_STATE_FAILED);
+	else
+		test_reboot_to_next_step(TEST_STATE_STEP_3);
+}
+
+static void run_test_step3(void)
+{
+	lid_open = 1;
+	test_reset();
+
+	RUN_TEST(test_check_boot_down);
+
+	if (test_get_error_count())
+		test_reboot_to_next_step(TEST_STATE_FAILED);
+	else
+		test_reboot_to_next_step(TEST_STATE_PASSED);
+}
+
+void test_run_step(uint32_t state)
+{
+	if (state & TEST_STATE_MASK(TEST_STATE_STEP_1))
+		run_test_step1();
+	else if (state & TEST_STATE_MASK(TEST_STATE_STEP_2))
+		run_test_step2();
+	else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3))
+		run_test_step3();
+}
+
+int test_task(void *data)
+{
+	test_run_multistep();
+	return EC_SUCCESS;
+}
+
+void run_test(void)
+{
+	msleep(30); /* Wait for TASK_ID_TEST to initialize */
+	task_wake(TASK_ID_TEST);
 }
