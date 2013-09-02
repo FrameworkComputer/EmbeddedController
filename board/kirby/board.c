@@ -10,6 +10,7 @@
 #include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
@@ -150,3 +151,17 @@ const struct i2c_port_t i2c_ports[] = {
 	{"host", I2C_PORT_HOST, 100},
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+
+static void board_enable_backlight(void)
+{
+	gpio_set_level(GPIO_BST_LED_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_enable_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_enable_backlight, HOOK_PRIO_DEFAULT);
+
+static void board_disable_backlight(void)
+{
+	gpio_set_level(GPIO_BST_LED_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_disable_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_disable_backlight, HOOK_PRIO_DEFAULT);
