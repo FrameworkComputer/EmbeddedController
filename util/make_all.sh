@@ -14,4 +14,4 @@ for b in $boards; do
 done
 
 # Run unit tests
-make BOARD=host runtests
+make BOARD=host runtests $*
