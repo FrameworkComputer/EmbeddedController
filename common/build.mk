@@ -25,6 +25,7 @@ common-$(CONFIG_CHARGER_BQ24738)+=charger_bq24738.o
 common-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
 common-$(CONFIG_CHIPSET_BAYTRAIL)+=chipset_baytrail.o
 common-$(CONFIG_CHIPSET_GAIA)+=chipset_gaia.o
+common-$(CONFIG_CHIPSET_TEGRA)+=chipset_tegra.o
 common-$(CONFIG_CHIPSET_HASWELL)+=chipset_haswell.o
 common-$(CONFIG_CHIPSET_IVYBRIDGE)+=chipset_ivybridge.o
 common-$(CONFIG_CHIPSET_X86)+=chipset_x86_common.o
