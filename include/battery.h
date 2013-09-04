@@ -54,9 +54,13 @@ int battery_state_of_charge(int *percent);
 int battery_state_of_charge_abs(int *percent);
 
 /*
- * Return non-zero if the battery is reporting capacity in 10mW.
- * Otherwise, in mAh. */
-int battery_is_in_10mw_mode(void);
+ * Set 'val' to non-zero if the battery is reporting capacity in 10mW.
+ * Otherwise, in mAh.
+ */
+int battery_is_in_10mw_mode(int *val);
+
+/* Set battery capacity mode to mAh(=0) or 10mW(=1). */
+int battery_set_10mw_mode(int enabled);
 
 /*
  * Battery remaining capacity
@@ -84,6 +88,9 @@ int battery_desired_current(int *current);
  * unit: mV
  */
 int battery_desired_voltage(int *voltage);
+
+/* Check if battery allows charging */
+int battery_charging_allowed(int *allowed);
 
 /* Read battery status */
 int battery_status(int *status);

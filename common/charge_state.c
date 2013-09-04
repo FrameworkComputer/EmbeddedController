@@ -34,6 +34,10 @@
 /* Timeout after AP battery shutdown warning before we kill the AP */
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
 
+#ifndef BATTERY_AP_OFF_LEVEL
+#define BATTERY_AP_OFF_LEVEL 0
+#endif
+
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
 static int state_machine_force_idle = 0;
@@ -124,6 +128,74 @@ static void low_battery_shutdown(struct power_state_context *ctx)
 	}
 }
 
+int charge_keep_power_off(void)
+{
+	int charge;
+
+	if (BATTERY_AP_OFF_LEVEL == 0)
+		return 0;
+
+	if (battery_remaining_capacity(&charge))
+		return charge_get_state() != PWR_STATE_ERROR;
+
+	return charge <= BATTERY_AP_OFF_LEVEL;
+}
+
+#ifdef CONFIG_CHARGER_EN_GPIO
+#ifdef CONFIG_CHARGER_EN_ACTIVE_LOW
+static void charge_set_charger_en_gpio(int level)
+{
+	gpio_set_level(GPIO_CHARGER_EN_L, !level);
+}
+
+static int charge_get_charger_en_gpio(void)
+{
+	return !gpio_get_level(GPIO_CHARGER_EN_L);
+}
+#else
+static void charge_set_charger_en_gpio(int level)
+{
+	gpio_set_level(GPIO_CHARGER_EN, level);
+}
+
+static int charge_get_charger_en_gpio(void)
+{
+	return gpio_get_level(GPIO_CHARGER_EN);
+}
+#endif
+#endif
+
+/**
+ * Enable or disable charging, and set requested voltage and current. If either
+ * of voltage and current is set to 0, charging is disable.
+ *
+ * @param voltage   Requested voltage in mV. Set -1 to preserve current value.
+ * @param current   Requested current in mA. Set -1 to preserve current value.
+ */
+static int charge_request(int voltage, int current)
+{
+	int rv = EC_SUCCESS;
+
+	if (voltage == -1 && current == -1)
+		return EC_SUCCESS;
+
+#ifdef CONFIG_CHARGER_EN_GPIO
+	if (voltage == 0 || current == 0) {
+		charge_set_charger_en_gpio(0);
+		return EC_SUCCESS;
+	} else {
+		charge_set_charger_en_gpio(1);
+	}
+#endif
+
+	if (voltage != -1)
+		rv |= charger_set_voltage(voltage);
+	if (current != -1)
+		rv |= charger_set_current(current);
+
+	return rv;
+}
+
 /**
  * Common handler for charging states.
  *
@@ -160,15 +232,19 @@ static int state_common(struct power_state_context *ctx)
 	if (curr->ac) {
 		*batt_flags |= EC_BATT_FLAG_AC_PRESENT;
 		if (charger_get_voltage(&curr->charging_voltage)) {
-			charger_set_voltage(0);
-			charger_set_current(0);
+			charge_request(0, 0);
 			curr->error |= F_CHARGER_VOLTAGE;
 		}
 		if (charger_get_current(&curr->charging_current)) {
-			charger_set_voltage(0);
-			charger_set_current(0);
+			charge_request(0, 0);
 			curr->error |= F_CHARGER_CURRENT;
 		}
+#ifdef CONFIG_CHARGER_EN_GPIO
+		if (!charge_get_charger_en_gpio()) {
+			curr->charging_voltage = 0;
+			curr->charging_current = 0;
+		}
+#endif
 	} else {
 		*batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
 		/* AC disconnected should get us out of force idle mode. */
@@ -194,8 +270,8 @@ static int state_common(struct power_state_context *ctx)
 			 * battery pack with minimum current and maximum
 			 * voltage for 30 seconds.
 			 */
-			charger_set_voltage(ctx->battery->voltage_max);
-			charger_set_current(ctx->battery->precharge_current);
+			charge_request(ctx->battery->voltage_max,
+				       ctx->battery->precharge_current);
 			for (d = 0; d < 30; d++) {
 				sleep(1);
 				rv = battery_temperature(&batt->temperature);
@@ -225,11 +301,24 @@ static int state_common(struct power_state_context *ctx)
 	*ctx->memmap_batt_rate = batt->current < 0 ?
 		-batt->current : batt->current;
 
-	if (battery_desired_voltage(&batt->desired_voltage))
-		curr->error |= F_DESIRED_VOLTAGE;
+	if (battery_charging_allowed(&d)) {
+		curr->error |= F_DESIRED_VOLTAGE | F_DESIRED_CURRENT;
+	} else if (d) {
+		rv = battery_desired_voltage(&batt->desired_voltage);
+		if (rv == EC_ERROR_UNIMPLEMENTED)
+			batt->desired_voltage = ctx->charger->voltage_max;
+		else if (rv != EC_SUCCESS)
+			curr->error |= F_DESIRED_VOLTAGE;
 
-	if (battery_desired_current(&batt->desired_current))
-		curr->error |= F_DESIRED_CURRENT;
+		rv = battery_desired_current(&batt->desired_current);
+		if (rv == EC_ERROR_UNIMPLEMENTED)
+			batt->desired_current = ctx->charger->current_max;
+		else if (rv != EC_SUCCESS)
+			curr->error |= F_DESIRED_CURRENT;
+	} else { /* Charging not allowed */
+		batt->desired_voltage = 0;
+		batt->desired_current = 0;
+	}
 
 	if (fake_state_of_charge >= 0)
 		batt->state_of_charge = fake_state_of_charge;
@@ -289,11 +378,11 @@ static int state_common(struct power_state_context *ctx)
 	if (batt->desired_current > user_current_limit)
 		batt->desired_current = user_current_limit;
 
-	if (battery_get_battery_mode(&d)) {
+	if (battery_is_in_10mw_mode(&d)) {
 		curr->error |= F_BATTERY_MODE;
-	} else if (d & MODE_CAPACITY) {
+	} else if (d) {
 		/* Battery capacity mode was set to mW; reset it back to mAh */
-		if (battery_set_battery_mode(d & ~MODE_CAPACITY))
+		if (battery_set_10mw_mode(0))
 			ctx->curr.error |= F_BATTERY_MODE;
 	}
 
@@ -319,8 +408,7 @@ static int state_common(struct power_state_context *ctx)
 static enum power_state state_init(struct power_state_context *ctx)
 {
 	/* Stop charger, unconditionally */
-	charger_set_current(0);
-	charger_set_voltage(0);
+	charge_request(0, 0);
 
 	/* Update static battery info */
 	update_battery_info();
@@ -379,8 +467,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 		CPRINTF("[%T Charge start %dmV %dmA]\n",
 			batt->desired_voltage, want_current);
 
-		if (charger_set_voltage(batt->desired_voltage) ||
-		    charger_set_current(want_current))
+		if (charge_request(batt->desired_voltage, want_current))
 			return PWR_STATE_ERROR;
 
 		update_charger_time(ctx, get_time());
@@ -421,7 +508,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 		return PWR_STATE_REINIT;
 
 	if (batt->state_of_charge >= BATTERY_LEVEL_FULL) {
-		if (charger_set_voltage(0) || charger_set_current(0))
+		if (charge_request(0, 0))
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
 	}
@@ -437,7 +524,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 
 	if (want_voltage != curr->charging_voltage) {
 		CPRINTF("[%T Charge voltage %dmV]\n", want_voltage);
-		if (charger_set_voltage(want_voltage))
+		if (charge_request(want_voltage, -1))
 			return PWR_STATE_ERROR;
 		update_charger_time(ctx, now);
 	}
@@ -465,7 +552,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
 			want_current, batt->desired_voltage);
 	}
 
-	if (charger_set_current(want_current))
+	if (charge_request(-1, want_current))
 		return PWR_STATE_ERROR;
 
 	/* Update charger watchdog timer and debounce timer */
@@ -518,6 +605,8 @@ static enum power_state state_error(struct power_state_context *ctx)
 		logged_error = 0;
 		return PWR_STATE_REINIT;
 	}
+
+	charge_request(0, 0);
 
 	/* Debug output */
 	if (ctx->curr.error != logged_error) {

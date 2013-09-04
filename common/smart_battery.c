@@ -42,11 +42,27 @@ int battery_set_battery_mode(int mode)
 	return sb_write(SB_BATTERY_MODE, mode);
 }
 
-int battery_is_in_10mw_mode(void)
+int battery_is_in_10mw_mode(int *ret)
 {
 	int val;
-	battery_get_battery_mode(&val);
-	return val & MODE_CAPACITY;
+	int rv = battery_get_battery_mode(&val);
+	if (rv)
+		return rv;
+	*ret = val & MODE_CAPACITY;
+	return EC_SUCCESS;
+}
+
+int battery_set_10mw_mode(int enabled)
+{
+	int val, rv;
+	rv = battery_get_battery_mode(&val);
+	if (rv)
+		return rv;
+	if (enabled)
+		val |= MODE_CAPACITY;
+	else
+		val &= ~MODE_CAPACITY;
+	return battery_set_battery_mode(val);
 }
 
 /* Read battery temperature
@@ -122,6 +138,18 @@ int battery_desired_current(int *current)
 int battery_desired_voltage(int *voltage)
 {
 	return sb_read(SB_CHARGING_VOLTAGE, voltage);
+}
+
+/* Check if battery allows charging */
+int battery_charging_allowed(int *allowed)
+{
+	int v, c, rv;
+
+	rv = battery_desired_voltage(&v) | battery_desired_current(&c);
+	if (rv)
+		return rv;
+	*allowed = (v != 0) && (c != 0);
+	return EC_SUCCESS;
 }
 
 /* Read battery status */

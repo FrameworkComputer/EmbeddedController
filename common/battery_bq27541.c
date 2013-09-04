@@ -184,6 +184,17 @@ int battery_design_voltage(int *voltage)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+int battery_charging_allowed(int *allowed)
+{
+	int rv, val;
+
+	rv = bq27541_read(REG_FLAGS, &val);
+	if (rv)
+		return rv;
+	*allowed = (val & 0x100);
+	return EC_SUCCESS;
+}
+
 int battery_desired_current(int *current)
 {
 	return EC_ERROR_UNIMPLEMENTED;
@@ -194,8 +205,15 @@ int battery_get_battery_mode(int *mode)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_is_in_10mw_mode(void)
+int battery_is_in_10mw_mode(int *val)
 {
 	/* Always using mAh unit */
-	return 0;
+	*val = 0;
+	return EC_SUCCESS;
+}
+
+int battery_set_10mw_mode(int enabled)
+{
+	/* Not supported by this battery chip */
+	return EC_ERROR_INVAL;
 }

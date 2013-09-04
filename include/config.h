@@ -152,6 +152,17 @@
  */
 #undef CONFIG_CHARGER_TIMEOUT_HOURS
 
+/*
+ * Board has an GPIO pin to enable or disable charging.
+ *
+ * This GPIO should be named GPIO_CHARGER_EN, if active high. Or
+ * GPIO_CHARGER_EN_L if active low.
+ */
+#undef CONFIG_CHARGER_EN_GPIO
+
+/* Charger enable GPIO is active low */
+#undef CONFIG_CHARGER_EN_ACTIVE_LOW
+
 /*****************************************************************************/
 /* Chipset config */
 
