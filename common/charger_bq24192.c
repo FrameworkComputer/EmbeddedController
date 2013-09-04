@@ -58,6 +58,18 @@ static int bq24192_watchdog_reset(void)
 	       bq24192_write(BQ24192_REG_POWER_ON_CFG, val);
 }
 
+static int bq24192_set_terminate_current(int current)
+{
+	int reg_val, rv;
+	int val = (current - 128) / 128;
+
+	rv = bq24192_read(BQ24192_REG_PRE_CHG_CURRENT, &reg_val);
+	if (rv)
+		return rv;
+	reg_val = (reg_val & ~0xf) | (val & 0xf);
+	return bq24192_write(BQ24192_REG_PRE_CHG_CURRENT, reg_val);
+}
+
 int charger_enable_otg_power(int enabled)
 {
 	int val, rv;
@@ -194,6 +206,13 @@ int charger_set_voltage(int voltage)
 	return bq24192_write(BQ24192_REG_CHG_VOLTAGE, val);
 }
 
+/* Charging power state initialization */
+int charger_post_init(void)
+{
+	/* Input current controlled by extpower module. Do nothing here. */
+	return EC_SUCCESS;
+}
+
 
 /*****************************************************************************/
 /* Hooks */
@@ -218,6 +237,9 @@ static void bq24192_init(void)
 	val &= ~0x30;
 	rv = bq24192_write(BQ24192_REG_CHG_TERM_TMR, val);
 	if (rv)
+		return;
+
+	if (bq24192_set_terminate_current(128))
 		return;
 
 	if (bq24192_watchdog_reset())
