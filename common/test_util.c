@@ -10,6 +10,8 @@
 
 #include "console.h"
 #include "host_command.h"
+#include "system.h"
+#include "task.h"
 #include "test_util.h"
 #include "util.h"
 
@@ -72,6 +74,49 @@ void test_print_result(void)
 int test_get_error_count(void)
 {
 	return __test_error_count;
+}
+
+uint32_t test_get_state(void)
+{
+	return system_get_scratchpad();
+}
+
+test_mockable void test_clean_up(void)
+{
+}
+
+void test_reboot_to_next_step(enum test_state_t step)
+{
+	ccprintf("Rebooting to next test step...\n");
+	cflush();
+	system_set_scratchpad(TEST_STATE_MASK(step));
+	system_reset(SYSTEM_RESET_HARD);
+}
+
+test_mockable void test_run_step(uint32_t state)
+{
+}
+
+void test_run_multistep(void)
+{
+	uint32_t state = test_get_state();
+
+	if (state & TEST_STATE_MASK(TEST_STATE_PASSED)) {
+		test_clean_up();
+		system_set_scratchpad(0);
+		test_pass();
+	} else if (state & TEST_STATE_MASK(TEST_STATE_FAILED)) {
+		test_clean_up();
+		system_set_scratchpad(0);
+		test_fail();
+	}
+
+	if (state & TEST_STATE_STEP_1 || state == 0) {
+		task_wait_event(-1); /* Wait for run_test() */
+		test_run_step(TEST_STATE_MASK(TEST_STATE_STEP_1));
+	} else {
+		test_run_step(state);
+	}
 }
 
 #ifdef HAS_TASK_HOSTCMD

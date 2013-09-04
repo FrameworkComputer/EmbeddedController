@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
+#include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
@@ -29,15 +30,7 @@ static int mock_flash_op_fail = EC_SUCCESS;
 
 const char *testdata = "TestData0000000"; /* 16 bytes */
 
-#define TEST_STATE_CLEAN_UP    (1 << 0)
-#define TEST_STATE_STEP_2      (1 << 1)
-#define TEST_STATE_STEP_3      (1 << 2)
-#define TEST_STATE_BOOT_WP_ON  (1 << 3)
-#define TEST_STATE_PASSED      (1 << 4)
-#define TEST_STATE_FAILED      (1 << 5)
-
-#define CLEAN_UP_FLAG_PASSED TEST_STATE_PASSED
-#define CLEAN_UP_FLAG_FAILED TEST_STATE_FAILED
+#define BOOT_WP_MASK TEST_STATE_MASK(TEST_STATE_STEP_2)
 
 /*****************************************************************************/
 /* Emulator-only mock functions */
@@ -81,7 +74,7 @@ int gpio_get_level(enum gpio_signal signal)
 	const char *name = gpio_list[signal].name;
 
 	if (mock_wp == -1)
-		mock_wp = !!(system_get_scratchpad() & TEST_STATE_BOOT_WP_ON);
+		mock_wp = !!(test_get_state() & BOOT_WP_MASK);
 
 	if (strcasecmp(name, "WP_L") == 0)
 		return !mock_wp;
@@ -422,27 +415,15 @@ static int test_boot_no_write_protect(void)
 	return EC_SUCCESS;
 }
 
-static int clean_up(void)
+int test_clean_up_(void)
 {
-	system_set_scratchpad(0);
 	SET_WP_FLAGS(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 	return EC_SUCCESS;
 }
 
-static void reboot_to_clean_up(uint32_t flags)
+void test_clean_up(void)
 {
-	ccprintf("Rebooting to clear WP...\n");
-	cflush();
-	system_set_scratchpad(TEST_STATE_CLEAN_UP | flags);
-	system_reset(SYSTEM_RESET_HARD);
-}
-
-static void reboot_to_next_step(uint32_t step)
-{
-	ccprintf("Rebooting to next test step...\n");
-	cflush();
-	system_set_scratchpad(step);
-	system_reset(SYSTEM_RESET_HARD);
+	test_clean_up_(); /* Throw away return value */
 }
 
 static void run_test_step1(void)
@@ -459,9 +440,9 @@ static void run_test_step1(void)
 	RUN_TEST(test_write_protect);
 
 	if (test_get_error_count())
-		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
+		test_reboot_to_next_step(TEST_STATE_FAILED);
 	else
-		reboot_to_next_step(TEST_STATE_STEP_2 | TEST_STATE_BOOT_WP_ON);
+		test_reboot_to_next_step(TEST_STATE_STEP_2);
 }
 
 static void run_test_step2(void)
@@ -469,9 +450,9 @@ static void run_test_step2(void)
 	RUN_TEST(test_boot_write_protect);
 
 	if (test_get_error_count())
-		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
+		test_reboot_to_next_step(TEST_STATE_FAILED);
 	else
-		reboot_to_next_step(TEST_STATE_STEP_3);
+		test_reboot_to_next_step(TEST_STATE_STEP_3);
 }
 
 static void run_test_step3(void)
@@ -479,37 +460,29 @@ static void run_test_step3(void)
 	RUN_TEST(test_boot_no_write_protect);
 
 	if (test_get_error_count())
-		reboot_to_clean_up(CLEAN_UP_FLAG_FAILED);
+		test_reboot_to_next_step(TEST_STATE_FAILED);
 	else
-		reboot_to_clean_up(CLEAN_UP_FLAG_PASSED);
+		test_reboot_to_next_step(TEST_STATE_PASSED);
 }
 
-int TaskTest(void *data)
+void test_run_step(uint32_t state)
 {
-	uint32_t state = system_get_scratchpad();
-
-	if (state & TEST_STATE_PASSED)
-		ccprintf("Pass!\n");
-	else if (state & TEST_STATE_FAILED)
-		ccprintf("Fail!\n");
-
-	if (state & TEST_STATE_STEP_2)
-		run_test_step2();
-	else if (state & TEST_STATE_STEP_3)
-		run_test_step3();
-	else if (state & TEST_STATE_CLEAN_UP)
-		clean_up();
-#ifdef EMU_BUILD
-	else
+	if (state & TEST_STATE_MASK(TEST_STATE_STEP_1))
 		run_test_step1();
-#endif
+	else if (state & TEST_STATE_MASK(TEST_STATE_STEP_2))
+		run_test_step2();
+	else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3))
+		run_test_step3();
+}
 
+int task_test(void *data)
+{
+	test_run_multistep();
 	return EC_SUCCESS;
 }
 
-#ifndef EMU_BUILD
 void run_test(void)
 {
-	run_test_step1();
+	msleep(30); /* Wait for TASK_ID_TEST to initialize */
+	task_wake(TASK_ID_TEST);
 }
-#endif

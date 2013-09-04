@@ -62,6 +62,22 @@
 			return EC_ERROR_UNKNOWN; \
 	} while (0)
 
+/* Mutlistep test states */
+enum test_state_t {
+	TEST_STATE_STEP_1 = 0,
+	TEST_STATE_STEP_2,
+	TEST_STATE_STEP_3,
+	TEST_STATE_STEP_4,
+	TEST_STATE_STEP_5,
+	TEST_STATE_STEP_6,
+	TEST_STATE_STEP_7,
+	TEST_STATE_STEP_8,
+	TEST_STATE_STEP_9,
+	TEST_STATE_PASSED,
+	TEST_STATE_FAILED,
+};
+#define TEST_STATE_MASK(x) (1 << (x))
+
 /* Hooks gcov_flush() for test coverage report generation */
 void register_test_end_hook(void);
 
@@ -112,5 +128,35 @@ const char *test_get_captured_console(void);
  * exits.
  */
 void emulator_flush(void);
+
+/*
+ * Entry point of multi-step test.
+ *
+ * Depending on current test state, this function runs the corresponding
+ * test step. This function should be called in a dedicated task on every
+ * reboot. Also, run_test() is responsible for starting the test by kicking
+ * that task.
+ */
+void test_run_multistep(void);
+
+/*
+ * A function that runs the test step specified in 'state'. This function
+ * should be defined by all multi-step tests.
+ *
+ * @param state     TEST_STATE_MASK(x) indicating the step to run.
+ */
+void test_run_step(uint32_t state);
+
+/* Get the current test state */
+uint32_t test_get_state(void);
+
+/*
+ * Multistep test clean up. If a multi-step test has this function defined,
+ * it will be called on test end. (i.e. when test passes or fails.)
+ */
+void test_clean_up(void);
+
+/* Set the next step and reboot */
+void test_reboot_to_next_step(enum test_state_t step);
 
 #endif /* __CROS_EC_TEST_UTIL_H */
