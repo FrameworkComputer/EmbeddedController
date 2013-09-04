@@ -8,7 +8,7 @@
 
 common-y=main.o util.o console_output.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
-common-y+=gpio_common.o version.o printf.o queue.o
+common-y+=gpio_common.o version.o printf.o queue.o getset.o
 
 common-$(BOARD_bolt)+=battery_link.o
 common-$(BOARD_daisy)+=extpower_snow.o

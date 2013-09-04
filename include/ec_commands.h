@@ -635,6 +635,20 @@ struct ec_response_get_protocol_info {
 	uint32_t flags;
 } __packed;
 
+
+/* Get/Set miscellaneous values */
+#define EC_CMD_GET_SET_VALUE	0x0c
+
+/* The upper byte of .flags tells what to do (nothing means "get") */
+#define EC_GSV_SET        0x80000000
+/* The lower three bytes of .flags identifies the parameter */
+#define EC_GSV_PARAM_MASK 0x00ffffff
+/* The same struct is sent in both directions */
+struct ec_cmd_get_set_value {
+	uint32_t flags;
+	uint32_t value;
+} __packed;
+
 /*****************************************************************************/
 /* Flash commands */
 
