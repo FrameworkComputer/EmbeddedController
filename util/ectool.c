@@ -17,6 +17,7 @@
 #include "compile_time_macros.h"
 #include "ec_flash.h"
 #include "ectool.h"
+#include "getset.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
 #include "misc_util.h"
@@ -104,6 +105,8 @@ const char help_str[] =
 	"      Various lightbar control commands\n"
 	"  panicinfo\n"
 	"      Prints saved panic info\n"
+	"  pause_in_s5 [on|off]\n"
+	"      Whether or not the AP should pause in S5 on shutdown\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
 	"  powerinfo\n"
@@ -179,6 +182,20 @@ int is_battery_range(int val)
 	return (val >= 0 && val <= 65535) ? 1 : 0;
 }
 
+int parse_bool(const char *s, int *dest)
+{
+	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
+	    tolower(*s) == 'f' || tolower(*s) == 'n') {
+		*dest = 0;
+		return 1;
+	} else if (!strcasecmp(s, "on") || !strncasecmp(s, "ena", 3) ||
+	    tolower(*s) == 't' || tolower(*s) == 'y') {
+		*dest = 1;
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 void print_help(const char *prog)
 {
@@ -300,6 +317,28 @@ int cmd_test(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_s5(int argc, char *argv[])
+{
+	struct ec_cmd_get_set_value s;
+	int rv;
+
+	s.flags = GSV_PARAM_s5;
+
+	if (argc > 1) {
+		s.flags |= EC_GSV_SET;
+		if (!parse_bool(argv[1], &s.value)) {
+			fprintf(stderr, "invalid arg \"%s\"\n", argv[1]);
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_GET_SET_VALUE, 0,
+			&s, sizeof(s), &s, sizeof(s));
+	if (rv > 0)
+		printf("%s\n", s.value ? "on" : "off");
+
+	return rv < 0;
+}
 
 
 int cmd_cmdversions(int argc, char *argv[])
@@ -3337,6 +3376,7 @@ const struct command commands[] = {
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
 	{"panicinfo", cmd_panic_info},
+	{"pause_in_s5", cmd_s5},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
 	{"pstoreinfo", cmd_pstore_info},

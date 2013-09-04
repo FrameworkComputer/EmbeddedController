@@ -7,5 +7,5 @@
  * List of get/set value items: <name, init_val>
  */
 #define GSV_LIST \
-	GSV_ITEM(s5, 0xdeadbeef) \
+	GSV_ITEM(s5, 0) \
 	/* end */

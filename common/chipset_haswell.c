@@ -9,6 +9,7 @@
 #include "chipset_x86_common.h"
 #include "common.h"
 #include "console.h"
+#include "getset.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "system.h"
@@ -315,7 +316,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Disable PP5000 (5V) rail. */
 		gpio_set_level(GPIO_PP5000_EN, 0);
-		return X86_S5G3;
+
+		/* Start shutting down */
+		return gsv[GSV_PARAM_s5] ? X86_S5 : X86_S5G3;
 
 	case X86_S5G3:
 		/* Deassert DPWROK, assert RSMRST# */
