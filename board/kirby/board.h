@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Pit board configuration */
+/* Kirby board configuration */
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -12,6 +12,8 @@
 #define CONFIG_BATTERY_BQ27541
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24192
+#define CONFIG_CHARGER_EN_GPIO
+#define CONFIG_CHARGER_EN_ACTIVE_LOW
 #define CONFIG_ADC
 #define CONFIG_ADC_CLOCK
 #define CONFIG_CHIPSET_GAIA
@@ -109,7 +111,7 @@ enum gpio_signal {
 	/* Other inputs */
 	GPIO_WP_L,
 	/* Outputs */
-	GPIO_CHARGER_EN,
+	GPIO_CHARGER_EN_L,
 	GPIO_EC_INT,
 	GPIO_EC_INT2,
 	GPIO_ID_MUX,

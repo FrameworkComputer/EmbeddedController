@@ -160,12 +160,6 @@ int charger_get_current(int *current)
 	return EC_SUCCESS;
 }
 
-/* TODO(victoryang): remove this after enabling charger task on Kirby */
-int charger_closest_current(int current)
-{
-	return current;
-}
-
 int charger_set_current(int current)
 {
 	int rv, val;

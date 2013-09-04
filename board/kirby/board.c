@@ -2,10 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* Pit board-specific configuration */
+/* Kirby board-specific configuration */
 
 #include "adc.h"
-#include "battery_pack.h"
 #include "common.h"
 #include "extpower.h"
 #include "gaia_power.h"
@@ -105,16 +104,6 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_B, 0x00c0, GPIO_ALT_I2C,	  MODULE_I2C},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
-/* Battery temperature ranges in degrees C */
-const struct battery_temperature_ranges bat_temp_ranges = {
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 45,
-	.charging_min_c       = 0,
-	.charging_max_c       = 60,
-	.discharging_min_c    = 0,
-	.discharging_max_c    = 100,
-};
 
 /* PWM channels */
 const struct pwm_t pwm_channels[] = {
