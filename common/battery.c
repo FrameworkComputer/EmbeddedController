@@ -91,6 +91,10 @@ static int print_battery_info(void)
 	battery_is_in_10mw_mode(&value);
 	unit = value ? "0 mW" : " mAh";
 
+	print_item_name("Charging:");
+	if (check_print_error(battery_charging_allowed(&value)))
+		ccprintf("%sAllowed\n", value ? "" : "Not ");
+
 	print_item_name("Charge:");
 	if (check_print_error(battery_state_of_charge(&value)))
 		ccprintf("%d %%\n", value);
