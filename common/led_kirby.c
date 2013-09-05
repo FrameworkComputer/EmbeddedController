@@ -5,11 +5,19 @@
  * Kirby LED driver.
  */
 
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "pwm.h"
 #include "util.h"
+
+/* Brightness of each color. Range = 0 - 100. */
+#define BRIGHTNESS_RED    50
+#define BRIGHTNESS_GREEN  25
+#define BRIGHTNESS_YELLOW 50
 
 void led_set_color(uint8_t red, uint8_t green, uint8_t yellow)
 {
@@ -37,6 +45,39 @@ void led_set_color(uint8_t red, uint8_t green, uint8_t yellow)
 		gpio_set_level(GPIO_CHG_LED_R, 0);
 	}
 }
+
+static void led_update_color(void)
+{
+	enum power_state state = charge_get_state();
+
+	/* check ac. no ac -> off */
+	if (!extpower_is_present()) {
+		led_set_color(0, 0, 0);
+		return;
+	}
+
+	switch (state) {
+	case PWR_STATE_CHARGE:
+		led_set_color(0, 0, BRIGHTNESS_YELLOW);
+		break;
+	case PWR_STATE_IDLE:
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		led_set_color(0, BRIGHTNESS_GREEN, 0);
+		break;
+	case PWR_STATE_ERROR:
+		led_set_color(BRIGHTNESS_RED, 0, 0);
+		break;
+	case PWR_STATE_INIT:
+	case PWR_STATE_UNCHANGE:
+	case PWR_STATE_IDLE0:
+	case PWR_STATE_REINIT:
+	case PWR_STATE_DISCHARGE:
+		break;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, led_update_color, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, led_update_color, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHARGE_STATE_CHANGE, led_update_color, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
