@@ -244,7 +244,18 @@ static int check_for_power_off_event(void)
 	return 0;
 }
 
-void gaia_suspend_deferred(void)
+/**
+ * Deferred handling for suspend events
+ *
+ * The suspend event needs to be able to call the suspend and resume hooks.
+ * This cannot be done from interrupt level, since the handlers from those
+ * hooks may need to use mutexes or other functionality not present at
+ * interrupt level.  Use a deferred function instead.
+ *
+ * Deferred functions are called from the hook task and not the chipset task,
+ * so that's a slight deviation from the spec in hooks.h, but a minor one.
+ */
+static void gaia_suspend_deferred(void)
 {
 	int new_ap_suspended;
 

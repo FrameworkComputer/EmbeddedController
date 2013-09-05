@@ -162,6 +162,13 @@ void hook_init(void);
 /**
  * Call all the hook routines of a specified type.
  *
+ * This function must be called from the correct type-specific context (task);
+ * see enum hook_type for details.  hook_notify() should NEVER be called from
+ * interrupt context unless specifically allowed for a hook type, because hook
+ * routines may need to perform task-level calls like usleep() and mutex
+ * operations that are not valid in interrupt context.  Instead of calling a
+ * hook from interrupt context, use a deferred function.
+ *
  * @param type		Type of hook routines to call.
  */
 void hook_notify(enum hook_type type);
@@ -185,6 +192,21 @@ int hook_call_deferred(void (*routine)(void), int us);
 
 /**
  * Register a hook routine.
+ *
+ * NOTE: Hook routines must be careful not to leave resources locked which may
+ * be needed by other hook routines or deferred function calls.  This can cause
+ * a deadlock, because most hooks and all deferred functions are called from
+ * the same hook task.  For example:
+ *
+ *   hook1(): lock foo
+ *   deferred1(): lock foo, use foo, unlock foo
+ *   hook2(): unlock foo
+ *
+ * In this example, hook1() and hook2() lock and unlock a shared resource foo
+ * (for example, a mutex).  If deferred1() attempts to lock the resource, it
+ * will stall waiting for the resource to be unlocked.  But the unlock will
+ * never happen, because hook2() won't be called by the hook task until
+ * deferred1() returns.
  *
  * @param hooktype	Type of hook for routine (enum hook_type)
  * @param routine	Hook routine, with prototype void routine(void)
@@ -210,6 +232,12 @@ struct deferred_data {
  *
  * Note that if you declare a bunch of these, you may need to override
  * DEFERRABLE_MAX_COUNT in your board.h.
+ *
+ * NOTE: Deferred function call routines must be careful not to leave resources
+ * locked which may be needed by other hook routines or deferred function
+ * calls.  This can cause a deadlock, because most hooks and all deferred
+ * functions are called from the same hook task.  See DECLARE_HOOK() for an
+ * example.
  *
  * @param routine	Function pointer, with prototype void routine(void)
  */
