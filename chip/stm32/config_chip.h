@@ -47,6 +47,9 @@
  */
 #define CONFIG_WATCHDOG_HELP
 
+/* Use DMA */
+#define CONFIG_DMA
+
 /* Flash protection applies to the next boot, not the current one */
 #define CONFIG_FLASH_PROTECT_NEXT_BOOT
 

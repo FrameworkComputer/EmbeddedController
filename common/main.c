@@ -10,6 +10,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "dma.h"
 #include "eeprom.h"
 #include "eoption.h"
 #include "flash.h"
@@ -89,6 +90,11 @@ test_mockable int main(void)
 
 	/* Main initialization stage.  Modules may enable interrupts here. */
 	cpu_init();
+
+#ifdef CONFIG_DMA
+	/* Initialize DMA.  Must be before UART. */
+	dma_init();
+#endif
 
 	/* Initialize UART.  Console output functions may now be used. */
 	uart_init();

@@ -2,11 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Register map and API for STM32 processor dma registers
+ * DMA interface
  */
 
 #ifndef __CROS_EC_DMA_H
 #define __CROS_EC_DMA_H
+
+#ifdef CONFIG_DMA
 
 #include "common.h"
 #include "registers.h"
@@ -134,4 +136,10 @@ void dma_disable_tc_interrupt(enum dma_channel channel);
  */
 int dma_wait(enum dma_channel channel);
 
+/**
+ * Initialize the DMA module.
+ */
+void dma_init(void);
+
+#endif /* CONFIG_DMA */
 #endif

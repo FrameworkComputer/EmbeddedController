@@ -280,6 +280,9 @@
 
 /*****************************************************************************/
 
+/* Compile support for the DMA module */
+#undef CONFIG_DMA
+
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
 

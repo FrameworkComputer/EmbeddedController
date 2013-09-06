@@ -182,7 +182,7 @@ void dma_test(void)
 }
 #endif /* CONFIG_DMA_HELP */
 
-static void dma_init(void)
+void dma_init(void)
 {
 	int i;
 
@@ -193,7 +193,6 @@ static void dma_init(void)
 	for (i = 0; i < STM32_DMAC_COUNT; i++)
 		id[i] = TASK_ID_INVALID;
 }
-DECLARE_HOOK(HOOK_INIT, dma_init, HOOK_PRIO_INIT_DMA);
 
 int dma_wait(enum dma_channel channel)
 {
