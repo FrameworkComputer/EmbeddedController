@@ -15,4 +15,5 @@
  * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TEST_TASK_LIST \
+	TASK_TEST(CHARGER, charger_task, NULL, TASK_STACK_SIZE) \
 	TASK_TEST(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE)

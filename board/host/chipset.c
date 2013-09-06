@@ -21,6 +21,11 @@ test_mockable void chipset_reset(int cold_reset)
 	fprintf(stderr, "Chipset reset!\n");
 }
 
+test_mockable void chipset_throttle_cpu(int throttle)
+{
+	/* Do nothing */
+}
+
 test_mockable void chipset_force_shutdown(void)
 {
 	/* Do nothing */

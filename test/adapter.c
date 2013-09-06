@@ -240,34 +240,34 @@ static int test_thresholds_sequence(int entry)
 	/* one more ought to do it */
 	check_threshold(mock_current, lim);
 	TEST_ASSERT(lim->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* going midrange for a long time shouldn't change anything */
 	mock_current = (lim->lo_val + lim->hi_val) / 2;
 	for (i = 1; i < longtime; i++)
 		check_threshold(mock_current, lim);
 	TEST_ASSERT(lim->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* below low limit for not quite long enough */
 	mock_current = lim->lo_val - 1;
 	for (i = 1; i < lim->lo_cnt; i++)
 		check_threshold(mock_current, lim);
 	TEST_ASSERT(lim->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* back above the low limit once */
 	mock_current = lim->lo_val + 1;
 	check_threshold(mock_current, lim);
 	TEST_ASSERT(lim->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* now back down - that should have reset the count */
 	mock_current = lim->lo_val - 1;
 	for (i = 1; i < lim->lo_cnt; i++)
 		check_threshold(mock_current, lim);
 	TEST_ASSERT(lim->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* One more ought to do it */
 	check_threshold(mock_current, lim);
@@ -374,34 +374,34 @@ static int test_batt(void)
 	/* one more ought to do it */
 	watch_battery_closely(&ctx);
 	TEST_ASSERT(l->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* going midrange for a long time shouldn't change anything */
 	mock_batt((l->lo_val + l->hi_val) / 2);
 	for (i = 1; i < longtime; i++)
 		watch_battery_closely(&ctx);
 	TEST_ASSERT(l->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* charge for not quite long enough */
 	mock_batt(-1);
 	for (i = 1; i < l->lo_cnt; i++)
 		watch_battery_closely(&ctx);
 	TEST_ASSERT(l->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* back above the low limit once */
 	mock_batt(l->lo_val + 1);
 	watch_battery_closely(&ctx);
 	TEST_ASSERT(l->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* now charge again  - that should have reset the count */
 	mock_batt(-1);
 	for (i = 1; i < l->lo_cnt; i++)
 		watch_battery_closely(&ctx);
 	TEST_ASSERT(l->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
 
 	/* One more ought to do it */
 	watch_battery_closely(&ctx);
@@ -416,20 +416,203 @@ static int test_batt(void)
 	/* one more */
 	watch_battery_closely(&ctx);
 	TEST_ASSERT(h->triggered == 1);
-	TEST_ASSERT(ap_is_throttled == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	return EC_SUCCESS;
+}
+
+static int test_batt_vs_adapter(void)
+{
+	/* Only need one set of adapter thresholds for this test */
+	struct adapter_limits *a_lim;
+
+	/* Same structs are used for battery thresholds */
+	struct adapter_limits *b_lim;
+
+	int longtime;
+	int i;
+
+	/* For adapter, we'll use ADAPTER_UNKNOWN, Turbo off, softer limits */
+	a_lim = &ad_limits[0][0][0];
+
+	/* NB: struct adapter_limits assumes hi_val > lo_val, so the values in
+	 * batt_limits[] indicate discharge current (mA).  However, the value
+	 * returned from battery_current() is postive for charging, and
+	 * negative for discharging.
+	 */
+
+	/* We're assuming two limits, mild and urgent. */
+	TEST_ASSERT(NUM_BATT_THRESHOLDS == 2);
+	/* Find out which is which. We want the mild one. */
+	if (batt_limits[0].hi_val > batt_limits[1].hi_val)
+		b_lim = &batt_limits[1];
+	else
+		b_lim = &batt_limits[0];
+
+
+	/* DANGER: we need these two to not be in sync. */
+	TEST_ASSERT(a_lim->hi_cnt == 16);
+	TEST_ASSERT(b_lim->hi_cnt == 16);
+	/* Now that we know they're the same, let's change one */
+	b_lim->hi_cnt = 12;
+
+	/* DANGER: We also rely on these values */
+	TEST_ASSERT(a_lim->lo_cnt == 80);
+	TEST_ASSERT(b_lim->lo_cnt == 50);
+
+
+	/* Find a time longer than all sample count limits */
+	longtime = MAX(MAX(a_lim->lo_cnt, a_lim->hi_cnt),
+		       MAX(b_lim->lo_cnt, b_lim->hi_cnt)) + 2;
+
+
+	test_reset_mocks();			/* everything == 0 */
+	ctx.curr.batt.state_of_charge = 25;
+	change_ac(1);
+
+	/* make sure no limits are triggered by staying low for a long time */
+	mock_current = a_lim->lo_val - 1;	/* charger current is safe */
+	mock_batt(-1);				/* battery is charging */
+
+	for (i = 1; i < longtime; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+
+	/* battery discharge current is too high for almost long enough */
+	mock_batt(b_lim->hi_val + 1);
+	for (i = 1; i < b_lim->hi_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->count != 0);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+	/* one more ought to do it */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled);
+
+
+	/* charge for not quite long enough */
+	mock_batt(-1);
+	for (i = 1; i < b_lim->lo_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* and one more */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+
+	/* Now adapter current is too high for almost long enough */
+	mock_current = a_lim->hi_val + 1;
+	for (i = 1; i < a_lim->hi_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+	/* one more ought to do it */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 1);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* below low limit for not quite long enough */
+	mock_current = a_lim->lo_val - 1;
+	for (i = 1; i < a_lim->lo_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 1);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* One more ought to do it */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+
+	/* Now both are high, but battery hi_cnt is shorter */
+	mock_batt(b_lim->hi_val + 1);
+	mock_current = a_lim->hi_val + 1;
+	for (i = 1; i < b_lim->hi_cnt; i++)	/* just under battery limit */
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
+
+	/* one more should kick the battery threshold */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* don't quite reach the adapter threshold */
+	for (i = 1; i < a_lim->hi_cnt - b_lim->hi_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* okay, now */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 1);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* Leave battery high, let the adapter come down */
+	mock_current = a_lim->lo_val - 1;
+	for (i = 1; i < a_lim->lo_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 1);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* One more ought to do it for the adapter */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* now charge the battery again */
+	mock_batt(-1);
+	for (i = 1; i < b_lim->lo_cnt; i++)
+		watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->triggered == 1);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled);
+
+	/* and one more */
+	watch_adapter_closely(&ctx);
+	TEST_ASSERT(b_lim->triggered == 0);
+	TEST_ASSERT(a_lim->triggered == 0);
+	TEST_ASSERT(ap_is_throttled == 0);
 
 	return EC_SUCCESS;
 }
 
 
+
 void run_test(void)
 {
 	test_reset();
+	test_chipset_on();
 
 	RUN_TEST(test_identification);
 	RUN_TEST(test_turbo);
 	RUN_TEST(test_thresholds);
 	RUN_TEST(test_batt);
+
+	RUN_TEST(test_batt_vs_adapter);
 
 	test_print_result();
 }

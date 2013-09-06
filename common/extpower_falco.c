@@ -26,6 +26,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "smart_battery.h"
+#include "throttle_ap.h"
 #include "util.h"
 
 /* Console output macros */
@@ -194,21 +195,34 @@ bad:
 	CPRINTF("[%T ERROR: can't talk to charger: %d]\n", r);
 }
 
-test_export_static int ap_is_throttled;
-static void set_throttle(int on)
+
+/* We need to OR all the possible reasons to throttle in order to decide
+ * whether it should happen or not. Use one bit per reason.
+ */
+#define BATT_REASON_OFFSET 0
+#define AC_REASON_OFFSET NUM_BATT_THRESHOLDS
+BUILD_ASSERT(NUM_BATT_THRESHOLDS + NUM_AC_THRESHOLDS < 32);
+
+test_export_static uint32_t ap_is_throttled;
+static void set_throttle(int on, int whosays)
 {
-	host_throttle_cpu(on);
-	ap_is_throttled = on;
+	if (on)
+		ap_is_throttled |= (1 << whosays);
+	else
+		ap_is_throttled &= ~(1 << whosays);
+
+	throttle_ap(ap_is_throttled ? THROTTLE_ON : THROTTLE_OFF,
+		    THROTTLE_SOFT, THROTTLE_SRC_POWER);
 }
 
 test_export_static
-void check_threshold(int current, struct adapter_limits *lim)
+void check_threshold(int current, struct adapter_limits *lim, int whoami)
 {
 	if (lim->triggered) {
 		/* watching for current to drop */
 		if (current < lim->lo_val) {
 			if (++lim->count >= lim->lo_cnt) {
-				set_throttle(0);
+				set_throttle(0, whoami);
 				lim->count = 0;
 				lim->triggered = 0;
 			}
@@ -219,7 +233,7 @@ void check_threshold(int current, struct adapter_limits *lim)
 		/* watching for current to rise */
 		if (current > lim->hi_val) {
 			if (++lim->count >= lim->hi_cnt) {
-				set_throttle(1);
+				set_throttle(1, whoami);
 				lim->count = 0;
 				lim->triggered = 1;
 			}
@@ -251,7 +265,8 @@ void watch_battery_closely(struct power_state_context *ctx)
 
 	/* Check limits against DISCHARGE current, not CHARGE current! */
 	for (i = 0; i < NUM_BATT_THRESHOLDS; i++)
-		check_threshold(-current, &batt_limits[i]); /* invert sign! */
+		check_threshold(-current, &batt_limits[i], /* invert sign! */
+				i + BATT_REASON_OFFSET);
 }
 
 void watch_adapter_closely(struct power_state_context *ctx)
@@ -288,13 +303,14 @@ void watch_adapter_closely(struct power_state_context *ctx)
 	/* Check all the thresholds. */
 	current = adc_read_channel(ADC_CH_CHARGER_CURRENT);
 	for (i = 0; i < NUM_AC_THRESHOLDS; i++)
-		check_threshold(current, &ad_limits[ac_adapter][ac_turbo][i]);
+		check_threshold(current, &ad_limits[ac_adapter][ac_turbo][i],
+			i + AC_REASON_OFFSET);
 }
 
 static int command_adapter(int argc, char **argv)
 {
 	enum adapter_type v = identify_adapter();
-	ccprintf("Adapter %s (%dmv), turbo %d, AP_throttled %d\n",
+	ccprintf("Adapter %s (%dmv), turbo %d, ap_is_throttled 0x%08x\n",
 		 ad_name[v], last_mv, ac_turbo, ap_is_throttled);
 	return EC_SUCCESS;
 }

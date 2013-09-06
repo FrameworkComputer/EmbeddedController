@@ -181,6 +181,9 @@
 #define CONFIG_CHIPSET_HAS_PP1350
 #define CONFIG_CHIPSET_HAS_PP5000
 
+/* Compile support for chipset throttling */
+#undef CONFIG_CHIPSET_CAN_THROTTLE
+
 /*****************************************************************************/
 /*
  * Optional console commands

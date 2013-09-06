@@ -73,8 +73,9 @@ int charger_set_current(int current)
 	if (current > info->current_max)
 		current = info->current_max;
 
+	if (mock_current != current)
+		uart_printf("Charger set current: %d\n", current);
 	mock_current = current;
-	uart_printf("Charger set current: %d\n", current);
 	return EC_SUCCESS;
 }
 

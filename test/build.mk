@@ -30,7 +30,7 @@ test-list-$(BOARD_bolt)=
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
-test-list-host+=sbs_charging adapter host_command
+test-list-host+=sbs_charging adapter host_command thermal_falco
 
 adapter-y=adapter.o
 console_edit-y=console_edit.o
@@ -51,6 +51,7 @@ sbs_charging-y=sbs_charging.o
 stress-y=stress.o
 system-y=system.o
 thermal-y=thermal.o
+thermal_falco-y=thermal_falco.o
 timer_calib-y=timer_calib.o
 timer_dos-y=timer_dos.o
 utils-y=utils.o

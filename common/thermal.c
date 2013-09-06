@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "temp_sensor.h"
 #include "thermal.h"
+#include "throttle_ap.h"
 #include "timer.h"
 #include "util.h"
 
@@ -131,18 +132,18 @@ static void thermal_control(void)
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HIGH])) {
 		CPRINTF("[%T thermal HIGH]\n");
-		chipset_throttle_cpu(1);
+		throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HIGH])) {
 		CPRINTF("[%T thermal no longer high]\n");
-		chipset_throttle_cpu(0);
+		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
 	}
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN])) {
 		CPRINTF("[%T thermal WARN]\n");
-		host_throttle_cpu(1);
+		throttle_ap(THROTTLE_ON, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_WARN])) {
 		CPRINTF("[%T thermal no longer warn]\n");
-		host_throttle_cpu(0);
+		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 
 	/* Max fan needed is what's needed. */
