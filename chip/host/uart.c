@@ -69,8 +69,10 @@ static void trigger_interrupt(void)
 	 * TODO: Check global interrupt status when we have
 	 * interrupt support.
 	 */
-	if (!int_disabled)
-		uart_process();
+	if (!int_disabled) {
+		uart_process_input();
+		uart_process_output();
+	}
 }
 
 int uart_init_done(void)
@@ -185,5 +187,6 @@ void *uart_monitor_stdin(void *d)
 void uart_init(void)
 {
 	pthread_create(&input_thread, NULL, uart_monitor_stdin, NULL);
+	stopped = 1;  /* Not transmitting yet */
 	init_done = 1;
 }

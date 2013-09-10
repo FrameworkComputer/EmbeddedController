@@ -96,7 +96,8 @@ static void uart_interrupt(void)
 	STM32_USART_CR1(UARTN) &= ~STM32_USART_CR1_TXEIE;
 
 	/* Read input FIFO until empty, then fill output FIFO */
-	uart_process();
+	uart_process_input();
+	uart_process_output();
 
 	/*
 	 * Re-enable TX empty interrupt only if it was not disabled by

@@ -178,14 +178,20 @@ void uart_tx_stop(void);
 int uart_tx_stopped(void);
 
 /**
- * Helper for UART processing.
+ * Helper for processing UART input.
  *
- * Reads the input FIFO until empty, then fills the output FIFO until the
- * transmit buffer is empty or the FIFO full.
- *
- * Designed to be called from the driver interrupt handler.
+ * Reads the input FIFO until empty.  Intended to be called from the driver
+ * interrupt handler.
  */
-void uart_process(void);
+void uart_process_input(void);
+
+/**
+ * Helper for processing UART output.
+ *
+ * Fills the output FIFO until the transmit buffer is empty or the FIFO full.
+ * Intended to be called from the driver interrupt handler.
+ */
+void uart_process_output(void);
 
 /*
  * COMx functions

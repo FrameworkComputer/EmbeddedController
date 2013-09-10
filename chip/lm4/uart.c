@@ -103,7 +103,8 @@ static void uart_ec_interrupt(void)
 
 
 	/* Read input FIFO until empty, then fill output FIFO */
-	uart_process();
+	uart_process_input();
+	uart_process_output();
 }
 DECLARE_IRQ(LM4_IRQ_UART0, uart_ec_interrupt, 1);
 

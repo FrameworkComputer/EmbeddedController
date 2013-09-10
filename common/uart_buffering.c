@@ -65,23 +65,23 @@ static int __tx_char(void *context, int c)
 	return 0;
 }
 
-/**
- * Copy output from buffer until TX fifo full or output buffer empty.
- *
- * May be called from interrupt context.
- */
-static void fill_tx_fifo(void)
+void uart_process_output(void)
 {
+	if (uart_suspended)
+		return;
+
+	/* Copy output from buffer until TX fifo full or output buffer empty */
 	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
 		uart_write_char(tx_buf[tx_buf_tail]);
 		tx_buf_tail = TX_BUF_NEXT(tx_buf_tail);
 	}
+
+	/* If output buffer is empty, disable transmit interrupt */
+	if (tx_buf_tail == tx_buf_head)
+		uart_tx_stop();
 }
 
-/**
- * Helper for UART processing.
- */
-void uart_process(void)
+void uart_process_input(void)
 {
 	int got_input = 0;
 
@@ -110,16 +110,6 @@ void uart_process(void)
 
 	if (got_input)
 		console_has_input();
-
-	if (uart_suspended)
-		return;
-
-	/* Copy output from buffer until TX fifo full or output buffer empty */
-	fill_tx_fifo();
-
-	/* If output buffer is empty, disable transmit interrupt */
-	if (tx_buf_tail == tx_buf_head)
-		uart_tx_stop();
 }
 
 int uart_putc(int c)
@@ -174,34 +164,27 @@ void uart_flush_output(void)
 	if (uart_suspended)
 		return;
 
-	/*
-	 * If we're in interrupt context, copy output explicitly, since the
-	 * UART interrupt may not be able to preempt this one.
-	 */
-	if (in_interrupt_context()) {
-		do {
-			/* Copy until TX fifo full or output buffer empty */
-			fill_tx_fifo();
-
-			/* Wait for transmit FIFO empty */
-			uart_tx_flush();
-		} while (tx_buf_head != tx_buf_tail);
-		return;
-	}
-
-	/* Wait for buffer to empty */
+	/* Loop until buffer is empty */
 	while (tx_buf_head != tx_buf_tail) {
-		/*
-		 * It's possible we're in some other interrupt, and the
-		 * previous context was doing a printf() or puts() but hadn't
-		 * enabled the UART interrupt.  Check if the interrupt is
-		 * disabled, and if so, re-enable and trigger it.  Note that
-		 * this check is inside the while loop, so we'll be safe even
-		 * if the context switches away from us to another partial
-		 * printf() and back.
-		 */
-		if (uart_tx_stopped())
+		if (in_interrupt_context()) {
+			/*
+			 * Explicitly process UART output, since the UART
+			 * interrupt may not be able to preempt the interrupt
+			 * we're in now.
+			 */
+			uart_process_output();
+		} else if (uart_tx_stopped()) {
+			/*
+			 * It's possible we switched from a previous context
+			 * which was doing a printf() or puts() but hadn't
+			 * enabled the UART interrupt.  Check if the interrupt
+			 * is disabled, and if so, re-enable and trigger it.
+			 * Note that this check is inside the while loop, so
+			 * we'll be safe even if the context switches away from
+			 * us to another partial printf() and back.
+			 */
 			uart_tx_start();
+		}
 	}
 
 	/* Wait for transmit FIFO empty */
@@ -214,7 +197,7 @@ void uart_flush_input(void)
 	uart_disable_interrupt();
 
 	/* Empty the hardware FIFO */
-	uart_process();
+	uart_process_input();
 
 	/* Clear the input buffer */
 	rx_buf_tail = rx_buf_head;
@@ -231,7 +214,7 @@ int uart_getc(void)
 	uart_disable_interrupt();
 
 	/* Call interrupt handler to empty the hardware FIFO */
-	uart_process();
+	uart_process_input();
 
 	if (rx_buf_tail == rx_buf_head) {
 		c = -1;  /* No pending input */
