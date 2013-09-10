@@ -273,6 +273,13 @@ int uint64divmod(uint64_t *n, int d)
 	return r;
 }
 
+int get_next_bit(uint32_t *mask)
+{
+	int bit = 31 - __builtin_clz(*mask);
+	*mask &= ~(1 << bit);
+	return bit;
+}
+
 
 /****************************************************************************/
 /* stateful conditional stuff */

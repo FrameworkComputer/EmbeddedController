@@ -42,7 +42,7 @@ static int find_gpio_port_index(uint32_t port_base)
 	return -1;
 }
 
-void gpio_set_alternate_function(int port, int mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
 	int port_index = find_gpio_port_index(port);
 	int cgmask;

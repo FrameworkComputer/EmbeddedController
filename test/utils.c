@@ -154,6 +154,20 @@ static int test_uint64divmod_2(void)
 	TEST_CHECK(r == 0 && n == 0ULL);
 }
 
+static int test_get_next_bit(void)
+{
+	uint32_t mask = 0x10001010;
+
+	TEST_ASSERT(get_next_bit(&mask) == 28);
+	TEST_ASSERT(mask == 0x1010);
+	TEST_ASSERT(get_next_bit(&mask) == 12);
+	TEST_ASSERT(mask == 0x10);
+	TEST_ASSERT(get_next_bit(&mask) == 4);
+	TEST_ASSERT(mask == 0x0);
+
+	return EC_SUCCESS;
+}
+
 static int test_shared_mem(void)
 {
 	int i, j;
@@ -299,6 +313,7 @@ void run_test(void)
 	RUN_TEST(test_uint64divmod_0);
 	RUN_TEST(test_uint64divmod_1);
 	RUN_TEST(test_uint64divmod_2);
+	RUN_TEST(test_get_next_bit);
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);

@@ -20,10 +20,20 @@
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
 
+static uint32_t expand_to_2bit_mask(uint32_t mask)
+{
+	uint32_t mask_out = 0;
+	while (mask) {
+		int bit = get_next_bit(&mask);
+		mask_out |= 3 << (bit * 2);
+	}
+	return mask_out;
+}
+
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	/* Bitmask for registers with 2 bits per GPIO pin */
-	const uint32_t mask2 = (mask * mask) | (mask * mask * 2);
+	const uint32_t mask2 = expand_to_2bit_mask(mask);
 	uint32_t val;
 
 	/* Set up pullup / pulldown */
@@ -124,7 +134,7 @@ static void gpio_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
-void gpio_set_alternate_function(int port, int mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
 	int bit;
 	uint8_t half;
@@ -134,9 +144,8 @@ void gpio_set_alternate_function(int port, int mask, int func)
 	if (func < 0) {
 		/* Return to normal GPIO function, defaulting to input. */
 		while (mask) {
-			bit = 31 - __builtin_clz(mask);
+			bit = get_next_bit(&mask);
 			moder &= ~(0x3 << (bit * 2));
-			mask &= ~(1 << bit);
 		}
 		STM32_GPIO_MODER(port) = moder;
 		return;

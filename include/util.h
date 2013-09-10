@@ -101,6 +101,16 @@ int tolower(int c);
  */
 int uint64divmod(uint64_t *v, int by);
 
+/**
+ * Get-and-clear next bit from mask.
+ *
+ * Starts with most significant bit.
+ *
+ * @param mask Bitmask to extract next bit from. Must NOT be zero.
+ * @return bit position (0..31)
+ */
+int get_next_bit(uint32_t *mask);
+
 
 /****************************************************************************/
 /* Conditional stuff.

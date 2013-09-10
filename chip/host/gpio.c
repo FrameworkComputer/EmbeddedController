@@ -34,7 +34,8 @@ test_mockable void gpio_set_flags_by_mask(uint32_t port, uint32_t mask,
 	/* Nothing */
 }
 
-test_mockable void gpio_set_alternate_function(int port, int mask, int func)
+test_mockable void gpio_set_alternate_function(uint32_t port, uint32_t mask,
+					       int func)
 {
 	/* Nothing */
 }

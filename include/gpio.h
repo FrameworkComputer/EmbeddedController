@@ -193,6 +193,6 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
  * @param func		Alternate function; if <0, configures the specified
  *			GPIOs for normal GPIO operation.
  */
-void gpio_set_alternate_function(int port, int mask, int func);
+void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
 
 #endif  /* __CROS_EC_GPIO_H */

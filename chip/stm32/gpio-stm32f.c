@@ -111,7 +111,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t pmask, uint32_t flags)
 	/* Interrupt is enabled by gpio_enable_interrupt() */
 }
 
-void gpio_set_alternate_function(int port, int mask, int func)
+void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
 	/* TODO(rspangler): implement me! */
 }
@@ -224,11 +224,10 @@ static void gpio_interrupt(void)
 	STM32_EXTI_PR = pending;
 
 	while (pending) {
-		bit = 31 - __builtin_clz(pending);
+		bit = get_next_bit(&pending);
 		g = exti_events[bit];
 		if (g && g->irq_handler)
 			g->irq_handler(g - gpio_list);
-		pending &= ~(1 << bit);
 	}
 }
 DECLARE_IRQ(STM32_IRQ_EXTI0, gpio_interrupt, 1);
