@@ -9,9 +9,10 @@
 #include "chipset_x86_common.h"
 #include "common.h"
 #include "console.h"
-#include "getset.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
@@ -50,6 +51,7 @@
 		   IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
+static int pause_in_s5;	      /* Pause in S5 when shutting down? */
 
 void chipset_force_shutdown(void)
 {
@@ -319,7 +321,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_PP5000_EN, 0);
 
 		/* Start shutting down */
-		return gsv[GSV_PARAM_s5] ? X86_S5 : X86_S5G3;
+		return pause_in_s5 ? X86_S5 : X86_S5G3;
 
 	case X86_S5G3:
 		/* Deassert DPWROK, assert RSMRST# */
@@ -337,3 +339,35 @@ void haswell_interrupt(enum gpio_signal signal)
 	/* Pass through eDP VDD enable from PCH */
 	gpio_set_level(GPIO_EC_EDP_VDD_EN, gpio_get_level(GPIO_PCH_EDP_VDD_EN));
 }
+
+static int host_command_gsv(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_set_value *p = args->params;
+	struct ec_response_get_set_value *r = args->response;
+
+	if (p->flags & EC_GSV_SET)
+		pause_in_s5 = p->value;
+
+	r->value = pause_in_s5;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
+		     host_command_gsv,
+		     EC_VER_MASK(0));
+
+static int console_command_gsv(int argc, char **argv)
+{
+	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
+		return EC_ERROR_INVAL;
+
+	ccprintf("pause_in_s5 = %s\n", pause_in_s5 ? "on" : "off");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pause_in_s5, console_command_gsv,
+			"[on|off]",
+			"Should the AP pause in S5 during shutdown?",
+			NULL);
+

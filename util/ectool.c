@@ -17,7 +17,6 @@
 #include "compile_time_macros.h"
 #include "ec_flash.h"
 #include "ectool.h"
-#include "getset.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
 #include "misc_util.h"
@@ -319,23 +318,24 @@ int cmd_test(int argc, char *argv[])
 
 int cmd_s5(int argc, char *argv[])
 {
-	struct ec_cmd_get_set_value s;
+	struct ec_params_get_set_value p;
+	struct ec_params_get_set_value r;
 	int rv;
 
-	s.flags = GSV_PARAM_s5;
+	p.flags = 0;
 
 	if (argc > 1) {
-		s.flags |= EC_GSV_SET;
-		if (!parse_bool(argv[1], &s.value)) {
+		p.flags |= EC_GSV_SET;
+		if (!parse_bool(argv[1], &p.value)) {
 			fprintf(stderr, "invalid arg \"%s\"\n", argv[1]);
 			return -1;
 		}
 	}
 
-	rv = ec_command(EC_CMD_GET_SET_VALUE, 0,
-			&s, sizeof(s), &s, sizeof(s));
+	rv = ec_command(EC_CMD_GSV_PAUSE_IN_S5, 0,
+			&p, sizeof(p), &r, sizeof(r));
 	if (rv > 0)
-		printf("%s\n", s.value ? "on" : "off");
+		printf("%s\n", r.value ? "on" : "off");
 
 	return rv < 0;
 }
