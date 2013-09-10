@@ -44,56 +44,63 @@ int charger_closest_current(int current)
 	return current - (current % info->current_step);
 }
 
+static void print_item_name(const char *name)
+{
+	ccprintf("  %-8s", name);
+}
+
+static int check_print_error(int rv)
+{
+	if (rv == EC_SUCCESS)
+		return 1;
+	ccputs(rv == EC_ERROR_UNIMPLEMENTED ? "(unsupported)\n" : "(error)\n");
+	return 0;
+}
+
 static int print_info(void)
 {
-	int rv;
 	int d;
-	const struct charger_info *info;
+	const struct charger_info *info = charger_get_info();
 
 	/* info */
-	info = charger_get_info();
-	ccprintf("Name  : %s\n", info->name);
+	print_item_name("Name:");
+	ccprintf("%s\n", info->name);
 
 	/* option */
-	rv = charger_get_option(&d);
-	if (rv)
-		return rv;
-	ccprintf("Option: %016b (0x%04x)\n", d, d);
+	print_item_name("Option:");
+	if (check_print_error(charger_get_option(&d)))
+		ccprintf("%016b (0x%04x)\n", d, d);
 
 	/* manufacturer id */
-	rv = charger_manufacturer_id(&d);
-	if (rv)
-		return rv;
-	ccprintf("Man id: 0x%04x\n", d);
+	print_item_name("Man id:");
+	if (check_print_error(charger_manufacturer_id(&d)))
+		ccprintf("0x%04x\n", d);
 
 	/* device id */
-	rv = charger_device_id(&d);
-	if (rv)
-		return rv;
-	ccprintf("Dev id: 0x%04x\n", d);
+	print_item_name("Dev id:");
+	if (check_print_error(charger_device_id(&d)))
+		ccprintf("0x%04x\n", d);
 
 	/* charge voltage limit */
-	rv = charger_get_voltage(&d);
-	if (rv)
-		return rv;
-	ccprintf("V_batt: %5d (%4d - %5d, %3d)\n", d,
-		 info->voltage_min, info->voltage_max, info->voltage_step);
+	print_item_name("V_batt:");
+	if (check_print_error(charger_get_voltage(&d)))
+		ccprintf("%5d (%4d - %5d, %3d)\n", d,
+			 info->voltage_min, info->voltage_max,
+			 info->voltage_step);
 
 	/* charge current limit */
-	rv = charger_get_current(&d);
-	if (rv)
-		return rv;
-	ccprintf("I_batt: %5d (%4d - %5d, %3d)\n", d,
-		 info->current_min, info->current_max, info->current_step);
+	print_item_name("I_batt:");
+	if (check_print_error(charger_get_current(&d)))
+		ccprintf("%5d (%4d - %5d, %3d)\n", d,
+			 info->current_min, info->current_max,
+			 info->current_step);
 
 	/* input current limit */
-	rv = charger_get_input_current(&d);
-	if (rv)
-		return rv;
-
-	ccprintf("I_in  : %5d (%4d - %5d, %3d)\n", d,
-		 info->input_current_min, info->input_current_max,
-		 info->input_current_step);
+	print_item_name("I_in:");
+	if (check_print_error(charger_get_input_current(&d)))
+		ccprintf("%5d (%4d - %5d, %3d)\n", d,
+			 info->input_current_min, info->input_current_max,
+			 info->input_current_step);
 
 	return EC_SUCCESS;
 }
