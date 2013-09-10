@@ -19,14 +19,12 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 
 static const struct battery_info info = {
 	/*
-	 * TODO(victoryang): What are the correct values?
-	 * Design voltage
-	 *   max    = 4.4V
-	 *   normal = 3.8V
+	 *   max    = 4.2V
+	 *   normal = 3.7V
 	 *   min    = 3.0V
 	 */
-	.voltage_max    = 4400,
-	.voltage_normal = 3800,
+	.voltage_max    = 4200,
+	.voltage_normal = 3700,
 	.voltage_min    = 3000,
 
 	/* Pre-charge current: I <= 0.01C */
