@@ -306,7 +306,8 @@ static int state_common(struct power_state_context *ctx)
 	} else if (d) {
 		rv = battery_desired_voltage(&batt->desired_voltage);
 		if (rv == EC_ERROR_UNIMPLEMENTED)
-			batt->desired_voltage = ctx->charger->voltage_max;
+			batt->desired_voltage = MIN(ctx->charger->voltage_max,
+						    ctx->battery->voltage_max);
 		else if (rv != EC_SUCCESS)
 			curr->error |= F_DESIRED_VOLTAGE;
 
