@@ -613,6 +613,9 @@
  */
 #define CONFIG_UART_TX_BUF_SIZE 512
 
+/* Use DMA for UART output */
+#undef CONFIG_UART_TX_DMA
+
 /*
  * UART receive buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.  Must be larger than

@@ -65,11 +65,59 @@ static int __tx_char(void *context, int c)
 	return 0;
 }
 
+#ifdef CONFIG_UART_TX_DMA
+
+/**
+ * Process UART output via DMA
+ */
+static void uart_process_output_dma(void)
+{
+	/* Size of current DMA transfer */
+	static int tx_dma_in_progress;
+
+	/*
+	 * Get head pointer now, to avoid math problems if some other task
+	 * or interrupt adds output during this call.
+	 */
+	int head = tx_buf_head;
+
+	/* If DMA is still busy, nothing to do. */
+	if(!uart_tx_dma_ready())
+		return;
+
+	/* If a previous DMA transfer completed, free up the buffer it used */
+	if (tx_dma_in_progress) {
+		tx_buf_tail = (tx_buf_tail + tx_dma_in_progress) &
+			(CONFIG_UART_TX_BUF_SIZE - 1);
+		tx_dma_in_progress = 0;
+	}
+
+	/* Disable DMA-done interrupt if nothing to send */
+	if(head == tx_buf_tail) {
+		uart_tx_stop();
+		return;
+	}
+
+	/*
+	 * Get the largest contiguous block of output.  If the transmit buffer
+	 * wraps, only use the part before the wrap.
+	 */
+	tx_dma_in_progress = (head > tx_buf_tail ? head :
+			      CONFIG_UART_TX_BUF_SIZE) - tx_buf_tail;
+
+	uart_tx_dma_start((char *)(tx_buf + tx_buf_tail), tx_dma_in_progress);
+}
+
+#endif /* CONFIG_UART_TX_DMA */
+
 void uart_process_output(void)
 {
 	if (uart_suspended)
 		return;
 
+#ifdef CONFIG_UART_TX_DMA
+	uart_process_output_dma();
+#else
 	/* Copy output from buffer until TX fifo full or output buffer empty */
 	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
 		uart_write_char(tx_buf[tx_buf_tail]);
@@ -79,6 +127,7 @@ void uart_process_output(void)
 	/* If output buffer is empty, disable transmit interrupt */
 	if (tx_buf_tail == tx_buf_head)
 		uart_tx_stop();
+#endif
 }
 
 void uart_process_input(void)

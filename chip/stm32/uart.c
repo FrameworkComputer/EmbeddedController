@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "clock.h"
+#include "dma.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -16,6 +17,19 @@
 
 /* Console USART index */
 #define UARTN CONFIG_UART_CONSOLE
+
+#ifdef CONFIG_UART_TX_DMA
+#define UART_TX_INT_ENABLE STM32_USART_CR1_TCIE
+
+/* DMA channel options; assumes UART1 */
+static const struct dma_option dma_tx_option = {
+	STM32_DMAC_USART1_TX, (void *)&STM32_USART_DR(UARTN),
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
+};
+
+#else
+#define UART_TX_INT_ENABLE STM32_USART_CR1_TXEIE
+#endif
 
 static int init_done;    /* Initialization done? */
 static int should_stop;  /* Last TX control action */
@@ -28,21 +42,21 @@ int uart_init_done(void)
 void uart_tx_start(void)
 {
 	disable_sleep(SLEEP_MASK_UART);
-	STM32_USART_CR1(UARTN) |= STM32_USART_CR1_TXEIE;
 	should_stop = 0;
+	STM32_USART_CR1(UARTN) |= UART_TX_INT_ENABLE;
 	task_trigger_irq(STM32_IRQ_USART(UARTN));
 }
 
 void uart_tx_stop(void)
 {
-	STM32_USART_CR1(UARTN) &= ~STM32_USART_CR1_TXEIE;
+	STM32_USART_CR1(UARTN) &= ~UART_TX_INT_ENABLE;
 	should_stop = 1;
 	enable_sleep(SLEEP_MASK_UART);
 }
 
 int uart_tx_stopped(void)
 {
-	return !(STM32_USART_CR1(UARTN) & STM32_USART_CR1_TXEIE);
+	return !(STM32_USART_CR1(UARTN) & UART_TX_INT_ENABLE);
 }
 
 void uart_tx_flush(void)
@@ -56,6 +70,27 @@ int uart_tx_ready(void)
 	return STM32_USART_SR(UARTN) & STM32_USART_SR_TXE;
 }
 
+#ifdef CONFIG_UART_TX_DMA
+
+int uart_tx_dma_ready(void)
+{
+	return STM32_USART_SR(UARTN) & STM32_USART_SR_TC;
+}
+
+void uart_tx_dma_start(const char *src, int len)
+{
+	/* Prepare DMA */
+	dma_prepare_tx(&dma_tx_option, len, src);
+
+	/* Force clear TC so we don't re-interrupt */
+	STM32_USART_SR(UARTN) &= ~STM32_USART_SR_TC;
+
+	/* Start DMA */
+	dma_go(dma_get_channel(dma_tx_option.channel));
+}
+
+#endif /* CONFIG_UART_TX_DMA */
+
 int uart_rx_available(void)
 {
 	return STM32_USART_SR(UARTN) & STM32_USART_SR_RXNE;
@@ -63,11 +98,10 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
-	/* we normally never wait here since uart_write_char is normally called
-	 * when the buffer is ready, excepted when we insert a carriage return
-	 * before a line feed in the interrupt routine.
-	 */
-	while (!uart_tx_ready()) ;
+	/* Wait for space */
+	while (!uart_tx_ready())
+		;
+
 	STM32_USART_DR(UARTN) = c;
 }
 
@@ -89,22 +123,30 @@ void uart_enable_interrupt(void)
 /* Interrupt handler for console USART */
 static void uart_interrupt(void)
 {
+#ifdef CONFIG_UART_TX_DMA
+	/* Disable transmission complete interrupt if DMA done */
+	if (STM32_USART_SR(UARTN) & STM32_USART_SR_TC)
+		STM32_USART_CR1(UARTN) &= ~STM32_USART_CR1_TCIE;
+#else
 	/*
 	 * Disable the TX empty interrupt before filling the TX buffer since it
 	 * needs an actual write to DR to be cleared.
 	 */
 	STM32_USART_CR1(UARTN) &= ~STM32_USART_CR1_TXEIE;
+#endif
 
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();
 	uart_process_output();
 
+#ifndef CONFIG_UART_TX_DMA
 	/*
 	 * Re-enable TX empty interrupt only if it was not disabled by
 	 * uart_process.
 	 */
 	if (!should_stop)
 		STM32_USART_CR1(UARTN) |= STM32_USART_CR1_TXEIE;
+#endif
 }
 DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 2);
 
@@ -162,8 +204,13 @@ void uart_init(void)
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN) = 0x0000;
 
+#ifdef CONFIG_UART_TX_DMA
+	/* Enable DMA transmitter */
+	STM32_USART_CR3(UARTN) |= STM32_USART_CR3_DMAT;
+#else
 	/* DMA disabled, special modes disabled, error interrupt disabled */
 	STM32_USART_CR3(UARTN) = 0x0000;
+#endif
 
 #ifdef CHIP_FAMILY_stm32l
 	/* Use single-bit sampling */
