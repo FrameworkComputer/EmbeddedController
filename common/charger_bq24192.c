@@ -109,7 +109,8 @@ int charger_get_input_current(int *input_current)
 	rv = bq24192_read(BQ24192_REG_INPUT_CTRL, &value);
 	if (rv)
 		return rv;
-	return input_current_steps[value & 0x7];
+	*input_current = input_current_steps[value & 0x7];
+	return EC_SUCCESS;
 }
 
 int charger_manufacturer_id(int *id)
