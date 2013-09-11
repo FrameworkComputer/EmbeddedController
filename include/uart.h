@@ -80,37 +80,11 @@ void uart_flush_output(void);
  */
 
 /**
- * Flush input buffer, discarding all input.
- */
-void uart_flush_input(void);
-
-/**
  * Read a single character of input, similar to fgetc().
  *
  * @return the character, or -1 if no input waiting.
  */
 int uart_getc(void);
-
-/**
- * Read characters from the UART, similar to fgets().
- *
- * Reads input until one of the following conditions is met:
- *    (1)  <size-1> characters have been read.
- *    (2)  A newline ('\n') has been read.
- *    (3)  The input buffer is empty (this keeps the call from blocking).
- *
- * Characters are stored in <dest> and are null-terminated.
- * Characters include the newline if present, so that the caller can
- * distinguish between a complete line and a truncated one.  If the
- * input buffer is empty, a null-terminated empty string ("") is
- * returned.
- *
- * @param dest		Destination for input
- * @param size		Size of buffer pointed to by dest
- *
- * @return the number of characters read, not counting the terminating null.
- */
-int uart_gets(char *dest, int size);
 
 /*
  * Hardware UART driver functions

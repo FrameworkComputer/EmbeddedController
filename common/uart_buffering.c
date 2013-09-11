@@ -240,21 +240,6 @@ void uart_flush_output(void)
 	uart_tx_flush();
 }
 
-void uart_flush_input(void)
-{
-	/* Disable interrupts */
-	uart_disable_interrupt();
-
-	/* Empty the hardware FIFO */
-	uart_process_input();
-
-	/* Clear the input buffer */
-	rx_buf_tail = rx_buf_head;
-
-	/* Re-enable interrupts */
-	uart_enable_interrupt();
-}
-
 int uart_getc(void)
 {
 	int c;
@@ -276,33 +261,6 @@ int uart_getc(void)
 	uart_enable_interrupt();
 
 	return c;
-}
-
-int uart_gets(char *dest, int size)
-{
-	int got = 0;
-	int c;
-
-	/* Read characters */
-	while (got < size - 1) {
-		c = uart_getc();
-
-		/* Stop on input buffer empty */
-		if (c == -1)
-			break;
-
-		dest[got++] = c;
-
-		/* Stop after newline */
-		if (c == '\n')
-			break;
-	}
-
-	/* Null-terminate */
-	dest[got] = '\0';
-
-	/* Return the length we got */
-	return got;
 }
 
 /*****************************************************************************/
