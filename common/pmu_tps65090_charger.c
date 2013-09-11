@@ -104,7 +104,7 @@ static int notify_battery_low(void)
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		now = get_time();
 		if (now.val - last_notify_time.val > MINUTE) {
-			CPUTS("[pmu] notify battery low (< 10%)\n");
+			CPUTS("[pmu] notify battery low (< 4%)\n");
 			last_notify_time = now;
 			/* TODO(rongchang): notify AP ? */
 		}
@@ -350,12 +350,12 @@ static int calc_next_state(int state)
 		/* Check remaining charge % */
 		if (battery_state_of_charge(&capacity) == 0) {
 			/*
-			 * Shutdown AP when state of charge < 2.5%.
+			 * Shutdown AP when state of charge < 1.5%.
 			 * Moving average is rounded to integer.
 			 */
-			if (rsoc_moving_average(capacity) < 3) {
+			if (rsoc_moving_average(capacity) < 2) {
 				return system_off();
-			} else if (capacity < 10) {
+			} else if (capacity < 4) {
 				notify_battery_low();
 			}
 		}
