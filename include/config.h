@@ -613,6 +613,24 @@
 #undef CONFIG_UART_HOST
 
 /*
+ * UART receive buffer size in bytes.  Must be a power of 2 for macros in
+ * common/uart_buffering.c to work properly.  Must be larger than
+ * CONFIG_CONSOLE_INPUT_LINE_SIZE to copy and paste scripts.
+ */
+#define CONFIG_UART_RX_BUF_SIZE 128
+
+/* Use DMA for UART input */
+#undef CONFIG_UART_RX_DMA
+
+/*
+ * On some platforms, UART receive DMA can't trigger an interrupt when a single
+ * character is received.  Those platforms poll for characters every HOOK_TICK.
+ * When a character is received, make this many additional checks between then
+ * and the next HOOK_TICK, to increase responsiveness of the console to input.
+ */
+#define CONFIG_UART_RX_DMA_RECHECKS 5
+
+/*
  * UART transmit buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.
  */
@@ -620,13 +638,6 @@
 
 /* Use DMA for UART output */
 #undef CONFIG_UART_TX_DMA
-
-/*
- * UART receive buffer size in bytes.  Must be a power of 2 for macros in
- * common/uart_buffering.c to work properly.  Must be larger than
- * CONFIG_CONSOLE_INPUT_LINE_SIZE to copy and paste scripts.
- */
-#define CONFIG_UART_RX_BUF_SIZE 128
 
 /*****************************************************************************/
 

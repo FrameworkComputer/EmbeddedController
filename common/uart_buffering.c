@@ -9,10 +9,12 @@
 
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "util.h"
 
@@ -27,6 +29,14 @@
 
 /* ASCII control character; for example, CTRL('C') = ^C */
 #define CTRL(c) ((c) - '@')
+
+/*
+ * Interval between rechecking the receive DMA head pointer, after a character
+ * of input has been detected by the normal tick task.  There will be
+ * CONFIG_UART_RX_DMA_RECHECKS rechecks between this tick and the next tick.
+ */
+#define RX_DMA_RECHECK_INTERVAL (HOOK_TICK_INTERVAL /			\
+				 (CONFIG_UART_RX_DMA_RECHECKS + 1))
 
 /* Transmit and receive buffers */
 static volatile char tx_buf[CONFIG_UART_TX_BUF_SIZE];
@@ -70,7 +80,7 @@ static int __tx_char(void *context, int c)
 /**
  * Process UART output via DMA
  */
-static void uart_process_output_dma(void)
+void uart_process_output(void)
 {
 	/* Size of current DMA transfer */
 	static int tx_dma_in_progress;
@@ -80,6 +90,9 @@ static void uart_process_output_dma(void)
 	 * or interrupt adds output during this call.
 	 */
 	int head = tx_buf_head;
+
+	if (uart_suspended)
+		return;
 
 	/* If DMA is still busy, nothing to do. */
 	if(!uart_tx_dma_ready())
@@ -108,16 +121,13 @@ static void uart_process_output_dma(void)
 	uart_tx_dma_start((char *)(tx_buf + tx_buf_tail), tx_dma_in_progress);
 }
 
-#endif /* CONFIG_UART_TX_DMA */
+#else /* !CONFIG_UART_TX_DMA */
 
 void uart_process_output(void)
 {
 	if (uart_suspended)
 		return;
 
-#ifdef CONFIG_UART_TX_DMA
-	uart_process_output_dma();
-#else
 	/* Copy output from buffer until TX fifo full or output buffer empty */
 	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
 		uart_write_char(tx_buf[tx_buf_tail]);
@@ -127,8 +137,56 @@ void uart_process_output(void)
 	/* If output buffer is empty, disable transmit interrupt */
 	if (tx_buf_tail == tx_buf_head)
 		uart_tx_stop();
-#endif
 }
+
+#endif /* !CONFIG_UART_TX_DMA */
+
+#ifdef CONFIG_UART_RX_DMA
+
+void uart_process_input(void)
+{
+	static int fast_rechecks;
+	int cur_head = rx_buf_head;
+
+	int i;
+
+	/* Update receive buffer head from current DMA receive pointer */
+	rx_buf_head = uart_rx_dma_head();
+
+	/* Handle software flow control characters */
+	for (i = cur_head; i != rx_buf_head; i = RX_BUF_NEXT(i)) {
+		int c = rx_buf[i];
+
+		if (c == CTRL('Q')) {
+			/* Software flow control - XOFF */
+			uart_suspended = 1;
+			uart_tx_stop();
+		} else if (c == CTRL('S')) {
+			/* Software flow control - XON */
+			uart_suspended = 0;
+			uart_tx_start();
+		}
+	}
+
+	if (rx_buf_head != cur_head) {
+		console_has_input();
+		fast_rechecks = CONFIG_UART_RX_DMA_RECHECKS;
+	}
+
+	/*
+	 * Input is checked once a tick when the console is idle.  When input
+	 * is received, check more frequently for a bit, so that the console is
+	 * more responsive.
+	 */
+	if (fast_rechecks) {
+		fast_rechecks--;
+		hook_call_deferred(uart_process_input, RX_DMA_RECHECK_INTERVAL);
+	}
+}
+DECLARE_HOOK(HOOK_TICK, uart_process_input, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(uart_process_input);
+
+#else /* !CONFIG_UART_RX_DMA */
 
 void uart_process_input(void)
 {
@@ -151,14 +209,15 @@ void uart_process_input(void)
 			/* Buffer all other input */
 			rx_buf[rx_buf_head] = c;
 			rx_buf_head = rx_buf_next;
+			got_input = 1;
 		}
-
-		got_input = 1;
 	}
 
 	if (got_input)
 		console_has_input();
 }
+
+#endif /* !CONFIG_UART_RX_DMA */
 
 int uart_putc(int c)
 {
@@ -241,26 +300,27 @@ void uart_flush_output(void)
 
 int uart_getc(void)
 {
-	int c;
-
-	/* Disable interrupts */
-	uart_disable_interrupt();
-
-	/* Call interrupt handler to empty the hardware FIFO */
-	uart_process_input();
-
-	if (rx_buf_tail == rx_buf_head) {
-		c = -1;  /* No pending input */
-	} else {
-		c = rx_buf[rx_buf_tail];
+	/* Look for a non-flow-control character */
+	while(rx_buf_tail != rx_buf_head) {
+		int c = rx_buf[rx_buf_tail];
 		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+
+		if (c != CTRL('Q') && c != CTRL('S'))
+			return c;
 	}
 
-	/* Re-enable interrupts */
-	uart_enable_interrupt();
-
-	return c;
+	/* If we're still here, no input */
+	return -1;
 }
+
+#ifdef CONFIG_UART_RX_DMA
+static void uart_rx_dma_init(void)
+{
+	/* Start receiving */
+	uart_rx_dma_start((char *)rx_buf, CONFIG_UART_RX_BUF_SIZE);
+}
+DECLARE_HOOK(HOOK_INIT, uart_rx_dma_init, HOOK_PRIO_DEFAULT);
+#endif
 
 /*****************************************************************************/
 /* Host commands */

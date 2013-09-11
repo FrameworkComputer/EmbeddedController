@@ -31,6 +31,17 @@ static const struct dma_option dma_tx_option = {
 #define UART_TX_INT_ENABLE STM32_USART_CR1_TXEIE
 #endif
 
+#ifdef CONFIG_UART_RX_DMA
+/* DMA channel options; assumes UART1 */
+static const struct dma_option dma_rx_option = {
+	STM32_DMAC_USART1_RX, (void *)&STM32_USART_DR(UARTN),
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+	STM32_DMA_CCR_CIRC
+};
+
+static int dma_rx_len;   /* Size of receive DMA circular buffer */
+#endif
+
 static int init_done;    /* Initialization done? */
 static int should_stop;  /* Last TX control action */
 
@@ -95,6 +106,23 @@ int uart_rx_available(void)
 	return STM32_USART_SR(UARTN) & STM32_USART_SR_RXNE;
 }
 
+#ifdef CONFIG_UART_RX_DMA
+
+void uart_rx_dma_start(char *dest, int len)
+{
+	/* Start receiving */
+	dma_rx_len = len;
+	dma_start_rx(&dma_rx_option, len, dest);
+}
+
+int uart_rx_dma_head(void)
+{
+	return dma_bytes_done(dma_get_channel(STM32_DMAC_USART1_RX),
+			      dma_rx_len);
+}
+
+#endif
+
 void uart_write_char(char c)
 {
 	/* Wait for space */
@@ -134,14 +162,21 @@ static void uart_interrupt(void)
 	STM32_USART_CR1(UARTN) &= ~STM32_USART_CR1_TXEIE;
 #endif
 
-	/* Read input FIFO until empty, then fill output FIFO */
+#ifndef CONFIG_UART_RX_DMA
+	/*
+	 * Read input FIFO until empty.  DMA-based receive does this from a
+	 * hook in the UART buffering module.
+	 */
 	uart_process_input();
+#endif
+
+	/* Fill output FIFO */
 	uart_process_output();
 
 #ifndef CONFIG_UART_TX_DMA
 	/*
 	 * Re-enable TX empty interrupt only if it was not disabled by
-	 * uart_process.
+	 * uart_process_output().
 	 */
 	if (!should_stop)
 		STM32_USART_CR1(UARTN) |= STM32_USART_CR1_TXEIE;
@@ -194,11 +229,10 @@ void uart_init(void)
 
 	/*
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,
-	 * RXNE interrupt, TX and RX enabled.
+	 * TX and RX enabled.
 	 */
 	STM32_USART_CR1(UARTN) =
-		STM32_USART_CR1_UE | STM32_USART_CR1_RXNEIE |
-		STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
 
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN) = 0x0000;
@@ -209,6 +243,14 @@ void uart_init(void)
 #else
 	/* DMA disabled, special modes disabled, error interrupt disabled */
 	STM32_USART_CR3(UARTN) = 0x0000;
+#endif
+
+#ifdef CONFIG_UART_RX_DMA
+	/* Enable DMA receiver */
+	STM32_USART_CR3(UARTN) |= STM32_USART_CR3_DMAR;
+#else
+	/* Enable receive-not-empty interrupt */
+	STM32_USART_CR1(UARTN) |= STM32_USART_CR1_RXNEIE;
 #endif
 
 #ifdef CHIP_FAMILY_stm32l

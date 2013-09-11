@@ -119,6 +119,26 @@ void uart_tx_dma_start(const char *src, int len);
 int uart_rx_available(void);
 
 /**
+ * Start a UART receive DMA transfer.
+ *
+ * DMA will be configured in circular buffer mode, so received characters
+ * will be stored into the buffer continuously.
+ *
+ * @param dest		Pointer to destination buffer
+ * @param len		Length of buffer in bytes
+ */
+void uart_rx_dma_start(char *dest, int len);
+
+/**
+ * Return the head of the receive DMA transfer buffer
+ *
+ * This is the next offset in the buffer which will receive a character, and
+ * will be from 0..(len-1) where len is the buffer length passed to
+ * uart_rx_dma_start().
+ */
+int uart_rx_dma_head(void);
+
+/**
  * Send a character to the UART data register.
  *
  * If the transmit FIFO is full, blocks until there is space.

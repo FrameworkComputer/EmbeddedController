@@ -50,7 +50,8 @@
 /* Use DMA */
 #define CONFIG_DMA
 
-/* Use DMA for UART output */
+/* Use DMA for UART I/O */
+#define CONFIG_UART_RX_DMA
 #define CONFIG_UART_TX_DMA
 
 /* Flash protection applies to the next boot, not the current one */
