@@ -165,10 +165,8 @@ static void set_turbo(int on)
 {
 	int tmp, r;
 
-	if (ac_turbo == on)
-		return;
-
-	CPRINTF("[%T turbo mode => %d]\n", on);
+	if (ac_turbo != on)
+		CPRINTF("[%T turbo mode => %d]\n", on);
 
 	/* Set/clear turbo mode in charger */
 	r = charger_get_option(&tmp);
@@ -184,7 +182,9 @@ static void set_turbo(int on)
 	if (r != EC_SUCCESS)
 		goto bad;
 
-	/* Set allowed Io based on adapter */
+	/* Set allowed Io based on adapter. The charger will sometimes change
+	 * this setting all by itself due to inrush current limiting, so we
+	 * can't assume it stays where we put it. */
 	r = charger_set_input_current(ad_input_current[ac_adapter][on]);
 	if (r != EC_SUCCESS)
 		goto bad;
@@ -287,18 +287,17 @@ void watch_adapter_closely(struct power_state_context *ctx)
 		} else if (ctx->curr.batt.state_of_charge > 15) {
 			set_turbo(1);
 		}
+	} else {
+		/* If we're not on AC, we can't monitor the current,
+		 * so watch for its return.
+		 */
+		ac_turbo = -1;
 	}
 
 	/* If the AP is off, we won't need to throttle it. */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
 			     CHIPSET_STATE_SUSPEND))
 		return;
-
-	/* And if we're not on AC, we can't monitor the current. */
-	if (!extpower_is_present()) {
-		ac_turbo = -1;			/* watch for its return */
-		return;
-	}
 
 	/* Check all the thresholds. */
 	current = adc_read_channel(ADC_CH_CHARGER_CURRENT);
