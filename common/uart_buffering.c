@@ -146,8 +146,7 @@ void uart_process_input(void)
 		} else if (c == CTRL('S')) {
 			/* Software flow control - XON */
 			uart_suspended = 0;
-			if (uart_tx_stopped())
-				uart_tx_start();
+			uart_tx_start();
 		} else if (rx_buf_next != rx_buf_tail) {
 			/* Buffer all other input */
 			rx_buf[rx_buf_head] = c;
@@ -165,7 +164,7 @@ int uart_putc(int c)
 {
 	int rv = __tx_char(NULL, c);
 
-	if (!uart_suspended && uart_tx_stopped())
+	if (!uart_suspended)
 		uart_tx_start();
 
 	return rv ? EC_ERROR_OVERFLOW : EC_SUCCESS;
@@ -179,7 +178,7 @@ int uart_puts(const char *outstr)
 			break;
 	}
 
-	if (!uart_suspended && uart_tx_stopped())
+	if (!uart_suspended)
 		uart_tx_start();
 
 	/* Successful if we consumed all output */
@@ -190,7 +189,7 @@ int uart_vprintf(const char *format, va_list args)
 {
 	int rv = vfnprintf(__tx_char, NULL, format, args);
 
-	if (!uart_suspended && uart_tx_stopped())
+	if (!uart_suspended)
 		uart_tx_start();
 
 	return rv;
@@ -222,7 +221,7 @@ void uart_flush_output(void)
 			 * we're in now.
 			 */
 			uart_process_output();
-		} else if (uart_tx_stopped()) {
+		} else {
 			/*
 			 * It's possible we switched from a previous context
 			 * which was doing a printf() or puts() but hadn't

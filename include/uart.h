@@ -149,8 +149,8 @@ void uart_enable_interrupt(void);
 /**
  * Re-enable the UART transmit interrupt.
  *
- * This also forces triggering an interrupt if the hardware doesn't
- * automatically trigger it when the transmit buffer was filled beforehand.
+ * This also forces triggering a UART interrupt, if the transmit interrupt was
+ * disabled.
  */
 void uart_tx_start(void);
 
@@ -158,11 +158,6 @@ void uart_tx_start(void);
  * Disable the UART transmit interrupt.
  */
 void uart_tx_stop(void);
-
-/**
- * Return non-zero if the UART transmit interrupt is disabled.
- */
-int uart_tx_stopped(void);
 
 /**
  * Helper for processing UART input.

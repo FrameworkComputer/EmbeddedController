@@ -25,6 +25,10 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
+	/* If interrupt is already enabled, nothing to do */
+	if (LM4_UART_IM(0) & 0x20)
+		return;
+
 	/*
 	 * Re-enable the transmit interrupt, then forcibly trigger the
 	 * interrupt.  This works around a hardware problem with the
@@ -38,11 +42,6 @@ void uart_tx_start(void)
 void uart_tx_stop(void)
 {
 	LM4_UART_IM(0) &= ~0x20;
-}
-
-int uart_tx_stopped(void)
-{
-	return !(LM4_UART_IM(0) & 0x20);
 }
 
 void uart_tx_flush(void)

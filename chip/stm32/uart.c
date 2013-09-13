@@ -41,6 +41,10 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
+	/* If interrupt is already enabled, nothing to do */
+	if (STM32_USART_CR1(UARTN) & UART_TX_INT_ENABLE)
+		return;
+
 	disable_sleep(SLEEP_MASK_UART);
 	should_stop = 0;
 	STM32_USART_CR1(UARTN) |= UART_TX_INT_ENABLE;
@@ -52,11 +56,6 @@ void uart_tx_stop(void)
 	STM32_USART_CR1(UARTN) &= ~UART_TX_INT_ENABLE;
 	should_stop = 1;
 	enable_sleep(SLEEP_MASK_UART);
-}
-
-int uart_tx_stopped(void)
-{
-	return !(STM32_USART_CR1(UARTN) & UART_TX_INT_ENABLE);
 }
 
 void uart_tx_flush(void)
