@@ -58,7 +58,7 @@ int ad_input_current[][NUM_AC_TURBO_STATES] = {
 	 * because the BQ24738 Input Current Register masks off bits 6-0.
 	 * FIXME: That constraint may vary with other chargers. */
 	{0x0a00, 0x0a00},			/* ADAPTER_UNKNOWN */
-	{0x0a00, 0x0800},			/* ADAPTER_45W */
+	{0x0600, 0x0800},			/* ADAPTER_45W */
 	{0x0a00, 0x0c00},			/* ADAPTER_65W */
 	{0x0f00, 0x1100}			/* ADAPTER_90W */
 };
