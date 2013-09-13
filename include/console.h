@@ -48,6 +48,7 @@ enum console_channel {
 	CC_THERMAL,
 	CC_USBCHARGE,
 	CC_VBOOT,
+	CC_HOOK,
 	/* Channel count; not itself a channel */
 	CC_CHANNEL_COUNT
 };

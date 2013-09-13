@@ -388,6 +388,11 @@
 #undef CONFIG_HOST_COMMAND_STATUS
 
 /*****************************************************************************/
+
+/* Compile support for hooks debug and statistic function */
+#undef CONFIG_HOOK_DEBUG
+
+/*****************************************************************************/
 /* I2C configuration */
 
 #undef CONFIG_I2C
