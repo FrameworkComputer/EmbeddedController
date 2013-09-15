@@ -5,11 +5,9 @@
  * Smart battery driver.
  */
 
-#include "console.h"
 #include "host_command.h"
 #include "smart_battery.h"
 #include "timer.h"
-#include "util.h"
 
 test_mockable int sbc_read(int cmd, int *param)
 {
@@ -301,82 +299,6 @@ test_mockable int battery_device_chemistry(char *device_chemistry, int buf_size)
 	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 		SB_DEVICE_CHEMISTRY, device_chemistry, buf_size);
 }
-
-/*****************************************************************************/
-/* Console commands */
-
-/* Usage:sb reg [value]
- *     sb 0x14       // read desired charging current
- *     sb 0x15       // read desired charging voltage
- *     sb 0x3        // read battery mode
- *     sb 0x3 0xe001 // set battery mode to 0xe001
- */
-static int command_sb(int argc, char **argv)
-{
-	int rv;
-	int cmd, d;
-	char *e;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	cmd = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	if (argc > 2) {
-		d = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM3;
-		return sb_write(cmd, d);
-	}
-
-	rv = sb_read(cmd, &d);
-	if (rv)
-		return rv;
-
-	ccprintf("0x%04x (%d)\n", d, d);
-	return EC_SUCCESS;
-}
-
-DECLARE_CONSOLE_COMMAND(sb, command_sb,
-			"reg [value]",
-			"Read/write smart battery registers",
-			NULL);
-
-static int command_sbc(int argc, char **argv)
-{
-	int rv;
-	int cmd, d;
-	char *e;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	cmd = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	if (argc > 2) {
-		d = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM3;
-		return sbc_write(cmd, d);
-	}
-
-	rv = sbc_read(cmd, &d);
-	if (rv)
-		return rv;
-
-	ccprintf("0x%04x (%d)\n", d, d);
-	return EC_SUCCESS;
-}
-
-DECLARE_CONSOLE_COMMAND(sbc, command_sbc,
-			"reg [value]",
-			"Read/write smart battery controller registers",
-			NULL);
-
 
 /*****************************************************************************/
 /* Smart battery pass-through
