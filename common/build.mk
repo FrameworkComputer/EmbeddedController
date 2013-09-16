@@ -22,7 +22,6 @@ common-$(CONFIG_BACKLIGHT_X86)+=backlight_x86.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o battery_bq27541.o
 common-$(CONFIG_BATTERY_LINK)+=battery_link.o
-common-$(CONFIG_BATTERY_MOCK)+=mock_smart_battery.o mock_charger.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o smart_battery.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger_common.o
 common-$(CONFIG_CHARGER_BQ24192)+=charger_bq24192.o
