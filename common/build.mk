@@ -11,19 +11,17 @@ common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
 common-y+=gpio_common.o version.o printf.o queue.o
 common-y+=throttle_ap.o
 
-common-$(BOARD_bolt)+=battery_link.o
 common-$(BOARD_daisy)+=extpower_snow.o
-common-$(BOARD_falco)+=battery_falco.o led_falco.o
-common-$(BOARD_kirby)+=battery_kirby.o led_kirby.o
-common-$(BOARD_link)+=battery_link.o
-common-$(BOARD_peppy)+=battery_peppy.o led_common.o led_peppy.o
-common-$(BOARD_slippy)+=battery_slippy.o led_slippy.o
+common-$(BOARD_falco)+=led_falco.o
+common-$(BOARD_kirby)+=led_kirby.o
+common-$(BOARD_peppy)+=led_common.o led_peppy.o
+common-$(BOARD_slippy)+=led_slippy.o
 common-$(BOARD_snow)+=extpower_snow.o
-common-$(BOARD_spring)+=battery_spring.o
 
 common-$(CONFIG_BACKLIGHT_X86)+=backlight_x86.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o battery_bq27541.o
+common-$(CONFIG_BATTERY_LINK)+=battery_link.o
 common-$(CONFIG_BATTERY_MOCK)+=mock_smart_battery.o mock_charger.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o smart_battery.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger_common.o

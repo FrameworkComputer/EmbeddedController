@@ -55,11 +55,16 @@
 /*****************************************************************************/
 /* Battery config */
 
-/* Compile support for the BQ20Z453 battery used on some of the ARM laptops */
-#undef CONFIG_BATTERY_BQ20Z453
-
-/* Compile support for the BQ27541 battery */
-#undef CONFIG_BATTERY_BQ27541
+/*
+ * Compile battery-specific code.  Choose at most one.
+ *
+ * Note that some boards have their own unique battery constants / functions.
+ * In this case, those are provided in board/(boardname)/battery.c, and none of
+ * these are defined.
+ */
+#undef CONFIG_BATTERY_BQ20Z453	/* BQ20Z453 battery used on some ARM laptops */
+#undef CONFIG_BATTERY_BQ27541	/* BQ27541 battery */
+#undef CONFIG_BATTERY_LINK	/* Battery used on Link, Bolt, etc. */
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
