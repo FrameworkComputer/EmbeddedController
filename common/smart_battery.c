@@ -21,12 +21,12 @@ test_mockable int sbc_write(int cmd, int param)
 	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
 }
 
-test_mockable int sb_read(int cmd, int *param)
+int sb_read(int cmd, int *param)
 {
 	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
 }
 
-test_mockable int sb_write(int cmd, int param)
+int sb_write(int cmd, int param)
 {
 	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
 }

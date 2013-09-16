@@ -10,52 +10,45 @@
 #include "console.h"
 #include "smart_battery.h"
 #include "smart_battery_stub.h"
+#include "test_util.h"
 #include "uart.h"
 #include "util.h"
 
 static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];
 
-int sb_read(int cmd, int *param)
+int sb_i2c_read16(int port, int slave_addr, int offset, int *data)
 {
-	if (cmd >= ARRAY_SIZE(mock_smart_battery))
-		return EC_ERROR_UNIMPLEMENTED;
-	if (cmd < 0 || param == NULL)
+	if (port != I2C_PORT_BATTERY || slave_addr != BATTERY_ADDR)
 		return EC_ERROR_INVAL;
-	*param = mock_smart_battery[cmd];
-	return EC_SUCCESS;
-}
-
-int sb_write(int cmd, int param)
-{
-	if (cmd >= ARRAY_SIZE(mock_smart_battery))
+	if (offset >= ARRAY_SIZE(mock_smart_battery))
 		return EC_ERROR_UNIMPLEMENTED;
-	if (cmd < 0)
+	if (offset < 0 || data == NULL)
 		return EC_ERROR_INVAL;
-	mock_smart_battery[cmd] = param;
+	*data = mock_smart_battery[offset];
 	return EC_SUCCESS;
 }
+DECLARE_TEST_I2C_READ16(sb_i2c_read16);
 
-int battery_manufacturer_name(char *manufacturer_name, int buf_size)
+int sb_i2c_write16(int port, int slave_addr, int offset, int data)
 {
+	if (port != I2C_PORT_BATTERY || slave_addr != BATTERY_ADDR)
+		return EC_ERROR_INVAL;
+	if (offset >= ARRAY_SIZE(mock_smart_battery))
+		return EC_ERROR_UNIMPLEMENTED;
+	if (offset < 0)
+		return EC_ERROR_INVAL;
+	mock_smart_battery[offset] = data;
 	return EC_SUCCESS;
 }
+DECLARE_TEST_I2C_WRITE16(sb_i2c_write16);
 
-int battery_device_name(char *device_name, int buf_size)
-{
-	return EC_SUCCESS;
-}
-
-int battery_device_chemistry(char *device_chemistry, int buf_size)
+int sb_i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
+		       int len)
 {
 	return EC_SUCCESS;
 }
 
 int battery_time_at_rate(int rate, int *minutes)
-{
-	return EC_SUCCESS;
-}
-
-int battery_manufacturer_date(int *year, int *month, int *day)
 {
 	return EC_SUCCESS;
 }
