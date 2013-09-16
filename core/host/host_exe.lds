@@ -83,6 +83,26 @@ SECTIONS {
     __deferred_funcs = .;
     *(.rodata.deferred)
     __deferred_funcs_end = .;
+
+    __test_i2c_read8 = .;
+    *(.rodata.test_i2c.read8)
+    __test_i2c_read8_end = .;
+
+    __test_i2c_write8 = .;
+    *(.rodata.test_i2c.write8)
+    __test_i2c_write8_end = .;
+
+    __test_i2c_read16 = .;
+    *(.rodata.test_i2c.read16)
+    __test_i2c_read16_end = .;
+
+    __test_i2c_write16 = .;
+    *(.rodata.test_i2c.write16)
+    __test_i2c_write16_end = .;
+
+    __test_i2c_read_string = .;
+    *(.rodata.test_i2c.read_string)
+    __test_i2c_read_string_end = .;
   }
 }
 INSERT BEFORE .rodata;

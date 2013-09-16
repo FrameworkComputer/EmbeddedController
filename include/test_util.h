@@ -165,4 +165,57 @@ void test_clean_up(void);
 /* Set the next step and reboot */
 void test_reboot_to_next_step(enum test_state_t step);
 
+struct test_i2c_read_string_dev {
+	/* I2C string read handler */
+	int (*routine)(int port, int slave_addr, int offset, uint8_t *data,
+		       int len);
+};
+
+struct test_i2c_read_dev {
+	/* I2C read handler */
+	int (*routine)(int port, int slave_addr, int offset, int *data);
+};
+
+struct test_i2c_write_dev {
+	/* I2C write handler */
+	int (*routine)(int port, int slave_addr, int offset, int data);
+};
+
+/**
+ * Register an I2C 8-bit read function.
+ *
+ * When this function is called, it should either perform the desired
+ * mock functionality, or return EC_ERROR_INVAL to indicate it does
+ * not respond to the specified port and slave address.
+ *
+ * @param routine     Function pointer, with the same prototype as i2c_read8()
+ */
+#define DECLARE_TEST_I2C_READ8(routine)					\
+	const struct test_i2c_read_dev __test_i2c_read8_##routine	\
+	__attribute__((section(".rodata.test_i2c.read8")))		\
+		= {routine}
+
+/* Register an I2C 8-bit write function. */
+#define DECLARE_TEST_I2C_WRITE8(routine)				\
+	const struct test_i2c_write_dev __test_i2c_write8_##routine	\
+	__attribute__((section(".rodata.test_i2c.write8")))		\
+		= {routine}
+
+/* Register an I2C 16-bit read function. */
+#define DECLARE_TEST_I2C_READ16(routine)				\
+	const struct test_i2c_read_dev __test_i2c_read16_##routine	\
+	__attribute__((section(".rodata.test_i2c.read16")))		\
+		= {routine}
+
+/* Register an I2C 16-bit write function. */
+#define DECLARE_TEST_I2C_WRITE16(routine)				\
+	const struct test_i2c_write_dev __test_i2c_write16_##routine	\
+	__attribute__((section(".rodata.test_i2c.write16")))		\
+		= {routine}
+
+#define DECLARE_TEST_I2C_READ_STRING(routine)				\
+	const struct test_i2c_read_string_dev __test_i2c_rs_##routine	\
+	__attribute__((section(".rodata.test_i2c.read_string")))	\
+		= {routine}
+
 #endif /* __CROS_EC_TEST_UTIL_H */
