@@ -1270,7 +1270,7 @@ int cmd_fanduty(int argc, char *argv[])
 
 #define LBMSG(state) #state
 #include "lightbar_msg_list.h"
-static const char const *lightbar_cmds[] = {
+static const char * const lightbar_cmds[] = {
 	LIGHTBAR_MSG_LIST
 };
 #undef LBMSG
