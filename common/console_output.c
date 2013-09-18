@@ -18,7 +18,7 @@ static uint32_t channel_mask_saved = CC_DEFAULT;
 
 /* List of channel names; must match enum console_channel. */
 /* TODO: move this to board.c */
-static const char *channel_names[CC_CHANNEL_COUNT] = {
+static const char * const channel_names[] = {
 	"command",
 	"charger",
 	"chipset",
@@ -40,7 +40,9 @@ static const char *channel_names[CC_CHANNEL_COUNT] = {
 	"thermal",
 	"usbcharge",
 	"vboot",
+	"hook",
 };
+BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
 
 /*****************************************************************************/
 /* Channel-based console output */
