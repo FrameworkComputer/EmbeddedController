@@ -6,6 +6,7 @@
 
 #include "adc.h"
 #include "common.h"
+#include "chipset.h"
 #include "extpower.h"
 #include "gaia_power.h"
 #include "gpio.h"
@@ -140,16 +141,13 @@ const struct i2c_port_t i2c_ports[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
 
-static void board_enable_backlight(void)
+static void board_update_backlight(void)
 {
-	gpio_set_level(GPIO_BST_LED_EN, 1);
+	gpio_set_level(GPIO_BST_LED_EN, chipset_in_state(CHIPSET_STATE_ON) ||
+		gpio_get_level(GPIO_LID_OPEN));
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_enable_backlight, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_enable_backlight, HOOK_PRIO_DEFAULT);
-
-static void board_disable_backlight(void)
-{
-	gpio_set_level(GPIO_BST_LED_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_disable_backlight, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_disable_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_update_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_update_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_update_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_update_backlight, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_LID_CHANGE, board_update_backlight, HOOK_PRIO_DEFAULT);
