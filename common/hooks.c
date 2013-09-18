@@ -58,6 +58,33 @@ static int defer_new_call;
 static uint64_t max_hook_tick_delay;
 static uint64_t max_hook_second_delay;
 static uint64_t max_hook_run_time[ARRAY_SIZE(hook_list)];
+
+static uint64_t avg_hook_tick_delay;
+static uint64_t avg_hook_second_delay;
+static uint64_t avg_hook_run_time[ARRAY_SIZE(hook_list)];
+
+static inline void update_hook_average(uint64_t *avg, uint64_t time)
+{
+	*avg = (*avg * 7 + time) >> 3;
+}
+
+static void record_hook_delay(uint64_t now, uint64_t last, uint64_t interval,
+			      uint64_t *max_delay, uint64_t *avg_delay)
+{
+	uint64_t delayed = now - last - interval;
+	/* Ignore the first call */
+	if (last == -interval)
+		return;
+
+	if (delayed > *max_delay)
+		*max_delay = delayed;
+	update_hook_average(avg_delay, delayed);
+
+	/* Warn if delayed by more than 10% */
+	if (delayed * 10 > interval)
+		CPRINTF("Hook at interval %d us delayed by %d us\n",
+			(uint32_t)interval, (uint32_t)delayed);
+}
 #endif
 
 void hook_notify(enum hook_type type)
@@ -98,6 +125,7 @@ void hook_notify(enum hook_type type)
 	run_time = get_time().val - start_time;
 	if (run_time > max_hook_run_time[type])
 		max_hook_run_time[type] = run_time;
+	update_hook_average(avg_hook_run_time + type, run_time);
 #endif
 }
 
@@ -167,10 +195,9 @@ void hook_task(void)
 
 		if (t - last_tick >= HOOK_TICK_INTERVAL) {
 #ifdef CONFIG_HOOK_DEBUG
-			uint64_t delayed = t - last_tick - HOOK_TICK_INTERVAL;
-			if (last_tick != -HOOK_TICK_INTERVAL &&
-			    delayed > max_hook_tick_delay)
-				max_hook_tick_delay = delayed;
+			record_hook_delay(t, last_tick, HOOK_TICK_INTERVAL,
+					  &max_hook_tick_delay,
+					  &avg_hook_tick_delay);
 #endif
 			hook_notify(HOOK_TICK);
 			last_tick = t;
@@ -178,10 +205,9 @@ void hook_task(void)
 
 		if (t - last_second >= SECOND) {
 #ifdef CONFIG_HOOK_DEBUG
-			uint64_t delayed = t - last_second - SECOND;
-			if (last_second != -SECOND &&
-			    delayed > max_hook_second_delay)
-				max_hook_second_delay = delayed;
+			record_hook_delay(t, last_second, SECOND,
+					  &max_hook_second_delay,
+					  &avg_hook_second_delay);
 #endif
 			hook_notify(HOOK_SECOND);
 			last_second = t;
@@ -218,12 +244,14 @@ void hook_task(void)
 /* Console commands */
 
 #ifdef CONFIG_HOOK_DEBUG
-static void print_hook_delay(uint32_t interval, uint32_t delay)
+static void print_hook_delay(uint32_t interval, uint32_t delay, uint32_t avg)
 {
 	int percentage = delay * 100 / interval;
+	int percent_avg = avg * 100 / interval;
 
 	ccprintf("  Interval:    %7d us\n", interval);
 	ccprintf("  Max delayed: %7d us (%d%%)\n\n", delay, percentage);
+	ccprintf("  Average:     %7d us (%d%%)\n\n", avg, percent_avg);
 }
 
 static int command_stats(int argc, char **argv)
@@ -231,14 +259,17 @@ static int command_stats(int argc, char **argv)
 	int i;
 
 	ccprintf("HOOK_TICK:\n");
-	print_hook_delay(HOOK_TICK_INTERVAL, max_hook_tick_delay);
+	print_hook_delay(HOOK_TICK_INTERVAL, max_hook_tick_delay,
+			 avg_hook_tick_delay);
 
 	ccprintf("HOOK_SECOND:\n");
-	print_hook_delay(SECOND, max_hook_second_delay);
+	print_hook_delay(SECOND, max_hook_second_delay, avg_hook_second_delay);
 
 	ccprintf("Max run time for each hook:\n");
 	for (i = 0; i < ARRAY_SIZE(hook_list); ++i)
-		ccprintf("%3d:%6d us\n", i, (uint32_t)max_hook_run_time[i]);
+		ccprintf("%3d:%6d us (Avg: %5d us)\n", i,
+			 (uint32_t)max_hook_run_time[i],
+			 (uint32_t)avg_hook_run_time[i]);
 
 	return EC_SUCCESS;
 }
