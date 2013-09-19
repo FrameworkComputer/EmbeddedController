@@ -5,6 +5,7 @@
 
 /* UART module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -14,7 +15,9 @@
 #include "uart.h"
 #include "util.h"
 
+#ifdef CONFIG_UART_HOST
 #define CONFIG_UART_HOST_IRQ CONCAT2(LM4_IRQ_UART, CONFIG_UART_HOST)
+#endif
 
 static int init_done;
 
@@ -107,6 +110,8 @@ static void uart_ec_interrupt(void)
 }
 DECLARE_IRQ(LM4_IRQ_UART0, uart_ec_interrupt, 1);
 
+#ifdef CONFIG_UART_HOST
+
 /**
  * Interrupt handler for Host UART
  */
@@ -138,6 +143,8 @@ static void uart_host_interrupt(void)
 }
 /* Must be same prio as LPC interrupt handler so they don't preempt */
 DECLARE_IRQ(CONFIG_UART_HOST_IRQ, uart_host_interrupt, 2);
+
+#endif /* CONFIG_UART_HOST */
 
 static void uart_config(int port)
 {
@@ -173,17 +180,23 @@ static void uart_config(int port)
 
 void uart_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
 	/* Enable UART0 and Host UART and delay a few clocks */
-	LM4_SYSTEM_RCGCUART |= (1 << CONFIG_UART_HOST) | 1;
-	scratch = LM4_SYSTEM_RCGCUART;
+	LM4_SYSTEM_RCGCUART |= 1;
+
+#ifdef CONFIG_UART_HOST
+	LM4_SYSTEM_RCGCUART |= (1 << CONFIG_UART_HOST);
+#endif
+
+	clock_wait_cycles(3);
 
 	gpio_config_module(MODULE_UART, 1);
 
 	/* Configure UARTs (identically) */
 	uart_config(0);
+
+#ifdef CONFIG_UART_HOST
 	uart_config(CONFIG_UART_HOST);
+#endif
 
 	/*
 	 * Enable interrupts for UART0 only. Host UART will have to wait
@@ -197,6 +210,8 @@ void uart_init(void)
 
 /*****************************************************************************/
 /* COMx functions */
+
+#ifdef CONFIG_UART_HOST
 
 void uart_comx_enable(void)
 {
@@ -222,6 +237,8 @@ void uart_comx_putc(int c)
 {
 	LM4_UART_DR(CONFIG_UART_HOST) = c;
 }
+
+#endif /* CONFIG_UART_HOST */
 
 /*****************************************************************************/
 /* Console commands */

@@ -266,6 +266,8 @@ void lpc_keyboard_resume_irq(void)
 		lpc_manual_irq(1);
 }
 
+#ifdef CONFIG_UART_HOST
+
 int lpc_comx_has_char(void)
 {
 	return LM4_LPC_ST(LPC_CH_COMX) & LM4_LPC_ST_FRMH;
@@ -281,6 +283,8 @@ void lpc_comx_put_char(int c)
 	LPC_POOL_COMX[1] = c;
 	/* TODO: manually trigger IRQ, like we do for keyboard? */
 }
+
+#endif /* CONFIG_UART_HOST */
 
 /**
  * Update the host event status.
@@ -599,12 +603,14 @@ static void lpc_interrupt(void)
 	}
 #endif
 
+#ifdef CONFIG_UART_HOST
 	/* Handle COMx */
 	if (lpc_comx_has_char()) {
 		/* Copy a character to the UART if there's space */
 		if (uart_comx_putc_ok())
 			uart_comx_putc(lpc_comx_get_char());
 	}
+#endif
 
 	/* Debugging: print changes to LPC0RESET */
 	if (mis & (1 << 31)) {
@@ -731,6 +737,7 @@ static void lpc_init(void)
 	LM4_LPC_ADR(LPC_CH_MEMMAP) = EC_LPC_ADDR_MEMMAP;
 	LM4_LPC_CTL(LPC_CH_MEMMAP) = 0x0019 | (LPC_POOL_OFFS_MEMMAP << (5 - 1));
 
+#ifdef CONFIG_UART_HOST
 	/*
 	 * Set LPC channel 7 to COM port I/O address.  Note that channel 7
 	 * ignores the TYPE bit and is always an 8-byte range.
@@ -750,6 +757,7 @@ static void lpc_init(void)
 	 * sensible to buffer input anyway.
 	 */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_COMX, 2);
+#endif /* CONFIG_UART_HOST */
 
 	/*
 	 * Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
@@ -764,8 +772,11 @@ static void lpc_init(void)
 		(1 << LPC_CH_CMD_DATA) |
 		(1 << LPC_CH_KEYBOARD) |
 		(1 << LPC_CH_CMD) |
-		(1 << LPC_CH_MEMMAP) |
-		(1 << LPC_CH_COMX);
+		(1 << LPC_CH_MEMMAP);
+
+#ifdef CONFIG_UART_HOST
+	LM4_LPC_LPCCTL |= 1 << LPC_CH_COMX;
+#endif
 
 	/*
 	 * Ensure the EC (slave) has control of the memory-mapped I/O space.
@@ -793,8 +804,10 @@ static void lpc_init(void)
 	/* Enable LPC interrupt */
 	task_enable_irq(LM4_IRQ_LPC);
 
+#ifdef CONFIG_UART_HOST
 	/* Enable COMx UART */
 	uart_comx_enable();
+#endif
 
 	/* Restore event masks if needed */
 	lpc_post_sysjump();
