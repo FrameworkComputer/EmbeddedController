@@ -134,7 +134,7 @@ static void fan_set_thermal_control_enabled(int enable)
 }
 
 /* The thermal task will only call this function with pct in [0,100]. */
-void pwm_fan_set_percent_needed(int pct)
+test_mockable void pwm_fan_set_percent_needed(int pct)
 {
 	int rpm;
 

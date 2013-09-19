@@ -32,6 +32,9 @@ int board_discharge_on_ac(int enabled);
 
 #ifdef TEST_thermal
 #define CONFIG_CHIPSET_CAN_THROTTLE
+#define CONFIG_FAN
+#define CONFIG_FAN_RPM_MAX 5000
+#define CONFIG_FAN_RPM_MIN 1000
 #define CONFIG_TEMP_SENSOR
 #endif
 
@@ -42,6 +45,9 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_EXTPOWER_FALCO
+#define CONFIG_FAN
+#define CONFIG_FAN_RPM_MAX 5000
+#define CONFIG_FAN_RPM_MIN 1000
 #define CONFIG_TEMP_SENSOR
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
