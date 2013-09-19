@@ -35,6 +35,10 @@ proc flash_slippy { } {
 	flash_lm4 ../../../build/slippy/ec.bin 0
 }
 
+proc flash_rambi { } {
+	flash_lm4 ../../../build/rambi/ec.bin 0
+}
+
 # Bolt/slippy/falco/peppy have 128KB images
 proc flash_bolt { } {
 	flash_lm4 ../../../build/bolt/ec.bin 0
@@ -58,6 +62,14 @@ proc flash_falco { } {
 
 proc flash_peppy { } {
 	flash_lm4 ../../../build/peppy/ec.bin 0
+}
+
+proc flash_rambi_ro { } {
+	flash_lm4 ../../../build/rambi/ec.RO.flat 0
+}
+
+proc flash_rambi_rw { } {
+	flash_lm4 ../../../build/rambi/ec.RW.bin 131072
 }
 
 # link has pstate in last sector

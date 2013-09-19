@@ -144,7 +144,7 @@ function free_pty() {
 
 # Board specific flashing scripts
 
-function flash_daisy() {
+function flash_stm32() {
 	TOOL_PATH="${SCRIPT_LOCATION}/../build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	if [ ! -x "$STM32MON" ]; then
@@ -190,7 +190,7 @@ function flash_link() {
 	die "Failed to program ${IMG}"
 }
 
-function flash_slippy() {
+function flash_lm4() {
 	OCD_CFG="servo_v2_slower.cfg"
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
@@ -222,9 +222,9 @@ fi
 save="$(servo_save)"
 
 case "${BOARD}" in
-	puppy | daisy | snow | spring | pit | kirby ) flash_daisy ;;
+	daisy | kirby | pit | puppy | snow | spring ) flash_stm32 ;;
+	bolt | falco | peppy | rambi | slippy ) flash_lm4 ;;
 	link ) flash_link ;;
-	slippy | falco | peppy | bolt ) flash_slippy ;;
 	*) die "board ${BOARD} not supported" ;;
 esac
 

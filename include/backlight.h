@@ -15,6 +15,10 @@
  *
  * @param signal	Signal which triggered the interrupt.
  */
+#ifdef CONFIG_BACKLIGHT_X86
 void backlight_interrupt(enum gpio_signal signal);
+#else
+#define backlight_interrupt NULL
+#endif
 
 #endif  /* __CROS_EC_BACKLIGHT_H */
