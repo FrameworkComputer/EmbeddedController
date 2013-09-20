@@ -89,6 +89,10 @@ enum x86_state x86_handle_state(enum x86_state state);
 /**
  * Interrupt handler for x86 chipset GPIOs.
  */
+#ifdef CONFIG_CHIPSET_X86
 void x86_interrupt(enum gpio_signal signal);
+#else
+#define x86_interrupt NULL
+#endif
 
 #endif  /* __CROS_EC_CHIPSET_X86_COMMON_H */

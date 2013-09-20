@@ -11,6 +11,10 @@
 /**
  * Interrupt handler for Haswell-specific GPIOs.
  */
+#ifdef CONFIG_CHIPSET_HASWELL
 void haswell_interrupt(enum gpio_signal signal);
+#else
+#define haswell_interrupt NULL
+#endif
 
 #endif

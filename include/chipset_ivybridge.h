@@ -11,6 +11,10 @@
 /**
  * Interrupt handler for Ivy Bridge-specific GPIOs.
  */
+#ifdef CONFIG_CHIPSET_IVYBRIDGE
 void ivybridge_interrupt(enum gpio_signal signal);
+#else
+#define ivybridge_interrupt NULL
+#endif
 
 #endif

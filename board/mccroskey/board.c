@@ -164,11 +164,6 @@ void board_i2c_post_init(int port)
 	}
 }
 
-void chipset_reset(int is_cold)
-{
-	/* FIXME: this is just a stub for now... */
-}
-
 void kbd_power_on(enum gpio_signal signal)
 {
 	/* FIXME: this is just a stub for now... */

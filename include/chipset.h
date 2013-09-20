@@ -35,6 +35,7 @@ enum chipset_state_mask {
 };
 
 #ifdef HAS_TASK_CHIPSET
+
 /**
  * Check if chipset is in a given state.
  *
@@ -44,14 +45,7 @@ enum chipset_state_mask {
  * mask.
  */
 int chipset_in_state(int state_mask);
-#else
-static inline int chipset_in_state(int state_mask)
-{
-	return 0;
-}
-#endif
 
-#ifdef HAS_TASK_CHIPSET
 /**
  * Ask the chipset to exit the hard off state.
  *
@@ -59,9 +53,6 @@ static inline int chipset_in_state(int state_mask)
  * state to begin with.
  */
 void chipset_exit_hard_off(void);
-#else
-static inline void chipset_exit_hard_off(void) { }
-#endif
 
 /* This is a private chipset-specific implementation for use only by
  * throttle_ap() . Don't call this directly!
@@ -83,5 +74,23 @@ void chipset_force_shutdown(void);
  *			if 0, just pulse the reset line to the CPU.
  */
 void chipset_reset(int cold_reset);
+
+#else /* !HAS_TASK_CHIPSET */
+/*
+ * Allow other modules to compile if the chipset module is disabled.  This is
+ * commonly done during early stages of board bringup.
+ */
+
+static inline int chipset_in_state(int state_mask)
+{
+	return 0;
+}
+
+static inline void chipset_exit_hard_off(void) { }
+static inline void chipset_throttle_cpu(int throttle) { }
+static inline void chipset_force_shutdown(void) { }
+static inline void chipset_reset(int cold_reset) { }
+
+#endif /* !HAS_TASK_CHIPSET */
 
 #endif  /* __CROS_EC_CHIPSET_H */
