@@ -65,7 +65,7 @@ enum gpio_signal {
 	GPIO_KB_PWR_ON_L = 0,    /* Keyboard power button */
 	GPIO_PP1800_LDO2,      /* LDO2 is ON (end of PMIC sequence) */
 	GPIO_SOC1V8_XPSHOLD,   /* App Processor ON  */
-	GPIO_CHARGER_INT,
+	GPIO_CHARGER_INT_L,
 	GPIO_LID_OPEN,         /* LID switch detection */
 	GPIO_SUSPEND_L,        /* AP suspend/resume state */
 	/* Keyboard inputs */

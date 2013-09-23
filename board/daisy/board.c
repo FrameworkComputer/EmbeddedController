@@ -40,7 +40,7 @@ const struct gpio_info gpio_list[] = {
 	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
 	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_RISING, gaia_power_event},
-	{"CHARGER_INT", GPIO_C, (1<<4),  GPIO_INT_RISING, NULL},
+	{"CHARGER_INT_L", GPIO_C, (1<<4),  GPIO_INT_FALLING, NULL},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
 	{"SUSPEND_L",   GPIO_A, (1<<7),  GPIO_INT_BOTH, gaia_suspend_event},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,

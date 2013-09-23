@@ -92,7 +92,7 @@ enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_KB_PWR_ON_L = 0,
 	GPIO_SOC1V8_XPSHOLD,
-	GPIO_CHARGER_INT,
+	GPIO_CHARGER_INT_L,
 	GPIO_USB_CHG_INT,
 	GPIO_USBPD_INT_L,
 	GPIO_LID_OPEN,

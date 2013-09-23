@@ -394,7 +394,7 @@ void charger_task(void)
 	pmu_init();
 
 	/* Enable charger interrupt */
-	gpio_enable_interrupt(GPIO_CHARGER_INT);
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 
 	/*
 	 * EC STOP mode support
