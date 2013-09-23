@@ -13,11 +13,10 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #    scancode typematic charging
 
 test-list-$(BOARD_bds)+=
-test-list-$(BOARD_daisy)+=kb_scan flash stress
-test-list-$(BOARD_mccroskey)+=flash
-test-list-$(BOARD_pit)+=kb_scan flash stress
-test-list-$(BOARD_snow)+=kb_scan flash stress
-test-list-$(BOARD_spring)+=kb_scan flash stress
+test-list-$(BOARD_daisy)+=kb_scan stress
+test-list-$(BOARD_pit)+=kb_scan stress
+test-list-$(BOARD_snow)+=kb_scan stress
+test-list-$(BOARD_spring)+=kb_scan stress
 
 # Disable x86 boards until they compiles
 # TODO(victoryang): Fix them

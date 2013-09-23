@@ -17,18 +17,13 @@
 #include "timer.h"
 #include "util.h"
 
-static int last_write_offset;
-static int last_write_size;
-static char last_write_data[64];
-
-static int last_erase_offset;
-static int last_erase_size;
-
 static int mock_wp = -1;
 
 static int mock_flash_op_fail = EC_SUCCESS;
 
-const char *testdata = "TestData0000000"; /* 16 bytes */
+const char *testdata = "TestData00000000"; /* 16 bytes excluding NULL end */
+
+char flash_recorded_data[128];
 
 #define BOOT_WP_MASK TEST_STATE_MASK(TEST_STATE_STEP_2)
 
@@ -50,23 +45,9 @@ void host_send_response(struct host_cmd_handler_args *args)
 	/* Do nothing */
 }
 
-int flash_write(int offset, int size, const char *data)
+int flash_pre_op(void)
 {
-	if (mock_flash_op_fail != EC_SUCCESS)
-		return mock_flash_op_fail;
-	last_write_offset = offset;
-	last_write_size = size;
-	memcpy(last_write_data, data, size);
-	return EC_SUCCESS;
-}
-
-int flash_erase(int offset, int size)
-{
-	if (mock_flash_op_fail != EC_SUCCESS)
-		return mock_flash_op_fail;
-	last_erase_offset = offset;
-	last_erase_size = size;
-	return EC_SUCCESS;
+	return mock_flash_op_fail;
 }
 
 int gpio_get_level(enum gpio_signal signal)
@@ -88,23 +69,34 @@ int gpio_get_level(enum gpio_signal signal)
 /*****************************************************************************/
 /* Test utilities */
 
-static void begin_verify(void)
+static void record_flash(int offset, int size)
 {
-	last_write_offset = -1;
-	last_write_size = -1;
-	last_write_data[0] = '\0';
-	last_erase_offset = -1;
-	last_erase_size = -1;
+	memcpy(flash_recorded_data, __host_flash + offset, size);
+}
+
+static int verify_flash(int offset, int size)
+{
+	TEST_ASSERT_ARRAY_EQ(flash_recorded_data, __host_flash + offset, size);
+	return EC_SUCCESS;
 }
 
 static int verify_write(int offset, int size, const char *data)
 {
 	int i;
 
-	if (offset != last_write_offset || size != last_write_size)
-		return EC_ERROR_UNKNOWN;
 	for (i = 0; i < size; ++i)
-		if (data[i] != last_write_data[i])
+		if (__host_flash[offset + i] != data[i])
+			return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
+static int verify_erase(int offset, int size)
+{
+	int i;
+
+	for (i = 0; i < size; ++i)
+		if ((__host_flash[offset + i] & 0xff) != 0xff)
 			return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
@@ -113,31 +105,28 @@ static int verify_write(int offset, int size, const char *data)
 
 #define VERIFY_NO_WRITE(off, sz, d) \
 	do { \
-		begin_verify(); \
+		record_flash(off, sz); \
 		TEST_ASSERT(host_command_write(off, sz, d) != EC_SUCCESS); \
-		TEST_ASSERT(last_write_offset == -1 && last_write_size == -1); \
+		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS); \
 	} while (0)
 
 #define VERIFY_NO_ERASE(off, sz) \
 	do { \
-		begin_verify(); \
+		record_flash(off, sz); \
 		TEST_ASSERT(host_command_erase(off, sz) != EC_SUCCESS); \
-		TEST_ASSERT(last_erase_offset == -1 && last_erase_size == -1); \
+		TEST_ASSERT(verify_flash(off, sz) == EC_SUCCESS); \
 	} while (0)
 
 #define VERIFY_WRITE(off, sz, d) \
 	do { \
-		begin_verify(); \
 		TEST_ASSERT(host_command_write(off, sz, d) == EC_SUCCESS); \
 		TEST_ASSERT(verify_write(off, sz, d) == EC_SUCCESS); \
 	} while (0)
 
 #define VERIFY_ERASE(off, sz) \
 	do { \
-		begin_verify(); \
 		TEST_ASSERT(host_command_erase(off, sz) == EC_SUCCESS); \
-		TEST_ASSERT(last_erase_offset == off && \
-			    last_erase_size == sz); \
+		TEST_ASSERT(verify_erase(off, sz) == EC_SUCCESS); \
 	} while (0)
 
 #define SET_WP_FLAGS(m, f) \
@@ -288,10 +277,10 @@ static int test_overwrite_current(void)
 	mock_is_running_img = 1;
 #endif
 
-	VERIFY_NO_ERASE(offset, sizeof(testdata));
-	VERIFY_NO_ERASE(offset + size - sizeof(testdata), sizeof(testdata));
-	VERIFY_NO_WRITE(offset, sizeof(testdata), testdata);
-	VERIFY_NO_WRITE(offset + size - sizeof(testdata), sizeof(testdata),
+	VERIFY_NO_ERASE(offset, strlen(testdata));
+	VERIFY_NO_ERASE(offset + size - strlen(testdata), strlen(testdata));
+	VERIFY_NO_WRITE(offset, strlen(testdata), testdata);
+	VERIFY_NO_WRITE(offset + size - strlen(testdata), strlen(testdata),
 			testdata);
 
 	return EC_SUCCESS;
@@ -314,10 +303,10 @@ static int test_overwrite_other(void)
 	mock_is_running_img = 0;
 #endif
 
-	VERIFY_ERASE(offset, sizeof(testdata));
-	VERIFY_ERASE(offset + size - sizeof(testdata), sizeof(testdata));
-	VERIFY_WRITE(offset, sizeof(testdata), testdata);
-	VERIFY_WRITE(offset + size - sizeof(testdata), sizeof(testdata),
+	VERIFY_ERASE(offset, strlen(testdata));
+	VERIFY_ERASE(offset + size - strlen(testdata), strlen(testdata));
+	VERIFY_WRITE(offset, strlen(testdata), testdata);
+	VERIFY_WRITE(offset + size - strlen(testdata), strlen(testdata),
 		     testdata);
 
 	return EC_SUCCESS;

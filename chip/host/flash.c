@@ -15,14 +15,20 @@
 char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 uint8_t __host_flash_protect[PHYSICAL_BANKS];
 
+/* Override this function to make flash erase/write operation fail */
+test_mockable int flash_pre_op(void)
+{
+	return EC_SUCCESS;
+}
+
 static int flash_check_protect(int offset, int size)
 {
 	int first_bank = offset / CONFIG_FLASH_BANK_SIZE;
-	int last_bank = DIV_ROUND_UP(offset + size + 1,
+	int last_bank = DIV_ROUND_UP(offset + size,
 				     CONFIG_FLASH_BANK_SIZE);
 	int bank;
 
-	for (bank = first_bank; bank <= last_bank; ++bank)
+	for (bank = first_bank; bank < last_bank; ++bank)
 		if (__host_flash_protect[bank])
 			return 1;
 	return 0;
@@ -61,6 +67,9 @@ int flash_physical_write(int offset, int size, const char *data)
 {
 	ASSERT((size & (CONFIG_FLASH_WRITE_SIZE - 1)) == 0);
 
+	if (flash_pre_op() != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
+
 	if (flash_check_protect(offset, size))
 		return EC_ERROR_ACCESS_DENIED;
 
@@ -73,6 +82,9 @@ int flash_physical_write(int offset, int size, const char *data)
 int flash_physical_erase(int offset, int size)
 {
 	ASSERT((size & (CONFIG_FLASH_ERASE_SIZE - 1)) == 0);
+
+	if (flash_pre_op() != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
 
 	if (flash_check_protect(offset, size))
 		return EC_ERROR_ACCESS_DENIED;

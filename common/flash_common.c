@@ -127,7 +127,7 @@ int flash_is_erased(uint32_t offset, int size)
 	return 1;
 }
 
-test_mockable int flash_write(int offset, int size, const char *data)
+int flash_write(int offset, int size, const char *data)
 {
 	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
@@ -139,7 +139,7 @@ test_mockable int flash_write(int offset, int size, const char *data)
 	return flash_physical_write(offset, size, data);
 }
 
-test_mockable int flash_erase(int offset, int size)
+int flash_erase(int offset, int size)
 {
 	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
