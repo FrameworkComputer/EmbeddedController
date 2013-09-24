@@ -1891,4 +1891,15 @@ struct ec_params_reboot_ec {
 
 #endif  /* !__ACPI__ */
 
+/*****************************************************************************/
+/*
+ * Deprecated constants. These constants have been renamed for clarity. The
+ * meaning and size has not changed. Programs that use the old names should
+ * switch to the new names soon, as the old names may not be carried forward
+ * forever.
+ */
+#define EC_HOST_PARAM_SIZE      EC_PROTO2_MAX_PARAM_SIZE
+#define EC_LPC_ADDR_OLD_PARAM   EC_HOST_CMD_REGION1
+#define EC_OLD_PARAM_SIZE       EC_HOST_CMD_REGION_SIZE
+
 #endif  /* __CROS_EC_COMMANDS_H */
