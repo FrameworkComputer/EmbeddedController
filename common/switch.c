@@ -53,10 +53,12 @@ static void switch_update(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
 
+#ifdef CONFIG_SWITCH_DEDICATED_RECOVERY
 	if (gpio_get_level(GPIO_RECOVERY_L) == 0)
 		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;
 	else
 		*memmap_switches &= ~EC_SWITCH_DEDICATED_RECOVERY;
+#endif
 
 	if (prev != *memmap_switches)
 		CPRINTF("[%T SW 0x%02x]\n", *memmap_switches);
@@ -76,8 +78,10 @@ static void switch_init(void)
 	/* Switch data is now present */
 	*host_get_memmap(EC_MEMMAP_SWITCHES_VERSION) = 1;
 
+#ifdef CONFIG_SWITCH_DEDICATED_RECOVERY
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_RECOVERY_L);
+#endif
 
 	/*
 	 * TODO(rspangler): It's weird that flash_common.c owns reading the

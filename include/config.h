@@ -556,6 +556,9 @@
  */
 #undef CONFIG_SWITCH
 
+/* Compile support for dedicated recovery signal from servo board */
+#undef CONFIG_SWITCH_DEDICATED_RECOVERY
+
 /*
  * System should remain unlocked even if write protect is enabled.
  *
