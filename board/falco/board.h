@@ -21,9 +21,10 @@
 #define CONFIG_EXTPOWER_FALCO
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_FAN
+#define CONFIG_FAN_CH_CPU 2
 #define CONFIG_FAN_RPM_MIN 1000
 #define CONFIG_FAN_RPM_MAX 5050
-#define CONFIG_FAN_POWER_GOOD   GPIO_PP5000_PGOOD
+#define CONFIG_FAN_POWER_GOOD GPIO_PP5000_PGOOD
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_POWER_BUTTON
@@ -47,10 +48,6 @@ enum module_id {
 	MODULE_PWM_FAN,
 	MODULE_UART,
 };
-
-/* PWM channels */
-#define FAN_CH_CPU         2  /* CPU fan */
-#define FAN_CH_BL_DISPLAY  4  /* LVDS backlight (from PCH, cleaned by EC) */
 
 /* I2C ports */
 #define I2C_PORT_BATTERY 0

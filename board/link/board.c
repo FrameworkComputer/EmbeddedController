@@ -184,8 +184,8 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN] = {FAN_CH_CPU, PWM_CONFIG_HAS_RPM_MODE},
-	[PWM_CH_KBLIGHT] = {FAN_CH_KBLIGHT, 0},
+	[PWM_CH_FAN] = {CONFIG_FAN_CH_CPU, PWM_CONFIG_HAS_RPM_MODE},
+	[PWM_CH_KBLIGHT] = {1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 

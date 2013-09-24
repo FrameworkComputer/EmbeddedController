@@ -21,9 +21,10 @@
 #define CONFIG_CHIPSET_X86
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_FAN
+#define CONFIG_FAN_CH_CPU 0
 #define CONFIG_FAN_RPM_MIN 1500
 #define CONFIG_FAN_RPM_MAX 9300
-#define CONFIG_FAN_POWER_GOOD   GPIO_PGOOD_5VALW
+#define CONFIG_FAN_POWER_GOOD GPIO_PGOOD_5VALW
 #define CONFIG_I2C_PASSTHRU_RESTRICTED
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -53,11 +54,6 @@ enum module_id {
 	MODULE_PWM_KBLIGHT,
 	MODULE_UART,
 };
-
-/* Fan PWM channels */
-#define FAN_CH_CPU       0  /* CPU fan */
-#define FAN_CH_KBLIGHT   1  /* Keyboard backlight */
-#define FAN_CH_POWER_LED 5  /* Power adapter LED */
 
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */

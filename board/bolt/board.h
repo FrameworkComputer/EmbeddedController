@@ -38,6 +38,7 @@
 /* External Charger maximum current. */
 #define   CONFIG_CHARGER_INPUT_CURRENT 5000
 #define CONFIG_FAN
+#define CONFIG_FAN_CH_CPU 2
 #define CONFIG_FAN_RPM_MIN 1000
 #define CONFIG_FAN_RPM_MAX 5050
 #define CONFIG_FAN_POWER_GOOD  GPIO_PP5000_PGOOD
@@ -65,17 +66,12 @@ enum module_id {
 	MODULE_UART,
 };
 
-/* PWM channels */
-#define FAN_CH_CPU         2  /* CPU fan */
-#define FAN_CH_KBLIGHT     4  /* Keyboard backlight */
-#define FAN_CH_BL_DISPLAY  0  /* Panel backlight (from PCH, cleaned by EC) */
-
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_LIGHTBAR 1
 #define I2C_PORT_THERMAL 5
-/* There are only two I2C ports used because battery and charger share a port */
+/* There are only 3 I2C ports used because battery and charger share a port */
 #define I2C_PORTS_USED 3
 
 /* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */

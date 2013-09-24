@@ -152,9 +152,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_GREEN] = {FAN_CH_LED_GREEN, 0},
-	[PWM_CH_LED_RED] = {FAN_CH_LED_RED, 0},
+	[PWM_CH_LED_GREEN] = {4, 0},
+	[PWM_CH_LED_RED] = {3, 0},
 };
+
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C ports */

@@ -51,10 +51,6 @@ enum module_id {
 	MODULE_UART,
 };
 
-/* PWM channels */
-#define FAN_CH_LED_GREEN   4  /* LED0 = green */
-#define FAN_CH_LED_RED     3  /* LED1 = red */
-
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
