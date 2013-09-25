@@ -36,6 +36,12 @@ static void pb_change_hook(void)
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, pb_change_hook, HOOK_PRIO_DEFAULT);
 
+int pb_memmap_state(void)
+{
+	uint8_t *memmap = host_get_memmap(EC_MEMMAP_SWITCHES);
+	return *memmap & EC_SWITCH_POWER_BUTTON_PRESSED;
+}
+
 static int test_hook(void)
 {
 	/* Release power button for testing */
@@ -50,6 +56,7 @@ static int test_hook(void)
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 1);
 	TEST_ASSERT(power_button_is_pressed());
+	TEST_ASSERT(pb_memmap_state());
 	TEST_ASSERT(host_get_events() &
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
 	host_clear_events(0xffffffff);
@@ -59,6 +66,7 @@ static int test_hook(void)
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 2);
 	TEST_ASSERT(!power_button_is_pressed());
+	TEST_ASSERT(!pb_memmap_state());
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON)));
 
@@ -79,6 +87,7 @@ static int test_debounce(void)
 	msleep(20);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());
+	TEST_ASSERT(!pb_memmap_state());
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON)));
 
@@ -87,6 +96,7 @@ static int test_debounce(void)
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());
+	TEST_ASSERT(!pb_memmap_state());
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON)));
 

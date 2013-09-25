@@ -30,6 +30,12 @@ static void lid_change_hook(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, lid_change_hook, HOOK_PRIO_DEFAULT);
 
+int lid_memmap_state(void)
+{
+	uint8_t *memmap = host_get_memmap(EC_MEMMAP_SWITCHES);
+	return *memmap & EC_SWITCH_LID_OPEN;
+}
+
 static int test_hook(void)
 {
 	/* Close lid for testing */
@@ -44,6 +50,7 @@ static int test_hook(void)
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 1);
 	TEST_ASSERT(lid_is_open());
+	TEST_ASSERT(lid_memmap_state());
 	TEST_ASSERT(host_get_events() &
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
 
@@ -52,6 +59,7 @@ static int test_hook(void)
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 2);
 	TEST_ASSERT(!lid_is_open());
+	TEST_ASSERT(!lid_memmap_state());
 	TEST_ASSERT(host_get_events() &
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED));
 
@@ -72,6 +80,7 @@ static int test_debounce(void)
 	msleep(20);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
+	TEST_ASSERT(!lid_memmap_state());
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)));
 
@@ -80,6 +89,7 @@ static int test_debounce(void)
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
+	TEST_ASSERT(!lid_memmap_state());
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)));
 
