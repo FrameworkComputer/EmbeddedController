@@ -29,7 +29,7 @@ test-list-$(BOARD_bolt)=
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
-test-list-host+=sbs_charging adapter host_command thermal_falco
+test-list-host+=sbs_charging adapter host_command thermal_falco led_lp5562
 
 adapter-y=adapter.o
 console_edit-y=console_edit.o
@@ -40,6 +40,7 @@ host_command-y=host_command.o
 kb_8042-y=kb_8042.o
 kb_mkbp-y=kb_mkbp.o
 kb_scan-y=kb_scan.o
+led_lp5562-y=led_lp5562.o
 lid_sw-y=lid_sw.o
 mutex-y=mutex.o
 pingpong-y=pingpong.o

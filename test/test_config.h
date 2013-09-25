@@ -8,9 +8,24 @@
 #ifndef __CROS_EC_TEST_CONFIG_H
 #define __CROS_EC_TEST_CONFIG_H
 
+#ifdef TEST_adapter
+#define CONFIG_CHIPSET_CAN_THROTTLE
+#define CONFIG_EXTPOWER_FALCO
+#endif
+
 #ifdef TEST_kb_8042
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_PROTOCOL_8042
+#endif
+
+#ifdef TEST_led_lp5562
+#define CONFIG_BATTERY_MOCK
+#define CONFIG_BATTERY_SMART
+#define CONFIG_CHARGER_INPUT_CURRENT 4032
+#define CONFIG_LED_DRIVER_LP5562
+#define I2C_PORT_HOST 1
+#define I2C_PORT_BATTERY 1
+#define I2C_PORT_CHARGER 1
 #endif
 
 #ifdef TEST_sbs_charging
@@ -23,11 +38,6 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_HOST 1
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
-#endif
-
-#ifdef TEST_adapter
-#define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_EXTPOWER_FALCO
 #endif
 
 #ifdef TEST_thermal
