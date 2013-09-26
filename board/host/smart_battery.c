@@ -9,7 +9,6 @@
 #include "common.h"
 #include "console.h"
 #include "smart_battery.h"
-#include "smart_battery_stub.h"
 #include "test_util.h"
 #include "uart.h"
 #include "util.h"
