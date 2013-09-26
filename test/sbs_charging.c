@@ -18,6 +18,7 @@
 #include "util.h"
 
 #define WAIT_CHARGER_TASK 500
+#define BATTERY_DETACH_DELAY 35000
 
 static int mock_ac_present = 1;
 static int mock_chipset_state = CHIPSET_STATE_ON;
@@ -101,6 +102,20 @@ static int test_charge_state(void)
 	ccprintf("[CHARGING TEST] AC on\n");
 	mock_ac_present = 1;
 	sb_write(SB_CURRENT, 1000);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_CHARGE);
+
+	/* Detach battery, charging error */
+	ccprintf("[CHARGING TEST] Detach battery\n");
+	TEST_ASSERT(test_detach_i2c(I2C_PORT_BATTERY, BATTERY_ADDR) ==
+		    EC_SUCCESS);
+	msleep(BATTERY_DETACH_DELAY);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_ERROR);
+
+	/* Attach battery again, charging */
+	ccprintf("[CHARGING TEST] Attach battery\n");
+	test_attach_i2c(I2C_PORT_HOST, BATTERY_ADDR);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_CHARGE);
 
