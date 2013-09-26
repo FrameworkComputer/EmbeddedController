@@ -13,6 +13,10 @@
 #define CONFIG_EXTPOWER_FALCO
 #endif
 
+#ifdef TEST_bklight_x86
+#define CONFIG_BACKLIGHT_X86
+#endif
+
 #ifdef TEST_kb_8042
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_PROTOCOL_8042
