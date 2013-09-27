@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -554,6 +555,18 @@ void keyboard_scan_enable(int enable)
 		keyboard_clear_buffer();
 	}
 }
+
+#ifdef CONFIG_LID_SWITCH
+
+static void keyboard_lid_change(void)
+{
+	/* If lid is open, wake the keyboard task */
+	if (lid_is_open())
+		task_wake(TASK_ID_KEYSCAN);
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, keyboard_lid_change, HOOK_PRIO_DEFAULT);
+
+#endif
 
 /*****************************************************************************/
 /* Host commands */
