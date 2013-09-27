@@ -13,8 +13,13 @@
 #define CONFIG_EXTPOWER_FALCO
 #endif
 
-#ifdef TEST_bklight_x86
-#define CONFIG_BACKLIGHT_X86
+#ifdef TEST_bklight_lid
+#define CONFIG_BACKLIGHT_LID
+#endif
+
+#ifdef TEST_bklight_passthru
+#define CONFIG_BACKLIGHT_LID
+#define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BKLTEN
 #endif
 
 #ifdef TEST_kb_8042

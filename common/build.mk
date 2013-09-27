@@ -18,7 +18,7 @@ common-$(BOARD_peppy)+=led_common.o led_peppy.o
 common-$(BOARD_slippy)+=led_slippy.o
 common-$(BOARD_snow)+=extpower_snow.o
 
-common-$(CONFIG_BACKLIGHT_X86)+=backlight_x86.o
+common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o battery_bq27541.o
 common-$(CONFIG_BATTERY_LINK)+=battery_link.o

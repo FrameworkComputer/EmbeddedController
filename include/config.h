@@ -46,11 +46,18 @@
 #undef CONFIG_ADC_CLOCK
 
 /*
- * Compile support for passing backlight-enable signal from x86 chipset through
- * EC.  This allows the EC to gate the backlight-enable signal with the lid
- * switch.
+ * Compile support for controlling the display backlight based on the state of
+ * the lid switch.  The EC will disable the backlight when the lid is
+ * closed.
  */
-#undef CONFIG_BACKLIGHT_X86
+#undef CONFIG_BACKLIGHT_LID
+
+/*
+ * If defined, EC will enable the backlight signal only if this GPIO is
+ * asserted AND the lid is open.  This supports passing the backlight-enable
+ * signal from the AP through EC.
+ */
+#undef CONFIG_BACKLIGHT_REQ_GPIO
 
 /*****************************************************************************/
 /* Battery config */

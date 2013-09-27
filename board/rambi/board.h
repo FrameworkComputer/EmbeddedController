@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_BACKLIGHT_LID
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CMD_GSV
 #define CONFIG_EXTPOWER_GPIO
@@ -23,7 +24,6 @@
 
 /* TODO(rspangler): port these to Rambi, or remove if not needed */
 #if 0
-#define CONFIG_BACKLIGHT_X86
 #define CONFIG_BATTERY_CHECK_CONNECTED
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
