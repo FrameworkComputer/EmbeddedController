@@ -9,6 +9,7 @@
 #include "console.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 static const char *get_error_text(int rv)
 {
@@ -168,6 +169,13 @@ static int command_battery(int argc, char **argv)
 
 	for (loop = 0; loop < repeat; loop++) {
 		rv = print_battery_info();
+
+		/*
+		 * Running with a high repeat count will take so long the
+		 * watchdog timer fires.  So reset the watchdog timer each
+		 * iteration.
+		 */
+		watchdog_reload();
 
 		if (sleep_ms)
 			msleep(sleep_ms);
