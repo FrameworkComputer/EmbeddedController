@@ -156,20 +156,6 @@ static int rsoc_moving_average(int state_of_charge)
 	return moving_average;
 }
 
-
-static int config_low_current_charging(int charge)
-{
-	/* Disable low current termination */
-	if (charge < 40)
-		return pmu_low_current_charging(1);
-
-	/* Enable low current termination */
-	if (charge > 60)
-		return pmu_low_current_charging(0);
-
-	return EC_SUCCESS;
-}
-
 static int calc_next_state(int state)
 {
 	int batt_temp, alarm, capacity, charge;
@@ -190,11 +176,8 @@ static int calc_next_state(int state)
 			return ST_BAD_COND;
 
 		/* Enable charging when battery doesn't respond */
-		if (battery_temperature(&batt_temp)) {
-			if (config_low_current_charging(0))
-				return ST_BAD_COND;
+		if (battery_temperature(&batt_temp))
 			return ST_PRE_CHARGING;
-		}
 
 		/* Turn off charger when battery temperature is out
 		 * of the start charging range.
@@ -212,7 +195,6 @@ static int calc_next_state(int state)
 
 		/* Start charging only when battery charge lower than 100% */
 		if (!battery_state_of_charge(&charge)) {
-			config_low_current_charging(charge);
 			if (charge < 100)
 				return ST_CHARGING;
 		}
@@ -230,7 +212,6 @@ static int calc_next_state(int state)
 			if (!battery_start_charging_range(batt_temp))
 				return ST_IDLE0;
 			if (!battery_state_of_charge(&charge)) {
-				config_low_current_charging(charge);
 				if (charge >= 100)
 					return ST_IDLE0;
 			}
@@ -392,6 +373,9 @@ void charger_task(void)
 	timestamp_t pre_chg_start = get_time();
 
 	pmu_init();
+
+	/* Enable low current charging */
+	pmu_low_current_charging(1);
 
 	/* Enable charger interrupt */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
