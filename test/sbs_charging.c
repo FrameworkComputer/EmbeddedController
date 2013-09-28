@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "smart_battery.h"
@@ -20,19 +21,10 @@
 #define WAIT_CHARGER_TASK 500
 #define BATTERY_DETACH_DELAY 35000
 
-static int mock_ac_present = 1;
 static int mock_chipset_state = CHIPSET_STATE_ON;
 static int is_shutdown;
 static int is_force_discharge;
 static int is_hibernated;
-
-/* Mock GPIOs */
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_AC_PRESENT)
-		return mock_ac_present;
-	return 0;
-}
 
 void chipset_force_shutdown(void)
 {
@@ -72,7 +64,7 @@ static void test_setup(void)
 	/* Discharging at 100mAh */
 	sb_write(SB_CURRENT, -100);
 	/* Unplug AC */
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 }
 
 static int wait_charging_state(void)
@@ -100,7 +92,7 @@ static int test_charge_state(void)
 	state = wait_charging_state();
 	/* Plug AC, charging at 1000mAh */
 	ccprintf("[CHARGING TEST] AC on\n");
-	mock_ac_present = 1;
+	gpio_set_level(GPIO_AC_PRESENT, 1);
 	sb_write(SB_CURRENT, 1000);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_CHARGE);
@@ -121,14 +113,14 @@ static int test_charge_state(void)
 
 	/* Unplug AC, discharging at 1000mAh */
 	ccprintf("[CHARGING TEST] AC off\n");
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	sb_write(SB_CURRENT, -1000);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 
 	/* Discharging overtemp */
 	ccprintf("[CHARGING TEST] AC off, batt temp = 90 C\n");
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	sb_write(SB_CURRENT, -1000);
 
 	state = wait_charging_state();
@@ -141,7 +133,7 @@ static int test_charge_state(void)
 
 	/* Force idle */
 	ccprintf("[CHARGING TEST] AC on, force idle\n");
-	mock_ac_present = 1;
+	gpio_set_level(GPIO_AC_PRESENT, 1);
 	sb_write(SB_CURRENT, 1000);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_CHARGE);
@@ -154,7 +146,7 @@ static int test_charge_state(void)
 
 	/* Force discharge */
 	ccprintf("[CHARGING TEST] AC on, force discharge\n");
-	mock_ac_present = 1;
+	gpio_set_level(GPIO_AC_PRESENT, 1);
 	sb_write(SB_CURRENT, 1000);
 	charge_control(CHARGE_CONTROL_DISCHARGE);
 	state = wait_charging_state();
@@ -171,7 +163,7 @@ static int test_charge_state(void)
 static int test_low_battery(void)
 {
 	ccprintf("[CHARGING TEST] Low battery with AC\n");
-	mock_ac_present = 1;
+	gpio_set_level(GPIO_AC_PRESENT, 1);
 	is_hibernated = 0;
 	sb_write(SB_CURRENT, 1000);
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
@@ -184,7 +176,7 @@ static int test_low_battery(void)
 	mock_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_PRE_INIT);
 	hook_notify(HOOK_CHIPSET_STARTUP);
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	is_hibernated = 0;
 	sb_write(SB_CURRENT, -1000);
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
@@ -205,10 +197,10 @@ static int test_low_battery(void)
 	is_shutdown = 0;
 	mock_chipset_state = CHIPSET_STATE_ON;
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 10);
-	mock_ac_present = 1;
+	gpio_set_level(GPIO_AC_PRESENT, 1);
 	sb_write(SB_CURRENT, 1000);
 	wait_charging_state();
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	sb_write(SB_CURRENT, -1000);
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
 	wait_charging_state();
@@ -225,7 +217,7 @@ static int test_batt_fake(void)
 	mock_chipset_state = CHIPSET_STATE_ON;
 	hook_notify(HOOK_CHIPSET_PRE_INIT);
 	hook_notify(HOOK_CHIPSET_STARTUP);
-	mock_ac_present = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	is_hibernated = 0;
 	sb_write(SB_CURRENT, -1000);
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 30);

@@ -4,19 +4,23 @@
  */
 /* Emulator board-specific configuration */
 
+#include "extpower.h"
 #include "gpio.h"
+#include "lid_switch.h"
+#include "power_button.h"
 #include "temp_sensor.h"
 #include "util.h"
 
 #define MOCK_GPIO(x) {#x, 0, 0, 0, 0}
+#define MOCK_GPIO_INT(x, i, r) {#x, 0, 0, i, r}
 
 const struct gpio_info gpio_list[] = {
 	MOCK_GPIO(EC_INT),
-	MOCK_GPIO(LID_OPEN),
-	MOCK_GPIO(POWER_BUTTON_L),
+	MOCK_GPIO_INT(LID_OPEN, GPIO_INT_BOTH, lid_interrupt),
+	MOCK_GPIO_INT(POWER_BUTTON_L, GPIO_INT_BOTH, power_button_interrupt),
 	MOCK_GPIO(WP),
 	MOCK_GPIO(ENTERING_RW),
-	MOCK_GPIO(AC_PRESENT),
+	MOCK_GPIO_INT(AC_PRESENT, GPIO_INT_BOTH, extpower_interrupt),
 	MOCK_GPIO(PCH_BKLTEN),
 	MOCK_GPIO(ENABLE_BACKLIGHT),
 };

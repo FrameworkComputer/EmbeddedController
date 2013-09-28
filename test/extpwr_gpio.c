@@ -15,22 +15,11 @@
 #include "timer.h"
 #include "util.h"
 
-static int mock_ac;
 static int ac_hook_count;
-
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_AC_PRESENT)
-		return mock_ac;
-	return 0;
-}
 
 static void set_ac(int val)
 {
-	if (val == mock_ac)
-		return;
-	mock_ac = val;
-	extpower_interrupt(GPIO_AC_PRESENT);
+	gpio_set_level(GPIO_AC_PRESENT, val);
 	msleep(50);
 }
 

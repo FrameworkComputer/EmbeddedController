@@ -24,7 +24,6 @@ static uint8_t lp5562_reg[LP5562_NUM_WATCH_REG];
 #define LED_COLOR_YELLOW LP5562_COLOR_BLUE(0x40)
 #define LED_COLOR_RED    LP5562_COLOR_RED(0x80)
 
-static int mock_ac;
 static enum charging_state mock_charge_state = ST_IDLE;
 static int lp5562_failed_i2c_reg = -1;
 static const char * const state_names[] = POWER_STATE_NAME_TABLE;
@@ -32,16 +31,9 @@ static const char * const state_names[] = POWER_STATE_NAME_TABLE;
 /*****************************************************************************/
 /* Mock functions */
 
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_AC_PRESENT)
-		return mock_ac;
-	return 0;
-}
-
 static void set_ac(int ac)
 {
-	mock_ac = ac;
+	gpio_set_level(GPIO_AC_PRESENT, ac);
 	ccprintf("[%T TEST AC = %d]\n", ac);
 }
 

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "power_button.h"
@@ -14,20 +15,11 @@
 #include "timer.h"
 #include "util.h"
 
-static int mock_power_button = 1;
-static int mock_lid = 1;
 static int pb_hook_count;
-
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_POWER_BUTTON_L)
-		return mock_power_button;
-	return 0;
-}
 
 int lid_is_open(void)
 {
-	return mock_lid;
+	return 1;
 }
 
 static void pb_change_hook(void)
@@ -45,14 +37,12 @@ int pb_memmap_state(void)
 static int test_hook(void)
 {
 	/* Release power button for testing */
-	mock_power_button = 1;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	msleep(100);
 	pb_hook_count = 0;
 	host_clear_events(0xffffffff);
 
-	mock_power_button = 0;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 1);
 	TEST_ASSERT(power_button_is_pressed());
@@ -61,8 +51,7 @@ static int test_hook(void)
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON));
 	host_clear_events(0xffffffff);
 
-	mock_power_button = 1;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 2);
 	TEST_ASSERT(!power_button_is_pressed());
@@ -76,14 +65,12 @@ static int test_hook(void)
 static int test_debounce(void)
 {
 	/* Release power button for testing */
-	mock_power_button = 1;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	msleep(100);
 	pb_hook_count = 0;
 	host_clear_events(0xffffffff);
 
-	mock_power_button = 0;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
 	msleep(20);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());
@@ -91,8 +78,7 @@ static int test_debounce(void)
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON)));
 
-	mock_power_button = 1;
-	power_button_interrupt(GPIO_POWER_BUTTON_L);
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	msleep(50);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());

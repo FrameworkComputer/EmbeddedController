@@ -22,27 +22,19 @@
 #include "adapter_externs.h"
 
 /* Local state */
-static int mock_ac;
 static int mock_id;
 static int mock_current;
 static struct power_state_context ctx;
 
 static void test_reset_mocks(void)
 {
-	mock_ac = 0;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	mock_id = 0;
 	mock_current = 0;
 	memset(&ctx, 0, sizeof(ctx));
 }
 
 /* Mocked functions from the rest of the EC */
-
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_AC_PRESENT)
-		return mock_ac;
-	return 0;
-}
 
 int adc_read_channel(enum adc_channel ch)
 {
@@ -83,8 +75,7 @@ void chipset_throttle_cpu(int throttle)
 
 static void change_ac(int val)
 {
-	mock_ac = val;
-	extpower_interrupt(GPIO_AC_PRESENT);
+	gpio_set_level(GPIO_AC_PRESENT, val);
 	msleep(50);
 }
 
@@ -183,6 +174,7 @@ static int test_turbo(void)
 	TEST_ASSERT(ac_turbo == 0);
 
 	test_turbo_init();
+	change_ac(0);
 	set_id(ad_id_vals[1].lo - 1);
 	change_ac(1);
 	watch_adapter_closely(&ctx);

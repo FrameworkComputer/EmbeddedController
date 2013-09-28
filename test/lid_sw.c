@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
@@ -14,15 +15,7 @@
 #include "timer.h"
 #include "util.h"
 
-static int mock_lid;
 static int lid_hook_count;
-
-int gpio_get_level(enum gpio_signal signal)
-{
-	if (signal == GPIO_LID_OPEN)
-		return mock_lid;
-	return 0;
-}
 
 static void lid_change_hook(void)
 {
@@ -39,14 +32,12 @@ int lid_memmap_state(void)
 static int test_hook(void)
 {
 	/* Close lid for testing */
-	mock_lid = 0;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(100);
 	lid_hook_count = 0;
 	host_clear_events(0xffffffff);
 
-	mock_lid = 1;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 1);
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 1);
 	TEST_ASSERT(lid_is_open());
@@ -54,8 +45,7 @@ static int test_hook(void)
 	TEST_ASSERT(host_get_events() &
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
 
-	mock_lid = 0;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 2);
 	TEST_ASSERT(!lid_is_open());
@@ -69,14 +59,12 @@ static int test_hook(void)
 static int test_debounce(void)
 {
 	/* Close lid for testing */
-	mock_lid = 0;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(100);
 	lid_hook_count = 0;
 	host_clear_events(0xffffffff);
 
-	mock_lid = 1;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 1);
 	msleep(20);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
@@ -84,8 +72,7 @@ static int test_debounce(void)
 	TEST_ASSERT(!(host_get_events() &
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)));
 
-	mock_lid = 0;
-	lid_interrupt(GPIO_LID_OPEN);
+	gpio_set_level(GPIO_LID_OPEN, 0);
 	msleep(50);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
