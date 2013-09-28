@@ -168,7 +168,7 @@ static int try_pull_up_scl(enum gpio_signal scl)
  * Try to unwedge the bus.
  *
  * The implementation is based on unwedge_i2c_bus() in i2c-stm32f.c.
- * Or refer to https://gerrit.chromium.org/gerrit/#/c/32168 for details.
+ * Or refer to https://chromium-review.googlesource.com/#/c/32168 for details.
  *
  * @param port		I2C port
  * @param force_unwedge	perform unwedge without checking if wedged
