@@ -119,7 +119,29 @@ static int test_hostcmd_driver_error(void)
 	return EC_SUCCESS;
 }
 
-static int test_hostcmd_wrong_version(void)
+static int test_hostcmd_invalid_command(void)
+{
+	hostcmd_fill_in_default();
+
+	req->command = 0xff;
+	hostcmd_send();
+	TEST_ASSERT(resp->result == EC_RES_INVALID_COMMAND);
+
+	return EC_SUCCESS;
+}
+
+static int test_hostcmd_wrong_command_version(void)
+{
+	hostcmd_fill_in_default();
+
+	req->command_version = 1;
+	hostcmd_send();
+	TEST_ASSERT(resp->result == EC_RES_INVALID_VERSION);
+
+	return EC_SUCCESS;
+}
+
+static int test_hostcmd_wrong_struct_version(void)
 {
 	hostcmd_fill_in_default();
 
@@ -153,7 +175,9 @@ void run_test(void)
 	RUN_TEST(test_hostcmd_too_short);
 	RUN_TEST(test_hostcmd_too_long);
 	RUN_TEST(test_hostcmd_driver_error);
-	RUN_TEST(test_hostcmd_wrong_version);
+	RUN_TEST(test_hostcmd_invalid_command);
+	RUN_TEST(test_hostcmd_wrong_command_version);
+	RUN_TEST(test_hostcmd_wrong_struct_version);
 	RUN_TEST(test_hostcmd_invalid_checksum);
 
 	test_print_result();
