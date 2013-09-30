@@ -383,7 +383,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 	return state;
 }
 
-void haswell_interrupt(enum gpio_signal signal)
+void bolt_interrupt(enum gpio_signal signal)
 {
 	/* Pass through eDP VDD enable from PCH */
 	gpio_set_level(GPIO_EC_EDP_VDD_EN, gpio_get_level(GPIO_PCH_EDP_VDD_EN));
