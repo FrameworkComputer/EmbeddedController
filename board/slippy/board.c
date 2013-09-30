@@ -243,14 +243,6 @@ void board_process_wake_events(uint32_t active_wake_events)
 }
 
 /**
- * Board-specific g781 power state.
- */
-int board_g781_has_power(void)
-{
-	return gpio_get_level(GPIO_PP3300_DX_EN);
-}
-
-/**
  * Discharge battery when on AC power for factory test.
  */
 int board_discharge_on_ac(int enable)

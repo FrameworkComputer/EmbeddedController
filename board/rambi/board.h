@@ -20,6 +20,7 @@
 #define CONFIG_PWM
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DX_EN
 #define CONFIG_WIRELESS
 
 /* TODO(rspangler): port these to Rambi, or remove if not needed */
@@ -179,11 +180,6 @@ enum temp_sensor_id {
 
 	TEMP_SENSOR_COUNT
 };
-
-/**
- * Board-specific g781 power state.
- */
-int board_g781_has_power(void);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -58,8 +58,11 @@ static struct tmp006_data_t tmp006_data[TMP006_COUNT];
  */
 static int tmp006_has_power(int idx)
 {
-	/* All TMP006 sensors are powered by VS. */
-	return gpio_get_level(GPIO_PGOOD_1_8VS);
+#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
+	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#else
+	return 1;
+#endif
 }
 
 static int tmp006_read_die_temp(const struct tmp006_data_t *tdata,

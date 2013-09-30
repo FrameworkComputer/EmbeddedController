@@ -36,6 +36,7 @@
 #define CONFIG_SWITCH_DEDICATED_RECOVERY
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DX_EN
 #define CONFIG_UART_HOST 2
 #define CONFIG_USB_PORT_POWER_DUMB
 #define CONFIG_WIRELESS
@@ -195,11 +196,6 @@ enum temp_sensor_id {
 
 	TEMP_SENSOR_COUNT
 };
-
-/**
- * Board-specific g781 power state.
- */
-int board_g781_has_power(void);
 
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
