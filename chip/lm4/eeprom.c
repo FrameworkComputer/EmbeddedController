@@ -62,7 +62,7 @@ int eeprom_read(int block, int offset, int size, char *data)
 
 	if (block < 0 || block >= block_count ||
 	    offset < 0 || offset > EEPROM_BLOCK_SIZE || offset & 3 ||
-	    size < 0 || offset + size >= EEPROM_BLOCK_SIZE || size & 3)
+	    size < 0 || offset + size > EEPROM_BLOCK_SIZE || size & 3)
 		return EC_ERROR_UNKNOWN;
 
 	rv = wait_for_done();
@@ -89,7 +89,7 @@ int eeprom_write(int block, int offset, int size, const char *data)
 
 	if (block < 0 || block >= block_count ||
 	    offset < 0 || offset > EEPROM_BLOCK_SIZE || offset & 3 ||
-	    size < 0 || offset + size >= EEPROM_BLOCK_SIZE || size & 3)
+	    size < 0 || offset + size > EEPROM_BLOCK_SIZE || size & 3)
 		return EC_ERROR_UNKNOWN;
 
 	rv = wait_for_done();
