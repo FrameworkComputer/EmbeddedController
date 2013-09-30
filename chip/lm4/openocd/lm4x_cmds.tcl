@@ -39,7 +39,19 @@ proc flash_rambi { } {
 	flash_lm4 ../../../build/rambi/ec.bin 0
 }
 
-# Bolt/slippy/falco/peppy have 128KB images
+# 128KB images
+proc flash_samus { } {
+	flash_lm4 ../../../build/samus/ec.bin 0
+}
+
+proc flash_samus_ro { } {
+	flash_lm4 ../../../build/samus/ec.RO.flat 0
+}
+
+proc flash_samus_rw { } {
+	flash_lm4 ../../../build/samus/ec.RW.bin 131072
+}
+
 proc flash_bolt { } {
 	flash_lm4 ../../../build/bolt/ec.bin 0
 }
