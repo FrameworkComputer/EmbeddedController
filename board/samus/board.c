@@ -40,8 +40,6 @@ const struct gpio_info gpio_list[] = {
 	 lid_interrupt},
 	{"AC_PRESENT",           LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
 	 extpower_interrupt},
-	{"PCH_BKLTEN",           LM4_GPIO_M, (1<<3), GPIO_INT_BOTH,
-	 backlight_interrupt},
 	{"PCH_SLP_S0_L",         LM4_GPIO_G, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PCH_SLP_S3_L",         LM4_GPIO_G, (1<<7), GPIO_INT_BOTH,
@@ -52,19 +50,17 @@ const struct gpio_info gpio_list[] = {
 	 x86_interrupt},
 	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH,
 	 x86_interrupt},
-	/* EC needs to control PP1050_PGOOD as it goes to VCCST_PGOOD. */
-	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_ODR_LOW, NULL },
-	{"PP1350_PGOOD",         LM4_GPIO_H, (1<<6), GPIO_INT_BOTH,
+	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_INT_BOTH,
 	 x86_interrupt},
-	{"PP5000_PGOOD",         LM4_GPIO_N, (1<<0), GPIO_INT_BOTH,
+	{"PP1200_PGOOD",         LM4_GPIO_H, (1<<6), GPIO_INT_BOTH,
+	 x86_interrupt},
+	{"PP1800_PGOOD",         LM4_GPIO_L, (1<<7), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
-	{"PCH_EDP_VDD_EN",       LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
-	 haswell_interrupt},
 	{"RECOVERY_L",           LM4_GPIO_A, (1<<5), GPIO_PULL_UP|GPIO_INT_BOTH,
 	 switch_interrupt},
-	{"WP",                   LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
+	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
 
 	/* Other inputs */
@@ -73,23 +69,24 @@ const struct gpio_info gpio_list[] = {
 	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
 	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_INPUT, NULL},
 	{"ONEWIRE",              LM4_GPIO_F, (1<<7), GPIO_INPUT, NULL},
-	{"PCH_CATERR_L",         LM4_GPIO_F, (1<<3), GPIO_INPUT, NULL},
 	{"THERMAL_DATA_READY_L", LM4_GPIO_B, (1<<0), GPIO_INPUT, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
 	{"USB2_STATUS_L",        LM4_GPIO_D, (1<<7), GPIO_INPUT, NULL},
+	/* Not yet sure if this will need to be handled as an interrupt */
+	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INPUT, NULL},
 
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
-	{"PP1350_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
+	{"PP1200_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP3300_DSW_GATED_EN",  LM4_GPIO_J, (1<<3), GPIO_OUT_LOW, NULL},
-	{"PP3300_DX_EN",         LM4_GPIO_F, (1<<6), GPIO_OUT_LOW, NULL},
 	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<2), GPIO_OUT_LOW, NULL},
 	{"PP3300_WLAN_EN",       LM4_GPIO_J, (1<<0), GPIO_OUT_LOW, NULL},
 	{"PP1050_EN",            LM4_GPIO_C, (1<<7), GPIO_OUT_LOW, NULL},
-	{"VCORE_EN",             LM4_GPIO_C, (1<<5), GPIO_OUT_LOW, NULL},
+	{"PP5000_USB_EN",        LM4_GPIO_C, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP5000_EN",            LM4_GPIO_H, (1<<7), GPIO_OUT_LOW, NULL},
+	{"PP1800_EN",            LM4_GPIO_L, (1<<6), GPIO_OUT_LOW, NULL},
 	{"SYS_PWROK",            LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
 	{"WLAN_OFF_L",           LM4_GPIO_J, (1<<4), GPIO_OUT_LOW, NULL},
 
@@ -107,13 +104,10 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_ODR_HIGH, NULL},
 	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	/* FIXME: Why is PL6 act like it is inverted. Setting value to
-	 * 0 makes the signal high, and setting it to 1 makes the signal low. */
-	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_INPUT, NULL},
-	{"PCH_SYSRST_L",         LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
+	{"PCH_RCIN_L",           LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
+	{"PCH_SYS_RST_L",        LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
-	{"EC_EDP_VDD_EN",        LM4_GPIO_J, (1<<5), GPIO_OUT_LOW, NULL},
 
 	{"LPC_CLKRUN_L",         LM4_GPIO_M, (1<<2), GPIO_ODR_HIGH, NULL},
 	{"USB1_CTL1",            LM4_GPIO_E, (1<<1), GPIO_OUT_LOW, NULL},
@@ -150,13 +144,15 @@ const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
 /* x86 signal list.  Must match order of enum x86_signal. */
 const struct x86_signal_info x86_signal_list[] = {
-	{GPIO_PP5000_PGOOD,  1, "PGOOD_PP5000"},
-	{GPIO_PP1350_PGOOD,  1, "PGOOD_PP1350"},
+	{GPIO_PP1050_PGOOD,  1, "PGOOD_PP1050"},
+	{GPIO_PP1200_PGOOD,  1, "PGOOD_PP1200"},
+	{GPIO_PP1800_PGOOD,  1, "PGOOD_PP1800"},
 	{GPIO_VCORE_PGOOD,   1, "PGOOD_VCORE"},
-	{GPIO_PCH_SLP_S0_L,  1, "SLP_S0#_DEASSERTED"},
-	{GPIO_PCH_SLP_S3_L,  1, "SLP_S3#_DEASSERTED"},
-	{GPIO_PCH_SLP_S5_L,  1, "SLP_S5#_DEASSERTED"},
-	{GPIO_PCH_SLP_SUS_L, 1, "SLP_SUS#_DEASSERTED"},
+	{GPIO_PCH_SLP_S0_L,  1, "SLP_S0_L_DEASSERTED"},
+	{GPIO_PCH_SLP_S3_L,  1, "SLP_S3_L_DEASSERTED"},
+	{GPIO_PCH_SLP_S5_L,  1, "SLP_S5_L_DEASSERTED"},
+	{GPIO_PCH_SLP_SUS_L, 1, "SLP_SUS_L_DEASSERTED"},
+	{GPIO_PCH_SUSWARN_L, 1, "SUSWARN_L_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(x86_signal_list) == X86_SIGNAL_COUNT);
 

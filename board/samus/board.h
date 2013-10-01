@@ -15,6 +15,7 @@
 #define CONFIG_TASK_PROFILING
 
 /* Optional features */
+#define CONFIG_BOARD_VERSION
 #define CONFIG_CHIPSET_X86
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_CUSTOM_KEYSCAN
@@ -25,12 +26,10 @@
 #define CONFIG_ONEWIRE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
-#define CONFIG_WP_ACTIVE_HIGH
 
 #define CONFIG_BATTERY_LINK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BACKLIGHT_LID
-#define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BKLTEN
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24715
 /* 10mOhm sense resitors. */
@@ -49,10 +48,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_UART_HOST 2
 #define CONFIG_WIRELESS
-#if 0
-#define CONFIG_USB_PORT_POWER_DUMB
-#endif
-
+#define CONFIG_USB_PORT_POWER_SMART
 
 #ifndef __ASSEMBLER__
 
@@ -91,19 +87,17 @@ enum gpio_signal {
 	GPIO_POWER_BUTTON_L = 0,   /* Power button */
 	GPIO_LID_OPEN,             /* Lid switch */
 	GPIO_AC_PRESENT,           /* AC power present */
-	GPIO_PCH_BKLTEN,           /* Backlight enable signal from PCH */
 	GPIO_PCH_SLP_S0_L,         /* SLP_S0# signal from PCH */
 	GPIO_PCH_SLP_S3_L,         /* SLP_S3# signal from PCH */
 	GPIO_PCH_SLP_S5_L,         /* SLP_S5# signal from PCH */
 	GPIO_PCH_SLP_SUS_L,        /* SLP_SUS# signal from PCH */
 	GPIO_PCH_SUSWARN_L,        /* SUSWARN# signal from PCH */
 	GPIO_PP1050_PGOOD,         /* Power good on 1.05V */
-	GPIO_PP1350_PGOOD,         /* Power good on 1.35V (DRAM) */
-	GPIO_PP5000_PGOOD,         /* Power good on 5V */
+	GPIO_PP1200_PGOOD,         /* Power good on 1.2V (DRAM) */
+	GPIO_PP1800_PGOOD,         /* Power good on 1.8V (DRAM) */
 	GPIO_VCORE_PGOOD,          /* Power good on core VR */
-	GPIO_PCH_EDP_VDD_EN,       /* PCH wants EDP enabled */
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
-	GPIO_WP,                   /* Write protect input */
+	GPIO_WP_L,                 /* Write protect input */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
@@ -111,23 +105,23 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
 	GPIO_CPU_PGOOD,            /* Power good to the CPU */
 	GPIO_ONEWIRE,              /* One-wire bus to adapter LED */
-	GPIO_PCH_CATERR_L,         /* Catastrophic error signal from PCH */
 	GPIO_THERMAL_DATA_READY_L, /* From thermal sensor */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_STATUS_L,        /* USB charger port 2 status output */
+	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt (through EC_WAKE_L) */
 
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
-	GPIO_PP1350_EN,            /* Enable 1.35V supply */
+	GPIO_PP1200_EN,            /* Enable 1.20V supply */
 	GPIO_PP3300_DSW_GATED_EN,  /* Enable DSW rails */
-	GPIO_PP3300_DX_EN,         /* Enable power to lots of peripherals */
 	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
 	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
 	GPIO_PP1050_EN,            /* Enable 1.05V regulator */
-	GPIO_VCORE_EN,             /* Stuffing option - not connected */
+	GPIO_PP5000_USB_EN,        /* Enable USB power */
 	GPIO_PP5000_EN,            /* Enable 5V supply */
+	GPIO_PP1800_EN,            /* Enable 1.8V supply */
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 
@@ -147,7 +141,6 @@ enum gpio_signal {
 	GPIO_PCH_SYS_RST_L,        /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_TOUCHSCREEN_RESET_L,  /* Reset touch screen */
-	GPIO_EC_EDP_VDD_EN,        /* Enable EDP (passthru from PCH) */
 	GPIO_LPC_CLKRUN_L,         /* Dunno. Probably important, though. */
 
 	GPIO_USB1_CTL1,            /* USB charger port 1 CTL1 output */
@@ -167,13 +160,16 @@ enum gpio_signal {
 
 /* x86 signal definitions */
 enum x86_signal {
-	X86_PGOOD_PP5000 = 0,
-	X86_PGOOD_PP1350,
+	X86_PGOOD_PP1050 = 0,
+	X86_PGOOD_PP1200,
+	X86_PGOOD_PP1800,
 	X86_PGOOD_VCORE,
-	X86_PCH_SLP_S0n_DEASSERTED,
-	X86_PCH_SLP_S3n_DEASSERTED,
-	X86_PCH_SLP_S5n_DEASSERTED,
-	X86_PCH_SLP_SUSn_DEASSERTED,
+
+	X86_PCH_SLP_S0_L_DEASSERTED,
+	X86_PCH_SLP_S3_L_DEASSERTED,
+	X86_PCH_SLP_S5_L_DEASSERTED,
+	X86_PCH_SLP_SUS_L_DEASSERTED,
+	X86_PCH_SUSWARN_L_DEASSERTED,
 
 	/* Number of X86 signals */
 	X86_SIGNAL_COUNT

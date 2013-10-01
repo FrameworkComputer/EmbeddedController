@@ -23,31 +23,34 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
-#define IN_PGOOD_PP5000            X86_SIGNAL_MASK(X86_PGOOD_PP5000)
-#define IN_PGOOD_PP1350            X86_SIGNAL_MASK(X86_PGOOD_PP1350)
-#define IN_PGOOD_VCORE             X86_SIGNAL_MASK(X86_PGOOD_VCORE)
-#define IN_PCH_SLP_S0n_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S0n_DEASSERTED)
-#define IN_PCH_SLP_S3n_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S3n_DEASSERTED)
-#define IN_PCH_SLP_S5n_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S5n_DEASSERTED)
-#define IN_PCH_SLP_SUSn_DEASSERTED X86_SIGNAL_MASK(X86_PCH_SLP_SUSn_DEASSERTED)
+#define IN_PGOOD_PP1050           X86_SIGNAL_MASK(X86_PGOOD_PP1050)
+#define IN_PGOOD_PP1200           X86_SIGNAL_MASK(X86_PGOOD_PP1200)
+#define IN_PGOOD_PP1800           X86_SIGNAL_MASK(X86_PGOOD_PP1800)
+#define IN_PGOOD_VCORE            X86_SIGNAL_MASK(X86_PGOOD_VCORE)
 
-/* All always-on supplies */
-#define IN_PGOOD_ALWAYS_ON   (IN_PGOOD_PP5000)
+#define IN_PCH_SLP_S0_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S0_L_DEASSERTED)
+#define IN_PCH_SLP_S3_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S3_L_DEASSERTED)
+#define IN_PCH_SLP_S5_DEASSERTED  X86_SIGNAL_MASK(X86_PCH_SLP_S5_L_DEASSERTED)
+#define IN_PCH_SLP_SUS_DEASSERTED X86_SIGNAL_MASK(X86_PCH_SLP_SUS_L_DEASSERTED)
+
+
 /* All non-core power rails */
-#define IN_PGOOD_ALL_NONCORE (IN_PGOOD_PP1350)
+#define IN_PGOOD_ALL_NONCORE (IN_PGOOD_PP1050)
 /* All core power rails */
 #define IN_PGOOD_ALL_CORE    (IN_PGOOD_VCORE)
 /* Rails required for S3 */
-#define IN_PGOOD_S3          (IN_PGOOD_ALWAYS_ON | IN_PGOOD_PP1350)
+#define IN_PGOOD_S3          (IN_PGOOD_PP1200 | IN_PGOOD_PP1800)
 /* Rails required for S0 */
-#define IN_PGOOD_S0          (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE)
+#define IN_PGOOD_S0          (IN_PGOOD_ALL_NONCORE)
 
 /* All PM_SLP signals from PCH deasserted */
-#define IN_ALL_PM_SLP_DEASSERTED (IN_PCH_SLP_S3n_DEASSERTED |		\
-				  IN_PCH_SLP_S5n_DEASSERTED)
+#define IN_ALL_PM_SLP_DEASSERTED (IN_PCH_SLP_S3_DEASSERTED | \
+				  IN_PCH_SLP_S5_DEASSERTED | \
+				  IN_PCH_SLP_SUS_DEASSERTED)
+
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0 (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE |		\
-		   IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
+#define IN_ALL_S0 (IN_PGOOD_ALL_NONCORE | IN_PGOOD_ALL_CORE | \
+		   IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
 
@@ -91,15 +94,11 @@ void chipset_reset(int cold_reset)
 		 */
 
 		/*
-		 * Pulse must be at least 16 PCI clocks long = 500 ns. The gpio
-		 * pin used by the EC (PL6) does not behave in the correct
-		 * manner when configured as open drain. In order to mimic
-		 * open drain, the pin is initially configured as an input.
-		 * When it is needed to drive low, the flags are updated which
-		 * changes the pin to an output and drives the pin low.  */
-		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_OUT_LOW);
+		 * Pulse must be at least 16 PCI clocks long = 500 ns.
+		 */
+		gpio_set_level(GPIO_PCH_RCIN_L, 0);
 		udelay(10);
-		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_INPUT);
+		gpio_set_level(GPIO_PCH_RCIN_L, 1);
 	}
 }
 
@@ -110,9 +109,6 @@ void chipset_throttle_cpu(int throttle)
 
 enum x86_state x86_chipset_init(void)
 {
-	/* Enable interrupts for our GPIOs */
-	gpio_enable_interrupt(GPIO_PCH_EDP_VDD_EN);
-
 	/*
 	 * If we're switching between images without rebooting, see if the x86
 	 * is already powered on; if so, leave it there instead of cycling
@@ -127,13 +123,11 @@ enum x86_state x86_chipset_init(void)
 			CPRINTF("[%T x86 forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_SYS_PWROK, 0);
-			gpio_set_level(GPIO_VCORE_EN, 0);
 			gpio_set_level(GPIO_PP1050_EN, 0);
-			gpio_set_level(GPIO_PP1350_EN, 0);
-			gpio_set_level(GPIO_PP1050_PGOOD, 0);
-			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
-			gpio_set_level(GPIO_PP3300_DX_EN, 0);
+			gpio_set_level(GPIO_PP1200_EN, 0);
+			gpio_set_level(GPIO_PP1800_EN, 0);
 			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
+			gpio_set_level(GPIO_PP5000_USB_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			wireless_enable(0);
@@ -195,33 +189,19 @@ enum x86_state x86_handle_state(enum x86_state state)
 		 */
 		msleep(10);
 
-		/* Enable PP5000 (5V) rail as 1.05V and 1.35V rails need 5V
+		/* Enable PP5000 (5V) rail as 1.05V and 1.2V rails need 5V
 		 * rail to regulate properly. */
 		gpio_set_level(GPIO_PP5000_EN, 1);
-		if (x86_wait_signals(IN_PGOOD_PP5000)) {
-			chipset_force_shutdown();
-			return X86_G3;
-		}
 
 		/* Assert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
 
-		/* Enable PP1050 rail. Bring up the PP1050_PCH_SUS rail to
-		 * provide 1.05V suspend as early as possible as the RSMSRT#
-		 * signal deasserting indicates both the PP3300_PCH_SUS
-		 * and PP1050_PCH_SUS rails are good. Since PP1050_PGGOOD is
-		 * driven as output to work around VCCST_PWRGD timing problems
-		 * there is no way to know when PP1050_PCH_SUS rail is good.
-		 * Similarly the PP3300_PCH_SUS rail is enabled by SLP_SUS#
-		 * being deasserted without a power good signal. The RSMRST#
-		 * is driven by an RC circuit feeding into schmitt trigger.
-		 * Therefore, the PP1050_PCH_SUS rail is brought up as early
-		 * as possible after DPWROK is asserted so that it will be
-		 * ready by the time RSMRST# is deasserted. */
+		/* Enable PP1050 rail. */
 		gpio_set_level(GPIO_PP1050_EN, 1);
 
-		/* Wait for SLP_SUS# to deassert before enabling PP1050. */
-		if (x86_wait_signals(IN_PCH_SLP_SUSn_DEASSERTED)) {
+		/* Wait for 1.05V to come up and CPU to notice */
+		if (x86_wait_signals(IN_PGOOD_PP1050 |
+				     IN_PCH_SLP_SUS_DEASSERTED)) {
 			chipset_force_shutdown();
 			return X86_G3;
 		}
@@ -231,14 +211,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		return X86_S5;
 
 	case X86_S5S3:
-		/* Wait for the always-on rails to be good */
-		if (x86_wait_signals(IN_PGOOD_ALWAYS_ON)) {
-			chipset_force_shutdown();
-			return X86_S5;
-		}
-
 		/* Turn on power to RAM */
-		gpio_set_level(GPIO_PP1350_EN, 1);
+		gpio_set_level(GPIO_PP1200_EN, 1);
+		gpio_set_level(GPIO_PP1800_EN, 1);
 		if (x86_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
 			return X86_S5;
@@ -263,13 +238,11 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 	case X86_S3S0:
 		/* Wait 20ms before allowing VCCST_PGOOD to rise. */
-		msleep(20);
-		/* Assert VCCST_PGOOD using PP1050_PGOOD. */
-		gpio_set_level(GPIO_PP1050_PGOOD, 1);
+		msleep(20);	   /* HEY: really? */
 
 		/* Turn on power rails */
-		gpio_set_level(GPIO_PP3300_DX_EN, 1);
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
+		gpio_set_level(GPIO_PP5000_USB_EN, 1);
 
 		/* Enable wireless */
 		wireless_enable(EC_WIRELESS_SWITCH_ALL);
@@ -285,18 +258,10 @@ enum x86_state x86_handle_state(enum x86_state state)
 		if (x86_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
 			wireless_enable(0);
-			gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
-			gpio_set_level(GPIO_PP3300_DX_EN, 0);
 			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
-			gpio_set_level(GPIO_PP1050_PGOOD, 0);
+			gpio_set_level(GPIO_PP5000_USB_EN, 0);
 			return X86_S3;
 		}
-
-		/*
-		 * Enable +CPU_CORE.  The CPU itself will request the supplies
-		 * when it's ready.
-		 */
-		gpio_set_level(GPIO_VCORE_EN, 1);
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
@@ -319,17 +284,12 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
-		/* Drop VCCST_PGOOD */
-		gpio_set_level(GPIO_PP1050_PGOOD, 0);
 		/* Clear PCH_PWROK */
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 
 		/* Wait 40ns */
 		udelay(1);
-
-		/* Disable +CPU_CORE */
-		gpio_set_level(GPIO_VCORE_EN, 0);
 
 		/* Disable wireless */
 		wireless_enable(0);
@@ -341,8 +301,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 		/* Turn off power rails */
-		gpio_set_level(GPIO_EC_EDP_VDD_EN, 0);
-		gpio_set_level(GPIO_PP3300_DX_EN, 0);
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 		return X86_S3;
 
@@ -350,11 +308,13 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
-		/* Disable touchpad power */
+		/* Disable peripheral power */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+		gpio_set_level(GPIO_PP5000_USB_EN, 0);
 
 		/* Turn off power to RAM */
-		gpio_set_level(GPIO_PP1350_EN, 0);
+		gpio_set_level(GPIO_PP1800_EN, 0);
+		gpio_set_level(GPIO_PP1200_EN, 0);
 
 		/*
 		 * Put touchscreen and lightbar in reset, so we won't
@@ -375,16 +335,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Deassert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PP1050_EN, 0);
-		/* Disable PP5000 (5V) rail. */
-		gpio_set_level(GPIO_PP5000_EN, 0);
 		return X86_G3;
 	}
 
 	return state;
-}
-
-void haswell_interrupt(enum gpio_signal signal)
-{
-	/* Pass through eDP VDD enable from PCH */
-	gpio_set_level(GPIO_EC_EDP_VDD_EN, gpio_get_level(GPIO_PCH_EDP_VDD_EN));
 }
