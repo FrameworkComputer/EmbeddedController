@@ -27,7 +27,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
 
-#ifdef TEST_led_lp5562
+#ifdef TEST_led_spring
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER_INPUT_CURRENT 4032

@@ -12,10 +12,6 @@ common-y+=gpio_common.o version.o printf.o queue.o
 common-y+=throttle_ap.o
 
 common-$(BOARD_daisy)+=extpower_snow.o
-common-$(BOARD_falco)+=led_falco.o
-common-$(BOARD_kirby)+=led_kirby.o
-common-$(BOARD_peppy)+=led_common.o led_peppy.o
-common-$(BOARD_slippy)+=led_slippy.o
 common-$(BOARD_snow)+=extpower_snow.o
 
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
@@ -48,8 +44,9 @@ common-$(CONFIG_I2C_ARBITRATION)+=i2c_arbitration.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
+common-$(CONFIG_LED_COMMON)+=led_common.o
 common-$(CONFIG_LED_DRIVER_DS2413)+=led_driver_ds2413.o
-common-$(CONFIG_LED_DRIVER_LP5562)+=led_driver_lp5562.o led_lp5562.o
+common-$(CONFIG_LED_DRIVER_LP5562)+=led_driver_lp5562.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
