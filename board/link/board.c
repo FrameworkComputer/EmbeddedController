@@ -261,15 +261,3 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
-
-/**
- * Perform necessary actions on host events.
- */
-void board_process_wake_events(uint32_t active_wake_events)
-{
-	/* Update level-sensitive wake signal */
-	if (active_wake_events)
-		gpio_set_level(GPIO_PCH_WAKE_L, 0);
-	else
-		gpio_set_level(GPIO_PCH_WAKE_L, 1);
-}

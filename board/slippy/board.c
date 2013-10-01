@@ -226,23 +226,6 @@ struct keyboard_scan_config keyscan_config = {
 };
 
 /**
- * Perform necessary actions on host wake events.
- */
-void board_process_wake_events(uint32_t active_wake_events)
-{
-	uint32_t power_button_mask;
-
-	power_button_mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
-
-	/* If there are other events aside from the power button press drive
-	 * the wake pin. Otherwise ensure it is high. */
-	if (active_wake_events & ~power_button_mask)
-		gpio_set_level(GPIO_PCH_WAKE_L, 0);
-	else
-		gpio_set_level(GPIO_PCH_WAKE_L, 1);
-}
-
-/**
  * Discharge battery when on AC power for factory test.
  */
 int board_discharge_on_ac(int enable)

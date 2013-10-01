@@ -149,6 +149,23 @@ static void lpc_generate_sci(void)
 			host_events & event_mask[LPC_HOST_EVENT_SCI]);
 }
 
+/**
+ * Update the level-sensitive wake signal to the AP.
+ *
+ * @param wake_events	Currently asserted wake events
+ */
+static void lpc_update_wake(uint32_t wake_events)
+{
+	/*
+	 * Mask off power button event, since the AP gets that through a
+	 * separate dedicated GPIO.
+	 */
+	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
+
+	/* Signal is asserted low when wake events is non-zero */
+	gpio_set_level(GPIO_PCH_WAKE_L, !wake_events);
+}
+
 uint8_t *lpc_get_memmap_range(void)
 {
 	return (uint8_t *)LPC_POOL_MEMMAP;
@@ -296,7 +313,6 @@ void lpc_comx_put_char(int c)
 static void update_host_event_status(void) {
 	int need_sci = 0;
 	int need_smi = 0;
-	uint32_t active_wake_events;
 
 	if (!init_done)
 		return;
@@ -325,8 +341,7 @@ static void update_host_event_status(void) {
 	task_enable_irq(LM4_IRQ_LPC);
 
 	/* Process the wake events. */
-	active_wake_events = host_events & event_mask[LPC_HOST_EVENT_WAKE];
-	board_process_wake_events(active_wake_events);
+	lpc_update_wake(host_events & event_mask[LPC_HOST_EVENT_WAKE]);
 
 	/* Send pulse on SMI signal if needed */
 	if (need_smi)
