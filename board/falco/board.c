@@ -248,7 +248,7 @@ int board_discharge_on_ac(int enable)
  * Take a nice smooth ramp and make it all chunky.
  * And never turn it off. Bah. That'll do wonders for battery life.
  */
-#ifdef CONFIG_PWM_FAN_RPM_CUSTOM
+#ifdef CONFIG_FAN_RPM_CUSTOM
 int pwm_fan_percent_to_rpm(int pct)
 {
 	const int FAN_MAX = 5050;
@@ -260,4 +260,4 @@ int pwm_fan_percent_to_rpm(int pct)
 	int chunky = 100 * (pct + m0) / m;
 	return FAN_MIN + (FAN_MAX - FAN_MIN) * m * chunky / 10000;
 }
-#endif	/* CONFIG_PWM_FAN_RPM_CUSTOM */
+#endif	/* CONFIG_FAN_RPM_CUSTOM */

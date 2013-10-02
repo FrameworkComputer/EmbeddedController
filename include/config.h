@@ -324,7 +324,7 @@
 #undef CONFIG_FAN
 
 /* Fan channel (not PWM channel) for the CPU fan */
-#undef CONFIG_FAN_CPU_CH
+#undef CONFIG_FAN_CH_CPU
 
 /* Name of active high GPIO to control power to the cooling fan */
 #undef CONFIG_FAN_EN_GPIO
@@ -733,6 +733,7 @@
 
 #ifndef HAS_TASK_CHARGER
 #undef CONFIG_CHARGER
+#undef CONFIG_CHARGER_BQ24192
 #undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715
 #undef CONFIG_CHARGER_BQ24725

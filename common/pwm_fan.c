@@ -24,4 +24,4 @@ int pwm_fan_percent_to_rpm(int pct)
 
 	return rpm;
 }
-#endif	/* CONFIG_PWM_FAN_RPM_CUSTOM */
+#endif	/* CONFIG_FAN_RPM_CUSTOM */
