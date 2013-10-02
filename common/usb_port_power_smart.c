@@ -21,10 +21,13 @@
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
 
+#define USB_CHARGE_PORT_COUNT 2
+
 /* The previous USB port state before sys jump */
 struct usb_state {
 	uint8_t port_mode[USB_CHARGE_PORT_COUNT];
-	uint8_t pad[2]; /* Pad to 4 bytes for system_add_jump_tag(). */
+	/* Pad to 4 bytes for system_add_jump_tag(). */
+	uint8_t pad[4 - USB_CHARGE_PORT_COUNT];
 };
 
 static uint8_t charge_mode[USB_CHARGE_PORT_COUNT];

@@ -96,9 +96,6 @@ enum pwm_channel {
 /* Host connects to keyboard controller module via LPC */
 #define HOST_KB_BUS_LPC
 
-/* USB charge port */
-#define USB_CHARGE_PORT_COUNT 2
-
 /* GPIO signal definitions. */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
