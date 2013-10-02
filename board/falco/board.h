@@ -127,7 +127,7 @@ enum gpio_signal {
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_TOUCHSCREEN_RESET_L,  /* Reset touch screen */
 	GPIO_EC_EDP_VDD_EN,        /* Enable EDP (passthru from PCH) */
-	GPOI_LPC_CLKRUN_L,         /* Dunno. Probably important, though. */
+	GPIO_LPC_CLKRUN_L,         /* Dunno. Probably important, though. */
 
 	GPIO_USB1_ENABLE,          /* USB port 1 output power enable */
 	GPIO_USB2_ENABLE,          /* USB port 2 output power enable */
