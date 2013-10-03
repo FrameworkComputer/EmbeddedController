@@ -79,6 +79,7 @@ const struct gpio_info gpio_list[] = {
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
 	{"USB2_STATUS_L",        LM4_GPIO_D, (1<<7), GPIO_INPUT, NULL},
+	{"BAT_DETECT_L",         LM4_GPIO_B, (1<<4), GPIO_INPUT, NULL},
 
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
@@ -228,3 +229,11 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
+
+/**
+ * Physical detection of battery connection.
+ */
+int battery_is_connected(void)
+{
+	return (gpio_get_level(GPIO_BAT_DETECT_L) == 0);
+}

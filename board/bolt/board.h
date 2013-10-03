@@ -24,6 +24,7 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_WP_ACTIVE_HIGH
 
+#define CONFIG_BATTERY_CHECK_CONNECTED
 #define CONFIG_BATTERY_LINK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BACKLIGHT_LID
@@ -114,6 +115,7 @@ enum gpio_signal {
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_STATUS_L,        /* USB charger port 2 status output */
+	GPIO_BAT_DETECT_L,         /* Battery detect from BAT_TEMP */
 
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
