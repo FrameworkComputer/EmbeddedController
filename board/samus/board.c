@@ -108,8 +108,9 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_SYS_RST_L",        LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
-
+#ifndef HEY_USE_BUILTIN_CLKRUN
 	{"LPC_CLKRUN_L",         LM4_GPIO_M, (1<<2), GPIO_ODR_HIGH, NULL},
+#endif
 	{"USB1_CTL1",            LM4_GPIO_E, (1<<1), GPIO_OUT_LOW, NULL},
 	{"USB1_CTL2",            LM4_GPIO_E, (1<<2), GPIO_OUT_HIGH, NULL},
 	{"USB1_CTL3",            LM4_GPIO_E, (1<<3), GPIO_OUT_LOW, NULL},
@@ -137,8 +138,11 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_J, 0x80, 0, MODULE_PECI, GPIO_ANALOG},	/* PECI Rx */
 	{GPIO_L, 0x3f, 15, MODULE_LPC},			/* LPC */
 	{GPIO_M, 0x33, 15, MODULE_LPC},			/* LPC */
-	{GPIO_N, 0x0c, 1, MODULE_PWM_FAN},		/* Fan0 PWM/tach */
-	{GPIO_N, 0x40, 1, MODULE_PWM_KBLIGHT},		/* Fan1 PWM */
+#ifdef HEY_USE_BUILTIN_CLKRUN
+	{GPIO_M, 0x04, 15, MODULE_LPC, GPIO_OPEN_DRAIN},/* LPC */
+#endif
+	{GPIO_N, 0x3c, 1, MODULE_PWM_FAN},		/* Fan0PWM/TACH 2&3 */
+	{GPIO_N, 0x40, 1, MODULE_PWM_KBLIGHT},		/* Fan1PWM4 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
@@ -165,14 +169,13 @@ const struct adc_t adc_channels[] = {
 	{"ECTemp", LM4_ADC_SEQ0, -225, ADC_READ_MAX, 420,
 	 LM4_AIN_NONE, 0x0e /* TS0 | IE0 | END0 */, 0, 0},
 
-	/* IOUT == ICMNT is on PE3/AIN0 */
-	/* We have 0.01-ohm resistors, and IOUT is 20X the differential
-	 * voltage, so 1000mA ==> 200mV.
-	 * ADC returns 0x000-0xFFF, which maps to 0.0-3.3V (as configured).
-	 * mA = 1000 * ADC_VALUE / ADC_READ_MAX * 3300 / 200
+	/* We're measuring the adapter input current through a 0.01-ohm
+	 * resistor (ACP/ACN). IOUT is 40X the differential voltage, so
+	 * 1000mA => 400mV. ADC returns 0x000-0xFFF over 0.0-3.3V.
+	 * mA = 1000 * ADC_VALUE / ADC_READ_MAX * 3.3(V) * 100(R) / 40(gain)
 	 */
-	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 2, 0,
-	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
+	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 4, 0,
+	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

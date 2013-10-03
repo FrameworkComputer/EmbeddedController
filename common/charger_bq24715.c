@@ -169,6 +169,24 @@ int charger_set_voltage(int voltage)
 /* Charging power state initialization */
 int charger_post_init(void)
 {
-	/* Set charger input current limit */
-	return charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+	int rv;
+	int option;
+
+	rv = charger_get_option(&option);
+	if (rv)
+		return rv;
+
+	/* Don't be noisy */
+	option |= OPT_AUDIO_FREQ_40KHZ_LIMIT;
+
+	/* Always monitor adapter current (40X multiplier). */
+	option |= OPT_FIX_IOUT_ALWAYS;
+	option &= ~OPT_IOUT_MASK;
+
+	rv = charger_set_option(option);
+	if (rv)
+		return rv;
+
+	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+	return rv;
 }

@@ -12,6 +12,8 @@
 #define CONFIG_CONSOLE_CMDHELP
 #define CONFIG_TASK_PROFILING
 
+#define HEY_USE_BUILTIN_CLKRUN
+
 /* Optional features */
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHIPSET_X86
@@ -32,7 +34,7 @@
 /* 10mOhm sense resitors. */
 #define   CONFIG_CHARGER_SENSE_RESISTOR 10
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
-/* External Charger maximum current. */
+/* HEY: what value for External Charger maximum current? */
 #define   CONFIG_CHARGER_INPUT_CURRENT 5000
 #define CONFIG_FAN
 #define CONFIG_FAN_CH_CPU 2
@@ -137,8 +139,9 @@ enum gpio_signal {
 	GPIO_PCH_SYS_RST_L,        /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_TOUCHSCREEN_RESET_L,  /* Reset touch screen */
+#ifndef HEY_USE_BUILTIN_CLKRUN
 	GPIO_LPC_CLKRUN_L,         /* Dunno. Probably important, though. */
-
+#endif
 	GPIO_USB1_CTL1,            /* USB charger port 1 CTL1 output */
 	GPIO_USB1_CTL2,            /* USB charger port 1 CTL2 output */
 	GPIO_USB1_CTL3,            /* USB charger port 1 CTL3 output */
@@ -174,7 +177,6 @@ enum x86_signal {
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
-
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
 
