@@ -5,14 +5,12 @@
  * TI bq24707A battery charger driver.
  */
 
+#include "battery_smart.h"
 #include "charger.h"
 #include "charger_bq24707a.h"
 #include "console.h"
 #include "common.h"
-#include "i2c.h"
-#include "smart_battery.h"
 #include "util.h"
-#include "printf.h"
 
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10

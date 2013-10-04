@@ -5,7 +5,7 @@
  * Battery pack vendor provided charging profile
  */
 
-#include "battery_pack.h"
+#include "battery.h"
 #include "gpio.h"
 
 /* FIXME: We need REAL values for all this stuff */

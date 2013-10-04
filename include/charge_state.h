@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "battery_pack.h"
+#include "battery.h"
 #include "timer.h"
 
 #ifndef __CROS_EC_CHARGE_STATE_H

@@ -5,12 +5,11 @@
  * Smart battery driver.
  */
 
-#include "battery_pack.h"
+#include "battery.h"
+#include "battery_smart.h"
 #include "common.h"
 #include "console.h"
-#include "smart_battery.h"
 #include "test_util.h"
-#include "uart.h"
 #include "util.h"
 
 static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];

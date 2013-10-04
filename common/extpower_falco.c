@@ -15,6 +15,7 @@
 #include <limits.h>				/* part of the compiler */
 
 #include "adc.h"
+#include "battery_smart.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "charger_bq24738.h"
@@ -25,7 +26,6 @@
 #include "extpower_falco.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "smart_battery.h"
 #include "throttle_ap.h"
 #include "util.h"
 

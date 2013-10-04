@@ -5,9 +5,9 @@
  * Battery pack vendor provided charging profile
  */
 
-#include "battery_pack.h"
+#include "battery.h"
+#include "battery_smart.h"
 #include "host_command.h"
-#include "smart_battery.h"
 
 #define SB_SHIP_MODE_DATA	0x0010
 

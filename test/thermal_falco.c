@@ -5,7 +5,8 @@
  * Test thermal engine.
  */
 
-#include "battery_pack.h"
+#include "battery.h"
+#include "battery_smart.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -15,7 +16,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
-#include "smart_battery.h"
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "thermal.h"

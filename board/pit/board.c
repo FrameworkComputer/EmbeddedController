@@ -4,7 +4,7 @@
  */
 /* Pit board-specific configuration */
 
-#include "battery_pack.h"
+#include "battery.h"
 #include "common.h"
 #include "extpower.h"
 #include "gaia_power.h"

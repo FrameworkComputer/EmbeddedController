@@ -5,15 +5,13 @@
  * Test lid switch.
  */
 
-#include "battery_pack.h"
+#include "battery_smart.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
-#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "smart_battery.h"
 #include "task.h"
 #include "test_util.h"
 #include "util.h"

@@ -5,12 +5,12 @@
  * Test lid switch.
  */
 
+#include "battery_smart.h"
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
 #include "lp5562.h"
 #include "pmu_tpschrome.h"
-#include "smart_battery.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"

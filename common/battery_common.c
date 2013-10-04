@@ -86,7 +86,7 @@ static int print_battery_info(void)
 		ccprintf("0x%04x = %d mA\n", value, value);
 
 	print_item_name("Mode:");
-	if (check_print_error(battery_get_battery_mode(&value)))
+	if (check_print_error(battery_get_mode(&value)))
 		ccprintf("0x%04x\n", value);
 
 	battery_is_in_10mw_mode(&value);

@@ -5,11 +5,11 @@
  * TPSChrome powerinfo commands.
  */
 
+#include "battery.h"
 #include "console.h"
 #include "extpower.h"
 #include "host_command.h"
 #include "pmu_tpschrome.h"
-#include "smart_battery.h"
 #include "util.h"
 
 /* FIXME: move all the constants to pmu_tpschrome, make

@@ -6,7 +6,6 @@
  */
 
 #include "battery.h"
-#include "battery_pack.h"
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"

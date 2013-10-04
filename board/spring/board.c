@@ -5,7 +5,6 @@
 /* Spring board-specific configuration */
 
 #include "adc.h"
-#include "battery_pack.h"
 #include "board_config.h"
 #include "chipset.h"
 #include "common.h"
@@ -105,16 +104,6 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
-/* Battery temperature ranges in degrees C */
-const struct battery_temperature_ranges bat_temp_ranges = {
-	.start_charging_min_c = 5,
-	.start_charging_max_c = 45,
-	.charging_min_c       = 5,
-	.charging_max_c       = 60,
-	.discharging_min_c    = 0,
-	.discharging_max_c    = 100,
-};
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {

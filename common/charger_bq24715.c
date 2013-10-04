@@ -5,11 +5,11 @@
  * TI bq24715 battery charger driver.
  */
 
+#include "battery_smart.h"
 #include "charger.h"
 #include "charger_bq24715.h"
 #include "console.h"
 #include "common.h"
-#include "smart_battery.h"
 #include "util.h"
 
 /* Sense resistor configurations and macros */

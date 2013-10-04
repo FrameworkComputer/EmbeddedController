@@ -10,4 +10,4 @@ CHIP:=host
 
 board-y=board.o
 board-$(HAS_TASK_CHIPSET)+=chipset.o
-board-$(CONFIG_BATTERY_MOCK)+=smart_battery.o charger.o
+board-$(CONFIG_BATTERY_MOCK)+=battery.o charger.o

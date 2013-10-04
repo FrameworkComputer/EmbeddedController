@@ -5,14 +5,13 @@
  * Battery LED state machine to drive RGB LED on LP5562
  */
 
+#include "battery.h"
 #include "common.h"
-#include "ec_commands.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lp5562.h"
 #include "pmu_tpschrome.h"
-#include "smart_battery.h"
 #include "timer.h"
 #include "util.h"
 

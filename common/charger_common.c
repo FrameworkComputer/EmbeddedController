@@ -10,7 +10,6 @@
 #include "console.h"
 #include "host_command.h"
 #include "printf.h"
-#include "smart_battery.h"
 #include "util.h"
 
 /* Console output macros */

@@ -5,7 +5,7 @@
  * Battery pack vendor provided charging profile
  */
 
-#include "battery_pack.h"
+#include "battery.h"
 
 /*
  * Design capacity

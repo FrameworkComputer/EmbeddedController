@@ -8,9 +8,7 @@
 #ifndef __CROS_EC_SMART_BATTERY_H
 #define __CROS_EC_SMART_BATTERY_H
 
-#include "battery.h"
 #include "common.h"
-#include "i2c.h"
 
 /* Smart battery and charger I2C address */
 #define BATTERY_ADDR 0x16
@@ -60,14 +58,15 @@
 #define SB_MANUFACTURER_DATA            0x23
 
 /* Battery mode */
-#define MODE_CAPACITY                   (1 << 15)
-#define MODE_CHARGER                    (1 << 14)
-#define MODE_ALARM                      (1 << 13)
-#define MODE_PRIMARY_BATTERY            (1 << 9)
-#define MODE_CHARGE_CONTROLLER_ENABLED  (1 << 8)
-#define MODE_CONDITION_CYCLE            (1 << 7)
-#define MODE_PRIMARY_BATTERY_SUPPORT    (1 << 1)
 #define MODE_INTERNAL_CHARGE_CONTROLLER (1 << 0)
+#define MODE_PRIMARY_BATTERY_SUPPORT    (1 << 1)
+#define MODE_CONDITION_CYCLE            (1 << 7)
+#define MODE_CHARGE_CONTROLLER_ENABLED  (1 << 8)
+#define MODE_PRIMARY_BATTERY            (1 << 9)
+#define MODE_ALARM                      (1 << 13)
+#define MODE_CHARGER                    (1 << 14)
+#define MODE_CAPACITY                   (1 << 15)
+
 /* Battery status */
 #define STATUS_ERR_CODE_MASK            0xf
 #define STATUS_CODE_OK                  0

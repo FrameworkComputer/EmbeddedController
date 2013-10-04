@@ -16,9 +16,9 @@ common-$(BOARD_snow)+=extpower_snow.o
 
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
-common-$(CONFIG_BATTERY_BQ27541)+=battery.o battery_bq27541.o
+common-$(CONFIG_BATTERY_BQ27541)+=battery_common.o battery_bq27541.o
 common-$(CONFIG_BATTERY_LINK)+=battery_link.o
-common-$(CONFIG_BATTERY_SMART)+=battery.o smart_battery.o
+common-$(CONFIG_BATTERY_SMART)+=battery_common.o battery_smart.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger_common.o
 common-$(CONFIG_CHARGER_BQ24192)+=charger_bq24192.o
 common-$(CONFIG_CHARGER_BQ24715)+=charger_bq24715.o

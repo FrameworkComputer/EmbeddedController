@@ -159,12 +159,12 @@ int battery_time_at_rate(int rate, int *minutes)
 	return bq27541_read(REG_AT_RATE_TIME_TO_EMPTY, minutes);
 }
 
-int battery_manufacturer_name(char *name, int buf_size)
+int battery_manufacturer_name(char *dest, int size)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_device_chemistry(char *chemistry, int buf_size)
+int battery_device_chemistry(char *dest, int size)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
@@ -200,7 +200,7 @@ int battery_desired_current(int *current)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_get_battery_mode(int *mode)
+int battery_get_mode(int *mode)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }

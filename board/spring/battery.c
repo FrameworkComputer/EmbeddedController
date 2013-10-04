@@ -5,13 +5,24 @@
  * Smart battery driver for Spring.
  */
 
+#include "battery.h"
+#include "battery_smart.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "smart_battery.h"
 #include "util.h"
 
 #define PARAM_CUT_OFF_LOW  0x10
 #define PARAM_CUT_OFF_HIGH 0x00
+
+/* Battery temperature ranges in degrees C */
+const struct battery_temperature_ranges bat_temp_ranges = {
+	.start_charging_min_c = 5,
+	.start_charging_max_c = 45,
+	.charging_min_c       = 5,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 100,
+};
 
 int battery_command_cut_off(struct host_cmd_handler_args *args)
 {

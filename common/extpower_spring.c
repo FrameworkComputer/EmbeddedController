@@ -6,6 +6,7 @@
 /* USB charging control for spring board */
 
 #include "adc.h"
+#include "battery.h"
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"
@@ -17,7 +18,6 @@
 #include "pmu_tpschrome.h"
 #include "pwm.h"
 #include "registers.h"
-#include "smart_battery.h"
 #include "stm32_adc.h"
 #include "system.h"
 #include "task.h"

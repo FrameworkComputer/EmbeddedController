@@ -5,11 +5,10 @@
  * Mock battery charger driver.
  */
 
+#include "battery_smart.h"
 #include "charger.h"
 #include "console.h"
 #include "common.h"
-#include "smart_battery.h"
-#include "uart.h"
 #include "util.h"
 
 static const struct charger_info mock_charger_info = {
@@ -74,7 +73,7 @@ int charger_set_current(int current)
 		current = info->current_max;
 
 	if (mock_current != current)
-		uart_printf("Charger set current: %d\n", current);
+		ccprintf("Charger set current: %d\n", current);
 	mock_current = current;
 	return EC_SUCCESS;
 }
@@ -89,7 +88,7 @@ int charger_get_voltage(int *voltage)
 int charger_set_voltage(int voltage)
 {
 	mock_voltage = voltage;
-	uart_printf("Charger set voltage: %d\n", voltage);
+	ccprintf("Charger set voltage: %d\n", voltage);
 	return EC_SUCCESS;
 }
 

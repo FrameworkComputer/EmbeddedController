@@ -6,8 +6,6 @@
  */
 
 #include "battery.h"
-#include "battery_pack.h"
-#include "board.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -18,7 +16,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
-#include "smart_battery.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

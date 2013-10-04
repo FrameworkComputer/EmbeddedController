@@ -4,7 +4,7 @@
  */
 /* Snow board-specific configuration */
 
-#include "battery_pack.h"
+#include "battery.h"
 #include "board_config.h"
 #include "chipset.h"
 #include "common.h"

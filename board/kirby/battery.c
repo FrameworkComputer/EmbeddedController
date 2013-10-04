@@ -5,7 +5,7 @@
  * Battery pack info for Kirby
  */
 
-#include "battery_pack.h"
+#include "battery.h"
 
 /* Battery temperature ranges in degrees C */
 const struct battery_temperature_ranges bat_temp_ranges = {

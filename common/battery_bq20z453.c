@@ -5,9 +5,8 @@
  * Smart battery driver for BQ20Z453.
  */
 
+#include "battery_smart.h"
 #include "host_command.h"
-#include "smart_battery.h"
-#include "timer.h"
 
 #define PARAM_CUT_OFF 0x0010
 
