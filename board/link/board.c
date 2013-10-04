@@ -197,7 +197,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 	{"thermal",  I2C_PORT_THERMAL,  100},
 };
-BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 #define TEMP_PCH_REG_ADDR	((0x41 << 1) | I2C_FLAG_BIG_ENDIAN)
 #define TEMP_CHARGER_REG_ADDR	((0x43 << 1) | I2C_FLAG_BIG_ENDIAN)

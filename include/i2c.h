@@ -21,6 +21,7 @@ struct i2c_port_t {
 };
 
 extern const struct i2c_port_t i2c_ports[];
+extern const unsigned int i2c_ports_used;
 
 /* Flags for i2c_xfer() */
 #define I2C_XFER_START (1 << 0)  /* Start smbus session from idle state */

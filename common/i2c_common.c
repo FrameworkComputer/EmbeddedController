@@ -368,7 +368,7 @@ static int command_scan(int argc, char **argv)
 {
 	int i;
 
-	for (i = 0; i < I2C_PORTS_USED; i++)
+	for (i = 0; i < i2c_ports_used; i++)
 		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
 	return EC_SUCCESS;
 }

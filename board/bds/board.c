@@ -36,7 +36,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct i2c_port_t i2c_ports[] = {
 	{"lightbar", I2C_PORT_LIGHTBAR, 400},
 };
-BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */

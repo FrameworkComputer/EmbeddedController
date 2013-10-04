@@ -54,7 +54,6 @@ enum module_id {
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
-#define I2C_PORTS_USED 1
 
 #define GPIO_AP_CLAIM	GPIO_SPI1_NSS	/* AP claims bus */
 #define GPIO_EC_CLAIM	GPIO_SPI1_MISO	/* EC claims bus */

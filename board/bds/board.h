@@ -46,8 +46,6 @@ enum pwm_channel {
 
 /* I2C ports */
 #define I2C_PORT_LIGHTBAR 5  // port 5 / PA6:7 on link, but PG6:7 on badger
-/* Number of I2C ports used */
-#define I2C_PORTS_USED 1
 
 /* Second UART port */
 #define CONFIG_UART_HOST 1

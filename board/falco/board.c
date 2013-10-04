@@ -198,7 +198,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"lvds",     I2C_PORT_LVDS,     100},
 	{"thermal",  I2C_PORT_THERMAL,  100},
 };
-BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[] = {

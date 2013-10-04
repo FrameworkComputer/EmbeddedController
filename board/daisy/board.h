@@ -53,7 +53,6 @@ enum module_id {
 #define I2C_PORT_BATTERY I2C_PORT_HOST
 #define I2C_PORT_CHARGER I2C_PORT_HOST
 #define I2C_PORT_SLAVE 1
-#define I2C_PORTS_USED 2
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 3

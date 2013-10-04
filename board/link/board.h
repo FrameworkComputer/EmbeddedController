@@ -86,8 +86,6 @@ enum pwm_channel {
 #define I2C_PORT_THERMAL 5
 #define I2C_PORT_LIGHTBAR 1
 #define I2C_PORT_REGULATOR 0
-/* There are only 3 I2C ports used because battery and charger share a port */
-#define I2C_PORTS_USED 3
 
 /* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPION

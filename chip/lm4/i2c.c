@@ -244,7 +244,7 @@ static void i2c_freq_changed(void)
 	int freq = clock_get_freq();
 	int i;
 
-	for (i = 0; i < I2C_PORTS_USED; i++) {
+	for (i = 0; i < i2c_ports_used; i++) {
 		/*
 		 * From datasheet:
 		 *     SCL_PRD = 2 * (1 + TPR) * (SCL_LP + SCL_HP) * CLK_PRD
@@ -277,7 +277,7 @@ static void i2c_init(void)
 	int i;
 
 	/* Enable I2C modules and delay a few clocks */
-	for (i = 0; i < I2C_PORTS_USED; i++)
+	for (i = 0; i < i2c_ports_used; i++)
 		mask |= 1 << i2c_ports[i].port;
 
 	LM4_SYSTEM_RCGCI2C |= mask;
@@ -291,7 +291,7 @@ static void i2c_init(void)
 		task_waiting_on_port[i] = TASK_ID_INVALID;
 
 	/* Initialize ports as master, with interrupts enabled */
-	for (i = 0; i < I2C_PORTS_USED; i++)
+	for (i = 0; i < i2c_ports_used; i++)
 		LM4_I2C_MCR(i2c_ports[i].port) = 0x10;
 
 	/* Set initial clock frequency */
@@ -355,9 +355,9 @@ static int command_i2cread(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM1;
 
-	for (i = 0; i < I2C_PORTS_USED && port != i2c_ports[i].port; i++)
+	for (i = 0; i < i2c_ports_used && port != i2c_ports[i].port; i++)
 		;
-	if (i >= I2C_PORTS_USED)
+	if (i >= i2c_ports_used)
 		return EC_ERROR_PARAM1;
 
 	addr = strtoi(argv[2], &e, 0);

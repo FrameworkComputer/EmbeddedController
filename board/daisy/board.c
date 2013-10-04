@@ -124,7 +124,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"0", 0, 100},
 	{"1", 1, 100},
 };
-BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_PORTS_USED);
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 void keyboard_suppress_noise(void)
 {
