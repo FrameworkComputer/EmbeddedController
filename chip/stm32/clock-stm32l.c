@@ -33,16 +33,6 @@ enum clock_osc {
 static int freq;
 static int current_osc;
 
-void enable_sleep(uint32_t mask)
-{
-	/* low power mode not implemented */
-}
-
-void disable_sleep(uint32_t mask)
-{
-	/* low power mode not implemented */
-}
-
 int clock_get_freq(void)
 {
 	return freq;

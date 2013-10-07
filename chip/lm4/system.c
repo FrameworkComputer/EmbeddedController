@@ -13,6 +13,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 /* Indices for hibernate data registers */
@@ -28,17 +29,19 @@ enum hibdata_index {
 #define HIBDATA_WAKE_PIN        (1 << 2)  /* Wake pin */
 
 /*
- * Time it takes wait_for_hibctl_wc() to return.  Experimentally verified to
- * be ~200 us; the value below is somewhat conservative.
- */
-#define HIB_WAIT_USEC 1000
-
-/*
  * Time to hibernate to trigger a power-on reset.  50 ms is sufficient for the
  * EC itself, but we need a longer delay to ensure the rest of the components
  * on the same power rail are reset and 5VALW has dropped.
  */
 #define HIB_RESET_USEC 1000000
+
+/*
+ * Convert between microseconds and the hibernation module RTC subsecond
+ * register which has 15-bit resolution. Divide down both numerator and
+ * denominator to avoid integer overflow while keeping the math accurate.
+ */
+#define HIB_RTC_USEC_TO_SUBSEC(us) ((us) * (32768/64) / (1000000/64))
+#define HIB_RTC_SUBSEC_TO_USEC(ss) ((ss) * (1000000/64) / (32768/64))
 
 /**
  * Wait for a write to commit to a hibernate register.
@@ -187,7 +190,7 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
  *
  * @return the real-time clock seconds value.
  */
-uint32_t system_get_rtc(uint32_t *ss_ptr)
+static uint32_t system_get_rtc_sec_subsec(uint32_t *ss_ptr)
 {
 	uint32_t rtc, rtc2;
 	uint32_t rtcss, rtcss2;
@@ -209,6 +212,17 @@ uint32_t system_get_rtc(uint32_t *ss_ptr)
 	return rtc;
 }
 
+timestamp_t system_get_rtc(void)
+{
+	uint32_t rtc, rtc_ss;
+	timestamp_t time;
+
+	rtc = system_get_rtc_sec_subsec(&rtc_ss);
+
+	time.val = ((uint64_t)rtc) * SECOND + HIB_RTC_SUBSEC_TO_USEC(rtc_ss);
+	return time;
+}
+
 /**
  * Set the real-time clock.
  *
@@ -222,6 +236,91 @@ void system_set_rtc(uint32_t seconds)
 }
 
 /**
+ * Set the hibernate RTC match time at a given time from now
+ *
+ * @param seconds      Number of seconds from now for RTC match
+ * @param microseconds Number of microseconds from now for RTC match
+ */
+static void set_hibernate_rtc_match_time(uint32_t seconds,
+					uint32_t microseconds)
+{
+	uint32_t rtc, rtcss;
+
+	/*
+	 * Make sure that the requested delay is not less then the
+	 * amount of time it takes to set the RTC match registers,
+	 * otherwise, the match event could be missed.
+	 */
+	if (seconds == 0 && microseconds < HIB_SET_RTC_MATCH_DELAY_USEC)
+		microseconds = HIB_SET_RTC_MATCH_DELAY_USEC;
+
+	/* Calculate the wake match */
+	rtc = system_get_rtc_sec_subsec(&rtcss) + seconds;
+	rtcss += HIB_RTC_USEC_TO_SUBSEC(microseconds);
+	if (rtcss > 0x7fff) {
+		rtc += rtcss >> 15;
+		rtcss &= 0x7fff;
+	}
+
+	/* Set RTC alarm match */
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBRTCM0 = rtc;
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBRTCSS = rtcss << 16;
+	wait_for_hibctl_wc();
+}
+
+/**
+ * Use hibernate module to set up an RTC interrupt at a given
+ * time from now
+ *
+ * @param seconds      Number of seconds before RTC interrupt
+ * @param microseconds Number of microseconds before RTC interrupt
+ */
+void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
+{
+	/* Clear pending interrupt */
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
+
+	/* Set match time */
+	set_hibernate_rtc_match_time(seconds, microseconds);
+
+	/* Enable RTC interrupt on match */
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBIM = 1;
+}
+
+/**
+ * Disable and clear the RTC interrupt.
+ */
+void system_reset_rtc_alarm(void)
+{
+	/* Disable hibernate interrupts */
+	LM4_HIBERNATE_HIBIM = 0;
+
+	/* Clear interrupts */
+	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
+}
+
+/**
+ * Hibernate module interrupt
+ */
+static void __hibernate_irq(void)
+{
+	system_reset_rtc_alarm();
+}
+DECLARE_IRQ(LM4_IRQ_HIBERNATE, __hibernate_irq, 1);
+
+/**
+ * Enable hibernate interrupt
+ */
+void system_enable_hib_interrupt(void)
+{
+	task_enable_irq(LM4_IRQ_HIBERNATE);
+}
+
+/**
  * Internal hibernate function.
  *
  * @param seconds      Number of seconds to sleep before RTC alarm
@@ -230,7 +329,6 @@ void system_set_rtc(uint32_t seconds)
  */
 static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 {
-	uint32_t rtc, rtcss;
 	uint32_t hibctl;
 
 	/* Set up wake reasons and hibernate flags */
@@ -244,46 +342,21 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 	if (seconds || microseconds) {
 		hibctl |= LM4_HIBCTL_RTCWEN;
 		flags |= HIBDATA_WAKE_RTC;
+
+		set_hibernate_rtc_match_time(seconds, microseconds);
 	} else {
 		hibctl &= ~LM4_HIBCTL_RTCWEN;
 	}
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBCTL = hibctl;
 
-	/* Store hibernate flags */
-	hibdata_write(HIBDATA_INDEX_WAKE, flags);
-
 	/* Clear pending interrupt */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
 
-	/* Add expected overhead for hibernate register writes */
-	microseconds += HIB_WAIT_USEC * 4;
+	/* Store hibernate flags */
+	hibdata_write(HIBDATA_INDEX_WAKE, flags);
 
-	/*
-	 * The code below must run uninterrupted to make sure we accurately
-	 * calculate the RTC match value.
-	 */
-	interrupt_disable();
-
-	/*
-	 * Calculate the wake match, compensating for additional delays caused
-	 * by writing to the hibernate register.
-	 */
-	rtc = system_get_rtc(&rtcss) + seconds;
-	rtcss += microseconds * (32768/64) / (1000000/64);
-	if (rtcss > 0x7fff) {
-		rtc += rtcss >> 15;
-		rtcss &= 0x7fff;
-	}
-
-	/* Set RTC alarm match */
-	wait_for_hibctl_wc();
-	LM4_HIBERNATE_HIBRTCM0 = rtc;
-	wait_for_hibctl_wc();
-	LM4_HIBERNATE_HIBRTCSS = rtcss << 16;
-
-	wait_for_hibctl_wc();
 	__enter_hibernate(hibctl | LM4_HIBCTL_HIBREQ);
 }
 
@@ -296,6 +369,8 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_pre_init(void)
 {
+	uint32_t hibctl;
+
 	/*
 	 * Enable clocks to the hibernation module in run, sleep,
 	 * and deep sleep modes.
@@ -329,6 +404,16 @@ void system_pre_init(void)
 		for (i = 0; i < LM4_HIBERNATE_HIBDATA_ENTRIES; i++)
 			hibdata_write(i, 0);
 	}
+
+	/*
+	 * Set wake reasons to RTC match and WAKE pin by default.
+	 * Before going in to hibernate, these may change.
+	 */
+	hibctl = LM4_HIBERNATE_HIBCTL;
+	hibctl |= LM4_HIBCTL_RTCWEN;
+	hibctl |= LM4_HIBCTL_PINWEN;
+	wait_for_hibctl_wc();
+	LM4_HIBERNATE_HIBCTL = hibctl;
 
 	/*
 	 * Initialize registers after reset to work around LM4 chip errata
@@ -504,9 +589,9 @@ static int command_system_rtc(int argc, char **argv)
 		return EC_ERROR_INVAL;
 	}
 
-	rtc = system_get_rtc(&rtcss);
+	rtc = system_get_rtc_sec_subsec(&rtcss);
 	ccprintf("RTC: 0x%08x.%04x (%d.%06d s)\n",
-		 rtc, rtcss, rtc, (rtcss * (1000000/64)) / (32768/64));
+		 rtc, rtcss, rtc, HIB_RTC_SUBSEC_TO_USEC(rtcss));
 
 	return EC_SUCCESS;
 }
@@ -515,6 +600,41 @@ DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
 			"Get/set real-time clock",
 			NULL);
 
+#ifdef CONFIG_CMD_RTC_ALARM
+/**
+ * Test the RTC alarm by setting an interrupt on RTC match.
+ */
+static int command_rtc_alarm_test(int argc, char **argv)
+{
+	int s = 1, us = 0;
+	char *e;
+
+	ccprintf("Setting RTC alarm\n");
+	system_enable_hib_interrupt();
+
+	if (argc > 1) {
+		s = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+	}
+	if (argc > 2) {
+		us = strtoi(argv[2], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+	}
+
+	system_set_rtc_alarm(s, us);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
+			"[seconds [microseconds]]",
+			"Test alarm",
+			NULL);
+#endif /* CONFIG_CMD_RTC_ALARM */
+
 /*****************************************************************************/
 /* Host commands */
 
@@ -522,7 +642,7 @@ static int system_rtc_get_value(struct host_cmd_handler_args *args)
 {
 	struct ec_response_rtc *r = args->response;
 
-	r->time = system_get_rtc(NULL);
+	r->time = system_get_rtc_sec_subsec(NULL);
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;

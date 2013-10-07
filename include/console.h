@@ -30,6 +30,7 @@ enum console_channel {
 			  * inside a console command routine. */
 	CC_CHARGER,
 	CC_CHIPSET,
+	CC_CLOCK,
 	CC_DMA,
 	CC_EVENTS,
 	CC_GPIO,

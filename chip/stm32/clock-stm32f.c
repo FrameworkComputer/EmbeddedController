@@ -35,19 +35,6 @@
 #define RTC_FREQ 40000 /* Hz */
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
-/* On-going actions preventing to go into deep-sleep mode */
-static uint32_t sleep_mask;
-
-void enable_sleep(uint32_t mask)
-{
-	atomic_clear(&sleep_mask, mask);
-}
-
-void disable_sleep(uint32_t mask)
-{
-	atomic_or(&sleep_mask, mask);
-}
-
 static void wait_rtc_ready(void)
 {
 	/* wait for Registers Synchronized Flag */
@@ -298,27 +285,4 @@ void clock_init(void)
 	task_enable_irq(STM32_IRQ_RTC_ALARM);
 }
 
-/*****************************************************************************/
-/* Console commands */
 
-static int command_sleepmask(int argc, char **argv)
-{
-	int off;
-
-	if (argc >= 2) {
-		off = strtoi(argv[1], NULL, 10);
-
-		if (off)
-			disable_sleep(SLEEP_MASK_FORCE);
-		else
-			enable_sleep(SLEEP_MASK_FORCE);
-	}
-
-	ccprintf("sleep mask: %08x\n", sleep_mask);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
-			"[0|1]",
-			"Display/force sleep mack",
-			NULL);

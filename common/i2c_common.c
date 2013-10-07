@@ -22,17 +22,15 @@ static struct mutex port_mutex[I2C_PORT_COUNT];
 void i2c_lock(int port, int lock)
 {
 	if (lock) {
-#ifdef CHIP_stm32
 		/* Don't allow deep sleep when I2C port is locked */
 		disable_sleep(SLEEP_MASK_I2C);
-#endif
+
 		mutex_lock(port_mutex + port);
 	} else {
 		mutex_unlock(port_mutex + port);
-#ifdef CHIP_stm32
+
 		/* Allow deep sleep again after I2C port is unlocked */
 		enable_sleep(SLEEP_MASK_I2C);
-#endif
 	}
 }
 

@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "uart.h"
 #include "util.h"

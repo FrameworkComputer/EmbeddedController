@@ -22,6 +22,7 @@ static const char * const channel_names[] = {
 	"command",
 	"charger",
 	"chipset",
+	"clock",
 	"dma",
 	"events",
 	"gpio",

@@ -11,6 +11,7 @@
 #include "cpu.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -18,7 +19,25 @@
 #include "util.h"
 #include "watchdog.h"
 
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_CLOCK, outstr)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
+
+/*
+ * Length of time for the processor to wake up from deep sleep. Actual
+ * measurement gives anywhere from 75-200us, so this is conservative.
+ */
+#define DEEP_SLEEP_RECOVER_TIME_USEC 300
+
+/* Low power idle statistics */
+#ifdef CONFIG_LOW_POWER_IDLE
+static int idle_sleep_cnt;
+static int idle_dsleep_cnt;
+static uint64_t idle_dsleep_time_us;
+static int dsleep_recovery_margin_us = 1000000;
+#endif
 
 static int freq;
 
@@ -33,6 +52,17 @@ static void disable_pll(void)
 		LM4_SYSTEM_RCC_PWRDN |
 		LM4_SYSTEM_RCC_OSCSRC(1) |
 		LM4_SYSTEM_RCC_MOSCDIS;
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	/*
+	 * If using the low power idle, then set the ACG bit, which specifies
+	 * that the sleep and deep sleep modes are using their own clock gating
+	 * registers SCGC and DCGS respectively instead of using the run mode
+	 * clock gating registers RCGC.
+	 */
+	LM4_SYSTEM_RCC |= LM4_SYSTEM_RCC_ACG;
+#endif
+
 	LM4_SYSTEM_RCC2 &= ~LM4_SYSTEM_RCC2_USERCC2;
 
 	freq = INTERNAL_CLOCK;
@@ -55,6 +85,16 @@ static void enable_pll(void)
 		LM4_SYSTEM_RCC_BYPASS |
 		LM4_SYSTEM_RCC_OSCSRC(1) |
 		LM4_SYSTEM_RCC_MOSCDIS;
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	/*
+	 * If using the low power idle, then set the ACG bit, which specifies
+	 * that the sleep and deep sleep modes are using their own clock gating
+	 * registers SCGC and DCGS respectively instead of using the run mode
+	 * clock gating registers RCGC.
+	 */
+	LM4_SYSTEM_RCC |= LM4_SYSTEM_RCC_ACG;
+#endif
 
 	/* Wait for the PLL to lock */
 	clock_wait_cycles(1024);
@@ -155,6 +195,105 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
 		*(LM4_SYSTEM_DCGC_BASE + offset) &= ~mask;
 }
 
+/*
+ * The low power idle task does not support using the EEPROM,
+ * because it is dangerous to go to deep sleep while EEPROM
+ * transaction is in progress. To fix, LM4_EEPROM_EEDONE, should
+ * be checked before going in to deep sleep.
+ */
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_EEPROM)
+#error "Low power idle mode does not support use of EEPROM"
+#endif
+
+#ifdef CONFIG_LOW_POWER_IDLE
+
+/* Low power idle task.  Executed when no tasks are ready to be scheduled. */
+void __idle(void)
+{
+	timestamp_t t0, t1, rtc_t0, rtc_t1;
+	int next_delay = 0;
+	int time_for_dsleep, margin_us;
+
+	/* Enable the hibernate IRQ used to wake up from deep sleep */
+	system_enable_hib_interrupt();
+
+	/* Set SRAM and flash power management to 'low power' in deep sleep. */
+	LM4_SYSTEM_DSLPPWRCFG = 0x23;
+
+	/*
+	 * Print when the idle task starts.  This is the lowest priority task,
+	 * so this only starts once all other tasks have gotten a chance to do
+	 * their task inits and have gone to sleep.
+	 */
+	CPRINTF("[%T low power idle task started]\n");
+
+	while (1) {
+		/*
+		 * Disable interrupts before going to deep sleep in order to
+		 * calculate the appropriate time to wake up. Note: the wfi
+		 * instruction waits until an interrupt is pending, so it
+		 * will still wake up even with interrupts disabled.
+		 */
+		interrupt_disable();
+
+		t0 = get_time();
+		next_delay = __hw_clock_event_get() - t0.le.lo;
+
+		/* Do we have enough time before next event to deep sleep. */
+		time_for_dsleep = next_delay > (DEEP_SLEEP_RECOVER_TIME_USEC +
+						HIB_SET_RTC_MATCH_DELAY_USEC);
+
+		if (!sleep_mask && time_for_dsleep) {
+			/* Deep-sleep in STOP mode. */
+			idle_dsleep_cnt++;
+
+			/* Set deep sleep bit. */
+			CPU_SCB_SYSCTRL |= 0x4;
+
+			/* Record real time before sleeping. */
+			rtc_t0 = system_get_rtc();
+
+			/*
+			 * Set RTC interrupt in time to wake up before
+			 * next event.
+			 */
+			system_set_rtc_alarm(0, next_delay -
+						DEEP_SLEEP_RECOVER_TIME_USEC);
+
+			/* Wait for interrupt: goes into deep sleep. */
+			asm("wfi");
+
+			/* Clear deep sleep bit. */
+			CPU_SCB_SYSCTRL &= ~0x4;
+
+			/* Disable and clear RTC interrupt. */
+			system_reset_rtc_alarm();
+
+			/* Fast forward timer according to RTC counter. */
+			rtc_t1 = system_get_rtc();
+			t1.val = t0.val + (rtc_t1.val - rtc_t0.val);
+			force_time(t1);
+
+			/* Record time spent in deep sleep. */
+			idle_dsleep_time_us += (rtc_t1.val - rtc_t0.val);
+
+			/* Calculate how close we were to missing deadline */
+			margin_us = next_delay - (int)(rtc_t1.val - rtc_t0.val);
+
+			/* Record the closest to missing a deadline. */
+			if (margin_us < dsleep_recovery_margin_us)
+				dsleep_recovery_margin_us = margin_us;
+		} else {
+			idle_sleep_cnt++;
+
+			/* Normal idle : only CPU clock stopped. */
+			asm("wfi");
+		}
+		interrupt_enable();
+	}
+}
+#endif /* CONFIG_LOW_POWER_IDLE */
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -169,36 +308,56 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
  *   3 : CPU in sleep mode and peripherals gated
  *   4 : CPU in deep sleep mode
  *   5 : CPU in deep sleep mode and peripherals gated
+ *
+ * Clocks :
+ *   0 : No change
+ *   1 : 16MHz
+ *   2 : 1 MHz
+ *   3 : 30kHz
+ *
+ * SRAM Power Management:
+ *   0 : Active
+ *   1 : Standby
+ *   3 : Low Power
+ *
+ * Flash Power Management:
+ *   0 : Active
+ *   2 : Low Power
  */
 static int command_sleep(int argc, char **argv)
 {
 	int level = 0;
 	int clock = 0;
+	int sram_pm = 0;
+	int flash_pm = 0;
 	uint32_t uartibrd = 0;
 	uint32_t uartfbrd = 0;
 
-	if (argc >= 2) {
+	if (argc >= 2)
 		level = strtoi(argv[1], NULL, 10);
-	}
-	if (argc >= 3) {
+	if (argc >= 3)
 		clock = strtoi(argv[2], NULL, 10);
-	}
+	if (argc >= 4)
+		sram_pm = strtoi(argv[3], NULL, 10);
+	if (argc >= 5)
+		flash_pm = strtoi(argv[4], NULL, 10);
 
 #ifdef BOARD_bds
-	/* remove LED current sink  */
+	/* Remove LED current sink. */
 	gpio_set_level(GPIO_DEBUG_LED, 0);
 #endif
 
-	ccprintf("Going to sleep : level %d clock %d...\n", level, clock);
+	ccprintf("Sleep : level %d, clock %d, sram pm %d, flash_pm %d...\n",
+			level, clock, sram_pm, flash_pm);
 	cflush();
 
-	/* clock setting */
+	/* Set clock speed. */
 	if (clock) {
 		/* Use ROM code function to set the clock */
 		void **func_table = (void **)*(uint32_t *)0x01000044;
 		void (*rom_clock_set)(uint32_t rcc) = func_table[23];
 
-		/* disable interrupts */
+		/* Disable interrupts. */
 		asm volatile("cpsid i");
 
 		switch (clock) {
@@ -219,18 +378,20 @@ static int command_sleep(int argc, char **argv)
 			break;
 		}
 
-		/* TODO: move this to the UART module; ugly to have
-		   UARTisms here.  Also note this only fixes UART0,
-		   not UART1. */
+		/*
+		 * TODO: move this to the UART module; ugly to have
+		 * UARTisms here.  Also note this only fixes UART0,
+		 * not UART1.
+		 */
 		if (uartfbrd) {
-			/* Disable the port via UARTCTL and add HSE */
+			/* Disable the port via UARTCTL and add HSE. */
 			LM4_UART_CTL(0) = 0x0320;
-			/* Set the baud rate divisor */
+			/* Set the baud rate divisor. */
 			LM4_UART_IBRD(0) = uartibrd;
 			LM4_UART_FBRD(0) = uartfbrd;
 			/* Poke UARTLCRH to make the new divisor take effect. */
 			LM4_UART_LCRH(0) = LM4_UART_LCRH(0);
-			/* Enable the port */
+			/* Enable the port. */
 			LM4_UART_CTL(0) |= 0x0001;
 		}
 		asm volatile("cpsie i");
@@ -241,27 +402,50 @@ static int command_sleep(int argc, char **argv)
 		cflush();
 	}
 
+	/* Enable interrupts. */
 	asm volatile("cpsid i");
 
 	/* gate peripheral clocks */
 	if (level & 1) {
+		clock_disable_peripheral(CGC_OFFSET_WD,     0xffffffff,
+				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_TIMER,  0xffffffff,
 				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_GPIO,   0xffffffff,
 				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_DMA,    0xffffffff,
 				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_HIB,    0xffffffff,
+				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_UART,   0xffffffff,
 				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_SSI,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_I2C,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_ADC,    0xffffffff,
+				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_LPC,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_PECI,   0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_FAN,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_EEPROM, 0xffffffff,
 				CGC_MODE_ALL);
 		clock_disable_peripheral(CGC_OFFSET_WTIMER, 0xffffffff,
 				CGC_MODE_ALL);
 	}
-	/* set deep sleep bit */
+
+	/* Set deep sleep bit. */
 	if (level >= 4)
 		CPU_SCB_SYSCTRL |= 0x4;
-	/* go to low power mode (forever ...) */
+
+	/* Set SRAM and flash PM for sleep and deep sleep. */
+	LM4_SYSTEM_SLPPWRCFG = (flash_pm << 4) | sram_pm;
+	LM4_SYSTEM_DSLPPWRCFG = (flash_pm << 4) | sram_pm;
+
+	/* Go to low power mode (forever ...) */
 	if (level > 1)
 		while (1) {
 			asm("wfi");
@@ -274,7 +458,7 @@ static int command_sleep(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sleep, command_sleep,
-			"[level [clock]]",
+			"[level [clock] [sram pm] [flash pm]]",
 			"Drop into sleep",
 			NULL);
 #endif /* CONFIG_CMD_SLEEP */
@@ -408,4 +592,28 @@ DECLARE_CONSOLE_COMMAND(clockgates, command_clock_gating,
 			"Get state of the clock gating controls regs",
 			NULL);
 #endif /* CONFIG_CMD_CLOCKGATES */
+
+#ifdef CONFIG_LOW_POWER_IDLE
+/**
+ * Print low power idle statistics
+ */
+static int command_idle_stats(int argc, char **argv)
+{
+	timestamp_t ts = get_time();
+
+	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
+	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
+	ccprintf("Time spent in deep-sleep:            %.6lds\n",
+			idle_dsleep_time_us);
+	ccprintf("Total time on:                       %.6lds\n", ts.val);
+	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
+			dsleep_recovery_margin_us);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
+			"",
+			"Print last idle stats",
+			NULL);
+#endif /* CONFIG_LOW_POWER_IDLE */
 

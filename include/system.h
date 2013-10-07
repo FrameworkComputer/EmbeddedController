@@ -8,7 +8,9 @@
 #ifndef __CROS_EC_SYSTEM_H
 #define __CROS_EC_SYSTEM_H
 
+#include "atomic.h"
 #include "common.h"
+#include "timer.h"
 
 /* Reset causes */
 #define RESET_FLAG_OTHER       (1 << 0)   /* Other known reason */
@@ -267,5 +269,73 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds);
  */
 int system_get_console_force_enabled(void);
 int system_set_console_force_enabled(int enabled);
+
+/**
+ * Read the real-time clock.
+ *
+ * @return The real-time clock value as a timestamp.
+ */
+timestamp_t system_get_rtc(void);
+
+/**
+ * Enable hibernate interrupt
+ */
+void system_enable_hib_interrupt(void);
+
+/* Low power modes for idle API */
+enum {
+	SLEEP_MASK_AP_RUN   = (1 << 0), /* the main CPU is running */
+	SLEEP_MASK_UART     = (1 << 1), /* UART communication on-going */
+	SLEEP_MASK_I2C      = (1 << 2), /* I2C master communication on-going */
+	SLEEP_MASK_CHARGING = (1 << 3), /* Charging loop on-going */
+	SLEEP_MASK_USB_PWR  = (1 << 4), /* USB power loop on-going */
+
+	SLEEP_MASK_FORCE  = (1 << 31), /* Force disabling low power modes */
+};
+
+/*
+ * Current sleep mask. You may read from this variable, but must NOT
+ * modify it; use enable_sleep() or disable_sleep() to do that.
+ */
+extern uint32_t sleep_mask;
+
+/**
+ * Enable low power sleep mask. For low power sleep to take affect, all masks
+ * in the sleep mask enum above must be enabled.
+ *
+ * @param Sleep mask to enable.
+ */
+static inline void enable_sleep(uint32_t mask)
+{
+	atomic_clear(&sleep_mask, mask);
+}
+
+/**
+ * Disable low power sleep mask. For low power sleep to take affect, all masks
+ * in the sleep mask enum above must be enabled.
+ *
+ * @param Sleep mask to enable.
+ */
+static inline void disable_sleep(uint32_t mask)
+{
+	atomic_or(&sleep_mask, mask);
+}
+
+/**
+ * Use hibernate module to set up an RTC interrupt at a given
+ * time from now
+ *
+ * Note: If time given is less than HIB_SET_RTC_MATCH_DELAY_USEC, then it will
+ * set the interrupt at exactly HIB_SET_RTC_MATCH_DELAY_USEC.
+ *
+ * @param seconds      Number of seconds before RTC interrupt
+ * @param microseconds Number of microseconds before RTC interrupt
+ */
+void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds);
+
+/**
+ * Disable and clear the RTC interrupt.
+ */
+void system_reset_rtc_alarm(void);
 
 #endif  /* __CROS_EC_SYSTEM_H */

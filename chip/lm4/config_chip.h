@@ -25,6 +25,12 @@
 /* Number of I2C ports */
 #define I2C_PORT_COUNT 6
 
+/*
+ * Time it takes to set the RTC match register. This value is conservatively
+ * set based on measurements around 200us.
+ */
+#define HIB_SET_RTC_MATCH_DELAY_USEC 300
+
 /****************************************************************************/
 /* Memory mapping */
 
@@ -35,7 +41,7 @@
 #define CONFIG_STACK_SIZE           4096
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE        384
+#define IDLE_TASK_STACK_SIZE        512
 #define LARGER_TASK_STACK_SIZE      640
 
 /* Default task stack size */
