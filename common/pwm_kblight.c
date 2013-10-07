@@ -5,7 +5,6 @@
 
 /* PWM control module for Chromebook keyboard backlight. */
 
-#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -13,14 +12,8 @@
 #include "host_command.h"
 #include "lid_switch.h"
 #include "pwm.h"
-#include "registers.h"
 #include "system.h"
-#include "task.h"
-#include "timer.h"
 #include "util.h"
-
-/* Max PWM for controller */
-#define MAX_PWM 0x1ff
 
 #define PWMKBD_SYSJUMP_TAG 0x504b  /* "PK" */
 #define PWM_HOOK_VERSION 1

@@ -11,7 +11,6 @@
 #include "pwm.h"
 #include "pwm_data.h"
 #include "registers.h"
-#include "thermal.h"
 #include "util.h"
 
 /* Maximum RPM for PWM controller */
@@ -47,7 +46,10 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 	else if (percent > 100)
 		percent = 100;
 
-	duty = (MAX_PWM * percent) / 100;
+	if (pwm->flags & PWM_CONFIG_ACTIVE_LOW)
+		percent = 100 - percent;
+
+	duty = (MAX_PWM * percent + 50) / 100;
 
 	/* Always enable the channel */
 	pwm_enable(ch, 1);
@@ -59,8 +61,13 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 int pwm_get_duty(enum pwm_channel ch)
 {
 	const struct pwm_t *pwm = pwm_channels + ch;
+	int percent = ((LM4_FAN_FANCMD(pwm->channel) >> 16) * 100 + MAX_PWM / 2)
+		/ MAX_PWM;
 
-	return (LM4_FAN_FANCMD(pwm->channel) >> 16) * 100 / MAX_PWM;
+	if (pwm->flags & PWM_CONFIG_ACTIVE_LOW)
+		percent = 100 - percent;
+
+	return percent;
 }
 
 static void pwm_init(void)
@@ -109,4 +116,4 @@ static void pwm_init(void)
 		}
 	}
 }
-DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_INIT_PWM);

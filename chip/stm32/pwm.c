@@ -135,6 +135,11 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 		pwm_disable(ch);
 }
 
+int pwm_get_enabled(enum pwm_channel ch)
+{
+	return using_pwm[ch];
+}
+
 static void pwm_reconfigure(enum pwm_channel ch)
 {
 	using_pwm[ch] = 0;
