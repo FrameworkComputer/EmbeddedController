@@ -122,10 +122,10 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* PWM channels */
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_POWER_LED] = {STM32_TIM(2), STM32_TIM_CH(2),
-			      PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
+	{STM32_TIM(2), STM32_TIM_CH(2),
+	 PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 

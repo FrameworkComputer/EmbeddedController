@@ -106,13 +106,13 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
-/* PWM channels */
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_CHG_Y] = {STM32_TIM(3), STM32_TIM_CH(1), PWM_CONFIG_ACTIVE_LOW,
+	{STM32_TIM(3), STM32_TIM_CH(1), PWM_CONFIG_ACTIVE_LOW,
 			  GPIO_CHG_LED_Y},
-	[PWM_CH_CHG_G] = {STM32_TIM(3), STM32_TIM_CH(2), PWM_CONFIG_ACTIVE_LOW,
+	{STM32_TIM(3), STM32_TIM_CH(2), PWM_CONFIG_ACTIVE_LOW,
 			  GPIO_CHG_LED_G},
-	[PWM_CH_CHG_R] = {STM32_TIM(3), STM32_TIM_CH(3), PWM_CONFIG_ACTIVE_LOW,
+	{STM32_TIM(3), STM32_TIM_CH(3), PWM_CONFIG_ACTIVE_LOW,
 			  GPIO_CHG_LED_R},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
