@@ -53,23 +53,22 @@ void keyboard_raw_task_start(void)
 
 test_mockable void keyboard_raw_drive_column(int col)
 {
-	if (col == KEYBOARD_COLUMN_NONE) {
-		/* Tri-state all outputs */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
-	} else if (col == KEYBOARD_COLUMN_ALL) {
-		/* Assert all outputs */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0;
-	} else {
-		/* Assert a single output */
-		LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = 0xff;
-		LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = 0x1f;
-		if (col < 8)
-			LM4_GPIO_DATA(LM4_GPIO_P, 1 << col) = 0;
-		else
-			LM4_GPIO_DATA(LM4_GPIO_Q, 1 << (col - 8)) = 0;
-	}
+	int mask;
+
+	if (col == KEYBOARD_COLUMN_NONE)
+		mask = 0x1fff;			/* Tri-state all outputs */
+	else if (col == KEYBOARD_COLUMN_ALL)
+		mask = 0;			/* Assert all outputs */
+	else
+		mask = 0x1fff ^ (1 << col);	/* Assert a single output */
+
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	/* Invert column 2 output */
+	mask ^= (1 << 2);
+#endif
+
+	LM4_GPIO_DATA(LM4_GPIO_P, 0xff) = mask & 0xff;
+	LM4_GPIO_DATA(LM4_GPIO_Q, 0x1f) = (mask >> 8) & 0x1f;
 }
 
 test_mockable int keyboard_raw_read_rows(void)

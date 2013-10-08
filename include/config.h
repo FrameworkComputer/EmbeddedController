@@ -426,6 +426,14 @@
 /*****************************************************************************/
 /* Keyboard config */
 
+/*
+ * The Silego reset chip sits in between the EC and the physical keyboard on
+ * column 2.  To save power in low-power modes, some Silego variants require
+ * the signal to be inverted so that the open-drain output from the EC isn't
+ * costing power due to the pull-up resistor in the Silego.
+ */
+#undef CONFIG_KEYBOARD_COL2_INVERTED
+
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
 
