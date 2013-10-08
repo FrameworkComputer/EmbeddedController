@@ -254,20 +254,34 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_USER_REG3   REG32(0x400fe1ec)
 #define LM4_SYSTEM_SRI2C       REG32(0x400fe520)
 #define LM4_SYSTEM_SREEPROM    REG32(0x400fe558)
-#define LM4_SYSTEM_RCGCWD      REG32(0x400fe600)
-#define LM4_SYSTEM_RCGCTIMER   REG32(0x400fe604)
+
+#define LM4_SYSTEM_RCGC_BASE   ((volatile uint32_t *)0x400fe600)
 #define LM4_SYSTEM_RCGCGPIO    REG32(0x400fe608)
-#define LM4_SYSTEM_RCGCDMA     REG32(0x400fe60c)
-#define LM4_SYSTEM_RCGCHIB     REG32(0x400fe614)
-#define LM4_SYSTEM_RCGCUART    REG32(0x400fe618)
-#define LM4_SYSTEM_RCGCSSI     REG32(0x400fe61c)
-#define LM4_SYSTEM_RCGCI2C     REG32(0x400fe620)
-#define LM4_SYSTEM_RCGCADC     REG32(0x400fe638)
-#define LM4_SYSTEM_RCGCLPC     REG32(0x400fe648)
-#define LM4_SYSTEM_RCGCPECI    REG32(0x400fe650)
-#define LM4_SYSTEM_RCGCFAN     REG32(0x400fe654)
-#define LM4_SYSTEM_RCGCEEPROM  REG32(0x400fe658)
-#define LM4_SYSTEM_RCGCWTIMER  REG32(0x400fe65c)
+#define LM4_SYSTEM_SCGC_BASE   ((volatile uint32_t *)0x400fe700)
+#define LM4_SYSTEM_DCGC_BASE   ((volatile uint32_t *)0x400fe800)
+
+/*
+ * Offsets from CGC_BASE registers for each peripheral.
+ * Note: these are in units of 32-bit words offset from
+ * the base address.
+ */
+enum clock_gate_offsets {
+	CGC_OFFSET_WD =        0,
+	CGC_OFFSET_TIMER =     1,
+	CGC_OFFSET_GPIO =      2,
+	CGC_OFFSET_DMA =       3,
+	CGC_OFFSET_HIB =       5,
+	CGC_OFFSET_UART =      6,
+	CGC_OFFSET_SSI =       7,
+	CGC_OFFSET_I2C =       8,
+	CGC_OFFSET_ADC =       14,
+	CGC_OFFSET_LPC =       18,
+	CGC_OFFSET_PECI =      20,
+	CGC_OFFSET_FAN =       21,
+	CGC_OFFSET_EEPROM =    22,
+	CGC_OFFSET_WTIMER =    23,
+};
+
 #define LM4_SYSTEM_PREEPROM    REG32(0x400fea58)
 
 #define LM4_DMA_DMACFG         REG32(0x400ff004)

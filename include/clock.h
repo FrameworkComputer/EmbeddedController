@@ -67,6 +67,32 @@ enum {
 	SLEEP_MASK_FORCE  = (1 << 31), /* Force disabling low power modes */
 };
 
+/* Clock gate control modes for clock_enable_peripheral() */
+#define CGC_MODE_RUN    (1 << 0)
+#define CGC_MODE_SLEEP  (1 << 1)
+#define CGC_MODE_DSLEEP (1 << 2)
+#define CGC_MODE_ALL    (CGC_MODE_RUN | CGC_MODE_SLEEP | CGC_MODE_DSLEEP)
+
+/**
+ * Enable clock to peripheral by setting the CGC register pertaining
+ * to run, sleep, and/or deep sleep modes.
+ *
+ * @param offset  Offset of the peripheral. See enum clock_gate_offsets.
+ * @param mask    Bit mask of the bits within CGC reg to set.
+ * @param mode    Which mode(s) to enable the clock for
+ */
+void clock_enable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode);
+
+/**
+ * Disable clock to peripheral by setting the CGC register pertaining
+ * to run, sleep, and/or deep sleep modes.
+ *
+ * @param offset  Offset of the peripheral. See enum clock_gate_offsets.
+ * @param mask    Bit mask of the bits within CGC reg to clear.
+ * @param mode    Which mode(s) to enable the clock for
+ */
+void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode);
+
 void enable_sleep(uint32_t mask);
 void disable_sleep(uint32_t mask);
 

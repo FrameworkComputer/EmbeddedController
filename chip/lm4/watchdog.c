@@ -91,12 +91,8 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, watchdog_freq_changed, HOOK_PRIO_DEFAULT);
 
 int watchdog_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable watchdog 0 clock */
-	LM4_SYSTEM_RCGCWD |= 0x1;
-	/* Wait 3 clock cycles before using the module */
-	scratch = LM4_SYSTEM_RCGCWD;
+	/* Enable watchdog 0 clock in run, sleep, and deep sleep modes */
+	clock_enable_peripheral(CGC_OFFSET_WD, 0x1, CGC_MODE_ALL);
 
 	/* Set initial timeout period */
 	watchdog_freq_changed();

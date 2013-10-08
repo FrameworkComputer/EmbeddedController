@@ -128,6 +128,33 @@ void clock_init(void)
 	disable_pll();
 }
 
+void clock_enable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
+{
+	if (mode & CGC_MODE_RUN)
+		*(LM4_SYSTEM_RCGC_BASE + offset) |= mask;
+
+	if (mode & CGC_MODE_SLEEP)
+		*(LM4_SYSTEM_SCGC_BASE + offset) |= mask;
+
+	if (mode & CGC_MODE_DSLEEP)
+		*(LM4_SYSTEM_DCGC_BASE + offset) |= mask;
+
+	/* Wait for clock change to take affect. */
+	clock_wait_cycles(3);
+}
+
+void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
+{
+	if (mode & CGC_MODE_RUN)
+		*(LM4_SYSTEM_RCGC_BASE + offset) &= ~mask;
+
+	if (mode & CGC_MODE_SLEEP)
+		*(LM4_SYSTEM_SCGC_BASE + offset) &= ~mask;
+
+	if (mode & CGC_MODE_DSLEEP)
+		*(LM4_SYSTEM_DCGC_BASE + offset) &= ~mask;
+}
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -218,12 +245,18 @@ static int command_sleep(int argc, char **argv)
 
 	/* gate peripheral clocks */
 	if (level & 1) {
-		LM4_SYSTEM_RCGCTIMER = 0;
-		LM4_SYSTEM_RCGCGPIO = 0;
-		LM4_SYSTEM_RCGCDMA = 0;
-		LM4_SYSTEM_RCGCUART = 0;
-		LM4_SYSTEM_RCGCLPC = 0;
-		LM4_SYSTEM_RCGCWTIMER = 0;
+		clock_disable_peripheral(CGC_OFFSET_TIMER,  0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_GPIO,   0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_DMA,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_UART,   0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_LPC,    0xffffffff,
+				CGC_MODE_ALL);
+		clock_disable_peripheral(CGC_OFFSET_WTIMER, 0xffffffff,
+				CGC_MODE_ALL);
 	}
 	/* set deep sleep bit */
 	if (level >= 4)
@@ -289,3 +322,90 @@ DECLARE_CONSOLE_COMMAND(pll, command_pll,
 			NULL);
 
 #endif /* CONFIG_CMD_PLL */
+
+#ifdef CONFIG_CMD_CLOCKGATES
+/**
+ * Print all clock gating registers
+ */
+static int command_clock_gating(int argc, char **argv)
+{
+	ccprintf("         Run       , Sleep     , Deep Sleep\n");
+
+	ccprintf("WD:      0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_WD));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_WD));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_WD));
+
+	ccprintf("TIMER:   0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_TIMER));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_TIMER));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_TIMER));
+
+	ccprintf("GPIO:    0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_GPIO));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_GPIO));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_GPIO));
+
+	ccprintf("DMA:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_DMA));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_DMA));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_DMA));
+
+	ccprintf("HIB:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_HIB));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_HIB));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_HIB));
+
+	ccprintf("UART:    0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_UART));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_UART));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_UART));
+
+	ccprintf("SSI:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_SSI));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_SSI));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_SSI));
+
+	ccprintf("I2C:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_I2C));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_I2C));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_I2C));
+
+	ccprintf("ADC:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_ADC));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_ADC));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_ADC));
+
+	ccprintf("LPC:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_LPC));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_LPC));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_LPC));
+
+	ccprintf("PECI:    0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_PECI));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_PECI));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_PECI));
+
+	ccprintf("FAN:     0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_FAN));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_FAN));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_FAN));
+
+	ccprintf("EEPROM:  0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_EEPROM));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_EEPROM));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_EEPROM));
+
+	ccprintf("WTIMER:  0x%08x, ",
+				*(LM4_SYSTEM_RCGC_BASE + CGC_OFFSET_WTIMER));
+	ccprintf("0x%08x, ",	*(LM4_SYSTEM_SCGC_BASE + CGC_OFFSET_WTIMER));
+	ccprintf("0x%08x\n",	*(LM4_SYSTEM_DCGC_BASE + CGC_OFFSET_WTIMER));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(clockgates, command_clock_gating,
+			"",
+			"Get state of the clock gating controls regs",
+			NULL);
+#endif /* CONFIG_CMD_CLOCKGATES */
+

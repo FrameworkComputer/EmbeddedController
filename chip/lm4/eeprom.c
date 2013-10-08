@@ -240,9 +240,9 @@ DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide,
 
 int eeprom_init(void)
 {
-	/* Enable the EEPROM module and delay a few clocks */
-	LM4_SYSTEM_RCGCEEPROM = 1;
-	clock_wait_cycles(6);
+	/* Enable the EEPROM module in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_EEPROM, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Wait for internal EEPROM init to finish */
 	wait_for_done();

@@ -3,13 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include "clock.h"
 #include "jtag.h"
 #include "registers.h"
 
 void jtag_pre_init(void)
 {
-	/* Enable clocks to GPIO block C */
-	LM4_SYSTEM_RCGCGPIO |= 0x0004;
+	/* Enable clocks to GPIO block C in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_GPIO, 0x0004,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/*
 	 * Ensure PC0:3 are set to JTAG function.  They should be set this way

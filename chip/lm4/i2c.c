@@ -276,12 +276,12 @@ static void i2c_init(void)
 	uint32_t mask = 0;
 	int i;
 
-	/* Enable I2C modules and delay a few clocks */
+	/* Enable I2C modules in run and sleep modes. */
 	for (i = 0; i < i2c_ports_used; i++)
 		mask |= 1 << i2c_ports[i].port;
 
-	LM4_SYSTEM_RCGCI2C |= mask;
-	clock_wait_cycles(3);
+	clock_enable_peripheral(CGC_OFFSET_I2C, mask,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);

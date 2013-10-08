@@ -76,8 +76,8 @@ static void pwm_init(void)
 	const struct pwm_t *pwm;
 
 	/* Enable the fan module and delay a few clocks */
-	LM4_SYSTEM_RCGCFAN = 1;
-	clock_wait_cycles(3);
+	clock_enable_peripheral(CGC_OFFSET_FAN, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Disable all fans */
 	LM4_FAN_FANCTL = 0;

@@ -203,9 +203,9 @@ static void adc_init(void)
 	 */
 	clock_enable_pll(1, 0);
 
-	/* Enable ADC0 module and delay a few clocks. */
-	LM4_SYSTEM_RCGCADC = 1;
-	clock_wait_cycles(3);
+	/* Enable ADC0 module in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_ADC, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/*
 	 * Use external voltage references (VREFA+, VREFA-) instead of

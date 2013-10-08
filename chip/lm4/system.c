@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : LM4 hardware specific implementation */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -295,12 +296,11 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_pre_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
-
-	/* Enable clocks to the hibernation module */
-	LM4_SYSTEM_RCGCHIB = 1;
-	/* Wait 3 clock cycles before using the module */
-	scratch = LM4_SYSTEM_RCGCHIB;
+	/*
+	 * Enable clocks to the hibernation module in run, sleep,
+	 * and deep sleep modes.
+	 */
+	clock_enable_peripheral(CGC_OFFSET_HIB, 0x1, CGC_MODE_ALL);
 
 	/*
 	 * Enable the hibernation oscillator, if it's not already enabled.

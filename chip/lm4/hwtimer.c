@@ -69,17 +69,14 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
 int __hw_clock_source_init(uint32_t start_t)
 {
-	volatile uint32_t scratch __attribute__((unused));
-
 	/*
 	 * Use WTIMER0 (timer 6) configured as a free running counter with 1 us
 	 * period.
 	 */
 
-	/* Enable WTIMER0 clock */
-	LM4_SYSTEM_RCGCWTIMER |= 1;
-	/* wait 3 clock cycles before using the module */
-	scratch = LM4_SYSTEM_RCGCWTIMER;
+	/* Enable WTIMER0 clock in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_WTIMER, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Ensure timer is disabled : TAEN = TBEN = 0 */
 	LM4_TIMER_CTL(6) &= ~0x101;

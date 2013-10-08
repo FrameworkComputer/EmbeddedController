@@ -110,9 +110,9 @@ static void peci_init(void)
 {
 	int i;
 
-	/* Enable the PECI module and delay a few clocks */
-	LM4_SYSTEM_RCGCPECI = 1;
-	clock_wait_cycles(3);
+	/* Enable the PECI module in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_PECI, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_PECI, 1);

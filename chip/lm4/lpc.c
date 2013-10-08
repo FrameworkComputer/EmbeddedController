@@ -677,9 +677,9 @@ static void lpc_post_sysjump(void)
 
 static void lpc_init(void)
 {
-	/* Enable RGCGLPC then delay a few clocks. */
-	LM4_SYSTEM_RCGCLPC = 1;
-	clock_wait_cycles(6);
+	/* Enable LPC clock in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_LPC, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	LM4_LPC_LPCIM = 0;
 	LM4_LPC_LPCCTL = 0;

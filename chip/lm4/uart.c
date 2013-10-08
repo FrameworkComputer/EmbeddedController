@@ -180,14 +180,16 @@ static void uart_config(int port)
 
 void uart_init(void)
 {
-	/* Enable UART0 and Host UART and delay a few clocks */
-	LM4_SYSTEM_RCGCUART |= 1;
+	uint32_t mask = 0;
+
+	/* Enable UART0 and Host UART in run, sleep, and deep sleep modes. */
+	mask |= 1;
 
 #ifdef CONFIG_UART_HOST
-	LM4_SYSTEM_RCGCUART |= (1 << CONFIG_UART_HOST);
+	mask |= (1 << CONFIG_UART_HOST);
 #endif
 
-	clock_wait_cycles(3);
+	clock_enable_peripheral(CGC_OFFSET_UART, mask, CGC_MODE_ALL);
 
 	gpio_config_module(MODULE_UART, 1);
 
