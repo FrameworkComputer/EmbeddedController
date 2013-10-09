@@ -348,16 +348,15 @@ static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 
 	case EC_VBOOT_HASH_START:
-		return host_start_hash(p);
-
 	case EC_VBOOT_HASH_RECALC:
 		rv = host_start_hash(p);
 		if (rv != EC_RES_SUCCESS)
 			return rv;
 
-		/* Wait for hash to finish */
-		while (in_progress)
-			usleep(1000);
+		/* Wait for hash to finish if command is RECALC */
+		if (p->cmd == EC_VBOOT_HASH_RECALC)
+			while (in_progress)
+				usleep(1000);
 
 		fill_response(r);
 		args->response_size = sizeof(*r);
