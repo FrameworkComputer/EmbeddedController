@@ -122,7 +122,7 @@ int x86_wait_signals(uint32_t want)
 void x86_set_state(enum x86_state new_state)
 {
 	/* Record the time we go into G3 */
-	if (state == X86_G3)
+	if (new_state == X86_G3)
 		last_shutdown_time = get_time().val;
 
 	state = new_state;
