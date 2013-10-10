@@ -179,6 +179,7 @@
 /* Chipset config */
 
 /* Compile support for the AP chipset; pick at most one */
+#undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
 #undef CONFIG_CHIPSET_GAIA	/* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */

@@ -11,6 +11,9 @@
 /* Optional features */
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BOARD_VERSION
+#define CONFIG_CHIPSET_BAYTRAIL
+#define CONFIG_CHIPSET_CAN_THROTTLE
+#define CONFIG_CHIPSET_X86
 #define CONFIG_CMD_GSV
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_KEYBOARD_COL2_INVERTED
@@ -35,9 +38,6 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
-#define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_CHIPSET_HASWELL
-#define CONFIG_CHIPSET_X86
 #define CONFIG_USB_PORT_POWER_DUMB
 #endif
 
@@ -107,7 +107,7 @@ enum gpio_signal {
 	GPIO_LPC_CLKRUN_L,         /* Request that PCH drive LPC clock */
 	GPIO_PCH_CORE_PWROK,       /* Indicate core well power is stable */
 	GPIO_PCH_PWRBTN_L,         /* Power button output to PCH */
-	GPIO_PCH_RCIN_L,           /* RCIN# line to PCH (for 8042 emulation) */
+	GPIO_PCH_RCIN_L,           /* Reset line to PCH (for 8042 emulation) */
 	GPIO_PCH_RSMRST_L,         /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_PCH_SOC_OVERRIDE_L,   /* SOC override signal to PCH; when high, ME
