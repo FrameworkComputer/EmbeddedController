@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BKLTEN
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHARGER
