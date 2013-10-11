@@ -6,6 +6,7 @@
 /* Keyboard scanner module for Chrome EC */
 
 #include "chipset.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -26,6 +27,15 @@
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
+
+#ifndef CONFIG_KEYBOARD_POST_SCAN_CLOCKS
+/*
+ * Default delay in clocks; this was experimentally determined to be long
+ * enough to avoid watchdog warnings or I2C errors on a typical notebook
+ * config on STM32.
+ */
+#define CONFIG_KEYBOARD_POST_SCAN_CLOCKS 16000
+#endif
 
 #ifndef CONFIG_KEYBOARD_BOARD_CONFIG
 /* Use default keyboard scan config, because board didn't supply one */
@@ -62,8 +72,12 @@ static uint8_t simulated_key[KEYBOARD_COLS]; /* Keys simulated-pressed */
 
 static uint32_t scan_time[SCAN_TIME_COUNT];  /* Times of last scans */
 static int scan_time_index;                  /* Current scan_time[] index */
+
 /* Index into scan_time[] when each key started debouncing */
 static uint8_t scan_edge_index[KEYBOARD_COLS][KEYBOARD_ROWS];
+
+/* Minimum delay between keyboard scans based on current clock frequency */
+static uint32_t post_scan_clock_us;
 
 /*
  * Print all keyboard scan state changes?  Off by default because it generates
@@ -443,6 +457,13 @@ static enum boot_key check_boot_key(const uint8_t *state)
 	return BOOT_KEY_OTHER;
 }
 
+static void keyboard_freq_change(void)
+{
+	post_scan_clock_us = (CONFIG_KEYBOARD_POST_SCAN_CLOCKS * 1000) /
+		(clock_get_freq() / 1000);
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, keyboard_freq_change, HOOK_PRIO_DEFAULT);
+
 /*****************************************************************************/
 /* Interface */
 
@@ -490,6 +511,9 @@ void keyboard_scan_task(void)
 
 	keyboard_raw_task_start();
 
+	/* Set initial clock frequency-based minimum delay between scans */
+	keyboard_freq_change();
+
 	while (1) {
 		/* Enable all outputs */
 		CPRINTF("[%T KB wait]\n");
@@ -533,6 +557,9 @@ void keyboard_scan_task(void)
 			if (wait_time < keyscan_config.min_post_scan_delay_us)
 				wait_time =
 					keyscan_config.min_post_scan_delay_us;
+
+			if (wait_time < post_scan_clock_us)
+				wait_time = post_scan_clock_us;
 
 			usleep(wait_time);
 		}

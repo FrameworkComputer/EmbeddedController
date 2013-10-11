@@ -451,6 +451,13 @@
 #undef CONFIG_KEYBOARD_BOARD_CONFIG
 
 /*
+ * Minimum CPU clocks between scans.  This ensures that keyboard scanning
+ * doesn't starve the other EC tasks of CPU when running at a decreased system
+ * clock.
+ */
+#undef CONFIG_KEYBOARD_POST_SCAN_CLOCKS
+
+/*
  * Call board-supplied keyboard_suppress_noise() function when the debounced
  * keyboard state changes.  Some boards use this to send a signal to the audio
  * codec to suppress typing noise picked up by the microphone.
