@@ -29,6 +29,14 @@ void keyboard_raw_init(void)
 	LM4_GPIO_ODR(LM4_GPIO_P) = 0xff;
 	LM4_GPIO_ODR(LM4_GPIO_Q) |= 0x1f;
 
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	/*
+	 * When column 2 is inverted, the Silego has a pulldown instead of a
+	 * pullup.  So drive it push-pull instead of open-drain.
+	 */
+	LM4_GPIO_ODR(LM4_GPIO_P) &= ~(1 << 2);
+#endif
+
 	/* Set row inputs with pull-up */
 	LM4_GPIO_AFSEL(KB_SCAN_ROW_GPIO) &= 0xff;
 	LM4_GPIO_DEN(KB_SCAN_ROW_GPIO) |= 0xff;
