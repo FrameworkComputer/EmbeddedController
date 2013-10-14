@@ -290,9 +290,11 @@ static void gpio_interrupt(int port, uint32_t mis)
 	int i = 0;
 	const struct gpio_info *g = gpio_list;
 
-	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		if (port == g->port && (mis & g->mask) && g->irq_handler)
+	for (i = 0; i < GPIO_COUNT && mis; i++, g++) {
+		if (port == g->port && (mis & g->mask) && g->irq_handler) {
 			g->irq_handler(i);
+			mis &= ~g->mask;
+		}
 	}
 }
 
