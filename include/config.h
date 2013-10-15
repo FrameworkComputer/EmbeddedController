@@ -46,9 +46,8 @@
 #undef CONFIG_ADC_CLOCK
 
 /*
- * Compile support for controlling the display backlight based on the state of
- * the lid switch.  The EC will disable the backlight when the lid is
- * closed.
+ * Support controlling the display backlight based on the state of the lid
+ * switch.  The EC will disable the backlight when the lid is closed.
  */
 #undef CONFIG_BACKLIGHT_LID
 
@@ -178,23 +177,20 @@
 /*****************************************************************************/
 /* Chipset config */
 
-/* Compile support for the AP chipset; pick at most one */
+/* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
 #undef CONFIG_CHIPSET_GAIA	/* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
 
-/*
- * Compile common x86 chipset infrastructure.  Required for
- * CONFIG_CHIPSET_HASWELL and CONFIG_CHIPSET_IVYBRIDGE.
- */
+/* Compile common x86 chipset infrastructure.  Required for x86 chips. */
 #undef CONFIG_CHIPSET_X86
 
-/* Compile support for power rail control */
+/* Support power rail control */
 #define CONFIG_CHIPSET_HAS_PP1350
 #define CONFIG_CHIPSET_HAS_PP5000
 
-/* Compile support for chipset throttling */
+/* Support chipset throttling */
 #undef CONFIG_CHIPSET_CAN_THROTTLE
 
 /*****************************************************************************/
@@ -212,9 +208,9 @@
 #undef CONFIG_CMD_PLL
 #undef CONFIG_CMD_PMU
 #undef CONFIG_CMD_POWERLED
+#undef CONFIG_CMD_RTC_ALARM
 #undef CONFIG_CMD_SCRATCHPAD
 #undef CONFIG_CMD_SLEEP
-#undef CONFIG_CMD_RTC_ALARM
 
 /*****************************************************************************/
 
@@ -298,13 +294,13 @@
 
 /*****************************************************************************/
 
-/* Compile support for the DMA module */
+/* Support DMA transfers inside the EC */
 #undef CONFIG_DMA
 
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
 
-/* Compile support for EC chip internal data EEPROM */
+/* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 
 /*
@@ -313,17 +309,26 @@
  */
 #undef CONFIG_EOPTION
 
-/* Compile support for handling turbo-mode chargers */
+/* Support turbo-mode chargers */
 #undef CONFIG_EXTPOWER_FALCO
 
-/* Compile support for detecting external power presence via a GPIO */
+/* Support detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
 
-/* Compile support for providing power to the device via USB on Spring. */
+/* Support providing power to the device via USB on Kirby. */
+#undef CONFIG_EXTPOWER_KIRBY
+
+/*
+ * Support detecting external power presence via a pair of GPIOs, as used
+ * on Snow.
+ */
+#undef CONFIG_EXTPOWER_SNOW
+
+/* Support providing power to the device via USB on Spring. */
 #undef CONFIG_EXTPOWER_SPRING
 
 /*****************************************************************************/
-/* Compile support for PWM control of cooling fans */
+/* Support PWM control of cooling fans */
 #undef CONFIG_FAN
 
 /* Fan channel (not PWM channel) for the CPU fan */
@@ -332,27 +337,28 @@
 /* Name of active high GPIO to control power to the cooling fan */
 #undef CONFIG_FAN_EN_GPIO
 
+/*
+ * GPIO which indicates power-good on the fan power rail.  If defined, the
+ * faninfo console command will display the fan power state.
+ */
+#undef CONFIG_FAN_PGOOD_GPIO
+
 /* Fan speeds corresponding to 1% and 100% cooling (0% == off). */
 #undef CONFIG_FAN_RPM_MIN
 #undef CONFIG_FAN_RPM_MAX
 
-/* Alternately, define this to replace the default mapping with your own
- * board-specific function in board.c:
+/*
+ * Replace the default fan mapping with a board-specific function in board.c:
  *
  *   int pwm_fan_percent_to_rpm(int pct);
  *
  */
 #undef CONFIG_FAN_RPM_CUSTOM
 
-/* If you define this, the "faninfo" console command will read the GPIO to
- * display the state of the fan's power rail.
- */
-#undef CONFIG_FAN_POWER_GOOD
-
 /*****************************************************************************/
 /* Flash configuration */
 
-/* Compile support for programming on-chip flash */
+/* Support programming on-chip flash */
 #define CONFIG_FLASH
 
 #undef CONFIG_FLASH_BANK_SIZE
@@ -407,7 +413,7 @@
 
 /*****************************************************************************/
 
-/* Compile support for hooks debug and statistic function */
+/* Enable debugging and profiling statistics for hook functions */
 #undef CONFIG_HOOK_DEBUG
 
 /*****************************************************************************/
@@ -478,10 +484,10 @@
 
 /*****************************************************************************/
 
-/* Compile support for common LED interface */
+/* Support common LED interface */
 #undef CONFIG_LED_COMMON
 
-/* Compile support for LED driver chip(s) */
+/* Support for LED driver chip(s) */
 #undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 
@@ -495,16 +501,19 @@
 
 #undef CONFIG_LOW_POWER_IDLE
 
-/* Compile support for LPC interface */
+/* Support LPC interface */
 #undef CONFIG_LPC
 
-/* Compile support for one-wire interface */
+/* Support memory protection unit (MPU) */
+#undef CONFIG_MPU
+
+/* Support one-wire interface */
 #undef CONFIG_ONEWIRE
 
 /* Check for stack overflows on every context switch */
 #undef CONFIG_OVERFLOW_DETECT
 
-/* Compile support for PECI interface to x86 processor */
+/* Support PECI interface to x86 processor */
 #undef CONFIG_PECI
 
 /*****************************************************************************/
@@ -527,10 +536,10 @@
  */
 #undef CONFIG_PMU_HARD_RESET
 
-/* Compile support for TPS65090 PMU */
+/* Support TPS65090 PMU */
 #undef CONFIG_PMU_TPS65090
 
-/* Compile support for PMU powerinfo host command */
+/* Support PMU powerinfo host and console commands */
 #undef CONFIG_PMU_POWERINFO
 
 /*****************************************************************************/
@@ -538,7 +547,7 @@
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
-/* Compile support for sending the power button signal to x86 chipsets */
+/* Support sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
 
 /*
@@ -549,18 +558,15 @@
  */
 #undef CONFIG_PSTATE_AT_END
 
-/*
- * Compile support for using part of the EC's data EEPROM to hold persistent
- * storage for the AP.
- */
+/* Use part of the EC's data EEPROM to hold persistent storage for the AP. */
 #undef CONFIG_PSTORE
 
 /*****************************************************************************/
-/* Compile support for PWM control */
+/* Support PWM control */
 #undef CONFIG_PWM
 
 /*****************************************************************************/
-/* Compile support for PWM output to keyboard backlight */
+/* Support PWM output to keyboard backlight */
 #undef CONFIG_PWM_KBLIGHT
 
 /* Base address of RAM for the chip */
@@ -569,13 +575,16 @@
 /* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
 
+/* Support IR357x Link voltage regulator debugging / reprogramming */
+#undef CONFIG_REGULATOR_IR357X
+
 /*
  * If defined, the hash module will save its last computed hash when jumping
  * between EC images.
  */
 #undef CONFIG_SAVE_VBOOT_HASH
 
-/* Compile support for SPI interfaces */
+/* Support SPI interfaces */
 #undef CONFIG_SPI
 
 /* Default stack size to use for tasks, in bytes */
@@ -587,7 +596,7 @@
  */
 #undef CONFIG_SWITCH
 
-/* Compile support for dedicated recovery signal from servo board */
+/* Support dedicated recovery signal from servo board */
 #undef CONFIG_SWITCH_DEDICATED_RECOVERY
 
 /*
@@ -635,7 +644,7 @@
 /* Compile common code for temperature sensor support */
 #undef CONFIG_TEMP_SENSOR
 
-/* Compile support for particular temperature sensor chips */
+/* Support particular temperature sensor chips */
 #undef CONFIG_TEMP_SENSOR_G781		/* G781 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP006	/* TI TMP006 sensor, on I2C bus */
 
@@ -687,17 +696,17 @@
 
 /*****************************************************************************/
 
-/* Compile support for simple control of power to the device's USB ports */
+/* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB
 
 /*
- * Compile support for smart power control to the device's USB ports, using
+ * Support smart power control to the device's USB ports, using
  * dedicated power control chips.  This potentially enables automatic
  * negotiation of supplying more power to peripherals.
  */
 #undef CONFIG_USB_PORT_POWER_SMART
 
-/* Compile support for the TSU6721 I2C smart switch */
+/* Support the TSU6721 I2C smart switch */
 #undef CONFIG_USB_SWITCH_TSU6721
 
 /*****************************************************************************/
@@ -720,8 +729,7 @@
 /*****************************************************************************/
 
 /*
- * Compile support for controlling power to WiFi, WWAN (3G/LTE), and/or
- * bluetooth modules.
+ * Support controlling power to WiFi, WWAN (3G/LTE), and/or bluetooth modules.
  */
 #undef CONFIG_WIRELESS
 

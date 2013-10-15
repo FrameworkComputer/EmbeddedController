@@ -17,7 +17,7 @@
 #include "util.h"
 
 #ifdef CONFIG_UART_HOST
-#define CONFIG_UART_HOST_IRQ CONCAT2(LM4_IRQ_UART, CONFIG_UART_HOST)
+#define IRQ_UART_HOST CONCAT2(LM4_IRQ_UART, CONFIG_UART_HOST)
 #endif
 
 static int init_done;
@@ -149,7 +149,7 @@ static void uart_host_interrupt(void)
 #endif
 }
 /* Must be same prio as LPC interrupt handler so they don't preempt */
-DECLARE_IRQ(CONFIG_UART_HOST_IRQ, uart_host_interrupt, 2);
+DECLARE_IRQ(IRQ_UART_HOST, uart_host_interrupt, 2);
 
 #endif /* CONFIG_UART_HOST */
 
@@ -230,7 +230,7 @@ void uart_init(void)
 void uart_comx_enable(void)
 {
 	uart_clear_rx_fifo(CONFIG_UART_HOST);
-	task_enable_irq(CONFIG_UART_HOST_IRQ);
+	task_enable_irq(IRQ_UART_HOST);
 }
 
 int uart_comx_putc_ok(void)

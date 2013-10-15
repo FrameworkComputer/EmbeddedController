@@ -11,9 +11,6 @@ common-y+=memory_commands.o shared_mem.o system_common.o hooks.o
 common-y+=gpio_common.o version.o printf.o queue.o
 common-y+=throttle_ap.o
 
-common-$(BOARD_daisy)+=extpower_snow.o
-common-$(BOARD_snow)+=extpower_snow.o
-
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BATTERY_BQ20Z453)+=battery_bq20z453.o
 common-$(CONFIG_BATTERY_BQ27541)+=battery_common.o battery_bq27541.o
@@ -37,6 +34,7 @@ common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_EXTPOWER_FALCO)+=extpower_falco.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_EXTPOWER_KIRBY)+=extpower_kirby.o
+common-$(CONFIG_EXTPOWER_SNOW)+=extpower_snow.o
 common-$(CONFIG_EXTPOWER_SPRING)+=extpower_spring.o
 common-$(CONFIG_FAN)+=pwm_fan.o
 common-$(CONFIG_FLASH)+=flash_common.o

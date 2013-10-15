@@ -192,12 +192,12 @@ static int cc_faninfo(int argc, char **argv)
 	ccprintf("Mode:   %s\n", fan_get_rpm_mode() ? "rpm" : "duty");
 	ccprintf("Auto:   %s\n", thermal_control_enabled ? "yes" : "no");
 	ccprintf("Enable: %s\n", fan_get_enabled() ? "yes" : "no");
-#ifdef CONFIG_FAN_POWER_GOOD
+#ifdef CONFIG_FAN_PGOOD_GPIO
 	ccprintf("Power:  %s\n",
 #ifdef CONFIG_FAN_EN_GPIO
 		 gpio_get_level(CONFIG_FAN_EN_GPIO) &&
 #endif
-		 gpio_get_level(CONFIG_FAN_POWER_GOOD) ? "yes" : "no");
+		 gpio_get_level(CONFIG_FAN_PGOOD_GPIO) ? "yes" : "no");
 #endif
 
 
