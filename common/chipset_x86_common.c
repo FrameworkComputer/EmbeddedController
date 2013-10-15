@@ -361,6 +361,8 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 
 static int command_x86indebug(int argc, char **argv)
 {
+	const struct x86_signal_info *s = x86_signal_list;
+	int i;
 	char *e;
 
 	/* If one arg, set the mask */
@@ -375,6 +377,16 @@ static int command_x86indebug(int argc, char **argv)
 	/* Print the mask */
 	ccprintf("x86 in:     0x%04x\n", in_signals);
 	ccprintf("debug mask: 0x%04x\n", in_debug);
+
+	/* Print the decode */
+
+	ccprintf("bit meanings:\n");
+	for (i = 0; i < X86_SIGNAL_COUNT; i++, s++) {
+		int mask = 1 << i;
+		ccprintf("  0x%04x %d %s\n",
+			 mask, in_signals & mask ? 1 : 0, s->name);
+	}
+
 	return EC_SUCCESS;
 };
 DECLARE_CONSOLE_COMMAND(x86indebug, command_x86indebug,
