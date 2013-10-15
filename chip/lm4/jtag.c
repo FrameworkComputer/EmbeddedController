@@ -4,14 +4,15 @@
  */
 
 #include "clock.h"
+#include "gpio.h"
 #include "jtag.h"
 #include "registers.h"
+#include "system.h"
 
 void jtag_pre_init(void)
 {
 	/* Enable clocks to GPIO block C in run and sleep modes. */
-	clock_enable_peripheral(CGC_OFFSET_GPIO, 0x0004,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	clock_enable_peripheral(CGC_OFFSET_GPIO, 0x0004, CGC_MODE_ALL);
 
 	/*
 	 * Ensure PC0:3 are set to JTAG function.  They should be set this way
@@ -35,7 +36,30 @@ void jtag_pre_init(void)
 	LM4_GPIO_DEN(LM4_GPIO_C) |= 0x0f;
 	LM4_GPIO_PUR(LM4_GPIO_C) |= 0x0f;
 
+	/* Set interrupt on either edge of the JTAG signals */
+	LM4_GPIO_IS(LM4_GPIO_C) &= ~0x0f;
+	LM4_GPIO_IBE(LM4_GPIO_C) |= 0x0f;
+
 	/* Re-lock commit register */
 	LM4_GPIO_CR(LM4_GPIO_C) &= ~0x0f;
 	LM4_GPIO_LOCK(LM4_GPIO_C) = 0;
 }
+
+#ifdef CONFIG_LOW_POWER_IDLE
+void jtag_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * This interrupt is the first sign someone is trying to use
+	 * the JTAG. Disable slow speed sleep so that the JTAG action
+	 * can take place.
+	 */
+	disable_sleep(SLEEP_MASK_JTAG);
+
+	/*
+	 * Once we get this interrupt, disable it from occurring again
+	 * to avoid repeated interrupts when debugging via JTAG.
+	 */
+	gpio_disable_interrupt(GPIO_JTAG_TCK);
+}
+#endif /* CONFIG_LOW_POWER_IDLE */
+

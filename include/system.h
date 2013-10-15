@@ -284,13 +284,25 @@ void system_enable_hib_interrupt(void);
 
 /* Low power modes for idle API */
 enum {
+	/*
+	 * Sleep masks to prevent going in to deep sleep.
+	 */
 	SLEEP_MASK_AP_RUN   = (1 << 0), /* the main CPU is running */
 	SLEEP_MASK_UART     = (1 << 1), /* UART communication on-going */
 	SLEEP_MASK_I2C      = (1 << 2), /* I2C master communication on-going */
 	SLEEP_MASK_CHARGING = (1 << 3), /* Charging loop on-going */
 	SLEEP_MASK_USB_PWR  = (1 << 4), /* USB power loop on-going */
 
-	SLEEP_MASK_FORCE  = (1 << 31), /* Force disabling low power modes */
+	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
+
+
+	/*
+	 * Sleep masks to prevent using slow speed clock in deep sleep.
+	 */
+	SLEEP_MASK_JTAG     = (1 << 16), /* JTAG is in use. */
+	SLEEP_MASK_CONSOLE  = (1 << 17), /* Console is in use. */
+
+	SLEEP_MASK_FORCE_NO_LOW_SPEED = (1 << 31)  /* Force disable. */
 };
 
 /*
@@ -298,6 +310,13 @@ enum {
  * modify it; use enable_sleep() or disable_sleep() to do that.
  */
 extern uint32_t sleep_mask;
+
+/*
+ * Macros to use to get whether deep sleep is allowed or whether
+ * low speed deep sleep is allowed.
+ */
+#define DEEP_SLEEP_ALLOWED           (!(sleep_mask & 0x0000ffff))
+#define LOW_SPEED_DEEP_SLEEP_ALLOWED (!(sleep_mask & 0xffff0000))
 
 /**
  * Enable low power sleep mask. For low power sleep to take affect, all masks

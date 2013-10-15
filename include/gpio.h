@@ -169,6 +169,18 @@ void gpio_set_level(enum gpio_signal signal, int value);
 int gpio_enable_interrupt(enum gpio_signal signal);
 
 /**
+ * Disable interrupts for the signal.
+ *
+ * The signal must have been defined with
+ * an interrupt handler.  Normally called by the module which handles the
+ * interrupt, if it doesn't want to process interrupts.
+ *
+ * @param signal	Signal to disable interrupts for
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int gpio_disable_interrupt(enum gpio_signal signal);
+
+/**
  * Set flags for GPIO(s) by port and mask.
  *
  * Use gpio_set_flags() to set flags for an individual GPIO by id.

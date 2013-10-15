@@ -177,6 +177,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 #ifdef CONFIG_LOW_POWER_IDLE
 
+void clock_refresh_console_in_use(void)
+{
+}
+
 #ifdef CONFIG_FORCE_CONSOLE_RESUME
 static void enable_serial_wakeup(int enable)
 {
@@ -192,7 +196,7 @@ static void enable_serial_wakeup(int enable)
 	} else {
 		/* serial port wake up : don't go back to sleep */
 		if (STM32_EXTI_PR & (1 << 10))
-			disable_sleep(SLEEP_MASK_FORCE);
+			disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
 		/* restore keyboard external IT on PC10 */
 		STM32_AFIO_EXTICR(10 / 4) = save_exticr;
 	}
@@ -216,7 +220,7 @@ void __idle(void)
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
-		if (!sleep_mask && (next_delay > STOP_MODE_LATENCY)) {
+		if (DEEP_SLEEP_ALLOWED && (next_delay > STOP_MODE_LATENCY)) {
 			/* deep-sleep in STOP mode */
 
 			enable_serial_wakeup(1);

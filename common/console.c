@@ -4,7 +4,7 @@
  */
 
 /* Console module for Chrome EC */
-
+#include "clock.h"
 #include "console.h"
 #include "link_defs.h"
 #include "system.h"
@@ -519,6 +519,11 @@ static void console_handle_char(int c)
 
 void console_has_input(void)
 {
+#ifdef CONFIG_LOW_POWER_IDLE
+	/* Notify the clock module that the console is in use. */
+	clock_refresh_console_in_use();
+#endif
+
 	/* Wake up the console task */
 	task_wake(TASK_ID_CONSOLE);
 }

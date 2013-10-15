@@ -313,6 +313,11 @@ int uart_getc(void)
 	return -1;
 }
 
+int uart_buffer_empty(void)
+{
+	return tx_buf_head == tx_buf_tail;
+}
+
 #ifdef CONFIG_UART_RX_DMA
 static void uart_rx_dma_init(void)
 {
