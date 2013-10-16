@@ -45,6 +45,8 @@ include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
 include common/build.mk
+include driver/build.mk
+include power/build.mk
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
@@ -60,7 +62,10 @@ all-y+=$(call objs_from_dir,chip/$(CHIP),chip)
 all-y+=$(call objs_from_dir,board/$(BOARD),board)
 all-y+=$(call objs_from_dir,private,private)
 all-y+=$(call objs_from_dir,common,common)
+all-y+=$(call objs_from_dir,driver,driver)
+all-y+=$(call objs_from_dir,power,power)
 all-y+=$(call objs_from_dir,test,$(PROJECT))
-dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common test util
+dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common power test util
+dirs+=$(shell find driver -type d)
 
 include Makefile.rules

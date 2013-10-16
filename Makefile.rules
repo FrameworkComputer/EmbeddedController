@@ -165,7 +165,8 @@ $(out)/util/burn_my_ec: $(out)/$(PROJECT).bin
 .PHONY: FORCE
 cscope.files: FORCE
 	@-rm -f cscope.out
-	@find chip/${CHIP} board/${BOARD} common core include -name '*.[chS]' \
+	@find chip/${CHIP} board/${BOARD} common core driver power include \
+		-name '*.[chS]' \
 		-not -name '*test*' -not -name '*mock*' -not -name '*~*' \
 		> cscope.files
 
