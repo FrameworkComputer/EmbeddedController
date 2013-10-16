@@ -114,7 +114,6 @@ enum gpio_signal {
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_STATUS_L,        /* USB charger port 2 status output */
-	GPIO_BAT_DETECT_L,	   /* Battery detect from BAT_TEMP */
 	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt (through EC_WAKE_L) */
 
 	/* Outputs */
@@ -186,6 +185,8 @@ enum adc_channel {
 	ADC_CH_EC_TEMP = 0,
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
+	/* BAT_TEMP */
+	ADC_CH_BAT_TEMP,
 
 	ADC_CH_COUNT
 };

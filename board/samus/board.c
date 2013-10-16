@@ -73,7 +73,6 @@ const struct gpio_info gpio_list[] = {
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
 	{"USB2_STATUS_L",        LM4_GPIO_D, (1<<7), GPIO_INPUT, NULL},
-	{"BAT_DETECT_L",	 LM4_GPIO_B, (1<<4), GPIO_INPUT, NULL},
 	/* Not yet sure if this will need to be handled as an interrupt */
 	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INPUT, NULL},
 
@@ -176,6 +175,13 @@ const struct adc_t adc_channels[] = {
 	 */
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 4, 0,
 	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
+
+	/* FIXME: We don't know what to expect here, but it's an analog input
+	 * that's pulled high. We're using it as a battery presence indicator
+	 * for now. We'll return just 0 - ADC_READ_MAX for now.
+	 */
+	{"BatteryTemp", LM4_ADC_SEQ2, 1, 1, 0,
+	 LM4_AIN(10), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<4)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -278,5 +284,5 @@ struct keyboard_scan_config keyscan_config = {
  */
 int battery_is_connected(void)
 {
-	return (gpio_get_level(GPIO_BAT_DETECT_L) == 0);
+	return adc_read_channel(ADC_CH_BAT_TEMP) < (9 * ADC_READ_MAX / 10);
 }
