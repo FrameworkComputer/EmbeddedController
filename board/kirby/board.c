@@ -5,6 +5,7 @@
 /* Kirby board-specific configuration */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "common.h"
 #include "chipset.h"
 #include "extpower.h"
@@ -17,7 +18,6 @@
 #include "pwm_data.h"
 #include "registers.h"
 #include "spi.h"
-#include "stm32_adc.h"
 #include "task.h"
 #include "util.h"
 

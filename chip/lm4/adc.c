@@ -6,12 +6,12 @@
 /* LM4-specific ADC module for Chrome EC */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "clock.h"
 #include "console.h"
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "lm4_adc.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"

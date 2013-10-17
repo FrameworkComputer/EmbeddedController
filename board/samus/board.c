@@ -5,19 +5,17 @@
 /* EC for Samus board configuration */
 
 #include "adc.h"
-#include "board.h"
+#include "adc_chip.h"
 #include "backlight.h"
-#include "chip_temp_sensor.h"
 #include "chipset_x86_common.h"
 #include "common.h"
-#include "ec_commands.h"
+#include "driver/temp_sensor/tmp006.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "lm4_adc.h"
 #include "peci.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -25,9 +23,9 @@
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
+#include "temp_sensor_chip.h"
 #include "timer.h"
 #include "thermal.h"
-#include "tmp006.h"
 #include "util.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */

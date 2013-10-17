@@ -5,8 +5,8 @@
  * TI bq24192 battery charger driver.
  */
 
+#include "bq24192.h"
 #include "charger.h"
-#include "charger_bq24192.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

@@ -6,10 +6,12 @@
 /* USB charging control for spring board */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "battery.h"
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"
+#include "driver/tsu6721.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,12 +19,11 @@
 #include "keyboard_protocol.h"
 #include "pmu_tpschrome.h"
 #include "pwm.h"
+/* TODO(rspangler): files in common should not use chip registers directly */
 #include "registers.h"
-#include "stm32_adc.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "tsu6721.h"
 #include "util.h"
 
 #define PWM_FREQUENCY 32000 /* Hz */

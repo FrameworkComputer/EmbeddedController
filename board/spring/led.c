@@ -7,10 +7,10 @@
 
 #include "battery.h"
 #include "common.h"
+#include "driver/led/lp5562.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "lp5562.h"
 #include "pmu_tpschrome.h"
 #include "timer.h"
 #include "util.h"

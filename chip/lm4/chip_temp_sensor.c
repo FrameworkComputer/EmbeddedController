@@ -6,9 +6,9 @@
 /* Temperature sensor module for Chrome EC */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "common.h"
 #include "hooks.h"
-#include "lm4_adc.h"
 
 /* Initialize temperature reading to a sane value (27 C) */
 static int last_val = C_TO_K(27);

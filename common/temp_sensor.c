@@ -5,23 +5,14 @@
 
 /* Temperature sensor module for Chrome EC */
 
-#include "chip_temp_sensor.h"
-#include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "gpio.h"
-#include "i2c.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "peci.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "timer.h"
-#include "tmp006.h"
 #include "util.h"
-
-/* Default temperature to report in mapped memory */
-#define MAPPED_TEMP_DEFAULT (296 - EC_TEMP_SENSOR_OFFSET)
 
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 {
@@ -82,10 +73,10 @@ static void temp_sensor_init(void)
 	base_b = host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B);
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		if (i < EC_TEMP_SENSOR_ENTRIES)
-			base[i] = MAPPED_TEMP_DEFAULT;
+			base[i] = EC_TEMP_SENSOR_DEFAULT;
 		else
 			base_b[i - EC_TEMP_SENSOR_ENTRIES] =
-				MAPPED_TEMP_DEFAULT;
+				EC_TEMP_SENSOR_DEFAULT;
 	}
 
 	/* Set the rest of memory region to SENSOR_NOT_PRESENT */

@@ -9,12 +9,12 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/tsu6721.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"
-#include "tsu6721.h"
 #include "util.h"
 
 /* Console output macros */

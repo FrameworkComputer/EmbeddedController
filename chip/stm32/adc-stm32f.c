@@ -4,12 +4,12 @@
  */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
 #include "hooks.h"
 #include "registers.h"
-#include "stm32_adc.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"

@@ -25,7 +25,7 @@ CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
             -fno-delete-null-pointer-checks -Wdeclaration-after-statement \
             -Wno-pointer-sign -fno-strict-overflow -fconserve-stack
 CFLAGS_DEBUG= -g
-CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) )
+CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
             $(if $(EMU_BUILD),-DEMU_BUILD) \

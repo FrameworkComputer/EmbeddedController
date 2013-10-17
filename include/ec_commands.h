@@ -85,6 +85,8 @@
  * Valid only if EC_MEMMAP_THERMAL_VERSION returns >= 2.
  */
 #define EC_TEMP_SENSOR_B_ENTRIES      8
+
+/* Special values for mapped temperature sensors */
 #define EC_TEMP_SENSOR_NOT_PRESENT    0xff
 #define EC_TEMP_SENSOR_ERROR          0xfe
 #define EC_TEMP_SENSOR_NOT_POWERED    0xfd
@@ -94,6 +96,13 @@
  * reporting a temperature range of 200K to 454K = -73C to 181C.
  */
 #define EC_TEMP_SENSOR_OFFSET      200
+
+/*
+ * The default value a temperature sensor will return when it is present but
+ * has not been read this boot.  This is a reasonable number to avoid
+ * triggering alarms on the host.
+ */
+#define EC_TEMP_SENSOR_DEFAULT     (296 - EC_TEMP_SENSOR_OFFSET)
 
 #define EC_FAN_SPEED_ENTRIES       4       /* Number of fans at EC_MEMMAP_FAN */
 #define EC_FAN_SPEED_NOT_PRESENT   0xffff  /* Entry not present */

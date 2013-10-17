@@ -7,10 +7,10 @@
 
 #include "common.h"
 #include "console.h"
+#include "g781.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "hooks.h"
-#include "temp_sensor_g781.h"
 #include "util.h"
 
 static int g781_temp_val_local;

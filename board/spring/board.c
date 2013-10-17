@@ -5,6 +5,7 @@
 /* Spring board-specific configuration */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "board_config.h"
 #include "chipset.h"
 #include "common.h"
@@ -20,7 +21,6 @@
 #include "pwm.h"
 #include "pwm_data.h"
 #include "registers.h"
-#include "stm32_adc.h"
 #include "timer.h"
 #include "util.h"
 

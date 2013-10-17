@@ -6,8 +6,8 @@
  */
 
 #include "battery_smart.h"
+#include "bq24715.h"
 #include "charger.h"
-#include "charger_bq24715.h"
 #include "console.h"
 #include "common.h"
 #include "util.h"
