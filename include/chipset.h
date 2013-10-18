@@ -75,6 +75,11 @@ void chipset_force_shutdown(void);
  */
 void chipset_reset(int cold_reset);
 
+/**
+ * Interrupt handler for power GPIO inputs.
+ */
+void power_interrupt(enum gpio_signal signal);
+
 #else /* !HAS_TASK_CHIPSET */
 /*
  * Allow other modules to compile if the chipset module is disabled.  This is
@@ -90,6 +95,8 @@ static inline void chipset_exit_hard_off(void) { }
 static inline void chipset_throttle_cpu(int throttle) { }
 static inline void chipset_force_shutdown(void) { }
 static inline void chipset_reset(int cold_reset) { }
+
+#define power_interrupt NULL
 
 #endif /* !HAS_TASK_CHIPSET */
 

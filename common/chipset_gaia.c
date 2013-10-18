@@ -27,7 +27,6 @@
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "common.h"
 #include "console.h"
-#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -289,15 +288,15 @@ static void gaia_suspend_deferred(void)
 }
 DECLARE_DEFERRED(gaia_suspend_deferred);
 
-void gaia_suspend_event(enum gpio_signal signal)
+void power_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(gaia_suspend_deferred, 0);
-}
-
-void gaia_power_event(enum gpio_signal signal)
-{
-	/* Wake up the task */
-	task_wake(TASK_ID_CHIPSET);
+	if (signal == GPIO_SUSPEND_L) {
+		/* Handle suspend events in the hook task */
+		hook_call_deferred(gaia_suspend_deferred, 0);
+	} else {
+		/* All other events are handled in the chipset task */
+		task_wake(TASK_ID_CHIPSET);
+	}
 }
 
 static void gaia_lid_event(void)

@@ -5,9 +5,9 @@
 /* Nyan board-specific configuration */
 
 #include "battery.h"
+#include "chipset.h"
 #include "common.h"
 #include "extpower.h"
-#include "tegra_power.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
@@ -27,11 +27,11 @@
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, tegra_power_event},
-	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, tegra_power_event},
+	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, power_interrupt},
+	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, power_interrupt},
 	{"CHARGER_INT", GPIO_C, (1<<6),  GPIO_INT_RISING, NULL},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
-	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_KB_INPUT, tegra_suspend_event},
+	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_KB_INPUT, power_interrupt},
 	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
 	 spi_event},
 	{"AC_PRESENT",  GPIO_A, (1<<0),  GPIO_INT_BOTH, extpower_interrupt},

@@ -27,7 +27,6 @@
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "common.h"
 #include "console.h"
-#include "tegra_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -248,15 +247,15 @@ static void tegra_suspend_deferred(void)
 }
 DECLARE_DEFERRED(tegra_suspend_deferred);
 
-void tegra_suspend_event(enum gpio_signal signal)
+void power_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(tegra_suspend_deferred, 0);
-}
-
-void tegra_power_event(enum gpio_signal signal)
-{
-	/* Wake up the task */
-	task_wake(TASK_ID_CHIPSET);
+	if (signal == GPIO_SUSPEND_L) {
+		/* Handle suspend events in the hook task */
+		hook_call_deferred(tegra_suspend_deferred, 0);
+	} else {
+		/* All other events are handled in the chipset task */
+		task_wake(TASK_ID_CHIPSET);
+	}
 }
 
 static void tegra_lid_event(void)

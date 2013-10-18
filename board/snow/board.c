@@ -9,7 +9,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -34,12 +33,12 @@
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, gaia_power_event},
-	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, gaia_power_event},
-	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, gaia_power_event},
+	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, power_interrupt},
+	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH, power_interrupt},
+	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, power_interrupt},
 	{"CHARGER_INT_L", GPIO_C, (1<<4),  GPIO_INT_FALLING, pmu_irq_handler},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
-	{"SUSPEND_L",   GPIO_A, (1<<7),  INT_BOTH_FLOATING, gaia_suspend_event},
+	{"SUSPEND_L",   GPIO_A, (1<<7),  INT_BOTH_FLOATING, power_interrupt},
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},

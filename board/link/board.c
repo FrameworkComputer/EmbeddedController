@@ -7,7 +7,7 @@
 #include "adc.h"
 #include "backlight.h"
 #include "chip_temp_sensor.h"
-#include "chipset_ivybridge.h"
+#include "chipset.h"
 #include "chipset_x86_common.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -59,7 +59,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_SLP_SUS_L",        LM4_GPIO_G, (1<<3), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH,
-	 ivybridge_interrupt},
+	 power_interrupt},
 	{"PGOOD_1_5V_DDR",       LM4_GPIO_K, (1<<0), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"PGOOD_1_5V_PCH",       LM4_GPIO_K, (1<<1), GPIO_INT_BOTH,

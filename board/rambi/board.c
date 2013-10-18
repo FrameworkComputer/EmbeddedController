@@ -7,7 +7,6 @@
 #include "adc.h"
 #include "backlight.h"
 #include "chip_temp_sensor.h"
-#include "chipset_haswell.h"
 #include "chipset_x86_common.h"
 #include "common.h"
 #include "ec_commands.h"

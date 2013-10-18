@@ -337,7 +337,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 	return state;
 }
 
-void ivybridge_interrupt(enum gpio_signal signal)
+void power_interrupt(enum gpio_signal signal)
 {
 	/* Route SUSWARN# back to SUSACK# */
 	gpio_set_level(GPIO_PCH_SUSACK_L, gpio_get_level(GPIO_PCH_SUSWARN_L));

@@ -8,7 +8,6 @@
 #include "common.h"
 #include "chipset.h"
 #include "extpower.h"
-#include "gaia_power.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -28,8 +27,8 @@
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_PWR_ON_L",   GPIO_A, (1<<0),  GPIO_INT_BOTH, gaia_power_event},
-	{"XPSHOLD",       GPIO_E, (1<<5),  GPIO_INT_RISING, gaia_power_event},
+	{"KB_PWR_ON_L",   GPIO_A, (1<<0),  GPIO_INT_BOTH, power_interrupt},
+	{"XPSHOLD",       GPIO_E, (1<<5),  GPIO_INT_RISING, power_interrupt},
 	{"CHARGER_INT_L", GPIO_E, (1<<2),  GPIO_INT_FALLING,
 	 NULL /*pmu_irq_handler*/},
 	{"USB_CHG_INT",   GPIO_E, (1<<15), GPIO_INT_FALLING,
@@ -37,7 +36,7 @@ const struct gpio_info gpio_list[] = {
 	{"USBPD_INT_L",   GPIO_E, (1<<1),  GPIO_INT_FALLING,
 	 NULL /*extpower_interrupt*/},
 	{"LID_OPEN",      GPIO_E, (1<<6),  GPIO_INT_BOTH, lid_interrupt},
-	{"SUSPEND_L",     GPIO_E, (1<<3),  GPIO_INT_BOTH, gaia_suspend_event},
+	{"SUSPEND_L",     GPIO_E, (1<<3),  GPIO_INT_BOTH, power_interrupt},
 	{"SPI1_NSS",      GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
 	 spi_event},
 	{"AC_PRESENT_L",  GPIO_A, (1<<1),  GPIO_INT_BOTH, extpower_interrupt},
