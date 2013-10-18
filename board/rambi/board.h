@@ -26,6 +26,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DX_EN
+#define CONFIG_USB_PORT_POWER_SMART
 #define CONFIG_WIRELESS
 
 /* TODO(rspangler): port these to Rambi, or remove if not needed */
@@ -38,7 +39,6 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
-#define CONFIG_USB_PORT_POWER_DUMB
 #endif
 
 #ifndef __ASSEMBLER__

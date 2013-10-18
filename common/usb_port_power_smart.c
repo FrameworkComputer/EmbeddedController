@@ -34,6 +34,14 @@ static uint8_t charge_mode[USB_CHARGE_PORT_COUNT];
 
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
+#ifdef BOARD_rambi
+	/*
+	 * Rambi has only a single shared control signal, so the last mode set
+	 * to either port wins.  Also, only CTL1 can be set; the other pins
+	 * are hard-wired.
+	 */
+	gpio_set_level(GPIO_USB_CTL1, mode & 0x4);
+#else
 	if (port_id == 0) {
 		gpio_set_level(GPIO_USB1_CTL1, mode & 0x4);
 		gpio_set_level(GPIO_USB1_CTL2, mode & 0x2);
@@ -43,6 +51,7 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 		gpio_set_level(GPIO_USB2_CTL2, mode & 0x2);
 		gpio_set_level(GPIO_USB2_CTL3, mode & 0x1);
 	}
+#endif
 }
 
 static void usb_charge_set_enabled(int port_id, int en)
@@ -55,10 +64,15 @@ static void usb_charge_set_enabled(int port_id, int en)
 
 static void usb_charge_set_ilim(int port_id, int sel)
 {
+#ifdef BOARD_rambi
+	/* Rambi has a shared ILIM_SEL signal too */
+	gpio_set_level(GPIO_USB_ILIM_SEL, sel);
+#else
 	if (port_id == 0)
 		gpio_set_level(GPIO_USB1_ILIM_SEL, sel);
 	else
 		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
+#endif
 }
 
 static void usb_charge_all_ports_on(void)
