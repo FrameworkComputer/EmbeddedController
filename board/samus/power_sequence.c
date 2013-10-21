@@ -11,6 +11,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "lid_switch.h"
 #include "registers.h"
 #include "system.h"
@@ -58,6 +59,7 @@
 		   IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
+static int pause_in_s5;	      /* Pause in S5 when shutting down? */
 
 void chipset_force_shutdown(void)
 {
@@ -109,7 +111,8 @@ void chipset_reset(int cold_reset)
 
 void chipset_throttle_cpu(int throttle)
 {
-	/* FIXME CPRINTF("[%T %s(%d)]\n", __func__, throttle);*/
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
 enum x86_state x86_chipset_init(void)
@@ -344,7 +347,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, 0);
 
-		return X86_S5;
+		return pause_in_s5 ? X86_S5 : X86_S5G3;
 
 	case X86_S5G3:
 		/* Deassert DPWROK */
@@ -359,3 +362,34 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 	return state;
 }
+
+static int host_command_gsv(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_set_value *p = args->params;
+	struct ec_response_get_set_value *r = args->response;
+
+	if (p->flags & EC_GSV_SET)
+		pause_in_s5 = p->value;
+
+	r->value = pause_in_s5;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
+		     host_command_gsv,
+		     EC_VER_MASK(0));
+
+static int console_command_gsv(int argc, char **argv)
+{
+	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
+		return EC_ERROR_INVAL;
+
+	ccprintf("pause_in_s5 = %s\n", pause_in_s5 ? "on" : "off");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pause_in_s5, console_command_gsv,
+			"[on|off]",
+			"Should the AP pause in S5 during shutdown?",
+			NULL);
