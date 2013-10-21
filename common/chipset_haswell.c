@@ -91,16 +91,20 @@ void chipset_reset(int cold_reset)
 		/*
 		 * Send a RCIN# pulse to the PCH.  This just causes it to
 		 * assert INIT# to the CPU without dropping power or asserting
-		 * PLTRST# to reset the rest of the system.
+		 * PLTRST# to reset the rest of the system.  Pulse must be at
+		 * least 16 PCI clocks long = 500 ns.
 		 */
 
 		/*
-		 * Pulse must be at least 16 PCI clocks long = 500 ns. The gpio
-		 * pin used by the EC (PL6) does not behave in the correct
-		 * manner when configured as open drain. In order to mimic
-		 * open drain, the pin is initially configured as an input.
-		 * When it is needed to drive low, the flags are updated which
-		 * changes the pin to an output and drives the pin low.  */
+		 * The gpio pin used by the EC (PL6) does not behave in the
+		 * correct manner when configured as open drain. In order to
+		 * mimic open drain, the pin is initially configured as an
+		 * input.  When it is needed to drive low, the flags are
+		 * updated which changes the pin to an output and drives the
+		 * pin low.  Note that this logic will work fine even on boards
+		 * where RCIN# has been moved to a different pin, so there's no
+		 * need to #ifdef this behavior.  See crosbug.com/p/20173.
+		 */
 		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_OUT_LOW);
 		udelay(10);
 		gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_INPUT);

@@ -108,8 +108,11 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_ODR_HIGH, NULL},
 	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	/* FIXME: Why is PL6 act like it is inverted. Setting value to
-	 * 0 makes the signal high, and setting it to 1 makes the signal low. */
+	/*
+	 * PL6 is one of 4 pins on the EC which can't be used in open-drain
+	 * mode.  To work around this PCH_RCIN_L is set to an input. It will
+	 * only be set to an output when it needs to be driven to 0.
+	 */
 	{"PCH_RCIN_L",           LM4_GPIO_L, (1<<6), GPIO_INPUT, NULL},
 	{"PCH_SYSRST_L",         LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
