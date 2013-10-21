@@ -29,7 +29,6 @@
 #define CONFIG_BATTERY_CHECK_CONNECTED
 #define CONFIG_BATTERY_LINK
 #define CONFIG_BATTERY_SMART
-#define CONFIG_BACKLIGHT_LID
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24715
 /* 10mOhm sense resitors. */
@@ -65,10 +64,16 @@ enum module_id {
 };
 
 /* I2C ports */
+#define I2C_PORT_BACKLIGHT 0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
+#define I2C_PORT_ALS 1
+#define I2C_PORT_CAPSENSE 1
 #define I2C_PORT_LIGHTBAR 1
 #define I2C_PORT_THERMAL 5
+
+/* Backlight I2C device address */
+#define I2C_ADDR_BACKLIGHT ((0x2C << 1) | I2C_FLAG_BIG_ENDIAN)
 
 /* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPIOK
