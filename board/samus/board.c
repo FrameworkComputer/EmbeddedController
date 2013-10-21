@@ -105,7 +105,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_ODR_HIGH, NULL},
 	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
-	{"PCH_RCIN_L",           LM4_GPIO_F, (1<<3), GPIO_OUT_HIGH, NULL},
+	{"PCH_RCIN_L",           LM4_GPIO_F, (1<<3), GPIO_ODR_HIGH, NULL},
 	{"PCH_SYS_RST_L",        LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
