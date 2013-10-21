@@ -24,7 +24,15 @@
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
-#define KB_FIFO_DEPTH		16	/* FIXME: this is pretty huge */
+/*
+ * Keyboard FIFO depth.  This needs to be big enough not to overflow if a
+ * series of keys is pressed in rapid succession and the kernel is too busy
+ * to read them out right away.
+ *
+ * RAM usage is (depth * #cols); see kb_fifo[][] below.  A 16-entry FIFO will
+ * consume 16x13=208 bytes, which is non-trivial but not horrible.
+ */
+#define KB_FIFO_DEPTH 16
 
 /* Changes to col,row here need to also be reflected in kernel.
  * drivers/input/mkbp.c ... see KEY_BATTERY.
