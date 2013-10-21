@@ -11,7 +11,6 @@
 
 #define SB_SHIP_MODE_DATA	0x0010
 
-/* FIXME: We need REAL values for all this stuff */
 const struct battery_temperature_ranges bat_temp_ranges = {
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,

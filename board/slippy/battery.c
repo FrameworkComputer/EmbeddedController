@@ -8,7 +8,7 @@
 #include "battery.h"
 #include "gpio.h"
 
-/* FIXME: We need REAL values for all this stuff */
+/* Reasonable temperature thresholds, since we didn't get vendor data */
 const struct battery_temperature_ranges bat_temp_ranges = {
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 50,
