@@ -14,6 +14,7 @@
 #include "lid_switch.h"
 #include "registers.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "wireless.h"
@@ -42,6 +43,10 @@
 #define IN_PGOOD_S3          (IN_PGOOD_PP1200 | IN_PGOOD_PP1800)
 /* Rails required for S0 */
 #define IN_PGOOD_S0          (IN_PGOOD_ALL_NONCORE)
+/* Rails used to detect if PP5000 is up. 1.8V PGOOD is not
+ * a reliable signal to use here with an internal pullup. */
+#define IN_PGOOD_PP5000	     (IN_PGOOD_PP1050 | IN_PGOOD_PP1200)
+
 
 /* All PM_SLP signals from PCH deasserted */
 #define IN_ALL_PM_SLP_DEASSERTED (IN_PCH_SLP_S3_DEASSERTED | \
@@ -193,6 +198,19 @@ enum x86_state x86_handle_state(enum x86_state state)
 		 * rail to regulate properly. */
 		gpio_set_level(GPIO_PP5000_EN, 1);
 
+		/* Wait for PP1050/PP1200 PGOOD to go LOW to
+		 * indicate that PP5000 is stable */
+		while ((x86_get_signals() & IN_PGOOD_PP5000) != 0) {
+			if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
+				CPRINTF("[%T timeout waiting for PP5000\n");
+				chipset_force_shutdown();
+				return X86_G3;
+			}
+		}
+
+		/* Turn on 3.3V DSW rail. */
+		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
+
 		/* Assert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
 
@@ -212,8 +230,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 	case X86_S5S3:
 		/* Turn on power to RAM */
-		gpio_set_level(GPIO_PP1200_EN, 1);
 		gpio_set_level(GPIO_PP1800_EN, 1);
+		gpio_set_level(GPIO_PP1200_EN, 1);
 		if (x86_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
 			return X86_S5;
@@ -232,19 +250,20 @@ enum x86_state x86_handle_state(enum x86_state state)
 		 */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 
+		/* Turn on USB power rail. */
+		gpio_set_level(GPIO_PP5000_USB_EN, 1);
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return X86_S3;
 
 	case X86_S3S0:
 		/* Wait 20ms before allowing VCCST_PGOOD to rise. */
-		msleep(20);	   /* HEY: really? */
+		msleep(20);
 
-		/* Turn on power rails */
-		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
-		gpio_set_level(GPIO_PP5000_USB_EN, 1);
-
-		/* Enable wireless */
+		/* Enable wireless, WLAN power first */
+		wireless_enable(EC_WIRELESS_SWITCH_WLAN_POWER);
+		msleep(1);
 		wireless_enable(EC_WIRELESS_SWITCH_ALL);
 
 		/*
@@ -258,8 +277,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 		if (x86_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
 			wireless_enable(0);
-			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
-			gpio_set_level(GPIO_PP5000_USB_EN, 0);
 			return X86_S3;
 		}
 
@@ -300,8 +317,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 		 */
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
-		/* Turn off power rails */
-		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 		return X86_S3;
 
 	case X86_S3S5:
@@ -334,7 +349,11 @@ enum x86_state x86_handle_state(enum x86_state state)
 	case X86_S5G3:
 		/* Deassert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
+
+		/* Turn off power rails enabled in S5 */
 		gpio_set_level(GPIO_PP1050_EN, 0);
+		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
+		gpio_set_level(GPIO_PP5000_EN, 0);
 		return X86_G3;
 	}
 
