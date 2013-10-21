@@ -96,9 +96,17 @@ static void thermal_control(void)
 	}
 
 	if (!num_sensors_read) {
-		/* If we can't read any sensors, do nothing and hope
-		 * it gets better.
-		 * FIXME: What *should* we do?
+		/*
+		 * Trigger a SMI event if we can't read any sensors.
+		 *
+		 * In theory we could do something more elaborate like forcing
+		 * the system to shut down if no sensors are available after
+		 * several retries.  This is a very unlikely scenario -
+		 * particularly on LM4-based boards, since the LM4 has its own
+		 * internal temp sensor.  It's most likely to occur during
+		 * bringup of a new board, where we haven't debugged the I2C
+		 * bus to the sensors; forcing a shutdown in that case would
+		 * merely hamper board bringup.
 		 */
 		smi_sensor_failure_warning();
 		return;
