@@ -54,13 +54,19 @@ BUILD_ASSERT(ARRAY_SIZE(ad_id_vals) == NUM_ADAPTER_TYPES);
 
 test_export_static
 int ad_input_current[][NUM_AC_TURBO_STATES] = {
-	/* Current limits in mA, for turbo off and turbo on. In hex,
-	 * because the BQ24738 Input Current Register masks off bits 6-0.
-	 * FIXME: That constraint may vary with other chargers. */
-	{0x0a00, 0x0a00},			/* ADAPTER_UNKNOWN */
-	{0x0600, 0x0800},			/* ADAPTER_45W */
-	{0x0a00, 0x0c00},			/* ADAPTER_65W */
-	{0x0f00, 0x1100}			/* ADAPTER_90W */
+	/*
+	 * Current limits in mA for each adapter, for turbo off and turbo on.
+	 * Values are in hex to avoid roundoff, because the BQ24738 Input
+	 * Current Register masks off bits 6-0.
+	 *
+	 * Note that this is very specific to the combinations of adapters and
+	 * BQ24738 charger chip on Falco.
+	 */
+
+	{0x0a00, 0x0a00},			/* ADAPTER_UNKNOWN ~ 2.5 A */
+	{0x0600, 0x0800},			/* ADAPTER_45W ~ 1.5-2.0 A */
+	{0x0a00, 0x0c00},			/* ADAPTER_65W ~ 2.5-3.0 A */
+	{0x0f00, 0x1100}			/* ADAPTER_90W ~ 3.8-4.3 A */
 };
 BUILD_ASSERT(ARRAY_SIZE(ad_input_current) == NUM_ADAPTER_TYPES);
 
