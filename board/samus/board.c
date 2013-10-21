@@ -197,12 +197,45 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+#define TEMP_U40_REG_ADDR	((0x40 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP_U41_REG_ADDR	((0x44 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP_U42_REG_ADDR	((0x41 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP_U43_REG_ADDR	((0x45 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP_U115_REG_ADDR	((0x42 << 1) | I2C_FLAG_BIG_ENDIAN)
+#define TEMP_U116_REG_ADDR	((0x43 << 1) | I2C_FLAG_BIG_ENDIAN)
+
+#define TEMP_U40_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U40_REG_ADDR)
+#define TEMP_U41_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U41_REG_ADDR)
+#define TEMP_U42_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U42_REG_ADDR)
+#define TEMP_U43_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U43_REG_ADDR)
+#define TEMP_U115_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U115_REG_ADDR)
+#define TEMP_U116_ADDR TMP006_ADDR(I2C_PORT_THERMAL, TEMP_U116_REG_ADDR)
+
+const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
+	{"Charger", TEMP_U40_ADDR},
+	{"CPU", TEMP_U41_ADDR},
+	{"Left C", TEMP_U42_ADDR},
+	{"Right C", TEMP_U43_ADDR},
+	{"Right D", TEMP_U115_ADDR},
+	{"Left D", TEMP_U116_ADDR},
+};
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[] = {
-/* HEY: Need correct I2C addresses and read function for external sensor */
-	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
+	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
+	{"I2C-Charger-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 0, 7},
+	{"I2C-Charger-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 1, 7},
+	{"I2C-CPU-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 2, 7},
+	{"I2C-CPU-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 3, 7},
+	{"I2C-Left C-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 4, 7},
+	{"I2C-Left C-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 5, 7},
+	{"I2C-Right C-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 6, 7},
+	{"I2C-Right C-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 7, 7},
+	{"I2C-Right D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 8, 7},
+	{"I2C-Right D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 9, 7},
+	{"I2C-Left D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 10, 7},
+	{"I2C-Left D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 11, 7},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -210,9 +243,21 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.
  */
 struct ec_thermal_config thermal_params[] = {
-	{ {0, 0, 0}, 0, 0},
 	/* Only the AP affects the thermal limits and fan speed. */
 	{{C_TO_K(100), C_TO_K(114), C_TO_K(110)}, C_TO_K(60), C_TO_K(90)},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

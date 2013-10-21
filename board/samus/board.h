@@ -45,6 +45,8 @@
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_SWITCH_DEDICATED_RECOVERY
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_TMP006
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DSW_GATED_EN
 #define CONFIG_UART_HOST 2
 #define CONFIG_WIRELESS
 #define CONFIG_USB_PORT_POWER_SMART
@@ -192,15 +194,34 @@ enum pwm_channel {
 };
 
 enum temp_sensor_id {
-	/* HEY - need two I2C sensor values, and put PECI first */
-
-	/* EC internal temperature sensor */
-	TEMP_SENSOR_EC_INTERNAL,
 	/* CPU die temperature via PECI */
 	TEMP_SENSOR_CPU_PECI,
+	/* EC internal temperature sensor */
+	TEMP_SENSOR_EC_INTERNAL,
+	/* TMP006 U40, die/object temperature near battery charger */
+	TEMP_SENSOR_I2C_U40_DIE,
+	TEMP_SENSOR_I2C_U40_OBJECT,
+	/* TMP006 U41, die/object temperature near CPU */
+	TEMP_SENSOR_I2C_U41_DIE,
+	TEMP_SENSOR_I2C_U41_OBJECT,
+	/* TMP006 U42, die/object temperature left side of C-case */
+	TEMP_SENSOR_I2C_U42_DIE,
+	TEMP_SENSOR_I2C_U42_OBJECT,
+	/* TMP006 U43, die/object temperature right side of C-case */
+	TEMP_SENSOR_I2C_U43_DIE,
+	TEMP_SENSOR_I2C_U43_OBJECT,
+	/* TMP006 U115, die/object temperature right side of D-case */
+	TEMP_SENSOR_I2C_U115_DIE,
+	TEMP_SENSOR_I2C_U115_OBJECT,
+	/* TMP006 U116, die/object temperature left side of D-case */
+	TEMP_SENSOR_I2C_U116_DIE,
+	TEMP_SENSOR_I2C_U116_OBJECT,
 
 	TEMP_SENSOR_COUNT
 };
+
+/* The number of TMP006 sensor chips on the board. */
+#define TMP006_COUNT 6
 
 /* Known board versions for system_get_board_version(). */
 enum board_version {
