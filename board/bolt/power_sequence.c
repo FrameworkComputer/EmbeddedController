@@ -105,7 +105,8 @@ void chipset_reset(int cold_reset)
 
 void chipset_throttle_cpu(int throttle)
 {
-	/* FIXME CPRINTF("[%T %s(%d)]\n", __func__, throttle);*/
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
 enum x86_state x86_chipset_init(void)
