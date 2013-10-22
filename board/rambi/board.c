@@ -52,7 +52,7 @@ const struct gpio_info gpio_list[] = {
 	 x86_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
-	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH|GPIO_PULL_UP,
+	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
 
 	/* Other inputs */
