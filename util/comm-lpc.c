@@ -257,22 +257,15 @@ int comm_init_lpc(void)
 
 	/*
 	 * Test if the I/O port has been configured for Chromium EC LPC
-	 * interface.  If all the bytes are 0xff, very likely that Chromium EC
-	 * is not present.
-	 *
-	 * TODO: (crosbug.com/p/10963) Should only need to look at the command
-	 * byte, since we don't support ACPI burst mode and thus bit 4 should
-	 * be 0.
+	 * interface.  Chromium EC guarantees that at least one status bit will
+	 * be 0, so if the command and data bytes are both 0xff, very likely
+	 * that Chromium EC is not present.  See crosbug.com/p/10963.
 	 */
 	byte &= inb(EC_LPC_ADDR_HOST_CMD);
 	byte &= inb(EC_LPC_ADDR_HOST_DATA);
-	for (i = 0; i < EC_PROTO2_MAX_PARAM_SIZE && byte == 0xff; ++i)
-		byte &= inb(EC_LPC_ADDR_HOST_PARAM + i);
 	if (byte == 0xff) {
-		fprintf(stderr, "Port 0x%x,0x%x,0x%x-0x%x are all 0xFF.\n",
-			EC_LPC_ADDR_HOST_CMD, EC_LPC_ADDR_HOST_DATA,
-			EC_LPC_ADDR_HOST_PARAM,
-			EC_LPC_ADDR_HOST_PARAM + EC_PROTO2_MAX_PARAM_SIZE - 1);
+		fprintf(stderr, "Port 0x%x,0x%x are both 0xFF.\n",
+			EC_LPC_ADDR_HOST_CMD, EC_LPC_ADDR_HOST_DATA);
 		fprintf(stderr,
 			"Very likely this board doesn't have a Chromium EC.\n");
 		return -4;
@@ -304,7 +297,7 @@ int comm_init_lpc(void)
 			sizeof(struct ec_host_response);
 
 	} else if (i & EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED) {
-		/* Protocol version 2*/
+		/* Protocol version 2 */
 		ec_command = ec_command_lpc;
 		ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 

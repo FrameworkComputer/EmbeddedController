@@ -724,6 +724,12 @@ static void lpc_init(void)
 	 */
 	LM4_LPC_ADR(LPC_CH_CMD) = EC_LPC_ADDR_HOST_DATA;
 	LM4_LPC_CTL(LPC_CH_CMD) = (LPC_POOL_OFFS_CMD << (5 - 1));
+	/*
+	 * Initialize status bits to 0.  We never set the ACPI burst status bit,
+	 * so this guarantees that at least one status bit will always be 0.
+	 * This is used by comm_lpc.c to detect that the EC is present on the
+	 * LPC bus.  See crosbug.com/p/10963.
+	 */
 	LM4_LPC_ST(LPC_CH_CMD) = 0;
 	/* Unmask interrupt for host command writes */
 	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_CMD, 4);
