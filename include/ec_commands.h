@@ -1684,7 +1684,7 @@ struct ec_response_i2c_passthru {
 
 
 /*****************************************************************************/
-/* Temporary debug commands. TODO: remove this crosbug.com/p/13849 */
+/* Debug commands for battery charging */
 
 /*
  * Dump charge state machine context.

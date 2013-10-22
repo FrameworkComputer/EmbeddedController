@@ -208,17 +208,10 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	if (size > EC_PROTO2_MAX_PARAM_SIZE)
 		args->result = EC_RES_INVALID_RESPONSE;
 
-	/*
-	 * Write result to the data byte.  This sets the TOH bit in the
-	 * status byte and triggers an IRQ on the host so the host can read
-	 * the result.
-	 *
-	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
-	 * IRQs
-	 */
+	/* Write result to the data byte.  This sets the TOH status bit. */
 	LPC_POOL_CMD[1] = args->result;
 
-	/* Clear the busy bit */
+	/* Clear the busy bit, so the host knows the EC is done. */
 	task_disable_irq(LM4_IRQ_LPC);
 	LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_BUSY;
 	task_enable_irq(LM4_IRQ_LPC);
@@ -230,17 +223,10 @@ static void lpc_send_response_packet(struct host_packet *pkt)
 	if (pkt->driver_result == EC_RES_IN_PROGRESS)
 		return;
 
-	/*
-	 * Write result to the data byte.  This sets the TOH bit in the
-	 * status byte and triggers an IRQ on the host so the host can read
-	 * the result.
-	 *
-	 * TODO: (crosbug.com/p/7496) or it would, if we actually set up host
-	 * IRQs
-	 */
+	/* Write result to the data byte.  This sets the TOH status bit. */
 	LPC_POOL_CMD[1] = pkt->driver_result;
 
-	/* Clear the busy bit */
+	/* Clear the busy bit, so the host knows the EC is done. */
 	task_disable_irq(LM4_IRQ_LPC);
 	LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_BUSY;
 	task_enable_irq(LM4_IRQ_LPC);

@@ -24,11 +24,8 @@
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
- * switch.
- *
- * TODO: (crosbug.com/p/9986) This is a serious security hole and should be
- * removed in mass production.  Acceptable here only because daisy isn't a
- * production board.
+ * switch.  This is a serious security hole, but is acceptable here because
+ * daisy isn't a production board.
  */
 #define CONFIG_SYSTEM_UNLOCKED
 

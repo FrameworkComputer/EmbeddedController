@@ -30,7 +30,10 @@
 /*
  * RTC clock frequency (connected to LSI clock)
  *
- * TODO: crosbug.com/p/12281 calibrate LSI frequency
+ * TODO(crosbug.com/p/12281): Calibrate LSI frequency on a per-chip basis.  The
+ * LSI on any given chip can be between 30 kHz to 60 kHz.  Without calibration,
+ * LSI frequency may be off by as much as 50%.  Fortunately, we don't do any
+ * high-precision delays based solely on LSI.
  */
 #define RTC_FREQ 40000 /* Hz */
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
