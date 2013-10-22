@@ -88,7 +88,6 @@ void gpio_pre_init(void)
 	int i;
 
 	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
-	/* FIXME: This seems to break USB download in U-Boot (?!?) */
 	STM32_RCC_APB2ENR |= 1 << 0;
 
 	if ((STM32_RCC_AHBENR & 0x3f) == 0x3f) {
