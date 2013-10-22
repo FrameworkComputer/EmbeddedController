@@ -12,7 +12,8 @@
 #define CPU_CLOCK 48000000
 
 /* Debug features */
-#define CONFIG_I2C_DEBUG	/* FIXME(dhendrix): remove this eventually */
+/* TODO(crosbug.com/p/23494): turn off extra I2C debugging when it works */
+#define CONFIG_I2C_DEBUG
 #undef  CONFIG_TASK_PROFILING
 
 /* Features not present on this reference board */
@@ -23,8 +24,8 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 
 /*
- * TODO(dhendrix): Stop mode causes the UART to drop characters and likely
- * other bad side-effects. Disable for now.
+ * TODO(crosbug.com/p/23494): Stop mode causes the UART to drop characters and
+ * likely other bad side-effects. Disable for now.
  */
 #undef   CONFIG_LOW_POWER_IDLE
 
@@ -91,7 +92,10 @@ enum gpio_signal {
 	GPIO_HUB_RESET,
 	GPIO_WP_L,
 
-	/* FIXME: this will be an alt. function GPIO, so remove it from here */
+	/*
+	 * TODO(crosbug.com/p/23494): This will be an alternate function GPIO,
+	 * so remove it from here.
+	 */
 	GPIO_BL_PWM,
 
 	/* Unimplemented GPIOs */

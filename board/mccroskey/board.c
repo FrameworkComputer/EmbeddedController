@@ -22,8 +22,6 @@
 
 #define HARD_RESET_TIMEOUT_MS 5
 
-static void kbd_power_on(enum gpio_signal signal);
-
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
@@ -43,7 +41,8 @@ const struct gpio_info gpio_list[] = {
 	 keyboard_raw_gpio_interrupt},
 	{"KB_IN07",        GPIO_B, (1<<15), GPIO_KB_INPUT,
 	 keyboard_raw_gpio_interrupt},
-	{"KBD_PWR_BUTTON", GPIO_B, (1<<2),  GPIO_INPUT, kbd_power_on},
+	/* TODO(crosbug.com/p/23494): interrupt handler for power button */
+	{"KBD_PWR_BUTTON", GPIO_B, (1<<2),  GPIO_INPUT, NULL},
 
 	{"OMZO_RDY_L",     GPIO_A, (1<<0),  GPIO_INPUT, NULL},	/* PA0_WKUP */
 	{"OZMO_RST_L",     GPIO_A, (1<<2),  GPIO_ODR_HIGH, NULL},
@@ -77,7 +76,7 @@ const struct gpio_info gpio_list[] = {
 	{"HUB_RESET",      GPIO_C, (1<<14), GPIO_ODR_HIGH, NULL},
 	{"WP_L",           GPIO_D, (1<<2),  GPIO_INPUT, NULL},
 
-	/* FIXME: make this alt. function */
+	/* TODO(crosbug.com/p/23494): make this an alternate function */
 	{"BL_PWM",         GPIO_A, (1<<1),  GPIO_OUTPUT, NULL},
 
 	/* Unimplemented signals which we need to emulate for now */
@@ -101,8 +100,8 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
 	/*
-	 * TODO(rspangler): use this instead of hard-coded register writes in
-	 * board_config_pre_init().
+	 * TODO(crosbug.com/p/23494): Use this instead of hard-coded register
+	 * writes in board_config_pre_init().
 	 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
@@ -111,15 +110,20 @@ void board_config_pre_init(void)
 {
 	uint32_t val;
 
-	/* Enable all GPIOs clocks
-	 * TODO: more fine-grained enabling for power saving
+	/* Enable all GPIOs clocks.
+	 *
+	 * TODO(crosbug.com/p/23494): more fine-grained enabling for power
+	 * saving.
 	 */
 	STM32_RCC_APB2ENR |= 0x1fd;
 
 #ifdef CONFIG_SPI
-	/* SPI1 on pins PA4-7 (alt. function push-pull, 10MHz) */
-	/* FIXME: Connected device SPI freq is fxo/2 in master mode, fxo/4
-	 * in slave mode. fxo ranges from 12-40MHz */
+	/*
+	 * SPI1 on pins PA4-7 (alt. function push-pull, 10MHz).
+	 *
+	 * TODO(crosbug.com/p/23494): Connected device SPI freq is fxo/2 in
+	 * master mode, fxo/4 in slave mode. fxo ranges from 12-40MHz.
+	 */
 	val = STM32_GPIO_CRL(GPIO_A) & ~0xffff0000;
 	val |= 0x99990000;
 	STM32_GPIO_CRL(GPIO_A) = val;
@@ -162,9 +166,4 @@ void board_i2c_post_init(int port)
 		val |= 0xdd000000;
 		STM32_GPIO_CRL(GPIO_B) = val;
 	}
-}
-
-void kbd_power_on(enum gpio_signal signal)
-{
-	/* FIXME: this is just a stub for now... */
 }
