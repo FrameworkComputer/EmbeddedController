@@ -540,7 +540,11 @@
 /* Support TPS65090 PMU */
 #undef CONFIG_PMU_TPS65090
 
-/* Support PMU powerinfo host and console commands */
+/*
+ * Support PMU powerinfo host and console commands.  Note that the
+ * implementation is currently specific to the Pit board, so don't blindly
+ * enable this for another board without fixing that first.
+ */
 #undef CONFIG_PMU_POWERINFO
 
 /*****************************************************************************/

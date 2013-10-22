@@ -12,8 +12,9 @@
 #include "pmu_tpschrome.h"
 #include "util.h"
 
-/* FIXME: move all the constants to pmu_tpschrome, make
- * dcdc3, fet output name configurable.
+/*
+ * All these constants are specific to the Pit board.  If we reuse this command
+ * on other boards, we'll need to move the table to board.c.
  */
 static const struct {
 	const char *name;
@@ -33,6 +34,7 @@ static const struct {
 	{"p1350", 1350, 5000},
 };
 
+/* These constants may be Pit-specific as well. */
 static const int pmu_voltage_range_mv = 17000;
 static const int pmu_ac_sense_range_mv = 33;
 static const int pmu_bat_sense_range_mv = 40;
@@ -113,6 +115,15 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 		"Show PMU power info",
 		NULL);
 
+/**
+ * Host command to get power info from PMU
+ *
+ * This reuses the same EC_CMD_POWER_INFO host command as Spring, but doesn't
+ * provide the full set of information because Pit doesn't take power over USB.
+ *
+ * Note that Spring *also* uses the TPS65090 PMU, but it can't use this common
+ * code because it implements the same host command differently...
+ */
 static int power_command_info(struct host_cmd_handler_args *args)
 {
 	int bat_charging_current;
