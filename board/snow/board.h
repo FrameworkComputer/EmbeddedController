@@ -44,9 +44,6 @@ enum module_id {
 	MODULE_UART,
 };
 
-/* By default, enable all console messages except keyboard */
-#define CC_DEFAULT	(CC_ALL & ~CC_MASK(CC_KEYSCAN))
-
 /* Keyboard output ports */
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
