@@ -33,7 +33,6 @@ enum throttle_sources {
 	THROTTLE_SRC_POWER,
 };
 
-
 /**
  * Enable/disable CPU throttling.
  *
@@ -44,8 +43,16 @@ enum throttle_sources {
  * @param type          Type of throttling desired
  * @param source        Which task is requesting throttling
  */
+#ifdef HAS_TASK_CHIPSET
 void throttle_ap(enum throttle_level level,
 		 enum throttle_type type,
 		 enum throttle_sources source);
+
+#else
+static inline void throttle_ap(enum throttle_level level,
+			       enum throttle_type type,
+			       enum throttle_sources source)
+{}
+#endif
 
 #endif	/* __CROS_EC_THROTTLE_AP_H */

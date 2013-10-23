@@ -9,7 +9,6 @@
 common-y=main.o util.o console_output.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system.o hooks.o
 common-y+=gpio.o version.o printf.o queue.o
-common-y+=throttle_ap.o
 
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 # TODO(rspangler): Why do these include battery_common but the other batteries
@@ -52,7 +51,7 @@ common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_WIRELESS)+=wireless.o
-common-$(HAS_TASK_CHIPSET)+=chipset.o
+common-$(HAS_TASK_CHIPSET)+=chipset.o throttle_ap.o
 common-$(HAS_TASK_CONSOLE)+=console.o
 common-$(HAS_TASK_HOSTCMD)+=host_command.o host_event_commands.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
