@@ -311,8 +311,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Wait 40ns */
 		udelay(1);
 
-		/* Disable wireless */
-		wireless_enable(0);
+		/* Disable WWAN, but leave WiFi on */
+		wireless_enable(EC_WIRELESS_SWITCH_WLAN |
+				EC_WIRELESS_SWITCH_WLAN_POWER);
 
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop
@@ -325,6 +326,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 	case X86_S3S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+		/* Disable wireless */
+		wireless_enable(0);
 
 		/* Disable peripheral power */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
