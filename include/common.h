@@ -53,6 +53,9 @@
 /* Include top-level configuration file */
 #include "config.h"
 
+/* Canonical list of module IDs */
+#include "module_id.h"
+
 /* List of common error codes that can be returned */
 enum ec_error_list {
 	/* Success - no error */

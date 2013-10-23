@@ -46,17 +46,6 @@
 
 #ifndef __ASSEMBLER__
 
-/* Module IDs */
-/* TODO(rspangler): use this in place of enum console_channel as well */
-enum module_id {
-	MODULE_I2C,
-	MODULE_LPC,
-	MODULE_PECI,
-	MODULE_PWM_FAN,
-	MODULE_PWM_KBLIGHT,
-	MODULE_UART,
-};
-
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,

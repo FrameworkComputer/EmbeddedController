@@ -43,16 +43,6 @@
 
 #ifndef __ASSEMBLER__
 
-/* Module IDs */
-/* TODO(rspangler): use this in place of enum console_channel as well */
-enum module_id {
-	MODULE_I2C,
-	MODULE_LPC,
-	MODULE_SPI,
-	MODULE_PWM_LED,
-	MODULE_UART,
-};
-
 /* I2C ports */
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0

@@ -29,17 +29,6 @@
 
 #ifndef __ASSEMBLER__
 
-/* Module IDs */
-/* TODO(rspangler): use this in place of enum console_channel as well */
-enum module_id {
-	MODULE_I2C,
-	MODULE_LED_KIRBY,
-	MODULE_SPI,
-	MODULE_UART,
-	MODULE_ADC,
-	MODULE_CHIPSET,
-};
-
 /* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_D
 

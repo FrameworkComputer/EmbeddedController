@@ -20,12 +20,6 @@
 
 #ifndef __ASSEMBLER__
 
-/* Module IDs */
-enum module_id {
-	MODULE_UART,
-	MODULE_CHIPSET,
-};
-
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 4
