@@ -26,9 +26,4 @@ void pwm_fan_set_percent_needed(int pct);
  */
 int pwm_fan_percent_to_rpm(int pct);
 
-/**
- * Configure the fan GPIOs for the pwm module -- board-specific.
- */
-void configure_fan_gpios(void);
-
 #endif  /* __CROS_EC_FAN_H */
