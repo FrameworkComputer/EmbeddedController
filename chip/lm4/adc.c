@@ -120,7 +120,17 @@ static void lm4_adc_configure(const struct adc_t *adc)
 int adc_read_channel(enum adc_channel ch)
 {
 	const struct adc_t *adc = adc_channels + ch;
-	int rv = lm4_adc_flush_and_read(adc->sequencer);
+	int rv;
+
+	/* Enable ADC0 module in run and sleep modes. */
+	clock_enable_peripheral(CGC_OFFSET_ADC, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
+
+	rv = lm4_adc_flush_and_read(adc->sequencer);
+
+	/* Disable ADC0 module to conserve power. */
+	clock_disable_peripheral(CGC_OFFSET_ADC, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	if (rv == ADC_READ_ERROR)
 		return ADC_READ_ERROR;
@@ -236,5 +246,9 @@ static void adc_init(void)
 	/* Initialize ADC sequencer */
 	for (i = 0; i < ADC_CH_COUNT; ++i)
 		lm4_adc_configure(adc_channels + i);
+
+	/* Disable ADC0 module until it is needed to conserve power. */
+	clock_disable_peripheral(CGC_OFFSET_ADC, 0x1,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
