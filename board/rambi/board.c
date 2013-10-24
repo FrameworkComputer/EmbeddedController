@@ -109,7 +109,7 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_D, 0x0f, 2, MODULE_SPI},			/* SPI1 */
 	{GPIO_L, 0x3f, 15, MODULE_LPC},			/* LPC */
 	{GPIO_M, 0x33, 15, MODULE_LPC},			/* LPC */
-	{GPIO_N, 0x50, 1, MODULE_PWM_LED, GPIO_OPEN_DRAIN}, /* Power LEDs */
+	{GPIO_N, 0x50, 1, MODULE_PWM_LED, GPIO_OPEN_DRAIN}, /* FAN0PWM 3&4 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 

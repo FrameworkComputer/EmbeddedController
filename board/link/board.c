@@ -138,10 +138,10 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_C, 0x30, 2, MODULE_UART},			/* UART1 */
 	{GPIO_J, 0x40, 1, MODULE_PECI},			/* PECI Tx */
 	{GPIO_J, 0x80, 0, MODULE_PECI, GPIO_ANALOG},	/* PECI Rx */
-	{GPIO_K, 0x40, 1, MODULE_PWM_KBLIGHT},		/* Fan1 PWM */
+	{GPIO_K, 0x40, 1, MODULE_PWM_KBLIGHT},		/* FAN0PWM1 */
 	{GPIO_L, 0x3f, 15, MODULE_LPC},			/* LPC */
 	{GPIO_M, 0x33, 15, MODULE_LPC},			/* LPC */
-	{GPIO_M, 0xc0, 1, MODULE_PWM_FAN},		/* Fan0 PWM/tach */
+	{GPIO_M, 0xc0, 1, MODULE_PWM_FAN},		/* FAN0PWM0 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 

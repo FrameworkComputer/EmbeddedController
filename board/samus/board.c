@@ -138,8 +138,8 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 #ifdef HEY_USE_BUILTIN_CLKRUN
 	{GPIO_M, 0x04, 15, MODULE_LPC, GPIO_OPEN_DRAIN},/* LPC */
 #endif
-	{GPIO_N, 0x3c, 1, MODULE_PWM_FAN},		/* Fan0PWM/TACH 2&3 */
-	{GPIO_N, 0x40, 1, MODULE_PWM_KBLIGHT},		/* Fan1PWM4 */
+	{GPIO_N, 0x3c, 1, MODULE_PWM_FAN},		/* FAN0PWM 2&3 */
+	{GPIO_N, 0x40, 1, MODULE_PWM_KBLIGHT},		/* FAN0PWM4 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
