@@ -256,8 +256,6 @@ static void i2c_init_port(const struct i2c_port_t *p, int force_unwedge)
 
 	/* Set up initial bus frequencies */
 	i2c_set_freq_port(p);
-
-	/* TODO: enable interrupts using I2C_CR2 bits 8,9 */
 }
 
 /*****************************************************************************/
@@ -278,8 +276,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	/*
 	 * Clear status
 	 *
-	 * TODO: should check for any leftover error status, and reset the
-	 * port if present.
+	 * TODO(crosbug.com/p/29314): should check for any leftover error
+	 * status, and reset the port if present.
 	 */
 	STM32_I2C_SR1(port) = 0;
 
@@ -457,9 +455,9 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	uint8_t reg, block_length;
 
 	/*
-	 * TODO: when i2c_xfer() supports start/stop bits, won't need a temp
-	 * buffer, and this code can merge with the LM4 implementation and
-	 * move to i2c_common.c.
+	 * TODO(crosbug.com/p/23569): When i2c_xfer() supports start/stop bits
+	 * on all platforms, won't need a temp buffer, and this code can merge
+	 * with the LM4 implementation and move to i2c_common.c.
 	 */
 	uint8_t buffer[SMBUS_MAX_BLOCK + 1];
 

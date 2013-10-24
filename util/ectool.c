@@ -2359,7 +2359,8 @@ int cmd_i2c_read(int argc, char *argv[])
 	}
 
 	/*
-	 * TODO: use I2C_XFER command if supported, then fall back to I2C_READ
+	 * TODO(crosbug.com/p/23570): use I2C_XFER command if supported, then
+	 * fall back to I2C_READ.
 	 */
 
 	rv = ec_command(EC_CMD_I2C_READ, 0, &p, sizeof(p), &r, sizeof(r));
@@ -2417,7 +2418,8 @@ int cmd_i2c_write(int argc, char *argv[])
 	}
 
 	/*
-	 * TODO: use I2C_XFER command if supported, then fall back to I2C_WRITE
+	 * TODO(crosbug.com/p/23570): use I2C_XFER command if supported, then
+	 * fall back to I2C_WRITE.
 	 */
 
 	rv = ec_command(EC_CMD_I2C_WRITE, 0, &p, sizeof(p), NULL, 0);

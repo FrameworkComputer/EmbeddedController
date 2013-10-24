@@ -114,7 +114,10 @@ int i2c_write8(int port, int slave_addr, int offset, int data)
 /*****************************************************************************/
 /* Host commands */
 
-/* TODO: replace with single I2C passthru command */
+/*
+ * TODO(crosbug.com/p/23570): remove separate read and write commands, as soon
+ * as ectool supports EC_CMD_I2C_PASSTHRU.
+ */
 
 static int i2c_command_read(struct host_cmd_handler_args *args)
 {
@@ -163,9 +166,8 @@ static int i2c_command_write(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_I2C_WRITE, i2c_command_write, EC_VER_MASK(0));
 
-/* TODO: remove temporary extra debugging for help host-side debugging */
 #ifdef CONFIG_I2C_DEBUG_PASSTHRU
-#define PTHRUPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define PTHRUPRINTF(format, args...) CPRINTF(format, ## args)
 #else
 #define PTHRUPRINTF(format, args...)
 #endif
@@ -343,11 +345,10 @@ static void scan_bus(int port, const char *desc)
 
 #ifdef CHIP_FAMILY_stm32f
 		/*
-		 * Hope that address 0 exists, because the i2c_xfer()
-		 * implementation on STM32F can't read a byte without writing
-		 * one first.
-		 *
-		 * TODO: remove when that limitation is fixed.
+		 * TODO(crosbug.com/p/23569): The i2c_xfer() implementation on
+		 * STM32F can't read a byte without writing one first.  So
+		 * write a byte and hope nothing bad happens.  Remove this
+		 * workaround when STM32F is fixed.
 		 */
 		tmp = 0;
 		if (!i2c_xfer(port, a, &tmp, 1, &tmp, 1, I2C_XFER_SINGLE))

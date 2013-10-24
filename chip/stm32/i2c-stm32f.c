@@ -818,7 +818,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 {
 	int rv;
 
-	/* TODO: support start/stop flags */
+	/* TODO(crosbug.com/p/23569): support start/stop flags */
 
 	ASSERT(out || !out_bytes);
 	ASSERT(in || !in_bytes);
@@ -866,9 +866,9 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	uint8_t reg, block_length;
 
 	/*
-	 * TODO: when i2c_xfer() supports start/stop bits, won't need a temp
-	 * buffer, and this code can merge with the LM4 implementation and
-	 * move to i2c_common.c.
+	 * TODO(crosbug.com/p/23569): when i2c_xfer() supports start/stop bits,
+	 * won't need a temp buffer, and this code can merge with the LM4
+	 * implementation and move to i2c_common.c.
 	 */
 	uint8_t buffer[SMBUS_MAX_BLOCK + 1];
 

@@ -1527,6 +1527,11 @@ struct ec_response_gpio_get {
 /*****************************************************************************/
 /* I2C commands. Only available when flash write protect is unlocked. */
 
+/*
+ * TODO(crosbug.com/p/23570): These commands are deprecated, and will be
+ * removed soon.  Use EC_CMD_I2C_XFER instead.
+ */
+
 /* Read I2C bus */
 #define EC_CMD_I2C_READ 0x94
 
