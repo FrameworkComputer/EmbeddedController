@@ -119,8 +119,8 @@ void eoption_init(void)
 		return;
 
 	/*
-	 * TODO: should have a CRC if we start using this for real
-	 * (non-debugging) options.
+	 * TODO(crosbug.com/p/23558): The header should really have a checksum
+	 * field, so that we can detect uninitialized/corrupt data.
 	 */
 
 	/* Initialize fields which weren't set in previous versions */
