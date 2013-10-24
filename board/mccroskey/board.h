@@ -45,7 +45,7 @@ enum module_id {
 #define KB_OUT_PORT_LIST GPIO_C
 
 /* EC is I2C master */
-#define I2C_PORT_HOST 0
+#define I2C_PORT_MASTER 0
 #define I2C_PORT_SLAVE 0	/* needed for DMAC macros (ugh) */
 #define GPIO_I2C2_SCL 0		/* unused, but must be defined anyway */
 #define GPIO_I2C2_SDA 0		/* unused, but must be defined anyway */

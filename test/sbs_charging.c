@@ -105,7 +105,7 @@ static int test_charge_state(void)
 
 	/* Attach battery again, charging */
 	ccprintf("[CHARGING TEST] Attach battery\n");
-	test_attach_i2c(I2C_PORT_HOST, BATTERY_ADDR);
+	test_attach_i2c(I2C_PORT_BATTERY, BATTERY_ADDR);
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_CHARGE);
 

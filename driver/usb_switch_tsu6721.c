@@ -36,7 +36,7 @@ uint8_t tsu6721_read(uint8_t reg)
 	int res;
 	int val;
 
-	res = i2c_read8(I2C_PORT_HOST, TSU6721_I2C_ADDR, reg, &val);
+	res = i2c_read8(I2C_PORT_MASTER, TSU6721_I2C_ADDR, reg, &val);
 	if (res)
 		return 0xee;
 
@@ -47,7 +47,7 @@ int tsu6721_write(uint8_t reg, uint8_t val)
 {
 	int res;
 
-	res = i2c_write8(I2C_PORT_HOST, TSU6721_I2C_ADDR, reg, val);
+	res = i2c_write8(I2C_PORT_MASTER, TSU6721_I2C_ADDR, reg, val);
 	if (res)
 		CPRINTF("[%T TSU6721 I2C write failed]\n");
 	return res;

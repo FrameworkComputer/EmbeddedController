@@ -42,17 +42,17 @@
 
 static int bq27541_read(int offset, int *data)
 {
-	return i2c_read16(I2C_PORT_HOST, BQ27541_ADDR, offset, data);
+	return i2c_read16(I2C_PORT_BATTERY, BQ27541_ADDR, offset, data);
 }
 
 static int bq27541_read8(int offset, int *data)
 {
-	return i2c_read8(I2C_PORT_HOST, BQ27541_ADDR, offset, data);
+	return i2c_read8(I2C_PORT_BATTERY, BQ27541_ADDR, offset, data);
 }
 
 static int bq27541_write(int offset, int data)
 {
-	return i2c_write16(I2C_PORT_HOST, BQ27541_ADDR, offset, data);
+	return i2c_write16(I2C_PORT_BATTERY, BQ27541_ADDR, offset, data);
 }
 
 int bq27541_probe(void)

@@ -65,10 +65,10 @@
 	((I2C_PORT_SLAVE) ? STM32_DMAC_I2C2_TX : STM32_DMAC_I2C1_TX)
 #define DMAC_SLAVE_RX \
 	((I2C_PORT_SLAVE) ? STM32_DMAC_I2C2_RX : STM32_DMAC_I2C1_RX)
-#define DMAC_HOST_TX \
-	((I2C_PORT_HOST) ? STM32_DMAC_I2C2_TX : STM32_DMAC_I2C1_TX)
-#define DMAC_HOST_RX \
-	((I2C_PORT_HOST) ? STM32_DMAC_I2C2_RX : STM32_DMAC_I2C1_RX)
+#define DMAC_MASTER_TX \
+	((I2C_PORT_MASTER) ? STM32_DMAC_I2C2_TX : STM32_DMAC_I2C1_TX)
+#define DMAC_MASTER_RX \
+	((I2C_PORT_MASTER) ? STM32_DMAC_I2C2_RX : STM32_DMAC_I2C1_RX)
 
 enum {
 	/*
@@ -728,10 +728,10 @@ static int i2c_master_transmit(int port, int slave_addr, const uint8_t *data,
 
 	/* Configure DMA channel for TX to host */
 	dma_prepare_tx(dma_tx_option + port, size, data);
-	dma_enable_tc_interrupt(DMAC_HOST_TX);
+	dma_enable_tc_interrupt(DMAC_MASTER_TX);
 
 	/* Start the DMA */
-	dma_go(dma_get_channel(DMAC_HOST_TX));
+	dma_go(dma_get_channel(DMAC_MASTER_TX));
 
 	/* Configuring i2c2 to use DMA */
 	STM32_I2C_CR2(port) |= CR2_DMAEN;
@@ -743,8 +743,8 @@ static int i2c_master_transmit(int port, int slave_addr, const uint8_t *data,
 	if (!rv_start)
 		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
-	dma_disable(DMAC_HOST_TX);
-	dma_disable_tc_interrupt(DMAC_HOST_TX);
+	dma_disable(DMAC_MASTER_TX);
+	dma_disable_tc_interrupt(DMAC_MASTER_TX);
 	STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 
 	if (rv_start)
@@ -777,7 +777,7 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		enable_ack(port);
 		dma_start_rx(dma_rx_option + port, size, data);
 
-		dma_enable_tc_interrupt(DMAC_HOST_RX);
+		dma_enable_tc_interrupt(DMAC_MASTER_RX);
 
 		STM32_I2C_CR2(port) |= CR2_DMAEN;
 		STM32_I2C_CR2(port) |= CR2_LAST;
@@ -786,8 +786,8 @@ static int i2c_master_receive(int port, int slave_addr, uint8_t *data,
 		if (!rv_start)
 			rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
 
-		dma_disable(DMAC_HOST_RX);
-		dma_disable_tc_interrupt(DMAC_HOST_RX);
+		dma_disable(DMAC_MASTER_RX);
+		dma_disable_tc_interrupt(DMAC_MASTER_RX);
 		STM32_I2C_CR2(port) &= ~CR2_DMAEN;
 		disable_ack(port);
 

@@ -38,12 +38,12 @@ static const int input_current_steps[] = {
 
 int bq24192_read(int reg, int *value)
 {
-	return i2c_read8(I2C_PORT_HOST, BQ24192_ADDR, reg, value);
+	return i2c_read8(I2C_PORT_CHARGER, BQ24192_ADDR, reg, value);
 }
 
 int bq24192_write(int reg, int value)
 {
-	return i2c_write8(I2C_PORT_HOST, BQ24192_ADDR, reg, value);
+	return i2c_write8(I2C_PORT_CHARGER, BQ24192_ADDR, reg, value);
 }
 
 static int bq24192_watchdog_reset(void)

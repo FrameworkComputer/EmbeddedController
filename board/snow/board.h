@@ -51,9 +51,9 @@ enum module_id {
 #define KB_OUT_PORT_LIST GPIO_B, GPIO_C
 
 /* Charging */
-#define I2C_PORT_HOST 1
-#define I2C_PORT_BATTERY I2C_PORT_HOST
-#define I2C_PORT_CHARGER I2C_PORT_HOST
+#define I2C_PORT_MASTER 1
+#define I2C_PORT_BATTERY I2C_PORT_MASTER
+#define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_SLAVE 1
 
 #define GPIO_AP_CLAIM	GPIO_SPI1_NSS	/* AP claims bus */

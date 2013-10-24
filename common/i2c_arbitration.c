@@ -31,7 +31,7 @@ int i2c_claim(int port)
 {
 	timestamp_t start;
 
-	if (port != I2C_PORT_HOST)
+	if (port != I2C_PORT_MASTER)
 		return EC_SUCCESS;
 
 	/* If AP is off, we have the bus */
@@ -79,7 +79,7 @@ int i2c_claim(int port)
 
 void i2c_release(int port)
 {
-	if (port == I2C_PORT_HOST) {
+	if (port == I2C_PORT_MASTER) {
 		/* Release our claim */
 		gpio_set_level(GPIO_EC_CLAIM, 1);
 		usleep(BUS_SLEW_DELAY_US);

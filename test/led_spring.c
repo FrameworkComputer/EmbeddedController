@@ -59,7 +59,7 @@ static void set_battery_soc(int soc)
 
 static int lp5562_i2c_write8(int port, int slave_addr, int offset, int data)
 {
-	if (port != I2C_PORT_HOST || slave_addr != LP5562_I2C_ADDR)
+	if (port != I2C_PORT_MASTER || slave_addr != LP5562_I2C_ADDR)
 		return EC_ERROR_INVAL;
 	if (offset == lp5562_failed_i2c_reg)
 		return EC_ERROR_UNKNOWN;

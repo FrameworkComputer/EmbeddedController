@@ -46,20 +46,10 @@ enum module_id {
 /* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_D
 
-/*
- * Charging.
- *
- * "HOST" means the port where the EC is the master, which has the battery,
- * charger and PMU.
- *
- * "SLAVE" means the port where the EC is the slave, which has the AP (host
- * processor).
- *
- * TODO: In this context, "host" is badly overloaded and confusing.
- */
-#define I2C_PORT_HOST 0
-#define I2C_PORT_BATTERY I2C_PORT_HOST
-#define I2C_PORT_CHARGER I2C_PORT_HOST
+/* Single I2C port, where the EC is the master. */
+#define I2C_PORT_MASTER 0
+#define I2C_PORT_BATTERY I2C_PORT_MASTER
+#define I2C_PORT_CHARGER I2C_PORT_MASTER
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 2

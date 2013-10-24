@@ -32,7 +32,7 @@
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_LED_DRIVER_LP5562
-#define I2C_PORT_HOST 1
+#define I2C_PORT_MASTER 1
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
 #endif
@@ -44,7 +44,7 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 int board_discharge_on_ac(int enabled);
-#define I2C_PORT_HOST 1
+#define I2C_PORT_MASTER 1
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
 #endif
@@ -70,7 +70,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_TEMP_SENSOR
 #define I2C_PORT_BATTERY 1
 #define I2C_PORT_CHARGER 1
-#define I2C_PORT_HOST 1
+#define I2C_PORT_MASTER 1
 #endif
 
 #endif  /* __CROS_EC_TEST_CONFIG_H */
