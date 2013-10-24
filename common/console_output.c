@@ -16,8 +16,20 @@
 static uint32_t channel_mask = CC_DEFAULT;
 static uint32_t channel_mask_saved = CC_DEFAULT;
 
-/* List of channel names; must match enum console_channel. */
-/* TODO: move this to board.c */
+/*
+ * List of channel names; must match enum console_channel.
+ *
+ * We could do something fancy and macro-y with this like ec.tasklist, so that
+ * the channel name list and console_channel enum come from the same header
+ * file.  That's clever, but I'm not convinced it's more readable or
+ * maintainable than the two simple lists we have now.
+ *
+ * We could also try to get clever with #ifdefs or board-specific lists of
+ * channel names, so that for example boards without port80 support don't waste
+ * binary size on the channel name string for "port80".  Pruning the channel
+ * list might also become more important if we have >32 channels - for example,
+ * if we decide to replace enum console_channel with enum module_id.
+ */
 static const char * const channel_names[] = {
 	"command",
 	"charger",
@@ -103,8 +115,6 @@ static int command_ch(int argc, char **argv)
 
 			/* No disabling the command output channel */
 			channel_mask = m | CC_MASK(CC_COMMAND);
-
-			/* TODO: save channel list to EEPROM */
 
 			return EC_SUCCESS;
 		}
