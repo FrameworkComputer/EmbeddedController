@@ -214,7 +214,7 @@ int charger_post_init(void)
 
 static void bq24192_init(void)
 {
-	int val, rv;
+	int val;
 
 	if (charger_device_id(&val) || val != BQ24192_DEVICE_ID) {
 		CPRINTF("[%T BQ24192 incorrent ID: 0x%02x]\n", val);
@@ -223,15 +223,16 @@ static void bq24192_init(void)
 
 	/*
 	 * Disable I2C watchdog timer.
-	 * TODO(victoryang): Re-enable watchdog timer and kick it periodically
-	 *                   in charger task.
+	 *
+	 * TODO(crosbug.com/p/22238): Re-enable watchdog timer and kick it
+	 * periodically in charger task.
 	 */
-	rv = bq24192_read(BQ24192_REG_CHG_TERM_TMR, &val);
-	if (rv)
+	if (bq24192_read(BQ24192_REG_CHG_TERM_TMR, &val))
 		return;
+
 	val &= ~0x30;
-	rv = bq24192_write(BQ24192_REG_CHG_TERM_TMR, val);
-	if (rv)
+
+	if (bq24192_write(BQ24192_REG_CHG_TERM_TMR, val))
 		return;
 
 	if (bq24192_set_terminate_current(128))
