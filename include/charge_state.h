@@ -12,7 +12,7 @@
 /* Update period to prevent charger watchdog timeout */
 #define CHARGER_UPDATE_PERIOD (SECOND * 10)
 
-/* Power state task polling period in usec */
+/* Power state task polling periods in usec */
 #define POLL_PERIOD_VERY_LONG   MINUTE
 #define POLL_PERIOD_LONG        (MSEC * 500)
 #define POLL_PERIOD_CHARGE      (MSEC * 250)
@@ -110,7 +110,6 @@ struct power_state_context {
 	struct power_state_data prev;
 	timestamp_t power_state_updated_time;
 	uint32_t *memmap_batt_volt;
-	/* TODO(rong): check endianness of EC and memmap*/
 	uint32_t *memmap_batt_rate;
 	uint32_t *memmap_batt_cap;
 	uint8_t *memmap_batt_flags;
@@ -124,13 +123,6 @@ struct power_state_context {
 	timestamp_t shutdown_warning_time;
 	int battery_responsive;
 };
-
-/* Trickle charging state handler.
- * Trickle charging state is sub-state of charging. Normal charging handler
- * can not set battery input current cap to a very low value. This function
- * uses charging voltage to control battery input current.
- */
-enum power_state trickle_charge(struct power_state_context *ctx);
 
 /**
  * Return current charge state.
