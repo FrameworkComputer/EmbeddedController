@@ -6,32 +6,30 @@
  */
 
 #include "battery_smart.h"
+#include "hooks.h"
 #include "host_command.h"
 
 #define PARAM_CUT_OFF 0x0010
 
+static void cutoff(void)
+{
+	/* Claim i2c and send cutoff command to battery. */
+	sb_write(SB_MANUFACTURER_ACCESS, PARAM_CUT_OFF);
+}
+DECLARE_DEFERRED(cutoff);
+
 int battery_command_cut_off(struct host_cmd_handler_args *args)
 {
 	/*
-	 * TODO: Since this is a host command, the i2c bus is claimed by host.
-	 *       Thus, we would send back the response in advanced so that
-	 *       the host can release the bus and then EC can send command to
-	 *       battery.
-	 *
-	 *       Refactoring this via task is a way. However, it is wasteful.
-	 *       Need a light-weight solution.
+	 * Queue battery cutoff.  This must be deferred so we can send the
+	 * response to the host first.  Some platforms (snow) share an I2C bus
+	 * between the EC, AP, and battery, so we need the host to complete the
+	 * transaction and release the I2C bus before we'll be abl eto send the
+	 * cutoff command.
 	 */
-	args->result = EC_RES_SUCCESS;
-	host_send_response(args);
-
-	/* This function would try to claim i2c and then send to battery. */
-	sb_write(SB_MANUFACTURER_ACCESS, PARAM_CUT_OFF);
+	hook_call_deferred(cutoff, 1000);
 
 	return EC_RES_SUCCESS;
-	/*
-	 * Not sure if there is a side-effect since this could send result
-	 * back to host TWICE.
-	 */
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
 		     EC_VER_MASK(0));
