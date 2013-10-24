@@ -23,8 +23,15 @@
 #endif
 
 #ifdef TEST_kb_8042
-#undef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_KEYBOARD_PROTOCOL_8042
+#endif
+
+#ifdef TEST_kb_mkbp
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#endif
+
+#ifdef TEST_kb_scan
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #endif
 
 #ifdef TEST_led_spring

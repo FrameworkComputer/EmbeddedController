@@ -11,7 +11,6 @@
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
 #undef CONFIG_FMAP
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_POWER_BUTTON
 #undef CONFIG_WATCHDOG
 #define CONFIG_SWITCH

@@ -16,7 +16,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "keyboard_protocol.h"
+#include "keyboard_mkbp.h"
 #include "pmu_tpschrome.h"
 #include "pwm.h"
 /* TODO(rspangler): files in common should not use chip registers directly */

@@ -774,6 +774,11 @@
  */
 #endif
 
+#ifndef HAS_TASK_KEYSCAN
+#undef CONFIG_KEYBOARD_PROTOCOL_8042
+#undef CONFIG_KEYBOARD_PROTOCOL_MKBP
+#endif
+
 /*****************************************************************************/
 /*
  * Apply test config overrides last, since tests need to override some of the

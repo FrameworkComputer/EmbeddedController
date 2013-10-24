@@ -156,12 +156,8 @@ void keyboard_send_battery_key(void)
 {
 	uint8_t state[KEYBOARD_COLS];
 
-#ifdef HAS_TASK_KEYSCAN
 	/* Copy debounced state and add battery pseudo-key */
 	memcpy(state, keyboard_scan_get_state(), sizeof(state));
-#else
-	memset(state, 0, sizeof(state));
-#endif
 	state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
 
 	/* Add to FIFO only if AP is on or else it will wake from suspend */
@@ -206,7 +202,6 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 			       struct ec_mkbp_protocol_config *dst,
 			       uint32_t valid_mask, uint8_t new_flags)
 {
-#ifdef HAS_TASK_KEYSCAN
 	struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	if (valid_mask & EC_MKBP_VALID_SCAN_PERIOD)
@@ -241,12 +236,10 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
 			!(dst->flags & EC_MKBP_FLAGS_ENABLE))
 		task_wake(TASK_ID_KEYSCAN);
-#endif
 }
 
 static void get_keyscan_config(struct ec_mkbp_config *dst)
 {
-#ifdef HAS_TASK_KEYSCAN
 	const struct keyboard_scan_config *ksc = keyboard_scan_get_config();
 
 	/* Copy fields from keyscan config to mkbp config */
@@ -256,7 +249,6 @@ static void get_keyscan_config(struct ec_mkbp_config *dst)
 	dst->scan_period_us = ksc->scan_period_us;
 	dst->min_post_scan_delay_us = ksc->min_post_scan_delay_us;
 	dst->poll_timeout_us = ksc->poll_timeout_us;
-#endif
 }
 
 /**
@@ -264,8 +256,6 @@ static void get_keyscan_config(struct ec_mkbp_config *dst)
  *
  * This is like a structure copy, except that only selected fields are
  * copied.
- *
- * TODO(sjg@chromium.org): Consider making this table driven as ectool.
  *
  * @param src		Source config
  * @param dst		Destination config

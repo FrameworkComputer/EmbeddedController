@@ -20,6 +20,10 @@ int keyboard_fifo_add(const uint8_t *buffp);
 /**
  * Send KEY_BATTERY keystroke.
  */
+#ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 void keyboard_send_battery_key(void);
+#else
+static inline void keyboard_send_battery_key(void) { }
+#endif
 
 #endif  /* __CROS_EC_KEYBOARD_MKBP_H */
