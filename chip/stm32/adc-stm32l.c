@@ -126,9 +126,10 @@ static void adc_release(void)
 		clock_enable_module(MODULE_ADC, 0);
 		restore_clock = 0;
 	}
+
 	/*
-	 * Always power down ADC.
-	 * TODO(victoryang): Can we leave ADC powered?
+	 * Power down the ADC.  The ADC consumes a non-trivial amount of power,
+	 * so it's wasteful to leave it on.
 	 */
 	if (adc_powered())
 		STM32_ADC_CR2 = 0;

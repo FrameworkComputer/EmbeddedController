@@ -10,7 +10,13 @@
 
 #include "common.h"
 
-#define ADC_READ_ERROR -1
+#define ADC_READ_ERROR -1  /* Value returned by adc_read_channel() on error */
+
+/*
+ * Boards which use the ADC interface must provide enum adc_channel in the
+ * board.h file.  See chip/$CHIP/adc_chip.h for additional chip-specific
+ * requirements.
+ */
 
 /**
  * Read an ADC channel.

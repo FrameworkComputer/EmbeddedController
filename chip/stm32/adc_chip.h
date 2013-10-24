@@ -5,8 +5,8 @@
 
 /* STM32-specific ADC module for Chrome EC */
 
-#ifndef __CROS_EC_STM32_ADC_H
-#define __CROS_EC_STM32_ADC_H
+#ifndef __CROS_EC_ADC_CHIP_H
+#define __CROS_EC_ADC_CHIP_H
 
 /* Data structure to define ADC channels. */
 struct adc_t {
@@ -17,6 +17,10 @@ struct adc_t {
 	int channel;
 };
 
+/*
+ * Boards must provide this list of ADC channel definitions.  This must match
+ * the enum adc_channel list provided by the board.
+ */
 extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by adc_read_channel(). */
@@ -26,4 +30,4 @@ extern const struct adc_t adc_channels[];
 /* Just plain id mapping for code readability */
 #define STM32_AIN(x) (x)
 
-#endif /* __CROS_EC_STM32_ADC_H */
+#endif /* __CROS_EC_ADC_CHIP_H */

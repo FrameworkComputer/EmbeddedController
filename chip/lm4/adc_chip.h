@@ -5,8 +5,8 @@
 
 /* LM4-specific ADC module for Chrome EC */
 
-#ifndef __CROS_EC_LM4_ADC_H
-#define __CROS_EC_LM4_ADC_H
+#ifndef __CROS_EC_ADC_CHIP_H
+#define __CROS_EC_ADC_CHIP_H
 
 enum lm4_adc_sequencer
 {
@@ -30,6 +30,10 @@ struct adc_t {
 	uint8_t gpio_mask;
 };
 
+/*
+ * Boards must provide this list of ADC channel definitions.  This must match
+ * the enum adc_channel list provided by the board.
+ */
 extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by raw ADC read. */
@@ -42,4 +46,4 @@ extern const struct adc_t adc_channels[];
 /* Dummy value for "channel" in adc_t if we don't have an external channel. */
 #define LM4_AIN_NONE (-1)
 
-#endif /* __CROS_EC_LM4_ADC_H */
+#endif /* __CROS_EC_ADC_CHIP_H */
