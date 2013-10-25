@@ -10,7 +10,14 @@
 
 /* Optional features */
 #define CONFIG_BACKLIGHT_LID
+#define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_BQ24715
+/* TODO(crosbug.com/p/23597): Real number for input current limit */
+#define CONFIG_CHARGER_INPUT_CURRENT 4032
+#define CONFIG_CHARGER_SENSE_RESISTOR 10    /* Charge sense resistor, mOhm */
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input senso resistor, mOhm */
 #define CONFIG_CHIPSET_BAYTRAIL
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_CHIPSET_X86
@@ -28,18 +35,6 @@
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DX_EN
 #define CONFIG_USB_PORT_POWER_SMART
 #define CONFIG_WIRELESS
-
-/* TODO(rspangler): port these to Rambi, or remove if not needed */
-#if 0
-#define CONFIG_BATTERY_CHECK_CONNECTED
-#define CONFIG_BATTERY_SMART
-#define CONFIG_CHARGER
-#define CONFIG_CHARGER_BQ24707A
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 4032 /* mA, about half max */
-#define CONFIG_CHARGER_SENSE_RESISTOR 10 /* Charge sense resistor, mOhm */
-#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input sensor resistor, mOhm */
-#endif
 
 #ifndef __ASSEMBLER__
 
