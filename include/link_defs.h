@@ -73,6 +73,7 @@ extern const struct host_command __hcmds_end[];
 /* IRQs (interrupt handlers) */
 extern const struct irq_priority __irqprio[];
 extern const struct irq_priority __irqprio_end[];
+extern const void *__irqhandler[];
 
 /* Shared memory buffer.  Use via shared_mem.h interface. */
 extern uint8_t __shared_mem_buf[];

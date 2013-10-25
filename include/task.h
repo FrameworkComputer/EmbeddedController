@@ -203,6 +203,14 @@ struct irq_priority {
  * Macro to connect the interrupt handler "routine" to the irq number "irq" and
  * ensure it is enabled in the interrupt controller with the right priority.
  */
+#ifdef __nds32__
+#define DECLARE_IRQ(irq, routine, priority)                     \
+	void IRQ_HANDLER(CPU_INT(irq))(void)			\
+		__attribute__ ((alias(STRINGIFY(routine))));	\
+	const struct irq_priority IRQ_PRIORITY(CPU_INT(irq))	\
+	__attribute__((section(".rodata.irqprio")))		\
+			= {CPU_INT(irq), priority}
+#else
 #define DECLARE_IRQ(irq, routine, priority)                     \
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
@@ -214,5 +222,6 @@ struct irq_priority {
 	const struct irq_priority IRQ_PRIORITY(irq)		\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
+#endif
 
 #endif  /* __CROS_EC_TASK_H */
