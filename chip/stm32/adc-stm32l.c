@@ -196,6 +196,7 @@ int adc_read_all_channels(int *data)
 		ret = EC_ERROR_UNKNOWN;
 		goto exit_all_channels;
 	}
+	dma_clear_isr(STM32_DMAC_ADC);
 
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
 		adc = adc_channels + i;
