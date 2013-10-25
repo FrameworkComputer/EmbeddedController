@@ -12,7 +12,10 @@ build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
-boards := $(filter-out host,$(subst board/,,$(wildcard board/*)))
+
+# Don't do a build test on the following boards:
+skip_boards = host it8380dev
+boards := $(filter-out $(skip_boards),$(subst board/,,$(wildcard board/*)))
 
 # Create output directories if necessary
 _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
