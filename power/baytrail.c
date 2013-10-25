@@ -60,7 +60,6 @@ void chipset_force_shutdown(void)
 	 * Force x86 off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
-	/* TODO(rspangler): verify this works */
 	gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 }

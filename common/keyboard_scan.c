@@ -301,12 +301,7 @@ static int check_keys_changed(uint8_t *state)
 	/* Read the raw key state */
 	any_pressed = read_matrix(new_state);
 
-	/* Ignore if so many keys are pressed that we're ghosting */
-	/*
-	 * TODO: maybe in this case we should reset all the debounce times,
-	 * because in the ghosting case we're not paying attention to any of
-	 * the keys which aren't ghosting.
-	 */
+	/* Ignore if so many keys are pressed that we're ghosting. */
 	if (has_ghosting(new_state))
 		return any_pressed;
 

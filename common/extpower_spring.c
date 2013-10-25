@@ -600,8 +600,8 @@ static void usb_device_change(int dev_type)
 /* External API */
 
 /*
- * TODO: Init here until we can do with HOOK_INIT.  Just need to set prio so we
- * init before the charger task does.
+ * TODO(crosbug.com/p/23741): Init here until we can do with HOOK_INIT.  Just
+ * need to set prio so we init before the charger task does.
  */
 void extpower_charge_init(void)
 {

@@ -220,8 +220,11 @@ void system_disable_jump(void)
 
 #ifdef CONFIG_MPU
 	/*
-	 * Lock down memory
-	 * TODO: Lock down other images (RO or RW) not running.
+	 * Lock down memory to prevent code execution from data areas.
+	 *
+	 * TODO(crosbug.com/p/16904): Also lock down the image which isn't
+	 * running (RO if RW, or vice versa), so a bad or malicious jump can't
+	 * execute code from that image.
 	 */
 	{
 		int mpu_error = mpu_protect_ram();

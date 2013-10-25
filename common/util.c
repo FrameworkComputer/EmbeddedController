@@ -171,7 +171,10 @@ int memcmp(const void *s1, const void *s2, int len)
 
 void *memcpy(void *dest, const void *src, int len)
 {
-	/* TODO: optimized version using LDM/STM would be much faster */
+	/*
+	 * TODO(crosbug.com/p/23720): if src/dest are aligned, copy a word at a
+	 * time instead.
+	 */
 	char *d = (char *)dest;
 	const char *s = (const char *)src;
 	while (len > 0) {
@@ -184,7 +187,10 @@ void *memcpy(void *dest, const void *src, int len)
 
 void *memset(void *dest, int c, int len)
 {
-	/* TODO: optimized version using STM would be much faster */
+	/*
+	 * TODO(crosbug.com/p/23720): if dest is aligned, copy a word at a time
+	 * instead.
+	 */
 	char *d = (char *)dest;
 	while (len > 0) {
 		*(d++) = c;
@@ -205,7 +211,10 @@ void *memmove(void *dest, const void *src, int len)
 		/* Copy from end, so we don't overwrite the source */
 		char *d = (char *)dest + len;
 		const char *s = (const char *)src + len;
-		/* TODO: optimized version using LDM/STM would be much faster */
+		/*
+		 * TODO(crosbug.com/p/23720): if src/dest are aligned, copy a
+		 * word at a time instead.
+		 */
 		while (len > 0) {
 			*(--d) = *(--s);
 			len--;

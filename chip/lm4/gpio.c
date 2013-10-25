@@ -47,8 +47,9 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 	int port_index = find_gpio_port_index(port);
 	int cgmask;
 
+	/* Ignore (do nothing for) invalid port values */
 	if (port_index < 0)
-		return;  /* TODO: assert */
+		return;
 
 	/* Enable the GPIO port in run and sleep. */
 	cgmask = 1 << port_index;

@@ -72,44 +72,46 @@ test_mockable void host_send_response(struct host_cmd_handler_args *args)
 {
 #ifdef CONFIG_HOST_COMMAND_STATUS
 	/*
-	 * TODO(sjg@chromium.org):
-	 * If we got an 'in progress' previously, then this
-	 * must be the completion of that command, so stash the result
-	 * code. We can't send it back to the host now since we already sent
-	 * the in-progress response and the host is on to other things now.
 	 *
-	 * If we are in interrupt context, then we are handling a
-	 * get_status response or an immediate error which prevented us
-	 * from processing the command. Note we can't check for the
-	 * GET_COMMS_STATUS command in args->command because the original
-	 * command value has now been overwritten.
+	 * If we are in interrupt context, then we are handling a get_status
+	 * response or an immediate error which prevented us from processing
+	 * the command. Note we can't check for the GET_COMMS_STATUS command in
+	 * args->command because the original command value has now been
+	 * overwritten.
 	 *
 	 * When a EC_CMD_RESEND_RESPONSE arrives we will supply this response
 	 * to that command.
-	 *
-	 * We don't support stashing response data, so mark the response as
-	 * unavailable in that case.
-	 *
-	 * TODO(sjg@chromium.org): If we stashed the command in host_command
-	 * before processing it, then it would not get overwritten by a
-	 * subsequent command and we could simplify the logic here by adding
-	 * a flag to host_cmd_handler_args to indicate that the command had
-	 * an interim response. We would have to make this stashing dependent
-	 * on CONFIG_HOST_COMMAND_STATUS also.
 	 */
 	if (!in_interrupt_context()) {
 		if (command_pending) {
-			CPRINTF("pending complete, size=%d, result=%d\n",
+			/*
+			 * We previously got EC_RES_IN_PROGRESS.  This must be
+			 * the completion of that command, so stash the result
+			 * code.
+			 */
+			CPRINTF("[%T HC pending done, size=%d, result=%d]\n",
 				args->response_size, args->result);
+
+			/*
+			 * We don't support stashing response data, so mark the
+			 * response as unavailable in that case.
+			 */
 			if (args->response_size != 0)
 				saved_result = EC_RES_UNAVAILABLE;
 			else
 				saved_result = args->result;
+
+			/*
+			 * We can't send the response back to the host now
+			 * since we already sent the in-progress response and
+			 * the host is on to other things now.
+			 */
 			command_pending = 0;
 			return;
+
 		} else if (args->result == EC_RES_IN_PROGRESS) {
 			command_pending = 1;
-			CPRINTF("Command pending\n");
+			CPRINTF("[HC pending]\n");
 		}
 	}
 #endif

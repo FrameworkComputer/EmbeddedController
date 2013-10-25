@@ -168,9 +168,9 @@ int tsu6721_init(void)
 	return res ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 /*
- * TODO(vpalatin): using the I2C early in the HOOK_INIT
- * currently triggers all sort of badness, I need to debug
- * this before re-activatin this initialization.
+ * TODO(crosbug.com/p/23741): Using I2C early in the HOOK_INIT currently
+ * triggers all sort of badness.  Debug this before re-activating
+ * initialization in HOOK_INIT.
  */
 #if 0
 DECLARE_HOOK(HOOK_INIT, tsu6721_init, HOOK_PRIO_DEFAULT);

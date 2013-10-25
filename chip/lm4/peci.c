@@ -16,8 +16,13 @@
 #include "temp_sensor.h"
 #include "util.h"
 
-/* Max junction temperature for processor in degrees C */
-/* TODO: read TjMax from processor via PECI */
+/*
+ * Max junction temperature for processor in degrees C.  This is correct for
+ * Ivy Bridge and Haswell; future chips don't have PECI.
+ *
+ * In theory we could read TjMax from the processor via PECI, but that requires
+ * closed-source Intel PECI commands.
+ */
 #define PECI_TJMAX 105
 
 /* Initial PECI baud rate */
@@ -26,8 +31,12 @@
 /* Polling interval for PECI, in ms */
 #define PECI_POLL_INTERVAL_MS 250
 
-/* Internal and external path delays, in ns */
-#define PECI_TD_FET_NS 60  /* Guess; TODO: what is real delay */
+/*
+ * Internal and external path delays, in ns.  The external delay is a
+ * best-guess measurement, but we're fairly tolerant of a bad guess because
+ * PECI_BAUD_RATE is slow compared to PECI's actual maximum baud rate.
+ */
+#define PECI_TD_FET_NS 60
 #define PECI_TD_INT_NS 80
 
 /* Number of controller retries. Should be between 0 and 7. */
