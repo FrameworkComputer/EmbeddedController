@@ -176,9 +176,6 @@ static int gpio_command_get(struct host_cmd_handler_args *args)
 	struct ec_response_gpio_get *r = args->response;
 	int i;
 
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
 	i = find_signal_by_name(p->name);
 	if (i == GPIO_COUNT)
 		return EC_RES_ERROR;
