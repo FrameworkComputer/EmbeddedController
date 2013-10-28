@@ -81,7 +81,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"PCH_SOC_OVERRIDE_L",   LM4_GPIO_G, (1<<1), GPIO_OUT_HIGH, NULL},
 	{"PCH_SYS_PWROK",        LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
-	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_OUT_HIGH, NULL},
+	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PP1350_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP3300_DX_EN",         LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
 	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<2), GPIO_OUT_LOW, NULL},
@@ -108,7 +108,8 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_B, 0x80, 3, MODULE_I2C, GPIO_OPEN_DRAIN},	/* I2C5 SDA */
 	{GPIO_D, 0x0f, 2, MODULE_SPI},			/* SPI1 */
 	{GPIO_L, 0x3f, 15, MODULE_LPC},			/* LPC */
-	{GPIO_M, 0x33, 15, MODULE_LPC},			/* LPC */
+	{GPIO_M, 0x31, 15, MODULE_LPC},			/* LPC */
+	{GPIO_M, 0x02, 15, MODULE_LPC, GPIO_OPEN_DRAIN},/* LPC (SCI#) */
 	{GPIO_N, 0x50, 1, MODULE_PWM_LED, GPIO_OPEN_DRAIN}, /* FAN0PWM 3&4 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
