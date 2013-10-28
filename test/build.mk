@@ -9,9 +9,6 @@
 test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #disable: powerdemo
 
-# TODO(victoryang): Fix these tests:
-#    scancode typematic charging
-
 test-list-$(BOARD_bds)+=
 test-list-$(BOARD_daisy)+=kb_scan stress
 test-list-$(BOARD_pit)+=kb_scan stress

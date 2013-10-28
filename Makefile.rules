@@ -39,8 +39,6 @@ cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
 	         -MMD -MF $@.d $< -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $(filter %.c, $^) -o $@
-cmd_qemu = ./util/run_qemu_test --image=build/$(BOARD)/$*/$*.bin test/$*.py \
-	   $(silent)
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
@@ -59,8 +57,7 @@ utils: $(build-utils) $(host-utils)
 
 # On board test binaries
 test-targets=$(foreach t,$(test-list-y),test-$(t))
-qemu-test-targets=$(foreach t,$(test-list-y),qemu-$(t))
-.PHONY: $(qemu-test-targets) $(test-targets)
+.PHONY: $(test-targets)
 
 $(test-targets): test-%:
 	@set -e ; \
@@ -69,11 +66,7 @@ $(test-targets): test-%:
 	        V=$(V) out=$(out)/$* TEST_BUILD=y; \
 	cp $(out)/$*/$*.bin $(out)/test-$*.bin
 
-$(qemu-test-targets): qemu-%: test-%
-	$(call quiet,qemu,TEST   )
-
 tests: $(test-targets)
-qemu-tests: $(qemu-test-targets)
 
 # Emulator test executables
 host-test-targets=$(foreach t,$(test-list-host),host-$(t))
