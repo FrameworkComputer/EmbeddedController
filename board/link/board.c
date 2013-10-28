@@ -19,7 +19,7 @@
 #include "peci.h"
 #include "power_button.h"
 #include "pwm.h"
-#include "pwm_data.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"

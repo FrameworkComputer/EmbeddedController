@@ -22,7 +22,7 @@
 #include "hwtimer.h"
 #include "power_led.h"
 #include "pwm.h"
-#include "pwm_data.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"

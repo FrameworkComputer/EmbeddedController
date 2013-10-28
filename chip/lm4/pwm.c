@@ -9,7 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "pwm.h"
-#include "pwm_data.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "util.h"
 

@@ -19,7 +19,7 @@
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
 #include "pwm.h"
-#include "pwm_data.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "timer.h"
 #include "util.h"

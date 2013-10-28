@@ -15,7 +15,7 @@
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "pwm.h"
-#include "pwm_data.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
