@@ -51,7 +51,7 @@ int board_discharge_on_ac(int enabled);
 
 #ifdef TEST_thermal
 #define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_FAN
+#define CONFIG_FANS 1
 #define CONFIG_FAN_CH_CPU 0
 #define CONFIG_FAN_RPM_MAX 5000
 #define CONFIG_FAN_RPM_MIN 1000
@@ -65,7 +65,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_EXTPOWER_FALCO
-#define CONFIG_FAN
+#define CONFIG_FANS 1
 #define CONFIG_FAN_CH_CPU 0
 #define CONFIG_FAN_RPM_MAX 5000
 #define CONFIG_FAN_RPM_MIN 1000

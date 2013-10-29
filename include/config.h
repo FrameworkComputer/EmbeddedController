@@ -329,8 +329,8 @@
 #undef CONFIG_EXTPOWER_SPRING
 
 /*****************************************************************************/
-/* Support PWM control of cooling fans */
-#undef CONFIG_FAN
+/* Number of cooling fans. Undef if none. */
+#undef CONFIG_FANS
 
 /* Fan channel (not PWM channel) for the CPU fan */
 #undef CONFIG_FAN_CH_CPU

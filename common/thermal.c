@@ -154,7 +154,7 @@ static void thermal_control(void)
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 
-#ifdef CONFIG_FAN
+#ifdef CONFIG_FANS
 	/* Max fan needed is what's needed. */
 	fan_set_percent_needed(fmax);
 #endif
