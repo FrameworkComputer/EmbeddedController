@@ -190,7 +190,7 @@ void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
  *
  * @return the real-time clock seconds value.
  */
-static uint32_t system_get_rtc_sec_subsec(uint32_t *ss_ptr)
+uint32_t system_get_rtc_sec_subsec(uint32_t *ss_ptr)
 {
 	uint32_t rtc, rtc2;
 	uint32_t rtcss, rtcss2;
@@ -289,6 +289,14 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	/* Enable RTC interrupt on match */
 	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIM = 1;
+
+	/*
+	 * Wait for the write to commit.  This ensures that the RTC interrupt
+	 * actually gets enabled.  This is important if we're about to switch
+	 * the system to the 30 kHz oscillator, which might prevent the write
+	 * from comitting.
+	 */
+	wait_for_hibctl_wc();
 }
 
 /**
@@ -297,9 +305,11 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 void system_reset_rtc_alarm(void)
 {
 	/* Disable hibernate interrupts */
+	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIM = 0;
 
 	/* Clear interrupts */
+	wait_for_hibctl_wc();
 	LM4_HIBERNATE_HIBIC = LM4_HIBERNATE_HIBRIS;
 }
 
@@ -344,6 +354,10 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 		flags |= HIBDATA_WAKE_RTC;
 
 		set_hibernate_rtc_match_time(seconds, microseconds);
+
+		/* Enable RTC interrupt on match */
+		wait_for_hibctl_wc();
+		LM4_HIBERNATE_HIBIM = 1;
 	} else {
 		hibctl &= ~LM4_HIBCTL_RTCWEN;
 	}
