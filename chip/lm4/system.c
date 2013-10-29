@@ -513,17 +513,20 @@ const char *system_get_chip_id_string(void)
 
 const char *system_get_raw_chip_name(void)
 {
-	if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e20000) {
+	switch ((LM4_SYSTEM_DID1 & 0xffff0000) >> 16) {
+	case 0x10de:
+		return "tm4e1g31h6zrb";
+	case 0x10e2:
 		return "lm4fsxhh5bb";
-	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e30000) {
+	case 0x10e3:
 		return "lm4fs232h5bb";
-	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e40000) {
+	case 0x10e4:
 		return "lm4fs99h5bb";
-	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10e60000) {
+	case 0x10e6:
 		return "lm4fs1ah5bb";
-	} else if ((LM4_SYSTEM_DID1 & 0xffff0000) == 0x10ea0000) {
+	case 0x10ea:
 		return "lm4fs1gh5bb";
-	} else {
+	default:
 		return system_get_chip_id_string();
 	}
 }
