@@ -129,6 +129,8 @@ enum x86_state x86_chipset_init(void)
 	 */
 	if (system_jumped_to_this_image()) {
 		if ((x86_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
+			/* Disable idle task deep sleep when in S0. */
+			disable_sleep(SLEEP_MASK_AP_RUN);
 			CPRINTF("[%T x86 already in S0]\n");
 			return X86_S0;
 		} else {
