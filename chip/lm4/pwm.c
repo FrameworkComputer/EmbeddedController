@@ -9,7 +9,7 @@
  */
 
 #include "clock.h"
-#include "fan_chip.h"
+#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "pwm.h"
@@ -19,12 +19,12 @@
 
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
-	fan_chip_set_enabled(pwm_channels[ch].channel, enabled);
+	fan_set_enabled(pwm_channels[ch].channel, enabled);
 }
 
 int pwm_get_enabled(enum pwm_channel ch)
 {
-	return fan_chip_get_enabled(pwm_channels[ch].channel);
+	return fan_get_enabled(pwm_channels[ch].channel);
 }
 
 void pwm_set_duty(enum pwm_channel ch, int percent)
@@ -42,12 +42,12 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 	pwm_enable(ch, 1);
 
 	/* Set the duty cycle */
-	fan_chip_set_duty(pwm_channels[ch].channel, percent);
+	fan_set_duty(pwm_channels[ch].channel, percent);
 }
 
 int pwm_get_duty(enum pwm_channel ch)
 {
-	int percent = fan_chip_get_duty(pwm_channels[ch].channel);
+	int percent = fan_get_duty(pwm_channels[ch].channel);
 
 	if (pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW)
 		percent = 100 - percent;
@@ -60,10 +60,10 @@ static void pwm_init(void)
 	int i;
 
 	for (i = 0; i < PWM_CH_COUNT; ++i)
-		fan_chip_channel_setup(pwm_channels[i].channel,
+		fan_channel_setup(pwm_channels[i].channel,
 				       (pwm_channels[i].flags &
 					PWM_CONFIG_HAS_RPM_MODE)
-				       ? FAN_CHIP_USE_RPM_MODE : 0);
+				       ? FAN_USE_RPM_MODE : 0);
 }
 
 /* The chip-specific fan module initializes before this. */

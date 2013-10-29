@@ -351,7 +351,7 @@
 /*
  * Replace the default fan mapping with a board-specific function in board.c:
  *
- *   int pwm_fan_percent_to_rpm(int pct);
+ *   int fan_percent_to_rpm(int pct);
  *
  */
 #undef CONFIG_FAN_RPM_CUSTOM

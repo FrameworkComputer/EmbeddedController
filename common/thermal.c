@@ -156,7 +156,7 @@ static void thermal_control(void)
 
 #ifdef CONFIG_FAN
 	/* Max fan needed is what's needed. */
-	pwm_fan_set_percent_needed(fmax);
+	fan_set_percent_needed(fmax);
 #endif
 }
 

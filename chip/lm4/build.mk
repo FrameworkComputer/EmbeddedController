@@ -15,12 +15,13 @@ chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o
 # Optional chip modules
 chip-$(CONFIG_ADC)+=adc.o chip_temp_sensor.o
 chip-$(CONFIG_EEPROM)+=eeprom.o
-chip-$(CONFIG_FAN)+=fan.o fan_chip.o
+chip-$(CONFIG_FAN)+=fan.o
 chip-$(CONFIG_FLASH)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PECI)+=peci.o
-chip-$(CONFIG_PWM)+=pwm.o fan_chip.o
+# pwm functions are implemented with the fan functions
+chip-$(CONFIG_PWM)+=pwm.o fan.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

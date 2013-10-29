@@ -28,8 +28,7 @@ common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_EXTPOWER_KIRBY)+=extpower_kirby.o
 common-$(CONFIG_EXTPOWER_SNOW)+=extpower_snow.o
 common-$(CONFIG_EXTPOWER_SPRING)+=extpower_spring.o
-# TODO(rspangler): Rename to CONFIG_PWM_FAN.
-common-$(CONFIG_FAN)+=pwm_fan.o
+common-$(CONFIG_FAN)+=fan.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FMAP)+=fmap.o
 common-$(CONFIG_I2C)+=i2c.o
