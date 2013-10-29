@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-/* PWM control module for Chromebook fans */
+/* Chrome OS fan control */
 
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "fan.h"
+#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -19,111 +20,18 @@
 #include "timer.h"
 #include "util.h"
 
-/*****************************************************************************/
-/* Chip-specific stuff */
-
-/* Maximum RPM for fan controller */
-#define MAX_RPM 0x1fff
-/* Max PWM for fan controller */
-#define MAX_PWM 0x1ff
-/*
- * Scaling factor for requested/actual RPM for CPU fan.  We need this because
- * the fan controller on Blizzard filters tach pulses that are less than 64
- * 15625Hz ticks apart, which works out to ~7000rpm on an unscaled fan.  By
- * telling the controller we actually have twice as many edges per revolution,
- * the controller can handle fans that actually go twice as fast.  See
- * crosbug.com/p/7718.
- */
-#define CPU_FAN_SCALE 2
-
-static int fan_get_enabled(void)
-{
-	return pwm_get_enabled(PWM_CH_FAN);
-}
-
-static void fan_set_enabled(int enable)
-{
-	pwm_enable(PWM_CH_FAN, enable);
-
-#ifdef CONFIG_FAN_EN_GPIO
-	gpio_set_level(CONFIG_FAN_EN_GPIO, enable);
-#endif /* CONFIG_FAN_EN_GPIO */
-}
-
-static int fan_get_rpm_mode(void)
-{
-	return (LM4_FAN_FANCH(CONFIG_FAN_CH_CPU) & 0x0001) ? 0 : 1;
-}
-
-static void fan_set_rpm_mode(int rpm_mode)
-{
-	int was_enabled = fan_get_enabled();
-	int was_rpm = fan_get_rpm_mode();
-
-	if (!was_rpm && rpm_mode) {
-		/* Enable RPM control */
-		fan_set_enabled(0);
-		LM4_FAN_FANCH(CONFIG_FAN_CH_CPU) &= ~0x0001;
-		fan_set_enabled(was_enabled);
-	} else if (was_rpm && !rpm_mode) {
-		/* Disable RPM mode */
-		fan_set_enabled(0);
-		LM4_FAN_FANCH(CONFIG_FAN_CH_CPU) |= 0x0001;
-		fan_set_enabled(was_enabled);
-	}
-}
-
-static int fan_get_rpm_actual(void)
-{
-	return (LM4_FAN_FANCST(CONFIG_FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
-}
-
-static int fan_get_rpm_target(void)
-{
-	return (LM4_FAN_FANCMD(CONFIG_FAN_CH_CPU) & MAX_RPM) * CPU_FAN_SCALE;
-}
-
-static void fan_set_rpm_target(int rpm)
-{
-	/* Apply fan scaling */
-	if (rpm > 0)
-		rpm /= CPU_FAN_SCALE;
-
-	/* Treat out-of-range requests as requests for maximum fan speed */
-	if (rpm < 0 || rpm > MAX_RPM)
-		rpm = MAX_RPM;
-
-	LM4_FAN_FANCMD(CONFIG_FAN_CH_CPU) = rpm;
-}
-
-static int fan_get_status(void)
-{
-	return (LM4_FAN_FANSTS >> (2 * CONFIG_FAN_CH_CPU)) & 0x03;
-}
-static const char * const human_status[] = {
-	"not spinning", "changing", "locked", "frustrated"
-};
-
-/**
- * Return non-zero if fan is enabled but stalled.
- */
-static int fan_is_stalled(void)
-{
-	/* Must be enabled with non-zero target to stall */
-	if (!fan_get_enabled() || fan_get_rpm_target() == 0)
-		return 0;
-
-	/* Check for stall condition */
-	return (((LM4_FAN_FANSTS >> (2 * CONFIG_FAN_CH_CPU)) & 0x03) == 0) ?
-		1 : 0;
-}
-
-/*****************************************************************************/
-/* Control functions */
-
 /* True if we're listening to the thermal control task. False if we're setting
  * things manually. */
 static int thermal_control_enabled;
+
+static void fan_set_enabled(int enable)
+{
+	fan_chip_set_enabled(CONFIG_FAN_CH_CPU, enable);
+
+#ifdef CONFIG_FAN_EN_GPIO
+	gpio_set_level(CONFIG_FAN_EN_GPIO, enable);
+#endif	/* CONFIG_FAN_EN_GPIO */
+}
 
 static void fan_set_thermal_control_enabled(int enable)
 {
@@ -131,7 +39,8 @@ static void fan_set_thermal_control_enabled(int enable)
 
 	/* If controlling the fan, need it in RPM-control mode */
 	if (enable)
-		fan_set_rpm_mode(1);
+		fan_chip_channel_setup(CONFIG_FAN_CH_CPU,
+			FAN_CHIP_USE_RPM_MODE);
 }
 
 /* The thermal task will only call this function with pct in [0,100]. */
@@ -144,13 +53,13 @@ test_mockable void pwm_fan_set_percent_needed(int pct)
 
 	rpm = pwm_fan_percent_to_rpm(pct);
 
-	fan_set_rpm_target(rpm);
+	fan_chip_set_rpm_target(CONFIG_FAN_CH_CPU, rpm);
 }
 
 static void fan_set_duty_cycle(int percent)
 {
 	/* Move the fan to manual control */
-	fan_set_rpm_mode(0);
+	fan_chip_set_rpm_mode(CONFIG_FAN_CH_CPU, 0);
 
 	/* Always enable the fan */
 	fan_set_enabled(1);
@@ -159,12 +68,7 @@ static void fan_set_duty_cycle(int percent)
 	fan_set_thermal_control_enabled(0);
 
 	/* Set the duty cycle */
-	pwm_set_duty(PWM_CH_FAN, percent);
-}
-
-static int fan_get_duty_cycle(void)
-{
-	return pwm_get_duty(PWM_CH_FAN);
+	fan_chip_set_duty(CONFIG_FAN_CH_CPU, percent);
 }
 
 /*****************************************************************************/
@@ -180,18 +84,26 @@ DECLARE_CONSOLE_COMMAND(fanauto, cc_fanauto,
 			"Enable thermal fan control",
 			NULL);
 
-
 static int cc_faninfo(int argc, char **argv)
 {
+	static const char * const human_status[] = {
+		"not spinning", "changing", "locked", "frustrated"
+	};
 	int tmp;
-	ccprintf("Actual: %4d rpm\n", fan_get_rpm_actual());
-	ccprintf("Target: %4d rpm\n", fan_get_rpm_target());
-	ccprintf("Duty:   %d%%\n", fan_get_duty_cycle());
-	tmp = fan_get_status();
+
+	ccprintf("Actual: %4d rpm\n",
+		 fan_chip_get_rpm_actual(CONFIG_FAN_CH_CPU));
+	ccprintf("Target: %4d rpm\n",
+		 fan_chip_get_rpm_target(CONFIG_FAN_CH_CPU));
+	ccprintf("Duty:   %d%%\n",
+		 fan_chip_get_duty(CONFIG_FAN_CH_CPU));
+	tmp = fan_chip_get_status(CONFIG_FAN_CH_CPU);
 	ccprintf("Status: %d (%s)\n", tmp, human_status[tmp]);
-	ccprintf("Mode:   %s\n", fan_get_rpm_mode() ? "rpm" : "duty");
+	ccprintf("Mode:   %s\n",
+		 fan_chip_get_rpm_mode(CONFIG_FAN_CH_CPU) ? "rpm" : "duty");
 	ccprintf("Auto:   %s\n", thermal_control_enabled ? "yes" : "no");
-	ccprintf("Enable: %s\n", fan_get_enabled() ? "yes" : "no");
+	ccprintf("Enable: %s\n",
+		 fan_chip_get_enabled(CONFIG_FAN_CH_CPU) ? "yes" : "no");
 #ifdef CONFIG_FAN_PGOOD_GPIO
 	ccprintf("Power:  %s\n",
 #ifdef CONFIG_FAN_EN_GPIO
@@ -229,7 +141,7 @@ static int cc_fanset(int argc, char **argv)
 	}
 
 	/* Move the fan to automatic control */
-	fan_set_rpm_mode(1);
+	fan_chip_set_rpm_mode(CONFIG_FAN_CH_CPU, 1);
 
 	/* Always enable the fan */
 	fan_set_enabled(1);
@@ -237,7 +149,7 @@ static int cc_fanset(int argc, char **argv)
 	/* Disable thermal engine automatic fan control. */
 	fan_set_thermal_control_enabled(0);
 
-	fan_set_rpm_target(rpm);
+	fan_chip_set_rpm_target(CONFIG_FAN_CH_CPU, rpm);
 
 	ccprintf("Setting fan rpm target to %d\n", rpm);
 
@@ -277,7 +189,7 @@ static int hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pwm_get_fan_rpm *r = args->response;
 
-	r->rpm = fan_get_rpm_target();
+	r->rpm = fan_chip_get_rpm_target(CONFIG_FAN_CH_CPU);
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -291,8 +203,8 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_set_fan_target_rpm *p = args->params;
 
 	fan_set_thermal_control_enabled(0);
-	fan_set_rpm_mode(1);
-	fan_set_rpm_target(p->rpm);
+	fan_chip_set_rpm_mode(CONFIG_FAN_CH_CPU, 1);
+	fan_chip_set_rpm_target(CONFIG_FAN_CH_CPU, p->rpm);
 
 	return EC_RES_SUCCESS;
 }
@@ -346,11 +258,11 @@ static void pwm_fan_init(void)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
 		/* Restore previous state. */
-		fan_set_enabled(prev->fan_en);
-		fan_set_rpm_target(prev->fan_rpm);
+		fan_chip_set_enabled(CONFIG_FAN_CH_CPU, prev->fan_en);
+		fan_chip_set_rpm_target(CONFIG_FAN_CH_CPU, prev->fan_rpm);
 	} else {
 		/* Set initial fan speed to maximum */
-		pwm_fan_set_percent_needed(100);
+		fan_chip_set_duty(CONFIG_FAN_CH_CPU, 100);
 	}
 
 	fan_set_thermal_control_enabled(1);
@@ -366,7 +278,7 @@ static void pwm_fan_second(void)
 {
 	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
 
-	if (fan_is_stalled()) {
+	if (fan_chip_is_stalled(CONFIG_FAN_CH_CPU)) {
 		mapped[0] = EC_FAN_SPEED_STALLED;
 		/*
 		 * Issue warning.  As we have thermal shutdown
@@ -375,7 +287,7 @@ static void pwm_fan_second(void)
 		host_set_single_event(EC_HOST_EVENT_THERMAL);
 		cprintf(CC_PWM, "[%T Fan stalled!]\n");
 	} else {
-		mapped[0] = fan_get_rpm_actual();
+		mapped[0] = fan_chip_get_rpm_actual(CONFIG_FAN_CH_CPU);
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, pwm_fan_second, HOOK_PRIO_DEFAULT);
@@ -384,8 +296,8 @@ static void pwm_fan_preserve_state(void)
 {
 	struct pwm_fan_state state;
 
-	state.fan_en = fan_get_enabled();
-	state.fan_rpm = fan_get_rpm_target();
+	state.fan_en = fan_chip_get_enabled(CONFIG_FAN_CH_CPU);
+	state.fan_rpm = fan_chip_get_rpm_target(CONFIG_FAN_CH_CPU);
 
 	system_add_jump_tag(PWMFAN_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(state), &state);
@@ -394,7 +306,7 @@ DECLARE_HOOK(HOOK_SYSJUMP, pwm_fan_preserve_state, HOOK_PRIO_DEFAULT);
 
 static void pwm_fan_resume(void)
 {
-	fan_set_enabled(1);
+	fan_chip_set_enabled(CONFIG_FAN_CH_CPU, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
 
@@ -405,8 +317,8 @@ static void pwm_fan_S3_S5(void)
 	/* For now don't do anything with it. We'll have to turn it on again if
 	 * we need active cooling during heavy battery charging or something.
 	 */
-	fan_set_rpm_target(0);
-	fan_set_enabled(0);			/* crosbug.com/p/8097 */
+	fan_chip_set_rpm_target(CONFIG_FAN_CH_CPU, 0);
+	fan_chip_set_enabled(CONFIG_FAN_CH_CPU, 0); /* crosbug.com/p/8097 */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);

@@ -53,8 +53,8 @@ include util/lock/build.mk
 
 includes+=$(includes-y)
 
-objs_from_dir=$(foreach obj, $($(2)-y), \
-	        $(out)/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj)))
+objs_from_dir=$(sort $(foreach obj, $($(2)-y), \
+	        $(out)/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj))))
 
 # Get all sources to build
 all-y=$(call objs_from_dir,core/$(CORE),core)
