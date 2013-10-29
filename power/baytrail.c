@@ -124,7 +124,12 @@ enum x86_state x86_chipset_init(void)
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);
 			gpio_set_level(GPIO_PP1350_EN, 0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
-			gpio_set_level(GPIO_PP5000_EN, 0);
+			/*
+			 * TODO(crosbug.com/p/23673): turn off PP5000 after
+			 * Rev.1 hardware is obsolete:
+			 *
+			 * gpio_set_level(GPIO_PP5000_EN, 0);
+			 */
 			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 			gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 			wireless_enable(0);
@@ -180,9 +185,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 		break;
 
 	case X86_G3S5:
-		/* TODO(rspangler): temporary hack on Rev.1 boards */
-		gpio_set_level(GPIO_PP5000_EN, 1);
-
 		/*
 		 * Wait 10ms after +3VALW good, since that powers VccDSW and
 		 * VccSUS.
@@ -246,7 +248,12 @@ enum x86_state x86_handle_state(enum x86_state state)
 			chipset_force_shutdown();
 			wireless_enable(0);
 			gpio_set_level(GPIO_PP3300_DX_EN, 0);
-			/* TODO(rspangler) turn off PP5000 after Rev.1 */
+			/*
+			 * TODO(crosbug.com/p/23673): turn off PP5000 after
+			 * Rev.1 hardware is obsolete:
+			 *
+			 * gpio_set_level(GPIO_PP5000_EN, 0);
+			 */
 			gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 			return X86_S3;
 		}
@@ -299,7 +306,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Turn off power rails */
 		gpio_set_level(GPIO_PP3300_DX_EN, 0);
-		/* TODO(rspangler: turn off PP5000 after rev.1 */
+		/* TODO(crosbug.com/p/23673): turn off PP5000 after rev.1 */
+		/* gpio_set_level(GPIO_PP5000_EN, 0); */
 		return X86_S3;
 
 	case X86_S3S5:
@@ -319,9 +327,6 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Assert RSMRST# */
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 		gpio_set_level(GPIO_SUSP_VR_EN, 0);
-
-		/* TODO(rspangler): temporary hack on rev.1 boards */
-		gpio_set_level(GPIO_PP5000_EN, 0);
 
 		return X86_G3;
 	}
