@@ -31,17 +31,27 @@ int fan_percent_to_rpm(int pct);
  * These functions require chip-specific implementations.
  */
 
+/* Enable/Disable the fan controller */
 void fan_set_enabled(int ch, int enabled);
 int fan_get_enabled(int ch);
+
+/* Fixed pwm duty cycle (0-100%) */
 void fan_set_duty(int ch, int percent);
 int fan_get_duty(int ch);
+
+/* Enable/Disable automatic RPM control using tach feedback */
 void fan_set_rpm_mode(int ch, int rpm_mode);
 int fan_get_rpm_mode(int ch);
+
+/* Set the target for the automatic RPM control */
 void fan_set_rpm_target(int ch, int rpm);
 int fan_get_rpm_actual(int ch);
 int fan_get_rpm_target(int ch);
+
+/* Is the fan stalled when it shouldn't be? */
 int fan_is_stalled(int ch);
 
+/* How is the automatic RPM control doing? */
 enum fan_status {
 	FAN_STATUS_STOPPED = 0,
 	FAN_STATUS_CHANGING = 1,
@@ -50,8 +60,10 @@ enum fan_status {
 };
 enum fan_status fan_get_status(int ch);
 
-/* Maintain target RPM using tach input */
+/* Flag to enable automatic RPM control using tach input */
 #define FAN_USE_RPM_MODE (1 << 0)
+
+/* Initialize the HW according to the desired flags */
 void fan_channel_setup(int ch, unsigned int flags);
 
 #endif  /* __CROS_EC_FAN_H */
