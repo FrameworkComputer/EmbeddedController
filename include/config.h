@@ -332,27 +332,9 @@
 /* Number of cooling fans. Undef if none. */
 #undef CONFIG_FANS
 
-/* Fan channel (not PWM channel) for the CPU fan */
-#undef CONFIG_FAN_CH_CPU
-
-/* Name of active high GPIO to control power to the cooling fan */
-#undef CONFIG_FAN_EN_GPIO
-
 /*
- * GPIO which indicates power-good on the fan power rail.  If defined, the
- * faninfo console command will display the fan power state.
- */
-#undef CONFIG_FAN_PGOOD_GPIO
-
-/* Fan speeds corresponding to 1% and 100% cooling (0% == off). */
-#undef CONFIG_FAN_RPM_MIN
-#undef CONFIG_FAN_RPM_MAX
-
-/*
- * Replace the default fan mapping with a board-specific function in board.c:
- *
- *   int fan_percent_to_rpm(int pct);
- *
+ * Replace the default fan_percent_to_rpm() function with a board-specific
+ * implementation in board.c
  */
 #undef CONFIG_FAN_RPM_CUSTOM
 

@@ -35,10 +35,7 @@
 #define   CONFIG_CHARGER_SENSE_RESISTOR 10
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define   CONFIG_CHARGER_INPUT_CURRENT 2000
-#define CONFIG_FANS 1
-#define CONFIG_FAN_CH_CPU 2
-#define CONFIG_FAN_RPM_MIN 1000
-#define CONFIG_FAN_RPM_MAX 5050
+#define CONFIG_FANS 1				/* HEY */
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_SWITCH_DEDICATED_RECOVERY
@@ -180,7 +177,6 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 
 	/* Number of PWM channels */

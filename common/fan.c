@@ -14,6 +14,10 @@
 #include "system.h"
 #include "util.h"
 
+/* HEY - this is temporary! (crosbug.com/p/23530) */
+#define CONFIG_FAN_CH_CPU (fans[0].ch)
+#define HEY0 0
+
 /* True if we're listening to the thermal control task. False if we're setting
  * things manually. */
 static int thermal_control_enabled;
@@ -26,13 +30,15 @@ static int thermal_control_enabled;
 */
 int fan_percent_to_rpm(int pct)
 {
-	int rpm;
+	int rpm, max, min;
 
-	if (!pct)
+	if (!pct) {
 		rpm = 0;
-	else
-		rpm = ((pct - 1) * CONFIG_FAN_RPM_MAX +
-		       (100 - pct) * CONFIG_FAN_RPM_MIN) / 99;
+	} else {
+		min = fans[HEY0].rpm_min;
+		max = fans[HEY0].rpm_max;
+		rpm = ((pct - 1) * max + (100 - pct) * min) / 99;
+	}
 
 	return rpm;
 }
@@ -55,9 +61,8 @@ static void set_enabled(int enable)
 {
 	fan_set_enabled(CONFIG_FAN_CH_CPU, enable);
 
-#ifdef CONFIG_FAN_EN_GPIO
-	gpio_set_level(CONFIG_FAN_EN_GPIO, enable);
-#endif	/* CONFIG_FAN_EN_GPIO */
+	if (fans[HEY0].enable_gpio >= 0)
+		gpio_set_level(fans[HEY0].enable_gpio, enable);
 }
 
 static void set_thermal_control_enabled(int enable)
@@ -102,7 +107,7 @@ static int cc_faninfo(int argc, char **argv)
 	static const char * const human_status[] = {
 		"not spinning", "changing", "locked", "frustrated"
 	};
-	int tmp;
+	int tmp, is_pgood;
 
 	ccprintf("Actual: %4d rpm\n",
 		 fan_get_rpm_actual(CONFIG_FAN_CH_CPU));
@@ -117,14 +122,18 @@ static int cc_faninfo(int argc, char **argv)
 	ccprintf("Auto:   %s\n", thermal_control_enabled ? "yes" : "no");
 	ccprintf("Enable: %s\n",
 		 fan_get_enabled(CONFIG_FAN_CH_CPU) ? "yes" : "no");
-#ifdef CONFIG_FAN_PGOOD_GPIO
-	ccprintf("Power:  %s\n",
-#ifdef CONFIG_FAN_EN_GPIO
-		 gpio_get_level(CONFIG_FAN_EN_GPIO) &&
-#endif
-		 gpio_get_level(CONFIG_FAN_PGOOD_GPIO) ? "yes" : "no");
-#endif
 
+	/* Assume we don't know */
+	is_pgood = -1;
+	/* If we have an enable output, see if it's on or off. */
+	if (fans[HEY0].enable_gpio >= 0)
+		is_pgood = gpio_get_level(fans[HEY0].enable_gpio);
+	/* If we have a pgood input, it overrides any enable output. */
+	if (fans[HEY0].pgood_gpio >= 0)
+		is_pgood = gpio_get_level(fans[HEY0].pgood_gpio);
+	/* If we think we know, say so */
+	if (is_pgood >= 0)
+		ccprintf("Power:  %s\n", is_pgood ? "yes" : "no");
 
 	return EC_SUCCESS;
 }
@@ -266,6 +275,9 @@ static void pwm_fan_init(void)
 	int i;
 
 	gpio_config_module(MODULE_PWM_FAN, 1);
+
+	for (i = 0; i < CONFIG_FANS; i++)
+		fan_channel_setup(fans[i].ch, fans[i].flags);
 
 	prev = (const struct pwm_fan_state *)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);

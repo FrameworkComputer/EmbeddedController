@@ -23,16 +23,11 @@
 #define CONFIG_CMD_GSV
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_FANS 1
-#define CONFIG_FAN_CH_CPU 2
-#define CONFIG_FAN_PGOOD_GPIO GPIO_PP5000_PGOOD
-#define CONFIG_FAN_RPM_MIN 1000
-#define CONFIG_FAN_RPM_MAX 5050
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
-#define CONFIG_PWM
 #define CONFIG_SWITCH_DEDICATED_RECOVERY
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
@@ -161,18 +156,10 @@ enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
 
-	/* HEY: Be prepared to read this (ICMNT). */
 	/* Charger current in mA. */
 	ADC_CH_CHARGER_CURRENT,
 
 	ADC_CH_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_FAN,
-
-	/* Number of PWM channels */
-	PWM_CH_COUNT
 };
 
 enum temp_sensor_id {

@@ -50,10 +50,4 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-enum pwm_channel {
-	PWM_CH_FAN,
-
-	PWM_CH_COUNT
-};
-
 #endif /* __BOARD_H */

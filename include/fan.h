@@ -8,13 +8,33 @@
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
 
+/* Characteristic of each physical fan */
+struct fan_t {
+	unsigned int flags;
+	int rpm_min;
+	int rpm_max;
+	/* Hardware channel number (the meaning is chip-specific) */
+	int ch;
+	/* Active-high power_good input GPIO, or -1 if none */
+	int pgood_gpio;
+	/* Active-high power_enable output GPIO, or -1 if none */
+	int enable_gpio;
+};
+
+/* Values for the flags field */
+#define FAN_USE_RPM_MODE (1 << 0)
+
+/* The list of fans is instantiated in board.c. */
+extern const struct fan_t fans[];
+
+
 /**
  * Set the amount of active cooling needed. The thermal control task will call
  * this frequently, and the fan control logic will attempt to provide it.
  *
  * @param pct   Percentage of cooling effort needed (0 - 100)
  */
-void fan_set_percent_needed(int pct);
+void fan_set_percent_needed(int pct);		/* HEY: need fan arg */
 
 /**
  * This function translates the percentage of cooling needed into a target RPM.
@@ -24,7 +44,7 @@ void fan_set_percent_needed(int pct);
  * @param pct   Percentage of cooling effort needed (always in [0,100])
  * Return       Target RPM for fan
  */
-int fan_percent_to_rpm(int pct);
+int fan_percent_to_rpm(int pct);		/* HEY: need fan arg */
 
 
 /**

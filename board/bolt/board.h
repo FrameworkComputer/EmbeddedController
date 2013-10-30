@@ -37,10 +37,6 @@
 /* External Charger maximum current. */
 #define   CONFIG_CHARGER_INPUT_CURRENT 5000
 #define CONFIG_FANS 1
-#define CONFIG_FAN_CH_CPU 2
-#define CONFIG_FAN_PGOOD_GPIO  GPIO_PP5000_PGOOD
-#define CONFIG_FAN_RPM_MIN 1500
-#define CONFIG_FAN_RPM_MAX 9300
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_SWITCH_DEDICATED_RECOVERY
@@ -176,7 +172,6 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 
 	/* Number of PWM channels */

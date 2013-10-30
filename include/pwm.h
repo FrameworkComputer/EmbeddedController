@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_PWM_H
 #define __CROS_EC_PWM_H
 
+/* The values are defined in board.h */
+enum pwm_channel;
+
 /**
  * Enable/disable a PWM channel.
  */

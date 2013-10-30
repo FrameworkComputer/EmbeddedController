@@ -6,6 +6,18 @@
 /* Mocked fan implementation for tests */
 
 #include "fan.h"
+#include "util.h"
+
+const struct fan_t fans[] = {
+	{.flags = FAN_USE_RPM_MODE,
+	 .rpm_min = 1000,
+	 .rpm_max = 5000,
+	 .ch = 0,
+	 .pgood_gpio = -1,
+	 .enable_gpio = -1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
 
 static int mock_enabled;
 void fan_set_enabled(int ch, int enabled)

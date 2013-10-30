@@ -22,8 +22,6 @@
 #include "lid_switch.h"
 #include "peci.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
 #include "temp_sensor.h"
@@ -190,11 +188,17 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	{CONFIG_FAN_CH_CPU, PWM_CONFIG_HAS_RPM_MODE},
+/* Physical fans. These are logically separate from pwm_channels. */
+const struct fan_t fans[] = {
+	{.flags = FAN_USE_RPM_MODE,
+	 .rpm_min = 1000,
+	 .rpm_max = 5050,
+	 .ch = 2,
+	 .pgood_gpio = GPIO_PP5000_PGOOD,
+	 .enable_gpio = -1,
+	},
 };
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
