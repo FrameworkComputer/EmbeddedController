@@ -282,13 +282,9 @@ void __schedule(int desched, int resched)
 {
 	register int p0 asm("r0") = desched;
 	register int p1 asm("r1") = resched;
-	/*
-	 * TODO: remove hardcoded opcode.  SWI is not compiled properly for
-	 * ARMv7-M on our current chroot toolchain.
-	 */
-	asm(".hword 0xdf00 @swi 0"::"r"(p0),"r"(p1));
-}
 
+	asm("svc 0"::"r"(p0),"r"(p1));
+}
 
 #ifdef CONFIG_TASK_PROFILING
 void task_start_irq_handler(void *excep_return)
