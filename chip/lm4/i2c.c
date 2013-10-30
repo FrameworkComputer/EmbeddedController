@@ -269,7 +269,7 @@ static void i2c_freq_changed(void)
 		LM4_I2C_MTPR(i2c_ports[i].port) = tpr;
 	}
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
 
 static void i2c_init(void)
 {

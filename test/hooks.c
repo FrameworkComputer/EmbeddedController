@@ -40,6 +40,7 @@ static void tick2_hook(void)
 	tick2_hook_count++;
 	tick_count_seen_by_tick2 = tick_hook_count;
 }
+/* tick2_hook() prio means it should be called after tick_hook() */
 DECLARE_HOOK(HOOK_TICK, tick2_hook, HOOK_PRIO_DEFAULT+1);
 
 static void second_hook(void)

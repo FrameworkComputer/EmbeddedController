@@ -113,7 +113,7 @@ static void peci_freq_changed(void)
 		       (PECI_RETRY_COUNT << 12) |
 		       (PECI_ERROR_BYPASS << 11);
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT - 1);
+DECLARE_HOOK(HOOK_FREQ_CHANGE, peci_freq_changed, HOOK_PRIO_DEFAULT);
 
 static void peci_init(void)
 {

@@ -373,7 +373,7 @@ static void pwm_fan_init(void)
 	for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++)
 		mapped[i] = EC_FAN_SPEED_NOT_PRESENT;
 }
-DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT);
 
 static void pwm_fan_second(void)
 {

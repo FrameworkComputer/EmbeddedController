@@ -166,7 +166,7 @@ static void thermal_control(void)
 }
 
 /* Wait until after the sensors have been read */
-DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR + 1);
+DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 /*****************************************************************************/
 /* Console commands */
