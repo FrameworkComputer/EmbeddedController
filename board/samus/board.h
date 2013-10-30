@@ -34,8 +34,7 @@
 /* 10mOhm sense resitors. */
 #define   CONFIG_CHARGER_SENSE_RESISTOR 10
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
-/* HEY: what value for External Charger maximum current? */
-#define   CONFIG_CHARGER_INPUT_CURRENT 5000
+#define   CONFIG_CHARGER_INPUT_CURRENT 2000
 #define CONFIG_FAN
 #define CONFIG_FAN_CH_CPU 2
 #define CONFIG_FAN_RPM_MIN 1000
