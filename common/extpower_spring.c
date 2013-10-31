@@ -19,7 +19,10 @@
 #include "keyboard_mkbp.h"
 #include "pmu_tpschrome.h"
 #include "pwm.h"
-/* TODO(rspangler): files in common should not use chip registers directly */
+/*
+ * TODO(crosbug.com/p/23745): Refactor low-level STM32 ADC code out of this
+ * module.  Files in common should not use chip registers directly.
+ */
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -215,10 +218,10 @@ static int apple_charger_current(void)
 	int type = 0;
 	int data[ADC_CH_COUNT];
 
-	/* TODO(victoryang): Handle potential race condition. */
+	/* TODO(crosbug.com/p/23743): Handle potential race condition. */
 	tsu6721_disable_interrupts();
 	tsu6721_mux(TSU6721_MUX_USB);
-	/* Wait 20ms for signal to stablize */
+	/* Wait for signal to stablize */
 	msleep(DELAY_USB_DP_DN_MS);
 	adc_read_all_channels(data);
 	vp = data[ADC_CH_USB_DP_SNS];
@@ -433,8 +436,8 @@ static void usb_detect_overcurrent(int dev_type)
 		power_removed_time[idx] = get_time();
 		power_removed_type[idx] = current_dev_type;
 		/*
-		 * TODO(victoryang): Record the maximum current seen during
-		 * retry?
+		 * TODO(crosbug.com/p/23744): Record the maximum current seen
+		 * during retry?
 		 */
 		power_removed_pwm_duty[idx] = current_pwm_duty;
 	} else if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
@@ -608,15 +611,18 @@ void extpower_charge_init(void)
 	set_pwm_duty_cycle(I_LIMIT_500MA);
 
 	/*
-	 * Somehow TSU6721 comes up slowly. Let's wait for a moment before
-	 * accessing it.
-	 * TODO(victoryang): Investigate slow init issue.
+	 * TODO(crosbug.com/p/23742): For some reason the TSU6721 comes up very
+	 * slowly.  Wait for a while before accessing it.  This delay seems to
+	 * be long enough.  Once we understand the slow start, it may be
+	 * possible to remove this delay.
 	 */
 	msleep(500);
 
 	tsu6721_reset();
 	gpio_enable_interrupt(GPIO_USB_CHG_INT);
-	msleep(100); /* TSU6721 doesn't work properly right away. */
+
+	/* TODO(crosbug.com/p/23742): Need delay after reset as well */
+	msleep(100);
 
 	extpower_charge_update(1);
 }
@@ -850,11 +856,9 @@ static void usb_charger_redetect(void)
 DECLARE_HOOK(HOOK_SECOND, usb_charger_redetect, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
-/*
- * Console commands for debugging.
- * TODO(victoryang): Gate with CONFIG flag after charging control is done.
- */
+/* Console commands for debugging */
 
+#ifdef CONFIG_CMD_ILIM
 static int command_ilim(int argc, char **argv)
 {
 	char *e;
@@ -886,7 +890,9 @@ DECLARE_CONSOLE_COMMAND(ilim, command_ilim,
 		"[percent | on | off]",
 		"Set or show ILIM duty cycle/GPIO value",
 		NULL);
+#endif /* CONFIG_CMD_ILIM */
 
+#ifdef CONFIG_CMD_BATDEBUG
 static int command_batdebug(int argc, char **argv)
 {
 	int val;
@@ -908,6 +914,7 @@ static int command_batdebug(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(batdebug, command_batdebug,
 			NULL, NULL, NULL);
+#endif /* CONFIG_CMD_BATDEBUG */
 
 /*****************************************************************************/
 /* Host commands */
