@@ -61,26 +61,14 @@ DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
 		     switch_command_enable_backlight,
 		     EC_VER_MASK(0));
 
-/**
- * Hook to turn backlight PWM mode on if it turns off.
- */
-static void backlight_pwm_mode_hook(void)
+void backlight_interrupt(enum gpio_signal signal)
 {
-	int reg;
-
-	/* Only check if the system is powered. */
-	if (!chipset_in_state(CHIPSET_STATE_ON))
-		return;
-
-	/* Read current command reg to see if it is on. */
-	i2c_read8(I2C_PORT_BACKLIGHT, I2C_ADDR_BACKLIGHT,
-		  LP8555_REG_COMMAND, &reg);
-
-	/* Turn it on if needed. */
-	if (!(reg & LP8555_REG_COMMAND_ON))
-		lp8555_enable_pwm_mode();
+	/*
+	 * PCH indicates it is turning on backlight so we should
+	 * attempt to put the backlight controller into PWM mode.
+	 */
+	lp8555_enable_pwm_mode();
 }
-DECLARE_HOOK(HOOK_SECOND, backlight_pwm_mode_hook, HOOK_PRIO_LAST);
 
 /**
  * Update backlight state.
@@ -100,6 +88,7 @@ DECLARE_HOOK(HOOK_LID_CHANGE, update_backlight, HOOK_PRIO_DEFAULT);
  */
 static void backlight_init(void)
 {
+	gpio_enable_interrupt(GPIO_PCH_BL_EN);
 	update_backlight();
 }
 DECLARE_HOOK(HOOK_INIT, backlight_init, HOOK_PRIO_DEFAULT);

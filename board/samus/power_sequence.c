@@ -138,6 +138,7 @@ enum x86_state x86_chipset_init(void)
 			gpio_set_level(GPIO_PP5000_USB_EN, 0);
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
+			gpio_set_level(GPIO_PP3300_DSW_EN, 0);
 			wireless_enable(0);
 		}
 	}
@@ -191,6 +192,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		break;
 
 	case X86_G3S5:
+		/* Enable 3.3V DSW */
+		gpio_set_level(GPIO_PP3300_DSW_EN, 1);
+
 		/*
 		 * Wait 10ms after +3VALW good, since that powers VccDSW and
 		 * VccSUS.
@@ -211,7 +215,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 			}
 		}
 
-		/* Turn on 3.3V DSW rail. */
+		/* Turn on 3.3V DSW gated rail for core regulator */
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
 
 		/* Assert DPWROK */
@@ -361,6 +365,8 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_PP1050_EN, 0);
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 		gpio_set_level(GPIO_PP5000_EN, 0);
+		/* Disable 3.3V DSW */
+		gpio_set_level(GPIO_PP3300_DSW_EN, 0);
 		return X86_G3;
 	}
 

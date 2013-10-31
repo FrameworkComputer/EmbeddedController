@@ -18,7 +18,6 @@
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHIPSET_X86
 #define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_EXTPOWER_GPIO
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_DRIVER_DS2413
@@ -87,6 +86,7 @@ enum gpio_signal {
 	GPIO_VCORE_PGOOD,          /* Power good on core VR */
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
 	GPIO_WP_L,                 /* Write protect input */
+	GPIO_PCH_BL_EN,            /* PCH backlight input */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
@@ -104,7 +104,8 @@ enum gpio_signal {
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
 	GPIO_PP1200_EN,            /* Enable 1.20V supply */
-	GPIO_PP3300_DSW_GATED_EN,  /* Enable DSW rails */
+	GPIO_PP3300_DSW_EN,        /* Enable 3.3V DSW rail */
+	GPIO_PP3300_DSW_GATED_EN,  /* Enable 3.3V Gated DSW and core VDD */
 	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
 	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
 	GPIO_PP1050_EN,            /* Enable 1.05V regulator */
@@ -130,6 +131,7 @@ enum gpio_signal {
 	GPIO_PCH_SYS_RST_L,        /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_TOUCHSCREEN_RESET_L,  /* Reset touch screen */
+	GPIO_PCH_ACOK,             /* AC present signal buffered to PCH */
 #ifndef HEY_USE_BUILTIN_CLKRUN
 	GPIO_LPC_CLKRUN_L,         /* Dunno. Probably important, though. */
 #endif

@@ -52,7 +52,7 @@ const struct gpio_info gpio_list[] = {
 	 x86_interrupt},
 	{"PP1200_PGOOD",         LM4_GPIO_H, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
-	{"PP1800_PGOOD",         LM4_GPIO_L, (1<<7), GPIO_PULL_UP|GPIO_INT_BOTH,
+	{"PP1800_PGOOD",         LM4_GPIO_L, (1<<7), GPIO_INT_BOTH,
 	 x86_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
 	 x86_interrupt},
@@ -60,6 +60,8 @@ const struct gpio_info gpio_list[] = {
 	 switch_interrupt},
 	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
+	{"PCH_BL_EN",            LM4_GPIO_M, (1<<3), GPIO_INT_RISING,
+	 backlight_interrupt},
 
 	/* Other inputs */
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
@@ -78,6 +80,7 @@ const struct gpio_info gpio_list[] = {
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PP1200_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
+	{"PP3300_DSW_EN",        LM4_GPIO_F, (1<<6), GPIO_OUT_LOW, NULL},
 	{"PP3300_DSW_GATED_EN",  LM4_GPIO_J, (1<<3), GPIO_OUT_LOW, NULL},
 	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<2), GPIO_OUT_LOW, NULL},
 	{"PP3300_WLAN_EN",       LM4_GPIO_J, (1<<0), GPIO_OUT_LOW, NULL},
@@ -98,14 +101,15 @@ const struct gpio_info gpio_list[] = {
 	 * input until we drive it high.  So can't use open-drain (HI_Z).
 	 */
 	{"PCH_HDA_SDO",          LM4_GPIO_G, (1<<1), GPIO_INPUT, NULL},
-	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_OUT_HIGH, NULL},
+	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PCH_NMI_L",            LM4_GPIO_F, (1<<2), GPIO_ODR_HIGH, NULL},
-	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_OUT_HIGH, NULL},
+	{"PCH_PWRBTN_L",         LM4_GPIO_H, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PCH_PWROK",            LM4_GPIO_F, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PCH_RCIN_L",           LM4_GPIO_F, (1<<3), GPIO_ODR_HIGH, NULL},
 	{"PCH_SYS_RST_L",        LM4_GPIO_F, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
+	{"PCH_ACOK",             LM4_GPIO_M, (1<<6), GPIO_OUT_LOW, NULL},
 #ifndef HEY_USE_BUILTIN_CLKRUN
 	{"LPC_CLKRUN_L",         LM4_GPIO_M, (1<<2), GPIO_ODR_HIGH, NULL},
 #endif
