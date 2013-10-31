@@ -402,14 +402,19 @@ void report_panic(void)
 	panic_print(pdata);
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_show_process_stack(pdata);
-	/* TODO: Dump main stack contents as well if the exception happened
-	 * in a handler's context. */
+	/*
+	 * TODO(crosbug.com/p/23760): Dump main stack contents as well if the
+	 * exception happened in a handler's context.
+	 */
 #endif
 	panic_reboot();
 }
 
-/* Default exception handler, which reports a panic.
- * Naked call so we can extract raw LR and IPSR. */
+/**
+ * Default exception handler, which reports a panic.
+ *
+ * Declare this as a naked call so we can extract raw LR and IPSR values.
+ */
 void exception_panic(void) __attribute__((naked));
 void exception_panic(void)
 {

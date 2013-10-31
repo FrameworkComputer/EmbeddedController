@@ -31,9 +31,9 @@
  * may override this by #undef'ing them in config_chip.h or board.h,
  * respectively.
  *
- * TODO(rspangler): describe all of these.  Also describe the HAS_TASK_* macro
- * and how/when it should be used vs. a config define.  And BOARD_*, CHIP_*,
- * and CHIP_FAMILY_*.
+ * TODO(crosbug.com/p/23758): Describe all of these.  Also describe the
+ * HAS_TASK_* macro and how/when it should be used vs. a config define.  And
+ * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
 /* Compile chip support for analog-to-digital convertor */

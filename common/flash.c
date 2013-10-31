@@ -628,8 +628,10 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 
 #ifdef CHIP_FAMILY_stm32f
 	/*
-	 * TODO: ignore all-now on STM32F if WP isn't asserted; this is left
-	 * over from limitations in early snow.
+	 * TODO(crosbug.com/p/23762): Should ignore all-now on STM32F if WP
+	 * isn't asserted.  We don't do this due to limitations in early snow
+	 * boards (lack of WP GPIO?) - in which case, this can either be
+	 * restricted to BOARD_snow, or removed entirely.
 	 */
 	r->valid_flags |= EC_FLASH_PROTECT_ALL_NOW;
 	r->writable_flags |= EC_FLASH_PROTECT_ALL_NOW;

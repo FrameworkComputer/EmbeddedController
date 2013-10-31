@@ -223,9 +223,9 @@ static void i2c_process_command(void)
 		/*
 		 * Old style (version 1) command.
 		 *
-		 * TODO(rspangler): Nothing sends these anymore, since this was
-		 * superseded by version 2 before snow launched.  This code
-		 * should be safe to remove.
+		 * TODO(crosbug.com/p/23765): Nothing sends these anymore,
+		 * since this was superseded by version 2 before snow launched.
+		 * This code should be safe to remove.
 		 */
 		args->version = 0;
 		args->params_size = EC_PROTO2_MAX_PARAM_SIZE;	/* unknown */
@@ -486,7 +486,10 @@ static void i2c_init_port(unsigned int port)
 
 static void i2c_init(void)
 {
-	/* TODO: Add #defines to determine which channels to init */
+	/*
+	 * TODO(crosbug.com/p/23763): Add config options to determine which
+	 * channels to init.
+	 */
 	i2c_init_port(I2C1);
 	i2c_init_port(I2C2);
 

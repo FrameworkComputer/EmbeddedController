@@ -182,12 +182,6 @@ void system_reset(int flags)
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
-	/*
-	 * TODO: Check if a collision between reset flags and fake wp occurred.
-	 * Remove this when we have real write protect pin.
-	 */
-	ASSERT(!(system_get_reset_flags() & 0x8000));
-
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
 		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
