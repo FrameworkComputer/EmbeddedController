@@ -8,8 +8,13 @@
 #ifndef __CROS_EC_COMMANDS_H
 #define __CROS_EC_COMMANDS_H
 
-/* Current version of this protocol */
-/* TODO: This is effectively useless; protocol is determined in other ways */
+/*
+ * Current version of this protocol
+ *
+ * TODO(crosbug.com/p/11223): This is effectively useless; protocol is
+ * determined in other ways.  Remove this once the kernel code no longer
+ * depends on it.
+ */
 #define EC_PROTO_VERSION          0x00000002
 
 /* Command version mask */
@@ -1764,8 +1769,8 @@ struct ec_params_sb_wr_block {
 /* System commands */
 
 /*
- * TODO: this is a confusing name, since it doesn't necessarily reboot the EC.
- * Rename to "set image" or something similar.
+ * TODO(crosbug.com/p/23747): This is a confusing name, since it doesn't
+ * necessarily reboot the EC.  Rename to "image" or something similar?
  */
 #define EC_CMD_REBOOT_EC 0xd2
 

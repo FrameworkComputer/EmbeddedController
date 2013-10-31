@@ -372,6 +372,7 @@ void host_command_task(void)
 /*****************************************************************************/
 /* Host commands */
 
+/* TODO(crosbug.com/p/11223): Remove this once the kernel no longer cares */
 static int host_command_proto_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_proto_version *r = args->response;
