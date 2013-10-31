@@ -705,7 +705,10 @@ static int command_sysjump(int argc, char **argv)
 	if (!strcasecmp(argv[1], "RO"))
 		return system_run_image_copy(SYSTEM_IMAGE_RO);
 	else if (!strcasecmp(argv[1], "RW") || !strcasecmp(argv[1], "A")) {
-		/* TODO: remove "A" once all scripts are updated to use "RW" */
+		/*
+		 * TODO(crosbug.com/p/11149): remove "A" once all scripts are
+		 * updated to use "RW".
+		 */
 		return system_run_image_copy(SYSTEM_IMAGE_RW);
 	} else if (!strcasecmp(argv[1], "disable")) {
 		system_disable_jump();

@@ -105,10 +105,10 @@ int x86_wait_signals(uint32_t want)
 			return EC_ERROR_TIMEOUT;
 		}
 		/*
-		 * TODO: should really shrink the remaining timeout if we woke
-		 * up but didn't have all the signals we wanted.  Also need to
-		 * handle aborts if we're no longer in the same state we were
-		 * when we started waiting.
+		 * TODO(crosbug.com/p/23772): should really shrink the
+		 * remaining timeout if we woke up but didn't have all the
+		 * signals we wanted.  Also need to handle aborts if we're no
+		 * longer in the same state we were when we started waiting.
 		 */
 	}
 	return EC_SUCCESS;
@@ -207,9 +207,9 @@ int chipset_in_state(int state_mask)
 	int need_mask = 0;
 
 	/*
-	 * TODO: what to do about state transitions?  If the caller wants
-	 * HARD_OFF|SOFT_OFF and we're in G3S5, we could still return
-	 * non-zero.
+	 * TODO(crosbug.com/p/23773): what to do about state transitions?  If
+	 * the caller wants HARD_OFF|SOFT_OFF and we're in G3S5, we could still
+	 * return non-zero.
 	 */
 	switch (state) {
 	case X86_G3:

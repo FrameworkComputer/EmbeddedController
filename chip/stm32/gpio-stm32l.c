@@ -96,7 +96,9 @@ void gpio_pre_init(void)
 	} else {
 		/*
 		 * Enable all GPIOs clocks
-		 * TODO: more fine-grained enabling for power saving
+		 *
+		 * TODO(crosbug.com/p/23770): only enable the banks we need to,
+		 * and support disabling some of them in low-power idle.
 		 */
 		STM32_RCC_AHBENR |= 0x3f;
 	}

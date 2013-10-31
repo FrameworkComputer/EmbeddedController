@@ -36,11 +36,11 @@ static const struct dma_option dma_rx_option = {
 /*
  * Timeout to wait for SPI request packet
  *
- * TODO(sjg@chromium.org): Support much slower SPI clocks. For 4096 we have a
- * delay of 4ms. For the largest message (68 bytes) this is 130KhZ, assuming
- * that the master starts sending bytes as soon as it drops NSS. In practice,
- * this timeout seems adequately high for a 1MHz clock which is as slow as we
- * would reasonably want it.
+ * This affects the slowest SPI clock we can support.  A delay of 8192 us
+ * permits a 512-byte request at 500 KHz, assuming the master starts sending
+ * bytes as soon as it asserts chip select.  That's as slow as we would
+ * practically want to run the SPI interface, since running it slower
+ * significantly impacts firmware update times.
  */
 #define SPI_CMD_RX_TIMEOUT_US 8192
 
@@ -410,7 +410,8 @@ void spi_event(enum gpio_signal signal)
 		/*
 		 * Protocol version 2
 		 *
-		 * TODO: remove once all systems upgraded to version 3
+		 * TODO(crosbug.com/p/20257): Remove once kernel supports
+		 * version 3.
 		 */
 		args.version = in_msg[0] - EC_CMD_VERSION0;
 		args.command = in_msg[1];

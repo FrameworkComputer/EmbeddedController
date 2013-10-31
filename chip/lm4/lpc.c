@@ -78,12 +78,11 @@ static struct ec_lpc_host_args * const lpc_host_args =
 static void wait_irq_sent(void)
 {
 	/*
-	 * TODO(yjlou): udelay() is not graceful. Since the SIRQRIS is almost
-	 * not cleared in continuous mode and EC has problem to file more than
-	 * 1 frame in the quiet mode, this is the best way we can do right now.
-	 *
-	 * 4 us is the time of 2 SERIRQ frames, which is long enough to
-	 * guarantee the IRQ has been sent out.
+	 * A hard-coded delay here isn't very elegant, but it's the best we can
+	 * manage (and it's a short delay, so it's not that horrible).  We need
+	 * this because SIRQRIS isn't cleared in continuous mode, and the EC
+	 * has trouble sending more than 1 frame in quiet mode.  Waiting 4 us =
+	 * 2 SERIRQ frames ensures the IRQ has been sent out.
 	 */
 	udelay(4);
 }
@@ -284,7 +283,12 @@ int lpc_comx_get_char(void)
 void lpc_comx_put_char(int c)
 {
 	LPC_POOL_COMX[1] = c;
-	/* TODO: manually trigger IRQ, like we do for keyboard? */
+
+	/*
+	 * We could in theory manually trigger an IRQ, like we do for the 8042
+	 * keyboard interface, but neither the kernel nor BIOS seems to require
+	 * this.
+	 */
 }
 
 #endif /* CONFIG_UART_HOST */
@@ -401,10 +405,12 @@ static void handle_acpi_write(int is_cmd)
 #ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			/*
-			 * TODO: not very satisfying that LPC knows directly
-			 * about the keyboard backlight, but for now this is
-			 * good enough and less code than defining a new
-			 * console command interface just for ACPI read/write.
+			 * TODO(crosbug.com/p/23774): not very satisfying that
+			 * LPC knows directly about the keyboard backlight, but
+			 * for now this is good enough and less code than
+			 * defining a new API for ACPI commands.  If we start
+			 * adding more commands, or need to support LPC on more
+			 * than just LM4, fix this.
 			 */
 			result = pwm_get_duty(PWM_CH_KBLIGHT);
 			break;
@@ -751,8 +757,10 @@ static void lpc_init(void)
 	 */
 	LM4_LPC_ADR(LPC_CH_COMX) = LPC_COMX_ADDR;
 	/*
-	 * TODO: could configure IRQSELs and set IRQEN2/CX, and then the host
-	 * can enable IRQs on its own.
+	 * In theory we could configure IRQSELs and set IRQEN2/CX, and then the
+	 * host could enable IRQs on its own.  So far that hasn't been
+	 * necessary, and due to the issues with IRQs (see wait_irq_sent()
+	 * above) it might not work anyway.
 	 */
 	LM4_LPC_CTL(LPC_CH_COMX) = 0x0004 | (LPC_POOL_OFFS_COMX << (5 - 1));
 	/* Enable COMx emulation for reads and writes. */

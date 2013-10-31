@@ -67,7 +67,11 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t pmask, uint32_t flags)
 	 * output, or alternate function.
 	 */
 	if (flags & GPIO_OUTPUT) {
-		/* TODO: This assumes output max speed of 10MHz */
+		/*
+		 * This sets output max speed to 10MHz.  That should be
+		 * sufficient for most GPIO needs; the only thing that needs to
+		 * go faster is SPI, which overrides the port speed on its own.
+		 */
 		mask |= 0x11111111 & mode;
 		if (flags & GPIO_OPEN_DRAIN)
 			mask |= 0x44444444 & cnf;
@@ -113,7 +117,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t pmask, uint32_t flags)
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
-	/* TODO(rspangler): implement me! */
+	/* TODO(crosbug.com/p/21618): implement me! */
 }
 
 void gpio_pre_init(void)
@@ -128,7 +132,8 @@ void gpio_pre_init(void)
 		/*
 		 * Enable all GPIOs clocks
 		 *
-		 * TODO: more fine-grained enabling for power saving
+		 * TODO(crosbug.com/p/23770): only enable the banks we need to,
+		 * and support disabling some of them in low-power idle.
 		 */
 		STM32_RCC_APB2ENR |= 0x1fd;
 	}
