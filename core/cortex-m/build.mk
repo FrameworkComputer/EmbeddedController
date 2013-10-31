@@ -6,6 +6,9 @@
 # Cortex-M4 core OS files build
 #
 
+# Select ARMv7-m bare-metal toolchain
+CROSS_COMPILE?=arm-none-eabi-
+
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=-mfpu=fpv4-sp-d16 -mfloat-abi=hard
 

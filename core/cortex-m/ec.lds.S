@@ -11,8 +11,8 @@
 #define FW_SIZE(section) FW_SIZE_(section)
 
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
-OUTPUT_ARCH(arm)
+OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
+OUTPUT_ARCH(BFD_ARCH)
 ENTRY(reset)
 MEMORY
 {

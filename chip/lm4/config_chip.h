@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
+/* CPU core BFD configuration */
+#include "core/cortex-m/config_core.h"
+
 /* 16.000 Mhz internal oscillator frequency (PIOSC) */
 #define INTERNAL_CLOCK 16000000
 

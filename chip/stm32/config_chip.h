@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
+/* CPU core BFD configuration */
+#include "core/cortex-m/config_core.h"
+
 /* Default to UART 1 for EC console */
 #define CONFIG_UART_CONSOLE 1
 

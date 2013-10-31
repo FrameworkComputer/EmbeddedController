@@ -5,8 +5,8 @@
 
 #include "config.h"
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
-OUTPUT_ARCH(arm)
+OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
+OUTPUT_ARCH(BFD_ARCH)
 MEMORY
 {
     FLASH (rx) : ORIGIN = CONFIG_FLASH_BASE, LENGTH = CONFIG_FLASH_SIZE
