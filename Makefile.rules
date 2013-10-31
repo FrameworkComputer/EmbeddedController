@@ -47,6 +47,13 @@ cmd_extractrw-y = cd $(out) && \
 	mv RW_SECTION_A $(PROJECT).RW.bin
 cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
 
+# commands to build optional xref files
+cmd_deps_to_list = cat $(deps) | tr -d ':\\' | tr ' ' '\012' \
+	| egrep '\.[chS]$$' | sort | uniq > $@
+cmd_etags = etags -o $@ $(shell cat $<)
+cmd_ctags = ctags -o $@ $(shell cat $<)
+targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
+
 .PHONY: all tests utils hosttests
 all: $(out)/$(PROJECT).bin utils
 
@@ -155,16 +162,18 @@ $(host-utils): $(out)/%:%.c $(foreach u,$(host-util-common),util/$(u).c) \
 
 $(out)/util/burn_my_ec: $(out)/$(PROJECT).bin
 
-.PHONY: FORCE
-cscope.files: FORCE
-	@-rm -f cscope.out
-	@find chip/${CHIP} board/${BOARD} common core driver power include \
-		-name '*.[chS]' \
-		-not -name '*test*' -not -name '*mock*' -not -name '*~*' \
-		> cscope.files
+$(out)/cscope.files: $(out)/$(PROJECT).bin
+	$(call quiet,deps_to_list,SH     )
 
-TAGS tags: cscope.files
-	@etags $(shell cat cscope.files)
+$(out)/TAGS: $(out)/cscope.files
+	$(call quiet,etags,ETAGS  )
+
+$(out)/tags: $(out)/cscope.files
+	$(call quiet,ctags,CTAGS  )
+
+.PHONY: xrefs
+xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
+	$(call targ_if_prog,ctags,$(out)/tags)
 
 .PHONY: clean
 clean:
