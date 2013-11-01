@@ -88,8 +88,9 @@ const struct gpio_info gpio_list[] = {
 	{"KB_OUT11",      GPIO_D, (1<<11), GPIO_KB_OUTPUT, NULL},
 	{"KB_OUT12",      GPIO_D, (1<<12), GPIO_KB_OUTPUT, NULL},
 	/*
-	 * Unimplemented
-	 * TODO: Remove these when codes compile without them
+	 * TODO(crosbug.com/p/23802): These pins are never used for I2C on
+	 * Kirby, but the I2C code won't currently compile unless they're
+	 * defined.
 	 */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("I2C2_SCL"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("I2C2_SDA"),

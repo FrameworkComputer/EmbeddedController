@@ -99,8 +99,8 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
 	/*
-	 * TODO(rspangler): use this instead of hard-coded register writes in
-	 * board_config_pre_init().
+	 * TODO(crosbug.com/p/21618): use this instead of hard-coded register
+	 * writes in board_config_pre_init().
 	 */
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
@@ -132,9 +132,7 @@ void board_config_pre_init(void)
 {
 	uint32_t val;
 
-	/* Enable all GPIOs clocks
-	 * TODO: more fine-grained enabling for power saving
-	 */
+	/* Enable all GPIOs clocks */
 	STM32_RCC_APB2ENR |= 0x1fd;
 
 	/* remap OSC_IN/OSC_OUT to PD0/PD1 */

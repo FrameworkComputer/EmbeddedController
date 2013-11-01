@@ -20,7 +20,7 @@ def period_us(num):
 
 # build the same pseudo random sequence as the target
 def build_sequence():
-    #TODO
+    # TODO(crosbug.com/p/23800): implement
     return []
 
 def test(helper):
@@ -34,7 +34,7 @@ def test(helper):
 
       # Check the results
       model = build_sequence()
-      #TODO
+      # TODO(crosbug.com/p/23800): implement
 
       helper.trace("Got %d timer IRQ\n" % len(seq))
 

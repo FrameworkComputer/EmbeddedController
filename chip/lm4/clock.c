@@ -168,10 +168,11 @@ void clock_init(void)
 #endif
 
 	/*
-	 * TODO: UART seems to glitch unless we wait 500k cycles before
-	 * enabling the PLL, but only if this is a cold boot.  Why?  UART
-	 * doesn't even use the PLL'd system clock.  I've heard rumors the
-	 * Stellaris ROM library does this too, but why?
+	 * TODO(crosbug.com/p/23794): UART seems to glitch unless we wait 500k
+	 * cycles before enabling the PLL, but only if this is a cold boot.
+	 * Why?  UART doesn't even use the PLL'd system clock.  I've heard
+	 * rumors the Stellaris ROM library does this too, but why?  Revisit on
+	 * current systems to see if this is is still needed.
 	 */
 	if (!system_jumped_to_this_image())
 		clock_wait_cycles(500000);
@@ -457,9 +458,10 @@ static int command_sleep(int argc, char **argv)
 		}
 
 		/*
-		 * TODO: move this to the UART module; ugly to have
-		 * UARTisms here.  Also note this only fixes UART0,
-		 * not UART1.
+		 * TODO(crosbug.com/p/23795): move this to the UART module;
+		 * ugly to have UARTisms here.  Also note this only fixes
+		 * UART0, not UART1.  Should just be able to trigger
+		 * HOOK_FREQ_CHANGE and have that take care of it.
 		 */
 		if (uartfbrd) {
 			/* Disable the port via UARTCTL and add HSE. */

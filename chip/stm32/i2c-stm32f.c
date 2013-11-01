@@ -377,6 +377,10 @@ static void unwedge_i2c_bus(int port)
 
 	ASSERT(port == I2C1 || port == I2C2);
 
+	/*
+	 * TODO(crosbug.com/p/23802): This requires defining GPIOs for both
+	 * ports even if the board only supports one port.
+	 */
 	if (port == I2C1) {
 		sda = GPIO_I2C1_SDA;
 		scl = GPIO_I2C1_SCL;

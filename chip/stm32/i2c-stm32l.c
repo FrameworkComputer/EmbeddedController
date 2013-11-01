@@ -178,6 +178,10 @@ static void i2c_try_unwedge(int port, int force_unwedge)
 	enum gpio_signal scl, sda;
 	int i;
 
+	/*
+	 * TODO(crosbug.com/p/23802): This requires defining GPIOs for both
+	 * ports even if the board only supports one port.
+	 */
 	if (port == I2C1) {
 		sda = GPIO_I2C1_SDA;
 		scl = GPIO_I2C1_SCL;

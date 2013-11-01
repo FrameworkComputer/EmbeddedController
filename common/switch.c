@@ -84,8 +84,9 @@ static void switch_init(void)
 #endif
 
 	/*
-	 * TODO(rspangler): It's weird that flash_common.c owns reading the
-	 * write protect signal, but we enable the interrupt for it here.
+	 * TODO(crosbug.com/p/23793): It's weird that flash_common.c owns
+	 * reading the write protect signal, but we enable the interrupt for it
+	 * here.  Take ownership of WP back, or refactor it to its own module.
 	 */
 #ifdef CONFIG_WP_ACTIVE_HIGH
 	gpio_enable_interrupt(GPIO_WP);

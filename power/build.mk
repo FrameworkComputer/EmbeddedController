@@ -6,7 +6,6 @@
 # Power management for application processor and peripherals
 #
 
-# TODO(rspangler): rename _CHIPSET to _POWER
 power-$(CONFIG_CHIPSET_BAYTRAIL)+=baytrail.o
 power-$(CONFIG_CHIPSET_GAIA)+=gaia.o
 power-$(CONFIG_CHIPSET_HASWELL)+=haswell.o

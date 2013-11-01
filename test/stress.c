@@ -56,8 +56,6 @@ struct i2c_test_param_t {
 /* ADC test */
 #define ADC_TEST_ITERATION 2000
 
-/* TODO(victoryang): PECI test */
-
 /*****************************************************************************/
 /* Test utilities */
 

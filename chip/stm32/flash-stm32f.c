@@ -48,8 +48,9 @@ static int entire_flash_locked;
 #define FLASH_HOOK_VERSION 1
 /* The previous write protect state before sys jump */
 /*
- * TODO: check if STM32L code works here too - that is, check if entire flash
- * is locked by attempting to lock it rather than keeping a global variable.
+ * TODO(crosbug.com/p/23798): check if STM32L code works here too - that is,
+ * check if entire flash is locked by attempting to lock it rather than keeping
+ * a global variable.
  */
 struct flash_wp_state {
 	int entire_flash_locked;
@@ -478,8 +479,9 @@ int flash_pre_init(void)
 			 * Write protect register was in an inconsistent state.
 			 * Set it back to a good state and reboot.
 			 *
-			 * TODO: this seems really similar to the check above.
-			 * One of them should be able to go away.
+			 * TODO(crosbug.com/p/23798): this seems really similar
+			 * to the check above.  One of them should be able to
+			 * go away.
 			 */
 			flash_protect_ro_at_boot(
 				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);

@@ -17,7 +17,6 @@
  * 'd' is an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
-/* TODO(rspangler): re-enable tasks once initial bringup is done */
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK_NOTEST(VBOOTHASH, vboot_hash_task, NULL, LARGER_TASK_STACK_SIZE) \

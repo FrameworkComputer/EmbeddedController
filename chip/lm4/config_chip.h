@@ -98,7 +98,7 @@
 #define CONFIG_FW_RW_OFF		CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_RW_SIZE		CONFIG_FW_IMAGE_SIZE
 
-/* TODO: why 2 sets of configs with the same numbers? */
+/* TODO(crosbug.com/p/23796): why 2 sets of configs with the same numbers? */
 #define CONFIG_FW_WP_RO_OFF		CONFIG_FW_RO_OFF
 #define CONFIG_FW_WP_RO_SIZE		CONFIG_FW_RO_SIZE
 
