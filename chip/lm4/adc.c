@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "atomic.h"
 #include "clock.h"
 #include "console.h"
 #include "common.h"
@@ -121,17 +122,40 @@ static void adc_configure(const struct adc_t *adc)
 int adc_read_channel(enum adc_channel ch)
 {
 	const struct adc_t *adc = adc_channels + ch;
+	static uint32_t ch_busy_mask;
+	static struct mutex adc_clock;
 	int rv;
 
-	/* Enable ADC0 module in run and sleep modes. */
+	/*
+	 * TODO(crbug.com/314121): Generalize ADC reads such that any task can
+	 * trigger a read of any channel.
+	 */
+
+	/*
+	 * Enable ADC clock and set a bit in ch_busy_mask to signify that this
+	 * channel is busy. Note, this function may be called from multiple
+	 * tasks, but each channel may be read by only one task. If assert
+	 * fails, then it means multiple tasks are trying to read same channel.
+	 */
+	mutex_lock(&adc_clock);
+	ASSERT(!(ch_busy_mask & (1UL << ch)));
 	clock_enable_peripheral(CGC_OFFSET_ADC, 0x1,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	ch_busy_mask |= (1UL << ch);
+	mutex_unlock(&adc_clock);
 
 	rv = flush_and_read(adc->sequencer);
 
-	/* Disable ADC0 module to conserve power. */
-	clock_disable_peripheral(CGC_OFFSET_ADC, 0x1,
+	/*
+	 * If no ADC channels are busy, then disable ADC clock to conserve
+	 * power.
+	 */
+	mutex_lock(&adc_clock);
+	ch_busy_mask &= ~(1UL << ch);
+	if (!ch_busy_mask)
+		clock_disable_peripheral(CGC_OFFSET_ADC, 0x1,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	mutex_unlock(&adc_clock);
 
 	if (rv == ADC_READ_ERROR)
 		return ADC_READ_ERROR;
