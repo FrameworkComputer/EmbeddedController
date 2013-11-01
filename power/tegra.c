@@ -20,7 +20,6 @@
  *    released
  *  - Holding pwron for 9s powers off the AP
  *  - Pressing and releasing pwron within that 9s is ignored
- *  - If XPSHOLD is dropped by the AP, then we power the AP off
  */
 
 #include "clock.h"
@@ -45,6 +44,7 @@
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  (9 * SECOND)
 
+#ifdef TODO_XPSHOLD
 /*
  * If the power key is pressed to turn on, then held for this long, we
  * power off.
@@ -54,6 +54,7 @@
  *    press or XPSHOLD == 0).
  */
 #define DELAY_SHUTDOWN_ON_POWER_HOLD	(9 * SECOND)
+#endif  /* TODO_XPSHOLD */
 
 /* Maximum delay after power button press before we deassert GPIO_PMIC_PWRON */
 #define DELAY_RELEASE_PWRON   SECOND /* 1s */
@@ -61,11 +62,13 @@
 /* debounce time to prevent accidental power-on after keyboard power off */
 #define KB_PWR_ON_DEBOUNCE    250    /* 250us */
 
+#ifdef TODO_XPSHOLD
 /*
  * nyan's GPIO_SOC1V8_XPSHOLD will go low for ~20ms after initial high.
  * XPSHOLD_DEBOUNCE is used to wait this long, then check the signal again.
  */
 #define XPSHOLD_DEBOUNCE      (30 * 1000)  /* 30 ms */
+#endif  /* TODO_XPSHOLD */
 
 /* Application processor power state */
 static int ap_on;
@@ -200,9 +203,11 @@ static int check_for_power_off_event(void)
 
 	power_button_was_pressed = pressed;
 
+#ifdef TODO_XPSHOLD
 	/* XPSHOLD released by AP : shutdown immediately */
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
 		return 3;
+#endif  /* TODO_XPSHOLD */
 
 	return 0;
 }
@@ -273,7 +278,9 @@ static int tegra_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
+#ifdef TODO_XPSHOLD
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
+#endif  /* TODO_XPSHOLD */
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
 	/* Leave power off only if requested by reset flags */
@@ -349,12 +356,14 @@ void chipset_force_shutdown(void)
  */
 static int check_for_power_on_event(void)
 {
+#ifdef TODO_XPSHOLD
 	/* check if system is already ON */
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD)) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
 	}
+#endif  /* TODO_XPSHOLD */
 
 	/* power on requested at EC startup for recovery */
 	if (auto_power_on) {
@@ -393,9 +402,11 @@ static int power_on(void)
 	gpio_set_level(GPIO_AP_RESET_L, 1);
 	set_pmic_pwrok(1);
 
+#ifdef TODO_XPSHOLD
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
 		/* Initialize non-AP components */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
+#endif  /* TODO_XPSHOLD */
 
 	ap_on = 1;
 	disable_sleep(SLEEP_MASK_AP_RUN);
@@ -427,6 +438,7 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 	return 0;
 }
 
+#ifdef TODO_XPSHOLD
 /**
  * Wait for the XPSHOLD signal from the AP to be asserted within timeout_us
  * and if asserted clear the PMIC_PWRON signal
@@ -454,6 +466,7 @@ static int react_to_xpshold(unsigned int timeout_us)
 	CPRINTF("[%T XPSHOLD seen]\n");
 	return 0;
 }
+#endif  /* TODO_XPSHOLD */
 
 /**
  * Power off the AP
@@ -528,12 +541,14 @@ void chipset_task(void)
 		if (!power_on()) {
 			int continue_power = 0;
 
+#ifdef TODO_XPSHOLD
 			if (!react_to_xpshold(DELAY_RELEASE_PWRON)) {
 				/* AP looks good */
 				if (!wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD))
 					continue_power = 1;
 			}
+#endif  /* TODO_XPSHOLD */
 			set_pmic_pwrok(0);
 			if (continue_power) {
 				power_button_was_pressed = 0;
