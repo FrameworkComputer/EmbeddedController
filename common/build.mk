@@ -11,14 +11,15 @@ common-y+=memory_commands.o shared_mem.o system.o hooks.o
 common-y+=gpio.o version.o printf.o queue.o
 
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
-# TODO(rspangler): Why do these include battery_common but the other batteries
-# don't?  Perhaps should use CONFIG_CMD_BATTERY instead, since all that's in
-# battery.c is the battery console command?
+# TODO(crosbug.com/p/23821): Why do these include battery_common but
+# the other batteries don't?  Perhaps should use CONFIG_CMD_BATTERY
+# instead, since all that's in battery.c is the battery console
+# command?
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger.o
-# TODO(rspangler): This is really the charge state machine for ARM, not the
-# charger driver for the tps65090.  Rename.
+# TODO(crosbug.com/p/23815): This is really the charge state machine
+# for ARM, not the charger driver for the tps65090.  Rename.
 common-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
 common-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o

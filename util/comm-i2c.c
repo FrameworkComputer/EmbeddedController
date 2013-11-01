@@ -126,7 +126,8 @@ static int ec_command_i2c(int command, int version,
 
 	/* check response error code */
 	ret = resp_buf[0];
-	/* TODO: handle EC_RES_IN_PROGRESS case. */
+
+	/* TODO(crosbug.com/p/23824): handle EC_RES_IN_PROGRESS case. */
 
 	resp_len = resp_buf[1];
 	if (resp_len > insize) {

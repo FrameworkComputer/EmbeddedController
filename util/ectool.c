@@ -496,7 +496,10 @@ int cmd_reboot_ec(int argc, char *argv[])
 	else if (!strcmp(argv[1], "RO"))
 		p.cmd = EC_REBOOT_JUMP_RO;
 	else if (!strcmp(argv[1], "RW") || !strcmp(argv[1], "A")) {
-		/* TODO: remove "A" once all scripts are updated to use "RW" */
+		/*
+		 * TODO(crosbug.com/p/11149): remove "A" once all scripts are
+		 * updated to use "RW".
+		 */
 		p.cmd = EC_REBOOT_JUMP_RW;
 	} else if (!strcmp(argv[1], "cold"))
 		p.cmd = EC_REBOOT_COLD;
@@ -1080,7 +1083,11 @@ int cmd_thermal_set_threshold_v1(int argc, char *argv[])
 	return rv;
 }
 
-
+/**
+ * Detect the version of EC_CMD_THERMAL_GET_THRESHOLD that the EC supports.
+ *
+ * @return The version, or -1 if error.
+ */
 static int thermal_threshold_version(void)
 {
 	struct ec_params_thermal_get_threshold v0_p;
@@ -1092,8 +1099,11 @@ static int thermal_threshold_version(void)
 	v1_p.sensor_num = 0;
 	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1,
 			&v1_p, sizeof(v1_p), &v1_r, sizeof(v1_r));
-	/* FIXME: Verson 1 will only return these responses */
-	/* FIXME: if (??? == EC_RES_SUCCESS || ??? == EC_RES_INVALID_PARAM) */
+
+	/*
+	 * TODO(crosbug.com/p/23828): Version 1 of the threshold command will
+	 * only return EC_RES_SUCCESS or EC_RES_INVALID_PARAM?
+	 */
 	if (rv > 0)
 		return 1;
 
@@ -1101,13 +1111,16 @@ static int thermal_threshold_version(void)
 	v0_p.threshold_id = 0;
 	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 0,
 			&v0_p, sizeof(v0_p), &v0_r, sizeof(v0_r));
-	/* FIXME: Verson 0 will only return these responses */
-	/* FIXME: if (??? == EC_RES_SUCCESS || ??? == EC_RES_ERROR) */
+	/*
+	 * TODO(crosbug.com/p/23828): Version 0 of the threshold command will
+	 * only return EC_RES_SUCCESS or EC_RES_ERROR?
+	 */
 	if (rv > 0)
 		return 0;
 
-	/* Anything else is most likely EC_RES_INVALID_COMMAND,
-	 * but we don't care because it's nothing we can use.
+	/*
+	 * Anything else is most likely EC_RES_INVALID_COMMAND, but we don't
+	 * care because it's nothing we can use.
 	 */
 	return -1;
 }

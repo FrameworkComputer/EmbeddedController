@@ -309,12 +309,18 @@ int chipset_in_state(int state_mask)
 
 void chipset_exit_hard_off(void)
 {
-	/* TODO: implement, if/when we take the AP down to a hard-off state */
+	/*
+	 * TODO(crosbug.com/p/23822): Implement, if/when we take the AP down to
+	 * a hard-off state.
+	 */
 }
 
 void chipset_reset(int is_cold)
 {
-	/* TODO: implement cold reset.  For now, all resets are warm resets. */
+	/*
+	 * TODO(crosbug.com/p/23822): Implement cold reset.  For now, all
+	 * resets are warm resets.
+	 */
 	CPRINTF("[%T EC triggered warm reboot]\n");
 
 	/*

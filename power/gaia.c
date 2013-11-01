@@ -369,12 +369,18 @@ int chipset_in_state(int state_mask)
 
 void chipset_exit_hard_off(void)
 {
-	/* TODO: implement, if/when we take the AP down to a hard-off state */
+	/*
+	 * TODO(crosbug.com/p/23822): Implement, if/when we take the AP down to
+	 * a hard-off state.
+	 */
 }
 
 void chipset_reset(int is_cold)
 {
-	/* TODO: implement cold reset.  For now, all resets are warm resets. */
+	/*
+	 * TODO(crosbug.com/p/23822): Implement cold reset.  For now, all
+	 * resets are warm resets.
+	 */
 	CPRINTF("[%T EC triggered warm reboot]\n");
 
 	/*
@@ -438,8 +444,7 @@ void chipset_force_shutdown(void)
  */
 static int check_for_power_on_event(void)
 {
-	/* the system is already ON */
-	/* TODO: this isn't the right check for pit */
+	/* Check if we've already powered the system on */
 	if (gpio_get_level(GPIO_EN_PP3300)) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */

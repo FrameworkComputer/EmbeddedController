@@ -663,7 +663,7 @@ int cmd_keyscan(int argc, char *argv[])
 		return -1;
 	}
 
-	/* TODO(sjg@chromium.org): Read key matrix from fdt */
+	/* TODO(crosbug.com/p/23826): Read key matrix from fdt */
 	err = keyscan_read_fdt_matrix(&keyscan, "test/test-matrix.bin");
 	if (!err)
 		err = keyscan_process_file(f, &keyscan);

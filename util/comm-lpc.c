@@ -26,11 +26,10 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 	for (i = 0; i < timeout_usec; i += delay) {
 		/*
 		 * Delay first, in case we just sent out a command but the EC
-		 * hasn't raise the busy flag. However, I think this doesn't
+		 * hasn't raised the busy flag.  However, I think this doesn't
 		 * happen since the LPC commands are executed in order and the
-		 * busy flag is set by hardware.
-		 *
-		 * TODO: move this delay after inb(status).
+		 * busy flag is set by hardware.  Minor issue in any case,
+		 * since the initial delay is very short.
 		 */
 		usleep(MIN(delay, timeout_usec - i));
 
@@ -142,7 +141,7 @@ static int ec_command_lpc_3(int command, int version,
 		return -EC_RES_REQUEST_TRUNCATED;
 
 	/* Fill in request packet */
-	/* TODO: this should be common to all protocols */
+	/* TODO(crosbug.com/p/23825): This should be common to all protocols */
 	rq.struct_version = EC_HOST_REQUEST_VERSION;
 	rq.checksum = 0;
 	rq.command = command;
