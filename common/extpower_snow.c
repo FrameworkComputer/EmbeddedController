@@ -43,4 +43,4 @@ int extpower_is_present(void)
 	return ac_good;
 }
 
-/* TODO: host events and hook notifications */
+/* TODO(crosbug.com/p/23810): host events and hook notifications */

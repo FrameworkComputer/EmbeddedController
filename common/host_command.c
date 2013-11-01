@@ -59,6 +59,15 @@ static uint8_t command_pending;
 static uint8_t saved_result = EC_RES_UNAVAILABLE;
 #endif
 
+/*
+ * Host command args passed to command handler.  Static to keep it off the
+ * stack.  Note this means we can handle only one host command at a time.
+ */
+static struct host_cmd_handler_args args0;
+
+/* Current host command packet from host, for protocol version 3+ */
+static struct host_packet *pkt0;
+
 uint8_t *host_get_memmap(int offset)
 {
 #ifdef CONFIG_LPC
@@ -120,7 +129,10 @@ test_mockable void host_send_response(struct host_cmd_handler_args *args)
 
 void host_command_received(struct host_cmd_handler_args *args)
 {
-	/* TODO: should warn if we already think we're in a command */
+	/*
+	 * TODO(crosbug.com/p/23806): should warn if we already think we're in
+	 * a command.
+	 */
 
 	/*
 	 * If this is the reboot command, reboot immediately.  This gives the
@@ -151,10 +163,6 @@ void host_command_received(struct host_cmd_handler_args *args)
 	/* Send the response now */
 	host_send_response(args);
 }
-
-/* TODO(rspangler): less awful names. */
-static struct host_cmd_handler_args args0;
-static struct host_packet *pkt0;
 
 void host_packet_respond(struct host_cmd_handler_args *args)
 {
@@ -203,7 +211,6 @@ int host_request_expected_size(const struct ec_host_request *r)
 		return 0;
 
 	/* Reserved byte should be 0 */
-	/* TODO: maybe we should have a header checksum instead? */
 	if (r->reserved)
 		return 0;
 

@@ -26,8 +26,21 @@
 #define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
 
 /*
- * When chipset is on, we stretch the power button signal to it so chipset
- * hard-reset is triggered at ~8 sec, not ~4 sec:
+ * x86 chipsets have a hardware timer on the power button input which causes
+ * them to reset when the button is pressed for more than 4 seconds.  This is
+ * problematic for Chrome OS, which needs more time than that to transition
+ * through the lock and logout screens.  So when the system is on, we need to
+ * stretch the power button signal so that the chipset will hard-reboot after 8
+ * seconds instead of 4.
+ *
+ * When the button is pressed, we initially send a short pulse (t0); this
+ * allows the chipset to process its initial power button interrupt and do
+ * things like wake from suspend.  We then deassert the power button signal to
+ * the chipset for (t1 = 4 sec - t0), which keeps the chipset from starting its
+ * hard reset timer.  If the power button is still pressed after this period,
+ * we again assert the power button signal for the remainder of the press
+ * duration.  Since (t0+t1) causes a 4-second offset, the hard reset timeout in
+ * the chipset triggers after 8 seconds as desired.
  *
  *   PWRBTN#   ---                      ----
  *     to EC     |______________________|
@@ -41,7 +54,6 @@
  *    to host    v                      v
  *     @S0   make code             break code
  */
-/* TODO: link to full power button / lid switch state machine description. */
 #define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
 /*

@@ -124,8 +124,8 @@ int battery_charging_allowed(int *allowed)
 	int v, c, rv;
 
 	/*
-	 * TODO(rspangler): This re-reads the battery current and voltage,
-	 * which is silly because charge_state.c just read them.
+	 * TODO(crosbug.com/p/23811): This re-reads the battery current and
+	 * voltage, which is silly because charge_state.c just read them.
 	 */
 	rv = battery_desired_voltage(&v) | battery_desired_current(&c);
 	if (rv)

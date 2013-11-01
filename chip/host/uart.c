@@ -23,7 +23,10 @@ static int init_done;
 static pthread_t input_thread;
 
 #define INPUT_BUFFER_SIZE 16
-/* TODO: Guard these data with mutex lock when we have interrupt support. */
+/*
+ * TODO(crosbug.com/p/23804): Guard these data with mutex lock when we have
+ * interrupt support.
+ */
 static int char_available;
 static char cached_char_buf[INPUT_BUFFER_SIZE];
 static struct queue cached_char = {
@@ -66,8 +69,8 @@ const char *test_get_captured_console(void)
 static void trigger_interrupt(void)
 {
 	/*
-	 * TODO: Check global interrupt status when we have
-	 * interrupt support.
+	 * TODO(crosbug.com/p/23804): Check global interrupt status when we
+	 * have interrupt support.
 	 */
 	if (!int_disabled) {
 		uart_process_input();
@@ -174,8 +177,8 @@ void *uart_monitor_stdin(void *d)
 		}
 		tcsetattr(0, TCSANOW, &org_settings);
 		/*
-		 * TODO: Trigger emulated interrupt when we have
-		 * interrupt support. Also, we will need a condition
+		 * TODO(crosbug.com/p/23804): Trigger emulated interrupt when
+		 * we have interrupt support. Also, we will need a condition
 		 * variable to indicate the character has been read.
 		 */
 		trigger_interrupt();

@@ -80,8 +80,8 @@ static int battery_discharging_range(int deci_k)
 		temp_c < bat_temp_ranges.discharging_max_c);
 }
 
-/*
- * Turn off the host application processor
+/**
+ * Turn off the AP
  */
 static int system_off(void)
 {
@@ -93,7 +93,7 @@ static int system_off(void)
 	return ST_IDLE0;
 }
 
-/*
+/**
  * Notify the host when battery remaining charge is lower than 10%
  */
 static int notify_battery_low(void)
@@ -106,7 +106,7 @@ static int notify_battery_low(void)
 		if (now.val - last_notify_time.val > MINUTE) {
 			CPUTS("[pmu] notify battery low (< 4%)\n");
 			last_notify_time = now;
-			/* TODO(rongchang): notify AP ? */
+			/* TODO(crosbug.com/p/23814): Actually notify AP */
 		}
 	}
 	return ST_DISCHARGING;
@@ -347,7 +347,6 @@ static int calc_next_state(int state)
 	return ST_IDLE0;
 }
 
-/* TODO: Merge charge_state.h and unify charge interface */
 enum charging_state charge_get_state(void)
 {
 	return current_state;
