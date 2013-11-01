@@ -198,10 +198,17 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 const struct fan_t fans[] = {
 	{.flags = FAN_USE_RPM_MODE,
 	 .rpm_min = 1000,
-	 .rpm_max = 5050,
+	 .rpm_max = 6500,
 	 .ch = 2,
-	 .pgood_gpio = -1,			/* HEY */
-	 .enable_gpio = -1,			/* HEY */
+	 .pgood_gpio = -1,
+	 .enable_gpio = -1,
+	},
+	{.flags = FAN_USE_RPM_MODE,
+	 .rpm_min = 1000,
+	 .rpm_max = 6500,
+	 .ch = 3,
+	 .pgood_gpio = -1,
+	 .enable_gpio = -1,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
