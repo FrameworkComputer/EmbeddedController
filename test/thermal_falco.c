@@ -81,7 +81,7 @@ void host_throttle_cpu(int throttled)
 	host_throttled = throttled;
 }
 
-void fan_set_percent_needed(int pct)
+void fan_set_percent_needed(int fan, int pct)
 {
 	fan_pct = pct;
 }

@@ -179,9 +179,9 @@ const struct adc_t adc_channels[] = {
 	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 4, 0,
 	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 
-	/* FIXME: We don't know what to expect here, but it's an analog input
-	 * that's pulled high. We're using it as a battery presence indicator
-	 * for now. We'll return just 0 - ADC_READ_MAX for now.
+	/* TODO: We don't know what to expect here, but it's an analog input
+	 * that's pulled high. We're only using it as a battery presence
+	 * indicator for now, so we'll just return 0 - ADC_READ_MAX.
 	 */
 	{"BatteryTemp", LM4_ADC_SEQ2, 1, 1, 0,
 	 LM4_AIN(10), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<4)},

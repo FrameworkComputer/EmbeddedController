@@ -155,8 +155,13 @@ static void thermal_control(void)
 	}
 
 #ifdef CONFIG_FANS
-	/* Max fan needed is what's needed. */
-	fan_set_percent_needed(fmax);
+	/* TODO(crosbug.com/p/23797): For now, we just treat all fans the
+	 * same. It would be better if we could assign different thermal
+	 * profiles to each fan - in case one fan cools the CPU while another
+	 * cools the radios or battery.
+	 */
+	for (i = 0; i < CONFIG_FANS; i++)
+		fan_set_percent_needed(i, fmax);
 #endif
 }
 

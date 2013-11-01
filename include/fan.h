@@ -32,19 +32,21 @@ extern const struct fan_t fans[];
  * Set the amount of active cooling needed. The thermal control task will call
  * this frequently, and the fan control logic will attempt to provide it.
  *
+ * @param fan   Fan number (index into fans[])
  * @param pct   Percentage of cooling effort needed (0 - 100)
  */
-void fan_set_percent_needed(int pct);		/* HEY: need fan arg */
+void fan_set_percent_needed(int fan, int pct);
 
 /**
  * This function translates the percentage of cooling needed into a target RPM.
  * The default implementation should be sufficient for most needs, but
  * individual boards may provide a custom version if needed (see config.h).
  *
+ * @param fan   Fan number (index into fans[])
  * @param pct   Percentage of cooling effort needed (always in [0,100])
  * Return       Target RPM for fan
  */
-int fan_percent_to_rpm(int pct);		/* HEY: need fan arg */
+int fan_percent_to_rpm(int fan, int pct);
 
 
 /**

@@ -127,7 +127,7 @@ int fan_is_stalled(int ch)
 		return 0;
 
 	/* Check for stall condition */
-	return (((LM4_FAN_FANSTS >> (2 * ch)) & 0x03) == 0) ? 1 : 0;
+	return fan_get_status(ch) == FAN_STATUS_STOPPED;
 }
 
 void fan_channel_setup(int ch, unsigned int flags)

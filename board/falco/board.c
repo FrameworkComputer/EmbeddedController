@@ -259,10 +259,10 @@ int board_discharge_on_ac(int enable)
  * And never turn it off. Bah. That'll do wonders for battery life.
  */
 #ifdef CONFIG_FAN_RPM_CUSTOM
-int fan_percent_to_rpm(int pct)
+int fan_percent_to_rpm(int fan, int pct)
 {
-	const int FAN_MAX = 5050;
-	const int FAN_MIN = 2700;
+	const int FAN_MAX = fans[fan].rpm_max;
+	const int FAN_MIN = fans[fan].rpm_min;
 	const int NUM_STEPS = 7;
 	const int m = 100 * 100 / NUM_STEPS;
 	const int m0 = m / 200;
