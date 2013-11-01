@@ -6,8 +6,10 @@
 # LM4 chip specific files build
 #
 
-# LM4 SoC has a Cortex-M4 ARM core
+# LM4 SoC has a Cortex-M4F ARM core
 CORE:=cortex-m
+# Allow the full Cortex-M4 instruction set
+CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 
 # Required chip modules
 chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o

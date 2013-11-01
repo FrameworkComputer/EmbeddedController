@@ -8,6 +8,8 @@
 
 # STM32 SoC family has a Cortex-M3 ARM core
 CORE:=cortex-m
+# Force Cortex-M3 subset of instructions
+CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 
 chip-y=dma.o hwtimer.o system.o uart.o
 chip-y+=jtag-$(CHIP_FAMILY).o clock-$(CHIP_FAMILY).o gpio-$(CHIP_FAMILY).o
