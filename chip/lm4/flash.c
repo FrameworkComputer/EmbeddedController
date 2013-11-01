@@ -96,6 +96,10 @@ int flash_physical_write(int offset, int size, const char *data)
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 
+	/* Fail if offset, size, and data aren't at least word-aligned */
+	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
+		return EC_ERROR_INVAL;
+
 	/* Get initial write buffer index and page */
 	LM4_FLASH_FMA = offset & ~(FLASH_FWB_BYTES - 1);
 	i = (offset >> 2) & (FLASH_FWB_WORDS - 1);
