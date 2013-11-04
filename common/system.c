@@ -27,10 +27,16 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+/* Round up to a multiple of 4 */
+#define ROUNDUP4(x) (((x) + 3) & ~3)
+
+/* Data for an individual jump tag */
 struct jump_tag {
-	uint16_t tag;
-	uint8_t data_size;
-	uint8_t data_version;
+	uint16_t tag;		/* Tag ID */
+	uint8_t data_size;	/* Size of data which follows */
+	uint8_t data_version;	/* Data version */
+
+	/* Followed by data_size bytes of data */
 };
 
 /*
@@ -171,9 +177,9 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 		return EC_ERROR_UNKNOWN;
 
 	/* Make room for the new tag */
-	if (size > 255 || (size & 3))
+	if (size > 255)
 		return EC_ERROR_INVAL;
-	jdata->jump_tag_total += size + sizeof(struct jump_tag);
+	jdata->jump_tag_total += ROUNDUP4(size) + sizeof(struct jump_tag);
 
 	t = (struct jump_tag *)system_usable_ram_end();
 	t->tag = tag;
@@ -197,7 +203,7 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 	while (used < jdata->jump_tag_total) {
 		/* Check the next tag */
 		t = (const struct jump_tag *)(system_usable_ram_end() + used);
-		used += sizeof(struct jump_tag) + t->data_size;
+		used += sizeof(struct jump_tag) + ROUNDUP4(t->data_size);
 		if (t->tag != tag)
 			continue;
 
@@ -813,6 +819,35 @@ DECLARE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
 			"Display/force sleep mask.\nSee also 'dsleepmask'.",
 			NULL);
 #endif
+
+#ifdef CONFIG_CMD_JUMPTAGS
+static int command_jumptags(int argc, char **argv)
+{
+	const struct jump_tag *t;
+	int used = 0;
+
+	/* Jump tags valid only after a sysjump */
+	if (!jdata)
+		return EC_SUCCESS;
+
+	while (used < jdata->jump_tag_total) {
+		/* Check the next tag */
+		t = (const struct jump_tag *)(system_usable_ram_end() + used);
+		used += sizeof(struct jump_tag) + ROUNDUP4(t->data_size);
+
+		ccprintf("%08x: 0x%04x %c%c.%d %3d\n",
+			 (uintptr_t)t,
+			 t->tag, t->tag >> 8, (uint8_t)t->tag,
+			 t->data_version, t->data_size);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(jumptags, command_jumptags,
+			NULL,
+			"List jump tags",
+			NULL);
+#endif /* CONFIG_CMD_JUMPTAGS */
 
 /*****************************************************************************/
 /* Host commands */

@@ -21,7 +21,6 @@
 struct pwm_kbd_state {
 	uint8_t kblight_en;
 	uint8_t kblight_percent;
-	uint8_t pad0, pad1; /* Pad to multiple of 4 bytes. */
 };
 
 /*****************************************************************************/

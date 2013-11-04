@@ -109,8 +109,7 @@ int system_jumped_to_this_image(void);
  * This may ONLY be called from within a HOOK_SYSJUMP handler.
  *
  * @param tag		Data type
- * @param size          Size of data; must be a multiple of 4 bytes, and less
- *			than 255 bytes.
+ * @param size          Size of data; must be less than 255 bytes.
  * @param version       Data version, so that tag data can evolve as firmware
  *			is updated.
  * @param data		Pointer to data to save
@@ -128,7 +127,7 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
  * @param version	Set to data version if successful
  * @param size		Set to data size if successful
  * @return		A pointer to the data, or NULL if no matching tag is
- *			found.
+ *			found.  This pointer will be 32-bit aligned.
  */
 const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 

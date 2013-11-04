@@ -26,8 +26,6 @@
 /* The previous USB port state before sys jump */
 struct usb_state {
 	uint8_t port_mode[USB_CHARGE_PORT_COUNT];
-	/* Pad to 4 bytes for system_add_jump_tag(). */
-	uint8_t pad[4 - USB_CHARGE_PORT_COUNT];
 };
 
 static uint8_t charge_mode[USB_CHARGE_PORT_COUNT];

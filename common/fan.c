@@ -339,7 +339,6 @@ BUILD_ASSERT(CONFIG_FANS <= EC_FAN_SPEED_ENTRIES);
 struct pwm_fan_state {
 	uint16_t fan_rpm;
 	uint8_t fan_en;
-	char pad; /* Pad to multiple of 4 bytes. */
 };
 
 static void pwm_fan_init(void)

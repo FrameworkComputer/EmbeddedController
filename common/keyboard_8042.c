@@ -148,7 +148,6 @@ struct kb_state {
 	uint8_t codeset;
 	uint8_t ctlram;
 	uint8_t keystroke_enabled;
-	uint8_t pad;	/* Pad to 4 bytes for system_add_jump_tag(). */
 };
 
 /* The standard Chrome OS keyboard matrix table. */
