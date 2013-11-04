@@ -14,8 +14,7 @@
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BQ24715
-/* TODO(crosbug.com/p/23597): Real number for input current limit */
-#define CONFIG_CHARGER_INPUT_CURRENT 4032
+#define CONFIG_CHARGER_INPUT_CURRENT 3420   /* 65 W adapter, 19 V, 3.42 A */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10    /* Charge sense resistor, mOhm */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* Input senso resistor, mOhm */
 #define CONFIG_CHIPSET_BAYTRAIL
