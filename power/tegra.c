@@ -44,6 +44,7 @@
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  (9 * SECOND)
 
+/* TODO(crosbug.com/p/23853): remove TODO_XPSHOLD */
 #ifdef TODO_XPSHOLD
 /*
  * If the power key is pressed to turn on, then held for this long, we
