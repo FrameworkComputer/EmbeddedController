@@ -236,7 +236,7 @@ void __idle(void)
 	timestamp_t t0, t1, rtc_t0, rtc_t1;
 	int next_delay = 0;
 	int time_for_dsleep, margin_us;
-	int use_lfiosc;
+	int use_low_speed_clock;
 
 	/* Enable the hibernate IRQ used to wake up from deep sleep */
 	system_enable_hib_interrupt();
@@ -301,25 +301,37 @@ void __idle(void)
 			}
 
 			/*
-			 * Determine if we should use the LFIOSC (30kHz) or the
-			 * PIOSC (16MHz) for the clock in deep sleep. Use the
-			 * LFIOSC only if the sleep mask specifies that low
+			 * Determine if we should use a lower clock speed or
+			 * keep the same (16MHz) clock in deep sleep. Use the
+			 * lower speed only if the sleep mask specifies that low
 			 * speed sleep is allowed, the console UART TX is not
 			 * busy, and the console UART buffer is empty.
 			 */
-			use_lfiosc = LOW_SPEED_DEEP_SLEEP_ALLOWED &&
+			use_low_speed_clock = LOW_SPEED_DEEP_SLEEP_ALLOWED &&
 				!uart_tx_in_progress() && uart_buffer_empty();
 
-			/* Set the deep sleep clock register. */
-			LM4_SYSTEM_DSLPCLKCFG = use_lfiosc ? 0x32 : 0x10;
+#ifdef CONFIG_LOW_POWER_USE_LFIOSC
+			/* Set the deep sleep clock register. Use either the
+			 *  normal PIOSC (16MHz) or the LFIOSC (32kHz). */
+			LM4_SYSTEM_DSLPCLKCFG = use_low_speed_clock ?
+					0x32 : 0x10;
+#else
+			/*
+			 * Set the deep sleep clock register. Use either the
+			 * PIOSC with no divider (16MHz) or the PIOSC with
+			 * a /64 divider (250kHz).
+			 */
+			LM4_SYSTEM_DSLPCLKCFG = use_low_speed_clock ?
+					0x1f800010 : 0x10;
+#endif
 
 			/*
-			 * If using low speed (LFIOSC) clock, disable console.
+			 * If using low speed clock, disable console.
 			 * This will also convert the console RX pin to a GPIO
 			 * and set an edge interrupt to wake us from deep sleep
 			 * if any action occurs on console.
 			 */
-			if (use_lfiosc)
+			if (use_low_speed_clock)
 				uart_enter_dsleep();
 
 			/* Set deep sleep bit. */
@@ -350,7 +362,7 @@ void __idle(void)
 			force_time(t1);
 
 			/* If using low speed clock, re-enable the console. */
-			if (use_lfiosc)
+			if (use_low_speed_clock)
 				uart_exit_dsleep();
 
 			/* Record time spent in deep sleep. */
@@ -358,6 +370,8 @@ void __idle(void)
 
 			/* Calculate how close we were to missing deadline */
 			margin_us = next_delay - (int)(rtc_t1.val - rtc_t0.val);
+			if (margin_us < 0)
+				CPRINTF("[%T overslept by %dus]\n", -margin_us);
 
 			/* Record the closest to missing a deadline. */
 			if (margin_us < dsleep_recovery_margin_us)
@@ -699,7 +713,7 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 /**
  * Configure deep sleep clock settings.
  */
-static int command_dsleepmask(int argc, char **argv)
+static int command_dsleep(int argc, char **argv)
 {
 	int v;
 
@@ -734,7 +748,7 @@ static int command_dsleepmask(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dsleepmask, command_dsleepmask,
+DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
 			"[ on | off | <timeout> sec]",
 			"Deep sleep clock settings:\nUse 'on' to force deep "
 			"sleep not to use low speed clock.\nUse 'off' to "

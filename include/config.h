@@ -485,7 +485,13 @@
  */
 #define CONFIG_LID_SWITCH
 
+/*
+ * Low power idle options. These are disabled by default and all boards that
+ * want to use low power idle must define it. When using the LFIOSC, the low
+ * frequency clock will be used to conserve even more power when possible.
+ */
 #undef CONFIG_LOW_POWER_IDLE
+#undef CONFIG_LOW_POWER_USE_LFIOSC
 
 /* Support LPC interface */
 #undef CONFIG_LPC
