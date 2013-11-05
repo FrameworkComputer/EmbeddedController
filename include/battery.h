@@ -86,7 +86,7 @@ int battery_is_connected(void);
 /**
  * Get battery mode.
  *
- * See MODE_* constants in smart_battery.h
+ * See MODE_* constants in battery_smart.h
  *
  * @param mode		Destination for current mode.
  * @return non-zero if error.
@@ -96,7 +96,7 @@ int battery_get_mode(int *mode);
 /**
  * Set battery mode.
  *
- * See MODE_* constants in smart_battery.h
+ * See MODE_* constants in battery_smart.h
  *
  * @param mode		New mode.
  * @return non-zero if error.
@@ -267,7 +267,7 @@ int battery_charging_allowed(int *allowed);
 /**
  * Read battery status.
  *
- * @param status	Destination for status; see STATUS_* in smart_battery.h.
+ * @param status	Destination for status; see STATUS_* in battery_smart.h.
  * @return non-zero if error.
  */
 int battery_status(int *status);

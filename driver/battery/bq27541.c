@@ -205,6 +205,11 @@ int battery_get_mode(int *mode)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+int battery_status(int *status)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 int battery_is_in_10mw_mode(int *val)
 {
 	/* Always using mAh unit */

@@ -38,6 +38,30 @@ static int print_battery_info(void)
 	char text[32];
 	const char *unit;
 
+	print_item_name("Status:");
+	if (check_print_error(battery_status(&value))) {
+		const char * const st[] = {"EMPTY", "FULL", "DCHG", "INIT",};
+		const char * const al[] = {"RT", "RC", "--", "TD",
+					   "OT", "--", "TC", "OC"};
+		int i;
+		ccprintf("0x%04x", value);
+
+		/* bits 0-3 are only valid when the previous transaction
+		 * failed, so ignore them */
+
+		/* bits 4-7 are status */
+		for (i = 0; i < 4; i++)
+			if (value & (1 << (i+4)))
+				ccprintf(" %s", st[i]);
+
+		/* bits 15-8 are alarms */
+		for (i = 0; i < 8; i++)
+			if (value & (1 << (i+8)))
+				ccprintf(" %s", al[i]);
+
+		ccprintf("\n");
+	}
+
 	print_item_name("Temp:");
 	if (check_print_error(battery_temperature(&value)))
 		ccprintf("0x%04x = %.1d K (%.1d C)\n",
