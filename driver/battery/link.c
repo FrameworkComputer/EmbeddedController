@@ -7,6 +7,43 @@
 
 #include "battery.h"
 
+static const struct battery_info info = {
+	/*
+	 * Design voltage
+	 *   max    = 8.4V
+	 *   normal = 7.4V
+	 *   min    = 6.0V
+	 */
+	.voltage_max    = 8400,
+	.voltage_normal = 7400,
+	.voltage_min    = 6000,
+
+	/* Pre-charge current: I <= 0.01C */
+	.precharge_current  = 64, /* mA */
+};
+
+const struct battery_info *battery_get_info(void)
+{
+	return &info;
+}
+
+const struct battery_temperature_ranges bat_temp_ranges = {
+	/*
+	 * Operational temperature range
+	 *   0 <= T_charge    <= 50 deg C
+	 * -20 <= T_discharge <= 60 deg C
+	 */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c       = 0,
+	.charging_max_c       = 50,
+	.discharging_min_c    = -20,
+	.discharging_max_c    = 60,
+};
+
+
+#ifdef CONFIG_BATTERY_VENDOR_PARAMS
+
 /*
  * Design capacity
  *   Battery capacity = 8200 mAh
@@ -47,46 +84,18 @@ static const int const current_limit[TEMP_RANGE_MAX][VOLT_RANGE_MAX] = {
 	{ 800, 1600,  800},
 };
 
-const struct battery_temperature_ranges bat_temp_ranges = {
-	/*
-	 * Operational temperature range
-	 *   0 <= T_charge    <= 50 deg C
-	 * -20 <= T_discharge <= 60 deg C
-	 */
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 50,
-	.charging_min_c       = 0,
-	.charging_max_c       = 50,
-	.discharging_min_c    = -20,
-	.discharging_max_c    = 60,
-};
-
-static const struct battery_info info = {
-	/*
-	 * Design voltage
-	 *   max    = 8.4V
-	 *   normal = 7.4V
-	 *   min    = 6.0V
-	 */
-	.voltage_max    = 8400,
-	.voltage_normal = 7400,
-	.voltage_min    = 6000,
-
-	/* Pre-charge current: I <= 0.01C */
-	.precharge_current  = 64, /* mA */
-};
-
 static inline void limit_value(int *val, int limit)
 {
 	if (*val > limit)
 		*val = limit;
 }
 
-const struct battery_info *battery_get_info(void)
-{
-	return &info;
-}
-
+/**
+ * This can override the smart battery's charging profile. On entry, all the
+ * battery parameters have been updated from the smart battery. On return, the
+ * desired_voltage and desired_current will be passed to the charger. To use
+ * the smart battery's profile, simply do nothing.
+ */
 void battery_vendor_params(struct batt_params *batt)
 {
 	int *desired_current = &batt->desired_current;
@@ -129,3 +138,5 @@ void battery_vendor_params(struct batt_params *batt)
 	if (*desired_current > 0 && *desired_current < info.precharge_current)
 		*desired_current = info.precharge_current;
 }
+
+#endif	/* CONFIG_BATTERY_VENDOR_PARAMS */
