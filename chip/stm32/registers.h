@@ -214,6 +214,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_G                       STM32_GPIOG_BASE
 #define GPIO_H                       STM32_GPIOH_BASE
 
+#define DUMMY_GPIO_BANK GPIO_A
+
 #if defined(CHIP_FAMILY_stm32l)
 #define STM32_GPIOA_BASE            0x40020000
 #define STM32_GPIOB_BASE            0x40020400

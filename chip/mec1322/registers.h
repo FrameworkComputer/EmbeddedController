@@ -1,0 +1,152 @@
+/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Register map for MEC1322 processor
+ */
+
+#ifndef __CROS_EC_REGISTERS_H
+#define __CROS_EC_REGISTERS_H
+
+#include "common.h"
+
+/* EC Chip Configuration */
+#define MEC1322_CHIP_BASE      0x400fff00
+#define MEC1322_CHIP_DEV_ID    REG8(MEC1322_CHIP_BASE + 0x20)
+#define MEC1322_CHIP_DEV_REV   REG8(MEC1322_CHIP_BASE + 0x21)
+
+
+/* EC Subsystem */
+#define MEC1322_EC_BASE        0x4000fc00
+#define MEC1322_EC_INT_CTRL    REG32(MEC1322_EC_BASE + 0x18)
+
+
+/* Interrupt aggregator */
+#define MEC1322_INT_BASE       0x4000c000
+#define MEC1322_INTx_BASE(x)   (MEC1322_INT_BASE + ((x) - 8) * 0x14)
+#define MEC1322_INT_SOURCE(x)  REG32(MEC1322_INTx_BASE(x) + 0x0)
+#define MEC1322_INT_ENABLE(x)  REG32(MEC1322_INTx_BASE(x) + 0x4)
+#define MEC1322_INT_RESULT(x)  REG32(MEC1322_INTx_BASE(x) + 0x8)
+#define MEC1322_INT_DISABLE(x) REG32(MEC1322_INTx_BASE(x) + 0xc)
+#define MEC1322_INT_BLK_EN     REG32(MEC1322_INT_BASE + 0x200)
+#define MEC1322_INT_BLK_DIS    REG32(MEC1322_INT_BASE + 0x204)
+#define MEC1322_INT_BLK_IRQ    REG32(MEC1322_INT_BASE + 0x208)
+
+
+/* UART */
+#define MEC1322_UART_CONFIG_BASE  0x400f1f00
+#define MEC1322_UART_RUNTIME_BASE 0x400f1c00
+
+#define MEC1322_UART_ACT       REG8(MEC1322_UART_CONFIG_BASE + 0x30)
+#define MEC1322_UART_CFG       REG8(MEC1322_UART_CONFIG_BASE + 0xf0)
+
+/* DLAB=0 */
+#define MEC1322_UART_RB /*R*/  REG8(MEC1322_UART_RUNTIME_BASE + 0x0)
+#define MEC1322_UART_TB /*W*/  REG8(MEC1322_UART_RUNTIME_BASE + 0x0)
+#define MEC1322_UART_IER       REG8(MEC1322_UART_RUNTIME_BASE + 0x1)
+/* DLAB=1 */
+#define MEC1322_UART_PBRG0     REG8(MEC1322_UART_RUNTIME_BASE + 0x0)
+#define MEC1322_UART_PBRG1     REG8(MEC1322_UART_RUNTIME_BASE + 0x1)
+
+#define MEC1322_UART_FCR /*W*/ REG8(MEC1322_UART_RUNTIME_BASE + 0x2)
+#define MEC1322_UART_IIR /*R*/ REG8(MEC1322_UART_RUNTIME_BASE + 0x2)
+#define MEC1322_UART_LCR       REG8(MEC1322_UART_RUNTIME_BASE + 0x3)
+#define MEC1322_UART_MCR       REG8(MEC1322_UART_RUNTIME_BASE + 0x4)
+#define MEC1322_UART_LSR       REG8(MEC1322_UART_RUNTIME_BASE + 0x5)
+#define MEC1322_UART_MSR       REG8(MEC1322_UART_RUNTIME_BASE + 0x6)
+#define MEC1322_UART_SCR       REG8(MEC1322_UART_RUNTIME_BASE + 0x7)
+
+
+/* GPIO */
+#define MEC1322_GPIO_BASE      0x40081000
+#define MEC1322_GPIO_PORT(x)   (x)
+#define GPIO_PORT(x)           MEC1322_GPIO_PORT(x)
+static inline uintptr_t gpio_port_base(int port_id)
+{
+	int oct = (port_id / 10) * 8 + port_id % 10;
+	return MEC1322_GPIO_BASE + oct * 0x20;
+}
+#define MEC1322_GPIO_CTL(port, id) REG32(gpio_port_base(port) + (id << 2))
+
+#define DUMMY_GPIO_BANK GPIO_PORT(0)
+
+
+/* Timer */
+#define MEC1322_TMR16_BASE(x)  (0x40000c00 + (x) * 0x20)
+#define MEC1322_TMR32_BASE(x)  (0x40000c80 + (x) * 0x20)
+
+#define MEC1322_TMR16_CNT(x)   REG32(MEC1322_TMR16_BASE(x) + 0x0)
+#define MEC1322_TMR16_PRE(x)   REG32(MEC1322_TMR16_BASE(x) + 0x4)
+#define MEC1322_TMR16_STS(x)   REG32(MEC1322_TMR16_BASE(x) + 0x8)
+#define MEC1322_TMR16_IEN(x)   REG32(MEC1322_TMR16_BASE(x) + 0xc)
+#define MEC1322_TMR16_CTL(x)   REG32(MEC1322_TMR16_BASE(x) + 0x10)
+#define MEC1322_TMR32_CNT(x)   REG32(MEC1322_TMR32_BASE(x) + 0x0)
+#define MEC1322_TMR32_PRE(x)   REG32(MEC1322_TMR32_BASE(x) + 0x4)
+#define MEC1322_TMR32_STS(x)   REG32(MEC1322_TMR32_BASE(x) + 0x8)
+#define MEC1322_TMR32_IEN(x)   REG32(MEC1322_TMR32_BASE(x) + 0xc)
+#define MEC1322_TMR32_CTL(x)   REG32(MEC1322_TMR32_BASE(x) + 0x10)
+
+
+/* Watchdog */
+#define MEC1322_WDG_BASE       0x40000400
+#define MEC1322_WDG_LOAD       REG16(MEC1322_WDG_BASE + 0x0)
+#define MEC1322_WDG_CTL        REG8(MEC1322_WDG_BASE + 0x4)
+#define MEC1322_WDG_KICK       REG8(MEC1322_WDG_BASE + 0x8)
+#define MEC1322_WDG_CNT        REG16(MEC1322_WDG_BASE + 0xc)
+
+
+/* VBAT */
+#define MEC1322_VBAT_BASE      0x4000a400
+#define MEC1322_VBAT_STS       REG32(MEC1322_VBAT_BASE + 0x0)
+#define MEC1322_VBAT_CE        REG32(MEC1322_VBAT_BASE + 0x8)
+
+
+/* IRQ Numbers */
+#define MEC1322_IRQ_I2C_0        0
+#define MEC1322_IRQ_I2C_1        1
+#define MEC1322_IRQ_I2C_2        2
+#define MEC1322_IRQ_I2C_3        3
+#define MEC1322_IRQ_DMA_0        4
+#define MEC1322_IRQ_DMA_1        5
+#define MEC1322_IRQ_DMA_2        6
+#define MEC1322_IRQ_DMA_3        7
+#define MEC1322_IRQ_DMA_4        8
+#define MEC1322_IRQ_DMA_5        9
+#define MEC1322_IRQ_DMA_6        10
+#define MEC1322_IRQ_DMA_7        11
+#define MEC1322_IRQ_LPC          12
+#define MEC1322_IRQ_UART         13
+#define MEC1322_IRQ_EMI          14
+#define MEC1322_IRQ_ACPIEC0_IBF  15
+#define MEC1322_IRQ_ACPIEC0_OBF  16
+#define MEC1322_IRQ_TIMER16_0    49
+#define MEC1322_IRQ_TIMER16_1    50
+#define MEC1322_IRQ_TIMER16_2    51
+#define MEC1322_IRQ_TIMER16_3    52
+#define MEC1322_IRQ_TIMER32_0    53
+#define MEC1322_IRQ_TIMER32_1    54
+#define MEC1322_IRQ_GIRQ8        57
+#define MEC1322_IRQ_GIRQ9        58
+#define MEC1322_IRQ_GIRQ10       59
+#define MEC1322_IRQ_GIRQ11       60
+#define MEC1322_IRQ_GIRQ12       61
+#define MEC1322_IRQ_GIRQ13       62
+#define MEC1322_IRQ_GIRQ14       63
+#define MEC1322_IRQ_GIRQ15       64
+#define MEC1322_IRQ_GIRQ16       65
+#define MEC1322_IRQ_GIRQ17       66
+#define MEC1322_IRQ_GIRQ18       67
+#define MEC1322_IRQ_GIRQ19       68
+#define MEC1322_IRQ_GIRQ20       69
+#define MEC1322_IRQ_GIRQ21       70
+#define MEC1322_IRQ_GIRQ22       71
+#define MEC1322_IRQ_GIRQ23       72
+#define MEC1322_IRQ_DMA_8        81
+#define MEC1322_IRQ_DMA_9        82
+#define MEC1322_IRQ_DMA_10       83
+#define MEC1322_IRQ_DMA_11       84
+#define MEC1322_IRQ_PWM_WDT3     85
+#define MEC1322_IRQ_RTC          91
+#define MEC1322_IRQ_RTC_ALARM    92
+
+#endif /* __CROS_EC_REGISTERS_H */

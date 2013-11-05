@@ -30,6 +30,7 @@
 /* Macros to access registers */
 #define REG32(addr) (*(volatile uint32_t *)(addr))
 #define REG16(addr) (*(volatile uint16_t *)(addr))
+#define REG8(addr)  (*(volatile uint8_t  *)(addr))
 
 /*
  * Define __aligned(n) and __packed if someone hasn't beat us to it.  Linux

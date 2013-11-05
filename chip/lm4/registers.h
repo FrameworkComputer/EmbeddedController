@@ -487,6 +487,8 @@ enum clock_gate_offsets {
 #define GPIO_P LM4_GPIO_P
 #define GPIO_Q LM4_GPIO_Q
 
+#define DUMMY_GPIO_BANK GPIO_A
+
 /* Value to write to LM4_GPIO_LOCK to unlock writes */
 #define LM4_GPIO_LOCK_UNLOCK          0x4c4f434b
 
