@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "battery_smart.h"
 #include "common.h"
 #include "driver/led/lp5562.h"
 #include "extpower.h"
@@ -68,6 +69,14 @@ static int set_led_color(enum led_state_t state)
 	else
 		last_state = LED_STATE_INVALID;
 	return rv;
+}
+
+/**
+ * Directly read state of charge (0-100) of battery.
+ */
+static int battery_state_of_charge(int *percent)
+{
+	return sb_read(SB_RELATIVE_STATE_OF_CHARGE, percent);
 }
 
 /*****************************************************************************/

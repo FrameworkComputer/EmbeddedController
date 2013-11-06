@@ -109,6 +109,7 @@ void battery_vendor_params(struct batt_params *batt)
 	/* Don't charge if outside of allowable temperature range */
 	if (bat_temp_c >= bat_temp_ranges.charging_max_c ||
 	    bat_temp_c < bat_temp_ranges.charging_min_c) {
+		batt->flags &= ~BATT_FLAG_WANT_CHARGE;
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
 		return;

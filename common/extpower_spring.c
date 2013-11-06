@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "battery.h"
+#include "battery_smart.h"
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"
@@ -163,6 +164,23 @@ static enum {
 	REDETECTED,
 } charger_need_redetect = NO_REDETECT;
 static timestamp_t charger_redetection_time;
+
+/**
+ * Directly read discharge current in mA; negative = charging.
+ */
+static int battery_current(int *current)
+{
+	int rv, d;
+
+	rv = sb_read(SB_CURRENT, &d);
+	if (rv) {
+		*current = 0;
+		return rv;
+	}
+
+	*current = (int16_t)d;
+	return EC_SUCCESS;
+}
 
 static int get_video_power(void)
 {
@@ -895,7 +913,10 @@ DECLARE_CONSOLE_COMMAND(ilim, command_ilim,
 #ifdef CONFIG_CMD_BATDEBUG
 static int command_batdebug(int argc, char **argv)
 {
-	int val;
+	struct batt_params batt;
+
+	battery_get_params(&batt);
+
 	ccprintf("VBUS = %d mV\n", adc_read_channel(ADC_CH_USB_VBUS_SNS));
 	ccprintf("VAC = %d mV\n", pmu_adc_read(ADC_VAC, ADC_FLAG_KEEP_ON)
 				  * 17000 / 1024);
@@ -906,10 +927,8 @@ static int command_batdebug(int argc, char **argv)
 	ccprintf("IBAT = %d mA\n", pmu_adc_read(ADC_IBAT, 0)
 				  * (1000 / R_BATTERY_MOHM) * 40 / 1024);
 	ccprintf("PWM = %d%%\n", pwm_get_duty(PWM_CH_ILIM));
-	battery_current(&val);
-	ccprintf("Battery Current = %d mA\n", val);
-	battery_voltage(&val);
-	ccprintf("Battery Voltage= %d mV\n", val);
+	ccprintf("Battery Current = %d mA\n", batt.current);
+	ccprintf("Battery Voltage= %d mV\n", batt.voltage);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(batdebug, command_batdebug,

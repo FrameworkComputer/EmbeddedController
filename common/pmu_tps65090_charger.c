@@ -158,7 +158,10 @@ static int rsoc_moving_average(int state_of_charge)
 
 static int calc_next_state(int state)
 {
-	int batt_temp, alarm, capacity, charge;
+	struct batt_params batt;
+	int alarm;
+
+	battery_get_params(&batt);
 
 	switch (state) {
 	case ST_IDLE0:
@@ -176,13 +179,13 @@ static int calc_next_state(int state)
 			return ST_BAD_COND;
 
 		/* Enable charging when battery doesn't respond */
-		if (battery_temperature(&batt_temp))
+		if (!(batt.flags & BATT_FLAG_RESPONSIVE))
 			return ST_PRE_CHARGING;
 
 		/* Turn off charger when battery temperature is out
 		 * of the start charging range.
 		 */
-		if (!battery_start_charging_range(batt_temp))
+		if (!battery_start_charging_range(batt.temperature))
 			return ST_BAD_COND;
 
 		/* Turn off charger on battery over temperature alarm */
@@ -194,8 +197,8 @@ static int calc_next_state(int state)
 			return ST_IDLE;
 
 		/* Start charging only when battery charge lower than 100% */
-		if (!battery_state_of_charge(&charge)) {
-			if (charge < 100)
+		if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
+			if (batt.state_of_charge < 100)
 				return ST_CHARGING;
 		}
 
@@ -205,14 +208,15 @@ static int calc_next_state(int state)
 		if (!extpower_is_present())
 			return ST_IDLE0;
 
-		/* If the battery goes online after enable the charger,
-		 * go into charging state.
+		/*
+		 * If the battery goes online after enabling the charger, go
+		 * into charging state.
 		 */
-		if (battery_temperature(&batt_temp) == EC_SUCCESS) {
-			if (!battery_start_charging_range(batt_temp))
+		if (batt.flags & BATT_FLAG_RESPONSIVE) {
+			if (!battery_start_charging_range(batt.temperature))
 				return ST_IDLE0;
-			if (!battery_state_of_charge(&charge)) {
-				if (charge >= 100)
+			if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
+				if (batt.state_of_charge >= 100)
 					return ST_IDLE0;
 			}
 			return ST_CHARGING;
@@ -229,14 +233,14 @@ static int calc_next_state(int state)
 		 * Disable charging on battery access error, or charging
 		 * temperature out of range.
 		 */
-		if (battery_temperature(&batt_temp)) {
+		if (!(batt.flags & BATT_FLAG_RESPONSIVE)) {
 			CPUTS("[pmu] charging: unable to get battery "
 			      "temperature\n");
 			return ST_IDLE0;
-		} else if (!battery_charging_range(batt_temp)) {
+		} else if (!battery_charging_range(batt.temperature)) {
 			CPRINTF("[pmu] charging: temperature out of range "
 				"%dC\n",
-				DECI_KELVIN_TO_CELSIUS(batt_temp));
+				DECI_KELVIN_TO_CELSIUS(batt.temperature));
 			return ST_CHARGING_ERROR;
 		}
 
@@ -292,10 +296,10 @@ static int calc_next_state(int state)
 			if (alarm & ALARM_OVER_TEMP)
 				return ST_CHARGING_ERROR;
 
-			if (battery_temperature(&batt_temp))
+			if (!(batt.flags & BATT_FLAG_RESPONSIVE))
 				return ST_CHARGING_ERROR;
 
-			if (!battery_charging_range(batt_temp))
+			if (!battery_charging_range(batt.temperature))
 				return ST_CHARGING_ERROR;
 
 			return ST_CHARGING;
@@ -314,11 +318,12 @@ static int calc_next_state(int state)
 			return ST_IDLE0;
 
 		/* Check battery discharging temperature range */
-		if (battery_temperature(&batt_temp) == 0) {
-			if (!battery_discharging_range(batt_temp)) {
+		if (batt.flags & BATT_FLAG_RESPONSIVE) {
+			if (!battery_discharging_range(batt.temperature)) {
 				CPRINTF("[pmu] discharging: temperature out of"
 					"range %dC\n",
-					DECI_KELVIN_TO_CELSIUS(batt_temp));
+					DECI_KELVIN_TO_CELSIUS(
+							batt.temperature));
 				return system_off();
 			}
 		}
@@ -329,14 +334,14 @@ static int calc_next_state(int state)
 			return system_off();
 		}
 		/* Check remaining charge % */
-		if (battery_state_of_charge(&capacity) == 0) {
+		if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
 			/*
 			 * Shutdown AP when state of charge < 1.5%.
 			 * Moving average is rounded to integer.
 			 */
-			if (rsoc_moving_average(capacity) < 2) {
+			if (rsoc_moving_average(batt.state_of_charge) < 2) {
 				return system_off();
-			} else if (capacity < 4) {
+			} else if (batt.state_of_charge < 4) {
 				notify_battery_low();
 			}
 		}

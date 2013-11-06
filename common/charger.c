@@ -18,9 +18,20 @@
 
 int charger_closest_voltage(int voltage)
 {
-	const struct charger_info *info;
+	const struct charger_info *info = charger_get_info();
 
-	info = charger_get_info();
+	/*
+	 * If the requested voltage is non-zero but below our minimum,
+	 * return the minimum.  See crosbug.com/p/8662.
+	 */
+	if (voltage > 0 && voltage < info->voltage_min)
+		return info->voltage_min;
+
+	/* Clip to max */
+	if (voltage > info->voltage_max)
+		return info->voltage_max;
+
+	/* Otherwise round down to nearest voltage step */
 	return voltage - (voltage % info->voltage_step);
 }
 

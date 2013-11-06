@@ -87,24 +87,9 @@ int battery_device_name(char *device_name, int buf_size)
 	return rv;
 }
 
-int battery_temperature(int *deci_kelvin)
-{
-	return bq27541_read(REG_TEMPERATURE, deci_kelvin);
-}
-
-int battery_voltage(int *voltage)
-{
-	return bq27541_read(REG_VOLTAGE, voltage);
-}
-
-int battery_state_of_charge(int *percent)
-{
-	return bq27541_read(REG_STATE_OF_CHARGE, percent);
-}
-
 int battery_state_of_charge_abs(int *percent)
 {
-	return battery_state_of_charge(percent);
+	return EC_ERROR_UNIMPLEMENTED;
 }
 
 int battery_remaining_capacity(int *capacity)
@@ -137,18 +122,6 @@ int battery_design_capacity(int *capacity)
 	return bq27541_read(REG_DESIGN_CAPACITY, capacity);
 }
 
-int battery_average_current(int *current)
-{
-	int rv = bq27541_read(REG_AVERAGE_CURRENT, current);
-	*current = (int)((int16_t)*current);
-	return rv;
-}
-
-int battery_current(int *current)
-{
-	return battery_average_current(current);
-}
-
 int battery_time_at_rate(int rate, int *minutes)
 {
 	int rv;
@@ -174,17 +147,18 @@ int battery_serial_number(int *serial)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_desired_voltage(int *voltage)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
 int battery_design_voltage(int *voltage)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_charging_allowed(int *allowed)
+/**
+ * Check if battery allows charging.
+ *
+ * @param allowed	Non-zero if charging allowed; zero if not allowed.
+ * @return non-zero if error.
+ */
+static int battery_charging_allowed(int *allowed)
 {
 	int rv, val;
 
@@ -193,11 +167,6 @@ int battery_charging_allowed(int *allowed)
 		return rv;
 	*allowed = (val & 0x100);
 	return EC_SUCCESS;
-}
-
-int battery_desired_current(int *current)
-{
-	return EC_ERROR_UNIMPLEMENTED;
 }
 
 int battery_get_mode(int *mode)
@@ -221,4 +190,46 @@ int battery_set_10mw_mode(int enabled)
 {
 	/* Not supported by this battery chip */
 	return EC_ERROR_INVAL;
+}
+
+void battery_get_params(struct batt_params *batt)
+{
+	int v;
+
+	/* Reset flags */
+	batt->flags = 0;
+
+	if (bq27541_read(REG_TEMPERATURE, &batt->temperature))
+		batt->flags |= BATT_FLAG_BAD_ANY;
+	else
+		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
+
+	if (bq27541_read(REG_STATE_OF_CHARGE, &batt->state_of_charge))
+		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_CHARGE_PERCENT;
+
+	if (bq27541_read(REG_VOLTAGE, &batt->voltage))
+		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_VOLTAGE;
+
+	v = 0;
+	if (bq27541_read(REG_AVERAGE_CURRENT, &v))
+		batt->flags |= BATT_FLAG_BAD_ANY;
+	batt->current = (int16_t)v;
+
+	/* Default to not desiring voltage and current */
+	batt->desired_voltage = batt->desired_current = 0;
+
+	v = 0;
+	if (battery_charging_allowed(&v)) {
+		batt->flags |= BATT_FLAG_BAD_ANY;
+	} else if (v) {
+		batt->flags |= BATT_FLAG_WANT_CHARGE;
+
+		/*
+		 * Desired voltage and current are not provided by the battery.
+		 * So ask for battery's max voltage and an arbitrarily large
+		 * current.
+		 */
+		batt->desired_voltage = battery_get_info()->voltage_max;
+		batt->desired_current = 99999;
+	}
 }

@@ -102,6 +102,7 @@ void battery_vendor_params(struct batt_params *batt)
 	    bat_temp_c < bat_temp_ranges.charging_min_c) {
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;
+		batt->flags &= ~BATT_FLAG_WANT_CHARGE;
 		return;
 	}
 

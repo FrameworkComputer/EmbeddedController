@@ -126,7 +126,6 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
  */
 static int power_command_info(struct host_cmd_handler_args *args)
 {
-	int bat_charging_current;
 	struct ec_response_power_info *r = args->response;
 
 	r->voltage_ac = calc_voltage(
@@ -140,14 +139,17 @@ static int power_command_info(struct host_cmd_handler_args *args)
 			pmu_sense_resistor_ac, pmu_ac_sense_range_mv);
 	} else {
 		/* Power source == battery */
+		struct batt_params batt;
+
 		r->voltage_system = calc_voltage(
 			pmu_adc_read(ADC_VBAT, ADC_FLAG_KEEP_ON),
 			pmu_voltage_range_mv);
-		/* PMU reads charging current. When battery is discharging,
-		 * ADC returns 0. Use battery gas guage output instead.
+		/*
+		 * PMU reads charging current. When battery is discharging, ADC
+		 * returns 0. Use battery gas gauge output instead.
 		 */
-		battery_current(&bat_charging_current);
-		r->current_system = -bat_charging_current;
+		battery_get_params(&batt);
+		r->current_system = -batt.current;
 	}
 
 	/* Ignore USB powerinfo fields. */

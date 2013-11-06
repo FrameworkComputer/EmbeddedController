@@ -10,6 +10,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "timer.h"
+#include "util.h"
 
 test_mockable int sbc_read(int cmd, int *param)
 {
@@ -64,21 +65,6 @@ int battery_set_10mw_mode(int enabled)
 	return battery_set_mode(val);
 }
 
-int battery_temperature(int *deci_kelvin)
-{
-	return sb_read(SB_TEMPERATURE, deci_kelvin);
-}
-
-int battery_voltage(int *voltage)
-{
-	return sb_read(SB_VOLTAGE, voltage);
-}
-
-int battery_state_of_charge(int *percent)
-{
-	return sb_read(SB_RELATIVE_STATE_OF_CHARGE, percent);
-}
-
 int battery_state_of_charge_abs(int *percent)
 {
 	return sb_read(SB_ABSOLUTE_STATE_OF_CHARGE, percent);
@@ -107,31 +93,6 @@ int battery_run_time_to_empty(int *minutes)
 int battery_time_to_full(int *minutes)
 {
 	return sb_read(SB_AVERAGE_TIME_TO_FULL, minutes);
-}
-
-int battery_desired_current(int *current)
-{
-	return sb_read(SB_CHARGING_CURRENT, current);
-}
-
-int battery_desired_voltage(int *voltage)
-{
-	return sb_read(SB_CHARGING_VOLTAGE, voltage);
-}
-
-int battery_charging_allowed(int *allowed)
-{
-	int v, c, rv;
-
-	/*
-	 * TODO(crosbug.com/p/23811): This re-reads the battery current and
-	 * voltage, which is silly because charge_state.c just read them.
-	 */
-	rv = battery_desired_voltage(&v) | battery_desired_current(&c);
-	if (rv)
-		return rv;
-	*allowed = (v != 0) && (c != 0);
-	return EC_SUCCESS;
 }
 
 /* Read battery status */
@@ -166,35 +127,6 @@ int battery_design_voltage(int *voltage)
 int battery_serial_number(int *serial)
 {
 	return sb_read(SB_SERIAL_NUMBER, serial);
-}
-
-/* Read battery discharging current
- * unit: mA
- * negative value: charging
- */
-int battery_current(int *current)
-{
-	int rv, d;
-
-	rv = sb_read(SB_CURRENT, &d);
-	if (rv)
-		return rv;
-
-	*current = (int16_t)d;
-	return EC_SUCCESS;
-}
-
-
-int battery_average_current(int *current)
-{
-	int rv, d;
-
-	rv = sb_read(SB_AVERAGE_CURRENT, &d);
-	if (rv)
-		return rv;
-
-	*current = (int16_t)d;
-	return EC_SUCCESS;
 }
 
 test_mockable int battery_time_at_rate(int rate, int *minutes)
@@ -276,6 +208,47 @@ test_mockable int battery_device_chemistry(char *dest, int size)
 {
 	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 			       SB_DEVICE_CHEMISTRY, dest, size);
+}
+
+void battery_get_params(struct batt_params *batt)
+{
+	int v;
+
+	/* Reset battery parameters */
+	memset(batt, 0, sizeof(*batt));
+
+	if (sb_read(SB_TEMPERATURE, &batt->temperature))
+		batt->flags |= BATT_FLAG_BAD_ANY;
+	else
+		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
+
+	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt->state_of_charge))
+		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_CHARGE_PERCENT;
+
+	if (sb_read(SB_VOLTAGE, &batt->voltage))
+		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_VOLTAGE;
+
+	v = 0;
+	if (sb_read(SB_CURRENT, &v))
+		batt->flags |= BATT_FLAG_BAD_ANY;
+	else
+		batt->current = (int16_t)v;
+
+	if (sb_read(SB_CHARGING_VOLTAGE, &batt->desired_voltage) ||
+	    sb_read(SB_CHARGING_CURRENT, &batt->desired_current))
+		batt->flags |= BATT_FLAG_BAD_ANY;
+
+	/*
+	 * Charging allowed if both desired voltage and current are nonzero
+	 * and battery isn't full.
+	 */
+	if (batt->desired_voltage && batt->desired_current &&
+	    batt->state_of_charge < BATTERY_LEVEL_FULL) {
+		batt->flags |= BATT_FLAG_WANT_CHARGE;
+	} else {
+		/* Force both to zero */
+		batt->desired_voltage = batt->desired_current = 0;
+	}
 }
 
 /*****************************************************************************/

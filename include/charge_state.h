@@ -22,24 +22,21 @@
 
 /* Power state error flags */
 #define F_CHARGER_INIT        (1 << 0) /* Charger initialization */
-#define F_CHARGER_VOLTAGE     (1 << 1) /* Charger maximun output voltage */
+#define F_CHARGER_VOLTAGE     (1 << 1) /* Charger maximum output voltage */
 #define F_CHARGER_CURRENT     (1 << 2) /* Charger maximum output current */
 #define F_BATTERY_VOLTAGE     (1 << 3) /* Battery voltage */
-#define F_BATTERY_CURRENT     (1 << 4) /* Battery charging current */
-#define F_DESIRED_VOLTAGE     (1 << 5) /* Battery desired voltage */
-#define F_DESIRED_CURRENT     (1 << 6) /* Battery desired current */
-#define F_BATTERY_TEMPERATURE (1 << 7) /* Battery temperature */
 #define F_BATTERY_MODE        (1 << 8) /* Battery mode */
 #define F_BATTERY_CAPACITY    (1 << 9) /* Battery capacity */
 #define F_BATTERY_STATE_OF_CHARGE (1 << 10) /* State of charge, percentage */
 #define F_BATTERY_UNRESPONSIVE    (1 << 11) /* Battery not responding */
 #define F_BATTERY_NOT_CONNECTED   (1 << 12) /* Battery not connected */
+#define F_BATTERY_GET_PARAMS  (1 << 13) /* Any battery parameter bad */
 
-#define F_BATTERY_MASK (F_BATTERY_VOLTAGE | F_BATTERY_CURRENT |  \
-			F_DESIRED_VOLTAGE | F_DESIRED_CURRENT |  \
-			F_BATTERY_TEMPERATURE | F_BATTERY_MODE | \
+#define F_BATTERY_MASK (F_BATTERY_VOLTAGE | \
+			F_BATTERY_MODE | \
 			F_BATTERY_CAPACITY | F_BATTERY_STATE_OF_CHARGE | \
-			F_BATTERY_UNRESPONSIVE | F_BATTERY_NOT_CONNECTED)
+			F_BATTERY_UNRESPONSIVE | F_BATTERY_NOT_CONNECTED | \
+			F_BATTERY_GET_PARAMS)
 #define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | \
 			F_CHARGER_INIT)
 

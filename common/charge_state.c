@@ -255,9 +255,9 @@ static int state_common(struct power_state_context *ctx)
 	}
 #endif /* CONFIG_BATTERY_CHECK_CONNECTED */
 
-	/* Read temperature and see if battery is responsive */
-	rv = battery_temperature(&batt->temperature);
-	if (rv) {
+	/* Read params and see if battery is responsive */
+	battery_get_params(batt);
+	if (!(batt->flags & BATT_FLAG_RESPONSIVE)) {
 		/* Check low battery condition and retry */
 		if (curr->ac && ctx->battery_responsive &&
 		    !(curr->error & F_CHARGER_MASK)) {
@@ -271,8 +271,8 @@ static int state_common(struct power_state_context *ctx)
 				       ctx->battery->precharge_current);
 			for (d = 0; d < 30; d++) {
 				sleep(1);
-				rv = battery_temperature(&batt->temperature);
-				if (rv == 0) {
+				battery_get_params(batt);
+				if (batt->flags & BATT_FLAG_RESPONSIVE) {
 					ctx->battery_responsive = 1;
 					break;
 				}
@@ -280,7 +280,7 @@ static int state_common(struct power_state_context *ctx)
 		}
 
 		/* Set error if battery is still unresponsive */
-		if (rv) {
+		if (!(batt->flags & BATT_FLAG_RESPONSIVE)) {
 			curr->error |= F_BATTERY_UNRESPONSIVE;
 			return curr->error;
 		}
@@ -288,40 +288,25 @@ static int state_common(struct power_state_context *ctx)
 		ctx->battery_responsive = 1;
 	}
 
-	if (battery_voltage(&batt->voltage))
+	/* Translate flags */
+	if (batt->flags & BATT_FLAG_BAD_ANY)
+		curr->error |= F_BATTERY_GET_PARAMS;
+	if (batt->flags & BATT_FLAG_BAD_VOLTAGE)
 		curr->error |= F_BATTERY_VOLTAGE;
+	if (batt->flags & BATT_FLAG_BAD_CHARGE_PERCENT)
+		curr->error |= F_BATTERY_STATE_OF_CHARGE;
+
 	*ctx->memmap_batt_volt = batt->voltage;
 
-	if (battery_current(&batt->current))
-		curr->error |= F_BATTERY_CURRENT;
 	/* Memory mapped value: discharge rate */
 	*ctx->memmap_batt_rate = batt->current < 0 ?
 		-batt->current : batt->current;
 
-	if (battery_charging_allowed(&d)) {
-		curr->error |= F_DESIRED_VOLTAGE | F_DESIRED_CURRENT;
-	} else if (d) {
-		rv = battery_desired_voltage(&batt->desired_voltage);
-		if (rv == EC_ERROR_UNIMPLEMENTED)
-			batt->desired_voltage = MIN(ctx->charger->voltage_max,
-						    ctx->battery->voltage_max);
-		else if (rv != EC_SUCCESS)
-			curr->error |= F_DESIRED_VOLTAGE;
-
-		rv = battery_desired_current(&batt->desired_current);
-		if (rv == EC_ERROR_UNIMPLEMENTED)
-			batt->desired_current = ctx->charger->current_max;
-		else if (rv != EC_SUCCESS)
-			curr->error |= F_DESIRED_CURRENT;
-	} else { /* Charging not allowed */
-		batt->desired_voltage = 0;
-		batt->desired_current = 0;
-	}
-
-	if (fake_state_of_charge >= 0)
+	/* Fake state of charge if necessary */
+	if (fake_state_of_charge >= 0) {
 		batt->state_of_charge = fake_state_of_charge;
-	else if (battery_state_of_charge(&batt->state_of_charge))
-		curr->error |= F_BATTERY_STATE_OF_CHARGE;
+		curr->error &= ~F_BATTERY_STATE_OF_CHARGE;
+	}
 
 	if (batt->state_of_charge != prev->batt.state_of_charge) {
 		rv = battery_full_charge_capacity(&d);
@@ -458,7 +443,7 @@ static enum power_state state_idle(struct power_state_context *ctx)
 		return PWR_STATE_UNCHANGE;
 
 	/* Configure init charger state and switch to charge state */
-	if (batt->desired_voltage && batt->desired_current) {
+	if (batt->flags & BATT_FLAG_WANT_CHARGE) {
 		int want_current =
 			charger_closest_current(batt->desired_current);
 
@@ -497,7 +482,10 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	if (curr->error)
 		return PWR_STATE_ERROR;
 
-	/* Check charger reset */
+	/*
+	 * Some chargers will reset out from underneath us.  If this happens,
+	 * reinitialize charging.
+	 */
 	if (curr->charging_voltage == 0 ||
 	    curr->charging_current == 0)
 		return PWR_STATE_REINIT;
@@ -505,7 +493,8 @@ static enum power_state state_charge(struct power_state_context *ctx)
 	if (!curr->ac)
 		return PWR_STATE_REINIT;
 
-	if (batt->state_of_charge >= BATTERY_LEVEL_FULL) {
+	/* Stop charging if charging is no longer allowed */
+	if (!(batt->flags & BATT_FLAG_WANT_CHARGE)) {
 		if (charge_request(0, 0))
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;

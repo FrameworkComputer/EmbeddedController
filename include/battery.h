@@ -38,10 +38,26 @@ struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */
 	int state_of_charge;  /* State of charge (percent, 0-100) */
 	int voltage;          /* Battery voltage (mV) */
-	int current;          /* Battery current (mA) */
+	int current;          /* Battery current (mA); negative=discharging */
 	int desired_voltage;  /* Charging voltage desired by battery (mV) */
 	int desired_current;  /* Charging current desired by battery (mA) */
+	int flags;            /* Flags */
 };
+
+/* Flags for batt_params */
+
+/* Battery wants to be charged */
+#define BATT_FLAG_WANT_CHARGE			(1 << 0)
+
+/* Battery is responsive (talking to us via I2C) */
+#define BATT_FLAG_RESPONSIVE			(1 << 1)
+
+/* Able to talk to battery, but it won't tell us voltage or charge percent */
+#define BATT_FLAG_BAD_VOLTAGE			(1 << 2)
+#define BATT_FLAG_BAD_CHARGE_PERCENT		(1 << 3)
+
+/* Battery couldn't tell us every params we want */
+#define BATT_FLAG_BAD_ANY			(1 << 4)
 
 /* Working temperature ranges in degrees C */
 struct battery_temperature_ranges {
@@ -68,6 +84,15 @@ struct battery_info {
  * Return vendor-provided battery constants.
  */
 const struct battery_info *battery_get_info(void);
+
+/**
+ * Get current battery parameters.
+ *
+ * Error conditions are reported via batt.flags.
+ *
+ * @param batt		Destination for battery data
+ */
+void battery_get_params(struct batt_params *batt);
 
 /**
  * Modify battery parameters to match vendor charging profile.
@@ -121,70 +146,12 @@ int battery_is_in_10mw_mode(int *val);
 int battery_set_10mw_mode(int enabled);
 
 /**
- * Read battery temperature.
- *
- * @param deci_kelvin	Destination for battery temperature in units of 0.1 K
- * @return non-zero if error.
- */
-int battery_temperature(int *deci_kelvin);
-
-/**
- * Read battery voltage.
- *
- * @param voltage	Destination for voltage in mW
- * @return non-zero if error.
- */
-int battery_voltage(int *voltage);
-
-/**
  * Read nominal voltage battery is designed to supply.
  *
  * @param voltage	Destination for voltage in mW
  * @return non-zero if error.
  */
 int battery_design_voltage(int *voltage);
-
-/**
- * Read charging voltage desired by battery.
- *
- * @param voltage	Destination for voltage in mV.
- * @return non-zero if error.
- */
-int battery_desired_voltage(int *voltage);
-
-/**
- * Read battery discharging current.
- *
- * @param current	Destination for discharge current in mA; negative
- *			value indicates charging.
- * @return non-zero if error.
- */
-int battery_current(int *current);
-
-/**
- * Read averaged battery discharging current.
- *
- * @param current	Destination for discharge current in mA; negative
- *			value indicates charging.
- * @return non-zero if error.
- */
-int battery_average_current(int *current);
-
-/**
- * Read charging current desired by battery.
- *
- * @param current	Destination for current in mA.
- * @return non-zero if error.
- */
-int battery_desired_current(int *current);
-
-/**
- * Read battery relative state of charge.
- *
- * @param percent	Destination for charge in percent
- * @return non-zero if error.
- */
-int battery_state_of_charge(int *percent);
 
 /**
  * Read absolute state of charge.
@@ -257,14 +224,6 @@ int battery_time_to_full(int *minutes);
 int battery_time_at_rate(int rate, int *minutes);
 
 /**
- * Check if battery allows charging.
- *
- * @param allowed	Non-zero if charging allowed; zero if not allowed.
- * @return non-zero if error.
- */
-int battery_charging_allowed(int *allowed);
-
-/**
  * Read battery status.
  *
  * @param status	Destination for status; see STATUS_* in battery_smart.h.
@@ -326,4 +285,3 @@ int battery_device_chemistry(char *dest, int size);
 int battery_manufacturer_date(int *year, int *month, int *day);
 
 #endif /* __CROS_EC_BATTERY_H */
-

@@ -31,19 +31,16 @@ static int check_print_error(int rv)
 	return rv == EC_SUCCESS;
 }
 
-static int print_battery_info(void)
+static void print_battery_status(void)
 {
-	int value;
-	int hour, minute;
-	char text[32];
-	const char *unit;
+	static const char * const st[] = {"EMPTY", "FULL", "DCHG", "INIT",};
+	static const char * const al[] =
+		{"RT", "RC", "--", "TD", "OT", "--", "TC", "OC"};
+
+	int value, i;
 
 	print_item_name("Status:");
 	if (check_print_error(battery_status(&value))) {
-		const char * const st[] = {"EMPTY", "FULL", "DCHG", "INIT",};
-		const char * const al[] = {"RT", "RC", "--", "TD",
-					   "OT", "--", "TC", "OC"};
-		int i;
 		ccprintf("0x%04x", value);
 
 		/* bits 0-3 are only valid when the previous transaction
@@ -61,11 +58,11 @@ static int print_battery_info(void)
 
 		ccprintf("\n");
 	}
+}
 
-	print_item_name("Temp:");
-	if (check_print_error(battery_temperature(&value)))
-		ccprintf("0x%04x = %.1d K (%.1d C)\n",
-			 value, value, value - 2731);
+static void print_battery_strings(void)
+{
+	char text[32];
 
 	print_item_name("Manuf:");
 	if (check_print_error(battery_manufacturer_name(text, sizeof(text))))
@@ -78,36 +75,60 @@ static int print_battery_info(void)
 	print_item_name("Chem:");
 	if (check_print_error(battery_device_chemistry(text, sizeof(text))))
 		ccprintf("%s\n", text);
+}
+
+static void print_battery_params(void)
+{
+	struct batt_params batt;
+
+	battery_get_params(&batt);
+	print_item_name("Param flags:");
+	ccprintf("%08x\n", batt.flags);
+
+	print_item_name("Temp:");
+	ccprintf("0x%04x = %.1d K (%.1d C)\n",
+		 batt.temperature, batt.temperature, batt.temperature - 2731);
+
+	print_item_name("V:");
+	ccprintf("0x%04x = %d mV\n", batt.voltage, batt.voltage);
+
+	print_item_name("V-desired:");
+	ccprintf("0x%04x = %d mV\n", batt.desired_voltage,
+		 batt.desired_voltage);
+
+	print_item_name("I:");
+	ccprintf("0x%04x = %d mA", batt.current & 0xffff, batt.current);
+	if (batt.current > 0)
+		ccputs("(CHG)");
+	else if (batt.current < 0)
+		ccputs("(DISCHG)");
+	ccputs("\n");
+
+	print_item_name("I-desired:");
+	ccprintf("0x%04x = %d mA\n", batt.desired_current,
+		 batt.desired_current);
+
+	print_item_name("Charging:");
+	ccprintf("%sAllowed\n",
+		 batt.flags & BATT_FLAG_WANT_CHARGE ? "" : "Not ");
+
+	print_item_name("Charge:");
+		ccprintf("%d %%\n", batt.state_of_charge);
+}
+
+static void print_battery_info(void)
+{
+	int value;
+	int hour, minute;
+	const char *unit;
 
 	print_item_name("Serial:");
 	if (check_print_error(battery_serial_number(&value)))
 		ccprintf("0x%04x\n", value);
 
-	print_item_name("V:");
-	if (check_print_error(battery_voltage(&value)))
-		ccprintf("0x%04x = %d mV\n", value, value);
-
-	print_item_name("V-desired:");
-	if (check_print_error(battery_desired_voltage(&value)))
-		ccprintf("0x%04x = %d mV\n", value, value);
-
-	print_item_name("V-deisgn:");
+	print_item_name("V-design:");
 	if (check_print_error(battery_design_voltage(&value)))
 		ccprintf("0x%04x = %d mV\n", value, value);
-
-	print_item_name("I:");
-	if (check_print_error(battery_current(&value))) {
-		ccprintf("0x%04x = %d mA", value & 0xffff, value);
-		if (value > 0)
-			ccputs("(CHG)");
-		else if (value < 0)
-			ccputs("(DISCHG)");
-		ccputs("\n");
-	}
-
-	print_item_name("I-desired:");
-	if (check_print_error(battery_desired_current(&value)))
-		ccprintf("0x%04x = %d mA\n", value, value);
 
 	print_item_name("Mode:");
 	if (check_print_error(battery_get_mode(&value)))
@@ -116,15 +137,7 @@ static int print_battery_info(void)
 	battery_is_in_10mw_mode(&value);
 	unit = value ? "0 mW" : " mAh";
 
-	print_item_name("Charging:");
-	if (check_print_error(battery_charging_allowed(&value)))
-		ccprintf("%sAllowed\n", value ? "" : "Not ");
-
-	print_item_name("Charge:");
-	if (check_print_error(battery_state_of_charge(&value)))
-		ccprintf("%d %%\n", value);
-
-	print_item_name("Abs:");
+	print_item_name("Abs charge:");
 	if (check_print_error(battery_state_of_charge_abs(&value)))
 		ccprintf("%d %%\n", value);
 
@@ -163,14 +176,11 @@ static int print_battery_info(void)
 		}
 		ccprintf("%dh:%d\n", hour, minute);
 	}
-
-	return 0;
 }
 
 static int command_battery(int argc, char **argv)
 {
 	int repeat = 1;
-	int rv = 0;
 	int loop;
 	int sleep_ms = 0;
 	char *e;
@@ -192,7 +202,10 @@ static int command_battery(int argc, char **argv)
 	}
 
 	for (loop = 0; loop < repeat; loop++) {
-		rv = print_battery_info();
+		print_battery_status();
+		print_battery_params();
+		print_battery_strings();
+		print_battery_info();
 
 		/*
 		 * Running with a high repeat count will take so long the
@@ -203,15 +216,9 @@ static int command_battery(int argc, char **argv)
 
 		if (sleep_ms)
 			msleep(sleep_ms);
-
-		if (rv)
-			break;
 	}
 
-	if (rv)
-		ccprintf("Failed - error %d\n", rv);
-
-	return rv ? EC_ERROR_UNKNOWN : EC_SUCCESS;
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery,
 			"<repeat_count> <sleep_ms>",
