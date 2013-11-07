@@ -459,26 +459,25 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	uint8_t reg, block_length;
 
 	/*
-	 * TODO(crosbug.com/p/23569): When i2c_xfer() supports start/stop bits
-	 * on all platforms, won't need a temp buffer, and this code can merge
-	 * with the LM4 implementation and move to i2c_common.c.
+	 * TODO(crosbug.com/p/23569): when i2c_xfer() supports start/stop bits,
+	 * merge this with the LM4 implementation and move to i2c_common.c.
 	 */
-	uint8_t buffer[SMBUS_MAX_BLOCK + 1];
 
 	if ((len <= 0) || (len > SMBUS_MAX_BLOCK))
 		return EC_ERROR_INVAL;
 
 	i2c_lock(port, 1);
 
+	/* Read the counted string into the output buffer */
 	reg = offset;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buffer, SMBUS_MAX_BLOCK + 1,
-		      I2C_XFER_SINGLE);
+	rv = i2c_xfer(port, slave_addr, &reg, 1, data, len, I2C_XFER_SINGLE);
 	if (rv == EC_SUCCESS) {
 		/* Block length is the first byte of the returned buffer */
-		block_length = MIN(buffer[0], len - 1);
-		buffer[block_length + 1] = 0;
+		block_length = MIN(data[0], len - 1);
 
-		memcpy(data, buffer+1, block_length + 1);
+		/* Move data down, then null-terminate it */
+		memmove(data, data + 1, block_length);
+		data[block_length] = 0;
 	}
 
 	i2c_lock(port, 0);
