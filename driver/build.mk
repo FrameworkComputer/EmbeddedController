@@ -6,6 +6,9 @@
 # Drivers for off-chip devices
 #
 
+# ALS drivers
+driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
+
 # Batteries
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o

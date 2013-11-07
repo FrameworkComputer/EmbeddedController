@@ -15,6 +15,8 @@
 #undef HEY_USE_BUILTIN_CLKRUN
 
 /* Optional features */
+#define CONFIG_ALS
+#define CONFIG_ALS_ISL29035
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CHIPSET_X86
 #define CONFIG_CHIPSET_CAN_THROTTLE
@@ -214,6 +216,13 @@ enum temp_sensor_id {
 
 /* The number of TMP006 sensor chips on the board. */
 #define TMP006_COUNT 6
+
+/* Light sensors attached to the EC. */
+enum als_id {
+	ALS_ISL29035 = 0,
+
+	ALS_COUNT,
+};
 
 /* Known board versions for system_get_board_version(). */
 enum board_version {

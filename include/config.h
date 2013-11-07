@@ -46,6 +46,13 @@
 #undef CONFIG_ADC_CLOCK
 
 /*
+ * Some ALS modules may be connected to the EC. We need the command, and
+ * specific drivers for each module.
+ */
+#undef CONFIG_ALS
+#undef CONFIG_ALS_ISL29035
+
+/*
  * Support controlling the display backlight based on the state of the lid
  * switch.  The EC will disable the backlight when the lid is closed.
  */

@@ -4,12 +4,14 @@
  */
 /* EC for Samus board configuration */
 
+#include "als.h"
 #include "adc.h"
 #include "adc_chip.h"
 #include "backlight.h"
 #include "chipset_x86_common.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp006.h"
+#include "driver/als_isl29035.h"
 #include "extpower.h"
 #include "fan.h"
 #include "gpio.h"
@@ -266,6 +268,13 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"I2C-Left D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 11, 7},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* ALS instances. Must be in same order as enum als_id. */
+struct als_t als[] = {
+	{"ISL", isl29035_read_lux},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
+
 
 /* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.
