@@ -7,6 +7,7 @@
 
 #include "driver/als_isl29035.h"
 #include "common.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "timer.h"
 
@@ -22,22 +23,27 @@
 #define ILS29035_REG_INT_HT_MSB 7
 #define ILS29035_REG_ID         15
 
+static void isl29035_init(void)
+{
+	/*
+	 * Tell it to read continually. This uses 70uA, as opposed to nearly
+	 * zero, but it makes the hook/update code cleaner (we don't want to
+	 * wait 90ms to read on demand while processing hook callbacks).
+	 */
+	(void)i2c_write8(I2C_PORT_ALS, ILS29035_I2C_ADDR,
+			 ILS29035_REG_COMMAND_I, 0xa0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, isl29035_init, HOOK_PRIO_DEFAULT);
+
 int isl29035_read_lux(int *lux)
 {
 	int rv, lsb, msb, data;
 
-	/* Tell it to read once */
-	rv = i2c_write8(I2C_PORT_ALS, ILS29035_I2C_ADDR,
-			ILS29035_REG_COMMAND_I, 0x20);
-	if (rv)
-		return rv;
-
-	/* The highest precision (default) should take ~90ms */
-	usleep(100 * MSEC);
-
-	/* NOTE: It is necessary to read the LSB first, then the MSB. If you do
+	/*
+	 * NOTE: It is necessary to read the LSB first, then the MSB. If you do
 	 * it in the opposite order, the results are not correct. This is
-	 * apparently an undocumented "feature".
+	 * apparently an undocumented "feature". It's especially noticeable in
+	 * one-shot mode.
 	 */
 
 	/* Read lsb */
@@ -57,7 +63,8 @@ int isl29035_read_lux(int *lux)
 	/*
 	 * The default power-on values will give 16 bits of precision:
 	 * 0x0000-0xffff indicates 0-1000 lux. If you change the defaults,
-	 * you'll need to change the scale factor accordingly.
+	 * you'll need to change the scale factor accordingly (and maybe this
+	 * expression, to avoid rounding errors).
 	 */
 	*lux = data * 1000 / 0xffff;
 

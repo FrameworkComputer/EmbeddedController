@@ -81,6 +81,7 @@
 #define EC_MEMMAP_BATT_MODEL       0x68 /* Battery Model Number String */
 #define EC_MEMMAP_BATT_SERIAL      0x70 /* Battery Serial Number String */
 #define EC_MEMMAP_BATT_TYPE        0x78 /* Battery Type String */
+#define EC_MEMMAP_ALS              0x80 /* ALS readings in lux (uint16_t) */
 
 /* Number of temp sensors at EC_MEMMAP_TEMP_SENSOR */
 #define EC_TEMP_SENSOR_ENTRIES     16
@@ -101,6 +102,11 @@
  * reporting a temperature range of 200K to 454K = -73C to 181C.
  */
 #define EC_TEMP_SENSOR_OFFSET      200
+
+/*
+ * Number of ALS readings at EC_MEMMAP_ALS
+ */
+#define EC_ALS_ENTRIES             2
 
 /*
  * The default value a temperature sensor will return when it is present but
