@@ -179,19 +179,6 @@ int battery_status(int *status)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_is_in_10mw_mode(int *val)
-{
-	/* Always using mAh unit */
-	*val = 0;
-	return EC_SUCCESS;
-}
-
-int battery_set_10mw_mode(int enabled)
-{
-	/* Not supported by this battery chip */
-	return EC_ERROR_INVAL;
-}
-
 void battery_get_params(struct batt_params *batt)
 {
 	int v;

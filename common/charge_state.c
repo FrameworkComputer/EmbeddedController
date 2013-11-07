@@ -361,14 +361,6 @@ static int state_common(struct power_state_context *ctx)
 	if (batt->desired_current > user_current_limit)
 		batt->desired_current = user_current_limit;
 
-	if (battery_is_in_10mw_mode(&d)) {
-		curr->error |= F_BATTERY_MODE;
-	} else if (d) {
-		/* Battery capacity mode was set to mW; reset it back to mAh */
-		if (battery_set_10mw_mode(0))
-			ctx->curr.error |= F_BATTERY_MODE;
-	}
-
 	if (fake_state_of_charge >= 0)
 		*ctx->memmap_batt_cap =
 			fake_state_of_charge *

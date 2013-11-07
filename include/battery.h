@@ -113,37 +113,10 @@ int battery_is_connected(void);
  *
  * See MODE_* constants in battery_smart.h
  *
- * @param mode		Destination for current mode.
+ * @param mode         Destination for current mode.
  * @return non-zero if error.
  */
 int battery_get_mode(int *mode);
-
-/**
- * Set battery mode.
- *
- * See MODE_* constants in battery_smart.h
- *
- * @param mode		New mode.
- * @return non-zero if error.
- */
-int battery_set_mode(int mode);
-
-/**
- * Check if battery is reporting capacity in 10 mW units.
- *
- * @param val		Destination for capacity units; set zero if mAh or
- *			non-zero if 10 mW.
- * @return non-zero if error.
- */
-int battery_is_in_10mw_mode(int *val);
-
-/**
- * Set battery capacity units.
- *
- * @param enabled	Set mode to mAh (=0) or 10 mW (=1)
- * @return non-zero if error.
- */
-int battery_set_10mw_mode(int enabled);
 
 /**
  * Read nominal voltage battery is designed to supply.
@@ -164,8 +137,7 @@ int battery_state_of_charge_abs(int *percent);
 /**
  * Read battery remaining capacity.
  *
- * @param capacity	Destination for capacity; units are mAh or 10 mW,
- *			depending on battery_is_in_10mw_mode().
+ * @param capacity	Destination for capacity in mAh
  * @return non-zero if error.
  */
 int battery_remaining_capacity(int *capacity);
@@ -173,8 +145,7 @@ int battery_remaining_capacity(int *capacity);
 /**
  * Read battery full charge capacity.
  *
- * @param capacity	Destination for capacity; units are mAh or 10 mW,
- *			depending on battery_is_in_10mw_mode().
+ * @param capacity	Destination for capacity in mAh
  * @return non-zero if error.
  */
 int battery_full_charge_capacity(int *capacity);
@@ -182,8 +153,7 @@ int battery_full_charge_capacity(int *capacity);
 /**
  * Read the nominal capacity the battery is designed to supply when new.
  *
- * @param capacity	Destination for capacity; units are mAh or 10 mW,
- *			depending on battery_is_in_10mw_mode().
+ * @param capacity	Destination for capacity in mAh
  * @return non-zero if error.
  */
 int battery_design_capacity(int *capacity);

@@ -37,32 +37,23 @@ int battery_get_mode(int *mode)
 	return sb_read(SB_BATTERY_MODE, mode);
 }
 
-int battery_set_mode(int mode)
-{
-	return sb_write(SB_BATTERY_MODE, mode);
-}
+/**
+ * Force battery to mAh mode (instead of 10mW mode) for reporting capacity.
+ *
+ * @return non-zero if error.
+ */
 
-int battery_is_in_10mw_mode(int *ret)
-{
-	int val;
-	int rv = battery_get_mode(&val);
-	if (rv)
-		return rv;
-	*ret = val & MODE_CAPACITY;
-	return EC_SUCCESS;
-}
-
-int battery_set_10mw_mode(int enabled)
+static int battery_force_mah_mode(void)
 {
 	int val, rv;
 	rv = battery_get_mode(&val);
 	if (rv)
 		return rv;
-	if (enabled)
-		val |= MODE_CAPACITY;
-	else
-		val &= ~MODE_CAPACITY;
-	return battery_set_mode(val);
+
+	if (val & MODE_CAPACITY)
+		rv = sb_write(SB_BATTERY_MODE, val & ~MODE_CAPACITY);
+
+	return rv;
 }
 
 int battery_state_of_charge_abs(int *percent)
@@ -72,11 +63,19 @@ int battery_state_of_charge_abs(int *percent)
 
 int battery_remaining_capacity(int *capacity)
 {
+	int rv = battery_force_mah_mode();
+	if (rv)
+		return rv;
+
 	return sb_read(SB_REMAINING_CAPACITY, capacity);
 }
 
 int battery_full_charge_capacity(int *capacity)
 {
+	int rv = battery_force_mah_mode();
+	if (rv)
+		return rv;
+
 	return sb_read(SB_FULL_CHARGE_CAPACITY, capacity);
 }
 
@@ -107,11 +106,12 @@ int battery_cycle_count(int *count)
 	return sb_read(SB_CYCLE_COUNT, count);
 }
 
-/* Designed battery capacity
- * unit: mAh or 10mW depends on battery mode
- */
 int battery_design_capacity(int *capacity)
 {
+	int rv = battery_force_mah_mode();
+	if (rv)
+		return rv;
+
 	return sb_read(SB_DESIGN_CAPACITY, capacity);
 }
 
@@ -228,11 +228,13 @@ void battery_get_params(struct batt_params *batt)
 	if (sb_read(SB_VOLTAGE, &batt->voltage))
 		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_VOLTAGE;
 
+	/* Ensure battery current is set to 0 if unable to read it */
 	v = 0;
+
 	if (sb_read(SB_CURRENT, &v))
 		batt->flags |= BATT_FLAG_BAD_ANY;
-	else
-		batt->current = (int16_t)v;
+
+	batt->current = (int16_t)v;
 
 	if (sb_read(SB_CHARGING_VOLTAGE, &batt->desired_voltage) ||
 	    sb_read(SB_CHARGING_CURRENT, &batt->desired_current))

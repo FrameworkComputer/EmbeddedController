@@ -120,7 +120,6 @@ static void print_battery_info(void)
 {
 	int value;
 	int hour, minute;
-	const char *unit;
 
 	print_item_name("Serial:");
 	if (check_print_error(battery_serial_number(&value)))
@@ -134,24 +133,21 @@ static void print_battery_info(void)
 	if (check_print_error(battery_get_mode(&value)))
 		ccprintf("0x%04x\n", value);
 
-	battery_is_in_10mw_mode(&value);
-	unit = value ? "0 mW" : " mAh";
-
 	print_item_name("Abs charge:");
 	if (check_print_error(battery_state_of_charge_abs(&value)))
 		ccprintf("%d %%\n", value);
 
 	print_item_name("Remaining:");
 	if (check_print_error(battery_remaining_capacity(&value)))
-		ccprintf("%d%s\n", value, unit);
+		ccprintf("%d mAh\n", value);
 
 	print_item_name("Cap-full:");
 	if (check_print_error(battery_full_charge_capacity(&value)))
-		ccprintf("%d%s\n", value, unit);
+		ccprintf("%d mAh\n", value);
 
 	print_item_name("  Design:");
 	if (check_print_error(battery_design_capacity(&value)))
-		ccprintf("%d%s\n", value, unit);
+		ccprintf("%d mAh\n", value);
 
 	print_item_name("Time-full:");
 	if (check_print_error(battery_time_to_full(&value))) {
