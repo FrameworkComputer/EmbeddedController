@@ -40,6 +40,7 @@
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
 	GPIO_KB_PWR_ON_L = 0,
+	GPIO_SOC1V8_XPSHOLD,
 	GPIO_LID_OPEN,
 	GPIO_SUSPEND_L,
 	GPIO_SPI1_NSS,
@@ -64,7 +65,7 @@ enum gpio_signal {
 	GPIO_I2C1_SDA,
 	GPIO_I2C2_SCL,
 	GPIO_I2C2_SDA,
-	GPIO_LED_POWER_L,
+	GPIO_LED_POWER_L,  /* alias to GPIO_PWR_LED1 */
 	GPIO_PMIC_PWRON_L,
 	GPIO_PMIC_RESET,
 	GPIO_KB_OUT00,
@@ -81,7 +82,6 @@ enum gpio_signal {
 	GPIO_KB_OUT11,
 	GPIO_KB_OUT12,
 	GPIO_PWR_LED0,
-	GPIO_PWR_LED1,
 	GPIO_BAT_LED0,
 	GPIO_BAT_LED1,
 	GPIO_CHARGING,
