@@ -28,7 +28,7 @@
 #define I2C_DATA_ADDR  0x35
 #define I2C_BLOCK_ADDR 0x79
 
-#define I2C_FREQ 200000
+#define I2C_FREQ 150000
 
 /* I2C pins on the FTDI interface */
 #define SCL_BIT        (1 << 0)
@@ -38,15 +38,23 @@
 #define CHIP_ID 0x8380
 
 /* Embedded flash page size */
-#define PAGE_SIZE 256
+#define PAGE_SIZE		256
+
+/* Embedded flash block write size */
+#define BLOCK_WRITE_SIZE	65536
+
+/* Embedded flash number of pages in a sector erase */
+#define SECTOR_ERASE_PAGES	4
 
 /* JEDEC SPI Flash commands */
-#define SPI_CMD_PAGE_PROGRAM  0x02
-#define SPI_CMD_WRITE_DISABLE 0x04
-#define SPI_CMD_READ_STATUS   0x05
-#define SPI_CMD_WRITE_ENABLE  0x06
-#define SPI_CMD_FAST_READ     0x0B
-#define SPI_CMD_CHIP_ERASE    0xC7
+#define SPI_CMD_PAGE_PROGRAM	0x02
+#define SPI_CMD_WRITE_DISABLE	0x04
+#define SPI_CMD_READ_STATUS	0x05
+#define SPI_CMD_WRITE_ENABLE	0x06
+#define SPI_CMD_FAST_READ	0x0B
+#define SPI_CMD_CHIP_ERASE	0xC7
+#define SPI_CMD_SECTOR_ERASE	0xD7
+#define SPI_CMD_WORD_PROGRAM	0xAD
 
 /* Size for FTDI outgoing buffer */
 #define FTDI_CMD_BUF_SIZE (1<<12)
@@ -69,32 +77,65 @@ enum {
 	FLAG_ERASE          = 0x02,
 };
 
-static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
-			     uint8_t *ptr, uint8_t byte)
-{
-	int ret;
-	uint8_t ack;
-	uint8_t *b = ptr;
+/* number of bytes to send consecutively before checking for ACKs */
+#define TX_BUFFER_LIMIT	32
 
-	*b++ = MPSSE_DO_WRITE | MPSSE_BITMODE | MPSSE_WRITE_NEG;
-	*b++ = 0x07; *b++ = byte;
-	/* prepare for ACK */
-	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT;
-	/* read ACK */
-	*b++ = MPSSE_DO_READ | MPSSE_BITMODE | MPSSE_LSB;
-	*b++ = 0;
-	*b++ = SEND_IMMEDIATE;
-	ret = ftdi_write_data(ftdi, buf, b - buf);
-	if (ret < 0) {
-		fprintf(stderr, "failed to write byte\n");
-		return ret;
-	}
-	ret = ftdi_read_data(ftdi, &ack, 1);
-	if (ret < 0 || (ack & 0x80) != 0) {
-		if (debug)
-			fprintf(stderr, "write ACK failed: %d - 0x%02x\n",
-				ret, ack);
-		return  -ENXIO;
+static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
+			     uint8_t *ptr, uint8_t *tbuf, int tcnt)
+{
+	int ret, i, j;
+	int tx_buffered = 0;
+	static uint8_t ack[TX_BUFFER_LIMIT];
+	uint8_t *b = ptr;
+	uint8_t failed_ack = 0;
+
+	for (i = 0; i < tcnt; i++) {
+		/* WORKAROUND: force SDA before sending the next byte */
+		*b++ = SET_BITS_LOW; *b++ = SDA_BIT; *b++ = SCL_BIT | SDA_BIT;
+		/* write byte */
+		*b++ = MPSSE_DO_WRITE | MPSSE_BITMODE | MPSSE_WRITE_NEG;
+		*b++ = 0x07; *b++ = *tbuf++;
+		/* prepare for ACK */
+		*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT;
+		/* read ACK */
+		*b++ = MPSSE_DO_READ | MPSSE_BITMODE | MPSSE_LSB;
+		*b++ = 0;
+		*b++ = SEND_IMMEDIATE;
+
+		tx_buffered++;
+
+		/*
+		 * On the last byte, or every TX_BUFFER_LIMIT bytes, read the
+		 * ACK bits.
+		 */
+		if (i == tcnt-1 || (tx_buffered == TX_BUFFER_LIMIT)) {
+			/* write data */
+			ret = ftdi_write_data(ftdi, buf, b - buf);
+			if (ret < 0) {
+				fprintf(stderr, "failed to write byte\n");
+				return ret;
+			}
+
+			/* read ACK bits */
+			ret = ftdi_read_data(ftdi, &ack[0], tx_buffered);
+			for (j = 0; j < tx_buffered; j++) {
+				if ((ack[j] & 0x80) != 0)
+					failed_ack = ack[j];
+			}
+
+			/* check ACK bits */
+			if (ret < 0 || failed_ack) {
+				if (debug)
+					fprintf(stderr,
+						"write ACK fail: %d, 0x%02x\n",
+						ret, failed_ack);
+				return  -ENXIO;
+			}
+
+			/* reset for next set of transactions */
+			b = ptr;
+			tx_buffered = 0;
+		}
 	}
 	return 0;
 }
@@ -141,6 +182,7 @@ static int i2c_byte_transfer(struct ftdi_context *ftdi, uint8_t addr,
 	int ret = 0, rets;
 	static uint8_t buf[FTDI_CMD_BUF_SIZE];
 	uint8_t *b = buf;
+	uint8_t slave_addr;
 
 	/* START condition */
 	/* SCL & SDA high */
@@ -154,7 +196,8 @@ static int i2c_byte_transfer(struct ftdi_context *ftdi, uint8_t addr,
 	*b++ = SET_BITS_LOW; *b++ = 0; *b++ = SCL_BIT | SDA_BIT;
 
 	/* send address */
-	ret = i2c_add_send_byte(ftdi, buf, b, (addr << 1) | (write ? 0 : 1));
+	slave_addr = (addr << 1) | (write ? 0 : 1);
+	ret = i2c_add_send_byte(ftdi, buf, b, &slave_addr, 1);
 	if (ret < 0) {
 		if (debug)
 			fprintf(stderr, "address %02x failed\n", addr);
@@ -163,10 +206,8 @@ static int i2c_byte_transfer(struct ftdi_context *ftdi, uint8_t addr,
 	}
 
 	b = buf;
-	/* WORKAROUND: force SDA before sending the 2nd byte */
-	*b++ = SET_BITS_LOW; *b++ = SDA_BIT; *b++ = SCL_BIT | SDA_BIT;
 	if (write) /* write data */
-		ret = i2c_add_send_byte(ftdi, buf, b, *data);
+		ret = i2c_add_send_byte(ftdi, buf, b, data, numbytes);
 	else /* read data */
 		ret = i2c_add_recv_bytes(ftdi, buf, b, data, numbytes);
 
@@ -226,7 +267,7 @@ static int check_chipid(struct ftdi_context *ftdi)
 	ret = i2c_read_byte(ftdi, 0x01, (uint8_t *)&id);
 	if (ret < 0)
 		return ret;
-	ret = i2c_read_byte(ftdi, 0x01, &ver);
+	ret = i2c_read_byte(ftdi, 0x02, &ver);
 	if (ret < 0)
 		return ret;
 	if (id != CHIP_ID) {
@@ -236,7 +277,8 @@ static int check_chipid(struct ftdi_context *ftdi)
 	/* compute embedded flash size from CHIPVER field */
 	flash_size = (128 + (ver & 0xF0)) * 1024;
 
-	printf("CHIPID %04x Flash size %d kB\n", id, flash_size / 1024);
+	printf("CHIPID %04x, CHIPVER %02x, Flash size %d kB\n", id, ver,
+			flash_size / 1024);
 
 	return 0;
 }
@@ -257,20 +299,60 @@ static int spi_flash_command(struct ftdi_context *ftdi, uint8_t cmd)
 	return ret ? -EIO : 0;
 }
 
+/* SPI Flash generic command, short version */
+static int spi_flash_command_short(struct ftdi_context *ftdi, uint8_t cmd)
+{
+	int ret = 0;
+
+	ret |= i2c_write_byte(ftdi, 0x05, 0xfe);
+	ret |= i2c_write_byte(ftdi, 0x08, 0x00);
+	ret |= i2c_write_byte(ftdi, 0x05, 0xfd);
+	ret |= i2c_write_byte(ftdi, 0x08, cmd);
+
+	return ret ? -EIO : 0;
+}
+
+/* SPI Flash erase preamble. What is this for? Why is it needed? */
+static int spi_flash_erase_preamble(struct ftdi_context *ftdi)
+{
+	int ret = 0;
+
+	/* What do these do? */
+	ret |= spi_flash_command(ftdi, 0x50);
+	ret |= spi_flash_command_short(ftdi, 0x01);
+	ret |= i2c_write_byte(ftdi, 0x08, 0x00);
+
+	return ret ? -EIO : 0;
+}
+
+/* SPI Flash set erase page */
+static int spi_flash_set_erase_page(struct ftdi_context *ftdi, int page)
+{
+	int ret = 0;
+
+	ret |= i2c_write_byte(ftdi, 0x08, page >> 8);
+	ret |= i2c_write_byte(ftdi, 0x08, page & 0xff);
+	ret |= i2c_write_byte(ftdi, 0x08, 0);
+
+	return ret ? -EIO : 0;
+}
+
 /* Poll SPI Flash Read Status register until BUSY is reset */
 static int spi_poll_busy(struct ftdi_context *ftdi)
 {
 	uint8_t reg = 0xff;
+	int ret;
+
+	ret = spi_flash_command_short(ftdi, SPI_CMD_READ_STATUS);
+	if (ret < 0)
+		return ret;
 
 	while (1) {
-		int ret = spi_flash_command(ftdi, SPI_CMD_READ_STATUS);
+		ret = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &reg, 0, 1);
 		if (ret < 0)
 			return ret;
 
-		ret = i2c_read_byte(ftdi, 0x08, &reg);
-		if (ret < 0)
-			return ret;
-		if ((ret & 0x01) == 0)
+		if ((reg & 0x01) == 0)
 			break;
 	}
 	return 0;
@@ -450,53 +532,102 @@ int command_write_pages(struct ftdi_context *ftdi, uint32_t address,
 	int res;
 	uint32_t remaining = size;
 	int cnt;
-	uint16_t page;
-
-	res = spi_flash_command(ftdi, SPI_CMD_WRITE_ENABLE);
-	if (res < 0) {
-		fprintf(stderr, "Flash write enable FAILED (%d)\n", res);
-		goto failed_write;
-	}
+	uint8_t page;
+	uint8_t cmd;
 
 	while (remaining) {
-		uint8_t cmd = 0xA;
-		int i;
-
-		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE : remaining;
-		page = address / PAGE_SIZE;
+		cnt = (remaining > BLOCK_WRITE_SIZE) ?
+				BLOCK_WRITE_SIZE : remaining;
+		page = address / BLOCK_WRITE_SIZE;
 
 		draw_spinner(remaining, size);
 
-		/* Program Page command */
-		res = spi_flash_command(ftdi, SPI_CMD_PAGE_PROGRAM);
-		if (res < 0)
-			goto failed_write;
-		/* send page address */
-		res = i2c_write_byte(ftdi, 0x08, page >> 8);
-		res = i2c_write_byte(ftdi, 0x08, page & 0xff);
-		res = i2c_write_byte(ftdi, 0x08, 0x00);
+		/* Preamble */
+		res = spi_flash_erase_preamble(ftdi);
 		if (res < 0) {
-			fprintf(stderr, "page address set failed\n");
+			fprintf(stderr, "Flash erase preamble FAILED (%d)\n",
+					res);
 			goto failed_write;
 		}
-		/* write page data */
-		res = i2c_byte_transfer(ftdi, I2C_CMD_ADDR, &cmd, 1, 1);
-		for (i = 0; i < cnt; i++, buffer++) {
-			res = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, buffer,
-						1, 1);
-			if (res < 0) {
-				fprintf(stderr, "page data write failed\n");
-				goto failed_write;
-			}
+
+		/* Write enable */
+		res = spi_flash_command_short(ftdi, SPI_CMD_WRITE_ENABLE);
+		if (res < 0) {
+			fprintf(stderr, "Flash write enable FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Setup write */
+		res = spi_flash_command_short(ftdi, SPI_CMD_WORD_PROGRAM);
+		if (res < 0) {
+			fprintf(stderr, "Flash setup write FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Set page */
+		cmd = 0;
+		res = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &page, 1, 1);
+		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &cmd, 1, 1);
+		res |= i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &cmd, 1, 1);
+		if (res < 0) {
+			fprintf(stderr, "Flash write set page FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Wait until not busy */
+		res = spi_poll_busy(ftdi);
+		if (res < 0) {
+			fprintf(stderr, "Flash write polling FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Write up to BLOCK_WRITE_SIZE data */
+		res = i2c_write_byte(ftdi, 0x10, 0x20);
+		res = i2c_byte_transfer(ftdi, I2C_BLOCK_ADDR, buffer, 1, cnt);
+		buffer += cnt;
+
+		if (res < 0) {
+			fprintf(stderr, "Flash data write failed\n");
+			goto failed_write;
+		}
+
+		cmd = 0xff;
+		res = i2c_byte_transfer(ftdi, I2C_DATA_ADDR, &cmd, 1, 1);
+		res |= i2c_write_byte(ftdi, 0x10, 0x00);
+		if (res < 0) {
+			fprintf(stderr, "Flash end data write FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Write disable */
+		res = spi_flash_command_short(ftdi, SPI_CMD_WRITE_DISABLE);
+		if (res < 0) {
+			fprintf(stderr, "Flash write disable FAILED (%d)\n",
+					res);
+			goto failed_write;
+		}
+
+		/* Wait until available */
+		res = spi_poll_busy(ftdi);
+		if (res < 0) {
+			fprintf(stderr, "Flash write polling FAILED (%d)\n",
+					res);
+			goto failed_write;
 		}
 
 		address += cnt;
 		remaining -= cnt;
 	}
+
 	res = size;
 
 failed_write:
-	if (spi_flash_command(ftdi, SPI_CMD_WRITE_DISABLE) < 0)
+	if (spi_flash_command_short(ftdi, SPI_CMD_WRITE_DISABLE) < 0)
 		fprintf(stderr, "Flash write disable FAILED\n");
 
 	return res;
@@ -510,29 +641,69 @@ int command_write_unprotect(struct ftdi_context *ftdi)
 
 int command_erase(struct ftdi_context *ftdi, uint32_t len, uint32_t off)
 {
-	int res;
+	int res = 0;
+	int page = SECTOR_ERASE_PAGES - 1;
+	uint32_t remaining = len;
+
+	printf("Erasing chip...\n");
 
 	if (off != 0 || len != flash_size) {
 		fprintf(stderr, "Only full chip erase is supported\n");
 		return -EINVAL;
 	}
 
-	res = spi_flash_command(ftdi, SPI_CMD_WRITE_ENABLE);
-	if (res < 0) {
-		fprintf(stderr, "Flash write enable FAILED (%d)\n", res);
-		goto failed_erase;
+	while (remaining) {
+		draw_spinner(remaining, len);
+
+		res = spi_flash_erase_preamble(ftdi);
+		if (res < 0) {
+			fprintf(stderr, "Flash erase preamble FAILED (%d)\n",
+					res);
+			goto failed_erase;
+		}
+
+		res = spi_flash_command_short(ftdi, SPI_CMD_WRITE_ENABLE);
+		if (res < 0) {
+			fprintf(stderr, "Flash write enable FAILED (%d)\n",
+					res);
+			goto failed_erase;
+		}
+
+		res = spi_flash_command_short(ftdi, SPI_CMD_SECTOR_ERASE);
+		if (res < 0) {
+			fprintf(stderr, "Flash erase setup FAILED (%d)\n",
+					res);
+			goto failed_erase;
+		}
+
+		res = spi_flash_set_erase_page(ftdi, page);
+		if (res < 0) {
+			fprintf(stderr, "Flash sector erase FAILED (%d)\n",
+					res);
+			goto failed_erase;
+		}
+
+		res = spi_poll_busy(ftdi);
+		if (res < 0) {
+			fprintf(stderr, "Flash BUSY polling FAILED (%d)\n",
+					res);
+			goto failed_erase;
+		}
+
+		if (spi_flash_command_short(ftdi, SPI_CMD_WRITE_DISABLE) < 0) {
+			fprintf(stderr, "Flash write disable FAILED\n");
+			goto failed_erase;
+		}
+
+		page += SECTOR_ERASE_PAGES;
+		remaining -= SECTOR_ERASE_PAGES * PAGE_SIZE;
 	}
 
-	res = spi_flash_command(ftdi, SPI_CMD_CHIP_ERASE);
-	if (res < 0)
-		fprintf(stderr, "Flash chip erase FAILED (%d)\n", res);
-	res = spi_poll_busy(ftdi);
-	if (res < 0)
-		fprintf(stderr, "Flash BUSY polling FAILED (%d)\n", res);
-
 failed_erase:
-	if (spi_flash_command(ftdi, SPI_CMD_WRITE_DISABLE) < 0)
+	if (spi_flash_command_short(ftdi, SPI_CMD_WRITE_DISABLE) < 0)
 		fprintf(stderr, "Flash write disable FAILED\n");
+
+	printf("\n");
 
 	return res;
 }
