@@ -231,8 +231,13 @@ void svc_handler(int desched, task_id_t resched)
 #endif
 
 	current = current_task;
-#ifdef CONFIG_OVERFLOW_DETECT
-	ASSERT(*current->stack == STACK_UNUSED_VALUE);
+
+#ifdef CONFIG_DEBUG_STACK_OVERFLOW
+	if (*current->stack != STACK_UNUSED_VALUE) {
+		panic_printf("\n\nStack overflow in %s task!\n",
+			     task_names[current - tasks]);
+		panic_reboot();
+	}
 #endif
 
 	if (desched && !current->events) {
@@ -561,6 +566,38 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"[setmask]",
 			"Print/set ready tasks",
 			NULL);
+
+#ifdef CONFIG_CMD_STACKOVERFLOW
+static void stack_overflow_recurse(int n)
+{
+	ccprintf("+%d", n);
+
+	/*
+	 * Force task context switch, since that's where we do stack overflow
+	 * checking.
+	 */
+	msleep(10);
+
+	stack_overflow_recurse(n+1);
+
+	/*
+	 * Do work after the recursion, or else the compiler uses tail-chaining
+	 * and we don't actually consume additional stack.
+	 */
+	ccprintf("-%d", n);
+}
+
+static int command_stackoverflow(int argc, char **argv)
+{
+	ccprintf("Recursing 0,");
+	stack_overflow_recurse(1);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(stackoverflow, command_stackoverflow,
+			NULL,
+			"Recurse until stack overflow",
+			NULL);
+#endif /* CONFIG_CMD_STACKOVERFLOW */
 
 void task_pre_init(void)
 {

@@ -82,11 +82,16 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum);
 
 /**
- * Display a panic message and reset
+ * Display a custom panic message and reset
  *
  * @param msg	Panic message
  */
 void panic(const char *msg);
+
+/**
+ * Display a default message and reset
+ */
+void panic_reboot(void);
 
 /**
  * Enable/disable bus fault handler

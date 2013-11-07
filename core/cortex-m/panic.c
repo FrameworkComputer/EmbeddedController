@@ -327,7 +327,7 @@ static void panic_show_process_stack(const struct panic_data *pdata)
 /**
  * Display a message and reboot
  */
-static void panic_reboot(void)
+void panic_reboot(void)
 {
 	panic_puts("\n\nRebooting...\n");
 	system_reset(0);

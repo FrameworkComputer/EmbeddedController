@@ -215,6 +215,7 @@
 #undef CONFIG_CMD_RTC_ALARM
 #undef CONFIG_CMD_SCRATCHPAD
 #undef CONFIG_CMD_SLEEP
+#undef CONFIG_CMD_STACKOVERFLOW
 
 /*****************************************************************************/
 
@@ -295,6 +296,9 @@
  * Boards may #undef this to reduce image size.
  */
 #define CONFIG_DEBUG_EXCEPTIONS
+
+/* Check for stack overflows on every context switch */
+#define CONFIG_DEBUG_STACK_OVERFLOW
 
 /*****************************************************************************/
 
@@ -501,9 +505,6 @@
 
 /* Support one-wire interface */
 #undef CONFIG_ONEWIRE
-
-/* Check for stack overflows on every context switch */
-#undef CONFIG_OVERFLOW_DETECT
 
 /* Support PECI interface to x86 processor */
 #undef CONFIG_PECI
