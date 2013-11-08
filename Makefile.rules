@@ -10,6 +10,8 @@ objs := $(all-y)
 deps := $(objs:%.o=%.o.d)
 build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
+build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
+host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 
 # Create output directories if necessary
 _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
@@ -37,8 +39,10 @@ cmd_elf = $(LD) $(LDFLAGS) $(objs) -o $@ -T $< -Map $(out)/$*.map
 cmd_exe = $(CC) $(HOST_TEST_LDFLAGS) $(objs) -o $@
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) $(BUILD_LDFLAGS) \
-	         -MMD -MF $@.d $< -o $@
-cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d $(filter %.c, $^) -o $@
+	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c) \
+	         -MMD -MF $@.d -o $@
+cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
+	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
@@ -153,11 +157,10 @@ $(out)/common/version.o: $(out)/ec_version.h
 $(out)/ec_version.h: $(filter-out $(out)/common/version.o,$(objs))
 	$(call quiet,version,VERSION)
 
-$(build-utils): $(out)/%:%.c
+$(build-utils): $(out)/%:$(build-srcs)
 	$(call quiet,c_to_build,BUILDCC)
 
-$(host-utils): $(out)/%:%.c $(foreach u,$(host-util-common),util/$(u).c) \
-			    $(foreach u,$(util-lock-objs),util/lock/$(u).c)
+$(host-utils): $(out)/%:$(host-srcs)
 	$(call quiet,c_to_host,HOSTCC )
 
 $(out)/util/burn_my_ec: $(out)/$(PROJECT).bin

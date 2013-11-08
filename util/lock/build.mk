@@ -6,4 +6,4 @@
 # Lock library
 #
 
-util-lock-objs=csem ipc_lock gec_lock
+util-lock-objs=csem.o ipc_lock.o gec_lock.o

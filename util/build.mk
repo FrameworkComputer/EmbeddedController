@@ -7,10 +7,15 @@
 #
 
 host-util-bin=ectool lbplay burn_my_ec
-host-util-common=ectool_keyscan comm-host comm-dev misc_util ec_flash
+
+comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 ifeq ($(CONFIG_LPC),y)
-host-util-common+=comm-lpc
+comm-objs+=comm-lpc.o
 else
-host-util-common+=comm-i2c
+comm-objs+=comm-i2c.o
 endif
+ectool-objs=ectool.o ectool_keyscan.o misc_util.o ec_flash.o $(comm-objs)
+lbplay-objs=lbplay.o $(comm-objs)
+burn_my_ec-objs=ec_flash.o $(comm-objs) misc_util.o
+
 build-util-bin=ec_uartd stm32mon iteflash
