@@ -71,6 +71,8 @@ enum gpio_signal {
 	GPIO_S5_PGOOD,             /* Power good on S5 supplies */
 	GPIO_VCORE_PGOOD,          /* Power good on core VR */
 	GPIO_WP_L,                 /* Write protect input */
+	GPIO_JTAG_TCK,             /* JTAG clock input */
+	GPIO_UART0_RX,             /* UART0 RX input */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */

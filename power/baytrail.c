@@ -113,6 +113,9 @@ enum x86_state x86_chipset_init(void)
 	 */
 	if (system_jumped_to_this_image()) {
 		if ((x86_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
+			/* Disable idle task deep sleep when in S0. */
+			disable_sleep(SLEEP_MASK_AP_RUN);
+
 			CPRINTF("[%T x86 already in S0]\n");
 			return X86_S0;
 		} else {
@@ -266,6 +269,12 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
+		/*
+		 * Disable idle task deep sleep. This means that the low
+		 * power idle task will not go into deep sleep while in S0.
+		 */
+		disable_sleep(SLEEP_MASK_AP_RUN);
+
 		/* Wait 100ms after all voltages good */
 		msleep(100);
 
@@ -296,6 +305,12 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Disable wireless */
 		wireless_enable(0);
+
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S3 or lower.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
 
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop

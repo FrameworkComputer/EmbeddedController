@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "jtag.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "peci.h"
@@ -26,20 +27,23 @@
 #include "temp_sensor_chip.h"
 #include "thermal.h"
 #include "timer.h"
+#include "uart.h"
 #include "util.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"POWER_BUTTON_L",       LM4_GPIO_A, (1<<2), GPIO_INT_BOTH,
+	{"POWER_BUTTON_L",       LM4_GPIO_A, (1<<2), GPIO_INT_BOTH_DSLEEP,
 	 power_button_interrupt},
-	{"LID_OPEN",             LM4_GPIO_A, (1<<3), GPIO_INT_BOTH,
+	{"LID_OPEN",             LM4_GPIO_A, (1<<3), GPIO_INT_BOTH_DSLEEP,
 	 lid_interrupt},
-	{"AC_PRESENT",           LM4_GPIO_H, (1<<3), GPIO_INT_BOTH,
+	{"AC_PRESENT",           LM4_GPIO_H, (1<<3), GPIO_INT_BOTH_DSLEEP,
 	 extpower_interrupt},
-	{"PCH_SLP_S3_L",         LM4_GPIO_G, (1<<7), GPIO_INT_BOTH|GPIO_PULL_UP,
+	{"PCH_SLP_S3_L",         LM4_GPIO_G, (1<<7), GPIO_INT_BOTH_DSLEEP |
+							GPIO_PULL_UP,
 	 x86_interrupt},
-	{"PCH_SLP_S4_L",         LM4_GPIO_H, (1<<1), GPIO_INT_BOTH|GPIO_PULL_UP,
+	{"PCH_SLP_S4_L",         LM4_GPIO_H, (1<<1), GPIO_INT_BOTH_DSLEEP |
+							GPIO_PULL_UP,
 	 x86_interrupt},
 	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_INT_BOTH,
 	 x86_interrupt},
@@ -53,6 +57,11 @@ const struct gpio_info gpio_list[] = {
 	 x86_interrupt},
 	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
+	{"JTAG_TCK",             LM4_GPIO_C, (1<<0), GPIO_DEFAULT,
+	 jtag_interrupt},
+	{"UART0_RX",             LM4_GPIO_A, (1<<0), GPIO_INT_BOTH_DSLEEP |
+							GPIO_PULL_UP,
+	 uart_deepsleep_interrupt},
 
 	/* Other inputs */
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
