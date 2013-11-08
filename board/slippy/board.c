@@ -194,10 +194,8 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	/* Note: battery and charger share a port.  Only include it once in
-	 * this list so we don't double-initialize it. */
-	{"batt_chg", I2C_PORT_BATTERY,  100},
-	{"thermal",  I2C_PORT_THERMAL,  100},
+	{"batt_chg", 0, 100},
+	{"thermal",  5, 100},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
