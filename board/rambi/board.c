@@ -9,7 +9,7 @@
 #include "backlight.h"
 #include "chipset_x86_common.h"
 #include "common.h"
-#include "driver/temp_sensor/g781.h"
+#include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -178,10 +178,12 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[] = {
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
-	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
-		G781_IDX_INTERNAL, 4},
-	{"G781External", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
-		G781_IDX_EXTERNAL, 4},
+	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_LOCAL, 4},
+	{"TMP432_Power_top", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE1, 4},
+	{"TMP432_CPU_bottom", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE2, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -189,6 +191,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.
  */
 struct ec_thermal_config thermal_params[] = {
+	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
