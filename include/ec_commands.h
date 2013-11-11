@@ -931,15 +931,15 @@ struct rgb_s {
  */
 struct lightbar_params {
 	/* Timing */
-	int google_ramp_up;
-	int google_ramp_down;
-	int s3s0_ramp_up;
-	int s0_tick_delay[2];			/* AC=0/1 */
-	int s0a_tick_delay[2];			/* AC=0/1 */
-	int s0s3_ramp_down;
-	int s3_sleep_for;
-	int s3_ramp_up;
-	int s3_ramp_down;
+	int32_t google_ramp_up;
+	int32_t google_ramp_down;
+	int32_t s3s0_ramp_up;
+	int32_t s0_tick_delay[2];		/* AC=0/1 */
+	int32_t s0a_tick_delay[2];		/* AC=0/1 */
+	int32_t s0s3_ramp_down;
+	int32_t s3_sleep_for;
+	int32_t s3_ramp_up;
+	int32_t s3_ramp_down;
 
 	/* Oscillation */
 	uint8_t new_s0;
