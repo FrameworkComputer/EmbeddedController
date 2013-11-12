@@ -36,6 +36,8 @@ const char help_str[] =
 	"      Prints battery info\n"
 	"  batterycutoff\n"
 	"      Cut off battery output power\n"
+	"  boardversion\n"
+	"      Prints the board version\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
 	"  chargedump\n"
@@ -2856,6 +2858,20 @@ int cmd_battery_cut_off(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_board_version(int argc, char *argv[])
+{
+	struct ec_response_board_version response;
+	int rv;
+
+	rv = ec_command(EC_CMD_GET_BOARD_VERSION, 0, NULL, 0, &response,
+			sizeof(response));
+	if (rv < 0)
+		return rv;
+
+	printf("%d\n", response.board_version);
+	return rv;
+}
+
 int cmd_chipinfo(int argc, char *argv[])
 {
 	struct ec_response_get_chip_info info;
@@ -3356,6 +3372,7 @@ const struct command commands[] = {
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"batterycutoff", cmd_battery_cut_off},
+	{"boardversion", cmd_board_version},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargedump", cmd_charge_dump},
 	{"chargecontrol", cmd_charge_control},
