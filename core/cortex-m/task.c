@@ -64,13 +64,6 @@ extern int __task_start(int *task_stack_ready);
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-	/*
-	 * Print when the idle task starts.  This is the lowest priority task,
-	 * so this only starts once all other tasks have gotten a chance to do
-	 * their task inits and have gone to sleep.
-	 */
-	cprintf(CC_TASK, "[%T idle task started]\n");
-
 	while (1) {
 		/*
 		 * Wait for the next irq event.  This stops the CPU clock
