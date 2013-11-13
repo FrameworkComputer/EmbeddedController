@@ -45,6 +45,14 @@ static void extpower_buffer_to_pch(void)
 		gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 	}
 }
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, extpower_buffer_to_pch, HOOK_PRIO_DEFAULT);
+
+static void extpower_shutdown(void)
+{
+	/* Drive ACOK buffer to PCH low when shutting down */
+	gpio_set_level(GPIO_PCH_ACOK, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, extpower_shutdown, HOOK_PRIO_DEFAULT);
 
 void extpower_interrupt(enum gpio_signal signal)
 {

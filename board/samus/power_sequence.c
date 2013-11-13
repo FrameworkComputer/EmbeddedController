@@ -233,6 +233,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Wait 5ms for SUSCLK to stabilize */
 		msleep(5);
+
+		/* Call hook to indicate out of G3 state */
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
 		return X86_S5;
 
 	case X86_S5S3:
