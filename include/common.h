@@ -110,4 +110,12 @@ enum ec_error_list {
 #define test_export_static static
 #endif
 
+/*
+ * accessor allowing to override some read only data accesses.
+ * used to workaround a buggy toolchain (cf http://crosbug.com/p/24378)
+ */
+#ifndef RO
+#define RO(var) var
+#endif
+
 #endif  /* __CROS_EC_COMMON_H */

@@ -460,7 +460,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 	/* Handle version of current image */
 	if (copy == system_get_image_copy() || copy == SYSTEM_IMAGE_UNKNOWN)
-		return version_data.version;
+		return &RO(version_data).version[0];
 
 	addr = get_base(copy);
 	if (addr == 0xffffffff)
@@ -473,8 +473,8 @@ const char *system_get_version(enum system_image_copy_t copy)
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
 	v = (const struct version_struct *)addr;
-	if (v->cookie1 == version_data.cookie1 &&
-	    v->cookie2 == version_data.cookie2)
+	if (v->cookie1 == RO(version_data).cookie1 &&
+	    v->cookie2 == RO(version_data).cookie2)
 		return v->version;
 
 	return "";

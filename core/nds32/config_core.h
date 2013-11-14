@@ -10,4 +10,18 @@
 #define BFD_ARCH nds32
 #define BFD_FORMAT "elf32-nds32le"
 
+
+/*
+ * Force the compiler to use a proper relocation when accessing an external
+ * variable in a read-only section.
+ * TODO(crosbug.com/p/24378): remove me when the nds32 toolchain bug is fixed.
+ */
+#undef RO
+#define RO(var) \
+({								\
+	typeof(var) *__ptr_val;					\
+	asm volatile("la %0, " #var "\n" : "=r"(__ptr_val));	\
+	((typeof(var))(*__ptr_val));				\
+})
+
 #endif /* __CONFIG_CORE_H */
