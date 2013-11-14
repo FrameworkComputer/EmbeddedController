@@ -29,6 +29,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_PWM
+#define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G781
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PP3300_DX_EN
@@ -114,6 +115,7 @@ enum gpio_signal {
 	GPIO_USB2_ENABLE,          /* USB port 2 output power enable */
 	GPIO_VCORE_EN,             /* Enable core power supplies */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
+	GPIO_PCH_SCI_L,            /* Assert SCI to PCH */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
