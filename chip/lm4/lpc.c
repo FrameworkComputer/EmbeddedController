@@ -141,7 +141,13 @@ static void lpc_generate_smi(void)
  */
 static void lpc_generate_sci(void)
 {
+#ifdef CONFIG_SCI_GPIO
+	gpio_set_level(CONFIG_SCI_GPIO, 0);
+	udelay(65);
+	gpio_set_level(CONFIG_SCI_GPIO, 1);
+#else
 	LM4_LPC_LPCCTL |= LM4_LPC_SCI_START;
+#endif
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI])
 		CPRINTF("[%T sci 0x%08x]\n",

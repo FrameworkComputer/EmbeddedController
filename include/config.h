@@ -588,6 +588,9 @@
  */
 #undef CONFIG_SAVE_VBOOT_HASH
 
+/* Allow the board to use a GPIO for the SCI# signal. */
+#undef CONFIG_SCI_GPIO
+
 /* Support SPI interfaces */
 #undef CONFIG_SPI
 
