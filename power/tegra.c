@@ -144,6 +144,18 @@ static void set_pmic_pwrok(int asserted)
 }
 
 /**
+ * Set the AP RESET signal.
+ *
+ * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
+ *			logical level of the pin, not the physical level.
+ */
+static void set_ap_reset(int asserted)
+{
+	/* Signal is active-low */
+	gpio_set_level(GPIO_AP_RESET_L, asserted ? 0 : 1);
+}
+
+/**
  * Check for some event triggering the shutdown.
  *
  * It can be either a long power button press or a shutdown triggered from the
@@ -158,19 +170,14 @@ static int check_for_power_off_event(void)
 
 	/*
 	 * Check for power button press.
-	 *
-	 * If power_request is POWER_REQ_OFF, simulate the requst as power
-	 * button is pressed. This will casue GPIO_PMIC_PWRON_L to be driven
-	 * low (by set_pmic_pwrok(1)) until PMIC automatically turns off power.
-	 * (PMIC turns off power if GPIO_PMIC_PWRON_L is low for >=9 seconds.)
 	 */
 	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
 		udelay(KB_PWR_ON_DEBOUNCE);
 		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
 			pressed = 1;
 	} else if (power_request == POWER_REQ_OFF) {
-		pressed = 1;
 		power_request = POWER_REQ_NONE;
+		return 4;  /* return non-zero for shudown down */
 	}
 
 #ifdef HAS_TASK_KEYSCAN
@@ -334,6 +341,10 @@ void chipset_reset(int is_cold)
 
 void chipset_force_shutdown(void)
 {
+	/* Assert AP reset to shutdown immediately */
+	set_ap_reset(1);
+
+	/* Release the power button, if it was asserted */
 	set_pmic_pwrok(0);
 }
 
@@ -349,8 +360,13 @@ void chipset_force_shutdown(void)
  */
 static int check_for_power_on_event(void)
 {
-	/* check if system is already ON */
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD)) {
+	/*
+	 * check if system is already ON:
+	 *   1. XPSHOLD is high (power is supplied), and
+	 *   2. AP_RESET_L is high (not a force shutdown).
+	 */
+	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) &&
+	    gpio_get_level(GPIO_AP_RESET_L)) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
@@ -390,11 +406,14 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
-	gpio_set_level(GPIO_AP_RESET_L, 1);
+	/* Make sure we de-assert the AP_RESET_L pin. */
+	set_ap_reset(0);
+
+	/* Push the power button */
 	set_pmic_pwrok(1);
 
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
-		/* Initialize non-AP components */
+	/* Initialize non-AP components if the AP is off. */
+	if (!ap_on)
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 	ap_on = 1;
