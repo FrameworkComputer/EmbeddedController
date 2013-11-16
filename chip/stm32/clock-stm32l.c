@@ -148,8 +148,14 @@ void clock_enable_module(enum module_id module, int enable)
 		new_mask = clock_mask & ~(1 << module);
 
 	/* Only change clock if needed */
-	if ((!!new_mask) != (!!clock_mask))
+	if ((!!new_mask) != (!!clock_mask)) {
+
+		/* Flush UART before switching clock speed */
+		cflush();
+
 		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI);
+	}
+
 	clock_mask = new_mask;
 }
 
