@@ -31,10 +31,6 @@ proc flash_bds { } {
 	flash_lm4 ../../../build/bds/ec.bin 0
 }
 
-proc flash_slippy { } {
-	flash_lm4 ../../../build/slippy/ec.bin 0
-}
-
 proc flash_rambi { } {
 	flash_lm4 ../../../build/rambi/ec.bin 0
 }
@@ -50,22 +46,6 @@ proc flash_samus_ro { } {
 
 proc flash_samus_rw { } {
 	flash_lm4 ../../../build/samus/ec.RW.bin 131072
-}
-
-proc flash_bolt { } {
-	flash_lm4 ../../../build/bolt/ec.bin 0
-}
-
-proc flash_bolt_ro { } {
-	flash_lm4 ../../../build/bolt/ec.RO.flat 0
-}
-
-proc flash_bolt_rw { } {
-	flash_lm4 ../../../build/bolt/ec.RW.bin 131072
-}
-
-proc flash_slippy_rw { } {
-	flash_lm4 ../../../build/slippy/ec.RW.bin 131072
 }
 
 proc flash_falco { } {
@@ -91,8 +71,8 @@ proc unprotect_link { } {
 	reset
 }
 
-# Slippy/peppy/falco have pstate following RO
-proc unprotect_slippy { } {
+# Peppy/falco have pstate following RO
+proc unprotect_peppy { } {
 	reset halt
 	flash erase_sector 0 126 127
 	reset

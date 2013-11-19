@@ -222,8 +222,8 @@ fi
 save="$(servo_save)"
 
 case "${BOARD}" in
-	daisy | kirby | pit | puppy | snow | spring | discovery | nyan ) flash_stm32 ;;
-	bolt | samus | falco | peppy | rambi | slippy ) flash_lm4 ;;
+	pit | snow | spring | discovery | nyan ) flash_stm32 ;;
+	samus | falco | peppy | rambi ) flash_lm4 ;;
 	link ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
 esac

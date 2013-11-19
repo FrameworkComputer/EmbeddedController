@@ -77,7 +77,7 @@
  */
 #undef CONFIG_BATTERY_BQ20Z453	/* BQ20Z453 battery used on some ARM laptops */
 #undef CONFIG_BATTERY_BQ27541	/* BQ27541 battery */
-#undef CONFIG_BATTERY_LINK	/* Battery used on Link, Bolt, etc. */
+#undef CONFIG_BATTERY_LINK	/* Battery used on Link */
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
@@ -329,9 +329,6 @@
 
 /* Support detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
-
-/* Support providing power to the device via USB on Kirby. */
-#undef CONFIG_EXTPOWER_KIRBY
 
 /*
  * Support detecting external power presence via a pair of GPIOs, as used

@@ -10,14 +10,12 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #disable: powerdemo
 
 test-list-$(BOARD_bds)+=
-test-list-$(BOARD_daisy)+=kb_scan stress
 test-list-$(BOARD_pit)+=kb_scan stress
 test-list-$(BOARD_snow)+=kb_scan stress
 test-list-$(BOARD_spring)+=kb_scan stress
 
-# Bolt and Samus have board-specific chipset code, and the tests don't
-# compile with those. Disable them for now.
-test-list-$(BOARD_bolt)=
+# Samus has board-specific chipset code, and the tests don't
+# compile with it. Disable them for now.
 test-list-$(BOARD_samus)=
 
 # Emulator tests

@@ -43,16 +43,11 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
-#if defined(BOARD_pit) || defined(BOARD_puppy)
+#ifdef BOARD_pit
 #define DELAY_5V_SETUP		(2 * MSEC)
 #define DELAY_3V_SETUP		(2 * MSEC)
 #else
 #define DELAY_5V_SETUP		MSEC
-#endif
-
-/* Delay between PMIC_PWRON and enabling 3.3V */
-#ifdef BOARD_kirby
-#define DELAY_PRE_3V_ENABLE     16620
 #endif
 
 /* Delay between 1.35v and 3.3v rails startup */
@@ -173,7 +168,7 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
  */
 static void set_pmic_pwrok(int asserted)
 {
-#if defined(BOARD_pit) || defined(BOARD_kirby)
+#ifdef BOARD_pit
 	/* Signal is active-high */
 	gpio_set_level(GPIO_PMIC_PWRON, asserted);
 #else
@@ -316,9 +311,7 @@ static int gaia_power_init(void)
 	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
-#ifndef BOARD_kirby
 	gpio_enable_interrupt(GPIO_PP1800_LDO2);
-#endif
 
 	/* Leave power off only if requested by reset flags */
 	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
@@ -399,12 +392,6 @@ void chipset_reset(int is_cold)
 
 void chipset_force_shutdown(void)
 {
-#ifdef BOARD_kirby
-	gpio_set_flags(GPIO_SOC1V8_XPSHOLD, GPIO_ODR_LOW);
-	udelay(DELAY_XPSHOLD_PULL);
-	gpio_set_flags(GPIO_SOC1V8_XPSHOLD, GPIO_INT_RISING | GPIO_INPUT);
-#endif
-
 	/* Turn off all rails */
 	gpio_set_level(GPIO_EN_PP3300, 0);
 #ifdef CONFIG_CHIPSET_HAS_PP1350
@@ -492,7 +479,7 @@ static int power_on(void)
 	usleep(DELAY_5V_SETUP);
 #endif
 
-#if defined(BOARD_pit) || defined(BOARD_puppy)
+#ifdef BOARD_pit
 	/*
 	 * 3.3V rail must come up right after 5V, because it sources power to
 	 * various buck supplies.
@@ -511,13 +498,6 @@ static int power_on(void)
 		set_pmic_pwrok(1);
 	}
 
-#ifdef BOARD_kirby
-	/*
-	 * There is no input signal for PMIC ready for 3.3V power. We can only
-	 * for a pre-defined amount of time.
-	 */
-	udelay(DELAY_PRE_3V_ENABLE);
-#else
 	/* wait for all PMIC regulators to be ready */
 	wait_in_signal(GPIO_PP1800_LDO2, 1, PMIC_TIMEOUT);
 
@@ -537,7 +517,6 @@ static int power_on(void)
 	gpio_set_level(GPIO_EN_PP1350, 1);
 	/* Wait to avoid large inrush current */
 	usleep(DELAY_RAIL_STAGGERING);
-#endif
 
 	/* Enable 3.3v power rail, if it's not already on */
 	gpio_set_level(GPIO_EN_PP3300, 1);

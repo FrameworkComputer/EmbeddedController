@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* External power detection for daisy/snow/pit */
+/* External power detection for snow */
 
 #include "common.h"
 #include "extpower.h"
@@ -16,7 +16,7 @@ int extpower_is_present(void)
 	/*
 	 * Detect AC state using combined gpio pins
 	 *
-	 * On daisy and snow, there's no single gpio signal to detect AC.
+	 * On snow, there's no single gpio signal to detect AC.
 	 *   GPIO_AC_PWRBTN_L provides AC on and PWRBTN release.
 	 *   GPIO_KB_PWR_ON_L provides PWRBTN release.
 	 *

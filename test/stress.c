@@ -35,8 +35,6 @@ struct i2c_test_param_t {
 	{8, 0, 0x60, 0x0, -1},
 	{8, 0, 0x60, 0x0, 0x40},
 	{8, 0, 0x4a, 0x1, -1},
-#elif defined(BOARD_daisy)
-	{8, 1, 0x90, 0x19, -1},
 #elif defined(BOARD_link)
 	{8, 0, 0x16, 0x8, -1},
 	{8, 0, 0x16, 0x9, -1},
@@ -48,7 +46,7 @@ struct i2c_test_param_t {
 #endif
 };
 /* Disable I2C test for boards without test configuration */
-#if defined(BOARD_bds) || defined(BOARD_mccroskey) || defined(BOARD_slippy) || \
+#if defined(BOARD_bds) || defined(BOARD_mccroskey) || \
 	defined(BOARD_falco) || defined(BOARD_peppy) || defined(BOARD_wolf)
 #undef CONFIG_I2C
 #endif
