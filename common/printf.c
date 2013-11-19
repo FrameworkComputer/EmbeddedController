@@ -14,67 +14,84 @@ static const char error_str[] = "ERROR";
 #define MAX_FORMAT 1024  /* Maximum chars in a single format field */
 
 /**
- * Convert a single digit to hex
+ * Convert the lowest nibble of a number to hex
  *
- * @param c	Value of digit (0 - 0x0f)
+ * @param c	Number to extract lowest nibble from
  *
  * @return The corresponding ASCII character ('0' - 'f').
  */
 static int hexdigit(int c)
 {
+	/* Strip off just the last nibble */
+	c &= 0x0f;
+
 	return c > 9 ? (c + 'a' - 10) : (c + '0');
 }
+
+/* Flags for vfnprintf() flags */
+#define PF_LEFT		(1 << 0)  /* Left-justify */
+#define PF_PADZERO	(1 << 1)  /* Pad with 0's not spaces */
+#define PF_NEGATIVE	(1 << 2)  /* Number is negative */
+#define PF_64BIT	(1 << 3)  /* Number is 64-bit */
 
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	      const char *format, va_list args)
 {
 	/*
 	 * Longest uint64 in decimal = 20
-	 * longest uint32 in binary  = 32
+	 * Longest uint32 in binary  = 32
+	 * + sign bit
+	 * + terminating null
 	 */
 	char intbuf[34];
-	int dropped_chars = 0;
-	int is_left;
-	int pad_zero;
+	int flags;
 	int pad_width;
 	int precision;
 	char *vstr;
 	int vlen;
 
-	while (*format && !dropped_chars) {
+	while (*format) {
 		int c = *format++;
 
 		/* Copy normal characters */
 		if (c != '%') {
-			dropped_chars |= addchar(context, c);
+			if (addchar(context, c))
+				return EC_ERROR_OVERFLOW;
 			continue;
 		}
+
+		/* Zero flags, now that we're in a format */
+		flags = 0;
 
 		/* Get first format character */
 		c = *format++;
 
 		/* Send "%" for "%%" input */
 		if (c == '%' || c == '\0') {
-			dropped_chars |= addchar(context, '%');
+			if (addchar(context, '%'))
+				return EC_ERROR_OVERFLOW;
 			continue;
 		}
 
 		/* Handle %c */
 		if (c == 'c') {
 			c = va_arg(args, int);
-			dropped_chars |= addchar(context, c);
+			if (addchar(context, c))
+				return EC_ERROR_OVERFLOW;
 			continue;
 		}
 
 		/* Handle left-justification ("%-5s") */
-		is_left = (c == '-');
-		if (is_left)
+		if (c == '-') {
+			flags |= PF_LEFT;
 			c = *format++;
+		}
 
 		/* Handle padding with 0's */
-		pad_zero = (c == '0');
-		if (pad_zero)
+		if (c == '0') {
+			flags |= PF_PADZERO;
 			c = *format++;
+		}
 
 		/* Count padding length */
 		pad_width = 0;
@@ -128,33 +145,28 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			}
 
 			for ( ; precision; precision--, vstr++) {
-				dropped_chars |=
-					addchar(context,
-						hexdigit((*vstr >> 4) & 0x0f));
-				dropped_chars |=
-					addchar(context,
-						hexdigit(*vstr & 0x0f));
+				if (addchar(context, hexdigit(*vstr >> 4)) ||
+				    addchar(context, hexdigit(*vstr)))
+					return EC_ERROR_OVERFLOW;
 			}
 
 			continue;
 		} else {
 			uint64_t v;
-			int is_negative = 0;
-			int is_64bit = 0;
 			int base = 10;
 
 			/* Handle length */
 			if (c == 'l') {
-				is_64bit = 1;
+				flags |= PF_64BIT;
 				c = *format++;
 			}
 
 			/* Special-case: %T = current time */
 			if (c == 'T') {
 				v = get_time().val;
-				is_64bit = 1;
+				flags |= PF_64BIT;
 				precision = 6;
-			} else if (is_64bit) {
+			} else if (flags & PF_64BIT) {
 				v = va_arg(args, uint64_t);
 			} else {
 				v = va_arg(args, uint32_t);
@@ -162,15 +174,15 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			switch (c) {
 			case 'd':
-				if (is_64bit) {
+				if (flags & PF_64BIT) {
 					if ((int64_t)v < 0) {
-						is_negative = 1;
+						flags |= PF_NEGATIVE;
 						if (v != (1ULL << 63))
 							v = -v;
 					}
 				} else {
 					if ((int)v < 0) {
-						is_negative = 1;
+						flags |= PF_NEGATIVE;
 						if (v != (1ULL << 31))
 							v = -(int)v;
 					}
@@ -229,7 +241,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					*(--vstr) = 'a' + digit - 10;
 			}
 
-			if (is_negative)
+			if (flags & PF_NEGATIVE)
 				*(--vstr) = '-';
 
 			/*
@@ -250,20 +262,23 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		if (!precision)
 			precision = MAX(vlen, pad_width);
 
-		while (vlen < pad_width && !is_left) {
-			dropped_chars |= addchar(context, pad_zero ? '0' : ' ');
+		while (vlen < pad_width && !(flags & PF_LEFT)) {
+			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
+				return EC_ERROR_OVERFLOW;
 			vlen++;
 		}
 		while (*vstr && --precision >= 0)
-			dropped_chars |= addchar(context, *vstr++);
-		while (vlen < pad_width && is_left) {
-			dropped_chars |= addchar(context, ' ');
+			if (addchar(context, *vstr++))
+				return EC_ERROR_OVERFLOW;
+		while (vlen < pad_width && flags & PF_LEFT) {
+			if (addchar(context, ' '))
+				return EC_ERROR_OVERFLOW;
 			vlen++;
 		}
 	}
 
-	/* Successful if we consumed all output */
-	return dropped_chars ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+	/* If we're still here, we consumed all output */
+	return EC_SUCCESS;
 }
 
 /* Context for snprintf() */
