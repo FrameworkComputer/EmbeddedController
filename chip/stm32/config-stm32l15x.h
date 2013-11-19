@@ -50,5 +50,8 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 2048
 
+/* Use DMA for UART receive */
+#define CONFIG_UART_RX_DMA
+
 /* Flash erases to 0, not 1 */
 #define CONFIG_FLASH_ERASED_VALUE32 0

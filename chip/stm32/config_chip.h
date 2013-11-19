@@ -55,8 +55,11 @@
 /* Use DMA */
 #define CONFIG_DMA
 
-/* Use DMA for UART I/O */
-#define CONFIG_UART_RX_DMA
+/*
+ * Use DMA for UART transmit for all platforms.  DMA for UART receive is
+ * enabled on a per-chip basis because it doesn't seem to work reliably on
+ * STM32F (see crosbug.com/p/24141).
+ */
 #define CONFIG_UART_TX_DMA
 
 /* Flash protection applies to the next boot, not the current one */

@@ -48,3 +48,6 @@
 
 /* Flash erases to 0, not 1 */
 #define CONFIG_FLASH_ERASED_VALUE32 0
+
+/* Use DMA for UART receive */
+#define CONFIG_UART_RX_DMA
