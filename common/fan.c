@@ -259,6 +259,36 @@ DECLARE_CONSOLE_COMMAND(fanduty, cc_fanduty,
 			NULL);
 
 /*****************************************************************************/
+/* DPTF interface functions */
+
+/* 0-100% if in duty mode. -1 if not */
+int dptf_get_fan_duty_target(void)
+{
+	int fan = 0;				/* TODO(crosbug.com/p/23803) */
+
+	if (thermal_control_enabled[fan] || fan_get_rpm_mode(fan))
+		return -1;
+
+	return fan_get_duty(fan);
+}
+
+/* 0-100% sets duty, out of range means let the EC drive */
+void dptf_set_fan_duty_target(int pct)
+{
+	int fan;
+
+	if (pct < 0 || pct > 100) {
+		/* TODO(crosbug.com/p/23803) */
+		for (fan = 0; fan < CONFIG_FANS; fan++)
+			set_thermal_control_enabled(fan, 1);
+	} else {
+		/* TODO(crosbug.com/p/23803) */
+		for (fan = 0; fan < CONFIG_FANS; fan++)
+			set_duty_cycle(fan, pct);
+	}
+}
+
+/*****************************************************************************/
 /* Host commands */
 
 static int hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)

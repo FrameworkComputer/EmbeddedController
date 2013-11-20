@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "dptf.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -412,7 +413,7 @@ static void handle_acpi_write(int is_cmd)
 	/* Process complete commands */
 	if (acpi_cmd == EC_CMD_ACPI_READ && acpi_data_count == 1) {
 		/* ACPI read cmd + addr */
-		int result = 0;
+		int result = 0xff;		/* value for bogus read */
 
 		switch (acpi_addr) {
 		case EC_ACPI_MEM_VERSION:
@@ -435,6 +436,12 @@ static void handle_acpi_write(int is_cmd)
 			 * than just LM4, fix this.
 			 */
 			result = pwm_get_duty(PWM_CH_KBLIGHT);
+			break;
+#endif
+#ifdef CONFIG_FANS
+		case EC_ACPI_MEM_FAN_DUTY:
+			/** TODO(crosbug.com/p/23774): Fix this too */
+			result = dptf_get_fan_duty_target();
 			break;
 #endif
 		default:
@@ -461,6 +468,12 @@ static void handle_acpi_write(int is_cmd)
 			 */
 			CPRINTF("\r[%T ACPI kblight %d]", data);
 			pwm_set_duty(PWM_CH_KBLIGHT, data);
+			break;
+#endif
+#ifdef CONFIG_FANS
+		case EC_ACPI_MEM_FAN_DUTY:
+			/** TODO(crosbug.com/p/23774): Fix this too */
+			dptf_set_fan_duty_target(data);
 			break;
 #endif
 		default:
