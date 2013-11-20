@@ -23,6 +23,7 @@
 #define CONFIG_CMD_GSV
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_KEYBOARD_COL2_INVERTED
+#define CONFIG_KEYBOARD_IRQ_GPIO GPIO_KBD_IRQ_L
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 #undef  CONFIG_PECI
@@ -116,6 +117,7 @@ enum gpio_signal {
 	GPIO_VCORE_EN,             /* Enable core power supplies */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 	GPIO_PCH_SCI_L,            /* Assert SCI to PCH */
+	GPIO_KBD_IRQ_L,            /* Negative edge triggered irq. */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
