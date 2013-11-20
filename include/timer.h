@@ -60,6 +60,9 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now);
 /**
  * Busy-wait.
  *
+ * This may be called with interrupts disabled, at any time after timer_init()
+ * has been called.
+ *
  * Note that calling this with us>1000 may impact system performance; use
  * usleep() for longer delays.
  *
@@ -74,12 +77,16 @@ void udelay(unsigned us);
  * perhaps longer, if a higher-priority task is running when the delay
  * expires).
  *
+ * This may only be called from a task function, with interrupts enabled.
+ *
  * @param us		Number of microseconds to sleep.
  */
 void usleep(unsigned us);
 
 /**
- * Sleep for milliseconds
+ * Sleep for milliseconds.
+ *
+ * Otherwise the same as usleep().
  *
  * @param ms		Number of milliseconds to sleep.
  */
@@ -90,6 +97,8 @@ static inline void msleep(unsigned ms)
 
 /**
  * Sleep for seconds
+ *
+ * Otherwise the same as usleep().
  *
  * @param sec		Number of seconds to sleep.
  */
