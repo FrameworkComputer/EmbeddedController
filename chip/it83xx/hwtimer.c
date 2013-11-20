@@ -13,6 +13,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* 128us (2^7 us) between 2 ticks */
 #define TICK_INTERVAL_LOG2  7
@@ -64,6 +65,11 @@ void __hw_clock_source_set(uint32_t ts)
 
 static void __hw_clock_source_irq(void)
 {
+#ifdef CONFIG_WATCHDOG
+	/* Determine interrupt number. */
+	int irq = IT83XX_INTC_IVCT3 - 16;
+#endif
+
 	/*
 	 * If this is a SW interrupt, then process the timers, but don't
 	 * increment the time_us.
@@ -72,6 +78,18 @@ static void __hw_clock_source_irq(void)
 		process_timers(0);
 		return;
 	}
+
+#ifdef CONFIG_WATCHDOG
+	/*
+	 * Both the external timer for the watchdog warning and the HW timer
+	 * go through this irq. So, if this interrupt was caused by watchdog
+	 * warning timer, then call that function.
+	 */
+	if (irq == IT83XX_IRQ_EXT_TIMER3) {
+		watchdog_warning_irq();
+		return;
+	}
+#endif
 
 	/* clear interrupt status */
 	task_clear_pending_irq(IT83XX_IRQ_TMR_B0);

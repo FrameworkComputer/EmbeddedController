@@ -31,6 +31,12 @@ int watchdog_init(void);
  */
 void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp);
 
+/**
+ * Watchdog has not been tickled recently warning. This function should be
+ * called when the watchdog is close to firing.
+ */
+void watchdog_warning_irq(void);
+
 /* Reload the watchdog counter */
 #ifdef CONFIG_WATCHDOG
 void watchdog_reload(void);
