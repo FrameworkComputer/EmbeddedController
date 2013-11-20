@@ -87,6 +87,15 @@ static void wait_irq_sent(void)
 	udelay(4);
 }
 
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
+static void keyboard_irq_assert(void)
+{
+	/* Negative edge-triggered keyboard interrupt. */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 0);
+	wait_irq_sent();
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+}
+#else
 static void wait_send_serirq(uint32_t lpcirqctl)
 {
 	LM4_LPC_LPCIRQCTL = lpcirqctl;
@@ -116,6 +125,13 @@ static void lpc_manual_irq(int irq_num)
 	/* Generate a all-high frame to simulate a rising edge. */
 	wait_send_serirq(common_bits);
 }
+
+static inline void keyboard_irq_assert(void)
+{
+	/* Use serirq method. */
+	lpc_manual_irq(1);  /* IRQ#1 */
+}
+#endif
 
 /**
  * Generate SMI pulse to the host chipset via GPIO.
@@ -253,7 +269,7 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	LPC_POOL_KEYBOARD[1] = chr;
 	if (send_irq) {
-		lpc_manual_irq(1);  /* IRQ#1 */
+		keyboard_irq_assert();
 	}
 }
 
@@ -271,7 +287,7 @@ void lpc_keyboard_clear_buffer(void)
 void lpc_keyboard_resume_irq(void)
 {
 	if (lpc_keyboard_has_char())
-		lpc_manual_irq(1);
+		keyboard_irq_assert();
 }
 
 #ifdef CONFIG_UART_HOST

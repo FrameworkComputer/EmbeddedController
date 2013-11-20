@@ -442,6 +442,9 @@
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
 
+/* The board uses a negative edge-triggered GPIO for keyboard interrupts. */
+#undef CONFIG_KEYBOARD_IRQ_GPIO
+
 /* Compile code for 8042 keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
 
