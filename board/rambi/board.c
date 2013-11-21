@@ -95,11 +95,7 @@ const struct gpio_info gpio_list[] = {
 	{"PP3300_DX_EN",         LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
 	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<4), GPIO_OUT_LOW, NULL},
 	{"PP3300_WLAN_EN",       LM4_GPIO_J, (1<<0), GPIO_OUT_LOW, NULL},
-	/*
-	 * TODO(crosbug.com/p/23673): PP5000_EN should default to GPIO_OUT_LOW
-	 * once issues with Rev.1 boards are fixed.
-	 */
-	{"PP5000_EN",            LM4_GPIO_H, (1<<7), GPIO_OUT_HIGH, NULL},
+	{"PP5000_EN",            LM4_GPIO_H, (1<<7), GPIO_OUT_LOW, NULL},
 	{"PPSX_EN",              LM4_GPIO_L, (1<<6), GPIO_OUT_LOW, NULL},
 	{"SUSP_VR_EN",           LM4_GPIO_C, (1<<7), GPIO_OUT_LOW, NULL},
 	{"TOUCHSCREEN_RESET_L",  LM4_GPIO_N, (1<<7), GPIO_OUT_LOW, NULL},
