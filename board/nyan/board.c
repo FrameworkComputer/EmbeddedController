@@ -81,7 +81,7 @@ const struct gpio_info gpio_list[] = {
 	{"BAT_LED0",    GPIO_B, (1<<11), GPIO_OUT_LOW, NULL},
 	{"BAT_LED1",    GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"CHARGING",    GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
-	{"EC_BL_OVERRIDE", GPIO_H, (1<<1), GPIO_ODR_LOW, NULL},
+	{"EC_BL_OVERRIDE", GPIO_H, (1<<1), GPIO_ODR_HIGH, NULL},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
