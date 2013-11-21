@@ -128,7 +128,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	else
 		LM4_GPIO_IEV(port) &= ~mask;
 
-	if (flags & GPIO_INT_F_BOTH)
+	/* Handle interrupting on both edges */
+	if ((flags & GPIO_INT_F_RISING) &&
+	    (flags & GPIO_INT_F_FALLING))
 		LM4_GPIO_IBE(port) |= mask;
 	else
 		LM4_GPIO_IBE(port) &= ~mask;

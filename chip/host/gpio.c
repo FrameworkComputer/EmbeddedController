@@ -27,11 +27,9 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 
 static int gpio_interrupt_check(uint32_t flags, int old, int new)
 {
-	if ((flags & (GPIO_INT_F_RISING|GPIO_INT_F_BOTH)) &&
-	    old == 0 && new == 1)
+	if ((flags & GPIO_INT_F_RISING) && old == 0 && new == 1)
 		return 1;
-	if ((flags & (GPIO_INT_F_FALLING|GPIO_INT_F_BOTH)) &&
-	    old == 1 && new == 0)
+	if ((flags & GPIO_INT_F_FALLING) && old == 1 && new == 0)
 		return 1;
 	if ((flags & GPIO_INT_F_LOW) && new == 0)
 		return 1;

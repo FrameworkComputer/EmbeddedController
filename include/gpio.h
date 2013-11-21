@@ -24,7 +24,6 @@
 #define GPIO_HIGH          (1 << 7)  /* If GPIO_OUTPUT, set level high */
 #define GPIO_INT_F_RISING  (1 << 8)  /* Interrupt on rising edge */
 #define GPIO_INT_F_FALLING (1 << 9)  /* Interrupt on falling edge */
-#define GPIO_INT_F_BOTH    (1 << 10) /* Interrupt on both edges */
 #define GPIO_INT_F_LOW     (1 << 11) /* Interrupt on low level */
 #define GPIO_INT_F_HIGH    (1 << 12) /* Interrupt on high level */
 #define GPIO_DEFAULT       (1 << 13) /* Don't set up on boot */
@@ -37,12 +36,12 @@
 #define GPIO_ODR_LOW        (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_LOW)
 #define GPIO_INT_RISING     (GPIO_INPUT | GPIO_INT_F_RISING)
 #define GPIO_INT_FALLING    (GPIO_INPUT | GPIO_INT_F_FALLING)
-#define GPIO_INT_BOTH       (GPIO_INPUT | GPIO_INT_F_BOTH)
+/* TODO(crosbug.com/p/24204): "EDGE" would have been clearer than "BOTH". */
+#define GPIO_INT_BOTH       (GPIO_INT_RISING | GPIO_INT_FALLING)
 #define GPIO_INT_LOW        (GPIO_INPUT | GPIO_INT_F_LOW)
 #define GPIO_INT_HIGH       (GPIO_INPUT | GPIO_INT_F_HIGH)
-#define GPIO_INT_EDGE       (GPIO_INT_RISING | GPIO_INT_FALLING | GPIO_INT_BOTH)
 #define GPIO_INT_LEVEL      (GPIO_INT_LOW | GPIO_INT_HIGH)
-#define GPIO_INT_ANY        (GPIO_INT_EDGE | GPIO_INT_LEVEL)
+#define GPIO_INT_ANY        (GPIO_INT_BOTH | GPIO_INT_LEVEL)
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
 
 /* GPIO signal definition structure, for use by board.c */
