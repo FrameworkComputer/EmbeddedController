@@ -43,7 +43,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  (9 * SECOND)
+#define DELAY_FORCE_SHUTDOWN  (10200 * MSEC)  /* 10.2 seconds */
 
 /*
  * If the power key is pressed to turn on, then held for this long, we
@@ -53,7 +53,7 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or XPSHOLD == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(9 * SECOND)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(10200 * MSEC)  /* 10.2 seconds */
 
 /* Maximum delay after power button press before we deassert GPIO_PMIC_PWRON */
 #define DELAY_RELEASE_PWRON   SECOND /* 1s */
