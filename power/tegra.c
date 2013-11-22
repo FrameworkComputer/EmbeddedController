@@ -46,6 +46,19 @@
 #define DELAY_FORCE_SHUTDOWN  (10200 * MSEC)  /* 10.2 seconds */
 
 /*
+ * The minimum time to assert the PMIC PWRON pin is 20ms.
+ * Give it longer to ensure the PMIC doesn't lose it.
+ */
+#define PMIC_PWRON_DEBOUNCE_TIME  (20 * MSEC * 3)
+
+/*
+ * The minimum time to assert the PMIC THERM pin is 32us. However,
+ * it needs to be extended to about 50ms to let the 5V rail
+ * dissipate fully.
+ */
+#define PMIC_THERM_HOLD_TIME  (50 * MSEC)
+
+/*
  * If the power key is pressed to turn on, then held for this long, we
  * power off.
  *
@@ -132,27 +145,29 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 }
 
 /**
- * Set the PMIC PWROK signal.
+ * Set the PMIC PWRON signal.
+ *
+ * Note that asserting requires holding for PMIC_PWRON_DEBOUNCE_TIME.
  *
  * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
  *			logical level of the pin, not the physical level.
  */
-static void set_pmic_pwrok(int asserted)
+static void set_pmic_pwron(int asserted)
 {
 	/* Signal is active-low */
 	gpio_set_level(GPIO_PMIC_PWRON_L, asserted ? 0 : 1);
 }
 
 /**
- * Set the AP RESET signal.
+ * Set the PMIC THERM to force shutdown the AP.
  *
  * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
  *			logical level of the pin, not the physical level.
  */
-static void set_ap_reset(int asserted)
+static void set_pmic_therm(int asserted)
 {
 	/* Signal is active-low */
-	gpio_set_level(GPIO_AP_RESET_L, asserted ? 0 : 1);
+	gpio_set_level(GPIO_PMIC_THERM_L, asserted ? 0 : 1);
 }
 
 /**
@@ -188,7 +203,8 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
-		set_pmic_pwrok(1);
+		set_pmic_pwron(1);
+		usleep(PMIC_PWRON_DEBOUNCE_TIME);
 
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
@@ -202,7 +218,7 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPRINTF("[%T power off cancel]\n");
-		set_pmic_pwrok(0);
+		set_pmic_pwron(0);
 	}
 
 	power_button_was_pressed = pressed;
@@ -283,6 +299,15 @@ static int tegra_power_init(void)
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
+	/*
+	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
+	 * the AP could stay in strange state.
+	 */
+	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
+		CPRINTF("[%T not sysjump; forcing AP shutdown]\n");
+		chipset_force_shutdown();
+	}
+
 	/* Leave power off only if requested by reset flags */
 	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
 		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
@@ -341,11 +366,13 @@ void chipset_reset(int is_cold)
 
 void chipset_force_shutdown(void)
 {
-	/* Assert AP reset to shutdown immediately */
-	set_ap_reset(1);
-
 	/* Release the power button, if it was asserted */
-	set_pmic_pwrok(0);
+	set_pmic_pwron(0);
+
+	/* Assert AP reset to shutdown immediately */
+	set_pmic_therm(1);
+	udelay(PMIC_THERM_HOLD_TIME);
+	set_pmic_therm(0);
 }
 
 /*****************************************************************************/
@@ -360,13 +387,8 @@ void chipset_force_shutdown(void)
  */
 static int check_for_power_on_event(void)
 {
-	/*
-	 * check if system is already ON:
-	 *   1. XPSHOLD is high (power is supplied), and
-	 *   2. AP_RESET_L is high (not a force shutdown).
-	 */
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) &&
-	    gpio_get_level(GPIO_AP_RESET_L)) {
+	/* check if system is already ON */
+	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD)) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
@@ -406,11 +428,12 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
-	/* Make sure we de-assert the AP_RESET_L pin. */
-	set_ap_reset(0);
+	/* Make sure we de-assert the PMI_THERM_L pin. */
+	set_pmic_therm(0);
 
 	/* Push the power button */
-	set_pmic_pwrok(1);
+	set_pmic_pwron(1);
+	usleep(PMIC_PWRON_DEBOUNCE_TIME);
 
 	/* Initialize non-AP components if the AP is off. */
 	if (!ap_on)
@@ -553,7 +576,7 @@ void chipset_task(void)
 					DELAY_SHUTDOWN_ON_POWER_HOLD))
 					continue_power = 1;
 			}
-			set_pmic_pwrok(0);
+			set_pmic_pwron(0);
 			if (continue_power) {
 				power_button_was_pressed = 0;
 				while (!(value = check_for_power_off_event()))
