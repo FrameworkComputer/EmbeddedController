@@ -93,7 +93,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PP1350_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP3300_DX_EN",         LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
-	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<2), GPIO_OUT_LOW, NULL},
+	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<4), GPIO_OUT_LOW, NULL},
 	{"PP3300_WLAN_EN",       LM4_GPIO_J, (1<<0), GPIO_OUT_LOW, NULL},
 	/*
 	 * TODO(crosbug.com/p/23673): PP5000_EN should default to GPIO_OUT_LOW
