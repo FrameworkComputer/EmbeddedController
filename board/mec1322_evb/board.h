@@ -19,7 +19,6 @@
 #undef CONFIG_LPC
 #undef CONFIG_PECI
 #undef CONFIG_SWITCH
-#undef CONFIG_WATCHDOG
 
 #ifndef __ASSEMBLER__
 
