@@ -75,7 +75,15 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 		}
 	}
 
-	if (!success_cnt)
+	/*
+	 * Require at least two valid samples. When the AP transitions into S0,
+	 * it is possible, depending on the timing of the PECI sample, to read
+	 * an invalid temperature. This is very rare, but when it does happen
+	 * the temperature returned is PECI_TJMAX. Requiring two valid samples
+	 * here assures us that one bad maximum temperature reading when
+	 * entering S0 won't cause us to trigger an over temperature.
+	 */
+	if (success_cnt < 2)
 		return EC_ERROR_UNKNOWN;
 
 	*temp_ptr = sum / success_cnt;
