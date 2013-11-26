@@ -385,6 +385,10 @@ static enum power_state state_init(struct power_state_context *ctx)
 	/* Stop charger, unconditionally */
 	charge_request(0, 0);
 
+	/* if battery was not detected initially, get battery info again */
+	if (ctx->battery == NULL)
+		ctx->battery = battery_get_info();
+
 	/* Update static battery info */
 	update_battery_info();
 
