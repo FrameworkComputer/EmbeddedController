@@ -79,6 +79,9 @@ static void prepare_channel(stm32_dma_chan_t *chan, unsigned count,
 
 void dma_go(stm32_dma_chan_t *chan)
 {
+	/* Flush data in write buffer so that DMA can get the lastest data */
+	asm volatile("dsb;");
+
 	/* Fire it up */
 	chan->ccr |= STM32_DMA_CCR_EN;
 }
