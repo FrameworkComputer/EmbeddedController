@@ -9,7 +9,9 @@
 host-util-bin=ectool lbplay burn_my_ec
 
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
-ifeq ($(CONFIG_LPC),y)
+ifeq ($(CHIP),mec1322)
+comm-objs+=comm-mec1322.o
+else ifeq ($(CONFIG_LPC),y)
 comm-objs+=comm-lpc.o
 else
 comm-objs+=comm-i2c.o
