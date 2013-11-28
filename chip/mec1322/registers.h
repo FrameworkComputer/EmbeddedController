@@ -121,6 +121,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_VBAT_BASE      0x4000a400
 #define MEC1322_VBAT_STS       REG32(MEC1322_VBAT_BASE + 0x0)
 #define MEC1322_VBAT_CE        REG32(MEC1322_VBAT_BASE + 0x8)
+#define MEC1322_VBAT_RAM(x)    REG32(MEC1322_VBAT_BASE + 0x400 + 4 * (x))
 
 
 /* LPC */

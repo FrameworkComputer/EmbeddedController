@@ -16,6 +16,11 @@
 #include "timer.h"
 #include "util.h"
 
+/* Indices for hibernate data registers (RAM backed by VBAT) */
+enum hibdata_index {
+	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
+	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
+};
 
 
 
@@ -76,6 +81,17 @@ int system_get_vbnvcontext(uint8_t *block)
 int system_set_vbnvcontext(const uint8_t *block)
 {
 	return EC_ERROR_UNIMPLEMENTED;
+}
+
+int system_set_scratchpad(uint32_t value)
+{
+	MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD) = value;
+	return EC_SUCCESS;
+}
+
+uint32_t system_get_scratchpad(void)
+{
+	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
