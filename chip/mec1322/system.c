@@ -17,12 +17,7 @@
 #include "util.h"
 
 
-#define DUMMY(x) x {}
-#define DUMMY_int(x) x { return 0; }
 
-DUMMY(void system_hibernate(uint32_t seconds, uint32_t microseconds));
-DUMMY_int(int system_get_vbnvcontext(uint8_t *block));
-DUMMY_int(int system_set_vbnvcontext(const uint8_t *block));
 
 void system_pre_init(void)
 {
@@ -71,4 +66,19 @@ const char *system_get_chip_revision(void)
 	buf[1] = to_hex(rev & 0xf);
 	buf[2] = '\0';
 	return buf;
+}
+
+int system_get_vbnvcontext(uint8_t *block)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+int system_set_vbnvcontext(const uint8_t *block)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	/* TODO(crosbug.com/p/24107): Implement this */
 }
