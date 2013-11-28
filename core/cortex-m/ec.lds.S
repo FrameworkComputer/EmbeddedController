@@ -141,11 +141,16 @@ SECTIONS
            "Increase DEFERRABLE_MAX_COUNT")
 
     .bss : {
-	/* Stacks must be 64-bit aligned */
-        . = ALIGN(8);
+	/*
+	 * Align to 512 bytes. This is convenient when some memory block
+	 * need big alignment. When COMPILE_FOR_RAM is not set, this is the
+	 * beginning of the RAM, so there is usually no penalty on aligning
+	 * this.
+	 */
+        . = ALIGN(512);
         __bss_start = .;
-        *(.bss.tasks)
-        *(.bss.task_scratchpad)
+	*(.bss.big_align)
+	/* Stacks must be 64-bit aligned */
         . = ALIGN(8);
         *(.bss.system_stack)
 	/* Rest of .bss takes care of its own alignment */
