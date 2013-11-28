@@ -22,7 +22,25 @@ enum hibdata_index {
 	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
 };
 
+static void check_reset_cause(void)
+{
+	uint32_t status = MEC1322_VBAT_STS;
+	uint32_t flags = 0;
 
+	/* Clear the reset causes now that we've read them */
+	MEC1322_VBAT_STS |= status;
+
+	if (status & (1 << 7))
+		flags |= RESET_FLAG_POWER_ON;
+
+	if (status & (1 << 5))
+		flags |= RESET_FLAG_WATCHDOG;
+
+	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
+	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
+
+	system_set_reset_flags(flags);
+}
 
 void system_pre_init(void)
 {
@@ -31,13 +49,33 @@ void system_pre_init(void)
 
 	/* Deassert nSIO_RESET */
 	MEC1322_PCR_PWR_RST_CTL &= ~(1 << 0);
+
+	check_reset_cause();
 }
 
 void system_reset(int flags)
 {
+	uint32_t save_flags = 0;
+
+	/* Disable interrupts to avoid task swaps during reboot */
+	interrupt_disable();
+
+	/* Save current reset reasons if necessary */
+	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
+		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+
+	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
+		save_flags |= RESET_FLAG_AP_OFF;
+
+	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = save_flags;
+
 	/* Trigger watchdog in 1ms */
 	MEC1322_WDG_LOAD = 1;
 	MEC1322_WDG_CTL |= 1;
+
+	/* Spin and wait for reboot; should never return */
+	while (1)
+		;
 }
 
 const char *system_get_chip_vendor(void)
