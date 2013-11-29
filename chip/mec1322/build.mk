@@ -13,6 +13,7 @@ CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 
 # Required chip modules
 chip-y=clock.o gpio.o hwtimer.o system.o uart.o jtag.o
+chip-$(CONFIG_FANS)+=fan.o
 chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
