@@ -271,9 +271,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Wait 20ms before allowing VCCST_PGOOD to rise. */
 		msleep(20);
 
-		/* Enable wireless, WLAN power first */
-		wireless_enable(EC_WIRELESS_SWITCH_WLAN_POWER);
-		msleep(1);
+		/* Enable wireless. */
 		wireless_enable(EC_WIRELESS_SWITCH_ALL);
 
 		/*
