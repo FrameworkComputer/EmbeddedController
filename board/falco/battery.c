@@ -11,15 +11,6 @@
 
 #define SB_SHIP_MODE_DATA	0x0010
 
-const struct battery_temperature_ranges bat_temp_ranges = {
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 45,
-	.charging_min_c       = 0,
-	.charging_max_c       = 45,
-	.discharging_min_c    = -10,
-	.discharging_max_c    = 60,
-};
-
 static const struct battery_info info = {
 
 	.voltage_max    = 8400,
@@ -28,6 +19,13 @@ static const struct battery_info info = {
 
 	/* Pre-charge values. */
 	.precharge_current  = 256,	/* mA */
+
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 45,
+	.charging_min_c       = 0,
+	.charging_max_c       = 45,
+	.discharging_min_c    = -10,
+	.discharging_max_c    = 60,
 };
 
 const struct battery_info *battery_get_info(void)

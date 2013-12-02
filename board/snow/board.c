@@ -106,7 +106,7 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
 /* Battery temperature ranges in degrees C */
-const struct battery_temperature_ranges bat_temp_ranges = {
+static const struct battery_info info = {
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
 	.charging_min_c       = 0,
@@ -114,6 +114,11 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 	.discharging_min_c    = 0,
 	.discharging_max_c    = 100,
 };
+
+const struct battery_info *battery_get_info(void)
+{
+	return &info;
+}
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

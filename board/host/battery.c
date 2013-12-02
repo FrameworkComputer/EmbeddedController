@@ -51,21 +51,6 @@ int battery_time_at_rate(int rate, int *minutes)
 	return EC_SUCCESS;
 }
 
-/* Fake battery */
-const struct battery_temperature_ranges bat_temp_ranges = {
-	/*
-	 * Operational temperature range
-	 *   0 <= T_charge    <= 50 deg C
-	 * -20 <= T_discharge <= 60 deg C
-	 */
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 50,
-	.charging_min_c       = 0,
-	.charging_max_c       = 50,
-	.discharging_min_c    = -20,
-	.discharging_max_c    = 60,
-};
-
 static const struct battery_info bat_info = {
 	/*
 	 * Design voltage
@@ -79,6 +64,18 @@ static const struct battery_info bat_info = {
 
 	/* Pre-charge current: I <= 0.01C */
 	.precharge_current  = 64, /* mA */
+
+	/*
+	 * Operational temperature range
+	 *   0 <= T_charge    <= 50 deg C
+	 * -20 <= T_discharge <= 60 deg C
+	 */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c       = 0,
+	.charging_max_c       = 50,
+	.discharging_min_c    = -20,
+	.discharging_max_c    = 60,
 };
 
 const struct battery_info *battery_get_info(void)

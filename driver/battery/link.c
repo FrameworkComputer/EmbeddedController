@@ -20,14 +20,7 @@ static const struct battery_info info = {
 
 	/* Pre-charge current: I <= 0.01C */
 	.precharge_current  = 64, /* mA */
-};
 
-const struct battery_info *battery_get_info(void)
-{
-	return &info;
-}
-
-const struct battery_temperature_ranges bat_temp_ranges = {
 	/*
 	 * Operational temperature range
 	 *   0 <= T_charge    <= 50 deg C
@@ -41,6 +34,10 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 	.discharging_max_c    = 60,
 };
 
+const struct battery_info *battery_get_info(void)
+{
+	return &info;
+}
 
 #ifdef CONFIG_BATTERY_VENDOR_PARAMS
 
@@ -107,8 +104,8 @@ void battery_vendor_params(struct batt_params *batt)
 		batt->desired_voltage = info.voltage_max;
 
 	/* Don't charge if outside of allowable temperature range */
-	if (bat_temp_c >= bat_temp_ranges.charging_max_c ||
-	    bat_temp_c < bat_temp_ranges.charging_min_c) {
+	if (bat_temp_c >= info.charging_max_c ||
+	    bat_temp_c < info.charging_min_c) {
 		batt->flags &= ~BATT_FLAG_WANT_CHARGE;
 		batt->desired_voltage = 0;
 		batt->desired_current = 0;

@@ -14,15 +14,6 @@
 #define SB_SHIP_MODE_DATA	0xc574
 
 /* Values for 54Wh 3UPF656790-1-T1001 battery */
-const struct battery_temperature_ranges bat_temp_ranges = {
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 60,
-	.charging_min_c       = 0,
-	.charging_max_c       = 60,
-	.discharging_min_c    = 0,
-	.discharging_max_c    = 50,
-};
-
 static const struct battery_info info = {
 
 	.voltage_max    = 12600,
@@ -31,6 +22,13 @@ static const struct battery_info info = {
 
 	/* Pre-charge values. */
 	.precharge_current  = 392,	/* mA */
+
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 60,
+	.charging_min_c       = 0,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 50,
 };
 
 const struct battery_info *battery_get_info(void)

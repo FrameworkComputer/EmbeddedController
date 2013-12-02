@@ -62,22 +62,28 @@ static void enable_charging(int enable)
 static int battery_start_charging_range(int deci_k)
 {
 	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
-	return (temp_c >= bat_temp_ranges.start_charging_min_c &&
-		temp_c < bat_temp_ranges.start_charging_max_c);
+	const struct battery_info *info = battery_get_info();
+
+	return (temp_c >= info->start_charging_min_c &&
+		temp_c < info->start_charging_max_c);
 }
 
 static int battery_charging_range(int deci_k)
 {
 	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
-	return (temp_c >= bat_temp_ranges.charging_min_c &&
-		temp_c < bat_temp_ranges.charging_max_c);
+	const struct battery_info *info = battery_get_info();
+
+	return (temp_c >= info->charging_min_c &&
+		temp_c < info->charging_max_c);
 }
 
 static int battery_discharging_range(int deci_k)
 {
 	int8_t temp_c = DECI_KELVIN_TO_CELSIUS(deci_k);
-	return (temp_c >= bat_temp_ranges.discharging_min_c &&
-		temp_c < bat_temp_ranges.discharging_max_c);
+	const struct battery_info *info = battery_get_info();
+
+	return (temp_c >= info->discharging_min_c &&
+		temp_c < info->discharging_max_c);
 }
 
 /**

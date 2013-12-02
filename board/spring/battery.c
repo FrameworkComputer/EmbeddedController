@@ -15,7 +15,7 @@
 #define PARAM_CUT_OFF_HIGH 0x00
 
 /* Battery temperature ranges in degrees C */
-const struct battery_temperature_ranges bat_temp_ranges = {
+static const struct battery_info info = {
 	.start_charging_min_c = 5,
 	.start_charging_max_c = 45,
 	.charging_min_c       = 5,
@@ -23,6 +23,11 @@ const struct battery_temperature_ranges bat_temp_ranges = {
 	.discharging_min_c    = 0,
 	.discharging_max_c    = 100,
 };
+
+const struct battery_info *battery_get_info(void)
+{
+	return &info;
+}
 
 int battery_command_cut_off(struct host_cmd_handler_args *args)
 {

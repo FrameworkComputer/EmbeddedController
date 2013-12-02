@@ -59,17 +59,6 @@ struct batt_params {
 /* Battery couldn't tell us every params we want */
 #define BATT_FLAG_BAD_ANY			(1 << 4)
 
-/* Working temperature ranges in degrees C */
-struct battery_temperature_ranges {
-	int8_t start_charging_min_c;
-	int8_t start_charging_max_c;
-	int8_t charging_min_c;
-	int8_t charging_max_c;
-	int8_t discharging_min_c;
-	int8_t discharging_max_c;
-};
-extern const struct battery_temperature_ranges bat_temp_ranges;
-
 /* Battery constants */
 struct battery_info {
 	/* Design voltage in mV */
@@ -78,6 +67,13 @@ struct battery_info {
 	int voltage_min;
 	/* Pre-charge current in mA */
 	int precharge_current;
+	/* Working temperature ranges in degrees C */
+	int8_t start_charging_min_c;
+	int8_t start_charging_max_c;
+	int8_t charging_min_c;
+	int8_t charging_max_c;
+	int8_t discharging_min_c;
+	int8_t discharging_max_c;
 };
 
 /**
