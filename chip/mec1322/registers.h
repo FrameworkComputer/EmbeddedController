@@ -207,6 +207,39 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_FAN_STATUS     REG8(MEC1322_FAN_BASE + 0x11)
 
 
+/* I2C */
+#define MEC1322_I2C0_BASE      0x40001800
+#define MEC1322_I2C1_BASE      0x4000ac00
+#define MEC1322_I2C2_BASE      0x4000b000
+#define MEC1322_I2C3_BASE      0x4000b400
+#define MEC1322_I2C_BASESEP    0x00000400
+#define MEC1322_I2C_ADDR(port, offset) \
+	(offset + (port == 0 ? MEC1322_I2C0_BASE : \
+		   MEC1322_I2C1_BASE + MEC1322_I2C_BASESEP * (port - 1)))
+
+#define MEC1322_I2C_CTRL(port)          REG8(MEC1322_I2C_ADDR(port, 0x0))
+#define MEC1322_I2C_STATUS(port)        REG8(MEC1322_I2C_ADDR(port, 0x0))
+#define MEC1322_I2C_OWN_ADDR(port)      REG16(MEC1322_I2C_ADDR(port, 0x4))
+#define MEC1322_I2C_DATA(port)          REG8(MEC1322_I2C_ADDR(port, 0x8))
+#define MEC1322_I2C_MASTER_CMD(port)    REG32(MEC1322_I2C_ADDR(port, 0xc))
+#define MEC1322_I2C_SLAVE_CMD(port)     REG32(MEC1322_I2C_ADDR(port, 0x10))
+#define MEC1322_I2C_PEC(port)           REG8(MEC1322_I2C_ADDR(port, 0x14))
+#define MEC1322_I2C_DATA_TIM_2(port)    REG8(MEC1322_I2C_ADDR(port, 0x18))
+#define MEC1322_I2C_COMPLETE(port)      REG32(MEC1322_I2C_ADDR(port, 0x20))
+#define MEC1322_I2C_IDLE_SCALE(port)    REG32(MEC1322_I2C_ADDR(port, 0x24))
+#define MEC1322_I2C_CONFIG(port)        REG32(MEC1322_I2C_ADDR(port, 0x28))
+#define MEC1322_I2C_BUS_CLK(port)       REG16(MEC1322_I2C_ADDR(port, 0x2c))
+#define MEC1322_I2C_BLK_ID(port)        REG8(MEC1322_I2C_ADDR(port, 0x30))
+#define MEC1322_I2C_REV(port)           REG8(MEC1322_I2C_ADDR(port, 0x34))
+#define MEC1322_I2C_BB_CTRL(port)       REG8(MEC1322_I2C_ADDR(port, 0x38))
+#define MEC1322_I2C_DATA_TIM(port)      REG32(MEC1322_I2C_ADDR(port, 0x40))
+#define MEC1322_I2C_TOUT_SCALE(port)    REG32(MEC1322_I2C_ADDR(port, 0x44))
+#define MEC1322_I2C_SLAVE_TX_BUF(port)  REG8(MEC1322_I2C_ADDR(port, 0x48))
+#define MEC1322_I2C_SLAVE_RX_BUF(port)  REG8(MEC1322_I2C_ADDR(port, 0x4c))
+#define MEC1322_I2C_MASTER_TX_BUF(port) REG8(MEC1322_I2C_ADDR(port, 0x50))
+#define MEC1322_I2C_MASTER_RX_BUF(port) REG8(MEC1322_I2C_ADDR(port, 0x54))
+
+
 /* IRQ Numbers */
 #define MEC1322_IRQ_I2C_0        0
 #define MEC1322_IRQ_I2C_1        1
