@@ -253,10 +253,14 @@ static int debounce_test(void)
 
 static int simulate_key_test(void)
 {
+	int old_count;
+
+	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 1);
-	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+	TEST_ASSERT(fifo_add_count > old_count);
+	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 0);
-	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+	TEST_ASSERT(fifo_add_count > old_count);
 
 	return EC_SUCCESS;
 }

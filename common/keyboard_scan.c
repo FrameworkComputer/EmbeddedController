@@ -28,6 +28,9 @@
 
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
+/* If we're waiting for a scan to happen, we'll give it this long */
+#define SCAN_TASK_TIMEOUT_US	(100 * MSEC)
+
 #ifndef CONFIG_KEYBOARD_POST_SCAN_CLOCKS
 /*
  * Default delay in clocks; this was experimentally determined to be long
@@ -87,6 +90,9 @@ static int print_state_changes;
 
 static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 
+/* Constantly incrementing counter of the number of times we polled */
+static volatile int kbd_polls;
+
 static int is_scanning_enabled(void)
 {
 #ifdef CONFIG_LID_SWITCH
@@ -119,6 +125,30 @@ static void print_state(const uint8_t *state, const char *msg)
 }
 
 /**
+ * Ensure that the keyboard has been scanned.
+ *
+ * Makes sure that we've fully gone through the keyboard scanning loop at
+ * least once.
+ */
+static void ensure_keyboard_scanned(int old_polls)
+{
+	uint64_t start_time;
+
+	start_time = get_time().val;
+
+	/*
+	 * Ensure we see the poll task run.
+	 *
+	 * Note that the poll task is higher priority than ours so we know that
+	 * while we're running it's not partway through a poll.  That means that
+	 * if kbd_polls changes we've gone through a whole cycle.
+	 */
+	while ((kbd_polls == old_polls) &&
+	       (get_time().val - start_time < SCAN_TASK_TIMEOUT_US))
+		usleep(keyscan_config.scan_period_us);
+}
+
+/**
  * Simulate a keypress.
  *
  * @param row		Row of key
@@ -127,15 +157,29 @@ static void print_state(const uint8_t *state, const char *msg)
  */
 static void simulate_key(int row, int col, int pressed)
 {
+	int old_polls;
+
 	if ((simulated_key[col] & (1 << row)) == ((pressed ? 1 : 0) << row))
 		return;  /* No change */
 
 	simulated_key[col] ^= (1 << row);
 
+	/* Keep track of polls now that we've got keys simulated */
+	old_polls = kbd_polls;
+
 	print_state(simulated_key, "simulated ");
 
 	/* Wake the task to handle changes in simulated keys */
 	task_wake(TASK_ID_KEYSCAN);
+
+	/*
+	 * Make sure that the keyboard task sees the key for long enough.
+	 * That means it needs to have run and for enough time.
+	 */
+	ensure_keyboard_scanned(old_polls);
+	usleep(pressed ?
+	       keyscan_config.debounce_down_us : keyscan_config.debounce_up_us);
+	ensure_keyboard_scanned(kbd_polls);
 }
 
 /**
@@ -386,6 +430,8 @@ static int check_keys_changed(uint8_t *state)
 		keyboard_fifo_add(state);
 #endif
 	}
+
+	kbd_polls++;
 
 	return any_pressed;
 }
@@ -647,7 +693,7 @@ static int command_keyboard_press(int argc, char **argv)
 					ccprintf("\t%d %d\n", i, j);
 		}
 
-	} else if (argc == 4) {
+	} else if (argc == 3 || argc == 4) {
 		int r, c, p;
 		char *e;
 
@@ -659,16 +705,22 @@ static int command_keyboard_press(int argc, char **argv)
 		if (*e || r < 0 || r >= KEYBOARD_ROWS)
 			return EC_ERROR_PARAM2;
 
-		p = strtoi(argv[3], &e, 0);
-		if (*e || p < 0 || p > 1)
-			return EC_ERROR_PARAM3;
+		if (argc == 3) {
+			/* Simulate a press and release */
+			simulate_key(r, c, 1);
+			simulate_key(r, c, 0);
+		} else {
+			p = strtoi(argv[3], &e, 0);
+			if (*e || p < 0 || p > 1)
+				return EC_ERROR_PARAM3;
 
-		simulate_key(r, c, p);
+			simulate_key(r, c, p);
+		}
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
-			"[col] [row] [0 | 1]",
+			"[col row [0 | 1]]",
 			"Simulate keypress",
 			NULL);
