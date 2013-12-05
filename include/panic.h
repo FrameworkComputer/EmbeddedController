@@ -11,13 +11,8 @@
 
 #include <stdarg.h>
 
-/* Data saved across reboots */
-struct panic_data {
-	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
-	uint8_t struct_version;   /* Structure version (currently 2) */
-	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
-	uint8_t reserved;         /* Reserved; set 0 */
-
+/* ARM Cortex-Mx registers saved on panic */
+struct cortex_panic_data {
 	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return).
 				   * In version 1, that was uint32_t regs[11] =
 				   * psp, ipsr, lr, r4-r11
@@ -30,6 +25,19 @@ struct panic_data {
 	uint32_t shcsr;
 	uint32_t hfsr;
 	uint32_t dfsr;
+};
+
+/* Data saved across reboots */
+struct panic_data {
+	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
+	uint8_t struct_version;   /* Structure version (currently 2) */
+	uint8_t flags;            /* Flags (PANIC_DATA_FLAG_*) */
+	uint8_t reserved;         /* Reserved; set 0 */
+
+	/* core specific panic data */
+	union {
+		struct cortex_panic_data cm; /* Cortex-Mx registers */
+	};
 
 	/*
 	 * These fields go at the END of the struct so we can find it at the
@@ -41,6 +49,14 @@ struct panic_data {
 
 #define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
 #define PANIC_ARCH_CORTEX_M 1        /* Cortex-M architecture */
+
+/*
+ * Panic data goes at the end of RAM.  This is safe because we don't context
+ * switch away from the panic handler before rebooting, and stacks and data
+ * start at the beginning of RAM.
+ */
+#define PANIC_DATA_PTR ((struct panic_data *)\
+	(CONFIG_RAM_BASE + CONFIG_RAM_SIZE - sizeof(struct panic_data)))
 
 /* Flags for panic_data.flags */
 /* panic_data.frame is valid */
@@ -69,6 +85,13 @@ void panic_puts(const char *s);
  * @param ...		Arguments to process
  */
 void panic_printf(const char *format, ...);
+
+/*
+ * Print saved panic information
+ *
+ * @param pdata pointer to saved panic data
+ */
+void panic_data_print(const struct panic_data *pdata);
 
 /**
  * Report an assertion failure and reset

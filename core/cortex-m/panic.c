@@ -19,68 +19,13 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-/*
- * Panic data goes at the end of RAM.  This is safe because we don't context
- * switch away from the panic handler before rebooting, and stacks and data
- * start at the beginning of RAM.
- */
-static struct panic_data * const pdata_ptr =
-	(struct panic_data *)(CONFIG_RAM_BASE + CONFIG_RAM_SIZE
-			     - sizeof(struct panic_data));
+
+/* Panic data goes at the end of RAM. */
+static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
 
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
 static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
 				     - sizeof(struct panic_data)) & ~7;
-
-/**
- * Add a character directly to the UART buffer.
- *
- * @param context	Context; ignored.
- * @param c		Character to write.
- * @return 0 if the character was transmitted, 1 if it was dropped.
- */
-static int panic_txchar(void *context, int c)
-{
-	if (c == '\n')
-		panic_txchar(context, '\r');
-
-	/* Wait for space in transmit FIFO */
-	while (!uart_tx_ready())
-		;
-
-	/* Write the character directly to the transmit FIFO */
-	uart_write_char(c);
-
-	return 0;
-}
-
-void panic_puts(const char *outstr)
-{
-	/* Flush the output buffer */
-	uart_flush_output();
-
-	/* Put all characters in the output buffer */
-	while (*outstr)
-		panic_txchar(NULL, *outstr++);
-
-	/* Flush the transmit FIFO */
-	uart_tx_flush();
-}
-
-void panic_printf(const char *format, ...)
-{
-	va_list args;
-
-	/* Flush the output buffer */
-	uart_flush_output();
-
-	va_start(args, format);
-	vfnprintf(panic_txchar, NULL, format, args);
-	va_end(args);
-
-	/* Flush the transmit FIFO */
-	uart_tx_flush();
-}
 
 /**
  * Print the name and value of a register
@@ -253,13 +198,13 @@ static uint32_t get_exception_frame_size(const struct panic_data *pdata)
 
 	/* CPU uses xPSR[9] to indicate whether it padded the stack for
 	 * alignment or not. */
-	if (pdata->frame[7] & (1 << 9))
+	if (pdata->cm.frame[7] & (1 << 9))
 		frame_size += sizeof(uint32_t);
 
 #ifdef CONFIG_FPU
 	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
 	 * frame for FPU or not. */
-	if (!(pdata->regs[11] & (1 << 4)))
+	if (!(pdata->cm.regs[11] & (1 << 4)))
 		frame_size += 18 * sizeof(uint32_t);
 #endif
 
@@ -273,9 +218,9 @@ static uint32_t get_exception_frame_size(const struct panic_data *pdata)
  */
 static uint32_t get_process_stack_position(const struct panic_data *pdata)
 {
-	uint32_t psp = pdata->regs[0];
+	uint32_t psp = pdata->cm.regs[0];
 
-	if (!is_frame_in_handler_stack(pdata->regs[11]))
+	if (!is_frame_in_handler_stack(pdata->cm.regs[11]))
 		psp += get_exception_frame_size(pdata);
 
 	return psp;
@@ -289,15 +234,15 @@ static uint32_t get_process_stack_position(const struct panic_data *pdata)
  */
 static void panic_show_extra(const struct panic_data *pdata)
 {
-	show_fault(pdata->mmfs, pdata->hfsr, pdata->dfsr);
-	if (pdata->mmfs & CPU_NVIC_MMFS_BFARVALID)
-		panic_printf(", bfar = %x", pdata->bfar);
-	if (pdata->mmfs & CPU_NVIC_MMFS_MFARVALID)
-		panic_printf(", mfar = %x", pdata->mfar);
-	panic_printf("\nmmfs = %x, ", pdata->mmfs);
-	panic_printf("shcsr = %x, ", pdata->shcsr);
-	panic_printf("hfsr = %x, ", pdata->hfsr);
-	panic_printf("dfsr = %x\n", pdata->dfsr);
+	show_fault(pdata->cm.mmfs, pdata->cm.hfsr, pdata->cm.dfsr);
+	if (pdata->cm.mmfs & CPU_NVIC_MMFS_BFARVALID)
+		panic_printf(", bfar = %x", pdata->cm.bfar);
+	if (pdata->cm.mmfs & CPU_NVIC_MMFS_MFARVALID)
+		panic_printf(", mfar = %x", pdata->cm.mfar);
+	panic_printf("\nmmfs = %x, ", pdata->cm.mmfs);
+	panic_printf("shcsr = %x, ", pdata->cm.shcsr);
+	panic_printf("hfsr = %x, ", pdata->cm.hfsr);
+	panic_printf("dfsr = %x\n", pdata->cm.dfsr);
 }
 
 /*
@@ -324,27 +269,19 @@ static void panic_show_process_stack(const struct panic_data *pdata)
 }
 #endif /* CONFIG_DEBUG_EXCEPTIONS */
 
-/**
- * Display a message and reboot
- */
-void panic_reboot(void)
-{
-	panic_puts("\n\nRebooting...\n");
-	system_reset(0);
-}
-
 /*
  * Print panic data
  */
-static void panic_print(const struct panic_data *pdata)
+void panic_data_print(const struct panic_data *pdata)
 {
-	const uint32_t *lregs = pdata->regs;
+	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
-	const int32_t in_handler = is_frame_in_handler_stack(pdata->regs[11]);
+	const int32_t in_handler =
+		is_frame_in_handler_stack(pdata->cm.regs[11]);
 	int i;
 
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
-		sregs = pdata->frame;
+		sregs = pdata->cm.frame;
 
 	panic_printf("\n=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
 		     in_handler ? "HANDLER" : "PROCESS",
@@ -378,8 +315,8 @@ void report_panic(void)
 	pdata->reserved = 0;
 
 	/* Choose the right sp (psp or msp) based on EXC_RETURN value */
-	sp = is_frame_in_handler_stack(pdata->regs[11])
-		? pdata->regs[2] : pdata->regs[0];
+	sp = is_frame_in_handler_stack(pdata->cm.regs[11])
+		? pdata->cm.regs[2] : pdata->cm.regs[0];
 	/* If stack is valid, copy exception frame to pdata */
 	if ((sp & 3) == 0 &&
 	    sp >= CONFIG_RAM_BASE &&
@@ -387,19 +324,19 @@ void report_panic(void)
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
 		for (i = 0; i < 8; i++)
-			pdata->frame[i] = sregs[i];
+			pdata->cm.frame[i] = sregs[i];
 		pdata->flags |= PANIC_DATA_FLAG_FRAME_VALID;
 	}
 
 	/* Save extra information */
-	pdata->mmfs = CPU_NVIC_MMFS;
-	pdata->bfar = CPU_NVIC_BFAR;
-	pdata->mfar = CPU_NVIC_MFAR;
-	pdata->shcsr = CPU_NVIC_SHCSR;
-	pdata->hfsr = CPU_NVIC_HFSR;
-	pdata->dfsr = CPU_NVIC_DFSR;
+	pdata->cm.mmfs = CPU_NVIC_MMFS;
+	pdata->cm.bfar = CPU_NVIC_BFAR;
+	pdata->cm.mfar = CPU_NVIC_MFAR;
+	pdata->cm.shcsr = CPU_NVIC_SHCSR;
+	pdata->cm.hfsr = CPU_NVIC_HFSR;
+	pdata->cm.dfsr = CPU_NVIC_DFSR;
 
-	panic_print(pdata);
+	panic_data_print(pdata);
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_show_process_stack(pdata);
 	/*
@@ -427,7 +364,7 @@ void exception_panic(void)
 		"stmia r0, {r1-r11, lr}\n"
 		"mov sp, %[pstack]\n"
 		"b report_panic\n" : :
-			[pregs] "r" (pdata_ptr->regs),
+			[pregs] "r" (pdata_ptr->cm.regs),
 			[pstack] "r" (pstack_addr) :
 			/* Constraints protecting these from being clobbered.
 			 * Gcc should be using r0 & r12 for pregs and pstack. */
@@ -446,94 +383,3 @@ void ignore_bus_fault(int ignored)
 {
 	bus_fault_ignored = ignored;
 }
-
-#ifdef CONFIG_DEBUG_ASSERT_REBOOTS
-void panic_assert_fail(const char *msg, const char *func, const char *fname,
-		       int linenum)
-{
-	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n",
-		     msg, func, fname, linenum);
-
-	panic_reboot();
-}
-#endif
-
-void panic(const char *msg)
-{
-	panic_printf("\n** PANIC: %s\n", msg);
-	panic_reboot();
-}
-
-struct panic_data *panic_get_data(void)
-{
-	return pdata_ptr->magic == PANIC_DATA_MAGIC ? pdata_ptr : NULL;
-}
-
-/*****************************************************************************/
-/* Console commands */
-
-static int command_crash(int argc, char **argv)
-{
-	if (argc < 2)
-		return EC_ERROR_PARAM1;
-
-	if (!strcasecmp(argv[1], "divzero")) {
-		int a = 1, b = 0;
-
-		cflush();
-		ccprintf("%08x", a / b);
-	} else if (!strcasecmp(argv[1], "unaligned")) {
-		cflush();
-		ccprintf("%08x", *(int *)0xcdef);
-	} else {
-		return EC_ERROR_PARAM1;
-	}
-
-	/* Everything crashes, so shouldn't get back here */
-	return EC_ERROR_UNKNOWN;
-}
-DECLARE_CONSOLE_COMMAND(crash, command_crash,
-			"[divzero | unaligned]",
-			"Crash the system (for testing)",
-			NULL);
-
-static int command_panicinfo(int argc, char **argv)
-{
-	if (pdata_ptr->magic == PANIC_DATA_MAGIC) {
-		ccprintf("Saved panic data:%s\n",
-			 (pdata_ptr->flags & PANIC_DATA_FLAG_OLD_CONSOLE ?
-			  "" : " (NEW)"));
-
-		panic_print(pdata_ptr);
-
-		/* Data has now been printed */
-		pdata_ptr->flags |= PANIC_DATA_FLAG_OLD_CONSOLE;
-	} else {
-		ccprintf("No saved panic data available.\n");
-	}
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
-			NULL,
-			"Print info from a previous panic",
-			NULL);
-
-/*****************************************************************************/
-/* Host commands */
-
-int host_command_panic_info(struct host_cmd_handler_args *args)
-{
-	if (pdata_ptr->magic == PANIC_DATA_MAGIC) {
-		ASSERT(pdata_ptr->struct_size <= args->response_max);
-		memcpy(args->response, pdata_ptr, pdata_ptr->struct_size);
-		args->response_size = pdata_ptr->struct_size;
-
-		/* Data has now been returned */
-		pdata_ptr->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;
-	}
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_PANIC_INFO,
-		     host_command_panic_info,
-		     EC_VER_MASK(0));

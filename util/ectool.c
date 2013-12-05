@@ -1875,7 +1875,7 @@ int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
 	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
-	const uint32_t *lregs = pdata->regs;
+	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
 	enum {
 		ORIG_UNKNOWN = 0,
@@ -1905,6 +1905,11 @@ int cmd_panic_info(int argc, char *argv[])
 			"Following data may be incorrect!\n",
 			pdata->struct_version);
 
+	if (pdata->arch != PANIC_ARCH_CORTEX_M)
+		fprintf(stderr, "Unknown architecture (%d). "
+			"CPU specific data will be incorrect!\n",
+			pdata->arch);
+
 	printf("Saved panic data:%s\n",
 	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
 
@@ -1919,7 +1924,7 @@ int cmd_panic_info(int argc, char *argv[])
 	 * version 1.
 	 */
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
-		sregs = pdata->frame - (pdata->struct_version == 1 ? 1 : 0);
+		sregs = pdata->cm.frame - (pdata->struct_version == 1 ? 1 : 0);
 
 	printf("=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
 	       panic_origins[origin],

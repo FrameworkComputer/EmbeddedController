@@ -226,6 +226,14 @@
 
 /*****************************************************************************/
 
+/* Provide common core code to output panic information without interrupts. */
+#define CONFIG_COMMON_PANIC_OUTPUT
+
+/* Provide common core code to handle the operating system timers. */
+#define CONFIG_COMMON_TIMER
+
+/*****************************************************************************/
+
 /*
  * Provide additional help on console commands, such as the supported
  * options/usage.

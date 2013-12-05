@@ -44,5 +44,10 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL (250 * MSEC)
 
+/* Do NOT use common panic code (designed to output information on the UART) */
+#undef CONFIG_COMMON_PANIC_OUTPUT
+/* Do NOT use common timer code which is designed for hardware counters. */
+#undef CONFIG_COMMON_TIMER
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
 
