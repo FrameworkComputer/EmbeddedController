@@ -89,7 +89,12 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_RSMRST_L",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"PCH_SOC_OVERRIDE_L",   LM4_GPIO_G, (1<<1), GPIO_OUT_HIGH, NULL},
+	/*
+	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
+	 * from the new one when we deprecate the 1.5 boards.
+	 */
 	{"PCH_SYS_PWROK",        LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
+	{"PCH_SYS_PWROK_NEW",    LM4_GPIO_J, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PP1350_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP3300_DX_EN",         LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
@@ -106,7 +111,12 @@ const struct gpio_info gpio_list[] = {
 	{"VCORE_EN",             LM4_GPIO_C, (1<<5), GPIO_OUT_LOW, NULL},
 	{"WLAN_OFF_L",           LM4_GPIO_J, (1<<4), GPIO_OUT_LOW, NULL},
 	{"PCH_SCI_L",            LM4_GPIO_M, (1<<1), GPIO_ODR_HIGH, NULL},
+	/*
+	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
+	 * from the new one when we deprecate the 1.5 boards.
+	 */
 	{"KBD_IRQ_L",            LM4_GPIO_M, (1<<4), GPIO_OUT_HIGH, NULL},
+	{"KBD_IRQ_NEW_L",        LM4_GPIO_M, (1<<3), GPIO_OUT_HIGH, NULL},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
