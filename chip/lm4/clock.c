@@ -143,7 +143,7 @@ int clock_get_freq(void)
 
 void clock_init(void)
 {
-#ifdef BOARD_bds
+#ifdef BOARD_BDS
 	/*
 	 * Perform an auto calibration of the internal oscillator using the
 	 * 32.768KHz hibernate clock, unless we've already done so.  This is
@@ -435,7 +435,7 @@ static int command_sleep(int argc, char **argv)
 	if (argc >= 5)
 		flash_pm = strtoi(argv[4], NULL, 10);
 
-#ifdef BOARD_bds
+#ifdef BOARD_BDS
 	/* Remove LED current sink. */
 	gpio_set_level(GPIO_DEBUG_LED, 0);
 #endif

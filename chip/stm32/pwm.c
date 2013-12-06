@@ -38,7 +38,7 @@ static void pwm_configure(enum pwm_channel ch)
 	const struct gpio_info *gpio = gpio_list + pwm->pin;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 	volatile unsigned *ccmr = NULL;
-#ifdef CHIP_FAMILY_stm32f
+#ifdef CHIP_FAMILY_STM32F
 	int mask = gpio->mask;
 	volatile uint32_t *gpio_cr = NULL;
 	uint32_t val;
@@ -47,7 +47,7 @@ static void pwm_configure(enum pwm_channel ch)
 	if (using_pwm[ch])
 		return;
 
-#ifdef CHIP_FAMILY_stm32f
+#ifdef CHIP_FAMILY_STM32F
 	if (mask < 0x100) {
 		gpio_cr = &STM32_GPIO_CRL(gpio->port);
 	} else {

@@ -192,7 +192,7 @@ static void uart_freq_change(void)
 {
 	int div = DIV_ROUND_NEAREST(clock_get_freq(), CONFIG_UART_BAUD_RATE);
 
-#ifdef CHIP_FAMILY_stm32l
+#ifdef CHIP_FAMILY_STM32L
 	if (div / 16 > 0) {
 		/*
 		 * CPU clock is high enough to support x16 oversampling.
@@ -254,7 +254,7 @@ void uart_init(void)
 	STM32_USART_CR1(UARTN) |= STM32_USART_CR1_RXNEIE;
 #endif
 
-#ifdef CHIP_FAMILY_stm32l
+#ifdef CHIP_FAMILY_STM32L
 	/* Use single-bit sampling */
 	STM32_USART_CR3(UARTN) |= STM32_USART_CR3_ONEBIT;
 #endif

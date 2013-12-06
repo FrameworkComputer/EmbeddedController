@@ -13,14 +13,14 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Use variant specific configuration for flash / UART / IRQ */
-#if defined(CHIP_VARIANT_stm32l15x)
+#if defined(CHIP_VARIANT_STM32L15X)
 #include "config-stm32l15x.h"
-#elif defined(CHIP_VARIANT_stm32l100)
+#elif defined(CHIP_VARIANT_STM32L100)
 #include "config-stm32l100.h"
-#elif defined(CHIP_VARIANT_stm32f100)
+#elif defined(CHIP_VARIANT_STM32F100)
 /* STM32F100xx is currently the only outlier in the STM32F series */
 #include "config-stm32f100.h"
-#elif defined(CHIP_VARIANT_stm32f10x)
+#elif defined(CHIP_VARIANT_STM32F10X)
 /* STM32F101xx, STM32F102xx, STM32F103xx, STM32F105xx, and STM32F107xx */
 #include "config-stm32f10x.h"
 #else

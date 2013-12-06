@@ -621,7 +621,7 @@ static void pmu_chipset_startup(void)
 {
 	pmu_init();
 
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
 	/* Enable FET4 by default which allows for SD Card booting */
 	{
 		int pgood;

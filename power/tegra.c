@@ -521,7 +521,7 @@ static int react_to_xpshold(unsigned int timeout_us)
 	/* wait for Power button release */
 	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
 
-#ifdef BOARD_nyan
+#ifdef BOARD_NYAN
 	/*
 	 * nyan's GPIO_SOC1V8_XPSHOLD will go low for about 20ms after initial
 	 * high. Wait XPSHOLD_DEBOUNCE time, then check the signal again.

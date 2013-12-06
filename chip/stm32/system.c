@@ -151,14 +151,14 @@ void system_pre_init(void)
 	while (!(STM32_RCC_CSR & (1 << 1)))
 		;
 	/* re-configure RTC if needed */
-#ifdef CHIP_FAMILY_stm32l
+#ifdef CHIP_FAMILY_STM32L
 	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_CSR |= 0x00800000;
 		/* Enable RTC and use LSI as clock source */
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
-#elif defined(CHIP_FAMILY_stm32f)
+#elif defined(CHIP_FAMILY_STM32F)
 	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_BDCR |= 0x00010000;
@@ -197,7 +197,7 @@ void system_reset(int flags)
 
 	if (flags & SYSTEM_RESET_HARD) {
 
-#ifdef CHIP_FAMILY_stm32l
+#ifdef CHIP_FAMILY_STM32L
 		/*
 		 * Ask the flash module to reboot, so that we reload the
 		 * option bytes.

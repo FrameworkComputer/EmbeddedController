@@ -8,33 +8,33 @@
 #ifndef __CROS_EC_TEST_CONFIG_H
 #define __CROS_EC_TEST_CONFIG_H
 
-#ifdef TEST_adapter
+#ifdef TEST_ADAPTER
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_EXTPOWER_FALCO
 #endif
 
-#ifdef TEST_bklight_lid
+#ifdef TEST_BKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID
 #endif
 
-#ifdef TEST_bklight_passthru
+#ifdef TEST_BKLIGHT_PASSTHRU
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BKLTEN
 #endif
 
-#ifdef TEST_kb_8042
+#ifdef TEST_KB_8042
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
 
-#ifdef TEST_kb_mkbp
+#ifdef TEST_KB_MKBP
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #endif
 
-#ifdef TEST_kb_scan
+#ifdef TEST_KB_SCAN
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #endif
 
-#ifdef TEST_led_spring
+#ifdef TEST_LED_SPRING
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
@@ -44,7 +44,7 @@
 #define I2C_PORT_CHARGER 1
 #endif
 
-#ifdef TEST_sbs_charging
+#ifdef TEST_SBS_CHARGING
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
@@ -56,13 +56,13 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_CHARGER 1
 #endif
 
-#ifdef TEST_thermal
+#ifdef TEST_THERMAL
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_FANS 1
 #define CONFIG_TEMP_SENSOR
 #endif
 
-#ifdef TEST_thermal_falco
+#ifdef TEST_THERMAL_FALCO
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER

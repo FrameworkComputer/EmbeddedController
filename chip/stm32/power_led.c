@@ -64,7 +64,7 @@ static void power_led_manual_off(void)
 	 * configure it as an open-drain output and set it to high impedence,
 	 * but reconfiguring as an input had better results in testing.
 	 */
-#ifdef BOARD_snow
+#ifdef BOARD_SNOW
 	gpio_set_flags(GPIO_LED_POWER_L, GPIO_INPUT);
 	gpio_set_level(GPIO_LED_POWER_L, 1);
 #else

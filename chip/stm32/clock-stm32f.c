@@ -113,14 +113,14 @@ static void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
-#if defined(BOARD_snow) || defined(BOARD_spring)
+#if defined(BOARD_SNOW) || defined(BOARD_SPRING)
 /*
  * stays on HSI (8MHz), no prescaler, PLLSRC = HSI/2, PLLMUL = x4
  * no MCO                      => PLLCLK = 16 Mhz
  */
 #define DESIRED_CPU_CLOCK 16000000
 #define RCC_CFGR 0x00080000
-#elif defined(BOARD_mccroskey)
+#elif defined(BOARD_MCCROSKEY)
 /*
  * HSI = 8MHz, no prescaler, no MCO
  * PLLSRC = HSI/2, PLLMUL = x12 => PLLCLK = 48MHz

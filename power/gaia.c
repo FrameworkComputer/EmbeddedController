@@ -43,7 +43,7 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
 #define DELAY_5V_SETUP		(2 * MSEC)
 #define DELAY_3V_SETUP		(2 * MSEC)
 #else
@@ -168,7 +168,7 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
  */
 static void set_pmic_pwrok(int asserted)
 {
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
 	/* Signal is active-high */
 	gpio_set_level(GPIO_PMIC_PWRON, asserted);
 #else
@@ -320,7 +320,7 @@ static int gaia_power_init(void)
 		auto_power_on = 1;
 	}
 
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
        /*
         * Force the AP into reset unless we're doing a sysjump.  Otherwise a
         * suspended AP may still be in a strange state from the last reboot,
@@ -408,7 +408,7 @@ void chipset_force_shutdown(void)
 	gpio_set_level(GPIO_EN_PP5000, 0);
 #endif
 
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
        /*
         * Force the AP into reset.  Otherwise it will hold XPSHOLD for a long
         * time if it's in a low power state.  See crosbug.com/p/22233.
@@ -479,7 +479,7 @@ static int power_on(void)
 	usleep(DELAY_5V_SETUP);
 #endif
 
-#ifdef BOARD_pit
+#ifdef BOARD_PIT
 	/*
 	 * 3.3V rail must come up right after 5V, because it sources power to
 	 * various buck supplies.
