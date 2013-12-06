@@ -59,6 +59,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
  * them identically for our purposes */
 /******************************************************************************/
 
+#ifdef BOARD_bds
 /* We need to limit the total current per ISC to no more than 20mA (5mA per
  * color LED, but we have four LEDs in parallel on each ISC). Any more than
  * that runs the risk of damaging the LED component. A value of 0x67 is as high
@@ -69,6 +70,19 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_RED   0x5c
 #define MAX_GREEN 0x30
 #define MAX_BLUE  0x67
+#endif
+#ifdef BOARD_link
+/* Link uses seven segments, not four, but keep the same limits anyway */
+#define MAX_RED   0x5c
+#define MAX_GREEN 0x30
+#define MAX_BLUE  0x67
+#endif
+#ifdef BOARD_samus
+/* Samus uses completely different LEDs, so the numbers are different */
+#define MAX_RED   0x4f
+#define MAX_GREEN 0x55
+#define MAX_BLUE  0x67
+#endif
 
 /* How many (logical) LEDs do we have? */
 #define NUM_LEDS 4
@@ -109,7 +123,15 @@ static void set_from_array(const struct initdata_s *data, int count)
 
 /* Controller register lookup tables. */
 static const uint8_t led_to_ctrl[] = { 1, 1, 0, 0 };
+#ifdef BOARD_bds
 static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
+#endif
+#ifdef BOARD_link
+static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
+#endif
+#ifdef BOARD_samus
+static const uint8_t led_to_isc[] = { 0x15, 0x18, 0x15, 0x18 };
+#endif
 
 /* Scale 0-255 into max value */
 static inline uint8_t scale_abs(int val, int max)
