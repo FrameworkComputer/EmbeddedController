@@ -9,14 +9,14 @@
 test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils
 #disable: powerdemo
 
-test-list-$(BOARD_bds)+=
-test-list-$(BOARD_pit)+=kb_scan stress
-test-list-$(BOARD_snow)+=kb_scan stress
-test-list-$(BOARD_spring)+=kb_scan stress
+test-list-$(BOARD_BDS)+=
+test-list-$(BOARD_PIT)+=kb_scan stress
+test-list-$(BOARD_SNOW)+=kb_scan stress
+test-list-$(BOARD_SPRING)+=kb_scan stress
 
 # Samus has board-specific chipset code, and the tests don't
 # compile with it. Disable them for now.
-test-list-$(BOARD_samus)=
+test-list-$(BOARD_SAMUS)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks

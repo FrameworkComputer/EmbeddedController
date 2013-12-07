@@ -9,12 +9,13 @@ BOARD ?= bds
 
 PROJECT?=ec
 
-# output directory for build objects
+# Output directory for build objects
 out?=build/$(BOARD)
 
 include Makefile.toolchain
 
-# Get CHIP name
+# The board makefile sets $CHIP.  Include it now, since it must be
+# defined for _flag_cfg below.
 include board/$(BOARD)/build.mk
 
 # Transform the configuration into make variables
@@ -37,16 +38,31 @@ _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -Iboard/$(BOARD) \
 	cut -c9- | sort)
 
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
-$(eval BOARD_$(BOARD)=y)
 
 # Get build configuration from sub-directories
--include private/build.mk
+# Note that this re-includes the board makefile
+
 include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
+
+# Create uppercase config variants, to avoid mixed case constants.
+# Also translate '-' to '_', so 'cortex-m' turns into 'CORTEX_M'.
+# This must be done after including board/chip/core configs, since we
+# want to run 'tr' once per variable instead of once per reference.
+uppercase = $(shell echo $(1) | tr '[:lower:]-' '[:upper:]_')
+UC_BOARD:=$(call uppercase,$(BOARD))
+UC_CHIP:=$(call uppercase,$(CHIP))
+UC_CHIP_FAMILY:=$(call uppercase,$(CHIP_FAMILY))
+UC_CHIP_VARIANT:=$(call uppercase,$(CHIP_VARIANT))
+UC_CORE:=$(call uppercase,$(CORE))
+
+$(eval BOARD_$(UC_BOARD)=y)
+
 include common/build.mk
 include driver/build.mk
 include power/build.mk
+-include private/build.mk
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
