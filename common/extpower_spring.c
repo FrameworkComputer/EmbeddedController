@@ -236,7 +236,6 @@ static int apple_charger_current(void)
 	int type = 0;
 	int data[ADC_CH_COUNT];
 
-	/* TODO(crosbug.com/p/23743): Handle potential race condition. */
 	tsu6721_disable_interrupts();
 	tsu6721_mux(TSU6721_MUX_USB);
 	/* Wait for signal to stablize */
@@ -453,10 +452,6 @@ static void usb_detect_overcurrent(int dev_type)
 		int idx = !(current_dev_type == TSU6721_TYPE_VBUS_DEBOUNCED);
 		power_removed_time[idx] = get_time();
 		power_removed_type[idx] = current_dev_type;
-		/*
-		 * TODO(crosbug.com/p/23744): Record the maximum current seen
-		 * during retry?
-		 */
 		power_removed_pwm_duty[idx] = current_pwm_duty;
 	} else if (dev_type & TSU6721_TYPE_VBUS_DEBOUNCED) {
 		int idx = !(dev_type == TSU6721_TYPE_VBUS_DEBOUNCED);
