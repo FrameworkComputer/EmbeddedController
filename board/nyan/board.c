@@ -55,7 +55,7 @@ const struct gpio_info gpio_list[] = {
 	/* Other inputs */
 	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
 	/* Outputs */
-	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_OUT_LOW, NULL},
+	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_ODR_HIGH, NULL},
 	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"EC_INT",      GPIO_B, (1<<9),  GPIO_ODR_HIGH, NULL},
 	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
