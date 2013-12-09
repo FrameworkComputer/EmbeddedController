@@ -79,6 +79,11 @@ enum lpc_host_event_type {
 void lpc_set_host_event_state(uint32_t mask);
 
 /**
+ * Clear and return the lowest host event.
+ */
+int lpc_query_host_event_state(void);
+
+/**
  * Set the event mask for the specified event type.
  *
  * @param type		Event type

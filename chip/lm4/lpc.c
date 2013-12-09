@@ -5,6 +5,7 @@
 
 /* LPC module for Chrome EC */
 
+#include "acpi.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -55,11 +56,6 @@
 #define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
-
-static uint8_t acpi_cmd;         /* Last received ACPI command */
-static uint8_t acpi_addr;        /* First byte of data after ACPI command */
-static int acpi_data_count;      /* Number of data writes after command */
-static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];   /* Event masks for each type */
@@ -373,6 +369,23 @@ void lpc_set_host_event_state(uint32_t mask)
 	}
 }
 
+int lpc_query_host_event_state(void)
+{
+	int evt_index = 0;
+	int i;
+
+	for (i = 0; i < 32; i++) {
+		if (host_events & (1 << i)) {
+			host_clear_events(1 << i);
+			evt_index = i + 1;	/* Events are 1-based */
+			break;
+		}
+	}
+
+	return evt_index;
+}
+
+
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
 	event_mask[type] = mask;
@@ -389,115 +402,20 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
  *
  * @param is_cmd	Is write command (is_cmd=1) or data (is_cmd=0)
  */
+__attribute__((noinline))			/* TODO(crosbug.com/p/24515) */
 static void handle_acpi_write(int is_cmd)
 {
-	int data = 0;
+	uint8_t value, result;
 
 	/* Set the busy bit */
 	LM4_LPC_ST(LPC_CH_ACPI) |= LM4_LPC_ST_BUSY;
 
 	/* Read command/data; this clears the FRMH status bit. */
-	if (is_cmd) {
-		acpi_cmd = LPC_POOL_ACPI[0];
-		acpi_data_count = 0;
-	} else {
-		data = LPC_POOL_ACPI[0];
-		/*
-		 * The first data byte is the ACPI memory address for
-		 * read/write commands.
-		 */
-		if (!acpi_data_count++)
-			acpi_addr = data;
-	}
+	value = LPC_POOL_ACPI[0];
 
-	/* Process complete commands */
-	if (acpi_cmd == EC_CMD_ACPI_READ && acpi_data_count == 1) {
-		/* ACPI read cmd + addr */
-		int result = 0xff;		/* value for bogus read */
-
-		switch (acpi_addr) {
-		case EC_ACPI_MEM_VERSION:
-			result = EC_ACPI_MEM_VERSION_CURRENT;
-			break;
-		case EC_ACPI_MEM_TEST:
-			result = acpi_mem_test;
-			break;
-		case EC_ACPI_MEM_TEST_COMPLIMENT:
-			result = 0xff - acpi_mem_test;
-			break;
-#ifdef CONFIG_PWM_KBLIGHT
-		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
-			/*
-			 * TODO(crosbug.com/p/23774): not very satisfying that
-			 * LPC knows directly about the keyboard backlight, but
-			 * for now this is good enough and less code than
-			 * defining a new API for ACPI commands.  If we start
-			 * adding more commands, or need to support LPC on more
-			 * than just LM4, fix this.
-			 */
-			result = pwm_get_duty(PWM_CH_KBLIGHT);
-			break;
-#endif
-#ifdef CONFIG_FANS
-		case EC_ACPI_MEM_FAN_DUTY:
-			/** TODO(crosbug.com/p/23774): Fix this too */
-			result = dptf_get_fan_duty_target();
-			break;
-#endif
-		default:
-			break;
-		}
-
-		/* Send the result byte */
-		CPRINTF("[%T ACPI read 0x%02x = 0x%02x]\n", acpi_addr, result);
+	/* Handle whatever this was. */
+	if (acpi_ap_to_ec(is_cmd, value, &result))
 		LPC_POOL_ACPI[1] = result;
-
-	} else if (acpi_cmd == EC_CMD_ACPI_WRITE && acpi_data_count == 2) {
-		/* ACPI write cmd + addr + data */
-		switch (acpi_addr) {
-		case EC_ACPI_MEM_TEST:
-			CPRINTF("[%T ACPI mem test 0x%02x]\n", data);
-			acpi_mem_test = data;
-			break;
-#ifdef CONFIG_PWM_KBLIGHT
-		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
-			/*
-			 * Debug output with CR not newline, because the host
-			 * does a lot of keyboard backlights and it scrolls the
-			 * debug console.
-			 */
-			CPRINTF("\r[%T ACPI kblight %d]", data);
-			pwm_set_duty(PWM_CH_KBLIGHT, data);
-			break;
-#endif
-#ifdef CONFIG_FANS
-		case EC_ACPI_MEM_FAN_DUTY:
-			/** TODO(crosbug.com/p/23774): Fix this too */
-			dptf_set_fan_duty_target(data);
-			break;
-#endif
-		default:
-			CPRINTF("[%T ACPI write 0x%02x = 0x%02x]\n",
-				acpi_addr, data);
-			break;
-		}
-
-	} else if (acpi_cmd == EC_CMD_ACPI_QUERY_EVENT && !acpi_data_count) {
-		/* Clear and return the lowest host event */
-		int evt_index = 0;
-		int i;
-
-		for (i = 0; i < 32; i++) {
-			if (host_events & (1 << i)) {
-				host_clear_events(1 << i);
-				evt_index = i + 1; /* Events are 1-based */
-				break;
-			}
-		}
-
-		CPRINTF("[%T ACPI query = %d]\n", evt_index);
-		LPC_POOL_ACPI[1] = evt_index;
-	}
 
 	/* Clear the busy bit */
 	LM4_LPC_ST(LPC_CH_ACPI) &= ~LM4_LPC_ST_BUSY;

@@ -148,6 +148,12 @@ void lpc_set_host_event_state(uint32_t mask)
 	/* TODO(crosbug.com/p/24107): Host event */
 }
 
+int lpc_query_host_event_state(void)
+{
+	/* TODO(crosbug.com/p/24107): Host event */
+	return 0;
+}
+
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
 	/* TODO(crosbug.com/p/24107): Host event */
