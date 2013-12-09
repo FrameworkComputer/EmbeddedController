@@ -266,10 +266,10 @@ int dptf_get_fan_duty_target(void)
 {
 	int fan = 0;				/* TODO(crosbug.com/p/23803) */
 
-	if (thermal_control_enabled[fan] || fan_get_rpm_mode(fan))
+	if (thermal_control_enabled[fan] || fan_get_rpm_mode(fans[fan].ch))
 		return -1;
 
-	return fan_get_duty(fan);
+	return fan_get_duty(fans[fan].ch);
 }
 
 /* 0-100% sets duty, out of range means let the EC drive */
@@ -367,6 +367,7 @@ BUILD_ASSERT(CONFIG_FANS <= EC_FAN_SPEED_ENTRIES);
 #define PWM_HOOK_VERSION 1
 /* Saved PWM state across sysjumps */
 struct pwm_fan_state {
+	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
 	uint16_t fan_rpm;
 	uint8_t fan_en;
 };
@@ -381,21 +382,25 @@ static void pwm_fan_init(void)
 
 	gpio_config_module(MODULE_PWM_FAN, 1);
 
-	for (i = 0; i < CONFIG_FANS; i++)
-		fan_channel_setup(fans[i].ch, fans[i].flags);
+	for (fan = 0; fan < CONFIG_FANS; fan++)
+		fan_channel_setup(fans[fan].ch, fans[fan].flags);
 
 	prev = (const struct pwm_fan_state *)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
 		/* Restore previous state. */
-		fan_set_enabled(fans[fan].ch, prev->fan_en);
-		fan_set_rpm_target(fans[fan].ch, prev->fan_rpm);
+		for (fan = 0; fan < CONFIG_FANS; fan++) {
+			fan_set_enabled(fans[fan].ch, prev->fan_en);
+			fan_set_rpm_target(fans[fan].ch, prev->fan_rpm);
+		}
 	} else {
 		/* Set initial fan speed to maximum */
-		fan_set_duty(fans[fan].ch, 100);
+		for (fan = 0; fan < CONFIG_FANS; fan++)
+			fan_set_duty(fans[fan].ch, 100);
 	}
 
-	set_thermal_control_enabled(fan, 1);
+	for (fan = 0; fan < CONFIG_FANS; fan++)
+		set_thermal_control_enabled(fan, 1);
 
 	/* Initialize memory-mapped data */
 	mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
