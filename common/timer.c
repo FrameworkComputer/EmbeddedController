@@ -69,7 +69,7 @@ void process_timers(int overflow)
 				int tskid = 31 - __builtin_clz(check_timer);
 
 				/* timer has expired ? */
-				if (timer_deadline[tskid].val < now.val)
+				if (timer_deadline[tskid].val <= now.val)
 					expire_timer(tskid);
 				else if ((timer_deadline[tskid].le.hi ==
 					  now.le.hi) &&
