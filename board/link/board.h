@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_AP_HANG_DETECT
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BKLTEN
 #define CONFIG_BATTERY_LINK

@@ -52,6 +52,9 @@
 #undef CONFIG_ALS
 #undef CONFIG_ALS_ISL29035
 
+/* Support AP hang detection host command and state machine */
+#undef CONFIG_AP_HANG_DETECT
+
 /*
  * Support controlling the display backlight based on the state of the lid
  * switch.  The EC will disable the backlight when the lid is closed.

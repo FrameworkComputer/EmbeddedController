@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_AP_HANG_DETECT
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION

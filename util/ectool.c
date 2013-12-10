@@ -88,6 +88,8 @@ const char help_str[] =
 	"      Get the value of GPIO signal\n"
 	"  gpioset <GPIO name>\n"
 	"      Set the value of GPIO signal\n"
+	"  hangdetect <flags> <event_msec> <reboot_msec> | stop | start\n"
+	"      Configure or start/stop the hang detect timer\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
 	"  kbpress\n"
@@ -3365,6 +3367,59 @@ int cmd_tmp006cal(int argc, char *argv[])
 			  &p, sizeof(p), NULL, 0);
 }
 
+static int cmd_hang_detect(int argc, char *argv[])
+{
+	struct ec_params_hang_detect req;
+	char *e;
+
+	memset(&req, 0, sizeof(req));
+
+	if (argc == 2 && !strcasecmp(argv[1], "stop")) {
+		req.flags = EC_HANG_STOP_NOW;
+		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
+				  NULL, 0);
+	}
+
+	if (argc == 2 && !strcasecmp(argv[1], "start")) {
+		req.flags = EC_HANG_START_NOW;
+		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
+				  NULL, 0);
+	}
+
+	if (argc == 4) {
+		req.flags = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad flags.\n");
+			return -1;
+		}
+
+		req.host_event_timeout_msec = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad event timeout.\n");
+			return -1;
+		}
+
+		req.warm_reboot_timeout_msec = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad reboot timeout.\n");
+			return -1;
+		}
+
+		printf("hang flags=0x%x\n"
+		       "event_timeout=%d ms\n"
+		       "reboot_timeout=%d ms\n",
+		       req.flags, req.host_event_timeout_msec,
+		       req.warm_reboot_timeout_msec);
+
+		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
+				  NULL, 0);
+	}
+
+	fprintf(stderr,
+		"Must specify start/stop or <flags> <event_ms> <reboot_ms>\n");
+	return -1;
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -3403,6 +3458,7 @@ const struct command commands[] = {
 	{"flashinfo", cmd_flash_info},
 	{"gpioget", cmd_gpio_get},
 	{"gpioset", cmd_gpio_set},
+	{"hangdetect", cmd_hang_detect},
 	{"hello", cmd_hello},
 	{"kbpress", cmd_kbpress},
 	{"i2cread", cmd_i2c_read},
