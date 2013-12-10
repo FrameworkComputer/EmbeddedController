@@ -88,6 +88,7 @@ enum gpio_signal {
 	GPIO_CHARGING,
 	GPIO_EC_BL_OVERRIDE,
 	GPIO_PMIC_THERM_L,
+	GPIO_PMIC_WARM_RESET_L,
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };

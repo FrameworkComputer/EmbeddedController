@@ -78,6 +78,12 @@
  */
 #define XPSHOLD_DEBOUNCE      (30 * 1000)  /* 30 ms */
 
+/*
+ * The hold time for pulling down the PMIC_WARM_RESET_L pin so that
+ * the AP can entery the recovery mode (flash SPI flash from USB).
+ */
+#define PMIC_WARM_RESET_L_HOLD_TIME (4 * MSEC)
+
 /* Application processor power state */
 static int ap_on;
 static int ap_suspended;
@@ -318,6 +324,16 @@ static int tegra_power_init(void)
 	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
 		CPRINTF("[%T not sysjump; forcing AP shutdown]\n");
 		chipset_force_shutdown();
+
+		/*
+		 * The warm reset triggers AP into the Tegra recovery mode (
+		 * flash SPI from USB).
+		 */
+		CPRINTF("[%T assert GPIO_PMIC_WARM_RESET_L for %d ms]\n",
+				PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
+		usleep(PMIC_WARM_RESET_L_HOLD_TIME);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);
 	}
 
 	/* Leave power off only if requested by reset flags */
