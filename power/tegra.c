@@ -31,6 +31,7 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "keyboard_scan.h"
+#include "power_button.h"
 #include "power_led.h"
 #include "pmu_tpschrome.h"
 #include "system.h"
@@ -70,9 +71,6 @@
 
 /* Maximum delay after power button press before we deassert GPIO_PMIC_PWRON */
 #define DELAY_RELEASE_PWRON   SECOND /* 1s */
-
-/* debounce time to prevent accidental power-on after keyboard power off */
-#define KB_PWR_ON_DEBOUNCE    250    /* 250us */
 
 /*
  * nyan's GPIO_SOC1V8_XPSHOLD will go low for ~20ms after initial high.
@@ -186,10 +184,8 @@ static int check_for_power_off_event(void)
 	/*
 	 * Check for power button press.
 	 */
-	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
-		udelay(KB_PWR_ON_DEBOUNCE);
-		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
-			pressed = 1;
+	if (power_button_is_pressed()) {
+		pressed = 1;
 	} else if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
 		return 4;  /* return non-zero for shudown down */
@@ -295,7 +291,6 @@ DECLARE_HOOK(HOOK_LID_CHANGE, tegra_lid_event, HOOK_PRIO_DEFAULT);
 static int tegra_power_init(void)
 {
 	/* Enable interrupts for our GPIOs */
-	gpio_enable_interrupt(GPIO_KB_PWR_ON_L);
 	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
 	gpio_enable_interrupt(GPIO_SUSPEND_L);
 
@@ -407,10 +402,8 @@ static int check_for_power_on_event(void)
 	}
 
 	/* check for power button press */
-	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
-		udelay(KB_PWR_ON_DEBOUNCE);
-		if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0)
-			return 4;
+	if (power_button_is_pressed()) {
+		return 4;
 	}
 
 	if (power_request == POWER_REQ_ON) {
@@ -453,20 +446,31 @@ static int power_on(void)
 /**
  * Wait for the power button to be released
  *
- * @return 0 if ok, -1 if power button failed to release
+ * @param timeout_us Timeout in microseconds, or -1 to wait forever
+ * @return EC_SUCCESS if ok, or
+ *         EC_ERROR_TIMEOUT if power button failed to release
  */
 static int wait_for_power_button_release(unsigned int timeout_us)
 {
-	/* wait for Power button release */
-	wait_in_signal(GPIO_KB_PWR_ON_L, 1, timeout_us);
+	timestamp_t deadline;
+	timestamp_t now = get_time();
 
-	udelay(KB_PWR_ON_DEBOUNCE);
-	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
-		CPRINTF("[%T power button not released in time]\n");
-		return -1;
+	deadline.val = now.val + timeout_us;
+
+	while (power_button_is_pressed()) {
+		now = get_time();
+		if (timeout_us < 0) {
+			task_wait_event(-1);
+		} else if (timestamp_expired(deadline, &now) ||
+			(task_wait_event(deadline.val - now.val) ==
+			TASK_EVENT_TIMER)) {
+			CPRINTF("[%T power button not released in time]\n");
+			return EC_ERROR_TIMEOUT;
+		}
 	}
+
 	CPRINTF("[%T power button released]\n");
-	return 0;
+	return EC_SUCCESS;
 }
 
 /**
@@ -588,6 +592,13 @@ void chipset_task(void)
 		wait_for_power_button_release(-1);
 	}
 }
+
+static void powerbtn_tegra_changed(void)
+{
+	task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_tegra_changed,
+		HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console debug command */

@@ -19,6 +19,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_SPI
 #define CONFIG_PWM
+#define CONFIG_POWER_BUTTON
 
 #ifndef __ASSEMBLER__
 
@@ -39,7 +40,7 @@
 /* GPIO signal list */
 enum gpio_signal {
 	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_KB_PWR_ON_L = 0,
+	GPIO_POWER_BUTTON_L = 0,
 	GPIO_SOC1V8_XPSHOLD,
 	GPIO_LID_OPEN,
 	GPIO_SUSPEND_L,

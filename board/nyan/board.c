@@ -13,6 +13,7 @@
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
+#include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
@@ -27,7 +28,8 @@
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH, power_interrupt},
+	{"POWER_BUTTON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH,
+	 power_button_interrupt},
 	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, power_interrupt},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
 	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_KB_INPUT, power_interrupt},
