@@ -41,6 +41,8 @@
 /* EC Subsystem */
 #define MEC1322_EC_BASE        0x4000fc00
 #define MEC1322_EC_INT_CTRL    REG32(MEC1322_EC_BASE + 0x18)
+#define MEC1322_EC_TRACE_EN    REG32(MEC1322_EC_BASE + 0x1c)
+#define MEC1322_EC_JTAG_EN     REG32(MEC1322_EC_BASE + 0x20)
 
 
 /* Interrupt aggregator */
@@ -238,6 +240,15 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_I2C_SLAVE_RX_BUF(port)  REG8(MEC1322_I2C_ADDR(port, 0x4c))
 #define MEC1322_I2C_MASTER_TX_BUF(port) REG8(MEC1322_I2C_ADDR(port, 0x50))
 #define MEC1322_I2C_MASTER_RX_BUF(port) REG8(MEC1322_I2C_ADDR(port, 0x54))
+
+
+/* Keyboard scan matrix */
+#define MEC1322_KS_BASE        0x40009c00
+#define MEC1322_KS_KSO_SEL     REG32(MEC1322_KS_BASE + 0x4)
+#define MEC1322_KS_KSI_INPUT   REG32(MEC1322_KS_BASE + 0x8)
+#define MEC1322_KS_KSI_STATUS  REG32(MEC1322_KS_BASE + 0xc)
+#define MEC1322_KS_KSI_INT_EN  REG32(MEC1322_KS_BASE + 0x10)
+#define MEC1322_KS_EXT_CTRL    REG32(MEC1322_KS_BASE + 0x14)
 
 
 /* IRQ Numbers */

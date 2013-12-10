@@ -47,6 +47,9 @@ void system_pre_init(void)
 	/* Enable direct NVIC */
 	MEC1322_EC_INT_CTRL |= 1;
 
+	/* Disable ARM TRACE debug port */
+	MEC1322_EC_TRACE_EN &= ~1;
+
 	/* Deassert nSIO_RESET */
 	MEC1322_PCR_PWR_RST_CTL &= ~(1 << 0);
 

@@ -10,6 +10,9 @@
 #include "registers.h"
 #include "util.h"
 
+#define GPIO_KB_INPUT GPIO_INPUT
+#define GPIO_KB_OUTPUT (GPIO_ODR_HIGH | GPIO_PULL_UP)
+
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
 	{"LED1", GPIO_PORT(15), (1 << 4), GPIO_ODR_LOW, NULL},
@@ -28,6 +31,13 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_PORT(3),  (1 << 4), 3, MODULE_PWM_FAN},
 	{GPIO_PORT(14), (1 << 0), 3, MODULE_PWM_FAN},
 	{GPIO_PORT(1),  0x60,     2, MODULE_I2C},  /* I2C0 */
+	{GPIO_PORT(0),  0xfe,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
+	{GPIO_PORT(1),  0x03,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
+	{GPIO_PORT(3),  0x04,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
+	{GPIO_PORT(4),  0x0d,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
+	{GPIO_PORT(10), 0xd8,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
+	{GPIO_PORT(12), 0x60,     2, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
+	{GPIO_PORT(14), 0x14,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
