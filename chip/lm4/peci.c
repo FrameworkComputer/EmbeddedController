@@ -16,15 +16,6 @@
 #include "temp_sensor.h"
 #include "util.h"
 
-/*
- * Max junction temperature for processor in degrees C.  This is correct for
- * Ivy Bridge and Haswell; future chips don't have PECI.
- *
- * In theory we could read TjMax from the processor via PECI, but that requires
- * closed-source Intel PECI commands.
- */
-#define PECI_TJMAX 105
-
 /* Initial PECI baud rate */
 #define PECI_BAUD_RATE 100000
 
@@ -79,9 +70,9 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 	 * Require at least two valid samples. When the AP transitions into S0,
 	 * it is possible, depending on the timing of the PECI sample, to read
 	 * an invalid temperature. This is very rare, but when it does happen
-	 * the temperature returned is PECI_TJMAX. Requiring two valid samples
-	 * here assures us that one bad maximum temperature reading when
-	 * entering S0 won't cause us to trigger an over temperature.
+	 * the temperature returned is CONFIG_PECI_TJMAX. Requiring two valid
+	 * samples here assures us that one bad maximum temperature reading
+	 * when entering S0 won't cause us to trigger an over temperature.
 	 */
 	if (success_cnt < 2)
 		return EC_ERROR_UNKNOWN;
@@ -117,7 +108,7 @@ static void peci_freq_changed(void)
 		(PECI_POLL_INTERVAL_MS * (freq / 1000 / 4096));
 
 	/* Set up temperature monitoring to report in degrees K */
-	LM4_PECI_CTL = ((PECI_TJMAX + 273) << 22) | 0x0001 |
+	LM4_PECI_CTL = ((CONFIG_PECI_TJMAX + 273) << 22) | 0x0001 |
 		       (PECI_RETRY_COUNT << 12) |
 		       (PECI_ERROR_BYPASS << 11);
 }

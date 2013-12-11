@@ -524,6 +524,15 @@
 /* Support PECI interface to x86 processor */
 #undef CONFIG_PECI
 
+/*
+ * Maximum operating temperature in degrees Celcius used on some x86
+ * processors. CPU chip temperature is reported relative to this value and
+ * is never reported greater than this value. Processor asserts PROCHOT#
+ * and starts throttling frequency and voltage at this temp. Operation may
+ * become unreliable if temperature exceeds this limit.
+ */
+#undef CONFIG_PECI_TJMAX
+
 /*****************************************************************************/
 /* PMU config */
 
