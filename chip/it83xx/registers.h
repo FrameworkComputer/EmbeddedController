@@ -529,6 +529,7 @@ enum clock_gate_offsets {
 #define IT83XX_GCTRL_BASE 0x00F02000
 
 #define IT83XX_GCTRL_WNCKR     REG8(IT83XX_GCTRL_BASE+0x0B)
+#define IT83XX_GCTRL_RSTS      REG8(IT83XX_GCTRL_BASE+0x06)
 
 /* --- MISC (not implemented yet) --- */
 
