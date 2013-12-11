@@ -20,39 +20,27 @@
 #define MPU_CTRL_PRIVDEFEN	(1 << 2)
 #define MPU_CTRL_HFNMIENA	(1 << 1)
 #define MPU_CTRL_ENABLE		(1 << 0)
-#define MPU_ATTR_NX		(1 << 12)
-#define MPU_ATTR_NOACCESS	(0 << 8)
-#define MPU_ATTR_FULLACCESS	(3 << 8)
-/* Suggested in table 3-6 of Stellaris LM4F232H5QC Datasheet and table 38 of
- * STM32F10xxx Cortex-M3 programming manual for internal sram. */
-#define MPU_ATTR_INTERNALSRAM	6
 
-/**
- * Configure a region
- *
- * region: Number of the region to update
- * addr: Base address of the region
- * size: Size of the region in bytes
- * attr: Attribute of the region. Current value will be overwritten if enable
- * is set.
- * enable: Enables the region if non zero. Otherwise, disables the region.
- *
- * Returns EC_SUCCESS on success or EC_ERROR_INVAL if a parameter is invalid.
+/*
+ * XN (execute never) bit. It's bit 12 if accessed by halfword.
+ *   0: XN off
+ *   1: XN on
  */
-int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
-		      uint16_t attr, uint8_t enable);
+#define MPU_ATTR_XN		(1 << 12)
+
+/* AP bit. See table 3-5 of Stellaris LM4F232H5QC datasheet for details */
+#define MPU_ATTR_NO_NO (0 << 8)  /* previleged no access, unprev no access */
+#define MPU_ATTR_RW_RW (3 << 8)  /* previleged ReadWrite, unprev ReadWrite */
+#define MPU_ATTR_RO_NO (5 << 8)  /* previleged Read-only, unprev no access */
+
+/* Suggested value for TEX S/C/B bit. See table 3-6 of Stellaris LM4F232H5QC
+ * datasheet and table 38 of STM32F10xxx Cortex-M3 programming manual. */
+#define MPU_ATTR_INTERNAL_SRAM  6  /* for Internal SRAM */
+#define MPU_ATTR_FLASH_MEMORY   2  /* for flash memory */
 
 /**
- * Set a region non-executable.
- *
- * region: number of the region
- * addr: base address of the region
- * size: size of the region in bytes
+ * Enable MPU
  */
-int mpu_nx_region(uint8_t region, uint32_t addr, uint32_t size);
-
-/**
- * Enable MPU */
 void mpu_enable(void);
 
 /**
@@ -70,9 +58,15 @@ extern char __iram_text_start;
 extern char __iram_text_end;
 
 /**
- * Lock down RAM
+ * Protect RAM from code execution
  */
 int mpu_protect_ram(void);
+
+/**
+ * Protect flash memory from code execution
+ */
+int mpu_lock_ro_flash(void);
+int mpu_lock_rw_flash(void);
 
 /**
  * Initialize MPU.

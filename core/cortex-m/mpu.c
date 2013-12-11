@@ -11,20 +11,28 @@
 #include "task.h"
 #include "util.h"
 
+/* Region assignment. 7 as the highest, a higher index has a higher priority.
+ * For example, using 7 for .iram.text allows us to mark entire RAM XN except
+ * .iram.text, which is used for hibernation. */
+enum mpu_region {
+	REGION_IRAM = 0,          /* For internal RAM */
+	REGION_FLASH_MEMORY = 1,  /* For flash memory */
+	REGION_IRAM_TEXT = 7      /* For *.(iram.text) */
+};
+
 /**
  * Update a memory region.
  *
- * region: number of the region to update
+ * region: index of the region to update
  * addr: base address of the region
  * size_bit: size of the region in power of two.
- * attr: attribute of the region. Current value will be overwritten if enable
- * is set.
+ * attr: attribute bits. Current value will be overwritten if enable is true.
  * enable: enables the region if non zero. Otherwise, disables the region.
  *
  * Based on 3.1.4.1 'Updating an MPU Region' of Stellaris LM4F232H5QC Datasheet
  */
 static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
-		       uint16_t attr, uint8_t enable)
+			      uint16_t attr, uint8_t enable)
 {
 	asm volatile("isb; dsb;");
 
@@ -39,8 +47,19 @@ static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	asm volatile("isb; dsb;");
 }
 
-int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
-		      uint16_t attr, uint8_t enable)
+/**
+ * Configure a region
+ *
+ * region: index of the region to update
+ * addr: Base address of the region
+ * size: Size of the region in bytes
+ * attr: Attribute bits. Current value will be overwritten if enable is set.
+ * enable: Enables the region if non zero. Otherwise, disables the region.
+ *
+ * Returns EC_SUCCESS on success or EC_ERROR_INVAL if a parameter is invalid.
+ */
+static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
+			     uint16_t attr, uint8_t enable)
 {
 	int size_bit = 0;
 
@@ -60,11 +79,34 @@ int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 	return EC_SUCCESS;
 }
 
-int mpu_nx_region(uint8_t region, uint32_t addr, uint32_t size)
+/**
+ * Set a region non-executable and read-write.
+ *
+ * region: index of the region
+ * addr: base address of the region
+ * size: size of the region in bytes
+ * texscb: TEX and SCB bit field
+ */
+static int mpu_lock_region(uint8_t region, uint32_t addr, uint32_t size,
+			   uint8_t texscb)
 {
-	return mpu_config_region(
-		region, addr, size,
-		MPU_ATTR_NX | MPU_ATTR_FULLACCESS | MPU_ATTR_INTERNALSRAM, 1);
+	return mpu_config_region(region, addr, size,
+				 MPU_ATTR_XN | MPU_ATTR_RW_RW | texscb, 1);
+}
+
+/**
+ * Set a region executable and read-write.
+ *
+ * region: index of the region
+ * addr: base address of the region
+ * size: size of the region in bytes
+ * texscb: TEX and SCB bit field
+ */
+static int mpu_unlock_region(uint8_t region, uint32_t addr, uint32_t size,
+			     uint8_t texscb)
+{
+	return mpu_config_region(region, addr, size,
+				 MPU_ATTR_RW_RW | texscb, 1);
 }
 
 void mpu_enable(void)
@@ -82,25 +124,30 @@ uint32_t mpu_get_type(void)
 	return MPU_TYPE;
 }
 
-/**
- * Prevent code from running on RAM.
- * We need to allow execution from iram.text. Using higher region# allows us to
- * do 'whitelisting' (lock down all then create exceptions).
- */
 int mpu_protect_ram(void)
 {
 	int ret;
-
-	ret = mpu_nx_region(0, CONFIG_RAM_BASE, CONFIG_RAM_SIZE);
+	ret = mpu_lock_region(REGION_IRAM, CONFIG_RAM_BASE,
+			      CONFIG_RAM_SIZE, MPU_ATTR_INTERNAL_SRAM);
 	if (ret != EC_SUCCESS)
 		return ret;
-
-	ret = mpu_config_region(
-		7, (uint32_t)&__iram_text_start,
+	ret = mpu_unlock_region(
+		REGION_IRAM_TEXT, (uint32_t)&__iram_text_start,
 		(uint32_t)(&__iram_text_end - &__iram_text_start),
-		MPU_ATTR_FULLACCESS | MPU_ATTR_INTERNALSRAM, 1);
-
+		MPU_ATTR_INTERNAL_SRAM);
 	return ret;
+}
+
+int mpu_lock_ro_flash(void)
+{
+	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_FW_RO_OFF,
+			       CONFIG_FW_IMAGE_SIZE, MPU_ATTR_FLASH_MEMORY);
+}
+
+int mpu_lock_rw_flash(void)
+{
+	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_FW_RW_OFF,
+			       CONFIG_FW_IMAGE_SIZE, MPU_ATTR_FLASH_MEMORY);
 }
 
 int mpu_pre_init(void)
@@ -112,9 +159,7 @@ int mpu_pre_init(void)
 
 	mpu_disable();
 	for (i = 0; i < 8; ++i) {
-		mpu_config_region(
-			i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE,
-			MPU_ATTR_FULLACCESS | MPU_ATTR_INTERNALSRAM, 0);
+		mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0, 0);
 	}
 
 	return EC_SUCCESS;

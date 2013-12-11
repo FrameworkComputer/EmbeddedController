@@ -225,32 +225,53 @@ void system_disable_jump(void)
 	disable_jump = 1;
 
 #ifdef CONFIG_MPU
-	/*
-	 * Lock down memory to prevent code execution from data areas.
-	 *
-	 * TODO(crosbug.com/p/16904): Also lock down the image which isn't
-	 * running (RO if RW, or vice versa), so a bad or malicious jump can't
-	 * execute code from that image.
-	 */
 	if (system_is_locked()) {
+		int ret;
+		int enable_mpu = 0;
+		enum system_image_copy_t copy;
+
+		CPRINTF("[%T MPU type: %08x]\n", mpu_get_type());
 		/*
-		 * Protect memory from code execution
+		 * Protect RAM from code execution
 		 */
-		int mpu_error = mpu_protect_ram();
-		if (mpu_error == EC_SUCCESS) {
-			mpu_enable();
+		ret = mpu_protect_ram();
+		if (ret == EC_SUCCESS) {
+			enable_mpu = 1;
 			CPRINTF("[%T RAM locked. Exclusion %08x-%08x]\n",
 				&__iram_text_start, &__iram_text_end);
 		} else {
-			CPRINTF("[%T Failed to lock RAM (%d). mpu_type:%08x]\n",
-				mpu_error, mpu_get_type());
+			CPRINTF("[%T Failed to lock RAM (%d)]\n", ret);
 		}
+
 		/*
-		 * Protect the other image from code execution
-		 * TODO: https://chromium-review.googlesource.com/#/c/169050/
+		 * Protect inactive image (ie. RO if running RW, vice versa)
+		 * from code execution.
 		 */
+		switch (system_get_image_copy()) {
+		case SYSTEM_IMAGE_RO:
+			ret =  mpu_lock_rw_flash();
+			copy = SYSTEM_IMAGE_RW;
+			break;
+		case SYSTEM_IMAGE_RW:
+			ret =  mpu_lock_ro_flash();
+			copy = SYSTEM_IMAGE_RO;
+			break;
+		default:
+			copy = SYSTEM_IMAGE_UNKNOWN;
+			ret = !EC_SUCCESS;
+		}
+		if (ret == EC_SUCCESS) {
+			enable_mpu = 1;
+			CPRINTF("[%T %s image locked]\n", image_names[copy]);
+		} else {
+			CPRINTF("[%T Failed to lock %s image (%d)]\n",
+				image_names[copy], ret);
+		}
+
+		if (enable_mpu)
+			mpu_enable();
 	} else {
-		CPRINTF("[%T RAM not locked]\n");
+		CPRINTF("[%T System is unlocked. Skip MPU configuration\n");
 	}
 #endif
 }
