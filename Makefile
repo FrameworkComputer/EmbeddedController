@@ -14,11 +14,25 @@ out?=build/$(BOARD)
 
 include Makefile.toolchain
 
-# The board makefile sets $CHIP.  Include it now, since it must be
-# defined for _flag_cfg below.
+# The board makefile sets $CHIP and the chip makefile sets $CORE.
+# Include those now, since they must be defined for _flag_cfg below.
 include board/$(BOARD)/build.mk
+include chip/$(CHIP)/build.mk
 
-# Transform the configuration into make variables
+# Create uppercase config variants, to avoid mixed case constants.
+# Also translate '-' to '_', so 'cortex-m' turns into 'CORTEX_M'.  This must
+# be done before evaluating config.h.
+uppercase = $(shell echo $(1) | tr '[:lower:]-' '[:upper:]_')
+UC_BOARD:=$(call uppercase,$(BOARD))
+UC_CHIP:=$(call uppercase,$(CHIP))
+UC_CHIP_FAMILY:=$(call uppercase,$(CHIP_FAMILY))
+UC_CHIP_VARIANT:=$(call uppercase,$(CHIP_VARIANT))
+UC_CORE:=$(call uppercase,$(CORE))
+UC_PROJECT:=$(call uppercase,$(PROJECT))
+
+# Transform the configuration into make variables.  This must be done after
+# the board/project/chip/core variables are defined, since some of the configs
+# are dependent on particular configurations.
 includes=include core/$(CORE)/include $(dirs) $(out) test
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
@@ -40,22 +54,10 @@ _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -Iboard/$(BOARD) \
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 
 # Get build configuration from sub-directories
-# Note that this re-includes the board makefile
-
+# Note that this re-includes the board and chip makefiles
 include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
-
-# Create uppercase config variants, to avoid mixed case constants.
-# Also translate '-' to '_', so 'cortex-m' turns into 'CORTEX_M'.
-# This must be done after including board/chip/core configs, since we
-# want to run 'tr' once per variable instead of once per reference.
-uppercase = $(shell echo $(1) | tr '[:lower:]-' '[:upper:]_')
-UC_BOARD:=$(call uppercase,$(BOARD))
-UC_CHIP:=$(call uppercase,$(CHIP))
-UC_CHIP_FAMILY:=$(call uppercase,$(CHIP_FAMILY))
-UC_CHIP_VARIANT:=$(call uppercase,$(CHIP_VARIANT))
-UC_CORE:=$(call uppercase,$(CORE))
 
 $(eval BOARD_$(UC_BOARD)=y)
 
