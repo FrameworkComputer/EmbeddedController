@@ -23,6 +23,19 @@
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
+/*****************************************************************************/
+/* DPTF temperature thresholds */
+
+void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
+{
+	/* TODO(crosbug.com/p/23970) */
+	CPRINTF("[%T DPTF sensor %d, threshold %d C, index %d, %sabled]\n",
+		sensor_id, K_TO_C(temp), idx, enable ? "en" : "dis");
+}
+
+/*****************************************************************************/
+/* EC-specific thermal controls */
+
 test_mockable_static void smi_sensor_failure_warning(void)
 {
 	CPRINTF("[%T can't read any temp sensors!]\n");

@@ -20,6 +20,11 @@ static uint8_t acpi_addr;        /* First byte of data after ACPI command */
 static int acpi_data_count;      /* Number of data writes after command */
 static uint8_t acpi_mem_test;    /* Test byte in ACPI memory space */
 
+#ifdef CONFIG_TEMP_SENSOR
+static int dptf_temp_sensor_id;			/* last sensor ID written */
+static int dptf_temp_threshold;			/* last threshold written */
+#endif
+
 /* This handles AP writes to the EC via the ACPI I/O port. There are only a few
  * ACPI commands (EC_CMD_ACPI_*), but they are all handled here.
  */
@@ -27,8 +32,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 {
 	int data = 0;
 	int retval = 0;
-
-	CPRINTF("[HEY: %T %s(%d, 0x%x)]\n", is_cmd, value);
+	int result = 0xff;			/* value for bogus read */
 
 	/* Read command/data; this clears the FRMH status bit. */
 	if (is_cmd) {
@@ -47,8 +51,6 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 	/* Process complete commands */
 	if (acpi_cmd == EC_CMD_ACPI_READ && acpi_data_count == 1) {
 		/* ACPI read cmd + addr */
-		int result = 0xff;		/* value for bogus read */
-
 		switch (acpi_addr) {
 		case EC_ACPI_MEM_VERSION:
 			result = EC_ACPI_MEM_VERSION_CURRENT;
@@ -61,29 +63,20 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
-			/*
-			 * TODO(crosbug.com/p/23774): not very satisfying that
-			 * LPC knows directly about the keyboard backlight, but
-			 * for now this is good enough and less code than
-			 * defining a new API for ACPI commands.  If we start
-			 * adding more commands, or need to support LPC on more
-			 * than just LM4, fix this.
-			 */
 			result = pwm_get_duty(PWM_CH_KBLIGHT);
 			break;
 #endif
 #ifdef CONFIG_FANS
 		case EC_ACPI_MEM_FAN_DUTY:
-			/** TODO(crosbug.com/p/23774): Fix this too */
 			result = dptf_get_fan_duty_target();
 			break;
 #endif
 		default:
+			CPRINTF("[%T ACPI read 0x%02x (ignored)]\n", acpi_addr);
 			break;
 		}
 
 		/* Send the result byte */
-		CPRINTF("[%T ACPI read 0x%02x = 0x%02x]\n", acpi_addr, result);
 		*resultptr = result;
 		retval = 1;
 
@@ -91,7 +84,6 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		/* ACPI write cmd + addr + data */
 		switch (acpi_addr) {
 		case EC_ACPI_MEM_TEST:
-			CPRINTF("[%T ACPI mem test 0x%02x]\n", data);
 			acpi_mem_test = data;
 			break;
 #ifdef CONFIG_PWM_KBLIGHT
@@ -107,12 +99,28 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #endif
 #ifdef CONFIG_FANS
 		case EC_ACPI_MEM_FAN_DUTY:
-			/** TODO(crosbug.com/p/23774): Fix this too */
 			dptf_set_fan_duty_target(data);
 			break;
 #endif
+#ifdef CONFIG_TEMP_SENSOR
+		case EC_ACPI_MEM_TEMP_ID:
+			dptf_temp_sensor_id = data;
+			break;
+		case EC_ACPI_MEM_TEMP_THRESHOLD:
+			dptf_temp_threshold = data + EC_TEMP_SENSOR_OFFSET;
+			break;
+		case EC_ACPI_MEM_TEMP_COMMIT:
+		{
+			int idx = data & EC_ACPI_MEM_TEMP_COMMIT_SELECT_MASK;
+			int enable = data & EC_ACPI_MEM_TEMP_COMMIT_ENABLE_MASK;
+			dptf_set_temp_threshold(dptf_temp_sensor_id,
+						dptf_temp_threshold,
+						idx, enable);
+			break;
+		}
+#endif
 		default:
-			CPRINTF("[%T ACPI write 0x%02x = 0x%02x]\n",
+			CPRINTF("[%T ACPI write 0x%02x = 0x%02x (ignored)]\n",
 				acpi_addr, data);
 			break;
 		}

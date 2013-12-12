@@ -1855,6 +1855,7 @@ struct ec_params_reboot_ec {
 #define EC_CMD_ACPI_QUERY_EVENT 0x84
 
 /* Valid addresses in ACPI memory space, for read/write commands */
+
 /* Memory space version; set to EC_ACPI_MEM_VERSION_CURRENT */
 #define EC_ACPI_MEM_VERSION            0x00
 /*
@@ -1864,10 +1865,44 @@ struct ec_params_reboot_ec {
 #define EC_ACPI_MEM_TEST               0x01
 /* Test compliment; writes here are ignored. */
 #define EC_ACPI_MEM_TEST_COMPLIMENT    0x02
+
 /* Keyboard backlight brightness percent (0 - 100) */
 #define EC_ACPI_MEM_KEYBOARD_BACKLIGHT 0x03
-/* Target Fan Duty (0-100, 0xff for auto/none) */
-#define EC_ACPI_MEM_FAN_DUTY 0x04
+/* DPTF Target Fan Duty (0-100, 0xff for auto/none) */
+#define EC_ACPI_MEM_FAN_DUTY           0x04
+
+/*
+ * DPTF temp thresholds. Any of the EC's temp sensors can have up to two
+ * independent thresholds attached to them. The current value of the ID
+ * register determines which sensor is affected by the THRESHOLD and COMMIT
+ * registers. The THRESHOLD register uses the same EC_TEMP_SENSOR_OFFSET scheme
+ * as the memory-mapped sensors. The COMMIT register applies those settings.
+ */
+#define EC_ACPI_MEM_TEMP_ID            0x05
+#define EC_ACPI_MEM_TEMP_THRESHOLD     0x06
+#define EC_ACPI_MEM_TEMP_COMMIT        0x07
+/*
+ * Here are the bits for the COMMIT register:
+ *   bit 0 selects the threshold index for the chosen sensor (0/1)
+ *   bit 1 enables/disables the selected threshold (0 = off, 1 = on)
+ * Each write to the commit register affects one threshold.
+ */
+#define EC_ACPI_MEM_TEMP_COMMIT_SELECT_MASK (1 << 0)
+#define EC_ACPI_MEM_TEMP_COMMIT_ENABLE_MASK (1 << 1)
+/*
+ * Example:
+ *
+ * Set the thresholds for sensor 2 to 50 C and 60 C:
+ *   write 2 to [0x05]      --  select temp sensor 2
+ *   write 0x7b to [0x06]   --  C_TO_K(50) - EC_TEMP_SENSOR_OFFSET
+ *   write 0x2 to [0x07]    --  enable threshold 0 with this value
+ *   write 0x85 to [0x06]   --  C_TO_K(60) - EC_TEMP_SENSOR_OFFSET
+ *   write 0x3 to [0x07]    --  enable threshold 1 with this value
+ *
+ * Disable the 60 C threshold, leaving the 50 C threshold unchanged:
+ *   write 2 to [0x05]      --  select temp sensor 2
+ *   write 0x1 to [0x07]    --  disable threshold 1
+ */
 
 /* Current version of ACPI memory address space */
 #define EC_ACPI_MEM_VERSION_CURRENT 1
