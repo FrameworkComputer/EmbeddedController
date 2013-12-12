@@ -143,6 +143,23 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 }
 
 /**
+ * Set the AP RESET signal.
+ *
+ * This fucntion is for backward-compatible.
+ *
+ * AP_RESET_L (PB3) is stuffed before rev <= 2.0 and connected to PMIC RESET.
+ * After rev >= 2.2, this is removed. This should not effected the new board.
+ *
+ * @param asserted  Assert (=1) or deassert (=0) the signal.  This is the
+ *                  logical level of the pin, not the physical level.
+ */
+static void set_ap_reset(int asserted)
+{
+	/* Signal is active-low */
+	gpio_set_level(GPIO_AP_RESET_L, asserted ? 0 : 1);
+}
+
+/**
  * Set the PMIC PWRON signal.
  *
  * Note that asserting requires holding for PMIC_PWRON_DEBOUNCE_TIME.
@@ -368,6 +385,9 @@ void chipset_force_shutdown(void)
 	set_pmic_therm(1);
 	udelay(PMIC_THERM_HOLD_TIME);
 	set_pmic_therm(0);
+
+	/* Hold the reset pin so that the AP stays in off mode (rev <= 2.0) */
+	set_ap_reset(1);
 }
 
 /*****************************************************************************/
@@ -421,8 +441,9 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
-	/* Make sure we de-assert the PMI_THERM_L pin. */
+	/* Make sure we de-assert the PMI_THERM_L and AP_RESET_L pin. */
 	set_pmic_therm(0);
+	set_ap_reset(0);
 
 	/* Push the power button */
 	set_pmic_pwron(1);
