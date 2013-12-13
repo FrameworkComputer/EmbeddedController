@@ -14,7 +14,11 @@ void dptf_set_fan_duty_target(int pct);
 /* 0-100% if in duty mode. -1 if not */
 int dptf_get_fan_duty_target(void);
 
-/* Each temp sensor can have up to two thresholds */
+/* Thermal thresholds may be set for each temp sensor. */
+#define DPTF_THRESHOLDS_PER_SENSOR 2
+#define DPTF_THRESHOLD_HYSTERESIS 2
+
+/* Set/enable the thresholds */
 void dptf_set_temp_threshold(int sensor_id,	/* zero-based sensor index */
 			     int temp,		/* in degrees K */
 			     int idx,		/* which threshold (0 or 1) */

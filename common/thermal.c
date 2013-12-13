@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "dptf.h"
 #include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -26,12 +27,76 @@
 /*****************************************************************************/
 /* DPTF temperature thresholds */
 
+static struct {
+	int temp;			/* degrees K, negative for disabled */
+	cond_t over;			/* watch for crossings */
+} dptf_threshold[TEMP_SENSOR_COUNT][DPTF_THRESHOLDS_PER_SENSOR];
+
+static void dptf_init(void)
+{
+	int id, t;
+
+	for (id = 0; id < TEMP_SENSOR_COUNT; id++)
+		for (t = 0; t < DPTF_THRESHOLDS_PER_SENSOR; t++) {
+			dptf_threshold[id][t].temp = -1;
+			cond_init(&dptf_threshold[id][t].over, 0);
+		}
+
+}
+DECLARE_HOOK(HOOK_INIT, dptf_init, HOOK_PRIO_DEFAULT);
+
+
+
+
+/* Return true if any threshold transition occurs. */
+static int dpft_check_temp_threshold(int sensor_id, int temp)
+{
+	int tripped = 0;
+	int max, i;
+
+	for (i = 0; i < DPTF_THRESHOLDS_PER_SENSOR; i++) {
+
+		max = dptf_threshold[sensor_id][i].temp;
+		if (max < 0)			/* disabled? */
+			continue;
+
+		if (temp >= max)
+			cond_set_true(&dptf_threshold[sensor_id][i].over);
+		else if (temp <= max - DPTF_THRESHOLD_HYSTERESIS)
+			cond_set_false(&dptf_threshold[sensor_id][i].over);
+
+		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
+			CPRINTF("[%T DPTF over threshold [%d][%d]\n",
+				sensor_id, i);
+			tripped = 1;
+		}
+		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
+			CPRINTF("[%T DPTF under threshold [%d][%d]\n",
+				sensor_id, i);
+			tripped = 1;
+		}
+	}
+
+	return tripped;
+}
+
+
 void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 {
-	/* TODO(crosbug.com/p/23970) */
 	CPRINTF("[%T DPTF sensor %d, threshold %d C, index %d, %sabled]\n",
 		sensor_id, K_TO_C(temp), idx, enable ? "en" : "dis");
+
+	if (enable) {
+		dptf_threshold[sensor_id][idx].temp = temp;
+		cond_init(&dptf_threshold[sensor_id][idx].over, 0);
+	} else {
+		dptf_threshold[sensor_id][idx].temp = -1;
+	}
 }
+
+
+
+
 
 /*****************************************************************************/
 /* EC-specific thermal controls */
@@ -67,6 +132,7 @@ static void thermal_control(void)
 	int num_valid_limits[EC_TEMP_THRESH_COUNT];
 	int num_sensors_read;
 	int fmax;
+	int dptf_tripped;
 
 	/* Get ready to count things */
 	memset(count_over, 0, sizeof(count_over));
@@ -74,6 +140,7 @@ static void thermal_control(void)
 	memset(num_valid_limits, 0, sizeof(num_valid_limits));
 	num_sensors_read = 0;
 	fmax = 0;
+	dptf_tripped = 0;
 
 	/* go through all the sensors */
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
@@ -106,6 +173,9 @@ static void thermal_control(void)
 			if (f > fmax)
 				fmax = f;
 		}
+
+		/* and check the dptf thresholds */
+		dptf_tripped |= dpft_check_temp_threshold(i, t);
 	}
 
 	if (!num_sensors_read) {
@@ -176,6 +246,10 @@ static void thermal_control(void)
 	for (i = 0; i < CONFIG_FANS; i++)
 		fan_set_percent_needed(i, fmax);
 #endif
+
+	/* Don't forget to signal any DPTF thresholds */
+	if (dptf_tripped)
+		host_set_single_event(EC_HOST_EVENT_THERMAL_THRESHOLD);
 }
 
 /* Wait until after the sensors have been read */
@@ -256,6 +330,32 @@ DECLARE_CONSOLE_COMMAND(thermalset, command_thermalset,
 			NULL);
 
 
+static int command_dptftemp(int argc, char **argv)
+{
+	int id, t;
+	int temp, trig;
+
+	ccprintf("sensor   thresh0   thresh1\n");
+	for (id = 0; id < TEMP_SENSOR_COUNT; id++) {
+		ccprintf(" %2d", id);
+		for (t = 0; t < DPTF_THRESHOLDS_PER_SENSOR; t++) {
+			temp = dptf_threshold[id][t].temp;
+			trig = cond_is_true(&dptf_threshold[id][t].over);
+			if (temp < 0)
+				ccprintf("       --- ");
+			else
+				ccprintf("       %3d%c", temp,
+					 trig ? '*' : ' ');
+		}
+		ccprintf("    %s\n", temp_sensors[id].name);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp,
+			NULL,
+			"Print DPTF thermal parameters (degrees Kelvin)",
+			NULL);
 
 
 /*****************************************************************************/
