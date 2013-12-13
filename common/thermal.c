@@ -7,6 +7,7 @@
  * implementation from the original version that shipped on Link.
  */
 
+#include "atomic.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -45,8 +46,21 @@ static void dptf_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, dptf_init, HOOK_PRIO_DEFAULT);
 
+/* Keep track of which triggered sensor thresholds the AP has seen */
+static uint32_t dptf_seen;
 
+int dptf_query_next_sensor_event(void)
+{
+	int id;
 
+	for (id = 0; id < TEMP_SENSOR_COUNT; id++)
+		if (dptf_seen & (1 << id)) {	/* atomic? */
+			atomic_clear(&dptf_seen, (1 << id));
+			return id;
+		}
+
+	return -1;
+}
 
 /* Return true if any threshold transition occurs. */
 static int dpft_check_temp_threshold(int sensor_id, int temp)
@@ -68,18 +82,19 @@ static int dpft_check_temp_threshold(int sensor_id, int temp)
 		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
 			CPRINTF("[%T DPTF over threshold [%d][%d]\n",
 				sensor_id, i);
+			atomic_or(&dptf_seen, (1 << sensor_id));
 			tripped = 1;
 		}
 		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
 			CPRINTF("[%T DPTF under threshold [%d][%d]\n",
 				sensor_id, i);
+			atomic_or(&dptf_seen, (1 << sensor_id));
 			tripped = 1;
 		}
 	}
 
 	return tripped;
 }
-
 
 void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 {
@@ -89,14 +104,11 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 	if (enable) {
 		dptf_threshold[sensor_id][idx].temp = temp;
 		cond_init(&dptf_threshold[sensor_id][idx].over, 0);
+		atomic_clear(&dptf_seen, (1 << sensor_id));
 	} else {
 		dptf_threshold[sensor_id][idx].temp = -1;
 	}
 }
-
-
-
-
 
 /*****************************************************************************/
 /* EC-specific thermal controls */
@@ -350,6 +362,7 @@ static int command_dptftemp(int argc, char **argv)
 		ccprintf("    %s\n", temp_sensors[id].name);
 	}
 
+	ccprintf("AP seen mask: 0x%08x\n", dptf_seen);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp,

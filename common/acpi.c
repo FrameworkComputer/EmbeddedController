@@ -71,6 +71,11 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result = dptf_get_fan_duty_target();
 			break;
 #endif
+#ifdef CONFIG_TEMP_SENSOR
+		case EC_ACPI_MEM_TEMP_ID:
+			result = dptf_query_next_sensor_event();
+			break;
+#endif
 		default:
 			CPRINTF("[%T ACPI read 0x%02x (ignored)]\n", acpi_addr);
 			break;

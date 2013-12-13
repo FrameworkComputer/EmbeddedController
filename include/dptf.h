@@ -24,4 +24,10 @@ void dptf_set_temp_threshold(int sensor_id,	/* zero-based sensor index */
 			     int idx,		/* which threshold (0 or 1) */
 			     int enable);	/* true = on, false = off */
 
+/*
+ * Return the ID of a temp sensor that has crossed its threshold since the last
+   time we asked. -1 means none.
+ */
+int dptf_query_next_sensor_event(void);
+
 #endif	/* __CROS_EC_DPTF_H */

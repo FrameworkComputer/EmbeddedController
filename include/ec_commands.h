@@ -1877,6 +1877,14 @@ struct ec_params_reboot_ec {
  * register determines which sensor is affected by the THRESHOLD and COMMIT
  * registers. The THRESHOLD register uses the same EC_TEMP_SENSOR_OFFSET scheme
  * as the memory-mapped sensors. The COMMIT register applies those settings.
+ *
+ * The spec does not mandate any way to read back the threshold settings
+ * themselves, but when a threshold is crossed the AP needs a way to determine
+ * which sensor(s) are responsible. Each reading of the ID register clears and
+ * returns one sensor ID that has crossed one of its threshold (in either
+ * direction) since the last read. A value of 0xFF means "no new thresholds
+ * have tripped". Setting or enabling the thresholds for a sensor will clear
+ * the unread event count for that sensor.
  */
 #define EC_ACPI_MEM_TEMP_ID            0x05
 #define EC_ACPI_MEM_TEMP_THRESHOLD     0x06
