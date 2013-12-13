@@ -5,24 +5,70 @@
 
 /* LPC module for MEC1322 */
 
+#include "acpi.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 static uint8_t mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
+static uint32_t host_events;     /* Currently pending SCI/SMI events */
+static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
 static uint8_t host_cmd_flags;   /* Flags from host command */
 
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __attribute__((aligned(4)));
+static int init_done;
 
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
+
+/**
+ * Generate SMI pulse to the host chipset via GPIO.
+ *
+ * If the x86 is in S0, SMI# is sampled at 33MHz, so minimum pulse length is
+ * 60ns.  If the x86 is in S3, SMI# is sampled at 32.768KHz, so we need pulse
+ * length >61us.  Both are short enough and events are infrequent, so just
+ * delay for 65us.
+ */
+static void lpc_generate_smi(void)
+{
+	gpio_set_level(GPIO_PCH_SMI_L, 0);
+	udelay(65);
+	gpio_set_level(GPIO_PCH_SMI_L, 1);
+}
+
+static void lpc_generate_sci(void)
+{
+	/* TODO (crosbug.com/p/24550): Use EC_SCI# instead of GPIO */
+	gpio_set_level(GPIO_PCH_SCI_L, 0);
+	udelay(65);
+	gpio_set_level(GPIO_PCH_SCI_L, 1);
+}
+
+/**
+ * Update the level-sensitive wake signal to the AP.
+ *
+ * @param wake_events	Currently asserted wake events
+ */
+static void lpc_update_wake(uint32_t wake_events)
+{
+	/*
+	 * Mask off power button event, since the AP gets that through a
+	 * separate dedicated GPIO.
+	 */
+	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
+
+	/* Signal is asserted low when wake events is non-zero */
+	gpio_set_level(GPIO_PCH_WAKE_L, !wake_events);
+}
 
 uint8_t *lpc_get_memmap_range(void)
 {
@@ -32,6 +78,58 @@ uint8_t *lpc_get_memmap_range(void)
 static uint8_t *lpc_get_hostcmd_data_range(void)
 {
 	return mem_mapped;
+}
+
+/**
+ * Update the host event status.
+ *
+ * Sends a pulse if masked event status becomes non-zero:
+ *   - SMI pulse via PCH_SMI_L GPIO
+ *   - SCI pulse via PCH_SCI_L GPIO
+ */
+static void update_host_event_status(void)
+{
+	int need_sci = 0;
+	int need_smi = 0;
+
+	if (!init_done)
+		return;
+
+	/* Disable LPC interrupt while updating status register */
+	task_disable_irq(MEC1322_IRQ_ACPIEC0_IBF);
+
+	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
+		/* Only generate SMI for first event */
+		if (!(MEC1322_ACPI_EC_STATUS(0) & EC_LPC_STATUS_SMI_PENDING))
+			need_smi = 1;
+		MEC1322_ACPI_EC_STATUS(0) |= EC_LPC_STATUS_SMI_PENDING;
+	} else {
+		MEC1322_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_SMI_PENDING;
+	}
+
+	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
+		/* Generate SCI for every event */
+		need_sci = 1;
+		MEC1322_ACPI_EC_STATUS(0) |= EC_LPC_STATUS_SCI_PENDING;
+	} else {
+		MEC1322_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_SCI_PENDING;
+	}
+
+	/* Copy host events to mapped memory */
+	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = host_events;
+
+	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
+
+	/* Process the wake events. */
+	lpc_update_wake(host_events & event_mask[LPC_HOST_EVENT_WAKE]);
+
+	/* Send pulse on SMI signal if needed */
+	if (need_smi)
+		lpc_generate_smi();
+
+	/* ACPI 5.0-12.6.1: Generate SCI for SCI_EVT=1. */
+	if (need_sci)
+		lpc_generate_sci();
 }
 
 static void lpc_send_response_packet(struct host_packet *pkt)
@@ -59,6 +157,12 @@ static void setup_lpc(void)
 	if (ptr < 0x120000)
 		ptr = ptr - 0x118000 + 0x20000000;
 
+	/* Set up ACPI0 for 0x62/0x66 */
+	MEC1322_LPC_ACPI_EC0_BAR = 0x00628034;
+	MEC1322_INT_ENABLE(15) |= 1 << 6;
+	MEC1322_INT_BLK_EN |= 1 << 15;
+	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
+
 	/* Set up ACPI1 for 0x200/0x204 */
 	MEC1322_LPC_ACPI_EC1_BAR = 0x02008407;
 	MEC1322_INT_ENABLE(15) |= 1 << 8;
@@ -79,6 +183,12 @@ static void setup_lpc(void)
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
 		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
 		EC_HOST_CMD_FLAG_VERSION_3;
+
+	/* Sufficiently initialized */
+	init_done = 1;
+
+	/* Update host events now that we can copy them to memmap */
+	update_host_event_status();
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, setup_lpc, HOOK_PRIO_FIRST);
 
@@ -96,6 +206,33 @@ static void lpc_init(void)
  * before other inits try to initialize their memmap data.
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
+
+static void acpi_0_interrupt(void)
+{
+	uint8_t value, result, is_cmd;
+
+	is_cmd = MEC1322_ACPI_EC_STATUS(0) & EC_LPC_STATUS_LAST_CMD;
+
+	/* Set the bust bi */
+	MEC1322_ACPI_EC_STATUS(0) |= EC_LPC_STATUS_PROCESSING;
+
+	/* Read command/data; this clears the FRMH bit. */
+	value = MEC1322_ACPI_EC_OS2EC(0, 0);
+
+	/* Handle whatever this was. */
+	if (acpi_ap_to_ec(is_cmd, value, &result))
+		MEC1322_ACPI_EC_EC2OS(0, 0) = result;
+
+	/* Clear the busy bit */
+	MEC1322_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_PROCESSING;
+
+	/*
+	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
+	 * Full condition on the kernel channel.
+	 */
+	lpc_generate_sci();
+}
+DECLARE_IRQ(MEC1322_IRQ_ACPIEC0_IBF, acpi_0_interrupt, 1);
 
 static void acpi_1_interrupt(void)
 {
@@ -145,24 +282,38 @@ DECLARE_IRQ(MEC1322_IRQ_ACPIEC1_IBF, acpi_1_interrupt, 1);
 
 void lpc_set_host_event_state(uint32_t mask)
 {
-	/* TODO(crosbug.com/p/24107): Host event */
+	if (mask != host_events) {
+		host_events = mask;
+		update_host_event_status();
+	}
 }
 
 int lpc_query_host_event_state(void)
 {
-	/* TODO(crosbug.com/p/24107): Host event */
-	return 0;
+	int evt_index = 0;
+	int i;
+
+	for (i = 0; i < 32; i++) {
+		if (host_events & (1 << i)) {
+			host_clear_events(1 << i);
+			evt_index = i + 1;	/* Events are 1-based */
+			break;
+		}
+	}
+
+	return evt_index;
 }
+
 
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
-	/* TODO(crosbug.com/p/24107): Host event */
+	event_mask[type] = mask;
+	update_host_event_status();
 }
 
 uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 {
-	/* TODO(crosbug.com/p/24107): Host event */
-	return 0;
+	return event_mask[type];
 }
 
 /* On boards without a host, this command is used to set up LPC */
