@@ -46,8 +46,13 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {
 	uint32_t mask = gpio_list[signal].mask;
-	int i = 31 - __builtin_clz(mask);
-	uint32_t val = MEC1322_GPIO_CTL(gpio_list[signal].port, i);
+	int i;
+	uint32_t val;
+
+	if (mask == 0)
+		return 0;
+	i = 31 - __builtin_clz(mask);
+	val = MEC1322_GPIO_CTL(gpio_list[signal].port, i);
 
 	if (val & (1 << 9)) /* Output */
 		return (val & (1 << 16)) ? 1 : 0;
@@ -58,7 +63,12 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	uint32_t mask = gpio_list[signal].mask;
-	int i = 31 - __builtin_clz(mask);
+	int i;
+
+	if (mask == 0)
+		return;
+	i = 31 - __builtin_clz(mask);
+
 	if (value)
 		MEC1322_GPIO_CTL(gpio_list[signal].port, i) |= (1 << 16);
 	else
@@ -132,10 +142,15 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
-	int i = 31 - __builtin_clz(gpio_list[signal].mask);
-	int port = gpio_list[signal].port;
-	int girq_id = int_map[port].girq_id;
-	int bit_id = (port - int_map[port].port_offset) * 8 + i;
+	int i, port, girq_id, bit_id;
+
+	if (gpio_list[signal].mask == 0)
+		return EC_SUCCESS;
+
+	i = 31 - __builtin_clz(gpio_list[signal].mask);
+	port = gpio_list[signal].port;
+	girq_id = int_map[port].girq_id;
+	bit_id = (port - int_map[port].port_offset) * 8 + i;
 
 	MEC1322_INT_ENABLE(girq_id) |= (1 << bit_id);
 	MEC1322_INT_BLK_EN |= (1 << girq_id);
@@ -145,10 +160,15 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 
 int gpio_disable_interrupt(enum gpio_signal signal)
 {
-	int i = 31 - __builtin_clz(gpio_list[signal].mask);
-	int port = gpio_list[signal].port;
-	int girq_id = int_map[port].girq_id;
-	int bit_id = (port - int_map[port].port_offset) * 8 + i;
+	int i, port, girq_id, bit_id;
+
+	if (gpio_list[signal].mask == 0)
+		return EC_SUCCESS;
+
+	i = 31 - __builtin_clz(gpio_list[signal].mask);
+	port = gpio_list[signal].port;
+	girq_id = int_map[port].girq_id;
+	bit_id = (port - int_map[port].port_offset) * 8 + i;
 
 	MEC1322_INT_DISABLE(girq_id) |= (1 << bit_id);
 
