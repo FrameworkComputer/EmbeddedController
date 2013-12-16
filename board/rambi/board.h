@@ -97,7 +97,7 @@ enum gpio_signal {
 	GPIO_PCH_RCIN_L,           /* Reset line to PCH (for 8042 emulation) */
 	GPIO_PCH_RSMRST_L,         /* Reset PCH resume power plane logic */
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
-	GPIO_PCH_SOC_OVERRIDE_L,   /* SOC override signal to PCH; when high, ME
+	GPIO_PCH_SOC_OVERRIDE,     /* SOC override signal to PCH; when high, ME
 				    * ignores security descriptor */
 	/*
 	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
