@@ -22,7 +22,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_SCI_L", GPIO_PORT(2), (1 << 6), GPIO_ODR_HIGH, NULL},
 	{"PCH_WAKE_L", GPIO_PORT(20), (1 << 0), GPIO_ODR_HIGH, NULL},
 	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("RECOVERYn"),
+	GPIO_SIGNAL_NOT_IMPLEMENTED("RECOVERY_L"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
 	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
 };

@@ -40,9 +40,9 @@ static int lock_init(struct ipc_lock *lock)
 	if (lock->sem < 0) {
 		/* get or create the semaphore, init to 1 if needed */
 		int sem = csem_get_or_create(lock->key, 1);
-		if (sem < 0) {
+		if (sem < 0)
 			return -1;
-		}
+
 		lock->sem = sem;
 	}
 	return 0;
@@ -63,14 +63,13 @@ int acquire_lock(struct ipc_lock *lock, int timeout_msecs)
 	/* initialize the lock */
 	if (lock_init(lock) < 0) {
 		fprintf(stderr, "%s(): failed to init lock 0x%08x\n",
-		        __func__, (uint32_t)lock->key);
+			__func__, (uint32_t)lock->key);
 		return -1;
 	}
 
 	/* check if it is already held */
-	if (lock->is_held) {
+	if (lock->is_held)
 		return 1;
-	}
 
 	/* calculate the timeout */
 	if (timeout_msecs >= 0) {
@@ -84,7 +83,7 @@ int acquire_lock(struct ipc_lock *lock, int timeout_msecs)
 	ret = csem_down_timeout_undo(lock->sem, timeout_ptr);
 	if (ret < 0) {
 		fprintf(stderr, "%s(): failed to acquire lock 0x%08x\n",
-		        __func__, (uint32_t)lock->key);
+			__func__, (uint32_t)lock->key);
 		return -1;
 	}
 
@@ -101,6 +100,6 @@ int release_lock(struct ipc_lock *lock)
 		/* NOTE: do not destroy the semaphore, we want it to persist */
 		return 0;
 	}
-        /* did not hold the lock */
-        return -1;
+	/* did not hold the lock */
+	return -1;
 }

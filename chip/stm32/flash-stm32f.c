@@ -153,7 +153,7 @@ static int preserve_optb(int byte)
 
 	/* The byte has been reset, no need to run preserve. */
 	if (*(uint16_t *)(STM32_OPTB_BASE + byte) == 0xffff)
-		return EC_SUCCESS;;
+		return EC_SUCCESS;
 
 	for (i = 0; i < ARRAY_SIZE(optb); ++i)
 		optb[i] = read_optb(i * 2);
@@ -201,7 +201,7 @@ static int write_optb(int byte, uint8_t value)
 	/* set OPTPG bit */
 	STM32_FLASH_CR |= OPTPG;
 
-	*hword = value ;
+	*hword = value;
 
 	/* reset OPTPG bit */
 	STM32_FLASH_CR &= ~OPTPG;
@@ -234,7 +234,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	/* set PG bit */
 	STM32_FLASH_CR |= PG;
 
-	for ( ; size > 0; size -= sizeof(uint16_t)) {
+	for (; size > 0; size -= sizeof(uint16_t)) {
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
@@ -242,7 +242,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		watchdog_reload();
 
 		/* wait to be ready  */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
+		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP);
 		     i++)
 			;
 
@@ -251,7 +251,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		data += 2;
 
 		/* Wait for writes to complete */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP) ;
+		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP);
 		     i++)
 			;
 
@@ -487,8 +487,7 @@ int flash_pre_init(void)
 				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
-	}
-	else {
+	} else {
 		if (prot_flags & EC_FLASH_PROTECT_RO_NOW) {
 			/*
 			 * Write protect pin unasserted but some section is

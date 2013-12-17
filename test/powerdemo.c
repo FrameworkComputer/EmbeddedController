@@ -61,7 +61,7 @@ static void __set_state(int new_state, int pin_value, int timeout)
 
 int power_demo_init(void)
 {
-	volatile uint32_t scratch  __attribute__((unused));
+	volatile uint32_t scratch __attribute__((unused));
 
 	/* Set up TIMER1 as our state timer */
 	/* Enable TIMER1 clock */

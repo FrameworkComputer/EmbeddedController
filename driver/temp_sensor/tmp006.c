@@ -79,52 +79,52 @@ static int tmp006_read_die_temp(const struct tmp006_data_t *tdata,
 /**
  * Calculate the remote object temperature.
  *
- * @param Tdie_i	Die temperature in 1/100 K.
- * @param Vobj_i	Voltage read from register 0. In nV.
+ * @param tdie_i	Die temperature in 1/100 K.
+ * @param vobj_i	Voltage read from register 0. In nV.
  * @param tdata		TMP006 data for this sensor.
  *
  * @return Object temperature in 1/100 K.
  */
-static int tmp006_calculate_object_temp(int Tdie_i, int Vobj_i,
+static int tmp006_calculate_object_temp(int tdie_i, int vobj_i,
 					const struct tmp006_data_t *tdata)
 {
-	float Tdie, Vobj;
-	float Tx, S, Vos, Vx, fv, Tobj, T4;
-	int Tobj_i;
+	float tdie, vobj;
+	float tx, s, vos, vx, fv, tobj, t4;
+	int tobj_i;
 
-	Tdie = (float)Tdie_i * 1e-2f;
-	Vobj = (float)Vobj_i * 1e-9f;
+	tdie = (float)tdie_i * 1e-2f;
+	vobj = (float)vobj_i * 1e-9f;
 
 	/* Calculate according to TMP006 users guide. */
-	Tx = Tdie - 298.15f;
-	/* S is the sensitivity */
-	S = tdata->s0 * (1.0f + A1 * Tx + A2 * Tx * Tx);
-	/* Vos is the offset voltage */
-	Vos = tdata->b0 + tdata->b1 * Tx + tdata->b2 * Tx * Tx;
-	Vx = Vobj - Vos;
-	/* fv is Seebeck coefficient f(Vobj) */
-	fv = Vx + C2 * Vx * Vx;
+	tx = tdie - 298.15f;
+	/* s is the sensitivity */
+	s = tdata->s0 * (1.0f + A1 * tx + A2 * tx * tx);
+	/* vos is the offset voltage */
+	vos = tdata->b0 + tdata->b1 * tx + tdata->b2 * tx * tx;
+	vx = vobj - vos;
+	/* fv is Seebeck coefficient f(vobj) */
+	fv = vx + C2 * vx * vx;
 
-	T4 = Tdie * Tdie * Tdie * Tdie + fv / S;
-	Tobj = sqrtf(sqrtf(T4));
-	Tobj_i = (int32_t)(Tobj * 100.0f);
+	t4 = tdie * tdie * tdie * tdie + fv / s;
+	tobj = sqrtf(sqrtf(t4));
+	tobj_i = (int32_t)(tobj * 100.0f);
 
-	return Tobj_i;
+	return tobj_i;
 }
 
 /**
  * Apply TMP006 temporal correction.
  *
- * @param T1-T4		Four die temperature readings separated by 1s in 1/100K.
- * @param Vobj		Voltage read from register 0, in nV.
+ * @param t1-t4		Four die temperature readings separated by 1s in 1/100K.
+ * @param vobj		Voltage read from register 0, in nV.
  *
  * @return Corrected object voltage in 1/100K.
  */
-static int tmp006_correct_object_voltage(int T1, int T2, int T3, int T4,
-					 int Vobj)
+static int tmp006_correct_object_voltage(int t1, int t2, int t3, int t4,
+					 int vobj)
 {
-	int Tslope = 3 * T1 + T2 - T3 - 3 * T4;
-	return Vobj + 296 * Tslope;
+	int tslope = 3 * t1 + t2 - t3 - 3 * t4;
+	return vobj + 296 * tslope;
 }
 
 static int tmp006_read_object_temp(const struct tmp006_data_t *tdata,

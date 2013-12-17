@@ -35,7 +35,7 @@ enum gpio_signal {
 	 * Signals which aren't implemented on MEC1322 eval board but we'll
 	 * emulate anyway, to make it more convenient to debug other code.
 	 */
-	GPIO_RECOVERYn,           /* Recovery signal from DOWN button */
+	GPIO_RECOVERY_L,          /* Recovery signal from DOWN button */
 	GPIO_WP,                  /* Write protect input */
 	GPIO_ENTERING_RW,         /* EC entering RW code */
 

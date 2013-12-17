@@ -80,7 +80,8 @@ int atoi(const char *nptr)
 	int neg = 0;
 	char c = '\0';
 
-	while ((c = *nptr++) && isspace(c)) {}
+	while ((c = *nptr++) && isspace(c))
+		;
 
 	if (c == '-') {
 		neg = 1;
@@ -106,7 +107,8 @@ int strtoi(const char *nptr, char **endptr, int base)
 	if (endptr)
 		*endptr = (char *)nptr;
 
-	while((c = *nptr++) && isspace(c)) {}
+	while ((c = *nptr++) && isspace(c))
+		;
 
 	if (c == '0' && *nptr == 'x') {
 		base = 16;
@@ -336,8 +338,7 @@ int cond_went(cond_t *c, int val)
 	if (val) {
 		ret = *c & COND_RISE_MASK;
 		*c &= ~COND_RISE_MASK;
-	}
-	else {
+	} else {
 		ret = *c & COND_FALL_MASK;
 		*c &= ~COND_FALL_MASK;
 	}

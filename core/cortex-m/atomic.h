@@ -18,17 +18,17 @@
  * you must either clear explicitly the exclusive monitor (using clrex)
  * or do it in exception context (which clears the monitor).
  */
-#define ATOMIC_OP(asm_op,a,v) do {                              \
+#define ATOMIC_OP(asm_op, a, v) do {				\
 	uint32_t reg0, reg1;                                    \
-	                                                        \
+								\
 	__asm__ __volatile__("1: ldrex   %0, [%2]\n"            \
-	                        #asm_op" %0, %0, %3\n"          \
-	                     "   strex   %1, %0, [%2]\n"        \
-	                     "   teq     %1, #0\n"              \
-	                     "   bne     1b"                    \
-	                     : "=&r" (reg0), "=&r" (reg1)       \
-	                     : "r" (a), "r" (v) : "cc");        \
-} while (0);
+			     #asm_op" %0, %0, %3\n"		\
+			     "   strex   %1, %0, [%2]\n"        \
+			     "   teq     %1, #0\n"              \
+			     "   bne     1b"                    \
+			     : "=&r" (reg0), "=&r" (reg1)       \
+			     : "r" (a), "r" (v) : "cc");        \
+} while (0)
 
 static inline void atomic_clear(uint32_t *addr, uint32_t bits)
 {
@@ -55,12 +55,12 @@ static inline uint32_t atomic_read_clear(uint32_t *addr)
 	uint32_t ret, tmp;
 
 	__asm__ __volatile__("   mov     %3, #0\n"
-	                     "1: ldrex   %0, [%2]\n"
-	                     "   strex   %1, %3, [%2]\n"
-	                     "   teq     %1, #0\n"
-	                     "   bne     1b"
-	                     : "=&r" (ret), "=&r" (tmp)
-	                     : "r" (addr), "r" (0) : "cc");
+			     "1: ldrex   %0, [%2]\n"
+			     "   strex   %1, %3, [%2]\n"
+			     "   teq     %1, #0\n"
+			     "   bne     1b"
+			     : "=&r" (ret), "=&r" (tmp)
+			     : "r" (addr), "r" (0) : "cc");
 
 	return ret;
 }

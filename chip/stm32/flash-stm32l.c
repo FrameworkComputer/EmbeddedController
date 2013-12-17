@@ -139,8 +139,7 @@ void  __attribute__((section(".iram.text")))
 	int i;
 
 	/* Wait for ready  */
-	for (i = 0; (STM32_FLASH_SR & 1) && (i < flash_timeout_loop) ;
-	     i++)
+	for (i = 0; (STM32_FLASH_SR & 1) && (i < flash_timeout_loop); i++)
 		;
 
 	/* Set PROG and FPRG bits */
@@ -151,7 +150,7 @@ void  __attribute__((section(".iram.text")))
 		*addr++ = *data++;
 
 	/* Wait for writes to complete */
-	for (i = 0; ((STM32_FLASH_SR & 9) != 8) && (i < flash_timeout_loop) ;
+	for (i = 0; ((STM32_FLASH_SR & 9) != 8) && (i < flash_timeout_loop);
 	     i++)
 		;
 
@@ -205,7 +204,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 			/* Wait for writes to complete */
 			for (i = 0; ((STM32_FLASH_SR & 9) != 8) &&
-				     (i < flash_timeout_loop) ; i++)
+				     (i < flash_timeout_loop); i++)
 				;
 
 			size -= sizeof(uint32_t);
@@ -256,7 +255,7 @@ int flash_physical_erase(int offset, int size)
 	/* Set PROG and ERASE bits */
 	STM32_FLASH_PECR |= STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_ERASE;
 
-	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset) ;
+	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset);
 	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
 	     address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
 		timestamp_t deadline;

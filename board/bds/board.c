@@ -41,7 +41,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
 const struct gpio_info gpio_list[] = {
-	{"RECOVERYn", GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
+	{"RECOVERY_L", GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
 	{"DEBUG_LED", GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),

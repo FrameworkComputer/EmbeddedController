@@ -215,7 +215,7 @@ uint8_t *SHA256_final(struct sha256_ctx *ctx)
 
 	SHA256_transform(ctx, ctx->block, block_nb);
 
-	for (i = 0 ; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		UNPACK32(ctx->h[i], &ctx->buf[i << 2]);
 
 	return ctx->buf;

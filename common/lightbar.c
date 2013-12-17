@@ -464,14 +464,14 @@ static inline float cycle_010(uint8_t i)
 
 /* This function provides a smooth oscillation between -0.5 and +0.5.
  * Zero starts at 0x00. */
-static inline float cycle_0P0N0(uint16_t i)
+static inline float cycle_0p0n0(uint16_t i)
 {
 	uint8_t i8 = i & 0x00FF;
 	return cycle_010(i8+64) - 0.5f;
 }
 
 /* This function provides a pulsing oscillation between -0.5 and +0.5. */
-static inline float cycle_NPN(uint16_t i)
+static inline float cycle_npn(uint16_t i)
 {
 	if ((i / 256) % 4)
 		return -0.5f;
@@ -562,7 +562,7 @@ static uint32_t sequence_S3S0(void)
 	}
 
 	/* Initial conditions */
-	st.w0 = -256;				/* start cycle_NPN() quietly */
+	st.w0 = -256;				/* start cycle_npn() quietly */
 	st.ramp = 0;
 
 	/* Ready for S0 */
@@ -612,10 +612,10 @@ static uint32_t sequence_S0(void)
 		for (i = 0; i < NUM_LEDS; i++) {
 			if (st.p.new_s0) {
 				w = st.w0 - i * w_ofs * f_ramp;
-				f = base_s0 + osc_s0 * cycle_NPN(w);
+				f = base_s0 + osc_s0 * cycle_npn(w);
 			} else {
 				w = st.w0 - i * w_ofs * f_ramp;
-				f = base_s0 + osc_s0 * cycle_0P0N0(w) * f_ramp;
+				f = base_s0 + osc_s0 * cycle_0p0n0(w) * f_ramp;
 			}
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;

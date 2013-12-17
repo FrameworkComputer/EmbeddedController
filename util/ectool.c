@@ -761,7 +761,8 @@ int cmd_serial_test(int argc, char *argv[])
 
 	while (*c) {
 		/* Wait for space in transmit FIFO */
-		while (!(inb(0x2fd) & 0x20)) {}
+		while (!(inb(0x2fd) & 0x20))
+			;
 
 		/* Put the next character */
 		outb(*c++, 0x2f8);
@@ -3217,7 +3218,7 @@ static int get_value(const struct param_info *param, const char *config)
 static int show_fields(struct ec_mkbp_config *config, int argc, char *argv[])
 {
 	const struct param_info *param;
-	uint32_t mask ;
+	uint32_t mask;
 	int i;
 
 	if (!argc) {

@@ -13,7 +13,7 @@
 #define TMP006_REG(ADDR) (ADDR & 0xffff)
 
 struct tmp006_t {
-	const char* name;
+	const char *name;
 	int addr;          /* I2C address formed by TMP006_ADDR macro. */
 };
 

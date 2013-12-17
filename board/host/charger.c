@@ -26,9 +26,9 @@ static const struct charger_info mock_charger_info = {
 
 #define OPTION_CHARGE_INHIBIT (1 << 0)
 
-static uint32_t mock_option = 0;
-static uint32_t mock_current = 0;
-static uint32_t mock_voltage = 0;
+static uint32_t mock_option;
+static uint32_t mock_current;
+static uint32_t mock_voltage;
 
 const struct charger_info *charger_get_info(void)
 {

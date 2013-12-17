@@ -25,8 +25,8 @@ int spi_enable(int enable)
 		gpio_config_module(MODULE_SPI, 1);
 		/* Don't use the SSI0 frame output.  CS# is a GPIO so we can
 		 * keep it low during an entire transaction. */
-		gpio_set_flags(GPIO_SPI_CSn, GPIO_OUTPUT);
-		gpio_set_level(GPIO_SPI_CSn, 1);
+		gpio_set_flags(GPIO_SPI_CS_L, GPIO_OUTPUT);
+		gpio_set_level(GPIO_SPI_CS_L, 1);
 
 		/* Enable SSI port */
 		LM4_SSI_CR1(0) |= 0x02;
@@ -35,8 +35,8 @@ int spi_enable(int enable)
 		LM4_SSI_CR1(0) &= ~0x02;
 
 		/* Make sure CS# is deselected */
-		gpio_set_level(GPIO_SPI_CSn, 1);
-		gpio_set_flags(GPIO_SPI_CSn, GPIO_ODR_HIGH);
+		gpio_set_level(GPIO_SPI_CS_L, 1);
+		gpio_set_flags(GPIO_SPI_CS_L, GPIO_ODR_HIGH);
 
 		gpio_config_module(MODULE_SPI, 0);
 	}
@@ -59,7 +59,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	/* Start transaction.  Need to do this explicitly because the LM4
 	 * SSI controller pulses its frame select every byte, and the EEPROM
 	 * wants the chip select held low during the entire transaction. */
-	gpio_set_level(GPIO_SPI_CSn, 0);
+	gpio_set_level(GPIO_SPI_CS_L, 0);
 
 	while (rxcount < totallen) {
 		/* Handle received bytes if any.  We just checked rxcount <
@@ -89,7 +89,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	}
 
 	/* End transaction */
-	gpio_set_level(GPIO_SPI_CSn, 1);
+	gpio_set_level(GPIO_SPI_CS_L, 1);
 
 	return EC_SUCCESS;
 }

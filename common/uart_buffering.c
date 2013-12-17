@@ -95,7 +95,7 @@ void uart_process_output(void)
 		return;
 
 	/* If DMA is still busy, nothing to do. */
-	if(!uart_tx_dma_ready())
+	if (!uart_tx_dma_ready())
 		return;
 
 	/* If a previous DMA transfer completed, free up the buffer it used */
@@ -106,7 +106,7 @@ void uart_process_output(void)
 	}
 
 	/* Disable DMA-done interrupt if nothing to send */
-	if(head == tx_buf_tail) {
+	if (head == tx_buf_tail) {
 		uart_tx_stop();
 		return;
 	}
@@ -301,7 +301,7 @@ void uart_flush_output(void)
 int uart_getc(void)
 {
 	/* Look for a non-flow-control character */
-	while(rx_buf_tail != rx_buf_head) {
+	while (rx_buf_tail != rx_buf_head) {
 		int c = rx_buf[rx_buf_tail];
 		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
 

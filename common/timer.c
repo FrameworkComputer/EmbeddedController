@@ -21,7 +21,7 @@
 static volatile uint32_t clksrc_high;
 
 /* Bitmap of currently running timers */
-static uint32_t timer_running = 0;
+static uint32_t timer_running;
 
 /* Deadlines of all timers */
 static timestamp_t timer_deadline[TASK_ID_COUNT];

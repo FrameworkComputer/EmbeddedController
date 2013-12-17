@@ -158,9 +158,8 @@ int mpu_pre_init(void)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	mpu_disable();
-	for (i = 0; i < 8; ++i) {
+	for (i = 0; i < 8; ++i)
 		mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0, 0);
-	}
 
 	return EC_SUCCESS;
 }

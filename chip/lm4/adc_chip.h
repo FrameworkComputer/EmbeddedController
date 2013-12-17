@@ -8,8 +8,7 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-enum lm4_adc_sequencer
-{
+enum lm4_adc_sequencer {
 	LM4_ADC_SEQ0 = 0,
 	LM4_ADC_SEQ1,
 	LM4_ADC_SEQ2,

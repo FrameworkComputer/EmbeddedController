@@ -37,7 +37,7 @@
 
 static const char * const state_name[] = POWER_STATE_NAME_TABLE;
 
-static int state_machine_force_idle = 0;
+static int state_machine_force_idle;
 
 static unsigned user_current_limit = -1U;
 

@@ -225,11 +225,11 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	}
 
 	/* Send the command payloads */
-	for (p = loads, c = 0; c < cnt ; c++, p++) {
+	for (p = loads, c = 0; c < cnt; c++, p++) {
 		crc = 0;
 		size = p->size;
 		data = p->data;
-		for (i = 0; i < size ; i++)
+		for (i = 0; i < size; i++)
 			crc ^= data[i];
 		if (size == 1)
 			crc = 0xff ^ crc;
@@ -291,7 +291,7 @@ struct stm32_def *command_get_id(int fd)
 			return NULL;
 		}
 		chipid = (id[1] << 8) | id[2];
-		for (def = chip_defs ; def->id ; def++)
+		for (def = chip_defs; def->id; def++)
 			if (def->id == chipid)
 				break;
 		if (def->id == 0)
@@ -625,7 +625,8 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 		free(buffer);
 		return -EIO;
 	}
-	if ((res = fread(buffer, 1, size, hnd)) <= 0) {
+	res = fread(buffer, 1, size, hnd);
+	if (res <= 0) {
 		fprintf(stderr, "Cannot read %s\n", filename);
 		free(buffer);
 		return -EIO;

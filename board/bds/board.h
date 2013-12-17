@@ -38,17 +38,19 @@ enum pwm_channel {
 };
 
 /* I2C ports */
-#define I2C_PORT_LIGHTBAR 5  // port 5 / PA6:7 on link, but PG6:7 on badger
+#define I2C_PORT_LIGHTBAR 5  /* Port 5 / PA6:7 on link, but PG6:7 on badger */
 
 /* Second UART port */
 #define CONFIG_UART_HOST 1
 
 /* GPIO signal list */
 enum gpio_signal {
-	GPIO_RECOVERYn = 0,       /* Recovery signal from DOWN button */
+	GPIO_RECOVERY_L = 0,      /* Recovery signal from DOWN button */
 	GPIO_DEBUG_LED,           /* Debug LED */
-	/* Signals which aren't implemented on BDS but we'll emulate anyway, to
-	 * make it more convenient to debug other code. */
+	/*
+	 * Signals which aren't implemented on BDS but we'll emulate anyway, to
+	 * make it more convenient to debug other code.
+	 */
 	GPIO_WP,                  /* Write protect input */
 	GPIO_ENTERING_RW,         /* EC entering RW code */
 

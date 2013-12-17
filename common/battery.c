@@ -34,8 +34,8 @@ static int check_print_error(int rv)
 static void print_battery_status(void)
 {
 	static const char * const st[] = {"EMPTY", "FULL", "DCHG", "INIT",};
-	static const char * const al[] =
-		{"RT", "RC", "--", "TD", "OT", "--", "TC", "OC"};
+	static const char * const al[] = {"RT", "RC", "--", "TD",
+					  "OT", "--", "TC", "OC"};
 
 	int value, i;
 

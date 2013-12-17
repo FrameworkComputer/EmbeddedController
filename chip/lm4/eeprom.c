@@ -75,7 +75,7 @@ int eeprom_read(int block, int offset, int size, char *data)
 
 	LM4_EEPROM_EEOFFSET = offset >> 2;
 
-	for ( ; size; size -= sizeof(uint32_t))
+	for (; size; size -= sizeof(uint32_t))
 		*(d++) = LM4_EEPROM_EERDWRINC;
 
 	return EC_SUCCESS;
@@ -103,7 +103,7 @@ int eeprom_write(int block, int offset, int size, const char *data)
 	LM4_EEPROM_EEOFFSET = offset >> 2;
 
 	/* Write 32 bits at a time; wait for each write to complete */
-	for ( ; size; size -= sizeof(uint32_t)) {
+	for (; size; size -= sizeof(uint32_t)) {
 		LM4_EEPROM_EERDWRINC = *(d++);
 
 		rv = wait_for_done();

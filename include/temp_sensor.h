@@ -28,7 +28,7 @@ enum temp_sensor_type {
 };
 
 struct temp_sensor_t {
-	const char* name;
+	const char *name;
 	/* Temperature sensor type. */
 	enum temp_sensor_type type;
 	/* Read sensor value in K into temp_ptr; return non-zero if error. */

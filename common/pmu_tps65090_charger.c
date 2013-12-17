@@ -345,11 +345,10 @@ static int calc_next_state(int state)
 			 * Shutdown AP when state of charge < 1.5%.
 			 * Moving average is rounded to integer.
 			 */
-			if (rsoc_moving_average(batt.state_of_charge) < 2) {
+			if (rsoc_moving_average(batt.state_of_charge) < 2)
 				return system_off();
-			} else if (batt.state_of_charge < 4) {
+			else if (batt.state_of_charge < 4)
 				notify_battery_low();
-			}
 		}
 
 		return ST_DISCHARGING;

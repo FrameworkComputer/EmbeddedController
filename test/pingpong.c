@@ -16,7 +16,7 @@
 
 static int wake_count[3];
 
-int TaskAbc(void *data)
+int task_abc(void *data)
 {
 	int myid = task_get_current() - TASK_ID_TESTA;
 	task_id_t next = task_get_current() + 1;
@@ -45,7 +45,7 @@ int TaskAbc(void *data)
 	return EC_SUCCESS;
 }
 
-int TaskTick(void *data)
+int task_tick(void *data)
 {
 	task_wait_event(-1);
 	ccprintf("\n[starting Task T]\n");

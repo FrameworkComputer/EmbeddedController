@@ -82,8 +82,8 @@ static const uint8_t out_preamble[4] = {
  * message, including protocol overhead, and must be 32-bit aligned.
  */
 static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)]
-	__attribute__((aligned(4)));
-static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __attribute__((aligned(4)));
+	__aligned(4);
+static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4);
 static uint8_t enabled;
 static struct host_cmd_handler_args args;
 static struct host_packet spi_packet;

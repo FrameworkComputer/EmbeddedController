@@ -144,7 +144,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				continue;
 			}
 
-			for ( ; precision; precision--, vstr++) {
+			for (; precision; precision--, vstr++) {
 				if (addchar(context, hexdigit(*vstr >> 4)) ||
 				    addchar(context, hexdigit(*vstr)))
 					return EC_ERROR_OVERFLOW;

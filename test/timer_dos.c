@@ -22,7 +22,7 @@ static uint32_t prng(uint32_t x)
 
 #define TEST_TIME (3 * SECOND)
 
-int TaskTimer(void *seed)
+int task_timer(void *seed)
 {
 	uint32_t num = (uint32_t)seed;
 	task_id_t id = task_get_current();

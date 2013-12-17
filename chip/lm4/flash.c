@@ -105,7 +105,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	i = (offset >> 2) & (FLASH_FWB_WORDS - 1);
 
 	/* Copy words into buffer */
-	for ( ; size > 0; size -= 4) {
+	for (; size > 0; size -= 4) {
 		LM4_FLASH_FWB[i++] = *data32++;
 		if (i == FLASH_FWB_WORDS) {
 			rv = write_buffer();
@@ -132,8 +132,8 @@ int flash_physical_erase(int offset, int size)
 
 	LM4_FLASH_FCMISC = LM4_FLASH_FCRIS;  /* Clear previous error status */
 
-	for ( ; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-			offset += CONFIG_FLASH_ERASE_SIZE) {
+	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
+		     offset += CONFIG_FLASH_ERASE_SIZE) {
 		int t;
 
 		/* Do nothing if already erased */

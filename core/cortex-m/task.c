@@ -113,7 +113,7 @@ uint8_t task_stacks[0
 		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 		    CONFIG_TASK_LIST
 		    CONFIG_TEST_TASK_LIST
-] __attribute__((aligned(8)));
+] __aligned(8);
 
 #undef TASK
 
@@ -137,7 +137,7 @@ static task_ *current_task = (task_ *)scratchpad;
  * task unblocking.  After checking for a task switch, svc_handler() will clear
  * the flag (unless profiling is also enabled; then the flag remains set).
  */
-static int need_resched_or_profiling = 0;
+static int need_resched_or_profiling;
 
 /*
  * Bitmap of all tasks ready to be run.
@@ -340,8 +340,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 		ret = timer_arm(deadline, me);
 		ASSERT(ret == EC_SUCCESS);
 	}
-	while (!(evt = atomic_read_clear(&tsk->events)))
-	{
+	while (!(evt = atomic_read_clear(&tsk->events))) {
 		/* Remove ourself and get the next task in the scheduler */
 		__schedule(1, resched);
 		resched = TASK_ID_IDLE;

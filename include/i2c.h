@@ -66,7 +66,7 @@ void i2c_lock(int port, int lock);
 
 /* Read a 16-bit register from the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */
-int i2c_read16(int port, int slave_addr, int offset, int* data);
+int i2c_read16(int port, int slave_addr, int offset, int *data);
 
 /* Write a 16-bit register to the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */
@@ -74,7 +74,7 @@ int i2c_write16(int port, int slave_addr, int offset, int data);
 
 /* Read an 8-bit register from the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */
-int i2c_read8(int port, int slave_addr, int offset, int* data);
+int i2c_read8(int port, int slave_addr, int offset, int *data);
 
 /* Write an 8-bit register to the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */

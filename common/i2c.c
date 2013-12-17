@@ -187,13 +187,15 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	int msgnum;
 
 	if (args->params_size < sizeof(*params)) {
-		PTHRUPRINTF("[%T i2c passthru no params, params_size=%d, need at least %d]\n",
+		PTHRUPRINTF("[%T i2c passthru no params, params_size=%d, "
+			    "need at least %d]\n",
 			    args->params_size, sizeof(*params));
 		return EC_RES_INVALID_PARAM;
 	}
 	size = sizeof(*params) + params->num_msgs * sizeof(*msg);
 	if (args->params_size < size) {
-		PTHRUPRINTF("[%T i2c passthru params_size=%d, need at least %d]\n",
+		PTHRUPRINTF("[%T i2c passthru params_size=%d, "
+			    "need at least %d]\n",
 			    args->params_size, size);
 		return EC_RES_INVALID_PARAM;
 	}
@@ -216,7 +218,8 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 		}
 
-		PTHRUPRINTF("[%T i2c passthru port=%d, %s, addr=0x%02x, len=0x%02x]\n",
+		PTHRUPRINTF("[%T i2c passthru port=%d, %s, addr=0x%02x, "
+			    "len=0x%02x]\n",
 			    params->port,
 			    addr_flags & EC_I2C_FLAG_READ ? "read" : "write",
 			    addr_flags & EC_I2C_ADDR_MASK,
@@ -288,7 +291,8 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 			xferflags |= I2C_XFER_STOP;
 
 		/* Transfer next message */
-		PTHRUPRINTF("[%T i2c passthru xfer port=%x, addr=%x, out=%p, write_len=%x, data=%p, read_len=%x, xferflags=%x]\n",
+		PTHRUPRINTF("[%T i2c passthru xfer port=%x, addr=%x, out=%p, "
+			    "write_len=%x, data=%p, read_len=%x, flags=%x]\n",
 			    params->port, addr, out, write_len,
 			    &resp->data[in_len], read_len, xferflags);
 		rv = i2c_xfer(params->port, addr, out, write_len,

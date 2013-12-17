@@ -22,7 +22,7 @@
  */
 #define RELATIVE(addr) ((addr) - CONFIG_FLASH_BASE)
 
-typedef struct _FmapHeader {
+struct fmap_header {
 	char        fmap_signature[FMAP_SIGNATURE_SIZE];
 	uint8_t     fmap_ver_major;
 	uint8_t     fmap_ver_minor;
@@ -30,24 +30,24 @@ typedef struct _FmapHeader {
 	uint32_t    fmap_size;
 	char        fmap_name[FMAP_NAMELEN];
 	uint16_t    fmap_nareas;
-} __packed FmapHeader;
+} __packed;
 
 #define FMAP_AREA_STATIC      (1 << 0)	/* can be checksummed */
 #define FMAP_AREA_COMPRESSED  (1 << 1)  /* may be compressed */
 #define FMAP_AREA_RO          (1 << 2)  /* writes may fail */
 
-typedef struct _FmapAreaHeader {
+struct fmap_area_header {
 	uint32_t area_offset;
 	uint32_t area_size;
 	char     area_name[FMAP_NAMELEN];
 	uint16_t area_flags;
-} __packed FmapAreaHeader;
+} __packed;
 
 #define NUM_EC_FMAP_AREAS 7
 
 const struct _ec_fmap {
-	FmapHeader header;
-	FmapAreaHeader area[NUM_EC_FMAP_AREAS];
+	struct fmap_header header;
+	struct fmap_area_header area[NUM_EC_FMAP_AREAS];
 } ec_fmap __attribute__((section(".google"))) = {
 	/* Header */
 	{

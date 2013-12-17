@@ -438,9 +438,8 @@ static int check_for_power_on_event(void)
 	}
 
 	/* check for power button press */
-	if (power_button_is_pressed()) {
+	if (power_button_is_pressed())
 		return 4;
-	}
 
 	if (power_request == POWER_REQ_ON) {
 		power_request = POWER_REQ_NONE;

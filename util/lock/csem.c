@@ -72,9 +72,8 @@ static int does_semctl_set_otime(void)
 
 	/* create a test semaphore */
 	sem_id = semget(IPC_PRIVATE, 1, S_IRUSR|S_IWUSR);
-	if (sem_id < 0) {
+	if (sem_id < 0)
 		return -1;
-	}
 
 	/* set the value */
 	if (csem_setval(sem_id, 1) < 0) {
@@ -99,22 +98,21 @@ int csem_create(key_t key, unsigned val)
 	/* see if we need to trigger a semop to set sem_otime */
 	if (need_otime_hack < 0) {
 		int ret = does_semctl_set_otime();
-		if (ret < 0) {
+		if (ret < 0)
 			return -1;
-		}
+
 		need_otime_hack = !ret;
 	}
 
 	/* create it or fail */
 	sem_id = semget(key, 1, IPC_CREAT|IPC_EXCL | S_IRUSR|S_IWUSR);
-	if (sem_id < 0) {
+	if (sem_id < 0)
 		return -1;
-	}
 
 	/* initalize the value */
-	if (need_otime_hack) {
+	if (need_otime_hack)
 		val++;
-	}
+
 	if (csem_setval(sem_id, val) < 0) {
 		csem_destroy(sem_id);
 		return -1;
@@ -145,9 +143,8 @@ int csem_get(key_t key)
 
 	/* get the (assumed existing) semaphore */
 	sem_id = semget(key, 1, S_IRUSR|S_IWUSR);
-	if (sem_id < 0) {
+	if (sem_id < 0)
 		return -1;
-	}
 
 	/* loop until sem_otime != 0, which means it has been initialized */
 	for (i = 0; i < MAX_OTIME_LOOPS; i++) {
@@ -181,9 +178,8 @@ int csem_get_or_create(key_t key, unsigned val)
 
 	/* it must exist already - get it */
 	sem_id = csem_get(key);
-	if (sem_id < 0) {
+	if (sem_id < 0)
 		return -1;
-	}
 
 	return sem_id;
 }
@@ -202,9 +198,9 @@ int csem_setval(int sem_id, unsigned val)
 {
 	union semun arg;
 	arg.val = val;
-	if (semctl(sem_id, 0, SETVAL, arg) < 0) {
+	if (semctl(sem_id, 0, SETVAL, arg) < 0)
 		return -1;
-	}
+
 	return 0;
 }
 
@@ -247,8 +243,8 @@ int csem_down_undo(int sem_id)
 }
 
 static int csem_down_timeout_undoflag(int sem_id,
-                                      struct timespec *timeout,
-                                      int undoflag)
+				      struct timespec *timeout,
+				      int undoflag)
 {
 	struct sembuf sops;
 	sops.sem_num = 0;
@@ -272,8 +268,8 @@ time_t csem_get_otime(int sem_id)
 	union semun arg;
 	struct semid_ds ds;
 	arg.buf = &ds;
-	if (semctl(sem_id, 0, IPC_STAT, arg) < 0) {
+	if (semctl(sem_id, 0, IPC_STAT, arg) < 0)
 		return -1;
-	}
+
 	return ds.sem_otime;
 }

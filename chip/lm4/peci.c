@@ -38,7 +38,7 @@
 
 #define TEMP_AVG_LENGTH 4  /* Should be power of 2 */
 static int temp_vals[TEMP_AVG_LENGTH];
-static int temp_idx = 0;
+static int temp_idx;
 
 int peci_get_cpu_temp(void)
 {

@@ -574,11 +574,12 @@ static int wait_status(int port, uint32_t mask, enum wait_t wait)
 	r = STM32_I2C_SR1(port);
 	while (mask ? ((r & mask) != mask) : r) {
 		t2 = get_time();
-		if (t2.val - t1.val > I2C_TX_TIMEOUT_MASTER) {
+
+		if (t2.val - t1.val > I2C_TX_TIMEOUT_MASTER)
 			return EC_ERROR_TIMEOUT | (wait << 8);
-		} else if (t2.val - t1.val > 150) {
+		else if (t2.val - t1.val > 150)
 			usleep(100);
-		}
+
 		r = STM32_I2C_SR1(port);
 	}
 

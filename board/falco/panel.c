@@ -104,7 +104,7 @@ void lcdvcc_interrupt(enum gpio_signal signal)
 	if (pch_value && !lcdvcc_en_deferred_value) {
 		lcdvcc_en_deferred_value = 1;
 		hook_call_deferred(&set_lcdvcc_en_value,
-		                   LCDVCC_ENABLE_DELAY_US);
+				   LCDVCC_ENABLE_DELAY_US);
 	}
 }
 
