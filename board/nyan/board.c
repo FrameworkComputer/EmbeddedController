@@ -85,7 +85,7 @@ const struct gpio_info gpio_list[] = {
 	{"CHARGING",    GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
 	{"EC_BL_OVERRIDE", GPIO_H, (1<<1), GPIO_ODR_HIGH, NULL},
 	{"PMIC_THERM_L",  GPIO_A, (1<<1),  GPIO_ODR_HIGH, NULL},
-	{"PMIC_WARM_RESET_L", GPIO_C, (1<<3),  GPIO_OUT_HIGH, NULL},
+	{"PMIC_WARM_RESET_L", GPIO_C, (1<<3),  GPIO_ODR_HIGH, NULL},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
