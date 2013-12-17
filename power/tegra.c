@@ -69,14 +69,11 @@
  */
 #define DELAY_SHUTDOWN_ON_POWER_HOLD	(10200 * MSEC)  /* 10.2 seconds */
 
-/* Maximum delay after power button press before we deassert GPIO_PMIC_PWRON */
-#define DELAY_RELEASE_PWRON   SECOND /* 1s */
-
 /*
- * nyan's GPIO_SOC1V8_XPSHOLD will go low for ~20ms after initial high.
- * XPSHOLD_DEBOUNCE is used to wait this long, then check the signal again.
+ * nyan's GPIO_SOC1V8_XPSHOLD will go low for 36~40ms after PMIC_PWRON_L is low.
+ * XPSHOLD_DEBOUNCE is waiting slightly longer.
  */
-#define XPSHOLD_DEBOUNCE      (30 * 1000)  /* 30 ms */
+#define XPSHOLD_TIMEOUT  (50 * MSEC)  /* 50 ms */
 
 /*
  * The hold time for pulling down the PMIC_WARM_RESET_L pin so that
@@ -510,23 +507,13 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 }
 
 /**
- * Wait for the XPSHOLD signal from the AP to be asserted within timeout_us
- * and if asserted clear the PMIC_PWRON signal
+ * Wait for the XPSHOLD signal from the AP to be asserted.
  *
- * @return 0 if ok, -1 if power button failed to release
+ * @return 0 if ok, -1 if XPSHOLD doesn't show up in time.
  */
-static int react_to_xpshold(unsigned int timeout_us)
+static int wait_for_xpshold(void)
 {
-	/* wait for Power button release */
-	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
-
-#ifdef BOARD_NYAN
-	/*
-	 * nyan's GPIO_SOC1V8_XPSHOLD will go low for about 20ms after initial
-	 * high. Wait XPSHOLD_DEBOUNCE time, then check the signal again.
-	 */
-	udelay(XPSHOLD_DEBOUNCE);
-#endif
+	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, XPSHOLD_TIMEOUT);
 
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
 		CPRINTF("[%T XPSHOLD not seen in time]\n");
@@ -610,7 +597,7 @@ void chipset_task(void)
 		if (!power_on()) {
 			int continue_power = 0;
 
-			if (!react_to_xpshold(DELAY_RELEASE_PWRON)) {
+			if (!wait_for_xpshold()) {
 				/* AP looks good */
 				if (!wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD))
