@@ -81,6 +81,12 @@
  */
 #define PMIC_WARM_RESET_L_HOLD_TIME (4 * MSEC)
 
+/*
+ * The first time the PMIC sees power (AC or battery) it needs 200ms (+/-12%
+ * oscillator tolerance) for the RTC startup. In addition there is a startup
+ * time of approx. 0.5msec until V2_5 regulator starts up. */
+#define PMIC_RTC_STARTUP (225 * MSEC)
+
 /* Application processor power state */
 static int ap_on;
 static int ap_suspended;
@@ -453,9 +459,23 @@ static int check_for_power_on_event(void)
  */
 static int power_on(void)
 {
+	uint64_t t;
+
 	/* Make sure we de-assert the PMI_THERM_L and AP_RESET_L pin. */
 	set_pmic_therm(0);
 	set_ap_reset(0);
+
+	/*
+	 * Before we push PMIC power button, wait for the PMI RTC ready, which
+	 * takes PMIC_RTC_STARTUP from the AC/battery is plugged in.
+	 */
+	t = get_time().val;
+	if (t < PMIC_RTC_STARTUP) {
+		uint32_t wait = PMIC_RTC_STARTUP - t;
+		CPRINTF("[%T wait for %dms for PMIC RTC start-up]\n",
+			wait / MSEC);
+		usleep(wait);
+	}
 
 	/* Push the power button */
 	set_pmic_pwron(1);
