@@ -10,6 +10,7 @@ common-y=main.o util.o console_output.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system.o hooks.o
 common-y+=gpio.o version.o printf.o queue.o
 
+common-$(CONFIG_ADC)+=adc.o
 common-$(CONFIG_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o

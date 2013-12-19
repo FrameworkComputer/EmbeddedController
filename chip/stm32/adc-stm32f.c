@@ -289,21 +289,3 @@ static void adc_init(void)
 	STM32_ADC_SMPR2 = 0x12492492;
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
-
-static int command_adc(int argc, char **argv)
-{
-	int i;
-	int data[ADC_CH_COUNT];
-
-	if (adc_read_all_channels(data))
-		return EC_ERROR_UNKNOWN;
-	for (i = 0; i < ADC_CH_COUNT; ++i)
-		ccprintf("ADC channel \"%s\" = %d\n",
-			 adc_channels[i].name, data[i]);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(adc, command_adc,
-			NULL,
-			"Print ADC channels",
-			NULL);

@@ -162,6 +162,18 @@ int adc_read_channel(enum adc_channel ch)
 	return rv * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
+int adc_read_all_channels(int *data)
+{
+	int i;
+
+	for (i = 0; i < ADC_CH_COUNT; ++i) {
+		data[i] = adc_read_channel(i);
+		if (data[i] == ADC_READ_ERROR)
+			return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
+}
+
 /*****************************************************************************/
 /* Interrupt handlers */
 
@@ -205,21 +217,6 @@ DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp,
 			"Print EC temperature",
 			NULL);
 #endif
-
-static int command_adc(int argc, char **argv)
-{
-	int i;
-
-	for (i = 0; i < ADC_CH_COUNT; ++i)
-		ccprintf("ADC channel \"%s\" = %d\n",
-			 adc_channels[i].name, adc_read_channel(i));
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(adc, command_adc,
-			NULL,
-			"Print ADC channels",
-			NULL);
 
 /*****************************************************************************/
 /* Initialization */
