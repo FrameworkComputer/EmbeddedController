@@ -12,6 +12,7 @@
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_FANS 1
+#define CONFIG_ADC
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
@@ -22,6 +23,15 @@
 #undef CONFIG_SWITCH
 
 #ifndef __ASSEMBLER__
+
+enum adc_channel {
+	ADC_CH_1 = 0,
+	ADC_CH_2,
+	ADC_CH_3,
+	ADC_CH_4,
+
+	ADC_CH_COUNT
+};
 
 /* GPIO signal list */
 enum gpio_signal {

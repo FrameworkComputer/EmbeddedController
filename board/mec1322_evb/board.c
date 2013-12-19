@@ -4,6 +4,8 @@
  */
 /* MEC1322 eval board-specific configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "fan.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -43,6 +45,15 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_PORT(14), 0x14,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	[ADC_CH_1] = {"ADC1", 1, 1, 0, MEC1322_ADC_CH(1)},
+	[ADC_CH_2] = {"ADC2", 1, 1, 0, MEC1322_ADC_CH(2)},
+	[ADC_CH_3] = {"ADC3", 1, 1, 0, MEC1322_ADC_CH(3)},
+	[ADC_CH_4] = {"ADC4", 1, 1, 0, MEC1322_ADC_CH(4)},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_t fans[] = {

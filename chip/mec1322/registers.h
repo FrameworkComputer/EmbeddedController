@@ -262,6 +262,16 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_KS_EXT_CTRL    REG32(MEC1322_KS_BASE + 0x14)
 
 
+/* ADC */
+#define MEC1322_ADC_BASE       0x40007c00
+#define MEC1322_ADC_CTRL       REG32(MEC1322_ADC_BASE + 0x0)
+#define MEC1322_ADC_DELAY      REG32(MEC1322_ADC_BASE + 0x4)
+#define MEC1322_ADC_STS        REG32(MEC1322_ADC_BASE + 0x8)
+#define MEC1322_ADC_SINGLE     REG32(MEC1322_ADC_BASE + 0xc)
+#define MEC1322_ADC_REPEAT     REG32(MEC1322_ADC_BASE + 0x10)
+#define MEC1322_ADC_READ(x)    REG32(MEC1322_ADC_BASE + 0x14 + (x) * 0x4)
+
+
 /* IRQ Numbers */
 #define MEC1322_IRQ_I2C_0        0
 #define MEC1322_IRQ_I2C_1        1
