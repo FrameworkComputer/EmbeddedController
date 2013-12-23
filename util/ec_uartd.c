@@ -30,6 +30,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+static const int ftdi_id[][2] = { {0x0403, 0xbcda},
+				  {0x0403, 0xbcd9} };
+
 int main(int argc, char **argv)
 {
 	struct ftdi_context fcontext;
@@ -38,6 +41,8 @@ int main(int argc, char **argv)
 	char buf[1024];
 	int fd;
 	int rv;
+	int i;
+	int device_opened;
 
 	/* Init */
 	if (ftdi_init(&fcontext) < 0) {
@@ -47,12 +52,22 @@ int main(int argc, char **argv)
 
 	/* Open interface B (UART) in the FTDI device and set 115kbaud */
 	ftdi_set_interface(&fcontext, INTERFACE_B);
-	rv = ftdi_usb_open(&fcontext, 0x0403, 0xbcda);
-	if (rv < 0) {
+	device_opened = 0;
+	for (i = 0; i < sizeof(ftdi_id) / sizeof(ftdi_id[0]); ++i) {
+		rv = ftdi_usb_open(&fcontext, ftdi_id[i][0], ftdi_id[i][1]);
+		if (rv >= 0) {
+			fprintf(stderr, "Using FTDI device %04x:%04x\n",
+					ftdi_id[i][0], ftdi_id[i][1]);
+			device_opened = 1;
+			break;
+		}
+	}
+	if (!device_opened) {
 		fprintf(stderr, "error opening ftdi device: %d (%s)\n",
 			rv, ftdi_get_error_string(&fcontext));
 		return 2;
 	}
+
 	rv = ftdi_set_baudrate(&fcontext, 115200);
 	if (rv < 0) {
 		fprintf(stderr, "error setting baudrate: %d (%s)\n",
