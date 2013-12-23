@@ -140,6 +140,18 @@ int test_send_host_command(int command, int version, const void *params,
 }
 #endif  /* TASK_HAS_HOSTCMD */
 
+/* Linear congruential pseudo random number generator */
+uint32_t prng(uint32_t seed)
+{
+	return 22695477 * seed + 1;
+}
+
+uint32_t prng_no_seed(void)
+{
+	static uint32_t seed = 0x1234abcd;
+	return seed = prng(seed);
+}
+
 static int command_run_test(int argc, char **argv)
 {
 	run_test();

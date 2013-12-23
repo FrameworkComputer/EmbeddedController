@@ -57,16 +57,8 @@ struct i2c_test_param_t {
 /*****************************************************************************/
 /* Test utilities */
 
-/* Linear congruential pseudo random number generator*/
-static uint32_t prng(void)
-{
-	static uint32_t x = 1357;
-	x = 22695477 * x + 1;
-	return x;
-}
-
 /* period between 500us and 32ms */
-#define RAND_US() (((prng() % 64) + 1) * 500)
+#define RAND_US() (((prng_no_seed() % 64) + 1) * 500)
 
 static int stress(const char *name,
 		  int (*test_routine)(void),
@@ -103,7 +95,7 @@ static int test_i2c(void)
 	int res = EC_ERROR_UNKNOWN;
 	int dummy_data;
 	struct i2c_test_param_t *param;
-	param = i2c_test_params + (prng() % (sizeof(i2c_test_params) /
+	param = i2c_test_params + (prng_no_seed() % (sizeof(i2c_test_params) /
 				   sizeof(struct i2c_test_param_t)));
 	if (param->width == 8 && param->data == -1)
 		res = i2c_read8(param->port, param->addr,

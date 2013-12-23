@@ -109,6 +109,10 @@ int test_get_error_count(void);
 int test_send_host_command(int command, int version, const void *params,
 			   int params_size, void *resp, int resp_size);
 
+uint32_t prng(uint32_t seed);
+
+uint32_t prng_no_seed(void);
+
 /* Number of failed tests */
 extern int __test_error_count;
 

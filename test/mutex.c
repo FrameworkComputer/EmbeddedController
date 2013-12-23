@@ -15,12 +15,6 @@
 
 static struct mutex mtx;
 
-/* Linear congruential pseudo random number generator*/
-static uint32_t prng(uint32_t x)
-{
-	return 22695477 * x + 1;
-}
-
 /* period between 50us and 3.2ms */
 #define PERIOD_US(num) (((num % 64) + 1) * 50)
 /* one of the 3 MTX3x tasks */

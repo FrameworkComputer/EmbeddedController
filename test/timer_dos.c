@@ -8,14 +8,9 @@
 #include "common.h"
 #include "console.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
-
-/* Linear congruential pseudo random number generator*/
-static uint32_t prng(uint32_t x)
-{
-	return 22695477 * x + 1;
-}
 
 /* period between 500us and 128ms */
 #define PERIOD_US(num) (((num % 256) + 1) * 500)
