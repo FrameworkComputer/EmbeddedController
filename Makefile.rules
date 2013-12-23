@@ -12,6 +12,7 @@ build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
+boards := $(filter-out host,$(subst board/,,$(wildcard board/*)))
 
 # Create output directories if necessary
 _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
@@ -60,6 +61,11 @@ targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
 .PHONY: all tests utils hosttests
 all: $(out)/$(PROJECT).bin utils
+
+buildall: $(foreach b, $(boards), proj-$(b)) runtests
+proj-%:
+	@echo "======= building $*"; \
+	$(MAKE) --no-print-directory BOARD=$* V=$(V)
 
 dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
 dis: $(dis-y)
