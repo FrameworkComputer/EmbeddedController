@@ -73,11 +73,15 @@ void gpio_config_module(enum module_id id, int enable)
 			continue;  /* Pins for some other module */
 
 		if (enable) {
-			gpio_set_flags_by_mask(af->port, af->mask, af->flags);
+			if (!(af->flags & GPIO_DEFAULT))
+				gpio_set_flags_by_mask(af->port,
+					af->mask, af->flags);
 			gpio_set_alternate_function(af->port, af->mask,
 						    af->func);
 		} else {
-			gpio_set_flags_by_mask(af->port, af->mask, GPIO_INPUT);
+			if (!(af->flags & GPIO_DEFAULT))
+				gpio_set_flags_by_mask(af->port,
+					af->mask, GPIO_INPUT);
 			gpio_set_alternate_function(af->port, af->mask, -1);
 		}
 	}
