@@ -332,11 +332,7 @@ static int tegra_power_init(void)
 		 * The warm reset triggers AP into the Tegra recovery mode (
 		 * flash SPI from USB).
 		 */
-		CPRINTF("[%T assert GPIO_PMIC_WARM_RESET_L for %d ms]\n",
-				PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
-		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
-		usleep(PMIC_WARM_RESET_L_HOLD_TIME);
-		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);
+		chipset_reset(0);
 	}
 
 	/* Leave power off only if requested by reset flags */
@@ -376,23 +372,6 @@ void chipset_exit_hard_off(void)
 	 * TODO(crosbug.com/p/23822): Implement, if/when we take the AP down to
 	 * a hard-off state.
 	 */
-}
-
-void chipset_reset(int is_cold)
-{
-	/*
-	 * TODO(crosbug.com/p/23822): Implement cold reset.  For now, all
-	 * resets are warm resets.
-	 */
-	CPRINTF("[%T EC triggered warm reboot]\n");
-
-	/*
-	 * This is a hack to do an AP warm reboot while still preserving RAM
-	 * contents. This is useful for looking at kernel log message contents
-	 * from previous boot in cases where the AP/OS is hard hung.
-	 */
-	power_request = POWER_REQ_ON;
-	task_wake(TASK_ID_CHIPSET);
 }
 
 void chipset_force_shutdown(void)
@@ -559,6 +538,23 @@ static void power_off(void)
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
 	CPRINTF("[%T power shutdown complete]\n");
+}
+
+void chipset_reset(int is_cold)
+{
+	if (is_cold) {
+		CPRINTF("[%T EC triggered cold reboot]\n");
+		power_off();
+		/* After XPSHOLD is dropped off, the system will be on again */
+		power_request = POWER_REQ_ON;
+	} else {
+		CPRINTF("[%T EC triggered warm reboot]\n");
+		CPRINTF("[%T assert GPIO_PMIC_WARM_RESET_L for %d ms]\n",
+				PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
+		usleep(PMIC_WARM_RESET_L_HOLD_TIME);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);
+	}
 }
 
 /*
