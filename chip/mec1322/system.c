@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "registers.h"
 #include "system.h"
@@ -50,7 +51,9 @@ static void check_reset_cause(void)
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
 
-	if (status & (1 << 5) && !(flags & (RESET_FLAG_SOFT | RESET_FLAG_HARD)))
+	if (status & (1 << 5) && !(flags & (RESET_FLAG_SOFT |
+					    RESET_FLAG_HARD |
+					    RESET_FLAG_HIBERNATE)))
 		flags |= RESET_FLAG_WATCHDOG;
 
 	system_set_reset_flags(flags);
@@ -70,7 +73,7 @@ void system_pre_init(void)
 	check_reset_cause();
 }
 
-void system_reset(int flags)
+void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;
 
@@ -84,7 +87,9 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		save_flags |= RESET_FLAG_AP_OFF;
 
-	if (flags & SYSTEM_RESET_HARD)
+	if (wake_from_hibernate)
+		save_flags |= RESET_FLAG_HIBERNATE;
+	else if (flags & SYSTEM_RESET_HARD)
 		save_flags |= RESET_FLAG_HARD;
 	else
 		save_flags |= RESET_FLAG_SOFT;
@@ -98,6 +103,11 @@ void system_reset(int flags)
 	/* Spin and wait for reboot; should never return */
 	while (1)
 		;
+}
+
+void system_reset(int flags)
+{
+	_system_reset(flags, 0);
 }
 
 const char *system_get_chip_vendor(void)
@@ -154,7 +164,145 @@ uint32_t system_get_scratchpad(void)
 	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
 }
 
+static void system_unpower_gpio(void)
+{
+	int i, j, k;
+	uint32_t val;
+	int want_skip;
+
+	const int pins[16][2] = {{0, 7}, {1, 7}, {2, 7}, {3, 6}, {4, 7}, {5, 7},
+				 {6, 7}, {10, 7}, {11, 7}, {12, 7}, {13, 6},
+				 {14, 7}, {15, 7}, {16, 5}, {20, 6}, {21, 1} };
+
+	const int skip[5][2] = {{13, 1}, /* VCC1_nRST */
+				{6, 3},  /* VCC_PWRGD */
+				{12, 1}, /* nRESET_OUT */
+				{14, 3}, /* RSMRST# */
+				{20, 5}, /* Not exist */
+	};
+
+	for (i = 0; i < 16; ++i) {
+		for (j = 0; j <= pins[i][1]; ++j) {
+			want_skip = 0;
+			for (k = 0; k < 5; ++k)
+				if (skip[k][0] == pins[i][0] &&
+				    skip[k][1] == j)
+					want_skip = 1;
+			if (want_skip)
+				continue;
+
+			/*
+			 * GPIO Input, pull-high, interrupt disabled
+			 * TODO(crosbug.com/p/25302): Unpower GPIO instead of
+			 *                            setting them to be input.
+			 */
+			val = MEC1322_GPIO_CTL(pins[i][0], j);
+			val &= ~((1 << 12) | (1 << 13));
+			val &= ~(1 << 9);
+			val = (val & ~(0xf << 4)) | (0x4 << 4);
+			val = (val & ~0x3) | 0x1;
+			MEC1322_GPIO_CTL(pins[i][0], j) = val;
+		}
+	}
+}
+
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	/* TODO(crosbug.com/p/24107): Implement this */
+	int i;
+
+	cflush();
+
+	/* Disable interrupts */
+	interrupt_disable();
+	for (i = 0; i <= 92; ++i) {
+		task_disable_irq(i);
+		task_clear_pending_irq(i);
+	}
+
+	for (i = 8; i <= 23; ++i)
+		MEC1322_INT_DISABLE(i) = 0xffffffff;
+	MEC1322_INT_BLK_DIS |= 0xffff00;
+
+	/* Set processor clock to lowest, 1MHz */
+	MEC1322_PCR_PROC_CLK_CTL = 48;
+
+	/* Power down ADC VREF */
+	MEC1322_EC_ADC_VREF_PD |= 1;
+
+	/* Assert nSIO_RESET */
+	MEC1322_PCR_PWR_RST_CTL |= 1;
+
+	/* Disable UART */
+	MEC1322_UART_ACT &= ~0x1;
+	MEC1322_LPC_ACT &= ~0x1;
+
+	/* Disable JTAG */
+	MEC1322_EC_JTAG_EN &= ~1;
+
+	/* Disable 32KHz clock */
+	MEC1322_VBAT_CE &= ~0x2;
+
+	/* Stop watchdog */
+	MEC1322_WDG_CTL &= ~1;
+
+	/* Stop timers */
+	MEC1322_TMR32_CTL(0) &= ~1;
+	MEC1322_TMR32_CTL(1) &= ~1;
+	MEC1322_TMR16_CTL(0) &= ~1;
+
+	/* Power down ADC */
+	MEC1322_ADC_CTRL &= ~1;
+
+	/* Disable blocks */
+	MEC1322_PCR_CHIP_SLP_EN |= 0x3;
+	MEC1322_PCR_EC_SLP_EN |= 0xe0700ff7;
+	MEC1322_PCR_HOST_SLP_EN |= 0x5f003;
+	MEC1322_PCR_EC_SLP_EN2 |= 0x1ffffff8;
+	MEC1322_PCR_SYS_SLP_CTL = (MEC1322_PCR_SYS_SLP_CTL & ~0x7) | 0x2;
+	MEC1322_PCR_SLOW_CLK_CTL &= 0xfffffc00;
+	CPU_SCB_SYSCTRL |= 0x4;
+
+	system_unpower_gpio();
+
+#ifdef CONFIG_WAKE_PIN
+	gpio_set_flags_by_mask(gpio_list[CONFIG_WAKE_PIN].port,
+			       gpio_list[CONFIG_WAKE_PIN].mask,
+			       gpio_list[CONFIG_WAKE_PIN].flags);
+	gpio_enable_interrupt(CONFIG_WAKE_PIN);
+	interrupt_enable();
+	task_enable_irq(MEC1322_IRQ_GIRQ8);
+	task_enable_irq(MEC1322_IRQ_GIRQ9);
+	task_enable_irq(MEC1322_IRQ_GIRQ10);
+	task_enable_irq(MEC1322_IRQ_GIRQ11);
+	task_enable_irq(MEC1322_IRQ_GIRQ20);
+#endif
+
+	if (seconds || microseconds) {
+		MEC1322_INT_BLK_EN |= 1 << 17;
+		MEC1322_INT_ENABLE(17) |= 1 << 20;
+		interrupt_enable();
+		task_enable_irq(MEC1322_IRQ_HTIMER);
+		if (seconds > 2) {
+			ASSERT(seconds <= 0xffff / 8);
+			MEC1322_HTIMER_CONTROL = 1;
+			MEC1322_HTIMER_PRELOAD =
+				(seconds * 8 + microseconds / 125000);
+		} else {
+			MEC1322_HTIMER_CONTROL = 0;
+			MEC1322_HTIMER_PRELOAD =
+				(seconds * 1000000 + microseconds) * 2 / 71;
+		}
+	}
+
+	asm("wfi");
+
+	/* We lost states of most modules, let's just reboot */
+	_system_reset(0, 1);
 }
+
+static void htimer_interrupt(void)
+{
+	/* Time to wake up */
+	_system_reset(0, 1);
+}
+DECLARE_IRQ(MEC1322_IRQ_HTIMER, htimer_interrupt, 1);

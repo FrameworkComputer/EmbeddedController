@@ -13,6 +13,7 @@
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_FANS 1
 #define CONFIG_ADC
+#define CONFIG_WAKE_PIN GPIO_S1
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
@@ -40,6 +41,7 @@ enum gpio_signal {
 	GPIO_LED3,
 	GPIO_PCH_SMI_L,           /* SMI output */
 	GPIO_PCH_WAKE_L,          /* PCH wake pin */
+	GPIO_S1,                  /* Switch S1 */
 	/*
 	 * Signals which aren't implemented on MEC1322 eval board but we'll
 	 * emulate anyway, to make it more convenient to debug other code.
