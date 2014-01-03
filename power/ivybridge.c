@@ -6,7 +6,7 @@
 /* X86 chipset power control module for Chrome EC */
 
 #include "chipset.h"
-#include "chipset_x86_common.h"
+#include "power.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

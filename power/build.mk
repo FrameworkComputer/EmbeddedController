@@ -11,4 +11,4 @@ power-$(CONFIG_CHIPSET_GAIA)+=gaia.o
 power-$(CONFIG_CHIPSET_HASWELL)+=haswell.o
 power-$(CONFIG_CHIPSET_IVYBRIDGE)+=ivybridge.o
 power-$(CONFIG_CHIPSET_TEGRA)+=tegra.o
-power-$(CONFIG_CHIPSET_X86)+=x86_common.o
+power-$(CONFIG_CHIPSET_X86)+=common.o

@@ -6,7 +6,7 @@
 /* Common functionality across x86 chipsets */
 
 #include "chipset.h"
-#include "chipset_x86_common.h"
+#include "power.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
