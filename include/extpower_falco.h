@@ -41,6 +41,6 @@ struct adapter_limits {
 #define NUM_BATT_THRESHOLDS 2
 
 /* Change turbo mode or throttle the AP depending on the adapter state. */
-void watch_adapter_closely(struct power_state_context *ctx);
+void watch_adapter_closely(struct charge_state_context *ctx);
 
 #endif  /* __CROS_EC_EXTPOWER_FALCO_H */

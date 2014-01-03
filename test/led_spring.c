@@ -26,7 +26,7 @@ static uint8_t lp5562_reg[LP5562_NUM_WATCH_REG];
 
 static enum charging_state mock_charge_state = ST_IDLE;
 static int lp5562_failed_i2c_reg = -1;
-static const char * const state_names[] = POWER_STATE_NAME_TABLE;
+static const char * const state_names[] = CHARGE_STATE_NAME_TABLE;
 
 /*****************************************************************************/
 /* Mock functions */

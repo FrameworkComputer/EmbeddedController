@@ -251,7 +251,7 @@ void check_threshold(int current, struct adapter_limits *lim, int whoami)
 
 
 test_export_static
-void watch_battery_closely(struct power_state_context *ctx)
+void watch_battery_closely(struct charge_state_context *ctx)
 {
 	int i;
 	int current = ctx->curr.batt.current;
@@ -275,7 +275,7 @@ void watch_battery_closely(struct power_state_context *ctx)
 				i + BATT_REASON_OFFSET);
 }
 
-void watch_adapter_closely(struct power_state_context *ctx)
+void watch_adapter_closely(struct charge_state_context *ctx)
 {
 	int current, i;
 

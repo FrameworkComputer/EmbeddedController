@@ -24,7 +24,7 @@
 /* Local state */
 static int mock_id;
 static int mock_current;
-static struct power_state_context ctx;
+static struct charge_state_context ctx;
 
 static void test_reset_mocks(void)
 {

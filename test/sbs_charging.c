@@ -67,7 +67,7 @@ static void test_setup(void)
 
 static int wait_charging_state(void)
 {
-	enum power_state state;
+	enum charge_state state;
 	task_wake(TASK_ID_CHARGER);
 	msleep(WAIT_CHARGER_TASK);
 	state = charge_get_state();
@@ -85,7 +85,7 @@ static int charge_control(enum ec_charge_control_mode mode)
 
 static int test_charge_state(void)
 {
-	enum power_state state;
+	enum charge_state state;
 
 	state = wait_charging_state();
 	/* Plug AC, charging at 1000mAh */

@@ -35,7 +35,7 @@
 #define BATTERY_AP_OFF_LEVEL 0
 #endif
 
-static const char * const state_name[] = POWER_STATE_NAME_TABLE;
+static const char * const state_name[] = CHARGE_STATE_NAME_TABLE;
 
 static int state_machine_force_idle;
 
@@ -44,16 +44,16 @@ static unsigned user_current_limit = -1U;
 static int fake_state_of_charge = -1;
 
 /* Current power state context */
-static struct power_state_context task_ctx;
+static struct charge_state_context task_ctx;
 
 static inline int is_charger_expired(
-	struct power_state_context *ctx, timestamp_t now)
+	struct charge_state_context *ctx, timestamp_t now)
 {
 	return now.val - ctx->charger_update_time.val > CHARGER_UPDATE_PERIOD;
 }
 
 static inline void update_charger_time(
-	struct power_state_context *ctx, timestamp_t now)
+	struct charge_state_context *ctx, timestamp_t now)
 {
 	ctx->charger_update_time.val = now.val;
 }
@@ -106,7 +106,7 @@ static void update_battery_info(void)
 /**
  * Prevent battery from going into deep discharge state
  */
-static void low_battery_shutdown(struct power_state_context *ctx)
+static void low_battery_shutdown(struct charge_state_context *ctx)
 {
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		/* AP is off, so shut down the EC now */
@@ -199,12 +199,12 @@ static int charge_request(int voltage, int current)
  * This handler gets battery charging parameters, charger state, ac state, and
  * timestamp. It also fills memory map and issues power events on state change.
  */
-static int state_common(struct power_state_context *ctx)
+static int state_common(struct charge_state_context *ctx)
 {
 	int rv, d;
 
-	struct power_state_data *curr = &ctx->curr;
-	struct power_state_data *prev = &ctx->prev;
+	struct charge_state_data *curr = &ctx->curr;
+	struct charge_state_data *prev = &ctx->prev;
 	struct batt_params *batt = &ctx->curr.batt;
 	uint8_t *batt_flags = ctx->memmap_batt_flags;
 
@@ -380,7 +380,7 @@ static int state_common(struct power_state_context *ctx)
  *	- initialize charger
  *	- new states: DISCHARGE, IDLE
  */
-static enum power_state state_init(struct power_state_context *ctx)
+static enum charge_state state_init(struct charge_state_context *ctx)
 {
 	/* Stop charger, unconditionally */
 	charge_request(0, 0);
@@ -416,7 +416,7 @@ static enum power_state state_init(struct power_state_context *ctx)
  *	- detect charger and battery status change
  *	- new states: CHARGE, INIT
  */
-static enum power_state state_idle(struct power_state_context *ctx)
+static enum charge_state state_idle(struct charge_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
 
@@ -466,9 +466,9 @@ static enum power_state state_idle(struct power_state_context *ctx)
  *	- detect battery status change
  *	- new state: INIT
  */
-static enum power_state state_charge(struct power_state_context *ctx)
+static enum charge_state state_charge(struct charge_state_context *ctx)
 {
-	struct power_state_data *curr = &ctx->curr;
+	struct charge_state_data *curr = &ctx->curr;
 	struct batt_params *batt = &ctx->curr.batt;
 	int debounce = 0;
 	int want_current;
@@ -552,7 +552,7 @@ static enum power_state state_charge(struct power_state_context *ctx)
  *	- detect ac status
  *	- new state: INIT
  */
-static enum power_state state_discharge(struct power_state_context *ctx)
+static enum charge_state state_discharge(struct charge_state_context *ctx)
 {
 	struct batt_params *batt = &ctx->curr.batt;
 	int8_t bat_temp_c = DECI_KELVIN_TO_CELSIUS(batt->temperature);
@@ -580,7 +580,7 @@ static enum power_state state_discharge(struct power_state_context *ctx)
  *	- log error
  *	- new state: INIT
  */
-static enum power_state state_error(struct power_state_context *ctx)
+static enum charge_state state_error(struct charge_state_context *ctx)
 {
 	static int logged_error;
 
@@ -608,7 +608,7 @@ static enum power_state state_error(struct power_state_context *ctx)
 /**
  * Print charging progress
  */
-static void charging_progress(struct power_state_context *ctx)
+static void charging_progress(struct charge_state_context *ctx)
 {
 	int seconds, minutes;
 
@@ -641,7 +641,7 @@ static void charging_progress(struct power_state_context *ctx)
 	}
 }
 
-enum power_state charge_get_state(void)
+enum charge_state charge_get_state(void)
 {
 	return task_ctx.curr.state;
 }
@@ -689,10 +689,10 @@ static int charge_force_idle(int enable)
  */
 void charger_task(void)
 {
-	struct power_state_context *ctx = &task_ctx;
+	struct charge_state_context *ctx = &task_ctx;
 	timestamp_t ts;
 	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
-	enum power_state new_state;
+	enum charge_state new_state;
 	uint8_t batt_flags;
 
 	while (1) {
@@ -700,7 +700,7 @@ void charger_task(void)
 
 #ifdef CONFIG_CHARGER_TIMEOUT_HOURS
 		if (ctx->curr.state == PWR_STATE_CHARGE &&
-		    ctx->power_state_updated_time.val +
+		    ctx->charge_state_updated_time.val +
 		    CONFIG_CHARGER_TIMEOUT_HOURS * HOUR < ctx->curr.ts.val) {
 			CPRINTF("[%T Charge timed out after %d hours]\n",
 				CONFIG_CHARGER_TIMEOUT_HOURS);
@@ -767,8 +767,8 @@ void charger_task(void)
 				state_name[ctx->prev.state],
 				state_name[new_state],
 				ctx->curr.ts.val -
-				ctx->power_state_updated_time.val);
-			ctx->power_state_updated_time = ctx->curr.ts;
+				ctx->charge_state_updated_time.val);
+			ctx->charge_state_updated_time = ctx->curr.ts;
 			hook_notify(HOOK_CHARGE_STATE_CHANGE);
 		}
 
@@ -877,7 +877,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);
 
 static void charge_init(void)
 {
-	struct power_state_context *ctx = &task_ctx;
+	struct charge_state_context *ctx = &task_ctx;
 
 	ctx->prev.state = PWR_STATE_INIT;
 	ctx->curr.state = PWR_STATE_INIT;

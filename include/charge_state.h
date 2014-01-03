@@ -41,7 +41,7 @@
 			F_CHARGER_INIT)
 
 /* Power states */
-enum power_state {
+enum charge_state {
 	/* Meta-state; unchanged from previous time through task loop */
 	PWR_STATE_UNCHANGE = 0,
 	/* Initializing charge state machine at boot */
@@ -68,11 +68,10 @@ enum power_state {
 /* External (AC) power is present */
 #define CHARGE_FLAG_EXTERNAL_POWER (1 << 1)
 
-/* Debugging constants, in the same order as enum power_state. This string
+/* Debugging constants, in the same order as enum charge_state. This string
  * table was moved here to sync with enum above.
  */
-#define POWER_STATE_NAME_TABLE  \
-	{			\
+#define CHARGE_STATE_NAME_TABLE { \
 		"unchange",	\
 		"init",		\
 		"reinit",	\
@@ -83,17 +82,17 @@ enum power_state {
 		"charge_near_full",      \
 		"error"		\
 	}
-	/* End of POWER_STATE_NAME_TABLE macro */
+	/* End of CHARGE_STATE_NAME_TABLE macro */
 
 /* Power state data
  * Status collection of charging state machine.
  */
-struct power_state_data {
+struct charge_state_data {
 	int ac;
 	int charging_voltage;
 	int charging_current;
 	struct batt_params batt;
-	enum power_state state;
+	enum charge_state state;
 	uint32_t error;
 	timestamp_t ts;
 };
@@ -102,10 +101,10 @@ struct power_state_data {
  * The shared context for state handler. The context contains current and
  * previous state.
  */
-struct power_state_context {
-	struct power_state_data curr;
-	struct power_state_data prev;
-	timestamp_t power_state_updated_time;
+struct charge_state_context {
+	struct charge_state_data curr;
+	struct charge_state_data prev;
+	timestamp_t charge_state_updated_time;
 	uint32_t *memmap_batt_volt;
 	uint32_t *memmap_batt_rate;
 	uint32_t *memmap_batt_cap;
@@ -124,7 +123,7 @@ struct power_state_context {
 /**
  * Return current charge state.
  */
-enum power_state charge_get_state(void);
+enum charge_state charge_get_state(void);
 
 /**
  * Return current charge state flags (CHARGE_FLAG_*)

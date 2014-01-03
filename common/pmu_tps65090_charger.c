@@ -44,7 +44,7 @@
 #define BATTERY_AP_OFF_LEVEL 0
 #endif
 
-static const char * const state_list[] = POWER_STATE_NAME_TABLE;
+static const char * const state_list[] = CHARGE_STATE_NAME_TABLE;
 
 /* States for throttling PMU task */
 static timestamp_t last_waken; /* Initialized to 0 */

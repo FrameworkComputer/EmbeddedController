@@ -24,8 +24,7 @@ enum charging_state {
 /* Debugging constants, in the same order as enum power_state. This string
  * table was moved here to sync with enum above.
  */
-#define POWER_STATE_NAME_TABLE  \
-	{			\
+#define CHARGE_STATE_NAME_TABLE { \
 		"idle0",	\
 		"idle",		\
 		"bad cond",	\
@@ -34,7 +33,7 @@ enum charging_state {
 		"charging error", \
 		"discharging"	\
 	}
-	/* End of POWER_STATE_NAME_TABLE macro */
+	/* End of CHARGE_STATE_NAME_TABLE macro */
 
 /* JEITA temperature threshold */
 enum TPS_TEMPERATURE {
