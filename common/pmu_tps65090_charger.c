@@ -52,6 +52,21 @@ static int has_pending_event;
 
 static enum charging_state current_state = ST_IDLE0;
 
+#ifdef CONFIG_PMU_TPS65090_CHARGING_LED
+static void update_battery_led(void)
+{
+	int alarm;
+	int led_on = 0;
+	if(extpower_is_present()){
+		battery_status(&alarm);
+		if((alarm & ALARM_CHARGED) && !gpio_get_level(GPIO_CHARGER_EN))
+			led_on = 1;
+	}
+
+	gpio_set_level(GPIO_CHARGING_LED, led_on);
+}
+#endif
+
 static void enable_charging(int enable)
 {
 	enable = enable ? 1 : 0;
@@ -409,6 +424,9 @@ void charger_task(void)
 		extpower_charge_update(0);
 #endif
 
+#ifdef CONFIG_PMU_TPS65090_CHARGING_LED
+		update_battery_led();
+#endif
 		/*
 		 * When battery is extremely low, the internal voltage can not
 		 * power on its gas guage IC. Charging loop will enable the

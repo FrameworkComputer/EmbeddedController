@@ -70,7 +70,7 @@ const struct gpio_info gpio_list[] = {
 	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_ODR_HIGH, NULL},
 	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_ODR_HIGH, NULL},
 	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
-	{"LED_POWER_L", GPIO_A, (1<<2), GPIO_OUT_HIGH, NULL},
+	{"CHARGING_LED",GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
 	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
 	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
