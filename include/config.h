@@ -734,6 +734,12 @@
  */
 #undef CONFIG_USB_PORT_POWER_SMART
 
+/*
+ * Smart USB power control can use a full set of control signals to the USB
+ * port power chip, or a reduced set.  If this is defined, use the reduced set.
+ */
+#undef CONFIG_USB_PORT_POWER_SMART_SIMPLE
+
 /* Support the TSU6721 I2C smart switch */
 #undef CONFIG_USB_SWITCH_TSU6721
 
