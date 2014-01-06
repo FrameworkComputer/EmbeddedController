@@ -245,11 +245,11 @@ static uint32_t read_mapped_mem32(uint8_t offset)
 	return val;
 }
 
-static int read_mapped_string(uint8_t offset, char *buffer)
+static int read_mapped_string(uint8_t offset, char *buffer, int max_size)
 {
 	int ret;
 
-	ret = ec_readmem(offset, 0, buffer);
+	ret = ec_readmem(offset, max_size, buffer);
 	if (ret <= 0) {
 		fprintf(stderr, "failure in %s(): %d\n", __func__, ret);
 		exit(1);
@@ -2769,22 +2769,26 @@ int cmd_battery(int argc, char *argv[])
 
 	printf("Battery info:\n");
 
-	rv = read_mapped_string(EC_MEMMAP_BATT_MFGR, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_MFGR, batt_text,
+			sizeof(batt_text));
 	if (rv < 0 || !is_string_printable(batt_text))
 		goto cmd_error;
 	printf("  OEM name:               %s\n", batt_text);
 
-	rv = read_mapped_string(EC_MEMMAP_BATT_MODEL, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_MODEL, batt_text,
+			sizeof(batt_text));
 	if (rv < 0 || !is_string_printable(batt_text))
 		goto cmd_error;
 	printf("  Model number:           %s\n", batt_text);
 
-	rv = read_mapped_string(EC_MEMMAP_BATT_TYPE, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_TYPE, batt_text,
+			sizeof(batt_text));
 	if (rv < 0 || !is_string_printable(batt_text))
 		goto cmd_error;
 	printf("  Chemistry   :           %s\n", batt_text);
 
-	rv = read_mapped_string(EC_MEMMAP_BATT_SERIAL, batt_text);
+	rv = read_mapped_string(EC_MEMMAP_BATT_SERIAL, batt_text,
+			sizeof(batt_text));
 	printf("  Serial number:          %s\n", batt_text);
 
 	val = read_mapped_mem32(EC_MEMMAP_BATT_DCAP);
