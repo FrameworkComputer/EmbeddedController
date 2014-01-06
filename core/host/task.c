@@ -13,6 +13,7 @@
 
 #include "atomic.h"
 #include "common.h"
+#include "console.h"
 #include "task.h"
 #include "task_id.h"
 #include "test_util.h"
@@ -35,6 +36,7 @@ static struct emu_task_t tasks[TASK_ID_COUNT];
 static pthread_cond_t scheduler_cond;
 static pthread_mutex_t run_lock;
 static task_id_t running_task_id;
+static int task_started;
 
 static sem_t interrupt_sem;
 static pthread_mutex_t interrupt_lock;
@@ -280,10 +282,17 @@ static int fast_forward(void)
 	}
 }
 
+int task_start_called(void)
+{
+	return task_started;
+}
+
 void task_scheduler(void)
 {
 	int i;
 	timestamp_t now;
+
+	task_started = 1;
 
 	while (1) {
 		now = get_time();

@@ -13,6 +13,7 @@
 #include "common.h"
 #include "queue.h"
 #include "task.h"
+#include "test_util.h"
 #include "uart.h"
 #include "util.h"
 
@@ -66,16 +67,20 @@ const char *test_get_captured_console(void)
 	return (const char *)capture_buf;
 }
 
+static void uart_interrupt(void)
+{
+	uart_process_input();
+	uart_process_output();
+}
+
 static void trigger_interrupt(void)
 {
-	/*
-	 * TODO(crosbug.com/p/23804): Check global interrupt status when we
-	 * have interrupt support.
-	 */
-	if (!int_disabled) {
-		uart_process_input();
-		uart_process_output();
-	}
+	if (int_disabled)
+		return;
+	if (task_start_called())
+		task_trigger_test_interrupt(uart_interrupt);
+	else
+		uart_interrupt();
 }
 
 int uart_init_done(void)
@@ -177,9 +182,9 @@ void *uart_monitor_stdin(void *d)
 		}
 		tcsetattr(0, TCSANOW, &org_settings);
 		/*
-		 * TODO(crosbug.com/p/23804): Trigger emulated interrupt when
-		 * we have interrupt support. Also, we will need a condition
-		 * variable to indicate the character has been read.
+		 * Trigger emulated interrupt to process input. Keyboard
+		 * input while interrupt handler runs is queued by the
+		 * system.
 		 */
 		trigger_interrupt();
 	}
