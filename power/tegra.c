@@ -381,7 +381,7 @@ void chipset_force_shutdown(void)
 
 	/* Assert AP reset to shutdown immediately */
 	set_pmic_therm(1);
-	udelay(PMIC_THERM_HOLD_TIME);
+	usleep(PMIC_THERM_HOLD_TIME);
 	set_pmic_therm(0);
 
 	/* Hold the reset pin so that the AP stays in off mode (rev <= 2.0) */
