@@ -38,7 +38,7 @@ def RunOnce(test_name, log, timeout_secs):
     return child.expect(EXPECT_LIST)
   except pexpect.EOF:
     child.close()
-    raise
+    return RESULT_ID_FAIL
   finally:
     if child.isalive():
       child.kill(signal.SIGTERM)
