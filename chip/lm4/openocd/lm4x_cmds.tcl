@@ -35,7 +35,6 @@ proc flash_rambi { } {
 	flash_lm4 ../../../build/rambi/ec.bin 0
 }
 
-# 128KB images
 proc flash_samus { } {
 	flash_lm4 ../../../build/samus/ec.bin 0
 }
@@ -46,6 +45,14 @@ proc flash_samus_ro { } {
 
 proc flash_samus_rw { } {
 	flash_lm4 ../../../build/samus/ec.RW.bin 131072
+}
+
+proc flash_squawks { } {
+	flash_lm4 ../../../build/squawks/ec.bin 0
+}
+
+proc flash_squawks_ro { } {
+	flash_lm4 ../../../build/squawks/ec.RO.flat 0
 }
 
 proc flash_falco { } {
