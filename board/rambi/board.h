@@ -106,7 +106,6 @@ enum gpio_signal {
 	 * from the new one when we deprecate the 1.5 boards.
 	 */
 	GPIO_PCH_SYS_PWROK,        /* EC thinks everything is up and ready */
-	GPIO_PCH_SYS_PWROK_NEW,    /* Duplicate of SYS_PWROK for 2.0 boards */
 	GPIO_PCH_WAKE_L,           /* Wake signal from EC to PCH */
 	GPIO_PP1350_EN,            /* Enable 1.35V supply */
 	GPIO_PP3300_DX_EN,         /* Enable power to lots of peripherals */
