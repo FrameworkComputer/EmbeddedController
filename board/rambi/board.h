@@ -122,12 +122,7 @@ enum gpio_signal {
 	GPIO_VCORE_EN,             /* Enable core power supplies */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 	GPIO_PCH_SCI_L,            /* Assert SCI to PCH */
-	/*
-	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
-	 * from the new one when we deprecate the 1.5 boards.
-	 */
 	GPIO_KBD_IRQ_L,            /* Negative edge triggered irq. */
-	GPIO_KBD_IRQ_NEW_L,        /* Duplicate of KBD_IRQ# for 2.0 boards */
 
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT

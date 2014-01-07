@@ -106,12 +106,7 @@ const struct gpio_info gpio_list[] = {
 	{"VCORE_EN",             LM4_GPIO_C, (1<<5), GPIO_OUT_LOW, NULL},
 	{"WLAN_OFF_L",           LM4_GPIO_J, (1<<4), GPIO_OUT_LOW, NULL},
 	{"PCH_SCI_L",            LM4_GPIO_M, (1<<1), GPIO_ODR_HIGH, NULL},
-	/*
-	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
-	 * from the new one when we deprecate the 1.5 boards.
-	 */
-	{"KBD_IRQ_L",            LM4_GPIO_M, (1<<4), GPIO_OUT_HIGH, NULL},
-	{"KBD_IRQ_NEW_L",        LM4_GPIO_M, (1<<3), GPIO_ODR_HIGH, NULL},
+	{"KBD_IRQ_L",            LM4_GPIO_M, (1<<3), GPIO_ODR_HIGH, NULL},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
