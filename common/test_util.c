@@ -9,11 +9,19 @@
 #include <stdlib.h>
 
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
 #include "util.h"
+
+struct test_util_tag {
+	uint8_t error_count;
+};
+
+#define TEST_UTIL_SYSJUMP_TAG 0x5455 /* "TU" */
+#define TEST_UTIL_SYSJUMP_VERSION 1
 
 int __test_error_count;
 
@@ -53,7 +61,8 @@ void register_test_end_hook(void)
 
 void test_reset(void)
 {
-	__test_error_count = 0;
+	if (!system_jumped_to_this_image())
+		__test_error_count = 0;
 }
 
 void test_pass(void)
@@ -151,6 +160,30 @@ uint32_t prng_no_seed(void)
 	static uint32_t seed = 0x1234abcd;
 	return seed = prng(seed);
 }
+
+static void restore_state(void)
+{
+	const struct test_util_tag *tag;
+	int version, size;
+
+	tag = (const struct test_util_tag *)system_get_jump_tag(
+		TEST_UTIL_SYSJUMP_TAG, &version, &size);
+	if (tag && version == TEST_UTIL_SYSJUMP_VERSION &&
+	    size == sizeof(*tag))
+		__test_error_count = tag->error_count;
+	else
+		__test_error_count = 0;
+}
+DECLARE_HOOK(HOOK_INIT, restore_state, HOOK_PRIO_DEFAULT);
+
+static void preserve_state(void)
+{
+	struct test_util_tag tag;
+	tag.error_count = __test_error_count;
+	system_add_jump_tag(TEST_UTIL_SYSJUMP_TAG, TEST_UTIL_SYSJUMP_VERSION,
+			    sizeof(tag), &tag);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, preserve_state, HOOK_PRIO_DEFAULT);
 
 static int command_run_test(int argc, char **argv)
 {
