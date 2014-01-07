@@ -174,7 +174,7 @@ enum x86_signal {
 	X86_SLP_ME_DEASSERTED,
 
 	/* Number of X86 signals */
-	X86_SIGNAL_COUNT
+	POWER_SIGNAL_COUNT
 };
 
 enum temp_sensor_id {

@@ -168,7 +168,7 @@ enum x86_signal {
 	X86_SUSWARN_DEASSERTED,
 
 	/* Number of X86 signals */
-	X86_SIGNAL_COUNT
+	POWER_SIGNAL_COUNT
 };
 
 enum adc_channel {

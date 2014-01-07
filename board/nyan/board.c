@@ -14,6 +14,7 @@
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
 #include "power_button.h"
+#include "power.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
@@ -30,9 +31,11 @@ const struct gpio_info gpio_list[] = {
 	/* Inputs with interrupt handlers are first for efficiency */
 	{"POWER_BUTTON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH,
 	 power_button_interrupt},
-	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH, power_interrupt},
+	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_BOTH,
+	 power_signal_interrupt},
 	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
-	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_KB_INPUT, power_interrupt},
+	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_KB_INPUT,
+	 power_signal_interrupt},
 	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
 	 spi_event},
 	{"AC_PRESENT",  GPIO_A, (1<<0),  GPIO_INT_BOTH, extpower_interrupt},

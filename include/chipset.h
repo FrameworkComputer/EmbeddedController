@@ -76,7 +76,7 @@ void chipset_force_shutdown(void);
 void chipset_reset(int cold_reset);
 
 /**
- * Interrupt handler for power GPIO inputs.
+ * Interrupt handler to power GPIO inputs.
  */
 void power_interrupt(enum gpio_signal signal);
 

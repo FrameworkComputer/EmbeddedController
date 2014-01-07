@@ -8,7 +8,6 @@
 #include "adc_chip.h"
 #include "backlight.h"
 #include "chipset.h"
-#include "power.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp006.h"
 #include "extpower.h"
@@ -18,6 +17,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "peci.h"
+#include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -47,35 +47,35 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_BKLTEN",           LM4_GPIO_J, (1<<3), GPIO_INT_BOTH,
 	 backlight_interrupt},
 	{"PCH_SLP_A_L",          LM4_GPIO_G, (1<<5), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_ME_CSW_DEV_L", LM4_GPIO_G, (1<<4), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_S3_L",         LM4_GPIO_J, (1<<0), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_S4_L",         LM4_GPIO_J, (1<<1), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_S5_L",         LM4_GPIO_J, (1<<2), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_SUS_L",        LM4_GPIO_G, (1<<3), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SUSWARN_L",        LM4_GPIO_G, (1<<2), GPIO_INT_BOTH,
 	 power_interrupt},
 	{"PGOOD_1_5V_DDR",       LM4_GPIO_K, (1<<0), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_1_5V_PCH",       LM4_GPIO_K, (1<<1), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_1_8VS",          LM4_GPIO_K, (1<<3), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_5VALW",          LM4_GPIO_H, (1<<0), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_CPU_CORE",       LM4_GPIO_M, (1<<3), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_VCCP",           LM4_GPIO_K, (1<<2), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_VCCSA",          LM4_GPIO_H, (1<<1), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PGOOD_VGFX_CORE",      LM4_GPIO_D, (1<<2), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"RECOVERY_L",           LM4_GPIO_H, (1<<7), GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
@@ -146,8 +146,8 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
-/* x86 signal list.  Must match order of enum x86_signal. */
-const struct x86_signal_info x86_signal_list[] = {
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
 	{GPIO_PGOOD_5VALW,		1, "PGOOD_5VALW"},
 	{GPIO_PGOOD_1_5V_DDR,		1, "PGOOD_1_5V_DDR"},
 	{GPIO_PGOOD_1_5V_PCH,		1, "PGOOD_1_5V_PCH"},
@@ -163,7 +163,7 @@ const struct x86_signal_info x86_signal_list[] = {
 	{GPIO_PCH_SLP_SUS_L,		1, "SLP_SUS#_DEASSERTED"},
 	{GPIO_PCH_SLP_ME_CSW_DEV_L,	1, "SLP_ME#_DEASSERTED"},
 };
-BUILD_ASSERT(ARRAY_SIZE(x86_signal_list) == X86_SIGNAL_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {

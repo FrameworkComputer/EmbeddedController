@@ -7,7 +7,6 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "backlight.h"
-#include "power.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -18,6 +17,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "peci.h"
+#include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -41,20 +41,20 @@ const struct gpio_info gpio_list[] = {
 	 extpower_interrupt},
 	{"PCH_SLP_S3_L",         LM4_GPIO_G, (1<<7), GPIO_INT_BOTH_DSLEEP |
 							GPIO_PULL_UP,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PCH_SLP_S4_L",         LM4_GPIO_H, (1<<1), GPIO_INT_BOTH_DSLEEP |
 							GPIO_PULL_UP,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PP1050_PGOOD",         LM4_GPIO_H, (1<<4), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PP3300_PCH_PGOOD",     LM4_GPIO_C, (1<<4), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"PP5000_PGOOD",         LM4_GPIO_N, (1<<0), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"S5_PGOOD",             LM4_GPIO_G, (1<<0), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"VCORE_PGOOD",          LM4_GPIO_C, (1<<6), GPIO_INT_BOTH,
-	 x86_interrupt},
+	 power_signal_interrupt},
 	{"WP_L",                 LM4_GPIO_A, (1<<4), GPIO_INT_BOTH,
 	 switch_interrupt},
 	{"JTAG_TCK",             LM4_GPIO_C, (1<<0), GPIO_DEFAULT,
@@ -124,8 +124,8 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 
-/* x86 signal list.  Must match order of enum x86_signal. */
-const struct x86_signal_info x86_signal_list[] = {
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
 	{GPIO_PP1050_PGOOD,      1, "PGOOD_PP1050"},
 	{GPIO_PP3300_PCH_PGOOD,  1, "PGOOD_PP3300_PCH"},
 	{GPIO_PP5000_PGOOD,      1, "PGOOD_PP5000"},
@@ -138,7 +138,7 @@ const struct x86_signal_info x86_signal_list[] = {
 	{GPIO_PCH_SUS_STAT_L,    0, "SUS_STAT#_ASSERTED"},
 	{GPIO_PCH_SUSPWRDNACK,   1, "SUSPWRDNACK_ASSERTED"},
 };
-BUILD_ASSERT(ARRAY_SIZE(x86_signal_list) == X86_SIGNAL_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {

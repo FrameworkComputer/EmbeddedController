@@ -135,8 +135,8 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
-/* x86 signal definitions */
-enum x86_signal {
+/* power signal definitions */
+enum power_signal {
 	X86_PGOOD_PP5000 = 0,
 	X86_PGOOD_PP1350,
 	X86_PGOOD_PP1050,
@@ -147,7 +147,7 @@ enum x86_signal {
 	X86_SLP_SUS_DEASSERTED,
 
 	/* Number of X86 signals */
-	X86_SIGNAL_COUNT
+	POWER_SIGNAL_COUNT
 };
 
 /* Charger module */

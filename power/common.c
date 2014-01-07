@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-/* Common functionality across x86 chipsets */
+/* Common functionality across all chipsets */
 
 #include "chipset.h"
-#include "power.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "power.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -47,7 +47,7 @@ static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
 static uint32_t in_want;      /* Input signal state we're waiting for */
 static uint32_t in_debug;     /* Signal values which print debug output */
 
-static enum x86_state state = X86_G3;  /* Current state */
+static enum power_state state = POWER_G3;  /* Current state */
 static int want_g3_exit;      /* Should we exit the G3 state? */
 static uint64_t last_shutdown_time; /* When did we enter G3? */
 
@@ -57,40 +57,40 @@ static uint32_t hibernate_delay = 3600;
 /**
  * Update input signals mask
  */
-static void x86_update_signals(void)
+static void power_update_signals(void)
 {
 	uint32_t inew = 0;
-	const struct x86_signal_info *s = x86_signal_list;
+	const struct power_signal_info *s = power_signal_list;
 	int i;
 
-	for (i = 0; i < X86_SIGNAL_COUNT; i++, s++) {
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
 		if (gpio_get_level(s->gpio) == s->level)
 			inew |= 1 << i;
 	}
 
 	if ((in_signals & in_debug) != (inew & in_debug))
-		CPRINTF("[%T x86 in 0x%04x]\n", inew);
+		CPRINTF("[%T power in 0x%04x]\n", inew);
 
 	in_signals = inew;
 }
 
-uint32_t x86_get_signals(void)
+uint32_t power_get_signals(void)
 {
 	return in_signals;
 }
 
-int x86_has_signals(uint32_t want)
+int power_has_signals(uint32_t want)
 {
 	if ((in_signals & want) == want)
 		return 1;
 
-	CPRINTF("[%T x86 power lost input; wanted 0x%04x, got 0x%04x]\n",
+	CPRINTF("[%T power lost input; wanted 0x%04x, got 0x%04x]\n",
 		want, in_signals & want);
 
 	return 0;
 }
 
-int x86_wait_signals(uint32_t want)
+int power_wait_signals(uint32_t want)
 {
 	in_want = want;
 	if (!want)
@@ -98,8 +98,8 @@ int x86_wait_signals(uint32_t want)
 
 	while ((in_signals & in_want) != in_want) {
 		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
-			x86_update_signals();
-			CPRINTF("[%T x86 power timeout on input; "
+			power_update_signals();
+			CPRINTF("[%T power timeout on input; "
 				"wanted 0x%04x, got 0x%04x]\n",
 				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
@@ -115,32 +115,32 @@ int x86_wait_signals(uint32_t want)
 }
 
 /**
- * Set the low-level x86 chipset state.
+ * Set the low-level power chipset state.
  *
  * @param new_state	New chipset state.
  */
-void x86_set_state(enum x86_state new_state)
+void power_set_state(enum power_state new_state)
 {
 	/* Record the time we go into G3 */
-	if (new_state == X86_G3)
+	if (new_state == POWER_G3)
 		last_shutdown_time = get_time().val;
 
 	state = new_state;
 }
 
 /**
- * Common handler for x86 steady states
+ * Common handler for steady states
  *
- * @param state		Current x86 state
- * @return Updated x86 state
+ * @param state		Current power state
+ * @return Updated power state
  */
-static enum x86_state x86_common_state(enum x86_state state)
+static enum power_state power_common_state(enum power_state state)
 {
 	switch (state) {
-	case X86_G3:
+	case POWER_G3:
 		if (want_g3_exit) {
 			want_g3_exit = 0;
-			return X86_G3S5;
+			return POWER_G3S5;
 		}
 
 		in_want = 0;
@@ -155,7 +155,7 @@ static enum x86_state x86_common_state(enum x86_state state)
 				 * Time's up.  Hibernate until wake pin
 				 * asserted.
 				 */
-				CPRINTF("[%T x86 hibernating]\n");
+				CPRINTF("[%T hibernating]\n");
 				system_hibernate(0, 0);
 			} else {
 				uint64_t wait = target_time - time_now;
@@ -168,26 +168,26 @@ static enum x86_state x86_common_state(enum x86_state state)
 		}
 		break;
 
-	case X86_S5:
+	case POWER_S5:
 		/* Wait for inactivity timeout */
-		x86_wait_signals(0);
+		power_wait_signals(0);
 		if (task_wait_event(S5_INACTIVITY_TIMEOUT) ==
 		    TASK_EVENT_TIMER) {
 			/* Drop to G3; wake not requested yet */
 			want_g3_exit = 0;
-			return X86_S5G3;
+			return POWER_S5G3;
 		}
 		break;
 
-	case X86_S3:
+	case POWER_S3:
 		/* Wait for a message */
-		x86_wait_signals(0);
+		power_wait_signals(0);
 		task_wait_event(-1);
 		break;
 
-	case X86_S0:
+	case POWER_S0:
 		/* Wait for a message */
-		x86_wait_signals(0);
+		power_wait_signals(0);
 		task_wait_event(-1);
 		break;
 
@@ -212,32 +212,32 @@ int chipset_in_state(int state_mask)
 	 * return non-zero.
 	 */
 	switch (state) {
-	case X86_G3:
+	case POWER_G3:
 		need_mask = CHIPSET_STATE_HARD_OFF;
 		break;
-	case X86_G3S5:
-	case X86_S5G3:
+	case POWER_G3S5:
+	case POWER_S5G3:
 		/*
 		 * In between hard and soft off states.  Match only if caller
 		 * will accept both.
 		 */
 		need_mask = CHIPSET_STATE_HARD_OFF | CHIPSET_STATE_SOFT_OFF;
 		break;
-	case X86_S5:
+	case POWER_S5:
 		need_mask = CHIPSET_STATE_SOFT_OFF;
 		break;
-	case X86_S5S3:
-	case X86_S3S5:
+	case POWER_S5S3:
+	case POWER_S3S5:
 		need_mask = CHIPSET_STATE_SOFT_OFF | CHIPSET_STATE_SUSPEND;
 		break;
-	case X86_S3:
+	case POWER_S3:
 		need_mask = CHIPSET_STATE_SUSPEND;
 		break;
-	case X86_S3S0:
-	case X86_S0S3:
+	case POWER_S3S0:
+	case POWER_S0S3:
 		need_mask = CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON;
 		break;
-	case X86_S0:
+	case POWER_S0:
 		need_mask = CHIPSET_STATE_ON;
 		break;
 	}
@@ -249,7 +249,7 @@ int chipset_in_state(int state_mask)
 void chipset_exit_hard_off(void)
 {
 	/* If not in the hard-off state nor headed there, nothing to do */
-	if (state != X86_G3 && state != X86_S5G3)
+	if (state != POWER_G3 && state != POWER_S5G3)
 		return;
 
 	/* Set a flag to leave G3, then wake the task */
@@ -264,77 +264,77 @@ void chipset_exit_hard_off(void)
 
 void chipset_task(void)
 {
-	enum x86_state new_state;
+	enum power_state new_state;
 
 	while (1) {
-		CPRINTF("[%T x86 power state %d = %s, in 0x%04x]\n",
+		CPRINTF("[%T power state %d = %s, in 0x%04x]\n",
 			state, state_names[state], in_signals);
 
 		/* Always let the specific chipset handle the state first */
-		new_state = x86_handle_state(state);
+		new_state = power_handle_state(state);
 
 		/*
 		 * If the state hasn't changed, run common steady-state
 		 * handler.
 		 */
 		if (new_state == state)
-			new_state = x86_common_state(state);
+			new_state = power_common_state(state);
 
 		/* Handle state changes */
 		if (new_state != state)
-			x86_set_state(new_state);
+			power_set_state(new_state);
 	}
 }
 
 /*****************************************************************************/
 /* Hooks */
 
-static void x86_common_init(void)
+static void power_common_init(void)
 {
-	const struct x86_signal_info *s = x86_signal_list;
+	const struct power_signal_info *s = power_signal_list;
 	int i;
 
 	/* Update input state */
-	x86_update_signals();
+	power_update_signals();
 
 	/* Call chipset-specific init to set initial state */
-	x86_set_state(x86_chipset_init());
+	power_set_state(power_chipset_init());
 
 	/* Enable interrupts for input signals */
-	for (i = 0; i < X86_SIGNAL_COUNT; i++, s++)
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
 		gpio_enable_interrupt(s->gpio);
 }
-DECLARE_HOOK(HOOK_INIT, x86_common_init, HOOK_PRIO_INIT_CHIPSET);
+DECLARE_HOOK(HOOK_INIT, power_common_init, HOOK_PRIO_INIT_CHIPSET);
 
-static void x86_lid_change(void)
+static void power_lid_change(void)
 {
 	/* Wake up the task to update power state */
 	task_wake(TASK_ID_CHIPSET);
 }
-DECLARE_HOOK(HOOK_LID_CHANGE, x86_lid_change, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_LID_CHANGE, power_lid_change, HOOK_PRIO_DEFAULT);
 
-static void x86_ac_change(void)
+static void power_ac_change(void)
 {
 	if (extpower_is_present()) {
-		CPRINTF("[%T x86 AC on]\n");
+		CPRINTF("[%T AC on]\n");
 	} else {
-		CPRINTF("[%T x86 AC off]\n");
+		CPRINTF("[%T AC off]\n");
 
-		if (state == X86_G3) {
+		if (state == POWER_G3) {
 			last_shutdown_time = get_time().val;
 			task_wake(TASK_ID_CHIPSET);
 		}
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, x86_ac_change, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Interrupts */
 
-void x86_interrupt(enum gpio_signal signal)
+void power_signal_interrupt(enum gpio_signal signal)
 {
 	/* Shadow signals and compare with our desired signal state. */
-	x86_update_signals();
+	power_update_signals();
 
 	/* Wake up the task */
 	task_wake(TASK_ID_CHIPSET);
@@ -346,22 +346,22 @@ void x86_interrupt(enum gpio_signal signal)
 static int command_powerinfo(int argc, char **argv)
 {
 	/*
-	 * Print x86 power state in same format as state machine.  This is
+	 * Print power state in same format as state machine.  This is
 	 * used by FAFT tests, so must match exactly.
 	 */
-	ccprintf("[%T x86 power state %d = %s, in 0x%04x]\n",
+	ccprintf("[%T power state %d = %s, in 0x%04x]\n",
 		 state, state_names[state], in_signals);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 			NULL,
-			"Show current x86 power state",
+			"Show current power state",
 			NULL);
 
-static int command_x86indebug(int argc, char **argv)
+static int command_powerindebug(int argc, char **argv)
 {
-	const struct x86_signal_info *s = x86_signal_list;
+	const struct power_signal_info *s = power_signal_list;
 	int i;
 	char *e;
 
@@ -375,13 +375,13 @@ static int command_x86indebug(int argc, char **argv)
 	}
 
 	/* Print the mask */
-	ccprintf("x86 in:     0x%04x\n", in_signals);
+	ccprintf("power in:   0x%04x\n", in_signals);
 	ccprintf("debug mask: 0x%04x\n", in_debug);
 
 	/* Print the decode */
 
 	ccprintf("bit meanings:\n");
-	for (i = 0; i < X86_SIGNAL_COUNT; i++, s++) {
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
 		int mask = 1 << i;
 		ccprintf("  0x%04x %d %s\n",
 			 mask, in_signals & mask ? 1 : 0, s->name);
@@ -389,9 +389,9 @@ static int command_x86indebug(int argc, char **argv)
 
 	return EC_SUCCESS;
 };
-DECLARE_CONSOLE_COMMAND(x86indebug, command_x86indebug,
+DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
 			"[mask]",
-			"Get/set x86 input debug mask",
+			"Get/set power input debug mask",
 			NULL);
 
 static int command_hibernation_delay(int argc, char **argv)
@@ -410,7 +410,7 @@ static int command_hibernation_delay(int argc, char **argv)
 
 	/* Print the current setting */
 	ccprintf("Hibernation delay: %d s\n", hibernate_delay);
-	if (state == X86_G3 && !extpower_is_present()) {
+	if (state == POWER_G3 && !extpower_is_present()) {
 		ccprintf("Time G3: %d s\n", time_g3);
 		ccprintf("Time left: %d s\n", hibernate_delay - time_g3);
 	}

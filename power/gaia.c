@@ -283,7 +283,7 @@ static void gaia_suspend_deferred(void)
 }
 DECLARE_DEFERRED(gaia_suspend_deferred);
 
-void power_interrupt(enum gpio_signal signal)
+void power_signal_interrupt(enum gpio_signal signal)
 {
 	if (signal == GPIO_SUSPEND_L) {
 		/* Handle suspend events in the hook task */

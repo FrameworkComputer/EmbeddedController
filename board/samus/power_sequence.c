@@ -6,13 +6,13 @@
 /* X86 chipset power control module for Chrome EC */
 
 #include "chipset.h"
-#include "power.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
+#include "power.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -25,15 +25,15 @@
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
-#define IN_PGOOD_PP1050           X86_SIGNAL_MASK(X86_PGOOD_PP1050)
-#define IN_PGOOD_PP1200           X86_SIGNAL_MASK(X86_PGOOD_PP1200)
-#define IN_PGOOD_PP1800           X86_SIGNAL_MASK(X86_PGOOD_PP1800)
-#define IN_PGOOD_VCORE            X86_SIGNAL_MASK(X86_PGOOD_VCORE)
+#define IN_PGOOD_PP1050           POWER_SIGNAL_MASK(X86_PGOOD_PP1050)
+#define IN_PGOOD_PP1200           POWER_SIGNAL_MASK(X86_PGOOD_PP1200)
+#define IN_PGOOD_PP1800           POWER_SIGNAL_MASK(X86_PGOOD_PP1800)
+#define IN_PGOOD_VCORE            POWER_SIGNAL_MASK(X86_PGOOD_VCORE)
 
-#define IN_PCH_SLP_S0_DEASSERTED  X86_SIGNAL_MASK(X86_SLP_S0_DEASSERTED)
-#define IN_PCH_SLP_S3_DEASSERTED  X86_SIGNAL_MASK(X86_SLP_S3_DEASSERTED)
-#define IN_PCH_SLP_S5_DEASSERTED  X86_SIGNAL_MASK(X86_SLP_S5_DEASSERTED)
-#define IN_PCH_SLP_SUS_DEASSERTED X86_SIGNAL_MASK(X86_SLP_SUS_DEASSERTED)
+#define IN_PCH_SLP_S0_DEASSERTED  POWER_SIGNAL_MASK(X86_SLP_S0_DEASSERTED)
+#define IN_PCH_SLP_S3_DEASSERTED  POWER_SIGNAL_MASK(X86_SLP_S3_DEASSERTED)
+#define IN_PCH_SLP_S5_DEASSERTED  POWER_SIGNAL_MASK(X86_SLP_S5_DEASSERTED)
+#define IN_PCH_SLP_SUS_DEASSERTED POWER_SIGNAL_MASK(X86_SLP_SUS_DEASSERTED)
 
 
 /* All non-core power rails */
@@ -66,7 +66,7 @@ void chipset_force_shutdown(void)
 	CPRINTF("[%T %s()]\n", __func__);
 
 	/*
-	 * Force x86 off. This condition will reset once the state machine
+	 * Force off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
@@ -115,7 +115,7 @@ void chipset_throttle_cpu(int throttle)
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
-enum x86_state x86_chipset_init(void)
+enum power_state power_chipset_init(void)
 {
 	/*
 	 * If we're switching between images without rebooting, see if the x86
@@ -123,12 +123,12 @@ enum x86_state x86_chipset_init(void)
 	 * through G3.
 	 */
 	if (system_jumped_to_this_image()) {
-		if ((x86_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
-			CPRINTF("[%T x86 already in S0]\n");
-			return X86_S0;
+		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
+			CPRINTF("[%T already in S0]\n");
+			return POWER_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPRINTF("[%T x86 forcing G3]\n");
+			CPRINTF("[%T forcing G3]\n");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_SYS_PWROK, 0);
 			gpio_set_level(GPIO_PP1050_EN, 0);
@@ -143,22 +143,22 @@ enum x86_state x86_chipset_init(void)
 		}
 	}
 
-	return X86_G3;
+	return POWER_G3;
 }
 
-enum x86_state x86_handle_state(enum x86_state state)
+enum power_state power_handle_state(enum power_state state)
 {
 	switch (state) {
-	case X86_G3:
+	case POWER_G3:
 		break;
 
-	case X86_S5:
+	case POWER_S5:
 		if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 1)
-			return X86_S5S3; /* Power up to next state */
+			return POWER_S5S3; /* Power up to next state */
 
 		break;
 
-	case X86_S3:
+	case POWER_S3:
 		/*
 		 * If lid is closed; hold touchscreen in reset to cut
 		 * power usage.  If lid is open, take touchscreen out
@@ -167,31 +167,31 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, lid_is_open());
 
 		/* Check for state transitions */
-		if (!x86_has_signals(IN_PGOOD_S3)) {
+		if (!power_has_signals(IN_PGOOD_S3)) {
 			/* Required rail went away */
 			chipset_force_shutdown();
-			return X86_S3S5;
+			return POWER_S3S5;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
 			/* Power up to next state */
-			return X86_S3S0;
+			return POWER_S3S0;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 0) {
 			/* Power down to next state */
-			return X86_S3S5;
+			return POWER_S3S5;
 		}
 		break;
 
-	case X86_S0:
-		if (!x86_has_signals(IN_PGOOD_S0)) {
+	case POWER_S0:
+		if (!power_has_signals(IN_PGOOD_S0)) {
 			/* Required rail went away */
 			chipset_force_shutdown();
-			return X86_S0S3;
+			return POWER_S0S3;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
 			/* Power down to next state */
-			return X86_S0S3;
+			return POWER_S0S3;
 		}
 		break;
 
-	case X86_G3S5:
+	case POWER_G3S5:
 		/* Enable 3.3V DSW */
 		gpio_set_level(GPIO_PP3300_DSW_EN, 1);
 
@@ -207,11 +207,11 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Wait for PP1050/PP1200 PGOOD to go LOW to
 		 * indicate that PP5000 is stable */
-		while ((x86_get_signals() & IN_PGOOD_PP5000) != 0) {
+		while ((power_get_signals() & IN_PGOOD_PP5000) != 0) {
 			if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 				CPRINTF("[%T timeout waiting for PP5000\n");
 				chipset_force_shutdown();
-				return X86_G3;
+				return POWER_G3;
 			}
 		}
 
@@ -225,10 +225,10 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_PP1050_EN, 1);
 
 		/* Wait for 1.05V to come up and CPU to notice */
-		if (x86_wait_signals(IN_PGOOD_PP1050 |
+		if (power_wait_signals(IN_PGOOD_PP1050 |
 				     IN_PCH_SLP_SUS_DEASSERTED)) {
 			chipset_force_shutdown();
-			return X86_G3;
+			return POWER_G3;
 		}
 
 		/* Wait 5ms for SUSCLK to stabilize */
@@ -236,15 +236,15 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Call hook to indicate out of G3 state */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
-		return X86_S5;
+		return POWER_S5;
 
-	case X86_S5S3:
+	case POWER_S5S3:
 		/* Turn on power to RAM */
 		gpio_set_level(GPIO_PP1800_EN, 1);
 		gpio_set_level(GPIO_PP1200_EN, 1);
-		if (x86_wait_signals(IN_PGOOD_S3)) {
+		if (power_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
-			return X86_S5;
+			return POWER_S5;
 		}
 
 		/*
@@ -265,9 +265,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
-		return X86_S3;
+		return POWER_S3;
 
-	case X86_S3S0:
+	case POWER_S3S0:
 		/* Wait 20ms before allowing VCCST_PGOOD to rise. */
 		msleep(20);
 
@@ -282,10 +282,10 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 1);
 
 		/* Wait for non-core power rails good */
-		if (x86_wait_signals(IN_PGOOD_S0)) {
+		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
 			wireless_enable(0);
-			return X86_S3;
+			return POWER_S3;
 		}
 
 		/* Call hooks now that rails are up */
@@ -303,9 +303,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		/* Set PCH_PWROK */
 		gpio_set_level(GPIO_PCH_PWROK, 1);
 		gpio_set_level(GPIO_SYS_PWROK, 1);
-		return X86_S0;
+		return POWER_S0;
 
-	case X86_S0S3:
+	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
@@ -326,9 +326,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		 */
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
-		return X86_S3;
+		return POWER_S3;
 
-	case X86_S3S5:
+	case POWER_S3S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
@@ -356,9 +356,9 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, 0);
 
-		return pause_in_s5 ? X86_S5 : X86_S5G3;
+		return pause_in_s5 ? POWER_S5 : POWER_S5G3;
 
-	case X86_S5G3:
+	case POWER_S5G3:
 		/* Deassert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 
@@ -368,7 +368,7 @@ enum x86_state x86_handle_state(enum x86_state state)
 		gpio_set_level(GPIO_PP5000_EN, 0);
 		/* Disable 3.3V DSW */
 		gpio_set_level(GPIO_PP3300_DSW_EN, 0);
-		return X86_G3;
+		return POWER_G3;
 	}
 
 	return state;

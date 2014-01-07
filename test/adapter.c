@@ -6,6 +6,7 @@
  */
 
 #include "adc.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
@@ -15,7 +16,6 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
-#include "chipset.h"
 #include "power.h"
 
 /* Normally private stuff from the modules we're going to test */

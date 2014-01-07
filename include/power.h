@@ -3,96 +3,97 @@
  * found in the LICENSE file.
  */
 
-/* Common interface for x86 chipsets */
+/* Common power interface for all chipsets */
 
-#ifndef __CROS_EC_CHIPSET_X86_COMMON_H
-#define __CROS_EC_CHIPSET_X86_COMMON_H
+#ifndef __CROS_EC_POWER_COMMON_H
+#define __CROS_EC_POWER_COMMON_H
 
 #include "common.h"
 #include "gpio.h"
 
-enum x86_state {
+enum power_state {
 	/* Steady states */
-	X86_G3 = 0,	/*
+	POWER_G3 = 0,	/*
 			 * System is off (not technically all the way into G3,
 			 * which means totally unpowered...)
 			 */
-	X86_S5,		/* System is soft-off */
-	X86_S3,		/* Suspend; RAM on, processor is asleep */
-	X86_S0,		/* System is on */
+	POWER_S5,		/* System is soft-off */
+	POWER_S3,		/* Suspend; RAM on, processor is asleep */
+	POWER_S0,		/* System is on */
 
 	/* Transitions */
-	X86_G3S5,	/* G3 -> S5 (at system init time) */
-	X86_S5S3,	/* S5 -> S3 */
-	X86_S3S0,	/* S3 -> S0 */
-	X86_S0S3,	/* S0 -> S3 */
-	X86_S3S5,	/* S3 -> S5 */
-	X86_S5G3,	/* S5 -> G3 */
+	POWER_G3S5,	/* G3 -> S5 (at system init time) */
+	POWER_S5S3,	/* S5 -> S3 */
+	POWER_S3S0,	/* S3 -> S0 */
+	POWER_S0S3,	/* S0 -> S3 */
+	POWER_S3S5,	/* S3 -> S5 */
+	POWER_S5G3,	/* S5 -> G3 */
 };
 
-/* Information on an x86 signal */
-struct x86_signal_info {
+/* Information on an power signal */
+struct power_signal_info {
 	enum gpio_signal gpio;	/* GPIO for signal */
 	int level;		/* GPIO level which sets signal bit */
 	const char *name;	/* Name of signal */
 };
 
 /*
- * Each board must provide its signal list and a corresponding enum x86_signal.
+ * Each board must provide its signal list and a corresponding enum
+ * power_signal.
  */
-extern const struct x86_signal_info x86_signal_list[];
+extern const struct power_signal_info power_signal_list[];
 
-/* Convert enum x86_signal to a mask for signal functions */
-#define X86_SIGNAL_MASK(signal) (1 << (signal))
+/* Convert enum power_signal to a mask for signal functions */
+#define POWER_SIGNAL_MASK(signal) (1 << (signal))
 
 /**
- * Return current input signal state (one or more X86_SIGNAL_MASK()s).
+ * Return current input signal state (one or more POWER_SIGNAL_MASK()s).
  */
-uint32_t x86_get_signals(void);
+uint32_t power_get_signals(void);
 
 /**
  * Check for required inputs
  *
  * @param want		Mask of signals which must be present (one or more
- *			X86_SIGNAL_MASK()s).
+ *			POWER_SIGNAL_MASK()s).
  *
  * @return Non-zero if all present; zero if a required signal is missing.
  */
-int x86_has_signals(uint32_t want);
+int power_has_signals(uint32_t want);
 
 /**
- * Wait for x86 input signals to be present
+ * Wait for power input signals to be present
  *
  * @param want		Mask of signals which must be present (one or more
- *			X86_SIGNAL_MASK()s).  If want=0, stops waiting for
+ *			POWER_SIGNAL_MASK()s).  If want=0, stops waiting for
  *			signals.
  * @return EC_SUCCESS when all inputs are present, or ERROR_TIMEOUT if timeout
  * before reaching the desired state.
  */
-int x86_wait_signals(uint32_t want);
+int power_wait_signals(uint32_t want);
 
 /**
  * Chipset-specific initialization
  *
- * @return The state the chipset should start in.  Usually X86_G3, but may
- * be X86_G0 if the chipset was already on and we've jumped to this image.
+ * @return The state the chipset should start in.  Usually POWER_G3, but may
+ * be POWER_G0 if the chipset was already on and we've jumped to this image.
  */
-enum x86_state x86_chipset_init(void);
+enum power_state power_chipset_init(void);
 
 /**
  * Chipset-specific state handler
  *
- * @return The updated state for the x86 chipset.
+ * @return The updated state for the chipset.
  */
-enum x86_state x86_handle_state(enum x86_state state);
+enum power_state power_handle_state(enum power_state state);
 
 /**
- * Interrupt handler for x86 chipset GPIOs.
+ * Interrupt handler for chipset GPIOs.
  */
 #ifdef CONFIG_CHIPSET_X86
-void x86_interrupt(enum gpio_signal signal);
+void power_signal_interrupt(enum gpio_signal signal);
 #else
-#define x86_interrupt NULL
+#define power_signal_interrupt NULL
 #endif
 
-#endif  /* __CROS_EC_CHIPSET_X86_COMMON_H */
+#endif  /* __CROS_EC_POWER_COMMON_H */
