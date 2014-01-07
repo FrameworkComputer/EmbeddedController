@@ -197,6 +197,7 @@ static int test_scancode_set2(void)
 
 static int test_power_button(void)
 {
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 	set_scancode(1);
 	test_chipset_on();
 
@@ -257,6 +258,7 @@ static int test_sysjump_cont(void)
 void run_test(void)
 {
 	test_reset();
+	wait_for_task_started();
 
 	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
 		RUN_TEST(test_single_key_press);
