@@ -24,10 +24,6 @@ static int init_done;
 static pthread_t input_thread;
 
 #define INPUT_BUFFER_SIZE 16
-/*
- * TODO(crosbug.com/p/23804): Guard these data with mutex lock when we have
- * interrupt support.
- */
 static int char_available;
 static char cached_char_buf[INPUT_BUFFER_SIZE];
 static struct queue cached_char = {
@@ -130,6 +126,7 @@ void uart_write_char(char c)
 int uart_read_char(void)
 {
 	char ret;
+	ASSERT(in_interrupt_context());
 	queue_remove_unit(&cached_char, &ret);
 	--char_available;
 	return ret;
