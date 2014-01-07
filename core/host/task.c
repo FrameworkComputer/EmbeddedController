@@ -5,19 +5,42 @@
 
 /* Task scheduling / events module for Chrome EC operating system */
 
+#include <execinfo.h>
+#include <malloc.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
+#include "host_test.h"
 #include "task.h"
 #include "task_id.h"
 #include "test_util.h"
 #include "timer.h"
+
+#define SIGNAL_INTERRUPT SIGUSR1
+
+#define SIGNAL_TRACE_DUMP SIGTERM
+#define MAX_TRACE 30
+/*
+ * When trace dump is requested from signal handler, skip:
+ *   _task_dump_trace_impl
+ *   _task_dump_trace_dispath
+ *   A function in libc
+ */
+#define SIGNAL_TRACE_OFFSET 3
+/*
+ * When trace dump is requested from task_dump_trace(), skip:
+ *   task_dump_trace
+ *   _task_dump_trace_impl
+ */
+#define DIRECT_TRACE_OFFSET 2
 
 struct emu_task_t {
 	pthread_t thread;
@@ -37,6 +60,7 @@ static pthread_cond_t scheduler_cond;
 static pthread_mutex_t run_lock;
 static task_id_t running_task_id;
 static int task_started;
+static pthread_t main_thread;
 
 static sem_t interrupt_sem;
 static pthread_mutex_t interrupt_lock;
@@ -105,7 +129,7 @@ void interrupt_enable(void)
 	interrupt_disabled = 0;
 }
 
-void _task_execute_isr(int sig)
+static void _task_execute_isr(int sig)
 {
 	in_interrupt = 1;
 	pending_isr();
@@ -113,10 +137,75 @@ void _task_execute_isr(int sig)
 	in_interrupt = 0;
 }
 
-void task_register_interrupt(void)
+static void __attribute__((noinline)) _task_dump_trace_impl(int offset)
+{
+	void *trace[MAX_TRACE];
+	size_t sz;
+	char **messages;
+	char buf[256];
+	FILE *file;
+	int i, nb;
+
+	sz = backtrace(trace, MAX_TRACE);
+	messages = backtrace_symbols(trace + offset, sz - offset);
+
+	for (i = 0; i < sz - offset; ++i) {
+		fprintf(stderr, "#%-2d %s\n", i, messages[i]);
+		sprintf(buf, "addr2line %p -e %s",
+			trace[i + offset], __get_prog_name());
+		file = popen(buf, "r");
+		if (file) {
+			nb = fread(buf, 1, sizeof(buf) - 1, file);
+			buf[nb] = '\0';
+			fprintf(stderr, "    %s", buf);
+			pclose(file);
+		}
+	}
+	fflush(stderr);
+	free(messages);
+}
+
+void __attribute__((noinline)) task_dump_trace(void)
+{
+	_task_dump_trace_impl(DIRECT_TRACE_OFFSET);
+}
+
+static void __attribute__((noinline)) _task_dump_trace_dispatch(int sig)
+{
+	int need_dispatch = 1;
+
+	if (pthread_self() != main_thread) {
+		need_dispatch = 0;
+	} else if (!task_start_called()) {
+		fprintf(stderr, "Stack trace of main thread:\n");
+		need_dispatch = 0;
+	} else if (in_interrupt_context()) {
+		fprintf(stderr, "Stack trace of ISR:\n");
+	} else {
+		fprintf(stderr, "Stack trace of task %d (%s):\n",
+				running_task_id, task_names[running_task_id]);
+	}
+
+	if (need_dispatch) {
+		pthread_kill(tasks[running_task_id].thread, SIGNAL_TRACE_DUMP);
+	} else {
+		_task_dump_trace_impl(SIGNAL_TRACE_OFFSET);
+		udelay(100 * MSEC); /* Leave time for stderr to flush */
+		exit(1);
+	}
+}
+
+void task_register_tracedump(void)
+{
+	/* Trace dumper MUST be registered from main thread */
+	main_thread = pthread_self();
+	signal(SIGNAL_TRACE_DUMP, _task_dump_trace_dispatch);
+}
+
+static void task_register_interrupt(void)
 {
 	sem_init(&interrupt_sem, 0, 0);
-	signal(SIGUSR1, _task_execute_isr);
+	signal(SIGNAL_INTERRUPT, _task_execute_isr);
 }
 
 void task_trigger_test_interrupt(void (*isr)(void))
@@ -127,7 +216,7 @@ void task_trigger_test_interrupt(void (*isr)(void))
 
 	/* Suspend current task and excute ISR */
 	pending_isr = isr;
-	pthread_kill(tasks[running_task_id].thread, SIGUSR1);
+	pthread_kill(tasks[running_task_id].thread, SIGNAL_INTERRUPT);
 
 	/* Wait for ISR to complete */
 	sem_wait(&interrupt_sem);

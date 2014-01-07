@@ -30,6 +30,8 @@ int main(int argc, char **argv)
 {
 	__prog_name = argv[0];
 
+	task_register_tracedump();
+
 	register_test_end_hook();
 
 	flash_pre_init();

@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "panic.h"
+#include "test_util.h"
 #include "util.h"
 
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -15,7 +16,7 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 {
 	fprintf(stderr, "ASSERTION FAIL: %s:%d:%s - %s\n",
 		fname, linenum, func, msg);
-	fflush(stderr);
+	task_dump_trace();
 
 	puts("Fail!"); /* Inform test runner */
 	fflush(stdout);
