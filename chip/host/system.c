@@ -228,11 +228,6 @@ uint32_t system_get_scratchpad(void)
 		return 0;
 }
 
-uintptr_t system_usable_ram_end(void)
-{
-	return (uintptr_t)(__shared_mem_buf + SHARED_MEM_SIZE);
-}
-
 static void __jump_resetvec(void)
 {
 	save_time(get_time());
