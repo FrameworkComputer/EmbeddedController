@@ -36,6 +36,9 @@
  * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
+/* Specify type of accelerometers attached. */
+#undef CONFIG_ACCEL_KXCJ9
+
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
 
@@ -234,6 +237,7 @@
  * console.
  */
 
+#undef CONFIG_CMD_ACCELS
 #undef CONFIG_CMD_BATDEBUG
 #undef CONFIG_CMD_CLOCKGATES
 #undef CONFIG_CMD_COMXTEST
