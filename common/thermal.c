@@ -102,8 +102,10 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 		sensor_id, K_TO_C(temp), idx, enable ? "en" : "dis");
 
 	if (enable) {
+		/* Don't update threshold condition if already enabled */
+		if (dptf_threshold[sensor_id][idx].temp == -1)
+			cond_init(&dptf_threshold[sensor_id][idx].over, 0);
 		dptf_threshold[sensor_id][idx].temp = temp;
-		cond_init(&dptf_threshold[sensor_id][idx].over, 0);
 		atomic_clear(&dptf_seen, (1 << sensor_id));
 	} else {
 		dptf_threshold[sensor_id][idx].temp = -1;
