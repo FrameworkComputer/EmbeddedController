@@ -744,6 +744,11 @@
 #undef CONFIG_USB_SWITCH_TSU6721
 
 /*****************************************************************************/
+
+/* Support computing hash of code for verified boot */
+#undef CONFIG_VBOOT_HASH
+
+/*****************************************************************************/
 /* Watchdog config */
 
 /*

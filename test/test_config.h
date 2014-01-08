@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_TEST_CONFIG_H
 #define __CROS_EC_TEST_CONFIG_H
 
+/* Don't compile vboot hash support unless specifically testing for it */
+#undef CONFIG_VBOOT_HASH
+
 #ifdef TEST_ADAPTER
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_EXTPOWER_FALCO

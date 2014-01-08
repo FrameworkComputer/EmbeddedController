@@ -22,8 +22,9 @@
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_POWERINFO
 #define CONFIG_PMU_TPS65090
-#define CONFIG_SPI
 #define CONFIG_PWM
+#define CONFIG_SPI
+#define CONFIG_VBOOT_HASH
 
 #ifndef __ASSEMBLER__
 

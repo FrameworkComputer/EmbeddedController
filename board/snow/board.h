@@ -30,6 +30,7 @@
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_TPS65090
 #define CONFIG_PWM
+#define CONFIG_VBOOT_HASH
 
 /* use STOP mode when we have nothing to do */
 #define CONFIG_LOW_POWER_IDLE

@@ -36,6 +36,9 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE 488
 
+/* Larger task stack size, for hook task */
+#define LARGER_TASK_STACK_SIZE 640
+
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL (500 * MSEC)
 

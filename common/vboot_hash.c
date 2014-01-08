@@ -28,7 +28,9 @@ struct vboot_hash_tag {
 
 #define VBOOT_HASH_SYSJUMP_TAG 0x5648 /* "VH" */
 #define VBOOT_HASH_SYSJUMP_VERSION 1
-#define CHUNK_SIZE 1024
+
+#define CHUNK_SIZE 1024       /* Bytes to hash per deferred call */
+#define WORK_INTERVAL_US 100  /* Delay between deferred calls */
 
 static uint32_t data_offset;
 static uint32_t data_size;
@@ -39,10 +41,65 @@ static int in_progress;
 
 static struct sha256_ctx ctx;
 
-/*
+/**
+ * Abort hash currently in progress, and invalidate any completed hash.
+ */
+static void vboot_hash_abort(void)
+{
+	if (in_progress) {
+		want_abort = 1;
+	} else {
+		CPRINTF("[%T hash abort]\n");
+		want_abort = 0;
+		data_size = 0;
+		hash = NULL;
+	}
+}
+
+/**
+ * Do next chunk of hashing work, if any.
+ */
+static void vboot_hash_next_chunk(void)
+{
+	int size;
+
+	/* Handle abort */
+	if (want_abort) {
+		in_progress = 0;
+		vboot_hash_abort();
+		return;
+	}
+
+	/* Compute the next chunk of hash */
+	size = MIN(CHUNK_SIZE, data_size - curr_pos);
+	SHA256_update(&ctx, (const uint8_t *)(CONFIG_FLASH_BASE +
+					      data_offset + curr_pos), size);
+
+	curr_pos += size;
+	if (curr_pos >= data_size) {
+		/* Store the final hash */
+		hash = SHA256_final(&ctx);
+		CPRINTF("[%T hash done %.*h]\n", SHA256_DIGEST_SIZE, hash);
+
+		in_progress = 0;
+
+		/* Handle receiving abort during finalize */
+		if (want_abort)
+			vboot_hash_abort();
+
+		return;
+	}
+
+	/* If we're still here, more work to do; come back later */
+	hook_call_deferred(vboot_hash_next_chunk, WORK_INTERVAL_US);
+}
+DECLARE_DEFERRED(vboot_hash_next_chunk);
+
+/**
  * Start computing a hash of <size> bytes of data at flash offset <offset>.
- * If nonce_size is non-zero, prefixes the <nonce> onto the data to be
- * hashed.  Returns non-zero if error.
+ *
+ * If nonce_size is non-zero, prefixes the <nonce> onto the data to be hashed.
+ * Returns non-zero if error.
  */
 static int vboot_hash_start(uint32_t offset, uint32_t size,
 			    const uint8_t *nonce, int nonce_size)
@@ -74,24 +131,33 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 	if (nonce_size)
 		SHA256_update(&ctx, nonce, nonce_size);
 
-	/* Wake the hash task */
-	task_wake(TASK_ID_VBOOTHASH);
+	hook_call_deferred(vboot_hash_next_chunk, 0);
 
 	return EC_SUCCESS;
 }
 
-/* Abort hash currently in progress, and invalidate any completed hash. */
-static void vboot_hash_abort(void)
+int vboot_hash_invalidate(int offset, int size)
 {
-	if (in_progress) {
-		want_abort = 1;
-	} else {
-		CPRINTF("[%T hash abort]\n");
-		want_abort = 0;
-		data_size = 0;
-		hash = NULL;
-	}
+	/* Don't invalidate if passed an invalid region */
+	if (offset < 0 || size <= 0 || offset + size < 0)
+		return 0;
+
+	/* Don't invalidate if hash is already invalid */
+	if (!hash)
+		return 0;
+
+	/* No overlap if passed region is off either end of hashed region */
+	if (offset + size <= data_offset || offset >= data_offset + data_size)
+		return 0;
+
+	/* Invalidate the hash */
+	CPRINTF("[%T hash invalidated 0x%08x 0x%08x]\n", offset, size);
+	vboot_hash_abort();
+	return 1;
 }
+
+/*****************************************************************************/
+/* Hooks */
 
 static void vboot_hash_init(void)
 {
@@ -117,72 +183,7 @@ static void vboot_hash_init(void)
 				 NULL, 0);
 	}
 }
-
-int vboot_hash_invalidate(int offset, int size)
-{
-	/* Don't invalidate if passed an invalid region */
-	if (offset < 0 || size <= 0 || offset + size < 0)
-		return 0;
-
-	/* Don't invalidate if hash is already invalid */
-	if (!hash)
-		return 0;
-
-	/* No overlap if passed region is off either end of hashed region */
-	if (offset + size <= data_offset || offset >= data_offset + data_size)
-		return 0;
-
-	/* Invalidate the hash */
-	CPRINTF("[%T hash invalidated 0x%08x 0x%08x]\n", offset, size);
-	vboot_hash_abort();
-	return 1;
-}
-
-void vboot_hash_task(void)
-{
-	vboot_hash_init();
-
-	while (1) {
-		if (!in_progress) {
-			/* Nothing to do, so go back to sleep */
-			task_wait_event(-1);
-		} else if (want_abort) {
-			/* Abort hash computation currently in progress */
-			in_progress = 0;
-			vboot_hash_abort();
-		} else {
-			/* Compute the next chunk of hash */
-			int size = MIN(CHUNK_SIZE, data_size - curr_pos);
-
-			SHA256_update(&ctx,
-				      (const uint8_t *)(CONFIG_FLASH_BASE +
-							data_offset + curr_pos),
-				      size);
-			curr_pos += size;
-			if (curr_pos >= data_size) {
-				/* Store the final hash */
-				hash = SHA256_final(&ctx);
-				CPRINTF("[%T hash done %.*h]\n",
-					SHA256_DIGEST_SIZE, hash);
-
-				in_progress = 0;
-
-				/* Handle receiving abort during finalize */
-				if (want_abort)
-					vboot_hash_abort();
-			}
-
-			/*
-			 * Let other tasks (really, just the watchdog task)
-			 * run for a bit.
-			 */
-			usleep(100);
-		}
-	}
-}
-
-/*****************************************************************************/
-/* Hooks */
+DECLARE_HOOK(HOOK_INIT, vboot_hash_init, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_SAVE_VBOOT_HASH
 

@@ -132,7 +132,7 @@ int flash_write(int offset, int size, const char *data)
 	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-#ifdef HAS_TASK_VBOOTHASH
+#ifdef CONFIG_VBOOT_HASH
 	vboot_hash_invalidate(offset, size);
 #endif
 
@@ -144,7 +144,7 @@ int flash_erase(int offset, int size)
 	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
 		return EC_ERROR_INVAL;  /* Invalid range */
 
-#ifdef HAS_TASK_VBOOTHASH
+#ifdef CONFIG_VBOOT_HASH
 	vboot_hash_invalidate(offset, size);
 #endif
 

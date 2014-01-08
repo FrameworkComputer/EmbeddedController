@@ -21,6 +21,7 @@
 #define CONFIG_SPI
 #define CONFIG_PWM
 #define CONFIG_POWER_BUTTON
+#define CONFIG_VBOOT_HASH
 
 #ifndef __ASSEMBLER__
 
