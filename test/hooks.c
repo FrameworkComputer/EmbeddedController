@@ -70,7 +70,7 @@ static int test_init_hook(void)
 
 static int test_ticks(void)
 {
-	uint64_t interval;
+	int64_t interval;
 	int error_pct;
 
 	/*
