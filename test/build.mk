@@ -22,7 +22,7 @@ test-list-$(BOARD_SAMUS)=
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
 test-list-host+=sbs_charging adapter host_command thermal_falco led_spring
-test-list-host+=bklight_lid bklight_passthru interrupt
+test-list-host+=bklight_lid bklight_passthru interrupt timer_dos
 
 adapter-y=adapter.o
 bklight_lid-y=bklight_lid.o
