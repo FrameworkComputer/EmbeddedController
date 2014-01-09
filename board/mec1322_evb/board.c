@@ -35,7 +35,11 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_PORT(16), 0x24,     1, MODULE_UART}, /* UART0 */
 	{GPIO_PORT(3),  (1 << 4), 3, MODULE_PWM_FAN},
 	{GPIO_PORT(14), (1 << 0), 3, MODULE_PWM_FAN},
-	{GPIO_PORT(1),  0x60,     2, MODULE_I2C},  /* I2C0 */
+	/*
+	 * I2C0: External pull-up resistors on EVB are too weak. Let's
+	 * also enable internal pull-up here.
+	 */
+	{GPIO_PORT(1),  0x60,     2, MODULE_I2C, GPIO_PULL_UP},
 	{GPIO_PORT(0),  0xfe,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
 	{GPIO_PORT(1),  0x03,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
 	{GPIO_PORT(3),  0x04,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
