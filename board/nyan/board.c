@@ -13,6 +13,7 @@
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
+#include "power.h"
 #include "power_button.h"
 #include "power.h"
 #include "pwm.h"
@@ -99,6 +100,13 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_B, 0x00c0, GPIO_ALT_I2C,	 MODULE_I2C, GPIO_DEFAULT},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
+
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	{GPIO_SOC1V8_XPSHOLD, 1, "XPSHOLD"},
+	{GPIO_SUSPEND_L,      0, "SUSPEND#_ASSERTED"},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

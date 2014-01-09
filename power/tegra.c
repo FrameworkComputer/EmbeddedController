@@ -18,19 +18,22 @@
  *  When powered on:
  *  - The PMIC PWRON signal is released <= 1 second after the power button is
  *    released
- *  - Holding pwron for 9s powers off the AP
- *  - Pressing and releasing pwron within that 9s is ignored
+ *  - Holding pwron for 10.2s powers off the AP
+ *  - Pressing and releasing pwron within that 10.2s is ignored
  *  - If XPSHOLD is dropped by the AP, then we power the AP off
+ *  - If SUSPEND_L goes low, enter suspend mode.
+ *
  */
 
-#include "clock.h"
 #include "chipset.h"  /* This module implements chipset functions too */
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
 #include "keyboard_scan.h"
+#include "power.h"
 #include "power_button.h"
 #include "power_led.h"
 #include "pmu_tpschrome.h"
@@ -42,6 +45,10 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+
+/* masks for power signals */
+#define IN_XPSHOLD POWER_SIGNAL_MASK(TEGRA_XPSHOLD)
+#define IN_SUSPEND POWER_SIGNAL_MASK(TEGRA_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown */
 #define DELAY_FORCE_SHUTDOWN  (10200 * MSEC)  /* 10.2 seconds */
@@ -70,12 +77,6 @@
 #define DELAY_SHUTDOWN_ON_POWER_HOLD	(10200 * MSEC)  /* 10.2 seconds */
 
 /*
- * nyan's GPIO_SOC1V8_XPSHOLD will go low for 36~40ms after PMIC_PWRON_L is low.
- * XPSHOLD_DEBOUNCE is waiting slightly longer.
- */
-#define XPSHOLD_TIMEOUT  (50 * MSEC)  /* 50 ms */
-
-/*
  * The hold time for pulling down the PMIC_WARM_RESET_L pin so that
  * the AP can entery the recovery mode (flash SPI flash from USB).
  */
@@ -87,14 +88,7 @@
  * time of approx. 0.5msec until V2_5 regulator starts up. */
 #define PMIC_RTC_STARTUP (225 * MSEC)
 
-/* Application processor power state */
-static int ap_on;
-static int ap_suspended;
-
-/* simulated event state */
-static int force_signal = -1;
-static int force_value;
-
+/* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
 
@@ -116,40 +110,6 @@ enum power_request_t {
 };
 
 static enum power_request_t power_request;
-
-/**
- * Wait for GPIO "signal" to reach level "value".
- * Returns EC_ERROR_TIMEOUT if timeout before reaching the desired state.
- *
- * @param signal	Signal to watch
- * @param value		Value to watch for
- * @param timeout	Timeout in microseconds from now, or -1 to wait forever
- * @return 0 if signal did change to required value, EC_ERROR_TIMEOUT if we
- * timed out first.
- */
-static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
-{
-	timestamp_t deadline;
-	timestamp_t now = get_time();
-
-	deadline.val = now.val + timeout;
-
-	while (((force_signal != signal) || (force_value != value)) &&
-			gpio_get_level(signal) != value) {
-		now = get_time();
-		if (timeout < 0) {
-			task_wait_event(-1);
-		} else if (timestamp_expired(deadline, &now) ||
-				(task_wait_event(deadline.val - now.val) ==
-					TASK_EVENT_TIMER)) {
-			CPRINTF("[%T power timeout waiting for GPIO %d/%s]\n",
-				signal, gpio_get_name(signal));
-			return EC_ERROR_TIMEOUT;
-		}
-	}
-
-	return EC_SUCCESS;
-}
 
 /**
  * Set the AP RESET signal.
@@ -246,62 +206,12 @@ static int check_for_power_off_event(void)
 	power_button_was_pressed = pressed;
 
 	/* XPSHOLD released by AP : shutdown immediately */
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0)
+	if (!power_has_signals(IN_XPSHOLD))
 		return 3;
 
 	return 0;
 }
 
-/**
- * Deferred handling for suspend events
- *
- * The suspend event needs to be able to call the suspend and resume hooks.
- * This cannot be done from interrupt level, since the handlers from those
- * hooks may need to use mutexes or other functionality not present at
- * interrupt level.  Use a deferred function instead.
- *
- * Deferred functions are called from the hook task and not the chipset task,
- * so that's a slight deviation from the spec in hooks.h, but a minor one.
- */
-static void tegra_suspend_deferred(void)
-{
-	int new_ap_suspended;
-
-	if (!ap_on) /* power on/off : not a real suspend / resume */
-		return;
-
-	new_ap_suspended = !gpio_get_level(GPIO_SUSPEND_L);
-
-	/* We never want to call two suspend or two resumes in a row */
-	if (ap_suspended == new_ap_suspended)
-		return;
-
-	ap_suspended = new_ap_suspended;
-
-	if (ap_suspended) {
-		if (lid_is_open())
-			powerled_set_state(POWERLED_STATE_SUSPEND);
-		else
-			powerled_set_state(POWERLED_STATE_OFF);
-		/* Call hooks here since we don't know it prior to AP suspend */
-		hook_notify(HOOK_CHIPSET_SUSPEND);
-	} else {
-		powerled_set_state(POWERLED_STATE_ON);
-		hook_notify(HOOK_CHIPSET_RESUME);
-	}
-}
-DECLARE_DEFERRED(tegra_suspend_deferred);
-
-void power_signal_interrupt(enum gpio_signal signal)
-{
-	if (signal == GPIO_SUSPEND_L) {
-		/* Handle suspend events in the hook task */
-		hook_call_deferred(tegra_suspend_deferred, 0);
-	} else {
-		/* All other events are handled in the chipset task */
-		task_wake(TASK_ID_CHIPSET);
-	}
-}
 
 static void tegra_lid_event(void)
 {
@@ -314,12 +224,8 @@ static void tegra_lid_event(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, tegra_lid_event, HOOK_PRIO_DEFAULT);
 
-static int tegra_power_init(void)
+enum power_state power_chipset_init(void)
 {
-	/* Enable interrupts for our GPIOs */
-	gpio_enable_interrupt(GPIO_SOC1V8_XPSHOLD);
-	gpio_enable_interrupt(GPIO_SUSPEND_L);
-
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
 	 * the AP could stay in strange state.
@@ -342,37 +248,11 @@ static int tegra_power_init(void)
 		auto_power_on = 1;
 	}
 
-	return EC_SUCCESS;
+	return POWER_G3;
 }
 
 /*****************************************************************************/
 /* Chipset interface */
-
-int chipset_in_state(int state_mask)
-{
-	/* If AP is off, match any off state for now */
-	if ((state_mask & CHIPSET_STATE_ANY_OFF) && !ap_on)
-		return 1;
-
-	/* If AP is on, match on state */
-	if ((state_mask & CHIPSET_STATE_ON) && ap_on && !ap_suspended)
-		return 1;
-
-	/* if AP is suspended, match on state */
-	if ((state_mask & CHIPSET_STATE_SUSPEND) && ap_on && ap_suspended)
-		return 1;
-
-	/* In any other case, we don't have a match */
-	return 0;
-}
-
-void chipset_exit_hard_off(void)
-{
-	/*
-	 * TODO(crosbug.com/p/23822): Implement, if/when we take the AP down to
-	 * a hard-off state.
-	 */
-}
 
 void chipset_force_shutdown(void)
 {
@@ -401,7 +281,7 @@ void chipset_force_shutdown(void)
 static int check_for_power_on_event(void)
 {
 	/* check if system is already ON */
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD)) {
+	if (power_get_signals() & IN_XPSHOLD) {
 		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
 		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
@@ -433,10 +313,8 @@ static int check_for_power_on_event(void)
 
 /**
  * Power on the AP
- *
- * @return 0 if ok, -1 on error (PP1800_LDO2 failed to come on)
  */
-static int power_on(void)
+static void power_on(void)
 {
 	uint64_t t;
 
@@ -461,18 +339,14 @@ static int power_on(void)
 	usleep(PMIC_PWRON_DEBOUNCE_TIME);
 
 	/* Initialize non-AP components if the AP is off. */
-	if (!ap_on)
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-	ap_on = 1;
 	disable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_ON);
 
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP);
-
-	CPRINTF("[%T AP running ...]\n");
-	return 0;
 }
 
 /**
@@ -502,25 +376,8 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 	}
 
 	CPRINTF("[%T power button released]\n");
+	power_button_was_pressed = 0;
 	return EC_SUCCESS;
-}
-
-/**
- * Wait for the XPSHOLD signal from the AP to be asserted.
- *
- * @return 0 if ok, -1 if XPSHOLD doesn't show up in time.
- */
-static int wait_for_xpshold(void)
-{
-	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, XPSHOLD_TIMEOUT);
-
-	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
-		CPRINTF("[%T XPSHOLD not seen in time]\n");
-		return -1;
-	}
-
-	CPRINTF("[%T XPSHOLD seen]\n");
-	return 0;
 }
 
 /**
@@ -532,8 +389,7 @@ static void power_off(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
 	chipset_force_shutdown();
-	ap_on = 0;
-	ap_suspended = 0;
+
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
@@ -557,29 +413,27 @@ void chipset_reset(int is_cold)
 	}
 }
 
-/*
- * Calculates the delay in microseconds to the next time we have to check
- * for a power event,
- *
-  *@return delay to next check, or -1 if no future check is needed
- */
-static int next_pwr_event(void)
-{
-	if (!power_off_deadline.val)
-		return -1;
-
-	return power_off_deadline.val - get_time().val;
-}
-
-/*****************************************************************************/
-static int wait_for_power_on(void)
+enum power_state power_handle_state(enum power_state state)
 {
 	int value;
-	while (1) {
-		value = check_for_power_on_event();
-		if (!value) {
-			task_wait_event(-1);
-			continue;
+	static int boot_from_g3;
+
+	switch (state) {
+	case POWER_G3:
+		boot_from_g3 = check_for_power_on_event();
+		if (boot_from_g3)
+			return POWER_G3S5;
+		break;
+
+	case POWER_G3S5:
+		return POWER_S5;
+
+	case POWER_S5:
+		if (boot_from_g3) {
+			value = boot_from_g3;
+			boot_from_g3 = 0;
+		} else {
+			value = check_for_power_on_event();
 		}
 
 #ifdef HAS_TASK_CHARGER
@@ -590,46 +444,81 @@ static int wait_for_power_on(void)
 		 */
 		if (value != 1 && charge_keep_power_off()) {
 			CPRINTF("[%T power on ignored due to low battery]\n");
-			continue;
+			return state;
 		}
 #endif
 
-		CPRINTF("[%T power on %d]\n", value);
-		return value;
-	}
-}
-
-void chipset_task(void)
-{
-	int value;
-
-	tegra_power_init();
-	ap_on = 0;
-
-	while (1) {
-		/* Wait until we need to power on, then power on */
-		wait_for_power_on();
-
-		if (!power_on()) {
-			int continue_power = 0;
-
-			if (!wait_for_xpshold()) {
-				/* AP looks good */
-				if (!wait_for_power_button_release(
-					DELAY_SHUTDOWN_ON_POWER_HOLD))
-					continue_power = 1;
-			}
-			set_pmic_pwron(0);
-			if (continue_power) {
-				power_button_was_pressed = 0;
-				while (!(value = check_for_power_off_event()))
-					task_wait_event(next_pwr_event());
-				CPRINTF("[%T power ending loop %d]\n", value);
-			}
+		if (value) {
+			CPRINTF("[%T power on %d]\n", value);
+			return POWER_S5S3;
 		}
-		power_off();
+		return state;
+
+	case POWER_S5S3:
+		power_on();
+		if (power_wait_signals(IN_XPSHOLD) == EC_SUCCESS) {
+			CPRINTF("[%T XPSHOLD seen]\n");
+			if (wait_for_power_button_release(
+					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
+					EC_SUCCESS) {
+				set_pmic_pwron(0);
+				CPRINTF("[%T AP running ...]\n");
+				return POWER_S3;
+			} else {
+				CPRINTF("[%T long-press button, shutdown]\n");
+				power_off();
+				/*
+				 * Since the AP may be up already, return S0S3
+				 * state to go through the suspend hook.
+				 */
+				return POWER_S0S3;
+			}
+		} else {
+			CPRINTF("[%T XPSHOLD not seen in time]\n");
+		}
+		set_pmic_pwron(0);
+		return POWER_S5;
+
+	case POWER_S3:
+		if (!(power_get_signals() & IN_XPSHOLD))
+			return POWER_S3S5;
+		else if (!(power_get_signals() & IN_SUSPEND))
+			return POWER_S3S0;
+		return state;
+
+	case POWER_S3S0:
+		powerled_set_state(POWERLED_STATE_ON);
+		hook_notify(HOOK_CHIPSET_RESUME);
+		return POWER_S0;
+
+	case POWER_S0:
+		value = check_for_power_off_event();
+		if (value) {
+			CPRINTF("[%T power off %d]\n", value);
+			power_off();
+			return POWER_S0S3;
+		} else if (power_get_signals() & IN_SUSPEND)
+			return POWER_S0S3;
+		return state;
+
+	case POWER_S0S3:
+		if (lid_is_open())
+			powerled_set_state(POWERLED_STATE_SUSPEND);
+		else
+			powerled_set_state(POWERLED_STATE_OFF);
+		/* Call hooks here since we don't know it prior to AP suspend */
+		hook_notify(HOOK_CHIPSET_SUSPEND);
+		return POWER_S3;
+
+	case POWER_S3S5:
 		wait_for_power_button_release(-1);
+		return POWER_S5;
+
+	case POWER_S5G3:
+		return POWER_G3;
 	}
+
+	return state;
 }
 
 static void powerbtn_tegra_changed(void)

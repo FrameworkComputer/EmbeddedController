@@ -95,6 +95,13 @@ enum gpio_signal {
 	GPIO_COUNT
 };
 
+enum power_signal {
+	TEGRA_XPSHOLD = 0,
+	TEGRA_SUSPEND_ASSERTED,
+
+	/* Number of power signals */
+	POWER_SIGNAL_COUNT
+};
 
 enum pwm_channel {
 	PWM_CH_POWER_LED = 0,
