@@ -21,7 +21,6 @@ const struct gpio_info gpio_list[] = {
 	{"LED2", GPIO_PORT(15), (1 << 5), GPIO_ODR_HIGH, NULL},
 	{"LED3", GPIO_PORT(15), (1 << 6), GPIO_ODR_LOW, NULL},
 	{"PCH_SMI_L", GPIO_PORT(4), (1 << 4), GPIO_ODR_HIGH, NULL},
-	{"PCH_SCI_L", GPIO_PORT(2), (1 << 6), GPIO_ODR_HIGH, NULL},
 	{"PCH_WAKE_L", GPIO_PORT(20), (1 << 0), GPIO_ODR_HIGH, NULL},
 	/* Unimplemented signals which we need to emulate for now */
 	GPIO_SIGNAL_NOT_IMPLEMENTED("RECOVERY_L"),
@@ -47,6 +46,7 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_PORT(10), 0xd8,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
 	{GPIO_PORT(12), 0x60,     2, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
 	{GPIO_PORT(14), 0x14,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
+	{GPIO_PORT(2),  0x20,     2, MODULE_LPC},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 

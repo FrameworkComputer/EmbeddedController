@@ -48,10 +48,15 @@ static void lpc_generate_smi(void)
 
 static void lpc_generate_sci(void)
 {
-	/* TODO (crosbug.com/p/24550): Use EC_SCI# instead of GPIO */
-	gpio_set_level(GPIO_PCH_SCI_L, 0);
+#ifdef CONFIG_SCI_GPIO
+	gpio_set_level(CONFIG_SCI_GPIO, 0);
 	udelay(65);
-	gpio_set_level(GPIO_PCH_SCI_L, 1);
+	gpio_set_level(CONFIG_SCI_GPIO, 1);
+#else
+	MEC1322_ACPI_PM_STS |= 1;
+	udelay(65);
+	MEC1322_ACPI_PM_STS &= ~1;
+#endif
 }
 
 /**
@@ -157,6 +162,8 @@ static void setup_lpc(void)
 	/* EMI module only takes alias memory address */
 	if (ptr < 0x120000)
 		ptr = ptr - 0x118000 + 0x20000000;
+
+	gpio_config_module(MODULE_LPC, 1);
 
 	/* Set up ACPI0 for 0x62/0x66 */
 	MEC1322_LPC_ACPI_EC0_BAR = 0x00628034;

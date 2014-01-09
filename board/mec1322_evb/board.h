@@ -39,7 +39,6 @@ enum gpio_signal {
 	GPIO_LED2,
 	GPIO_LED3,
 	GPIO_PCH_SMI_L,           /* SMI output */
-	GPIO_PCH_SCI_L,           /* SCI output */
 	GPIO_PCH_WAKE_L,          /* PCH wake pin */
 	/*
 	 * Signals which aren't implemented on MEC1322 eval board but we'll
