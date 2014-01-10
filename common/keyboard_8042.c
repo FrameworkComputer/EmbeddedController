@@ -6,6 +6,7 @@
  */
 
 #include "chipset.h"
+#include "button.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -113,7 +114,6 @@ static uint8_t controller_ram[0x20] = {
 	/* 0x01 - 0x1f are controller RAM */
 };
 static uint8_t A20_status;
-static int power_button_pressed;
 static void keyboard_special(uint16_t k);
 
 /*
@@ -188,6 +188,15 @@ static const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	{0x0000, 0x0015, 0x0024, 0x002d, 0x001d, 0x0043, 0x003c, 0x0059, 0x004d,
 	 0x0044, 0x0000, 0xe075, 0xe06b},
 };
+
+/* Button scancodes. Must be in the same order as defined in button_type */
+static const uint16_t button_scancodes[2][KEYBOARD_BUTTON_COUNT] = {
+	/* Set 1 */
+	{0xe05e, 0xe02e, 0xe030},
+	/* Set 2 */
+	{0xe037, 0xe021, 0xe033},
+};
+BUILD_ASSERT(ARRAY_SIZE(button_scancodes[0]) == KEYBOARD_BUTTON_COUNT);
 
 /*****************************************************************************/
 /* Keyboard event log */
@@ -290,44 +299,20 @@ static enum scancode_set_list acting_code_set(enum scancode_set_list set)
 	return set;
 }
 
-static enum ec_error_list matrix_callback(int8_t row, int8_t col,
-					  int8_t pressed,
-					  enum scancode_set_list code_set,
-					  uint8_t *scan_code, int32_t *len)
+/**
+ * Return the make or break code bytes for the active scancode set.
+ *
+ * @param make_code	The make code to generate the make or break code from
+ * @param pressed	Whether the key or button was pressed
+ * @param code_set	The scancode set being used
+ * @param scan_code	An array of bytes to store the make or break code in
+ * @param len		The number of valid bytes to send in scan_code
+ */
+static void scancode_bytes(uint16_t make_code, int8_t pressed,
+			   enum scancode_set_list code_set, uint8_t *scan_code,
+			   int32_t *len)
 {
-	uint16_t make_code;
-
-	ASSERT(scan_code);
-	ASSERT(len);
-
-	if (row > KEYBOARD_ROWS || col > KEYBOARD_COLS)
-		return EC_ERROR_INVAL;
-
-	if (pressed)
-		keyboard_special(scancode_set1[row][col]);
-
 	*len = 0;
-
-	code_set = acting_code_set(code_set);
-
-	switch (code_set) {
-	case SCANCODE_SET_1:
-		make_code = scancode_set1[row][col];
-		break;
-
-	case SCANCODE_SET_2:
-		make_code = scancode_set2[row][col];
-		break;
-
-	default:
-		CPRINTF("[%T KB scancode set %d unsupported]\n", code_set);
-		return EC_ERROR_UNIMPLEMENTED;
-	}
-
-	if (!make_code) {
-		CPRINTF("[%T KB scancode %d:%d missing]\n", row, col);
-		return EC_ERROR_UNIMPLEMENTED;
-	}
 
 	/* Output the make code (from table) */
 	if (make_code >= 0x0100) {
@@ -363,7 +348,46 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	default:
 		break;
 	}
+}
 
+static enum ec_error_list matrix_callback(int8_t row, int8_t col,
+					  int8_t pressed,
+					  enum scancode_set_list code_set,
+					  uint8_t *scan_code, int32_t *len)
+{
+	uint16_t make_code;
+
+	ASSERT(scan_code);
+	ASSERT(len);
+
+	if (row > KEYBOARD_ROWS || col > KEYBOARD_COLS)
+		return EC_ERROR_INVAL;
+
+	if (pressed)
+		keyboard_special(scancode_set1[row][col]);
+
+	code_set = acting_code_set(code_set);
+
+	switch (code_set) {
+	case SCANCODE_SET_1:
+		make_code = scancode_set1[row][col];
+		break;
+
+	case SCANCODE_SET_2:
+		make_code = scancode_set2[row][col];
+		break;
+
+	default:
+		CPRINTF("[%T KB scancode set %d unsupported]\n", code_set);
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	if (!make_code) {
+		CPRINTF("[%T KB scancode %d:%d missing]\n", row, col);
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	scancode_bytes(make_code, pressed, code_set, scan_code, len);
 	return EC_SUCCESS;
 }
 
@@ -899,6 +923,38 @@ void keyboard_protocol_task(void)
 	}
 }
 
+/**
+ * Handle button changing state.
+ *
+ * @param button	Type of button that changed
+ * @param is_pressed	Whether the button was pressed or released
+ */
+void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
+{
+	/* TODO(crosbug.com/p/24956): Add typematic repeat support. */
+
+	uint8_t scan_code[MAX_SCAN_CODE_LEN];
+	uint16_t make_code;
+	uint32_t len;
+	enum scancode_set_list code_set;
+
+	/*
+	 * Only send the scan code if main chipset is fully awake and
+	 * keystrokes are enabled.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
+		return;
+
+	code_set = acting_code_set(scancode_set);
+	make_code = button_scancodes[code_set - SCANCODE_SET_1][button];
+	scancode_bytes(make_code, is_pressed, code_set, scan_code, &len);
+	ASSERT(len > 0);
+	if (keystroke_enabled) {
+		i8042_send_to_host(len, scan_code);
+		task_wake(TASK_ID_KEYPROTO);
+	}
+}
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -1092,30 +1148,8 @@ DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);
  */
 static void keyboard_power_button(void)
 {
-	enum scancode_set_list code_set;
-	uint8_t code[2][2][3] = {
-		{  /* set 1 */
-			{0xe0, 0xde},        /* break */
-			{0xe0, 0x5e},        /* make */
-		}, {  /* set 2 */
-			{0xe0, 0xf0, 0x37},  /* break */
-			{0xe0, 0x37},        /* make */
-		}
-	};
-
-	power_button_pressed = power_button_is_pressed();
-
-	/*
-	 * Only send the scan code if main chipset is fully awake and
-	 * keystrokes are enabled.
-	 */
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
-		return;
-
-	code_set = acting_code_set(scancode_set);
-	i8042_send_to_host(
-		(code_set == SCANCODE_SET_2 && !power_button_pressed) ? 3 : 2,
-		code[code_set - SCANCODE_SET_1][power_button_pressed]);
+	keyboard_update_button(KEYBOARD_BUTTON_POWER,
+			       power_button_is_pressed());
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 	     HOOK_PRIO_DEFAULT);
