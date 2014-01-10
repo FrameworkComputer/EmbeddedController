@@ -22,6 +22,20 @@ enum hibdata_index {
 	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
 };
 
+static int check_vcc1_por(void)
+{
+	/*
+	 * WDT count resets on VCC1 POR. If we see WDT count = 0, we know
+	 * POR has occurred, and we set WDT count to 1.
+	 */
+	if (MEC1322_EC_WDT_CNT == 0) {
+		MEC1322_EC_WDT_CNT = 1;
+		return 1;
+	}
+
+	return 0;
+}
+
 static void check_reset_cause(void)
 {
 	uint32_t status = MEC1322_VBAT_STS;
@@ -30,14 +44,14 @@ static void check_reset_cause(void)
 	/* Clear the reset causes now that we've read them */
 	MEC1322_VBAT_STS |= status;
 
-	if (status & (1 << 7))
+	if (status & (1 << 7) || check_vcc1_por())
 		flags |= RESET_FLAG_POWER_ON;
-
-	if (status & (1 << 5))
-		flags |= RESET_FLAG_WATCHDOG;
 
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
+
+	if (status & (1 << 5) && !(flags & (RESET_FLAG_SOFT | RESET_FLAG_HARD)))
+		flags |= RESET_FLAG_WATCHDOG;
 
 	system_set_reset_flags(flags);
 }
@@ -69,6 +83,11 @@ void system_reset(int flags)
 
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		save_flags |= RESET_FLAG_AP_OFF;
+
+	if (flags & SYSTEM_RESET_HARD)
+		save_flags |= RESET_FLAG_HARD;
+	else
+		save_flags |= RESET_FLAG_SOFT;
 
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = save_flags;
 
