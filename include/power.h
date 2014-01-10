@@ -5,8 +5,8 @@
 
 /* Common power interface for all chipsets */
 
-#ifndef __CROS_EC_POWER_COMMON_H
-#define __CROS_EC_POWER_COMMON_H
+#ifndef __CROS_EC_POWER_H
+#define __CROS_EC_POWER_H
 
 #include "common.h"
 #include "gpio.h"
@@ -96,4 +96,4 @@ void power_signal_interrupt(enum gpio_signal signal);
 #define power_signal_interrupt NULL
 #endif
 
-#endif  /* __CROS_EC_POWER_COMMON_H */
+#endif  /* __CROS_EC_POWER_H */
