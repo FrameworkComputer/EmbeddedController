@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_TEST_CONFIG_H
 #define __CROS_EC_TEST_CONFIG_H
 
+/* Test config flags only apply for test builds */
+#ifdef TEST_BUILD
+
 /* Don't compile vboot hash support unless specifically testing for it */
 #undef CONFIG_VBOOT_HASH
 
@@ -79,4 +82,5 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_MASTER 1
 #endif
 
+#endif  /* TEST_BUILD */
 #endif  /* __CROS_EC_TEST_CONFIG_H */
