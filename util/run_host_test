@@ -15,8 +15,9 @@ TIMEOUT=10
 RESULT_ID_TIMEOUT = 0
 RESULT_ID_PASS = 1
 RESULT_ID_FAIL = 2
+RESULT_ID_EOF = 3
 
-EXPECT_LIST = [pexpect.TIMEOUT, 'Pass!', 'Fail!']
+EXPECT_LIST = [pexpect.TIMEOUT, 'Pass!', 'Fail!', pexpect.EOF]
 
 class Tee(object):
   def __init__(self, target):
@@ -30,15 +31,12 @@ class Tee(object):
     sys.stdout.flush()
     self._target.flush()
 
-def RunOnce(test_name, log, timeout_secs):
+def RunOnce(test_name, log):
   child = pexpect.spawn('build/host/{0}/{0}.exe'.format(test_name),
-                      timeout=TIMEOUT)
+                        timeout=TIMEOUT)
   child.logfile = log
   try:
     return child.expect(EXPECT_LIST)
-  except pexpect.EOF:
-    child.close()
-    return RESULT_ID_FAIL
   finally:
     if child.isalive():
       child.kill(signal.SIGTERM)
@@ -49,10 +47,9 @@ tee_log = Tee(log)
 test_name = sys.argv[1]
 start_time = time.time()
 
-result_id = RunOnce(test_name, tee_log, start_time + TIMEOUT - time.time())
+result_id = RunOnce(test_name, tee_log)
 
 elapsed_time = time.time() - start_time
-failed = False
 if result_id == RESULT_ID_TIMEOUT:
   sys.stderr.write('Test %s timed out after %d seconds!\n' %
                    (test_name, TIMEOUT))
@@ -60,8 +57,13 @@ if result_id == RESULT_ID_TIMEOUT:
 elif result_id == RESULT_ID_PASS:
   sys.stderr.write('Test %s passed! (%.3f seconds)\n' %
                    (test_name, elapsed_time))
+  failed = False
 elif result_id == RESULT_ID_FAIL:
   sys.stderr.write('Test %s failed! (%.3f seconds)\n' %
+                   (test_name, elapsed_time))
+  failed = True
+elif result_id == RESULT_ID_EOF:
+  sys.stderr.write('Test %s terminated unexpectedly! (%.3f seconds)\n' %
                    (test_name, elapsed_time))
   failed = True
 
