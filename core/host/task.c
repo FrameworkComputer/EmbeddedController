@@ -178,7 +178,7 @@ static void __attribute__((noinline)) _task_dump_trace_dispatch(int sig)
 {
 	int need_dispatch = 1;
 
-	if (pthread_self() != main_thread) {
+	if (!pthread_equal(pthread_self(), main_thread)) {
 		need_dispatch = 0;
 	} else if (!task_start_called()) {
 		fprintf(stderr, "Stack trace of main thread:\n");
