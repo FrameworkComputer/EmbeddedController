@@ -20,6 +20,7 @@ common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 # command?
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
+common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CHARGER)+=charge_state.o charger.o
 # TODO(crosbug.com/p/23815): This is really the charge state machine
 # for ARM, not the charger driver for the tps65090.  Rename.

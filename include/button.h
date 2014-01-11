@@ -21,4 +21,24 @@ enum keyboard_button_type {
 	KEYBOARD_BUTTON_COUNT
 };
 
+struct button_config {
+	const char *name;
+	enum keyboard_button_type type;
+	enum gpio_signal gpio;
+	uint32_t debounce_us;
+	int flags;
+};
+
+/*
+ * Defined in board.c. Should be CONFIG_BUTTON_COUNT elements long.
+ */
+extern const struct button_config buttons[];
+
+/*
+ * Interrupt handler for button.
+ *
+ * @param signal	Signal which triggered the interrupt.
+ */
+void button_interrupt(enum gpio_signal signal);
+
 #endif  /* __CROS_EC_BUTTON_H */

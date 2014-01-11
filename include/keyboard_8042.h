@@ -9,6 +9,14 @@
 #define __CROS_EC_KEYBOARD_8042_H
 
 #include "common.h"
+#include "button.h"
+
+/**
+ * Called by power button handler and button interrupt handler.
+ *
+ * This function sends the corresponding make or break code to the host.
+ */
+void button_state_changed(enum keyboard_button_type button, int is_pressed);
 
 /**
  * Notify the keyboard module when a byte is written by the host.

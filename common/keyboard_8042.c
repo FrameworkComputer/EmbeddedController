@@ -929,7 +929,8 @@ void keyboard_protocol_task(void)
  * @param button	Type of button that changed
  * @param is_pressed	Whether the button was pressed or released
  */
-void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
+test_mockable void keyboard_update_button(enum keyboard_button_type button,
+					  int is_pressed)
 {
 	/* TODO(crosbug.com/p/24956): Add typematic repeat support. */
 
