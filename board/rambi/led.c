@@ -13,7 +13,7 @@
 #include "pwm.h"
 #include "util.h"
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_POWER_LED};
+const enum ec_led_id supported_led_ids[] = {EC_LED_ID_BATTERY_LED};
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
@@ -88,7 +88,7 @@ static void led_tick(void)
 	int chstate = charge_get_state();
 
 	/* If we don't control the LED, nothing to do */
-	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;
 
 	/* If we're just suspending now, reset ticks so LED changes quickly */

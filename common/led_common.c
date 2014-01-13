@@ -60,10 +60,13 @@ static int led_command_control(struct host_cmd_handler_args *args)
 		if (r->brightness_range[i] == 0 && p->brightness[i] != 0)
 			return EC_RES_INVALID_PARAM;
 
-	if (p->flags & EC_LED_FLAGS_AUTO)
+	if (p->flags & EC_LED_FLAGS_AUTO) {
 		led_auto_control(p->led_id, 1);
-	else if (led_set_brightness(p->led_id, p->brightness) != EC_SUCCESS)
-		return EC_RES_INVALID_PARAM;
+	} else {
+		if (led_set_brightness(p->led_id, p->brightness) != EC_SUCCESS)
+			return EC_RES_INVALID_PARAM;
+		led_auto_control(p->led_id, 0);
+	}
 
 	return EC_RES_SUCCESS;
 }
