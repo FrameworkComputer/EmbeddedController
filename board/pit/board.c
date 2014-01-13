@@ -15,8 +15,6 @@
 #include "lid_switch.h"
 #include "pmu_tpschrome.h"
 #include "power.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "registers.h"
 #include "spi.h"
 #include "timer.h"
@@ -93,7 +91,6 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0x0004, GPIO_ALT_TIM2,  MODULE_POWER_LED},
 	{GPIO_A, 0x00f0, GPIO_ALT_SPI,   MODULE_SPI},
 	{GPIO_A, 0x0600, GPIO_ALT_USART, MODULE_UART},
 	{GPIO_B, 0x0cc0, GPIO_ALT_I2C,	 MODULE_I2C},
@@ -133,13 +130,6 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	{STM32_TIM(2), STM32_TIM_CH(3),
-	 PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 int pmu_board_init(void)
 {

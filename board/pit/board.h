@@ -22,7 +22,6 @@
 #define CONFIG_PMU_HARD_RESET
 #define CONFIG_PMU_POWERINFO
 #define CONFIG_PMU_TPS65090
-#define CONFIG_PWM
 #define CONFIG_SPI
 #define CONFIG_VBOOT_HASH
 
@@ -99,13 +98,6 @@ enum gpio_signal {
 	/* Number of GPIOs; not an actual GPIO */
 	GPIO_COUNT
 };
-
-enum pwm_channel {
-	PWM_CH_POWER_LED = 0,
-	/* Number of PWM channels */
-	PWM_CH_COUNT
-};
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
