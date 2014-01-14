@@ -37,56 +37,128 @@
 #define LM4_I2C_MCS_BUSBSY (1 << 6)
 #define LM4_I2C_MCS_CLKTO  (1 << 7)
 
-static task_id_t task_waiting_on_port[I2C_PORT_COUNT];
+/*
+ * Minimum delay between resetting the port or sending a stop condition, and
+ * when the port can be expected to be back in an idle state (and the slave
+ * has had long enough to see the start/stop condition edges).
+ *
+ * 500 us = 50 clocks at 100 KHz bus speed.  This has been experimentally
+ * determined to be enough.
+ */
+#define I2C_IDLE_US 500
+
+/* Maximum time we allow for an I2C transfer */
+#define I2C_TIMEOUT_US SECOND
+
+/* IRQ for each port */
+static const uint32_t i2c_irqs[] = {LM4_IRQ_I2C0, LM4_IRQ_I2C1, LM4_IRQ_I2C2,
+				    LM4_IRQ_I2C3, LM4_IRQ_I2C4, LM4_IRQ_I2C5};
+BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_PORT_COUNT);
+
+/* I2C port state data */
+struct i2c_port_data {
+	const uint8_t *out;	/* Output data pointer */
+	int out_size;		/* Output data to transfer, in bytes */
+	uint8_t *in;		/* Input data pointer */
+	int in_size;		/* Input data to transfer, in bytes */
+	int flags;		/* Flags (I2C_XFER_*) */
+	int idx;		/* Index into input/output data */
+	int err;		/* Error code, if any */
+
+	/* Task waiting on port, or TASK_ID_INVALID if none. */
+	int task_waiting;
+};
+static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
 /**
- * Wait for port to go idle
+ * I2C transfer engine.
  *
- * @param port		Port to check
- * @return EC_SUCCESS if port is idle; non-zero if error.
+ * @return Zero when done with transfer (ready to wake task).
+ *
+ * MCS sequence on multi-byte write:
+ *     0x3 0x1 0x1 ... 0x1 0x5
+ * Single byte write:
+ *     0x7
+ *
+ * MCS receive sequence on multi-byte read:
+ *     0xb 0x9 0x9 ... 0x9 0x5
+ * Single byte read:
+ *     0x7
  */
-static int wait_idle(int port)
+int i2c_do_work(int port)
 {
-	int i;
-	int event = 0;
+	struct i2c_port_data *pd = pdata + port;
+	uint32_t reg_mcs = LM4_I2C_MCS_RUN;
 
-	i = LM4_I2C_MCS(port);
-	while (i & LM4_I2C_MCS_BUSY) {
-		/* Port is busy, so wait for the interrupt */
-		task_waiting_on_port[port] = task_get_current();
-		LM4_I2C_MIMR(port) = 0x03;
+	if (pd->flags & I2C_XFER_START) {
+		/* Set start bit on first byte */
+		reg_mcs |= LM4_I2C_MCS_START;
+		pd->flags &= ~I2C_XFER_START;
+	} else if (LM4_I2C_MCS(port) & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_ARBLST |
+					LM4_I2C_MCS_ERROR)) {
 		/*
-		 * We want to wait here quietly until the I2C interrupt comes
-		 * along, but we don't want to lose any pending events that
-		 * will be needed by the task that started the I2C transaction
-		 * in the first place. So we save them up and restore them when
-		 * the I2C is either completed or timed out. Refer to the
-		 * implementation of usleep() for a similar situation.
+		 * Error after starting; abort transfer.  Ignore errors at
+		 * start because arbitration and timeout errors are taken care
+		 * of in i2c_xfer(), and slave ack failures will automatically
+		 * clear once we send a start condition.
 		 */
-		event |= (task_wait_event(SECOND) & ~TASK_EVENT_I2C_IDLE);
-		LM4_I2C_MIMR(port) = 0x00;
-		task_waiting_on_port[port] = TASK_ID_INVALID;
-		if (event & TASK_EVENT_TIMER) {
-			/* Restore any events that we saw while waiting */
-			task_set_event(task_get_current(),
-				       (event & ~TASK_EVENT_TIMER), 0);
-			return EC_ERROR_TIMEOUT;
-		}
-
-		i = LM4_I2C_MCS(port);
+		pd->err = EC_ERROR_UNKNOWN;
+		return 0;
 	}
 
-	/*
-	 * Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
-	 * one, because we've handled it above.
-	 */
-	task_set_event(task_get_current(), event, 0);
+	if (pd->out_size) {
+		/* Send next byte of output */
+		LM4_I2C_MDR(port) = *(pd->out++);
+		pd->idx++;
 
-	/* Check for errors */
-	if (i & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_ARBLST | LM4_I2C_MCS_ERROR))
-		return EC_ERROR_UNKNOWN;
+		/* Handle starting to send last byte */
+		if (pd->idx == pd->out_size) {
 
-	return EC_SUCCESS;
+			/* Done with output after this */
+			pd->out_size = 0;
+			pd->idx = 0;
+
+			/* Resend start bit when changing direction */
+			pd->flags |= I2C_XFER_START;
+
+			/*
+			 * Send stop bit after last byte if the stop flag is
+			 * on, and caller doesn't expect to receive data.
+			 */
+			if ((pd->flags & I2C_XFER_STOP) && pd->in_size == 0)
+				reg_mcs |= LM4_I2C_MCS_STOP;
+		}
+
+		LM4_I2C_MCS(port) = reg_mcs;
+		return 1;
+
+	} else if (pd->in_size) {
+		if (pd->idx) {
+			/* Copy the byte we just read */
+			*(pd->in++) = LM4_I2C_MDR(port) & 0xff;
+		} else {
+			/* Starting receive; switch to receive address */
+			LM4_I2C_MSA(port) |= 0x01;
+		}
+
+		if (pd->idx < pd->in_size) {
+			/* More data to read */
+			pd->idx++;
+
+			/* ACK all bytes except the last one */
+			if ((pd->flags & I2C_XFER_STOP) &&
+			    pd->idx == pd->in_size)
+				reg_mcs |= LM4_I2C_MCS_STOP;
+			else
+				reg_mcs |= LM4_I2C_MCS_ACK;
+
+			LM4_I2C_MCS(port) = reg_mcs;
+			return 1;
+		}
+	}
+
+	/* If we're still here, done with transfer */
+	return 0;
 }
 
 int i2c_get_line_levels(int port)
@@ -98,15 +170,26 @@ int i2c_get_line_levels(int port)
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
-	int rv, i;
-	int started = (flags & I2C_XFER_START) ? 0 : 1;
-	uint32_t reg_mcs;
+	struct i2c_port_data *pd = pdata + port;
+	uint32_t reg_mcs = LM4_I2C_MCS(port);
+	int events = 0;
+	int other_events = 0;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
-	reg_mcs = LM4_I2C_MCS(port);
-	if (!started && (reg_mcs & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_ARBLST))) {
+	/* Copy data to port struct */
+	pd->out = out;
+	pd->out_size = out_size;
+	pd->in = in;
+	pd->in_size = in_size;
+	pd->flags = flags;
+	pd->idx = 0;
+	pd->err = 0;
+
+	/* Make sure we're in a good state to start */
+	if ((flags & I2C_XFER_START) &&
+	    (reg_mcs & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_ARBLST))) {
 		uint32_t tpr = LM4_I2C_MTPR(port);
 
 		CPRINTF("[%T I2C%d bad status 0x%02x]\n", port, reg_mcs);
@@ -125,85 +208,61 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		 * We don't know what edges the slave saw, so sleep long enough
 		 * that the slave will see the new start condition below.
 		 */
-		usleep(1000);
+		usleep(I2C_IDLE_US);
 	}
 
-	if (out) {
-		LM4_I2C_MSA(port) = slave_addr & 0xff;
-		for (i = 0; i < out_size; i++) {
-			LM4_I2C_MDR(port) = out[i];
-			/*
-			 * Set up master control/status register
-			 * MCS sequence on multi-byte write:
-			 *     0x3 0x1 0x1 ... 0x1 0x5
-			 * Single byte write:
-			 *     0x7
-			 */
-			reg_mcs = LM4_I2C_MCS_RUN;
-			/* Set start bit on first byte */
-			if (!started) {
-				started = 1;
-				reg_mcs |= LM4_I2C_MCS_START;
-			}
-			/*
-			 * Send stop bit if the stop flag is on, and caller
-			 * doesn't expect to receive data.
-			 */
-			if ((flags & I2C_XFER_STOP) && in_size == 0 &&
-			    i == (out_size - 1))
-				reg_mcs |= LM4_I2C_MCS_STOP;
+	/* Set slave address for transmit */
+	LM4_I2C_MSA(port) = slave_addr & 0xff;
 
-			LM4_I2C_MCS(port) = reg_mcs;
+	/* Enable interrupts */
+	pd->task_waiting = task_get_current();
+	LM4_I2C_MICR(port) = 0x03;
+	LM4_I2C_MIMR(port) = 0x03;
 
-			rv = wait_idle(port);
-			if (rv) {
-				LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
-				return rv;
-			}
-		}
+	/* Kick the port interrupt handler to start the transfer */
+	task_trigger_irq(i2c_irqs[port]);
+
+	/* Wait for transfer complete or timeout */
+	while (!(events & (TASK_EVENT_I2C_IDLE | TASK_EVENT_TIMER))) {
+		/*
+		 * We could be clever and track how long we were actually
+		 * asleep, and wait for the remainder if we were woken up
+		 * for some other event.  But that would consume additional
+		 * stack space and processing time for the infrequent case
+		 * of an I2C timeout, so isn't worth it.
+		 */
+		events = task_wait_event(I2C_TIMEOUT_US);
+
+		/*
+		 * We want to wait here quietly until the transaction is
+		 * complete, but we don't want to lose any pending events that
+		 * will be needed by the task that started the I2C transaction
+		 * in the first place. So we save them up and restore them on
+		 * completion or timeout. See the usleep() implementation for a
+		 * similar situation.
+		 */
+		other_events |= events &
+			~(TASK_EVENT_I2C_IDLE | TASK_EVENT_TIMER);
 	}
 
-	if (in_size) {
-		if (out_size)
-			/* resend start bit when change direction */
-			started = 0;
+	/* Disable interrupts */
+	LM4_I2C_MIMR(port) = 0x00;
+	pd->task_waiting = TASK_ID_INVALID;
 
-		LM4_I2C_MSA(port) = (slave_addr & 0xff) | 0x01;
-		for (i = 0; i < in_size; i++) {
-			LM4_I2C_MDR(port) = in[i];
-			/*
-			 * MCS receive sequence on multi-byte read:
-			 *     0xb 0x9 0x9 ... 0x9 0x5
-			 * Single byte read:
-			 *     0x7
-			 */
-			reg_mcs = LM4_I2C_MCS_RUN;
-			if (!started) {
-				started = 1;
-				reg_mcs |= LM4_I2C_MCS_START;
-			}
-			/* ACK all bytes except the last one */
-			if ((flags & I2C_XFER_STOP) && i == (in_size - 1))
-				reg_mcs |= LM4_I2C_MCS_STOP;
-			else
-				reg_mcs |= LM4_I2C_MCS_ACK;
+	/* Restore any events that we saw while waiting */
+	task_set_event(task_get_current(), other_events, 0);
 
-			LM4_I2C_MCS(port) = reg_mcs;
-			rv = wait_idle(port);
-			if (rv) {
-				LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
-				return rv;
-			}
-			in[i] = LM4_I2C_MDR(port) & 0xff;
-		}
+	/* Handle timeout */
+	if (events & TASK_EVENT_TIMER)
+		pd->err = EC_ERROR_TIMEOUT;
+
+	if (pd->err) {
+		/* Force port back idle */
+		LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
+		usleep(I2C_IDLE_US);
 	}
 
-	/* Check for error conditions */
-	if (LM4_I2C_MCS(port) & (LM4_I2C_MCS_CLKTO | LM4_I2C_MCS_ARBLST |
-				 LM4_I2C_MCS_ERROR))
-		return EC_ERROR_UNKNOWN;
-
-	return EC_SUCCESS;
+	return pd->err;
 }
 
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
@@ -286,10 +345,6 @@ static void i2c_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
 
-	/* No tasks are waiting on ports */
-	for (i = 0; i < I2C_PORT_COUNT; i++)
-		task_waiting_on_port[i] = TASK_ID_INVALID;
-
 	/* Initialize ports as master, with interrupts enabled */
 	for (i = 0; i < i2c_ports_used; i++)
 		LM4_I2C_MCR(i2c_ports[i].port) = 0x10;
@@ -297,13 +352,11 @@ static void i2c_init(void)
 	/* Set initial clock frequency */
 	i2c_freq_changed();
 
-	/* Enable irqs */
-	task_enable_irq(LM4_IRQ_I2C0);
-	task_enable_irq(LM4_IRQ_I2C1);
-	task_enable_irq(LM4_IRQ_I2C2);
-	task_enable_irq(LM4_IRQ_I2C3);
-	task_enable_irq(LM4_IRQ_I2C4);
-	task_enable_irq(LM4_IRQ_I2C5);
+	/* Enable IRQs; no tasks are waiting on ports */
+	for (i = 0; i < I2C_PORT_COUNT; i++) {
+		pdata[i].task_waiting = TASK_ID_INVALID;
+		task_enable_irq(i2c_irqs[i]);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 
@@ -314,13 +367,17 @@ DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
  */
 static void handle_interrupt(int port)
 {
-	int id = task_waiting_on_port[port];
+	int id = pdata[port].task_waiting;
 
 	/* Clear the interrupt status */
 	LM4_I2C_MICR(port) = LM4_I2C_MMIS(port);
 
-	/* Wake up the task which was waiting on the I2C interrupt, if any. */
-	if (id != TASK_ID_INVALID)
+	/* If no task is waiting, just return */
+	if (id == TASK_ID_INVALID)
+		return;
+
+	/* If done doing work, wake up the task waiting for the transfer */
+	if (!i2c_do_work(port))
 		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
 }
 
@@ -337,61 +394,3 @@ DECLARE_IRQ(LM4_IRQ_I2C2, i2c2_interrupt, 2);
 DECLARE_IRQ(LM4_IRQ_I2C3, i2c3_interrupt, 2);
 DECLARE_IRQ(LM4_IRQ_I2C4, i2c4_interrupt, 2);
 DECLARE_IRQ(LM4_IRQ_I2C5, i2c5_interrupt, 2);
-
-/*****************************************************************************/
-/* Console commands */
-
-static int command_i2cread(int argc, char **argv)
-{
-	int port, addr, count = 1;
-	char *e;
-	int rv;
-	int d, i;
-
-	if (argc < 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	port = strtoi(argv[1], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM1;
-
-	for (i = 0; i < i2c_ports_used && port != i2c_ports[i].port; i++)
-		;
-	if (i >= i2c_ports_used)
-		return EC_ERROR_PARAM1;
-
-	addr = strtoi(argv[2], &e, 0);
-	if (*e || (addr & 0x01))
-		return EC_ERROR_PARAM2;
-
-	if (argc > 3) {
-		count = strtoi(argv[3], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM3;
-	}
-
-	ccprintf("Reading %d bytes from %d:0x%02x:", count, port, addr);
-	i2c_lock(port, 1);
-	LM4_I2C_MSA(port) = addr | 0x01;
-	for (i = 0; i < count; i++) {
-		if (i == 0)
-			LM4_I2C_MCS(port) = (count > 1 ? 0x0b : 0x07);
-		else
-			LM4_I2C_MCS(port) = (i == count - 1 ? 0x05 : 0x09);
-		rv = wait_idle(port);
-		if (rv != EC_SUCCESS) {
-			LM4_I2C_MCS(port) = LM4_I2C_MCS_STOP;
-			i2c_lock(port, 0);
-			return rv;
-		}
-		d = LM4_I2C_MDR(port) & 0xff;
-		ccprintf(" 0x%02x", d);
-	}
-	i2c_lock(port, 0);
-	ccputs("\n");
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(i2cread, command_i2cread,
-			"port addr [count]",
-			"Read from I2C",
-			NULL);
