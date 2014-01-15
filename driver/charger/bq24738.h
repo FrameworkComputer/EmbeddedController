@@ -54,7 +54,4 @@
 #define ACPRES_DEGLITCH_150MS           (0 << 15)
 #define ACPRES_DEGLITCH_1300MS_DEFAULT  (1 << 15)
 
-/* Discharge battery when on AC power. */
-int charger_discharge_on_ac(int enable);
-
 #endif /* __CROS_EC_CHARGER_BQ24738_H */

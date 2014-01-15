@@ -7,6 +7,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "backlight.h"
+#include "charger.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -199,3 +200,11 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, 0, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/**
+ * Discharge battery when on AC power for factory test.
+ */
+int board_discharge_on_ac(int enable)
+{
+	return charger_discharge_on_ac(enable);
+}
