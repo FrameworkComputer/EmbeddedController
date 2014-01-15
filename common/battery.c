@@ -6,10 +6,26 @@
  */
 
 #include "battery.h"
+#include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+
+#ifdef CONFIG_BATTERY_PRESENT_GPIO
+#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
+#error "Don't define both CONFIG_BATTERY_PRESENT_CUSTOM and" \
+	"CONFIG_BATTERY_PRESENT_GPIO"
+#endif
+/**
+ * Physical detection of battery.
+ */
+int battery_is_present(void)
+{
+	return (gpio_get_level(CONFIG_BATTERY_PRESENT_GPIO) == 0);
+}
+#endif
 
 static const char *get_error_text(int rv)
 {

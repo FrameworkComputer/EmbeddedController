@@ -240,14 +240,3 @@ int battery_command_cut_off(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
 		     EC_VER_MASK(0));
-
-
-#ifdef CONFIG_BATTERY_CHECK_CONNECTED
-/**
- * Physical detection of battery connection.
- */
-int battery_is_connected(void)
-{
-	return (gpio_get_level(GPIO_BAT_DETECT_L) == 0);
-}
-#endif	/* CONFIG_BATTERY_CHECK_CONNECTED */

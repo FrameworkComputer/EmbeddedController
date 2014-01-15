@@ -98,11 +98,13 @@ void battery_get_params(struct batt_params *batt);
 void battery_vendor_params(struct batt_params *batt);
 
 /**
- * Attempt communication with the battery.
+ * Check for presence of battery.
  *
- * @return non-zero if the battery responds.
+ * @return non-zero if the battery is present. Note that the
+ * battery may not be responding on the i2c interface if it
+ * is deeply discharged.
  */
-int battery_is_connected(void);
+int battery_is_present(void);
 
 /**
  * Get battery mode.

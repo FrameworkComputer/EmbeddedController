@@ -309,10 +309,12 @@ struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
 /**
- * Physical detection of battery connection.
+ * Physical check of battery presence.
  */
-int battery_is_connected(void)
+int battery_is_present(void)
 {
 	return adc_read_channel(ADC_CH_BAT_TEMP) < (9 * ADC_READ_MAX / 10);
 }
+#endif
