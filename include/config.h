@@ -189,13 +189,10 @@
 
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
-#undef CONFIG_CHIPSET_GAIA	/* Gaia and Ares (ARM) */
+#undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
-#undef CONFIG_CHIPSET_TEGRA	/* Tegra */
-
-/* Compile common x86 chipset infrastructure.  Required for x86 chips. */
-#undef CONFIG_CHIPSET_X86
+#undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
 
 /* Support power rail control */
 #define CONFIG_CHIPSET_HAS_PP1350
@@ -574,6 +571,9 @@
 /* Support sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
 
+/* Compile common code for AP power state machine */
+#undef CONFIG_POWER_COMMON
+
 /*
  * The EC stores persistent state information for flash write protect in a
  * block of flash.  If this option is defined, the information is in the last
@@ -819,8 +819,8 @@
 #undef CONFIG_CHIPSET_GAIA
 #undef CONFIG_CHIPSET_HASWELL
 #undef CONFIG_CHIPSET_IVYBRIDGE
-#undef CONFIG_CHIPSET_X86
 #undef CONFIG_CHIPSET_TEGRA
+#undef CONFIG_POWER_COMMON
 #endif
 
 #ifndef HAS_TASK_KEYPROTO
