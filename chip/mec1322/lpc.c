@@ -194,7 +194,7 @@ static void setup_lpc(void)
 	MEC1322_LPC_EMI_BAR = 0x0800800f;
 	MEC1322_EMI_MBA0 = ptr;
 	MEC1322_EMI_MRL0 = 0x200;
-	MEC1322_EMI_MWL0 = 0x200;
+	MEC1322_EMI_MWL0 = 0x100;
 
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
