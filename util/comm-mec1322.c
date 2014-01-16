@@ -47,22 +47,56 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 	return -1;  /* Timeout */
 }
 
-static void write_memmap(uint8_t b, uint16_t addr)
+static inline void write_emi_address(uint16_t addr, int access_mode)
 {
-	addr -= 0x800;
-	outb(addr & 0xfc, 0x82);
+	addr -= 0x800; /* EMI base is at 0x800 */
+	outb((addr & 0xfc) | (access_mode & 0x3), 0x82);
 	outb((addr >> 8) & 0x7f, 0x83);
 	usleep(500);
+}
+
+static void write_memmap(uint8_t b, uint16_t addr)
+{
+	write_emi_address(addr, 0);
 	outb(b, 0x84 + (addr & 0x3));
 }
 
 static uint8_t read_memmap(uint16_t addr)
 {
-	addr -= 0x800;
-	outb(addr & 0xfc, 0x82);
-	outb((addr >> 8) & 0x7f, 0x83);
-	usleep(500);
+	write_emi_address(addr, 0);
 	return inb(0x84 + (addr & 0x3));
+}
+
+static int burst_read(uint8_t *out, int *csum, uint16_t addr, int sz)
+{
+	int i;
+	if (addr & 0x3) /* Unaligned access unsupported */
+		return 1;
+	write_emi_address(addr, 3);
+	while (sz) {
+		for (i = 0; i < 4 && sz; ++i, --sz, ++out) {
+			*out = inb(0x84 + i);
+			if (csum)
+				*csum += *out;
+		}
+	}
+	return 0;
+}
+
+static int burst_write(const uint8_t *data, int *csum, uint16_t addr, int sz)
+{
+	int i;
+	if (addr & 0x3) /* Unaligned access unsupported */
+		return 1;
+	write_emi_address(addr, 3);
+	while (sz) {
+		for (i = 0; i < 4 && sz; ++i, --sz, ++data) {
+			outb(*data, 0x84 + i);
+			if (csum)
+				*csum += *data;
+		}
+	}
+	return 0;
 }
 
 static void send_byte(uint8_t b, uint16_t addr)
@@ -86,8 +120,6 @@ static int ec_command_lpc(int command, int version,
 			  void *indata, int insize)
 {
 	struct ec_lpc_host_args args;
-	const uint8_t *d;
-	uint8_t *dout;
 	int csum;
 	int i;
 
@@ -100,15 +132,12 @@ static int ec_command_lpc(int command, int version,
 	csum = command + args.flags + args.command_version + args.data_size;
 
 	/* Write data and update checksum */
-	for (i = 0, d = (uint8_t *)outdata; i < outsize; i++, d++) {
-		send_byte(*d, EC_LPC_ADDR_HOST_PARAM + i);
-		csum += *d;
-	}
+	burst_write((uint8_t *)outdata, &csum, EC_LPC_ADDR_HOST_PARAM, outsize);
 
 	/* Finalize checksum and write args */
 	args.checksum = (uint8_t)csum;
-	for (i = 0, d = (const uint8_t *)&args; i < sizeof(args); i++, d++)
-		send_byte(*d, EC_LPC_ADDR_HOST_ARGS + i);
+	burst_write((const uint8_t *)&args, NULL,
+		    EC_LPC_ADDR_HOST_ARGS, sizeof(args));
 
 	send_byte(command, EC_LPC_ADDR_HOST_CMD);
 
@@ -125,8 +154,7 @@ static int ec_command_lpc(int command, int version,
 	}
 
 	/* Read back args */
-	for (i = 0, dout = (uint8_t *)&args; i < sizeof(args); i++, dout++)
-		*dout = read_byte(EC_LPC_ADDR_HOST_ARGS + i);
+	burst_read((uint8_t *)&args, NULL, EC_LPC_ADDR_HOST_ARGS, sizeof(args));
 
 	/*
 	 * If EC didn't modify args flags, then somehow we sent a new-style
@@ -147,11 +175,8 @@ static int ec_command_lpc(int command, int version,
 	csum = command + args.flags + args.command_version + args.data_size;
 
 	/* Read response and update checksum */
-	for (i = 0, dout = (uint8_t *)indata; i < args.data_size;
-	     i++, dout++) {
-		*dout = read_byte(EC_LPC_ADDR_HOST_PARAM + i);
-		csum += *dout;
-	}
+	burst_read((uint8_t *)indata, &csum,
+		   EC_LPC_ADDR_HOST_PARAM, args.data_size);
 
 	/* Verify checksum */
 	if (args.checksum != (uint8_t)csum) {
@@ -170,7 +195,6 @@ static int ec_command_lpc_3(int command, int version,
 	struct ec_host_request rq;
 	struct ec_host_response rs;
 	const uint8_t *d;
-	uint8_t *dout;
 	int csum = 0;
 	int i;
 
@@ -188,10 +212,8 @@ static int ec_command_lpc_3(int command, int version,
 	rq.data_len = outsize;
 
 	/* Copy data and start checksum */
-	for (i = 0, d = (const uint8_t *)outdata; i < outsize; i++, d++) {
-		send_byte(*d, EC_LPC_ADDR_HOST_PACKET + sizeof(rq) + i);
-		csum += *d;
-	}
+	burst_write((const uint8_t *)outdata, &csum,
+		    EC_LPC_ADDR_HOST_PACKET + sizeof(rq), outsize);
 
 	/* Finish checksum */
 	for (i = 0, d = (const uint8_t *)&rq; i < sizeof(rq); i++, d++)
@@ -201,8 +223,8 @@ static int ec_command_lpc_3(int command, int version,
 	rq.checksum = (uint8_t)(-csum);
 
 	/* Copy header */
-	for (i = 0, d = (const uint8_t *)&rq; i < sizeof(rq); i++, d++)
-		send_byte(*d, EC_LPC_ADDR_HOST_PACKET + i);
+	burst_write((const uint8_t *)&rq, NULL,
+		    EC_LPC_ADDR_HOST_PACKET, sizeof(rq));
 
 	/* Start the command */
 	send_byte(EC_COMMAND_PROTOCOL_3, EC_LPC_ADDR_HOST_CMD);
@@ -221,10 +243,7 @@ static int ec_command_lpc_3(int command, int version,
 
 	/* Read back response header and start checksum */
 	csum = 0;
-	for (i = 0, dout = (uint8_t *)&rs; i < sizeof(rs); i++, dout++) {
-		*dout = read_byte(EC_LPC_ADDR_HOST_PACKET + i);
-		csum += *dout;
-	}
+	burst_read((uint8_t *)&rs, &csum, EC_LPC_ADDR_HOST_PACKET, sizeof(rs));
 
 	if (rs.struct_version != EC_HOST_RESPONSE_VERSION) {
 		fprintf(stderr, "EC response version mismatch\n");
@@ -242,10 +261,8 @@ static int ec_command_lpc_3(int command, int version,
 	}
 
 	/* Read back data and update checksum */
-	for (i = 0, dout = (uint8_t *)indata; i < rs.data_len; i++, dout++) {
-		*dout = read_byte(EC_LPC_ADDR_HOST_PACKET + sizeof(rs) + i);
-		csum += *dout;
-	}
+	burst_read((uint8_t *)indata, &csum,
+		   EC_LPC_ADDR_HOST_PACKET + sizeof(rs), rs.data_len);
 
 	/* Verify checksum */
 	if ((uint8_t)csum) {
