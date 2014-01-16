@@ -119,6 +119,16 @@ int i2c_write8(int port, int slave_addr, int offset, int data)
  * as ectool supports EC_CMD_I2C_PASSTHRU.
  */
 
+static int port_is_valid(int port)
+{
+	int i;
+
+	for (i = 0; i < i2c_ports_used; i++)
+		if (i2c_ports[i].port == port)
+			return 1;
+	return 0;
+}
+
 static int i2c_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_read *p = args->params;
@@ -130,7 +140,10 @@ static int i2c_command_read(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if  (p->read_size == 16)
+	if (!port_is_valid(p->port))
+		return EC_RES_INVALID_PARAM;
+
+	if (p->read_size == 16)
 		rv = i2c_read16(p->port, p->addr, p->offset, &data);
 	else if (p->read_size == 8)
 		rv = i2c_read8(p->port, p->addr, p->offset, &data);
@@ -153,6 +166,9 @@ static int i2c_command_write(struct host_cmd_handler_args *args)
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
 #endif
+
+	if (!port_is_valid(p->port))
+		return EC_RES_INVALID_PARAM;
 
 	if (p->write_size == 16)
 		rv = i2c_write16(p->port, p->addr, p->offset, p->data);
@@ -200,7 +216,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	if (params->port >= I2C_PORT_COUNT) {
+	if (!port_is_valid(params->port)) {
 		PTHRUPRINTF("[%T i2c passthru invalid port %d]\n",
 			    params->port);
 		return EC_RES_INVALID_PARAM;
