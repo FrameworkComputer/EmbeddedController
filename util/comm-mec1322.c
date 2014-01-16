@@ -3,9 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* This is a temporary HACK for MEC1322. */
-
-/* TODO(crosbug.com/p/24280): Remove this file and use comm-lpc.c */
+/* LPC communication protocol for MEC1322 */
 
 #include <stdint.h>
 #include <stdio.h>
