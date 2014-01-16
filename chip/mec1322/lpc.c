@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
+#include "port80.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -186,15 +187,15 @@ static void setup_lpc(void)
 
 	/* TODO(crosbug.com/p/24107): Route KIRQ to SER_IRQ1 */
 
-	/* Set up EMI module for memory mapped region.
-	 * TODO(crosbug.com/p/24107): Use LPC memory transaction for this
-	 *                            when we have updated info of memory BAR
-	 *                            register.
-	 */
-	MEC1322_LPC_EMI_BAR = 0x0800800f;
+	/* Set up EMI module for memory mapped region and port 80 */
+	MEC1322_LPC_EMI_BAR = 0x0080800f;
 	MEC1322_EMI_MBA0 = ptr;
 	MEC1322_EMI_MRL0 = 0x200;
 	MEC1322_EMI_MWL0 = 0x100;
+
+	MEC1322_INT_ENABLE(15) |= 1 << 2;
+	MEC1322_INT_BLK_EN |= 1 << 15;
+	task_enable_irq(MEC1322_IRQ_EMI);
 
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
@@ -223,6 +224,12 @@ static void lpc_init(void)
  * before other inits try to initialize their memmap data.
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
+
+static void emi_interrupt(void)
+{
+	port_80_write(MEC1322_EMI_H2E_MBX);
+}
+DECLARE_IRQ(MEC1322_IRQ_EMI, emi_interrupt, 1);
 
 static void acpi_0_interrupt(void)
 {

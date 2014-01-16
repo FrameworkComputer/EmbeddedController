@@ -50,19 +50,19 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 static void write_memmap(uint8_t b, uint16_t addr)
 {
 	addr -= 0x800;
-	outb(addr & 0xfc, 0x802);
-	outb((addr >> 8) & 0x7f, 0x803);
+	outb(addr & 0xfc, 0x82);
+	outb((addr >> 8) & 0x7f, 0x83);
 	usleep(500);
-	outb(b, 0x804 + (addr & 0x3));
+	outb(b, 0x84 + (addr & 0x3));
 }
 
 static uint8_t read_memmap(uint16_t addr)
 {
 	addr -= 0x800;
-	outb(addr & 0xfc, 0x802);
-	outb((addr >> 8) & 0x7f, 0x803);
+	outb(addr & 0xfc, 0x82);
+	outb((addr >> 8) & 0x7f, 0x83);
 	usleep(500);
-	return inb(0x804 + (addr & 0x3));
+	return inb(0x84 + (addr & 0x3));
 }
 
 static void send_byte(uint8_t b, uint16_t addr)
