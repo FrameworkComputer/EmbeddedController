@@ -292,8 +292,14 @@ enum power_state power_handle_state(enum power_state state)
 		/* Disable +CPU_CORE */
 		gpio_set_level(GPIO_VCORE_EN, 0);
 
+#ifdef CONFIG_WIRELESS_SUSPEND_ENABLE_WIFI
+		/* Disable WWAN, but leave WiFi on */
+		wireless_enable(EC_WIRELESS_SWITCH_WLAN |
+				EC_WIRELESS_SWITCH_WLAN_POWER);
+#else
 		/* Disable wireless */
 		wireless_enable(0);
+#endif
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
@@ -315,6 +321,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+		/* Disable wireless */
+		wireless_enable(0);
 
 		/* Disable touchpad power */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);

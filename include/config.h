@@ -773,6 +773,11 @@
 #undef CONFIG_WIRELESS
 
 /*
+ * Support for WiFi devices that must remain powered in suspend.
+ */
+#undef CONFIG_WIRELESS_SUSPEND_ENABLE_WIFI
+
+/*
  * Write protect signal is active-high.  If this is defined, there must be a
  * GPIO named GPIO_WP; if not defined, there must be a GPIO names GPIO_WP_L.
  */
