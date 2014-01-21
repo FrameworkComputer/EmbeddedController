@@ -9,6 +9,7 @@
 #include "flash.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
+#include "stack_trace.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"

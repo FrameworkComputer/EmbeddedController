@@ -8,8 +8,8 @@
 
 #include "common.h"
 #include "console.h"
-#include "test_util.h"
 #include "task.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 

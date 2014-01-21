@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "stack_trace.h"
 
 #define RUN_TEST(n) \
 	do { \
@@ -130,19 +131,8 @@ void interrupt_generator_udelay(unsigned us);
 
 #ifdef EMU_BUILD
 void wait_for_task_started(void);
-
-/*
- * Register trace dump handler for emulator. Trace dump is printed to stderr
- * when SIGUSR2 is received.
- */
-void task_register_tracedump(void);
-
-/* Dump current stack trace */
-void task_dump_trace(void);
 #else
 static inline void wait_for_task_started(void) { }
-static inline void task_register_tracedump(void) { }
-static inline void task_dump_trace(void) { }
 #endif
 
 uint32_t prng(uint32_t seed);

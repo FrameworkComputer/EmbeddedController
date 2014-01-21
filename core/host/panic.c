@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "panic.h"
+#include "stack_trace.h"
 #include "test_util.h"
 #include "util.h"
 

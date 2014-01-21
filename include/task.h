@@ -105,6 +105,11 @@ uint32_t task_wait_event(int timeout_us);
  */
 void task_print_list(void);
 
+/**
+ * Returns the name of the task.
+ */
+const char *task_get_name(task_id_t tskid);
+
 #ifdef CONFIG_TASK_PROFILING
 /**
  * Start tracking an interrupt.
