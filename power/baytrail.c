@@ -16,6 +16,7 @@
 #include "power.h"
 #include "system.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "util.h"
 #include "wireless.h"
 
@@ -315,12 +316,26 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Turn off power rails */
 		gpio_set_level(GPIO_PP3300_DX_EN, 0);
+
+#ifdef CONFIG_USB_PORT_POWER_IN_S3
+		/*
+		 * Disable the 5V rail if all USB ports are disabled.  Else
+		 * leave 5V enabled so the ports will continue to work in S3.
+		 */
+		if (!usb_charge_ports_enabled())
+			gpio_set_level(GPIO_PP5000_EN, 0);
+#else
 		gpio_set_level(GPIO_PP5000_EN, 0);
+#endif
+
 		return POWER_S3;
 
 	case POWER_S3S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+
+		/* Turn off 5V rail (if it wasn't turned off in S3) */
+		gpio_set_level(GPIO_PP5000_EN, 0);
 
 		/* Disable wireless */
 		wireless_enable(0);

@@ -85,6 +85,19 @@ static void usb_charge_all_ports_off(void)
 	usb_charge_set_mode(1, USB_CHARGE_MODE_DISABLED);
 }
 
+int usb_charge_ports_enabled(void)
+{
+	int mask = 0;
+
+	if (gpio_get_level(GPIO_USB1_ENABLE))
+		mask |= (1 << 0);
+
+	if (gpio_get_level(GPIO_USB2_ENABLE))
+		mask |= (1 << 1);
+
+	return mask;
+}
+
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
 	CPRINTF("[%T USB charge p%d m%d]\n", port_id, mode);

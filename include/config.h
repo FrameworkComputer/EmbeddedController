@@ -728,6 +728,12 @@
 #undef CONFIG_USB_PORT_POWER_DUMB
 
 /*
+ * Support supplying USB power in S3, if the host leaves the port enabled when
+ * entering S3.
+ */
+#undef CONFIG_USB_PORT_POWER_IN_S3
+
+/*
  * Support smart power control to the device's USB ports, using
  * dedicated power control chips.  This potentially enables automatic
  * negotiation of supplying more power to peripherals.
