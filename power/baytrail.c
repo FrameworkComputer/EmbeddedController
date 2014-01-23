@@ -89,11 +89,11 @@ void chipset_reset(int cold_reset)
 		/*
 		 * Send a reset pulse to the PCH.  This just causes it to
 		 * assert INIT# to the CPU without dropping power or asserting
-		 * PLTRST# to reset the rest of the system.  Pulse must be at
-		 * least 16 PCI clocks long = 500 ns.
+		 * PLTRST# to reset the rest of the system.  The PCH uses a 16
+		 * ms debounce time, so assert the signal for twice that.
 		 */
 		gpio_set_level(GPIO_PCH_RCIN_L, 0);
-		udelay(10);
+		usleep(32 * MSEC);
 		gpio_set_level(GPIO_PCH_RCIN_L, 1);
 	}
 }
