@@ -210,6 +210,7 @@ enum power_state power_handle_state(enum power_state state)
 		while ((power_get_signals() & IN_PGOOD_PP5000) != 0) {
 			if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 				CPRINTF("[%T timeout waiting for PP5000\n");
+				gpio_set_level(GPIO_PP5000_EN, 0);
 				chipset_force_shutdown();
 				return POWER_G3;
 			}
@@ -227,6 +228,9 @@ enum power_state power_handle_state(enum power_state state)
 		/* Wait for 1.05V to come up and CPU to notice */
 		if (power_wait_signals(IN_PGOOD_PP1050 |
 				     IN_PCH_SLP_SUS_DEASSERTED)) {
+			gpio_set_level(GPIO_PP1050_EN, 0);
+			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
+			gpio_set_level(GPIO_PP5000_EN, 0);
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
@@ -243,6 +247,8 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP1800_EN, 1);
 		gpio_set_level(GPIO_PP1200_EN, 1);
 		if (power_wait_signals(IN_PGOOD_S3)) {
+			gpio_set_level(GPIO_PP1800_EN, 0);
+			gpio_set_level(GPIO_PP1200_EN, 0);
 			chipset_force_shutdown();
 			return POWER_S5;
 		}

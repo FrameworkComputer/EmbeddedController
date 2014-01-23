@@ -213,6 +213,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		gpio_set_level(GPIO_SUSP_VR_EN, 1);
 		if (power_wait_signals(IN_PGOOD_PP1050)) {
+			gpio_set_level(GPIO_SUSP_VR_EN, 0);
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
@@ -229,7 +230,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP5000_EN, 1);
 		if (power_wait_signals(IN_PGOOD_PP5000)) {
 			chipset_force_shutdown();
-			return POWER_G3;
+			return POWER_S5G3;
 		}
 
 		/* Wait for the always-on rails to be good */
