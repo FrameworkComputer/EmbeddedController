@@ -229,6 +229,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 		/* Turn on power rails */
 		gpio_set_level(GPIO_PP5000_EN, 1);
+		usleep(3 * MSEC);  /* Small delay; see crosbug.com/p/25271 */
 		gpio_set_level(GPIO_PP3300_DX_EN, 1);
 
 		/* Enable wireless */
