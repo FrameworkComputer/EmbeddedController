@@ -92,7 +92,7 @@ const struct gpio_info gpio_list[] = {
 	{"PCH_RSMRST_L",         LM4_GPIO_F, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_SMI_L",            LM4_GPIO_F, (1<<4), GPIO_ODR_HIGH, NULL},
 	{"PCH_SOC_OVERRIDE",     LM4_GPIO_G, (1<<1), GPIO_OUT_LOW, NULL},
-	{"PCH_SYS_PWROK",        LM4_GPIO_H, (1<<2), GPIO_OUT_LOW, NULL},
+	{"PCH_SYS_PWROK",        LM4_GPIO_J, (1<<1), GPIO_OUT_LOW, NULL},
 	{"PCH_WAKE_L",           LM4_GPIO_F, (1<<0), GPIO_ODR_HIGH, NULL},
 	{"PP1350_EN",            LM4_GPIO_H, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP3300_DX_EN",         LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
