@@ -508,6 +508,12 @@
  * Low power idle options. These are disabled by default and all boards that
  * want to use low power idle must define it. When using the LFIOSC, the low
  * frequency clock will be used to conserve even more power when possible.
+ *
+ * GPIOs which need to trigger interrupts in low power idle must specify the
+ * GPIO_INT_DSLEEP flag in gpio_list[].
+ *
+ * Note that for some processors (e.g. LM4), an active JTAG connection will
+ * prevent the EC from using low-power idle.
  */
 #undef CONFIG_LOW_POWER_IDLE
 #undef CONFIG_LOW_POWER_USE_LFIOSC
