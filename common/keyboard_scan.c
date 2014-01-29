@@ -213,18 +213,27 @@ static int read_matrix(uint8_t *state)
 
 		/* Read the row state */
 		r = keyboard_raw_read_rows();
-		/* Mask off keys that don't exist on the actual keyboard */
-		r &= keyscan_config.actual_key_mask[c];
+
 		/* Add in simulated keypresses */
 		r |= simulated_key[c];
+
+		/*
+		 * Keep track of what keys appear to be pressed.  Even if they
+		 * don't exist in the matrix, they'll keep triggering
+		 * interrupts, so we can't leave scanning mode.
+		 */
+		pressed |= r;
+
+		/* Mask off keys that don't exist on the actual keyboard */
+		r &= keyscan_config.actual_key_mask[c];
 
 #ifdef CONFIG_KEYBOARD_TEST
 		/* Use simulated keyscan sequence instead if testing active */
 		r = keyscan_seq_get_scan(c, r);
 #endif
 
+		/* Store the masked state */
 		state[c] = r;
-		pressed |= r;
 	}
 
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
