@@ -35,9 +35,15 @@ static int raw_power_button_pressed(void)
 	if (simulate_power_pressed)
 		return 1;
 
-	/* Ignore power button if lid is closed */
+#ifndef CONFIG_POWER_BUTTON_IGNORE_LID
+	/*
+	 * Always indicate power button released if the lid is closed.
+	 * This prevents waking the system if the device is squashed enough to
+	 * press the power button through the closed lid.
+	 */
 	if (!lid_is_open())
 		return 0;
+#endif
 
 	return gpio_get_level(GPIO_POWER_BUTTON_L) ? 0 : 1;
 }

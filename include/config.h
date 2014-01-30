@@ -574,6 +574,9 @@
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
+/* Allow the power button to send events while the lid is closed */
+#undef CONFIG_POWER_BUTTON_IGNORE_LID
+
 /* Support sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
 
