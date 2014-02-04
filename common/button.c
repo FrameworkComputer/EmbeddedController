@@ -77,8 +77,10 @@ static void button_change_deferred(void)
 				CPRINTF("[%T Button '%s' was %s]\n",
 					buttons[i].name, new_pressed ?
 					"pressed" : "released");
+#ifdef HAS_TASK_KEYPROTO
 				keyboard_update_button(buttons[i].type,
 					new_pressed);
+#endif
 			}
 
 			/* Clear the debounce time to stop checking it */
