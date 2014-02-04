@@ -177,6 +177,10 @@ static int hang_detect_host_command(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	}
 
+	/* If hang detect transitioning to disabled, stop timers */
+	if (hdparams.flags && !p->flags)
+		hang_detect_stop("ap flags=0");
+
 	/* Save new params */
 	hdparams = *p;
 	CPRINTF("[%T hang detect flags=0x%x, event=%d ms, reboot=%d ms]\n",
