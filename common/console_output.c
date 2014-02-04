@@ -44,6 +44,7 @@ static const char * const channel_names[] = {
 	"keyscan",
 	"lightbar",
 	"lpc",
+	"motionsense",
 	"port80",
 	"pwm",
 	"spi",

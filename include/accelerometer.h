@@ -3,6 +3,11 @@
  * found in the LICENSE file.
  */
 
+#ifndef __CROS_EC_ACCELEROMETER_H
+#define __CROS_EC_ACCELEROMETER_H
+
+/* Header file for accelerometer drivers. */
+
 /* This array must be defined in board.c. */
 extern const int accel_addr[];
 
@@ -34,3 +39,5 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc);
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int accel_init(enum accel_id id);
+
+#endif /* __CROS_EC_ACCELEROMETER_H */

@@ -10,6 +10,7 @@ common-y=main.o util.o console_output.o uart_buffering.o
 common-y+=memory_commands.o shared_mem.o system.o hooks.o
 common-y+=gpio.o version.o printf.o queue.o
 
+common-$(CONFIG_ACCEL_CALIBRATE)+=motion_calibrate.o
 common-$(CONFIG_ADC)+=adc.o
 common-$(CONFIG_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
@@ -63,4 +64,6 @@ common-$(HAS_TASK_CONSOLE)+=console.o
 common-$(HAS_TASK_HOSTCMD)+=acpi.o host_command.o host_event_commands.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lightbar.o
+common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o math_util.o
 common-$(TEST_BUILD)+=test_util.o
+
