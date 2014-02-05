@@ -111,10 +111,6 @@ enum gpio_signal {
 	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
 	GPIO_PCH_SOC_OVERRIDE,     /* SOC override signal to PCH; when high, ME
 				    * ignores security descriptor */
-	/*
-	 * TODO(crosbug.com/p/24424): Remove old assignment and remove _NEW
-	 * from the new one when we deprecate the 1.5 boards.
-	 */
 	GPIO_PCH_SYS_PWROK,        /* EC thinks everything is up and ready */
 	GPIO_PCH_WAKE_L,           /* Wake signal from EC to PCH */
 	GPIO_PP1350_EN,            /* Enable 1.35V supply */
