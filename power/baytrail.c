@@ -267,8 +267,11 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
 
-		/* Wait 100ms after all voltages good */
-		msleep(100);
+		/*
+		 * Wait 5 ms after all voltages good.  100 ms is only needed
+		 * for PCIe devices; mini-PCIe devices should need only 1 ms.
+		 */
+		msleep(5);
 
 		/*
 		 * Throttle CPU if necessary.  This should only be asserted
