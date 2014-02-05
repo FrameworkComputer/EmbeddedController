@@ -342,8 +342,9 @@ enum power_state power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_enable(0);
 
-		/* Disable touchpad power */
+		/* Disable touchpad power and hold touchscreen in reset */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 
 		/* Turn off power to RAM */
 		gpio_set_level(GPIO_PP1350_EN, 0);
