@@ -19,9 +19,9 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 enum led_color {
 	LED_OFF = 0,
 	LED_RED,
+	LED_ORANGE,
 	LED_YELLOW,
 	LED_GREEN,
-	LED_DIM_GREEN,
 
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
@@ -31,9 +31,9 @@ enum led_color {
 static const uint8_t color_brightness[LED_COLOR_COUNT][2] = {
 	{0, 0},
 	{100, 0},
-	{40, 80},
+	{30, 45},
+	{20, 60},
 	{0, 100},
-	{0, 10},
 };
 
 /**
@@ -80,31 +80,18 @@ DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
  */
 static void led_tick(void)
 {
-	static int suspended_prev;
 	static unsigned ticks;
-	int blink_on;
-
-	int suspended = chipset_in_state(CHIPSET_STATE_SUSPEND);
 	int chstate = charge_get_state();
+
+	ticks++;
 
 	/* If we don't control the LED, nothing to do */
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;
 
-	/* If we're just suspending now, reset ticks so LED changes quickly */
-	if (suspended && !suspended_prev)
-		ticks = 0;
-	else
-		ticks++;
-
-	suspended_prev = suspended;
-
-	/* Blink with 25% duty cycle, 4 sec period */
-	blink_on = ticks % 16 < 4;
-
-	/* If charging error, blink red */
+	/* If charging error, blink orange, 25% duty cycle, 4 sec period */
 	if (chstate == PWR_STATE_ERROR) {
-		set_color(blink_on ? LED_RED : LED_OFF);
+		set_color((ticks % 16) < 4 ? LED_ORANGE : LED_OFF);
 		return;
 	}
 
@@ -115,20 +102,9 @@ static void led_tick(void)
 		return;
 	}
 
-	/*
-	 * If the system is charging, solid yellow.
-	 *
-	 * Note that this means you can't distinguish power states
-	 * (on/suspend/off) when the system is charging.
-	 */
+	/* If the system is charging, solid orange */
 	if (chstate == PWR_STATE_CHARGE) {
-		set_color(LED_YELLOW);
-		return;
-	}
-
-	/* If suspended, blink yellow */
-	if (suspended) {
-		set_color(blink_on ? LED_YELLOW : LED_OFF);
+		set_color(LED_ORANGE);
 		return;
 	}
 
@@ -136,12 +112,6 @@ static void led_tick(void)
 	if (chstate == PWR_STATE_CHARGE_NEAR_FULL ||
 	    chstate == PWR_STATE_IDLE) {
 		set_color(LED_GREEN);
-		return;
-	}
-
-	/* If powered on, dim green (just as an indicator we're on) */
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		set_color(LED_DIM_GREEN);
 		return;
 	}
 
