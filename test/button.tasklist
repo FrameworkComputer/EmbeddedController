@@ -1,4 +1,4 @@
-/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -14,4 +14,5 @@
  * 'd' in an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
-#define CONFIG_TEST_TASK_LIST  /* No test task */
+#define CONFIG_TEST_TASK_LIST \
+        TASK_TEST(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE)

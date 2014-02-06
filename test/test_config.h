@@ -84,6 +84,7 @@ int board_discharge_on_ac(int enabled);
 
 #ifdef TEST_BUTTON
 #define CONFIG_BUTTON_COUNT 2
+#define CONFIG_KEYBOARD_PROTOCOL_8042
 #endif
 
 #endif  /* TEST_BUILD */
