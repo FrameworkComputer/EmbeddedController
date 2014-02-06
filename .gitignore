@@ -4,3 +4,4 @@ private/
 *.pyc
 tags
 cscope.out
+.tests-passed

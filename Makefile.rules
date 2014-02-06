@@ -67,6 +67,8 @@ targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 all: $(out)/$(PROJECT).bin utils
 
 buildall: $(foreach b, $(boards), proj-$(b)) runtests
+	@touch .tests-passed
+
 proj-%:
 	@echo "======= building $*"; \
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
