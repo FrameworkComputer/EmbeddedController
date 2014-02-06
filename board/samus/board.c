@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "backlight.h"
+#include "capsense.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp006.h"
 #include "driver/als_isl29035.h"
@@ -64,6 +65,8 @@ const struct gpio_info gpio_list[] = {
 	 switch_interrupt},
 	{"PCH_BL_EN",            LM4_GPIO_M, (1<<3), GPIO_INT_RISING,
 	 backlight_interrupt},
+	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INT_FALLING,
+	capsense_interrupt},
 
 	/* Other inputs */
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
@@ -76,8 +79,6 @@ const struct gpio_info gpio_list[] = {
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
 	{"USB2_STATUS_L",        LM4_GPIO_D, (1<<7), GPIO_INPUT, NULL},
-	/* Not yet sure if this will need to be handled as an interrupt */
-	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INPUT, NULL},
 
 	/* Outputs; all unasserted by default except for reset signals */
 	{"CPU_PROCHOT",          LM4_GPIO_B, (1<<1), GPIO_OUT_LOW, NULL},

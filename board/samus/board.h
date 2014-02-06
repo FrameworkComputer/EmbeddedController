@@ -18,6 +18,7 @@
 #define CONFIG_ALS
 #define CONFIG_ALS_ISL29035
 #define CONFIG_BOARD_VERSION
+#define CONFIG_CAPSENSE
 #define CONFIG_POWER_COMMON
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_KEYBOARD_BOARD_CONFIG
@@ -92,6 +93,7 @@ enum gpio_signal {
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
 	GPIO_WP_L,                 /* Write protect input */
 	GPIO_PCH_BL_EN,            /* PCH backlight input */
+	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
@@ -104,7 +106,6 @@ enum gpio_signal {
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_STATUS_L,        /* USB charger port 2 status output */
-	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt (through EC_WAKE_L) */
 
 	/* Outputs */
 	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */

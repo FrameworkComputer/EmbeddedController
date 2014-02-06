@@ -145,6 +145,11 @@
  */
 #undef CONFIG_BUTTON_COUNT
 
+/*
+ * Capsense chip has buttons, too.
+ */
+#undef CONFIG_CAPSENSE
+
 /*****************************************************************************/
 /* Charger config */
 

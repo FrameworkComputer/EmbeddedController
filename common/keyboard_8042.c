@@ -192,9 +192,11 @@ static const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 /* Button scancodes. Must be in the same order as defined in button_type */
 static const uint16_t button_scancodes[2][KEYBOARD_BUTTON_COUNT] = {
 	/* Set 1 */
-	{0xe05e, 0xe02e, 0xe030},
+	{0xe05e, 0xe02e, 0xe030,
+	 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009},
 	/* Set 2 */
-	{0xe037, 0xe021, 0xe032},
+	{0xe037, 0xe021, 0xe032,
+	 0x0016, 0x001e, 0x0026, 0x0025, 0x002e, 0x0036, 0x003d, 0x003e},
 };
 
 /*****************************************************************************/
