@@ -664,6 +664,17 @@ int charge_get_percent(void)
 	return task_ctx.curr.batt.state_of_charge;
 }
 
+int charge_temp_sensor_get_val(int idx, int *temp_ptr)
+{
+	const struct batt_params *batt = &task_ctx.curr.batt;
+
+	if (!(batt->flags & BATT_FLAG_RESPONSIVE))
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = C_TO_K(DECI_KELVIN_TO_CELSIUS(batt->temperature));
+	return EC_SUCCESS;
+}
+
 int charge_want_shutdown(void)
 {
 	return (charge_get_state() == PWR_STATE_DISCHARGE) &&

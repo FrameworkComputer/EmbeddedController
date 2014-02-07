@@ -23,6 +23,8 @@ enum temp_sensor_type {
 	TEMP_SENSOR_TYPE_BOARD,
 	/* Case temperature sensors. */
 	TEMP_SENSOR_TYPE_CASE,
+	/* Battery temperature sensors. */
+	TEMP_SENSOR_TYPE_BATTERY,
 
 	TEMP_SENSOR_TYPE_COUNT
 };

@@ -143,5 +143,16 @@ int charge_want_shutdown(void);
 #else
 static inline int charge_want_shutdown(void) { return 0; }
 #endif
+
+/**
+ * Get the last polled battery/charger temperature.
+ *
+ * @param idx		Sensor index to read.
+ * @param temp_ptr	Destination for temperature in K.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
+int charge_temp_sensor_get_val(int idx, int *temp_ptr);
+
 #endif /* __CROS_EC_CHARGE_STATE_H */
 
