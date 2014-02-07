@@ -194,9 +194,8 @@ static const uint16_t button_scancodes[2][KEYBOARD_BUTTON_COUNT] = {
 	/* Set 1 */
 	{0xe05e, 0xe02e, 0xe030},
 	/* Set 2 */
-	{0xe037, 0xe021, 0xe033},
+	{0xe037, 0xe021, 0xe032},
 };
-BUILD_ASSERT(ARRAY_SIZE(button_scancodes[0]) == KEYBOARD_BUTTON_COUNT);
 
 /*****************************************************************************/
 /* Keyboard event log */
