@@ -76,6 +76,15 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result = dptf_query_next_sensor_event();
 			break;
 #endif
+#ifdef CONFIG_CHARGER
+		case EC_ACPI_MEM_CHARGING_LIMIT:
+			result = dptf_get_charging_current_limit();
+			if (result >= 0)
+				result /= EC_ACPI_MEM_CHARGING_LIMIT_STEP_MA;
+			else
+				result = EC_ACPI_MEM_CHARGING_LIMIT_DISABLED;
+			break;
+#endif
 		default:
 			CPRINTF("[%T ACPI read 0x%02x (ignored)]\n", acpi_addr);
 			break;
@@ -123,6 +132,16 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 						idx, enable);
 			break;
 		}
+#endif
+#ifdef CONFIG_CHARGER
+		case EC_ACPI_MEM_CHARGING_LIMIT:
+			if (data == EC_ACPI_MEM_CHARGING_LIMIT_DISABLED) {
+				dptf_set_charging_current_limit(-1);
+			} else {
+				data *= EC_ACPI_MEM_CHARGING_LIMIT_STEP_MA;
+				dptf_set_charging_current_limit(data);
+			}
+			break;
 #endif
 		default:
 			CPRINTF("[%T ACPI write 0x%02x = 0x%02x (ignored)]\n",

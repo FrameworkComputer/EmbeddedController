@@ -8,6 +8,7 @@
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "dptf.h"
 #include "host_command.h"
 #include "printf.h"
 #include "util.h"
@@ -15,6 +16,19 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+
+/* DPTF current limit, -1 = none */
+static int dptf_limit_ma = -1;
+
+void dptf_set_charging_current_limit(int ma)
+{
+	dptf_limit_ma = ma >= 0 ? ma : -1;
+}
+
+int dptf_get_charging_current_limit(void)
+{
+	return dptf_limit_ma;
+}
 
 int charger_closest_voltage(int voltage)
 {
@@ -38,6 +52,10 @@ int charger_closest_voltage(int voltage)
 int charger_closest_current(int current)
 {
 	const struct charger_info * const info = charger_get_info();
+
+	/* Apply DPTF limit if necessary */
+	if (dptf_limit_ma >= 0 && current > dptf_limit_ma)
+		current = dptf_limit_ma;
 
 	/*
 	 * If the requested current is non-zero but below our minimum,
@@ -112,6 +130,13 @@ static int print_info(void)
 			 info->input_current_min, info->input_current_max,
 			 info->input_current_step);
 
+	/* dptf current limit */
+	print_item_name("I_dptf:");
+	if (dptf_limit_ma >= 0)
+		ccprintf("%5d\n", dptf_limit_ma);
+	else
+		ccputs("disabled\n");
+
 	return EC_SUCCESS;
 }
 
@@ -138,11 +163,17 @@ static int command_charger(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM2;
 		return charger_set_voltage(d);
+	} else if (strcasecmp(argv[1], "dptf") == 0) {
+		d = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+		dptf_limit_ma = d;
+		return EC_SUCCESS;
 	} else
 		return EC_ERROR_PARAM1;
 }
 
 DECLARE_CONSOLE_COMMAND(charger, command_charger,
-			"[input | current | voltage] [newval]",
+			"[input | current | voltage | dptf] [newval]",
 			"Get or set charger param(s)",
 			NULL);

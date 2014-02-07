@@ -1971,6 +1971,14 @@ struct ec_params_reboot_ec {
  *   write 0x1 to [0x07]    --  disable threshold 1
  */
 
+/* DPTF battery charging current limit */
+#define EC_ACPI_MEM_CHARGING_LIMIT     0x08
+
+/* Charging limit is specified in 64 mA steps */
+#define EC_ACPI_MEM_CHARGING_LIMIT_STEP_MA   64
+/* Value to disable DPTF battery charging limit */
+#define EC_ACPI_MEM_CHARGING_LIMIT_DISABLED  0xff
+
 /* Current version of ACPI memory address space */
 #define EC_ACPI_MEM_VERSION_CURRENT 1
 
