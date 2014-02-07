@@ -177,7 +177,11 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* Temperature sensors data; must be in same order as enum temp_sensor_id. */
+/*
+ * Temperature sensors data; must be in same order as enum temp_sensor_id.
+ * Sensor index and name must match those present in coreboot:
+ *     src/mainboard/google/${board}/acpi/dptf.asl
+ */
 const struct temp_sensor_t temp_sensors[] = {
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
 	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
