@@ -83,6 +83,57 @@ static int test_memmove(void)
 	return EC_SUCCESS;
 }
 
+static int test_memcpy(void)
+{
+	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int dest_offset = 500;
+	const int iteration = 1000;
+
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	for (i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (i = len; i < buf_size; ++i)
+		buf[i] = 0;
+
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memcpy(buf + dest_offset + 1, buf, len);  /* unaligned */
+	t1 = get_time();
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, len);
+	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memcpy(buf + dest_offset, buf, len);	  /* aligned */
+	t3 = get_time();
+	ccprintf(" %d us) ", t3.val-t2.val);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
+
+	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+
+	memcpy(buf + dest_offset + 1, buf + 1, len - 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf + 1, len - 1);
+
+	/* Test small copies */
+	memcpy(buf + dest_offset, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, 1);
+	memcpy(buf + dest_offset, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, 4);
+	memcpy(buf + dest_offset + 1, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, 1);
+	memcpy(buf + dest_offset + 1, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, 4);
+
+	shared_mem_release(buf);
+	return EC_SUCCESS;
+}
+
 static int test_strzcpy(void)
 {
 	char dest[10];
@@ -305,6 +356,7 @@ void run_test(void)
 	RUN_TEST(test_strtoi);
 	RUN_TEST(test_parse_bool);
 	RUN_TEST(test_memmove);
+	RUN_TEST(test_memcpy);
 	RUN_TEST(test_strzcpy);
 	RUN_TEST(test_strlen);
 	RUN_TEST(test_strcasecmp);
