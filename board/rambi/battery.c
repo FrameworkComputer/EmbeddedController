@@ -48,7 +48,7 @@ static int cutoff(void)
 
 static int battery_command_cut_off(struct host_cmd_handler_args *args)
 {
-	return cutoff() ? EC_RES_SUCCESS : EC_RES_ERROR;
+	return cutoff() ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
 		     EC_VER_MASK(0));
