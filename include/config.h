@@ -821,9 +821,11 @@
 #undef CONFIG_WIRELESS
 
 /*
- * Support for WiFi devices that must remain powered in suspend.
+ * Support for WiFi devices that must remain powered in suspend.  Set to the
+ * combination of EC_WIRELESS_SWITCH flags (from ec_commands.h) which should
+ * be set in suspend.
  */
-#undef CONFIG_WIRELESS_SUSPEND_ENABLE_WIFI
+#undef CONFIG_WIRELESS_SUSPEND
 
 /*
  * Write protect signal is active-high.  If this is defined, there must be a

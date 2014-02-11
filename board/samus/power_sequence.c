@@ -139,7 +139,7 @@ enum power_state power_chipset_init(void)
 			gpio_set_level(GPIO_PP5000_EN, 0);
 			gpio_set_level(GPIO_PCH_DPWROK, 0);
 			gpio_set_level(GPIO_PP3300_DSW_EN, 0);
-			wireless_enable(0);
+			wireless_set_state(WIRELESS_OFF);
 		}
 	}
 
@@ -278,7 +278,7 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(20);
 
 		/* Enable wireless. */
-		wireless_enable(EC_WIRELESS_SWITCH_ALL);
+		wireless_set_state(WIRELESS_ON);
 
 		/*
 		 * Make sure touchscreen is out if reset (even if the
@@ -290,7 +290,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Wait for non-core power rails good */
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
-			wireless_enable(0);
+			wireless_set_state(WIRELESS_OFF);
 			return POWER_S3;
 		}
 
@@ -322,9 +322,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Wait 40ns */
 		udelay(1);
 
-		/* Disable WWAN, but leave WiFi on */
-		wireless_enable(EC_WIRELESS_SWITCH_WLAN |
-				EC_WIRELESS_SWITCH_WLAN_POWER);
+		/* Suspend wireless */
+		wireless_set_state(WIRELESS_SUSPEND);
 
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop
@@ -339,7 +338,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 		/* Disable wireless */
-		wireless_enable(0);
+		wireless_set_state(WIRELESS_OFF);
 
 		/* Disable peripheral power */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);

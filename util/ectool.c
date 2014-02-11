@@ -158,7 +158,7 @@ const char help_str[] =
 	"      Set USB mux switch state\n"
 	"  version\n"
 	"      Prints EC version\n"
-	"  wireless <mask>\n"
+	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	"      Enable/disable WLAN/Bluetooth radio\n"
 	"\n"
 	"Not working for you?  Make sure LPC I/O is configured:\n"
@@ -2316,30 +2316,77 @@ int cmd_switches(int argc, char *argv[])
 
 int cmd_wireless(int argc, char *argv[])
 {
-	struct ec_params_switch_enable_wireless p;
 	char *e;
 	int rv;
+	int now_flags;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <mask>\n", argv[0]);
+	if (argc < 2) {
+		fprintf(stderr,
+			"Usage: %s <flags> [<mask> [<susflags> <susmask>]]\n",
+			argv[0]);
 		fprintf(stderr, "  0x1 = WLAN radio\n"
 				"  0x2 = Bluetooth radio\n"
 				"  0x4 = WWAN power\n"
 				"  0x8 = WLAN power\n");
 		return -1;
 	}
-	p.enabled = strtol(argv[1], &e, 0);
+
+	now_flags = strtol(argv[1], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad value.\n");
+		fprintf(stderr, "Bad flags.\n");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS, 0,
-			&p, sizeof(p), NULL, 0);
-	if (rv < 0)
-		return rv;
+	if (argc < 3) {
+		/* Old-style - current flags only */
+		struct ec_params_switch_enable_wireless_v0 p;
 
-	printf("Success.\n");
+		p.enabled = now_flags;
+		rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS, 0,
+				&p, sizeof(p), NULL, 0);
+		if (rv < 0)
+			return rv;
+
+		printf("Success.\n");
+	} else {
+		/* New-style - masks and suspend flags */
+		struct ec_params_switch_enable_wireless_v1 p;
+		struct ec_response_switch_enable_wireless_v1 r;
+
+		memset(&p, 0, sizeof(p));
+
+		p.now_flags = now_flags;
+
+		p.now_mask = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad mask.\n");
+			return -1;
+		}
+
+		if (argc > 4) {
+			p.suspend_flags = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad suspend flags.\n");
+				return -1;
+			}
+
+			p.suspend_mask = strtol(argv[4], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad suspend mask.\n");
+				return -1;
+			}
+		}
+
+		rv = ec_command(EC_CMD_SWITCH_ENABLE_WIRELESS,
+				EC_VER_SWITCH_ENABLE_WIRELESS,
+				&p, sizeof(p), &r, sizeof(r));
+		if (rv < 0)
+			return rv;
+
+		printf("Now=0x%x, suspend=0x%x\n",
+		       r.now_flags, r.suspend_flags);
+	}
+
 	return 0;
 }
 

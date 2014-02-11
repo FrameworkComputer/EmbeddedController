@@ -9,15 +9,17 @@
 #define __CROS_EC_WIRELESS_H
 
 #include "common.h"
-#include "ec_commands.h"
+
+/* Wireless power state for wireless_set_state() */
+enum wireless_power_state {
+	WIRELESS_OFF,
+	WIRELESS_SUSPEND,
+	WIRELESS_ON
+};
 
 /**
- * Set wireless switch state.
- *
- * @param flags		Enable flags from ec_commands.h (EC_WIRELESS_SWITCH_*),
- *			0 to turn all wireless off, or -1 to turn all wireless
- *			on.
+ * Set wireless power state.
  */
-void wireless_enable(int flags);
+void wireless_set_state(enum wireless_power_state state);
 
 #endif  /* __CROS_EC_WIRELESS_H */

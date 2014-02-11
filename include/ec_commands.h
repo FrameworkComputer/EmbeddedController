@@ -1520,9 +1520,39 @@ struct ec_params_switch_enable_backlight {
 
 /* Enable/disable WLAN/Bluetooth */
 #define EC_CMD_SWITCH_ENABLE_WIRELESS 0x91
+#define EC_VER_SWITCH_ENABLE_WIRELESS 1
 
-struct ec_params_switch_enable_wireless {
+/* Version 0 params; no response */
+struct ec_params_switch_enable_wireless_v0 {
 	uint8_t enabled;
+} __packed;
+
+/* Version 1 params */
+struct ec_params_switch_enable_wireless_v1 {
+	/* Flags to enable now */
+	uint8_t now_flags;
+
+	/* Which flags to copy from now_flags */
+	uint8_t now_mask;
+
+	/*
+	 * Flags to leave enabled in S3, if they're on at the S0->S3
+	 * transition.  (Other flags will be disabled by the S0->S3
+	 * transition.)
+	 */
+	uint8_t suspend_flags;
+
+	/* Which flags to copy from suspend_flags */
+	uint8_t suspend_mask;
+} __packed;
+
+/* Version 1 response */
+struct ec_response_switch_enable_wireless_v1 {
+	/* Flags to enable now */
+	uint8_t now_flags;
+
+	/* Flags to leave enabled in S3 */
+	uint8_t suspend_flags;
 } __packed;
 
 /*****************************************************************************/
