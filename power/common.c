@@ -114,11 +114,6 @@ int power_wait_signals(uint32_t want)
 	return EC_SUCCESS;
 }
 
-/**
- * Set the low-level power chipset state.
- *
- * @param new_state	New chipset state.
- */
 void power_set_state(enum power_state new_state)
 {
 	/* Record the time we go into G3 */

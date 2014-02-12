@@ -51,3 +51,6 @@
 
 /* Use DMA for UART receive */
 #define CONFIG_UART_RX_DMA
+
+/* Fake hibernate mode */
+#define CONFIG_STM32L_FAKE_HIBERNATE

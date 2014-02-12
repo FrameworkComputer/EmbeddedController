@@ -73,6 +73,13 @@ int power_has_signals(uint32_t want);
 int power_wait_signals(uint32_t want);
 
 /**
+ * Set the low-level power chipset state.
+ *
+ * @param new_state New chipset state.
+ */
+void power_set_state(enum power_state new_state);
+
+/**
  * Chipset-specific initialization
  *
  * @return The state the chipset should start in.  Usually POWER_G3, but may

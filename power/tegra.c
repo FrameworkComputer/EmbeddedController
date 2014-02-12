@@ -318,6 +318,10 @@ static void power_on(void)
 {
 	uint64_t t;
 
+	/* Set pull-up and enable interrupt */
+	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT | GPIO_PULL_UP |
+		GPIO_INT_BOTH);
+
 	/* Make sure we de-assert the PMI_THERM_L and AP_RESET_L pin. */
 	set_pmic_therm(0);
 	set_ap_reset(0);
@@ -389,6 +393,9 @@ static void power_off(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
 	chipset_force_shutdown();
+
+	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
+	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT);
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);

@@ -665,6 +665,9 @@
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
 
+/* Fake hibernate mode */
+#undef CONFIG_STM32L_FAKE_HIBERNATE
+
 /*
  * Compile common code to handle simple switch inputs such as the recovery
  * button input from the servo debug interface.
