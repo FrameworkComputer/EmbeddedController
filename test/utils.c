@@ -68,18 +68,45 @@ static int test_parse_bool(void)
 
 static int test_memmove(void)
 {
-	char buf[100];
 	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int iteration = 1000;
 
-	for (i = 0; i < 100; ++i)
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	for (i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (i = len; i < buf_size; ++i)
 		buf[i] = 0;
-	for (i = 0; i < 30; ++i)
-		buf[i] = i;
-	memmove(buf + 60, buf, 30);
-	TEST_ASSERT_ARRAY_EQ(buf, buf + 60, 30);
-	memmove(buf + 10, buf, 30);
-	TEST_ASSERT_ARRAY_EQ(buf + 10, buf + 60, 30);
 
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memmove(buf + 101, buf, len);  /* unaligned */
+	t1 = get_time();
+	TEST_ASSERT_ARRAY_EQ(buf + 101, buf, len);
+	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memmove(buf + 100, buf, len);	  /* aligned */
+	t3 = get_time();
+	ccprintf(" %d us) ", t3.val-t2.val);
+	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
+
+	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+
+	/* Test small moves */
+	memmove(buf + 1, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf, 1);
+	memmove(buf + 5, buf, 4);
+	memmove(buf + 1, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf + 5, 4);
+
+	shared_mem_release(buf);
 	return EC_SUCCESS;
 }
 
