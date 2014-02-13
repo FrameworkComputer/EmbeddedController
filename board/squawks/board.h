@@ -186,6 +186,9 @@ enum temp_sensor_id {
 	TEMP_SENSOR_I2C_TMP432_REMOTE1,
 	TEMP_SENSOR_I2C_TMP432_REMOTE2,
 
+	/* Battery temperature sensor */
+	TEMP_SENSOR_BATTERY,
+
 	TEMP_SENSOR_COUNT
 };
 
