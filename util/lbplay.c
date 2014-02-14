@@ -1,198 +1,165 @@
-/* Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/io.h>
+#include <strings.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include "comm-host.h"
-#include "compile_time_macros.h"
-#include "lightbar.h"
-#include "lock/gec_lock.h"
-
-#define LB_SIZES(SUBCMD) { \
-		sizeof(((struct ec_params_lightbar *)0)->SUBCMD) \
-		+ sizeof(((struct ec_params_lightbar *)0)->cmd), \
-		sizeof(((struct ec_response_lightbar *)0)->SUBCMD) }
-static const struct {
-	uint8_t insize;
-	uint8_t outsize;
-} lb_command_paramcount[] = {
-	LB_SIZES(dump),
-	LB_SIZES(off),
-	LB_SIZES(on),
-	LB_SIZES(init),
-	LB_SIZES(brightness),
-	LB_SIZES(seq),
-	LB_SIZES(reg),
-	LB_SIZES(rgb),
-	LB_SIZES(get_seq),
-	LB_SIZES(demo),
-	LB_SIZES(get_params),
-	LB_SIZES(set_params),
-	LB_SIZES(version)
-};
-#undef LB_SIZES
-
-
-#define GEC_LOCK_TIMEOUT_SECS	30  /* 30 secs */
-#define LOCK do { \
-	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) { \
-		fprintf(stderr, "Could not acquire GEC lock.\n"); \
-		exit(1); \
-	} } while (0)
-
-#define UNLOCK do { release_gec_lock(); } while (0)
-
-
-static void lb_cmd_noargs(enum lightbar_command cmd)
-{
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	param.cmd = cmd;
-	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		   &param, lb_command_paramcount[param.cmd].insize,
-		   &resp, lb_command_paramcount[param.cmd].outsize);
-}
-
-inline void lightbar_off(void)
-{
-	lb_cmd_noargs(LIGHTBAR_CMD_OFF);
-}
-
-inline void lightbar_on(void)
-{
-	lb_cmd_noargs(LIGHTBAR_CMD_ON);
-}
-
-inline void lightbar_init_vals(void)
-{
-	lb_cmd_noargs(LIGHTBAR_CMD_INIT);
-}
-
-void lightbar_brightness(int newval)
-{
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	param.cmd = LIGHTBAR_CMD_BRIGHTNESS;
-	param.brightness.num = newval;
-	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		   &param, lb_command_paramcount[param.cmd].insize,
-		   &resp, lb_command_paramcount[param.cmd].outsize);
-}
-
-void lightbar_sequence(enum lightbar_sequence num)
-{
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	param.cmd = LIGHTBAR_CMD_SEQ;
-	param.seq.num = num;
-	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		   &param, lb_command_paramcount[param.cmd].insize,
-		   &resp, lb_command_paramcount[param.cmd].outsize);
-}
-
-void lightbar_reg(uint8_t ctrl, uint8_t reg, uint8_t val)
-{
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	param.cmd = LIGHTBAR_CMD_REG;
-	param.reg.ctrl = ctrl;
-	param.reg.reg = reg;
-	param.reg.value = val;
-	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		   &param, lb_command_paramcount[param.cmd].insize,
-		   &resp, lb_command_paramcount[param.cmd].outsize);
-}
-
-void lightbar_rgb(int led, int red, int green, int blue)
-{
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	param.cmd = LIGHTBAR_CMD_RGB;
-	param.rgb.led = led;
-	param.rgb.red = red;
-	param.rgb.green = green;
-	param.rgb.blue = blue;
-	ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-		   &param, lb_command_paramcount[param.cmd].insize,
-		   &resp, lb_command_paramcount[param.cmd].outsize);
-}
-
-void wait_for_ec_to_stop(void)
-{
-	int r;
-	struct ec_params_lightbar param;
-	struct ec_response_lightbar resp;
-	int count = 0;
-
-	do {
-		usleep(100000);
-		param.cmd = LIGHTBAR_CMD_GET_SEQ;
-		r = ec_command(EC_CMD_LIGHTBAR_CMD, 0,
-			       &param,
-			       lb_command_paramcount[param.cmd].insize,
-			       &resp,
-			       lb_command_paramcount[param.cmd].outsize);
-		if (count++ > 10) {
-			fprintf(stderr, "EC isn't responding\n");
-			UNLOCK;
-			exit(1);
-		}
-	} while (r < 0 && resp.get_seq.num != LIGHTBAR_STOP);
-}
+#define LIGHTBAR "/sys/devices/virtual/chromeos/cros_ec/lightbar"
 
 int main(int argc, char **argv)
 {
-	int i;
+	int major, minor, fd_v;
+	int i, tries, fd_s, fd_l;
+	char buf[80];
+	int ret = 1;
 
-	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
+	/* Check version */
+	fd_v = open(LIGHTBAR "/version", O_RDONLY);
+	if (fd_v < 0) {
+		perror("can't open version file");
+		goto out;
+	}
+	ret = read(fd_v, buf, sizeof(buf));
+	if (ret <= 0) {
+		perror("can't read version");
+		close(fd_v);
+		goto out;
+	}
+	buf[ret] = '\0';
+	close(fd_v);
 
-	LOCK;
-
-	if (comm_init() < 0) {
-		fprintf(stderr, "comm_init() failed\n");
-		UNLOCK;
-		return 2;
+	errno = 0;
+	/* Expect "MAJOR MINOR" */
+	if (2 != sscanf(buf, "%d %d", &major, &minor)) {
+		if (errno)
+			perror("can't parse version string");
+		else
+			fprintf(stderr, "can't parse version string\n");
+		goto out;
+	}
+	/* Pixel is "0 0". Minor change will be compatible, Major may not */
+	if (major != 0) {
+		fprintf(stderr, "Don't know how to handle version %d.%d\n",
+			major, minor);
+		goto out;
 	}
 
-	/* Tell the EC to let us drive. */
-	lightbar_sequence(LIGHTBAR_STOP);
+	/* Take over lightbar sequencing. */
+	fd_s = open(LIGHTBAR "/sequence", O_RDWR | O_SYNC);
+	if (fd_s < 0) {
+		perror("can't open sequence control");
+		goto out;
+	}
 
-	/* Wait until it's listening (or die trying) */
-	wait_for_ec_to_stop();
+	/* NOTE: Cooperative locking only. Rude programs may not play nice. */
+	if (flock(fd_s, LOCK_EX | LOCK_NB) < 0) {
+		perror("can't lock sequence control");
+		goto out_close;
+	}
 
-	/* Initialize it */
-	lightbar_off();
-	lightbar_init_vals();
-	lightbar_brightness(0xff);
-	lightbar_on();
+	/*
+	 * If power events are changing the sequence our request to stop may
+	 * be missed, so try a few times before giving up.
+	 *
+	 * Note that every write to a control file should be prefaced with an
+	 * lseek() to the beginning. sysfs files don't work quite like normal
+	 * files.
+	 */
+	tries = 3;
+	while (1) {
+		lseek(fd_s, 0, SEEK_SET);
+		if (read(fd_s, buf, sizeof(buf)) <= 0) {
+			perror("can't read sequence control");
+			goto out_unlock;
+		}
 
-	UNLOCK;
+		if (!strncasecmp(buf, "stop", 4))
+			break;
 
-	/* Play a bit */
-	for (i = 0; i <= 255; i += 4) {
-		LOCK;
-		lightbar_rgb(4, 0, i, 0);
-		UNLOCK;
+		if (!tries--) {
+			fprintf(stderr, "couldn't get EC to stop\n");
+			goto out_unlock;
+		}
+
+		lseek(fd_s, 0, SEEK_SET);
+		strcpy(buf, "stop");
+		if (write(fd_s, buf, strlen(buf) + 1) <= 0) {
+			perror("can't write sequence control");
+			goto out_unlock;
+		}
+	}
+
+	/* Turn the brightness all the way up */
+	fd_l = open(LIGHTBAR "/brightness", O_WRONLY | O_SYNC);
+	if (fd_l < 0) {
+		perror("can't open brightness control");
+		goto out_run;
+	}
+	strcpy(buf, "255");
+	if (write(fd_l, buf, strlen(buf) + 1) < 0) {
+		perror("can't write brightness control");
+		goto out_led;
+	}
+	close(fd_l);
+
+	/* Now let's drive the colors. */
+	fd_l = open(LIGHTBAR "/led_rgb", O_WRONLY | O_SYNC);
+	if (fd_l < 0) {
+		perror("can't open led control");
+		goto out_run;
+	}
+
+	/* Cycle through some colors. We can update multiple LEDs at once,
+	 * but there's a limit on how often we can send commands to the
+	 * lightbar. Going too fast will block, although buffering combined
+	 * with lseek() may just cause data to be lost. Read "/interval_msec"
+	 * to see what the limit is. The default is 50msec (20Hz).
+	 */
+	for (i = 0; i < 256; i += 4) {
+		sprintf(buf, "0 %d %d %d 1 %d %d %d 2 %d %d %d 3 %d %d %d",
+			i, 0, 0,
+			0, 0, i,
+			255-i, 255, 0,
+			0, 255, 255-i);
+		lseek(fd_l, 0, SEEK_SET);
+		if (write(fd_l, buf, strlen(buf) + 1) < 0)
+			perror("write to led control");
+
 		usleep(100000);
 	}
 
-	for (; i >= 0; i -= 4) {
-		LOCK;
-		lightbar_rgb(4, i, 0, 0);
-		UNLOCK;
-		usleep(100000);
-	}
+	/* all white */
+	strcpy(buf, "4 255 255 255");
+	lseek(fd_l, 0, SEEK_SET);
+	if (write(fd_l, buf, strlen(buf) + 1) < 0)
+		perror("write to led control");
 
-	/* Let the EC drive again */
-	LOCK;
-	lightbar_sequence(LIGHTBAR_RUN);
-	UNLOCK;
-	return 0;
+	usleep(400000);
+
+	/* Done. */
+	ret = 0;
+out_led:
+	close(fd_l);
+out_run:
+	/* Let EC drive lightbar again */
+	strcpy(buf, "run");
+	lseek(fd_s, 0, SEEK_SET);
+	if (write(fd_s, buf, strlen(buf) + 1) < 0)
+		perror("write to sequence control");
+out_unlock:
+	flock(fd_s, LOCK_UN);
+out_close:
+	close(fd_s);
+out:
+	return ret;
 }
