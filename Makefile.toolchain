@@ -55,5 +55,5 @@ BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 LDFLAGS=-nostdlib -X
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
-HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread -rdynamic\
+HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,)

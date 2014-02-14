@@ -51,4 +51,13 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+/* Identifiers for each accelerometer used. */
+enum accel_id {
+	ACCEL_LID,
+	ACCEL_BASE,
+
+	/* Number of accelerometers. */
+	ACCEL_COUNT
+};
+
 #endif /* __BOARD_H */
