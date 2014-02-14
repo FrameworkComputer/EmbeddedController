@@ -12,7 +12,6 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
-#include "pmu_tpschrome.h"
 #include "power.h"
 #include "power_button.h"
 #include "power.h"

@@ -126,6 +126,11 @@ struct charge_state_context {
 enum charge_state charge_get_state(void);
 
 /**
+ * Return non-zero if battery is so low we want to keep AP off.
+ */
+int charge_keep_power_off(void);
+
+/**
  * Return current charge state flags (CHARGE_FLAG_*)
  */
 uint32_t charge_get_flags(void);

@@ -25,6 +25,7 @@
  *
  */
 
+#include "charge_state.h"
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "clock.h"
 #include "common.h"
@@ -36,7 +37,6 @@
 #include "power.h"
 #include "power_button.h"
 #include "power_led.h"
-#include "pmu_tpschrome.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
