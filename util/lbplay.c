@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 		perror("can't open version file");
 		goto out;
 	}
-	ret = read(fd_v, buf, sizeof(buf));
+	ret = read(fd_v, buf, sizeof(buf) - 1);
 	if (ret <= 0) {
 		perror("can't read version");
 		close(fd_v);
