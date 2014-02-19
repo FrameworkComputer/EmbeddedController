@@ -152,12 +152,12 @@ const struct adc_t adc_channels[] = {
 	 LM4_AIN_NONE, 0x0e /* TS0 | IE0 | END0 */, 0, 0},
 
 	/* IOUT == ICMNT is on PE3/AIN0 */
-	/* We have 0.01-ohm resistors, and IOUT is 20X the differential
-	 * voltage, so 1000mA ==> 200mV.
+	/* We have 0.01-ohm resistors, and IOUT is 40X the differential
+	 * voltage, so 1000mA ==> 400mV.
 	 * ADC returns 0x000-0xFFF, which maps to 0.0-3.3V (as configured).
-	 * mA = 1000 * ADC_VALUE / ADC_READ_MAX * 3300 / 200
+	 * mA = 1000 * ADC_VALUE / ADC_READ_MAX * 3300 / 400
 	 */
-	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 2, 0,
+	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 4, 0,
 	 LM4_AIN(0), 0x06 /* IE0 | END0 */, LM4_GPIO_E, (1<<3)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
