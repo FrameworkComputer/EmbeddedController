@@ -25,10 +25,11 @@
 
 /* Current acceleration vectors and current lid angle. */
 static vector_3_t acc_lid_raw, acc_lid, acc_base;
+static vector_3_t acc_lid_host, acc_base_host;
 static float lid_angle_deg;
 
 /* Sampling interval for measuring acceleration and calculating lid angle. */
-static int accel_interval_ms = 250;
+static int accel_interval_ms = 10;
 
 #ifdef CONFIG_CMD_LID_ANGLE
 static int accel_disp;
@@ -119,7 +120,7 @@ void motion_get_accel_base(vector_3_t *v)
 
 void motion_sense_task(void)
 {
-	timestamp_t ts0, ts1;
+	static timestamp_t ts0, ts1;
 	int wait_us;
 	int ret;
 	uint8_t *lpc_status;
@@ -160,6 +161,12 @@ void motion_sense_task(void)
 
 		/* TODO(crosbug.com/p/25597): Add filter to smooth lid angle. */
 
+		/* Rotate accels into standard reference frame for the host. */
+		rotate(acc_base, &p_acc_orient->rot_standard_ref,
+				&acc_base_host);
+		rotate(acc_lid, &p_acc_orient->rot_standard_ref,
+				&acc_lid_host);
+
 		/*
 		 * Set the busy bit before writing the sensor data. Increment
 		 * the counter and clear the busy bit after writing the sensor
@@ -174,12 +181,12 @@ void motion_sense_task(void)
 		 * assumes little endian, which is what the host expects.
 		 */
 		lpc_data[0] = (int)lid_angle_deg;
-		lpc_data[1] = acc_base[X];
-		lpc_data[2] = acc_base[Y];
-		lpc_data[3] = acc_base[Z];
-		lpc_data[4] = acc_lid[X];
-		lpc_data[5] = acc_lid[Y];
-		lpc_data[6] = acc_lid[Z];
+		lpc_data[1] = acc_base_host[X];
+		lpc_data[2] = acc_base_host[Y];
+		lpc_data[3] = acc_base_host[Z];
+		lpc_data[4] = acc_lid_host[X];
+		lpc_data[5] = acc_lid_host[Y];
+		lpc_data[6] = acc_lid_host[Z];
 
 		/*
 		 * Increment sample id and clear busy bit to signal we finished

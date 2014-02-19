@@ -12,6 +12,7 @@
 #include "motion_sense.h"
 #include "timer.h"
 #include "task.h"
+#include "uart.h"
 #include "util.h"
 
 /*
@@ -20,6 +21,17 @@
  */
 #define AUTO_CAL_DIR_THRESHOLD (ACCEL_G * 3 / 4)
 #define AUTO_CAL_MAG_THRESHOLD (ACCEL_G / 20)
+
+/*
+ * Solution to standard reference frame calibration equation. Note, this matrix
+ * depends on the exact instructions regarding the orientation given to the user
+ * for calibrating the standard reference frame.
+ */
+static matrix_3x3_t standard_ref_calib = {
+	{ 1024,  0,  0},
+	{ 0, -1024,  0},
+	{ 0,  0, -1024}
+};
 
 /*****************************************************************************/
 /* Console commands */
@@ -47,6 +59,13 @@ static int command_print_orientation(int argc, char **argv)
 
 	R = &acc_orient.rot_hinge_180;
 	ccprintf("Hinge rotation 180 R:\n%.2d\t%.2d\t%.2d\n%.2d\t%.2d\t%.2d\n"
+			"%.2d\t%.2d\t%.2d\n\n",
+	(int)((*R)[0][0]*100), (int)((*R)[0][1]*100), (int)((*R)[0][2]*100),
+	(int)((*R)[1][0]*100), (int)((*R)[1][1]*100), (int)((*R)[1][2]*100),
+	(int)((*R)[2][0]*100), (int)((*R)[2][1]*100), (int)((*R)[2][2]*100));
+
+	R = &acc_orient.rot_standard_ref;
+	ccprintf("Standard ref frame R:\n%.2d\t%.2d\t%.2d\n%.2d\t%.2d\t%.2d\n"
 			"%.2d\t%.2d\t%.2d\n\n",
 	(int)((*R)[0][0]*100), (int)((*R)[0][1]*100), (int)((*R)[0][2]*100),
 	(int)((*R)[1][0]*100), (int)((*R)[1][1]*100), (int)((*R)[1][2]*100),
@@ -119,7 +138,7 @@ static int calibrate_orientation(int type)
 		}
 
 		/* Wait until next reading. */
-		task_wait_event(50*MSEC);
+		task_wait_event(50 * MSEC);
 	}
 
 	/* Solve for the rotation matrix and display final rotation matrix. */
@@ -185,67 +204,178 @@ static int calibrate_hinge(void)
 	return EC_SUCCESS;
 }
 
+/**
+ * Calibrate the standard reference frame.
+ */
+static int calibrate_standard_frame(vector_3_t *v_x, vector_3_t *v_y,
+		vector_3_t *v_z)
+{
+	static matrix_3x3_t m;
+	int j;
+
+	for (j = 0; j < 3; j++) {
+		m[0][j] = (*v_x)[j];
+		m[1][j] = (*v_y)[j];
+		m[2][j] = (*v_z)[j];
+	}
+
+	return solve_rotation_matrix(&m, &standard_ref_calib,
+						&acc_orient.rot_standard_ref);
+}
+
+/**
+ * Wait until a specific set of keys is pressed: enter, 'q', or 's'. Return
+ * key that was pressed.
+ */
+static int wait_for_key(void)
+{
+	int c = uart_getc();
+
+	/* Loop until previous character was a new line char, 'q', or 's'. */
+	while (c != '\r' && c != '\n' && c != 'q' && c != 's') {
+		task_wait_event(50 * MSEC);
+		c = uart_getc();
+	}
+
+	return c;
+}
+
 static int command_auto_calibrate(int argc, char **argv)
 {
-	char *e;
-	int type, ret;
-	static int last_type = -1;
+	int c;
+	vector_3_t v_x, v_y, v_z;
 
-	if (argc != 2)
+	if (argc > 1)
 		return EC_ERROR_PARAM_COUNT;
 
-	type = strtoi(argv[1], &e, 0);
-
-	if (*e)
-		return EC_ERROR_PARAM1;
+	ccprintf("Calibrating... press 'q' at any time to quit, and 's' "
+			"to skip step.\n");
 
 	/*
-	 * First time this issued, just display instructions and return. If
-	 * command is repeated, then perform calibration.
+	 * Part 1: Calibrate the lid to base alignment rotation matrix.
 	 */
-	if (type != last_type) {
-		/*
-		 * type 0: calibrate the lid to base alignment rotation matrix.
-		 * type 1: calibrate the hinge 90 rotation matrix.
-		 * type 2: calibrate hinge axis and hinge 180 rotation matrix.
-		 */
-		switch (type) {
-		case 0:
-			ccprintf("To calibrate, close lid, issue this command "
-				"again, and rotate the machine in space until "
-				"all 3 directions are captured.\n");
-			break;
-		case 1:
-			ccprintf("To calibrate, open lid to 90 degrees, issue "
-				" this command again, and rotate in space "
-				"until all 3 directions are captured.\n");
-			break;
-		case 2:
-			ccprintf("To calibrate, align hinge with gravity, and "
-				"issue this command again.\n");
-			break;
-		default:
-			return EC_ERROR_PARAM1;
-		}
+	ccprintf("\nStep 1: close lid, press enter, and rotate the machine\n"
+		"in space until all 3 directions are captured.\n");
 
-		last_type = type;
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
 		return EC_SUCCESS;
 	}
 
-	/* Call appropriate calibration function. */
-	if (type == 0 || type == 1)
-		ret = calibrate_orientation(type);
-	else
-		ret = calibrate_hinge();
+	/* If step is not skipped, perform calibration. */
+	if (c != 's') {
+		if (calibrate_orientation(0) != EC_SUCCESS) {
+			ccprintf("Calibration error.\n");
+			return EC_SUCCESS;
+		}
+	}
 
+	/*
+	 * Part 2: Calibrate the hinge 90 rotation matrix.
+	 */
+	ccprintf("\nStep 2: open lid to 90 degrees, press enter, and rotate\n"
+		"in space until all 3 directions are captured.\n");
+
+
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
+		return EC_SUCCESS;
+	}
+
+	/* If step is not skipped, perform calibration. */
+	if (c != 's') {
+		if (calibrate_orientation(1) != EC_SUCCESS) {
+			ccprintf("Calibration error.\n");
+			return EC_SUCCESS;
+		}
+	}
+
+	/*
+	 * Part 3: Calibrate the hinge axis and hinge 180 rotation matrix.
+	 */
+	ccprintf("\nStep 3: align hinge with gravity, and press enter.\n");
+
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
+		return EC_SUCCESS;
+	}
+
+	/* If step is not skipped, perform calibration. */
+	if (c != 's') {
+		if (calibrate_hinge() != EC_SUCCESS) {
+			ccprintf("Calibration error.\n");
+			return EC_SUCCESS;
+		}
+	}
+
+	/*
+	 * Part 4: Calibrate the standard reference frame rotation matrix.
+	 */
+	ccprintf("\nStep 4a: place machine on right side, with hinge\n"
+		"aligned with gravity, and press enter.\n");
+
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
+		return EC_SUCCESS;
+	}
+
+	if (c == 's')
+		goto auto_calib_done;
+
+	/* In this orientation, the Y axis should be highest. Capture data. */
+	motion_get_accel_base(&v_y);
+
+	ccprintf("\nStep 4b: place machine flat on table, with keyboard\n"
+		"up, and press enter.\n");
+
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
+		return EC_SUCCESS;
+	}
+
+	if (c == 's')
+		goto auto_calib_done;
+
+	/* In this orientation, the Z axis should be highest. Capture data. */
+	motion_get_accel_base(&v_z);
+
+	ccprintf("\nStep 4c: hold machine perpendicular to table with\n"
+		"the hinge up, and press enter.\n");
+
+	/* Wait for user to press enter, quit, or skip. */
+	c = wait_for_key();
+	if (c == 'q') {
+		ccprintf("Calibration exited.\n");
+		return EC_SUCCESS;
+	}
+
+	if (c == 's')
+		goto auto_calib_done;
+
+	/* In this orientation, the X axis should be highest. Capture data. */
+	motion_get_accel_base(&v_x);
+
+	if (calibrate_standard_frame(&v_x, &v_y, &v_z) != EC_SUCCESS) {
+		ccprintf("Calibration error.\n");
+		return EC_SUCCESS;
+	}
+
+auto_calib_done:
 	/* Print results of all calibration. */
-	if (ret == EC_SUCCESS)
-		command_print_orientation(0, NULL);
+	command_print_orientation(0, NULL);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelcalib, command_auto_calibrate,
-	"0 - Calibrate lid to base alignment rotation matrix\n1 - Calibrate "
-	"hinge positive 90 rotation matrix\n2 - Calibrate hinge axis and hinge "
-	"180 matrix",
+	"",
 	"Auto calibrate the accelerometers", NULL);

@@ -30,6 +30,12 @@ struct accel_orientation {
 	 */
 	matrix_3x3_t rot_hinge_180;
 
+	/*
+	 * Rotation matrix to rotate base sensor into the standard reference
+	 * frame.
+	 */
+	matrix_3x3_t rot_standard_ref;
+
 	/* Vector pointing along hinge axis. */
 	vector_3_t hinge_axis;
 };
