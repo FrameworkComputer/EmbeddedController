@@ -122,7 +122,7 @@ const char help_str[] =
 	"      Reads from EC host persistent storage to a file\n"
 	"  pstorewrite <offset> <infile>\n"
 	"      Writes to EC host persistent storage from a file\n"
-	"  pwmgetfanrpm\n"
+	"  pwmgetfanrpm [<index> | all]\n"
 	"      Prints current fan RPM\n"
 	"  pwmgetkblight\n"
 	"      Prints current keyboard backlight percent\n"
@@ -1169,21 +1169,46 @@ int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 	return 0;
 }
 
-
-int cmd_pwm_get_fan_rpm(int argc, char *argv[])
+static int print_fan(int idx)
 {
-	int rv;
+	int rv = read_mapped_mem16(EC_MEMMAP_FAN + 2 * idx);
 
-	rv = read_mapped_mem16(EC_MEMMAP_FAN);
 	switch (rv) {
 	case EC_FAN_SPEED_NOT_PRESENT:
 		return -1;
 	case EC_FAN_SPEED_STALLED:
-		printf("Fan stalled!\n");
+		printf("Fan %d stalled!\n", idx);
 		break;
 	default:
-		printf("Current fan RPM: %d\n", rv);
+		printf("Fan %d RPM: %d\n", idx, rv);
 		break;
+	}
+
+	return 0;
+}
+
+int cmd_pwm_get_fan_rpm(int argc, char *argv[])
+{
+	int i;
+
+	if (argc < 2 || !strcasecmp(argv[1], "all")) {
+		/* Print all the fan speeds */
+		for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++) {
+			if (print_fan(i))
+				break;  /* Stop at first not-present fan */
+		}
+
+	} else {
+		char *e;
+		int idx;
+
+		idx = strtol(argv[1], &e, 0);
+		if ((e && *e) || idx < 0 || idx >= EC_FAN_SPEED_ENTRIES) {
+			fprintf(stderr, "Bad index.\n");
+			return -1;
+		}
+
+		return print_fan(idx);
 	}
 
 	return 0;
