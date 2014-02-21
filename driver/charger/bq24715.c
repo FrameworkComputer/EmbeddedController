@@ -183,6 +183,9 @@ int charger_post_init(void)
 	option |= OPT_FIX_IOUT_ALWAYS;
 	option &= ~OPT_IOUT_MASK;
 
+	/* Enable dynamic power management */
+	option |= OPT_IDPM_ENABLE;
+
 	rv = charger_set_option(option);
 	if (rv)
 		return rv;
