@@ -313,6 +313,9 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 
 	/* TODO(crosbug.com/p/23803) */
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
+		/* Always enable the fan */
+		set_enabled(fan, 1);
+
 		set_thermal_control_enabled(fan, 0);
 		fan_set_rpm_mode(fans[fan].ch, 1);
 		fan_set_rpm_target(fans[fan].ch, p->rpm);
