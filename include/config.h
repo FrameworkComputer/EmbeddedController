@@ -482,6 +482,15 @@
 #undef CONFIG_HOOK_DEBUG
 
 /*****************************************************************************/
+/* CRC configuration */
+
+/* Enable the hardware accelerator for CRC computation */
+#undef CONFIG_HW_CRC
+
+/* Enable the software routine for CRC computation */
+#undef CONFIG_SW_CRC
+
+/*****************************************************************************/
 /* I2C configuration */
 
 #undef CONFIG_I2C

@@ -26,6 +26,7 @@ TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
 chip-y=dma.o system.o
 chip-y+=jtag-$(CHIP_FAMILY).o clock-$(CHIP_FAMILY).o
 chip-$(CONFIG_SPI)+=spi.o
+chip-$(CONFIG_SW_CRC)+=crc.o
 chip-$(CONFIG_COMMON_GPIO)+=gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(CHIP_FAMILY).o
