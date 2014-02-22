@@ -67,6 +67,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		val |= 0x55555555 & mask2;
 		STM32_GPIO_MODER(port) = val;
 
+	} else if (flags & GPIO_ANALOG) {
+		/* Analog, MODE=11 */
+		val |= 0xFFFFFFFF & mask2;
+		STM32_GPIO_MODER(port) = val;
 	} else if (flags & GPIO_INPUT) {
 		/* Input, MODE=00 */
 		STM32_GPIO_MODER(port) = val;

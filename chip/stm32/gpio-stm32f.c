@@ -81,7 +81,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t pmask, uint32_t flags)
 		 * GPIOx_ODR determines which resistor to activate in
 		 * input mode, see Table 16 (datasheet rm0041)
 		 */
-		if (flags & GPIO_PULL_UP) {
+		if (flags & GPIO_ANALOG) {
+			/* Analog input, MODE=00 CNF=00 */
+			/* the 4 bits in mask are already reset above */
+		} else if (flags & GPIO_PULL_UP) {
 			mask |= 0x88888888 & cnf;
 			STM32_GPIO_BSRR(port) = pmask;
 		} else if (flags & GPIO_PULL_DOWN) {
