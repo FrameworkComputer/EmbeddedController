@@ -670,6 +670,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_CR1_MSTR		(1 << 2)
 #define STM32_SPI_CR2_RXDMAEN		(1 << 0)
 #define STM32_SPI_CR2_TXDMAEN		(1 << 1)
+#define STM32_SPI_CR2_DATASIZE(n)	(((n) - 1) << 8)
 
 /* --- Debug --- */
 
