@@ -21,11 +21,13 @@
 #include "util.h"
 
 
-/* The Link lightbar had no specific version. Any new ones should, especially
- * if they are different in any way. If anything changes, update these.
+/*
+ * The Link lightbar had no version command, so defaulted to zero. If we make
+ * any incompatible changes, update the version. Indicate any new features in
+ * the current version with flags bits.
  */
-#define LIGHTBAR_IMPLEMENTATION_VERSION 1
-#define LIGHTBAR_IMPLEMENTATION_FLAGS   0x00000000
+#define LIGHTBAR_IMPLEMENTATION_VERSION 0
+#define LIGHTBAR_IMPLEMENTATION_FLAGS   0
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
@@ -1211,6 +1213,7 @@ static int help(const char *cmd)
 		 " (LED=4 for all)\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	ccprintf("  %s params                - show current params\n", cmd);
+	ccprintf("  %s version               - show current version\n", cmd);
 	return EC_SUCCESS;
 }
 #endif
@@ -1323,6 +1326,12 @@ static int command_lightbar(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
+	if (!strcasecmp(argv[1], "version")) {
+		ccprintf("%d 0x%x\n", LIGHTBAR_IMPLEMENTATION_VERSION,
+			 LIGHTBAR_IMPLEMENTATION_FLAGS);
+		return EC_SUCCESS;
+	}
+
 	if (!strcasecmp(argv[1], "brightness")) {
 		char *e;
 		if (argc > 2) {
@@ -1392,6 +1401,6 @@ static int command_lightbar(int argc, char **argv)
 	return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar,
-			"[on | off | init | brightness | seq] | [ctrl reg val]",
+			"[help | COMMAND [ARGS]]",
 			"Get/set lightbar state",
 			NULL);
