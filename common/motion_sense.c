@@ -141,6 +141,9 @@ void motion_sense_task(void)
 		return;
 	}
 
+	/* Write to status byte to represent that accelerometers are present. */
+	*lpc_status |= EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
+
 	while (1) {
 		ts0 = get_time();
 
@@ -194,7 +197,7 @@ void motion_sense_task(void)
 		 */
 		sample_id = (sample_id + 1) &
 				EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
-		*lpc_status = sample_id;
+		*lpc_status = EC_MEMMAP_ACC_STATUS_PRESENCE_BIT | sample_id;
 
 
 #ifdef CONFIG_CMD_LID_ANGLE

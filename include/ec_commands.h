@@ -88,6 +88,7 @@
 /* Define the format of the accelerometer mapped memory status byte. */
 #define EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK  0x0f
 #define EC_MEMMAP_ACC_STATUS_BUSY_BIT        (1 << 4)
+#define EC_MEMMAP_ACC_STATUS_PRESENCE_BIT    (1 << 7)
 
 /* Number of temp sensors at EC_MEMMAP_TEMP_SENSOR */
 #define EC_TEMP_SENSOR_ENTRIES     16
