@@ -189,15 +189,30 @@ static const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	 0x0044, 0x0000, 0xe075, 0xe06b},
 };
 
-/* Button scancodes. Must be in the same order as defined in button_type */
-static const uint16_t button_scancodes[2][KEYBOARD_BUTTON_COUNT] = {
-	/* Set 1 */
-	{0xe05e, 0xe02e, 0xe030,
-	 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009},
-	/* Set 2 */
-	{0xe037, 0xe021, 0xe032,
-	 0x0016, 0x001e, 0x0026, 0x0025, 0x002e, 0x0036, 0x003d, 0x003e},
+struct button_8042_t {
+	uint16_t scancode_set1;
+	uint16_t scancode_set2;
+	int repeat;
 };
+
+/*
+ * Button scancodes.
+ * Must be in the same order as defined in keyboard_button_type.
+ */
+static const struct button_8042_t buttons_8042[] = {
+	{0xe05e, 0xe037, 0}, /* Power */
+	{0xe02e, 0xe021, 1}, /* Volume Down */
+	{0xe030, 0xe032, 1}, /* Volume Up */
+	{0x0002, 0x0016, 1}, /* 1 */
+	{0x0003, 0x001e, 1}, /* 2 */
+	{0x0004, 0x0026, 1}, /* 3 */
+	{0x0005, 0x0025, 1}, /* 4 */
+	{0x0006, 0x002e, 1}, /* 5 */
+	{0x0007, 0x0036, 1}, /* 6 */
+	{0x0008, 0x003d, 1}, /* 7 */
+	{0x0009, 0x003e, 1}, /* 8 */
+};
+BUILD_ASSERT(ARRAY_SIZE(buttons_8042) == KEYBOARD_BUTTON_COUNT);
 
 /*****************************************************************************/
 /* Keyboard event log */
@@ -423,6 +438,18 @@ static void keyboard_wakeup(void)
 	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
 
+static void set_typematic_key(const uint8_t *scan_code, int32_t len)
+{
+	typematic_deadline.val = get_time().val + typematic_first_delay;
+	memcpy(typematic_scan_code, scan_code, len);
+	typematic_len = len;
+}
+
+static void clear_typematic_key(void)
+{
+	typematic_len = 0;
+}
+
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
@@ -441,14 +468,10 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 	if (is_pressed) {
 		keyboard_wakeup();
-
-		typematic_deadline.val = get_time().val + typematic_first_delay;
-
-		memcpy(typematic_scan_code, scan_code, len);
-		typematic_len = len;
+		set_typematic_key(scan_code, len);
 		task_wake(TASK_ID_KEYPROTO);
 	} else {
-		typematic_len = 0;
+		clear_typematic_key();
 	}
 }
 
@@ -933,11 +956,10 @@ void keyboard_protocol_task(void)
 test_mockable void keyboard_update_button(enum keyboard_button_type button,
 					  int is_pressed)
 {
-	/* TODO(crosbug.com/p/24956): Add typematic repeat support. */
-
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
 	uint16_t make_code;
 	uint32_t len;
+	struct button_8042_t button_8042;
 	enum scancode_set_list code_set;
 
 	/*
@@ -948,9 +970,29 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 		return;
 
 	code_set = acting_code_set(scancode_set);
-	make_code = button_scancodes[code_set - SCANCODE_SET_1][button];
+	button_8042 = buttons_8042[button];
+
+	switch (code_set) {
+	case SCANCODE_SET_1:
+		make_code = button_8042.scancode_set1;
+		break;
+	case SCANCODE_SET_2:
+		make_code = button_8042.scancode_set2;
+		break;
+	default:
+		return; /* Other sets are not supported */
+	}
+
 	scancode_bytes(make_code, is_pressed, code_set, scan_code, &len);
 	ASSERT(len > 0);
+
+	if (button_8042.repeat) {
+		if (is_pressed)
+			set_typematic_key(scan_code, len);
+		else
+			clear_typematic_key();
+	}
+
 	if (keystroke_enabled) {
 		i8042_send_to_host(len, scan_code);
 		task_wake(TASK_ID_KEYPROTO);
