@@ -396,95 +396,82 @@ DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
 			"Scan I2C ports for devices",
 			NULL);
 
-
 static int command_i2cxfer(int argc, char **argv)
 {
-	int rw = 0;
-	int port, slave_addr, offset;
-	int value = 0;
+	int port, slave_addr;
+	uint8_t offset;
+	int v = 0;
+	uint8_t data[32];
 	char *e;
 	int rv = 0;
 
-	if (argc < 5) {
-		ccputs("Usage: i2cxfer r/r16/w/w16 port addr offset [value]\n");
-		return EC_ERROR_UNKNOWN;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	slave_addr = strtoi(argv[3], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM3;
+
+	offset = strtoi(argv[4], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM4;
+
+	if (argc >= 5) {
+		v = strtoi(argv[5], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM5;
 	}
 
 	if (strcasecmp(argv[1], "r") == 0) {
-		rw = 0;
+		/* 8-bit read */
+		rv = i2c_read8(port, slave_addr, offset, &v);
+		if (!rv)
+			ccprintf("0x%02x [%d]\n", v);
+
 	} else if (strcasecmp(argv[1], "r16") == 0) {
-		rw = 1;
+		/* 16-bit read */
+		rv = i2c_read16(port, slave_addr, offset, &v);
+		if (!rv)
+			ccprintf("0x%04x [%d]\n", v);
+
+	} else if (strcasecmp(argv[1], "rlen") == 0) {
+		/* Arbitrary length read; param5 = len */
+		if (argc < 6 || v < 0 || v > sizeof(data))
+			return EC_ERROR_PARAM5;
+
+		i2c_lock(port, 1);
+		rv = i2c_xfer(port, slave_addr,
+			      &offset, 1, data, v, I2C_XFER_SINGLE);
+		i2c_lock(port, 0);
+
+		if (!rv)
+			ccprintf("Data: %.*h\n", v, data);
+
 	} else if (strcasecmp(argv[1], "w") == 0) {
-		rw = 2;
+		/* 8-bit write */
+		if (argc < 6)
+			return EC_ERROR_PARAM5;
+
+		rv = i2c_write8(port, slave_addr, offset, v);
+
 	} else if (strcasecmp(argv[1], "w16") == 0) {
-		rw = 3;
+		/* 16-bit write */
+		if (argc < 6)
+			return EC_ERROR_PARAM5;
+
+		rv = i2c_write16(port, slave_addr, offset, v);
+
 	} else {
-		ccputs("Invalid rw mode : r / w / r16 / w16\n");
-		return EC_ERROR_INVAL;
+		return EC_ERROR_PARAM1;
 	}
 
-	port = strtoi(argv[2], &e, 0);
-	if (*e) {
-		ccputs("Invalid port\n");
-		return EC_ERROR_INVAL;
-	}
-
-	slave_addr = strtoi(argv[3], &e, 0);
-	if (*e) {
-		ccputs("Invalid slave_addr\n");
-		return EC_ERROR_INVAL;
-	}
-
-	offset = strtoi(argv[4], &e, 0);
-	if (*e) {
-		ccputs("Invalid addr\n");
-		return EC_ERROR_INVAL;
-	}
-
-	if (rw > 1) {
-		if (argc < 6) {
-			ccputs("No write value\n");
-			return EC_ERROR_INVAL;
-		}
-		value = strtoi(argv[5], &e, 0);
-		if (*e) {
-			ccputs("Invalid write value\n");
-			return EC_ERROR_INVAL;
-		}
-	}
-
-
-	switch (rw) {
-	case 0:
-		rv = i2c_read8(port, slave_addr, offset, &value);
-		break;
-	case 1:
-		rv = i2c_read16(port, slave_addr, offset, &value);
-		break;
-	case 2:
-		rv = i2c_write8(port, slave_addr, offset, value);
-		break;
-	case 3:
-		rv = i2c_write16(port, slave_addr, offset, value);
-		break;
-	}
-
-
-	if (rv) {
-		ccprintf("i2c command failed\n", rv);
-		return rv;
-	}
-
-	if (rw == 0)
-		ccprintf("0x%02x [%d]\n", value);
-	else if (rw == 1)
-		ccprintf("0x%04x [%d]\n", value);
-
-	ccputs("ok\n");
-
-	return EC_SUCCESS;
+	return rv;
 }
 DECLARE_CONSOLE_COMMAND(i2cxfer, command_i2cxfer,
-			"r/r16/w/w16 port addr offset [value]",
+			"r/r16/rlen/w/w16 port addr offset [value | len]",
 			"Read write I2C",
 			NULL);
