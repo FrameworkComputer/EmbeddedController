@@ -69,12 +69,14 @@ const struct gpio_info gpio_list[] = {
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
 	{"BOARD_VERSION2",       LM4_GPIO_Q, (1<<6), GPIO_INPUT, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
+#ifdef CONFIG_CHIPSET_DEBUG
 	{"PCH_SLP_SX_L",         LM4_GPIO_G, (1<<3), GPIO_INPUT|GPIO_PULL_UP,
 	 NULL},
 	{"PCH_SUS_STAT_L",       LM4_GPIO_G, (1<<6), GPIO_INPUT|GPIO_PULL_UP,
 	 NULL},
 	{"PCH_SUSPWRDNACK",      LM4_GPIO_G, (1<<2), GPIO_INPUT|GPIO_PULL_UP,
 	 NULL},
+#endif
 	{"PP1000_S0IX_PGOOD",    LM4_GPIO_H, (1<<6), GPIO_INPUT, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
@@ -136,9 +138,11 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PP1000_S0IX_PGOOD, 1, "PGOOD_PP1000_S0IX"},
 	{GPIO_PCH_SLP_S3_L,      1, "SLP_S3#_DEASSERTED"},
 	{GPIO_PCH_SLP_S4_L,      1, "SLP_S4#_DEASSERTED"},
+#ifdef CONFIG_CHIPSET_DEBUG
 	{GPIO_PCH_SLP_SX_L,      1, "SLP_SX#_DEASSERTED"},
 	{GPIO_PCH_SUS_STAT_L,    0, "SUS_STAT#_ASSERTED"},
 	{GPIO_PCH_SUSPWRDNACK,   1, "SUSPWRDNACK_ASSERTED"},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

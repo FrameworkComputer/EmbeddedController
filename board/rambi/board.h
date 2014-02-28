@@ -88,9 +88,11 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
+#ifdef CONFIG_CHIPSET_DEBUG
 	GPIO_PCH_SLP_SX_L,         /* SLP_S0IX# signal from PCH */
 	GPIO_PCH_SUS_STAT_L,       /* SUS_STAT# signal from PCH */
 	GPIO_PCH_SUSPWRDNACK,      /* SUSPWRDNACK signal from PCH */
+#endif
 	GPIO_PP1000_S0IX_PGOOD,    /* Power good on 1.00V (S0iX supplies) */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
@@ -145,9 +147,11 @@ enum power_signal {
 	X86_PGOOD_PP1000_S0IX,
 	X86_SLP_S3_DEASSERTED,
 	X86_SLP_S4_DEASSERTED,
+#ifdef CONFIG_CHIPSET_DEBUG
 	X86_SLP_SX_DEASSERTED,
 	X86_SUS_STAT_ASSERTED,
 	X86_SUSPWRDNACK_ASSERTED,
+#endif
 
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT

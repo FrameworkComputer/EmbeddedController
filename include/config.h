@@ -225,12 +225,15 @@
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
 
+/* Support chipset throttling */
+#undef CONFIG_CHIPSET_CAN_THROTTLE
+
+/* Enable additional chipset debugging */
+#undef CONFIG_CHIPSET_DEBUG
+
 /* Support power rail control */
 #define CONFIG_CHIPSET_HAS_PP1350
 #define CONFIG_CHIPSET_HAS_PP5000
-
-/* Support chipset throttling */
-#undef CONFIG_CHIPSET_CAN_THROTTLE
 
 /*****************************************************************************/
 /*
