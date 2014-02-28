@@ -197,8 +197,15 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	reg_sts = MEC1322_I2C_STATUS(port);
 	if (!started &&
-	    ((reg_sts & (STS_BER | STS_LAB)) || !(reg_sts & STS_NBB))) {
-		CPRINTF("[%T I2C%d bad status 0x%02x]\n", port, reg_sts);
+	    (((reg_sts & (STS_BER | STS_LAB)) || !(reg_sts & STS_NBB)) ||
+			    (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
+		CPRINTF("[%T I2C%d bad status 0x%02x, SCL=%d, SDA=%d]\n", port,
+			reg_sts,
+			i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
+			i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
+
+		/* Attempt to unwedge the port. */
+		i2c_unwedge(port);
 
 		/* Bus error, bus busy, or arbitration lost. Reset port. */
 		reset_port(port);
@@ -294,6 +301,70 @@ err_i2c_xfer:
 	/* Send STOP and return error */
 	MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO | CTRL_STO | CTRL_ACK;
 	return EC_ERROR_UNKNOWN;
+}
+
+int i2c_raw_get_scl(int port)
+{
+	enum gpio_signal g;
+	int ret;
+
+	/* If no SCL pin defined for this port, then return 1 to appear idle. */
+	if (get_scl_from_i2c_port(port, &g) != EC_SUCCESS)
+		return 1;
+
+	/*
+	 * TODO(crosbug.com/p/26483): The following code assumes the worst case,
+	 * that since the pin is an output, gpio_get_level() will return the
+	 * state that we are trying to drive the output to, instead of the
+	 * actual state of the pin. Need to determine if this is the case, and
+	 * if not, we can optimize.
+	 */
+
+	/* If we are driving the pin low, it must be low. */
+	if (gpio_get_level(g) == 0)
+		return 0;
+
+	/*
+	 * Otherwise, we need to toggle it to an input to read the true pin
+	 * state.
+	 */
+	gpio_set_flags(g, GPIO_INPUT);
+	ret = gpio_get_level(g);
+	gpio_set_flags(g, GPIO_ODR_HIGH);
+
+	return ret;
+}
+
+int i2c_raw_get_sda(int port)
+{
+	enum gpio_signal g;
+	int ret;
+
+	/* If no SDA pin defined for this port, then return 1 to appear idle. */
+	if (get_sda_from_i2c_port(port, &g) != EC_SUCCESS)
+		return 1;
+
+	/*
+	 * TODO(crosbug.com/p/26483): The following code assumes the worst case,
+	 * that since the pin is an output, gpio_get_level() will return the
+	 * state that we are trying to drive the output to, instead of the
+	 * actual state of the pin. Need to determine if this is the case, and
+	 * if not, we can optimize.
+	 */
+
+	/* If we are driving the pin low, it must be low. */
+	if (gpio_get_level(g) == 0)
+		return 0;
+
+	/*
+	 * Otherwise, we need to toggle it to an input to read the true pin
+	 * state.
+	 */
+	gpio_set_flags(g, GPIO_INPUT);
+	ret = gpio_get_level(g);
+	gpio_set_flags(g, GPIO_ODR_HIGH);
+
+	return ret;
 }
 
 int i2c_get_line_levels(int port)

@@ -144,112 +144,14 @@ static void i2c_set_freq_port(const struct i2c_port_t *p)
 	STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
 }
 
-/*
- * Try to pull up SCL. If clock is stretched, we will wait for a few cycles
- * for the slave to get ready.
- *
- * @param scl		the SCL gpio pin
- * @return 0 when success; -1 if SCL is still low
- */
-static int try_pull_up_scl(enum gpio_signal scl)
-{
-	int i;
-	for (i = 0; i < 3; ++i) {
-		gpio_set_level(scl, 1);
-		if (gpio_get_level(scl))
-			return 0;
-		udelay(I2C_BITBANG_HALF_CYCLE_US);
-	}
-	CPRINTF("[%T I2C clock stretched too long?]\n");
-	return -1;
-}
-
-/*
- * Try to unwedge the bus.
- *
- * The implementation is based on unwedge_i2c_bus() in i2c-stm32f.c.
- * Or refer to https://chromium-review.googlesource.com/#/c/32168 for details.
- *
- * @param port		I2C port
- * @param force_unwedge	perform unwedge without checking if wedged
- */
-static void i2c_try_unwedge(int port, int force_unwedge)
-{
-	enum gpio_signal scl, sda;
-	int i;
-
-	/*
-	 * TODO(crosbug.com/p/23802): This requires defining GPIOs for both
-	 * ports even if the board only supports one port.
-	 */
-	if (port == I2C1) {
-		sda = GPIO_I2C1_SDA;
-		scl = GPIO_I2C1_SCL;
-	} else {
-		sda = GPIO_I2C2_SDA;
-		scl = GPIO_I2C2_SCL;
-	}
-
-	if (!force_unwedge) {
-		if (gpio_get_level(scl) && gpio_get_level(sda))
-			/* Everything seems ok; no need to unwedge */
-			return;
-		CPRINTF("[%T I2C wedge detected; fixing]\n");
-	}
-
-	gpio_set_flags(scl, GPIO_ODR_HIGH);
-	gpio_set_flags(sda, GPIO_ODR_HIGH);
-
-	if (!gpio_get_level(scl)) {
-		/*
-		 * Clock is low, wait for a while in case of clock stretched
-		 * by a slave.
-		 */
-		if (try_pull_up_scl(scl))
-			return;
-	}
-
-	/*
-	 * SCL is high. No matter whether SDA is 0 or 1, we generate at most
-	 * 9 clocks with SDA released and then send a STOP. If a slave is in the
-	 * middle of writing, one of the cycles should be a NACK.
-	 * If it's in reading, then this should finish the transaction.
-	 */
-	udelay(I2C_BITBANG_HALF_CYCLE_US);
-	for (i = 0; i < 9; ++i) {
-		if (try_pull_up_scl(scl))
-			return;
-		udelay(I2C_BITBANG_HALF_CYCLE_US);
-		gpio_set_level(scl, 0);
-		udelay(I2C_BITBANG_HALF_CYCLE_US);
-		if (gpio_get_level(sda))
-			break;
-	}
-
-	/* Issue a STOP */
-	gpio_set_level(sda, 0);
-	udelay(I2C_BITBANG_HALF_CYCLE_US);
-	if (try_pull_up_scl(scl))
-		return;
-	udelay(I2C_BITBANG_HALF_CYCLE_US);
-	gpio_set_level(sda, 1);
-	if (gpio_get_level(sda) == 0)
-		CPRINTF("[%T sda is still low]\n");
-	udelay(I2C_BITBANG_HALF_CYCLE_US);
-}
-
 /**
  * Initialize on the specified I2C port.
  *
  * @param p		the I2c port
- * @param force_unwedge	perform unwedge without checking if wedged
  */
-static void i2c_init_port(const struct i2c_port_t *p, int force_unwedge)
+static void i2c_init_port(const struct i2c_port_t *p)
 {
 	int port = p->port;
-
-	/* Unwedge the bus if it seems wedged */
-	i2c_try_unwedge(port, force_unwedge);
 
 	/* Enable clocks to I2C modules if necessary */
 	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
@@ -403,14 +305,16 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		if (rv == I2C_ERROR_FAILED_START) {
 			const struct i2c_port_t *p = i2c_ports;
 			CPRINTF("[%T i2c_xfer start error; "
-				"try resetting i2c%d to unwedge.\n", port);
+				"unwedging and resetting i2c %d.\n", port);
+
+			i2c_unwedge(port);
+
 			for (i = 0; i < i2c_ports_used; i++, p++) {
 				if (p->port == port) {
-					i2c_init_port(p, 1); /* force unwedge */
+					i2c_init_port(p);
 					break;
 				}
 			}
-			CPRINTF("[%T I2C done resetting.\n");
 		}
 	}
 
@@ -434,22 +338,32 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	return rv;
 }
 
+int i2c_raw_get_scl(int port)
+{
+	enum gpio_signal g;
+
+	if (get_scl_from_i2c_port(port, &g) == EC_SUCCESS)
+		return gpio_get_level(g);
+
+	/* If no SCL pin defined for this port, then return 1 to appear idle. */
+	return 1;
+}
+
+int i2c_raw_get_sda(int port)
+{
+	enum gpio_signal g;
+
+	if (get_sda_from_i2c_port(port, &g) == EC_SUCCESS)
+		return gpio_get_level(g);
+
+	/* If no SCL pin defined for this port, then return 1 to appear idle. */
+	return 1;
+}
+
 int i2c_get_line_levels(int port)
 {
-	enum gpio_signal sda, scl;
-
-	ASSERT(port == I2C1 || port == I2C2);
-
-	if (port == I2C1) {
-		sda = GPIO_I2C1_SDA;
-		scl = GPIO_I2C1_SCL;
-	} else {
-		sda = GPIO_I2C2_SDA;
-		scl = GPIO_I2C2_SCL;
-	}
-
-	return (gpio_get_level(sda) ? I2C_LINE_SDA_HIGH : 0) |
-		(gpio_get_level(scl) ? I2C_LINE_SCL_HIGH : 0);
+	return (i2c_raw_get_sda(port) ? I2C_LINE_SDA_HIGH : 0) |
+		(i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
@@ -526,7 +440,7 @@ static void i2c_init(void)
 	int i;
 
 	for (i = 0; i < i2c_ports_used; i++, p++)
-		i2c_init_port(p, 0); /* do not force unwedged */
+		i2c_init_port(p);
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
 
