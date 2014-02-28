@@ -11,6 +11,7 @@
 #include "driver/accel_kxcj9.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "timer.h"
 #include "util.h"
 
 /* Range of the accelerometers: 2G, 4G, or 8G. */
@@ -23,7 +24,6 @@ static int sensor_resolution[ACCEL_COUNT] = {KXCJ9_RES_12BIT, KXCJ9_RES_12BIT};
 static int sensor_datarate[ACCEL_COUNT] = {KXCJ9_OSA_12_50HZ,
 						KXCJ9_OSA_12_50HZ};
 
-#ifdef CONFIG_CMD_ACCELS
 /**
  * Read register from accelerometer.
  */
@@ -31,7 +31,6 @@ static int raw_read8(const int addr, const int reg, int *data_ptr)
 {
 	return i2c_read8(I2C_PORT_ACCEL, addr, reg, data_ptr);
 }
-#endif /* CONFIG_CMD_ACCELS */
 
 /**
  * Write register from accelerometer.
@@ -123,8 +122,10 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 		return EC_ERROR_INVAL;
 
 	/* Read 6 bytes starting at KXCJ9_XOUT_L. */
+	i2c_lock(I2C_PORT_ACCEL, 1);
 	ret = i2c_xfer(I2C_PORT_ACCEL, accel_addr[id], &reg, 1, acc, 6,
 			I2C_XFER_SINGLE);
+	i2c_lock(I2C_PORT_ACCEL, 0);
 
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -165,10 +166,36 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 int accel_init(enum accel_id id)
 {
 	int ret = EC_SUCCESS;
+	int cnt = 0, ctrl2;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
 		return EC_ERROR_INVAL;
+
+	/*
+	 * This sensor can be powered through an EC reboot, so the state of
+	 * the sensor is unknown here. Initiate software reset to restore
+	 * sensor to default.
+	 */
+	ret = raw_write8(accel_addr[id], KXCJ9_CTRL2, KXCJ9_CTRL2_SRST);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Wait until software reset is complete or timeout. */
+	while (1) {
+		raw_read8(accel_addr[id], KXCJ9_CTRL2, &ctrl2);
+
+		/* Reset complete. */
+		if (!(ctrl2 & KXCJ9_CTRL2_SRST))
+			break;
+
+		/* Check for timeout. */
+		if (cnt++ > 5)
+			return EC_ERROR_TIMEOUT;
+
+		/* Give more time for reset action to complete. */
+		msleep(10);
+	}
 
 	/* Enable accelerometer, 12-bit resolution mode, +/- 2G range.*/
 	ret |= raw_write8(accel_addr[id],  KXCJ9_CTRL1,
