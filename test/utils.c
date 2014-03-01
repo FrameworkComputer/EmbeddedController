@@ -161,6 +161,58 @@ static int test_memcpy(void)
 	return EC_SUCCESS;
 }
 
+/* Plain memset, used as a reference to measure speed gain */
+static void *dumb_memset(void *dest, int c, int len)
+{
+	char *d = (char *)dest;
+	while (len > 0) {
+		*(d++) = c;
+		len--;
+	}
+	return dest;
+}
+
+static int test_memset(void)
+{
+	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int iteration = 1000;
+
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		dumb_memset(buf, 1, len);
+	t1 = get_time();
+	TEST_ASSERT_MEMSET(buf, (char)1, len);
+	ccprintf(" (speed gain: %d ->", t1.val-t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memset(buf, 1, len);
+	t3 = get_time();
+	TEST_ASSERT_MEMSET(buf, (char)1, len);
+	ccprintf(" %d us) ", t3.val-t2.val);
+
+	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+
+	memset(buf, 128, len);
+	TEST_ASSERT_MEMSET(buf, (char)128, len);
+
+	memset(buf, -2, len);
+	TEST_ASSERT_MEMSET(buf, (char)-2, len);
+
+	memset(buf + 1, 1, len - 2);
+	TEST_ASSERT_MEMSET(buf + 1, (char)1, len - 2);
+
+	shared_mem_release(buf);
+	return EC_SUCCESS;
+}
+
 static int test_strzcpy(void)
 {
 	char dest[10];
@@ -248,7 +300,7 @@ static int test_get_next_bit(void)
 
 static int test_shared_mem(void)
 {
-	int i, j;
+	int i;
 	int sz = shared_mem_size();
 	char *mem;
 
@@ -257,9 +309,7 @@ static int test_shared_mem(void)
 
 	for (i = 0; i < 256; ++i) {
 		memset(mem, i, sz);
-		for (j = 0; j < sz; ++j)
-			TEST_ASSERT(mem[j] == (char)i);
-
+		TEST_ASSERT_MEMSET(mem, (char)i, sz);
 		if ((i & 0xf) == 0)
 			msleep(20); /* Yield to other tasks */
 	}
@@ -384,6 +434,7 @@ void run_test(void)
 	RUN_TEST(test_parse_bool);
 	RUN_TEST(test_memmove);
 	RUN_TEST(test_memcpy);
+	RUN_TEST(test_memset);
 	RUN_TEST(test_strzcpy);
 	RUN_TEST(test_strlen);
 	RUN_TEST(test_strcasecmp);

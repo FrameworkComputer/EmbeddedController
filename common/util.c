@@ -217,15 +217,38 @@ void *memcpy(void *dest, const void *src, int len)
 
 void *memset(void *dest, int c, int len)
 {
-	/*
-	 * TODO(crosbug.com/p/23720): if dest is aligned, copy a word at a time
-	 * instead.
-	 */
 	char *d = (char *)dest;
-	while (len > 0) {
+	uint32_t cccc;
+	uint32_t *dw;
+	char *head;
+	char * const tail = (char *)dest + len;
+	/* Set 'body' to the last word boundary */
+	uint32_t * const body = (uint32_t *)((uintptr_t)tail & ~3);
+
+	c &= 0xff;	/* Clear upper bits before ORing below */
+	cccc = c | (c << 8) | (c << 16) | (c << 24);
+
+	if ((uintptr_t)tail < (((uintptr_t)d + 3) & ~3))
+		/* len is shorter than the first word boundary */
+		head = tail;
+	else
+		/* Set 'head' to the first word boundary */
+		head = (char *)(((uintptr_t)d + 3) & ~3);
+
+	/* Copy head */
+	while (d < head)
 		*(d++) = c;
-		len--;
-	}
+
+	/* Copy body */
+	dw = (uint32_t *)d;
+	while (dw < body)
+		*(dw++) = cccc;
+
+	/* Copy tail */
+	d = (char *)dw;
+	while (d < tail)
+		*(d++) = c;
+
 	return dest;
 }
 

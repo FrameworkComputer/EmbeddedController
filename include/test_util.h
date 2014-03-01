@@ -58,6 +58,19 @@
 			} \
 	} while (0)
 
+#define TEST_ASSERT_MEMSET(d, c, n) \
+	do { \
+		int __i; \
+		for (__i = 0; __i < n; ++__i) \
+			if ((d)[__i] != (c)) { \
+				ccprintf("%d: ASSERT_MEMSET failed at " \
+					 "index=%d: %d != %d\n", __LINE__, \
+					 __i, (int)(d)[__i], (c)); \
+				task_dump_trace(); \
+				return EC_ERROR_UNKNOWN; \
+			} \
+	} while (0)
+
 #define TEST_CHECK(n) \
 	do { \
 		if (n) \
