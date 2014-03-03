@@ -21,7 +21,35 @@
  * algorithmically.  To avoid burning memory for a lookup table, use macros to
  * compute the offset.  This also has the benefit that compilation will fail if
  * an unsupported master/slave pairing is used.
- *
+ */
+#ifdef CHIP_FAMILY_STM32F0
+/*
+ * Slave        Master
+ *     1    15  2  3 17
+ *     2     1 15  3 14
+ *     3     1  2 15 14
+ *    15     2  3 16 17
+ *     --------------------
+ *     ts =  0  1  2  3
+ */
+#define STM32_TIM_TS_SLAVE_1_MASTER_15  0
+#define STM32_TIM_TS_SLAVE_1_MASTER_2   1
+#define STM32_TIM_TS_SLAVE_1_MASTER_3   2
+#define STM32_TIM_TS_SLAVE_1_MASTER_17  3
+#define STM32_TIM_TS_SLAVE_2_MASTER_1   0
+#define STM32_TIM_TS_SLAVE_2_MASTER_15  1
+#define STM32_TIM_TS_SLAVE_2_MASTER_3   2
+#define STM32_TIM_TS_SLAVE_2_MASTER_14  3
+#define STM32_TIM_TS_SLAVE_3_MASTER_1   0
+#define STM32_TIM_TS_SLAVE_3_MASTER_2   1
+#define STM32_TIM_TS_SLAVE_3_MASTER_15  2
+#define STM32_TIM_TS_SLAVE_3_MASTER_14  3
+#define STM32_TIM_TS_SLAVE_15_MASTER_2  0
+#define STM32_TIM_TS_SLAVE_15_MASTER_3  1
+#define STM32_TIM_TS_SLAVE_15_MASTER_16 2
+#define STM32_TIM_TS_SLAVE_15_MASTER_17 3
+#else /* !CHIP_FAMILY_STM32F0 */
+/*
  * Slave        Master
  *     1    15  2  3  4  (STM32F100 only)
  *     2     9 10  3  4
@@ -51,6 +79,7 @@
 #define STM32_TIM_TS_SLAVE_9_MASTER_3  1
 #define STM32_TIM_TS_SLAVE_9_MASTER_10 2
 #define STM32_TIM_TS_SLAVE_9_MASTER_11 3
+#endif /* !CHIP_FAMILY_STM32F0 */
 #define TSMAP(slave, master) \
 	CONCAT4(STM32_TIM_TS_SLAVE_, slave, _MASTER_, master)
 
@@ -64,7 +93,11 @@
 #define IRQ_WD  IRQ_TIM(TIM_WATCHDOG)
 
 /* TIM1 has fancy names for its IRQs; remap count-up IRQ for the macro above */
+#ifdef CHIP_FAMILY_STM32F0
+#define STM32_IRQ_TIM1 STM32_IRQ_TIM1_BRK_UP_TRG
+#else /* !CHIP_FAMILY_STM32F0 */
 #define STM32_IRQ_TIM1 STM32_IRQ_TIM1_UP_TIM16
+#endif /* !CHIP_FAMILY_STM32F0 */
 
 #define TIM_BASE(n) CONCAT3(STM32_TIM, n, _BASE)
 #define TIM_WD_BASE TIM_BASE(TIM_WATCHDOG)
@@ -169,7 +202,7 @@ void __hw_timer_enable_clock(int n, int enable)
 	 * Mapping of timers to reg/mask is split into a few different ranges,
 	 * some specific to individual chips.
 	 */
-#if defined(CHIP_FAMILY_STM32F)
+#if defined(CHIP_FAMILY_STM32F) || defined(CHIP_FAMILY_STM32F0)
 	if (n == 1) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM1;
@@ -181,6 +214,16 @@ void __hw_timer_enable_clock(int n, int enable)
 	}
 #endif
 
+#if defined(CHIP_FAMILY_STM32F0)
+	if (n >= 15 && n <= 17) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = STM32_RCC_PB2_TIM15 << (n - 15);
+	}
+	if (n == 14) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = STM32_RCC_PB1_TIM14;
+	}
+#endif
 	if (n >= 2 && n <= 7) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM2 << (n - 2);

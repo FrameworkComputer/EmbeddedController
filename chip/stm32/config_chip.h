@@ -6,8 +6,13 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
+#ifdef CHIP_FAMILY_STM32F0
+/* CPU core BFD configuration */
+#include "core/cortex-m0/config_core.h"
+#else
 /* CPU core BFD configuration */
 #include "core/cortex-m/config_core.h"
+#endif
 
 /* Default to UART 1 for EC console */
 #define CONFIG_UART_CONSOLE 1
@@ -23,6 +28,9 @@
 #elif defined(CHIP_VARIANT_STM32F10X)
 /* STM32F101xx, STM32F102xx, STM32F103xx, STM32F105xx, and STM32F107xx */
 #include "config-stm32f10x.h"
+#elif defined(CHIP_VARIANT_STM32F07X)
+/* STM32F07xx */
+#include "config-stm32f07x.h"
 #else
 #error "Unsupported chip variant"
 #endif
