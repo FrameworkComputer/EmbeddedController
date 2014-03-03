@@ -656,6 +656,9 @@
 /* Allow the board to use a GPIO for the SCI# signal. */
 #undef CONFIG_SCI_GPIO
 
+/* Emulate the CLZ (Count Leading Zeros) in software for CPU lacking support */
+#undef CONFIG_SOFTWARE_CLZ
+
 /* Support SPI interfaces */
 #undef CONFIG_SPI
 

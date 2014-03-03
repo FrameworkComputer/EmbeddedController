@@ -10,6 +10,11 @@
 #define BFD_ARCH nds32
 #define BFD_FORMAT "elf32-nds32le"
 
+/*
+ * The Andestar v3m architecture has no CLZ instruction (contrary to v3),
+ * so let's use the software implementation.
+ */
+#define CONFIG_SOFTWARE_CLZ
 
 /*
  * Force the compiler to use a proper relocation when accessing an external
