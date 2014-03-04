@@ -97,7 +97,10 @@ static int test_memmove(void)
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+#ifndef TEST_COVERAGE
+	/* Measuring coverage makes it fluctuate even more, so skip it. */
 	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+#endif
 
 	/* Test small moves */
 	memmove(buf + 1, buf, 1);
