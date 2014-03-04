@@ -1,4 +1,4 @@
-/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -64,8 +64,8 @@ const struct gpio_info gpio_list[] = {
 	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
 	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_ODR_HIGH, NULL},
 	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_ODR_HIGH, NULL},
-	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_ODR_HIGH, NULL},
-	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
+	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_OUT_LOW, NULL},
+	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_OUT_LOW, NULL},
 	{"LED_POWER_L", GPIO_A, (1<<2),  GPIO_OUT_HIGH, NULL},  /* PWR_LED1 */
 	{"PMIC_PWRON_L", GPIO_A, (1<<12), GPIO_OUT_HIGH, NULL},
 	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
