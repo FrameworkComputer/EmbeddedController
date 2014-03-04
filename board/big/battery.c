@@ -74,6 +74,23 @@ static struct battery_info info_3s = {
 	.discharging_max_c    = 50,
 };
 
+static struct battery_info info_3s_LGC = {
+
+        .voltage_max    = 13140,
+        .voltage_normal = 11400, /* Average of max & min */
+        .voltage_min    =  9000,
+
+        /* Pre-charge values. */
+        .precharge_current  = 256,      /* mA */
+
+        .start_charging_min_c = 0,
+        .start_charging_max_c = 50,
+        .charging_min_c       = 0,
+        .charging_max_c       = 60,
+        .discharging_min_c    = 0,
+        .discharging_max_c    = 75,
+};
+
 static struct battery_info info_4s = {
 
 	.voltage_max    = 17520,
@@ -119,6 +136,13 @@ static struct battery_device support_batteries[] = {
 		.design_mv		= 15200,
 		.battery_info		= &info_4s,
 		.support_cut_off	= 1,
+	},
+	{
+		.manuf                  = "LGC",
+		.device                 = "AC14B18J",
+		.design_mv              = 11400,
+		.battery_info           = &info_3s_LGC,
+		.support_cut_off        = 1,
 	},
 };
 
