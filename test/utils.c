@@ -99,7 +99,7 @@ static int test_memmove(void)
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
 #ifndef TEST_COVERAGE
 	/* Measuring coverage makes it fluctuate even more, so skip it. */
-	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
 #endif
 
 	/* Test small moves */
@@ -145,7 +145,7 @@ static int test_memcpy(void)
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
-	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
 
 	memcpy(buf + dest_offset + 1, buf + 1, len - 1);
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf + 1, len - 1);
