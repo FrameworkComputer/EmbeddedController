@@ -146,6 +146,18 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
+static void update_touchscreen(void)
+{
+	/*
+	 * If the lid is closed; put the touchscreen in reset to save power.
+	 * If the lid is open, take it out of reset so it can wake the
+	 * processor (although just opening the lid should do that anyway, so
+	 * we don't have to worry about it staying on while the AP is off).
+	 */
+	gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, lid_is_open());
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, update_touchscreen, HOOK_PRIO_DEFAULT);
+
 enum power_state power_handle_state(enum power_state state)
 {
 	switch (state) {
@@ -159,13 +171,6 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3:
-		/*
-		 * If lid is closed; hold touchscreen in reset to cut
-		 * power usage.  If lid is open, take touchscreen out
-		 * of reset so it can wake the processor.
-		 */
-		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, lid_is_open());
-
 		/* Check for state transitions */
 		if (!power_has_signals(IN_PGOOD_S3)) {
 			/* Required rail went away */
@@ -280,11 +285,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable wireless. */
 		wireless_set_state(WIRELESS_ON);
 
-		/*
-		 * Make sure touchscreen is out if reset (even if the
-		 * lid is still closed); it may have been turned off if
-		 * the lid was closed in S3.
-		 */
+		/* Make sure the touchscreen is on, too. */
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 1);
 
 		/* Wait for non-core power rails good */
