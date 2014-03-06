@@ -339,8 +339,8 @@ static int test_shared_mem(void)
 
 static int test_scratchpad(void)
 {
-	system_set_scratchpad(0xfeedfeed);
-	TEST_ASSERT(system_get_scratchpad() == 0xfeedfeed);
+	system_set_scratchpad(0xfeed);
+	TEST_ASSERT(system_get_scratchpad() == 0xfeed);
 
 	return EC_SUCCESS;
 }
