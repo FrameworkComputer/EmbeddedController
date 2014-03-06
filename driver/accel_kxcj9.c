@@ -183,10 +183,10 @@ int accel_init(enum accel_id id)
 
 	/* Wait until software reset is complete or timeout. */
 	while (1) {
-		raw_read8(accel_addr[id], KXCJ9_CTRL2, &ctrl2);
+		ret = raw_read8(accel_addr[id], KXCJ9_CTRL2, &ctrl2);
 
 		/* Reset complete. */
-		if (!(ctrl2 & KXCJ9_CTRL2_SRST))
+		if (ret == EC_SUCCESS && !(ctrl2 & KXCJ9_CTRL2_SRST))
 			break;
 
 		/* Check for timeout. */
