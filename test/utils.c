@@ -201,7 +201,7 @@ static int test_memset(void)
 	ccprintf(" %d us) ", t3.val-t2.val);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
-	TEST_ASSERT((t1.val-t0.val) > (t3.val-t2.val) * 3);
+	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
 
 	memset(buf, 128, len);
 	TEST_ASSERT_MEMSET(buf, (char)128, len);
