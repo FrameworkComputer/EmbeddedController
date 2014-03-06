@@ -314,6 +314,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 		/* Turn off power rails */
+		msleep(7);  /* Small delay; see crosbug.com/p/26561 */
 		gpio_set_level(GPIO_PP3300_DX_EN, 0);
 
 #ifdef CONFIG_USB_PORT_POWER_IN_S3
