@@ -149,7 +149,7 @@ void uart_enable_interrupt(void)
 }
 
 /* Interrupt handler for console USART */
-static void uart_interrupt(void)
+void uart_interrupt(void)
 {
 #ifdef CONFIG_UART_TX_DMA
 	/* Disable transmission complete interrupt if DMA done */

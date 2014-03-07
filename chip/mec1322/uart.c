@@ -97,7 +97,7 @@ void uart_enable_interrupt(void)
 /**
  * Interrupt handler for UART
  */
-static void uart_ec_interrupt(void)
+void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();

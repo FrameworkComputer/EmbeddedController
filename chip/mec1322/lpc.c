@@ -225,13 +225,13 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-static void emi_interrupt(void)
+void emi_interrupt(void)
 {
 	port_80_write(MEC1322_EMI_H2E_MBX);
 }
 DECLARE_IRQ(MEC1322_IRQ_EMI, emi_interrupt, 1);
 
-static void acpi_0_interrupt(void)
+void acpi_0_interrupt(void)
 {
 	uint8_t value, result, is_cmd;
 
@@ -258,7 +258,7 @@ static void acpi_0_interrupt(void)
 }
 DECLARE_IRQ(MEC1322_IRQ_ACPIEC0_IBF, acpi_0_interrupt, 1);
 
-static void acpi_1_interrupt(void)
+void acpi_1_interrupt(void)
 {
 	uint8_t st = MEC1322_ACPI_EC_STATUS(1);
 	if (!(st & EC_LPC_STATUS_FROM_HOST) ||
@@ -305,7 +305,7 @@ static void acpi_1_interrupt(void)
 DECLARE_IRQ(MEC1322_IRQ_ACPIEC1_IBF, acpi_1_interrupt, 1);
 
 #ifdef HAS_TASK_KEYPROTO
-static void kb_ibf_interrupt(void)
+void kb_ibf_interrupt(void)
 {
 	if (lpc_keyboard_input_pending())
 		keyboard_host_write(MEC1322_8042_H2E,

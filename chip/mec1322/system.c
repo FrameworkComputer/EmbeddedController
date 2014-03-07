@@ -300,7 +300,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	_system_reset(0, 1);
 }
 
-static void htimer_interrupt(void)
+void htimer_interrupt(void)
 {
 	/* Time to wake up */
 	_system_reset(0, 1);

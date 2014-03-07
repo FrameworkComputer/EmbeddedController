@@ -238,7 +238,7 @@ void dma_clear_isr(enum dma_channel channel)
 	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
 }
 
-static void dma_event_interrupt_channel_4(void)
+void dma_event_interrupt_channel_4(void)
 {
 	dma_clear_isr(STM32_DMAC_CH4);
 	if (id[STM32_DMAC_CH4] != TASK_ID_INVALID)
@@ -246,7 +246,7 @@ static void dma_event_interrupt_channel_4(void)
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4, dma_event_interrupt_channel_4, 3);
 
-static void dma_event_interrupt_channel_5(void)
+void dma_event_interrupt_channel_5(void)
 {
 	dma_clear_isr(STM32_DMAC_CH5);
 	if (id[STM32_DMAC_CH5] != TASK_ID_INVALID)
@@ -254,7 +254,7 @@ static void dma_event_interrupt_channel_5(void)
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_5, dma_event_interrupt_channel_5, 3);
 
-static void dma_event_interrupt_channel_6(void)
+void dma_event_interrupt_channel_6(void)
 {
 	dma_clear_isr(STM32_DMAC_CH6);
 	if (id[STM32_DMAC_CH6] != TASK_ID_INVALID)
@@ -262,7 +262,7 @@ static void dma_event_interrupt_channel_6(void)
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_6, dma_event_interrupt_channel_6, 3);
 
-static void dma_event_interrupt_channel_7(void)
+void dma_event_interrupt_channel_7(void)
 {
 	dma_clear_isr(STM32_DMAC_CH7);
 	if (id[STM32_DMAC_CH7] != TASK_ID_INVALID)

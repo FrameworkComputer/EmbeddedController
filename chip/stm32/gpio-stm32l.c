@@ -228,7 +228,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 /*****************************************************************************/
 /* Interrupt handler */
 
-static void gpio_interrupt(void)
+void gpio_interrupt(void)
 {
 	int bit;
 	const struct gpio_info *g;

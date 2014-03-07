@@ -401,7 +401,6 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
  *
  * @param is_cmd	Is write command (is_cmd=1) or data (is_cmd=0)
  */
-__attribute__((noinline))			/* TODO(crosbug.com/p/24515) */
 static void handle_acpi_write(int is_cmd)
 {
 	uint8_t value, result;
@@ -520,7 +519,7 @@ static void handle_host_write(int is_cmd)
 /**
  * LPC interrupt handler
  */
-static void lpc_interrupt(void)
+void lpc_interrupt(void)
 {
 	uint32_t mis = LM4_LPC_LPCMIS;
 	uint32_t st;

@@ -101,13 +101,13 @@ uint32_t reset_rtc_alarm(void)
 	return rtc_stamp;
 }
 
-static void __rtc_wakeup_irq(void)
+void __rtc_wakeup_irq(void)
 {
 	reset_rtc_alarm();
 }
 DECLARE_IRQ(STM32_IRQ_RTC_WAKEUP, __rtc_wakeup_irq, 1);
 
-static void __rtc_alarm_irq(void)
+void __rtc_alarm_irq(void)
 {
 	reset_rtc_alarm();
 }

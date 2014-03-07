@@ -316,7 +316,7 @@ void system_reset_rtc_alarm(void)
 /**
  * Hibernate module interrupt
  */
-static void __hibernate_irq(void)
+void __hibernate_irq(void)
 {
 	system_reset_rtc_alarm();
 }

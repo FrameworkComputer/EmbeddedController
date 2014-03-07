@@ -725,7 +725,7 @@ void extpower_interrupt(enum gpio_signal signal)
 /*****************************************************************************/
 /* Hooks */
 
-static void adc_watchdog_interrupt(void)
+void adc_watchdog_interrupt(void)
 {
 	switch (current_watchdog) {
 	case ADC_WATCH_USB:

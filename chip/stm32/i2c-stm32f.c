@@ -299,7 +299,7 @@ static void i2c_event_handler(int port)
 		}
 	}
 }
-static void i2c2_event_interrupt(void) { i2c_event_handler(I2C2); }
+void i2c2_event_interrupt(void) { i2c_event_handler(I2C2); }
 DECLARE_IRQ(STM32_IRQ_I2C2_EV, i2c2_event_interrupt, 3);
 
 static void i2c_error_handler(int port)
@@ -318,7 +318,7 @@ static void i2c_error_handler(int port)
 
 	STM32_I2C_SR1(port) &= ~0xdf00;
 }
-static void i2c2_error_interrupt(void) { i2c_error_handler(I2C2); }
+void i2c2_error_interrupt(void) { i2c_error_handler(I2C2); }
 DECLARE_IRQ(STM32_IRQ_I2C2_ER, i2c2_error_interrupt, 2);
 
 /* board-specific setup for post-I2C module init */
