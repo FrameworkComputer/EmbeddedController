@@ -22,9 +22,6 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-#define I2C1      STM32_I2C1_PORT
-#define I2C2      STM32_I2C2_PORT
-
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK 32
 
