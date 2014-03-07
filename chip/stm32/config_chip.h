@@ -31,6 +31,9 @@
 #elif defined(CHIP_VARIANT_STM32F07X)
 /* STM32F07xx */
 #include "config-stm32f07x.h"
+#elif defined(CHIP_VARIANT_STM32F03X)
+/* STM32F03x */
+#include "config-stm32f03x.h"
 #else
 #error "Unsupported chip variant"
 #endif
