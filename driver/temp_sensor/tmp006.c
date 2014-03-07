@@ -324,6 +324,28 @@ DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION,
 		     tmp006_set_calibration,
 		     EC_VER_MASK(0));
 
+int tmp006_get_raw(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_tmp006_get_raw *p = args->params;
+	struct ec_response_tmp006_get_raw *r = args->response;
+	const struct tmp006_data_t *tdata;
+
+	if (p->index >= TMP006_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	tdata = tmp006_data + p->index;
+
+	r->v = tdata->v;
+	r->t = tdata->t[(tdata->tidx - 1) & 0x3];
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_RAW,
+		     tmp006_get_raw,
+		     EC_VER_MASK(0));
+
 /*****************************************************************************/
 /* Console commands */
 

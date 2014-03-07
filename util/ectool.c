@@ -152,6 +152,8 @@ const char help_str[] =
 	"      Set the threshold temperature values for the thermal engine.\n"
 	"  tmp006cal <tmp006_index> [<S0> <b0> <b1> <b2>]\n"
 	"      Get/set TMP006 calibration\n"
+	"  tmp006raw <tmp006_index>\n"
+	"      Get raw TMP006 data\n"
 	"  usbchargemode <port> <mode>\n"
 	"      Set USB charging mode\n"
 	"  usbmux <mux>\n"
@@ -3444,6 +3446,36 @@ int cmd_tmp006cal(int argc, char *argv[])
 			  &p, sizeof(p), NULL, 0);
 }
 
+int cmd_tmp006raw(int argc, char *argv[])
+{
+	struct ec_params_tmp006_get_raw p;
+	struct ec_response_tmp006_get_raw r;
+	char *e;
+	int idx;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Must specify tmp006 index.\n");
+		return -1;
+	}
+
+	idx = strtol(argv[1], &e, 0);
+	if ((e && *e) || idx < 0 || idx > 255) {
+		fprintf(stderr, "Bad index.\n");
+		return -1;
+	}
+
+	p.index = idx;
+
+	rv = ec_command(EC_CMD_TMP006_GET_RAW, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("T: %d.%02d K\n", r.t / 100, r.t % 100);
+	printf("V: %d nV\n", r.v);
+	return EC_SUCCESS;
+}
+
 static int cmd_hang_detect(int argc, char *argv[])
 {
 	struct ec_params_hang_detect req;
@@ -3569,6 +3601,7 @@ const struct command commands[] = {
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
 	{"tmp006cal", cmd_tmp006cal},
+	{"tmp006raw", cmd_tmp006raw},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},
 	{"version", cmd_version},

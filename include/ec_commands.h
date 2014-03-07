@@ -1323,6 +1323,18 @@ struct ec_params_tmp006_set_calibration {
 	float b2;
 } __packed;
 
+/* Read raw TMP006 data */
+#define EC_CMD_TMP006_GET_RAW 0x55
+
+struct ec_params_tmp006_get_raw {
+	uint8_t index;
+} __packed;
+
+struct ec_response_tmp006_get_raw {
+	int32_t t;  /* In 1/100 K */
+	int32_t v;  /* In nV */
+};
+
 /*****************************************************************************/
 /* MKBP - Matrix KeyBoard Protocol */
 
