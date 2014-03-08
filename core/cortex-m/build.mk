@@ -17,6 +17,8 @@ CFLAGS_CPU+=-mthumb -Os -mno-sched-prolog
 CFLAGS_CPU+=-mno-unaligned-access
 CFLAGS_CPU+=$(CFLAGS_FPU-y)
 
-core-y=cpu.o init.o panic.o switch.o task.o
+core-y=cpu.o init.o
+core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
+core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
 core-$(CONFIG_WATCHDOG)+=watchdog.o
 core-$(CONFIG_MPU)+=mpu.o

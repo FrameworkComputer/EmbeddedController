@@ -330,7 +330,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	task_ *tsk = current_task;
 	task_id_t me = tsk - tasks;
 	uint32_t evt;
-	int ret;
+	int ret __attribute__((unused));
 
 	ASSERT(!in_interrupt_context());
 

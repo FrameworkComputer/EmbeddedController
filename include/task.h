@@ -205,6 +205,10 @@ struct irq_priority {
  * Implement the DECLARE_IRQ(irq, routine, priority) macro which is
  * a core specific helper macro to declare an interrupt handler "routine".
  */
+#ifdef CONFIG_COMMON_RUNTIME
 #include "irq_handler.h"
+#else
+#define DECLARE_IRQ(irq, routine, priority)
+#endif
 
 #endif  /* __CROS_EC_TASK_H */

@@ -267,6 +267,18 @@
 /* Provide common core code to output panic information without interrupts. */
 #define CONFIG_COMMON_PANIC_OUTPUT
 
+/*
+ * Provide the default GPIO abstraction layer.
+ * You want this unless you are doing a really tiny firmware.
+ */
+#define CONFIG_COMMON_GPIO
+
+/*
+ * Provide common runtime layer code (tasks, hooks ...)
+ * You want this unless you are doing a really tiny firmware.
+ */
+#define CONFIG_COMMON_RUNTIME
+
 /* Provide common core code to handle the operating system timers. */
 #define CONFIG_COMMON_TIMER
 

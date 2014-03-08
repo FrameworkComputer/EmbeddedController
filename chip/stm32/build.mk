@@ -25,11 +25,14 @@ I2C_FAMILY=$(subst stm32f0,stm32l,$(CHIP_FAMILY))
 # Select between 16-bit and 32-bit timer for clock source
 TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
 
-chip-y=dma.o hwtimer$(TIMER_TYPE).o system.o uart.o
-chip-y+=jtag-$(CHIP_FAMILY).o clock-$(CHIP_FAMILY).o gpio-$(CHIP_FAMILY).o
+chip-y=dma.o system.o
+chip-y+=jtag-$(CHIP_FAMILY).o clock-$(CHIP_FAMILY).o
 chip-$(CONFIG_SPI)+=spi.o
+chip-$(CONFIG_COMMON_GPIO)+=gpio-$(CHIP_FAMILY).o
+chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(I2C_FAMILY).o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+chip-$(HAS_TASK_CONSOLE)+=uart.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(HAS_TASK_POWERLED)+=power_led.o
 chip-$(CONFIG_FLASH)+=flash-$(FLASH_FAMILY).o

@@ -192,6 +192,7 @@ void hook_notify(enum hook_type type);
  */
 int hook_call_deferred(void (*routine)(void), int us);
 
+#ifdef CONFIG_COMMON_RUNTIME
 /**
  * Register a hook routine.
  *
@@ -247,5 +248,10 @@ struct deferred_data {
 	const struct deferred_data __deferred_##routine			\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
+
+#else /* CONFIG_COMMON_RUNTIME */
+#define DECLARE_HOOK(t, func, p) void unused_hook_##func(void) { func(); }
+#define DECLARE_DEFERRED(func) void unused_deferred_##func(void) { func(); }
+#endif /* CONFIG_COMMON_RUNTIME */
 
 #endif  /* __CROS_EC_HOOKS_H */
