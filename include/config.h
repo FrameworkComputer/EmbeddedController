@@ -36,8 +36,11 @@
  * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
-/* Use to enable EC console functions for calibrating accelerometers. */
+/* Enable EC console functions for calibrating accelerometers. */
 #undef CONFIG_ACCEL_CALIBRATE
+
+/* Enable accelerometer interrupts. */
+#undef CONFIG_ACCEL_INTERRUPTS
 
 /* Specify type of accelerometers attached. */
 #undef CONFIG_ACCEL_KXCJ9

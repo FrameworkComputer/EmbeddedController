@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_MOTION_SENSE_H
 #define __CROS_EC_MOTION_SENSE_H
 
+#include "gpio.h"
 #include "math_util.h"
 
 /**
@@ -72,6 +73,20 @@ void motion_get_accel_lid(vector_3_t *v, int adjusted);
  */
 void motion_get_accel_base(vector_3_t *v);
 #endif
+
+/**
+ * Interrupt function for lid accelerometer.
+ *
+ * @param signal GPIO signal that caused interrupt
+ */
+void accel_int_lid(enum gpio_signal signal);
+
+/**
+ * Interrupt function for base accelerometer.
+ *
+ * @param signal GPIO signal that caused interrupt
+ */
+void accel_int_base(enum gpio_signal signal);
 
 
 #endif /* __CROS_EC_MOTION_SENSE_H */

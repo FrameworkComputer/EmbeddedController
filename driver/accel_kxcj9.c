@@ -14,6 +14,9 @@
 #include "timer.h"
 #include "util.h"
 
+#define CPUTS(outstr) cputs(CC_ACCEL, outstr)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+
 /* Range of the accelerometers: 2G, 4G, or 8G. */
 static int sensor_range[ACCEL_COUNT] = {KXCJ9_GSEL_2G, KXCJ9_GSEL_2G};
 
@@ -111,6 +114,77 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 	return ret;
 }
 
+#ifdef CONFIG_ACCEL_INTERRUPTS
+int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
+{
+	int ctrl1, tmp, ret;
+
+	/*
+	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
+	 * task can call this function. If this isn't true anymore, need to
+	 * protect with a mutex.
+	 */
+
+	/*
+	 * Read the current status of the control register and disable the
+	 * sensor to allow for changing of critical parameters.
+	 */
+	ret = raw_read8(accel_addr[id], KXCJ9_CTRL1, &ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1 & ~KXCJ9_CTRL1_PC1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Set interrupt timer to 1 so it wakes up immediately. */
+	ret = raw_write8(accel_addr[id], KXCJ9_WAKEUP_TIMER, 1);
+	if (ret != EC_SUCCESS)
+		goto error_enable_sensor;
+
+	/*
+	 * Set threshold, note threshold register is in units of 16 counts, so
+	 * first we need to divide by 16 to get the value to send.
+	 */
+	threshold >>= 4;
+	ret = raw_write8(accel_addr[id], KXCJ9_WAKEUP_THRESHOLD, threshold);
+	if (ret != EC_SUCCESS)
+		goto error_enable_sensor;
+
+	/*
+	 * Set interrupt enable register on sensor. Note that once this
+	 * function is called once, the interrupt stays enabled and it is
+	 * only necessary to clear KXCJ9_INT_REL to allow the next interrupt.
+	 */
+	ret = raw_read8(accel_addr[id], KXCJ9_INT_CTRL1, &tmp);
+	if (ret != EC_SUCCESS)
+		goto error_enable_sensor;
+	if (!(tmp & KXCJ9_INT_CTRL1_IEN)) {
+		ret = raw_write8(accel_addr[id], KXCJ9_INT_CTRL1,
+				tmp | KXCJ9_INT_CTRL1_IEN);
+		if (ret != EC_SUCCESS)
+			goto error_enable_sensor;
+	}
+
+	/*
+	 * Clear any pending interrupt on sensor by reading INT_REL register.
+	 * Note: this register latches motion detected above threshold. Once
+	 * latched, no interrupt can occur until this register is cleared.
+	 */
+	ret = raw_read8(accel_addr[id], KXCJ9_INT_REL, &tmp);
+
+error_enable_sensor:
+	/* Re-enable accelerometer. */
+	if (raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1 | KXCJ9_CTRL1_PC1) !=
+			EC_SUCCESS) {
+		/* Cannot re-enable accel, print warning and return an error. */
+		CPRINTF("[%T Error trying to enable accelerometer %d]\n", id);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return ret;
+}
+#endif
+
 int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 {
 	uint8_t acc[6];
@@ -166,7 +240,7 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 int accel_init(enum accel_id id)
 {
 	int ret = EC_SUCCESS;
-	int cnt = 0, ctrl2;
+	int cnt = 0, ctrl1, ctrl2;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -197,14 +271,37 @@ int accel_init(enum accel_id id)
 		msleep(10);
 	}
 
-	/* Enable accelerometer, 12-bit resolution mode, +/- 2G range.*/
-	ret |= raw_write8(accel_addr[id],  KXCJ9_CTRL1,
-			KXCJ9_CTRL1_PC1 | sensor_resolution[id] |
-			sensor_range[id]);
+#ifdef CONFIG_ACCEL_INTERRUPTS
+	/* Set interrupt polarity to rising edge and keep interrupt disabled. */
+	ret |= raw_write8(accel_addr[id], KXCJ9_INT_CTRL1, KXCJ9_INT_CTRL1_IEA);
+
+	/* Set output data rate for wake-up interrupt function. */
+	ret |= raw_write8(accel_addr[id], KXCJ9_CTRL2, KXCJ9_OWUF_100_0HZ);
+
+	/* Set interrupt to trigger on motion on any axis. */
+	ret |= raw_write8(accel_addr[id], KXCJ9_INT_CTRL2,
+			KXCJ9_INT_SRC2_XNWU | KXCJ9_INT_SRC2_XPWU |
+			KXCJ9_INT_SRC2_YNWU | KXCJ9_INT_SRC2_YPWU |
+			KXCJ9_INT_SRC2_ZNWU | KXCJ9_INT_SRC2_ZPWU);
+
+	/*
+	 * Enable accel interrupts. Note: accels will not initiate an interrupt
+	 * until interrupt enable bit in KXCJ9_INT_CTRL1 is set on the device.
+	 */
+	gpio_enable_interrupt(GPIO_ACCEL_INT_LID);
+	gpio_enable_interrupt(GPIO_ACCEL_INT_BASE);
+#endif
 
 	/* Set output data rate. */
-	ret |= raw_write8(accel_addr[id],  KXCJ9_DATA_CTRL,
-			sensor_datarate[id]);
+	ret |= raw_write8(accel_addr[id], KXCJ9_DATA_CTRL, sensor_datarate[id]);
+
+	/* Set resolution and range and enable sensor. */
+	ctrl1 = sensor_resolution[id] | sensor_range[id]  | KXCJ9_CTRL1_PC1;
+#ifdef CONFIG_ACCEL_INTERRUPTS
+	/* Enable wake up (motion detect) functionality. */
+	ctrl1 |= KXCJ9_CTRL1_WUFE;
+#endif
+	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1);
 
 	return ret;
 }
@@ -213,7 +310,6 @@ int accel_init(enum accel_id id)
 
 /*****************************************************************************/
 /* Console commands */
-
 #ifdef CONFIG_CMD_ACCELS
 static int command_read_accelerometer(int argc, char **argv)
 {
@@ -273,4 +369,33 @@ static int command_write_accelerometer(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelwrite, command_write_accelerometer,
 	"addr reg data",
 	"Write to accelerometer at slave address addr", NULL);
+
+#ifdef CONFIG_ACCEL_INTERRUPTS
+static int command_accelerometer_interrupt(int argc, char **argv)
+{
+	char *e;
+	int id, thresh;
+
+	if (argc != 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* First argument is id. */
+	id = strtoi(argv[1], &e, 0);
+	if (*e || id < 0 || id >= ACCEL_COUNT)
+		return EC_ERROR_PARAM1;
+
+	/* Second argument is interrupt threshold. */
+	thresh = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	accel_set_interrupt(id, thresh);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(accelint, command_accelerometer_interrupt,
+	"id threshold",
+	"Write interrupt threshold", NULL);
+#endif /* CONFIG_ACCEL_INTERRUPTS */
+
 #endif /* CONFIG_CMD_ACCELS */

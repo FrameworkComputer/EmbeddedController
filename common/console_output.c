@@ -32,6 +32,7 @@ static uint32_t channel_mask_saved = CC_DEFAULT;
  */
 static const char * const channel_names[] = {
 	"command",
+	"accel",
 	"charger",
 	"chipset",
 	"clock",

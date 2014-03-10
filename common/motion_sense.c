@@ -243,6 +243,24 @@ void motion_sense_task(void)
 	}
 }
 
+void accel_int_lid(enum gpio_signal signal)
+{
+	/*
+	 * Print statement is here for testing with console accelint command.
+	 * Remove print statement when interrupt is used for real.
+	 */
+	CPRINTF("[%T Accelerometer wake-up interrupt occurred on lid]\n");
+}
+
+void accel_int_base(enum gpio_signal signal)
+{
+	/*
+	 * Print statement is here for testing with console accelint command.
+	 * Remove print statement when interrupt is used for real.
+	 */
+	CPRINTF("[%T Accelerometer wake-up interrupt occurred on base]\n");
+}
+
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_LID_ANGLE

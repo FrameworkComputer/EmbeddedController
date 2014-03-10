@@ -129,4 +129,16 @@ int accel_write_resolution(const enum accel_id id, const int res);
  */
 int accel_write_datarate(const enum accel_id id, const int rate);
 
+#ifdef CONFIG_ACCEL_INTERRUPTS
+/**
+ * Setup a one-time accel interrupt. If the threshold is low enough, the
+ * interrupt may trigger due simply to noise and not any real motion. If the
+ * threshold is 0, the interrupt will fire immediately.
+ *
+ * @param id Target accelerometer
+ * @param threshold Threshold for interrupt in units of counts.
+ */
+int accel_set_interrupt(const enum accel_id id, unsigned int threshold);
+#endif
+
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */
