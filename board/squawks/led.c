@@ -48,7 +48,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (led_id == EC_LED_ID_POWER_LED) {
-		pwm_set_duty(PWM_CH_LED_BATTERY_GREEN,
+		pwm_set_duty(PWM_CH_LED_POWER_GREEN,
 			     brightness[EC_LED_COLOR_GREEN]);
 	} else {
 		pwm_set_duty(PWM_CH_LED_BATTERY_ORANGE,
