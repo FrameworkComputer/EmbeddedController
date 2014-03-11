@@ -21,8 +21,8 @@ static int sensor_range[ACCEL_COUNT] = {KXCJ9_GSEL_2G, KXCJ9_GSEL_2G};
 static int sensor_resolution[ACCEL_COUNT] = {KXCJ9_RES_12BIT, KXCJ9_RES_12BIT};
 
 /* Output data rate: KXCJ9_OSA_* ranges from 0.781Hz to 1600Hz. */
-static int sensor_datarate[ACCEL_COUNT] = {KXCJ9_OSA_12_50HZ,
-						KXCJ9_OSA_12_50HZ};
+static int sensor_datarate[ACCEL_COUNT] = {KXCJ9_OSA_100_0HZ,
+						KXCJ9_OSA_100_0HZ};
 
 /**
  * Read register from accelerometer.

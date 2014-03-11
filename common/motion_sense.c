@@ -28,8 +28,12 @@ static vector_3_t acc_lid_raw, acc_lid, acc_base;
 static vector_3_t acc_lid_host, acc_base_host;
 static float lid_angle_deg;
 
+/* Accelerometer polling intervals based on chipset state. */
+#define ACCEL_INTERVAL_AP_ON_MS      10
+#define ACCEL_INTERVAL_AP_SUSPEND_MS 100
+
 /* Sampling interval for measuring acceleration and calculating lid angle. */
-static int accel_interval_ms = 10;
+static int accel_interval_ms = ACCEL_INTERVAL_AP_SUSPEND_MS;
 
 #ifdef CONFIG_CMD_LID_ANGLE
 static int accel_disp;
@@ -116,6 +120,20 @@ void motion_get_accel_base(vector_3_t *v)
 	memcpy(v, &acc_base, sizeof(vector_3_t));
 }
 #endif
+
+/* Lower accel polling rate on chipset suspend. */
+static void set_slow_accel_polling(void)
+{
+	accel_interval_ms = ACCEL_INTERVAL_AP_SUSPEND_MS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, set_slow_accel_polling, HOOK_PRIO_DEFAULT);
+
+/* Raise accel polling rate on chipset resume. */
+static void set_fast_accel_polling(void)
+{
+	accel_interval_ms = ACCEL_INTERVAL_AP_ON_MS;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, set_fast_accel_polling, HOOK_PRIO_DEFAULT);
 
 
 void motion_sense_task(void)
@@ -244,7 +262,11 @@ static int command_ctrl_print_lid_angle_calcs(int argc, char **argv)
 		accel_disp = val;
 	}
 
-	/* Second arg changes the accel task time interval. */
+	/*
+	 * Second arg changes the accel task time interval. Note accel
+	 * sampling interval will be clobbered when chipset suspends or
+	 * resumes.
+	 */
 	if (argc > 2) {
 		val = strtoi(argv[2], &e, 0);
 		if (*e)
