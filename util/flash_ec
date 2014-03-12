@@ -231,7 +231,7 @@ info "Using EC image : ${IMG}"
 EC_UART="$(ec_uart)"
 info "EC UART pty : ${EC_UART}"
 
-if dut_control uart_mux 2>/dev/null ; then
+if dut_control boot_mode 2>/dev/null ; then
 	SERVO_TYPE=toad
 	info "Using a TOAD cable"
 fi
@@ -240,6 +240,7 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	big | blaze | discovery | nyan | pit | snow | spring ) flash_stm32 ;;
+	fruitpie ) flash_stm32 ;;
 	falco | peppy | rambi | samus | squawks ) flash_lm4 ;;
 	link ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
