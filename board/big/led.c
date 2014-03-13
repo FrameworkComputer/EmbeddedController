@@ -121,11 +121,13 @@ static void big_led_set_power(void)
 static void big_led_set_battery(void)
 {
 	static int battery_second;
+	uint32_t chflags = charge_get_flags();
 
 	battery_second++;
 
 	/* BAT LED behavior:
-	 * Fully charged: Blue
+	 * Fully charged / idle: Blue
+	 * Force idle (for factory): 2 secs of blue, 2 secs of yellow
 	 * Under charging: Orange
 	 * Battery low (10%): Orange in breeze mode (1 sec on, 3 sec off)
 	 * Battery critical low (less than 3%) or abnormal battery
@@ -151,6 +153,13 @@ static void big_led_set_battery(void)
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		bat_led_set_color(LED_BLUE);
+		break;
+	case PWR_STATE_IDLE: /* External power connected in IDLE. */
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+			bat_led_set_color(
+				(battery_second & 0x2) ? LED_BLUE : LED_ORANGE);
+		else
+			bat_led_set_color(LED_BLUE);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
