@@ -22,8 +22,10 @@ endif
 FLASH_FAMILY=$(subst stm32f0,stm32f,$(CHIP_FAMILY))
 # STM32F0xx chips will re-use STM32L I2C code
 I2C_FAMILY=$(subst stm32f0,stm32l,$(CHIP_FAMILY))
+# Select between 16-bit and 32-bit timer for clock source
+TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
 
-chip-y=dma.o hwtimer.o system.o uart.o
+chip-y=dma.o hwtimer$(TIMER_TYPE).o system.o uart.o
 chip-y+=jtag-$(CHIP_FAMILY).o clock-$(CHIP_FAMILY).o gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_I2C)+=i2c-$(I2C_FAMILY).o

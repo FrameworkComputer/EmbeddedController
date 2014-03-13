@@ -220,6 +220,8 @@
 
 #define STM32_TIM_REG(n, offset) \
 		REG16(STM32_TIM_BASE(n) + (offset))
+#define STM32_TIM_REG32(n, offset) \
+		REG32(STM32_TIM_BASE(n) + (offset))
 
 #define STM32_TIM_CR1(n)           STM32_TIM_REG(n, 0x00)
 #define STM32_TIM_CR2(n)           STM32_TIM_REG(n, 0x04)
@@ -242,6 +244,12 @@
 #define STM32_TIM_DMAR(n)          STM32_TIM_REG(n, 0x4C)
 #define STM32_TIM_OR(n)            STM32_TIM_REG(n, 0x50)
 
+#define STM32_TIM32_CNT(n)         STM32_TIM_REG32(n, 0x24)
+#define STM32_TIM32_ARR(n)         STM32_TIM_REG32(n, 0x2C)
+#define STM32_TIM32_CCR1(n)        STM32_TIM_REG32(n, 0x34)
+#define STM32_TIM32_CCR2(n)        STM32_TIM_REG32(n, 0x38)
+#define STM32_TIM32_CCR3(n)        STM32_TIM_REG32(n, 0x3C)
+#define STM32_TIM32_CCR4(n)        STM32_TIM_REG32(n, 0x40)
 /* Timer registers as struct */
 struct timer_ctlr {
 	unsigned cr1;
