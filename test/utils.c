@@ -97,8 +97,11 @@ static int test_memmove(void)
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
-#ifndef TEST_COVERAGE
-	/* Measuring coverage makes it fluctuate even more, so skip it. */
+#ifndef EMU_BUILD
+	/*
+	 * The speed gain is too unpredictable on host, especially on
+	 * buildbots. Skip it if we are running in the emulator.
+	 */
 	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
 #endif
 
@@ -145,7 +148,13 @@ static int test_memcpy(void)
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+#ifndef EMU_BUILD
+	/*
+	 * The speed gain is too unpredictable on host, especially on
+	 * buildbots. Skip it if we are running in the emulator.
+	 */
 	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
+#endif
 
 	memcpy(buf + dest_offset + 1, buf + 1, len - 1);
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf + 1, len - 1);
@@ -201,7 +210,13 @@ static int test_memset(void)
 	ccprintf(" %d us) ", t3.val-t2.val);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
+#ifndef EMU_BUILD
+	/*
+	 * The speed gain is too unpredictable on host, especially on
+	 * buildbots. Skip it if we are running in the emulator.
+	 */
 	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
+#endif
 
 	memset(buf, 128, len);
 	TEST_ASSERT_MEMSET(buf, (char)128, len);
