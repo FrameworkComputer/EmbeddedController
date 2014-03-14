@@ -10,6 +10,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lid_angle.h"
 #include "math_util.h"
 #include "motion_sense.h"
 #include "timer.h"
@@ -27,10 +28,19 @@
 static vector_3_t acc_lid_raw, acc_lid, acc_base;
 static vector_3_t acc_lid_host, acc_base_host;
 static float lid_angle_deg;
+static int lid_angle_is_reliable;
 
 /* Accelerometer polling intervals based on chipset state. */
 #define ACCEL_INTERVAL_AP_ON_MS      10
 #define ACCEL_INTERVAL_AP_SUSPEND_MS 100
+
+/*
+ * Angle threshold for how close the hinge aligns with gravity before
+ * considering the lid angle calculation unreliable. For computational
+ * efficiency, value is given unit-less, so if you want the threshold to be
+ * at 15 degrees, the value would be cos(15 deg) = 0.96593.
+ */
+#define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD 0.96593F
 
 /* Sampling interval for measuring acceleration and calculating lid angle. */
 static int accel_interval_ms = ACCEL_INTERVAL_AP_SUSPEND_MS;
@@ -50,12 +60,20 @@ const struct accel_orientation * const p_acc_orient = &acc_orient;
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
  * the base and one in the lid.
+ *
+ * @param base Base accel vector
+ * @param lid  Lid accel vector
+ * @param lid_angle Pointer to location to store lid angle result
+ *
+ * @return flag representing if resulting lid angle calculation is reliable.
  */
-static float calculate_lid_angle(vector_3_t base, vector_3_t lid)
+static int calculate_lid_angle(vector_3_t base, vector_3_t lid,
+		float *lid_angle)
 {
 	vector_3_t v;
 	float ang_lid_to_base, ang_lid_90, ang_lid_270;
 	float lid_to_base, base_to_hinge;
+	int reliable = 1;
 
 	/*
 	 * The angle between lid and base is:
@@ -66,11 +84,21 @@ static float calculate_lid_angle(vector_3_t base, vector_3_t lid)
 	 */
 	lid_to_base = cosine_of_angle_diff(base, lid);
 	base_to_hinge = cosine_of_angle_diff(base, p_acc_orient->hinge_axis);
+
+	/*
+	 * If hinge aligns too closely with gravity, then result may be
+	 * unreliable.
+	 */
+	if (ABS(base_to_hinge) > HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD)
+		reliable = 0;
+
 	base_to_hinge = SQ(base_to_hinge);
 
 	/* Check divide by 0. */
-	if (ABS(1.0F - base_to_hinge) < 0.01F)
-		return 0.0;
+	if (ABS(1.0F - base_to_hinge) < 0.01F) {
+		*lid_angle = 0.0;
+		return 0;
+	}
 
 	ang_lid_to_base = arc_cos(
 			(lid_to_base - base_to_hinge) / (1 - base_to_hinge));
@@ -101,12 +129,16 @@ static float calculate_lid_angle(vector_3_t base, vector_3_t lid)
 	if (ang_lid_270 > ang_lid_90)
 		ang_lid_to_base = -ang_lid_to_base;
 
-	return ang_lid_to_base;
+	*lid_angle = ang_lid_to_base;
+	return reliable;
 }
 
 int motion_get_lid_angle(void)
 {
-	return (int)lid_angle_deg;
+	if (lid_angle_is_reliable)
+		return (int)lid_angle_deg;
+	else
+		return (int)LID_ANGLE_UNRELIABLE;
 }
 
 #ifdef CONFIG_ACCEL_CALIBRATE
@@ -178,7 +210,8 @@ void motion_sense_task(void)
 		rotate(acc_lid_raw, &p_acc_orient->rot_align, &acc_lid);
 
 		/* Calculate angle of lid. */
-		lid_angle_deg = calculate_lid_angle(acc_base, acc_lid);
+		lid_angle_is_reliable = calculate_lid_angle(acc_base, acc_lid,
+				&lid_angle_deg);
 
 		/* TODO(crosbug.com/p/25597): Add filter to smooth lid angle. */
 
@@ -201,7 +234,7 @@ void motion_sense_task(void)
 		 * Copy sensor data to shared memory. Note that this code
 		 * assumes little endian, which is what the host expects.
 		 */
-		lpc_data[0] = (int)lid_angle_deg;
+		lpc_data[0] = motion_get_lid_angle();
 		lpc_data[1] = acc_base_host[X];
 		lpc_data[2] = acc_base_host[Y];
 		lpc_data[3] = acc_base_host[Z];
@@ -217,14 +250,18 @@ void motion_sense_task(void)
 				EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 		*lpc_status = EC_MEMMAP_ACC_STATUS_PRESENCE_BIT | sample_id;
 
+#ifdef CONFIG_LID_ANGLE_KEY_SCAN
+		lidangle_keyscan_update(motion_get_lid_angle());
+#endif
 
 #ifdef CONFIG_CMD_LID_ANGLE
 		if (accel_disp) {
 			CPRINTF("[%T ACC base=%-5d, %-5d, %-5d  lid=%-5d, "
-					"%-5d, %-5d  a=%-6.1d]\n",
+					"%-5d, %-5d  a=%-6.1d r=%d]\n",
 					acc_base[X], acc_base[Y], acc_base[Z],
 					acc_lid[X], acc_lid[Y], acc_lid[Z],
-					(int)(10*lid_angle_deg));
+					(int)(10*lid_angle_deg),
+					lid_angle_is_reliable);
 		}
 #endif
 

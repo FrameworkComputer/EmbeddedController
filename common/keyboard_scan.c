@@ -93,7 +93,7 @@ static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
 /* Constantly incrementing counter of the number of times we polled */
 static volatile int kbd_polls;
 
-static int is_scanning_enabled(void)
+int keyboard_scan_is_enabled(void)
 {
 #ifdef CONFIG_LID_SWITCH
 	/* Scanning is never enabled when lid is closed */
@@ -201,7 +201,7 @@ static int read_matrix(uint8_t *state)
 	for (c = 0; c < KEYBOARD_COLS; c++) {
 		/*
 		 * Stop if scanning becomes disabled.  Check enable_cscanning
-		 * instead of is_scanning_enabled() so that we can scan the
+		 * instead of keyboard_scan_is_enabled() so that we can scan the
 		 * matrix at boot time before the lid switch is readable.
 		 */
 		if (!enable_scanning)
@@ -404,7 +404,7 @@ static int check_keys_changed(uint8_t *state)
 
 #ifdef CONFIG_KEYBOARD_PROTOCOL_8042
 			/* Inform keyboard module if scanning is enabled */
-			if (is_scanning_enabled())
+			if (keyboard_scan_is_enabled())
 				keyboard_state_changed(i, c, new_mask ? 1 : 0);
 #endif
 		}
@@ -567,7 +567,7 @@ void keyboard_scan_task(void)
 	while (1) {
 		/* Enable all outputs */
 		CPRINTF("[%T KB wait]\n");
-		if (is_scanning_enabled())
+		if (keyboard_scan_is_enabled())
 			keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 		keyboard_raw_enable_interrupt(1);
 
@@ -579,9 +579,10 @@ void keyboard_scan_task(void)
 			 * user pressing a key and enable_interrupt()
 			 * starting to pay attention to edges.
 			 */
-			if (!keyboard_raw_read_rows() || !is_scanning_enabled())
+			if (!keyboard_raw_read_rows() ||
+					!keyboard_scan_is_enabled())
 				task_wait_event(-1);
-		} while (!is_scanning_enabled());
+		} while (!keyboard_scan_is_enabled());
 
 		/* Enter polling mode */
 		CPRINTF("[%T KB poll]\n");
@@ -589,7 +590,7 @@ void keyboard_scan_task(void)
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 		/* Busy polling keyboard state. */
-		while (is_scanning_enabled()) {
+		while (keyboard_scan_is_enabled()) {
 			start = get_time();
 
 			/* Check for keys down */

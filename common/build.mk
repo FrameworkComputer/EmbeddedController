@@ -49,6 +49,7 @@ common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LED_COMMON)+=led_common.o
+common-$(CONFIG_LID_ANGLE_KEY_SCAN)+=lid_angle.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=port80.o
 common-$(CONFIG_ONEWIRE)+=onewire.o

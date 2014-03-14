@@ -70,15 +70,15 @@ static int test_lid_angle(void)
 	TEST_ASSERT(motion_get_lid_angle() == -135);
 
 	/*
-	 * Align base with hinge and make sure it returns 0 for angle. In this
-	 * test it doesn't matter what the lid acceleration vector is.
+	 * Align base with hinge and make sure it returns unreliable for angle.
+	 * In this test it doesn't matter what the lid acceleration vector is.
 	 */
 	mock_x_acc[ACCEL_BASE] = 0;
 	mock_y_acc[ACCEL_BASE] = 1000;
 	mock_z_acc[ACCEL_BASE] = 0;
 	task_wake(TASK_ID_MOTIONSENSE);
 	msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == 0);
+	TEST_ASSERT(motion_get_lid_angle() == LID_ANGLE_UNRELIABLE);
 
 	/*
 	 * Use all three axes and set lid to negative base and make sure

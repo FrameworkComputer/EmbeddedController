@@ -43,6 +43,7 @@ static const char * const channel_names[] = {
 	"i2c",
 	"keyboard",
 	"keyscan",
+	"lidangle",
 	"lightbar",
 	"lpc",
 	"motionsense",

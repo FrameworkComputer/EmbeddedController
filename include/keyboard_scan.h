@@ -84,6 +84,11 @@ void keyboard_scan_enable(int enable);
 static inline void keyboard_scan_enable(int enable) { }
 #endif
 
+/**
+ * Returns if keyboard matrix scanning is enabled/disabled.
+ */
+int keyboard_scan_is_enabled(void);
+
 #ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
 /**
  * Indicate to audio codec that a key has been pressed.

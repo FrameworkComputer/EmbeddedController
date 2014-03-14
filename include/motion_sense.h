@@ -11,6 +11,9 @@
 #include "gpio.h"
 #include "math_util.h"
 
+/* Anything outside of lid angle range [-180, 180] should work. */
+#define LID_ANGLE_UNRELIABLE 500.0F
+
 /**
  * This structure defines all of the data needed to specify the orientation
  * of the base and lid accelerometers in order to calculate the lid angle.

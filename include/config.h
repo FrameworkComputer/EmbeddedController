@@ -559,6 +559,17 @@
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 
 /*
+ * Allows using the lid angle measurement to determine if key scanning should
+ * be enabled or disabled when chipset is suspended.
+ *
+ * Any board that defines this must also define two macros:
+ * LID_IN_RANGE_TO_ACCEPT_KEYS(angle), LID_IN_RANGE_TO_IGNORE_KEYS(angle).
+ * These macros should return true if the given angle argument is in range
+ * to accept or ignore key presses.
+ */
+#undef CONFIG_LID_ANGLE_KEY_SCAN
+
+/*
  * Compile lid switch support.
  *
  * This is enabled by default because all boards other than reference boards
