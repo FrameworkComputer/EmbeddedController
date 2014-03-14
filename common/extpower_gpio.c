@@ -10,10 +10,15 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "timer.h"
+
+#define EXTPOWER_DEBOUNCE_US  (30 * MSEC)
+
+static int debounced_extpower_presence;
 
 int extpower_is_present(void)
 {
-	return gpio_get_level(GPIO_AC_PRESENT);
+	return debounced_extpower_presence;
 }
 
 /**
@@ -21,10 +26,16 @@ int extpower_is_present(void)
  */
 static void extpower_deferred(void)
 {
+	int extpower_presence = gpio_get_level(GPIO_AC_PRESENT);
+
+	if (extpower_presence == debounced_extpower_presence)
+		return;
+
+	debounced_extpower_presence = extpower_presence;
 	hook_notify(HOOK_AC_CHANGE);
 
 	/* Forward notification to host */
-	if (extpower_is_present())
+	if (extpower_presence)
 		host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
 	else
 		host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
@@ -34,11 +45,13 @@ DECLARE_DEFERRED(extpower_deferred);
 void extpower_interrupt(enum gpio_signal signal)
 {
 	/* Trigger deferred notification of external power change */
-	hook_call_deferred(extpower_deferred, 0);
+	hook_call_deferred(extpower_deferred, EXTPOWER_DEBOUNCE_US);
 }
 
 static void extpower_init(void)
 {
+	debounced_extpower_presence = gpio_get_level(GPIO_AC_PRESENT);
+
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 }

@@ -26,14 +26,6 @@ static int mock_id;
 static int mock_current;
 static struct charge_state_context ctx;
 
-static void test_reset_mocks(void)
-{
-	gpio_set_level(GPIO_AC_PRESENT, 0);
-	mock_id = 0;
-	mock_current = 0;
-	memset(&ctx, 0, sizeof(ctx));
-}
-
 /* Mocked functions from the rest of the EC */
 
 int adc_read_channel(enum adc_channel ch)
@@ -82,6 +74,14 @@ static void change_ac(int val)
 static void set_id(int val)
 {
 	mock_id = val;
+}
+
+static void test_reset_mocks(void)
+{
+	change_ac(0);
+	set_id(0);
+	mock_current = 0;
+	memset(&ctx, 0, sizeof(ctx));
 }
 
 /* Specify as discharge current */
