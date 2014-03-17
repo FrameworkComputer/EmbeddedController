@@ -73,6 +73,7 @@ vector irq_14	/* HW 14 */
 vector irq_15	/* HW 15 */
 
 /* E-flash signature */
+.org 0x80
 .balign 16
 .global eflash_sig
 eflash_sig:

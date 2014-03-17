@@ -37,6 +37,16 @@ void clock_init(void)
 	/* Set EC Clock Frequency to PLL frequency. */
 	IT83XX_ECPM_SCDCR3 &= 0xf0;
 
+	/*
+	 * The VCC power status is treated as power-on.
+	 * The VCC supply of LPC and related functions (EC2I,
+	 * KBC, SWUC, PMC, CIR, SSPI, UART, BRAM, and PECI).
+	 * It means VCC (pin 11) should be logic high before using
+	 * these functions, or firmware treats VCC logic high
+	 * as following setting.
+	 */
+	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & 0x3F) + 0x40;
+
 	/* Turn off auto clock gating. */
 	IT83XX_ECPM_AUTOCG = 0x00;
 }
