@@ -19,7 +19,8 @@ struct adc_t {
 
 /*
  * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
+ * the enum adc_channel list provided by the board. Also, for STM32F0, this
+ * must be ordered by AIN ID.
  */
 extern const struct adc_t adc_channels[];
 

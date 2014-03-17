@@ -57,4 +57,15 @@ int adc_enable_watchdog(int ain_id, int high, int low);
  */
 int adc_disable_watchdog(void);
 
+/**
+ * Set the delay between ADC watchdog samples. This can be used as a trade-off
+ * of power consumption and performance.
+ *
+ * @param delay_ms      The delay in milliseconds between two ADC watchdog
+ *                      samples.
+ *
+ * @return              EC_SUCCESS, or non-zero if any error or not supported.
+ */
+int adc_set_watchdog_delay(int delay_ms);
+
 #endif  /* __CROS_EC_ADC_H */
