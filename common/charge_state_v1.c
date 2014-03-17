@@ -874,18 +874,40 @@ void charger_task(void)
 /* Hooks */
 
 /**
- * Charge notification hook.
+ * Chipset notification hook.
  *
- * This is triggered when the AC state changes or the system boots, so that
- * we can update our charging state.
+ * This is triggered when the system boots or resumes, so that we can update
+ * our charging state.
  */
-static void charge_hook(void)
+static void chipset_hook(void)
 {
 	/* Wake up the task now */
 	task_wake(TASK_ID_CHARGER);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_hook, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_AC_CHANGE, charge_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, chipset_hook, HOOK_PRIO_DEFAULT);
+
+/**
+ * AC change notification hook.
+ *
+ * This is triggered when the AC state changes, so that we can update the
+ * memory-mapped AC status and our charging state.
+ */
+static void ac_change_hook(void)
+{
+	/**
+	 * Update the memory-mapped AC_PRESENT flag immediately so the
+	 * state is correct prior to the host being notified of the AC
+	 * change event.
+	 */
+	if (extpower_is_present())
+		*task_ctx.memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
+	else
+		*task_ctx.memmap_batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
+
+	/* Wake up the task now */
+	task_wake(TASK_ID_CHARGER);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, ac_change_hook, HOOK_PRIO_DEFAULT);
 
 static void charge_init(void)
 {
