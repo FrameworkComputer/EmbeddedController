@@ -17,6 +17,9 @@
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 
+/* Number of times to attempt to enable sensor before giving up. */
+#define SENSOR_ENABLE_ATTEMPTS 3
+
 /* Range of the accelerometers: 2G, 4G, or 8G. */
 static int sensor_range[ACCEL_COUNT] = {KXCJ9_GSEL_2G, KXCJ9_GSEL_2G};
 
@@ -43,10 +46,72 @@ static int raw_write8(const int addr, const int reg, int data)
 	return i2c_write8(I2C_PORT_ACCEL, addr, reg, data);
 }
 
+/**
+ * Disable sensor by taking it out of operating mode. When disabled, the
+ * acceleration data does not change.
+ *
+ * Note: This is intended to be called in a pair with enable_sensor().
+ *
+ * @id Sensor index
+ * @ctrl1 Pointer to location to store KXCJ9_CTRL1 register after disabling
+ *
+ * @return EC_SUCCESS if successful, EC_ERROR_* otherwise
+ */
+static int disable_sensor(const enum accel_id id, int *ctrl1)
+{
+	int ret;
+
+	/*
+	 * Read the current state of the ctrl1 register so that we can restore
+	 * it later.
+	 */
+	ret = raw_read8(accel_addr[id], KXCJ9_CTRL1, ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Disable sensor. */
+	*ctrl1 &= ~KXCJ9_CTRL1_PC1;
+	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, *ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Enable sensor by placing it in operating mode.
+ *
+ * Note: This is intended to be called in a pair with disable_sensor().
+ *
+ * @id Sensor index
+ * @ctrl1 Value of KXCJ9_CTRL1 register to write to sensor
+ *
+ * @return EC_SUCCESS if successful, EC_ERROR_* otherwise
+ */
+static int enable_sensor(const enum accel_id id, const int ctrl1)
+{
+	int i, ret;
+
+	for (i = 0; i < SENSOR_ENABLE_ATTEMPTS; i++) {
+		/* Enable accelerometer based on ctrl1 value. */
+		ret = raw_write8(accel_addr[id], KXCJ9_CTRL1,
+				ctrl1 | KXCJ9_CTRL1_PC1);
+
+		/* On first success, we are done. */
+		if (ret == EC_SUCCESS)
+			return EC_SUCCESS;
+	}
+
+	/* Cannot enable accel, print warning and return an error. */
+	CPRINTF("[%T Error trying to enable accelerometer %d]\n", id);
+
+	return ret;
+}
+
 
 int accel_write_range(const enum accel_id id, const int range)
 {
-	int ret;
+	int ret, ctrl1;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -60,6 +125,17 @@ int accel_write_range(const enum accel_id id, const int range)
 		range != KXCJ9_GSEL_8G)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
+	 * task can call this function. If this isn't true anymore, need to
+	 * protect with a mutex.
+	 */
+
+	/* Disable the sensor to allow for changing of critical parameters. */
+	ret = disable_sensor(id, &ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
 	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1,
 			KXCJ9_CTRL1_PC1 | sensor_resolution[id] | range);
 
@@ -67,12 +143,16 @@ int accel_write_range(const enum accel_id id, const int range)
 	if (ret == EC_SUCCESS)
 		sensor_range[id] = range;
 
+	/* Re-enable the sensor. */
+	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
+
 	return ret;
 }
 
 int accel_write_resolution(const enum accel_id id, const int res)
 {
-	int ret;
+	int ret, ctrl1;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -82,6 +162,17 @@ int accel_write_resolution(const enum accel_id id, const int res)
 	if (res != KXCJ9_RES_12BIT && res != KXCJ9_RES_8BIT)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
+	 * task can call this function. If this isn't true anymore, need to
+	 * protect with a mutex.
+	 */
+
+	/* Disable the sensor to allow for changing of critical parameters. */
+	ret = disable_sensor(id, &ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
 	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1,
 			KXCJ9_CTRL1_PC1 | res | sensor_range[id]);
 
@@ -89,12 +180,16 @@ int accel_write_resolution(const enum accel_id id, const int res)
 	if (ret == EC_SUCCESS)
 		sensor_resolution[id] = res;
 
+	/* Re-enable the sensor. */
+	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
+
 	return ret;
 }
 
 int accel_write_datarate(const enum accel_id id, const int rate)
 {
-	int ret;
+	int ret, ctrl1;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -104,12 +199,27 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 	if (rate < KXCJ9_OSA_12_50HZ || rate > KXCJ9_OSA_6_250HZ)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
+	 * task can call this function. If this isn't true anymore, need to
+	 * protect with a mutex.
+	 */
+
+	/* Disable the sensor to allow for changing of critical parameters. */
+	ret = disable_sensor(id, &ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
 	/* Set output data rate. */
 	ret = raw_write8(accel_addr[id],  KXCJ9_DATA_CTRL, rate);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
 		sensor_datarate[id] = rate;
+
+	/* Re-enable the sensor. */
+	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
 
 	return ret;
 }
@@ -125,14 +235,8 @@ int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
 	 * protect with a mutex.
 	 */
 
-	/*
-	 * Read the current status of the control register and disable the
-	 * sensor to allow for changing of critical parameters.
-	 */
-	ret = raw_read8(accel_addr[id], KXCJ9_CTRL1, &ctrl1);
-	if (ret != EC_SUCCESS)
-		return ret;
-	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1 & ~KXCJ9_CTRL1_PC1);
+	/* Disable the sensor to allow for changing of critical parameters. */
+	ret = disable_sensor(id, &ctrl1);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -173,13 +277,9 @@ int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
 	ret = raw_read8(accel_addr[id], KXCJ9_INT_REL, &tmp);
 
 error_enable_sensor:
-	/* Re-enable accelerometer. */
-	if (raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1 | KXCJ9_CTRL1_PC1) !=
-			EC_SUCCESS) {
-		/* Cannot re-enable accel, print warning and return an error. */
-		CPRINTF("[%T Error trying to enable accelerometer %d]\n", id);
+	/* Re-enable the sensor. */
+	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
-	}
 
 	return ret;
 }
@@ -247,6 +347,17 @@ int accel_init(enum accel_id id)
 		return EC_ERROR_INVAL;
 
 	/*
+	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
+	 * task can call this function. If this isn't true anymore, need to
+	 * protect with a mutex.
+	 */
+
+	/* Disable the sensor to allow for changing of critical parameters. */
+	ret = disable_sensor(id, &ctrl1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/*
 	 * This sensor can be powered through an EC reboot, so the state of
 	 * the sensor is unknown here. Initiate software reset to restore
 	 * sensor to default.
@@ -270,6 +381,14 @@ int accel_init(enum accel_id id)
 		/* Give more time for reset action to complete. */
 		msleep(10);
 	}
+
+	/* Set resolution and range. */
+	ctrl1 = sensor_resolution[id] | sensor_range[id];
+#ifdef CONFIG_ACCEL_INTERRUPTS
+	/* Enable wake up (motion detect) functionality. */
+	ctrl1 |= KXCJ9_CTRL1_WUFE;
+#endif
+	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1);
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/* Set interrupt polarity to rising edge and keep interrupt disabled. */
@@ -295,13 +414,8 @@ int accel_init(enum accel_id id)
 	/* Set output data rate. */
 	ret |= raw_write8(accel_addr[id], KXCJ9_DATA_CTRL, sensor_datarate[id]);
 
-	/* Set resolution and range and enable sensor. */
-	ctrl1 = sensor_resolution[id] | sensor_range[id]  | KXCJ9_CTRL1_PC1;
-#ifdef CONFIG_ACCEL_INTERRUPTS
-	/* Enable wake up (motion detect) functionality. */
-	ctrl1 |= KXCJ9_CTRL1_WUFE;
-#endif
-	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, ctrl1);
+	/* Enable the sensor. */
+	ret |= enable_sensor(id, ctrl1);
 
 	return ret;
 }
