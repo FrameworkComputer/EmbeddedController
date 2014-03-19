@@ -159,8 +159,10 @@
 /*****************************************************************************/
 /* Charger config */
 
-/* Compile common charge state code */
+/* Compile common charge state code. You must pick an implementation. */
 #undef CONFIG_CHARGER
+#undef CONFIG_CHARGER_V1
+#undef CONFIG_CHARGER_V2
 
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BQ24707A

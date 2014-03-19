@@ -8,7 +8,15 @@
 #ifndef __CROS_EC_EXTPOWER_FALCO_H
 #define __CROS_EC_EXTPOWER_FALCO_H
 
+#ifdef CONFIG_CHARGER_V2
+#error "This is not compatible with CONFIG_CHARGER_V2"
+/*
+ * ... but we can't define CONFIG_CHARGER_V1 because the tests don't need or
+ * want charge_state_v1.c. Sigh.
+ */
+#endif
 #include "charge_state.h"
+#include "charge_state_v1.h"
 
 /* Supported adapters */
 enum adapter_type {

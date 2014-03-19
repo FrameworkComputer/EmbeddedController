@@ -54,6 +54,7 @@
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
+#define CONFIG_CHARGER_V1
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 int board_discharge_on_ac(int enabled);
@@ -72,6 +73,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
+#define CONFIG_CHARGER_V1
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_EXTPOWER_FALCO
