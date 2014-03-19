@@ -39,6 +39,37 @@ die() {
   exit 1
 }
 
+# Note: Link is a special case and is not included here.
+BOARDS_LM4=(
+	falco
+	peppy
+	rambi
+	samus
+	squawks
+)
+
+BOARDS_STM32=(
+	big
+	blaze
+	discovery
+	firefly
+	fruitpie
+	nyan
+	pit
+	plankton
+	ryu
+	ryu_sh
+	samus_pd
+	snow
+	spring
+	veyron
+	zinger
+)
+
+BOARDS_STM32_DFU=(
+	twinkie
+)
+
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
@@ -64,6 +95,18 @@ fi
 set -e
 
 SERVO_TYPE=servo
+
+in_array() {
+	local n=$#
+	local value=${!n}
+
+	for (( i=1; i<$#; i++ )) do
+		if [ "${!i}" == "${value}" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
 
 # reset the EC
 toad_ec_hard_reset() {
@@ -327,14 +370,16 @@ info "${MCU} UART pty : ${EC_UART}"
 
 save="$(servo_save)"
 
-case "${BOARD}" in
-	big | discovery | nyan | pit | snow | spring | veyron ) flash_stm32 ;;
-	fruitpie | zinger | firefly | samus_pd | ryu | ryu_sh ) flash_stm32 ;;
-	plankton ) flash_stm32 ;;
-	twinkie) flash_stm32_dfu ;;
-	falco | peppy | rambi | samus | squawks ) flash_lm4 ;;
-	link ) flash_link ;;
-	*) die "board ${BOARD} not supported" ;;
-esac
+if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
+	flash_lm4
+elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
+	flash_stm32
+elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
+	flash_stm32_dfu
+elif [ "${BOARD}" == "link" ]; then
+	flash_link
+else
+	die "board ${BOARD} not supported"
+fi
 
 info "Flashing done."
