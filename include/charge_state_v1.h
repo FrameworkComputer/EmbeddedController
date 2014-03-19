@@ -40,50 +40,6 @@
 #define F_CHARGER_MASK (F_CHARGER_VOLTAGE | F_CHARGER_CURRENT | \
 			F_CHARGER_INIT)
 
-/* Power states */
-enum charge_state {
-	/* Meta-state; unchanged from previous time through task loop */
-	PWR_STATE_UNCHANGE = 0,
-	/* Initializing charge state machine at boot */
-	PWR_STATE_INIT,
-	/* Re-initializing charge state machine */
-	PWR_STATE_REINIT,
-	/* Just transitioned from init to idle */
-	PWR_STATE_IDLE0,
-	/* Idle; AC present */
-	PWR_STATE_IDLE,
-	/* Discharging */
-	PWR_STATE_DISCHARGE,
-	/* Charging */
-	PWR_STATE_CHARGE,
-	/* Charging, almost fully charged */
-	PWR_STATE_CHARGE_NEAR_FULL,
-	/* Charging state machine error */
-	PWR_STATE_ERROR
-};
-
-/* Charge state flags */
-/* Forcing idle state */
-#define CHARGE_FLAG_FORCE_IDLE (1 << 0)
-/* External (AC) power is present */
-#define CHARGE_FLAG_EXTERNAL_POWER (1 << 1)
-
-/* Debugging constants, in the same order as enum charge_state. This string
- * table was moved here to sync with enum above.
- */
-#define CHARGE_STATE_NAME_TABLE { \
-		"unchange",	\
-		"init",		\
-		"reinit",	\
-		"idle0",	\
-		"idle",		\
-		"discharge",	\
-		"charge",	\
-		"charge_near_full",      \
-		"error"		\
-	}
-	/* End of CHARGE_STATE_NAME_TABLE macro */
-
 /* Power state data
  * Status collection of charging state machine.
  */
@@ -119,41 +75,6 @@ struct charge_state_context {
 	timestamp_t shutdown_warning_time;
 	int battery_responsive;
 };
-
-/**
- * Return current charge state.
- */
-enum charge_state charge_get_state(void);
-
-/**
- * Return non-zero if battery is so low we want to keep AP off.
- */
-int charge_keep_power_off(void);
-
-/**
- * Return current charge state flags (CHARGE_FLAG_*)
- */
-uint32_t charge_get_flags(void);
-
-/**
- * Return current battery charge percentage.
- */
-int charge_get_percent(void);
-
-/**
- * Return non-zero if discharging and battery so low we should shut down.
- */
-int charge_want_shutdown(void);
-
-/**
- * Get the last polled battery/charger temperature.
- *
- * @param idx		Sensor index to read.
- * @param temp_ptr	Destination for temperature in K.
- *
- * @return EC_SUCCESS if successful, non-zero if error.
- */
-int charge_temp_sensor_get_val(int idx, int *temp_ptr);
 
 #endif /* __CROS_EC_CHARGE_STATE_V1_H */
 

@@ -25,6 +25,7 @@ common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CHARGER)+=charger.o
 common-$(CONFIG_CHARGER_V1)+=charge_state_v1.o
+common-$(CONFIG_CHARGER_V2)+=charge_state_v2.o
 # TODO(crosbug.com/p/23815): This is really the charge state machine
 # for ARM, not the charger driver for the tps65090.  Rename.
 common-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
