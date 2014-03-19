@@ -24,6 +24,7 @@
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_DRIVER_DS2413
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_ONEWIRE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
@@ -97,6 +98,8 @@ enum gpio_signal {
 	GPIO_WP_L,                 /* Write protect input */
 	GPIO_PCH_BL_EN,            /* PCH backlight input */
 	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt */
+	GPIO_JTAG_TCK,             /* JTAG clock input */
+	GPIO_UART0_RX,             /* UART0 RX input */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */

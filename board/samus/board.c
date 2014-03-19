@@ -17,6 +17,7 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "jtag.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "peci.h"
@@ -30,6 +31,7 @@
 #include "temp_sensor_chip.h"
 #include "timer.h"
 #include "thermal.h"
+#include "uart.h"
 #include "util.h"
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
@@ -67,6 +69,11 @@ const struct gpio_info gpio_list[] = {
 	 backlight_interrupt},
 	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INT_FALLING,
 	capsense_interrupt},
+	{"JTAG_TCK",             LM4_GPIO_C, (1<<0), GPIO_DEFAULT,
+	 jtag_interrupt},
+	{"UART0_RX",             LM4_GPIO_A, (1<<0), GPIO_PULL_UP|
+							GPIO_INT_BOTH_DSLEEP,
+	 uart_deepsleep_interrupt},
 
 	/* Other inputs */
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
