@@ -135,11 +135,28 @@ function servo_restore() {
 }
 
 function free_pty() {
+	local pids
+
 	pids=$(lsof -F p 2>/dev/null -- $1 | cut -d'p' -f2)
-	if [ "${pids}" != "" ]; then
-		kill -9 ${pids}
-		info "You'll need to re-launch console on $1"
+	if [ "${pids}" == "" ]; then
+		return
 	fi
+
+	# Try to kill nicely at first...
+	kill ${pids}
+	info "You'll need to re-launch console on $1"
+
+	# Wait up to 3 seconds for them to die...
+	for i in $(seq 30); do
+		pids=$(lsof -F p 2>/dev/null -- $1 | cut -d'p' -f2)
+		if [ "${pids}" == "" ]; then
+			return
+		fi
+		sleep .1
+	done
+
+	# Forcibly kill
+	kill -9 ${pids}
 }
 
 # Board specific flashing scripts
