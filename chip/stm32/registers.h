@@ -390,6 +390,34 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define stm32_i2c_reg(port, offset) \
 	((uint16_t *)((STM32_I2C1_BASE + ((port) * 0x400)) + (offset)))
 
+#ifdef CHIP_FAMILY_STM32F0
+#define STM32_I2C_CR1(n)            REG32(stm32_i2c_reg(n, 0x00))
+#define STM32_I2C_CR1_PE            (1 << 0)
+#define STM32_I2C_CR2(n)            REG32(stm32_i2c_reg(n, 0x04))
+#define STM32_I2C_CR2_RD_WRN        (1 << 10)
+#define STM32_I2C_CR2_START         (1 << 13)
+#define STM32_I2C_CR2_STOP          (1 << 14)
+#define STM32_I2C_CR2_NACK          (1 << 15)
+#define STM32_I2C_CR2_RELOAD        (1 << 24)
+#define STM32_I2C_CR2_AUTOEND       (1 << 25)
+#define STM32_I2C_OAR1(n)           REG32(stm32_i2c_reg(n, 0x08))
+#define STM32_I2C_OAR2(n)           REG32(stm32_i2c_reg(n, 0x0C))
+#define STM32_I2C_TIMINGR(n)        REG32(stm32_i2c_reg(n, 0x10))
+#define STM32_I2C_TIMEOUTR(n)       REG32(stm32_i2c_reg(n, 0x14))
+#define STM32_I2C_ISR(n)            REG32(stm32_i2c_reg(n, 0x18))
+#define STM32_I2C_ISR_TXIS          (1 << 1)
+#define STM32_I2C_ISR_RXNE          (1 << 2)
+#define STM32_I2C_ISR_NACK          (1 << 4)
+#define STM32_I2C_ISR_STOP          (1 << 5)
+#define STM32_I2C_ISR_TC            (1 << 6)
+#define STM32_I2C_ISR_BERR          (1 << 8)
+#define STM32_I2C_ISR_ARLO          (1 << 9)
+#define STM32_I2C_ISR_BUSY          (1 << 15)
+#define STM32_I2C_ICR(n)            REG32(stm32_i2c_reg(n, 0x1C))
+#define STM32_I2C_PECR(n)           REG32(stm32_i2c_reg(n, 0x20))
+#define STM32_I2C_RXDR(n)           REG32(stm32_i2c_reg(n, 0x24))
+#define STM32_I2C_TXDR(n)           REG32(stm32_i2c_reg(n, 0x28))
+#else /* !CHIP_FAMILY_STM32F0 */
 #define STM32_I2C_CR1(n)            REG16(stm32_i2c_reg(n, 0x00))
 #define STM32_I2C_CR1_PE	(1 << 0)
 #define STM32_I2C_CR1_START	(1 << 8)
@@ -416,6 +444,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define STM32_I2C_CCR(n)            REG16(stm32_i2c_reg(n, 0x1C))
 #define STM32_I2C_TRISE(n)          REG16(stm32_i2c_reg(n, 0x20))
+#endif /* !CHIP_FAMILY_STM32F0 */
 
 /* --- Power / Reset / Clocks --- */
 #define STM32_PWR_BASE              0x40007000
