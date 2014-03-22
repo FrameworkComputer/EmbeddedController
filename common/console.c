@@ -136,6 +136,20 @@ static const struct console_command *find_command(char *name)
 	return match;
 }
 
+
+static const char const *errmsgs[] = {
+	"OK",
+	"Unknown error",
+	"Unimplemented",
+	"Overflow",
+	"Timeout",
+	"Invalid argument",
+	"Busy",
+	"Access Denied",
+	"Not Powered",
+	"Not Calibrated",
+};
+
 /**
  * Handle a line of input containing a single command.
  *
@@ -168,16 +182,14 @@ static int handle_command(char *input)
 		return rv;
 
 	/* Print more info for errors */
-	if (rv == EC_ERROR_INVAL)
-		ccputs("Command usage/param invalid.\n");
+	if (rv < ARRAY_SIZE(errmsgs))
+		ccprintf("%s\n", errmsgs[rv]);
+	else if (rv >= EC_ERROR_PARAM1 && rv < EC_ERROR_PARAM_COUNT)
+		ccprintf("Parameter %d invalid\n", rv - EC_ERROR_PARAM1 + 1);
 	else if (rv == EC_ERROR_PARAM_COUNT)
-		ccputs("Wrong number of params.\n");
-	else if (rv >= EC_ERROR_PARAM1 && rv <= EC_ERROR_PARAM9)
-		ccprintf("Parameter %d invalid.\n", rv - EC_ERROR_PARAM1 + 1);
-	else if (rv != EC_SUCCESS) {
+		ccputs("Wrong number of params\n");
+	else if (rv != EC_SUCCESS)
 		ccprintf("Command returned error %d\n", rv);
-		return rv;
-	}
 
 #ifdef CONFIG_CONSOLE_CMDHELP
 	if (cmd->argdesc)
