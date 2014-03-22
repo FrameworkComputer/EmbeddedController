@@ -167,7 +167,6 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	struct i2c_port_data *pd = pdata + port;
 	uint32_t reg_mcs = LM4_I2C_MCS(port);
 	int events = 0;
-	int other_events = 0;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
@@ -224,34 +223,11 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	task_trigger_irq(i2c_irqs[port]);
 
 	/* Wait for transfer complete or timeout */
-	while (!(events & (TASK_EVENT_I2C_IDLE | TASK_EVENT_TIMER))) {
-		/*
-		 * We could be clever and track how long we were actually
-		 * asleep, and wait for the remainder if we were woken up
-		 * for some other event.  But that would consume additional
-		 * stack space and processing time for the infrequent case
-		 * of an I2C timeout, so isn't worth it.
-		 */
-		events = task_wait_event(I2C_TIMEOUT_US);
-
-		/*
-		 * We want to wait here quietly until the transaction is
-		 * complete, but we don't want to lose any pending events that
-		 * will be needed by the task that started the I2C transaction
-		 * in the first place. So we save them up and restore them on
-		 * completion or timeout. See the usleep() implementation for a
-		 * similar situation.
-		 */
-		other_events |= events &
-			~(TASK_EVENT_I2C_IDLE | TASK_EVENT_TIMER);
-	}
+	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE, I2C_TIMEOUT_US);
 
 	/* Disable interrupts */
 	LM4_I2C_MIMR(port) = 0x00;
 	pd->task_waiting = TASK_ID_INVALID;
-
-	/* Restore any events that we saw while waiting */
-	task_set_event(task_get_current(), other_events, 0);
 
 	/* Handle timeout */
 	if (events & TASK_EVENT_TIMER)
