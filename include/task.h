@@ -95,8 +95,27 @@ uint32_t *task_get_event_bitmap(task_id_t tskid);
  * @param timeout_us	If > 0, sets a timer to produce the TASK_EVENT_TIMER
  *			event after the specified micro-second duration.
  *
- * @return The bitmap of received events. */
+ * @return The bitmap of received events.
+ */
 uint32_t task_wait_event(int timeout_us);
+
+/**
+ * Wait for any event included in an event mask.
+ *
+ * If one or more events are already pending, returns immediately.  Otherwise,
+ * it de-schedules the calling task and wakes up the next one in the priority
+ * order.  Automatically clears the bitmap of received events before returning
+ * the events which are set.
+ *
+ * @param event_mask	Bitmap of task events to wait for.
+ *
+ * @param timeout_us	If > 0, sets a timer to produce the TASK_EVENT_TIMER
+ *			event after the specified micro-second duration.
+ *
+ * @return		The bitmap of received events. Includes
+ *			TASK_EVENT_TIMER if the timeout is reached.
+ */
+uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us);
 
 /**
  * Prints the list of tasks.
