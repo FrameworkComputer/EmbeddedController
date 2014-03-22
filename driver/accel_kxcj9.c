@@ -11,6 +11,7 @@
 #include "driver/accel_kxcj9.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -29,6 +30,8 @@ static int sensor_resolution[ACCEL_COUNT] = {KXCJ9_RES_12BIT, KXCJ9_RES_12BIT};
 /* Output data rate: KXCJ9_OSA_* ranges from 0.781Hz to 1600Hz. */
 static int sensor_datarate[ACCEL_COUNT] = {KXCJ9_OSA_100_0HZ,
 						KXCJ9_OSA_100_0HZ};
+
+static struct mutex accel_mutex[ACCEL_COUNT];
 
 /**
  * Read register from accelerometer.
@@ -69,11 +72,19 @@ static int disable_sensor(const enum accel_id id, int *ctrl1)
 	if (ret != EC_SUCCESS)
 		return ret;
 
+	/*
+	 * Before disabling the sensor, acquire mutex to prevent another task
+	 * from attempting to access accel parameters until we enable sensor.
+	 */
+	mutex_lock(&accel_mutex[id]);
+
 	/* Disable sensor. */
 	*ctrl1 &= ~KXCJ9_CTRL1_PC1;
 	ret = raw_write8(accel_addr[id], KXCJ9_CTRL1, *ctrl1);
-	if (ret != EC_SUCCESS)
+	if (ret != EC_SUCCESS) {
+		mutex_unlock(&accel_mutex[id]);
 		return ret;
+	}
 
 	return EC_SUCCESS;
 }
@@ -98,9 +109,15 @@ static int enable_sensor(const enum accel_id id, const int ctrl1)
 				ctrl1 | KXCJ9_CTRL1_PC1);
 
 		/* On first success, we are done. */
-		if (ret == EC_SUCCESS)
+		if (ret == EC_SUCCESS) {
+			mutex_unlock(&accel_mutex[id]);
 			return EC_SUCCESS;
+		}
+
 	}
+
+	/* Release mutex. */
+	mutex_unlock(&accel_mutex[id]);
 
 	/* Cannot enable accel, print warning and return an error. */
 	CPRINTF("[%T Error trying to enable accelerometer %d]\n", id);
@@ -111,7 +128,7 @@ static int enable_sensor(const enum accel_id id, const int ctrl1)
 
 int accel_write_range(const enum accel_id id, const int range)
 {
-	int ret, ctrl1;
+	int ret, ctrl1, ctrl1_new;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -125,23 +142,20 @@ int accel_write_range(const enum accel_id id, const int range)
 		range != KXCJ9_GSEL_8G)
 		return EC_ERROR_INVAL;
 
-	/*
-	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
-	 * task can call this function. If this isn't true anymore, need to
-	 * protect with a mutex.
-	 */
-
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1,
-			KXCJ9_CTRL1_PC1 | sensor_resolution[id] | range);
+	/* Determine new value of CTRL1 reg and attempt to write it. */
+	ctrl1_new = (ctrl1 & ~KXCJ9_GSEL_ALL) | range;
+	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
-	if (ret == EC_SUCCESS)
+	if (ret == EC_SUCCESS) {
 		sensor_range[id] = range;
+		ctrl1 = ctrl1_new;
+	}
 
 	/* Re-enable the sensor. */
 	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
@@ -152,7 +166,7 @@ int accel_write_range(const enum accel_id id, const int range)
 
 int accel_write_resolution(const enum accel_id id, const int res)
 {
-	int ret, ctrl1;
+	int ret, ctrl1, ctrl1_new;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
@@ -162,23 +176,20 @@ int accel_write_resolution(const enum accel_id id, const int res)
 	if (res != KXCJ9_RES_12BIT && res != KXCJ9_RES_8BIT)
 		return EC_ERROR_INVAL;
 
-	/*
-	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
-	 * task can call this function. If this isn't true anymore, need to
-	 * protect with a mutex.
-	 */
-
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1,
-			KXCJ9_CTRL1_PC1 | res | sensor_range[id]);
+	/* Determine new value of CTRL1 reg and attempt to write it. */
+	ctrl1_new = (ctrl1 & ~KXCJ9_RES_12BIT) | res;
+	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
-	if (ret == EC_SUCCESS)
+	if (ret == EC_SUCCESS) {
 		sensor_resolution[id] = res;
+		ctrl1 = ctrl1_new;
+	}
 
 	/* Re-enable the sensor. */
 	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
@@ -198,12 +209,6 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 	/* Check that rate input is valid. */
 	if (rate < KXCJ9_OSA_12_50HZ || rate > KXCJ9_OSA_6_250HZ)
 		return EC_ERROR_INVAL;
-
-	/*
-	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
-	 * task can call this function. If this isn't true anymore, need to
-	 * protect with a mutex.
-	 */
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -228,12 +233,6 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
 {
 	int ctrl1, tmp, ret;
-
-	/*
-	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
-	 * task can call this function. If this isn't true anymore, need to
-	 * protect with a mutex.
-	 */
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -296,10 +295,12 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 		return EC_ERROR_INVAL;
 
 	/* Read 6 bytes starting at KXCJ9_XOUT_L. */
+	mutex_lock(&accel_mutex[id]);
 	i2c_lock(I2C_PORT_ACCEL, 1);
 	ret = i2c_xfer(I2C_PORT_ACCEL, accel_addr[id], &reg, 1, acc, 6,
 			I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_ACCEL, 0);
+	mutex_unlock(&accel_mutex[id]);
 
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -345,12 +346,6 @@ int accel_init(enum accel_id id)
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
 		return EC_ERROR_INVAL;
-
-	/*
-	 * TODO(crosbug.com/p/26884): This driver currently assumes only one
-	 * task can call this function. If this isn't true anymore, need to
-	 * protect with a mutex.
-	 */
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -483,6 +478,113 @@ static int command_write_accelerometer(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelwrite, command_write_accelerometer,
 	"addr reg data",
 	"Write to accelerometer at slave address addr", NULL);
+
+static int command_accelrange(int argc, char **argv)
+{
+	char *e;
+	int id, data;
+
+	if (argc < 2 || argc > 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* First argument is sensor id. */
+	id = strtoi(argv[1], &e, 0);
+	if (*e || id < 0 || id > ACCEL_COUNT)
+		return EC_ERROR_PARAM1;
+
+	if (argc == 3) {
+		/* Second argument is data to write. */
+		data = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		/*
+		 * Write new range, if it returns invalid arg, then return
+		 * a parameter error.
+		 */
+		if (accel_write_range(id, data) == EC_ERROR_INVAL)
+			return EC_ERROR_PARAM2;
+	} else {
+		ccprintf("Range for sensor %d: 0x%02x\n", id, sensor_range[id]);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(accelrange, command_accelrange,
+	"id [data]",
+	"Read or write accelerometer range", NULL);
+
+static int command_accelresolution(int argc, char **argv)
+{
+	char *e;
+	int id, data;
+
+	if (argc < 2 || argc > 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* First argument is sensor id. */
+	id = strtoi(argv[1], &e, 0);
+	if (*e || id < 0 || id > ACCEL_COUNT)
+		return EC_ERROR_PARAM1;
+
+	if (argc == 3) {
+		/* Second argument is data to write. */
+		data = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		/*
+		 * Write new resolution, if it returns invalid arg, then
+		 * return a parameter error.
+		 */
+		if (accel_write_resolution(id, data) == EC_ERROR_INVAL)
+			return EC_ERROR_PARAM2;
+	} else {
+		ccprintf("Resolution for sensor %d: 0x%02x\n", id,
+				sensor_resolution[id]);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
+	"id [data]",
+	"Read or write accelerometer resolution", NULL);
+
+static int command_acceldatarate(int argc, char **argv)
+{
+	char *e;
+	int id, data;
+
+	if (argc < 2 || argc > 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* First argument is sensor id. */
+	id = strtoi(argv[1], &e, 0);
+	if (*e || id < 0 || id > ACCEL_COUNT)
+		return EC_ERROR_PARAM1;
+
+	if (argc == 3) {
+		/* Second argument is data to write. */
+		data = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		/*
+		 * Write new data rate, if it returns invalid arg, then
+		 * return a parameter error.
+		 */
+		if (accel_write_datarate(id, data) == EC_ERROR_INVAL)
+			return EC_ERROR_PARAM2;
+	} else {
+		ccprintf("Data rate for sensor %d: 0x%02x\n", id,
+				sensor_datarate[id]);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(accelrate, command_acceldatarate,
+	"id [data]",
+	"Read or write accelerometer range", NULL);
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 static int command_accelerometer_interrupt(int argc, char **argv)

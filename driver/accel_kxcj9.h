@@ -57,6 +57,7 @@
 #define KXCJ9_GSEL_4G		(1 << 3)
 #define KXCJ9_GSEL_8G		(2 << 3)
 #define KXCJ9_GSEL_8G_14BIT	(3 << 3)
+#define KXCJ9_GSEL_ALL          (3 << 3)
 
 #define KXCJ9_RES_8BIT		(0 << 6)
 #define KXCJ9_RES_12BIT		(1 << 6)
