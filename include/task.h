@@ -13,7 +13,9 @@
 
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM for their own events */
-#define TASK_EVENT_CUSTOM(x)	(x & 0x0fffffff)
+#define TASK_EVENT_CUSTOM(x)	(x & 0x07ffffff)
+/* ADC interrupt handler event */
+#define TASK_EVENT_ADC_DONE	(1 << 27)
 /* I2C interrupt handler event */
 #define TASK_EVENT_I2C_IDLE	(1 << 28)
 /* task_wake() called on task */
