@@ -106,6 +106,8 @@ const char help_str[] =
 	"      Set the color of an LED or query brightness range\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  motionsense [CMDS]\n"
+	"      Various motion sense control commands\n"
 	"  panicinfo\n"
 	"      Prints saved panic info\n"
 	"  pause_in_s5 [on|off]\n"
@@ -1684,6 +1686,224 @@ static int cmd_lightbar(int argc, char **argv)
 	}
 
 	return lb_help(argv[0]);
+}
+
+/* Create an array to store sizes of motion sense param and response structs. */
+#define MS_SIZES(SUBCMD) { \
+		sizeof(((struct ec_params_motion_sense *)0)->SUBCMD) \
+		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
+		sizeof(((struct ec_response_motion_sense *)0)->SUBCMD) }
+static const struct {
+	uint8_t insize;
+	uint8_t outsize;
+} ms_command_sizes[] = {
+	MS_SIZES(dump),
+	MS_SIZES(info),
+	MS_SIZES(ec_rate),
+	MS_SIZES(sensor_odr),
+	MS_SIZES(sensor_range),
+};
+BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
+#undef MS_SIZES
+
+static int ms_help(const char *cmd)
+{
+	printf("Usage:\n");
+	printf("  %s                            - dump all motion data\n", cmd);
+	printf("  %s info NUM                   - print sensor info\n", cmd);
+	printf("  %s ec_rate [RATE_MS]          - set/get sample rate\n", cmd);
+	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
+	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
+
+	return 0;
+}
+
+static int cmd_motionsense(int argc, char **argv)
+{
+	int i, rv;
+	struct ec_params_motion_sense param;
+	struct ec_response_motion_sense resp;
+	char *e;
+
+	/* No motionsense command has more than 5 args. */
+	if (argc > 5)
+		return ms_help(argv[0]);
+
+	if (argc == 1) {
+		/* No args, dump motion data. */
+		param.cmd = MOTIONSENSE_CMD_DUMP;
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		for (i = 0; i < ARRAY_SIZE(resp.dump.sensor_presence); i++) {
+			printf("Sensor %d: ", i);
+			if (resp.dump.sensor_presence[i])
+				printf("%d\t%d\t%d\n", resp.dump.data[3*i],
+							resp.dump.data[3*i+1],
+							resp.dump.data[3*i+2]);
+			else
+				printf("None\n");
+		}
+
+		return 0;
+	}
+
+	if (argc == 3 && !strcasecmp(argv[1], "info")) {
+		param.cmd = MOTIONSENSE_CMD_INFO;
+
+		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("Type:     ");
+		switch (resp.info.type) {
+		case MOTIONSENSE_TYPE_ACCEL:
+			printf("accel\n");
+			break;
+		case MOTIONSENSE_TYPE_GYRO:
+			printf("gyro\n");
+			break;
+		default:
+			printf("unknown\n");
+		}
+
+		printf("Location: ");
+		switch (resp.info.location) {
+		case MOTIONSENSE_LOC_BASE:
+			printf("base\n");
+			break;
+		case MOTIONSENSE_LOC_LID:
+			printf("lid\n");
+			break;
+		default:
+			printf("unknown\n");
+		}
+
+		printf("Chip:     ");
+		switch (resp.info.chip) {
+		case MOTIONSENSE_CHIP_KXCJ9:
+			printf("kxcj9\n");
+			break;
+		default:
+			printf("unknown\n");
+		}
+
+		return 0;
+	}
+
+	if (argc < 4 && !strcasecmp(argv[1], "ec_rate")) {
+		param.cmd = MOTIONSENSE_CMD_EC_RATE;
+		param.ec_rate.data = EC_MOTION_SENSE_NO_VALUE;
+
+		if (argc == 3) {
+			param.ec_rate.data = strtol(argv[2], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("%d\n", resp.ec_rate.ret);
+		return 0;
+	}
+
+	if (argc > 2 && !strcasecmp(argv[1], "odr")) {
+		param.cmd = MOTIONSENSE_CMD_SENSOR_ODR;
+		param.sensor_odr.data = EC_MOTION_SENSE_NO_VALUE;
+		param.sensor_odr.roundup = 1;
+
+		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			return -1;
+		}
+
+		if (argc >= 4) {
+			param.sensor_odr.data = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		if (argc == 5) {
+			param.sensor_odr.roundup = strtol(argv[4], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("%d\n", resp.sensor_odr.ret);
+		return 0;
+	}
+
+	if (argc > 2 && !strcasecmp(argv[1], "range")) {
+		param.cmd = MOTIONSENSE_CMD_SENSOR_RANGE;
+		param.sensor_range.data = EC_MOTION_SENSE_NO_VALUE;
+		param.sensor_odr.roundup = 1;
+
+		param.sensor_range.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			return -1;
+		}
+
+		if (argc >= 4) {
+			param.sensor_range.data = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		if (argc == 5) {
+			param.sensor_odr.roundup = strtol(argv[4], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("%d\n", resp.sensor_range.ret);
+		return 0;
+	}
+
+	return ms_help(argv[0]);
 }
 
 static int find_led_color_by_name(const char *color)
@@ -3681,6 +3901,7 @@ const struct command commands[] = {
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"motionsense", cmd_motionsense},
 	{"panicinfo", cmd_panic_info},
 	{"pause_in_s5", cmd_s5},
 	{"powerinfo", cmd_power_info},

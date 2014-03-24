@@ -1161,6 +1161,130 @@ enum ec_vboot_hash_status {
 #define EC_VBOOT_HASH_OFFSET_RW 0xfffffffd
 
 /*****************************************************************************/
+/*
+ * Motion sense commands. We'll make separate structs for sub-commands with
+ * different input args, so that we know how much to expect.
+ */
+#define EC_CMD_MOTION_SENSE_CMD 0x2B
+
+/* Motion sense commands */
+enum motionsense_command {
+	/*
+	 * Dump command returns all motion sensor data including a physical
+	 * presence bit for each potential sensor.
+	 */
+	MOTIONSENSE_CMD_DUMP = 0,
+
+	/*
+	 * Info command returns data describing the details of a given sensor,
+	 * including enum motionsensor_type, enum motionsensor_location, and
+	 * enum motionsensor_chip.
+	 */
+	MOTIONSENSE_CMD_INFO = 1,
+
+	/*
+	 * EC Rate command is a setter/getter command for the EC sampling rate
+	 * of all motion sensors in milliseconds.
+	 */
+	MOTIONSENSE_CMD_EC_RATE = 2,
+
+	/*
+	 * Sensor ODR command is a setter/getter command for the output data
+	 * rate of a specific motion sensor in millihertz.
+	 */
+	MOTIONSENSE_CMD_SENSOR_ODR = 3,
+
+	/*
+	 * Sensor range command is a setter/getter command for the range of
+	 * a specified motion sensor in +/-G's or +/- deg/s.
+	 */
+	MOTIONSENSE_CMD_SENSOR_RANGE = 4,
+
+	/* Number of motionsense sub-commands. */
+	MOTIONSENSE_NUM_CMDS
+};
+
+/* List of motion sensor types. */
+enum motionsensor_type {
+	MOTIONSENSE_TYPE_ACCEL,
+	MOTIONSENSE_TYPE_GYRO,
+};
+
+/* List of motion sensor locations. */
+enum motionsensor_location {
+	MOTIONSENSE_LOC_BASE,
+	MOTIONSENSE_LOC_LID,
+};
+
+/* List of motion sensor chips. */
+enum motionsensor_chip {
+	MOTIONSENSE_CHIP_KXCJ9,
+};
+
+/*
+ * Send this value for the data element to only perform a read. If you
+ * send any other value, the EC will interpret it as data to set.
+ */
+#define EC_MOTION_SENSE_NO_VALUE -1
+
+struct ec_params_motion_sense {
+	uint8_t cmd;
+	union {
+		/* Used for MOTIONSENSE_CMD_DUMP. */
+		struct {
+			/* no args */
+		} dump;
+
+		/* Used for MOTIONSENSE_CMD_EC_RATE. */
+		struct {
+			int16_t data;
+		} ec_rate;
+
+		/* Used for MOTIONSENSE_CMD_INFO. */
+		struct {
+			uint8_t sensor_num;
+		} info;
+
+		/*
+		 * Used for MOTIONSENSE_CMD_SENSOR_ODR and
+		 * MOTIONSENSE_CMD_SENSOR_RANGE.
+		 */
+		struct {
+			uint8_t sensor_num;
+			uint8_t roundup;
+			uint16_t reserved;
+			int32_t data;
+		} sensor_odr, sensor_range;
+	};
+} __packed;
+
+struct ec_response_motion_sense {
+	union {
+		/* Used for MOTIONSENSE_CMD_DUMP. */
+		struct {
+			uint8_t sensor_presence[3];
+			uint8_t reserved;
+			int16_t data[9];
+		} dump;
+
+		/* Used for MOTIONSENSE_CMD_INFO. */
+		struct {
+			uint8_t type;
+			uint8_t location;
+			uint8_t chip;
+		} info;
+
+		/*
+		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR,
+		 * and MOTIONSENSE_CMD_SENSOR_RANGE.
+		 */
+		struct {
+			int32_t ret;
+		} ec_rate, sensor_odr, sensor_range;
+	};
+} __packed;
+
+/*****************************************************************************/
 /* USB charging control commands */
 
 /* Set USB port charging mode */
@@ -2143,7 +2267,7 @@ struct ec_params_reboot_ec {
  * Header bytes greater than this indicate a later version. For example,
  * EC_CMD_VERSION0 + 1 means we are using version 1.
  *
- * The old EC interface must not use commands 0dc or higher.
+ * The old EC interface must not use commands 0xdc or higher.
  */
 #define EC_CMD_VERSION0 0xdc
 

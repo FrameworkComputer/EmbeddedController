@@ -100,36 +100,6 @@
 #define KXCJ9_OSA_1600_HZ	7
 
 
-/**
- * Write the accelerometer range.
- *
- * @param id Target accelerometer
- * @param range Range (KXCJ9_GSEL_*).
- *
- * @return EC_SUCCESS if successful, non-zero if error.
- */
-int accel_write_range(const enum accel_id id, const int range);
-
-/**
- * Write the accelerometer resolution.
- *
- * @param id Target accelerometer
- * @param range Resolution (KXCJ9_RES_*).
- *
- * @return EC_SUCCESS if successful, non-zero if error.
- */
-int accel_write_resolution(const enum accel_id id, const int res);
-
-/**
- * Write the accelerometer data rate.
- *
- * @param id Target accelerometer
- * @param range Data rate (KXCJ9_OSA_*).
- *
- * @return EC_SUCCESS if successful, non-zero if error.
- */
-int accel_write_datarate(const enum accel_id id, const int rate);
-
 #ifdef CONFIG_ACCEL_INTERRUPTS
 /**
  * Setup a one-time accel interrupt. If the threshold is low enough, the

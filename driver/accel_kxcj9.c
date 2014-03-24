@@ -21,17 +21,88 @@
 /* Number of times to attempt to enable sensor before giving up. */
 #define SENSOR_ENABLE_ATTEMPTS 3
 
-/* Range of the accelerometers: 2G, 4G, or 8G. */
-static int sensor_range[ACCEL_COUNT] = {KXCJ9_GSEL_2G, KXCJ9_GSEL_2G};
+/*
+ * Struct for pairing an engineering value with the register value for a
+ * parameter.
+ */
+struct accel_param_pair {
+	int val; /* Value in engineering units. */
+	int reg; /* Corresponding register value. */
+};
 
-/* Resolution: KXCJ9_RES_12BIT or KXCJ9_RES_12BIT. */
-static int sensor_resolution[ACCEL_COUNT] = {KXCJ9_RES_12BIT, KXCJ9_RES_12BIT};
+/* List of range values in +/-G's and their associated register values. */
+const struct accel_param_pair ranges[] = {
+	{2, KXCJ9_GSEL_2G},
+	{4, KXCJ9_GSEL_4G},
+	{8, KXCJ9_GSEL_8G_14BIT}
+};
 
-/* Output data rate: KXCJ9_OSA_* ranges from 0.781Hz to 1600Hz. */
-static int sensor_datarate[ACCEL_COUNT] = {KXCJ9_OSA_100_0HZ,
-						KXCJ9_OSA_100_0HZ};
+/* List of resolution values in bits and their associated register values. */
+const struct accel_param_pair resolutions[] = {
+	{8,  KXCJ9_RES_8BIT},
+	{12, KXCJ9_RES_12BIT}
+};
+
+/* List of ODR values in mHz and their associated register values. */
+const struct accel_param_pair datarates[] = {
+	{781,     KXCJ9_OSA_0_781HZ},
+	{1563,    KXCJ9_OSA_1_563HZ},
+	{3125,    KXCJ9_OSA_3_125HZ},
+	{6250,    KXCJ9_OSA_6_250HZ},
+	{12500,   KXCJ9_OSA_12_50HZ},
+	{25000,   KXCJ9_OSA_25_00HZ},
+	{50000,   KXCJ9_OSA_50_00HZ},
+	{100000,  KXCJ9_OSA_100_0HZ},
+	{200000,  KXCJ9_OSA_200_0HZ},
+	{400000,  KXCJ9_OSA_400_0HZ},
+	{800000,  KXCJ9_OSA_800_0HZ},
+	{1600000, KXCJ9_OSA_1600_HZ}
+};
+
+/* Current range of each accelerometer. The value is an index into ranges[]. */
+static int sensor_range[ACCEL_COUNT] = {0, 0};
+
+/*
+ * Current resolution of each accelerometer. The value is an index into
+ * resolutions[].
+ */
+static int sensor_resolution[ACCEL_COUNT] = {1, 1};
+
+/*
+ * Current output data rate of each accelerometer. The value is an index into
+ * datarates[].
+ */
+static int sensor_datarate[ACCEL_COUNT] = {6, 6};
+
 
 static struct mutex accel_mutex[ACCEL_COUNT];
+
+/**
+ * Find index into a accel_param_pair that matches the given engineering value
+ * passed in. The round_up flag is used to specify whether to round up or down.
+ * Note, this function always returns a valid index. If the request is
+ * outside the range of values, it returns the closest valid index.
+ */
+static int find_param_index(const int eng_val, const int round_up,
+		const struct accel_param_pair *pairs, const int size)
+{
+	int i;
+
+	/* Linear search for index to match. */
+	for (i = 0; i < size - 1; i++) {
+		if (eng_val <= pairs[i].val)
+			return i;
+
+		if (eng_val < pairs[i+1].val) {
+			if (round_up)
+				return i + 1;
+			else
+				return i;
+		}
+	}
+
+	return i;
+}
 
 /**
  * Read register from accelerometer.
@@ -125,22 +196,16 @@ static int enable_sensor(const enum accel_id id, const int ctrl1)
 	return ret;
 }
 
-
-int accel_write_range(const enum accel_id id, const int range)
+int accel_set_range(const enum accel_id id, const int range, const int rnd)
 {
-	int ret, ctrl1, ctrl1_new;
+	int ret, ctrl1, ctrl1_new, index;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
 		return EC_ERROR_INVAL;
 
-	/*
-	 * Verify that the input range is valid. Note that we currently
-	 * don't support the 8G with 14-bit resolution mode.
-	 */
-	if (range != KXCJ9_GSEL_2G && range != KXCJ9_GSEL_4G &&
-		range != KXCJ9_GSEL_8G)
-		return EC_ERROR_INVAL;
+	/* Find index for interface pair matching the specified range. */
+	index = find_param_index(range, rnd, ranges, ARRAY_SIZE(ranges));
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -148,12 +213,12 @@ int accel_write_range(const enum accel_id id, const int range)
 		return ret;
 
 	/* Determine new value of CTRL1 reg and attempt to write it. */
-	ctrl1_new = (ctrl1 & ~KXCJ9_GSEL_ALL) | range;
+	ctrl1_new = (ctrl1 & ~KXCJ9_GSEL_ALL) | ranges[index].reg;
 	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
-		sensor_range[id] = range;
+		sensor_range[id] = index;
 		ctrl1 = ctrl1_new;
 	}
 
@@ -164,17 +229,27 @@ int accel_write_range(const enum accel_id id, const int range)
 	return ret;
 }
 
-int accel_write_resolution(const enum accel_id id, const int res)
+int accel_get_range(const enum accel_id id, int * const range)
 {
-	int ret, ctrl1, ctrl1_new;
+	/* Check for valid id. */
+	if (id < 0 || id >= ACCEL_COUNT)
+		return EC_ERROR_INVAL;
+
+	*range = ranges[sensor_range[id]].val;
+	return EC_SUCCESS;
+}
+
+int accel_set_resolution(const enum accel_id id, const int res, const int rnd)
+{
+	int ret, ctrl1, ctrl1_new, index;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
 		return EC_ERROR_INVAL;
 
-	/* Check that resolution input is valid. */
-	if (res != KXCJ9_RES_12BIT && res != KXCJ9_RES_8BIT)
-		return EC_ERROR_INVAL;
+	/* Find index for interface pair matching the specified resolution. */
+	index = find_param_index(res, rnd, resolutions,
+			ARRAY_SIZE(resolutions));
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -182,12 +257,12 @@ int accel_write_resolution(const enum accel_id id, const int res)
 		return ret;
 
 	/* Determine new value of CTRL1 reg and attempt to write it. */
-	ctrl1_new = (ctrl1 & ~KXCJ9_RES_12BIT) | res;
+	ctrl1_new = (ctrl1 & ~KXCJ9_RES_12BIT) | resolutions[index].reg;
 	ret = raw_write8(accel_addr[id],  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
-		sensor_resolution[id] = res;
+		sensor_resolution[id] = index;
 		ctrl1 = ctrl1_new;
 	}
 
@@ -198,17 +273,26 @@ int accel_write_resolution(const enum accel_id id, const int res)
 	return ret;
 }
 
-int accel_write_datarate(const enum accel_id id, const int rate)
+int accel_get_resolution(const enum accel_id id, int * const res)
 {
-	int ret, ctrl1;
+	/* Check for valid id. */
+	if (id < 0 || id >= ACCEL_COUNT)
+		return EC_ERROR_INVAL;
+
+	*res = resolutions[sensor_resolution[id]].val;
+	return EC_SUCCESS;
+}
+
+int accel_set_datarate(const enum accel_id id, const int rate, const int rnd)
+{
+	int ret, ctrl1, index;
 
 	/* Check for valid id. */
 	if (id < 0 || id >= ACCEL_COUNT)
 		return EC_ERROR_INVAL;
 
-	/* Check that rate input is valid. */
-	if (rate < KXCJ9_OSA_12_50HZ || rate > KXCJ9_OSA_6_250HZ)
-		return EC_ERROR_INVAL;
+	/* Find index for interface pair matching the specified rate. */
+	index = find_param_index(rate, rnd, datarates, ARRAY_SIZE(datarates));
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	ret = disable_sensor(id, &ctrl1);
@@ -216,11 +300,12 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 		return ret;
 
 	/* Set output data rate. */
-	ret = raw_write8(accel_addr[id],  KXCJ9_DATA_CTRL, rate);
+	ret = raw_write8(accel_addr[id],  KXCJ9_DATA_CTRL,
+			datarates[index].reg);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
-		sensor_datarate[id] = rate;
+		sensor_datarate[id] = index;
 
 	/* Re-enable the sensor. */
 	if (enable_sensor(id, ctrl1) != EC_SUCCESS)
@@ -228,6 +313,17 @@ int accel_write_datarate(const enum accel_id id, const int rate)
 
 	return ret;
 }
+
+int accel_get_datarate(const enum accel_id id, int * const rate)
+{
+	/* Check for valid id. */
+	if (id < 0 || id >= ACCEL_COUNT)
+		return EC_ERROR_INVAL;
+
+	*rate = datarates[sensor_datarate[id]].val;
+	return EC_SUCCESS;
+}
+
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
@@ -284,7 +380,8 @@ error_enable_sensor:
 }
 #endif
 
-int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
+int accel_read(const enum accel_id id, int * const x_acc, int * const y_acc,
+		int * const z_acc)
 {
 	uint8_t acc[6];
 	uint8_t reg = KXCJ9_XOUT_L;
@@ -306,7 +403,7 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 		return ret;
 
 	/* Determine multiplier based on stored range. */
-	switch (sensor_range[id]) {
+	switch (ranges[sensor_range[id]].reg) {
 	case KXCJ9_GSEL_2G:
 		multiplier = 1;
 		break;
@@ -314,6 +411,7 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 		multiplier = 2;
 		break;
 	case KXCJ9_GSEL_8G:
+	case KXCJ9_GSEL_8G_14BIT:
 		multiplier = 4;
 		break;
 	default:
@@ -338,7 +436,7 @@ int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
 	return EC_SUCCESS;
 }
 
-int accel_init(enum accel_id id)
+int accel_init(const enum accel_id id)
 {
 	int ret = EC_SUCCESS;
 	int cnt = 0, ctrl1, ctrl2;
@@ -378,7 +476,8 @@ int accel_init(enum accel_id id)
 	}
 
 	/* Set resolution and range. */
-	ctrl1 = sensor_resolution[id] | sensor_range[id];
+	ctrl1 = resolutions[sensor_resolution[id]].reg |
+			ranges[sensor_range[id]].reg;
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/* Enable wake up (motion detect) functionality. */
 	ctrl1 |= KXCJ9_CTRL1_WUFE;
@@ -407,7 +506,8 @@ int accel_init(enum accel_id id)
 #endif
 
 	/* Set output data rate. */
-	ret |= raw_write8(accel_addr[id], KXCJ9_DATA_CTRL, sensor_datarate[id]);
+	ret |= raw_write8(accel_addr[id], KXCJ9_DATA_CTRL,
+			datarates[sensor_datarate[id]].reg);
 
 	/* Enable the sensor. */
 	ret |= enable_sensor(id, ctrl1);
@@ -482,9 +582,9 @@ DECLARE_CONSOLE_COMMAND(accelwrite, command_write_accelerometer,
 static int command_accelrange(int argc, char **argv)
 {
 	char *e;
-	int id, data;
+	int id, data, round = 1;
 
-	if (argc < 2 || argc > 3)
+	if (argc < 2 || argc > 4)
 		return EC_ERROR_PARAM_COUNT;
 
 	/* First argument is sensor id. */
@@ -492,34 +592,42 @@ static int command_accelrange(int argc, char **argv)
 	if (*e || id < 0 || id > ACCEL_COUNT)
 		return EC_ERROR_PARAM1;
 
-	if (argc == 3) {
+	if (argc >= 3) {
 		/* Second argument is data to write. */
 		data = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
+
+		if (argc == 4) {
+			/* Third argument is rounding flag. */
+			round = strtoi(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM3;
+		}
 
 		/*
 		 * Write new range, if it returns invalid arg, then return
 		 * a parameter error.
 		 */
-		if (accel_write_range(id, data) == EC_ERROR_INVAL)
+		if (accel_set_range(id, data, round) == EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		ccprintf("Range for sensor %d: 0x%02x\n", id, sensor_range[id]);
+		accel_get_range(id, &data);
+		ccprintf("Range for sensor %d: %d\n", id, data);
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelrange, command_accelrange,
-	"id [data]",
+	"id [data [roundup]]",
 	"Read or write accelerometer range", NULL);
 
 static int command_accelresolution(int argc, char **argv)
 {
 	char *e;
-	int id, data;
+	int id, data, round = 1;
 
-	if (argc < 2 || argc > 3)
+	if (argc < 2 || argc > 4)
 		return EC_ERROR_PARAM_COUNT;
 
 	/* First argument is sensor id. */
@@ -527,35 +635,42 @@ static int command_accelresolution(int argc, char **argv)
 	if (*e || id < 0 || id > ACCEL_COUNT)
 		return EC_ERROR_PARAM1;
 
-	if (argc == 3) {
+	if (argc >= 3) {
 		/* Second argument is data to write. */
 		data = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
+
+		if (argc == 4) {
+			/* Third argument is rounding flag. */
+			round = strtoi(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM3;
+		}
 
 		/*
 		 * Write new resolution, if it returns invalid arg, then
 		 * return a parameter error.
 		 */
-		if (accel_write_resolution(id, data) == EC_ERROR_INVAL)
+		if (accel_set_resolution(id, data, round) == EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		ccprintf("Resolution for sensor %d: 0x%02x\n", id,
-				sensor_resolution[id]);
+		accel_get_resolution(id, &data);
+		ccprintf("Resolution for sensor %d: %d\n", id, data);
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
-	"id [data]",
+	"id [data [roundup]]",
 	"Read or write accelerometer resolution", NULL);
 
 static int command_acceldatarate(int argc, char **argv)
 {
 	char *e;
-	int id, data;
+	int id, data, round = 1;
 
-	if (argc < 2 || argc > 3)
+	if (argc < 2 || argc > 4)
 		return EC_ERROR_PARAM_COUNT;
 
 	/* First argument is sensor id. */
@@ -563,27 +678,34 @@ static int command_acceldatarate(int argc, char **argv)
 	if (*e || id < 0 || id > ACCEL_COUNT)
 		return EC_ERROR_PARAM1;
 
-	if (argc == 3) {
+	if (argc >= 3) {
 		/* Second argument is data to write. */
 		data = strtoi(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
 
+		if (argc == 4) {
+			/* Third argument is rounding flag. */
+			round = strtoi(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM3;
+		}
+
 		/*
 		 * Write new data rate, if it returns invalid arg, then
 		 * return a parameter error.
 		 */
-		if (accel_write_datarate(id, data) == EC_ERROR_INVAL)
+		if (accel_set_datarate(id, data, round) == EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		ccprintf("Data rate for sensor %d: 0x%02x\n", id,
-				sensor_datarate[id]);
+		accel_get_datarate(id, &data);
+		ccprintf("Data rate for sensor %d: %d\n", id, data);
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelrate, command_acceldatarate,
-	"id [data]",
+	"id [data [roundup]]",
 	"Read or write accelerometer range", NULL);
 
 #ifdef CONFIG_ACCEL_INTERRUPTS

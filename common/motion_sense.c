@@ -30,9 +30,13 @@ static vector_3_t acc_lid_host, acc_base_host;
 static float lid_angle_deg;
 static int lid_angle_is_reliable;
 
+/* Bounds for setting the sensor polling interval. */
+#define MIN_POLLING_INTERVAL_MS 5
+#define MAX_POLLING_INTERVAL_MS 1000
+
 /* Accelerometer polling intervals based on chipset state. */
-#define ACCEL_INTERVAL_AP_ON_MS      10
-#define ACCEL_INTERVAL_AP_SUSPEND_MS 100
+static int accel_interval_ap_on_ms = 10;
+static const int accel_interval_ap_suspend_ms = 100;
 
 /*
  * Angle threshold for how close the hinge aligns with gravity before
@@ -43,7 +47,7 @@ static int lid_angle_is_reliable;
 #define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD 0.96593F
 
 /* Sampling interval for measuring acceleration and calculating lid angle. */
-static int accel_interval_ms = ACCEL_INTERVAL_AP_SUSPEND_MS;
+static int accel_interval_ms;
 
 #ifdef CONFIG_CMD_LID_ANGLE
 static int accel_disp;
@@ -153,19 +157,17 @@ void motion_get_accel_base(vector_3_t *v)
 }
 #endif
 
-/* Lower accel polling rate on chipset suspend. */
-static void set_slow_accel_polling(void)
+static void set_ap_suspend_polling(void)
 {
-	accel_interval_ms = ACCEL_INTERVAL_AP_SUSPEND_MS;
+	accel_interval_ms = accel_interval_ap_suspend_ms;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, set_slow_accel_polling, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, set_ap_suspend_polling, HOOK_PRIO_DEFAULT);
 
-/* Raise accel polling rate on chipset resume. */
-static void set_fast_accel_polling(void)
+static void set_ap_on_polling(void)
 {
-	accel_interval_ms = ACCEL_INTERVAL_AP_ON_MS;
+	accel_interval_ms = accel_interval_ap_on_ms;
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, set_fast_accel_polling, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, set_ap_on_polling, HOOK_PRIO_DEFAULT);
 
 
 void motion_sense_task(void)
@@ -180,6 +182,14 @@ void motion_sense_task(void)
 	lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 	lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
 
+	/*
+	 * TODO(crosbug.com/p/27320): The motion_sense task currently assumes
+	 * one configuration of motion sensors. Namely, it assumes there is
+	 * one accel in the base, one in the lid, and they both use the same
+	 * driver. Eventually, all of these assumptions will have to be removed
+	 * when we have other configurations of motion sensors.
+	 */
+
 	/* Initialize accelerometers. */
 	ret = accel_init(ACCEL_LID);
 	ret |= accel_init(ACCEL_BASE);
@@ -190,6 +200,17 @@ void motion_sense_task(void)
 				"motion sense task.\n");
 		return;
 	}
+
+	/* Initialize sampling interval. */
+	accel_interval_ms = accel_interval_ap_suspend_ms;
+
+	/* Set default accelerometer parameters. */
+	accel_set_range(ACCEL_LID,  2, 1);
+	accel_set_range(ACCEL_BASE, 2, 1);
+	accel_set_resolution(ACCEL_LID,  12, 1);
+	accel_set_resolution(ACCEL_BASE, 12, 1);
+	accel_set_datarate(ACCEL_LID,  100000, 1);
+	accel_set_datarate(ACCEL_BASE, 100000, 1);
 
 	/* Write to status byte to represent that accelerometers are present. */
 	*lpc_status |= EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
@@ -297,6 +318,139 @@ void accel_int_base(enum gpio_signal signal)
 	 */
 	CPRINTF("[%T Accelerometer wake-up interrupt occurred on base]\n");
 }
+
+/*****************************************************************************/
+/* Host commands */
+
+static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_motion_sense *in = args->params;
+	struct ec_response_motion_sense *out = args->response;
+	int id, data;
+
+	switch (in->cmd) {
+	case MOTIONSENSE_CMD_DUMP:
+		/*
+		 * TODO(crosbug.com/p/27320): Need to remove hard coding and
+		 * use some motion_sense data structure from the board file to
+		 * help fill in this response.
+		 */
+		out->dump.sensor_presence[0] = 1;
+		out->dump.sensor_presence[1] = 1;
+		out->dump.sensor_presence[2] = 0;
+		out->dump.data[0] = acc_base_host[X];
+		out->dump.data[1] = acc_base_host[Y];
+		out->dump.data[2] = acc_base_host[Z];
+		out->dump.data[3] = acc_lid_host[X];
+		out->dump.data[4] = acc_lid_host[Y];
+		out->dump.data[5] = acc_lid_host[Z];
+
+		args->response_size = sizeof(out->dump);
+		break;
+
+	case MOTIONSENSE_CMD_INFO:
+		/*
+		 * TODO(crosbug.com/p/27320): Need to remove hard coding and
+		 * use some motion_sense data structure from the board file to
+		 * help fill in this response.
+		 */
+		switch (in->sensor_odr.sensor_num) {
+		case ACCEL_BASE:
+			out->info.type = MOTIONSENSE_TYPE_ACCEL;
+			out->info.location = MOTIONSENSE_LOC_BASE;
+			out->info.chip = MOTIONSENSE_CHIP_KXCJ9;
+			break;
+		case ACCEL_LID:
+			out->info.type = MOTIONSENSE_TYPE_ACCEL;
+			out->info.location = MOTIONSENSE_LOC_LID;
+			out->info.chip = MOTIONSENSE_CHIP_KXCJ9;
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
+
+		args->response_size = sizeof(out->info);
+		break;
+
+	case MOTIONSENSE_CMD_EC_RATE:
+		/*
+		 * Set new sensor sampling rate when AP is on, if the data arg
+		 * has a value.
+		 */
+		if (in->ec_rate.data != EC_MOTION_SENSE_NO_VALUE) {
+			if (in->ec_rate.data >= MIN_POLLING_INTERVAL_MS &&
+				in->ec_rate.data <= MAX_POLLING_INTERVAL_MS) {
+				accel_interval_ap_on_ms = in->ec_rate.data;
+				accel_interval_ms = accel_interval_ap_on_ms;
+			} else {
+				CPRINTF("[%T MS bad EC sampling rate %d]\n",
+						in->ec_rate.data);
+				return EC_RES_INVALID_PARAM;
+			}
+		}
+
+		out->ec_rate.ret = accel_interval_ap_on_ms;
+
+		args->response_size = sizeof(out->ec_rate);
+		break;
+
+	case MOTIONSENSE_CMD_SENSOR_ODR:
+		/* Verify sensor number is valid. */
+		if (in->sensor_odr.sensor_num >= ACCEL_COUNT)
+			return EC_RES_INVALID_PARAM;
+
+		id = in->sensor_odr.sensor_num;
+
+		/* Set new datarate if the data arg has a value. */
+		if (in->sensor_odr.data != EC_MOTION_SENSE_NO_VALUE) {
+			if (accel_set_datarate(id, in->sensor_odr.data,
+					in->sensor_odr.roundup) != EC_SUCCESS) {
+				CPRINTF("[%T MS bad sensor rate %d]\n",
+						in->sensor_odr.data);
+				return EC_RES_INVALID_PARAM;
+			}
+		}
+
+		accel_get_datarate(id, &data);
+		out->sensor_odr.ret = data;
+
+		args->response_size = sizeof(out->sensor_odr);
+		break;
+
+	case MOTIONSENSE_CMD_SENSOR_RANGE:
+		/* Verify sensor number is valid. */
+		if (in->sensor_odr.sensor_num >= ACCEL_COUNT)
+			return EC_RES_INVALID_PARAM;
+
+		id = in->sensor_odr.sensor_num;
+
+		/* Set new datarate if the data arg has a value. */
+		if (in->sensor_range.data != EC_MOTION_SENSE_NO_VALUE) {
+			if (accel_set_range(id, in->sensor_range.data,
+				in->sensor_range.roundup) != EC_SUCCESS) {
+				CPRINTF("[%T MS bad sensor range %d]\n",
+						in->sensor_range.data);
+				return EC_RES_INVALID_PARAM;
+			}
+		}
+
+		accel_get_range(id, &data);
+		out->sensor_range.ret = data;
+
+		args->response_size = sizeof(out->sensor_range);
+		break;
+
+	default:
+		CPRINTF("[%T MS bad cmd 0x%x]\n", in->cmd);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD,
+		     host_cmd_motion_sense,
+		     EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Console commands */
