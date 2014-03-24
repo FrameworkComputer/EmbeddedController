@@ -55,4 +55,4 @@ static void extpower_init(void)
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 }
-DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_INIT_EXTPOWER);

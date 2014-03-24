@@ -29,6 +29,8 @@ enum hook_priority {
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 4,
 	/* PWM inits before modules which might use it (fans, LEDs) */
 	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 5,
+	/* Extpower inits before modules which might use it (battery, LEDs) */
+	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 6,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,
