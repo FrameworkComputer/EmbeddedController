@@ -364,6 +364,16 @@ data_loop:
 	isb
 #endif /* CONFIG_FPU */
 
+#ifdef CONFIG_DEBUG_DISABLE_WRITE_BUFFER
+	/* Disable write buffer used for default memory map accesses */
+	ldr r0, =0xE000E008 /* Load address of ACTLR */
+	ldr r1, [r0]        /* Read ACTLR */
+	orr r1, r1, #2      /* Set DISDEFWBUF bit */
+	str r1, [r0]        /* Write back ACTLR */
+	dsb                 /* Wait for store to complete */
+	isb                 /* Reset pipeline */
+#endif /* CONFIG_DEBUG_DISABLE_WRITE_BUFFER */
+
 	/* Jump to C code */
 	bl main
 

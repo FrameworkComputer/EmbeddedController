@@ -344,6 +344,15 @@
 #define CONFIG_DEBUG_ASSERT_REBOOTS
 
 /*
+ * Disable the write buffer used for default memory map accesses.
+ * This turns "Imprecise data bus errors" into "Precise" errors
+ * in exception traces at the cost of some performance.
+ * This may help identify the offending instruction causing an
+ * exception. Supported on cortex-m.
+ */
+#undef CONFIG_DEBUG_DISABLE_WRITE_BUFFER
+
+/*
  * Print additional information when exceptions are triggered, such as the
  * fault address, here shown as bfar. This shows the reason for the fault
  * and may help to determine the cause.
