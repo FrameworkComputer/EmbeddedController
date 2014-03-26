@@ -123,6 +123,8 @@
 /*
  * Charger should call battery_vendor_params() to limit/correct the voltage and
  * current requested by the battery pack before acting on the request.
+ *
+ * This is valid with CONFIG_CHARGER_V1 only.
  */
 #undef CONFIG_BATTERY_VENDOR_PARAMS
 
@@ -194,6 +196,9 @@
  * voltage, and the maximum power of the running system.
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
+
+/* Equivalent of CONFIG_BATTERY_VENDOR_PARAMS for use with CONFIG_CHARGER_V2 */
+#undef CONFIG_CHARGER_PROFILE_OVERRIDE
 
 /* Value of the charge sense resistor, in mOhms */
 #undef CONFIG_CHARGER_SENSE_RESISTOR
