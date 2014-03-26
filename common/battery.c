@@ -21,9 +21,10 @@
 /**
  * Physical detection of battery.
  */
-int battery_is_present(void)
+enum battery_present battery_is_present(void)
 {
-	return (gpio_get_level(CONFIG_BATTERY_PRESENT_GPIO) == 0);
+	/* The GPIO is low when the battery is present */
+	return gpio_get_level(CONFIG_BATTERY_PRESENT_GPIO) ? BP_NO : BP_YES;
 }
 #endif
 

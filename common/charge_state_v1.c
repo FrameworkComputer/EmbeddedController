@@ -250,7 +250,7 @@ static int state_common(struct charge_state_context *ctx)
 
 #if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
-	if (!battery_is_present()) {
+	if (battery_is_present() == BP_NO) {
 		curr->error |= F_BATTERY_NOT_CONNECTED;
 		return curr->error;
 	}

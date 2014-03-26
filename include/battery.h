@@ -100,11 +100,13 @@ void battery_vendor_params(struct batt_params *batt);
 /**
  * Check for presence of battery.
  *
- * @return non-zero if the battery is present. Note that the
- * battery may not be responding on the i2c interface if it
- * is deeply discharged.
+ * @return Whether there is a battery attached or not, or if we can't tell.
  */
-int battery_is_present(void);
+enum battery_present {
+	BP_NO = 0,
+	BP_YES = 1,
+	BP_NOT_SURE,
+} battery_is_present(void);
 
 /**
  * Get battery mode.

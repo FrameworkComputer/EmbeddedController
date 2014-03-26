@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "backlight.h"
+#include "battery.h"
 #include "capsense.h"
 #include "common.h"
 #include "driver/temp_sensor/tmp006.h"
@@ -321,8 +322,13 @@ struct keyboard_scan_config keyscan_config = {
 /**
  * Physical check of battery presence.
  */
-int battery_is_present(void)
+enum battery_present battery_is_present(void)
 {
-	return adc_read_channel(ADC_CH_BAT_TEMP) < (9 * ADC_READ_MAX / 10);
+	/*
+	 * This pin has a pullup, so if it's not completely pegged there's
+	 * something attached. Probably a battery.
+	 */
+	int analog_val = adc_read_channel(ADC_CH_BAT_TEMP);
+	return analog_val < (9 * ADC_READ_MAX / 10) ? BP_YES : BP_NO;
 }
 #endif
