@@ -187,19 +187,19 @@ void battery_get_params(struct batt_params *batt)
 	batt->flags = 0;
 
 	if (bq27541_read(REG_TEMPERATURE, &batt->temperature))
-		batt->flags |= BATT_FLAG_BAD_ANY;
+		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
 	else
 		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
 
 	if (bq27541_read(REG_STATE_OF_CHARGE, &batt->state_of_charge))
-		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_CHARGE_PERCENT;
+		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	if (bq27541_read(REG_VOLTAGE, &batt->voltage))
-		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_VOLTAGE;
+		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
 
 	v = 0;
 	if (bq27541_read(REG_AVERAGE_CURRENT, &v))
-		batt->flags |= BATT_FLAG_BAD_ANY;
+		batt->flags |= BATT_FLAG_BAD_CURRENT;
 	batt->current = (int16_t)v;
 
 	/* Default to not desiring voltage and current */

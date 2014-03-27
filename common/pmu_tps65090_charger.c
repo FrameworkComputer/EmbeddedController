@@ -218,7 +218,7 @@ static int calc_next_state(int state)
 			return ST_IDLE;
 
 		/* Start charging only when battery charge lower than 100% */
-		if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
+		if (!(batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)) {
 			if (batt.state_of_charge < 100)
 				return ST_CHARGING;
 		}
@@ -236,7 +236,7 @@ static int calc_next_state(int state)
 		if (batt.flags & BATT_FLAG_RESPONSIVE) {
 			if (!battery_start_charging_range(batt.temperature))
 				return ST_IDLE0;
-			if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
+			if (!(batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)) {
 				if (batt.state_of_charge >= 100)
 					return ST_IDLE0;
 			}
@@ -355,7 +355,7 @@ static int calc_next_state(int state)
 			return system_off();
 		}
 		/* Check remaining charge % */
-		if (!(batt.flags & BATT_FLAG_BAD_CHARGE_PERCENT)) {
+		if (!(batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)) {
 			/*
 			 * Shutdown AP when state of charge < 1.5%.
 			 * Moving average is rounded to integer.

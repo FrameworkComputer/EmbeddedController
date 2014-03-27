@@ -33,6 +33,16 @@
  */
 #define BATTERY_LEVEL_SHUTDOWN		  3
 
+/*
+ * Sometimes we have hardware to detect battery present, sometimes we have to
+ * wait until we've been able to talk to the battery.
+ */
+enum battery_present {
+	BP_NO = 0,
+	BP_YES = 1,
+	BP_NOT_SURE,
+};
+
 /* Battery parameters */
 struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */
@@ -41,23 +51,31 @@ struct batt_params {
 	int current;          /* Battery current (mA); negative=discharging */
 	int desired_voltage;  /* Charging voltage desired by battery (mV) */
 	int desired_current;  /* Charging current desired by battery (mA) */
+	int remaining_capacity;  /* Remaining capacity in mAh */
+	int full_capacity;    /* Capacity in mAh (might change occasionally) */
+	enum battery_present is_present; /* Is the battery physically present */
 	int flags;            /* Flags */
 };
 
 /* Flags for batt_params */
 
 /* Battery wants to be charged */
-#define BATT_FLAG_WANT_CHARGE			(1 << 0)
+#define BATT_FLAG_WANT_CHARGE			0x00000001
 
 /* Battery is responsive (talking to us via I2C) */
-#define BATT_FLAG_RESPONSIVE			(1 << 1)
+#define BATT_FLAG_RESPONSIVE			0x00000002
 
-/* Able to talk to battery, but it won't tell us voltage or charge percent */
-#define BATT_FLAG_BAD_VOLTAGE			(1 << 2)
-#define BATT_FLAG_BAD_CHARGE_PERCENT		(1 << 3)
-
-/* Battery couldn't tell us every params we want */
-#define BATT_FLAG_BAD_ANY			(1 << 4)
+/* Bits to indicate which parameter(s) could not be read */
+#define BATT_FLAG_BAD_TEMPERATURE		0x00000004
+#define BATT_FLAG_BAD_STATE_OF_CHARGE		0x00000008
+#define BATT_FLAG_BAD_VOLTAGE			0x00000010
+#define BATT_FLAG_BAD_CURRENT			0x00000020
+#define BATT_FLAG_BAD_DESIRED_VOLTAGE		0x00000040
+#define BATT_FLAG_BAD_DESIRED_CURRENT		0x00000080
+#define BATT_FLAG_BAD_REMAINING_CAPACITY	0x00000100
+#define BATT_FLAG_BAD_FULL_CAPACITY		0x00000200
+/* All of the above BATT_FLAG_BAD_* bits */
+#define BATT_FLAG_BAD_ANY			0x000003fc
 
 /* Battery constants */
 struct battery_info {
@@ -102,11 +120,7 @@ void battery_vendor_params(struct batt_params *batt);
  *
  * @return Whether there is a battery attached or not, or if we can't tell.
  */
-enum battery_present {
-	BP_NO = 0,
-	BP_YES = 1,
-	BP_NOT_SURE,
-} battery_is_present(void);
+enum battery_present battery_is_present(void);
 
 /**
  * Get battery mode.

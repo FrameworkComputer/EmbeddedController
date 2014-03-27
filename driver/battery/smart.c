@@ -218,39 +218,62 @@ void battery_get_params(struct batt_params *batt)
 	memset(batt, 0, sizeof(*batt));
 
 	if (sb_read(SB_TEMPERATURE, &batt->temperature))
-		batt->flags |= BATT_FLAG_BAD_ANY;
-	else
-		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
+		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
 
 	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt->state_of_charge))
-		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_CHARGE_PERCENT;
+		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	if (sb_read(SB_VOLTAGE, &batt->voltage))
-		batt->flags |= BATT_FLAG_BAD_ANY | BATT_FLAG_BAD_VOLTAGE;
+		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
 
-	/* Ensure battery current is set to 0 if unable to read it */
-	v = 0;
-
+	/* This is a signed 16-bit value. */
 	if (sb_read(SB_CURRENT, &v))
-		batt->flags |= BATT_FLAG_BAD_ANY;
+		batt->flags |= BATT_FLAG_BAD_CURRENT;
+	else
+		batt->current = (int16_t)v;
 
-	batt->current = (int16_t)v;
+	if (sb_read(SB_CHARGING_VOLTAGE, &batt->desired_voltage))
+		batt->flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
 
-	if (sb_read(SB_CHARGING_VOLTAGE, &batt->desired_voltage) ||
-	    sb_read(SB_CHARGING_CURRENT, &batt->desired_current))
-		batt->flags |= BATT_FLAG_BAD_ANY;
+	if (sb_read(SB_CHARGING_CURRENT, &batt->desired_current))
+		batt->flags |= BATT_FLAG_BAD_DESIRED_CURRENT;
+
+	if (battery_remaining_capacity(&batt->remaining_capacity))
+		batt->flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
+
+	if (battery_full_charge_capacity(&batt->full_capacity))
+		batt->flags |= BATT_FLAG_BAD_FULL_CAPACITY;
+
+	/* If any of those reads worked, the battery is responsive */
+	if ((batt->flags & BATT_FLAG_BAD_ANY) != BATT_FLAG_BAD_ANY)
+		batt->flags |= BATT_FLAG_RESPONSIVE;
+
+#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
+	defined(CONFIG_BATTERY_PRESENT_GPIO)
+	/* Hardware can tell us for certain */
+	batt->is_present = battery_is_present();
+#else
+	/* No hardware test, so we only know it's there if it responds */
+	if (batt->flags & BATT_FLAG_RESPONSIVE)
+		batt->is_present = BP_YES;
+	else
+		batt->is_present = BP_NOT_SURE;
+#endif
 
 	/*
 	 * Charging allowed if both desired voltage and current are nonzero
-	 * and battery isn't full.
+	 * and battery isn't full (and we read them all correctly).
 	 */
-	if (batt->desired_voltage && batt->desired_current &&
-	    batt->state_of_charge < BATTERY_LEVEL_FULL) {
+	if (!(batt->flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
+			     BATT_FLAG_BAD_DESIRED_CURRENT |
+			     BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
+	    batt->desired_voltage &&
+	    batt->desired_current &&
+	    batt->state_of_charge < BATTERY_LEVEL_FULL)
 		batt->flags |= BATT_FLAG_WANT_CHARGE;
-	} else {
+	else
 		/* Force both to zero */
 		batt->desired_voltage = batt->desired_current = 0;
-	}
 }
 
 /*****************************************************************************/

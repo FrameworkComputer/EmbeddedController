@@ -294,7 +294,7 @@ static int state_common(struct charge_state_context *ctx)
 		curr->error |= F_BATTERY_GET_PARAMS;
 	if (batt->flags & BATT_FLAG_BAD_VOLTAGE)
 		curr->error |= F_BATTERY_VOLTAGE;
-	if (batt->flags & BATT_FLAG_BAD_CHARGE_PERCENT)
+	if (batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
 		curr->error |= F_BATTERY_STATE_OF_CHARGE;
 
 	*ctx->memmap_batt_volt = batt->voltage;
