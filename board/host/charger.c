@@ -36,7 +36,7 @@ const struct charger_info *charger_get_info(void)
 }
 
 
-int  charger_get_status(int *status)
+int charger_get_status(int *status)
 {
 	*status = CHARGER_LEVEL_2;
 	if (mock_option & CHARGE_FLAG_INHIBIT_CHARGE)

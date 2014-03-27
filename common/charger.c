@@ -96,6 +96,26 @@ int charger_closest_current(int current)
 	return current - (current % info->current_step);
 }
 
+void charger_get_params(struct charger_params *chg)
+{
+	memset(chg, 0, sizeof(*chg));
+
+	if (charger_get_current(&chg->current))
+		chg->flags |= CHG_FLAG_BAD_CURRENT;
+
+	if (charger_get_voltage(&chg->voltage))
+		chg->flags |= CHG_FLAG_BAD_VOLTAGE;
+
+	if (charger_get_input_current(&chg->input_current))
+		chg->flags |= CHG_FLAG_BAD_INPUT_CURRENT;
+
+	if (charger_get_status(&chg->status))
+		chg->flags |= CHG_FLAG_BAD_STATUS;
+
+	if (charger_get_option(&chg->option))
+		chg->flags |= CHG_FLAG_BAD_OPTION;
+}
+
 static void print_item_name(const char *name)
 {
 	ccprintf("  %-8s", name);

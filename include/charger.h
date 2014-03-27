@@ -27,21 +27,41 @@ struct charger_info {
 	uint16_t input_current_step;
 };
 
+/*
+ * Parameters common to all chargers. Current is in mA, voltage in mV.
+ * The status and option values are charger-specific.
+ */
+struct charger_params {
+	int current;
+	int voltage;
+	int input_current;
+	int status;
+	int option;
+	int flags;
+};
+
+/* Get the current charger_params. Failures are reported in .flags */
+void charger_get_params(struct charger_params *chg);
+
+/* Bits to indicate which fields of struct charger_params could not be read */
+#define CHG_FLAG_BAD_CURRENT		0x00000001
+#define CHG_FLAG_BAD_VOLTAGE		0x00000002
+#define CHG_FLAG_BAD_INPUT_CURRENT	0x00000004
+#define CHG_FLAG_BAD_STATUS		0x00000008
+#define CHG_FLAG_BAD_OPTION		0x00000010
+/* All of the above CHG_FLAG_BAD_* bits */
+#define CHG_FLAG_BAD_ANY                0x0000001f
+
 /* Power state machine post init */
 int charger_post_init(void);
 
 /* Get charger information. */
 const struct charger_info *charger_get_info(void);
 
-/* Get smart battery charger status. Supported flags:
- *     CHARGER_CHARGE_INHIBITED
- *     CHARGER_LEVEL_2
- */
+/* Get smart battery charger status. Supported flags may vary. */
 int charger_get_status(int *status);
 
-/* Set smart battery charger mode. Supported mode(s):
- *     CHARGER_FLAG_INHIBIT_CHARGE
- */
+/* Set smart battery charger mode. Supported modes may vary. */
 int charger_set_mode(int mode);
 
 /**
