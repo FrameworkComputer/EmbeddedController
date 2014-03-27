@@ -1,0 +1,8 @@
+# Chromium EC owners
+rspangler@chromium.org
+victoryang@chromium.org
+vpalatin@chromium.org
+wfrichar@chromium.org
+
+# Don't inherit owners from elsewhere in the manifest
+set noparent
