@@ -779,7 +779,13 @@ int read_mapped_temperature(int id)
 {
 	int rv;
 
-	if (id < EC_TEMP_SENSOR_ENTRIES)
+	if (!read_mapped_mem8(EC_MEMMAP_THERMAL_VERSION)) {
+		/*
+		 *  The temp_sensor_init() is not called, which implies no
+		 * temp sensor is defined.
+		 */
+		rv = EC_TEMP_SENSOR_NOT_PRESENT;
+	} else if (id < EC_TEMP_SENSOR_ENTRIES)
 		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR + id);
 	else if (read_mapped_mem8(EC_MEMMAP_THERMAL_VERSION) >= 2)
 		rv = read_mapped_mem8(EC_MEMMAP_TEMP_SENSOR_B +
