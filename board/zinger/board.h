@@ -15,6 +15,10 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
+#define CONFIG_USB_POWER_DELIVERY
+#undef CONFIG_USB_PD_DUAL_ROLE
+#undef CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_HW_CRC
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
@@ -29,14 +33,35 @@
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
 
+/* Stub value */
+#define TASK_ID_PD 0
+
 /* debug printf flash footprinf is about 1400 bytes */
 #define CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
 
 #ifndef __ASSEMBLER__
 
+#include "common.h"
+
 /* No GPIO abstraction layer */
 enum gpio_signal;
+
+enum adc_channel {
+	ADC_CH_CC1_PD = 1,
+	ADC_CH_A_SENSE = 2,
+	ADC_CH_V_SENSE = 3,
+	/* Number of ADC channels */
+	ADC_CH_COUNT
+};
+/* captive cable : no CC2 */
+#define ADC_CH_CC2_PD ADC_CH_CC1_PD
+
+/* Initialize all useful registers */
+void hardware_init(void);
+
+/* last interrupt event */
+extern volatile uint32_t last_event;
 
 #endif /* !__ASSEMBLER__ */
 
