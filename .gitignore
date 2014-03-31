@@ -3,5 +3,6 @@ private/
 *.swp
 *.pyc
 tags
-cscope.out
+TAGS
+cscope.*
 .tests-passed
