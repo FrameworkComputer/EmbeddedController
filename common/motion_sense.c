@@ -378,15 +378,15 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		 * has a value.
 		 */
 		if (in->ec_rate.data != EC_MOTION_SENSE_NO_VALUE) {
-			if (in->ec_rate.data >= MIN_POLLING_INTERVAL_MS &&
-				in->ec_rate.data <= MAX_POLLING_INTERVAL_MS) {
-				accel_interval_ap_on_ms = in->ec_rate.data;
-				accel_interval_ms = accel_interval_ap_on_ms;
-			} else {
-				CPRINTF("[%T MS bad EC sampling rate %d]\n",
-						in->ec_rate.data);
-				return EC_RES_INVALID_PARAM;
-			}
+			/* Bound the new sampling rate. */
+			data = in->ec_rate.data;
+			if (data < MIN_POLLING_INTERVAL_MS)
+				data = MIN_POLLING_INTERVAL_MS;
+			if (data > MAX_POLLING_INTERVAL_MS)
+				data = MAX_POLLING_INTERVAL_MS;
+
+			accel_interval_ap_on_ms = data;
+			accel_interval_ms = data;
 		}
 
 		out->ec_rate.ret = accel_interval_ap_on_ms;
