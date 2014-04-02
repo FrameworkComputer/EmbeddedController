@@ -66,8 +66,8 @@ enum problem_type {
 };
 
 /*
- * TODO(wfrichar): When do we decide a problem is real and not just
- * intermittent? And what do we do about it?
+ * TODO(crosbug.com/p/27639): When do we decide a problem is real and not
+ * just intermittent? And what do we do about it?
  */
 static void problem(enum problem_type p, int v)
 {
@@ -266,8 +266,8 @@ static int charge_request(int voltage, int current)
 {
 	int r1, r2;
 
+	/* TODO(crosbug.com/p/27640): should we call charger_set_mode() too? */
 	if (!voltage || !current)
-		/* TODO(wfrichar): should we call charger_set_mode() too? */
 		voltage = current = 0;
 
 	CPRINTF("[%T %s(%dmV, %dmA)]\n", __func__, voltage, current);
@@ -311,19 +311,15 @@ static void prevent_hot_discharge(void)
 		return;
 
 	/*
-	 * TODO(wfrichar): Shouldn't we do this in stages, like
+	 * TODO(crosbug.com/p/27641): Shouldn't we do this in stages, like
 	 * prevent_deep_discharge()?  Send an event, give the AP time to react,
 	 * maybe even hibernate the EC if things are really bad?
 	 *
-	 * TODO(wfrichar): The thermal loop should watch the battery temp
-	 * anyway, so it can turn fans on. It could also force an AP shutdown
-	 * if it's too hot, but AFAIK we don't have anything in place to do a
-	 * battery shutdown if it's really really hot. We probably should, just
-	 * in case.
-	 *
-	 * TODO(wfrichar): It'd also be nice if we had a persistent error log
-	 * for that somewhere too. It would have to be in the EC's eeprom and
-	 * not in the nvram if we're going to cut the battery.
+	 * TODO(crosbug.com/p/27642): The thermal loop should watch the battery
+	 * temp anyway, so it can turn fans on. It could also force an AP
+	 * shutdown if it's too hot, but AFAIK we don't have anything in place
+	 * to do a battery shutdown if it's really really hot. We probably
+	 * should, just in case.
 	 */
 	batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
 	if (batt_temp_c > batt_info->discharging_max_c ||
@@ -471,12 +467,7 @@ void charger_task(void)
 
 		/* Okay, we're on AC and we should have a battery. */
 
-		/* Needed for factory tests.
-		 *
-		 * TODO(wfrichar): But see chrome-os-partner:26418. Can we do
-		 * away with state_machine_force_idle if DPTF current=0 does
-		 * the same thing?
-		 */
+		/* Used for factory tests. */
 		if (state_machine_force_idle) {
 			curr.state = ST_IDLE;
 			goto wait_for_it;
@@ -518,9 +509,8 @@ void charger_task(void)
 		}
 
 		/*
-		 * TODO(wfrichar): Quit trying if charging too long without
-		 * getting full. See CONFIG_CHARGER_TIMEOUT_HOURS,
-		 * chrome-os-partner:20145
+		 * TODO(crosbug.com/p/27643): Quit trying if charging too long
+		 * without getting full (CONFIG_CHARGER_TIMEOUT_HOURS).
 		 */
 
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
