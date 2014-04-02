@@ -106,7 +106,7 @@ const struct gpio_info gpio_list[] = {
 	{"ENABLE_BACKLIGHT",     LM4_GPIO_M, (1<<7), GPIO_OUT_LOW, NULL},
 	{"ENABLE_TOUCHPAD",      LM4_GPIO_N, (1<<1), GPIO_OUT_LOW, NULL},
 	{"ENTERING_RW",          LM4_GPIO_D, (1<<3), GPIO_OUT_LOW, NULL},
-	{"LIGHTBAR_RESET_L",     LM4_GPIO_J, (1<<2), GPIO_OUT_LOW, NULL},
+	{"LIGHTBAR_RESET_L",     LM4_GPIO_J, (1<<2), GPIO_ODR_LOW, NULL},
 	{"PCH_DPWROK",           LM4_GPIO_G, (1<<0), GPIO_OUT_LOW, NULL},
 	/*
 	 * HDA_SDO is technically an output, but we need to leave it as an
