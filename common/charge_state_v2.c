@@ -64,6 +64,16 @@ enum problem_type {
 
 	NUM_PROBLEM_TYPES
 };
+static const char * const prob_text[] = {
+	"static update",
+	"set voltage",
+	"set current",
+	"post init",
+	"chg params",
+	"batt params",
+	"custom profile",
+};
+BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
 
 /*
  * TODO(crosbug.com/p/27639): When do we decide a problem is real and not
@@ -71,7 +81,8 @@ enum problem_type {
  */
 static void problem(enum problem_type p, int v)
 {
-	ccprintf("[%T %s: problem %d, value 0x%x]\n", __FILE__, p, v);
+	ccprintf("[%T %s: problem %d (%s), value 0x%x]\n", __FILE__,
+		 p, prob_text[p], v);
 	problems_exist = 1;
 }
 
