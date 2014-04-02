@@ -20,7 +20,6 @@
 
 /* DPTF current limit, -1 = none */
 static int dptf_limit_ma = -1;
-static int dptf_limit_ma_bak = -1;
 
 void dptf_set_charging_current_limit(int ma)
 {
@@ -32,27 +31,13 @@ int dptf_get_charging_current_limit(void)
 	return dptf_limit_ma;
 }
 
-static void dptf_suspend_hook(void)
+static void dptf_disable_hook(void)
 {
 	/* Before get to Sx, EC should take control of charger from DPTF */
-	dptf_limit_ma_bak = dptf_limit_ma;
 	dptf_limit_ma = -1;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dptf_suspend_hook, HOOK_PRIO_DEFAULT);
-
-static void dptf_shutdown_hook(void)
-{
-	dptf_limit_ma = -1;
-	dptf_limit_ma_bak = -1;
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dptf_shutdown_hook, HOOK_PRIO_DEFAULT);
-
-static void dptf_s0_hook(void)
-{
-	/* Before go to S0, EC restore charger control */
-	dptf_limit_ma = dptf_limit_ma_bak;
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, dptf_s0_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dptf_disable_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dptf_disable_hook, HOOK_PRIO_DEFAULT);
 
 int charger_closest_voltage(int voltage)
 {
