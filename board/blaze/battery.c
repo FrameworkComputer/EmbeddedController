@@ -15,9 +15,8 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
-/* These 2 defines are for cut_off command for 3S battery */
-#define SB_SHIP_MODE_ADDR	0x3a
-#define SB_SHIP_MODE_DATA	0xc574
+/* Shutdown mode parameter to write to manufacturer access register */
+#define SB_SHUTDOWN_DATA	0x0010
 
 static struct battery_info *battery_info;
 static int battery_cut_off;
@@ -30,37 +29,10 @@ struct battery_device {
 	int			support_cut_off;
 };
 
-static struct battery_info info_2s = {
-	/*
-	 * Design voltage
-	 *   max    = 8.4V
-	 *   normal = 7.4V
-	 *   min    = 6.0V
-	 */
-	.voltage_max    = 8400,
-	.voltage_normal = 7400,
-	.voltage_min    = 6000,
-
-	/* Pre-charge current: I <= 0.01C */
-	.precharge_current  = 64, /* mA */
-
-	/*
-	 * Operational temperature range
-	 *   0 <= T_charge    <= 50 deg C
-	 * -20 <= T_discharge <= 60 deg C
-	 */
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 50,
-	.charging_min_c       = 0,
-	.charging_max_c       = 50,
-	.discharging_min_c    = -20,
-	.discharging_max_c    = 60,
-};
-
 static struct battery_info info_3s = {
 
-	.voltage_max    = 12600,
-	.voltage_normal = 11100, /* Average of max & min */
+	.voltage_max    = 13050,
+	.voltage_normal = 11400, /* Average of max & min */
 	.voltage_min    =  9000,
 
 	/* Pre-charge values. */
@@ -71,28 +43,28 @@ static struct battery_info info_3s = {
 	.charging_min_c       = 0,
 	.charging_max_c       = 60,
 	.discharging_min_c    = 0,
-	.discharging_max_c    = 50,
+	.discharging_max_c    = 60,
 };
 
 static struct battery_device support_batteries[] = {
 	{
-		.manuf			= "NVT",
-		.device			= "ARROW",
-		.design_mv		= 7400,
-		.battery_info		= &info_2s,
-		.support_cut_off	= 0,
-	},
-	{
-		.manuf			= "SANYO",
-		.device			= "AP13J3K",
-		.design_mv		= 11250,
+		.manuf			= "13-1B",
+		.device			= "BO03037X",
+		.design_mv		= 11400,
 		.battery_info		= &info_3s,
 		.support_cut_off	= 1,
 	},
 	{
-		.manuf			= "SONYCorp",
-		.device			= "AP13J4K",
+		.manuf			= "13-1C",
+		.device			= "BO03037X",
 		.design_mv		= 11400,
+		.battery_info		= &info_3s,
+		.support_cut_off	= 1,
+	},
+	{
+		.manuf			= "13-1B",
+		.device			= "BO03032X",
+		.design_mv		= 11100,
 		.battery_info		= &info_3s,
 		.support_cut_off	= 1,
 	}
@@ -231,10 +203,23 @@ const struct battery_info *battery_get_info(void)
 	return NULL;
 }
 
+static int cutoff(void)
+{
+	int rv;
+
+	/* Ship mode command must be sent twice to take effect */
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	return sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+}
+
 int battery_command_cut_off(struct host_cmd_handler_args *args)
 {
 	if (battery_cut_off)
-		return sb_write(SB_SHIP_MODE_ADDR, SB_SHIP_MODE_DATA);
+		return cutoff() ? EC_RES_ERROR : EC_RES_SUCCESS;
 	else
 		return EC_RES_INVALID_COMMAND;
 }
