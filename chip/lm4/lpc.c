@@ -86,9 +86,18 @@ static void wait_irq_sent(void)
 #ifdef CONFIG_KEYBOARD_IRQ_GPIO
 static void keyboard_irq_assert(void)
 {
-	/* Negative edge-triggered keyboard interrupt. */
+	/*
+	 * Enforce signal-high for long enough for the signal to be pulled high
+	 * by the external pullup resistor.  This ensures the host will see the
+	 * following falling edge, regardless of the line state before this
+	 * function call.
+	 */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+	udelay(4);
+	/* Generate a falling edge */
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 0);
-	wait_irq_sent();
+	udelay(4);
+	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
 }
 #else
@@ -139,8 +148,13 @@ static inline void keyboard_irq_assert(void)
  */
 static void lpc_generate_smi(void)
 {
+	/* Enforce signal-high for long enough to debounce high */
+	gpio_set_level(GPIO_PCH_SMI_L, 1);
+	udelay(65);
+	/* Generate a falling edge */
 	gpio_set_level(GPIO_PCH_SMI_L, 0);
 	udelay(65);
+	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(GPIO_PCH_SMI_L, 1);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
@@ -154,8 +168,13 @@ static void lpc_generate_smi(void)
 static void lpc_generate_sci(void)
 {
 #ifdef CONFIG_SCI_GPIO
+	/* Enforce signal-high for long enough to debounce high */
+	gpio_set_level(CONFIG_SCI_GPIO, 1);
+	udelay(65);
+	/* Generate a falling edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 0);
 	udelay(65);
+	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
 	LM4_LPC_LPCCTL |= LM4_LPC_SCI_START;
