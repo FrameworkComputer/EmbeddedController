@@ -442,6 +442,19 @@ void charger_task(void)
 		battery_get_params(&curr.batt);
 
 		/*
+		 * TODO(crosbug.com/p/27527). Sometimes the battery thinks its
+		 * temperature is 6280C, which seems a bit high. Let's ignore
+		 * anything above the boiling point of tungsten until this bug
+		 * is fixed. If the battery is really that warm, we probably
+		 * have more urgent problems.
+		 */
+		if (curr.batt.temperature > CELSIUS_TO_DECI_KELVIN(5660)) {
+			ccprintf("[%T ignoring ridiculous batt.temp of %dC]\n",
+				 DECI_KELVIN_TO_CELSIUS(curr.batt.temperature));
+			curr.batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
+		}
+
+		/*
 		 * Now decide what we want to do about it. We'll normally just
 		 * pass along whatever the battery wants to the charger. Note
 		 * that if battery_get_params() can't get valid values from the

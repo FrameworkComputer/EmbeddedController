@@ -116,6 +116,18 @@ static int test_charge_state(void)
 	state = wait_charging_state();
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 
+	/* Discharging waaaay overtemp is ignored */
+	ccprintf("[CHARGING TEST] AC off, batt temp = 0xffff\n");
+	gpio_set_level(GPIO_AC_PRESENT, 0);
+	sb_write(SB_CURRENT, -1000);
+	state = wait_charging_state();
+	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	sb_write(SB_TEMPERATURE, 0xffff);
+	state = wait_charging_state();
+	TEST_ASSERT(!is_shutdown);
+	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
+	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
+
 	/* Discharging overtemp */
 	ccprintf("[CHARGING TEST] AC off, batt temp = 90 C\n");
 	gpio_set_level(GPIO_AC_PRESENT, 0);
