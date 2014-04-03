@@ -271,6 +271,8 @@ void keyboard_host_write(int data, int is_cmd)
  */
 static void keyboard_enable_irq(int enable)
 {
+	CPRINTF("[%T KB IRQ %s]\n", enable ? "enable" : "disable");
+
 	i8042_irq_enabled = enable;
 	if (enable)
 		lpc_keyboard_resume_irq();
@@ -1011,16 +1013,16 @@ static int command_typematic(int argc, char **argv)
 		typematic_inter_delay = strtoi(argv[2], NULL, 0) * MSEC;
 	}
 
-	ccprintf("From host:    0x%02x\n", typematic_value_from_host);
-	ccprintf("First delay: %d ms\n", typematic_first_delay / 1000);
-	ccprintf("Inter delay: %d ms\n", typematic_inter_delay / 1000);
+	ccprintf("From host:   0x%02x\n", typematic_value_from_host);
+	ccprintf("First delay: %3d ms\n", typematic_first_delay / 1000);
+	ccprintf("Inter delay: %3d ms\n", typematic_inter_delay / 1000);
 	ccprintf("Now:         %.6ld\n", get_time().val);
 	ccprintf("Deadline:    %.6ld\n", typematic_deadline.val);
 
-	ccputs("Repeat scan code:");
+	ccputs("Repeat scan code: {");
 	for (i = 0; i < typematic_len; ++i)
-		ccprintf(" 0x%02x", typematic_scan_code[i]);
-	ccputs("\n");
+		ccprintf("0x%02x, ", typematic_scan_code[i]);
+	ccputs("}\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typematic, command_typematic,
@@ -1141,6 +1143,87 @@ DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
 			"[0 | 1]",
 			"Print or toggle keyboard info",
 			NULL);
+
+
+static int command_8042_internal(int argc, char **argv)
+{
+	int i;
+
+	ccprintf("data_port_state=%d\n", data_port_state);
+	ccprintf("i8042_irq_enabled=%d\n", i8042_irq_enabled);
+	ccprintf("keyboard_enabled=%d\n", keyboard_enabled);
+	ccprintf("keystroke_enabled=%d\n", keystroke_enabled);
+
+	ccprintf("resend_command[]={");
+	for (i = 0; i < resend_command_len; i++)
+		ccprintf("0x%02x, ", resend_command[i]);
+	ccprintf("}\n");
+
+	ccprintf("controller_ram_address=0x%02x\n", controller_ram_address);
+	ccprintf("A20_status=%d\n", A20_status);
+
+	ccprintf("from_host.buf[]={");
+	for (i = from_host.head; i != from_host.tail;
+			i = (i + 1) % from_host.buf_bytes)
+		ccprintf("0x%02x, ", from_host.buf[i]);
+	ccprintf("}\n");
+
+	ccprintf("to_host.buf[]={");
+	for (i = to_host.head;
+			i != to_host.tail;
+			i = (i + 1) % to_host.buf_bytes)
+		ccprintf("0x%02x, ", to_host.buf[i]);
+	ccprintf("}\n");
+
+	return EC_SUCCESS;
+}
+
+
+static int command_8042(int argc, char **argv)
+{
+	if (argc >= 2) {
+		if (!strcasecmp(argv[1], "internal"))
+			return command_8042_internal(argc, argv);
+		else if (!strcasecmp(argv[1], "typematic"))
+			return command_typematic(argc - 1, argv + 1);
+		else if (!strcasecmp(argv[1], "codeset"))
+			return command_codeset(argc - 1, argv + 1);
+		else if (!strcasecmp(argv[1], "ctrlram"))
+			return command_controller_ram(argc - 1, argv + 1);
+		else if (!strcasecmp(argv[1], "kblog"))
+			return command_keyboard_log(argc - 1, argv + 1);
+		else if (!strcasecmp(argv[1], "kbd"))
+			return command_keyboard(argc - 1, argv + 1);
+		else
+			return EC_ERROR_PARAM1;
+	} else {
+		char *ctlram_argv[] = {"ctrlram", "0"};
+
+		ccprintf("\n- Typematic:\n");
+		command_typematic(argc, argv);
+		ccprintf("\n- Codeset:\n");
+		command_codeset(argc, argv);
+		ccprintf("\n- Control RAM:\n");
+		command_controller_ram(
+			sizeof(ctlram_argv) / sizeof(ctlram_argv[0]),
+			ctlram_argv);
+		ccprintf("\n- Keyboard log:\n");
+		command_keyboard_log(argc, argv);
+		ccprintf("\n- Keyboard:\n");
+		command_keyboard(argc, argv);
+		ccprintf("\n- Internal:\n");
+		command_8042_internal(argc, argv);
+		ccprintf("\n");
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(8042, command_8042,
+			"[internal | typematic | codeset | ctrlram |"
+			" kblog | kbd]",
+			"Print 8042 state in one place",
+			NULL);
+
 
 /*****************************************************************************/
 /* Hooks */
