@@ -57,18 +57,22 @@
 #define EC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
-#define EC_MEMMAP_TEMP_SENSOR      0x00 /* Temp sensors */
-#define EC_MEMMAP_FAN              0x10 /* Fan speeds */
-#define EC_MEMMAP_TEMP_SENSOR_B    0x18 /* Temp sensors (second set) */
-#define EC_MEMMAP_ID               0x20 /* 'E' 'C' */
+#define EC_MEMMAP_TEMP_SENSOR      0x00 /* Temp sensors 0x00 - 0x0f */
+#define EC_MEMMAP_FAN              0x10 /* Fan speeds 0x10 - 0x17 */
+#define EC_MEMMAP_TEMP_SENSOR_B    0x18 /* More temp sensors 0x18 - 0x1f */
+#define EC_MEMMAP_ID               0x20 /* 0x20 == 'E', 0x21 == 'C' */
 #define EC_MEMMAP_ID_VERSION       0x22 /* Version of data in 0x20 - 0x2f */
 #define EC_MEMMAP_THERMAL_VERSION  0x23 /* Version of data in 0x00 - 0x1f */
 #define EC_MEMMAP_BATTERY_VERSION  0x24 /* Version of data in 0x40 - 0x7f */
 #define EC_MEMMAP_SWITCHES_VERSION 0x25 /* Version of data in 0x30 - 0x33 */
 #define EC_MEMMAP_EVENTS_VERSION   0x26 /* Version of data in 0x34 - 0x3f */
-#define EC_MEMMAP_HOST_CMD_FLAGS   0x27 /* Host command interface flags */
-#define EC_MEMMAP_SWITCHES         0x30
-#define EC_MEMMAP_HOST_EVENTS      0x34
+#define EC_MEMMAP_HOST_CMD_FLAGS   0x27 /* Host cmd interface flags (8 bits) */
+/* Unused 0x28 - 0x2f */
+#define EC_MEMMAP_SWITCHES         0x30	/* 8 bits */
+/* Unused 0x31 - 0x33 */
+#define EC_MEMMAP_HOST_EVENTS      0x34 /* 32 bits */
+/* Reserve 0x38 - 0x3f for additional host event-related stuff */
+/* Battery values are all 32 bits */
 #define EC_MEMMAP_BATT_VOLT        0x40 /* Battery Present Voltage */
 #define EC_MEMMAP_BATT_RATE        0x44 /* Battery Present Rate */
 #define EC_MEMMAP_BATT_CAP         0x48 /* Battery Remaining Capacity */
@@ -77,13 +81,19 @@
 #define EC_MEMMAP_BATT_DVLT        0x54 /* Battery Design Voltage */
 #define EC_MEMMAP_BATT_LFCC        0x58 /* Battery Last Full Charge Capacity */
 #define EC_MEMMAP_BATT_CCNT        0x5c /* Battery Cycle Count */
+/* Strings are all 8 bytes (EC_MEMMAP_TEXT_MAX) */
 #define EC_MEMMAP_BATT_MFGR        0x60 /* Battery Manufacturer String */
 #define EC_MEMMAP_BATT_MODEL       0x68 /* Battery Model Number String */
 #define EC_MEMMAP_BATT_SERIAL      0x70 /* Battery Serial Number String */
 #define EC_MEMMAP_BATT_TYPE        0x78 /* Battery Type String */
-#define EC_MEMMAP_ALS              0x80 /* ALS readings in lux (uint16_t) */
-#define EC_MEMMAP_ACC_STATUS       0x90 /* Accelerometer status */
-#define EC_MEMMAP_ACC_DATA         0x92 /* Accelerometer data 0x92 - 0xa5 */
+#define EC_MEMMAP_ALS              0x80 /* ALS readings in lux (2 X 16 bits) */
+/* Unused 0x84 - 0x8f */
+#define EC_MEMMAP_ACC_STATUS       0x90 /* Accelerometer status (8 bits )*/
+/* Unused 0x91 */
+#define EC_MEMMAP_ACC_DATA         0x92 /* Accelerometer data 0x92 - 0x9f */
+#define EC_MEMMAP_GYRO_DATA        0xa0 /* Gyroscope data 0xa0 - 0xa5 */
+/* Unused 0xa6 - 0xfe (remember, 0xff is NOT part of the memmap region) */
+
 
 /* Define the format of the accelerometer mapped memory status byte. */
 #define EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK  0x0f
