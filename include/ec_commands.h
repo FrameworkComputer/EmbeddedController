@@ -1170,8 +1170,8 @@ enum ec_vboot_hash_status {
 /* Motion sense commands */
 enum motionsense_command {
 	/*
-	 * Dump command returns all motion sensor data including a physical
-	 * presence bit for each potential sensor.
+	 * Dump command returns all motion sensor data including motion sense
+	 * module flags and individual sensor flags.
 	 */
 	MOTIONSENSE_CMD_DUMP = 0,
 
@@ -1204,26 +1204,45 @@ enum motionsense_command {
 	MOTIONSENSE_NUM_CMDS
 };
 
+enum motionsensor_id {
+	EC_MOTION_SENSOR_ACCEL_BASE = 0,
+	EC_MOTION_SENSOR_ACCEL_LID = 1,
+	EC_MOTION_SENSOR_GYRO = 2,
+
+	/*
+	 * Note, if more sensors are added and this count changes, the padding
+	 * in ec_response_motion_sense dump command must be modified.
+	 */
+	EC_MOTION_SENSOR_COUNT = 3
+};
+
 /* List of motion sensor types. */
 enum motionsensor_type {
-	MOTIONSENSE_TYPE_ACCEL,
-	MOTIONSENSE_TYPE_GYRO,
+	MOTIONSENSE_TYPE_ACCEL = 0,
+	MOTIONSENSE_TYPE_GYRO = 1,
 };
 
 /* List of motion sensor locations. */
 enum motionsensor_location {
-	MOTIONSENSE_LOC_BASE,
-	MOTIONSENSE_LOC_LID,
+	MOTIONSENSE_LOC_BASE = 0,
+	MOTIONSENSE_LOC_LID = 1,
 };
 
 /* List of motion sensor chips. */
 enum motionsensor_chip {
-	MOTIONSENSE_CHIP_KXCJ9,
+	MOTIONSENSE_CHIP_KXCJ9 = 0,
 };
+
+/* Module flag masks used for the dump sub-command. */
+#define MOTIONSENSE_MODULE_FLAG_ACTIVE (1<<0)
+
+/* Sensor flag masks used for the dump sub-command. */
+#define MOTIONSENSE_SENSOR_FLAG_PRESENT (1<<0)
 
 /*
  * Send this value for the data element to only perform a read. If you
- * send any other value, the EC will interpret it as data to set.
+ * send any other value, the EC will interpret it as data to set and will
+ * return the actual value set.
  */
 #define EC_MOTION_SENSE_NO_VALUE -1
 
@@ -1237,11 +1256,13 @@ struct ec_params_motion_sense {
 
 		/* Used for MOTIONSENSE_CMD_EC_RATE. */
 		struct {
+			/* Data to set or EC_MOTION_SENSE_NO_VALUE to read. */
 			int16_t data;
 		} ec_rate;
 
 		/* Used for MOTIONSENSE_CMD_INFO. */
 		struct {
+			/* Should be element of enum motionsensor_id. */
 			uint8_t sensor_num;
 		} info;
 
@@ -1250,9 +1271,15 @@ struct ec_params_motion_sense {
 		 * MOTIONSENSE_CMD_SENSOR_RANGE.
 		 */
 		struct {
+			/* Should be element of enum motionsensor_id. */
 			uint8_t sensor_num;
+
+			/* Rounding flag, true for round-up, false for down. */
 			uint8_t roundup;
+
 			uint16_t reserved;
+
+			/* Data to set or EC_MOTION_SENSE_NO_VALUE to read. */
 			int32_t data;
 		} sensor_odr, sensor_range;
 	};
@@ -1262,15 +1289,25 @@ struct ec_response_motion_sense {
 	union {
 		/* Used for MOTIONSENSE_CMD_DUMP. */
 		struct {
-			uint8_t sensor_presence[3];
-			uint8_t reserved;
-			int16_t data[9];
+			/* Flags representing the motion sensor module. */
+			uint8_t module_flags;
+
+			/* Flags for each sensor in enum motionsensor_id. */
+			uint8_t sensor_flags[EC_MOTION_SENSOR_COUNT];
+
+			/* Array of all sensor data. Each sensor is 3-axis. */
+			int16_t data[3*EC_MOTION_SENSOR_COUNT];
 		} dump;
 
 		/* Used for MOTIONSENSE_CMD_INFO. */
 		struct {
+			/* Should be element of enum motionsensor_type. */
 			uint8_t type;
+
+			/* Should be element of enum motionsensor_location. */
 			uint8_t location;
+
+			/* Should be element of enum motionsensor_chip. */
 			uint8_t chip;
 		} info;
 
@@ -1279,6 +1316,7 @@ struct ec_response_motion_sense {
 		 * and MOTIONSENSE_CMD_SENSOR_RANGE.
 		 */
 		struct {
+			/* Current value of the parameter queried. */
 			int32_t ret;
 		} ec_rate, sensor_odr, sensor_range;
 	};

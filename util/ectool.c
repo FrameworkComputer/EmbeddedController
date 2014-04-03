@@ -1739,9 +1739,15 @@ static int cmd_motionsense(int argc, char **argv)
 		if (rv < 0)
 			return rv;
 
-		for (i = 0; i < ARRAY_SIZE(resp.dump.sensor_presence); i++) {
+		if (resp.dump.module_flags & MOTIONSENSE_MODULE_FLAG_ACTIVE)
+			printf("Motion sensing active\n");
+		else
+			printf("Motion sensing inactive\n");
+
+		for (i = 0; i < EC_MOTION_SENSOR_COUNT; i++) {
 			printf("Sensor %d: ", i);
-			if (resp.dump.sensor_presence[i])
+			if (resp.dump.sensor_flags[i] &
+					MOTIONSENSE_SENSOR_FLAG_PRESENT)
 				printf("%d\t%d\t%d\n", resp.dump.data[3*i],
 							resp.dump.data[3*i+1],
 							resp.dump.data[3*i+2]);
