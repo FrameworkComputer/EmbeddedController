@@ -59,6 +59,9 @@ enum scancode_set_list {
 
 #define MAX_SCAN_CODE_LEN 4
 
+/* Number of bytes host can get behind before we start generating extra IRQs */
+#define KB_TO_HOST_RETRIES 3
+
 /*
  * Mutex to control write access to the to-host buffer head.  Don't need to
  * mutex the tail because reads are only done in one place.
@@ -899,6 +902,7 @@ static void keyboard_special(uint16_t k)
 void keyboard_protocol_task(void)
 {
 	int wait = -1;
+	int retries = 0;
 
 	reset_rate_and_delay();
 
@@ -934,9 +938,28 @@ void keyboard_protocol_task(void)
 			if (queue_is_empty(&to_host))
 				break;
 
-			/* Host interface must have space */
-			if (lpc_keyboard_has_char())
+			/* Handle data waiting for host */
+			if (lpc_keyboard_has_char()) {
+				/* If interrupts disabled, nothing we can do */
+				if (!i8042_irq_enabled)
+					break;
+
+				/* Give the host a little longer to respond */
+				if (++retries < KB_TO_HOST_RETRIES)
+					break;
+
+				/*
+				 * We keep getting data, but the host keeps
+				 * ignoring us.  Fine, we're done waiting.
+				 * Hey, host, are you ever gonna get to this
+				 * data?  Send it another interrupt in case it
+				 * somehow missed the first one.
+				 */
+				CPRINTF("[%T KB extra IRQ]\n");
+				lpc_keyboard_resume_irq();
+				retries = 0;
 				break;
+			}
 
 			/* Get a char from buffer. */
 			kblog_put('k', to_host.head);
@@ -945,6 +968,7 @@ void keyboard_protocol_task(void)
 
 			/* Write to host. */
 			lpc_keyboard_put_char(chr, i8042_irq_enabled);
+			retries = 0;
 		}
 	}
 }
