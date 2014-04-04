@@ -1827,14 +1827,79 @@ struct ec_params_hang_detect {
 } __packed;
 
 /*****************************************************************************/
-/* Debug commands for battery charging */
+/* Commands for battery charging */
 
 /*
- * Dump charge state machine context.
- *
- * Response is a binary dump of charge state machine context.
+ * This is the single catch-all host command to exchange data regarding the
+ * charge state machine (v2 and up).
  */
-#define EC_CMD_CHARGE_DUMP 0xa0
+#define EC_CMD_CHARGE_STATE 0xa0
+
+/* Subcommands for this host command */
+enum charge_state_command {
+	CHARGE_STATE_CMD_GET_STATE,
+	CHARGE_STATE_CMD_GET_PARAM,
+	CHARGE_STATE_CMD_SET_PARAM,
+	CHARGE_STATE_NUM_CMDS
+};
+
+/*
+ * Known param numbers are defined here. Ranges are reserved for board-specific
+ * params, which are handled by the particular implementations.
+ */
+enum charge_state_params {
+	CS_PARAM_CHG_VOLTAGE,	      /* charger voltage limit */
+	CS_PARAM_CHG_CURRENT,	      /* charger current limit */
+	CS_PARAM_CHG_INPUT_CURRENT,   /* charger input current limit */
+	CS_PARAM_CHG_STATUS,	      /* charger-specific status */
+	CS_PARAM_CHG_OPTION,	      /* charger-specific options */
+	/* How many so far? */
+	CS_NUM_BASE_PARAMS,
+
+	/* Range for CONFIG_CHARGER_PROFILE_OVERRIDE params */
+	CS_PARAM_CUSTOM_PROFILE_MIN = 0x10000,
+	CS_PARAM_CUSTOM_PROFILE_MAX = 0x1ffff,
+
+	/* Other custom param ranges go here... */
+};
+
+struct ec_params_charge_state {
+	uint8_t cmd;				/* enum charge_state_command */
+	union {
+		struct {
+			/* no args */
+		} get_state;
+
+		struct {
+			uint32_t param;		/* enum charge_state_param */
+		} get_param;
+
+		struct {
+			uint32_t param;		/* param to set */
+			uint32_t value;		/* value to set */
+		} set_param;
+	};
+} __packed;
+
+struct ec_response_charge_state {
+	union {
+		struct {
+			int ac;
+			int chg_voltage;
+			int chg_current;
+			int chg_input_current;
+			int batt_state_of_charge;
+		} get_state;
+
+		struct {
+			uint32_t value;
+		} get_param;
+		struct {
+			/* no return values */
+		} set_param;
+	};
+} __packed;
+
 
 /*
  * Set maximum battery charging current.

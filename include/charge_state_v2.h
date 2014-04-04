@@ -48,5 +48,14 @@ struct charge_state_data {
  */
 int charger_profile_override(struct charge_state_data *);
 
+/*
+ * Access to custom profile params through host commands.
+ * What this does is up to the implementation.
+ */
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value);
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 

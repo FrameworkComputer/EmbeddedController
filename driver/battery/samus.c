@@ -7,6 +7,7 @@
 
 #include "charge_state.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "util.h"
 
 static const struct battery_info info = {
@@ -110,6 +111,29 @@ int charger_profile_override(struct charge_state_data *curr)
 	}
 
 	return 0;
+}
+
+/* Customs options controllable by host command. */
+#define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	if (param == PARAM_FASTCHARGE) {
+		*value = fast_charging_allowed;
+		return EC_RES_SUCCESS;
+	}
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	if (param == PARAM_FASTCHARGE) {
+		fast_charging_allowed = value;
+		return EC_RES_SUCCESS;
+	}
+	return EC_RES_INVALID_PARAM;
 }
 
 static int command_fastcharge(int argc, char **argv)

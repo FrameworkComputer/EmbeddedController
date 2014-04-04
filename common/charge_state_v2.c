@@ -271,11 +271,11 @@ static void show_charging_progress(void)
 
 /*
  * Ask the charger for some voltage and current. If either value is 0,
- * charging is disabled; otherwise it's enabled.
+ * charging is disabled; otherwise it's enabled. Negative values are ignored.
  */
 static int charge_request(int voltage, int current)
 {
-	int r1, r2;
+	int r1 = EC_SUCCESS, r2 = EC_SUCCESS;
 
 	/* TODO(crosbug.com/p/27640): should we call charger_set_mode() too? */
 	if (!voltage || !current)
@@ -283,11 +283,13 @@ static int charge_request(int voltage, int current)
 
 	CPRINTF("[%T %s(%dmV, %dmA)]\n", __func__, voltage, current);
 
-	r1 = charger_set_voltage(voltage);
+	if (voltage > 0)
+		r1 = charger_set_voltage(voltage);
 	if (r1 != EC_SUCCESS)
 		problem(PR_SET_VOLTAGE, r1);
 
-	r2 = charger_set_current(current);
+	if (current > 0)
+		r2 = charger_set_current(current);
 	if (r2 != EC_SUCCESS)
 		problem(PR_SET_CURRENT, r2);
 
@@ -741,6 +743,108 @@ static int charge_command_current_limit(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CURRENT_LIMIT, charge_command_current_limit,
+		     EC_VER_MASK(0));
+
+static int charge_command_charge_state(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_charge_state *in = args->params;
+	struct ec_response_charge_state *out = args->response;
+	uint32_t val;
+	int rv = EC_RES_SUCCESS;
+
+	switch (in->cmd) {
+
+	case CHARGE_STATE_CMD_GET_STATE:
+		out->get_state.ac = curr.ac;
+		out->get_state.chg_voltage = curr.chg.voltage;
+		out->get_state.chg_current = curr.chg.current;
+		out->get_state.chg_input_current = curr.chg.input_current;
+		out->get_state.batt_state_of_charge = curr.batt.state_of_charge;
+		args->response_size = sizeof(out->get_state);
+		break;
+
+	case CHARGE_STATE_CMD_GET_PARAM:
+		val = 0;
+#ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
+		/* custom profile params */
+		if (in->get_param.param >= CS_PARAM_CUSTOM_PROFILE_MIN &&
+		    in->get_param.param <= CS_PARAM_CUSTOM_PROFILE_MAX) {
+			rv  = charger_profile_override_get_param(
+				in->get_param.param, &val);
+		} else
+#endif
+			/* standard params */
+			switch (in->get_param.param) {
+			case CS_PARAM_CHG_VOLTAGE:
+				val = curr.chg.voltage;
+				break;
+			case CS_PARAM_CHG_CURRENT:
+				val = curr.chg.current;
+				break;
+			case CS_PARAM_CHG_INPUT_CURRENT:
+				val = curr.chg.input_current;
+				break;
+			case CS_PARAM_CHG_STATUS:
+				val = curr.chg.status;
+				break;
+			case CS_PARAM_CHG_OPTION:
+				val = curr.chg.option;
+				break;
+			default:
+				rv = EC_RES_INVALID_PARAM;
+			}
+
+		/* got something */
+		out->get_param.value = val;
+		args->response_size = sizeof(out->get_param);
+		break;
+
+	case CHARGE_STATE_CMD_SET_PARAM:
+		val = in->set_param.value;
+#ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
+		/* custom profile params */
+		if (in->set_param.param >= CS_PARAM_CUSTOM_PROFILE_MIN &&
+		    in->set_param.param <= CS_PARAM_CUSTOM_PROFILE_MAX) {
+			rv  = charger_profile_override_set_param(
+				in->set_param.param, val);
+		} else
+#endif
+			switch (in->set_param.param) {
+			case CS_PARAM_CHG_VOLTAGE:
+				if (charge_request(val, -1))
+					rv = EC_RES_ERROR;
+				break;
+			case CS_PARAM_CHG_CURRENT:
+				if (charge_request(-1, val))
+					rv = EC_RES_ERROR;
+				break;
+			case CS_PARAM_CHG_INPUT_CURRENT:
+				if (charger_set_input_current(val))
+					rv = EC_RES_ERROR;
+				break;
+			case CS_PARAM_CHG_STATUS:
+				/* Can't set this */
+				rv = EC_RES_ACCESS_DENIED;
+				break;
+			case CS_PARAM_CHG_OPTION:
+				if (charger_set_option(val))
+					rv = EC_RES_ERROR;
+				break;
+			default:
+				rv = EC_RES_INVALID_PARAM;
+
+			}
+		break;
+
+	default:
+		CPRINTF("[%T EC_CMD_CHARGE_STATE: bad cmd 0x%x]\n", in->cmd);
+		rv = EC_RES_INVALID_PARAM;
+	}
+
+	return rv;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_STATE, charge_command_charge_state,
 		     EC_VER_MASK(0));
 
 /*****************************************************************************/

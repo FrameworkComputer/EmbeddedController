@@ -40,10 +40,10 @@ const char help_str[] =
 	"      Prints the board version\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
-	"  chargedump\n"
-	"      Dump the context of charge state machine\n"
 	"  chargecontrol\n"
 	"      Force the battery to stop charging or discharge\n"
+	"  chargestate\n"
+	"      Handle commands related to charge state v2 (and later)\n"
 	"  chipinfo\n"
 	"      Prints chip info\n"
 	"  cmdversions <cmd>\n"
@@ -2757,26 +2757,124 @@ int cmd_charge_control(int argc, char *argv[])
 }
 
 
-int cmd_charge_dump(int argc, char *argv[])
+
+/* Table of subcommand sizes for EC_CMD_CHARGE_STATE */
+#define CB_SIZES(SUBCMD) { \
+		sizeof(((struct ec_params_charge_state *)0)->SUBCMD) \
+		+ sizeof(((struct ec_params_charge_state *)0)->cmd), \
+		sizeof(((struct ec_response_charge_state *)0)->SUBCMD) }
+static const struct {
+	uint8_t to_ec_size;
+	uint8_t from_ec_size;
+} cs_paramcount[] = {
+	/* Order must match enum charge_state_command */
+	CB_SIZES(get_state),
+	CB_SIZES(get_param),
+	CB_SIZES(set_param),
+};
+#undef CB_SIZES
+BUILD_ASSERT(ARRAY_SIZE(cs_paramcount) == CHARGE_STATE_NUM_CMDS);
+
+static int cs_do_cmd(struct ec_params_charge_state *to_ec,
+		     struct ec_response_charge_state *from_ec)
 {
-	unsigned char *out = ec_inbuf;
-	int rv, i;
+	int rv;
+	int cmd = to_ec->cmd;
 
-	rv = ec_command(EC_CMD_CHARGE_DUMP, 0, NULL, 0,
-			ec_inbuf, ec_max_insize);
+	rv = ec_command(EC_CMD_CHARGE_STATE, 0,
+			to_ec, cs_paramcount[cmd].to_ec_size,
+			from_ec, cs_paramcount[cmd].from_ec_size);
 
-	if (rv < 0)
-		return rv;
-
-	for (i = 0; i < rv; ++i) {
-		printf("%02X", out[i]);
-		if ((i & 31) == 31)
-			printf("\n");
-	}
-	printf("\n");
-	return 0;
+	return (rv < 0 ? 1 : 0);
 }
 
+static const char * const base_params[] = {
+	"chg_voltage",
+	"chg_current",
+	"chg_input_current",
+	"chg_status",
+	"chg_option",
+};
+BUILD_ASSERT(ARRAY_SIZE(base_params) == CS_NUM_BASE_PARAMS);
+
+static int cmd_charge_state(int argc, char **argv)
+{
+	struct ec_params_charge_state param;
+	struct ec_response_charge_state resp;
+	uint32_t p, v;
+	int i, r;
+	char *e;
+
+	if (argc > 1 && !strcasecmp(argv[1], "show")) {
+		param.cmd = CHARGE_STATE_CMD_GET_STATE;
+		r = cs_do_cmd(&param, &resp);
+		if (r)
+			return r;
+		printf("ac = %d\n", resp.get_state.ac);
+		printf("chg_voltage = %dmV\n", resp.get_state.chg_voltage);
+		printf("chg_current = %dmA\n", resp.get_state.chg_current);
+		printf("chg_input_current = %dmA\n",
+		       resp.get_state.chg_input_current);
+		printf("batt_state_of_charge = %d%%\n",
+		       resp.get_state.batt_state_of_charge);
+		return 0;
+	}
+
+	if (argc > 1 && !strcasecmp(argv[1], "param")) {
+		switch (argc) {
+		case 3:
+			if (!strcasecmp(argv[2], "help"))
+				break;
+			param.cmd = CHARGE_STATE_CMD_GET_PARAM;
+			p = strtoul(argv[2], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad param: %s\n", argv[2]);
+				return -1;
+			}
+			param.get_param.param = p;
+			r = cs_do_cmd(&param, &resp);
+			if (r)
+				return r;
+			v = resp.get_param.value;
+			if (p < CS_NUM_BASE_PARAMS)
+				printf("%d (0x%x)       # %s\n", v, v,
+				       base_params[p]);
+			else
+				printf("%d (0x%x)\n", v, v);
+			return 0;
+		case 4:
+			param.cmd = CHARGE_STATE_CMD_SET_PARAM;
+			p = strtoul(argv[2], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad param: %s\n", argv[2]);
+				return -1;
+			}
+			v = strtoul(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad value: %s\n", argv[3]);
+				return -1;
+			}
+			param.set_param.param = p;
+			param.set_param.value = v;
+			return cs_do_cmd(&param, &resp);
+		}
+
+		printf("base params:\n");
+		for (i = 0; i < CS_NUM_BASE_PARAMS; i++)
+			printf("  %d   %s\n", i, base_params[i]);
+		printf("custom profile params:\n");
+		printf("  0x%x - 0x%x\n", CS_PARAM_CUSTOM_PROFILE_MIN,
+		       CS_PARAM_CUSTOM_PROFILE_MAX);
+
+		return 0;
+	}
+
+	printf("Usage:\n");
+	printf("  %s show                  - show current state\n", argv[0]);
+	printf("  %s param NUM [VALUE]     - get/set param NUM\n", argv[0]);
+	printf("  %s param help            - show known param NUMs\n", argv[0]);
+	return 0;
+}
 
 int cmd_gpio_get(int argc, char *argv[])
 {
@@ -3549,8 +3647,8 @@ const struct command commands[] = {
 	{"batterycutoff", cmd_battery_cut_off},
 	{"boardversion", cmd_board_version},
 	{"chargecurrentlimit", cmd_charge_current_limit},
-	{"chargedump", cmd_charge_dump},
 	{"chargecontrol", cmd_charge_control},
+	{"chargestate", cmd_charge_state},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"console", cmd_console},
