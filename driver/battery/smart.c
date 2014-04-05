@@ -212,68 +212,69 @@ test_mockable int battery_device_chemistry(char *dest, int size)
 
 void battery_get_params(struct batt_params *batt)
 {
+	struct batt_params batt_new = {0};
 	int v;
 
-	/* Reset battery parameters */
-	memset(batt, 0, sizeof(*batt));
+	if (sb_read(SB_TEMPERATURE, &batt_new.temperature))
+		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	if (sb_read(SB_TEMPERATURE, &batt->temperature))
-		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
+	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge))
+		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
-	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt->state_of_charge))
-		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
-
-	if (sb_read(SB_VOLTAGE, &batt->voltage))
-		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
+	if (sb_read(SB_VOLTAGE, &batt_new.voltage))
+		batt_new.flags |= BATT_FLAG_BAD_VOLTAGE;
 
 	/* This is a signed 16-bit value. */
 	if (sb_read(SB_CURRENT, &v))
-		batt->flags |= BATT_FLAG_BAD_CURRENT;
+		batt_new.flags |= BATT_FLAG_BAD_CURRENT;
 	else
-		batt->current = (int16_t)v;
+		batt_new.current = (int16_t)v;
 
-	if (sb_read(SB_CHARGING_VOLTAGE, &batt->desired_voltage))
-		batt->flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
+	if (sb_read(SB_CHARGING_VOLTAGE, &batt_new.desired_voltage))
+		batt_new.flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
 
-	if (sb_read(SB_CHARGING_CURRENT, &batt->desired_current))
-		batt->flags |= BATT_FLAG_BAD_DESIRED_CURRENT;
+	if (sb_read(SB_CHARGING_CURRENT, &batt_new.desired_current))
+		batt_new.flags |= BATT_FLAG_BAD_DESIRED_CURRENT;
 
-	if (battery_remaining_capacity(&batt->remaining_capacity))
-		batt->flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
+	if (battery_remaining_capacity(&batt_new.remaining_capacity))
+		batt_new.flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
 
-	if (battery_full_charge_capacity(&batt->full_capacity))
-		batt->flags |= BATT_FLAG_BAD_FULL_CAPACITY;
+	if (battery_full_charge_capacity(&batt_new.full_capacity))
+		batt_new.flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
 	/* If any of those reads worked, the battery is responsive */
-	if ((batt->flags & BATT_FLAG_BAD_ANY) != BATT_FLAG_BAD_ANY)
-		batt->flags |= BATT_FLAG_RESPONSIVE;
+	if ((batt_new.flags & BATT_FLAG_BAD_ANY) != BATT_FLAG_BAD_ANY)
+		batt_new.flags |= BATT_FLAG_RESPONSIVE;
 
 #if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/* Hardware can tell us for certain */
-	batt->is_present = battery_is_present();
+	batt_new.is_present = battery_is_present();
 #else
 	/* No hardware test, so we only know it's there if it responds */
-	if (batt->flags & BATT_FLAG_RESPONSIVE)
-		batt->is_present = BP_YES;
+	if (batt_new.flags & BATT_FLAG_RESPONSIVE)
+		batt_new.is_present = BP_YES;
 	else
-		batt->is_present = BP_NOT_SURE;
+		batt_new.is_present = BP_NOT_SURE;
 #endif
 
 	/*
 	 * Charging allowed if both desired voltage and current are nonzero
 	 * and battery isn't full (and we read them all correctly).
 	 */
-	if (!(batt->flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
-			     BATT_FLAG_BAD_DESIRED_CURRENT |
-			     BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
-	    batt->desired_voltage &&
-	    batt->desired_current &&
-	    batt->state_of_charge < BATTERY_LEVEL_FULL)
-		batt->flags |= BATT_FLAG_WANT_CHARGE;
+	if (!(batt_new.flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
+				BATT_FLAG_BAD_DESIRED_CURRENT |
+				BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
+	    batt_new.desired_voltage &&
+	    batt_new.desired_current &&
+	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
+		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 	else
 		/* Force both to zero */
-		batt->desired_voltage = batt->desired_current = 0;
+		batt_new.desired_voltage = batt_new.desired_current = 0;
+
+	/* Update visible battery parameters */
+	memcpy(batt, &batt_new, sizeof(*batt));
 }
 
 /*****************************************************************************/
