@@ -53,9 +53,10 @@ struct accel_orientation acc_orient;
 
 
 /**
- * Get last calculated lid angle.
+ * Get last calculated lid angle. Note, the lid angle calculated by the EC
+ * is un-calibrated and is an approximate angle.
  *
- * @return lid angle in degrees in range [-180, 180].
+ * @return lid angle in degrees in range [0, 360].
  */
 int motion_get_lid_angle(void);
 

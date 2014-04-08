@@ -17,4 +17,12 @@
  */
 void lidangle_keyscan_update(float lid_ang);
 
+/**
+ * Getter and setter methods for the keyboard wake angle. In S3, when the
+ * lid angle is greater than this value, the keyboard is disabled, and when
+ * the lid angle is smaller than this value, the keyboard is enabled.
+ */
+int lid_angle_get_kb_wake_angle(void);
+void lid_angle_set_kb_wake_angle(int ang);
+
 #endif  /* __CROS_EC_LID_ANGLE_H */

@@ -576,11 +576,6 @@
 /*
  * Allows using the lid angle measurement to determine if key scanning should
  * be enabled or disabled when chipset is suspended.
- *
- * Any board that defines this must also define two macros:
- * LID_IN_RANGE_TO_ACCEPT_KEYS(angle), LID_IN_RANGE_TO_IGNORE_KEYS(angle).
- * These macros should return true if the given angle argument is in range
- * to accept or ignore key presses.
  */
 #undef CONFIG_LID_ANGLE_KEY_SCAN
 

@@ -133,6 +133,10 @@ static int calculate_lid_angle(vector_3_t base, vector_3_t lid,
 	if (ang_lid_270 > ang_lid_90)
 		ang_lid_to_base = -ang_lid_to_base;
 
+	/* Place lid angle between 0 and 360 degrees. */
+	if (ang_lid_to_base < 0)
+		ang_lid_to_base += 360;
+
 	*lid_angle = ang_lid_to_base;
 	return reliable;
 }
@@ -140,7 +144,11 @@ static int calculate_lid_angle(vector_3_t base, vector_3_t lid,
 int motion_get_lid_angle(void)
 {
 	if (lid_angle_is_reliable)
-		return (int)lid_angle_deg;
+		/*
+		 * Round to nearest int by adding 0.5. Note, only works because
+		 * lid angle is known to be positive.
+		 */
+		return (int)(lid_angle_deg + 0.5F);
 	else
 		return (int)LID_ANGLE_UNRELIABLE;
 }
@@ -253,7 +261,11 @@ void motion_sense_task(void)
 
 		/*
 		 * Copy sensor data to shared memory. Note that this code
-		 * assumes little endian, which is what the host expects.
+		 * assumes little endian, which is what the host expects. Also,
+		 * note that we share the lid angle calculation with host only
+		 * for debugging purposes. The EC lid angle is an approximation
+		 * with un-calibrated accels. The AP calculates a separate,
+		 * more accurate lid angle.
 		 */
 		lpc_data[0] = motion_get_lid_angle();
 		lpc_data[1] = acc_base_host[X];
@@ -465,6 +477,20 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		out->sensor_range.ret = data;
 
 		args->response_size = sizeof(out->sensor_range);
+		break;
+
+	case MOTIONSENSE_CMD_KB_WAKE_ANGLE:
+#ifdef CONFIG_LID_ANGLE_KEY_SCAN
+		/* Set new keyboard wake lid angle if data arg has value. */
+		if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
+			lid_angle_set_kb_wake_angle(in->kb_wake_angle.data);
+
+		out->kb_wake_angle.ret = lid_angle_get_kb_wake_angle();
+#else
+		out->kb_wake_angle.ret = 0;
+#endif
+		args->response_size = sizeof(out->kb_wake_angle);
+
 		break;
 
 	default:

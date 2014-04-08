@@ -1702,6 +1702,7 @@ static const struct {
 	MS_SIZES(ec_rate),
 	MS_SIZES(sensor_odr),
 	MS_SIZES(sensor_range),
+	MS_SIZES(kb_wake_angle),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -1715,6 +1716,7 @@ static int ms_help(const char *cmd)
 	printf("  %s ec_rate [RATE_MS]          - set/get sample rate\n", cmd);
 	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
 	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
+	printf("  %s kb_wake NUM                - set/get KB wake ang\n", cmd);
 
 	return 0;
 }
@@ -1932,6 +1934,29 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 
 		printf("%d\n", resp.sensor_range.ret);
+		return 0;
+	}
+
+	if (argc < 4 && !strcasecmp(argv[1], "kb_wake")) {
+		param.cmd = MOTIONSENSE_CMD_KB_WAKE_ANGLE;
+		param.kb_wake_angle.data = EC_MOTION_SENSE_NO_VALUE;
+
+		if (argc == 3) {
+			param.kb_wake_angle.data = strtol(argv[2], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				return -1;
+			}
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+				&param, ms_command_sizes[param.cmd].insize,
+				&resp, ms_command_sizes[param.cmd].outsize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("%d\n", resp.kb_wake_angle.ret);
 		return 0;
 	}
 

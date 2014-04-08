@@ -1200,6 +1200,15 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_SENSOR_RANGE = 4,
 
+	/*
+	 * Setter/getter command for the keyboard wake angle. When the lid
+	 * angle is greater than this value, keyboard wake is disabled in S3,
+	 * and when the lid angle goes less than this value, keyboard wake is
+	 * enabled. Note, the lid angle measurement is an approximate,
+	 * un-calibrated value, hence the wake angle isn't exact.
+	 */
+	MOTIONSENSE_CMD_KB_WAKE_ANGLE = 5,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -1254,11 +1263,14 @@ struct ec_params_motion_sense {
 			/* no args */
 		} dump;
 
-		/* Used for MOTIONSENSE_CMD_EC_RATE. */
+		/*
+		 * Used for MOTIONSENSE_CMD_EC_RATE and
+		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE.
+		 */
 		struct {
 			/* Data to set or EC_MOTION_SENSE_NO_VALUE to read. */
 			int16_t data;
-		} ec_rate;
+		} ec_rate, kb_wake_angle;
 
 		/* Used for MOTIONSENSE_CMD_INFO. */
 		struct {
@@ -1313,12 +1325,13 @@ struct ec_response_motion_sense {
 
 		/*
 		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR,
-		 * and MOTIONSENSE_CMD_SENSOR_RANGE.
+		 * MOTIONSENSE_CMD_SENSOR_RANGE, and
+		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE.
 		 */
 		struct {
 			/* Current value of the parameter queried. */
 			int32_t ret;
-		} ec_rate, sensor_odr, sensor_range;
+		} ec_rate, sensor_odr, sensor_range, kb_wake_angle;
 	};
 } __packed;
 

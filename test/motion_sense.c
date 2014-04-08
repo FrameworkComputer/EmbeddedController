@@ -86,13 +86,13 @@ static int test_lid_angle(void)
 	msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == 90);
 
-	/* Set lid open to -135. */
+	/* Set lid open to 225. */
 	mock_x_acc[ACCEL_LID] = 500;
 	mock_y_acc[ACCEL_LID] = 0;
 	mock_z_acc[ACCEL_LID] = -500;
 	task_wake(TASK_ID_MOTIONSENSE);
 	msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == -135);
+	TEST_ASSERT(motion_get_lid_angle() == 225);
 
 	/*
 	 * Align base with hinge and make sure it returns unreliable for angle.
