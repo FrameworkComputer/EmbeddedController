@@ -76,7 +76,7 @@ static struct battery_info info_3s = {
 
 static struct battery_info info_3s_LGC = {
 
-        .voltage_max    = 13140,
+        .voltage_max    = 12900,
         .voltage_normal = 11400, /* Average of max & min */
         .voltage_min    =  9000,
 
@@ -91,9 +91,9 @@ static struct battery_info info_3s_LGC = {
         .discharging_max_c    = 75,
 };
 
-static struct battery_info info_4s = {
+static struct battery_info info_4s_LGC = {
 
-	.voltage_max    = 17520,
+	.voltage_max    = 17200,
 	.voltage_normal = 15200, /* Average of max & min */
 	.voltage_min    = 12000,
 
@@ -134,7 +134,7 @@ static struct battery_device support_batteries[] = {
 		.manuf			= "LGC",
 		.device			= "AC14B8K",
 		.design_mv		= 15200,
-		.battery_info		= &info_4s,
+		.battery_info		= &info_4s_LGC,
 		.support_cut_off	= 1,
 	},
 	{
