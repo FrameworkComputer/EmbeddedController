@@ -10,4 +10,4 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32l
 CHIP_VARIANT:=stm32l100
 
-board-y=board.o battery.o
+board-y=board.o battery.o led.o
