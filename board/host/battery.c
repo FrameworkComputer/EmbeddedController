@@ -45,6 +45,7 @@ int sb_i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 {
 	return EC_SUCCESS;
 }
+DECLARE_TEST_I2C_READ_STRING(sb_i2c_read_string);
 
 int battery_time_at_rate(int rate, int *minutes)
 {

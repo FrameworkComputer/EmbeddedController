@@ -68,6 +68,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 int board_discharge_on_ac(int enabled);

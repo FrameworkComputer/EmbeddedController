@@ -27,8 +27,10 @@ static const struct charger_info mock_charger_info = {
 #define OPTION_CHARGE_INHIBIT (1 << 0)
 
 static uint32_t mock_option;
+static uint32_t mock_mode;
 static uint32_t mock_current;
 static uint32_t mock_voltage;
+static uint32_t mock_input_current;
 
 const struct charger_info *charger_get_info(void)
 {
@@ -39,7 +41,7 @@ const struct charger_info *charger_get_info(void)
 int charger_get_status(int *status)
 {
 	*status = CHARGER_LEVEL_2;
-	if (mock_option & CHARGE_FLAG_INHIBIT_CHARGE)
+	if (mock_mode & CHARGE_FLAG_INHIBIT_CHARGE)
 		*status |= CHARGER_CHARGE_INHIBITED;
 
 	return EC_SUCCESS;
@@ -49,9 +51,9 @@ int charger_get_status(int *status)
 int charger_set_mode(int mode)
 {
 	if (mode & CHARGE_FLAG_INHIBIT_CHARGE)
-		mock_option |= OPTION_CHARGE_INHIBIT;
+		mock_mode |= OPTION_CHARGE_INHIBIT;
 	else
-		mock_option &= ~OPTION_CHARGE_INHIBIT;
+		mock_mode &= ~OPTION_CHARGE_INHIBIT;
 	return EC_SUCCESS;
 }
 
@@ -95,12 +97,14 @@ int charger_set_voltage(int voltage)
 
 int charger_get_option(int *option)
 {
+	*option = mock_option;
 	return EC_SUCCESS;
 }
 
 
 int charger_set_option(int option)
 {
+	mock_option = option;
 	return EC_SUCCESS;
 }
 
@@ -119,18 +123,30 @@ int charger_device_id(int *id)
 
 int charger_get_input_current(int *input_current)
 {
+	*input_current = mock_input_current;
 	return EC_SUCCESS;
 }
 
 
-int charger_set_input_current(int input_current)
+int charger_set_input_current(int current)
 {
+	const struct charger_info *info = charger_get_info();
+
+	if (current < info->input_current_min)
+		current = info->input_current_min;
+	if (current > info->input_current_max)
+		current = info->input_current_max;
+
+	if (mock_input_current != current)
+		ccprintf("Charger set input current: %d\n", current);
+
+	mock_input_current = current;
 	return EC_SUCCESS;
 }
 
 
 int charger_post_init(void)
 {
-	mock_current = CONFIG_CHARGER_INPUT_CURRENT;
+	mock_current = mock_input_current = CONFIG_CHARGER_INPUT_CURRENT;
 	return EC_SUCCESS;
 }

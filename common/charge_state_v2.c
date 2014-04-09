@@ -38,7 +38,8 @@ static struct charge_state_data curr;
 static int prev_ac, prev_volt, prev_curr, prev_charge;
 static int state_machine_force_idle;
 static unsigned int user_current_limit = -1U;
-static timestamp_t shutdown_warning_time, precharge_start_time;
+test_export_static timestamp_t shutdown_warning_time;
+static timestamp_t precharge_start_time;
 static int battery_seems_to_be_dead;
 static int problems_exist;
 
@@ -802,10 +803,12 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 #endif
 			switch (in->set_param.param) {
 			case CS_PARAM_CHG_VOLTAGE:
+				val = charger_closest_voltage(val);
 				if (charge_request(val, -1))
 					rv = EC_RES_ERROR;
 				break;
 			case CS_PARAM_CHG_CURRENT:
+				val = charger_closest_current(val);
 				if (charge_request(-1, val))
 					rv = EC_RES_ERROR;
 				break;
