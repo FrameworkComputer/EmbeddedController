@@ -12,14 +12,6 @@
 /* Update period to prevent charger watchdog timeout */
 #define CHARGER_UPDATE_PERIOD (SECOND * 10)
 
-/* Power state task polling periods in usec */
-#define POLL_PERIOD_VERY_LONG   MINUTE
-#define POLL_PERIOD_LONG        (MSEC * 500)
-#define POLL_PERIOD_CHARGE      (MSEC * 250)
-#define POLL_PERIOD_SHORT       (MSEC * 100)
-#define MIN_SLEEP_USEC          (MSEC * 50)
-#define MAX_SLEEP_USEC          SECOND
-
 /* Power state error flags */
 #define F_CHARGER_INIT        (1 << 0) /* Charger initialization */
 #define F_CHARGER_VOLTAGE     (1 << 1) /* Charger maximum output voltage */

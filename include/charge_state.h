@@ -6,8 +6,23 @@
 #define __CROS_EC_CHARGE_STATE_H
 
 #include "common.h"
+#include "timer.h"
 
 /* Stuff that's common to all charger implementations can go here. */
+
+/* Seconds after AP battery shutdown warning before we kill the AP */
+#define LOW_BATTERY_SHUTDOWN_TIMEOUT 30
+/* Seconds to spend trying to wake a non-responsive battery */
+#define PRECHARGE_TIMEOUT 30
+
+/* Power state task polling periods in usec */
+#define CHARGE_POLL_PERIOD_VERY_LONG   MINUTE
+#define CHARGE_POLL_PERIOD_LONG        (MSEC * 500)
+#define CHARGE_POLL_PERIOD_CHARGE      (MSEC * 250)
+#define CHARGE_POLL_PERIOD_SHORT       (MSEC * 100)
+#define CHARGE_MIN_SLEEP_USEC          (MSEC * 50)
+#define CHARGE_MAX_SLEEP_USEC          SECOND
+
 /* Power states */
 enum charge_state {
 	/* Meta-state; unchanged from previous time through task loop */

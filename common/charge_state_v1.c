@@ -28,8 +28,7 @@
 /* Voltage debounce time */
 #define DEBOUNCE_TIME (10 * SECOND)
 
-/* Timeout after AP battery shutdown warning before we kill the AP */
-#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
+#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (LOW_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
 
 #ifndef BATTERY_AP_OFF_LEVEL
 #define BATTERY_AP_OFF_LEVEL 0
@@ -270,7 +269,7 @@ static int state_common(struct charge_state_context *ctx)
 			 */
 			charge_request(ctx->battery->voltage_max,
 				       ctx->battery->precharge_current);
-			for (d = 0; d < 30; d++) {
+			for (d = 0; d < PRECHARGE_TIMEOUT; d++) {
 				sleep(1);
 				battery_get_params(batt);
 				if (batt->flags & BATT_FLAG_RESPONSIVE) {
@@ -703,7 +702,7 @@ void charger_task(void)
 {
 	struct charge_state_context *ctx = &task_ctx;
 	timestamp_t ts;
-	int sleep_usec = POLL_PERIOD_SHORT, diff_usec, sleep_next;
+	int sleep_usec = CHARGE_POLL_PERIOD_SHORT, diff_usec, sleep_next;
 	enum charge_state new_state;
 	uint8_t batt_flags;
 
@@ -792,7 +791,7 @@ void charger_task(void)
 			 * to charging on the next call and we don't want to
 			 * blink the LED green.
 			 */
-			sleep_usec = POLL_PERIOD_SHORT;
+			sleep_usec = CHARGE_POLL_PERIOD_SHORT;
 			break;
 		case PWR_STATE_CHARGE_NEAR_FULL:
 			/*
@@ -808,15 +807,16 @@ void charger_task(void)
 			*ctx->memmap_batt_flags = batt_flags;
 
 			/* Charge done */
-			sleep_usec = (new_state == PWR_STATE_IDLE ?
-				      POLL_PERIOD_LONG : POLL_PERIOD_CHARGE);
+			sleep_usec = (new_state == PWR_STATE_IDLE
+				      ? CHARGE_POLL_PERIOD_LONG
+				      : CHARGE_POLL_PERIOD_CHARGE);
 			break;
 		case PWR_STATE_DISCHARGE:
 			batt_flags = *ctx->memmap_batt_flags;
 			batt_flags &= ~EC_BATT_FLAG_CHARGING;
 			batt_flags |= EC_BATT_FLAG_DISCHARGING;
 			*ctx->memmap_batt_flags = batt_flags;
-			sleep_usec = POLL_PERIOD_LONG;
+			sleep_usec = CHARGE_POLL_PERIOD_LONG;
 			break;
 		case PWR_STATE_CHARGE:
 			batt_flags = *ctx->memmap_batt_flags;
@@ -825,18 +825,18 @@ void charger_task(void)
 			*ctx->memmap_batt_flags = batt_flags;
 
 			/* Charging */
-			sleep_usec = POLL_PERIOD_CHARGE;
+			sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_ERROR:
 			/* Error */
-			sleep_usec = POLL_PERIOD_CHARGE;
+			sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
 			break;
 		case PWR_STATE_UNCHANGE:
 			/* Don't change sleep duration */
 			break;
 		default:
 			/* Other state; poll quickly and hope it goes away */
-			sleep_usec = POLL_PERIOD_SHORT;
+			sleep_usec = CHARGE_POLL_PERIOD_SHORT;
 		}
 
 #ifdef CONFIG_EXTPOWER_FALCO
@@ -859,11 +859,11 @@ void charger_task(void)
 			 * need to poll frequently.  charge_hook() will wake us
 			 * up if anything important changes.
 			 */
-			sleep_next = POLL_PERIOD_VERY_LONG - diff_usec;
-		} else if (sleep_next < MIN_SLEEP_USEC) {
-			sleep_next = MIN_SLEEP_USEC;
-		} else if (sleep_next > MAX_SLEEP_USEC) {
-			sleep_next = MAX_SLEEP_USEC;
+			sleep_next = CHARGE_POLL_PERIOD_VERY_LONG - diff_usec;
+		} else if (sleep_next < CHARGE_MIN_SLEEP_USEC) {
+			sleep_next = CHARGE_MIN_SLEEP_USEC;
+		} else if (sleep_next > CHARGE_MAX_SLEEP_USEC) {
+			sleep_next = CHARGE_MAX_SLEEP_USEC;
 		}
 
 		task_wait_event(sleep_next);

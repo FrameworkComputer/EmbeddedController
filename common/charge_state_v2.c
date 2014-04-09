@@ -26,18 +26,8 @@
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
-/* Delay after AP battery shutdown warning before we kill the AP */
-#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (30 * SECOND)
-/* Time to spend trying to wake a non-responsive battery */
-#define PRECHARGE_TIMEOUT_US (30 * SECOND)
-
-/* Power state task polling periods in usec */
-#define POLL_PERIOD_VERY_LONG   MINUTE
-#define POLL_PERIOD_LONG        (MSEC * 500)
-#define POLL_PERIOD_CHARGE      (MSEC * 250)
-#define POLL_PERIOD_SHORT       (MSEC * 100)
-#define MIN_SLEEP_USEC          (MSEC * 50)
-#define MAX_SLEEP_USEC          MINUTE
+#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (LOW_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
+#define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
 
 /*
  * State for charger_task(). Here so we can reset it on a HOOK_INIT, and
@@ -596,7 +586,7 @@ wait_for_it:
 		/* How long to sleep? */
 		if (problems_exist)
 			/* If there are errors, don't wait very long. */
-			sleep_usec = POLL_PERIOD_SHORT;
+			sleep_usec = CHARGE_POLL_PERIOD_SHORT;
 		else if (sleep_usec <= 0) {
 			/* default values depend on the state */
 			if (curr.state == ST_IDLE ||
@@ -604,22 +594,23 @@ wait_for_it:
 				/* If AP is off, we can sleep a long time */
 				if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
 						     CHIPSET_STATE_SUSPEND))
-					sleep_usec = POLL_PERIOD_VERY_LONG;
+					sleep_usec =
+						CHARGE_POLL_PERIOD_VERY_LONG;
 				else
 					/* Discharging, not too urgent */
-					sleep_usec = POLL_PERIOD_LONG;
+					sleep_usec = CHARGE_POLL_PERIOD_LONG;
 			} else {
 				/* Charging, so pay closer attention */
-				sleep_usec = POLL_PERIOD_CHARGE;
+				sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
 			}
 		}
 
 		/* Adjust for time spent in this loop */
 		sleep_usec -= (int)(get_time().val - curr.ts.val);
-		if (sleep_usec < MIN_SLEEP_USEC)
-			sleep_usec = MIN_SLEEP_USEC;
-		else if (sleep_usec > MAX_SLEEP_USEC)
-			sleep_usec = MAX_SLEEP_USEC;
+		if (sleep_usec < CHARGE_MIN_SLEEP_USEC)
+			sleep_usec = CHARGE_MIN_SLEEP_USEC;
+		else if (sleep_usec > CHARGE_MAX_SLEEP_USEC)
+			sleep_usec = CHARGE_MAX_SLEEP_USEC;
 
 		task_wait_event(sleep_usec);
 	}
