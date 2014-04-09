@@ -385,7 +385,7 @@ static void prevent_deep_discharge(void)
 static void notify_host_of_low_battery(void)
 {
 	/* We can't tell what the current charge is. Assume it's okay. */
-	if (curr.batt.flags && BATT_FLAG_BAD_STATE_OF_CHARGE)
+	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
 		return;
 
 	if (curr.batt.state_of_charge <= BATTERY_LEVEL_LOW &&
