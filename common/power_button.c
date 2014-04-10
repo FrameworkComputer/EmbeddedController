@@ -75,7 +75,7 @@ static void power_button_change_deferred(void)
 
 	/* Re-enable keyboard scanning if power button is no longer pressed */
 	if (!new_pressed)
-		keyboard_scan_enable(1);
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	/* If power button hasn't changed state, nothing to do */
 	if (new_pressed == debounced_power_pressed)
@@ -102,7 +102,7 @@ void power_button_interrupt(enum gpio_signal signal)
 	 * on the same column with refresh key.
 	 */
 	if (raw_power_button_pressed())
-		keyboard_scan_enable(0);
+		keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	/* Reset power button debounce time */
 	hook_call_deferred(power_button_change_deferred, PWRBTN_DEBOUNCE_US);

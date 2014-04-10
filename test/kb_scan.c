@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
@@ -330,12 +331,14 @@ static int runtime_key_test(void)
 static int lid_test(void)
 {
 	lid_open = 0;
+	hook_notify(HOOK_LID_CHANGE);
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
 	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 
 	lid_open = 1;
+	hook_notify(HOOK_LID_CHANGE);
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
@@ -375,6 +378,7 @@ void test_init(void)
 static void run_test_step1(void)
 {
 	lid_open = 1;
+	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
 
 	RUN_TEST(deghost_test);
@@ -396,6 +400,7 @@ static void run_test_step1(void)
 static void run_test_step2(void)
 {
 	lid_open = 1;
+	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
 
 	RUN_TEST(test_check_boot_esc);
@@ -409,6 +414,7 @@ static void run_test_step2(void)
 static void run_test_step3(void)
 {
 	lid_open = 1;
+	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
 
 	RUN_TEST(test_check_boot_down);

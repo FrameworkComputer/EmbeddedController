@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
@@ -125,16 +126,11 @@ void lidangle_keyscan_update(float lid_ang)
 	lidangle_buffer[index] = lid_ang;
 	index = (index == KEY_SCAN_LID_ANGLE_BUFFER_SIZE-1) ? 0 : index+1;
 
-#ifdef CONFIG_LID_SWITCH
 	/*
-	 * If lid is closed, don't need to check if keyboard scanning should
-	 * be enabled.
+	 * Any time the chipset is off, manage whether or not keyboard scanning
+	 * is enabled based on lid angle history.
 	 */
-	if (!lid_is_open())
-		return;
-#endif
-
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+	if (!chipset_in_state(CHIPSET_STATE_ON)) {
 		for (i = 0; i < KEY_SCAN_LID_ANGLE_BUFFER_SIZE; i++) {
 			/*
 			 * If any lid angle samples are unreliable, then
@@ -154,16 +150,20 @@ void lidangle_keyscan_update(float lid_ang)
 				keys_ignore = 0;
 		}
 
-		/* Enable or disable keyboard scanning if necessary. */
-		if (keys_accept && !keyboard_scan_is_enabled()) {
-			CPRINTF("[%T Enabling keyboard scan, lid ang at %d]\n",
-					(int)lidangle_buffer[index]);
-			keyboard_scan_enable(1);
-		} else if (keys_ignore && !keys_accept &&
-				keyboard_scan_is_enabled()) {
-			CPRINTF("[%T Disabling keyboard scan, lid ang at %d]\n",
-					(int)lidangle_buffer[index]);
-			keyboard_scan_enable(0);
-		}
+		/* Enable or disable keyboard scanning as necessary. */
+		if (keys_accept)
+			keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+		else if (keys_ignore && !keys_accept)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
+
+static void enable_keyboard(void)
+{
+	/*
+	 * Make sure lid angle is not disabling keyboard scanning when AP is
+	 * running.
+	 */
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_keyboard, HOOK_PRIO_DEFAULT);

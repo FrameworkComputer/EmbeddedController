@@ -75,19 +75,26 @@ static inline enum boot_key keyboard_scan_get_boot_key(void)
  */
 const uint8_t *keyboard_scan_get_state(void);
 
+enum kb_scan_disable_masks {
+	/* Reasons why keyboard scanning should be disabled */
+	KB_SCAN_DISABLE_LID_CLOSED   = (1<<0),
+	KB_SCAN_DISABLE_POWER_BUTTON = (1<<1),
+	KB_SCAN_DISABLE_LID_ANGLE    = (1<<2),
+};
+
 #ifdef HAS_TASK_KEYSCAN
 /**
- * Enables/disables keyboard matrix scan.
+ * Enable/disable keyboard scanning. Scanning will be disabled if any disable
+ * reason bit is set. Scanning is enabled only if no disable reasons are set.
+ *
+ * @param enable Clear(=1) or set(=0) disable-bits from the mask.
+ * @param mask Disable reasons from kb_scan_disable_masks
  */
-void keyboard_scan_enable(int enable);
+void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask);
 #else
-static inline void keyboard_scan_enable(int enable) { }
+static inline void keyboard_scan_enable(int enable,
+		enum kb_scan_disable_masks mask) { }
 #endif
-
-/**
- * Returns if keyboard matrix scanning is enabled/disabled.
- */
-int keyboard_scan_is_enabled(void);
 
 #ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
 /**

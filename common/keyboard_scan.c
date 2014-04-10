@@ -88,20 +88,37 @@ static uint32_t post_scan_clock_us;
  */
 static int print_state_changes;
 
-static int enable_scanning = 1;  /* Must init to 1 for scanning at boot */
+static int disable_scanning_mask;  /* Must init to 0 for scanning at boot */
 
 /* Constantly incrementing counter of the number of times we polled */
 static volatile int kbd_polls;
 
-int keyboard_scan_is_enabled(void)
+static int keyboard_scan_is_enabled(void)
 {
-#ifdef CONFIG_LID_SWITCH
-	/* Scanning is never enabled when lid is closed */
-	if (!lid_is_open())
-		return 0;
-#endif
+	return !disable_scanning_mask;
+}
 
-	return enable_scanning;
+void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
+{
+	int old_disable_scanning = disable_scanning_mask;
+
+	disable_scanning_mask = enable ? (disable_scanning_mask & ~mask) :
+					 (disable_scanning_mask | mask);
+
+	if (disable_scanning_mask != old_disable_scanning)
+		CPRINTF("[%T KB disable_scanning_mask changed: 0x%08x]\n",
+				disable_scanning_mask);
+
+	if (old_disable_scanning && !disable_scanning_mask) {
+		/*
+		 * Scanning is being enabled, so wake up the scanning task to
+		 * unlock the task_wait_event() loop after enable_interrupt().
+		 */
+		task_wake(TASK_ID_KEYSCAN);
+	} else if (disable_scanning_mask && !old_disable_scanning) {
+		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+		keyboard_clear_buffer();
+	}
 }
 
 /**
@@ -200,11 +217,10 @@ static int read_matrix(uint8_t *state)
 
 	for (c = 0; c < KEYBOARD_COLS; c++) {
 		/*
-		 * Stop if scanning becomes disabled.  Check enable_cscanning
-		 * instead of keyboard_scan_is_enabled() so that we can scan the
-		 * matrix at boot time before the lid switch is readable.
+		 * Stop if scanning becomes disabled. Note, scanning is enabled
+		 * on boot by default.
 		 */
-		if (!enable_scanning)
+		if (!keyboard_scan_is_enabled())
 			break;
 
 		/* Select column, then wait a bit for it to settle */
@@ -617,30 +633,14 @@ void keyboard_scan_task(void)
 	}
 }
 
-void keyboard_scan_enable(int enable)
-{
-	enable_scanning = enable;
-
-	if (enable) {
-		/*
-		 * A power button press had tri-stated all columns (see the
-		 * 'else' statement below); we need a wake-up to unlock the
-		 * task_wait_event() loop after enable_interrupt().
-		 */
-		task_wake(TASK_ID_KEYSCAN);
-	} else {
-		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-		keyboard_clear_buffer();
-	}
-}
-
 #ifdef CONFIG_LID_SWITCH
 
 static void keyboard_lid_change(void)
 {
-	/* If lid is open, wake the keyboard task */
 	if (lid_is_open())
-		task_wake(TASK_ID_KEYSCAN);
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
+	else
+		keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, keyboard_lid_change, HOOK_PRIO_DEFAULT);
 
@@ -680,6 +680,8 @@ static int command_ksstate(int argc, char **argv)
 	print_state(prev_state, "prev      ");
 	print_state(debouncing, "debouncing");
 
+	ccprintf("Keyboard scan disable mask: 0x%08x\n",
+		 disable_scanning_mask);
 	ccprintf("Keyboard scan state printing %s\n",
 		 print_state_changes ? "on" : "off");
 	return EC_SUCCESS;
