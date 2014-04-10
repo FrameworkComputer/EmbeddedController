@@ -72,8 +72,18 @@ BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
  */
 static void problem(enum problem_type p, int v)
 {
-	ccprintf("[%T %s: problem %d (%s), value 0x%x]\n", __FILE__,
-		 p, prob_text[p], v);
+	static int last_prob_val[NUM_PROBLEM_TYPES];
+	static timestamp_t last_prob_time[NUM_PROBLEM_TYPES];
+	timestamp_t t_now, t_diff;
+
+	if (last_prob_val[p] != v) {
+		t_now = get_time();
+		t_diff.val = t_now.val - last_prob_time[p].val;
+		ccprintf("[%T charge problem: %s, 0x%x -> 0x%x after %.6lds]\n",
+			 prob_text[p], last_prob_val[p], v, t_diff.val);
+		last_prob_val[p] = v;
+		last_prob_time[p] = t_now;
+	}
 	problems_exist = 1;
 }
 
@@ -492,20 +502,27 @@ void charger_task(void)
 
 		/* If the battery is not responsive, try to wake it up. */
 		if (!(curr.batt.flags & BATT_FLAG_RESPONSIVE)) {
-			/* If we've already tried (or for too long) */
-			if (battery_seems_to_be_dead ||
-			    (curr.state == ST_PRECHARGE &&
-			     (get_time().val > precharge_start_time.val +
-			      PRECHARGE_TIMEOUT_US))) {
-				/* Then do nothing */
+			if (battery_seems_to_be_dead) {
+				/* It's dead, do nothing */
+				curr.state = ST_IDLE;
+				curr.requested_voltage = 0;
+				curr.requested_current = 0;
+			} else if (curr.state == ST_PRECHARGE &&
+				   (get_time().val > precharge_start_time.val +
+				    PRECHARGE_TIMEOUT_US)) {
+				/* We've tried long enough, give up */
+				ccprintf("[%T battery seems to be dead]\n");
 				battery_seems_to_be_dead = 1;
 				curr.state = ST_IDLE;
 				curr.requested_voltage = 0;
 				curr.requested_current = 0;
 			} else {
 				/* See if we can wake it up */
-				if (curr.state != ST_PRECHARGE)
+				if (curr.state != ST_PRECHARGE) {
+					ccprintf("[%T try to wake battery]\n");
 					precharge_start_time = get_time();
+					need_static = 1;
+				}
 				curr.state = ST_PRECHARGE;
 				curr.requested_voltage =
 					batt_info->voltage_max;
@@ -515,6 +532,9 @@ void charger_task(void)
 			goto wait_for_it;
 		} else {
 			/* The battery is responding. Yay. Try to use it. */
+			if (curr.state == ST_PRECHARGE ||
+			    battery_seems_to_be_dead)
+				ccprintf("[%T battery woke up]\n");
 			battery_seems_to_be_dead = 0;
 			curr.state = ST_CHARGE;
 		}
