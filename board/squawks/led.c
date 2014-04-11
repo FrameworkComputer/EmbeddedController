@@ -130,9 +130,12 @@ static enum led_color new_battery_led_color(void)
 	    (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE))
 		return (ticks & 0x4) ? LED_GREEN : LED_OFF;
 
-	/* If the system is charging, orange under 95%; green if over */
+	/*
+	 * If the system is charging, orange; green if 95% or over.
+	 * Subtract 5% to compensate for how the UI reports charge remaining.
+	 */
 	if (chstate == PWR_STATE_CHARGE)
-		return charge_get_percent() < 95 ? LED_ORANGE : LED_GREEN;
+		return charge_get_percent() < 90 ? LED_ORANGE : LED_GREEN;
 
 	/* If AC connected and fully charged (or close to it), solid green */
 	if (chstate == PWR_STATE_CHARGE_NEAR_FULL ||
@@ -140,9 +143,13 @@ static enum led_color new_battery_led_color(void)
 		return LED_GREEN;
 	}
 
-	/* Otherwise, discharging; flash orange if less than 10% power */
-	if (charge_get_percent() < 10)
-		return (ticks % 8 < 2) ? LED_ORANGE : LED_OFF;
+	/*
+	 * Otherwise, discharging; flash orange if 10% or less power, 50%
+	 * duty cycle, 2 sec period. Adding 4% bias to compensate for how
+	 * the UI reports charge remaining.
+	 */
+	if (charge_get_percent() < 14)
+		return (ticks & 0x4) ? LED_ORANGE : LED_OFF;
 
 	/* Discharging and greater than 10% power, so off */
 	return LED_OFF;
