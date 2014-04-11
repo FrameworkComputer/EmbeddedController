@@ -443,18 +443,6 @@ enum power_state power_handle_state(enum power_state state)
 			value = check_for_power_on_event();
 		}
 
-#ifdef HAS_TASK_CHARGER
-		/*
-		 * If the system is already on (value == 1), the kernel
-		 * would handle low power condition and we should not
-		 * shutdown the system from EC.
-		 */
-		if (value != 1 && charge_keep_power_off()) {
-			CPRINTF("[%T power on ignored due to low battery]\n");
-			return state;
-		}
-#endif
-
 		if (value) {
 			CPRINTF("[%T power on %d]\n", value);
 			return POWER_S5S3;
