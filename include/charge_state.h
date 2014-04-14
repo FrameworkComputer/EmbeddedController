@@ -103,6 +103,13 @@ int charge_want_shutdown(void);
  */
 int charge_temp_sensor_get_val(int idx, int *temp_ptr);
 
+/**
+ * Get the pointer to the battery parameters we saved in charge state.
+ *
+ * Use this carefully. Other threads can modify data while you are reading.
+ */
+const struct batt_params *charger_current_battery_params(void);
+
 
 /* Pick the right implementation */
 #ifdef CONFIG_CHARGER_V1

@@ -695,6 +695,11 @@ static int charge_force_idle(int enable)
 	return EC_SUCCESS;
 }
 
+const struct batt_params *charger_current_battery_params(void)
+{
+	return &task_ctx.curr.batt;
+}
+
 /**
  * Battery charging task
  */

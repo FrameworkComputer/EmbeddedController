@@ -398,6 +398,11 @@ static void notify_host_of_low_battery(void)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
 }
 
+const struct batt_params *charger_current_battery_params(void)
+{
+	return &curr.batt;
+}
+
 /* Main loop */
 void charger_task(void)
 {

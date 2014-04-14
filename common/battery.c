@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -96,41 +97,51 @@ static void print_battery_strings(void)
 
 static void print_battery_params(void)
 {
-	struct batt_params batt;
+#if defined(HAS_TASK_CHARGER)
+	/* Ask charger so that we don't need to ask battery again. */
+	const struct batt_params *batt = charger_current_battery_params();
+#else
+	/* This is for test code, where doesn't have charger task. */
+	struct batt_params _batt;
+	const struct batt_params *batt = &_batt;
 
-	battery_get_params(&batt);
+	battery_get_params(&_batt);
+#endif
+
 	print_item_name("Param flags:");
-	ccprintf("%08x\n", batt.flags);
+	ccprintf("%08x\n", batt->flags);
 
 	print_item_name("Temp:");
 	ccprintf("0x%04x = %.1d K (%.1d C)\n",
-		 batt.temperature, batt.temperature, batt.temperature - 2731);
+		 batt->temperature,
+		 batt->temperature,
+		 batt->temperature - 2731);
 
 	print_item_name("V:");
-	ccprintf("0x%04x = %d mV\n", batt.voltage, batt.voltage);
+	ccprintf("0x%04x = %d mV\n", batt->voltage, batt->voltage);
 
 	print_item_name("V-desired:");
-	ccprintf("0x%04x = %d mV\n", batt.desired_voltage,
-		 batt.desired_voltage);
+	ccprintf("0x%04x = %d mV\n", batt->desired_voltage,
+		 batt->desired_voltage);
 
 	print_item_name("I:");
-	ccprintf("0x%04x = %d mA", batt.current & 0xffff, batt.current);
-	if (batt.current > 0)
+	ccprintf("0x%04x = %d mA", batt->current & 0xffff, batt->current);
+	if (batt->current > 0)
 		ccputs("(CHG)");
-	else if (batt.current < 0)
+	else if (batt->current < 0)
 		ccputs("(DISCHG)");
 	ccputs("\n");
 
 	print_item_name("I-desired:");
-	ccprintf("0x%04x = %d mA\n", batt.desired_current,
-		 batt.desired_current);
+	ccprintf("0x%04x = %d mA\n", batt->desired_current,
+		 batt->desired_current);
 
 	print_item_name("Charging:");
 	ccprintf("%sAllowed\n",
-		 batt.flags & BATT_FLAG_WANT_CHARGE ? "" : "Not ");
+		 batt->flags & BATT_FLAG_WANT_CHARGE ? "" : "Not ");
 
 	print_item_name("Charge:");
-		ccprintf("%d %%\n", batt.state_of_charge);
+		ccprintf("%d %%\n", batt->state_of_charge);
 }
 
 static void print_battery_info(void)

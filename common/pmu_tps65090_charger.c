@@ -52,6 +52,10 @@ static int has_pending_event;
 
 static enum charging_state current_state = ST_IDLE0;
 
+/* Cached version of battery parameter */
+static struct batt_params batt_params_copy;
+
+
 #ifdef CONFIG_PMU_TPS65090_CHARGING_LED
 static void update_battery_led(void)
 {
@@ -177,12 +181,26 @@ static int rsoc_moving_average(int state_of_charge)
 	return moving_average;
 }
 
+/*
+ * This saves battery parameters for charger_current_battery_params().
+ */
+static void battery_get_params_and_save_a_copy(struct batt_params *batt)
+{
+	battery_get_params(&batt_params_copy);
+	memcpy(batt, &batt_params_copy, sizeof(*batt));
+}
+
+struct batt_params *charger_current_battery_params(void)
+{
+	return &batt_params_copy;
+}
+
 static int calc_next_state(int state)
 {
 	struct batt_params batt;
 	int alarm;
 
-	battery_get_params(&batt);
+	battery_get_params_and_save_a_copy(&batt);
 
 	switch (state) {
 	case ST_IDLE0:
