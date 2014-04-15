@@ -118,11 +118,7 @@ uint8_t task_stacks[0
 #undef TASK
 
 /* Reserve space to discard context on first context switch. */
-#ifdef CONFIG_FPU
-uint32_t scratchpad[17+18];
-#else
 uint32_t scratchpad[17];
-#endif
 
 static task_ *current_task = (task_ *)scratchpad;
 
@@ -635,14 +631,10 @@ void task_pre_init(void)
 
 		/*
 		 * Update stack used by first frame: 8 words for the normal
-		 * stack, plus 8 for R4-R11. With FP enabled, we need another
-		 * 18 words for S0-S15 and FPCSR and to align to 64-bit.
+		 * stack, plus 8 for R4-R11. Even if using FPU, the first frame
+		 * does not store FP regs.
 		 */
-#ifdef CONFIG_FPU
-		sp = stack_next + ssize - 16 - 18;
-#else
 		sp = stack_next + ssize - 16;
-#endif
 		tasks[i].sp = (uint32_t)sp;
 
 		/* Initial context on stack (see __switchto()) */
@@ -669,6 +661,19 @@ void task_pre_init(void)
 
 	/* Initialize IRQs */
 	__nvic_init_irqs();
+}
+
+void task_clear_fp_used(void)
+{
+	int ctrl;
+
+	/* Clear the CONTROL.FPCA bit, which represents FP context active. */
+	asm volatile("mrs %0, control" : "=r"(ctrl));
+	ctrl &= ~0x4;
+	asm volatile("msr control, %0" : : "r"(ctrl));
+
+	/* Flush pipeline before returning. */
+	asm volatile("isb");
 }
 
 int task_start(void)

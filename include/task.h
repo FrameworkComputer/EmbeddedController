@@ -171,6 +171,15 @@ int task_start(void);
  */
 int task_start_called(void);
 
+#ifdef CONFIG_FPU
+/**
+ * Clear floating-point used flag for currently executing task. This means the
+ * FPU regs will not be stored on context switches until the next time floating
+ * point is used for currently executing task.
+ */
+void task_clear_fp_used(void);
+#endif
+
 /**
  * Enable an interrupt.
  */
