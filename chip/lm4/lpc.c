@@ -389,12 +389,25 @@ void lpc_set_host_event_state(uint32_t mask)
 
 int lpc_query_host_event_state(void)
 {
+	const uint32_t any_mask = event_mask[0] | event_mask[1] | event_mask[2];
 	int evt_index = 0;
 	int i;
 
 	for (i = 0; i < 32; i++) {
-		if (host_events & (1 << i)) {
-			host_clear_events(1 << i);
+		const uint32_t e = (1 << i);
+
+		if (host_events & e) {
+			host_clear_events(e);
+
+			/*
+			 * If host hasn't unmasked this event, drop it.  We do
+			 * this at query time rather than event generation time
+			 * so that the host has a chance to unmask events
+			 * before they're dropped by a query.
+			 */
+			if (!(e & any_mask))
+				continue;
+
 			evt_index = i + 1;	/* Events are 1-based */
 			break;
 		}
@@ -402,7 +415,6 @@ int lpc_query_host_event_state(void)
 
 	return evt_index;
 }
-
 
 void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 {
