@@ -264,7 +264,7 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	big | discovery | nyan | pit | snow | spring ) flash_stm32 ;;
-	fruitpie | zinger | firefly | samus_pd) flash_stm32 ;;
+	fruitpie | zinger | firefly | samus_pd | twinkie) flash_stm32 ;;
 	falco | peppy | rambi | samus | squawks ) flash_lm4 ;;
 	link ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
