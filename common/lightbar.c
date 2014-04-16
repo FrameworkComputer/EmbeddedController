@@ -141,9 +141,8 @@ static inline uint8_t scale_abs(int val, int max)
 	return (val * max)/255;
 }
 
-/* It will often be simpler to provide an overall brightness control. */
+/* This is the overall brightness control. */
 static int brightness = 0xc0;
-
 
 /* So that we can make brightness changes happen instantly, we need to track
  * the current values. The values in the controllers aren't very helpful. */
@@ -155,18 +154,7 @@ static inline uint8_t scale(int val, int max)
 	return scale_abs((val * brightness)/255, max);
 }
 
-static void lightbar_init_vals(void)
-{
-	CPRINTF("[%T LB_init_vals]\n");
-	set_from_array(init_vals, ARRAY_SIZE(init_vals));
-	memset(current, 0, sizeof(current));
-}
-
-/* Change it with this function (defined below). */
-static void lightbar_brightness(int newval);
-
-
-/* Helper function. */
+/* Helper function to set one LED color and remember it for later */
 static void setrgb(int led, int red, int green, int blue)
 {
 	int ctrl, bank;
@@ -179,6 +167,109 @@ static void setrgb(int led, int red, int green, int blue)
 	controller_write(ctrl, bank+1, scale(red, MAX_RED));
 	controller_write(ctrl, bank+2, scale(green, MAX_GREEN));
 }
+
+/* LEDs are numbered 0-3, RGB values should be in 0-255.
+ * If you specify too large an LED, it sets them all. */
+static void lb_setrgb(int led, int red, int green, int blue)
+{
+	int i;
+	if (led >= NUM_LEDS)
+		for (i = 0; i < NUM_LEDS; i++)
+			setrgb(i, red, green, blue);
+	else
+		setrgb(led, red, green, blue);
+}
+
+/* Change current display brightness (0-255) */
+static void lb_brightness(int newval)
+{
+	int i;
+	CPRINTF("[%T LB_bright 0x%02x]\n", newval);
+	brightness = newval;
+	for (i = 0; i < NUM_LEDS; i++)
+		setrgb(i, current[i][0], current[i][1], current[i][2]);
+}
+
+/* Initialize the controller ICs after reset */
+static void lb_init(void)
+{
+	CPRINTF("[%T LB_init_vals]\n");
+	set_from_array(init_vals, ARRAY_SIZE(init_vals));
+	memset(current, 0, sizeof(current));
+}
+
+/* Just go into standby mode. No register values should change. */
+static void lb_off(void)
+{
+	CPRINTF("[%T LB_off]\n");
+	controller_write(0, 0x01, 0x00);
+	controller_write(1, 0x01, 0x00);
+}
+
+/* Come out of standby mode. */
+static void lb_on(void)
+{
+	CPRINTF("[%T LB_on]\n");
+	controller_write(0, 0x01, 0x20);
+	controller_write(1, 0x01, 0x20);
+}
+
+/*
+ * This sets up the auto-cycling features of the controllers to make a
+ * semi-random pattern of slowly fading colors. This is interesting only
+ * because it doesn't require any effort from the EC.
+*/
+static void lb_start_builtin_cycle(void)
+{
+	int r = scale(255, MAX_RED);
+	int g = scale(255, MAX_BLUE);
+	int b = scale(255, MAX_GREEN);
+	struct initdata_s pulse_vals[] = {
+		{0x11, 0xce},
+		{0x12, 0x67},
+		{0x13, 0xef},
+		{0x15, b},
+		{0x16, r},
+		{0x17, g},
+		{0x18, b},
+		{0x19, r},
+		{0x1a, g},
+	};
+
+	set_from_array(pulse_vals, ARRAY_SIZE(pulse_vals));
+	controller_write(1, 0x13, 0xcd);	/* this one's different */
+}
+
+static const uint8_t dump_reglist[] = {
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0a,			  0x0f,
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+	0x18, 0x19, 0x1a
+};
+
+/* Helper for host command to dump controller registers */
+static void lb_hc_cmd_dump(struct ec_response_lightbar *out)
+{
+	int i;
+	uint8_t reg;
+
+	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) ==
+		     ARRAY_SIZE(out->dump.vals));
+
+	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
+		reg = dump_reglist[i];
+		out->dump.vals[i].reg = reg;
+		out->dump.vals[i].ic0 = controller_read(0, reg);
+		out->dump.vals[i].ic1 = controller_read(1, reg);
+	}
+}
+
+/* Helper for host command to write controller registers directly */
+static void lb_hc_cmd_reg(const struct ec_params_lightbar *in)
+{
+	controller_write(in->reg.ctrl, in->reg.reg, in->reg.value);
+}
+
 
 
 /******************************************************************************/
@@ -249,13 +340,13 @@ static const struct lightbar_params default_params = {
 };
 
 #define LB_SYSJUMP_TAG 0x4c42			/* "LB" */
-static void lb_preserve_state(void)
+static void lightbar_preserve_state(void)
 {
 	system_add_jump_tag(LB_SYSJUMP_TAG, 0, sizeof(st), &st);
 }
-DECLARE_HOOK(HOOK_SYSJUMP, lb_preserve_state, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SYSJUMP, lightbar_preserve_state, HOOK_PRIO_DEFAULT);
 
-static void lb_restore_state(void)
+static void lightbar_restore_state(void)
 {
 	const uint8_t *old_state = 0;
 	int size;
@@ -320,10 +411,14 @@ static void get_battery_level(void)
 
 
 #ifdef CONFIG_PWM_KBLIGHT
-	/* With nothing else to go on, use the keyboard backlight level to
-	 * set the brightness. If the keyboard backlight is OFF (which it is
-	 * when ambient is bright), use max brightness for lightbar. If
-	 * keyboard backlight is ON, use keyboard backlight brightness.
+	/*
+	 * With nothing else to go on, use the keyboard backlight level to *
+	 * set the brightness. In general, if the keyboard backlight
+	 * is OFF (which it is when ambient is bright), use max brightness for
+	 * lightbar. If keyboard backlight is ON, use keyboard backlight
+	 * brightness. That fails if the keyboard backlight is off because
+	 * someone's watching a movie in the dark, of course. Ideally we should
+	 * just let the AP control it directly.
 	 */
 	if (pwm_get_enabled(PWM_CH_KBLIGHT)) {
 		pct = pwm_get_duty(PWM_CH_KBLIGHT);
@@ -337,14 +432,15 @@ static void get_battery_level(void)
 
 	if (pct != last_backlight_level) {
 		last_backlight_level = pct;
-		lightbar_brightness(pct);
+		lb_brightness(pct);
 	}
 #endif
 }
 
 
-/* Forcing functions for demo mode */
+/* Forcing functions for demo mode, called by the keyboard task. */
 
+/* Up/Down keys */
 void demo_battery_level(int inc)
 {
 	if (!demo_mode)
@@ -359,6 +455,7 @@ void demo_battery_level(int inc)
 	CPRINTF("[%T LB demo: battery_level=%d]\n", st.battery_level);
 }
 
+/* Left/Right keys */
 void demo_is_charging(int ischarge)
 {
 	if (!demo_mode)
@@ -369,6 +466,7 @@ void demo_is_charging(int ischarge)
 		st.battery_is_charging);
 }
 
+/* Bright/Dim keys */
 void demo_brightness(int inc)
 {
 	int b;
@@ -381,7 +479,7 @@ void demo_brightness(int inc)
 		b = 0xff;
 	else if (b < 0)
 		b = 0;
-	lightbar_brightness(b);
+	lb_brightness(b);
 }
 
 
@@ -389,50 +487,13 @@ void demo_brightness(int inc)
 /* Basic LED control functions. Use these to implement the pretty patterns. */
 /******************************************************************************/
 
-/* Just go into standby mode. No register values should change. */
-static void lightbar_off(void)
-{
-	CPRINTF("[%T LB_off]\n");
-	controller_write(0, 0x01, 0x00);
-	controller_write(1, 0x01, 0x00);
-}
 
-/* Come out of standby mode. */
-static void lightbar_on(void)
-{
-	CPRINTF("[%T LB_on]\n");
-	controller_write(0, 0x01, 0x20);
-	controller_write(1, 0x01, 0x20);
-}
-
-/* LEDs are numbered 0-3, RGB values should be in 0-255.
- * If you specify too large an LED, it sets them all. */
-static void lightbar_setrgb(int led, int red, int green, int blue)
-{
-	int i;
-	if (led >= NUM_LEDS)
-		for (i = 0; i < NUM_LEDS; i++)
-			setrgb(i, red, green, blue);
-	else
-		setrgb(led, red, green, blue);
-}
-
-/* Change current display brightness (0-255) */
-static void lightbar_brightness(int newval)
-{
-	int i;
-	CPRINTF("[%T LB_bright 0x%02x]\n", newval);
-	brightness = newval;
-	for (i = 0; i < NUM_LEDS; i++)
-		lightbar_setrgb(i, current[i][0],
-				current[i][1], current[i][2]);
-}
 
 /******************************************************************************/
 /* Helper functions and data. */
 /******************************************************************************/
 
-const float _ramp_table[] = {
+static const float _ramp_table[] = {
 	0.000000f, 0.000151f, 0.000602f, 0.001355f, 0.002408f, 0.003760f,
 	0.005412f, 0.007361f, 0.009607f, 0.012149f, 0.014984f, 0.018112f,
 	0.021530f, 0.025236f, 0.029228f, 0.033504f, 0.038060f, 0.042895f,
@@ -510,7 +571,7 @@ static uint32_t pulse_google_colors(void)
 			r = st.p.color[i].r * f;
 			g = st.p.color[i].g * f;
 			b = st.p.color[i].b * f;
-			lightbar_setrgb(i, r, g, b);
+			lb_setrgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.google_ramp_up);
 	}
@@ -520,7 +581,7 @@ static uint32_t pulse_google_colors(void)
 			r = st.p.color[i].r * f;
 			g = st.p.color[i].g * f;
 			b = st.p.color[i].b * f;
-			lightbar_setrgb(i, r, g, b);
+			lb_setrgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.google_ramp_down);
 	}
@@ -536,8 +597,8 @@ static uint32_t sequence_S3S0(void)
 	int ci;
 	uint32_t res;
 
-	lightbar_init_vals();
-	lightbar_on();
+	lb_init();
+	lb_on();
 	get_battery_level();
 
 	res = pulse_google_colors();
@@ -559,7 +620,7 @@ static uint32_t sequence_S3S0(void)
 		r = st.p.color[ci].r * f;
 		g = st.p.color[ci].g * f;
 		b = st.p.color[ci].b * f;
-		lightbar_setrgb(NUM_LEDS, r, g, b);
+		lb_setrgb(NUM_LEDS, r, g, b);
 		WAIT_OR_RET(st.p.s3s0_ramp_up);
 	}
 
@@ -585,8 +646,8 @@ static uint32_t sequence_S0(void)
 	start = get_time();
 	tick = last_tick = 0;
 
-	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
-	lightbar_on();
+	lb_setrgb(NUM_LEDS, 0, 0, 0);
+	lb_on();
 
 	while (1) {
 		now = get_time();
@@ -622,7 +683,7 @@ static uint32_t sequence_S0(void)
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
-			lightbar_setrgb(i, r, g, b);
+			lb_setrgb(i, r, g, b);
 		}
 
 		/* Increment the phase */
@@ -659,7 +720,7 @@ static uint32_t sequence_S0S3(void)
 			r = drop[i][0] * f;
 			g = drop[i][1] * f;
 			b = drop[i][2] * f;
-			lightbar_setrgb(i, r, g, b);
+			lb_setrgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.s0s3_ramp_down);
 	}
@@ -676,9 +737,9 @@ static uint32_t sequence_S3(void)
 	float f;
 	int ci;
 
-	lightbar_off();
-	lightbar_init_vals();
-	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
+	lb_off();
+	lb_init();
+	lb_setrgb(NUM_LEDS, 0, 0, 0);
 	while (1) {
 		WAIT_OR_RET(st.p.s3_sleep_for);
 		get_battery_level();
@@ -689,14 +750,14 @@ static uint32_t sequence_S3(void)
 			continue;
 
 		/* pulse once */
-		lightbar_on();
+		lb_on();
 
 		for (w = 0; w < 128; w += 2) {
 			f = cycle_010(w);
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
-			lightbar_setrgb(NUM_LEDS, r, g, b);
+			lb_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(st.p.s3_ramp_up);
 		}
 		for (w = 128; w <= 256; w++) {
@@ -704,12 +765,12 @@ static uint32_t sequence_S3(void)
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
-			lightbar_setrgb(NUM_LEDS, r, g, b);
+			lb_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(st.p.s3_ramp_down);
 		}
 
-		lightbar_setrgb(NUM_LEDS, 0, 0, 0);
-		lightbar_off();
+		lb_setrgb(NUM_LEDS, 0, 0, 0);
+		lb_off();
 	}
 	return 0;
 }
@@ -723,16 +784,16 @@ static uint32_t sequence_S5S3(void)
 	 * respond. Don't return early, because we still want to initialize the
 	 * lightbar even if another message comes along while we're waiting. */
 	usleep(100);
-	lightbar_init_vals();
-	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
-	lightbar_on();
+	lb_init();
+	lb_setrgb(NUM_LEDS, 0, 0, 0);
+	lb_on();
 	return 0;
 }
 
 /* Sleep to off. The S3->S5 transition takes about 10msec, so just wait. */
 static uint32_t sequence_S3S5(void)
 {
-	lightbar_off();
+	lb_off();
 	WAIT_OR_RET(-1);
 	return 0;
 }
@@ -762,26 +823,26 @@ static uint32_t sequence_TEST_inner(void)
 		{0xff, 0xff, 0xff},
 	};
 
-	lightbar_init_vals();
-	lightbar_on();
+	lb_init();
+	lb_on();
 	for (i = 0; i < ARRAY_SIZE(testcolors); i++) {
 		for (k = 0; k <= kmax; k += kstep) {
 			r = testcolors[i].r ? k : 0;
 			g = testcolors[i].g ? k : 0;
 			b = testcolors[i].b ? k : 0;
-			lightbar_setrgb(NUM_LEDS, r, g, b);
+			lb_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(10000);
 		}
 		for (k = kmax; k >= 0; k -= kstep) {
 			r = testcolors[i].r ? k : 0;
 			g = testcolors[i].g ? k : 0;
 			b = testcolors[i].b ? k : 0;
-			lightbar_setrgb(NUM_LEDS, r, g, b);
+			lb_setrgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(10000);
 		}
 	}
 
-	lightbar_setrgb(NUM_LEDS, 0, 0, 0);
+	lb_setrgb(NUM_LEDS, 0, 0, 0);
 	return 0;
 }
 
@@ -798,37 +859,19 @@ static uint32_t sequence_TEST(void)
 	return r;
 }
 
-/* This uses the auto-cycling features of the controllers to make a semi-random
- * pattern of slowly fading colors. This is interesting only because it doesn't
- * require any effort from the EC. */
 static uint32_t sequence_PULSE(void)
 {
 	uint32_t msg;
-	int r = scale(255, MAX_RED);
-	int g = scale(255, MAX_BLUE);
-	int b = scale(255, MAX_GREEN);
-	struct initdata_s pulse_vals[] = {
-		{0x11, 0xce},
-		{0x12, 0x67},
-		{0x13, 0xef},
-		{0x15, b},
-		{0x16, r},
-		{0x17, g},
-		{0x18, b},
-		{0x19, r},
-		{0x1a, g},
-	};
 
-	lightbar_init_vals();
-	lightbar_on();
+	lb_init();
+	lb_on();
 
-	set_from_array(pulse_vals, ARRAY_SIZE(pulse_vals));
-	controller_write(1, 0x13, 0xcd);	/* this one's different */
+	lb_start_builtin_cycle();
 
 	/* Not using WAIT_OR_RET() here, because we want to clean up when we're
 	 * done. The only way out is to get a message. */
 	msg = task_wait_event(-1);
-	lightbar_init_vals();
+	lb_init();
 	return TASK_EVENT_CUSTOM(msg);
 }
 
@@ -862,13 +905,13 @@ static uint32_t sequence_RUN(void)
 /* We shouldn't come here, but if we do it shouldn't hurt anything */
 static uint32_t sequence_ERROR(void)
 {
-	lightbar_init_vals();
-	lightbar_on();
+	lb_init();
+	lb_on();
 
-	lightbar_setrgb(0, 255, 255, 255);
-	lightbar_setrgb(1, 255, 0, 255);
-	lightbar_setrgb(2, 0, 255, 255);
-	lightbar_setrgb(3, 255, 255, 255);
+	lb_setrgb(0, 255, 255, 255);
+	lb_setrgb(1, 255, 0, 255);
+	lb_setrgb(2, 0, 255, 255);
+	lb_setrgb(3, 255, 255, 255);
 
 	WAIT_OR_RET(10 * SECOND);
 	return 0;
@@ -956,15 +999,15 @@ static uint32_t sequence_KONAMI(void)
 	int i;
 	int tmp;
 
-	lightbar_off();
-	lightbar_init_vals();
-	lightbar_on();
+	lb_off();
+	lb_init();
+	lb_on();
 
 	tmp = brightness;
 	brightness = 255;
 
 	for (i = 0; i < ARRAY_SIZE(konami); i++) {
-		lightbar_setrgb(konami[i].led,
+		lb_setrgb(konami[i].led,
 				  konami[i].r, konami[i].g, konami[i].b);
 		if (konami[i].delay)
 			usleep(konami[i].delay);
@@ -997,7 +1040,7 @@ void lightbar_task(void)
 
 	CPRINTF("[%T LB task starting]\n");
 
-	lb_restore_state();
+	lightbar_restore_state();
 
 	while (1) {
 		CPRINTF("[%T LB task %d = %s]\n",
@@ -1078,46 +1121,6 @@ static void lightbar_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, lightbar_shutdown, HOOK_PRIO_DEFAULT);
 
 /****************************************************************************/
-/* Generic command-handling (should work the same for both console & LPC) */
-/****************************************************************************/
-
-static const uint8_t dump_reglist[] = {
-	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	0x08, 0x09, 0x0a,			  0x0f,
-	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-	0x18, 0x19, 0x1a
-};
-
-static void do_cmd_dump(struct ec_response_lightbar *out)
-{
-	int i;
-	uint8_t reg;
-
-	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) ==
-		     ARRAY_SIZE(out->dump.vals));
-
-	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
-		reg = dump_reglist[i];
-		out->dump.vals[i].reg = reg;
-		out->dump.vals[i].ic0 = controller_read(0, reg);
-		out->dump.vals[i].ic1 = controller_read(1, reg);
-	}
-}
-
-static void do_cmd_rgb(uint8_t led,
-		       uint8_t red, uint8_t green, uint8_t blue)
-{
-	int i;
-
-	if (led >= NUM_LEDS)
-		for (i = 0; i < NUM_LEDS; i++)
-			lightbar_setrgb(i, red, green, blue);
-	else
-		lightbar_setrgb(led, red, green, blue);
-}
-
-
-/****************************************************************************/
 /* Host commands via LPC bus */
 /****************************************************************************/
 
@@ -1128,34 +1131,32 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 
 	switch (in->cmd) {
 	case LIGHTBAR_CMD_DUMP:
-		do_cmd_dump(out);
+		lb_hc_cmd_dump(out);
 		args->response_size = sizeof(out->dump);
 		break;
 	case LIGHTBAR_CMD_OFF:
-		lightbar_off();
+		lb_off();
 		break;
 	case LIGHTBAR_CMD_ON:
-		lightbar_on();
+		lb_on();
 		break;
 	case LIGHTBAR_CMD_INIT:
-		lightbar_init_vals();
+		lb_init();
 		break;
 	case LIGHTBAR_CMD_BRIGHTNESS:
-		lightbar_brightness(in->brightness.num);
+		lb_brightness(in->brightness.num);
 		break;
 	case LIGHTBAR_CMD_SEQ:
 		lightbar_sequence(in->seq.num);
 		break;
 	case LIGHTBAR_CMD_REG:
-		controller_write(in->reg.ctrl,
-				 in->reg.reg,
-				 in->reg.value);
+		lb_hc_cmd_reg(in);
 		break;
 	case LIGHTBAR_CMD_RGB:
-		do_cmd_rgb(in->rgb.led,
-			   in->rgb.red,
-			   in->rgb.green,
-			   in->rgb.blue);
+		lb_setrgb(in->rgb.led,
+			  in->rgb.red,
+			  in->rgb.green,
+			  in->rgb.blue);
 		break;
 	case LIGHTBAR_CMD_GET_SEQ:
 		out->get_seq.num = st.cur_seq;
@@ -1296,8 +1297,8 @@ static int command_lightbar(int argc, char **argv)
 	struct ec_response_lightbar out;
 
 	if (argc == 1) {			/* no args = dump 'em all */
-		do_cmd_dump(&out);
-		for (i = 0; i < ARRAY_SIZE(dump_reglist); i++)
+		lb_hc_cmd_dump(&out);
+		for (i = 0; i < ARRAY_SIZE(out.dump.vals); i++)
 			ccprintf(" %02x     %02x     %02x\n",
 				 out.dump.vals[i].reg,
 				 out.dump.vals[i].ic0,
@@ -1307,17 +1308,17 @@ static int command_lightbar(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "init")) {
-		lightbar_init_vals();
+		lb_init();
 		return EC_SUCCESS;
 	}
 
 	if (!strcasecmp(argv[1], "off")) {
-		lightbar_off();
+		lb_off();
 		return EC_SUCCESS;
 	}
 
 	if (!strcasecmp(argv[1], "on")) {
-		lightbar_on();
+		lb_on();
 		return EC_SUCCESS;
 	}
 
@@ -1336,7 +1337,7 @@ static int command_lightbar(int argc, char **argv)
 		char *e;
 		if (argc > 2) {
 			num = 0xff & strtoi(argv[2], &e, 16);
-			lightbar_brightness(num);
+			lb_brightness(num);
 		}
 		ccprintf("brightness is %02x\n", brightness);
 		return EC_SUCCESS;
@@ -1375,11 +1376,11 @@ static int command_lightbar(int argc, char **argv)
 
 	if (argc == 4) {
 		char *e;
-		uint8_t ctrl, reg, val;
-		ctrl = 0xff & strtoi(argv[1], &e, 16);
-		reg = 0xff & strtoi(argv[2], &e, 16);
-		val = 0xff & strtoi(argv[3], &e, 16);
-		controller_write(ctrl, reg, val);
+		struct ec_params_lightbar in;
+		in.reg.ctrl = strtoi(argv[1], &e, 16);
+		in.reg.reg = strtoi(argv[2], &e, 16);
+		in.reg.value = strtoi(argv[3], &e, 16);
+		lb_hc_cmd_reg(&in);
 		return EC_SUCCESS;
 	}
 
@@ -1390,7 +1391,7 @@ static int command_lightbar(int argc, char **argv)
 		r = strtoi(argv[2], &e, 16);
 		g = strtoi(argv[3], &e, 16);
 		b = strtoi(argv[4], &e, 16);
-		do_cmd_rgb(led, r, g, b);
+		lb_setrgb(led, r, g, b);
 		return EC_SUCCESS;
 	}
 
