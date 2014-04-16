@@ -26,6 +26,7 @@ void lightbar_sequence(enum lightbar_sequence s);
 /* External stuff */
 
 /* These are used for demo purposes */
+#define DEMO_MODE_DEFAULT 0
 extern void demo_battery_level(int inc);
 extern void demo_is_charging(int ischarge);
 extern void demo_brightness(int inc);

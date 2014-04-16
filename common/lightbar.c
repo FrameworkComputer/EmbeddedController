@@ -6,6 +6,9 @@
  * LED controls.
  */
 
+#ifdef LIGHTBAR_SIMULATION
+#include "simulation.h"
+#else
 #include "battery.h"
 #include "charge_state.h"
 #include "common.h"
@@ -20,6 +23,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#endif
 
 /*
  * The Link lightbar had no version command, so defaulted to zero. We have
@@ -139,7 +143,7 @@ static void lightbar_restore_state(void)
 static int last_backlight_level;
 #endif
 
-static int demo_mode;
+static int demo_mode = DEMO_MODE_DEFAULT;
 
 /* Update the known state. */
 static void get_battery_level(void)
@@ -1016,7 +1020,7 @@ static void show_params(const struct lightbar_params *p)
 	ccprintf("%d\t\t# .s0a_tick_delay (battery)\n", p->s0a_tick_delay[0]);
 	ccprintf("%d\t\t# .s0a_tick_delay (AC)\n", p->s0a_tick_delay[1]);
 	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
-	ccprintf("%d\t# .s3_sleep_for\n", p->s3_sleep_for);
+	ccprintf("%d\t\t# .s3_sleep_for\n", p->s3_sleep_for);
 	ccprintf("%d\t\t# .s3_ramp_up\n", p->s3_ramp_up);
 	ccprintf("%d\t\t# .s3_ramp_down\n", p->s3_ramp_down);
 	ccprintf("%d\t\t# .new_s0\n", p->new_s0);
@@ -1032,7 +1036,7 @@ static void show_params(const struct lightbar_params *p)
 		 p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
 	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
 		 p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
-	ccprintf("%d %d %d\t\t# .battery_threshold\n",
+	ccprintf("%d %d %d\t# .battery_threshold\n",
 		 p->battery_threshold[0],
 		 p->battery_threshold[1],
 		 p->battery_threshold[2]);
@@ -1089,6 +1093,10 @@ static int command_lightbar(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "params")) {
+#ifdef LIGHTBAR_SIMULATION
+		if (argc > 2)
+			lb_read_params_from_file(argv[2], &st.p);
+#endif
 		show_params(&st.p);
 		return EC_SUCCESS;
 	}
