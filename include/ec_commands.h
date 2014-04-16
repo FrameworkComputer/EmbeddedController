@@ -990,19 +990,24 @@ struct ec_params_lightbar {
 	union {
 		struct {
 			/* no args */
-		} dump, off, on, init, get_seq, get_params, version;
+		} dump, off, on, init, get_seq, get_params,
+			version, get_brightness, get_demo;
 
-		struct num {
+		struct {
 			uint8_t num;
-		} brightness, seq, demo;
+		} set_brightness, seq, demo;
 
-		struct reg {
+		struct {
 			uint8_t ctrl, reg, value;
 		} reg;
 
-		struct rgb {
+		struct {
 			uint8_t led, red, green, blue;
-		} rgb;
+		} set_rgb;
+
+		struct {
+			uint8_t led;
+		} get_rgb;
 
 		struct lightbar_params set_params;
 	};
@@ -1010,7 +1015,7 @@ struct ec_params_lightbar {
 
 struct ec_response_lightbar {
 	union {
-		struct dump {
+		struct {
 			struct {
 				uint8_t reg;
 				uint8_t ic0;
@@ -1018,20 +1023,25 @@ struct ec_response_lightbar {
 			} vals[23];
 		} dump;
 
-		struct get_seq {
+		struct  {
 			uint8_t num;
-		} get_seq;
+		} get_seq, get_brightness, get_demo;
 
 		struct lightbar_params get_params;
 
-		struct version {
+		struct {
 			uint32_t num;
 			uint32_t flags;
 		} version;
 
 		struct {
+			uint8_t red, green, blue;
+		} get_rgb;
+
+		struct {
 			/* no return params */
-		} off, on, init, brightness, seq, reg, rgb, demo, set_params;
+		} off, on, init, set_brightness, seq, reg, set_rgb,
+			demo, set_params;
 	};
 } __packed;
 
@@ -1041,15 +1051,18 @@ enum lightbar_command {
 	LIGHTBAR_CMD_OFF = 1,
 	LIGHTBAR_CMD_ON = 2,
 	LIGHTBAR_CMD_INIT = 3,
-	LIGHTBAR_CMD_BRIGHTNESS = 4,
+	LIGHTBAR_CMD_SET_BRIGHTNESS = 4,
 	LIGHTBAR_CMD_SEQ = 5,
 	LIGHTBAR_CMD_REG = 6,
-	LIGHTBAR_CMD_RGB = 7,
+	LIGHTBAR_CMD_SET_RGB = 7,
 	LIGHTBAR_CMD_GET_SEQ = 8,
 	LIGHTBAR_CMD_DEMO = 9,
 	LIGHTBAR_CMD_GET_PARAMS = 10,
 	LIGHTBAR_CMD_SET_PARAMS = 11,
 	LIGHTBAR_CMD_VERSION = 12,
+	LIGHTBAR_CMD_GET_BRIGHTNESS = 13,
+	LIGHTBAR_CMD_GET_RGB = 14,
+	LIGHTBAR_CMD_GET_DEMO = 15,
 	LIGHTBAR_NUM_CMDS
 };
 

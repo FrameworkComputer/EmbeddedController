@@ -1348,15 +1348,18 @@ static const struct {
 	LB_SIZES(off),
 	LB_SIZES(on),
 	LB_SIZES(init),
-	LB_SIZES(brightness),
+	LB_SIZES(set_brightness),
 	LB_SIZES(seq),
 	LB_SIZES(reg),
-	LB_SIZES(rgb),
+	LB_SIZES(set_rgb),
 	LB_SIZES(get_seq),
 	LB_SIZES(demo),
 	LB_SIZES(get_params),
 	LB_SIZES(set_params),
 	LB_SIZES(version),
+	LB_SIZES(get_brightness),
+	LB_SIZES(get_rgb),
+	LB_SIZES(get_demo),
 };
 #undef LB_SIZES
 
@@ -1367,13 +1370,14 @@ static int lb_help(const char *cmd)
 	printf("  %s off                   - enter standby\n", cmd);
 	printf("  %s on                    - leave standby\n", cmd);
 	printf("  %s init                  - load default vals\n", cmd);
-	printf("  %s brightness NUM        - set intensity (0-ff)\n", cmd);
+	printf("  %s brightness [NUM]      - get/set intensity (0-ff)\n", cmd);
 	printf("  %s seq [NUM|SEQUENCE]    - run given pattern"
 		 " (no arg for list)\n", cmd);
 	printf("  %s CTRL REG VAL          - set LED controller regs\n", cmd);
 	printf("  %s LED RED GREEN BLUE    - set color manually"
 		 " (LED=4 for all)\n", cmd);
-	printf("  %s demo 0|1              - turn demo mode on & off\n", cmd);
+	printf("  %s LED                   - get current LED color\n", cmd);
+	printf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	printf("  %s params [setfile]      - get params"
 	       " (or set from file)\n", cmd);
 	return 0;
@@ -1631,29 +1635,49 @@ static int cmd_lightbar(int argc, char **argv)
 
 	if (!strcasecmp(argv[1], "version")) {
 		r = lb_do_cmd(LIGHTBAR_CMD_VERSION, &param, &resp);
-		if (!r) {
-			printf("num:   %d\n", resp.version.num);
-			printf("flags: 0x%x\n", resp.version.flags);
-		}
+		if (!r)
+			printf("version %d flags 0x%x\n",
+			       resp.version.num, resp.version.flags);
 		return r;
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "brightness")) {
+	if (argc > 1 && !strcasecmp(argv[1], "brightness")) {
 		char *e;
-		param.brightness.num = 0xff & strtoul(argv[2], &e, 16);
-		return lb_do_cmd(LIGHTBAR_CMD_BRIGHTNESS, &param, &resp);
+		int rv;
+		if (argc > 2) {
+			param.set_brightness.num = 0xff &
+				strtoul(argv[2], &e, 16);
+			return lb_do_cmd(LIGHTBAR_CMD_SET_BRIGHTNESS,
+					 &param, &resp);
+		}
+		rv = lb_do_cmd(LIGHTBAR_CMD_GET_BRIGHTNESS,
+			       &param, &resp);
+		if (rv)
+			return rv;
+		printf("%02x\n", resp.get_brightness.num);
+		return 0;
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "demo")) {
-		if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
-			param.demo.num = 1;
-		else if (!strcasecmp(argv[2], "off") || argv[2][0] == '0')
-			param.demo.num = 0;
-		else {
-			fprintf(stderr, "Invalid arg\n");
-			return -1;
+	if (argc > 1 && !strcasecmp(argv[1], "demo")) {
+		int rv;
+		if (argc > 2) {
+			if (!strcasecmp(argv[2], "on") || argv[2][0] == '1')
+				param.demo.num = 1;
+			else if (!strcasecmp(argv[2], "off") ||
+				 argv[2][0] == '0')
+				param.demo.num = 0;
+			else {
+				fprintf(stderr, "Invalid arg\n");
+				return -1;
+			}
+			return lb_do_cmd(LIGHTBAR_CMD_DEMO, &param, &resp);
 		}
-		return lb_do_cmd(LIGHTBAR_CMD_DEMO, &param, &resp);
+
+		rv = lb_do_cmd(LIGHTBAR_CMD_GET_DEMO, &param, &resp);
+		if (rv)
+			return rv;
+		printf("%s\n", resp.get_demo.num ? "on" : "off");
+		return 0;
 	}
 
 	if (argc >= 2 && !strcasecmp(argv[1], "seq")) {
@@ -1682,11 +1706,27 @@ static int cmd_lightbar(int argc, char **argv)
 
 	if (argc == 5) {
 		char *e;
-		param.rgb.led = strtoul(argv[1], &e, 16);
-		param.rgb.red = strtoul(argv[2], &e, 16);
-		param.rgb.green = strtoul(argv[3], &e, 16);
-		param.rgb.blue = strtoul(argv[4], &e, 16);
-		return lb_do_cmd(LIGHTBAR_CMD_RGB, &param, &resp);
+		param.set_rgb.led = strtoul(argv[1], &e, 16);
+		param.set_rgb.red = strtoul(argv[2], &e, 16);
+		param.set_rgb.green = strtoul(argv[3], &e, 16);
+		param.set_rgb.blue = strtoul(argv[4], &e, 16);
+		return lb_do_cmd(LIGHTBAR_CMD_SET_RGB, &param, &resp);
+	}
+
+	/* Only thing left is to try to read an LED value */
+	if (argc == 2) {
+		char *e;
+		param.get_rgb.led = strtoul(argv[1], &e, 0);
+		if (!(e && *e)) {
+			r = lb_do_cmd(LIGHTBAR_CMD_GET_RGB, &param, &resp);
+			if (r)
+				return r;
+			printf("%02x %02x %02x\n",
+			       resp.get_rgb.red,
+			       resp.get_rgb.green,
+			       resp.get_rgb.blue);
+			return 0;
+		}
 	}
 
 	return lb_help(argv[0]);
