@@ -71,7 +71,7 @@ common-$(HAS_TASK_CONSOLE)+=console.o console_output.o uart_buffering.o
 common-$(HAS_TASK_CONSOLE)+=memory_commands.o
 common-$(HAS_TASK_HOSTCMD)+=acpi.o host_command.o host_event_commands.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
-common-$(HAS_TASK_LIGHTBAR)+=lightbar.o
+common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o math_util.o
 common-$(TEST_BUILD)+=test_util.o
 
