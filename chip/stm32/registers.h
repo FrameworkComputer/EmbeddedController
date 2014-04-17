@@ -46,6 +46,7 @@
 #define STM32_IRQ_USB             31
 /* aliases for easier code sharing */
 #define STM32_IRQ_COMP STM32_IRQ_ADC_COMP
+
 #else /* !CHIP_FAMILY_STM32F0 */
 #define STM32_IRQ_WWDG             0
 #define STM32_IRQ_PVD              1
@@ -65,7 +66,14 @@
 #define STM32_IRQ_DMA_CHANNEL_5   15
 #define STM32_IRQ_DMA_CHANNEL_6   16
 #define STM32_IRQ_DMA_CHANNEL_7   17
+#define STM32_IRQ_DMA_CHANNEL_8   18 /* STM32TS60 only */
+
+#ifdef CHIP_VARIANT_STM32TS60
+#define STM32_IRQ_ADC_1           21
+#else
 #define STM32_IRQ_ADC_1           18 /* ADC1 and ADC2 interrupt on STM32F10x */
+#endif
+
 #define STM32_IRQ_USB_HP          19
 #define STM32_IRQ_CAN_TX          19 /* STM32F10x only */
 #define STM32_IRQ_USB_LP          20
@@ -74,11 +82,14 @@
 #define STM32_IRQ_CAN_RX1         21 /* STM32F10x only */
 #define STM32_IRQ_COMP            22
 #define STM32_IRQ_CAN_SCE         22 /* STM32F10x only */
+#define STM32_IRQ_ADC_2           22 /* STM32TS60 only */
 #define STM32_IRQ_EXTI9_5         23
 #define STM32_IRQ_LCD             24 /* STM32L15X only */
 #define STM32_IRQ_TIM1_BRK_TIM15  24 /* TIM15 interrupt on STM32F100 only */
+#define STM32_IRQ_PMAD            24 /* STM32TS60 only */
 #define STM32_IRQ_TIM9            25 /* STM32L15X only */
 #define STM32_IRQ_TIM1_UP_TIM16   25 /* TIM16 interrupt on STM32F100 only */
+#define STM32_IRQ_PMSE            25 /* STM32TS60 only */
 #define STM32_IRQ_TIM10           26 /* STM32L15X only */
 #define STM32_IRQ_TIM1_TRG_TIM17  26 /* STM32F100 only */
 #define STM32_IRQ_TIM1_TRG_COM    26 /* STM32F10x only */
@@ -293,6 +304,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_F                       STM32_GPIOF_BASE
 #define GPIO_G                       STM32_GPIOG_BASE
 #define GPIO_H                       STM32_GPIOH_BASE
+#define GPIO_I                       STM32_GPIOI_BASE
 
 #define DUMMY_GPIO_BANK GPIO_A
 
@@ -358,6 +370,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_GPIOE_BASE            0x40011800
 #define STM32_GPIOF_BASE            0x4001c000
 #define STM32_GPIOG_BASE            0x40012000
+#define STM32_GPIOH_BASE            0x40012400 /* STM32TS only */
+#define STM32_GPIOI_BASE            0x40012800 /* STM32TS only */
 
 #define STM32_GPIO_CRL(b)       REG32((b) + 0x00)
 #define STM32_GPIO_CRH(b)       REG32((b) + 0x04)
@@ -522,6 +536,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB2_TIM15		(1 << 16) /* STM32F0XX */
 #define STM32_RCC_PB2_TIM16		(1 << 17) /* STM32F0XX */
 #define STM32_RCC_PB2_TIM17		(1 << 18) /* STM32F0XX */
+#define STM32_RCC_PB2_PMAD		(1 << 11) /* STM32TS */
+#define STM32_RCC_PB2_PMSE		(1 << 13) /* STM32TS */
 #define STM32_RCC_PB1_TIM14		(1 << 8)  /* STM32F0XX */
 
 #define STM32_SYSCFG_BASE           0x40010000
@@ -667,7 +683,10 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_CR1_LSBFIRST		(1 << 7)
 #define STM32_SPI_CR1_SPE		(1 << 6)
 #define STM32_SPI_CR1_BR_DIV64R		(5 << 3)
+#define STM32_SPI_CR1_BR_DIV4R		(1 << 3)
 #define STM32_SPI_CR1_MSTR		(1 << 2)
+#define STM32_SPI_CR2_RXNEIE		(1 << 6)
+#define STM32_SPI_CR2_SSOE		(1 << 2)
 #define STM32_SPI_CR2_RXDMAEN		(1 << 0)
 #define STM32_SPI_CR2_TXDMAEN		(1 << 1)
 #define STM32_SPI_CR2_DATASIZE(n)	(((n) - 1) << 8)
@@ -763,10 +782,16 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 /* --- ADC --- */
 
+#if defined(CHIP_VARIANT_STM32TS60)
+#define STM32_ADC1_BASE             0x40013800
+#define STM32_ADC2_BASE             0x40013c00
+#define STM32_ADC_BASE(x)           (0x40013800 + 0x400 * (x))
+#else /* !CHIP_VARIANT_STM32TS60 */
 #define STM32_ADC1_BASE             0x40012400
 #define STM32_ADC_BASE              0x40012700 /* STM32L15X only */
 #define STM32_ADC2_BASE             0x40012800 /* STM32F10x only */
 #define STM32_ADC3_BASE             0x40013C00 /* STM32F10x only */
+#endif
 
 #if defined(CHIP_VARIANT_STM32F100)
 #define STM32_ADC_SR               REG32(STM32_ADC1_BASE + 0x00)
@@ -784,6 +809,13 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_JSQR             REG32(STM32_ADC1_BASE + 0x38)
 #define STM32_ADC_JDR(n)           REG32(STM32_ADC1_BASE + 0x3C + ((n)&3) * 4)
 #define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x4C)
+#elif defined(CHIP_VARIANT_STM32TS60)
+#define STM32_ADC_SR(x)            REG32(STM32_ADC_BASE(x) + 0x00)
+#define STM32_ADC_CR1(x)           REG32(STM32_ADC_BASE(x) + 0x04)
+#define STM32_ADC_CR2(x)           REG32(STM32_ADC_BASE(x) + 0x08)
+#define STM32_ADC_SMPR2(x)         REG32(STM32_ADC_BASE(x) + 0x10)
+#define STM32_ADC_SQR3(x)          REG32(STM32_ADC_BASE(x) + 0x34)
+#define STM32_ADC_DR(x)            REG32(STM32_ADC_BASE(x) + 0x4c)
 #elif defined(CHIP_FAMILY_STM32F0)
 #define STM32_ADC_ISR              REG32(STM32_ADC1_BASE + 0x00)
 #define STM32_ADC_IER              REG32(STM32_ADC1_BASE + 0x04)
@@ -1041,6 +1073,8 @@ enum dma_channel {
 	STM32_DMAC_USART1_RX = STM32_DMAC_CH5,
 	STM32_DMAC_I2C1_TX = STM32_DMAC_CH6,
 	STM32_DMAC_I2C1_RX = STM32_DMAC_CH7,
+	STM32_DMAC_PMSE_ROW = STM32_DMAC_CH6,
+	STM32_DMAC_PMSE_COL = STM32_DMAC_CH7,
 
 	/* Only DMA1 (with 7 channels) is present on STM32F100 and STM32L151x */
 	STM32_DMAC_COUNT = 7,

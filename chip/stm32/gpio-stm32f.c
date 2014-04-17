@@ -138,7 +138,11 @@ void gpio_pre_init(void)
 		 * TODO(crosbug.com/p/23770): only enable the banks we need to,
 		 * and support disabling some of them in low-power idle.
 		 */
+#ifdef CHIP_VARIANT_STM32TS60
+		STM32_RCC_APB2ENR |= 0x7fd;
+#else
 		STM32_RCC_APB2ENR |= 0x1fd;
+#endif
 	}
 
 	/* Set all GPIOs to defaults */

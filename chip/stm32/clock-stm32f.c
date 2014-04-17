@@ -128,6 +128,9 @@ DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
  */
 #define DESIRED_CPU_CLOCK 48000000
 #define RCC_CFGR 0x00680000
+#elif defined(BOARD_KEYBORG)
+#define DESIRED_CPU_CLOCK 48000000
+#define RCC_CFGR 0x00684000
 #else
 #error "Need board-specific clock settings"
 #endif
