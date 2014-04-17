@@ -7,6 +7,7 @@
 #include "board.h"
 #include "common.h"
 #include "debug.h"
+#include "master_slave.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -17,6 +18,8 @@ int main(void)
 	int i = 0;
 	hardware_init();
 	debug_printf("Keyborg starting...\n");
+
+	master_slave_init();
 
 	while (1) {
 		i++;

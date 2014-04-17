@@ -9,5 +9,5 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f
 CHIP_VARIANT:=stm32ts60
 
-board-y=board.o hardware.o runtime.o
+board-y=board.o hardware.o runtime.o master_slave.o
 board-$(CONFIG_DEBUG_PRINTF)+=debug.o
