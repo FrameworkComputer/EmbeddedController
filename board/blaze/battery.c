@@ -29,6 +29,30 @@ struct battery_device {
 	int			support_cut_off;
 };
 
+/*
+ * Used for the case that battery cannot be detected, such as the pre-charge
+ * case. In this case, we need to provide the battery with the enough voltage
+ * (usually the highest voltage among batteries, but the smallest precharge
+ * current). This should be as conservative as possible.
+ */
+static struct battery_info info_precharge = {
+
+	.voltage_max    = 13050,    /* the max voltage among batteries */
+	.voltage_normal = 11400,
+	.voltage_min    =  9000,
+
+	/* Pre-charge values. */
+	.precharge_current  = 392,  /* mA, the min current among batteries */
+
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 60,
+	.charging_min_c       = 0,
+	.charging_max_c       = 60,
+	.discharging_min_c    = 0,
+	.discharging_max_c    = 60,
+};
+
+
 static struct battery_info info_3s = {
 
 	.voltage_max    = 13050,
@@ -176,16 +200,16 @@ const struct battery_info *battery_get_info(void)
 
 	if (battery_manufacturer_name(manuf, sizeof(manuf))) {
 		CPRINTF("[%T Failed to get MANUF name]\n");
-		return NULL;
+		return &info_precharge;
 	}
 
 	if (battery_device_name(device, sizeof(device))) {
 		CPRINTF("[%T Failed to get DEVICE name]\n");
-		return NULL;
+		return &info_precharge;
 	}
 	if (battery_design_voltage((int *)&design_mv)) {
 		CPRINTF("[%T Failed to get DESIGN_VOLTAGE]\n");
-		return NULL;
+		return &info_precharge;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(support_batteries); ++i) {
@@ -200,7 +224,9 @@ const struct battery_info *battery_get_info(void)
 		}
 	}
 
-	return NULL;
+	CPRINTF("[%T un-recognized battery Manuf:%s, Device:%s]\n",
+		manuf, device);
+	return &info_precharge;
 }
 
 static int cutoff(void)
