@@ -80,10 +80,8 @@ static int wait_bits(int nb)
 
 	avail = dma_bytes_done(rx, PD_MAX_RAW_SIZE);
 	if (avail < nb) { /* no received yet ... */
-		timestamp_t deadline = get_time();
-		deadline.val += 4 * MAX_BITS * (nb - avail);
 		while ((dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb)
-			&& get_time().val < deadline.val)
+			&& !(STM32_TIM_SR(TIM_RX) & 4))
 			; /* optimized for latency, not CPU usage ... */
 		if (dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb) {
 			CPRINTF("TMOUT RX %d/%d\n",
@@ -524,10 +522,3 @@ void pd_set_clock(int freq)
 {
 	STM32_TIM_ARR(TIM_TX) = clock_get_freq() / (2*freq);
 }
-
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-void pd_set_host_mode(int enable)
-{
-	gpio_set_level(GPIO_CC_HOST, enable);
-}
-#endif /* CONFIG_USB_PD_DUAL_ROLE */

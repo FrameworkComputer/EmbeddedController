@@ -106,3 +106,7 @@ void pd_power_supply_reset(void)
 	set_output_voltage(VO_5V);
 	/* TODO transition delay */
 }
+
+void pd_board_checks(void)
+{
+}

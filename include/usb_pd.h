@@ -142,6 +142,20 @@ void pd_power_supply_reset(void);
  */
 int pd_set_power_supply_ready(void);
 
+/**
+ * Ask the specified voltage from the PD source.
+ *
+ * It triggers a new negotiation sequence with the source.
+ * @param mv request voltage in millivolts.
+ */
+void pd_request_source_voltage(int mv);
+
+/*
+ * Verify board specific health status : current, voltages...
+ *
+ */
+void pd_board_checks(void);
+
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];
 extern const int pd_src_pdo_cnt;
@@ -223,13 +237,6 @@ void pd_dump_packet(void *ctxt, const char *msg);
  * @param freq frequency in hertz.
  */
 void pd_set_clock(int freq);
-
-/**
- * Enable/Disable the host pull-up on CC.
- *
- * @param enable non null if we are a host / power source.
- */
-void pd_set_host_mode(int enable);
 
 /* TX/RX callbacks */
 

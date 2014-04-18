@@ -305,9 +305,11 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 			   id == pd_message_id) {
 				/* got the GoodCRC we were expecting */
 				inc_id();
+				/* do not catch last edges as a new packet */
+				udelay(10);
 				return bit_len;
 			} else {
-				CPRINTF("ERR ACK/%d %04x\n", id, head);
+				/* CPRINTF("ERR ACK/%d %04x\n", id, head); */
 			}
 		}
 	}
@@ -626,6 +628,8 @@ void pd_task(void)
 	while (1) {
 		/* monitor for incoming packet */
 		pd_rx_enable_monitoring();
+		/* Verify board specific health status : current, voltages... */
+		pd_board_checks();
 		/* wait for next event/packet or timeout expiration */
 		evt = task_wait_event(timeout);
 		/* incoming packet ? */
@@ -637,7 +641,8 @@ void pd_task(void)
 			else if (head == PD_ERR_HARD_RESET)
 				execute_hard_reset();
 		}
-		timeout = -1;
+		/* if nothing to do, verify the state of the world in 500ms */
+		timeout = 500*MSEC;
 		switch (pd_task_state) {
 		case PD_STATE_DISABLED:
 			/* Nothing to do */
@@ -719,6 +724,8 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_READY:
 			/* we have power and we are happy */
+			/* check vital parameters from time to time */
+			timeout = 100*MSEC;
 			break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_HARD_RESET:
@@ -740,6 +747,15 @@ void pd_rx_event(void)
 }
 
 #ifdef CONFIG_COMMON_RUNTIME
+void pd_request_source_voltage(int mv)
+{
+	pd_set_max_voltage(mv);
+	pd_role = PD_ROLE_SINK;
+	pd_set_host_mode(0);
+	pd_task_state = PD_STATE_SNK_DISCONNECTED;
+	task_wake(TASK_ID_PD);
+}
+
 static int command_pd(int argc, char **argv)
 {
 	if (argc < 2)
@@ -759,18 +775,12 @@ static int command_pd(int argc, char **argv)
 		pd_task_state = PD_STATE_SRC_DISCONNECTED;
 		task_wake(TASK_ID_PD);
 	} else if (!strncasecmp(argv[1], "dev", 3)) {
+		int max_volt = -1;
 		if (argc >= 3) {
-			unsigned max_volt;
 			char *e;
-
-			max_volt = strtoi(argv[2], &e, 10);
-			pd_set_max_voltage(max_volt * 1000);
+			max_volt = strtoi(argv[2], &e, 10) * 1000;
 		}
-
-		pd_role = PD_ROLE_SINK;
-		pd_set_host_mode(0);
-		pd_task_state = PD_STATE_SNK_DISCONNECTED;
-		task_wake(TASK_ID_PD);
+		pd_request_source_voltage(max_volt);
 	} else if (!strcasecmp(argv[1], "clock")) {
 		int freq;
 		char *e;

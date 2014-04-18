@@ -112,3 +112,7 @@ int pd_set_power_supply_ready(void)
 void pd_power_supply_reset(void)
 {
 }
+
+void pd_board_checks(void)
+{
+}

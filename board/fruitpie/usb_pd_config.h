@@ -61,6 +61,11 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 }
 
+static inline void pd_set_host_mode(int enable)
+{
+	gpio_set_level(GPIO_CC_HOST, enable);
+}
+
 /* Standard-current DFP : no-connect voltage is 1.55V */
 #define PD_SRC_VNC 1550 /* mV */
 
