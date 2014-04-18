@@ -22,6 +22,7 @@
 #include "task.h"
 #include "util.h"
 #include "timer.h"
+#include "charger.h"
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
@@ -117,3 +118,11 @@ const struct pwm_t pwm_channels[] = {
 	 PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/**
+ * Discharge battery when on AC power for factory test.
+ */
+int board_discharge_on_ac(int enable)
+{
+	return charger_discharge_on_ac(enable);
+}
