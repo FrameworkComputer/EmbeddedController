@@ -136,6 +136,13 @@
  */
 #undef CONFIG_BATTERY_CUT_OFF
 
+/*
+ * The board-specific battery.c implements get and set functions to read and
+ * write arbirary vendor-specific parameters stored in the battery.
+ * See include/battery.h for prototypes.
+ */
+#undef CONFIG_BATTERY_VENDOR_PARAM
+
 /*****************************************************************************/
 
 /*

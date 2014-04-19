@@ -36,6 +36,8 @@ const char help_str[] =
 	"      Prints battery info\n"
 	"  batterycutoff\n"
 	"      Cut off battery output power\n"
+	"  batteryparam\n"
+	"      Read or write board-specific battery parameter\n"
 	"  boardversion\n"
 	"      Prints the board version\n"
 	"  chargecurrentlimit\n"
@@ -3325,6 +3327,60 @@ int cmd_battery_cut_off(int argc, char *argv[])
 	return rv;
 }
 
+int cmd_battery_vendor_param(int argc, char *argv[])
+{
+	struct ec_params_battery_vendor_param p;
+	struct ec_response_battery_vendor_param r;
+	char *e;
+	int rv;
+
+	if (argc < 3)
+		goto cmd_battery_vendor_param_usage;
+
+	if (!strcasecmp(argv[1], "get"))
+		p.mode = BATTERY_VENDOR_PARAM_MODE_GET;
+	else if (!strcasecmp(argv[1], "set"))
+		p.mode = BATTERY_VENDOR_PARAM_MODE_SET;
+	else
+		goto cmd_battery_vendor_param_usage;
+
+	p.param = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Invalid param.\n");
+		goto cmd_battery_vendor_param_usage;
+	}
+
+	if (p.mode == BATTERY_VENDOR_PARAM_MODE_SET) {
+		if (argc != 4) {
+			fprintf(stderr, "Missing value.\n");
+			goto cmd_battery_vendor_param_usage;
+		}
+
+		p.value = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Invalid value.\n");
+			goto cmd_battery_vendor_param_usage;
+		}
+	}
+
+	rv = ec_command(EC_CMD_BATTERY_VENDOR_PARAM, 0, &p, sizeof(p),
+			&r, sizeof(r));
+
+	if (rv < 0)
+		return rv;
+
+	printf("0x%08x\n", r.value);
+
+	return 0;
+
+cmd_battery_vendor_param_usage:
+	fprintf(stderr,
+		"Usage:\t %s get <param>\n"
+		"\t %s set <param> <value>\n",
+		argv[0], argv[0]);
+	return -1;
+}
+
 int cmd_board_version(int argc, char *argv[])
 {
 	struct ec_response_board_version response;
@@ -3922,6 +3978,7 @@ const struct command commands[] = {
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
 	{"batterycutoff", cmd_battery_cut_off},
+	{"batteryparam", cmd_battery_vendor_param},
 	{"boardversion", cmd_board_version},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargecontrol", cmd_charge_control},

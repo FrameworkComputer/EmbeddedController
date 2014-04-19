@@ -2129,6 +2129,33 @@ struct ec_params_sb_wr_block {
 	uint16_t data[32];
 } __packed;
 
+
+/*****************************************************************************/
+/* Battery vendor parameters
+ *
+ * Get or set vendor-specific parameters in the battery. Implementations may
+ * differ between boards or batteries. On a set operation, the response
+ * contains the actual value set, which may be rounded or clipped from the
+ * requested value.
+ */
+
+#define EC_CMD_BATTERY_VENDOR_PARAM 0xb4
+
+enum ec_battery_vendor_param_mode {
+	BATTERY_VENDOR_PARAM_MODE_GET = 0,
+	BATTERY_VENDOR_PARAM_MODE_SET,
+};
+
+struct ec_params_battery_vendor_param {
+	uint32_t param;
+	uint32_t value;
+	uint8_t mode;
+} __packed;
+
+struct ec_response_battery_vendor_param {
+	uint32_t value;
+} __packed;
+
 /*****************************************************************************/
 /* System commands */
 
