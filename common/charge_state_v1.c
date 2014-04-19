@@ -349,9 +349,9 @@ static int state_common(struct charge_state_context *ctx)
 		*ctx->memmap_batt_flags &= ~EC_BATT_FLAG_LEVEL_CRITICAL;
 	}
 
-#ifdef CONFIG_BATTERY_VENDOR_PARAMS
+#ifdef CONFIG_BATTERY_OVERRIDE_PARAMS
 	/* Apply battery pack vendor charging method */
-	battery_vendor_params(batt);
+	battery_override_params(batt);
 #endif
 
 #ifdef CONFIG_CHARGER_CURRENT_LIMIT

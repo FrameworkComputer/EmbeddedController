@@ -169,7 +169,7 @@ static struct battery_device support_batteries[] = {
 	},
 };
 
-#ifdef CONFIG_BATTERY_VENDOR_PARAMS
+#ifdef CONFIG_BATTERY_OVERRIDE_PARAMS
 /*
  * The following parameters are for 2S battery.
  * There is no corresponding params for 3S battery.
@@ -213,7 +213,7 @@ static inline void limit_value(int *val, int limit)
 		*val = limit;
 }
 
-void battery_vendor_params(struct batt_params *batt)
+void battery_override_params(struct batt_params *batt)
 {
 	int *desired_current = &batt->desired_current;
 	int temp_range, volt_range;
@@ -264,7 +264,7 @@ void battery_vendor_params(struct batt_params *batt)
 	    *desired_current < battery_info->precharge_current)
 		*desired_current = battery_info->precharge_current;
 }
-#endif	/* CONFIG_BATTERY_VENDOR_PARAMS */
+#endif	/* CONFIG_BATTERY_OVERRIDE_PARAMS */
 
 const struct battery_info *battery_get_info(void)
 {

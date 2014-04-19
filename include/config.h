@@ -95,6 +95,14 @@
 #undef CONFIG_BATTERY_MOCK
 
 /*
+ * Charger should call battery_override_params() to limit/correct the voltage
+ * and current requested by the battery pack before acting on the request.
+ *
+ * This is valid with CONFIG_CHARGER_V1 only.
+ */
+#undef CONFIG_BATTERY_OVERRIDE_PARAMS
+
+/*
  * If defined, the charger will check for battery presence before attempting
  * to communicate with it. This avoids the 30 second delay when booting
  * without a battery present. Do not use with CONFIG_BATTERY_PRESENT_GPIO.
@@ -119,14 +127,6 @@
  * http://sbs-forum.org/specs/sbdat110.pdf)
  */
 #undef CONFIG_BATTERY_SMART
-
-/*
- * Charger should call battery_vendor_params() to limit/correct the voltage and
- * current requested by the battery pack before acting on the request.
- *
- * This is valid with CONFIG_CHARGER_V1 only.
- */
-#undef CONFIG_BATTERY_VENDOR_PARAMS
 
 /*
  * Support battery cut-off as host command and console command.
@@ -212,7 +212,10 @@
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
 
-/* Equivalent of CONFIG_BATTERY_VENDOR_PARAMS for use with CONFIG_CHARGER_V2 */
+/*
+ * Equivalent of CONFIG_BATTERY_OVERRIDE_PARAMS for use with
+ * CONFIG_CHARGER_V2
+ */
 #undef CONFIG_CHARGER_PROFILE_OVERRIDE
 
 /* Value of the charge sense resistor, in mOhms */

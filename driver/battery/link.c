@@ -39,7 +39,7 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-#ifdef CONFIG_BATTERY_VENDOR_PARAMS
+#ifdef CONFIG_BATTERY_OVERRIDE_PARAMS
 
 /*
  * Design capacity
@@ -93,7 +93,7 @@ static inline void limit_value(int *val, int limit)
  * desired_voltage and desired_current will be passed to the charger. To use
  * the smart battery's profile, simply do nothing.
  */
-void battery_vendor_params(struct batt_params *batt)
+void battery_override_params(struct batt_params *batt)
 {
 	int *desired_current = &batt->desired_current;
 	int temp_range, volt_range;
@@ -137,4 +137,4 @@ void battery_vendor_params(struct batt_params *batt)
 		*desired_current = info.precharge_current;
 }
 
-#endif	/* CONFIG_BATTERY_VENDOR_PARAMS */
+#endif	/* CONFIG_BATTERY_OVERRIDE_PARAMS */

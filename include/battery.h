@@ -113,7 +113,7 @@ void battery_get_params(struct batt_params *batt);
  *
  * @param batt		Battery parameters to modify
  */
-void battery_vendor_params(struct batt_params *batt);
+void battery_override_params(struct batt_params *batt);
 
 /**
  * Check for presence of battery.
