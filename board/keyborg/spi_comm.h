@@ -10,6 +10,7 @@
 
 enum ts_command {
 	TS_CMD_HELLO = 0,
+	TS_CMD_FULL_SCAN,
 };
 
 struct spi_comm_packet {

@@ -13,6 +13,7 @@
 #include "spi_comm.h"
 #include "task.h"
 #include "timer.h"
+#include "touch_scan.h"
 #include "util.h"
 
 #define DUMMY_DATA 0xdd
@@ -431,6 +432,8 @@ static void spi_nss_interrupt(void)
 
 	if (cmd->cmd_sts == TS_CMD_HELLO)
 		spi_slave_hello_back(cmd);
+	else if (cmd->cmd_sts == TS_CMD_FULL_SCAN)
+		touch_scan_slave_start();
 	else
 		spi_slave_nack();
 }

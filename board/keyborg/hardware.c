@@ -9,6 +9,7 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
+#include "touch_scan.h"
 #include "util.h"
 
 static void clock_init(void)
@@ -113,8 +114,8 @@ static void adc_init(void)
 		/* Set right alignment */
 		STM32_ADC_CR2(id) &= ~(1 << 11);
 
-		/* Set sampling time to 28.5 cycles */
-		STM32_ADC_SMPR2(id) = 0x3;
+		/* Set sampling time */
+		STM32_ADC_SMPR2(id) = ADC_SMPR_VAL;
 
 		/* Select AIN0 */
 		STM32_ADC_SQR3(id) &= ~0x1f;
@@ -168,6 +169,12 @@ static void irq_init(void)
 	asm("cpsie i");
 }
 
+static void pmse_init(void)
+{
+	/* Use 10K-ohm pull down */
+	STM32_PMSE_CR |= (1 << 13);
+}
+
 void hardware_init(void)
 {
 	power_init();
@@ -176,4 +183,5 @@ void hardware_init(void)
 	timers_init();
 	adc_init();
 	irq_init();
+	pmse_init();
 }
