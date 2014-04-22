@@ -35,8 +35,9 @@
  */
 static const struct battery_info *batt_info;
 static struct charge_state_data curr;
-static int prev_ac, prev_volt, prev_curr, prev_charge;
+static int prev_ac, prev_charge;
 static int state_machine_force_idle;
+static int manual_mode;  /* volt/curr are no longer maintained by charger */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_warning_time;
 static timestamp_t precharge_start_time;
@@ -241,6 +242,7 @@ static void dump_charge_state(void)
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
 	ccprintf("  force_idle = %d\n", state_machine_force_idle);
+	ccprintf("  manual_mode = %d\n", manual_mode);
 	ccprintf("  user_current_limit = %dmA\n", user_current_limit);
 	ccprintf("  battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
 #undef DUMP
@@ -277,12 +279,14 @@ static void show_charging_progress(void)
 static int charge_request(int voltage, int current)
 {
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS;
+	static int prev_volt, prev_curr;
 
 	/* TODO(crosbug.com/p/27640): should we call charger_set_mode() too? */
 	if (!voltage || !current)
 		voltage = current = 0;
 
-	CPRINTF("[%T %s(%dmV, %dmA)]\n", __func__, voltage, current);
+	if (prev_volt != voltage || prev_curr != current)
+		CPRINTF("[%T %s(%dmV, %dmA)]\n", __func__, voltage, current);
 
 	if (voltage >= 0)
 		r1 = charger_set_voltage(voltage);
@@ -293,6 +297,14 @@ static int charge_request(int voltage, int current)
 		r2 = charger_set_current(current);
 	if (r2 != EC_SUCCESS)
 		problem(PR_SET_CURRENT, r2);
+
+	/*
+	 * Only update if the request worked, so we'll keep trying on failures.
+	 */
+	if (!r1 && !r2) {
+		prev_volt = voltage;
+		prev_curr = current;
+	}
 
 	return r1 ? r1 : r2;
 }
@@ -309,6 +321,12 @@ static int charge_force_idle(int enable)
 		return EC_ERROR_NOT_POWERED;
 
 	state_machine_force_idle = enable;
+	if (enable) {
+		charge_request(0, 0);
+		manual_mode = 1;
+	} else {
+		manual_mode = 0;
+	}
 	return EC_SUCCESS;
 }
 
@@ -415,7 +433,7 @@ void charger_task(void)
 	/* Initialize all the state */
 	memset(&curr, 0, sizeof(curr));
 	curr.batt.is_present = BP_NOT_SURE;
-	prev_ac = prev_volt = prev_curr = prev_charge = -1;
+	prev_ac = prev_charge = -1;
 	state_machine_force_idle = 0;
 	shutdown_warning_time.val = 0UL;
 	battery_seems_to_be_dead = 0;
@@ -600,19 +618,15 @@ wait_for_it:
 			charger_closest_current(curr.requested_current);
 
 		/*
-		 * Only update the charger when something changes so that
-		 * temporary overrides are possible through console commands.
+		 * As a safety feature, some chargers will stop charging if
+		 * we don't communicate with it frequently enough. In manual
+		 * mode, we'll just tell it what it already knows
 		 */
-		if ((prev_volt != curr.requested_voltage ||
-		     prev_curr != curr.requested_current) &&
-		    EC_SUCCESS == charge_request(curr.requested_voltage,
-						 curr.requested_current)) {
-			/*
-			 * Only update if the request worked, so we'll keep
-			 * trying on failures.
-			 */
-			prev_volt = curr.requested_voltage;
-			prev_curr = curr.requested_current;
+		if (manual_mode) {
+			charge_request(curr.chg.voltage, curr.chg.current);
+		} else {
+			charge_request(curr.requested_voltage,
+				       curr.requested_current);
 		}
 
 		/* How long to sleep? */
@@ -837,11 +851,13 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 				val = charger_closest_voltage(val);
 				if (charge_request(val, -1))
 					rv = EC_RES_ERROR;
+				manual_mode = 1;
 				break;
 			case CS_PARAM_CHG_CURRENT:
 				val = charger_closest_current(val);
 				if (charge_request(-1, val))
 					rv = EC_RES_ERROR;
+				manual_mode = 1;
 				break;
 			case CS_PARAM_CHG_INPUT_CURRENT:
 				if (charger_set_input_current(val))

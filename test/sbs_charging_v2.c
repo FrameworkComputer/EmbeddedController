@@ -105,6 +105,14 @@ static int wait_charging_state(void)
 	return state;
 }
 
+static int charge_control(enum ec_charge_control_mode mode)
+{
+	struct ec_params_charge_control params;
+	params.mode = mode;
+	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 1, &params,
+				      sizeof(params), NULL, 0);
+}
+
 /* Setup init condition */
 static void test_setup(int on_ac)
 {
@@ -134,16 +142,11 @@ static void test_setup(int on_ac)
 		gpio_set_level(GPIO_AC_PRESENT, 0);
 	}
 
+	/* Reset the charger state to initial state */
+	charge_control(CHARGE_CONTROL_NORMAL);
+
 	/* Let things stabilize */
 	wait_charging_state();
-}
-
-static int charge_control(enum ec_charge_control_mode mode)
-{
-	struct ec_params_charge_control params;
-	params.mode = mode;
-	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 1, &params,
-				      sizeof(params), NULL, 0);
 }
 
 /* Host Event helpers */
