@@ -1767,12 +1767,45 @@ struct ec_params_gpio_set {
 /* Get GPIO value */
 #define EC_CMD_GPIO_GET 0x93
 
+/* Version 0 of input params and response */
 struct ec_params_gpio_get {
 	char name[32];
 } __packed;
 struct ec_response_gpio_get {
 	uint8_t val;
 } __packed;
+
+/* Version 1 of input params and response */
+struct ec_params_gpio_get_v1 {
+	uint8_t subcmd;
+	union {
+		struct {
+			char name[32];
+		} get_value_by_name;
+		struct {
+			uint8_t index;
+		} get_info;
+	};
+} __packed;
+
+struct ec_response_gpio_get_v1 {
+	union {
+		struct {
+			uint8_t val;
+		} get_value_by_name, get_count;
+		struct {
+			uint8_t val;
+			char name[32];
+			uint32_t flags;
+		} get_info;
+	};
+} __packed;
+
+enum gpio_get_subcmd {
+	EC_GPIO_GET_BY_NAME = 0,
+	EC_GPIO_GET_COUNT = 1,
+	EC_GPIO_GET_INFO = 2,
+};
 
 /*****************************************************************************/
 /* I2C commands. Only available when flash write protect is unlocked. */

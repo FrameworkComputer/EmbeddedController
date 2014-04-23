@@ -3157,26 +3157,102 @@ static int cmd_charge_state(int argc, char **argv)
 
 int cmd_gpio_get(int argc, char *argv[])
 {
-	struct ec_params_gpio_get p;
-	struct ec_response_gpio_get r;
-	int rv;
+	struct ec_params_gpio_get_v1 p_v1;
+	struct ec_response_gpio_get_v1 r_v1;
+	int i, rv, subcmd, num_gpios;
+	int cmdver = 1;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <GPIO name>\n", argv[0]);
+	if (!ec_cmd_version_supported(EC_CMD_GPIO_GET, cmdver)) {
+		struct ec_params_gpio_get p;
+		struct ec_response_gpio_get r;
+
+		/* Fall back to version 0 command */
+		cmdver = 0;
+		if (argc != 2) {
+			fprintf(stderr, "Usage: %s <GPIO name>\n", argv[0]);
+			return -1;
+		}
+
+		if (strlen(argv[1]) + 1 > sizeof(p.name)) {
+			fprintf(stderr, "GPIO name too long.\n");
+			return -1;
+		}
+		strcpy(p.name, argv[1]);
+
+		rv = ec_command(EC_CMD_GPIO_GET, cmdver, &p,
+				sizeof(p), &r, sizeof(r));
+		if (rv < 0)
+			return rv;
+
+		printf("GPIO %s = %d\n", p.name, r.val);
+		return 0;
+	}
+
+	if (argc > 2 || (argc == 2 && !strcmp(argv[1], "help"))) {
+		printf("Usage: %s [<subcmd> <GPIO name>]\n", argv[0]);
+		printf("'gpioget <GPIO_NAME>' - Get value by name\n");
+		printf("'gpioget count' - Get count of GPIOS\n");
+		printf("'gpioget all' - Get info for all GPIOs\n");
 		return -1;
 	}
 
-	if (strlen(argv[1]) + 1 > sizeof(p.name)) {
-		fprintf(stderr, "GPIO name too long.\n");
-		return -1;
-	}
-	strcpy(p.name, argv[1]);
+	/* Keeping it consistent with console command behavior */
+	if (argc == 1)
+		subcmd = EC_GPIO_GET_INFO;
+	else if (!strcmp(argv[1], "count"))
+		subcmd = EC_GPIO_GET_COUNT;
+	else if (!strcmp(argv[1], "all"))
+		subcmd = EC_GPIO_GET_INFO;
+	else
+		subcmd = EC_GPIO_GET_BY_NAME;
 
-	rv = ec_command(EC_CMD_GPIO_GET, 0, &p, sizeof(p), &r, sizeof(r));
+	if (subcmd == EC_GPIO_GET_BY_NAME) {
+		p_v1.subcmd = EC_GPIO_GET_BY_NAME;
+		if (strlen(argv[1]) + 1 > sizeof(p_v1.get_value_by_name.name)) {
+			fprintf(stderr, "GPIO name too long.\n");
+			return -1;
+		}
+		strcpy(p_v1.get_value_by_name.name, argv[1]);
+
+		rv = ec_command(EC_CMD_GPIO_GET, cmdver, &p_v1,
+				sizeof(p_v1), &r_v1, sizeof(r_v1));
+
+		if (rv < 0)
+			return rv;
+
+		printf("GPIO %s = %d\n", p_v1.get_value_by_name.name,
+			r_v1.get_value_by_name.val);
+		return 0;
+	}
+
+	/* Need GPIO count for EC_GPIO_GET_COUNT or EC_GPIO_GET_INFO */
+	p_v1.subcmd = EC_GPIO_GET_COUNT;
+	rv = ec_command(EC_CMD_GPIO_GET, cmdver, &p_v1,
+			sizeof(p_v1), &r_v1, sizeof(r_v1));
 	if (rv < 0)
 		return rv;
 
-	printf("GPIO %s = %d\n", p.name, r.val);
+	if (subcmd == EC_GPIO_GET_COUNT) {
+		printf("GPIO COUNT = %d\n", r_v1.get_count.val);
+		return 0;
+	}
+
+	/* subcmd EC_GPIO_GET_INFO */
+	num_gpios = r_v1.get_count.val;
+	p_v1.subcmd = EC_GPIO_GET_INFO;
+
+	for (i = 0; i < num_gpios; i++) {
+		p_v1.get_info.index = i;
+
+		rv = ec_command(EC_CMD_GPIO_GET, cmdver, &p_v1,
+				sizeof(p_v1), &r_v1, sizeof(r_v1));
+		if (rv < 0)
+			return rv;
+
+		printf("%2d %-32s 0x%04X\n", r_v1.get_info.val,
+			r_v1.get_info.name, r_v1.get_info.flags);
+	}
+
 	return 0;
 }
 
