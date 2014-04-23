@@ -617,16 +617,21 @@ wait_for_it:
 		curr.requested_current =
 			charger_closest_current(curr.requested_current);
 
-		/*
-		 * As a safety feature, some chargers will stop charging if
-		 * we don't communicate with it frequently enough. In manual
-		 * mode, we'll just tell it what it already knows
-		 */
-		if (manual_mode) {
-			charge_request(curr.chg.voltage, curr.chg.current);
-		} else {
-			charge_request(curr.requested_voltage,
-				       curr.requested_current);
+		/* Charger only accpets request when AC is on. */
+		if (curr.ac) {
+			/*
+			 * As a safety feature, some chargers will stop
+			 * charging if we don't communicate with it frequently
+			 * enough. In manual mode, we'll just tell it what it
+			 * knows.
+			 */
+			if (manual_mode) {
+				charge_request(curr.chg.voltage,
+					       curr.chg.current);
+			} else {
+				charge_request(curr.requested_voltage,
+					       curr.requested_current);
+			}
 		}
 
 		/* How long to sleep? */
