@@ -19,7 +19,7 @@
 #define SB_SHUTDOWN_DATA	0x0010
 
 static struct battery_info *battery_info;
-static int battery_cut_off;
+static int support_cut_off;
 
 struct battery_device {
 	char			manuf[9];
@@ -218,7 +218,7 @@ const struct battery_info *battery_get_info(void)
 		    (support_batteries[i].design_mv == design_mv)) {
 			CPRINTF("[%T battery Manuf:%s, Device=%s, design=%u]\n",
 				manuf, device, design_mv);
-			battery_cut_off = support_batteries[i].support_cut_off;
+			support_cut_off = support_batteries[i].support_cut_off;
 			battery_info = support_batteries[i].battery_info;
 			return battery_info;
 		}
@@ -229,25 +229,23 @@ const struct battery_info *battery_get_info(void)
 	return &info_precharge;
 }
 
-static int cutoff(void)
+int board_cut_off_battery(void)
 {
 	int rv;
+
+	if (!support_cut_off)
+		return EC_RES_INVALID_COMMAND;
 
 	/* Ship mode command must be sent twice to take effect */
 	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 
 	if (rv != EC_SUCCESS)
-		return rv;
+		goto out;
 
-	return sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
-}
-
-int battery_command_cut_off(struct host_cmd_handler_args *args)
-{
-	if (battery_cut_off)
-		return cutoff() ? EC_RES_ERROR : EC_RES_SUCCESS;
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+out:
+	if (rv)
+		return EC_RES_ERROR;
 	else
-		return EC_RES_INVALID_COMMAND;
+		return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
-		     EC_VER_MASK(0));

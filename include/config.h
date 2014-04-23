@@ -128,6 +128,14 @@
  */
 #undef CONFIG_BATTERY_VENDOR_PARAMS
 
+/*
+ * Support battery cut-off as host command and console command.
+ *
+ * Once defined, you have to implement a board_cut_off_battery() function
+ * in board/???/battery.c file.
+ */
+#undef CONFIG_BATTERY_CUT_OFF
+
 /*****************************************************************************/
 
 /*
