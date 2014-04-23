@@ -11,7 +11,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define BAUD 9600
+#define BAUD 38400
 #define BIT_PERIOD (1000000 / BAUD)
 
 int debug_txchar(void *context, int c)
@@ -27,8 +27,8 @@ int debug_txchar(void *context, int c)
 	st = get_time();
 	for (i = 0; i < 10; ++i) {
 		STM32_GPIO_BSRR(GPIO_A) = 1 << ((c & 1) ? 15 : 31);
-		d = MAX(st.val + BIT_PERIOD * (i + 1) - get_time().val, 0);
-		if (d)
+		d = (int32_t)st.le.lo + BIT_PERIOD * (i + 1) - get_time().le.lo;
+		if (d > 0)
 			udelay(d);
 		c >>= 1;
 	}
