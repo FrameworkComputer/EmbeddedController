@@ -620,12 +620,19 @@ wait_for_it:
 		/* Charger only accpets request when AC is on. */
 		if (curr.ac) {
 			/*
+			 * Some batteries would wake up after cut-off if we keep
+			 * charging it. Thus, we only charge when AC is on and
+			 * battery is not cut off yet.
+			 */
+			if (battery_is_cut_off())
+				charge_request(0, 0);
+			/*
 			 * As a safety feature, some chargers will stop
 			 * charging if we don't communicate with it frequently
 			 * enough. In manual mode, we'll just tell it what it
 			 * knows.
 			 */
-			if (manual_mode) {
+			else if (manual_mode) {
 				charge_request(curr.chg.voltage,
 					       curr.chg.current);
 			} else {

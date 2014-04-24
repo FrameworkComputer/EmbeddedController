@@ -5,6 +5,7 @@
 
 /* I2C cross-platform code for Chrome EC */
 
+#include "battery.h"
 #include "clock.h"
 #include "console.h"
 #include "host_command.h"
@@ -489,6 +490,14 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
 	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+#endif
+
+#ifdef CONFIG_BATTERY_CUT_OFF
+	/*
+	 * Some batteries would wake up after cut-off if we talk to it.
+	 */
+	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
 

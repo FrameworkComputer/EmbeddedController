@@ -275,4 +275,9 @@ int battery_manufacturer_date(int *year, int *month, int *day);
  */
 int board_cut_off_battery(void);
 
+/**
+ * Return if the battery has been cut off.
+ */
+int battery_is_cut_off(void);
+
 #endif /* __CROS_EC_BATTERY_H */

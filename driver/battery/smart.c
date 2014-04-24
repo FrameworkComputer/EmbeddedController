@@ -24,12 +24,39 @@ test_mockable int sbc_write(int cmd, int param)
 
 test_mockable int sb_read(int cmd, int *param)
 {
+#ifdef CONFIG_BATTERY_CUT_OFF
+	/*
+	 * Some batteries would wake up after cut-off if we talk to it.
+	 */
+	if (battery_is_cut_off())
+		return EC_RES_ACCESS_DENIED;
+#endif
 	return i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
 }
 
 test_mockable int sb_write(int cmd, int param)
 {
+#ifdef CONFIG_BATTERY_CUT_OFF
+	/*
+	 * Some batteries would wake up after cut-off if we talk to it.
+	 */
+	if (battery_is_cut_off())
+		return EC_RES_ACCESS_DENIED;
+#endif
 	return i2c_write16(I2C_PORT_BATTERY, BATTERY_ADDR, cmd, param);
+}
+
+int sb_read_string(int port, int slave_addr, int offset, uint8_t *data,
+	int len)
+{
+#ifdef CONFIG_BATTERY_CUT_OFF
+	/*
+	 * Some batteries would wake up after cut-off if we talk to it.
+	 */
+	if (battery_is_cut_off())
+		return EC_RES_ACCESS_DENIED;
+#endif
+	return i2c_read_string(port, slave_addr, offset, data, len);
 }
 
 int battery_get_mode(int *mode)
@@ -192,21 +219,21 @@ test_mockable int battery_manufacture_date(int *year, int *month, int *day)
 /* Read manufacturer name */
 test_mockable int battery_manufacturer_name(char *dest, int size)
 {
-	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+	return sb_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 			       SB_MANUFACTURER_NAME, dest, size);
 }
 
 /* Read device name */
 test_mockable int battery_device_name(char *dest, int size)
 {
-	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+	return sb_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 			       SB_DEVICE_NAME, dest, size);
 }
 
 /* Read battery type/chemistry */
 test_mockable int battery_device_chemistry(char *dest, int size)
 {
-	return i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
+	return sb_read_string(I2C_PORT_BATTERY, BATTERY_ADDR,
 			       SB_DEVICE_CHEMISTRY, dest, size);
 }
 
