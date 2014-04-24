@@ -170,9 +170,11 @@ static const uint8_t dec4b5b[] = {
 #define PD_CAPS_COUNT 50
 
 /* Timers */
-#define PD_T_SEND_SOURCE_CAP 1500000 /* us (between 1s and 2s) */
-#define PD_T_GET_SOURCE_CAP  1500000 /* us (between 1s and 2s) */
-#define PD_T_SOURCE_ACTIVITY   45000 /* us (between 40ms and 50ms) */
+#define PD_T_SEND_SOURCE_CAP (1500*MSEC) /* between 1s and 2s */
+#define PD_T_GET_SOURCE_CAP  (1500*MSEC) /* between 1s and 2s */
+#define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
+#define PD_T_PS_TRANSITION    (220*MSEC) /* between 200ms and 220ms */
 
 /* Port role at startup */
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -193,6 +195,7 @@ static enum {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	PD_STATE_SNK_DISCONNECTED,
 	PD_STATE_SNK_DISCOVERY,
+	PD_STATE_SNK_REQUESTED,
 	PD_STATE_SNK_TRANSITION,
 	PD_STATE_SNK_READY,
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -365,13 +368,15 @@ static void send_sink_cap(void *ctxt)
 	CPRINTF("snkCAP>%d\n", bit_len);
 }
 
-static void send_request(void *ctxt, uint32_t rdo)
+static int send_request(void *ctxt, uint32_t rdo)
 {
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd_role, pd_message_id, 1);
 
 	bit_len = send_validate_message(ctxt, header, 1, &rdo);
 	CPRINTF("REQ%d>\n", bit_len);
+
+	return bit_len;
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
@@ -408,8 +413,16 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 			/* we were waiting for them, let's process them */
 			res = pd_choose_voltage(cnt, payload, &rdo);
 			if (res >= 0) {
-				send_request(ctxt, rdo);
-				pd_task_state = PD_STATE_SNK_TRANSITION;
+				res = send_request(ctxt, rdo);
+				if (res >= 0)
+					pd_task_state = PD_STATE_SNK_REQUESTED;
+				else
+					/*
+					 * for now: ignore failure here,
+					 * we will retry ...
+					 * TODO(crosbug.com/p/28332)
+					 */
+					pd_task_state = PD_STATE_SNK_REQUESTED;
 			}
 		}
 		break;
@@ -617,7 +630,7 @@ void pd_task(void)
 	int head;
 	void *ctxt = pd_hw_init();
 	uint32_t payload[7];
-	int timeout = 10000;
+	int timeout = 10*MSEC;
 	uint32_t evt;
 	int cc1_volt, cc2_volt;
 	int res;
@@ -657,7 +670,7 @@ void pd_task(void)
 				pd_select_polarity(pd_polarity);
 				pd_task_state = PD_STATE_SRC_DISCOVERY;
 			}
-			timeout = 10000;
+			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SRC_DISCOVERY:
 			/* Query capabilites of the other side */
@@ -711,18 +724,34 @@ void pd_task(void)
 				pd_select_polarity(pd_polarity);
 				pd_task_state = PD_STATE_SNK_DISCOVERY;
 			}
-			timeout = 10000;
+			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_DISCOVERY:
 			res = send_control(ctxt, PD_CTRL_GET_SOURCE_CAP);
 			/* packet was acked => PD capable device) */
 			if (res >= 0) {
-				pd_task_state = PD_STATE_SNK_TRANSITION;
+				/*
+				 * we should a SOURCE_CAP package which will
+				 * switch to the PD_STATE_SNK_REQUESTED state,
+				 * else retry after the response timeout.
+				 */
+				timeout = PD_T_SENDER_RESPONSE;
 			} else { /* failed, retry later */
 				timeout = PD_T_GET_SOURCE_CAP;
 			}
 			break;
+		case PD_STATE_SNK_REQUESTED:
+			/* Ensure the power supply actually becomes ready */
+			pd_task_state = PD_STATE_SNK_TRANSITION;
+			timeout = PD_T_PS_TRANSITION;
+			break;
 		case PD_STATE_SNK_TRANSITION:
+			/*
+			 * did not get the PS_READY,
+			 * try again to whole request cycle.
+			 */
+			pd_task_state = PD_STATE_SNK_DISCOVERY;
+			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_READY:
 			/* we have power and we are happy */
@@ -808,10 +837,10 @@ static int command_pd(int argc, char **argv)
 	} else if (!strncasecmp(argv[1], "state", 5)) {
 		const char * const state_names[] = {
 			"DISABLED",
-			"SNK_DISCONNECTED", "SNK_DISCOVERY", "SNK_TRANSITION",
-			"SNK_READY",
+			"SNK_DISCONNECTED", "SNK_DISCOVERY", "SNK_REQUESTED",
+			"SNK_TRANSITION", "SNK_READY",
 			"SRC_DISCONNECTED", "SRC_DISCOVERY", "SRC_NEGOCIATE",
-			"SRC_READY",
+			"SRC_ACCEPTED", "SRC_TRANSITION", "SRC_READY",
 			"HARD_RESET", "BIST",
 		};
 		ccprintf("Role: %s Polarity: CC%d State: %s\n",
