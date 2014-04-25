@@ -33,7 +33,12 @@ SERVO_TYPE=servo
 
 # reset the EC
 toad_hard_reset() {
-	info "you probably need to hard-reset your EC with Refresh+Power"
+	if dut_control cold_reset 2>/dev/null ; then
+		dut_control cold_reset:on
+		dut_control cold_reset:off
+	else
+		info "you probably need to hard-reset your EC manually"
+	fi
 }
 
 servo_hard_reset() {
@@ -233,7 +238,7 @@ info "EC UART pty : ${EC_UART}"
 
 if dut_control boot_mode 2>/dev/null ; then
 	SERVO_TYPE=toad
-	info "Using a TOAD cable"
+	info "Using a dedicated debug cable"
 fi
 
 save="$(servo_save)"
