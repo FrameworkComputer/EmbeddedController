@@ -232,7 +232,8 @@ void gpio_interrupt(void)
 {
 	int bit;
 	const struct gpio_info *g;
-	uint32_t pending = STM32_EXTI_PR;
+	/* process only GPIO EXTINTs (EXTINT0..15) not other EXTINTs */
+	uint32_t pending = STM32_EXTI_PR & 0xFFFF;
 
 	STM32_EXTI_PR = pending;
 
