@@ -63,11 +63,13 @@ uint32_t task_wait_event(int timeout_us)
 {
 	uint32_t evt;
 
+	asm volatile("cpsid i");
 	/* the event already happened */
 	if (last_event || !timeout_us) {
 		evt = last_event;
 		last_event = 0;
 
+		asm volatile("cpsie i ; isb");
 		return evt;
 	}
 
@@ -84,6 +86,7 @@ uint32_t task_wait_event(int timeout_us)
 	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
 	evt = last_event;
 	last_event = 0;
+	asm volatile("cpsie i ; isb");
 
 	return evt;
 }
