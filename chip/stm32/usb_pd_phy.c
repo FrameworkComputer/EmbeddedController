@@ -263,10 +263,8 @@ void pd_start_tx(void *ctxt, int bit_len)
 
 	/* update DMA configuration */
 	dma_prepare_tx(&dma_tx_option, DIV_ROUND_UP(bit_len, 8), ctxt);
-	/* Flush data in write buffer so that DMA can get the lastest data */
+	/* Flush data in write buffer so that DMA can get the latest data */
 	asm volatile("dmb;");
-	/* Kick off the DMA to send the data */
-	dma_go(tx);
 
 	/* disable RX detection interrupt */
 	pd_rx_disable_monitoring();
@@ -277,8 +275,13 @@ void pd_start_tx(void *ctxt, int bit_len)
 	 */
 	pd_tx_enable();
 
+	/* Kick off the DMA to send the data */
+	dma_go(tx);
+
+#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* Start counting at 300Khz*/
 	STM32_TIM_CR1(TIM_TX) |= 1;
+#endif
 }
 
 void pd_tx_done(void)
@@ -294,14 +297,31 @@ void pd_tx_done(void)
 	while (!(spi->sr & (1<<1)))
 		; /* wait for TXE == 1 */
 #endif
+
 	while (spi->sr & (1<<7))
 		; /* wait for BSY == 0 */
+
+	/*
+	 * At the end of transmitting, the last bit is guaranteed by the
+	 * protocol to be low, and it is necessary that the TX line stay low
+	 * until pd_tx_disable().
+	 *
+	 * When using SPI slave mode for TX, this is done by writing out dummy
+	 * 0 byte at end.
+	 * When using SPI master mode, the CPOL and CPHA are set high, which
+	 * means that after the last bit is transmitted there are no more
+	 * clock edges. Hopefully, this is sufficient to guarantee that the
+	 * MOSI line does not change before pd_tx_disable().
+	 */
+#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* ensure that we are not pushing out junk */
 	*(uint8_t *)&spi->dr = 0;
 	/* Stop counting */
 	STM32_TIM_CR1(TIM_TX) &= ~1;
-	/* clear tranfer flag */
+#endif
+	/* clear transfer flag */
 	dma_clear_isr(DMAC_SPI_TX);
+
 	/* put TX pins and reference in Hi-Z */
 	pd_tx_disable();
 }
@@ -380,14 +400,31 @@ void *pd_hw_init(void)
 	/* Enable Tx DMA for our first transaction */
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_DATASIZE(8);
 
-	/* Enable the salve SPI: LSB first, force NSS, TX only */
+#ifdef CONFIG_USB_PD_TX_USES_SPI_MASTER
+	/*
+	 * Enable the master SPI: LSB first, force NSS, TX only, CPOL and CPHA
+	 * high.
+	 */
+	spi->cr1 = STM32_SPI_CR1_LSBFIRST | STM32_SPI_CR1_BIDIMODE
+		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI
+		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_MSTR
+		 | STM32_SPI_CR1_BR_DIV64R | STM32_SPI_CR1_SPE
+		 | STM32_SPI_CR1_CPOL | STM32_SPI_CR1_CPHA;
+
+#if CPU_CLOCK != 38400000
+#error "CPU_CLOCK must be 38.4MHz to use SPI master for USB PD Tx"
+#endif
+#else
+	/* Enable the slave SPI: LSB first, force NSS, TX only */
 	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST
 		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE
 		 | STM32_SPI_CR1_BIDIOE;
+#endif
 
 	/* configure TX DMA */
 	dma_prepare_tx(&dma_tx_option, PD_MAX_RAW_SIZE, raw_samples);
 
+#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* --- set the TX timer with updates at 600KHz (BMC frequency) --- */
 	__hw_timer_enable_clock(TIM_TX, 1);
 	/* Timer configuration */
@@ -406,6 +443,7 @@ void *pd_hw_init(void)
 	STM32_TIM_PSC(TIM_TX) = 0;
 	/* Reload the pre-scaler and reset the counter */
 	STM32_TIM_EGR(TIM_TX) = 0x0001;
+#endif
 
 	/* --- set counter for RX timing : 2.4Mhz rate, free-running --- */
 	__hw_timer_enable_clock(TIM_RX, 1);
@@ -415,9 +453,9 @@ void *pd_hw_init(void)
 	STM32_TIM_DIER(TIM_RX) = 0x0000;
 	/* Auto-reload value : 16-bit free running counter */
 	STM32_TIM_ARR(TIM_RX) = 0xFFFF;
+
 	/* Timeout for message receive : 2.7ms */
-	STM32_TIM_CCR2(TIM_RX) = clock_get_freq() / (RX_CLOCK_DIV + 1)
-				 * 27 / 10000 /* 2.7 ms */;
+	STM32_TIM_CCR2(TIM_RX) = 2400000 * 27 / 10000;
 	/* Timer ICx input configuration */
 #if TIM_CCR_IDX == 1
 	STM32_TIM_CCMR1(TIM_RX) = TIM_CCR_CS << 0;
@@ -430,7 +468,7 @@ void *pd_hw_init(void)
 	/* configure DMA request on CCRx update */
 	STM32_TIM_DIER(TIM_RX) |= 1 << (8 + TIM_CCR_IDX); /* CCxDE */;
 	/* set prescaler to /26 (F=1.2Mhz, T=0.8us) */
-	STM32_TIM_PSC(TIM_RX) = RX_CLOCK_DIV;
+	STM32_TIM_PSC(TIM_RX) = (clock_get_freq() / 2400000) - 1;
 	/* Reload the pre-scaler and reset the counter */
 	STM32_TIM_EGR(TIM_RX) = 0x0001 | (1 << TIM_CCR_IDX) /* clear CCRx */;
 	/* clear update event from reloading */

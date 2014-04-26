@@ -843,6 +843,9 @@
 
 /*****************************************************************************/
 
+/* USB PD transmit uses SPI master */
+#undef CONFIG_USB_PD_TX_USES_SPI_MASTER
+
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB
 
