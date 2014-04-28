@@ -62,9 +62,12 @@ static void power_init(void)
 
 static void pins_init(void)
 {
-	/* Enable SWD, but disable JTAG. We want JTDI as GPIO. */
+	/*
+	 * Disable JTAG and SWD. We want JTDI for UART Tx and SWD pins for
+	 * touch scan.
+	 */
 	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x7 << 24))
-			       | (2 << 24);
+			       | (4 << 24);
 
 	/*
 	 * Initial pin usage:
