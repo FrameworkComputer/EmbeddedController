@@ -54,7 +54,7 @@ static int master_handshake(void)
 	uint32_t val;
 	int err;
 
-	/* SYNC2 -> GPIO_INPUT */
+	/* SYNC2 is the sync signal from the slave. Set it to input. */
 	val = STM32_GPIO_CRL(GPIO_I);
 	val &= ~0x00000f00;
 	val |=  0x00000400;
@@ -72,7 +72,17 @@ static int slave_handshake(void)
 	uint32_t val;
 	int err;
 
-	/* SYNC1 -> GPIO_INPUT */
+	/*
+	 * N_CHG is used to drive SPI_NSS on the master. Set it to
+	 * output low.
+	 */
+	val = STM32_GPIO_CRL(GPIO_A);
+	val &= ~0x000000f0;
+	val |= 0x00000010;
+	STM32_GPIO_CRL(GPIO_A) = val;
+	STM32_GPIO_BSRR(GPIO_A) = 1 << (1 + 16);
+
+	/* SYNC1 is the sync signal from the master. Set it to input. */
 	val = STM32_GPIO_CRL(GPIO_I);
 	val &= ~0x000000f0;
 	val |=  0x00000040;
@@ -87,7 +97,16 @@ static int slave_handshake(void)
 
 static void master_slave_check(void)
 {
-	if (STM32_GPIO_IDR(GPIO_A) & (1 << 0) /* NSS */) {
+	/*
+	 * Master slave identity check:
+	 *   - Master has USB_PU connected to N_CHG through 1.5K
+	 *     resistor. USB_PU is initially low, so N_CHG is low.
+	 *   - Slave has N_CHG connected to master NSS with a 20K
+	 *     pull-up. Master NSS is initially Hi-Z, so N_CHG is
+	 *     high.
+	 */
+
+	if (STM32_GPIO_IDR(GPIO_A) & (1 << 1) /* N_CHG */) {
 		debug_printf("I'm slave\n");
 		is_master = 0;
 	} else {

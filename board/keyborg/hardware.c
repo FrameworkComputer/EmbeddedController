@@ -66,21 +66,23 @@ static void pins_init(void)
 	STM32_GPIO_AFIO_MAPR = (STM32_GPIO_AFIO_MAPR & ~(0x7 << 24))
 			       | (2 << 24);
 
-	/* Pin usage:
+	/*
+	 * Initial pin usage:
 	 * PA0:  SPI_NSS  - INPUT/INT_FALLING
-	 * PA1:  N_CHG    - OUTPUT/LOW
+	 * PA1:  N_CHG    - INPUT
 	 * PA3:  SPI_CLK  - INPUT
 	 * PA4:  SPI_MISO - INPUT
 	 * PA6:  CS1      - OUTPUT/HIGH
 	 * PA7:  SPI_MOSI - INPUT
+	 * PA9:  USB_PU   - OUTPUT/LOW
 	 * PA15: UART TX  - OUTPUT/HIGH
 	 * PI1:  SYNC1    - OUTPUT/LOW
 	 * PI2:  SYNC2    - OUTPUT/LOW
 	 */
-	STM32_GPIO_CRL(GPIO_A) = FLOAT(0) | OUT(1) | FLOAT(3) | FLOAT(4) |
+	STM32_GPIO_CRL(GPIO_A) = FLOAT(0) | FLOAT(1) | FLOAT(3) | FLOAT(4) |
 				 OUT(6) | FLOAT(7);
-	STM32_GPIO_CRH(GPIO_A) = OUT(15);
-	STM32_GPIO_BSRR(GPIO_A) = LOW(1) | HIGH(6) | HIGH(15);
+	STM32_GPIO_CRH(GPIO_A) = OUT(9) | OUT(15);
+	STM32_GPIO_BSRR(GPIO_A) = LOW(1) | HIGH(6) | LOW(9) | HIGH(15);
 	STM32_EXTI_FTSR |= INT(0);
 
 	STM32_GPIO_CRL(GPIO_I) = OUT(1) | OUT(2);
