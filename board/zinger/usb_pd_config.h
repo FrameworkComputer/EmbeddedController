@@ -29,7 +29,7 @@ static inline void spi_enable_clock(void)
 #define TIM_CCR_IDX 1
 /* connect TIM3 CH1 to TIM3_CH2 input */
 #define TIM_CCR_CS  2
-#define EXTI_COMP 7
+#define EXTI_COMP_MASK (1 << 7)
 #define IRQ_COMP STM32_IRQ_EXTI4_15
 /* the RX is inverted, triggers on rising edge */
 #define EXTI_XTSR STM32_EXTI_RTSR
@@ -44,7 +44,7 @@ static inline void pd_set_pins_speed(void)
 }
 
 /* Drive the CC line from the TX block */
-static inline void pd_tx_enable(void)
+static inline void pd_tx_enable(int polarity)
 {
 	/* Drive TX GND on PA4 */
 	STM32_GPIO_BSRR(GPIO_A) = 1 << (4 + 16 /* Reset */);
@@ -53,12 +53,18 @@ static inline void pd_tx_enable(void)
 }
 
 /* Put the TX driver in Hi-Z state */
-static inline void pd_tx_disable(void)
+static inline void pd_tx_disable(int polarity)
 {
 	/* Put TX GND (PA4) in Hi-Z state */
 	STM32_GPIO_BSRR(GPIO_A) = 1 << 4 /* Set */;
 	/* Put SPI MISO (PA6) in Hi-Z by putting it in input mode  */
 	STM32_GPIO_MODER(GPIO_A) &= ~(0x3 << (2*6));
+}
+
+/* we know the plug polarity, do the right configuration */
+static inline void pd_select_polarity(int polarity)
+{
+	/* captive cable : no polarity */
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */

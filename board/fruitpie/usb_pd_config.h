@@ -29,7 +29,7 @@ static inline void spi_enable_clock(void)
 #define DMAC_TIM_RX STM32_DMAC_CH2
 #define TIM_CCR_IDX 1
 #define TIM_CCR_CS  1
-#define EXTI_COMP 21
+#define EXTI_COMP_MASK (1 << 21)
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
@@ -44,15 +44,25 @@ static inline void pd_set_pins_speed(void)
 }
 
 /* Drive the CC line from the TX block */
-static inline void pd_tx_enable(void)
+static inline void pd_tx_enable(int polarity)
 {
 	gpio_set_level(GPIO_PD_TX_EN, 1);
 }
 
 /* Put the TX driver in Hi-Z state */
-static inline void pd_tx_disable(void)
+static inline void pd_tx_disable(int polarity)
 {
 	gpio_set_level(GPIO_PD_TX_EN, 0);
+}
+
+/* we know the plug polarity, do the right configuration */
+static inline void pd_select_polarity(int polarity)
+{
+	/* use the right comparator non inverted input for COMP1 */
+	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
+		| STM32_COMP_CMP1EN
+		| (polarity ? STM32_COMP_CMP1INSEL_INM4
+			    : STM32_COMP_CMP1INSEL_INM6);
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */

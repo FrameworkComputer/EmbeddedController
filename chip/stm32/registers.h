@@ -926,6 +926,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_COMP_CMP2OUTSEL_NONE     (0 << 24)
 #define STM32_COMP_WNDWEN              (1 << 23)
 
+#define STM32_COMP_CMP2INSEL_MASK      (7 << 20)
 #define STM32_COMP_CMP2INSEL_INM6      (6 << 20)
 #define STM32_COMP_CMP2INSEL_INM5      (5 << 20)
 #define STM32_COMP_CMP2INSEL_INM4      (4 << 20)
@@ -957,6 +958,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_COMP_CMP1OUTSEL_TIM1_BRK (1 << 8)
 #define STM32_COMP_CMP1OUTSEL_NONE     (0 << 8)
 
+#define STM32_COMP_CMP1INSEL_MASK      (7 << 4)
 #define STM32_COMP_CMP1INSEL_INM6      (6 << 4)
 #define STM32_COMP_CMP1INSEL_INM5      (5 << 4)
 #define STM32_COMP_CMP1INSEL_INM4      (4 << 4)

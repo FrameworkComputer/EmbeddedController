@@ -255,7 +255,7 @@ static const struct dma_option dma_tx_option = {
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 };
 
-void pd_start_tx(void *ctxt, int bit_len)
+void pd_start_tx(void *ctxt, int polarity, int bit_len)
 {
 	stm32_dma_chan_t *tx = dma_get_channel(DMAC_SPI_TX);
 
@@ -271,7 +271,7 @@ void pd_start_tx(void *ctxt, int bit_len)
 	 * - set the low level reference.
 	 * - put SPI function on TX pin.
 	 */
-	pd_tx_enable();
+	pd_tx_enable(polarity);
 
 	/* Kick off the DMA to send the data */
 	dma_go(tx);
@@ -282,7 +282,7 @@ void pd_start_tx(void *ctxt, int bit_len)
 #endif
 }
 
-void pd_tx_done(void)
+void pd_tx_done(int polarity)
 {
 	stm32_spi_regs_t *spi = SPI_REGS;
 
@@ -321,7 +321,7 @@ void pd_tx_done(void)
 	dma_clear_isr(DMAC_SPI_TX);
 
 	/* put TX pins and reference in Hi-Z */
-	pd_tx_disable();
+	pd_tx_disable(polarity);
 }
 
 /* --- RX operation using comparator linked to timer --- */
@@ -352,7 +352,7 @@ void pd_rx_complete(void)
 void pd_rx_enable_monitoring(void)
 {
 	/* clear comparator external interrupt */
-	STM32_EXTI_PR = 1 << EXTI_COMP;
+	STM32_EXTI_PR = EXTI_COMP_MASK;
 	/* clean up older comparator event */
 	task_clear_pending_irq(IRQ_COMP);
 	/* re-enable comparator interrupt to detect packets */
@@ -364,7 +364,7 @@ void pd_rx_disable_monitoring(void)
 	/* stop monitoring RX during sampling */
 	task_disable_irq(IRQ_COMP);
 	/* clear comparator external interrupt */
-	STM32_EXTI_PR = 1 << EXTI_COMP;
+	STM32_EXTI_PR = EXTI_COMP_MASK;
 }
 
 /* detect an edge on the PD RX pin */
@@ -490,10 +490,14 @@ void *pd_hw_init(void)
 	/* turn on COMP/SYSCFG */
 	STM32_RCC_APB2ENR |= 1 << 0;
 	/* currently in hi-speed mode : TODO revisit later, INM = PA0(INM6) */
-	STM32_COMP_CSR = STM32_COMP_CMP1EN | STM32_COMP_CMP1MODE_LSPEED |
+	STM32_COMP_CSR = STM32_COMP_CMP1MODE_LSPEED |
 			 STM32_COMP_CMP1INSEL_INM6 |
 			 STM32_COMP_CMP1OUTSEL_TIM1_IC1 |
-			 STM32_COMP_CMP1HYST_HI;
+			 STM32_COMP_CMP1HYST_HI |
+			 STM32_COMP_CMP2MODE_LSPEED |
+			 STM32_COMP_CMP2INSEL_INM6 |
+			 STM32_COMP_CMP2OUTSEL_TIM1_IC1 |
+			 STM32_COMP_CMP2HYST_HI;
 #elif defined(CHIP_FAMILY_STM32L)
 	/* 40 MHz pin speed on PB4 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x300;
@@ -510,8 +514,8 @@ void *pd_hw_init(void)
 #endif /* CONFIG_USB_PD_INTERNAL_COMP */
 	/* DBG */usleep(250000);
 	/* comparator interrupt setup */
-	EXTI_XTSR |= 1 << EXTI_COMP;
-	STM32_EXTI_IMR |= 1 << EXTI_COMP;
+	EXTI_XTSR |= EXTI_COMP_MASK;
+	STM32_EXTI_IMR |= EXTI_COMP_MASK;
 	task_enable_irq(IRQ_COMP);
 
 	CPRINTF("USB PD initialized\n");

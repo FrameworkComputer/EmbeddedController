@@ -273,8 +273,8 @@ static void send_hard_reset(void *ctxt)
 	/* Ensure that we have a final edge */
 	off = pd_write_last_edge(ctxt, off);
 	/* Transmit the packet */
-	pd_start_tx(ctxt, off);
-	pd_tx_done();
+	pd_start_tx(ctxt, pd_polarity, off);
+	pd_tx_done(pd_polarity);
 }
 
 static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
@@ -290,8 +290,8 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 		/* write the encoded packet in the transmission buffer */
 		bit_len = prepare_message(ctxt, header, cnt, data);
 		/* Transmit the packet */
-		pd_start_tx(ctxt, bit_len);
-		pd_tx_done();
+		pd_start_tx(ctxt, pd_polarity, bit_len);
+		pd_tx_done(pd_polarity);
 		/* starting waiting for GoodCrc */
 		pd_rx_start();
 		/* read the incoming packet if any */
@@ -336,8 +336,8 @@ static void send_goodcrc(void *ctxt, int id)
 	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd_role, id, 0);
 	int bit_len = prepare_message(ctxt, header, 0, NULL);
 
-	pd_start_tx(ctxt, bit_len);
-	pd_tx_done();
+	pd_start_tx(ctxt, pd_polarity, bit_len);
+	pd_tx_done(pd_polarity);
 }
 
 static int send_source_cap(void *ctxt)
@@ -654,6 +654,7 @@ void pd_task(void)
 			if ((cc1_volt < PD_SRC_VNC) ||
 			    (cc2_volt < PD_SRC_VNC)) {
 				pd_polarity = !(cc1_volt < PD_SRC_VNC);
+				pd_select_polarity(pd_polarity);
 				pd_task_state = PD_STATE_SRC_DISCOVERY;
 			}
 			timeout = 10000;
@@ -707,6 +708,7 @@ void pd_task(void)
 			if ((cc1_volt > PD_SNK_VA) ||
 			    (cc2_volt > PD_SNK_VA)) {
 				pd_polarity = !(cc1_volt > PD_SNK_VA);
+				pd_select_polarity(pd_polarity);
 				pd_task_state = PD_STATE_SNK_DISCOVERY;
 			}
 			timeout = 10000;

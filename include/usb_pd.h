@@ -244,11 +244,16 @@ void pd_set_clock(int freq);
  * Start sending over the wire the prepared packet.
  *
  * @param ctxt    opaque context.
+ * @param polarity plug polarity (0=CC1, 1=CC2).
  * @param bit_len size of the packet in bits.
  */
-void pd_start_tx(void *ctxt, int bit_len);
-/* Call when we are done sending a packet */
-void pd_tx_done(void);
+void pd_start_tx(void *ctxt, int polarity, int bit_len);
+/**
+ * Call when we are done sending a packet.
+ *
+ * @param polarity plug polarity (0=CC1, 1=CC2).
+ */
+void pd_tx_done(int polarity);
 
 /* Callback when the hardware has detected an incoming packet */
 void pd_rx_event(void);
