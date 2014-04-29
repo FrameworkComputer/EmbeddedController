@@ -24,4 +24,14 @@ int power_button_is_pressed(void);
  */
 void power_button_interrupt(enum gpio_signal signal);
 
+/**
+ * For x86 systems, force-deassert the power button signal to the PCH.
+ */
+void power_button_pch_release(void);
+
+/**
+ * For x86 systems, force a pulse of the power button signal to the PCH.
+ */
+void power_button_pch_pulse(void);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */

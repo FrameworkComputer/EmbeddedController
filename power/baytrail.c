@@ -13,7 +13,9 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"
+#include "lpc.h"
 #include "power.h"
+#include "power_button.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_charge.h"
@@ -51,6 +53,8 @@
 
 static int throttle_cpu;      /* Throttle CPU? */
 static int pause_in_s5 = 1;   /* Pause in S5 when shutting down? */
+static int restart_from_s5;   /* Force system back on from S5 */
+static int fake_pltrst_timeout;  /* Fake PLTRST# timeout at next power-on */
 
 void chipset_force_shutdown(void)
 {
@@ -282,6 +286,31 @@ enum power_state power_handle_state(enum power_state state)
 		/* Set SYS and CORE PWROK */
 		gpio_set_level(GPIO_PCH_SYS_PWROK, 1);
 		gpio_set_level(GPIO_PCH_CORE_PWROK, 1);
+
+		/* Wait 50 ms for platform reset to deassert */
+		{
+			int i;
+
+			for (i = 0; i < 50; i++) {
+				usleep(MSEC);
+				if (!lpc_get_pltrst_asserted())
+					break;
+			}
+
+			if (i < 50 && !fake_pltrst_timeout) {
+				/* Deasserted in time */
+				CPRINTF("[%T power PLTRST# deasserted]\n");
+			} else {
+				/* Force a reset.  See crosbug.com/p/28422 */
+				CPRINTF("[%T power PLTRST# timeout]\n");
+				power_button_pch_release();
+				chipset_force_shutdown();
+				restart_from_s5 = 1;
+
+				fake_pltrst_timeout = 0;
+			}
+		}
+
 		return POWER_S0;
 
 	case POWER_S0S3:
@@ -347,6 +376,29 @@ enum power_state power_handle_state(enum power_state state)
 		/* Turn off power to RAM */
 		gpio_set_level(GPIO_PP1350_EN, 0);
 
+		/*
+		 * If restarting from S5, delay and fake power button press.
+		 * See crosbug.com/p/28422.
+		 */
+		if (restart_from_s5) {
+			CPRINTF("[%T power restart from S5]\n");
+
+			restart_from_s5 = 0;
+
+			/* Delay for system to shut down after rails dropped */
+			msleep(100);
+
+			/* Restart system via power button press */
+			power_button_pch_pulse();
+
+			/*
+			 * Force system to start back up from scratch.  This is
+			 * needed to undo the effects of a previous call to
+			 * chipset_force_shutdown().
+			 */
+			return POWER_G3S5;
+		}
+
 		/* Start shutting down */
 		return pause_in_s5 ? POWER_S5 : POWER_S5G3;
 
@@ -392,3 +444,13 @@ DECLARE_CONSOLE_COMMAND(pause_in_s5, console_command_gsv,
 			"Should the AP pause in S5 during shutdown?",
 			NULL);
 
+static int console_command_powerfail(int argc, char **argv)
+{
+	ccprintf("Faking a failure of next power-on event\n");
+	fake_pltrst_timeout = 1;
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerfail, console_command_powerfail,
+			NULL,
+			"Fake PLTRST# failure during next power-on",
+			NULL);

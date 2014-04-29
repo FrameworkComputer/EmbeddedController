@@ -127,6 +127,34 @@ static void set_pwrbtn_to_pch(int high)
 	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
+void power_button_pch_release(void)
+{
+	CPRINTF("[%T PB PCH force release]\n");
+
+	/* Deassert power button signal to PCH */
+	set_pwrbtn_to_pch(1);
+
+	/*
+	 * If power button is actually pressed, eat the next release so we
+	 * don't send an extra release.
+	 */
+	if (power_button_is_pressed())
+		pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
+	else
+		pwrbtn_state = PWRBTN_STATE_IDLE;
+}
+
+void power_button_pch_pulse(void)
+{
+	CPRINTF("[%T PB PCH pulse]\n");
+
+	chipset_exit_hard_off();
+	set_pwrbtn_to_pch(0);
+	pwrbtn_state = PWRBTN_STATE_LID_OPEN;
+	tnext_state = get_time().val + PWRBTN_INITIAL_US;
+	task_wake(TASK_ID_POWERBTN);
+}
+
 /**
  * Handle debounced power button down.
  */
@@ -180,11 +208,7 @@ static void set_initial_pwrbtn_state(void)
 		 * Otherwise, it might power on.
 		 */
 		CPRINTF("[%T PB init-off]\n");
-		set_pwrbtn_to_pch(1);
-		if (power_button_is_pressed())
-			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
-		else
-			pwrbtn_state = PWRBTN_STATE_IDLE;
+		power_button_pch_release();
 	} else {
 		/*
 		 * All other EC reset conditions power on the main processor so
@@ -363,13 +387,8 @@ DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
 static void powerbtn_x86_lid_change(void)
 {
 	/* If chipset is off, pulse the power button on lid open to wake it. */
-	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		chipset_exit_hard_off();
-		set_pwrbtn_to_pch(0);
-		pwrbtn_state = PWRBTN_STATE_LID_OPEN;
-		tnext_state = get_time().val + PWRBTN_INITIAL_US;
-		task_wake(TASK_ID_POWERBTN);
-	}
+	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		power_button_pch_pulse();
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, powerbtn_x86_lid_change, HOOK_PRIO_DEFAULT);
 

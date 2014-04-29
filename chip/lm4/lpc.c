@@ -427,6 +427,11 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 	return event_mask[type];
 }
 
+int lpc_get_pltrst_asserted(void)
+{
+	return (LM4_LPC_LPCSTS & (1<<10)) ? 1 : 0;
+}
+
 /**
  * Handle write to ACPI I/O port
  *
@@ -618,7 +623,7 @@ void lpc_interrupt(void)
 		}
 
 		CPRINTF("[%T LPC RESET# %sasserted]\n",
-			(LM4_LPC_LPCSTS & (1<<10)) ? "" : "de");
+			lpc_get_pltrst_asserted() ? "" : "de");
 	}
 }
 DECLARE_IRQ(LM4_IRQ_LPC, lpc_interrupt, 2);
