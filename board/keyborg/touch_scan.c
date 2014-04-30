@@ -149,9 +149,9 @@ void touch_scan_slave_start(void)
 	struct spi_comm_packet *resp = (struct spi_comm_packet *)buf;
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
-		if (col >= COL_COUNT) {
-			enable_col(col - COL_COUNT, 1);
-			STM32_PMSE_MCCR = mccr_list[col - COL_COUNT];
+		if (col < COL_COUNT) {
+			enable_col(col, 1);
+			STM32_PMSE_MCCR = mccr_list[col];
 		}
 
 		if (master_slave_sync(20) != EC_SUCCESS)
@@ -175,8 +175,8 @@ void touch_scan_slave_start(void)
 		/* Start sending the response for the current column */
 		spi_slave_send_response_async(resp);
 
-		if (col >= COL_COUNT) {
-			enable_col(col - COL_COUNT, 0);
+		if (col < COL_COUNT) {
+			enable_col(col, 0);
 			STM32_PMSE_MCCR = 0;
 		}
 	}
@@ -199,9 +199,9 @@ int touch_scan_full_matrix(void)
 		return EC_ERROR_UNKNOWN;
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
-		if (col < COL_COUNT) {
-			enable_col(col, 1);
-			STM32_PMSE_MCCR = mccr_list[col];
+		if (col >= COL_COUNT) {
+			enable_col(col - COL_COUNT, 1);
+			STM32_PMSE_MCCR = mccr_list[col - COL_COUNT];
 		}
 
 		if (master_slave_sync(20) != EC_SUCCESS)
@@ -232,8 +232,8 @@ int touch_scan_full_matrix(void)
 		if (spi_master_wait_response_async() != EC_SUCCESS)
 			return EC_ERROR_UNKNOWN;
 
-		if (col < COL_COUNT) {
-			enable_col(col, 0);
+		if (col >= COL_COUNT) {
+			enable_col(col - COL_COUNT, 0);
 			STM32_PMSE_MCCR = 0;
 		}
 	}
