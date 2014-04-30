@@ -282,9 +282,20 @@ static int check_for_power_on_event(void)
 {
 	/* check if system is already ON */
 	if (power_get_signals() & IN_XPSHOLD) {
-		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
-		auto_power_on = 0;  /* no need to arrange another power on */
-		return 1;
+		if (system_get_reset_flags() & RESET_FLAG_AP_OFF) {
+			CPRINTF(
+				"[%T system is on, but "
+				"RESET_FLAG_AP_OFF is on]\n");
+			system_clear_reset_flags(RESET_FLAG_AP_OFF);
+			return 0;
+		} else {
+			CPRINTF(
+				"[%T system is on, thus clear "
+				"auto_power_on]\n");
+			/* no need to arrange another power on */
+			auto_power_on = 0;
+			return 1;
+		}
 	}
 
 	/* power on requested at EC startup for recovery */
