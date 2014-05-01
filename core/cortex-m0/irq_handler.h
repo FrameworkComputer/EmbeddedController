@@ -55,7 +55,8 @@ extern int need_resched_or_profiling;
 			     "cpsid i\n isb\n"			\
 	/* re-schedule the highest priority task */		\
 			     "bl svc_handler\n"			\
-	/* return from exception */				\
+	/* enable interrupts and return from exception */	\
+			     "cpsie i\n"			\
 			     "pop {r0,pc}\n"			\
 			: : "r"(&need_resched_or_profiling));	\
 	}							\
