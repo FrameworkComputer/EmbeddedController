@@ -349,6 +349,12 @@ void pd_rx_complete(void)
 	dma_disable(DMAC_TIM_RX);
 }
 
+int pd_rx_started(void)
+{
+	/* is the sampling timer running ? */
+	return STM32_TIM_CR1(TIM_RX) & 1;
+}
+
 void pd_rx_enable_monitoring(void)
 {
 	/* clear comparator external interrupt */

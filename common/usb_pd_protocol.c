@@ -631,7 +631,6 @@ void pd_task(void)
 	void *ctxt = pd_hw_init();
 	uint32_t payload[7];
 	int timeout = 10*MSEC;
-	uint32_t evt;
 	int cc1_volt, cc2_volt;
 	int res;
 
@@ -644,9 +643,9 @@ void pd_task(void)
 		/* Verify board specific health status : current, voltages... */
 		pd_board_checks();
 		/* wait for next event/packet or timeout expiration */
-		evt = task_wait_event(timeout);
+		task_wait_event(timeout);
 		/* incoming packet ? */
-		if (evt & PD_EVENT_RX) {
+		if (pd_rx_started()) {
 			head = analyze_rx(payload);
 			pd_rx_complete();
 			if (head > 0)
@@ -795,8 +794,6 @@ static int command_pd(int argc, char **argv)
 	if (!strcasecmp(argv[1], "tx")) {
 		pd_task_state = PD_STATE_SNK_DISCOVERY;
 		task_wake(TASK_ID_PD);
-	} else if (!strcasecmp(argv[1], "rx")) {
-		pd_rx_event();
 	} else if (!strcasecmp(argv[1], "bist")) {
 		pd_task_state = PD_STATE_BIST;
 		task_wake(TASK_ID_PD);

@@ -255,6 +255,13 @@ void pd_start_tx(void *ctxt, int polarity, int bit_len);
  */
 void pd_tx_done(int polarity);
 
+/**
+ * Check whether the PD reception is started.
+ *
+ * @return true if the reception is on-going.
+ */
+int pd_rx_started(void);
+
 /* Callback when the hardware has detected an incoming packet */
 void pd_rx_event(void);
 /* Start sampling the CC line for reception */
