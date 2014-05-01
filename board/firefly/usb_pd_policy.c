@@ -85,7 +85,7 @@ void pd_power_supply_reset(void)
 {
 }
 
-void pd_board_checks(void)
+int pd_board_checks(void)
 {
 	static int blinking;
 	int vbus;
@@ -122,4 +122,6 @@ void pd_board_checks(void)
 	gpio_set_level(GPIO_LED_PP5000, led5);
 	gpio_set_level(GPIO_LED_PP12000, led12);
 	gpio_set_level(GPIO_LED_PP20000, led20);
+
+	return EC_SUCCESS;
 }

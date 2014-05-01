@@ -113,6 +113,7 @@ void pd_power_supply_reset(void)
 {
 }
 
-void pd_board_checks(void)
+int pd_board_checks(void)
 {
+	return EC_SUCCESS;
 }

@@ -641,7 +641,13 @@ void pd_task(void)
 		/* monitor for incoming packet */
 		pd_rx_enable_monitoring();
 		/* Verify board specific health status : current, voltages... */
-		pd_board_checks();
+		res = pd_board_checks();
+		if (res != EC_SUCCESS) {
+			/* cut the power */
+			execute_hard_reset();
+			/* notify the other side of the issue */
+			/* send_hard_reset(ctxt); */
+		}
 		/* wait for next event/packet or timeout expiration */
 		task_wait_event(timeout);
 		/* incoming packet ? */
@@ -667,6 +673,8 @@ void pd_task(void)
 			    (cc2_volt < PD_SRC_VNC)) {
 				pd_polarity = !(cc1_volt < PD_SRC_VNC);
 				pd_select_polarity(pd_polarity);
+				/* Enable VBUS */
+				pd_set_power_supply_ready();
 				pd_task_state = PD_STATE_SRC_DISCOVERY;
 			}
 			timeout = 10*MSEC;
@@ -705,7 +713,8 @@ void pd_task(void)
 			/* Verify that the sink is alive */
 			res = send_control(ctxt, PD_CTRL_PING);
 			if (res < 0) {
-				/* The sink died ... TODO */
+				/* The sink died ... */
+				pd_power_supply_reset();
 				pd_task_state = PD_STATE_SRC_DISCOVERY;
 				timeout = PD_T_SEND_SOURCE_CAP;
 			} else { /* schedule next keep-alive */

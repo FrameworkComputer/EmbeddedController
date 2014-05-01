@@ -153,8 +153,9 @@ void pd_request_source_voltage(int mv);
 /*
  * Verify board specific health status : current, voltages...
  *
+ * @return EC_SUCCESS if the board is good, <0 else.
  */
-void pd_board_checks(void);
+int pd_board_checks(void);
 
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];
