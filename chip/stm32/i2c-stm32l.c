@@ -34,8 +34,12 @@
  * mode).  The slave is supposed to wait forever for the master to read bytes.
  * ...but we're going to keep the timeout to make sure we're robust.  It may in
  * fact be needed if the host resets itself mid-read.
+ *
+ * NOTE: One case where this timeout is useful is when the battery
+ * flips out.  The battery may flip out and hold lines low for up to
+ * 25ms.  If we just wait it will eventually let them go.
  */
-#define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
+#define I2C_TX_TIMEOUT_MASTER	(30 * MSEC)
 
 /*
  * Delay 5us in bitbang mode.  That gives us roughly 5us low and 5us high or
