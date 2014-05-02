@@ -573,6 +573,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 void pmu_irq_handler(enum gpio_signal signal)
 {
 	pmu_task_throttled_wake();
-	CPRINTF("Charger IRQ received.\n");
+	CPRINTF("[%T Charger IRQ received]\n");
 }
 

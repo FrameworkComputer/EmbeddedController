@@ -214,7 +214,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	bit = 31 - __builtin_clz(g->mask);
 
 	if (exti_events[bit]) {
-		CPRINTF("Overriding %s with %s on EXTI%d\n",
+		CPRINTF("[%T Overriding %s with %s on EXTI%d]\n",
 			exti_events[bit]->name, g->name, bit);
 	}
 	exti_events[bit] = g;

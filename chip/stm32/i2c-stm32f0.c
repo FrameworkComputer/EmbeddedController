@@ -72,7 +72,7 @@ static void i2c_set_freq_port(const struct i2c_port_t *p)
 		STM32_I2C_TIMINGR(port) = 0xB0420F13;
 		break;
 	default: /* unknown speed, defaults to 100kBps */
-		CPRINTF("Unsupported speed %d kBps\n", p->kbps);
+		CPRINTF("[%T I2C bad speed %d kBps]\n", p->kbps);
 		STM32_I2C_TIMINGR(port) = 0xB0420F13;
 	}
 	/* Enable port */

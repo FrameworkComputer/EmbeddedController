@@ -83,7 +83,7 @@ static void record_hook_delay(uint64_t now, uint64_t last, uint64_t interval,
 
 	/* Warn if delayed by more than 10% */
 	if (delayed * 10 > interval)
-		CPRINTF("Hook at interval %d us delayed by %d us\n",
+		CPRINTF("[%T Hook at interval %d us delayed by %d us]\n",
 			(uint32_t)interval, (uint32_t)delayed);
 }
 #endif

@@ -153,7 +153,7 @@ static int pmu_get_event(int *event)
 	*event = irq1 | (irq2 << 8);
 
 	if (prev_event != *event) {
-		CPRINTF("pmu event: %016b\n", *event);
+		CPRINTF("[%T pmu event: %016b]\n", *event);
 		prev_event = *event;
 	}
 

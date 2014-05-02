@@ -438,13 +438,14 @@ static int check_keys_changed(uint8_t *state)
 
 #ifdef PRINT_SCAN_TIMES
 		/* Print delta times from now back to each previous scan */
+		CPRINTF("[%T kb deltaT");
 		for (i = 0; i < SCAN_TIME_COUNT; i++) {
 			int tnew = scan_time[
 				(SCAN_TIME_COUNT + scan_time_index - i) %
 				SCAN_TIME_COUNT];
 			CPRINTF(" %d", tnow - tnew);
 		}
-		CPRINTF("\n");
+		CPRINTF("]\n");
 #endif
 
 		/* Swallow special keys */

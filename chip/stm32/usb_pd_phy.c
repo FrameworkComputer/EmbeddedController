@@ -84,7 +84,7 @@ static int wait_bits(int nb)
 			&& !(STM32_TIM_SR(TIM_RX) & 4))
 			; /* optimized for latency, not CPU usage ... */
 		if (dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb) {
-			CPRINTF("TMOUT RX %d/%d\n",
+			CPRINTF("[%T PD TMOUT RX %d/%d]\n",
 				dma_bytes_done(rx, PD_MAX_RAW_SIZE), nb);
 			return -1;
 		}
@@ -131,7 +131,7 @@ int pd_dequeue_bits(void *ctxt, int off, int len, uint32_t *val)
 		return -1;
 	}
 stream_err:
-	CPRINTF("Invalid %d @%d\n", cnt, off);
+	CPRINTF("[%T PD Invalid %d @%d]\n", cnt, off);
 	return -1;
 }
 
@@ -155,7 +155,7 @@ int pd_find_preamble(void *ctxt)
 				!(STM32_TIM_SR(TIM_RX) & 4))
 				;
 			if (STM32_TIM_SR(TIM_RX) & 4) {
-				CPRINTF("TMOUT RX %d/%d\n",
+				CPRINTF("[%T PD TMOUT RX %d/%d]\n",
 					PD_MAX_RAW_SIZE - rx->cndtr, bit);
 				return -1;
 			}
@@ -524,7 +524,7 @@ void *pd_hw_init(void)
 	STM32_EXTI_IMR |= EXTI_COMP_MASK;
 	task_enable_irq(IRQ_COMP);
 
-	CPRINTF("USB PD initialized\n");
+	CPRINTF("[%T USB PD initialized]\n");
 	return raw_samples;
 }
 

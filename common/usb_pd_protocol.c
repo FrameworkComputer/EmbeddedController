@@ -312,13 +312,14 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 				udelay(10);
 				return bit_len;
 			} else {
-				/* CPRINTF("ERR ACK/%d %04x\n", id, head); */
+				/* CPRINTF("[%T PD ERR ACK/%d %04x]\n",
+					id, head); */
 			}
 		}
 	}
 	/* we failed all the re-transmissions */
 	/* TODO: try HardReset */
-	CPRINTF("TX NO ACK %04x/%d\n", header, cnt);
+	CPRINTF("[%T PD TX NO ACK %04x/%d]\n", header, cnt);
 	return -1;
 }
 
@@ -329,7 +330,7 @@ static int send_control(void *ctxt, int type)
 
 	bit_len = send_validate_message(ctxt, header, 0, NULL);
 
-	CPRINTF("CTRL[%d]>%d\n", type, bit_len);
+	CPRINTF("[%T PD CTRL[%d]>%d]\n", type, bit_len);
 
 	return bit_len;
 }
@@ -351,7 +352,7 @@ static int send_source_cap(void *ctxt)
 
 	bit_len = send_validate_message(ctxt, header, pd_src_pdo_cnt,
 					pd_src_pdo);
-	CPRINTF("srcCAP>%d\n", bit_len);
+	CPRINTF("[%T PD srcCAP>%d]\n", bit_len);
 
 	return bit_len;
 }
@@ -365,7 +366,7 @@ static void send_sink_cap(void *ctxt)
 
 	bit_len = send_validate_message(ctxt, header, pd_snk_pdo_cnt,
 					pd_snk_pdo);
-	CPRINTF("snkCAP>%d\n", bit_len);
+	CPRINTF("[%T PD snkCAP>%d]\n", bit_len);
 }
 
 static int send_request(void *ctxt, uint32_t rdo)
@@ -374,7 +375,7 @@ static int send_request(void *ctxt, uint32_t rdo)
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd_role, pd_message_id, 1);
 
 	bit_len = send_validate_message(ctxt, header, 1, &rdo);
-	CPRINTF("REQ%d>\n", bit_len);
+	CPRINTF("[%T PD REQ%d>]\n", bit_len);
 
 	return bit_len;
 }
@@ -387,14 +388,14 @@ static int send_bist(void *ctxt)
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd_role, pd_message_id, 1);
 
 	bit_len = send_validate_message(ctxt, header, 1, &bdo);
-	CPRINTF("BIST>%d\n", bit_len);
+	CPRINTF("[%T PD BIST>%d]\n", bit_len);
 
 	return bit_len;
 }
 
 static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
 {
-	CPRINTF("Unhandled VDM VID %04x CMD %04x\n", payload[0] >> 16,
+	CPRINTF("[%T PD Unhandled VDM VID %04x CMD %04x]\n", payload[0] >> 16,
 		payload[0] & 0xFFFF);
 }
 
@@ -438,7 +439,7 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 		send_control(ctxt, PD_CTRL_REJECT);
 		break;
 	case PD_DATA_BIST:
-		CPRINTF("BIST not supported\n");
+		CPRINTF("[%T PD BIST not supported]\n");
 		break;
 	case PD_DATA_SINK_CAP:
 		break;
@@ -446,7 +447,7 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 		handle_vdm_request(ctxt, cnt, payload);
 		break;
 	default:
-		CPRINTF("Unhandled data message type %d\n", type);
+		CPRINTF("[%T PD unhandled data message type %d]\n", type);
 	}
 }
 
@@ -484,7 +485,7 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 	case PD_CTRL_WAIT:
 	case PD_CTRL_SOFT_RESET:
 	default:
-		CPRINTF("Unhandled ctrl message type %d\n", type);
+		CPRINTF("[%T PD unhandled ctrl message type %d]\n", type);
 	}
 }
 
@@ -497,10 +498,10 @@ static void handle_request(void *ctxt, uint16_t head, uint32_t *payload)
 		send_goodcrc(ctxt, PD_HEADER_ID(head));
 
 	/* dump received packet content */
-	CPRINTF("RECV %04x/%d ", head, cnt);
+	CPRINTF("[%T PD RECV %04x/%d ", head, cnt);
 	for (p = 0; p < cnt; p++)
 		CPRINTF("[%d]%08x ", p, payload[p]);
-	CPRINTF("\n");
+	CPRINTF("]\n");
 
 	if (cnt)
 		handle_data_request(ctxt, head, payload);
@@ -590,7 +591,8 @@ static int analyze_rx(uint32_t *payload)
 		msg = "CRC";
 		if (pcrc != ccrc)
 			bit = PD_ERR_CRC;
-		/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, crc32_result());
+		/* DEBUG */
+		CPRINTF("[%T PD CRC %08x <> %08x]\n", pcrc, crc32_result());
 		goto packet_err;
 	}
 
@@ -608,7 +610,7 @@ packet_err:
 	if (debug_dump)
 		pd_dump_packet(ctxt, msg);
 	else
-		CPRINTF("RX ERR (%d)\n", bit);
+		CPRINTF("[%T PD RX ERR (%d)]\n", bit);
 	return bit;
 }
 
@@ -622,7 +624,7 @@ static void execute_hard_reset(void)
 	pd_task_state = PD_STATE_SRC_DISCONNECTED;
 #endif
 	pd_power_supply_reset();
-	CPRINTF("HARD RESET!\n");
+	CPRINTF("[%T PD HARD RESET!]\n");
 }
 
 void pd_task(void)
