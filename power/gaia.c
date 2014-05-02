@@ -23,6 +23,7 @@
  *  - If XPSHOLD is dropped by the AP, then we power the AP off
  */
 
+#include "battery.h"
 #include "clock.h"
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "common.h"
@@ -642,6 +643,7 @@ void chipset_task(void)
 
 	gaia_power_init();
 	ap_on = 0;
+	battery_wait_for_stable();
 
 	while (1) {
 		/* Wait until we need to power on, then power on */
