@@ -125,5 +125,41 @@ int port80_last_boot(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PORT80_LAST_BOOT,
-		     port80_last_boot, EC_VER_MASK(0));
+
+int port80_command_read(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_port80_read *p = args->params;
+	uint32_t offset = p->read_buffer.offset;
+	uint32_t entries = p->read_buffer.num_entries;
+	int i;
+	struct ec_response_port80_read *rsp = args->response;
+
+	if (args->version == 0)
+		return port80_last_boot(args);
+
+	if (p->subcmd == EC_PORT80_GET_INFO) {
+		rsp->get_info.writes = writes;
+		rsp->get_info.history_size = ARRAY_SIZE(history);
+		args->response_size = sizeof(rsp->get_info);
+		return EC_RES_SUCCESS;
+	} else if (p->subcmd == EC_PORT80_READ_BUFFER) {
+		/* do not allow bad offset or size */
+		if (offset >= ARRAY_SIZE(history) || entries == 0 ||
+			entries > args->response_max)
+			return EC_RES_INVALID_PARAM;
+
+		for (i = 0; i < entries; i++) {
+			uint16_t e = history[(i + offset) %
+				ARRAY_SIZE(history)];
+			rsp->data.codes[i] = e;
+		}
+
+		args->response_size = entries*sizeof(uint16_t);
+		return EC_RES_SUCCESS;
+	}
+
+	return EC_RES_INVALID_PARAM;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PORT80_READ,
+		port80_command_read,
+		EC_VER_MASK(0) | EC_VER_MASK(1));

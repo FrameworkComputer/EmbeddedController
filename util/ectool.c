@@ -116,6 +116,8 @@ const char help_str[] =
 	"      Whether or not the AP should pause in S5 on shutdown\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
+	"  port80read\n"
+	"      Print history of port 80 write\n"
 	"  powerinfo\n"
 	"	Prints power-related information\n"
 	"  protoinfo\n"
@@ -4042,6 +4044,103 @@ static int cmd_hang_detect(int argc, char *argv[])
 	return -1;
 }
 
+enum port_80_event {
+	PORT_80_EVENT_RESUME = 0x1001,  /* S3->S0 transition */
+	PORT_80_EVENT_RESET = 0x1002,   /* RESET transition */
+};
+
+int cmd_port80_read(int argc, char *argv[])
+{
+	struct ec_params_port80_read p;
+	int cmdver = 1, rv;
+	int i, head, tail;
+	uint16_t *history;
+	uint32_t writes, history_size;
+	struct ec_response_port80_read rsp;
+	int printed = 0;
+
+	if (!ec_cmd_version_supported(EC_CMD_PORT80_READ, cmdver)) {
+		/* fall back to last boot */
+		struct ec_response_port80_last_boot r;
+		rv = ec_command(EC_CMD_PORT80_LAST_BOOT, 0,
+				NULL, 0, &r, sizeof(r));
+		fprintf(stderr, "Last boot %2x\n", r.code);
+		printf("done.\n");
+		return 0;
+	}
+
+
+	/* read writes and history_size */
+	p.subcmd = EC_PORT80_GET_INFO;
+	rv = ec_command(EC_CMD_PORT80_READ, cmdver,
+			&p, sizeof(p), &rsp, sizeof(rsp));
+	if (rv < 0) {
+		fprintf(stderr, "Read error at writes\n");
+		return rv;
+	}
+	writes = rsp.get_info.writes;
+	history_size = rsp.get_info.history_size;
+
+	history = malloc(history_size*sizeof(uint16_t));
+	if (!history) {
+		fprintf(stderr, "Unable to allocate buffer.\n");
+		return -1;
+	}
+	/* As the history buffer is quite large, we read data in chunks, with
+	    size in bytes of EC_PORT80_SIZE_MAX in each chunk.
+	    Incrementing offset until all history buffer has been read. To
+	    simplify the design, chose HISTORY_LEN is always multiple of
+	    EC_PORT80_SIZE_MAX.
+
+	    offset: entry offset from the beginning of history buffer.
+	    num_entries: number of entries requested.
+	*/
+	p.subcmd = EC_PORT80_READ_BUFFER;
+	for (i = 0; i < history_size; i += EC_PORT80_SIZE_MAX) {
+		p.read_buffer.offset = i;
+		p.read_buffer.num_entries = EC_PORT80_SIZE_MAX;
+		rv = ec_command(EC_CMD_PORT80_READ, cmdver,
+				&p, sizeof(p), &rsp, sizeof(rsp));
+		if (rv < 0) {
+			fprintf(stderr, "Read error at offset %d\n", i);
+			free(history);
+			return rv;
+		}
+		memcpy((void *)(history + i), rsp.data.codes,
+			EC_PORT80_SIZE_MAX*sizeof(uint16_t));
+	}
+
+	head = writes;
+	if (head > history_size)
+		tail = head - history_size;
+	else
+		tail = 0;
+
+	fprintf(stderr, "Port 80 writes");
+	for (i = tail; i < head; i++) {
+		int e = history[i % history_size];
+		switch (e) {
+		case PORT_80_EVENT_RESUME:
+			fprintf(stderr, "\n(S3->S0)");
+			printed = 0;
+			break;
+		case PORT_80_EVENT_RESET:
+			fprintf(stderr, "\n(RESET)");
+			printed = 0;
+			break;
+		default:
+			if (!(printed++ % 20))
+				fprintf(stderr, "\n ");
+			fprintf(stderr, " %02x", e);
+		}
+	}
+	fprintf(stderr, " <--new\n");
+
+	free(history);
+	printf("done.\n");
+	return 0;
+}
+
 struct command {
 	const char *name;
 	int (*handler)(int argc, char *argv[]);
@@ -4094,6 +4193,7 @@ const struct command commands[] = {
 	{"motionsense", cmd_motionsense},
 	{"panicinfo", cmd_panic_info},
 	{"pause_in_s5", cmd_s5},
+	{"port80read", cmd_port80_read},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
 	{"pstoreinfo", cmd_pstore_info},

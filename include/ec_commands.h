@@ -1406,8 +1406,40 @@ struct ec_response_rtc {
 /*****************************************************************************/
 /* Port80 log access */
 
+/* Maximum entries that can be read/written in a single command */
+#define EC_PORT80_SIZE_MAX 32
+
 /* Get last port80 code from previous boot */
 #define EC_CMD_PORT80_LAST_BOOT 0x48
+#define EC_CMD_PORT80_READ 0x48
+
+enum ec_port80_subcmd {
+	EC_PORT80_GET_INFO = 0,
+	EC_PORT80_READ_BUFFER,
+};
+
+struct ec_params_port80_read {
+	uint16_t subcmd;
+	union {
+		struct {
+			uint32_t offset;
+			uint32_t num_entries;
+		} read_buffer;
+	};
+} __packed;
+
+struct ec_response_port80_read {
+	union {
+		struct {
+			uint32_t writes;
+			uint32_t history_size;
+			uint32_t last_boot;
+		} get_info;
+		struct {
+			uint16_t codes[EC_PORT80_SIZE_MAX];
+		} data;
+	};
+} __packed;
 
 struct ec_response_port80_last_boot {
 	uint16_t code;
