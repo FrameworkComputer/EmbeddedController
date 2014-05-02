@@ -298,6 +298,12 @@ static void power_common_init(void)
 	/* Enable interrupts for input signals */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
 		gpio_enable_interrupt(s->gpio);
+
+	/*
+	 * Update input state again since there is a small window
+	 * before GPIO is enabled.
+	 */
+	power_update_signals();
 }
 DECLARE_HOOK(HOOK_INIT, power_common_init, HOOK_PRIO_INIT_CHIPSET);
 
