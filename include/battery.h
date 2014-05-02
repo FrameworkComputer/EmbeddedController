@@ -302,4 +302,11 @@ int battery_get_vendor_param(uint32_t param, uint32_t *value);
  */
 int battery_set_vendor_param(uint32_t param, uint32_t value);
 
+/**
+ * Wait for battery stable.
+ *
+ * @return non-zero if error.
+ */
+int battery_wait_for_stable(void);
+
 #endif /* __CROS_EC_BATTERY_H */
