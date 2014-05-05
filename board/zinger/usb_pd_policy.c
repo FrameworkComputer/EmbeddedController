@@ -36,20 +36,20 @@ static inline void set_output_voltage(enum volt v)
 
 static inline void output_enable(void)
 {
-	/* GPF0 (FET driver shutdown) = 0 */
-	STM32_GPIO_BSRR(GPIO_F) = GPIO_RESET(0);
+	/* GPF0 (enable OR'ing FETs) = 1 */
+	STM32_GPIO_BSRR(GPIO_F) = GPIO_SET(0);
 }
 
 static inline void output_disable(void)
 {
-	/* GPF0 (FET driver shutdown) = 1 */
-	STM32_GPIO_BSRR(GPIO_F) = GPIO_SET(0);
+	/* GPF0 (disable OR'ing FETs) = 0 */
+	STM32_GPIO_BSRR(GPIO_F) = GPIO_RESET(0);
 }
 
 static inline int output_is_enabled(void)
 {
-	/* GPF0 = FET driver shutdown */
-	return !(STM32_GPIO_IDR(GPIO_F) & 1);
+	/* GPF0 = enable output FET */
+	return STM32_GPIO_IDR(GPIO_F) & 1;
 }
 
 /* ----- fault conditions ----- */

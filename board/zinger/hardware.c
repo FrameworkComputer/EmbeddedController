@@ -87,10 +87,10 @@ static void pins_init(void)
 	STM32_GPIO_MODER(GPIO_A) = OUT(0) | ANALOG(1) | ANALOG(2) | ANALOG(3)
 				 | OUT(4) | AF(5) /*| AF(6)*/ | AF(7) | AF(9)
 				 | AF(10) | OUT(13) | OUT(14);
-	/* set PF0 / PF1 as output, PF0 is open-drain, high by default */
-	STM32_GPIO_ODR(GPIO_F) = HIGH(0);
+	/* set PF0 / PF1 as output */
+	STM32_GPIO_ODR(GPIO_F) = 0;
 	STM32_GPIO_MODER(GPIO_F) = OUT(0) | OUT(1);
-	STM32_GPIO_OTYPER(GPIO_F) = ODR(0);
+	STM32_GPIO_OTYPER(GPIO_F) = 0;
 
 	/* Set PB1 as AF0 (TIM14_CH1) */
 	STM32_GPIO_OSPEEDR(GPIO_B) = HISPEED(1);
