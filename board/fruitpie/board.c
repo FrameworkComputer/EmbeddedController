@@ -50,7 +50,7 @@ const struct gpio_info gpio_list[] = {
 	/* Power and muxes control */
 	{"PP5000_EN",         GPIO_A, (1<<5),  GPIO_OUT_HIGH, NULL},
 	{"CC_HOST",           GPIO_A, (1<<6),  GPIO_OUT_LOW, NULL},
-	{"CHARGE_EN_L",       GPIO_A, (1<<8),  GPIO_OUT_HIGH, NULL},
+	{"CHARGE_EN_L",       GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
 	{"USB_C_5V_EN",       GPIO_A, (1<<10), GPIO_OUT_LOW, NULL},
 	{"VCONN1_EN",         GPIO_B, (1<<15), GPIO_OUT_LOW, NULL},
 	{"VCONN2_EN",         GPIO_C, (1<<14), GPIO_OUT_LOW, NULL},

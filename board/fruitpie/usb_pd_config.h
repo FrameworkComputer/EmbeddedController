@@ -82,8 +82,8 @@ static inline void pd_set_host_mode(int enable)
 /* UFP-side : threshold for DFP connection detection */
 #define PD_SNK_VA   200 /* mV */
 
-/* we are a dev board, wait for the user to tell us what we should do */
-#define PD_DEFAULT_STATE PD_STATE_DISABLED
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
 /* delay necessary for the voltage transition on the power supply */
 #define PD_POWER_SUPPLY_TRANSITION_DELAY 50000 /* us */
