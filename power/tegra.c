@@ -25,6 +25,7 @@
  *
  */
 
+#include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"  /* This module implements chipset functions too */
 #include "clock.h"
@@ -262,6 +263,12 @@ enum power_state power_chipset_init(void)
 			system_get_reset_flags());
 		auto_power_on = 1;
 	}
+
+	/*
+	 * Some batteries use clock stretching feature, which requires
+	 * more time to be stable. See http://crosbug.com/p/28289
+	 */
+	battery_wait_for_stable();
 
 	return init_power_state;
 }
