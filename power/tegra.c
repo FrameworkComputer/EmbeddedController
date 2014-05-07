@@ -111,6 +111,11 @@ enum power_request_t {
 
 static enum power_request_t power_request;
 
+
+/* Forward declaration */
+static void chipset_turn_off_power_rails(void);
+
+
 /**
  * Set the AP RESET signal.
  *
@@ -232,7 +237,7 @@ enum power_state power_chipset_init(void)
 	 */
 	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
 		CPRINTF("[%T not sysjump; forcing AP shutdown]\n");
-		chipset_force_shutdown();
+		chipset_turn_off_power_rails();
 
 		/*
 		 * The warm reset triggers AP into the Tegra recovery mode (
@@ -254,7 +259,7 @@ enum power_state power_chipset_init(void)
 /*****************************************************************************/
 /* Chipset interface */
 
-void chipset_force_shutdown(void)
+static void chipset_turn_off_power_rails(void)
 {
 	/* Release the power button, if it was asserted */
 	set_pmic_pwron(0);
@@ -266,6 +271,14 @@ void chipset_force_shutdown(void)
 
 	/* Hold the reset pin so that the AP stays in off mode (rev <= 2.0) */
 	set_ap_reset(1);
+}
+
+void chipset_force_shutdown(void)
+{
+	chipset_turn_off_power_rails();
+
+	/* clean-up internal variable */
+	power_request = POWER_REQ_NONE;
 }
 
 /*****************************************************************************/
@@ -403,7 +416,7 @@ static void power_off(void)
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
-	chipset_force_shutdown();
+	chipset_turn_off_power_rails();
 
 	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT);
