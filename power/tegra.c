@@ -231,6 +231,8 @@ DECLARE_HOOK(HOOK_LID_CHANGE, tegra_lid_event, HOOK_PRIO_DEFAULT);
 
 enum power_state power_chipset_init(void)
 {
+	int init_power_state;
+
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
 	 * the AP could stay in strange state.
@@ -244,6 +246,14 @@ enum power_state power_chipset_init(void)
 		 * flash SPI from USB).
 		 */
 		chipset_reset(0);
+
+		init_power_state = POWER_G3;
+	} else {
+		/* In the SYSJUMP case, we check if the AP is on */
+		if (power_get_signals() & IN_XPSHOLD)
+			init_power_state = POWER_S0;
+		else
+			init_power_state = POWER_G3;
 	}
 
 	/* Leave power off only if requested by reset flags */
@@ -253,7 +263,7 @@ enum power_state power_chipset_init(void)
 		auto_power_on = 1;
 	}
 
-	return POWER_G3;
+	return init_power_state;
 }
 
 /*****************************************************************************/
@@ -293,13 +303,16 @@ void chipset_force_shutdown(void)
  */
 static int check_for_power_on_event(void)
 {
+	int ap_off_flag;
+
+	ap_off_flag = system_get_reset_flags() & RESET_FLAG_AP_OFF;
+	system_clear_reset_flags(RESET_FLAG_AP_OFF);
 	/* check if system is already ON */
 	if (power_get_signals() & IN_XPSHOLD) {
-		if (system_get_reset_flags() & RESET_FLAG_AP_OFF) {
+		if (ap_off_flag) {
 			CPRINTF(
 				"[%T system is on, but "
 				"RESET_FLAG_AP_OFF is on]\n");
-			system_clear_reset_flags(RESET_FLAG_AP_OFF);
 			return 0;
 		} else {
 			CPRINTF(
