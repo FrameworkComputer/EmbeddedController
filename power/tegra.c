@@ -388,6 +388,8 @@ static void power_on(void)
 
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP);
+
+	CPRINTF("[%T AP running ...]\n");
 }
 
 /**
@@ -494,7 +496,6 @@ enum power_state power_handle_state(enum power_state state)
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
 				set_pmic_pwron(0);
-				CPRINTF("[%T AP running ...]\n");
 				return POWER_S3;
 			} else {
 				CPRINTF("[%T long-press button, shutdown]\n");
