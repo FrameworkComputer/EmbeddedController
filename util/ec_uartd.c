@@ -18,6 +18,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include <errno.h>
 #include <fcntl.h>
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #include <ftdi.h>
@@ -128,8 +129,19 @@ int main(int argc, char **argv)
 		bytes = ftdi_read_data(&fcontext, buf, sizeof(buf));
 		if (bytes > 0) {
 			int bytes_remaining = bytes;
-			while ((bytes = write(fd, buf, bytes_remaining)) > 0)
+			char *buf_ptr = buf;
+
+retry_write:
+			while (bytes_remaining &&
+			       ((bytes = write(fd, buf_ptr,
+					       bytes_remaining)) > 0)) {
+				buf_ptr += bytes;
 				bytes_remaining -= bytes;
+			}
+
+			if ((bytes == -1) &&
+			    ((errno == EAGAIN) || (errno == EWOULDBLOCK)))
+				goto retry_write;
 
 			if (bytes == -1)
 				perror("writing ftdi data to pty");
