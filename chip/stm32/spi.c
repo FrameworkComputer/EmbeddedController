@@ -8,6 +8,7 @@
  * This uses DMA to handle transmission and reception.
  */
 
+#include "chipset.h"
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
@@ -454,26 +455,6 @@ void spi_event(enum gpio_signal signal)
 	CPRINTF("[%T SPI rx bad data\n]");
 }
 
-static void spi_init(void)
-{
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
-
-	/* 40 MHz pin speed */
-	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
-
-	/* Enable clocks to SPI1 module */
-	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
-
-	/* Enable rx DMA and get ready to receive our first transaction */
-	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN;
-
-	/* Enable the SPI peripheral */
-	spi->cr1 |= STM32_SPI_CR1_SPE;
-
-	gpio_enable_interrupt(GPIO_SPI1_NSS);
-}
-DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
-
 static void spi_chipset_startup(void)
 {
 	/* Enable pullup and interrupts on NSS */
@@ -503,6 +484,30 @@ static void spi_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+static void spi_init(void)
+{
+	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+
+	/* 40 MHz pin speed */
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
+
+	/* Enable clocks to SPI1 module */
+	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+
+	/* Enable rx DMA and get ready to receive our first transaction */
+	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN;
+
+	/* Enable the SPI peripheral */
+	spi->cr1 |= STM32_SPI_CR1_SPE;
+
+	gpio_enable_interrupt(GPIO_SPI1_NSS);
+
+	/* If chipset is already on, prepare for transactions */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		spi_chipset_startup();
+}
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
 
 /**
  * Get protocol information
