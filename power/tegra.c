@@ -233,12 +233,13 @@ DECLARE_HOOK(HOOK_LID_CHANGE, tegra_lid_event, HOOK_PRIO_DEFAULT);
 enum power_state power_chipset_init(void)
 {
 	int init_power_state;
+	uint32_t reset_flags = system_get_reset_flags();
 
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
 	 * the AP could stay in strange state.
 	 */
-	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
+	if (!(reset_flags & RESET_FLAG_SYSJUMP)) {
 		CPRINTF("[%T not sysjump; forcing AP shutdown]\n");
 		chipset_turn_off_power_rails();
 
@@ -258,7 +259,8 @@ enum power_state power_chipset_init(void)
 	}
 
 	/* Leave power off only if requested by reset flags */
-	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
+	if (!(reset_flags & RESET_FLAG_AP_OFF) &&
+	    !(reset_flags & RESET_FLAG_SYSJUMP)) {
 		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
 			system_get_reset_flags());
 		auto_power_on = 1;
