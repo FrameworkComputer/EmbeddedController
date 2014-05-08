@@ -205,6 +205,13 @@
 #undef CONFIG_CHARGER_DISCHARGE_ON_AC
 
 /*
+ * Board specific flag used to disable external ILIM pin used to determine input
+ * current limit. When defined, the input current limit is decided only by
+ * the software register value.
+ */
+#undef CONFIG_CHARGER_ILIM_PIN_DISABLED
+
+/*
  * Maximum amount of input current the charger can receive, in mA.
  *
  * This value should depend on external power adapter, designed charging

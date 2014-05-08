@@ -170,9 +170,28 @@ int charger_set_voltage(int voltage)
 int charger_post_init(void)
 {
 	int rv;
+#ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
+	int option2;
+#endif
 
 	/* Set charger input current limit */
 	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
+
+#ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
+	if (rv)
+		return rv;
+
+	/* Disable the external ILIM pin. */
+	rv = i2c_read16(I2C_PORT_CHARGER, BQ24773_ADDR,
+			   BQ24773_CHARGE_OPTION2, &option2);
+	if (rv)
+		return rv;
+
+	option2 &= ~OPTION2_EN_EXTILIM;
+	rv = i2c_write16(I2C_PORT_CHARGER, BQ24773_ADDR,
+			   BQ24773_CHARGE_OPTION2, option2);
+#endif
+
 	return rv;
 }
 

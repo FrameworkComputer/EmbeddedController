@@ -42,6 +42,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR     5 /* milliOhms */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* milliOhms */
 #define CONFIG_CHARGER_INPUT_CURRENT    512 /* mA */
+#define CONFIG_CHARGER_ILIM_PIN_DISABLED    /* external ILIM pin disabled */
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

@@ -28,4 +28,6 @@
 #define OPTION0_CHARGE_INHIBIT          (1 << 0)
 #define OPTION0_LEARN_ENABLE            (1 << 5)
 
+#define OPTION2_EN_EXTILIM              (1 << 7)
+
 #endif /* __CROS_EC_CHARGER_BQ24773_H */
