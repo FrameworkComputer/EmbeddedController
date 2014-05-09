@@ -731,6 +731,9 @@
 /* Allow the board to use a GPIO for the SCI# signal. */
 #undef CONFIG_SCI_GPIO
 
+/* Support computing SHA-1 hash */
+#undef CONFIG_SHA1
+
 /* Emulate the CLZ (Count Leading Zeros) in software for CPU lacking support */
 #undef CONFIG_SOFTWARE_CLZ
 

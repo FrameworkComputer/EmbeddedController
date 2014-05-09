@@ -58,6 +58,7 @@ common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
+common-$(CONFIG_SHA1)+=sha1.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o
