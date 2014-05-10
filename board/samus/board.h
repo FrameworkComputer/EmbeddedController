@@ -18,17 +18,14 @@
 #define CONFIG_ALS
 #define CONFIG_ALS_ISL29035
 #define CONFIG_BOARD_VERSION
-#define CONFIG_CAPSENSE
 #define CONFIG_POWER_COMMON
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
-#define CONFIG_LED_DRIVER_DS2413
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_ONEWIRE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
-
+/* Note: not CONFIG_BACKLIGHT_LID. It's handled specially for Samus. */
 #define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BL_EN
 #define CONFIG_BATTERY_SAMUS
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
@@ -36,12 +33,13 @@
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
-#define CONFIG_CHARGER_BQ24715
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
-/* 10mOhm sense resitors. */
+#define CONFIG_CHARGER_BQ24773
+/* FIXME(crosbug.com/p/28721): determine correct values for these */
 #define   CONFIG_CHARGER_SENSE_RESISTOR 10
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+/* FIXME(crosbug.com/p/24461): determine correct values for this */
 #define   CONFIG_CHARGER_INPUT_CURRENT 2000
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_FANS 2
 #define CONFIG_PECI_TJMAX 100
 #define CONFIG_PWM
@@ -56,6 +54,7 @@
 #define CONFIG_WIRELESS
 #define CONFIG_WIRELESS_SUSPEND \
 	(EC_WIRELESS_SWITCH_WLAN | EC_WIRELESS_SWITCH_WLAN_POWER)
+/* Do we want EC_WIRELESS_SWITCH_WWAN as well? */
 
 #ifndef __ASSEMBLER__
 
@@ -64,7 +63,7 @@
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_ALS 1
-#define I2C_PORT_CAPSENSE 1
+#define I2C_PORT_ACCEL 1
 #define I2C_PORT_LIGHTBAR 1
 #define I2C_PORT_THERMAL 5
 
@@ -75,7 +74,7 @@
 /* Host connects to keyboard controller module via LPC */
 #define HOST_KB_BUS_LPC
 
-/* USB ports */
+/* USB ports managed by the EC */
 #define USB_PORT_COUNT 2
 
 /* GPIO signal definitions. */
@@ -96,17 +95,16 @@ enum gpio_signal {
 	GPIO_RECOVERY_L,           /* Recovery signal from servo */
 	GPIO_WP_L,                 /* Write protect input */
 	GPIO_PCH_BL_EN,            /* PCH backlight input */
-	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt */
 	GPIO_JTAG_TCK,             /* JTAG clock input */
 	GPIO_UART0_RX,             /* UART0 RX input */
+	GPIO_ACCEL_INT,            /* Combined accelerometer input */
+	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt input */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
 	GPIO_CPU_PGOOD,            /* Power good to the CPU */
-	GPIO_ONEWIRE,              /* One-wire bus to adapter LED */
-	GPIO_THERMAL_DATA_READY_L, /* From thermal sensor */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
@@ -119,6 +117,7 @@ enum gpio_signal {
 	GPIO_PP3300_DSW_GATED_EN,  /* Enable 3.3V Gated DSW and core VDD */
 	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
 	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
+	GPIO_PP3300_ACCEL_EN,      /* Enable Accelerometer power */
 	GPIO_PP1050_EN,            /* Enable 1.05V regulator */
 	GPIO_PP5000_USB_EN,        /* Enable USB power */
 	GPIO_PP5000_EN,            /* Enable 5V supply */
@@ -126,6 +125,7 @@ enum gpio_signal {
 	GPIO_SYS_PWROK,            /* EC thinks everything is up and ready */
 	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
 
+	GPIO_USB_MCU_RST_L,        /* USB PD MCU reset */
 	GPIO_ENABLE_BACKLIGHT,     /* Enable backlight power */
 	GPIO_ENABLE_TOUCHPAD,      /* Enable touchpad power */
 	GPIO_ENTERING_RW,          /* Indicate when EC is entering RW code */
@@ -236,7 +236,8 @@ enum als_id {
 /* Known board versions for system_get_board_version(). */
 enum board_version {
 	BOARD_VERSION_PROTO1 = 0,
-	BOARD_VERSION_EVT = 1,
+	BOARD_VERSION_PROTO1B = 1,
+	BOARD_VERSION_PROTO1_9 = 2,
 };
 
 /* Wireless signals */

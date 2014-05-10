@@ -51,6 +51,7 @@ const struct battery_info *battery_get_info(void)
  * bump it up a little bit every time through the loop until it's where we
  * wanted it in the first place.
  */
+/* FIXME(crosbug.com/p/24461): determine correct values for this */
 #define MAX_INPUT_CURRENT 3200
 #define INPUT_CURRENT_INCR 64
 
