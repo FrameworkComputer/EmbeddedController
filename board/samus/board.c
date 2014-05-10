@@ -182,19 +182,23 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	/* EC internal temperature is calculated by
+	/*
+	 * EC internal temperature is calculated by
 	 * 273 + (295 - 450 * ADC_VALUE / ADC_READ_MAX) / 2
 	 * = -225 * ADC_VALUE / ADC_READ_MAX + 420.5
 	 */
 	{"ECTemp", LM4_ADC_SEQ0, -225, ADC_READ_MAX, 420,
 	 LM4_AIN_NONE, 0x0e /* TS0 | IE0 | END0 */, 0, 0},
 
-	/* We're measuring the adapter input current through a 0.01-ohm
-	 * resistor (ACP/ACN). IOUT is 40X the differential voltage, so
-	 * 1000mA => 400mV. ADC returns 0x000-0xFFF over 0.0-3.3V.
-	 * mA = 1000 * ADC_VALUE / ADC_READ_MAX * 3.3(V) * 100(R) / 40(gain)
+	/*
+	 * The charger current is measured with a 0.005-ohm
+	 * resistor. IBAT is 20X the voltage across that resistor when
+	 * charging, and either 8X or 16X (default) when discharging, if it's
+	 * even enabled (default is not). Nothing looks at this except the
+	 * console command, so let's just leave it at unity gain. The ADC
+	 * returns 0x000-0xFFF for 0.0-3.3V. You do the math.
 	 */
-	{"ChargerCurrent", LM4_ADC_SEQ1, 33000, ADC_READ_MAX * 4, 0,
+	{"ChargerCurrent", LM4_ADC_SEQ1, 1, 1, 0,
 	 LM4_AIN(11), 0x06 /* IE0 | END0 */, LM4_GPIO_B, (1<<5)},
 
 	/*
