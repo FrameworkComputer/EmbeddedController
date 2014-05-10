@@ -68,9 +68,6 @@
 #define I2C_PORT_LIGHTBAR 1
 #define I2C_PORT_THERMAL 5
 
-/* Backlight I2C device address */
-#define I2C_ADDR_BACKLIGHT ((0x2C << 1) | I2C_FLAG_BIG_ENDIAN)
-
 /* 13x8 keyboard scanner uses an entire GPIO bank for row inputs */
 #define KB_SCAN_ROW_IRQ  LM4_IRQ_GPIOK
 #define KB_SCAN_ROW_GPIO LM4_GPIO_K

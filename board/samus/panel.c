@@ -12,6 +12,8 @@
 #include "i2c.h"
 #include "lid_switch.h"
 
+#define I2C_ADDR_BACKLIGHT ((0x2C << 1) | I2C_FLAG_BIG_ENDIAN)
+
 #define LP8555_REG_COMMAND           0x00
 #define  LP8555_REG_COMMAND_ON       0x01
 #define LP8555_REG_CONFIG            0x10
