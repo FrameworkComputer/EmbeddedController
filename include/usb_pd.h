@@ -104,6 +104,34 @@ enum pd_errors {
 /* VDO : Vendor Defined Message Object */
 #define VDO(vid, custom) (((vid) << 16) | ((custom) & 0xFFFF))
 
+#define VDO_ACK     (0 << 6)
+#define VDO_NAK     (1 << 6)
+#define VDO_PENDING (2 << 6)
+
+#define VDO_SRC_INITIATOR (0 << 5)
+#define VDO_SRC_RESPONDER (1 << 5)
+
+#define VDO_CMD_DISCOVER_VID (1 << 0)
+#define VDO_CMD_DISCOVER_ALT (2 << 0)
+#define VDO_CMD_AUTHENTICATE (3 << 0)
+#define VDO_CMD_ENTER_ALT    (4 << 0)
+#define VDO_CMD_EXIT_ALT     (5 << 0)
+#define VDO_CMD_VENDOR(x)    (((10 + (x)) & 0x1f))
+
+/* ChromeOS specific commands */
+#define VDO_CMD_VERSION      VDO_CMD_VENDOR(0)
+#define VDO_CMD_RW_HASH      VDO_CMD_VENDOR(2)
+#define VDO_CMD_REBOOT       VDO_CMD_VENDOR(5)
+#define VDO_CMD_FLASH_ERASE  VDO_CMD_VENDOR(6)
+#define VDO_CMD_FLASH_WRITE  VDO_CMD_VENDOR(7)
+#define VDO_CMD_FLASH_HASH   VDO_CMD_VENDOR(8)
+
+#define PD_VDO_VID(vdo) ((vdo) >> 16)
+#define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
+
+/* USB Vendor ID assigned to Google Inc. */
+#define USB_VID_GOOGLE 0x18d1
+
 /* --- Policy layer functions --- */
 
 /**
@@ -156,6 +184,17 @@ void pd_request_source_voltage(int mv);
  * @return EC_SUCCESS if the board is good, <0 else.
  */
 int pd_board_checks(void);
+
+/*
+ * Handle Vendor Defined Message with our vendor ID.
+ *
+ * @param ctxt     opaque context for PD communication.
+ * @param cnt      number of data objects in the payload.
+ * @param payload  payload data.
+ * @param rpayload pointer to the data to send back.
+ * @return if >0, number of VDOs to send back.
+ */
+int pd_custom_vdm(void *ctxt, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];

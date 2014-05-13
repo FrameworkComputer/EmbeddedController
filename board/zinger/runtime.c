@@ -91,6 +91,17 @@ uint32_t task_wait_event(int timeout_us)
 	return evt;
 }
 
+void cpu_reset(void)
+{
+	/* Disable interrupts */
+	asm volatile("cpsid i");
+	/* reboot the CPU */
+	CPU_NVIC_APINT = 0x05fa0004;
+	/* Spin and wait for reboot; should never return */
+	while (1)
+		;
+}
+
 /* --- stubs --- */
 void __hw_timer_enable_clock(int n, int enable)
 { /* Done in hardware init */ }

@@ -18,7 +18,9 @@
 #define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PD_DUAL_ROLE
 #undef CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_HW_CRC
+#define CONFIG_SHA1
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
@@ -62,6 +64,15 @@ void hardware_init(void);
 
 /* last interrupt event */
 extern volatile uint32_t last_event;
+
+/* RW section flashing */
+int flash_erase_rw(void);
+int flash_write_rw(int offset, int size, const char *data);
+uint8_t *flash_hash_rw(void);
+int is_ro_mode(void);
+
+/* Reboot the CPU */
+void cpu_reset(void);
 
 #endif /* !__ASSEMBLER__ */
 

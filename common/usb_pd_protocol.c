@@ -395,8 +395,23 @@ static int send_bist(void *ctxt)
 
 static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
 {
-	CPRINTF("[%T PD Unhandled VDM VID %04x CMD %04x]\n", payload[0] >> 16,
-		payload[0] & 0xFFFF);
+	uint16_t vid = PD_VDO_VID(payload[0]);
+#ifdef CONFIG_USB_PD_CUSTOM_VDM
+	int rlen;
+	uint32_t *rdata;
+
+	if (vid == USB_VID_GOOGLE) {
+		rlen = pd_custom_vdm(ctxt, cnt, payload, &rdata);
+		if (rlen > 0) {
+			uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF,
+						pd_role, pd_message_id, rlen);
+			send_validate_message(ctxt, header, rlen, rdata);
+		}
+		return;
+	}
+#endif
+	CPRINTF("[%T PD Unhandled VDM VID %04x CMD %04x]\n",
+		vid, payload[0] & 0xFFFF);
 }
 
 static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)

@@ -10,9 +10,11 @@
 #include "debug.h"
 #include "hooks.h"
 #include "registers.h"
+#include "sha1.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
+#include "version.h"
 
 /* ------------------------- Power supply control ------------------------ */
 
@@ -204,4 +206,60 @@ int pd_board_checks(void)
 
 	return EC_SUCCESS;
 
+}
+
+/* ----------------- Vendor Defined Messages ------------------ */
+int pd_custom_vdm(void *ctxt, int cnt, uint32_t *payload, uint32_t **rpayload)
+{
+	static int flash_offset;
+	void *hash;
+	int cmd = PD_VDO_CMD(payload[0]);
+	int rsize = 1;
+	debug_printf("%T] VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
+
+	*rpayload = payload;
+	switch (cmd) {
+	case VDO_CMD_VERSION:
+		memcpy(payload + 1, &version_data.version, 24);
+		rsize = 7;
+		break;
+	case VDO_CMD_REBOOT:
+		/* ensure the power supply is in a safe state */
+		pd_power_supply_reset();
+		cpu_reset();
+		break;
+	case VDO_CMD_RW_HASH:
+		hash = flash_hash_rw();
+		memcpy(payload + 1, hash, SHA1_DIGEST_SIZE);
+		rsize = 6;
+		break;
+	case VDO_CMD_FLASH_ERASE:
+		/* do not kill the code under our feet */
+		if (!is_ro_mode())
+			break;
+		flash_offset = 0;
+		flash_erase_rw();
+		break;
+	case VDO_CMD_FLASH_WRITE:
+		/* do not kill the code under our feet */
+		if (!is_ro_mode())
+			break;
+		flash_write_rw(flash_offset, 4*(cnt - 1),
+			       (const char *)(payload+1));
+		flash_offset += 4*(cnt - 1);
+		break;
+	case VDO_CMD_FLASH_HASH:
+		/* this is not touching the code area */
+		flash_write_rw(CONFIG_FW_RW_SIZE - 32, 4*cnt,
+			       (const char *)(payload+1));
+		break;
+	default:
+		/* Unknown : do not answer */
+		return 0;
+	}
+	debug_printf("%T] DONE\n");
+	/* respond (positively) to the request */
+	payload[0] |= VDO_SRC_RESPONDER;
+
+	return rsize;
 }
