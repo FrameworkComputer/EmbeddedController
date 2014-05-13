@@ -80,8 +80,8 @@ static timestamp_t fault_deadline;
 /* convert VBUS current in raw ADC value */
 #define VBUS_MA(ma) ((ma)*ADC_SCALE*R_SENSE/1000*CURR_GAIN/VDDA_MV)
 
-/* Max current : 10% over 3A = 3.3A */
-#define MAX_CURRENT VBUS_MA(3300)
+/* Max current : 20% over 3A = 3.6A */
+#define MAX_CURRENT VBUS_MA(3600)
 /* reset over-current after 1 second */
 #define OCP_TIMEOUT SECOND
 
