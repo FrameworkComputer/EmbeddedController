@@ -43,6 +43,7 @@ test_export_static timestamp_t shutdown_warning_time;
 static timestamp_t precharge_start_time;
 static int battery_seems_to_be_dead;
 static int problems_exist;
+static int debugging;
 
 /* Track problems in communicating with the battery or charger */
 enum problem_type {
@@ -245,6 +246,7 @@ static void dump_charge_state(void)
 	ccprintf("  manual_mode = %d\n", manual_mode);
 	ccprintf("  user_current_limit = %dmA\n", user_current_limit);
 	ccprintf("  battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
+	ccprintf("  debug output = %s\n", debugging ? "on" : "off");
 #undef DUMP
 }
 
@@ -270,6 +272,15 @@ static void show_charging_progress(void)
 			curr.batt.state_of_charge,
 			minutes / 60, minutes % 60,
 			to_full ? "to full" : "to empty");
+
+	if (debugging) {
+		ccprintf("battery:\n");
+		print_battery_debug();
+		ccprintf("charger:\n");
+		print_charger_debug();
+		ccprintf("chg:\n");
+		dump_charge_state();
+	}
 }
 
 /*
@@ -917,6 +928,11 @@ static int command_chgstate(int argc, char **argv)
 			rv = charge_force_idle(val);
 			if (rv)
 				return rv;
+		} else if (!strcasecmp(argv[1], "debug")) {
+			if (argc <= 2)
+				return EC_ERROR_PARAM_COUNT;
+			if (!parse_bool(argv[2], &debugging))
+				return EC_ERROR_PARAM2;
 		} else {
 			/* maybe handle board_discharge_on_ac() too? */
 			return EC_ERROR_PARAM1;
@@ -927,6 +943,6 @@ static int command_chgstate(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
-			"[idle on|off]",
+			"[idle|debug on|off]",
 			"Get/set charge state machine status",
 			NULL);

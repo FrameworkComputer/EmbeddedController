@@ -209,6 +209,14 @@ static void print_battery_info(void)
 	}
 }
 
+void print_battery_debug(void)
+{
+	print_battery_status();
+	print_battery_params();
+	print_battery_strings();
+	print_battery_info();
+}
+
 static int command_battery(int argc, char **argv)
 {
 	int repeat = 1;
@@ -233,10 +241,7 @@ static int command_battery(int argc, char **argv)
 	}
 
 	for (loop = 0; loop < repeat; loop++) {
-		print_battery_status();
-		print_battery_params();
-		print_battery_strings();
-		print_battery_info();
+		print_battery_debug();
 
 		/*
 		 * Running with a high repeat count will take so long the

@@ -107,5 +107,8 @@ int charger_device_id(int *id);
 int charger_get_option(int *option);
 int charger_set_option(int option);
 
+/* Print all charger info for debugging purposes */
+void print_charger_debug(void);
+
 #endif /* __CROS_EC_CHARGER_H */
 

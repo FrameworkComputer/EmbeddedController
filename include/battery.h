@@ -309,4 +309,9 @@ int battery_set_vendor_param(uint32_t param, uint32_t value);
  */
 int battery_wait_for_stable(void);
 
+/**
+ * Print all battery info for debugging purposes
+ */
+void print_battery_debug(void);
+
 #endif /* __CROS_EC_BATTERY_H */

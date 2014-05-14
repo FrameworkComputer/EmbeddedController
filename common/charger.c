@@ -5,6 +5,7 @@
  * Common functions for battery charging.
  */
 
+#include "battery_smart.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
@@ -114,7 +115,7 @@ static int check_print_error(int rv)
 	return 0;
 }
 
-static int print_info(void)
+void print_charger_debug(void)
 {
 	int d;
 	const struct charger_info *info = charger_get_info();
@@ -165,8 +166,6 @@ static int print_info(void)
 		ccprintf("%5d\n", dptf_limit_ma);
 	else
 		ccputs("disabled\n");
-
-	return EC_SUCCESS;
 }
 
 static int command_charger(int argc, char **argv)
@@ -174,8 +173,10 @@ static int command_charger(int argc, char **argv)
 	int d;
 	char *e;
 
-	if (argc != 3)
-		return print_info();
+	if (argc != 3) {
+		print_charger_debug();
+		return EC_SUCCESS;
+	}
 
 	if (strcasecmp(argv[1], "input") == 0) {
 		d = strtoi(argv[2], &e, 0);
