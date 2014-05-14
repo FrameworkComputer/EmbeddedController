@@ -183,6 +183,37 @@ static void dual_role_force_sink(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
 
+/* ----------------- Vendor Defined Messages ------------------ */
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
+{
+	int cmd = PD_VDO_CMD(payload[0]);
+	int i;
+	ccprintf("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
+
+	/* make sure we have some payload */
+	if (cnt == 0)
+		return 0;
+
+	switch (cmd) {
+	case VDO_CMD_VERSION:
+		/* guarantee last byte of payload is null character */
+		*(payload + cnt - 1) = 0;
+		ccprintf("version: %s\n", (char *)(payload+1));
+		break;
+	case VDO_CMD_RW_HASH:
+		ccprintf("RW Hash: ");
+		payload++; /* skip cmd */
+		for (i = 0; i < cnt - 1; i++)
+			ccprintf("%08x ", *payload++);
+		ccprintf("\n");
+		break;
+	}
+
+	return 0;
+}
+
+/****************************************************************************/
+/* Console commands */
 static int command_ec_int(int argc, char **argv)
 {
 	pd_send_ec_int();
@@ -194,6 +225,8 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"Toggle EC interrupt line",
 			NULL);
 
+/****************************************************************************/
+/* Host commands */
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_status *p = args->params;

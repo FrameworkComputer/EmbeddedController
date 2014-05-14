@@ -127,3 +127,33 @@ int pd_power_negotiation_allowed(void)
 {
 	return 1;
 }
+
+/* ----------------- Vendor Defined Messages ------------------ */
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
+{
+	int cmd = PD_VDO_CMD(payload[0]);
+	int i;
+	ccprintf("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
+
+	/* make sure we have some payload */
+	if (cnt == 0)
+		return 0;
+
+	switch (cmd) {
+	case VDO_CMD_VERSION:
+		/* guarantee last byte of payload is null character */
+		*(payload + cnt - 1) = 0;
+		ccprintf("version: %s\n", (char *)(payload+1));
+		break;
+	case VDO_CMD_RW_HASH:
+		ccprintf("RW Hash: ");
+		payload++; /* skip cmd */
+		for (i = 0; i < cnt - 1; i++)
+			ccprintf("%08x ", *payload++);
+		ccprintf("\n");
+		break;
+	}
+
+	return 0;
+}
+
