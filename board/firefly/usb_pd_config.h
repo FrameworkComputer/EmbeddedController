@@ -88,6 +88,14 @@ static inline void pd_set_host_mode(int enable)
 {
 }
 
+static inline int pd_adc_read(int cc)
+{
+	if (cc == 0)
+		return adc_read_channel(ADC_CH_CC1_PD);
+	else
+		return adc_read_channel(ADC_CH_CC2_PD);
+}
+
 /* Standard-current DFP : no-connect voltage is 1.55V */
 #define PD_SRC_VNC 1550 /* mV */
 

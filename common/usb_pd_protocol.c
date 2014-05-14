@@ -669,8 +669,8 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_DISCONNECTED:
 			/* Vnc monitoring */
-			cc1_volt = adc_read_channel(ADC_CH_CC1_PD);
-			cc2_volt = adc_read_channel(ADC_CH_CC2_PD);
+			cc1_volt = pd_adc_read(0);
+			cc2_volt = pd_adc_read(1);
 			if ((cc1_volt < PD_SRC_VNC) ||
 			    (cc2_volt < PD_SRC_VNC)) {
 				pd_polarity = !(cc1_volt < PD_SRC_VNC);
@@ -726,8 +726,8 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SNK_DISCONNECTED:
 			/* Source connection monitoring */
-			cc1_volt = adc_read_channel(ADC_CH_CC1_PD);
-			cc2_volt = adc_read_channel(ADC_CH_CC2_PD);
+			cc1_volt = pd_adc_read(0);
+			cc2_volt = pd_adc_read(1);
 			if ((cc1_volt > PD_SNK_VA) ||
 			    (cc2_volt > PD_SNK_VA)) {
 				pd_polarity = !(cc1_volt > PD_SNK_VA);

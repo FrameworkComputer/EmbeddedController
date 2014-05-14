@@ -73,6 +73,14 @@ static inline void pd_tx_init(void)
 	/* Already done in hardware_init() */
 }
 
+static inline int pd_adc_read(int cc)
+{
+	if (cc == 0)
+		return adc_read_channel(ADC_CH_CC1_PD);
+	else
+		return adc_read_channel(ADC_CH_CC2_PD);
+}
+
 /* 3.0A DFP : no-connect voltage is 2.45V */
 #define PD_SRC_VNC (2450 /*mV*/ * 4096 / 3300/* 12-bit ADC with 3.3V range */)
 

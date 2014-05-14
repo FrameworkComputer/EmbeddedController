@@ -9,20 +9,19 @@
 #define __USB_PD_CONFIG_H
 
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX 17
+#define TIM_CLOCK_PD_TX 14
 #define TIM_CLOCK_PD_RX 1
 
 /* use the hardware accelerator for CRC */
 #define CONFIG_HW_CRC
 
-/* TX is using SPI2 on PB12-14 */
-#define SPI_REGS STM32_SPI2_REGS
-#define DMAC_SPI_TX STM32_DMAC_CH7
+/* TX is using SPI1 on PB3-5 */
+#define SPI_REGS STM32_SPI1_REGS
+#define DMAC_SPI_TX STM32_DMAC_CH3
 
 static inline void spi_enable_clock(void)
 {
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
-	STM32_SYSCFG_CFGR1 |= 1 << 24; /* Remap SPI2 DMA */
 }
 
 /* RX is using COMP1 triggering TIM1 CH1 */
@@ -37,22 +36,24 @@ static inline void spi_enable_clock(void)
 /* the pins used for communication need to be hi-speed */
 static inline void pd_set_pins_speed(void)
 {
-	/* 40 MHz pin speed on SPI PB12/13/14 */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x7f000000;
-	/* 40 MHz pin speed on TIM17_CH1 (PB9) */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000C0000;
+	/* 40 MHz pin speed on SPI PB3/4/5 */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
+	/* 40 MHz pin speed on TIM14_CH1 (PB1) */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000000C0;
 }
 
 /* Drive the CC line from the TX block */
 static inline void pd_tx_enable(int polarity)
 {
-	gpio_set_level(GPIO_PD_TX_EN, 1);
+	gpio_set_level(GPIO_USB_C0_CC1_TX_EN, 1);
+	gpio_set_level(GPIO_USB_C0_CC2_TX_EN, 1);
 }
 
 /* Put the TX driver in Hi-Z state */
 static inline void pd_tx_disable(int polarity)
 {
-	gpio_set_level(GPIO_PD_TX_EN, 0);
+	gpio_set_level(GPIO_USB_C0_CC1_TX_EN, 0);
+	gpio_set_level(GPIO_USB_C0_CC2_TX_EN, 0);
 }
 
 /* we know the plug polarity, do the right configuration */
@@ -73,15 +74,24 @@ static inline void pd_tx_init(void)
 
 static inline void pd_set_host_mode(int enable)
 {
-	gpio_set_level(GPIO_CC_HOST, enable);
+	if (enable) {
+		/* High-Z is used for host mode. */
+		gpio_set_flags(GPIO_USB_C0_CC1_ODL, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_C0_CC2_ODL, GPIO_INPUT);
+	} else {
+		/* Pull low for device mode. */
+		gpio_set_flags(GPIO_USB_C0_CC1_ODL, GPIO_OUT_LOW);
+		gpio_set_flags(GPIO_USB_C0_CC2_ODL, GPIO_OUT_LOW);
+	}
+
 }
 
 static inline int pd_adc_read(int cc)
 {
 	if (cc == 0)
-		return adc_read_channel(ADC_CH_CC1_PD);
+		return adc_read_channel(ADC_C0_CC1_PD);
 	else
-		return adc_read_channel(ADC_CH_CC2_PD);
+		return adc_read_channel(ADC_C0_CC2_PD);
 }
 
 /* Standard-current DFP : no-connect voltage is 1.55V */
