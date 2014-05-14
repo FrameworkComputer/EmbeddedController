@@ -9,6 +9,7 @@
 #include "console.h"
 #include "debug.h"
 #include "hooks.h"
+#include "irq_handler.h"
 #include "registers.h"
 #include "sha1.h"
 #include "timer.h"
@@ -59,6 +60,7 @@ static inline int output_is_enabled(void)
 enum faults {
 	FAULT_OK = 0,
 	FAULT_OCP, /* Over-Current Protection */
+	FAULT_FAST_OCP, /* Over-Current Protection for interrupt context */
 	FAULT_OVP, /* Under or Over-Voltage Protection */
 };
 
@@ -161,6 +163,9 @@ int pd_set_power_supply_ready(void)
 		return EC_ERROR_INVAL;
 
 	output_enable();
+	/* Over-current monitoring */
+	adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT, 0);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -171,16 +176,28 @@ void pd_power_supply_reset(void)
 	volt_idx = 0;
 	set_output_voltage(VO_5V);
 	/* TODO transition delay */
+
+	/* Stop OCP monitoring to save power */
+	adc_disable_watchdog();
 }
 
 int pd_board_checks(void)
 {
 	int vbus_volt, vbus_amp;
+	int watchdog_enabled = STM32_ADC_CFGR1 & (1 << 23);
+
+	if (watchdog_enabled)
+		/* if the watchdog is enabled, stop it to do other readings */
+		adc_disable_watchdog();
 
 	vbus_volt = adc_read_channel(ADC_CH_V_SENSE);
 	vbus_amp = adc_read_channel(ADC_CH_A_SENSE);
 
-	if (vbus_amp > MAX_CURRENT) {
+	if (watchdog_enabled)
+		/* re-enable fast OCP */
+		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT, 0);
+
+	if ((fault == FAULT_FAST_OCP) || (vbus_amp > MAX_CURRENT)) {
 		debug_printf("OverCurrent : %d mA\n",
 		  vbus_amp * VDDA_MV / CURR_GAIN * 1000 / R_SENSE / ADC_SCALE);
 		fault = FAULT_OCP;
@@ -206,6 +223,16 @@ int pd_board_checks(void)
 
 	return EC_SUCCESS;
 
+}
+
+void IRQ_HANDLER(STM32_IRQ_ADC_COMP)(void)
+{
+	/* cut the power output */
+	pd_power_supply_reset();
+	/* Clear flags */
+	STM32_ADC_ISR = 0x8e;
+	/* record a special fault, the normal check will record the timeout */
+	fault = FAULT_FAST_OCP;
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */

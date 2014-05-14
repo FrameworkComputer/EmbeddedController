@@ -116,6 +116,10 @@ static void adc_init(void)
 	STM32_ADC_CFGR2 = 0;
 	/* Sampling time : 13.5 ADC clock cycles. */
 	STM32_ADC_SMPR = 2;
+	/* Disable interrupts */
+	STM32_ADC_IER = 0;
+	/* Analog watchdog IRQ */
+	task_enable_irq(STM32_IRQ_ADC_COMP);
 }
 
 static void uart_init(void)
@@ -171,7 +175,7 @@ int adc_read_channel(enum adc_channel ch)
 	/* Select channel to convert */
 	STM32_ADC_CHSELR = 1 << ch;
 	/* Clear flags */
-	STM32_ADC_ISR = 0xe;
+	STM32_ADC_ISR = 0x8e;
 	/* Start conversion */
 	STM32_ADC_CR |= 1 << 2; /* ADSTART */
 	/* Wait for end of conversion */
@@ -181,6 +185,40 @@ int adc_read_channel(enum adc_channel ch)
 	value = STM32_ADC_DR;
 
 	return value;
+}
+
+int adc_enable_watchdog(int ch, int high, int low)
+{
+	/* Set thresholds */
+	STM32_ADC_TR = ((high & 0xfff) << 16) | (low & 0xfff);
+	/* Select channel to convert */
+	STM32_ADC_CHSELR = 1 << ch;
+	/* Clear flags */
+	STM32_ADC_ISR = 0x8e;
+	/* Set Watchdog enable bit on a single channel / continuous mode */
+	STM32_ADC_CFGR1 = (ch << 26) | (1 << 23) | (1 << 22)
+			|  (1 << 13) | (1 << 12);
+	/* Enable watchdog interrupt */
+	STM32_ADC_IER = 1 << 7;
+	/* Start continuous conversion */
+	STM32_ADC_CR |= 1 << 2; /* ADSTART */
+
+	return EC_SUCCESS;
+}
+
+int adc_disable_watchdog(void)
+{
+	/* Stop on-going conversion */
+	STM32_ADC_CR |= 1 << 4; /* ADSTP */
+	/* Wait for conversion to stop */
+	while (STM32_ADC_CR & (1 << 4))
+		;
+	/* CONT=0 -> continuous mode off / Clear Watchdog enable */
+	STM32_ADC_CFGR1 = 1 << 12;
+	/* Disable interrupt */
+	STM32_ADC_IER = 0;
+
+	return EC_SUCCESS;
 }
 
 /* ---- flash handling ---- */
