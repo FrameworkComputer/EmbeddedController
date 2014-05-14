@@ -18,6 +18,8 @@ DEFINE_integer port 9999 \
 	"Port to communicate to servo on."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
+DEFINE_string uart_prefix "ec" \
+	"Prefix name (ec|usbpd) to prepend to various UART servo controls."
 DEFINE_boolean unprotect "${FLAGS_FALSE}" \
 	"Clear the protect flag."
 
@@ -113,7 +115,7 @@ DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
 # Find the EC UART on the servo v2
 function ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	($DUT_CONTROL_CMD ec_uart_pty || \
+	($DUT_CONTROL_CMD ${FLAGS_uart_prefix}_uart_pty || \
             die "${SERVOD_FAIL}") | cut -d: -f2
 }
 
@@ -183,10 +185,10 @@ function flash_stm32() {
 	free_pty ${EC_UART}
 
 	if [ "${SERVO_TYPE}" = "servo" ] ; then
-		dut_control ec_uart_en:on
+		dut_control ${FLAGS_uart_prefix}_uart_en:on
 	fi
-	dut_control ec_uart_parity:even
-	dut_control ec_uart_baudrate:115200
+	dut_control ${FLAGS_uart_prefix}_uart_parity:even
+	dut_control ${FLAGS_uart_prefix}_uart_baudrate:115200
 	# Force the EC to boot in serial monitor mode
 	ec_enable_boot0
 	# Reset the EC
@@ -231,10 +233,10 @@ function flash_lm4() {
 }
 
 IMG="$(ec_image)"
-info "Using EC image : ${IMG}"
+info "Using ${FLAGS_uart_prefix} image : ${IMG}"
 
 EC_UART="$(ec_uart)"
-info "EC UART pty : ${EC_UART}"
+info "${FLAGS_uart_prefix} UART pty : ${EC_UART}"
 
 if dut_control boot_mode 2>/dev/null ; then
 	SERVO_TYPE=toad
