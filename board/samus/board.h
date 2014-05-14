@@ -100,6 +100,7 @@ enum gpio_signal {
 	GPIO_UART0_RX,             /* UART0 RX input */
 	GPIO_ACCEL_INT,            /* Combined accelerometer input */
 	GPIO_CAPSENSE_INT_L,       /* Capsense interrupt input */
+	GPIO_PD_MCU_INT_L,         /* Interrupt signal from PD MCU */
 
 	/* Other inputs */
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
