@@ -32,15 +32,15 @@
 /* Charger parameters */
 static const struct charger_info bq24773_charger_info = {
 	.name         = "bq24773",
-	.voltage_max  = 19200,
-	.voltage_min  = 1024,
-	.voltage_step = 16,
-	.current_max  = REG_TO_CURRENT(0x1FC0, R_SNS),
-	.current_min  = REG_TO_CURRENT(128, R_SNS),
-	.current_step = REG_TO_CURRENT(64, R_SNS),
-	.input_current_max  = REG8_TO_CURRENT(0x7F, R_AC),
-	.input_current_min  = REG8_TO_CURRENT(2, R_AC),
-	.input_current_step = REG8_TO_CURRENT(1, R_AC),
+	.voltage_max  = CHARGE_V_MAX,
+	.voltage_min  = CHARGE_V_MIN,
+	.voltage_step = CHARGE_V_STEP,
+	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
+	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
+	.current_step = REG_TO_CURRENT(CHARGE_I_STEP, R_SNS),
+	.input_current_max  = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
+	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
+	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
 
 /* bq24773 specific interfaces */
