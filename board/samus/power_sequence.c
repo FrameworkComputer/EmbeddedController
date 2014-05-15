@@ -340,8 +340,12 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
 
-		/* Wait 99ms after all voltages good */
-		msleep(99);
+		/*
+		 * Wait a bit for all voltages to be good. PCIe devices need
+		 * 99ms, but mini-PCIe devices only need 1ms. Intel recommends
+		 * at least 5ms between ALL_SYS_PWRGD and SYS_PWROK.
+		 */
+		msleep(5);
 
 		/*
 		 * Throttle CPU if necessary.  This should only be asserted
