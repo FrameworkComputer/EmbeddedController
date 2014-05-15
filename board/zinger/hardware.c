@@ -244,6 +244,8 @@ int adc_disable_watchdog(void)
 	STM32_ADC_CFGR1 = 1 << 12;
 	/* Disable interrupt */
 	STM32_ADC_IER = 0;
+	/* Clear flags */
+	STM32_ADC_ISR = 0x8e;
 
 	return EC_SUCCESS;
 }
