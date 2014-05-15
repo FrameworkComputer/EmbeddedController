@@ -10,4 +10,5 @@ CHIP_FAMILY:=stm32f
 CHIP_VARIANT:=stm32ts60
 
 board-y=board.o hardware.o runtime.o master_slave.o spi_comm.o touch_scan.o
+board-y+=encode.o
 board-$(CONFIG_DEBUG_PRINTF)+=debug.o

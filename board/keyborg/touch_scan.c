@@ -9,6 +9,7 @@
 #include "console.h"
 #include "debug.h"
 #include "dma.h"
+#include "encode.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "master_slave.h"
@@ -21,13 +22,7 @@
 #define TS_PIN_TO_CR(p) ((((p).port_id + 1) << 16) | (1 << (p).pin))
 #define TS_GPIO_TO_BASE(p) (0x40010800 + (p) * 0x400)
 
-/*
- * Storage for partial touch scan data. This will be smaller once
- * we figure out how to encode it.
- */
-static uint8_t touch_data[COL_COUNT + 10][ROW_COUNT * 2];
-
-static uint8_t buf[ROW_COUNT * 2];
+static uint8_t buf[2][ROW_COUNT * 2];
 
 static uint32_t mccr_list[COL_COUNT];
 static uint32_t mrcr_list[ROW_COUNT];
@@ -188,7 +183,7 @@ int touch_scan_full_matrix(void)
 {
 	struct spi_comm_packet cmd;
 	const struct spi_comm_packet *resp;
-	int col, row;
+	int col;
 	timestamp_t st = get_time();
 	uint8_t *dptr = NULL, *last_dptr = NULL;
 
@@ -198,6 +193,7 @@ int touch_scan_full_matrix(void)
 	if (spi_master_send_command(&cmd))
 		return EC_ERROR_UNKNOWN;
 
+	encode_reset();
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (col >= COL_COUNT) {
 			enable_col(col - COL_COUNT, 1);
@@ -208,10 +204,7 @@ int touch_scan_full_matrix(void)
 			return EC_ERROR_UNKNOWN;
 
 		last_dptr = dptr;
-		if (col < COL_COUNT + 10)
-			dptr = touch_data[col];
-		else
-			dptr = buf;
+		dptr = buf[col & 1];
 
 		scan_column(dptr + ROW_COUNT);
 
@@ -223,6 +216,7 @@ int touch_scan_full_matrix(void)
 			memcpy(last_dptr, resp->data, resp->size);
 			memset(last_dptr + resp->size, 0,
 					ROW_COUNT - resp->size);
+			encode_add_column(last_dptr);
 		}
 
 		if (master_slave_sync(20) != EC_SUCCESS)
@@ -243,20 +237,12 @@ int touch_scan_full_matrix(void)
 		return EC_ERROR_UNKNOWN;
 	memcpy(last_dptr, resp->data, resp->size);
 	memset(last_dptr + resp->size, 0, ROW_COUNT - resp->size);
+	encode_add_column(last_dptr);
 
 	master_slave_sync(20);
 
 	debug_printf("Sampling took %d us\n", get_time().val - st.val);
-
-	for (row = 0; row < ROW_COUNT * 2; ++row) {
-		for (col = 0; col < COL_COUNT + 10; ++col) {
-			if (touch_data[col][row] < THRESHOLD)
-				debug_printf("  - ");
-			else
-				debug_printf("%3d ", touch_data[col][row]);
-		}
-		debug_printf("\n");
-	}
+	encode_dump_matrix();
 
 	return EC_SUCCESS;
 }
