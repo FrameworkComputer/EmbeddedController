@@ -21,7 +21,7 @@
 
 static inline void spi_enable_clock(void)
 {
-	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 }
 
 /* RX is using COMP1 triggering TIM1 CH1 */
@@ -39,21 +39,35 @@ static inline void pd_set_pins_speed(void)
 	/* 40 MHz pin speed on SPI PB3/4/5 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
 	/* 40 MHz pin speed on TIM14_CH1 (PB1) */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000000C0;
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
 }
 
 /* Drive the CC line from the TX block */
 static inline void pd_tx_enable(int polarity)
 {
-	gpio_set_level(GPIO_USB_C0_CC1_TX_EN, 1);
-	gpio_set_level(GPIO_USB_C0_CC2_TX_EN, 1);
+	/* set the low level reference */
+	gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
+					GPIO_USB_C0_CC1_TX_EN, 1);
+
+	/* put SPI function on TX pin */
+	if (polarity) /* PE14 is SPI1 MISO */
+		gpio_set_alternate_function(GPIO_E, 0x4000, 1);
+	else /* PB4 is SPI1 MISO */
+		gpio_set_alternate_function(GPIO_B, 0x0010, 0);
 }
 
 /* Put the TX driver in Hi-Z state */
 static inline void pd_tx_disable(int polarity)
 {
-	gpio_set_level(GPIO_USB_C0_CC1_TX_EN, 0);
-	gpio_set_level(GPIO_USB_C0_CC2_TX_EN, 0);
+	/* put SPI TX in Hi-Z */
+	if (polarity) /* PE14 is SPI1 MISO */
+		gpio_set_alternate_function(GPIO_E, 0x4000, -1);
+	else /* PB4 is SPI1 MISO */
+		gpio_set_alternate_function(GPIO_B, 0x0010, -1);
+
+	/* put the low level reference in Hi-Z */
+	gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
+					GPIO_USB_C0_CC1_TX_EN, 0);
 }
 
 /* we know the plug polarity, do the right configuration */
@@ -76,12 +90,12 @@ static inline void pd_set_host_mode(int enable)
 {
 	if (enable) {
 		/* High-Z is used for host mode. */
-		gpio_set_flags(GPIO_USB_C0_CC1_ODL, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_C0_CC2_ODL, GPIO_INPUT);
+		gpio_set_level(GPIO_USB_C0_CC1_ODL, 1);
+		gpio_set_level(GPIO_USB_C0_CC2_ODL, 1);
 	} else {
 		/* Pull low for device mode. */
-		gpio_set_flags(GPIO_USB_C0_CC1_ODL, GPIO_OUT_LOW);
-		gpio_set_flags(GPIO_USB_C0_CC2_ODL, GPIO_OUT_LOW);
+		gpio_set_level(GPIO_USB_C0_CC1_ODL, 0);
+		gpio_set_level(GPIO_USB_C0_CC2_ODL, 0);
 	}
 
 }

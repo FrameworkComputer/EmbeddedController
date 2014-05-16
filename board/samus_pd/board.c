@@ -66,10 +66,10 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_REF_PD_ODL",      GPIO_A, (1<<7),  GPIO_ODR_LOW,  NULL},
 
 	{"USB_C_CC_EN",            GPIO_C, (1<<10), GPIO_OUT_LOW,  NULL},
-	{"USB_C0_CC1_TX_EN",       GPIO_A, (1<<15), GPIO_OUT_HIGH, NULL},
-	{"USB_C0_CC2_TX_EN",       GPIO_E, (1<<12), GPIO_OUT_HIGH, NULL},
-	{"USB_C1_CC1_TX_EN",       GPIO_B, (1<<9),  GPIO_OUT_HIGH, NULL},
-	{"USB_C1_CC2_TX_EN",       GPIO_B, (1<<12), GPIO_OUT_HIGH, NULL},
+	{"USB_C0_CC1_TX_EN",       GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
+	{"USB_C0_CC2_TX_EN",       GPIO_E, (1<<12), GPIO_OUT_LOW, NULL},
+	{"USB_C1_CC1_TX_EN",       GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
+	{"USB_C1_CC2_TX_EN",       GPIO_B, (1<<12), GPIO_OUT_LOW, NULL},
 
 #if 0
 	/* Alternate functions */
@@ -99,10 +99,10 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_CC1_VCONN1_EN_L", GPIO_D, (1<<10), GPIO_OUT_HIGH, NULL},
 	{"USB_C1_CC2_VCONN1_EN_L", GPIO_D, (1<<11), GPIO_OUT_HIGH, NULL},
 
-	{"USB_C0_CC1_ODL",         GPIO_B, (1<<8),  GPIO_OUT_LOW,  NULL},
-	{"USB_C0_CC2_ODL",         GPIO_E, (1<<0),  GPIO_OUT_LOW,  NULL},
-	{"USB_C1_CC1_ODL",         GPIO_F, (1<<9),  GPIO_OUT_LOW,  NULL},
-	{"USB_C1_CC2_ODL",         GPIO_F, (1<<10), GPIO_OUT_LOW,  NULL},
+	{"USB_C0_CC1_ODL",         GPIO_B, (1<<8),  GPIO_ODR_LOW,  NULL},
+	{"USB_C0_CC2_ODL",         GPIO_E, (1<<0),  GPIO_ODR_LOW,  NULL},
+	{"USB_C1_CC1_ODL",         GPIO_F, (1<<9),  GPIO_ODR_LOW,  NULL},
+	{"USB_C1_CC2_ODL",         GPIO_F, (1<<10), GPIO_ODR_LOW,  NULL},
 
 	{"USB_C_BC12_SEL",         GPIO_C, (1<<0),  GPIO_OUT_LOW,  NULL},
 	{"USB_C0_SS1_EN_L",        GPIO_E, (1<<2),  GPIO_OUT_HIGH, NULL},
@@ -181,8 +181,8 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_B, 0x0018, 0, MODULE_USB_PD},/* SPI1: MISO(PB4) SCK(PB3) */
-	{GPIO_B, 0x6000, 0, MODULE_USB_PD},/* SPI2: MISO(PB14) SCK(PB13) */
+	{GPIO_B, 0x0008, 0, MODULE_USB_PD},/* SPI1: SCK(PB3) */
+	{GPIO_B, 0x2000, 0, MODULE_USB_PD},/* SPI2: SCK(PB13) */
 	{GPIO_B, 0x0002, 0, MODULE_USB_PD},/* TIM14_CH1: PB1) */
 	{GPIO_E, 0x0002, 0, MODULE_USB_PD},/* TIM17_CH1: PE1) */
 	{GPIO_A, 0x0600, 1, MODULE_UART},  /* USART1: PA9/PA10 */
@@ -196,8 +196,8 @@ const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
 	[ADC_C0_CC1_PD] = {"C0_CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
-	[ADC_C0_CC2_PD] = {"C0_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
 	[ADC_C1_CC1_PD] = {"C1_CC1_PD", 3300, 4096, 0, STM32_AIN(2)},
+	[ADC_C0_CC2_PD] = {"C0_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
 	[ADC_C1_CC2_PD] = {"C1_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
