@@ -13,13 +13,25 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "usb_pd.h"
 #include "util.h"
 
-void button_event(enum gpio_signal signal)
+/* Debounce time for voltage buttons */
+#define BUTTON_DEBOUNCE_US (100 * MSEC)
+
+static enum gpio_signal button_pressed;
+
+/* Handle debounced button press */
+static void button_deferred(void)
 {
 	int mv;
-	switch (signal) {
+
+	/* bounce ? */
+	if (gpio_get_level(button_pressed) != 0)
+		return;
+
+	switch (button_pressed) {
 	case GPIO_SW_PP20000:
 		mv = 20000;
 		break;
@@ -34,7 +46,15 @@ void button_event(enum gpio_signal signal)
 	}
 	pd_request_source_voltage(mv);
 	ccprintf("Button %d = %d => Vout=%d mV\n",
-		 signal, gpio_get_level(signal), mv);
+		 button_pressed, gpio_get_level(button_pressed), mv);
+}
+DECLARE_DEFERRED(button_deferred);
+
+void button_event(enum gpio_signal signal)
+{
+	button_pressed = signal;
+	/* reset debounce time */
+	hook_call_deferred(button_deferred, BUTTON_DEBOUNCE_US);
 }
 
 void vbus_event(enum gpio_signal signal)
