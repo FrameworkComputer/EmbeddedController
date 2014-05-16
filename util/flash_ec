@@ -18,8 +18,6 @@ DEFINE_integer port 9999 \
 	"Port to communicate to servo on."
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
-DEFINE_string uart_prefix "" \
-	"Prefix name (ec|usbpd) to prepend to various UART servo controls."
 DEFINE_boolean unprotect "${FLAGS_FALSE}" \
 	"Clear the protect flag."
 
@@ -34,7 +32,7 @@ set -e
 SERVO_TYPE=servo
 
 # reset the EC
-toad_hard_reset() {
+toad_ec_hard_reset() {
 	if dut_control cold_reset 2>/dev/null ; then
 		dut_control cold_reset:on
 		dut_control cold_reset:off
@@ -43,26 +41,34 @@ toad_hard_reset() {
 	fi
 }
 
-servo_hard_reset() {
+servo_ec_hard_reset() {
 	dut_control cold_reset:on
 	dut_control cold_reset:off
 }
 
+servo_usbpd_hard_reset() {
+	dut_control usbpd_reset:on sleep:0.5 usbpd_reset:off
+}
+
 ec_reset() {
-	eval ${SERVO_TYPE}_hard_reset
+	eval ${SERVO_TYPE}_${MCU}_hard_reset
 }
 
 # force the EC to boot in serial monitor mode
-toad_boot0() {
+toad_ec_boot0() {
 	dut_control boot_mode:yes
 }
 
-servo_boot0() {
+servo_ec_boot0() {
 	dut_control spi1_vref:pp3300
 }
 
+servo_usbpd_boot0() {
+	dut_control usbpd_boot_mode:on
+}
+
 ec_enable_boot0() {
-	eval ${SERVO_TYPE}_boot0
+	eval ${SERVO_TYPE}_${MCU}_boot0
 }
 
 # Put back the servo and the system in a clean state at exit
@@ -115,25 +121,26 @@ DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
 # Find the EC UART on the servo v2
 function ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	($DUT_CONTROL_CMD ${FLAGS_uart_prefix}_uart_pty || \
-            die "${SERVOD_FAIL}") | cut -d: -f2
+	($DUT_CONTROL_CMD ${MCU}_uart_pty || \
+	    die "${SERVOD_FAIL}") | cut -d: -f2
 }
 
 # Servo variables management
-if [[ -z $FLAGS_uart_prefix ]] ; then
-	case "${BOARD}" in
-		samus_pd ) FLAGS_uart_prefix="usbpd" ;;
-		*) FLAGS_uart_prefix="ec" ;;
-	esac
-fi
+case "${BOARD}" in
+	samus_pd ) MCU="usbpd" ;;
+	*) MCU="ec" ;;
+esac
 
-servo_VARS="${FLAGS_uart_prefix}_uart_en ${FLAGS_uart_prefix}_uart_parity \
-${FLAGS_uart_prefix}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en spi1_vref"
-toad_VARS="${FLAGS_uart_prefix}_uart_parity \
-${FLAGS_uart_prefix}_uart_baudrate boot_mode"
+servo_VARS="${MCU}_uart_en ${MCU}_uart_parity \
+${MCU}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en spi1_vref"
+if [[ "${MCU}" == "usbpd" ]] ; then
+	servo_VARS+=" usbpd_boot_mode"
+fi
+toad_VARS="${MCU}_uart_parity \
+${MCU}_uart_baudrate boot_mode"
 
 function dut_control() {
-	$DUT_CONTROL_CMD "$1" >/dev/null
+	$DUT_CONTROL_CMD "$@" >/dev/null
 }
 
 function servo_save() {
@@ -192,10 +199,10 @@ function flash_stm32() {
 	free_pty ${EC_UART}
 
 	if [ "${SERVO_TYPE}" = "servo" ] ; then
-		dut_control ${FLAGS_uart_prefix}_uart_en:on
+		dut_control ${MCU}_uart_en:on
 	fi
-	dut_control ${FLAGS_uart_prefix}_uart_parity:even
-	dut_control ${FLAGS_uart_prefix}_uart_baudrate:115200
+	dut_control ${MCU}_uart_parity:even
+	dut_control ${MCU}_uart_baudrate:115200
 	# Force the EC to boot in serial monitor mode
 	ec_enable_boot0
 	# Reset the EC
@@ -240,7 +247,7 @@ function flash_lm4() {
 }
 
 if dut_control boot_mode 2>/dev/null ; then
-	if [[ "${FLAGS_uart_prefix}" != "ec" ]] ; then
+	if [[ "${MCU}" != "ec" ]] ; then
 		die "Toad cable can't support non-ec UARTs"
 	fi
 	SERVO_TYPE=toad
@@ -248,10 +255,10 @@ if dut_control boot_mode 2>/dev/null ; then
 fi
 
 IMG="$(ec_image)"
-info "Using ${FLAGS_uart_prefix} image : ${IMG}"
+info "Using ${MCU} image : ${IMG}"
 
 EC_UART="$(ec_uart)"
-info "${FLAGS_uart_prefix} UART pty : ${EC_UART}"
+info "${MCU} UART pty : ${EC_UART}"
 
 save="$(servo_save)"
 
