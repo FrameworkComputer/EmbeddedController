@@ -148,8 +148,8 @@ const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
 	[ADC_CH_CC1_PD] = {"CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
 	[ADC_CH_CC2_PD] = {"CC2_PD", 3300, 4096, 0, STM32_AIN(2)},
-	/* VBUS voltage sensing is behind a 14.3K/100K voltage divider */
-	[ADC_CH_VBUS_SENSE] = {"VBUS", 26377, 4096, 0, STM32_AIN(5)},
+	/* VBUS voltage sensing is behind a 10K/100K voltage divider */
+	[ADC_CH_VBUS_SENSE] = {"VBUS", 36300, 4096, 0, STM32_AIN(5)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
