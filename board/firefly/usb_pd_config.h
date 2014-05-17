@@ -96,6 +96,11 @@ static inline int pd_adc_read(int cc)
 		return adc_read_channel(ADC_CH_CC2_PD);
 }
 
+static inline int pd_snk_is_vbus_provided(void)
+{
+	return 1;
+}
+
 /* Standard-current DFP : no-connect voltage is 1.55V */
 #define PD_SRC_VNC 1550 /* mV */
 
