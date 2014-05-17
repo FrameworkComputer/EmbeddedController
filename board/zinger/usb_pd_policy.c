@@ -219,6 +219,11 @@ int pd_board_checks(void)
 	if ((fault != FAULT_OK) && (get_time().val > fault_deadline.val)) {
 		fault = FAULT_OK;
 		debug_printf("Reset fault\n");
+		/*
+		 * Reset the PD state and communication on both side,
+		 * so we can now re-negociate a voltage.
+		 */
+		return EC_ERROR_INVAL;
 	}
 
 	return EC_SUCCESS;
