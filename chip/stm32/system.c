@@ -64,7 +64,7 @@ void __no_hibernate(uint32_t seconds, uint32_t microseconds)
 	 *
 	 * Until then, treat this as a request to hard-reboot.
 	 */
-	cprintf(CC_SYSTEM, "[%T hibernate not supported, so rebooting]\n");
+	cprints(CC_SYSTEM, "hibernate not supported, so rebooting");
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
 }

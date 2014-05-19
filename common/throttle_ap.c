@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /*****************************************************************************/
 /* This enforces the virtual OR of all throttling sources. */
@@ -65,7 +65,7 @@ void throttle_ap(enum throttle_level level,
 	mutex_unlock(&throttle_mutex);
 
 	/* print outside the mutex */
-	CPRINTF("[%T set AP throttling type %d to %s (0x%08x)]\n",
+	CPRINTS("set AP throttling type %d to %s (0x%08x)",
 		type, tmpval ? "on" : "off", tmpval);
 
 }

@@ -30,6 +30,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 test_mockable int main(void)
 {
@@ -100,7 +101,7 @@ test_mockable int main(void)
 	uart_init();
 
 	if (system_jumped_to_this_image()) {
-		CPRINTF("[%T UART initialized after sysjump]\n");
+		CPRINTS("UART initialized after sysjump");
 	} else {
 		CPUTS("\n\n--- UART initialized after reboot ---\n");
 		CPUTS("[Reset cause: ");
@@ -144,7 +145,7 @@ test_mockable int main(void)
 	 * into account the time before timer_init(), but it'll at least catch
 	 * the majority of the time.
 	 */
-	CPRINTF("[%T Inits done]\n");
+	CPRINTS("Inits done");
 
 	/* Launch task scheduling (never returns) */
 	return task_start();

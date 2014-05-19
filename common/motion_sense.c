@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_SENSE, outstr)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 
 /* Minimum time in between running motion sense task loop. */
 #define MIN_MOTION_SENSE_WAIT_TIME (1 * MSEC)
@@ -204,8 +204,7 @@ void motion_sense_task(void)
 
 	/* If accelerometers do not initialize, then end task. */
 	if (ret != EC_SUCCESS) {
-		CPRINTF("[%T, Accelerometers failed to initialize. Stopping "
-				"motion sense task.\n");
+		CPRINTS("Accel init failed; stopping MS");
 		return;
 	}
 
@@ -289,8 +288,8 @@ void motion_sense_task(void)
 
 #ifdef CONFIG_CMD_LID_ANGLE
 		if (accel_disp) {
-			CPRINTF("[%T ACC base=%-5d, %-5d, %-5d  lid=%-5d, "
-					"%-5d, %-5d  a=%-6.1d r=%d]\n",
+			CPRINTS("ACC base=%-5d, %-5d, %-5d  lid=%-5d, "
+					"%-5d, %-5d  a=%-6.1d r=%d",
 					acc_base[X], acc_base[Y], acc_base[Z],
 					acc_lid[X], acc_lid[Y], acc_lid[Z],
 					(int)(10*lid_angle_deg),
@@ -319,7 +318,7 @@ void accel_int_lid(enum gpio_signal signal)
 	 * Print statement is here for testing with console accelint command.
 	 * Remove print statement when interrupt is used for real.
 	 */
-	CPRINTF("[%T Accelerometer wake-up interrupt occurred on lid]\n");
+	CPRINTS("Accelerometer wake-up interrupt occurred on lid");
 }
 
 void accel_int_base(enum gpio_signal signal)
@@ -328,7 +327,7 @@ void accel_int_base(enum gpio_signal signal)
 	 * Print statement is here for testing with console accelint command.
 	 * Remove print statement when interrupt is used for real.
 	 */
-	CPRINTF("[%T Accelerometer wake-up interrupt occurred on base]\n");
+	CPRINTS("Accelerometer wake-up interrupt occurred on base");
 }
 
 /*****************************************************************************/
@@ -445,7 +444,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (in->sensor_odr.data != EC_MOTION_SENSE_NO_VALUE) {
 			if (accel_set_datarate(id, in->sensor_odr.data,
 					in->sensor_odr.roundup) != EC_SUCCESS) {
-				CPRINTF("[%T MS bad sensor rate %d]\n",
+				CPRINTS("MS bad sensor rate %d",
 						in->sensor_odr.data);
 				return EC_RES_INVALID_PARAM;
 			}
@@ -467,7 +466,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (in->sensor_range.data != EC_MOTION_SENSE_NO_VALUE) {
 			if (accel_set_range(id, in->sensor_range.data,
 				in->sensor_range.roundup) != EC_SUCCESS) {
-				CPRINTF("[%T MS bad sensor range %d]\n",
+				CPRINTS("MS bad sensor range %d",
 						in->sensor_range.data);
 				return EC_RES_INVALID_PARAM;
 			}
@@ -494,7 +493,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		break;
 
 	default:
-		CPRINTF("[%T MS bad cmd 0x%x]\n", in->cmd);
+		CPRINTS("MS bad cmd 0x%x", in->cmd);
 		return EC_RES_INVALID_PARAM;
 	}
 

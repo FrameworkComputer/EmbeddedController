@@ -21,7 +21,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
 
 /* DMA channel option */
 static const struct dma_option dma_tx_option = {
@@ -346,7 +346,7 @@ void spi_event(enum gpio_signal signal)
 		 * AP started a transaction but we weren't ready for it.
 		 * Tell AP we weren't ready, and ignore the received data.
 		 */
-		CPRINTF("[%T SPI not ready]\n");
+		CPRINTS("SPI not ready");
 		spi->dr = EC_SPI_NOT_READY;
 		state = SPI_STATE_RX_BAD;
 		return;
@@ -452,7 +452,7 @@ void spi_event(enum gpio_signal signal)
 	/* Error, timeout, or protocol we can't handle.  Ignore data. */
 	spi->dr = EC_SPI_RX_BAD_DATA;
 	state = SPI_STATE_RX_BAD;
-	CPRINTF("[%T SPI rx bad data\n]");
+	CPRINTS("SPI rx bad data");
 }
 
 static void spi_chipset_startup(void)

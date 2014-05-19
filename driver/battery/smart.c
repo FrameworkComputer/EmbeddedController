@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr);
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 #define BATTERY_WAIT_TIMEOUT		(2800*MSEC)
 #define BATTERY_NO_RESPONSE_TIMEOUT	(1000*MSEC)
@@ -322,7 +322,7 @@ int battery_wait_for_stable(void)
 
 	got_response = 0;
 
-	CPRINTF("[%T Wait for battery stabilized during %d]\n",
+	CPRINTS("Wait for battery stabilized during %d",
 			 BATTERY_WAIT_TIMEOUT);
 	while (get_time().val < wait_timeout) {
 		/* Starting pinging battery */
@@ -330,19 +330,19 @@ int battery_wait_for_stable(void)
 			got_response = 1;
 			/* Battery is stable */
 			if (status & STATUS_INITIALIZED) {
-				CPRINTF("[%T battery initialized]\n");
+				CPRINTS("battery initialized");
 				return EC_SUCCESS;
 			}
 		}
 		/* Assume no battery connected if no response for a while */
 		else if (!got_response &&
 			 get_time().val > no_response_timeout) {
-			CPRINTF("[%T battery not responding]\n");
+			CPRINTS("battery not responding");
 			return EC_ERROR_NOT_POWERED;
 		}
 		msleep(25); /* clock stretching could hold 25ms */
 	}
-	CPRINTF("[%T battery wait stable timeout]\n");
+	CPRINTS("battery wait stable timeout");
 	return EC_ERROR_TIMEOUT;
 }
 

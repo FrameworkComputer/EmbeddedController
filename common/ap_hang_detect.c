@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 static struct ec_params_hang_detect hdparams;
 
@@ -36,7 +36,7 @@ static void hang_detect_deferred(void)
 
 	/* If we're rebooting the AP, stop hang detection */
 	if (timeout_will_reboot) {
-		CPRINTF("[%T hang detect triggering warm reboot]\n");
+		CPRINTS("hang detect triggering warm reboot");
 		host_set_single_event(EC_HOST_EVENT_HANG_REBOOT);
 		chipset_reset(0);
 		active = 0;
@@ -44,12 +44,12 @@ static void hang_detect_deferred(void)
 	}
 
 	/* Otherwise, we're starting with the host event */
-	CPRINTF("[%T hang detect sending host event]\n");
+	CPRINTS("hang detect sending host event");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 
 	/* If we're also rebooting, defer for the remaining delay */
 	if (hdparams.warm_reboot_timeout_msec) {
-		CPRINTF("[%T hang detect continuing (for reboot)]\n");
+		CPRINTS("hang detect continuing (for reboot)");
 		timeout_will_reboot = 1;
 		hook_call_deferred(hang_detect_deferred,
 				   (hdparams.warm_reboot_timeout_msec -
@@ -71,13 +71,13 @@ static void hang_detect_start(const char *why)
 		return;
 
 	if (hdparams.host_event_timeout_msec) {
-		CPRINTF("[%T hang detect started on %s (for event)]\n", why);
+		CPRINTS("hang detect started on %s (for event)", why);
 		timeout_will_reboot = 0;
 		active = 1;
 		hook_call_deferred(hang_detect_deferred,
 				   hdparams.host_event_timeout_msec * MSEC);
 	} else if (hdparams.warm_reboot_timeout_msec) {
-		CPRINTF("[%T hang detect started on %s (for reboot)]\n", why);
+		CPRINTS("hang detect started on %s (for reboot)", why);
 		timeout_will_reboot = 1;
 		active = 1;
 		hook_call_deferred(hang_detect_deferred,
@@ -91,7 +91,7 @@ static void hang_detect_start(const char *why)
 static void hang_detect_stop(const char *why)
 {
 	if (active)
-		CPRINTF("[%T hang detect stopped on %s]\n", why);
+		CPRINTS("hang detect stopped on %s", why);
 
 	active = 0;
 }
@@ -183,7 +183,7 @@ static int hang_detect_host_command(struct host_cmd_handler_args *args)
 
 	/* Save new params */
 	hdparams = *p;
-	CPRINTF("[%T hang detect flags=0x%x, event=%d ms, reboot=%d ms]\n",
+	CPRINTS("hang detect flags=0x%x, event=%d ms, reboot=%d ms",
 		hdparams.flags, hdparams.host_event_timeout_msec,
 		hdparams.warm_reboot_timeout_msec);
 

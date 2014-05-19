@@ -41,7 +41,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Time necessary for the 5V and 3.3V regulator outputs to stabilize */
 #ifdef BOARD_PIT
@@ -152,7 +152,7 @@ static int wait_in_signal(enum gpio_signal signal, int value, int timeout)
 		} else if (timestamp_expired(deadline, &now) ||
 				(task_wait_event(deadline.val - now.val) ==
 					TASK_EVENT_TIMER)) {
-			CPRINTF("[%T power timeout waiting for GPIO %d/%s]\n",
+			CPRINTS("power timeout waiting for GPIO %d/%s",
 				signal, gpio_get_name(signal));
 			return EC_ERROR_TIMEOUT;
 		}
@@ -212,16 +212,16 @@ static int check_for_power_off_event(void)
 
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
-			CPRINTF("[%T power waiting for long press %u]\n",
+			CPRINTS("power waiting for long press %u",
 				power_off_deadline.le.lo);
 		} else if (timestamp_expired(power_off_deadline, &now)) {
 			power_off_deadline.val = 0;
-			CPRINTF("[%T power off after long press now=%u, %u]\n",
+			CPRINTS("power off after long press now=%u, %u",
 				now.le.lo, power_off_deadline.le.lo);
 			return 2;
 		}
 	} else if (power_button_was_pressed) {
-		CPRINTF("[%T power off cancel]\n");
+		CPRINTS("power off cancel");
 		set_pmic_pwrok(0);
 	}
 
@@ -316,7 +316,7 @@ static int gaia_power_init(void)
 
 	/* Leave power off only if requested by reset flags */
 	if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF)) {
-		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
+		CPRINTS("auto_power_on is set due to reset_flag 0x%x",
 			system_get_reset_flags());
 		auto_power_on = 1;
 	}
@@ -329,7 +329,7 @@ static int gaia_power_init(void)
 	* See crosbug.com/p/22233.
 	*/
 	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP)) {
-		CPRINTF("[%T not sysjump; forcing AP reset]\n");
+		CPRINTS("not sysjump; forcing AP reset");
 		gpio_set_level(GPIO_AP_RESET_L, 0);
 		udelay(1000);
 		gpio_set_level(GPIO_AP_RESET_L, 1);
@@ -375,7 +375,7 @@ void chipset_reset(int is_cold)
 	 * TODO(crosbug.com/p/23822): Implement cold reset.  For now, all
 	 * resets are warm resets.
 	 */
-	CPRINTF("[%T EC triggered warm reboot]\n");
+	CPRINTS("EC triggered warm reboot");
 
 	/*
 	 * This is a hack to do an AP warm reboot while still preserving RAM
@@ -434,7 +434,7 @@ static int check_for_power_on_event(void)
 {
 	/* Check if we've already powered the system on */
 	if (gpio_get_level(GPIO_EN_PP3300)) {
-		CPRINTF("[%T system is on, thus clear auto_power_on]\n");
+		CPRINTS("system is on, thus clear auto_power_on");
 		auto_power_on = 0;  /* no need to arrange another power on */
 		return 1;
 	}
@@ -510,7 +510,7 @@ static int power_on(void)
 		gpio_set_level(GPIO_EN_PP5000, 0);
 		gpio_set_level(GPIO_EN_PP3300, 0);
 		usleep(DELAY_5V_SETUP);
-		CPRINTF("[%T power error: PMIC failed to enable]\n");
+		CPRINTS("power error: PMIC failed to enable");
 		return -1;
 	}
 
@@ -529,7 +529,7 @@ static int power_on(void)
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP);
 
-	CPRINTF("[%T AP running ...]\n");
+	CPRINTS("AP running ...");
 	return 0;
 }
 
@@ -545,10 +545,10 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 
 	udelay(KB_PWR_ON_DEBOUNCE);
 	if (gpio_get_level(GPIO_KB_PWR_ON_L) == 0) {
-		CPRINTF("[%T power button not released in time]\n");
+		CPRINTS("power button not released in time");
 		return -1;
 	}
-	CPRINTF("[%T power button released]\n");
+	CPRINTS("power button released");
 	return 0;
 }
 
@@ -564,10 +564,10 @@ static int react_to_xpshold(unsigned int timeout_us)
 	wait_in_signal(GPIO_SOC1V8_XPSHOLD, 1, timeout_us);
 
 	if (gpio_get_level(GPIO_SOC1V8_XPSHOLD) == 0) {
-		CPRINTF("[%T XPSHOLD not seen in time]\n");
+		CPRINTS("XPSHOLD not seen in time");
 		return -1;
 	}
-	CPRINTF("[%T XPSHOLD seen]\n");
+	CPRINTS("XPSHOLD seen");
 	set_pmic_pwrok(0);
 	return 0;
 }
@@ -589,7 +589,7 @@ static void power_off(void)
 #ifdef CONFIG_PMU_TPS65090
 	pmu_shutdown();
 #endif
-	CPRINTF("[%T power shutdown complete]\n");
+	CPRINTS("power shutdown complete");
 }
 
 
@@ -627,12 +627,12 @@ static int wait_for_power_on(void)
 		 * shutdown the system from EC.
 		 */
 		if (value != 1 && charge_keep_power_off()) {
-			CPRINTF("[%T power on ignored due to low battery]\n");
+			CPRINTS("power on ignored due to low battery");
 			continue;
 		}
 #endif
 
-		CPRINTF("[%T power on %d]\n", value);
+		CPRINTS("power on %d", value);
 		return value;
 	}
 }
@@ -668,7 +668,7 @@ void chipset_task(void)
 				power_button_was_pressed = 0;
 				while (!(value = check_for_power_off_event()))
 					task_wait_event(next_pwr_event());
-				CPRINTF("[%T power ending loop %d]\n", value);
+				CPRINTS("power ending loop %d", value);
 			}
 		}
 		power_off();

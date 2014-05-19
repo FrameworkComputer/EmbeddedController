@@ -24,7 +24,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (LOW_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
@@ -81,7 +81,7 @@ static void problem(enum problem_type p, int v)
 	if (last_prob_val[p] != v) {
 		t_now = get_time();
 		t_diff.val = t_now.val - last_prob_time[p].val;
-		ccprintf("[%T charge problem: %s, 0x%x -> 0x%x after %.6lds]\n",
+		CPRINTS("charge problem: %s, 0x%x -> 0x%x after %.6lds",
 			 prob_text[p], last_prob_val[p], v, t_diff.val);
 		last_prob_val[p] = v;
 		last_prob_time[p] = t_now;
@@ -268,11 +268,11 @@ static void show_charging_progress(void)
 	}
 
 	if (rv)
-		CPRINTF("[%T Battery %d%% / ??h:?? %s]\n",
+		CPRINTS("Battery %d%% / ??h:?? %s",
 			curr.batt.state_of_charge,
 			to_full ? "to full" : "to empty");
 	else
-		CPRINTF("[%T Battery %d%% / %dh:%d %s]\n",
+		CPRINTS("Battery %d%% / %dh:%d %s",
 			curr.batt.state_of_charge,
 			minutes / 60, minutes % 60,
 			to_full ? "to full" : "to empty");
@@ -301,7 +301,7 @@ static int charge_request(int voltage, int current)
 		voltage = current = 0;
 
 	if (prev_volt != voltage || prev_curr != current)
-		CPRINTF("[%T %s(%dmV, %dmA)]\n", __func__, voltage, current);
+		CPRINTS("%s(%dmV, %dmA)", __func__, voltage, current);
 
 	if (voltage >= 0)
 		r1 = charger_set_voltage(voltage);
@@ -371,7 +371,7 @@ static void prevent_hot_discharge(void)
 	batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
 	if (batt_temp_c > batt_info->discharging_max_c ||
 	    batt_temp_c < batt_info->discharging_min_c) {
-		CPRINTF("[%T charge force shutdown due to battery temp %dC]\n",
+		CPRINTS("charge force shutdown due to battery temp %dC",
 			batt_temp_c);
 		chipset_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
@@ -395,17 +395,17 @@ static void prevent_deep_discharge(void)
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		/* AP is off, so shut down the EC now */
-		CPRINTF("[%T charge force EC hibernate due to low battery]\n");
+		CPRINTS("charge force EC hibernate due to low battery");
 		system_hibernate(0, 0);
 	} else if (!shutdown_warning_time.val) {
 		/* Warn AP battery level is so low we'll shut down */
-		CPRINTF("[%T charge warn shutdown due to low battery]\n");
+		CPRINTS("charge warn shutdown due to low battery");
 		shutdown_warning_time = get_time();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	} else if (get_time().val > shutdown_warning_time.val +
 		   LOW_BATTERY_SHUTDOWN_TIMEOUT_US) {
 		/* Timeout waiting for AP to shut down, so kill it */
-		CPRINTF("[%T charge force shutdown due to low battery]\n");
+		CPRINTS("charge force shutdown due to low battery");
 		chipset_force_shutdown();
 	}
 }
@@ -490,7 +490,7 @@ void charger_task(void)
 		 * have more urgent problems.
 		 */
 		if (curr.batt.temperature > CELSIUS_TO_DECI_KELVIN(5660)) {
-			ccprintf("[%T ignoring ridiculous batt.temp of %dC]\n",
+			CPRINTS("ignoring ridiculous batt.temp of %dC",
 				 DECI_KELVIN_TO_CELSIUS(curr.batt.temperature));
 			curr.batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
 		}
@@ -549,7 +549,7 @@ void charger_task(void)
 				   (get_time().val > precharge_start_time.val +
 				    PRECHARGE_TIMEOUT_US)) {
 				/* We've tried long enough, give up */
-				ccprintf("[%T battery seems to be dead]\n");
+				CPRINTS("battery seems to be dead");
 				battery_seems_to_be_dead = 1;
 				curr.state = ST_IDLE;
 				curr.requested_voltage = 0;
@@ -557,7 +557,7 @@ void charger_task(void)
 			} else {
 				/* See if we can wake it up */
 				if (curr.state != ST_PRECHARGE) {
-					ccprintf("[%T try to wake battery]\n");
+					CPRINTS("try to wake battery");
 					precharge_start_time = get_time();
 					need_static = 1;
 				}
@@ -572,7 +572,7 @@ void charger_task(void)
 			/* The battery is responding. Yay. Try to use it. */
 			if (curr.state == ST_PRECHARGE ||
 			    battery_seems_to_be_dead) {
-				ccprintf("[%T battery woke up]\n");
+				CPRINTS("battery woke up");
 
 				/* Update the battery-specific values */
 				batt_info = battery_get_info();
@@ -905,7 +905,7 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 		break;
 
 	default:
-		CPRINTF("[%T EC_CMD_CHARGE_STATE: bad cmd 0x%x]\n", in->cmd);
+		CPRINTS("EC_CMD_CHARGE_STATE: bad cmd 0x%x", in->cmd);
 		rv = EC_RES_INVALID_PARAM;
 	}
 

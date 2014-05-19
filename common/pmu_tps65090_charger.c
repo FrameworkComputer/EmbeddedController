@@ -20,8 +20,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* Charging and discharging alarms */
 #define ALARM_DISCHARGING (ALARM_TERMINATE_DISCHARGE | ALARM_OVER_TEMP)
@@ -111,7 +110,7 @@ static int battery_discharging_range(int deci_k)
 static int system_off(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		CPUTS("[pmu] turn system off\n");
+		CPRINTS("pmu turning system off");
 		chipset_force_shutdown();
 	}
 
@@ -129,7 +128,7 @@ static int notify_battery_low(void)
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		now = get_time();
 		if (now.val - last_notify_time.val > MINUTE) {
-			CPUTS("[pmu] notify battery low (< 4%)\n");
+			CPRINTS("pmu notify battery low (< 4%)");
 			last_notify_time = now;
 			/* TODO(crosbug.com/p/23814): Actually notify AP */
 		}
@@ -273,12 +272,12 @@ static int calc_next_state(int state)
 		 * temperature out of range.
 		 */
 		if (!(batt.flags & BATT_FLAG_RESPONSIVE)) {
-			CPUTS("[pmu] charging: unable to get battery "
-			      "temperature\n");
+			CPRINTS("pmu charging: unable to get battery "
+				"temperature");
 			return ST_IDLE0;
 		} else if (!battery_charging_range(batt.temperature)) {
-			CPRINTF("[pmu] charging: temperature out of range "
-				"%dC\n",
+			CPRINTS("pmu charging: temperature out of range "
+				"%dC",
 				DECI_KELVIN_TO_CELSIUS(batt.temperature));
 			return ST_CHARGING_ERROR;
 		}
@@ -292,7 +291,7 @@ static int calc_next_state(int state)
 			return ST_IDLE0;
 
 		if (alarm & ALARM_OVER_TEMP) {
-			CPUTS("[pmu] charging: battery over temp\n");
+			CPRINTS("pmu charging: battery over temp");
 			return ST_CHARGING_ERROR;
 		}
 
@@ -306,14 +305,14 @@ static int calc_next_state(int state)
 		 *   - charger over temperature
 		 */
 		if (pmu_is_charger_alarm()) {
-			CPUTS("[pmu] charging: charger alarm\n");
+			CPRINTS("pmu charging: charger alarm");
 			return ST_IDLE0;
 		}
 
 #ifdef CONFIG_EXTPOWER_SPRING
 		/* Re-init on charger timeout. */
 		if (pmu_is_charge_timeout()) {
-			CPUTS("[pmu] charging: timeout\n");
+			CPRINTS("[pmu] charging: timeout");
 			return ST_IDLE0;
 		}
 #endif
@@ -359,8 +358,8 @@ static int calc_next_state(int state)
 		/* Check battery discharging temperature range */
 		if (batt.flags & BATT_FLAG_RESPONSIVE) {
 			if (!battery_discharging_range(batt.temperature)) {
-				CPRINTF("[pmu] discharging: temperature out of"
-					"range %dC\n",
+				CPRINTS("pmu discharging: temperature out of "
+					"range %dC",
 					DECI_KELVIN_TO_CELSIUS(
 							batt.temperature));
 				return system_off();
@@ -368,8 +367,7 @@ static int calc_next_state(int state)
 		}
 		/* Check discharging alarm */
 		if (!battery_status(&alarm) && (alarm & ALARM_DISCHARGING)) {
-			CPRINTF("[pmu] discharging: battery alarm %016b\n",
-					alarm);
+			CPRINTS("pmu discharging: battery alarm %016b", alarm);
 			return system_off();
 		}
 		/* Check remaining charge % */
@@ -462,7 +460,7 @@ void charger_task(void)
 			/* Reset state of charge moving average window */
 			rsoc_moving_average(-1);
 
-			CPRINTF("[batt] state %s -> %s\n",
+			CPRINTS("batt state %s -> %s",
 				state_list[current_state],
 				state_list[next_state]);
 
@@ -573,6 +571,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pmu_chipset_events, HOOK_PRIO_DEFAULT);
 void pmu_irq_handler(enum gpio_signal signal)
 {
 	pmu_task_throttled_wake();
-	CPRINTF("[%T Charger IRQ received]\n");
+	CPRINTS("Charger IRQ received");
 }
 

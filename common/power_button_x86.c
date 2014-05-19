@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 /*
  * x86 chipsets have a hardware timer on the power button input which causes
@@ -119,17 +119,17 @@ static void set_pwrbtn_to_pch(int high)
 	 * system, don't press the power button.
 	 */
 	if (!high && charge_want_shutdown()) {
-		CPRINTF("[%T PB PCH pwrbtn ignored due to battery level\n");
+		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
 
-	CPRINTF("[%T PB PCH pwrbtn=%s]\n", high ? "HIGH" : "LOW");
+	CPRINTS("PB PCH pwrbtn=%s", high ? "HIGH" : "LOW");
 	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
 void power_button_pch_release(void)
 {
-	CPRINTF("[%T PB PCH force release]\n");
+	CPRINTS("PB PCH force release");
 
 	/* Deassert power button signal to PCH */
 	set_pwrbtn_to_pch(1);
@@ -146,7 +146,7 @@ void power_button_pch_release(void)
 
 void power_button_pch_pulse(void)
 {
-	CPRINTF("[%T PB PCH pulse]\n");
+	CPRINTS("PB PCH pulse");
 
 	chipset_exit_hard_off();
 	set_pwrbtn_to_pch(0);
@@ -160,7 +160,7 @@ void power_button_pch_pulse(void)
  */
 static void power_button_pressed(uint64_t tnow)
 {
-	CPRINTF("[%T PB pressed]\n");
+	CPRINTS("PB pressed");
 	pwrbtn_state = PWRBTN_STATE_PRESSED;
 	tnext_state = tnow;
 }
@@ -170,7 +170,7 @@ static void power_button_pressed(uint64_t tnow)
  */
 static void power_button_released(uint64_t tnow)
 {
-	CPRINTF("[%T PB released]\n");
+	CPRINTS("PB released");
 	pwrbtn_state = PWRBTN_STATE_RELEASED;
 	tnext_state = tnow;
 }
@@ -189,10 +189,10 @@ static void set_initial_pwrbtn_state(void)
 		 * simply reflect the actual power button state.
 		 */
 		if (power_button_is_pressed()) {
-			CPRINTF("[%T PB init-jumped-held]\n");
+			CPRINTS("PB init-jumped-held");
 			set_pwrbtn_to_pch(0);
 		} else {
-			CPRINTF("[%T PB init-jumped]\n");
+			CPRINTS("PB init-jumped");
 		}
 	} else if ((reset_flags & RESET_FLAG_AP_OFF) ||
 		   (keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW)) {
@@ -207,14 +207,14 @@ static void set_initial_pwrbtn_state(void)
 		 * Don't let the PCH see that the power button was pressed.
 		 * Otherwise, it might power on.
 		 */
-		CPRINTF("[%T PB init-off]\n");
+		CPRINTS("PB init-off");
 		power_button_pch_release();
 	} else {
 		/*
 		 * All other EC reset conditions power on the main processor so
 		 * it can verify the EC.
 		 */
-		CPRINTF("[%T PB init-on]\n");
+		CPRINTS("PB init-on");
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 	}
 }
@@ -266,7 +266,7 @@ static void state_machine(uint64_t tnow)
 		 * again.
 		 */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			CPRINTF("[%T PB chipset already off]\n");
+			CPRINTS("PB chipset already off");
 		else
 			set_pwrbtn_to_pch(0);
 		pwrbtn_state = PWRBTN_STATE_HELD;
@@ -345,7 +345,7 @@ void power_button_task(void)
 		t = get_time().val;
 
 		/* Update state machine */
-		CPRINTF("[%T PB task %d = %s]\n", pwrbtn_state,
+		CPRINTS("PB task %d = %s", pwrbtn_state,
 			state_names[pwrbtn_state]);
 
 		state_machine(t);
@@ -365,7 +365,7 @@ void power_button_task(void)
 			 * back to sleep after deciding that we woke up too
 			 * early.)
 			 */
-			CPRINTF("[%T PB task %d = %s, wait %d]\n", pwrbtn_state,
+			CPRINTS("PB task %d = %s, wait %d", pwrbtn_state,
 			state_names[pwrbtn_state], d);
 			task_wait_event(d);
 		}
@@ -402,7 +402,7 @@ static void powerbtn_x86_changed(void)
 	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
 	    pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
 		/* Ignore all power button changes during an initial pulse */
-		CPRINTF("[%T PB ignoring change]\n");
+		CPRINTS("PB ignoring change");
 		return;
 	}
 
@@ -416,7 +416,7 @@ static void powerbtn_x86_changed(void)
 			 * Ignore the first power button release if we already
 			 * told the PCH the power button was released.
 			 */
-			CPRINTF("[%T PB ignoring release]\n");
+			CPRINTS("PB ignoring release");
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 			return;
 		}

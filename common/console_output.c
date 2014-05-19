@@ -88,6 +88,25 @@ int cprintf(enum console_channel channel, const char *format, ...)
 	return rv;
 }
 
+int cprints(enum console_channel channel, const char *format, ...)
+{
+	int r, rv;
+	va_list args;
+
+	/* Filter out inactive channels */
+	if (!(CC_MASK(channel) & channel_mask))
+		return EC_SUCCESS;
+
+	va_start(args, format);
+	rv = uart_printf("[%T ");
+	r = uart_vprintf(format, args);
+	if (r)
+		rv = r;
+	r = uart_puts("]\n");
+	va_end(args);
+	return r ? r : rv;
+}
+
 void cflush(void)
 {
 	uart_flush_output();

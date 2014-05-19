@@ -17,7 +17,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Flags for writes to MCS */
 #define LM4_I2C_MCS_RUN   (1 << 0)
@@ -186,7 +186,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			    (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 		uint32_t tpr = LM4_I2C_MTPR(port);
 
-		CPRINTF("[%T I2C%d bad status 0x%02x, SCL=%d, SDA=%d]\n", port,
+		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port,
 				reg_mcs,
 				i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
 				i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
@@ -352,7 +352,7 @@ static void i2c_freq_changed(void)
 
 #ifdef PRINT_I2C_SPEEDS
 		const int f = freq / (2 * (1 + tpr) * (6 + 4));
-		CPRINTF("[%T I2C%d clk=%d tpr=%d freq=%d]\n",
+		CPRINTS("I2C%d clk=%d tpr=%d freq=%d",
 			i2c_ports[i].port, freq, tpr, f);
 #endif
 

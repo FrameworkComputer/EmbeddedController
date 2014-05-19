@@ -21,7 +21,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
 #define IN_PGOOD_PP5000            POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
@@ -56,7 +56,7 @@ static int pause_in_s5;	      /* Pause in S5 when shutting down? */
 
 void chipset_force_shutdown(void)
 {
-	CPRINTF("[%T %s()]\n", __func__);
+	CPRINTS("%s()", __func__);
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -68,7 +68,7 @@ void chipset_force_shutdown(void)
 
 void chipset_reset(int cold_reset)
 {
-	CPRINTF("[%T %s(%d)]\n", __func__, cold_reset);
+	CPRINTS("%s(%d)", __func__, cold_reset);
 	if (cold_reset) {
 		/*
 		 * Drop and restore PWROK.  This causes the PCH to reboot,
@@ -131,11 +131,11 @@ enum power_state power_chipset_init(void)
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
 			/* Disable idle task deep sleep when in S0. */
 			disable_sleep(SLEEP_MASK_AP_RUN);
-			CPRINTF("[%T already in S0]\n");
+			CPRINTS("already in S0");
 			return POWER_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPRINTF("[%T forcing G3]\n");
+			CPRINTS("forcing G3");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_VCORE_EN, 0);
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);

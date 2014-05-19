@@ -14,7 +14,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
-#define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_DMA, format, ## args)
 
 /* Task IDs for the interrupt handlers to wake up */
 static task_id_t id[STM32_DMAC_COUNT];

@@ -15,7 +15,7 @@
 
 /* Console output macros. */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 
 static int freq;
 

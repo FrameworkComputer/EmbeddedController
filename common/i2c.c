@@ -24,7 +24,7 @@
 #define UNWEDGE_SDA_ATTEMPTS  3
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 static struct mutex port_mutex[I2C_PORT_COUNT];
 
@@ -269,7 +269,7 @@ int i2c_unwedge(int port)
 		 * If we get here, a slave is holding the clock low and there
 		 * is nothing we can do.
 		 */
-		CPRINTF("[%T I2C unwedge failed, SCL is being held low]\n");
+		CPRINTS("I2C unwedge failed, SCL is being held low");
 		ret = EC_ERROR_UNKNOWN;
 		goto unwedge_done;
 	}
@@ -277,7 +277,7 @@ int i2c_unwedge(int port)
 	if (i2c_raw_get_sda(port))
 		goto unwedge_done;
 
-	CPRINTF("[%T I2C unwedge called with SDA held low]\n");
+	CPRINTS("I2C unwedge called with SDA held low");
 
 	/* Keep trying to unwedge the SDA line until we run out of attempts. */
 	for (i = 0; i < UNWEDGE_SDA_ATTEMPTS; i++) {
@@ -312,11 +312,11 @@ int i2c_unwedge(int port)
 	}
 
 	if (!i2c_raw_get_sda(port)) {
-		CPRINTF("[%T I2C unwedge failed, SDA still low]\n");
+		CPRINTS("I2C unwedge failed, SDA still low");
 		ret = EC_ERROR_UNKNOWN;
 	}
 	if (!i2c_raw_get_scl(port)) {
-		CPRINTF("[%T I2C unwedge failed, SCL still low]\n");
+		CPRINTS("I2C unwedge failed, SCL still low");
 		ret = EC_ERROR_UNKNOWN;
 	}
 
@@ -399,7 +399,7 @@ static int i2c_command_write(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_I2C_WRITE, i2c_command_write, EC_VER_MASK(0));
 
 #ifdef CONFIG_I2C_DEBUG_PASSTHRU
-#define PTHRUPRINTF(format, args...) CPRINTF(format, ## args)
+#define PTHRUPRINTF(format, args...) CPRINTS(format, ## args)
 #else
 #define PTHRUPRINTF(format, args...)
 #endif
@@ -419,21 +419,21 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	int msgnum;
 
 	if (args->params_size < sizeof(*params)) {
-		PTHRUPRINTF("[%T i2c passthru no params, params_size=%d, "
-			    "need at least %d]\n",
+		PTHRUPRINTF("i2c passthru no params, params_size=%d, "
+			    "need at least %d",
 			    args->params_size, sizeof(*params));
 		return EC_RES_INVALID_PARAM;
 	}
 	size = sizeof(*params) + params->num_msgs * sizeof(*msg);
 	if (args->params_size < size) {
-		PTHRUPRINTF("[%T i2c passthru params_size=%d, "
-			    "need at least %d]\n",
+		PTHRUPRINTF("i2c passthru params_size=%d, "
+			    "need at least %d",
 			    args->params_size, size);
 		return EC_RES_INVALID_PARAM;
 	}
 
 	if (!port_is_valid(params->port)) {
-		PTHRUPRINTF("[%T i2c passthru invalid port %d]\n",
+		PTHRUPRINTF("i2c passthru invalid port %d",
 			    params->port);
 		return EC_RES_INVALID_PARAM;
 	}
@@ -446,12 +446,12 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 		/* Parse slave address if necessary */
 		if (addr_flags & EC_I2C_FLAG_10BIT) {
 			/* 10-bit addressing not supported yet */
-			PTHRUPRINTF("[%T i2c passthru no 10-bit addressing]\n");
+			PTHRUPRINTF("i2c passthru no 10-bit addressing");
 			return EC_RES_INVALID_PARAM;
 		}
 
-		PTHRUPRINTF("[%T i2c passthru port=%d, %s, addr=0x%02x, "
-			    "len=0x%02x]\n",
+		PTHRUPRINTF("i2c passthru port=%d, %s, addr=0x%02x, "
+			    "len=0x%02x",
 			    params->port,
 			    addr_flags & EC_I2C_FLAG_READ ? "read" : "write",
 			    addr_flags & EC_I2C_ADDR_MASK,
@@ -466,13 +466,13 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	/* Check there is room for the data */
 	if (args->response_max <
 			sizeof(struct ec_response_i2c_passthru) + read_len) {
-		PTHRUPRINTF("[%T i2c passthru overflow1]\n");
+		PTHRUPRINTF("i2c passthru overflow1");
 		return EC_RES_INVALID_PARAM;
 	}
 
 	/* Must have bytes to write */
 	if (args->params_size < size + write_len) {
-		PTHRUPRINTF("[%T i2c passthru overflow2]\n");
+		PTHRUPRINTF("i2c passthru overflow2");
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -531,8 +531,8 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 			xferflags |= I2C_XFER_STOP;
 
 		/* Transfer next message */
-		PTHRUPRINTF("[%T i2c passthru xfer port=%x, addr=%x, out=%p, "
-			    "write_len=%x, data=%p, read_len=%x, flags=%x]\n",
+		PTHRUPRINTF("i2c passthru xfer port=%x, addr=%x, out=%p, "
+			    "write_len=%x, data=%p, read_len=%x, flags=%x",
 			    params->port, addr, out, write_len,
 			    &resp->data[in_len], read_len, xferflags);
 		rv = i2c_xfer(params->port, addr, out, write_len,

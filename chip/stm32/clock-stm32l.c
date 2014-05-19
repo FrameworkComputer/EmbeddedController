@@ -228,7 +228,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	for (i = GPIO_KB_OUT00; i < GPIO_KB_OUT00 + KEYBOARD_COLS; i++)
 		gpio_set_flags(i, GPIO_INPUT);
 
-	ccprintf("[%T fake hibernate. waits for power button/lid/RTC/AC]\n");
+	ccprints("fake hibernate. waits for power button/lid/RTC/AC");
 	cflush();
 
 	if (seconds || microseconds) {
@@ -241,7 +241,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 			task_wait_event(-1);
 	}
 
-	ccprintf("[%T fake RTC alarm fires. resets EC]\n");
+	ccprints("fake RTC alarm fires. resets EC");
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
 }
@@ -249,7 +249,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 static void fake_hibernate_power_button_hook(void)
 {
 	if (fake_hibernate && lid_is_open() && !power_button_is_pressed()) {
-		ccprintf("[%T %s() resets EC]\n", __func__);
+		ccprints("%s() resets EC", __func__);
 		cflush();
 		system_reset(SYSTEM_RESET_HARD);
 	}
@@ -260,7 +260,7 @@ DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, fake_hibernate_power_button_hook,
 static void fake_hibernate_lid_hook(void)
 {
 	if (fake_hibernate && lid_is_open()) {
-		ccprintf("[%T %s() resets EC]\n", __func__);
+		ccprints("%s() resets EC", __func__);
 		cflush();
 		system_reset(SYSTEM_RESET_HARD);
 	}
@@ -270,7 +270,7 @@ DECLARE_HOOK(HOOK_LID_CHANGE, fake_hibernate_lid_hook, HOOK_PRIO_DEFAULT);
 static void fake_hibernate_ac_hook(void)
 {
 	if (fake_hibernate && extpower_is_present()) {
-		ccprintf("[%T %s() resets EC]\n", __func__);
+		ccprints("%s() resets EC", __func__);
 		cflush();
 		system_reset(SYSTEM_RESET_HARD);
 	}

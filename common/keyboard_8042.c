@@ -26,14 +26,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
-#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 
 #ifdef CONFIG_KEYBOARD_DEBUG
 #define CPUTS5(outstr) cputs(CC_KEYBOARD, outstr)
-#define CPRINTF5(format, args...) cprintf(CC_KEYBOARD, format, ## args)
+#define CPRINTS5(format, args...) cprints(CC_KEYBOARD, format, ## args)
 #else
 #define CPUTS5(outstr)
-#define CPRINTF5(format, args...)
+#define CPRINTS5(format, args...)
 #endif
 
 static enum {
@@ -274,7 +274,7 @@ void keyboard_host_write(int data, int is_cmd)
  */
 static void keyboard_enable_irq(int enable)
 {
-	CPRINTF("[%T KB IRQ %s]\n", enable ? "enable" : "disable");
+	CPRINTS("KB IRQ %s", enable ? "enable" : "disable");
 
 	i8042_irq_enabled = enable;
 	if (enable)
@@ -399,12 +399,12 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 		break;
 
 	default:
-		CPRINTF("[%T KB scancode set %d unsupported]\n", code_set);
+		CPRINTS("KB scancode set %d unsupported", code_set);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 
 	if (!make_code) {
-		CPRINTF("[%T KB scancode %d:%d missing]\n", row, col);
+		CPRINTS("KB scancode %d:%d missing", row, col);
 		return EC_ERROR_UNIMPLEMENTED;
 	}
 
@@ -461,7 +461,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	int32_t len;
 	enum ec_error_list ret;
 
-	CPRINTF5("[%T KB (%d,%d)=%d]\n", row, col, is_pressed);
+	CPRINTS5("KB (%d,%d)=%d", row, col, is_pressed);
 
 	ret = matrix_callback(row, col, is_pressed, scancode_set, scan_code,
 			      &len);
@@ -483,9 +483,9 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 static void keystroke_enable(int enable)
 {
 	if (!keystroke_enabled && enable)
-		CPRINTF("[%T KS enable]\n");
+		CPRINTS("KS enable");
 	else if (keystroke_enabled && !enable)
-		CPRINTF("[%T KS disable]\n");
+		CPRINTS("KS disable");
 
 	keystroke_enabled = enable;
 }
@@ -493,9 +493,9 @@ static void keystroke_enable(int enable)
 static void keyboard_enable(int enable)
 {
 	if (!keyboard_enabled && enable) {
-		CPRINTF("[%T KB enable]\n");
+		CPRINTS("KB enable");
 	} else if (keyboard_enabled && !enable) {
-		CPRINTF("[%T KB disable]\n");
+		CPRINTS("KB disable");
 		reset_rate_and_delay();
 		typematic_len = 0;  /* stop typematic */
 
@@ -533,7 +533,7 @@ static void update_ctl_ram(uint8_t addr, uint8_t data)
 
 	orig = controller_ram[addr];
 	controller_ram[addr] = data;
-	CPRINTF5("[%T KB set CTR_RAM(0x%02x)=0x%02x (old:0x%02x)]\n",
+	CPRINTS5("KB set CTR_RAM(0x%02x)=0x%02x (old:0x%02x)",
 		 addr, data, orig);
 
 	if (addr == 0x00) {
@@ -566,63 +566,63 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 	int save_for_resend = 1;
 	int i;
 
-	CPRINTF5("[%T KB recv data: 0x%02x]\n", data);
+	CPRINTS5("KB recv data: 0x%02x", data);
 	kblog_put('d', data);
 
 	switch (data_port_state) {
 	case STATE_SCANCODE:
-		CPRINTF5("[%T KB eaten by STATE_SCANCODE: 0x%02x]\n", data);
+		CPRINTS5("KB eaten by STATE_SCANCODE: 0x%02x", data);
 		if (data == SCANCODE_GET_SET) {
 			output[out_len++] = I8042_RET_ACK;
 			output[out_len++] = scancode_set;
 		} else {
 			scancode_set = data;
-			CPRINTF("[%T KB scancode set to %d]\n", scancode_set);
+			CPRINTS("KB scancode set to %d", scancode_set);
 			output[out_len++] = I8042_RET_ACK;
 		}
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_SETLEDS:
-		CPUTS5("[%T KB eaten by STATE_SETLEDS]\n");
+		CPRINTS5("KB eaten by STATE_SETLEDS");
 		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_EX_SETLEDS_1:
-		CPUTS5("[%T KB eaten by STATE_EX_SETLEDS_1]\n");
+		CPRINTS5("KB eaten by STATE_EX_SETLEDS_1");
 		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_EX_SETLEDS_2;
 		break;
 
 	case STATE_EX_SETLEDS_2:
-		CPUTS5("[%T KB eaten by STATE_EX_SETLEDS_2]\n");
+		CPRINTS5("KB eaten by STATE_EX_SETLEDS_2");
 		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_WRITE_CMD_BYTE:
-		CPRINTF5("[%T KB eaten by STATE_WRITE_CMD_BYTE: 0x%02x]\n",
+		CPRINTS5("KB eaten by STATE_WRITE_CMD_BYTE: 0x%02x",
 			 data);
 		update_ctl_ram(controller_ram_address, data);
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_WRITE_OUTPUT_PORT:
-		CPRINTF5("[%T KB eaten by STATE_WRITE_OUTPUT_PORT: 0x%02x]\n",
+		CPRINTS5("KB eaten by STATE_WRITE_OUTPUT_PORT: 0x%02x",
 			 data);
 		A20_status = (data & (1 << 1)) ? 1 : 0;
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_ECHO_MOUSE:
-		CPRINTF5("[%T KB eaten by STATE_ECHO_MOUSE: 0x%02x]\n", data);
+		CPRINTS5("KB eaten by STATE_ECHO_MOUSE: 0x%02x", data);
 		output[out_len++] = data;
 		data_port_state = STATE_NORMAL;
 		break;
 
 	case STATE_SETREP:
-		CPRINTF5("[%T KB eaten by STATE_SETREP: 0x%02x]\n", data);
+		CPRINTS5("KB eaten by STATE_SETREP: 0x%02x", data);
 		set_typematic_delays(data);
 
 		output[out_len++] = I8042_RET_ACK;
@@ -630,7 +630,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		break;
 
 	case STATE_SEND_TO_MOUSE:
-		CPRINTF5("[%T KB eaten by STATE_SEND_TO_MOUSE: 0x%02x]\n",
+		CPRINTS5("KB eaten by STATE_SEND_TO_MOUSE: 0x%02x",
 			 data);
 		data_port_state = STATE_NORMAL;
 		break;
@@ -713,7 +713,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case I8042_CMD_EX_ENABLE:
 		default:
 			output[out_len++] = I8042_RET_NAK;
-			CPRINTF("[%T KB Unsupported i8042 data 0x%02x]\n",
+			CPRINTS("KB Unsupported i8042 data 0x%02x",
 				data);
 			break;
 		}
@@ -741,7 +741,7 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 {
 	int out_len = 0;
 
-	CPRINTF5("[%T KB recv cmd: 0x%02x]\n", command);
+	CPRINTS5("KB recv cmd: 0x%02x", command);
 	kblog_put('c', command);
 
 	switch (command) {
@@ -826,7 +826,7 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 			 */
 			A20_status = command & (1 << 1) ? 1 : 0;
 		} else {
-			CPRINTF("[%T KB unsupported cmd: 0x%02x]\n", command);
+			CPRINTS("KB unsupported cmd: 0x%02x", command);
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			output[out_len++] = I8042_RET_NAK;
@@ -955,7 +955,7 @@ void keyboard_protocol_task(void)
 				 * data?  Send it another interrupt in case it
 				 * somehow missed the first one.
 				 */
-				CPRINTF("[%T KB extra IRQ]\n");
+				CPRINTS("KB extra IRQ");
 				lpc_keyboard_resume_irq();
 				retries = 0;
 				break;

@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 
 /*****************************************************************************/
 /* DPTF temperature thresholds */
@@ -80,13 +80,13 @@ static int dpft_check_temp_threshold(int sensor_id, int temp)
 			cond_set_false(&dptf_threshold[sensor_id][i].over);
 
 		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTF("[%T DPTF over threshold [%d][%d]\n",
+			CPRINTS("DPTF over threshold [%d][%d",
 				sensor_id, i);
 			atomic_or(&dptf_seen, (1 << sensor_id));
 			tripped = 1;
 		}
 		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTF("[%T DPTF under threshold [%d][%d]\n",
+			CPRINTS("DPTF under threshold [%d][%d",
 				sensor_id, i);
 			atomic_or(&dptf_seen, (1 << sensor_id));
 			tripped = 1;
@@ -98,7 +98,7 @@ static int dpft_check_temp_threshold(int sensor_id, int temp)
 
 void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 {
-	CPRINTF("[%T DPTF sensor %d, threshold %d C, index %d, %sabled]\n",
+	CPRINTS("DPTF sensor %d, threshold %d C, index %d, %sabled",
 		sensor_id, K_TO_C(temp), idx, enable ? "en" : "dis");
 
 	if (enable) {
@@ -117,7 +117,7 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 
 test_mockable_static void smi_sensor_failure_warning(void)
 {
-	CPRINTF("[%T can't read any temp sensors!]\n");
+	CPRINTS("can't read any temp sensors!");
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
 
@@ -224,7 +224,7 @@ static void thermal_control(void)
 	/* What do we do about it? (note hard-coded logic). */
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HALT])) {
-		CPRINTF("[%T thermal SHUTDOWN]\n");
+		CPRINTS("thermal SHUTDOWN");
 		chipset_force_shutdown();
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		/* We don't reboot automatically - the user has to push
@@ -232,22 +232,22 @@ static void thermal_control(void)
 		 * detect this sensor transition until then, but we
 		 * do have to check in order to clear the cond_t.
 		 */
-		CPRINTF("[%T thermal no longer shutdown]\n");
+		CPRINTS("thermal no longer shutdown");
 	}
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HIGH])) {
-		CPRINTF("[%T thermal HIGH]\n");
+		CPRINTS("thermal HIGH");
 		throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HIGH])) {
-		CPRINTF("[%T thermal no longer high]\n");
+		CPRINTS("thermal no longer high");
 		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_THERMAL);
 	}
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN])) {
-		CPRINTF("[%T thermal WARN]\n");
+		CPRINTS("thermal WARN");
 		throttle_ap(THROTTLE_ON, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_WARN])) {
-		CPRINTF("[%T thermal no longer warn]\n");
+		CPRINTS("thermal no longer warn");
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 

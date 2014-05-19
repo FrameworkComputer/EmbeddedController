@@ -14,7 +14,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_EVENTS, outstr)
-#define CPRINTF(format, args...) cprintf(CC_EVENTS, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_EVENTS, format, ## args)
 
 /*
  * Maintain two copies of the events that are set.
@@ -41,7 +41,7 @@ void host_set_events(uint32_t mask)
 {
 	/* Only print if something's about to change */
 	if ((events & mask) != mask || (events_copy_b & mask) != mask)
-		CPRINTF("[%T event set 0x%08x]\n", mask);
+		CPRINTS("event set 0x%08x", mask);
 
 	atomic_or(&events, mask);
 	atomic_or(&events_copy_b, mask);
@@ -57,7 +57,7 @@ void host_clear_events(uint32_t mask)
 {
 	/* Only print if something's about to change */
 	if (events & mask)
-		CPRINTF("[%T event clear 0x%08x]\n", mask);
+		CPRINTS("event clear 0x%08x", mask);
 
 	atomic_clear(&events, mask);
 
@@ -78,7 +78,7 @@ static void host_clear_events_b(uint32_t mask)
 {
 	/* Only print if something's about to change */
 	if (events_copy_b & mask)
-		CPRINTF("[%T event clear B 0x%08x]\n", mask);
+		CPRINTS("event clear B 0x%08x", mask);
 
 	atomic_clear(&events_copy_b, mask);
 }

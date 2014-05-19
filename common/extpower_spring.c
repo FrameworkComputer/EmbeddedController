@@ -35,6 +35,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 /* ILIM pin control */
 enum ilim_config {
@@ -463,14 +464,14 @@ static void usb_detect_overcurrent(int dev_type)
 		}
 		if (power_removed_type[idx] == dev_type) {
 			if (oc_detect_retry[idx] > 0) {
-				CPRINTF("[%T USB overcurrent: Retry (%d)]\n",
+				CPRINTS("USB overcurrent: Retry (%d)",
 					oc_detect_retry[idx]);
 				oc_detect_retry[idx]--;
 				return;
 			}
 			over_current_pwm_duty = power_removed_pwm_duty[idx] +
 						PWM_CTRL_OC_BACK_OFF;
-			CPRINTF("[%T USB overcurrent: Limited to %d%%]\n",
+			CPRINTS("USB overcurrent: Limited to %d%%",
 				over_current_pwm_duty);
 		}
 	}
@@ -784,12 +785,12 @@ static void pwm_tweak(void)
 	 */
 	if (pwm_check_vbus_low(vbus, current)) {
 		set_pwm_duty_cycle(current_pwm_duty + PWM_CTRL_STEP_UP);
-		CPRINTF("[%T PWM duty up %d%%]\n", current_pwm_duty);
+		CPRINTS("PWM duty up %d%%", current_pwm_duty);
 	} else if (pwm_check_vbus_high(vbus)) {
 		next = pwm_get_next_lower();
 		if (next >= 0) {
 			set_pwm_duty_cycle(next);
-			CPRINTF("[%T PWM duty down %d%%]\n", current_pwm_duty);
+			CPRINTS("PWM duty down %d%%", current_pwm_duty);
 		}
 	}
 }
@@ -850,7 +851,7 @@ static void usb_charger_redetect(void)
 		return;
 
 	if (timestamp_expired(charger_redetection_time, NULL)) {
-		CPRINTF("[%T USB Redetecting]\n");
+		CPRINTS("USB Redetecting");
 		/*
 		 * TSU6721 doesn't update device type if power or ID pin
 		 * is present. Therefore, if the device type is the same,

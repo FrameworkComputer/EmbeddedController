@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #define PWRBTN_DEBOUNCE_US (30 * MSEC)  /* Debounce time for power button */
 
@@ -83,7 +83,7 @@ static void power_button_change_deferred(void)
 
 	debounced_power_pressed = new_pressed;
 
-	CPRINTF("[%T power button %s]\n", new_pressed ? "pressed" : "released");
+	CPRINTS("power button %s", new_pressed ? "pressed" : "released");
 
 	/* Call hooks */
 	hook_notify(HOOK_POWER_BUTTON_CHANGE);

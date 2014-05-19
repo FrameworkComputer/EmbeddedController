@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_VBOOT, outstr)
-#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ## args)
 
 struct vboot_hash_tag {
 	uint8_t hash[SHA256_DIGEST_SIZE];
@@ -49,7 +49,7 @@ static void vboot_hash_abort(void)
 	if (in_progress) {
 		want_abort = 1;
 	} else {
-		CPRINTF("[%T hash abort]\n");
+		CPRINTS("hash abort");
 		want_abort = 0;
 		data_size = 0;
 		hash = NULL;
@@ -79,7 +79,7 @@ static void vboot_hash_next_chunk(void)
 	if (curr_pos >= data_size) {
 		/* Store the final hash */
 		hash = SHA256_final(&ctx);
-		CPRINTF("[%T hash done %.*h]\n", SHA256_DIGEST_SIZE, hash);
+		CPRINTS("hash done %.*h", SHA256_DIGEST_SIZE, hash);
 
 		in_progress = 0;
 
@@ -126,7 +126,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 	in_progress = 1;
 
 	/* Restart the hash computation */
-	CPRINTF("[%T hash start 0x%08x 0x%08x]\n", offset, size);
+	CPRINTS("hash start 0x%08x 0x%08x", offset, size);
 	SHA256_init(&ctx);
 	if (nonce_size)
 		SHA256_update(&ctx, nonce, nonce_size);
@@ -151,7 +151,7 @@ int vboot_hash_invalidate(int offset, int size)
 		return 0;
 
 	/* Invalidate the hash */
-	CPRINTF("[%T hash invalidated 0x%08x 0x%08x]\n", offset, size);
+	CPRINTS("hash invalidated 0x%08x 0x%08x", offset, size);
 	vboot_hash_abort();
 	return 1;
 }
@@ -170,7 +170,7 @@ static void vboot_hash_init(void)
 	if (tag && version == VBOOT_HASH_SYSJUMP_VERSION &&
 	    size == sizeof(*tag)) {
 		/* Already computed a hash, so don't recompute */
-		CPRINTF("[%T hash precomputed]\n");
+		CPRINTS("hash precomputed");
 		hash = tag->hash;
 		data_offset = tag->offset;
 		data_size = tag->size;

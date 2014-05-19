@@ -16,7 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIDANGLE, outstr)
-#define CPRINTF(format, args...) cprintf(CC_LIDANGLE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LIDANGLE, format, ## args)
 
 /*
  * Define the number of previous lid angle measurements to keep for determining

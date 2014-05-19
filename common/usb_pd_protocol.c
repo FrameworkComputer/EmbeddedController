@@ -531,7 +531,7 @@ static inline int decode_short(void *ctxt, int off, uint16_t *val16)
 	end = pd_dequeue_bits(ctxt, off, 20, &w);
 
 #if 0 /* DEBUG */
-	CPRINTF("%d-%d: %05x %x:%x:%x:%x\n",
+	CPRINTS("%d-%d: %05x %x:%x:%x:%x\n",
 		off, end, w,
 		dec4b5b[(w >> 15) & 0x1f], dec4b5b[(w >> 10) & 0x1f],
 		dec4b5b[(w >>  5) & 0x1f], dec4b5b[(w >>  0) & 0x1f]);

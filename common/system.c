@@ -25,7 +25,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /* Round up to a multiple of 4 */
 #define ROUNDUP4(x) (((x) + 3) & ~3)
@@ -230,17 +230,17 @@ void system_disable_jump(void)
 		int enable_mpu = 0;
 		enum system_image_copy_t copy;
 
-		CPRINTF("[%T MPU type: %08x]\n", mpu_get_type());
+		CPRINTS("MPU type: %08x", mpu_get_type());
 		/*
 		 * Protect RAM from code execution
 		 */
 		ret = mpu_protect_ram();
 		if (ret == EC_SUCCESS) {
 			enable_mpu = 1;
-			CPRINTF("[%T RAM locked. Exclusion %08x-%08x]\n",
+			CPRINTS("RAM locked. Exclusion %08x-%08x",
 				&__iram_text_start, &__iram_text_end);
 		} else {
-			CPRINTF("[%T Failed to lock RAM (%d)]\n", ret);
+			CPRINTS("Failed to lock RAM (%d)", ret);
 		}
 
 		/*
@@ -262,16 +262,16 @@ void system_disable_jump(void)
 		}
 		if (ret == EC_SUCCESS) {
 			enable_mpu = 1;
-			CPRINTF("[%T %s image locked]\n", image_names[copy]);
+			CPRINTS("%s image locked", image_names[copy]);
 		} else {
-			CPRINTF("[%T Failed to lock %s image (%d)]\n",
+			CPRINTS("Failed to lock %s image (%d)",
 				image_names[copy], ret);
 		}
 
 		if (enable_mpu)
 			mpu_enable();
 	} else {
-		CPRINTF("[%T System is unlocked. Skip MPU configuration\n");
+		CPRINTS("System is unlocked. Skip MPU configuration");
 	}
 #endif
 }
@@ -466,7 +466,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 		return EC_ERROR_UNKNOWN;
 #endif
 
-	CPRINTF("[%T Jumping to image %s]\n", image_names[copy]);
+	CPRINTS("Jumping to image %s", image_names[copy]);
 
 	jump_to_image(init_addr);
 
@@ -614,7 +614,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		system_disable_jump();
 		return EC_SUCCESS;
 	case EC_REBOOT_HIBERNATE:
-		CPRINTF("[%T system hibernating]\n");
+		CPRINTS("system hibernating");
 		system_hibernate(0, 0);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
@@ -1013,7 +1013,7 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 	}
 #endif
 
-	CPRINTF("[%T Executing host reboot command %d]\n", p.cmd);
+	CPRINTS("Executing host reboot command %d", p.cmd);
 	switch (handle_pending_reboot(p.cmd)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;

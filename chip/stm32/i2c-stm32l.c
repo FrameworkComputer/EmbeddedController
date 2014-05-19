@@ -20,7 +20,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK 32
@@ -50,7 +50,7 @@
 #ifdef CONFIG_I2C_DEBUG
 static void dump_i2c_reg(int port, const char *what)
 {
-	CPRINTF("[%T i2c CR1=%04x CR2=%04x SR1=%04x SR2=%04x %s]\n",
+	CPRINTS("i2c CR1=%04x CR2=%04x SR1=%04x SR2=%04x %s",
 		STM32_I2C_CR1(port),
 		STM32_I2C_CR2(port),
 		STM32_I2C_SR1(port),
@@ -305,8 +305,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		 */
 		if (rv == I2C_ERROR_FAILED_START) {
 			const struct i2c_port_t *p = i2c_ports;
-			CPRINTF("[%T i2c_xfer start error; "
-				"unwedging and resetting i2c %d.\n", port);
+			CPRINTS("i2c_xfer start error; "
+				"unwedging and resetting i2c %d", port);
 
 			i2c_unwedge(port);
 

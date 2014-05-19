@@ -16,7 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 
@@ -38,11 +38,11 @@ static int raw_lid_open(void)
 static void lid_switch_open(void)
 {
 	if (debounced_lid_open) {
-		CPRINTF("[%T lid already open]\n");
+		CPRINTS("lid already open");
 		return;
 	}
 
-	CPRINTF("[%T lid open]\n");
+	CPRINTS("lid open");
 	debounced_lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	host_set_single_event(EC_HOST_EVENT_LID_OPEN);
@@ -54,11 +54,11 @@ static void lid_switch_open(void)
 static void lid_switch_close(void)
 {
 	if (!debounced_lid_open) {
-		CPRINTF("[%T lid already closed]\n");
+		CPRINTS("lid already closed");
 		return;
 	}
 
-	CPRINTF("[%T lid close]\n");
+	CPRINTS("lid close");
 	debounced_lid_open = 0;
 	hook_notify(HOOK_LID_CHANGE);
 	host_set_single_event(EC_HOST_EVENT_LID_CLOSED);

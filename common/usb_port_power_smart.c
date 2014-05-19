@@ -16,7 +16,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
@@ -100,7 +100,7 @@ int usb_charge_ports_enabled(void)
 
 int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 {
-	CPRINTF("[%T USB charge p%d m%d]\n", port_id, mode);
+	CPRINTS("USB charge p%d m%d", port_id, mode);
 
 	if (port_id >= USB_CHARGE_PORT_COUNT)
 		return EC_ERROR_INVAL;

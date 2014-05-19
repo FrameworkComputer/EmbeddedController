@@ -22,7 +22,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
 
@@ -250,7 +250,7 @@ void __idle(void)
 	 * so this only starts once all other tasks have gotten a chance to do
 	 * their task inits and have gone to sleep.
 	 */
-	CPRINTF("[%T low power idle task started]\n");
+	CPRINTS("low power idle task started");
 
 	while (1) {
 		/*
@@ -286,8 +286,8 @@ void __idle(void)
 				clock_wait_cycles(1);
 
 				if (LOW_SPEED_DEEP_SLEEP_ALLOWED)
-					CPRINTF("[%T Disabling console in "
-						"deep sleep]\n");
+					CPRINTS("Disabling console in "
+						"deep sleep");
 			}
 
 			/*
@@ -361,7 +361,7 @@ void __idle(void)
 			/* Calculate how close we were to missing deadline */
 			margin_us = next_delay - (int)(rtc_t1.val - rtc_t0.val);
 			if (margin_us < 0)
-				CPRINTF("[%T overslept by %dus]\n", -margin_us);
+				CPRINTS("overslept by %dus", -margin_us);
 
 			/* Record the closest to missing a deadline. */
 			if (margin_us < dsleep_recovery_margin_us)

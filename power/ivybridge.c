@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
 #define IN_PGOOD_5VALW             POWER_SIGNAL_MASK(X86_PGOOD_5VALW)
@@ -62,7 +62,7 @@ static int throttle_cpu;      /* Throttle CPU? */
 
 void chipset_force_shutdown(void)
 {
-	CPRINTF("[%T chipset force shutdown]\n");
+	CPRINTS("chipset force shutdown");
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -124,11 +124,11 @@ enum power_state power_chipset_init(void)
 	 */
 	if (system_jumped_to_this_image()) {
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
-			CPRINTF("[%T already in S0]\n");
+			CPRINTS("already in S0");
 			return POWER_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPRINTF("[%T forcing G3]\n");
+			CPRINTS("forcing G3");
 			gpio_set_level(GPIO_PCH_PWROK, 0);
 			gpio_set_level(GPIO_ENABLE_VCORE, 0);
 			gpio_set_level(GPIO_ENABLE_VS, 0);

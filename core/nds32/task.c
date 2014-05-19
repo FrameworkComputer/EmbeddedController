@@ -59,7 +59,7 @@ void __idle(void)
 	 * so this only starts once all other tasks have gotten a chance to do
 	 * their task inits and have gone to sleep.
 	 */
-	cprintf(CC_TASK, "[%T idle task started]\n");
+	cprints(CC_TASK, "idle task started");
 
 	while (1) {
 		/*
@@ -74,7 +74,7 @@ void __idle(void)
 static void task_exit_trap(void)
 {
 	int i = task_get_current();
-	cprintf(CC_TASK, "[%T Task %d (%s) exited!]\n", i, task_names[i]);
+	cprints(CC_TASK, "Task %d (%s) exited!", i, task_names[i]);
 	/* Exited tasks simply sleep forever */
 	while (1)
 		task_wait_event(-1);

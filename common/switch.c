@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 static uint8_t *memmap_switches;
 
@@ -61,7 +61,7 @@ static void switch_update(void)
 #endif
 
 	if (prev != *memmap_switches)
-		CPRINTF("[%T SW 0x%02x]\n", *memmap_switches);
+		CPRINTS("SW 0x%02x", *memmap_switches);
 }
 DECLARE_DEFERRED(switch_update);
 DECLARE_HOOK(HOOK_LID_CHANGE, switch_update, HOOK_PRIO_DEFAULT);

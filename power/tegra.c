@@ -45,7 +45,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* masks for power signals */
 #define IN_XPSHOLD POWER_SIGNAL_MASK(TEGRA_XPSHOLD)
@@ -196,16 +196,16 @@ static int check_for_power_off_event(void)
 
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
-			CPRINTF("[%T power waiting for long press %u]\n",
+			CPRINTS("power waiting for long press %u",
 				power_off_deadline.le.lo);
 		} else if (timestamp_expired(power_off_deadline, &now)) {
 			power_off_deadline.val = 0;
-			CPRINTF("[%T power off after long press now=%u, %u]\n",
+			CPRINTS("power off after long press now=%u, %u",
 				now.le.lo, power_off_deadline.le.lo);
 			return 2;
 		}
 	} else if (power_button_was_pressed) {
-		CPRINTF("[%T power off cancel]\n");
+		CPRINTS("power off cancel");
 		set_pmic_pwron(0);
 	}
 
@@ -240,7 +240,7 @@ enum power_state power_chipset_init(void)
 	 * the AP could stay in strange state.
 	 */
 	if (!(reset_flags & RESET_FLAG_SYSJUMP)) {
-		CPRINTF("[%T not sysjump; forcing AP shutdown]\n");
+		CPRINTS("not sysjump; forcing AP shutdown");
 		chipset_turn_off_power_rails();
 
 		/*
@@ -261,7 +261,7 @@ enum power_state power_chipset_init(void)
 	/* Leave power off only if requested by reset flags */
 	if (!(reset_flags & RESET_FLAG_AP_OFF) &&
 	    !(reset_flags & RESET_FLAG_SYSJUMP)) {
-		CPRINTF("[%T auto_power_on is set due to reset_flag 0x%x]\n",
+		CPRINTS("auto_power_on set due to reset_flag 0x%x",
 			system_get_reset_flags());
 		auto_power_on = 1;
 	}
@@ -319,14 +319,14 @@ static int check_for_power_on_event(void)
 	/* check if system is already ON */
 	if (power_get_signals() & IN_XPSHOLD) {
 		if (ap_off_flag) {
-			CPRINTF(
-				"[%T system is on, but "
-				"RESET_FLAG_AP_OFF is on]\n");
+			CPRINTS(
+				"system is on, but "
+				"RESET_FLAG_AP_OFF is on");
 			return 0;
 		} else {
-			CPRINTF(
-				"[%T system is on, thus clear "
-				"auto_power_on]\n");
+			CPRINTS(
+				"system is on, thus clear "
+				"auto_power_on");
 			/* no need to arrange another power on */
 			auto_power_on = 0;
 			return 1;
@@ -379,7 +379,7 @@ static void power_on(void)
 	t = get_time().val;
 	if (t < PMIC_RTC_STARTUP) {
 		uint32_t wait = PMIC_RTC_STARTUP - t;
-		CPRINTF("[%T wait for %dms for PMIC RTC start-up]\n",
+		CPRINTS("wait for %dms for PMIC RTC start-up",
 			wait / MSEC);
 		usleep(wait);
 	}
@@ -398,7 +398,7 @@ static void power_on(void)
 	/* Call hooks now that AP is running */
 	hook_notify(HOOK_CHIPSET_STARTUP);
 
-	CPRINTF("[%T AP running ...]\n");
+	CPRINTS("AP running ...");
 }
 
 /**
@@ -422,12 +422,12 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 		} else if (timestamp_expired(deadline, &now) ||
 			(task_wait_event(deadline.val - now.val) ==
 			TASK_EVENT_TIMER)) {
-			CPRINTF("[%T power button not released in time]\n");
+			CPRINTS("power button not released in time");
 			return EC_ERROR_TIMEOUT;
 		}
 	}
 
-	CPRINTF("[%T power button released]\n");
+	CPRINTS("power button released");
 	power_button_was_pressed = 0;
 	return EC_SUCCESS;
 }
@@ -448,19 +448,19 @@ static void power_off(void)
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
-	CPRINTF("[%T power shutdown complete]\n");
+	CPRINTS("power shutdown complete");
 }
 
 void chipset_reset(int is_cold)
 {
 	if (is_cold) {
-		CPRINTF("[%T EC triggered cold reboot]\n");
+		CPRINTS("EC triggered cold reboot");
 		power_off();
 		/* After XPSHOLD is dropped off, the system will be on again */
 		power_request = POWER_REQ_ON;
 	} else {
-		CPRINTF("[%T EC triggered warm reboot]\n");
-		CPRINTF("[%T assert GPIO_PMIC_WARM_RESET_L for %d ms]\n",
+		CPRINTS("EC triggered warm reboot");
+		CPRINTS("assert GPIO_PMIC_WARM_RESET_L for %d ms",
 				PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
 		gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
 		usleep(PMIC_WARM_RESET_L_HOLD_TIME);
@@ -492,7 +492,7 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		if (value) {
-			CPRINTF("[%T power on %d]\n", value);
+			CPRINTS("power on %d", value);
 			return POWER_S5S3;
 		}
 		return state;
@@ -500,14 +500,14 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		power_on();
 		if (power_wait_signals(IN_XPSHOLD) == EC_SUCCESS) {
-			CPRINTF("[%T XPSHOLD seen]\n");
+			CPRINTS("XPSHOLD seen");
 			if (wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
 				set_pmic_pwron(0);
 				return POWER_S3;
 			} else {
-				CPRINTF("[%T long-press button, shutdown]\n");
+				CPRINTS("long-press button, shutdown");
 				power_off();
 				/*
 				 * Since the AP may be up already, return S0S3
@@ -516,7 +516,7 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_S0S3;
 			}
 		} else {
-			CPRINTF("[%T XPSHOLD not seen in time]\n");
+			CPRINTS("XPSHOLD not seen in time");
 		}
 		set_pmic_pwron(0);
 		return POWER_S5;
@@ -536,7 +536,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0:
 		value = check_for_power_off_event();
 		if (value) {
-			CPRINTF("[%T power off %d]\n", value);
+			CPRINTS("power off %d", value);
 			power_off();
 			return POWER_S0S3;
 		} else if (power_get_signals() & IN_SUSPEND)

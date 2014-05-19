@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /*
  * Default timeout in us; if we've been waiting this long for an input
@@ -69,7 +69,7 @@ static void power_update_signals(void)
 	}
 
 	if ((in_signals & in_debug) != (inew & in_debug))
-		CPRINTF("[%T power in 0x%04x]\n", inew);
+		CPRINTS("power in 0x%04x", inew);
 
 	in_signals = inew;
 }
@@ -84,7 +84,7 @@ int power_has_signals(uint32_t want)
 	if ((in_signals & want) == want)
 		return 1;
 
-	CPRINTF("[%T power lost input; wanted 0x%04x, got 0x%04x]\n",
+	CPRINTS("power lost input; wanted 0x%04x, got 0x%04x",
 		want, in_signals & want);
 
 	return 0;
@@ -99,8 +99,8 @@ int power_wait_signals(uint32_t want)
 	while ((in_signals & in_want) != in_want) {
 		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
 			power_update_signals();
-			CPRINTF("[%T power timeout on input; "
-				"wanted 0x%04x, got 0x%04x]\n",
+			CPRINTS("power timeout on input; "
+				"wanted 0x%04x, got 0x%04x",
 				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
 		}
@@ -150,7 +150,7 @@ static enum power_state power_common_state(enum power_state state)
 				 * Time's up.  Hibernate until wake pin
 				 * asserted.
 				 */
-				CPRINTF("[%T hibernating]\n");
+				CPRINTS("hibernating");
 				system_hibernate(0, 0);
 			} else {
 				uint64_t wait = target_time - time_now;
@@ -262,7 +262,7 @@ void chipset_task(void)
 	enum power_state new_state;
 
 	while (1) {
-		CPRINTF("[%T power state %d = %s, in 0x%04x]\n",
+		CPRINTS("power state %d = %s, in 0x%04x",
 			state, state_names[state], in_signals);
 
 		/* Always let the specific chipset handle the state first */
@@ -317,9 +317,9 @@ DECLARE_HOOK(HOOK_LID_CHANGE, power_lid_change, HOOK_PRIO_DEFAULT);
 static void power_ac_change(void)
 {
 	if (extpower_is_present()) {
-		CPRINTF("[%T AC on]\n");
+		CPRINTS("AC on");
 	} else {
-		CPRINTF("[%T AC off]\n");
+		CPRINTS("AC off");
 
 		if (state == POWER_G3) {
 			last_shutdown_time = get_time().val;
@@ -350,7 +350,7 @@ static int command_powerinfo(int argc, char **argv)
 	 * Print power state in same format as state machine.  This is
 	 * used by FAFT tests, so must match exactly.
 	 */
-	ccprintf("[%T power state %d = %s, in 0x%04x]\n",
+	ccprints("power state %d = %s, in 0x%04x",
 		 state, state_names[state], in_signals);
 
 	return EC_SUCCESS;

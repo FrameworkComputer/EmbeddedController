@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 const char *__prog_name;
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 	uart_init();
 
 	if (system_jumped_to_this_image()) {
-		CPRINTF("[%T Emulator initialized after sysjump]\n");
+		CPRINTS("Emulator initialized after sysjump");
 	} else {
 		CPUTS("\n\n--- Emulator initialized after reboot ---\n");
 		CPUTS("[Reset cause: ");

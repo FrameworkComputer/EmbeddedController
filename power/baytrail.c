@@ -24,7 +24,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
 #define IN_PGOOD_PP5000            POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
@@ -58,7 +58,7 @@ static int fake_pltrst_timeout;  /* Fake PLTRST# timeout at next power-on */
 
 void chipset_force_shutdown(void)
 {
-	CPRINTF("[%T %s()]\n", __func__);
+	CPRINTS("%s()", __func__);
 
 	/*
 	 * Force power off. This condition will reset once the state machine
@@ -70,7 +70,7 @@ void chipset_force_shutdown(void)
 
 void chipset_reset(int cold_reset)
 {
-	CPRINTF("[%T %s(%d)]\n", __func__, cold_reset);
+	CPRINTS("%s(%d)", __func__, cold_reset);
 	if (cold_reset) {
 		/*
 		 * Drop and restore PWROK.  This causes the PCH to reboot,
@@ -120,11 +120,11 @@ enum power_state power_chipset_init(void)
 			/* Disable idle task deep sleep when in S0. */
 			disable_sleep(SLEEP_MASK_AP_RUN);
 
-			CPRINTF("[%T already in S0]\n");
+			CPRINTS("already in S0");
 			return POWER_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPRINTF("[%T forcing G3]\n");
+			CPRINTS("forcing G3");
 			gpio_set_level(GPIO_PCH_CORE_PWROK, 0);
 			gpio_set_level(GPIO_VCORE_EN, 0);
 			gpio_set_level(GPIO_SUSP_VR_EN, 0);
@@ -299,10 +299,10 @@ enum power_state power_handle_state(enum power_state state)
 
 			if (i < 50 && !fake_pltrst_timeout) {
 				/* Deasserted in time */
-				CPRINTF("[%T power PLTRST# deasserted]\n");
+				CPRINTS("power PLTRST# deasserted");
 			} else {
 				/* Force a reset.  See crosbug.com/p/28422 */
-				CPRINTF("[%T power PLTRST# timeout]\n");
+				CPRINTS("power PLTRST# timeout");
 				power_button_pch_release();
 				chipset_force_shutdown();
 				restart_from_s5 = 1;
@@ -381,7 +381,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * See crosbug.com/p/28422.
 		 */
 		if (restart_from_s5) {
-			CPRINTF("[%T power restart from S5]\n");
+			CPRINTS("power restart from S5");
 
 			restart_from_s5 = 0;
 

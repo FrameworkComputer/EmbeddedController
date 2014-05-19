@@ -13,7 +13,7 @@
 #include "console.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* These 2 defines are for cut_off command for 3S battery */
 #define SB_SHIP_MODE_ADDR	0x3a
@@ -274,16 +274,16 @@ const struct battery_info *battery_get_info(void)
 	int design_mv;
 
 	if (battery_manufacturer_name(manuf, sizeof(manuf))) {
-		CPRINTF("[%T Failed to get MANUF name]\n");
+		CPRINTS("Failed to get MANUF name");
 		return &info_precharge;
 	}
 
 	if (battery_device_name(device, sizeof(device))) {
-		CPRINTF("[%T Failed to get DEVICE name]\n");
+		CPRINTS("Failed to get DEVICE name");
 		return &info_precharge;
 	}
 	if (battery_design_voltage((int *)&design_mv)) {
-		CPRINTF("[%T Failed to get DESIGN_VOLTAGE]\n");
+		CPRINTS("Failed to get DESIGN_VOLTAGE");
 		return &info_precharge;
 	}
 
@@ -291,7 +291,7 @@ const struct battery_info *battery_get_info(void)
 		if ((strcasecmp(support_batteries[i].manuf, manuf) == 0) &&
 		    (strcasecmp(support_batteries[i].device, device) == 0) &&
 		    (support_batteries[i].design_mv == design_mv)) {
-			CPRINTF("[%T battery Manuf:%s, Device=%s, design=%u]\n",
+			CPRINTS("battery Manuf:%s, Device=%s, design=%u",
 				manuf, device, design_mv);
 			support_cut_off = support_batteries[i].support_cut_off;
 			battery_info = support_batteries[i].battery_info;
@@ -299,7 +299,7 @@ const struct battery_info *battery_get_info(void)
 		}
 	}
 
-	CPRINTF("[%T un-recognized battery Manuf:%s, Device:%s]\n",
+	CPRINTS("un-recognized battery Manuf:%s, Device:%s",
 		manuf, device);
 	return &info_precharge;
 }

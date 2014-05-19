@@ -21,6 +21,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK 32
@@ -163,7 +164,7 @@ static int i2c_write_raw_slave(int port, void *buf, int len)
 		dma_disable_tc_interrupt(DMAC_SLAVE_TX);
 
 		if (!(rv & TASK_EVENT_WAKE)) {
-			CPRINTF("[%T Slave timeout, resetting i2c]\n");
+			CPRINTS("Slave timeout, resetting i2c");
 			i2c_init_port(port);
 		}
 	}
@@ -256,9 +257,7 @@ static void i2c_event_handler(int port)
 
 	/* Confirm that you are not in master mode */
 	if (STM32_I2C_SR2(port) & (1 << 0)) {
-		CPRINTF(
-			"[%T I2C slave ISR triggered in "
-			"master mode, ignoring]\n");
+		CPRINTS("slave ISR triggered in master mode, ignoring");
 		return;
 	}
 
@@ -316,9 +315,9 @@ static void i2c_error_handler(int port)
 		/* ACK failed (NACK); expected when AP reads final byte.
 		 * Software must clear AF bit. */
 	} else {
-		CPRINTF("[%T %s: I2C_SR1(%d): 0x%04x]\n",
+		CPRINTS("%s: I2C_SR1(%d): 0x%04x",
 			__func__, port, i2c_sr1[port]);
-		CPRINTF("[%T %s: I2C_SR2(%d): 0x%04x]\n",
+		CPRINTS("%s: I2C_SR2(%d): 0x%04x",
 			__func__, port, STM32_I2C_SR2(port));
 	}
 
@@ -552,7 +551,7 @@ static void handle_i2c_error(int port, int rv)
 	/* EC_ERROR_TIMEOUT may have a code specifying where the timeout was */
 	if ((rv & 0xff) == EC_ERROR_TIMEOUT) {
 #ifdef CONFIG_I2C_DEBUG
-		CPRINTF("[%T Wait_status() timeout type: %d]\n", (rv >> 8));
+		CPRINTS("Wait_status() timeout type: %d", (rv >> 8));
 #endif
 		rv = EC_ERROR_TIMEOUT;
 	}
@@ -574,7 +573,7 @@ static void handle_i2c_error(int port, int rv)
 		 * (Probably a stray pulse on the line got it out of sync with
 		 * the actual bytes) so reset it.
 		 */
-		CPRINTF("[%T Unable to send START, resetting i2c]\n");
+		CPRINTS("Unable to send START, resetting i2c");
 		i2c_init_port(port);
 		goto cr_cleanup;
 	} else if (rv == EC_ERROR_TIMEOUT && !(r & 2)) {
@@ -583,7 +582,7 @@ static void handle_i2c_error(int port, int rv)
 		 * It seems that this can be happen very briefly while sending
 		 * a 1. We've not actually seen this, but just to be safe.
 		 */
-		CPRINTF("[%T Bad BUSY bit detected]\n");
+		CPRINTS("Bad BUSY bit detected");
 		master_stop(port);
 	}
 

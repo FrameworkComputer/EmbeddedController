@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_USBCHARGE, outstr)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 /* 8-bit I2C address */
 #define TSU6721_I2C_ADDR (0x25 << 1)
@@ -49,7 +49,7 @@ int tsu6721_write(uint8_t reg, uint8_t val)
 
 	res = i2c_write8(I2C_PORT_MASTER, TSU6721_I2C_ADDR, reg, val);
 	if (res)
-		CPRINTF("[%T TSU6721 I2C write failed]\n");
+		CPRINTS("TSU6721 I2C write failed");
 	return res;
 }
 
@@ -102,7 +102,7 @@ void tsu6721_reset(void)
 
 	for (i = 0; i < TSU6721_SW_RESET_RETRY; ++i) {
 		if (i != 0) {
-			CPRINTF("[%T TSU6721 init failed. Retrying]\n");
+			CPRINTS("TSU6721 init failed. Retrying");
 			msleep(500);
 		}
 		if (tsu6721_write(TSU6721_REG_RESET, 0x1))
@@ -127,7 +127,7 @@ int tsu6721_mux(enum tsu6721_mux sel)
 	 * something known on the ID pin
 	 */
 	if (sel != TSU6721_MUX_AUTO && (id == 0x1f) && !vbus1 && !vbus3) {
-		CPRINTF("[%T TSU6721 cannot use manual mode: no VBUS or ID]\n");
+		CPRINTS("TSU6721 cannot use manual mode: no VBUS or ID");
 		return EC_ERROR_INVAL;
 	}
 
@@ -148,7 +148,7 @@ int tsu6721_init(void)
 	int res = 0;
 
 	if ((dev_id != 0x0a) && (dev_id != 0x12)) {
-		CPRINTF("[%T TSU6721 invalid device ID 0x%02x]\n", dev_id);
+		CPRINTS("TSU6721 invalid device ID 0x%02x", dev_id);
 		return EC_ERROR_UNKNOWN;
 	}
 

@@ -31,7 +31,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* Values for our supported adapters */
 static const char * const ad_name[] = {
@@ -156,11 +156,11 @@ static void ac_change_callback(void)
 {
 	if (extpower_is_present()) {
 		ac_adapter = identify_adapter();
-		CPRINTF("[%T AC Adapter is %s (%dmv)]\n",
+		CPRINTS("AC Adapter is %s (%dmv)",
 			ad_name[ac_adapter], last_mv);
 	} else {
 		ac_adapter = ADAPTER_UNKNOWN;
-		CPRINTF("[%T AC Adapter is not present]\n");
+		CPRINTS("AC Adapter is not present");
 		/* Charger unavailable. Clear local flags */
 	}
 }
@@ -172,7 +172,7 @@ static void set_turbo(int on)
 	int tmp, r;
 
 	if (ac_turbo != on)
-		CPRINTF("[%T turbo mode => %d]\n", on);
+		CPRINTS("turbo mode => %d", on);
 
 	/* Set/clear turbo mode in charger */
 	r = charger_get_option(&tmp);
@@ -198,7 +198,7 @@ static void set_turbo(int on)
 	ac_turbo = on;
 	return;
 bad:
-	CPRINTF("[%T ERROR: can't talk to charger: %d]\n", r);
+	CPRINTS("ERROR: can't talk to charger: %d", r);
 }
 
 

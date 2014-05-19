@@ -14,7 +14,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
-#define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ## args)
 
 /******************************************************************************/
 /* How to talk to the controller */
@@ -177,7 +177,7 @@ int lb_get_rgb(unsigned int led, uint8_t *red, uint8_t *green, uint8_t *blue)
 void lb_set_brightness(unsigned int newval)
 {
 	int i;
-	CPRINTF("[%T LB_bright 0x%02x]\n", newval);
+	CPRINTS("LB_bright 0x%02x", newval);
 	brightness = newval;
 	for (i = 0; i < NUM_LEDS; i++)
 		setrgb(i, current[i][0], current[i][1], current[i][2]);
@@ -192,7 +192,7 @@ uint8_t lb_get_brightness(void)
 /* Initialize the controller ICs after reset */
 void lb_init(void)
 {
-	CPRINTF("[%T LB_init_vals]\n");
+	CPRINTS("LB_init_vals");
 	set_from_array(init_vals, ARRAY_SIZE(init_vals));
 	memset(current, 0, sizeof(current));
 }
@@ -200,7 +200,7 @@ void lb_init(void)
 /* Just go into standby mode. No register values should change. */
 void lb_off(void)
 {
-	CPRINTF("[%T LB_off]\n");
+	CPRINTS("LB_off");
 	controller_write(0, 0x01, 0x00);
 	controller_write(1, 0x01, 0x00);
 }
@@ -208,7 +208,7 @@ void lb_off(void)
 /* Come out of standby mode. */
 void lb_on(void)
 {
-	CPRINTF("[%T LB_on]\n");
+	CPRINTS("LB_on");
 	controller_write(0, 0x01, 0x20);
 	controller_write(1, 0x01, 0x20);
 }

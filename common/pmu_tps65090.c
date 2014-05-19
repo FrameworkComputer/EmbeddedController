@@ -18,7 +18,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 #define TPS65090_I2C_ADDR 0x90
 
@@ -153,7 +153,7 @@ static int pmu_get_event(int *event)
 	*event = irq1 | (irq2 << 8);
 
 	if (prev_event != *event) {
-		CPRINTF("[%T pmu event: %016b]\n", *event);
+		CPRINTS("pmu event: %016b", *event);
 		prev_event = *event;
 	}
 
@@ -684,8 +684,8 @@ static int command_pmu(int argc, char **argv)
 	rv = pmu_read(IRQ1_REG, &value);
 	if (rv)
 		return rv;
-	CPRINTF("pmu events b%08b\n", value);
-	CPRINTF("ac gpio    %d\n", extpower_is_present());
+	CPRINTS("pmu events b%08b", value);
+	CPRINTS("ac gpio    %d", extpower_is_present());
 
 	if (rv)
 		ccprintf("Failed - error %d\n", rv);

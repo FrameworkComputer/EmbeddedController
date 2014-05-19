@@ -16,7 +16,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 #define I2C_CLOCK 16000000 /* 16 MHz */
 
@@ -199,7 +199,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (!started &&
 	    (((reg_sts & (STS_BER | STS_LAB)) || !(reg_sts & STS_NBB)) ||
 			    (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
-		CPRINTF("[%T I2C%d bad status 0x%02x, SCL=%d, SDA=%d]\n", port,
+		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port,
 			reg_sts,
 			i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
 			i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);

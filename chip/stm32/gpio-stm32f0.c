@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_GPIO, outstr)
-#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
 /* For each EXTI bit, record which GPIO entry is using it */
 static const struct gpio_info *exti_events[16];
@@ -210,7 +210,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	bit = 31 - __builtin_clz(g->mask);
 
 	if (exti_events[bit]) {
-		CPRINTF("[%T Overriding %s with %s on EXTI%d]\n",
+		CPRINTS("Overriding %s with %s on EXTI%d",
 			exti_events[bit]->name, g->name, bit);
 	}
 	exti_events[bit] = g;

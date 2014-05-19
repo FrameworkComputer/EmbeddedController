@@ -17,7 +17,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK 32
@@ -72,7 +72,7 @@ static void i2c_set_freq_port(const struct i2c_port_t *p)
 		STM32_I2C_TIMINGR(port) = 0xB0420F13;
 		break;
 	default: /* unknown speed, defaults to 100kBps */
-		CPRINTF("[%T I2C bad speed %d kBps]\n", p->kbps);
+		CPRINTS("I2C bad speed %d kBps", p->kbps);
 		STM32_I2C_TIMINGR(port) = 0xB0420F13;
 	}
 	/* Enable port */

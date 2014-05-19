@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* Voltage debounce time */
 #define DEBOUNCE_TIME (10 * SECOND)
@@ -109,17 +109,17 @@ static void low_battery_shutdown(struct charge_state_context *ctx)
 {
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		/* AP is off, so shut down the EC now */
-		CPRINTF("[%T charge force EC hibernate due to low battery]\n");
+		CPRINTS("charge force EC hibernate due to low battery");
 		system_hibernate(0, 0);
 	} else if (!ctx->shutdown_warning_time.val) {
 		/* Warn AP battery level is so low we'll shut down */
-		CPRINTF("[%T charge warn shutdown due to low battery]\n");
+		CPRINTS("charge warn shutdown due to low battery");
 		ctx->shutdown_warning_time = get_time();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	} else if (get_time().val > ctx->shutdown_warning_time.val +
 		   LOW_BATTERY_SHUTDOWN_TIMEOUT_US) {
 		/* Timeout waiting for AP to shut down, so kill it */
-		CPRINTF("[%T charge force shutdown due to low battery]\n");
+		CPRINTS("charge force shutdown due to low battery");
 		chipset_force_shutdown();
 	}
 }
@@ -443,7 +443,7 @@ static enum charge_state state_idle(struct charge_state_context *ctx)
 		int want_current =
 			charger_closest_current(batt->desired_current);
 
-		CPRINTF("[%T Charge start %dmV %dmA]\n",
+		CPRINTS("Charge start %dmV %dmA",
 			batt->desired_voltage, want_current);
 
 		if (charge_request(batt->desired_voltage, want_current))
@@ -506,7 +506,7 @@ static enum charge_state state_charge(struct charge_state_context *ctx)
 	want_voltage = charger_closest_voltage(batt->desired_voltage);
 
 	if (want_voltage != curr->charging_voltage) {
-		CPRINTF("[%T Charge voltage %dmV]\n", want_voltage);
+		CPRINTS("Charge voltage %dmV", want_voltage);
 		if (charge_request(want_voltage, -1))
 			return PWR_STATE_ERROR;
 		update_charger_time(ctx, now);
@@ -531,7 +531,7 @@ static enum charge_state state_charge(struct charge_state_context *ctx)
 	}
 
 	if (want_current != curr->charging_current) {
-		CPRINTF("[%T Charge current %dmA @ %dmV]\n",
+		CPRINTS("Charge current %dmA @ %dmV",
 			want_current, batt->desired_voltage);
 	}
 
@@ -566,7 +566,7 @@ static enum charge_state state_discharge(struct charge_state_context *ctx)
 	if ((bat_temp_c >= ctx->battery->discharging_max_c ||
 	     bat_temp_c < ctx->battery->discharging_min_c) &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
-		CPRINTF("[%T charge force shutdown due to battery temp]\n");
+		CPRINTS("charge force shutdown due to battery temp");
 		chipset_force_shutdown();
 		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	}
@@ -593,8 +593,8 @@ static enum charge_state state_error(struct charge_state_context *ctx)
 
 	/* Debug output */
 	if (ctx->curr.error != logged_error) {
-		CPRINTF("[%T Charge error: flag[%08b -> %08b], ac %d, "
-			" charger %s, battery %s\n",
+		CPRINTS("Charge error: flag[%08b -> %08b], ac %d, "
+			" charger %s, battery %s",
 			logged_error, ctx->curr.error, ctx->curr.ac,
 			(ctx->curr.error & F_CHARGER_MASK) ? "(err)" : "ok",
 			(ctx->curr.error & F_BATTERY_MASK) ? "(err)" : "ok");
@@ -618,7 +618,7 @@ static void charging_progress(struct charge_state_context *ctx)
 		else
 			battery_time_to_empty(&minutes);
 
-		CPRINTF("[%T Battery %3d%% / %dh:%d]\n",
+		CPRINTS("Battery %3d%% / %dh:%d",
 			ctx->curr.batt.state_of_charge,
 			minutes / 60, minutes % 60);
 		return;
@@ -634,8 +634,8 @@ static void charging_progress(struct charge_state_context *ctx)
 		seconds = (int)(get_time().val -
 				ctx->trickle_charging_time.val) / (int)SECOND;
 		minutes = seconds / 60;
-		CPRINTF("[%T Precharge CHG(%dmV) BATT(%dmV %dmA) "
-			"%dh:%d]\n", ctx->curr.charging_voltage,
+		CPRINTS("Precharge CHG(%dmV) BATT(%dmV %dmA) "
+			"%dh:%d", ctx->curr.charging_voltage,
 			ctx->curr.batt.voltage, ctx->curr.batt.current,
 			minutes / 60, minutes % 60);
 	}
@@ -718,7 +718,7 @@ void charger_task(void)
 		if (ctx->curr.state == PWR_STATE_CHARGE &&
 		    ctx->charge_state_updated_time.val +
 		    CONFIG_CHARGER_TIMEOUT_HOURS * HOUR < ctx->curr.ts.val) {
-			CPRINTF("[%T Charge timed out after %d hours]\n",
+			CPRINTS("Charge timed out after %d hours",
 				CONFIG_CHARGER_TIMEOUT_HOURS);
 			charge_force_idle(1);
 		}
@@ -764,7 +764,7 @@ void charger_task(void)
 			new_state = state_error(ctx);
 			break;
 		default:
-			CPRINTF("[%T Charge state %d undefined]\n",
+			CPRINTS("Charge state %d undefined",
 				ctx->curr.state);
 			ctx->curr.state = PWR_STATE_ERROR;
 			new_state = PWR_STATE_ERROR;
@@ -779,7 +779,7 @@ void charger_task(void)
 
 		if (new_state) {
 			ctx->curr.state = new_state;
-			CPRINTF("[%T Charge state %s -> %s after %.6ld sec]\n",
+			CPRINTS("Charge state %s -> %s after %.6ld sec",
 				state_name[ctx->prev.state],
 				state_name[new_state],
 				ctx->curr.ts.val -
@@ -942,8 +942,8 @@ static void charge_shutdown(void)
 {
 	/* Hibernate immediately if battery level is too low */
 	if (charge_want_shutdown()) {
-		CPRINTF("[%T charge force EC hibernate after"
-			" shutdown due to low battery]\n");
+		CPRINTS("charge force EC hibernate after "
+			"shutdown due to low battery");
 		system_hibernate(0, 0);
 	}
 }

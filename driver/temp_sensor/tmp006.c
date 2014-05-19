@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 
 /* Constants for calculating target object temperatures */
 static const float A1 = 1.75e-3f;

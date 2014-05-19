@@ -25,6 +25,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
@@ -106,7 +107,7 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 					 (disable_scanning_mask | mask);
 
 	if (disable_scanning_mask != old_disable_scanning)
-		CPRINTF("[%T KB disable_scanning_mask changed: 0x%08x]\n",
+		CPRINTS("KB disable_scanning_mask changed: 0x%08x",
 				disable_scanning_mask);
 
 	if (old_disable_scanning && !disable_scanning_mask) {
@@ -296,13 +297,13 @@ static int check_runtime_keys(const uint8_t *state)
 	/* Check individual keys */
 	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
-		CPRINTF("[%T KB warm reboot]\n");
+		CPRINTS("KB warm reboot");
 		keyboard_clear_buffer();
 		chipset_reset(0);
 		return 1;
 	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
-		CPRINTF("[%T KB hibernate]\n");
+		CPRINTS("KB hibernate");
 		system_hibernate(0, 0);
 		return 1;
 	}
@@ -516,7 +517,7 @@ static enum boot_key check_boot_key(const uint8_t *state)
 	/* Check what single key is down */
 	for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
 		if (check_key(state, k->mask_index, k->mask_value)) {
-			CPRINTF("[%T KB boot key %d]\n", i);
+			CPRINTS("KB boot key %d", i);
 			return i;
 		}
 	}
@@ -583,7 +584,7 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		/* Enable all outputs */
-		CPRINTF("[%T KB wait]\n");
+		CPRINTS("KB wait");
 		if (keyboard_scan_is_enabled())
 			keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
 		keyboard_raw_enable_interrupt(1);
@@ -602,7 +603,7 @@ void keyboard_scan_task(void)
 		} while (!keyboard_scan_is_enabled());
 
 		/* Enter polling mode */
-		CPRINTF("[%T KB poll]\n");
+		CPRINTS("KB poll");
 		keyboard_raw_enable_interrupt(0);
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 

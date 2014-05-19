@@ -15,7 +15,7 @@
 #include "util.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 struct button_state_t {
 	uint64_t debounce_time;
@@ -44,7 +44,7 @@ static void button_init(void)
 {
 	int i;
 
-	CPRINTF("[%T (re)initializing buttons and interrupts]\n");
+	CPRINTS("(re)initializing buttons and interrupts");
 	next_deferred_time = 0;
 	for (i = 0; i < CONFIG_BUTTON_COUNT; i++) {
 		state[i].debounced_pressed = raw_button_pressed(&buttons[i]);
@@ -74,7 +74,7 @@ static void button_change_deferred(void)
 			new_pressed = raw_button_pressed(&buttons[i]);
 			if (state[i].debounced_pressed != new_pressed) {
 				state[i].debounced_pressed = new_pressed;
-				CPRINTF("[%T Button '%s' was %s]\n",
+				CPRINTS("Button '%s' was %s",
 					buttons[i].name, new_pressed ?
 					"pressed" : "released");
 #ifdef HAS_TASK_KEYPROTO

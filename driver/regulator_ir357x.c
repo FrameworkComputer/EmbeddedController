@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* 8-bit I2C address */
 #define IR357x_I2C_ADDR (0x8 << 1)
@@ -113,7 +113,7 @@ static void ir357x_write(uint8_t reg, uint8_t val)
 
 	res = i2c_write8(I2C_PORT_REGULATOR, IR357x_I2C_ADDR, reg, val);
 	if (res)
-		CPRINTF("[%T IR I2C write failed]\n");
+		CPRINTF("IR I2C write failed");
 }
 
 static int ir357x_get_version(void)
@@ -151,12 +151,12 @@ static void ir357x_prog(void)
 		for (; settings->reg; settings++)
 			ir357x_write(settings->reg, settings->value);
 	} else {
-		CPRINTF("[%T IR%d chip unsupported. Skip writing settings!\n",
+		CPRINTF("IR%d chip unsupported. Skip writing settings!",
 			ir357x_get_version());
 		return;
 	}
 
-	CPRINTF("[%T IR%d registers UPDATED]\n", ir357x_get_version());
+	CPRINTF("IR%d registers UPDATED", ir357x_get_version());
 }
 
 static void ir357x_dump(void)
