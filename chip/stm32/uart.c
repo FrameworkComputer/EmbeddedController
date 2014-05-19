@@ -96,6 +96,9 @@ void uart_tx_dma_start(const char *src, int len)
 	/* Force clear TC so we don't re-interrupt */
 	STM32_USART_SR(UARTN) &= ~STM32_USART_SR_TC;
 
+	/* Enable TCIE (chrome-os-partner:28837) */
+	STM32_USART_CR1(UARTN) |= STM32_USART_CR1_TCIE;
+
 	/* Start DMA */
 	dma_go(dma_get_channel(dma_tx_option.channel));
 }
