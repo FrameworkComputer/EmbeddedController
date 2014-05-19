@@ -220,33 +220,37 @@ static const char * const batt_pres[] = {
 
 static void dump_charge_state(void)
 {
-#define DUMP(FLD, FMT) ccprintf("  " #FLD " = " FMT "\n", curr.FLD)
-	ccprintf("  state = %s\n", state_list[curr.state]);
+#define DUMP(FLD, FMT) ccprintf(#FLD " = " FMT "\n", curr.FLD)
+#define DUMP_CHG(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.chg. FLD)
+#define DUMP_BATT(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.batt. FLD)
+	ccprintf("state = %s\n", state_list[curr.state]);
 	DUMP(ac, "%d");
-	DUMP(chg.voltage, "%dmV");
-	DUMP(chg.current, "%dmA");
-	DUMP(chg.input_current, "%dmA");
-	DUMP(chg.status, "0x%x");
-	DUMP(chg.option, "0x%x");
-	DUMP(chg.flags, "0x%x");
-	ccprintf("  batt.temperature = %dC\n",
+	ccprintf("chg.*:\n");
+	DUMP_CHG(voltage, "%dmV");
+	DUMP_CHG(current, "%dmA");
+	DUMP_CHG(input_current, "%dmA");
+	DUMP_CHG(status, "0x%x");
+	DUMP_CHG(option, "0x%x");
+	DUMP_CHG(flags, "0x%x");
+	ccprintf("batt.*:\n");
+	ccprintf("\ttemperature = %dC\n",
 		 DECI_KELVIN_TO_CELSIUS(curr.batt.temperature));
-	DUMP(batt.state_of_charge, "%d%%");
-	DUMP(batt.voltage, "%dmV");
-	DUMP(batt.current, "%dmA");
-	DUMP(batt.desired_voltage, "%dmV");
-	DUMP(batt.desired_current, "%dmA");
-	DUMP(batt.flags, "0x%x");
-	DUMP(batt.remaining_capacity, "%dmAh");
-	DUMP(batt.full_capacity, "%dmAh");
-	ccprintf("  batt.is_present = %s\n", batt_pres[curr.batt.is_present]);
+	DUMP_BATT(state_of_charge, "%d%%");
+	DUMP_BATT(voltage, "%dmV");
+	DUMP_BATT(current, "%dmA");
+	DUMP_BATT(desired_voltage, "%dmV");
+	DUMP_BATT(desired_current, "%dmA");
+	DUMP_BATT(flags, "0x%x");
+	DUMP_BATT(remaining_capacity, "%dmAh");
+	DUMP_BATT(full_capacity, "%dmAh");
+	ccprintf("\tis_present = %s\n", batt_pres[curr.batt.is_present]);
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
-	ccprintf("  force_idle = %d\n", state_machine_force_idle);
-	ccprintf("  manual_mode = %d\n", manual_mode);
-	ccprintf("  user_current_limit = %dmA\n", user_current_limit);
-	ccprintf("  battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
-	ccprintf("  debug output = %s\n", debugging ? "on" : "off");
+	ccprintf("force_idle = %d\n", state_machine_force_idle);
+	ccprintf("manual_mode = %d\n", manual_mode);
+	ccprintf("user_current_limit = %dmA\n", user_current_limit);
+	ccprintf("battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
+	ccprintf("debug output = %s\n", debugging ? "on" : "off");
 #undef DUMP
 }
 
