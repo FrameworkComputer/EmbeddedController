@@ -68,6 +68,7 @@ all: $(out)/$(PROJECT).bin utils
 
 buildall: $(foreach b, $(boards), proj-$(b)) runtests
 	@touch .tests-passed
+	@echo "$@ completed successfully!"
 
 proj-%:
 	@echo "======= building $*"; \
