@@ -112,18 +112,18 @@ int pd_request_voltage(uint32_t rdo)
 	return EC_SUCCESS;
 }
 
-int pd_set_power_supply_ready(void)
+int pd_set_power_supply_ready(int port)
 {
 	/* provide VBUS */
-	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
+	gpio_set_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN, 1);
 
 	return EC_SUCCESS; /* we are ready */
 }
 
-void pd_power_supply_reset(void)
+void pd_power_supply_reset(int port)
 {
 	/* Kill VBUS */
-	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
+	gpio_set_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN, 0);
 }
 
 static void pd_send_ec_int(void)

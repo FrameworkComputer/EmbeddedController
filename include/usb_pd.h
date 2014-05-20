@@ -177,23 +177,27 @@ int pd_request_voltage(uint32_t rdo);
 
 /**
  * Go back to the default/safe state of the power supply
+ *
+ * @param port USB-C port number
  */
-void pd_power_supply_reset(void);
+void pd_power_supply_reset(int port);
 
 /**
  * Enable the power supply output after the ready delay.
  *
+ * @param port USB-C port number
  * @return EC_SUCCESS if the power supply is ready, <0 else.
  */
-int pd_set_power_supply_ready(void);
+int pd_set_power_supply_ready(int port);
 
 /**
  * Ask the specified voltage from the PD source.
  *
  * It triggers a new negotiation sequence with the source.
+ * @param port USB-C port number
  * @param mv request voltage in millivolts.
  */
-void pd_request_source_voltage(int mv);
+void pd_request_source_voltage(int port, int mv);
 
 /*
  * Verify board specific health status : current, voltages...
@@ -212,13 +216,13 @@ int pd_power_negotiation_allowed(void);
 /*
  * Handle Vendor Defined Message with our vendor ID.
  *
- * @param ctxt     opaque context for PD communication.
+ * @param port     USB-C port number
  * @param cnt      number of data objects in the payload.
  * @param payload  payload data.
  * @param rpayload pointer to the data to send back.
  * @return if >0, number of VDOs to send back.
  */
-int pd_custom_vdm(void *ctxt, int cnt, uint32_t *payload, uint32_t **rpayload);
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];
@@ -250,134 +254,149 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity);
 /**
  * Prepare packet reading state machine.
  *
- * @return opaque context for other reading functions.
+ * @param port USB-C port number
  */
-void *pd_init_dequeue(void);
+void pd_init_dequeue(int port);
 
 /**
  * Prepare packet reading state machine.
  *
- * @param ctxt opaque context.
+ * @param port USB-C port number
  * @param off  current position in the packet buffer.
  * @param len  minimum size to read in bits.
  * @param val  the read bits.
  * @return new position in the packet buffer.
  */
-int pd_dequeue_bits(void *ctxt, int off, int len, uint32_t *val);
+int pd_dequeue_bits(int port, int off, int len, uint32_t *val);
 
 /**
  * Advance until the end of the preamble.
  *
- * @param ctxt opaque context.
+ * @param port USB-C port number
  * @return new position in the packet buffer.
  */
-int pd_find_preamble(void *ctxt);
+int pd_find_preamble(int port);
 
 /**
  * Write the preamble in the TX buffer.
  *
- * @param ctxt opaque context.
+ * @param port USB-C port number
  * @return new position in the packet buffer.
  */
-int pd_write_preamble(void *ctxt);
+int pd_write_preamble(int port);
 
 /**
  * Write one 10-period symbol in the TX packet.
  * corresponding to a quartet with 4b5b encoding
  * and Biphase Mark Coding.
  *
- * @param ctxt    opaque context.
+ * @param port USB-C port number
  * @param bit_off current position in the packet buffer.
  * @param val10    the 10-bit integer.
  * @return new position in the packet buffer.
  */
-int pd_write_sym(void *ctxt, int bit_off, uint32_t val10);
+int pd_write_sym(int port, int bit_off, uint32_t val10);
 
 
 /**
  * Ensure that we have an edge after EOP and we end up at level 0,
  * also fill the last byte.
  *
- * @param ctxt    opaque context.
+ * @param port USB-C port number
  * @param bit_off current position in the packet buffer.
  * @return new position in the packet buffer.
  */
-int pd_write_last_edge(void *ctxt, int bit_off);
+int pd_write_last_edge(int port, int bit_off);
 
 /**
  * Dump the current PD packet on the console for debug.
  *
- * @param ctxt opaque context.
+ * @param port USB-C port number
  * @param msg  context string.
  */
-void pd_dump_packet(void *ctxt, const char *msg);
+void pd_dump_packet(int port, const char *msg);
 
 /**
  * Change the TX data clock frequency.
  *
+ * @param port USB-C port number
  * @param freq frequency in hertz.
  */
-void pd_set_clock(int freq);
+void pd_set_clock(int port, int freq);
 
 /* TX/RX callbacks */
 
 /**
  * Start sending over the wire the prepared packet.
  *
- * @param ctxt    opaque context.
+ * @param port USB-C port number
  * @param polarity plug polarity (0=CC1, 1=CC2).
  * @param bit_len size of the packet in bits.
  */
-void pd_start_tx(void *ctxt, int polarity, int bit_len);
+void pd_start_tx(int port, int polarity, int bit_len);
 
 /**
  * Set PD TX DMA to use circular mode. Call this before pd_start_tx() to
  * continually loop over the transmit buffer given in pd_start_tx().
+ *
+ * @param port USB-C port number
  */
-void pd_tx_set_circular_mode(void);
+void pd_tx_set_circular_mode(int port);
 
 /**
  * Call when we are done sending a packet.
  *
+ * @param port USB-C port number
  * @param polarity plug polarity (0=CC1, 1=CC2).
  */
-void pd_tx_done(int polarity);
+void pd_tx_done(int port, int polarity);
 
 /**
  * Check whether the PD reception is started.
  *
+ * @param port USB-C port number
  * @return true if the reception is on-going.
  */
-int pd_rx_started(void);
+int pd_rx_started(int port);
 
 /**
  * Suspend the PD task.
+ * @param port USB-C port number
  * @param enable pass 0 to resume, anything else to suspend
  */
-void pd_set_suspend(int enable);
+void pd_set_suspend(int port, int enable);
 
 /* Callback when the hardware has detected an incoming packet */
-void pd_rx_event(void);
+void pd_rx_event(int port);
 /* Start sampling the CC line for reception */
-void pd_rx_start(void);
+void pd_rx_start(int port);
 /* Call when we are done reading a packet */
-void pd_rx_complete(void);
+void pd_rx_complete(int port);
 
 /* restart listening to the CC wire */
-void pd_rx_enable_monitoring(void);
+void pd_rx_enable_monitoring(int port);
 /* stop listening to the CC wire during transmissions */
-void pd_rx_disable_monitoring(void);
+void pd_rx_disable_monitoring(int port);
 
 /**
  * Deinitialize the hardware used for PD.
+ *
+ * @param port USB-C port number
  */
-void pd_hw_release(void);
+void pd_hw_release(int port);
 
 /**
  * Initialize the hardware used for PD RX/TX.
  *
- * @return opaque context for other functions.
+ * @param port USB-C port number
  */
-void *pd_hw_init(void);
+void pd_hw_init(int port);
+
+/**
+ * Get port polarity.
+ *
+ * @param port USB-C port number
+ */
+int pd_get_polarity(int port);
 
 #endif  /* __USB_PD_H */

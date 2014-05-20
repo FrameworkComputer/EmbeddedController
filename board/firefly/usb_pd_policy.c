@@ -75,13 +75,13 @@ int pd_request_voltage(uint32_t rdo)
 	return EC_ERROR_INVAL;
 }
 
-int pd_set_power_supply_ready(void)
+int pd_set_power_supply_ready(int port)
 {
 	/* Never acting as a source */
 	return EC_ERROR_INVAL;
 }
 
-void pd_power_supply_reset(void)
+void pd_power_supply_reset(int port)
 {
 }
 

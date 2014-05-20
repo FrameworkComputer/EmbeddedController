@@ -8,33 +8,59 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
+/* Port and task configuration */
+#define PD_PORT_COUNT 1
+#define PORT_TO_TASK_ID(port) TASK_ID_PD
+#define TASK_ID_TO_PORT(id)   0
+
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX 17
-#define TIM_CLOCK_PD_RX 1
+#define TIM_CLOCK_PD_TX_C0 17
+#define TIM_CLOCK_PD_RX_C0 1
+
+#define TIM_CLOCK_PD_TX(p) TIM_CLOCK_PD_TX_C0
+#define TIM_CLOCK_PD_RX(p) TIM_CLOCK_PD_RX_C0
+
+/* Timer channel */
+#define TIM_RX_CCR_C0 1
+
+/* RX timer capture/compare register */
+#define TIM_CCR_C0 (&STM32_TIM_CCRx(TIM_CLOCK_PD_RX_C0, TIM_RX_CCR_C0))
+#define TIM_RX_CCR_REG(p) TIM_CCR_C0
+
+/* TX and RX timer register */
+#define TIM_REG_TX_C0 (STM32_TIM_BASE(TIM_CLOCK_PD_TX_C0))
+#define TIM_REG_RX_C0 (STM32_TIM_BASE(TIM_CLOCK_PD_RX_C0))
+#define TIM_REG_TX(p) TIM_REG_TX_C0
+#define TIM_REG_RX(p) TIM_REG_RX_C0
 
 /* use the hardware accelerator for CRC */
 #define CONFIG_HW_CRC
 
-/* TX is using SPI2 on PB3/PB4 or PA6 */
-#define SPI_REGS STM32_SPI1_REGS
-#define DMAC_SPI_TX STM32_DMAC_CH3
+/* TX is using SPI1 on PB3/PB4 or PA6 */
+#define SPI_REGS(p) STM32_SPI1_REGS
 
-static inline void spi_enable_clock(void)
+static inline void spi_enable_clock(int port)
 {
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 }
 
+#define DMAC_SPI_TX(p) STM32_DMAC_CH3
+
 /* RX is using COMP1 triggering TIM1 CH1 */
-#define DMAC_TIM_RX STM32_DMAC_CH2
-#define TIM_CCR_IDX 1
+#define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
+#define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM1_IC1
+
+#define TIM_CCR_IDX(p) TIM_RX_CCR_C0
 #define TIM_CCR_CS  1
-#define EXTI_COMP_MASK ((1 << 21) | (1 << 22))
+#define EXTI_COMP_MASK(p) ((1 << 21) | (1 << 22))
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
 
+#define DMAC_TIM_RX(p) STM32_DMAC_CH2
+
 /* the pins used for communication need to be hi-speed */
-static inline void pd_set_pins_speed(void)
+static inline void pd_set_pins_speed(int port)
 {
 	/* 40 MHz pin speed on SPI1 PA6/7 */
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0x0000F000;
@@ -45,7 +71,7 @@ static inline void pd_set_pins_speed(void)
 }
 
 /* Reset SPI peripheral used for TX */
-static inline void pd_tx_spi_reset(void)
+static inline void pd_tx_spi_reset(int port)
 {
 	/* Reset SPI1 */
 	STM32_RCC_APB2RSTR |= (1 << 12);
@@ -53,7 +79,7 @@ static inline void pd_tx_spi_reset(void)
 }
 
 /* Drive the CC line from the TX block */
-static inline void pd_tx_enable(int polarity)
+static inline void pd_tx_enable(int port, int polarity)
 {
 	/* put SPI function on TX pin */
 	if (polarity) /* PB4 is SPI1 MISO */
@@ -66,7 +92,7 @@ static inline void pd_tx_enable(int polarity)
 }
 
 /* Put the TX driver in Hi-Z state */
-static inline void pd_tx_disable(int polarity)
+static inline void pd_tx_disable(int port, int polarity)
 {
 	/* put SPI TX in Hi-Z */
 	if (polarity)
@@ -78,7 +104,7 @@ static inline void pd_tx_disable(int polarity)
 }
 
 /* we know the plug polarity, do the right configuration */
-static inline void pd_select_polarity(int polarity)
+static inline void pd_select_polarity(int port, int polarity)
 {
 	/* use the right comparator */
 	STM32_COMP_CSR =
@@ -93,11 +119,11 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 }
 
-static inline void pd_set_host_mode(int enable)
+static inline void pd_set_host_mode(int port, int enable)
 {
 }
 
-static inline int pd_adc_read(int cc)
+static inline int pd_adc_read(int port, int cc)
 {
 	if (cc == 0)
 		return adc_read_channel(ADC_CH_CC1_PD);
@@ -105,7 +131,7 @@ static inline int pd_adc_read(int cc)
 		return adc_read_channel(ADC_CH_CC2_PD);
 }
 
-static inline int pd_snk_is_vbus_provided(void)
+static inline int pd_snk_is_vbus_provided(int port)
 {
 	/* VBUS_WAKE is broken (not detecting 5V), use the ADC instead */
 	return adc_read_channel(ADC_CH_VBUS_SENSE) > 4000;

@@ -21,8 +21,6 @@ static uint32_t * const rw_rst =
 /* External interrupt EXTINT7 for external comparator on PA7 */
 void pd_rx_interrupt(void)
 {
-	/* clear the interrupt */
-	STM32_EXTI_PR = STM32_EXTI_PR;
 	/* trigger reception handling */
 	pd_rx_handler();
 }

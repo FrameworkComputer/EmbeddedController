@@ -37,9 +37,6 @@
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
 
-/* Stub value */
-#define TASK_ID_PD 0
-
 /* debug printf flash footprinf is about 1400 bytes */
 #define CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE

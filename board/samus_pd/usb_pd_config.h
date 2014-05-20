@@ -8,88 +8,173 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
+/* Port and task configuration */
+#define PD_PORT_COUNT 2
+#define PORT_TO_TASK_ID(port) ((port) ? TASK_ID_PD_C1 : TASK_ID_PD_C0)
+#define TASK_ID_TO_PORT(id)   ((id) == TASK_ID_PD_C0 ? 0 : 1)
+
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX 14
-#define TIM_CLOCK_PD_RX 1
+#define TIM_CLOCK_PD_TX_C0 14
+#define TIM_CLOCK_PD_RX_C0 1
+#define TIM_CLOCK_PD_TX_C1 17
+#define TIM_CLOCK_PD_RX_C1 3
+
+#define TIM_CLOCK_PD_TX(p) ((p) ? TIM_CLOCK_PD_TX_C1 : TIM_CLOCK_PD_TX_C0)
+#define TIM_CLOCK_PD_RX(p) ((p) ? TIM_CLOCK_PD_RX_C1 : TIM_CLOCK_PD_RX_C0)
+
+/* Timer channel */
+#define TIM_RX_CCR_C0 1
+#define TIM_RX_CCR_C1 1
+
+/* RX timer capture/compare register */
+#define TIM_CCR_C0 (&STM32_TIM_CCRx(TIM_CLOCK_PD_RX_C0, TIM_RX_CCR_C0))
+#define TIM_CCR_C1 (&STM32_TIM_CCRx(TIM_CLOCK_PD_RX_C1, TIM_RX_CCR_C1))
+#define TIM_RX_CCR_REG(p) ((p) ? TIM_CCR_C1 : TIM_CCR_C0)
+
+/* TX and RX timer register */
+#define TIM_REG_TX_C0 (STM32_TIM_BASE(TIM_CLOCK_PD_TX_C0))
+#define TIM_REG_RX_C0 (STM32_TIM_BASE(TIM_CLOCK_PD_RX_C0))
+#define TIM_REG_TX_C1 (STM32_TIM_BASE(TIM_CLOCK_PD_TX_C1))
+#define TIM_REG_RX_C1 (STM32_TIM_BASE(TIM_CLOCK_PD_RX_C1))
+#define TIM_REG_TX(p) ((p) ? TIM_REG_TX_C1 : TIM_REG_TX_C0)
+#define TIM_REG_RX(p) ((p) ? TIM_REG_RX_C1 : TIM_REG_RX_C0)
 
 /* use the hardware accelerator for CRC */
 #define CONFIG_HW_CRC
 
-/* TX is using SPI1 on PB3-5 */
-#define SPI_REGS STM32_SPI1_REGS
-#define DMAC_SPI_TX STM32_DMAC_CH3
-
-static inline void spi_enable_clock(void)
+/* TX uses SPI1 on PB3-5 for port C0, SPI2 on PB 13-15 for port C1 */
+#define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
+static inline void spi_enable_clock(int port)
 {
-	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+	if (port == 0)
+		STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+	else
+		STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
 }
 
-/* RX is using COMP1 triggering TIM1 CH1 */
-#define DMAC_TIM_RX STM32_DMAC_CH2
-#define TIM_CCR_IDX 1
+/* DMA for transmit uses DMA CH3 for C0 and DMA_CH7 for C1 */
+#define DMAC_SPI_TX(p) ((p) ? STM32_DMAC_CH7 : STM32_DMAC_CH3)
+
+/* RX uses COMP1 and TIM1 CH1 on port C0 and COMP2 and TIM3_CH1 for port C1*/
+#define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
+#define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM3_IC1
+
+#define TIM_CCR_IDX(p) ((p) ? TIM_RX_CCR_C1 : TIM_RX_CCR_C0)
 #define TIM_CCR_CS  1
-#define EXTI_COMP_MASK (1 << 21)
+#define EXTI_COMP_MASK(p) ((p) ? (1<<22) : (1 << 21))
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
 
+/* DMA for receive uses DMA_CH2 for C0 and DMA_CH6 for C1 */
+#define DMAC_TIM_RX(p) ((p) ? STM32_DMAC_CH6 : STM32_DMAC_CH2)
+
 /* the pins used for communication need to be hi-speed */
-static inline void pd_set_pins_speed(void)
+static inline void pd_set_pins_speed(int port)
 {
-	/* 40 MHz pin speed on SPI PB3/4/5 */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
-	/* 40 MHz pin speed on TIM14_CH1 (PB1) */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
+	if (port == 0) {
+		/* 40 MHz pin speed on SPI PB3/4/5 */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
+		/* 40 MHz pin speed on TIM14_CH1 (PB1) */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
+	} else {
+		/* 40 MHz pin speed on SPI PB13/14/15 */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0xFC000000;
+		/* 40 MHz pin speed on TIM17_CH1 (PE1) */
+		STM32_GPIO_OSPEEDR(GPIO_E) |= 0x0000000C;
+	}
 }
 
 /* Reset SPI peripheral used for TX */
-static inline void pd_tx_spi_reset(void)
+static inline void pd_tx_spi_reset(int port)
 {
-	/* Reset SPI1 */
-	STM32_RCC_APB2RSTR |= (1 << 12);
-	STM32_RCC_APB2RSTR &= ~(1 << 12);
+	if (port == 0) {
+		/* Reset SPI1 */
+		STM32_RCC_APB2RSTR |= (1 << 12);
+		STM32_RCC_APB2RSTR &= ~(1 << 12);
+	} else {
+		/* Reset SPI2 */
+		STM32_RCC_APB1RSTR |= (1 << 14);
+		STM32_RCC_APB1RSTR &= ~(1 << 14);
+	}
 }
 
 /* Drive the CC line from the TX block */
-static inline void pd_tx_enable(int polarity)
+static inline void pd_tx_enable(int port, int polarity)
 {
-	/* put SPI function on TX pin */
-	if (polarity) /* PE14 is SPI1 MISO */
-		gpio_set_alternate_function(GPIO_E, 0x4000, 1);
-	else /* PB4 is SPI1 MISO */
-		gpio_set_alternate_function(GPIO_B, 0x0010, 0);
+	if (port == 0) {
+		/* put SPI function on TX pin */
+		if (polarity) /* PE14 is SPI1 MISO */
+			gpio_set_alternate_function(GPIO_E, 0x4000, 1);
+		else /* PB4 is SPI1 MISO */
+			gpio_set_alternate_function(GPIO_B, 0x0010, 0);
 
-	/* set the low level reference */
-	gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
+		/* set the low level reference */
+		gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
 					GPIO_USB_C0_CC1_TX_EN, 1);
+	} else {
+		/* put SPI function on TX pin */
+		if (polarity) /* PD3 is SPI2 MISO */
+			gpio_set_alternate_function(GPIO_D, 0x0008, 1);
+		else /* PB14 is SPI2 MISO */
+			gpio_set_alternate_function(GPIO_B, 0x4000, 0);
+
+		/* set the low level reference */
+		gpio_set_level(polarity ? GPIO_USB_C1_CC2_TX_EN :
+					GPIO_USB_C1_CC1_TX_EN, 1);
+	}
 }
 
 /* Put the TX driver in Hi-Z state */
-static inline void pd_tx_disable(int polarity)
+static inline void pd_tx_disable(int port, int polarity)
 {
-	/* output low on SPI TX to disable the FET */
-	if (polarity) /* PE14 is SPI1 MISO */
-		STM32_GPIO_MODER(GPIO_E) = (STM32_GPIO_MODER(GPIO_E)
-						& ~(3 << (2*14)))
-						|  (1 << (2*14));
-	else /* PB4 is SPI1 MISO */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-						& ~(3 << (2*4)))
-						|  (1 << (2*4));
+	if (port == 0) {
+		/* output low on SPI TX to disable the FET */
+		if (polarity) /* PE14 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_E) = (STM32_GPIO_MODER(GPIO_E)
+						   & ~(3 << (2*14)))
+						   |  (1 << (2*14));
+		else /* PB4 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
+						   & ~(3 << (2*4)))
+						   |  (1 << (2*4));
 
-	/* put the low level reference in Hi-Z */
-	gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
+		/* put the low level reference in Hi-Z */
+		gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
 					GPIO_USB_C0_CC1_TX_EN, 0);
+	} else {
+		/* output low on SPI TX to disable the FET */
+		if (polarity) /* PD3 is SPI2 MISO */
+			STM32_GPIO_MODER(GPIO_D) = (STM32_GPIO_MODER(GPIO_D)
+						   & ~(3 << (2*3)))
+						   |  (1 << (2*3));
+		else /* PB14 is SPI2 MISO */
+			STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
+						   & ~(3 << (2*14)))
+						   |  (1 << (2*14));
+
+		/* put the low level reference in Hi-Z */
+		gpio_set_level(polarity ? GPIO_USB_C1_CC2_TX_EN :
+					GPIO_USB_C1_CC1_TX_EN, 0);
+	}
 }
 
 /* we know the plug polarity, do the right configuration */
-static inline void pd_select_polarity(int polarity)
+static inline void pd_select_polarity(int port, int polarity)
 {
-	/* use the right comparator non inverted input for COMP1 */
-	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
-		| STM32_COMP_CMP1EN
-		| (polarity ? STM32_COMP_CMP1INSEL_INM4
-			    : STM32_COMP_CMP1INSEL_INM6);
+	if (port == 0) {
+		/* use the right comparator non inverted input for COMP1 */
+		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
+			| STM32_COMP_CMP1EN
+			| (polarity ? STM32_COMP_CMP1INSEL_INM4
+					: STM32_COMP_CMP1INSEL_INM6);
+	} else {
+		/* use the right comparator non inverted input for COMP2 */
+		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP2INSEL_MASK)
+			| STM32_COMP_CMP2EN
+			| (polarity ? STM32_COMP_CMP2INSEL_INM5
+					: STM32_COMP_CMP2INSEL_INM6);
+	}
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */
@@ -98,37 +183,55 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 }
 
-static inline void pd_set_host_mode(int enable)
+static inline void pd_set_host_mode(int port, int enable)
 {
-	if (enable) {
-		/* We never charging in power source mode */
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
-		/* High-Z is used for host mode. */
-		gpio_set_level(GPIO_USB_C0_CC1_ODL, 1);
-		gpio_set_level(GPIO_USB_C0_CC2_ODL, 1);
+	if (port == 0) {
+		if (enable) {
+			/* We never charging in power source mode */
+			gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+			/* High-Z is used for host mode. */
+			gpio_set_level(GPIO_USB_C0_CC1_ODL, 1);
+			gpio_set_level(GPIO_USB_C0_CC2_ODL, 1);
+		} else {
+			/* Kill VBUS power supply */
+			gpio_set_level(GPIO_USB_C0_5V_EN, 0);
+			/* Pull low for device mode. */
+			gpio_set_level(GPIO_USB_C0_CC1_ODL, 0);
+			gpio_set_level(GPIO_USB_C0_CC2_ODL, 0);
+			/* Enable the charging path*/
+			gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+		}
 	} else {
-		/* Kill VBUS power supply */
-		gpio_set_level(GPIO_USB_C0_5V_EN, 0);
-		/* Pull low for device mode. */
-		gpio_set_level(GPIO_USB_C0_CC1_ODL, 0);
-		gpio_set_level(GPIO_USB_C0_CC2_ODL, 0);
-		/* Enable the charging path*/
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+		if (enable) {
+			/* We never charging in power source mode */
+			gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
+			/* High-Z is used for host mode. */
+			gpio_set_level(GPIO_USB_C1_CC1_ODL, 1);
+			gpio_set_level(GPIO_USB_C1_CC2_ODL, 1);
+		} else {
+			/* Kill VBUS power supply */
+			gpio_set_level(GPIO_USB_C1_5V_EN, 0);
+			/* Pull low for device mode. */
+			gpio_set_level(GPIO_USB_C1_CC1_ODL, 0);
+			gpio_set_level(GPIO_USB_C1_CC2_ODL, 0);
+			/* Enable the charging path*/
+			gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
+		}
 	}
-
 }
 
-static inline int pd_adc_read(int cc)
+static inline int pd_adc_read(int port, int cc)
 {
-	if (cc == 0)
-		return adc_read_channel(ADC_C0_CC1_PD);
+	if (port == 0)
+		return adc_read_channel(cc ? ADC_C0_CC2_PD : ADC_C0_CC1_PD);
 	else
-		return adc_read_channel(ADC_C0_CC2_PD);
+		return adc_read_channel(cc ? ADC_C1_CC2_PD : ADC_C1_CC1_PD);
 }
 
-static inline int pd_snk_is_vbus_provided(void)
+static inline int pd_snk_is_vbus_provided(int port)
 {
-	return gpio_get_level(GPIO_USB_C0_VBUS_WAKE);
+	return gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE :
+				     GPIO_USB_C0_VBUS_WAKE);
 }
 
 /* Standard-current DFP : no-connect voltage is 1.55V */

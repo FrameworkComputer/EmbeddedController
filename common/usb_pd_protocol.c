@@ -192,18 +192,7 @@ static const uint8_t dec4b5b[] = {
 #define PD_ROLE_DEFAULT PD_ROLE_SOURCE
 #endif
 
-/* current port role */
-static uint8_t pd_role = PD_ROLE_DEFAULT;
-/* 3-bit rolling message ID counter */
-static uint8_t pd_message_id;
-/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
-uint8_t pd_polarity;
-
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-static uint8_t pd_dual_role_toggle_on;
-#endif
-
-static enum {
+enum pd_states {
 	PD_STATE_DISABLED,
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	PD_STATE_SUSPENDED,
@@ -223,80 +212,107 @@ static enum {
 
 	PD_STATE_HARD_RESET,
 	PD_STATE_BIST,
-} pd_task_state = PD_DEFAULT_STATE;
+};
+
+static struct pd_protocol {
+	/* current port role */
+	uint8_t role;
+	/* 3-bit rolling message ID counter */
+	uint8_t msg_id;
+	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
+	uint8_t polarity;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* Port dual role toggling flag */
+	uint8_t dual_role_toggle;
+#endif
+	/* PD state for port */
+	enum pd_states task_state;
+} pd[PD_PORT_COUNT];
+
+struct mutex pd_crc_lock;
 
 /* increment message ID counter */
-static void inc_id(void)
+static void inc_id(int port)
 {
-	pd_message_id = (pd_message_id + 1) & PD_MESSAGE_ID_COUNT;
+	pd[port].msg_id = (pd[port].msg_id + 1) & PD_MESSAGE_ID_COUNT;
 }
 
-static inline int encode_short(void *ctxt, int off, uint16_t val16)
+static inline int encode_short(int port, int off, uint16_t val16)
 {
-	off = pd_write_sym(ctxt, off, bmc4b5b[(val16 >> 0) & 0xF]);
-	off = pd_write_sym(ctxt, off, bmc4b5b[(val16 >> 4) & 0xF]);
-	off = pd_write_sym(ctxt, off, bmc4b5b[(val16 >> 8) & 0xF]);
-	return pd_write_sym(ctxt, off, bmc4b5b[(val16 >> 12) & 0xF]);
+	off = pd_write_sym(port, off, bmc4b5b[(val16 >> 0) & 0xF]);
+	off = pd_write_sym(port, off, bmc4b5b[(val16 >> 4) & 0xF]);
+	off = pd_write_sym(port, off, bmc4b5b[(val16 >> 8) & 0xF]);
+	return pd_write_sym(port, off, bmc4b5b[(val16 >> 12) & 0xF]);
 }
 
-static inline int encode_word(void *ctxt, int off, uint32_t val32)
+static inline int encode_word(int port, int off, uint32_t val32)
 {
-	off = encode_short(ctxt, off, (val32 >> 0) & 0xFFFF);
-	return encode_short(ctxt, off, (val32 >> 16) & 0xFFFF);
+	off = encode_short(port, off, (val32 >> 0) & 0xFFFF);
+	return encode_short(port, off, (val32 >> 16) & 0xFFFF);
 }
 
 /* prepare a 4b/5b-encoded PD message to send */
-static int prepare_message(void *ctxt, uint16_t header, uint8_t cnt,
+static int prepare_message(int port, uint16_t header, uint8_t cnt,
 			   const uint32_t *data)
 {
 	int off, i;
-	crc32_init();
 	/* 64-bit preamble */
-	off = pd_write_preamble(ctxt);
+	off = pd_write_preamble(port);
 	/* Start Of Packet: 3x Sync-1 + 1x Sync-2 */
-	off = pd_write_sym(ctxt, off, BMC(PD_SYNC1));
-	off = pd_write_sym(ctxt, off, BMC(PD_SYNC1));
-	off = pd_write_sym(ctxt, off, BMC(PD_SYNC1));
-	off = pd_write_sym(ctxt, off, BMC(PD_SYNC2));
+	off = pd_write_sym(port, off, BMC(PD_SYNC1));
+	off = pd_write_sym(port, off, BMC(PD_SYNC1));
+	off = pd_write_sym(port, off, BMC(PD_SYNC1));
+	off = pd_write_sym(port, off, BMC(PD_SYNC2));
 	/* header */
-	off = encode_short(ctxt, off, header);
+	off = encode_short(port, off, header);
+
+#ifdef CONFIG_COMMON_RUNTIME
+	mutex_lock(&pd_crc_lock);
+#endif
+
+	crc32_init();
 	crc32_hash16(header);
 	/* data payload */
 	for (i = 0; i < cnt; i++) {
-		off = encode_word(ctxt, off, data[i]);
+		off = encode_word(port, off, data[i]);
 		crc32_hash32(data[i]);
 	}
 	/* CRC */
-	off = encode_word(ctxt, off, crc32_result());
+	off = encode_word(port, off, crc32_result());
+
+#ifdef CONFIG_COMMON_RUNTIME
+	mutex_unlock(&pd_crc_lock);
+#endif
+
 	/* End Of Packet */
-	off = pd_write_sym(ctxt, off, BMC(PD_EOP));
+	off = pd_write_sym(port, off, BMC(PD_EOP));
 	/* Ensure that we have a final edge */
-	return pd_write_last_edge(ctxt, off);
+	return pd_write_last_edge(port, off);
 }
 
-static int analyze_rx(uint32_t *payload);
-static void analyze_rx_bist(void);
+static int analyze_rx(int port, uint32_t *payload);
+static void analyze_rx_bist(int port);
 
-static void send_hard_reset(void *ctxt)
+static void send_hard_reset(int port)
 {
 	int off;
 
 	/* 64-bit preamble */
-	off = pd_write_preamble(ctxt);
+	off = pd_write_preamble(port);
 	/* Hard-Reset: 3x RST-1 + 1x RST-2 */
-	off = pd_write_sym(ctxt, off, BMC(PD_RST1));
-	off = pd_write_sym(ctxt, off, BMC(PD_RST1));
-	off = pd_write_sym(ctxt, off, BMC(PD_RST1));
-	off = pd_write_sym(ctxt, off, BMC(PD_RST2));
+	off = pd_write_sym(port, off, BMC(PD_RST1));
+	off = pd_write_sym(port, off, BMC(PD_RST1));
+	off = pd_write_sym(port, off, BMC(PD_RST1));
+	off = pd_write_sym(port, off, BMC(PD_RST2));
 	/* Ensure that we have a final edge */
-	off = pd_write_last_edge(ctxt, off);
+	off = pd_write_last_edge(port, off);
 	/* Transmit the packet */
-	pd_start_tx(ctxt, pd_polarity, off);
-	pd_tx_done(pd_polarity);
+	pd_start_tx(port, pd[port].polarity, off);
+	pd_tx_done(port, pd[port].polarity);
 }
 
-static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
-				 const uint32_t *data)
+static int send_validate_message(int port, uint16_t header,
+				 uint8_t cnt, const uint32_t *data)
 {
 	int r;
 	static uint32_t payload[7];
@@ -306,23 +322,23 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 		int bit_len;
 		uint16_t head;
 		/* write the encoded packet in the transmission buffer */
-		bit_len = prepare_message(ctxt, header, cnt, data);
+		bit_len = prepare_message(port, header, cnt, data);
 		/* Transmit the packet */
-		pd_start_tx(ctxt, pd_polarity, bit_len);
-		pd_tx_done(pd_polarity);
+		pd_start_tx(port, pd[port].polarity, bit_len);
+		pd_tx_done(port, pd[port].polarity);
 		/* starting waiting for GoodCrc */
-		pd_rx_start();
+		pd_rx_start(port);
 		/* read the incoming packet if any */
-		head = analyze_rx(payload);
-		pd_rx_complete();
+		head = analyze_rx(port, payload);
+		pd_rx_complete(port);
 		if (head > 0) { /* we got a good packet, analyze it */
 			int type = PD_HEADER_TYPE(head);
 			int nb = PD_HEADER_CNT(head);
 			uint8_t id = PD_HEADER_ID(head);
 			if (type == PD_CTRL_GOOD_CRC && nb == 0 &&
-			   id == pd_message_id) {
+			   id == pd[port].msg_id) {
 				/* got the GoodCRC we were expecting */
-				inc_id();
+				inc_id(port);
 				/* do not catch last edges as a new packet */
 				udelay(20);
 				return bit_len;
@@ -344,34 +360,35 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 	return -1;
 }
 
-static int send_control(void *ctxt, int type)
+static int send_control(int port, int type)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(type, pd_role, pd_message_id, 0);
+	uint16_t header = PD_HEADER(type, pd[port].role,
+			pd[port].msg_id, 0);
 
-	bit_len = send_validate_message(ctxt, header, 0, NULL);
+	bit_len = send_validate_message(port, header, 0, NULL);
 
 	CPRINTF("CTRL[%d]>%d\n", type, bit_len);
 
 	return bit_len;
 }
 
-static void send_goodcrc(void *ctxt, int id)
+static void send_goodcrc(int port, int id)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd_role, id, 0);
-	int bit_len = prepare_message(ctxt, header, 0, NULL);
+	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd[port].role, id, 0);
+	int bit_len = prepare_message(port, header, 0, NULL);
 
-	pd_start_tx(ctxt, pd_polarity, bit_len);
-	pd_tx_done(pd_polarity);
+	pd_start_tx(port, pd[port].polarity, bit_len);
+	pd_tx_done(port, pd[port].polarity);
 }
 
-static int send_source_cap(void *ctxt)
+static int send_source_cap(int port)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd_role, pd_message_id,
-				    pd_src_pdo_cnt);
+	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].role,
+			pd[port].msg_id, pd_src_pdo_cnt);
 
-	bit_len = send_validate_message(ctxt, header, pd_src_pdo_cnt,
+	bit_len = send_validate_message(port, header, pd_src_pdo_cnt,
 					pd_src_pdo);
 	CPRINTF("srcCAP>%d\n", bit_len);
 
@@ -379,76 +396,78 @@ static int send_source_cap(void *ctxt)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-static void send_sink_cap(void *ctxt)
+static void send_sink_cap(int port)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd_role, pd_message_id,
-				    pd_snk_pdo_cnt);
+	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].role,
+			pd[port].msg_id, pd_snk_pdo_cnt);
 
-	bit_len = send_validate_message(ctxt, header, pd_snk_pdo_cnt,
+	bit_len = send_validate_message(port, header, pd_snk_pdo_cnt,
 					pd_snk_pdo);
 	CPRINTF("snkCAP>%d\n", bit_len);
 }
 
-static int send_request(void *ctxt, uint32_t rdo)
+static int send_request(int port, uint32_t rdo)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd_role, pd_message_id, 1);
+	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].role,
+			pd[port].msg_id, 1);
 
-	bit_len = send_validate_message(ctxt, header, 1, &rdo);
+	bit_len = send_validate_message(port, header, 1, &rdo);
 	CPRINTF("REQ%d>\n", bit_len);
 
 	return bit_len;
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
-static int send_bist_cmd(void *ctxt)
+static int send_bist_cmd(int port)
 {
 	/* currently only support sending bist carrier 2 */
 	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_BIST, pd_role, pd_message_id, 1);
+	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].role,
+			pd[port].msg_id, 1);
 
-	bit_len = send_validate_message(ctxt, header, 1, &bdo);
+	bit_len = send_validate_message(port, header, 1, &bdo);
 	CPRINTF("BIST>%d\n", bit_len);
 
 	return bit_len;
 }
 
-static void bist_mode_2_tx(void *ctxt)
+static void bist_mode_2_tx(int port)
 {
 	int bit;
 
-	CPRINTF("BIST carrier 2 - sending\n");
+	CPRINTF("BIST carrier 2 - sending on port %d\n", port);
 
 	/*
 	 * build context buffer with 5 bytes, where the data is
 	 * alternating 1's and 0's.
 	 */
-	bit = pd_write_sym(ctxt, 0,   BMC(0x15));
-	bit = pd_write_sym(ctxt, bit, BMC(0x0a));
-	bit = pd_write_sym(ctxt, bit, BMC(0x15));
-	bit = pd_write_sym(ctxt, bit, BMC(0x0a));
+	bit = pd_write_sym(port, 0,   BMC(0x15));
+	bit = pd_write_sym(port, bit, BMC(0x0a));
+	bit = pd_write_sym(port, bit, BMC(0x15));
+	bit = pd_write_sym(port, bit, BMC(0x0a));
 
 	/* start a circular DMA transfer (will never end) */
-	pd_tx_set_circular_mode();
-	pd_start_tx(ctxt, pd_polarity, bit);
+	pd_tx_set_circular_mode(port);
+	pd_start_tx(port, pd[port].polarity, bit);
 
 	/* do not let pd task state machine run anymore */
 	while (1)
 		task_wait_event(-1);
 }
 
-static void bist_mode_2_rx(void)
+static void bist_mode_2_rx(int port)
 {
 	/* monitor for incoming packet */
-	pd_rx_enable_monitoring();
+	pd_rx_enable_monitoring(port);
 
 	/* loop until we start receiving data */
 	while (1) {
 		task_wait_event(500*MSEC);
 		/* incoming packet ? */
-		if (pd_rx_started())
+		if (pd_rx_started(port))
 			break;
 	}
 
@@ -458,14 +477,14 @@ static void bist_mode_2_rx(void)
 	 * analyze a chunk of data every 250ms.
 	 */
 	while (1) {
-		analyze_rx_bist();
-		pd_rx_complete();
+		analyze_rx_bist(port);
+		pd_rx_complete(port);
 		msleep(250);
-		pd_rx_enable_monitoring();
+		pd_rx_enable_monitoring(port);
 	}
 }
 
-static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
+static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 {
 	uint16_t vid = PD_VDO_VID(payload[0]);
 #ifdef CONFIG_USB_PD_CUSTOM_VDM
@@ -473,11 +492,12 @@ static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
 	uint32_t *rdata;
 
 	if (vid == USB_VID_GOOGLE) {
-		rlen = pd_custom_vdm(ctxt, cnt, payload, &rdata);
+		rlen = pd_custom_vdm(port, cnt, payload, &rdata);
 		if (rlen > 0) {
 			uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF,
-						pd_role, pd_message_id, rlen);
-			send_validate_message(ctxt, header, rlen, rdata);
+						pd[port].role, pd[port].msg_id,
+						rlen);
+			send_validate_message(port, header, rlen, rdata);
 		}
 		return;
 	}
@@ -486,7 +506,8 @@ static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
 		vid, payload[0] & 0xFFFF);
 }
 
-static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
+static void handle_data_request(int port, uint16_t head,
+		uint32_t *payload)
 {
 	int type = PD_HEADER_TYPE(head);
 	int cnt = PD_HEADER_CNT(head);
@@ -494,23 +515,25 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 	switch (type) {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_DATA_SOURCE_CAP:
-		if ((pd_task_state == PD_STATE_SNK_DISCOVERY)
-			|| (pd_task_state == PD_STATE_SNK_TRANSITION)) {
+		if ((pd[port].task_state == PD_STATE_SNK_DISCOVERY)
+			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)) {
 			uint32_t rdo;
 			int res;
 			/* we were waiting for them, let's process them */
 			res = pd_choose_voltage(cnt, payload, &rdo);
 			if (res >= 0) {
-				res = send_request(ctxt, rdo);
+				res = send_request(port, rdo);
 				if (res >= 0)
-					pd_task_state = PD_STATE_SNK_REQUESTED;
+					pd[port].task_state =
+							PD_STATE_SNK_REQUESTED;
 				else
 					/*
 					 * for now: ignore failure here,
 					 * we will retry ...
 					 * TODO(crosbug.com/p/28332)
 					 */
-					pd_task_state = PD_STATE_SNK_REQUESTED;
+					pd[port].task_state =
+							PD_STATE_SNK_REQUESTED;
 			}
 			/*
 			 * TODO(crosbug.com/p/28332): if pd_choose_voltage
@@ -520,33 +543,34 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_DATA_REQUEST:
-		if ((pd_role == PD_ROLE_SOURCE) && (cnt == 1))
+		if ((pd[port].role == PD_ROLE_SOURCE) && (cnt == 1))
 			if (!pd_request_voltage(payload[0])) {
-				send_control(ctxt, PD_CTRL_ACCEPT);
-				pd_task_state = PD_STATE_SRC_ACCEPTED;
+				send_control(port, PD_CTRL_ACCEPT);
+				pd[port].task_state = PD_STATE_SRC_ACCEPTED;
 				return;
 			}
 		/* the message was incorrect or cannot be satisfied */
-		send_control(ctxt, PD_CTRL_REJECT);
+		send_control(port, PD_CTRL_REJECT);
 		break;
 	case PD_DATA_BIST:
 		/* currently only support sending bist carrier mode 2 */
 		if ((payload[0] >> 28) == 5)
 			/* bist data object mode is 2 */
-			bist_mode_2_tx(ctxt);
+			bist_mode_2_tx(port);
 
 		break;
 	case PD_DATA_SINK_CAP:
 		break;
 	case PD_DATA_VENDOR_DEF:
-		handle_vdm_request(ctxt, cnt, payload);
+		handle_vdm_request(port, cnt, payload);
 		break;
 	default:
 		CPRINTF("Unhandled data message type %d\n", type);
 	}
 }
 
-static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
+static void handle_ctrl_request(int port, uint16_t head,
+		uint32_t *payload)
 {
 	int type = PD_HEADER_TYPE(head);
 	int res;
@@ -559,32 +583,33 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 		/* Nothing else to do */
 		break;
 	case PD_CTRL_GET_SOURCE_CAP:
-		res = send_source_cap(ctxt);
-		if ((res >= 0) && (pd_task_state == PD_STATE_SRC_DISCOVERY))
-			pd_task_state = PD_STATE_SRC_NEGOCIATE;
+		res = send_source_cap(port);
+		if ((res >= 0) &&
+		    (pd[port].task_state == PD_STATE_SRC_DISCOVERY))
+			pd[port].task_state = PD_STATE_SRC_NEGOCIATE;
 		break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_CTRL_GET_SINK_CAP:
-		send_sink_cap(ctxt);
+		send_sink_cap(port);
 		break;
 	case PD_CTRL_GOTO_MIN:
 		break;
 	case PD_CTRL_PS_RDY:
-		if (pd_role == PD_ROLE_SINK)
-			pd_task_state = PD_STATE_SNK_READY;
+		if (pd[port].role == PD_ROLE_SINK)
+			pd[port].task_state = PD_STATE_SNK_READY;
 		break;
 	case PD_CTRL_REJECT:
-		pd_task_state = PD_STATE_SNK_DISCOVERY;
+		pd[port].task_state = PD_STATE_SNK_DISCOVERY;
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_CTRL_ACCEPT:
 		break;
 	case PD_CTRL_SOFT_RESET:
 		/* Just reset message counters */
-		pd_message_id = 0;
+		pd[port].msg_id = 0;
 		CPRINTF("Soft Reset\n");
 		/* We are done, acknowledge with an Accept packet */
-		send_control(ctxt, PD_CTRL_ACCEPT);
+		send_control(port, PD_CTRL_ACCEPT);
 		break;
 	case PD_CTRL_PROTOCOL_ERR:
 	case PD_CTRL_SWAP:
@@ -594,13 +619,14 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 	}
 }
 
-static void handle_request(void *ctxt, uint16_t head, uint32_t *payload)
+static void handle_request(int port, uint16_t head,
+		uint32_t *payload)
 {
 	int cnt = PD_HEADER_CNT(head);
 	int p;
 
 	if (PD_HEADER_TYPE(head) != 1 || cnt)
-		send_goodcrc(ctxt, PD_HEADER_ID(head));
+		send_goodcrc(port, PD_HEADER_ID(head));
 
 	/* dump received packet content */
 	CPRINTF("RECV %04x/%d ", head, cnt);
@@ -609,17 +635,17 @@ static void handle_request(void *ctxt, uint16_t head, uint32_t *payload)
 	CPRINTF("\n");
 
 	if (cnt)
-		handle_data_request(ctxt, head, payload);
+		handle_data_request(port, head, payload);
 	else
-		handle_ctrl_request(ctxt, head, payload);
+		handle_ctrl_request(port, head, payload);
 }
 
-static inline int decode_short(void *ctxt, int off, uint16_t *val16)
+static inline int decode_short(int port, int off, uint16_t *val16)
 {
 	uint32_t w;
 	int end;
 
-	end = pd_dequeue_bits(ctxt, off, 20, &w);
+	end = pd_dequeue_bits(port, off, 20, &w);
 
 #if 0 /* DEBUG */
 	CPRINTS("%d-%d: %05x %x:%x:%x:%x\n",
@@ -634,10 +660,10 @@ static inline int decode_short(void *ctxt, int off, uint16_t *val16)
 	return end;
 }
 
-static inline int decode_word(void *ctxt, int off, uint32_t *val32)
+static inline int decode_word(int port, int off, uint32_t *val32)
 {
-	off = decode_short(ctxt, off, (uint16_t *)val32);
-	return decode_short(ctxt, off, ((uint16_t *)val32 + 1));
+	off = decode_short(port, off, (uint16_t *)val32);
+	return decode_short(port, off, ((uint16_t *)val32 + 1));
 }
 
 static int count_set_bits(int n)
@@ -650,19 +676,16 @@ static int count_set_bits(int n)
 	return count;
 }
 
-static void analyze_rx_bist(void)
+static void analyze_rx_bist(int port)
 {
-	void *ctxt;
 	int i = 0, bit = -1;
 	uint32_t w, match;
 	int invalid_bits = 0;
 	static int total_invalid_bits;
 
-	ctxt = pd_init_dequeue();
-
 	/* dequeue bits until we see a full byte of alternating 1's and 0's */
 	while (i < 10 && (bit < 0 || (w != 0xaa && w != 0x55)))
-		bit = pd_dequeue_bits(ctxt, i++, 8, &w);
+		bit = pd_dequeue_bits(port, i++, 8, &w);
 
 	/* if we didn't find any bytes that match criteria, display error */
 	if (i == 10) {
@@ -677,7 +700,7 @@ static void analyze_rx_bist(void)
 	match = w;
 	bit = i - 1;
 	for (i = 0; i < 40; i++) {
-		bit = pd_dequeue_bits(ctxt, bit, 8, &w);
+		bit = pd_dequeue_bits(port, bit, 8, &w);
 		if (i % 20 == 0)
 			CPRINTF("\n");
 		CPRINTF("%02x ", w);
@@ -689,7 +712,7 @@ static void analyze_rx_bist(void)
 			total_invalid_bits);
 }
 
-static int analyze_rx(uint32_t *payload)
+static int analyze_rx(int port, uint32_t *payload)
 {
 	int bit;
 	char *msg = "---";
@@ -698,13 +721,11 @@ static int analyze_rx(uint32_t *payload)
 	uint32_t pcrc, ccrc;
 	int p, cnt;
 	/* uint32_t eop; */
-	void *ctxt;
 
-	crc32_init();
-	ctxt = pd_init_dequeue();
+	pd_init_dequeue(port);
 
 	/* Detect preamble */
-	bit = pd_find_preamble(ctxt);
+	bit = pd_find_preamble(port);
 	if (bit < 0) {
 		msg = "Preamble";
 		goto packet_err;
@@ -712,7 +733,7 @@ static int analyze_rx(uint32_t *payload)
 
 	/* Find the Start Of Packet sequence */
 	while (bit > 0) {
-		bit = pd_dequeue_bits(ctxt, bit, 20, &val);
+		bit = pd_dequeue_bits(port, bit, 20, &val);
 		if (val == PD_SOP)
 			break;
 		/* TODO: detect SOP with 1 error code */
@@ -724,34 +745,45 @@ static int analyze_rx(uint32_t *payload)
 	}
 
 	/* read header */
-	bit = decode_short(ctxt, bit, &header);
+	bit = decode_short(port, bit, &header);
+
+#ifdef CONFIG_COMMON_RUNTIME
+	mutex_lock(&pd_crc_lock);
+#endif
+
+	crc32_init();
 	crc32_hash16(header);
 	cnt = PD_HEADER_CNT(header);
 
 	/* read payload data */
 	for (p = 0; p < cnt && bit > 0; p++) {
-		bit = decode_word(ctxt, bit, payload+p);
+		bit = decode_word(port, bit, payload+p);
 		crc32_hash32(payload[p]);
 	}
+	ccrc = crc32_result();
+
+#ifdef CONFIG_COMMON_RUNTIME
+	mutex_unlock(&pd_crc_lock);
+#endif
+
 	if (bit < 0) {
 		msg = "len";
 		goto packet_err;
 	}
 
 	/* check transmitted CRC */
-	bit = decode_word(ctxt, bit, &pcrc);
-	ccrc = crc32_result();
+	bit = decode_word(port, bit, &pcrc);
 	if (bit < 0 || pcrc != ccrc) {
 		msg = "CRC";
 		if (pcrc != ccrc)
 			bit = PD_ERR_CRC;
-		/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, crc32_result());
+		/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, ccrc);
 		goto packet_err;
 	}
 
 	/* check End Of Packet */
 	/* SKIP EOP for now
-	bit = pd_dequeue_bits(ctxt, bit, 5, &eop);
+	bit = pd_dequeue_bits(port, bit, 5, &eop);
 	if (bit < 0 || eop != PD_EOP) {
 		msg = "EOP";
 		goto packet_err;
@@ -761,61 +793,70 @@ static int analyze_rx(uint32_t *payload)
 	return header;
 packet_err:
 	if (debug_dump)
-		pd_dump_packet(ctxt, msg);
+		pd_dump_packet(port, msg);
 	else
 		CPRINTF("RX ERR (%d)\n", bit);
 	return bit;
 }
 
-static void execute_hard_reset(void)
+static void execute_hard_reset(int port)
 {
-	pd_message_id = 0;
+	pd[port].msg_id = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	pd_task_state = pd_role == PD_ROLE_SINK ? PD_STATE_SNK_DISCONNECTED
-						: PD_STATE_SRC_DISCONNECTED;
+	pd[port].task_state = pd[port].role == PD_ROLE_SINK ?
+			PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED;
 #else
-	pd_task_state = PD_STATE_SRC_DISCONNECTED;
+	pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
 #endif
-	pd_power_supply_reset();
+	pd_power_supply_reset(port);
 	CPRINTF("HARD RESET!\n");
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 void pd_set_dual_role(enum pd_dual_role_states dr_state)
 {
-	pd_dual_role_toggle_on = (dr_state == PD_DRP_TOGGLE_ON);
+	int i;
 
-	/* Change to sink if in source disconnected state or if force sink */
-	if (pd_role == PD_ROLE_SOURCE &&
-			(pd_task_state == PD_STATE_SRC_DISCONNECTED ||
-			 dr_state == PD_DRP_FORCE_SINK)) {
-		pd_role = PD_ROLE_SINK;
-		pd_task_state = PD_STATE_SNK_DISCONNECTED;
-		pd_set_host_mode(0);
-		task_wake(TASK_ID_PD);
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		pd[i].dual_role_toggle = (dr_state == PD_DRP_TOGGLE_ON);
+
+		/* Change to sink if in src disconnected state or force sink */
+		if (pd[i].role == PD_ROLE_SOURCE &&
+		    (pd[i].task_state == PD_STATE_SRC_DISCONNECTED ||
+		     dr_state == PD_DRP_FORCE_SINK)) {
+			pd[i].role = PD_ROLE_SINK;
+			pd[i].task_state = PD_STATE_SNK_DISCONNECTED;
+			pd_set_host_mode(i, 0);
+			task_wake(PORT_TO_TASK_ID(i));
+		}
 	}
 }
 #endif
 
 /* Return flag for pd state is connected */
-static int pd_is_connected(void)
+static int pd_is_connected(int port)
 {
-	if (pd_task_state == PD_STATE_DISABLED)
+	if (pd[port].task_state == PD_STATE_DISABLED)
 		return 0;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Check if sink is connected */
-	if (pd_role == PD_ROLE_SINK)
-		return pd_task_state != PD_STATE_SNK_DISCONNECTED;
+	if (pd[port].role == PD_ROLE_SINK)
+		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
 #endif
 	/* Must be a source */
-	return pd_task_state != PD_STATE_SRC_DISCONNECTED;
+	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED;
+}
+
+int pd_get_polarity(int port)
+{
+	return pd[port].polarity;
 }
 
 void pd_task(void)
 {
 	int head;
-	void *ctxt = pd_hw_init();
+	int port = TASK_ID_TO_PORT(task_get_current());
 	uint32_t payload[7];
 	int timeout = 10*MSEC;
 	int cc1_volt, cc2_volt;
@@ -823,39 +864,48 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
 #endif
+	/* Initialize TX pins and put them in Hi-Z */
+	pd_tx_init();
+
+	/* Initialize PD protocol state variables for each port. */
+	pd[port].role = PD_ROLE_DEFAULT;
+	pd[port].task_state = PD_DEFAULT_STATE;
 
 	/* Ensure the power supply is in the default state */
-	pd_power_supply_reset();
+	pd_power_supply_reset(port);
+
+	/* Initialize physical layer */
+	pd_hw_init(port);
 
 	while (1) {
 		/* monitor for incoming packet if in a connected state */
-		if (pd_is_connected())
-			pd_rx_enable_monitoring();
+		if (pd_is_connected(port))
+			pd_rx_enable_monitoring(port);
 		else
-			pd_rx_disable_monitoring();
+			pd_rx_disable_monitoring(port);
 
 		/* Verify board specific health status : current, voltages... */
 		res = pd_board_checks();
 		if (res != EC_SUCCESS) {
 			/* cut the power */
-			execute_hard_reset();
+			execute_hard_reset(port);
 			/* notify the other side of the issue */
-			/* send_hard_reset(ctxt); */
+			/* send_hard_reset(port); */
 		}
 		/* wait for next event/packet or timeout expiration */
 		task_wait_event(timeout);
 		/* incoming packet ? */
-		if (pd_rx_started()) {
-			head = analyze_rx(payload);
-			pd_rx_complete();
+		if (pd_rx_started(port)) {
+			head = analyze_rx(port, payload);
+			pd_rx_complete(port);
 			if (head > 0)
-				handle_request(ctxt, head, payload);
+				handle_request(port,  head, payload);
 			else if (head == PD_ERR_HARD_RESET)
-				execute_hard_reset();
+				execute_hard_reset(port);
 		}
 		/* if nothing to do, verify the state of the world in 500ms */
 		timeout = 500*MSEC;
-		switch (pd_task_state) {
+		switch (pd[port].task_state) {
 		case PD_STATE_DISABLED:
 			/* Nothing to do */
 			break;
@@ -863,15 +913,15 @@ void pd_task(void)
 			timeout = 10*MSEC;
 
 			/* Vnc monitoring */
-			cc1_volt = pd_adc_read(0);
-			cc2_volt = pd_adc_read(1);
+			cc1_volt = pd_adc_read(port, 0);
+			cc2_volt = pd_adc_read(port, 1);
 			if ((cc1_volt < PD_SRC_VNC) ||
 			    (cc2_volt < PD_SRC_VNC)) {
-				pd_polarity = !(cc1_volt < PD_SRC_VNC);
-				pd_select_polarity(pd_polarity);
+				pd[port].polarity = !(cc1_volt < PD_SRC_VNC);
+				pd_select_polarity(port, pd[port].polarity);
 				/* Enable VBUS */
-				pd_set_power_supply_ready();
-				pd_task_state = PD_STATE_SRC_DISCOVERY;
+				pd_set_power_supply_ready(port);
+				pd[port].task_state = PD_STATE_SRC_DISCOVERY;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 				/* Keep VBUS up for the hold period */
 				next_role_swap = get_time().val + PD_T_DRP_HOLD;
@@ -880,10 +930,10 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			/* Swap roles if time expired or VBUS is present */
 			else if ((get_time().val >= next_role_swap ||
-				 pd_snk_is_vbus_provided())) {
-				pd_role = PD_ROLE_SINK;
-				pd_task_state = PD_STATE_SNK_DISCONNECTED;
-				pd_set_host_mode(0);
+				 pd_snk_is_vbus_provided(port))) {
+				pd[port].role = PD_ROLE_SINK;
+				pd[port].task_state = PD_STATE_SNK_DISCONNECTED;
+				pd_set_host_mode(port, 0);
 				next_role_swap = get_time().val + PD_T_DRP_SNK;
 
 				/* Swap states quickly */
@@ -893,10 +943,10 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_DISCOVERY:
 			/* Query capabilites of the other side */
-			res = send_source_cap(ctxt);
+			res = send_source_cap(port);
 			/* packet was acked => PD capable device) */
 			if (res >= 0) {
-				pd_task_state = PD_STATE_SRC_NEGOCIATE;
+				pd[port].task_state = PD_STATE_SRC_NEGOCIATE;
 			} else { /* failed, retry later */
 				timeout = PD_T_SEND_SOURCE_CAP;
 			}
@@ -908,30 +958,30 @@ void pd_task(void)
 		case PD_STATE_SRC_ACCEPTED:
 			/* Accept sent, wait for the end of transition */
 			timeout = PD_POWER_SUPPLY_TRANSITION_DELAY;
-			pd_task_state = PD_STATE_SRC_TRANSITION;
+			pd[port].task_state = PD_STATE_SRC_TRANSITION;
 			break;
 		case PD_STATE_SRC_TRANSITION:
-			res = pd_set_power_supply_ready();
+			res = pd_set_power_supply_ready(port);
 			/* TODO error fallback */
 			/* the voltage output is good, notify the source */
-			res = send_control(ctxt, PD_CTRL_PS_RDY);
+			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
 				timeout =  PD_T_SEND_SOURCE_CAP;
 				/* it'a time to ping regularly the sink */
-				pd_task_state = PD_STATE_SRC_READY;
+				pd[port].task_state = PD_STATE_SRC_READY;
 			} else {
 				/* The sink did not ack, cut the power... */
-				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCONNECTED;
+				pd_power_supply_reset(port);
+				pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
 			}
 			break;
 		case PD_STATE_SRC_READY:
 			/* Verify that the sink is alive */
-			res = send_control(ctxt, PD_CTRL_PING);
+			res = send_control(port, PD_CTRL_PING);
 			if (res < 0) {
 				/* The sink died ... */
-				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCONNECTED;
+				pd_power_supply_reset(port);
+				pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
 				timeout = PD_T_SEND_SOURCE_CAP;
 			} else { /* schedule next keep-alive */
 				timeout = PD_T_SOURCE_ACTIVITY;
@@ -939,35 +989,38 @@ void pd_task(void)
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SUSPENDED:
-			pd_rx_disable_monitoring();
-			pd_hw_release();
-			pd_power_supply_reset();
+			pd_rx_disable_monitoring(port);
+			pd_hw_release(port);
+			pd_power_supply_reset(port);
 
 			/* Wait for resume */
-			while (pd_task_state == PD_STATE_SUSPENDED)
+			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
 
-			pd_hw_init();
+			pd_hw_init(port);
 			break;
 		case PD_STATE_SNK_DISCONNECTED:
 			timeout = 10*MSEC;
 
 			/* Source connection monitoring */
-			if (pd_snk_is_vbus_provided()) {
-				cc1_volt = pd_adc_read(0);
-				cc2_volt = pd_adc_read(1);
+			if (pd_snk_is_vbus_provided(port)) {
+				cc1_volt = pd_adc_read(port, 0);
+				cc2_volt = pd_adc_read(port, 1);
 				if ((cc1_volt >= PD_SNK_VA) ||
 				    (cc2_volt >= PD_SNK_VA)) {
-					pd_polarity = !(cc1_volt >= PD_SNK_VA);
-					pd_select_polarity(pd_polarity);
-					pd_task_state = PD_STATE_SNK_DISCOVERY;
+					pd[port].polarity =
+						!(cc1_volt >= PD_SNK_VA);
+					pd_select_polarity(port,
+							   pd[port].polarity);
+					pd[port].task_state =
+						PD_STATE_SNK_DISCOVERY;
 				}
-			} else if (pd_dual_role_toggle_on &&
+			} else if (pd[port].dual_role_toggle &&
 				   get_time().val >= next_role_swap) {
 				/* Swap roles to source */
-				pd_role = PD_ROLE_SOURCE;
-				pd_task_state = PD_STATE_SRC_DISCONNECTED;
-				pd_set_host_mode(1);
+				pd[port].role = PD_ROLE_SOURCE;
+				pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
+				pd_set_host_mode(port, 1);
 				next_role_swap = get_time().val + PD_T_DRP_SRC;
 
 				/* Swap states quickly */
@@ -982,7 +1035,7 @@ void pd_task(void)
 				break;
 			}
 
-			res = send_control(ctxt, PD_CTRL_GET_SOURCE_CAP);
+			res = send_control(port, PD_CTRL_GET_SOURCE_CAP);
 			/* packet was acked => PD capable device) */
 			if (res >= 0) {
 				/*
@@ -997,7 +1050,7 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_REQUESTED:
 			/* Ensure the power supply actually becomes ready */
-			pd_task_state = PD_STATE_SNK_TRANSITION;
+			pd[port].task_state = PD_STATE_SNK_TRANSITION;
 			timeout = PD_T_PS_TRANSITION;
 			break;
 		case PD_STATE_SNK_TRANSITION:
@@ -1005,7 +1058,7 @@ void pd_task(void)
 			 * did not get the PS_READY,
 			 * try again to whole request cycle.
 			 */
-			pd_task_state = PD_STATE_SNK_DISCOVERY;
+			pd[port].task_state = PD_STATE_SNK_DISCOVERY;
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_READY:
@@ -1014,22 +1067,22 @@ void pd_task(void)
 			break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_HARD_RESET:
-			send_hard_reset(ctxt);
+			send_hard_reset(port);
 			/* reset our own state machine */
-			execute_hard_reset();
+			execute_hard_reset(port);
 			break;
 		case PD_STATE_BIST:
-			send_bist_cmd(ctxt);
-			bist_mode_2_rx();
+			send_bist_cmd(port);
+			bist_mode_2_rx(port);
 			break;
 		}
 
 		/* Check for disconnection */
-		if (!pd_is_connected())
+		if (!pd_is_connected(port))
 			continue;
-		if (pd_role == PD_ROLE_SOURCE) {
+		if (pd[port].role == PD_ROLE_SOURCE) {
 			/* Source: detect disconnect by monitoring CC */
-			cc1_volt = pd_adc_read(pd_polarity);
+			cc1_volt = pd_adc_read(port, pd[port].polarity);
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			if (cc1_volt > PD_SRC_VNC &&
 			    get_time().val >= next_role_swap) {
@@ -1038,16 +1091,17 @@ void pd_task(void)
 #else
 			if (cc1_volt > PD_SRC_VNC) {
 #endif
-				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCONNECTED;
+				pd_power_supply_reset(port);
+				pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
 				/* Debouncing */
 				timeout = 50*MSEC;
 			}
 		}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (pd_role == PD_ROLE_SINK && !pd_snk_is_vbus_provided()) {
+		if (pd[port].role == PD_ROLE_SINK &&
+		    !pd_snk_is_vbus_provided(port)) {
 			/* Sink: detect disconnect by monitoring VBUS */
-			pd_task_state = PD_STATE_SNK_DISCONNECTED;
+			pd[port].task_state = PD_STATE_SNK_DISCONNECTED;
 			/* set timeout small to reconnect fast */
 			timeout = 5*MSEC;
 		}
@@ -1055,89 +1109,94 @@ void pd_task(void)
 	}
 }
 
-void pd_rx_event(void)
+void pd_rx_event(int port)
 {
-	task_set_event(TASK_ID_PD, PD_EVENT_RX, 0);
+	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 }
 
 #ifdef CONFIG_COMMON_RUNTIME
-void pd_set_suspend(int enable)
+void pd_set_suspend(int port, int enable)
 {
-	pd_task_state = enable ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE;
+	pd[port].task_state = enable ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE;
 
-	task_wake(TASK_ID_PD);
+	task_wake(PORT_TO_TASK_ID(port));
 }
 
-void pd_request_source_voltage(int mv)
+void pd_request_source_voltage(int port, int mv)
 {
 	pd_set_max_voltage(mv);
-	pd_role = PD_ROLE_SINK;
-	pd_set_host_mode(0);
-	pd_task_state = PD_STATE_SNK_DISCONNECTED;
-	task_wake(TASK_ID_PD);
+	pd[port].role = PD_ROLE_SINK;
+	pd_set_host_mode(port, 0);
+	pd[port].task_state = PD_STATE_SNK_DISCONNECTED;
+	task_wake(PORT_TO_TASK_ID(port));
 }
 
 static int command_pd(int argc, char **argv)
 {
-	if (argc < 2)
-		return EC_ERROR_PARAM1;
+	int port;
+	char *e;
 
-	if (!strcasecmp(argv[1], "tx")) {
-		pd_task_state = PD_STATE_SNK_DISCOVERY;
-		task_wake(TASK_ID_PD);
-	} else if (!strcasecmp(argv[1], "bist")) {
-		pd_task_state = PD_STATE_BIST;
-		task_wake(TASK_ID_PD);
-	} else if (!strcasecmp(argv[1], "charger")) {
-		pd_role = PD_ROLE_SOURCE;
-		pd_set_host_mode(1);
-		pd_task_state = PD_STATE_SRC_DISCONNECTED;
-		task_wake(TASK_ID_PD);
-	} else if (!strncasecmp(argv[1], "dev", 3)) {
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[1], &e, 10);
+	if (*e || port >= PD_PORT_COUNT)
+		return EC_ERROR_PARAM2;
+
+	if (!strcasecmp(argv[2], "tx")) {
+		pd[port].task_state = PD_STATE_SNK_DISCOVERY;
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strcasecmp(argv[2], "bist")) {
+		pd[port].task_state = PD_STATE_BIST;
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strcasecmp(argv[2], "charger")) {
+		pd[port].role = PD_ROLE_SOURCE;
+		pd_set_host_mode(port, 1);
+		pd[port].task_state = PD_STATE_SRC_DISCONNECTED;
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strncasecmp(argv[2], "dev", 3)) {
 		int max_volt = -1;
-		if (argc >= 3) {
-			char *e;
-			max_volt = strtoi(argv[2], &e, 10) * 1000;
-		}
-		pd_request_source_voltage(max_volt);
-	} else if (!strcasecmp(argv[1], "clock")) {
+		if (argc >= 3)
+			max_volt = strtoi(argv[3], &e, 10) * 1000;
+
+		pd_request_source_voltage(port, max_volt);
+	} else if (!strcasecmp(argv[2], "clock")) {
 		int freq;
-		char *e;
 
 		if (argc < 3)
 			return EC_ERROR_PARAM2;
 
-		freq = strtoi(argv[2], &e, 10);
+		freq = strtoi(argv[3], &e, 10);
 		if (*e)
 			return EC_ERROR_PARAM2;
-		pd_set_clock(freq);
+		pd_set_clock(port, freq);
 		ccprintf("set TX frequency to %d Hz\n", freq);
-	} else if (!strcasecmp(argv[1], "dump")) {
+	} else if (!strcasecmp(argv[2], "dump")) {
 		debug_dump = !debug_dump;
-	} else if (!strncasecmp(argv[1], "hard", 4)) {
-		pd_task_state = PD_STATE_HARD_RESET;
-		task_wake(TASK_ID_PD);
-	} else if (!strncasecmp(argv[1], "ping", 4)) {
-		pd_role = PD_ROLE_SOURCE;
-		pd_set_host_mode(1);
-		pd_task_state = PD_STATE_SRC_READY;
-		task_wake(TASK_ID_PD);
-	} else if (!strcasecmp(argv[1], "dualrole")) {
+	} else if (!strncasecmp(argv[2], "hard", 4)) {
+		pd[port].task_state = PD_STATE_HARD_RESET;
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strncasecmp(argv[2], "ping", 4)) {
+		pd[port].role = PD_ROLE_SOURCE;
+		pd_set_host_mode(port, 1);
+		pd[port].task_state = PD_STATE_SRC_READY;
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strcasecmp(argv[2], "dualrole")) {
 		int on;
 		char *e;
 
-		if (argc < 3) {
+		if (argc < 4) {
 			ccprintf("dual-role toggling: %d\n",
-				 pd_dual_role_toggle_on);
+				 pd[port].dual_role_toggle);
 		} else {
-			on = strtoi(argv[2], &e, 10);
+			on = strtoi(argv[3], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM3;
 
 			pd_set_dual_role(on ? PD_DRP_TOGGLE_ON :
 					      PD_DRP_FORCE_SINK);
 		}
-	} else if (!strncasecmp(argv[1], "state", 5)) {
+	} else if (!strncasecmp(argv[2], "state", 5)) {
 		const char * const state_names[] = {
 			"DISABLED", "SUSPENDED",
 			"SNK_DISCONNECTED", "SNK_DISCOVERY", "SNK_REQUESTED",
@@ -1146,9 +1205,10 @@ static int command_pd(int argc, char **argv)
 			"SRC_ACCEPTED", "SRC_TRANSITION", "SRC_READY",
 			"HARD_RESET", "BIST",
 		};
-		ccprintf("Role: %s Polarity: CC%d State: %s\n",
-			pd_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
-			pd_polarity + 1, state_names[pd_task_state]);
+		ccprintf("Port C%d - Role: %s Polarity: CC%d State: %s\n",
+			port, pd[port].role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+			pd[port].polarity + 1,
+			state_names[pd[port].task_state]);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -1156,7 +1216,9 @@ static int command_pd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
-			"[rx|tx|hardreset|clock|connect]",
+			"<port> "
+			"[tx|bist|charger|dev|dump|dualrole"
+			"|hard|clock|ping|state]",
 			"USB PD",
 			NULL);
 #endif /* CONFIG_COMMON_RUNTIME */

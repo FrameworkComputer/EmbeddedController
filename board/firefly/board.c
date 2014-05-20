@@ -44,7 +44,7 @@ static void button_deferred(void)
 	default:
 		mv = -1;
 	}
-	pd_request_source_voltage(mv);
+	pd_request_source_voltage(0, mv);
 	ccprintf("Button %d = %d => Vout=%d mV\n",
 		 button_pressed, gpio_get_level(button_pressed), mv);
 }
@@ -114,7 +114,7 @@ static int command_volt(int argc, char **argv)
 		millivolt = strtoi(argv[1], &e, 10) * 1000;
 	}
 	ccprintf("Request Vout=%d mV\n", millivolt);
-	pd_request_source_voltage(millivolt);
+	pd_request_source_voltage(0, millivolt);
 
 	return EC_SUCCESS;
 }

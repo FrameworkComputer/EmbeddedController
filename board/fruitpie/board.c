@@ -72,7 +72,7 @@ int board_set_debug(int enable)
 		gpio_config_module(MODULE_USB_PD, 0);
 
 		/* Suspend the USB PD task */
-		pd_set_suspend(1);
+		pd_set_suspend(0, 1);
 
 		/* Decrease BCDv1.2 timer to 0.6s */
 		tsu6721_write(TSU6721_REG_TIMER, 0x05);
@@ -148,7 +148,7 @@ int board_set_debug(int enable)
 		tsu6721_write(TSU6721_REG_TIMER, 0x15);
 
 		/* Restore the USB PD task */
-		pd_set_suspend(0);
+		pd_set_suspend(0, 0);
 	}
 
 	return rv;
@@ -183,9 +183,6 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_SS2_EN_L, 0);
 }
 
-/* PD Port polarity as detected by the common PD code */
-extern uint8_t pd_polarity;
-
 static int command_typec(int argc, char **argv)
 {
 	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
@@ -205,7 +202,7 @@ static int command_typec(int argc, char **argv)
 		ccprintf("CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
 			adc_read_channel(ADC_CH_CC1_PD),
 			adc_read_channel(ADC_CH_CC2_PD),
-			pd_polarity + 1);
+			pd_get_polarity(0) + 1);
 		if (has_ss)
 			ccprintf("Superspeed %s%s%s\n",
 				 has_dp ? dp_str : "",
@@ -220,7 +217,7 @@ static int command_typec(int argc, char **argv)
 	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
 		if (!strcasecmp(argv[2], mux_name[i]))
 			mux = i;
-	board_set_usb_mux(0, mux, pd_polarity);
+	board_set_usb_mux(0, mux, pd_get_polarity(0));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,

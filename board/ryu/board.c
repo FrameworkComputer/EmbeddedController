@@ -102,9 +102,6 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_USBC_SS_EN_L, 0);
 }
 
-/* PD Port polarity as detected by the common PD code */
-extern uint8_t pd_polarity;
-
 static int command_typec(int argc, char **argv)
 {
 	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
@@ -122,7 +119,8 @@ static int command_typec(int argc, char **argv)
 					"USB2" : "USB1";
 		/* dump current state */
 		ccprintf("Port CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
-			pd_adc_read(0),	pd_adc_read(1), pd_polarity + 1);
+			pd_adc_read(0, 0), pd_adc_read(0, 1),
+			pd_get_polarity(0) + 1);
 		if (!has_ss)
 			ccprintf("No Superspeed connection\n");
 		else
@@ -136,7 +134,7 @@ static int command_typec(int argc, char **argv)
 	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
 		if (!strcasecmp(argv[1], mux_name[i]))
 			mux = i;
-	board_set_usb_mux(0, mux, pd_polarity);
+	board_set_usb_mux(0, mux, pd_get_polarity(0));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,

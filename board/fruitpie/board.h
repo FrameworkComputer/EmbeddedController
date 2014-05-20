@@ -63,6 +63,7 @@
 
 /*
  * Used to set GPIO's and clock to SPI module used for debug
+ *
  * @param enable Whether to enable or disable debug
  */
 int board_set_debug(int enable);
