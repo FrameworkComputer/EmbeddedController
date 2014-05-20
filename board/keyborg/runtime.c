@@ -101,11 +101,10 @@ uint32_t task_wait_event(int timeout_us)
 	do {
 		/* sleep until next interrupt */
 		asm volatile("wfi");
-
-		STM32_TIM_DIER(2) = 0; /* disable match interrupt */
-		evt = last_event;
-		last_event = 0;
 	} while (need_wfi);
+	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
+	evt = last_event;
+	last_event = 0;
 
 	return evt;
 }
