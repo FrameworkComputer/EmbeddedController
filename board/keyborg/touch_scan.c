@@ -91,12 +91,12 @@ static void start_adc_sample(int id, int wait_cycle)
 	    "   bne 1b\n" :: "r"(wait_cycle / 3));
 }
 
-#if ADC_SMPL_CYCLE_2 < ADC_CONV_CYCLE_2 * 2
+#if ADC_SMPL_CYCLE_2 < ADC_QUNTZ_CYCLE_2
 static uint16_t flush_adc(int id)
 {
 	while (!(STM32_ADC_SR(id) & (1 << 1)))
 		;
-	return STM32_ADC_DR(id) & ADC_READ_MAX;
+	return STM32_ADC_DR(id);
 }
 #else
 #define flush_adc(x) STM32_ADC_DR(x)
@@ -120,14 +120,14 @@ void scan_column(uint8_t *data)
 	int i;
 
 	STM32_PMSE_MRCR = mrcr_list[0];
-	start_adc_sample(0, ADC_LONG_CPU_CYCLE);
+	start_adc_sample(0, ADC_SMPL_CPU_CYCLE);
 	STM32_PMSE_MRCR = mrcr_list[1];
-	start_adc_sample(1, ADC_LONG_CPU_CYCLE);
+	start_adc_sample(1, ADC_SMPL_CPU_CYCLE);
 
 	for (i = 2; i < ROW_COUNT; ++i) {
 		data[i - 2] = ADC_DATA_WINDOW(flush_adc(i & 1));
 		STM32_PMSE_MRCR = mrcr_list[i];
-		start_adc_sample(i & 1, ADC_SHORT_CPU_CYCLE);
+		start_adc_sample(i & 1, ADC_SMPL_CPU_CYCLE);
 	}
 
 	while (!(STM32_ADC_SR(ROW_COUNT & 1) & (1 << 1)))

@@ -22,13 +22,12 @@ enum pin_type {
 #define THRESHOLD 35
 
 /* ADC speed */
-#define ADC_SMPR_VAL 0x3 /* 28.5 cycles */
-#define ADC_SMPL_CYCLE_2 57
-#define ADC_CONV_CYCLE_2 25
+#define ADC_SMPR_VAL 0x2 /* 13.5 cycles */
+#define ADC_SMPL_CYCLE_2 27
+#define ADC_QUNTZ_CYCLE_2 25 /* Quantization always takes 12.5 cycles */
 
 /* CPU clock is 4 times faster than ADC clock */
-#define ADC_LONG_CPU_CYCLE (ADC_SMPL_CYCLE_2 * 2)
-#define ADC_SHORT_CPU_CYCLE ((ADC_SMPL_CYCLE_2 - ADC_CONV_CYCLE_2) * 2)
+#define ADC_SMPL_CPU_CYCLE (ADC_SMPL_CYCLE_2 * 2)
 
 struct ts_pin {
 	uint8_t port_id; /* GPIO_A = 0, GPIO_B = 1, ... */
