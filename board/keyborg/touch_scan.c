@@ -162,10 +162,7 @@ void touch_scan_slave_start(void)
 			resp->data[ROW_COUNT - 1 - i] = v;
 		}
 
-		/* Trim trailing zeros. */
-		for (i = 0; i < ROW_COUNT; ++i)
-			if (resp->data[i] >= THRESHOLD)
-				resp->size = i + 1;
+		resp->size = ROW_COUNT;
 
 		/* Flush the last response */
 		if (col != 0)
@@ -220,9 +217,7 @@ int touch_scan_full_matrix(void)
 			resp = spi_master_wait_response_done();
 			if (resp == NULL)
 				return EC_ERROR_UNKNOWN;
-			memcpy(last_dptr, resp->data, resp->size);
-			memset(last_dptr + resp->size, 0,
-					ROW_COUNT - resp->size);
+			memcpy(last_dptr, resp->data, ROW_COUNT);
 			encode_add_column(last_dptr);
 		}
 
@@ -242,8 +237,7 @@ int touch_scan_full_matrix(void)
 	resp = spi_master_wait_response_done();
 	if (resp == NULL)
 		return EC_ERROR_UNKNOWN;
-	memcpy(last_dptr, resp->data, resp->size);
-	memset(last_dptr + resp->size, 0, ROW_COUNT - resp->size);
+	memcpy(last_dptr, resp->data, ROW_COUNT);
 	encode_add_column(last_dptr);
 
 	master_slave_sync(20);
