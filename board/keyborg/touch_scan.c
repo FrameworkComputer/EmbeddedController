@@ -140,7 +140,7 @@ void scan_column(uint8_t *data)
 
 void touch_scan_slave_start(void)
 {
-	int col, i;
+	int col, i, v;
 	struct spi_comm_packet *resp = (struct spi_comm_packet *)buf;
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
@@ -155,10 +155,17 @@ void touch_scan_slave_start(void)
 		scan_column(resp->data);
 		resp->cmd_sts = EC_SUCCESS;
 
+		/* Reverse the scanned data */
+		for (i = 0; ROW_COUNT - 1 - i > i; ++i) {
+			v = resp->data[i];
+			resp->data[i] = resp->data[ROW_COUNT - 1 - i];
+			resp->data[ROW_COUNT - 1 - i] = v;
+		}
+
 		/* Trim trailing zeros. */
 		for (i = 0; i < ROW_COUNT; ++i)
 			if (resp->data[i] >= THRESHOLD)
-				resp->size = i;
+				resp->size = i + 1;
 
 		/* Flush the last response */
 		if (col != 0)
