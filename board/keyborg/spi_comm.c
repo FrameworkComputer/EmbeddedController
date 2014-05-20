@@ -31,7 +31,6 @@ static const struct dma_option dma_rx_option = {
 
 static uint8_t out_msg[SPI_PACKET_MAX_SIZE + 2];
 static uint8_t in_msg[SPI_PACKET_MAX_SIZE];
-static uint8_t * const reply_msg = out_msg + 1;
 
 static inline int wait_for_signal(uint32_t port, uint32_t mask,
 				  int value, int timeout_us)
@@ -324,11 +323,14 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	if (size > SPI_PACKET_MAX_SIZE)
 		return EC_ERROR_OVERFLOW;
 
+	if (out_msg != (uint8_t *)resp)
+		memcpy(out_msg, resp, size);
+
 	master_slave_sync(100);
 
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
-	spi->dr = *((uint8_t *)resp);
+	spi->dr = out_msg[0];
 
 	/* Set N_CHG (master SPI_NSS) to high */
 	STM32_GPIO_BSRR(GPIO_A) = 1 << 1;
@@ -340,7 +342,7 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	dma_clear_isr(STM32_DMAC_SPI1_TX);
 	dma_clear_isr(STM32_DMAC_SPI1_RX);
 	dma_start_rx(&dma_rx_option, size - 1, in_msg);
-	dma_prepare_tx(&dma_tx_option, size - 1, ((uint8_t *)resp)+1);
+	dma_prepare_tx(&dma_tx_option, size - 1, out_msg + 1);
 	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
 
 	master_slave_sync(5);
@@ -367,7 +369,7 @@ int spi_slave_send_response_flush(void)
 
 static void spi_slave_nack(void)
 {
-	struct spi_comm_packet *resp = (struct spi_comm_packet *)reply_msg;
+	struct spi_comm_packet *resp = (struct spi_comm_packet *)out_msg;
 
 	resp->cmd_sts = EC_ERROR_UNKNOWN;
 	resp->size = 0;
@@ -376,7 +378,7 @@ static void spi_slave_nack(void)
 
 static void spi_slave_hello_back(const struct spi_comm_packet *cmd)
 {
-	struct spi_comm_packet *resp = (struct spi_comm_packet *)reply_msg;
+	struct spi_comm_packet *resp = (struct spi_comm_packet *)out_msg;
 	uint8_t buf[SPI_PACKET_MAX_SIZE];
 	int i, sz;
 
