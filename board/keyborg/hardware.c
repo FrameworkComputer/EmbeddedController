@@ -14,17 +14,17 @@
 
 static void clock_init(void)
 {
-	/* Ensure that HSI is ON */
-	if (!(STM32_RCC_CR & (1 << 1))) {
-		/* Enable HSI */
-		STM32_RCC_CR |= 1 << 0;
-		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR & (1 << 1)))
+	/* Turn on HSE */
+	if (!(STM32_RCC_CR & (1 << 17))) {
+		/* Enable HSE */
+		STM32_RCC_CR |= (1 << 18) | (1 << 16);
+		/* Wait for HSE to be ready */
+		while (!(STM32_RCC_CR & (1 << 17)))
 			;
 	}
 
-	/* PLLSRC = HSI/2, PLLMUL = x12 (x HSI/2) = 48MHz */
-	STM32_RCC_CFGR = 0x00684000;
+	/* PLLSRC = HSE/2 = 8MHz, PLLMUL = x6 = 48MHz */
+	STM32_RCC_CFGR = 0x00534000;
 	/* Enable PLL */
 	STM32_RCC_CR |= 1 << 24;
 	/* Wait for PLL to be ready */
@@ -32,7 +32,7 @@ static void clock_init(void)
 			;
 
 	/* switch SYSCLK to PLL */
-	STM32_RCC_CFGR = 0x00684002;
+	STM32_RCC_CFGR = 0x00534002;
 	/* wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
