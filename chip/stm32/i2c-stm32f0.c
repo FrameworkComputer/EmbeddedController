@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
@@ -24,6 +25,12 @@
 
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
+
+/*
+ * Max data size for a version 3 request/response packet. This is
+ * big enough for EC_CMD_GET_VERSION plus header info.
+ */
+#define I2C_MAX_HOST_PACKET_SIZE 128
 
 /**
  * Wait for ISR register to contain the specified mask.
@@ -92,12 +99,170 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
 		STM32_RCC_APB1ENR |= 1 << (21 + port);
 
+	/* Default clock to i2c port 0 is HSI (8MHz). Change to SYSCLK. */
+	if (port == 0)
+		STM32_RCC_CFGR3 |= 0x10;
+
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
 
 	/* Set up initial bus frequencies */
 	i2c_set_freq_port(p);
 }
+
+/*****************************************************************************/
+#ifdef HAS_TASK_HOSTCMD
+/* Host command slave */
+/* Buffer for host commands (including version, error code and checksum) */
+static uint8_t host_buffer[I2C_MAX_HOST_PACKET_SIZE];
+static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
+static int host_i2c_resp_port;
+static int tx_pending;
+static struct host_packet i2c_packet;
+
+static void i2c_send_response_packet(struct host_packet *pkt)
+{
+	int size = pkt->response_size;
+	uint8_t *out = host_buffer;
+	int i = 0;
+
+	/* Ignore host command in-progress */
+	if (pkt->driver_result == EC_RES_IN_PROGRESS)
+		return;
+
+	/* Write result and size to first two bytes. */
+	*out++ = pkt->driver_result;
+	*out++ = size;
+
+	/* Transmit data when I2C tx buffer is empty until finished. */
+	while ((i < size + 2) && tx_pending) {
+		if (STM32_I2C_ISR(host_i2c_resp_port) & STM32_I2C_CR1_TXIE)
+			STM32_I2C_TXDR(host_i2c_resp_port) = host_buffer[i++];
+
+		/* I2C is slow, so let other things run while we wait */
+		usleep(50);
+	}
+}
+
+/* Process the command in the i2c host buffer */
+static void i2c_process_command(void)
+{
+	char *buff = host_buffer;
+
+	/*
+	 * TODO(crosbug.com/p/29241): Combine this functionality with the
+	 * i2c_process_command function in chip/stm32/i2c-stm32f.c to make one
+	 * host command i2c process function which handles all protocol
+	 * versions.
+	 */
+	if (*buff >= EC_COMMAND_PROTOCOL_3) {
+		i2c_packet.send_response = i2c_send_response_packet;
+
+		i2c_packet.request = (const void *)(&buff[1]);
+		i2c_packet.request_temp = params_copy;
+		i2c_packet.request_max = sizeof(params_copy);
+		/* Don't know the request size so pass in the entire buffer */
+		i2c_packet.request_size = I2C_MAX_HOST_PACKET_SIZE;
+
+		/*
+		 * Stuff response at buff[2] to leave the first two bytes of
+		 * buffer available for the result and size to send over i2c.
+		 */
+		i2c_packet.response = (void *)(&buff[2]);
+		i2c_packet.response_max = I2C_MAX_HOST_PACKET_SIZE;
+		i2c_packet.response_size = 0;
+
+		i2c_packet.driver_result = EC_RES_SUCCESS;
+	} else {
+		/* Only host command protocol 3 is supported. */
+		i2c_packet.driver_result = EC_RES_INVALID_HEADER;
+	}
+	host_packet_receive(&i2c_packet);
+}
+
+static void i2c_event_handler(int port)
+{
+	int i2c_isr;
+	static int rx_pending, buf_idx;
+
+	i2c_isr = STM32_I2C_ISR(port);
+
+	/*
+	 * Check for error conditions. Note, arbitration loss and bus error
+	 * are the only two errors we can get as a slave allowing clock
+	 * stretching and in non-SMBus mode.
+	 */
+	if (i2c_isr & (STM32_I2C_ISR_ARLO | STM32_I2C_ISR_BERR)) {
+		rx_pending = 0;
+		tx_pending = 0;
+
+		/* Make sure TXIS interrupt is disabled */
+		STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
+
+		/* Clear error status bits */
+		STM32_I2C_ICR(port) |= STM32_I2C_ICR_BERRCF |
+				STM32_I2C_ICR_ARLOCF;
+	}
+
+	/* Transfer matched our slave address */
+	if (i2c_isr & STM32_I2C_ISR_ADDR) {
+		if (i2c_isr & STM32_I2C_ISR_DIR) {
+			/* Transmitter slave */
+			/* Clear transmit buffer */
+			STM32_I2C_ISR(port) |= STM32_I2C_ISR_TXE;
+
+			/* Enable txis interrupt to start response */
+			STM32_I2C_CR1(port) |= STM32_I2C_CR1_TXIE;
+		} else {
+			/* Receiver slave */
+			buf_idx = 0;
+			rx_pending = 1;
+		}
+
+		/* Clear ADDR bit by writing to ADDRCF bit */
+		STM32_I2C_ICR(port) |= STM32_I2C_ICR_ADDRCF;
+	}
+
+	/* Stop condition on bus */
+	if (i2c_isr & STM32_I2C_ISR_STOP) {
+		rx_pending = 0;
+		tx_pending = 0;
+
+		/* Make sure TXIS interrupt is disabled */
+		STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
+
+		/* Clear STOPF bit by writing to STOPCF bit */
+		STM32_I2C_ICR(port) |= STM32_I2C_ICR_STOPCF;
+	}
+
+	/* Receiver full event */
+	if (i2c_isr & STM32_I2C_ISR_RXNE)
+		host_buffer[buf_idx++] = STM32_I2C_RXDR(port);
+
+	/* Transmitter empty event */
+	if (i2c_isr & STM32_I2C_ISR_TXIS) {
+		if (port == I2C_PORT_EC) { /* host is waiting for PD response */
+			if (rx_pending) {
+				host_i2c_resp_port = port;
+				/*
+				 * Disable TXIS interrupt, transmission will
+				 * be done by host command task.
+				 */
+				STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
+
+				i2c_process_command();
+				/* Reset host buffer after end of transfer */
+				rx_pending = 0;
+				tx_pending = 1;
+			} else {
+				STM32_I2C_TXDR(port) = 0xec;
+			}
+		}
+	}
+}
+void i2c2_event_interrupt(void) { i2c_event_handler(I2C_PORT_EC); }
+DECLARE_IRQ(STM32_IRQ_I2C1, i2c2_event_interrupt, 2);
+#endif
 
 /*****************************************************************************/
 /* Interface */
@@ -255,5 +420,34 @@ static void i2c_init(void)
 
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
+
+#ifdef HAS_TASK_HOSTCMD
+	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
+			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE;
+	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000 | CONFIG_USB_PD_I2C_SLAVE_ADDR;
+	task_enable_irq(STM32_IRQ_I2C1);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Get protocol information
+ */
+static int i2c_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->response;
+
+	memset(r, 0, sizeof(*r));
+	r->protocol_versions = (1 << 3);
+	r->max_request_packet_size = I2C_MAX_HOST_PACKET_SIZE;
+	r->max_response_packet_size = I2C_MAX_HOST_PACKET_SIZE;
+	r->flags = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
+		     i2c_get_protocol_info,
+		     EC_VER_MASK(0));
+

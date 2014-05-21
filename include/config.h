@@ -496,6 +496,9 @@
 
 /*****************************************************************************/
 
+/* Support EC acting as host master for other MCUs. */
+#undef CONFIG_HOST_CMD_MASTER
+
 /*
  * Support the host asking the EC about the status of the most recent host
  * command.
@@ -859,6 +862,9 @@
 
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
+
+/* USB PD MCU slave address for host commands */
+#define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
 
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB

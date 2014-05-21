@@ -207,4 +207,18 @@ void host_packet_receive(struct host_packet *pkt);
  */
 void host_throttle_cpu(int throttle);
 
+/**
+ * Send host command to PD MCU.
+ *
+ * @param command Host command number
+ * @param version Version of host command
+ * @param outdata Pointer to buffer of out data
+ * @param outsize Size of buffer to out data
+ * @param indata Pointer to buffer to store response
+ * @param insize Size of buffer to store response
+ */
+int pd_host_command(int command, int version,
+		    const void *outdata, int outsize,
+		    void *indata, int insize);
+
 #endif  /* __CROS_EC_HOST_COMMAND_H */

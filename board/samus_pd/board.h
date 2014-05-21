@@ -31,9 +31,8 @@
 
 /* I2C ports configuration */
 #define I2C_PORT_MASTER 1
-#define I2C_PORT_BATTERY I2C_PORT_MASTER
-#define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_SLAVE  0
+#define I2C_PORT_EC I2C_PORT_SLAVE
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

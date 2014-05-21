@@ -166,6 +166,11 @@ void host_command_received(struct host_cmd_handler_args *args)
 		return;
 	}
 
+	/*
+	 * TODO (crosbug.com/p/29315): This is typically running in interrupt
+	 * context, so it woud be better not to send the response here, and to
+	 * let the host command task send the response.
+	 */
 	/* Send the response now */
 	host_send_response(args);
 }
@@ -331,6 +336,11 @@ void host_packet_receive(struct host_packet *pkt)
 	return;
 
 host_packet_bad:
+	/*
+	 * TODO (crosbug.com/p/29315): This is typically running in interrupt
+	 * context, so it woud be better not to send the response here, and to
+	 * let the host command task send the response.
+	 */
 	/* Improperly formed packet from host, so send an error response */
 	host_packet_respond(&args0);
 }

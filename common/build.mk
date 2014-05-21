@@ -43,6 +43,7 @@ common-$(CONFIG_EXTPOWER_SPRING)+=extpower_spring.o
 common-$(CONFIG_FANS)+=fan.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FMAP)+=fmap.o
+common-$(CONFIG_HOST_CMD_MASTER)+=host_command_master.o
 common-$(CONFIG_I2C)+=i2c.o
 common-$(CONFIG_I2C_ARBITRATION)+=i2c_arbitration.o
 common-$(CONFIG_KEYBOARD_PROTOCOL_8042)+=keyboard_8042.o
