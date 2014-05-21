@@ -36,7 +36,7 @@
 #define CONFIG_CHARGER_BQ24773
 #define CONFIG_CHARGER_ILIM_PIN_DISABLED
 /* FIXME(crosbug.com/p/28721): determine correct values for these */
-#define   CONFIG_CHARGER_SENSE_RESISTOR 10
+#define   CONFIG_CHARGER_SENSE_RESISTOR 5
 #define   CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 /* FIXME(crosbug.com/p/24461): determine correct values for this */
 #define   CONFIG_CHARGER_INPUT_CURRENT 2000
