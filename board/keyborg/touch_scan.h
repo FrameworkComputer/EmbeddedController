@@ -21,6 +21,12 @@ enum pin_type {
 /* Threshold for each cell */
 #define THRESHOLD 35
 
+/* Threshold for entire column */
+#define COL_THRESHOLD 16
+
+/* The span width of active columns */
+#define COL_SPAN 5 /* Must not exceed 15 */
+
 /* ADC speed */
 #define ADC_SMPR_VAL 0x2 /* 13.5 cycles */
 #define ADC_SMPL_CYCLE_2 27
