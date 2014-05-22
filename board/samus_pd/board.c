@@ -87,9 +87,9 @@ const struct gpio_info gpio_list[] = {
 	/* Power and muxes control */
 	{"PP3300_USB_PD_EN",       GPIO_A, (1<<8),  GPIO_OUT_HIGH, NULL},
 	{"USB_C0_CHARGE_EN_L",     GPIO_D, (1<<12), GPIO_OUT_LOW, NULL},
-	{"USB_C1_CHARGE_EN_L",     GPIO_D, (1<<13), GPIO_OUT_LOW, NULL},
+	{"USB_C1_CHARGE_EN_L",     GPIO_D, (1<<13), GPIO_OUT_HIGH, NULL},
 	{"USB_C0_5V_EN",           GPIO_D, (1<<14), GPIO_OUT_LOW,  NULL},
-	{"USB_C1_5V_EN",           GPIO_D, (1<<15), GPIO_OUT_LOW,  NULL},
+	{"USB_C1_5V_EN",           GPIO_D, (1<<15), GPIO_OUT_HIGH, NULL},
 	{"USB_C0_CC1_VCONN1_EN_L", GPIO_D, (1<<8),  GPIO_OUT_HIGH, NULL},
 	{"USB_C0_CC2_VCONN1_EN_L", GPIO_D, (1<<9),  GPIO_OUT_HIGH, NULL},
 	{"USB_C1_CC1_VCONN1_EN_L", GPIO_D, (1<<10), GPIO_OUT_HIGH, NULL},
@@ -110,7 +110,7 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_SS1_DP_MODE_L",   GPIO_E, (1<<11), GPIO_OUT_HIGH, NULL},
 	{"USB_C1_SS2_DP_MODE_L",   GPIO_E, (1<<13), GPIO_OUT_HIGH, NULL},
 	{"USB_C0_DP_MODE_L",       GPIO_E, (1<<8),  GPIO_OUT_HIGH, NULL},
-	{"USB_C1_DP_MODE_L",       GPIO_F, (1<<6),  GPIO_OUT_HIGH, NULL},
+	{"USB_C1_DP_MODE_L",       GPIO_F, (1<<6),  GPIO_OUT_LOW,  NULL},
 	{"USB_C0_DP_POLARITY_L",   GPIO_E, (1<<7),  GPIO_OUT_HIGH, NULL},
 	{"USB_C1_DP_POLARITY_L",   GPIO_F, (1<<3),  GPIO_OUT_HIGH, NULL},
 
