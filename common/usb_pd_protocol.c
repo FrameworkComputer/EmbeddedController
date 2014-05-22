@@ -811,6 +811,16 @@ void pd_task(void)
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SRC_DISCOVERY:
+			/* Detect disconnect by monitoring Vnc */
+			cc1_volt = pd_adc_read(pd_polarity);
+			if (cc1_volt > PD_SRC_VNC) {
+				/* The sink disappeared ... */
+				pd_power_supply_reset();
+				pd_task_state = PD_STATE_SRC_DISCONNECTED;
+				/* Debouncing */
+				timeout = 50*MSEC;
+				break;
+			}
 			/* Query capabilites of the other side */
 			res = send_source_cap(ctxt);
 			/* packet was acked => PD capable device) */
