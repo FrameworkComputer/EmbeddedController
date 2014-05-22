@@ -489,10 +489,11 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 		if (pd_role == PD_ROLE_SINK)
 			pd_task_state = PD_STATE_SNK_READY;
 		break;
+	case PD_CTRL_REJECT:
+		pd_task_state = PD_STATE_SNK_DISCOVERY;
+		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_CTRL_ACCEPT:
-		break;
-	case PD_CTRL_REJECT:
 		break;
 	case PD_CTRL_PROTOCOL_ERR:
 	case PD_CTRL_SWAP:
