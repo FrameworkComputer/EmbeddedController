@@ -92,13 +92,19 @@ static inline void pd_tx_init(void)
 static inline void pd_set_host_mode(int enable)
 {
 	if (enable) {
+		/* We never charging in power source mode */
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
 		/* High-Z is used for host mode. */
 		gpio_set_level(GPIO_USB_C0_CC1_ODL, 1);
 		gpio_set_level(GPIO_USB_C0_CC2_ODL, 1);
 	} else {
+		/* Kill VBUS power supply */
+		gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 		/* Pull low for device mode. */
 		gpio_set_level(GPIO_USB_C0_CC1_ODL, 0);
 		gpio_set_level(GPIO_USB_C0_CC2_ODL, 0);
+		/* Enable the charging path*/
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
 	}
 
 }

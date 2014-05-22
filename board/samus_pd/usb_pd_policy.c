@@ -6,6 +6,7 @@
 #include "board.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
@@ -106,11 +107,16 @@ int pd_request_voltage(uint32_t rdo)
 
 int pd_set_power_supply_ready(void)
 {
+	/* provide VBUS */
+	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
 void pd_power_supply_reset(void)
 {
+	/* Kill VBUS */
+	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 }
 
 int pd_board_checks(void)
