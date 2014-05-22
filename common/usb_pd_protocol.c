@@ -750,6 +750,16 @@ void pd_task(void)
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_DISCOVERY:
+			/* For non-PD aware source, detect source disconnect */
+			cc1_volt = pd_adc_read(pd_polarity);
+			if (cc1_volt < PD_SNK_VA) {
+				/* The source disappeared ... */
+				pd_task_state = PD_STATE_SNK_DISCONNECTED;
+				/* Debouncing */
+				timeout = 50*MSEC;
+				break;
+			}
+
 			res = send_control(ctxt, PD_CTRL_GET_SOURCE_CAP);
 			/* packet was acked => PD capable device) */
 			if (res >= 0) {
