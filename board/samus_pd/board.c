@@ -18,7 +18,8 @@
 
 void vbus_evt(enum gpio_signal signal)
 {
-	ccprintf("VBUS %d!\n", signal);
+	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
+	task_wake(TASK_ID_PD);
 }
 
 void bc12_evt(enum gpio_signal signal)
@@ -176,6 +177,9 @@ static void board_init(void)
 	 * to specify device mode.
 	 */
 	gpio_set_level(GPIO_USB_C_CC_EN, 1);
+
+	/* Enable interrupts on VBUS transitions. */
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

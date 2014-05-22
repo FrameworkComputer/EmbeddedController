@@ -784,6 +784,7 @@ void pd_task(void)
 				pd_task_state = PD_STATE_SNK_DISCONNECTED;
 				/* set timeout small to reconnect fast */
 				timeout = 5*MSEC;
+				break;
 			}
 
 			/* check vital parameters from time to time */
