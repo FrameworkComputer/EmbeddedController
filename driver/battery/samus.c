@@ -52,7 +52,7 @@ const struct battery_info *battery_get_info(void)
  * wanted it in the first place.
  */
 /* FIXME(crosbug.com/p/24461): determine correct values for this */
-#define MAX_INPUT_CURRENT 3200
+#define MAX_INPUT_CURRENT 2432
 #define INPUT_CURRENT_INCR 64
 
 static int fast_charging_allowed;
