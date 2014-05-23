@@ -27,6 +27,15 @@
 #define CONCAT3(w, x, y) CONCAT_STAGE_1(w, x, y, )
 #define CONCAT4(w, x, y, z) CONCAT_STAGE_1(w, x, y, z)
 
+/*
+ * Macros to turn the argument into a string constant.
+ *
+ * Compared to directly using the preprocessor # operator, this 2-stage macro
+ * is safe with regards to using nested macros and defined arguments.
+ */
+#define STRINGIFY0(name)  #name
+#define STRINGIFY(name)  STRINGIFY0(name)
+
 /* Macros to access registers */
 #define REG32(addr) (*(volatile uint32_t *)(addr))
 #define REG16(addr) (*(volatile uint16_t *)(addr))
