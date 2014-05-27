@@ -186,6 +186,9 @@ int pd_board_checks(void)
 	int vbus_volt, vbus_amp;
 	int watchdog_enabled = STM32_ADC_CFGR1 & (1 << 23);
 
+	/* Reload the watchdog */
+	STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
+
 	if (watchdog_enabled)
 		/* if the watchdog is enabled, stop it to do other readings */
 		adc_disable_watchdog();

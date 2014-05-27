@@ -13,6 +13,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 static void clock_init(void)
 {
@@ -164,6 +165,7 @@ void hardware_init(void)
 	pins_init();
 	uart_init();
 	timers_init();
+	watchdog_init();
 	adc_init();
 	irq_init();
 }
