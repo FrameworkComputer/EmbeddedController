@@ -14,6 +14,7 @@
 #include "task.h"
 #include "touch_scan.h"
 #include "util.h"
+#include "version.h"
 
 const struct ts_pin row_pins[] = {
 	{TS_GPIO_E,  0}, /* R1 */
@@ -124,12 +125,18 @@ const struct ts_pin col_pins[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(col_pins) == COL_COUNT);
 
+static const char *get_version(void)
+{
+	/* TODO: refine this when we have RW */
+	return version_data.version;
+}
+
 int main(void)
 {
 	int i = 0;
 	hardware_init();
 	touch_scan_init();
-	debug_printf("Keyborg starting...\n");
+	debug_printf("%s starting...\n", get_version());
 
 	master_slave_init();
 
