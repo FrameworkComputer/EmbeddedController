@@ -16,7 +16,6 @@ enum pin_type {
 
 /* 8-bit window */
 #define ADC_WINDOW_POS 2
-#define ADC_DATA_WINDOW(x) ((x) >> ADC_WINDOW_POS)
 
 /* Threshold for each cell */
 #define THRESHOLD 35

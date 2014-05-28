@@ -98,16 +98,20 @@ static void start_adc_sample(int id, int wait_cycle)
 	    "   bne 1b\n" :: "r"(wait_cycle / 3));
 }
 
-#if ADC_SMPL_CYCLE_2 < ADC_QUNTZ_CYCLE_2
-static uint16_t flush_adc(int id)
+static inline uint8_t flush_adc(int id)
 {
+	uint16_t v;
+
+#if ADC_SMPL_CYCLE_2 < ADC_QUNTZ_CYCLE_2
 	while (!(STM32_ADC_SR(id) & (1 << 1)))
 		;
-	return STM32_ADC_DR(id);
-}
-#else
-#define flush_adc(x) STM32_ADC_DR(x)
 #endif
+
+	v = STM32_ADC_DR(id) >> ADC_WINDOW_POS;
+	if (v > 255)
+		v = 255;
+	return v;
+}
 
 static void enable_col(int idx, int enabled)
 {
@@ -151,7 +155,7 @@ int fast_scan(uint32_t *data)
 		start_adc_sample(0, ADC_SMPL_CPU_CYCLE);
 		while (!(STM32_ADC_SR(0) & (1 << 1)))
 			;
-		if (ADC_DATA_WINDOW(flush_adc(0)) >= COL_THRESHOLD)
+		if (flush_adc(0) >= COL_THRESHOLD)
 			set_scan_needed(col);
 
 		if (master_slave_sync(5) != EC_SUCCESS)
@@ -176,17 +180,17 @@ void scan_column(uint8_t *data)
 	start_adc_sample(1, ADC_SMPL_CPU_CYCLE);
 
 	for (i = 2; i < ROW_COUNT; ++i) {
-		data[i - 2] = ADC_DATA_WINDOW(flush_adc(i & 1));
+		data[i - 2] = flush_adc(i & 1);
 		STM32_PMSE_MRCR = mrcr_list[i];
 		start_adc_sample(i & 1, ADC_SMPL_CPU_CYCLE);
 	}
 
 	while (!(STM32_ADC_SR(ROW_COUNT & 1) & (1 << 1)))
 		;
-	data[ROW_COUNT - 2] = ADC_DATA_WINDOW(flush_adc(ROW_COUNT & 1));
+	data[ROW_COUNT - 2] = flush_adc(ROW_COUNT & 1);
 	while (!(STM32_ADC_SR((ROW_COUNT & 1) ^ 1) & (1 << 1)))
 		;
-	data[ROW_COUNT - 1] = ADC_DATA_WINDOW(flush_adc((ROW_COUNT & 1) ^ 1));
+	data[ROW_COUNT - 1] = flush_adc((ROW_COUNT & 1) ^ 1);
 }
 
 void touch_scan_slave_start(void)
