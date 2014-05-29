@@ -84,6 +84,35 @@ void encode_dump_matrix(void)
 
 	debug_printf("Encoded size = %d\n", encoded_size);
 
+#ifdef CONFIG_ENCODE_DUMP_PYTHON
+	debug_printf("heat_map = [");
+	dptr = encoded;
+	for (col = 0; col < COL_COUNT * 2; ++col) {
+		debug_printf("[");
+		if (dptr >= encoded + encoded_size) {
+			debug_printf("0] * %d,\n", ROW_COUNT * 2);
+			continue;
+		}
+		seg_count = *(dptr++);
+		row = 0;
+		for (seg = 0; seg < seg_count; ++seg) {
+			if (row < *dptr) {
+				debug_printf("] + [0] * %d + [", *dptr - row);
+				row = *dptr;
+			}
+			dptr++;
+			seg_end = *dptr + row;
+			dptr++;
+			for (; row < seg_end; ++row, ++dptr)
+				debug_printf("%d,", *dptr);
+		}
+		if (row < ROW_COUNT * 2)
+			debug_printf("] + [0] * %d,\n", ROW_COUNT * 2 - row);
+		else
+			debug_printf("],\n");
+	}
+	debug_printf("]\n");
+#else
 	dptr = encoded;
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (dptr >= encoded + encoded_size) {
@@ -111,4 +140,5 @@ void encode_dump_matrix(void)
 		}
 		debug_printf("\n");
 	}
+#endif
 }

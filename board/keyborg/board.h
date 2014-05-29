@@ -27,6 +27,11 @@
 #undef CONFIG_TASK_PROFILING
 #undef CONFIG_WATCHDOG_HELP
 
+/* How the touch data is stored and printed */
+#define CONFIG_ENCODE_SEGMENT
+#undef CONFIG_ENCODE_RAW
+#undef CONFIG_ENCODE_DUMP_PYTHON
+
 #ifndef __ASSEMBLER__
 
 enum gpio_signal;
