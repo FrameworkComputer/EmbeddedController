@@ -185,6 +185,13 @@ void pd_request_source_voltage(int mv);
  */
 int pd_board_checks(void);
 
+/**
+ * Query if power negotiation is allowed.
+ *
+ * @return true if negotation is allowed, false otherwise.
+ */
+int pd_power_negotiation_allowed(void);
+
 /*
  * Handle Vendor Defined Message with our vendor ID.
  *

@@ -18,6 +18,7 @@
 #include "extpower.h"
 #include "fan.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "jtag.h"
@@ -39,7 +40,8 @@
 
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
-	ccprintf("PD interrupt!\n");
+	/* Exchange status with PD MCU. */
+	host_command_pd_send_status();
 }
 
 /* GPIO signal list.  Must match order from enum gpio_signal. */
@@ -90,7 +92,8 @@ const struct gpio_info gpio_list[] = {
 	{"CAPSENSE_INT_L",       LM4_GPIO_N, (1<<0), GPIO_INPUT, NULL},
 #endif
 	{"PD_MCU_INT_L",         LM4_GPIO_J, (1<<5), GPIO_PULL_UP|
-							GPIO_INT_FALLING,
+							GPIO_INT_FALLING|
+							GPIO_INT_DSLEEP,
 	 pd_mcu_interrupt},
 
 	/* Other inputs */
@@ -337,6 +340,13 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xf6, 0x55, 0xfa, 0xc8  /* full set */
 	},
 };
+
+/* Initialize board. */
+static void board_init(void)
+{
+	gpio_enable_interrupt(GPIO_PD_MCU_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_BATTERY_PRESENT_CUSTOM
 /**

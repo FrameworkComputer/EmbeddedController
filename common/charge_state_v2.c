@@ -744,6 +744,8 @@ uint32_t charge_get_flags(void)
 		flags |= CHARGE_FLAG_FORCE_IDLE;
 	if (curr.ac)
 		flags |= CHARGE_FLAG_EXTERNAL_POWER;
+	if (curr.batt.flags & BATT_FLAG_RESPONSIVE)
+		flags |= CHARGE_FLAG_BATT_RESPONSIVE;
 
 	return flags;
 }

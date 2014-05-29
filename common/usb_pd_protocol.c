@@ -495,6 +495,10 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 					 */
 					pd_task_state = PD_STATE_SNK_REQUESTED;
 			}
+			/*
+			 * TODO(crosbug.com/p/28332): if pd_choose_voltage
+			 * returns an error, ignore failure for now.
+			 */
 		}
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -883,6 +887,12 @@ void pd_task(void)
 				pd_task_state = PD_STATE_SNK_DISCONNECTED;
 				/* Debouncing */
 				timeout = 50*MSEC;
+				break;
+			}
+
+			/* Don't continue if power negotiation is not allowed */
+			if (!pd_power_negotiation_allowed()) {
+				timeout = PD_T_GET_SOURCE_CAP;
 				break;
 			}
 

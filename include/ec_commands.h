@@ -2478,6 +2478,25 @@ struct ec_params_reboot_ec {
 
 /*****************************************************************************/
 /*
+ * PD commands
+ *
+ * These commands are for PD MCU communication.
+ */
+
+/* EC to PD MCU exchange status command */
+#define EC_CMD_PD_EXCHANGE_STATUS 0x100
+
+/* Status of EC being sent to PD */
+struct ec_params_pd_status {
+	int8_t batt_soc; /* battery state of charge */
+} __packed;
+
+/* Status of PD being sent back to EC */
+struct ec_response_pd_status {
+} __packed;
+
+/*****************************************************************************/
+/*
  * Deprecated constants. These constants have been renamed for clarity. The
  * meaning and size has not changed. Programs that use the old names should
  * switch to the new names soon, as the old names may not be carried forward

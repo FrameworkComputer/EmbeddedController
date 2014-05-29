@@ -50,6 +50,8 @@ enum charge_state {
 #define CHARGE_FLAG_FORCE_IDLE (1 << 0)
 /* External (AC) power is present */
 #define CHARGE_FLAG_EXTERNAL_POWER (1 << 1)
+/* Battery is responsive */
+#define CHARGE_FLAG_BATT_RESPONSIVE (1 << 2)
 
 /* Debugging constants, in the same order as enum charge_state. This string
  * table was moved here to sync with enum above.

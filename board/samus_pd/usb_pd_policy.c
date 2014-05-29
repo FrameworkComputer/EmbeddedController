@@ -8,6 +8,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -33,12 +34,19 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
 
+/* Flag for battery status */
+static int battery_ok;
+
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
 	int i;
 	int sel_mv;
 	int max_uw = 0;
 	int max_i = -1;
+
+	/* Don't negotiate power until battery ok signal is given */
+	if (!battery_ok)
+		return -EC_ERROR_UNKNOWN;
 
 	/* Get max power */
 	for (i = 0; i < cnt; i++) {
@@ -119,7 +127,72 @@ void pd_power_supply_reset(void)
 	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 }
 
+static void pd_send_ec_int(void)
+{
+	gpio_set_level(GPIO_EC_INT_L, 0);
+
+	/*
+	 * Delay long enough to guarantee EC see's the change. Slowest
+	 * EC clock speed is 250kHz in deep sleep -> 4us, and add 1us
+	 * for buffer.
+	 */
+	usleep(5);
+
+	gpio_set_level(GPIO_EC_INT_L, 1);
+}
+
 int pd_board_checks(void)
 {
+	static uint64_t last_time;
+
+	/*
+	 * If battery is not yet ok, signal EC to send status. Avoid
+	 * sending requests too frequently.
+	 */
+	if (!battery_ok && (get_time().val - last_time >= SECOND)) {
+		last_time = get_time().val;
+		pd_send_ec_int();
+	}
+
 	return EC_SUCCESS;
 }
+
+int pd_power_negotiation_allowed(void)
+{
+	return battery_ok;
+}
+
+static int command_ec_int(int argc, char **argv)
+{
+	pd_send_ec_int();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
+			"",
+			"Toggle EC interrupt line",
+			NULL);
+
+static int ec_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pd_status *p = args->params;
+	struct ec_response_pd_status *r = args->response;
+
+	if (p->batt_soc >= CONFIG_USB_PD_MIN_BATT_CHARGE) {
+		/*
+		 * When battery is above minimum charge, we know
+		 * that we have enough power remaining for us to
+		 * negotiate power over PD.
+		 */
+		CPRINTS("Battery is ok, safe to negotiate power");
+		battery_ok = 1;
+	} else {
+		battery_ok = 0;
+	}
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
+			EC_VER_MASK(0));

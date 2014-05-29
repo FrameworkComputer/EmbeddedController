@@ -125,3 +125,8 @@ int pd_board_checks(void)
 
 	return EC_SUCCESS;
 }
+
+int pd_power_negotiation_allowed(void)
+{
+	return 1;
+}

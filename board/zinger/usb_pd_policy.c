@@ -233,6 +233,11 @@ int pd_board_checks(void)
 
 }
 
+int pd_power_negotiation_allowed(void)
+{
+	return 1;
+}
+
 void IRQ_HANDLER(STM32_IRQ_ADC_COMP)(void)
 {
 	/* cut the power output */
