@@ -81,6 +81,18 @@ void touch_scan_init(void)
 		mccr_list[i] = TS_PIN_TO_CR(col_pins[i]);
 }
 
+static void discharge(void)
+{
+	int i;
+
+	/*
+	 * The value 20 is deducted from experiments.
+	 * Somehow this needs to be in reverse order
+	 */
+	for (i = 20; i >= 0; --i)
+		STM32_PMSE_MRCR = mrcr_list[i];
+}
+
 static void start_adc_sample(int id, int wait_cycle)
 {
 	/* Clear EOC and STRT bit */
@@ -202,7 +214,7 @@ void touch_scan_slave_start(void)
 		return;
 
 	/* Discharge the panel */
-	scan_column(buf[0]);
+	discharge();
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (col < COL_COUNT) {
@@ -239,10 +251,12 @@ void touch_scan_slave_start(void)
 		/* Start sending the response for the current column */
 		spi_slave_send_response_async(resp);
 
+		/* Disable the current column and discharge */
 		if (col < COL_COUNT) {
 			enable_col(col, 0);
 			STM32_PMSE_MCCR = 0;
 		}
+		discharge();
 	}
 	spi_slave_send_response_flush();
 	master_slave_sync(20);
@@ -268,7 +282,7 @@ int touch_scan_full_matrix(void)
 		return EC_ERROR_UNKNOWN;
 
 	/* Discharge the panel */
-	scan_column(buf[0]);
+	discharge();
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (col >= COL_COUNT) {
@@ -306,10 +320,12 @@ int touch_scan_full_matrix(void)
 		if (spi_master_wait_response_async() != EC_SUCCESS)
 			return EC_ERROR_UNKNOWN;
 
+		/* Disable the current column and discharge */
 		if (col >= COL_COUNT) {
 			enable_col(col - COL_COUNT, 0);
 			STM32_PMSE_MCCR = 0;
 		}
+		discharge();
 	}
 
 	resp = spi_master_wait_response_done();
