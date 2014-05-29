@@ -148,6 +148,7 @@ static inline void set_scan_needed(int col)
 		scan_needed[word + 1] |= SPAN_MASK >> (32 - bit);
 }
 
+#ifdef CONFIG_KEYBORG_FAST_SCAN
 int fast_scan(uint32_t *data)
 {
 	int col;
@@ -181,6 +182,17 @@ int fast_scan(uint32_t *data)
 
 	return EC_SUCCESS;
 }
+#else
+int fast_scan(uint32_t *data)
+{
+	int col;
+
+	for (col = 0; col < COL_COUNT * 2; ++col)
+		set_scan_needed(col);
+
+	return EC_SUCCESS;
+}
+#endif
 
 void scan_column(uint8_t *data)
 {

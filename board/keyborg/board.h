@@ -13,6 +13,7 @@
 
 /* Optional features */
 #define CONFIG_DEBUG_PRINTF
+#define CONFIG_KEYBORG_FAST_SCAN
 #undef CONFIG_ADC
 #undef CONFIG_COMMON_GPIO
 #undef CONFIG_COMMON_PANIC_OUTPUT
