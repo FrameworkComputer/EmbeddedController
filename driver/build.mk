@@ -28,6 +28,9 @@ driver-$(CONFIG_CHARGER_BQ24735)+=charger/bq24735.o
 driver-$(CONFIG_CHARGER_BQ24738)+=charger/bq24738.o
 driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
 
+# Current/Power monitor
+driver-$(CONFIG_INA231)+=ina231.o
+
 # LED drivers
 driver-$(CONFIG_LED_DRIVER_DS2413)+=led/ds2413.o
 driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
