@@ -1274,11 +1274,13 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_USB_BCDR             REG16(STM32_USB_FS_BASE + 0x58)
 
 #define EP_MASK     0x0F0F
+#define EP_TX_DTOG  0x0040
 #define EP_TX_MASK  0x0030
 #define EP_TX_VALID 0x0030
 #define EP_TX_NAK   0x0020
 #define EP_TX_STALL 0x0010
 #define EP_TX_DISAB 0x0000
+#define EP_RX_DTOG  0x4000
 #define EP_RX_MASK  0x3000
 #define EP_RX_VALID 0x3000
 #define EP_RX_NAK   0x2000
