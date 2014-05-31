@@ -288,6 +288,13 @@ void pd_set_clock(int freq);
  * @param bit_len size of the packet in bits.
  */
 void pd_start_tx(void *ctxt, int polarity, int bit_len);
+
+/**
+ * Set PD TX DMA to use circular mode. Call this before pd_start_tx() to
+ * continually loop over the transmit buffer given in pd_start_tx().
+ */
+void pd_tx_set_circular_mode(void);
+
 /**
  * Call when we are done sending a packet.
  *

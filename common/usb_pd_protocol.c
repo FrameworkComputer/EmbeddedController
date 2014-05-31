@@ -265,6 +265,7 @@ static int prepare_message(void *ctxt, uint16_t header, uint8_t cnt,
 }
 
 static int analyze_rx(uint32_t *payload);
+static void analyze_rx_bist(void);
 
 static void send_hard_reset(void *ctxt)
 {
@@ -384,9 +385,10 @@ static int send_request(void *ctxt, uint32_t rdo)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
-static int send_bist(void *ctxt)
+static int send_bist_cmd(void *ctxt)
 {
-	uint32_t bdo = BDO(BDO_MODE_TRANSMIT, 0);
+	/* currently only support sending bist carrier 2 */
+	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd_role, pd_message_id, 1);
 
@@ -394,6 +396,56 @@ static int send_bist(void *ctxt)
 	CPRINTF("BIST>%d\n", bit_len);
 
 	return bit_len;
+}
+
+static void bist_mode_2_tx(void *ctxt)
+{
+	int bit;
+
+	CPRINTF("BIST carrier 2 - sending\n");
+
+	/*
+	 * build context buffer with 5 bytes, where the data is
+	 * alternating 1's and 0's.
+	 */
+	bit = pd_write_sym(ctxt, 0,   BMC(0x15));
+	bit = pd_write_sym(ctxt, bit, BMC(0x0a));
+	bit = pd_write_sym(ctxt, bit, BMC(0x15));
+	bit = pd_write_sym(ctxt, bit, BMC(0x0a));
+
+	/* start a circular DMA transfer (will never end) */
+	pd_tx_set_circular_mode();
+	pd_start_tx(ctxt, pd_polarity, bit);
+
+	/* do not let pd task state machine run anymore */
+	while (1)
+		task_wait_event(-1);
+}
+
+static void bist_mode_2_rx(void)
+{
+	/* monitor for incoming packet */
+	pd_rx_enable_monitoring();
+
+	/* loop until we start receiving data */
+	while (1) {
+		task_wait_event(500*MSEC);
+		/* incoming packet ? */
+		if (pd_rx_started())
+			break;
+	}
+
+	/*
+	 * once we start receiving bist data, do not
+	 * let state machine run again. stay here, and
+	 * analyze a chunk of data every 250ms.
+	 */
+	while (1) {
+		analyze_rx_bist();
+		pd_rx_complete();
+		msleep(250);
+		pd_rx_enable_monitoring();
+	}
 }
 
 static void handle_vdm_request(void *ctxt, int cnt, uint32_t *payload)
@@ -457,7 +509,11 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 		send_control(ctxt, PD_CTRL_REJECT);
 		break;
 	case PD_DATA_BIST:
-		CPRINTF("BIST not supported\n");
+		/* currently only support sending bist carrier mode 2 */
+		if ((payload[0] >> 28) == 5)
+			/* bist data object mode is 2 */
+			bist_mode_2_tx(ctxt);
+
 		break;
 	case PD_DATA_SINK_CAP:
 		break;
@@ -552,6 +608,55 @@ static inline int decode_word(void *ctxt, int off, uint32_t *val32)
 {
 	off = decode_short(ctxt, off, (uint16_t *)val32);
 	return decode_short(ctxt, off, ((uint16_t *)val32 + 1));
+}
+
+static int count_set_bits(int n)
+{
+	int count = 0;
+	while (n) {
+		n &= (n - 1);
+		count++;
+	}
+	return count;
+}
+
+static void analyze_rx_bist(void)
+{
+	void *ctxt;
+	int i = 0, bit = -1;
+	uint32_t w, match;
+	int invalid_bits = 0;
+	static int total_invalid_bits;
+
+	ctxt = pd_init_dequeue();
+
+	/* dequeue bits until we see a full byte of alternating 1's and 0's */
+	while (i < 10 && (bit < 0 || (w != 0xaa && w != 0x55)))
+		bit = pd_dequeue_bits(ctxt, i++, 8, &w);
+
+	/* if we didn't find any bytes that match criteria, display error */
+	if (i == 10) {
+		CPRINTF("Could not find any bytes of alternating bits\n");
+		return;
+	}
+
+	/*
+	 * now we know what matching byte we are looking for, dequeue a bunch
+	 * more data and count how many bits differ from expectations.
+	 */
+	match = w;
+	bit = i - 1;
+	for (i = 0; i < 40; i++) {
+		bit = pd_dequeue_bits(ctxt, bit, 8, &w);
+		if (i % 20 == 0)
+			CPRINTF("\n");
+		CPRINTF("%02x ", w);
+		invalid_bits += count_set_bits(w ^ match);
+	}
+
+	total_invalid_bits += invalid_bits;
+	CPRINTF("- incorrect bits: %d / %d\n", invalid_bits,
+			total_invalid_bits);
 }
 
 static int analyze_rx(uint32_t *payload)
@@ -812,8 +917,8 @@ void pd_task(void)
 			execute_hard_reset();
 			break;
 		case PD_STATE_BIST:
-			send_bist(ctxt);
-			pd_task_state = PD_STATE_DISABLED;
+			send_bist_cmd(ctxt);
+			bist_mode_2_rx();
 			break;
 		}
 	}
