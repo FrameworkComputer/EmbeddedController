@@ -60,6 +60,9 @@ enum {
 /* Protocol revision */
 #define PD_REV10 0
 
+/* BMC-supported bit : we are using the baseband variant of the protocol */
+#define PD_BMC_SUPPORTED (1 << 15)
+
 /* Port role */
 #define PD_ROLE_SINK   0
 #define PD_ROLE_SOURCE 1
@@ -67,7 +70,8 @@ enum {
 /* build message header */
 #define PD_HEADER(type, role, id, cnt) \
 	((type) | (PD_REV10 << 6) | \
-	 ((role) << 8) | ((id) << 9) | ((cnt) << 12))
+	 ((role) << 8) | ((id) << 9) | ((cnt) << 12) | \
+	 PD_BMC_SUPPORTED)
 
 #define PD_HEADER_CNT(header)  (((header) >> 12) & 7)
 #define PD_HEADER_TYPE(header) ((header) & 0xF)
