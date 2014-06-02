@@ -291,14 +291,14 @@ void pd_tx_done(int polarity)
 	dma_wait(DMAC_SPI_TX);
 	/* wait for real end of transmission */
 #ifdef CHIP_FAMILY_STM32F0
-	while ((spi->sr & (3<<11)))
+	while (spi->sr & STM32_SPI_SR_FTLVL)
 		; /* wait for TX FIFO empty */
 #else
-	while (!(spi->sr & (1<<1)))
+	while (!(spi->sr & STM32_SPI_SR_TXE))
 		; /* wait for TXE == 1 */
 #endif
 
-	while (spi->sr & (1<<7))
+	while (spi->sr & STM32_SPI_SR_BSY)
 		; /* wait for BSY == 0 */
 
 	/*

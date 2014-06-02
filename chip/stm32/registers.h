@@ -688,9 +688,11 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_CR1_MSTR		(1 << 2)
 #define STM32_SPI_CR1_CPOL		(1 << 1)
 #define STM32_SPI_CR1_CPHA		(1 << 0)
+#define STM32_SPI_CR2_FRXTH		(1 << 12)
+#define STM32_SPI_CR2_NSSP		(1 << 3)
 #define STM32_SPI_CR2_RXNEIE		(1 << 6)
-#define STM32_SPI_CR2_SSOE		(1 << 2)
 #define STM32_SPI_CR2_RXDMAEN		(1 << 0)
+#define STM32_SPI_CR2_SSOE		(1 << 2)
 #define STM32_SPI_CR2_TXDMAEN		(1 << 1)
 #define STM32_SPI_CR2_DATASIZE(n)	(((n) - 1) << 8)
 
@@ -698,6 +700,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_SR_TXE		(1 << 1)
 #define STM32_SPI_SR_CRCERR		(1 << 4)
 #define STM32_SPI_SR_BSY		(1 << 7)
+#define STM32_SPI_SR_FRLVL		(3 << 9)
+#define STM32_SPI_SR_FTLVL		(3 << 11)
 
 /* --- Debug --- */
 
