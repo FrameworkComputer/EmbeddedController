@@ -312,6 +312,7 @@
 #undef CONFIG_CMD_RTC_ALARM
 #undef CONFIG_CMD_SCRATCHPAD
 #undef CONFIG_CMD_SLEEP
+#undef CONFIG_CMD_SPI_FLASH
 #undef CONFIG_CMD_STACKOVERFLOW
 
 /*****************************************************************************/
@@ -757,6 +758,15 @@
 
 /* Support SPI interfaces */
 #undef CONFIG_SPI
+
+/* Support SPI flash */
+#undef CONFIG_SPI_FLASH
+
+/* Size (bytes) of SPI flash memory */
+#undef CONFIG_SPI_FLASH_SIZE
+
+/* SPI module register used for flash interface */
+#undef CONFIG_SPI_FLASH_REGISTER
 
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
