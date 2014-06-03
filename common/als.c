@@ -10,8 +10,9 @@
 #include "als.h"
 #include "common.h"
 #include "console.h"
-#include "hooks.h"
 #include "host_command.h"
+#include "task.h"
+#include "timer.h"
 #include "util.h"
 
 int als_read(enum als_id id, int *lux)
@@ -19,23 +20,18 @@ int als_read(enum als_id id, int *lux)
 	return als[id].read(lux);
 }
 
-/*****************************************************************************/
-/* Hooks */
-
-static void als_update(void)
+void als_task(void)
 {
-	int i, rv, val;
+	int i, val;
 	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
 
-	for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++) {
-		rv = als_read(i, &val);
-		if (rv == EC_SUCCESS)
-			mapped[i] = val;
-		else
-			mapped[i] = 0;
+	while (1) {
+		for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++)
+			mapped[i] = als_read(i, &val) == EC_SUCCESS ? val : 0;
+
+		task_wait_event(SECOND);
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, als_update, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
