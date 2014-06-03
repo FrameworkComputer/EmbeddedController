@@ -555,10 +555,16 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_CTRL_ACCEPT:
 		break;
+	case PD_CTRL_SOFT_RESET:
+		/* Just reset message counters */
+		pd_message_id = 0;
+		CPRINTF("Soft Reset\n");
+		/* We are done, acknowledge with an Accept packet */
+		send_control(ctxt, PD_CTRL_ACCEPT);
+		break;
 	case PD_CTRL_PROTOCOL_ERR:
 	case PD_CTRL_SWAP:
 	case PD_CTRL_WAIT:
-	case PD_CTRL_SOFT_RESET:
 	default:
 		CPRINTF("Unhandled ctrl message type %d\n", type);
 	}
