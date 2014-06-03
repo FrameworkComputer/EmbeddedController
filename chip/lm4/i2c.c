@@ -48,7 +48,7 @@
 #define I2C_IDLE_US 500
 
 /* Maximum time we allow for an I2C transfer */
-#define I2C_TIMEOUT_US SECOND
+#define I2C_TIMEOUT_US (100*MSEC)
 
 /* IRQ for each port */
 static const uint32_t i2c_irqs[] = {LM4_IRQ_I2C0, LM4_IRQ_I2C1, LM4_IRQ_I2C2,
