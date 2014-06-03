@@ -82,6 +82,16 @@ static inline void pd_tx_init(void)
 
 static inline void pd_set_host_mode(int enable)
 {
+	/* We never charging in power source mode */
+	if (enable) {
+		gpio_set_level(GPIO_CHARGE_EN_L, 1);
+	} else {
+		/* Kill VBUS power supply */
+		gpio_set_level(GPIO_USB_C_5V_EN, 0);
+		/* Enable the charging path*/
+		gpio_set_level(GPIO_CHARGE_EN_L, 0);
+	}
+
 	gpio_set_level(GPIO_CC_HOST, enable);
 }
 
