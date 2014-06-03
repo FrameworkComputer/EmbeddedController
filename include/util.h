@@ -158,4 +158,13 @@ int cond_went(cond_t *c, int boolean);
 static inline int cond_went_false(cond_t *c) { return cond_went(c, 0); }
 static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
 
+/****************************************************************************/
+/* Console command parsing */
+
+/* Parse command-line arguments given integer shift value to obtain
+ * offset and size.
+ */
+int parse_offset_size(int argc, char **argv, int shift,
+			     int *offset, int *size);
+
 #endif  /* __CROS_EC_UTIL_H */
