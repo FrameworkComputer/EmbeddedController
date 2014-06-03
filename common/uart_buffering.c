@@ -157,11 +157,11 @@ void uart_process_input(void)
 	for (i = cur_head; i != rx_buf_head; i = RX_BUF_NEXT(i)) {
 		int c = rx_buf[i];
 
-		if (c == CTRL('Q')) {
+		if (c == CTRL('S')) {
 			/* Software flow control - XOFF */
 			uart_suspended = 1;
 			uart_tx_stop();
-		} else if (c == CTRL('S')) {
+		} else if (c == CTRL('Q')) {
 			/* Software flow control - XON */
 			uart_suspended = 0;
 			uart_tx_start();
@@ -197,11 +197,11 @@ void uart_process_input(void)
 		int c = uart_read_char();
 		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
 
-		if (c == CTRL('Q')) {
+		if (c == CTRL('S')) {
 			/* Software flow control - XOFF */
 			uart_suspended = 1;
 			uart_tx_stop();
-		} else if (c == CTRL('S')) {
+		} else if (c == CTRL('Q')) {
 			/* Software flow control - XON */
 			uart_suspended = 0;
 			uart_tx_start();
