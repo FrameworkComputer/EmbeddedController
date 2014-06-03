@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ina231.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -83,6 +84,11 @@ static void board_init(void)
 	/* Enable interrupts for INAs. */
 	gpio_enable_interrupt(GPIO_CC2_ALERT_L);
 	gpio_enable_interrupt(GPIO_VBUS_ALERT_L);
+
+	/* Calibrate INA0 (VBUS) with 1mA/LSB scale */
+	ina231_init(0, 0x8000, INA231_CALIB_1MA(15 /*mOhm*/));
+	/* Disable INA1 (VCONN2) to avoid leaking current */
+	ina231_init(1, 0, INA231_CALIB_1MA(15 /*mOhm*/));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

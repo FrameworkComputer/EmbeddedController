@@ -141,6 +141,6 @@ static int command_ina(int argc, char **argv)
 	return EC_ERROR_INVAL;
 }
 DECLARE_CONSOLE_COMMAND(ina, command_ina,
-			"[config|calib|mask|alert <val>]",
+			"<index> [config|calib|mask|alert <val>]",
 			"INA231 power/current sensing",
 			NULL);
