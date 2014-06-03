@@ -59,7 +59,10 @@ static inline void pd_tx_enable(int polarity)
 /* Put the TX driver in Hi-Z state */
 static inline void pd_tx_disable(int polarity)
 {
-	/* put SPI TX in Hi-Z */
+	/*
+	 * output low on SPI TX by removing alternate function mode which
+	 * restores to the initial configuration in board.c
+	 */
 	if (polarity) /* PE14 is SPI1 MISO */
 		gpio_set_alternate_function(GPIO_E, 0x4000, -1);
 	else /* PB4 is SPI1 MISO */

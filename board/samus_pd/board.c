@@ -67,10 +67,14 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_REF_PD_ODL",      GPIO_A, (1<<7),  GPIO_ODR_LOW,  NULL},
 
 	{"USB_C_CC_EN",            GPIO_C, (1<<10), GPIO_OUT_LOW,  NULL},
-	{"USB_C0_CC1_TX_EN",       GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
-	{"USB_C0_CC2_TX_EN",       GPIO_E, (1<<12), GPIO_OUT_LOW, NULL},
-	{"USB_C1_CC1_TX_EN",       GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
-	{"USB_C1_CC2_TX_EN",       GPIO_B, (1<<12), GPIO_OUT_LOW, NULL},
+	{"USB_C0_CC1_TX_EN",       GPIO_A, (1<<15), GPIO_OUT_LOW,  NULL},
+	{"USB_C0_CC2_TX_EN",       GPIO_E, (1<<12), GPIO_OUT_LOW,  NULL},
+	{"USB_C1_CC1_TX_EN",       GPIO_B, (1<<9),  GPIO_OUT_LOW,  NULL},
+	{"USB_C1_CC2_TX_EN",       GPIO_B, (1<<12), GPIO_OUT_LOW,  NULL},
+	{"USB_C0_CC1_TX_DATA",     GPIO_B, (1<<4),  GPIO_OUT_LOW,  NULL},
+	{"USB_C1_CC1_TX_DATA",     GPIO_B, (1<<14), GPIO_OUT_LOW,  NULL},
+	{"USB_C0_CC2_TX_DATA",     GPIO_E, (1<<14), GPIO_OUT_LOW,  NULL},
+	{"USB_C1_CC2_TX_DATA",     GPIO_D, (1<<3),  GPIO_OUT_LOW,  NULL},
 
 #if 0
 	/* Alternate functions */
@@ -78,15 +82,6 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_TX_CLKOUT",       GPIO_E, (1<<1),  GPIO_OUT_LOW,  NULL},
 	{"USB_C0_TX_CLKIN",        GPIO_B, (1<<3),  GPIO_OUT_LOW,  NULL},
 	{"USB_C1_TX_CLKIN",        GPIO_B, (1<<13), GPIO_OUT_LOW,  NULL},
-
-	{"USB_C0_CC1_TX_DATA",     GPIO_B, (1<<4),  GPIO_OUT_LOW,  NULL},
-	{"USB_C0_CC1_TX_DATA",     GPIO_B, (1<<5),  GPIO_INPUT,    NULL},
-	{"USB_C1_CC1_TX_DATA",     GPIO_B, (1<<14), GPIO_OUT_LOW,  NULL},
-	{"USB_C1_CC1_TX_DATA",     GPIO_B, (1<<15), GPIO_INPUT,    NULL},
-	{"USB_C0_CC2_TX_DATA",     GPIO_E, (1<<14), GPIO_OUT_LOW,  NULL},
-	{"USB_C0_CC2_TX_DATA",     GPIO_E, (1<<15), GPIO_INPUT,    NULL},
-	{"USB_C1_CC2_TX_DATA",     GPIO_D, (1<<3),  GPIO_OUT_LOW,  NULL},
-	{"USB_C1_CC2_TX_DATA",     GPIO_D, (1<<4),  GPIO_INPUT,    NULL},
 #endif
 
 	/* Power and muxes control */
