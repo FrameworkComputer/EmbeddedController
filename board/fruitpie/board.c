@@ -42,9 +42,9 @@ const struct gpio_info gpio_list[] = {
 	{"USB_CC2_PD",        GPIO_A, (1<<4),  GPIO_ANALOG, NULL},
 	{"PD_CLK_OUT",        GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
 	{"PD_TX_EN",          GPIO_B, (1<<12), GPIO_OUT_LOW, NULL},
+	{"PD_TX_DATA",        GPIO_B, (1<<14), GPIO_OUT_LOW, NULL},
 #if 0
 	{"PD_CLK_IN",         GPIO_B, (1<<13), GPIO_OUT_LOW, NULL},
-	{"PD_TX_DATA",        GPIO_B, (1<<14), GPIO_OUT_LOW, NULL},
 #endif
 
 	/* Power and muxes control */
@@ -104,7 +104,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_B, 0x6000, 0, MODULE_USB_PD},/* SPI2: MISO(PB14) SCK(PB13) */
+	{GPIO_B, 0x2000, 0, MODULE_USB_PD},/* SPI2: SCK(PB13) */
 	{GPIO_B, 0x0200, 2, MODULE_USB_PD},/* TIM17_CH1: PB9) */
 	{GPIO_A, 0xC000, 1, MODULE_UART},  /* USART2: PA14/PA15 */
 	{GPIO_B, 0x0cc0, 1, MODULE_I2C},   /* I2C SLAVE:PB6/7 MASTER:PB10/11 */

@@ -69,9 +69,9 @@ enum gpio_signal {
 	GPIO_USB_CC2_PD,
 	GPIO_PD_CLK_OUT,
 	GPIO_PD_TX_EN,
+	GPIO_PD_TX_DATA,
 #if 0
 	GPIO_PD_CLK_IN,
-	GPIO_PD_TX_DATA,
 #endif
 
 	/* Power and muxes control */

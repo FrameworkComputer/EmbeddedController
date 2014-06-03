@@ -47,11 +47,20 @@ static inline void pd_set_pins_speed(void)
 static inline void pd_tx_enable(int polarity)
 {
 	gpio_set_level(GPIO_PD_TX_EN, 1);
+	/* TX_DATA on PB14 is now connected to SPI2 */
+	gpio_set_alternate_function(GPIO_B, 0x4000, 0);
 }
 
 /* Put the TX driver in Hi-Z state */
 static inline void pd_tx_disable(int polarity)
 {
+	/* TX_DATA on PB14 is an output low GPIO to disable the FET */
+	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B) & ~(3 << (2*14)))
+							     |  (1 << (2*14));
+	/*
+	 * Tri-state the low side after the high side
+	 * to ensure we are not going above Vnc
+	 */
 	gpio_set_level(GPIO_PD_TX_EN, 0);
 }
 
