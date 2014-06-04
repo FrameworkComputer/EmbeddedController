@@ -20,6 +20,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
 
 /*
  * Default timeout in us; if we've been waiting this long for an input
@@ -332,8 +333,73 @@ DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Interrupts */
 
+#ifdef CONFIG_BRINGUP
+#define MAX_SIGLOG_ENTRIES 24
+
+static unsigned int siglog_entries;
+static unsigned int siglog_truncated;
+
+static struct {
+	timestamp_t time;
+	enum gpio_signal signal;
+	int level;
+} siglog[MAX_SIGLOG_ENTRIES];
+
+static void siglog_deferred(void)
+{
+	const struct gpio_info *g = gpio_list;
+	unsigned int i;
+	timestamp_t tdiff = {.val = 0};
+
+	/* Disable interrupts for input signals while we print stuff.*/
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
+		gpio_disable_interrupt(power_signal_list[i].gpio);
+
+	CPRINTF("%d signal changes:\n", siglog_entries);
+	for (i = 0; i < siglog_entries; i++) {
+		if (i)
+			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
+		CPRINTF("  %.6ld  +%.6ld  %s => %d\n",
+			siglog[i].time.val, tdiff.val,
+			g[siglog[i].signal].name,
+			siglog[i].level);
+	}
+	if (siglog_truncated)
+		CPRINTF("  SIGNAL LOG TRUNCATED...\n");
+	siglog_entries = siglog_truncated = 0;
+
+	/* Okay, turn 'em on again. */
+	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
+		gpio_enable_interrupt(power_signal_list[i].gpio);
+}
+DECLARE_DEFERRED(siglog_deferred);
+
+static void siglog_add(enum gpio_signal signal)
+{
+	if (siglog_entries >= MAX_SIGLOG_ENTRIES) {
+		siglog_truncated = 1;
+		return;
+	}
+
+	siglog[siglog_entries].time = get_time();
+	siglog[siglog_entries].signal = signal;
+	siglog[siglog_entries].level = gpio_get_level(signal);
+	siglog_entries++;
+
+	hook_call_deferred(siglog_deferred, SECOND);
+}
+
+#define SIGLOG(S) siglog_add(S)
+
+#else
+#define SIGLOG(S)
+#endif	/* CONFIG_BRINGUP */
+
+
 void power_signal_interrupt(enum gpio_signal signal)
 {
+	SIGLOG(signal);
+
 	/* Shadow signals and compare with our desired signal state. */
 	power_update_signals();
 

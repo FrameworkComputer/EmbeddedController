@@ -111,6 +111,10 @@ test_mockable int main(void)
 	CPRINTF("[Image: %s, %s]\n",
 		 system_get_image_copy_string(), system_get_build_info());
 
+#ifdef CONFIG_BRINGUP
+	ccprintf("\n\nWARNING: BRINGUP BUILD\n\n\n");
+#endif
+
 #ifdef CONFIG_WATCHDOG
 	/*
 	 * Intialize watchdog timer.  All lengthy operations between now and

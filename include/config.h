@@ -164,6 +164,10 @@
 #undef CONFIG_BOOTCFG_VALUE
 
 /*****************************************************************************/
+/* Modify the default behavior to make system bringup easier. */
+#undef CONFIG_BRINGUP
+
+/*****************************************************************************/
 
 /*
  * Number of extra buttons not on the keyboard scan matrix. Doesn't include
