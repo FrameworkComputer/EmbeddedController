@@ -951,7 +951,7 @@ struct rgb_s {
 /* List of tweakable parameters. NOTE: It's __packed so it can be sent in a
  * host command, but the alignment is the same regardless. Keep it that way.
  */
-struct lightbar_params {
+struct lightbar_params_v0 {
 	/* Timing */
 	int32_t google_ramp_up;
 	int32_t google_ramp_down;
@@ -985,12 +985,55 @@ struct lightbar_params {
 	struct rgb_s color[8];			/* 0-3 are Google colors */
 } __packed;
 
+struct lightbar_params_v1 {
+	/* Timing */
+	int32_t google_ramp_up;
+	int32_t google_ramp_down;
+	int32_t s3s0_ramp_up;
+	int32_t s0_tick_delay[2];		/* AC=0/1 */
+	int32_t s0a_tick_delay[2];		/* AC=0/1 */
+	int32_t s0s3_ramp_down;
+	int32_t s3_sleep_for;
+	int32_t s3_ramp_up;
+	int32_t s3_ramp_down;
+	int32_t tap_tick_delay;
+	int32_t tap_display_time;
+
+	/* Tap-for-battery params */
+	uint8_t tap_pct_red;
+	uint8_t tap_pct_green;
+	uint8_t tap_seg_min_on;
+	uint8_t tap_seg_max_on;
+	uint8_t tap_seg_osc;
+	uint8_t tap_idx[3];
+
+	/* Oscillation */
+	uint8_t osc_min[2];			/* AC=0/1 */
+	uint8_t osc_max[2];			/* AC=0/1 */
+	uint8_t w_ofs[2];			/* AC=0/1 */
+
+	/* Brightness limits based on the backlight and AC. */
+	uint8_t bright_bl_off_fixed[2];		/* AC=0/1 */
+	uint8_t bright_bl_on_min[2];		/* AC=0/1 */
+	uint8_t bright_bl_on_max[2];		/* AC=0/1 */
+
+	/* Battery level thresholds */
+	uint8_t battery_threshold[LB_BATTERY_LEVELS - 1];
+
+	/* Map [AC][battery_level] to color index */
+	uint8_t s0_idx[2][LB_BATTERY_LEVELS];	/* AP is running */
+	uint8_t s3_idx[2][LB_BATTERY_LEVELS];	/* AP is sleeping */
+
+	/* Color palette */
+	struct rgb_s color[8];			/* 0-3 are Google colors */
+} __packed;
+
 struct ec_params_lightbar {
 	uint8_t cmd;		      /* Command (see enum lightbar_command) */
 	union {
 		struct {
 			/* no args */
-		} dump, off, on, init, get_seq, get_params,
+		} dump, off, on, init, get_seq, get_params_v0, get_params_v1,
 			version, get_brightness, get_demo;
 
 		struct {
@@ -1009,7 +1052,8 @@ struct ec_params_lightbar {
 			uint8_t led;
 		} get_rgb;
 
-		struct lightbar_params set_params;
+		struct lightbar_params_v0 set_params_v0;
+		struct lightbar_params_v1 set_params_v1;
 	};
 } __packed;
 
@@ -1027,7 +1071,8 @@ struct ec_response_lightbar {
 			uint8_t num;
 		} get_seq, get_brightness, get_demo;
 
-		struct lightbar_params get_params;
+		struct lightbar_params_v0 get_params_v0;
+		struct lightbar_params_v1 get_params_v1;
 
 		struct {
 			uint32_t num;
@@ -1041,7 +1086,7 @@ struct ec_response_lightbar {
 		struct {
 			/* no return params */
 		} off, on, init, set_brightness, seq, reg, set_rgb,
-			demo, set_params;
+			demo, set_params_v0, set_params_v1;
 	};
 } __packed;
 
@@ -1057,12 +1102,14 @@ enum lightbar_command {
 	LIGHTBAR_CMD_SET_RGB = 7,
 	LIGHTBAR_CMD_GET_SEQ = 8,
 	LIGHTBAR_CMD_DEMO = 9,
-	LIGHTBAR_CMD_GET_PARAMS = 10,
-	LIGHTBAR_CMD_SET_PARAMS = 11,
+	LIGHTBAR_CMD_GET_PARAMS_V0 = 10,
+	LIGHTBAR_CMD_SET_PARAMS_V0 = 11,
 	LIGHTBAR_CMD_VERSION = 12,
 	LIGHTBAR_CMD_GET_BRIGHTNESS = 13,
 	LIGHTBAR_CMD_GET_RGB = 14,
 	LIGHTBAR_CMD_GET_DEMO = 15,
+	LIGHTBAR_CMD_GET_PARAMS_V1 = 16,
+	LIGHTBAR_CMD_SET_PARAMS_V1 = 17,
 	LIGHTBAR_NUM_CMDS
 };
 

@@ -19,4 +19,5 @@
 	LBMSG(RUN),		/* 9 */		\
 	LBMSG(PULSE),		/* A */		\
 	LBMSG(TEST),		/* B */		\
-	LBMSG(KONAMI),		/* C */
+	LBMSG(KONAMI),		/* C */         \
+	LBMSG(TAP),		/* D */

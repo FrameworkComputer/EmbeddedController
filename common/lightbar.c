@@ -48,6 +48,7 @@ static struct p_state {
 
 	/* Quantized battery charge level: 0=low 1=med 2=high 3=full. */
 	int battery_level;
+	int battery_percent;
 
 	/* It's either charging or discharging. */
 	int battery_is_charging;
@@ -58,11 +59,11 @@ static struct p_state {
 
 	uint8_t _pad0;				/* next item is __packed */
 
-	/* Tweakable parameters */
-	struct lightbar_params p;
+	/* Tweakable parameters. */
+	struct lightbar_params_v1 p;
 } st;
 
-static const struct lightbar_params default_params = {
+static const struct lightbar_params_v1 default_params = {
 	.google_ramp_up = 2500,
 	.google_ramp_down = 10000,
 	.s3s0_ramp_up = 2000,
@@ -72,8 +73,15 @@ static const struct lightbar_params default_params = {
 	.s3_sleep_for = 5 * SECOND,		/* between checks */
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
+	.tap_tick_delay = 5000,			/* oscillation step time */
+	.tap_display_time = 5000000,		/* total sequence time */
 
-	.new_s0 = 1,				/* 0=gentle, 1=pulse */
+	.tap_pct_red = 10,			/* below this is red */
+	.tap_pct_green = 97,			/* above this is green */
+	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
+	.tap_seg_max_on = 100,			/* max intensity (%) for "on" */
+	.tap_seg_osc = 25,			/* amplitude for charging osc */
+	.tap_idx = {5, 6, 7},			/* color [red, yellow, green] */
 
 	.osc_min = { 0x60, 0x60 },		/* battery, AC */
 	.osc_max = { 0xd0, 0xd0 },		/* battery, AC */
@@ -119,11 +127,14 @@ static void lightbar_restore_state(void)
 	old_state = system_get_jump_tag(LB_SYSJUMP_TAG, 0, &size);
 	if (old_state && size == sizeof(st)) {
 		memcpy(&st, old_state, size);
-		CPRINTS("LB state restored: %d %d - %d/%d",
+		CPRINTS("LB state restored: %d %d - %d %d/%d",
 			st.cur_seq, st.prev_seq,
-			st.battery_is_charging, st.battery_level);
+			st.battery_is_charging,
+			st.battery_percent,
+			st.battery_level);
 	} else {
 		st.cur_seq = st.prev_seq = LIGHTBAR_S5;
+		st.battery_percent = 100;
 		st.battery_level = LB_BATTERY_LEVELS - 1;
 		st.w0 = 0;
 		st.ramp = 0;
@@ -145,25 +156,31 @@ static int last_backlight_level;
 
 static int demo_mode = DEMO_MODE_DEFAULT;
 
+static int quantize_battery_level(int pct)
+{
+	int i, bl = 0;
+	for (i = 0; i < LB_BATTERY_LEVELS - 1; i++)
+		if (pct >= st.p.battery_threshold[i])
+			bl++;
+	return bl;
+}
+
 /* Update the known state. */
 static void get_battery_level(void)
 {
 	int pct = 0;
-	int i, bl;
+	int bl;
 
 	if (demo_mode)
 		return;
 
 #ifdef HAS_TASK_CHARGER
-	pct = charge_get_percent();
+	st.battery_percent = pct = charge_get_percent();
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
 #endif
 
 	/* Find the new battery level */
-	bl = 0;
-	for (i = 0; i < LB_BATTERY_LEVELS - 1; i++)
-		if (pct >= st.p.battery_threshold[i])
-			bl++;
+	bl = quantize_battery_level(pct);
 
 	/* Use some hysteresis to avoid flickering */
 	if (bl > st.battery_level
@@ -203,21 +220,27 @@ static void get_battery_level(void)
 /* Forcing functions for demo mode, called by the keyboard task. */
 
 /* Up/Down keys */
+#define DEMO_CHARGE_STEP 1
 void demo_battery_level(int inc)
 {
 	if (!demo_mode)
 		return;
 
-	st.battery_level += inc;
-	if (st.battery_level >= LB_BATTERY_LEVELS)
-		st.battery_level = LB_BATTERY_LEVELS - 1;
-	else if (st.battery_level < 0)
-		st.battery_level = 0;
+	st.battery_percent += DEMO_CHARGE_STEP * inc;
 
-	CPRINTS("LB demo: battery_level=%d", st.battery_level);
+	if (st.battery_percent > 100)
+		st.battery_percent = 100;
+	else if (st.battery_percent < 0)
+		st.battery_percent = 0;
+
+	st.battery_level = quantize_battery_level(st.battery_percent);
+
+	CPRINTS("LB demo: battery_percent = %d%%, battery_level=%d",
+		st.battery_percent, st.battery_level);
 }
 
 /* Left/Right keys */
+
 void demo_is_charging(int ischarge)
 {
 	if (!demo_mode)
@@ -282,10 +305,9 @@ static inline float cycle_010(uint8_t i)
 
 /* This function provides a smooth oscillation between -0.5 and +0.5.
  * Zero starts at 0x00. */
-static inline float cycle_0p0n0(uint16_t i)
+static inline float cycle_0p0n0(uint8_t i)
 {
-	uint8_t i8 = i & 0x00FF;
-	return cycle_010(i8+64) - 0.5f;
+	return cycle_010(i + 64) - 0.5f;
 }
 
 /* This function provides a pulsing oscillation between -0.5 and +0.5. */
@@ -348,7 +370,7 @@ static uint32_t pulse_google_colors(void)
 static uint32_t sequence_S3S0(void)
 {
 	int w, r, g, b;
-	float f, fmin, fmax, base_s0, goal;
+	float f, fmin;
 	int ci;
 	uint32_t res;
 
@@ -366,12 +388,9 @@ static uint32_t sequence_S3S0(void)
 		ci = 0;
 
 	fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
-	fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
-	base_s0 = (fmax + fmin) * 0.5f;
-	goal = st.p.new_s0 ? fmin : base_s0;
 
 	for (w = 0; w <= 128; w++) {
-		f = cycle_010(w) * goal;
+		f = cycle_010(w) * fmin;
 		r = st.p.color[ci].r * f;
 		g = st.p.color[ci].g * f;
 		b = st.p.color[ci].b * f;
@@ -428,13 +447,8 @@ static uint32_t sequence_S0(void)
 		f_ramp = st.ramp / 255.0f;
 
 		for (i = 0; i < NUM_LEDS; i++) {
-			if (st.p.new_s0) {
-				w = st.w0 - i * w_ofs * f_ramp;
-				f = base_s0 + osc_s0 * cycle_npn(w);
-			} else {
-				w = st.w0 - i * w_ofs * f_ramp;
-				f = base_s0 + osc_s0 * cycle_0p0n0(w) * f_ramp;
-			}
+			w = st.w0 - i * w_ofs * f_ramp;
+			f = base_s0 + osc_s0 * cycle_npn(w);
 			r = st.p.color[ci].r * f;
 			g = st.p.color[ci].g * f;
 			b = st.p.color[ci].b * f;
@@ -451,8 +465,7 @@ static uint32_t sequence_S0(void)
 		if (st.ramp < 0xff)
 			st.ramp++;
 
-		i = st.p.new_s0 ? st.p.s0a_tick_delay[st.battery_is_charging]
-			: st.p.s0_tick_delay[st.battery_is_charging];
+		i = st.p.s0a_tick_delay[st.battery_is_charging];
 		WAIT_OR_RET(i);
 	}
 	return 0;
@@ -751,10 +764,6 @@ static uint32_t sequence_KONAMI(void)
 	int i;
 	int tmp;
 
-	lb_off();
-	lb_init();
-	lb_on();
-
 	tmp = lb_get_brightness();
 	lb_set_brightness(255);
 
@@ -767,6 +776,113 @@ static uint32_t sequence_KONAMI(void)
 
 	lb_set_brightness(tmp);
 	return 0;
+}
+
+/* Returns 0.0 to 1.0 for val in [min, min + ofs] */
+static float range(int val, int min, int ofs)
+{
+	if (val <= min)
+		return 0.0f;
+	if (val >= min+ofs)
+		return 1.0f;
+	return (float)(val - min) / ofs;
+}
+
+/* Handy constant */
+#define CUT (100 / NUM_LEDS)
+
+static uint32_t sequence_TAP_inner(void)
+{
+	enum { RED, YELLOW, GREEN } base_color;
+	timestamp_t start, now;
+	int i, ci, max_led;
+	float min, delta, osc, power, mult;
+	uint8_t w = 0;
+
+	min = st.p.tap_seg_min_on / 100.0f;
+	delta = (st.p.tap_seg_max_on - st.p.tap_seg_min_on) / 100.0f;
+	osc = st.p.tap_seg_osc / 100.0f;
+
+	start = get_time();
+	while (1) {
+		if (st.battery_percent < st.p.tap_pct_red)
+			base_color = RED;
+		else if (st.battery_percent > st.p.tap_pct_green)
+			base_color = GREEN;
+		else
+			base_color = YELLOW;
+
+		ci = st.p.tap_idx[base_color];
+		max_led = st.battery_percent / CUT;
+
+		for (i = 0; i < NUM_LEDS; i++) {
+
+			if (max_led > i) {
+				mult = 1.0f;
+			} else if (max_led < i) {
+				mult = 0.0f;
+			} else {
+				switch (base_color) {
+				case RED:
+					power = range(st.battery_percent,
+						      0, st.p.tap_pct_red - 1);
+					break;
+				case YELLOW:
+					power = range(st.battery_percent,
+						      i * CUT, CUT - 1);
+					break;
+				case GREEN:
+					/* green is always full on */
+					power = 1.0f;
+				}
+				mult = min + power * delta;
+			}
+
+			/* Pulse when charging */
+			if (st.battery_is_charging)
+				mult *= 1.0f - (osc * cycle_010(w++));
+
+			lb_set_rgb(i, mult * st.p.color[ci].r,
+				   mult * st.p.color[ci].g,
+				   mult * st.p.color[ci].b);
+		}
+		/*
+		 * TODO: Use a different delay function here. Otherwise,
+		 * it's possible that a new sequence (such as KONAMI) can end
+		 * up with TAP as it's previous sequence. It's okay to return
+		 * early from TAP (or not), but we don't want to end up stuck
+		 * in the TAP sequence.
+		 */
+		WAIT_OR_RET(st.p.tap_tick_delay);
+		now = get_time();
+		if (now.le.lo - start.le.lo > st.p.tap_display_time)
+			break;
+	}
+	return 0;
+}
+
+static uint32_t sequence_TAP(void)
+{
+	int i;
+	uint32_t r;
+	uint8_t br, save[NUM_LEDS][3];
+
+	/* TODO(crosbug.com/p/29041): do we need more than lb_init() */
+	lb_init();
+	lb_on();
+
+	for (i = 0; i < NUM_LEDS; i++)
+		lb_get_rgb(i, &save[i][0], &save[i][1], &save[i][2]);
+	br = lb_get_brightness();
+	lb_set_brightness(255);
+
+	r = sequence_TAP_inner();
+
+	lb_set_brightness(br);
+	for (i = 0; i < NUM_LEDS; i++)
+		lb_set_rgb(i, save[i][0], save[i][1], save[i][2]);
+
+	return r;
 }
 
 /****************************************************************************/
@@ -801,8 +917,10 @@ void lightbar_task(void)
 		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) {
 			CPRINTS("LB msg %d = %s", pending_msg,
 				lightbar_cmds[pending_msg].string);
-			st.prev_seq = st.cur_seq;
-			st.cur_seq = pending_msg;
+			if (st.cur_seq != pending_msg) {
+				st.prev_seq = st.cur_seq;
+				st.cur_seq = pending_msg;
+			}
 		} else {
 			CPRINTS("LB msg 0x%x", msg);
 			switch (st.cur_seq) {
@@ -823,6 +941,7 @@ void lightbar_task(void)
 			case LIGHTBAR_RUN:
 			case LIGHTBAR_ERROR:
 			case LIGHTBAR_KONAMI:
+			case LIGHTBAR_TAP:
 				st.cur_seq = st.prev_seq;
 			default:
 				break;
@@ -935,14 +1054,22 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		out->get_demo.num = demo_mode;
 		args->response_size = sizeof(out->get_demo);
 		break;
-	case LIGHTBAR_CMD_GET_PARAMS:
-		CPRINTS("LB_get_params");
-		memcpy(&out->get_params, &st.p, sizeof(st.p));
-		args->response_size = sizeof(out->get_params);
+	case LIGHTBAR_CMD_GET_PARAMS_V0:
+		CPRINTS("LB_get_params_v0 not supported");
+		return EC_RES_INVALID_VERSION;
 		break;
-	case LIGHTBAR_CMD_SET_PARAMS:
-		CPRINTS("LB_set_params");
-		memcpy(&st.p, &in->set_params, sizeof(st.p));
+	case LIGHTBAR_CMD_SET_PARAMS_V0:
+		CPRINTS("LB_set_params_v0 not supported");
+		return EC_RES_INVALID_VERSION;
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V1:
+		CPRINTS("LB_get_params_v1");
+		memcpy(&out->get_params_v1, &st.p, sizeof(st.p));
+		args->response_size = sizeof(out->get_params_v1);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V1:
+		CPRINTS("LB_set_params_v1");
+		memcpy(&st.p, &in->set_params_v1, sizeof(st.p));
 		break;
 	case LIGHTBAR_CMD_VERSION:
 		CPRINTS("LB_version");
@@ -1008,7 +1135,7 @@ static void show_msg_names(void)
 		 lightbar_cmds[st.cur_seq].string);
 }
 
-static void show_params(const struct lightbar_params *p)
+static void show_params_v1(const struct lightbar_params_v1 *p)
 {
 	int i;
 
@@ -1023,7 +1150,15 @@ static void show_params(const struct lightbar_params *p)
 	ccprintf("%d\t\t# .s3_sleep_for\n", p->s3_sleep_for);
 	ccprintf("%d\t\t# .s3_ramp_up\n", p->s3_ramp_up);
 	ccprintf("%d\t\t# .s3_ramp_down\n", p->s3_ramp_down);
-	ccprintf("%d\t\t# .new_s0\n", p->new_s0);
+	ccprintf("%d\t\t# .tap_tick_delay\n", p->tap_tick_delay);
+	ccprintf("%d\t\t# .tap_display_time\n", p->tap_display_time);
+	ccprintf("%d\t\t# .tap_pct_red\n", p->tap_pct_red);
+	ccprintf("%d\t\t# .tap_pct_green\n", p->tap_pct_green);
+	ccprintf("%d\t\t# .tap_seg_min_on\n", p->tap_seg_min_on);
+	ccprintf("%d\t\t# .tap_seg_max_on\n", p->tap_seg_max_on);
+	ccprintf("%d\t\t# .tap_seg_osc\n", p->tap_seg_osc);
+	ccprintf("%d %d %d\t\t# .tap_idx\n",
+		 p->tap_idx[0], p->tap_idx[1], p->tap_idx[2]);
 	ccprintf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
 		 p->osc_min[0], p->osc_min[1]);
 	ccprintf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",
@@ -1097,7 +1232,7 @@ static int command_lightbar(int argc, char **argv)
 		if (argc > 2)
 			lb_read_params_from_file(argv[2], &st.p);
 #endif
-		show_params(&st.p);
+		show_params_v1(&st.p);
 		return EC_SUCCESS;
 	}
 
