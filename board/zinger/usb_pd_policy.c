@@ -148,7 +148,8 @@ int pd_request_voltage(uint32_t rdo)
 		     ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
 		     ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
-	output_disable();
+	if (idx - 1 < volt_idx) /* down voltage transition */
+		output_disable();
 	/* TODO discharge ? */
 	volt_idx = idx - 1;
 	set_output_voltage(voltages[volt_idx].select);
