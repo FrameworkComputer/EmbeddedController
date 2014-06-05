@@ -47,6 +47,7 @@ int fake_consolecmd_lightbar(int argc, char *argv[]);
 
 /* Non-standard standard library functions */
 void cprintf(int zero, const char *fmt, ...);
+void cprints(int zero, const char *fmt, ...);
 #define ccprintf(fmt...) cprintf(0, fmt)
 #define strtoi strtol
 

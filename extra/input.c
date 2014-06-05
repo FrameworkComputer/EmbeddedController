@@ -11,6 +11,40 @@
 
 #include "simulation.h"
 
+#ifdef HAS_GNU_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+
+char *get_input(const char *prompt)
+{
+	static char *line;
+
+	if (line) {
+		free(line);
+		line = 0;
+	}
+
+	line = readline(prompt);
+
+	if (line && *line)
+		add_history(line);
+
+	return line;
+}
+
+#else  /* no readline */
+
+char *get_input(const char *prompt)
+{
+	static char mybuf[80];
+	char *got;
+	printf("%s", prompt);
+	got = fgets(mybuf, sizeof(mybuf), stdin);
+	return got;
+}
+
+#endif /* HAS_GNU_READLINE */
+
 void *entry_input(void *ptr)
 {
 	char *got, buf[80];
@@ -20,9 +54,9 @@ void *entry_input(void *ptr)
 	int ret;
 
 	do {
-		printf("lightbar%% ");
-		got = fgets(buf, sizeof(buf), stdin);
+		got = get_input("lightbar% ");
 		if (got) {
+			strcpy(buf, got);
 			argc = 0;
 			argv[argc++] = "lightbar";
 			word = str = buf;

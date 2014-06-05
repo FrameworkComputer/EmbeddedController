@@ -5,12 +5,14 @@
  */
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "simulation.h"
 
@@ -28,6 +30,7 @@ int main(int argc, char *argv[])
 	printf("\nLook at the README file.\n");
 	printf("Click in the window.\n");
 	printf("Type \"help\" for commands.\n\n");
+	fflush(stdout);
 
 	init_windows();
 
@@ -77,7 +80,7 @@ uint32_t task_wait_event(int timeout_us)
 
 	if (timeout_us > 0) {
 		clock_gettime(CLOCK_REALTIME, &t);
-		timespec_incr(&t, 0, timeout_us * TS_USEC);
+		timespec_incr(&t, timeout_us / SECOND, timeout_us * TS_USEC);
 
 		if (ETIMEDOUT == pthread_cond_timedwait(&task_cond,
 							&task_mutex, &t))
@@ -124,9 +127,28 @@ void cprintf(int zero, const char *fmt, ...)
 	free(newfmt);
 }
 
+void cprints(int zero, const char *fmt, ...)
+{
+	va_list ap;
+
+	printf("[TT ");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("]\n");
+}
+
 timestamp_t get_time(void)
 {
-	timestamp_t ret = { .val = 0UL };
+	static struct timespec t_start;
+	struct timespec t;
+	timestamp_t ret;
+
+	if (!t_start.tv_sec)
+		clock_gettime(CLOCK_REALTIME, &t_start);
+	clock_gettime(CLOCK_REALTIME, &t);
+	ret.val = (t.tv_sec - t_start.tv_sec) * SECOND +
+		(t.tv_nsec - t_start.tv_nsec) / TS_USEC;
 	return ret;
 }
 
