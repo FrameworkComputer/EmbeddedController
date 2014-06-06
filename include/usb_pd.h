@@ -316,6 +316,12 @@ void pd_tx_done(int polarity);
  */
 int pd_rx_started(void);
 
+/**
+ * Suspend the PD task.
+ * @param enable pass 0 to resume, anything else to suspend
+ */
+void pd_set_suspend(int enable);
+
 /* Callback when the hardware has detected an incoming packet */
 void pd_rx_event(void);
 /* Start sampling the CC line for reception */
@@ -327,6 +333,11 @@ void pd_rx_complete(void);
 void pd_rx_enable_monitoring(void);
 /* stop listening to the CC wire during transmissions */
 void pd_rx_disable_monitoring(void);
+
+/**
+ * Deinitialize the hardware used for PD.
+ */
+void pd_hw_release(void);
 
 /**
  * Initialize the hardware used for PD RX/TX.

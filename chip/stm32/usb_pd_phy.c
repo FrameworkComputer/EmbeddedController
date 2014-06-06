@@ -394,6 +394,14 @@ void pd_rx_handler(void)
 DECLARE_IRQ(STM32_IRQ_COMP, pd_rx_handler, 1);
 #endif
 
+/* --- release hardware --- */
+void pd_hw_release(void)
+{
+	__hw_timer_enable_clock(TIM_RX, 0);
+	__hw_timer_enable_clock(TIM_TX, 0);
+	dma_disable(DMAC_SPI_TX);
+}
+
 /* --- Startup initialization --- */
 void *pd_hw_init(void)
 {
