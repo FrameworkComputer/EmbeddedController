@@ -300,9 +300,22 @@ void battery_get_params(struct batt_params *batt)
 	if (!(batt_new.flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
 				BATT_FLAG_BAD_DESIRED_CURRENT |
 				BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
+#ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
+		/*
+		 * TODO (crosbug.com/p/29467): remove this workaround
+		 * for dead battery that requests no voltage/current
+		 */
+		((batt_new.desired_voltage &&
+			batt_new.desired_current &&
+			batt_new.state_of_charge < BATTERY_LEVEL_FULL) ||
+		(batt_new.desired_voltage == 0 &&
+			batt_new.desired_current == 0 &&
+			batt_new.state_of_charge == 0)))
+#else
 	    batt_new.desired_voltage &&
 	    batt_new.desired_current &&
 	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
+#endif
 		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 	else
 		/* Force both to zero */

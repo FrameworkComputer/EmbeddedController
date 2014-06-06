@@ -570,6 +570,21 @@ void charger_task(void)
 			goto wait_for_it;
 		} else {
 			/* The battery is responding. Yay. Try to use it. */
+#ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
+			/*
+			 * TODO (crosbug.com/p/29467): remove this workaround
+			 * for dead battery that requests no voltage/current
+			 */
+			if (curr.requested_voltage == 0 &&
+			    curr.requested_current == 0 &&
+			    curr.batt.state_of_charge == 0) {
+				/* Battery is dead, give precharge current */
+				curr.requested_voltage =
+					batt_info->voltage_max;
+				curr.requested_current =
+					batt_info->precharge_current;
+			} else
+#endif
 			if (curr.state == ST_PRECHARGE ||
 			    battery_seems_to_be_dead) {
 				CPRINTS("battery woke up");

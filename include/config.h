@@ -143,6 +143,13 @@
  */
 #undef CONFIG_BATTERY_VENDOR_PARAM
 
+/*
+ * TODO(crosbug.com/p/29467): allows charging of a dead battery that
+ * requests nil for current and voltage. Remove this workaround when
+ * possible.
+ */
+#undef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
+
 /*****************************************************************************/
 
 /*

@@ -29,6 +29,8 @@
 /* Note: not CONFIG_BACKLIGHT_LID. It's handled specially for Samus. */
 #define CONFIG_BACKLIGHT_REQ_GPIO GPIO_PCH_BL_EN
 #define CONFIG_BATTERY_SAMUS
+/* TODO(crosbug.com/p/29467): remove this workaround when possible. */
+#define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER
