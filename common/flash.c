@@ -349,6 +349,7 @@ DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 			"Print flash info",
 			NULL);
 
+#ifdef CONFIG_CMD_FLASH
 static int command_flash_erase(int argc, char **argv)
 {
 	int offset = -1;
@@ -412,6 +413,7 @@ DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
 			"offset [size]",
 			"Write pattern to flash",
 			NULL);
+#endif
 
 static int command_flash_wp(int argc, char **argv)
 {
