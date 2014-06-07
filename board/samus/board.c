@@ -110,7 +110,7 @@ const struct gpio_info gpio_list[] = {
 	{"PP3300_DSW_GATED_EN",  LM4_GPIO_J, (1<<3), GPIO_OUT_LOW, NULL},
 	{"PP3300_LTE_EN",        LM4_GPIO_D, (1<<2), GPIO_OUT_LOW, NULL},
 	{"PP3300_WLAN_EN",       LM4_GPIO_J, (1<<0), GPIO_OUT_LOW, NULL},
-	{"PP3300_ACCEL_EN",      LM4_GPIO_J, (1<<1), GPIO_OUT_LOW, NULL},
+	{"PP3300_ACCEL_EN",      LM4_GPIO_J, (1<<1), GPIO_OUT_HIGH, NULL},
 	{"PP1050_EN",            LM4_GPIO_C, (1<<7), GPIO_OUT_LOW, NULL},
 	{"PP5000_USB_EN",        LM4_GPIO_C, (1<<5), GPIO_OUT_LOW, NULL},
 	{"PP5000_EN",            LM4_GPIO_H, (1<<7), GPIO_OUT_LOW, NULL},
