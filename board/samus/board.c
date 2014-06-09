@@ -100,7 +100,6 @@ const struct gpio_info gpio_list[] = {
 	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
 	{"BOARD_VERSION2",       LM4_GPIO_Q, (1<<6), GPIO_INPUT, NULL},
 	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
-	{"CPU_PGOOD",            LM4_GPIO_C, (1<<4), GPIO_INPUT, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},
@@ -126,6 +125,7 @@ const struct gpio_info gpio_list[] = {
 	{"ENTERING_RW",          LM4_GPIO_D, (1<<3), GPIO_OUT_LOW, NULL},
 	{"LIGHTBAR_RESET_L",     LM4_GPIO_J, (1<<2), GPIO_ODR_LOW, NULL},
 	{"PCH_DPWROK",           LM4_GPIO_G, (1<<0), GPIO_OUT_LOW, NULL},
+	{"PCH_RSMRST_L",         LM4_GPIO_C, (1<<4), GPIO_OUT_LOW, NULL},
 	/*
 	 * HDA_SDO is technically an output, but we need to leave it as an
 	 * input until we drive it high.  So can't use open-drain (HI_Z).

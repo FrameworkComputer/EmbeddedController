@@ -109,7 +109,6 @@ enum gpio_signal {
 	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
 	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
 	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
-	GPIO_CPU_PGOOD,            /* Power good to the CPU */
 	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
 	GPIO_USB1_STATUS_L,        /* USB charger port 1 status output */
 	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
@@ -136,6 +135,7 @@ enum gpio_signal {
 	GPIO_ENTERING_RW,          /* Indicate when EC is entering RW code */
 	GPIO_LIGHTBAR_RESET_L,     /* Reset lightbar controllers */
 	GPIO_PCH_DPWROK,           /* Indicate when VccDSW is good */
+	GPIO_PCH_RSMRST_L,         /* Reset PCH resume power plane logic */
 
 	GPIO_PCH_HDA_SDO,          /* HDA_SDO signal to PCH; when high, ME
 				    * ignores security descriptor */

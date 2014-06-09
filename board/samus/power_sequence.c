@@ -70,6 +70,25 @@ void chipset_force_shutdown(void)
 	 * transitions to G3.
 	 */
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
+	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+}
+
+static void chipset_force_g3(void)
+{
+	CPRINTS("Forcing G3");
+
+	gpio_set_level(GPIO_PCH_PWROK, 0);
+	gpio_set_level(GPIO_SYS_PWROK, 0);
+	gpio_set_level(GPIO_PP1050_EN, 0);
+	gpio_set_level(GPIO_PP1200_EN, 0);
+	gpio_set_level(GPIO_PP1800_EN, 0);
+	gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
+	gpio_set_level(GPIO_PP5000_USB_EN, 0);
+	gpio_set_level(GPIO_PP5000_EN, 0);
+	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+	gpio_set_level(GPIO_PCH_DPWROK, 0);
+	gpio_set_level(GPIO_PP3300_DSW_EN, 0);
+	wireless_set_state(WIRELESS_OFF);
 }
 
 void chipset_reset(int cold_reset)
@@ -130,18 +149,7 @@ enum power_state power_chipset_init(void)
 			return POWER_S0;
 		} else {
 			/* Force all signals to their G3 states */
-			CPRINTS("forcing G3");
-			gpio_set_level(GPIO_PCH_PWROK, 0);
-			gpio_set_level(GPIO_SYS_PWROK, 0);
-			gpio_set_level(GPIO_PP1050_EN, 0);
-			gpio_set_level(GPIO_PP1200_EN, 0);
-			gpio_set_level(GPIO_PP1800_EN, 0);
-			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
-			gpio_set_level(GPIO_PP5000_USB_EN, 0);
-			gpio_set_level(GPIO_PP5000_EN, 0);
-			gpio_set_level(GPIO_PCH_DPWROK, 0);
-			gpio_set_level(GPIO_PP3300_DSW_EN, 0);
-			wireless_set_state(WIRELESS_OFF);
+			chipset_force_g3();
 		}
 	}
 
@@ -217,8 +225,7 @@ enum power_state power_handle_state(enum power_state state)
 		while ((power_get_signals() & IN_PGOOD_PP5000) != 0) {
 			if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 				CPRINTS("timeout waiting for PP5000");
-				gpio_set_level(GPIO_PP5000_EN, 0);
-				chipset_force_shutdown();
+				chipset_force_g3();
 				return POWER_G3;
 			}
 		}
@@ -228,19 +235,24 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Assert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
+		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
+			CPRINTS("timeout waiting for SLP_SUS to deassert");
+			chipset_force_g3();
+			return POWER_G3;
+		}
 
 		/* Enable PP1050 rail. */
 		gpio_set_level(GPIO_PP1050_EN, 1);
 
 		/* Wait for 1.05V to come up and CPU to notice */
-		if (power_wait_signals(IN_PGOOD_PP1050 |
-				     IN_PCH_SLP_SUS_DEASSERTED)) {
-			gpio_set_level(GPIO_PP1050_EN, 0);
-			gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
-			gpio_set_level(GPIO_PP5000_EN, 0);
-			chipset_force_shutdown();
+		if (power_wait_signals(IN_PGOOD_PP1050)) {
+			CPRINTS("timeout waiting for PP1050");
+			chipset_force_g3();
 			return POWER_G3;
 		}
+
+		/* Deassert RSMRST# */
+		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 		/* Wait 5ms for SUSCLK to stabilize */
 		msleep(5);
@@ -382,10 +394,14 @@ enum power_state power_handle_state(enum power_state state)
 		/* Deassert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 
+		/* Assert RSMRST# */
+		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+
 		/* Turn off power rails enabled in S5 */
 		gpio_set_level(GPIO_PP1050_EN, 0);
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 		gpio_set_level(GPIO_PP5000_EN, 0);
+
 		/* Disable 3.3V DSW */
 		gpio_set_level(GPIO_PP3300_DSW_EN, 0);
 		return POWER_G3;
