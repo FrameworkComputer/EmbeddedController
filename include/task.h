@@ -239,6 +239,7 @@ struct irq_priority {
 #include "irq_handler.h"
 #else
 #define DECLARE_IRQ(irq, routine, priority)
+#define IRQ_HANDLER(irqname) CONCAT3(irq_, irqname, _handler)
 #endif
 
 #endif  /* __CROS_EC_TASK_H */
