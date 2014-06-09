@@ -4,8 +4,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-GPIO(CC2_ALERT_L,  A, 7,  GPIO_INT_FALLING, cc2_event)
-GPIO(VBUS_ALERT_L, B, 2,  GPIO_INT_FALLING, vbus_event)
+GPIO(CC2_ALERT_L,  A, 7,  GPIO_INT_BOTH | GPIO_PULL_UP, cc2_event)
+GPIO(VBUS_ALERT_L, B, 2,  GPIO_INT_BOTH | GPIO_PULL_UP, vbus_event)
 
 GPIO(CC1_EN,       A, 0,  GPIO_OUT_HIGH, NULL)
 GPIO(CC1_PD,       A, 1,  GPIO_ANALOG,   NULL)

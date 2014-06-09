@@ -100,7 +100,7 @@ USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_reset);
 #define EXTI_COMP 21
 
 /* Timer used for RX clocking */
-#define TIM_RX TIM_CLOCK_PD_RX
+#define TIM_RX 1
 /* Clock divider for RX edges timings (2.4Mhz counter from 48Mhz clock) */
 #define RX_CLOCK_DIV (20 - 1)
 

@@ -19,6 +19,16 @@
 #define CONFIG_USB
 #define CONFIG_USB_CONSOLE
 
+#ifdef HAS_TASK_PD /* PD message injector mode */
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_PD_USE_DAC_AS_REF
+#define CONFIG_HW_CRC
+#else /* PD sniffer mode */
+#undef CONFIG_DMA_DEFAULT_HANDLERS
+#endif
+
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_I2C
@@ -26,7 +36,6 @@
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
-#undef CONFIG_DMA_DEFAULT_HANDLERS
 
 /* I2C ports configuration */
 #define I2C_PORT_MASTER 0
@@ -45,7 +54,6 @@
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
-#define TIM_CLOCK_PD_RX 1
 #define TIM_CLOCK32 2
 #define TIM_ADC     3
 
@@ -81,7 +89,11 @@ enum usb_strings {
 #define USB_EP_CONTROL   0
 #define USB_EP_CON_TX    1
 #define USB_EP_CON_RX    2
+#ifdef HAS_TASK_SNIFFER
 #define USB_EP_SNIFFER   3
 #define USB_EP_COUNT     4
+#else
+#define USB_EP_COUNT     3
+#endif
 
 #endif /* __BOARD_H */
