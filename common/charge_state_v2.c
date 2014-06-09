@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "battery_smart.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -50,6 +51,7 @@ enum problem_type {
 	PR_STATIC_UPDATE,
 	PR_SET_VOLTAGE,
 	PR_SET_CURRENT,
+	PR_SET_MODE,
 	PR_POST_INIT,
 	PR_CHG_FLAGS,
 	PR_BATT_FLAGS,
@@ -61,6 +63,7 @@ static const char * const prob_text[] = {
 	"static update",
 	"set voltage",
 	"set current",
+	"set mode",
 	"post init",
 	"chg params",
 	"batt params",
@@ -293,10 +296,9 @@ static void show_charging_progress(void)
  */
 static int charge_request(int voltage, int current)
 {
-	int r1 = EC_SUCCESS, r2 = EC_SUCCESS;
+	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS;
 	static int prev_volt, prev_curr;
 
-	/* TODO(crosbug.com/p/27640): should we call charger_set_mode() too? */
 	if (!voltage || !current)
 		voltage = current = 0;
 
@@ -312,6 +314,17 @@ static int charge_request(int voltage, int current)
 		r2 = charger_set_current(current);
 	if (r2 != EC_SUCCESS)
 		problem(PR_SET_CURRENT, r2);
+
+	/*
+	 * Set the charge inhibit bit when possible as it appears to save
+	 * power in some cases (e.g. Nyan with BQ24735).
+	 */
+	if (voltage > 0 || current > 0)
+		r3 = charger_set_mode(0);
+	else
+		r3 = charger_set_mode(CHARGE_FLAG_INHIBIT_CHARGE);
+	if (r3 != EC_SUCCESS)
+		problem(PR_SET_MODE, r3);
 
 	/*
 	 * Only update if the request worked, so we'll keep trying on failures.
