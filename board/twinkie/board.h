@@ -50,6 +50,7 @@ enum gpio_signal {
 	GPIO_CC2_EN,
 	GPIO_CC2_PD,
 	GPIO_DAC,
+	GPIO_CC2_TX_DATA,
 
 	GPIO_CC1_RA,
 	GPIO_USB_DM,
@@ -61,6 +62,7 @@ enum gpio_signal {
 
 	GPIO_CC1_TX_EN,
 	GPIO_CC2_TX_EN,
+	GPIO_CC1_TX_DATA,
 	GPIO_CC1_RD,
 	GPIO_I2C_SCL,
 	GPIO_I2C_SDA,

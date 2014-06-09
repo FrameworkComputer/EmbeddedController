@@ -35,6 +35,7 @@ const struct gpio_info gpio_list[] = {
 	{"CC2_EN",            GPIO_A, (1<<2),  GPIO_OUT_HIGH, NULL},
 	{"CC2_PD",            GPIO_A, (1<<3),  GPIO_ANALOG, NULL},
 	{"DAC",               GPIO_A, (1<<4),  GPIO_ANALOG, NULL},
+	{"CC2_TX_DATA",       GPIO_A, (1<<6),  GPIO_OUT_LOW, NULL},
 
 	{"CC1_RA",            GPIO_A, (1<<8),  GPIO_ODR_HIGH, NULL},
 	{"USB_DM",            GPIO_A, (1<<11), GPIO_ANALOG, NULL},
@@ -46,6 +47,7 @@ const struct gpio_info gpio_list[] = {
 
 	{"CC1_TX_EN",         GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
 	{"CC2_TX_EN",         GPIO_B, (1<<3),  GPIO_OUT_LOW, NULL},
+	{"CC1_TX_DATA",       GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
 	{"CC1_RD",            GPIO_B, (1<<5),  GPIO_ODR_HIGH, NULL},
 	{"I2C_SCL",           GPIO_B, (1<<6),  GPIO_INPUT,    NULL},
 	{"I2C_SDA",           GPIO_B, (1<<7),  GPIO_INPUT,    NULL},
@@ -86,8 +88,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0x6000, 0, MODULE_USB_PD},/* SPI1: MISO(PA6) SCK(PA5) */
-	{GPIO_B, 0x0010, 0, MODULE_USB_PD},/* SPI1: MISO(PB4) */
+	{GPIO_A, 0x0020, 0, MODULE_USB_PD},/* SPI1: SCK(PA5) */
 	{GPIO_B, 0x0200, 2, MODULE_USB_PD},/* TIM17_CH1: PB9 */
 	{GPIO_A, 0x0600, 1, MODULE_UART, GPIO_PULL_UP},  /* USART1: PA9/PA10 */
 	{GPIO_B, 0x00C0, 1, MODULE_I2C},   /* I2C1 MASTER:PB6/7 */
