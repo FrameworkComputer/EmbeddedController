@@ -153,7 +153,7 @@ int fast_scan(uint32_t *data)
 {
 	int col;
 
-	memset(data, 0, SCAN_BUF_SIZE);
+	memset(data, 0, SCAN_BUF_SIZE * 4);
 
 	STM32_PMSE_MRCR = 1 << 31;
 	for (col = 0; col < COL_COUNT * 2; ++col) {
