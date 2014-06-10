@@ -59,7 +59,7 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C0_VBUS_WAKE",       GPIO_E, (1<<6),  GPIO_INT_BOTH, vbus_evt},
 	{"USB_C1_VBUS_WAKE",       GPIO_F, (1<<2),  GPIO_INT_BOTH, vbus_evt},
 	{"USB_C0_BC12_INT_L",      GPIO_B, (1<<0),  GPIO_INT_FALLING, bc12_evt},
-	{"USB_C1_BC12_INT_L",      GPIO_C, (1<<1),  GPIO_INT_FALLING, bc12_evt},
+	{"USB_C1_BC12_INT_L",      GPIO_C, (1<<11), GPIO_INT_FALLING, bc12_evt},
 	{"PCH_SLP_S0_L",           GPIO_C, (1<<14), GPIO_INT_BOTH, pch_evt},
 	{"PCH_SLP_S3_L",           GPIO_C, (1<<15), GPIO_INT_BOTH, pch_evt},
 	{"PCH_SLP_S5_L",           GPIO_D, (1<<7),  GPIO_INT_BOTH, pch_evt},
@@ -93,8 +93,9 @@ const struct gpio_info gpio_list[] = {
 #endif
 
 	/* Power and muxes control */
+	{"PPVAR_BOOSTIN_SENSE",    GPIO_C, (1<<1),  GPIO_ANALOG,   NULL},
 	{"PP3300_USB_PD_EN",       GPIO_A, (1<<8),  GPIO_OUT_HIGH, NULL},
-	{"USB_C0_CHARGE_EN_L",     GPIO_D, (1<<12), GPIO_OUT_LOW, NULL},
+	{"USB_C0_CHARGE_EN_L",     GPIO_D, (1<<12), GPIO_OUT_LOW,  NULL},
 	{"USB_C1_CHARGE_EN_L",     GPIO_D, (1<<13), GPIO_OUT_HIGH, NULL},
 	{"USB_C0_5V_EN",           GPIO_D, (1<<14), GPIO_OUT_LOW,  NULL},
 	{"USB_C1_5V_EN",           GPIO_D, (1<<15), GPIO_OUT_HIGH, NULL},
@@ -141,9 +142,6 @@ const struct gpio_info gpio_list[] = {
 	{"MASTER_I2C_SCL",         GPIO_B, (1<<10), GPIO_INPUT,    NULL},
 	{"MASTER_I2C_SDA",         GPIO_B, (1<<11), GPIO_INPUT,    NULL},
 
-	/* Test points */
-	{"TP60",                   GPIO_C, (1<<11), GPIO_ODR_HIGH, NULL},
-
 	/* Case closed debugging. */
 	{"SPI_FLASH_WP_L",         GPIO_D, (1<<2),  GPIO_INPUT,    NULL},
 	{"EC_INT_L",               GPIO_B, (1<<2),  GPIO_ODR_HIGH, NULL},
@@ -157,6 +155,11 @@ const struct gpio_info gpio_list[] = {
 	{"EC_JTAG_TCK",            GPIO_C, (1<<7),  GPIO_INPUT,    NULL},
 	{"EC_JTAG_TDO",            GPIO_C, (1<<8),  GPIO_INPUT,    NULL},
 	{"EC_JTAG_TDI",            GPIO_C, (1<<9),  GPIO_INPUT,    NULL},
+	{"PD_ENTERING_RW",         GPIO_B, (1<<5),  GPIO_OUT_LOW,  NULL},
+	{"PD_IN_RW",               GPIO_B, (1<<15), GPIO_INPUT,    NULL},
+	{"PD_DISABLE_DEBUG",       GPIO_E, (1<<15), GPIO_OUT_LOW,  NULL},
+	{"PD_DEBUG_EN",            GPIO_D, (1<<4),  GPIO_INPUT,    NULL},
+
 #if 0
 	/* Alternate functions */
 	{"EC_UART_TX",             GPIO_C, (1<<4),  GPIO_OUT_LOW,  NULL},
@@ -206,6 +209,9 @@ const struct adc_t adc_channels[] = {
 	[ADC_C1_CC1_PD] = {"C1_CC1_PD", 3300, 4096, 0, STM32_AIN(2)},
 	[ADC_C0_CC2_PD] = {"C0_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
 	[ADC_C1_CC2_PD] = {"C1_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
+
+	/* Vbus sensing. Converted to mV, full ADC is equivalent to 25.774V. */
+	[ADC_BOOSTIN] = {"V_BOOSTIN",  25774, 4096, 0, STM32_AIN(11)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

@@ -86,6 +86,7 @@ enum gpio_signal {
 #endif
 
 	/* Power and muxes control */
+	GPIO_PPVAR_BOOSTIN_SENSE,
 	GPIO_PP3300_USB_PD_EN,
 	GPIO_USB_C0_CHARGE_EN_L,
 	GPIO_USB_C1_CHARGE_EN_L,
@@ -132,9 +133,6 @@ enum gpio_signal {
 	GPIO_MASTER_I2C_SCL,
 	GPIO_MASTER_I2C_SDA,
 
-	/* Test points */
-	GPIO_TP60,
-
 	/* Case closed debugging */
 	GPIO_SPI_FLASH_WP_L,
 	GPIO_EC_INT_L,
@@ -148,6 +146,10 @@ enum gpio_signal {
 	GPIO_EC_JTAG_TCK,
 	GPIO_EC_JTAG_TDO,
 	GPIO_EC_JTAT_TDI,
+	GPIO_PD_ENTERING_RW,
+	GPIO_PD_IN_RW,
+	GPIO_PD_DISABLE_DEBUG,
+	GPIO_PD_DEBUG_EN,
 #if 0
 	/* Alternate functions */
 	GPIO_EC_UART_TX,
@@ -169,6 +171,7 @@ enum adc_channel {
 	ADC_C1_CC1_PD,
 	ADC_C0_CC2_PD,
 	ADC_C1_CC2_PD,
+	ADC_BOOSTIN,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
