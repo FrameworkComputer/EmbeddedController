@@ -4,7 +4,7 @@
  */
 /* Master/slave identification */
 
-#include "board.h"
+#include "config.h"
 #include "debug.h"
 #include "master_slave.h"
 #include "registers.h"

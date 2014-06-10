@@ -4,7 +4,6 @@
  */
 /* Stantum board-specific SPI module */
 
-#include "board.h"
 #include "common.h"
 #include "debug.h"
 #include "dma.h"

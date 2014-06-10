@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "board.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

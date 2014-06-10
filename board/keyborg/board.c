@@ -4,7 +4,6 @@
  */
 /* Keyborg board-specific configuration */
 
-#include "board.h"
 #include "common.h"
 #include "debug.h"
 #include "master_slave.h"

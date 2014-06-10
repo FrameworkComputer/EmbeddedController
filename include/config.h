@@ -954,6 +954,13 @@
  * Board is included after chip, so that chip defaults can be overridden on a
  * per-board basis as needed.
  */
+#ifdef __CROS_EC_CONFIG_CHIP_H
+#error Include config.h instead of config_chip.h!
+#endif
+#ifdef __BOARD_H
+#error Include config.h instead of board.h!
+#endif
+
 #include "config_chip.h"
 #include "board.h"
 

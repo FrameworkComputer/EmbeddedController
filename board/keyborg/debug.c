@@ -4,7 +4,6 @@
  */
 /* GPIO UART debug printf */
 
-#include "board.h"
 #include "common.h"
 #include "printf.h"
 #include "registers.h"
