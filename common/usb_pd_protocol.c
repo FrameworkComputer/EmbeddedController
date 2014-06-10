@@ -314,7 +314,7 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 				/* got the GoodCRC we were expecting */
 				inc_id();
 				/* do not catch last edges as a new packet */
-				udelay(10);
+				udelay(20);
 				return bit_len;
 			} else {
 				/* CPRINTF("ERR ACK/%d %04x\n", id, head); */
