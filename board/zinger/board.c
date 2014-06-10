@@ -6,9 +6,9 @@
 
 #include "common.h"
 #include "debug.h"
-#include "irq_handler.h"
 #include "registers.h"
 #include "sha1.h"
+#include "task.h"
 #include "usb_pd.h"
 #include "util.h"
 
@@ -19,13 +19,14 @@ static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_FLASH_BASE+CONFIG_FW_RW_OFF+4);
 
 /* External interrupt EXTINT7 for external comparator on PA7 */
-void IRQ_HANDLER(STM32_IRQ_EXTI4_15)(void)
+void pd_rx_interrupt(void)
 {
 	/* clear the interrupt */
 	STM32_EXTI_PR = STM32_EXTI_PR;
 	/* trigger reception handling */
 	pd_rx_handler();
 }
+DECLARE_IRQ(STM32_IRQ_EXTI4_15, pd_rx_interrupt, 1);
 
 static void jump_to_rw(void)
 {

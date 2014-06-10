@@ -390,7 +390,9 @@ void pd_rx_handler(void)
 	/* trigger the analysis in the task */
 	pd_rx_event();
 }
+#ifndef BOARD_ZINGER
 DECLARE_IRQ(STM32_IRQ_COMP, pd_rx_handler, 1);
+#endif
 
 /* --- Startup initialization --- */
 void *pd_hw_init(void)

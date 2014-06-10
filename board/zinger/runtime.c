@@ -7,8 +7,8 @@
 #include "common.h"
 #include "cpu.h"
 #include "debug.h"
-#include "irq_handler.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -52,12 +52,13 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	return 0;
 }
 
-void IRQ_HANDLER(STM32_IRQ_TIM2)(void)
+void tim2_interrupt(void)
 {
 	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
 	task_clear_pending_irq(STM32_IRQ_TIM2);
 	last_event = 1 << 29 /* task event wake */;
 }
+DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
 uint32_t task_wait_event(int timeout_us)
 {

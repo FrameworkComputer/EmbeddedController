@@ -480,7 +480,7 @@ static void spi_nss_interrupt(void)
 }
 
 /* Interrupt handler for PA0 */
-void IRQ_HANDLER(STM32_IRQ_EXTI0)(void)
+void spi_nss_interrupt_handler(void)
 {
 	/* Clear the interrupt */
 	STM32_EXTI_PR = STM32_EXTI_PR;
@@ -488,4 +488,4 @@ void IRQ_HANDLER(STM32_IRQ_EXTI0)(void)
 	/* SPI slave interrupt */
 	spi_nss_interrupt();
 }
-
+DECLARE_IRQ(STM32_IRQ_EXTI0, spi_nss_interrupt_handler, 1);

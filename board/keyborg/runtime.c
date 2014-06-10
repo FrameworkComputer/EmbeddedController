@@ -7,9 +7,9 @@
 #include "common.h"
 #include "cpu.h"
 #include "debug.h"
-#include "irq_handler.h"
 #include "master_slave.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -63,7 +63,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	return 0;
 }
 
-void IRQ_HANDLER(STM32_IRQ_TIM2)(void)
+void tim2_interrupt(void)
 {
 	if (STM32_TIM_CNT(3) == last_deadline >> 16) {
 		STM32_TIM_DIER(2) = 0;
@@ -74,6 +74,7 @@ void IRQ_HANDLER(STM32_IRQ_TIM2)(void)
 		need_wfi = 1;
 	}
 }
+DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
 void __hw_clock_event_set(uint32_t deadline)
 {

@@ -53,6 +53,14 @@ _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -Iboard/$(BOARD) \
 
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 
+ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
+	_irq_list:=$(shell $(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) -Iboard/$(BOARD) \
+		-D"ENABLE_IRQ(x)=EN_IRQ x" -imacros chip/$(CHIP)/registers.h \
+		board/$(BOARD)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
+	CPPFLAGS+=$(foreach irq,$(_irq_list),\
+		    -D"irq_$(irq)_handler_optional=irq_$(irq)_handler")
+endif
+
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
 include board/$(BOARD)/build.mk

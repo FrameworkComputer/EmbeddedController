@@ -4,14 +4,13 @@
  */
 
 #include "adc.h"
-#include "board.h"
 #include "common.h"
 #include "console.h"
 #include "debug.h"
 #include "hooks.h"
-#include "irq_handler.h"
 #include "registers.h"
 #include "sha1.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
@@ -239,7 +238,7 @@ int pd_power_negotiation_allowed(void)
 	return 1;
 }
 
-void IRQ_HANDLER(STM32_IRQ_ADC_COMP)(void)
+void pd_adc_interrupt(void)
 {
 	/* cut the power output */
 	pd_power_supply_reset();
@@ -248,6 +247,7 @@ void IRQ_HANDLER(STM32_IRQ_ADC_COMP)(void)
 	/* record a special fault, the normal check will record the timeout */
 	fault = FAULT_FAST_OCP;
 }
+DECLARE_IRQ(STM32_IRQ_ADC_COMP, pd_adc_interrupt, 1);
 
 /* ----------------- Vendor Defined Messages ------------------ */
 int pd_custom_vdm(void *ctxt, int cnt, uint32_t *payload, uint32_t **rpayload)

@@ -1,0 +1,13 @@
+/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/**
+ * List of enabled IRQ. To enable an IRQ, use ENABLE_IRQ(irq_num). Any
+ * IRQ that is not listed here is disabled.
+ */
+
+ENABLE_IRQ(STM32_IRQ_EXTI4_15)
+ENABLE_IRQ(STM32_IRQ_ADC_COMP)
+ENABLE_IRQ(STM32_IRQ_TIM2)
