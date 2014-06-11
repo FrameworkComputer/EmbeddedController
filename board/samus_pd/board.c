@@ -27,6 +27,11 @@ void bc12_evt(enum gpio_signal signal)
 	ccprintf("PERICOM %d!\n", signal);
 }
 
+void pch_evt(enum gpio_signal signal)
+{
+	ccprintf("PCH change %d!\n", signal);
+}
+
 void board_config_pre_init(void)
 {
 	/* enable SYSCFG clock */
@@ -55,6 +60,9 @@ const struct gpio_info gpio_list[] = {
 	{"USB_C1_VBUS_WAKE",       GPIO_F, (1<<2),  GPIO_INT_BOTH, vbus_evt},
 	{"USB_C0_BC12_INT_L",      GPIO_B, (1<<0),  GPIO_INT_FALLING, bc12_evt},
 	{"USB_C1_BC12_INT_L",      GPIO_C, (1<<1),  GPIO_INT_FALLING, bc12_evt},
+	{"PCH_SLP_S0_L",           GPIO_C, (1<<14), GPIO_INT_BOTH, pch_evt},
+	{"PCH_SLP_S3_L",           GPIO_C, (1<<15), GPIO_INT_BOTH, pch_evt},
+	{"PCH_SLP_S5_L",           GPIO_D, (1<<7),  GPIO_INT_BOTH, pch_evt},
 
 	/* PD RX/TX */
 	{"USB_C0_CC1_PD",          GPIO_A, (1<<0),  GPIO_ANALOG,   NULL},
