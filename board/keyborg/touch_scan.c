@@ -152,14 +152,19 @@ static inline void set_scan_needed(int col)
 int fast_scan(uint32_t *data)
 {
 	int col;
+	int chip_col;
 
 	memset(data, 0, SCAN_BUF_SIZE * 4);
 
 	STM32_PMSE_MRCR = 1 << 31;
 	for (col = 0; col < COL_COUNT * 2; ++col) {
-		if (col < COL_COUNT) {
-			enable_col(col, 1);
-			STM32_PMSE_MCCR = mccr_list[col];
+		if (master_slave_is_master())
+			chip_col = (col >= COL_COUNT) ? col - COL_COUNT : -1;
+		else
+			chip_col = (col < COL_COUNT) ? col : -1;
+		if (chip_col >= 0) {
+			enable_col(chip_col, 1);
+			STM32_PMSE_MCCR = mccr_list[chip_col];
 		}
 
 		if (master_slave_sync(5) != EC_SUCCESS)
@@ -173,8 +178,8 @@ int fast_scan(uint32_t *data)
 
 		if (master_slave_sync(5) != EC_SUCCESS)
 			return EC_ERROR_UNKNOWN;
-		if (col < COL_COUNT) {
-			enable_col(col, 0);
+		if (chip_col >= 0) {
+			enable_col(chip_col, 0);
 			STM32_PMSE_MCCR = 0;
 		}
 	}
