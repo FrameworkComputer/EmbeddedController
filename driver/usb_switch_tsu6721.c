@@ -141,6 +141,11 @@ int tsu6721_mux(enum tsu6721_mux sel)
 	return EC_SUCCESS;
 }
 
+void tsu6721_set_pins(int mask)
+{
+	tsu6721_write(TSU6721_REG_MANUAL2, mask);
+}
+
 int tsu6721_init(void)
 {
 	uint8_t settings;
