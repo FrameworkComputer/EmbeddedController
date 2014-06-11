@@ -15,7 +15,6 @@
 #define SYNC2 (1 << 2) /* PI2 */
 
 static int is_master = -1;
-static int last_sync; /* = 0 -> Low */
 
 int master_slave_is_master(void)
 {
@@ -36,15 +35,20 @@ static int wait_sync_signal(int mask, int v, int timeout_ms)
 int master_slave_sync(int timeout_ms)
 {
 	int err = EC_SUCCESS;
-	last_sync ^= 1;
 	if (is_master) {
-		STM32_GPIO_BSRR(GPIO_I) = SYNC1 << (last_sync ? 0 : 16);
-		if (wait_sync_signal(SYNC2, last_sync, timeout_ms))
+		STM32_GPIO_BSRR(GPIO_I) = SYNC1 << 0;
+		if (wait_sync_signal(SYNC2, 1, timeout_ms))
+			err = EC_ERROR_TIMEOUT;
+		STM32_GPIO_BSRR(GPIO_I) = SYNC1 << 16;
+		if (wait_sync_signal(SYNC2, 0, 5))
 			err = EC_ERROR_TIMEOUT;
 	} else {
-		if (wait_sync_signal(SYNC1, last_sync, timeout_ms))
+		if (wait_sync_signal(SYNC1, 1, timeout_ms))
 			err = EC_ERROR_TIMEOUT;
-		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << (last_sync ? 0 : 16);
+		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << 0;
+		if (wait_sync_signal(SYNC1, 0, 5))
+			err = EC_ERROR_TIMEOUT;
+		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << 16;
 	}
 	return err;
 }

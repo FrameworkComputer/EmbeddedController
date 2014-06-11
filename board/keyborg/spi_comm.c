@@ -309,9 +309,12 @@ void spi_slave_init(void)
 
 int spi_slave_send_response(struct spi_comm_packet *resp)
 {
-	if (spi_slave_send_response_async(resp) != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
-	return spi_slave_send_response_flush();
+	int r;
+
+	r = spi_slave_send_response_async(resp);
+	r |= spi_slave_send_response_flush();
+
+	return r;
 }
 
 int spi_slave_send_response_async(struct spi_comm_packet *resp)
@@ -325,7 +328,8 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	if (out_msg != (uint8_t *)resp)
 		memcpy(out_msg, resp, size);
 
-	master_slave_sync(100);
+	if (master_slave_sync(100) != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
 
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
@@ -344,7 +348,8 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	dma_prepare_tx(&dma_tx_option, size - 1, out_msg + 1);
 	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
 
-	master_slave_sync(5);
+	if (master_slave_sync(5) != EC_SUCCESS)
+		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }

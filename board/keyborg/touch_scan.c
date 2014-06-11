@@ -152,7 +152,7 @@ static inline void set_scan_needed(int col)
 int fast_scan(uint32_t *data)
 {
 	int col;
-	int chip_col;
+	int chip_col = 0;
 
 	memset(data, 0, SCAN_BUF_SIZE * 4);
 
@@ -168,7 +168,7 @@ int fast_scan(uint32_t *data)
 		}
 
 		if (master_slave_sync(5) != EC_SUCCESS)
-			return EC_ERROR_UNKNOWN;
+			goto fast_scan_err;
 
 		start_adc_sample(0, ADC_SMPL_CPU_CYCLE);
 		while (!(STM32_ADC_SR(0) & (1 << 1)))
@@ -177,7 +177,7 @@ int fast_scan(uint32_t *data)
 			set_scan_needed(col);
 
 		if (master_slave_sync(5) != EC_SUCCESS)
-			return EC_ERROR_UNKNOWN;
+			goto fast_scan_err;
 		if (chip_col >= 0) {
 			enable_col(chip_col, 0);
 			STM32_PMSE_MCCR = 0;
@@ -186,6 +186,11 @@ int fast_scan(uint32_t *data)
 	STM32_PMSE_MRCR = 0;
 
 	return EC_SUCCESS;
+fast_scan_err:
+	enable_col(chip_col, 0);
+	STM32_PMSE_MCCR = 0;
+	STM32_PMSE_MRCR = 0;
+	return EC_ERROR_UNKNOWN;
 }
 #else
 int fast_scan(uint32_t *data)
@@ -224,11 +229,11 @@ void scan_column(uint8_t *data)
 
 void touch_scan_slave_start(void)
 {
-	int col, i, v;
+	int col = 0, i, v;
 	struct spi_comm_packet *resp = (struct spi_comm_packet *)buf;
 
 	if (fast_scan(scan_needed) != EC_SUCCESS)
-		return;
+		goto slave_err;
 
 	/* Discharge the panel */
 	discharge();
@@ -240,7 +245,7 @@ void touch_scan_slave_start(void)
 		}
 
 		if (master_slave_sync(20) != EC_SUCCESS)
-			return;
+			goto slave_err;
 
 		if (GET_SCAN_NEEDED(col)) {
 			scan_column(resp->data);
@@ -260,13 +265,15 @@ void touch_scan_slave_start(void)
 
 		/* Flush the last response */
 		if (col != 0)
-			spi_slave_send_response_flush();
+			if (spi_slave_send_response_flush() != EC_SUCCESS)
+				goto slave_err;
 
 		if (master_slave_sync(40) != EC_SUCCESS)
-			return;
+			goto slave_err;
 
 		/* Start sending the response for the current column */
-		spi_slave_send_response_async(resp);
+		if (spi_slave_send_response_async(resp) != EC_SUCCESS)
+			goto slave_err;
 
 		/* Disable the current column and discharge */
 		if (col < COL_COUNT) {
@@ -277,13 +284,19 @@ void touch_scan_slave_start(void)
 	}
 	spi_slave_send_response_flush();
 	master_slave_sync(20);
+	return;
+slave_err:
+	if (col < COL_COUNT)
+		enable_col(col, 0);
+	STM32_PMSE_MCCR = 0;
+	spi_slave_send_response_flush();
 }
 
 int touch_scan_full_matrix(void)
 {
 	struct spi_comm_packet cmd;
 	const struct spi_comm_packet *resp;
-	int col;
+	int col = 0;
 	timestamp_t st = get_time();
 	uint8_t *dptr = NULL, *last_dptr = NULL;
 
@@ -291,12 +304,12 @@ int touch_scan_full_matrix(void)
 	cmd.size = 0;
 
 	if (spi_master_send_command(&cmd))
-		return EC_ERROR_UNKNOWN;
+		goto master_err;
 
 	encode_reset();
 
 	if (fast_scan(scan_needed) != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
+		goto master_err;
 
 	/* Discharge the panel */
 	discharge();
@@ -308,7 +321,7 @@ int touch_scan_full_matrix(void)
 		}
 
 		if (master_slave_sync(20) != EC_SUCCESS)
-			return EC_ERROR_UNKNOWN;
+			goto master_err;
 
 		last_dptr = dptr;
 		dptr = buf[col & 1];
@@ -322,7 +335,7 @@ int touch_scan_full_matrix(void)
 			/* Flush the data from the slave for the last column */
 			resp = spi_master_wait_response_done();
 			if (resp == NULL)
-				return EC_ERROR_UNKNOWN;
+				goto master_err;
 			if (resp->size)
 				memcpy(last_dptr, resp->data, ROW_COUNT);
 			else
@@ -331,11 +344,11 @@ int touch_scan_full_matrix(void)
 		}
 
 		if (master_slave_sync(40) != EC_SUCCESS)
-			return EC_ERROR_UNKNOWN;
+			goto master_err;
 
 		/* Start receiving data for the current column */
 		if (spi_master_wait_response_async() != EC_SUCCESS)
-			return EC_ERROR_UNKNOWN;
+			goto master_err;
 
 		/* Disable the current column and discharge */
 		if (col >= COL_COUNT) {
@@ -347,7 +360,7 @@ int touch_scan_full_matrix(void)
 
 	resp = spi_master_wait_response_done();
 	if (resp == NULL)
-		return EC_ERROR_UNKNOWN;
+		goto master_err;
 	if (resp->size)
 		memcpy(last_dptr, resp->data, ROW_COUNT);
 	else
@@ -360,4 +373,10 @@ int touch_scan_full_matrix(void)
 	encode_dump_matrix();
 
 	return EC_SUCCESS;
+master_err:
+	spi_master_wait_response_done();
+	if (col >= COL_COUNT)
+		enable_col(col - COL_COUNT, 0);
+	STM32_PMSE_MCCR = 0;
+	return EC_ERROR_UNKNOWN;
 }
