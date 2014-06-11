@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "debug.h"
 #include "irq_handler.h"
+#include "master_slave.h"
 #include "registers.h"
 #include "timer.h"
 #include "util.h"
@@ -107,6 +108,23 @@ uint32_t task_wait_event(int timeout_us)
 	last_event = 0;
 
 	return evt;
+}
+
+void system_reboot(void)
+{
+	if (master_slave_is_master()) {
+		/* Ask the slave to reboot as well */
+		STM32_GPIO_BSRR(GPIO_A) = 1 << (6 + 16);
+		udelay(10 * MSEC); /* The slave reboots in 5 ms */
+	}
+
+	/* Ask the watchdog to trigger a hard reboot */
+	STM32_IWDG_KR = 0x5555;
+	STM32_IWDG_RLR = 0x1;
+	STM32_IWDG_KR = 0xcccc;
+	/* wait for the watchdog */
+	while (1)
+		;
 }
 
 /* --- stubs --- */

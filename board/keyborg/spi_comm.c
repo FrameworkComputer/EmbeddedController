@@ -408,7 +408,12 @@ static void spi_nss_interrupt(void)
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
 
-	master_slave_sync(5);
+	/*
+	 * SPI_NSS is also used for the master to reboot the slave.
+	 * If SPI_NSS goes low without a sync in time, reboots.
+	 */
+	if (master_slave_sync(5))
+		system_reboot();
 
 	/* Read in the packet size */
 	while (!(spi->sr & STM32_SPI_SR_RXNE))

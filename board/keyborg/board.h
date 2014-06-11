@@ -40,6 +40,9 @@ enum gpio_signal;
 /* Initialize all useful registers */
 void hardware_init(void);
 
+/* On the master, reboot both chips. On the slave, reboot itself. */
+void system_reboot(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
