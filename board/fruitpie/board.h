@@ -25,6 +25,9 @@
 #define CONFIG_I2C
 #define CONFIG_BATTERY_SMART
 #define CONFIG_USB_SWITCH_TSU6721
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SIZE 8388608
+#define CONFIG_SPI_FLASH_REGISTER STM32_SPI2_REGS
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
@@ -51,6 +54,17 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 #ifndef __ASSEMBLER__
+
+/*
+ * Timeout to wait for TSU6721 to detect power. Set to double the BCD timer.
+ */
+#define DEBUG_SWITCH_TIMEOUT_MSEC (1200*MSEC)
+
+/*
+ * Used to set GPIO's and clock to SPI module used for debug
+ * @param enable Whether to enable or disable debug
+ */
+int board_set_debug(int enable);
 
 /* Timer selection */
 #define TIM_CLOCK32 2
