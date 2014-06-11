@@ -32,7 +32,7 @@ static int wait_sync_signal(int mask, int v, int timeout_ms)
 	return EC_SUCCESS;
 }
 
-int master_slave_sync(int timeout_ms)
+int master_slave_sync_impl(const char *filename, int line, int timeout_ms)
 {
 	int err = EC_SUCCESS;
 	if (is_master) {
@@ -50,6 +50,8 @@ int master_slave_sync(int timeout_ms)
 			err = EC_ERROR_TIMEOUT;
 		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << 16;
 	}
+	if (err != EC_SUCCESS)
+		debug_printf("Sync failed at %s:%d\n", filename, line);
 	return err;
 }
 

@@ -24,7 +24,9 @@ int master_slave_is_master(void);
  *
  * @return		EC_SUCCESS, or non-zero if any error.
  */
-int master_slave_sync(int timeout_ms);
+#define master_slave_sync(timeout_ms) \
+	master_slave_sync_impl(__FILE__, __LINE__, timeout_ms)
+int master_slave_sync_impl(const char *filename, int line, int timeout_ms);
 
 /**
  * Identify this chip and shake hands with the other chip.
