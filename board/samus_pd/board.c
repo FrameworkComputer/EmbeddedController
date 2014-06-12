@@ -224,76 +224,134 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-void board_set_usb_mux(enum typec_mux mux)
+void board_set_usb_mux(int port, enum typec_mux mux)
 {
-	/* reset everything */
-	gpio_set_level(GPIO_USB_C0_SS1_EN_L, 1);
-	gpio_set_level(GPIO_USB_C0_SS2_EN_L, 1);
-	gpio_set_level(GPIO_USB_C0_DP_MODE_L, 1);
-	gpio_set_level(GPIO_USB_C0_SS1_DP_MODE_L, 1);
-	gpio_set_level(GPIO_USB_C0_SS2_DP_MODE_L, 1);
-	switch (mux) {
-	case TYPEC_MUX_NONE:
-		/* everything is already disabled, we can return */
-		return;
-	case TYPEC_MUX_USB1:
-		gpio_set_level(GPIO_USB_C0_SS1_DP_MODE_L, 0);
-		break;
-	case TYPEC_MUX_USB2:
-		gpio_set_level(GPIO_USB_C0_SS2_DP_MODE_L, 0);
-		break;
-	case TYPEC_MUX_DP1:
-		gpio_set_level(GPIO_USB_C0_DP_POLARITY_L, 1);
-		gpio_set_level(GPIO_USB_C0_DP_MODE_L, 0);
-		break;
-	case TYPEC_MUX_DP2:
-		gpio_set_level(GPIO_USB_C0_DP_POLARITY_L, 0);
-		gpio_set_level(GPIO_USB_C0_DP_MODE_L, 0);
-		break;
+	if (port == 0) {
+		/* reset everything */
+		gpio_set_level(GPIO_USB_C0_SS1_EN_L, 1);
+		gpio_set_level(GPIO_USB_C0_SS2_EN_L, 1);
+		gpio_set_level(GPIO_USB_C0_DP_MODE_L, 1);
+		gpio_set_level(GPIO_USB_C0_SS1_DP_MODE_L, 1);
+		gpio_set_level(GPIO_USB_C0_SS2_DP_MODE_L, 1);
+		switch (mux) {
+		case TYPEC_MUX_NONE:
+			/* everything is already disabled, we can return */
+			return;
+		case TYPEC_MUX_USB1:
+			gpio_set_level(GPIO_USB_C0_SS1_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_USB2:
+			gpio_set_level(GPIO_USB_C0_SS2_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_DP1:
+			gpio_set_level(GPIO_USB_C0_DP_POLARITY_L, 1);
+			gpio_set_level(GPIO_USB_C0_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_DP2:
+			gpio_set_level(GPIO_USB_C0_DP_POLARITY_L, 0);
+			gpio_set_level(GPIO_USB_C0_DP_MODE_L, 0);
+			break;
+		}
+		gpio_set_level(GPIO_USB_C0_SS1_EN_L, 0);
+		gpio_set_level(GPIO_USB_C0_SS2_EN_L, 0);
+	} else {
+		/* reset everything */
+		gpio_set_level(GPIO_USB_C1_SS1_EN_L, 1);
+		gpio_set_level(GPIO_USB_C1_SS2_EN_L, 1);
+		gpio_set_level(GPIO_USB_C1_DP_MODE_L, 1);
+		gpio_set_level(GPIO_USB_C1_SS1_DP_MODE_L, 1);
+		gpio_set_level(GPIO_USB_C1_SS2_DP_MODE_L, 1);
+		switch (mux) {
+		case TYPEC_MUX_NONE:
+			/* everything is already disabled, we can return */
+			return;
+		case TYPEC_MUX_USB1:
+			gpio_set_level(GPIO_USB_C1_SS1_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_USB2:
+			gpio_set_level(GPIO_USB_C1_SS2_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_DP1:
+			gpio_set_level(GPIO_USB_C1_DP_POLARITY_L, 1);
+			gpio_set_level(GPIO_USB_C1_DP_MODE_L, 0);
+			break;
+		case TYPEC_MUX_DP2:
+			gpio_set_level(GPIO_USB_C1_DP_POLARITY_L, 0);
+			gpio_set_level(GPIO_USB_C1_DP_MODE_L, 0);
+			break;
+		}
+		gpio_set_level(GPIO_USB_C1_SS1_EN_L, 0);
+		gpio_set_level(GPIO_USB_C1_SS2_EN_L, 0);
 	}
-	gpio_set_level(GPIO_USB_C0_SS1_EN_L, 0);
-	gpio_set_level(GPIO_USB_C0_SS2_EN_L, 0);
 }
 
 static int command_typec(int argc, char **argv)
 {
 	const char * const mux_name[] = {"none", "usb1", "usb2", "dp1", "dp2"};
+	char *e;
+	int port;
 
-	if (argc < 2) {
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[1], &e, 10);
+	if (*e || port >= 2)
+		return EC_ERROR_PARAM1;
+
+	if (argc < 3) {
 		/* dump current state */
-		ccprintf("CC1 %d mV  CC2 %d mV\n",
-			pd_adc_read(0),
-			pd_adc_read(1));
-		ccprintf("DP %d Polarity %d\n",
-			!gpio_get_level(GPIO_USB_C0_DP_MODE_L),
-			!!gpio_get_level(GPIO_USB_C0_DP_POLARITY_L) + 1);
-		ccprintf("Superspeed %s\n",
-			gpio_get_level(GPIO_USB_C0_SS1_EN_L) ? "None" :
-			(!gpio_get_level(GPIO_USB_C0_DP_MODE_L) ? "DP" :
-			(!gpio_get_level(GPIO_USB_C0_SS1_DP_MODE_L) ?
-					"USB1" : "USB2")));
+		if (port == 0) {
+			ccprintf("Port C%d: CC1 %d mV  CC2 %d mV\n",
+				port,
+				pd_adc_read(0),
+				pd_adc_read(1));
+			ccprintf("DP %d Polarity %d\n",
+				!gpio_get_level(GPIO_USB_C0_DP_MODE_L),
+				!!gpio_get_level(GPIO_USB_C0_DP_POLARITY_L)
+					+ 1);
+			ccprintf("Superspeed %s\n",
+				gpio_get_level(GPIO_USB_C0_SS1_EN_L) ? "None" :
+				(!gpio_get_level(GPIO_USB_C0_DP_MODE_L) ? "DP" :
+				(!gpio_get_level(GPIO_USB_C0_SS1_DP_MODE_L) ?
+						"USB1" : "USB2")));
+		} else {
+			/* TODO: add param to pd_adc_read() to read C1 ADCs */
+			ccprintf("Port C%d: CC1 %d mV  CC2 %d mV\n",
+				port,
+				adc_read_channel(ADC_C1_CC1_PD),
+				adc_read_channel(ADC_C1_CC2_PD));
+			ccprintf("DP %d Polarity %d\n",
+				!gpio_get_level(GPIO_USB_C1_DP_MODE_L),
+				!!gpio_get_level(GPIO_USB_C1_DP_POLARITY_L)
+					+ 1);
+			ccprintf("Superspeed %s\n",
+				gpio_get_level(GPIO_USB_C1_SS1_EN_L) ? "None" :
+				(!gpio_get_level(GPIO_USB_C1_DP_MODE_L) ? "DP" :
+				(!gpio_get_level(GPIO_USB_C1_SS1_DP_MODE_L) ?
+						"USB1" : "USB2")));
+		}
 		return EC_SUCCESS;
 	}
 
-	if (!strcasecmp(argv[1], "mux")) {
+	if (!strcasecmp(argv[2], "mux")) {
 		enum typec_mux mux = TYPEC_MUX_NONE;
 		int i;
 
 		if (argc < 3)
-			return EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM3;
 
 		for (i = 0; i < ARRAY_SIZE(mux_name); i++)
-			if (!strcasecmp(argv[2], mux_name[i]))
+			if (!strcasecmp(argv[3], mux_name[i]))
 				mux = i;
-		board_set_usb_mux(mux);
+		board_set_usb_mux(port, mux);
 		return EC_SUCCESS;
 	} else {
-		return EC_ERROR_PARAM1;
+		return EC_ERROR_PARAM2;
 	}
 
 	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,
-			"[mux none|usb1|usb2|dp1|d2]",
+			"port [mux none|usb1|usb2|dp1|d2]",
 			"Control type-C connector",
 			NULL);
