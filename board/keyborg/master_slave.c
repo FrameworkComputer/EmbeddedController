@@ -23,10 +23,10 @@ int master_slave_is_master(void)
 
 static int wait_sync_signal(int mask, int v, int timeout_ms)
 {
-	uint32_t start = get_time().val;
+	uint32_t start = get_time().le.lo;
 
 	while ((!!(STM32_GPIO_IDR(GPIO_I) & mask)) != v) {
-		if ((get_time().val - start) >= timeout_ms * MSEC)
+		if ((get_time().le.lo - start) >= timeout_ms * MSEC)
 			return EC_ERROR_TIMEOUT;
 	}
 	return EC_SUCCESS;
