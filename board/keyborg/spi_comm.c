@@ -31,6 +31,8 @@ static const struct dma_option dma_rx_option = {
 static uint8_t out_msg[SPI_PACKET_MAX_SIZE + 2];
 static uint8_t in_msg[SPI_PACKET_MAX_SIZE];
 
+static stm32_spi_regs_t * const spi = STM32_SPI1_REGS;
+
 static inline int wait_for_signal(uint32_t port, uint32_t mask,
 				  int value, int timeout_us)
 {
@@ -49,8 +51,6 @@ static inline int wait_for_signal(uint32_t port, uint32_t mask,
 
 void spi_master_init(void)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
-
 	/*
 	 * CLK:  AFIO Push-pull
 	 * MISO: Input
@@ -107,7 +107,6 @@ static int spi_master_read_write_byte(uint8_t *in_buf, uint8_t *out_buf, int sz)
 
 int spi_master_send_command(struct spi_comm_packet *cmd)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 	int ret;
 
 	if (cmd->size + 3 > SPI_PACKET_MAX_SIZE)
@@ -141,9 +140,6 @@ int spi_master_send_command(struct spi_comm_packet *cmd)
 
 int spi_master_wait_response_async(void)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
-	int size;
-
 	master_slave_sync(40);
 	if (wait_for_signal(GPIO_A, 1 << 0, 1, 40 * MSEC))
 		goto err_wait_resp_async;
@@ -152,12 +148,18 @@ int spi_master_wait_response_async(void)
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
 
+#ifdef CONFIG_KEYBORG_SPI_FULL_PACKET
+	dma_clear_isr(STM32_DMAC_SPI1_TX);
+	dma_clear_isr(STM32_DMAC_SPI1_RX);
+	dma_start_rx(&dma_rx_option, SPI_PACKET_MAX_SIZE, in_msg);
+	dma_prepare_tx(&dma_tx_option, SPI_PACKET_MAX_SIZE, out_msg);
+	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
+#else
 	/* Get the packet size */
 	spi->dr = DUMMY_DATA;
 	while (!(spi->sr & STM32_SPI_SR_RXNE))
 		;
 	in_msg[0] = spi->dr;
-	size = in_msg[0] + SPI_PACKET_HEADER_SIZE;
 
 	master_slave_sync(5);
 
@@ -165,9 +167,14 @@ int spi_master_wait_response_async(void)
 	dma_clear_isr(STM32_DMAC_SPI1_RX);
 
 	/* Get the rest of the packet*/
-	dma_start_rx(&dma_rx_option, size - 1, in_msg + 1);
-	dma_prepare_tx(&dma_tx_option, size - 1, out_msg);
+	dma_start_rx(&dma_rx_option,
+		     in_msg[0] + SPI_PACKET_HEADER_SIZE - 1,
+		     in_msg + 1);
+	dma_prepare_tx(&dma_tx_option,
+		       in_msg[0] + SPI_PACKET_HEADER_SIZE - 1,
+		       out_msg);
 	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
+#endif
 
 	return EC_SUCCESS;
 err_wait_resp_async:
@@ -180,7 +187,6 @@ const struct spi_comm_packet *spi_master_wait_response_done(void)
 {
 	const struct spi_comm_packet *resp =
 		(const struct spi_comm_packet *)in_msg;
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
 	if (dma_wait(STM32_DMAC_SPI1_TX) || dma_wait(STM32_DMAC_SPI1_RX)) {
 		debug_printf("SPI: Incomplete response\n");
@@ -263,8 +269,6 @@ int spi_hello_test(int iteration)
 
 void spi_slave_init(void)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
-
 	/*
 	 * MISO: AFIO Push-pull
 	 */
@@ -320,7 +324,6 @@ int spi_slave_send_response(struct spi_comm_packet *resp)
 int spi_slave_send_response_async(struct spi_comm_packet *resp)
 {
 	int size = resp->size + SPI_PACKET_HEADER_SIZE;
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
 	if (size > SPI_PACKET_MAX_SIZE)
 		return EC_ERROR_OVERFLOW;
@@ -331,6 +334,14 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	if (master_slave_sync(100) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
+#ifdef CONFIG_KEYBORG_SPI_FULL_PACKET
+	dma_clear_isr(STM32_DMAC_SPI1_TX);
+	dma_prepare_tx(&dma_tx_option, SPI_PACKET_MAX_SIZE, out_msg);
+	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
+
+	/* Set N_CHG (master SPI_NSS) to high */
+	STM32_GPIO_BSRR(GPIO_A) = 1 << 1;
+#else
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
 	spi->dr = out_msg[0];
@@ -343,13 +354,12 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	in_msg[0] = spi->dr;
 
 	dma_clear_isr(STM32_DMAC_SPI1_TX);
-	dma_clear_isr(STM32_DMAC_SPI1_RX);
-	dma_start_rx(&dma_rx_option, size - 1, in_msg);
 	dma_prepare_tx(&dma_tx_option, size - 1, out_msg + 1);
 	dma_go(dma_get_channel(STM32_DMAC_SPI1_TX));
 
 	if (master_slave_sync(5) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
+#endif
 
 	return EC_SUCCESS;
 }
@@ -359,11 +369,8 @@ int spi_slave_send_response_flush(void)
 	int ret;
 
 	ret = dma_wait(STM32_DMAC_SPI1_TX);
-	ret |= dma_wait(STM32_DMAC_SPI1_RX);
 	dma_disable(STM32_DMAC_SPI1_TX);
-	dma_disable(STM32_DMAC_SPI1_RX);
 	dma_clear_isr(STM32_DMAC_SPI1_TX);
-	dma_clear_isr(STM32_DMAC_SPI1_RX);
 
 	/* Set N_CHG (master SPI_NSS) to low */
 	STM32_GPIO_BSRR(GPIO_A) = 1 << (1 + 16);
@@ -403,7 +410,6 @@ static void spi_nss_interrupt(void)
 {
 	const struct spi_comm_packet *cmd =
 		(const struct spi_comm_packet *)in_msg;
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
