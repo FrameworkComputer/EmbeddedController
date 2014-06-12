@@ -105,7 +105,7 @@ static inline int pd_adc_read(int cc)
 
 static inline int pd_snk_is_vbus_provided(void)
 {
-	return 1;
+	return gpio_get_level(GPIO_VBUS_WAKE);
 }
 
 /* Standard-current DFP : no-connect voltage is 1.55V */
