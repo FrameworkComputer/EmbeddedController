@@ -24,9 +24,13 @@
 
 static uint8_t buf[2][ROW_COUNT * 2];
 
+#ifdef CONFIG_KEYBORG_FAST_SCAN
 #define SCAN_BUF_SIZE (DIV_ROUND_UP(COL_COUNT * 2, 32) + 2)
 #define GET_SCAN_NEEDED(x) (scan_needed[(x) / 32 + 1] & (1 << ((x) & 31)))
 static uint32_t scan_needed[SCAN_BUF_SIZE];
+#else
+#define GET_SCAN_NEEDED(x) 1
+#endif
 
 #define SPAN_LENGTH (2 * COL_SPAN + 1)
 #define SPAN_MASK ((1 << SPAN_LENGTH) - 1)
@@ -138,6 +142,7 @@ static void enable_col(int idx, int enabled)
 	}
 }
 
+#ifdef CONFIG_KEYBORG_FAST_SCAN
 static inline void set_scan_needed(int col)
 {
 	uint8_t word = (col - COL_SPAN + 32) / 32;
@@ -148,7 +153,6 @@ static inline void set_scan_needed(int col)
 		scan_needed[word + 1] |= SPAN_MASK >> (32 - bit);
 }
 
-#ifdef CONFIG_KEYBORG_FAST_SCAN
 int fast_scan(uint32_t *data)
 {
 	int col;
@@ -185,6 +189,9 @@ int fast_scan(uint32_t *data)
 	}
 	STM32_PMSE_MRCR = 0;
 
+	/* Discharge the panel */
+	discharge();
+
 	return EC_SUCCESS;
 fast_scan_err:
 	enable_col(chip_col, 0);
@@ -193,15 +200,7 @@ fast_scan_err:
 	return EC_ERROR_UNKNOWN;
 }
 #else
-int fast_scan(uint32_t *data)
-{
-	int col;
-
-	for (col = 0; col < COL_COUNT * 2; ++col)
-		set_scan_needed(col);
-
-	return EC_SUCCESS;
-}
+#define fast_scan(x) EC_SUCCESS
 #endif
 
 void scan_column(uint8_t *data)
@@ -234,9 +233,6 @@ void touch_scan_slave_start(void)
 
 	if (fast_scan(scan_needed) != EC_SUCCESS)
 		goto slave_err;
-
-	/* Discharge the panel */
-	discharge();
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (col < COL_COUNT) {
@@ -310,9 +306,6 @@ int touch_scan_full_matrix(void)
 
 	if (fast_scan(scan_needed) != EC_SUCCESS)
 		goto master_err;
-
-	/* Discharge the panel */
-	discharge();
 
 	for (col = 0; col < COL_COUNT * 2; ++col) {
 		if (col >= COL_COUNT) {
