@@ -264,9 +264,6 @@ void touch_scan_slave_start(void)
 			if (spi_slave_send_response_flush() != EC_SUCCESS)
 				goto slave_err;
 
-		if (master_slave_sync(40) != EC_SUCCESS)
-			goto slave_err;
-
 		/* Start sending the response for the current column */
 		if (spi_slave_send_response_async(resp) != EC_SUCCESS)
 			goto slave_err;
@@ -335,9 +332,6 @@ int touch_scan_full_matrix(void)
 				memset(last_dptr, 0, ROW_COUNT);
 			encode_add_column(last_dptr);
 		}
-
-		if (master_slave_sync(40) != EC_SUCCESS)
-			goto master_err;
 
 		/* Start receiving data for the current column */
 		if (spi_master_wait_response_async() != EC_SUCCESS)

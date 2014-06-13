@@ -46,6 +46,22 @@ static inline int wait_for_signal(uint32_t port, uint32_t mask,
 	return EC_ERROR_TIMEOUT;
 }
 
+static volatile uint8_t slave_ready = 1;
+
+static inline int wait_for_slave_ready(int timeout_us)
+{
+	uint32_t start = get_time().le.lo;
+
+	while ((get_time().le.lo - start) < timeout_us) {
+		if (slave_ready) {
+			slave_ready = 0; /* Clear for the next event */
+			return EC_SUCCESS;
+		}
+	}
+
+	return EC_ERROR_TIMEOUT;
+}
+
 /*****************************************************************************/
 /* Master */
 
@@ -85,6 +101,12 @@ void spi_master_init(void)
 
 	/* Set MSTR and SPE */
 	spi->cr1 |= STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SPE;
+
+	/* Enable interrupt on PA0 (GPIO_SPI_NSS) */
+	STM32_AFIO_EXTICR(0) &= ~0xF;
+	STM32_EXTI_IMR |= (1 << 0);
+	task_clear_pending_irq(STM32_IRQ_EXTI0);
+	task_enable_irq(STM32_IRQ_EXTI0);
 }
 
 static int spi_master_read_write_byte(uint8_t *in_buf, uint8_t *out_buf, int sz)
@@ -140,7 +162,7 @@ int spi_master_send_command(struct spi_comm_packet *cmd)
 
 int spi_master_wait_response_async(void)
 {
-	master_slave_sync(40);
+	wait_for_slave_ready(100 * MSEC);
 	if (wait_for_signal(GPIO_A, 1 << 0, 1, 40 * MSEC))
 		goto err_wait_resp_async;
 
@@ -331,9 +353,6 @@ int spi_slave_send_response_async(struct spi_comm_packet *resp)
 	if (out_msg != (uint8_t *)resp)
 		memcpy(out_msg, resp, size);
 
-	if (master_slave_sync(100) != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
-
 #ifdef CONFIG_KEYBORG_SPI_FULL_PACKET
 	dma_clear_isr(STM32_DMAC_SPI1_TX);
 	dma_prepare_tx(&dma_tx_option, SPI_PACKET_MAX_SIZE, out_msg);
@@ -410,6 +429,11 @@ static void spi_nss_interrupt(void)
 {
 	const struct spi_comm_packet *cmd =
 		(const struct spi_comm_packet *)in_msg;
+
+	if (master_slave_is_master()) {
+		slave_ready = 1;
+		return;
+	}
 
 	if (spi->sr & STM32_SPI_SR_RXNE)
 		in_msg[0] = spi->dr;
