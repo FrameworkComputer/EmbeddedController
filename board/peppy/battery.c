@@ -36,9 +36,7 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-int battery_command_cut_off(struct host_cmd_handler_args *args)
+int board_cut_off_battery(void)
 {
 	return sb_write(SB_SHIP_MODE_ADDR, SB_SHIP_MODE_DATA);
 }
-DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
-		     EC_VER_MASK(0));
