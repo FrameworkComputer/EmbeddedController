@@ -137,6 +137,12 @@
 #undef CONFIG_BATTERY_CUT_OFF
 
 /*
+ * The default delay is 1 second. Define this if a board prefers
+ * different delay.
+ */
+#undef CONFIG_BATTERY_CUTOFF_DELAY_US
+
+/*
  * The board-specific battery.c implements get and set functions to read and
  * write arbirary vendor-specific parameters stored in the battery.
  * See include/battery.h for prototypes.

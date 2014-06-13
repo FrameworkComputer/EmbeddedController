@@ -17,8 +17,18 @@
 #include "util.h"
 #include "watchdog.h"
 
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
 #ifdef CONFIG_BATTERY_CUT_OFF
-static int is_cut_off;
+
+#ifndef CONFIG_BATTERY_CUTOFF_DELAY_US
+#define CONFIG_BATTERY_CUTOFF_DELAY_US (1 * SECOND)
+#endif
+
+static enum battery_cutoff_states battery_cutoff_state =
+	BATTERY_CUTOFF_STATE_NORMAL;
+
 #endif
 
 #ifdef CONFIG_BATTERY_PRESENT_GPIO
@@ -261,41 +271,95 @@ DECLARE_CONSOLE_COMMAND(battery, command_battery,
 			"Print battery info",
 			NULL);
 
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 int battery_is_cut_off(void)
 {
-	return is_cut_off;
+	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
 
-static void clean_cut_off(void)
+static void pending_cutoff_deferred(void)
 {
-	if (extpower_is_present())
-		is_cut_off = 0;
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, clean_cut_off, HOOK_PRIO_DEFAULT);
+	int rv;
 
-static int battery_command_cut_off(struct host_cmd_handler_args *args)
+	rv = board_cut_off_battery();
+
+	if (rv == EC_SUCCESS)
+		CPRINTF("[%T Battery cut off succeeded.]\n");
+	else
+		CPRINTF("[%T Battery cut off failed!]\n");
+}
+DECLARE_DEFERRED(pending_cutoff_deferred);
+
+static void clear_pending_cutoff(void)
 {
-	int rv = board_cut_off_battery();
-	if (!rv)
-		is_cut_off = 1;
+	if (extpower_is_present()) {
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+		hook_call_deferred(pending_cutoff_deferred, -1);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, clear_pending_cutoff, HOOK_PRIO_DEFAULT);
+
+static int battery_command_cutoff(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_battery_cutoff *p;
+	int rv;
+
+	if (args->version == 1) {
+		p = args->params;
+		if (p->flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN) {
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			CPRINTS("Battery cut off at-shutdown is scheduled");
+			return EC_RES_SUCCESS;
+		}
+	}
+
+	rv = board_cut_off_battery();
+	if (!rv) {
+		CPRINTS("Battery cut off is successful.");
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+	} else {
+		CPRINTS("Battery cut off has failed.");
+	}
 
 	return rv;
 }
-DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
+		EC_VER_MASK(0) | EC_VER_MASK(1));
+
+static void check_pending_cutoff(void)
+{
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_PENDING) {
+		CPRINTF("[%T Cutting off battery in %d second(s)]\n",
+			CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
+		hook_call_deferred(pending_cutoff_deferred,
+				   CONFIG_BATTERY_CUTOFF_DELAY_US);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, check_pending_cutoff, HOOK_PRIO_LAST);
 
 static int command_cutoff(int argc, char **argv)
 {
-	int rv = board_cut_off_battery();
-	if (!rv)
-		is_cut_off = 1;
+	int rv;
+
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "at-shutdown")) {
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			return EC_SUCCESS;
+		} else {
+			return EC_ERROR_INVAL;
+		}
+	}
+
+	rv = board_cut_off_battery();
+	if (!rv) {
+		ccprintf("[%T Battery cut off]\n");
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+	}
 
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff,
-		"",
+		"[at-shutdown]",
 		"Cut off the battery output",
 		NULL);
 #else

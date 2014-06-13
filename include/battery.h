@@ -43,6 +43,12 @@ enum battery_present {
 	BP_NOT_SURE,
 };
 
+enum battery_cutoff_states {
+	BATTERY_CUTOFF_STATE_NORMAL = 0,
+	BATTERY_CUTOFF_STATE_CUT_OFF,
+	BATTERY_CUTOFF_STATE_PENDING,
+};
+
 /* Battery parameters */
 struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */

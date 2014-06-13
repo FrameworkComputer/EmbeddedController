@@ -1967,12 +1967,20 @@ struct ec_params_charge_control {
 /*****************************************************************************/
 
 /*
- * Cut off battery power output if the battery supports.
+ * Cut off battery power immediately or after the host has shut down.
  *
- * For unsupported battery, just don't implement this command and lets EC
- * return EC_RES_INVALID_COMMAND.
+ * return EC_RES_INVALID_COMMAND if unsupported by a board/battery.
+ *	  EC_RES_SUCCESS if the command was successful.
+ *	  EC_RES_ERROR if the cut off command failed.
  */
 #define EC_CMD_BATTERY_CUT_OFF 0x99
+#define EC_VER_BATTERY_CUT_OFF 1
+
+#define EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN	(1 << 0)
+
+struct ec_params_battery_cutoff {
+	uint8_t flags;
+} __packed;
 
 /*****************************************************************************/
 /* USB port mux control. */
