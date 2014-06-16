@@ -234,6 +234,7 @@ static void reply(stm32_dma_chan_t *txdma,
 static void setup_for_transaction(void)
 {
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+	volatile uint8_t dummy __attribute__((unused));
 
 	/* Not ready to receive yet */
 	spi->dr = EC_SPI_NOT_READY;
@@ -248,7 +249,7 @@ static void setup_for_transaction(void)
 	 * Read a byte in case there is one pending; this prevents the receive
 	 * DMA from getting that byte right when we start it
 	 */
-	*in_msg = spi->dr;
+	dummy = spi->dr;
 
 	/* Start DMA */
 	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
