@@ -38,4 +38,5 @@ chip-$(CONFIG_FLASH)+=flash-$(FLASH_FAMILY).o
 chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_USB)+=usb.o usb_endpoints.o
+chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_phy.o
