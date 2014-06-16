@@ -443,13 +443,6 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	     msgnum++, msg++) {
 		unsigned int addr_flags = msg->addr_flags;
 
-		/* Parse slave address if necessary */
-		if (addr_flags & EC_I2C_FLAG_10BIT) {
-			/* 10-bit addressing not supported yet */
-			PTHRUPRINTF("i2c passthru no 10-bit addressing");
-			return EC_RES_INVALID_PARAM;
-		}
-
 		PTHRUPRINTF("i2c passthru port=%d, %s, addr=0x%02x, "
 			    "len=0x%02x",
 			    params->port,
