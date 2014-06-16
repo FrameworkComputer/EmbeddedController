@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "uart.h"
+#include "usb_console.h"
 #include "util.h"
 
 /* Default to all channels active */
@@ -68,26 +69,36 @@ BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
 
 int cputs(enum console_channel channel, const char *outstr)
 {
+	int rv1, rv2;
+
 	/* Filter out inactive channels */
 	if (!(CC_MASK(channel) & channel_mask))
 		return EC_SUCCESS;
 
-	return uart_puts(outstr);
+	rv1 = usb_puts(outstr);
+	rv2 = uart_puts(outstr);
+
+	return rv1 == EC_SUCCESS ? rv2 : rv1;
 }
 
 int cprintf(enum console_channel channel, const char *format, ...)
 {
-	int rv;
+	int rv1, rv2;
 	va_list args;
 
 	/* Filter out inactive channels */
 	if (!(CC_MASK(channel) & channel_mask))
 		return EC_SUCCESS;
 
+	usb_va_start(args, format);
+	rv1 = usb_vprintf(format, args);
+	usb_va_end(args);
+
 	va_start(args, format);
-	rv = uart_vprintf(format, args);
+	rv2 = uart_vprintf(format, args);
 	va_end(args);
-	return rv;
+
+	return rv1 == EC_SUCCESS ? rv2 : rv1;
 }
 
 int cprints(enum console_channel channel, const char *format, ...)
@@ -99,13 +110,21 @@ int cprints(enum console_channel channel, const char *format, ...)
 	if (!(CC_MASK(channel) & channel_mask))
 		return EC_SUCCESS;
 
+	rv = cprintf(channel, "[%T ");
+
 	va_start(args, format);
-	rv = uart_printf("[%T ");
 	r = uart_vprintf(format, args);
 	if (r)
 		rv = r;
-	r = uart_puts("]\n");
 	va_end(args);
+
+	usb_va_start(args, format);
+	r = usb_vprintf(format, args);
+	if (r)
+		rv = r;
+	usb_va_end(args);
+
+	r = cputs(channel, "]\n");
 	return r ? r : rv;
 }
 

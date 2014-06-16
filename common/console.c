@@ -4,12 +4,14 @@
  */
 
 /* Console module for Chrome EC */
+
 #include "clock.h"
 #include "console.h"
 #include "link_defs.h"
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "usb_console.h"
 #include "util.h"
 
 #define MAX_ARGS_PER_COMMAND 10
@@ -205,6 +207,14 @@ static void console_init(void)
 	ccputs(PROMPT);
 }
 
+static int console_putc(int c)
+{
+	int rv1 = uart_putc(c);
+	int rv2 = usb_putc(c);
+
+	return rv1 == EC_SUCCESS ? rv2 : rv1;
+}
+
 static void move_cursor_right(void)
 {
 	if (input_pos == input_len)
@@ -244,7 +254,7 @@ static void move_cursor_begin(void)
 static void repeat_char(char c, int cnt)
 {
 	while (cnt--)
-		uart_putc(c);
+		console_putc(c);
 }
 
 #ifdef CONFIG_CONSOLE_HISTORY
@@ -289,7 +299,7 @@ static void handle_backspace(void)
 		return;  /* Already at beginning of line */
 
 	/* Move cursor back */
-	uart_putc('\b');
+	console_putc('\b');
 
 	/* Print and move anything following the cursor position */
 	if (input_pos != input_len) {
@@ -302,7 +312,7 @@ static void handle_backspace(void)
 	}
 
 	/* Space over last character and move cursor to correct position */
-	uart_putc(' ');
+	console_putc(' ');
 	repeat_char('\b', input_len - input_pos + 1);
 
 	input_len--;
@@ -413,7 +423,7 @@ static void console_handle_char(int c)
 
 	case '\n':
 		/* Terminate this line */
-		uart_puts("\r\n");
+		console_putc('\n');
 
 #ifdef CONFIG_CONSOLE_HISTORY
 		/* Save command in history buffer */
@@ -512,7 +522,7 @@ static void console_handle_char(int c)
 			break;
 
 		/* Print character */
-		uart_putc(c);
+		console_putc(c);
 
 		/* If not at end of line, print rest of line and move it down */
 		if (input_pos != input_len) {
@@ -554,12 +564,23 @@ void console_task(void)
 	console_init();
 
 	while (1) {
-		int c = uart_getc();
+		int c;
 
-		if (c == -1)
-			task_wait_event(-1);  /* Wait for more input */
-		else
+		while (1) {
+			c = uart_getc();
+			if (c == -1)
+				break;
 			console_handle_char(c);
+		}
+
+		while (1) {
+			c = usb_getc();
+			if (c == -1)
+				break;
+			console_handle_char(c);
+		}
+
+		task_wait_event(-1);  /* Wait for more input */
 	}
 }
 
