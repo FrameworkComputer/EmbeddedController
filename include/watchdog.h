@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_WATCHDOG_H
 #define __CROS_EC_WATCHDOG_H
 
-/* Watchdog period in ms; must be at least twice HOOK_TICK_INTERVAL */
-#define WATCHDOG_PERIOD_MS 1100
-
 /**
  * Initialize the watchdog.
  *
