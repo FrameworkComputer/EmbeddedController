@@ -97,9 +97,9 @@ const struct gpio_info gpio_list[] = {
 	 pd_mcu_interrupt},
 
 	/* Other inputs */
-	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
+	{"BOARD_VERSION1",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
 	{"BOARD_VERSION2",       LM4_GPIO_Q, (1<<6), GPIO_INPUT, NULL},
-	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<7), GPIO_INPUT, NULL},
+	{"BOARD_VERSION3",       LM4_GPIO_Q, (1<<5), GPIO_INPUT, NULL},
 	{"USB1_OC_L",            LM4_GPIO_E, (1<<7), GPIO_INPUT, NULL},
 	{"USB1_STATUS_L",        LM4_GPIO_E, (1<<6), GPIO_INPUT, NULL},
 	{"USB2_OC_L",            LM4_GPIO_E, (1<<0), GPIO_INPUT, NULL},

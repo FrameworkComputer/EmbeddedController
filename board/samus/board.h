@@ -240,9 +240,9 @@ enum als_id {
 
 /* Known board versions for system_get_board_version(). */
 enum board_version {
-	BOARD_VERSION_PROTO1 = 0,
-	BOARD_VERSION_PROTO1B = 1,
-	BOARD_VERSION_PROTO1_9 = 2,
+	BOARD_VERSION_PROTO_1_9 = 0,
+	BOARD_VERSION_PROTO_2_A = 1,
+	BOARD_VERSION_PROTO_2_B = 2,
 };
 
 /* Wireless signals */
