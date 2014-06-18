@@ -75,9 +75,9 @@ static timestamp_t fault_deadline;
 /* Current sense resistor : 5 milliOhm */
 #define R_SENSE   5
 /* VBUS voltage is measured through 10k / 100k voltage divider = /11 */
-#define VOLT_DIV  ((10+110)/10)
-/* The current sensing op-amp has a x101 gain */
-#define CURR_GAIN 101
+#define VOLT_DIV  ((10+100)/10)
+/* The current sensing op-amp has a x100 gain */
+#define CURR_GAIN 100
 /* convert VBUS voltage in raw ADC value */
 #define VBUS_MV(mv) ((mv)*ADC_SCALE/VOLT_DIV/VDDA_MV)
 /* convert VBUS current in raw ADC value */
