@@ -82,7 +82,7 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 static void watchdog_freq_changed(void)
 {
 	/* Set the timeout period */
-	watchdog_period = WATCHDOG_PERIOD_MS * (clock_get_freq() / 1000);
+	watchdog_period = CONFIG_WATCHDOG_PERIOD_MS * (clock_get_freq() / 1000);
 
 	/* Reload the watchdog timer now */
 	watchdog_reload();

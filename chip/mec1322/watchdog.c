@@ -14,7 +14,7 @@
  * Fire auxiliary timer 50ms before watchdog timer expires. This leaves
  * some time for debug trace to be printed.
  */
-#define AUX_TIMER_PERIOD_MS (WATCHDOG_PERIOD_MS - 50)
+#define AUX_TIMER_PERIOD_MS (CONFIG_WATCHDOG_PERIOD_MS - 50)
 
 void watchdog_reload(void)
 {
@@ -70,7 +70,7 @@ int watchdog_init(void)
 #endif
 
 	/* Set timeout. It takes 1007us to decrement WDG_CNT by 1. */
-	MEC1322_WDG_LOAD = WATCHDOG_PERIOD_MS * 1000 / 1007;
+	MEC1322_WDG_LOAD = CONFIG_WATCHDOG_PERIOD_MS * 1000 / 1007;
 
 	/* Start watchdog */
 	MEC1322_WDG_CTL |= 1;
