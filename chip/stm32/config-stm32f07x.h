@@ -40,3 +40,6 @@
 /* Reduced history because of limited RAM */
 #undef CONFIG_CONSOLE_HISTORY
 #define CONFIG_CONSOLE_HISTORY 3
+
+/* STM32F0 has a larger USB RAM */
+#define CONFIG_USB_RAM_SIZE 1024

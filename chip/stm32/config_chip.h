@@ -87,6 +87,8 @@
 
 /* Dedicated SRAM region for USB transfers */
 #define CONFIG_USB_RAM_BASE 0x40006000
+#ifndef CONFIG_USB_RAM_SIZE
 #define CONFIG_USB_RAM_SIZE 512
+#endif
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */
