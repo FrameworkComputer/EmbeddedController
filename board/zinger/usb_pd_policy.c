@@ -85,6 +85,8 @@ static timestamp_t fault_deadline;
 
 /* Max current : 20% over 3A = 3.6A */
 #define MAX_CURRENT VBUS_MA(3600)
+/* Fast short circuit protection : 4.5A */
+#define MAX_CURRENT_FAST VBUS_MA(4500)
 /* reset over-current after 1 second */
 #define OCP_TIMEOUT SECOND
 
@@ -164,7 +166,7 @@ int pd_set_power_supply_ready(void)
 
 	output_enable();
 	/* Over-current monitoring */
-	adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT, 0);
+	adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
 
 	return EC_SUCCESS; /* we are ready */
 }
@@ -198,7 +200,7 @@ int pd_board_checks(void)
 
 	if (watchdog_enabled)
 		/* re-enable fast OCP */
-		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT, 0);
+		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
 
 	if ((fault == FAULT_FAST_OCP) || (vbus_amp > MAX_CURRENT)) {
 		debug_printf("OverCurrent : %d mA\n",

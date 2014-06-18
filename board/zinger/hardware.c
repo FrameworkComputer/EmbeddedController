@@ -115,8 +115,8 @@ static void adc_init(void)
 	STM32_ADC_CFGR1 = 1 << 12; /* (1 << 15) => AUTOOFF */;
 	/* clock is ADCCLK */
 	STM32_ADC_CFGR2 = 0;
-	/* Sampling time : 13.5 ADC clock cycles. */
-	STM32_ADC_SMPR = 2;
+	/* Sampling time : 71.5 ADC clock cycles, about 5us */
+	STM32_ADC_SMPR = 6;
 	/* Disable interrupts */
 	STM32_ADC_IER = 0;
 	/* Analog watchdog IRQ */
