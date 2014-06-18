@@ -29,6 +29,17 @@ int master_slave_is_master(void);
 int master_slave_sync_impl(const char *filename, int line, int timeout_ms);
 
 /**
+ * Enable/disable master-slave interrupt. Master-slave interrupt is
+ * implemented using SYNC1/SYNC2 signal, so this is assuming the master
+ * and the slave are in sync waiting for interrupt.
+ */
+void master_slave_enable_interrupt(void);
+void master_slave_disable_interrupt(void);
+
+/* Interrupt the other chip with a 1-ms pulse. */
+void master_slave_wake_other(void);
+
+/**
  * Identify this chip and shake hands with the other chip.
  *
  * @return		EC_SUCCESS, or non-zero if any error.

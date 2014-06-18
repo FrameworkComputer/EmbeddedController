@@ -12,7 +12,7 @@
 #include "touch_scan.h"
 #include "util.h"
 
-static void clock_init(void)
+void hardware_clock_init(void)
 {
 	/* Turn on HSE */
 	if (!(STM32_RCC_CR & (1 << 17))) {
@@ -183,7 +183,7 @@ static void pmse_init(void)
 void hardware_init(void)
 {
 	power_init();
-	clock_init();
+	hardware_clock_init();
 	pins_init();
 	timers_init();
 	adc_init();

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "cpu.h"
 #include "debug.h"
 #include "dma.h"
 #include "encode.h"
@@ -15,6 +16,7 @@
 #include "master_slave.h"
 #include "registers.h"
 #include "spi_comm.h"
+#include "task.h"
 #include "timer.h"
 #include "touch_scan.h"
 #include "util.h"
@@ -61,6 +63,8 @@ static void set_gpio(const struct ts_pin pin, enum pin_type type)
 	} else if (type == PIN_PD) {
 		mask |= 0x88888888 & mode;
 		STM32_GPIO_BSRR(port) = pmask << 16;
+	} else if (type == PIN_Z) {
+		mask |= 0x44444444 & mode;
 	} else if (type == PIN_ROW) {
 		/* Nothing for PIN_ROW. Already analog input. */
 	}
@@ -73,7 +77,7 @@ void touch_scan_init(void)
 	int i;
 
 	for (i = 0; i < ROW_COUNT; ++i) {
-		set_gpio(col_pins[i], PIN_ROW);
+		set_gpio(row_pins[i], PIN_ROW);
 		STM32_PMSE_PxPMR(row_pins[i].port_id) |= 1 << row_pins[i].pin;
 	}
 	for (i = 0; i < COL_COUNT; ++i)
@@ -84,6 +88,47 @@ void touch_scan_init(void)
 	for (i = 0; i < COL_COUNT; ++i)
 		mccr_list[i] = TS_PIN_TO_CR(col_pins[i]);
 }
+
+void touch_scan_enable_interrupt(void)
+{
+	int i;
+
+	/* Set ALLROW and ALLCOL */
+	for (i = 0; i < ROW_COUNT; ++i)
+		set_gpio(row_pins[i], PIN_Z);
+	for (i = 0; i < COL_COUNT; ++i) {
+		set_gpio(col_pins[i], PIN_COL);
+		STM32_PMSE_PxPMR(col_pins[i].port_id) |= 1 << col_pins[i].pin;
+	}
+	STM32_PMSE_MCCR = (1 << 31) | (0 << 20);
+	STM32_PMSE_MRCR = 1 << 31;
+
+	/* Enable external interrupt. EXTI3 on port E. Rising edge */
+	STM32_EXTI_RTSR |= 1 << 3;
+	STM32_AFIO_EXTICR(0) = (STM32_AFIO_EXTICR(0) & ~0xf000) | (4 << 12);
+	STM32_EXTI_IMR |= 1 << 3;
+	task_clear_pending_irq(STM32_IRQ_EXTI3);
+	task_enable_irq(STM32_IRQ_EXTI3);
+}
+
+void touch_scan_disable_interrupt(void)
+{
+	int i;
+
+	for (i = 0; i < ROW_COUNT; ++i)
+		set_gpio(row_pins[i], PIN_ROW);
+	for (i = 0; i < COL_COUNT; ++i) {
+		set_gpio(col_pins[i], PIN_PD);
+		STM32_PMSE_PxPMR(col_pins[i].port_id) &=
+					~(1 << col_pins[i].pin);
+	}
+}
+
+void touch_scan_interrupt(void)
+{
+	STM32_EXTI_PR = STM32_EXTI_PR;
+}
+DECLARE_IRQ(STM32_IRQ_EXTI3, touch_scan_interrupt, 1);
 
 static void discharge(void)
 {

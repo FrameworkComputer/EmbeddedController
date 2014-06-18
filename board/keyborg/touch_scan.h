@@ -12,6 +12,7 @@ enum pin_type {
 	PIN_ROW,
 	PIN_COL,
 	PIN_PD,
+	PIN_Z,
 };
 
 /* 8-bit window */
@@ -55,10 +56,22 @@ extern const struct ts_pin col_pins[];
 #define ROW_COUNT 41
 #define COL_COUNT 60
 
+/* Initialize touch scan module */
 void touch_scan_init(void);
 
+/* Start scanning on the slave. This is called by SPI command handler. */
 void touch_scan_slave_start(void);
 
+/**
+ * Initiate full matrix scan on the master. This also sends SPI command
+ * to the slave.
+ */
 int touch_scan_full_matrix(void);
+
+/* Configure touch scan module to interrupt on touch. */
+void touch_scan_enable_interrupt(void);
+
+/* Disable touch scan interrupt. */
+void touch_scan_disable_interrupt(void);
 
 #endif /* __BOARD_KEYBORG_TOUCH_SCAN_H */

@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "master_slave.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -54,6 +55,55 @@ int master_slave_sync_impl(const char *filename, int line, int timeout_ms)
 		debug_printf("Sync failed at %s:%d\n", filename, line);
 	return err;
 }
+
+void master_slave_enable_interrupt(void)
+{
+	if (is_master) {
+		/* Interrupt on EXTI2 on port I */
+		STM32_EXTI_RTSR |= 1 << 2;
+		STM32_AFIO_EXTICR(0) = (STM32_AFIO_EXTICR(0) & ~0xf00) |
+				       (8 << 8);
+		STM32_EXTI_IMR |= 1 << 2;
+		task_clear_pending_irq(STM32_IRQ_EXTI2);
+		task_enable_irq(STM32_IRQ_EXTI2);
+	} else {
+		/* Interrupt on EXTI1 on port I */
+		STM32_EXTI_RTSR |= 1 << 1;
+		STM32_AFIO_EXTICR(0) = (STM32_AFIO_EXTICR(0) & ~0xf0) |
+				       (8 << 4);
+		STM32_EXTI_IMR |= 1 << 1;
+		task_clear_pending_irq(STM32_IRQ_EXTI1);
+		task_enable_irq(STM32_IRQ_EXTI1);
+	}
+}
+
+void master_slave_disable_interrupt(void)
+{
+	if (is_master)
+		task_disable_irq(STM32_IRQ_EXTI2);
+	else
+		task_disable_irq(STM32_IRQ_EXTI1);
+}
+
+void master_slave_wake_other(void)
+{
+	if (is_master) {
+		STM32_GPIO_BSRR(GPIO_I) = SYNC1 << 0;
+		udelay(MSEC);
+		STM32_GPIO_BSRR(GPIO_I) = SYNC1 << 16;
+	} else {
+		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << 0;
+		udelay(MSEC);
+		STM32_GPIO_BSRR(GPIO_I) = SYNC2 << 16;
+	}
+}
+
+void master_slave_interrupt(void)
+{
+	STM32_EXTI_PR = STM32_EXTI_PR;
+}
+DECLARE_IRQ(STM32_IRQ_EXTI1, master_slave_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI2, master_slave_interrupt, 1);
 
 static int master_handshake(void)
 {

@@ -5,6 +5,7 @@
 /* Keyborg board-specific configuration */
 
 #include "common.h"
+#include "cpu.h"
 #include "debug.h"
 #include "master_slave.h"
 #include "registers.h"
@@ -130,6 +131,27 @@ static const char *get_version(void)
 	return version_data.version;
 }
 
+static void low_power(void)
+{
+	touch_scan_enable_interrupt();
+	master_slave_enable_interrupt();
+
+	CPU_SCB_SYSCTRL |= 0x4;
+	asm volatile("wfi");
+	CPU_SCB_SYSCTRL &= ~0x4;
+
+	hardware_clock_init();
+
+	touch_scan_disable_interrupt();
+	master_slave_disable_interrupt();
+	master_slave_wake_other();
+
+	/* Wait for the other chip to wake */
+	udelay(2 * MSEC);
+
+	master_slave_sync(5);
+}
+
 int main(void)
 {
 	int i = 0;
@@ -150,6 +172,10 @@ int main(void)
 		spi_slave_init();
 
 	master_slave_sync(100);
+
+	debug_printf("Touch to start...");
+	low_power();
+	debug_printf("\n");
 
 	while (1) {
 		i++;

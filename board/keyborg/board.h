@@ -41,6 +41,9 @@ enum gpio_signal;
 /* Initialize all useful registers */
 void hardware_init(void);
 
+/* Re-initialize clock */
+void hardware_clock_init(void);
+
 /* On the master, reboot both chips. On the slave, reboot itself. */
 void system_reboot(void);
 
