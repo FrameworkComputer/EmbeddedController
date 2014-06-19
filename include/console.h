@@ -52,6 +52,7 @@ enum console_channel {
 	CC_TASK,
 	CC_THERMAL,
 	CC_USB,
+	CC_USBMS,
 	CC_USBCHARGE,
 	CC_USBPD,
 	CC_VBOOT,

@@ -1258,6 +1258,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 
 /* --- MISC --- */
 
+#define STM32_UNIQUE_ID             0x1ffff7ac
 #define STM32_CEC_BASE              0x40007800 /* STM32F100 only */
 #define STM32_LCD_BASE              0x40002400
 #define STM32_FSMC_BASE             0xA0000000 /* STM32F10x only */
