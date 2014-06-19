@@ -34,7 +34,7 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 static unsigned max_mv = -1; /* no cap */
 
 /* Flag for battery status */
-static int battery_ok;
+static int battery_ok = 1;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
