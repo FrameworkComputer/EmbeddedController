@@ -14,6 +14,8 @@
 #define CONFIG_FANS 1
 #define CONFIG_ADC
 #define CONFIG_WAKE_PIN GPIO_S1
+#define CONFIG_SPI_PORT 0
+#define CONFIG_SPI_CS_GPIO GPIO_SHD_CS0
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM

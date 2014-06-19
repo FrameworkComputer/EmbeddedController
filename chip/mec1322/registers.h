@@ -297,6 +297,17 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_HTIMER_COUNT   REG16(MEC1322_HTIMER_BASE + 0x8)
 
 
+/* SPI */
+#define MEC1322_SPI_BASE(port) (0x40009400 + 0x80 * (port))
+#define MEC1322_SPI_AR(port)   REG8(MEC1322_SPI_BASE(port) + 0x00)
+#define MEC1322_SPI_CR(port)   REG8(MEC1322_SPI_BASE(port) + 0x04)
+#define MEC1322_SPI_SR(port)   REG8(MEC1322_SPI_BASE(port) + 0x08)
+#define MEC1322_SPI_TD(port)   REG8(MEC1322_SPI_BASE(port) + 0x0c)
+#define MEC1322_SPI_RD(port)   REG8(MEC1322_SPI_BASE(port) + 0x10)
+#define MEC1322_SPI_CC(port)   REG8(MEC1322_SPI_BASE(port) + 0x14)
+#define MEC1322_SPI_CG(port)   REG8(MEC1322_SPI_BASE(port) + 0x18)
+
+
 /* DMA */
 #define MEC1322_DMA_BASE            0x40002400
 

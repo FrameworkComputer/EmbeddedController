@@ -19,6 +19,16 @@ int spi_enable(int enable);
 int spi_transaction(const uint8_t *txdata, int txlen,
 		    uint8_t *rxdata, int rxlen);
 
+/* Similar to spi_transaction(), but hands over to DMA for reading response.
+ * Must call spi_transaction_flush() after this to make sure the response is
+ * received.
+ */
+int spi_transaction_async(const uint8_t *txdata, int txlen,
+			  uint8_t *rxdata, int rxlen);
+
+/* Wait for async response received */
+int spi_transaction_flush(void);
+
 #ifdef CONFIG_SPI
 /**
  * Called when the NSS level changes, signalling the start or end of a SPI

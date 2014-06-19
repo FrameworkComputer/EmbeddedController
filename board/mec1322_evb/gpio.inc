@@ -14,6 +14,9 @@ GPIO(PCH_WAKE_L, PORT(20), 0, GPIO_ODR_HIGH, NULL) /* PCH wake pin */
 /* Switch S1 */
 GPIO(S1,         PORT(6),  3, GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
 
+/* Shared SPI CS */
+GPIO(SHD_CS0,    PORT(15), 0, GPIO_ODR_HIGH, NULL)
+
 /*
  * Signals which aren't implemented on MEC1322 eval board but we'll
  * emulate anyway, to make it more convenient to debug other code.

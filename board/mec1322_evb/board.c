@@ -35,6 +35,8 @@ const struct gpio_alt_func gpio_alt_funcs[] = {
 	{GPIO_PORT(12), 0x60,     2, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
 	{GPIO_PORT(14), 0x14,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
 	{GPIO_PORT(2),  0x20,     2, MODULE_LPC},
+	{GPIO_PORT(12), 0x14,     1, MODULE_SPI},
+	{GPIO_PORT(6),  0x10,     1, MODULE_SPI},
 };
 const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
 

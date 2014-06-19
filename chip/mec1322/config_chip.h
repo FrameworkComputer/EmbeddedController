@@ -89,6 +89,7 @@
 #define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_FPU
+#define CONFIG_SPI
 #define CONFIG_DMA
 
 #undef CONFIG_FLASH
