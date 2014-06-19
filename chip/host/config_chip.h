@@ -42,7 +42,8 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 #define DEFERRABLE_MAX_COUNT 8
 
 /* Interval between HOOK_TICK notifications */
-#define HOOK_TICK_INTERVAL (250 * MSEC)
+#define HOOK_TICK_INTERVAL_MS 250
+#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Do NOT use common panic code (designed to output information on the UART) */
 #undef CONFIG_COMMON_PANIC_OUTPUT
@@ -50,4 +51,3 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 #undef CONFIG_COMMON_TIMER
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */
-

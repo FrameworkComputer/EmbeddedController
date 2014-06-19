@@ -934,14 +934,14 @@
  */
 #undef CONFIG_WATCHDOG_HELP
 
-/* Watchdog period in ms; must be at least twice HOOK_TICK_INTERVAL */
-#define CONFIG_WATCHDOG_PERIOD_MS 1100
+/* Watchdog period in ms; see also AUX_TIMER_PERIOD_MS */
+#define CONFIG_WATCHDOG_PERIOD_MS 1600
 
 /*
- * Fire auxiliary timer 50ms before watchdog timer expires. This leaves
+ * Fire auxiliary timer 500ms before watchdog timer expires. This leaves
  * some time for debug trace to be printed.
  */
-#define CONFIG_AUX_TIMER_PERIOD_MS (CONFIG_WATCHDOG_PERIOD_MS - 50)
+#define CONFIG_AUX_TIMER_PERIOD_MS (CONFIG_WATCHDOG_PERIOD_MS - 500)
 
 /*****************************************************************************/
 
@@ -1024,5 +1024,14 @@
  */
 #include "test_config.h"
 
+
+/*****************************************************************************/
+/*
+ * Sanity checks to make sure some of the configs above make sense.
+ */
+
+#if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
+#error "CONFIG_AUX_TIMER_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
+#endif
 
 #endif  /* __CROS_EC_CONFIG_H */

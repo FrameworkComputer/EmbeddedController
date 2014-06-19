@@ -54,7 +54,8 @@
 #define LARGER_TASK_STACK_SIZE 640
 
 /* Interval between HOOK_TICK notifications */
-#define HOOK_TICK_INTERVAL (500 * MSEC)
+#define HOOK_TICK_INTERVAL_MS 500
+#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8

@@ -20,7 +20,8 @@
 #define CONFIG_UART_TX_BUF_SIZE 8192
 
 /* Interval between HOOK_TICK notifications */
-#define HOOK_TICK_INTERVAL (250 * MSEC)
+#define HOOK_TICK_INTERVAL_MS 250
+#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
