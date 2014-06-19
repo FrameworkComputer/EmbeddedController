@@ -205,18 +205,35 @@ int pd_board_checks(void)
 		/* re-enable fast OCP */
 		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
 
-	if ((fault == FAULT_FAST_OCP) || (vbus_amp > MAX_CURRENT)) {
-		debug_printf("OverCurrent : %d mA\n",
-		  vbus_amp * VDDA_MV / CURR_GAIN * 1000 / R_SENSE / ADC_SCALE);
+	if (fault == FAULT_FAST_OCP) {
+		debug_printf("Fast OverCurrent\n");
 		fault = FAULT_OCP;
 		/* reset over-current after 1 second */
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
 		return EC_ERROR_INVAL;
 	}
+	if (vbus_amp > MAX_CURRENT) {
+		/* 3 more samples to check whether this is just a transient */
+		int count;
+		for (count = 0; count < 3; count++)
+			if (adc_read_channel(ADC_CH_A_SENSE) < MAX_CURRENT)
+				break;
+		/* trigger the slow OCP iff all 4 samples are above the max */
+		if (count == 3) {
+			debug_printf("OverCurrent : %d mA\n",
+			  vbus_amp * VDDA_MV / CURR_GAIN * 1000
+				   / R_SENSE / ADC_SCALE);
+			fault = FAULT_OCP;
+			/* reset over-current after 1 second */
+			fault_deadline.val = get_time().val + OCP_TIMEOUT;
+			return EC_ERROR_INVAL;
+		}
+	}
 	if ((output_is_enabled() && (vbus_volt > voltages[volt_idx].ovp)) ||
 	    (fault && (vbus_volt > voltages[volt_idx].ovp_rec))) {
-		debug_printf("OverVoltage : %d mV\n",
-			     vbus_volt * VDDA_MV * VOLT_DIV / ADC_SCALE);
+		if (!fault)
+			debug_printf("OverVoltage : %d mV\n",
+				vbus_volt * VDDA_MV * VOLT_DIV / ADC_SCALE);
 		/* TODO(crosbug.com/p/28331) discharge */
 		fault = FAULT_OVP;
 		/* no timeout */
