@@ -41,7 +41,7 @@
 /* All core power rails */
 #define IN_PGOOD_ALL_CORE    (IN_PGOOD_VCORE)
 /* Rails required for S3 */
-#define IN_PGOOD_S3          (IN_PGOOD_PP1200 | IN_PGOOD_PP1800)
+#define IN_PGOOD_S3          (IN_PGOOD_PP1200)
 /* Rails required for S0 */
 #define IN_PGOOD_S0          (IN_PGOOD_ALL_NONCORE)
 /* Rails used to detect if PP5000 is up. 1.8V PGOOD is not
