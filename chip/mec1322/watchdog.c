@@ -10,12 +10,6 @@
 #include "task.h"
 #include "watchdog.h"
 
-/*
- * Fire auxiliary timer 50ms before watchdog timer expires. This leaves
- * some time for debug trace to be printed.
- */
-#define AUX_TIMER_PERIOD_MS (CONFIG_WATCHDOG_PERIOD_MS - 50)
-
 void watchdog_reload(void)
 {
 	MEC1322_WDG_KICK = 1;
@@ -23,7 +17,7 @@ void watchdog_reload(void)
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Reload the auxiliary timer */
 	MEC1322_TMR16_CTL(0) &= ~(1 << 5);
-	MEC1322_TMR16_CNT(0) = AUX_TIMER_PERIOD_MS;
+	MEC1322_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
 	MEC1322_TMR16_CTL(0) |= 1 << 5;
 #endif
 }
@@ -65,7 +59,7 @@ int watchdog_init(void)
 	MEC1322_INT_BLK_EN |= 1 << 23;
 
 	/* Load and start the auxiliary timer */
-	MEC1322_TMR16_CNT(0) = AUX_TIMER_PERIOD_MS;
+	MEC1322_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
 	MEC1322_TMR16_CNT(0) |= 1 << 5;
 #endif
 

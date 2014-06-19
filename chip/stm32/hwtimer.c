@@ -366,7 +366,7 @@ void hwtimer_setup_watchdog(void)
 	 * to obtain the number of times TIM_CLOCK_LSB can overflow before we
 	 * generate an interrupt.
 	 */
-	timer->arr = timer->cnt = CONFIG_WATCHDOG_PERIOD_MS * MSEC / (1 << 16);
+	timer->arr = timer->cnt = CONFIG_AUX_TIMER_PERIOD_MS * MSEC / (1 << 16);
 
 	/* count on every TIM_CLOCK_LSB overflow */
 	timer->psc = 0;
