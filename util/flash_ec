@@ -128,6 +128,7 @@ function ec_uart() {
 # Servo variables management
 case "${BOARD}" in
 	samus_pd ) MCU="usbpd" ;;
+	twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
 
@@ -211,6 +212,26 @@ function flash_stm32() {
 	${STM32MON} -d ${EC_UART} -u -e -w "${IMG}"
 }
 
+function flash_stm32_dfu() {
+	DFU_DEVICE=0483:df11
+	ADDR=0x08000000
+	DFU_UTIL='dfu-util'
+	which $DFU_UTIL &> /dev/null || die \
+		"no dfu-util util found.  Did you 'sudo emerge dfu-util'"
+
+	info "Using dfu flasher : ${DFU_UTIL}"
+
+	dev_cnt=$(lsusb -d $DFU_DEVICE | wc -l)
+	if [ $dev_cnt -eq 0 ] ; then
+		die "unable to locate dfu device at $DFU_DEVICE"
+	elif [ $dev_cnt -ne 1 ] ; then
+		die "too many dfu devices (${dev_cnt}). Disconnect all but one."
+	fi
+
+	SIZE=$(wc -c ${IMG} | cut -d' ' -f1)
+	sudo $DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
+}
+
 function flash_link() {
 	OCD_CFG="servo_v2_slower.cfg"
 	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
@@ -264,7 +285,8 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	big | discovery | nyan | pit | snow | spring ) flash_stm32 ;;
-	fruitpie | zinger | firefly | samus_pd | twinkie) flash_stm32 ;;
+	fruitpie | zinger | firefly | samus_pd ) flash_stm32 ;;
+	twinkie) flash_stm32_dfu ;;
 	falco | peppy | rambi | samus | squawks ) flash_lm4 ;;
 	link ) flash_link ;;
 	*) die "board ${BOARD} not supported" ;;
