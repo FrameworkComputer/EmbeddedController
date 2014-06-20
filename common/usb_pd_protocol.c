@@ -760,6 +760,9 @@ static void execute_hard_reset(void)
 	CPRINTF("HARD RESET!\n");
 }
 
+#ifdef BOARD_SAMUS_PD
+extern void pd_charger_change(int c);
+#endif
 void pd_task(void)
 {
 	int head;
@@ -869,6 +872,13 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SNK_DISCONNECTED:
 			/* Source connection monitoring */
+#ifdef BOARD_SAMUS_PD
+			/*
+			 * TODO(crosbug.com/p/29841): remove hack for
+			 * getting extpower is present status from PD MCU.
+			 */
+			pd_charger_change(0);
+#endif
 			cc1_volt = pd_adc_read(0);
 			cc2_volt = pd_adc_read(1);
 			if ((cc1_volt > PD_SNK_VA) ||
@@ -924,6 +934,13 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_READY:
 			/* we have power and we are happy */
+#ifdef BOARD_SAMUS_PD
+			/*
+			 * TODO(crosbug.com/p/29841): remove hack for
+			 * getting extpower is present status from PD MCU.
+			 */
+			pd_charger_change(1);
+#endif
 
 			/* if we have lost vbus, go back to disconnected */
 			if (!pd_snk_is_vbus_provided()) {

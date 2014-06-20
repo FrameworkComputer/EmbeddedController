@@ -36,6 +36,8 @@ static unsigned max_mv = -1; /* no cap */
 /* Flag for battery status */
 static int battery_ok = 1;
 
+static int charger_connected;
+
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
 	int i;
@@ -140,6 +142,18 @@ static void pd_send_ec_int(void)
 	gpio_set_level(GPIO_EC_INT_L, 1);
 }
 
+/*
+ * TODO(crosbug.com/p/29841): remove hack for getting extpower
+ * is present status from PD MCU.
+ */
+void pd_charger_change(int c)
+{
+	if (charger_connected != c) {
+		charger_connected = c;
+		pd_send_ec_int();
+	}
+}
+
 int pd_board_checks(void)
 {
 	static uint64_t last_time;
@@ -188,6 +202,12 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	} else {
 		battery_ok = 0;
 	}
+
+	/*
+	 * TODO(crosbug.com/p/29841): remove hack for getting extpower
+	 * is present status from PD MCU.
+	 */
+	r->status = charger_connected ? EC_CMD_PD_STATUS_FLAG_CHARGER_CONN : 0;
 
 	args->response_size = sizeof(*r);
 

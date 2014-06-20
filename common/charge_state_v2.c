@@ -472,11 +472,27 @@ void charger_task(void)
 					problem(PR_POST_INIT, rv);
 				else
 					prev_ac = curr.ac;
+#ifdef BOARD_SAMUS
+				/*
+				 * TODO(crosbug.com/p/29841): remove hack for
+				 * getting extpower is present status from PD.
+				 */
+				CPRINTS("AC connected");
+				host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
+#endif
 			} else {
 				/* Some things are only meaningful on AC */
 				state_machine_force_idle = 0;
 				battery_seems_to_be_dead = 0;
 				prev_ac = curr.ac;
+#ifdef BOARD_SAMUS
+				/*
+				 * TODO(crosbug.com/p/29841): remove hack for
+				 * getting extpower is present status from PD.
+				 */
+				CPRINTS("AC disconnected");
+				host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
+#endif
 			}
 		}
 		charger_get_params(&curr.chg);

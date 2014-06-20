@@ -14,6 +14,8 @@
 
 #define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
 
+static int pd_charger_connected;
+
 void host_command_pd_send_status(void)
 {
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
@@ -22,6 +24,8 @@ void host_command_pd_send_status(void)
 static void pd_exchange_status(void)
 {
 	struct ec_params_pd_status ec_status;
+	struct ec_response_pd_status pd_status;
+	int rv;
 
 	/*
 	 * TODO(crosbug.com/p/29499): Change sending state of charge to
@@ -33,8 +37,22 @@ static void pd_exchange_status(void)
 	else
 		ec_status.batt_soc = -1;
 
-	pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
-			sizeof(struct ec_params_pd_status), NULL, 0);
+	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
+			     sizeof(struct ec_params_pd_status), &pd_status,
+			     sizeof(struct ec_response_pd_status));
+
+	if (rv >= 0)
+		pd_charger_connected = pd_status.status &
+			EC_CMD_PD_STATUS_FLAG_CHARGER_CONN;
+}
+
+/*
+ * TODO(crosbug.com/p/29841): remove hack for getting extpower
+ * is present status from PD MCU.
+ */
+int pd_extpower_is_present(void)
+{
+	return pd_charger_connected;
 }
 
 void pd_command_task(void)
