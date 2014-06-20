@@ -914,6 +914,12 @@
 #undef CONFIG_USB_PORT_POWER_SMART
 
 /*
+ * Override the default charging mode for USB smart power control.
+ * Value is selected from usb_charge_mode in include/usb_charge.h
+ */
+#undef CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE
+
+/*
  * Smart USB power control can use a full set of control signals to the USB
  * port power chip, or a reduced set.  If this is defined, use the reduced set.
  */

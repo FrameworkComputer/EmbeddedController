@@ -23,6 +23,10 @@
 
 #define USB_CHARGE_PORT_COUNT 2
 
+#ifndef CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE
+#define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_SDP2
+#endif
+
 /* The previous USB port state before sys jump */
 struct usb_state {
 	uint8_t port_mode[USB_CHARGE_PORT_COUNT];
@@ -75,8 +79,8 @@ static void usb_charge_set_ilim(int port_id, int sel)
 
 static void usb_charge_all_ports_on(void)
 {
-	usb_charge_set_mode(0, USB_CHARGE_MODE_SDP2);
-	usb_charge_set_mode(1, USB_CHARGE_MODE_SDP2);
+	usb_charge_set_mode(0, CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE);
+	usb_charge_set_mode(1, CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE);
 }
 
 static void usb_charge_all_ports_off(void)
