@@ -7,17 +7,17 @@
 
 /* Inputs with interrupt handlers are first for efficiency */
 /* Power button */
-GPIO(POWER_BUTTON_L, A, 2, GPIO_INT_BOTH, power_button_interrupt)
+GPIO(POWER_BUTTON_L, A, 2, GPIO_INT_BOTH_DSLEEP, power_button_interrupt)
 /* Lid switch */
-GPIO(LID_OPEN,       A, 3, GPIO_INT_BOTH, lid_interrupt)
+GPIO(LID_OPEN,       A, 3, GPIO_INT_BOTH_DSLEEP, lid_interrupt)
 /* AC power present */
-GPIO(AC_PRESENT,     H, 3, GPIO_INT_BOTH, extpower_interrupt)
+GPIO(AC_PRESENT,     H, 3, GPIO_INT_BOTH_DSLEEP, extpower_interrupt)
 /* SLP_S0# signal from PCH */
 GPIO(PCH_SLP_S0_L,   G, 6, GPIO_INT_BOTH, power_signal_interrupt)
 /* SLP_S3# signal from PCH */
-GPIO(PCH_SLP_S3_L,   G, 7, GPIO_INT_BOTH, power_signal_interrupt)
+GPIO(PCH_SLP_S3_L,   G, 7, GPIO_INT_BOTH_DSLEEP, power_signal_interrupt)
 /* SLP_S5# signal from PCH */
-GPIO(PCH_SLP_S5_L,   H, 1, GPIO_INT_BOTH, power_signal_interrupt)
+GPIO(PCH_SLP_S5_L,   H, 1, GPIO_INT_BOTH_DSLEEP, power_signal_interrupt)
 /* SLP_SUS# signal from PCH */
 GPIO(PCH_SLP_SUS_L,  G, 3, GPIO_INT_BOTH, power_signal_interrupt)
 /* SUSWARN# signal from PCH */
