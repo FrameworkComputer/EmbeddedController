@@ -1974,7 +1974,6 @@ struct ec_params_charge_control {
  *	  EC_RES_ERROR if the cut off command failed.
  */
 #define EC_CMD_BATTERY_CUT_OFF 0x99
-#define EC_VER_BATTERY_CUT_OFF 1
 
 #define EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN	(1 << 0)
 

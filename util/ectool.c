@@ -3654,20 +3654,36 @@ cmd_error:
 int cmd_battery_cut_off(int argc, char *argv[])
 {
 	struct ec_params_battery_cutoff p;
+	int cmd_version;
 	int rv;
 
 	memset(&p, 0, sizeof(p));
-	if (argc > 1) {
-		if (!strcasecmp(argv[1], "at-shutdown")) {
-			p.flags = EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN;
-		} else {
-			fprintf(stderr, "Bad parameter: %s\n", argv[1]);
+	if (ec_cmd_version_supported(EC_CMD_BATTERY_CUT_OFF, 1)) {
+		cmd_version = 1;
+		if (argc > 1) {
+			if (!strcasecmp(argv[1], "at-shutdown")) {
+				p.flags = EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN;
+			} else {
+				fprintf(stderr, "Bad parameter: %s\n", argv[1]);
+				return -1;
+			}
+		}
+	} else {
+		/* Fall back to version 0 command */
+		cmd_version = 0;
+		if (argc > 1) {
+			if (!strcasecmp(argv[1], "at-shutdown")) {
+				fprintf(stderr, "Explicit 'at-shutdown' ");
+				fprintf(stderr, "parameter not supported.\n");
+			} else {
+				fprintf(stderr, "Bad parameter: %s\n", argv[1]);
+			}
 			return -1;
 		}
 	}
 
-	rv = ec_command(EC_CMD_BATTERY_CUT_OFF, EC_VER_BATTERY_CUT_OFF,
-			&p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_BATTERY_CUT_OFF, cmd_version, &p, sizeof(p),
+			NULL, 0);
 	rv = (rv < 0 ? rv : 0);
 
 	if (rv < 0) {
@@ -3680,7 +3696,8 @@ int cmd_battery_cut_off(int argc, char *argv[])
 		printf("\n");
 		printf("SUCCESS. The battery has arranged a cut-off.\n");
 
-		if (p.flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN)
+		if (cmd_version == 1 &&
+		    (p.flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN))
 			printf("The battery will be cut off after shutdown.\n");
 		else
 			printf("The system should be shutdown immediately.\n");
