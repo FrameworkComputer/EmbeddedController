@@ -20,3 +20,4 @@ chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
+chip-$(CONFIG_DMA)+=dma.o

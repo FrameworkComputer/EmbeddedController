@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+/* Helper function for RAM address aliasing */
+#define MEC1322_RAM_ALIAS(x)   \
+	((x) >= 0x118000 ? (x) - 0x118000 + 0x20000000 : (x))
+
 /* EC Chip Configuration */
 #define MEC1322_CHIP_BASE      0x400fff00
 #define MEC1322_CHIP_DEV_ID    REG8(MEC1322_CHIP_BASE + 0x20)
@@ -291,6 +295,77 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_HTIMER_PRELOAD REG16(MEC1322_HTIMER_BASE + 0x0)
 #define MEC1322_HTIMER_CONTROL REG16(MEC1322_HTIMER_BASE + 0x4)
 #define MEC1322_HTIMER_COUNT   REG16(MEC1322_HTIMER_BASE + 0x8)
+
+
+/* DMA */
+#define MEC1322_DMA_BASE            0x40002400
+
+/*
+ * Available DMA channels.
+ *
+ * On MEC1322, any DMA channel may serve any device. Since we have
+ * 12 channels and 12 devices, we make each channel dedicated to the
+ * device of the same number.
+ */
+enum dma_channel {
+	/* Channel numbers */
+	MEC1322_DMAC_I2C0_SLAVE =  0,
+	MEC1322_DMAC_I2C0_MASTER = 1,
+	MEC1322_DMAC_I2C1_SLAVE =  2,
+	MEC1322_DMAC_I2C1_MASTER = 3,
+	MEC1322_DMAC_I2C2_SLAVE =  4,
+	MEC1322_DMAC_I2C2_MASTER = 5,
+	MEC1322_DMAC_I2C3_SLAVE =  6,
+	MEC1322_DMAC_I2C3_MASTER = 7,
+	MEC1322_DMAC_SPI0_TX =     8,
+	MEC1322_DMAC_SPI0_RX =     9,
+	MEC1322_DMAC_SPI1_TX =    10,
+	MEC1322_DMAC_SPI1_RX =    11,
+
+	/* Channel count */
+	MEC1322_DMAC_COUNT =      12,
+};
+
+/* Registers for a single channel of the DMA controller */
+struct mec1322_dma_chan {
+	uint32_t act;         /* Activate */
+	uint32_t mem_start;   /* Memory start address */
+	uint32_t mem_end;     /* Memory end address */
+	uint32_t dev;         /* Device address */
+	uint32_t ctrl;        /* Control */
+	uint32_t int_status;  /* Interrupt status */
+	uint32_t int_enabled; /* Interrupt enabled */
+	uint32_t pad;
+};
+
+/* Always use mec1322_dma_chan_t so volatile keyword is included! */
+typedef volatile struct mec1322_dma_chan mec1322_dma_chan_t;
+
+/* Common code and header file must use this */
+typedef mec1322_dma_chan_t dma_chan_t;
+
+/* Registers for the DMA controller */
+struct mec1322_dma_regs {
+	uint32_t ctrl;
+	uint32_t data;
+	uint32_t pad[2];
+	mec1322_dma_chan_t chan[MEC1322_DMAC_COUNT];
+};
+
+/* Always use mec1322_dma_regs_t so volatile keyword is included! */
+typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
+
+#define MEC1322_DMA_REGS ((mec1322_dma_regs_t *)MEC1322_DMA_BASE)
+
+/* Bits for DMA channel regs */
+#define MEC1322_DMA_ACT_EN		(1 << 0)
+#define MEC1322_DMA_XFER_SIZE(x)	((x) << 20)
+#define MEC1322_DMA_INC_DEV		(1 << 17)
+#define MEC1322_DMA_INC_MEM		(1 << 16)
+#define MEC1322_DMA_DEV(x)		((x) << 9)
+#define MEC1322_DMA_TO_DEV		(1 << 8)
+#define MEC1322_DMA_DONE		(1 << 2)
+#define MEC1322_DMA_RUN			(1 << 0)
 
 
 /* IRQ Numbers */
