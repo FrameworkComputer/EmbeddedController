@@ -387,6 +387,23 @@ static inline int battery_too_low(void)
 		 curr.batt.voltage <= batt_info->voltage_min));
 }
 
+#ifdef BOARD_SAMUS
+/*
+ * TODO(crosbug.com/p/29842): remove this workaround once the AC_PRESENT
+ * input is avaible.
+ */
+static void check_deep_discharge_again(void)
+{
+	/* Check again if power is present */
+	if (!extpower_is_present()) {
+		/* AP is off, so shut down the EC now */
+		CPRINTS("charge force EC hibernate due to low battery");
+		system_hibernate(0, 0);
+	}
+}
+DECLARE_DEFERRED(check_deep_discharge_again);
+#endif
+
 /* Shut everything down before the battery completely dies. */
 static void prevent_deep_discharge(void)
 {
@@ -394,9 +411,17 @@ static void prevent_deep_discharge(void)
 		return;
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+#ifdef BOARD_SAMUS
+		/*
+		 * TODO(crosbug.com/p/29842): remove this workaround once
+		 * the AC_PRESENT input is avaible.
+		 */
+		hook_call_deferred(check_deep_discharge_again, 10*SECOND);
+#else
 		/* AP is off, so shut down the EC now */
 		CPRINTS("charge force EC hibernate due to low battery");
 		system_hibernate(0, 0);
+#endif
 	} else if (!shutdown_warning_time.val) {
 		/* Warn AP battery level is so low we'll shut down */
 		CPRINTS("charge warn shutdown due to low battery");
