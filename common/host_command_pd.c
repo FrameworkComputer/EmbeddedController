@@ -7,10 +7,13 @@
 
 #include "charge_state.h"
 #include "common.h"
+#include "console.h"
 #include "host_command.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_PD_HOST_CMD, format, ## args)
 
 #define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
 
@@ -25,7 +28,7 @@ static void pd_exchange_status(void)
 {
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
-	int rv;
+	int rv = 0, tries = 0;
 
 	/*
 	 * TODO(crosbug.com/p/29499): Change sending state of charge to
@@ -37,13 +40,21 @@ static void pd_exchange_status(void)
 	else
 		ec_status.batt_soc = -1;
 
-	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
+	/* Try 3 times to get the PD MCU status. */
+	while (tries++ < 3) {
+		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
 			     sizeof(struct ec_params_pd_status), &pd_status,
 			     sizeof(struct ec_response_pd_status));
+		if (rv >= 0)
+			break;
+		task_wait_event(500*MSEC);
+	}
 
 	if (rv >= 0)
 		pd_charger_connected = pd_status.status &
 			EC_CMD_PD_STATUS_FLAG_CHARGER_CONN;
+	else
+		CPRINTS("Host command to PD MCU failed");
 }
 
 /*

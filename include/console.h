@@ -43,6 +43,7 @@ enum console_channel {
 	CC_LIGHTBAR,
 	CC_LPC,
 	CC_MOTION_SENSE,
+	CC_PD_HOST_CMD,
 	CC_PORT80,
 	CC_PWM,
 	CC_SPI,
