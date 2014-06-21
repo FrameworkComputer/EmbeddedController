@@ -30,7 +30,7 @@ struct dma_option {
  * @param channel	Channel to read
  * @return pointer to DMA channel registers
  */
-stm32_dma_chan_t *dma_get_channel(enum dma_channel channel);
+dma_chan_t *dma_get_channel(enum dma_channel channel);
 
 /**
  * Prepare a DMA transfer to transmit data from memory to a peripheral
@@ -76,14 +76,14 @@ void dma_disable(enum dma_channel channel);
  * @return number of bytes completed on a channel, or 0 if this channel is
  *		not enabled
  */
-int dma_bytes_done(stm32_dma_chan_t *chan, int orig_count);
+int dma_bytes_done(dma_chan_t *chan, int orig_count);
 
 /**
  * Start a previously-prepared dma channel
  *
  * @param chan	Channel to start, from dma_get_channel()
  */
-void dma_go(stm32_dma_chan_t *chan);
+void dma_go(dma_chan_t *chan);
 
 #ifdef CONFIG_DMA_HELP
 /**

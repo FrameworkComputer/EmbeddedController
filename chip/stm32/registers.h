@@ -1130,6 +1130,9 @@ struct stm32_dma_chan {
 /* Always use stm32_dma_chan_t so volatile keyword is included! */
 typedef volatile struct stm32_dma_chan stm32_dma_chan_t;
 
+/* Common code and header file must use this */
+typedef stm32_dma_chan_t dma_chan_t;
+
 /* Registers for the DMA controller */
 struct stm32_dma_regs {
 	uint32_t	isr;
