@@ -24,19 +24,7 @@
 #define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 4
 
-/* GPIO signal list */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_USER_BUTTON = 0,
-	/* Outputs */
-	GPIO_LED_BLUE,
-	GPIO_LED_GREEN,
-	/* Unimplemented signals we emulate */
-	GPIO_ENTERING_RW,
-	GPIO_WP_L,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 #endif /* !__ASSEMBLER__ */
 

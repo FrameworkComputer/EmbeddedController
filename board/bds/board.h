@@ -43,20 +43,7 @@ enum pwm_channel {
 /* Second UART port */
 #define CONFIG_UART_HOST 1
 
-/* GPIO signal list */
-enum gpio_signal {
-	GPIO_RECOVERY_L = 0,      /* Recovery signal from DOWN button */
-	GPIO_DEBUG_LED,           /* Debug LED */
-	/*
-	 * Signals which aren't implemented on BDS but we'll emulate anyway, to
-	 * make it more convenient to debug other code.
-	 */
-	GPIO_WP,                  /* Write protect input */
-	GPIO_ENTERING_RW,         /* EC entering RW code */
-
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 /* EEPROM blocks */
 #define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */

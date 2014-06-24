@@ -68,71 +68,7 @@
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
 
-/* GPIO signal definitions. */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_POWER_BUTTON_L = 0,   /* Power button */
-	GPIO_LID_OPEN,             /* Lid switch */
-	GPIO_AC_PRESENT,           /* AC power present */
-	GPIO_PCH_SLP_S3_L,         /* SLP_S3# signal from PCH */
-	GPIO_PCH_SLP_S4_L,         /* SLP_S4# signal from PCH */
-	GPIO_PP1050_PGOOD,         /* Power good on 1.05V */
-	GPIO_PP3300_PCH_PGOOD,     /* Power good on 3.3V (PCH supply) */
-	GPIO_PP5000_PGOOD,         /* Power good on 5V */
-	GPIO_S5_PGOOD,             /* Power good on S5 supplies */
-	GPIO_VCORE_PGOOD,          /* Power good on core VR */
-	GPIO_WP_L,                 /* Write protect input */
-	GPIO_JTAG_TCK,             /* JTAG clock input */
-	GPIO_UART0_RX,             /* UART0 RX input */
-
-	/* Other inputs */
-	GPIO_BOARD_VERSION1,       /* Board version stuffing resistor 1 */
-	GPIO_BOARD_VERSION2,       /* Board version stuffing resistor 2 */
-	GPIO_BOARD_VERSION3,       /* Board version stuffing resistor 3 */
-#ifdef CONFIG_CHIPSET_DEBUG
-	GPIO_PCH_SLP_SX_L,         /* SLP_S0IX# signal from PCH */
-	GPIO_PCH_SUS_STAT_L,       /* SUS_STAT# signal from PCH */
-	GPIO_PCH_SUSPWRDNACK,      /* SUSPWRDNACK signal from PCH */
-#endif
-	GPIO_PP1000_S0IX_PGOOD,    /* Power good on 1.00V (S0iX supplies) */
-	GPIO_USB1_OC_L,            /* USB port overcurrent warning */
-	GPIO_USB2_OC_L,            /* USB port overcurrent warning */
-
-	/* Outputs */
-	GPIO_CPU_PROCHOT,          /* Force CPU to think it's overheated */
-	GPIO_ENABLE_BACKLIGHT,     /* Enable backlight power */
-	GPIO_ENABLE_TOUCHPAD,      /* Enable touchpad power */
-	GPIO_ENTERING_RW,          /* Indicate when EC is entering RW code */
-	GPIO_LPC_CLKRUN_L,         /* Request that PCH drive LPC clock */
-	GPIO_PCH_CORE_PWROK,       /* Indicate core well power is stable */
-	GPIO_PCH_PWRBTN_L,         /* Power button output to PCH */
-	GPIO_PCH_RCIN_L,           /* Reset line to PCH (for 8042 emulation) */
-	GPIO_PCH_RSMRST_L,         /* Reset PCH resume power plane logic */
-	GPIO_PCH_SMI_L,            /* System management interrupt to PCH */
-	GPIO_PCH_SOC_OVERRIDE,     /* SOC override signal to PCH; when high, ME
-				    * ignores security descriptor */
-	GPIO_PCH_SYS_PWROK,        /* EC thinks everything is up and ready */
-	GPIO_PCH_WAKE_L,           /* Wake signal from EC to PCH */
-	GPIO_PP1350_EN,            /* Enable 1.35V supply */
-	GPIO_PP3300_DX_EN,         /* Enable power to lots of peripherals */
-	GPIO_PP3300_LTE_EN,        /* Enable LTE radio */
-	GPIO_PP3300_WLAN_EN,       /* Enable WiFi power */
-	GPIO_PP5000_EN,            /* Enable 5V supply */
-	GPIO_PPSX_EN,              /* Enable PP1350_PCH_SX, PP1000_PCH_SX */
-	GPIO_SUSP_VR_EN,           /* Enable 1.05V regulator */
-	GPIO_TOUCHSCREEN_RESET_L,  /* Reset touch screen */
-	GPIO_USB_CTL1,             /* USB control signal 1 to both ports */
-	GPIO_USB_ILIM_SEL,         /* USB current limit to both ports */
-	GPIO_USB1_ENABLE,          /* USB port 1 output power enable */
-	GPIO_USB2_ENABLE,          /* USB port 2 output power enable */
-	GPIO_VCORE_EN,             /* Enable core power supplies */
-	GPIO_WLAN_OFF_L,           /* Disable WiFi radio */
-	GPIO_PCH_SCI_L,            /* Assert SCI to PCH */
-	GPIO_KBD_IRQ_L,            /* Negative edge triggered irq. */
-
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 /* power signal definitions */
 enum power_signal {

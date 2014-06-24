@@ -69,9 +69,6 @@ struct gpio_info {
 /* Signal information from board.c.  Must match order from enum gpio_signal. */
 extern const struct gpio_info gpio_list[];
 
-/* Macro for signals which don't exist */
-#define GPIO_SIGNAL_NOT_IMPLEMENTED(name) {name, DUMMY_GPIO_BANK, 0, 0, NULL}
-
 /* GPIO alternate function structure, for use by board.c */
 struct gpio_alt_func {
 	/* Port base address */

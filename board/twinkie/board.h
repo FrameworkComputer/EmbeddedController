@@ -40,46 +40,7 @@
 #define TIM_CLOCK32 2
 #define TIM_ADC     3
 
-/* GPIO signal list */
-enum gpio_signal {
-	GPIO_CC2_ALERT_L,
-	GPIO_VBUS_ALERT_L,
-
-	GPIO_CC1_EN,
-	GPIO_CC1_PD,
-	GPIO_CC2_EN,
-	GPIO_CC2_PD,
-	GPIO_DAC,
-	GPIO_CC2_TX_DATA,
-
-	GPIO_CC1_RA,
-	GPIO_USB_DM,
-	GPIO_USB_DP,
-	GPIO_CC1_RPUSB,
-	GPIO_CC1_RP1A5,
-	GPIO_CC1_RP3A0,
-	GPIO_CC2_RPUSB,
-
-	GPIO_CC1_TX_EN,
-	GPIO_CC2_TX_EN,
-	GPIO_CC1_TX_DATA,
-	GPIO_CC1_RD,
-	GPIO_I2C_SCL,
-	GPIO_I2C_SDA,
-	GPIO_CC2_RD,
-	GPIO_LED_G_L,
-	GPIO_LED_R_L,
-	GPIO_LED_B_L,
-	GPIO_CC2_RA,
-	GPIO_CC2_RP1A5,
-	GPIO_CC2_RP3A0,
-
-	/* Unimplemented signals we emulate */
-	GPIO_ENTERING_RW,
-	GPIO_WP_L,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 /* ADC signal */
 enum adc_channel {

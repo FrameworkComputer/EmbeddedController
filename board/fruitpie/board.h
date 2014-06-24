@@ -56,63 +56,7 @@
 #define TIM_CLOCK32 2
 #define TIM_ADC     3
 
-/* GPIO signal list */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_VBUS_WAKE = 0,
-	GPIO_MASTER_I2C_INT_L,
-
-	/* PD RX/TX */
-	GPIO_USB_CC1_PD,
-	GPIO_PD_REF1,
-	GPIO_PD_REF2,
-	GPIO_USB_CC2_PD,
-	GPIO_PD_CLK_OUT,
-	GPIO_PD_TX_EN,
-	GPIO_PD_TX_DATA,
-#if 0
-	GPIO_PD_CLK_IN,
-#endif
-
-	/* Power and muxes control */
-	GPIO_PP5000_EN,
-	GPIO_CC_HOST,
-	GPIO_CHARGE_EN_L,
-	GPIO_USB_C_5V_EN,
-	GPIO_VCONN1_EN,
-	GPIO_VCONN2_EN,
-	GPIO_SS1_EN_L,
-	GPIO_SS2_EN_L,
-	GPIO_SS2_USB_MODE_L,
-	GPIO_SS1_USB_MODE_L,
-	GPIO_DP_MODE,
-	GPIO_DP_POLARITY_L,
-
-	/* Not used : no host on that bus */
-	GPIO_SLAVE_I2C_INT_L,
-
-	/* I2C busses */
-	GPIO_SLAVE_I2C_SCL,
-	GPIO_SLAVE_I2C_SDA,
-	GPIO_MASTER_I2C_SCL,
-	GPIO_MASTER_I2C_SDA,
-
-	/* Rohm BD92104 connections */
-	GPIO_ALERT_L,
-	GPIO_USBPD_RST,
-	GPIO_USBPD_FORCE_OTG,
-	GPIO_USBPD_VIN_EN_L,
-
-	/* Test points */
-	GPIO_TP9,
-	GPIO_TP11,
-
-	/* Unimplemented signals we emulate */
-	GPIO_ENTERING_RW,
-	GPIO_WP_L,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 /* ADC signal */
 enum adc_channel {

@@ -1,0 +1,123 @@
+/* -*- mode:c -*-
+ *
+ * Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Interrupts */
+GPIO(USB_C0_VBUS_WAKE,       E, 6,  GPIO_INT_BOTH,    vbus_evt)
+GPIO(USB_C1_VBUS_WAKE,       F, 2,  GPIO_INT_BOTH,    vbus_evt)
+GPIO(USB_C0_BC12_INT_L,      B, 0,  GPIO_INT_FALLING, bc12_evt)
+GPIO(USB_C1_BC12_INT_L,      C, 11, GPIO_INT_FALLING, bc12_evt)
+GPIO(PCH_SLP_S0_L,           C, 14, GPIO_INT_BOTH,    pch_evt)
+GPIO(PCH_SLP_S3_L,           C, 15, GPIO_INT_BOTH,    pch_evt)
+GPIO(PCH_SLP_S5_L,           D, 7,  GPIO_INT_BOTH,    pch_evt)
+
+/* PD RX/TX */
+GPIO(USB_C0_CC1_PD,          A, 0,  GPIO_ANALOG,   NULL)
+GPIO(USB_C0_REF,             A, 1,  GPIO_ANALOG,   NULL)
+GPIO(USB_C1_CC1_PD,          A, 2,  GPIO_ANALOG,   NULL)
+GPIO(USB_C1_REF,             A, 3,  GPIO_ANALOG,   NULL)
+GPIO(USB_C0_CC2_PD,          A, 4,  GPIO_ANALOG,   NULL)
+GPIO(USB_C1_CC2_PD,          A, 5,  GPIO_ANALOG,   NULL)
+GPIO(USB_C0_REF_PD_ODL,      A, 6,  GPIO_ODR_LOW,  NULL)
+GPIO(USB_C1_REF_PD_ODL,      A, 7,  GPIO_ODR_LOW,  NULL)
+
+GPIO(USB_C_CC_EN,            C, 10, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_CC1_TX_EN,       A, 15, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_CC2_TX_EN,       E, 12, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_CC1_TX_EN,       B, 9,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_CC2_TX_EN,       B, 12, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_CC1_TX_DATA,     B, 4,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_CC1_TX_DATA,     B, 14, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_CC2_TX_DATA,     E, 14, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_CC2_TX_DATA,     D, 3,  GPIO_OUT_LOW,  NULL)
+
+#if 0
+/* Alternate functions */
+GPIO(USB_C0_TX_CLKOUT,       B, 1,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_TX_CLKOUT,       E, 1,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_TX_CLKIN,        B, 3,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_TX_CLKIN,        B, 13, GPIO_OUT_LOW,  NULL)
+#endif
+
+/* Power and muxes control */
+GPIO(PPVAR_BOOSTIN_SENSE,    C, 1,  GPIO_ANALOG,   NULL)
+GPIO(PP3300_USB_PD_EN,       A, 8,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_CHARGE_EN_L,     D, 12, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_CHARGE_EN_L,     D, 13, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_5V_EN,           D, 14, GPIO_OUT_LOW,  NULL)
+GPIO(USB_C1_5V_EN,           D, 15, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_CC1_VCONN1_EN,   D, 8,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_CC2_VCONN1_EN,   D, 9,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_CC1_VCONN1_EN,   D, 10, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_CC2_VCONN1_EN,   D, 11, GPIO_OUT_HIGH, NULL)
+
+GPIO(USB_C0_CC1_ODL,         B, 8,  GPIO_ODR_LOW,  NULL)
+GPIO(USB_C0_CC2_ODL,         E, 0,  GPIO_ODR_LOW,  NULL)
+GPIO(USB_C1_CC1_ODL,         F, 9,  GPIO_ODR_LOW,  NULL)
+GPIO(USB_C1_CC2_ODL,         F, 10, GPIO_ODR_LOW,  NULL)
+
+GPIO(USB_C_BC12_SEL,         C, 0,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_SS1_EN_L,        E, 2,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_SS2_EN_L,        E, 3,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_SS1_EN_L,        E, 9,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_SS2_EN_L,        E, 10, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_SS1_DP_MODE_L,   E, 4,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_SS2_DP_MODE_L,   E, 5,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_SS1_DP_MODE_L,   E, 11, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_SS2_DP_MODE_L,   E, 13, GPIO_OUT_HIGH, NULL)
+GPIO(USB_C0_DP_MODE_L,       E, 8,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_DP_MODE_L,       F, 6,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_C0_DP_POLARITY_L,   E, 7,  GPIO_OUT_HIGH, NULL)
+GPIO(USB_C1_DP_POLARITY_L,   F, 3,  GPIO_OUT_HIGH, NULL)
+
+#if 0
+/* Alternate functions */
+GPIO(USB_DM,                 A, 11, GPIO_ANALOG,   NULL)
+GPIO(USB_DP,                 A, 12, GPIO_ANALOG,   NULL)
+GPIO(UART_TX,                A, 9,  GPIO_OUT_LOW,  NULL)
+GPIO(UART_RX,                A, 10, GPIO_OUT_LOW,  NULL)
+GPIO(TP64,                   A, 13, GPIO_ODR_HIGH, NULL)
+GPIO(TP71,                   A, 14, GPIO_ODR_HIGH, NULL)
+#endif
+
+/*
+ * I2C pins should be configured as inputs until I2C module is
+ * initialized. This will avoid driving the lines unintentionally.
+ */
+GPIO(SLAVE_I2C_SCL,          B, 6,  GPIO_INPUT,    NULL)
+GPIO(SLAVE_I2C_SDA,          B, 7,  GPIO_INPUT,    NULL)
+GPIO(MASTER_I2C_SCL,         B, 10, GPIO_INPUT,    NULL)
+GPIO(MASTER_I2C_SDA,         B, 11, GPIO_INPUT,    NULL)
+
+/* Case closed debugging. */
+GPIO(SPI_FLASH_WP_L,         D, 2,  GPIO_INPUT,    NULL)
+GPIO(EC_INT_L,               B, 2,  GPIO_ODR_HIGH, NULL)
+GPIO(EC_IN_RW,               C, 12, GPIO_INPUT,    NULL)
+GPIO(EC_RST_L,               C, 13, GPIO_OUT_HIGH, NULL)
+GPIO(SPI_FLASH_CS_L,         D, 0,  GPIO_INPUT,    NULL)
+GPIO(SPI_FLASH_CSK,          D, 1,  GPIO_INPUT,    NULL)
+GPIO(SPI_FLASH_MOSI,         C, 3,  GPIO_INPUT,    NULL)
+GPIO(SPI_FLASH_MISO,         C, 2,  GPIO_INPUT,    NULL)
+GPIO(EC_JTAG_TMS,            C, 6,  GPIO_INPUT,    NULL)
+GPIO(EC_JTAG_TCK,            C, 7,  GPIO_INPUT,    NULL)
+GPIO(EC_JTAG_TDO,            C, 8,  GPIO_INPUT,    NULL)
+GPIO(EC_JTAG_TDI,            C, 9,  GPIO_INPUT,    NULL)
+GPIO(PD_ENTERING_RW,         B, 5,  GPIO_OUT_LOW,  NULL)
+GPIO(PD_IN_RW,               B, 15, GPIO_INPUT,    NULL)
+GPIO(PD_DISABLE_DEBUG,       E, 15, GPIO_OUT_LOW,  NULL)
+GPIO(PD_DEBUG_EN,            D, 4,  GPIO_INPUT,    NULL)
+
+#if 0
+/* Alternate functions */
+GPIO(EC_UART_TX,             C, 4,  GPIO_OUT_LOW,  NULL)
+GPIO(EC_UART_RX,             C, 5,  GPIO_INPUT,    NULL)
+GPIO(AP_UART_TX,             D, 5,  GPIO_OUT_LOW,  NULL)
+GPIO(AP_UART_RX,             D, 6,  GPIO_INPUT,    NULL)
+#endif
+
+/* Unimplemented signals which we need to emulate for now */
+UNIMPLEMENTED(ENTERING_RW)
+UNIMPLEMENTED(WP_L)

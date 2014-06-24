@@ -38,16 +38,7 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	{"RECOVERY_L", GPIO_D, (1<<1), GPIO_PULL_UP, NULL},
-	{"DEBUG_LED", GPIO_A, (1<<7), GPIO_OUT_LOW, NULL},
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {

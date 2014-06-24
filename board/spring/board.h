@@ -73,60 +73,7 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-/* GPIO signal list */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_KB_PWR_ON_L = 0,  /* Keyboard power button */
-	GPIO_PP1800_LDO2,      /* LDO2 is ON (end of PMIC sequence) */
-	GPIO_SOC1V8_XPSHOLD,   /* App Processor ON  */
-	GPIO_CHARGER_INT_L,
-	GPIO_LID_OPEN,         /* LID switch detection */
-	GPIO_SUSPEND_L,        /* AP suspend/resume state */
-	GPIO_WP_L,             /* Write protection pin (low active) */
-	/* Keyboard inputs */
-	GPIO_KB_IN00,
-	GPIO_KB_IN01,
-	GPIO_KB_IN02,
-	GPIO_KB_IN03,
-	GPIO_KB_IN04,
-	GPIO_KB_IN05,
-	GPIO_KB_IN06,
-	GPIO_KB_IN07,
-	GPIO_USB_CHG_INT,
-	/* Other inputs */
-	GPIO_BCHGR_VACG,       /* AC good on TPSChrome */
-	GPIO_I2C1_SCL,
-	GPIO_I2C1_SDA,
-	GPIO_I2C2_SCL,
-	GPIO_I2C2_SDA,
-	/* Outputs */
-	GPIO_EN_PP1350,        /* DDR 1.35v rail enable */
-	GPIO_EN_PP5000,        /* 5.0v rail enable */
-	GPIO_EN_PP3300,        /* 3.3v rail enable */
-	GPIO_PMIC_PWRON_L,     /* 5v rail ready */
-	GPIO_PMIC_RESET,       /* Force hard reset of the pmic */
-	GPIO_ENTERING_RW,      /* EC is R/W mode for the kbc mux */
-	GPIO_CHARGER_EN,
-	GPIO_EC_INT,
-	GPIO_ID_MUX,
-	GPIO_KB_OUT00,
-	GPIO_KB_OUT01,
-	GPIO_KB_OUT02,
-	GPIO_KB_OUT03,
-	GPIO_KB_OUT04,
-	GPIO_KB_OUT05,
-	GPIO_KB_OUT06,
-	GPIO_KB_OUT07,
-	GPIO_KB_OUT08,
-	GPIO_KB_OUT09,
-	GPIO_KB_OUT10,
-	GPIO_KB_OUT11,
-	GPIO_KB_OUT12,
-	GPIO_BOOST_EN,
-	GPIO_ILIM,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 #endif /* !__ASSEMBLER__ */
 

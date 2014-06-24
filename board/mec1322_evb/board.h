@@ -34,25 +34,7 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* GPIO signal list */
-enum gpio_signal {
-	GPIO_LED1 = 0,
-	GPIO_LED2,
-	GPIO_LED3,
-	GPIO_PCH_SMI_L,           /* SMI output */
-	GPIO_PCH_WAKE_L,          /* PCH wake pin */
-	GPIO_S1,                  /* Switch S1 */
-	/*
-	 * Signals which aren't implemented on MEC1322 eval board but we'll
-	 * emulate anyway, to make it more convenient to debug other code.
-	 */
-	GPIO_RECOVERY_L,          /* Recovery signal from DOWN button */
-	GPIO_WP,                  /* Write protect input */
-	GPIO_ENTERING_RW,         /* EC entering RW code */
-
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 #endif /* !__ASSEMBLER__ */
 

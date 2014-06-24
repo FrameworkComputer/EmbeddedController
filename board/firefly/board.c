@@ -77,62 +77,7 @@ void board_config_pre_init(void)
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
 }
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	{"VBUS_WAKE",         GPIO_C, (1<<13), GPIO_INT_BOTH, vbus_event},
-	/* Buttons */
-	{"SW_PP20000",        GPIO_B, (1<<10), GPIO_INT_FALLING, button_event},
-	{"SW_PP12000",        GPIO_B, (1<<11), GPIO_INT_FALLING, button_event},
-	{"SW_PP5000",         GPIO_B, (1<<12), GPIO_INT_FALLING, button_event},
-
-	/* PD RX/TX */
-	{"USB_CC1_PD",        GPIO_A, (1<<0),  GPIO_ANALOG, NULL},
-	{"PD_REF1",           GPIO_A, (1<<1),  GPIO_ANALOG, NULL},
-	{"USB_CC2_PD",        GPIO_A, (1<<2),  GPIO_ANALOG, NULL},
-	{"PD_REF2",           GPIO_A, (1<<3),  GPIO_ANALOG, NULL},
-	{"PD_CC1_TX_EN",      GPIO_A, (1<<4),  GPIO_ODR_HIGH, NULL},
-	{"PD_CC2_TX_EN",      GPIO_A, (1<<15), GPIO_ODR_HIGH, NULL},
-	{"PD_CLK_OUT",        GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
-	{"PD_CC1_TX_DATA",    GPIO_A, (1<<6),  GPIO_INPUT, NULL},
-	{"PD_CC2_TX_DATA",    GPIO_B, (1<<4),  GPIO_INPUT, NULL},
-	{"PD_CLK_IN",         GPIO_B, (1<<3),  GPIO_INPUT, NULL},
-
-	/* CCx device pull-downs */
-	{"PD_CC1_DEVICE",     GPIO_B, (1<<13), GPIO_ODR_LOW, NULL},
-	{"PD_CC2_DEVICE",     GPIO_B, (1<<14), GPIO_ODR_LOW, NULL},
-
-	/* ADC */
-	{"VBUS_SENSE",        GPIO_A, (1<<5),  GPIO_ANALOG, NULL},
-
-	/* LEDs control */
-	{"LED_PP20000",       GPIO_B, (1<<0),  GPIO_OUT_LOW, NULL},
-	{"LED_PP12000",       GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
-	{"LED_PP5000",        GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-
-	/* Slave I2C port */
-	{"I2C_INT_L",   GPIO_B, (1<<8),  GPIO_ODR_HIGH, NULL},
-	/*
-	 * I2C pins should be configured as inputs until I2C module is
-	 * initialized. This will avoid driving the lines unintentionally.
-	 */
-	{"I2C_SCL",     GPIO_B, (1<<6),  GPIO_INPUT, NULL},
-	{"I2C_SDA",     GPIO_B, (1<<7),  GPIO_INPUT, NULL},
-
-	/* Test points */
-	{"TP_A8",             GPIO_A, (1<<8),  GPIO_ODR_HIGH, NULL},
-	{"TP_A13",            GPIO_A, (1<<13), GPIO_ODR_HIGH, NULL},
-	{"TP_A14",            GPIO_A, (1<<14), GPIO_ODR_HIGH, NULL},
-	{"TP_B15",            GPIO_B, (1<<15), GPIO_ODR_HIGH, NULL},
-	{"TP_C14",            GPIO_C, (1<<14), GPIO_ODR_HIGH, NULL},
-	{"TP_C15",            GPIO_C, (1<<15), GPIO_ODR_HIGH, NULL},
-	{"TP_F0",             GPIO_F, (1<<0),  GPIO_ODR_HIGH, NULL},
-	{"TP_F1",             GPIO_F, (1<<1),  GPIO_ODR_HIGH, NULL},
-
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {

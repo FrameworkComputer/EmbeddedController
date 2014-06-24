@@ -46,59 +46,8 @@
 #define TIM_POWER_LED 2
 #define TIM_WATCHDOG  4
 
-/* GPIO signal list */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_KB_PWR_ON_L = 0,
-	GPIO_PP1800_LDO2,
-	GPIO_SOC1V8_XPSHOLD,
-	GPIO_CHARGER_INT_L,
-	GPIO_LID_OPEN,
-	GPIO_SUSPEND_L,
-	GPIO_SPI1_NSS,
-	GPIO_AC_PRESENT,
-	/* Keyboard inputs */
-	GPIO_KB_IN00,
-	GPIO_KB_IN01,
-	GPIO_KB_IN02,
-	GPIO_KB_IN03,
-	GPIO_KB_IN04,
-	GPIO_KB_IN05,
-	GPIO_KB_IN06,
-	GPIO_KB_IN07,
-	/* Other inputs */
-	GPIO_WP_L,
-	/* Outputs */
-	GPIO_AP_RESET_L,
-	GPIO_CHARGER_EN,
-	GPIO_EC_INT,
-	GPIO_EN_PP1350,
-	GPIO_EN_PP3300,
-	GPIO_EN_PP5000,
-	GPIO_ENTERING_RW,
-	GPIO_I2C1_SCL,
-	GPIO_I2C1_SDA,
-	GPIO_I2C2_SCL,
-	GPIO_I2C2_SDA,
-	GPIO_CHARGING_LED,
-	GPIO_PMIC_PWRON,
-	GPIO_PMIC_RESET,
-	GPIO_KB_OUT00,
-	GPIO_KB_OUT01,
-	GPIO_KB_OUT02,
-	GPIO_KB_OUT03,
-	GPIO_KB_OUT04,
-	GPIO_KB_OUT05,
-	GPIO_KB_OUT06,
-	GPIO_KB_OUT07,
-	GPIO_KB_OUT08,
-	GPIO_KB_OUT09,
-	GPIO_KB_OUT10,
-	GPIO_KB_OUT11,
-	GPIO_KB_OUT12,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

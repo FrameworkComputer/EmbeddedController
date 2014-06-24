@@ -1,0 +1,47 @@
+/* -*- mode:c -*-
+ *
+ * Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * The GPIO macro is used to define a new GPIO pin name and function.
+ *
+ * The name is used to populate the gpio_signal enum by first prepending GPIO_
+ * to the name.  It is also used to construct the string name that is presented
+ * in the shell interface.  Similarly, the port parameter has GPIO_ prepended to
+ * it before it is used to initialize the port base address of a gpio_info
+ * struct.  The pin number is used to create a bitmask.  The flags and signal
+ * parameters are passed on to the gpio_info directly.
+ */
+#ifndef GPIO
+#define GPIO(name, port, pin, function, signal)
+#endif
+
+/*
+ * The UNIMPLEMENTED macro is used to define a GPIO that doesn't actually exist.
+ *
+ * Some GPIO names are well known and used by generic code, ENTERING_RW and WP_L
+ * are examples.  If a particular board doesn't have a GPIO assigned to such a
+ * function/name then it should specify that that GPIO is not implemented using
+ * the UNIMPLEMENTED macro below in the board gpio.inc file.  This macro creates
+ * an entry in the gpio_signal enum and the gpio_list array that is initialized
+ * to use the DUMMY_GPIO_BANK and a bitmask of zero.  The chip GPIO layer is
+ * implemented such that writes to and reads from DUMMY_GPIO_BANK with a bitmask
+ * of zero are harmless.
+ *
+ * This allows common code that expects these GPIOs to exist to compile and have
+ * some reduced functionality.
+ */
+#ifndef UNIMPLEMENTED
+#define UNIMPLEMENTED(name)
+#endif
+
+#include "gpio.inc"
+
+/*
+ * Once the gpio.inc file has been included these macros are no longer needed.
+ */
+#undef GPIO
+#undef UNIMPLEMENTED

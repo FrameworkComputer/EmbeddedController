@@ -30,71 +30,7 @@ void tsu_event(enum gpio_signal signal)
 	ccprintf("TSU!\n");
 }
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	{"VBUS_WAKE",         GPIO_B, (1<<5),  GPIO_INT_BOTH, vbus_event},
-	{"MASTER_I2C_INT_L",  GPIO_C, (1<<13), GPIO_INT_FALLING, tsu_event},
-
-	/* PD RX/TX */
-	{"USB_CC1_PD",        GPIO_A, (1<<0),  GPIO_ANALOG, NULL},
-	{"PD_REF1",           GPIO_A, (1<<1),  GPIO_ANALOG, NULL},
-	{"PD_REF2",           GPIO_A, (1<<3),  GPIO_ANALOG, NULL},
-	{"USB_CC2_PD",        GPIO_A, (1<<4),  GPIO_ANALOG, NULL},
-	{"PD_CLK_OUT",        GPIO_B, (1<<9),  GPIO_OUT_LOW, NULL},
-	{"PD_TX_EN",          GPIO_B, (1<<12), GPIO_OUT_LOW, NULL},
-	{"PD_TX_DATA",        GPIO_B, (1<<14), GPIO_OUT_LOW, NULL},
-#if 0
-	{"PD_CLK_IN",         GPIO_B, (1<<13), GPIO_OUT_LOW, NULL},
-#endif
-
-	/* Power and muxes control */
-	{"PP5000_EN",         GPIO_A, (1<<5),  GPIO_OUT_HIGH, NULL},
-	{"CC_HOST",           GPIO_A, (1<<6),  GPIO_OUT_LOW, NULL},
-	{"CHARGE_EN_L",       GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
-	{"USB_C_5V_EN",       GPIO_A, (1<<10), GPIO_OUT_LOW, NULL},
-	{"VCONN1_EN",         GPIO_B, (1<<15), GPIO_OUT_LOW, NULL},
-	{"VCONN2_EN",         GPIO_C, (1<<14), GPIO_OUT_LOW, NULL},
-	{"SS1_EN_L",          GPIO_A, (1<<9),  GPIO_OUT_HIGH, NULL},
-	{"SS2_EN_L",          GPIO_B, (1<<4),  GPIO_OUT_HIGH, NULL},
-	{"SS2_USB_MODE_L",    GPIO_B, (1<<3),  GPIO_OUT_HIGH, NULL},
-	{"SS1_USB_MODE_L",    GPIO_B, (1<<8),  GPIO_OUT_HIGH, NULL},
-	{"DP_MODE",           GPIO_C, (1<<15), GPIO_OUT_LOW, NULL},
-	{"DP_POLARITY_L",     GPIO_A, (1<<7),  GPIO_OUT_HIGH, NULL},
-
-	/* Not used : no host on that bus */
-	{"SLAVE_I2C_INT_L",   GPIO_B, (1<<2),  GPIO_ODR_HIGH, NULL},
-
-	/* Alternate functions */
-#if 0
-	{"USB_DM",            GPIO_A, (1<<11), GPIO_ANALOG, NULL},
-	{"USB_DP",            GPIO_A, (1<<12), GPIO_ANALOG, NULL},
-	{"UART_TX",           GPIO_A, (1<<14), GPIO_OUT_LOW, NULL},
-	{"UART_RX",           GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
-#endif
-	/*
-	 * I2C pins should be configured as inputs until I2C module is
-	 * initialized. This will avoid driving the lines unintentionally.
-	 */
-	{"SLAVE_I2C_SCL",     GPIO_B, (1<<6),  GPIO_INPUT, NULL},
-	{"SLAVE_I2C_SDA",     GPIO_B, (1<<7),  GPIO_INPUT, NULL},
-	{"MASTER_I2C_SCL",    GPIO_B, (1<<10), GPIO_INPUT, NULL},
-	{"MASTER_I2C_SDA",    GPIO_B, (1<<11), GPIO_INPUT, NULL},
-
-	/* Rohm BD92104 connections */
-	{"ALERT_L",           GPIO_A, (1<<2),  GPIO_INT_FALLING, rohm_event},
-	{"USBPD_RST",         GPIO_B, (1<<0),  GPIO_OUT_LOW, NULL},
-	{"USBPD_FORCE_OTG",   GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
-	{"USBPD_VIN_EN_L",    GPIO_F, (1<<0),  GPIO_OUT_HIGH, NULL},
-
-	/* Test points */
-	{"TP9",               GPIO_A, (1<<13), GPIO_ODR_HIGH, NULL},
-	{"TP11",              GPIO_F, (1<<1),  GPIO_ODR_HIGH, NULL},
-
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Initialize board. */
 static void board_init(void)

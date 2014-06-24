@@ -26,45 +26,7 @@ void vbus_event(enum gpio_signal signal)
 	ccprintf("INA!\n");
 }
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	{"CC2_ALERT_L",       GPIO_A, (1<<7),  GPIO_INT_FALLING, cc2_event},
-	{"VBUS_ALERT_L",      GPIO_B, (1<<2),  GPIO_INT_FALLING, vbus_event},
-
-	{"CC1_EN",            GPIO_A, (1<<0),  GPIO_OUT_HIGH, NULL},
-	{"CC1_PD",            GPIO_A, (1<<1),  GPIO_ANALOG, NULL},
-	{"CC2_EN",            GPIO_A, (1<<2),  GPIO_OUT_HIGH, NULL},
-	{"CC2_PD",            GPIO_A, (1<<3),  GPIO_ANALOG, NULL},
-	{"DAC",               GPIO_A, (1<<4),  GPIO_ANALOG, NULL},
-	{"CC2_TX_DATA",       GPIO_A, (1<<6),  GPIO_OUT_LOW, NULL},
-
-	{"CC1_RA",            GPIO_A, (1<<8),  GPIO_ODR_HIGH, NULL},
-	{"USB_DM",            GPIO_A, (1<<11), GPIO_ANALOG, NULL},
-	{"USB_DP",            GPIO_A, (1<<12), GPIO_ANALOG, NULL},
-	{"CC1_RPUSB",         GPIO_A, (1<<13), GPIO_ODR_HIGH, NULL},
-	{"CC1_RP1A5",         GPIO_A, (1<<14), GPIO_ODR_HIGH, NULL},
-	{"CC1_RP3A0",         GPIO_A, (1<<15), GPIO_ODR_HIGH, NULL},
-	{"CC2_RPUSB",         GPIO_B, (1<<0),  GPIO_ODR_HIGH, NULL},
-
-	{"CC1_TX_EN",         GPIO_B, (1<<1),  GPIO_OUT_LOW, NULL},
-	{"CC2_TX_EN",         GPIO_B, (1<<3),  GPIO_OUT_LOW, NULL},
-	{"CC1_TX_DATA",       GPIO_B, (1<<4),  GPIO_OUT_LOW, NULL},
-	{"CC1_RD",            GPIO_B, (1<<5),  GPIO_ODR_HIGH, NULL},
-	{"I2C_SCL",           GPIO_B, (1<<6),  GPIO_INPUT,    NULL},
-	{"I2C_SDA",           GPIO_B, (1<<7),  GPIO_INPUT,    NULL},
-	{"CC2_RD",            GPIO_B, (1<<8),  GPIO_ODR_HIGH, NULL},
-	{"LED_G_L",           GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
-	{"LED_R_L",           GPIO_B, (1<<13), GPIO_ODR_HIGH, NULL},
-	{"LED_B_L",           GPIO_B, (1<<14), GPIO_ODR_HIGH, NULL},
-	{"CC2_RA",            GPIO_B, (1<<15), GPIO_ODR_HIGH, NULL},
-	{"CC2_RP1A5",         GPIO_C, (1<<14), GPIO_ODR_HIGH, NULL},
-	{"CC2_RP3A0",         GPIO_C, (1<<15), GPIO_ODR_HIGH, NULL},
-
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Initialize board. */
 void board_config_pre_init(void)

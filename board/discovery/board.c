@@ -15,19 +15,7 @@ void button_event(enum gpio_signal signal)
 {
 }
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	/* Inputs with interrupt handlers are first for efficiency */
-	{"USER_BUTTON", GPIO_A, (1<<0),  GPIO_INT_BOTH, button_event},
-	/* Outputs */
-	{"LED_BLUE",    GPIO_B, (1<<6),  GPIO_OUT_LOW, NULL},
-	{"LED_GREEN",   GPIO_B, (1<<7),  GPIO_OUT_LOW, NULL},
-
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP_L"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Initialize board. */
 static void board_init(void)

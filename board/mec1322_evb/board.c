@@ -15,20 +15,7 @@
 #define GPIO_KB_INPUT GPIO_INPUT
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH | GPIO_PULL_UP)
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	{"LED1", GPIO_PORT(15), (1 << 4), GPIO_ODR_LOW, NULL},
-	{"LED2", GPIO_PORT(15), (1 << 5), GPIO_ODR_HIGH, NULL},
-	{"LED3", GPIO_PORT(15), (1 << 6), GPIO_ODR_LOW, NULL},
-	{"PCH_SMI_L", GPIO_PORT(4), (1 << 4), GPIO_ODR_HIGH, NULL},
-	{"PCH_WAKE_L", GPIO_PORT(20), (1 << 0), GPIO_ODR_HIGH, NULL},
-	{"S1", GPIO_PORT(6), (1 << 3), GPIO_INT_FALLING | GPIO_PULL_UP, NULL},
-	/* Unimplemented signals which we need to emulate for now */
-	GPIO_SIGNAL_NOT_IMPLEMENTED("RECOVERY_L"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("WP"),
-	GPIO_SIGNAL_NOT_IMPLEMENTED("ENTERING_RW"),
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {

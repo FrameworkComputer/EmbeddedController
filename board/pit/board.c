@@ -24,70 +24,7 @@
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
-/* GPIO signal list.  Must match order from enum gpio_signal. */
-const struct gpio_info gpio_list[] = {
-	/* Inputs with interrupt handlers are first for efficiency */
-	{"KB_PWR_ON_L", GPIO_B, (1<<5),  GPIO_INT_BOTH,
-	 power_signal_interrupt},
-	{"PP1800_LDO2", GPIO_A, (1<<1),  GPIO_INT_BOTH,
-	 power_signal_interrupt},
-	{"XPSHOLD",     GPIO_A, (1<<3),  GPIO_INT_RISING,
-	 power_signal_interrupt},
-	{"CHARGER_INT_L", GPIO_C, (1<<6),  GPIO_INT_FALLING, pmu_irq_handler},
-	{"LID_OPEN",    GPIO_C, (1<<13), GPIO_INT_BOTH, lid_interrupt},
-	{"SUSPEND_L",   GPIO_C, (1<<7),  GPIO_INT_BOTH,
-	 power_signal_interrupt},
-	{"SPI1_NSS",    GPIO_A, (1<<4),  GPIO_INT_BOTH | GPIO_PULL_UP,
-	 spi_event},
-	{"AC_PRESENT",  GPIO_A, (1<<0),  GPIO_INT_BOTH, extpower_interrupt},
-	{"KB_IN00",     GPIO_C, (1<<8),  GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN01",     GPIO_C, (1<<9),  GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN02",     GPIO_C, (1<<10), GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN03",     GPIO_C, (1<<11), GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN04",     GPIO_C, (1<<12), GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN05",     GPIO_C, (1<<14), GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN06",     GPIO_C, (1<<15), GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	{"KB_IN07",     GPIO_D, (1<<2),  GPIO_KB_INPUT,
-	 keyboard_raw_gpio_interrupt},
-	/* Other inputs */
-	{"WP_L",        GPIO_B, (1<<4),  GPIO_INPUT, NULL},
-	/* Outputs */
-	{"AP_RESET_L",  GPIO_B, (1<<3),  GPIO_ODR_HIGH, NULL},
-	{"CHARGER_EN",  GPIO_B, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"EC_INT",      GPIO_B, (1<<9),  GPIO_ODR_HIGH, NULL},
-	{"EN_PP1350",   GPIO_H, (1<<1),  GPIO_OUT_LOW, NULL},
-	{"EN_PP3300",   GPIO_A, (1<<8),  GPIO_OUT_LOW, NULL},
-	{"EN_PP5000",   GPIO_A, (1<<11), GPIO_OUT_LOW, NULL},
-	{"ENTERING_RW", GPIO_H, (1<<0),  GPIO_OUT_LOW, NULL},
-	{"I2C1_SCL",    GPIO_B, (1<<6),  GPIO_ODR_HIGH, NULL},
-	{"I2C1_SDA",    GPIO_B, (1<<7),  GPIO_ODR_HIGH, NULL},
-	{"I2C2_SCL",    GPIO_B, (1<<10), GPIO_ODR_HIGH, NULL},
-	{"I2C2_SDA",    GPIO_B, (1<<11), GPIO_ODR_HIGH, NULL},
-	{"CHARGING_LED",GPIO_A, (1<<2),  GPIO_OUT_LOW, NULL},
-	{"PMIC_PWRON",  GPIO_A, (1<<12), GPIO_OUT_LOW, NULL},
-	{"PMIC_RESET",  GPIO_A, (1<<15), GPIO_OUT_LOW, NULL},
-	{"KB_OUT00",    GPIO_B, (1<<0),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT01",    GPIO_B, (1<<8),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT02",    GPIO_B, (1<<12), GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT03",    GPIO_B, (1<<13), GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT04",    GPIO_B, (1<<14), GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT05",    GPIO_B, (1<<15), GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT06",    GPIO_C, (1<<0),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT07",    GPIO_C, (1<<1),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT08",    GPIO_C, (1<<2),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT09",    GPIO_B, (1<<1),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT10",    GPIO_C, (1<<5),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT11",    GPIO_C, (1<<4),  GPIO_KB_OUTPUT, NULL},
-	{"KB_OUT12",    GPIO_A, (1<<13),  GPIO_KB_OUTPUT, NULL},
-};
-BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
+#include "gpio_list.h"
 
 /* Pins with alternate functions */
 const struct gpio_alt_func gpio_alt_funcs[] = {

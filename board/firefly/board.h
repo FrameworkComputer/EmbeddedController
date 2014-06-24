@@ -42,59 +42,7 @@
 #define TIM_CLOCK32 2
 #define TIM_ADC     3
 
-/* GPIO signal list */
-enum gpio_signal {
-	/* Inputs with interrupt handlers are first for efficiency */
-	GPIO_VBUS_WAKE = 0,
-	GPIO_SW_PP20000,
-	GPIO_SW_PP12000,
-	GPIO_SW_PP5000,
-
-	/* PD RX/TX */
-	GPIO_USB_CC1_PD,
-	GPIO_PD_REF1,
-	GPIO_USB_CC2_PD,
-	GPIO_PD_REF2,
-	GPIO_PD_CC1_TX_EN,
-	GPIO_PD_CC2_TX_EN,
-	GPIO_PD_CLK_OUT,
-	GPIO_PD_CC1_TX_DATA,
-	GPIO_PD_CC2_TX_DATA,
-	GPIO_PD_CLK_IN,
-
-	/* CCx device pull-downs */
-	GPIO_PD_CC1_DEVICE,
-	GPIO_PD_CC2_DEVICE,
-
-	/* ADCs */
-	GPIO_VBUS_SENSE,
-
-	/* LEDs control */
-	GPIO_LED_PP20000,
-	GPIO_LED_PP12000,
-	GPIO_LED_PP5000,
-
-	/* Slave I2C */
-	GPIO_I2C_INT_L,
-	GPIO_I2C_SCL,
-	GPIO_I2C_SDA,
-
-	/* Test points */
-	GPIO_TP_A8,
-	GPIO_TP_A13,
-	GPIO_TP_A14,
-	GPIO_TP_B15,
-	GPIO_TP_C14,
-	GPIO_TP_C15,
-	GPIO_TP_F0,
-	GPIO_TP_F1,
-
-	/* Unimplemented signals we emulate */
-	GPIO_ENTERING_RW,
-	GPIO_WP_L,
-	/* Number of GPIOs; not an actual GPIO */
-	GPIO_COUNT
-};
+#include "gpio_signal.h"
 
 /* ADC signal */
 enum adc_channel {
