@@ -7,18 +7,13 @@
 
 /* Inputs with interrupt handlers are first for efficiency */
 /* Keyboard power button */
-GPIO(KB_PWR_ON_L,    B, 5, GPIO_INT_BOTH,      power_signal_interrupt)
-/* LDO2 is ON (end of PMIC sequence) */
-GPIO(PP1800_LDO2,    A, 1, GPIO_INT_BOTH,      power_signal_interrupt)
-/* App Processor ON  */
-GPIO(SOC1V8_XPSHOLD, A, 3, GPIO_INT_BOTH,      power_signal_interrupt)
-GPIO(CHARGER_INT_L,  C, 4, GPIO_INT_FALLING,   pmu_irq_handler)
-/* LID switch detection */
-GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)
-/* AP suspend/resume state */
-GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt)
-/* Write protection pin (low active) */
-GPIO(WP_L,           A, 13, GPIO_INPUT,        NULL)
+GPIO(KB_PWR_ON_L,    B, 5,  GPIO_INT_BOTH,     power_signal_interrupt)
+GPIO(PP1800_LDO2,    A, 1,  GPIO_INT_BOTH,     power_signal_interrupt) /* LDO2 is ON (end of PMIC sequence) */
+GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_BOTH,     power_signal_interrupt) /* App Processor ON  */
+GPIO(CHARGER_INT_L,  C, 4,  GPIO_INT_FALLING,  pmu_irq_handler)
+GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)          /* LID switch detection */
+GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt) /* AP suspend/resume state */
+GPIO(WP_L,           A, 13, GPIO_INPUT,        NULL)                   /* Write protection pin (low active) */
 
 /* Keyboard inputs */
 GPIO(KB_IN00,     C, 8,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
@@ -49,9 +44,7 @@ GPIO(EN_PP5000,   A, 11, GPIO_OUT_LOW,   NULL) /* 5.0v rail enable */
 GPIO(EN_PP3300,   A, 8,  GPIO_OUT_LOW,   NULL) /* 3.3v rail enable */
 GPIO(PMIC_PWRON_L,A, 12, GPIO_OUT_HIGH,  NULL) /* 5v rail ready */
 GPIO(PMIC_RESET,  A, 15, GPIO_OUT_LOW,   NULL) /* Force hard reset of the pmic */
-
-/* EC is R/W mode for the kbc mux */
-GPIO(ENTERING_RW, D, 0,  GPIO_OUT_LOW,   NULL)
+GPIO(ENTERING_RW, D, 0,  GPIO_OUT_LOW,   NULL) /* EC is R/W mode for the kbc mux */
 GPIO(CHARGER_EN,  B, 2,  GPIO_OUT_LOW,   NULL)
 GPIO(EC_INT,      B, 9,  GPIO_ODR_HIGH,  NULL)
 GPIO(ID_MUX,      D, 1,  GPIO_OUT_LOW,   NULL)

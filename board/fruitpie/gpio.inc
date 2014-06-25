@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-GPIO(VBUS_WAKE,         B, 5,  GPIO_INT_BOTH, vbus_event)
+GPIO(VBUS_WAKE,         B, 5,  GPIO_INT_BOTH,    vbus_event)
 GPIO(MASTER_I2C_INT_L,  C, 13, GPIO_INT_FALLING, tsu_event)
 
 /* PD RX/TX */

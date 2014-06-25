@@ -6,14 +6,14 @@
  */
 
 /* Inputs with interrupt handlers are first for efficiency */
-GPIO(KB_PWR_ON_L,    B, 5,  GPIO_INT_BOTH,    power_signal_interrupt)
-GPIO(PP1800_LDO2,    A, 1,  GPIO_INT_BOTH,    power_signal_interrupt)
-GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_RISING,  power_signal_interrupt)
-GPIO(CHARGER_INT_L,  C, 6,  GPIO_INT_FALLING, pmu_irq_handler)
-GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,    lid_interrupt)
-GPIO(SUSPEND_L,      C, 7,  GPIO_INT_BOTH,    power_signal_interrupt)
+GPIO(KB_PWR_ON_L,    B, 5,  GPIO_INT_BOTH,                power_signal_interrupt)
+GPIO(PP1800_LDO2,    A, 1,  GPIO_INT_BOTH,                power_signal_interrupt)
+GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_RISING,              power_signal_interrupt)
+GPIO(CHARGER_INT_L,  C, 6,  GPIO_INT_FALLING,             pmu_irq_handler)
+GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,                lid_interrupt)
+GPIO(SUSPEND_L,      C, 7,  GPIO_INT_BOTH,                power_signal_interrupt)
 GPIO(SPI1_NSS,       A, 4,  GPIO_INT_BOTH | GPIO_PULL_UP, spi_event)
-GPIO(AC_PRESENT,     A, 0,  GPIO_INT_BOTH,    extpower_interrupt)
+GPIO(AC_PRESENT,     A, 0,  GPIO_INT_BOTH,                extpower_interrupt)
 
 /* Keyboard inputs */
 GPIO(KB_IN00,     C, 8,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)

@@ -6,19 +6,13 @@
  */
 
 /* Inputs with interrupt handlers are first for efficiency */
-/* Keyboard power button */
-GPIO(KB_PWR_ON_L,    B, 5,  GPIO_INT_BOTH,     power_signal_interrupt)
-/* LDO2 is ON (end of PMIC sequence) */
-GPIO(PP1800_LDO2,    A, 1,  GPIO_INT_BOTH,     power_signal_interrupt)
-/* App Processor ON  */
-GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_BOTH,     power_signal_interrupt)
+GPIO(KB_PWR_ON_L,    B, 5,  GPIO_INT_BOTH,     power_signal_interrupt) /* Keyboard power button */
+GPIO(PP1800_LDO2,    A, 1,  GPIO_INT_BOTH,     power_signal_interrupt) /* LDO2 is ON (end of PMIC sequence) */
+GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_BOTH,     power_signal_interrupt) /* App Processor ON  */
 GPIO(CHARGER_INT_L,  C, 4,  GPIO_INT_FALLING,  pmu_irq_handler)
-/* LID switch detection */
-GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)
-/* AP suspend/resume state */
-GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt)
-/* Write protection pin (low active) */
-GPIO(WP_L,           B, 4,  GPIO_INPUT,        NULL)
+GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)          /* LID switch detection */
+GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt) /* AP suspend/resume state */
+GPIO(WP_L,           B, 4,  GPIO_INPUT,        NULL)                   /* Write protection pin (low active) */
 
 /* Keyboard inputs */
 GPIO(KB_IN00, C, 8,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
