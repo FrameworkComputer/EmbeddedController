@@ -94,6 +94,8 @@ static timestamp_t fault_deadline;
 #define UVP_MV(mv)  VBUS_MV((mv) * 8 / 10)
 /* Over-voltage limit is 1.2x Vnom */
 #define OVP_MV(mv)  VBUS_MV((mv) * 12 / 10)
+/* Over-voltage recovery threshold is 1.1x Vnom */
+#define OVP_REC_MV(mv)  VBUS_MV((mv) * 11 / 10)
 
 /* ----------------------- USB Power delivery policy ---------------------- */
 
@@ -111,11 +113,12 @@ static const struct {
 	enum volt select; /* GPIO configuration to select the voltage */
 	int       uvp;    /* under-voltage limit in mV */
 	int       ovp;    /* over-voltage limit in mV */
+	int       ovp_rec;/* over-voltage recovery threshold in mV */
 } voltages[ARRAY_SIZE(pd_src_pdo)] = {
-	{VO_5V,  UVP_MV(5000),  OVP_MV(5000)},
-	{VO_5V,  UVP_MV(5000),  OVP_MV(5000)},
-	{VO_12V, UVP_MV(12000), OVP_MV(12000)},
-	{VO_20V, UVP_MV(20000), OVP_MV(20000)},
+	{VO_5V,  UVP_MV(5000),  OVP_MV(5000), OVP_REC_MV(5000)},
+	{VO_5V,  UVP_MV(5000),  OVP_MV(5000), OVP_REC_MV(5000)},
+	{VO_12V, UVP_MV(12000), OVP_MV(12000), OVP_REC_MV(12000)},
+	{VO_20V, UVP_MV(20000), OVP_MV(20000), OVP_REC_MV(20000)},
 };
 
 /* currently selected PDO entry */
@@ -210,7 +213,8 @@ int pd_board_checks(void)
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
 		return EC_ERROR_INVAL;
 	}
-	if (output_is_enabled() && (vbus_volt > voltages[volt_idx].ovp)) {
+	if ((output_is_enabled() && (vbus_volt > voltages[volt_idx].ovp)) ||
+	    (fault && (vbus_volt > voltages[volt_idx].ovp_rec))) {
 		debug_printf("OverVoltage : %d mV\n",
 			     vbus_volt * VDDA_MV * VOLT_DIV / ADC_SCALE);
 		/* TODO(crosbug.com/p/28331) discharge */
