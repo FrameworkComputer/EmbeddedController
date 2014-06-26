@@ -63,14 +63,14 @@ static void usb_charge_set_enabled(int port_id, int en)
 static void usb_charge_set_ilim(int port_id, int sel)
 {
 #ifdef CONFIG_USB_PORT_POWER_SMART_SIMPLE
-	/* ILIM_SEL signal is shared too */
-	gpio_set_level(GPIO_USB_ILIM_SEL, sel);
+	/* ILIM_SEL signal is shared and inverted */
+	gpio_set_level(GPIO_USB_ILIM_SEL, sel ? 0 : 1);
 #else
 	if (port_id == 0)
 		gpio_set_level(GPIO_USB1_ILIM_SEL, sel);
 	else
 		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
-#endif
+#endif /* CONFIG_USB_PORT_POWER_SMART_SIMPLE */
 }
 
 static void usb_charge_all_ports_on(void)
