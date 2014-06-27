@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "registers.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -164,7 +165,7 @@ uint32_t system_get_scratchpad(void)
 	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
 }
 
-static void system_unpower_gpio(void)
+static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 {
 	int i, j, k;
 	uint32_t val;
@@ -191,17 +192,20 @@ static void system_unpower_gpio(void)
 			if (want_skip)
 				continue;
 
-			/*
-			 * GPIO Input, pull-high, interrupt disabled
-			 * TODO(crosbug.com/p/25302): Unpower GPIO instead of
-			 *                            setting them to be input.
-			 */
-			val = MEC1322_GPIO_CTL(pins[i][0], j);
-			val &= ~((1 << 12) | (1 << 13));
-			val &= ~(1 << 9);
-			val = (val & ~(0xf << 4)) | (0x4 << 4);
-			val = (val & ~0x3) | 0x1;
-			MEC1322_GPIO_CTL(pins[i][0], j) = val;
+			if (enabled) {
+				MEC1322_GPIO_CTL(pins[i][0], j) =
+					backup_gpio_ctl[i * 8 + j];
+			} else {
+				/* GPIO Input, pull-high, interrupt disabled */
+				val = MEC1322_GPIO_CTL(pins[i][0], j);
+				if (backup_gpio_ctl != NULL)
+					backup_gpio_ctl[i * 8 + j] = val;
+				val &= ~((1 << 12) | (1 << 13));
+				val &= ~(1 << 9);
+				val = (val & ~(0xf << 4)) | (0x4 << 4);
+				val = (val & ~0x3) | 0x1;
+				MEC1322_GPIO_CTL(pins[i][0], j) = val;
+			}
 		}
 	}
 }
@@ -209,18 +213,27 @@ static void system_unpower_gpio(void)
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	int i;
+	uint32_t int_status[15];
+	uint32_t int_block_status;
+	uint32_t nvic_status[3];
+	char *backup_gpio_ctl;
 
 	cflush();
 
 	/* Disable interrupts */
 	interrupt_disable();
+	for (i = 0; i < 3; ++i)
+		nvic_status[i] = CPU_NVIC_EN(i);
 	for (i = 0; i <= 92; ++i) {
 		task_disable_irq(i);
 		task_clear_pending_irq(i);
 	}
 
-	for (i = 8; i <= 23; ++i)
+	for (i = 8; i <= 23; ++i) {
+		int_status[i - 8] = MEC1322_INT_ENABLE(i);
 		MEC1322_INT_DISABLE(i) = 0xffffffff;
+	}
+	int_block_status = MEC1322_INT_BLK_EN;
 	MEC1322_INT_BLK_DIS |= 0xffff00;
 
 	/* Set processor clock to lowest, 1MHz */
@@ -258,11 +271,15 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	MEC1322_PCR_EC_SLP_EN |= 0xe0700ff7;
 	MEC1322_PCR_HOST_SLP_EN |= 0x5f003;
 	MEC1322_PCR_EC_SLP_EN2 |= 0x1ffffff8;
-	MEC1322_PCR_SYS_SLP_CTL = (MEC1322_PCR_SYS_SLP_CTL & ~0x7) | 0x2;
 	MEC1322_PCR_SLOW_CLK_CTL &= 0xfffffc00;
+
+	/* Set sleep state */
+	MEC1322_PCR_SYS_SLP_CTL = (MEC1322_PCR_SYS_SLP_CTL & ~0x7) | 0x2;
 	CPU_SCB_SYSCTRL |= 0x4;
 
-	system_unpower_gpio();
+	if (shared_mem_acquire(512, &backup_gpio_ctl) != EC_SUCCESS)
+		backup_gpio_ctl = NULL;
+	system_set_gpio_power(0, (uint32_t *)backup_gpio_ctl);
 
 #ifdef CONFIG_WAKE_PIN
 	gpio_set_flags_by_mask(gpio_list[CONFIG_WAKE_PIN].port,
@@ -296,13 +313,59 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	asm("wfi");
 
-	/* We lost states of most modules, let's just reboot */
-	_system_reset(0, 1);
+	/* If we didn't back up GPIO status, just reboot. */
+	if (backup_gpio_ctl == NULL)
+		_system_reset(0, 1);
+
+	system_set_gpio_power(1, (uint32_t *)backup_gpio_ctl);
+	shared_mem_release(backup_gpio_ctl);
+
+	/* Enable blocks */
+	MEC1322_PCR_SLOW_CLK_CTL |= 0x1e0;
+	MEC1322_PCR_CHIP_SLP_EN &= ~0x3;
+	MEC1322_PCR_EC_SLP_EN &= ~0xe0700ff7;
+	MEC1322_PCR_HOST_SLP_EN &= ~0x5f003;
+	MEC1322_PCR_EC_SLP_EN2 &= ~0x1ffffff8;
+
+	/* Enable timer */
+	MEC1322_TMR32_CTL(0) |= 1;
+	MEC1322_TMR32_CTL(1) |= 1;
+	MEC1322_TMR16_CTL(0) |= 1;
+
+	/* Enable watchdog */
+	MEC1322_WDG_CTL |= 1;
+
+	/* Enable 32KHz clock */
+	MEC1322_VBAT_CE |= 0x2;
+
+	/* Enable JTAG */
+	MEC1322_EC_JTAG_EN |= 1;
+
+	/* Enable UART */
+	MEC1322_LPC_ACT |= 1;
+	MEC1322_UART_ACT |= 1;
+
+	/* Deassert nSIO_RESET */
+	MEC1322_PCR_PWR_RST_CTL &= ~1;
+
+	/* Enable ADC */
+	MEC1322_EC_ADC_VREF_PD &= ~1;
+	MEC1322_ADC_CTRL |= 1 << 0;
+
+	/* Restore processor clock */
+	MEC1322_PCR_PROC_CLK_CTL = 4;
+
+	/* Restore interrupts */
+	for (i = 8; i <= 23; ++i)
+		MEC1322_INT_ENABLE(i) = int_status[i - 8];
+	MEC1322_INT_BLK_EN = int_block_status;
+
+	for (i = 0; i < 3; ++i)
+		CPU_NVIC_EN(i) = nvic_status[i];
 }
 
 void htimer_interrupt(void)
 {
 	/* Time to wake up */
-	_system_reset(0, 1);
 }
 DECLARE_IRQ(MEC1322_IRQ_HTIMER, htimer_interrupt, 1);
