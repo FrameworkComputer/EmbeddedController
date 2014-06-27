@@ -83,8 +83,17 @@ int spi_transaction_async(const uint8_t *txdata, int txlen,
 int spi_transaction_flush(void)
 {
 	int ret = dma_wait(SPI_DMA_CHANNEL);
+	uint8_t dummy __attribute__((unused)) = 0;
+
+	/* Disable auto read */
+	MEC1322_SPI_CR(CONFIG_SPI_PORT) &= ~(1 << 5);
 
 	gpio_set_level(CONFIG_SPI_CS_GPIO, 1);
+
+	dma_disable(SPI_DMA_CHANNEL);
+	dma_clear_isr(SPI_DMA_CHANNEL);
+	if (MEC1322_SPI_SR(CONFIG_SPI_PORT) & 0x2)
+		dummy = MEC1322_SPI_RD(CONFIG_SPI_PORT);
 
 	return ret;
 }
