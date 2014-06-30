@@ -468,7 +468,7 @@ static void spi_chipset_startup(void)
 
 	enabled = 1;
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, spi_chipset_startup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, spi_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, spi_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void spi_chipset_shutdown(void)

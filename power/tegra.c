@@ -384,13 +384,15 @@ static void power_on(void)
 		usleep(wait);
 	}
 
+	/*
+	 * When power_on() is called, we are at S5S3. Initialize components
+	 * to ready state before AP is up.
+	 */
+	hook_notify(HOOK_CHIPSET_PRE_INIT);
+
 	/* Push the power button */
 	set_pmic_pwron(1);
 	usleep(PMIC_PWRON_DEBOUNCE_TIME);
-
-	/* Initialize non-AP components if the AP is off. */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 	disable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_ON);
