@@ -14,6 +14,7 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
+#include "usb.h"
 #include "usb_pd.h"
 #include "util.h"
 
@@ -61,6 +62,14 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const void * const usb_strings[] = {
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("FruitPie"),
+	[USB_STR_VERSION] = USB_STRING_DESC("v1.0"),
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 int board_set_debug(int enable)
 {
@@ -153,6 +162,25 @@ int board_set_debug(int enable)
 
 	return rv;
 }
+
+static int command_debug(int argc, char **argv)
+{
+        char *e;
+        int v;
+
+        if (argc < 2)
+                return EC_ERROR_PARAM_COUNT;
+
+        v = strtoi(argv[1], &e, 0);
+        if (*e)
+                return EC_ERROR_PARAM1;
+
+        ccprintf("Setting debug: %d...\n", v);
+        board_set_debug(v);
+
+        return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(debugset, command_debug, NULL, "Set debug mode", NULL);
 
 void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 {
