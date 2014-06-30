@@ -16,7 +16,10 @@
 #include "uart.h"
 #include "util.h"
 
+#define TX_FIFO_SIZE 16
+
 static int init_done;
+static int tx_fifo_used;
 
 int uart_init_done(void)
 {
@@ -54,10 +57,10 @@ void uart_tx_flush(void)
 int uart_tx_ready(void)
 {
 	/*
-	 * TODO(crosbug.com/p/24107): This is FIFO empty bit instead of
-	 *                            FIFO full bit?
+	 * We have no indication of free space in transmit FIFO. To work around
+	 * this, we check transmit FIFO empty bit every 16 characters written.
 	 */
-	return MEC1322_UART_LSR & (1 << 5);
+	return tx_fifo_used != 0 || MEC1322_UART_LSR & (1 << 5);
 }
 
 int uart_rx_available(void)
@@ -71,6 +74,7 @@ void uart_write_char(char c)
 	while (!uart_tx_ready())
 		;
 
+	tx_fifo_used = (tx_fifo_used + 1) % TX_FIFO_SIZE;
 	MEC1322_UART_TB = c;
 }
 
