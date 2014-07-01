@@ -2496,13 +2496,8 @@ struct ec_params_pd_status {
 } __packed;
 
 /* Status of PD being sent back to EC */
-/*
- * TODO(crosbug.com/p/29841): remove hack for
- * getting extpower is present status from PD MCU.
- */
-#define EC_CMD_PD_STATUS_FLAG_CHARGER_CONN (1<<0)
 struct ec_response_pd_status {
-	int8_t status;
+	int8_t status; /* currently empty */
 } __packed;
 
 /*****************************************************************************/

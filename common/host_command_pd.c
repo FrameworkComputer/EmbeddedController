@@ -17,8 +17,6 @@
 
 #define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
 
-static int pd_charger_connected;
-
 void host_command_pd_send_status(void)
 {
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
@@ -50,20 +48,8 @@ static void pd_exchange_status(void)
 		task_wait_event(500*MSEC);
 	}
 
-	if (rv >= 0)
-		pd_charger_connected = pd_status.status &
-			EC_CMD_PD_STATUS_FLAG_CHARGER_CONN;
-	else
+	if (rv < 0)
 		CPRINTS("Host command to PD MCU failed");
-}
-
-/*
- * TODO(crosbug.com/p/29841): remove hack for getting extpower
- * is present status from PD MCU.
- */
-int pd_extpower_is_present(void)
-{
-	return pd_charger_connected;
 }
 
 void pd_command_task(void)

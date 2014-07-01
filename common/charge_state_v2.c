@@ -400,23 +400,6 @@ static inline int battery_too_low(void)
 		 curr.batt.voltage <= batt_info->voltage_min));
 }
 
-#ifdef BOARD_SAMUS
-/*
- * TODO(crosbug.com/p/29842): remove this workaround once the AC_PRESENT
- * input is avaible.
- */
-static void check_deep_discharge_again(void)
-{
-	/* Check again if power is present */
-	if (!extpower_is_present()) {
-		/* AP is off, so shut down the EC now */
-		CPRINTS("charge force EC hibernate due to low battery");
-		system_hibernate(0, 0);
-	}
-}
-DECLARE_DEFERRED(check_deep_discharge_again);
-#endif
-
 /* Shut everything down before the battery completely dies. */
 static void prevent_deep_discharge(void)
 {
@@ -424,17 +407,9 @@ static void prevent_deep_discharge(void)
 		return;
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-#ifdef BOARD_SAMUS
-		/*
-		 * TODO(crosbug.com/p/29842): remove this workaround once
-		 * the AC_PRESENT input is avaible.
-		 */
-		hook_call_deferred(check_deep_discharge_again, 10*SECOND);
-#else
 		/* AP is off, so shut down the EC now */
 		CPRINTS("charge force EC hibernate due to low battery");
 		system_hibernate(0, 0);
-#endif
 	} else if (!shutdown_warning_time.val) {
 		/* Warn AP battery level is so low we'll shut down */
 		CPRINTS("charge warn shutdown due to low battery");
@@ -510,27 +485,11 @@ void charger_task(void)
 					problem(PR_POST_INIT, rv);
 				else
 					prev_ac = curr.ac;
-#ifdef BOARD_SAMUS
-				/*
-				 * TODO(crosbug.com/p/29841): remove hack for
-				 * getting extpower is present status from PD.
-				 */
-				CPRINTS("AC connected");
-				host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
-#endif
 			} else {
 				/* Some things are only meaningful on AC */
 				state_machine_force_idle = 0;
 				battery_seems_to_be_dead = 0;
 				prev_ac = curr.ac;
-#ifdef BOARD_SAMUS
-				/*
-				 * TODO(crosbug.com/p/29841): remove hack for
-				 * getting extpower is present status from PD.
-				 */
-				CPRINTS("AC disconnected");
-				host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
-#endif
 			}
 		}
 		charger_get_params(&curr.chg);

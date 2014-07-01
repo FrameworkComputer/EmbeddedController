@@ -14,19 +14,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "system.h"
 
-/*
- * TODO(crosbug.com/p/29841): remove hack for getting extpower
- * is present status from PD MCU.
- */
-extern int pd_extpower_is_present(void);
 int extpower_is_present(void)
 {
-	if (system_get_board_version() <= BOARD_VERSION_PROTO_2_B)
-		return pd_extpower_is_present();
-	else
-		return gpio_get_level(GPIO_AC_PRESENT);
+	return gpio_get_level(GPIO_AC_PRESENT);
 }
 
 /**
