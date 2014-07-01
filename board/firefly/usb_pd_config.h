@@ -44,16 +44,25 @@ static inline void pd_set_pins_speed(void)
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000C0000;
 }
 
+/* Reset SPI peripheral used for TX */
+static inline void pd_tx_spi_reset(void)
+{
+	/* Reset SPI1 */
+	STM32_RCC_APB2RSTR |= (1 << 12);
+	STM32_RCC_APB2RSTR &= ~(1 << 12);
+}
+
 /* Drive the CC line from the TX block */
 static inline void pd_tx_enable(int polarity)
 {
-	/* set the low level reference */
-	gpio_set_level(polarity ? GPIO_PD_CC2_TX_EN : GPIO_PD_CC1_TX_EN, 0);
 	/* put SPI function on TX pin */
 	if (polarity) /* PB4 is SPI1 MISO */
 		gpio_set_alternate_function(GPIO_B, 0x0010, 0);
 	else /* PA6 is SPI1 MISO */
 		gpio_set_alternate_function(GPIO_A, 0x0040, 0);
+
+	/* set the low level reference */
+	gpio_set_level(polarity ? GPIO_PD_CC2_TX_EN : GPIO_PD_CC1_TX_EN, 0);
 }
 
 /* Put the TX driver in Hi-Z state */

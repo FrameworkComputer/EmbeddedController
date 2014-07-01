@@ -27,7 +27,16 @@ static task_id_t id[STM32_DMAC_COUNT];
  */
 static int dma_get_irq(enum dma_channel channel)
 {
+#ifdef CHIP_FAMILY_STM32F0
+	if (channel == STM32_DMAC_CH1)
+		return STM32_IRQ_DMA_CHANNEL_1;
+
+	return channel > STM32_DMAC_CH3 ?
+		STM32_IRQ_DMA_CHANNEL_4_7 :
+		STM32_IRQ_DMA_CHANNEL_2_3;
+#else
 	return STM32_IRQ_DMA_CHANNEL_1 + channel;
+#endif
 }
 
 /*
@@ -241,7 +250,47 @@ void dma_clear_isr(enum dma_channel channel)
 	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
 }
 
-#ifndef CHIP_FAMILY_STM32F0
+#ifdef CHIP_FAMILY_STM32F0
+void dma_event_interrupt_channel_1(void)
+{
+	if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(STM32_DMAC_CH1)) {
+		dma_clear_isr(STM32_DMAC_CH1);
+		if (id[STM32_DMAC_CH1] != TASK_ID_INVALID)
+			task_wake(id[STM32_DMAC_CH1]);
+	}
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_1, dma_event_interrupt_channel_1, 3);
+
+void dma_event_interrupt_channel_2_3(void)
+{
+	int i;
+
+	for (i = STM32_DMAC_CH2; i <= STM32_DMAC_CH3; i++) {
+		if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(i)) {
+			dma_clear_isr(i);
+			if (id[i] != TASK_ID_INVALID)
+				task_wake(id[i]);
+		}
+	}
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_2_3, dma_event_interrupt_channel_2_3, 3);
+
+void dma_event_interrupt_channel_4_7(void)
+{
+	int i;
+
+	for (i = STM32_DMAC_CH4; i <= STM32_DMAC_CH7; i++) {
+		if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(i)) {
+			dma_clear_isr(i);
+			if (id[i] != TASK_ID_INVALID)
+				task_wake(id[i]);
+		}
+	}
+}
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, dma_event_interrupt_channel_4_7, 3);
+
+#else /* !CHIP_FAMILY_STM32F0 */
+
 void dma_event_interrupt_channel_4(void)
 {
 	dma_clear_isr(STM32_DMAC_CH4);
@@ -273,4 +322,4 @@ void dma_event_interrupt_channel_7(void)
 		task_wake(id[STM32_DMAC_CH7]);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_7, dma_event_interrupt_channel_7, 3);
-#endif /* !CHIP_FAMILY_STM32F0 */
+#endif /* CHIP_FAMILY_STM32F0 */

@@ -214,14 +214,20 @@ int pd_write_last_edge(void *ctxt, int bit_off)
 
 	if (bit_idx == 0)
 		msg[word_idx] = 0;
+
 	if (!b_toggle /* last bit was 0 */) {
-		/* transition to 1, then 0 */
-		msg[word_idx] |= 1 << bit_idx;
+		/* transition to 1, another 1, then 0 */
+		if (bit_idx == 31) {
+			msg[word_idx++] |= 1 << bit_idx;
+			msg[word_idx] = 1;
+		} else {
+			msg[word_idx] |= 3 << bit_idx;
+		}
 	}
 	/* ensure that the trailer is 0 */
 	msg[word_idx+1] = 0;
 
-	return bit_off + 2;
+	return bit_off + 3;
 }
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -257,6 +263,35 @@ static struct dma_option dma_tx_option = {
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 };
 
+void pd_tx_spi_init(void)
+{
+	stm32_spi_regs_t *spi = SPI_REGS;
+
+	/* Enable Tx DMA for our first transaction */
+	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_DATASIZE(8);
+
+#ifdef CONFIG_USB_PD_TX_USES_SPI_MASTER
+	/*
+	 * Enable the master SPI: LSB first, force NSS, TX only, CPOL and CPHA
+	 * high.
+	 */
+	spi->cr1 = STM32_SPI_CR1_LSBFIRST | STM32_SPI_CR1_BIDIMODE
+		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI
+		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_MSTR
+		 | STM32_SPI_CR1_BR_DIV64R | STM32_SPI_CR1_SPE
+		 | STM32_SPI_CR1_CPOL | STM32_SPI_CR1_CPHA;
+
+#if CPU_CLOCK != 38400000
+#error "CPU_CLOCK must be 38.4MHz to use SPI master for USB PD Tx"
+#endif
+#else
+	/* Enable the slave SPI: LSB first, force NSS, TX only, CPHA */
+	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST
+		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE
+		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_CPHA;
+#endif
+}
+
 void pd_tx_set_circular_mode(void)
 {
 	dma_tx_option.flags |= STM32_DMA_CCR_CIRC;
@@ -266,6 +301,15 @@ void pd_start_tx(void *ctxt, int polarity, int bit_len)
 {
 	stm32_dma_chan_t *tx = dma_get_channel(DMAC_SPI_TX);
 
+	/* Initialize spi peripheral to prepare for transmission. */
+	pd_tx_spi_init();
+
+	/*
+	 * Set timer to one tick before reset so that the first tick causes
+	 * a rising edge on the output.
+	 */
+	STM32_TIM_CNT(TIM_TX) = TX_CLOCK_DIV - 1;
+
 	/* update DMA configuration */
 	dma_prepare_tx(&dma_tx_option, DIV_ROUND_UP(bit_len, 8), ctxt);
 	/* Flush data in write buffer so that DMA can get the latest data */
@@ -273,15 +317,22 @@ void pd_start_tx(void *ctxt, int polarity, int bit_len)
 
 	/* disable RX detection interrupt */
 	pd_rx_disable_monitoring();
-	/*
-	 * Drive the CC line from the TX block :
-	 * - set the low level reference.
-	 * - put SPI function on TX pin.
-	 */
-	pd_tx_enable(polarity);
 
 	/* Kick off the DMA to send the data */
+	dma_clear_isr(DMAC_SPI_TX);
+#ifdef CONFIG_COMMON_RUNTIME
+	dma_enable_tc_interrupt(DMAC_SPI_TX);
+#endif
 	dma_go(tx);
+
+	/*
+	 * Drive the CC line from the TX block :
+	 * - put SPI function on TX pin.
+	 * - set the low level reference.
+	 * Call this last before enabling timer in order to meet spec on
+	 * timing between enabling TX and clocking out bits.
+	 */
+	pd_tx_enable(polarity);
 
 #ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* Start counting at 300Khz*/
@@ -293,7 +344,12 @@ void pd_tx_done(int polarity)
 {
 	stm32_spi_regs_t *spi = SPI_REGS;
 
-	dma_wait(DMAC_SPI_TX);
+	/* wait for DMA */
+#ifdef CONFIG_COMMON_RUNTIME
+	task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+	dma_disable_tc_interrupt(DMAC_SPI_TX);
+#endif
+
 	/* wait for real end of transmission */
 #ifdef CHIP_FAMILY_STM32F0
 	while (spi->sr & STM32_SPI_SR_FTLVL)
@@ -302,9 +358,6 @@ void pd_tx_done(int polarity)
 	while (!(spi->sr & STM32_SPI_SR_TXE))
 		; /* wait for TXE == 1 */
 #endif
-
-	while (spi->sr & STM32_SPI_SR_BSY)
-		; /* wait for BSY == 0 */
 
 	/*
 	 * At the end of transmitting, the last bit is guaranteed by the
@@ -321,14 +374,23 @@ void pd_tx_done(int polarity)
 #ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* ensure that we are not pushing out junk */
 	*(uint8_t *)&spi->dr = 0;
-	/* Stop counting */
-	STM32_TIM_CR1(TIM_TX) &= ~1;
+	while (spi->sr & STM32_SPI_SR_FTLVL)
+		; /* wait for TX FIFO empty */
+#else
+	while (spi->sr & STM32_SPI_SR_BSY)
+		; /* wait for BSY == 0 */
 #endif
-	/* clear transfer flag */
-	dma_clear_isr(DMAC_SPI_TX);
 
 	/* put TX pins and reference in Hi-Z */
 	pd_tx_disable(polarity);
+
+#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
+	/* Stop counting */
+	STM32_TIM_CR1(TIM_TX) &= ~1;
+
+	/* Reset SPI to clear remaining data in buffer */
+	pd_tx_spi_reset();
+#endif
 }
 
 /* --- RX operation using comparator linked to timer --- */
@@ -405,8 +467,6 @@ void pd_hw_release(void)
 /* --- Startup initialization --- */
 void *pd_hw_init(void)
 {
-	stm32_spi_regs_t *spi = SPI_REGS;
-
 	/* set 40 MHz pin speed on communication pins */
 	pd_set_pins_speed();
 
@@ -418,29 +478,8 @@ void *pd_hw_init(void)
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
 
-	/* Enable Tx DMA for our first transaction */
-	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_DATASIZE(8);
-
-#ifdef CONFIG_USB_PD_TX_USES_SPI_MASTER
-	/*
-	 * Enable the master SPI: LSB first, force NSS, TX only, CPOL and CPHA
-	 * high.
-	 */
-	spi->cr1 = STM32_SPI_CR1_LSBFIRST | STM32_SPI_CR1_BIDIMODE
-		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI
-		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_MSTR
-		 | STM32_SPI_CR1_BR_DIV64R | STM32_SPI_CR1_SPE
-		 | STM32_SPI_CR1_CPOL | STM32_SPI_CR1_CPHA;
-
-#if CPU_CLOCK != 38400000
-#error "CPU_CLOCK must be 38.4MHz to use SPI master for USB PD Tx"
-#endif
-#else
-	/* Enable the slave SPI: LSB first, force NSS, TX only */
-	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST
-		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE
-		 | STM32_SPI_CR1_BIDIOE;
-#endif
+	/* Initialize SPI peripheral registers */
+	pd_tx_spi_init();
 
 	/* configure TX DMA */
 	dma_prepare_tx(&dma_tx_option, PD_MAX_RAW_SIZE, raw_samples);

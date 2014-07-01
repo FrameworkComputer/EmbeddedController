@@ -43,12 +43,21 @@ static inline void pd_set_pins_speed(void)
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000C0000;
 }
 
+/* Reset SPI peripheral used for TX */
+static inline void pd_tx_spi_reset(void)
+{
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= (1 << 14);
+	STM32_RCC_APB1RSTR &= ~(1 << 14);
+}
+
 /* Drive the CC line from the TX block */
 static inline void pd_tx_enable(int polarity)
 {
-	gpio_set_level(GPIO_PD_TX_EN, 1);
 	/* TX_DATA on PB14 is now connected to SPI2 */
 	gpio_set_alternate_function(GPIO_B, 0x4000, 0);
+
+	gpio_set_level(GPIO_PD_TX_EN, 1);
 }
 
 /* Put the TX driver in Hi-Z state */

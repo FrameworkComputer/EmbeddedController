@@ -43,13 +43,21 @@ static inline void pd_set_pins_speed(void)
 	/* Already done in hardware_init() */
 }
 
+/* Reset SPI peripheral used for TX */
+static inline void pd_tx_spi_reset(void)
+{
+	/* Reset SPI1 */
+	STM32_RCC_APB2RSTR |= (1 << 12);
+	STM32_RCC_APB2RSTR &= ~(1 << 12);
+}
+
 /* Drive the CC line from the TX block */
 static inline void pd_tx_enable(int polarity)
 {
-	/* Drive TX GND on PA4 */
-	STM32_GPIO_BSRR(GPIO_A) = 1 << (4 + 16 /* Reset */);
 	/* Drive SPI MISO on PA6 by putting it in AF mode  */
 	STM32_GPIO_MODER(GPIO_A) |= 0x2 << (2*6);
+	/* Drive TX GND on PA4 */
+	STM32_GPIO_BSRR(GPIO_A) = 1 << (4 + 16 /* Reset */);
 }
 
 /* Put the TX driver in Hi-Z state */
