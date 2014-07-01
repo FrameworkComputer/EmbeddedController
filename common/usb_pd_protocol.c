@@ -318,6 +318,13 @@ static int send_validate_message(void *ctxt, uint16_t header, uint8_t cnt,
 				udelay(20);
 				return bit_len;
 			} else {
+				/*
+				 * we have received a good packet
+				 * but not the expected GoodCRC,
+				 * the other side is trying to contact us,
+				 * bail out immediatly so we can get the retry.
+				 */
+				return -4;
 				/* CPRINTF("ERR ACK/%d %04x\n", id, head); */
 			}
 		}
