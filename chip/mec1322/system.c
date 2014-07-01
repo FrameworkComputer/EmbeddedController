@@ -236,9 +236,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	int_block_status = MEC1322_INT_BLK_EN;
 	MEC1322_INT_BLK_DIS |= 0xffff00;
 
-	/* Set processor clock to lowest, 1MHz */
-	MEC1322_PCR_PROC_CLK_CTL = 48;
-
 	/* Power down ADC VREF */
 	MEC1322_EC_ADC_VREF_PD |= 1;
 
@@ -313,6 +310,9 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	asm("wfi");
 
+	/* Use 48MHz clock to speed through wake-up */
+	MEC1322_PCR_PROC_CLK_CTL = 1;
+
 	/* If we didn't back up GPIO status, just reboot. */
 	if (backup_gpio_ctl == NULL)
 		_system_reset(0, 1);
@@ -352,9 +352,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	MEC1322_EC_ADC_VREF_PD &= ~1;
 	MEC1322_ADC_CTRL |= 1 << 0;
 
-	/* Restore processor clock */
-	MEC1322_PCR_PROC_CLK_CTL = 4;
-
 	/* Restore interrupts */
 	for (i = 8; i <= 23; ++i)
 		MEC1322_INT_ENABLE(i) = int_status[i - 8];
@@ -362,6 +359,9 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	for (i = 0; i < 3; ++i)
 		CPU_NVIC_EN(i) = nvic_status[i];
+
+	/* Restore processor clock */
+	MEC1322_PCR_PROC_CLK_CTL = 4;
 }
 
 void htimer_interrupt(void)
