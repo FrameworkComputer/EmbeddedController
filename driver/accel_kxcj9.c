@@ -16,7 +16,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 
 /* Number of times to attempt to enable sensor before giving up. */
 #define SENSOR_ENABLE_ATTEMPTS 3
@@ -191,7 +191,7 @@ static int enable_sensor(const enum accel_id id, const int ctrl1)
 	mutex_unlock(&accel_mutex[id]);
 
 	/* Cannot enable accel, print warning and return an error. */
-	CPRINTF("Error trying to enable accelerometer %d", id);
+	CPRINTF("Error trying to enable accelerometer %d\n", id);
 
 	return ret;
 }

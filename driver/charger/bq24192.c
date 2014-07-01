@@ -17,7 +17,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 /* Charger information */
 static const struct charger_info bq24192_charger_info = {
@@ -217,7 +217,7 @@ static void bq24192_init(void)
 	int val;
 
 	if (charger_device_id(&val) || val != BQ24192_DEVICE_ID) {
-		CPRINTF("BQ24192 incorrent ID: 0x%02x", val);
+		CPRINTF("BQ24192 incorrent ID: 0x%02x\n", val);
 		return;
 	}
 
@@ -241,7 +241,7 @@ static void bq24192_init(void)
 	if (bq24192_watchdog_reset())
 		return;
 
-	CPRINTF("BQ24192 initialized");
+	CPRINTF("BQ24192 initialized\n");
 }
 DECLARE_HOOK(HOOK_INIT, bq24192_init, HOOK_PRIO_LAST);
 
