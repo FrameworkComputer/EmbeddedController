@@ -300,6 +300,13 @@
 #define CONFIG_CHIPSET_HAS_PP5000
 
 /*****************************************************************************/
+/*
+ * Chip config for clock circuitry
+ *	define = crystal / undef = oscillator
+ */
+#undef CONFIG_CLOCK_CRYSTAL
+
+/*****************************************************************************/
 /* PMIC config */
 
 /* Support firmware long press power-off timer */

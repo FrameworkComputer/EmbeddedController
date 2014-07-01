@@ -12,6 +12,7 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_WATCHDOG_HELP
+#define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_CHIPSET_BRASWELL
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_IRQ_GPIO GPIO_KBD_IRQ_L
