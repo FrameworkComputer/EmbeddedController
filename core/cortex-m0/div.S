@@ -180,4 +180,4 @@ L_dont_sub0:
 	bx	lr
 
 __aeabi_idiv0:
-	bl panic
+	bl panic_reboot

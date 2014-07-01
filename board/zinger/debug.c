@@ -35,7 +35,3 @@ void debug_printf(const char *format, ...)
 	vfnprintf(debug_txchar, NULL, format, args);
 	va_end(args);
 }
-
-void panic(const char *msg)
-{
-}

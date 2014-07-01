@@ -103,6 +103,32 @@ void cpu_reset(void)
 		;
 }
 
+/**
+ * Default exception handler, which reports a panic.
+ *
+ * Declare this as a naked call so we can extract the real LR and SP.
+ */
+void exception_panic(void) __attribute__((naked));
+void exception_panic(void)
+{
+	asm volatile(
+#ifdef CONFIG_DEBUG_PRINTF
+		"mov r0, %0\n"
+		"mov r3, sp\n"
+		"ldr r1, [r3, #6*4]\n" /* retrieve exception PC */
+		"ldr r2, [r3, #5*4]\n" /* retrieve exception LR */
+		"bl debug_printf\n"
+#endif
+		"b cpu_reset\n"
+	: : "r"("PANIC PC=%08x LR=%08x\n\n"));
+}
+
+void panic_reboot(void)
+{ /* for div / 0 */
+	debug_printf("DIV0 PANIC\n\n");
+	cpu_reset();
+}
+
 /* --- stubs --- */
 void __hw_timer_enable_clock(int n, int enable)
 { /* Done in hardware init */ }

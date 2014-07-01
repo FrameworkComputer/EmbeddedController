@@ -384,10 +384,7 @@ fini_loop:
 /* Default exception handler */
 .thumb_func
 default_handler:
-#ifdef CONFIG_COMMON_PANIC_OUTPUT
 	b exception_panic
-#endif
-	b reset
 
 .align 2
 _bss_start:

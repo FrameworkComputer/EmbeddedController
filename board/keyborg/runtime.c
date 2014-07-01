@@ -128,6 +128,13 @@ void system_reboot(void)
 		;
 }
 
+/* Unhandled exception panic */
+void exception_panic(void)
+{
+	debug_printf("PANIC\n");
+	system_reboot();
+}
+
 /* --- stubs --- */
 void __hw_timer_enable_clock(int n, int enable)
 { /* Done in hardware init */ }
