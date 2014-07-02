@@ -3,34 +3,17 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * SPI flash driver for Chrome EC, particularly fruitpie board with Winbond
- * W25Q64FVZPIG flash memory.
- *
- * This uses DMA to handle transmission and reception.
+ * SPI flash driver for Chrome EC, particularly Winbond W25Q64FV.
  */
 
-#include "config.h"
+#include "common.h"
 #include "console.h"
-#include "dma.h"
-#include "gpio.h"
-#include "hooks.h"
-#include "registers.h"
 #include "shared_mem.h"
+#include "spi.h"
 #include "spi_flash.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
-
-/* Default DMA channel options */
-static const struct dma_option dma_tx_option = {
-	STM32_DMAC_CH7, (void *)&CONFIG_SPI_FLASH_REGISTER->dr,
-	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-};
-
-static const struct dma_option dma_rx_option = {
-	STM32_DMAC_CH6, (void *)&CONFIG_SPI_FLASH_REGISTER->dr,
-	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-};
 
 /*
  * Time to sleep when chip is busy
@@ -43,111 +26,36 @@ static const struct dma_option dma_rx_option = {
 #define SPI_FLASH_TIMEOUT_USEC	(800*MSEC)
 
 /*
- * Maximum message size (in bytes) for the W25Q64FV SPI flash
- * Instruction (1) + Address (3) + Data (256) = 260
- * Limited by chip maximum input length for write instruction
- */
-#define SPI_FLASH_MAX_MESSAGE_SIZE	260
-
-/*
  * Registers for the W25Q64FV SPI flash
  */
-#define SPI_FLASH_SR2_SUS			(1 << 7)
-#define SPI_FLASH_SR2_CMP			(1 << 6)
-#define SPI_FLASH_SR2_LB3			(1 << 5)
-#define SPI_FLASH_SR2_LB2			(1 << 4)
-#define SPI_FLASH_SR2_LB1			(1 << 3)
-#define SPI_FLASH_SR2_QE			(1 << 1)
+#define SPI_FLASH_SR2_SUS		(1 << 7)
+#define SPI_FLASH_SR2_CMP		(1 << 6)
+#define SPI_FLASH_SR2_LB3		(1 << 5)
+#define SPI_FLASH_SR2_LB2		(1 << 4)
+#define SPI_FLASH_SR2_LB1		(1 << 3)
+#define SPI_FLASH_SR2_QE		(1 << 1)
 #define SPI_FLASH_SR2_SRP1		(1 << 0)
 #define SPI_FLASH_SR1_SRP0		(1 << 7)
-#define SPI_FLASH_SR1_SEC			(1 << 6)
-#define SPI_FLASH_SR1_TB			(1 << 5)
-#define SPI_FLASH_SR1_BP2			(1 << 4)
-#define SPI_FLASH_SR1_BP1			(1 << 3)
-#define SPI_FLASH_SR1_BP0			(1 << 2)
-#define SPI_FLASH_SR1_WEL			(1 << 1)
+#define SPI_FLASH_SR1_SEC		(1 << 6)
+#define SPI_FLASH_SR1_TB		(1 << 5)
+#define SPI_FLASH_SR1_BP2		(1 << 4)
+#define SPI_FLASH_SR1_BP1		(1 << 3)
+#define SPI_FLASH_SR1_BP0		(1 << 2)
+#define SPI_FLASH_SR1_WEL		(1 << 1)
 #define SPI_FLASH_SR1_BUSY		(1 << 0)
 
 /* Internal buffer used by SPI flash driver */
 static uint8_t buf[SPI_FLASH_MAX_MESSAGE_SIZE];
-static uint8_t spi_enabled;
-
-/**
- * Sends and receives a message. Limited to SPI_FLASH_MAX_MESSAGE_SIZE.
- * @param snd_len Number of message bytes to send
- * @param rcv_len Number of bytes to receive
- * @return EC_SUCCESS, or non-zero if any error.
- */
-static int communicate(int snd_len, int rcv_len)
-{
-	int rv = EC_SUCCESS;
-	timestamp_t timeout;
-	stm32_dma_chan_t *txdma;
-	stm32_spi_regs_t *spi = CONFIG_SPI_FLASH_REGISTER;
-
-	/* Enable SPI if it is disabled */
-	if (!spi_enabled)
-		spi_flash_initialize();
-
-	/* Buffer overflow */
-	if (snd_len + rcv_len > SPI_FLASH_MAX_MESSAGE_SIZE)
-		return EC_ERROR_OVERFLOW;
-
-	/* Wipe send buffer from snd_len to snd_len + rcv_len */
-	memset(buf + snd_len, 0, rcv_len);
-
-	/* Drive SS low */
-	gpio_set_level(GPIO_PD_TX_EN, 0);
-
-	/* Clear out the FIFO. */
-	while (spi->sr & STM32_SPI_SR_FRLVL)
-		(void) (uint8_t) spi->dr;
-
-	/* Set up RX DMA */
-	dma_start_rx(&dma_rx_option, snd_len + rcv_len, buf);
-
-	/* Set up TX DMA */
-	txdma = dma_get_channel(dma_tx_option.channel);
-	dma_prepare_tx(&dma_tx_option, snd_len + rcv_len, buf);
-	dma_go(txdma);
-
-	/* Wait for DMA transmission to complete */
-	dma_wait(dma_tx_option.channel);
-
-	timeout.val = get_time().val + SPI_FLASH_TIMEOUT_USEC;
-	/* Wait for FIFO empty and BSY bit clear to indicate completion */
-	while ((spi->sr & STM32_SPI_SR_FTLVL) || (spi->sr & STM32_SPI_SR_BSY))
-		if (get_time().val > timeout.val)
-			return EC_ERROR_TIMEOUT;
-
-	/* Disable TX DMA */
-	dma_disable(dma_tx_option.channel);
-
-	/* Wait for DMA reception to complete */
-	dma_wait(dma_rx_option.channel);
-
-	timeout.val = get_time().val + SPI_FLASH_TIMEOUT_USEC;
-	/* Wait for FRLVL[1:0] to indicate FIFO empty */
-	while (spi->sr & STM32_SPI_SR_FRLVL)
-		if (get_time().val > timeout.val)
-			return EC_ERROR_TIMEOUT;
-
-	/* Disable RX DMA */
-	dma_disable(dma_rx_option.channel);
-
-	/* Drive SS high */
-	gpio_set_level(GPIO_PD_TX_EN, 1);
-
-	return rv;
-}
 
 /**
  * Computes block write protection range from registers
  * Returns start == len == 0 for no protection
+ *
  * @param sr1 Status register 1
  * @param sr2 Status register 2
  * @param start Output pointer for protection start offset
  * @param len Output pointer for protection length
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
@@ -204,10 +112,12 @@ static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 
 /**
  * Computes block write protection registers from range
+ *
  * @param start Desired protection start offset
  * @param len Desired protection length
  * @param sr1 Output pointer for status register 1
  * @param sr2 Output pointer for status register 2
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 static int protect_to_reg(unsigned int start, unsigned int len,
@@ -272,17 +182,9 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 }
 
 /**
- * Determines whether SPI is initialized
- * @return 1 if initialized, 0 otherwise.
- */
-int spi_flash_ready(void)
-{
-	return spi_enabled;
-}
-
-/**
  * Waits for chip to finish current operation. Must be called after
  * erase/write operations to ensure successive commands are executed.
+ *
  * @return EC_SUCCESS or error on timeout
  */
 int spi_flash_wait(void)
@@ -302,73 +204,12 @@ int spi_flash_wait(void)
 }
 
 /**
- * Initialize SPI module, registers, and clocks
- */
-void spi_flash_initialize(void)
-{
-	stm32_spi_regs_t *spi = CONFIG_SPI_FLASH_REGISTER;
-
-	/* Set SPI master, baud rate, and software slave control */
-	/* Set SPI clock rate to DIV2R = 24 MHz */
-	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI;
-
-	/*
-	 * Configure 8-bit datasize, set FRXTH, enable DMA,
-	 * and enable NSS output
-	 */
-	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN |
-			   STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
-
-	/* Enable SPI */
-	spi->cr1 |= STM32_SPI_CR1_SPE;
-
-	/* Drive SS high */
-	gpio_set_level(GPIO_PD_TX_EN, 1);
-
-	/* Set flag */
-	spi_enabled = 1;
-}
-
-/**
- * Shutdown SPI
- * @return EC_SUCCESS, or non-zero if any error.
- */
-int spi_flash_shutdown(void)
-{
-	int rv = EC_SUCCESS;
-	stm32_spi_regs_t *spi = CONFIG_SPI_FLASH_REGISTER;
-
-	/* Set flag */
-	spi_enabled = 0;
-
-	/* Disable DMA streams */
-	dma_disable(dma_tx_option.channel);
-	dma_disable(dma_rx_option.channel);
-
-
-
-	/* Disable SPI */
-	spi->cr1 &= ~STM32_SPI_CR1_SPE;
-
-	/* Read until FRLVL[1:0] is empty */
-	while (spi->sr & STM32_SPI_SR_FTLVL)
-		buf[0] = spi->dr;
-
-	/* Disable DMA buffers */
-	spi->cr2 &= ~(STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN);
-
-	return rv;
-}
-
-/**
  * Set the write enable latch
  */
 static int spi_flash_write_enable(void)
 {
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_WRITE_ENABLE;
-
-	return communicate(1, 0);
+	uint8_t cmd = SPI_FLASH_WRITE_ENABLE;
+	return spi_transaction(&cmd, 1, NULL, 0);
 }
 
 /**
@@ -377,12 +218,13 @@ static int spi_flash_write_enable(void)
  */
 uint8_t spi_flash_get_status1(void)
 {
-	/* Get SR 1 */
-	buf[0] = SPI_FLASH_READ_SR1;
-	if (communicate(1, 1))
+	uint8_t cmd = SPI_FLASH_READ_SR1;
+	uint8_t resp;
+
+	if (spi_transaction(&cmd, 1, &resp, 1) != EC_SUCCESS)
 		return -1;
 
-	return buf[1];
+	return resp;
 }
 
 /**
@@ -391,23 +233,27 @@ uint8_t spi_flash_get_status1(void)
  */
 uint8_t spi_flash_get_status2(void)
 {
-	/* Get SR 2 */
-	buf[0] = SPI_FLASH_READ_SR2;
-	if (communicate(1, 1))
+	uint8_t cmd = SPI_FLASH_READ_SR2;
+	uint8_t resp;
+
+	if (spi_transaction(&cmd, 1, &resp, 1) != EC_SUCCESS)
 		return -1;
 
-	return buf[1];
+	return resp;
 }
 
 /**
  * Sets the SPI flash status registers (non-volatile bits only)
  * Pass reg2 == -1 to only set reg1.
+ *
  * @param reg1 Status register 1
  * @param reg2 Status register 2 (optional)
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_set_status(int reg1, int reg2)
 {
+	uint8_t cmd[3] = {SPI_FLASH_WRITE_SR, reg1, reg2};
 	int rv = EC_SUCCESS;
 
 	/* Register has protection */
@@ -420,15 +266,10 @@ int spi_flash_set_status(int reg1, int reg2)
 	if (rv)
 		return rv;
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_WRITE_SR;
-	buf[1] = reg1;
-	buf[2] = reg2;
-
 	if (reg2 == -1)
-		rv = communicate(2, 0);
+		rv = spi_transaction(cmd, 2, NULL, 0);
 	else
-		rv = communicate(3, 0);
+		rv = spi_transaction(cmd, 3, NULL, 0);
 	if (rv)
 		return rv;
 
@@ -437,40 +278,37 @@ int spi_flash_set_status(int reg1, int reg2)
 
 /**
  * Returns the content of SPI flash
+ *
  * @param buf Buffer to write flash contents
  * @param offset Flash offset to start reading from
  * @param bytes Number of bytes to read. Limited by receive buffer to 256.
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 {
-	int rv = EC_SUCCESS;
+	uint8_t cmd[4] = {SPI_FLASH_READ,
+			  (offset >> 16) & 0xFF,
+			  (offset >> 8) & 0xFF,
+			  offset & 0xFF};
 
 	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_READ;
-	buf[1] = (offset >> 16) & 0xFF;
-	buf[2] = (offset >> 8) & 0xFF;
-	buf[3] = offset & 0xFF;
-
-	rv = communicate(4, bytes);
-	if (rv)
-		return rv;
-
-	memcpy(buf_usr, buf + 4, bytes);
-	return rv;
+	return spi_transaction(cmd, 4, buf_usr, bytes);
 }
 
 /**
  * Erase a block of SPI flash.
+ *
  * @param offset Flash offset to start erasing
  * @param block Block size in kb (4 or 32)
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 {
+	uint8_t cmd[4];
 	int rv = EC_SUCCESS;
 
 	/* Invalid block size */
@@ -492,12 +330,12 @@ static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 		return rv;
 
 	/* Compose instruction */
-	buf[0] = (block == 4) ? SPI_FLASH_ERASE_4KB : SPI_FLASH_ERASE_32KB;
-	buf[1] = (offset >> 16) & 0xFF;
-	buf[2] = (offset >> 8) & 0xFF;
-	buf[3] = offset & 0xFF;
+	cmd[0] = (block == 4) ? SPI_FLASH_ERASE_4KB : SPI_FLASH_ERASE_32KB;
+	cmd[1] = (offset >> 16) & 0xFF;
+	cmd[2] = (offset >> 8) & 0xFF;
+	cmd[3] = offset & 0xFF;
 
-	rv = communicate(4, 0);
+	rv = spi_transaction(cmd, 4, NULL, 0);
 	if (rv)
 		return rv;
 
@@ -506,8 +344,10 @@ static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 
 /**
  * Erase SPI flash.
+ *
  * @param offset Flash offset to start erasing
  * @param bytes Number of bytes to erase
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_erase(unsigned int offset, unsigned int bytes)
@@ -550,19 +390,21 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes)
 /**
  * Write to SPI flash. Assumes already erased.
  * Limited to SPI_FLASH_MAX_WRITE_SIZE by chip.
+ *
  * @param offset Flash offset to write
  * @param bytes Number of bytes to write
  * @param data Data to write to flash
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_write(unsigned int offset, unsigned int bytes,
 	const uint8_t const *data)
 {
-	int rv = EC_SUCCESS;
+	int rv;
 
 	/* Invalid input */
 	if (!data || offset + bytes > CONFIG_SPI_FLASH_SIZE ||
-		  bytes > SPI_FLASH_MAX_WRITE_SIZE)
+	    bytes > SPI_FLASH_MAX_WRITE_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Enable writing to SPI flash */
@@ -570,83 +412,72 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 	if (rv)
 		return rv;
 
+	/* Copy data to send buffer; buffers may overlap */
+	memmove(buf + 4, data, bytes);
+
 	/* Compose instruction */
 	buf[0] = SPI_FLASH_PAGE_PRGRM;
 	buf[1] = (offset >> 16) & 0xFF;
 	buf[2] = (offset >> 8) & 0xFF;
 	buf[3] = offset & 0xFF;
 
-	/* Copy data to send buffer; buffers may overlap */
-	memcpy(buf + 4, data, bytes);
-
-	return communicate(4 + bytes, 0);
+	return spi_transaction(buf, 4 + bytes, NULL, 0);
 }
 
 /**
  * Returns the SPI flash manufacturer ID and device ID [8:0]
+ *
  * @return flash manufacturer + device ID or -1 on error
  */
 uint16_t spi_flash_get_id(void)
 {
-	uint16_t res;
+	uint8_t cmd[4] = {SPI_FLASH_MFR_DEV_ID, 0, 0, 0};
+	uint8_t resp[2];
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_MFR_DEV_ID;
-	buf[1] = 0;
-	buf[2] = 0;
-	buf[3] = 0;
-
-	if (communicate(4, 2))
+	if (spi_transaction(cmd, 4, resp, 2) != EC_SUCCESS)
 		return -1;
 
-	res = (buf[4] << 8) | buf[5];
-	return res;
+	return (resp[4] << 8) | resp[5];
 }
 
 /**
  * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
+ *
  * @return flash JEDEC ID or -1 on error
  */
 uint32_t spi_flash_get_jedec_id(void)
 {
-	uint32_t res;
+	uint8_t cmd = SPI_FLASH_JEDEC_ID;
+	uint32_t resp;
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_JEDEC_ID;
-
-	if (communicate(1, 4))
+	if (spi_transaction(&cmd, 1, (uint8_t *)&resp, 4) != EC_SUCCESS)
 		return -1;
 
-	memcpy((uint8_t *) &res, buf + 1, 4);
-	return res;
+	return resp;
 }
 
 /**
  * Returns the SPI flash unique ID (serial)
+ *
  * @return flash unique ID or -1 on error
  */
 uint64_t spi_flash_get_unique_id(void)
 {
-	uint64_t res;
+	uint8_t cmd[5] = {SPI_FLASH_UNIQUE_ID, 0, 0, 0, 0};
+	uint64_t resp;
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_UNIQUE_ID;
-	buf[1] = 0;
-	buf[2] = 0;
-	buf[3] = 0;
-	buf[4] = 0;
-
-	if (communicate(5, 8))
+	if (spi_transaction(cmd, 5, (uint8_t *)&resp, 8) != EC_SUCCESS)
 		return -1;
 
-	memcpy((uint8_t *) &res, buf + 5, 8);
-	return res;
+	return resp;
 }
 
 /**
  * Check for SPI flash status register write protection
  * Cannot sample WP pin, will consider hardware WP to be no protection
+ *
  * @param wp Status register write protection mode
+ *
  * @return EC_SUCCESS for no protection, or non-zero if error.
  */
 int spi_flash_check_wp(void)
@@ -662,10 +493,12 @@ int spi_flash_check_wp(void)
 
 /**
  * Set SPI flash status register write protection
+ *
  * @param wp Status register write protection mode
+ *
  * @return EC_SUCCESS for no protection, or non-zero if error.
  */
-int spi_flash_set_wp(enum wp w)
+int spi_flash_set_wp(enum spi_flash_wp w)
 {
 	int sr1 = spi_flash_get_status1();
 	int sr2 = spi_flash_get_status2();
@@ -696,8 +529,10 @@ int spi_flash_set_wp(enum wp w)
 
 /**
  * Check for SPI flash block write protection
+ *
  * @param offset Flash block offset to check
  * @param bytes Flash block length to check
+ *
  * @return EC_SUCCESS for no protection, or non-zero if error.
  */
 int spi_flash_check_protect(unsigned int offset, unsigned int bytes)
@@ -727,8 +562,10 @@ int spi_flash_check_protect(unsigned int offset, unsigned int bytes)
 /**
  * Set SPI flash block write protection
  * If offset == bytes == 0, remove protection.
+ *
  * @param offset Flash block offset to protect
  * @param bytes Flash block length to protect
+ *
  * @return EC_SUCCESS, or non-zero if error.
  */
 int spi_flash_set_protect(unsigned int offset, unsigned int bytes)
@@ -753,7 +590,9 @@ static int command_spi_flashinfo(int argc, char **argv)
 {
 	uint32_t jedec;
 	uint64_t unique;
-	int rv = EC_SUCCESS;
+	int rv;
+
+	spi_enable(1);
 
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
@@ -791,6 +630,8 @@ static int command_spi_flasherase(int argc, char **argv)
 	if (rv)
 		return rv;
 
+	spi_enable(1);
+
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
 		return EC_ERROR_ACCESS_DENIED;
@@ -805,10 +646,8 @@ static int command_spi_flasherase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-
-	return rv;
+	/* Wait for the operation to complete */
+	return spi_flash_wait();
 }
 DECLARE_CONSOLE_COMMAND(spi_flasherase, command_spi_flasherase,
 	"offset [bytes]",
@@ -817,7 +656,6 @@ DECLARE_CONSOLE_COMMAND(spi_flasherase, command_spi_flasherase,
 
 static int command_spi_flashwrite(int argc, char **argv)
 {
-	char *data;
 	int offset = -1;
 	int bytes = SPI_FLASH_MAX_WRITE_SIZE;
 	int write_len;
@@ -828,18 +666,15 @@ static int command_spi_flashwrite(int argc, char **argv)
 	if (rv)
 		return rv;
 
+	spi_enable(1);
+
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
-	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire(SPI_FLASH_MAX_WRITE_SIZE, &data);
-	if (rv)
-		goto err_free;
-
 	/* Fill the data buffer with a pattern */
 	for (i = 0; i < SPI_FLASH_MAX_WRITE_SIZE; i++)
-		data[i] = i;
+		buf[i] = i;
 
 	ccprintf("Writing %d bytes to 0x%x...\n", bytes, offset);
 	while (bytes > 0) {
@@ -852,12 +687,12 @@ static int command_spi_flashwrite(int argc, char **argv)
 		/* Wait for previous operation to complete */
 		rv = spi_flash_wait();
 		if (rv)
-			goto err_free;
+			return rv;
 
 		/* Perform write */
-		rv = spi_flash_write(offset, write_len, data);
+		rv = spi_flash_write(offset, write_len, buf);
 		if (rv)
-			goto err_free;
+			return rv;
 
 		offset += write_len;
 		bytes -= write_len;
@@ -865,17 +700,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 
 	ASSERT(bytes == 0);
 
-err_free:
-	/* Free the buffer */
-	shared_mem_release(data);
-
-	/* Don't clobber return value */
-	if (rv)
-		spi_flash_wait();
-	else
-		rv = spi_flash_wait();
-
-	return rv;
+	return spi_flash_wait();
 }
 DECLARE_CONSOLE_COMMAND(spi_flashwrite, command_spi_flashwrite,
 	"offset [bytes]",
@@ -888,11 +713,13 @@ static int command_spi_flashread(int argc, char **argv)
 	int offset = -1;
 	int bytes = -1;
 	int read_len;
-	int rv = EC_SUCCESS;
+	int rv;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &bytes);
 	if (rv)
 		return rv;
+
+	spi_enable(1);
 
 	/* Can't read past size of memory */
 	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
@@ -941,11 +768,10 @@ DECLARE_CONSOLE_COMMAND(spi_flashread, command_spi_flashread,
 
 static int command_spi_flashread_sr(int argc, char **argv)
 {
-	uint8_t sr1 = spi_flash_get_status1();
-	uint8_t sr2 = spi_flash_get_status2();
+	spi_enable(1);
 
-	ccprintf("Status Register 1: 0x%02x\nStatus Register 2: 0x%02x\n",
-			 sr1, sr2);
+	ccprintf("Status Register 1: 0x%02x\n", spi_flash_get_status1());
+	ccprintf("Status Register 2: 0x%02x\n", spi_flash_get_status2());
 
 	return EC_SUCCESS;
 }
@@ -963,6 +789,8 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 	if (rv)
 		return rv;
 
+	spi_enable(1);
+
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
 	if (rv)
@@ -974,10 +802,8 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-
-	return rv;
+	/* Wait for the operation to complete */
+	return spi_flash_wait();
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_wsr, command_spi_flashwrite_sr,
 	"value1 value2",
@@ -993,6 +819,8 @@ static int command_spi_flashprotect(int argc, char **argv)
 	if (rv)
 		return rv;
 
+	spi_enable(1);
+
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
 	if (rv)
@@ -1003,10 +831,8 @@ static int command_spi_flashprotect(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-
-	return rv;
+	/* Wait for the operation to complete */
+	return spi_flash_wait();
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_prot, command_spi_flashprotect,
 	"offset len",

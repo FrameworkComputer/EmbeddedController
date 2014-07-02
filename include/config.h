@@ -765,8 +765,8 @@
 /* Size (bytes) of SPI flash memory */
 #undef CONFIG_SPI_FLASH_SIZE
 
-/* SPI module register used for flash interface */
-#undef CONFIG_SPI_FLASH_REGISTER
+/* SPI module port used for master interface */
+#undef CONFIG_SPI_MASTER_PORT
 
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE

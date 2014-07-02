@@ -14,35 +14,41 @@
 /* SPI flash instructions */
 #define SPI_FLASH_WRITE_ENABLE		0x06
 #define SPI_FLASH_WRITE_DISABLE		0x04
-#define SPI_FLASH_READ_SR1			0x05
-#define SPI_FLASH_READ_SR2			0x35
-#define SPI_FLASH_WRITE_SR			0x01
-#define SPI_FLASH_ERASE_4KB			0x20
+#define SPI_FLASH_READ_SR1		0x05
+#define SPI_FLASH_READ_SR2		0x35
+#define SPI_FLASH_WRITE_SR		0x01
+#define SPI_FLASH_ERASE_4KB		0x20
 #define SPI_FLASH_ERASE_32KB		0x52
 #define SPI_FLASH_ERASE_64KB		0xD8
 #define SPI_FLASH_ERASE_CHIP		0xC7
-#define SPI_FLASH_READ				0x03
+#define SPI_FLASH_READ			0x03
 #define SPI_FLASH_PAGE_PRGRM		0x02
 #define SPI_FLASH_REL_PWRDWN		0xAB
 #define SPI_FLASH_MFR_DEV_ID		0x90
-#define SPI_FLASH_JEDEC_ID			0x9F
-#define SPI_FLASH_UNIQUE_ID			0x4B
-#define SPI_FLASH_SFDP				0x44
+#define SPI_FLASH_JEDEC_ID		0x9F
+#define SPI_FLASH_UNIQUE_ID		0x4B
+#define SPI_FLASH_SFDP			0x44
 #define SPI_FLASH_ERASE_SEC_REG		0x44
 #define SPI_FLASH_PRGRM_SEC_REG		0x42
 #define SPI_FLASH_READ_SEC_REG		0x48
 #define SPI_FLASH_ENABLE_RESET		0x66
-#define SPI_FLASH_RESET				0x99
+#define SPI_FLASH_RESET			0x99
 
 /* Maximum single write size (in bytes) for the W25Q64FV SPI flash */
-#define SPI_FLASH_MAX_WRITE_SIZE		256
+#define SPI_FLASH_MAX_WRITE_SIZE	256
 
-/* Maximum single read size (in bytes) for the W25Q64FV SPI flash */
-/* Limited by size of internal driver buffer, not the chip */
+/*
+ * Maximum message size (in bytes) for the W25Q64FV SPI flash
+ * Instruction (1) + Address (3) + Data (256) = 260
+ * Limited by chip maximum input length of write instruction
+ */
+#define SPI_FLASH_MAX_MESSAGE_SIZE	(SPI_FLASH_MAX_WRITE_SIZE + 4)
+
+/* Maximum single read size in bytes. Limited by size of the message buffer */
 #define SPI_FLASH_MAX_READ_SIZE		(SPI_FLASH_MAX_MESSAGE_SIZE - 4)
 
 /* Status register write protect structure */
-enum wp {
+enum spi_flash_wp {
 	SPI_WP_NONE,
 	SPI_WP_HARDWARE,
 	SPI_WP_POWER_CYCLE,
@@ -50,37 +56,23 @@ enum wp {
 };
 
 /**
- * Determines whether SPI is initialized
- * @return 1 if initialized, 0 otherwise.
- */
-int spi_flash_ready(void);
-
-/**
- * Waits for chip to finish current operation. Must be called after
- * erase/write operations to ensure successive commands are executed.
- * @return EC_SUCCESS or error on timeout
+ * Waits for the chip to finish the current operation. Must be called
+ * after erase/erite operations to ensure successive commands are executed.
+ *
+ * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_wait(void);
 
 /**
- * Initialize SPI module, registers, and clocks
- */
-void spi_flash_initialize(void);
-
-/**
- * Shutdown SPI
- * @return EC_SUCCESS, or non-zero if any error.
- */
-int spi_flash_shutdown(void);
-
-/**
  * Returns the contents of SPI flash status register 1
+ *
  * @return register contents
  */
 uint8_t spi_flash_get_status1(void);
 
 /**
  * Returns the contents of SPI flash status register 2
+ *
  * @return register contents
  */
 uint8_t spi_flash_get_status2(void);
@@ -88,25 +80,31 @@ uint8_t spi_flash_get_status2(void);
 /**
  * Sets the SPI flash status registers (non-volatile bits only)
  * Pass reg2 == -1 to only set reg1.
+ *
  * @param reg1 Status register 1
  * @param reg2 Status register 2 (optional)
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_set_status(int reg1, int reg2);
 
 /**
  * Returns the content of SPI flash
+ *
  * @param buf Buffer to write flash contents
  * @param offset Flash offset to start reading from
  * @param bytes Number of bytes to read. Limited by receive buffer to 256.
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_read(uint8_t *buf, unsigned int offset, unsigned int bytes);
 
 /**
  * Erase SPI flash.
+ *
  * @param offset Flash offset to start erasing
  * @param bytes Number of bytes to erase
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_erase(unsigned int offset, unsigned int bytes);
@@ -114,9 +112,11 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes);
 /**
  * Write to SPI flash. Assumes already erased.
  * Limited to SPI_FLASH_MAX_WRITE_SIZE by chip.
+ *
  * @param offset Flash offset to write
  * @param bytes Number of bytes to write
  * @param data Data to write to flash
+ *
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_write(unsigned int offset, unsigned int bytes,
@@ -124,50 +124,62 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 
 /**
  * Returns the SPI flash manufacturer ID and device ID [8:0]
+ *
  * @return flash manufacturer + device ID
  */
 uint16_t spi_flash_get_id(void);
 
 /**
  * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
+ *
  * @return flash JEDEC ID
  */
 uint32_t spi_flash_get_jedec_id(void);
 
 /**
  * Returns the SPI flash unique ID (serial)
+ *
  * @return flash unique ID
  */
 uint64_t spi_flash_get_unique_id(void);
 
 /**
- * Check for SPI flash status register write protection
- * Cannot sample WP pin, will consider hardware WP to be no protection
+ * Check for SPI flash status register write protection.
+ * Note that this does not check the hardware WP pin as we might not be
+ * able to read the WP pin status.
+ *
  * @param wp Status register write protection mode
+ *
  * @return EC_SUCCESS for no protection, or non-zero if error.
  */
 int spi_flash_check_wp(void);
 
 /**
  * Set SPI flash status register write protection
+ *
  * @param wp Status register write protection mode
+ *
  * @return EC_SUCCESS for no protection, or non-zero if error.
  */
-int spi_flash_set_wp(enum wp);
+int spi_flash_set_wp(enum spi_flash_wp);
 
 /**
  * Check for SPI flash block write protection
+ *
  * @param offset Flash block offset to check
  * @param bytes Flash block length to check
- * @return EC_SUCCESS for no protection, or non-zero if error.
+ *
+ * @return EC_SUCCESS if no protection, or non-zero if error.
  */
 int spi_flash_check_protect(unsigned int offset, unsigned int bytes);
 
 /**
- * Set SPI flash block write protection
+ * Set SPI flash block write protection.
  * If offset == bytes == 0, remove protection.
+ *
  * @param offset Flash block offset to protect
  * @param bytes Flash block length to protect
+ *
  * @return EC_SUCCESS, or non-zero if error.
  */
 int spi_flash_set_protect(unsigned int offset, unsigned int bytes);
