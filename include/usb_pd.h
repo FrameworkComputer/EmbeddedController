@@ -209,6 +209,23 @@ extern const int pd_src_pdo_cnt;
 extern const uint32_t pd_snk_pdo[];
 extern const int pd_snk_pdo_cnt;
 
+/* Muxing for the USB type C */
+enum typec_mux {
+	TYPEC_MUX_NONE,
+	TYPEC_MUX_USB,
+	TYPEC_MUX_DP,
+	TYPEC_MUX_DOCK,
+};
+
+/*
+ * Configure superspeed muxes on type-C port.
+ *
+ * @param port port number.
+ * @param mux selected function.
+ * @param polarity plug polarity (0=CC1, 1=CC2).
+ */
+void board_set_usb_mux(int port, enum typec_mux mux, int polarity);
+
 /* --- Physical layer functions : chip specific --- */
 
 /* Packet preparation/retrieval */

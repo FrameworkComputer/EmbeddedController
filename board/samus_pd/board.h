@@ -59,15 +59,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* Muxing for the USB type C */
-enum typec_mux {
-	TYPEC_MUX_NONE,
-	TYPEC_MUX_USB1,
-	TYPEC_MUX_USB2,
-	TYPEC_MUX_DP1,
-	TYPEC_MUX_DP2,
-};
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

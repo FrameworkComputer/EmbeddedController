@@ -192,7 +192,7 @@ static uint8_t pd_role = PD_ROLE_DEFAULT;
 /* 3-bit rolling message ID counter */
 static uint8_t pd_message_id;
 /* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
-static uint8_t pd_polarity;
+uint8_t pd_polarity;
 
 static enum {
 	PD_STATE_DISABLED,

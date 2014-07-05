@@ -163,7 +163,7 @@ int board_set_debug(int enable)
 	return rv;
 }
 
-void board_set_usb_mux(enum typec_mux mux)
+void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 {
 	/* reset everything */
 	gpio_set_level(GPIO_SS1_EN_L, 1);
@@ -171,67 +171,68 @@ void board_set_usb_mux(enum typec_mux mux)
 	gpio_set_level(GPIO_DP_MODE, 0);
 	gpio_set_level(GPIO_SS1_USB_MODE_L, 1);
 	gpio_set_level(GPIO_SS2_USB_MODE_L, 1);
-	switch (mux) {
-	case TYPEC_MUX_NONE:
+
+	if (mux == TYPEC_MUX_NONE)
 		/* everything is already disabled, we can return */
 		return;
-	case TYPEC_MUX_USB1:
-		gpio_set_level(GPIO_SS1_USB_MODE_L, 0);
-		break;
-	case TYPEC_MUX_USB2:
-		gpio_set_level(GPIO_SS2_USB_MODE_L, 0);
-		break;
-	case TYPEC_MUX_DP1:
-		gpio_set_level(GPIO_DP_POLARITY_L, 1);
-		gpio_set_level(GPIO_DP_MODE, 1);
-		break;
-	case TYPEC_MUX_DP2:
-		gpio_set_level(GPIO_DP_POLARITY_L, 0);
-		gpio_set_level(GPIO_DP_MODE, 1);
-		break;
+
+	if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK) {
+		/* USB 3.0 uses 2 superspeed lanes */
+		gpio_set_level(polarity ? GPIO_SS2_USB_MODE_L :
+					  GPIO_SS1_USB_MODE_L, 0);
 	}
+
+	if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK) {
+		/* DP uses available superspeed lanes (x2 or x4) */
+		gpio_set_level(GPIO_DP_POLARITY_L, !polarity);
+		gpio_set_level(GPIO_DP_MODE, 1);
+	}
+	/* switch on superspeed lanes */
 	gpio_set_level(GPIO_SS1_EN_L, 0);
 	gpio_set_level(GPIO_SS2_EN_L, 0);
 }
 
+/* PD Port polarity as detected by the common PD code */
+extern uint8_t pd_polarity;
+
 static int command_typec(int argc, char **argv)
 {
-	const char * const mux_name[] = {"none", "usb1", "usb2", "dp1", "dp2"};
+	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
+	enum typec_mux mux = TYPEC_MUX_NONE;
+	int i;
 
 	if (argc < 2) {
+		int has_ss = !gpio_get_level(GPIO_SS1_EN_L);
+		int has_usb = !gpio_get_level(GPIO_SS1_USB_MODE_L)
+			   || !gpio_get_level(GPIO_SS2_USB_MODE_L);
+		int has_dp = !!gpio_get_level(GPIO_DP_MODE);
+		const char *dp_str = gpio_get_level(GPIO_DP_POLARITY_L) ?
+					"DP1" : "DP2";
+		const char *usb_str = gpio_get_level(GPIO_SS1_USB_MODE_L) ?
+					"USB2" : "USB1";
 		/* dump current state */
-		ccprintf("CC1 %d mV  CC2 %d mV\n",
+		ccprintf("CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
 			adc_read_channel(ADC_CH_CC1_PD),
-			adc_read_channel(ADC_CH_CC2_PD));
-		ccprintf("DP %d Polarity %d\n", gpio_get_level(GPIO_DP_MODE),
-			!!gpio_get_level(GPIO_DP_POLARITY_L) + 1);
-		ccprintf("Superspeed %s\n",
-			gpio_get_level(GPIO_SS1_EN_L) ? "None" :
-			(gpio_get_level(GPIO_DP_MODE) ? "DP" :
-			(!gpio_get_level(GPIO_SS1_USB_MODE_L) ? "USB1" : "USB2")
-			));
+			adc_read_channel(ADC_CH_CC2_PD),
+			pd_polarity + 1);
+		if (has_ss)
+			ccprintf("Superspeed %s%s%s\n",
+				 has_dp ? dp_str : "",
+				 has_dp && has_usb ? "+" : "",
+				 has_usb ? usb_str : "");
+		else
+			ccprintf("No Superspeed connection\n");
+
 		return EC_SUCCESS;
 	}
 
-	if (!strcasecmp(argv[1], "mux")) {
-		enum typec_mux mux = TYPEC_MUX_NONE;
-		int i;
-
-		if (argc < 3)
-			return EC_ERROR_PARAM2;
-
-		for (i = 0; i < ARRAY_SIZE(mux_name); i++)
-			if (!strcasecmp(argv[2], mux_name[i]))
-				mux = i;
-		board_set_usb_mux(mux);
-		return EC_SUCCESS;
-	} else {
-		return EC_ERROR_PARAM1;
-	}
-
-	return EC_ERROR_UNKNOWN;
+	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
+		if (!strcasecmp(argv[2], mux_name[i]))
+			mux = i;
+	board_set_usb_mux(0, mux, pd_polarity);
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,
-			"[mux none|usb1|usb2|dp1|d2]",
-			"Control type-C connector",
+			"[none|usb|dp|dock]",
+			"Control type-C connector muxing",
 			NULL);
