@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "host_command.h"
 #include "motion_sense.h"
 #include "task.h"
 #include "test_util.h"
@@ -64,6 +65,9 @@ int accel_get_datarate(const enum accel_id id, int * const rate)
 /* Test utilities */
 static int test_lid_angle(void)
 {
+	uint8_t *lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
+	uint8_t sample;
+
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk
 	 * and set the lid to closed.
@@ -74,24 +78,30 @@ static int test_lid_angle(void)
 	mock_x_acc[ACCEL_LID] = 0;
 	mock_y_acc[ACCEL_LID] = 0;
 	mock_z_acc[ACCEL_LID] = 1000;
+	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
-	msleep(5);
+	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
+		msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == 0);
 
 	/* Set lid open to 90 degrees. */
 	mock_x_acc[ACCEL_LID] = -1000;
 	mock_y_acc[ACCEL_LID] = 0;
 	mock_z_acc[ACCEL_LID] = 0;
+	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
-	msleep(5);
+	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
+		msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == 90);
 
 	/* Set lid open to 225. */
 	mock_x_acc[ACCEL_LID] = 500;
 	mock_y_acc[ACCEL_LID] = 0;
 	mock_z_acc[ACCEL_LID] = -500;
+	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
-	msleep(5);
+	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
+		msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == 225);
 
 	/*
@@ -101,8 +111,10 @@ static int test_lid_angle(void)
 	mock_x_acc[ACCEL_BASE] = 0;
 	mock_y_acc[ACCEL_BASE] = 1000;
 	mock_z_acc[ACCEL_BASE] = 0;
+	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
-	msleep(5);
+	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
+		msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == LID_ANGLE_UNRELIABLE);
 
 	/*
@@ -115,8 +127,10 @@ static int test_lid_angle(void)
 	mock_x_acc[ACCEL_LID] = -500;
 	mock_y_acc[ACCEL_LID] = -400;
 	mock_z_acc[ACCEL_LID] = -300;
+	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
-	msleep(5);
+	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
+		msleep(5);
 	TEST_ASSERT(motion_get_lid_angle() == 180);
 
 	return EC_SUCCESS;
