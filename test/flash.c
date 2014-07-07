@@ -260,6 +260,26 @@ static int test_read(void)
 	return EC_SUCCESS;
 }
 
+static int test_is_erased(void)
+{
+	int i;
+
+#ifdef EMU_BUILD
+	memset(__host_flash, 0xff, 1024);
+	TEST_ASSERT(flash_is_erased(0, 1024));
+
+	for (i = 0; i < 1024; ++i) {
+		__host_flash[i] = 0xec;
+		TEST_ASSERT(!flash_is_erased(0, 1024));
+		__host_flash[i] = 0xff;
+	}
+#else
+	ccprintf("Skip. Emulator only test.\n");
+#endif
+
+	return EC_SUCCESS;
+}
+
 static int test_overwrite_current(void)
 {
 	uint32_t offset, size;
@@ -421,6 +441,7 @@ static void run_test_step1(void)
 	mock_wp = 0;
 
 	RUN_TEST(test_read);
+	RUN_TEST(test_is_erased);
 	RUN_TEST(test_overwrite_current);
 	RUN_TEST(test_overwrite_other);
 	RUN_TEST(test_op_failure);
