@@ -87,7 +87,8 @@ static void ep0_rx(void)
 		case USB_DT_DEVICE: /* Setup : Get device descriptor */
 			memcpy_usbram(ep0_buf_tx, (void *)&dev_desc,
 					 sizeof(dev_desc));
-			btable_ep[0].tx_count =  sizeof(dev_desc);
+			btable_ep[0].tx_count = MIN(ep0_buf_rx[3],
+					 sizeof(dev_desc));
 			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
 				  EP_STATUS_OUT /*null OUT transaction */);
 			break;
@@ -135,6 +136,7 @@ static void ep0_rx(void)
 			/* set the address after we got IN packet handshake */
 			set_addr = ep0_buf_rx[1] & 0xff;
 			/* need null IN transaction -> TX Valid */
+			btable_ep[0].tx_count = 0;
 			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 			break;
 		case USB_REQ_SET_CONFIGURATION:
