@@ -89,6 +89,12 @@ static uint8_t enabled;
 static struct host_cmd_handler_args args;
 static struct host_packet spi_packet;
 
+/*
+ * This is set if SPI NSS raises to high while EC is still processing a
+ * command.
+ */
+static int setup_transaction_later;
+
 enum spi_state {
 	/* SPI not enabled (initial state, and when chipset is off) */
 	SPI_STATE_DISABLED = 0,
@@ -236,6 +242,9 @@ static void setup_for_transaction(void)
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 	volatile uint8_t dummy __attribute__((unused));
 
+	/* clear this as soon as possible */
+	setup_transaction_later = 0;
+
 	/* Not ready to receive yet */
 	spi->dr = EC_SPI_NOT_READY;
 
@@ -259,6 +268,24 @@ static void setup_for_transaction(void)
 	spi->dr = EC_SPI_OLD_READY;
 }
 
+
+/*
+ * If a setup_for_transaction() was postponed, call it now.
+ * Note that setup_for_transaction() cancels Tx DMA.
+ */
+static void check_setup_transaction_later(void)
+{
+	if (setup_transaction_later) {
+		setup_for_transaction();
+		/*
+		 * 'state' is set to SPI_STATE_READY_TO_RX. Somehow AP
+		 * de-asserted the SPI NSS during the handler was running.
+		 * Thus, the pending result will be dropped anyway.
+		 */
+	}
+}
+
+
 /**
  * Called for V2 protocol to indicate that a command has completed
  *
@@ -278,12 +305,21 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	if (state != SPI_STATE_PROCESSING)
 		return;
 
+	/* state == SPI_STATE_PROCESSING */
+
 	if (args->response_size > args->response_max)
 		result = EC_RES_INVALID_RESPONSE;
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
 	reply(txdma, result, args->response, args->response_size);
+
+	/*
+	 * Before the state is set to SENDING, any CS de-assertion would
+	 * set setup_transaction_later to 1.
+	 */
+	state = SPI_STATE_SENDING;
+	check_setup_transaction_later();
 }
 
 /**
@@ -304,6 +340,8 @@ static void spi_send_response_packet(struct host_packet *pkt)
 	if (state != SPI_STATE_PROCESSING)
 		return;
 
+	/* state == SPI_STATE_PROCESSING */
+
 	/* Append our past-end byte, which we reserved space for. */
 	((uint8_t *)pkt->response)[pkt->response_size] = EC_SPI_PAST_END;
 
@@ -312,6 +350,13 @@ static void spi_send_response_packet(struct host_packet *pkt)
 	dma_prepare_tx(&dma_tx_option,
 		       sizeof(out_preamble) + pkt->response_size + 1, out_msg);
 	dma_go(txdma);
+
+	/*
+	 * Before the state is set to SENDING, any CS de-assertion would
+	 * set setup_transaction_later to 1.
+	 */
+	state = SPI_STATE_SENDING;
+	check_setup_transaction_later();
 }
 
 /**
@@ -333,9 +378,18 @@ void spi_event(enum gpio_signal signal)
 	if (!enabled)
 		return;
 
-	/* Check chip select.  If it's high, the AP ended a tranaction. */
+	/* Check chip select.  If it's high, the AP ended a transaction. */
 	nss_reg = gpio_get_level_reg(GPIO_SPI1_NSS, &nss_mask);
 	if (REG16(nss_reg) & nss_mask) {
+		/*
+		 * If the buffer is still used by the host command, postpone
+		 * the DMA rx setup.
+		 */
+		if (state == SPI_STATE_PROCESSING) {
+			setup_transaction_later = 1;
+			return;
+		}
+
 		/* Set up for the next transaction */
 		setup_for_transaction();
 		return;
