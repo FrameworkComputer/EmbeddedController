@@ -120,7 +120,7 @@ int flash_is_erased(uint32_t offset, int size)
 			  (const char **)&ptr) < 0)
 		return 0;
 
-	for (size /= sizeof(uint32_t); size > 0; size -= 4, ptr++)
+	for (size /= sizeof(uint32_t); size > 0; size--, ptr++)
 		if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
 			return 0;
 
