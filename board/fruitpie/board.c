@@ -140,7 +140,7 @@ int board_set_debug(int enable)
 		STM32_GPIO_MODER(GPIO_B) &= ~0x3f000000;
 
 		/* Unset pullup on PD_TX_EN/SPI_NSS */
-		gpio_set_flags(GPIO_PD_TX_EN, GPIO_OUTPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_PD_TX_EN, GPIO_OUT_LOW);
 
 		/* Turn off debug mux */
 		tsu6721_set_pins(0);
