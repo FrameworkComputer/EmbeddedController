@@ -35,7 +35,7 @@ const uint32_t pd_snk_pdo[] = {
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 /* Desired voltage requested as a sink (in millivolts) */
-static unsigned select_mv = -1; /* no valid selection */
+static unsigned select_mv = 5000;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
