@@ -161,6 +161,28 @@ int pd_power_negotiation_allowed(void)
 	return battery_ok;
 }
 
+static void dual_role_on(void)
+{
+	pd_set_dual_role(PD_DRP_TOGGLE_ON);
+	CPRINTS("PCH -> S0, enable dual-role toggling");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
+
+static void dual_role_off(void)
+{
+	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
+	CPRINTS("PCH -> S3, disable dual-role toggling");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dual_role_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, dual_role_off, HOOK_PRIO_DEFAULT);
+
+static void dual_role_force_sink(void)
+{
+	pd_set_dual_role(PD_DRP_FORCE_SINK);
+	CPRINTS("PCH -> S5, force dual-role port to sink");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
+
 static int command_ec_int(int argc, char **argv)
 {
 	pd_send_ec_int();

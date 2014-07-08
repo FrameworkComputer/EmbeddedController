@@ -11,11 +11,15 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power.h"
 #include "registers.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "util.h"
+
+/* Chipset power state */
+static enum power_state ps;
 
 void vbus_evt(enum gpio_signal signal)
 {
@@ -30,7 +34,32 @@ void bc12_evt(enum gpio_signal signal)
 
 void pch_evt(enum gpio_signal signal)
 {
-	ccprintf("PCH change %d!\n", signal);
+	/* Determine new chipset state, trigger corresponding hook */
+	switch (ps) {
+	case POWER_S5:
+		if (gpio_get_level(GPIO_PCH_SLP_S5_L)) {
+			hook_notify(HOOK_CHIPSET_STARTUP);
+			ps = POWER_S3;
+		}
+		break;
+	case POWER_S3:
+		if (gpio_get_level(GPIO_PCH_SLP_S3_L)) {
+			hook_notify(HOOK_CHIPSET_RESUME);
+			ps = POWER_S0;
+		} else if (!gpio_get_level(GPIO_PCH_SLP_S5_L)) {
+			hook_notify(HOOK_CHIPSET_SHUTDOWN);
+			ps = POWER_S5;
+		}
+		break;
+	case POWER_S0:
+		if (!gpio_get_level(GPIO_PCH_SLP_S3_L)) {
+			hook_notify(HOOK_CHIPSET_SUSPEND);
+			ps = POWER_S3;
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 void board_config_pre_init(void)
@@ -59,6 +88,9 @@ void board_config_pre_init(void)
 /* Initialize board. */
 static void board_init(void)
 {
+	int slp_s5 = gpio_get_level(GPIO_PCH_SLP_S5_L);
+	int slp_s3 = gpio_get_level(GPIO_PCH_SLP_S3_L);
+
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is
 	 * important that this is enabled after the CC_ODL lines are set low
@@ -68,6 +100,22 @@ static void board_init(void)
 
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE);
+
+	/* Determine initial chipset state */
+	if (slp_s5 && slp_s3) {
+		hook_notify(HOOK_CHIPSET_RESUME);
+		ps = POWER_S0;
+	} else if (slp_s5 && !slp_s3) {
+		hook_notify(HOOK_CHIPSET_STARTUP);
+		ps = POWER_S3;
+	} else {
+		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+		ps = POWER_S5;
+	}
+
+	/* Enable interrupts on PCH state change */
+	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_S5_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

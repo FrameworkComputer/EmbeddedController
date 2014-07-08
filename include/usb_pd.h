@@ -132,6 +132,23 @@ enum pd_errors {
 /* USB Vendor ID assigned to Google Inc. */
 #define USB_VID_GOOGLE 0x18d1
 
+/* --- Protocol layer functions --- */
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+enum pd_dual_role_states {
+	PD_DRP_TOGGLE_ON,
+	PD_DRP_TOGGLE_OFF,
+	PD_DRP_FORCE_SINK
+};
+/**
+ * Set dual role state, from among enum pd_dual_role_states
+ *
+ * @param dr_state New state of dual-role port, selected from
+ *                 enum pd_dual_role_states
+ */
+void pd_set_dual_role(enum pd_dual_role_states dr_state);
+#endif
+
 /* --- Policy layer functions --- */
 
 /**
