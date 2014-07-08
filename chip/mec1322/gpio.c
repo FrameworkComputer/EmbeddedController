@@ -54,10 +54,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 	i = 31 - __builtin_clz(mask);
 	val = MEC1322_GPIO_CTL(gpio_list[signal].port, i);
 
-	if (val & (1 << 9)) /* Output */
-		return (val & (1 << 16)) ? 1 : 0;
-	else
-		return (val & (1 << 24)) ? 1 : 0;
+	return (val & (1 << 24)) ? 1 : 0;
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
