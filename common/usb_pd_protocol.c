@@ -540,6 +540,7 @@ static void handle_data_request(void *ctxt, uint16_t head, uint32_t *payload)
 static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 {
 	int type = PD_HEADER_TYPE(head);
+	int res;
 
 	switch (type) {
 	case PD_CTRL_GOOD_CRC:
@@ -549,7 +550,9 @@ static void handle_ctrl_request(void *ctxt, uint16_t head, uint32_t *payload)
 		/* Nothing else to do */
 		break;
 	case PD_CTRL_GET_SOURCE_CAP:
-		send_source_cap(ctxt);
+		res = send_source_cap(ctxt);
+		if ((res >= 0) && (pd_task_state == PD_STATE_SRC_DISCOVERY))
+			pd_task_state = PD_STATE_SRC_NEGOCIATE;
 		break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_CTRL_GET_SINK_CAP:
