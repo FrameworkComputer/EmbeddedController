@@ -859,7 +859,7 @@ void pd_task(void)
 			} else {
 				/* The sink did not ack, cut the power... */
 				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCOVERY;
+				pd_task_state = PD_STATE_SRC_DISCONNECTED;
 			}
 			break;
 		case PD_STATE_SRC_READY:
@@ -868,7 +868,7 @@ void pd_task(void)
 			if (res < 0) {
 				/* The sink died ... */
 				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCOVERY;
+				pd_task_state = PD_STATE_SRC_DISCONNECTED;
 				timeout = PD_T_SEND_SOURCE_CAP;
 			} else { /* schedule next keep-alive */
 				timeout = PD_T_SOURCE_ACTIVITY;
