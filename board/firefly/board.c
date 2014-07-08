@@ -60,6 +60,7 @@ void button_event(enum gpio_signal signal)
 void vbus_event(enum gpio_signal signal)
 {
 	ccprintf("VBUS! =%d\n", gpio_get_level(signal));
+	task_wake(TASK_ID_PD);
 }
 
 void board_config_pre_init(void)
@@ -108,6 +109,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_SW_PP20000);
 	gpio_enable_interrupt(GPIO_SW_PP12000);
 	gpio_enable_interrupt(GPIO_SW_PP5000);
+
+	/* Enable interrupts on VBUS transitions. */
+	gpio_enable_interrupt(GPIO_VBUS_WAKE);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
