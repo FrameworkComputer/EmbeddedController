@@ -895,15 +895,17 @@ void pd_task(void)
 			 */
 			pd_charger_change(0);
 #endif
-			cc1_volt = pd_adc_read(0);
-			cc2_volt = pd_adc_read(1);
-			if ((cc1_volt > PD_SNK_VA) ||
-			    (cc2_volt > PD_SNK_VA)) {
-				pd_polarity = !(cc1_volt > PD_SNK_VA);
-				pd_select_polarity(pd_polarity);
-				pd_task_state = PD_STATE_SNK_DISCOVERY;
+			if (pd_snk_is_vbus_provided()) {
+				cc1_volt = pd_adc_read(0);
+				cc2_volt = pd_adc_read(1);
+				if ((cc1_volt >= PD_SNK_VA) ||
+				    (cc2_volt >= PD_SNK_VA)) {
+					pd_polarity = !(cc1_volt >= PD_SNK_VA);
+					pd_select_polarity(pd_polarity);
+					pd_task_state = PD_STATE_SNK_DISCOVERY;
+				}
 			}
-			timeout = 10*MSEC;
+			timeout = 50*MSEC;
 			break;
 		case PD_STATE_SNK_DISCOVERY:
 			/* Don't continue if power negotiation is not allowed */
@@ -980,8 +982,7 @@ void pd_task(void)
 		    !pd_snk_is_vbus_provided()) {
 			/* Sink: detect disconnect by monitoring VBUS */
 			pd_task_state = PD_STATE_SNK_DISCONNECTED;
-			/* set timeout small to reconnect fast */
-			timeout = 5*MSEC;
+			timeout = 50*MSEC;
 		}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	}
