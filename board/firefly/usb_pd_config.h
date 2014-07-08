@@ -107,7 +107,8 @@ static inline int pd_adc_read(int cc)
 
 static inline int pd_snk_is_vbus_provided(void)
 {
-	return 1;
+	/* VBUS_WAKE is broken (not detecting 5V), use the ADC instead */
+	return adc_read_channel(ADC_CH_VBUS_SENSE) > 4000;
 }
 
 /* Standard-current DFP : no-connect voltage is 1.55V */
