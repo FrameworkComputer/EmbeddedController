@@ -829,16 +829,6 @@ void pd_task(void)
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SRC_DISCOVERY:
-			/* Detect disconnect by monitoring Vnc */
-			cc1_volt = pd_adc_read(pd_polarity);
-			if (cc1_volt > PD_SRC_VNC) {
-				/* The sink disappeared ... */
-				pd_power_supply_reset();
-				pd_task_state = PD_STATE_SRC_DISCONNECTED;
-				/* Debouncing */
-				timeout = 50*MSEC;
-				break;
-			}
 			/* Query capabilites of the other side */
 			res = send_source_cap(ctxt);
 			/* packet was acked => PD capable device) */
@@ -850,6 +840,7 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_NEGOCIATE:
 			/* wait for a "Request" message */
+			timeout = 500*MSEC;
 			break;
 		case PD_STATE_SRC_ACCEPTED:
 			/* Accept sent, wait for the end of transition */
@@ -865,8 +856,11 @@ void pd_task(void)
 				timeout =  PD_T_SEND_SOURCE_CAP;
 				/* it'a time to ping regularly the sink */
 				pd_task_state = PD_STATE_SRC_READY;
+			} else {
+				/* The sink did not ack, cut the power... */
+				pd_power_supply_reset();
+				pd_task_state = PD_STATE_SRC_DISCOVERY;
 			}
-			/* TODO error fallback */
 			break;
 		case PD_STATE_SRC_READY:
 			/* Verify that the sink is alive */
@@ -912,16 +906,6 @@ void pd_task(void)
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_DISCOVERY:
-			/* For non-PD aware source, detect source disconnect */
-			cc1_volt = pd_adc_read(pd_polarity);
-			if (cc1_volt < PD_SNK_VA) {
-				/* The source disappeared ... */
-				pd_task_state = PD_STATE_SNK_DISCONNECTED;
-				/* Debouncing */
-				timeout = 50*MSEC;
-				break;
-			}
-
 			/* Don't continue if power negotiation is not allowed */
 			if (!pd_power_negotiation_allowed()) {
 				timeout = PD_T_GET_SOURCE_CAP;
@@ -963,15 +947,6 @@ void pd_task(void)
 			 */
 			pd_charger_change(1);
 #endif
-
-			/* if we have lost vbus, go back to disconnected */
-			if (!pd_snk_is_vbus_provided()) {
-				pd_task_state = PD_STATE_SNK_DISCONNECTED;
-				/* set timeout small to reconnect fast */
-				timeout = 5*MSEC;
-				break;
-			}
-
 			/* check vital parameters from time to time */
 			timeout = 100*MSEC;
 			break;
@@ -986,6 +961,29 @@ void pd_task(void)
 			bist_mode_2_rx();
 			break;
 		}
+
+		/* Check for disconnection */
+		if (pd_role == PD_ROLE_SOURCE &&
+		    pd_task_state != PD_STATE_SRC_DISCONNECTED) {
+			/* Source: detect disconnect by monitoring CC */
+			cc1_volt = pd_adc_read(pd_polarity);
+			if (cc1_volt > PD_SRC_VNC) {
+				pd_power_supply_reset();
+				pd_task_state = PD_STATE_SRC_DISCONNECTED;
+				/* Debouncing */
+				timeout = 50*MSEC;
+			}
+		}
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (pd_role == PD_ROLE_SINK &&
+		    pd_task_state != PD_STATE_SNK_DISCONNECTED &&
+		    !pd_snk_is_vbus_provided()) {
+			/* Sink: detect disconnect by monitoring VBUS */
+			pd_task_state = PD_STATE_SNK_DISCONNECTED;
+			/* set timeout small to reconnect fast */
+			timeout = 5*MSEC;
+		}
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	}
 }
 
