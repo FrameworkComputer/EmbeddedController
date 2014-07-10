@@ -297,6 +297,12 @@
 #define CONFIG_CHIPSET_HAS_PP5000
 
 /*****************************************************************************/
+/* PMIC config */
+
+/* Support firmware long press power-off timer */
+#undef CONFIG_PMIC_FW_LONG_PRESS_TIMER
+
+/*****************************************************************************/
 /*
  * Optional console commands
  *
