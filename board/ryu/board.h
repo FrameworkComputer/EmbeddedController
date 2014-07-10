@@ -15,6 +15,9 @@
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 2
 
+/* By default, enable all console messages excepted USB */
+#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USBPD))
+
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_USB_POWER_DELIVERY
@@ -30,7 +33,7 @@
 
 /* Charging configuration */
 #undef CONFIG_BATTERY_RYU /* TODO implement */
-#define CONFIG_BATTERY_SMART
+#define CONFIG_BATTERY_BQ27541
 #define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
@@ -58,9 +61,9 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_CC1_PD = 0,
+	ADC_VBUS = 0,
+	ADC_CC1_PD,
 	ADC_CC2_PD,
-	ADC_VBUS,
 	ADC_IADP,
 	ADC_IBAT,
 	/* Number of ADC channels */
