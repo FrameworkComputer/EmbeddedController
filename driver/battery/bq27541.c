@@ -136,22 +136,30 @@ int battery_time_at_rate(int rate, int *minutes)
 
 int battery_manufacturer_name(char *dest, int size)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	strzcpy(dest, "<unkn>", size);
+
+	return EC_SUCCESS;
 }
 
 int battery_device_chemistry(char *dest, int size)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	strzcpy(dest, "<unkn>", size);
+
+	return EC_SUCCESS;
 }
 
 int battery_serial_number(int *serial)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	*serial = 0x0BAD0BAD;
+
+	return EC_SUCCESS;
 }
 
 int battery_design_voltage(int *voltage)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	*voltage = battery_get_info()->voltage_normal;
+
+	return EC_SUCCESS;
 }
 
 /**
@@ -193,7 +201,7 @@ void battery_get_params(struct batt_params *batt)
 	else
 		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
 
-	if (bq27541_read(REG_STATE_OF_CHARGE, &batt->state_of_charge))
+	if (bq27541_read8(REG_STATE_OF_CHARGE, &batt->state_of_charge))
 		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	if (bq27541_read(REG_VOLTAGE, &batt->voltage))
@@ -219,8 +227,15 @@ void battery_get_params(struct batt_params *batt)
 		 * current.
 		 */
 		batt->desired_voltage = battery_get_info()->voltage_max;
-		batt->desired_current = 99999;
+		batt->desired_current = 4096;
 	}
+}
+
+/* Wait until battery is totally stable */
+int battery_wait_for_stable(void)
+{
+	/* TODO(crosbug.com/p/30426): implement me */
+	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
