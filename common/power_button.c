@@ -20,6 +20,11 @@
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
+/* By default the power button is active low */
+#ifndef CONFIG_POWER_BUTTON_ACTIVE_STATE
+#define CONFIG_POWER_BUTTON_ACTIVE_STATE 0
+#endif
+
 #define PWRBTN_DEBOUNCE_US (30 * MSEC)  /* Debounce time for power button */
 
 static int debounced_power_pressed;	/* Debounced power button state */
@@ -45,7 +50,8 @@ static int raw_power_button_pressed(void)
 		return 0;
 #endif
 
-	return gpio_get_level(GPIO_POWER_BUTTON_L) ? 0 : 1;
+	return !!(gpio_get_level(GPIO_POWER_BUTTON_L)
+		 == CONFIG_POWER_BUTTON_ACTIVE_STATE);
 }
 
 int power_button_is_pressed(void)

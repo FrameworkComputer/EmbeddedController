@@ -715,6 +715,9 @@
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
+/* Force the active state of the power button : 0(default if unset) or 1 */
+#undef CONFIG_POWER_BUTTON_ACTIVE_STATE
+
 /* Allow the power button to send events while the lid is closed */
 #undef CONFIG_POWER_BUTTON_IGNORE_LID
 
