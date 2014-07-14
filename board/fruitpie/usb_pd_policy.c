@@ -60,7 +60,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 
 	/* request all the power ... */
 	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-		int uw = 250000 * (src_caps[i] & 0x3FF);
+		int uw = 250000 * (src_caps[max_i] & 0x3FF);
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
 		ccprintf("Request [%d] %dV %d/%d mW\n",
 			 max_i, sel_mv/1000, uw/1000, uw/1000);
