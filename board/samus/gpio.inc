@@ -97,3 +97,22 @@ GPIO(USB2_CTL2,           D, 1, GPIO_OUT_HIGH, NULL) /* USB charger port 2 CTL2 
 GPIO(USB2_CTL3,           D, 4, GPIO_OUT_LOW,  NULL) /* USB charger port 2 CTL3 output */
 GPIO(USB2_ENABLE,         D, 5, GPIO_OUT_HIGH, NULL) /* USB charger port 2 enable */
 GPIO(USB2_ILIM_SEL,       D, 6, GPIO_OUT_LOW,  NULL) /* USB charger port 2 ILIM_SEL output */
+
+ALTERNATE(A, 0x03, 1,  MODULE_UART, 0)               /* UART0 */
+ALTERNATE(A, 0x40, 3,  MODULE_I2C,  0)               /* I2C1 SCL */
+ALTERNATE(A, 0x80, 3,  MODULE_I2C,  GPIO_OPEN_DRAIN) /* I2C1 SDA */
+ALTERNATE(B, 0x04, 3,  MODULE_I2C,  0)               /* I2C0 SCL */
+ALTERNATE(B, 0x08, 3,  MODULE_I2C,  GPIO_OPEN_DRAIN) /* I2C0 SDA */
+ALTERNATE(B, 0x40, 3,  MODULE_I2C,  0)               /* I2C5 SCL */
+ALTERNATE(B, 0x80, 3,  MODULE_I2C,  GPIO_OPEN_DRAIN) /* I2C5 SDA */
+ALTERNATE(G, 0x30, 1,  MODULE_UART, 0)               /* UART2 */
+ALTERNATE(J, 0x40, 1,  MODULE_PECI, 0)               /* PECI Tx */
+ALTERNATE(J, 0x80, 0,  MODULE_PECI, GPIO_ANALOG)     /* PECI Rx */
+ALTERNATE(L, 0x3f, 15, MODULE_LPC,  0)               /* LPC */
+ALTERNATE(M, 0x33, 15, MODULE_LPC,  0)               /* LPC */
+#ifdef HEY_USE_BUILTIN_CLKRUN
+ALTERNATE(M, 0x04, 15, MODULE_LPC,  GPIO_OPEN_DRAIN) /* LPC */
+#endif
+
+ALTERNATE(N, 0x3c, 1,  MODULE_PWM_FAN,     0) /* FAN0PWM 2&3 */
+ALTERNATE(N, 0x40, 1,  MODULE_PWM_KBLIGHT, 0) /* FAN0PWM4 */

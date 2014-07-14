@@ -47,15 +47,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_B, 0x2000, 0, MODULE_USB_PD},/* SPI2: SCK(PB13) */
-	{GPIO_B, 0x0200, 2, MODULE_USB_PD},/* TIM17_CH1: PB9) */
-	{GPIO_A, 0xC000, 1, MODULE_UART},  /* USART2: PA14/PA15 */
-	{GPIO_B, 0x0cc0, 1, MODULE_I2C},   /* I2C SLAVE:PB6/7 MASTER:PB10/11 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */

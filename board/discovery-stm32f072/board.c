@@ -33,9 +33,3 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USER_BUTTON);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0xC000, 1, MODULE_UART}, /* USART2: PA14/PA15 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);

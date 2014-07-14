@@ -17,29 +17,6 @@
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_PORT(16), 0x24,     1, MODULE_UART}, /* UART0 */
-	{GPIO_PORT(3),  (1 << 4), 3, MODULE_PWM_FAN},
-	{GPIO_PORT(14), (1 << 0), 3, MODULE_PWM_FAN},
-	/*
-	 * I2C0: External pull-up resistors on EVB are too weak. Let's
-	 * also enable internal pull-up here.
-	 */
-	{GPIO_PORT(1),  0x60,     2, MODULE_I2C, GPIO_PULL_UP},
-	{GPIO_PORT(0),  0xfe,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
-	{GPIO_PORT(1),  0x03,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
-	{GPIO_PORT(3),  0x04,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
-	{GPIO_PORT(4),  0x0d,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
-	{GPIO_PORT(10), 0xd8,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT},
-	{GPIO_PORT(12), 0x60,     2, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
-	{GPIO_PORT(14), 0x14,     3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT},
-	{GPIO_PORT(2),  0x20,     2, MODULE_LPC},
-	{GPIO_PORT(12), 0x14,     1, MODULE_SPI},
-	{GPIO_PORT(6),  0x10,     1, MODULE_SPI},
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	[ADC_CH_1] = {"ADC1", 1, 1, 0, MEC1322_ADC_CH(1)},

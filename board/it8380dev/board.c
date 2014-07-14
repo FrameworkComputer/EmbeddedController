@@ -24,12 +24,6 @@ void test_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_B, 0x03, 1, MODULE_UART, GPIO_PULL_UP},	/* UART0 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* Initialize board. */
 static void board_init(void)
 {

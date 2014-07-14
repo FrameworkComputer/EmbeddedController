@@ -59,3 +59,8 @@ GPIO(TP_F1,             F, 1,  GPIO_ODR_HIGH, NULL)
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(WP_L)
+
+ALTERNATE(B, 0x0008, 0, MODULE_USB_PD, 0)            /* SPI1: SCK(PB3) */
+ALTERNATE(B, 0x0200, 2, MODULE_USB_PD, 0)            /* TIM17_CH1: PB9) */
+ALTERNATE(A, 0x0600, 1, MODULE_UART,   GPIO_PULL_UP) /* USART1: PA9/PA10 */
+ALTERNATE(B, 0x00c0, 1, MODULE_I2C,    0)            /* I2C SLAVE:PB6/7 */

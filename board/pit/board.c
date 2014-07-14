@@ -26,14 +26,6 @@
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0x00f0, GPIO_ALT_SPI,   MODULE_SPI},
-	{GPIO_A, 0x0600, GPIO_ALT_USART, MODULE_UART},
-	{GPIO_B, 0x0cc0, GPIO_ALT_I2C,	 MODULE_I2C},
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* Battery temperature ranges in degrees C */
 static const struct battery_info info = {
 	.start_charging_min_c = 0,

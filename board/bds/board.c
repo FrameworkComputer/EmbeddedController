@@ -39,12 +39,3 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 #include "gpio_list.h"
-
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0x03, 1, MODULE_UART},		/* UART0 */
-	{GPIO_G, 0x40, 3, MODULE_I2C},		/* I2C5 SCL */
-	{GPIO_G, 0x80, 3, GPIO_OPEN_DRAIN},	/* I2C5 SDA */
-	{GPIO_B, 0x03, 1, MODULE_UART},		/* UART1 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);

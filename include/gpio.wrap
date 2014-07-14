@@ -16,7 +16,24 @@
  * parameters are passed on to the gpio_info directly.
  */
 #ifndef GPIO
-#define GPIO(name, port, pin, function, signal)
+#define GPIO(name, port, pin, flags, signal)
+#endif
+
+/*
+ * The ALTERNATE macro is used associate a GPIO with an alternate function.
+ *
+ * Alternate functions allow hardware peripherals access to GPIO pins.
+ * Modules use gpio_config_module to enable and disable the alternate functions
+ * of GPIOs assigned to that module.  So if the module parameter is MODULE_UART
+ * then when the uart_init function is called the GPIO will be switched to its
+ * alternate function mode.  The function parameter is chip/variant specific
+ * and will usually need to be looked up in the datasheet.  The flags parameter
+ * has the same meaning as in the GPIO macro above.  This macro can assign
+ * multiple pins on the same port to a module, the second parameter is the
+ * bitmask of pins to be assigned.
+ */
+#ifndef ALTERNATE
+#define ALTERNATE(port, mask, function, module, flags)
 #endif
 
 /*
@@ -44,4 +61,5 @@
  * Once the gpio.inc file has been included these macros are no longer needed.
  */
 #undef GPIO
+#undef ALTERNATE
 #undef UNIMPLEMENTED

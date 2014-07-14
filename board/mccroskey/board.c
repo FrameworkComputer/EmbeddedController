@@ -24,15 +24,6 @@
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	/*
-	 * TODO(crosbug.com/p/23494): Use this instead of hard-coded register
-	 * writes in board_config_pre_init().
-	 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 void board_config_pre_init(void)
 {
 	uint32_t val;

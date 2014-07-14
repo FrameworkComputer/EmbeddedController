@@ -30,3 +30,5 @@ GPIO(START_SW, E, 4, GPIO_INT_FALLING, test_interrupt)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
+
+ALTERNATE(B, 0x03, 1, MODULE_UART, GPIO_PULL_UP) /* UART0 */

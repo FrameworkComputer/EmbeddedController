@@ -33,15 +33,6 @@
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	/*
-	 * TODO(crosbug.com/p/21618): use this instead of hard-coded register
-	 * writes in board_config_pre_init().
-	 */
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/*

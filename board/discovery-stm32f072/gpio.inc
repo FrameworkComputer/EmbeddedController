@@ -17,3 +17,5 @@ GPIO(LED_R, C, 9, GPIO_OUT_LOW, NULL)
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(WP_L)
+
+ALTERNATE(A, 0xC000, 1, MODULE_UART, 0) /* USART2: PA14/PA15 */

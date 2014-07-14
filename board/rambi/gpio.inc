@@ -65,3 +65,13 @@ GPIO(VCORE_EN,            C, 5, GPIO_OUT_LOW,  NULL) /* Enable core power suppli
 GPIO(WLAN_OFF_L,          J, 4, GPIO_OUT_LOW,  NULL) /* Disable WiFi radio */
 GPIO(PCH_SCI_L,           M, 1, GPIO_ODR_HIGH, NULL) /* Assert SCI to PCH */
 GPIO(KBD_IRQ_L,           M, 3, GPIO_ODR_HIGH, NULL) /* Negative edge triggered irq. */
+
+ALTERNATE(A, 0x03, 1,  MODULE_UART,    0)		/* UART0 */
+ALTERNATE(B, 0x04, 3,  MODULE_I2C,     0)		/* I2C0 SCL */
+ALTERNATE(B, 0x08, 3,  MODULE_I2C,     GPIO_OPEN_DRAIN)	/* I2C0 SDA */
+ALTERNATE(B, 0x40, 3,  MODULE_I2C,     0)		/* I2C5 SCL */
+ALTERNATE(B, 0x80, 3,  MODULE_I2C,     GPIO_OPEN_DRAIN)	/* I2C5 SDA */
+ALTERNATE(D, 0x0f, 2,  MODULE_SPI,     0)		/* SPI1 */
+ALTERNATE(L, 0x3f, 15, MODULE_LPC,     0)		/* LPC */
+ALTERNATE(M, 0x21, 15, MODULE_LPC,     0)		/* LPC */
+ALTERNATE(N, 0x50, 1,  MODULE_PWM_LED, GPIO_OPEN_DRAIN)	/* FAN0PWM 3&4 */

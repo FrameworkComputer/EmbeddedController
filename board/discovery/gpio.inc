@@ -15,3 +15,5 @@ GPIO(LED_GREEN,   B, 7, GPIO_OUT_LOW, NULL)
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(WP_L)
+
+ALTERNATE(A, 0x0600, GPIO_ALT_USART, MODULE_UART, 0)

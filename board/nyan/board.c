@@ -28,14 +28,6 @@
 
 #include "gpio_list.h"
 
-/* Pins with alternate functions */
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	{GPIO_A, 0x00f0, GPIO_ALT_SPI,   MODULE_SPI, GPIO_DEFAULT},
-	{GPIO_A, 0x0600, GPIO_ALT_USART, MODULE_UART, GPIO_DEFAULT},
-	{GPIO_B, 0x00c0, GPIO_ALT_I2C,	 MODULE_I2C, GPIO_DEFAULT},
-};
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_SOC1V8_XPSHOLD, 1, "XPSHOLD"},
