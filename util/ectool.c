@@ -5,6 +5,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,17 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
+
+/* Command line options */
+enum {
+	OPT_HELP = '?',
+	OPT_DEV = 1000,
+};
+
+static struct option long_opts[] = {
+	{"dev", 1, 0, OPT_DEV},
+	{NULL, 0, 0, 0}
+};
 
 #define GEC_LOCK_TIMEOUT_SECS	30  /* 30 secs */
 
@@ -168,12 +180,6 @@ const char help_str[] =
 	"      Prints EC version\n"
 	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	"      Enable/disable WLAN/Bluetooth radio\n"
-	"\n"
-	"Not working for you?  Make sure LPC I/O is configured:\n"
-	"  pci_write32 0 0x1f 0 0x88 0x00fc0801\n"
-	"  pci_write32 0 0x1f 0 0x8c 0x00fc0901\n"
-	"  pci_write16 0 0x1f 0 0x80 0x0010\n"
-	"  pci_write16 0 0x1f 0 0x82 0x3d01\n"
 	"";
 
 /* Note: depends on enum system_image_copy_t */
@@ -208,10 +214,14 @@ int parse_bool(const char *s, int *dest)
 	}
 }
 
-void print_help(const char *prog)
+void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s <command> [params]\n\n", prog);
-	puts(help_str);
+	printf("Usage: %s [--dev=n] <command> [params]\n\n",
+	       prog);
+	if (print_cmds)
+		puts(help_str);
+	else
+		printf("Use '%s help' to print a list of commands.\n", prog);
 }
 
 static uint8_t read_mapped_mem8(uint8_t offset)
@@ -4526,17 +4536,55 @@ const struct command commands[] = {
 	{NULL, NULL}
 };
 
-
 int main(int argc, char *argv[])
 {
 	const struct command *cmd;
+	int dev = 0;
 	int rv = 1;
+	int parse_error = 0;
+	char *e;
+	int i;
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
-	if (argc < 2 || !strcasecmp(argv[1], "-?") ||
-	    !strcasecmp(argv[1], "help")) {
-		print_help(argv[0]);
+	while ((i = getopt_long(argc, argv, "?", long_opts, NULL)) != -1) {
+		switch (i) {
+		case '?':
+			/* Unhandled option */
+			parse_error = 1;
+			break;
+
+		case OPT_DEV:
+			dev = strtoul(optarg, &e, 0);
+			if (!*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --dev\n");
+				parse_error = 1;
+			}
+			break;
+		}
+	}
+
+	/* Must specify a command */
+	if (!parse_error && optind == argc)
+		parse_error = 1;
+
+	/* 'ectool help' prints help with commands */
+	if (!parse_error && !strcasecmp(argv[optind], "help")) {
+		print_help(argv[0], 1);
+		exit(1);
+	}
+
+	/*
+	 * --dev support is coming in the next patch.  For now this is a
+	 * placeholder used in testing getopt_long()
+	 */
+	if (dev != 0) {
+		fprintf(stderr, "Bad device number %d\n", dev);
+		parse_error = 1;
+	}
+
+	if (parse_error) {
+		print_help(argv[0], 0);
 		exit(1);
 	}
 
@@ -4552,15 +4600,15 @@ int main(int argc, char *argv[])
 
 	/* Handle commands */
 	for (cmd = commands; cmd->name; cmd++) {
-		if (!strcasecmp(argv[1], cmd->name)) {
-			rv = cmd->handler(argc - 1, argv + 1);
+		if (!strcasecmp(argv[optind], cmd->name)) {
+			rv = cmd->handler(argc - optind, argv + optind);
 			goto out;
 		}
 	}
 
 	/* If we're still here, command was unknown */
-	fprintf(stderr, "Unknown command '%s'\n\n", argv[1]);
-	print_help(argv[0]);
+	fprintf(stderr, "Unknown command '%s'\n\n", argv[optind]);
+	print_help(argv[0], 0);
 
 out:
 	release_gec_lock();
