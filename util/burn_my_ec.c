@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 {
 	extern uint8_t data[] asm("_payload_start");
 
-	if (comm_init() < 0)
+	if (comm_init(COMM_ALL) < 0)
 		return -3;
 
 	flash_partition(EC_IMAGE_RW, data + CONFIG_FW_RW_OFF,

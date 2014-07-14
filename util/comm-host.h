@@ -25,19 +25,45 @@ extern int ec_max_outsize, ec_max_insize;
 extern void *ec_outbuf;
 extern void *ec_inbuf;
 
+/* Interfaces to allow for comm_init() */
+enum comm_interface {
+	COMM_DEV = (1 << 0),
+	COMM_LPC = (1 << 1),
+	COMM_I2C = (1 << 2),
+	COMM_ALL = -1
+};
+
 /**
  * Perform initializations needed for subsequent requests
  *
- * returns 0 in case of success or error code. */
-int comm_init(void);
+ * @param interfaces	Interfaces to try; use COMM_ALL to try all of them.
+ * @return 0 in case of success, or error code.
+ */
+int comm_init(int interfaces);
 
 /**
  * Send a command to the EC.  Returns the length of output data returned (0 if
  * none), or negative on error.
  */
-extern int (*ec_command)(int command, int version,
-			 const void *outdata, int outsize, /* to the EC */
-			 void *indata, int insize);	   /* from the EC */
+int ec_command(int command, int version,
+	       const void *outdata, int outsize,   /* to the EC */
+	       void *indata, int insize);	   /* from the EC */
+
+/**
+ * Set the offset to be applied to the command number when ec_command() calls
+ * ec_command_proto().
+ */
+void set_command_offset(int offset);
+
+/**
+ * Send a command to the EC.  Returns the length of output data returned (0 if
+ * none), or negative on error.  This is the low-level interface implemented
+ * by the protocol-specific driver.  DO NOT call this version directly from
+ * anywhere but ec_command(), or the --device option will not work.
+ */
+extern int (*ec_command_proto)(int command, int version,
+			       const void *outdata, int outsize, /* to EC */
+			       void *indata, int insize);        /* from EC */
 
 /**
  * Return the content of the EC information area mapped as "memory".

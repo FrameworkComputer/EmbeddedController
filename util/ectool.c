@@ -25,12 +25,13 @@
 
 /* Command line options */
 enum {
-	OPT_HELP = '?',
 	OPT_DEV = 1000,
+	OPT_INTERFACE,
 };
 
 static struct option long_opts[] = {
 	{"dev", 1, 0, OPT_DEV},
+	{"interface", 1, 0, OPT_INTERFACE},
 	{NULL, 0, 0, 0}
 };
 
@@ -216,7 +217,8 @@ int parse_bool(const char *s, int *dest)
 
 void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s [--dev=n] <command> [params]\n\n",
+	printf("Usage: %s [--dev=n] [--interface=dev|lpc|i2c] <command> "
+	       "[params]\n\n",
 	       prog);
 	if (print_cmds)
 		puts(help_str);
@@ -4540,6 +4542,7 @@ int main(int argc, char *argv[])
 {
 	const struct command *cmd;
 	int dev = 0;
+	int interfaces = COMM_ALL;
 	int rv = 1;
 	int parse_error = 0;
 	char *e;
@@ -4561,6 +4564,19 @@ int main(int argc, char *argv[])
 				parse_error = 1;
 			}
 			break;
+
+		case OPT_INTERFACE:
+			if (!strcasecmp(optarg, "dev")) {
+				interfaces = COMM_DEV;
+			} else if (!strcasecmp(optarg, "lpc")) {
+				interfaces = COMM_LPC;
+			} else if (!strcasecmp(optarg, "i2c")) {
+				interfaces = COMM_I2C;
+			} else {
+				fprintf(stderr, "Invalid --interface\n");
+				parse_error = 1;
+			}
+			break;
 		}
 	}
 
@@ -4574,11 +4590,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/*
-	 * --dev support is coming in the next patch.  For now this is a
-	 * placeholder used in testing getopt_long()
-	 */
-	if (dev != 0) {
+	/* Handle sub-devices command offset */
+	if (dev > 0 && dev < 4) {
+		set_command_offset(EC_CMD_PASSTHRU_OFFSET(dev));
+	} else if (dev != 0) {
 		fprintf(stderr, "Bad device number %d\n", dev);
 		parse_error = 1;
 	}
@@ -4593,7 +4608,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (comm_init()) {
+	if (comm_init(interfaces)) {
 		fprintf(stderr, "Couldn't find EC\n");
 		goto out;
 	}

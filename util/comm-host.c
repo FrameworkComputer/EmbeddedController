@@ -11,15 +11,16 @@
 #include "comm-host.h"
 #include "ec_commands.h"
 
-int (*ec_command)(int command, int version,
-		  const void *outdata, int outsize,
-		  void *indata, int insize);
+int (*ec_command_proto)(int command, int version,
+			const void *outdata, int outsize,
+			void *indata, int insize);
 
 int (*ec_readmem)(int offset, int bytes, void *dest);
 
 int ec_max_outsize, ec_max_insize;
 void *ec_outbuf;
 void *ec_inbuf;
+static int command_offset;
 
 int comm_init_dev(void) __attribute__((weak));
 int comm_init_lpc(void) __attribute__((weak));
@@ -58,21 +59,36 @@ static int fake_readmem(int offset, int bytes, void *dest)
 	return EC_MEMMAP_TEXT_MAX - 1;
 }
 
-int comm_init(void)
+void set_command_offset(int offset)
+{
+	command_offset = offset;
+}
+
+int ec_command(int command, int version,
+	       const void *outdata, int outsize,
+	       void *indata, int insize)
+{
+	/* Offset command code to support sub-devices */
+	return ec_command_proto(command_offset + command, version,
+				outdata, outsize,
+				indata, insize);
+}
+
+int comm_init(int interfaces)
 {
 	/* Default memmap access */
 	ec_readmem = fake_readmem;
 
 	/* Prefer new /dev method */
-	if (comm_init_dev && !comm_init_dev())
+	if ((interfaces & COMM_DEV) && comm_init_dev && !comm_init_dev())
 		goto init_ok;
 
 	/* Fallback to direct LPC on x86 */
-	if (comm_init_lpc && !comm_init_lpc())
+	if ((interfaces & COMM_LPC) && comm_init_lpc && !comm_init_lpc())
 		goto init_ok;
 
 	/* Fallback to direct i2c on ARM */
-	if (comm_init_i2c && !comm_init_i2c())
+	if ((interfaces & COMM_I2C) && comm_init_i2c && !comm_init_i2c())
 		goto init_ok;
 
 	/* Give up */

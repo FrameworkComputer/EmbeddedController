@@ -289,7 +289,7 @@ int comm_init_lpc(void)
 
 	if (i & EC_HOST_CMD_FLAG_VERSION_3) {
 		/* Protocol version 3 */
-		ec_command = ec_command_lpc_3;
+		ec_command_proto = ec_command_lpc_3;
 		ec_max_outsize = EC_LPC_HOST_PACKET_SIZE -
 			sizeof(struct ec_host_request);
 		ec_max_insize = EC_LPC_HOST_PACKET_SIZE -
@@ -297,7 +297,7 @@ int comm_init_lpc(void)
 
 	} else if (i & EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED) {
 		/* Protocol version 2 */
-		ec_command = ec_command_lpc;
+		ec_command_proto = ec_command_lpc;
 		ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	} else {

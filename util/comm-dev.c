@@ -102,7 +102,7 @@ int comm_init_dev(void)
 		return 3;
 	}
 
-	ec_command = ec_command_dev;
+	ec_command_proto = ec_command_dev;
 	if (ec_readmem_dev(EC_MEMMAP_ID, 2, version) == 2 &&
 	    version[0] == 'E' && version[1] == 'C')
 		ec_readmem = ec_readmem_dev;

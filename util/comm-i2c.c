@@ -206,7 +206,7 @@ int comm_init_i2c(void)
 
 	free(file_path);
 
-	ec_command = ec_command_i2c;
+	ec_command_proto = ec_command_i2c;
 	ec_max_outsize = ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
 
 	return 0;
