@@ -500,7 +500,7 @@ struct ec_host_response {
 /*
  * Notes on commands:
  *
- * Each command is an 8-byte command value.  Commands which take params or
+ * Each command is an 16-bit command value.  Commands which take params or
  * return response data specify structs for that data.  If no struct is
  * specified, the command does not input or output data, respectively.
  * Parameter/response length is implicit in the structs.  Some underlying
@@ -2499,6 +2499,33 @@ struct ec_params_pd_status {
 struct ec_response_pd_status {
 	int8_t status; /* currently empty */
 } __packed;
+
+/*****************************************************************************/
+/*
+ * Passthru commands
+ *
+ * Some platforms have sub-processors chained to each other.  For example.
+ *
+ *     AP <--> EC <--> PD MCU
+ *
+ * The top 2 bits of the command number are used to indicate which device the
+ * command is intended for.  Device 0 is always the device receiving the
+ * command; other device mapping is board-specific.
+ *
+ * When a device receives a command to be passed to a sub-processor, it passes
+ * it on with the device number set back to 0.  This allows the sub-processor
+ * to remain blissfully unaware of whether the command originated on the next
+ * device up the chain, or was passed through from the AP.
+ *
+ * In the above example, if the AP wants to send command 0x0002 to the PD MCU,
+ *     AP sends command 0x4002 to the EC
+ *     EC sends command 0x0002 to the PD MCU
+ *     EC forwards PD MCU response back to the AP
+ */
+
+/* Offset and max command number for sub-device n */
+#define EC_CMD_PASSTHRU_OFFSET(n) (0x4000 * (n))
+#define EC_CMD_PASSTHRU_MAX(n) (EC_CMD_PASSTHRU_OFFSET(n) + 0x3fff)
 
 /*****************************************************************************/
 /*

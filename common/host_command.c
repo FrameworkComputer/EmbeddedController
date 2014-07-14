@@ -530,18 +530,38 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 
 enum ec_status host_command_process(struct host_cmd_handler_args *args)
 {
-	const struct host_command *cmd = find_host_command(args->command);
+	const struct host_command *cmd;
 	enum ec_status rv;
 
 	if (hcdebug)
 		host_command_debug_request(args);
 
-	if (!cmd)
-		rv = EC_RES_INVALID_COMMAND;
-	else if (!(EC_VER_MASK(args->version) & cmd->version_mask))
-		rv = EC_RES_INVALID_VERSION;
-	else
-		rv = cmd->handler(args);
+#ifdef HAS_TASK_PDCMD
+	if (args->command >= EC_CMD_PASSTHRU_OFFSET(1) &&
+	    args->command <= EC_CMD_PASSTHRU_MAX(1)) {
+		rv = pd_host_command(args->command - EC_CMD_PASSTHRU_OFFSET(1),
+				     args->version,
+				     args->params, args->params_size,
+				     args->response, args->response_max);
+		if (rv >= 0) {
+			/* Success; store actual response size */
+			args->response_size = rv;
+			rv = EC_SUCCESS;
+		} else {
+			/* Failure, returned as negative error code */
+			rv = -rv;
+		}
+	} else
+#endif
+	{
+		cmd = find_host_command(args->command);
+		if (!cmd)
+			rv = EC_RES_INVALID_COMMAND;
+		else if (!(EC_VER_MASK(args->version) & cmd->version_mask))
+			rv = EC_RES_INVALID_VERSION;
+		else
+			rv = cmd->handler(args);
+	}
 
 	if (rv != EC_RES_SUCCESS)
 		CPRINTS("HC err %d", rv);
