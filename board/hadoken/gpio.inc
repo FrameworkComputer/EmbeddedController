@@ -1,0 +1,46 @@
+/* -*- mode:c -*-
+ *
+ * Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
+#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
+
+/* Inputs with interrupt handlers are first for efficiency */
+
+/* Keyboard inputs */
+/*
+ * TODO(yjlou): call keyboard_raw_gpio_interrupt() in chip/nrf51/keyboard_raw.c
+ */
+GPIO(KB_IN00, 0, 6,  GPIO_KB_INPUT, NULL)
+GPIO(KB_IN01, 0, 24, GPIO_KB_INPUT, NULL)
+GPIO(KB_IN02, 0, 1,  GPIO_KB_INPUT, NULL)
+GPIO(KB_IN03, 0, 4,  GPIO_KB_INPUT, NULL)
+GPIO(KB_IN04, 0, 0,  GPIO_KB_INPUT, NULL)
+GPIO(KB_IN05, 0, 30, GPIO_KB_INPUT, NULL)
+GPIO(KB_IN06, 0, 27, GPIO_KB_INPUT, NULL)
+GPIO(KB_IN07, 0, 26, GPIO_KB_INPUT, NULL)
+
+/* Other inputs */
+
+/* Outputs */
+GPIO(LED0, 0, 18, GPIO_OUTPUT | GPIO_HIGH, NULL)
+GPIO(LED1, 0, 19, GPIO_OUTPUT | GPIO_HIGH, NULL)
+GPIO(KB_OUT00, 0, 2,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT01, 0, 10, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT02, 0, 7,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT03, 0, 5,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT04, 0, 3,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT05, 0, 9,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT06, 0, 8,  GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT07, 0, 28, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT08, 0, 18, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT09, 0, 16, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT10, 0, 12, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT11, 0, 15, GPIO_KB_OUTPUT, NULL)
+GPIO(KB_OUT12, 0, 11, GPIO_KB_OUTPUT, NULL)
+
+/* Unimplemented */
+UNIMPLEMENTED(ENTERING_RW)
