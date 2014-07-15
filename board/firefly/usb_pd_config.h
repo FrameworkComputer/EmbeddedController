@@ -36,8 +36,8 @@ static inline void spi_enable_clock(void)
 /* the pins used for communication need to be hi-speed */
 static inline void pd_set_pins_speed(void)
 {
-	/* 40 MHz pin speed on SPI1 PA4/6/7 */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000F300;
+	/* 40 MHz pin speed on SPI1 PA6/7 */
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0x0000F000;
 	/* 40 MHz pin speed on SPI1 PB3/4/5 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
 	/* 40 MHz pin speed on TIM17_CH1 (PB9) */
