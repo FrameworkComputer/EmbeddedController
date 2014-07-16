@@ -637,7 +637,7 @@ static int command_i2cxfer(int argc, char **argv)
 	if (*e)
 		return EC_ERROR_PARAM4;
 
-	if (argc >= 5) {
+	if (argc >= 6) {
 		v = strtoi(argv[5], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM5;
