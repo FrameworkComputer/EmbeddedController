@@ -145,15 +145,13 @@
 #define STM32_USART1_BASE          0x40013800
 #define STM32_USART2_BASE          0x40004400
 #define STM32_USART3_BASE          0x40004800
-#define STM32_UART4_BASE           0x40004c00 /* STM32F100 and STM32F10x */
-#define STM32_UART5_BASE           0x40005000 /* STM32F100 and STM32F10x */
+#define STM32_USART4_BASE          0x40004c00
 
-#define STM32_USART_BASE(n)        CONCAT3(STM32_USART, n, _BASE)
-
-#define STM32_USART_REG(n, offset) REG16(STM32_USART_BASE(n) + (offset))
+#define STM32_USART_BASE(n)           CONCAT3(STM32_USART, n, _BASE)
+#define STM32_USART_REG(base, offset) REG16((base) + (offset))
 
 #ifdef CHIP_FAMILY_STM32F0
-#define STM32_USART_CR1(n)         STM32_USART_REG(n, 0x00)
+#define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR1_UE		(1 << 0)
 #define STM32_USART_CR1_RE		(1 << 2)
 #define STM32_USART_CR1_TE		(1 << 3)
@@ -161,32 +159,32 @@
 #define STM32_USART_CR1_TCIE		(1 << 6)
 #define STM32_USART_CR1_TXEIE		(1 << 7)
 #define STM32_USART_CR1_OVER8		(1 << 15)
-#define STM32_USART_CR2(n)         STM32_USART_REG(n, 0x04)
-#define STM32_USART_CR3(n)         STM32_USART_REG(n, 0x08)
+#define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
+#define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x08)
 #define STM32_USART_CR3_DMAR		(1 << 6)
 #define STM32_USART_CR3_DMAT		(1 << 7)
 #define STM32_USART_CR3_ONEBIT		(1 << 11)
-#define STM32_USART_BRR(n)         STM32_USART_REG(n, 0x0C)
-#define STM32_USART_GTPR(n)        STM32_USART_REG(n, 0x10)
-#define STM32_USART_RTOR(n)        STM32_USART_REG(n, 0x14)
-#define STM32_USART_RQR(n)         STM32_USART_REG(n, 0x18)
-#define STM32_USART_ISR(n)         STM32_USART_REG(n, 0x1C)
-#define STM32_USART_ICR(n)         STM32_USART_REG(n, 0x20)
-#define STM32_USART_RDR(n)         STM32_USART_REG(n, 0x24)
-#define STM32_USART_TDR(n)         STM32_USART_REG(n, 0x28)
+#define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x0C)
+#define STM32_USART_GTPR(base)     STM32_USART_REG(base, 0x10)
+#define STM32_USART_RTOR(base)     STM32_USART_REG(base, 0x14)
+#define STM32_USART_RQR(base)      STM32_USART_REG(base, 0x18)
+#define STM32_USART_ISR(base)      STM32_USART_REG(base, 0x1C)
+#define STM32_USART_ICR(base)      STM32_USART_REG(base, 0x20)
+#define STM32_USART_RDR(base)      STM32_USART_REG(base, 0x24)
+#define STM32_USART_TDR(base)      STM32_USART_REG(base, 0x28)
 /* register alias */
-#define STM32_USART_SR(n)          STM32_USART_ISR(n)
+#define STM32_USART_SR(base)       STM32_USART_ISR(base)
 #define STM32_USART_SR_RXNE		(1 << 5)
 #define STM32_USART_SR_TC		(1 << 6)
 #define STM32_USART_SR_TXE		(1 << 7)
 #else /* !CHIP_FAMILY_STM32F0 */
-#define STM32_USART_SR(n)          STM32_USART_REG(n, 0x00)
+#define STM32_USART_SR(base)       STM32_USART_REG(base, 0x00)
 #define STM32_USART_SR_RXNE		(1 << 5)
 #define STM32_USART_SR_TC		(1 << 6)
 #define STM32_USART_SR_TXE		(1 << 7)
-#define STM32_USART_DR(n)          STM32_USART_REG(n, 0x04)
-#define STM32_USART_BRR(n)         STM32_USART_REG(n, 0x08)
-#define STM32_USART_CR1(n)         STM32_USART_REG(n, 0x0C)
+#define STM32_USART_DR(base)       STM32_USART_REG(base, 0x04)
+#define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x08)
+#define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x0C)
 #define STM32_USART_CR1_RE		(1 << 2)
 #define STM32_USART_CR1_TE		(1 << 3)
 #define STM32_USART_CR1_RXNEIE		(1 << 5)
@@ -194,15 +192,15 @@
 #define STM32_USART_CR1_TXEIE		(1 << 7)
 #define STM32_USART_CR1_UE		(1 << 13)
 #define STM32_USART_CR1_OVER8		(1 << 15) /* STM32L only */
-#define STM32_USART_CR2(n)         STM32_USART_REG(n, 0x10)
-#define STM32_USART_CR3(n)         STM32_USART_REG(n, 0x14)
+#define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x10)
+#define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x14)
 #define STM32_USART_CR3_DMAR		(1 << 6)
 #define STM32_USART_CR3_DMAT		(1 << 7)
 #define STM32_USART_CR3_ONEBIT		(1 << 11) /* STM32L only */
-#define STM32_USART_GTPR(n)        STM32_USART_REG(n, 0x18)
+#define STM32_USART_GTPR(base)     STM32_USART_REG(base, 0x18)
 /* register aliases */
-#define STM32_USART_TDR(n)         STM32_USART_DR(n)
-#define STM32_USART_RDR(n)         STM32_USART_DR(n)
+#define STM32_USART_TDR(base)      STM32_USART_DR(base)
+#define STM32_USART_RDR(base)      STM32_USART_DR(base)
 #endif /* !CHIP_FAMILY_STM32F0 */
 
 #define STM32_IRQ_USART(n)         CONCAT2(STM32_IRQ_USART, n)
