@@ -968,6 +968,12 @@
 /* Support the TSU6721 I2C smart switch */
 #undef CONFIG_USB_SWITCH_TSU6721
 
+/* Support the Pericom PI3USB9281 I2C USB switch */
+#undef CONFIG_USB_SWITCH_PI3USB9281
+
+/* Select GPIO MUX for Pericom PI3USB9281 I2C USB switch */
+#undef CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO
+
 /*****************************************************************************/
 
 /* Support computing hash of code for verified boot */
