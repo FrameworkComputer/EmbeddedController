@@ -138,15 +138,16 @@ enum pd_errors {
 enum pd_dual_role_states {
 	PD_DRP_TOGGLE_ON,
 	PD_DRP_TOGGLE_OFF,
-	PD_DRP_FORCE_SINK
+	PD_DRP_FORCE_SINK,
+	PD_DRP_FORCE_SOURCE
 };
 /**
  * Set dual role state, from among enum pd_dual_role_states
  *
- * @param dr_state New state of dual-role port, selected from
- *                 enum pd_dual_role_states
+ * @param state New state of dual-role port, selected from
+ *              enum pd_dual_role_states
  */
-void pd_set_dual_role(enum pd_dual_role_states dr_state);
+void pd_set_dual_role(enum pd_dual_role_states state);
 #endif
 
 /* --- Policy layer functions --- */
