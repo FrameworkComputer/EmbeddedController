@@ -18,6 +18,9 @@ test-list-$(BOARD_SPRING)+=kb_scan stress
 # compile with it. Disable them for now.
 test-list-$(BOARD_SAMUS)=
 
+# Ryu has issues when building tests
+test-list-$(BOARD_RYU)=
+
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
