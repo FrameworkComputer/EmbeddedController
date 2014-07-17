@@ -302,12 +302,11 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 			if (rv)
 				goto xfer_exit;
 		}
-		/* Configure the read transfer */
+		/* Configure the read transfer and (re)start */
 		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
 				    | STM32_I2C_CR2_RD_WRN | slave_addr
-				    | STM32_I2C_CR2_AUTOEND;
-		/* START or repeated start */
-		STM32_I2C_CR2(port) |= STM32_I2C_CR2_START;
+				    | STM32_I2C_CR2_AUTOEND
+				    | STM32_I2C_CR2_START;
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
