@@ -525,6 +525,12 @@
  */
 #undef CONFIG_HOST_COMMAND_STATUS
 
+/*
+ * For ECs where the host command interface is I2C, slave
+ * address which the EC will respond to.
+ */
+#undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+
 /*****************************************************************************/
 
 /* Enable debugging and profiling statistics for hook functions */

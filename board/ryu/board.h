@@ -51,6 +51,11 @@
 #define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_BATTERY I2C_PORT_MASTER
 
+/* slave address for host commands */
+#ifdef HAS_TASK_HOSTCMD
+#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR 0x3c
+#endif
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
