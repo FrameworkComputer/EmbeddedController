@@ -56,6 +56,8 @@
 #define SB_DEVICE_NAME                  0x21
 #define SB_DEVICE_CHEMISTRY             0x22
 #define SB_MANUFACTURER_DATA            0x23
+/* Extention of smart battery spec, may not be supported on all platforms */
+#define SB_ALT_MANUFACTURER_ACCESS      0x44
 
 /* Battery mode */
 #define MODE_INTERNAL_CHARGE_CONTROLLER (1 << 0)
@@ -127,6 +129,14 @@
 #define INFO_CHARGER_SPEC(INFO)         ((INFO) & 0xf)
 #define INFO_SELECTOR_SUPPORT(INFO)     (((INFO) >> 4) & 1)
 
+/* Manufacturer Access parameters */
+#define PARAM_SAFETY_STATUS             0x51
+#define PARAM_OPERATION_STATUS          0x54
+/* Operation status masks -- 6 byte reply */
+/* reply[3] */
+#define BATTERY_DISCHARGING_DISABLED    0x20
+#define BATTERY_CHARGING_DISABLED       0x40
+
 /* Read from charger */
 int sbc_read(int cmd, int *param);
 
@@ -135,6 +145,10 @@ int sbc_write(int cmd, int param);
 
 /* Read from battery */
 int sb_read(int cmd, int *param);
+
+/* Read sequence from battery */
+int sb_read_string(int port, int slave_addr, int offset, uint8_t *data,
+		   int len);
 
 /* Write to battery */
 int sb_write(int cmd, int param);

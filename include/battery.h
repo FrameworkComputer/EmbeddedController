@@ -49,6 +49,12 @@ enum battery_cutoff_states {
 	BATTERY_CUTOFF_STATE_PENDING,
 };
 
+enum battery_disconnect_state {
+	BATTERY_DISCONNECTED = 0,
+	BATTERY_NOT_DISCONNECTED,
+	BATTERY_DISCONNECT_ERROR,
+};
+
 /* Battery parameters */
 struct batt_params {
 	int temperature;      /* Temperature in 0.1 K */
@@ -319,5 +325,10 @@ int battery_wait_for_stable(void);
  * Print all battery info for debugging purposes
  */
 void print_battery_debug(void);
+
+/**
+ * Get the disconnect state of the battery.
+ */
+enum battery_disconnect_state battery_get_disconnect_state(void);
 
 #endif /* __CROS_EC_BATTERY_H */

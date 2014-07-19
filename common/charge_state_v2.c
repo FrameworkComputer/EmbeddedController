@@ -598,6 +598,22 @@ void charger_task(void)
 					batt_info->precharge_current;
 			} else
 #endif
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+			if (curr.requested_voltage == 0 &&
+			    curr.requested_current == 0 &&
+			    battery_get_disconnect_state() ==
+			    BATTERY_DISCONNECTED) {
+				/*
+				 * Battery is in disconnect state. Apply a
+				 * current to kick it out of this state.
+				 */
+				CPRINTS("found battery in disconnect state");
+				curr.requested_voltage =
+					batt_info->voltage_max;
+				curr.requested_current =
+					batt_info->precharge_current;
+			} else
+#endif
 			if (curr.state == ST_PRECHARGE ||
 			    battery_seems_to_be_dead) {
 				CPRINTS("battery woke up");
