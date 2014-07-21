@@ -124,9 +124,12 @@ static int spi_dma_wait(void)
 {
 	timestamp_t timeout;
 	stm32_spi_regs_t *spi = SPI_REG;
+	int rv = EC_SUCCESS;
 
 	/* Wait for DMA transmission to complete */
-	dma_wait(dma_tx_option.channel);
+	rv = dma_wait(dma_tx_option.channel);
+	if (rv)
+		return rv;
 
 	timeout.val = get_time().val + SPI_TRANSACTION_TIMEOUT_USEC;
 	/* Wait for FIFO empty and BSY bit clear to indicate completion */
@@ -138,7 +141,9 @@ static int spi_dma_wait(void)
 	dma_disable(dma_tx_option.channel);
 
 	/* Wait for DMA reception to complete */
-	dma_wait(dma_rx_option.channel);
+	rv = dma_wait(dma_rx_option.channel);
+	if (rv)
+		return rv;
 
 	timeout.val = get_time().val + SPI_TRANSACTION_TIMEOUT_USEC;
 	/* Wait for FRLVL[1:0] to indicate FIFO empty */
@@ -149,7 +154,7 @@ static int spi_dma_wait(void)
 	/* Disable RX DMA */
 	dma_disable(dma_rx_option.channel);
 
-	return EC_SUCCESS;
+	return rv;
 }
 
 int spi_transaction_async(const uint8_t *txdata, int txlen,
