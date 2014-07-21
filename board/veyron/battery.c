@@ -38,9 +38,9 @@ struct battery_device {
  */
 static struct battery_info info_precharge = {
 
-	.voltage_max    = 12900,  /* the max voltage among batteries */
-	.voltage_normal = 11400,
-	.voltage_min    =  9000,
+	.voltage_max    = 8600,  /* the max voltage among batteries */
+	.voltage_normal = 7600,
+	.voltage_min    =  6000,
 
 	/* Pre-charge values. */
 	.precharge_current  = 256,  /* mA, the min current among batteries */

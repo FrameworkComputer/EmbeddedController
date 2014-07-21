@@ -283,6 +283,7 @@
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
+#undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
 
 /* Support chipset throttling */

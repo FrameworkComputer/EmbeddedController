@@ -8,6 +8,6 @@
 # the IC is STmicro STM32L100RBT6
 CHIP:=stm32
 CHIP_FAMILY:=stm32l
-CHIP_VARIANT:=stm32l100
+CHIP_VARIANT:=stm32l15x
 
 board-y=board.o battery.o led.o
