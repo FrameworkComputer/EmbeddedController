@@ -23,6 +23,48 @@
 
 static enum gpio_signal button_pressed;
 
+enum usbc_action {
+	USBC_ACT_5V_TO_DUT,
+	USBC_ACT_12V_TO_DUT,
+	USBC_ACT_DEVICE,
+	USBC_ACT_USB_EN,
+	USBC_ACT_DP_EN,
+	USBC_ACT_CABLE_FLIP,
+	USBC_ACT_CABLE_POLARITY0,
+	USBC_ACT_CABLE_POLARITY1,
+};
+
+static void set_usbc_action(enum usbc_action act)
+{
+	switch (act) {
+	case USBC_ACT_5V_TO_DUT: /* TODO: Force 5V */
+	case USBC_ACT_12V_TO_DUT:
+		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		break;
+	case USBC_ACT_DEVICE:
+		pd_set_dual_role(PD_DRP_FORCE_SINK);
+		break;
+	case USBC_ACT_USB_EN:
+		gpio_set_level(GPIO_USBC_SS_USB_MODE, 1);
+		break;
+	case USBC_ACT_DP_EN:
+		gpio_set_level(GPIO_USBC_SS_USB_MODE, 0);
+		break;
+	case USBC_ACT_CABLE_FLIP:
+		gpio_set_level(GPIO_USBC_DP_POLARITY,
+				!gpio_get_level(GPIO_USBC_DP_POLARITY));
+		break;
+	case USBC_ACT_CABLE_POLARITY0:
+		gpio_set_level(GPIO_USBC_DP_POLARITY, 0);
+		break;
+	case USBC_ACT_CABLE_POLARITY1:
+		gpio_set_level(GPIO_USBC_DP_POLARITY, 1);
+		break;
+	default:
+		break;
+	}
+}
+
 /* Handle debounced button press */
 static void button_deferred(void)
 {
@@ -36,23 +78,22 @@ static void button_deferred(void)
 
 	switch (button_pressed) {
 	case GPIO_DBG_5V_TO_DUT_L:
+		set_usbc_action(USBC_ACT_5V_TO_DUT);
+		break;
 	case GPIO_DBG_12V_TO_DUT_L:
-		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		set_usbc_action(USBC_ACT_12V_TO_DUT);
 		break;
 	case GPIO_DBG_CHG_TO_DEV_L:
-		pd_set_dual_role(PD_DRP_FORCE_SINK);
+		set_usbc_action(USBC_ACT_DEVICE);
 		break;
-
 	case GPIO_DBG_USB_EN_L:
-		gpio_set_level(GPIO_USBC_SS_USB_MODE, 1);
+		set_usbc_action(USBC_ACT_USB_EN);
 		break;
 	case GPIO_DBG_DP_EN_L:
-		gpio_set_level(GPIO_USBC_SS_USB_MODE, 0);
+		set_usbc_action(USBC_ACT_DP_EN);
 		break;
-
 	case GPIO_DBG_CABLE_FLIP_L:
-		gpio_set_level(GPIO_USBC_DP_POLARITY,
-				!gpio_get_level(GPIO_USBC_DP_POLARITY));
+		set_usbc_action(USBC_ACT_CABLE_FLIP);
 		break;
 	default:
 		break;
@@ -108,3 +149,37 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static int cmd_usbc_action(int argc, char *argv[])
+{
+	enum usbc_action act;
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "5v"))
+		act = USBC_ACT_5V_TO_DUT;
+	else if (!strcasecmp(argv[1], "12v"))
+		act = USBC_ACT_12V_TO_DUT;
+	else if (!strcasecmp(argv[1], "dev"))
+		act = USBC_ACT_DEVICE;
+	else if (!strcasecmp(argv[1], "usb"))
+		act = USBC_ACT_USB_EN;
+	else if (!strcasecmp(argv[1], "dp"))
+		act = USBC_ACT_DP_EN;
+	else if (!strcasecmp(argv[1], "flip"))
+		act = USBC_ACT_CABLE_FLIP;
+	else if (!strcasecmp(argv[1], "pol0"))
+		act = USBC_ACT_CABLE_POLARITY0;
+	else if (!strcasecmp(argv[1], "pol1"))
+		act = USBC_ACT_CABLE_POLARITY1;
+	else
+		return EC_ERROR_PARAM1;
+
+	set_usbc_action(act);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
+			"<5v | 12v | dev | usb | dp | flip | pol0 | pol1>",
+			"Set Plankton type-C port state",
+			NULL);
