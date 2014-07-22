@@ -194,6 +194,12 @@ $(out)/tags: $(out)/cscope.files
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
 	$(call targ_if_prog,ctags,$(out)/tags)
 
+.PHONY: flash
+flash:
+	openocd -c "set BOARD $(BOARD)"\
+		-c "set BUILD_DIR $(out)"\
+		-f board/$(BOARD)/openocd-flash.cfg
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
