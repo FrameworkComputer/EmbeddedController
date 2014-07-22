@@ -50,6 +50,11 @@ servo_usbpd_hard_reset() {
 	dut_control usbpd_reset:on sleep:0.5 usbpd_reset:off
 }
 
+servo_sh_hard_reset() {
+	dut_control sh_reset:on
+	dut_control sh_reset:off
+}
+
 ec_reset() {
 	eval ${SERVO_TYPE}_${MCU}_hard_reset
 }
@@ -65,6 +70,10 @@ servo_ec_boot0() {
 
 servo_usbpd_boot0() {
 	dut_control usbpd_boot_mode:on
+}
+
+servo_sh_boot0() {
+	dut_control sh_boot_mode:on
 }
 
 ec_enable_boot0() {
@@ -127,6 +136,7 @@ function ec_uart() {
 
 # Servo variables management
 case "${BOARD}" in
+	ryu_sh ) MCU="sh" ;;
 	samus_pd ) MCU="usbpd" ;;
 	twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
@@ -285,7 +295,7 @@ save="$(servo_save)"
 
 case "${BOARD}" in
 	big | discovery | nyan | pit | snow | spring | veyron ) flash_stm32 ;;
-	fruitpie | zinger | firefly | samus_pd | ryu ) flash_stm32 ;;
+	fruitpie | zinger | firefly | samus_pd | ryu | ryu_sh) flash_stm32 ;;
 	twinkie) flash_stm32_dfu ;;
 	falco | peppy | rambi | samus | squawks ) flash_lm4 ;;
 	link ) flash_link ;;
