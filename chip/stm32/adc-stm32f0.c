@@ -277,6 +277,13 @@ fail:
 
 static void adc_init(void)
 {
+	/*
+	 * If clock is already enabled, then this is a warm reboot and
+	 * ADC is already initialized.
+	 */
+	if (STM32_RCC_APB2ENR & (1 << 9))
+		return;
+
 	/* Enable ADC clock */
 	STM32_RCC_APB2ENR |= (1 << 9);
 	/* check HSI14 in RCC ? ON by default */
