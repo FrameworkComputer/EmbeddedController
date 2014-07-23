@@ -174,8 +174,8 @@ static const uint8_t dec4b5b[] = {
 #define PD_CAPS_COUNT 50
 
 /* Timers */
-#define PD_T_SEND_SOURCE_CAP (1500*MSEC) /* between 1s and 2s */
-#define PD_T_GET_SOURCE_CAP  (1500*MSEC) /* between 1s and 2s */
+#define PD_T_SEND_SOURCE_CAP  (100*MSEC) /* between 100ms and 200ms */
+#define PD_T_SINK_WAIT_CAP    (240*MSEC) /* between 210ms and 250ms */
 #define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
 #define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
 #define PD_T_PS_TRANSITION    (220*MSEC) /* between 200ms and 220ms */
@@ -886,7 +886,9 @@ void pd_task(void)
 	int res;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
+	uint64_t state_timeout = 0;
 #endif
+
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
 
@@ -1027,7 +1029,8 @@ void pd_task(void)
 			timeout = 10*MSEC;
 
 			/* Source connection monitoring */
-			if (pd_snk_is_vbus_provided(port)) {
+			if (pd_snk_is_vbus_provided(port) &&
+			    pd_power_negotiation_allowed()) {
 				cc1_volt = pd_adc_read(port, 0);
 				cc2_volt = pd_adc_read(port, 1);
 				if ((cc1_volt >= PD_SNK_VA) ||
@@ -1038,6 +1041,8 @@ void pd_task(void)
 							   pd[port].polarity);
 					pd[port].task_state =
 						PD_STATE_SNK_DISCOVERY;
+					state_timeout = get_time().val +
+						PD_T_SINK_WAIT_CAP;
 				}
 			} else if (drp_state == PD_DRP_TOGGLE_ON &&
 				   get_time().val >= next_role_swap) {
@@ -1053,36 +1058,24 @@ void pd_task(void)
 
 			break;
 		case PD_STATE_SNK_DISCOVERY:
-			/* Don't continue if power negotiation is not allowed */
-			if (!pd_power_negotiation_allowed()) {
-				timeout = PD_T_GET_SOURCE_CAP;
-				break;
-			}
-
-			res = send_control(port, PD_CTRL_GET_SOURCE_CAP);
-			/* packet was acked => PD capable device) */
-			if (res >= 0) {
-				/*
-				 * we should a SOURCE_CAP package which will
-				 * switch to the PD_STATE_SNK_REQUESTED state,
-				 * else retry after the response timeout.
-				 */
-				timeout = PD_T_SENDER_RESPONSE;
-			} else { /* failed, retry later */
-				timeout = PD_T_GET_SOURCE_CAP;
-			}
+			/* Wait for source cap expired */
+			if (get_time().val > state_timeout)
+				pd[port].task_state = PD_STATE_HARD_RESET;
+			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_REQUESTED:
 			/* Ensure the power supply actually becomes ready */
 			pd[port].task_state = PD_STATE_SNK_TRANSITION;
-			timeout = PD_T_PS_TRANSITION;
+			state_timeout = get_time().val + PD_T_PS_TRANSITION;
+			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_TRANSITION:
 			/*
 			 * did not get the PS_READY,
 			 * try again to whole request cycle.
 			 */
-			pd[port].task_state = PD_STATE_SNK_DISCOVERY;
+			if (get_time().val > state_timeout)
+				pd[port].task_state = PD_STATE_SNK_DISCOVERY;
 			timeout = 10*MSEC;
 			break;
 		case PD_STATE_SNK_READY:
