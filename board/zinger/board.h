@@ -43,6 +43,7 @@
 /* debug printf flash footprinf is about 1400 bytes */
 #define CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
+#define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
 #ifndef __ASSEMBLER__
 

@@ -12,15 +12,15 @@
 static int debug_txchar(void *context, int c)
 {
 	if (c == '\n') {
-		while (!(STM32_USART_SR(UARTN) & STM32_USART_SR_TXE))
+		while (!(STM32_USART_SR(UARTN_BASE) & STM32_USART_SR_TXE))
 			;
-		STM32_USART_TDR(UARTN) = '\r';
+		STM32_USART_TDR(UARTN_BASE) = '\r';
 	}
 
 	/* Wait for space to transmit */
-	while (!(STM32_USART_SR(UARTN) & STM32_USART_SR_TXE))
+	while (!(STM32_USART_SR(UARTN_BASE) & STM32_USART_SR_TXE))
 		;
-	STM32_USART_TDR(UARTN) = c;
+	STM32_USART_TDR(UARTN_BASE) = c;
 
 	return 0;
 }
