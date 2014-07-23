@@ -25,12 +25,8 @@ static pthread_t input_thread;
 
 #define INPUT_BUFFER_SIZE 16
 static int char_available;
-static char cached_char_buf[INPUT_BUFFER_SIZE];
-static struct queue cached_char = {
-	.buf_bytes  = INPUT_BUFFER_SIZE,
-	.unit_bytes = sizeof(char),
-	.buf        = cached_char_buf,
-};
+
+QUEUE_CONFIG(cached_char, INPUT_BUFFER_SIZE, char);
 
 #define CONSOLE_CAPTURE_SIZE 2048
 static char capture_buf[CONSOLE_CAPTURE_SIZE];
@@ -149,7 +145,7 @@ void uart_inject_char(char *s, int sz)
 
 	for (i = 0; i < sz; i += INPUT_BUFFER_SIZE - 1) {
 		num_char = MIN(INPUT_BUFFER_SIZE - 1, sz - i);
-		if (!queue_has_space(&cached_char, num_char))
+		if (queue_space(&cached_char) < num_char)
 			return;
 		queue_add_units(&cached_char, s + i, num_char);
 		char_available = num_char;
@@ -173,7 +169,7 @@ void *uart_monitor_stdin(void *d)
 	while (1) {
 		tcsetattr(0, TCSANOW, &new_settings);
 		rv = read(0, buf, INPUT_BUFFER_SIZE);
-		if (queue_has_space(&cached_char, rv)) {
+		if (queue_space(&cached_char) >= rv) {
 			queue_add_units(&cached_char, buf, rv);
 			char_available = rv;
 		}

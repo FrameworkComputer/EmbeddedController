@@ -12,142 +12,143 @@
 #include "timer.h"
 #include "util.h"
 
-static char buffer6[6];  /* Max 5 items in queue */
-static struct queue test_queue6 = {
-	.buf_bytes  = sizeof(buffer6),
-	.unit_bytes = sizeof(char),
-	.buf        = buffer6,
-};
+QUEUE_CONFIG(test_queue8, 8, char)
+QUEUE_CONFIG(test_queue2, 2, int16_t)
 
-static char buffer5[5];  /* Max 2 items (2 byte for each) in queue */
-static struct queue test_queue5 = {
-	.buf_bytes  = sizeof(buffer5),
-	.unit_bytes = 2,
-	.buf        = buffer5,
-};
-
-#define LOOP_DEQUE(q, d, n) \
-	do { \
-		int i; \
-		for (i = 0; i < n; ++i) \
-			TEST_ASSERT(queue_remove_unit(&q, d + i)); \
-	} while (0)
-
-static int test_queue6_empty(void)
+static int test_queue8_empty(void)
 {
 	char dummy = 1;
 
-	queue_reset(&test_queue6);
-	TEST_ASSERT(queue_is_empty(&test_queue6));
-	TEST_ASSERT(!queue_remove_unit(&test_queue6, &dummy));
-	queue_add_units(&test_queue6, &dummy, 1);
-	TEST_ASSERT(!queue_is_empty(&test_queue6));
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_is_empty(&test_queue8));
+	TEST_ASSERT(!queue_remove_units(&test_queue8, &dummy, 1));
+	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
+	TEST_ASSERT(!queue_is_empty(&test_queue8));
 
 	return EC_SUCCESS;
 }
 
-static int test_queue6_reset(void)
+static int test_queue8_init(void)
 {
 	char dummy = 1;
 
-	queue_reset(&test_queue6);
-	queue_add_units(&test_queue6, &dummy, 1);
-	queue_reset(&test_queue6);
-	TEST_ASSERT(queue_is_empty(&test_queue6));
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_is_empty(&test_queue8));
 
 	return EC_SUCCESS;
 }
 
-static int test_queue6_fifo(void)
+static int test_queue8_fifo(void)
 {
 	char buf1[3] = {1, 2, 3};
 	char buf2[3];
 
-	queue_reset(&test_queue6);
+	queue_init(&test_queue8);
 
-	queue_add_units(&test_queue6, buf1 + 0, 1);
-	queue_add_units(&test_queue6, buf1 + 1, 1);
-	queue_add_units(&test_queue6, buf1 + 2, 1);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 0, 1) == 1);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 1, 1) == 1);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 2, 1) == 1);
 
-	LOOP_DEQUE(test_queue6, buf2, 3);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 3) == 3);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 3);
 
 	return EC_SUCCESS;
 }
 
-static int test_queue6_multiple_units_add(void)
+static int test_queue8_multiple_units_add(void)
 {
 	char buf1[5] = {1, 2, 3, 4, 5};
 	char buf2[5];
 
-	queue_reset(&test_queue6);
-	TEST_ASSERT(queue_has_space(&test_queue6, 5));
-	queue_add_units(&test_queue6, buf1, 5);
-	LOOP_DEQUE(test_queue6, buf2, 5);
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_space(&test_queue8) >= 5);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 5) == 5);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 5);
 
 	return EC_SUCCESS;
 }
 
-static int test_queue6_removal(void)
+static int test_queue8_removal(void)
 {
 	char buf1[5] = {1, 2, 3, 4, 5};
 	char buf2[5];
 
-	queue_reset(&test_queue6);
-	queue_add_units(&test_queue6, buf1, 5);
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
 	/* 1, 2, 3, 4, 5 */
-	LOOP_DEQUE(test_queue6, buf2, 3);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 3) == 3);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 3);
 	/* 4, 5 */
-	queue_add_units(&test_queue6, buf1, 2);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 2) == 2);
 	/* 4, 5, 1, 2 */
-	TEST_ASSERT(queue_has_space(&test_queue6, 1));
-	TEST_ASSERT(!queue_has_space(&test_queue6, 2));
-	LOOP_DEQUE(test_queue6, buf2, 1);
+	TEST_ASSERT(queue_space(&test_queue8) == 4);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 1) == 1);
 	TEST_ASSERT(buf2[0] == 4);
 	/* 5, 1, 2 */
-	queue_add_units(&test_queue6, buf1 + 2, 2);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 2, 2) == 2);
 	/* 5, 1, 2, 3, 4 */
-	TEST_ASSERT(!queue_has_space(&test_queue6, 1));
-	LOOP_DEQUE(test_queue6, buf2, 1);
+	TEST_ASSERT(queue_space(&test_queue8) == 3);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 2, 3) == 3);
+	/* 5, 1, 2, 3, 4, 3, 4, 5 */
+	TEST_ASSERT(queue_space(&test_queue8) == 0);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 1) == 1);
 	TEST_ASSERT(buf2[0] == 5);
-	LOOP_DEQUE(test_queue6, buf2, 4);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 4) == 4);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 4);
-	TEST_ASSERT(queue_is_empty(&test_queue6));
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 3) == 3);
+	TEST_ASSERT_ARRAY_EQ(buf1 + 2, buf2, 3);
+	TEST_ASSERT(queue_is_empty(&test_queue8));
 	/* Empty */
-	queue_add_units(&test_queue6, buf1, 5);
-	LOOP_DEQUE(test_queue6, buf2, 5);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
+	TEST_ASSERT(queue_remove_units(&test_queue8, buf2, 5) == 5);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 5);
 
 	return EC_SUCCESS;
 }
 
-static int test_queue5_odd_even(void)
+static int test_queue8_peek(void)
+{
+	char buf1[5] = {1, 2, 3, 4, 5};
+	char buf2[5];
+
+	queue_init(&test_queue8);
+	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
+	/* 1, 2, 3, 4, 5 */
+	TEST_ASSERT(queue_count(&test_queue8) == 5);
+	TEST_ASSERT(queue_space(&test_queue8) == 3);
+	TEST_ASSERT(queue_peek_units(&test_queue8, buf2, 2, 3) == 3);
+	TEST_ASSERT_ARRAY_EQ(buf1 + 2, buf2, 3);
+	TEST_ASSERT(queue_count(&test_queue8) == 5);
+	TEST_ASSERT(queue_space(&test_queue8) == 3);
+
+	return EC_SUCCESS;
+}
+
+static int test_queue2_odd_even(void)
 {
 	uint16_t buf1[3] = {1, 2, 3};
 	uint16_t buf2[3];
 
-	queue_reset(&test_queue5);
-	queue_add_units(&test_queue5, buf1, 1);
+	queue_init(&test_queue2);
+	TEST_ASSERT(queue_add_units(&test_queue2, buf1, 1) == 1);
 	/* 1 */
-	TEST_ASSERT(!queue_has_space(&test_queue5, 2));
-	TEST_ASSERT(queue_has_space(&test_queue5, 1));
-	queue_add_units(&test_queue5, buf1 + 1, 1);
+	TEST_ASSERT(queue_space(&test_queue2) == 1);
+	TEST_ASSERT(queue_add_units(&test_queue2, buf1 + 1, 1) == 1);
 	/* 1, 2 */
-	TEST_ASSERT(!queue_has_space(&test_queue5, 1));
-	LOOP_DEQUE(test_queue5, buf2, 2);
+	TEST_ASSERT(queue_space(&test_queue2) == 0);
+	TEST_ASSERT(queue_remove_units(&test_queue2, buf2, 2) == 2);
 	TEST_ASSERT_ARRAY_EQ(buf1, buf2, 2);
-	TEST_ASSERT(queue_is_empty(&test_queue5));
+	TEST_ASSERT(queue_is_empty(&test_queue2));
 	/* Empty */
-	TEST_ASSERT(!queue_has_space(&test_queue5, 3));
-	TEST_ASSERT(queue_has_space(&test_queue5, 2));
-	TEST_ASSERT(queue_has_space(&test_queue5, 1));
-	queue_add_units(&test_queue5, buf1 + 2, 1);
+	TEST_ASSERT(queue_space(&test_queue2) == 2);
+	TEST_ASSERT(queue_add_units(&test_queue2, buf1 + 2, 1) == 1);
 	/* 3 */
-	LOOP_DEQUE(test_queue5, buf2, 1);
+	TEST_ASSERT(queue_remove_units(&test_queue2, buf2, 1) == 1);
 	TEST_ASSERT(buf2[0] == 3);
-	TEST_ASSERT(queue_is_empty(&test_queue5));
+	TEST_ASSERT(queue_is_empty(&test_queue2));
 
 	return EC_SUCCESS;
 }
@@ -156,12 +157,13 @@ void run_test(void)
 {
 	test_reset();
 
-	RUN_TEST(test_queue6_empty);
-	RUN_TEST(test_queue6_reset);
-	RUN_TEST(test_queue6_fifo);
-	RUN_TEST(test_queue6_multiple_units_add);
-	RUN_TEST(test_queue6_removal);
-	RUN_TEST(test_queue5_odd_even);
+	RUN_TEST(test_queue8_empty);
+	RUN_TEST(test_queue8_init);
+	RUN_TEST(test_queue8_fifo);
+	RUN_TEST(test_queue8_multiple_units_add);
+	RUN_TEST(test_queue8_removal);
+	RUN_TEST(test_queue8_peek);
+	RUN_TEST(test_queue2_odd_even);
 
 	test_print_result();
 }

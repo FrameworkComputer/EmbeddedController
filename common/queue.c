@@ -7,51 +7,125 @@
 #include "queue.h"
 #include "util.h"
 
-void queue_reset(struct queue *queue)
+void queue_init(struct queue const *q)
 {
-	queue->head = queue->tail = 0;
+	ASSERT(POWER_OF_TWO(q->buffer_units));
+
+	q->state->head = 0;
+	q->state->tail = 0;
 }
 
-int queue_is_empty(const struct queue *q)
+int queue_is_empty(struct queue const *q)
 {
-	return q->head == q->tail;
+	return q->state->head == q->state->tail;
 }
 
-int queue_has_space(const struct queue *q, int unit_count)
+size_t queue_count(struct queue const *q)
 {
-	if (q->tail >= q->head)
-		return (q->tail + unit_count * q->unit_bytes) <=
-		       (q->head + q->buf_bytes - 1);
-	else
-		return (q->tail + unit_count * q->unit_bytes) <=
-		       (q->head - 1);
+	return q->state->tail - q->state->head;
 }
 
-void queue_add_units(struct queue *q, const void *src, int unit_count)
+size_t queue_space(struct queue const *q)
 {
-	const uint8_t *s = (const uint8_t *)src;
-
-	if (!queue_has_space(q, unit_count))
-		return;
-
-	for (unit_count *= q->unit_bytes; unit_count; unit_count--) {
-		q->buf[q->tail++] = *(s++);
-		q->tail %= q->buf_bytes;
-	}
+	return q->buffer_units - queue_count(q);
 }
 
-int queue_remove_unit(struct queue *q, void *dest)
+size_t queue_add_unit(struct queue const *q, void const *src)
 {
-	int count;
-	uint8_t *d = (uint8_t *)dest;
+	size_t tail = q->state->tail & (q->buffer_units - 1);
 
-	if (queue_is_empty(q))
+	if (queue_space(q) == 0)
 		return 0;
 
-	for (count = q->unit_bytes; count; count--) {
-		*(d++) = q->buf[q->head++];
-		q->head %= q->buf_bytes;
-	}
+	if (q->unit_bytes == 1)
+		q->buffer[tail] = *((uint8_t *) src);
+	else
+		memcpy(q->buffer + tail * q->unit_bytes, src, q->unit_bytes);
+
+	q->state->tail += 1;
 
 	return 1;
+}
+
+size_t queue_add_units(struct queue const *q, void const *src, size_t count)
+{
+	size_t transfer = MIN(count, queue_space(q));
+	size_t tail     = q->state->tail & (q->buffer_units - 1);
+	size_t first    = MIN(transfer, q->buffer_units - tail);
+
+	memcpy(q->buffer + tail * q->unit_bytes,
+	       src,
+	       first * q->unit_bytes);
+
+	if (first < transfer)
+		memcpy(q->buffer,
+		       ((uint8_t const *) src) + first * q->unit_bytes,
+		       (transfer - first) * q->unit_bytes);
+
+	q->state->tail += transfer;
+
+	return transfer;
+}
+
+static void queue_read_safe(struct queue const *q,
+			    void *dest,
+			    size_t head,
+			    size_t transfer)
+{
+	size_t first = MIN(transfer, q->buffer_units - head);
+
+	memcpy(dest,
+	       q->buffer + head * q->unit_bytes,
+	       first * q->unit_bytes);
+
+	if (first < transfer)
+		memcpy(((uint8_t *) dest) + first * q->unit_bytes,
+		       q->buffer,
+		       (transfer - first) * q->unit_bytes);
+}
+
+size_t queue_remove_unit(struct queue const *q, void *dest)
+{
+	size_t head = q->state->head & (q->buffer_units - 1);
+
+	if (queue_count(q) == 0)
+		return 0;
+
+	if (q->unit_bytes == 1)
+		*((uint8_t *) dest) = q->buffer[head];
+	else
+		memcpy(dest, q->buffer + head * q->unit_bytes, q->unit_bytes);
+
+	q->state->head += 1;
+
+	return 1;
+}
+
+size_t queue_remove_units(struct queue const *q, void *dest, size_t count)
+{
+	size_t transfer = MIN(count, queue_count(q));
+	size_t head     = q->state->head & (q->buffer_units - 1);
+
+	queue_read_safe(q, dest, head, transfer);
+
+	q->state->head += transfer;
+
+	return transfer;
+}
+
+size_t queue_peek_units(struct queue const *q,
+			void *dest,
+			size_t i,
+			size_t count)
+{
+	size_t available = queue_count(q);
+	size_t transfer  = MIN(count, available - i);
+
+	if (i < available) {
+		size_t head = (q->state->head + i) & (q->buffer_units - 1);
+
+		queue_read_safe(q, dest, head, transfer);
+	}
+
+	return transfer;
 }

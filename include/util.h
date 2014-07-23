@@ -56,6 +56,9 @@
 #define NULL ((void *)0)
 #endif
 
+/* True of x is a power of two */
+#define POWER_OF_TWO(x) (x && !(x & (x - 1)))
+
 /**
  * macros for integer division with various rounding variants
  * default integer division rounds down.

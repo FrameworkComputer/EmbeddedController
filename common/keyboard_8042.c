@@ -68,12 +68,7 @@ enum scancode_set_list {
  */
 static struct mutex to_host_mutex;
 
-static uint8_t to_host_buffer[16];
-static struct queue to_host = {
-	.buf_bytes  = sizeof(to_host_buffer),
-	.unit_bytes = sizeof(uint8_t),
-	.buf        = to_host_buffer,
-};
+QUEUE_CONFIG(to_host, 16, uint8_t);
 
 /* Queue command/data from the host */
 enum {
@@ -96,12 +91,7 @@ struct host_byte {
  *
  * Hence, 5 (actually 4 plus one spare) is large enough, but use 8 for safety.
  */
-static uint8_t from_host_buffer[8 * sizeof(struct host_byte)];
-static struct queue from_host = {
-	.buf_bytes  = sizeof(from_host_buffer),
-	.unit_bytes = sizeof(struct host_byte),
-	.buf        = from_host_buffer,
-};
+QUEUE_CONFIG(from_host, 8, struct host_byte);
 
 static int i8042_irq_enabled;
 
@@ -235,6 +225,11 @@ struct kblog_t {
 	 *
 	 * k = to-host queue head pointer before byte dequeued
 	 * K = byte actually sent to host via LPC
+	 *
+	 * The to-host head and tail pointers are logged pre-wrapping to the
+	 * queue size.  This means that they continually increment as units
+	 * are dequeued and enqueued respectively.  Since only the bottom
+	 * byte of the value is logged they will wrap every 256 units.
 	 */
 	uint8_t type;
 	uint8_t byte;
@@ -263,7 +258,7 @@ void keyboard_host_write(int data, int is_cmd)
 
 	h.type = is_cmd ? HOST_COMMAND : HOST_DATA;
 	h.byte = data;
-	queue_add_units(&from_host, &h, 1);
+	queue_add_unit(&from_host, &h);
 	task_wake(TASK_ID_KEYPROTO);
 }
 
@@ -300,8 +295,8 @@ static void i8042_send_to_host(int len, const uint8_t *bytes)
 
 	/* Enqueue output data if there's space */
 	mutex_lock(&to_host_mutex);
-	if (queue_has_space(&to_host, len)) {
-		kblog_put('t', to_host.tail);
+	if (queue_space(&to_host) >= len) {
+		kblog_put('t', to_host.state->tail);
 		queue_add_units(&to_host, bytes, len);
 	}
 	mutex_unlock(&to_host_mutex);
@@ -433,7 +428,7 @@ static void reset_rate_and_delay(void)
 void keyboard_clear_buffer(void)
 {
 	mutex_lock(&to_host_mutex);
-	queue_reset(&to_host);
+	queue_init(&to_host);
 	mutex_unlock(&to_host_mutex);
 	lpc_keyboard_clear_buffer();
 }
@@ -962,7 +957,7 @@ void keyboard_protocol_task(void)
 			}
 
 			/* Get a char from buffer. */
-			kblog_put('k', to_host.head);
+			kblog_put('k', to_host.state->head);
 			queue_remove_unit(&to_host, &chr);
 			kblog_put('K', chr);
 
@@ -1186,17 +1181,24 @@ static int command_8042_internal(int argc, char **argv)
 	ccprintf("controller_ram_address=0x%02x\n", controller_ram_address);
 	ccprintf("A20_status=%d\n", A20_status);
 
-	ccprintf("from_host.buf[]={");
-	for (i = from_host.head; i != from_host.tail;
-			i = (i + 1) % from_host.buf_bytes)
-		ccprintf("0x%02x, ", from_host.buf[i]);
+	ccprintf("from_host[]={");
+	for (i = 0; i < queue_count(&from_host); ++i) {
+		struct host_byte entry;
+
+		queue_peek_units(&from_host, &entry, i, 1);
+
+		ccprintf("0x%02x, 0x%02x, ", entry.type, entry.byte);
+	}
 	ccprintf("}\n");
 
-	ccprintf("to_host.buf[]={");
-	for (i = to_host.head;
-			i != to_host.tail;
-			i = (i + 1) % to_host.buf_bytes)
-		ccprintf("0x%02x, ", to_host.buf[i]);
+	ccprintf("to_host[]={");
+	for (i = 0; i < queue_count(&to_host); ++i) {
+		uint8_t entry;
+
+		queue_peek_units(&to_host, &entry, i, 1);
+
+		ccprintf("0x%02x, ", entry);
+	}
 	ccprintf("}\n");
 
 	return EC_SUCCESS;
