@@ -20,6 +20,7 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_DYNAMIC_SRC_CAP
 #define CONFIG_ADC
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
@@ -50,6 +51,14 @@ enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
+
+enum board_src_cap {
+	SRC_CAP_5V = 0,
+	SRC_CAP_12V,
+};
+
+/* Set USB PD source capability */
+void board_set_source_cap(enum board_src_cap cap);
 
 #endif /* !__ASSEMBLER__ */
 

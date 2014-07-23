@@ -231,6 +231,14 @@ extern const int pd_src_pdo_cnt;
 extern const uint32_t pd_snk_pdo[];
 extern const int pd_snk_pdo_cnt;
 
+/*
+ * Get PD source power data objects.
+ *
+ * @param src_pdo pointer to the data to return.
+ * @return number of PDOs returned.
+ */
+int pd_get_source_pdo(const uint32_t **src_pdo);
+
 /* Muxing for the USB type C */
 enum typec_mux {
 	TYPEC_MUX_NONE,

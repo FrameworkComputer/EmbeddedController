@@ -37,8 +37,12 @@ enum usbc_action {
 static void set_usbc_action(enum usbc_action act)
 {
 	switch (act) {
-	case USBC_ACT_5V_TO_DUT: /* TODO: Force 5V */
+	case USBC_ACT_5V_TO_DUT:
+		board_set_source_cap(SRC_CAP_5V);
+		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		break;
 	case USBC_ACT_12V_TO_DUT:
+		board_set_source_cap(SRC_CAP_12V);
 		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
 		break;
 	case USBC_ACT_DEVICE:

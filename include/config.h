@@ -909,6 +909,9 @@
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
 
+/* Dynamic USB PD source capability */
+#undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
+
 /*****************************************************************************/
 
 /* Support simple control of power to the device's USB ports */

@@ -20,12 +20,17 @@
 /* Acceptable margin between requested VBUS and measured value */
 #define MARGIN_MV 400 /* mV */
 
-/* we are not acting as a source */
+/* Source PDOs */
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL),
 };
-const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+static const int pd_src_pdo_cnts[2] = {
+		[SRC_CAP_5V] = 1,
+		[SRC_CAP_12V] = 2,
+};
+
+static int pd_src_pdo_idx;
 
 /* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
@@ -37,6 +42,17 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 /* Desired voltage requested as a sink (in millivolts) */
 static unsigned select_mv = 5000;
+
+void board_set_source_cap(enum board_src_cap cap)
+{
+	pd_src_pdo_idx = cap;
+}
+
+int pd_get_source_pdo(const uint32_t **src_pdo)
+{
+	*src_pdo = pd_src_pdo;
+	return pd_src_pdo_cnts[pd_src_pdo_idx];
+}
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
@@ -79,7 +95,7 @@ int pd_request_voltage(uint32_t rdo)
 	uint32_t pdo;
 	uint32_t pdo_ma;
 
-	if (!idx || idx > pd_src_pdo_cnt)
+	if (!idx || idx > pd_src_pdo_cnts[pd_src_pdo_idx])
 		return EC_ERROR_INVAL; /* Invalid index */
 
 	/* check current ... */

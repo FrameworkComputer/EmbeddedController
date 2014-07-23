@@ -386,11 +386,17 @@ static void send_goodcrc(int port, int id)
 static int send_source_cap(int port)
 {
 	int bit_len;
+#ifdef CONFIG_USB_PD_DYNAMIC_SRC_CAP
+	const uint32_t *src_pdo;
+	const int src_pdo_cnt = pd_get_source_pdo(&src_pdo);
+#else
+	const uint32_t *src_pdo = pd_src_pdo;
+	const int src_pdo_cnt = pd_src_pdo_cnt;
+#endif
 	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].role,
-			pd[port].msg_id, pd_src_pdo_cnt);
+			pd[port].msg_id, src_pdo_cnt);
 
-	bit_len = send_validate_message(port, header, pd_src_pdo_cnt,
-					pd_src_pdo);
+	bit_len = send_validate_message(port, header, src_pdo_cnt, src_pdo);
 	CPRINTF("srcCAP>%d\n", bit_len);
 
 	return bit_len;
