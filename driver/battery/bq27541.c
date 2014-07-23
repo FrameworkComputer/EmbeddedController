@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "console.h"
+#include "extpower.h"
 #include "i2c.h"
 #include "util.h"
 
@@ -39,6 +40,7 @@
 #define REG_DEVICE_NAME_LENGTH      0x62
 #define MAX_DEVICE_NAME_LENGTH      7
 #define REG_DEVICE_NAME             0x63
+#define REG_PROTECTOR               0x6d
 
 static int bq27541_read(int offset, int *data)
 {
@@ -220,3 +222,50 @@ void battery_get_params(struct batt_params *batt)
 		batt->desired_current = 99999;
 	}
 }
+
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+/*
+ * Check if battery is in disconnect state, a state entered by pulling
+ * BATT_DISCONN_N low, and clear that state if we have external power plugged
+ * and no battery faults are detected. Disconnect state resembles battery
+ * shutdown mode, but extra steps must be taken to get the battery out of this
+ * mode.
+ */
+enum battery_disconnect_state battery_get_disconnect_state(void)
+{
+	int val, rv;
+	/*
+	 * Take note if we find that the battery isn't in disconnect state,
+	 * and always return NOT_DISCONNECTED without probing the battery.
+	 * This assumes the battery will not go to disconnect state during
+	 * runtime.
+	 */
+	static int not_disconnected;
+
+	if (not_disconnected)
+		return BATTERY_NOT_DISCONNECTED;
+
+	if (extpower_is_present()) {
+		/* Check DSG_OFF bit */
+		rv = bq27541_read(REG_PROTECTOR, &val);
+		if (rv)
+			return BATTERY_DISCONNECT_ERROR;
+		if (!(val & (1 << 6))) {
+			not_disconnected = 1;
+			return BATTERY_NOT_DISCONNECTED;
+		}
+
+		/* DSG_OFF is set. Verify this is not due to a safety fault */
+		if (val & 0x3f)
+			return BATTERY_DISCONNECT_ERROR;
+		rv = bq27541_read(REG_FLAGS, &val);
+		if (rv)
+			return BATTERY_DISCONNECT_ERROR;
+		if (val & 0xfc60)
+			return BATTERY_DISCONNECT_ERROR;
+		return BATTERY_DISCONNECTED;
+	}
+	not_disconnected = 1;
+	return BATTERY_NOT_DISCONNECTED;
+}
+#endif /* CONFIG_BATTERY_REVIVE_DISCONNECT */
