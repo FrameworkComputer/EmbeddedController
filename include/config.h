@@ -912,6 +912,19 @@
 #undef CONFIG_STREAM
 
 /*****************************************************************************/
+/* USART stream config */
+#undef CONFIG_STREAM_USART
+
+/*
+ * Each USART stream can be individually enabled and accessible using the
+ * stream interface provided in the usart_config struct.
+ */
+#undef CONFIG_STREAM_USART1
+#undef CONFIG_STREAM_USART2
+#undef CONFIG_STREAM_USART3
+#undef CONFIG_STREAM_USART4
+
+/*****************************************************************************/
 /* UART config */
 
 /* Baud rate for UARTs */

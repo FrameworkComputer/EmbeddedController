@@ -56,6 +56,14 @@
 #define NULL ((void *)0)
 #endif
 
+/*
+ * Convert a pointer to a base struct into a pointer to the struct that
+ * contains the base struct.  This requires knowing where in the contained
+ * struct the base struct resides, this is the member parameter to downcast.
+ */
+#define DOWNCAST(pointer, type, member)					\
+	((type *)(((uint8_t *) pointer) - offsetof(type, member)))
+
 /* True of x is a power of two */
 #define POWER_OF_TWO(x) (x && !(x & (x - 1)))
 
