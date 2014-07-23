@@ -362,7 +362,8 @@ static void power_on(void)
 	uint64_t t;
 
 	/* enable interrupt */
-	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT |	GPIO_INT_BOTH);
+	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT | GPIO_INT_BOTH
+			| GPIO_PULL_DOWN);
 	/* Make sure we de-assert the PMI_SOURCE and AP_RESET_L pin. */
 	set_pmic_source(1);
 	set_ap_reset(0);
