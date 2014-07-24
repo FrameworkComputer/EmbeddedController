@@ -177,6 +177,9 @@ const char help_str[] =
 	"      Set USB charging mode\n"
 	"  usbmux <mux>\n"
 	"      Set USB mux switch state\n"
+	"  usbpd <port> <auto | "
+			"[toggle|toggle-off|sink|source] [none|usb|dp|dock]>\n"
+	"      Control USB PD/type-C\n"
 	"  version\n"
 	"      Prints EC version\n"
 	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
@@ -2413,6 +2416,81 @@ int cmd_usb_mux(int argc, char *argv[])
 }
 
 
+int cmd_usb_pd(int argc, char *argv[])
+{
+	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source"};
+	const char *mux_str[] = {"", "none", "usb", "dp", "dock"};
+	struct ec_params_usb_pd_control p;
+	int rv, i, j;
+	int option_ok;
+	char *e;
+
+	p.role = USB_PD_CTRL_ROLE_NO_CHANGE;
+	p.mux = USB_PD_CTRL_MUX_NO_CHANGE;
+
+	if (argc <= 2) {
+		fprintf(stderr, "No option specified.\n");
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Invalid param (port)\n");
+		return -1;
+	}
+
+	for (i = 2; i < argc; ++i) {
+		option_ok = 0;
+		if (!strcmp(argv[i], "auto")) {
+			if (argc != 3) {
+				fprintf(stderr, "\"auto\" may not be used "
+						"with other options.\n");
+				return -1;
+			}
+			p.role = USB_PD_CTRL_ROLE_TOGGLE_ON;
+			p.mux = USB_PD_CTRL_MUX_AUTO;
+			continue;
+		}
+
+		for (j = 0; j < ARRAY_SIZE(role_str); ++j) {
+			if (!strcmp(argv[i], role_str[j])) {
+				if (p.role != USB_PD_CTRL_ROLE_NO_CHANGE) {
+					fprintf(stderr,
+						"Only one role allowed.\n");
+					return -1;
+				}
+				p.role = j;
+				option_ok = 1;
+				break;
+			}
+		}
+		if (option_ok)
+			continue;
+
+		for (j = 0; j < ARRAY_SIZE(mux_str); ++j) {
+			if (!strcmp(argv[i], mux_str[j])) {
+				if (p.mux != USB_PD_CTRL_MUX_NO_CHANGE) {
+					fprintf(stderr,
+						"Only one mux type allowed.\n");
+					return -1;
+				}
+				p.mux = j;
+				option_ok = 1;
+				break;
+			}
+		}
+
+		if (!option_ok) {
+			fprintf(stderr, "Unknown option: %s\n", argv[i]);
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_USB_PD_CONTROL, 0, &p, sizeof(p), NULL, 0);
+	return (rv < 0 ? rv : 0);
+}
+
+
 int cmd_kbpress(int argc, char *argv[])
 {
 	struct ec_params_mkbp_simulate_key p;
@@ -4533,6 +4611,7 @@ const struct command commands[] = {
 	{"tmp006raw", cmd_tmp006raw},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},
+	{"usbpd", cmd_usb_pd},
 	{"version", cmd_version},
 	{"wireless", cmd_wireless},
 	{NULL, NULL}

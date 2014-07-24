@@ -8,8 +8,10 @@
 #include "common.h"
 #include "console.h"
 #include "crc.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -1332,5 +1334,60 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			"Control type-C connector muxing",
 			NULL);
 #endif /* CONFIG_USBC_SS_MUX */
+
+static int hc_usb_pd_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_control *p = args->params;
+
+	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE) {
+		enum pd_dual_role_states role;
+		switch (p->role) {
+		case USB_PD_CTRL_ROLE_TOGGLE_ON:
+			role = PD_DRP_TOGGLE_ON;
+			break;
+		case USB_PD_CTRL_ROLE_TOGGLE_OFF:
+			role = PD_DRP_TOGGLE_OFF;
+			break;
+		case USB_PD_CTRL_ROLE_FORCE_SINK:
+			role = PD_DRP_FORCE_SINK;
+			break;
+		case USB_PD_CTRL_ROLE_FORCE_SOURCE:
+			role = PD_DRP_FORCE_SOURCE;
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
+		pd_set_dual_role(role);
+	}
+
+#ifdef CONFIG_USBC_SS_MUX
+	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE) {
+		enum typec_mux mux;
+		switch (p->mux) {
+		case USB_PD_CTRL_MUX_NONE:
+			mux = TYPEC_MUX_NONE;
+			break;
+		case USB_PD_CTRL_MUX_USB:
+			mux = TYPEC_MUX_USB;
+			break;
+		case USB_PD_CTRL_MUX_AUTO:
+		case USB_PD_CTRL_MUX_DP:
+			mux = TYPEC_MUX_DP;
+			break;
+		case USB_PD_CTRL_MUX_DOCK:
+			mux = TYPEC_MUX_DOCK;
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
+		board_set_usb_mux(p->port, mux, pd_get_polarity(p->port));
+	}
+#endif /* CONFIG_USBC_SS_MUX */
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
+		     hc_usb_pd_control,
+		     EC_VER_MASK(0));
 
 #endif /* CONFIG_COMMON_RUNTIME */

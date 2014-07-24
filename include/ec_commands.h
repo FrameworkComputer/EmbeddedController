@@ -2500,6 +2500,32 @@ struct ec_response_pd_status {
 	int8_t status; /* currently empty */
 } __packed;
 
+/* Set USB type-C port role and muxes */
+#define EC_CMD_USB_PD_CONTROL 0x101
+
+enum usb_pd_control_role {
+	USB_PD_CTRL_ROLE_NO_CHANGE = 0,
+	USB_PD_CTRL_ROLE_TOGGLE_ON = 1, /* == AUTO */
+	USB_PD_CTRL_ROLE_TOGGLE_OFF = 2,
+	USB_PD_CTRL_ROLE_FORCE_SINK = 3,
+	USB_PD_CTRL_ROLE_FORCE_SOURCE = 4,
+};
+
+enum usb_pd_control_mux {
+	USB_PD_CTRL_MUX_NO_CHANGE = 0,
+	USB_PD_CTRL_MUX_NONE = 1,
+	USB_PD_CTRL_MUX_USB = 2,
+	USB_PD_CTRL_MUX_DP = 3,
+	USB_PD_CTRL_MUX_DOCK = 4,
+	USB_PD_CTRL_MUX_AUTO = 5,
+};
+
+struct ec_params_usb_pd_control {
+	uint8_t port;
+	uint8_t role;
+	uint8_t mux;
+} __packed;
+
 /*****************************************************************************/
 /*
  * Passthru commands
