@@ -65,7 +65,7 @@ static void power_init(void)
 static void pins_init(void)
 {
 	/* Pin usage:
-	 * PA0  (OUT - OD GPIO)    : Wakeup on Vnc / Threshold
+	 * PA0  (OUT - GPIO)       : Wakeup on Vnc / Threshold
 	 * PA1  (ANALOG - ADC_IN1) : CC sense
 	 * PA2  (ANALOG - ADC_IN2) : Current sense
 	 * PA3  (ANALOG - ADC_IN3) : Voltage sense
@@ -81,10 +81,10 @@ static void pins_init(void)
 	 * PF0  (OUT - GPIO)       : LM5050 FET driver off
 	 * PF1  (OUT - GPIO)       : discharge FET
 	 */
-	STM32_GPIO_ODR(GPIO_A) = /* HIGH(0) | */ HIGH(4);
+	STM32_GPIO_ODR(GPIO_A) = HIGH(0) | HIGH(4);
 	STM32_GPIO_AFRL(GPIO_A) = AFx(7, 1);
 	STM32_GPIO_AFRH(GPIO_A) = AFx(9, 1) | AFx(10, 1);
-	STM32_GPIO_OTYPER(GPIO_A) = ODR(0) | ODR(4);
+	STM32_GPIO_OTYPER(GPIO_A) = ODR(4);
 	STM32_GPIO_OSPEEDR(GPIO_A) = HISPEED(5) | HISPEED(6) | HISPEED(7);
 	STM32_GPIO_MODER(GPIO_A) = OUT(0) | ANALOG(1) | ANALOG(2) | ANALOG(3)
 				 | OUT(4) | AF(5) /*| AF(6)*/ | AF(7) | AF(9)
