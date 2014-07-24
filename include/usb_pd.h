@@ -257,6 +257,16 @@ enum typec_mux {
  */
 void board_set_usb_mux(int port, enum typec_mux mux, int polarity);
 
+/*
+ * Query superspeed mux status on type-C port.
+ *
+ * @param port port number.
+ * @param dp_str pointer to the DP string to return.
+ * @param usb_str pointer to the USB string to return.
+ * @return Non-zero if superspeed connection is enabled; otherwise, zero.
+ */
+int board_get_usb_mux(int port, const char **dp_str, const char **usb_str);
+
 /* --- Physical layer functions : chip specific --- */
 
 /* Packet preparation/retrieval */

@@ -183,44 +183,23 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_SS2_EN_L, 0);
 }
 
-static int command_typec(int argc, char **argv)
+int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 {
-	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
-	enum typec_mux mux = TYPEC_MUX_NONE;
-	int i;
+	int has_ss = !gpio_get_level(GPIO_SS1_EN_L);
+	int has_usb = !gpio_get_level(GPIO_SS1_USB_MODE_L) ||
+		      !gpio_get_level(GPIO_SS2_USB_MODE_L);
+	int has_dp = !!gpio_get_level(GPIO_DP_MODE);
 
-	if (argc < 2) {
-		int has_ss = !gpio_get_level(GPIO_SS1_EN_L);
-		int has_usb = !gpio_get_level(GPIO_SS1_USB_MODE_L)
-			   || !gpio_get_level(GPIO_SS2_USB_MODE_L);
-		int has_dp = !!gpio_get_level(GPIO_DP_MODE);
-		const char *dp_str = gpio_get_level(GPIO_DP_POLARITY_L) ?
-					"DP1" : "DP2";
-		const char *usb_str = gpio_get_level(GPIO_SS1_USB_MODE_L) ?
-					"USB2" : "USB1";
-		/* dump current state */
-		ccprintf("CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
-			adc_read_channel(ADC_CH_CC1_PD),
-			adc_read_channel(ADC_CH_CC2_PD),
-			pd_get_polarity(0) + 1);
-		if (has_ss)
-			ccprintf("Superspeed %s%s%s\n",
-				 has_dp ? dp_str : "",
-				 has_dp && has_usb ? "+" : "",
-				 has_usb ? usb_str : "");
-		else
-			ccprintf("No Superspeed connection\n");
+	if (has_dp)
+		*dp_str = gpio_get_level(GPIO_DP_POLARITY_L) ? "DP1" : "DP2";
+	else
+		*dp_str = NULL;
 
-		return EC_SUCCESS;
-	}
+	if (has_usb)
+		*usb_str = gpio_get_level(GPIO_SS1_USB_MODE_L) ?
+				"USB2" : "USB1";
+	else
+		*usb_str = NULL;
 
-	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
-		if (!strcasecmp(argv[2], mux_name[i]))
-			mux = i;
-	board_set_usb_mux(0, mux, pd_get_polarity(0));
-	return EC_SUCCESS;
+	return has_ss;
 }
-DECLARE_CONSOLE_COMMAND(typec, command_typec,
-			"[none|usb|dp|dock]",
-			"Control type-C connector muxing",
-			NULL);

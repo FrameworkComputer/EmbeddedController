@@ -921,6 +921,9 @@
 /* Dynamic USB PD source capability */
 #undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
 
+/* Support for USB type-c superspeed mux */
+#undef CONFIG_USBC_SS_MUX
+
 /*****************************************************************************/
 
 /* Support simple control of power to the device's USB ports */

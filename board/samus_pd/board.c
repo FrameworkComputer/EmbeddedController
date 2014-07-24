@@ -207,65 +207,33 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	}
 }
 
-static int command_typec(int argc, char **argv)
+int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 {
-	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
-	char *e;
-	int port;
-	enum typec_mux mux = TYPEC_MUX_NONE;
-	int i;
+	int has_ss, has_usb, has_dp;
+	const char *dp, *usb;
 
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= PD_PORT_COUNT)
-		return EC_ERROR_PARAM1;
-
-	if (argc < 3) {
-		/* dump current state */
-		int has_usb, has_dp, has_ss;
-		const char *dp_str, *usb_str;
-		if (port == 0) {
-			has_ss = !gpio_get_level(GPIO_USB_C0_SS1_EN_L);
-			has_usb = !gpio_get_level(GPIO_USB_C0_SS1_DP_MODE)
-				|| !gpio_get_level(GPIO_USB_C0_SS2_DP_MODE);
-			has_dp = !gpio_get_level(GPIO_USB_C0_DP_MODE_L);
-			dp_str = gpio_get_level(GPIO_USB_C0_DP_POLARITY) ?
-					"DP2" : "DP1";
-			usb_str = gpio_get_level(GPIO_USB_C0_SS1_DP_MODE) ?
-					"USB2" : "USB1";
-		} else {
-			has_ss = !gpio_get_level(GPIO_USB_C1_SS1_EN_L);
-			has_usb = !gpio_get_level(GPIO_USB_C1_SS1_DP_MODE)
-				|| !gpio_get_level(GPIO_USB_C1_SS2_DP_MODE);
-			has_dp = !gpio_get_level(GPIO_USB_C1_DP_MODE_L);
-			dp_str = gpio_get_level(GPIO_USB_C1_DP_POLARITY) ?
-					"DP2" : "DP1";
-			usb_str = gpio_get_level(GPIO_USB_C1_SS1_DP_MODE) ?
-					"USB2" : "USB1";
-		}
-		ccprintf("Port C%d: CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
-			port, pd_adc_read(port, 0), pd_adc_read(port, 1),
-			pd_get_polarity(port) + 1);
-		if (has_ss)
-			ccprintf("Superspeed %s%s%s\n",
-				 has_dp ? dp_str : "",
-				 has_dp && has_usb ? "+" : "",
-				 has_usb ? usb_str : "");
-		else
-			ccprintf("No Superspeed connection\n");
-
-		return EC_SUCCESS;
+	if (port == 0) {
+		has_ss = !gpio_get_level(GPIO_USB_C0_SS1_EN_L);
+		has_usb = !gpio_get_level(GPIO_USB_C0_SS1_DP_MODE) ||
+			  !gpio_get_level(GPIO_USB_C0_SS2_DP_MODE);
+		has_dp = !gpio_get_level(GPIO_USB_C0_DP_MODE_L);
+		dp = gpio_get_level(GPIO_USB_C0_DP_POLARITY) ?
+				"DP2" : "DP1";
+		usb = gpio_get_level(GPIO_USB_C0_SS1_DP_MODE) ?
+				"USB2" : "USB1";
+	} else {
+		has_ss = !gpio_get_level(GPIO_USB_C1_SS1_EN_L);
+		has_usb = !gpio_get_level(GPIO_USB_C1_SS1_DP_MODE) ||
+			  !gpio_get_level(GPIO_USB_C1_SS2_DP_MODE);
+		has_dp = !gpio_get_level(GPIO_USB_C1_DP_MODE_L);
+		dp = gpio_get_level(GPIO_USB_C1_DP_POLARITY) ?
+				"DP2" : "DP1";
+		usb = gpio_get_level(GPIO_USB_C1_SS1_DP_MODE) ?
+				"USB2" : "USB1";
 	}
 
-	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
-		if (!strcasecmp(argv[2], mux_name[i]))
-			mux = i;
-	board_set_usb_mux(port, mux, pd_get_polarity(port));
-	return EC_SUCCESS;
+	*dp_str = has_dp ? dp : NULL;
+	*usb_str = has_usb ? usb : NULL;
+
+	return has_ss;
 }
-DECLARE_CONSOLE_COMMAND(typec, command_typec,
-			"<port> [none|usb|dp|dock]",
-			"Control type-C connector muxing",
-			NULL);

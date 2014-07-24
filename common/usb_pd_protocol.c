@@ -1288,4 +1288,49 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"|hard|clock|ping|state]",
 			"USB PD",
 			NULL);
+
+#ifdef CONFIG_USBC_SS_MUX
+static int command_typec(int argc, char **argv)
+{
+	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
+	char *e;
+	int port;
+	enum typec_mux mux = TYPEC_MUX_NONE;
+	int i;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[1], &e, 10);
+	if (*e || port >= PD_PORT_COUNT)
+		return EC_ERROR_PARAM1;
+
+	if (argc < 3) {
+		const char *dp_str, *usb_str;
+		ccprintf("Port C%d: CC1 %d mV  CC2 %d mV (polarity:CC%d)\n",
+			port, pd_adc_read(port, 0), pd_adc_read(port, 1),
+			pd_get_polarity(port) + 1);
+		if (board_get_usb_mux(port, &dp_str, &usb_str))
+			ccprintf("Superspeed %s%s%s\n",
+				 dp_str ? dp_str : "",
+				 dp_str && usb_str ? "+" : "",
+				 usb_str ? usb_str : "");
+		else
+			ccprintf("No Superspeed connection\n");
+
+		return EC_SUCCESS;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
+		if (!strcasecmp(argv[2], mux_name[i]))
+			mux = i;
+	board_set_usb_mux(port, mux, pd_get_polarity(port));
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(typec, command_typec,
+			"<port> [none|usb|dp|dock]",
+			"Control type-C connector muxing",
+			NULL);
+#endif /* CONFIG_USBC_SS_MUX */
+
 #endif /* CONFIG_COMMON_RUNTIME */
