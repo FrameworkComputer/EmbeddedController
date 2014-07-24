@@ -158,7 +158,7 @@ static void set_pmic_pwron(int asserted)
 static void set_pmic_source(int asserted)
 {
 	/* Signal is active-high */
-	gpio_set_level(GPIO_PMIC_THERM_H, asserted ? 1 : 0);
+	gpio_set_level(GPIO_PMIC_SOURCE_PWR_H, asserted ? 1 : 0);
 }
 
 /**
