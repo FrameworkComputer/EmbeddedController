@@ -21,6 +21,10 @@ test-list-$(BOARD_SAMUS)=
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
 
+# For some tests, we are running out of RAM for Samus PD. Disable them for
+# now.
+test-list-$(BOARD_SAMUS_PD)=
+
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
