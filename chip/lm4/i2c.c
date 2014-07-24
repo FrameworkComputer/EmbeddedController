@@ -72,6 +72,11 @@ struct i2c_port_data {
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
+int i2c_is_busy(int port)
+{
+	return LM4_I2C_MCS(port) & LM4_I2C_MCS_BUSBSY;
+}
+
 /**
  * I2C transfer engine.
  *

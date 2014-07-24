@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -33,6 +33,7 @@ common-$(CONFIG_COMMON_GPIO)+=gpio.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
 common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o shared_mem.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
+common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o
 common-$(CONFIG_EOPTION)+=eoption.o
@@ -60,6 +61,7 @@ common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_SHA1)+=sha1.o
+common-$(CONFIG_SMBUS)+= smbus.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o
 common-$(CONFIG_SWITCH)+=switch.o
@@ -79,4 +81,3 @@ common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o math_util.o
 common-$(TEST_BUILD)+=test_util.o
-

@@ -150,3 +150,24 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 	}
 	return EC_ERROR_UNKNOWN;
 }
+
+int smbus_write_word(uint8_t i2c_port, uint8_t slave_addr,
+			uint8_t smbus_cmd, uint16_t d16)
+{
+	return i2c_write16(i2c_port, slave_addr, smbus_cmd, d16);
+}
+
+int smbus_read_word(uint8_t i2c_port, uint8_t slave_addr,
+			uint8_t smbus_cmd, uint16_t *p16)
+{
+	int rv, d16 = 0;
+	rv = i2c_read16(i2c_port, slave_addr, smbus_cmd, &d16);
+	*p16 = d16;
+	return rv;
+}
+
+int smbus_read_string(int i2c_port, uint8_t slave_addr, uint8_t smbus_cmd,
+			uint8_t *data, int len)
+{
+	return i2c_read_string(i2c_port, slave_addr, smbus_cmd, data, len);
+}

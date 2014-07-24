@@ -88,6 +88,8 @@ enum ec_error_list {
 	EC_ERROR_NOT_POWERED = 8,
 	/* Failed because component is not calibrated */
 	EC_ERROR_NOT_CALIBRATED = 9,
+	/* Failed because CRC error */
+	EC_ERROR_CRC = 10,
 	/* Invalid console command param (PARAMn means parameter n is bad) */
 	EC_ERROR_PARAM1 = 11,
 	EC_ERROR_PARAM2 = 12,
