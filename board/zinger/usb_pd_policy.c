@@ -97,6 +97,10 @@ static timestamp_t fault_deadline;
 /* Over-voltage recovery threshold is 1.1x Vnom */
 #define OVP_REC_MV(mv)  VBUS_MV((mv) * 11 / 10)
 
+/* Time to allow for voltage down stepping */
+/* TODO reduce this time if possible when voltage discharging is implemented */
+#define VOLTAGE_DOWN_STEP_TIME (500*MSEC)
+
 /* ----------------------- USB Power delivery policy ---------------------- */
 
 /* Power Delivery Objects */
@@ -121,8 +125,13 @@ static const struct {
 	{VO_20V, UVP_MV(20000), OVP_MV(20000), OVP_REC_MV(20000)},
 };
 
-/* currently selected PDO entry */
+/* current and previous selected PDO entry */
 static int volt_idx;
+static int last_volt_idx;
+
+/* flag and timestamp for down-stepping the voltage */
+static int down_step;
+static uint64_t down_step_done_time;
 
 int pd_request_voltage(uint32_t rdo)
 {
@@ -152,9 +161,12 @@ int pd_request_voltage(uint32_t rdo)
 		     ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
 		     ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
-	if (idx - 1 < volt_idx) /* down voltage transition */
-		output_disable();
-	/* TODO discharge ? */
+	if (idx - 1 < volt_idx) { /* down voltage transition */
+		down_step = 1;
+		down_step_done_time = get_time().val + VOLTAGE_DOWN_STEP_TIME;
+		/* TODO discharge on down voltage transitions ? */
+	}
+	last_volt_idx = volt_idx;
 	volt_idx = idx - 1;
 	set_output_voltage(voltages[volt_idx].select);
 
@@ -190,6 +202,7 @@ int pd_board_checks(void)
 {
 	int vbus_volt, vbus_amp;
 	int watchdog_enabled = STM32_ADC_CFGR1 & (1 << 23);
+	int ovp_idx;
 
 	/* Reload the watchdog */
 	STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
@@ -212,6 +225,7 @@ int pd_board_checks(void)
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
 		return EC_ERROR_INVAL;
 	}
+
 	if (vbus_amp > MAX_CURRENT) {
 		/* 3 more samples to check whether this is just a transient */
 		int count;
@@ -229,8 +243,17 @@ int pd_board_checks(void)
 			return EC_ERROR_INVAL;
 		}
 	}
-	if ((output_is_enabled() && (vbus_volt > voltages[volt_idx].ovp)) ||
-	    (fault && (vbus_volt > voltages[volt_idx].ovp_rec))) {
+
+	/*
+	 * Set the voltage index to use for checking OVP. During a down step
+	 * transition, use the previous voltage index to check for OVP.
+	 */
+	if (down_step && get_time().val >= down_step_done_time)
+		down_step = 0;
+	ovp_idx = down_step ? last_volt_idx : volt_idx;
+
+	if ((output_is_enabled() && (vbus_volt > voltages[ovp_idx].ovp)) ||
+	    (fault && (vbus_volt > voltages[ovp_idx].ovp_rec))) {
 		if (!fault)
 			debug_printf("OverVoltage : %d mV\n",
 				vbus_volt * VDDA_MV * VOLT_DIV / ADC_SCALE);
