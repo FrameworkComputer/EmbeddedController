@@ -413,7 +413,7 @@ static int host_command_sb_read_block(struct host_cmd_handler_args *args)
 	    (p->reg != SB_DEVICE_CHEMISTRY) &&
 	    (p->reg != SB_MANUFACTURER_DATA))
 		return EC_RES_INVALID_PARAM;
-	rv = i2c_read_string(I2C_PORT_BATTERY, BATTERY_ADDR, p->reg,
+	rv = sb_read_string(I2C_PORT_BATTERY, BATTERY_ADDR, p->reg,
 			     r->data, 32);
 	if (rv)
 		return EC_RES_ERROR;
