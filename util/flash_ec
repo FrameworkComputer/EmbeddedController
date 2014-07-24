@@ -1,11 +1,43 @@
 #!/bin/bash
 
-# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-COMMON_SH=/usr/lib/crosutils/common.sh
-. "${COMMON_SH}" || exit 1
+SCRIPT="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT")"
+
+# Loads script libraries.
+. "/usr/share/misc/shflags" || exit 1
+
+# Redirects tput to stderr, and drop any error messages.
+tput2() {
+  tput "$@" 1>&2 2>/dev/null || true
+}
+
+error() {
+  tput2 bold && tput2 setaf 1
+  echo "ERROR: $*" >&2
+  tput2 sgr0
+}
+
+
+info() {
+  tput2 bold && tput2 setaf 2
+  echo "INFO: $*" >&2
+  tput2 sgr0
+}
+
+warn() {
+  tput2 bold && tput2 setaf 3
+  echo "WARNING: $*" >&2
+  tput2 sgr0
+}
+
+die() {
+  [ -z "$*" ] || error "$@"
+  exit 1
+}
 
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
@@ -25,7 +57,9 @@ DEFINE_boolean unprotect "${FLAGS_FALSE}" \
 FLAGS_HELP="usage: $0 [flags]"
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
-check_flags_only_and_allow_null_arg "$@" && set --
+if [[ $# -gt 0 ]]; then
+	die "invalid arguments: \"$*\""
+fi
 
 set -e
 
@@ -101,7 +135,7 @@ else
 	EC_FILE=ec.bin
 fi
 EMERGE_BUILD=${BOARD_ROOT}/firmware/${EC_FILE}
-LOCAL_BUILD=${SRC_ROOT}/platform/ec/build/${BOARD}/${EC_FILE}
+LOCAL_BUILD="$(readlink -f "${SCRIPT_DIR}/../build/${BOARD}/${EC_FILE}")"
 
 # Find the EC image to use
 function ec_image() {
