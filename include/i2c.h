@@ -126,6 +126,14 @@ int i2c_raw_mode(int port, int enable);
  */
 void i2c_lock(int port, int lock);
 
+/**
+ * Set the timeout for an I2C transaction.
+ *
+ * @param port		Port to set timeout for
+ * @param timeout	Timeout in usec, or 0 to use default
+ */
+void i2c_set_timeout(int port, uint32_t timeout);
+
 /* Read a 16-bit register from the slave at 8-bit slave address <slaveaddr>, at
  * the specified 8-bit <offset> in the slave's address space. */
 int i2c_read16(int port, int slave_addr, int offset, int *data);

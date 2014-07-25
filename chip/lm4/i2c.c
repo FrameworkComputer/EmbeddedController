@@ -47,8 +47,8 @@
  */
 #define I2C_IDLE_US 500
 
-/* Maximum time we allow for an I2C transfer */
-#define I2C_TIMEOUT_US (100*MSEC)
+/* Default maximum time we allow for an I2C transfer */
+#define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
 
 /* IRQ for each port */
 static const uint32_t i2c_irqs[] = {LM4_IRQ_I2C0, LM4_IRQ_I2C1, LM4_IRQ_I2C2,
@@ -64,6 +64,7 @@ struct i2c_port_data {
 	int flags;		/* Flags (I2C_XFER_*) */
 	int idx;		/* Index into input/output data */
 	int err;		/* Error code, if any */
+	uint32_t timeout_us;	/* Transaction timeout, or 0 to use default */
 
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
 	int task_waiting;
@@ -223,7 +224,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	task_trigger_irq(i2c_irqs[port]);
 
 	/* Wait for transfer complete or timeout */
-	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE, I2C_TIMEOUT_US);
+	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE, pd->timeout_us);
 
 	/* Disable interrupts */
 	LM4_I2C_MIMR(port) = 0x00;
@@ -326,6 +327,11 @@ exit:
 	return rv;
 }
 
+void i2c_set_timeout(int port, uint32_t timeout)
+{
+	pdata[port].timeout_us = timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
+}
+
 /*****************************************************************************/
 /* Hooks */
 
@@ -387,6 +393,9 @@ static void i2c_init(void)
 	for (i = 0; i < I2C_PORT_COUNT; i++) {
 		pdata[i].task_waiting = TASK_ID_INVALID;
 		task_enable_irq(i2c_irqs[i]);
+
+		/* Use default timeout */
+		i2c_set_timeout(i, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
