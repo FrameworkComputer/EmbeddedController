@@ -19,33 +19,25 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
-	LED_OFF = 0,
-	LED_GREEN,
+	LED_GREEN = 0,
 	LED_ORANGE,
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
-static int bat_led_set_color(enum led_color color)
+static int bat_led_set(enum led_color color, int on)
 {
 	switch (color) {
-	case LED_OFF:
-		gpio_set_level(GPIO_BAT_LED0, 1);
-		gpio_set_level(GPIO_BAT_LED1, 1);
-		break;
 	case LED_GREEN:
-		gpio_set_level(GPIO_BAT_LED0, 1);
-		gpio_set_level(GPIO_BAT_LED1, 0);
+		gpio_set_level(GPIO_BAT_LED1, on ? 0 : 1);
 		break;
 	case LED_ORANGE:
-		gpio_set_level(GPIO_BAT_LED0, 0);
-		gpio_set_level(GPIO_BAT_LED1, 1);
+		gpio_set_level(GPIO_BAT_LED0, on ? 0 : 1);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
 	return EC_SUCCESS;
 }
-
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
@@ -57,12 +49,16 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (EC_LED_ID_BATTERY_LED == led_id) {
-		if (brightness[EC_LED_COLOR_GREEN] != 0)
-			bat_led_set_color(LED_GREEN);
-		else if (brightness[EC_LED_COLOR_YELLOW] != 0)
-			bat_led_set_color(LED_ORANGE);
-		else
-			bat_led_set_color(LED_OFF);
+		if (brightness[EC_LED_COLOR_GREEN] != 0) {
+			bat_led_set(LED_GREEN, 1);
+			bat_led_set(LED_ORANGE, 0);
+		} else if (brightness[EC_LED_COLOR_YELLOW] != 0) {
+			bat_led_set(LED_GREEN, 1);
+			bat_led_set(LED_ORANGE, 1);
+		} else {
+			bat_led_set(LED_GREEN, 0);
+			bat_led_set(LED_ORANGE, 0);
+		}
 		return EC_SUCCESS;
 	} else {
 		return EC_ERROR_UNKNOWN;
@@ -70,16 +66,34 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 }
 
+static void veyron_led_set_power(void)
+{
+	static int power_second;
+
+	power_second++;
+
+	/* PWR LED behavior:
+	 * Power on: Green
+	 * Suspend: Green in breeze mode ( 1 sec on/ 3 sec off)
+	 * Power off: OFF
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		bat_led_set(LED_GREEN, 0);
+	else if (chipset_in_state(CHIPSET_STATE_ON))
+		bat_led_set(LED_GREEN, 1);
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+		bat_led_set(LED_GREEN, (power_second & 3) ? 0 : 1);
+}
+
+
 static void veyron_led_set_battery(void)
 {
 	static int battery_second;
-	uint32_t chflags = charge_get_flags();
 
 	battery_second++;
 
 	/* BAT LED behavior:
-	 * Fully charged / idle: Blue
-	 * Force idle (for factory): 2 secs of blue, 2 secs of yellow
+	 * Fully charged / idle: Off
 	 * Under charging: Orange
 	 * Battery low (10%): Orange in breeze mode (1 sec on, 3 sec off)
 	 * Battery critical low (less than 3%) or abnormal battery
@@ -88,30 +102,24 @@ static void veyron_led_set_battery(void)
 	 */
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		bat_led_set_color(LED_ORANGE);
+		bat_led_set(LED_ORANGE, 1);
+		break;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		bat_led_set(LED_ORANGE, 1);
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (charge_get_percent() < 3)
-			bat_led_set_color((battery_second & 1)
-					? LED_OFF : LED_ORANGE);
+			bat_led_set(LED_ORANGE, (battery_second & 1) ? 0 : 1);
 		else if (charge_get_percent() < 10)
-			bat_led_set_color((battery_second & 3)
-					? LED_OFF : LED_ORANGE);
+			bat_led_set(LED_ORANGE, (battery_second & 3) ? 0 : 1);
 		else
-			bat_led_set_color(LED_OFF);
+			bat_led_set(LED_ORANGE, 0);
 		break;
 	case PWR_STATE_ERROR:
-		bat_led_set_color((battery_second & 1) ? LED_OFF : LED_ORANGE);
-		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-		bat_led_set_color(LED_GREEN);
+		bat_led_set(LED_ORANGE, (battery_second & 1) ? 0 : 1);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			bat_led_set_color((battery_second & 0x2)
-					? LED_GREEN : LED_ORANGE);
-		else
-			bat_led_set_color(LED_GREEN);
+		bat_led_set(LED_ORANGE, 0);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -122,6 +130,8 @@ static void veyron_led_set_battery(void)
 /**  * Called by hook task every 1 sec  */
 static void led_second(void)
 {
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		veyron_led_set_power();
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		veyron_led_set_battery();
 }
