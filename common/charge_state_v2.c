@@ -18,6 +18,7 @@
 #include "host_command.h"
 #include "math_util.h"
 #include "printf.h"
+#include "sb_fw_update.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -475,6 +476,13 @@ void charger_task(void)
 	battery_seems_to_be_dead = 0;
 
 	while (1) {
+
+#ifdef CONFIG_SB_FIRMWARE_UPDATE
+		if (sb_fw_update_in_progress()) {
+			task_wait_event(CHARGE_MAX_SLEEP_USEC);
+			continue;
+		}
+#endif
 
 		/* Let's see what's going on... */
 		curr.ts = get_time();

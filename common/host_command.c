@@ -28,6 +28,9 @@
 
 static struct host_cmd_handler_args *pending_args;
 
+/* Verify Boot Mode */
+static int g_vboot_mode;
+
 #ifndef CONFIG_LPC
 /*
  * Simulated memory map.  Must be word-aligned, because some of the elements
@@ -76,6 +79,11 @@ uint8_t *host_get_memmap(int offset)
 #else
 	return host_memmap + offset;
 #endif
+}
+
+int host_get_vboot_mode(void)
+{
+	return g_vboot_mode;
 }
 
 test_mockable void host_send_response(struct host_cmd_handler_args *args)
@@ -605,6 +613,18 @@ DECLARE_HOST_COMMAND(EC_CMD_RESEND_RESPONSE,
 		     host_command_resend_response,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOST_COMMAND_STATUS */
+
+
+static int host_command_entering_mode(struct host_cmd_handler_args *args)
+{
+	struct ec_params_entering_mode *param =
+		(struct ec_params_entering_mode *)args->params;
+	args->response_size = 0;
+	g_vboot_mode = param->vboot_mode;
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ENTERING_MODE,
+		host_command_entering_mode, EC_VER_MASK(0));
 
 /* Returns what we tell it to. */
 static int host_command_test_protocol(struct host_cmd_handler_args *args)

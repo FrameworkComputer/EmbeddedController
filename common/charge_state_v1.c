@@ -16,6 +16,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "printf.h"
+#include "sb_fw_update.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -712,6 +713,12 @@ void charger_task(void)
 	uint8_t batt_flags;
 
 	while (1) {
+#ifdef CONFIG_SB_FIRMWARE_UPDATE
+		if (sb_fw_update_in_progress()) {
+			task_wait_event(CHARGE_MAX_SLEEP_USEC);
+			continue;
+		}
+#endif
 		state_common(ctx);
 
 #ifdef CONFIG_CHARGER_TIMEOUT_HOURS

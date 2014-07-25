@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+# Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -47,3 +47,6 @@ driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 # USB switches
 driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
 driver-$(CONFIG_USB_SWITCH_TSU6721)+=usb_switch_tsu6721.o
+
+# Firmware Update
+driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o
