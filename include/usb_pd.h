@@ -21,6 +21,7 @@ enum pd_errors {
 #define PD_EVENT_RX (1<<2)
 
 /* --- PD data message helpers --- */
+#define PDO_MAX_OBJECTS   7
 
 /* PDO : Power Data Object */
 /*

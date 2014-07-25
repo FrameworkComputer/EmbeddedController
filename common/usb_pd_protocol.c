@@ -217,6 +217,12 @@ enum pd_states {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 /* Port dual-role state */
 enum pd_dual_role_states drp_state = PD_DRP_TOGGLE_OFF;
+
+/* Last received source cap */
+static uint32_t pd_src_caps[PD_PORT_COUNT][PDO_MAX_OBJECTS];
+static int pd_src_cap_cnt[PD_PORT_COUNT];
+
+static int new_power_request;
 #endif
 
 static struct pd_protocol {
@@ -513,6 +519,44 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 		vid, payload[0] & 0xFFFF);
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
+{
+	int i;
+
+	pd_src_cap_cnt[port] = cnt;
+	for (i = 0; i < cnt; i++)
+		pd_src_caps[port][i] = *src_caps++;
+}
+
+static void pd_send_request_msg(int port)
+{
+	uint32_t rdo;
+	int res;
+
+	/* we were waiting for them, let's process them */
+	res = pd_choose_voltage(pd_src_cap_cnt[port], pd_src_caps[port], &rdo);
+	if (res >= 0) {
+		res = send_request(port, rdo);
+		if (res >= 0)
+			pd[port].task_state =
+					PD_STATE_SNK_REQUESTED;
+		else
+			/*
+			 * for now: ignore failure here,
+			 * we will retry ...
+			 * TODO(crosbug.com/p/28332)
+			 */
+			pd[port].task_state =
+					PD_STATE_SNK_REQUESTED;
+	}
+	/*
+	 * TODO(crosbug.com/p/28332): if pd_choose_voltage
+	 * returns an error, ignore failure for now.
+	 */
+}
+#endif
+
 static void handle_data_request(int port, uint16_t head,
 		uint32_t *payload)
 {
@@ -523,29 +567,10 @@ static void handle_data_request(int port, uint16_t head,
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_DATA_SOURCE_CAP:
 		if ((pd[port].task_state == PD_STATE_SNK_DISCOVERY)
-			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)) {
-			uint32_t rdo;
-			int res;
-			/* we were waiting for them, let's process them */
-			res = pd_choose_voltage(cnt, payload, &rdo);
-			if (res >= 0) {
-				res = send_request(port, rdo);
-				if (res >= 0)
-					pd[port].task_state =
-							PD_STATE_SNK_REQUESTED;
-				else
-					/*
-					 * for now: ignore failure here,
-					 * we will retry ...
-					 * TODO(crosbug.com/p/28332)
-					 */
-					pd[port].task_state =
-							PD_STATE_SNK_REQUESTED;
-			}
-			/*
-			 * TODO(crosbug.com/p/28332): if pd_choose_voltage
-			 * returns an error, ignore failure for now.
-			 */
+			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)
+			|| (pd[port].task_state == PD_STATE_SNK_READY)) {
+			pd_store_src_cap(port, cnt, payload);
+			pd_send_request_msg(port);
 		}
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -1080,6 +1105,10 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_READY:
 			/* we have power, check vitals from time to time */
+			if (new_power_request) {
+				pd_send_request_msg(port);
+				new_power_request = 0;
+			}
 			timeout = 100*MSEC;
 			break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -1142,9 +1171,16 @@ void pd_set_suspend(int port, int enable)
 void pd_request_source_voltage(int port, int mv)
 {
 	pd_set_max_voltage(mv);
-	pd[port].role = PD_ROLE_SINK;
-	pd_set_host_mode(port, 0);
-	pd[port].task_state = PD_STATE_SNK_DISCONNECTED;
+
+	if (pd[port].task_state == PD_STATE_SNK_READY) {
+		/* Set flag to send new power request in pd_task */
+		new_power_request = 1;
+	} else {
+		pd[port].role = PD_ROLE_SINK;
+		pd_set_host_mode(port, 0);
+		pd[port].task_state = PD_STATE_SNK_DISCONNECTED;
+	}
+
 	task_wake(PORT_TO_TASK_ID(port));
 }
 
