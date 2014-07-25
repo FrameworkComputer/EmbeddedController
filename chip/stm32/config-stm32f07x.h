@@ -15,7 +15,7 @@
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0002
 
 #define CONFIG_RAM_BASE         0x20000000
-#define CONFIG_RAM_SIZE         0x00002000
+#define CONFIG_RAM_SIZE         0x00004000
 
 /* Size of one firmware image in flash */
 #define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
