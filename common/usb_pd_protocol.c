@@ -940,7 +940,7 @@ void pd_task(void)
 			/* cut the power */
 			execute_hard_reset(port);
 			/* notify the other side of the issue */
-			/* send_hard_reset(port); */
+			send_hard_reset(port);
 		}
 		/* wait for next event/packet or timeout expiration */
 		task_wait_event(timeout);
