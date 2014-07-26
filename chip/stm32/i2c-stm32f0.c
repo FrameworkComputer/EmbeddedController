@@ -32,6 +32,14 @@
  */
 #define I2C_MAX_HOST_PACKET_SIZE 128
 
+#ifdef HAS_TASK_HOSTCMD
+#if (I2C_PORT_EC == STM32_I2C1_PORT)
+#define IRQ_SLAVE STM32_IRQ_I2C1
+#else
+#define IRQ_SLAVE STM32_IRQ_I2C2
+#endif
+#endif
+
 /**
  * Wait for ISR register to contain the specified mask.
  *
@@ -261,7 +269,7 @@ static void i2c_event_handler(int port)
 	}
 }
 void i2c2_event_interrupt(void) { i2c_event_handler(I2C_PORT_EC); }
-DECLARE_IRQ(STM32_IRQ_I2C1, i2c2_event_interrupt, 2);
+DECLARE_IRQ(IRQ_SLAVE, i2c2_event_interrupt, 2);
 #endif
 
 /*****************************************************************************/
@@ -424,7 +432,7 @@ static void i2c_init(void)
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE;
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000 | CONFIG_HOSTCMD_I2C_SLAVE_ADDR;
-	task_enable_irq(STM32_IRQ_I2C1);
+	task_enable_irq(IRQ_SLAVE);
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
