@@ -72,6 +72,12 @@ vector_irq 29                     @ IRQ  29 handler
 vector_irq 30                     @ IRQ  30 handler
 vector_irq 31                     @ IRQ  31 handler
 
+#ifdef CHIP_FAMILY_STM32F0
+/* Allocate space for SRAM vector table at SRAM based address */
+.section .bss.vector_table
+sram_vtable: .skip (48*4)
+#endif
+
 .text
 .syntax unified
 .code 16
@@ -87,11 +93,6 @@ reset:
 	msr control, r0
 	isb                  @ ensure the write is done
 
-	/* Set the vector table on our current code */
-	ldr r1, =vectors
-	ldr r2, =0xE000ED08   /* VTABLE register in SCB*/
-	str r1, [r2]
-
 	/* Clear BSS */
 	movs r0, #0
 	ldr  r1,_bss_start
@@ -101,6 +102,35 @@ bss_loop:
 	adds r1, #4
 	cmp  r1, r2
 	blt bss_loop
+
+#ifdef CHIP_FAMILY_STM32F0
+	/*
+	 * STM32F0 parts don't have the VTOR register for relocating
+	 * the vector table. Instead, we must copy the vector table from
+	 * flash into SRAM.
+	 */
+	ldr r1, =vectors
+	ldr r2, =sram_vtable
+	movs r0, #0
+vtable_loop:
+	ldr r3, [r1]
+	str r3, [r2]
+	adds r1, #4
+	adds r2, #4
+	adds r0, #1
+	cmp r0, #48
+	blt vtable_loop
+
+	/* Set SYSCFG_CFGR1 mem_mode to load vector table from SRAM */
+	movs r0, #3
+	ldr r1, =0x40010000
+	str r0, [r1]
+#else
+	/* Set the vector table on our current code */
+	ldr r1, =vectors
+	ldr r2, =0xE000ED08   /* VTOR register in SCB*/
+	str r1, [r2]
+#endif
 
 #ifndef COMPILE_FOR_RAM
 	/* Copy initialized data to Internal RAM */

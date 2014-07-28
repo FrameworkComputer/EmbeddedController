@@ -153,14 +153,13 @@ SECTIONS
 
     .bss : {
 	/*
-	 * Align to 512 bytes. This is convenient when some memory block
-	 * need big alignment. When COMPILE_FOR_RAM is not set, this is the
-	 * beginning of the RAM, so there is usually no penalty on aligning
-	 * this.
+	 * Vector table must be at the beginning of bss section. The vector
+	 * table section contains a RAM copy of the vector table used on
+	 * STM chips for relocating the vector table.
 	 */
-        . = ALIGN(512);
-        __bss_start = .;
-	*(.bss.big_align)
+	. = ALIGN(8);
+	__bss_start = .;
+	*(.bss.vector_table)
 	/* Stacks must be 64-bit aligned */
         . = ALIGN(8);
         *(.bss.system_stack)
