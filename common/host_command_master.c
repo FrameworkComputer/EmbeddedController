@@ -9,6 +9,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -19,14 +20,16 @@
 /* Host command timeout */
 #define HOST_COMMAND_TIMEOUT_US SECOND
 
-/*
- * Sends a command to the PD (protocol v3).
+static struct mutex pd_mutex;
+
+/**
+ * Non-task-safe internal version of pd_host_command().
  *
- * Returns >= 0 for success, or negative if error.
+ * Do not call this version directly!  Use pd_host_command().
  */
-int pd_host_command(int command, int version,
-		    const void *outdata, int outsize,
-		    void *indata, int insize)
+static int pd_host_command_internal(int command, int version,
+				    const void *outdata, int outsize,
+				    void *indata, int insize)
 {
 	int ret, i;
 	int resp_len;
@@ -147,6 +150,25 @@ int pd_host_command(int command, int version,
 
 	/* Return output buffer size */
 	return resp_len;
+}
+
+int pd_host_command(int command, int version,
+		    const void *outdata, int outsize,
+		    void *indata, int insize)
+{
+	int rv;
+
+	/* Acquire mutex */
+	mutex_lock(&pd_mutex);
+
+	/* Call internal version of host command */
+	rv = pd_host_command_internal(command, version, outdata, outsize,
+				      indata, insize);
+
+	/* Release mutex */
+	mutex_unlock(&pd_mutex);
+
+	return rv;
 }
 
 static int command_pd_mcu(int argc, char **argv)
