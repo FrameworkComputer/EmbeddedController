@@ -43,6 +43,7 @@ static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_warning_time;
 static timestamp_t precharge_start_time;
 static int battery_seems_to_be_dead;
+static int battery_seems_to_be_disconnected;
 static int problems_exist;
 static int debugging;
 
@@ -253,6 +254,8 @@ static void dump_charge_state(void)
 	ccprintf("manual_mode = %d\n", manual_mode);
 	ccprintf("user_current_limit = %dmA\n", user_current_limit);
 	ccprintf("battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
+	ccprintf("battery_seems_to_be_disconnected = %d\n",
+		 battery_seems_to_be_disconnected);
 	ccprintf("debug output = %s\n", debugging ? "on" : "off");
 #undef DUMP
 }
@@ -599,6 +602,8 @@ void charger_task(void)
 			} else
 #endif
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+			battery_seems_to_be_disconnected = 0;
+
 			if (curr.requested_voltage == 0 &&
 			    curr.requested_current == 0 &&
 			    battery_get_disconnect_state() ==
@@ -612,6 +617,7 @@ void charger_task(void)
 					batt_info->voltage_max;
 				curr.requested_current =
 					batt_info->precharge_current;
+				battery_seems_to_be_disconnected = 1;
 			} else
 #endif
 			if (curr.state == ST_PRECHARGE ||
@@ -627,7 +633,12 @@ void charger_task(void)
 			curr.state = ST_CHARGE;
 		}
 
-		if (curr.batt.state_of_charge >= BATTERY_LEVEL_FULL) {
+		/*
+		 * If battery seems to be disconnected, we need to get it
+		 * out of that state, even if the charge level is full.
+		 */
+		if (curr.batt.state_of_charge >= BATTERY_LEVEL_FULL &&
+		    !battery_seems_to_be_disconnected) {
 			/* Full up. Stop charging */
 			curr.state = ST_IDLE;
 			goto wait_for_it;
