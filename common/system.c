@@ -90,6 +90,36 @@ static enum ec_reboot_cmd reboot_at_shutdown;
 /* On-going actions preventing going into deep-sleep mode */
 uint32_t sleep_mask;
 
+/**
+ * Return the base pointer for the image copy, or 0xffffffff if error.
+ */
+static uintptr_t get_base(enum system_image_copy_t copy)
+{
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
+	case SYSTEM_IMAGE_RW:
+		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
+	default:
+		return 0xffffffff;
+	}
+}
+
+/**
+ * Return the size of the image copy, or 0 if error.
+ */
+static uint32_t get_size(enum system_image_copy_t copy)
+{
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+		return CONFIG_FW_RO_SIZE;
+	case SYSTEM_IMAGE_RW:
+		return CONFIG_FW_RW_SIZE;
+	default:
+		return 0;
+	}
+}
+
 int system_is_locked(void)
 {
 	if (force_locked)
@@ -297,13 +327,8 @@ int system_get_image_used(enum system_image_copy_t copy)
 	const uint8_t *image;
 	int size = 0;
 
-	if (copy == SYSTEM_IMAGE_RO) {
-		image = (const uint8_t *)CONFIG_FW_RO_OFF;
-		size = CONFIG_FW_RO_SIZE;
-	} else if (copy == SYSTEM_IMAGE_RW) {
-		image = (const uint8_t *)CONFIG_FW_RW_OFF;
-		size = CONFIG_FW_RW_SIZE;
-	}
+	image = (const uint8_t *)(get_base(copy));
+	size = get_size(copy);
 
 	if (size <= 0)
 		return 0;
@@ -395,38 +420,6 @@ static void jump_to_image(uintptr_t init_addr)
 	/* Jump to the reset vector */
 	resetvec();
 }
-
-/**
- * Return the base pointer for the image copy, or 0xffffffff if error.
- */
-static uint32_t get_base(enum system_image_copy_t copy)
-{
-	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
-	case SYSTEM_IMAGE_RW:
-		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
-	default:
-		return 0xffffffff;
-	}
-}
-
-/**
- * Return the size of the image copy, or 0 if error.
- */
-#ifndef EMU_BUILD
-static uint32_t get_size(enum system_image_copy_t copy)
-{
-	switch (copy) {
-	case SYSTEM_IMAGE_RO:
-		return CONFIG_FW_RO_SIZE;
-	case SYSTEM_IMAGE_RW:
-		return CONFIG_FW_RW_SIZE;
-	default:
-		return 0;
-	}
-}
-#endif
 
 int system_run_image_copy(enum system_image_copy_t copy)
 {
