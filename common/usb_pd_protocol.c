@@ -328,8 +328,7 @@ static int send_validate_message(int port, uint16_t header,
 
 	/* retry 3 times if we are not getting a valid answer */
 	for (r = 0; r <= PD_RETRY_COUNT; r++) {
-		int bit_len;
-		uint16_t head;
+		int bit_len, head;
 		/* write the encoded packet in the transmission buffer */
 		bit_len = prepare_message(port, header, cnt, data);
 		/* Transmit the packet */
