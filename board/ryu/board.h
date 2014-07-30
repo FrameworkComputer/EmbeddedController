@@ -31,6 +31,7 @@
 #define CONFIG_VBOOT_HASH
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_TASK_PROFILING
+#undef CONFIG_CONSOLE_CMDHELP
 
 /* Charging/Power configuration */
 #undef CONFIG_BATTERY_RYU /* TODO implement */
