@@ -364,6 +364,8 @@ static void power_on(void)
 	/* enable interrupt */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT | GPIO_INT_BOTH
 			| GPIO_PULL_DOWN);
+
+	gpio_set_flags(GPIO_EC_INT, GPIO_OUTPUT | GPIO_OUT_HIGH);
 	/* Make sure we de-assert the PMI_SOURCE and AP_RESET_L pin. */
 	set_pmic_source(1);
 	set_ap_reset(0);
@@ -444,8 +446,9 @@ static void power_off(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
 	chipset_turn_off_power_rails();
-	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
+	/* Change SUSPEND_L and EC_INT pin to high-Z to reduce power draw. */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT);
+	gpio_set_flags(GPIO_EC_INT, GPIO_INPUT);
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
