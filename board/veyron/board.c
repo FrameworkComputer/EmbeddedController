@@ -57,3 +57,19 @@ int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
 }
+
+void board_config_pre_init(void)
+{
+	/* enable SYSCFG clock */
+	STM32_RCC_APB2ENR |= 1 << 0;
+
+	/* Remap USART DMA to match the USART driver */
+	/*
+	 * the DMA mapping is :
+	 *  Chan 2 : TIM1_CH1
+	 *  Chan 3 : SPI1_TX
+	 *  Chan 4 : USART1_TX
+	 *  Chan 5 : USART1_RX
+	 */
+	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10); /* Remap USART1 RX/TX DMA */
+}

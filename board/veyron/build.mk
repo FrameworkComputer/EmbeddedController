@@ -5,9 +5,9 @@
 #
 # Board specific files build
 
-# the IC is STmicro STM32L100RBT6
+# the IC is STmicro STM32F071RB
 CHIP:=stm32
-CHIP_FAMILY:=stm32l
-CHIP_VARIANT:=stm32l15x
+CHIP_FAMILY:=stm32f0
+CHIP_VARIANT:=stm32f07x
 
 board-y=board.o battery.o led.o
