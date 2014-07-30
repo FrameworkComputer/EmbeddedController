@@ -228,7 +228,7 @@ function free_pty() {
 # Board specific flashing scripts
 
 function flash_stm32() {
-	TOOL_PATH="${SCRIPT_LOCATION}/../build/${BOARD}/util:$PATH"
+	TOOL_PATH="${SCRIPT_DIR}/../build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	if [ ! -x "$STM32MON" ]; then
 		die "no stm32mon util found."
