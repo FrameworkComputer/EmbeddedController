@@ -7,36 +7,41 @@
 SCRIPT="$(readlink -f "$0")"
 SCRIPT_DIR="$(dirname "$SCRIPT")"
 
+EC_DIR="$(readlink -f "${SCRIPT_DIR}/..")"
+if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
+	EC_DIR=
+fi
+
 # Loads script libraries.
 . "/usr/share/misc/shflags" || exit 1
 
 # Redirects tput to stderr, and drop any error messages.
 tput2() {
-  tput "$@" 1>&2 2>/dev/null || true
+	tput "$@" 1>&2 2>/dev/null || true
 }
 
 error() {
-  tput2 bold && tput2 setaf 1
-  echo "ERROR: $*" >&2
-  tput2 sgr0
+	tput2 bold && tput2 setaf 1
+	echo "ERROR: $*" >&2
+	tput2 sgr0
 }
 
 
 info() {
-  tput2 bold && tput2 setaf 2
-  echo "INFO: $*" >&2
-  tput2 sgr0
+	tput2 bold && tput2 setaf 2
+	echo "INFO: $*" >&2
+	tput2 sgr0
 }
 
 warn() {
-  tput2 bold && tput2 setaf 3
-  echo "WARNING: $*" >&2
-  tput2 sgr0
+	tput2 bold && tput2 setaf 3
+	echo "WARNING: $*" >&2
+	tput2 sgr0
 }
 
 die() {
-  [ -z "$*" ] || error "$@"
-  exit 1
+	[ -z "$*" ] || error "$@"
+	exit 1
 }
 
 # Note: Link is a special case and is not included here.
@@ -177,8 +182,13 @@ if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 else
 	EC_FILE=ec.bin
 fi
+
 EMERGE_BUILD=${BOARD_ROOT}/firmware/${EC_FILE}
-LOCAL_BUILD="$(readlink -f "${SCRIPT_DIR}/../build/${BOARD}/${EC_FILE}")"
+
+LOCAL_BUILD=
+if [[ -n "${EC_DIR}" ]]; then
+	LOCAL_BUILD="${EC_DIR}/build/${BOARD}/${EC_FILE}"
+fi
 
 # Find the EC image to use
 function ec_image() {
@@ -271,7 +281,7 @@ function free_pty() {
 # Board specific flashing scripts
 
 function flash_stm32() {
-	TOOL_PATH="${SCRIPT_DIR}/../build/${BOARD}/util:$PATH"
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	if [ ! -x "$STM32MON" ]; then
 		die "no stm32mon util found."
@@ -320,8 +330,10 @@ function flash_stm32_dfu() {
 }
 
 function flash_link() {
+	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
+
 	OCD_CFG="servo_v2_slower.cfg"
-	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
+	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		info "Clearing write protect flag."
@@ -337,8 +349,10 @@ function flash_link() {
 }
 
 function flash_lm4() {
+	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
+
 	OCD_CFG="servo_v2_slower.cfg"
-	OCD_PATH="${SRC_ROOT}/platform/ec/chip/lm4/openocd"
+	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		# Unprotect exists, but isn't needed because erasing pstate is
