@@ -121,8 +121,11 @@ static void i2c_init_port(const struct i2c_port_t *p)
 /*****************************************************************************/
 #ifdef HAS_TASK_HOSTCMD
 /* Host command slave */
-/* Buffer for host commands (including version, error code and checksum) */
-static uint8_t host_buffer[I2C_MAX_HOST_PACKET_SIZE];
+/*
+ * Buffer for received host command packets (including prefix byte on request,
+ * and result/size on response)
+ */
+static uint8_t host_buffer[I2C_MAX_HOST_PACKET_SIZE + 2];
 static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
 static int host_i2c_resp_port;
 static int tx_pending;
