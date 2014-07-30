@@ -43,7 +43,7 @@ enum throttle_sources {
  * @param type          Type of throttling desired
  * @param source        Which task is requesting throttling
  */
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_TEMP_SENSOR
 void throttle_ap(enum throttle_level level,
 		 enum throttle_type type,
 		 enum throttle_sources source);
