@@ -1300,6 +1300,7 @@ enum motionsensor_location {
 /* List of motion sensor chips. */
 enum motionsensor_chip {
 	MOTIONSENSE_CHIP_KXCJ9 = 0,
+	MOTIONSENSE_CHIP_LSM6DS0 = 1,
 };
 
 /* Module flag masks used for the dump sub-command. */

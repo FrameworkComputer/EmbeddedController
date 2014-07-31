@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ACCEL_KXCJ9_H
 #define __CROS_EC_ACCEL_KXCJ9_H
 
+#include "task.h"
+
 /*
  * 7-bit address is 000111Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
@@ -99,17 +101,18 @@
 #define KXCJ9_OSA_800_0HZ	6
 #define KXCJ9_OSA_1600_HZ	7
 
+struct kxcj9_data {
+	struct mutex accel_mutex;
+	/* Current range of accelerometer. */
+	int sensor_range;
+	/* Current output data rate of accelerometer. */
+	int sensor_datarate;
+	/* Current resolution of accelerometer. */
+	int sensor_resolution;
+	/* Device address. */
+	int accel_addr;
+};
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-/**
- * Setup a one-time accel interrupt. If the threshold is low enough, the
- * interrupt may trigger due simply to noise and not any real motion. If the
- * threshold is 0, the interrupt will fire immediately.
- *
- * @param id Target accelerometer
- * @param threshold Threshold for interrupt in units of counts.
- */
-int accel_set_interrupt(const enum accel_id id, unsigned int threshold);
-#endif
+extern const struct accelgyro_info accel_kxcj9;
 
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */

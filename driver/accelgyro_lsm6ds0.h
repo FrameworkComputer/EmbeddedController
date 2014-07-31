@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ACCEL_LSM6DS0_H
 #define __CROS_EC_ACCEL_LSM6DS0_H
 
+#include "task.h"
+
 /*
  * 7-bit address is 110101Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
@@ -41,5 +43,17 @@
 
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define LSM6DS0_RESOLUTION      16
+
+struct lsm6ds0_data {
+	struct mutex accel_mutex;
+	/* Current range of accelerometer. */
+	int sensor_range;
+	/* Current output data rate of accelerometer. */
+	int sensor_datarate;
+	/* Device address. */
+	int accel_addr;
+};
+
+extern const struct accelgyro_info accel_lsm6ds0;
 
 #endif /* __CROS_EC_ACCEL_LSM6DS0_H */

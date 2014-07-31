@@ -5,7 +5,7 @@
 
 /* LSM6DS0 accelerometer and gyro module for Chrome EC */
 
-#include "accelerometer.h"
+#include "accelgyro.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_lsm6ds0.h"
@@ -24,14 +24,14 @@ struct accel_param_pair {
 };
 
 /* List of range values in +/-G's and their associated register values. */
-const struct accel_param_pair ranges[] = {
+static const struct accel_param_pair ranges[] = {
 	{2, LSM6DS0_GSEL_2G},
 	{4, LSM6DS0_GSEL_4G},
 	{8, LSM6DS0_GSEL_8G}
 };
 
 /* List of ODR values in mHz and their associated register values. */
-const struct accel_param_pair datarates[] = {
+static const struct accel_param_pair datarates[] = {
 	{10000,    LSM6DS0_ODR_10HZ},
 	{50000,    LSM6DS0_ODR_50HZ},
 	{119000,   LSM6DS0_ODR_119HZ},
@@ -39,17 +39,6 @@ const struct accel_param_pair datarates[] = {
 	{476000,   LSM6DS0_ODR_476HZ},
 	{952000,   LSM6DS0_ODR_982HZ}
 };
-
-/* Current range of each accelerometer. The value is an index into ranges[]. */
-static int sensor_range[ACCEL_COUNT] = {0, 0};
-
-/*
- * Current output data rate of each accelerometer. The value is an index into
- * datarates[].
- */
-static int sensor_datarate[ACCEL_COUNT] = {1, 1};
-
-static struct mutex accel_mutex[ACCEL_COUNT];
 
 /**
  * Find index into a accel_param_pair that matches the given engineering value
@@ -94,9 +83,12 @@ static int raw_write8(const int addr, const int reg, int data)
 	return i2c_write8(I2C_PORT_ACCEL, addr, reg, data);
 }
 
-int accel_set_range(const enum accel_id id, const int range, const int rnd)
+static int accel_set_range(void *drv_data,
+			   const int range,
+			   const int rnd)
 {
 	int ret, index, ctrl_reg6;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
 
 	/* Find index for interface pair matching the specified range. */
 	index = find_param_index(range, rnd, ranges, ARRAY_SIZE(ranges));
@@ -105,61 +97,52 @@ int accel_set_range(const enum accel_id id, const int range, const int rnd)
 	 * Lock accel resource to prevent another task from attempting
 	 * to write accel parameters until we are done.
 	 */
-	mutex_lock(&accel_mutex[id]);
+	mutex_lock(&data->accel_mutex);
 
-	ret = raw_read8(accel_addr[id], LSM6DS0_CTRL_REG6_XL, &ctrl_reg6);
+	ret = raw_read8(data->accel_addr, LSM6DS0_CTRL_REG6_XL, &ctrl_reg6);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	ctrl_reg6 = (ctrl_reg6 & ~LSM6DS0_GSEL_ALL) | ranges[index].reg;
-	ret = raw_write8(accel_addr[id], LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
+	ret = raw_write8(data->accel_addr, LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
 
 accel_cleanup:
 	/* Unlock accel resource and save new range if written successfully. */
-	mutex_unlock(&accel_mutex[id]);
+	mutex_unlock(&data->accel_mutex);
 	if (ret == EC_SUCCESS)
-		sensor_range[id] = index;
+		data->sensor_range = index;
 
 	return EC_SUCCESS;
 }
 
-int accel_get_range(const enum accel_id id, int * const range)
+static int accel_get_range(void *drv_data, int * const range)
 {
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
-		return EC_ERROR_INVAL;
-
-	*range = ranges[sensor_range[id]].val;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
+	*range = ranges[data->sensor_range].val;
 	return EC_SUCCESS;
 }
 
-int accel_set_resolution(const enum accel_id id, const int res, const int rnd)
+static int accel_set_resolution(void *drv_data,
+				const int res,
+				const int rnd)
 {
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
-		return EC_ERROR_INVAL;
-
 	/* Only one resolution, LSM6DS0_RESOLUTION, so nothing to do. */
 	return EC_SUCCESS;
 }
 
-int accel_get_resolution(const enum accel_id id, int * const res)
+static int accel_get_resolution(void *drv_data,
+				int * const res)
 {
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
-		return EC_ERROR_INVAL;
-
 	*res = LSM6DS0_RESOLUTION;
 	return EC_SUCCESS;
 }
 
-int accel_set_datarate(const enum accel_id id, const int rate, const int rnd)
+static int accel_set_datarate(void *drv_data,
+			      const int rate,
+			      const int rnd)
 {
 	int ret, index, ctrl_reg6;
-
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
-		return EC_ERROR_INVAL;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
 
 	/* Find index for interface pair matching the specified range. */
 	index = find_param_index(rate, rnd, datarates, ARRAY_SIZE(datarates));
@@ -168,62 +151,64 @@ int accel_set_datarate(const enum accel_id id, const int rate, const int rnd)
 	 * Lock accel resource to prevent another task from attempting
 	 * to write accel parameters until we are done.
 	 */
-	mutex_lock(&accel_mutex[id]);
+	mutex_lock(&data->accel_mutex);
 
-	ret = raw_read8(accel_addr[id], LSM6DS0_CTRL_REG6_XL, &ctrl_reg6);
+	ret = raw_read8(data->accel_addr, LSM6DS0_CTRL_REG6_XL, &ctrl_reg6);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	ctrl_reg6 = (ctrl_reg6 & ~LSM6DS0_ODR_ALL) | datarates[index].reg;
-	ret = raw_write8(accel_addr[id], LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
+	ret = raw_write8(data->accel_addr, LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
 
 accel_cleanup:
 	/* Unlock accel resource and save new ODR if written successfully. */
-	mutex_unlock(&accel_mutex[id]);
+	mutex_unlock(&data->accel_mutex);
 	if (ret == EC_SUCCESS)
-		sensor_datarate[id] = index;
+		data->sensor_datarate = index;
 
 	return EC_SUCCESS;
 }
 
-int accel_get_datarate(const enum accel_id id, int * const rate)
+static int accel_get_datarate(void *drv_data,
+			      int * const rate)
 {
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
-		return EC_ERROR_INVAL;
-
-	*rate = datarates[sensor_datarate[id]].val;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
+	*rate = datarates[data->sensor_datarate].val;
 	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
-int accel_set_interrupt(const enum accel_id id, unsigned int threshold)
+static int accel_set_interrupt(void *drv_data,
+			       unsigned int threshold)
 {
 	/* Currently unsupported. */
 	return EC_ERROR_UNKNOWN;
 }
 #endif
 
-int accel_read(const enum accel_id id, int * const x_acc, int * const y_acc,
-		int * const z_acc)
+static int accel_read(void *drv_data,
+		      int * const x_acc,
+		      int * const y_acc,
+		      int * const z_acc)
 {
 	uint8_t acc[6];
 	uint8_t reg = LSM6DS0_OUT_X_L_XL;
 	int ret, multiplier;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
 
 	/* Read 6 bytes starting at LSM6DS0_OUT_X_L_XL. */
-	mutex_lock(&accel_mutex[id]);
+	mutex_lock(&data->accel_mutex);
 	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, accel_addr[id], &reg, 1, acc, 6,
+	ret = i2c_xfer(I2C_PORT_ACCEL, data->accel_addr, &reg, 1, acc, 6,
 			I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_ACCEL, 0);
-	mutex_unlock(&accel_mutex[id]);
+	mutex_unlock(&data->accel_mutex);
 
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* Determine multiplier based on stored range. */
-	switch (ranges[sensor_range[id]].reg) {
+	switch (ranges[data->sensor_range].reg) {
 	case LSM6DS0_GSEL_2G:
 		multiplier = 1;
 		break;
@@ -254,32 +239,50 @@ int accel_read(const enum accel_id id, int * const x_acc, int * const y_acc,
 	return EC_SUCCESS;
 }
 
-int accel_init(const enum accel_id id)
+static int accel_init(void *drv_data, int i2c_addr)
 {
 	int ret, ctrl_reg6;
+	struct lsm6ds0_data *data = (struct lsm6ds0_data *)drv_data;
 
-	/* Check for valid id. */
-	if (id < 0 || id >= ACCEL_COUNT)
+	if (data == NULL)
 		return EC_ERROR_INVAL;
 
-	mutex_lock(&accel_mutex[id]);
+	memset(&data->accel_mutex, sizeof(struct mutex), 0);
+	data->sensor_range = 0;
+	data->sensor_datarate = 1;
+	data->accel_addr = i2c_addr;
 
 	/*
 	 * This sensor can be powered through an EC reboot, so the state of
 	 * the sensor is unknown here. Initiate software reset to restore
 	 * sensor to default.
 	 */
-	ret = raw_write8(accel_addr[id], LSM6DS0_CTRL_REG8, 1);
+	ret = raw_write8(data->accel_addr, LSM6DS0_CTRL_REG8, 1);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	/* Set ODR and range. */
-	ctrl_reg6 = datarates[sensor_datarate[id]].reg |
-			ranges[sensor_range[id]].reg;
+	ctrl_reg6 = datarates[data->sensor_datarate].reg |
+			ranges[data->sensor_range].reg;
 
-	ret = raw_write8(accel_addr[id], LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
+	ret = raw_write8(data->accel_addr, LSM6DS0_CTRL_REG6_XL, ctrl_reg6);
 
 accel_cleanup:
-	mutex_unlock(&accel_mutex[id]);
 	return ret;
 }
+
+const struct accelgyro_info accel_lsm6ds0 = {
+	.chip_type = CHIP_LSM6DS0,
+	.sensor_type = SENSOR_ACCELEROMETER,
+	.init = accel_init,
+	.read = accel_read,
+	.set_range = accel_set_range,
+	.get_range = accel_get_range,
+	.set_resolution = accel_set_resolution,
+	.get_resolution = accel_get_resolution,
+	.set_datarate = accel_set_datarate,
+	.get_datarate = accel_get_datarate,
+#ifdef CONFIG_ACCEL_INTERRUPTS
+	.set_interrupt = accel_set_interrupt,
+#endif
+};

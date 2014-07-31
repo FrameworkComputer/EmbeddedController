@@ -5,7 +5,6 @@
 
 /* Motion sensor calibration code. */
 
-#include "accelerometer.h"
 #include "common.h"
 #include "console.h"
 #include "math_util.h"

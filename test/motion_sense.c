@@ -7,12 +7,14 @@
 
 #include <math.h>
 
+#include "accelgyro.h"
 #include "common.h"
 #include "host_command.h"
 #include "motion_sense.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
+#include "util.h"
 
 /* Mock acceleration values for motion sense task to read in. */
 int mock_x_acc[ACCEL_COUNT], mock_y_acc[ACCEL_COUNT], mock_z_acc[ACCEL_COUNT];
@@ -20,46 +22,101 @@ int mock_x_acc[ACCEL_COUNT], mock_y_acc[ACCEL_COUNT], mock_z_acc[ACCEL_COUNT];
 /*****************************************************************************/
 /* Mock functions */
 
-int accel_init(enum accel_id id)
+static int accel_init(void *drv_data, int i2c_addr)
 {
 	return EC_SUCCESS;
 }
 
-int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
+static int accel_read_base(void *drv_data, int *x_acc, int *y_acc, int *z_acc)
 {
 	/* Return the mock values. */
-	*x_acc = mock_x_acc[id];
-	*y_acc = mock_y_acc[id];
-	*z_acc = mock_z_acc[id];
+	*x_acc = mock_x_acc[ACCEL_BASE];
+	*y_acc = mock_y_acc[ACCEL_BASE];
+	*z_acc = mock_z_acc[ACCEL_BASE];
 
 	return EC_SUCCESS;
 }
 
-int accel_set_range(const enum accel_id id, const int range, const int rnd)
+static int accel_read_lid(void *drv_data, int *x_acc, int *y_acc, int *z_acc)
 {
+	/* Return the mock values. */
+	*x_acc = mock_x_acc[ACCEL_LID];
+	*y_acc = mock_y_acc[ACCEL_LID];
+	*z_acc = mock_z_acc[ACCEL_LID];
+
 	return EC_SUCCESS;
 }
-int accel_get_range(const enum accel_id id, int * const range)
-{
-	return EC_SUCCESS;
-}
-int accel_set_resolution(const enum accel_id id, const int res, const int rnd)
-{
-	return EC_SUCCESS;
-}
-int accel_get_resolution(const enum accel_id id, int * const res)
-{
-	return EC_SUCCESS;
-}
-int accel_set_datarate(const enum accel_id id, const int rate, const int rnd)
-{
-	return EC_SUCCESS;
-}
-int accel_get_datarate(const enum accel_id id, int * const rate)
+
+static int accel_set_range(void *drv_data,
+			   const int range,
+			   const int rnd)
 {
 	return EC_SUCCESS;
 }
 
+static int accel_get_range(void *drv_data,
+			   int * const range)
+{
+	return EC_SUCCESS;
+}
+
+static int accel_set_resolution(void *drv_data,
+				const int res,
+				const int rnd)
+{
+	return EC_SUCCESS;
+}
+
+static int accel_get_resolution(void *drv_data,
+				int * const res)
+{
+	return EC_SUCCESS;
+}
+
+static int accel_set_datarate(void *drv_data,
+			      const int rate,
+			      const int rnd)
+{
+	return EC_SUCCESS;
+}
+
+static int accel_get_datarate(void *drv_data,
+			      int * const rate)
+{
+	return EC_SUCCESS;
+}
+
+const struct accelgyro_info test_motion_sense_base = {
+	.chip_type = CHIP_TEST,
+	.sensor_type = SENSOR_ACCELEROMETER,
+	.init = accel_init,
+	.read = accel_read_base,
+	.set_range = accel_set_range,
+	.get_range = accel_get_range,
+	.set_resolution = accel_set_resolution,
+	.get_resolution = accel_get_resolution,
+	.set_datarate = accel_set_datarate,
+	.get_datarate = accel_get_datarate,
+};
+
+const struct accelgyro_info test_motion_sense_lid = {
+	.chip_type = CHIP_TEST,
+	.sensor_type = SENSOR_ACCELEROMETER,
+	.init = accel_init,
+	.read = accel_read_lid,
+	.set_range = accel_set_range,
+	.get_range = accel_get_range,
+	.set_resolution = accel_set_resolution,
+	.get_resolution = accel_get_resolution,
+	.set_datarate = accel_set_datarate,
+	.get_datarate = accel_get_datarate,
+};
+
+const struct motion_sensor_t motion_sensors[] = {
+	{"test base sensor", LOCATION_BASE, &test_motion_sense_base, NULL, 0},
+	{"test lid sensor", LOCATION_LID, &test_motion_sense_lid, NULL, 0},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /*****************************************************************************/
 /* Test utilities */

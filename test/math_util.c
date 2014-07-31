@@ -10,43 +10,12 @@
 #include "math_util.h"
 #include "motion_sense.h"
 #include "test_util.h"
+#include "util.h"
 
 /*****************************************************************************/
-/* Mock functions */
-
-/* Need to define accelerometer functions just to compile. */
-int accel_init(enum accel_id id)
-{
-	return EC_SUCCESS;
-}
-int accel_read(enum accel_id id, int *x_acc, int *y_acc, int *z_acc)
-{
-	return EC_SUCCESS;
-}
-int accel_set_range(const enum accel_id id, const int range, const int rnd)
-{
-	return EC_SUCCESS;
-}
-int accel_get_range(const enum accel_id id, int * const range)
-{
-	return EC_SUCCESS;
-}
-int accel_set_resolution(const enum accel_id id, const int res, const int rnd)
-{
-	return EC_SUCCESS;
-}
-int accel_get_resolution(const enum accel_id id, int * const res)
-{
-	return EC_SUCCESS;
-}
-int accel_set_datarate(const enum accel_id id, const int rate, const int rnd)
-{
-	return EC_SUCCESS;
-}
-int accel_get_datarate(const enum accel_id id, int * const rate)
-{
-	return EC_SUCCESS;
-}
+/* Need to define motion sensor globals just to compile. */
+const struct motion_sensor_t motion_sensors[] = {};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /*****************************************************************************/
 /* Test utilities */
