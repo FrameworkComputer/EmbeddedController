@@ -104,6 +104,7 @@ enum pd_errors {
 
 /* VDO : Vendor Defined Message Object */
 #define VDO(vid, custom) (((vid) << 16) | ((custom) & 0xFFFF))
+#define VDO_MAX_SIZE 7
 
 #define VDO_ACK     (0 << 6)
 #define VDO_NAK     (1 << 6)
@@ -275,7 +276,7 @@ void pd_set_input_current_limit(uint32_t max_ma);
  */
 int pd_board_checks(void);
 
-/*
+/**
  * Handle Vendor Defined Message with our vendor ID.
  *
  * @param port     USB-C port number
@@ -286,13 +287,24 @@ int pd_board_checks(void);
  */
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
+/**
+ * Send Vendor Defined Message
+ *
+ * @param port     USB-C port number
+ * @param vid      Vendor ID
+ * @param cmd      VDO command number
+ * @param data     Pointer to payload to send
+ * @param data     number of data objects in payload
+ */
+void pd_send_vdm(int port, uint32_t vid, int cmd, uint32_t *data, int count);
+
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];
 extern const int pd_src_pdo_cnt;
 extern const uint32_t pd_snk_pdo[];
 extern const int pd_snk_pdo_cnt;
 
-/*
+/**
  * Get PD source power data objects.
  *
  * @param src_pdo pointer to the data to return.
@@ -308,7 +320,7 @@ enum typec_mux {
 	TYPEC_MUX_DOCK,
 };
 
-/*
+/**
  * Configure superspeed muxes on type-C port.
  *
  * @param port port number.
@@ -317,7 +329,7 @@ enum typec_mux {
  */
 void board_set_usb_mux(int port, enum typec_mux mux, int polarity);
 
-/*
+/**
  * Query superspeed mux status on type-C port.
  *
  * @param port port number.

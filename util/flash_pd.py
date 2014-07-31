@@ -184,7 +184,7 @@ def flash_pd(options):
   # reboot in RO
   ec.flash_command('reboot')
   # delay to give time to reboot
-  time.sleep(0.5)
+  time.sleep(1.5)
   # erase all RW partition
   ec.flash_command('erase')
 
@@ -214,7 +214,7 @@ def flash_pd(options):
   # reboot in RW
   ec.flash_command('reboot')
   # delay for reboot
-  time.sleep(0.2)
+  time.sleep(1.5)
 
   logging.info('Flashing DONE.')
   logging.info('SHA-1: %s', sha_str)
