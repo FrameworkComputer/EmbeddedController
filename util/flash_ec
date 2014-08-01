@@ -332,7 +332,7 @@ function flash_stm32_dfu() {
 function flash_link() {
 	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
 
-	OCD_CFG="servo_v2_slower.cfg"
+	OCD_CFG="servo_v2.cfg"
 	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
@@ -351,7 +351,7 @@ function flash_link() {
 function flash_lm4() {
 	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
 
-	OCD_CFG="servo_v2_slower.cfg"
+	OCD_CFG="servo_v2.cfg"
 	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
