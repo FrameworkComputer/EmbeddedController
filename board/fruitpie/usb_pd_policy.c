@@ -123,11 +123,6 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-int pd_power_negotiation_allowed(void)
-{
-	return 1;
-}
-
 /* ----------------- Vendor Defined Messages ------------------ */
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {

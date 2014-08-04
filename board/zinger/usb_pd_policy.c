@@ -279,11 +279,6 @@ int pd_board_checks(void)
 
 }
 
-int pd_power_negotiation_allowed(void)
-{
-	return 1;
-}
-
 void pd_adc_interrupt(void)
 {
 	/* cut the power output */

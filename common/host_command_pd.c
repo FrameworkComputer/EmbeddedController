@@ -28,10 +28,6 @@ static void pd_exchange_status(void)
 	struct ec_response_pd_status pd_status;
 	int rv = 0, tries = 0;
 
-	/*
-	 * TODO(crosbug.com/p/29499): Change sending state of charge to
-	 * remaining capacity for finer grained control.
-	 */
 	/* Send battery state of charge */
 	if (charge_get_flags() & CHARGE_FLAG_BATT_RESPONSIVE)
 		ec_status.batt_soc = charge_get_percent();

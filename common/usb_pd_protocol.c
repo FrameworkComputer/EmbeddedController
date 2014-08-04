@@ -1066,8 +1066,7 @@ void pd_task(void)
 			timeout = 10*MSEC;
 
 			/* Source connection monitoring */
-			if (pd_snk_is_vbus_provided(port) &&
-			    pd_power_negotiation_allowed()) {
+			if (pd_snk_is_vbus_provided(port)) {
 				cc1_volt = pd_adc_read(port, 0);
 				cc2_volt = pd_adc_read(port, 1);
 				if ((cc1_volt >= PD_SNK_VA) ||

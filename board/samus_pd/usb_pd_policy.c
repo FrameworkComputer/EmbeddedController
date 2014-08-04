@@ -33,8 +33,8 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
 
-/* Flag for battery status */
-static int battery_ok = 1;
+/* Battery state of charge percentage */
+static int batt_soc;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
@@ -42,10 +42,6 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	int sel_mv;
 	int max_uw = 0;
 	int max_i = -1;
-
-	/* Don't negotiate power until battery ok signal is given */
-	if (!battery_ok)
-		return -EC_ERROR_UNKNOWN;
 
 	/* Get max power */
 	for (i = 0; i < cnt; i++) {
@@ -142,23 +138,7 @@ static void pd_send_ec_int(void)
 
 int pd_board_checks(void)
 {
-	static uint64_t last_time;
-
-	/*
-	 * If battery is not yet ok, signal EC to send status. Avoid
-	 * sending requests too frequently.
-	 */
-	if (!battery_ok && (get_time().val - last_time >= SECOND)) {
-		last_time = get_time().val;
-		pd_send_ec_int();
-	}
-
 	return EC_SUCCESS;
-}
-
-int pd_power_negotiation_allowed(void)
-{
-	return battery_ok;
 }
 
 static void dual_role_on(void)
@@ -232,17 +212,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;
 
-	if (p->batt_soc >= CONFIG_USB_PD_MIN_BATT_CHARGE) {
-		/*
-		 * When battery is above minimum charge, we know
-		 * that we have enough power remaining for us to
-		 * negotiate power over PD.
-		 */
-		CPRINTS("Battery is ok, safe to negotiate power");
-		battery_ok = 1;
-	} else {
-		battery_ok = 0;
-	}
+	batt_soc = p->batt_soc;
 
 	r->status = 0;
 

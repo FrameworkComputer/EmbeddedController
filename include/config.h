@@ -908,10 +908,6 @@
 /* USB PD MCU slave address for host commands */
 #define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
 
-/* TODO(crosbug.com/p/29499): Determine threshold for power negotiation */
-/* USB PD minimum battery charge to negotiate for more power */
-#define CONFIG_USB_PD_MIN_BATT_CHARGE 1
-
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
 
