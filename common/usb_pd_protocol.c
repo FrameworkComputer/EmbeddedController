@@ -671,7 +671,10 @@ static void handle_ctrl_request(int port, uint16_t head,
 	case PD_CTRL_GOTO_MIN:
 		break;
 	case PD_CTRL_PS_RDY:
-		if (pd[port].role == PD_ROLE_SINK)
+		if (pd[port].task_state == PD_STATE_SNK_DISCOVERY)
+			/* Don't know what power source is ready. Reset. */
+			set_state(port, PD_STATE_HARD_RESET);
+		else if (pd[port].role == PD_ROLE_SINK)
 			set_state(port, PD_STATE_SNK_READY);
 		break;
 	case PD_CTRL_REJECT:
