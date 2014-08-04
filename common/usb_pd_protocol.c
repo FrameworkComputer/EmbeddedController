@@ -550,6 +550,21 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 		vid, payload[0] & 0xFFFF);
 }
 
+/* Return flag for pd state is connected */
+static int pd_is_connected(int port)
+{
+	if (pd[port].task_state == PD_STATE_DISABLED)
+		return 0;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* Check if sink is connected */
+	if (pd[port].role == PD_ROLE_SINK)
+		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
+#endif
+	/* Must be a source */
+	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED;
+}
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 {
@@ -694,6 +709,13 @@ static void handle_request(int port, uint16_t head,
 	for (p = 0; p < cnt; p++)
 		CPRINTF("[%d]%08x ", p, payload[p]);
 	CPRINTF("\n");
+
+	/*
+	 * If we are in disconnected state, we shouldn't get a request. Do
+	 * a hard reset if we get one.
+	 */
+	if (!pd_is_connected(port))
+		set_state(port, PD_STATE_HARD_RESET);
 
 	if (cnt)
 		handle_data_request(port, head, payload);
@@ -910,21 +932,6 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 	}
 }
 #endif
-
-/* Return flag for pd state is connected */
-static int pd_is_connected(int port)
-{
-	if (pd[port].task_state == PD_STATE_DISABLED)
-		return 0;
-
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	/* Check if sink is connected */
-	if (pd[port].role == PD_ROLE_SINK)
-		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
-#endif
-	/* Must be a source */
-	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED;
-}
 
 int pd_get_polarity(int port)
 {
