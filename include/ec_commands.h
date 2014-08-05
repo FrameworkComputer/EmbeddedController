@@ -2497,7 +2497,8 @@ struct ec_params_pd_status {
 
 /* Status of PD being sent back to EC */
 struct ec_response_pd_status {
-	int8_t status; /* currently empty */
+	int8_t status;        /* PD MCU status */
+	uint32_t curr_lim_ma; /* input current limit */
 } __packed;
 
 /* Set USB type-C port role and muxes */

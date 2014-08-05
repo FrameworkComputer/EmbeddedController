@@ -44,8 +44,23 @@ static void pd_exchange_status(void)
 		task_wait_event(500*MSEC);
 	}
 
-	if (rv < 0)
+	if (rv < 0) {
 		CPRINTS("Host command to PD MCU failed");
+		return;
+	}
+
+	/* Set input current limit */
+#ifdef BOARD_SAMUS
+	/*
+	 * TODO(crosbug.com/p/28532): Remove this workaround for Samus p2b
+	 * boards which cannot correctly limit input current.
+	 */
+	pd_status.curr_lim_ma = pd_status.curr_lim_ma * 2 / 3;
+#endif
+	rv = charger_set_input_current(MAX(pd_status.curr_lim_ma,
+					CONFIG_CHARGER_INPUT_CURRENT));
+	if (rv < 0)
+		CPRINTS("Failed to set input current limit from PD MCU");
 }
 
 void pd_command_task(void)

@@ -36,11 +36,15 @@ static unsigned max_mv = -1; /* no cap */
 /* Battery state of charge percentage */
 static int batt_soc;
 
+/* PD MCU status for host response */
+static struct ec_response_pd_status pd_status;
+
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 {
 	int i;
 	int sel_mv;
 	int max_uw = 0;
+	int max_ma;
 	int max_i = -1;
 
 	/* Get max power */
@@ -65,16 +69,18 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	/* request all the power ... */
 	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		int uw = 250000 * (src_caps[max_i] & 0x3FF);
+		max_ma = uw / sel_mv;
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		ccprintf("Request [%d] %dV %d/%d mW\n",
-			 max_i, sel_mv/1000, uw/1000, uw/1000);
+		ccprintf("Request [%d] %dV %dmW\n",
+			 max_i, sel_mv/1000, uw/1000);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
+		max_ma = ma;
 		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		ccprintf("Request [%d] %dV %d/%d mA\n",
-			 max_i, sel_mv/1000, max_i, ma/2, ma);
+		ccprintf("Request [%d] %dV %dmA\n",
+			 max_i, sel_mv/1000, ma);
 	}
-	return EC_SUCCESS;
+	return max_ma;
 }
 
 void pd_set_max_voltage(unsigned mv)
@@ -134,6 +140,12 @@ static void pd_send_ec_int(void)
 	usleep(5);
 
 	gpio_set_level(GPIO_EC_INT_L, 1);
+}
+
+void pd_set_input_current_limit(uint32_t max_ma)
+{
+	pd_status.curr_lim_ma = max_ma;
+	pd_send_ec_int();
 }
 
 int pd_board_checks(void)
@@ -214,7 +226,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 
 	batt_soc = p->batt_soc;
 
-	r->status = 0;
+	*r = pd_status;
 
 	args->response_size = sizeof(*r);
 

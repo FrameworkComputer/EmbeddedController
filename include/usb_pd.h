@@ -159,7 +159,7 @@ void pd_set_dual_role(enum pd_dual_role_states state);
  * @param cnt  the number of Power Data Objects.
  * @param src_caps Power Data Objects representing the source capabilities.
  * @param rdo  requested Request Data Object.
- * @return EC_SUCCESS if the RDO is filled with valid data, <0 else.
+ * @return <0 if invalid, else value is the current limit of the RDO data
  */
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo);
 
@@ -201,7 +201,14 @@ int pd_set_power_supply_ready(int port);
  */
 void pd_request_source_voltage(int port, int mv);
 
-/*
+/**
+ * Set the input current limit.
+ *
+ * @max_ma Maximum current limit
+ */
+void pd_set_input_current_limit(uint32_t max_ma);
+
+/**
  * Verify board specific health status : current, voltages...
  *
  * @return EC_SUCCESS if the board is good, <0 else.

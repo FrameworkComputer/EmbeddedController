@@ -243,6 +243,11 @@ static struct pd_protocol {
 	enum pd_states timeout_state;
 	/* Timeout for the current state. Set to 0 for no timeout. */
 	uint64_t timeout;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* Current limit based on the last request message */
+	uint32_t curr_limit;
+#endif
 } pd[PD_PORT_COUNT];
 
 /*
@@ -606,6 +611,7 @@ static void pd_send_request_msg(int port)
 	/* we were waiting for them, let's process them */
 	res = pd_choose_voltage(pd_src_cap_cnt[port], pd_src_caps[port], &rdo);
 	if (res >= 0) {
+		pd[port].curr_limit = res;
 		res = send_request(port, rdo);
 		if (res >= 0)
 			set_state(port, PD_STATE_SNK_REQUESTED);
@@ -694,11 +700,13 @@ static void handle_ctrl_request(int port, uint16_t head,
 	case PD_CTRL_GOTO_MIN:
 		break;
 	case PD_CTRL_PS_RDY:
-		if (pd[port].task_state == PD_STATE_SNK_DISCOVERY)
+		if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
 			/* Don't know what power source is ready. Reset. */
 			set_state(port, PD_STATE_HARD_RESET);
-		else if (pd[port].role == PD_ROLE_SINK)
+		} else if (pd[port].role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
+			pd_set_input_current_limit(pd[port].curr_limit);
+		}
 		break;
 	case PD_CTRL_REJECT:
 		set_state(port, PD_STATE_SNK_DISCOVERY);
@@ -915,6 +923,9 @@ static void execute_hard_reset(int port)
 	if (pd[port].task_state != PD_STATE_VDM_COMM)
 		set_state(port, pd[port].role == PD_ROLE_SINK ?
 			PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
+
+	/* Clear the input current limit */
+	pd_set_input_current_limit(0);
 #else
 	set_state(port, PD_STATE_SRC_DISCONNECTED);
 #endif
@@ -1253,6 +1264,8 @@ void pd_task(void)
 			if (pd[port].task_state != PD_STATE_VDM_COMM) {
 				/* Sink: detect disconnect by monitoring VBUS */
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
+				/* Clear the input current limit */
+				pd_set_input_current_limit(0);
 				/* set timeout small to reconnect fast */
 				timeout = 5*MSEC;
 			}

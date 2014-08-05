@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -37,6 +38,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	int i;
 	int sel_mv;
 	int max_uw = 0;
+	int max_ma;
 	int max_i = -1;
 
 	/* Get max power */
@@ -61,16 +63,26 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	/* request all the power ... */
 	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		int uw = 250000 * (src_caps[max_i] & 0x3FF);
+		max_ma = uw / sel_mv;
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		ccprintf("Request [%d] %dV %d/%d mW\n",
-			 max_i, sel_mv/1000, uw/1000, uw/1000);
+		ccprintf("Request [%d] %dV %dmW\n",
+			 max_i, sel_mv/1000, uw/1000);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
+		max_ma = ma;
 		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		ccprintf("Request [%d] %dV %d/%d mA\n",
-			 max_i, sel_mv/1000, max_i, ma/2, ma);
+		ccprintf("Request [%d] %dV %dmA\n",
+			 max_i, sel_mv/1000, ma);
 	}
-	return EC_SUCCESS;
+	return max_ma;
+}
+
+void pd_set_input_current_limit(uint32_t max_ma)
+{
+	int rv = charger_set_input_current(MAX(max_ma,
+					CONFIG_CHARGER_INPUT_CURRENT));
+	if (rv < 0)
+		CPRINTS("Failed to set input current limit for PD");
 }
 
 void pd_set_max_voltage(unsigned mv)
