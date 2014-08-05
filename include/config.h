@@ -908,6 +908,9 @@
 /* Include all USB Power Delivery modules */
 #undef CONFIG_USB_POWER_DELIVERY
 
+/* Default state of PD communication enabled flag */
+#define CONFIG_USB_PD_COMM_ENABLED 1
+
 /* Respond to custom vendor-defined messages over PD */
 #undef CONFIG_USB_PD_CUSTOM_VDM
 

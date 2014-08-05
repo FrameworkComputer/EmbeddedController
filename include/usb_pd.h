@@ -412,4 +412,13 @@ void pd_hw_init(int port);
  */
 int pd_get_polarity(int port);
 
+/**
+ * Set the PD communication enabled flag. When communication is disabled,
+ * the port can still detect connection and source power but will not
+ * send or respond to any PD communication.
+ *
+ * @param enable Enable flag to set
+ */
+void pd_comm_enable(int enable);
+
 #endif  /* __USB_PD_H */
