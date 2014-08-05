@@ -108,7 +108,7 @@ const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(5000,  3000, 0),
 		PDO_FIXED(12000, 3000, 0),
-		PDO_FIXED(20000, 2000, 0),
+		PDO_FIXED(20000, 3000, 0),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
