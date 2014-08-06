@@ -905,11 +905,20 @@
 /*****************************************************************************/
 /* USB PD config */
 
+/* Include all USB Power Delivery modules */
+#undef CONFIG_USB_POWER_DELIVERY
+
+/* Respond to custom vendor-defined messages over PD */
+#undef CONFIG_USB_PD_CUSTOM_VDM
+
+/* Define if this board can act as a dual-role PD port (source and sink) */
+#undef CONFIG_USB_PD_DUAL_ROLE
+
 /* USB PD MCU slave address for host commands */
 #define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
 
-/* Compile chip support for the USB device controller */
-#undef CONFIG_USB
+/* Define if using internal comparator for PD receive */
+#undef CONFIG_USB_PD_INTERNAL_COMP
 
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
@@ -921,6 +930,9 @@
 #undef CONFIG_USBC_SS_MUX
 
 /*****************************************************************************/
+
+/* Compile chip support for the USB device controller */
+#undef CONFIG_USB
 
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB
