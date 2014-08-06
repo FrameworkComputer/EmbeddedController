@@ -214,8 +214,22 @@ static inline void set_state_timeout(int port,
 
 static inline void set_state(int port, enum pd_states next_state)
 {
-	pd[port].task_state = next_state;
+	enum pd_states last_state = pd[port].task_state;
+
 	set_state_timeout(port, 0, 0);
+	pd[port].task_state = next_state;
+
+	/* Log state transition, except for toggling between sink and source */
+	if (last_state == next_state)
+		return;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	if ((last_state == PD_STATE_SNK_DISCONNECTED &&
+	     next_state == PD_STATE_SRC_DISCONNECTED) ||
+	    (last_state == PD_STATE_SRC_DISCONNECTED &&
+	     next_state == PD_STATE_SNK_DISCONNECTED))
+		return;
+#endif
+	CPRINTF("C%d st%d\n", port, next_state);
 }
 
 /* increment message ID counter */
@@ -680,14 +694,16 @@ static void handle_request(int port, uint16_t head,
 	int cnt = PD_HEADER_CNT(head);
 	int p;
 
-	if (PD_HEADER_TYPE(head) != 1 || cnt)
+	if (PD_HEADER_TYPE(head) != PD_CTRL_GOOD_CRC || cnt)
 		send_goodcrc(port, PD_HEADER_ID(head));
 
-	/* dump received packet content */
-	CPRINTF("RECV %04x/%d ", head, cnt);
-	for (p = 0; p < cnt; p++)
-		CPRINTF("[%d]%08x ", p, payload[p]);
-	CPRINTF("\n");
+	/* dump received packet content (except for ping) */
+	if (PD_HEADER_TYPE(head) != PD_CTRL_PING) {
+		CPRINTF("RECV %04x/%d ", head, cnt);
+		for (p = 0; p < cnt; p++)
+			CPRINTF("[%d]%08x ", p, payload[p]);
+		CPRINTF("\n");
+	}
 
 	/*
 	 * If we are in disconnected state, we shouldn't get a request. Do
