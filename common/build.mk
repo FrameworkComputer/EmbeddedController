@@ -62,6 +62,7 @@ common-$(CONFIG_SHA1)+=sha1.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o
 common-$(CONFIG_SWITCH)+=switch.o
+common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
