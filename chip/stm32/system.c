@@ -40,7 +40,14 @@ static uint16_t bkpdata_read(enum bkpdata_index index)
 	if (index < 0 || index >= STM32_BKP_ENTRIES)
 		return 0;
 
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0)
+	if (index & 1)
+		return STM32_BKP_DATA(index >> 1) >> 16;
+	else
+		return STM32_BKP_DATA(index >> 1) & 0xFFFF;
+#else
 	return STM32_BKP_DATA(index);
+#endif
 }
 
 /**
@@ -53,7 +60,19 @@ static int bkpdata_write(enum bkpdata_index index, uint16_t value)
 	if (index < 0 || index >= STM32_BKP_ENTRIES)
 		return EC_ERROR_INVAL;
 
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0)
+	if (index & 1) {
+		uint32_t val = STM32_BKP_DATA(index >> 1);
+		val = (val & 0x0000FFFF) | (value << 16);
+		STM32_BKP_DATA(index >> 1) = val;
+	} else {
+		uint32_t val = STM32_BKP_DATA(index >> 1);
+		val = (val & 0xFFFF0000) | value;
+		STM32_BKP_DATA(index >> 1) = val;
+	}
+#else
 	STM32_BKP_DATA(index) = value;
+#endif
 	return EC_SUCCESS;
 }
 
