@@ -163,15 +163,16 @@ static inline void pd_tx_disable(int port, int polarity)
 static inline void pd_select_polarity(int port, int polarity)
 {
 	if (port == 0) {
-		/* use the right comparator non inverted input for COMP1 */
+		/* use the right comparator inverted input for COMP1 */
 		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
 			| STM32_COMP_CMP1EN
 			| (polarity ? STM32_COMP_CMP1INSEL_INM4
 					: STM32_COMP_CMP1INSEL_INM6);
 	} else {
-		/* use the right comparator non inverted input for COMP2 */
+		/* use the right comparator inverted input for COMP2 */
+		/* use window mode on COMP2 to use COMP1 non-inverting input */
 		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP2INSEL_MASK)
-			| STM32_COMP_CMP2EN
+			| STM32_COMP_CMP2EN | STM32_COMP_WNDWEN
 			| (polarity ? STM32_COMP_CMP2INSEL_INM5
 					: STM32_COMP_CMP2INSEL_INM6);
 	}
