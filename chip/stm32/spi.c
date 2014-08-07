@@ -26,12 +26,12 @@
 /* DMA channel option */
 static const struct dma_option dma_tx_option = {
 	STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
-	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 };
 
 static const struct dma_option dma_rx_option = {
 	STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
-	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_16_BIT
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 };
 
 /*
@@ -550,8 +550,12 @@ static void spi_init(void)
 	/* Enable clocks to SPI1 module */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 
-	/* Enable rx DMA and get ready to receive our first transaction */
-	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN;
+	/*
+	 * Enable rx/tx DMA and get ready to receive our first transaction and
+	 * "disable" FIFO by setting event to happen after only 1 byte
+	 */
+	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN |
+		STM32_SPI_CR2_FRXTH;
 
 	/* Enable the SPI peripheral */
 	spi->cr1 |= STM32_SPI_CR1_SPE;
