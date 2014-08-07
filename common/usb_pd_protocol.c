@@ -966,6 +966,7 @@ void pd_task(void)
 #endif
 	enum pd_states this_state;
 	timestamp_t now;
+	int caps_count = 0;
 
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
@@ -1026,6 +1027,7 @@ void pd_task(void)
 				/* Enable VBUS */
 				pd_set_power_supply_ready(port);
 				set_state(port, PD_STATE_SRC_DISCOVERY);
+				caps_count = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 				/* Keep VBUS up for the hold period */
 				next_role_swap = get_time().val + PD_T_DRP_HOLD;
@@ -1047,13 +1049,19 @@ void pd_task(void)
 #endif
 			break;
 		case PD_STATE_SRC_DISCOVERY:
-			/* Query capabilites of the other side */
-			res = send_source_cap(port);
-			/* packet was acked => PD capable device) */
-			if (res >= 0) {
-				set_state(port, PD_STATE_SRC_NEGOCIATE);
-			} else { /* failed, retry later */
-				timeout = PD_T_SEND_SOURCE_CAP;
+			/* Send source cap some minimum number of times */
+			if (caps_count < PD_CAPS_COUNT) {
+				/* Query capabilites of the other side */
+				res = send_source_cap(port);
+				/* packet was acked => PD capable device) */
+				if (res >= 0) {
+					set_state(port,
+						  PD_STATE_SRC_NEGOCIATE);
+					caps_count = 0;
+				} else { /* failed, retry later */
+					timeout = PD_T_SEND_SOURCE_CAP;
+					caps_count++;
+				}
 			}
 			break;
 		case PD_STATE_SRC_NEGOCIATE:
