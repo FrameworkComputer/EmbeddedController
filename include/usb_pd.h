@@ -133,6 +133,9 @@ enum pd_errors {
 /* USB Vendor ID assigned to Google Inc. */
 #define USB_VID_GOOGLE 0x18d1
 
+/* Timeout for message receive in microseconds */
+#define USB_PD_RX_TMOUT_US 2700
+
 /* --- Protocol layer functions --- */
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE

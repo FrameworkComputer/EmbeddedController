@@ -334,8 +334,20 @@ static int send_validate_message(int port, uint16_t header,
 		/* Transmit the packet */
 		pd_start_tx(port, pd[port].polarity, bit_len);
 		pd_tx_done(port, pd[port].polarity);
-		/* starting waiting for GoodCrc */
-		pd_rx_start(port);
+		/*
+		 * If we failed the first try, enable interrupt and yield
+		 * to other tasks, so that we don't starve them.
+		 */
+		if (r) {
+			pd_rx_enable_monitoring(port);
+			/* Message receive timeout is 2.7ms */
+			if (task_wait_event(USB_PD_RX_TMOUT_US) ==
+			    TASK_EVENT_TIMER)
+				continue;
+		} else {
+			/* starting waiting for GoodCrc */
+			pd_rx_start(port);
+		}
 		/* read the incoming packet if any */
 		head = analyze_rx(port, payload);
 		pd_rx_complete(port);

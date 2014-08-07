@@ -531,8 +531,8 @@ void pd_hw_init(int port)
 	/* Auto-reload value : 16-bit free running counter */
 	phy->tim_rx->arr = 0xFFFF;
 
-	/* Timeout for message receive : 2.7ms */
-	phy->tim_rx->ccr[2] = 2400000 * 27 / 10000;
+	/* Timeout for message receive */
+	phy->tim_rx->ccr[2] = (2400000 / 1000) * USB_PD_RX_TMOUT_US / 1000;
 	/* Timer ICx input configuration */
 	if (TIM_CCR_IDX(port) == 1)
 		phy->tim_rx->ccmr1 |= TIM_CCR_CS << 0;
