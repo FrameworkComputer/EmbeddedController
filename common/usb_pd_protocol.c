@@ -29,56 +29,6 @@ static int debug_dump;
 const int debug_dump;
 #endif
 
-/* Control Message type */
-enum {
-	/* 0 Reserved */
-	PD_CTRL_GOOD_CRC = 1,
-	PD_CTRL_GOTO_MIN = 2,
-	PD_CTRL_ACCEPT = 3,
-	PD_CTRL_REJECT = 4,
-	PD_CTRL_PING = 5,
-	PD_CTRL_PS_RDY = 6,
-	PD_CTRL_GET_SOURCE_CAP = 7,
-	PD_CTRL_GET_SINK_CAP = 8,
-	PD_CTRL_PROTOCOL_ERR = 9,
-	PD_CTRL_SWAP = 10,
-	/* 11 Reserved */
-	PD_CTRL_WAIT = 12,
-	PD_CTRL_SOFT_RESET = 13,
-	/* 14-15 Reserved */
-};
-
-/* Data message type */
-enum {
-	/* 0 Reserved */
-	PD_DATA_SOURCE_CAP = 1,
-	PD_DATA_REQUEST = 2,
-	PD_DATA_BIST = 3,
-	PD_DATA_SINK_CAP = 4,
-	/* 5-14 Reserved */
-	PD_DATA_VENDOR_DEF = 15,
-};
-
-/* Protocol revision */
-#define PD_REV10 0
-
-/* BMC-supported bit : we are using the baseband variant of the protocol */
-#define PD_BMC_SUPPORTED (1 << 15)
-
-/* Port role */
-#define PD_ROLE_SINK   0
-#define PD_ROLE_SOURCE 1
-
-/* build message header */
-#define PD_HEADER(type, role, id, cnt) \
-	((type) | (PD_REV10 << 6) | \
-	 ((role) << 8) | ((id) << 9) | ((cnt) << 12) | \
-	 PD_BMC_SUPPORTED)
-
-#define PD_HEADER_CNT(header)  (((header) >> 12) & 7)
-#define PD_HEADER_TYPE(header) ((header) & 0xF)
-#define PD_HEADER_ID(header)   (((header) >> 9) & 7)
-
 /* Encode 5 bits using Biphase Mark Coding */
 #define BMC(x)   ((x &  1 ? 0x001 : 0x3FF) \
 		^ (x &  2 ? 0x004 : 0x3FC) \
@@ -121,11 +71,6 @@ static const uint16_t bmc4b5b[] = {
 /* Reserved    Error        10000 */
 /* Reserved    Error        11111 */
 };
-#define PD_SYNC1 0x18
-#define PD_SYNC2 0x11
-#define PD_RST1  0x07
-#define PD_RST2  0x19
-#define PD_EOP   0x0D
 
 static const uint8_t dec4b5b[] = {
 /* Error    */ 0x10 /* 00000 */,
