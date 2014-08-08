@@ -32,6 +32,7 @@ struct charge_state_data {
 	enum charge_state_v2 state;
 	int requested_voltage;
 	int requested_current;
+	int desired_input_current;
 };
 
 /*
@@ -56,6 +57,15 @@ enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value);
 enum ec_status charger_profile_override_set_param(uint32_t param,
 						  uint32_t value);
+
+/**
+ * Set the charge input current limit. This value is stored and sent every
+ * time AC is applied.
+ *
+ * @param ma New input current limit in mA
+ * @return EC_SUCCESS or error
+ */
+int charge_set_input_current_limit(int ma);
 
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 

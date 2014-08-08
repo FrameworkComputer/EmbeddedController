@@ -169,18 +169,12 @@ int charger_set_voltage(int voltage)
 /* Charging power state initialization */
 int charger_post_init(void)
 {
-	int rv;
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
+	int rv;
 	int option2;
 #endif
 
-	/* Set charger input current limit */
-	rv = charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT);
-
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
-	if (rv)
-		return rv;
-
 	/* Read the external ILIM pin enabled flag. */
 	rv = i2c_read16(I2C_PORT_CHARGER, BQ24773_ADDR,
 			   BQ24773_CHARGE_OPTION2, &option2);
@@ -193,9 +187,10 @@ int charger_post_init(void)
 		rv = i2c_write16(I2C_PORT_CHARGER, BQ24773_ADDR,
 				 BQ24773_CHARGE_OPTION2, option2);
 	}
-#endif
-
 	return rv;
+#else
+	return EC_SUCCESS;
+#endif
 }
 
 int charger_discharge_on_ac(int enable)

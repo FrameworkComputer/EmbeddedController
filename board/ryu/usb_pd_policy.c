@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "charger.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -80,7 +80,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 
 void pd_set_input_current_limit(uint32_t max_ma)
 {
-	int rv = charger_set_input_current(MAX(max_ma,
+	int rv = charge_set_input_current_limit(MAX(max_ma,
 					CONFIG_CHARGER_INPUT_CURRENT));
 	if (rv < 0)
 		CPRINTS("Failed to set input current limit for PD");

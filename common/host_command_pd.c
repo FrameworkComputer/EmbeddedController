@@ -57,7 +57,7 @@ static void pd_exchange_status(void)
 	 */
 	pd_status.curr_lim_ma = pd_status.curr_lim_ma * 2 / 3;
 #endif
-	rv = charger_set_input_current(MAX(pd_status.curr_lim_ma,
+	rv = charge_set_input_current_limit(MAX(pd_status.curr_lim_ma,
 					CONFIG_CHARGER_INPUT_CURRENT));
 	if (rv < 0)
 		CPRINTS("Failed to set input current limit from PD MCU");
