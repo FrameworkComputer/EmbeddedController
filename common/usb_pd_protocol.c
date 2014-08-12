@@ -598,6 +598,17 @@ static void execute_soft_reset(int port)
 	CPRINTF("Soft Reset\n");
 }
 
+void pd_soft_reset(void)
+{
+	int i;
+
+	for (i = 0; i < PD_PORT_COUNT; ++i)
+		if (pd_is_connected(i)) {
+			execute_soft_reset(i);
+			send_control(i, PD_CTRL_SOFT_RESET);
+		}
+}
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 {

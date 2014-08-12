@@ -212,6 +212,9 @@ enum pd_data_msg_type {
 #define PD_RST2  0x19
 #define PD_EOP   0x0D
 
+/* Issue PD soft reset */
+void pd_soft_reset(void);
+
 /* --- Policy layer functions --- */
 
 /**

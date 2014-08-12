@@ -20,6 +20,7 @@
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "usb_pd.h"
 #include "util.h"
 #include "version.h"
 
@@ -398,6 +399,17 @@ static void jump_to_image(uintptr_t init_addr)
 	gpio_set_level(GPIO_ENTERING_RW, 1);
 	usleep(MSEC);
 	gpio_set_level(GPIO_ENTERING_RW, 0);
+
+#ifdef CONFIG_USB_POWER_DELIVERY
+	/*
+	 * On sysjump, we are most definitely going to drop pings (if any)
+	 * and lose all of our PD state. Instead of trying to remember all
+	 * the states and deal with on-going transmission, let's send soft
+	 * reset here so that the communication starts over without dropping
+	 * power.
+	 */
+	pd_soft_reset();
+#endif
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())
