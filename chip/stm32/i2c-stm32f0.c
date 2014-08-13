@@ -166,23 +166,23 @@ static void i2c_process_command(void)
 	 * host command i2c process function which handles all protocol
 	 * versions.
 	 */
+	i2c_packet.send_response = i2c_send_response_packet;
+
+	i2c_packet.request = (const void *)(&buff[1]);
+	i2c_packet.request_temp = params_copy;
+	i2c_packet.request_max = sizeof(params_copy);
+	/* Don't know the request size so pass in the entire buffer */
+	i2c_packet.request_size = I2C_MAX_HOST_PACKET_SIZE;
+
+	/*
+	 * Stuff response at buff[2] to leave the first two bytes of
+	 * buffer available for the result and size to send over i2c.
+	 */
+	i2c_packet.response = (void *)(&buff[2]);
+	i2c_packet.response_max = I2C_MAX_HOST_PACKET_SIZE;
+	i2c_packet.response_size = 0;
+
 	if (*buff >= EC_COMMAND_PROTOCOL_3) {
-		i2c_packet.send_response = i2c_send_response_packet;
-
-		i2c_packet.request = (const void *)(&buff[1]);
-		i2c_packet.request_temp = params_copy;
-		i2c_packet.request_max = sizeof(params_copy);
-		/* Don't know the request size so pass in the entire buffer */
-		i2c_packet.request_size = I2C_MAX_HOST_PACKET_SIZE;
-
-		/*
-		 * Stuff response at buff[2] to leave the first two bytes of
-		 * buffer available for the result and size to send over i2c.
-		 */
-		i2c_packet.response = (void *)(&buff[2]);
-		i2c_packet.response_max = I2C_MAX_HOST_PACKET_SIZE;
-		i2c_packet.response_size = 0;
-
 		i2c_packet.driver_result = EC_RES_SUCCESS;
 	} else {
 		/* Only host command protocol 3 is supported. */
