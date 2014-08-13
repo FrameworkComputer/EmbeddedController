@@ -21,8 +21,8 @@
 
 #define EC_I2C_ADDR 0x1e
 
-#define I2C_ADAPTER_NODE "/sys/class/i2c-adapter/i2c-%d/name"
-#define I2C_ADAPTER_NAME "cros_ec_i2c"
+#define I2C_ADAPTER_NODE "/sys/class/i2c-adapter/i2c-%d/%d-%04x/name"
+#define I2C_ADAPTER_NAME "cros-ec-i2c"
 #define I2C_MAX_ADAPTER  32
 #define I2C_NODE "/dev/i2c-%d"
 
@@ -179,7 +179,8 @@ int comm_init_i2c(void)
 
 	/* find the device number based on the adapter name */
 	for (i = 0; i < I2C_MAX_ADAPTER; i++) {
-		if (asprintf(&file_path, I2C_ADAPTER_NODE, i) < 0)
+		if (asprintf(&file_path, I2C_ADAPTER_NODE,
+			     i, i, EC_I2C_ADDR) < 0)
 			return -1;
 		f = fopen(file_path, "r");
 		if (f) {
