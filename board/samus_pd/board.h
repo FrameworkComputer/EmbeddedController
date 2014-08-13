@@ -23,6 +23,7 @@
 #define CONFIG_USB_PD_COMM_ENABLED 0
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_FLASH_ERASE_CHECK
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_ADC
@@ -68,6 +69,12 @@ enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
+
+/* Called when we receive battery level info from the EC. */
+void board_update_battery_soc(int soc);
+
+/* Get the last received battery level. */
+int board_get_battery_soc(void);
 
 #endif /* !__ASSEMBLER__ */
 

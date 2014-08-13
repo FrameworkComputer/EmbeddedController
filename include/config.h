@@ -917,6 +917,9 @@
 /* Define if this board can act as a dual-role PD port (source and sink) */
 #undef CONFIG_USB_PD_DUAL_ROLE
 
+/* Check whether PD is the sole power source before flash erase operation */
+#undef CONFIG_USB_PD_FLASH_ERASE_CHECK
+
 /* USB PD MCU slave address for host commands */
 #define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
 

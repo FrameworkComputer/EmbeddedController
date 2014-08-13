@@ -33,9 +33,6 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
 
-/* Battery state of charge percentage */
-static int batt_soc;
-
 /* PD MCU status for host response */
 static struct ec_response_pd_status pd_status;
 
@@ -224,7 +221,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;
 
-	batt_soc = p->batt_soc;
+	board_update_battery_soc(p->batt_soc);
 
 	*r = pd_status;
 

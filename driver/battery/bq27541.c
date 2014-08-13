@@ -189,6 +189,14 @@ int battery_status(int *status)
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+enum battery_present battery_is_present(void)
+{
+	int v;
+	if (bq27541_read(REG_TEMPERATURE, &v))
+		return BP_NOT_SURE;
+	return BP_YES;
+}
+
 void battery_get_params(struct batt_params *batt)
 {
 	int v;

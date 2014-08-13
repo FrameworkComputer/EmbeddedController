@@ -6,6 +6,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "battery.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -20,6 +21,9 @@
 
 /* Chipset power state */
 static enum power_state ps;
+
+/* Battery state of charge */
+int batt_soc;
 
 void vbus0_evt(enum gpio_signal signal)
 {
@@ -259,4 +263,21 @@ int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 	*usb_str = has_usb ? usb : NULL;
 
 	return has_ss;
+}
+
+void board_update_battery_soc(int soc)
+{
+	batt_soc = soc;
+}
+
+int board_get_battery_soc(void)
+{
+	return batt_soc;
+}
+
+enum battery_present battery_is_present(void)
+{
+	if (batt_soc >= 0)
+		return BP_YES;
+	return BP_NOT_SURE;
 }

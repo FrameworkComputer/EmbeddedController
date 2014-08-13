@@ -5,6 +5,7 @@
 
 /* Flash memory module for Chrome EC */
 
+#include "battery.h"
 #include "console.h"
 #include "flash.h"
 #include "hooks.h"
@@ -280,6 +281,23 @@ exit_wr:
 int flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
+
+#ifdef CONFIG_USB_PD_FLASH_ERASE_CHECK
+	/*
+	 * During flash erase operation, read is stalled and thus interrupt
+	 * might be serviced later. This can cause PD communication to fail.
+	 * This is unlikely going to affect normal users as they have
+	 * batteries. However, print a warning in the console for developers
+	 * without a battery.
+	 *
+	 * TODO(crosbug.com/p/31362): Remove this when PD ping is disabled.
+	 */
+	if (battery_is_present() != BP_YES) {
+		ccprintf("WARNING: Performing flash erase while running on "
+			 "USB PD power only!\n");
+		cflush();
+	}
+#endif
 
 	if (unlock(PRG_LOCK) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
