@@ -147,7 +147,7 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 
 	/* Transmit data when I2C tx buffer is empty until finished. */
 	while ((i < size + 2) && tx_pending) {
-		if (STM32_I2C_ISR(host_i2c_resp_port) & STM32_I2C_CR1_TXIE)
+		if (STM32_I2C_ISR(host_i2c_resp_port) & STM32_I2C_ISR_TXIS)
 			STM32_I2C_TXDR(host_i2c_resp_port) = host_buffer[i++];
 
 		/* I2C is slow, so let other things run while we wait */
