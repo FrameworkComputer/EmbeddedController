@@ -40,11 +40,11 @@ float cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2);
  * Rotate vector v by rotation matrix R.
  *
  * @param v Vector to be rotated.
- * @param R Pointer to rotation matrix.
- * @param res Pointer to the resultant vector.
+ * @param R Rotation matrix.
+ * @param res Resultant vector.
  */
-void rotate(const vector_3_t v, const matrix_3x3_t (* const R),
-		vector_3_t *res);
+void rotate(const vector_3_t v, const matrix_3x3_t R,
+		vector_3_t res);
 
 
 #ifdef CONFIG_ACCEL_CALIBRATE

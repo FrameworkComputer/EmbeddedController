@@ -9,6 +9,7 @@
 #include "console.h"
 #include "math_util.h"
 #include "motion_sense.h"
+#include "accelgyro.h"
 #include "timer.h"
 #include "task.h"
 #include "uart.h"

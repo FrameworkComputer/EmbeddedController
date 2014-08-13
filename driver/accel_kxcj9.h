@@ -88,6 +88,7 @@
 #define KXCJ9_INT_CTRL2_XPWUE		(1 << 4)
 #define KXCJ9_INT_CTRL2_XNWUE		(1 << 5)
 
+#define KXCJ9_OSA_0_000HZ	0
 #define KXCJ9_OSA_0_781HZ	8
 #define KXCJ9_OSA_1_563HZ	9
 #define KXCJ9_OSA_3_125HZ	0xa
@@ -102,7 +103,6 @@
 #define KXCJ9_OSA_1600_HZ	7
 
 struct kxcj9_data {
-	struct mutex accel_mutex;
 	/* Current range of accelerometer. */
 	int sensor_range;
 	/* Current output data rate of accelerometer. */
@@ -113,6 +113,6 @@ struct kxcj9_data {
 	int accel_addr;
 };
 
-extern const struct accelgyro_info accel_kxcj9;
+extern const struct accelgyro_drv kxcj9_drv;
 
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */

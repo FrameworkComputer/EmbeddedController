@@ -84,18 +84,30 @@ float cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
 	return (float)dotproduct / (denominator);
 }
 
-void rotate(const vector_3_t v, const matrix_3x3_t (* const R),
-		vector_3_t *res)
+/*
+ * rotate a vector v
+ *  - support input v and output res are the same vector
+ */
+void rotate(const vector_3_t v, const matrix_3x3_t R,
+		vector_3_t res)
 {
-	(*res)[0] =	v[0] * (*R)[0][0] +
-			v[1] * (*R)[1][0] +
-			v[2] * (*R)[2][0];
-	(*res)[1] =	v[0] * (*R)[0][1] +
-			v[1] * (*R)[1][1] +
-			v[2] * (*R)[2][1];
-	(*res)[2] =	v[0] * (*R)[0][2] +
-			v[1] * (*R)[1][2] +
-			v[2] * (*R)[2][2];
+	vector_3_t t;
+
+	/* copy input v to temp vector t */
+	t[0] = v[0];
+	t[1] = v[1];
+	t[2] = v[2];
+
+	/* start rotate */
+	res[0] =	t[0] * R[0][0] +
+			t[1] * R[1][0] +
+			t[2] * R[2][0];
+	res[1] =	t[0] * R[0][1] +
+			t[1] * R[1][1] +
+			t[2] * R[2][1];
+	res[2] =	t[0] * R[0][2] +
+			t[1] * R[1][2] +
+			t[2] * R[2][2];
 }
 
 #ifdef CONFIG_ACCEL_CALIBRATE

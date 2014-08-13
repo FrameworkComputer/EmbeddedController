@@ -6,7 +6,7 @@
  */
 
 #include <math.h>
-
+#include <stdio.h>
 #include "math_util.h"
 #include "motion_sense.h"
 #include "test_util.h"
@@ -14,7 +14,7 @@
 
 /*****************************************************************************/
 /* Need to define motion sensor globals just to compile. */
-const struct motion_sensor_t motion_sensors[] = {};
+struct motion_sensor_t motion_sensors[] = {};
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /*****************************************************************************/
@@ -40,7 +40,6 @@ static int test_acos(void)
 
 	return EC_SUCCESS;
 }
-
 
 void run_test(void)
 {
