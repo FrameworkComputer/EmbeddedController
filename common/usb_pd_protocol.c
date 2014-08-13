@@ -1493,14 +1493,14 @@ static int command_pd(int argc, char **argv)
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strncasecmp(argv[2], "dev", 3)) {
 		int max_volt = -1;
-		if (argc >= 3)
+		if (argc >= 4)
 			max_volt = strtoi(argv[3], &e, 10) * 1000;
 
 		pd_request_source_voltage(port, max_volt);
 	} else if (!strcasecmp(argv[2], "clock")) {
 		int freq;
 
-		if (argc < 3)
+		if (argc < 4)
 			return EC_ERROR_PARAM2;
 
 		freq = strtoi(argv[3], &e, 10);
@@ -1521,7 +1521,7 @@ static int command_pd(int argc, char **argv)
 	} else if (!strcasecmp(argv[2], "enable")) {
 		int enable;
 
-		if (argc < 3)
+		if (argc < 4)
 			return EC_ERROR_PARAM_COUNT;
 
 		enable = strtoi(argv[3], &e, 10);
