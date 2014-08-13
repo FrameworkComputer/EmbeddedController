@@ -255,9 +255,13 @@ static void setup_for_transaction(void)
 	dma_disable(STM32_DMAC_SPI1_TX);
 
 	/*
-	 * Read a byte in case there is one pending; this prevents the receive
-	 * DMA from getting that byte right when we start it
+	 * Read dummy bytes in case there are some pending; this prevents the
+	 * receive DMA from getting that byte right when we start it. 4 Bytes
+	 * makes sure the RX FIFO on the F0 is empty as well.
 	 */
+	dummy = spi->dr;
+	dummy = spi->dr;
+	dummy = spi->dr;
 	dummy = spi->dr;
 
 	/* Start DMA */
