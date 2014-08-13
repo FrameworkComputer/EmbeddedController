@@ -22,11 +22,19 @@
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 
-/* dump full packet on RX error */
-static int debug_dump;
+/*
+ * Debug log level - higher number == more log
+ *   Level 0: Log state transitions
+ *   Level 1: Level 0, plus packet info
+ *   Level 2: Level 1, plus ping packet and packet dump on error
+ *
+ * Note that higher log level causes timing changes and thus may affect
+ * performance.
+ */
+static int debug_level;
 #else
 #define CPRINTF(format, args...)
-const int debug_dump;
+const int debug_level;
 #endif
 
 /* Encode 5 bits using Biphase Mark Coding */
@@ -318,6 +326,9 @@ static void send_hard_reset(int port)
 	if (!pd_comm_enabled)
 		return;
 
+	if (debug_level >= 1)
+		CPRINTF("Sending hard reset\n");
+
 	/* 64-bit preamble */
 	off = pd_write_preamble(port);
 	/* Hard-Reset: 3x RST-1 + 1x RST-2 */
@@ -392,7 +403,8 @@ static int send_validate_message(int port, uint16_t header,
 	}
 	/* we failed all the re-transmissions */
 	/* TODO: try HardReset */
-	CPRINTF("TX NO ACK %04x/%d\n", header, cnt);
+	if (debug_level >= 1)
+		CPRINTF("TX NO ACK %04x/%d\n", header, cnt);
 	return -1;
 }
 
@@ -404,7 +416,8 @@ static int send_control(int port, int type)
 
 	bit_len = send_validate_message(port, header, 0, NULL);
 
-	CPRINTF("CTRL[%d]>%d\n", type, bit_len);
+	if (debug_level >= 1)
+		CPRINTF("CTRL[%d]>%d\n", type, bit_len);
 
 	return bit_len;
 }
@@ -436,7 +449,8 @@ static int send_source_cap(int port)
 			pd[port].msg_id, src_pdo_cnt);
 
 	bit_len = send_validate_message(port, header, src_pdo_cnt, src_pdo);
-	CPRINTF("srcCAP>%d\n", bit_len);
+	if (debug_level >= 1)
+		CPRINTF("srcCAP>%d\n", bit_len);
 
 	return bit_len;
 }
@@ -450,7 +464,8 @@ static void send_sink_cap(int port)
 
 	bit_len = send_validate_message(port, header, pd_snk_pdo_cnt,
 					pd_snk_pdo);
-	CPRINTF("snkCAP>%d\n", bit_len);
+	if (debug_level >= 1)
+		CPRINTF("snkCAP>%d\n", bit_len);
 }
 
 static int send_request(int port, uint32_t rdo)
@@ -460,7 +475,8 @@ static int send_request(int port, uint32_t rdo)
 			pd[port].msg_id, 1);
 
 	bit_len = send_validate_message(port, header, 1, &rdo);
-	CPRINTF("REQ%d>\n", bit_len);
+	if (debug_level >= 1)
+		CPRINTF("REQ%d>\n", bit_len);
 
 	return bit_len;
 }
@@ -556,8 +572,9 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 #endif
 		return;
 	}
-	CPRINTF("Unhandled VDM VID %04x CMD %04x\n",
-		vid, payload[0] & 0xFFFF);
+	if (debug_level >= 1)
+		CPRINTF("Unhandled VDM VID %04x CMD %04x\n",
+			vid, payload[0] & 0xFFFF);
 }
 
 /* Return flag for pd state is connected */
@@ -752,8 +769,9 @@ static void handle_request(int port, uint16_t head,
 	if (PD_HEADER_TYPE(head) != PD_CTRL_GOOD_CRC || cnt)
 		send_goodcrc(port, PD_HEADER_ID(head));
 
-	/* dump received packet content (except for ping) */
-	if (PD_HEADER_TYPE(head) != PD_CTRL_PING) {
+	/* dump received packet content (only dump ping at debug level 2) */
+	if ((debug_level == 1 && PD_HEADER_TYPE(head) != PD_CTRL_PING) ||
+	    debug_level >= 2) {
 		CPRINTF("RECV %04x/%d ", head, cnt);
 		for (p = 0; p < cnt; p++)
 			CPRINTF("[%d]%08x ", p, payload[p]);
@@ -910,7 +928,8 @@ static int analyze_rx(int port, uint32_t *payload)
 		msg = "CRC";
 		if (pcrc != ccrc)
 			bit = PD_ERR_CRC;
-		/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, ccrc);
+		if (debug_level >= 1)
+			/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, ccrc);
 		goto packet_err;
 	}
 
@@ -925,7 +944,7 @@ static int analyze_rx(int port, uint32_t *payload)
 
 	return header;
 packet_err:
-	if (debug_dump)
+	if (debug_level >= 2)
 		pd_dump_packet(port, msg);
 	else
 		CPRINTF("RX ERR (%d)\n", bit);
@@ -1490,7 +1509,15 @@ static int command_pd(int argc, char **argv)
 		pd_set_clock(port, freq);
 		ccprintf("set TX frequency to %d Hz\n", freq);
 	} else if (!strcasecmp(argv[2], "dump")) {
-		debug_dump = !debug_dump;
+		int level;
+
+		if (argc < 4)
+			return EC_ERROR_PARAM2;
+
+		level = strtoi(argv[3], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM2;
+		debug_level = level;
 	} else if (!strcasecmp(argv[2], "enable")) {
 		int enable;
 
