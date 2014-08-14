@@ -53,7 +53,10 @@ BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
 #endif
 
 /* Define the accelerometer orientation matrices. */
-const struct accel_orientation acc_orient = {
+#ifndef CONFIG_ACCEL_CALIBRATE
+const
+#endif
+struct accel_orientation acc_orient = {
 	/* Lid and base sensor are already aligned. */
 	.rot_align = {
 		{ 1,  0,  0},

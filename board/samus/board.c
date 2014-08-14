@@ -13,8 +13,10 @@
 #include "charger.h"
 #include "common.h"
 #include "console.h"
-#include "driver/temp_sensor/tmp006.h"
+#include "driver/accel_kxcj9.h"
+#include "driver/accelgyro_lsm6ds0.h"
 #include "driver/als_isl29035.h"
+#include "driver/temp_sensor/tmp006.h"
 #include "extpower.h"
 #include "fan.h"
 #include "gpio.h"
@@ -24,6 +26,7 @@
 #include "jtag.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "motion_sense.h"
 #include "peci.h"
 #include "power.h"
 #include "power_button.h"
@@ -31,6 +34,7 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
+#include "task.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
 #include "timer.h"
@@ -238,3 +242,59 @@ int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
 }
+
+/* Base Sensor mutex */
+static struct mutex g_base_mutex;
+
+/* Lid Sensor mutex */
+static struct mutex g_lid_mutex;
+
+/* kxcj9 local/private data */
+struct kxcj9_data g_kxcj9_data;
+
+/* Four Motion sensors */
+struct motion_sensor_t motion_sensors[] = {
+
+	{"Base", SENSOR_CHIP_LSM6DS0, SENSOR_ACCELEROMETER, LOCATION_BASE,
+		&lsm6ds0_drv, &g_base_mutex, NULL, LSM6DS0_ADDR1},
+
+	{"Lid",  SENSOR_CHIP_KXCJ9, SENSOR_ACCELEROMETER, LOCATION_LID,
+		&kxcj9_drv, &g_lid_mutex, &g_kxcj9_data, KXCJ9_ADDR0},
+
+	{"Base Gyro", SENSOR_CHIP_LSM6DS0, SENSOR_GYRO, LOCATION_BASE,
+		&lsm6ds0_drv, &g_base_mutex, NULL, LSM6DS0_ADDR1},
+
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* Define the accelerometer orientation matrices. */
+#ifndef CONFIG_ACCEL_CALIBRATE
+const
+#endif
+struct accel_orientation acc_orient = {
+	/* Lid and base sensor are already aligned. */
+	.rot_align = {
+		{ 1,  0,  0},
+		{ 0,  1,  0},
+		{ 0,  0,  1}
+	},
+
+	/* Hinge aligns with y axis. */
+	.rot_hinge_90 = {
+		{ 1,  0,  0},
+		{ 0,  1,  0},
+		{ 0,  0,  1}
+	},
+	.rot_hinge_180 = {
+		{-1,  0,  0},
+		{ 0,  1,  0},
+		{ 0,  0, -1}
+	},
+	.rot_standard_ref = {
+		{-1,  0,  0},
+		{ 0, -1,  0},
+		{ 0,  0, -1}
+	},
+	.hinge_axis = {0, 1, 0},
+};
+
