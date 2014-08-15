@@ -217,6 +217,9 @@ static int check_for_power_off_event(void)
 	} else if (power_button_was_pressed) {
 		CPRINTS("power off cancel");
 		set_pmic_pwron(0);
+#ifdef CONFIG_PMIC_FW_LONG_PRESS_TIMER
+		timer_cancel(TASK_ID_CHIPSET);
+#endif
 	}
 
 	power_button_was_pressed = pressed;
