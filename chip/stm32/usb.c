@@ -221,7 +221,7 @@ void usb_interrupt(void)
 }
 DECLARE_IRQ(STM32_IRQ_USB_LP, usb_interrupt, 1);
 
-static void usb_init(void)
+void usb_init(void)
 {
 	/* Enable USB device clock. */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
@@ -262,4 +262,30 @@ static void usb_init(void)
 
 	CPRINTF("USB init done\n");
 }
+#ifndef CONFIG_USB_INHIBIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
+#endif
+
+void usb_release(void)
+{
+	/* signal disconnect to host */
+#ifdef CHIP_VARIANT_STM32L15X
+	STM32_SYSCFG_PMC &= ~1;
+#elif defined(CHIP_FAMILY_STM32F0)
+	STM32_USB_BCDR &= ~(1 << 15) /* DPPU */;
+#else
+	/* hardwired or regular GPIO on other platforms */
+#endif
+
+	/* power down USB */
+	STM32_USB_CNTR = 0;
+
+	/* disable interrupt handlers */
+	task_disable_irq(STM32_IRQ_USB_LP);
+
+	/* disable 48MHz clock */
+	clock_enable_module(MODULE_USB, 0);
+
+	/* disable USB device clock */
+	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
+}

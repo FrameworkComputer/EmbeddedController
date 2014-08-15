@@ -242,4 +242,8 @@ extern void (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 	void IFACE_HANDLER(num)(void)                \
 	__attribute__ ((alias(STRINGIFY(handler))));
 
+/* functions to start/stop USB */
+void usb_init(void);
+void usb_release(void);
+
 #endif /* USB_H */
