@@ -531,7 +531,7 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 enum ec_status host_command_process(struct host_cmd_handler_args *args)
 {
 	const struct host_command *cmd;
-	enum ec_status rv;
+	int rv;
 
 	if (hcdebug)
 		host_command_debug_request(args);

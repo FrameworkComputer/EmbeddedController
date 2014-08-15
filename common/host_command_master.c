@@ -89,12 +89,7 @@ static int pd_host_command_internal(int command, int version,
 		return -ret;
 	}
 
-	ret = resp_buf[0];
 	resp_len = resp_buf[1];
-
-	if (ret)
-		CPRINTF("[%T command 0x%02x returned error %d]\n", command,
-			ret);
 
 	if (resp_len > (insize + sizeof(rs))) {
 		/* Do a dummy read to generate stop condition */
@@ -112,6 +107,14 @@ static int pd_host_command_internal(int command, int version,
 	i2c_lock(I2C_PORT_PD_MCU, 0);
 	if (ret) {
 		CPRINTF("[%T i2c transaction 2 failed: %d]\n", ret);
+		return -ret;
+	}
+
+	/* Check for host command error code */
+	ret = resp_buf[0];
+	if (ret) {
+		CPRINTF("[%T command 0x%02x returned error %d]\n", command,
+			ret);
 		return -ret;
 	}
 

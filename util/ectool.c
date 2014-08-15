@@ -22,6 +22,7 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
+#include "sha1.h"
 
 /* Command line options */
 enum {
@@ -93,6 +94,8 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
+	"  flashpd\n"
+	"      Flash commands over PD\n"
 	"  flashprotect [now] [enable | disable]\n"
 	"      Prints or sets EC flash protection state\n"
 	"  flashread <offset> <size> <outfile>\n"
@@ -773,6 +776,132 @@ int cmd_flash_protect(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+/* PD image size is 16k minus 32 bits for the RW hash */
+#define PD_RW_IMAGE_SIZE (16 * 1024 - 32)
+static struct sha1_ctx ctx;
+int cmd_flash_pd(int argc, char *argv[])
+{
+	struct ec_params_usb_pd_fw_update *p =
+		(struct ec_params_usb_pd_fw_update *)ec_outbuf;
+	int i;
+	int rv, fsize, step = 96, padding_size;
+	char *e;
+	char *buf, *fw_padding;
+	uint32_t *data = &(p->size) + 1;
+
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s <dev_id> <port> <filename>\n",
+			argv[0]);
+		return -1;
+	}
+
+	p->dev_id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad device ID\n");
+		return -1;
+	}
+
+	p->port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	/* Read the input file */
+	buf = read_file(argv[3], &fsize);
+	if (!buf)
+		return -1;
+
+	/* Verify size of file */
+	if (fsize > PD_RW_IMAGE_SIZE)
+		goto pd_flash_error;
+
+	/* Add padding to image */
+	padding_size = PD_RW_IMAGE_SIZE - fsize;
+	fw_padding = (char *)malloc(padding_size);
+	memset(fw_padding, 0xff, padding_size);
+	fprintf(stderr, "File size %d, Padding size %d\n", fsize, padding_size);
+
+	/* Write expected flash hash to all 0s */
+	fprintf(stderr, "Erasing expected RW hash\n");
+	p->cmd = USB_PD_FW_FLASH_HASH;
+	p->size = 20;
+	for (i = 0; i < 5; i++)
+		*(data + i) = 0;
+	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+			p, p->size + sizeof(*p), NULL, 0);
+
+	if (rv < 0)
+		goto pd_flash_error;
+
+	/* Reboot */
+	fprintf(stderr, "Rebooting\n");
+	p->cmd = USB_PD_FW_REBOOT;
+	p->size = 0;
+	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+			p, p->size + sizeof(*p), NULL, 0);
+
+	if (rv < 0)
+		goto pd_flash_error;
+
+	/* Erase RW flash */
+	fprintf(stderr, "Erasing RW flash\n");
+	p->cmd = USB_PD_FW_FLASH_ERASE;
+	p->size = 0;
+	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+			p, p->size + sizeof(*p), NULL, 0);
+
+	if (rv < 0)
+		goto pd_flash_error;
+
+	/* Write RW flash */
+	fprintf(stderr, "Writing RW flash\n");
+	p->cmd = USB_PD_FW_FLASH_WRITE;
+	p->size = step;
+
+	for (i = 0; i < fsize; i += step) {
+		p->size = MIN(fsize - i, step);
+		memcpy(data, buf + i, p->size);
+		rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+				p, p->size + sizeof(*p), NULL, 0);
+		if (rv < 0)
+			goto pd_flash_error;
+	}
+
+	/*
+	 * TODO(crosbug.com/p/31552): Would be better to have sha1 in the RW
+	 * binary and we won't have to calculate it here and send it down.
+	 */
+	/* Calculate sha1 of new RW flash */
+	sha1_init(&ctx);
+	sha1_update(&ctx, buf, fsize);
+	sha1_update(&ctx, fw_padding, padding_size);
+	sha1_final(&ctx);
+
+	/* Write expected flash hash */
+	fprintf(stderr, "Setting expected RW hash\n");
+	p->cmd = USB_PD_FW_FLASH_HASH;
+	p->size = 20;
+	memcpy(data, ctx.buf.b, p->size);
+	for (i = 0; i < 5; i++)
+		fprintf(stderr, "%08x ", *(data + i));
+	fprintf(stderr, "\n");
+	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+			p, p->size + sizeof(*p), NULL, 0);
+
+	if (rv < 0)
+		goto pd_flash_error;
+
+	free(buf);
+	fprintf(stderr, "Complete\n");
+	return 0;
+
+pd_flash_error:
+	free(buf);
+	fprintf(stderr, "PD flash error\n");
+	return -1;
 }
 
 
@@ -4570,6 +4699,7 @@ const struct command commands[] = {
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},
+	{"flashpd", cmd_flash_pd},
 	{"gpioget", cmd_gpio_get},
 	{"gpioset", cmd_gpio_set},
 	{"hangdetect", cmd_hang_detect},

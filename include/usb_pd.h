@@ -301,7 +301,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
  * @param data     Pointer to payload to send
  * @param data     number of data objects in payload
  */
-void pd_send_vdm(int port, uint32_t vid, int cmd, uint32_t *data, int count);
+void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
+		 int count);
 
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];

@@ -962,9 +962,15 @@ packet_err:
 	return bit;
 }
 
-void pd_send_vdm(int port, uint32_t vid, int cmd, uint32_t *data, int count)
+void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
+		 int count)
 {
 	int i;
+
+	if (count > VDO_MAX_SIZE - 1) {
+		CPRINTF("VDM over max size\n");
+		return;
+	}
 
 	pd[port].vdo_data[0] = VDO(vid, cmd);
 	pd[port].vdo_count = count + 1;
@@ -1785,6 +1791,81 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     hc_usb_pd_control,
+		     EC_VER_MASK(0));
+
+static int hc_remote_flash(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_fw_update *p = args->params;
+	int port = p->port;
+	const uint32_t *data = &(p->size) + 1;
+	int i, size;
+
+	if (p->size + sizeof(*p) > args->params_size)
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->cmd) {
+	case USB_PD_FW_REBOOT:
+		ccprintf("PD Update - Reboot\n");
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
+
+		/* Delay to give time for device to reboot */
+		usleep(750 * MSEC);
+		return EC_RES_SUCCESS;
+
+	case USB_PD_FW_FLASH_ERASE:
+		ccprintf("PD Update - Erase RW flash\n");
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_ERASE, NULL, 0);
+
+		/* Wait until VDM is done */
+		while (pd[port].vdm_state > 0)
+			task_wait_event(100*MSEC);
+		break;
+
+	case USB_PD_FW_FLASH_HASH:
+		/* Can only write 20 bytes */
+		if (p->size != 20)
+			return EC_RES_INVALID_PARAM;
+
+		ccprintf("PD Update - Write RW flash hash ");
+		for (i = 0; i < 5; i++)
+			ccprintf("%08x ", *(data + i));
+		ccprintf("\n");
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_HASH, data, 5);
+
+		/* Wait until VDM is done */
+		while (pd[port].vdm_state > 0)
+			task_wait_event(100*MSEC);
+		break;
+
+	case USB_PD_FW_FLASH_WRITE:
+		/* Data size must be a multiple of 4 */
+		if (!p->size || p->size % 4)
+			return EC_RES_INVALID_PARAM;
+
+		size = p->size / 4;
+		ccprintf("PD Update - Write RW flash\n");
+		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
+			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
+				    data + i, MIN(size - i, VDO_MAX_SIZE - 1));
+
+			/* Wait until VDM is done */
+			while (pd[port].vdm_state > 0)
+				task_wait_event(10*MSEC);
+		}
+		break;
+
+	default:
+		return EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	if (pd[port].vdm_state < 0)
+		return EC_RES_ERROR;
+	else
+		return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
+		     hc_remote_flash,
 		     EC_VER_MASK(0));
 
 #endif /* CONFIG_COMMON_RUNTIME */

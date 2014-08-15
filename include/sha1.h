@@ -9,7 +9,12 @@
 #define _SHA1_H
 
 #include "common.h"
+#ifdef HOST_TOOLS_BUILD
+#include <string.h>
+#define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
+#else
 #include "util.h"
+#endif
 
 #define SHA1_DIGEST_SIZE 20
 #define SHA1_BLOCK_SIZE 64

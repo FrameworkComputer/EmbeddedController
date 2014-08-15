@@ -2528,6 +2528,26 @@ struct ec_params_usb_pd_control {
 	uint8_t mux;
 } __packed;
 
+/* Write USB-PD device FW */
+#define EC_CMD_USB_PD_FW_UPDATE 0x110
+
+enum usb_pd_fw_update_cmds {
+	USB_PD_FW_REBOOT,
+	USB_PD_FW_FLASH_ERASE,
+	USB_PD_FW_FLASH_WRITE,
+	USB_PD_FW_FLASH_HASH,
+};
+
+struct ec_params_usb_pd_fw_update {
+	uint8_t cmd;
+	uint8_t dev_id;
+	uint8_t port;
+	uint8_t reserved;  /* reserved */
+	uint32_t size;     /* Size to write in bytes */
+	/* Followed by data to write */
+} __packed;
+
+
 /*****************************************************************************/
 /*
  * Passthru commands
