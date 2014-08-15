@@ -11,7 +11,7 @@ GPIO(BC_TEMP_ALERT_L,      A, 13, GPIO_INT_FALLING,                unhandled_evt
 GPIO(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
 GPIO(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
 GPIO(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    unhandled_evt)
-GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_RISING,                 unhandled_evt)
+GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
 GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
 GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
 GPIO(AP_IN_SUSPEND,        E, 9,  GPIO_INT_BOTH | GPIO_PULL_UP,    power_signal_interrupt)

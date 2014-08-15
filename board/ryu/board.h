@@ -33,6 +33,7 @@
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_TASK_PROFILING
 #undef CONFIG_CONSOLE_CMDHELP
+#define CONFIG_INDUCTIVE_CHARGING
 
 /* Charging/Power configuration */
 #undef CONFIG_BATTERY_RYU /* TODO implement */
