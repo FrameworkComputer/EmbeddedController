@@ -570,6 +570,12 @@
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 
 /*****************************************************************************/
+/* Inductive charging */
+
+/* Enable inductive charging support */
+#undef CONFIG_INDUCTIVE_CHARGING
+
+/*****************************************************************************/
 
 /* Number of IRQs supported on the EC chip */
 #undef CONFIG_IRQ_COUNT

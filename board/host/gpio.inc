@@ -15,3 +15,8 @@ GPIO(PCH_BKLTEN,           0, 0, 0,             NULL)
 GPIO(ENABLE_BACKLIGHT,     0, 0, 0,             NULL)
 GPIO(BUTTON_VOLUME_DOWN_L, 0, 0, GPIO_INT_BOTH, button_interrupt)
 GPIO(BUTTON_VOLUME_UP,     0, 0, GPIO_INT_BOTH, button_interrupt)
+
+/* Inductive charging */
+GPIO(CHARGE_EN,            0, 0, 0,             NULL)
+GPIO(CHARGE_DONE,          0, 0, GPIO_INT_BOTH, inductive_charging_interrupt)
+GPIO(BASE_CHG_VDD_EN,      0, 0, 0,             NULL)

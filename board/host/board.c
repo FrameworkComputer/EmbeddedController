@@ -7,6 +7,7 @@
 #include "button.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "inductive_charging.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power_button.h"
