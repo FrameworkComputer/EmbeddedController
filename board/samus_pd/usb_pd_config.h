@@ -162,19 +162,21 @@ static inline void pd_tx_disable(int port, int polarity)
 /* we know the plug polarity, do the right configuration */
 static inline void pd_select_polarity(int port, int polarity)
 {
+	uint32_t val = STM32_COMP_CSR;
+
+	/* Use window mode so that COMP1 and COMP2 share non-inverting input */
+	val |= STM32_COMP_CMP1EN | STM32_COMP_CMP2EN | STM32_COMP_WNDWEN;
+
 	if (port == 0) {
 		/* use the right comparator inverted input for COMP1 */
-		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
-			| STM32_COMP_CMP1EN
-			| (polarity ? STM32_COMP_CMP1INSEL_INM4
-					: STM32_COMP_CMP1INSEL_INM6);
+		STM32_COMP_CSR = (val & ~STM32_COMP_CMP1INSEL_MASK) |
+				 (polarity ? STM32_COMP_CMP1INSEL_INM4
+					   : STM32_COMP_CMP1INSEL_INM6);
 	} else {
 		/* use the right comparator inverted input for COMP2 */
-		/* use window mode on COMP2 to use COMP1 non-inverting input */
-		STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP2INSEL_MASK)
-			| STM32_COMP_CMP2EN | STM32_COMP_WNDWEN
-			| (polarity ? STM32_COMP_CMP2INSEL_INM5
-					: STM32_COMP_CMP2INSEL_INM6);
+		STM32_COMP_CSR = (val & ~STM32_COMP_CMP2INSEL_MASK) |
+				 (polarity ? STM32_COMP_CMP2INSEL_INM5
+					   : STM32_COMP_CMP2INSEL_INM6);
 	}
 }
 
