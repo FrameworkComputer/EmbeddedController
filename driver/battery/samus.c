@@ -46,7 +46,7 @@ const struct battery_info *battery_get_info(void)
 
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
 
-static int fast_charging_allowed;
+static int fast_charging_allowed = 1;
 
 /*
  * This can override the smart battery's charging profile. To make a change,
@@ -58,6 +58,15 @@ static int fast_charging_allowed;
  */
 int charger_profile_override(struct charge_state_data *curr)
 {
+	/* temp in 0.1 deg C */
+	int temp_c = curr->batt.temperature - 2731;
+	/* keep track of last temperature range for hysteresis */
+	static enum {
+		TEMP_LOW,
+		TEMP_NORMAL,
+		TEMP_HIGH
+	} temp_range = TEMP_NORMAL;
+
 	/* We only want to override how we charge, nothing else. */
 	if (curr->state != ST_CHARGE)
 		return 0;
@@ -66,25 +75,48 @@ int charger_profile_override(struct charge_state_data *curr)
 	if (!fast_charging_allowed)
 		return 0;
 
-	/* Okay, impose our custom will */
-	curr->requested_current = 9000;
-	curr->requested_voltage = 8300;
-	if (curr->batt.current <= 6300) {
-		curr->requested_current = 6300;
-		curr->requested_voltage = 8400;
-	} else if (curr->batt.current <= 4500) {
-		curr->requested_current = 4500;
-		curr->requested_voltage = 8500;
-	} else if (curr->batt.current <= 2700) {
-		curr->requested_current = 2700;
+	/*
+	 * Okay, impose our custom will:
+	 * When battery is 15-45C:
+	 * CC at 9515mA @ 8.3V
+	 * CV at 8.3V until current drops to 4759mA
+	 * CC at 4759mA @ 8.7V
+	 * CV at 8.7V
+	 *
+	 * When battery is <15C:
+	 * CC at 2854mA @ 8.7V
+	 * CV at 8.7V
+	 *
+	 * When battery is >45C:
+	 * CC at 6660mA @ 8.3V
+	 * CV at 8.3V (when battery is hot we don't go to fully charged)
+	 *
+	 * Add 0.2 degrees of hysteresis.
+	 */
+	if (temp_c < 149)
+		temp_range = TEMP_LOW;
+	else if (temp_c > 151 && temp_c < 449)
+		temp_range = TEMP_NORMAL;
+	else if (temp_c > 451)
+		temp_range = TEMP_HIGH;
+
+	switch (temp_range) {
+	case TEMP_LOW:
+		curr->requested_current = 2854;
 		curr->requested_voltage = 8700;
-	} else if (curr->batt.current <= 475) {
-		/*
-		 * Should we stop? If so, how do we start again?
-		 * For now, just use the battery's profile.
-		 */
-		curr->requested_current = curr->batt.desired_current;
-		curr->requested_voltage = curr->batt.desired_voltage;
+		break;
+	case TEMP_NORMAL:
+		curr->requested_current = 9515;
+		curr->requested_voltage = 8300;
+		if (curr->batt.current <= 4759 && curr->batt.voltage >= 8250) {
+			curr->requested_current = 4759;
+			curr->requested_voltage = 8700;
+		}
+		break;
+	case TEMP_HIGH:
+		curr->requested_current = 6660;
+		curr->requested_voltage = 8300;
+		break;
 	}
 
 	return 0;
