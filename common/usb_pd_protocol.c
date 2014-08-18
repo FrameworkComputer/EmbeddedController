@@ -1258,22 +1258,32 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SRC_READY:
-			if (pd[port].ping_enabled) {
-				/* Verify that the sink is alive */
-				res = send_control(port, PD_CTRL_PING);
-				if (res >= 0) {
-					/* schedule next keep-alive */
-					timeout = PD_T_SOURCE_ACTIVITY;
-				} else {
-					/* The sink died ... */
-					pd_power_supply_reset(port);
-					set_state(port,
-						  PD_STATE_SRC_DISCONNECTED);
-					timeout = PD_T_SEND_SOURCE_CAP;
-				}
-			} else {
+			if (!pd[port].ping_enabled) {
 				timeout = PD_T_SOURCE_ACTIVITY;
+				break;
 			}
+
+			/* Verify that the sink is alive */
+			res = send_control(port, PD_CTRL_PING);
+			if (res >= 0) {
+				/* schedule next keep-alive */
+				timeout = PD_T_SOURCE_ACTIVITY;
+				break;
+			}
+
+			timeout = 10 * MSEC;
+
+			/* Ping dropped. Try soft reset. */
+			execute_soft_reset(port);
+			res = send_control(port, PD_CTRL_SOFT_RESET);
+
+			if (res >= 0) {
+				set_state(port, PD_STATE_SOFT_RESET);
+				break;
+			}
+
+			/* Soft reset failed. Let's try hard reset. */
+			set_state(port, PD_STATE_HARD_RESET);
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SUSPENDED:
