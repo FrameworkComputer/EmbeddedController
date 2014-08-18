@@ -170,6 +170,9 @@ enum pd_states {
 	PD_STATE_SOFT_RESET,
 	PD_STATE_HARD_RESET,
 	PD_STATE_BIST,
+
+	/* Number of states. Not an actual state. */
+	PD_STATE_COUNT,
 };
 
 enum vdm_states {
@@ -1380,6 +1383,8 @@ void pd_task(void)
 			send_bist_cmd(port);
 			bist_mode_2_rx(port);
 			break;
+		default:
+			break;
 		}
 
 		pd[port].last_state = this_state;
@@ -1707,6 +1712,7 @@ static int command_pd(int argc, char **argv)
 			"SRC_ACCEPTED", "SRC_TRANSITION", "SRC_READY",
 			"SOFT_RESET", "HARD_RESET", "BIST",
 		};
+		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
 		ccprintf("Port C%d, %s - Role: %s Polarity: CC%d State: %s\n",
 			port, pd_comm_enabled ? "Enabled" : "Disabled",
 			pd[port].role == PD_ROLE_SOURCE ? "SRC" : "SNK",
