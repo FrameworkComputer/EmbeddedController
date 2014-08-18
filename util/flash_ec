@@ -46,6 +46,7 @@ die() {
 
 # Note: Link is a special case and is not included here.
 BOARDS_LM4=(
+	auron
 	falco
 	peppy
 	rambi

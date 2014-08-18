@@ -27,6 +27,10 @@ proc flash_link_rw { } {
 	flash_lm4 ../../../build/link/ec.RW.bin 131072
 }
 
+proc flash_auron { } {
+	flash_lm4 ../../../build/auron/ec.bin 0
+}
+
 proc flash_bds { } {
 	flash_lm4 ../../../build/bds/ec.bin 0
 }
@@ -80,6 +84,13 @@ proc unprotect_link { } {
 
 # Peppy/falco have pstate following RO
 proc unprotect_peppy { } {
+	reset halt
+	flash erase_sector 0 126 127
+	reset
+}
+
+# Auron have pstate following RO
+proc unprotect_auron { } {
 	reset halt
 	flash erase_sector 0 126 127
 	reset
