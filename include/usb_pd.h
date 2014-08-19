@@ -127,6 +127,7 @@ enum pd_errors {
 #define VDO_CMD_FLASH_ERASE  VDO_CMD_VENDOR(6)
 #define VDO_CMD_FLASH_WRITE  VDO_CMD_VENDOR(7)
 #define VDO_CMD_FLASH_HASH   VDO_CMD_VENDOR(8)
+#define VDO_CMD_PING_ENABLE  VDO_CMD_VENDOR(10)
 
 #define PD_VDO_VID(vdo) ((vdo) >> 16)
 #define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
@@ -502,5 +503,15 @@ int pd_get_polarity(int port);
  * @param enable Enable flag to set
  */
 void pd_comm_enable(int enable);
+
+/**
+ * Set the PD pings enabled flag. When source has negotiated power over
+ * PD successfully, it can optionally send pings periodically based on
+ * this enable flag.
+ *
+ * @param port USB-C port number
+ * @param enable Enable flag to set
+ */
+void pd_ping_enable(int port, int enable);
 
 #endif  /* __USB_PD_H */

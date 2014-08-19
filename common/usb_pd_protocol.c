@@ -206,6 +206,8 @@ static struct pd_protocol {
 	enum pd_states timeout_state;
 	/* Timeout for the current state. Set to 0 for no timeout. */
 	uint64_t timeout;
+	/* Flag for sending pings in SRC_READY */
+	uint8_t ping_enabled;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Current limit based on the last request message */
@@ -1057,6 +1059,11 @@ void pd_comm_enable(int enable)
 	pd_comm_enabled = enable;
 }
 
+void pd_ping_enable(int port, int enable)
+{
+	pd[port].ping_enabled = enable;
+}
+
 void pd_task(void)
 {
 	int head;
@@ -1078,6 +1085,7 @@ void pd_task(void)
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
+	pd[port].ping_enabled = 0;
 	set_state(port, PD_DEFAULT_STATE);
 
 	/* Ensure the power supply is in the default state */
@@ -1202,16 +1210,21 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SRC_READY:
-			/* Verify that the sink is alive */
-			res = send_control(port, PD_CTRL_PING);
-			if (res >= 0) {
-				/* schedule next keep-alive */
-				timeout = PD_T_SOURCE_ACTIVITY;
+			if (pd[port].ping_enabled) {
+				/* Verify that the sink is alive */
+				res = send_control(port, PD_CTRL_PING);
+				if (res >= 0) {
+					/* schedule next keep-alive */
+					timeout = PD_T_SOURCE_ACTIVITY;
+				} else {
+					/* The sink died ... */
+					pd_power_supply_reset(port);
+					set_state(port,
+						  PD_STATE_SRC_DISCONNECTED);
+					timeout = PD_T_SEND_SOURCE_CAP;
+				}
 			} else {
-				/* The sink died ... */
-				pd_power_supply_reset(port);
-				set_state(port, PD_STATE_SRC_DISCONNECTED);
-				timeout = PD_T_SEND_SOURCE_CAP;
+				timeout = PD_T_SOURCE_ACTIVITY;
 			}
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1545,10 +1558,32 @@ static int command_pd(int argc, char **argv)
 		send_control(port, PD_CTRL_SOFT_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strncasecmp(argv[2], "ping", 4)) {
-		pd[port].role = PD_ROLE_SOURCE;
-		pd_set_host_mode(port, 1);
-		set_state(port, PD_STATE_SRC_READY);
-		task_wake(PORT_TO_TASK_ID(port));
+		int enable;
+
+		if (argc > 3) {
+			enable = strtoi(argv[3], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			pd[port].ping_enabled = enable;
+		}
+
+		ccprintf("Pings %s\n", pd[port].ping_enabled ? "on" : "off");
+	} else if (!strncasecmp(argv[2], "vdm", 3)) {
+		if (argc < 4)
+			return EC_ERROR_PARAM_COUNT;
+
+		if (!strncasecmp(argv[3], "ping", 4)) {
+			uint32_t enable;
+			if (argc < 5)
+				return EC_ERROR_PARAM_COUNT;
+			enable = strtoi(argv[4], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM4;
+			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_PING_ENABLE,
+				    &enable, 1);
+		} else {
+			return EC_ERROR_PARAM_COUNT;
+		}
 	} else if (!strcasecmp(argv[2], "dualrole")) {
 		if (argc < 4) {
 			ccprintf("dual-role toggling: ");
@@ -1603,7 +1638,7 @@ static int command_pd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"<port> "
 			"[tx|bist|charger|dev|dump|dualrole|enable"
-			"|soft|hard|clock|ping|state]",
+			"|soft|hard|clock|ping|state|vdm [ping]]",
 			"USB PD",
 			NULL);
 

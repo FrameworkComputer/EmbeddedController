@@ -326,6 +326,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		flash_write_rw(CONFIG_FW_RW_SIZE - 32, 4*cnt,
 			       (const char *)(payload+1));
 		break;
+	case VDO_CMD_PING_ENABLE:
+		pd_ping_enable(0, payload[1]);
+		break;
 	default:
 		/* Unknown : do not answer */
 		return 0;
