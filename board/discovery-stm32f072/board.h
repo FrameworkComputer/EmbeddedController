@@ -11,6 +11,14 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
+/* Enable USART1,3,4 and USB streams */
+#define CONFIG_STREAM
+#define CONFIG_STREAM_USART
+#define CONFIG_STREAM_USART1
+#define CONFIG_STREAM_USART3
+#define CONFIG_STREAM_USART4
+#define CONFIG_STREAM_USB
+
 /* the UART console is on USART2 (PA14/PA15) */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 2
@@ -18,9 +26,13 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
+#define CONFIG_USB
 
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
+
+/* USB configuration */
+#define CONFIG_USB_PID 0x5009
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -35,6 +47,25 @@
 
 #include "gpio_signal.h"
 
+/* USB string indexes */
+enum usb_strings {
+	USB_STR_DESC = 0,
+	USB_STR_VENDOR,
+	USB_STR_PRODUCT,
+	USB_STR_VERSION,
+
+	USB_STR_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
+
+/* USB interface indexes (use define rather than enum to expand them) */
+#define USB_IFACE_STREAM	0
+#define USB_IFACE_COUNT		1
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL		0
+#define USB_EP_STREAM		1
+#define USB_EP_COUNT		2
 
 #endif /* __BOARD_H */
