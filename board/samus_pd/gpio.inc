@@ -13,6 +13,7 @@ GPIO(USB_C1_BC12_INT_L,      C, 11, GPIO_INT_FALLING, bc12_evt)
 GPIO(PCH_SLP_S0_L,           C, 14, GPIO_INT_BOTH,    pch_evt)
 GPIO(PCH_SLP_S3_L,           C, 15, GPIO_INT_BOTH,    pch_evt)
 GPIO(PCH_SLP_S5_L,           D, 7,  GPIO_INT_BOTH,    pch_evt)
+GPIO(WP_L,                   D, 2,  GPIO_INT_BOTH,    switch_interrupt)
 
 /* PD RX/TX */
 GPIO(USB_C0_CC1_PD,          A, 0,  GPIO_ANALOG,   NULL)
@@ -93,7 +94,6 @@ GPIO(MASTER_I2C_SCL,         B, 10, GPIO_INPUT,    NULL)
 GPIO(MASTER_I2C_SDA,         B, 11, GPIO_INPUT,    NULL)
 
 /* Case closed debugging. */
-GPIO(SPI_FLASH_WP_L,         D, 2,  GPIO_INPUT,    NULL)
 GPIO(EC_INT_L,               B, 2,  GPIO_ODR_HIGH, NULL)
 GPIO(EC_IN_RW,               C, 12, GPIO_INPUT,    NULL)
 GPIO(EC_RST_L,               C, 13, GPIO_OUT_HIGH, NULL)
@@ -120,7 +120,6 @@ GPIO(AP_UART_RX,             D, 6,  GPIO_INPUT,    NULL)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
-UNIMPLEMENTED(WP_L)
 
 ALTERNATE(B, 0x0008, 0, MODULE_USB_PD, 0) /* SPI1: SCK(PB3) */
 ALTERNATE(B, 0x2000, 0, MODULE_USB_PD, 0) /* SPI2: SCK(PB13) */

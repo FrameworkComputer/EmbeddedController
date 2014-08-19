@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "power.h"
 #include "registers.h"
+#include "switch.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
