@@ -265,6 +265,8 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_SRI2C       REG32(0x400fe520)
 #define LM4_SYSTEM_SREEPROM    REG32(0x400fe558)
 
+#define LM4_SYSTEM_SRI2C_ADDR  ((uint32_t *)0x400fe520)
+
 #define LM4_SYSTEM_RCGC_BASE   ((volatile uint32_t *)0x400fe600)
 #define LM4_SYSTEM_RCGCGPIO    REG32(0x400fe608)
 #define LM4_SYSTEM_SCGC_BASE   ((volatile uint32_t *)0x400fe700)

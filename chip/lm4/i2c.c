@@ -5,6 +5,7 @@
 
 /* I2C port module for Chrome EC */
 
+#include "atomic.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -187,7 +188,9 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			    (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 		uint32_t tpr = LM4_I2C_MTPR(port);
 
-		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port,
+		CPRINTS("I2C%d Addr:%02X bad status 0x%02x, SCL=%d, SDA=%d",
+				port,
+				slave_addr,
 				reg_mcs,
 				i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
 				i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
@@ -196,9 +199,9 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		i2c_unwedge(port);
 
 		/* Clock timeout or arbitration lost.  Reset port to clear. */
-		LM4_SYSTEM_SRI2C |= (1 << port);
+		atomic_or(LM4_SYSTEM_SRI2C_ADDR, (1 << port));
 		clock_wait_cycles(3);
-		LM4_SYSTEM_SRI2C &= ~(1 << port);
+		atomic_clear(LM4_SYSTEM_SRI2C_ADDR, (1 << port));
 		clock_wait_cycles(3);
 
 		/* Restore settings */
