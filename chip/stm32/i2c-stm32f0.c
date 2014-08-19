@@ -155,12 +155,11 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 	}
 
 	/*
-	 * If an error occurred. Set the transmitter not full so as to keep
-	 * sending '0xec' in the event loop. That way the master doesn't have
-	 * to snoop the response stream.
+	 * Set the transmitter to be in 'not full' state to keep sending
+	 * '0xec' in the event loop. Because of this, the master i2c
+	 * doesn't need to snoop the response stream to abort transaction.
 	 */
-	if (pkt->driver_result != EC_RES_SUCCESS)
-		STM32_I2C_CR1(host_i2c_resp_port) |= STM32_I2C_CR1_TXIE;
+	STM32_I2C_CR1(host_i2c_resp_port) |= STM32_I2C_CR1_TXIE;
 }
 
 /* Process the command in the i2c host buffer */
