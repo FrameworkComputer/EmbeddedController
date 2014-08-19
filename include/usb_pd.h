@@ -128,6 +128,7 @@ enum pd_errors {
 #define VDO_CMD_FLASH_WRITE  VDO_CMD_VENDOR(7)
 #define VDO_CMD_FLASH_HASH   VDO_CMD_VENDOR(8)
 #define VDO_CMD_PING_ENABLE  VDO_CMD_VENDOR(10)
+#define VDO_CMD_CURRENT      VDO_CMD_VENDOR(11)
 
 #define PD_VDO_VID(vdo) ((vdo) >> 16)
 #define PD_VDO_CMD(vdo) ((vdo) & 0x1f)

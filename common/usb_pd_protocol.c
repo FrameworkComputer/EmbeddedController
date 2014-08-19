@@ -1581,6 +1581,9 @@ static int command_pd(int argc, char **argv)
 				return EC_ERROR_PARAM4;
 			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_PING_ENABLE,
 				    &enable, 1);
+		} else if (!strncasecmp(argv[3], "curr", 4)) {
+			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_CURRENT,
+				    NULL, 0);
 		} else {
 			return EC_ERROR_PARAM_COUNT;
 		}
@@ -1638,7 +1641,7 @@ static int command_pd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"<port> "
 			"[tx|bist|charger|dev|dump|dualrole|enable"
-			"|soft|hard|clock|ping|state|vdm [ping]]",
+			"|soft|hard|clock|ping|state|vdm [ping | curr]]",
 			"USB PD",
 			NULL);
 

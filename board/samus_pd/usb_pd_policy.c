@@ -196,6 +196,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			ccprintf("%08x ", *payload++);
 		ccprintf("\n");
 		break;
+	case VDO_CMD_CURRENT:
+		ccprintf("Current: %dmA\n", payload[1]);
+		break;
 	}
 
 	return 0;

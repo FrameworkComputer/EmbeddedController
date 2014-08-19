@@ -82,6 +82,8 @@ static timestamp_t fault_deadline;
 #define VBUS_MV(mv) ((mv)*ADC_SCALE/VOLT_DIV/VDDA_MV)
 /* convert VBUS current in raw ADC value */
 #define VBUS_MA(ma) ((ma)*ADC_SCALE*R_SENSE/1000*CURR_GAIN/VDDA_MV)
+/* convert raw ADC value to mA */
+#define ADC_TO_CURR_MA(vbus) ((vbus)*1000/(ADC_SCALE*R_SENSE)*VDDA_MV/CURR_GAIN)
 
 /* Max current : 20% over 3A = 3.6A */
 #define MAX_CURRENT VBUS_MA(3600)
@@ -132,6 +134,9 @@ static int last_volt_idx;
 /* flag and timestamp for down-stepping the voltage */
 static int down_step;
 static uint64_t down_step_done_time;
+
+/* output current measurement */
+int vbus_amp;
 
 int pd_request_voltage(uint32_t rdo)
 {
@@ -200,7 +205,7 @@ void pd_power_supply_reset(int port)
 
 int pd_board_checks(void)
 {
-	int vbus_volt, vbus_amp;
+	int vbus_volt;
 	int ovp_idx;
 
 	/* Reload the watchdog */
@@ -328,6 +333,11 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		break;
 	case VDO_CMD_PING_ENABLE:
 		pd_ping_enable(0, payload[1]);
+		break;
+	case VDO_CMD_CURRENT:
+		/* return last measured current */
+		payload[1] = ADC_TO_CURR_MA(vbus_amp);
+		rsize = 2;
 		break;
 	default:
 		/* Unknown : do not answer */
