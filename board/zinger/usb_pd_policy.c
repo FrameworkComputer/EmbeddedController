@@ -201,22 +201,13 @@ void pd_power_supply_reset(int port)
 int pd_board_checks(void)
 {
 	int vbus_volt, vbus_amp;
-	int watchdog_enabled = STM32_ADC_CFGR1 & (1 << 23);
 	int ovp_idx;
 
 	/* Reload the watchdog */
 	STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 
-	if (watchdog_enabled)
-		/* if the watchdog is enabled, stop it to do other readings */
-		adc_disable_watchdog();
-
 	vbus_volt = adc_read_channel(ADC_CH_V_SENSE);
 	vbus_amp = adc_read_channel(ADC_CH_A_SENSE);
-
-	if (watchdog_enabled)
-		/* re-enable fast OCP */
-		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
 
 	if (fault == FAULT_FAST_OCP) {
 		debug_printf("Fast OverCurrent\n");

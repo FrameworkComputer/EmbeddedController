@@ -170,9 +170,26 @@ void hardware_init(void)
 	irq_init();
 }
 
+static int watchdog_ain_id, watchdog_ain_high, watchdog_ain_low;
+
+static int adc_enable_last_watchdog(void)
+{
+	return adc_enable_watchdog(watchdog_ain_id, watchdog_ain_high,
+			    watchdog_ain_low);
+}
+
+static inline int adc_watchdog_enabled(void)
+{
+	return STM32_ADC_CFGR1 & (1 << 23);
+}
+
 int adc_read_channel(enum adc_channel ch)
 {
 	int value;
+	int watchdog_enabled = adc_watchdog_enabled();
+
+	if (watchdog_enabled)
+		adc_disable_watchdog();
 
 	/* Select channel to convert */
 	STM32_ADC_CHSELR = 1 << ch;
@@ -186,11 +203,19 @@ int adc_read_channel(enum adc_channel ch)
 	/* read converted value */
 	value = STM32_ADC_DR;
 
+	if (watchdog_enabled)
+		adc_enable_last_watchdog();
+
 	return value;
 }
 
 int adc_enable_watchdog(int ch, int high, int low)
 {
+	/* store last watchdog setup */
+	watchdog_ain_id = ch;
+	watchdog_ain_high = high;
+	watchdog_ain_low = low;
+
 	/* Set thresholds */
 	STM32_ADC_TR = ((high & 0xfff) << 16) | (low & 0xfff);
 	/* Select channel to convert */
