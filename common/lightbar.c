@@ -563,7 +563,6 @@ static uint32_t sequence_S5S3(void)
 static uint32_t sequence_S3S5(void)
 {
 	lb_off();
-	WAIT_OR_RET(-1);
 	return 0;
 }
 
@@ -571,6 +570,7 @@ static uint32_t sequence_S3S5(void)
  * nothing to do. We'll just wait here until the state changes. */
 static uint32_t sequence_S5(void)
 {
+	lb_off();
 	WAIT_OR_RET(-1);
 	return 0;
 }
@@ -644,9 +644,10 @@ static uint32_t sequence_PULSE(void)
 	return TASK_EVENT_CUSTOM(msg);
 }
 
-/* The host CPU (or someone) is going to poke at the lightbar directly, so we
- * don't want the EC messing with it. We'll just sit here and ignore all
- * other messages until we're told to continue. */
+/* The AP is going to poke at the lightbar directly, so we don't want the EC
+ * messing with it. We'll just sit here and ignore all other messages until
+ * we're told to continue (or until we think the AP is shutting down).
+ */
 static uint32_t sequence_STOP(void)
 {
 	uint32_t msg;
@@ -654,10 +655,12 @@ static uint32_t sequence_STOP(void)
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
 		CPRINTS("LB_stop got pending_msg %d", pending_msg);
-	} while (msg != PENDING_MSG || pending_msg != LIGHTBAR_RUN);
-
-	/* Q: What should we do if the host shuts down? */
-	/* A: Nothing. We could be driving from the EC console. */
+	} while (msg != PENDING_MSG || (
+			 pending_msg != LIGHTBAR_RUN &&
+			 pending_msg != LIGHTBAR_S0S3 &&
+			 pending_msg != LIGHTBAR_S3 &&
+			 pending_msg != LIGHTBAR_S3S5 &&
+			 pending_msg != LIGHTBAR_S5));
 
 	CPRINTS("LB_stop->running");
 	return 0;
@@ -669,7 +672,10 @@ static uint32_t sequence_RUN(void)
 	return 0;
 }
 
-/* We shouldn't come here, but if we do it shouldn't hurt anything */
+/* We shouldn't come here, but if we do it shouldn't hurt anything. This
+ * sequence is to indicate an internal error in the lightbar logic, not an
+ * error with the Chromebook itself.
+ */
 static uint32_t sequence_ERROR(void)
 {
 	lb_init();
@@ -759,23 +765,31 @@ static const struct {
 	{4, 0x00, 0x00, 0x00, 100000},
 };
 
-static uint32_t sequence_KONAMI(void)
+static uint32_t sequence_KONAMI_inner(void)
 {
 	int i;
-	int tmp;
-
-	tmp = lb_get_brightness();
-	lb_set_brightness(255);
 
 	for (i = 0; i < ARRAY_SIZE(konami); i++) {
 		lb_set_rgb(konami[i].led,
 			   konami[i].r, konami[i].g, konami[i].b);
 		if (konami[i].delay)
-			usleep(konami[i].delay);
+			WAIT_OR_RET(konami[i].delay);
 	}
 
-	lb_set_brightness(tmp);
 	return 0;
+}
+
+static uint32_t sequence_KONAMI(void)
+{
+	int tmp;
+	uint32_t r;
+
+	/* Force brightness to max, then restore it */
+	tmp = lb_get_brightness();
+	lb_set_brightness(255);
+	r = sequence_KONAMI_inner();
+	lb_set_brightness(tmp);
+	return r;
 }
 
 /* Returns 0.0 to 1.0 for val in [min, min + ofs] */
@@ -846,14 +860,10 @@ static uint32_t sequence_TAP_inner(void)
 				   mult * st.p.color[ci].g,
 				   mult * st.p.color[ci].b);
 		}
-		/*
-		 * TODO: Use a different delay function here. Otherwise,
-		 * it's possible that a new sequence (such as KONAMI) can end
-		 * up with TAP as it's previous sequence. It's okay to return
-		 * early from TAP (or not), but we don't want to end up stuck
-		 * in the TAP sequence.
-		 */
+
 		WAIT_OR_RET(st.p.tap_tick_delay);
+
+		/* Return after some time has elapsed */
 		now = get_time();
 		if (now.le.lo - start.le.lo > st.p.tap_display_time)
 			break;
@@ -867,7 +877,10 @@ static uint32_t sequence_TAP(void)
 	uint32_t r;
 	uint8_t br, save[NUM_LEDS][3];
 
-	/* TODO(crosbug.com/p/29041): do we need more than lb_init() */
+	/* TODO(crosbug.com/p/29041): Do we need more than lb_init()?
+	 * Yes. And then we may need to turn it off again, if the AP is still
+	 * off when we're done.
+	 */
 	lb_init();
 	lb_on();
 
@@ -888,6 +901,12 @@ static uint32_t sequence_TAP(void)
 /****************************************************************************/
 /* The main lightbar task. It just cycles between various pretty patterns. */
 /****************************************************************************/
+
+/* Distinguish "normal" sequences from one-shot sequences */
+static inline int is_normal_sequence(enum lightbar_sequence seq)
+{
+	return (seq >= LIGHTBAR_S5 && seq <= LIGHTBAR_S3S5);
+}
 
 /* Link each sequence with a command to invoke it. */
 struct lightbar_cmd_t {
@@ -918,7 +937,8 @@ void lightbar_task(void)
 			CPRINTS("LB msg %d = %s", pending_msg,
 				lightbar_cmds[pending_msg].string);
 			if (st.cur_seq != pending_msg) {
-				st.prev_seq = st.cur_seq;
+				if (is_normal_sequence(st.cur_seq))
+					st.prev_seq = st.cur_seq;
 				st.cur_seq = pending_msg;
 			}
 		} else {

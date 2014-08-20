@@ -31,6 +31,7 @@ test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
 test-list-host+=sbs_charging adapter host_command thermal_falco led_spring
 test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
 test-list-host+=motion_sense math_util sbs_charging_v2 battery_get_params_smart
+test-list-host+=lightbar
 
 adapter-y=adapter.o
 button-y=button.o
@@ -64,3 +65,4 @@ timer_calib-y=timer_calib.o
 timer_dos-y=timer_dos.o
 utils-y=utils.o
 battery_get_params_smart-y=battery_get_params_smart.o
+lightbar-y=lightbar.o

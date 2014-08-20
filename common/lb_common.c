@@ -68,6 +68,12 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_GREEN 0x55
 #define MAX_BLUE  0x67
 #endif
+#ifdef BOARD_HOST
+/* For testing only */
+#define MAX_RED   0xff
+#define MAX_GREEN 0xff
+#define MAX_BLUE  0xff
+#endif
 
 /* How we'd like to see the driver chips initialized. The controllers have some
  * auto-cycling capability, but it's not much use for our purposes. For now,
@@ -112,6 +118,10 @@ static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
 static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
 #endif
 #ifdef BOARD_SAMUS
+static const uint8_t led_to_isc[] = { 0x15, 0x18, 0x15, 0x18 };
+#endif
+#ifdef BOARD_HOST
+/* For testing only */
 static const uint8_t led_to_isc[] = { 0x15, 0x18, 0x15, 0x18 };
 #endif
 

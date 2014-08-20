@@ -112,5 +112,9 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_CHARGER 1
 #endif
 
+#ifdef TEST_LIGHTBAR
+#define I2C_PORT_LIGHTBAR 1
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __CROS_EC_TEST_CONFIG_H */
