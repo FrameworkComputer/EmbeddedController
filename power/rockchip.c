@@ -50,7 +50,7 @@
 #define IN_SUSPEND POWER_SIGNAL_MASK(RK_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  (10200 * MSEC)  /* 10.2 seconds */
+#define DELAY_FORCE_SHUTDOWN  (8 * SECOND)
 
 /*
  * The minimum time to assert the PMIC PWRON pin is 20ms.
@@ -73,7 +73,7 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or power good == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(10200 * MSEC)  /* 10.2 seconds */
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
 
 /*
  * The hold time for pulling down the PMIC_WARM_RESET_L pin so that
@@ -189,6 +189,8 @@ static int check_for_power_off_event(void)
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
 			CPRINTS("power waiting for long press %u",
 				power_off_deadline.le.lo);
+			/* Ensure we will wake up to check the power key */
+			timer_arm(power_off_deadline, TASK_ID_CHIPSET);
 		} else if (timestamp_expired(power_off_deadline, &now)) {
 			power_off_deadline.val = 0;
 			CPRINTS("power off after long press now=%u, %u",
