@@ -2,7 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * STM32L SoC system monitor interface tool
+ * STM32 SoC system monitor interface tool
+ * For Serial, implement proctol v2.0 as defined in:
+ * http://www.st.com/st-web-ui/static/active/en/resource/technical/\
+ * document/application_note/CD00264342.pdf
+ *
+ * For i2C, implement protocol v1.0 as defined in:
+ * http://www.st.com/st-web-ui/static/active/en/resource/technical/\
+ * document/application_note/DM00072315.pdf
  */
 
 /* use cfmakeraw() */
@@ -16,7 +23,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <linux/i2c-dev.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
@@ -52,24 +61,27 @@ struct stm32_def {
 	uint32_t flash_start;
 	uint32_t flash_size;
 	uint32_t page_size;
+	uint32_t cmds_len;
 } chip_defs[] = {
-	{0x416, "STM32L15xxB",   0x08000000, 0x20000, 256},
-	{0x429, "STM32L15xxB-A", 0x08000000, 0x20000, 256},
-	{0x427, "STM32L15xxC",   0x08000000, 0x40000, 256},
-	{0x420, "STM32F100xx",   0x08000000, 0x20000, 1024},
-	{0x410, "STM32F102R8",   0x08000000, 0x10000, 1024},
-	{0x440, "STM32F05x",     0x08000000, 0x10000, 1024},
-	{0x444, "STM32F03x",     0x08000000, 0x08000, 1024},
-	{0x448, "STM32F07xB",    0x08000000, 0x20000, 1024},
+	{0x416, "STM32L15xxB",   0x08000000, 0x20000, 256, 13},
+	{0x429, "STM32L15xxB-A", 0x08000000, 0x20000, 256, 13},
+	{0x427, "STM32L15xxC",   0x08000000, 0x40000, 256, 13},
+	{0x420, "STM32F100xx",   0x08000000, 0x20000, 1024, 13},
+	{0x410, "STM32F102R8",   0x08000000, 0x10000, 1024, 13},
+	{0x440, "STM32F05x",     0x08000000, 0x10000, 1024, 13},
+	{0x444, "STM32F03x",     0x08000000, 0x08000, 1024, 13},
+	{0x448, "STM32F07xB",    0x08000000, 0x20000, 2048, 13},
 	{ 0 }
 };
 
 #define DEFAULT_TIMEOUT 4 /* seconds */
 #define DEFAULT_BAUDRATE B38400
 #define PAGE_SIZE 256
+#define INVALID_I2C_ADAPTER -1
 
 /* store custom parameters */
 speed_t baudrate = DEFAULT_BAUDRATE;
+int i2c_adapter = INVALID_I2C_ADAPTER;
 const char *serial_port = "/dev/ttyUSB1";
 const char *input_filename;
 const char *output_filename;
@@ -87,7 +99,14 @@ typedef struct {
 	uint8_t *data;
 } payload_t;
 
-static int has_exterase;
+/* List all possible flash erase functions */
+typedef int command_erase_t(int fd, uint16_t count, uint16_t start);
+command_erase_t command_erase;
+command_erase_t command_ext_erase;
+command_erase_t command_erase_i2c;
+
+command_erase_t *erase;
+
 static void discard_input(int);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -155,10 +174,39 @@ int open_serial(const char *port)
 	return fd;
 }
 
+int open_i2c(const int port)
+{
+	int fd;
+	char filename[20];
+
+	snprintf(filename, 19, "/dev/i2c-%d", port);
+	fd = open(filename, O_RDWR);
+	if (fd < 0) {
+		perror("Unable to open i2c adapter");
+		return -1;
+	}
+	/*
+	 * When in I2C mode, the bootloader is listening at address 0x76 (10 bit
+	 * mode), 0x3B (7 bit mode)
+	 */
+	if (ioctl(fd, I2C_SLAVE, 0x3B) < 0) {
+		perror("Unable to select proper address");
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+
 static void discard_input(int fd)
 {
 	uint8_t buffer[64];
 	int res, i;
+
+	/* Skip in i2c mode */
+	if (i2c_adapter != INVALID_I2C_ADAPTER)
+		return;
 
 	/* eat trailing garbage */
 	do {
@@ -201,72 +249,69 @@ int wait_for_ack(int fd)
 }
 
 int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
-		 uint8_t *resp, int resp_size)
+		 uint8_t *resp, int resp_size, int ack_requested)
 {
 	int res, i, c;
 	payload_t *p;
 	int readcnt = 0;
-	int size;
-	uint8_t *data;
-	uint8_t crc = 0xff ^ cmd; /* XOR checksum */
+	uint8_t cmd_frame[] = { cmd, 0xff ^ cmd }; /* XOR checksum */
 
 	/* Send the command index */
-	res = write(fd, &cmd, 1);
+	res = write(fd, cmd_frame, 2);
 	if (res <= 0) {
-		perror("Failed to write command");
+		perror("Failed to write command frame");
 		return -1;
 	}
-	/* Send the checksum */
-	res = write(fd, &crc, 1);
-	if (res <= 0) {
-		perror("Failed to write checksum");
-		return -1;
-	}
+
 	/* Wait for the ACK */
 	if (wait_for_ack(fd) < 0) {
-		fprintf(stderr, "Failed to get command %02x ACK\n", cmd);
+		fprintf(stderr, "Failed to get command 0x%02x ACK\n", cmd);
 		return -1;
 	}
 
 	/* Send the command payloads */
 	for (p = loads, c = 0; c < cnt; c++, p++) {
-		crc = 0;
-		size = p->size;
-		data = p->data;
+		uint8_t crc = 0;
+		int size = p->size;
+		uint8_t *data = malloc(size + 1), *data_ptr;
+
+		if (data == NULL) {
+			fprintf(stderr,
+				"Failed to allocate memory for load %d\n", c);
+			return -ENOMEM;
+		}
+		memcpy(data, p->data, size);
 		for (i = 0; i < size; i++)
 			crc ^= data[i];
 		if (size == 1)
 			crc = 0xff ^ crc;
-
+		data[size] = crc;
+		size++;
+		data_ptr = data;
 		while (size) {
-			res = write(fd, data, size);
+			res = write(fd, data_ptr, size);
 			if (res < 0) {
 				perror("Failed to write command payload");
+				free(data);
 				return -1;
 			}
 			size -= res;
-			data += res;
-		}
-
-		/* Send the checksum */
-		res = write(fd, &crc, 1);
-		if (res <= 0) {
-			perror("Failed to write checksum");
-			return -1;
+			data_ptr += res;
 		}
 
 		/* Wait for the ACK */
 		if (wait_for_ack(fd) < 0) {
 			fprintf(stderr, "payload %d ACK failed for CMD%02x\n",
-				c, cmd);
+					c, cmd);
+			free(data);
 			return -1;
 		}
-
+		free(data);
 	}
 
 	/* Read the answer payload */
 	if (resp) {
-		while ((res = read(fd, resp, resp_size))) {
+		while ((resp_size > 0) && (res = read(fd, resp, resp_size))) {
 			if (res < 0) {
 				perror("Failed to read payload");
 				return -1;
@@ -275,23 +320,32 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 			resp += res;
 			resp_size -= res;
 		}
-	}
 
+		/* Wait for the ACK */
+		if (ack_requested) {
+			if (wait_for_ack(fd) < 0) {
+				fprintf(stderr,
+					"Failed to get response to command 0x%02x ACK\n",
+					cmd);
+				return -1;
+			}
+		}
+	}
 	return readcnt;
 }
 
 struct stm32_def *command_get_id(int fd)
 {
 	int res;
-	uint8_t id[4];
+	uint8_t id[3];
 	uint16_t chipid;
 	struct stm32_def *def;
 
-	res = send_command(fd, CMD_GETID, NULL, 0, id, sizeof(id));
+	res = send_command(fd, CMD_GETID, NULL, 0, id, sizeof(id), 1);
 	if (res > 0) {
-		if (id[0] != 1 || id[3] != RESP_ACK) {
-			fprintf(stderr, "unknown ID : %02x %02x %02x %02x\n",
-				id[0], id[1], id[2], id[3]);
+		if (id[0] != 1) {
+			fprintf(stderr, "unknown ID : %02x %02x %02x\n",
+				id[0], id[1], id[2]);
 			return NULL;
 		}
 		chipid = (id[1] << 8) | id[2];
@@ -311,6 +365,10 @@ int init_monitor(int fd)
 {
 	int res;
 	uint8_t init = CMD_INIT;
+
+	/* Skip in i2c mode */
+	if (i2c_adapter != INVALID_I2C_ADAPTER)
+		return 0;
 
 	printf("Waiting for the monitor startup ...");
 	fflush(stdout);
@@ -347,27 +405,36 @@ int init_monitor(int fd)
 	return 0;
 }
 
-int command_get_commands(int fd)
+int command_get_commands(int fd, struct stm32_def *chip)
 {
 	int res, i;
 	uint8_t cmds[64];
 
-	res = send_command(fd, CMD_GETCMD, NULL, 0, cmds, sizeof(cmds));
+	/*
+	 * For i2c, we have to request the exact amount of bytes we expect.
+	 * TODO(gwendal): Broken on device with Bootloader version 1.1
+	 */
+	res = send_command(fd, CMD_GETCMD, NULL, 0, cmds, chip->cmds_len, 1);
 	if (res > 0) {
-		if ((cmds[0] > sizeof(cmds) - 2) ||
-		    (cmds[cmds[0] + 2] != RESP_ACK)) {
+		if (cmds[0] > sizeof(cmds) - 2) {
 			fprintf(stderr, "invalid GET answer (%02x...)\n",
 				cmds[0]);
 			return -1;
 		}
 		printf("Bootloader v%d.%d, commands : ",
 		       cmds[1] >> 4, cmds[1] & 0xf);
+
+		erase = command_erase;
 		for (i = 2; i < 2 + cmds[0]; i++) {
 			if (cmds[i] == CMD_EXTERASE)
-				has_exterase = 1;
+				erase = command_ext_erase;
 			printf("%02x ", cmds[i]);
 		}
+
+		if (i2c_adapter != INVALID_I2C_ADAPTER)
+			erase = command_erase_i2c;
 		printf("\n");
+
 		return 0;
 	}
 
@@ -400,10 +467,10 @@ int command_read_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 
 		draw_spinner(remaining, size);
 		fflush(stdout);
-		res = send_command(fd, CMD_READMEM, loads, 2, buffer, cnt + 1);
+		res = send_command(fd, CMD_READMEM, loads, 2, buffer, cnt + 1,
+				   0);
 		if (res < 0)
 			return -EIO;
-
 		buffer += cnt + 1;
 		address += cnt + 1;
 		remaining -= cnt + 1;
@@ -433,7 +500,7 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 
 		draw_spinner(remaining, size);
 		fflush(stdout);
-		res = send_command(fd, CMD_WRITEMEM, loads, 2, NULL, 0);
+		res = send_command(fd, CMD_WRITEMEM, loads, 2, NULL, 0, 1);
 		if (res < 0)
 			return -EIO;
 
@@ -465,7 +532,7 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 			pages[i+1] = htons(start + i);
 	}
 
-	res = send_command(fd, CMD_EXTERASE, &load, 1, NULL, 0);
+	res = send_command(fd, CMD_EXTERASE, &load, 1, NULL, 0, 1);
 	if (res >= 0)
 		printf("Flash erased.\n");
 
@@ -474,10 +541,54 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 	return res;
 }
 
-int command_erase(int fd, uint8_t count, uint8_t start)
+int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 {
 	int res;
-	payload_t load = { 1, (uint8_t *)&count };
+	uint16_t count_be = htons(count);
+	payload_t load[2] = {
+		{ 2, (uint8_t *)&count_be},
+		{ 0, NULL},
+	};
+	int load_cnt = 1;
+	uint16_t *pages = NULL;
+
+	if (count < 0xfff) {
+		int i;
+		/* not a special value : build a list of pages */
+		/*
+		 * I2c protocol requires 2 messages, the count has to be acked
+		 * before the addresses can be sent.
+		 * TODO(gwendal): Still broken on i2c.
+		 */
+		load_cnt = 2;
+		load[1].size = 2 * count;
+		pages = malloc(load[1].size);
+		if (!pages)
+			return -ENOMEM;
+		load[1].data = (uint8_t *)pages;
+		count_be = htons(count - 1);
+		for (i = 0; i < count; i++)
+			pages[i] = htons(start + i);
+	} else {
+		load_cnt = 1;
+	}
+
+	res = send_command(fd, CMD_EXTERASE, load, load_cnt,
+			   NULL, 0, 1);
+	if (res >= 0)
+		printf("Flash erased.\n");
+
+	if (pages)
+		free(pages);
+	return res;
+}
+
+
+int command_erase(int fd, uint16_t count, uint16_t start)
+{
+	int res;
+	uint8_t count_8bit = count;
+	payload_t load = { 1, &count_8bit };
 	uint8_t *pages = NULL;
 
 	if (count < 0xff) {
@@ -493,7 +604,7 @@ int command_erase(int fd, uint8_t count, uint8_t start)
 			pages[i+1] = start + i;
 	}
 
-	res = send_command(fd, CMD_ERASE, &load, 1, NULL, 0);
+	res = send_command(fd, CMD_ERASE, &load, 1, NULL, 0, 1);
 	if (res >= 0)
 		printf("Flash erased.\n");
 
@@ -506,7 +617,7 @@ int command_read_unprotect(int fd)
 {
 	int res;
 
-	res = send_command(fd, CMD_RU, NULL, 0, NULL, 0);
+	res = send_command(fd, CMD_RU, NULL, 0, NULL, 0, 1);
 	if (res < 0)
 		return -EIO;
 
@@ -530,7 +641,7 @@ int command_write_unprotect(int fd)
 {
 	int res;
 
-	res = send_command(fd, CMD_WU, NULL, 0, NULL, 0);
+	res = send_command(fd, CMD_WU, NULL, 0, NULL, 0, 1);
 	if (res < 0)
 		return -EIO;
 
@@ -557,7 +668,7 @@ int command_go(int fd, uint32_t address)
 	uint32_t addr_be = htonl(address);
 	payload_t load = { 4, (uint8_t *)&addr_be };
 
-	res = send_command(fd, CMD_GO, &load, 1, NULL, 0);
+	res = send_command(fd, CMD_GO, &load, 1, NULL, 0, 1);
 	if (res < 0)
 		return -EIO;
 
@@ -660,16 +771,22 @@ static const struct option longopts[] = {
 	{"help", 0, 0, 'h'},
 	{"unprotect", 0, 0, 'u'},
 	{"baudrate", 1, 0, 'b'},
+	{"adapter", 1, 0, 'a'},
 	{NULL, 0, 0, 0}
 };
 
 void display_usage(char *program)
 {
-	fprintf(stderr, "Usage: %s [-d <tty>] [-b <baudrate>] [-u] [-e] [-U]"
-		" [-r <file>] [-w <file>] [-g]\n", program);
+	fprintf(stderr,
+		"Usage: %s [-a <i2c_adapter> | [-d <tty>] [-b <baudrate>]]"
+		" [-u] [-e] [-U] [-r <file>] [-w <file>] [-g]\n", program);
+	fprintf(stderr, "Can access the controller via serial port or i2c\n");
+	fprintf(stderr, "Serial port mode:\n");
 	fprintf(stderr, "--d[evice] <tty> : use <tty> as the serial port\n");
 	fprintf(stderr, "--b[audrate] <baudrate> : set serial port speed "
 			"to <baudrate> bauds\n");
+	fprintf(stderr, "i2c mode:\n");
+	fprintf(stderr, "--a[dapter] <id> : use i2c adapter <id>.\n\n");
 	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
 	fprintf(stderr, "--U[nprotect] : remove flash read protect\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
@@ -709,9 +826,12 @@ int parse_parameters(int argc, char **argv)
 	int opt, idx;
 	int flags = 0;
 
-	while ((opt = getopt_long(argc, argv, "b:d:eghr:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:b:d:eghr:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
+		case 'a':
+			i2c_adapter = atoi(optarg);
+			break;
 		case 'b':
 			baudrate = parse_baudrate(optarg);
 			break;
@@ -755,11 +875,14 @@ int main(int argc, char **argv)
 	/* Parse command line options */
 	flags = parse_parameters(argc, argv);
 
-	/* Open the serial port tty */
-	ser = open_serial(serial_port);
+	if (i2c_adapter == INVALID_I2C_ADAPTER) {
+		/* Open the serial port tty */
+		ser = open_serial(serial_port);
+	} else {
+		ser = open_i2c(i2c_adapter);
+	}
 	if (ser < 0)
 		return 1;
-
 	/* Trigger embedded monitor detection */
 	if (init_monitor(ser) < 0)
 		goto terminate;
@@ -768,7 +891,7 @@ int main(int argc, char **argv)
 	if (!chip)
 		goto terminate;
 
-	command_get_commands(ser);
+	command_get_commands(ser, chip);
 
 	if (flags & FLAG_READ_UNPROTECT)
 		command_read_unprotect(ser);
@@ -776,15 +899,20 @@ int main(int argc, char **argv)
 		command_write_unprotect(ser);
 
 	if (flags & FLAG_ERASE || output_filename) {
-		/* Mass erase is not supported on STM32L15xx */
-		/* command_ext_erase(ser, ERASE_ALL, 0); */
-		int i, page_count = chip->flash_size / chip->page_size;
-		for (i = 0; i < page_count; i += 128) {
-			int count = MIN(128, page_count - i);
-			if (has_exterase)
-				command_ext_erase(ser, count, i);
-			else
-				command_erase(ser, count, i);
+		if (!strcmp("STM32L15", chip->name)) {
+			/* Mass erase is not supported on STM32L15xx */
+			/* command_ext_erase(ser, ERASE_ALL, 0); */
+			int i, page_count = chip->flash_size / chip->page_size;
+			for (i = 0; i < page_count; i += 128) {
+				int count = MIN(128, page_count - i);
+				ret = erase(ser, count, i);
+				if (ret)
+					goto terminate;
+			}
+		} else {
+			ret = erase(ser, 0xFFFF, 0);
+			if (ret)
+				goto terminate;
 		}
 	}
 

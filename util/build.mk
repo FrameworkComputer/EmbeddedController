@@ -6,7 +6,7 @@
 # Host tools build
 #
 
-host-util-bin=ectool lbplay burn_my_ec
+host-util-bin=ectool lbplay burn_my_ec stm32mon
 
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 ifeq ($(CHIP),mec1322)
@@ -20,4 +20,4 @@ ectool-objs=ectool.o ectool_keyscan.o misc_util.o ec_flash.o $(comm-objs) ../com
 lbplay-objs=lbplay.o $(comm-objs)
 burn_my_ec-objs=ec_flash.o $(comm-objs) misc_util.o
 
-build-util-bin=ec_uartd stm32mon iteflash
+build-util-bin=ec_uartd iteflash
