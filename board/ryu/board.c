@@ -12,6 +12,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "power.h"
 #include "power_button.h"
@@ -37,6 +38,15 @@ void unhandled_evt(enum gpio_signal signal)
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * Determine recovery mode is requested by the power, volup, and
+	 * voldown buttons being pressed.
+	 */
+	if (power_button_signal_asserted() &&
+	    !gpio_get_level(GPIO_BTN_VOLD_L) &&
+	    !gpio_get_level(GPIO_BTN_VOLU_L))
+		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is
 	 * important that this is enabled after the CC_DEVICE_ODL lines are
