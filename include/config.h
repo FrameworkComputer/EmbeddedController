@@ -652,6 +652,13 @@
 #define CONFIG_LID_SWITCH
 
 /*
+ * Support for turning the lightbar power rails on briefly when the AP is off.
+ * Enabling this requires implementing the board-specific lb_power() function
+ * to do it (see lb_common.h).
+ */
+#undef CONFIG_LIGHTBAR_POWER_RAILS
+
+/*
  * Low power idle options. These are disabled by default and all boards that
  * want to use low power idle must define it. When using the LFIOSC, the low
  * frequency clock will be used to conserve even more power when possible.

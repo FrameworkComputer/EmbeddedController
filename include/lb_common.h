@@ -34,5 +34,10 @@ void lb_start_builtin_cycle(void);
 void lb_hc_cmd_dump(struct ec_response_lightbar *out);
 /* Write the IC controller register given by the LIGHTBAR_CMD_REG command. */
 void lb_hc_cmd_reg(const struct ec_params_lightbar *in);
+/*
+ * Optional (see config.h). Request that the lightbar power rails be on or off.
+ * Returns true if a change to the rails was made, false if it wasn't.
+ */
+int lb_power(int enabled);
 
 #endif  /* __CROS_EC_LB_COMMON_H */

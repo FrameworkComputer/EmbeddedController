@@ -74,7 +74,7 @@ static const struct lightbar_params_v1 default_params = {
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
 	.tap_tick_delay = 5000,			/* oscillation step time */
-	.tap_display_time = 5000000,		/* total sequence time */
+	.tap_display_time = 3000000,		/* total sequence time */
 
 	.tap_pct_red = 10,			/* below this is red */
 	.tap_pct_green = 97,			/* above this is green */
@@ -819,6 +819,8 @@ static uint32_t sequence_TAP_inner(void)
 
 	start = get_time();
 	while (1) {
+		get_battery_level();
+
 		if (st.battery_percent < st.p.tap_pct_red)
 			base_color = RED;
 		else if (st.battery_percent > st.p.tap_pct_green)
@@ -877,11 +879,13 @@ static uint32_t sequence_TAP(void)
 	uint32_t r;
 	uint8_t br, save[NUM_LEDS][3];
 
-	/* TODO(crosbug.com/p/29041): Do we need more than lb_init()?
-	 * Yes. And then we may need to turn it off again, if the AP is still
-	 * off when we're done.
-	 */
-	lb_init();
+#ifdef CONFIG_LIGHTBAR_POWER_RAILS
+	/* Request that the lightbar power rails be turned on. */
+	if (lb_power(1)) {
+		lb_init();
+		lb_set_rgb(NUM_LEDS, 0, 0, 0);
+	}
+#endif
 	lb_on();
 
 	for (i = 0; i < NUM_LEDS; i++)
@@ -895,6 +899,10 @@ static uint32_t sequence_TAP(void)
 	for (i = 0; i < NUM_LEDS; i++)
 		lb_set_rgb(i, save[i][0], save[i][1], save[i][2]);
 
+#ifdef CONFIG_LIGHTBAR_POWER_RAILS
+	/* Suggest that the lightbar power rails can be shut down again. */
+	lb_power(0);
+#endif
 	return r;
 }
 

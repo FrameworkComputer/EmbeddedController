@@ -436,6 +436,36 @@ enum power_state power_handle_state(enum power_state state)
 	return state;
 }
 
+#ifdef CONFIG_LIGHTBAR_POWER_RAILS
+/* Returns true if a change was made, NOT the new state */
+int lb_power(int enabled)
+{
+	/* No change needed. */
+	if (enabled == gpio_get_level(GPIO_PP5000_EN))
+		return 0;
+
+	/* If the AP is on, we don't change the rails. */
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+
+	/*
+	 * If the AP is off, we can still turn the lightbar on briefly.
+	 * When turning on, we have to wait for the rails to come up fully
+	 * before we the lightbar ICs will respond. There's not a reliable
+	 * PGOOD signal for that (I tried), so we just have to wait. These
+	 * delays seem to work.
+	 */
+	gpio_set_level(GPIO_PP5000_EN, enabled);
+	if (enabled)
+		msleep(10);
+	gpio_set_level(GPIO_LIGHTBAR_RESET_L, enabled);
+	if (enabled)
+		msleep(1);
+
+	return 1;
+}
+#endif
+
 static int host_command_gsv(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_get_set_value *p = args->params;
