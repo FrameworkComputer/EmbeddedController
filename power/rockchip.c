@@ -16,8 +16,6 @@
  *    it off until pwron is released and pressed again
  *
  *  When powered on:
- *  - The PMIC PWRON signal is released <= 1 second after the power button is
- *    released
  *  - Holding pwron for 10.2s powers off the AP
  *  - Pressing and releasing pwron within that 10.2s is ignored
  *  - If POWER_GOOD is dropped by the pmic, then we cut off the pmic source
@@ -120,45 +118,37 @@ static void chipset_turn_off_power_rails(void);
 /**
  * Set the AP RESET signal.
  *
- * This fucntion is for backward-compatible.
- *
- * AP_RESET_L (PB3) is stuffed before rev <= 2.0 and connected to PMIC RESET.
- * After rev >= 2.2, this is removed. This should not effected the new board.
- *
- * @param asserted  Assert (=1) or deassert (=0) the signal.  This is the
- *                  logical level of the pin, not the physical level.
+ * @param asserted	Resetting (=1) or idle (=0)
  */
 static void set_ap_reset(int asserted)
 {
 	/* Signal is active-high */
-	gpio_set_level(GPIO_AP_RESET_H, asserted ? 1 : 0);
+	gpio_set_level(GPIO_AP_RESET, asserted ? 1 : 0);
 }
 
 
 /**
- * Set the PMIC PWRON signal.
+ * Set the PMIC PWREN signal.
  *
  * Note that asserting requires holding for PMIC_PWRON_DEBOUNCE_TIME.
  *
- * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
- *			logical level of the pin, not the physical level.
+ * @param asserted	Assert (=1) or deassert (=0) the signal.
  */
-static void set_pmic_pwron(int asserted)
+static void set_pmic_pwren(int asserted)
 {
-	/* Signal is active-low */
-	gpio_set_level(GPIO_PMIC_PWRON_L, asserted ? 0 : 1);
+	/* Signal is active-high */
+	gpio_set_level(GPIO_PMIC_PWREN, asserted ? 1 : 0);
 }
 
 /**
  * Set the PMIC source to force shutdown the AP.
  *
- * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
- *			logical level of the pin, not the physical level.
+ * @param asserted	Assert (=1) or deassert (=0) the signal.
  */
 static void set_pmic_source(int asserted)
 {
 	/* Signal is active-high */
-	gpio_set_level(GPIO_PMIC_SOURCE_PWR_H, asserted ? 1 : 0);
+	gpio_set_level(GPIO_PMIC_SOURCE_PWREN, asserted ? 1 : 0);
 }
 
 /**
@@ -192,7 +182,7 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
-		set_pmic_pwron(1);
+		set_pmic_pwren(1);
 		usleep(PMIC_PWRON_DEBOUNCE_TIME);
 
 		if (!power_button_was_pressed) {
@@ -207,7 +197,7 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPRINTS("power off cancel");
-		set_pmic_pwron(0);
+		set_pmic_pwren(0);
 	}
 
 	power_button_was_pressed = pressed;
@@ -281,7 +271,7 @@ enum power_state power_chipset_init(void)
 static void chipset_turn_off_power_rails(void)
 {
 	/* Release the power button, if it was asserted */
-	set_pmic_pwron(0);
+	set_pmic_pwren(0);
 	/* Close the pmic power source immediately */
 	set_pmic_source(0);
 
@@ -392,7 +382,7 @@ static void power_on(void)
 	 */
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INPUT);
 	/* Push the power button */
-	set_pmic_pwron(1);
+	set_pmic_pwren(1);
 	usleep(PMIC_PWRON_DEBOUNCE_TIME);
 	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INPUT | GPIO_INT_BOTH
 			| GPIO_PULL_UP);
@@ -513,7 +503,6 @@ enum power_state power_handle_state(enum power_state state)
 			if (wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
-				set_pmic_pwron(0);
 				return POWER_S3;
 			} else {
 				CPRINTS("long-press button, shutdown");
@@ -527,7 +516,7 @@ enum power_state power_handle_state(enum power_state state)
 		} else {
 			CPRINTS("POWER_GOOD not seen in time");
 		}
-		set_pmic_pwron(0);
+		set_pmic_pwren(0);
 		return POWER_S5;
 
 	case POWER_S3:
