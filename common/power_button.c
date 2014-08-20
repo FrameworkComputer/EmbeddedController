@@ -31,6 +31,16 @@ static int debounced_power_pressed;	/* Debounced power button state */
 static int simulate_power_pressed;
 
 /**
+ * Return non-zero if power button signal asserted at hardware input.
+ *
+ */
+int power_button_signal_asserted(void)
+{
+	return !!(gpio_get_level(GPIO_POWER_BUTTON_L)
+		 == CONFIG_POWER_BUTTON_ACTIVE_STATE);
+}
+
+/**
  * Get raw power button signal state.
  *
  * @return 1 if power button is pressed, 0 if not pressed.
@@ -50,8 +60,7 @@ static int raw_power_button_pressed(void)
 		return 0;
 #endif
 
-	return !!(gpio_get_level(GPIO_POWER_BUTTON_L)
-		 == CONFIG_POWER_BUTTON_ACTIVE_STATE);
+	return power_button_signal_asserted();
 }
 
 int power_button_is_pressed(void)

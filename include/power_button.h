@@ -18,6 +18,12 @@
 int power_button_is_pressed(void);
 
 /**
+ * Return non-zero if power button signal asserted at hardware input.
+ *
+ */
+int power_button_signal_asserted(void);
+
+/**
  * Interrupt handler for power button.
  *
  * @param signal	Signal which triggered the interrupt.
