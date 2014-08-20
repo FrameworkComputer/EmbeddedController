@@ -27,7 +27,7 @@ static xcb_drawable_t win;
 static xcb_gcontext_t foreground;
 static xcb_colormap_t colormap_id;
 
-static int lb_power;
+static int fake_power;
 
 void init_windows(void)
 {
@@ -124,7 +124,7 @@ void update_window(void)
 	int i;
 	uint16_t copyleds[NUM_LEDS][3];
 
-	if (lb_power) {
+	if (fake_power) {
 		pthread_mutex_lock(&leds_mutex);
 		memcpy(copyleds, leds, sizeof(leds));
 		pthread_mutex_unlock(&leds_mutex);
@@ -220,26 +220,31 @@ int lb_get_rgb(unsigned int led, uint8_t *red, uint8_t *green, uint8_t *blue)
 
 void lb_init(void)
 {
-	if (lb_power)
+	if (fake_power)
 		lb_set_rgb(NUM_LEDS, 0, 0, 0);
 };
 void lb_off(void)
 {
-	lb_power = 0;
+	fake_power = 0;
 	update_window();
 };
 void lb_on(void)
 {
-	lb_power = 1;
+	fake_power = 1;
 	update_window();
 };
 void lb_start_builtin_cycle(void) { };
 void lb_hc_cmd_dump(struct ec_response_lightbar *out)
 {
-	printf("lightbar is %s\n", lb_power ? "on" : "off");
-	memset(out, lb_power, sizeof(*out));
+	printf("lightbar is %s\n", fake_power ? "on" : "off");
+	memset(out, fake_power, sizeof(*out));
 };
 void lb_hc_cmd_reg(const struct ec_params_lightbar *in) { };
+
+int lb_power(int enabled)
+{
+	return fake_power;
+}
 
 
 /*****************************************************************************/

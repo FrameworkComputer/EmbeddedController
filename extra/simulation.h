@@ -21,7 +21,8 @@ void *entry_windows(void *);
 void *entry_input(void *);
 void *entry_lightbar(void *);
 void init_windows(void);
-int lb_read_params_from_file(const char *filename, struct lightbar_params *p);
+int lb_read_params_from_file(const char *filename,
+			     struct lightbar_params_v1 *p);
 /* Interfaces to the EC code that we're encapsulating */
 void lightbar_task(void);
 int fake_consolecmd_lightbar(int argc, char *argv[]);
@@ -32,6 +33,10 @@ int fake_consolecmd_lightbar(int argc, char *argv[]);
 #ifndef CONFIG_CONSOLE_CMDHELP
 #define CONFIG_CONSOLE_CMDHELP
 #endif
+#ifndef CONFIG_LIGHTBAR_POWER_RAILS
+#define CONFIG_LIGHTBAR_POWER_RAILS
+#endif
+
 
 /* Stuff that's too interleaved with the rest of the EC to just include */
 

@@ -164,7 +164,8 @@ uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 }
 
 /* Copied from util/ectool.c */
-int lb_read_params_from_file(const char *filename, struct lightbar_params *p)
+int lb_read_params_from_file(const char *filename,
+			     struct lightbar_params_v1 *p)
 {
 	FILE *fp;
 	char buf[80];
@@ -207,7 +208,18 @@ int lb_read_params_from_file(const char *filename, struct lightbar_params *p)
 	READ(1); p->s3_sleep_for = val[0];
 	READ(1); p->s3_ramp_up = val[0];
 	READ(1); p->s3_ramp_down = val[0];
-	READ(1); p->new_s0 = val[0];
+	READ(1); p->tap_tick_delay = val[0];
+	READ(1); p->tap_display_time = val[0];
+
+	READ(1); p->tap_pct_red = val[0];
+	READ(1); p->tap_pct_green = val[0];
+	READ(1); p->tap_seg_min_on = val[0];
+	READ(1); p->tap_seg_max_on = val[0];
+	READ(1); p->tap_seg_osc = val[0];
+	READ(3);
+	p->tap_idx[0] = val[0];
+	p->tap_idx[1] = val[1];
+	p->tap_idx[2] = val[2];
 
 	READ(2);
 	p->osc_min[0] = val[0];
@@ -266,6 +278,8 @@ int lb_read_params_from_file(const char *filename, struct lightbar_params *p)
 		p->color[i].g = val[1];
 		p->color[i].b = val[2];
 	}
+
+#undef READ
 
 	/* Yay */
 	r = 0;
