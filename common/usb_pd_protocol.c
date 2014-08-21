@@ -371,6 +371,14 @@ static int send_validate_message(int port, uint16_t header,
 			if (task_wait_event(USB_PD_RX_TMOUT_US) ==
 			    TASK_EVENT_TIMER)
 				continue;
+			/*
+			 * Make sure we woke up due to rx recd, otherwise
+			 * we need to manually start
+			 */
+			if (!pd_rx_started(port)) {
+				pd_rx_disable_monitoring(port);
+				pd_rx_start(port);
+			}
 		} else {
 			/* starting waiting for GoodCrc */
 			pd_rx_start(port);
