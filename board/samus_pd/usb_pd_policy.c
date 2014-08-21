@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -194,6 +195,18 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"Toggle EC interrupt line",
 			NULL);
 
+static int command_pd_host_event(int argc, char **argv)
+{
+	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	pd_send_ec_int();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
+			"",
+			"Send PD host event",
+			NULL);
+
 /****************************************************************************/
 /* Host commands */
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
@@ -204,6 +217,9 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	board_update_battery_soc(p->batt_soc);
 
 	*r = pd_status;
+
+	/* Clear host event */
+	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
 
 	args->response_size = sizeof(*r);
 

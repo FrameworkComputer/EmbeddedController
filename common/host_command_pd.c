@@ -54,6 +54,10 @@ static void pd_exchange_status(void)
 					CONFIG_CHARGER_INPUT_CURRENT));
 	if (rv < 0)
 		CPRINTS("Failed to set input current limit from PD MCU");
+
+	/* If PD is signalling host event, then pass it up to AP */
+	if (pd_status.status | PD_STATUS_HOST_EVENT)
+		host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }
 
 void pd_command_task(void)

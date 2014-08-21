@@ -271,6 +271,9 @@ enum host_event_code {
 	/* Hang detect logic detected a hang and warm rebooted the AP */
 	EC_HOST_EVENT_HANG_REBOOT = 21,
 
+	/* PD MCU triggering host event */
+	EC_HOST_EVENT_PD_MCU = 22,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
@@ -2497,8 +2500,9 @@ struct ec_params_pd_status {
 } __packed;
 
 /* Status of PD being sent back to EC */
+#define PD_STATUS_HOST_EVENT (1 << 0)
 struct ec_response_pd_status {
-	int8_t status;        /* PD MCU status */
+	uint32_t status;      /* PD MCU status */
 	uint32_t curr_lim_ma; /* input current limit */
 } __packed;
 
