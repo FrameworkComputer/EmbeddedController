@@ -29,6 +29,7 @@
 
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (LOW_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
+#define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
 
 /*
  * State for charger_task(). Here so we can reset it on a HOOK_INIT, and
@@ -187,7 +188,8 @@ static void update_dynamic_battery_info(void)
 
 	cap_changed = 0;
 	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
-	    curr.batt.full_capacity != *memmap_lfcc) {
+	    (curr.batt.full_capacity <= (*memmap_lfcc - LFCC_EVENT_THRESH) ||
+	     curr.batt.full_capacity >= (*memmap_lfcc + LFCC_EVENT_THRESH))) {
 		*memmap_lfcc = curr.batt.full_capacity;
 		cap_changed = 1;
 	}
