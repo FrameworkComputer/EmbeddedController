@@ -56,7 +56,7 @@ void tim2_interrupt(void)
 {
 	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
 	task_clear_pending_irq(STM32_IRQ_TIM2);
-	last_event = 1 << 29 /* task event wake */;
+	last_event = TASK_EVENT_TIMER;
 }
 DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
@@ -85,10 +85,12 @@ uint32_t task_wait_event(int timeout_us)
 	asm volatile("wfi");
 
 	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
-	evt = last_event;
-	last_event = 0;
 	asm volatile("cpsie i ; isb");
 
+	/* note: interrupt that woke us up will run here */
+
+	evt = last_event;
+	last_event = 0;
 	return evt;
 }
 

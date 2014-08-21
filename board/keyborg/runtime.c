@@ -68,7 +68,7 @@ void tim2_interrupt(void)
 	if (STM32_TIM_CNT(3) == last_deadline >> 16) {
 		STM32_TIM_DIER(2) = 0;
 		task_clear_pending_irq(STM32_IRQ_TIM2);
-		last_event = 1 << 29 /* task event wake */;
+		last_event = TASK_EVENT_TIMER;
 		need_wfi = 0;
 	} else {
 		need_wfi = 1;
