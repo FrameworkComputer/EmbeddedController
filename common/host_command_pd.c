@@ -50,13 +50,6 @@ static void pd_exchange_status(void)
 	}
 
 	/* Set input current limit */
-#ifdef BOARD_SAMUS
-	/*
-	 * TODO(crosbug.com/p/28532): Remove this workaround for Samus p2b
-	 * boards which cannot correctly limit input current.
-	 */
-	pd_status.curr_lim_ma = pd_status.curr_lim_ma * 2 / 3;
-#endif
 	rv = charge_set_input_current_limit(MAX(pd_status.curr_lim_ma,
 					CONFIG_CHARGER_INPUT_CURRENT));
 	if (rv < 0)
