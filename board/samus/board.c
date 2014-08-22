@@ -212,7 +212,7 @@ struct keyboard_scan_config keyscan_config = {
 /* Initialize board. */
 static void board_init(void)
 {
-	gpio_enable_interrupt(GPIO_PD_MCU_INT_L);
+	gpio_enable_interrupt(GPIO_PD_MCU_INT);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

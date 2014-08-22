@@ -30,15 +30,13 @@ GPIO(UART0_RX,       A, 0, GPIO_PULL_UP | GPIO_INT_BOTH_DSLEEP, uart_deepsleep_i
  */
 GPIO(ACCEL_INT, F, 7, GPIO_INPUT, NULL)
 
-/* Capsense interrupt input. This connection exists but may not be configured */
-#ifdef CONFIG_CAPSENSE
-GPIO(CAPSENSE_INT_L, N, 0, GPIO_INT_FALLING, capsense_interrupt)
-#else
-GPIO(CAPSENSE_INT_L, N, 0, GPIO_INPUT, NULL)
-#endif
+/*
+ * Ambient Light Sensor input.  This could become an interrupt once supported.
+ */
+GPIO(ALS_INT_L, N, 0, GPIO_INPUT, NULL)
 
-/* Interrupt signal from PD MCU */
-GPIO(PD_MCU_INT_L, J, 5, GPIO_PULL_UP | GPIO_INT_FALLING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
+/* Interrupt signal from PD MCU, external pull-down */
+GPIO(PD_MCU_INT, J, 5, GPIO_INT_RISING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
 
 /* Other inputs */
 GPIO(BOARD_VERSION1, Q, 7, GPIO_INPUT, NULL) /* Board version stuffing resistor 1 */
@@ -56,20 +54,20 @@ GPIO(PP3300_DSW_EN,       F, 6, GPIO_OUT_LOW,  NULL) /* Enable 3.3V DSW rail */
 GPIO(PP3300_DSW_GATED_EN, J, 3, GPIO_OUT_LOW,  NULL) /* Enable 3.3V Gated DSW and core VDD */
 GPIO(PP3300_LTE_EN,       D, 2, GPIO_OUT_LOW,  NULL) /* Enable LTE radio */
 GPIO(PP3300_WLAN_EN,      J, 0, GPIO_OUT_LOW,  NULL) /* Enable WiFi power */
-GPIO(PP3300_ACCEL_EN,     J, 1, GPIO_OUT_HIGH, NULL) /* Enable Accelerometer power */
 GPIO(PP1050_EN,           C, 7, GPIO_OUT_LOW,  NULL) /* Enable 1.05V regulator */
 GPIO(PP5000_USB_EN,       C, 5, GPIO_OUT_LOW,  NULL) /* Enable USB power */
 GPIO(PP5000_EN,           H, 7, GPIO_OUT_LOW,  NULL) /* Enable 5V supply */
 GPIO(PP1800_EN,           L, 6, GPIO_OUT_LOW,  NULL) /* Enable 1.8V supply */
 GPIO(SYS_PWROK,           H, 2, GPIO_OUT_LOW,  NULL) /* EC thinks everything is up and ready */
 GPIO(WLAN_OFF_L,          J, 4, GPIO_OUT_LOW,  NULL) /* Disable WiFi radio */
-GPIO(USB_MCU_RST_L,       B, 0, GPIO_ODR_HIGH, NULL) /* USB PD MCU reset */
+GPIO(USB_MCU_RST,         B, 0, GPIO_ODR_LOW,  NULL) /* USB PD MCU reset */
 GPIO(ENABLE_BACKLIGHT,    M, 7, GPIO_OUT_LOW,  NULL) /* Enable backlight power */
 GPIO(ENABLE_TOUCHPAD,     N, 1, GPIO_OUT_LOW,  NULL) /* Enable touchpad power */
 GPIO(ENTERING_RW,         D, 3, GPIO_OUT_LOW,  NULL) /* Indicate when EC is entering RW code */
 GPIO(LIGHTBAR_RESET_L,    J, 2, GPIO_ODR_LOW,  NULL) /* Reset lightbar controllers */
 GPIO(PCH_DPWROK,          G, 0, GPIO_OUT_LOW,  NULL) /* Indicate when VccDSW is good */
 GPIO(PCH_RSMRST_L,        C, 4, GPIO_OUT_LOW,  NULL) /* Reset PCH resume power plane logic */
+GPIO(PCH_RTCRST_L,        J, 1, GPIO_ODR_HIGH, NULL) /* Reset PCH RTC well */
 /*
  * HDA_SDO is technically an output, but we need to leave it as an
  * input until we drive it high.  So can't use open-drain (HI_Z).
@@ -91,12 +89,12 @@ GPIO(USB1_CTL1,           E, 1, GPIO_OUT_LOW,  NULL) /* USB charger port 1 CTL1 
 GPIO(USB1_CTL2,           E, 2, GPIO_OUT_HIGH, NULL) /* USB charger port 1 CTL2 output */
 GPIO(USB1_CTL3,           E, 3, GPIO_OUT_LOW,  NULL) /* USB charger port 1 CTL3 output */
 GPIO(USB1_ENABLE,         E, 4, GPIO_OUT_HIGH, NULL) /* USB charger port 1 enable */
-GPIO(USB1_ILIM_SEL,       E, 5, GPIO_OUT_LOW,  NULL) /* USB charger port 1 ILIM_SEL output */
+GPIO(USB1_ILIM_SEL_L,     E, 5, GPIO_OUT_HIGH, NULL) /* USB charger port 1 ILIM_SEL output */
 GPIO(USB2_CTL1,           D, 0, GPIO_OUT_LOW,  NULL) /* USB charger port 2 CTL1 output */
 GPIO(USB2_CTL2,           D, 1, GPIO_OUT_HIGH, NULL) /* USB charger port 2 CTL2 output */
 GPIO(USB2_CTL3,           D, 4, GPIO_OUT_LOW,  NULL) /* USB charger port 2 CTL3 output */
 GPIO(USB2_ENABLE,         D, 5, GPIO_OUT_HIGH, NULL) /* USB charger port 2 enable */
-GPIO(USB2_ILIM_SEL,       D, 6, GPIO_OUT_LOW,  NULL) /* USB charger port 2 ILIM_SEL output */
+GPIO(USB2_ILIM_SEL_L,     D, 6, GPIO_OUT_HIGH, NULL) /* USB charger port 2 ILIM_SEL output */
 
 ALTERNATE(A, 0x03, 1,  MODULE_UART, 0)               /* UART0 */
 ALTERNATE(A, 0x40, 3,  MODULE_I2C,  0)               /* I2C1 SCL */
