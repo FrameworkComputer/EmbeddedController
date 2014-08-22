@@ -81,11 +81,11 @@ void board_config_pre_init(void)
 	/*
 	 * the DMA mapping is :
 	 *  Chan 2 : TIM1_CH1  (C0 RX)
-	 *  Chan 3 : SPI1_TX   (C0 TX)
+	 *  Chan 3 : SPI1_TX   (C1 TX)
 	 *  Chan 4 : USART1_TX
 	 *  Chan 5 : USART1_RX
 	 *  Chan 6 : TIM3_CH1  (C1 RX)
-	 *  Chan 7 : SPI2_TX   (C1 TX)
+	 *  Chan 7 : SPI2_TX   (C0 TX)
 	 */
 
 	/*

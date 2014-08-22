@@ -14,9 +14,9 @@
 #define TASK_ID_TO_PORT(id)   ((id) == TASK_ID_PD_C0 ? 0 : 1)
 
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX_C0 14
+#define TIM_CLOCK_PD_TX_C0 17
 #define TIM_CLOCK_PD_RX_C0 1
-#define TIM_CLOCK_PD_TX_C1 17
+#define TIM_CLOCK_PD_TX_C1 14
 #define TIM_CLOCK_PD_RX_C1 3
 
 #define TIM_CLOCK_PD_TX(p) ((p) ? TIM_CLOCK_PD_TX_C1 : TIM_CLOCK_PD_TX_C0)
@@ -42,8 +42,8 @@
 /* use the hardware accelerator for CRC */
 #define CONFIG_HW_CRC
 
-/* TX uses SPI1 on PB3-5 for port C0, SPI2 on PB 13-15 for port C1 */
-#define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
+/* TX uses SPI1 on PB3-4 for port C1, SPI2 on PB 13-14 for port C0 */
+#define SPI_REGS(p) ((p) ? STM32_SPI1_REGS : STM32_SPI2_REGS)
 static inline void spi_enable_clock(int port)
 {
 	if (port == 0)
@@ -52,8 +52,8 @@ static inline void spi_enable_clock(int port)
 		STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
 }
 
-/* DMA for transmit uses DMA CH3 for C0 and DMA_CH7 for C1 */
-#define DMAC_SPI_TX(p) ((p) ? STM32_DMAC_CH7 : STM32_DMAC_CH3)
+/* DMA for transmit uses DMA CH7 for C0 and DMA_CH3 for C1 */
+#define DMAC_SPI_TX(p) ((p) ? STM32_DMAC_CH3 : STM32_DMAC_CH7)
 
 /* RX uses COMP1 and TIM1 CH1 on port C0 and COMP2 and TIM3_CH1 for port C1*/
 #define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
@@ -73,15 +73,15 @@ static inline void spi_enable_clock(int port)
 static inline void pd_set_pins_speed(int port)
 {
 	if (port == 0) {
-		/* 40 MHz pin speed on SPI PB3/4/5 */
-		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000FC0;
-		/* 40 MHz pin speed on TIM14_CH1 (PB1) */
-		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
-	} else {
-		/* 40 MHz pin speed on SPI PB13/14/15 */
-		STM32_GPIO_OSPEEDR(GPIO_B) |= 0xFC000000;
+		/* 40 MHz pin speed on SPI PB13/14 */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x3C000000;
 		/* 40 MHz pin speed on TIM17_CH1 (PE1) */
 		STM32_GPIO_OSPEEDR(GPIO_E) |= 0x0000000C;
+	} else {
+		/* 40 MHz pin speed on SPI PB3/4 */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000003C0;
+		/* 40 MHz pin speed on TIM14_CH1 (PB1) */
+		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
 	}
 }
 
@@ -89,13 +89,13 @@ static inline void pd_set_pins_speed(int port)
 static inline void pd_tx_spi_reset(int port)
 {
 	if (port == 0) {
-		/* Reset SPI1 */
-		STM32_RCC_APB2RSTR |= (1 << 12);
-		STM32_RCC_APB2RSTR &= ~(1 << 12);
-	} else {
 		/* Reset SPI2 */
 		STM32_RCC_APB1RSTR |= (1 << 14);
 		STM32_RCC_APB1RSTR &= ~(1 << 14);
+	} else {
+		/* Reset SPI1 */
+		STM32_RCC_APB2RSTR |= (1 << 12);
+		STM32_RCC_APB2RSTR &= ~(1 << 12);
 	}
 }
 
@@ -104,24 +104,22 @@ static inline void pd_tx_enable(int port, int polarity)
 {
 	if (port == 0) {
 		/* put SPI function on TX pin */
-		if (polarity) /* PE14 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_E, 0x4000, 1);
-		else /* PB4 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_B, 0x0010, 0);
-
-		/* set the low level reference */
-		gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
-					GPIO_USB_C0_CC1_TX_EN, 1);
-	} else {
-		/* put SPI function on TX pin */
 		if (polarity) /* PD3 is SPI2 MISO */
 			gpio_set_alternate_function(GPIO_D, 0x0008, 1);
 		else /* PB14 is SPI2 MISO */
 			gpio_set_alternate_function(GPIO_B, 0x4000, 0);
 
 		/* set the low level reference */
-		gpio_set_level(polarity ? GPIO_USB_C1_CC2_TX_EN :
-					GPIO_USB_C1_CC1_TX_EN, 1);
+		gpio_set_level(GPIO_USB_C0_CC_TX_EN, 1);
+	} else {
+		/* put SPI function on TX pin */
+		if (polarity) /* PE14 is SPI1 MISO */
+			gpio_set_alternate_function(GPIO_E, 0x4000, 1);
+		else /* PB4 is SPI1 MISO */
+			gpio_set_alternate_function(GPIO_B, 0x0010, 0);
+
+		/* set the low level reference */
+		gpio_set_level(GPIO_USB_C1_CC_TX_EN, 1);
 	}
 }
 
@@ -129,20 +127,6 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	if (port == 0) {
-		/* output low on SPI TX to disable the FET */
-		if (polarity) /* PE14 is SPI1 MISO */
-			STM32_GPIO_MODER(GPIO_E) = (STM32_GPIO_MODER(GPIO_E)
-						   & ~(3 << (2*14)))
-						   |  (1 << (2*14));
-		else /* PB4 is SPI1 MISO */
-			STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-						   & ~(3 << (2*4)))
-						   |  (1 << (2*4));
-
-		/* put the low level reference in Hi-Z */
-		gpio_set_level(polarity ? GPIO_USB_C0_CC2_TX_EN :
-					GPIO_USB_C0_CC1_TX_EN, 0);
-	} else {
 		/* output low on SPI TX to disable the FET */
 		if (polarity) /* PD3 is SPI2 MISO */
 			STM32_GPIO_MODER(GPIO_D) = (STM32_GPIO_MODER(GPIO_D)
@@ -154,8 +138,20 @@ static inline void pd_tx_disable(int port, int polarity)
 						   |  (1 << (2*14));
 
 		/* put the low level reference in Hi-Z */
-		gpio_set_level(polarity ? GPIO_USB_C1_CC2_TX_EN :
-					GPIO_USB_C1_CC1_TX_EN, 0);
+		gpio_set_level(GPIO_USB_C0_CC_TX_EN, 0);
+	} else {
+		/* output low on SPI TX to disable the FET */
+		if (polarity) /* PE14 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_E) = (STM32_GPIO_MODER(GPIO_E)
+						   & ~(3 << (2*14)))
+						   |  (1 << (2*14));
+		else /* PB4 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
+						   & ~(3 << (2*4)))
+						   |  (1 << (2*4));
+
+		/* put the low level reference in Hi-Z */
+		gpio_set_level(GPIO_USB_C1_CC_TX_EN, 0);
 	}
 }
 

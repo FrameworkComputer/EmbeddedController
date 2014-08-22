@@ -127,7 +127,7 @@ void pd_power_supply_reset(int port)
 
 static void pd_send_ec_int(void)
 {
-	gpio_set_level(GPIO_EC_INT_L, 0);
+	gpio_set_level(GPIO_EC_INT, 1);
 
 	/*
 	 * Delay long enough to guarantee EC see's the change. Slowest
@@ -136,7 +136,7 @@ static void pd_send_ec_int(void)
 	 */
 	usleep(5);
 
-	gpio_set_level(GPIO_EC_INT_L, 1);
+	gpio_set_level(GPIO_EC_INT, 0);
 }
 
 void pd_set_input_current_limit(uint32_t max_ma)
