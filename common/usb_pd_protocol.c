@@ -1057,6 +1057,23 @@ int pd_get_polarity(int port)
 void pd_comm_enable(int enable)
 {
 	pd_comm_enabled = enable;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/*
+	 * If communications are enabled, start hard reset timer for
+	 * any port in PD_SNK_DISCOVERY.
+	 */
+	if (enable) {
+		int i;
+		for (i = 0; i < PD_PORT_COUNT; i++) {
+			if (pd[i].task_state == PD_STATE_SNK_DISCOVERY)
+				set_state_timeout(i,
+						  get_time().val +
+						  PD_T_SINK_WAIT_CAP,
+						  PD_STATE_HARD_RESET);
+		}
+	}
+#endif
 }
 
 void pd_ping_enable(int port, int enable)
@@ -1269,8 +1286,9 @@ void pd_task(void)
 
 			break;
 		case PD_STATE_SNK_DISCOVERY:
-			/* Wait for source cap expired */
-			if (pd[port].last_state != pd[port].task_state)
+			/* Wait for source cap expired only if we are enabled */
+			if ((pd[port].last_state != pd[port].task_state)
+			    && pd_comm_enabled)
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,

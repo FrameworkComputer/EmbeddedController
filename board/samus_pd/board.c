@@ -15,6 +15,7 @@
 #include "power.h"
 #include "registers.h"
 #include "switch.h"
+#include "system.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
@@ -130,11 +131,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
 	gpio_enable_interrupt(GPIO_PCH_SLP_S5_L);
 
-	/* TODO(crosbug.com/p/31125): remove #if and keep #else for EVT */
-#if 1
-	/* Enable PD communication */
-	pd_enable = 1;
-#else
 	/*
 	 * Do not enable PD communication in RO as a security measure.
 	 * We don't want to allow communication to outside world until
@@ -143,13 +139,12 @@ static void board_init(void)
 	 * booting without a battery.
 	 */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && !gpio_get_level(GPIO_WP_L)) {
-		CPRINTF("[%T PD communication disabled]\n");
+	    && system_is_locked()) {
+		ccprintf("[%T PD communication disabled]\n");
 		pd_enable = 0;
 	} else {
 		pd_enable = 1;
 	}
-#endif
 	pd_comm_enable(pd_enable);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
