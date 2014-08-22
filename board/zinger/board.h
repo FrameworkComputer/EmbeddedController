@@ -42,6 +42,10 @@
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
+/* USB PD ChromeOS VDM information */
+#define USB_PD_HARDWARE_DEVICE_ID 1
+#define USB_PD_DBG_SW_VERSION     255
+
 #ifndef __ASSEMBLER__
 
 #include "common.h"

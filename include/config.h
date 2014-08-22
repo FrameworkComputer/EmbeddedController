@@ -941,6 +941,9 @@
 /* Define if this board can act as a dual-role PD port (source and sink) */
 #undef CONFIG_USB_PD_DUAL_ROLE
 
+/* Dynamic USB PD source capability */
+#undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
+
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
 
@@ -950,11 +953,11 @@
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP
 
+/* Define to have PD state machine send read info VDM on connection */
+#undef CONFIG_USB_PD_READ_INFO_ON_CONNECT
+
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
-
-/* Dynamic USB PD source capability */
-#undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
 
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX

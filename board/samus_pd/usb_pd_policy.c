@@ -154,7 +154,6 @@ int pd_board_checks(void)
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
-	int i;
 	ccprintf("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	/* make sure we have some payload */
@@ -167,12 +166,17 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		*(payload + cnt - 1) = 0;
 		ccprintf("version: %s\n", (char *)(payload+1));
 		break;
-	case VDO_CMD_RW_HASH:
-		ccprintf("RW Hash: ");
-		payload++; /* skip cmd */
-		for (i = 0; i < cnt - 1; i++)
-			ccprintf("%08x ", *payload++);
-		ccprintf("\n");
+	case VDO_CMD_READ_INFO:
+		/* copy hash */
+		if (cnt >= 6)
+			pd_dev_store_rw_hash(port, payload + 1);
+
+		/* if last word is present, it contains lots of info */
+		if (cnt == 7)
+			ccprintf("Dev:%d SW:%d RW:%d\n",
+				 VDO_INFO_HW_DEV_ID(payload[6]),
+				 VDO_INFO_SW_DBG_VER(payload[6]),
+				 VDO_INFO_IS_RW(payload[6]));
 		break;
 	case VDO_CMD_CURRENT:
 		ccprintf("Current: %dmA\n", payload[1]);

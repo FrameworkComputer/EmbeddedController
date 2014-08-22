@@ -122,7 +122,7 @@ enum pd_errors {
 
 /* ChromeOS specific commands */
 #define VDO_CMD_VERSION      VDO_CMD_VENDOR(0)
-#define VDO_CMD_RW_HASH      VDO_CMD_VENDOR(2)
+#define VDO_CMD_READ_INFO    VDO_CMD_VENDOR(2)
 #define VDO_CMD_REBOOT       VDO_CMD_VENDOR(5)
 #define VDO_CMD_FLASH_ERASE  VDO_CMD_VENDOR(6)
 #define VDO_CMD_FLASH_WRITE  VDO_CMD_VENDOR(7)
@@ -132,6 +132,18 @@ enum pd_errors {
 
 #define PD_VDO_VID(vdo) ((vdo) >> 16)
 #define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
+
+/*
+ * ChromeOS specific VDO_CMD_READ_INFO responds with device info including:
+ * RW Hash: sha1 of RW hash (20 bytes)
+ * HW Device ID: unique descriptor for each ChromeOS model (2 bytes)
+ * SW Debug Version: Software version useful for debugging (1 byte)
+ * IS RW: True if currently in RW, False otherwise (1 bit)
+ */
+#define VDO_INFO(id, ver, is_rw) ((id) << 16 | (ver) << 8 | (is_rw))
+#define VDO_INFO_HW_DEV_ID(x)    ((x) >> 16)
+#define VDO_INFO_SW_DBG_VER(x)   (((x) >> 8) & 0xff)
+#define VDO_INFO_IS_RW(x)        ((x) & 1)
 
 /* USB Vendor ID assigned to Google Inc. */
 #define USB_VID_GOOGLE 0x18d1
@@ -291,6 +303,14 @@ int pd_board_checks(void);
  * @return if >0, number of VDOs to send back.
  */
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
+
+/**
+ * Store RW hash of device
+ *
+ * @param port     USB-C port number
+ * @param rw_hash  pointer to sha1 rw_hash
+ */
+void pd_dev_store_rw_hash(int port, uint32_t *rw_hash);
 
 /**
  * Send Vendor Defined Message

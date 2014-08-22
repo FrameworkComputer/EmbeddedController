@@ -369,10 +369,16 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		pd_power_supply_reset(0);
 		cpu_reset();
 		break;
-	case VDO_CMD_RW_HASH:
+	case VDO_CMD_READ_INFO:
 		hash = flash_hash_rw();
+		/* copy hash into response */
 		memcpy(payload + 1, hash, SHA1_DIGEST_SIZE);
-		rsize = 6;
+		/* copy other info into response */
+		payload[SHA1_DIGEST_SIZE/4 + 1] = VDO_INFO(
+						USB_PD_HARDWARE_DEVICE_ID,
+						USB_PD_DBG_SW_VERSION,
+						!is_ro_mode());
+		rsize = 7;
 		break;
 	case VDO_CMD_FLASH_ERASE:
 		/* do not kill the code under our feet */

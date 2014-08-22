@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
+#include "sha1.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -220,6 +221,9 @@ static struct pd_protocol {
 	/* next Vendor Defined Message to send */
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	uint8_t vdo_count;
+
+	/* Attached ChromeOS device RW hash */
+	uint32_t dev_rw_hash[SHA1_DIGEST_SIZE/4];
 } pd[PD_PORT_COUNT];
 
 /*
@@ -1019,6 +1023,11 @@ static void pd_vdm_send_state_machine(int port)
 	}
 }
 
+void pd_dev_store_rw_hash(int port, uint32_t *rw_hash)
+{
+	memcpy(pd[port].dev_rw_hash, rw_hash, SHA1_DIGEST_SIZE);
+}
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 void pd_set_dual_role(enum pd_dual_role_states state)
 {
@@ -1276,6 +1285,11 @@ void pd_task(void)
 						!(cc1_volt >= PD_SNK_VA);
 					pd_select_polarity(port,
 							   pd[port].polarity);
+#ifdef CONFIG_USB_PD_READ_INFO_ON_CONNECT
+					/* Send google VDM to read info */
+					pd_send_vdm(port, USB_VID_GOOGLE,
+						VDO_CMD_READ_INFO, NULL, 0);
+#endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 				}
@@ -1493,9 +1507,9 @@ static int remote_flashing(int argc, char **argv)
 		cmd = VDO_CMD_FLASH_HASH;
 		cnt = argc;
 		ccprintf("HASH ...");
-	} else if (!strcasecmp(argv[3], "rw_hash")) {
-		cmd = VDO_CMD_RW_HASH;
-		ccprintf("RW HASH...");
+	} else if (!strcasecmp(argv[3], "info")) {
+		cmd = VDO_CMD_READ_INFO;
+		ccprintf("INFO...");
 	} else if (!strcasecmp(argv[3], "version")) {
 		cmd = VDO_CMD_VERSION;
 		ccprintf("VERSION...");
@@ -1602,6 +1616,11 @@ static int command_pd(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "hard", 4)) {
 		set_state(port, PD_STATE_HARD_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strncasecmp(argv[2], "hash", 4)) {
+		int i;
+		for (i = 0; i < SHA1_DIGEST_SIZE / 4; i++)
+			ccprintf("%08x ", pd[port].dev_rw_hash[i]);
+		ccprintf("\n");
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
 		execute_soft_reset(port);
 		send_control(port, PD_CTRL_SOFT_RESET);
@@ -1690,7 +1709,8 @@ static int command_pd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"<port> "
 			"[tx|bist|charger|dev|dump|dualrole|enable"
-			"|soft|hard|clock|ping|state|vdm [ping | curr]]",
+			"|soft|hash|hard|clock|ping|state"
+			"|vdm [ping | curr]]",
 			"USB PD",
 			NULL);
 
