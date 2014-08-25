@@ -21,6 +21,7 @@
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 /*
  * Debug log level - higher number == more log
@@ -1400,6 +1401,30 @@ void pd_rx_event(int port)
 {
 	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+static void dual_role_on(void)
+{
+	pd_set_dual_role(PD_DRP_TOGGLE_ON);
+	CPRINTS("chipset -> S0, enable dual-role toggling");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
+
+static void dual_role_off(void)
+{
+	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
+	CPRINTS("chipset -> S3, disable dual-role toggling");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dual_role_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, dual_role_off, HOOK_PRIO_DEFAULT);
+
+static void dual_role_force_sink(void)
+{
+	pd_set_dual_role(PD_DRP_FORCE_SINK);
+	CPRINTS("chipset -> S5, force dual-role port to sink");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
 void pd_set_suspend(int port, int enable)
