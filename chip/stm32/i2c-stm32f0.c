@@ -291,6 +291,12 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	int rv = EC_SUCCESS;
 	int i;
 
+#if defined(CONFIG_I2C_SCL_GATE_ADDR) && defined(CONFIG_I2C_SCL_GATE_PORT)
+	if (port == CONFIG_I2C_SCL_GATE_PORT &&
+	    slave_addr == CONFIG_I2C_SCL_GATE_ADDR)
+		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 1);
+#endif
+
 	ASSERT(out || !out_bytes);
 	ASSERT(in || !in_bytes);
 
@@ -366,6 +372,12 @@ xfer_exit:
 		udelay(10);
 		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
 	}
+
+#ifdef CONFIG_I2C_SCL_GATE_ADDR
+	if (port == CONFIG_I2C_SCL_GATE_PORT &&
+	    slave_addr == CONFIG_I2C_SCL_GATE_ADDR)
+		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 0);
+#endif
 
 	return rv;
 }

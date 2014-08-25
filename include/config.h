@@ -569,6 +569,17 @@
 #undef CONFIG_I2C_PASSTHROUGH
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 
+/*
+ * I2C SCL gating.
+ *
+ * If CONFIG_I2C_SCL_GATE_ADDR/PORT is defined, whenever the defined address
+ * is addressed, CONFIG_I2C_SCL_GATE_GPIO is set to high. When the I2C
+ * transaction is done, the pin is set back to low.
+ */
+#undef CONFIG_I2C_SCL_GATE_PORT
+#undef CONFIG_I2C_SCL_GATE_ADDR
+#undef CONFIG_I2C_SCL_GATE_GPIO
+
 /*****************************************************************************/
 /* Inductive charging */
 
