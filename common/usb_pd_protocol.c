@@ -266,6 +266,14 @@ static uint8_t pd_comm_enabled = CONFIG_USB_PD_COMM_ENABLED;
 
 struct mutex pd_crc_lock;
 
+/*
+ * 4 entry rw_hash table of type-C devices that AP has firmware updates for.
+ */
+#ifdef CONFIG_COMMON_RUNTIME
+#define RW_HASH_ENTRIES 4
+static struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
+#endif
+
 static inline void set_state_timeout(int port,
 				     uint64_t timeout,
 				     enum pd_states timeout_state)
@@ -1633,10 +1641,24 @@ static int command_pd(int argc, char **argv)
 	int port;
 	char *e;
 
-	if (argc < 3)
+	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
+	if (!strncasecmp(argv[1], "rwhashtable", 3)) {
+		int i, j;
+		struct ec_params_usb_pd_rw_hash_entry *p;
+		for (i = 0; i < RW_HASH_ENTRIES; i++) {
+			p = &rw_hash_table[i];
+			ccprintf("Device:%d Hash:", p->dev_id);
+			for (j = 0; j < SHA1_DIGEST_SIZE/4; j++)
+				ccprintf(" 0x%08x", p->dev_rw_hash.w[j]);
+			ccprintf("\n");
+		}
+		return EC_SUCCESS;
+	}
 	port = strtoi(argv[1], &e, 10);
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
 	if (*e || port >= PD_PORT_COUNT)
 		return EC_ERROR_PARAM2;
 
@@ -1964,6 +1986,40 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 		     hc_remote_flash,
+		     EC_VER_MASK(0));
+
+static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
+{
+	int i, idx = 0, found = 0;
+	const struct ec_params_usb_pd_rw_hash_entry *p = args->params;
+	static int rw_hash_next_idx;
+
+	if (!p->dev_id) {
+		ccprintf("PD RW_HASH - 0 is not a valid device id");
+		return EC_RES_INVALID_PARAM;
+	}
+
+	for (i = 0; i < RW_HASH_ENTRIES; i++) {
+		if (p->dev_id == rw_hash_table[i].dev_id) {
+			idx = i;
+			found = 1;
+			break;
+		}
+	}
+	if (!found) {
+		idx = rw_hash_next_idx;
+		rw_hash_next_idx = rw_hash_next_idx + 1;
+		if (rw_hash_next_idx == RW_HASH_ENTRIES)
+			rw_hash_next_idx = 0;
+	}
+	memcpy(&rw_hash_table[idx], p, sizeof(*p));
+	ccprintf("PD RW_HASH - stored dev_id:%d at index:%d\n",
+		 rw_hash_table[idx].dev_id, idx);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
+		     hc_remote_rw_hash_entry,
 		     EC_VER_MASK(0));
 
 #endif /* CONFIG_COMMON_RUNTIME */

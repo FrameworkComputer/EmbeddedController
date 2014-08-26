@@ -160,6 +160,8 @@ const char help_str[] =
 	"      Print real-time clock\n"
 	"  rtcset <time>\n"
 	"      Set real-time clock\n"
+	"  rwhashpd <dev_id> <SHA1[0] ... <SHA1[4]>\n"
+	"      Set entry in PD MCU's device rw_hash table.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
 	"  switches\n"
@@ -777,6 +779,38 @@ int cmd_flash_protect(int argc, char *argv[])
 
 	return 0;
 }
+
+int cmd_rw_hash_pd(int argc, char *argv[])
+{
+	struct ec_params_usb_pd_rw_hash_entry *p =
+		(struct ec_params_usb_pd_rw_hash_entry *)ec_outbuf;
+	int i, rv;
+	char *e;
+
+	if (argc < 7) {
+		fprintf(stderr, "Usage: %s <dev_id> <SHA1[0]> ... <SHA1[4]>\n",
+			argv[0]);
+		return -1;
+	}
+
+	p->dev_id = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad device ID\n");
+		return -1;
+	}
+
+	for (i = 2; i < 7; i++) {
+		p->dev_rw_hash.w[i - 2] = strtol(argv[i], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad SHA1 digest\n");
+			return -1;
+		}
+	}
+	rv = ec_command(EC_CMD_USB_PD_RW_HASH_ENTRY, 0, p, sizeof(*p), NULL, 0);
+
+	return rv;
+}
+
 
 /* PD image size is 16k minus 32 bits for the RW hash */
 #define PD_RW_IMAGE_SIZE (16 * 1024 - 32)
@@ -4729,6 +4763,7 @@ const struct command commands[] = {
 	{"reboot_ec", cmd_reboot_ec},
 	{"rtcget", cmd_rtc_get},
 	{"rtcset", cmd_rtc_set},
+	{"rwhashpd", cmd_rw_hash_pd},
 	{"sertest", cmd_serial_test},
 	{"port80flood", cmd_port_80_flood},
 	{"switches", cmd_switches},

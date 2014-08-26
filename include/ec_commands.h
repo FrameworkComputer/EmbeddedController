@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "sha1.h"
 
 /* Host communication command constants for Chrome EC */
 
@@ -2626,7 +2627,16 @@ struct ec_params_usb_pd_fw_update {
 	/* Followed by data to write */
 } __packed;
 
+/* Write USB-PD Accessory RW_HASH table entry */
+#define EC_CMD_USB_PD_RW_HASH_ENTRY 0x111
 
+struct ec_params_usb_pd_rw_hash_entry {
+	uint8_t dev_id;
+	union {
+		uint8_t b[SHA1_DIGEST_SIZE];
+		uint32_t w[DIV_ROUND_UP(SHA1_DIGEST_SIZE, sizeof(uint32_t))];
+	} dev_rw_hash;
+} __packed;
 /*****************************************************************************/
 /*
  * Passthru commands
