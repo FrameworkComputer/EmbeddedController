@@ -286,9 +286,9 @@ struct accel_orientation acc_orient = {
 		{ 0,  0,  1}
 	},
 	.rot_hinge_180 = {
-		{-1,  0,  0},
+		{ 1,  0,  0},
 		{ 0,  1,  0},
-		{ 0,  0, -1}
+		{ 0,  0,  1}
 	},
 	.rot_standard_ref = {
 		{-1,  0,  0},
