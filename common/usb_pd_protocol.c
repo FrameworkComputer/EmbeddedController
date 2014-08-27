@@ -253,6 +253,12 @@ static inline void set_state(int port, enum pd_states next_state)
 	set_state_timeout(port, 0, 0);
 	pd[port].task_state = next_state;
 
+#ifdef CONFIG_USBC_SS_MUX
+	if (next_state == PD_STATE_SRC_DISCONNECTED)
+		board_set_usb_mux(port, TYPEC_MUX_NONE,
+				  pd[port].polarity);
+#endif
+
 	/* Log state transition, except for toggling between sink and source */
 	if (last_state == next_state)
 		return;
@@ -1191,6 +1197,11 @@ void pd_task(void)
 			    (cc2_volt < PD_SRC_VNC)) {
 				pd[port].polarity = !(cc1_volt < PD_SRC_VNC);
 				pd_select_polarity(port, pd[port].polarity);
+				/* Set to USB SS initially */
+#ifdef CONFIG_USBC_SS_MUX
+				board_set_usb_mux(port, TYPEC_MUX_USB,
+						  pd[port].polarity);
+#endif
 				/* Enable VBUS */
 				pd_set_power_supply_ready(port);
 				set_state(port, PD_STATE_SRC_DISCOVERY);
