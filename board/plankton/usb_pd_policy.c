@@ -24,10 +24,12 @@
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL),
+		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL),
 };
-static const int pd_src_pdo_cnts[2] = {
+static const int pd_src_pdo_cnts[3] = {
 		[SRC_CAP_5V] = 1,
 		[SRC_CAP_12V] = 2,
+		[SRC_CAP_20V] = 3,
 };
 
 static int pd_src_pdo_idx;
@@ -124,8 +126,9 @@ int pd_request_voltage(uint32_t rdo)
 int pd_set_power_supply_ready(int port)
 {
 	/* Output the correct voltage */
-	gpio_set_level(requested_voltage_idx ? GPIO_USBC_12V_EN :
-					       GPIO_USBC_5V_EN, 1);
+	gpio_set_level(GPIO_VBUS_CHARGER_EN, 1);
+	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 1);
+	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 2);
 
 	return EC_SUCCESS;
 }
@@ -134,8 +137,9 @@ void pd_power_supply_reset(int port)
 {
 	/* Kill VBUS */
 	requested_voltage_idx = 0;
-	gpio_set_level(GPIO_USBC_5V_EN, 0);
-	gpio_set_level(GPIO_USBC_12V_EN, 0);
+	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
+	gpio_set_level(GPIO_USBC_VSEL_0, 0);
+	gpio_set_level(GPIO_USBC_VSEL_1, 0);
 }
 
 int pd_board_checks(void)

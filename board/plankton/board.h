@@ -29,7 +29,7 @@
 #undef CONFIG_TASK_PROFILING
 
 /* I2C ports configuration */
-#define I2C_PORT_SLAVE  0
+#define I2C_PORT_MASTER 1
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -48,6 +48,7 @@
 /* ADC signal */
 enum adc_channel {
 	ADC_CH_CC1_PD = 0,
+	ADC_CH_CC2_PD,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -55,6 +56,7 @@ enum adc_channel {
 enum board_src_cap {
 	SRC_CAP_5V = 0,
 	SRC_CAP_12V,
+	SRC_CAP_20V,
 };
 
 /* Set USB PD source capability */
