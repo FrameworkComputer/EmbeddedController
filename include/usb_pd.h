@@ -137,12 +137,14 @@ enum pd_errors {
  * ChromeOS specific VDO_CMD_READ_INFO responds with device info including:
  * RW Hash: sha1 of RW hash (20 bytes)
  * HW Device ID: unique descriptor for each ChromeOS model (2 bytes)
- * SW Debug Version: Software version useful for debugging (1 byte)
+ * SW Debug Version: Software version useful for debugging (15 bits)
  * IS RW: True if currently in RW, False otherwise (1 bit)
  */
-#define VDO_INFO(id, ver, is_rw) ((id) << 16 | (ver) << 8 | (is_rw))
+#define VDO_INFO(id, ver, is_rw) ((id) << 16 \
+				  | ((ver) & 0x7fff) << 1 \
+				  | ((is_rw) & 1))
 #define VDO_INFO_HW_DEV_ID(x)    ((x) >> 16)
-#define VDO_INFO_SW_DBG_VER(x)   (((x) >> 8) & 0xff)
+#define VDO_INFO_SW_DBG_VER(x)   (((x) >> 1) & 0x7fff)
 #define VDO_INFO_IS_RW(x)        ((x) & 1)
 
 /* USB Vendor ID assigned to Google Inc. */

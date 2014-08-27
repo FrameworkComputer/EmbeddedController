@@ -376,7 +376,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		/* copy other info into response */
 		payload[SHA1_DIGEST_SIZE/4 + 1] = VDO_INFO(
 						USB_PD_HARDWARE_DEVICE_ID,
-						USB_PD_DBG_SW_VERSION,
+						ver_get_numcommits(),
 						!is_ro_mode());
 		rsize = 7;
 		break;

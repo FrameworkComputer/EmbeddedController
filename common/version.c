@@ -18,3 +18,34 @@ const struct version_struct version_data
 
 const char build_info[] __attribute__((section(".rodata.buildinfo")))  =
 	CROS_EC_VERSION " " DATE " " BUILDER;
+
+uint32_t ver_get_numcommits(void)
+{
+	int i;
+	int numperiods = 0;
+	uint32_t ret = 0;
+
+	/*
+	 * Version string is formatted like:
+	 * name_major.branch.numcommits-hash[dirty]
+	 * we want to return the numcommits as an int.
+	 */
+	for (i = 0; i < 32; i++) {
+		if (version_data.version[i] == '.') {
+			numperiods++;
+			if (numperiods == 2)
+				break;
+		}
+	}
+
+	i++;
+	for (; i < 32; i++) {
+		if (version_data.version[i] == '-')
+			break;
+		ret *= 10;
+		ret += version_data.version[i] - '0';
+	}
+
+	return (i == 32 ? 0 : ret);
+}
+
