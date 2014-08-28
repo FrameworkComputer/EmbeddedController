@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "comm-host.h"
@@ -76,6 +77,8 @@ int ec_command(int command, int version,
 
 int comm_init(int interfaces)
 {
+	struct ec_response_get_protocol_info info;
+
 	/* Default memmap access */
 	ec_readmem = fake_readmem;
 
@@ -102,6 +105,23 @@ int comm_init(int interfaces)
 	if (!ec_outbuf || !ec_inbuf) {
 		fprintf(stderr, "Unable to allocate buffers\n");
 		return 1;
+	}
+
+	/* read max request / response size from ec for protocol v3+ */
+	if (ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0, &info,
+		sizeof(info)) == sizeof(info)) {
+		ec_max_outsize = info.max_request_packet_size -
+			 sizeof(struct ec_host_request);
+		ec_max_insize = info.max_response_packet_size -
+			sizeof(struct ec_host_response);
+
+		ec_outbuf = realloc(ec_outbuf, ec_max_outsize);
+		ec_inbuf = realloc(ec_inbuf, ec_max_insize);
+
+		if (!ec_outbuf || !ec_inbuf) {
+			fprintf(stderr, "Unable to reallocate buffers\n");
+			return 1;
+		}
 	}
 
 	return 0;
