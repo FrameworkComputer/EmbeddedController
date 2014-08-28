@@ -52,8 +52,10 @@ static enum power_state state = POWER_G3;  /* Current state */
 static int want_g3_exit;      /* Should we exit the G3 state? */
 static uint64_t last_shutdown_time; /* When did we enter G3? */
 
+#ifdef CONFIG_HIBERNATE
 /* Delay before hibernating, in seconds */
 static uint32_t hibernate_delay = 3600;
+#endif
 
 /**
  * Update input signals mask
@@ -140,6 +142,7 @@ static enum power_state power_common_state(enum power_state state)
 		}
 
 		in_want = 0;
+#ifdef CONFIG_HIBERNATE
 		if (extpower_is_present())
 			task_wait_event(-1);
 		else {
@@ -162,6 +165,9 @@ static enum power_state power_common_state(enum power_state state)
 				task_wait_event(wait);
 			}
 		}
+#else /* !CONFIG_HIBERNATE */
+		task_wait_event(-1);
+#endif
 		break;
 
 	case POWER_S5:
@@ -461,6 +467,7 @@ DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
 			"Get/set power input debug mask",
 			NULL);
 
+#ifdef CONFIG_HIBERNATE
 static int command_hibernation_delay(int argc, char **argv)
 {
 	char *e;
@@ -487,3 +494,4 @@ DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
 			"[sec]",
 			"Set the delay before going into hibernation",
 			NULL);
+#endif /* CONFIG_HIBERNATE */

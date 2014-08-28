@@ -624,11 +624,13 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_DISABLE_JUMP:
 		system_disable_jump();
 		return EC_SUCCESS;
+#ifdef CONFIG_HIBERNATE
 	case EC_REBOOT_HIBERNATE:
 		CPRINTS("system hibernating");
 		system_hibernate(0, 0);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
+#endif
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -697,6 +699,7 @@ DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 			NULL);
 #endif /* CONFIG_CMD_SCRATCHPAD */
 
+#ifdef CONFIG_HIBERNATE
 static int command_hibernate(int argc, char **argv)
 {
 	int seconds = 0;
@@ -720,6 +723,7 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 			"[sec] [usec]",
 			"Hibernate the EC",
 			NULL);
+#endif /* CONFIG_HIBERNATE */
 
 static int command_version(int argc, char **argv)
 {

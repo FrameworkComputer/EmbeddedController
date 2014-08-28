@@ -563,6 +563,11 @@
 #undef CONFIG_SW_CRC
 
 /*****************************************************************************/
+
+/* Enable system hibernate */
+#define CONFIG_HIBERNATE
+
+/*****************************************************************************/
 /* I2C configuration */
 
 #undef CONFIG_I2C
