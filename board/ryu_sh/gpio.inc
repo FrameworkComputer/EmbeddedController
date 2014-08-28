@@ -18,13 +18,15 @@ GPIO(SH_EC_SIGNAL,         A, 7,  GPIO_OUT_LOW,  NULL)
 GPIO(SH_IRQ_L,             A, 11, GPIO_OUT_LOW,  NULL)
 
 /* Inputs */
+GPIO(LID_CLOSED,           A,  2, GPIO_INPUT,  NULL)
+GPIO(BASE_PRESENT,         A,  3, GPIO_INPUT,  NULL)
 GPIO(COMPASS_DRDY,         B, 11, GPIO_INPUT,  NULL)
 GPIO(AP_IN_SUSPEND,        B, 15, GPIO_INPUT,  NULL)
 
 #if 0
 /* Alternate functions */
-GPIO(UART_TX,              A,  2, GPIO_OUT_LOW,  NULL)
-GPIO(UART_RX,              A,  3, GPIO_OUT_LOW,  NULL)
+GPIO(UART_TX,              A,  9, GPIO_OUT_LOW,  NULL)
+GPIO(UART_RX,              A, 10, GPIO_OUT_LOW,  NULL)
 #endif
 
 /* Needed to bypass flash write protection */
@@ -40,6 +42,6 @@ GPIO(SLAVE_I2C_SDA,        B,  7, GPIO_INPUT,    NULL)
 GPIO(MASTER_I2C_SCL,       B, 13, GPIO_INPUT,    NULL)
 GPIO(MASTER_I2C_SDA,       B, 14, GPIO_INPUT,    NULL)
 
-ALTERNATE(A, 0x000C, 1, MODULE_UART,   0) /* USART2: PA2/PA3 */
+ALTERNATE(A, 0x0600, 1, MODULE_UART,   0) /* USART1: PA9/PA10 */
 ALTERNATE(B, 0x00C0, 1, MODULE_I2C,    0) /* I2C SLAVE:PB6/7 */
 ALTERNATE(B, 0x6000, 5, MODULE_I2C,    0) /* I2C MASTER:PB13/14 */

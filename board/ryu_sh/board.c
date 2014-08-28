@@ -30,3 +30,19 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+void board_config_pre_init(void)
+{
+	/*
+	 *  enable SYSCFG clock:
+	 *  otherwise the SYSCFG peripheral is not clocked during the pre-init
+	 *  and the register write as no effect.
+	 */
+	STM32_RCC_APB2ENR |= 1 << 0;
+	/*
+	 * Remap USART DMA to match the USART driver
+	 * the DMA mapping is :
+	 *  Chan 4 : USART1_TX
+	 *  Chan 5 : USART1_RX
+	 */
+	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
+}

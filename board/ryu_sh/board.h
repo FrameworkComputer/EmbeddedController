@@ -11,9 +11,9 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
-/* the UART console is on USART2 (PA2/PA3) */
+/* the UART console is on USART1 (PA9/PA10) */
 #undef CONFIG_UART_CONSOLE
-#define CONFIG_UART_CONSOLE 2
+#define CONFIG_UART_CONSOLE 1
 
 /* By default, enable all console messages  */
 #define CC_DEFAULT     CC_ALL
@@ -21,6 +21,7 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_I2C
+#define CONFIG_BOARD_PRE_INIT
 #undef  CONFIG_LID_SWITCH
 #define CONFIG_VBOOT_HASH
 #undef CONFIG_WATCHDOG_HELP
