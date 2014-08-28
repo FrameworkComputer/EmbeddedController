@@ -184,6 +184,7 @@ static int check_for_power_off_event(void)
 	} else if (power_button_was_pressed) {
 		CPRINTS("power off cancel");
 		set_pmic_pwren(0);
+		timer_cancel(TASK_ID_CHIPSET);
 	}
 
 	power_button_was_pressed = pressed;
