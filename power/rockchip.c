@@ -142,14 +142,14 @@ static void set_pmic_warm_reset(int asserted)
 
 
 /**
- * Set the PMIC PWREN signal.
+ * Set the PMIC PWRON signal.
  *
  * @param asserted	Assert (=1) or deassert (=0) the signal.
  */
-static void set_pmic_pwren(int asserted)
+static void set_pmic_pwron(int asserted)
 {
 	/* Signal is active-high */
-	gpio_set_level(GPIO_PMIC_PWREN, asserted ? 1 : 0);
+	gpio_set_level(GPIO_PMIC_PWRON, asserted ? 1 : 0);
 }
 
 /**
@@ -194,8 +194,6 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
-		set_pmic_pwren(1);
-
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
 			CPRINTS("power waiting for long press %u",
@@ -210,7 +208,6 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPRINTS("power off cancel");
-		set_pmic_pwren(0);
 		timer_cancel(TASK_ID_CHIPSET);
 	}
 
@@ -284,8 +281,8 @@ enum power_state power_chipset_init(void)
 
 static void chipset_turn_off_power_rails(void)
 {
-	/* Release the power button, if it was asserted */
-	set_pmic_pwren(0);
+	/* Release the power on pin, if it was asserted */
+	set_pmic_pwron(0);
 	/* Close the pmic power source immediately */
 	set_pmic_source(0);
 
@@ -368,7 +365,7 @@ static void power_on(void)
 	set_pmic_source(1);
 	usleep(PMIC_SOURCE_STARTUP_TIME);
 
-	set_pmic_pwren(1);
+	set_pmic_pwron(1);
 	/*
 	 * BUG Workaround(crosbug.com/p/31635): usleep hangs in task when using
 	 * big delays.
@@ -515,6 +512,7 @@ enum power_state power_handle_state(enum power_state state)
 			if (wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
+				set_pmic_pwron(0);
 				return POWER_S3;
 			} else {
 				CPRINTS("long-press button, shutdown");
@@ -528,7 +526,7 @@ enum power_state power_handle_state(enum power_state state)
 		} else {
 			CPRINTS("POWER_GOOD not seen in time");
 		}
-		set_pmic_pwren(0);
+		set_pmic_pwron(0);
 		return POWER_S5;
 
 	case POWER_S3:
