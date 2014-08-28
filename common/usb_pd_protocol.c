@@ -124,6 +124,33 @@ static const uint8_t dec4b5b[] = {
 #define PD_HARD_RESET (PD_RST1 | (PD_RST1 << 5) |\
 		      (PD_RST1 << 10) | (PD_RST2 << 15))
 
+/* Polarity is based 'DFP Perspective' (see table USB Type-C Cable and Connector
+ * Specification)
+ *
+ * CC1    CC2    STATE             POSITION
+ * ----------------------------------------
+ * open   open   NC                N/A
+ * Rd     open   UFP attached      1
+ * open   Rd     UFP attached      2
+ * open   Ra     pwr cable no UFP  1
+ * Ra     open   pwr cable no UFP  2
+ * Rd     Ra     pwr cable & UFP   1
+ * Ra     Rd     pwr cable & UFP   2
+ * Rd     Rd     dbg accessory     N/A
+ * Ra     Ra     audio accessory   N/A
+ *
+ * Note, V(Rd) > V(Ra)
+ * TODO(crosbug.com/p/31197): Need to identify necessary polarity switching for
+ *                            debug dongle.
+ *
+ */
+#ifndef PD_SRC_RD_THRESHOLD
+#define PD_SRC_RD_THRESHOLD  200 /* mV */
+#endif
+#define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
+#define CC_RD(cc) ((cc > PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
+#define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))
+
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
 #define PD_RETRY_COUNT 2
@@ -1195,7 +1222,8 @@ void pd_task(void)
 			cc2_volt = pd_adc_read(port, 1);
 			if ((cc1_volt < PD_SRC_VNC) ||
 			    (cc2_volt < PD_SRC_VNC)) {
-				pd[port].polarity = !(cc1_volt < PD_SRC_VNC);
+				pd[port].polarity =
+					GET_POLARITY(cc1_volt, cc2_volt);
 				pd_select_polarity(port, pd[port].polarity);
 				/* Set to USB SS initially */
 #ifdef CONFIG_USBC_SS_MUX
