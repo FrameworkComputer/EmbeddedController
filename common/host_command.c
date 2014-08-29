@@ -626,6 +626,7 @@ DECLARE_HOST_COMMAND(EC_CMD_TEST_PROTOCOL,
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_HOSTCMD
 static int parse_byte(char *b, uint8_t *out)
 {
 	int i;
@@ -726,6 +727,7 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 			"cmd ver param",
 			"Fake host command",
 			NULL);
+#endif /* CONFIG_CMD_HOSTCMD */
 
 static int command_hcdebug(int argc, char **argv)
 {
