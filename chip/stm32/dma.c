@@ -250,6 +250,7 @@ void dma_clear_isr(enum dma_channel channel)
 	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
 }
 
+#ifdef CONFIG_DMA_DEFAULT_HANDLERS
 #ifdef CHIP_FAMILY_STM32F0
 void dma_event_interrupt_channel_1(void)
 {
@@ -323,3 +324,4 @@ void dma_event_interrupt_channel_7(void)
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_7, dma_event_interrupt_channel_7, 3);
 #endif /* CHIP_FAMILY_STM32F0 */
+#endif /* CONFIG_DMA_DEFAULT_HANDLERS */
