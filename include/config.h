@@ -1092,6 +1092,10 @@
 #undef CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO
 
 /*****************************************************************************/
+/* USB GPIO config */
+#undef CONFIG_USB_GPIO
+
+/*****************************************************************************/
 
 /* Support computing hash of code for verified boot */
 #undef CONFIG_VBOOT_HASH

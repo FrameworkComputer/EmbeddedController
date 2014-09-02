@@ -39,6 +39,7 @@ chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_USB)+=usb.o usb_endpoints.o
 chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
+chip-$(CONFIG_USB_GPIO)+=usb_gpio.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_MS)+=usb_ms.o usb_ms_scsi.o
 chip-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_phy.o
