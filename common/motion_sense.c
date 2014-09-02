@@ -21,6 +21,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_SENSE, outstr)
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
 
 /* Minimum time in between running motion sense task loop. */
 #define MIN_MOTION_SENSE_WAIT_TIME (1 * MSEC)
@@ -199,6 +200,7 @@ static void clock_chipset_shutdown(void)
 	accel_interval_ms = accel_interval_ap_suspend_ms;
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
+		sensor->state = SENSOR_NOT_INITIALIZED;
 		sensor->power = SENSOR_POWER_OFF;
 	}
 }
@@ -335,6 +337,7 @@ void motion_sense_task(void)
 
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
+		sensor->state = SENSOR_NOT_INITIALIZED;
 		if ((LOCATION_BASE == sensor->location)
 			&& (SENSOR_ACCELEROMETER == sensor->type))
 			accel_base = sensor;
@@ -406,15 +409,17 @@ void motion_sense_task(void)
 
 #ifdef CONFIG_CMD_LID_ANGLE
 		if (accel_disp) {
+			CPRINTF("[%T ");
 			for (i = 0; i < motion_sensor_count; ++i) {
 				sensor = &motion_sensors[i];
-				CPRINTS("%s=%-5d, %-5d, %-5d", sensor->name,
+				CPRINTF("%s=%-5d, %-5d, %-5d ", sensor->name,
 					sensor->raw_xyz[X],
 					sensor->raw_xyz[Y],
 					sensor->raw_xyz[Z]);
 			}
-			CPRINTS("a=%-6.1d r=%d", (int)(10*lid_angle_deg),
+			CPRINTF("a=%-6.1d r=%d", (int)(10*lid_angle_deg),
 					lid_angle_is_reliable);
+			CPRINTF("]\n");
 		}
 #endif
 		update_sense_data(lpc_status, lpc_data, &sample_id);
@@ -854,7 +859,9 @@ static int command_accel_read_xyz(int argc, char **argv)
 
 	while ((n == -1) || (n-- > 0)) {
 		sensor->drv->read(sensor, &x, &y, &z);
-		ccprintf("XYZ:%d %d %d %d\n", id, x, y, z);
+		ccprintf("Current raw data %d: %-5d %-5d %-5d\n", id, x, y, z);
+		ccprintf("Last calib. data %d: %-5d %-5d %-5d\n", id,
+			 sensor->xyz[X], sensor->xyz[Y], sensor->xyz[Z]);
 		task_wait_event(MIN_MOTION_SENSE_WAIT_TIME);
 	}
 	return EC_SUCCESS;
