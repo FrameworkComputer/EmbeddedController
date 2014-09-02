@@ -274,8 +274,8 @@ const
 struct accel_orientation acc_orient = {
 	/* Lid and base sensor are already aligned. */
 	.rot_align = {
+		{ 0, -1,  0},
 		{ 1,  0,  0},
-		{ 0,  1,  0},
 		{ 0,  0,  1}
 	},
 
