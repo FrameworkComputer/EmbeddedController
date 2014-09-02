@@ -31,6 +31,7 @@ chip-$(CONFIG_COMMON_GPIO)+=gpio.o gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(CHIP_FAMILY).o i2c.o
 chip-$(CONFIG_STREAM_USART)+=usart.o usart-$(CHIP_FAMILY).o
+chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
