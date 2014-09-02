@@ -903,6 +903,15 @@
 #undef CONFIG_TEMP_SENSOR_POWER_GPIO
 
 /*****************************************************************************/
+/* Stream config
+ *
+ * Streams are an abstraction for managing character based IO streams.  Streams
+ * can virtualize USARTs (interrupt, polled, or DMA driven), USB bulk
+ * endpoints, I2C transfers, and more.
+ */
+#undef CONFIG_STREAM
+
+/*****************************************************************************/
 /* UART config */
 
 /* Baud rate for UARTs */
