@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "board.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "crc.h"
@@ -1499,6 +1500,19 @@ static void dual_role_force_sink(void)
 	CPRINTS("chipset -> S5, force dual-role port to sink");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
+
+#ifdef HAS_TASK_CHIPSET
+static void dual_role_init(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		dual_role_force_sink();
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+		dual_role_off();
+	else /* CHIPSET_STATE_ON */
+		dual_role_on();
+}
+DECLARE_HOOK(HOOK_INIT, dual_role_init, HOOK_PRIO_DEFAULT);
+#endif /* HAS_TASK_CHIPSET */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
