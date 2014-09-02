@@ -33,13 +33,24 @@
 #define ASSERT(cond)
 #endif
 
-
 /* Standard macros / definitions */
 #ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MAX(a, b)					\
+	({						\
+		__typeof__(a) temp_a = (a);		\
+		__typeof__(b) temp_b = (b);		\
+							\
+		temp_a > temp_b ? temp_a : temp_b;	\
+	})
 #endif
 #ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MIN(a, b)					\
+	({						\
+		__typeof__(a) temp_a = (a);		\
+		__typeof__(b) temp_b = (b);		\
+							\
+		temp_a < temp_b ? temp_a : temp_b;	\
+	})
 #endif
 #ifndef NULL
 #define NULL ((void *)0)
