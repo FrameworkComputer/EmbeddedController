@@ -620,16 +620,26 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RTC_TR                REG32(STM32_RTC_BASE + 0x00)
 #define STM32_RTC_DR                REG32(STM32_RTC_BASE + 0x04)
 #define STM32_RTC_CR                REG32(STM32_RTC_BASE + 0x08)
+#define STM32_RTC_CR_BYPSHAD        (1 << 5)
+#define STM32_RTC_CR_ALRAE          (1 << 8)
+#define STM32_RTC_CR_ALRAIE         (1 << 12)
 #define STM32_RTC_ISR               REG32(STM32_RTC_BASE + 0x0C)
+#define STM32_RTC_ISR_ALRAWF        (1 << 0)
+#define STM32_RTC_ISR_RSF           (1 << 5)
+#define STM32_RTC_ISR_INITF         (1 << 6)
+#define STM32_RTC_ISR_INIT          (1 << 7)
+#define STM32_RTC_ISR_ALRAF         (1 << 8)
 #define STM32_RTC_PRER              REG32(STM32_RTC_BASE + 0x10)
 #define STM32_RTC_WUTR              REG32(STM32_RTC_BASE + 0x14)
 #define STM32_RTC_CALIBR            REG32(STM32_RTC_BASE + 0x18)
 #define STM32_RTC_ALRMAR            REG32(STM32_RTC_BASE + 0x1C)
 #define STM32_RTC_ALRMBR            REG32(STM32_RTC_BASE + 0x20)
 #define STM32_RTC_WPR               REG32(STM32_RTC_BASE + 0x24)
+#define STM32_RTC_SSR               REG32(STM32_RTC_BASE + 0x28)
 #define STM32_RTC_TSTR              REG32(STM32_RTC_BASE + 0x30)
 #define STM32_RTC_TSDR              REG32(STM32_RTC_BASE + 0x34)
 #define STM32_RTC_TAFCR             REG32(STM32_RTC_BASE + 0x40)
+#define STM32_RTC_ALRMASSR          REG32(STM32_RTC_BASE + 0x44)
 #define STM32_RTC_BACKUP(n)         REG32(STM32_RTC_BASE + 0x50 + 4 * (n))
 
 #define STM32_BKP_DATA(n)           STM32_RTC_BACKUP(n)
@@ -814,6 +824,10 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_EXTI_FTSR             REG32(STM32_EXTI_BASE + 0x0c)
 #define STM32_EXTI_SWIER            REG32(STM32_EXTI_BASE + 0x10)
 #define STM32_EXTI_PR               REG32(STM32_EXTI_BASE + 0x14)
+
+#if defined(CHIP_FAMILY_STM32F0)
+#define EXTI_RTC_ALR_EVENT (1 << 17)
+#endif
 
 /* --- ADC --- */
 
