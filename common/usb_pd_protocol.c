@@ -1644,7 +1644,62 @@ static int command_pd(int argc, char **argv)
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strncasecmp(argv[1], "rwhashtable", 3)) {
+	/* command: pd <subcmd> <args> */
+	if (!strcasecmp(argv[1], "dualrole")) {
+		if (argc < 3) {
+			ccprintf("dual-role toggling: ");
+			switch (drp_state) {
+			case PD_DRP_TOGGLE_ON:
+				ccprintf("on\n");
+				break;
+			case PD_DRP_TOGGLE_OFF:
+				ccprintf("off\n");
+				break;
+			case PD_DRP_FORCE_SINK:
+				ccprintf("force sink\n");
+				break;
+			case PD_DRP_FORCE_SOURCE:
+				ccprintf("force source\n");
+				break;
+			}
+		} else {
+			if (!strcasecmp(argv[2], "on"))
+				pd_set_dual_role(PD_DRP_TOGGLE_ON);
+			else if (!strcasecmp(argv[2], "off"))
+				pd_set_dual_role(PD_DRP_TOGGLE_OFF);
+			else if (!strcasecmp(argv[2], "sink"))
+				pd_set_dual_role(PD_DRP_FORCE_SINK);
+			else if (!strcasecmp(argv[2], "source"))
+				pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+			else
+				return EC_ERROR_PARAM3;
+		}
+		return EC_SUCCESS;
+	} else if (!strcasecmp(argv[1], "dump")) {
+		int level;
+
+		if (argc < 3)
+			ccprintf("dump level: %d\n", debug_level);
+		else {
+			level = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM2;
+			debug_level = level;
+		}
+		return EC_SUCCESS;
+	} else if (!strcasecmp(argv[1], "enable")) {
+		int enable;
+
+		if (argc < 3)
+			return EC_ERROR_PARAM_COUNT;
+
+		enable = strtoi(argv[2], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM3;
+		pd_comm_enable(enable);
+		ccprintf("Ports %s\n", enable ? "enabled" : "disabled");
+		return EC_SUCCESS;
+	} else if (!strncasecmp(argv[1], "rwhashtable", 3)) {
 		int i, j;
 		struct ec_params_usb_pd_rw_hash_entry *p;
 		for (i = 0; i < RW_HASH_ENTRIES; i++) {
@@ -1656,6 +1711,8 @@ static int command_pd(int argc, char **argv)
 		}
 		return EC_SUCCESS;
 	}
+
+	/* command: pd <port> <subcmd> [args] */
 	port = strtoi(argv[1], &e, 10);
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
@@ -1690,27 +1747,6 @@ static int command_pd(int argc, char **argv)
 			return EC_ERROR_PARAM2;
 		pd_set_clock(port, freq);
 		ccprintf("set TX frequency to %d Hz\n", freq);
-	} else if (!strcasecmp(argv[2], "dump")) {
-		int level;
-
-		if (argc < 4)
-			return EC_ERROR_PARAM2;
-
-		level = strtoi(argv[3], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM2;
-		debug_level = level;
-	} else if (!strcasecmp(argv[2], "enable")) {
-		int enable;
-
-		if (argc < 4)
-			return EC_ERROR_PARAM_COUNT;
-
-		enable = strtoi(argv[3], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM3;
-		pd_comm_enable(enable);
-		ccprintf("Ports %s\n", enable ? "enabled" : "disabled");
 	} else if (!strncasecmp(argv[2], "hard", 4)) {
 		set_state(port, PD_STATE_HARD_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
@@ -1754,35 +1790,6 @@ static int command_pd(int argc, char **argv)
 		} else {
 			return EC_ERROR_PARAM_COUNT;
 		}
-	} else if (!strcasecmp(argv[2], "dualrole")) {
-		if (argc < 4) {
-			ccprintf("dual-role toggling: ");
-			switch (drp_state) {
-			case PD_DRP_TOGGLE_ON:
-				ccprintf("on\n");
-				break;
-			case PD_DRP_TOGGLE_OFF:
-				ccprintf("off\n");
-				break;
-			case PD_DRP_FORCE_SINK:
-				ccprintf("force sink\n");
-				break;
-			case PD_DRP_FORCE_SOURCE:
-				ccprintf("force source\n");
-				break;
-			}
-		} else {
-			if (!strcasecmp(argv[3], "on"))
-				pd_set_dual_role(PD_DRP_TOGGLE_ON);
-			else if (!strcasecmp(argv[3], "off"))
-				pd_set_dual_role(PD_DRP_TOGGLE_OFF);
-			else if (!strcasecmp(argv[3], "sink"))
-				pd_set_dual_role(PD_DRP_FORCE_SINK);
-			else if (!strcasecmp(argv[3], "source"))
-				pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-			else
-				return EC_ERROR_PARAM3;
-		}
 	} else if (!strncasecmp(argv[2], "flash", 4)) {
 		return remote_flashing(argc, argv);
 	} else if (!strncasecmp(argv[2], "state", 5)) {
@@ -1807,10 +1814,9 @@ static int command_pd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
-			"<port> "
-			"[tx|bist|charger|dev|dump|dualrole|enable"
-			"|soft|hash|hard|clock|ping|state"
-			"|vdm [ping | curr]]",
+			"dualrole|dump|enable [0|1]|rwhashtable|\n\t<port> "
+			"[tx|bist|charger|clock|dev"
+			"|soft|hash|hard|ping|state|vdm [ping | curr]]",
 			"USB PD",
 			NULL);
 
