@@ -47,9 +47,9 @@
 static inline void spi_enable_clock(int port)
 {
 	if (port == 0)
-		STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
-	else
 		STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+	else
+		STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 }
 
 /* DMA for transmit uses DMA CH7 for C0 and DMA_CH3 for C1 */
