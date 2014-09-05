@@ -253,7 +253,8 @@ static struct pd_protocol {
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	uint8_t vdo_count;
 
-	/* Attached ChromeOS device RW hash */
+	/* Attached ChromeOS device id & RW hash */
+	uint8_t dev_id;
 	uint32_t dev_rw_hash[SHA1_DIGEST_SIZE/4];
 } pd[PD_PORT_COUNT];
 
@@ -290,9 +291,11 @@ static inline void set_state(int port, enum pd_states next_state)
 	pd[port].task_state = next_state;
 
 #ifdef CONFIG_USBC_SS_MUX
-	if (next_state == PD_STATE_SRC_DISCONNECTED)
+	if (next_state == PD_STATE_SRC_DISCONNECTED) {
+		pd[port].dev_id = 0;
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
+	}
 #endif
 
 	/* Log state transition, except for toggling between sink and source */
@@ -1083,9 +1086,21 @@ static void pd_vdm_send_state_machine(int port)
 	}
 }
 
-void pd_dev_store_rw_hash(int port, uint32_t *rw_hash)
+static inline void pd_dev_dump_info(uint8_t dev_id, uint32_t *hash)
 {
+	int j;
+	ccprintf("Device:%d Hash:", dev_id);
+	for (j = 0; j < SHA1_DIGEST_SIZE/4; j++)
+		ccprintf(" 0x%08x", hash[j]);
+	ccprintf("\n");
+}
+
+void pd_dev_store_rw_hash(int port, uint8_t dev_id, uint32_t *rw_hash)
+{
+	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, SHA1_DIGEST_SIZE);
+	if (debug_level >= 1)
+		pd_dev_dump_info(dev_id, rw_hash);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1700,14 +1715,11 @@ static int command_pd(int argc, char **argv)
 		ccprintf("Ports %s\n", enable ? "enabled" : "disabled");
 		return EC_SUCCESS;
 	} else if (!strncasecmp(argv[1], "rwhashtable", 3)) {
-		int i, j;
+		int i;
 		struct ec_params_usb_pd_rw_hash_entry *p;
 		for (i = 0; i < RW_HASH_ENTRIES; i++) {
 			p = &rw_hash_table[i];
-			ccprintf("Device:%d Hash:", p->dev_id);
-			for (j = 0; j < SHA1_DIGEST_SIZE/4; j++)
-				ccprintf(" 0x%08x", p->dev_rw_hash.w[j]);
-			ccprintf("\n");
+			pd_dev_dump_info(p->dev_id, p->dev_rw_hash.w);
 		}
 		return EC_SUCCESS;
 	}
@@ -2026,6 +2038,33 @@ static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 		     hc_remote_rw_hash_entry,
+		     EC_VER_MASK(0));
+
+static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
+{
+	const uint8_t *port = args->params;
+	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
+
+	if (*port >= PD_PORT_COUNT) {
+		ccprintf("PD DEV_INFO - Port:%d >= %d (max ports)\n",
+			 *port, PD_PORT_COUNT);
+		return EC_RES_INVALID_PARAM;
+	}
+	r->dev_id = pd[*port].dev_id;
+	ccprintf("PD DEV_INFO - requested Port:%d has Device:%d\n",
+		 *port, r->dev_id);
+
+	if (r->dev_id) {
+		memcpy(r->dev_rw_hash.b, pd[*port].dev_rw_hash,
+		       SHA1_DIGEST_SIZE);
+	}
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
+		     hc_remote_pd_dev_info,
 		     EC_VER_MASK(0));
 
 #endif /* CONFIG_COMMON_RUNTIME */

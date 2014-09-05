@@ -307,12 +307,13 @@ int pd_board_checks(void);
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /**
- * Store RW hash of device
+ * Store Device ID & RW hash of device
  *
  * @param port     USB-C port number
+ * @param dev_id   device identifier
  * @param rw_hash  pointer to sha1 rw_hash
  */
-void pd_dev_store_rw_hash(int port, uint32_t *rw_hash);
+void pd_dev_store_rw_hash(int port, uint8_t dev_id, uint32_t *rw_hash);
 
 /**
  * Send Vendor Defined Message

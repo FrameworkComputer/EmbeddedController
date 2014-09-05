@@ -2637,6 +2637,13 @@ struct ec_params_usb_pd_rw_hash_entry {
 		uint32_t w[DIV_ROUND_UP(SHA1_DIGEST_SIZE, sizeof(uint32_t))];
 	} dev_rw_hash;
 } __packed;
+
+/* Read USB-PD Accessory info */
+#define EC_CMD_USB_PD_DEV_INFO 0x112
+
+struct ec_params_usb_pd_info_request {
+	uint8_t port;
+} __packed;
 /*****************************************************************************/
 /*
  * Passthru commands

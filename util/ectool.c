@@ -118,6 +118,8 @@ const char help_str[] =
 	"      Write I2C bus\n"
 	"  i2cxfer <port> <slave_addr> <read_count> [write bytes...]\n"
 	"      Perform I2C transfer on EC's I2C bus\n"
+	"  infopddev <port>\n"
+	"      Get info about USB type-C accessory attached to port\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
 	"  led <name> <query | auto | off | <color> | <color>=<value>...>\n"
@@ -808,6 +810,43 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 	}
 	rv = ec_command(EC_CMD_USB_PD_RW_HASH_ENTRY, 0, p, sizeof(*p), NULL, 0);
 
+	return rv;
+}
+
+
+int cmd_pd_device_info(int argc, char *argv[])
+{
+	int i, rv;
+	char *e;
+	struct ec_params_usb_pd_info_request *p =
+		(struct ec_params_usb_pd_info_request *)ec_outbuf;
+	struct ec_params_usb_pd_rw_hash_entry *r =
+		(struct ec_params_usb_pd_rw_hash_entry *)ec_inbuf;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+		return -1;
+	}
+
+	p->port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_USB_PD_DEV_INFO, 0, p, sizeof(*p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	if (!r->dev_id)
+		printf("Port:%d has no valid device\n", p->port);
+	else {
+		printf("Port:%d Device:%d Hash: ", p->port, r->dev_id);
+		for (i = 0; i < 5; i++)
+			printf(" 0x%08x", r->dev_rw_hash.w[i]);
+		printf("\n");
+	}
 	return rv;
 }
 
@@ -4742,6 +4781,7 @@ const struct command commands[] = {
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
 	{"i2cxfer", cmd_i2c_xfer},
+	{"infopddev", cmd_pd_device_info},
 	{"led", cmd_led},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
