@@ -46,6 +46,7 @@ GPIO(USB1_STATUS_L,  E, 6, GPIO_INPUT, NULL) /* USB charger port 1 status output
 GPIO(USB2_OC_L,      E, 0, GPIO_INPUT, NULL) /* USB port overcurrent warning */
 GPIO(USB2_STATUS_L,  D, 7, GPIO_INPUT, NULL) /* USB charger port 2 status output */
 GPIO(PD_IN_RW,       A, 5, GPIO_INPUT, NULL) /* PD is in RW */
+GPIO(PCH_HDA_SDO_L,  G, 1, GPIO_INPUT, NULL) /* HDA_SDO signal to PCH to disable ME */
 
 /* Outputs; all unasserted by default except for reset signals */
 GPIO(CPU_PROCHOT,         B, 1, GPIO_OUT_LOW,  NULL) /* Force CPU to think it's overheated */
@@ -68,11 +69,6 @@ GPIO(LIGHTBAR_RESET_L,    J, 2, GPIO_ODR_LOW,  NULL) /* Reset lightbar controlle
 GPIO(PCH_DPWROK,          G, 0, GPIO_OUT_LOW,  NULL) /* Indicate when VccDSW is good */
 GPIO(PCH_RSMRST_L,        C, 4, GPIO_OUT_LOW,  NULL) /* Reset PCH resume power plane logic */
 GPIO(PCH_RTCRST_L,        J, 1, GPIO_ODR_HIGH, NULL) /* Reset PCH RTC well */
-/*
- * HDA_SDO is technically an output, but we need to leave it as an
- * input until we drive it high.  So can't use open-drain (HI_Z).
- */
-GPIO(PCH_HDA_SDO,         G, 1, GPIO_INPUT,    NULL) /* HDA_SDO signal to PCH; when high, ME ignores security descriptor */
 GPIO(PCH_WAKE_L,          F, 0, GPIO_ODR_HIGH, NULL) /* Wake signal from EC to PCH */
 GPIO(PCH_NMI_L,           F, 2, GPIO_ODR_HIGH, NULL) /* Non-maskable interrupt pin to PCH */
 GPIO(PCH_PWRBTN_L,        H, 0, GPIO_ODR_HIGH, NULL) /* Power button output to PCH */
