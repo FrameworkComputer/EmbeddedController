@@ -18,7 +18,6 @@ GPIO(PP1050_PGOOD,   H, 4, GPIO_INT_BOTH,                       power_signal_int
 GPIO(PP1200_PGOOD,   H, 6, GPIO_INT_BOTH,                       power_signal_interrupt)   /* Power good on 1.2V (DRAM) */
 GPIO(PP1800_PGOOD,   L, 7, GPIO_INT_BOTH,                       power_signal_interrupt)   /* Power good on 1.8V (DRAM) */
 GPIO(VCORE_PGOOD,    C, 6, GPIO_INT_BOTH,                       power_signal_interrupt)   /* Power good on core VR */
-GPIO(RECOVERY_L,     A, 5, GPIO_PULL_UP | GPIO_INT_BOTH,        switch_interrupt)         /* Recovery signal from servo */
 GPIO(WP_L,           A, 4, GPIO_INT_BOTH,                       switch_interrupt)         /* Write protect input */
 GPIO(PCH_BL_EN,      M, 3, GPIO_INT_RISING,                     backlight_interrupt)      /* PCH backlight input */
 GPIO(JTAG_TCK,       C, 0, GPIO_DEFAULT,                        jtag_interrupt)           /* JTAG clock input */
@@ -46,6 +45,7 @@ GPIO(USB1_OC_L,      E, 7, GPIO_INPUT, NULL) /* USB port overcurrent warning */
 GPIO(USB1_STATUS_L,  E, 6, GPIO_INPUT, NULL) /* USB charger port 1 status output */
 GPIO(USB2_OC_L,      E, 0, GPIO_INPUT, NULL) /* USB port overcurrent warning */
 GPIO(USB2_STATUS_L,  D, 7, GPIO_INPUT, NULL) /* USB charger port 2 status output */
+GPIO(PD_IN_RW,       A, 5, GPIO_INPUT, NULL) /* PD is in RW */
 
 /* Outputs; all unasserted by default except for reset signals */
 GPIO(CPU_PROCHOT,         B, 1, GPIO_OUT_LOW,  NULL) /* Force CPU to think it's overheated */
