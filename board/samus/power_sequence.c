@@ -103,6 +103,7 @@ static void chipset_reset_rtc(void)
 		gpio_set_level(GPIO_PCH_RTCRST_L, 0);
 		udelay(100);
 		gpio_set_level(GPIO_PCH_RTCRST_L, 1);
+		udelay(10 * MSEC);
 	}
 }
 
