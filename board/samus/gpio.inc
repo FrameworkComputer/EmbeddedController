@@ -61,7 +61,7 @@ GPIO(PP5000_EN,           H, 7, GPIO_OUT_LOW,  NULL) /* Enable 5V supply */
 GPIO(PP1800_EN,           L, 6, GPIO_OUT_LOW,  NULL) /* Enable 1.8V supply */
 GPIO(SYS_PWROK,           H, 2, GPIO_OUT_LOW,  NULL) /* EC thinks everything is up and ready */
 GPIO(WLAN_OFF_L,          J, 4, GPIO_OUT_LOW,  NULL) /* Disable WiFi radio */
-GPIO(USB_MCU_RST,         B, 0, GPIO_ODR_LOW,  NULL) /* USB PD MCU reset */
+GPIO(USB_MCU_RST,         B, 0, GPIO_OUT_LOW,  NULL) /* USB PD MCU reset */
 GPIO(ENABLE_BACKLIGHT,    M, 7, GPIO_OUT_LOW,  NULL) /* Enable backlight power */
 GPIO(ENABLE_TOUCHPAD,     N, 1, GPIO_OUT_LOW,  NULL) /* Enable touchpad power */
 GPIO(ENTERING_RW,         D, 3, GPIO_OUT_LOW,  NULL) /* Indicate when EC is entering RW code */
