@@ -457,6 +457,15 @@ const struct batt_params *charger_current_battery_params(void)
 	return &curr.batt;
 }
 
+void charger_init(void)
+{
+	/* Initialize current state */
+	memset(&curr, 0, sizeof(curr));
+	curr.batt.is_present = BP_NOT_SURE;
+	curr.desired_input_current = CONFIG_CHARGER_INPUT_CURRENT;
+}
+DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
+
 /* Main loop */
 void charger_task(void)
 {
@@ -466,10 +475,6 @@ void charger_task(void)
 	/* Get the battery-specific values */
 	batt_info = battery_get_info();
 
-	/* Initialize all the state */
-	memset(&curr, 0, sizeof(curr));
-	curr.batt.is_present = BP_NOT_SURE;
-	curr.desired_input_current = CONFIG_CHARGER_INPUT_CURRENT;
 	prev_ac = prev_charge = -1;
 	state_machine_force_idle = 0;
 	shutdown_warning_time.val = 0UL;

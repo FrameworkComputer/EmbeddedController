@@ -56,6 +56,8 @@ static void pd_exchange_status(void)
 
 void pd_command_task(void)
 {
+	/* On startup exchange status with the PD */
+	pd_exchange_status();
 
 	while (1) {
 		/* Wait for the next command event */
