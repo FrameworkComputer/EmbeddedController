@@ -79,11 +79,25 @@ static const uint8_t out_preamble[4] = {
 };
 
 /*
+ * Space allocation of the past-end status byte (EC_SPI_PAST_END) in the out_msg
+ * buffer. This seems to be dynamic because the F0 family needs to send it 4
+ * times in order to make sure it actually stays at the repeating byte after DMA
+ * ends.
+ *
+ * See crbug.com/31390
+ */
+#ifdef CHIP_FAMILY_STM32F0
+#define EC_SPI_PAST_END_LENGTH 4
+#else
+#define EC_SPI_PAST_END_LENGTH 1
+#endif
+
+/*
  * Our input and output buffers. These must be large enough for our largest
  * message, including protocol overhead, and must be 32-bit aligned.
  */
-static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble)]
-	__aligned(4);
+static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble) +
+	EC_SPI_PAST_END_LENGTH] __aligned(4);
 static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4);
 static uint8_t enabled;
 static struct host_cmd_handler_args args;
@@ -232,6 +246,35 @@ static void reply(stm32_dma_chan_t *txdma,
 }
 
 /**
+ * Sends a byte over SPI without DMA
+ *
+ * This is mostly used when we want to relay status bytes to the AP while we're
+ * recieving the message and we're thinking about it.
+ *
+ * @note It may be sent 0, 1, or >1 times, depending on whether the host clocks
+ * the bus or not. Basically, the EC is saying "if you ask me what my status is,
+ * you'll get this value.  But you're not required to ask, or you can ask
+ * multiple times."
+ *
+ * @param byte	status byte to send, one of the EC_SPI_* #defines from
+ *		ec_commands.h
+ */
+static void tx_status(uint8_t byte)
+{
+	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+
+	spi->dr = byte;
+#ifdef CHIP_FAMILY_STM32F0
+	/* It sends the byte 4 times in order to be sure it bypassed the FIFO
+	 * from the STM32F0 line.
+	 */
+	spi->dr = byte;
+	spi->dr = byte;
+	spi->dr = byte;
+#endif
+}
+
+/**
  * Get ready to receive a message from the master.
  *
  * Set up our RX DMA and disable our TX DMA. Set up the data output so that
@@ -246,7 +289,7 @@ static void setup_for_transaction(void)
 	setup_transaction_later = 0;
 
 	/* Not ready to receive yet */
-	spi->dr = EC_SPI_NOT_READY;
+	tx_status(EC_SPI_NOT_READY);
 
 	/* We are no longer actively processing a transaction */
 	state = SPI_STATE_PREPARE_RX;
@@ -256,20 +299,22 @@ static void setup_for_transaction(void)
 
 	/*
 	 * Read dummy bytes in case there are some pending; this prevents the
-	 * receive DMA from getting that byte right when we start it. 4 Bytes
-	 * makes sure the RX FIFO on the F0 is empty as well.
+	 * receive DMA from getting that byte right when we start it.
 	 */
 	dummy = spi->dr;
+#ifdef CHIP_FAMILY_STM32F0
+	/* 4 Bytes makes sure the RX FIFO on the F0 is empty as well. */
 	dummy = spi->dr;
 	dummy = spi->dr;
 	dummy = spi->dr;
+#endif
 
 	/* Start DMA */
 	dma_start_rx(&dma_rx_option, sizeof(in_msg), in_msg);
 
 	/* Ready to receive */
 	state = SPI_STATE_READY_TO_RX;
-	spi->dr = EC_SPI_OLD_READY;
+	tx_status(EC_SPI_OLD_READY);
 }
 
 
@@ -347,12 +392,20 @@ static void spi_send_response_packet(struct host_packet *pkt)
 	/* state == SPI_STATE_PROCESSING */
 
 	/* Append our past-end byte, which we reserved space for. */
-	((uint8_t *)pkt->response)[pkt->response_size] = EC_SPI_PAST_END;
+	((uint8_t *)pkt->response)[pkt->response_size + 0] = EC_SPI_PAST_END;
+#ifdef CHIP_FAMILY_STM32F0
+	/* Make sure we are going to be outputting it properly when the DMA
+	 * ends due to the TX FIFO bug on the F0. See crbug.com/31390
+	 */
+	((uint8_t *)pkt->response)[pkt->response_size + 1] = EC_SPI_PAST_END;
+	((uint8_t *)pkt->response)[pkt->response_size + 2] = EC_SPI_PAST_END;
+	((uint8_t *)pkt->response)[pkt->response_size + 3] = EC_SPI_PAST_END;
+#endif
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
-	dma_prepare_tx(&dma_tx_option,
-		       sizeof(out_preamble) + pkt->response_size + 1, out_msg);
+	dma_prepare_tx(&dma_tx_option, sizeof(out_preamble) + pkt->response_size
+		+ EC_SPI_PAST_END_LENGTH, out_msg);
 	dma_go(txdma);
 
 	/*
@@ -373,7 +426,6 @@ static void spi_send_response_packet(struct host_packet *pkt)
  */
 void spi_event(enum gpio_signal signal)
 {
-	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 	stm32_dma_chan_t *rxdma;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
@@ -406,14 +458,14 @@ void spi_event(enum gpio_signal signal)
 		 * Tell AP we weren't ready, and ignore the received data.
 		 */
 		CPRINTS("SPI not ready");
-		spi->dr = EC_SPI_NOT_READY;
+		tx_status(EC_SPI_NOT_READY);
 		state = SPI_STATE_RX_BAD;
 		return;
 	}
 
 	/* We're now inside a transaction */
 	state = SPI_STATE_RECEIVING;
-	spi->dr = EC_SPI_RECEIVING;
+	tx_status(EC_SPI_RECEIVING);
 	rxdma = dma_get_channel(STM32_DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
@@ -453,15 +505,15 @@ void spi_event(enum gpio_signal signal)
 		memcpy(out_msg, out_preamble, sizeof(out_preamble));
 		spi_packet.response = out_msg + sizeof(out_preamble);
 		/* Reserve space for the preamble and trailing past-end byte */
-		spi_packet.response_max =
-			sizeof(out_msg) - sizeof(out_preamble) - 1;
+		spi_packet.response_max = sizeof(out_msg)
+			- sizeof(out_preamble) - EC_SPI_PAST_END_LENGTH;
 		spi_packet.response_size = 0;
 
 		spi_packet.driver_result = EC_RES_SUCCESS;
 
 		/* Move to processing state */
 		state = SPI_STATE_PROCESSING;
-		spi->dr = EC_SPI_PROCESSING;
+		tx_status(EC_SPI_PROCESSING);
 
 		host_packet_receive(&spi_packet);
 		return;
@@ -473,6 +525,12 @@ void spi_event(enum gpio_signal signal)
 		 * TODO(crosbug.com/p/20257): Remove once kernel supports
 		 * version 3.
 		 */
+
+#ifdef CHIP_FAMILY_STM32F0
+		CPRINTS("WARNING: Protocol version 2 is not supported on the F0"
+			" line due to crbug.com/31390");
+#endif
+
 		args.version = in_msg[0] - EC_CMD_VERSION0;
 		args.command = in_msg[1];
 		args.params_size = in_msg[2];
@@ -501,7 +559,7 @@ void spi_event(enum gpio_signal signal)
 
 		/* Move to processing state */
 		state = SPI_STATE_PROCESSING;
-		spi->dr = EC_SPI_PROCESSING;
+		tx_status(EC_SPI_PROCESSING);
 
 		host_command_received(&args);
 		return;
@@ -509,7 +567,7 @@ void spi_event(enum gpio_signal signal)
 
  spi_event_error:
 	/* Error, timeout, or protocol we can't handle.  Ignore data. */
-	spi->dr = EC_SPI_RX_BAD_DATA;
+	tx_status(EC_SPI_RX_BAD_DATA);
 	state = SPI_STATE_RX_BAD;
 	CPRINTS("SPI rx bad data");
 }
