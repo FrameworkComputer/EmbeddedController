@@ -29,11 +29,13 @@
 enum {
 	OPT_DEV = 1000,
 	OPT_INTERFACE,
+	OPT_NAME,
 };
 
 static struct option long_opts[] = {
 	{"dev", 1, 0, OPT_DEV},
 	{"interface", 1, 0, OPT_INTERFACE},
+	{"name", 1, 0, OPT_NAME},
 	{NULL, 0, 0, 0}
 };
 
@@ -228,9 +230,8 @@ int parse_bool(const char *s, int *dest)
 
 void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s [--dev=n] [--interface=dev|lpc|i2c] <command> "
-	       "[params]\n\n",
-	       prog);
+	printf("Usage: %s [--dev=n] [--interface=dev|lpc|i2c] ", prog);
+	printf("[--name=cros_ec|cros_sh|cros_pd] <command> [params]\n\n");
 	if (print_cmds)
 		puts(help_str);
 	else
@@ -4839,6 +4840,7 @@ int main(int argc, char *argv[])
 	const struct command *cmd;
 	int dev = 0;
 	int interfaces = COMM_ALL;
+	char device_name[40] = "cros_ec";
 	int rv = 1;
 	int parse_error = 0;
 	char *e;
@@ -4873,6 +4875,9 @@ int main(int argc, char *argv[])
 				parse_error = 1;
 			}
 			break;
+		case OPT_NAME:
+			strncpy(device_name, optarg, 40);
+			break;
 		}
 	}
 
@@ -4904,7 +4909,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (comm_init(interfaces)) {
+	if (comm_init(interfaces, device_name)) {
 		fprintf(stderr, "Couldn't find EC\n");
 		goto out;
 	}

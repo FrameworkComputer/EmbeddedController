@@ -78,13 +78,15 @@ static int ec_readmem_dev(int offset, int bytes, void *dest)
 			      dest, bytes);
 }
 
-int comm_init_dev(void)
+int comm_init_dev(const char *device_name)
 {
 	char version[80];
+	char device[80] = "/dev/";
 	int r;
 	char *s;
 
-	fd = open("/dev/" CROS_EC_DEV_NAME, O_RDWR);
+	strncat(device, (device_name ? device_name : CROS_EC_DEV_NAME), 40);
+	fd = open(device, O_RDWR);
 	if (fd < 0)
 		return 1;
 

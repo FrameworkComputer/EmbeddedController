@@ -37,9 +37,10 @@ enum comm_interface {
  * Perform initializations needed for subsequent requests
  *
  * @param interfaces	Interfaces to try; use COMM_ALL to try all of them.
+ * @param device_name For DEV option, the device file to use.
  * @return 0 in case of success, or error code.
  */
-int comm_init(int interfaces);
+int comm_init(int interfaces, const char *device_name);
 
 /**
  * Send a command to the EC.  Returns the length of output data returned (0 if

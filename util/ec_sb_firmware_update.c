@@ -635,7 +635,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (comm_init(interfaces)) {
+	if (comm_init(interfaces, NULL)) {
 		fprintf(stderr, "Couldn't find EC\n");
 		goto out;
 	}

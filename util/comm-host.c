@@ -23,7 +23,7 @@ void *ec_outbuf;
 void *ec_inbuf;
 static int command_offset;
 
-int comm_init_dev(void) __attribute__((weak));
+int comm_init_dev(const char *device_name) __attribute__((weak));
 int comm_init_lpc(void) __attribute__((weak));
 int comm_init_i2c(void) __attribute__((weak));
 
@@ -75,7 +75,7 @@ int ec_command(int command, int version,
 				indata, insize);
 }
 
-int comm_init(int interfaces)
+int comm_init(int interfaces, const char *device_name)
 {
 	struct ec_response_get_protocol_info info;
 
@@ -83,7 +83,8 @@ int comm_init(int interfaces)
 	ec_readmem = fake_readmem;
 
 	/* Prefer new /dev method */
-	if ((interfaces & COMM_DEV) && comm_init_dev && !comm_init_dev())
+	if ((interfaces & COMM_DEV) && comm_init_dev &&
+	    !comm_init_dev(device_name))
 		goto init_ok;
 
 	/* Fallback to direct LPC on x86 */
