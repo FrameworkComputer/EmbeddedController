@@ -2591,6 +2591,7 @@ enum usb_pd_control_role {
 	USB_PD_CTRL_ROLE_TOGGLE_OFF = 2,
 	USB_PD_CTRL_ROLE_FORCE_SINK = 3,
 	USB_PD_CTRL_ROLE_FORCE_SOURCE = 4,
+	USB_PD_CTRL_ROLE_COUNT
 };
 
 enum usb_pd_control_mux {
@@ -2600,12 +2601,20 @@ enum usb_pd_control_mux {
 	USB_PD_CTRL_MUX_DP = 3,
 	USB_PD_CTRL_MUX_DOCK = 4,
 	USB_PD_CTRL_MUX_AUTO = 5,
+	USB_PD_CTRL_MUX_COUNT
 };
 
 struct ec_params_usb_pd_control {
 	uint8_t port;
 	uint8_t role;
 	uint8_t mux;
+} __packed;
+
+struct ec_response_usb_pd_control {
+	uint8_t enabled;
+	uint8_t role;
+	uint8_t polarity;
+	uint8_t state;
 } __packed;
 
 /* Write USB-PD device FW */

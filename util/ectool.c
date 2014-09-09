@@ -23,6 +23,7 @@
 #include "misc_util.h"
 #include "panic.h"
 #include "sha1.h"
+#include "usb_pd.h"
 
 /* Command line options */
 enum {
@@ -2621,17 +2622,21 @@ int cmd_usb_mux(int argc, char *argv[])
 int cmd_usb_pd(int argc, char *argv[])
 {
 	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source"};
-	const char *mux_str[] = {"", "none", "usb", "dp", "dock"};
+	const char *mux_str[] = {"", "none", "usb", "dp", "dock", "auto"};
 	struct ec_params_usb_pd_control p;
+	struct ec_response_usb_pd_control *r =
+		(struct ec_response_usb_pd_control *)ec_inbuf;
 	int rv, i, j;
 	int option_ok;
 	char *e;
 
+	BUILD_ASSERT(ARRAY_SIZE(role_str) == USB_PD_CTRL_ROLE_COUNT);
+	BUILD_ASSERT(ARRAY_SIZE(mux_str) == USB_PD_CTRL_MUX_COUNT);
 	p.role = USB_PD_CTRL_ROLE_NO_CHANGE;
 	p.mux = USB_PD_CTRL_MUX_NO_CHANGE;
 
-	if (argc <= 2) {
-		fprintf(stderr, "No option specified.\n");
+	if (argc < 2) {
+		fprintf(stderr, "No port specified.\n");
 		return -1;
 	}
 
@@ -2688,7 +2693,14 @@ int cmd_usb_pd(int argc, char *argv[])
 		}
 	}
 
-	rv = ec_command(EC_CMD_USB_PD_CONTROL, 0, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_USB_PD_CONTROL, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+
+	if ((rv >= 0) && (argc == 2))
+		printf("Port C%d is %sabled, Role:%s Polarity:CC%d State:%d\n",
+		       p.port, (r->enabled) ? "en" : "dis",
+		       r->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+		       r->polarity + 1, r->state);
 	return (rv < 0 ? rv : 0);
 }
 

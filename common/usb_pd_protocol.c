@@ -1879,6 +1879,7 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_control *p = args->params;
+	struct ec_response_usb_pd_control *r = args->response;
 
 	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE) {
 		enum pd_dual_role_states role;
@@ -1924,7 +1925,11 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		board_set_usb_mux(p->port, mux, pd_get_polarity(p->port));
 	}
 #endif /* CONFIG_USBC_SS_MUX */
-
+	r->enabled = pd_comm_enabled;
+	r->role = pd[p->port].role;
+	r->polarity = pd[p->port].polarity;
+	r->state = pd[p->port].task_state;
+	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
