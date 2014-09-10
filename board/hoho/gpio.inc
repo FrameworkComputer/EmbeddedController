@@ -21,6 +21,7 @@ GPIO(PD_MCDP_SPI_WP_L, B, 2,  GPIO_OUT_LOW,  NULL)
 GPIO(PD_CC1_TX_DATA,   B, 4,  GPIO_OUT_LOW,  NULL)
 GPIO(MCDP_I2C_SCL,     B, 6,  GPIO_INPUT,    NULL)
 GPIO(MCDP_I2C_SDA,     B, 7,  GPIO_INPUT,    NULL)
+GPIO(PD_MCDP_SPI_CL_L, B, 12, GPIO_OUT_LOW,  NULL)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)

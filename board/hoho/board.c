@@ -26,6 +26,46 @@ void board_config_pre_init(void)
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
 }
 
+#ifdef CONFIG_SPI_FLASH
+
+static void board_init_spi2(void)
+{
+	/* Remap SPI2 to DMA channels 6 and 7 */
+	STM32_SYSCFG_CFGR1 |= (1 << 24);
+
+	/* Set pin NSS to general purpose output mode (01b). */
+	/* Set pins SCK, MISO, and MOSI to alternate function (10b). */
+	STM32_GPIO_MODER(GPIO_B) &= ~0xff000000;
+	STM32_GPIO_MODER(GPIO_B) |= 0xa9000000;
+
+	/* Set all four pins to alternate function 0 */
+	STM32_GPIO_AFRH(GPIO_B) &= ~(0xffff0000);
+
+	/* Set all four pins to output push-pull */
+	STM32_GPIO_OTYPER(GPIO_B) &= ~(0xf000);
+
+	/* Set pullup on NSS */
+	STM32_GPIO_PUPDR(GPIO_B) |= 0x1000000;
+
+	/* Set all four pins to high speed */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= (1 << 14);
+	STM32_RCC_APB1RSTR &= ~(1 << 14);
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+}
+
+/* Initialize board. */
+static void board_init(void)
+{
+	board_init_spi2();
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_SPI_FLASH */
+
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
