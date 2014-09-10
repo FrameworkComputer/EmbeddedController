@@ -2,17 +2,20 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Battery driver for BQ27541.
+ * Battery driver for BQ27541/BQ27741/BQ27742.
  */
 
 #include "battery.h"
 #include "console.h"
 #include "extpower.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "util.h"
 
 #define BQ27541_ADDR                0xaa
 #define BQ27541_TYPE_ID             0x0541
+#define BQ27741_TYPE_ID             0x0741
+#define BQ27742_TYPE_ID             0x0742
 
 #define REG_CTRL                    0x00
 #define REG_AT_RATE                 0x02
@@ -42,6 +45,8 @@
 #define REG_DEVICE_NAME             0x63
 #define REG_PROTECTOR               0x6d
 
+static int battery_type_id;
+
 static int bq27541_read(int offset, int *data)
 {
 	return i2c_read16(I2C_PORT_BATTERY, BQ27541_ADDR, offset, data);
@@ -60,15 +65,24 @@ static int bq27541_write(int offset, int data)
 int bq27541_probe(void)
 {
 	int rv;
-	int dev_type;
 
 	rv = bq27541_write(REG_CTRL, 0x1);
-	rv |= bq27541_read(REG_CTRL, &dev_type);
+	rv |= bq27541_read(REG_CTRL, &battery_type_id);
 
 	if (rv)
 		return rv;
-	return (dev_type == BQ27541_TYPE_ID) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
+	if (battery_type_id == BQ27541_TYPE_ID ||
+	    battery_type_id == BQ27741_TYPE_ID ||
+	    battery_type_id == BQ27742_TYPE_ID)
+		return EC_SUCCESS;
+	return EC_ERROR_UNKNOWN;
 }
+
+static void probe_type_id(void)
+{
+	bq27541_probe();
+}
+DECLARE_HOOK(HOOK_INIT, probe_type_id, HOOK_PRIO_DEFAULT);
 
 int battery_device_name(char *device_name, int buf_size)
 {
@@ -175,7 +189,12 @@ static int battery_charging_allowed(int *allowed)
 	rv = bq27541_read(REG_FLAGS, &val);
 	if (rv)
 		return rv;
-	*allowed = (val & 0x100);
+	if (battery_type_id == BQ27541_TYPE_ID ||
+	    battery_type_id == BQ27741_TYPE_ID)
+		*allowed = (val & 0x100);
+	else /* BQ27742_TYPE_ID */
+		*allowed = (val & 0x8);
+
 	return EC_SUCCESS;
 }
 
