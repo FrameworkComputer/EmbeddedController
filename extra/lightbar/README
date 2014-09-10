@@ -1,0 +1,39 @@
+Lightbar simulator
+------------------------------------------------------------------------------
+
+Build with "make lightbar". The executable is "./lightbar".
+
+You may need to install libxcb1-dev or similar.
+
+This provides a simulation environment for the lightbar task, compiling
+common/lightbar.c from the EC source, but faking the rest of the EC.
+
+The EC console is on stdin/stdout, delivering all input to the lightbar's
+console command handler (so it prefixes any input with "lightbar"). The
+lightbar itself is displayed in an X window. You can click in that window to
+emulate changes to the battery level, AC connection, and brightness, all of
+which are normally outside the lightbar task's direct control.
+
+The initial sequence is "S5". Try issuing the command "seq s3s0" to see
+something more familiar.
+
+
+Note: the Pixel lightbar circuitry has three modes of operation:
+
+Unpowered
+
+  When the host CPU is off (S5/G3), all power to the lightbar and its
+  controller circuitry is lost.
+
+On
+
+  When the host CPU is on (S0) or suspended (S3), the lightbar is powered
+  again. After every power loss, it will need to be reinitialized by calling
+  lb_init() before it can be used.
+
+Standby
+
+  The lightbar controller ICs can turn off all the LED outputs to conserve
+  power. This is the initial state when power is applied. You can turn the
+  LEDs off manually by calling lb_off(). When suspended, the controller will
+  respond to commands, but the LEDs aren't lit. Turn them on with lb_on().

@@ -4,12 +4,12 @@
 
 PROG= lightbar
 HEADERS= simulation.h
-SRCS= main.c windows.c input.c ../common/lightbar.c
+SRCS= main.c windows.c input.c ../../common/lightbar.c
 
 # comment this out if you don't have libreadline installed
 HAS_GNU_READLINE=1
 
-INCLUDE= -I. -I../include
+INCLUDE= -I. -I../../include
 CFLAGS= -g -Wall -Werror -pthread ${INCLUDE} -DLIGHTBAR_SIMULATION
 LDFLAGS = -lX11 -lxcb -lrt
 
