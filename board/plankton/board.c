@@ -42,14 +42,17 @@ static void set_usbc_action(enum usbc_action act)
 	case USBC_ACT_5V_TO_DUT:
 		board_set_source_cap(SRC_CAP_5V);
 		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		pd_soft_reset();
 		break;
 	case USBC_ACT_12V_TO_DUT:
 		board_set_source_cap(SRC_CAP_12V);
 		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		pd_soft_reset();
 		break;
 	case USBC_ACT_20V_TO_DUT:
 		board_set_source_cap(SRC_CAP_20V);
 		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
+		pd_soft_reset();
 		break;
 	case USBC_ACT_DEVICE:
 		pd_set_dual_role(PD_DRP_FORCE_SINK);
