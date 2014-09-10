@@ -26,7 +26,7 @@ static void pd_exchange_status(void)
 {
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
-	int rv = 0, tries = 0;
+	int rv = 0;
 
 	/* Send battery state of charge */
 	if (charge_get_flags() & CHARGE_FLAG_BATT_RESPONSIVE)
@@ -34,15 +34,9 @@ static void pd_exchange_status(void)
 	else
 		ec_status.batt_soc = -1;
 
-	/* Try 3 times to get the PD MCU status. */
-	while (tries++ < 3) {
-		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
+	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
 			     sizeof(struct ec_params_pd_status), &pd_status,
 			     sizeof(struct ec_response_pd_status));
-		if (rv >= 0)
-			break;
-		task_wait_event(500*MSEC);
-	}
 
 	if (rv < 0) {
 		CPRINTS("Host command to PD MCU failed");

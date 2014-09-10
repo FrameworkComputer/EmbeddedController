@@ -20,6 +20,9 @@
 /* Host command timeout */
 #define HOST_COMMAND_TIMEOUT_US SECOND
 
+/* Number of attempts for each PD host command */
+#define PD_HOST_COMMAND_ATTEMPTS 3
+
 static struct mutex pd_mutex;
 
 /**
@@ -86,7 +89,7 @@ static int pd_host_command_internal(int command, int version,
 	if (ret) {
 		i2c_lock(I2C_PORT_PD_MCU, 0);
 		CPRINTF("[%T i2c transaction 1 failed: %d]\n", ret);
-		return -ret;
+		return -EC_RES_BUS_ERROR;
 	}
 
 	resp_len = resp_buf[1];
@@ -107,7 +110,7 @@ static int pd_host_command_internal(int command, int version,
 	i2c_lock(I2C_PORT_PD_MCU, 0);
 	if (ret) {
 		CPRINTF("[%T i2c transaction 2 failed: %d]\n", ret);
-		return -ret;
+		return -EC_RES_BUS_ERROR;
 	}
 
 	/* Check for host command error code */
@@ -151,7 +154,7 @@ static int pd_host_command_internal(int command, int version,
 	if ((uint8_t)sum) {
 		CPRINTF("[%T command 0x%02x bad checksum returned: "
 			"%d]\n", command, sum);
-		return -EC_RES_ERROR;
+		return -EC_RES_INVALID_CHECKSUM;
 	}
 
 	/* Return output buffer size */
@@ -163,16 +166,23 @@ int pd_host_command(int command, int version,
 		    void *indata, int insize)
 {
 	int rv;
+	int tries = 0;
 
-	/* Acquire mutex */
-	mutex_lock(&pd_mutex);
+	/* Try multiple times to send host command. */
+	for (tries = 0; tries < PD_HOST_COMMAND_ATTEMPTS; tries++) {
+		/* Acquire mutex */
+		mutex_lock(&pd_mutex);
+		/* Call internal version of host command */
+		rv = pd_host_command_internal(command, version, outdata,
+					      outsize, indata, insize);
+		/* Release mutex */
+		mutex_unlock(&pd_mutex);
 
-	/* Call internal version of host command */
-	rv = pd_host_command_internal(command, version, outdata, outsize,
-				      indata, insize);
-
-	/* Release mutex */
-	mutex_unlock(&pd_mutex);
+		/* If host command error due to i2c bus error, try again. */
+		if (rv != -EC_RES_BUS_ERROR)
+			break;
+		task_wait_event(50*MSEC);
+	}
 
 	return rv;
 }
