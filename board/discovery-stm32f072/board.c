@@ -9,6 +9,7 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "usb_gpio.h"
 #include "util.h"
 
 void button_event(enum gpio_signal signal);
@@ -26,6 +27,28 @@ void button_event(enum gpio_signal signal)
 
 	count++;
 }
+
+static enum gpio_signal const usb_gpio_list[] = {
+	GPIO_USER_BUTTON,
+	GPIO_LED_U,
+	GPIO_LED_D,
+	GPIO_LED_L,
+	GPIO_LED_R,
+};
+
+USB_GPIO_CONFIG(usb_gpio,
+		usb_gpio_list,
+		USB_IFACE_GPIO,
+		USB_EP_GPIO)
+
+const void *const usb_strings[] = {
+	[USB_STR_DESC]    = usb_string_desc,
+	[USB_STR_VENDOR]  = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("discovery-stm32f072"),
+	[USB_STR_VERSION] = USB_STRING_DESC("v1.0"),
+};
+
+BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* Initialize board. */
 static void board_init(void)

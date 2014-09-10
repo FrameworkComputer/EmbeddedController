@@ -27,12 +27,13 @@
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #define CONFIG_USB
+#define CONFIG_USB_GPIO
 
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 
 /* USB configuration */
-#define CONFIG_USB_PID 0x5009
+#define CONFIG_USB_PID 0x500f
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -61,11 +62,13 @@ enum usb_strings {
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_STREAM	0
-#define USB_IFACE_COUNT		1
+#define USB_IFACE_GPIO		1
+#define USB_IFACE_COUNT		2
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_STREAM		1
-#define USB_EP_COUNT		2
+#define USB_EP_GPIO		2
+#define USB_EP_COUNT		3
 
 #endif /* __BOARD_H */

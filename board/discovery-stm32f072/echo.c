@@ -39,15 +39,6 @@ USB_STREAM_CONFIG(usb_stream1,
 		  in_ready,
 		  out_ready)
 
-const void *const usb_strings[] = {
-	[USB_STR_DESC]    = usb_string_desc,
-	[USB_STR_VENDOR]  = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT] = USB_STRING_DESC("discovery-stm32f072"),
-	[USB_STR_VERSION] = NULL /* filled at runtime */,
-};
-
-BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
-
 struct stream_console_state {
 	size_t wrote;
 };
