@@ -318,6 +318,8 @@ static void setup_for_transaction(void)
 	tx_status(EC_SPI_OLD_READY);
 }
 
+/* Forward declaraction */
+static void spi_init(void);
 
 /*
  * If a setup_for_transaction() was postponed, call it now.
@@ -326,7 +328,7 @@ static void setup_for_transaction(void)
 static void check_setup_transaction_later(void)
 {
 	if (setup_transaction_later) {
-		setup_for_transaction();
+		spi_init(); /* Fix for bug chrome-os-partner:31390 */
 		/*
 		 * 'state' is set to SPI_STATE_READY_TO_RX. Somehow AP
 		 * de-asserted the SPI NSS during the handler was running.
@@ -449,7 +451,7 @@ void spi_event(enum gpio_signal signal)
 		}
 
 		/* Set up for the next transaction */
-		setup_for_transaction();
+		spi_init(); /* Fix for bug chrome-os-partner:31390 */
 		return;
 	}
 
@@ -612,6 +614,13 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
 static void spi_init(void)
 {
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
+
+	/* Reset the SPI Peripheral to clear any existing weird states. */
+	/* Fix for bug chrome-os-partner:31390 */
+	enabled = 0;
+	state = SPI_STATE_DISABLED;
+	STM32_RCC_APB2RSTR |= (1 << 12);
+	STM32_RCC_APB2RSTR &= ~(1 << 12);
 
 	/* 40 MHz pin speed */
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xff00;
