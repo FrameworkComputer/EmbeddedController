@@ -31,6 +31,9 @@
 #define CONFIG_SPI_FLASH_SIZE 524288
 #define CONFIG_SPI_FLASH_W25Q64
 
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_TMP432
+
 #define CONFIG_I2C
 
 /* I2C ports */
@@ -66,6 +69,14 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+enum temp_sensor_id {
+	/* TMP432 local and remote sensors */
+	TEMP_SENSOR_I2C_TMP432_LOCAL,
+	TEMP_SENSOR_I2C_TMP432_REMOTE1,
+	TEMP_SENSOR_I2C_TMP432_REMOTE2,
+
+	TEMP_SENSOR_COUNT
+};
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
