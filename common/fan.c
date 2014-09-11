@@ -399,7 +399,7 @@ static void pwm_fan_init(void)
 	} else {
 		/* Set initial fan speed to maximum */
 		for (fan = 0; fan < CONFIG_FANS; fan++)
-			fan_set_duty(fans[fan].ch, 100);
+			fan_set_rpm_target(fans[fan].ch, fans[fan].rpm_max);
 	}
 
 	for (fan = 0; fan < CONFIG_FANS; fan++)
