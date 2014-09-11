@@ -10,7 +10,7 @@ GPIO(POWER_BUTTON_L, B, 5,  GPIO_INT_BOTH,                power_button_interrupt
 GPIO(SOC_POWER_GOOD, A, 3,  GPIO_INT_BOTH ,               power_signal_interrupt)
 GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,                lid_interrupt)
 GPIO(SUSPEND_L,      C, 7,  GPIO_INT_BOTH,                power_signal_interrupt)
-GPIO(SPI1_NSS,       A, 4,  GPIO_INT_BOTH | GPIO_PULL_UP, spi_event)
+GPIO(SPI1_NSS,       A, 4,  GPIO_INT_BOTH,                spi_event)
 GPIO(AC_PRESENT,     A, 0,  GPIO_INT_BOTH,                extpower_interrupt)
 
 /* Keyboard inputs */
@@ -30,7 +30,7 @@ GPIO(WP_L, B, 4, GPIO_INPUT, NULL)
 GPIO(BAT_LED0,          B, 11, GPIO_OUT_LOW,   NULL)
 GPIO(BAT_LED1,          A, 11, GPIO_OUT_LOW,   NULL)
 GPIO(EC_BL_OVERRIDE,    F, 1,  GPIO_OUT_LOW,   NULL)
-GPIO(EC_INT,            B, 9,  GPIO_OUT_HIGH,  NULL)
+GPIO(EC_INT,            B, 9,  GPIO_OUT_LOW,  NULL)
 GPIO(ENTERING_RW,       F, 0,  GPIO_OUT_LOW,   NULL)
 GPIO(I2C1_SCL,          B, 6,  GPIO_ODR_HIGH,  NULL)
 GPIO(I2C1_SDA,          B, 7,  GPIO_ODR_HIGH,  NULL)

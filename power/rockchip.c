@@ -382,9 +382,6 @@ static void power_on(void)
 	/* Wait till the AP has SPI ready */
 	usleep(PMIC_SPI_READY_TIME);
 
-	gpio_set_flags(GPIO_SPI1_NSS, GPIO_INPUT | GPIO_INT_BOTH
-			| GPIO_PULL_UP);
-
 	/* enable interrupt */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT | GPIO_INT_BOTH
 			| GPIO_PULL_DOWN);
