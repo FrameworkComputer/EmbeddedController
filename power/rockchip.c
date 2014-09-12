@@ -132,7 +132,7 @@ static void set_pmic_reset(int asserted)
 /**
  * Set the PMIC WARM RESET signal.
  *
- * @param asserted	Resetting (=1) or idle (=0)
+ * @param asserted	Resetting (=0) or idle (=1)
  */
 static void set_pmic_warm_reset(int asserted)
 {
