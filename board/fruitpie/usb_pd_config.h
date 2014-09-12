@@ -64,7 +64,7 @@ static inline void spi_enable_clock(int port)
 static inline void pd_set_pins_speed(int port)
 {
 	/* 40 MHz pin speed on SPI PB12/13/14 */
-	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x7f000000;
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x3f000000;
 	/* 40 MHz pin speed on TIM17_CH1 (PB9) */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x000C0000;
 }
