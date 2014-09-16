@@ -1396,7 +1396,8 @@ void pd_task(void)
 				if ((cc1_volt >= PD_SNK_VA) ||
 				    (cc2_volt >= PD_SNK_VA)) {
 					pd[port].polarity =
-						!(cc1_volt >= PD_SNK_VA);
+						GET_POLARITY(cc1_volt,
+							     cc2_volt);
 					pd_select_polarity(port,
 							   pd[port].polarity);
 #ifdef CONFIG_USB_PD_READ_INFO_ON_CONNECT
