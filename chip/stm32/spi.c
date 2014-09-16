@@ -22,6 +22,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
 
 /* DMA channel option */
 static const struct dma_option dma_tx_option = {
@@ -429,6 +430,7 @@ void spi_event(enum gpio_signal signal)
 	stm32_dma_chan_t *rxdma;
 	uint16_t *nss_reg;
 	uint32_t nss_mask;
+	uint16_t i;
 
 	/* If not enabled, ignore glitches on NSS */
 	if (!enabled)
@@ -570,6 +572,11 @@ void spi_event(enum gpio_signal signal)
 	tx_status(EC_SPI_RX_BAD_DATA);
 	state = SPI_STATE_RX_BAD;
 	CPRINTS("SPI rx bad data");
+
+	CPRINTF("in_msg=[");
+	for (i = 0; i < dma_bytes_done(rxdma, sizeof(in_msg)); i++)
+		CPRINTF("%02x ", in_msg[i]);
+	CPRINTF("]\n");
 }
 
 static void spi_chipset_startup(void)
