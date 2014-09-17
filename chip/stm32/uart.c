@@ -194,7 +194,20 @@ DECLARE_IRQ(STM32_IRQ_USART(UARTN), uart_interrupt, 2);
  */
 static void uart_freq_change(void)
 {
-	int div = DIV_ROUND_NEAREST(clock_get_freq(), CONFIG_UART_BAUD_RATE);
+	int freq;
+	int div;
+
+#if defined(CHIP_FAMILY_STM32F0) && (UARTN <= 2)
+	/*
+	 * UART is clocked from HSI (8MHz) to allow it to work when waking
+	 * up from sleep
+	 */
+	freq = 8000000;
+#else
+	/* UART clocked from the main clock */
+	freq = clock_get_freq();
+#endif
+	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE);
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0)
 	if (div / 16 > 0) {
@@ -223,6 +236,14 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
 void uart_init(void)
 {
 	/* Enable USART clock */
+#ifdef CHIP_FAMILY_STM32F0
+#if (UARTN == 1)
+	STM32_RCC_CFGR3 |= 0x0003; /* USART1 clock source from HSI(8MHz) */
+#elif (UARTN == 2)
+	STM32_RCC_CFGR3 |= 0x0300; /* USART2 clock source from HSI(8MHz) */
+#endif /* UARTN */
+#endif /* CHIP_FAMILY_STM32F0 */
+
 #if (UARTN == 1)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART1;
 #else
