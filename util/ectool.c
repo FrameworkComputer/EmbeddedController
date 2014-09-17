@@ -1581,6 +1581,7 @@ static const struct {
 	LB_SIZES(get_demo),
 	LB_SIZES(get_params_v1),
 	LB_SIZES(set_params_v1),
+	LB_SIZES(set_program),
 };
 #undef LB_SIZES
 
@@ -1601,6 +1602,7 @@ static int lb_help(const char *cmd)
 	printf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	printf("  %s params [setfile]      - get params"
 	       " (or set from file)\n", cmd);
+	printf("  %s program file          - load program from file\n", cmd);
 	return 0;
 }
 
@@ -1999,6 +2001,43 @@ static void lb_show_params_v1(const struct lightbar_params_v1 *p)
 		       p->color[i].b, i);
 }
 
+static int lb_load_program(const char *filename, struct lb_program *prog)
+{
+	FILE *fp;
+	size_t got;
+	int rc;
+
+	fp = fopen(filename, "rb");
+	if (!fp) {
+		fprintf(stderr, "Can't open %s: %s\n",
+			filename, strerror(errno));
+		return 1;
+	}
+
+	rc = fseek(fp, 0, SEEK_END);
+	if (rc) {
+		fprintf(stderr, "Couldn't find end of file %s",
+				filename);
+		fclose(fp);
+		return 1;
+	}
+	rc = (int) ftell(fp);
+	if (rc > LB_PROG_LEN) {
+		fprintf(stderr, "File %s is too long, aborting\n", filename);
+		fclose(fp);
+		return 1;
+	}
+	rewind(fp);
+
+	memset(prog->data, 0, LB_PROG_LEN);
+	got = fread(prog->data, 1, LB_PROG_LEN, fp);
+	if (rc != got)
+		fprintf(stderr, "Warning: did not read entire file\n");
+	prog->size = got;
+	fclose(fp);
+	return 0;
+}
+
 static int cmd_lightbar_params_v0(int argc, char **argv)
 {
 	struct ec_params_lightbar param;
@@ -2143,6 +2182,11 @@ static int cmd_lightbar(int argc, char **argv)
 		}
 		param.seq.num = num;
 		return lb_do_cmd(LIGHTBAR_CMD_SEQ, &param, &resp);
+	}
+
+	if (argc >= 3 && !strcasecmp(argv[1], "program")) {
+		lb_load_program(argv[2], &param.set_program);
+		return lb_do_cmd(LIGHTBAR_CMD_SET_PROGRAM, &param, &resp);
 	}
 
 	if (argc == 4) {

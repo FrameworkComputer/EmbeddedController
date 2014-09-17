@@ -973,6 +973,365 @@ static uint32_t sequence_TAP(void)
 }
 
 /****************************************************************************/
+/* Lightbar bytecode interpreter: Lightbyte. */
+/****************************************************************************/
+
+static struct lb_program cur_prog;
+static struct lb_program next_prog;
+static uint8_t pc;
+
+enum lb_color {
+	LB_COL_RED,
+	LB_COL_GREEN,
+	LB_COL_BLUE,
+	LB_COL_ALL
+};
+
+enum lb_control {
+	LB_CONT_COLOR0,
+	LB_CONT_COLOR1,
+	LB_CONT_PHASE,
+	LB_CONT_MAX
+};
+
+static uint8_t led_desc[NUM_LEDS][LB_CONT_MAX][3];
+static uint32_t lb_ramp_delay;
+
+/* Get one byte of data pointed to by the pc and advance
+ * the pc forward.
+ */
+static inline uint32_t decode_8(uint8_t *dest)
+{
+	if (pc >= cur_prog.size) {
+		CPRINTS("pc 0x%02x out of bounds", pc);
+		return EC_RES_INVALID_PARAM;
+	}
+	*dest = cur_prog.data[pc++];
+	return EC_SUCCESS;
+}
+
+/* Get four bytes of data pointed to by the pc and advance
+ * the pc forward that amount.
+ */
+static inline uint32_t decode_32(uint32_t *dest)
+{
+	if (pc >= cur_prog.size - 3) {
+		CPRINTS("pc 0x%02x near or out of bounds", pc);
+		return EC_RES_INVALID_PARAM;
+	}
+	*dest  = cur_prog.data[pc++] << 24;
+	*dest |= cur_prog.data[pc++] << 16;
+	*dest |= cur_prog.data[pc++] <<  8;
+	*dest |= cur_prog.data[pc++];
+	return EC_SUCCESS;
+}
+
+/* JUMP xx - jump to immediate location
+ * Changes the pc to the one-byte immediate argument.
+ */
+static uint32_t lightbyte_JUMP(void)
+{
+	uint8_t new_pc;
+	if (decode_8(&new_pc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	pc = new_pc;
+	return EC_SUCCESS;
+}
+
+/* DELAY xx xx xx xx - yield processor for some time
+ * Performs an interruptible wait for a number of microseconds
+ * given in the four-byte immediate.
+ */
+static uint32_t lightbyte_DELAY(void)
+{
+	uint32_t delay_us;
+	if (decode_32(&delay_us) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	WAIT_OR_RET(delay_us);
+	return EC_SUCCESS;
+}
+
+/* SET_BRIGHTNESS xx
+ * Sets the current brightness to the given one-byte
+ * immediate argument.
+ */
+static uint32_t lightbyte_SET_BRIGHTNESS(void)
+{
+	uint8_t val;
+	if (decode_8(&val) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	lb_set_brightness(val);
+	return EC_SUCCESS;
+}
+
+/* SET_COLOR cc xx
+ * SET_COLOR cc rr gg bb
+ * Stores a color value in the led_desc structure.
+ * cc is a bit-packed location to perform the action on.
+ *
+ * The high four bits are used to describe an LED. If the
+ * value is less than NUM_LEDS, it describes a particular LED,
+ * and if it is greater than or equal to that value, it
+ * will perform the action on all LEDs.
+ *
+ * The next two bits are the control bits. This should be a value
+ * in lb_control that is not LB_CONT_MAX, and the corresponding
+ * color will be the one the action is performed on.
+ *
+ * The last two bits are the color bits. If this is LB_COL_RED,
+ * LB_COL_GREEN, or LB_COL_BLUE, then there is only one more byte
+ * to decode and this is a color value for that specific color
+ * channel. If it is LB_COL_ALL, then there are three more bytes,
+ * and it reads like a standard 24-bit color value.
+ */
+static uint32_t lightbyte_SET_COLOR(void)
+{
+
+	uint8_t packed_loc, led, control, color, value;
+	int start_led, end_led, color_mask, i, j;
+	if (decode_8(&packed_loc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	led = packed_loc >> 4;
+	control = (packed_loc >> 2) & 0x3;
+	color = packed_loc & 0x3;
+
+	if (control >= LB_CONT_MAX)
+		return EC_RES_INVALID_PARAM;
+
+	if (led >= NUM_LEDS) {
+		start_led = 0;
+		end_led = NUM_LEDS - 1;
+	} else
+		start_led = end_led = led;
+
+	color_mask = color == LB_COL_ALL ? 7 : (1 << color);
+
+	for (i = 0; i < 3; i++) {
+		if (color_mask & (1 << i)) {
+			if (decode_8(&value) != EC_SUCCESS)
+				return EC_RES_INVALID_PARAM;
+			for (j = start_led; j <= end_led; j++)
+				led_desc[j][control][i] = value;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+/* SET_DELAY_TIME xx xx xx xx - change ramp speed
+ * This sets the length of time between ramp/cycle steps to
+ * the four-byte immediate argument, which represents a duration
+ * in milliseconds.
+ */
+static uint32_t lightbyte_SET_DELAY_TIME(void)
+{
+	uint32_t delay_us;
+	if (decode_32(&delay_us) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	lb_ramp_delay = delay_us;
+	return EC_SUCCESS;
+}
+
+static inline int get_interp_value(int led, int color, int interp)
+{
+	int base = led_desc[led][LB_CONT_COLOR0][color];
+	int delta = led_desc[led][LB_CONT_COLOR1][color] - base;
+	return base + (delta * interp / FP_SCALE);
+}
+
+/* RAMP_ONCE - simple gradient or color set
+ * If the ramp delay is set to zero, then this sets the color of
+ * all LEDs to their respective COLOR1.
+ * If the ramp delay is nonzero, then this sets their color to
+ * their respective COLOR0, and takes them via interpolation to
+ * COLOR1, with the delay time passing in between each step.
+ */
+static uint32_t lightbyte_RAMP_ONCE(void)
+{
+	int w, i, r, g, b;
+	float f;
+
+	/* special case for instantaneous set */
+	if (lb_ramp_delay == 0) {
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = led_desc[i][LB_CONT_COLOR1][LB_COL_RED];
+			g = led_desc[i][LB_CONT_COLOR1][LB_COL_GREEN];
+			b = led_desc[i][LB_CONT_COLOR1][LB_COL_BLUE];
+			lb_set_rgb(i, r, g, b);
+		}
+		return EC_SUCCESS;
+	}
+
+	for (w = 0; w < 128; w++) {
+		f = cycle_010(w);
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = get_interp_value(i, LB_COL_RED, f);
+			g = get_interp_value(i, LB_COL_GREEN, f);
+			b = get_interp_value(i, LB_COL_BLUE, f);
+			lb_set_rgb(i, r, g, b);
+		}
+		WAIT_OR_RET(lb_ramp_delay);
+	}
+	return EC_SUCCESS;
+}
+
+/* CYCLE_ONCE - simple cycle or color set
+ * If the ramp delay is zero, then this sets the color of all LEDs
+ * to their respective COLOR0.
+ * If the ramp delay is nonzero, this sets the color of all LEDs
+ * to COLOR0, then performs a ramp (as in RAMP_ONCE) to COLOR1,
+ * and finally back to COLOR0.
+ */
+static uint32_t lightbyte_CYCLE_ONCE(void)
+{
+	int w, i, r, g, b;
+	float f;
+
+	/* special case for instantaneous set */
+	if (lb_ramp_delay == 0) {
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = led_desc[i][LB_CONT_COLOR0][LB_COL_RED];
+			g = led_desc[i][LB_CONT_COLOR0][LB_COL_GREEN];
+			b = led_desc[i][LB_CONT_COLOR0][LB_COL_BLUE];
+			lb_set_rgb(i, r, g, b);
+		}
+		return EC_SUCCESS;
+	}
+
+	for (w = 0; w < 256; w++) {
+		f = cycle_010(w);
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = get_interp_value(i, LB_COL_RED, f);
+			g = get_interp_value(i, LB_COL_GREEN, f);
+			b = get_interp_value(i, LB_COL_BLUE, f);
+			lb_set_rgb(i, r, g, b);
+		}
+		WAIT_OR_RET(lb_ramp_delay);
+	}
+	return EC_SUCCESS;
+}
+
+/* CYCLE - repeating cycle
+ * Indefinitely ramps from COLOR0 to COLOR1, taking into
+ * account the PHASE of each component of each color when
+ * interpolating. (Different LEDs and different color channels
+ * on a single LED can start at different places in the cycle,
+ * though they will advance at the same rate.)
+ *
+ * If the ramp delay is zero, this instruction will error out.
+ */
+static uint32_t lightbyte_CYCLE(void)
+{
+	int w, i, r, g, b;
+
+	/* what does it mean to cycle indefinitely with 0 delay? */
+	if (lb_ramp_delay == 0)
+		return EC_RES_INVALID_PARAM;
+
+	for (w = 0;; w++) {
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = get_interp_value(i, LB_COL_RED,
+				cycle_010((w & 0xff) +
+				led_desc[i][LB_CONT_PHASE][LB_COL_RED]));
+			g = get_interp_value(i, LB_COL_GREEN,
+				cycle_010((w & 0xff) +
+				led_desc[i][LB_CONT_PHASE][LB_COL_GREEN]));
+			b = get_interp_value(i, LB_COL_BLUE,
+				cycle_010((w & 0xff) +
+				led_desc[i][LB_CONT_PHASE][LB_COL_BLUE]));
+			lb_set_rgb(i, r, g, b);
+		}
+		WAIT_OR_RET(lb_ramp_delay);
+	}
+	return EC_SUCCESS;
+}
+
+#undef GET_INTERP_VALUE
+
+#define OPCODE_TABLE		\
+	OP(JUMP),		\
+	OP(DELAY),		\
+	OP(SET_BRIGHTNESS),	\
+	OP(SET_COLOR),		\
+	OP(SET_DELAY_TIME),	\
+	OP(RAMP_ONCE),		\
+	OP(CYCLE_ONCE),		\
+	OP(CYCLE),
+
+#define OP(X) X
+enum lightbyte_opcode {
+	OPCODE_TABLE
+	HALT,
+	MAX_OPCODE
+};
+#undef OP
+
+#define OP(X) lightbyte_ ## X
+static uint32_t (*lightbyte_dispatch[])(void) = {
+	OPCODE_TABLE
+};
+#undef OP
+
+#define OP(X) # X
+static const char * const lightbyte_names[] = {
+	OPCODE_TABLE
+	"HALT"
+};
+#undef OP
+
+static uint32_t sequence_PROGRAM(void)
+{
+	uint8_t saved_brightness;
+	uint8_t next_inst;
+	uint32_t rc;
+	uint8_t old_pc;
+
+	/* load next program */
+	memcpy(&cur_prog, &next_prog, sizeof(struct lb_program));
+
+	/* reset program state */
+	saved_brightness = lb_get_brightness();
+	pc = 0;
+	memset(led_desc, 0, sizeof(led_desc));
+	lb_ramp_delay = 0;
+
+	/* decode-execute loop */
+	for (;;) {
+		old_pc = pc;
+		if (decode_8(&next_inst) != EC_SUCCESS)
+			return EC_RES_INVALID_PARAM;
+
+		if (next_inst == HALT) {
+			CPRINTS("LB PROGRAM pc: 0x%02x, halting", old_pc);
+			lb_set_brightness(saved_brightness);
+			return 0;
+		} else if (next_inst >= MAX_OPCODE) {
+			CPRINTS("LB PROGRAM pc: 0x%02x, "
+				"found invalid opcode 0x%02x",
+				old_pc, next_inst);
+			lb_set_brightness(saved_brightness);
+			return EC_RES_INVALID_PARAM;
+		} else {
+			CPRINTS("LB PROGRAM pc: 0x%02x, opcode 0x%02x -> %s",
+				 old_pc, next_inst, lightbyte_names[next_inst]);
+			rc = lightbyte_dispatch[next_inst]();
+			if (rc) {
+				lb_set_brightness(saved_brightness);
+				return rc;
+			}
+		}
+
+		/* yield processor in case we are stuck in a tight loop */
+		WAIT_OR_RET(100);
+	}
+}
+
+/****************************************************************************/
 /* The main lightbar task. It just cycles between various pretty patterns. */
 /****************************************************************************/
 
@@ -1036,6 +1395,7 @@ void lightbar_task(void)
 			case LIGHTBAR_ERROR:
 			case LIGHTBAR_KONAMI:
 			case LIGHTBAR_TAP:
+			case LIGHTBAR_PROGRAM:
 				st.cur_seq = st.prev_seq;
 			default:
 				break;
@@ -1165,6 +1525,10 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		CPRINTS("LB_set_params_v1");
 		memcpy(&st.p, &in->set_params_v1, sizeof(st.p));
 		break;
+	case LIGHTBAR_CMD_SET_PROGRAM:
+		CPRINTS("LB_set_program");
+		memcpy(&next_prog, &in->set_program, sizeof(struct lb_program));
+		break;
 	case LIGHTBAR_CMD_VERSION:
 		CPRINTS("LB_version");
 		out->version.num = LIGHTBAR_IMPLEMENTATION_VERSION;
@@ -1204,6 +1568,7 @@ static int help(const char *cmd)
 	ccprintf("  %s LED                   - get current LED color\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	ccprintf("  %s params                - show current params\n", cmd);
+	ccprintf("  %s program filename      - load lightbyte program\n", cmd);
 	ccprintf("  %s version               - show current version\n", cmd);
 	return EC_SUCCESS;
 }
@@ -1373,6 +1738,15 @@ static int command_lightbar(int argc, char **argv)
 			return EC_ERROR_PARAM2;
 		lightbar_sequence(num);
 		return EC_SUCCESS;
+	}
+
+	if (argc >= 3 && !strcasecmp(argv[1], "program")) {
+#ifdef LIGHTBAR_SIMULATION
+		return lb_load_program(argv[2], &next_prog);
+#else
+		ccprintf("can't load program from console\n");
+		return EC_ERROR_INVAL;
+#endif
 	}
 
 	if (argc == 4) {

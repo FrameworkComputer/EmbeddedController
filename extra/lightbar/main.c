@@ -290,3 +290,40 @@ done:
 	fclose(fp);
 	return r;
 }
+
+int lb_load_program(const char *filename, struct lb_program *prog)
+{
+	FILE *fp;
+	size_t got;
+	int rc;
+
+	fp = fopen(filename, "rb");
+	if (!fp) {
+		fprintf(stderr, "Can't open %s: %s\n",
+			filename, strerror(errno));
+		return 1;
+	}
+
+	rc = fseek(fp, 0, SEEK_END);
+	if (rc) {
+		fprintf(stderr, "Couldn't find end of file %s",
+				filename);
+		fclose(fp);
+		return 1;
+	}
+	rc = (int) ftell(fp);
+	if (rc > LB_PROG_LEN) {
+		fprintf(stderr, "File %s is too long, aborting\n", filename);
+		fclose(fp);
+		return 1;
+	}
+	rewind(fp);
+
+	memset(prog->data, 0, LB_PROG_LEN);
+	got = fread(prog->data, 1, LB_PROG_LEN, fp);
+	if (rc != got)
+		fprintf(stderr, "Warning: did not read entire file\n");
+	prog->size = got;
+	fclose(fp);
+	return 0;
+}
