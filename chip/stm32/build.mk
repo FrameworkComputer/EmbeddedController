@@ -51,3 +51,4 @@ chip-$(CONFIG_USB_GPIO)+=usb_gpio.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_MS)+=usb_ms.o usb_ms_scsi.o
 chip-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_phy.o
+chip-$(CONFIG_USB_SPI)+=usb_spi.o
