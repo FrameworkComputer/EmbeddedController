@@ -26,14 +26,35 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
+
+/* USB Configuration */
 #define CONFIG_USB
+#define CONFIG_USB_PID 0x500f
+
+/* USB interface indexes (use define rather than enum to expand them) */
+#define USB_IFACE_STREAM 0
+#define USB_IFACE_GPIO   1
+#define USB_IFACE_SPI    2
+#define USB_IFACE_COUNT  3
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL 0
+#define USB_EP_STREAM  1
+#define USB_EP_GPIO    2
+#define USB_EP_SPI     3
+#define USB_EP_COUNT   4
+
+/* Enable control of GPIOs over USB */
 #define CONFIG_USB_GPIO
+
+/* Enable control of SPI over USB */
+#define CONFIG_SPI_MASTER_PORT 2
+#define CONFIG_SPI_CS_GPIO     GPIO_SPI_CS
+
+#define CONFIG_USB_SPI
 
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
-
-/* USB configuration */
-#define CONFIG_USB_PID 0x500f
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -59,16 +80,4 @@ enum usb_strings {
 };
 
 #endif /* !__ASSEMBLER__ */
-
-/* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_STREAM	0
-#define USB_IFACE_GPIO		1
-#define USB_IFACE_COUNT		2
-
-/* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_STREAM		1
-#define USB_EP_GPIO		2
-#define USB_EP_COUNT		3
-
 #endif /* __BOARD_H */
