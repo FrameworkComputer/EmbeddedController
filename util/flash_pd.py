@@ -125,13 +125,14 @@ class FlashPD(client.ServoClient):
       logging.debug("Expect '%s' missing", val)
     return (done, l)
 
-  def flash_command(self, cmd, expect='DONE 0', retries=2):
-    """Send PD Flash command and interrogate output.
+  def pd_command(self, cmd, expect='DONE 0', retries=2, ignore_fail=False):
+    """Send PD command and interrogate output.
 
     Args:
-      cmd     : string of 'pd port flash' command to execute
-      expect  : string of expected response after 'cmd'
-      retries : integer number of times to repeat command if it fails.
+      cmd         : string of 'pd <port>' command to execute
+      expect      : string of expected response after 'cmd'
+      retries     : integer number of times to repeat command if it fails.
+      ignore_fail : boolean to ignore failure
 
     Returns:
       tuple :
@@ -144,17 +145,22 @@ class FlashPD(client.ServoClient):
     """
     tries = retries + 1
     for i in xrange(tries):
-      self._serial.write('pd %d flash %s\n' % (self._options.multiport, cmd))
+      self._serial.write('pd %d %s\n' % (self._options.multiport, cmd))
       (found, line) = self.expect(expect)
       if i:
         time.sleep(1)
-        logging.debug("pd flash cmd Retry%d for '%s'", i, cmd)
+        logging.debug("pd cmd Retry%d for '%s'", i, cmd)
       if found:
         break
-    if (i + 1) == tries and not found:
-      raise FlashPDError("Failed pd flash cmd: '%s' after %d retries\n" %
+    if (i + 1) == tries and not found and not ignore_fail:
+      raise FlashPDError("Failed pd cmd: '%s' after %d retries\n" %
                          (cmd, retries))
     return (found, line)
+
+  def flash_command(self, cmd, expect='DONE 0', retries=2, ignore_fail=False):
+    """Helper method."""
+    flash_cmd = 'flash %s' % cmd
+    return self.pd_command(flash_cmd, expect, retries, ignore_fail)
 
   def get_version(self):
     """Retreive PSU firmware version.
@@ -217,10 +223,24 @@ def flash_pd(options):
   # erase all RW partition
   ec.flash_command('erase')
 
-  # verify that erase was successful by reading hash of RW
-  (done, _) = ec.flash_command('rw_hash', expect=ERASED_RW_HASH)
+  # TODO(tbroch) deprecate rw_hash if/when command is completely deprecated in
+  # favor of 'info'
+  # verify that erase was successful by reading hash empty RW
+  (done, _) = ec.flash_command('rw_hash', expect=ERASED_RW_HASH, retries=0,
+                               ignore_fail=True)
   if done:
     done = ec.expect('DONE')
+  else:
+    # try info command and guarantee we're in RO
+    (done, line) = ec.flash_command('info', expect=r'INFO')
+    m = re.match(r'INFO.*(18d1\S{4})', line)
+    if done and m:
+      done = ec.expect('DONE 0')
+      in_rw = int(m.group(1), 16) & 0x1
+      if in_rw:
+        raise FlashPDError('Not in RO after erase')
+    # Google UFP devices share their hash to DFP after info command so check it
+    (done, _) = ec.pd_command('hash', expect=ERASED_RW_HASH)
 
   if not done:
     raise FlashPDError('Erase failed')
