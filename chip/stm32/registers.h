@@ -153,6 +153,7 @@
 #ifdef CHIP_FAMILY_STM32F0
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR1_UE		(1 << 0)
+#define STM32_USART_CR1_UESM            (1 << 1)
 #define STM32_USART_CR1_RE		(1 << 2)
 #define STM32_USART_CR1_TE		(1 << 3)
 #define STM32_USART_CR1_RXNEIE		(1 << 5)
@@ -794,6 +795,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_REGS_BASE       0x40022000
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
+#define STM32_FLASH_ACR_LATENCY     (1 << 0)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x04)
 #define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x08)
 #define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x0c)
