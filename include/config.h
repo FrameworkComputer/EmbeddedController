@@ -1001,6 +1001,12 @@
 /* Default state of PD communication enabled flag */
 #define CONFIG_USB_PD_COMM_ENABLED 1
 
+/* Support for USB PD alternate mode */
+#undef CONFIG_USB_PD_ALT_MODE
+
+/* Support for USB PD alternate mode of Downward Facing Port */
+#undef CONFIG_USB_PD_ALT_MODE_DFP
+
 /* Respond to custom vendor-defined messages over PD */
 #undef CONFIG_USB_PD_CUSTOM_VDM
 
@@ -1012,6 +1018,10 @@
 
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
+
+/* HW & SW version for alternate mode discover identity response (4bits each) */
+#undef CONFIG_USB_PD_IDENTITY_HW_ID
+#undef CONFIG_USB_PD_IDENTITY_SW_ID
 
 /* USB PD MCU slave address for host commands */
 #define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
