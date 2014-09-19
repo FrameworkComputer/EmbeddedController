@@ -493,6 +493,18 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_PWR_CR                REG32(STM32_PWR_BASE + 0x00)
 #define STM32_PWR_CR_LPSDSR		(1 << 0)
 #define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x04)
+#if defined(CHIP_FAMILY_STM32F)
+#define STM32_PWR_CSR_EWUP          (1 << 8)
+#elif defined(CHIP_FAMILY_STM32F0)
+#define STM32_PWR_CSR_EWUP1         (1 << 8)
+#define STM32_PWR_CSR_EWUP2         (1 << 9)
+#define STM32_PWR_CSR_EWUP3         (1 << 10)
+#define STM32_PWR_CSR_EWUP4         (1 << 11)
+#define STM32_PWR_CSR_EWUP5         (1 << 12)
+#define STM32_PWR_CSR_EWUP6         (1 << 13)
+#define STM32_PWR_CSR_EWUP7         (1 << 14)
+#define STM32_PWR_CSR_EWUP8         (1 << 15)
+#endif
 
 #if defined(CHIP_FAMILY_STM32L)
 #define STM32_RCC_BASE              0x40023800

@@ -570,6 +570,9 @@
 /* Enable system hibernate */
 #define CONFIG_HIBERNATE
 
+/* For ECs with multiple wakeup pins, define enabled wakeup pins */
+#undef CONFIG_HIBERNATE_WAKEUP_PINS
+
 /*****************************************************************************/
 /* I2C configuration */
 

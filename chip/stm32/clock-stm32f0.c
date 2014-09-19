@@ -258,6 +258,30 @@ static void config_hispeed_clock(void)
 #endif
 }
 
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	uint32_t rtc, rtcss;
+
+	if (seconds || microseconds)
+		set_rtc_alarm(seconds, microseconds, &rtc, &rtcss);
+
+	/* interrupts off now */
+	asm volatile("cpsid i");
+
+#ifdef CONFIG_HIBERNATE_WAKEUP_PINS
+	/* enable the wake up pins */
+	STM32_PWR_CSR |= CONFIG_HIBERNATE_WAKEUP_PINS;
+#endif
+	STM32_PWR_CR |= 0xe;
+	CPU_SCB_SYSCTRL |= 0x4;
+	/* go to Standby mode */
+	asm("wfi");
+
+	/* we should never reach that point */
+	while (1)
+		;
+}
+
 #ifdef CONFIG_LOW_POWER_IDLE
 
 void clock_refresh_console_in_use(void)

@@ -170,7 +170,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	asm volatile("cpsid i");
 
 	/* enable the wake up pin */
-	STM32_PWR_CSR |= (1<<8);
+	STM32_PWR_CSR |= STM32_PWR_CSR_EWUP;
 	STM32_PWR_CR |= 0xe;
 	CPU_SCB_SYSCTRL |= 0x4;
 	/* go to Standby mode */
