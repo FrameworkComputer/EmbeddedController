@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ioexpander_pca9534.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -198,3 +199,19 @@ DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
 			"<5v|12v|20v|dev|usb|dp|flip|pol0|pol1>",
 			"Set Plankton type-C port state",
 			NULL);
+
+static int cmd_usb_hub_reset(int argc, char *argv[])
+{
+	int ret;
+
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x40, 7, PCA9534_OUTPUT);
+	if (ret)
+		return ret;
+	ret = pca9534_set_level(I2C_PORT_MASTER, 0x40, 7, 0);
+	if (ret)
+		return ret;
+	usleep(100 * MSEC);
+	return pca9534_set_level(I2C_PORT_MASTER, 0x40, 7, 1);
+}
+DECLARE_CONSOLE_COMMAND(hub_reset, cmd_usb_hub_reset,
+			NULL, "Reset USB hub", NULL);

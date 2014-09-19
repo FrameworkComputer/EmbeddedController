@@ -29,6 +29,9 @@ driver-$(CONFIG_CHARGER_BQ24735)+=charger/bq24735.o
 driver-$(CONFIG_CHARGER_BQ24738)+=charger/bq24738.o
 driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
 
+# I/O expander
+driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
+
 # Current/Power monitor
 driver-$(CONFIG_INA231)+=ina231.o
 
