@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "registers.h"
 #include "sha1.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -283,9 +284,27 @@ static inline void set_state_timeout(int port,
 	pd[port].timeout_state = timeout_state;
 }
 
+/* Return flag for pd state is connected */
+static int pd_is_connected(int port)
+{
+	if (pd[port].task_state == PD_STATE_DISABLED)
+		return 0;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* Check if sink is connected */
+	if (pd[port].role == PD_ROLE_SINK)
+		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
+#endif
+	/* Must be a source */
+	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED;
+}
+
 static inline void set_state(int port, enum pd_states next_state)
 {
 	enum pd_states last_state = pd[port].task_state;
+#ifdef CONFIG_LOW_POWER_IDLE
+	int i;
+#endif
 
 	set_state_timeout(port, 0, 0);
 	pd[port].task_state = next_state;
@@ -296,6 +315,18 @@ static inline void set_state(int port, enum pd_states next_state)
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
 	}
+#endif
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	/* If any PD port is connected, then disable deep sleep */
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		if (pd_is_connected(i))
+			break;
+	}
+	if (i == PD_PORT_COUNT)
+		enable_sleep(SLEEP_MASK_USB_PD);
+	else
+		disable_sleep(SLEEP_MASK_USB_PD);
 #endif
 
 	/* Log state transition, except for toggling between sink and source */
@@ -638,21 +669,6 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 	if (debug_level >= 1)
 		CPRINTF("Unhandled VDM VID %04x CMD %04x\n",
 			vid, payload[0] & 0xFFFF);
-}
-
-/* Return flag for pd state is connected */
-static int pd_is_connected(int port)
-{
-	if (pd[port].task_state == PD_STATE_DISABLED)
-		return 0;
-
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	/* Check if sink is connected */
-	if (pd[port].role == PD_ROLE_SINK)
-		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
-#endif
-	/* Must be a source */
-	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED;
 }
 
 static void execute_hard_reset(int port)

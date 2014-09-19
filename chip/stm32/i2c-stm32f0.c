@@ -104,9 +104,21 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
 		STM32_RCC_APB1ENR |= 1 << (21 + port);
 
-	/* Default clock to i2c port 0 is HSI (8MHz). Change to SYSCLK. */
-	if (port == 0)
+	if (port == 0) {
+#if defined(CONFIG_HOSTCMD_I2C_SLAVE_ADDR) && \
+defined(CONFIG_LOW_POWER_IDLE) && \
+(I2C_PORT_EC == STM32_I2C1_PORT)
+		/*
+		 * Use HSI (8MHz) for i2c clock. This allows smooth wakeup
+		 * from STOP mode since HSI is only clock running immediately
+		 * upon exit from STOP mode.
+		 */
+		STM32_RCC_CFGR3 &= ~0x10;
+#else
+		/* Use SYSCLK for i2c clock. */
 		STM32_RCC_CFGR3 |= 0x10;
+#endif
+	}
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
@@ -418,6 +430,14 @@ static void i2c_init(void)
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE;
+#if defined(CONFIG_LOW_POWER_IDLE) && (I2C_PORT_EC == STM32_I2C1_PORT)
+	/*
+	 * If using low power idle and EC port is I2C1, then set I2C1 to wake
+	 * from STOP mode on address match. Note, this only works on I2C1 and
+	 * only if the clock to I2C1 is HSI 8MHz.
+	 */
+	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_WUPEN;
+#endif
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000 | CONFIG_HOSTCMD_I2C_SLAVE_ADDR;
 	task_enable_irq(IRQ_SLAVE);
 #endif

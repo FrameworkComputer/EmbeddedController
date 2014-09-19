@@ -50,21 +50,27 @@ void pch_evt(enum gpio_signal signal)
 	switch (ps) {
 	case POWER_S5:
 		if (gpio_get_level(GPIO_PCH_SLP_S5_L)) {
+			/* S5 -> S3 */
 			hook_notify(HOOK_CHIPSET_STARTUP);
 			ps = POWER_S3;
 		}
 		break;
 	case POWER_S3:
 		if (gpio_get_level(GPIO_PCH_SLP_S3_L)) {
+			/* S3 -> S0: disable deep sleep */
+			disable_sleep(SLEEP_MASK_AP_RUN);
 			hook_notify(HOOK_CHIPSET_RESUME);
 			ps = POWER_S0;
 		} else if (!gpio_get_level(GPIO_PCH_SLP_S5_L)) {
+			/* S3 -> S5 */
 			hook_notify(HOOK_CHIPSET_SHUTDOWN);
 			ps = POWER_S5;
 		}
 		break;
 	case POWER_S0:
 		if (!gpio_get_level(GPIO_PCH_SLP_S3_L)) {
+			/* S0 -> S3: enable deep sleep */
+			enable_sleep(SLEEP_MASK_AP_RUN);
 			hook_notify(HOOK_CHIPSET_SUSPEND);
 			ps = POWER_S3;
 		}
@@ -117,12 +123,15 @@ static void board_init(void)
 
 	/* Determine initial chipset state */
 	if (slp_s5 && slp_s3) {
+		disable_sleep(SLEEP_MASK_AP_RUN);
 		hook_notify(HOOK_CHIPSET_RESUME);
 		ps = POWER_S0;
 	} else if (slp_s5 && !slp_s3) {
+		enable_sleep(SLEEP_MASK_AP_RUN);
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		ps = POWER_S3;
 	} else {
+		enable_sleep(SLEEP_MASK_AP_RUN);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		ps = POWER_S5;
 	}

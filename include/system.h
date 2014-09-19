@@ -291,6 +291,7 @@ enum {
 	SLEEP_MASK_I2C      = (1 << 2), /* I2C master communication on-going */
 	SLEEP_MASK_CHARGING = (1 << 3), /* Charging loop on-going */
 	SLEEP_MASK_USB_PWR  = (1 << 4), /* USB power loop on-going */
+	SLEEP_MASK_USB_PD   = (1 << 5), /* USB PD device connected */
 
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 
