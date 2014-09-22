@@ -238,9 +238,9 @@ void uart_init(void)
 	/* Enable USART clock */
 #ifdef CHIP_FAMILY_STM32F0
 #if (UARTN == 1)
-	STM32_RCC_CFGR3 |= 0x0003; /* USART1 clock source from HSI(8MHz) */
+	STM32_RCC_CFGR3 |= 0x0003;   /* USART1 clock source from HSI(8MHz) */
 #elif (UARTN == 2)
-	STM32_RCC_CFGR3 |= 0x0300; /* USART2 clock source from HSI(8MHz) */
+	STM32_RCC_CFGR3 |= 0x030000; /* USART2 clock source from HSI(8MHz) */
 #endif /* UARTN */
 #endif /* CHIP_FAMILY_STM32F0 */
 
