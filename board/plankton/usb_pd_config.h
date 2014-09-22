@@ -110,6 +110,7 @@ static inline void pd_select_polarity(int port, int polarity)
 			| (polarity ?
 			   STM32_COMP_CMP1INSEL_INM4 :
 			   STM32_COMP_CMP1INSEL_INM6);
+	gpio_set_level(GPIO_USBC_POLARITY, polarity);
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */
