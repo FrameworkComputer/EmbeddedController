@@ -233,10 +233,6 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-		/* Assert RTCRST# while in G3 if keyboard initiated reset */
-		if (system_get_reset_flags() & RESET_FLAG_RESET_PIN)
-			chipset_reset_rtc();
-
 		/* Enable 3.3V DSW */
 		gpio_set_level(GPIO_PP3300_DSW_EN, 1);
 
