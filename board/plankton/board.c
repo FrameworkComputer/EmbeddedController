@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "ioexpander_pca9534.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
@@ -200,7 +201,7 @@ DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
 			"Set Plankton type-C port state",
 			NULL);
 
-static int cmd_usb_hub_reset(int argc, char *argv[])
+static int board_usb_hub_reset(void)
 {
 	int ret;
 
@@ -213,5 +214,23 @@ static int cmd_usb_hub_reset(int argc, char *argv[])
 	usleep(100 * MSEC);
 	return pca9534_set_level(I2C_PORT_MASTER, 0x40, 7, 1);
 }
+
+static int cmd_usb_hub_reset(int argc, char *argv[])
+{
+	return board_usb_hub_reset();
+}
 DECLARE_CONSOLE_COMMAND(hub_reset, cmd_usb_hub_reset,
 			NULL, "Reset USB hub", NULL);
+
+static void board_usb_hub_reset_no_return(void)
+{
+	board_usb_hub_reset();
+}
+DECLARE_DEFERRED(board_usb_hub_reset_no_return);
+
+static void board_init_usb_hub(void)
+{
+	if (system_get_reset_flags() & RESET_FLAG_POWER_ON)
+		hook_call_deferred(board_usb_hub_reset_no_return, 500 * MSEC);
+}
+DECLARE_HOOK(HOOK_INIT, board_init_usb_hub, HOOK_PRIO_DEFAULT);
