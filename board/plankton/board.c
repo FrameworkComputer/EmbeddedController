@@ -36,25 +36,31 @@ enum usbc_action {
 	USBC_ACT_CABLE_FLIP,
 	USBC_ACT_CABLE_POLARITY0,
 	USBC_ACT_CABLE_POLARITY1,
+
+	/* Number of USBC actions */
+	USBC_ACT_COUNT
+};
+
+enum board_src_cap src_cap_mapping[USBC_ACT_COUNT] =
+{
+	[USBC_ACT_5V_TO_DUT] = SRC_CAP_5V,
+	[USBC_ACT_12V_TO_DUT] = SRC_CAP_12V,
+	[USBC_ACT_20V_TO_DUT] = SRC_CAP_20V,
 };
 
 static void set_usbc_action(enum usbc_action act)
 {
+	int need_soft_reset;
+
 	switch (act) {
 	case USBC_ACT_5V_TO_DUT:
-		board_set_source_cap(SRC_CAP_5V);
-		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-		pd_soft_reset();
-		break;
 	case USBC_ACT_12V_TO_DUT:
-		board_set_source_cap(SRC_CAP_12V);
-		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-		pd_soft_reset();
-		break;
 	case USBC_ACT_20V_TO_DUT:
-		board_set_source_cap(SRC_CAP_20V);
+		need_soft_reset = gpio_get_level(GPIO_VBUS_CHARGER_EN);
+		board_set_source_cap(src_cap_mapping[act]);
 		pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-		pd_soft_reset();
+		if (need_soft_reset)
+			pd_soft_reset();
 		break;
 	case USBC_ACT_DEVICE:
 		pd_set_dual_role(PD_DRP_FORCE_SINK);
