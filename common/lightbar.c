@@ -37,6 +37,8 @@
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
 #define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ## args)
 
+#define FP_SCALE 10000
+
 /******************************************************************************/
 /* Here's some state that we might want to maintain across sysjumps, just to
  * prevent the lightbar from flashing during normal boot as the EC jumps from
@@ -271,51 +273,58 @@ void demo_brightness(int inc)
 /* Helper functions and data. */
 /******************************************************************************/
 
-static const float _ramp_table[] = {
-	0.000000f, 0.000151f, 0.000602f, 0.001355f, 0.002408f, 0.003760f,
-	0.005412f, 0.007361f, 0.009607f, 0.012149f, 0.014984f, 0.018112f,
-	0.021530f, 0.025236f, 0.029228f, 0.033504f, 0.038060f, 0.042895f,
-	0.048005f, 0.053388f, 0.059039f, 0.064957f, 0.071136f, 0.077573f,
-	0.084265f, 0.091208f, 0.098396f, 0.105827f, 0.113495f, 0.121396f,
-	0.129524f, 0.137876f, 0.146447f, 0.155230f, 0.164221f, 0.173414f,
-	0.182803f, 0.192384f, 0.202150f, 0.212096f, 0.222215f, 0.232501f,
-	0.242949f, 0.253551f, 0.264302f, 0.275194f, 0.286222f, 0.297379f,
-	0.308658f, 0.320052f, 0.331555f, 0.343159f, 0.354858f, 0.366644f,
-	0.378510f, 0.390449f, 0.402455f, 0.414519f, 0.426635f, 0.438795f,
-	0.450991f, 0.463218f, 0.475466f, 0.487729f, 0.500000f, 0.512271f,
-	0.524534f, 0.536782f, 0.549009f, 0.561205f, 0.573365f, 0.585481f,
-	0.597545f, 0.609551f, 0.621490f, 0.633356f, 0.645142f, 0.656841f,
-	0.668445f, 0.679947f, 0.691342f, 0.702621f, 0.713778f, 0.724806f,
-	0.735698f, 0.746449f, 0.757051f, 0.767499f, 0.777785f, 0.787904f,
-	0.797850f, 0.807616f, 0.817197f, 0.826586f, 0.835780f, 0.844770f,
-	0.853553f, 0.862124f, 0.870476f, 0.878604f, 0.886505f, 0.894173f,
-	0.901604f, 0.908792f, 0.915735f, 0.922427f, 0.928864f, 0.935044f,
-	0.940961f, 0.946612f, 0.951995f, 0.957105f, 0.961940f, 0.966496f,
-	0.970772f, 0.974764f, 0.978470f, 0.981888f, 0.985016f, 0.987851f,
-	0.990393f, 0.992639f, 0.994588f, 0.996240f, 0.997592f, 0.998645f,
-	0.999398f, 0.999849f, 1.000000f,
+#define F(x) (x * FP_SCALE)
+static const int _ramp_table[] = {
+	F(0.000000), F(0.000151), F(0.000602), F(0.001355), F(0.002408),
+	F(0.003760), F(0.005412), F(0.007361), F(0.009607), F(0.012149),
+	F(0.014984), F(0.018112), F(0.021530), F(0.025236), F(0.029228),
+	F(0.033504), F(0.038060), F(0.042895), F(0.048005), F(0.053388),
+	F(0.059039), F(0.064957), F(0.071136), F(0.077573), F(0.084265),
+	F(0.091208), F(0.098396), F(0.105827), F(0.113495), F(0.121396),
+	F(0.129524), F(0.137876), F(0.146447), F(0.155230), F(0.164221),
+	F(0.173414), F(0.182803), F(0.192384), F(0.202150), F(0.212096),
+	F(0.222215), F(0.232501), F(0.242949), F(0.253551), F(0.264302),
+	F(0.275194), F(0.286222), F(0.297379), F(0.308658), F(0.320052),
+	F(0.331555), F(0.343159), F(0.354858), F(0.366644), F(0.378510),
+	F(0.390449), F(0.402455), F(0.414519), F(0.426635), F(0.438795),
+	F(0.450991), F(0.463218), F(0.475466), F(0.487729), F(0.500000),
+	F(0.512271), F(0.524534), F(0.536782), F(0.549009), F(0.561205),
+	F(0.573365), F(0.585481), F(0.597545), F(0.609551), F(0.621490),
+	F(0.633356), F(0.645142), F(0.656841), F(0.668445), F(0.679947),
+	F(0.691342), F(0.702621), F(0.713778), F(0.724806), F(0.735698),
+	F(0.746449), F(0.757051), F(0.767499), F(0.777785), F(0.787904),
+	F(0.797850), F(0.807616), F(0.817197), F(0.826586), F(0.835780),
+	F(0.844770), F(0.853553), F(0.862124), F(0.870476), F(0.878604),
+	F(0.886505), F(0.894173), F(0.901604), F(0.908792), F(0.915735),
+	F(0.922427), F(0.928864), F(0.935044), F(0.940961), F(0.946612),
+	F(0.951995), F(0.957105), F(0.961940), F(0.966496), F(0.970772),
+	F(0.974764), F(0.978470), F(0.981888), F(0.985016), F(0.987851),
+	F(0.990393), F(0.992639), F(0.994588), F(0.996240), F(0.997592),
+	F(0.998645), F(0.999398), F(0.999849), F(1.000000),
 };
+#undef F
+
 
 /* This function provides a smooth ramp up from 0.0 to 1.0 and back to 0.0,
  * for input from 0x00 to 0xff. */
-static inline float cycle_010(uint8_t i)
+static inline int cycle_010(uint8_t i)
 {
 	return i < 128 ? _ramp_table[i] : _ramp_table[256-i];
 }
 
 /* This function provides a smooth oscillation between -0.5 and +0.5.
  * Zero starts at 0x00. */
-static inline float cycle_0p0n0(uint8_t i)
+static inline int cycle_0p0n0(uint8_t i)
 {
-	return cycle_010(i + 64) - 0.5f;
+	return cycle_010(i + 64) - FP_SCALE / 2;
 }
 
 /* This function provides a pulsing oscillation between -0.5 and +0.5. */
-static inline float cycle_npn(uint16_t i)
+static inline int cycle_npn(uint16_t i)
 {
 	if ((i / 256) % 4)
-		return -0.5f;
-	return cycle_010(i) - 0.5f;
+		return -FP_SCALE / 2;
+	return cycle_010(i) - FP_SCALE / 2;
 }
 
 /******************************************************************************/
@@ -340,14 +349,14 @@ static uint32_t pending_msg;
 static uint32_t pulse_google_colors(void)
 {
 	int w, i, r, g, b;
-	float f;
+	int f;
 
 	for (w = 0; w < 128; w += 2) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = st.p.color[i].r * f;
-			g = st.p.color[i].g * f;
-			b = st.p.color[i].b * f;
+			r = st.p.color[i].r * f / FP_SCALE;
+			g = st.p.color[i].g * f / FP_SCALE;
+			b = st.p.color[i].b * f / FP_SCALE;
 			lb_set_rgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.google_ramp_up);
@@ -355,9 +364,9 @@ static uint32_t pulse_google_colors(void)
 	for (w = 128; w <= 256; w++) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = st.p.color[i].r * f;
-			g = st.p.color[i].g * f;
-			b = st.p.color[i].b * f;
+			r = st.p.color[i].r * f / FP_SCALE;
+			g = st.p.color[i].g * f / FP_SCALE;
+			b = st.p.color[i].b * f / FP_SCALE;
 			lb_set_rgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.google_ramp_down);
@@ -370,7 +379,7 @@ static uint32_t pulse_google_colors(void)
 static uint32_t sequence_S3S0(void)
 {
 	int w, r, g, b;
-	float f, fmin;
+	int f, fmin;
 	int ci;
 	uint32_t res;
 
@@ -387,13 +396,13 @@ static uint32_t sequence_S3S0(void)
 	if (ci >= ARRAY_SIZE(st.p.color))
 		ci = 0;
 
-	fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
+	fmin = st.p.osc_min[st.battery_is_charging] * FP_SCALE / 255;
 
 	for (w = 0; w <= 128; w++) {
-		f = cycle_010(w) * fmin;
-		r = st.p.color[ci].r * f;
-		g = st.p.color[ci].g * f;
-		b = st.p.color[ci].b * f;
+		f = cycle_010(w) * fmin / FP_SCALE;
+		r = st.p.color[ci].r * f / FP_SCALE;
+		g = st.p.color[ci].g * f / FP_SCALE;
+		b = st.p.color[ci].b * f / FP_SCALE;
 		lb_set_rgb(NUM_LEDS, r, g, b);
 		WAIT_OR_RET(st.p.s3s0_ramp_up);
 	}
@@ -415,7 +424,7 @@ static uint32_t sequence_S0(void)
 	int i, ci;
 	uint8_t w_ofs;
 	uint16_t w;
-	float f, fmin, fmax, base_s0, osc_s0, f_ramp;
+	int f, fmin, fmax, base_s0, osc_s0, f_ramp;
 
 	start = get_time();
 	tick = last_tick = 0;
@@ -440,18 +449,18 @@ static uint32_t sequence_S0(void)
 		if (ci >= ARRAY_SIZE(st.p.color))
 			ci = 0;
 		w_ofs = st.p.w_ofs[st.battery_is_charging];
-		fmin = st.p.osc_min[st.battery_is_charging] / 255.0f;
-		fmax = st.p.osc_max[st.battery_is_charging] / 255.0f;
-		base_s0 = (fmax + fmin) * 0.5f;
+		fmin = st.p.osc_min[st.battery_is_charging] * FP_SCALE / 255;
+		fmax = st.p.osc_max[st.battery_is_charging] * FP_SCALE / 255;
+		base_s0 = (fmax + fmin) / 2;
 		osc_s0 = fmax - fmin;
-		f_ramp = st.ramp / 255.0f;
+		f_ramp = st.ramp * FP_SCALE / 255;
 
 		for (i = 0; i < NUM_LEDS; i++) {
-			w = st.w0 - i * w_ofs * f_ramp;
-			f = base_s0 + osc_s0 * cycle_npn(w);
-			r = st.p.color[ci].r * f;
-			g = st.p.color[ci].g * f;
-			b = st.p.color[ci].b * f;
+			w = st.w0 - i * w_ofs * f_ramp / FP_SCALE;
+			f = base_s0 + osc_s0 * cycle_npn(w) / FP_SCALE;
+			r = st.p.color[ci].r * f / FP_SCALE;
+			g = st.p.color[ci].g * f / FP_SCALE;
+			b = st.p.color[ci].b * f / FP_SCALE;
 			lb_set_rgb(i, r, g, b);
 		}
 
@@ -475,7 +484,7 @@ static uint32_t sequence_S0(void)
 static uint32_t sequence_S0S3(void)
 {
 	int w, i, r, g, b;
-	float f;
+	int f;
 	uint8_t drop[NUM_LEDS][3];
 
 	/* Grab current colors */
@@ -486,9 +495,9 @@ static uint32_t sequence_S0S3(void)
 	for (w = 128; w <= 256; w++) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
-			r = drop[i][0] * f;
-			g = drop[i][1] * f;
-			b = drop[i][2] * f;
+			r = drop[i][0] * f / FP_SCALE;
+			g = drop[i][1] * f / FP_SCALE;
+			b = drop[i][2] * f / FP_SCALE;
 			lb_set_rgb(i, r, g, b);
 		}
 		WAIT_OR_RET(st.p.s0s3_ramp_down);
@@ -503,7 +512,7 @@ static uint32_t sequence_S3(void)
 {
 	int r, g, b;
 	int w;
-	float f;
+	int f;
 	int ci;
 
 	lb_off();
@@ -523,17 +532,17 @@ static uint32_t sequence_S3(void)
 
 		for (w = 0; w < 128; w += 2) {
 			f = cycle_010(w);
-			r = st.p.color[ci].r * f;
-			g = st.p.color[ci].g * f;
-			b = st.p.color[ci].b * f;
+			r = st.p.color[ci].r * f / FP_SCALE;
+			g = st.p.color[ci].g * f / FP_SCALE;
+			b = st.p.color[ci].b * f / FP_SCALE;
 			lb_set_rgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(st.p.s3_ramp_up);
 		}
 		for (w = 128; w <= 256; w++) {
 			f = cycle_010(w);
-			r = st.p.color[ci].r * f;
-			g = st.p.color[ci].g * f;
-			b = st.p.color[ci].b * f;
+			r = st.p.color[ci].r * f / FP_SCALE;
+			g = st.p.color[ci].g * f / FP_SCALE;
+			b = st.p.color[ci].b * f / FP_SCALE;
 			lb_set_rgb(NUM_LEDS, r, g, b);
 			WAIT_OR_RET(st.p.s3_ramp_down);
 		}
@@ -793,13 +802,13 @@ static uint32_t sequence_KONAMI(void)
 }
 
 /* Returns 0.0 to 1.0 for val in [min, min + ofs] */
-static float range(int val, int min, int ofs)
+static int range(int val, int min, int ofs)
 {
 	if (val <= min)
-		return 0.0f;
+		return 0;
 	if (val >= min+ofs)
-		return 1.0f;
-	return (float)(val - min) / ofs;
+		return FP_SCALE;
+	return (val - min) * FP_SCALE / ofs;
 }
 
 /* Handy constant */
@@ -810,12 +819,12 @@ static uint32_t sequence_TAP_inner(void)
 	enum { RED, YELLOW, GREEN } base_color;
 	timestamp_t start, now;
 	int i, ci, max_led;
-	float min, delta, osc, power, mult;
+	int f_min, f_delta, f_osc, f_power, f_mult;
 	uint8_t w = 0;
 
-	min = st.p.tap_seg_min_on / 100.0f;
-	delta = (st.p.tap_seg_max_on - st.p.tap_seg_min_on) / 100.0f;
-	osc = st.p.tap_seg_osc / 100.0f;
+	f_min = st.p.tap_seg_min_on * FP_SCALE / 100;
+	f_delta = (st.p.tap_seg_max_on - st.p.tap_seg_min_on) * FP_SCALE / 100;
+	f_osc = st.p.tap_seg_osc * FP_SCALE / 100;
 
 	start = get_time();
 	while (1) {
@@ -834,33 +843,36 @@ static uint32_t sequence_TAP_inner(void)
 		for (i = 0; i < NUM_LEDS; i++) {
 
 			if (max_led > i) {
-				mult = 1.0f;
+				f_mult = FP_SCALE;
 			} else if (max_led < i) {
-				mult = 0.0f;
+				f_mult = 0;
 			} else {
 				switch (base_color) {
 				case RED:
-					power = range(st.battery_percent,
-						      0, st.p.tap_pct_red - 1);
+					f_power = range(st.battery_percent, 0,
+							st.p.tap_pct_red - 1);
 					break;
 				case YELLOW:
-					power = range(st.battery_percent,
-						      i * CUT, CUT - 1);
+					f_power = range(st.battery_percent,
+							i * CUT, CUT - 1);
 					break;
 				case GREEN:
 					/* green is always full on */
-					power = 1.0f;
+					f_power = FP_SCALE;
 				}
-				mult = min + power * delta;
+				f_mult = f_min + f_power * f_delta / FP_SCALE;
 			}
 
 			/* Pulse when charging */
-			if (st.battery_is_charging)
-				mult *= 1.0f - (osc * cycle_010(w++));
+			if (st.battery_is_charging) {
+				int scale = (FP_SCALE -
+					     f_osc * cycle_010(w++) / FP_SCALE);
+				f_mult = f_mult * scale / FP_SCALE;
+			}
 
-			lb_set_rgb(i, mult * st.p.color[ci].r,
-				   mult * st.p.color[ci].g,
-				   mult * st.p.color[ci].b);
+			lb_set_rgb(i, f_mult * st.p.color[ci].r / FP_SCALE,
+				   f_mult * st.p.color[ci].g / FP_SCALE,
+				   f_mult * st.p.color[ci].b / FP_SCALE);
 		}
 
 		WAIT_OR_RET(st.p.tap_tick_delay);
