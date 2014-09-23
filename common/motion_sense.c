@@ -164,7 +164,7 @@ void motion_get_accel_lid(vector_3_t *v, int adjusted)
 	struct motion_sensor_t *accel_lid = NULL;
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
-		if ((LOCATION_BASE == sensor->location)
+		if ((LOCATION_LID == sensor->location)
 			&& (SENSOR_ACCELEROMETER == sensor->type)) {
 			accel_lid = sensor;
 			break;
