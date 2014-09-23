@@ -47,47 +47,5 @@ void rotate(const vector_3_t v, const matrix_3x3_t R,
 		vector_3_t res);
 
 
-#ifdef CONFIG_ACCEL_CALIBRATE
-
-/**
- * Multiply two 3x3 matrices.
- *
- * @param m1
- * @param m2
- * @param res Pointer to resultant matrix R = a1*a2;
- */
-void matrix_multiply(matrix_3x3_t *m1, matrix_3x3_t *m2, matrix_3x3_t *res);
-
-/**
- * Given an input matrix and an output matrix, solve for the rotation
- * matrix to get from the input matrix to the output matrix. Note, that this
- * operation is not guaranteed. In order to successfully calculate the rotation
- * matrix, the input must be linearly independent so that the matrix can be
- * inverted.
- *
- * This function solves the following matrix equation for R:
- * in * R = out
- *
- * If input matrix is invertible the resulting rotation matrix is stored in R.
- *
- * @param in
- * @param out
- * @param R Pointer to resultant matrix.
- *
- * @return EC_SUCCESS if successful
- */
-int solve_rotation_matrix(matrix_3x3_t *in, matrix_3x3_t *out, matrix_3x3_t *R);
-
-/**
- * Calculate magnitude of a vector.
- *
- * @param v Vector to be measured.
- *
- * @return Magnitued of vector v.
- */
-int vector_magnitude(const vector_3_t v);
-
-#endif
-
 
 #endif /* __CROS_MATH_UTIL_H */

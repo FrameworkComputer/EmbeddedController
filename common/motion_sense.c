@@ -156,43 +156,6 @@ int motion_get_lid_angle(void)
 		return (int)LID_ANGLE_UNRELIABLE;
 }
 
-#ifdef CONFIG_ACCEL_CALIBRATE
-void motion_get_accel_lid(vector_3_t *v, int adjusted)
-{
-	int i;
-	struct motion_sensor_t *sensor;
-	struct motion_sensor_t *accel_lid = NULL;
-	for (i = 0; i < motion_sensor_count; ++i) {
-		sensor = &motion_sensors[i];
-		if ((LOCATION_LID == sensor->location)
-			&& (SENSOR_ACCELEROMETER == sensor->type)) {
-			accel_lid = sensor;
-			break;
-		}
-	}
-	if (accel_lid)
-		memcpy(v, (adjusted ? accel_lid->xyz : accel_lid->raw_xyz),
-			 sizeof(vector_3_t));
-}
-
-void motion_get_accel_base(vector_3_t *v)
-{
-	int i;
-	struct motion_sensor_t *sensor;
-	struct motion_sensor_t *accel_base = NULL;
-	for (i = 0; i < motion_sensor_count; ++i) {
-		sensor = &motion_sensors[i];
-		if ((LOCATION_BASE == sensor->location)
-			&& (SENSOR_ACCELEROMETER == sensor->type)) {
-			accel_base = sensor;
-			break;
-		}
-	}
-	if (accel_base)
-		memcpy(v, accel_base->xyz, sizeof(vector_3_t));
-}
-#endif
-
 static void clock_chipset_shutdown(void)
 {
 	int i;

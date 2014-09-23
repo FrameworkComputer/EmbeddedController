@@ -36,9 +36,6 @@
  * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
-/* Enable EC console functions for calibrating accelerometers. */
-#undef CONFIG_ACCEL_CALIBRATE
-
 /* Enable accelerometer interrupts. */
 #undef CONFIG_ACCEL_INTERRUPTS
 
@@ -1168,10 +1165,6 @@
 #ifndef HAS_TASK_KEYSCAN
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
-#endif
-
-#ifndef HAS_TASK_MOTIONSENSE
-#undef CONFIG_ACCEL_CALIBRATE
 #endif
 
 /*****************************************************************************/

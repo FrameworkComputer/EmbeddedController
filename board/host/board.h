@@ -9,7 +9,6 @@
 #define __BOARD_H
 
 /* Optional features */
-#undef CONFIG_ACCEL_CALIBRATE
 #define CONFIG_EXTPOWER_GPIO
 #undef CONFIG_FMAP
 #define CONFIG_POWER_BUTTON

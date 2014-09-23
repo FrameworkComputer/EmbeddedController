@@ -268,10 +268,7 @@ struct motion_sensor_t motion_sensors[] = {
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Define the accelerometer orientation matrices. */
-#ifndef CONFIG_ACCEL_CALIBRATE
-const
-#endif
-struct accel_orientation acc_orient = {
+const struct accel_orientation acc_orient = {
 	/* Lid and base sensor are already aligned. */
 	.rot_align = {
 		{ 0, -1,  0},

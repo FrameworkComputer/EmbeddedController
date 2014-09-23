@@ -45,11 +45,7 @@ struct accel_orientation {
 };
 
 /* Link global structure for orientation. This must be defined in board.c. */
-extern
-#ifndef CONFIG_ACCEL_CALIBRATE
-const
-#endif
-struct accel_orientation acc_orient;
+extern const struct accel_orientation acc_orient;
 
 
 /**
@@ -60,23 +56,6 @@ struct accel_orientation acc_orient;
  */
 int motion_get_lid_angle(void);
 
-
-#ifdef CONFIG_ACCEL_CALIBRATE
-/**
- * Get the last measured lid acceleration vector.
- *
- * @param v Pointer to location to store vector.
- * @param adjusted If false use the raw vector, if true use the adjusted vector.
- */
-void motion_get_accel_lid(vector_3_t *v, int adjusted);
-
-/**
- * Get the last measured base acceleration vector.
- *
- * @param v Pointer to location to store vector.
- */
-void motion_get_accel_base(vector_3_t *v);
-#endif
 
 /**
  * Interrupt function for lid accelerometer.
