@@ -37,6 +37,9 @@
 #define CONFIG_INDUCTIVE_CHARGING
 #undef CONFIG_HIBERNATE
 
+/* Disable unused console command to save flash space */
+#undef CONFIG_CMD_POWERINDEBUG
+
 /*
  * Pericom I2C workaround
  * TODO(crosbug.com/p/31529): Remove this.

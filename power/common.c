@@ -432,6 +432,7 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 			"Show current power state",
 			NULL);
 
+#ifdef CONFIG_CMD_POWERINDEBUG
 static int command_powerindebug(int argc, char **argv)
 {
 	const struct power_signal_info *s = power_signal_list;
@@ -466,6 +467,7 @@ DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
 			"[mask]",
 			"Get/set power input debug mask",
 			NULL);
+#endif
 
 #ifdef CONFIG_HIBERNATE
 static int command_hibernation_delay(int argc, char **argv)

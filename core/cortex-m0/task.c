@@ -538,6 +538,7 @@ DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
 			"Print task info",
 			NULL);
 
+#ifdef CONFIG_CMD_TASKREADY
 static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
@@ -554,6 +555,7 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"[setmask]",
 			"Print/set ready tasks",
 			NULL);
+#endif
 
 #ifdef CONFIG_CMD_STACKOVERFLOW
 static void stack_overflow_recurse(int n)

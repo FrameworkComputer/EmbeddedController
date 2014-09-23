@@ -323,12 +323,14 @@
 #define CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_PLL
 #undef CONFIG_CMD_PMU
+#define CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_CMD_POWERLED
 #undef CONFIG_CMD_RTC_ALARM
 #undef CONFIG_CMD_SCRATCHPAD
 #undef CONFIG_CMD_SLEEP
 #undef CONFIG_CMD_SPI_FLASH
 #undef CONFIG_CMD_STACKOVERFLOW
+#undef CONFIG_CMD_TASKREADY
 
 /*****************************************************************************/
 
