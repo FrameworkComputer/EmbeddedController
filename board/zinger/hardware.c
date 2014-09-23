@@ -104,13 +104,17 @@ static void adc_init(void)
 	/* Only do the calibration if the ADC is off  */
 	if (!(STM32_ADC_CR & 1)) {
 		/* ADC calibration */
-		STM32_ADC_CR = 1 << 31; /* set ADCAL = 1, ADC off */
+		STM32_ADC_CR = STM32_ADC_CR_ADCAL; /* set ADCAL = 1, ADC off */
 		/* wait for the end of calibration */
-		while (STM32_ADC_CR & (1 << 31))
+		while (STM32_ADC_CR & STM32_ADC_CR_ADCAL)
 			;
 	}
+	/* As per ST recommendation, ensure two cycles before setting ADEN */
+	asm volatile("nop; nop;");
 	/* ADC enabled */
-	STM32_ADC_CR = 1 << 0;
+	STM32_ADC_CR = STM32_ADC_ISR_ADRDY;
+	while (!(STM32_ADC_ISR & STM32_ADC_ISR_ADRDY))
+		;
 	/* Single conversion, right aligned, 12-bit */
 	STM32_ADC_CFGR1 = 1 << 12; /* (1 << 15) => AUTOOFF */;
 	/* clock is ADCCLK */
