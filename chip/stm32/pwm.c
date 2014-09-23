@@ -47,7 +47,7 @@ static void pwm_configure(enum pwm_channel ch)
 	if (using_pwm[ch])
 		return;
 
-#ifdef CHIP_FAMILY_STM32F
+#if defined(CHIP_FAMILY_STM32F)
 	if (mask < 0x100) {
 		gpio_cr = &STM32_GPIO_CRL(gpio->port);
 	} else {
@@ -63,7 +63,9 @@ static void pwm_configure(enum pwm_channel ch)
 	val = *gpio_cr & ~(mask * 0xf);
 	val |= mask * 0x9;
 	*gpio_cr = val;
-#else /* stm32l or stm32f0 */
+#elif defined(CHIP_FAMILY_STM32F0)
+	gpio_set_alternate_function(gpio->port, gpio->mask, pwm->gpio_alt_func);
+#else /* stm32l */
 	gpio_set_alternate_function(gpio->port, gpio->mask,
 				    GPIO_ALT_TIM(pwm->tim.id));
 #endif
@@ -101,6 +103,13 @@ static void pwm_configure(enum pwm_channel ch)
 	else
 		tim->ccer = 1 << (pwm->channel * 4 - 4);
 
+	/*
+	 * Main output enable.
+	 * TODO(shawnn): BDTR is undocumented on STM32L. Verify this isn't
+	 * harmful on STM32L.
+	 */
+	tim->bdtr |= (1 << 15);
+
 	/* Generate update event to force loading of shadow registers */
 	tim->egr |= 1;
 
@@ -117,6 +126,9 @@ static void pwm_disable(enum pwm_channel ch)
 
 	if (using_pwm[ch] == 0)
 		return;
+
+	/* Main output disable */
+	tim->bdtr &= ~(1 << 15);
 
 	/* Disable counter */
 	tim->cr1 &= ~0x1;

@@ -362,7 +362,12 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_GPIO_AFRH(b)      REG32((b) + 0x24)
 #define STM32_GPIO_BRR(b)       REG32((b) + 0x28)
 
-#define GPIO_ALT_TIM(x)         (0 /*TODO(fixme)*/)
+#define GPIO_ALT_F0		0x0
+#define GPIO_ALT_F1		0x1
+#define GPIO_ALT_F2		0x2
+#define GPIO_ALT_F3		0x3
+#define GPIO_ALT_F4		0x4
+#define GPIO_ALT_F5		0x5
 
 #elif defined(CHIP_FAMILY_STM32F)
 #define STM32_GPIOA_BASE            0x40010800
