@@ -391,6 +391,10 @@ static uint32_t sequence_S3S0(void)
 	if (res)
 		return res;
 
+#ifndef BLUE_PULSING
+	return 0;
+#endif
+
 	/* Ramp up to starting brightness, using S0 colors */
 	ci = st.p.s0_idx[st.battery_is_charging][st.battery_level];
 	if (ci >= ARRAY_SIZE(st.p.color))
@@ -414,6 +418,8 @@ static uint32_t sequence_S3S0(void)
 	/* Ready for S0 */
 	return 0;
 }
+
+#ifdef BLUE_PULSING
 
 /* CPU is fully on */
 static uint32_t sequence_S0(void)
@@ -479,6 +485,54 @@ static uint32_t sequence_S0(void)
 	}
 	return 0;
 }
+
+#else  /* just simple google colors */
+
+static uint32_t sequence_S0(void)
+{
+	int w, i, r, g, b;
+	int f;
+
+	lb_set_rgb(NUM_LEDS, 0, 0, 0);
+	lb_on();
+
+	/* Ramp up */
+	for (w = 0; w < 128; w += 2) {
+		f = cycle_010(w);
+		for (i = 0; i < NUM_LEDS; i++) {
+			r = st.p.color[i].r * f / FP_SCALE;
+			g = st.p.color[i].g * f / FP_SCALE;
+			b = st.p.color[i].b * f / FP_SCALE;
+			lb_set_rgb(i, r, g, b);
+		}
+		WAIT_OR_RET(st.p.google_ramp_up);
+	}
+
+	while (1) {
+
+		get_battery_level();
+
+		/* Not really low use google colors */
+		if (st.battery_level) {
+			for (i = 0; i < NUM_LEDS; i++) {
+				r = st.p.color[i].r;
+				g = st.p.color[i].g;
+				b = st.p.color[i].b;
+				lb_set_rgb(i, r, g, b);
+			}
+		} else {
+			r = st.p.color[5].r;
+			g = st.p.color[5].g;
+			b = st.p.color[5].b;
+			lb_set_rgb(4, r, g, b);
+		}
+
+		WAIT_OR_RET(1 * SECOND);
+	}
+	return 0;
+}
+
+#endif
 
 /* CPU is going to sleep. */
 static uint32_t sequence_S0S3(void)
