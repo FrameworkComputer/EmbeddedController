@@ -712,6 +712,11 @@
 #undef CONFIG_LOW_POWER_IDLE
 #undef CONFIG_LOW_POWER_USE_LFIOSC
 
+/*
+ * Enable deep sleep during S0 (ignores SLEEP_MASK_AP_RUN).
+ */
+#undef CONFIG_LOW_POWER_S0
+
 /* Support LPC interface */
 #undef CONFIG_LPC
 
