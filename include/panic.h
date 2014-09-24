@@ -101,8 +101,12 @@ void panic_data_print(const struct panic_data *pdata);
  * @param fname		File name where assertion happened
  * @param linenum	Line number where assertion happened
  */
+#ifdef CONFIG_DEBUG_ASSERT_BRIEF
+void panic_assert_fail(const char *fname, int linenum);
+#else
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum);
+#endif
 
 /**
  * Display a custom panic message and reset

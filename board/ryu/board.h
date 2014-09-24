@@ -36,6 +36,7 @@
 #undef CONFIG_CONSOLE_CMDHELP
 #define CONFIG_INDUCTIVE_CHARGING
 #undef CONFIG_HIBERNATE
+#define CONFIG_DEBUG_ASSERT_BRIEF
 
 /* Disable unused console command to save flash space */
 #undef CONFIG_CMD_POWERINDEBUG

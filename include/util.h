@@ -18,11 +18,19 @@
  */
 #ifdef CONFIG_DEBUG_ASSERT
 #ifdef CONFIG_DEBUG_ASSERT_REBOOTS
+
+#ifdef CONFIG_DEBUG_ASSERT_BRIEF
+#define ASSERT(cond) do {			\
+		if (!(cond))			\
+			panic_assert_fail(__FILE__, __LINE__);	\
+	} while (0)
+#else
 #define ASSERT(cond) do {			\
 		if (!(cond))			\
 			panic_assert_fail(#cond, __func__, __FILE__, \
 				__LINE__);	\
 	} while (0)
+#endif
 #else
 #define ASSERT(cond) do {			\
 		if (!(cond))			\
