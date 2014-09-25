@@ -76,13 +76,13 @@ static const struct lightbar_params_v1 default_params = {
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
 	.tap_tick_delay = 5000,			/* oscillation step time */
-	.tap_display_time = 3000000,		/* total sequence time */
+	.tap_display_time = 5 * SECOND,		/* total sequence time */
 
 	.tap_pct_red = 10,			/* below this is red */
 	.tap_pct_green = 97,			/* above this is green */
 	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
 	.tap_seg_max_on = 100,			/* max intensity (%) for "on" */
-	.tap_seg_osc = 25,			/* amplitude for charging osc */
+	.tap_seg_osc = 50,			/* amplitude for charging osc */
 	.tap_idx = {5, 6, 7},			/* color [red, yellow, green] */
 
 	.osc_min = { 0x60, 0x60 },		/* battery, AC */
@@ -267,6 +267,14 @@ void demo_brightness(int inc)
 	else if (b < 0)
 		b = 0;
 	lb_set_brightness(b);
+}
+
+/* T key */
+void demo_tap(void)
+{
+	if (!demo_mode)
+		return;
+	lightbar_sequence(LIGHTBAR_TAP);
 }
 
 /******************************************************************************/

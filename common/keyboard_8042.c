@@ -876,6 +876,9 @@ static void keyboard_special(uint16_t k)
 	case 0x0041:				/* bright */
 		demo_brightness(1);
 		break;
+	case 0x0014:				/* T */
+		demo_tap();
+		break;
 	}
 #endif
 
