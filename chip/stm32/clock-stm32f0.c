@@ -389,8 +389,11 @@ void clock_init(void)
 	 *  PLL unlocked, RTC enabled on LSE
 	 */
 
-	/* put 1 Wait-State for flash access to ensure proper reads at 48Mhz */
-	STM32_FLASH_ACR = STM32_FLASH_ACR_LATENCY; /* 1 WS / Prefetch enabled */
+	/*
+	 * put 1 Wait-State for flash access to ensure proper reads at 48Mhz
+	 * and enable prefetch buffer.
+	 */
+	STM32_FLASH_ACR = STM32_FLASH_ACR_LATENCY | STM32_FLASH_ACR_PRFTEN;
 
 	config_hispeed_clock();
 

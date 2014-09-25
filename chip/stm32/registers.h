@@ -814,6 +814,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
 #define STM32_FLASH_ACR_LATENCY     (1 << 0)
+#define STM32_FLASH_ACR_PRFTEN      (1 << 4)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x04)
 #define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x08)
 #define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x0c)
