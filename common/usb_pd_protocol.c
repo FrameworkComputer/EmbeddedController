@@ -705,9 +705,8 @@ void pd_soft_reset(void)
 
 	for (i = 0; i < PD_PORT_COUNT; ++i)
 		if (pd_is_connected(i)) {
-			execute_soft_reset(i);
-			send_control(i, PD_CTRL_SOFT_RESET);
 			set_state(i, PD_STATE_SOFT_RESET);
+			task_wake(PORT_TO_TASK_ID(i));
 		}
 }
 
@@ -1360,19 +1359,9 @@ void pd_task(void)
 				break;
 			}
 
-			timeout = 10 * MSEC;
-
 			/* Ping dropped. Try soft reset. */
-			execute_soft_reset(port);
-			res = send_control(port, PD_CTRL_SOFT_RESET);
-
-			if (res >= 0) {
-				set_state(port, PD_STATE_SOFT_RESET);
-				break;
-			}
-
-			/* Soft reset failed. Let's try hard reset. */
-			set_state(port, PD_STATE_HARD_RESET);
+			set_state(port, PD_STATE_SOFT_RESET);
+			timeout = 10 * MSEC;
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SUSPENDED:
@@ -1456,6 +1445,15 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_SOFT_RESET:
 			if (pd[port].last_state != pd[port].task_state)
+				execute_soft_reset(port);
+				res = send_control(port, PD_CTRL_SOFT_RESET);
+
+				/* if soft reset failed, try hard reset. */
+				if (res < 0) {
+					set_state(port, PD_STATE_HARD_RESET);
+					break;
+				}
+
 				set_state_timeout(
 					port,
 					get_time().val + PD_T_SENDER_RESPONSE,
@@ -1785,8 +1783,6 @@ static int command_pd(int argc, char **argv)
 			ccprintf("%08x ", pd[port].dev_rw_hash[i]);
 		ccprintf("\n");
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
-		execute_soft_reset(port);
-		send_control(port, PD_CTRL_SOFT_RESET);
 		set_state(port, PD_STATE_SOFT_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strncasecmp(argv[2], "ping", 4)) {

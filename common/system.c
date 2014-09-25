@@ -409,6 +409,7 @@ static void jump_to_image(uintptr_t init_addr)
 	 * power.
 	 */
 	pd_soft_reset();
+	usleep(5*MSEC);
 #endif
 
 	/* Flush UART output unless the UART hasn't been initialized yet */
