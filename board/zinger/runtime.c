@@ -4,6 +4,7 @@
  */
 /* tiny substitute of the runtime layer */
 
+#include "clock.h"
 #include "common.h"
 #include "cpu.h"
 #include "debug.h"
@@ -21,6 +22,11 @@ timestamp_t get_time(void)
 	t.le.lo = STM32_TIM32_CNT(2);
 	t.le.hi = 0;
 	return t;
+}
+
+void force_time(timestamp_t ts)
+{
+	STM32_TIM32_CNT(2) = ts.le.lo;
 }
 
 void udelay(unsigned us)
@@ -60,9 +66,57 @@ void tim2_interrupt(void)
 }
 DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
+static void config_hispeed_clock(void)
+{
+	/* Ensure that HSI8 is ON */
+	if (!(STM32_RCC_CR & (1 << 1))) {
+		/* Enable HSI */
+		STM32_RCC_CR |= 1 << 0;
+		/* Wait for HSI to be ready */
+		while (!(STM32_RCC_CR & (1 << 1)))
+			;
+	}
+	/* PLLSRC = HSI, PLLMUL = x12 (x HSI/2) = 48Mhz */
+	STM32_RCC_CFGR = 0x00288000;
+	/* Enable PLL */
+	STM32_RCC_CR |= 1 << 24;
+	/* Wait for PLL to be ready */
+	while (!(STM32_RCC_CR & (1 << 25)))
+			;
+
+	/* switch SYSCLK to PLL */
+	STM32_RCC_CFGR = 0x00288002;
+	/* wait until the PLL is the clock source */
+	while ((STM32_RCC_CFGR & 0xc) != 0x8)
+		;
+}
+
+void runtime_init(void)
+{
+	/* put 1 Wait-State for flash access to ensure proper reads at 48Mhz */
+	STM32_FLASH_ACR = 0x1001; /* 1 WS / Prefetch enabled */
+
+	config_hispeed_clock();
+
+	rtc_init();
+}
+
+/*
+ * minimum delay to enter stop mode
+ * STOP_MODE_LATENCY: max time to wake up from STOP mode with regulator in low
+ * power mode is 5 us + PLL locking time is 200us.
+ * SET_RTC_MATCH_DELAY: max time to set RTC match alarm. if we set the alarm
+ * in the past, it will never wake up and cause a watchdog.
+ */
+#define STOP_MODE_LATENCY 300   /* us */
+#define SET_RTC_MATCH_DELAY 200 /* us */
+
 uint32_t task_wait_event(int timeout_us)
 {
 	uint32_t evt;
+	timestamp_t t0;
+	uint32_t rtc0, rtc0ss, rtc1, rtc1ss;
+	int rtc_diff;
 
 	asm volatile("cpsid i");
 	/* the event already happened */
@@ -75,16 +129,38 @@ uint32_t task_wait_event(int timeout_us)
 	}
 
 	/* set timeout on timer */
-	if (timeout_us > 0) {
+	if (timeout_us < 0) {
+		asm volatile ("wfi");
+	} else if (timeout_us <= (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY)) {
 		STM32_TIM32_CCR1(2) = STM32_TIM32_CNT(2) + timeout_us;
 		STM32_TIM_SR(2) = 0; /* clear match flag */
 		STM32_TIM_DIER(2) = 2; /*  match interrupt */
+
+		asm volatile("wfi");
+
+		STM32_TIM_DIER(2) = 0; /* disable match interrupt */
+	} else {
+		t0 = get_time();
+
+		/* set deep sleep bit */
+		CPU_SCB_SYSCTRL |= 0x4;
+
+		set_rtc_alarm(0, timeout_us - STOP_MODE_LATENCY,
+			      &rtc0, &rtc0ss);
+
+		asm volatile("wfi");
+
+		CPU_SCB_SYSCTRL &= ~0x4;
+
+		config_hispeed_clock();
+
+		/* fast forward timer according to RTC counter */
+		reset_rtc_alarm(&rtc1, &rtc1ss);
+		rtc_diff = get_rtc_diff(rtc0, rtc0ss, rtc1, rtc1ss);
+		t0.val = t0.val + rtc_diff;
+		force_time(t0);
 	}
 
-	/* sleep until next interrupt */
-	asm volatile("wfi");
-
-	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
 	asm volatile("cpsie i ; isb");
 
 	/* note: interrupt that woke us up will run here */

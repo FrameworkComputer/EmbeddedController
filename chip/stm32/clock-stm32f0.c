@@ -108,8 +108,8 @@ static inline uint32_t sec_to_rtc(uint32_t sec)
 }
 
 /* Return time diff between two rtc readings */
-static inline int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
-				   uint32_t rtc1, uint32_t rtc1ss)
+int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
+		     uint32_t rtc1, uint32_t rtc1ss)
 {
 	int32_t diff;
 
@@ -381,22 +381,8 @@ void clock_enable_module(enum module_id module, int enable)
 {
 }
 
-void clock_init(void)
+void rtc_init(void)
 {
-	/*
-	 * The initial state :
-	 *  SYSCLK from HSI (=8MHz), no divider on AHB, APB1, APB2
-	 *  PLL unlocked, RTC enabled on LSE
-	 */
-
-	/*
-	 * put 1 Wait-State for flash access to ensure proper reads at 48Mhz
-	 * and enable prefetch buffer.
-	 */
-	STM32_FLASH_ACR = STM32_FLASH_ACR_LATENCY | STM32_FLASH_ACR_PRFTEN;
-
-	config_hispeed_clock();
-
 	rtc_unlock_regs();
 
 	/* Enter RTC initialize mode */
@@ -418,6 +404,25 @@ void clock_init(void)
 	task_enable_irq(STM32_IRQ_RTC_WAKEUP);
 
 	rtc_lock_regs();
+}
+
+void clock_init(void)
+{
+	/*
+	 * The initial state :
+	 *  SYSCLK from HSI (=8MHz), no divider on AHB, APB1, APB2
+	 *  PLL unlocked, RTC enabled on LSE
+	 */
+
+	/*
+	 * put 1 Wait-State for flash access to ensure proper reads at 48Mhz
+	 * and enable prefetch buffer.
+	 */
+	STM32_FLASH_ACR = STM32_FLASH_ACR_LATENCY | STM32_FLASH_ACR_PRFTEN;
+
+	config_hispeed_clock();
+
+	rtc_init();
 }
 
 /*****************************************************************************/

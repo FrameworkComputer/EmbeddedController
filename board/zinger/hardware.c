@@ -15,35 +15,23 @@
 #include "util.h"
 #include "watchdog.h"
 
-static void clock_init(void)
+static void system_init(void)
 {
-	/*
-	 * put 1 Wait-State for flash access to ensure proper reads at 48Mhz
-	 * and enable prefetch buffer.
-	 */
-	STM32_FLASH_ACR = STM32_FLASH_ACR_LATENCY | STM32_FLASH_ACR_PRFTEN;
+	/* Enable access to RCC CSR register and RTC backup registers */
+	STM32_PWR_CR |= 1 << 8;
 
-	/* Ensure that HSI8 is ON */
-	if (!(STM32_RCC_CR & (1 << 1))) {
-		/* Enable HSI */
-		STM32_RCC_CR |= 1 << 0;
-		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR & (1 << 1)))
-			;
-	}
-	/* PLLSRC = HSI, PLLMUL = x12 (x HSI/2) = 48Mhz */
-	STM32_RCC_CFGR = 0x00288000;
-	/* Enable PLL */
-	STM32_RCC_CR |= 1 << 24;
-	/* Wait for PLL to be ready */
-	while (!(STM32_RCC_CR & (1 << 25)))
-			;
-
-	/* switch SYSCLK to PLL */
-	STM32_RCC_CFGR = 0x00288002;
-	/* wait until the PLL is the clock source */
-	while ((STM32_RCC_CFGR & 0xc) != 0x8)
+	/* switch on LSI */
+	STM32_RCC_CSR |= 1 << 0;
+	/* Wait for LSI to be ready */
+	while (!(STM32_RCC_CSR & (1 << 1)))
 		;
+	/* re-configure RTC if needed */
+	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
+		/* the RTC settings are bad, we need to reset it */
+		STM32_RCC_BDCR |= 0x00010000;
+		/* Enable RTC and use LSI as clock source */
+		STM32_RCC_BDCR = (STM32_RCC_BDCR & ~0x00018300) | 0x00008200;
+	}
 }
 
 static void power_init(void)
@@ -165,10 +153,12 @@ static void irq_init(void)
 	asm("cpsie i");
 }
 
+extern void runtime_init(void);
 void hardware_init(void)
 {
 	power_init();
-	clock_init();
+	system_init();
+	runtime_init(); /* sets clock */
 	pins_init();
 	uart_init();
 	timers_init();
