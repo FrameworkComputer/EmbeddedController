@@ -988,23 +988,8 @@ static struct lb_program cur_prog;
 static struct lb_program next_prog;
 static uint8_t pc;
 
-enum lb_color {
-	LB_COL_RED,
-	LB_COL_GREEN,
-	LB_COL_BLUE,
-	LB_COL_ALL
-};
-
-enum lb_control {
-	LB_CONT_COLOR0,
-	LB_CONT_COLOR1,
-	LB_CONT_PHASE,
-	LB_CONT_MAX
-};
-
 static uint8_t led_desc[NUM_LEDS][LB_CONT_MAX][3];
 static uint32_t lb_ramp_delay;
-
 /* Get one byte of data pointed to by the pc and advance
  * the pc forward.
  */
@@ -1261,33 +1246,26 @@ static uint32_t lightbyte_CYCLE(void)
 
 #undef GET_INTERP_VALUE
 
-#define OPCODE_TABLE		\
-	OP(JUMP),		\
-	OP(DELAY),		\
-	OP(SET_BRIGHTNESS),	\
-	OP(SET_COLOR),		\
-	OP(SET_DELAY_TIME),	\
-	OP(RAMP_ONCE),		\
-	OP(CYCLE_ONCE),		\
-	OP(CYCLE),
-
 #define OP(X) X
+#include "lightbar_opcode_list.h"
 enum lightbyte_opcode {
-	OPCODE_TABLE
+	LIGHTBAR_OPCODE_TABLE
 	HALT,
 	MAX_OPCODE
 };
 #undef OP
 
 #define OP(X) lightbyte_ ## X
+#include "lightbar_opcode_list.h"
 static uint32_t (*lightbyte_dispatch[])(void) = {
-	OPCODE_TABLE
+	LIGHTBAR_OPCODE_TABLE
 };
 #undef OP
 
 #define OP(X) # X
+#include "lightbar_opcode_list.h"
 static const char * const lightbyte_names[] = {
-	OPCODE_TABLE
+	LIGHTBAR_OPCODE_TABLE
 	"HALT"
 };
 #undef OP

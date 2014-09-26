@@ -19,6 +19,21 @@ enum lightbar_sequence {
 };
 #undef LBMSG
 
+/* Bytecode field constants */
+enum lb_color {
+	LB_COL_RED,
+	LB_COL_GREEN,
+	LB_COL_BLUE,
+	LB_COL_ALL
+};
+
+enum lb_control {
+	LB_CONT_COLOR0,
+	LB_CONT_COLOR1,
+	LB_CONT_PHASE,
+	LB_CONT_MAX
+};
+
 /* Request a preset sequence from the lightbar task. */
 void lightbar_sequence(enum lightbar_sequence s);
 

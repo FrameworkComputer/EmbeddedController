@@ -1037,6 +1037,7 @@ struct lightbar_params_v1 {
 
 /* Lightbyte program. */
 #define LB_PROG_LEN 192
+#define LB_PROG_MAX_OPERANDS 4
 struct lb_program {
 	uint8_t size;
 	uint8_t data[LB_PROG_LEN];
