@@ -73,16 +73,16 @@ static int wait_sr1(int port, int mask)
 	while (get_time().val < timeout) {
 		int sr1 = STM32_I2C_SR1(port);
 
-		/* Check for desired mask */
-		if ((sr1 & mask) == mask)
-			return EC_SUCCESS;
-
 		/* Check for errors */
 		if (sr1 & (STM32_I2C_SR1_ARLO | STM32_I2C_SR1_BERR |
 			   STM32_I2C_SR1_AF)) {
 			dump_i2c_reg(port, "wait_sr1 failed");
 			return EC_ERROR_UNKNOWN;
 		}
+
+		/* Check for desired mask */
+		if ((sr1 & mask) == mask)
+			return EC_SUCCESS;
 
 		/* I2C is slow, so let other things run while we wait */
 		usleep(100);
