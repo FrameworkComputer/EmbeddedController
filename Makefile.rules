@@ -30,6 +30,7 @@ section_is = $(subst .,,SECTION_IS_$(suffix $(1)))
 # Decrease verbosity unless you pass V=1
 quiet = $(if $(V),,@echo '  $(2)' $(subst $(out)/,,$@) ; )$(cmd_$(1))
 silent = $(if $(V),,1>/dev/null)
+silent_err = $(if $(V),,2>/dev/null)
 
 # commands to build all targets
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
@@ -52,10 +53,13 @@ cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
-cmd_extractrw-y = cd $(out) && \
-	dump_fmap -x $(PROJECT).bin.tmp RW_SECTION_A $(silent) && \
-	mv RW_SECTION_A $(PROJECT).RW.bin
+cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
+	       bs=1 count=$(_rw_size) skip=$(_rw_off) $(silent_err)
 cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
+
+# commands for RSA signature
+cmd_pubkey = ./util/pem_extract_pubkey.py $(PEM) > $@
+cmd_rsasign = ./util/ec_sign_rsa.py $(PEM) $(out)/$*.bin.tmp
 
 # commands to build optional xref files
 cmd_deps_to_list = cat $(deps) | tr -d ':\\' | tr ' ' '\012' \
@@ -65,7 +69,6 @@ cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
 .PHONY: all tests utils hosttests
-all: $(out)/$(PROJECT).bin utils
 
 buildall: $(foreach b, $(boards), proj-$(b)) runtests
 	@touch .tests-passed
@@ -138,8 +141,8 @@ $(out)/%.lds: core/$(CORE)/ec.lds.S
 
 $(out)/%.bin: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)
-	$(if $(sign-y),$(call quiet,sign,SIGN   ),)
-	$(if $(sign-y),$(call quiet,extractrw-y,EXTR_RW), \
+	$(if $(wildcard $(PEM)),$(call quiet,rsasign,SIGN   ),)
+	$(if $(wildcard $(PEM)),$(call quiet,extractrw-y,EXTR_RW), \
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
@@ -172,6 +175,9 @@ $(out)/%.o:%.S
 $(out)/common/version.o: $(out)/ec_version.h
 $(out)/ec_version.h: $(filter-out $(out)/common/version.o,$(objs))
 	$(call quiet,version,VERSION)
+
+$(out)/gen_pub_key.h: $(PEM)
+	$(call quiet,pubkey,PUBKEY )
 
 $(build-utils): $(out)/%:$(build-srcs)
 	$(call quiet,c_to_build,BUILDCC)

@@ -61,6 +61,7 @@ common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_RSA)+=rsa.o
 common-$(CONFIG_SHA1)+=sha1.o
+common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SMBUS)+= smbus.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o

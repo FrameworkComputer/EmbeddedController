@@ -7,10 +7,21 @@
 #include "common.h"
 #include "debug.h"
 #include "registers.h"
+#include "rsa.h"
 #include "sha1.h"
+#include "sha256.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "util.h"
+
+/* Insert the RSA public key definition */
+const struct rsa_public_key pkey __attribute__((section(".rsa_pubkey"))) =
+#include "gen_pub_key.h"
+/* The RSA signature is stored at the end of the RW firmware */
+static const void *rw_sig = (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF
+				 + CONFIG_FW_RW_SIZE - RSANUMBYTES;
+/* Large 768-Byte buffer for RSA computation : could be re-use afterwards... */
+static uint32_t rsa_workbuf[3 * RSANUMWORDS];
 
 extern void pd_rx_handler(void);
 
@@ -44,23 +55,17 @@ int is_ro_mode(void)
 
 static int check_rw_valid(void)
 {
-	uint32_t *hash;
-	uint32_t *fw_hash = (uint32_t *)
-		(CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE - 32);
+	int good;
+	uint8_t *hash;
 
 	/* Check if we have a RW firmware flashed */
 	if (*rw_rst == 0xffffffff)
 		return 0;
 
-	hash = (uint32_t *)flash_hash_rw();
-	/* TODO(crosbug.com/p/28336) use secret key to check RW */
-	if (memcmp(hash, fw_hash, SHA1_DIGEST_SIZE) != 0) {
-		/* Firmware doesn't match the recorded hash */
-		debug_printf("SHA-1 %08x %08x %08x %08x %08x\n",
-			hash[0], hash[1], hash[2], hash[3], hash[4]);
-		debug_printf("FW SHA-1 %08x %08x %08x %08x %08x\n",
-			fw_hash[0], fw_hash[1], fw_hash[2],
-			fw_hash[3], fw_hash[4]);
+	hash = flash_hash_rw();
+	good = rsa_verify(&pkey, (void *)rw_sig, (void *)hash, rsa_workbuf);
+	if (!good) {
+		debug_printf("RSA verify FAILED\n");
 		return 0;
 	}
 

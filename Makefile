@@ -30,7 +30,12 @@ PROJECT?=ec
 # Output directory for build objects
 out?=build/$(BOARD)
 
+# If no key file is provided, use the default dev key
+PEM ?= board/$(BOARD)/dev_key.pem
+
 include Makefile.toolchain
+
+all: $(out)/$(PROJECT).bin utils
 
 # The board makefile sets $CHIP and the chip makefile sets $CORE.
 # Include those now, since they must be defined for _flag_cfg below.
@@ -78,6 +83,14 @@ ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
 	CPPFLAGS+=$(foreach irq,$(_irq_list),\
 		    -D"irq_$(irq)_handler_optional=irq_$(irq)_handler")
 endif
+
+# Compute RW firmware size and offset
+_rw_off_str:=$(shell echo "CONFIG_FW_RW_OFF" | $(CPP) $(CPPFLAGS) -P \
+		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
+_rw_off:=$(shell echo "$$(($(_rw_off_str)))")
+_rw_size_str:=$(shell echo "CONFIG_FW_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
+		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
+_rw_size:=$(shell echo "$$(($(_rw_size_str)))")
 
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles

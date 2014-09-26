@@ -9,7 +9,8 @@
 #include "common.h"
 #include "cpu.h"
 #include "registers.h"
-#include "sha1.h"
+#include "rsa.h"
+#include "sha256.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -374,11 +375,11 @@ exit_er:
 	return res;
 }
 
-static struct sha1_ctx ctx;
+static struct sha256_ctx ctx;
 uint8_t *flash_hash_rw(void)
 {
-	sha1_init(&ctx);
-	sha1_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF,
-		    CONFIG_FW_RW_SIZE - 32);
-	return sha1_final(&ctx);
+	SHA256_init(&ctx);
+	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF,
+		    CONFIG_FW_RW_SIZE - RSANUMBYTES);
+	return SHA256_final(&ctx);
 }

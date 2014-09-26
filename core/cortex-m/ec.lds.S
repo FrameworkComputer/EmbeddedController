@@ -209,6 +209,13 @@ SECTIONS
 	/* NOTHING MAY GO AFTER THIS! */
     } > IRAM
 
+    .flash_suffix  : AT(LOADADDR(.data) + SIZEOF(.data)) {
+        FILL(0xff);
+        /* Put the public key coefficients at the end of the partition */
+        . = ORIGIN(FLASH) + LENGTH(FLASH) - 528;
+        *(.rsa_pubkey)
+    } > FLASH
+
     /* The linker won't notice if the .data section is too big to fit,
      * apparently because we're sending it into IRAM, not FLASH. The following
      * symbol isn't used by the code, but running "objdump -t *.elf | grep hey"
