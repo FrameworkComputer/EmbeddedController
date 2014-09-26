@@ -108,7 +108,7 @@ GPIO(PD_ENTERING_RW,         B, 5,  GPIO_OUT_LOW,  NULL)
 GPIO(PD_DISABLE_DEBUG,       E, 15, GPIO_OUT_HIGH, NULL)
 GPIO(PD_DEBUG_EN_L,          D, 4,  GPIO_INPUT | GPIO_PULL_UP, NULL)
 GPIO(PD_SPI_PP3300_EN_L,     A, 7,  GPIO_OUT_HIGH, NULL)
-GPIO(TP203,                  A, 3,  GPIO_OUT_LOW,  NULL)
+GPIO(BST_DISABLE,            A, 3,  GPIO_OUT_LOW,  NULL)
 
 #if 0
 /* Alternate functions */
