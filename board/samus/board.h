@@ -164,6 +164,7 @@ enum board_version {
 	BOARD_VERSION_PROTO_2_A = 1,
 	BOARD_VERSION_PROTO_2_B = 2,
 	BOARD_VERSION_EVT = 3,
+	BOARD_VERSION_EVT2 = 4,
 };
 
 /* Wireless signals */
