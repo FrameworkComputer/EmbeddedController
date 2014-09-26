@@ -802,6 +802,9 @@
 /* Support IR357x Link voltage regulator debugging / reprogramming */
 #undef CONFIG_REGULATOR_IR357X
 
+/* Support verifying 2048-bit RSA signature */
+#undef CONFIG_RSA
+
 /*
  * If defined, the hash module will save its last computed hash when jumping
  * between EC images.
