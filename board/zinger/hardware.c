@@ -73,6 +73,14 @@ static void pins_init(void)
 	 * PF0  (OUT - GPIO)       : LM5050 FET driver off
 	 * PF1  (OUT - GPIO)       : discharge FET
 	 */
+
+	/*
+	 * Clear power control/status register to disable wakeup
+	 * pin A0, so that we can change it to an output.
+	 */
+	STM32_PWR_CSR = 0;
+	STM32_PWR_CR |= 0xc;
+
 	STM32_GPIO_ODR(GPIO_A) = HIGH(0) | HIGH(4);
 	STM32_GPIO_AFRL(GPIO_A) = AFx(7, 1);
 	STM32_GPIO_AFRH(GPIO_A) = AFx(9, 1) | AFx(10, 1);
@@ -157,7 +165,26 @@ static void irq_init(void)
 extern void runtime_init(void);
 void hardware_init(void)
 {
+	uint32_t raw_cause = STM32_RCC_CSR;
+	uint32_t pwr_status = STM32_PWR_CSR;
+
 	power_init();
+
+	/* Clear the hardware reset cause by setting the RMVF bit */
+	STM32_RCC_CSR |= 1 << 24;
+	/* Clear SBF in PWR_CSR */
+	STM32_PWR_CR |= 1 << 3;
+
+	/*
+	 * WORKAROUND: as we cannot de-activate the watchdog during
+	 * long hibernation, we are woken-up once by the watchdog and
+	 * go back to hibernate if we detect that condition, without
+	 * watchdog initialized this time.
+	 * The RTC deadline (if any) is already set.
+	 */
+	if ((pwr_status & 0x2) && (raw_cause & 0x60000000))
+		__enter_hibernate(0, 0);
+
 	system_init();
 	runtime_init(); /* sets clock */
 	pins_init();

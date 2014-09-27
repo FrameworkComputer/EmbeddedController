@@ -228,9 +228,6 @@ enum pd_data_msg_type {
 #define PD_RST2  0x19
 #define PD_EOP   0x0D
 
-/* Issue PD soft reset */
-void pd_soft_reset(void);
-
 /* --- Policy layer functions --- */
 
 /**
@@ -513,6 +510,15 @@ void pd_hw_release(int port);
  */
 void pd_hw_init(int port);
 
+/* --- Protocol layer functions --- */
+/**
+ * Get connected state
+ *
+ * @param port USB-C port number
+ * @return True if port is in connected state
+ */
+int pd_is_connected(int port);
+
 /**
  * Get port polarity.
  *
@@ -538,5 +544,8 @@ void pd_comm_enable(int enable);
  * @param enable Enable flag to set
  */
 void pd_ping_enable(int port, int enable);
+
+/* Issue PD soft reset */
+void pd_soft_reset(void);
 
 #endif  /* __USB_PD_H */

@@ -285,7 +285,7 @@ static inline void set_state_timeout(int port,
 }
 
 /* Return flag for pd state is connected */
-static int pd_is_connected(int port)
+int pd_is_connected(int port)
 {
 	if (pd[port].task_state == PD_STATE_DISABLED)
 		return 0;

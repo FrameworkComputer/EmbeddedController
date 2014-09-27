@@ -41,6 +41,7 @@
 #undef CONFIG_DEBUG_STACK_OVERFLOW
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
+#define CONFIG_HIBERNATE_WAKEUP_PINS STM32_PWR_CSR_EWUP1
 
 /* debug printf flash footprinf is about 1400 bytes */
 #define CONFIG_DEBUG_PRINTF
@@ -92,6 +93,7 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 void reset_rtc_alarm(uint32_t *rtc, uint32_t *rtcss);
 int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
 		     uint32_t rtc1, uint32_t rtc1ss);
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /* Reboot the CPU */
 void cpu_reset(void);
