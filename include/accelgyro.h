@@ -71,7 +71,7 @@ struct accelgyro_drv {
 	 * Setter and getter methods for the sensor output data range. As the
 	 * ODR increases, the LPF roll-off frequency also increases.
 	 * @s Pointer to sensor data.
-	 * @rate Output data rate (units are Hz)
+	 * @rate Output data rate (units are milli-Hz)
 	 * @rnd Rounding flag. If true, it rounds up to nearest valid
 	 * value. Otherwise, it rounds down.
 	 * @return EC_SUCCESS if successful, non-zero if error.

@@ -539,6 +539,14 @@
 #undef CONFIG_FW_WP_RO_SIZE
 
 /*****************************************************************************/
+/* Motion sensor based gesture recognition */
+#undef CONFIG_GESTURE_DETECTION
+
+/* Sensor sampling interval for gesture recognition */
+#undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
+
+
+/*****************************************************************************/
 
 /*
  * Support the host asking the EC about the status of the most recent host

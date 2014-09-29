@@ -6,8 +6,10 @@
 /* Motion sense module to read from various motion sensors. */
 
 #include "accelgyro.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "gesture.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_angle.h"
@@ -42,9 +44,15 @@ static int lid_angle_is_reliable;
 #define MIN_POLLING_INTERVAL_MS 5
 #define MAX_POLLING_INTERVAL_MS 1000
 
+/* Define sensor sampling interval in suspend. */
+#ifdef CONFIG_GESTURE_DETECTION
+#define SUSPEND_SAMPLING_INTERVAL CONFIG_GESTURE_SAMPLING_INTERVAL_MS
+#else
+#define SUSPEND_SAMPLING_INTERVAL 100
+#endif
+
 /* Accelerometer polling intervals based on chipset state. */
 static int accel_interval_ap_on_ms = 10;
-static const int accel_interval_ap_suspend_ms = 100;
 
 /*
  * Angle threshold for how close the hinge aligns with gravity before
@@ -171,6 +179,11 @@ static void clock_chipset_shutdown(void)
 			sensor->drv->set_data_rate(sensor, 0, 0);
 		sensor->state = SENSOR_NOT_INITIALIZED;
 	}
+
+#ifdef CONFIG_GESTURE_DETECTION
+	/* run gesture module hook which may override default behavior */
+	gesture_chipset_shutdown();
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
@@ -178,7 +191,8 @@ static void clock_chipset_suspend(void)
 {
 	int i;
 	struct motion_sensor_t *sensor;
-	accel_interval_ms = accel_interval_ap_suspend_ms;
+
+	accel_interval_ms = SUSPEND_SAMPLING_INTERVAL;
 
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
@@ -191,6 +205,11 @@ static void clock_chipset_suspend(void)
 			sensor->state = SENSOR_NOT_INITIALIZED;
 		}
 	}
+
+#ifdef CONFIG_GESTURE_DETECTION
+	/* run gesture module hook which may override default behavior */
+	gesture_chipset_suspend();
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, clock_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -205,6 +224,11 @@ static void clock_chipset_resume(void)
 		sensor = &motion_sensors[i];
 		sensor->active = SENSOR_ACTIVE_S0;
 	}
+
+#ifdef CONFIG_GESTURE_DETECTION
+	/* run gesture module hook which may override default behavior */
+	gesture_chipset_resume();
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, clock_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -331,7 +355,8 @@ void motion_sense_task(void)
 	set_present(lpc_status);
 
 	/* Initialize sampling interval. */
-	accel_interval_ms = accel_interval_ap_suspend_ms;
+	accel_interval_ms = chipset_in_state(CHIPSET_STATE_ON) ?
+			accel_interval_ap_on_ms : SUSPEND_SAMPLING_INTERVAL;
 
 	while (1) {
 		ts0 = get_time();
@@ -364,10 +389,13 @@ void motion_sense_task(void)
 					sizeof(vector_3_t));
 		}
 
-		if (rd_cnt != motion_sensor_count) {
-			task_wait_event(TASK_MOTION_SENSE_WAIT_TIME);
-			continue;
-		}
+#ifdef CONFIG_GESTURE_DETECTION
+		/* Run gesture recognition engine */
+		gesture_calc();
+#endif
+
+		if (rd_cnt != motion_sensor_count)
+			goto motion_wait;
 
 		/* Calculate angle of lid accel. */
 		lid_angle_is_reliable = calculate_lid_angle(
@@ -405,6 +433,7 @@ void motion_sense_task(void)
 #endif
 		update_sense_data(lpc_status, lpc_data, &sample_id);
 
+motion_wait:
 		/* Delay appropriately to keep sampling time consistent. */
 		ts1 = get_time();
 		wait_us = accel_interval_ms * MSEC - (ts1.val-ts0.val);
