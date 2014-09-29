@@ -212,6 +212,9 @@ static void update_dynamic_battery_info(void)
 		break;
 	}
 
+	/* Tell the AP to re-read battery status if charge state changes */
+	if (*memmap_flags != tmp)
+		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
 	*memmap_flags = tmp;
 
 	/* Poke the AP if the full_capacity changes. */

@@ -275,6 +275,9 @@ enum host_event_code {
 	/* PD MCU triggering host event */
 	EC_HOST_EVENT_PD_MCU = 22,
 
+	/* Battery Status flags have changed */
+	EC_HOST_EVENT_BATTERY_STATUS = 23,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
