@@ -333,6 +333,8 @@ static inline int cycle_npn(uint16_t i)
 static uint32_t pending_msg;
 /* And here's the task event that we use to trigger delivery. */
 #define PENDING_MSG 1
+/* When a program halts, return this. */
+#define PROGRAM_FINISHED 2
 
 /* Interruptible delay. */
 #define WAIT_OR_RET(A) do { \
@@ -1235,13 +1237,20 @@ static uint32_t lightbyte_CYCLE(void)
 	return EC_SUCCESS;
 }
 
+/* HALT - return with success
+ * Show's over. Go back to what you were doing before.
+ */
+static uint32_t lightbyte_HALT(void)
+{
+	return PROGRAM_FINISHED;
+}
+
 #undef GET_INTERP_VALUE
 
 #define OP(X) X
 #include "lightbar_opcode_list.h"
 enum lightbyte_opcode {
 	LIGHTBAR_OPCODE_TABLE
-	HALT,
 	MAX_OPCODE
 };
 #undef OP
@@ -1257,7 +1266,6 @@ static uint32_t (*lightbyte_dispatch[])(void) = {
 #include "lightbar_opcode_list.h"
 static const char * const lightbyte_names[] = {
 	LIGHTBAR_OPCODE_TABLE
-	"HALT"
 };
 #undef OP
 
@@ -1283,11 +1291,7 @@ static uint32_t sequence_PROGRAM(void)
 		if (decode_8(&next_inst) != EC_SUCCESS)
 			return EC_RES_INVALID_PARAM;
 
-		if (next_inst == HALT) {
-			CPRINTS("LB PROGRAM pc: 0x%02x, halting", old_pc);
-			lb_set_brightness(saved_brightness);
-			return 0;
-		} else if (next_inst >= MAX_OPCODE) {
+		if (next_inst >= MAX_OPCODE) {
 			CPRINTS("LB PROGRAM pc: 0x%02x, "
 				"found invalid opcode 0x%02x",
 				old_pc, next_inst);

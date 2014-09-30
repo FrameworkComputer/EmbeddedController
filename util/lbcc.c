@@ -67,7 +67,6 @@ struct safe_lb_program {
 #include "lightbar_opcode_list.h"
 enum lightbyte_opcode {
 	LIGHTBAR_OPCODE_TABLE
-	HALT,
 	MAX_OPCODE
 };
 #undef OP
