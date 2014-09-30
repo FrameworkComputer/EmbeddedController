@@ -1017,12 +1017,7 @@ static inline uint32_t decode_32(uint32_t *dest)
  */
 static uint32_t lightbyte_JUMP(void)
 {
-	uint8_t new_pc;
-	if (decode_8(&new_pc) != EC_SUCCESS)
-		return EC_RES_INVALID_PARAM;
-
-	pc = new_pc;
-	return EC_SUCCESS;
+	return decode_8(&pc);
 }
 
 /* DELAY xx xx xx xx - yield processor for some time
@@ -1115,12 +1110,7 @@ static uint32_t lightbyte_SET_COLOR(void)
  */
 static uint32_t lightbyte_SET_DELAY_TIME(void)
 {
-	uint32_t delay_us;
-	if (decode_32(&delay_us) != EC_SUCCESS)
-		return EC_RES_INVALID_PARAM;
-
-	lb_ramp_delay = delay_us;
-	return EC_SUCCESS;
+	return decode_32(&lb_ramp_delay);
 }
 
 static inline int get_interp_value(int led, int color, int interp)
