@@ -94,6 +94,10 @@ GPIO(USB2_ILIM_SEL_L,     D, 6, GPIO_OUT_HIGH, NULL) /* USB charger port 2 ILIM_
 
 GPIO(I2C0_SCL,            B, 2, GPIO_ODR_HIGH, NULL) /* I2C port 0 SCL */
 GPIO(I2C0_SDA,            B, 3, GPIO_ODR_HIGH, NULL) /* I2C port 0 SDA */
+GPIO(I2C1_SCL,            A, 6, GPIO_ODR_HIGH, NULL) /* I2C port 1 SCL */
+GPIO(I2C1_SDA,            A, 7, GPIO_ODR_HIGH, NULL) /* I2C port 1 SDA */
+GPIO(I2C5_SCL,            B, 6, GPIO_ODR_HIGH, NULL) /* I2C port 5 SCL */
+GPIO(I2C5_SDA,            B, 7, GPIO_ODR_HIGH, NULL) /* I2C port 5 SDA */
 
 ALTERNATE(A, 0x03, 1,  MODULE_UART, 0)               /* UART0 */
 ALTERNATE(A, 0x40, 3,  MODULE_I2C,  0)               /* I2C1 SCL */
