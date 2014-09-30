@@ -1120,30 +1120,21 @@ static inline int get_interp_value(int led, int color, int interp)
 	return base + (delta * interp / FP_SCALE);
 }
 
-/* RAMP_ONCE - simple gradient or color set
- * If the ramp delay is set to zero, then this sets the color of
- * all LEDs to their respective COLOR1.
- * If the ramp delay is nonzero, then this sets their color to
- * their respective COLOR0, and takes them via interpolation to
- * COLOR1, with the delay time passing in between each step.
- */
-static uint32_t lightbyte_RAMP_ONCE(void)
+static void set_all_leds(int color)
 {
-	int w, i, r, g, b;
-	int f;
-
-	/* special case for instantaneous set */
-	if (lb_ramp_delay == 0) {
-		for (i = 0; i < NUM_LEDS; i++) {
-			r = led_desc[i][LB_CONT_COLOR1][LB_COL_RED];
-			g = led_desc[i][LB_CONT_COLOR1][LB_COL_GREEN];
-			b = led_desc[i][LB_CONT_COLOR1][LB_COL_BLUE];
-			lb_set_rgb(i, r, g, b);
-		}
-		return EC_SUCCESS;
+	int i, r, g, b;
+	for (i = 0; i < NUM_LEDS; i++) {
+		r = led_desc[i][color][LB_COL_RED];
+		g = led_desc[i][color][LB_COL_GREEN];
+		b = led_desc[i][color][LB_COL_BLUE];
+		lb_set_rgb(i, r, g, b);
 	}
+}
 
-	for (w = 0; w < 128; w++) {
+static uint32_t ramp_all_leds(int stop_at)
+{
+	int w, i, r, g, b, f;
+	for (w = 0; w < stop_at; w++) {
 		f = cycle_010(w);
 		for (i = 0; i < NUM_LEDS; i++) {
 			r = get_interp_value(i, LB_COL_RED, f);
@@ -1156,6 +1147,24 @@ static uint32_t lightbyte_RAMP_ONCE(void)
 	return EC_SUCCESS;
 }
 
+/* RAMP_ONCE - simple gradient or color set
+ * If the ramp delay is set to zero, then this sets the color of
+ * all LEDs to their respective COLOR1.
+ * If the ramp delay is nonzero, then this sets their color to
+ * their respective COLOR0, and takes them via interpolation to
+ * COLOR1, with the delay time passing in between each step.
+ */
+static uint32_t lightbyte_RAMP_ONCE(void)
+{
+	/* special case for instantaneous set */
+	if (lb_ramp_delay == 0) {
+		set_all_leds(LB_CONT_COLOR1);
+		return EC_SUCCESS;
+	}
+
+	return ramp_all_leds(128);
+}
+
 /* CYCLE_ONCE - simple cycle or color set
  * If the ramp delay is zero, then this sets the color of all LEDs
  * to their respective COLOR0.
@@ -1165,31 +1174,13 @@ static uint32_t lightbyte_RAMP_ONCE(void)
  */
 static uint32_t lightbyte_CYCLE_ONCE(void)
 {
-	int w, i, r, g, b;
-	int f;
-
 	/* special case for instantaneous set */
 	if (lb_ramp_delay == 0) {
-		for (i = 0; i < NUM_LEDS; i++) {
-			r = led_desc[i][LB_CONT_COLOR0][LB_COL_RED];
-			g = led_desc[i][LB_CONT_COLOR0][LB_COL_GREEN];
-			b = led_desc[i][LB_CONT_COLOR0][LB_COL_BLUE];
-			lb_set_rgb(i, r, g, b);
-		}
+		set_all_leds(LB_CONT_COLOR0);
 		return EC_SUCCESS;
 	}
 
-	for (w = 0; w < 256; w++) {
-		f = cycle_010(w);
-		for (i = 0; i < NUM_LEDS; i++) {
-			r = get_interp_value(i, LB_COL_RED, f);
-			g = get_interp_value(i, LB_COL_GREEN, f);
-			b = get_interp_value(i, LB_COL_BLUE, f);
-			lb_set_rgb(i, r, g, b);
-		}
-		WAIT_OR_RET(lb_ramp_delay);
-	}
-	return EC_SUCCESS;
+	return ramp_all_leds(256);
 }
 
 /* CYCLE - repeating cycle
