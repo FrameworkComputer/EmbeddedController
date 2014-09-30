@@ -86,6 +86,13 @@ test_mockable void keyboard_raw_drive_column(int out)
 			}
 		}
 
+	#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		if (bsrr & (gpio_list[GPIO_KB_OUT02].mask << 16 |
+				 gpio_list[GPIO_KB_OUT02].mask))
+			bsrr ^= (gpio_list[GPIO_KB_OUT02].mask << 16 |
+				 gpio_list[GPIO_KB_OUT02].mask);
+	#endif
+
 		if (bsrr)
 			STM32_GPIO_BSRR(kb_out_ports[i]) = bsrr;
 
