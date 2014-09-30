@@ -1889,54 +1889,39 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			NULL);
 #endif /* CONFIG_USBC_SS_MUX */
 
+static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
+	[USB_PD_CTRL_ROLE_TOGGLE_ON]    = PD_DRP_TOGGLE_ON,
+	[USB_PD_CTRL_ROLE_TOGGLE_OFF]   = PD_DRP_TOGGLE_OFF,
+	[USB_PD_CTRL_ROLE_FORCE_SINK]   = PD_DRP_FORCE_SINK,
+	[USB_PD_CTRL_ROLE_FORCE_SOURCE] = PD_DRP_FORCE_SOURCE,
+};
+
+#ifdef CONFIG_USBC_SS_MUX
+static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
+	[USB_PD_CTRL_MUX_NONE] = TYPEC_MUX_NONE,
+	[USB_PD_CTRL_MUX_USB]  = TYPEC_MUX_USB,
+	[USB_PD_CTRL_MUX_AUTO] = TYPEC_MUX_DP,
+	[USB_PD_CTRL_MUX_DP]   = TYPEC_MUX_DP,
+	[USB_PD_CTRL_MUX_DOCK] = TYPEC_MUX_DOCK,
+};
+#endif
+
 static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_control *p = args->params;
 	struct ec_response_usb_pd_control *r = args->response;
 
-	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE) {
-		enum pd_dual_role_states role;
-		switch (p->role) {
-		case USB_PD_CTRL_ROLE_TOGGLE_ON:
-			role = PD_DRP_TOGGLE_ON;
-			break;
-		case USB_PD_CTRL_ROLE_TOGGLE_OFF:
-			role = PD_DRP_TOGGLE_OFF;
-			break;
-		case USB_PD_CTRL_ROLE_FORCE_SINK:
-			role = PD_DRP_FORCE_SINK;
-			break;
-		case USB_PD_CTRL_ROLE_FORCE_SOURCE:
-			role = PD_DRP_FORCE_SOURCE;
-			break;
-		default:
-			return EC_RES_INVALID_PARAM;
-		}
-		pd_set_dual_role(role);
-	}
+	if (p->role >= USB_PD_CTRL_ROLE_COUNT ||
+	    p->mux >= USB_PD_CTRL_MUX_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	if (p->role != USB_PD_CTRL_ROLE_NO_CHANGE)
+		pd_set_dual_role(dual_role_map[p->role]);
 
 #ifdef CONFIG_USBC_SS_MUX
-	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE) {
-		enum typec_mux mux;
-		switch (p->mux) {
-		case USB_PD_CTRL_MUX_NONE:
-			mux = TYPEC_MUX_NONE;
-			break;
-		case USB_PD_CTRL_MUX_USB:
-			mux = TYPEC_MUX_USB;
-			break;
-		case USB_PD_CTRL_MUX_AUTO:
-		case USB_PD_CTRL_MUX_DP:
-			mux = TYPEC_MUX_DP;
-			break;
-		case USB_PD_CTRL_MUX_DOCK:
-			mux = TYPEC_MUX_DOCK;
-			break;
-		default:
-			return EC_RES_INVALID_PARAM;
-		}
-		board_set_usb_mux(p->port, mux, pd_get_polarity(p->port));
-	}
+	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
+		board_set_usb_mux(p->port, typec_mux_map[p->mux],
+				  pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
 	r->enabled = pd_comm_enabled;
 	r->role = pd[p->port].role;
