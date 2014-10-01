@@ -1539,7 +1539,9 @@ static int help(const char *cmd)
 	ccprintf("  %s LED                   - get current LED color\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
 	ccprintf("  %s params                - show current params\n", cmd);
+#ifdef LIGHTBAR_SIMULATION
 	ccprintf("  %s program filename      - load lightbyte program\n", cmd);
+#endif
 	ccprintf("  %s version               - show current version\n", cmd);
 	return EC_SUCCESS;
 }
@@ -1711,14 +1713,11 @@ static int command_lightbar(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (argc >= 3 && !strcasecmp(argv[1], "program")) {
 #ifdef LIGHTBAR_SIMULATION
+	if (argc >= 3 && !strcasecmp(argv[1], "program")) {
 		return lb_load_program(argv[2], &next_prog);
-#else
-		ccprintf("can't load program from console\n");
-		return EC_ERROR_INVAL;
-#endif
 	}
+#endif
 
 	if (argc == 4) {
 		struct ec_params_lightbar in;
