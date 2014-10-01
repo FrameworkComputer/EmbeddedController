@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Battery LED and Power LED control for Veyron
+ * Battery LED and Power LED control for pinky
  */
 
 #include "gpio.h"
@@ -66,7 +66,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 }
 
-static void veyron_led_set_power(void)
+static void pinky_led_set_power(void)
 {
 	static int power_second;
 
@@ -86,7 +86,7 @@ static void veyron_led_set_power(void)
 }
 
 
-static void veyron_led_set_battery(void)
+static void pinky_led_set_battery(void)
 {
 	static int battery_second;
 
@@ -131,9 +131,9 @@ static void veyron_led_set_battery(void)
 static void led_second(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		veyron_led_set_power();
+		pinky_led_set_power();
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		veyron_led_set_battery();
+		pinky_led_set_battery();
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
 

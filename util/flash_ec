@@ -72,7 +72,7 @@ BOARDS_STM32=(
 	samus_pd
 	snow
 	spring
-	veyron
+	pinky
 	zinger
 	minimuffin
 )
