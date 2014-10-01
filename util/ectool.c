@@ -153,6 +153,8 @@ const char help_str[] =
 	"      Prints current fan RPM\n"
 	"  pwmgetkblight\n"
 	"      Prints current keyboard backlight percent\n"
+	"  pwmgetnumfans\n"
+	"      Prints the number of fans present\n"
 	"  pwmsetfanrpm <targetrpm>\n"
 	"      Set target fan RPM\n"
 	"  pwmsetkblight <percent>\n"
@@ -1420,28 +1422,50 @@ static int print_fan(int idx)
 	return 0;
 }
 
+static int get_num_fans(void)
+{
+	int idx, rv;
+
+	for (idx = 0; idx < EC_FAN_SPEED_ENTRIES; idx++) {
+		rv = read_mapped_mem16(EC_MEMMAP_FAN + 2 * idx);
+		if (rv == EC_FAN_SPEED_NOT_PRESENT)
+			break;
+	}
+
+	return idx;
+}
+
+int cmd_pwm_get_num_fans(int argc, char *argv[])
+{
+	int num_fans;
+
+	num_fans = get_num_fans();
+
+	printf("Number of fans = %d\n", num_fans);
+
+	return 0;
+}
+
 int cmd_pwm_get_fan_rpm(int argc, char *argv[])
 {
-	int i;
+	int i, num_fans;
 
+	num_fans = get_num_fans();
 	if (argc < 2 || !strcasecmp(argv[1], "all")) {
 		/* Print all the fan speeds */
-		for (i = 0; i < EC_FAN_SPEED_ENTRIES; i++) {
-			if (print_fan(i))
-				break;  /* Stop at first not-present fan */
-		}
-
+		for (i = 0; i < num_fans; i++)
+			print_fan(i);
 	} else {
 		char *e;
 		int idx;
 
 		idx = strtol(argv[1], &e, 0);
-		if ((e && *e) || idx < 0 || idx >= EC_FAN_SPEED_ENTRIES) {
+		if ((e && *e) || idx < 0 || idx >= num_fans) {
 			fprintf(stderr, "Bad index.\n");
 			return -1;
 		}
 
-		return print_fan(idx);
+		print_fan(idx);
 	}
 
 	return 0;
@@ -4854,6 +4878,7 @@ const struct command commands[] = {
 	{"pstorewrite", cmd_pstore_write},
 	{"pwmgetfanrpm", cmd_pwm_get_fan_rpm},
 	{"pwmgetkblight", cmd_pwm_get_keyboard_backlight},
+	{"pwmgetnumfans", cmd_pwm_get_num_fans},
 	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
 	{"readtest", cmd_read_test},
