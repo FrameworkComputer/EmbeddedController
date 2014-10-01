@@ -210,7 +210,8 @@ fi
 function ec_image() {
 	# No image specified on the command line, try default ones
 	if [[ -n "${FLAGS_image}" ]] ; then
-		if [ -f "${FLAGS_image}" ]; then
+		if [ -f "${FLAGS_image}" ] || \
+		   [ "${FLAGS_image}" == "-" ]; then
 			echo "${FLAGS_image}"
 			return
 		fi

@@ -734,7 +734,10 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 		return -ENOMEM;
 	}
 
-	hnd = fopen(filename, "r");
+	if (!strncmp(filename, "-", sizeof("-")))
+		hnd = fdopen(STDIN_FILENO, "r");
+	else
+		hnd = fopen(filename, "r");
 	if (!hnd) {
 		fprintf(stderr, "Cannot open file %s for reading\n", filename);
 		free(buffer);
@@ -792,8 +795,8 @@ void display_usage(char *program)
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
 	fprintf(stderr, "--r[ead] <file> : read the flash content and "
 			"write it into <file>\n");
-	fprintf(stderr, "--w[rite] <file> : read <file> and "
-			"write it to flash\n");
+	fprintf(stderr, "--w[rite] <file|-> : read <file> or\n\t"
+			"standard input and write it to flash\n");
 	fprintf(stderr, "--g[o] : jump to execute flash entrypoint\n");
 
 	exit(2);
