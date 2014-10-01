@@ -44,6 +44,7 @@ hooks-y=hooks.o
 host_command-y=host_command.o
 inductive_charging-y=inductive_charging.o
 interrupt-y=interrupt.o
+interrupt-scale=10
 kb_8042-y=kb_8042.o
 kb_mkbp-y=kb_mkbp.o
 kb_scan-y=kb_scan.o

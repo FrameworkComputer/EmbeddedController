@@ -84,7 +84,6 @@ static void __attribute__((noinline)) _task_dump_trace_dispatch(int sig)
 		pthread_kill(task_get_thread(running), SIGNAL_TRACE_DUMP);
 	} else {
 		_task_dump_trace_impl(SIGNAL_TRACE_OFFSET);
-		udelay(100 * MSEC); /* Leave time for stderr to flush */
 		exit(1);
 	}
 }
