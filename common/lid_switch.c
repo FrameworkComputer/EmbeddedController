@@ -21,6 +21,7 @@
 #define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 
 static int debounced_lid_open;		/* Debounced lid state */
+static int forced_lid_open;	/* Forced lid open */
 
 /**
  * Get raw lid switch state.
@@ -29,7 +30,7 @@ static int debounced_lid_open;		/* Debounced lid state */
  */
 static int raw_lid_open(void)
 {
-	return gpio_get_level(GPIO_LID_OPEN) ? 1 : 0;
+	return (forced_lid_open || gpio_get_level(GPIO_LID_OPEN)) ? 1 : 0;
 }
 
 /**
@@ -125,3 +126,21 @@ DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
 			NULL,
 			"Simulate lid close",
 			NULL);
+
+/**
+ * Host command to enable/disable lid opened.
+ */
+static int hc_force_lid_open(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_force_lid_open *p = args->params;
+
+	/* Override lid open if necessary */
+	forced_lid_open = p->enabled ? 1 : 0;
+
+	/* Make this take effect immediately; no debounce time */
+	hook_call_deferred(lid_change_deferred, 0);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FORCE_LID_OPEN, hc_force_lid_open,
+		     EC_VER_MASK(0));

@@ -1466,6 +1466,16 @@ struct ec_response_motion_sense {
 } __packed;
 
 /*****************************************************************************/
+/* Force lid open command */
+
+/* Make lid event always open */
+#define EC_CMD_FORCE_LID_OPEN 0x2c
+
+struct ec_params_force_lid_open {
+	uint8_t enabled;
+} __packed;
+
+/*****************************************************************************/
 /* USB charging control commands */
 
 /* Set USB port charging mode */
