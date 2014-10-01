@@ -28,8 +28,6 @@ void lb_init(void);
 void lb_off(void);
 /* Enable the LED current. */
 void lb_on(void);
-/* Instruct the IC to run a built-in sequence of color changes. */
-void lb_start_builtin_cycle(void);
 /* Fill in the response fields for the LIGHTBAR_CMD_DUMP command. */
 void lb_hc_cmd_dump(struct ec_response_lightbar *out);
 /* Write the IC controller register given by the LIGHTBAR_CMD_REG command. */

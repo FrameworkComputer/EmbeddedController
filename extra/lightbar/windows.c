@@ -233,7 +233,6 @@ void lb_on(void)
 	fake_power = 1;
 	update_window();
 };
-void lb_start_builtin_cycle(void) { };
 void lb_hc_cmd_dump(struct ec_response_lightbar *out)
 {
 	printf("lightbar is %s\n", fake_power ? "on" : "off");

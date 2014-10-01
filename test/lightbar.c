@@ -56,69 +56,69 @@ static int test_double_oneshots(void)
 {
 	/* Start in S0 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 	/* Invoke the oneshot */
-	TEST_ASSERT(set_seq(LIGHTBAR_TEST) == EC_RES_SUCCESS);
-	msleep(MSEC);
-	TEST_ASSERT(get_seq() == LIGHTBAR_TEST);
+	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
+	usleep(SECOND);
+	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
 	/* Switch to a different oneshot while that one's running */
 	TEST_ASSERT(set_seq(LIGHTBAR_KONAMI) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_KONAMI);
 	/* Afterwards, it should go back to the original normal state */
-	msleep(30 * MSEC);
+	usleep(30 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 
 	/* Same test, but with a bunch more oneshots. */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
-	TEST_ASSERT(set_seq(LIGHTBAR_TEST) == EC_RES_SUCCESS);
-	msleep(MSEC);
-	TEST_ASSERT(get_seq() == LIGHTBAR_TEST);
+	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
+	usleep(SECOND);
+	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
 	TEST_ASSERT(set_seq(LIGHTBAR_KONAMI) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_KONAMI);
 	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
-	TEST_ASSERT(set_seq(LIGHTBAR_PULSE) == EC_RES_SUCCESS);
-	msleep(MSEC);
-	TEST_ASSERT(get_seq() == LIGHTBAR_PULSE);
 	TEST_ASSERT(set_seq(LIGHTBAR_KONAMI) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_KONAMI);
+	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
+	usleep(SECOND);
+	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
 	/* It should still go back to the original normal state */
-	msleep(30 * MSEC);
+	usleep(30 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 
 	/* But if the interruption is a normal state, that should stick. */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
-	TEST_ASSERT(set_seq(LIGHTBAR_TEST) == EC_RES_SUCCESS);
-	msleep(MSEC);
-	TEST_ASSERT(get_seq() == LIGHTBAR_TEST);
+	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
+	usleep(SECOND);
+	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
 	TEST_ASSERT(set_seq(LIGHTBAR_KONAMI) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_KONAMI);
 	/* Here's a normal sequence */
 	TEST_ASSERT(set_seq(LIGHTBAR_S3) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 	/* And another one-shot */
 	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
-	TEST_ASSERT(set_seq(LIGHTBAR_PULSE) == EC_RES_SUCCESS);
-	msleep(MSEC);
-	TEST_ASSERT(get_seq() == LIGHTBAR_PULSE);
 	TEST_ASSERT(set_seq(LIGHTBAR_KONAMI) == EC_RES_SUCCESS);
-	msleep(MSEC);
+	usleep(SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_KONAMI);
+	TEST_ASSERT(set_seq(LIGHTBAR_TAP) == EC_RES_SUCCESS);
+	usleep(SECOND);
+	TEST_ASSERT(get_seq() == LIGHTBAR_TAP);
 	/* It should go back to the new normal sequence */
-	msleep(30 * MSEC);
+	usleep(30 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 
 	return EC_SUCCESS;
@@ -128,8 +128,6 @@ static int test_oneshots_norm_msg(void)
 {
 	/* Revert to the next state when interrupted with a normal message. */
 	enum lightbar_sequence seqs[] = {
-		LIGHTBAR_PULSE,
-		LIGHTBAR_TEST,
 		LIGHTBAR_KONAMI,
 		LIGHTBAR_TAP,
 	};
@@ -138,17 +136,17 @@ static int test_oneshots_norm_msg(void)
 	for (i = 0; i < ARRAY_SIZE(seqs); i++) {
 		/* Start in S0 */
 		TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		/* Invoke the oneshot */
 		TEST_ASSERT(set_seq(seqs[i]) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		/* Interrupt with S0S3 */
 		TEST_ASSERT(set_seq(LIGHTBAR_S0S3) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		/* It should be back right away */
 		TEST_ASSERT(get_seq() == LIGHTBAR_S0S3);
 		/* And transition on to the correct value */
-		msleep(30 * MSEC);
+		usleep(30 * SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 	}
 
@@ -162,14 +160,14 @@ static int test_stop_timeout(void)
 	for (i = 0; i < LIGHTBAR_NUM_SEQUENCES; i++) {
 		/* Start in S0 */
 		TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		/* Tell it to stop */
 		TEST_ASSERT(set_seq(LIGHTBAR_STOP) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_STOP);
 		/* Try to interrupt it */
 		TEST_ASSERT(set_seq(i) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		/* What happened? */
 		if (i == LIGHTBAR_RUN ||
 		    i == LIGHTBAR_S0S3 || i ==  LIGHTBAR_S3 ||
@@ -182,7 +180,7 @@ static int test_stop_timeout(void)
 
 		/* Let it RUN again for the next iteration */
 		TEST_ASSERT(set_seq(LIGHTBAR_RUN) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 	}
 
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
@@ -194,7 +192,6 @@ static int test_oneshots_timeout(void)
 	/* These should revert to the previous state after running */
 	enum lightbar_sequence seqs[] = {
 		LIGHTBAR_RUN,
-		LIGHTBAR_TEST,
 		LIGHTBAR_KONAMI,
 		LIGHTBAR_TAP,
 	};
@@ -202,15 +199,15 @@ static int test_oneshots_timeout(void)
 
 	for (i = 0; i < ARRAY_SIZE(seqs); i++) {
 		TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
-		msleep(MSEC);
+		usleep(SECOND);
 		TEST_ASSERT(set_seq(seqs[i]) == EC_RES_SUCCESS);
 		/* Assume the oneshot sequence takes at least a second (except
 		 * for LIGHTBAR_RUN, which returns immediately) */
 		if (seqs[i] != LIGHTBAR_RUN) {
-			msleep(MSEC);
+			usleep(SECOND);
 			TEST_ASSERT(get_seq() == seqs[i]);
 		}
-		msleep(30 * MSEC);
+		usleep(30 * SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 	}
 
@@ -221,22 +218,22 @@ static int test_transition_states(void)
 {
 	/* S5S3 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S5S3) == EC_RES_SUCCESS);
-	msleep(10 * MSEC);
+	usleep(10 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 
 	/* S3S0 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S3S0) == EC_RES_SUCCESS);
-	msleep(10 * MSEC);
+	usleep(10 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S0);
 
 	/* S0S3 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0S3) == EC_RES_SUCCESS);
-	msleep(10 * MSEC);
+	usleep(10 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 
 	/* S3S5 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S3S5) == EC_RES_SUCCESS);
-	msleep(10 * MSEC);
+	usleep(10 * SECOND);
 	TEST_ASSERT(get_seq() == LIGHTBAR_S5);
 
 	return EC_SUCCESS;
@@ -254,29 +251,22 @@ static int test_stable_states(void)
 
 	/* It should stay there */
 	for (i = 0; i < 30; i++) {
-		msleep(MSEC);
+		usleep(SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_S5);
 	}
 
 	/* S3 is sticky, too */
 	TEST_ASSERT(set_seq(LIGHTBAR_S3) == EC_RES_SUCCESS);
 	for (i = 0; i < 30; i++) {
-		msleep(MSEC);
+		usleep(SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_S3);
 	}
 
 	/* And S0 */
 	TEST_ASSERT(set_seq(LIGHTBAR_S0) == EC_RES_SUCCESS);
 	for (i = 0; i < 30; i++) {
-		msleep(MSEC);
+		usleep(SECOND);
 		TEST_ASSERT(get_seq() == LIGHTBAR_S0);
-	}
-
-	/* PULSE is stable too, but nobody should care. Test it anyway. */
-	TEST_ASSERT(set_seq(LIGHTBAR_PULSE) == EC_RES_SUCCESS);
-	for (i = 0; i < 30; i++) {
-		msleep(MSEC);
-		TEST_ASSERT(get_seq() == LIGHTBAR_PULSE);
 	}
 
 	return EC_SUCCESS;

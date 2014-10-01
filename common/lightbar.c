@@ -639,75 +639,6 @@ static uint32_t sequence_S5(void)
 	return 0;
 }
 
-/* Used by factory. */
-static uint32_t sequence_TEST_inner(void)
-{
-	int i, k, r, g, b;
-	int kmax = 254;
-	int kstep = 8;
-
-	static const struct rgb_s testcolors[] = {
-		{0xff, 0x00, 0x00},
-		{0xff, 0xff, 0x00},
-		{0x00, 0xff, 0x00},
-		{0x00, 0x00, 0xff},
-		{0x00, 0xff, 0xff},
-		{0xff, 0x00, 0xff},
-		{0xff, 0xff, 0xff},
-	};
-
-	lb_init();
-	lb_on();
-	for (i = 0; i < ARRAY_SIZE(testcolors); i++) {
-		for (k = 0; k <= kmax; k += kstep) {
-			r = testcolors[i].r ? k : 0;
-			g = testcolors[i].g ? k : 0;
-			b = testcolors[i].b ? k : 0;
-			lb_set_rgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(10000);
-		}
-		for (k = kmax; k >= 0; k -= kstep) {
-			r = testcolors[i].r ? k : 0;
-			g = testcolors[i].g ? k : 0;
-			b = testcolors[i].b ? k : 0;
-			lb_set_rgb(NUM_LEDS, r, g, b);
-			WAIT_OR_RET(10000);
-		}
-	}
-
-	lb_set_rgb(NUM_LEDS, 0, 0, 0);
-	return 0;
-}
-
-static uint32_t sequence_TEST(void)
-{
-	int tmp;
-	uint32_t r;
-
-	/* Force brightness to max, then restore it */
-	tmp = lb_get_brightness();
-	lb_set_brightness(255);
-	r = sequence_TEST_inner();
-	lb_set_brightness(tmp);
-	return r;
-}
-
-static uint32_t sequence_PULSE(void)
-{
-	uint32_t msg;
-
-	lb_init();
-	lb_on();
-
-	lb_start_builtin_cycle();
-
-	/* Not using WAIT_OR_RET() here, because we want to clean up when we're
-	 * done. The only way out is to get a message. */
-	msg = task_wait_event(-1);
-	lb_init();
-	return TASK_EVENT_CUSTOM(msg);
-}
-
 /* The AP is going to poke at the lightbar directly, so we don't want the EC
  * messing with it. We'll just sit here and ignore all other messages until
  * we're told to continue (or until we think the AP is shutting down).
@@ -1351,7 +1282,6 @@ void lightbar_task(void)
 			case LIGHTBAR_S3S5:
 				st.cur_seq = LIGHTBAR_S5;
 				break;
-			case LIGHTBAR_TEST:
 			case LIGHTBAR_STOP:
 			case LIGHTBAR_RUN:
 			case LIGHTBAR_ERROR:

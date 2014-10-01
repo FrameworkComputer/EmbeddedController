@@ -17,8 +17,6 @@
 	LBMSG(S3S5),		/* 7 */		\
 	LBMSG(STOP),		/* 8 */		\
 	LBMSG(RUN),		/* 9 */		\
-	LBMSG(PULSE),		/* A */		\
-	LBMSG(TEST),		/* B */		\
-	LBMSG(KONAMI),		/* C */         \
-	LBMSG(TAP),		/* D */		\
-	LBMSG(PROGRAM),		/* E */
+	LBMSG(KONAMI),		/* A */         \
+	LBMSG(TAP),		/* B */		\
+	LBMSG(PROGRAM),		/* C */

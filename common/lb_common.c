@@ -223,32 +223,6 @@ void lb_on(void)
 	controller_write(1, 0x01, 0x20);
 }
 
-/*
- * This sets up the auto-cycling features of the controllers to make a
- * semi-random pattern of slowly fading colors. This is interesting only
- * because it doesn't require any effort from the EC.
-*/
-void lb_start_builtin_cycle(void)
-{
-	int r = scale(255, MAX_RED);
-	int g = scale(255, MAX_BLUE);
-	int b = scale(255, MAX_GREEN);
-	struct initdata_s pulse_vals[] = {
-		{0x11, 0xce},
-		{0x12, 0x67},
-		{0x13, 0xef},
-		{0x15, b},
-		{0x16, r},
-		{0x17, g},
-		{0x18, b},
-		{0x19, r},
-		{0x1a, g},
-	};
-
-	set_from_array(pulse_vals, ARRAY_SIZE(pulse_vals));
-	controller_write(1, 0x13, 0xcd);	/* this one's different */
-}
-
 static const uint8_t dump_reglist[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a,			  0x0f,
