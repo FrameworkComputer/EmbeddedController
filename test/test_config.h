@@ -116,5 +116,12 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_LIGHTBAR 1
 #endif
 
+#ifdef TEST_USB_PD
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_CUSTOM_VDM
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_SW_CRC
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __CROS_EC_TEST_CONFIG_H */
