@@ -1538,7 +1538,6 @@ static int help(const char *cmd)
 		 " (LED=%d for all)\n", cmd, NUM_LEDS);
 	ccprintf("  %s LED                   - get current LED color\n", cmd);
 	ccprintf("  %s demo [0|1]            - turn demo mode on & off\n", cmd);
-	ccprintf("  %s params                - show current params\n", cmd);
 #ifdef LIGHTBAR_SIMULATION
 	ccprintf("  %s program filename      - load lightbyte program\n", cmd);
 #endif
@@ -1565,65 +1564,6 @@ static void show_msg_names(void)
 		ccprintf(" %s", lightbar_cmds[i].string);
 	ccprintf("\nCurrent = 0x%x %s\n", st.cur_seq,
 		 lightbar_cmds[st.cur_seq].string);
-}
-
-static void show_params_v1(const struct lightbar_params_v1 *p)
-{
-	int i;
-
-	ccprintf("%d\t\t# .google_ramp_up\n", p->google_ramp_up);
-	ccprintf("%d\t\t# .google_ramp_down\n", p->google_ramp_down);
-	ccprintf("%d\t\t# .s3s0_ramp_up\n", p->s3s0_ramp_up);
-	ccprintf("%d\t\t# .s0_tick_delay (battery)\n", p->s0_tick_delay[0]);
-	ccprintf("%d\t\t# .s0_tick_delay (AC)\n", p->s0_tick_delay[1]);
-	ccprintf("%d\t\t# .s0a_tick_delay (battery)\n", p->s0a_tick_delay[0]);
-	ccprintf("%d\t\t# .s0a_tick_delay (AC)\n", p->s0a_tick_delay[1]);
-	ccprintf("%d\t\t# .s0s3_ramp_down\n", p->s0s3_ramp_down);
-	ccprintf("%d\t\t# .s3_sleep_for\n", p->s3_sleep_for);
-	ccprintf("%d\t\t# .s3_ramp_up\n", p->s3_ramp_up);
-	ccprintf("%d\t\t# .s3_ramp_down\n", p->s3_ramp_down);
-	ccprintf("%d\t\t# .tap_tick_delay\n", p->tap_tick_delay);
-	ccprintf("%d\t\t# .tap_display_time\n", p->tap_display_time);
-	ccprintf("%d\t\t# .tap_pct_red\n", p->tap_pct_red);
-	ccprintf("%d\t\t# .tap_pct_green\n", p->tap_pct_green);
-	ccprintf("%d\t\t# .tap_seg_min_on\n", p->tap_seg_min_on);
-	ccprintf("%d\t\t# .tap_seg_max_on\n", p->tap_seg_max_on);
-	ccprintf("%d\t\t# .tap_seg_osc\n", p->tap_seg_osc);
-	ccprintf("%d %d %d\t\t# .tap_idx\n",
-		 p->tap_idx[0], p->tap_idx[1], p->tap_idx[2]);
-	ccprintf("0x%02x 0x%02x\t# .osc_min (battery, AC)\n",
-		 p->osc_min[0], p->osc_min[1]);
-	ccprintf("0x%02x 0x%02x\t# .osc_max (battery, AC)\n",
-		 p->osc_max[0], p->osc_max[1]);
-	ccprintf("%d %d\t\t# .w_ofs (battery, AC)\n",
-		 p->w_ofs[0], p->w_ofs[1]);
-	ccprintf("0x%02x 0x%02x\t# .bright_bl_off_fixed (battery, AC)\n",
-		 p->bright_bl_off_fixed[0], p->bright_bl_off_fixed[1]);
-	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_min (battery, AC)\n",
-		 p->bright_bl_on_min[0], p->bright_bl_on_min[1]);
-	ccprintf("0x%02x 0x%02x\t# .bright_bl_on_max (battery, AC)\n",
-		 p->bright_bl_on_max[0], p->bright_bl_on_max[1]);
-	ccprintf("%d %d %d\t# .battery_threshold\n",
-		 p->battery_threshold[0],
-		 p->battery_threshold[1],
-		 p->battery_threshold[2]);
-	ccprintf("%d %d %d %d\t\t# .s0_idx[] (battery)\n",
-		 p->s0_idx[0][0], p->s0_idx[0][1],
-		 p->s0_idx[0][2], p->s0_idx[0][3]);
-	ccprintf("%d %d %d %d\t\t# .s0_idx[] (AC)\n",
-		 p->s0_idx[1][0], p->s0_idx[1][1],
-		 p->s0_idx[1][2], p->s0_idx[1][3]);
-	ccprintf("%d %d %d %d\t# .s3_idx[] (battery)\n",
-		 p->s3_idx[0][0], p->s3_idx[0][1],
-		 p->s3_idx[0][2], p->s3_idx[0][3]);
-	ccprintf("%d %d %d %d\t# .s3_idx[] (AC)\n",
-		 p->s3_idx[1][0], p->s3_idx[1][1],
-		 p->s3_idx[1][2], p->s3_idx[1][3]);
-	for (i = 0; i < ARRAY_SIZE(p->color); i++)
-		ccprintf("0x%02x 0x%02x 0x%02x\t# color[%d]\n",
-			 p->color[i].r,
-			 p->color[i].g,
-			 p->color[i].b, i);
 }
 
 static int command_lightbar(int argc, char **argv)
@@ -1656,15 +1596,6 @@ static int command_lightbar(int argc, char **argv)
 
 	if (!strcasecmp(argv[1], "on")) {
 		lb_on();
-		return EC_SUCCESS;
-	}
-
-	if (!strcasecmp(argv[1], "params")) {
-#ifdef LIGHTBAR_SIMULATION
-		if (argc > 2)
-			lb_read_params_from_file(argv[2], &st.p);
-#endif
-		show_params_v1(&st.p);
 		return EC_SUCCESS;
 	}
 
