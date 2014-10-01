@@ -456,7 +456,7 @@ void pd_rx_handler(void)
 		}
 	}
 }
-#ifndef BOARD_ZINGER
+#ifdef CONFIG_USB_PD_RX_COMP_IRQ
 DECLARE_IRQ(STM32_IRQ_COMP, pd_rx_handler, 1);
 #endif
 

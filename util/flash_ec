@@ -74,6 +74,7 @@ BOARDS_STM32=(
 	spring
 	veyron
 	zinger
+	minimuffin
 )
 
 BOARDS_STM32_PROG_EN=(

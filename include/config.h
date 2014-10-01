@@ -1019,6 +1019,9 @@
 /* Define to have PD state machine send read info VDM on connection */
 #undef CONFIG_USB_PD_READ_INFO_ON_CONNECT
 
+/* Use comparator module for PD RX interrupt */
+#define CONFIG_USB_PD_RX_COMP_IRQ
+
 /* USB PD transmit uses SPI master */
 #undef CONFIG_USB_PD_TX_USES_SPI_MASTER
 

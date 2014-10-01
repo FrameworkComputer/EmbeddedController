@@ -3,7 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Tiny charger configuration */
+/*
+ * Tiny charger configuration. This config is used for multiple boards
+ * including zinger and minimuffin.
+ */
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -19,6 +22,7 @@
 #undef CONFIG_USB_PD_DUAL_ROLE
 #undef CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_CUSTOM_VDM
+#undef CONFIG_USB_PD_RX_COMP_IRQ
 #define CONFIG_HW_CRC
 #define CONFIG_SHA1
 #undef CONFIG_WATCHDOG_HELP
@@ -43,7 +47,13 @@
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
 /* USB PD ChromeOS VDM information */
+#if defined(BOARD_ZINGER)
 #define USB_PD_HARDWARE_DEVICE_ID 1
+#elif defined(BOARD_MINIMUFFIN)
+#define USB_PD_HARDWARE_DEVICE_ID 2
+#else
+#error "Board does not have a USB-PD HW Device ID"
+#endif
 
 #ifndef __ASSEMBLER__
 

@@ -88,10 +88,17 @@ static timestamp_t fault_deadline;
 /* convert raw ADC value to mV */
 #define ADC_TO_VOLT_MV(vbus) ((vbus)*VOLT_DIV*VDDA_MV/ADC_SCALE)
 
-/* Max current : 20% over 3A = 3.6A */
-#define MAX_CURRENT VBUS_MA(3600)
-/* Fast short circuit protection : 4.5A */
-#define MAX_CURRENT_FAST VBUS_MA(4500)
+/* Max current */
+#if defined(BOARD_ZINGER)
+#define RATED_CURRENT 3000
+#elif defined(BOARD_MINIMUFFIN)
+#define RATED_CURRENT 2250
+#endif
+
+/* Max current : 20% over rated current */
+#define MAX_CURRENT VBUS_MA(RATED_CURRENT * 6/5)
+/* Fast short circuit protection : 50% over rated current */
+#define MAX_CURRENT_FAST VBUS_MA(RATED_CURRENT * 3/2)
 /* reset over-current after 1 second */
 #define OCP_TIMEOUT SECOND
 
@@ -143,9 +150,9 @@ static void discharge_voltage(int target_volt)
 /* Power Delivery Objects */
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(5000,  3000, 0),
-		PDO_FIXED(12000, 3000, 0),
-		PDO_FIXED(20000, 3000, 0),
+		PDO_FIXED(5000,  RATED_CURRENT, 0),
+		PDO_FIXED(12000, RATED_CURRENT, 0),
+		PDO_FIXED(20000, RATED_CURRENT, 0),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 

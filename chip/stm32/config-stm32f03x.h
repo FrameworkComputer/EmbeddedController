@@ -31,8 +31,7 @@
  * Put pstate after RO to give RW more space and make RO write protect region
  * contiguous.
  */
-#ifdef BOARD_ZINGER
-/* Do not use pstate for zinger. Flash space is limited */
+#if defined(BOARD_ZINGER) || defined(BOARD_MINIMUFFIN)
 #define CONFIG_FW_PSTATE_SIZE   0
 #else
 #define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
