@@ -1320,6 +1320,21 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SRC_READY:
+#ifdef CONFIG_USB_PD_SIMPLE_DFP
+			/*
+			 * For simple devices that don't support alternate
+			 * mode and are only sources (ie power adapters),
+			 * send custom VDM with info about this device
+			 * once power contract has been negotiated.
+			 */
+			if (pd[port].last_state != pd[port].task_state) {
+				/* Send google VDM to read info */
+				pd_send_vdm(port, USB_VID_GOOGLE,
+					    VDO_CMD_SEND_INFO,
+					    pd_get_info(), 6);
+			}
+#endif
+
 			if (!pd[port].ping_enabled) {
 				timeout = PD_T_SOURCE_ACTIVITY;
 				break;
@@ -1363,11 +1378,6 @@ void pd_task(void)
 							     cc2_volt);
 					pd_select_polarity(port,
 							   pd[port].polarity);
-#ifdef CONFIG_USB_PD_READ_INFO_ON_CONNECT
-					/* Send google VDM to read info */
-					pd_send_vdm(port, USB_VID_GOOGLE,
-						VDO_CMD_READ_INFO, NULL, 0);
-#endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 				}

@@ -374,10 +374,25 @@ void pd_adc_interrupt(void)
 DECLARE_IRQ(STM32_IRQ_ADC_COMP, pd_adc_interrupt, 1);
 
 /* ----------------- Vendor Defined Messages ------------------ */
+static uint32_t info_data[6];
+uint32_t *pd_get_info(void)
+{
+	void *hash;
+
+	/* calculate RW hash */
+	hash = flash_hash_rw();
+	/* copy first 20 bytes of RW hash */
+	memcpy(info_data, hash, 5 * sizeof(uint32_t));
+	/* copy other info into data msg */
+	info_data[5] = VDO_INFO(USB_PD_HARDWARE_DEVICE_ID,
+				ver_get_numcommits(), !is_ro_mode());
+
+	return info_data;
+}
+
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	static int flash_offset;
-	void *hash;
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize = 1;
 	debug_printf("%T] VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
@@ -394,13 +409,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		cpu_reset();
 		break;
 	case VDO_CMD_READ_INFO:
-		hash = flash_hash_rw();
-		/* copy the 20 first bytes of the hash into response */
-		memcpy(payload + 1, hash, 5 * sizeof(uint32_t));
-		/* copy other info into response */
-		payload[6] = VDO_INFO(USB_PD_HARDWARE_DEVICE_ID,
-					ver_get_numcommits(),
-					!is_ro_mode());
+		/* copy info into response */
+		memcpy(payload + 1, pd_get_info(), 24);
 		rsize = 7;
 		break;
 	case VDO_CMD_FLASH_ERASE:

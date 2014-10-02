@@ -1019,8 +1019,8 @@
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP
 
-/* Define to have PD state machine send read info VDM on connection */
-#undef CONFIG_USB_PD_READ_INFO_ON_CONNECT
+/* Simple DFP, such as power adapter, will send info CVDM on connect */
+#undef CONFIG_USB_PD_SIMPLE_DFP
 
 /* Use comparator module for PD RX interrupt */
 #define CONFIG_USB_PD_RX_COMP_IRQ

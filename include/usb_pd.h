@@ -122,6 +122,7 @@ enum pd_errors {
 
 /* ChromeOS specific commands */
 #define VDO_CMD_VERSION      VDO_CMD_VENDOR(0)
+#define VDO_CMD_SEND_INFO    VDO_CMD_VENDOR(1)
 #define VDO_CMD_READ_INFO    VDO_CMD_VENDOR(2)
 #define VDO_CMD_REBOOT       VDO_CMD_VENDOR(5)
 #define VDO_CMD_FLASH_ERASE  VDO_CMD_VENDOR(6)
@@ -317,6 +318,13 @@ void pd_set_input_current_limit(uint32_t max_ma);
  * @return EC_SUCCESS if the board is good, <0 else.
  */
 int pd_board_checks(void);
+
+/**
+ * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
+ *
+ * @return Pointer to data payload for VDO_CMD_*_INFO
+ */
+uint32_t *pd_get_info(void);
 
 /**
  * Handle Vendor Defined Message with our vendor ID.

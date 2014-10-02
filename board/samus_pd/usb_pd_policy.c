@@ -168,6 +168,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		ccprintf("version: %s\n", (char *)(payload+1));
 		break;
 	case VDO_CMD_READ_INFO:
+	case VDO_CMD_SEND_INFO:
 		/* if last word is present, it contains lots of info */
 		if (cnt == 7) {
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
