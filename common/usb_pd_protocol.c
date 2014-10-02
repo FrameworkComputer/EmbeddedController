@@ -229,7 +229,7 @@ static struct pd_protocol {
 	uint8_t vdo_count;
 
 	/* Attached ChromeOS device id & RW hash */
-	uint8_t dev_id;
+	uint16_t dev_id;
 	uint32_t dev_rw_hash[SHA1_DIGEST_SIZE/4];
 } pd[PD_PORT_COUNT];
 
@@ -1075,16 +1075,16 @@ static void pd_vdm_send_state_machine(int port)
 	}
 }
 
-static inline void pd_dev_dump_info(uint8_t dev_id, uint32_t *hash)
+static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
 {
 	int j;
-	ccprintf("Device:%d Hash:", dev_id);
+	ccprintf("Device:0x%04x Hash:", dev_id);
 	for (j = 0; j < SHA1_DIGEST_SIZE/4; j++)
 		ccprintf(" 0x%08x", hash[j]);
 	ccprintf("\n");
 }
 
-void pd_dev_store_rw_hash(int port, uint8_t dev_id, uint32_t *rw_hash)
+void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash)
 {
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, SHA1_DIGEST_SIZE);

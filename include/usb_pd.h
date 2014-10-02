@@ -135,13 +135,23 @@ enum pd_errors {
 #define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
 
 /*
+ * ChromeOS specific PD device Hardware IDs. Used to identify unique
+ * products and used in VDO_INFO. Note this field is 10 bits.
+ */
+#define USB_PD_HW_DEV_ID_RESERVED    0
+#define USB_PD_HW_DEV_ID_ZINGER      1
+#define USB_PD_HW_DEV_ID_MINIMUFFIN  2
+
+/*
  * ChromeOS specific VDO_CMD_READ_INFO responds with device info including:
  * RW Hash: sha1 of RW hash (20 bytes)
  * HW Device ID: unique descriptor for each ChromeOS model (2 bytes)
+ *               top 6 bits are minor revision, bottom 10 bits are major
  * SW Debug Version: Software version useful for debugging (15 bits)
  * IS RW: True if currently in RW, False otherwise (1 bit)
  */
-#define VDO_INFO(id, ver, is_rw) ((id) << 16 \
+#define VDO_INFO(id, id_minor, ver, is_rw) ((id_minor) << 26 \
+				  | ((id) & 0x3ff) << 16 \
 				  | ((ver) & 0x7fff) << 1 \
 				  | ((is_rw) & 1))
 #define VDO_INFO_HW_DEV_ID(x)    ((x) >> 16)
@@ -344,7 +354,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
  * @param dev_id   device identifier
  * @param rw_hash  pointer to sha1 rw_hash
  */
-void pd_dev_store_rw_hash(int port, uint8_t dev_id, uint32_t *rw_hash);
+void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash);
 
 /**
  * Send Vendor Defined Message

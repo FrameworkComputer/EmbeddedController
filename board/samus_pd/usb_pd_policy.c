@@ -161,7 +161,7 @@ static void pd_send_host_event(void)
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
-	uint8_t dev_id = 0;
+	uint16_t dev_id = 0;
 	ccprintf("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	/* make sure we have some payload */
@@ -182,7 +182,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			pd_send_host_event();
 
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
-			ccprintf("Dev:%d SW:%d RW:%d\n", dev_id,
+			ccprintf("Dev:0x%04x SW:%d RW:%d\n", dev_id,
 				 VDO_INFO_SW_DBG_VER(payload[6]),
 				 VDO_INFO_IS_RW(payload[6]));
 		}

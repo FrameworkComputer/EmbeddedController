@@ -2654,10 +2654,9 @@ enum usb_pd_fw_update_cmds {
 };
 
 struct ec_params_usb_pd_fw_update {
+	uint16_t dev_id;
 	uint8_t cmd;
-	uint8_t dev_id;
 	uint8_t port;
-	uint8_t reserved;  /* reserved */
 	uint32_t size;     /* Size to write in bytes */
 	/* Followed by data to write */
 } __packed;
@@ -2666,7 +2665,7 @@ struct ec_params_usb_pd_fw_update {
 #define EC_CMD_USB_PD_RW_HASH_ENTRY 0x111
 #define SHA1_DIGEST_SIZE 20
 struct ec_params_usb_pd_rw_hash_entry {
-	uint8_t dev_id;
+	uint16_t dev_id;
 	union {
 		uint8_t b[SHA1_DIGEST_SIZE];
 		uint32_t w[SHA1_DIGEST_SIZE/4];

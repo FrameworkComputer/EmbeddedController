@@ -50,15 +50,6 @@
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
-/* USB PD ChromeOS VDM information */
-#if defined(BOARD_ZINGER)
-#define USB_PD_HARDWARE_DEVICE_ID 1
-#elif defined(BOARD_MINIMUFFIN)
-#define USB_PD_HARDWARE_DEVICE_ID 2
-#else
-#error "Board does not have a USB-PD HW Device ID"
-#endif
-
 #ifndef __ASSEMBLER__
 
 #include "common.h"
