@@ -432,29 +432,28 @@ static struct motion_sensor_t
 
 	for (i = 0; i < motion_sensor_count; ++i) {
 
+		sensor = &motion_sensors[i];
+
 		if ((LOCATION_BASE == sensor->location)
 			&& (SENSOR_ACCELEROMETER == sensor->type)
 			&& (host_id == EC_MOTION_SENSOR_ACCEL_BASE)) {
-			sensor = &motion_sensors[i];
 			break;
 		}
 
 		if ((LOCATION_LID == sensor->location)
 			&& (SENSOR_ACCELEROMETER == sensor->type)
 			&& (host_id == EC_MOTION_SENSOR_ACCEL_LID)) {
-			sensor = &motion_sensors[i];
 			break;
 		}
 
 		if ((LOCATION_BASE == sensor->location)
 			&& (SENSOR_GYRO == sensor->type)
 			&& (host_id == EC_MOTION_SENSOR_GYRO)) {
-			sensor = &motion_sensors[i];
 			break;
 		}
 	}
 
-	if (!sensor)
+	if (i == motion_sensor_count)
 		return NULL;
 
 	if ((sensor->power == SENSOR_POWER_ON)
