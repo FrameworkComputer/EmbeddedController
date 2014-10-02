@@ -1527,7 +1527,7 @@ int cmd_fanduty(int argc, char *argv[])
 
 	if (argc != 2) {
 		fprintf(stderr,
-			"Usage: %s <targetrpm>\n", argv[0]);
+			"Usage: %s <percent>\n", argv[0]);
 		return -1;
 	}
 	p.percent = strtol(argv[1], &e, 0);
