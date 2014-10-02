@@ -150,6 +150,13 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
+/* Send host event up to AP */
+static void pd_send_host_event(void)
+{
+	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	pd_send_ec_int();
+}
+
 /* ----------------- Vendor Defined Messages ------------------ */
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
@@ -171,6 +178,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	case VDO_CMD_SEND_INFO:
 		/* if last word is present, it contains lots of info */
 		if (cnt == 7) {
+			/* send host event */
+			pd_send_host_event();
+
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
 			ccprintf("Dev:%d SW:%d RW:%d\n", dev_id,
 				 VDO_INFO_SW_DBG_VER(payload[6]),
@@ -204,8 +214,7 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 
 static int command_pd_host_event(int argc, char **argv)
 {
-	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
-	pd_send_ec_int();
+	pd_send_host_event();
 
 	return EC_SUCCESS;
 }
