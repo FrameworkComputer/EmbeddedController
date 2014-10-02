@@ -106,8 +106,8 @@ static int dfp_enter_modes(int port, uint32_t *payload)
 	if (modep->amode == dfp_amode_none)
 		return 0;
 
-	modep->enter(*modep->mode_caps);
-	payload[0] = VDO(modep->svid, 1,
+	modep->fx->enter(port, *modep->mode_caps);
+	payload[0] = VDO(modep->fx->svid, 1,
 			 CMD_ENTER_MODE |
 			 VDO_OPOS(modep->amode));
 	pe[port].amode_idx++;
@@ -124,8 +124,8 @@ int pd_exit_modes(int port, uint32_t *payload)
 	if (modep->amode == dfp_amode_none)
 		return 1;
 
-	modep->exit();
-	payload[0] = VDO(modep->svid, 1,
+	modep->fx->exit(port);
+	payload[0] = VDO(modep->fx->svid, 1,
 			 CMD_EXIT_MODE |
 			 VDO_OPOS(modep->amode));
 	pe[port].amode_idx++;
@@ -146,7 +146,7 @@ static void dump_pe(int port)
 	}
 	for (i = 0; i < pe[port].amode_cnt; i++) {
 		ccprintf("MODE[%d]: svid:%04x mode:%d caps:%08x\n", i,
-			 modep->svid, modep->amode, *modep->mode_caps);
+			 modep->fx->svid, modep->amode, *modep->mode_caps);
 		modep++;
 	}
 }

@@ -134,12 +134,16 @@ struct svdm_svid_data {
 	uint32_t mode_vdo[PDO_MODES];
 };
 
-struct svdm_amode_data {
+struct svdm_amode_fx {
 	uint16_t svid;
+	void (*enter)(int port, uint32_t mode_caps);
+	void (*exit)(int port);
+};
+
+struct svdm_amode_data {
+	const struct svdm_amode_fx *fx;
 	enum dfp_amode amode;
 	uint32_t *mode_caps;
-	void (*enter)(uint32_t mode_caps);
-	void (*exit)(void);
 };
 
 /* Policy structure for driving alternate mode */

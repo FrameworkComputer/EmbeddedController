@@ -186,20 +186,20 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		return pd_custom_vdm(port, cnt, payload, rpayload);
 }
 
-static void svdm_enter_dp_mode(uint32_t mode_caps)
+static void svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
 	ccprintf("Entering mode w/ vdo = %08x\n", mode_caps);
 }
 
-static void svdm_exit_dp_mode(void)
+static void svdm_exit_dp_mode(int port)
 {
 	ccprintf("Exiting mode\n");
 	/* return to safe config */
 }
 
-static struct svdm_amode_data supported_modes[] = {
+const struct svdm_amode_fx supported_modes[] = {
 	{
-		.svid = 0xff01,
+		.svid = USB_SID_DISPLAYPORT,
 		.enter = &svdm_enter_dp_mode,
 		.exit = &svdm_exit_dp_mode,
 	},
@@ -208,20 +208,17 @@ static struct svdm_amode_data supported_modes[] = {
 void pd_dfp_choose_modes(struct pd_policy *pe)
 {
 	int i, j;
-	struct svdm_amode_data *modep;
-	pe->amode_cnt = sizeof(supported_modes) / sizeof(struct
-							 svdm_amode_data);
-	pe->amodes = modep = supported_modes;
+	pe->amode_cnt = ARRAY_SIZE(supported_modes);
+	pe->amodes->fx = supported_modes;
 	for (i = 0; i < pe->amode_cnt; i++) {
 		for (j = 0; j < pe->svid_cnt; j++) {
-			if (pe->svids[j].svid == modep->svid) {
+			if (pe->svids[j].svid == pe->amodes->fx[i].svid) {
 				/* TODO(tbroch) need more elaborate mode
 				   resolution */
-				modep->mode_caps = &pe->svids[j].mode_vdo[0];
-				modep->amode = dfp_amode1;
+				pe->amodes[i].mode_caps = pe->svids[j].mode_vdo;
+				pe->amodes[i].amode = dfp_amode1;
 				break;
 			}
 		}
-		modep++;
 	}
 }

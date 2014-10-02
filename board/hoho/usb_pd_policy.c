@@ -188,9 +188,9 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		rsize = 7;
 		break;
 	default:
-		/* Unknown : do not answer */
-		return 0;
+		rsize = 0;
 	}
+
 	ccprintf("%T] DONE\n");
 	/* respond (positively) to the request */
 	payload[0] |= VDO_SRC_RESPONDER;
