@@ -5,12 +5,11 @@
 """Flash PD PSU RW firmware over the USBPD comm channel using console.
 
   Example:
-    util/flash_pd.py ./build/zinger/ec.RW.flat
+    util/flash_pd.py ./build/zinger/ec.RW.bin
 """
 
 import array
 import errno
-import hashlib
 import logging
 import optparse
 import os
@@ -24,13 +23,12 @@ import serial
 from servo import client
 from servo import multiservo
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
-# RW area is half of the 32-kB flash minus the hash storage area
-MAX_FW_SIZE = 16 * 1024 - 32
-# Hash of RW when erased (set to all F's)
-ERASED_RW_HASH = 'd582e94d 0d12a61c 1199927e 5610c036 2e2870a9'
-
+# RW area is half of the 32-kB
+MAX_FW_SIZE = 16 * 1024
+# 20 first bytes of SHA-256 of RW when erased (set to all F's)
+ERASED_RW_HASH = 'd86670be 559860c7 2b2149e8 d2ae1104 9550e093'
 
 class FlashPDError(Exception):
   """Exception class for flash_pd utility."""
@@ -200,14 +198,10 @@ def flash_pd(options):
   with open(options.firmware) as fd:
     fw = fd.read()
     fw_size = len(fw)
-    # Compute SHA-1 hash for the full (padded) RW firmware
-    padded_fw = fw + '\xff' * (MAX_FW_SIZE - fw_size)
-    sha = hashlib.sha1(padded_fw).digest()
-    sha_str = ' '.join(['%08x' % (w) for w in array.array('I', sha)])
+    # The RW firmware should be already padded and signed
+    if fw_size != MAX_FW_SIZE:
+      raise FlashPDError('Bad RW firmware size %d/%d' % (fw_size, MAX_FW_SIZE))
 
-    # pad the firmware to a multiple of 6 U32
-    if fw_size % 24:
-      fw += '\xff'*(24 - fw_size % 24)
     words = array.array('I', fw)
 
   logging.info('Current PD FW version is %s', ec.get_version())
@@ -216,31 +210,23 @@ def flash_pd(options):
 
   logging.info('Flashing %d bytes', fw_size)
 
-  # reset flashed hash to reboot in RO
-  ec.flash_command('hash' + ' 00000000' * 5)
+  # reset flashed signature to reboot in RO
+  ec.flash_command('signature')
   # reboot in RO
   ec.reboot()
   # erase all RW partition
   ec.flash_command('erase')
 
-  # TODO(tbroch) deprecate rw_hash if/when command is completely deprecated in
-  # favor of 'info'
-  # verify that erase was successful by reading hash empty RW
-  (done, _) = ec.flash_command('rw_hash', expect=ERASED_RW_HASH, retries=0,
-                               ignore_fail=True)
-  if done:
-    done = ec.expect('DONE')
-  else:
-    # try info command and guarantee we're in RO
-    (done, line) = ec.flash_command('info', expect=r'INFO')
-    m = re.match(r'INFO.*(18d1\S{4})', line)
-    if done and m:
-      done = ec.expect('DONE 0')
-      in_rw = int(m.group(1), 16) & 0x1
-      if in_rw:
-        raise FlashPDError('Not in RO after erase')
-    # Google UFP devices share their hash to DFP after info command so check it
-    (done, _) = ec.pd_command('hash', expect=ERASED_RW_HASH)
+  # try info command and guarantee we're in RO
+  (done, line) = ec.flash_command('info', expect=r'INFO')
+  m = re.match(r'INFO.*(18d1\S{4})', line)
+  if done and m:
+    done = ec.expect('DONE 0')
+    in_rw = int(m.group(1), 16) & 0x1
+    if in_rw:
+      raise FlashPDError('Not in RO after erase')
+  # Google UFP devices share their hash to DFP after info command so check it
+  (done, _) = ec.pd_command('hash', expect=ERASED_RW_HASH)
 
   if not done:
     raise FlashPDError('Erase failed')
@@ -259,14 +245,15 @@ def flash_pd(options):
     ec.flash_command(cmd)
     if not i % 0x10:
       logging.info('Chunk %d of %d done.', i, len(words) / 6)
+  # write the remaining words
+  chunk = words[len(words) / 6 * 6:]
+  cmd = ' '.join(['%08x' % (w) for w in chunk])
+  ec.flash_command(cmd)
 
-  # write new firmware hash
-  ec.flash_command('hash ' + sha_str)
   # reboot in RW
   ec.reboot()
 
   logging.info('Flashing DONE.')
-  logging.info('SHA-1: %s', sha_str)
   logging.info('New PD FW version is %s', ec.get_version())
 
 

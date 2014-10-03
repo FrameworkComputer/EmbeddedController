@@ -418,10 +418,16 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			       (const char *)(payload+1));
 		flash_offset += 4*(cnt - 1);
 		break;
-	case VDO_CMD_FLASH_HASH:
+	case VDO_CMD_ERASE_SIG:
 		/* this is not touching the code area */
-		flash_write_rw(CONFIG_FW_RW_SIZE - 32, 4*cnt,
-			       (const char *)(payload+1));
+		{
+			uint32_t zero = 0;
+			int offset;
+			/* zeroes the area containing the RSA signature */
+			for (offset = CONFIG_FW_RW_SIZE - 256;
+			     offset < CONFIG_FW_RW_SIZE; offset += 4)
+				flash_write_rw(offset, 4, (const char *)&zero);
+		}
 		break;
 	case VDO_CMD_PING_ENABLE:
 		pd_ping_enable(0, payload[1]);

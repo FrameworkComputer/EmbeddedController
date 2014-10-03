@@ -1586,15 +1586,9 @@ static int remote_flashing(int argc, char **argv)
 	} else if (!strcasecmp(argv[3], "reboot")) {
 		cmd = VDO_CMD_REBOOT;
 		ccprintf("REBOOT ...");
-	} else if (!strcasecmp(argv[3], "hash")) {
-		int i;
-		argc -= 4;
-		for (i = 0; i < argc; i++)
-			if (hex8tou32(argv[i+4], data + i))
-				return EC_ERROR_INVAL;
-		cmd = VDO_CMD_FLASH_HASH;
-		cnt = argc;
-		ccprintf("HASH ...");
+	} else if (!strcasecmp(argv[3], "signature")) {
+		cmd = VDO_CMD_ERASE_SIG;
+		ccprintf("ERASE SIG ...");
 	} else if (!strcasecmp(argv[3], "info")) {
 		cmd = VDO_CMD_READ_INFO;
 		ccprintf("INFO...");
@@ -1936,16 +1930,9 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 			task_wait_event(100*MSEC);
 		break;
 
-	case USB_PD_FW_FLASH_HASH:
-		/* Can only write 20 bytes */
-		if (p->size != 20)
-			return EC_RES_INVALID_PARAM;
-
-		ccprintf("PD Update - Write RW flash hash ");
-		for (i = 0; i < 5; i++)
-			ccprintf("%08x ", *(data + i));
-		ccprintf("\n");
-		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_HASH, data, 5);
+	case USB_PD_FW_ERASE_SIG:
+		ccprintf("PD Update - Erase RW RSA signature\n");
+		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_ERASE_SIG, NULL, 0);
 
 		/* Wait until VDM is done */
 		while (pd[port].vdm_state > 0)

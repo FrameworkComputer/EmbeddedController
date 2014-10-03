@@ -2650,7 +2650,7 @@ enum usb_pd_fw_update_cmds {
 	USB_PD_FW_REBOOT,
 	USB_PD_FW_FLASH_ERASE,
 	USB_PD_FW_FLASH_WRITE,
-	USB_PD_FW_FLASH_HASH,
+	USB_PD_FW_ERASE_SIG,
 };
 
 struct ec_params_usb_pd_fw_update {
