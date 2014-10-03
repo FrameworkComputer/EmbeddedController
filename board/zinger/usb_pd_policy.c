@@ -256,14 +256,17 @@ void pd_power_supply_reset(int port)
 
 int pd_board_checks(void)
 {
+#ifdef CONFIG_HIBERNATE
 	static timestamp_t hib_to;
 	static int hib_to_ready;
+#endif
 	int vbus_volt;
 	int ovp_idx;
 
 	/* Reload the watchdog */
 	STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 
+#ifdef CONFIG_HIBERNATE
 	/* If output is disabled for long enough, then hibernate */
 	if (!pd_is_connected(0) && hib_to_ready) {
 		if (get_time().val >= hib_to.val) {
@@ -274,6 +277,7 @@ int pd_board_checks(void)
 		hib_to.val = get_time().val + 60*SECOND;
 		hib_to_ready = 1;
 	}
+#endif
 
 	vbus_volt = adc_read_channel(ADC_CH_V_SENSE);
 	vbus_amp = adc_read_channel(ADC_CH_A_SENSE);
