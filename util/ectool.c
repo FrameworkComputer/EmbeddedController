@@ -1598,26 +1598,79 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 
 int cmd_fanduty(int argc, char *argv[])
 {
-	struct ec_params_pwm_set_fan_duty p;
+	struct ec_params_pwm_set_fan_duty_v1 p_v1;
 	char *e;
-	int rv;
+	int rv, num_fans;
+	int cmdver = 1;
 
-	if (argc != 2) {
-		fprintf(stderr,
-			"Usage: %s <percent>\n", argv[0]);
+	if (!ec_cmd_version_supported(EC_CMD_PWM_SET_FAN_DUTY, cmdver)) {
+		struct ec_params_pwm_set_fan_duty_v0 p_v0;
+
+		if (argc != 2) {
+			fprintf(stderr,
+				"Usage: %s <percent>\n", argv[0]);
+			return -1;
+		}
+		p_v0.percent = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad percent arg.\n");
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, 0,
+				&p_v0, sizeof(p_v0), NULL, 0);
+		if (rv < 0)
+			return rv;
+
+		printf("Fan duty cycle set.\n");
+		return 0;
+	}
+
+	if (argc > 3 || (argc == 2 && !strcmp(argv[1], "help")) || argc == 1) {
+		printf("Usage: %s [idx] <percent>\n", argv[0]);
+		printf("'%s 0 50' - Set fan 0 duty cycle to 50 percent\n",
+			argv[0]);
+		printf("'%s 30' - Set all fans duty cycle to 30 percent\n",
+			argv[0]);
 		return -1;
 	}
-	p.percent = strtol(argv[1], &e, 0);
+
+	num_fans = get_num_fans();
+	p_v1.percent = strtol(argv[argc - 1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad percent arg.\n");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, 0, &p, sizeof(p), NULL, 0);
-	if (rv < 0)
-		return rv;
+	if (argc == 2) {
+		/* Reuse version 0 command if we're setting duty cycle
+		 * for all fans */
+		struct ec_params_pwm_set_fan_duty_v0 p_v0;
 
-	printf("Fan duty cycle set.\n");
+		cmdver = 0;
+		p_v0.percent = p_v1.percent;
+
+		rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, cmdver,
+				&p_v0, sizeof(p_v0), NULL, 0);
+		if (rv < 0)
+			return rv;
+
+		printf("Fan duty cycle set for all fans.\n");
+	} else {
+		p_v1.fan_idx = strtol(argv[1], &e, 0);
+		if ((e && *e) || (p_v1.fan_idx >= num_fans)) {
+			fprintf(stderr, "Bad fan index.\n");
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_PWM_SET_FAN_DUTY, cmdver,
+				&p_v1, sizeof(p_v1), NULL, 0);
+		if (rv < 0)
+			return rv;
+
+		printf("Fan %d duty cycle set.\n", p_v1.fan_idx);
+	}
+
 	return 0;
 }
 
