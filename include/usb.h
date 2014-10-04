@@ -24,6 +24,8 @@
 #define USB_DT_OTHER_SPEED_CONFIG         0x07
 #define USB_DT_INTERFACE_POWER            0x08
 #define USB_DT_DEBUG                      0x0a
+#define USB_DT_BOS                        0x0f
+#define USB_DT_DEVICE_CAPABILITY          0x10
 
 /* USB Device Descriptor */
 struct usb_device_descriptor {
@@ -43,6 +45,46 @@ struct usb_device_descriptor {
 	uint8_t bNumConfigurations;
 } __packed;
 #define USB_DT_DEVICE_SIZE                18
+
+/* BOS Descriptor ( USB3.1 rev1 Section 9.6.2 ) */
+struct bos_context {
+	void *descp;
+	int size;
+};
+
+struct usb_bos_hdr_descriptor {
+	uint8_t bLength;
+	uint8_t bDescriptorType; /* USB_DT_BOS */
+	uint16_t wTotalLength;   /* Total length of of hdr + all dev caps */
+	uint8_t bNumDeviceCaps;  /* Container ID Descriptor + others */
+} __packed;
+#define USB_DT_BOS_SIZE 5
+
+/* Container ID Descriptor */
+struct usb_contid_caps_descriptor {
+	uint8_t  bLength;
+	uint8_t  bDescriptorType;     /* USB_DT_DEVICE_CAPABILITY */
+	uint8_t  bDevCapabilityType;  /* USB_DC_DTYPE_xxx */
+	uint8_t  bReserved;           /* SBZ */
+	uint8_t  ContainerID[16];     /* UUID */
+} __packed;
+#define USB_DT_CONTID_SIZE         20
+
+/* Device Cap Type Codes ( offset 2 of Device Capability Descriptor */
+#define USB_DC_DTYPE_WIRELESS  0x01
+#define USB_DC_DTYPE_USB20EXT  0x02
+#define USB_DC_DTYPE_USBSS     0x03
+#define USB_DC_DTYPE_CONTID    0x04
+#define USB_DC_DTYPE_PLATFORM  0x05
+#define USB_DC_DTYPE_PD        0x06
+#define USB_DC_DTYPE_BATTINFO  0x07
+#define USB_DC_DTYPE_CONSUMER  0x08
+#define USB_DC_DTYPE_PRODUCER  0x09
+#define USB_DC_DTYPE_USBSSP    0x0a
+#define USB_DC_DTYPE_PCSTIME   0x0b
+#define USB_DC_DTYPE_WUSBEXT   0x0c
+#define USB_DC_DTYPE_BILLBOARD 0x0d
+/* RESERVED 0x00, 0xOe - 0xff */
 
 /* Configuration Descriptor */
 struct usb_config_descriptor {
@@ -103,6 +145,7 @@ struct usb_endpoint_descriptor {
 #define USB_CLASS_CSCID                   0x0b
 #define USB_CLASS_CONTENT_SEC             0x0d
 #define USB_CLASS_VIDEO                   0x0e
+#define USB_CLASS_BILLBOARD               0x11
 #define USB_CLASS_WIRELESS_CONTROLLER     0xe0
 #define USB_CLASS_MISC                    0xef
 #define USB_CLASS_APP_SPEC                0xfe
@@ -211,9 +254,10 @@ static inline void memcpy_usbram(usb_uint *ebuf, const uint8_t *src, int size)
 	(((uint32_t)(x) - (uint32_t)__usb_ram_start) \
 	/ (sizeof(usb_uint)/sizeof(uint16_t)))
 
-/* String descriptors are defined in the board code */
+/* These descriptors defined in board code */
 extern const void * const usb_strings[];
 extern const uint8_t usb_string_desc[];
+extern struct bos_context bos_ctx;
 
 /* Helpers for endpoint declaration */
 

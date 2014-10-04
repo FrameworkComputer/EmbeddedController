@@ -19,12 +19,23 @@
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
+#ifdef CONFIG_USB_BOS
+/* v2.01 (vs 2.00) BOS Descriptor provided */
+#define USB_DEV_BCDUSB 0x0201
+#else
+#define USB_DEV_BCDUSB 0x0200
+#endif
+
+#ifndef USB_DEV_CLASS
+#define USB_DEV_CLASS USB_CLASS_PER_INTERFACE
+#endif
+
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
-	.bcdUSB = 0x0200, /* v2.00 */
-	.bDeviceClass = USB_CLASS_PER_INTERFACE,
+	.bcdUSB = USB_DEV_BCDUSB,
+	.bDeviceClass = USB_DEV_CLASS,
 	.bDeviceSubClass = 0x00,
 	.bDeviceProtocol = 0x00,
 	.bMaxPacketSize0 = USB_MAX_PACKET_SIZE,
@@ -100,6 +111,12 @@ static void ep0_rx(void)
 			desc = __usb_desc;
 			len = USB_DESC_SIZE;
 			break;
+#ifdef CONFIG_USB_BOS
+		case USB_DT_BOS: /* Setup : Get BOS descriptor */
+			desc = bos_ctx.descp;
+			len = bos_ctx.size;
+			break;
+#endif
 		case USB_DT_STRING: /* Setup : Get string descriptor */
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
