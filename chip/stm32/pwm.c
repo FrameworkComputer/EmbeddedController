@@ -63,7 +63,7 @@ static void pwm_configure(enum pwm_channel ch)
 	val = *gpio_cr & ~(mask * 0xf);
 	val |= mask * 0x9;
 	*gpio_cr = val;
-#elif defined(CHIP_FAMILY_STM32F0)
+#elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	gpio_set_alternate_function(gpio->port, gpio->mask, pwm->gpio_alt_func);
 #else /* stm32l */
 	gpio_set_alternate_function(gpio->port, gpio->mask,

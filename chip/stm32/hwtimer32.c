@@ -89,9 +89,27 @@ void __hw_timer_enable_clock(int n, int enable)
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM15 << (n - 15);
 	}
+#endif
+
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	if (n == 14) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM14;
+	}
+#endif
+
+#if defined(CHIP_FAMILY_STM32F3)
+	if (n == 12 || n == 13) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = STM32_RCC_PB1_TIM12 << (n - 12);
+	}
+	if (n == 18) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = STM32_RCC_PB1_TIM18;
+	}
+	if (n == 19) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = STM32_RCC_PB2_TIM19;
 	}
 #endif
 	if (n >= 2 && n <= 7) {

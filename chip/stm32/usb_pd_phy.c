@@ -351,7 +351,7 @@ void pd_tx_done(int port, int polarity)
 #endif
 
 	/* wait for real end of transmission */
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	while (spi->sr & STM32_SPI_SR_FTLVL)
 		; /* wait for TX FIFO empty */
 #else
@@ -562,7 +562,7 @@ void pd_hw_init(int port)
 
 	/* --- COMP2 as comparator for RX vs Vmid = 850mV --- */
 #ifdef CONFIG_USB_PD_INTERNAL_COMP
-#if defined(CHIP_FAMILY_STM32F0)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	/* turn on COMP/SYSCFG */
 	STM32_RCC_APB2ENR |= 1 << 0;
 	/* currently in hi-speed mode : TODO revisit later, INM = PA0(INM6) */

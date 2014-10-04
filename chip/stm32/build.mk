@@ -18,8 +18,6 @@ CORE:=cortex-m
 CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 endif
 
-# STM32F0xx and STM32F1xx are using the same flash controller
-FLASH_FAMILY=$(subst stm32f0,stm32f,$(CHIP_FAMILY))
 # Select between 16-bit and 32-bit timer for clock source
 TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
 
@@ -36,7 +34,7 @@ chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(HAS_TASK_POWERLED)+=power_led.o
-chip-$(CONFIG_FLASH)+=flash-$(FLASH_FAMILY).o
+chip-$(CONFIG_FLASH)+=flash-$(CHIP_FAMILY).o
 chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_USB)+=usb.o usb_endpoints.o

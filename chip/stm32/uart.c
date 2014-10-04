@@ -197,7 +197,8 @@ static void uart_freq_change(void)
 	int freq;
 	int div;
 
-#if defined(CHIP_FAMILY_STM32F0) && (UARTN <= 2)
+#if (defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)) && \
+	(UARTN <= 2)
 	/*
 	 * UART is clocked from HSI (8MHz) to allow it to work when waking
 	 * up from sleep
@@ -209,7 +210,8 @@ static void uart_freq_change(void)
 #endif
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE);
 
-#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0)
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) || \
+	defined(CHIP_FAMILY_STM32F3)
 	if (div / 16 > 0) {
 		/*
 		 * CPU clock is high enough to support x16 oversampling.
@@ -236,13 +238,13 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
 void uart_init(void)
 {
 	/* Enable USART clock */
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #if (UARTN == 1)
 	STM32_RCC_CFGR3 |= 0x0003;   /* USART1 clock source from HSI(8MHz) */
 #elif (UARTN == 2)
 	STM32_RCC_CFGR3 |= 0x030000; /* USART2 clock source from HSI(8MHz) */
 #endif /* UARTN */
-#endif /* CHIP_FAMILY_STM32F0 */
+#endif /* CHIP_FAMILY_STM32F0 || CHIP_FAMILY_STM32F3 */
 
 #if (UARTN == 1)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART1;

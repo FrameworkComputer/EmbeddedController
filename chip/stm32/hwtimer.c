@@ -48,7 +48,43 @@
 #define STM32_TIM_TS_SLAVE_15_MASTER_3  1
 #define STM32_TIM_TS_SLAVE_15_MASTER_16 2
 #define STM32_TIM_TS_SLAVE_15_MASTER_17 3
-#else /* !CHIP_FAMILY_STM32F0 */
+#elif defined(CHIP_FAMILY_STM32F3)
+/*
+ * Slave        Master
+ *     2    19 15  3 14
+ *     3    19  2  5 14
+ *     4    19  2  3 15
+ *     5     2  3  4 15
+ *    12     4  5 13 14
+ *    19     2  3 15 16
+ *    ---------------------
+ *     ts =  0  1  2  3
+ */
+#define STM32_TIM_TS_SLAVE_2_MASTER_19  0
+#define STM32_TIM_TS_SLAVE_2_MASTER_15  1
+#define STM32_TIM_TS_SLAVE_2_MASTER_3   2
+#define STM32_TIM_TS_SLAVE_2_MASTER_14  3
+#define STM32_TIM_TS_SLAVE_3_MASTER_19  0
+#define STM32_TIM_TS_SLAVE_3_MASTER_2   1
+#define STM32_TIM_TS_SLAVE_3_MASTER_5   2
+#define STM32_TIM_TS_SLAVE_3_MASTER_14  3
+#define STM32_TIM_TS_SLAVE_4_MASTER_19  0
+#define STM32_TIM_TS_SLAVE_4_MASTER_2   1
+#define STM32_TIM_TS_SLAVE_4_MASTER_3   2
+#define STM32_TIM_TS_SLAVE_4_MASTER_15  3
+#define STM32_TIM_TS_SLAVE_5_MASTER_2   0
+#define STM32_TIM_TS_SLAVE_5_MASTER_3   1
+#define STM32_TIM_TS_SLAVE_5_MASTER_4   2
+#define STM32_TIM_TS_SLAVE_5_MASTER_15  3
+#define STM32_TIM_TS_SLAVE_12_MASTER_4  0
+#define STM32_TIM_TS_SLAVE_12_MASTER_5  1
+#define STM32_TIM_TS_SLAVE_12_MASTER_13 2
+#define STM32_TIM_TS_SLAVE_12_MASTER_14 3
+#define STM32_TIM_TS_SLAVE_19_MASTER_2  0
+#define STM32_TIM_TS_SLAVE_19_MASTER_3  1
+#define STM32_TIM_TS_SLAVE_19_MASTER_15 2
+#define STM32_TIM_TS_SLAVE_19_MASTER_16 3
+#else /* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 */
 /*
  * Slave        Master
  *     1    15  2  3  4  (STM32F100 only)
@@ -219,11 +255,30 @@ void __hw_timer_enable_clock(int n, int enable)
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM15 << (n - 15);
 	}
+#endif
+
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	if (n == 14) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM14;
 	}
 #endif
+
+#if defined(CHIP_FAMILY_STM32F3)
+	if (n == 12 || n == 13) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = STM32_RCC_PB1_TIM12 << (n - 12);
+	}
+	if (n == 18) {
+		reg = &STM32_RCC_APB1ENR;
+		mask = STM32_RCC_PB1_TIM18;
+	}
+	if (n == 19) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = STM32_RCC_PB2_TIM19;
+	}
+#endif
+
 	if (n >= 2 && n <= 7) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM2 << (n - 2);
