@@ -406,6 +406,8 @@ struct pd_policy {
 /* USB-IF SIDs */
 #define USB_SID_PD          0xff00 /* power delivery */
 #define USB_SID_DISPLAYPORT 0xff01
+
+#define USB_GOOGLE_TYPEC_URL "http://www.google.com/chrome/devices/typec"
 /* USB Vendor ID assigned to Google Inc. */
 #define USB_VID_GOOGLE 0x18d1
 

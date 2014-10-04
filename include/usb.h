@@ -257,7 +257,7 @@ static inline void memcpy_usbram(usb_uint *ebuf, const uint8_t *src, int size)
 /* These descriptors defined in board code */
 extern const void * const usb_strings[];
 extern const uint8_t usb_string_desc[];
-extern struct bos_context bos_ctx;
+extern const struct bos_context bos_ctx;
 
 /* Helpers for endpoint declaration */
 
