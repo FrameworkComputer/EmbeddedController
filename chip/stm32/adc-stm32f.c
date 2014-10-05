@@ -247,6 +247,8 @@ int adc_read_all_channels(int *data)
 	}
 
 exit_all_channels:
+	dma_disable(STM32_DMAC_ADC);
+
 	if (restore_watchdog)
 		adc_enable_watchdog_no_lock();
 

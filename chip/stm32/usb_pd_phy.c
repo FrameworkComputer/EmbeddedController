@@ -544,6 +544,8 @@ void pd_hw_init(int port)
 	/* Timer ICx input configuration */
 	if (TIM_RX_CCR_IDX(port) == 1)
 		phy->tim_rx->ccmr1 |= TIM_CCR_CS << 0;
+	else if (TIM_RX_CCR_IDX(port) == 4)
+		phy->tim_rx->ccmr2 |= TIM_CCR_CS << 8;
 	else
 		/*  Unsupported RX timer capture input */
 		ASSERT(0);

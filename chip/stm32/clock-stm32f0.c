@@ -198,16 +198,39 @@ DECLARE_IRQ(STM32_IRQ_RTC_WAKEUP, __rtc_alarm_irq, 1);
 
 static void config_hispeed_clock(void)
 {
-	/* Ensure that HSI48 is ON */
-	if (!(STM32_RCC_CR2 & (1 << 17))) {
-		/* Enable HSI */
-		STM32_RCC_CR2 |= 1 << 16;
-		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR2 & (1 << 17)))
+#ifdef CHIP_FAMILY_STM32F3
+	/* Ensure that HSE is ON */
+	if (!(STM32_RCC_CR & (1 << 17))) {
+		/* Enable HSE */
+		STM32_RCC_CR |= 1 << 16;
+		/* Wait for HSE to be ready */
+		while (!(STM32_RCC_CR & (1 << 17)))
 			;
 	}
 
-#if (CPU_CLOCK == HSI48_CLOCK)
+	/*
+	 * HSE = 24MHz, no prescalar, no MCO, with PLL *2 => 48MHz SYSCLK
+	 * HCLK = SYSCLK, PCLK = HCLK / 2 = 24MHz
+	 * ADCCLK = PCLK / 6 = 4MHz
+	 * USB uses SYSCLK = 48MHz
+	 */
+	/*STM32_RCC_CFGR = 0x0041a400;*/
+	STM32_RCC_CFGR = 0x0041a400;
+
+	/* Enable the PLL */
+	STM32_RCC_CR |= 0x01000000;
+
+	/* Wait until the PLL is ready */
+	while (!(STM32_RCC_CR & 0x02000000))
+		;
+
+	/* Switch SYSCLK to PLL */
+	STM32_RCC_CFGR |= 0x2;
+
+	/* Wait until the PLL is the clock source */
+	while ((STM32_RCC_CFGR & 0xc) != 0x8)
+		;
+#elif (CPU_CLOCK == HSI48_CLOCK)
 	/*
 	 * HSI48 = 48MHz, no prescaler, no MCO, no PLL
 	 * therefore PCLK = FCLK = SYSCLK = 48MHz
@@ -254,7 +277,7 @@ static void config_hispeed_clock(void)
 		;
 
 #else
-#error "CPU_CLOCK must be either 48MHz or 38.4MHz"
+#error "CPU_CLOCK must be either 48MHz or 38.4MHz for STM32F0"
 #endif
 }
 
