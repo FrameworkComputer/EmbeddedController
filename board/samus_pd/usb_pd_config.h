@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
+#include "chip/stm32/registers.h"
+#include "gpio.h"
+
 /* USB Power delivery board configuration */
 
 #ifndef __USB_PD_CONFIG_H
@@ -200,8 +204,7 @@ static inline void pd_set_host_mode(int port, int enable)
 			/* Pull low for device mode. */
 			gpio_set_level(GPIO_USB_C0_CC1_ODL, 0);
 			gpio_set_level(GPIO_USB_C0_CC2_ODL, 0);
-			/* Enable the charging path*/
-			gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+			/* Let charge_manager decide to enable the port */
 		}
 	} else {
 		if (enable) {
@@ -216,8 +219,7 @@ static inline void pd_set_host_mode(int port, int enable)
 			/* Pull low for device mode. */
 			gpio_set_level(GPIO_USB_C1_CC1_ODL, 0);
 			gpio_set_level(GPIO_USB_C1_CC2_ODL, 0);
-			/* Enable the charging path*/
-			gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
+			/* Let charge_manager decide to enable the port */
 		}
 	}
 }

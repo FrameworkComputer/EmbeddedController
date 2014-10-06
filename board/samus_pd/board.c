@@ -7,25 +7,38 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "battery.h"
+#include "charge_manager.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "pi3usb9281.h"
 #include "power.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "usb.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 /* Chipset power state */
 static enum power_state ps;
 
 /* Battery state of charge */
 int batt_soc;
+
+/* PWM channels. Must be in the exact same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	{STM32_TIM(15), STM32_TIM_CH(2), 0, GPIO_ILIM_ADJ_PWM, GPIO_ALT_F1},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 void vbus0_evt(enum gpio_signal signal)
 {
@@ -39,9 +52,54 @@ void vbus1_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C1);
 }
 
-void bc12_evt(enum gpio_signal signal)
+/*
+ * Update available charge. Called from deferred task, queued on Pericom
+ * interrupt.
+ */
+static void board_usb_charger_update(int port)
 {
-	ccprintf("PERICOM %d!\n", signal);
+	int device_type, charger_status;
+	struct charge_port_info charge;
+	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+
+	/* Read interrupt register to clear*/
+	pi3usb9281_get_interrupts(port);
+	device_type = pi3usb9281_get_device_type(port);
+	charger_status = pi3usb9281_get_charger_status(port);
+
+	/* Attachment: decode + update available charge */
+	if (device_type || (charger_status & 0x1f))
+		charge.current = pi3usb9281_get_ilim(device_type,
+						     charger_status);
+	/* Detachment: update available charge to 0 */
+	else
+		charge.current = 0;
+
+	charge_manager_update(CHARGE_SUPPLIER_BC12, port, &charge);
+
+}
+
+/* Pericom USB deferred tasks -- called after USB device insert / removal */
+static void usb_port0_charger_update(void)
+{
+	board_usb_charger_update(0);
+}
+DECLARE_DEFERRED(usb_port0_charger_update);
+
+static void usb_port1_charger_update(void)
+{
+	board_usb_charger_update(1);
+}
+DECLARE_DEFERRED(usb_port1_charger_update);
+
+void usb0_evt(enum gpio_signal signal)
+{
+	hook_call_deferred(usb_port0_charger_update, 0);
+}
+
+void usb1_evt(enum gpio_signal signal)
+{
+	hook_call_deferred(usb_port1_charger_update, 0);
 }
 
 void pch_evt(enum gpio_signal signal)
@@ -121,6 +179,14 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE);
 
+	/* Enable pericom BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+	pi3usb9281_set_interrupt_mask(0, 0xff);
+	pi3usb9281_set_interrupt_mask(1, 0xff);
+	pi3usb9281_enable_interrupts(0);
+	pi3usb9281_enable_interrupts(1);
+
 	/* Determine initial chipset state */
 	if (slp_s5 && slp_s3) {
 		disable_sleep(SLEEP_MASK_AP_RUN);
@@ -155,6 +221,18 @@ static void board_init(void)
 		pd_enable = 1;
 	}
 	pd_comm_enable(pd_enable);
+
+	/* Enable ILIM PWM: initial duty cycle 0% = 500mA limit. */
+	pwm_enable(PWM_CH_ILIM, 1);
+	pwm_set_duty(PWM_CH_ILIM, 0);
+
+	/*
+	 * Initialize BC1.2 USB charging, so that charge manager will assign
+	 * charge port based upon charger actually present. Charger detection
+	 * can take up to 200ms after power-on, so delay the initialization.
+	 */
+	hook_call_deferred(usb_port0_charger_update, 200 * MSEC);
+	hook_call_deferred(usb_port1_charger_update, 200 * MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -304,4 +382,38 @@ enum battery_present battery_is_present(void)
 	if (batt_soc >= 0)
 		return BP_YES;
 	return BP_NOT_SURE;
+}
+
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ */
+void board_set_active_charge_port(int charge_port)
+{
+	if (charge_port >= 0 && charge_port < PD_PORT_COUNT &&
+	    pd_get_role(charge_port) != PD_ROLE_SINK) {
+		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
+		charge_port = CHARGE_PORT_NONE;
+	}
+	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
+	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
+	CPRINTS("Set active charge port %d", charge_port);
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param charge_ma     Desired charge limit (mA).
+ */
+void board_set_charge_limit(int charge_ma)
+{
+	int pwm_duty = MA_TO_PWM(charge_ma);
+	if (pwm_duty < 0)
+		pwm_duty = 0;
+	else if (pwm_duty > 100)
+		pwm_duty = 100;
+
+	pwm_set_duty(PWM_CH_ILIM, pwm_duty);
+	CPRINTS("Set ilim duty %d", pwm_duty);
 }
