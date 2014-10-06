@@ -81,10 +81,10 @@ static void pwm_configure(enum pwm_channel ch)
 	 * ARR determines the wave period, CCRn determines duty cycle.
 	 * Thus, frequency = cpu_freq / PSC / ARR. so:
 	 *
-	 *     frequency = cpu_freq / (cpu_freq/10000) / 100 = 100 Hz.
+	 *     frequency = cpu_freq / (cpu_freq/10000 + 1) / (99 + 1) = 100 Hz.
 	 */
-	tim->psc = clock_get_freq() / 10000;
-	tim->arr = 100;
+	tim->psc = clock_get_freq() / 10000 - 1;
+	tim->arr = 99;
 
 	if (pwm->channel <= 2) /* Channel ID starts from 1 */
 		ccmr = &tim->ccmr1;
