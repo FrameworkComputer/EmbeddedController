@@ -1359,15 +1359,59 @@ int cmd_thermal_set_threshold(int argc, char *argv[])
 }
 
 
+static int get_num_fans(void)
+{
+	int idx, rv;
+
+	for (idx = 0; idx < EC_FAN_SPEED_ENTRIES; idx++) {
+		rv = read_mapped_mem16(EC_MEMMAP_FAN + 2 * idx);
+		if (rv == EC_FAN_SPEED_NOT_PRESENT)
+			break;
+	}
+
+	return idx;
+}
+
 int cmd_thermal_auto_fan_ctrl(int argc, char *argv[])
 {
-	int rv;
+	int rv, num_fans;
+	struct ec_params_auto_fan_ctrl_v1 p_v1;
+	char *e;
+	int cmdver = 1;
 
-	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, 0, NULL, 0, NULL, 0);
+	if (!ec_cmd_version_supported(EC_CMD_THERMAL_AUTO_FAN_CTRL, cmdver)
+	    || (argc == 1)) {
+		/* If no argument is provided then enable auto fan ctrl */
+		/* for all fans by using version 0 of the host command */
+
+		rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, 0,
+				NULL, 0, NULL, 0);
+		if (rv < 0)
+			return rv;
+
+		printf("Automatic fan control is now on for all fans.\n");
+		return 0;
+	}
+
+	if (argc > 2 || !strcmp(argv[1], "help")) {
+		printf("Usage: %s [idx]\n", argv[0]);
+		return -1;
+	}
+
+	num_fans = get_num_fans();
+	p_v1.fan_idx = strtol(argv[1], &e, 0);
+	if ((e && *e) || (p_v1.fan_idx >= num_fans)) {
+		fprintf(stderr, "Bad fan index.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_THERMAL_AUTO_FAN_CTRL, cmdver,
+			&p_v1, sizeof(p_v1), NULL, 0);
 	if (rv < 0)
 		return rv;
 
-	printf("Automatic fan control is now on.\n");
+	printf("Automatic fan control is now on for fan %d\n", p_v1.fan_idx);
+
 	return 0;
 }
 
@@ -1387,19 +1431,6 @@ static int print_fan(int idx)
 	}
 
 	return 0;
-}
-
-static int get_num_fans(void)
-{
-	int idx, rv;
-
-	for (idx = 0; idx < EC_FAN_SPEED_ENTRIES; idx++) {
-		rv = read_mapped_mem16(EC_MEMMAP_FAN + 2 * idx);
-		if (rv == EC_FAN_SPEED_NOT_PRESENT)
-			break;
-	}
-
-	return idx;
 }
 
 int cmd_pwm_get_num_fans(int argc, char *argv[])

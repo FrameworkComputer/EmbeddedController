@@ -370,16 +370,26 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_FAN_DUTY,
 static int hc_thermal_auto_fan_ctrl(struct host_cmd_handler_args *args)
 {
 	int fan;
+	const struct ec_params_auto_fan_ctrl_v1 *p_v1 = args->params;
 
-	/* TODO(crosbug.com/p/23803) */
-	for (fan = 0; fan < CONFIG_FANS; fan++)
-		set_thermal_control_enabled(fan, 1);
+	if (args->version == 0) {
+		for (fan = 0; fan < CONFIG_FANS; fan++)
+			set_thermal_control_enabled(fan, 1);
+
+		return EC_RES_SUCCESS;
+	}
+
+	fan = p_v1->fan_idx;
+	if (fan >= CONFIG_FANS)
+		return EC_RES_ERROR;
+
+	set_thermal_control_enabled(fan, 1);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_AUTO_FAN_CTRL,
 		     hc_thermal_auto_fan_ctrl,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0)|EC_VER_MASK(1));
 
 
 /*****************************************************************************/

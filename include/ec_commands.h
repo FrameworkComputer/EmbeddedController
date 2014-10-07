@@ -1607,6 +1607,11 @@ struct ec_params_thermal_set_threshold_v1 {
 /* Toggle automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
+/* Version 1 of input params */
+struct ec_params_auto_fan_ctrl_v1 {
+	uint8_t fan_idx;
+} __packed;
+
 /* Get TMP006 calibration data */
 #define EC_CMD_TMP006_GET_CALIBRATION 0x53
 
