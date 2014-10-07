@@ -82,8 +82,9 @@ BOARDS_STM32_PROG_EN=(
 )
 
 BOARDS_STM32_DFU=(
-	twinkie
+	dingdong
 	hoho
+	twinkie
 )
 
 # Flags
@@ -243,7 +244,7 @@ function ec_uart() {
 case "${BOARD}" in
 	ryu_sh ) MCU="sh" ;;
 	samus_pd ) MCU="usbpd" ;;
-	twinkie|hoho ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
+	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
 

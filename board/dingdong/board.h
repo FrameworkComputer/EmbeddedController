@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Hoho dongle configuration */
+/* Dingdong dongle configuration */
 
 #ifndef __BOARD_H
 #define __BOARD_H
@@ -18,22 +18,13 @@
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
-#define CONFIG_CMD_SPI_FLASH
 #define CONFIG_HW_CRC
-#define CONFIG_I2C
-#define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_SIZE 1048576
-#define CONFIG_SPI_MASTER_PORT 2
-#define CONFIG_SPI_CS_GPIO GPIO_PD_MCDP_SPI_CS_L
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
-
-/* I2C ports configuration */
-#define I2C_PORT_MASTER 0
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
