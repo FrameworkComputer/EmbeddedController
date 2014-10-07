@@ -1505,8 +1505,8 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 
 	if (argc > 3 || (argc == 2 && !strcmp(argv[1], "help")) || argc == 1) {
 		printf("Usage: %s [idx] <targetrpm>\n", argv[0]);
-		printf("'pwmfansetrpm 0 3000' - Set fan 0 RPM to 3000\n");
-		printf("'pwmfansetrpm 3000' - Set all fans RPM to 3000\n");
+		printf("'%s 0 3000' - Set fan 0 RPM to 3000\n", argv[0]);
+		printf("'%s 3000' - Set all fans RPM to 3000\n", argv[0]);
 		return -1;
 	}
 
