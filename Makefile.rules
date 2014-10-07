@@ -41,6 +41,7 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
 cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
+cmd_elf_to_hex = $(OBJCOPY) -O ihex $^ $@
 cmd_elf = $(LD) $(objs) $(LDFLAGS) -o $@ -T $< -Map $(out)/$*.map
 cmd_exe = $(CC) $(objs) $(HOST_TEST_LDFLAGS) -o $@
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
@@ -80,6 +81,9 @@ proj-%:
 
 dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
 dis: $(dis-y)
+
+hex-y = $(out)/$(PROJECT).RO.hex $(out)/$(PROJECT).RW.hex
+hex: $(hex-y)
 
 utils: $(build-utils) $(host-utils)
 
@@ -156,6 +160,9 @@ $(out)/%.dis: $(out)/%.elf
 
 $(out)/%.flat: $(out)/%.elf
 	$(call quiet,elf_to_flat,OBJCOPY)
+
+$(out)/%.hex: $(out)/%.elf
+	$(call quiet,elf_to_hex,OBJCOPY)
 
 $(out)/%.elf: $(out)/%.lds $(objs)
 	$(call quiet,elf,LD     )
