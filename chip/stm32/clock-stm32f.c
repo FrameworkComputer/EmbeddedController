@@ -161,6 +161,7 @@ static void config_hispeed_clock(void)
 		;
 }
 
+#ifdef CONFIG_HIBERNATE
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	if (seconds || microseconds)
@@ -180,6 +181,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	while (1)
 		;
 }
+#endif
 
 #ifdef CONFIG_LOW_POWER_IDLE
 
