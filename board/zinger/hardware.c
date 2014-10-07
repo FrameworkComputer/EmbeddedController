@@ -109,18 +109,20 @@ static void adc_init(void)
 		while (STM32_ADC_CR & STM32_ADC_CR_ADCAL)
 			;
 	}
-	/* As per ST recommendation, ensure two cycles before setting ADEN */
-	asm volatile("nop; nop;");
-	/* ADC enabled */
-	STM32_ADC_CR = STM32_ADC_ISR_ADRDY;
-	while (!(STM32_ADC_ISR & STM32_ADC_ISR_ADRDY))
-		;
 	/* Single conversion, right aligned, 12-bit */
 	STM32_ADC_CFGR1 = 1 << 12; /* (1 << 15) => AUTOOFF */;
-	/* clock is ADCCLK */
+	/* clock is ADCCLK (ADEN must be off when writing this reg) */
 	STM32_ADC_CFGR2 = 0;
 	/* Sampling time : 71.5 ADC clock cycles, about 5us */
 	STM32_ADC_SMPR = 6;
+
+	/*
+	 * ADC enable (note: takes 4 ADC clocks between end of calibration
+	 * and setting ADEN).
+	 */
+	STM32_ADC_CR = STM32_ADC_CR_ADEN;
+	while (!(STM32_ADC_ISR & STM32_ADC_ISR_ADRDY))
+		STM32_ADC_CR = STM32_ADC_CR_ADEN;
 	/* Disable interrupts */
 	STM32_ADC_IER = 0;
 	/* Analog watchdog IRQ */
