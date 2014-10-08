@@ -183,7 +183,7 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
  */
 struct ec_thermal_config thermal_params[] = {
 	/* Only the AP affects the thermal limits and fan speed. */
-	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)}, C_TO_K(55), C_TO_K(85)},
+	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)}, C_TO_K(43), C_TO_K(75)},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
@@ -305,4 +305,3 @@ const struct accel_orientation acc_orient = {
 	},
 	.hinge_axis = {0, 1, 0},
 };
-
