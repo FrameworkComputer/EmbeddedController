@@ -418,9 +418,11 @@ static void prevent_deep_discharge(void)
 		return;
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+#ifdef CONFIG_HIBERNATE
 		/* AP is off, so shut down the EC now */
 		CPRINTS("charge force EC hibernate due to low battery");
 		system_hibernate(0, 0);
+#endif
 	} else if (!shutdown_warning_time.val) {
 		/* Warn AP battery level is so low we'll shut down */
 		CPRINTS("charge warn shutdown due to low battery");
