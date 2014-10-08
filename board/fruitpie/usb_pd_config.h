@@ -138,6 +138,13 @@ static inline int pd_adc_read(int port, int cc)
 		return adc_read_channel(ADC_CH_CC2_PD);
 }
 
+static inline void pd_set_vconn(int port, int polarity, int enable)
+{
+	/* Set VCONN on the opposite CC line from the polarity */
+	gpio_set_level(polarity ? GPIO_VCONN1_EN :
+				  GPIO_VCONN2_EN, enable);
+}
+
 static inline int pd_snk_is_vbus_provided(int port)
 {
 	return gpio_get_level(GPIO_VBUS_WAKE);

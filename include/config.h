@@ -1041,6 +1041,9 @@
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
 
+/* Support for USB type-c vconn. Not needed for captive cables. */
+#undef CONFIG_USBC_VCONN
+
 /*****************************************************************************/
 /* USB interfaces config */
 
