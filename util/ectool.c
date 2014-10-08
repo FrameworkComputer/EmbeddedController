@@ -2082,7 +2082,7 @@ static void lb_show_params_v1(const struct lightbar_params_v1 *p)
 		       p->color[i].b, i);
 }
 
-static int lb_load_program(const char *filename, struct lb_program *prog)
+static int lb_load_program(const char *filename, struct lightbar_program *prog)
 {
 	FILE *fp;
 	size_t got;
@@ -2103,15 +2103,15 @@ static int lb_load_program(const char *filename, struct lb_program *prog)
 		return 1;
 	}
 	rc = (int) ftell(fp);
-	if (rc > LB_PROG_LEN) {
+	if (rc > EC_LB_PROG_LEN) {
 		fprintf(stderr, "File %s is too long, aborting\n", filename);
 		fclose(fp);
 		return 1;
 	}
 	rewind(fp);
 
-	memset(prog->data, 0, LB_PROG_LEN);
-	got = fread(prog->data, 1, LB_PROG_LEN, fp);
+	memset(prog->data, 0, EC_LB_PROG_LEN);
+	got = fread(prog->data, 1, EC_LB_PROG_LEN, fp);
 	if (rc != got)
 		fprintf(stderr, "Warning: did not read entire file\n");
 	prog->size = got;

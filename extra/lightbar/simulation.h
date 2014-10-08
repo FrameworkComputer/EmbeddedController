@@ -23,7 +23,7 @@ void *entry_lightbar(void *);
 void init_windows(void);
 int lb_read_params_from_file(const char *filename,
 			     struct lightbar_params_v1 *p);
-int lb_load_program(const char *filename, struct lb_program *prog);
+int lb_load_program(const char *filename, struct lightbar_program *prog);
 /* Interfaces to the EC code that we're encapsulating */
 void lightbar_task(void);
 int fake_consolecmd_lightbar(int argc, char *argv[]);

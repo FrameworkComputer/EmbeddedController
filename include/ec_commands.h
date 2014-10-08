@@ -1050,11 +1050,10 @@ struct lightbar_params_v1 {
 } __packed;
 
 /* Lightbyte program. */
-#define LB_PROG_LEN 192
-#define LB_PROG_MAX_OPERANDS 4
-struct lb_program {
+#define EC_LB_PROG_LEN 192
+struct lightbar_program {
 	uint8_t size;
-	uint8_t data[LB_PROG_LEN];
+	uint8_t data[EC_LB_PROG_LEN];
 };
 
 struct ec_params_lightbar {
@@ -1083,7 +1082,7 @@ struct ec_params_lightbar {
 
 		struct lightbar_params_v0 set_params_v0;
 		struct lightbar_params_v1 set_params_v1;
-		struct lb_program set_program;
+		struct lightbar_program set_program;
 	};
 } __packed;
 

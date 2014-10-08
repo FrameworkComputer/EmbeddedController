@@ -31,10 +31,10 @@ static const char usage[] =
 /* globals */
 static int hit_errors;
 static int opt_verbose;
-static int is_jump_target[LB_PROG_LEN];		/* does program jump here? */
-static int is_instruction[LB_PROG_LEN];		/* instruction or operand? */
-static char *label[LB_PROG_LEN];		/* labels we've seen */
-static char *reloc_label[LB_PROG_LEN];		/* put label target here */
+static int is_jump_target[EC_LB_PROG_LEN];	/* does program jump here? */
+static int is_instruction[EC_LB_PROG_LEN];	/* instruction or operand? */
+static char *label[EC_LB_PROG_LEN];		/* labels we've seen */
+static char *reloc_label[EC_LB_PROG_LEN];	/* put label target here */
 
 static void Error(const char *format, ...)
 {
@@ -56,10 +56,11 @@ static void Warning(const char *format, ...)
 }
 
 /* The longest line should have a label, an opcode, and the max operands */
+#define LB_PROG_MAX_OPERANDS 4
 #define MAX_WORDS (2 + LB_PROG_MAX_OPERANDS)
 
-struct safe_lb_program {
-	struct lb_program p;
+struct safe_lightbar_program {
+	struct lightbar_program p;
 	uint8_t zeros[LB_PROG_MAX_OPERANDS];
 } __packed;
 
@@ -85,14 +86,14 @@ static const char const *color_sym[] = {
 	"r", "g", "b", "rgb"
 };
 
-static void read_binary(FILE *fp, struct safe_lb_program *prog)
+static void read_binary(FILE *fp, struct safe_lightbar_program *prog)
 {
 	int got;
 
 	memset(prog, 0, sizeof(*prog));
 
 	/* Read up to one more byte than we need, so we know if it's too big */
-	got = fread(prog->p.data, 1, LB_PROG_LEN + 1, fp);
+	got = fread(prog->p.data, 1, EC_LB_PROG_LEN + 1, fp);
 	if (got < 1) {
 		Error("Unable to read any input: ");
 		if (feof(fp))
@@ -101,10 +102,10 @@ static void read_binary(FILE *fp, struct safe_lb_program *prog)
 			fprintf(stderr, "%s\n", strerror(errno));
 		else
 			fprintf(stderr, "no idea why.\n");
-	} else if (got > LB_PROG_LEN) {
-		Warning("Truncating input at %d bytes\n", LB_PROG_LEN);
+	} else if (got > EC_LB_PROG_LEN) {
+		Warning("Truncating input at %d bytes\n", EC_LB_PROG_LEN);
 		prog->zeros[0] = 0;
-		got = LB_PROG_LEN;
+		got = EC_LB_PROG_LEN;
 	} else {
 		prog->p.size = got;
 	}
@@ -216,7 +217,7 @@ static int print_op(FILE *fp, uint8_t addr, uint8_t cmd, uint8_t *arg)
 	return operands;
 }
 
-static void disassemble_prog(FILE *fp, struct safe_lb_program *prog)
+static void disassemble_prog(FILE *fp, struct safe_lightbar_program *prog)
 {
 	int i;
 	uint8_t *ptr, targ;
@@ -240,7 +241,7 @@ static void disassemble_prog(FILE *fp, struct safe_lb_program *prog)
 
 	/* Finally, make sure the program doesn't jump to any location other
 	 * than a valid instruction */
-	for (i = 0; i < LB_PROG_LEN; i++)
+	for (i = 0; i < EC_LB_PROG_LEN; i++)
 		if (is_jump_target[i] && !is_instruction[i]) {
 			Warning("program jumps to 0x%02x, "
 				"which is not a valid instruction\n", i);
@@ -328,28 +329,28 @@ static int is_color_arg(char *buf, uint32_t *valp)
 	return rv;
 }
 
-static void fixup_symbols(struct safe_lb_program *prog)
+static void fixup_symbols(struct safe_lightbar_program *prog)
 {
 	int i, j;
 
-	for (i = 0; i < LB_PROG_LEN; i++) {
+	for (i = 0; i < EC_LB_PROG_LEN; i++) {
 		if (reloc_label[i]) {
 			/* Looking for reloc label */
-			for (j = 0; j < LB_PROG_LEN; j++) {
+			for (j = 0; j < EC_LB_PROG_LEN; j++) {
 				if (label[j] && !strcmp(label[j],
 							reloc_label[i])) {
 					prog->p.data[i] = j;
 					break;
 				}
 			}
-			if (j >= LB_PROG_LEN)
+			if (j >= EC_LB_PROG_LEN)
 				Error("Can't find label %s from line %d\n", j);
 		}
 	}
 }
 
 
-static void compile(FILE *fp, struct safe_lb_program *prog)
+static void compile(FILE *fp, struct safe_lightbar_program *prog)
 {
 	char buf[128];
 	struct parse_s token[MAX_WORDS];
@@ -409,7 +410,7 @@ static void compile(FILE *fp, struct safe_lb_program *prog)
 		}
 
 		/* Do we even have a place to write this opcode? */
-		if (addr >= LB_PROG_LEN) {
+		if (addr >= EC_LB_PROG_LEN) {
 			Error("out of program space at line %d\n", line);
 			break;
 		}
@@ -481,7 +482,7 @@ static void compile(FILE *fp, struct safe_lb_program *prog)
 		}
 
 		/* Did we run past the end? */
-		if (addr > LB_PROG_LEN) {
+		if (addr > EC_LB_PROG_LEN) {
 			Error("out of program space at line %d\n", line);
 			break;
 		}
@@ -501,7 +502,7 @@ static void compile(FILE *fp, struct safe_lb_program *prog)
 
 int main(int argc, char *argv[])
 {
-	struct safe_lb_program safe_prog;
+	struct safe_lightbar_program safe_prog;
 	int opt_decode = 0;
 	int c;
 	int errorcnt = 0;

@@ -908,8 +908,8 @@ static uint32_t sequence_TAP(void)
 /* Lightbar bytecode interpreter: Lightbyte. */
 /****************************************************************************/
 
-static struct lb_program cur_prog;
-static struct lb_program next_prog;
+static struct lightbar_program cur_prog;
+static struct lightbar_program next_prog;
 static uint8_t pc;
 
 static uint8_t led_desc[NUM_LEDS][LB_CONT_MAX][3];
@@ -1189,7 +1189,7 @@ static uint32_t sequence_PROGRAM(void)
 	uint8_t old_pc;
 
 	/* load next program */
-	memcpy(&cur_prog, &next_prog, sizeof(struct lb_program));
+	memcpy(&cur_prog, &next_prog, sizeof(struct lightbar_program));
 
 	/* reset program state */
 	saved_brightness = lb_get_brightness();
@@ -1419,7 +1419,9 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		break;
 	case LIGHTBAR_CMD_SET_PROGRAM:
 		CPRINTS("LB_set_program");
-		memcpy(&next_prog, &in->set_program, sizeof(struct lb_program));
+		memcpy(&next_prog,
+		       &in->set_program,
+		       sizeof(struct lightbar_program));
 		break;
 	case LIGHTBAR_CMD_VERSION:
 		CPRINTS("LB_version");
