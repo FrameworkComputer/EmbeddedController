@@ -14,7 +14,7 @@ GPIO(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    unhandled_evt
 GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
 GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
 GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
-GPIO(AP_IN_SUSPEND,        E, 9,  GPIO_INT_BOTH | GPIO_PULL_UP,    power_signal_interrupt)
+GPIO(AP_IN_SUSPEND,        E, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
 GPIO(BASE_PRES_L,          E, 10, GPIO_INT_BOTH | GPIO_PULL_UP,    unhandled_evt)
 GPIO(AP_HOLD,              E, 14, GPIO_INT_BOTH, power_signal_interrupt)
 
