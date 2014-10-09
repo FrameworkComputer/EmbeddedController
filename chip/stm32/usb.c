@@ -63,11 +63,18 @@ static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
 static int set_addr;
+/* remaining size of descriptor data to transfer */
+static int desc_left;
+/* pointer to descriptor data if any */
+static const uint8_t *desc_ptr;
 
 /* Requests on the control endpoint (aka EP0) */
 static void ep0_rx(void)
 {
 	uint16_t req = ep0_buf_rx[0]; /* bRequestType | bRequest */
+
+	/* reset any incomplete descriptor transfer */
+	desc_ptr = NULL;
 
 	/* interface specific requests */
 	if ((req & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
@@ -81,48 +88,51 @@ static void ep0_rx(void)
 	if (req == (USB_DIR_IN | (USB_REQ_GET_DESCRIPTOR << 8))) {
 		uint8_t type = ep0_buf_rx[1] >> 8;
 		uint8_t idx = ep0_buf_rx[1] & 0xff;
-		const uint8_t *str_desc;
+		const uint8_t *desc;
+		int len;
 
 		switch (type) {
 		case USB_DT_DEVICE: /* Setup : Get device descriptor */
-			memcpy_usbram(ep0_buf_tx, (void *)&dev_desc,
-					 sizeof(dev_desc));
-			btable_ep[0].tx_count = MIN(ep0_buf_rx[3],
-					 sizeof(dev_desc));
-			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
-				  EP_STATUS_OUT /*null OUT transaction */);
+			desc = (void *)&dev_desc;
+			len = sizeof(dev_desc);
 			break;
 		case USB_DT_CONFIGURATION: /* Setup : Get configuration desc */
-			memcpy_usbram(ep0_buf_tx, __usb_desc,
-					 USB_DESC_SIZE);
-			/* set the real descriptor size */
-			ep0_buf_tx[1] = USB_DESC_SIZE;
-			btable_ep[0].tx_count = MIN(ep0_buf_rx[3],
-					 USB_DESC_SIZE);
-			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
-				  EP_STATUS_OUT /*null OUT transaction */);
+			desc = __usb_desc;
+			len = USB_DESC_SIZE;
 			break;
 		case USB_DT_STRING: /* Setup : Get string descriptor */
-			if (idx >= USB_STR_COUNT) {
+			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
-				STM32_TOGGLE_EP(0, EP_TX_RX_MASK,
-					  EP_RX_VALID | EP_TX_STALL, 0);
-				return; /* don't remove the STALL */
-			}
-			str_desc = usb_strings[idx];
-			memcpy_usbram(ep0_buf_tx, str_desc, str_desc[0]);
-			btable_ep[0].tx_count = MIN(ep0_buf_rx[3], str_desc[0]);
-			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
-				  EP_STATUS_OUT /*null OUT transaction */);
+				goto unknown_req;
+
+			desc = usb_strings[idx];
+			len = desc[0];
 			break;
 		case USB_DT_DEVICE_QUALIFIER: /* Get device qualifier desc */
 			/* Not high speed : STALL next IN used as handshake */
-			STM32_TOGGLE_EP(0, EP_TX_RX_MASK,
-					EP_RX_VALID | EP_TX_STALL, 0);
-			break;
+			goto unknown_req;
 		default: /* unhandled descriptor */
 			goto unknown_req;
 		}
+		/* do not send more than what the host asked for */
+		len = MIN(ep0_buf_rx[3], len);
+		/*
+		 * if we cannot transmit everything at once,
+		 * keep the remainder for the next IN packet
+		 */
+		if (len >= USB_MAX_PACKET_SIZE) {
+			desc_left = len - USB_MAX_PACKET_SIZE;
+			desc_ptr = desc + USB_MAX_PACKET_SIZE;
+			len = USB_MAX_PACKET_SIZE;
+		}
+		memcpy_usbram(ep0_buf_tx, desc, len);
+		if (type == USB_DT_CONFIGURATION)
+			/* set the real descriptor size */
+			ep0_buf_tx[1] = USB_DESC_SIZE;
+		btable_ep[0].tx_count = len;
+		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
+				desc_left ? 0 : EP_STATUS_OUT);
+		/* send the null OUT transaction if the transfer is complete */
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
 		uint16_t zero = 0;
 		/* Get status */
@@ -165,7 +175,18 @@ static void ep0_tx(void)
 		set_addr = 0;
 		CPRINTF("SETAD %02x\n", STM32_USB_DADDR);
 	}
-
+	if (desc_ptr) {
+		/* we have an on-going descriptor transfer */
+		int len = MIN(desc_left, USB_MAX_PACKET_SIZE);
+		memcpy_usbram(ep0_buf_tx, desc_ptr, len);
+		btable_ep[0].tx_count = len;
+		desc_left -= len;
+		desc_ptr += len;
+		STM32_TOGGLE_EP(0, EP_TX_MASK, EP_TX_VALID,
+				desc_left ? 0 : EP_STATUS_OUT);
+		/* send the null OUT transaction if the transfer is complete */
+		return;
+	}
 	STM32_TOGGLE_EP(0, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
