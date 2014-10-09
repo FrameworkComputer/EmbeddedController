@@ -83,11 +83,6 @@
  */
 #define PMIC_RESET_HOLD_TIME (50 * MSEC)
 
-/*
- * Time until AP is ready to talk SPI, before then there's SPI garbage
- */
-#define PMIC_SPI_READY_TIME (100 * MSEC)
-
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -390,29 +385,7 @@ static void power_on(void)
 	set_pmic_reset(0);
 	set_pmic_warm_reset(0);
 
-	/* Wait till the AP has SPI ready */
-	usleep(PMIC_SPI_READY_TIME);
-
-	/* enable interrupt */
-	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT | GPIO_INT_BOTH
-			| GPIO_PULL_DOWN);
-
-	gpio_set_flags(GPIO_EC_INT, GPIO_OUTPUT | GPIO_OUT_HIGH);
-
-	/*
-	 * When power_on() is called, we are at S5S3. Initialize components
-	 * to ready state before AP is up.
-	 */
-	hook_notify(HOOK_CHIPSET_PRE_INIT);
-
-	disable_sleep(SLEEP_MASK_AP_RUN);
-	powerled_set_state(POWERLED_STATE_ON);
-
-	/* Call hooks now that AP is running */
-	hook_notify(HOOK_CHIPSET_STARTUP);
-
 	set_5v_power(1);
-	CPRINTS("AP running ...");
 }
 
 /**
@@ -516,13 +489,29 @@ enum power_state power_handle_state(enum power_state state)
 		return state;
 
 	case POWER_S5S3:
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
+
 		power_on();
+
+		disable_sleep(SLEEP_MASK_AP_RUN);
+		powerled_set_state(POWERLED_STATE_ON);
+
 		if (power_wait_signals(IN_POWER_GOOD) == EC_SUCCESS) {
 			CPRINTS("POWER_GOOD seen");
 			if (wait_for_power_button_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
 				set_pmic_pwron(0);
+
+				/* setup misc gpio for S3/S0 functionality */
+				gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT
+					| GPIO_INT_BOTH | GPIO_PULL_DOWN);
+				gpio_set_flags(GPIO_EC_INT, GPIO_OUTPUT
+						| GPIO_OUT_HIGH);
+
+				/* Call hooks now that AP is running */
+				hook_notify(HOOK_CHIPSET_STARTUP);
+
 				return POWER_S3;
 			} else {
 				CPRINTS("long-press button, shutdown");
@@ -536,7 +525,8 @@ enum power_state power_handle_state(enum power_state state)
 		} else {
 			CPRINTS("POWER_GOOD not seen in time");
 		}
-		set_pmic_pwron(0);
+
+		chipset_turn_off_power_rails();
 		return POWER_S5;
 
 	case POWER_S3:
