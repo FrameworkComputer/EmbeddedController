@@ -92,13 +92,16 @@ _rw_size_str:=$(shell echo "CONFIG_FW_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
 
+$(eval BOARD_$(UC_BOARD)=y)
+$(eval CHIP_$(UC_CHIP)=y)
+$(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
+$(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
+
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
 include board/$(BOARD)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
-
-$(eval BOARD_$(UC_BOARD)=y)
 
 include common/build.mk
 include driver/build.mk

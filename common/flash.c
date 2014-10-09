@@ -188,7 +188,7 @@ int flash_protect_ro_at_boot(int enable)
 	 * This assumes PSTATE immediately follows RO, which it does on
 	 * all STM32 platforms (which are the only ones with this config).
 	 */
-	flash_physical_protect_ro_at_boot(new_flags);
+	flash_physical_protect_at_boot(new_flags ? FLASH_WP_RO : FLASH_WP_NONE);
 #endif
 
 	return EC_SUCCESS;

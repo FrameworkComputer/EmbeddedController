@@ -28,6 +28,13 @@
 #define PSTATE_BANK		(PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
 #define PSTATE_BANK_COUNT	(PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
 
+/* Range of write protection */
+enum flash_wp_range {
+	FLASH_WP_NONE = 0,
+	FLASH_WP_RO,
+	FLASH_WP_ALL,
+};
+
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 
@@ -70,12 +77,12 @@ int flash_physical_get_protect(int bank);
 uint32_t flash_physical_get_protect_flags(void);
 
 /**
- * Enable/disable protecting RO firmware and pstate at boot.
+ * Enable/disable protecting firmware/pstate at boot.
  *
- * @param enable	Enable (non-zero) or disable (zero) protection
+ * @param range		The range to protect
  * @return non-zero if error.
  */
-int flash_physical_protect_ro_at_boot(int enable);
+int flash_physical_protect_at_boot(enum flash_wp_range range);
 
 /**
  * Protect flash now.
@@ -95,6 +102,13 @@ int flash_physical_protect_now(int all);
  * Only returns (with EC_ERROR_ACCESS_DENIED) if the command is locked.
  */
 int flash_physical_force_reload(void);
+
+/**
+ * Restore flash physical layer state after sysjump.
+ *
+ * @return non-zero if restored.
+ */
+int flash_physical_restore_state(void);
 
 /*****************************************************************************/
 /* Low-level common code for use by flash modules. */
