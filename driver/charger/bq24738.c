@@ -161,6 +161,7 @@ int charger_post_init(void)
 	if (rv)
 		return rv;
 	val &= ~OPTION_IFAULT_HI_ENABLE;
+	val &= ~OPTION_LEARN_ENABLE;
 	rv = charger_set_option(val);
 	if (rv)
 		return rv;

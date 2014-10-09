@@ -182,6 +182,7 @@ int charger_post_init(void)
 	/* Always monitor adapter current (40X multiplier). */
 	option |= OPT_FIX_IOUT_ALWAYS;
 	option &= ~OPT_IOUT_MASK;
+	option &= ~OPT_LEARN_MASK;
 
 	/* Enable dynamic power management */
 	option |= OPT_IDPM_ENABLE;

@@ -169,10 +169,20 @@ int charger_set_voltage(int voltage)
 /* Charging power state initialization */
 int charger_post_init(void)
 {
+	int rv, option;
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
-	int rv;
 	int option2;
 #endif
+
+	rv = charger_get_option(&option);
+	if (rv)
+		return rv;
+
+	option &= ~OPTION0_LEARN_ENABLE;
+
+	rv = charger_set_option(option);
+	if (rv)
+		return rv;
 
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
 	/* Read the external ILIM pin enabled flag. */
