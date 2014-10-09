@@ -125,17 +125,17 @@ int flash_physical_restore_state(void);
 int flash_is_erased(uint32_t offset, int size);
 
 /**
- * Enable write protect for the read-only code.
+ * Enable write protect for the specified range.
  *
  * Once write protect is enabled, it will STAY enabled until the system is
  * hard-rebooted with the hardware write protect pin deasserted.  If the write
  * protect pin is deasserted, the protect setting is ignored, and the entire
  * flash will be writable.
  *
- * @param enable        Enable write protection
+ * @param range		The range to protect.
  * @return EC_SUCCESS, or nonzero if error.
  */
-int flash_protect_ro_at_boot(int enable);
+int flash_protect_at_boot(enum flash_wp_range range);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */

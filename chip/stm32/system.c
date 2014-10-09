@@ -231,11 +231,21 @@ void system_reset(int flags)
 		/* Fall through to watchdog if that fails */
 #endif
 
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+		/*
+		 * On some chips, a reboot doesn't always reload the option
+		 * bytes, and we need to explicitly request for a reload.
+		 * The reload request triggers a chip reset, so let's just
+		 * use this for hard reset.
+		 */
+		STM32_FLASH_CR |= STM32_FLASH_CR_OBL_LAUNCH;
+#else
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = 0x5555;
 		STM32_IWDG_RLR = 0x1;
 		STM32_IWDG_KR = 0xcccc;
-		/* wait for the watchdog */
+#endif
+		/* wait for the chip to reboot */
 		while (1)
 			;
 	} else {

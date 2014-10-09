@@ -151,10 +151,10 @@ int flash_erase(int offset, int size)
 	return flash_physical_erase(offset, size);
 }
 
-int flash_protect_ro_at_boot(int enable)
+int flash_protect_at_boot(enum flash_wp_range range)
 {
 	struct persist_state pstate;
-	int new_flags = enable ? PERSIST_FLAG_PROTECT_RO : 0;
+	int new_flags = (range != FLASH_WP_NONE) ? PERSIST_FLAG_PROTECT_RO : 0;
 
 	/* Read the current persist state from flash */
 	flash_read_pstate(&pstate);
@@ -188,7 +188,7 @@ int flash_protect_ro_at_boot(int enable)
 	 * This assumes PSTATE immediately follows RO, which it does on
 	 * all STM32 platforms (which are the only ones with this config).
 	 */
-	flash_physical_protect_at_boot(new_flags ? FLASH_WP_RO : FLASH_WP_NONE);
+	flash_physical_protect_at_boot(range);
 #endif
 
 	return EC_SUCCESS;
@@ -261,14 +261,45 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 {
 	int retval = EC_SUCCESS;
 	int rv;
+	enum flash_wp_range range = FLASH_WP_NONE;
+	int need_set_protect = 0;
 
 	/*
 	 * Process flags we can set.  Track the most recent error, but process
 	 * all flags before returning.
 	 */
+
+	/*
+	 * AT_BOOT flags are trickier than NOW flags, as they can be set
+	 * when HW write protection is disabled and can be unset without
+	 * a reboot.
+	 *
+	 * If we are only setting/clearing RO_AT_BOOT, things are simple.
+	 * Setting ALL_AT_BOOT is processed only if HW write protection is
+	 * enabled and RO_AT_BOOT is set, so it's also simple.
+	 *
+	 * The most tricky one is when we want to clear ALL_AT_BOOT. We need
+	 * to determine whether to clear protection for the entire flash or
+	 * leave RO protected. There are two cases that we want to keep RO
+	 * protected:
+	 *   1. RO_AT_BOOT was already set before flash_set_protect() is
+	 *      called.
+	 *   2. RO_AT_BOOT was not set, but it's requested to be set by
+	 *      the caller of flash_set_protect().
+	 */
 	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		rv = flash_protect_ro_at_boot(
-			      flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+		range = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ?
+			FLASH_WP_RO : FLASH_WP_NONE;
+		need_set_protect = 1;
+	}
+	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	    !(flags & EC_FLASH_PROTECT_ALL_AT_BOOT)) {
+		if (flash_get_protect() & EC_FLASH_PROTECT_RO_AT_BOOT)
+			range = FLASH_WP_RO;
+		need_set_protect = 1;
+	}
+	if (need_set_protect) {
+		rv = flash_protect_at_boot(range);
 		if (rv)
 			retval = rv;
 	}
@@ -280,6 +311,13 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	if ((~flash_get_protect()) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
 				      EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
+
+	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	    (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)) {
+		rv = flash_protect_at_boot(FLASH_WP_ALL);
+		if (rv)
+			retval = rv;
+	}
 
 	if ((mask & EC_FLASH_PROTECT_RO_NOW) &&
 	    (flags & EC_FLASH_PROTECT_RO_NOW)) {
