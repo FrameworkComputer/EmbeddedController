@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "hooks.h"
 #include "registers.h"
-#include "sha1.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"

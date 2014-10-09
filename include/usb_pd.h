@@ -144,7 +144,7 @@ enum pd_errors {
 
 /*
  * ChromeOS specific VDO_CMD_READ_INFO responds with device info including:
- * RW Hash: sha1 of RW hash (20 bytes)
+ * RW Hash: First 20 bytes of SHA-256 of RW (20 bytes)
  * HW Device ID: unique descriptor for each ChromeOS model (2 bytes)
  *               top 6 bits are minor revision, bottom 10 bits are major
  * SW Debug Version: Software version useful for debugging (15 bits)
@@ -352,7 +352,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
  *
  * @param port     USB-C port number
  * @param dev_id   device identifier
- * @param rw_hash  pointer to sha1 rw_hash
+ * @param rw_hash  pointer to rw_hash
  */
 void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash);
 

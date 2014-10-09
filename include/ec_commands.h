@@ -2668,12 +2668,13 @@ struct ec_params_usb_pd_fw_update {
 
 /* Write USB-PD Accessory RW_HASH table entry */
 #define EC_CMD_USB_PD_RW_HASH_ENTRY 0x111
-#define SHA1_DIGEST_SIZE 20
+/* RW hash is first 20 bytes of SHA-256 of RW section */
+#define PD_RW_HASH_SIZE 20
 struct ec_params_usb_pd_rw_hash_entry {
 	uint16_t dev_id;
 	union {
-		uint8_t b[SHA1_DIGEST_SIZE];
-		uint32_t w[SHA1_DIGEST_SIZE/4];
+		uint8_t b[PD_RW_HASH_SIZE];
+		uint32_t w[PD_RW_HASH_SIZE/4];
 	} dev_rw_hash;
 } __packed;
 

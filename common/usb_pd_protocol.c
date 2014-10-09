@@ -14,7 +14,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
-#include "sha1.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -230,7 +229,7 @@ static struct pd_protocol {
 
 	/* Attached ChromeOS device id & RW hash */
 	uint16_t dev_id;
-	uint32_t dev_rw_hash[SHA1_DIGEST_SIZE/4];
+	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
 } pd[PD_PORT_COUNT];
 
 /*
@@ -1079,7 +1078,7 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
 {
 	int j;
 	ccprintf("Device:0x%04x Hash:", dev_id);
-	for (j = 0; j < SHA1_DIGEST_SIZE/4; j++)
+	for (j = 0; j < PD_RW_HASH_SIZE/4; j++)
 		ccprintf(" 0x%08x", hash[j]);
 	ccprintf("\n");
 }
@@ -1087,7 +1086,7 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
 void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash)
 {
 	pd[port].dev_id = dev_id;
-	memcpy(pd[port].dev_rw_hash, rw_hash, SHA1_DIGEST_SIZE);
+	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 	if (debug_level >= 1)
 		pd_dev_dump_info(dev_id, rw_hash);
 }
@@ -1757,7 +1756,7 @@ static int command_pd(int argc, char **argv)
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strncasecmp(argv[2], "hash", 4)) {
 		int i;
-		for (i = 0; i < SHA1_DIGEST_SIZE / 4; i++)
+		for (i = 0; i < PD_RW_HASH_SIZE / 4; i++)
 			ccprintf("%08x ", pd[port].dev_rw_hash[i]);
 		ccprintf("\n");
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
@@ -2030,7 +2029,7 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 
 	if (r->dev_id) {
 		memcpy(r->dev_rw_hash.b, pd[*port].dev_rw_hash,
-		       SHA1_DIGEST_SIZE);
+		       PD_RW_HASH_SIZE);
 	}
 
 	args->response_size = sizeof(*r);

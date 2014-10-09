@@ -22,7 +22,6 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
-#include "sha1.h"
 #include "usb_pd.h"
 
 /* Command line options */
@@ -167,7 +166,7 @@ const char help_str[] =
 	"      Print real-time clock\n"
 	"  rtcset <time>\n"
 	"      Set real-time clock\n"
-	"  rwhashpd <dev_id> <SHA1[0] ... <SHA1[4]>\n"
+	"  rwhashpd <dev_id> <HASH[0] ... <HASH[4]>\n"
 	"      Set entry in PD MCU's device rw_hash table.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
@@ -794,7 +793,7 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 	char *e;
 
 	if (argc < 7) {
-		fprintf(stderr, "Usage: %s <dev_id> <SHA1[0]> ... <SHA1[4]>\n",
+		fprintf(stderr, "Usage: %s <dev_id> <HASH[0]> ... <HASH[4]>\n",
 			argv[0]);
 		return -1;
 	}
@@ -808,7 +807,7 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 	for (i = 2; i < 7; i++) {
 		p->dev_rw_hash.w[i - 2] = strtol(argv[i], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "Bad SHA1 digest\n");
+			fprintf(stderr, "Bad RW hash\n");
 			return -1;
 		}
 	}

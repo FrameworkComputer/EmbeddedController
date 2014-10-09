@@ -8,7 +8,6 @@
 #include "debug.h"
 #include "registers.h"
 #include "rsa.h"
-#include "sha1.h"
 #include "sha256.h"
 #include "task.h"
 #include "usb_pd.h"
