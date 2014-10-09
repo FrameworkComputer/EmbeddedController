@@ -650,7 +650,7 @@ static void execute_hard_reset(int port)
 		PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
 
 	/* Clear the input current limit */
-	pd_set_input_current_limit(0);
+	pd_set_input_current_limit(port, 0);
 #else
 	set_state(port, PD_STATE_SRC_DISCONNECTED);
 #endif
@@ -793,7 +793,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 			set_state(port, PD_STATE_HARD_RESET);
 		} else if (pd[port].role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
-			pd_set_input_current_limit(pd[port].curr_limit);
+			pd_set_input_current_limit(port, pd[port].curr_limit);
 		}
 		break;
 	case PD_CTRL_REJECT:
@@ -1499,7 +1499,7 @@ void pd_task(void)
 			/* Sink: detect disconnect by monitoring VBUS */
 			set_state(port, PD_STATE_SNK_DISCONNECTED);
 			/* Clear the input current limit */
-			pd_set_input_current_limit(0);
+			pd_set_input_current_limit(port, 0);
 			/* set timeout small to reconnect fast */
 			timeout = 5*MSEC;
 		}

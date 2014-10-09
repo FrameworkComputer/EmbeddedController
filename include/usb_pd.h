@@ -562,9 +562,10 @@ void pd_request_source_voltage(int port, int mv);
 /**
  * Set the input current limit.
  *
+ * @port USB-C port number
  * @max_ma Maximum current limit
  */
-void pd_set_input_current_limit(uint32_t max_ma);
+void pd_set_input_current_limit(int port, uint32_t max_ma);
 
 /**
  * Verify board specific health status : current, voltages...

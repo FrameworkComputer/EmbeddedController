@@ -83,7 +83,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	return ma;
 }
 
-void pd_set_input_current_limit(uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma)
 {
 	/* No battery, nothing to do */
 	return;

@@ -106,7 +106,7 @@ void pd_power_supply_reset(int port)
 	/* Not implemented */
 }
 
-void pd_set_input_current_limit(uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma)
 {
 	/* Not implemented */
 }

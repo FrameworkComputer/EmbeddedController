@@ -139,7 +139,7 @@ static void pd_send_ec_int(void)
 	gpio_set_level(GPIO_EC_INT, 0);
 }
 
-void pd_set_input_current_limit(uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma)
 {
 	pd_status.curr_lim_ma = max_ma;
 	pd_send_ec_int();
