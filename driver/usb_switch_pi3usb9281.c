@@ -119,6 +119,28 @@ int pi3usb9281_get_charger_status(uint8_t chip_idx)
 	return pi3usb9281_read(chip_idx, PI3USB9281_REG_CHG_STATUS) & 0x1f;
 }
 
+int pi3usb9281_get_ilim(int device_type, int charger_status)
+{
+	/* Limit USB port current. 500mA for not listed types. */
+	int current_limit_ma = 500;
+
+	if (charger_status & PI3USB9281_CHG_CAR_TYPE1 ||
+	    charger_status & PI3USB9281_CHG_CAR_TYPE2)
+		current_limit_ma = 3000;
+	else if (charger_status & PI3USB9281_CHG_APPLE_1A)
+		current_limit_ma = 1000;
+	else if (charger_status & PI3USB9281_CHG_APPLE_2A)
+		current_limit_ma = 2000;
+	else if (charger_status & PI3USB9281_CHG_APPLE_2_4A)
+		current_limit_ma = 2400;
+	else if (device_type & PI3USB9281_TYPE_CDP)
+		current_limit_ma = 1500;
+	else if (device_type & PI3USB9281_TYPE_DCP)
+		current_limit_ma = 1500;
+
+	return current_limit_ma;
+}
+
 int pi3usb9281_get_vbus(uint8_t chip_idx)
 {
 	int vbus = pi3usb9281_read(chip_idx, PI3USB9281_REG_VBUS);

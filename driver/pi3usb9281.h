@@ -74,6 +74,9 @@ int pi3usb9281_get_device_type(uint8_t chip_idx);
 /* Get attached charger status. */
 int pi3usb9281_get_charger_status(uint8_t chip_idx);
 
+/* Get charger current limit based on device type and charger status. */
+int pi3usb9281_get_ilim(int device_type, int charger_status);
+
 /* Set switch configuration to manual. */
 int pi3usb9281_set_switch_manual(uint8_t chip_idx, int val);
 
