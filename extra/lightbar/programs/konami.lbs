@@ -1,0 +1,89 @@
+# Konami code easter egg
+	delay.w 100000
+	set.rgb {1,2}.end 0xff 0xff 0x00
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.rgb {1,2}.end 0x00 0x00 0x00
+	set.1 {0,3}.end.b 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.1 {0,3}.end.b 0x00
+	set.1 {0,1}.end.r 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.1 {0,1}.end.r 0x00
+	set.1 {2,3}.end.g 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.1 {2,3}.end.g 0x00
+	set.1 {0,1}.end.r 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.1 {0,1}.end.r 0x00
+	set.1 {2,3}.end.g 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	set.1 {2,3}.end.g 0x00
+	set.rgb {0,2}.end 0x00 0xff 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	delay.w 50000
+	wait
+	set.rgb {0,2}.end 0x00 0x00 0x00
+	set.rgb {1,3}.end 0xff 0x00 0xff
+	ramp.1
+	wait
+	wait
+	cycle.1
+	wait
+	delay.w 100000
+	wait
+	wait
+	set.rgb {0,1,2,3}.end 0xff 0xff 0xff
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	halt

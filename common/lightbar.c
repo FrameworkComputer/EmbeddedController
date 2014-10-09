@@ -927,6 +927,7 @@ static struct lightbar_program next_prog;
 static uint8_t pc;
 
 static uint8_t led_desc[NUM_LEDS][LB_CONT_MAX][3];
+static uint32_t lb_wait_delay;
 static uint32_t lb_ramp_delay;
 /* Get one byte of data pointed to by the pc and advance
  * the pc forward.
@@ -957,6 +958,20 @@ static inline uint32_t decode_32(uint32_t *dest)
 	return EC_SUCCESS;
 }
 
+/* ON - turn on lightbar */
+static uint32_t lightbyte_ON(void)
+{
+	lb_on();
+	return EC_SUCCESS;
+}
+
+/* OFF - turn off lightbar */
+static uint32_t lightbyte_OFF(void)
+{
+	lb_off();
+	return EC_SUCCESS;
+}
+
 /* JUMP xx - jump to immediate location
  * Changes the pc to the one-byte immediate argument.
  */
@@ -965,17 +980,72 @@ static uint32_t lightbyte_JUMP(void)
 	return decode_8(&pc);
 }
 
-/* DELAY xx xx xx xx - yield processor for some time
- * Performs an interruptible wait for a number of microseconds
- * given in the four-byte immediate.
+/* JUMP_BATTERY aa bb - switch on battery level
+ * If the battery is low, changes pc to aa.
+ * If the battery is high, changes pc to bb.
+ * Otherwise, continues execution as normal.
  */
-static uint32_t lightbyte_DELAY(void)
+static uint32_t lightbyte_JUMP_BATTERY(void)
 {
-	uint32_t delay_us;
-	if (decode_32(&delay_us) != EC_SUCCESS)
+	uint8_t low_pc, high_pc;
+	if (decode_8(&low_pc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+	if (decode_8(&high_pc) != EC_SUCCESS)
 		return EC_RES_INVALID_PARAM;
 
-	WAIT_OR_RET(delay_us);
+	get_battery_level();
+	if (st.battery_level == 0)
+		pc = low_pc;
+	else if (st.battery_level == 3)
+		pc = high_pc;
+
+	return EC_SUCCESS;
+}
+
+/* JUMP_IF_CHARGING xx - conditional jump to location
+ * Changes the pc to xx if the device is charging.
+ */
+static uint32_t lightbyte_JUMP_IF_CHARGING(void)
+{
+	uint8_t charge_pc;
+	if (decode_8(&charge_pc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	if (st.battery_is_charging)
+		pc = charge_pc;
+
+	return EC_SUCCESS;
+}
+
+/* SET_WAIT_DELAY xx xx xx xx - set up to yield processor
+ * Sets the wait delay to the given four-byte immediate, in
+ * microseconds. Future WAIT instructions will wait for this
+ * much time.
+ */
+static uint32_t lightbyte_SET_WAIT_DELAY(void)
+{
+	return decode_32(&lb_wait_delay);
+}
+
+/* SET_RAMP_DELAY xx xx xx xx - change ramp speed
+ * This sets the length of time between ramp/cycle steps to
+ * the four-byte immediate argument, which represents a duration
+ * in milliseconds.
+ */
+static uint32_t lightbyte_SET_RAMP_DELAY(void)
+{
+	return decode_32(&lb_ramp_delay);
+}
+
+/* WAIT - yield processor for some time
+ * Yields the processor for some amount of time set by the most
+ * recent SET_WAIT_DELAY instruction.
+ */
+static uint32_t lightbyte_WAIT(void)
+{
+	if (lb_wait_delay != 0)
+		WAIT_OR_RET(lb_wait_delay);
+
 	return EC_SUCCESS;
 }
 
@@ -993,32 +1063,33 @@ static uint32_t lightbyte_SET_BRIGHTNESS(void)
 	return EC_SUCCESS;
 }
 
-/* SET_COLOR cc xx
- * SET_COLOR cc rr gg bb
+/* SET_COLOR_SINGLE cc xx
+ * SET_COLOR_RGB cc rr gg bb
  * Stores a color value in the led_desc structure.
  * cc is a bit-packed location to perform the action on.
  *
- * The high four bits are used to describe an LED. If the
- * value is less than NUM_LEDS, it describes a particular LED,
- * and if it is greater than or equal to that value, it
- * will perform the action on all LEDs.
+ * The high four bits are a bitset for which LEDs to operate on.
+ * LED 0 is the lowest of the four bits.
  *
  * The next two bits are the control bits. This should be a value
  * in lb_control that is not LB_CONT_MAX, and the corresponding
  * color will be the one the action is performed on.
  *
- * The last two bits are the color bits. If this is LB_COL_RED,
- * LB_COL_GREEN, or LB_COL_BLUE, then there is only one more byte
- * to decode and this is a color value for that specific color
- * channel. If it is LB_COL_ALL, then there are three more bytes,
- * and it reads like a standard 24-bit color value.
+ * The last two bits are the color bits if this instruction is
+ * SET_COLOR_SINGLE. They correspond to a LB_COL value for the
+ * channel to set the color for using the next immediate byte.
+ * In SET_COLOR_RGB, these bits are don't-cares, as there should
+ * always be three bytes that follow, which correspond to a
+ * complete RGB specification.
  */
-static uint32_t lightbyte_SET_COLOR(void)
+static uint32_t lightbyte_SET_COLOR_SINGLE(void)
 {
 
 	uint8_t packed_loc, led, control, color, value;
-	int start_led, end_led, color_mask, i, j;
+	int i;
 	if (decode_8(&packed_loc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+	if (decode_8(&value) != EC_SUCCESS)
 		return EC_RES_INVALID_PARAM;
 
 	led = packed_loc >> 4;
@@ -1028,34 +1099,74 @@ static uint32_t lightbyte_SET_COLOR(void)
 	if (control >= LB_CONT_MAX)
 		return EC_RES_INVALID_PARAM;
 
-	if (led >= NUM_LEDS) {
-		start_led = 0;
-		end_led = NUM_LEDS - 1;
-	} else
-		start_led = end_led = led;
-
-	color_mask = color == LB_COL_ALL ? 7 : (1 << color);
-
-	for (i = 0; i < 3; i++) {
-		if (color_mask & (1 << i)) {
-			if (decode_8(&value) != EC_SUCCESS)
-				return EC_RES_INVALID_PARAM;
-			for (j = start_led; j <= end_led; j++)
-				led_desc[j][control][i] = value;
-		}
-	}
+	for (i = 0; i < NUM_LEDS; i++)
+		if (led & (1 << i))
+			led_desc[i][control][color] = value;
 
 	return EC_SUCCESS;
 }
 
-/* SET_DELAY_TIME xx xx xx xx - change ramp speed
- * This sets the length of time between ramp/cycle steps to
- * the four-byte immediate argument, which represents a duration
- * in milliseconds.
- */
-static uint32_t lightbyte_SET_DELAY_TIME(void)
+static uint32_t lightbyte_SET_COLOR_RGB(void)
 {
-	return decode_32(&lb_ramp_delay);
+	uint8_t packed_loc, r, g, b, led, control;
+	int i;
+
+	/* gross */
+	if (decode_8(&packed_loc) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+	if (decode_8(&r) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+	if (decode_8(&g) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+	if (decode_8(&b) != EC_SUCCESS)
+		return EC_RES_INVALID_PARAM;
+
+	led = packed_loc >> 4;
+	control = (packed_loc >> 2) & 0x3;
+
+	if (control >= LB_CONT_MAX)
+		return EC_RES_INVALID_PARAM;
+
+	for (i = 0; i < NUM_LEDS; i++)
+		if (led & (1 << i)) {
+			led_desc[i][control][LB_COL_RED] = r;
+			led_desc[i][control][LB_COL_GREEN] = g;
+			led_desc[i][control][LB_COL_BLUE] = b;
+		}
+
+	return EC_SUCCESS;
+}
+
+/* GET_COLORS - take current colors and push them to the state
+ * Gets the current state of the LEDs and puts them in COLOR0.
+ * Good for the beginning of a program if you need to fade in.
+ */
+static uint32_t lightbyte_GET_COLORS(void)
+{
+	int i;
+	for (i = 0; i < NUM_LEDS; i++)
+		lb_get_rgb(i, &led_desc[i][LB_CONT_COLOR0][LB_COL_RED],
+			      &led_desc[i][LB_CONT_COLOR0][LB_COL_GREEN],
+			      &led_desc[i][LB_CONT_COLOR0][LB_COL_BLUE]);
+
+	return EC_SUCCESS;
+}
+
+/* SWAP_COLORS - swaps beginning and end colors in state
+ * Exchanges COLOR0 and COLOR1 on all LEDs.
+ */
+static uint32_t lightbyte_SWAP_COLORS(void)
+{
+	int i, j, tmp;
+	for (i = 0; i < NUM_LEDS; i++)
+		for (j = 0; j < 3; j++) {
+			tmp = led_desc[i][LB_CONT_COLOR0][j];
+			led_desc[i][LB_CONT_COLOR0][j] =
+				led_desc[i][LB_CONT_COLOR1][j];
+			led_desc[i][LB_CONT_COLOR1][j] = tmp;
+		}
+
+	return EC_SUCCESS;
 }
 
 static inline int get_interp_value(int led, int color, int interp)
@@ -1173,7 +1284,7 @@ static uint32_t lightbyte_HALT(void)
 
 #undef GET_INTERP_VALUE
 
-#define OP(X) X
+#define OP(NAME, BYTES, MNEMONIC) NAME,
 #include "lightbar_opcode_list.h"
 enum lightbyte_opcode {
 	LIGHTBAR_OPCODE_TABLE
@@ -1181,14 +1292,14 @@ enum lightbyte_opcode {
 };
 #undef OP
 
-#define OP(X) lightbyte_ ## X
+#define OP(NAME, BYTES, MNEMONIC) lightbyte_ ## NAME,
 #include "lightbar_opcode_list.h"
 static uint32_t (*lightbyte_dispatch[])(void) = {
 	LIGHTBAR_OPCODE_TABLE
 };
 #undef OP
 
-#define OP(X) # X
+#define OP(NAME, BYTES, MNEMONIC) MNEMONIC,
 #include "lightbar_opcode_list.h"
 static const char * const lightbyte_names[] = {
 	LIGHTBAR_OPCODE_TABLE
@@ -1209,7 +1320,11 @@ static uint32_t sequence_PROGRAM(void)
 	saved_brightness = lb_get_brightness();
 	pc = 0;
 	memset(led_desc, 0, sizeof(led_desc));
+	lb_wait_delay = 0;
 	lb_ramp_delay = 0;
+
+	lb_on();
+	lb_set_brightness(255);
 
 	/* decode-execute loop */
 	for (;;) {
@@ -1582,6 +1697,7 @@ static int command_lightbar(int argc, char **argv)
 	}
 
 #ifdef LIGHTBAR_SIMULATION
+	/* Load a program. */
 	if (argc >= 3 && !strcasecmp(argv[1], "program")) {
 		return lb_load_program(argv[2], &next_prog);
 	}

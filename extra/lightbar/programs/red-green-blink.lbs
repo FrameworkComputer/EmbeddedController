@@ -1,0 +1,14 @@
+# Blinks red and green with 1 second pauses.
+	set.rgb {0,1,2,3}.beg 0xff 0x00 0x00
+	set.rgb {0,1,2,3}.end 0x00 0xff 0x00
+	delay.w 250000
+	delay.r 0
+	cycle.1
+	wait
+	ramp.1
+	wait
+	cycle.1
+	wait
+	ramp.1
+	wait
+	halt

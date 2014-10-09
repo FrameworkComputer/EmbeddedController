@@ -1,0 +1,22 @@
+# S0 sequence: Google colors, unless battery is low.
+	set.rgb {0}.end 0x33 0x69 0xe8
+	set.rgb {1}.end 0xd5 0x0f 0x25
+	set.rgb {2}.end 0xee 0xb2 0x11
+	set.rgb {3}.end 0x00 0x99 0x25
+	delay.r 1250
+	ramp.1
+	set.1 {0,1,2,3}.beg.r 0xff
+	delay.r 2500
+	delay.w 1000000
+	wait
+	jump L0003
+L0001:	swap
+	ramp.1
+L0002:	wait
+L0003:	jbat L0004 L0002
+	jump L0002
+L0004:	swap
+	ramp.1
+L0005:	wait
+	jbat L0005 L0001
+	jump L0001

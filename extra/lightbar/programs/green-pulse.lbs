@@ -1,0 +1,8 @@
+	set.1 {0,1,2,3}.end.g 0xff
+	delay.r 7813
+	delay.w 2000000
+L0001:	on
+	cycle.1
+	off
+	wait
+	jump L0001

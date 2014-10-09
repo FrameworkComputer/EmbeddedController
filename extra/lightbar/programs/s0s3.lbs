@@ -1,0 +1,16 @@
+# S0S3 sequence: Fade out, Google color ramp up/down.
+	get
+	delay.r 2000
+	ramp.1
+	swap
+	set.rgb {0}.end 0x33 0x69 0xe8
+	set.rgb {1}.end 0xd5 0x0f 0x25
+	set.rgb {2}.end 0xee 0xb2 0x11
+	set.rgb {3}.end 0x00 0x99 0x25
+	delay.r 1250
+	ramp.1
+	swap
+	delay.r 10000
+	ramp.1
+	off
+	halt

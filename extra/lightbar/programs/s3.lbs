@@ -1,0 +1,17 @@
+# S3 sequence: Pulse red on low battery.
+	set.rgb {0,1,2,3}.end 0xff 0x00 0x00
+	cycle.1
+	delay.w 5000000
+L0001:	off
+	wait
+	jcharge L0001
+	jbat L0002 L0001
+	jump L0001
+L0002:	on
+	delay.r 1250
+	ramp.1
+	swap
+	delay.r 10000
+	ramp.1
+	swap
+	jump L0001

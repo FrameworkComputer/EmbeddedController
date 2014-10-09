@@ -64,7 +64,7 @@ struct safe_lightbar_program {
 	uint8_t zeros[LB_PROG_MAX_OPERANDS];
 } __packed;
 
-#define OP(X) X
+#define OP(NAME, BYTES, MNEMONIC) NAME,
 #include "lightbar_opcode_list.h"
 enum lightbyte_opcode {
 	LIGHTBAR_OPCODE_TABLE
@@ -72,18 +72,25 @@ enum lightbyte_opcode {
 };
 #undef OP
 
-static const char const *opcode_sym[] = {
-	"jump", "wait", "bright", "color",
-	"step", "ramp.1", "cycle.1", "cycle",
-	"halt",
+#define OP(NAME, BYTES, MNEMONIC) BYTES,
+#include "lightbar_opcode_list.h"
+static const int num_operands[] = {
+	LIGHTBAR_OPCODE_TABLE
 };
-BUILD_ASSERT(ARRAY_SIZE(opcode_sym) == MAX_OPCODE);
+#undef OP
+
+#define OP(NAME, BYTES, MNEMONIC) MNEMONIC,
+#include "lightbar_opcode_list.h"
+static const char const *opcode_sym[] = {
+	LIGHTBAR_OPCODE_TABLE
+};
+#undef OP
 
 static const char const *control_sym[] = {
 	"beg", "end", "phase", "<invalid>"
 };
 static const char const *color_sym[] = {
-	"r", "g", "b", "rgb"
+	"r", "g", "b", "<invalid>"
 };
 
 static void read_binary(FILE *fp, struct safe_lightbar_program *prog)
@@ -111,40 +118,32 @@ static void read_binary(FILE *fp, struct safe_lightbar_program *prog)
 	}
 }
 
-/* Returns number of operands required by an opcode */
-static int num_operands(uint8_t cmd, uint8_t *arg)
-{
-	int operands = 0;
-
-	switch (cmd) {
-	case JUMP:
-	case SET_BRIGHTNESS:
-		operands = 1;
-		break;
-
-	case DELAY:
-	case SET_DELAY_TIME:
-		operands = 4;
-		break;
-
-	case SET_COLOR:
-		if ((arg[0] & 0x03) == LB_COL_ALL)
-			operands = 4;
-		else
-			operands = 2;
-		break;
-
-	default:
-		break;
-	}
-	return operands;
-}
-
 static uint32_t val32(uint8_t *ptr)
 {
 	uint32_t val;
 	val = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
 	return val;
+}
+
+static int is_jump(uint8_t op)
+{
+	/* TODO: probably should be a field in the opcode list */
+	return op >= JUMP && op <= JUMP_IF_CHARGING;
+}
+
+static void print_led_set(FILE *fp, uint8_t led)
+{
+	int i, first = 1;
+
+	fprintf(fp, "{");
+	for (i = 0; i < NUM_LEDS; i++)
+		if (led & (1 << i)) {
+			if (!first)
+				fprintf(fp, ",");
+			fprintf(fp, "%d", i);
+			first = 0;
+		}
+	fprintf(fp, "}");
 }
 
 /* returns number of operands consumed */
@@ -153,7 +152,7 @@ static int print_op(FILE *fp, uint8_t addr, uint8_t cmd, uint8_t *arg)
 	uint8_t led, color, control;
 	int i, operands;
 
-	operands = num_operands(cmd, arg);
+	operands = num_operands[cmd];
 
 	/* assume valid instruction for now */
 	is_instruction[addr] = 1;
@@ -176,32 +175,44 @@ static int print_op(FILE *fp, uint8_t addr, uint8_t cmd, uint8_t *arg)
 
 	switch (cmd) {
 	case JUMP:
+	case JUMP_IF_CHARGING:
 		fprintf(fp, "\tL00%02x\n", arg[0]);
 		break;
-	case DELAY:
-	case SET_DELAY_TIME:
+	case JUMP_BATTERY:
+		fprintf(fp, "\tL00%02x L00%02x\n", arg[0], arg[1]);
+		break;
+	case SET_WAIT_DELAY:
+	case SET_RAMP_DELAY:
 		fprintf(fp, "\t%d\n", val32(arg));
 		break;
 	case SET_BRIGHTNESS:
 		fprintf(fp, "\t%d\n", arg[0]);
 		break;
-	case SET_COLOR:
+	case SET_COLOR_SINGLE:
 		led = arg[0] >> 4;
 		control = (arg[0] >> 2) & 0x03;
 		color = arg[0] & 0x03;
 		fprintf(fp, "\t");
-		if (led >= NUM_LEDS)
-			fprintf(fp, "all");
-		else
-			fprintf(fp, "%d", led);
+
+		print_led_set(fp, led);
 		fprintf(fp, ".%s", control_sym[control]);
 		fprintf(fp, ".%s", color_sym[color]);
-		if (color == LB_COL_ALL)
-			fprintf(fp, "\t0x%02x 0x%02x 0x%02x\n",
-				arg[1], arg[2], arg[3]);
-		else
-			fprintf(fp, "\t0x%02x\n", arg[1]);
+		fprintf(fp, "\t0x%02x\n", arg[1]);
 		break;
+	case SET_COLOR_RGB:
+		led = arg[0] >> 4;
+		control = (arg[0] >> 2) & 0x03;
+		fprintf(fp, "\t");
+
+		print_led_set(fp, led);
+		fprintf(fp, ".%s", control_sym[control]);
+		fprintf(fp, "\t0x%02x 0x%02x 0x%02x\n", arg[1], arg[2], arg[3]);
+		break;
+	case ON:
+	case OFF:
+	case WAIT:
+	case GET_COLORS:
+	case SWAP_COLORS:
 	case RAMP_ONCE:
 	case CYCLE_ONCE:
 	case CYCLE:
@@ -217,20 +228,31 @@ static int print_op(FILE *fp, uint8_t addr, uint8_t cmd, uint8_t *arg)
 	return operands;
 }
 
+static void set_jump_target(uint8_t targ)
+{
+	if (targ >= EC_LB_PROG_LEN) {
+		Warning("program jumps to 0x%02x, "
+			"which out of bounds\n", targ);
+		return;
+	}
+	is_jump_target[targ] = 1;
+}
+
 static void disassemble_prog(FILE *fp, struct safe_lightbar_program *prog)
 {
 	int i;
-	uint8_t *ptr, targ;
+	uint8_t *ptr, op;
 
 	/* Scan the program once to identify all the jump targets,
 	 * so we can print the labels when we encounter them. */
 	for (i = 0; i < prog->p.size; i++) {
 		ptr = &prog->p.data[i];
-		if (ptr[0] == JUMP) {
-			targ = ptr[1];
-			is_jump_target[targ] = 1;
-		}
-		i += num_operands(*ptr, ptr + 1);
+		op = *ptr;
+		if (is_jump(op))
+			set_jump_target(ptr[1]);
+		if (op == JUMP_BATTERY)
+			set_jump_target(ptr[2]);
+		i += num_operands[op];
 	}
 
 	/* Now disassemble */
@@ -278,28 +300,60 @@ static int split_line(char *buf, char *delim, struct parse_s *elt, int max)
 	return i;
 }
 
-/* Decode color arg. Return 0 if bogus, number of additional args if okay. */
-static int is_color_arg(char *buf, uint32_t *valp)
+/* Decode led set. Return 0 if bogus, 1 if okay. */
+static int is_led_set(char *buf, uint8_t *valp)
+{
+	uint8_t led = 0;
+	unsigned long int next_led;
+	char *ptr;
+
+	if (!buf)
+		return 0;
+
+	if (*buf != '{')
+		return 0;
+
+	buf++;
+	for (;;) {
+		next_led = strtoul(buf, &ptr, 0);
+		if (buf == ptr) {
+			if (buf[0] == '}' && buf[1] == 0) {
+				*valp = led;
+				return 1;
+			} else
+				return 0;
+		}
+
+		if (next_led >= NUM_LEDS)
+			return 0;
+
+		led |= 1 << next_led;
+
+		buf = ptr;
+		if (*buf == ',')
+			buf++;
+	}
+}
+
+/* Decode color arg based on expected control param sections.
+ * Return 0 if bogus, 1 if okay.
+ */
+static int is_color_arg(char *buf, int expected, uint32_t *valp)
 {
 	struct parse_s token[MAX_WORDS];
-	uint8_t led, control, color, val;
-	int  i;
-	int rv = 1;
+	uint8_t led, control, color;
+	int i;
 
 	if (!buf)
 		return 0;
 
 	/* There should be three terms, separated with '.' */
-	i = split_line(buf, ".,", token, MAX_WORDS);
-	if (i != 3)
+	i = split_line(buf, ".", token, MAX_WORDS);
+	if (i != expected)
 		return 0;
 
-	if (!strcmp("all", token[0].word)) {
-		led  = NUM_LEDS;
-	} else if (token[0].is_num) {
-		led = token[0].val;
-	} else {
-		Error("Invalid LED \"%s\"\n", token[0].word);
+	if (!is_led_set(token[0].word, &led)) {
+		Error("Invalid LED set \"%s\"\n", token[0].word);
 		return 0;
 	}
 
@@ -311,22 +365,20 @@ static int is_color_arg(char *buf, uint32_t *valp)
 	if (i >= LB_CONT_MAX)
 		return 0;
 
-	for (i = 0; i < ARRAY_SIZE(color_sym); i++)
-		if (!strcmp(token[2].word, color_sym[i])) {
-			color = i;
-			break;
-		}
-	if (i >= ARRAY_SIZE(color_sym))
-		return 0;
+	if (expected == 3) {
+		for (i = 0; i < ARRAY_SIZE(color_sym); i++)
+			if (!strcmp(token[2].word, color_sym[i])) {
+				color = i;
+				break;
+			}
+		if (i >= ARRAY_SIZE(color_sym))
+			return 0;
+	} else
+		color = 0;
 
 
-	val = ((led & 0xF) << 4) | ((control & 0x3) << 2) | (color & 0x3);
-
-	*valp = val;
-	if (color == LB_COL_ALL)
-		rv = 3;
-
-	return rv;
+	*valp = ((led & 0xF) << 4) | ((control & 0x3) << 2) | (color & 0x3);
+	return 1;
 }
 
 static void fixup_symbols(struct safe_lightbar_program *prog)
@@ -422,11 +474,28 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 		/* Now we need operands. */
 		switch (opcode) {
 		case JUMP:
+		case JUMP_IF_CHARGING:
 			/* a label */
 			if (token[wnum].word)
 				reloc_label[addr++] = strdup(token[wnum].word);
 			else
 				Error("Missing jump target at line %d\n", line);
+			break;
+		case JUMP_BATTERY:
+			/* two labels*/
+			if (token[wnum].word)
+				reloc_label[addr++] = strdup(token[wnum].word);
+			else {
+				Error("Missing first jump target "
+				      "at line %d\n", line);
+				break;
+			}
+			wnum++;
+			if (token[wnum].word)
+				reloc_label[addr++] = strdup(token[wnum].word);
+			else
+				Error("Missing second jump target "
+				      "at line %d\n", line);
 			break;
 
 		case SET_BRIGHTNESS:
@@ -437,8 +506,8 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 				Error("Missing/invalid arg at line %d\n", line);
 			break;
 
-		case DELAY:
-		case SET_DELAY_TIME:
+		case SET_WAIT_DELAY:
+		case SET_RAMP_DELAY:
 			/* one 32-bit arg */
 			if (token[wnum].is_num) {
 				prog->p.data[addr++] =
@@ -454,17 +523,36 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 			}
 			break;
 
-		case SET_COLOR:
-			/* one magic word, then one or three more 8-bit args */
-			i = is_color_arg(token[wnum].word, &token[wnum].val);
+		case SET_COLOR_SINGLE:
+			/* one magic word, then one more 8-bit arg */
+			i = is_color_arg(token[wnum].word, 3, &token[wnum].val);
 			if (!i) {
 				Error("Missing/invalid arg at line %d\n", line);
 				break;
 			}
 			/* save the magic number */
 			prog->p.data[addr++] = token[wnum++].val;
-			while (i--) {
-				/* and the others */
+			/* and the color immediate */
+			if (token[wnum].is_num) {
+				prog->p.data[addr++] =
+					token[wnum++].val;
+			} else {
+				Error("Missing/Invalid arg "
+				      "at line %d\n", line);
+				break;
+			}
+			break;
+		case SET_COLOR_RGB:
+			/* one magic word, then three more 8-bit args */
+			i = is_color_arg(token[wnum].word, 2, &token[wnum].val);
+			if (!i) {
+				Error("Missing/invalid arg at line %d\n", line);
+				break;
+			}
+			/* save the magic number */
+			prog->p.data[addr++] = token[wnum++].val;
+			/* and the color immediates */
+			for (i = 0; i < 3; i++) {
 				if (token[wnum].is_num) {
 					prog->p.data[addr++] =
 						token[wnum++].val;
