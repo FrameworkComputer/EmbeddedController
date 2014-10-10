@@ -227,17 +227,6 @@ static inline int pd_adc_read(int port, int cc)
 		return adc_read_channel(cc ? ADC_C1_CC2_PD : ADC_C1_CC1_PD);
 }
 
-static inline void pd_set_vconn(int port, int polarity, int enable)
-{
-	/* Set VCONN on the opposite CC line from the polarity */
-	if (port == 0)
-		gpio_set_level(polarity ? GPIO_USB_C0_CC1_VCONN1_EN :
-					  GPIO_USB_C0_CC2_VCONN1_EN, enable);
-	else
-		gpio_set_level(polarity ? GPIO_USB_C1_CC1_VCONN1_EN :
-					  GPIO_USB_C1_CC2_VCONN1_EN, enable);
-}
-
 static inline int pd_snk_is_vbus_provided(int port)
 {
 	return gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE :

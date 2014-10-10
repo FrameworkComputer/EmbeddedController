@@ -283,16 +283,13 @@ static inline void set_state(int port, enum pd_states next_state)
 	set_state_timeout(port, 0, 0);
 	pd[port].task_state = next_state;
 
+#ifdef CONFIG_USBC_SS_MUX
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 		pd[port].dev_id = 0;
-#ifdef CONFIG_USBC_SS_MUX
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
-#endif
-#ifdef CONFIG_USBC_VCONN
-		pd_set_vconn(port, pd[port].polarity, 0);
-#endif
 	}
+#endif
 
 #ifdef CONFIG_LOW_POWER_IDLE
 	/* If any PD port is connected, then disable deep sleep */
@@ -1248,10 +1245,6 @@ void pd_task(void)
 #endif
 					break;
 				}
-
-#ifdef CONFIG_USBC_VCONN
-				pd_set_vconn(port, pd[port].polarity, 1);
-#endif
 
 				set_state(port, PD_STATE_SRC_DISCOVERY);
 				caps_count = 0;
