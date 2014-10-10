@@ -21,6 +21,7 @@ common-$(CONFIG_BATTERY_BQ27541)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
 common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
+common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 common-$(CONFIG_CHARGER)+=charger.o
 common-$(CONFIG_CHARGER_V1)+=charge_state_v1.o
 common-$(CONFIG_CHARGER_V2)+=charge_state_v2.o
