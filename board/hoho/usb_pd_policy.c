@@ -143,35 +143,64 @@ static int svdm_response_modes(int port, uint32_t *payload)
 	return mode_cnt + 1;
 }
 
+static int hpd_get_irq(int port)
+{
+	/* TODO(tbroch) FIXME */
+	return 0;
+}
+
+static enum hpd_level hpd_get_level(int port)
+{
+	return gpio_get_level(GPIO_DP_HPD);
+}
+
+static int dp_status(int port, uint32_t *payload)
+{
+	uint32_t ufp_dp_sts = payload[1] & 0x3;
+	payload[1] = VDO_DP_STATUS(hpd_get_irq(port), /* IRQ_HPD */
+				   hpd_get_level(port), /* HPD_HI|LOW */
+				   0,                 /* request exit DP */
+				   0,                 /* request exit USB */
+				   0,                 /* MF pref */
+				   gpio_get_level(GPIO_PD_SBU_ENABLE),
+				   0,                 /* power low */
+				   (ufp_dp_sts | 0x2));
+	return 2;
+}
+
+static int dp_config(int port, uint32_t *payload)
+{
+	if (PD_DP_CFG_DPON(payload[1]))
+		gpio_set_level(GPIO_PD_SBU_ENABLE, 1);
+	return 1;
+}
+
 static int svdm_enter_mode(int port, uint32_t *payload)
 {
 	/* SID & mode request is valid */
 	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
 	    (PD_VDO_OPOS(payload[0]) != 1))
-		return 1; /* will generate a NAK */
-
-	gpio_set_level(GPIO_PD_SBU_ENABLE, 1);
-	payload[1] = 0;
+		return 0; /* will generate a NAK */
 	return 1;
 }
 
 static int svdm_exit_mode(int port, uint32_t *payload)
 {
-	/* SID & mode request is valid */
-	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
-	    (PD_VDO_OPOS(payload[0]) != 1))
-		return 1; /* will generate a NAK */
-
 	gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
-	payload[1] = 0;
-	return 1;
+	return 1; /* Must return ACK */
 }
+
+static struct amode_fx dp_fx = {
+	.status = &dp_status,
+	.config = &dp_config,
+};
 
 const struct svdm_response svdm_rsp = {
 	.identity = &svdm_response_identity,
 	.svids = &svdm_response_svids,
 	.modes = &svdm_response_modes,
 	.enter_mode = &svdm_enter_mode,
+	.amode = &dp_fx,
 	.exit_mode = &svdm_exit_mode,
 };
 

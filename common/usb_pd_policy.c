@@ -225,6 +225,12 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		case CMD_ENTER_MODE:
 			func = svdm_rsp.enter_mode;
 			break;
+		case CMD_DP_STATUS:
+			func = svdm_rsp.amode->status;
+			break;
+		case CMD_DP_CONFIG:
+			func = svdm_rsp.amode->config;
+			break;
 		case CMD_EXIT_MODE:
 			func = svdm_rsp.exit_mode;
 			break;
@@ -232,12 +238,13 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		if (func)
 			rsize = func(port, payload);
 		else /* not supported : NACK it */
-			rsize = 1;
-		if (rsize > 1)
+			rsize = 0;
+		if (rsize >= 1)
 			payload[0] |= VDO_CMDT(CMDT_RSP_ACK);
-		else if (rsize == 1)
+		else if (!rsize) {
 			payload[0] |= VDO_CMDT(CMDT_RSP_NAK);
-		else {
+			rsize = 1;
+		} else {
 			payload[0] |= VDO_CMDT(CMDT_RSP_BUSY);
 			rsize = 1;
 		}
@@ -259,6 +266,14 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 				rsize = dfp_enter_mode(port, payload);
 			break;
 		case CMD_ENTER_MODE:
+			if (pe[port].amode.index != -1)
+				rsize = pe[port].amode.fx->status(port,
+								  payload);
+			break;
+		case CMD_DP_STATUS:
+			rsize = pe[port].amode.fx->config(port, payload);
+			break;
+		case CMD_DP_CONFIG:
 			rsize = 0;
 			break;
 		case CMD_EXIT_MODE:

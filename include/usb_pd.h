@@ -106,6 +106,12 @@ enum pd_errors {
 /* TODO(tbroch) is there a finite number for these in the spec */
 #define SVID_DISCOVERY_MAX 16
 
+/* function table for entered mode */
+struct amode_fx {
+	int (*status)(int port, uint32_t *payload);
+	int (*config)(int port, uint32_t *payload);
+};
+
 /* function table for alternate mode capable responders */
 struct svdm_response {
 	int (*identity)(int port, uint32_t *payload);
@@ -113,6 +119,7 @@ struct svdm_response {
 	int (*modes)(int port, uint32_t *payload);
 	int (*enter_mode)(int port, uint32_t *payload);
 	int (*exit_mode)(int port, uint32_t *payload);
+	struct amode_fx *amode;
 };
 
 struct svdm_svid_data {
@@ -124,6 +131,8 @@ struct svdm_svid_data {
 struct svdm_amode_fx {
 	uint16_t svid;
 	void (*enter)(int port, uint32_t mode_caps);
+	int (*status)(int port, uint32_t *payload);
+	int (*config)(int port, uint32_t *payload);
 	void (*exit)(int port);
 };
 
@@ -138,6 +147,12 @@ struct svdm_amode_data {
 	const struct svdm_amode_fx *fx;
 	int index;
 	uint32_t mode_caps;
+};
+
+enum hpd_level {
+	hpd_unknown = -1,
+	hpd_low = 0,
+	hpd_high,
 };
 
 /* Policy structure for driving alternate mode */
@@ -162,7 +177,7 @@ struct pd_policy {
  * ----------
  * <31:16>  :: SVID
  * <15>     :: VDM type ( 1b == structured, 0b == unstructured )
- * <14:13>  :: Structured VDM version
+ * <14:13>  :: Structured VDM version (can only be 00 == 1.0 currently)
  * <12:11>  :: reserved
  * <10:8>   :: object position (1-7 valid ... used for enter/exit mode only)
  * <7:6>    :: command type (SVDM only?)
@@ -191,12 +206,15 @@ struct pd_policy {
 #define VDO_SRC_INITIATOR (0 << 5)
 #define VDO_SRC_RESPONDER (1 << 5)
 
-#define CMD_DISCOVER_IDENT 1
-#define CMD_DISCOVER_SVID  2
-#define CMD_DISCOVER_MODES 3
-#define CMD_ENTER_MODE     4
-#define CMD_EXIT_MODE      5
-#define CMD_ATTENTION      6
+#define CMD_DISCOVER_IDENT  1
+#define CMD_DISCOVER_SVID   2
+#define CMD_DISCOVER_MODES  3
+#define CMD_ENTER_MODE      4
+#define CMD_EXIT_MODE       5
+#define CMD_ATTENTION       6
+#define CMD_DP_STATUS      16
+#define CMD_DP_CONFIG      17
+
 #define VDO_CMD_VENDOR(x)    (((10 + (x)) & 0x1f))
 
 /* ChromeOS specific commands */
@@ -370,6 +388,40 @@ struct pd_policy {
 #define MODE_DP_SRC  0x2
 #define MODE_DP_BOTH 0x3
 
+/*
+ * DisplayPort Status VDO
+ * ----------------------
+ * <31:9> : SBZ
+ * <8>    : IRQ_HPD : 1 == irq arrived since last message otherwise 0.
+ * <7>    : HPD state : 0 = HPD_LOW, 1 == HPD_HIGH
+ * <6>    : Exit DP Alt mode: 0 == maintain, 1 == exit
+ * <5>    : USB config : 0 == maintain current, 1 == switch to USB from DP
+ * <4>    : Multi-function preference : 0 == no pref, 1 == MF preferred.
+ * <3>    : enabled : is DPout on/off.
+ * <2>    : power low : 0 == normal or LPM disabled, 1 == DP disabled for LPM
+ * <1:0>  : connect status : 00b ==  no (DFP|UFP)_D is connected or disabled.
+ *          01b == DFP_D connected, 10b == UFP_D connected, 11b == both.
+ */
+#define VDO_DP_STATUS(irq, lvl, amode, usbc, mf, en, lp, conn)		\
+	(((irq) & 1) << 8 | ((lvl) & 1) << 7 | ((amode) & 1) << 6	\
+	 | ((usbc) & 1) << 5 | ((mf) & 1) << 4 | ((en) & 1) << 3	\
+	 | ((lp) & 1) << 2 | ((conn & 0x3) << 0))
+/*
+ * DisplayPort Configure VDO
+ * -------------------------
+ * <31:24> : SBZ
+ * <23:16> : sink pin assignment supported (same as mode caps)
+ * <15:8>  : source pin assignment supported (same as mode caps)
+ * <7:6>   : SBZ
+ * <5:2>   : signalling : 0h == unspec'd, 1h == dp v1.3,
+ *           2h == USB gen2, remaining rsv
+ * <1:0>   : cfg : 00 == USB, 01|10 == DP, 11 == reserved
+ */
+#define VDO_DP_CFG(snkp, srcp, sig, cfg)				\
+	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
+	 | ((sig) & 0x7) << 2 | ((cfg) & 0x3))
+
+#define PD_DP_CFG_DPON(x) (((x & 0x3) == 1) || ((x & 0x3) == 2))
 /*
  * ChromeOS specific PD device Hardware IDs. Used to identify unique
  * products and used in VDO_INFO. Note this field is 10 bits.

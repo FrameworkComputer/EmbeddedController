@@ -218,20 +218,56 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		return pd_custom_vdm(port, cnt, payload, rpayload);
 }
 
+static void svdm_safe_dp_mode(int port)
+{
+	/* make DP interface safe until configure */
+	board_set_usb_mux(port, TYPEC_MUX_NONE, pd_get_polarity(port));
+}
+
 static void svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
-	board_set_usb_mux(port, TYPEC_MUX_DP, pd_get_polarity(port));
+	svdm_safe_dp_mode(port);
 }
+
+static int dp_on;
+
+static int svdm_dp_status(int port, uint32_t *payload)
+{
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS);
+	payload[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+				   0, /* HPD level ... not applicable */
+				   0, /* exit DP? ... no */
+				   0, /* usb mode? ... no */
+				   0, /* multi-function ... no */
+				   dp_on,
+				   0, /* power low? ... no */
+				   dp_on);
+	return 2;
+};
+
+static int svdm_dp_config(int port, uint32_t *payload)
+{
+	board_set_usb_mux(port, TYPEC_MUX_DP, pd_get_polarity(port));
+	dp_on = 1;
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG);
+	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* sink pins */
+				MODE_DP_PIN_E, /* src pins */
+				0,             /* signalling unspec'd */
+				2);            /* UFP connected */
+	return 2;
+};
 
 static void svdm_exit_dp_mode(int port)
 {
-	board_set_usb_mux(port, TYPEC_MUX_NONE, pd_get_polarity(port));
+	svdm_safe_dp_mode(port);
 }
 
 const struct svdm_amode_fx supported_modes[] = {
 	{
 		.svid = USB_SID_DISPLAYPORT,
 		.enter = &svdm_enter_dp_mode,
+		.status = &svdm_dp_status,
+		.config = &svdm_dp_config,
 		.exit = &svdm_exit_dp_mode,
 	},
 };
