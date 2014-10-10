@@ -170,6 +170,7 @@ static const uint8_t dec4b5b[] = {
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
 #define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
+#define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
 
 /* Port role at startup */
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -214,6 +215,8 @@ static struct pd_protocol {
 	enum pd_states timeout_state;
 	/* Timeout for the current state. Set to 0 for no timeout. */
 	uint64_t timeout;
+	/* Time for source recovery after hard reset */
+	uint64_t src_recover;
 	/* Flag for sending pings in SRC_READY */
 	uint8_t ping_enabled;
 
@@ -655,6 +658,7 @@ static void execute_hard_reset(int port)
 	set_state(port, PD_STATE_SRC_DISCONNECTED);
 #endif
 	pd_power_supply_reset(port);
+	pd[port].src_recover = get_time().val + PD_T_SRC_RECOVER;
 	CPRINTF("HARD RESET!\n");
 }
 
@@ -1233,6 +1237,10 @@ void pd_task(void)
 			cc2_volt = pd_adc_read(port, 1);
 			if ((cc1_volt < PD_SRC_VNC) ||
 			    (cc2_volt < PD_SRC_VNC)) {
+				/* Break if in hard reset recovery time */
+				if (get_time().val < pd[port].src_recover)
+					break;
+
 				pd[port].polarity =
 					GET_POLARITY(cc1_volt, cc2_volt);
 				pd_select_polarity(port, pd[port].polarity);
