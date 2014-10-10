@@ -1168,6 +1168,7 @@ void pd_task(void)
 	int res;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
+	int hard_reset_count = 0;
 #endif
 	enum pd_states this_state;
 	timestamp_t now;
@@ -1384,8 +1385,16 @@ void pd_task(void)
 							   pd[port].polarity);
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
+					break;
 				}
-			} else if (drp_state == PD_DRP_TOGGLE_ON &&
+			}
+
+			/*
+			 * If no source detected, reset hard reset counter and
+			 * check for role swap
+			 */
+			hard_reset_count = 0;
+			if (drp_state == PD_DRP_TOGGLE_ON &&
 				   get_time().val >= next_role_swap) {
 				/* Swap roles to source */
 				pd[port].role = PD_ROLE_SOURCE;
@@ -1399,8 +1408,12 @@ void pd_task(void)
 
 			break;
 		case PD_STATE_SNK_DISCOVERY:
-			/* Wait for source cap expired only if we are enabled */
+			/*
+			 * Wait for source cap expired only if we are enabled
+			 * and haven't passed the hard reset counter
+			 */
 			if ((pd[port].last_state != pd[port].task_state)
+			    && hard_reset_count < PD_HARD_RESET_COUNT
 			    && pd_comm_enabled)
 				set_state_timeout(port,
 						  get_time().val +
@@ -1411,6 +1424,7 @@ void pd_task(void)
 		case PD_STATE_SNK_REQUESTED:
 			/* Ensure the power supply actually becomes ready */
 			set_state(port, PD_STATE_SNK_TRANSITION);
+			hard_reset_count = 0;
 			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_TRANSITION:
@@ -1448,6 +1462,11 @@ void pd_task(void)
 					PD_STATE_HARD_RESET);
 			break;
 		case PD_STATE_HARD_RESET:
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY)
+				hard_reset_count++;
+#endif
+
 			pd_exit_modes(port, payload);
 			send_hard_reset(port);
 			/* reset our own state machine */
