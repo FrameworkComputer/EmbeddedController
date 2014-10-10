@@ -147,6 +147,13 @@ static inline int pd_adc_read(int port, int cc)
 		return adc_read_channel(ADC_CC2_PD);
 }
 
+static inline void pd_set_vconn(int port, int polarity, int enable)
+{
+	/* Set VCONN on the opposite CC line from the polarity */
+	gpio_set_level(polarity ? GPIO_USBC_VCONN1_EN_L :
+				  GPIO_USBC_VCONN2_EN_L, !enable);
+}
+
 static inline int pd_snk_is_vbus_provided(int port)
 {
 	return gpio_get_level(GPIO_CHGR_ACOK);
