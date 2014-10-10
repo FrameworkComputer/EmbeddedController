@@ -67,7 +67,7 @@ const void * const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
 	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("FruitPie"),
-	[USB_STR_VERSION] = USB_STRING_DESC("v1.0"),
+	[USB_STR_VERSION] = NULL /* filled at runtime */,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 

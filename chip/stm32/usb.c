@@ -44,7 +44,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bcdDevice = 0x0200, /* 2.00 */
 	.iManufacturer = USB_STR_VENDOR,
 	.iProduct = USB_STR_PRODUCT,
-	.iSerialNumber = USB_STR_VERSION,
+	.iSerialNumber = 0,
 	.bNumConfigurations = 1
 };
 
@@ -55,7 +55,7 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.wTotalLength = 0x0BAD, /* no of returned bytes, set at runtime */
 	.bNumInterfaces = USB_IFACE_COUNT,
 	.bConfigurationValue = 1,
-	.iConfiguration = 0,
+	.iConfiguration = USB_STR_VERSION,
 	.bmAttributes = 0x80, /* bus powered */
 	.bMaxPower = 250, /* MaxPower 500 mA */
 };
@@ -121,7 +121,12 @@ static void ep0_rx(void)
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
 				goto unknown_req;
-
+			if (idx == USB_STR_VERSION) {
+				/* use the generated firmware version string */
+				desc = usb_fw_version;
+				len = desc[0];
+				break;
+			}
 			desc = usb_strings[idx];
 			len = desc[0];
 			break;
