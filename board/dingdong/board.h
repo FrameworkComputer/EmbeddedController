@@ -19,6 +19,8 @@
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_HW_CRC
+#define CONFIG_USB
+#define CONFIG_USB_BOS
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_DUAL_ROLE
@@ -29,6 +31,9 @@
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
+
+/* USB configuration */
+#define CONFIG_USB_PID 0x5011
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -50,6 +55,28 @@ enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
+
+/* USB string indexes */
+enum usb_strings {
+	USB_STR_DESC = 0,
+	USB_STR_VENDOR,
+	USB_STR_PRODUCT,
+	USB_STR_VERSION,
+	USB_STR_BB_URL,
+
+	USB_STR_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
+
+/* USB Device class */
+#define USB_DEV_CLASS USB_CLASS_BILLBOARD
+
+/* USB interface indexes (use define rather than enum to expand them) */
+#define USB_IFACE_COUNT     0
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL   0
+#define USB_EP_COUNT     1
 
 #endif /* __BOARD_H */
