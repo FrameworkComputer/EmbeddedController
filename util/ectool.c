@@ -937,6 +937,16 @@ int cmd_flash_pd(int argc, char *argv[])
 			goto pd_flash_error;
 	}
 
+	/* Reboot into new RW */
+	fprintf(stderr, "Rebooting PD into new RW\n");
+	p->cmd = USB_PD_FW_REBOOT;
+	p->size = 0;
+	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
+			p, p->size + sizeof(*p), NULL, 0);
+
+	if (rv < 0)
+		goto pd_flash_error;
+
 	free(buf);
 	fprintf(stderr, "Complete\n");
 	return 0;
