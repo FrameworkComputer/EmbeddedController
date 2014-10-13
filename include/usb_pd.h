@@ -150,10 +150,11 @@ struct svdm_amode_data {
 	uint32_t mode_caps;
 };
 
-enum hpd_level {
-	hpd_unknown = -1,
-	hpd_low = 0,
+enum hpd_event {
+	hpd_none,
+	hpd_low,
 	hpd_high,
+	hpd_irq,
 };
 
 /* Policy structure for driving alternate mode */
@@ -414,6 +415,9 @@ struct pd_policy {
 
 #define PD_VDO_HPD_IRQ(x) ((x >> 8) & 1)
 #define PD_VDO_HPD_LVL(x) ((x >> 7) & 1)
+
+#define HPD_DEBOUNCE_LVL (100*MSEC)
+#define HPD_DEBOUNCE_IRQ (2*MSEC)
 /*
  * DisplayPort Configure VDO
  * -------------------------
@@ -716,7 +720,7 @@ void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash);
  * @param vid      Vendor ID
  * @param cmd      VDO command number
  * @param data     Pointer to payload to send
- * @param data     number of data objects in payload
+ * @param count    number of data objects in payload
  */
 void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count);
@@ -775,6 +779,21 @@ int board_get_usb_mux(int port, const char **dp_str, const char **usb_str);
  */
 void board_flip_usb_mux(int port);
 
+/**
+ * Determine if in alternate mode or not.
+ *
+ * @param port port number.
+ * @return object position of mode chosen in alternate mode otherwise zero.
+ */
+int pd_alt_mode(int port);
+
+/**
+ * Send hpd over USB PD.
+ *
+ * @param port port number.
+ * @param hpd hotplug detect type.
+ */
+void pd_send_hpd(int port, enum hpd_event hpd);
 /* --- Physical layer functions : chip specific --- */
 
 /* Packet preparation/retrieval */

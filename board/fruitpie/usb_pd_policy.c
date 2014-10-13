@@ -232,7 +232,6 @@ static int svdm_dp_config(int port, uint32_t *payload)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
-	CPRINTF("dp sts:%08x\n", payload[1]);
 	return 1; /* ack */
 }
 

@@ -8,13 +8,85 @@
 #include "adc_chip.h"
 #include "common.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "usb.h"
 #include "usb_bb.h"
 #include "usb_pd.h"
+#include "task.h"
+#include "timer.h"
 #include "util.h"
 
+static volatile uint64_t hpd_prev_ts;
+static volatile int hpd_prev_level;
+
+void hpd_event(enum gpio_signal signal);
 #include "gpio_list.h"
+
+/**
+ * Hotplug detect deferred task
+ *
+ * Called after level change on hpd GPIO to evaluate (and debounce) what event
+ * has occurred.  There are 3 events that occur on HPD:
+ *    1. low  : downstream display sink is deattached
+ *    2. high : downstream display sink is attached
+ *    3. irq  : downstream display sink signalling an interrupt.
+ *
+ * The debounce times for these various events are:
+ *  100MSEC : min pulse width of level value.
+ *    2MSEC : min pulse width of IRQ low pulse.  Max is level debounce min.
+ *
+ * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
+ * ----------------------------------------------------
+ * 1        0         1     <2ms        n/a       low glitch (ignore)
+ * 1        0         1     >2ms        <100ms    irq
+ * x        0         1     n/a         >100ms    high
+ * 0        1         0     <100ms      n/a       high glitch (ignore)
+ * x        1         0     n/a         >100ms    low
+ */
+
+void hpd_irq_deferred(void)
+{
+	pd_send_hpd(0, hpd_irq);
+}
+DECLARE_DEFERRED(hpd_irq_deferred);
+
+void hpd_lvl_deferred(void)
+{
+	int level = gpio_get_level(GPIO_DP_HPD);
+
+	if (level != hpd_prev_level)
+		/* It's a glitch while in deferred or canceled action */
+		return;
+
+	pd_send_hpd(0, (level) ? hpd_high : hpd_low);
+}
+DECLARE_DEFERRED(hpd_lvl_deferred);
+
+void hpd_event(enum gpio_signal signal)
+{
+	timestamp_t now = get_time();
+	int level = gpio_get_level(signal);
+	uint64_t cur_delta = now.val - hpd_prev_ts;
+
+	/* store current time */
+	hpd_prev_ts = now.val;
+
+	/* All previous hpd level events need to be re-triggered */
+	hook_call_deferred(hpd_lvl_deferred, -1);
+
+	/* It's a glitch.  Previous time moves but level is the same. */
+	if (cur_delta < HPD_DEBOUNCE_IRQ)
+		return;
+
+	if ((!hpd_prev_level && level) && (cur_delta < HPD_DEBOUNCE_LVL))
+		/* It's an irq */
+		hook_call_deferred(hpd_irq_deferred, 0);
+	else if (cur_delta >= HPD_DEBOUNCE_LVL)
+		hook_call_deferred(hpd_lvl_deferred, HPD_DEBOUNCE_LVL);
+
+	hpd_prev_level = level;
+}
 
 /* Initialize board. */
 void board_config_pre_init(void)
@@ -24,6 +96,17 @@ void board_config_pre_init(void)
 	/* Remap USART DMA to match the USART driver */
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
 }
+
+/* Initialize board. */
+static void board_init(void)
+{
+	timestamp_t now = get_time();
+	hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
+	hpd_prev_ts = now.val;
+	gpio_enable_interrupt(GPIO_DP_HPD);
+}
+
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {

@@ -12,8 +12,8 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_pd.h"
+#include "util.h"
 #include "version.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -31,6 +31,9 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 /* Desired voltage requested as a sink (in millivolts) */
 static unsigned select_mv = 5000;
+
+/* Whether alternate mode has been entered or not */
+static int alt_mode;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 		      uint32_t *curr_limit, uint32_t *supply_voltage)
@@ -182,12 +185,20 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
 	    (PD_VDO_OPOS(payload[0]) != OPOS))
 		return 0; /* will generate a NAK */
+
+	alt_mode = OPOS;
 	return 1;
+}
+
+int pd_alt_mode(int port)
+{
+	return alt_mode;
 }
 
 static int svdm_exit_mode(int port, uint32_t *payload)
 {
 	gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
+	alt_mode = 0;
 	return 1; /* Must return ACK */
 }
 
