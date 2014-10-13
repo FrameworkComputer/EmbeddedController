@@ -256,9 +256,6 @@ enum power_state power_handle_state(enum power_state state)
 			}
 		}
 
-		/* Turn on 3.3V DSW gated rail for core regulator */
-		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
-
 		/* Assert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
 
@@ -352,6 +349,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
+		/* Turn on 3.3V DSW gated rail for core regulator */
+		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 1);
+
 		/* Wait 20ms before allowing VCCST_PGOOD to rise. */
 		msleep(20);
 
@@ -421,6 +421,9 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
+		/* Turn off DSW gated */
+		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
+
 		return POWER_S3;
 
 	case POWER_S3S5:
@@ -462,7 +465,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Turn off power rails enabled in S5 */
 		gpio_set_level(GPIO_PP1050_EN, 0);
-		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 		gpio_set_level(GPIO_PP5000_EN, 0);
 
 		/* Disable 3.3V DSW */
