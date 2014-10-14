@@ -26,6 +26,7 @@
 #include "jtag.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "lightbar.h"
 #include "motion_sense.h"
 #include "peci.h"
 #include "power.h"
@@ -234,6 +235,15 @@ enum battery_present battery_is_present(void)
 	return analog_val < (9 * ADC_READ_MAX / 10) ? BP_YES : BP_NO;
 }
 #endif
+
+/**
+ * Show battery status on lightbar when AC status changes
+ */
+void show_battery_status(void)
+{
+	lightbar_sequence(LIGHTBAR_TAP);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, show_battery_status, HOOK_PRIO_DEFAULT);
 
 /**
  * Discharge battery when on AC power for factory test.
