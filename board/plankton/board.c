@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ina2xx.h"
 #include "ioexpander_pca9534.h"
 #include "registers.h"
 #include "system.h"
@@ -168,6 +169,8 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_DBG_CHG_TO_DEV_L);
 	gpio_enable_interrupt(GPIO_DBG_USB_TOGGLE_L);
 	gpio_enable_interrupt(GPIO_DBG_CABLE_FLIP_L);
+
+	ina2xx_init(0, 0x399f, INA2XX_CALIB_1MA(10 /* mOhm */));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

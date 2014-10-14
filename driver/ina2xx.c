@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * TI INA231 Current/Power monitor driver.
+ * TI INA219/231 Current/Power monitor driver.
  */
 
 #include "console.h"
@@ -10,7 +10,7 @@
 #include "i2c.h"
 #include "system.h"
 #include "timer.h"
-#include "ina231.h"
+#include "ina2xx.h"
 #include "uart.h"
 #include "util.h"
 
@@ -18,81 +18,82 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 /* 8-bit I2C base address */
-#define INA231_I2C_ADDR (0x40 << 1)
+#define INA2XX_I2C_ADDR (0x40 << 1)
 
-uint16_t ina231_read(uint8_t idx, uint8_t reg)
+uint16_t ina2xx_read(uint8_t idx, uint8_t reg)
 {
 	int res;
 	int val;
-	uint8_t addr = INA231_I2C_ADDR | (idx << 1);
+	uint8_t addr = INA2XX_I2C_ADDR | (idx << 1);
 
 	res = i2c_read16(I2C_PORT_MASTER, addr, reg, &val);
 	if (res) {
-		CPRINTS("INA231 I2C read failed");
+		CPRINTS("INA2XX I2C read failed");
 		return 0x0bad;
 	}
 	return (val >> 8) | ((val & 0xff) << 8);
 }
 
-int ina231_write(uint8_t idx, uint8_t reg, uint16_t val)
+int ina2xx_write(uint8_t idx, uint8_t reg, uint16_t val)
 {
 	int res;
-	uint8_t addr = INA231_I2C_ADDR | (idx << 1);
+	uint8_t addr = INA2XX_I2C_ADDR | (idx << 1);
 	uint16_t be_val = (val >> 8) | ((val & 0xff) << 8);
 
 	res = i2c_write16(I2C_PORT_MASTER, addr, reg, be_val);
 	if (res)
-		CPRINTS("INA231 I2C write failed");
+		CPRINTS("INA2XX I2C write failed");
 	return res;
 }
 
-int ina231_init(uint8_t idx, uint16_t config, uint16_t calib)
+int ina2xx_init(uint8_t idx, uint16_t config, uint16_t calib)
 {
 	int res;
 
-	res = ina231_write(idx, INA231_REG_CONFIG, config);
+	res = ina2xx_write(idx, INA2XX_REG_CONFIG, config);
 	/* TODO(crosbug.com/p/29730): assume 1mA/LSB, revisit later */
-	res |= ina231_write(idx, INA231_REG_CALIB, calib);
+	res |= ina2xx_write(idx, INA2XX_REG_CALIB, calib);
 
 	return res;
 }
 
-int ina231_get_voltage(uint8_t idx)
+int ina2xx_get_voltage(uint8_t idx)
 {
-	uint16_t bv = ina231_read(idx, INA231_REG_BUS_VOLT);
-	/* Bus voltage LSB : 1.25mV / bit */
-	return INA231_BUS_MV((int)bv);
+	uint16_t bv = ina2xx_read(idx, INA2XX_REG_BUS_VOLT);
+	return INA2XX_BUS_MV((int)bv);
 }
 
-int ina231_get_current(uint8_t idx)
+int ina2xx_get_current(uint8_t idx)
 {
-	int16_t curr = ina231_read(idx, INA231_REG_CURRENT);
+	int16_t curr = ina2xx_read(idx, INA2XX_REG_CURRENT);
 	/* Current calibration: LSB = 1mA/bit */
 	return (int)curr;
 }
 
-int ina231_get_power(uint8_t idx)
+int ina2xx_get_power(uint8_t idx)
 {
-	uint16_t pow = ina231_read(idx, INA231_REG_POWER);
-	/* When current LSB = 1mA/bit, power LSB is 25mW/bit */
-	return INA231_POW_MW((int)pow);
+	uint16_t pow = ina2xx_read(idx, INA2XX_REG_POWER);
+	return INA2XX_POW_MW((int)pow);
 }
 
-static void ina231_dump(uint8_t idx)
+static void ina2xx_dump(uint8_t idx)
 {
-	uint16_t cfg = ina231_read(idx, INA231_REG_CONFIG);
-	int16_t sv = ina231_read(idx, INA231_REG_SHUNT_VOLT);
-	uint16_t bv = ina231_read(idx, INA231_REG_BUS_VOLT);
-	uint16_t pow = ina231_read(idx, INA231_REG_POWER);
-	int16_t curr = ina231_read(idx, INA231_REG_CURRENT);
-	uint16_t calib = ina231_read(idx, INA231_REG_CALIB);
-	uint16_t mask = ina231_read(idx, INA231_REG_MASK);
-	uint16_t alert = ina231_read(idx, INA231_REG_ALERT);
+	uint16_t cfg = ina2xx_read(idx, INA2XX_REG_CONFIG);
+	int16_t sv = ina2xx_read(idx, INA2XX_REG_SHUNT_VOLT);
+	uint16_t bv = ina2xx_read(idx, INA2XX_REG_BUS_VOLT);
+	uint16_t pow = ina2xx_read(idx, INA2XX_REG_POWER);
+	int16_t curr = ina2xx_read(idx, INA2XX_REG_CURRENT);
+	uint16_t calib = ina2xx_read(idx, INA2XX_REG_CALIB);
+	uint16_t mask = ina2xx_read(idx, INA2XX_REG_MASK);
+	uint16_t alert = ina2xx_read(idx, INA2XX_REG_ALERT);
 
 	ccprintf("Configuration: %04x\n", cfg);
-	ccprintf("Shunt voltage: %04x => %d uV\n", sv, (int)sv * 25 / 10);
-	ccprintf("Bus voltage  : %04x => %d mV\n", bv, INA231_BUS_MV((int)bv));
-	ccprintf("Power        : %04x => %d mW\n", pow, INA231_POW_MW(pow));
+	ccprintf("Shunt voltage: %04x => %d uV\n", sv,
+						   INA2XX_SHUNT_UV((int)sv));
+	ccprintf("Bus voltage  : %04x => %d mV\n", bv,
+						   INA2XX_BUS_MV((int)bv));
+	ccprintf("Power        : %04x => %d mW\n", pow,
+						   INA2XX_POW_MW((int)pow));
 	ccprintf("Current      : %04x => %d mA\n", curr, curr);
 	ccprintf("Calibration  : %04x\n", calib);
 	ccprintf("Mask/Enable  : %04x\n", mask);
@@ -116,7 +117,7 @@ static int command_ina(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	if (2 == argc) { /* dump all registers */
-		ina231_dump(idx);
+		ina2xx_dump(idx);
 		return EC_SUCCESS;
 	} else if (4 == argc) {
 		val = strtoi(argv[3], &e, 16);
@@ -124,13 +125,13 @@ static int command_ina(int argc, char **argv)
 			return EC_ERROR_PARAM3;
 
 		if (!strcasecmp(argv[2], "config")) {
-			ina231_write(idx, INA231_REG_CONFIG, val);
+			ina2xx_write(idx, INA2XX_REG_CONFIG, val);
 		} else if (!strcasecmp(argv[2], "calib")) {
-			ina231_write(idx, INA231_REG_CALIB, val);
+			ina2xx_write(idx, INA2XX_REG_CALIB, val);
 		} else if (!strcasecmp(argv[2], "mask")) {
-			ina231_write(idx, INA231_REG_MASK, val);
+			ina2xx_write(idx, INA2XX_REG_MASK, val);
 		} else if (!strcasecmp(argv[2], "alert")) {
-			ina231_write(idx, INA231_REG_ALERT, val);
+			ina2xx_write(idx, INA2XX_REG_ALERT, val);
 		} else { /* read one register */
 			ccprintf("Invalid register: %s\n", argv[1]);
 			return EC_ERROR_INVAL;
@@ -142,5 +143,5 @@ static int command_ina(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ina, command_ina,
 			"<index> [config|calib|mask|alert <val>]",
-			"INA231 power/current sensing",
+			"INA2XX power/current sensing",
 			NULL);

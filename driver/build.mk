@@ -33,7 +33,7 @@ driver-$(CONFIG_CHARGER_BQ24773)+=charger/bq24773.o
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
 
 # Current/Power monitor
-driver-$(CONFIG_INA231)+=ina231.o
+driver-$(CONFIG_INA219)$(CONFIG_INA231)+=ina2xx.o
 
 # LED drivers
 driver-$(CONFIG_LED_DRIVER_DS2413)+=led/ds2413.o
