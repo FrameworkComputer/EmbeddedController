@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
 #include "task.h"
@@ -275,9 +276,49 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
+static void hpd0_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
+}
+
+static void hpd1_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_C1_DP_HPD, 1);
+}
+
+DECLARE_DEFERRED(hpd0_irq_deferred);
+DECLARE_DEFERRED(hpd1_irq_deferred);
+
+#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
+
+static int svdm_dp_attention(int port, uint32_t *payload)
+{
+	int cur_lvl;
+	int lvl = PD_VDO_HPD_LVL(payload[1]);
+	int irq = PD_VDO_HPD_IRQ(payload[1]);
+	enum gpio_signal hpd = PORT_TO_HPD(port);
+	cur_lvl = gpio_get_level(hpd);
+	if (irq & cur_lvl) {
+		gpio_set_level(hpd, 0);
+		/* 250 usecs is minimum, 2msec is max */
+		if (port)
+			hook_call_deferred(hpd1_irq_deferred, 300);
+		else
+			hook_call_deferred(hpd0_irq_deferred, 300);
+	} else if (irq & !cur_lvl) {
+		CPRINTF("PE ERR: IRQ_HPD w/ HPD_LOW\n");
+		return 0; /* nak */
+	} else {
+		gpio_set_level(hpd, lvl);
+	}
+	/* ack */
+	return 1;
+}
+
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
+	gpio_set_level(PORT_TO_HPD(port), 0);
 }
 
 const struct svdm_amode_fx supported_modes[] = {
@@ -286,6 +327,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.enter = &svdm_enter_dp_mode,
 		.status = &svdm_dp_status,
 		.config = &svdm_dp_config,
+		.attention = &svdm_dp_attention,
 		.exit = &svdm_exit_dp_mode,
 	},
 };

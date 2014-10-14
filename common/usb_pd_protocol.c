@@ -302,9 +302,13 @@ static inline void set_state(int port, enum pd_states next_state)
 
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 		pd[port].dev_id = 0;
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+		pd_exit_mode(port, NULL);
+#else
 #ifdef CONFIG_USBC_SS_MUX
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
+#endif
 #endif
 #ifdef CONFIG_USBC_VCONN
 		pd_set_vconn(port, pd[port].polarity, 0);
@@ -1559,7 +1563,7 @@ void pd_task(void)
 				hard_reset_count++;
 #endif
 
-			pd_exit_mode(port, payload);
+			pd_exit_mode(port, NULL);
 			send_hard_reset(port);
 			/* reset our own state machine */
 			execute_hard_reset(port);

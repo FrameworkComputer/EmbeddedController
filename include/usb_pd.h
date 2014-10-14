@@ -133,6 +133,7 @@ struct svdm_amode_fx {
 	void (*enter)(int port, uint32_t mode_caps);
 	int (*status)(int port, uint32_t *payload);
 	int (*config)(int port, uint32_t *payload);
+	int (*attention)(int port, uint32_t *payload);
 	void (*exit)(int port);
 };
 
@@ -194,6 +195,7 @@ struct pd_policy {
 #define VDO_SVDM_VERS(x)  (x << 13)
 #define VDO_OPOS(x)       (x << 8)
 #define VDO_CMDT(x)       (x << 6)
+#define VDO_OPOS_MASK     VDO_OPOS(0x7)
 #define VDO_CMDT_MASK     VDO_CMDT(0x3)
 
 #define CMDT_INIT     0
@@ -409,6 +411,9 @@ struct pd_policy {
 	(((irq) & 1) << 8 | ((lvl) & 1) << 7 | ((amode) & 1) << 6	\
 	 | ((usbc) & 1) << 5 | ((mf) & 1) << 4 | ((en) & 1) << 3	\
 	 | ((lp) & 1) << 2 | ((conn & 0x3) << 0))
+
+#define PD_VDO_HPD_IRQ(x) ((x >> 8) & 1)
+#define PD_VDO_HPD_LVL(x) ((x >> 7) & 1)
 /*
  * DisplayPort Configure VDO
  * -------------------------

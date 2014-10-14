@@ -124,7 +124,14 @@ static int svdm_response_svids(int port, uint32_t *payload)
 	return 2;
 }
 
-const uint32_t vdo_dp_mode[1] =  {
+/* Will only ever be a single mode for this UFP_D device as it has no USB
+ * support (2.0 or 3.0) making it only PIN_E configureable nor does it have any
+ * source functionality.
+ */
+#define MODE_CNT 1
+#define OPOS 1
+
+const uint32_t vdo_dp_mode[MODE_CNT] =  {
 	VDO_MODE_DP(0,		   /* UFP pin cfg supported : none */
 		    MODE_DP_PIN_C, /* DFP pin cfg supported */
 		    1,		   /* no usb2.0	signalling in AMode */
@@ -135,39 +142,30 @@ const uint32_t vdo_dp_mode[1] =  {
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
-	int mode_cnt = ARRAY_SIZE(vdo_dp_mode);
-
 	if (PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) {
 		/* TODO(tbroch) USB billboard enabled here then */
 		return 1; /* will generate a NAK */
 	}
 
 	memcpy(payload + 1, vdo_dp_mode, sizeof(vdo_dp_mode));
-	return mode_cnt + 1;
-}
-
-static int hpd_get_irq(int port)
-{
-	/* TODO(tbroch) FIXME */
-	return 0;
-}
-
-static enum hpd_level hpd_get_level(int port)
-{
-	return gpio_get_level(GPIO_DP_HPD);
+	return MODE_CNT + 1;
 }
 
 static int dp_status(int port, uint32_t *payload)
 {
-	uint32_t ufp_dp_sts = payload[1] & 0x3;
-	payload[1] = VDO_DP_STATUS(hpd_get_irq(port), /* IRQ_HPD */
-				   hpd_get_level(port), /* HPD_HI|LOW */
-				   0,                 /* request exit DP */
-				   0,                 /* request exit USB */
-				   0,                 /* MF pref */
+	int opos = PD_VDO_OPOS(payload[0]);
+	int hpd = gpio_get_level(GPIO_DP_HPD);
+	if (opos != OPOS)
+		return 0; /* nak */
+
+	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
+				   (hpd == 1),       /* HPD_HI|LOW */
+				   0,		     /* request exit DP */
+				   0,		     /* request exit USB */
+				   0,		     /* MF pref */
 				   gpio_get_level(GPIO_PD_SBU_ENABLE),
-				   0,                 /* power low */
-				   (ufp_dp_sts | 0x2));
+				   0,		     /* power low */
+				   0x2);
 	return 2;
 }
 
@@ -182,7 +180,7 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 {
 	/* SID & mode request is valid */
 	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
-	    (PD_VDO_OPOS(payload[0]) != 1))
+	    (PD_VDO_OPOS(payload[0]) != OPOS))
 		return 0; /* will generate a NAK */
 	return 1;
 }

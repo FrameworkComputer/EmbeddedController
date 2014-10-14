@@ -224,6 +224,12 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
+static int svdm_dp_attention(int port, uint32_t *payload)
+{
+	CPRINTF("dp sts:%08x\n", payload[1]);
+	return 1; /* ack */
+}
+
 static void svdm_exit_dp_mode(int port)
 {
 	CPRINTF("Exiting mode\n");
@@ -236,6 +242,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.enter = &svdm_enter_dp_mode,
 		.status = &svdm_dp_status,
 		.config = &svdm_dp_config,
+		.attention = &svdm_dp_attention,
 		.exit = &svdm_exit_dp_mode,
 	},
 };
