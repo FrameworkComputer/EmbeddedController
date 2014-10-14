@@ -42,3 +42,30 @@ int flash_physical_restore_state(void)
 	/* Nothing to restore */
 	return 0;
 }
+
+uint32_t flash_physical_get_valid_flags(void)
+{
+	return EC_FLASH_PROTECT_RO_AT_BOOT |
+	       EC_FLASH_PROTECT_ALL_AT_BOOT |
+	       EC_FLASH_PROTECT_RO_NOW |
+	       EC_FLASH_PROTECT_ALL_NOW;
+}
+
+uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+{
+	uint32_t ret = 0;
+
+	/* If RO protection isn't enabled, its at-boot state can be changed. */
+	if (!(cur_flags & EC_FLASH_PROTECT_RO_NOW))
+		ret |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/*
+	 * RW at-boot state can be set if WP GPIO is asserted and can always
+	 * be cleared.
+	 */
+	if (cur_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
+			 EC_FLASH_PROTECT_GPIO_ASSERTED))
+		ret |= EC_FLASH_PROTECT_ALL_AT_BOOT;
+
+	return ret;
+}

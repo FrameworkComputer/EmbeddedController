@@ -204,6 +204,32 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
+uint32_t flash_physical_get_valid_flags(void)
+{
+	return EC_FLASH_PROTECT_RO_AT_BOOT |
+	       EC_FLASH_PROTECT_RO_NOW |
+	       EC_FLASH_PROTECT_ALL_NOW;
+}
+
+uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+{
+	uint32_t ret = 0;
+
+	/* If RO protection isn't enabled, its at-boot state can be changed. */
+	if (!(cur_flags & EC_FLASH_PROTECT_RO_NOW))
+		ret |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/*
+	 * If entire flash isn't protected at this boot, it can be enabled if
+	 * the WP GPIO is asserted.
+	 */
+	if (!(cur_flags & EC_FLASH_PROTECT_ALL_NOW) &&
+	    (cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
+		ret |= EC_FLASH_PROTECT_ALL_NOW;
+
+	return ret;
+}
+
 
 /*****************************************************************************/
 /* High-level APIs */
