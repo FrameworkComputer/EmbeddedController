@@ -209,6 +209,7 @@ int lb_read_params_from_file(const char *filename,
 	READ(1); p->s3_ramp_up = val[0];
 	READ(1); p->s3_ramp_down = val[0];
 	READ(1); p->tap_tick_delay = val[0];
+	READ(1); p->tap_gate_delay = val[0];
 	READ(1); p->tap_display_time = val[0];
 
 	READ(1); p->tap_pct_red = val[0];

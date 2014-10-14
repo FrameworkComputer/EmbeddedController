@@ -1951,6 +1951,7 @@ static int lb_read_params_v1_from_file(const char *filename,
 	READ(1); p->s3_ramp_up = val[0];
 	READ(1); p->s3_ramp_down = val[0];
 	READ(1); p->tap_tick_delay = val[0];
+	READ(1); p->tap_gate_delay = val[0];
 	READ(1); p->tap_display_time = val[0];
 
 	READ(1); p->tap_pct_red = val[0];
@@ -2049,6 +2050,7 @@ static void lb_show_params_v1(const struct lightbar_params_v1 *p)
 	printf("%d\t\t# .s3_ramp_up\n", p->s3_ramp_up);
 	printf("%d\t\t# .s3_ramp_down\n", p->s3_ramp_down);
 	printf("%d\t\t# .tap_tick_delay\n", p->tap_tick_delay);
+	printf("%d\t\t# .tap_gate_delay\n", p->tap_gate_delay);
 	printf("%d\t\t# .tap_display_time\n", p->tap_display_time);
 	printf("%d\t\t# .tap_pct_red\n", p->tap_pct_red);
 	printf("%d\t\t# .tap_pct_green\n", p->tap_pct_green);

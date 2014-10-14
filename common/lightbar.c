@@ -76,7 +76,8 @@ static const struct lightbar_params_v1 default_params = {
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
 	.tap_tick_delay = 5000,			/* oscillation step time */
-	.tap_display_time = 5 * SECOND,		/* total sequence time */
+	.tap_gate_delay = 200 * MSEC,		/* segment gating delay */
+	.tap_display_time = 3 * SECOND,		/* total sequence time */
 
 	.tap_pct_red = 10,			/* below this is red */
 	.tap_pct_green = 97,			/* above this is green */
@@ -804,8 +805,10 @@ static uint32_t sequence_TAP_inner(void)
 {
 	enum { RED, YELLOW, GREEN } base_color;
 	timestamp_t start, now;
+	uint32_t elapsed_time = 0;
 	int i, ci, max_led;
 	int f_min, f_delta, f_osc, f_power, f_mult;
+	int gi, gr, gate[NUM_LEDS] = {0, 0, 0, 0};
 	uint8_t w = 0;
 
 	f_min = st.p.tap_seg_min_on * FP_SCALE / 100;
@@ -825,6 +828,14 @@ static uint32_t sequence_TAP_inner(void)
 
 		ci = st.p.tap_idx[base_color];
 		max_led = st.battery_percent / CUT;
+
+		/* Enable the segments gradually */
+		gi = elapsed_time / st.p.tap_gate_delay;
+		gr = elapsed_time % st.p.tap_gate_delay;
+		if (gi < NUM_LEDS)
+			gate[gi] = FP_SCALE * gr / st.p.tap_gate_delay;
+		if (gi && gi <= NUM_LEDS)
+			gate[gi - 1] = FP_SCALE;
 
 		for (i = 0; i < NUM_LEDS; i++) {
 
@@ -849,6 +860,8 @@ static uint32_t sequence_TAP_inner(void)
 				f_mult = f_min + f_power * f_delta / FP_SCALE;
 			}
 
+			f_mult = f_mult * gate[i] / FP_SCALE;
+
 			/* Pulse when charging */
 			if (st.battery_is_charging) {
 				int scale = (FP_SCALE -
@@ -865,7 +878,8 @@ static uint32_t sequence_TAP_inner(void)
 
 		/* Return after some time has elapsed */
 		now = get_time();
-		if (now.le.lo - start.le.lo > st.p.tap_display_time)
+		elapsed_time = now.le.lo - start.le.lo;
+		if (elapsed_time > st.p.tap_display_time)
 			break;
 	}
 	return 0;

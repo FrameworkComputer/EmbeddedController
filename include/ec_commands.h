@@ -1018,6 +1018,7 @@ struct lightbar_params_v1 {
 	int32_t s3_ramp_up;
 	int32_t s3_ramp_down;
 	int32_t tap_tick_delay;
+	int32_t tap_gate_delay;
 	int32_t tap_display_time;
 
 	/* Tap-for-battery params */
