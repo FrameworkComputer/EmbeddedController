@@ -369,6 +369,9 @@ void pd_adc_interrupt(void)
 		fault = FAULT_FAST_OCP;
 		/* pd_board_checks() will record the timeout later */
 	}
+
+	/* clear ADC irq so we don't get a second interrupt */
+	task_clear_pending_irq(STM32_IRQ_ADC_COMP);
 }
 DECLARE_IRQ(STM32_IRQ_ADC_COMP, pd_adc_interrupt, 1);
 
