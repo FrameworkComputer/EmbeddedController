@@ -76,6 +76,7 @@ static void set_usbc_action(enum usbc_action act)
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, 0);
 		break;
 	case USBC_ACT_CABLE_FLIP:
+		pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_FLIP, NULL, 0);
 		gpio_set_level(GPIO_USBC_POLARITY,
 			       !gpio_get_level(GPIO_USBC_POLARITY));
 		break;

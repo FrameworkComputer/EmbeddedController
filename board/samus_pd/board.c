@@ -180,94 +180,113 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+struct usb_port_mux
+{
+	enum gpio_signal ss1_en_l;
+	enum gpio_signal ss2_en_l;
+	enum gpio_signal dp_mode_l;
+	enum gpio_signal dp_polarity;
+	enum gpio_signal ss1_dp_mode;
+	enum gpio_signal ss2_dp_mode;
+};
+
+const struct usb_port_mux usb_muxes[] = {
+	{
+		.ss1_en_l    = GPIO_USB_C0_SS1_EN_L,
+		.ss2_en_l    = GPIO_USB_C0_SS2_EN_L,
+		.dp_mode_l   = GPIO_USB_C0_DP_MODE_L,
+		.dp_polarity = GPIO_USB_C0_DP_POLARITY,
+		.ss1_dp_mode = GPIO_USB_C0_SS1_DP_MODE,
+		.ss2_dp_mode = GPIO_USB_C0_SS2_DP_MODE,
+	},
+	{
+		.ss1_en_l    = GPIO_USB_C1_SS1_EN_L,
+		.ss2_en_l    = GPIO_USB_C1_SS2_EN_L,
+		.dp_mode_l   = GPIO_USB_C1_DP_MODE_L,
+		.dp_polarity = GPIO_USB_C1_DP_POLARITY,
+		.ss1_dp_mode = GPIO_USB_C1_SS1_DP_MODE,
+		.ss2_dp_mode = GPIO_USB_C1_SS2_DP_MODE,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == PD_PORT_COUNT);
+
 void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 {
-	if (port == 0) {
-		/* reset everything */
-		gpio_set_level(GPIO_USB_C0_SS1_EN_L, 1);
-		gpio_set_level(GPIO_USB_C0_SS2_EN_L, 1);
-		gpio_set_level(GPIO_USB_C0_DP_MODE_L, 1);
-		gpio_set_level(GPIO_USB_C0_DP_POLARITY, 1);
-		gpio_set_level(GPIO_USB_C0_SS1_DP_MODE, 1);
-		gpio_set_level(GPIO_USB_C0_SS2_DP_MODE, 1);
+	const struct usb_port_mux *usb_mux = usb_muxes + port;
 
-		if (mux == TYPEC_MUX_NONE)
-			/* everything is already disabled, we can return */
-			return;
+	/* reset everything */
+	gpio_set_level(usb_mux->ss1_en_l, 1);
+	gpio_set_level(usb_mux->ss2_en_l, 1);
+	gpio_set_level(usb_mux->dp_mode_l, 1);
+	gpio_set_level(usb_mux->dp_polarity, 1);
+	gpio_set_level(usb_mux->ss1_dp_mode, 1);
+	gpio_set_level(usb_mux->ss2_dp_mode, 1);
 
-		if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK) {
-			/* USB 3.0 uses 2 superspeed lanes */
-			gpio_set_level(polarity ? GPIO_USB_C0_SS2_DP_MODE :
-						  GPIO_USB_C0_SS1_DP_MODE, 0);
-		}
+	if (mux == TYPEC_MUX_NONE)
+		/* everything is already disabled, we can return */
+		return;
 
-		if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK) {
-			/* DP uses available superspeed lanes (x2 or x4) */
-			gpio_set_level(GPIO_USB_C0_DP_POLARITY, polarity);
-			gpio_set_level(GPIO_USB_C0_DP_MODE_L, 0);
-		}
-		/* switch on superspeed lanes */
-		gpio_set_level(GPIO_USB_C0_SS1_EN_L, 0);
-		gpio_set_level(GPIO_USB_C0_SS2_EN_L, 0);
-	} else {
-		/* reset everything */
-		gpio_set_level(GPIO_USB_C1_SS1_EN_L, 1);
-		gpio_set_level(GPIO_USB_C1_SS2_EN_L, 1);
-		gpio_set_level(GPIO_USB_C1_DP_MODE_L, 1);
-		gpio_set_level(GPIO_USB_C1_DP_POLARITY, 1);
-		gpio_set_level(GPIO_USB_C1_SS1_DP_MODE, 1);
-		gpio_set_level(GPIO_USB_C1_SS2_DP_MODE, 1);
-
-		if (mux == TYPEC_MUX_NONE)
-			/* everything is already disabled, we can return */
-			return;
-
-		if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK) {
-			/* USB 3.0 uses 2 superspeed lanes */
-			gpio_set_level(polarity ? GPIO_USB_C1_SS2_DP_MODE :
-						  GPIO_USB_C1_SS1_DP_MODE, 0);
-		}
-
-		if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK) {
-			/* DP uses available superspeed lanes (x2 or x4) */
-			gpio_set_level(GPIO_USB_C1_DP_POLARITY, polarity);
-			gpio_set_level(GPIO_USB_C1_DP_MODE_L, 0);
-		}
-		/* switch on superspeed lanes */
-		gpio_set_level(GPIO_USB_C1_SS1_EN_L, 0);
-		gpio_set_level(GPIO_USB_C1_SS2_EN_L, 0);
+	if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK) {
+		/* USB 3.0 uses 2 superspeed lanes */
+		gpio_set_level(polarity ? usb_mux->ss2_dp_mode :
+					  usb_mux->ss1_dp_mode, 0);
 	}
+
+	if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK) {
+		/* DP uses available superspeed lanes (x2 or x4) */
+		gpio_set_level(usb_mux->dp_polarity, polarity);
+		gpio_set_level(usb_mux->dp_mode_l, 0);
+	}
+	/* switch on superspeed lanes */
+	gpio_set_level(usb_mux->ss1_en_l, 0);
+	gpio_set_level(usb_mux->ss2_en_l, 0);
 }
 
 int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 {
+	const struct usb_port_mux *usb_mux = usb_muxes + port;
 	int has_ss, has_usb, has_dp;
 	const char *dp, *usb;
 
-	if (port == 0) {
-		has_ss = !gpio_get_level(GPIO_USB_C0_SS1_EN_L);
-		has_usb = !gpio_get_level(GPIO_USB_C0_SS1_DP_MODE) ||
-			  !gpio_get_level(GPIO_USB_C0_SS2_DP_MODE);
-		has_dp = !gpio_get_level(GPIO_USB_C0_DP_MODE_L);
-		dp = gpio_get_level(GPIO_USB_C0_DP_POLARITY) ?
-				"DP2" : "DP1";
-		usb = gpio_get_level(GPIO_USB_C0_SS1_DP_MODE) ?
-				"USB2" : "USB1";
-	} else {
-		has_ss = !gpio_get_level(GPIO_USB_C1_SS1_EN_L);
-		has_usb = !gpio_get_level(GPIO_USB_C1_SS1_DP_MODE) ||
-			  !gpio_get_level(GPIO_USB_C1_SS2_DP_MODE);
-		has_dp = !gpio_get_level(GPIO_USB_C1_DP_MODE_L);
-		dp = gpio_get_level(GPIO_USB_C1_DP_POLARITY) ?
-				"DP2" : "DP1";
-		usb = gpio_get_level(GPIO_USB_C1_SS1_DP_MODE) ?
-				"USB2" : "USB1";
-	}
+	has_ss = !gpio_get_level(usb_mux->ss1_en_l);
+	has_usb = !gpio_get_level(usb_mux->ss1_dp_mode) ||
+		  !gpio_get_level(usb_mux->ss2_dp_mode);
+	has_dp = !gpio_get_level(usb_mux->dp_mode_l);
+	dp = gpio_get_level(usb_mux->dp_polarity) ?
+			"DP2" : "DP1";
+	usb = gpio_get_level(usb_mux->ss1_dp_mode) ?
+			"USB2" : "USB1";
 
 	*dp_str = has_dp ? dp : NULL;
 	*usb_str = has_usb ? usb : NULL;
 
 	return has_ss;
+}
+
+void board_flip_usb_mux(int port)
+{
+	const struct usb_port_mux *usb_mux = usb_muxes + port;
+	int usb_polarity;
+
+	/* Flip DP polarity */
+	gpio_set_level(usb_mux->dp_polarity,
+		       !gpio_get_level(usb_mux->dp_polarity));
+
+	/* Flip USB polarity if enabled */
+	if (gpio_get_level(usb_mux->ss1_dp_mode) &&
+	    gpio_get_level(usb_mux->ss2_dp_mode))
+		return;
+	usb_polarity = gpio_get_level(usb_mux->ss1_dp_mode);
+
+	/*
+	 * Disable both sides first so that we don't enable both at the
+	 * same time accidentally.
+	 */
+	gpio_set_level(usb_mux->ss1_dp_mode, 1);
+	gpio_set_level(usb_mux->ss2_dp_mode, 1);
+
+	gpio_set_level(usb_mux->ss1_dp_mode, !usb_polarity);
+	gpio_set_level(usb_mux->ss2_dp_mode, usb_polarity);
 }
 
 void board_update_battery_soc(int soc)

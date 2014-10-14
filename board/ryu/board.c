@@ -138,6 +138,31 @@ int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 	return has_ss;
 }
 
+void board_flip_usb_mux(int port)
+{
+	int usb_polarity;
+
+	/* Flip DP polarity */
+	gpio_set_level(GPIO_USBC_DP_POLARITY,
+		       !gpio_get_level(GPIO_USBC_DP_POLARITY));
+
+	/* Flip USB polarity if enabled */
+	if (gpio_get_level(GPIO_USBC_SS1_USB_MODE_L) &&
+	    gpio_get_level(GPIO_USBC_SS2_USB_MODE_L))
+		return;
+	usb_polarity = gpio_get_level(GPIO_USBC_SS1_USB_MODE_L);
+
+	/*
+	 * Disable both sides first so that we don't enable both at the
+	 * same time accidentally.
+	 */
+	gpio_set_level(GPIO_USBC_SS1_USB_MODE_L, 1);
+	gpio_set_level(GPIO_USBC_SS2_USB_MODE_L, 1);
+
+	gpio_set_level(GPIO_USBC_SS1_USB_MODE_L, !usb_polarity);
+	gpio_set_level(GPIO_USBC_SS2_USB_MODE_L, usb_polarity);
+}
+
 /**
  * Discharge battery when on AC power for factory test.
  */
