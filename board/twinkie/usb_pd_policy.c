@@ -33,7 +33,8 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
 
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
+int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
+		      uint32_t *curr_limit, uint32_t *supply_voltage)
 {
 	int i;
 	int sel_mv;
@@ -63,18 +64,22 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		int uw = 250000 * (src_caps[i] & 0x3FF);
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		CPRINTF("Request [%d] %dV %d/%d mW\n",
-			max_i, sel_mv/1000, uw/1000, uw/1000);
+		*curr_limit = uw/sel_mv;
+		CPRINTF("Request [%d] %dV %dmW\n",
+			 max_i, sel_mv/1000, uw/1000);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
 		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		CPRINTF("Request [%d] %dV %d/%d mA\n",
-			max_i, sel_mv/1000, max_i, ma/2, ma);
+		*curr_limit = ma;
+		CPRINTF("Request [%d] %dV %dmA\n",
+			 max_i, sel_mv/1000, ma);
 	}
+	*supply_voltage = sel_mv;
 	return EC_SUCCESS;
 }
 
-void pd_set_input_current_limit(uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
 {
 }
 

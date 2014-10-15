@@ -32,7 +32,8 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Desired voltage requested as a sink (in millivolts) */
 static unsigned select_mv = 5000;
 
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
+int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
+		      uint32_t *curr_limit, uint32_t *supply_voltage)
 {
 	int i;
 	int ma;
@@ -56,10 +57,13 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	ma = 10 * (src_caps[i] & 0x3FF);
 	*rdo = RDO_FIXED(i + 1, ma, ma, 0);
 	CPRINTF("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
-	return ma;
+	*curr_limit = ma;
+	*supply_voltage = set_mv;
+	return EC_SUCCESS;
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
 {
 	/* No battery, nothing to do */
 	return;

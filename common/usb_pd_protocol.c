@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "board.h"
+#include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -153,6 +154,18 @@ static const uint8_t dec4b5b[] = {
 #define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))
 #define IS_CABLE(cc1, cc2)     (CC_RD(cc1) || CC_RD(cc2))
 
+/*
+ * Type C power source charge current limits are identified by their cc
+ * voltage (set by selecting the proper Rd resistor). Any voltage below
+ * TYPE_C_SRC_500_THRESHOLD will not be identified as a type C charger.
+ */
+#define TYPE_C_SRC_500_THRESHOLD	PD_SRC_RD_THRESHOLD
+#define TYPE_C_SRC_1500_THRESHOLD	660  /* mV */
+#define TYPE_C_SRC_3000_THRESHOLD	1230 /* mV */
+
+/* Type C supply voltage (mV) */
+#define TYPE_C_VOLTAGE	5000 /* mV */
+
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
 #define PD_RETRY_COUNT 2
@@ -221,8 +234,9 @@ static struct pd_protocol {
 	uint8_t ping_enabled;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	/* Current limit based on the last request message */
+	/* Current limit / voltage based on the last request message */
 	uint32_t curr_limit;
+	uint32_t supply_voltage;
 #endif
 
 	/* PD state for Vendor Defined Messages */
@@ -653,10 +667,13 @@ static void execute_hard_reset(int port)
 		PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
 
 	/* Clear the input current limit */
-	pd_set_input_current_limit(port, 0);
+	pd_set_input_current_limit(port, 0, 0);
+#ifdef CONFIG_CHARGE_MANAGER
+	typec_set_input_current_limit(port, 0, 0);
+#endif /* CONFIG_CHARGE_MANAGER */
 #else
 	set_state(port, PD_STATE_SRC_DISCONNECTED);
-#endif
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	pd_power_supply_reset(port);
 	pd[port].src_recover = get_time().val + PD_T_SRC_RECOVER;
 	CPRINTF("HARD RESET!\n");
@@ -697,13 +714,15 @@ static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 
 static void pd_send_request_msg(int port)
 {
-	uint32_t rdo;
+	uint32_t rdo, curr_limit, supply_voltage;
 	int res;
 
 	/* we were waiting for them, let's process them */
-	res = pd_choose_voltage(pd_src_cap_cnt[port], pd_src_caps[port], &rdo);
-	if (res >= 0) {
-		pd[port].curr_limit = res;
+	res = pd_choose_voltage(pd_src_cap_cnt[port], pd_src_caps[port], &rdo,
+				&curr_limit, &supply_voltage);
+	if (res == EC_SUCCESS) {
+		pd[port].curr_limit = curr_limit;
+		pd[port].supply_voltage = supply_voltage;
 		res = send_request(port, rdo);
 		if (res >= 0)
 			set_state(port, PD_STATE_SNK_REQUESTED);
@@ -797,7 +816,8 @@ static void handle_ctrl_request(int port, uint16_t head,
 			set_state(port, PD_STATE_HARD_RESET);
 		} else if (pd[port].role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
-			pd_set_input_current_limit(port, pd[port].curr_limit);
+			pd_set_input_current_limit(port, pd[port].curr_limit,
+						   pd[port].supply_voltage);
 		}
 		break;
 	case PD_CTRL_REJECT:
@@ -1128,7 +1148,13 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		}
 	}
 }
-#endif
+
+int pd_get_role(int port)
+{
+	return pd[port].role;
+}
+
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 int pd_get_polarity(int port)
 {
@@ -1162,6 +1188,40 @@ void pd_ping_enable(int port, int enable)
 	pd[port].ping_enabled = enable;
 }
 
+#ifdef CONFIG_CHARGE_MANAGER
+/*
+ * Initialize type C and PD current limits based upon cc_voltage. The PD
+ * current limit may be revised upward (or downward to zero) depending on
+ * PD negotiation.
+ */
+void pd_init_current_limits(int port, int cc_voltage)
+{
+	int charge;
+
+	/* Detect type C charger current limit based upon vbus voltage. */
+	if (cc_voltage > TYPE_C_SRC_3000_THRESHOLD)
+		charge = 3000;
+	else if (cc_voltage > TYPE_C_SRC_1500_THRESHOLD)
+		charge = 1500;
+	else if (cc_voltage > PD_SNK_VA)
+		charge = 500;
+	else
+		charge = 0;
+	typec_set_input_current_limit(port, charge, TYPE_C_VOLTAGE);
+
+	/*
+	 * Set the initial PD current limit based upon cc_voltage. If a PD
+	 * charger is attached, this will get changed upward later once
+	 * negotiation is complete.
+	 */
+	if (cc_voltage > PD_SNK_VA)
+		charge = PD_MIN_MA;
+	else
+		charge = 0;
+	pd_set_input_current_limit(port, charge, PD_MIN_MV);
+}
+#endif /* CONFIG_CHARGE_MANAGER */
+
 void pd_task(void)
 {
 	int head;
@@ -1173,7 +1233,10 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
 	int hard_reset_count = 0;
-#endif
+#ifdef CONFIG_CHARGE_MANAGER
+	static int initialized[PD_PORT_COUNT];
+#endif /* CONFIG_CHARGE_MANAGER */
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	enum pd_states this_state;
 	timestamp_t now;
 	int caps_count = 0;
@@ -1395,12 +1458,30 @@ void pd_task(void)
 							   pd[port].polarity);
 					/* reset message ID  on connection */
 					pd[port].msg_id = 0;
+#ifdef CONFIG_CHARGE_MANAGER
+					initialized[port] = 1;
+					pd_init_current_limits(port,
+							       pd[port].
+							       polarity ?
+							       cc2_volt :
+							       cc1_volt);
+#endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 					break;
 				}
 			}
 
+#ifdef CONFIG_CHARGE_MANAGER
+			/*
+			 * Set charge limit to zero if we have yet to set
+			 * a limit for this port.
+			 */
+			if (!initialized[port]) {
+				initialized[port] = 1;
+				pd_init_current_limits(port, 0);
+			}
+#endif
 			/*
 			 * If no source detected, reset hard reset counter and
 			 * check for role swap
@@ -1417,7 +1498,6 @@ void pd_task(void)
 				/* Swap states quickly */
 				timeout = 2*MSEC;
 			}
-
 			break;
 		case PD_STATE_SNK_DISCOVERY:
 			/*
@@ -1530,7 +1610,10 @@ void pd_task(void)
 			/* Sink: detect disconnect by monitoring VBUS */
 			set_state(port, PD_STATE_SNK_DISCONNECTED);
 			/* Clear the input current limit */
-			pd_set_input_current_limit(port, 0);
+			pd_set_input_current_limit(port, 0, 0);
+#ifdef CONFIG_CHARGE_MANAGER
+			typec_set_input_current_limit(port, 0, 0);
+#endif
 			/* set timeout small to reconnect fast */
 			timeout = 5*MSEC;
 		}

@@ -499,6 +499,13 @@ enum pd_dual_role_states {
  *              enum pd_dual_role_states
  */
 void pd_set_dual_role(enum pd_dual_role_states state);
+
+/**
+ * Get role, from among PD_ROLE_SINK and PD_ROLE_SOURCE
+ *
+ * @param port Port number from which to get role
+ */
+int pd_get_role(int port);
 #endif
 
 /* Control Message type */
@@ -561,6 +568,12 @@ enum pd_data_msg_type {
 #define PD_RST2  0x19
 #define PD_EOP   0x0D
 
+/* Minimum PD supply current  (mA) */
+#define PD_MIN_MA	500
+
+/* Minimum PD voltage (mV) */
+#define PD_MIN_MV	5000
+
 /* --- Policy layer functions --- */
 
 /**
@@ -569,9 +582,12 @@ enum pd_data_msg_type {
  * @param cnt  the number of Power Data Objects.
  * @param src_caps Power Data Objects representing the source capabilities.
  * @param rdo  requested Request Data Object.
- * @return <0 if invalid, else value is the current limit of the RDO data
+ * @param curr_limit  selected current limit (stored on success)
+ * @param supply_voltage  selected supply voltage (stored on success)
+ * @return <0 if invalid, else EC_SUCCESS
  */
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo);
+int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
+		      uint32_t *curr_limit, uint32_t *supply_voltage);
 
 /**
  * Put a cap on the max voltage requested as a sink.
@@ -612,12 +628,24 @@ int pd_set_power_supply_ready(int port);
 void pd_request_source_voltage(int port, int mv);
 
 /**
- * Set the input current limit.
+ * Set the PD input current limit.
  *
  * @port USB-C port number
  * @max_ma Maximum current limit
+ * @supply_voltage Voltage at which current limit is applied
  */
-void pd_set_input_current_limit(int port, uint32_t max_ma);
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage);
+
+/**
+ * Set the type-C input current limit.
+ *
+ * @port USB-C port number
+ * @max_ma Maximum current limit
+ * @supply_voltage Voltage at which current limit is applied
+ */
+void typec_set_input_current_limit(int port, uint32_t max_ma,
+				   uint32_t supply_voltage);
 
 /**
  * Verify board specific health status : current, voltages...

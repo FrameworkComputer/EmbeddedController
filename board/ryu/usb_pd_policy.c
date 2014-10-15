@@ -35,7 +35,8 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
 
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
+int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
+		      uint32_t *curr_limit, uint32_t *supply_voltage)
 {
 	int i;
 	int sel_mv;
@@ -76,10 +77,13 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 		CPRINTF("Request [%d] %dV %dmA\n",
 			max_i, sel_mv/1000, ma);
 	}
-	return max_ma;
+	*curr_limit = max_ma;
+	*supply_voltage = sel_mv;
+	return EC_SUCCESS;
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma)
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
 {
 	int rv = charge_set_input_current_limit(MAX(max_ma,
 					CONFIG_CHARGER_INPUT_CURRENT));
