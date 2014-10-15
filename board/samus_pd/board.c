@@ -48,7 +48,11 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_PD] = 0,
 	[CHARGE_SUPPLIER_TYPEC] = 1,
-	[CHARGE_SUPPLIER_BC12] = 1,
+	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
+	[CHARGE_SUPPLIER_BC12_DCP] = 1,
+	[CHARGE_SUPPLIER_BC12_CDP] = 2,
+	[CHARGE_SUPPLIER_BC12_SDP] = 3,
+	[CHARGE_SUPPLIER_OTHER] = 3
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
@@ -72,23 +76,40 @@ static void board_usb_charger_update(int port)
 {
 	int device_type, charger_status;
 	struct charge_port_info charge;
+	int type;
 	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
 
 	/* Read interrupt register to clear*/
 	pi3usb9281_get_interrupts(port);
+
+	/* Set device type */
 	device_type = pi3usb9281_get_device_type(port);
 	charger_status = pi3usb9281_get_charger_status(port);
+	if (PI3USB9281_CHG_STATUS_ANY(charger_status))
+		type = CHARGE_SUPPLIER_PROPRIETARY;
+	else if (device_type & PI3USB9281_TYPE_CDP)
+		type = CHARGE_SUPPLIER_BC12_CDP;
+	else if (device_type & PI3USB9281_TYPE_DCP)
+		type = CHARGE_SUPPLIER_BC12_DCP;
+	else if (device_type & PI3USB9281_TYPE_SDP)
+		type = CHARGE_SUPPLIER_BC12_SDP;
+	else
+		type = CHARGE_SUPPLIER_OTHER;
 
 	/* Attachment: decode + update available charge */
-	if (device_type || (charger_status & 0x1f))
+	if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
 		charge.current = pi3usb9281_get_ilim(device_type,
 						     charger_status);
-	/* Detachment: update available charge to 0 */
-	else
+		charge_manager_update(type, port, &charge);
+	} else { /* Detachment: update available charge to 0 */
 		charge.current = 0;
-
-	charge_manager_update(CHARGE_SUPPLIER_BC12, port, &charge);
-
+		charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, port,
+				      &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, port, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, port, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, port, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_OTHER, port, &charge);
+	}
 }
 
 /* Pericom USB deferred tasks -- called after USB device insert / removal */
@@ -176,9 +197,10 @@ void board_config_pre_init(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	int pd_enable;
+	int pd_enable, i;
 	int slp_s5 = gpio_get_level(GPIO_PCH_SLP_S5_L);
 	int slp_s3 = gpio_get_level(GPIO_PCH_SLP_S3_L);
+	struct charge_port_info charge;
 
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is
@@ -190,6 +212,18 @@ static void board_init(void)
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE);
+
+	/* Initialize all pericom charge suppliers to 0 */
+	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge.current = 0;
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, i,
+				      &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, i, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, i, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, i, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_OTHER, i, &charge);
+	}
 
 	/* Enable pericom BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);

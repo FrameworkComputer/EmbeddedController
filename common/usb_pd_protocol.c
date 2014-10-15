@@ -1985,6 +1985,18 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			NULL);
 #endif /* CONFIG_USBC_SS_MUX */
 
+static int hc_pd_ports(struct host_cmd_handler_args *args)
+{
+	struct ec_response_usb_pd_ports *r = args->response;
+	r->num_ports = PD_PORT_COUNT;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS,
+		     hc_pd_ports,
+		     EC_VER_MASK(0));
+
 static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
 	[USB_PD_CTRL_ROLE_TOGGLE_ON]    = PD_DRP_TOGGLE_ON,
 	[USB_PD_CTRL_ROLE_TOGGLE_OFF]   = PD_DRP_TOGGLE_OFF,

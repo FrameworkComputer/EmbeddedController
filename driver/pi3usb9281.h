@@ -46,6 +46,8 @@
 #define PI3USB9281_CHG_APPLE_1A     (1 << 2)
 #define PI3USB9281_CHG_APPLE_2A     (1 << 3)
 #define PI3USB9281_CHG_APPLE_2_4A   (1 << 4)
+/* Check if charge status has any connection */
+#define PI3USB9281_CHG_STATUS_ANY(x) (((x) & 0x1f) > 1)
 
 /* Read PI3USB9281 register. */
 uint8_t pi3usb9281_read(uint8_t chip_idx, uint8_t reg);

@@ -6,6 +6,8 @@
 #include "charge_manager.h"
 #include "console.h"
 #include "hooks.h"
+#include "host_command.h"
+#include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "util.h"
 
@@ -18,6 +20,7 @@ static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
 /* Store current state of port enable / charge current. */
 static int charge_port = CHARGE_PORT_NONE;
 static int charge_current = CHARGE_CURRENT_UNINITIALIZED;
+static int charge_supplier = CHARGE_SUPPLIER_NONE;
 
 /**
  * Initialize available charge. Run before board init, so board init can
@@ -113,6 +116,7 @@ static void charge_manager_refresh(void)
 		board_set_active_charge_port(new_port);
 
 		charge_current = new_charge_current;
+		charge_supplier = new_supplier;
 		charge_port = new_port;
 	}
 }
@@ -154,3 +158,96 @@ void charge_manager_update(int supplier,
 			hook_call_deferred(charge_manager_refresh, 0);
 	}
 }
+
+static int hc_pd_power_info(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_power_info *p = args->params;
+	struct ec_response_usb_pd_power_info *r = args->response;
+	int port = p->port;
+	int sup = CHARGE_SUPPLIER_NONE;
+	int i;
+
+	/* If host is asking for the charging port, set port appropriately */
+	if (port == PD_POWER_CHARGING_PORT)
+		port = charge_port;
+
+	/* Determine supplier information to show */
+	if (port == charge_port) {
+		sup = charge_supplier;
+	} else {
+		/* Find highest priority supplier */
+		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i) {
+			if (available_charge[i][port].current > 0 &&
+			    available_charge[i][port].voltage > 0 &&
+			    (sup == CHARGE_SUPPLIER_NONE ||
+			     supplier_priority[i] <
+			     supplier_priority[sup] ||
+			    (supplier_priority[i] ==
+			     supplier_priority[sup] &&
+			     POWER(available_charge[i][port]) >
+			     POWER(available_charge[sup]
+						   [port]))))
+				sup = i;
+		}
+	}
+
+	/* Fill in power role */
+	if (charge_port == port)
+		r->role = USB_PD_PORT_POWER_SINK;
+	else if (sup != CHARGE_SUPPLIER_NONE)
+		r->role = USB_PD_PORT_POWER_SINK_NOT_CHARGING;
+	else if (pd_is_connected(port) && pd_get_role(port) == PD_ROLE_SOURCE)
+		r->role = USB_PD_PORT_POWER_SOURCE;
+	else
+		r->role = USB_PD_PORT_POWER_DISCONNECTED;
+
+	if (sup == CHARGE_SUPPLIER_NONE) {
+		r->type = USB_CHG_TYPE_NONE;
+		r->voltage_max = 0;
+		r->voltage_now = 0;
+		r->current_max = 0;
+		r->max_power = 0;
+	} else {
+		switch (sup) {
+		case CHARGE_SUPPLIER_PD:
+			r->type = USB_CHG_TYPE_PD;
+			break;
+		case CHARGE_SUPPLIER_TYPEC:
+			r->type = USB_CHG_TYPE_C;
+			break;
+		case CHARGE_SUPPLIER_PROPRIETARY:
+			r->type = USB_CHG_TYPE_PROPRIETARY;
+			break;
+		case CHARGE_SUPPLIER_BC12_DCP:
+			r->type = USB_CHG_TYPE_BC12_DCP;
+			break;
+		case CHARGE_SUPPLIER_BC12_CDP:
+			r->type = USB_CHG_TYPE_BC12_CDP;
+			break;
+		case CHARGE_SUPPLIER_BC12_SDP:
+			r->type = USB_CHG_TYPE_BC12_SDP;
+			break;
+		default:
+			r->type = USB_CHG_TYPE_OTHER;
+		}
+		r->voltage_max = available_charge[sup][port].voltage;
+		r->current_max = available_charge[sup][port].current;
+		r->max_power = POWER(available_charge[sup][port]);
+
+		/*
+		 * If we are sourcing power, or sinking but not charging, then
+		 * VBUS must be 5V. If we are charging, then read VBUS ADC.
+		 */
+		if (r->role == USB_PD_PORT_POWER_SOURCE ||
+		    r->role == USB_PD_PORT_POWER_SINK_NOT_CHARGING)
+			r->voltage_now = 5000;
+		else
+			r->voltage_now = adc_read_channel(ADC_BOOSTIN);
+	}
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
+		     hc_pd_power_info,
+		     EC_VER_MASK(0));

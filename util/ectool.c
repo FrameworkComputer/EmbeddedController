@@ -191,6 +191,8 @@ const char help_str[] =
 	"  usbpd <port> <auto | "
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock]>\n"
 	"      Control USB PD/type-C\n"
+	"  usbpdpower\n"
+	"      Get USB PD power information\n"
 	"  version\n"
 	"      Prints EC version\n"
 	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
@@ -2880,6 +2882,86 @@ int cmd_usb_pd(int argc, char *argv[])
 	return (rv < 0 ? rv : 0);
 }
 
+int cmd_usb_pd_power(int argc, char *argv[])
+{
+	struct ec_params_usb_pd_power_info p;
+	struct ec_response_usb_pd_power_info *r =
+		(struct ec_response_usb_pd_power_info *)ec_inbuf;
+	int num_ports, i, rv;
+
+	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0,
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+	num_ports = ((struct ec_response_usb_pd_ports *)r)->num_ports;
+
+	for (i = 0; i < num_ports; i++) {
+		p.port = i;
+		rv = ec_command(EC_CMD_USB_PD_POWER_INFO, 0,
+				&p, sizeof(p),
+				ec_inbuf, ec_max_insize);
+		if (rv < 0)
+			return rv;
+
+		printf("Port %d:\n  Power role: ", i);
+		switch (r->role) {
+		case USB_PD_PORT_POWER_DISCONNECTED:
+			printf("Disconnected\n");
+			break;
+		case USB_PD_PORT_POWER_SOURCE:
+			printf("Source\n");
+			break;
+		case USB_PD_PORT_POWER_SINK:
+			printf("Sink\n");
+			break;
+		case USB_PD_PORT_POWER_SINK_NOT_CHARGING:
+			printf("Sink (not charging)\n");
+			break;
+		default:
+			printf("Unknown\n");
+		}
+
+		printf("  Charger type: ");
+		switch (r->type) {
+		case USB_CHG_TYPE_PD:
+			printf("PD\n");
+			break;
+		case USB_CHG_TYPE_C:
+			printf("Type-c\n");
+			break;
+		case USB_CHG_TYPE_PROPRIETARY:
+			printf("Proprietary\n");
+			break;
+		case USB_CHG_TYPE_BC12_DCP:
+			printf("BC1.2 DCP\n");
+			break;
+		case USB_CHG_TYPE_BC12_CDP:
+			printf("BC1.2 CDP\n");
+			break;
+		case USB_CHG_TYPE_BC12_SDP:
+			printf("BC1.2 SDP\n");
+			break;
+		case USB_CHG_TYPE_OTHER:
+			printf("Other\n");
+			break;
+		default:
+			printf("None\n");
+		}
+
+		printf("  Max charging voltage: %dmV\n",
+			r->voltage_max);
+		printf("  Current charging voltage: %dmV\n",
+			r->voltage_now);
+		printf("  Max input current: %dmA\n",
+			r->current_max);
+		printf("  Max input power: %dmW\n",
+			r->max_power);
+
+		printf("\n");
+	}
+
+	return 0;
+}
 
 int cmd_kbpress(int argc, char *argv[])
 {
@@ -5096,6 +5178,7 @@ const struct command commands[] = {
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},
 	{"usbpd", cmd_usb_pd},
+	{"usbpdpower", cmd_usb_pd_power},
 	{"version", cmd_version},
 	{"wireless", cmd_wireless},
 	{NULL, NULL}
