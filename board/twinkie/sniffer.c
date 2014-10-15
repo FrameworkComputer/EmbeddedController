@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -23,19 +24,24 @@
 #define EP_PAYLOAD_SIZE (EP_BUF_SIZE - 4)
 
 /* Buffer enough to avoid overflowing due to USB latencies on both sides */
-#define RX_COUNT (8 * EP_PAYLOAD_SIZE)
+#define RX_COUNT (16 * EP_PAYLOAD_SIZE)
 
 /* Task event for the USB transfer interrupt */
 #define USB_EVENTS TASK_EVENT_CUSTOM(3)
 
 /* edge timing samples */
 static uint8_t samples[RX_COUNT];
+/* bitmap of the samples sub-buffer filled with DMA data */
+static volatile uint32_t filled_dma;
+/* timestamps of the beginning of DMA buffers */
+static uint16_t sample_tstamp[2];
+/* sequence number of the beginning of DMA buffers */
+static uint16_t sample_seq[2];
 
 /* Bulk endpoint double buffer */
 static usb_uint ep_buf[2][EP_BUF_SIZE / 2] __usb_ram;
-
-/* The host is reading the incoming packets */
-static int tx_on;
+/* USB Buffers not used, ready to be filled */
+static volatile uint32_t free_usb = 3;
 
 /* USB descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_VENDOR) = {
@@ -62,31 +68,29 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_VENDOR,
 /* USB callbacks */
 static void ep_tx(void)
 {
-	int b = !(STM32_USB_EP(USB_EP_SNIFFER) & EP_TX_DTOG);
-	if (b)
-		btable_ep[USB_EP_SNIFFER].rx_count = 0;
-	else
-		btable_ep[USB_EP_SNIFFER].tx_count = 0;
+	static int b; /* current buffer index */
+	if (btable_ep[USB_EP_SNIFFER].tx_count) {
+		/* we have transmitted the previous buffer, toggle it */
+		free_usb |= 1 << b;
+		b = b ? 0 : 1;
+		btable_ep[USB_EP_SNIFFER].tx_addr = usb_sram_addr(ep_buf[b]);
+	}
+	/* re-enable data transmission if we have available data */
+	btable_ep[USB_EP_SNIFFER].tx_count = (free_usb & (1<<b)) ? 0
+								 : EP_BUF_SIZE;
+	STM32_TOGGLE_EP(USB_EP_SNIFFER, EP_TX_MASK, EP_TX_VALID, 0);
 	/* wake up the processing */
 	task_set_event(TASK_ID_SNIFFER, 1 << b, 0);
-	/* clear IT, toggle and validate buffers */
-	STM32_TOGGLE_EP(USB_EP_SNIFFER, 0, 0, EP_RX_DTOG);
-	STM32_TOGGLE_EP(USB_EP_SNIFFER, EP_TX_MASK, EP_TX_VALID, 0);
-	/* record the valid transmission */
-	tx_on = 1;
 }
 
 static void ep_reset(void)
 {
-	/* Bulk IN endpoint with double-buffering */
+	/* Bulk IN endpoint */
 	btable_ep[USB_EP_SNIFFER].tx_addr = usb_sram_addr(ep_buf[0]);
-	btable_ep[USB_EP_SNIFFER].rx_addr = usb_sram_addr(ep_buf[1]);
-	btable_ep[USB_EP_SNIFFER].tx_count = 0;
-	btable_ep[USB_EP_SNIFFER].rx_count = 0;
+	btable_ep[USB_EP_SNIFFER].tx_count = EP_BUF_SIZE;
 	STM32_USB_EP(USB_EP_SNIFFER) = (USB_EP_SNIFFER << 0) /*Endpoint Num*/ |
 				       (3 << 4) /* TX Valid */ |
 				       (0 << 9) /* Bulk EP */ |
-				       (1 << 8) /* DBL BUF */ |
 				       (0 << 12) /* RX Disabled */;
 }
 USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_reset);
@@ -120,10 +124,20 @@ void tim_dma_handler(void)
 	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
 	uint32_t stat = dma->isr & (STM32_DMA_ISR_HTIF(DMAC_TIM_RX)
 				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX));
-	seq++;
+	int idx = !(stat & STM32_DMA_ISR_HTIF(DMAC_TIM_RX));
+	uint16_t mask = idx ? 0xFF00 : 0x00FF;
+	int next = idx ? 0x0001 : 0x0100;
+
+	sample_tstamp[idx] = __hw_clock_source_read();
+	sample_seq[idx] = (seq++ << 3) & 0x0ff8;
+	if (filled_dma & next) {
+		oflow++;
+		sample_seq[idx] |= 0x8000;
+	}
+	filled_dma |= mask;
 	dma->ifcr |= STM32_DMA_ISR_ALL(DMAC_TIM_RX);
-	if (tx_on)
-		task_set_event(TASK_ID_SNIFFER, TASK_EVENT_CUSTOM(stat), 0);
+	/* time to process the samples */
+	task_set_event(TASK_ID_SNIFFER, TASK_EVENT_CUSTOM(stat), 0);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, tim_dma_handler, 1);
 
@@ -190,38 +204,25 @@ DECLARE_HOOK(HOOK_INIT, sniffer_init, HOOK_PRIO_DEFAULT);
 /* Task to post-process the samples and copy them the USB endpoint buffer */
 void sniffer_task(void)
 {
-	uint16_t cnt = 0;
-	int off = 0;
-	uint8_t freebuf = 3;
-	struct stm32_endpoint *ep = btable_ep+USB_EP_SNIFFER;
+	int u = 0; /* current USB buffer index */
+	int d = 0; /* current DMA buffer index */
+	int off = 0; /* DMA buffer offset */
 
 	while (1) {
 		/* Wait for a new buffer of samples or a new USB free buffer */
-		uint32_t evt = task_wait_event(-1);
+		task_wait_event(-1);
 
-		freebuf |= evt & USB_EVENTS;
-		if (evt & ~USB_EVENTS) {
-			off = evt & STM32_DMA_ISR_TCIF(DMAC_TIM_RX) ?
-				RX_COUNT/2 : 0;
-			cnt += RX_COUNT/2;
-			if (cnt > RX_COUNT) {
-				cnt -= RX_COUNT/2;
-				oflow++;
-			}
-		}
 		/* send the available samples over USB if we have a buffer*/
-		while (cnt && freebuf) {
-			int b = freebuf & 1 ? 0 : 1;
-			freebuf &= ~(1 << b);
-			ep_buf[b][0] = (seq << 8) | 1 /* CC1 stream */;
-			ep_buf[b][1] = __hw_clock_source_read();
-			memcpy_usbram(ep_buf[b] + 2,
+		while (filled_dma && free_usb) {
+			ep_buf[u][0] = sample_seq[d >> 3] | (d & 7);
+			ep_buf[u][1] = sample_tstamp[d >> 3];
+			memcpy_usbram(ep_buf[u] + 2,
 				      samples+off, EP_PAYLOAD_SIZE);
-			if (b)
-				ep->rx_count = EP_BUF_SIZE;
-			else
-				ep->tx_count = EP_BUF_SIZE;
-			cnt -= EP_PAYLOAD_SIZE;
+			atomic_clear((uint32_t *)&free_usb, 1 << u);
+			u = !u;
+			atomic_clear((uint32_t *)&filled_dma, 1 << d);
+
+			d = (d + 1) & 15;
 			off += EP_PAYLOAD_SIZE;
 			if (off >= RX_COUNT)
 				off = 0;
