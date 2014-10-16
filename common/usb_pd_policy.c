@@ -179,6 +179,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	int i;
 	int cmd = PD_VDO_CMD(payload[0]);
 	int cmd_type = PD_VDO_CMDT(payload[0]);
+	int (*func)(int port, uint32_t *payload) = NULL;
 
 	int rsize = 1; /* VDM header at a minimum */
 	ccprintf("%T] SVDM/%d [%d] %08x", cnt, cmd, payload[0]);
@@ -192,21 +193,25 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	if (cmd_type == CMDT_INIT) {
 		switch (cmd) {
 		case CMD_DISCOVER_IDENT:
-			rsize = svdm_rsp.identity(port, payload);
+			func = svdm_rsp.identity;
 			break;
 		case CMD_DISCOVER_SVID:
-			rsize = svdm_rsp.svids(port, payload);
+			func = svdm_rsp.svids;
 			break;
 		case CMD_DISCOVER_MODES:
-			rsize = svdm_rsp.modes(port, payload);
+			func = svdm_rsp.modes;
 			break;
 		case CMD_ENTER_MODE:
-			rsize = svdm_rsp.enter_mode(port, payload);
+			func = svdm_rsp.enter_mode;
 			break;
 		case CMD_EXIT_MODE:
-			rsize = svdm_rsp.exit_mode(port, payload);
+			func = svdm_rsp.exit_mode;
 			break;
 		}
+		if (func)
+			rsize = func(port, payload);
+		else /* not supported : NACK it */
+			rsize = 1;
 		if (rsize > 1)
 			payload[0] |= VDO_CMDT(CMDT_RSP_ACK);
 		else if (rsize == 1)
