@@ -84,6 +84,8 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 static int dfp_discover_modes(int port, uint32_t *payload)
 {
 	uint16_t svid = pe[port].svids[pe[port].svid_idx].svid;
+	if (!pe[port].svid_cnt)
+		return 0;
 	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
 	return 1;
 }
