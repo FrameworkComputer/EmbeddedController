@@ -1244,6 +1244,8 @@ void pd_task(void)
 				pd[port].polarity =
 					GET_POLARITY(cc1_volt, cc2_volt);
 				pd_select_polarity(port, pd[port].polarity);
+				/* reset message ID counter on connection */
+				pd[port].msg_id = 0;
 				/* Set to USB SS initially */
 #ifdef CONFIG_USBC_SS_MUX
 				board_set_usb_mux(port, TYPEC_MUX_USB,
@@ -1391,6 +1393,8 @@ void pd_task(void)
 							     cc2_volt);
 					pd_select_polarity(port,
 							   pd[port].polarity);
+					/* reset message ID  on connection */
+					pd[port].msg_id = 0;
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 					break;
