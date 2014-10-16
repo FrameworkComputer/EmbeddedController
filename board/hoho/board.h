@@ -21,7 +21,9 @@
 #define CONFIG_CMD_SPI_FLASH
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
-#define CONFIG_SPI_FLASH
+/* TODO(tbroch) Re-enable once STM spi master can be inhibited at boot so it
+   doesn't interfere with HDMI loading its f/w */
+#undef CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE 1048576
 #define CONFIG_SPI_MASTER_PORT 2
 #define CONFIG_SPI_CS_GPIO GPIO_PD_MCDP_SPI_CS_L
