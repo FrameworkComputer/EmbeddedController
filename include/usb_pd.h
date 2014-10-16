@@ -192,8 +192,8 @@ struct pd_policy {
 #define VDO_CMDT_MASK     VDO_CMDT(0x3)
 
 #define CMDT_INIT     0
-#define CMDT_RSP_NAK  1
-#define CMDT_RSP_ACK  2
+#define CMDT_RSP_ACK  1
+#define CMDT_RSP_NAK  2
 #define CMDT_RSP_BUSY 3
 
 
