@@ -164,7 +164,7 @@ static const uint8_t dec4b5b[] = {
 #define PD_T_SINK_WAIT_CAP    (240*MSEC) /* between 210ms and 250ms */
 #define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
 #define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
-#define PD_T_PS_TRANSITION    (220*MSEC) /* between 200ms and 220ms */
+#define PD_T_PS_TRANSITION    (500*MSEC) /* between 450ms and 550ms */
 #define PD_T_DRP_HOLD         (120*MSEC) /* between 100ms and 150ms */
 #define PD_T_DRP_LOCK         (120*MSEC) /* between 100ms and 150ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
@@ -1445,7 +1445,7 @@ void pd_task(void)
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_PS_TRANSITION,
-						  PD_STATE_SNK_DISCOVERY);
+						  PD_STATE_HARD_RESET);
 			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_READY:
