@@ -166,10 +166,10 @@ static void clock_chipset_shutdown(void)
 		sensor->active = SENSOR_ACTIVE_S5;
 		sensor->odr    = sensor->default_odr;
 		sensor->range  = sensor->default_range;
-		sensor->state = SENSOR_NOT_INITIALIZED;
 		if ((sensor->state == SENSOR_INITIALIZED) &&
 			!(sensor->active_mask & sensor->active))
 			sensor->drv->set_data_rate(sensor, 0, 0);
+		sensor->state = SENSOR_NOT_INITIALIZED;
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clock_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -256,17 +256,18 @@ static inline void update_sense_data(uint8_t *lpc_status,
 
 static inline void motion_sense_init(struct motion_sensor_t *sensor)
 {
-	int ret;
+	int ret, cnt = 3;
 
 	/* Initialize accelerometers. */
-	ret = sensor->drv->init(sensor);
-	if (ret != EC_SUCCESS) {
-		sensor->state = SENSOR_INIT_ERROR;
-		return;
-	}
-	sensor->state = SENSOR_INITIALIZED;
-}
+	do {
+		ret = sensor->drv->init(sensor);
+	} while ((ret != EC_SUCCESS) && (--cnt > 0));
 
+	if (ret != EC_SUCCESS)
+		sensor->state = SENSOR_INIT_ERROR;
+	else
+		sensor->state = SENSOR_INITIALIZED;
+}
 
 static int motion_sense_read(struct motion_sensor_t *sensor)
 {
@@ -281,10 +282,8 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 		&sensor->raw_xyz[Y],
 		&sensor->raw_xyz[Z]);
 
-	if (ret != EC_SUCCESS) {
-		sensor->state = SENSOR_INIT_ERROR;
+	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
-	}
 
 	return EC_SUCCESS;
 }
