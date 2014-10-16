@@ -42,7 +42,7 @@
 #undef CONFIG_DEBUG_STACK_OVERFLOW
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
-#undef CONFIG_HIBERNATE
+#define CONFIG_HIBERNATE
 #define CONFIG_HIBERNATE_WAKEUP_PINS STM32_PWR_CSR_EWUP1
 
 /* debug printf flash footprinf is about 1400 bytes */
