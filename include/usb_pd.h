@@ -115,20 +115,6 @@ struct svdm_response {
 	int (*exit_mode)(int port, uint32_t *payload);
 };
 
-/* defined in <board>/usb_pd_policy.c */
-extern const struct svdm_response svdm_rsp;
-
-/* Each SVID is allowed to have 6 modes */
-enum dfp_amode {
-	dfp_amode_none = 0,
-	dfp_amode1,
-	dfp_amode2,
-	dfp_amode3,
-	dfp_amode4,
-	dfp_amode5,
-	dfp_amode6,
-};
-
 struct svdm_svid_data {
 	uint16_t svid;
 	uint32_t mode_vdo[PDO_MODES];
@@ -140,10 +126,17 @@ struct svdm_amode_fx {
 	void (*exit)(int port);
 };
 
+/* defined in <board>/usb_pd_policy.c */
+/* All UFP_U should have */
+extern const struct svdm_response svdm_rsp;
+/* All DFP_U should have */
+extern const struct svdm_amode_fx supported_modes[];
+extern const int supported_modes_cnt;
+
 struct svdm_amode_data {
 	const struct svdm_amode_fx *fx;
-	enum dfp_amode amode;
-	uint32_t *mode_caps;
+	int index;
+	uint32_t mode_caps;
 };
 
 /* Policy structure for driving alternate mode */
@@ -154,12 +147,8 @@ struct pd_policy {
 	int svid_cnt;
 	/* supported svids & corresponding vdo mode data */
 	struct svdm_svid_data svids[SVID_DISCOVERY_MAX];
-	/* index of amode currently being operated on */
-	int amode_idx;
-	/* count of amodes discovered */
-	int amode_cnt;
-	/* supported amodes */
-	struct svdm_amode_data *amodes;
+	/*  active mode */
+	struct svdm_amode_data amode;
 };
 
 /*
@@ -612,20 +601,13 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /**
- * Choose appropriate alternate modes.
- *
- * @param pe        pd_policy data structure
- */
-void pd_dfp_choose_modes(struct pd_policy *pe);
-
-/**
  * Exit alternate mode
  *
  * @param port     USB-C port number
  * @param payload  payload data.
  * @return if >0, number of VDOs to send back.
  */
-int pd_exit_modes(int port, uint32_t *payload);
+int pd_exit_mode(int port, uint32_t *payload);
 
 /**
  * Store Device ID & RW hash of device

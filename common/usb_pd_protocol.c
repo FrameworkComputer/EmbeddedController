@@ -1479,7 +1479,7 @@ void pd_task(void)
 				hard_reset_count++;
 #endif
 
-			pd_exit_modes(port, payload);
+			pd_exit_mode(port, payload);
 			send_hard_reset(port);
 			/* reset our own state machine */
 			execute_hard_reset(port);

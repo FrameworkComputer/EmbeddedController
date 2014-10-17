@@ -234,24 +234,7 @@ const struct svdm_amode_fx supported_modes[] = {
 		.exit = &svdm_exit_dp_mode,
 	},
 };
-
-void pd_dfp_choose_modes(struct pd_policy *pe)
-{
-	int i, j;
-	pe->amode_cnt = ARRAY_SIZE(supported_modes);
-	pe->amodes->fx = supported_modes;
-	for (i = 0; i < pe->amode_cnt; i++) {
-		for (j = 0; j < pe->svid_cnt; j++) {
-			if (pe->svids[j].svid == pe->amodes->fx[i].svid) {
-				/* TODO(tbroch) need more elaborate mode
-				   resolution */
-				pe->amodes[i].mode_caps = pe->svids[j].mode_vdo;
-				pe->amodes[i].amode = dfp_amode1;
-				break;
-			}
-		}
-	}
-}
+const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 /****************************************************************************/
 /* Console commands */
 static int command_ec_int(int argc, char **argv)

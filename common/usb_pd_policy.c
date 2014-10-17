@@ -98,46 +98,49 @@ static int dfp_consume_modes(int port, uint32_t *payload)
 	return (pe[port].svid_idx < pe[port].svid_cnt);
 }
 
-static int dfp_enter_modes(int port, uint32_t *payload)
+/* TODO(tbroch) this function likely needs to move up the stack to where system
+ * policy decisions are made. */
+static int dfp_enter_mode(int port, uint32_t *payload)
 {
-	struct svdm_amode_data *modep;
-	if (pe[port].amodes == NULL)
-		pd_dfp_choose_modes(&pe[port]);
-
-	modep = &pe[port].amodes[pe[port].amode_idx];
-	if (modep->amode == dfp_amode_none)
+	int i, j, done;
+	struct svdm_amode_data *modep = &pe[port].amode;
+	pe[port].amode.index = -1; /* Error condition */
+	for (i = 0, done = 0; !done && (i < supported_modes_cnt); i++) {
+		for (j = 0; j < pe[port].svid_cnt; j++) {
+			if (pe[port].svids[j].svid != supported_modes[i].svid)
+				continue;
+			pe[port].amode.fx = &supported_modes[i];
+			pe[port].amode.mode_caps =
+				pe[port].svids[j].mode_vdo[0];
+			pe[port].amode.index = 0;
+			done = 1;
+			break;
+		}
+	}
+	if (modep->index == -1)
 		return 0;
 
-	modep->fx->enter(port, *modep->mode_caps);
+	modep->fx->enter(port, modep->mode_caps);
 	payload[0] = VDO(modep->fx->svid, 1,
 			 CMD_ENTER_MODE |
-			 VDO_OPOS(modep->amode));
-	pe[port].amode_idx++;
+			 VDO_OPOS((modep->index + 1)));
 	return 1;
 }
 
-int pd_exit_modes(int port, uint32_t *payload)
+int pd_exit_mode(int port, uint32_t *payload)
 {
-	struct svdm_amode_data *modep;
-	if (pe[port].amodes == NULL)
-		return 0;
-
-	modep = &pe[port].amodes[pe[port].amode_idx];
-	if (modep->amode == dfp_amode_none)
-		return 1;
-
+	struct svdm_amode_data *modep = &pe[port].amode;
 	modep->fx->exit(port);
 	payload[0] = VDO(modep->fx->svid, 1,
 			 CMD_EXIT_MODE |
-			 VDO_OPOS(modep->amode));
-	pe[port].amode_idx++;
+			 VDO_OPOS((modep->index + 1)));
 	return 1;
 }
 
 static void dump_pe(int port)
 {
 	int i, j;
-	struct svdm_amode_data *modep = pe[port].amodes;
+	struct svdm_amode_data *modep = &pe[port].amode;
 
 	for (i = 0; i < pe[port].svid_cnt; i++) {
 		ccprintf("SVID[%d]: %04x", i, pe[port].svids[i].svid);
@@ -146,11 +149,8 @@ static void dump_pe(int port)
 				 pe[port].svids[i].mode_vdo[j]);
 		ccprintf("\n");
 	}
-	for (i = 0; i < pe[port].amode_cnt; i++) {
-		ccprintf("MODE[%d]: svid:%04x mode:%d caps:%08x\n", i,
-			 modep->fx->svid, modep->amode, *modep->mode_caps);
-		modep++;
-	}
+	ccprintf("MODE[%d]: svid:%04x mode:%d caps:%08x\n", i,
+		 modep->fx->svid, modep->index + 1, modep->mode_caps);
 }
 
 static int command_pe(int argc, char **argv)
@@ -237,12 +237,12 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			if (dfp_consume_modes(port, payload))
 				rsize = dfp_discover_modes(port, payload);
 			else
-				rsize = dfp_enter_modes(port, payload);
+				rsize = dfp_enter_mode(port, payload);
 			break;
 		case CMD_ENTER_MODE:
-			rsize = dfp_enter_modes(port, payload);
+			rsize = dfp_enter_mode(port, payload);
 		case CMD_EXIT_MODE:
-			rsize = pd_exit_modes(port, payload);
+			rsize = pd_exit_mode(port, payload);
 			break;
 		}
 		payload[0] &= ~VDO_CMDT(0);
@@ -294,7 +294,7 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 #endif /* !CONFIG_USB_PD_CUSTOM_VDM */
 
 #ifndef CONFIG_USB_PD_ALT_MODE_DFP
-int pd_exit_modes(int port, uint32_t *payload)
+int pd_exit_mode(int port, uint32_t *payload)
 {
 	return 0;
 }
