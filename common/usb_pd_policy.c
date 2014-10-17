@@ -16,6 +16,8 @@
 #include "usb_pd_config.h"
 #include "version.h"
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+
 #ifdef CONFIG_USB_PD_ALT_MODE
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -90,10 +92,17 @@ static int dfp_discover_modes(int port, uint32_t *payload)
 	return 1;
 }
 
-static int dfp_consume_modes(int port, uint32_t *payload)
+static int dfp_consume_modes(int port, int cnt, uint32_t *payload)
 {
-	memcpy(pe[port].svids[pe[port].svid_idx].mode_vdo, &payload[1],
-	       sizeof(uint32_t) * PDO_MODES);
+	int idx = pe[port].svid_idx;
+	pe[port].svids[idx].mode_cnt = cnt - 1;
+	if (pe[port].svids[idx].mode_cnt < 0) {
+		CPRINTF("PE ERR: no modes provided for SVID\n");
+	} else {
+		memcpy(pe[port].svids[pe[port].svid_idx].mode_vdo, &payload[1],
+		       sizeof(uint32_t) * pe[port].svids[idx].mode_cnt);
+	}
+
 	pe[port].svid_idx++;
 	return (pe[port].svid_idx < pe[port].svid_cnt);
 }
@@ -140,17 +149,26 @@ int pd_exit_mode(int port, uint32_t *payload)
 static void dump_pe(int port)
 {
 	int i, j;
-	struct svdm_amode_data *modep = &pe[port].amode;
+
+	if (pe[port].svid_cnt < 1) {
+		ccprintf("No SVIDS discovered yet.\n");
+		return;
+	}
 
 	for (i = 0; i < pe[port].svid_cnt; i++) {
-		ccprintf("SVID[%d]: %04x", i, pe[port].svids[i].svid);
-		for (j = 0; j < (PDO_MAX_OBJECTS - 1); j++)
-			ccprintf(" [%d] %08x", j,
+		ccprintf("SVID[%d]: %04x MODES:", i, pe[port].svids[i].svid);
+		for (j = 0; j < pe[port].svids[j].mode_cnt; j++)
+			ccprintf(" [%d] %08x", j + 1,
 				 pe[port].svids[i].mode_vdo[j]);
 		ccprintf("\n");
 	}
-	ccprintf("MODE[%d]: svid:%04x mode:%d caps:%08x\n", i,
-		 modep->fx->svid, modep->index + 1, modep->mode_caps);
+	if (pe[port].amode.index == -1) {
+		ccprintf("No mode chosen yet.\n");
+		return;
+	}
+
+	ccprintf("MODE[%d]: svid:%04x caps:%08x\n", pe[port].amode.index + 1,
+		 pe[port].amode.fx->svid, pe[port].amode.mode_caps);
 }
 
 static int command_pe(int argc, char **argv)
@@ -234,13 +252,14 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			rsize = dfp_discover_modes(port, payload);
 			break;
 		case CMD_DISCOVER_MODES:
-			if (dfp_consume_modes(port, payload))
+			if (dfp_consume_modes(port, cnt, payload))
 				rsize = dfp_discover_modes(port, payload);
 			else
 				rsize = dfp_enter_mode(port, payload);
 			break;
 		case CMD_ENTER_MODE:
-			rsize = dfp_enter_mode(port, payload);
+			rsize = 0;
+			break;
 		case CMD_EXIT_MODE:
 			rsize = pd_exit_mode(port, payload);
 			break;
