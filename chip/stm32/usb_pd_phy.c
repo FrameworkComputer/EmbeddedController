@@ -472,6 +472,8 @@ void pd_hw_release(int port)
 void pd_hw_init(int port)
 {
 	struct pd_physical *phy = &pd_phy[port];
+	uint32_t val;
+
 	/* set 40 MHz pin speed on communication pins */
 	pd_set_pins_speed(port);
 
@@ -511,10 +513,16 @@ void pd_hw_init(int port)
 	/* Auto-reload value : 600000 Khz overflow */
 	phy->tim_tx->arr = TX_CLOCK_DIV;
 	/* 50% duty cycle on the output */
-	phy->tim_tx->ccr[1] = phy->tim_tx->arr / 2;
-	/* Timer CH1 output configuration */
-	phy->tim_tx->ccmr1 = (6 << 4) | (1 << 3);
-	phy->tim_tx->ccer = 1;
+	phy->tim_tx->ccr[TIM_TX_CCR_IDX(port)] = phy->tim_tx->arr / 2;
+	/* Timer channel output configuration */
+	val = (6 << 4) | (1 << 3);
+	if ((TIM_TX_CCR_IDX(port) & 1) == 0) /* CH2 or CH4 */
+		val <<= 8;
+	if (TIM_TX_CCR_IDX(port) <= 2)
+		phy->tim_tx->ccmr1 = val;
+	else
+		phy->tim_tx->ccmr2 = val;
+	phy->tim_tx->ccer = 1 << ((TIM_TX_CCR_IDX(port) - 1) * 4);
 	phy->tim_tx->bdtr = 0x8000;
 	/* set prescaler to /1 */
 	phy->tim_tx->psc = 0;
@@ -534,19 +542,19 @@ void pd_hw_init(int port)
 	/* Timeout for message receive */
 	phy->tim_rx->ccr[2] = (2400000 / 1000) * USB_PD_RX_TMOUT_US / 1000;
 	/* Timer ICx input configuration */
-	if (TIM_CCR_IDX(port) == 1)
+	if (TIM_RX_CCR_IDX(port) == 1)
 		phy->tim_rx->ccmr1 |= TIM_CCR_CS << 0;
 	else
 		/*  Unsupported RX timer capture input */
 		ASSERT(0);
 
-	phy->tim_rx->ccer = 0xB << ((TIM_CCR_IDX(port) - 1) * 4);
+	phy->tim_rx->ccer = 0xB << ((TIM_RX_CCR_IDX(port) - 1) * 4);
 	/* configure DMA request on CCRx update */
-	phy->tim_rx->dier |= 1 << (8 + TIM_CCR_IDX(port)); /* CCxDE */;
+	phy->tim_rx->dier |= 1 << (8 + TIM_RX_CCR_IDX(port)); /* CCxDE */;
 	/* set prescaler to /26 (F=1.2Mhz, T=0.8us) */
 	phy->tim_rx->psc = (clock_get_freq() / 2400000) - 1;
 	/* Reload the pre-scaler and reset the counter (clear CCRx) */
-	phy->tim_rx->egr = 0x0001 | (1 << TIM_CCR_IDX(port));
+	phy->tim_rx->egr = 0x0001 | (1 << TIM_RX_CCR_IDX(port));
 	/* clear update event from reloading */
 	phy->tim_rx->sr = 0;
 

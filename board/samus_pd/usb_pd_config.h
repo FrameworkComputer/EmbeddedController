@@ -25,6 +25,8 @@
 /* Timer channel */
 #define TIM_RX_CCR_C0 1
 #define TIM_RX_CCR_C1 1
+#define TIM_TX_CCR_C0 1
+#define TIM_TX_CCR_C1 1
 
 /* RX timer capture/compare register */
 #define TIM_CCR_C0 (&STM32_TIM_CCRx(TIM_CLOCK_PD_RX_C0, TIM_RX_CCR_C0))
@@ -59,7 +61,8 @@ static inline void spi_enable_clock(int port)
 #define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
 #define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM3_IC1
 
-#define TIM_CCR_IDX(p) ((p) ? TIM_RX_CCR_C1 : TIM_RX_CCR_C0)
+#define TIM_TX_CCR_IDX(p) ((p) ? TIM_TX_CCR_C1 : TIM_TX_CCR_C0)
+#define TIM_RX_CCR_IDX(p) ((p) ? TIM_RX_CCR_C1 : TIM_RX_CCR_C0)
 #define TIM_CCR_CS  1
 #define EXTI_COMP_MASK(p) ((p) ? (1<<22) : (1 << 21))
 #define IRQ_COMP STM32_IRQ_COMP
