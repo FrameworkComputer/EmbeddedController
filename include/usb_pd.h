@@ -491,9 +491,11 @@ enum pd_data_msg_type {
 #define PD_ROLE_SOURCE 1
 
 /* build message header */
+/* TODO(crosbug.com/p/28343): need to seperate data role from power role */
 #define PD_HEADER(type, role, id, cnt) \
 	((type) | (PD_REV20 << 6) | \
-	 ((role) << 8) | ((id) << 9) | ((cnt) << 12) | \
+	 ((role) << 5) | ((role) << 8) | \
+	 ((id) << 9) | ((cnt) << 12) | \
 	 PD_BMC_SUPPORTED)
 
 #define PD_HEADER_CNT(header)  (((header) >> 12) & 7)
