@@ -1023,6 +1023,10 @@
 /* Use DMA for UART output */
 #undef CONFIG_UART_TX_DMA
 
+/* The DMA channel for UART.  If not defined, default to UART1. */
+#undef CONFIG_UART_TX_DMA_CH
+#undef CONFIG_UART_RX_DMA_CH
+
 /*****************************************************************************/
 /* USB PD config */
 

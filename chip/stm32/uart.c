@@ -23,9 +23,13 @@
 #ifdef CONFIG_UART_TX_DMA
 #define UART_TX_INT_ENABLE STM32_USART_CR1_TCIE
 
+#ifndef CONFIG_UART_TX_DMA_CH
+#define CONFIG_UART_TX_DMA_CH STM32_DMAC_USART1_TX
+#endif
+
 /* DMA channel options; assumes UART1 */
 static const struct dma_option dma_tx_option = {
-	STM32_DMAC_USART1_TX, (void *)&STM32_USART_TDR(UARTN_BASE),
+	CONFIG_UART_TX_DMA_CH, (void *)&STM32_USART_TDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 };
 
@@ -34,9 +38,13 @@ static const struct dma_option dma_tx_option = {
 #endif
 
 #ifdef CONFIG_UART_RX_DMA
+
+#ifndef CONFIG_UART_RX_DMA_CH
+#define CONFIG_UART_RX_DMA_CH STM32_DMAC_USART1_RX
+#endif
 /* DMA channel options; assumes UART1 */
 static const struct dma_option dma_rx_option = {
-	STM32_DMAC_USART1_RX, (void *)&STM32_USART_RDR(UARTN_BASE),
+	CONFIG_UART_RX_DMA_CH, (void *)&STM32_USART_RDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
 	STM32_DMA_CCR_CIRC
 };
