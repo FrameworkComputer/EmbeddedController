@@ -25,7 +25,8 @@ extern int need_resched_or_profiling;
  * Macro to connect the interrupt handler "routine" to the irq number "irq" and
  * ensure it is enabled in the interrupt controller with the right priority.
  */
-#define DECLARE_IRQ(irq, routine, priority)                     \
+#define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
+#define DECLARE_IRQ_(irq, routine, priority)                    \
 	void IRQ_HANDLER(irq)(void) __attribute__((naked));	\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\

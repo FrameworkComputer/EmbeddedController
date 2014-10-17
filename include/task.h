@@ -240,7 +240,8 @@ struct irq_priority {
 #else
 #define IRQ_HANDLER(irqname) CONCAT3(irq_, irqname, _handler)
 #define IRQ_HANDLER_OPT(irqname) CONCAT3(irq_, irqname, _handler_optional)
-#define DECLARE_IRQ(irq, routine, priority) \
+#define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
+#define DECLARE_IRQ_(irq, routine, priority) \
 	void IRQ_HANDLER_OPT(irq)(void) __attribute__((alias(#routine)));
 
 /* Include ec.irqlist here for compilation dependency */

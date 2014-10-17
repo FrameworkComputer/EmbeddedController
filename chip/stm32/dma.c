@@ -292,36 +292,23 @@ DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, dma_event_interrupt_channel_4_7, 3);
 
 #else /* !CHIP_FAMILY_STM32F0 */
 
-void dma_event_interrupt_channel_4(void)
-{
-	dma_clear_isr(STM32_DMAC_CH4);
-	if (id[STM32_DMAC_CH4] != TASK_ID_INVALID)
-		task_wake(id[STM32_DMAC_CH4]);
-}
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4, dma_event_interrupt_channel_4, 3);
+#define DECLARE_DMA_IRQ(x) \
+	void CONCAT2(dma_event_interrupt_channel_, x)(void) \
+	{ \
+		dma_clear_isr(CONCAT2(STM32_DMAC_CH, x)); \
+		if (id[CONCAT2(STM32_DMAC_CH, x)] != TASK_ID_INVALID) \
+			task_wake(id[CONCAT2(STM32_DMAC_CH, x)]); \
+	} \
+	DECLARE_IRQ(CONCAT2(STM32_IRQ_DMA_CHANNEL_, x), \
+		    CONCAT2(dma_event_interrupt_channel_, x), 3);
 
-void dma_event_interrupt_channel_5(void)
-{
-	dma_clear_isr(STM32_DMAC_CH5);
-	if (id[STM32_DMAC_CH5] != TASK_ID_INVALID)
-		task_wake(id[STM32_DMAC_CH5]);
-}
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_5, dma_event_interrupt_channel_5, 3);
+DECLARE_DMA_IRQ(1);
+DECLARE_DMA_IRQ(2);
+DECLARE_DMA_IRQ(3);
+DECLARE_DMA_IRQ(4);
+DECLARE_DMA_IRQ(5);
+DECLARE_DMA_IRQ(6);
+DECLARE_DMA_IRQ(7);
 
-void dma_event_interrupt_channel_6(void)
-{
-	dma_clear_isr(STM32_DMAC_CH6);
-	if (id[STM32_DMAC_CH6] != TASK_ID_INVALID)
-		task_wake(id[STM32_DMAC_CH6]);
-}
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_6, dma_event_interrupt_channel_6, 3);
-
-void dma_event_interrupt_channel_7(void)
-{
-	dma_clear_isr(STM32_DMAC_CH7);
-	if (id[STM32_DMAC_CH7] != TASK_ID_INVALID)
-		task_wake(id[STM32_DMAC_CH7]);
-}
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_7, dma_event_interrupt_channel_7, 3);
 #endif /* CHIP_FAMILY_STM32F0 */
 #endif /* CONFIG_DMA_DEFAULT_HANDLERS */
