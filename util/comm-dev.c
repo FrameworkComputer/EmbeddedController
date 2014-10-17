@@ -19,6 +19,37 @@
 
 static int fd = -1;
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(t) (sizeof(t) / sizeof(t[0]))
+#endif
+
+static const char const *meanings[] = {
+	"SUCCESS",
+	"INVALID_COMMAND",
+	"ERROR",
+	"INVALID_PARAM",
+	"ACCESS_DENIED",
+	"INVALID_RESPONSE",
+	"INVALID_VERSION",
+	"INVALID_CHECKSUM",
+	"IN_PROGRESS",
+	"UNAVAILABLE",
+	"TIMEOUT",
+	"OVERFLOW",
+	"INVALID_HEADER",
+	"REQUEST_TRUNCATED",
+	"RESPONSE_TOO_BIG",
+	"BUS_ERROR"
+};
+
+static const char *strresult(int i)
+{
+	if (i < 0 || i >= ARRAY_SIZE(meanings))
+		return "<unknown>";
+	return meanings[i];
+}
+
+
 static int ec_command_dev(int command, int version,
 			  const void *outdata, int outsize,
 			  void *indata, int insize)
@@ -36,17 +67,20 @@ static int ec_command_dev(int command, int version,
 
 	r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
 	if (r < 0) {
-		fprintf(stderr, "ioctl %d, errno %d (%s), EC result %d\n",
-			r, errno, strerror(errno), s_cmd.result);
+		fprintf(stderr, "ioctl %d, errno %d (%s), EC result %d (%s)\n",
+			r, errno, strerror(errno), s_cmd.result,
+			strresult(s_cmd.result));
 		if (errno == EAGAIN && s_cmd.result == EC_RES_IN_PROGRESS) {
 			s_cmd.command = EC_CMD_RESEND_RESPONSE;
 			r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
 			fprintf(stderr,
-				"ioctl %d, errno %d (%s), EC result %d\n",
-				r, errno, strerror(errno), s_cmd.result);
+				"ioctl %d, errno %d (%s), EC result %d (%s)\n",
+				r, errno, strerror(errno), s_cmd.result,
+				strresult(s_cmd.result));
 		}
 	} else if (s_cmd.result != EC_RES_SUCCESS) {
-		fprintf(stderr, "EC result %d\n", s_cmd.result);
+		fprintf(stderr, "EC result %d (%s)\n", s_cmd.result,
+			strresult(s_cmd.result));
 		return -EECRESULT - s_cmd.result;
 	}
 

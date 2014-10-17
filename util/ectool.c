@@ -180,7 +180,7 @@ const char help_str[] =
 	"      Get the threshold temperature values from the thermal engine.\n"
 	"  thermalset <platform-specific args>\n"
 	"      Set the threshold temperature values for the thermal engine.\n"
-	"  tmp006cal <tmp006_index> [<S0> <b0> <b1> <b2>]\n"
+	"  tmp006cal <tmp006_index> [params...]\n"
 	"      Get/set TMP006 calibration\n"
 	"  tmp006raw <tmp006_index>\n"
 	"      Get raw TMP006 data\n"
@@ -4633,12 +4633,141 @@ static int cmd_keyconfig(int argc, char *argv[])
 	return 0;
 }
 
+/* Index is already checked. argv[0] is first param value */
+static int cmd_tmp006cal_v0(int idx, int argc, char *argv[])
+{
+	struct ec_params_tmp006_get_calibration pg;
+	struct ec_response_tmp006_get_calibration_v0 rg;
+	struct ec_params_tmp006_set_calibration_v0 ps;
+	float val;
+	char *e;
+	int i, rv;
+
+	/* Get current values */
+	pg.index = idx;
+	rv = ec_command(EC_CMD_TMP006_GET_CALIBRATION, 0,
+			&pg, sizeof(pg), &rg, sizeof(rg));
+	if (rv < 0)
+		return rv;
+
+	if (!argc) {
+		/* If no new values are given, just print what we have */
+		printf("S0: %e\n", rg.s0);
+		printf("b0: %e\n", rg.b0);
+		printf("b1: %e\n", rg.b1);
+		printf("b2: %e\n", rg.b2);
+		return EC_SUCCESS;
+	}
+
+	/* Prepare to reuse the current values */
+	memset(&ps, 0, sizeof(ps));
+	ps.index = idx;
+	ps.s0 = rg.s0;
+	ps.b0 = rg.b0;
+	ps.b1 = rg.b1;
+	ps.b2 = rg.b2;
+
+	/* Parse up to four args, skipping any that are just "-" */
+	for (i = 0; i < argc && i < 4; i++) {
+		if (!strcmp(argv[i], "-"))
+			continue;
+		val = strtod(argv[i], &e);
+		if (e && *e) {
+			fprintf(stderr,
+				"Bad arg \"%s\". Use \"-\" to skip a param.\n",
+				argv[i]);
+			return -1;
+		}
+		switch (i) {
+		case 0:
+			ps.s0 = val;
+			break;
+		case 1:
+			ps.b0 = val;
+			break;
+		case 2:
+			ps.b1 = val;
+			break;
+		case 3:
+			ps.b2 = val;
+			break;
+		}
+	}
+
+	/* Set 'em */
+	return ec_command(EC_CMD_TMP006_SET_CALIBRATION, 0,
+			  &ps, sizeof(ps), NULL, 0);
+}
+
+/* Index is already checked. argv[0] is first param value */
+static int cmd_tmp006cal_v1(int idx, int argc, char *argv[])
+{
+	struct ec_params_tmp006_get_calibration pg;
+	struct ec_response_tmp006_get_calibration_v1 *rg = ec_inbuf;
+	struct ec_params_tmp006_set_calibration_v1 *ps = ec_outbuf;
+	float val;
+	char *e;
+	int i, rv, cmdsize;
+
+	/* Algorithm 1 parameter names */
+	static const char const *alg1_pname[] = {
+		"s0", "a1", "a2", "b0", "b1", "b2", "c2",
+		"d0", "d1", "ds", "e0", "e1",
+	};
+
+	/* Get current values */
+	pg.index = idx;
+	rv = ec_command(EC_CMD_TMP006_GET_CALIBRATION, 1,
+			&pg, sizeof(pg), rg, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	if (!argc) {
+		/* If no new values are given, just print what we have */
+		printf("algorithm:  %d\n", rg->algorithm);
+		printf("params:\n");
+		/* We only know about alg 1 at the moment */
+		if (rg->algorithm == 1)
+			for (i = 0; i < rg->num_params; i++)
+				printf("  %s  %e\n", alg1_pname[i], rg->val[i]);
+		else
+			for (i = 0; i < rg->num_params; i++)
+				printf("  param%d  %e\n", i, rg->val[i]);
+		return EC_SUCCESS;
+	}
+
+	/* Prepare to reuse the current values */
+	memset(ps, 0, ec_max_outsize);
+	ps->index = idx;
+	ps->algorithm = rg->algorithm;
+	ps->num_params = rg->num_params;
+	for (i = 0; i < rg->num_params; i++)
+		ps->val[i] = rg->val[i];
+
+	/* Parse the args, skipping any that are just "-" */
+	for (i = 0; i < argc && i < rg->num_params; i++) {
+		if (!strcmp(argv[i], "-"))
+			continue;
+		val = strtod(argv[i], &e);
+		if (e && *e) {
+			fprintf(stderr,
+				"Bad arg \"%s\". Use \"-\" to skip a param.\n",
+				argv[i]);
+			return -1;
+		}
+		ps->val[i] = val;
+	}
+
+	/* Set 'em */
+	cmdsize = sizeof(*ps) + ps->num_params * sizeof(ps->val[0]);
+	return ec_command(EC_CMD_TMP006_SET_CALIBRATION, 1,
+			  ps, cmdsize, NULL, 0);
+}
+
 int cmd_tmp006cal(int argc, char *argv[])
 {
-	struct ec_params_tmp006_set_calibration p;
 	char *e;
 	int idx;
-	int rv;
 
 	if (argc < 2) {
 		fprintf(stderr, "Must specify tmp006 index.\n");
@@ -4651,58 +4780,18 @@ int cmd_tmp006cal(int argc, char *argv[])
 		return -1;
 	}
 
-	if (argc == 2) {
-		struct ec_params_tmp006_get_calibration pg;
-		struct ec_response_tmp006_get_calibration r;
+	/* Pass just the params (if any) to the helper function */
+	argc -= 2;
+	argv += 2;
 
-		pg.index = idx;
+	if (ec_cmd_version_supported(EC_CMD_TMP006_GET_CALIBRATION, 1))
+		return cmd_tmp006cal_v1(idx, argc, argv);
 
-		rv = ec_command(EC_CMD_TMP006_GET_CALIBRATION, 0,
-				&pg, sizeof(pg), &r, sizeof(r));
-		if (rv < 0)
-			return rv;
+	if (ec_cmd_version_supported(EC_CMD_TMP006_GET_CALIBRATION, 0))
+		return cmd_tmp006cal_v0(idx, argc, argv);
 
-		printf("S0: %e\n", r.s0);
-		printf("b0: %e\n", r.b0);
-		printf("b1: %e\n", r.b1);
-		printf("b2: %e\n", r.b2);
-		return EC_SUCCESS;
-	}
-
-	if (argc != 6) {
-		fprintf(stderr, "Must specify all calibration params.\n");
-		return -1;
-	}
-
-	memset(&p, 0, sizeof(p));
-	p.index = idx;
-
-	p.s0 = strtod(argv[2], &e);
-	if (e && *e) {
-		fprintf(stderr, "Bad S0.\n");
-		return -1;
-	}
-
-	p.b0 = strtod(argv[3], &e);
-	if (e && *e) {
-		fprintf(stderr, "Bad b0.\n");
-		return -1;
-	}
-
-	p.b1 = strtod(argv[4], &e);
-	if (e && *e) {
-		fprintf(stderr, "Bad b1.\n");
-		return -1;
-	}
-
-	p.b2 = strtod(argv[5], &e);
-	if (e && *e) {
-		fprintf(stderr, "Bad b2.\n");
-		return -1;
-	}
-
-	return ec_command(EC_CMD_TMP006_SET_CALIBRATION, 0,
-			  &p, sizeof(p), NULL, 0);
+	printf("The EC is being stupid\n");
+	return -1;
 }
 
 int cmd_tmp006raw(int argc, char *argv[])

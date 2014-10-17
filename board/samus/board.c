@@ -152,6 +152,7 @@ const struct tmp006_t tmp006_sensors[TMP006_COUNT] = {
 	{"Right D", TEMP_U115_ADDR},
 	{"Left D", TEMP_U116_ADDR},
 };
+BUILD_ASSERT(ARRAY_SIZE(tmp006_sensors) == TMP006_COUNT);
 
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[] = {
