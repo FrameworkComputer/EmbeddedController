@@ -263,6 +263,8 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		case CMD_EXIT_MODE:
 			rsize = pd_exit_mode(port, payload);
 			break;
+		default:
+			rsize = 0;
 		}
 		payload[0] &= ~VDO_CMDT(0);
 		payload[0] |= VDO_CMDT(CMDT_INIT);
@@ -284,6 +286,8 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		case CMD_EXIT_MODE:
 			rsize = 0;
 			break;
+		default:
+			rsize = 0;
 		}
 	} else if (cmd_type == CMDT_RSP_NAK) {
 		/* nothing to do */
