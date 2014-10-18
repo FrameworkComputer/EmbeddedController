@@ -16,6 +16,7 @@
 #include "usb_pd_config.h"
 #include "version.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 
 #ifdef CONFIG_USB_PD_ALT_MODE
@@ -61,7 +62,7 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 
 	for (i = pe[port].svid_cnt; i < pe[port].svid_cnt + 12; i += 2) {
 		if (i == SVID_DISCOVERY_MAX) {
-			ccprintf("ERR: too many svids discovered\n");
+			CPRINTF("ERR: too many svids discovered\n");
 			break;
 		}
 
@@ -80,7 +81,7 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 	}
 	/* TODO(tbroch) need to re-issue discover svids if > 12 */
 	if (i && ((i % 12) == 0))
-		ccprintf("TODO: need to re-issue discover svids > 12\n");
+		CPRINTF("TODO: need to re-issue discover svids > 12\n");
 }
 
 static int dfp_discover_modes(int port, uint32_t *payload)
@@ -202,10 +203,10 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	int (*func)(int port, uint32_t *payload) = NULL;
 
 	int rsize = 1; /* VDM header at a minimum */
-	ccprintf("%T] SVDM/%d [%d] %08x", cnt, cmd, payload[0]);
+	CPRINTF("SVDM/%d [%d] %08x", cnt, cmd, payload[0]);
 	for (i = 1; i < cnt; i++)
-		ccprintf(" %08x", payload[i]);
-	ccprintf("\n");
+		CPRINTF(" %08x", payload[i]);
+	CPRINTF("\n");
 
 	payload[0] &= ~VDO_CMDT_MASK;
 	*rpayload = payload;
@@ -280,7 +281,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			break;
 		case CMD_ENTER_MODE:
 			/* Error */
-			ccprintf("PE ERR: received BUSY for Enter mode\n");
+			CPRINTF("PE ERR: received BUSY for Enter mode\n");
 			rsize = 0;
 			break;
 		case CMD_EXIT_MODE:
@@ -294,9 +295,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		rsize = 0;
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 	} else {
-		ccprintf("PE ERR: unknown cmd type %d\n", cmd);
+		CPRINTF("PE ERR: unknown cmd type %d\n", cmd);
 	}
-	ccprintf("%T] DONE\n");
+	CPRINTS("DONE");
 	return rsize;
 }
 

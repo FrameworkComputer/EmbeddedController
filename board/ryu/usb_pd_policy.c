@@ -15,8 +15,8 @@
 #include "util.h"
 #include "usb_pd.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 /* TODO(crosbug.com/p/28869): update source and sink tables to spec. */
 const uint32_t pd_src_pdo[] = {
@@ -67,14 +67,14 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 		int uw = 250000 * (src_caps[max_i] & 0x3FF);
 		max_ma = uw / sel_mv;
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		ccprintf("Request [%d] %dV %dmW\n",
-			 max_i, sel_mv/1000, uw/1000);
+		CPRINTF("Request [%d] %dV %dmW\n",
+			max_i, sel_mv/1000, uw/1000);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
 		max_ma = ma;
 		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		ccprintf("Request [%d] %dV %dmA\n",
-			 max_i, sel_mv/1000, ma);
+		CPRINTF("Request [%d] %dV %dmA\n",
+			max_i, sel_mv/1000, ma);
 	}
 	return max_ma;
 }
@@ -111,9 +111,9 @@ int pd_request_voltage(uint32_t rdo)
 	if (max_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much max current */
 
-	ccprintf("Switch to %d V %d mA (for %d/%d mA)\n",
-		 ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
-		 ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
+	CPRINTF("Switch to %d V %d mA (for %d/%d mA)\n",
+		((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
+		((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
 	return EC_SUCCESS;
 }

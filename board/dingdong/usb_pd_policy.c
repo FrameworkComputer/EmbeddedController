@@ -16,6 +16,7 @@
 #include "usb_pd.h"
 #include "version.h"
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 /* Source PDOs */
@@ -54,7 +55,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	/* request all the power ... */
 	ma = 10 * (src_caps[i] & 0x3FF);
 	*rdo = RDO_FIXED(i + 1, ma, ma, 0);
-	ccprintf("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
+	CPRINTF("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
 	return ma;
 }
 
@@ -179,7 +180,7 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize = 1;
-	ccprintf("%T] VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
+	CPRINTF("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	*rpayload = payload;
 	switch (cmd) {
@@ -191,7 +192,7 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		rsize = 0;
 	}
 
-	ccprintf("%T] DONE\n");
+	CPRINTS("DONE");
 	/* respond (positively) to the request */
 	payload[0] |= VDO_SRC_RESPONDER;
 

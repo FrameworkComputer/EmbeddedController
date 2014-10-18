@@ -14,6 +14,7 @@
 #include "util.h"
 #include "usb_pd.h"
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 const uint32_t pd_src_pdo[] = {
@@ -65,13 +66,13 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 		int uw = 250000 * (src_caps[max_i] & 0x3FF);
 		max_ma = uw / sel_mv;
 		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		ccprintf("Request [%d] %dV %dmW\n",
+		CPRINTF("Request [%d] %dV %dmW\n",
 			 max_i, sel_mv/1000, uw/1000);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
 		max_ma = ma;
 		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		ccprintf("Request [%d] %dV %dmA\n",
+		CPRINTF("Request [%d] %dV %dmA\n",
 			 max_i, sel_mv/1000, ma);
 	}
 	return max_ma;
@@ -109,7 +110,7 @@ int pd_request_voltage(uint32_t rdo)
 	if (max_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much max current */
 
-	ccprintf("Switch to %d V %d mA (for %d/%d mA)\n",
+	CPRINTF("Switch to %d V %d mA (for %d/%d mA)\n",
 		 ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
 		 ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
@@ -147,7 +148,7 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	uint16_t dev_id = 0;
-	ccprintf("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
+	CPRINTF("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	/* make sure we have some payload */
 	if (cnt == 0)
@@ -157,14 +158,14 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	case VDO_CMD_VERSION:
 		/* guarantee last byte of payload is null character */
 		*(payload + cnt - 1) = 0;
-		ccprintf("version: %s\n", (char *)(payload+1));
+		CPRINTF("version: %s\n", (char *)(payload+1));
 		break;
 	case VDO_CMD_READ_INFO:
 	case VDO_CMD_SEND_INFO:
 		/* if last word is present, it contains lots of info */
 		if (cnt == 7) {
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
-			ccprintf("Dev:0x%04x SW:%d RW:%d\n", dev_id,
+			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
 				 VDO_INFO_SW_DBG_VER(payload[6]),
 				 VDO_INFO_IS_RW(payload[6]));
 		}
@@ -188,12 +189,12 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 
 static void svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
-	ccprintf("Entering mode w/ vdo = %08x\n", mode_caps);
+	CPRINTF("Entering mode w/ vdo = %08x\n", mode_caps);
 }
 
 static void svdm_exit_dp_mode(int port)
 {
-	ccprintf("Exiting mode\n");
+	CPRINTF("Exiting mode\n");
 	/* return to safe config */
 }
 

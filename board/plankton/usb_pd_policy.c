@@ -15,6 +15,7 @@
 #include "util.h"
 #include "usb_pd.h"
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 /* Acceptable margin between requested VBUS and measured value */
@@ -79,7 +80,7 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo)
 	/* request all the power ... */
 	ma = 10 * (src_caps[i] & 0x3FF);
 	*rdo = RDO_FIXED(i + 1, ma, ma, 0);
-	ccprintf("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
+	CPRINTF("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
 	return ma;
 }
 
@@ -114,9 +115,9 @@ int pd_request_voltage(uint32_t rdo)
 	if (max_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much max current */
 
-	ccprintf("Switch to %d V %d mA (for %d/%d mA)\n",
-		 ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
-		 ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
+	CPRINTF("Switch to %d V %d mA (for %d/%d mA)\n",
+		((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
+		((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
 	requested_voltage_idx = idx;
 
