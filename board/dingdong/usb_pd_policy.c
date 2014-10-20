@@ -13,6 +13,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb.h"
 #include "usb_pd.h"
 #include "version.h"
 
@@ -145,10 +146,8 @@ const uint32_t vdo_dp_mode[MODE_CNT] =  {
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
-	if (PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) {
-		/* TODO(tbroch) USB billboard enabled here then */
-		return 1; /* will generate a NAK */
-	}
+	if (PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT)
+		return 0; /* nak */
 
 	memcpy(payload + 1, vdo_dp_mode, sizeof(vdo_dp_mode));
 	return MODE_CNT + 1;
@@ -187,11 +186,12 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	    (PD_VDO_OPOS(payload[0]) != OPOS))
 		return 0; /* will generate NAK */
 
+	/* TODO(tbroch) Enumerate USB BB here with updated mode choice */
 	alt_mode = OPOS;
 	return 1;
 }
 
-int pd_alt_mode(int port)
+int pd_alt_mode(void)
 {
 	return alt_mode;
 }

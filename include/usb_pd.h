@@ -784,10 +784,9 @@ void board_flip_usb_mux(int port);
 /**
  * Determine if in alternate mode or not.
  *
- * @param port port number.
  * @return object position of mode chosen in alternate mode otherwise zero.
  */
-int pd_alt_mode(int port);
+int pd_alt_mode(void);
 
 /**
  * Send hpd over USB PD.
@@ -796,6 +795,11 @@ int pd_alt_mode(int port);
  * @param hpd hotplug detect type.
  */
 void pd_send_hpd(int port, enum hpd_event hpd);
+
+/**
+ * Enable USB Billboard Device.
+ */
+void pd_usb_billboard_deferred(void);
 /* --- Physical layer functions : chip specific --- */
 
 /* Packet preparation/retrieval */

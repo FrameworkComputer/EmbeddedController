@@ -296,6 +296,8 @@ extern void (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 
 /* functions to start/stop USB */
 void usb_init(void);
+void usb_disconnect(void);
+void usb_connect(void);
 void usb_release(void);
 
 #endif /* USB_H */

@@ -297,20 +297,37 @@ void usb_init(void)
 	/* set interrupts mask : reset/correct tranfer/errors */
 	STM32_USB_CNTR = 0xe400;
 
-	/* set pull-up on DP for FS mode */
-#ifdef CHIP_VARIANT_STM32L15X
-	STM32_SYSCFG_PMC |= 1;
-#elif defined(CHIP_FAMILY_STM32F0)
-	STM32_USB_BCDR |= 1 << 15 /* DPPU */;
-#else
-	/* hardwired or regular GPIO on other platforms */
+#ifndef CONFIG_USB_INHIBIT
+	usb_connect();
 #endif
 
 	CPRINTF("USB init done\n");
 }
-#ifndef CONFIG_USB_INHIBIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
+
+void usb_disconnect(void)
+{
+	/* disable pull-up on DP to disconnect */
+#ifdef CHIP_VARIANT_STM32L15X
+	STM32_SYSCFG_PMC &= ~1;
+#elif defined(CHIP_FAMILY_STM32F0)
+	STM32_USB_BCDR &= ~(1 << 15) /* DPPU */;
+#else
+#warn "usb disconnect not implemented for this chip family"
 #endif
+}
+
+void usb_connect(void)
+{
+	/* enable pull-up on DP to connect */
+#ifdef CHIP_VARIANT_STM32L15X
+	STM32_SYSCFG_PMC |= 1;
+#elif defined(CHIP_FAMILY_STM32F0)
+	STM32_USB_BCDR |= (1 << 15) /* DPPU */;
+#else
+#warn "usb connect not implemented for this chip family"
+#endif
+}
 
 void usb_release(void)
 {

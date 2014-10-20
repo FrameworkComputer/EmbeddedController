@@ -185,6 +185,9 @@ static const uint8_t dec4b5b[] = {
 #define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
 #define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
 
+/* from USB Type-C Specification Table 5-1 */
+#define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
+
 /* Port role at startup */
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 #define PD_ROLE_DEFAULT PD_ROLE_SINK
@@ -1464,6 +1467,9 @@ void pd_task(void)
 #endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
+					hook_call_deferred(
+						pd_usb_billboard_deferred,
+						PD_T_AME);
 					break;
 				}
 			}
@@ -1750,7 +1756,7 @@ static int remote_flashing(int argc, char **argv)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
 	uint32_t data[1];
-	int opos = pd_alt_mode(port);
+	int opos = pd_alt_mode();
 	if (!opos)
 		return;
 

@@ -7,11 +7,13 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "version.h"
@@ -382,10 +384,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	return 0;
 }
 
-int pd_alt_mode(int port)
-{
-	return 0;
-}
 #endif /* CONFIG_USB_PD_ALT_MODE */
 
 #ifndef CONFIG_USB_PD_CUSTOM_VDM
@@ -394,6 +392,18 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	return 0;
 }
 #endif /* !CONFIG_USB_PD_CUSTOM_VDM */
+
+void pd_usb_billboard_deferred(void)
+{
+#if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP) \
+	&& !defined(CONFIG_USB_PD_SIMPLE_DFP)
+
+	if (!pd_alt_mode())
+		usb_connect();
+
+#endif
+}
+DECLARE_DEFERRED(pd_usb_billboard_deferred);
 
 #ifndef CONFIG_USB_PD_ALT_MODE_DFP
 int pd_exit_mode(int port, uint32_t *payload)
