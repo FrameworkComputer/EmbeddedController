@@ -24,7 +24,7 @@
 			     "   str  %0, [%1]\n"		\
 			     "   cpsie i\n"			\
 			     : "=&r" (reg0)			\
-			     : "r" (a), "r" (v) : "cc");	\
+			     : "b" (a), "r" (v) : "cc");	\
 } while (0)
 
 static inline void atomic_clear(uint32_t *addr, uint32_t bits)
@@ -57,7 +57,7 @@ static inline uint32_t atomic_read_clear(uint32_t *addr)
 			     "   str     %2, [%1]\n"
 			     "   cpsie   i\n"
 			     : "=&r" (ret)
-			     : "r" (addr), "r" (0) : "cc");
+			     : "b" (addr), "r" (0) : "cc");
 
 	return ret;
 }
