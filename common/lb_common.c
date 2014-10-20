@@ -62,7 +62,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_GREEN 0x30
 #define MAX_BLUE  0x67
 #endif
-#ifdef BOARD_SAMUS
+#if defined(BOARD_SAMUS) || defined(BOARD_RYU_P2)
 /* Samus uses completely different LEDs, so the numbers are different */
 #define MAX_RED   0x4f
 #define MAX_GREEN 0x55
@@ -119,6 +119,9 @@ static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
 #endif
 #ifdef BOARD_SAMUS
 static const uint8_t led_to_isc[] = { 0x15, 0x18, 0x15, 0x18 };
+#endif
+#ifdef BOARD_RYU_P2
+static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
 #endif
 #ifdef BOARD_HOST
 /* For testing only */

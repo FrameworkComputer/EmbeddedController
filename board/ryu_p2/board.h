@@ -71,6 +71,7 @@
 #define I2C_PORT_EC I2C_PORT_SLAVE
 #define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_BATTERY I2C_PORT_MASTER
+#define I2C_PORT_LIGHTBAR I2C_PORT_MASTER
 
 /* slave address for host commands */
 #ifdef HAS_TASK_HOSTCMD
