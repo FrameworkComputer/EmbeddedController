@@ -64,7 +64,10 @@ BOARDS_STM32=(
 	discovery
 	firefly
 	fruitpie
+	kitty
+	minimuffin
 	nyan
+	pinky
 	pit
 	plankton
 	ryu
@@ -73,9 +76,7 @@ BOARDS_STM32=(
 	samus_pd
 	snow
 	spring
-	pinky
 	zinger
-	minimuffin
 )
 
 BOARDS_STM32_PROG_EN=(
