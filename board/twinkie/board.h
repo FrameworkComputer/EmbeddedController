@@ -15,7 +15,6 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_USB
 #define CONFIG_USB_CONSOLE
 
@@ -54,8 +53,9 @@
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
-#define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_CLOCK_MSB  3
+#define TIM_CLOCK_LSB 15
+#define TIM_ADC       16
 
 #include "gpio_signal.h"
 

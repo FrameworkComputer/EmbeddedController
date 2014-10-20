@@ -30,13 +30,13 @@
 #define USB_EVENTS TASK_EVENT_CUSTOM(3)
 
 /* edge timing samples */
-static uint8_t samples[RX_COUNT];
+static uint8_t samples[2][RX_COUNT];
 /* bitmap of the samples sub-buffer filled with DMA data */
 static volatile uint32_t filled_dma;
 /* timestamps of the beginning of DMA buffers */
-static uint16_t sample_tstamp[2];
+static uint16_t sample_tstamp[4];
 /* sequence number of the beginning of DMA buffers */
-static uint16_t sample_seq[2];
+static uint16_t sample_seq[4];
 
 /* Bulk endpoint double buffer */
 static usb_uint ep_buf[2][EP_BUF_SIZE / 2] __usb_ram;
@@ -97,19 +97,26 @@ USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_reset);
 
 
 /* --- RX operation using comparator linked to timer --- */
-/* RX is using COMP1 triggering TIM1 CH1 */
-#define DMAC_TIM_RX STM32_DMAC_CH6
-#define TIM_CCR_IDX 1
-#define TIM_CCR_CS  1
-#define EXTI_COMP 21
+/* RX on CC1 is using COMP1 triggering TIM1 CH1 */
+#define TIM_RX1 1
+#define DMAC_TIM_RX1 STM32_DMAC_CH6
+#define TIM_RX1_CCR_IDX 1
+/* RX on CC1 is using COMP2 triggering TIM2 CH4 */
+#define TIM_RX2 2
+#define DMAC_TIM_RX2 STM32_DMAC_CH7
+#define TIM_RX2_CCR_IDX 4
 
-/* Timer used for RX clocking */
-#define TIM_RX 1
 /* Clock divider for RX edges timings (2.4Mhz counter from 48Mhz clock) */
 #define RX_CLOCK_DIV (20 - 1)
 
-static const struct dma_option dma_tim_option = {
-	DMAC_TIM_RX, (void *)&STM32_TIM_CCRx(TIM_RX, TIM_CCR_IDX),
+static const struct dma_option dma_tim_cc1 = {
+	DMAC_TIM_RX1, (void *)&STM32_TIM_CCRx(TIM_RX1, TIM_RX1_CCR_IDX),
+	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+	STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
+};
+
+static const struct dma_option dma_tim_cc2 = {
+	DMAC_TIM_RX2, (void *)&STM32_TIM_CCRx(TIM_RX2, TIM_RX2_CCR_IDX),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
 	STM32_DMA_CCR_CIRC | STM32_DMA_CCR_TCIE | STM32_DMA_CCR_HTIE
 };
@@ -119,85 +126,118 @@ static volatile uint32_t seq;
 /* Buffer overflow count */
 static uint32_t oflow;
 
-void tim_dma_handler(void)
+void tim_rx1_handler(uint32_t stat)
 {
 	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
-	uint32_t stat = dma->isr & (STM32_DMA_ISR_HTIF(DMAC_TIM_RX)
-				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX));
-	int idx = !(stat & STM32_DMA_ISR_HTIF(DMAC_TIM_RX));
-	uint16_t mask = idx ? 0xFF00 : 0x00FF;
-	int next = idx ? 0x0001 : 0x0100;
+	int idx = !(stat & STM32_DMA_ISR_HTIF(DMAC_TIM_RX1));
+	uint32_t mask = idx ? 0xFF00 : 0x00FF;
+	uint32_t next = idx ? 0x0001 : 0x0100;
 
 	sample_tstamp[idx] = __hw_clock_source_read();
-	sample_seq[idx] = (seq++ << 3) & 0x0ff8;
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (0<<12) /* CC1 */;
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
 	}
 	filled_dma |= mask;
-	dma->ifcr |= STM32_DMA_ISR_ALL(DMAC_TIM_RX);
+	dma->ifcr = STM32_DMA_ISR_ALL(DMAC_TIM_RX1);
+}
+
+void tim_rx2_handler(uint32_t stat)
+{
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	int idx = !(stat & STM32_DMA_ISR_HTIF(DMAC_TIM_RX2));
+	uint32_t mask = idx ? 0xFF000000 : 0x00FF0000;
+	uint32_t next = idx ? 0x00010000 : 0x01000000;
+
+	idx += 2;
+	sample_tstamp[idx] = __hw_clock_source_read();
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (1<<12) /* CC2 */;
+	if (filled_dma & next) {
+		oflow++;
+		sample_seq[idx] |= 0x8000;
+	}
+	filled_dma |= mask;
+	dma->ifcr = STM32_DMA_ISR_ALL(DMAC_TIM_RX2);
+}
+
+void tim_dma_handler(void)
+{
+	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	uint32_t stat = dma->isr & (STM32_DMA_ISR_HTIF(DMAC_TIM_RX1)
+				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX1)
+				  | STM32_DMA_ISR_HTIF(DMAC_TIM_RX2)
+				  | STM32_DMA_ISR_TCIF(DMAC_TIM_RX2));
+	if (stat & STM32_DMA_ISR_ALL(DMAC_TIM_RX2))
+		tim_rx2_handler(stat);
+	else
+		tim_rx1_handler(stat);
 	/* time to process the samples */
 	task_set_event(TASK_ID_SNIFFER, TASK_EVENT_CUSTOM(stat), 0);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, tim_dma_handler, 1);
 
+static void rx_timer_init(int tim_id, timer_ctlr_t *tim, int ch_idx, int up_idx)
+{
+	int bit_idx = 8 * ((ch_idx - 1) % 2);
+	/* --- set counter for RX timing : 2.4Mhz rate, free-running --- */
+	__hw_timer_enable_clock(tim_id, 1);
+	/* Timer configuration */
+	tim->cr1 = 0x0004;
+	tim->cr2 = 0x0000;
+	/* Auto-reload value : 8-bit free running counter */
+	tim->arr = 0xFF;
+	/* Counter reloading event after 106us */
+	tim->ccr[1] = 0xFF;
+	/* Timer ICx input configuration */
+	if (ch_idx <= 2)
+		tim->ccmr1 = 1 << bit_idx;
+	else
+		tim->ccmr2 = 1 << bit_idx;
+	tim->ccer = 0xB << ((ch_idx - 1) * 4);
+	/* TODO: add input filtering */
+	/* configure DMA request on CCRx update and overflow/update event */
+	tim->dier = (1 << (8 + ch_idx)) | (1 << (8 + up_idx));
+	/* set prescaler to /26 (F=2.4Mhz, T=0.4us) */
+	tim->psc = RX_CLOCK_DIV;
+	/* Reload the pre-scaler and reset the counter, clear CCRx */
+	tim->egr = 0x001F;
+	/* clear update event from reloading */
+	tim->sr = 0;
+}
+
 static void sniffer_init(void)
 {
 	/* remap TIM1 CH1/2/3 to DMA channel 6 */
 	STM32_SYSCFG_CFGR1 |= 1 << 28;
-	/* --- set counter for RX timing : 2.4Mhz rate, free-running --- */
-	__hw_timer_enable_clock(TIM_RX, 1);
-	/* Timer configuration */
-	STM32_TIM_CR1(TIM_RX) = 0x0000;
-	STM32_TIM_CR2(TIM_RX) = 0x0000;
-	/* Auto-reload value : 8-bit free running counter */
-	STM32_TIM_ARR(TIM_RX) = 0xFF;
-	/* Counter reloading event after 106us */
-	STM32_TIM_CCR2(TIM_RX) = 0xFF;
-	/* Timer ICx input configuration */
-#if TIM_CCR_IDX == 1
-	STM32_TIM_CCMR1(TIM_RX) = TIM_CCR_CS << 0;
-#elif TIM_CCR_IDX == 4
-	STM32_TIM_CCMR2(TIM_RX) = TIM_CCR_CS << 8;
-#else
-#error Unsupported RX timer capture input
-#endif
-	STM32_TIM_CCER(TIM_RX) = 0xB << ((TIM_CCR_IDX - 1) * 4);
-	/* TODO: add input filtering */
-	/* configure DMA request on CCRx update */
-	STM32_TIM_DIER(TIM_RX) = (1 << (8 + TIM_CCR_IDX)) | (1 << (8+2));
-	/* set prescaler to /26 (F=2.4Mhz, T=0.4us) */
-	STM32_TIM_PSC(TIM_RX) = RX_CLOCK_DIV;
-	/* Reload the pre-scaler and reset the counter */
-	STM32_TIM_EGR(TIM_RX) = 0x0001 | (1 << TIM_CCR_IDX) /* clear CCRx */;
-	/* clear update event from reloading */
-	STM32_TIM_SR(TIM_RX) = 0;
 
-	/* --- DAC configuration for comparator at 550mV --- */
-	/* Enable DAC interface clock. */
-	STM32_RCC_APB1ENR |= (1 << 29);
-	/* set voltage Vout=0.550V (Vref = 3.0V) */
-	STM32_DAC_DHR12RD = 550 * 4096 / 3000;
-	/* Start DAC channel 1 */
-	STM32_DAC_CR = STM32_DAC_CR_EN1 | STM32_DAC_CR_BOFF1;
+	/* TIM1 CH1 for CC1 RX */
+	rx_timer_init(TIM_RX1, (void *)STM32_TIM_BASE(TIM_RX1),
+		      TIM_RX1_CCR_IDX, 2);
+	/* TIM3 CH4 for CC2 RX */
+	rx_timer_init(TIM_RX2, (void *)STM32_TIM_BASE(TIM_RX2),
+		      TIM_RX2_CCR_IDX, 2);
 
-	/* --- COMP2 as comparator for RX vs Vmid = 550mV --- */
 	/* turn on COMP/SYSCFG */
 	STM32_RCC_APB2ENR |= 1 << 0;
-	/* currently in hi-speed mode : INP = PA1 , INM = DAC1 / PA4 / INM4 */
 	STM32_COMP_CSR = STM32_COMP_CMP1EN | STM32_COMP_CMP1MODE_HSPEED |
 			 STM32_COMP_CMP1INSEL_VREF12 |
-			 /*STM32_COMP_CMP1INSEL_INM4 |*/
 			 STM32_COMP_CMP1OUTSEL_TIM1_IC1 |
-			 STM32_COMP_CMP1HYST_HI;
+			 STM32_COMP_CMP1HYST_HI |
+			 STM32_COMP_CMP2EN | STM32_COMP_CMP2MODE_HSPEED |
+			 STM32_COMP_CMP2INSEL_VREF12 |
+			 STM32_COMP_CMP2OUTSEL_TIM2_IC4 |
+			 STM32_COMP_CMP2HYST_HI;
 	ccprintf("Sniffer initialized\n");
 
 
-	/* start sampling the edges on the CC line using the RX timer */
-	dma_start_rx(&dma_tim_option, RX_COUNT, samples);
+	/* start sampling the edges on the CC lines using the RX timers */
+	dma_start_rx(&dma_tim_cc1, RX_COUNT, samples[0]);
+	dma_start_rx(&dma_tim_cc2, RX_COUNT, samples[1]);
 	task_enable_irq(STM32_IRQ_DMA_CHANNEL_4_7);
-	/* start RX timer */
-	STM32_TIM_CR1(TIM_RX) |= 1;
+	/* start RX timers on CC1 and CC2 */
+	STM32_TIM_CR1(TIM_RX1) |= 1;
+	STM32_TIM_CR1(TIM_RX2) |= 1;
 }
 DECLARE_HOOK(HOOK_INIT, sniffer_init, HOOK_PRIO_DEFAULT);
 
@@ -214,18 +254,19 @@ void sniffer_task(void)
 
 		/* send the available samples over USB if we have a buffer*/
 		while (filled_dma && free_usb) {
+			while (!(filled_dma & (1 << d))) {
+				d = (d + 1) & 31;
+				off += EP_PAYLOAD_SIZE;
+				if (off >= RX_COUNT)
+					off = 0;
+			}
 			ep_buf[u][0] = sample_seq[d >> 3] | (d & 7);
 			ep_buf[u][1] = sample_tstamp[d >> 3];
 			memcpy_usbram(ep_buf[u] + 2,
-				      samples+off, EP_PAYLOAD_SIZE);
+				      samples[d >> 4]+off, EP_PAYLOAD_SIZE);
 			atomic_clear((uint32_t *)&free_usb, 1 << u);
 			u = !u;
 			atomic_clear((uint32_t *)&filled_dma, 1 << d);
-
-			d = (d + 1) & 15;
-			off += EP_PAYLOAD_SIZE;
-			if (off >= RX_COUNT)
-				off = 0;
 		}
 	}
 }
