@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "inductive_charging.h"
+#include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
@@ -196,10 +197,4 @@ static const struct battery_info info = {
 const struct battery_info *battery_get_info(void)
 {
 	return &info;
-}
-
-/* Fake lid switch */
-int lid_is_open(void)
-{
-	return 1;
 }
