@@ -272,6 +272,9 @@ void usb_init(void)
 	/* we need a proper 48MHz clock */
 	clock_enable_module(MODULE_USB, 1);
 
+	/* configure the pinmux */
+	gpio_config_module(MODULE_USB, 1);
+
 	/* power on sequence */
 
 	/* keep FRES (USB reset) and remove PDWN (power down) */
@@ -325,6 +328,9 @@ void usb_release(void)
 
 	/* disable interrupt handlers */
 	task_disable_irq(STM32_IRQ_USB_LP);
+
+	/* unset pinmux */
+	gpio_config_module(MODULE_USB, 0);
 
 	/* disable 48MHz clock */
 	clock_enable_module(MODULE_USB, 0);
