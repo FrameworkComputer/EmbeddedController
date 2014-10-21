@@ -109,7 +109,7 @@ void udelay(unsigned us)
 	 * subtraction below can overflow.  That's acceptable, because the
 	 * watchdog timer would have tripped long before that anyway.
 	 */
-	while (__hw_clock_source_read() - t0 < us)
+	while (__hw_clock_source_read() - t0 <= us)
 		;
 }
 #endif
