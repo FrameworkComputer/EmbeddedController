@@ -21,8 +21,11 @@ struct fan_t {
 	int enable_gpio;
 };
 
-/* Values for the flags field */
-#define FAN_USE_RPM_MODE (1 << 0)
+/* Values for .flags field */
+/*   Enable automatic RPM control using tach input */
+#define FAN_USE_RPM_MODE   (1 << 0)
+/*   Require a higher duty cycle to start up than to keep running */
+#define FAN_USE_FAST_START (1 << 1)
 
 /* The list of fans is instantiated in board.c. */
 extern const struct fan_t fans[];
@@ -81,9 +84,6 @@ enum fan_status {
 	FAN_STATUS_FRUSTRATED = 3
 };
 enum fan_status fan_get_status(int ch);
-
-/* Flag to enable automatic RPM control using tach input */
-#define FAN_USE_RPM_MODE (1 << 0)
 
 /* Initialize the HW according to the desired flags */
 void fan_channel_setup(int ch, unsigned int flags);

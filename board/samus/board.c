@@ -105,16 +105,16 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_t fans[] = {
-	{.flags = FAN_USE_RPM_MODE,
-	 .rpm_min = 1000,
-	 .rpm_max = 6500,
+	{.flags = FAN_USE_RPM_MODE | FAN_USE_FAST_START,
+	 .rpm_min = 2286,
+	 .rpm_max = 6350,
 	 .ch = 2,
 	 .pgood_gpio = -1,
 	 .enable_gpio = -1,
 	},
-	{.flags = FAN_USE_RPM_MODE,
-	 .rpm_min = 1000,
-	 .rpm_max = 6500,
+	{.flags = FAN_USE_RPM_MODE | FAN_USE_FAST_START,
+	 .rpm_min = 2286,
+	 .rpm_max = 6350,
 	 .ch = 3,
 	 .pgood_gpio = -1,
 	 .enable_gpio = -1,

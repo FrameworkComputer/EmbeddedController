@@ -132,7 +132,9 @@ int fan_is_stalled(int ch)
 
 void fan_channel_setup(int ch, unsigned int flags)
 {
-	if (flags & FAN_USE_RPM_MODE) {
+	uint32_t init;
+
+	if (flags & FAN_USE_RPM_MODE)
 		/*
 		 * Configure automatic/feedback mode:
 		 * 0x8000 = bit 15     = auto-restart
@@ -146,8 +148,8 @@ void fan_channel_setup(int ch, unsigned int flags)
 		 *                       (see note at top of file)
 		 * 0x0000 = bit 0      = automatic control
 		 */
-		LM4_FAN_FANCH(ch) = 0x802c;
-	} else {
+		init = 0x802c;
+	else
 		/*
 		 * Configure drive-only mode:
 		 * 0x0000 = bit 15     = no auto-restart
@@ -159,8 +161,17 @@ void fan_channel_setup(int ch, unsigned int flags)
 		 * 0x0000 = bits 3:2   = 1 pulses per revolution
 		 * 0x0001 = bit 0      = manual control
 		 */
-		LM4_FAN_FANCH(ch) = 0x0001;
-	}
+		init = 0x0001;
+
+	if (flags & FAN_USE_FAST_START)
+		/*
+		 * Configure fast-start mode
+		 * 0x0000 = bits 10:8  = start period (2<<0) edges
+		 * 0x0040 = bits 7:6   = fast start at 50% duty
+		 */
+		init |= 0x0040;
+
+	LM4_FAN_FANCH(ch) = init;
 }
 
 static void fan_init(void)
