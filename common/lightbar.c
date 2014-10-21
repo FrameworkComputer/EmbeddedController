@@ -104,10 +104,17 @@ static const struct lightbar_params_v1 default_params = {
 		{ 0xff, 0xff, 0xff, 0xff }     /* AC: do nothing */
 	},
 	.color = {
-		{0x33, 0x69, 0xe8},		/* 0: Google blue */
-		{0xd5, 0x0f, 0x25},		/* 1: Google red */
-		{0xee, 0xb2, 0x11},		/* 2: Google yellow */
-		{0x00, 0x99, 0x25},		/* 3: Google green */
+		/*
+		 * These values have been optically calibrated for the
+		 * Samus LEDs to best match the official colors, described at
+		 * https://sites.google.com/a/google.com/brandsite/the-colours
+		 * See crosbug.com/p/33017 before making any changes.
+		 */
+		{0x50, 0x98, 0xe8},		/* 0: Google blue */
+		{0xdb, 0x44, 0x37},		/* 1: Google red */
+		{0xf4, 0xb4, 0x00},		/* 2: Google yellow */
+		{0x00, 0x88, 0x30},		/* 3: Google green */
+		/* These are primary colors */
 		{0x00, 0x00, 0xff},		/* 4: full blue */
 		{0xff, 0x00, 0x00},		/* 5: full red */
 		{0xff, 0xff, 0x00},		/* 6: full yellow */

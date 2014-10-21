@@ -63,10 +63,13 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_BLUE  0x67
 #endif
 #if defined(BOARD_SAMUS) || defined(BOARD_RYU_P2)
-/* Samus uses completely different LEDs, so the numbers are different */
-#define MAX_RED   0x4f
-#define MAX_GREEN 0x55
-#define MAX_BLUE  0x67
+/* Samus uses completely different LEDs, so the numbers are different. The
+ * Samus LEDs can handle much higher currents, but these constants were
+ * calibrated to provide uniform intensity at the level used by Link.
+ * See crosbug.com/p/33017 before making any changes. */
+#define MAX_RED   0x28
+#define MAX_GREEN 0x24
+#define MAX_BLUE  0x34
 #endif
 #ifdef BOARD_HOST
 /* For testing only */
