@@ -10,6 +10,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "lpc.h"
+#include "mkbp_event.h"
 #include "util.h"
 
 /* Console output macros */
@@ -51,6 +52,10 @@ void host_set_events(uint32_t mask)
 #else
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #endif
+
+#ifdef CONFIG_MKBP_EVENT
+	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+#endif
 }
 
 void host_clear_events(uint32_t mask)
@@ -66,7 +71,20 @@ void host_clear_events(uint32_t mask)
 #else
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #endif
+
+#ifdef CONFIG_MKBP_EVENT
+	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+#endif
 }
+
+static int host_get_next_event(uint8_t *out)
+{
+	uint32_t event_out = events;
+	memcpy(out, &event_out, sizeof(event_out));
+	atomic_clear(&events, event_out);
+	return sizeof(event_out);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT, host_get_next_event);
 
 /**
  * Clear one or more host event bits from copy B.

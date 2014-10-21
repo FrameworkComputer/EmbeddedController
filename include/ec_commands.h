@@ -1811,6 +1811,29 @@ struct ec_result_keyscan_seq_ctrl {
 	};
 } __packed;
 
+/*
+ * Get the next pending MKBP event.
+ *
+ * Returns EC_RES_UNAVAILABLE if there is no event pending.
+ */
+#define EC_CMD_GET_NEXT_EVENT 0x67
+
+enum ec_mkbp_event {
+	/* Keyboard matrix changed. The event data is the new matrix state. */
+	EC_MKBP_EVENT_KEY_MATRIX = 0,
+
+	/* New host event. The event data is 4 bytes of host event flags. */
+	EC_MKBP_EVENT_HOST_EVENT = 1,
+
+	/* Number of MKBP events */
+	EC_MKBP_EVENT_COUNT,
+};
+
+struct ec_response_get_next_event {
+	uint8_t event_type;
+	/* Followed by event data if any */
+} __packed;
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 

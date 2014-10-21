@@ -11,6 +11,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "mkbp_event.h"
 #include "task.h"
 #include "test_util.h"
 
@@ -74,6 +75,10 @@ extern const struct test_i2c_read_string_dev __test_i2c_read_string_end[];
 /* Host commands */
 extern const struct host_command __hcmds[];
 extern const struct host_command __hcmds_end[];
+
+/* MKBP events */
+extern const struct mkbp_event_source __mkbp_evt_srcs[];
+extern const struct mkbp_event_source __mkbp_evt_srcs_end[];
 
 /* IRQs (interrupt handlers) */
 extern const struct irq_priority __irqprio[];

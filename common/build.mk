@@ -54,6 +54,7 @@ common-$(CONFIG_LED_COMMON)+=led_common.o
 common-$(CONFIG_LID_ANGLE_KEY_SCAN)+=lid_angle.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
 common-$(CONFIG_LPC)+=acpi.o port80.o
+common-$(CONFIG_MKBP_EVENT)+=mkbp_event.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o

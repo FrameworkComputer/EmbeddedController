@@ -58,6 +58,11 @@ SECTIONS
         KEEP(*(.rodata.hcmds))
         __hcmds_end = .;
 
+	. = ALIGN(4);
+	__mkbp_evt_srcs = .;
+	KEEP(*(.rodata.evtsrcs))
+	__mkbp_evt_srcs_end = .;
+
         . = ALIGN(4);
         __hooks_init = .;
         KEEP(*(.rodata.HOOK_INIT))

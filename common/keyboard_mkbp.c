@@ -15,6 +15,7 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
+#include "mkbp_event.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -146,11 +147,32 @@ test_mockable int keyboard_fifo_add(const uint8_t *buffp)
 
 kb_fifo_push_done:
 
-	if (ret == EC_SUCCESS)
+	if (ret == EC_SUCCESS) {
 		set_host_interrupt(1);
+#ifdef CONFIG_MKBP_EVENT
+		mkbp_send_event(EC_MKBP_EVENT_KEY_MATRIX);
+#endif
+	}
 
 	return ret;
 }
+
+#ifdef CONFIG_MKBP_EVENT
+static int keyboard_get_next_event(uint8_t *out)
+{
+	if (!kb_fifo_entries)
+		return -1;
+
+	kb_fifo_remove(out);
+
+	/* Keep sending events if FIFO is not empty */
+	if (kb_fifo_entries)
+		mkbp_send_event(EC_MKBP_EVENT_KEY_MATRIX);
+
+	return KEYBOARD_COLS;
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_KEY_MATRIX, keyboard_get_next_event);
+#endif
 
 void keyboard_send_battery_key(void)
 {

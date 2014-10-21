@@ -751,6 +751,9 @@
 /* Support LPC interface */
 #undef CONFIG_LPC
 
+/* Support MKBP event */
+#undef CONFIG_MKBP_EVENT
+
 /* Support memory protection unit (MPU) */
 #undef CONFIG_MPU
 

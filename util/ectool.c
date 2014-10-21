@@ -2593,6 +2593,31 @@ static int cmd_motionsense(int argc, char **argv)
 	return ms_help(argv[0]);
 }
 
+int cmd_next_event(int argc, char *argv[])
+{
+	uint8_t *rdata = (uint8_t *)ec_inbuf;
+	int rv;
+	int i;
+
+	rv = ec_command(EC_CMD_GET_NEXT_EVENT, 0,
+			NULL, 0, rdata, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	printf("Next event is 0x%02x\n", rdata[0]);
+	if (rv > 1) {
+		printf("Event data:\n");
+		for (i = 1; i < rv; ++i) {
+			printf("%02x ", rdata[i]);
+			if (!(i & 0xf))
+				printf("\n");
+		}
+		printf("\n");
+	}
+
+	return 0;
+}
+
 static int find_led_color_by_name(const char *color)
 {
 	int i;
@@ -5026,6 +5051,7 @@ const struct command commands[] = {
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
 	{"motionsense", cmd_motionsense},
+	{"nextevent", cmd_next_event},
 	{"panicinfo", cmd_panic_info},
 	{"pause_in_s5", cmd_s5},
 	{"port80read", cmd_port80_read},
