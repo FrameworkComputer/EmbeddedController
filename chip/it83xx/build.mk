@@ -14,3 +14,4 @@ chip-y=hwtimer.o uart.o gpio.o system.o jtag.o clock.o irq.o
 
 # Optional chip modules
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+chip-$(CONFIG_PWM)+=pwm.o

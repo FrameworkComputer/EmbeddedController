@@ -15,5 +15,19 @@
 
 #include "gpio_signal.h"
 
+enum pwm_channel {
+	PWM_CH_0,
+	PWM_CH_1,
+	PWM_CH_2,
+	PWM_CH_3,
+	PWM_CH_4,
+	PWM_CH_5,
+	PWM_CH_6,
+	PWM_CH_7,
+
+	/* Number of PWM channels */
+	PWM_CH_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __BOARD_H */

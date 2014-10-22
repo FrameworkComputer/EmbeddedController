@@ -11,6 +11,8 @@
 #include "registers.h"
 #include "task.h"
 #include "util.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -23,6 +25,20 @@ void test_interrupt(enum gpio_signal signal)
 }
 
 #include "gpio_list.h"
+
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	{0, 0},
+	{1, PWM_CONFIG_ACTIVE_LOW},
+	{2, 0},
+	{3, PWM_CONFIG_ACTIVE_LOW},
+	{4, 0},
+	{5, PWM_CONFIG_ACTIVE_LOW},
+	{6, 0},
+	{7, PWM_CONFIG_ACTIVE_LOW},
+};
+
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Initialize board. */
 static void board_init(void)

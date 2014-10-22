@@ -103,5 +103,6 @@
 #undef CONFIG_I2C
 #undef CONFIG_FLASH
 #undef CONFIG_WATCHDOG
+#define CONFIG_PWM
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
