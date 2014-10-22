@@ -146,7 +146,8 @@ static int usb_wait_console(void)
 	 */
 	if (last_tx_ok) {
 		while (usb_console_tx_valid() || !is_reset) {
-			if (timestamp_expired(deadline, NULL)) {
+			if (timestamp_expired(deadline, NULL) ||
+			    in_interrupt_context()) {
 				last_tx_ok = 0;
 				return EC_ERROR_TIMEOUT;
 			}
