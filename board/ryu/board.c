@@ -176,25 +176,3 @@ int extpower_is_present(void)
 {
 	return gpio_get_level(GPIO_CHGR_ACOK);
 }
-
-/* Battery temperature ranges in degrees C */
-static const struct battery_info info = {
-	/* Design voltage */
-	.voltage_max    = 4350,
-	.voltage_normal = 3800,
-	.voltage_min    = 2800,
-	/* Pre-charge current: I <= 0.01C */
-	.precharge_current  = 64,  /* mA */
-	/* Operational temperature range */
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 45,
-	.charging_min_c       = 0,
-	.charging_max_c       = 50,
-	.discharging_min_c    = -20,
-	.discharging_max_c    = 60,
-};
-
-const struct battery_info *battery_get_info(void)
-{
-	return &info;
-}
