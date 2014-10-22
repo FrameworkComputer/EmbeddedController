@@ -31,31 +31,31 @@ static int is_reset;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
-	.bLength = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = USB_IFACE_CONSOLE,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 2,
-	.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+	.bLength            = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType    = USB_DT_INTERFACE,
+	.bInterfaceNumber   = USB_IFACE_CONSOLE,
+	.bAlternateSetting  = 0,
+	.bNumEndpoints      = 2,
+	.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,
 	.bInterfaceSubClass = 0,
 	.bInterfaceProtocol = 0,
-	.iInterface = 0,
+	.iInterface         = 0,
 };
-const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 82) = {
-	.bLength = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = 0x80 | USB_EP_CON_TX,
-	.bmAttributes = 0x02 /* Bulk IN */,
-	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
-	.bInterval = 10
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 0) = {
+	.bLength            = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType    = USB_DT_ENDPOINT,
+	.bEndpointAddress   = 0x80 | USB_EP_CONSOLE,
+	.bmAttributes       = 0x02 /* Bulk IN */,
+	.wMaxPacketSize     = USB_MAX_PACKET_SIZE,
+	.bInterval          = 10
 };
-const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 3) = {
-	.bLength = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = USB_EP_CON_RX,
-	.bmAttributes = 0x02 /* Bulk OUT */,
-	.wMaxPacketSize = USB_MAX_PACKET_SIZE,
-	.bInterval = 0
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) = {
+	.bLength            = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType    = USB_DT_ENDPOINT,
+	.bEndpointAddress   = USB_EP_CONSOLE,
+	.bmAttributes       = 0x02 /* Bulk OUT */,
+	.wMaxPacketSize     = USB_MAX_PACKET_SIZE,
+	.bInterval          = 0
 };
 
 static usb_uint ep_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
@@ -63,16 +63,14 @@ static usb_uint ep_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
 static void con_ep_tx(void)
 {
-	uint16_t ep = STM32_USB_EP(USB_EP_CON_TX);
 	/* clear IT */
-	STM32_USB_EP(USB_EP_CON_TX) = (ep & EP_MASK);
-	return;
+	STM32_TOGGLE_EP(USB_EP_CONSOLE, 0, 0, 0);
 }
 
 static void con_ep_rx(void)
 {
 	int i;
-	for (i = 0; i < (btable_ep[USB_EP_CON_RX].rx_count & 0x3ff); i++) {
+	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & 0x3ff); i++) {
 		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
 		if (rx_buf_next != rx_buf_tail) {
 			/* Not working on old STM32 ... */
@@ -80,24 +78,32 @@ static void con_ep_rx(void)
 			rx_buf_head = rx_buf_next;
 		}
 	}
+
 	/* clear IT */
-	STM32_TOGGLE_EP(USB_EP_CON_RX, EP_RX_MASK, EP_RX_VALID, 0);
+	STM32_TOGGLE_EP(USB_EP_CONSOLE, EP_RX_MASK, EP_RX_VALID, 0);
+
 	/* wake-up the console task */
 	console_has_input();
-	return;
 }
 
-int usb_getc(void)
+static void ep_reset(void)
 {
-	int c;
+	btable_ep[USB_EP_CONSOLE].tx_addr  = usb_sram_addr(ep_buf_tx);
+	btable_ep[USB_EP_CONSOLE].tx_count = 0;
 
-	if (rx_buf_tail == rx_buf_head)
-		return -1;
+	btable_ep[USB_EP_CONSOLE].rx_addr  = usb_sram_addr(ep_buf_rx);
+	btable_ep[USB_EP_CONSOLE].rx_count =
+		0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
 
-	c = rx_buf[rx_buf_tail];
-	rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
-	return c;
+	STM32_USB_EP(USB_EP_CONSOLE) = (USB_EP_CONSOLE | /* Endpoint Addr */
+					(2 << 4)       | /* TX NAK        */
+					(0 << 9)       | /* Bulk EP       */
+					(3 << 12));      /* RX VALID      */
+
+	is_reset = 1;
 }
+
+USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_reset);
 
 static int __tx_char(void *context, int c)
 {
@@ -121,13 +127,13 @@ static int __tx_char(void *context, int c)
 
 static void usb_enable_tx(int len)
 {
-	btable_ep[USB_EP_CON_TX].tx_count = len;
-	STM32_TOGGLE_EP(USB_EP_CON_TX, EP_TX_MASK, EP_TX_VALID, 0);
+	btable_ep[USB_EP_CONSOLE].tx_count = len;
+	STM32_TOGGLE_EP(USB_EP_CONSOLE, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
 static inline int usb_console_tx_valid(void)
 {
-	return (STM32_USB_EP(USB_EP_CON_TX) & EP_TX_MASK) == EP_TX_VALID;
+	return (STM32_USB_EP(USB_EP_CONSOLE) & EP_TX_MASK) == EP_TX_VALID;
 }
 
 static int usb_wait_console(void)
@@ -163,6 +169,21 @@ static int usb_wait_console(void)
 		last_tx_ok = !usb_console_tx_valid();
 		return EC_SUCCESS;
 	}
+}
+
+/*
+ * Public USB console implementation below.
+ */
+int usb_getc(void)
+{
+	int c;
+
+	if (rx_buf_tail == rx_buf_head)
+		return -1;
+
+	c = rx_buf[rx_buf_tail];
+	rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
+	return c;
 }
 
 int usb_putc(int c)
@@ -215,32 +236,3 @@ int usb_vprintf(const char *format, va_list args)
 	usb_enable_tx(tx_idx);
 	return ret;
 }
-
-static void ep_tx_reset(void)
-{
-	/* Serial Bulk IN endpoint 2 */
-	btable_ep[USB_EP_CON_TX].tx_addr = usb_sram_addr(ep_buf_tx);
-	btable_ep[USB_EP_CON_TX].tx_count = 0;
-	btable_ep[USB_EP_CON_TX].rx_count = 0;
-	STM32_USB_EP(USB_EP_CON_TX) = (USB_EP_CON_TX << 0) /* Endpoint Addr*/ |
-				      (2 << 4) /* TX NAK */ |
-				      (0 << 9) /* Bulk EP */ |
-				      (0 << 12) /* RX Disabled */;
-	is_reset = 1;
-}
-
-static void ep_rx_reset(void)
-{
-	/* Serial Bulk OUT endpoint 3 */
-	btable_ep[USB_EP_CON_RX].rx_addr = usb_sram_addr(ep_buf_rx);
-	btable_ep[USB_EP_CON_RX].tx_count = 0;
-	btable_ep[USB_EP_CON_RX].rx_count =
-		0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
-	STM32_USB_EP(USB_EP_CON_RX) = (USB_EP_CON_RX << 0) /* Endpoint Addr */ |
-				      (0 << 4) /* TX Disabled */ |
-				      (0 << 9) /* Bulk EP */ |
-				      (3 << 12) /* RX VALID */;
-}
-
-USB_DECLARE_EP(USB_EP_CON_TX, con_ep_tx, con_ep_tx, ep_tx_reset);
-USB_DECLARE_EP(USB_EP_CON_RX, con_ep_rx, con_ep_rx, ep_rx_reset);

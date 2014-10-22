@@ -87,13 +87,20 @@ enum usb_strings {
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
-#define USB_EP_CON_TX    1
-#define USB_EP_CON_RX    2
+#define USB_EP_CONSOLE   1
+
+/*
+ * Endpoint 2 is missing because the console used to use two bidirectional
+ * endpoints.  It now uses a single bidirectional endpoint relying on the
+ * direction bit as an additional bit identifying the endpoint used.  It is
+ * safe to reallocate endpoint 2 in the future.
+ */
+
 #ifdef HAS_TASK_SNIFFER
 #define USB_EP_SNIFFER   3
 #define USB_EP_COUNT     4
 #else
-#define USB_EP_COUNT     3
+#define USB_EP_COUNT     2
 #endif
 
 #endif /* __BOARD_H */
