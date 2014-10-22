@@ -194,7 +194,7 @@ void __rtc_alarm_irq(void)
 
 	reset_rtc_alarm(&rtc, &rtcss);
 }
-DECLARE_IRQ(STM32_IRQ_RTC_WAKEUP, __rtc_alarm_irq, 1);
+DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
 static void config_hispeed_clock(void)
 {
@@ -437,7 +437,7 @@ void rtc_init(void)
 	/* Enable RTC alarm interrupt */
 	STM32_RTC_CR |= STM32_RTC_CR_ALRAIE | STM32_RTC_CR_BYPSHAD;
 	STM32_EXTI_RTSR |= EXTI_RTC_ALR_EVENT;
-	task_enable_irq(STM32_IRQ_RTC_WAKEUP);
+	task_enable_irq(STM32_IRQ_RTC_ALARM);
 
 	rtc_lock_regs();
 }

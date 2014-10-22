@@ -15,6 +15,7 @@
 #define STM32_IRQ_WWDG             0
 #define STM32_IRQ_PVD              1
 #define STM32_IRQ_RTC_WAKEUP       2
+#define STM32_IRQ_RTC_ALARM        2
 #define STM32_IRQ_FLASH            3
 #define STM32_IRQ_RCC              4
 #define STM32_IRQ_EXTI0_1          5
