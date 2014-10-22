@@ -230,7 +230,17 @@ static void config_hispeed_clock(void)
 	/* Wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
-#elif (CPU_CLOCK == HSI48_CLOCK)
+#else
+	/* Ensure that HSI48 is ON */
+	if (!(STM32_RCC_CR2 & (1 << 17))) {
+		/* Enable HSI */
+		STM32_RCC_CR2 |= 1 << 16;
+		/* Wait for HSI to be ready */
+		while (!(STM32_RCC_CR2 & (1 << 17)))
+			;
+	}
+
+#if (CPU_CLOCK == HSI48_CLOCK)
 	/*
 	 * HSI48 = 48MHz, no prescaler, no MCO, no PLL
 	 * therefore PCLK = FCLK = SYSCLK = 48MHz
@@ -277,7 +287,8 @@ static void config_hispeed_clock(void)
 		;
 
 #else
-#error "CPU_CLOCK must be either 48MHz or 38.4MHz for STM32F0"
+#error "CPU_CLOCK must be either 48MHz or 38.4MHz"
+#endif
 #endif
 }
 
