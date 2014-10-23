@@ -68,7 +68,8 @@ void uart_tx_start(void)
 
 	disable_sleep(SLEEP_MASK_UART);
 	should_stop = 0;
-	STM32_USART_CR1(UARTN_BASE) |= UART_TX_INT_ENABLE;
+	STM32_USART_CR1(UARTN_BASE) |= UART_TX_INT_ENABLE |
+				       STM32_USART_CR1_TCIE;
 	task_trigger_irq(STM32_IRQ_USART(UARTN));
 }
 
@@ -76,7 +77,9 @@ void uart_tx_stop(void)
 {
 	STM32_USART_CR1(UARTN_BASE) &= ~UART_TX_INT_ENABLE;
 	should_stop = 1;
+#ifdef CONFIG_UART_TX_DMA
 	enable_sleep(SLEEP_MASK_UART);
+#endif
 }
 
 void uart_tx_flush(void)
@@ -163,6 +166,22 @@ void uart_enable_interrupt(void)
 /* Interrupt handler for console USART */
 void uart_interrupt(void)
 {
+#ifndef CONFIG_UART_TX_DMA
+	/*
+	 * When trasmission completes, enable sleep if we are done with Tx.
+	 * After that, proceed if there is other interrupt to handle.
+	 */
+	if (STM32_USART_SR(UARTN_BASE) & STM32_USART_SR_TC) {
+		if (should_stop) {
+			STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_TCIE;
+			enable_sleep(SLEEP_MASK_UART);
+		}
+		STM32_USART_ICR(UARTN_BASE) |= STM32_USART_SR_TC;
+		if (!(STM32_USART_SR(UARTN_BASE) & ~STM32_USART_SR_TC))
+			return;
+	}
+#endif
+
 #ifdef CONFIG_UART_TX_DMA
 	/* Disable transmission complete interrupt if DMA done */
 	if (STM32_USART_SR(UARTN_BASE) & STM32_USART_SR_TC)
