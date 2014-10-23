@@ -30,7 +30,7 @@ test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
 test-list-host+=sbs_charging adapter host_command thermal_falco led_spring
 test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
-test-list-host+=motion_sense math_util sbs_charging_v2 battery_get_params_smart
+test-list-host+=motion_lid math_util sbs_charging_v2 battery_get_params_smart
 test-list-host+=lightbar inductive_charging usb_pd
 
 adapter-y=adapter.o
@@ -52,7 +52,7 @@ kb_scan-y=kb_scan.o
 led_spring-y=led_spring.o led_spring_impl.o
 lid_sw-y=lid_sw.o
 math_util-y=math_util.o
-motion_sense-y=motion_sense.o
+motion_lid-y=motion_lid.o
 mutex-y=mutex.o
 pingpong-y=pingpong.o
 power_button-y=power_button.o

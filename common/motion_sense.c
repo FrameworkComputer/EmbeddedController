@@ -15,6 +15,7 @@
 #include "lid_angle.h"
 #include "math_util.h"
 #include "motion_sense.h"
+#include "motion_lid.h"
 #include "power.h"
 #include "timer.h"
 #include "task.h"
@@ -36,10 +37,6 @@ enum {
 	X, Y, Z
 };
 
-/* Current acceleration vectors and current lid angle. */
-static float lid_angle_deg;
-static int lid_angle_is_reliable;
-
 /* Bounds for setting the sensor polling interval. */
 #define MIN_POLLING_INTERVAL_MS 5
 #define MAX_POLLING_INTERVAL_MS 1000
@@ -53,6 +50,15 @@ static int lid_angle_is_reliable;
 
 /* Accelerometer polling intervals based on chipset state. */
 static int accel_interval_ap_on_ms = 10;
+/*
+ * Sampling interval for measuring acceleration and calculating lid angle.
+ * Set to accel_interval_ap_on_ms when ap is on.
+ */
+static int accel_interval_ms;
+
+#ifdef CONFIG_CMD_ACCEL_INFO
+static int accel_disp;
+#endif
 
 /*
  * Angle threshold for how close the hinge aligns with gravity before
@@ -62,107 +68,6 @@ static int accel_interval_ap_on_ms = 10;
  */
 #define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD 0.96593F
 
-/* Sampling interval for measuring acceleration and calculating lid angle. */
-static int accel_interval_ms;
-
-#ifdef CONFIG_CMD_LID_ANGLE
-static int accel_disp;
-#endif
-
-/* Pointer to constant acceleration orientation data. */
-const struct accel_orientation * const p_acc_orient = &acc_orient;
-
-/**
- * Calculate the lid angle using two acceleration vectors, one recorded in
- * the base and one in the lid.
- *
- * @param base Base accel vector
- * @param lid  Lid accel vector
- * @param lid_angle Pointer to location to store lid angle result
- *
- * @return flag representing if resulting lid angle calculation is reliable.
- */
-static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
-		float *lid_angle)
-{
-	vector_3_t v;
-	float ang_lid_to_base, ang_lid_90, ang_lid_270;
-	float lid_to_base, base_to_hinge;
-	int reliable = 1;
-
-	/*
-	 * The angle between lid and base is:
-	 * acos((cad(base, lid) - cad(base, hinge)^2) /(1 - cad(base, hinge)^2))
-	 * where cad() is the cosine_of_angle_diff() function.
-	 *
-	 * Make sure to check for divide by 0.
-	 */
-	lid_to_base = cosine_of_angle_diff(base, lid);
-	base_to_hinge = cosine_of_angle_diff(base, p_acc_orient->hinge_axis);
-
-	/*
-	 * If hinge aligns too closely with gravity, then result may be
-	 * unreliable.
-	 */
-	if (ABS(base_to_hinge) > HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD)
-		reliable = 0;
-
-	base_to_hinge = SQ(base_to_hinge);
-
-	/* Check divide by 0. */
-	if (ABS(1.0F - base_to_hinge) < 0.01F) {
-		*lid_angle = 0.0;
-		return 0;
-	}
-
-	ang_lid_to_base = arc_cos(
-			(lid_to_base - base_to_hinge) / (1 - base_to_hinge));
-
-	/*
-	 * The previous calculation actually has two solutions, a positive and
-	 * a negative solution. To figure out the sign of the answer, calculate
-	 * the angle between the actual lid angle and the estimated vector if
-	 * the lid were open to 90 deg, ang_lid_90. Also calculate the angle
-	 * between the actual lid angle and the estimated vector if the lid
-	 * were open to 270 deg, ang_lid_270. The smaller of the two angles
-	 * represents which one is closer. If the lid is closer to the
-	 * estimated 270 degree vector then the result is negative, otherwise
-	 * it is positive.
-	 */
-	rotate(base, p_acc_orient->rot_hinge_90, v);
-	ang_lid_90 = cosine_of_angle_diff(v, lid);
-	rotate(v, p_acc_orient->rot_hinge_180, v);
-	ang_lid_270 = cosine_of_angle_diff(v, lid);
-
-	/*
-	 * Note that ang_lid_90 and ang_lid_270 are not in degrees, because
-	 * the arc_cos() was never performed. But, since arc_cos() is
-	 * monotonically decreasing, we can do this comparison without ever
-	 * taking arc_cos(). But, since the function is monotonically
-	 * decreasing, the logic of this comparison is reversed.
-	 */
-	if (ang_lid_270 > ang_lid_90)
-		ang_lid_to_base = -ang_lid_to_base;
-
-	/* Place lid angle between 0 and 360 degrees. */
-	if (ang_lid_to_base < 0)
-		ang_lid_to_base += 360;
-
-	*lid_angle = ang_lid_to_base;
-	return reliable;
-}
-
-int motion_get_lid_angle(void)
-{
-	if (lid_angle_is_reliable)
-		/*
-		 * Round to nearest int by adding 0.5. Note, only works because
-		 * lid angle is known to be positive.
-		 */
-		return (int)(lid_angle_deg + 0.5F);
-	else
-		return (int)LID_ANGLE_UNRELIABLE;
-}
 
 static void motion_sense_shutdown(void)
 {
@@ -254,7 +159,11 @@ static inline void update_sense_data(uint8_t *lpc_status,
 	 * with un-calibrated accels. The AP calculates a separate,
 	 * more accurate lid angle.
 	 */
-	lpc_data[0] = motion_get_lid_angle();
+#ifdef CONFIG_LID_ANGLE
+	lpc_data[0] = motion_lid_get_angle();
+#else
+	lpc_data[0] = LID_ANGLE_UNRELIABLE;
+#endif
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
 		lpc_data[1+3*i] = sensor->xyz[X];
@@ -295,9 +204,9 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 
 	/* Read all raw X,Y,Z accelerations. */
 	ret = sensor->drv->read(sensor,
-		&sensor->raw_xyz[X],
-		&sensor->raw_xyz[Y],
-		&sensor->raw_xyz[Z]);
+		&sensor->xyz[X],
+		&sensor->xyz[Y],
+		&sensor->xyz[Z]);
 
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
@@ -322,8 +231,6 @@ void motion_sense_task(void)
 	int sample_id = 0;
 	int rd_cnt;
 	struct motion_sensor_t *sensor;
-	struct motion_sensor_t *accel_base = NULL;
-	struct motion_sensor_t *accel_lid = NULL;
 
 	lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 	lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
@@ -334,15 +241,6 @@ void motion_sense_task(void)
 
 		sensor->odr = sensor->default_odr;
 		sensor->range = sensor->default_range;
-
-		if ((LOCATION_BASE == sensor->location)
-			&& (SENSOR_ACCELEROMETER == sensor->type))
-			accel_base = sensor;
-
-		if ((LOCATION_LID == sensor->location)
-			&& (SENSOR_ACCELEROMETER == sensor->type)) {
-			accel_lid = sensor;
-		}
 	}
 
 	set_present(lpc_status);
@@ -364,69 +262,49 @@ void motion_sense_task(void)
 				if (sensor->state == SENSOR_NOT_INITIALIZED)
 					motion_sense_init(sensor);
 
-				if (EC_SUCCESS == motion_sense_read(sensor))
-					rd_cnt++;
-			}
+				if (EC_SUCCESS != motion_sense_read(sensor))
+					continue;
 
-			/*
-			 * Rotate the lid accel vector
-			 * so the reference frame aligns with the base sensor.
-			 */
-			if ((LOCATION_LID == sensor->location)
-				&& (SENSOR_ACCELEROMETER == sensor->type))
-				rotate(accel_lid->raw_xyz,
-					p_acc_orient->rot_align,
-					accel_lid->xyz);
-			else
-				memcpy(sensor->xyz, sensor->raw_xyz,
-					sizeof(vector_3_t));
+				rd_cnt++;
+				/*
+				 * Rotate the accel vector so the reference for
+				 * all sensors are in the same space.
+				 */
+				if (*sensor->rot_standard_ref != NULL) {
+					rotate(sensor->xyz,
+					       *sensor->rot_standard_ref,
+					       sensor->xyz);
+				}
+			}
 		}
 
 #ifdef CONFIG_GESTURE_DETECTION
 		/* Run gesture recognition engine */
 		gesture_calc();
 #endif
+#ifdef CONFIG_LID_ANGLE
+		if (rd_cnt == motion_sensor_count)
+			motion_lid_calc();
 
-		if (rd_cnt != motion_sensor_count)
-			goto motion_wait;
-
-		/* Calculate angle of lid accel. */
-		lid_angle_is_reliable = calculate_lid_angle(
-				accel_base->xyz,
-				accel_lid->xyz,
-				&lid_angle_deg);
-
-		for (i = 0; i < motion_sensor_count; ++i) {
-			sensor = &motion_sensors[i];
-			/* Rotate accels into standard reference frame. */
-			if (sensor->type == SENSOR_ACCELEROMETER)
-				rotate(sensor->xyz,
-					p_acc_orient->rot_standard_ref,
-					sensor->xyz);
-		}
-
-#ifdef CONFIG_LID_ANGLE_KEY_SCAN
-		lidangle_keyscan_update(motion_get_lid_angle());
 #endif
-
-#ifdef CONFIG_CMD_LID_ANGLE
+#ifdef CONFIG_CMD_ACCEL_INFO
 		if (accel_disp) {
 			CPRINTF("[%T ");
 			for (i = 0; i < motion_sensor_count; ++i) {
 				sensor = &motion_sensors[i];
 				CPRINTF("%s=%-5d, %-5d, %-5d ", sensor->name,
-					sensor->raw_xyz[X],
-					sensor->raw_xyz[Y],
-					sensor->raw_xyz[Z]);
+					sensor->xyz[X],
+					sensor->xyz[Y],
+					sensor->xyz[Z]);
 			}
-			CPRINTF("a=%-6.1d r=%d", (int)(10*lid_angle_deg),
-					lid_angle_is_reliable);
+#ifdef CONFIG_LID_ANGLE
+			CPRINTF("a=%-6.1d", 10 * motion_lid_get_angle());
+#endif
 			CPRINTF("]\n");
 		}
 #endif
 		update_sense_data(lpc_status, lpc_data, &sample_id);
 
-motion_wait:
 		/* Delay appropriately to keep sampling time consistent. */
 		ts1 = get_time();
 		wait_us = accel_interval_ms * MSEC - (ts1.val-ts0.val);
@@ -440,24 +318,6 @@ motion_wait:
 
 		task_wait_event(wait_us);
 	}
-}
-
-void accel_int_lid(enum gpio_signal signal)
-{
-	/*
-	 * Print statement is here for testing with console accelint command.
-	 * Remove print statement when interrupt is used for real.
-	 */
-	CPRINTS("Accelerometer wake-up interrupt occurred on lid");
-}
-
-void accel_int_base(enum gpio_signal signal)
-{
-	/*
-	 * Print statement is here for testing with console accelint command.
-	 * Remove print statement when interrupt is used for real.
-	 */
-	CPRINTS("Accelerometer wake-up interrupt occurred on base");
 }
 
 /*****************************************************************************/
@@ -510,7 +370,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	const struct ec_params_motion_sense *in = args->params;
 	struct ec_response_motion_sense *out = args->response;
 	struct motion_sensor_t *sensor;
-	int i, data;
+	int i, data, ret = EC_RES_INVALID_PARAM;
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_DUMP:
@@ -637,24 +497,15 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		out->sensor_range.ret = data;
 		args->response_size = sizeof(out->sensor_range);
 		break;
-
-	case MOTIONSENSE_CMD_KB_WAKE_ANGLE:
-#ifdef CONFIG_LID_ANGLE_KEY_SCAN
-		/* Set new keyboard wake lid angle if data arg has value. */
-		if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
-			lid_angle_set_kb_wake_angle(in->kb_wake_angle.data);
-
-		out->kb_wake_angle.ret = lid_angle_get_kb_wake_angle();
-#else
-		out->kb_wake_angle.ret = 0;
-#endif
-		args->response_size = sizeof(out->kb_wake_angle);
-
-		break;
-
 	default:
-		CPRINTS("MS bad cmd 0x%x", in->cmd);
-		return EC_RES_INVALID_PARAM;
+		/* Call other users of the motion task */
+#ifdef CONFIG_LID_ANGLE
+		if (ret == EC_RES_INVALID_PARAM)
+			ret = host_cmd_motion_lid(args);
+#endif
+		if (ret == EC_RES_INVALID_PARAM)
+			CPRINTS("MS bad cmd 0x%x", in->cmd);
+		return ret;
 	}
 
 	return EC_RES_SUCCESS;
@@ -666,43 +517,6 @@ DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD,
 
 /*****************************************************************************/
 /* Console commands */
-#ifdef CONFIG_CMD_LID_ANGLE
-static int command_ctrl_print_lid_angle_calcs(int argc, char **argv)
-{
-	char *e;
-	int val;
-
-	if (argc > 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	/* First argument is on/off whether to display accel data. */
-	if (argc > 1) {
-		if (!parse_bool(argv[1], &val))
-			return EC_ERROR_PARAM1;
-
-		accel_disp = val;
-	}
-
-	/*
-	 * Second arg changes the accel task time interval. Note accel
-	 * sampling interval will be clobbered when chipset suspends or
-	 * resumes.
-	 */
-	if (argc > 2) {
-		val = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM2;
-
-		accel_interval_ms = val;
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(lidangle, command_ctrl_print_lid_angle_calcs,
-	"on/off [interval]",
-	"Print lid angle calculations and set calculation frequency.", NULL);
-#endif /* CONFIG_CMD_LID_ANGLE */
-
 #ifdef CONFIG_CMD_ACCELS
 static int command_accelrange(int argc, char **argv)
 {
@@ -905,7 +719,64 @@ DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init,
 	"id",
 	"Init sensor", NULL);
 
+#ifdef CONFIG_CMD_ACCEL_INFO
+static int command_display_accel_info(int argc, char **argv)
+{
+	char *e;
+	int val;
+
+	if (argc > 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* First argument is on/off whether to display accel data. */
+	if (argc > 1) {
+		if (!parse_bool(argv[1], &val))
+			return EC_ERROR_PARAM1;
+
+		accel_disp = val;
+	}
+
+	/*
+	 * Second arg changes the accel task time interval. Note accel
+	 * sampling interval will be clobbered when chipset suspends or
+	 * resumes.
+	 */
+	if (argc > 2) {
+		val = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		accel_interval_ms = val;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(accelinfo, command_display_accel_info,
+	"on/off [interval]",
+	"Print motion sensor info, lid angle calculations"
+	" and set calculation frequency.", NULL);
+#endif /* CONFIG_CMD_ACCEL_INFO */
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
+/* TODO(crosbug.com/p/426659): this code is broken, does not compile. */
+void accel_int_lid(enum gpio_signal signal)
+{
+	/*
+	 * Print statement is here for testing with console accelint command.
+	 * Remove print statement when interrupt is used for real.
+	 */
+	CPRINTS("Accelerometer wake-up interrupt occurred on lid");
+}
+
+void accel_int_base(enum gpio_signal signal)
+{
+	/*
+	 * Print statement is here for testing with console accelint command.
+	 * Remove print statement when interrupt is used for real.
+	 */
+	CPRINTS("Accelerometer wake-up interrupt occurred on base");
+}
+
 static int command_accelerometer_interrupt(int argc, char **argv)
 {
 	char *e;

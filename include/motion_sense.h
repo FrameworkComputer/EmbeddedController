@@ -12,66 +12,6 @@
 #include "math_util.h"
 #include "chipset.h"
 
-/* Anything outside of lid angle range [-180, 180] should work. */
-#define LID_ANGLE_UNRELIABLE 500.0F
-
-/**
- * This structure defines all of the data needed to specify the orientation
- * of the base and lid accelerometers in order to calculate the lid angle.
- */
-struct accel_orientation {
-	/*
-	 * Rotation matrix to rotate the lid sensor into the same reference
-	 * frame as the base sensor.
-	 */
-	matrix_3x3_t rot_align;
-
-	/* Rotation matrix to rotate positive 90 degrees around the hinge. */
-	matrix_3x3_t rot_hinge_90;
-
-	/*
-	 * Rotation matrix to rotate 180 degrees around the hinge. The value
-	 * here should be rot_hinge_90 ^ 2.
-	 */
-	matrix_3x3_t rot_hinge_180;
-
-	/*
-	 * Rotation matrix to rotate base sensor into the standard reference
-	 * frame.
-	 */
-	matrix_3x3_t rot_standard_ref;
-
-	/* Vector pointing along hinge axis. */
-	vector_3_t hinge_axis;
-};
-
-/* Link global structure for orientation. This must be defined in board.c. */
-extern const struct accel_orientation acc_orient;
-
-
-/**
- * Get last calculated lid angle. Note, the lid angle calculated by the EC
- * is un-calibrated and is an approximate angle.
- *
- * @return lid angle in degrees in range [0, 360].
- */
-int motion_get_lid_angle(void);
-
-
-/**
- * Interrupt function for lid accelerometer.
- *
- * @param signal GPIO signal that caused interrupt
- */
-void accel_int_lid(enum gpio_signal signal);
-
-/**
- * Interrupt function for base accelerometer.
- *
- * @param signal GPIO signal that caused interrupt
- */
-void accel_int_base(enum gpio_signal signal);
-
 enum sensor_location_t {
 	LOCATION_BASE = 0,
 	LOCATION_LID  = 1,
@@ -110,6 +50,7 @@ struct motion_sensor_t {
 	struct mutex *mutex;
 	void *drv_data;
 	uint8_t i2c_addr;
+	const matrix_3x3_t *rot_standard_ref;
 
 	/* Default configuration parameters, RO only */
 	int default_odr;
@@ -122,9 +63,7 @@ struct motion_sensor_t {
 	/* state parameters */
 	enum sensor_state state;
 	enum chipset_state_mask active;
-	vector_3_t raw_xyz;
 	vector_3_t xyz;
-
 };
 
 /* Defined at board level. */
@@ -136,5 +75,21 @@ extern const unsigned int motion_sensor_count;
  * hooks are scheduled properly.
  */
 #define MOTION_SENSE_HOOK_PRIO (HOOK_PRIO_DEFAULT)
+
+#ifdef CONFIG_ACCEL_INTERRUPTS
+/**
+ * Interrupt function for lid accelerometer.
+ *
+ * @param signal GPIO signal that caused interrupt
+ */
+void accel_int_lid(enum gpio_signal signal);
+
+/**
+ * Interrupt function for base accelerometer.
+ *
+ * @param signal GPIO signal that caused interrupt
+ */
+void accel_int_base(enum gpio_signal signal);
+#endif
 
 #endif /* __CROS_EC_MOTION_SENSE_H */

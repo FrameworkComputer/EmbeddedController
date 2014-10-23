@@ -308,6 +308,7 @@
  */
 
 #undef CONFIG_CMD_ACCELS
+#undef CONFIG_CMD_ACCEL_INFO
 #undef CONFIG_CMD_BATDEBUG
 #undef CONFIG_CMD_CLOCKGATES
 #undef CONFIG_CMD_COMXTEST
@@ -317,7 +318,6 @@
 #undef CONFIG_CMD_HOSTCMD
 #undef CONFIG_CMD_ILIM
 #undef CONFIG_CMD_JUMPTAGS
-#define CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_PLL
 #undef CONFIG_CMD_PMU
 #define CONFIG_CMD_POWERINDEBUG
@@ -564,6 +564,18 @@
 
 #endif
 
+#undef CONFIG_LID_ANGLE
+#ifndef CONFIG_LID_ANGLE
+#undef CONFIG_SENSOR_BASE
+#undef CONFIG_SENSOR_LID
+
+/*
+ * Allows using the lid angle measurement to determine if key scanning should
+ * be enabled or disabled when chipset is suspended.
+ */
+#undef CONFIG_LID_ANGLE_KEY_SCAN
+
+#endif
 
 
 /*****************************************************************************/
@@ -727,12 +739,6 @@
 /* Support for LED driver chip(s) */
 #undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
-
-/*
- * Allows using the lid angle measurement to determine if key scanning should
- * be enabled or disabled when chipset is suspended.
- */
-#undef CONFIG_LID_ANGLE_KEY_SCAN
 
 /*
  * Compile lid switch support.

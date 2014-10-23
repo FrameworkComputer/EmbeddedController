@@ -48,6 +48,7 @@ static const char * const channel_names[] = {
 	"lidangle",
 	"lightbar",
 	"lpc",
+	"motionlid",
 	"motionsense",
 	"pdhostcmd",
 	"port80",

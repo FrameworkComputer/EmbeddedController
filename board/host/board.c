@@ -7,9 +7,11 @@
 #include "button.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "inductive_charging.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
+#include "motion_lid.h"
 #include "power_button.h"
 #include "temp_sensor.h"
 #include "timer.h"
@@ -54,13 +56,6 @@ BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
 
 /* Define the accelerometer orientation matrices. */
 const struct accel_orientation acc_orient = {
-	/* Lid and base sensor are already aligned. */
-	.rot_align = {
-		{ 1,  0,  0},
-		{ 0,  1,  0},
-		{ 0,  0,  1}
-	},
-
 	/* Hinge aligns with y axis. */
 	.rot_hinge_90 = {
 		{ 0,  0,  1},
@@ -71,11 +66,6 @@ const struct accel_orientation acc_orient = {
 		{-1,  0,  0},
 		{ 0,  1,  0},
 		{ 0,  0, -1}
-	},
-	.rot_standard_ref = {
-		{ 1,  0,  0},
-		{ 0,  1,  0},
-		{ 0,  0,  1}
 	},
 	.hinge_axis = {0, 1, 0},
 };

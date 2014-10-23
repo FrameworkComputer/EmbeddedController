@@ -11,6 +11,7 @@
 #include "common.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "motion_lid.h"
 #include "motion_sense.h"
 #include "task.h"
 #include "test_util.h"
@@ -88,15 +89,27 @@ const struct accelgyro_drv test_motion_sense = {
 	.get_data_rate = accel_get_data_rate,
 };
 
+const matrix_3x3_t base_standard_ref = {
+	{ 1, 0, 0},
+	{ 0, 1, 0},
+	{ 0, 0, 1}
+};
+
+const matrix_3x3_t lid_standard_ref = {
+	{ 1, 0, 0},
+	{ 1, 0, 0},
+	{ 0, 0, 1}
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	{SENSOR_ACTIVE_S0_S3_S5, "base", SENSOR_CHIP_LSM6DS0,
 		SENSOR_ACCELEROMETER, LOCATION_BASE,
 		&test_motion_sense, NULL, NULL,
-		0, 119000, 2},
+		0, &base_standard_ref, 119000, 2},
 	{SENSOR_ACTIVE_S0, "lid", SENSOR_CHIP_KXCJ9,
 		SENSOR_ACCELEROMETER, LOCATION_LID,
 		&test_motion_sense, NULL, NULL,
-		0, 100000, 2},
+		0, &lid_standard_ref, 100000, 2},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -130,7 +143,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == 0);
+	TEST_ASSERT(motion_lid_get_angle() == 0);
 
 	/* Set lid open to 90 degrees. */
 	lid->xyz[X] = -1000;
@@ -140,7 +153,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == 90);
+	TEST_ASSERT(motion_lid_get_angle() == 90);
 
 	/* Set lid open to 225. */
 	lid->xyz[X] = 500;
@@ -150,7 +163,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == 225);
+	TEST_ASSERT(motion_lid_get_angle() == 225);
 
 	/*
 	 * Align base with hinge and make sure it returns unreliable for angle.
@@ -163,7 +176,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == LID_ANGLE_UNRELIABLE);
+	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
 	/*
 	 * Use all three axes and set lid to negative base and make sure
@@ -179,7 +192,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
-	TEST_ASSERT(motion_get_lid_angle() == 180);
+	TEST_ASSERT(motion_lid_get_angle() == 180);
 
 	return EC_SUCCESS;
 }

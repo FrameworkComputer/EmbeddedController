@@ -335,9 +335,9 @@ static int read(const struct motion_sensor_t *s,
 	 * to get the latest updated sensor data quickly.
 	 */
 	if (!tmp) {
-		*x = s->raw_xyz[0];
-		*y = s->raw_xyz[1];
-		*z = s->raw_xyz[2];
+		*x = s->xyz[0];
+		*y = s->xyz[1];
+		*z = s->xyz[2];
 		return EC_SUCCESS;
 	}
 

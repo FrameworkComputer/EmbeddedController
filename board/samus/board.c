@@ -28,6 +28,7 @@
 #include "lid_switch.h"
 #include "lightbar.h"
 #include "motion_sense.h"
+#include "motion_lid.h"
 #include "peci.h"
 #include "power.h"
 #include "power_button.h"
@@ -264,6 +265,19 @@ static struct mutex g_lid_mutex;
 struct kxcj9_data g_kxcj9_data;
 
 /* Four Motion sensors */
+/* Matrix to rotate accelrator into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{-1,  0,  0},
+	{ 0, -1,  0},
+	{ 0,  0, -1}
+};
+
+const matrix_3x3_t lid_standard_ref = {
+	{ 0,  1,  0},
+	{-1,  0,  0},
+	{ 0,  0, -1}
+};
+
 struct motion_sensor_t motion_sensors[] = {
 
 	/*
@@ -274,30 +288,23 @@ struct motion_sensor_t motion_sensors[] = {
 	{SENSOR_ACTIVE_S0_S3_S5, "Base", SENSOR_CHIP_LSM6DS0,
 		SENSOR_ACCELEROMETER, LOCATION_BASE,
 		&lsm6ds0_drv, &g_base_mutex, NULL,
-		LSM6DS0_ADDR1, 119000, 2},
+		LSM6DS0_ADDR1, &base_standard_ref, 119000, 2},
 
 	{SENSOR_ACTIVE_S0, "Lid",  SENSOR_CHIP_KXCJ9,
 		SENSOR_ACCELEROMETER, LOCATION_LID,
 		&kxcj9_drv, &g_lid_mutex, &g_kxcj9_data,
-		KXCJ9_ADDR0, 100000, 2},
+		KXCJ9_ADDR0, &lid_standard_ref, 100000, 2},
 
 	{SENSOR_ACTIVE_S0, "Base Gyro", SENSOR_CHIP_LSM6DS0,
 		SENSOR_GYRO, LOCATION_BASE,
 		&lsm6ds0_drv, &g_base_mutex, NULL,
-		LSM6DS0_ADDR1, 119000, 2000},
+		LSM6DS0_ADDR1, NULL, 119000, 2000},
 
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Define the accelerometer orientation matrices. */
 const struct accel_orientation acc_orient = {
-	/* Lid and base sensor are already aligned. */
-	.rot_align = {
-		{ 0, -1,  0},
-		{ 1,  0,  0},
-		{ 0,  0,  1}
-	},
-
 	/* Hinge aligns with y axis. */
 	.rot_hinge_90 = {
 		{ 1,  0,  0},
@@ -308,11 +315,6 @@ const struct accel_orientation acc_orient = {
 		{ 1,  0,  0},
 		{ 0,  1,  0},
 		{ 0,  0,  1}
-	},
-	.rot_standard_ref = {
-		{-1,  0,  0},
-		{ 0, -1,  0},
-		{ 0,  0, -1}
 	},
 	.hinge_axis = {0, 1, 0},
 };
