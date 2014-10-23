@@ -182,6 +182,13 @@ enum board_version {
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
 
+/* Define for sensor tasks */
+#define CONFIG_SENSOR_BATTERY_TAP 0
+#define CONFIG_GESTURE_TAP_OUTER_WINDOW_T 200
+#define CONFIG_GESTURE_TAP_INNER_WINDOW_T 30
+#define CONFIG_GESTURE_TAP_MIN_INTERSTICE_T 120
+#define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 500
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

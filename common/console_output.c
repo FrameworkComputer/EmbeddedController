@@ -39,6 +39,7 @@ static const char * const channel_names[] = {
 	"clock",
 	"dma",
 	"events",
+	"gesture",
 	"gpio",
 	"hostcmd",
 	"i2c",

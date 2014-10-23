@@ -34,6 +34,7 @@ enum console_channel {
 	CC_CLOCK,
 	CC_DMA,
 	CC_EVENTS,
+	CC_GESTURE,
 	CC_GPIO,
 	CC_HOSTCMD,
 	CC_I2C,

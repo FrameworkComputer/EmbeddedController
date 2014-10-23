@@ -131,4 +131,10 @@ struct motion_sensor_t {
 extern struct motion_sensor_t motion_sensors[];
 extern const unsigned int motion_sensor_count;
 
+/*
+ * Priority of the motion sense resume/suspend hooks, to be sure associated
+ * hooks are scheduled properly.
+ */
+#define MOTION_SENSE_HOOK_PRIO (HOOK_PRIO_DEFAULT)
+
 #endif /* __CROS_EC_MOTION_SENSE_H */

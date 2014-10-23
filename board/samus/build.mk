@@ -9,4 +9,4 @@
 # the IC is TI Stellaris LM4
 CHIP:=lm4
 
-board-y=board.o power_sequence.o panel.o extpower.o gesture.o
+board-y=board.o power_sequence.o panel.o extpower.o
