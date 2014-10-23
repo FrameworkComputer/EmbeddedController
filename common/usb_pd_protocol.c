@@ -1567,6 +1567,7 @@ void pd_task(void)
 			send_hard_reset(port);
 			/* reset our own state machine */
 			execute_hard_reset(port);
+			timeout = 10*MSEC;
 			break;
 		case PD_STATE_BIST:
 			send_bist_cmd(port);
