@@ -136,6 +136,11 @@ static void update_prescaler(void)
 	 * prescaler counter ticks down, or if forced via EGR).
 	 */
 	STM32_TIM_PSC(TIM_CLOCK32) = (clock_get_freq() / SECOND) - 1;
+
+#ifdef CONFIG_WATCHDOG_HELP
+	/* Watchdog timer runs at 1KHz */
+	STM32_TIM_PSC(TIM_WATCHDOG) = (clock_get_freq() / SECOND * MSEC) - 1;
+#endif  /* CONFIG_WATCHDOG_HELP */
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
@@ -177,3 +182,75 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	return IRQ_TIM(TIM_CLOCK32);
 }
+
+#ifdef CONFIG_WATCHDOG_HELP
+
+#define IRQ_WD IRQ_TIM(TIM_WATCHDOG)
+
+void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+{
+	/* clear status */
+	STM32_TIM_SR(TIM_WATCHDOG) = 0;
+
+	watchdog_trace(excep_lr, excep_sp);
+}
+
+void IRQ_HANDLER(IRQ_WD)(void) __attribute__((naked));
+void IRQ_HANDLER(IRQ_WD)(void)
+{
+	/* Naked call so we can extract raw LR and SP */
+	asm volatile("mov r0, lr\n"
+		     "mov r1, sp\n"
+		     /* Must push registers in pairs to keep 64-bit aligned
+		      * stack for ARM EABI.  This also conveninently saves
+		      * R0=LR so we can pass it to task_resched_if_needed. */
+		     "push {r0, lr}\n"
+		     "bl watchdog_check\n"
+		     "pop {r0, lr}\n"
+		     "b task_resched_if_needed\n");
+}
+const struct irq_priority IRQ_PRIORITY(IRQ_WD)
+	__attribute__((section(".rodata.irqprio")))
+		= {IRQ_WD, 0}; /* put the watchdog at the highest
+					    priority */
+
+void hwtimer_setup_watchdog(void)
+{
+	/* Enable clock */
+	__hw_timer_enable_clock(TIM_WATCHDOG, 1);
+
+	/*
+	 * Timer configuration : Up counter, counter disabled, update
+	 * event only on overflow.
+	 */
+	STM32_TIM_CR1(TIM_WATCHDOG) = 0x0004;
+	/* No special configuration */
+	STM32_TIM_CR2(TIM_WATCHDOG) = 0x0000;
+	STM32_TIM_SMCR(TIM_WATCHDOG) = 0x0000;
+
+	/* AUto-reload value */
+	STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS;
+
+	/* Update prescaler */
+	update_prescaler();
+
+	/* Reload the pre-scaler */
+	STM32_TIM_EGR(TIM_WATCHDOG) = 0x0001;
+
+	/* setup the overflow interrupt */
+	STM32_TIM_DIER(TIM_WATCHDOG) = 0x0001;
+	STM32_TIM_SR(TIM_WATCHDOG) = 0;
+
+	/* Start counting */
+	STM32_TIM_CR1(TIM_WATCHDOG) |= 1;
+
+	/* Enable timer interrupts */
+	task_enable_irq(IRQ_WD);
+}
+
+void hwtimer_reset_watchdog(void)
+{
+	STM32_TIM_CNT(TIM_WATCHDOG) = 0x0000;
+}
+
+#endif  /* CONFIG_WATCHDOG_HELP */
