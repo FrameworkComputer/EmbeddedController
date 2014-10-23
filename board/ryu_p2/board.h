@@ -31,7 +31,7 @@
 #define CONFIG_I2C
 #define CONFIG_LID_SWITCH
 #define CONFIG_VBOOT_HASH
-#undef CONFIG_WATCHDOG_HELP
+#define CONFIG_WATCHDOG_HELP
 #undef CONFIG_TASK_PROFILING
 #define CONFIG_INDUCTIVE_CHARGING
 #undef CONFIG_HIBERNATE
@@ -84,6 +84,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 5
+#define TIM_WATCHDOG 19
 
 #include "gpio_signal.h"
 
