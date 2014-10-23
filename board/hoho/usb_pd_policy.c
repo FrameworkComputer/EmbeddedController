@@ -125,8 +125,8 @@ static int svdm_response_svids(int port, uint32_t *payload)
 }
 
 const uint32_t vdo_dp_mode[1] =  {
-	VDO_MODE_DP(MODE_DP_PIN_E, /* sink pin cfg */
-		    0,		   /* no src pin cfg */
+	VDO_MODE_DP(0,		   /* UFP pin cfg supported : none */
+		    MODE_DP_PIN_C, /* DFP pin cfg supported */
 		    1,		   /* no usb2.0	signalling in AMode */
 		    CABLE_PLUG,	   /* its a plug */
 		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
