@@ -130,7 +130,7 @@ void uart_rx_dma_start(char *dest, int len)
 
 int uart_rx_dma_head(void)
 {
-	return dma_bytes_done(dma_get_channel(STM32_DMAC_USART1_RX),
+	return dma_bytes_done(dma_get_channel(CONFIG_UART_RX_DMA_CH),
 			      dma_rx_len);
 }
 
