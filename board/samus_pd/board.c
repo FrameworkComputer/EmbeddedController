@@ -40,6 +40,14 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+/* Charge supplier priority: lower number indicates higher priority. */
+const int supplier_priority[] = {
+	[CHARGE_SUPPLIER_PD] = 0,
+	[CHARGE_SUPPLIER_TYPEC] = 1,
+	[CHARGE_SUPPLIER_BC12] = 1,
+};
+BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
+
 void vbus0_evt(enum gpio_signal signal)
 {
 	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));

@@ -68,32 +68,32 @@ static int charge_manager_is_seeded(void)
  */
 static void charge_manager_refresh(void)
 {
-	enum charge_supplier new_supplier = CHARGE_SUPPLIER_NONE;
+	int new_supplier = CHARGE_SUPPLIER_NONE;
 	int new_port = CHARGE_PORT_NONE;
 	int new_charge_current, new_charge_voltage, i, j;
 
 	/*
 	 * Charge supplier selection logic:
-	 * 1. Prefer higher priority (lower CHARGE_SUPPLIER index) supply.
-	 * 2. Prefer higher power over lower.
+	 * 1. Prefer higher priority supply.
+	 * 2. Prefer higher power over lower in case priority is tied.
 	 * available_charge can be changed at any time by other tasks,
 	 * so make no assumptions about its consistency.
 	 */
 	for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 		for (j = 0; j < PD_PORT_COUNT; ++j)
 			if (available_charge[i][j].current > 0 &&
-			    available_charge[i][j].voltage > 0) {
+			    available_charge[i][j].voltage > 0 &&
+			    (new_supplier == CHARGE_SUPPLIER_NONE ||
+			     supplier_priority[i] <
+			     supplier_priority[new_supplier] ||
+			    (supplier_priority[i] ==
+			     supplier_priority[new_supplier] &&
+			     POWER(available_charge[i][j]) >
+			     POWER(available_charge[new_supplier]
+						   [new_port])))) {
 				new_supplier = i;
 				new_port = j;
-				goto got_supplier;
 			}
-
-got_supplier:
-	if (new_supplier != CHARGE_SUPPLIER_NONE)
-		for (i = new_port + 1; i < PD_PORT_COUNT; ++i)
-			if (POWER(available_charge[new_supplier][i]) >
-			    POWER(available_charge[new_supplier][new_port]))
-				new_port = i;
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE)
 		new_charge_current = new_charge_voltage = 0;
@@ -125,10 +125,15 @@ DECLARE_DEFERRED(charge_manager_refresh);
  * @param charge_port		Charge port to update.
  * @param charge		Charge port current / voltage.
  */
-void charge_manager_update(enum charge_supplier supplier,
+void charge_manager_update(int supplier,
 			   int charge_port,
 			   struct charge_port_info *charge)
 {
+	if (supplier < 0 || supplier >= CHARGE_SUPPLIER_COUNT) {
+		CPRINTS("Invalid charge supplier: %d", supplier);
+		return;
+	}
+
 	/* Update charge table if needed. */
 	if (available_charge[supplier][charge_port].current !=
 		charge->current ||

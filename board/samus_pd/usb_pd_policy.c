@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "charge_manager.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

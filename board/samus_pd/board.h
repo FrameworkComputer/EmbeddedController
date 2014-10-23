@@ -67,7 +67,6 @@
 #define TIM_CLOCK32 2
 #define TIM_ADC     3
 
-#include "charge_manager.h"
 #include "gpio_signal.h"
 
 /* ADC signal */
@@ -86,6 +85,17 @@ enum pwm_channel {
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
+
+/* Charge suppliers */
+enum charge_supplier {
+	CHARGE_SUPPLIER_PD,
+	CHARGE_SUPPLIER_TYPEC,
+	CHARGE_SUPPLIER_BC12,
+	CHARGE_SUPPLIER_COUNT
+};
+
+/* supplier_priority table defined in board.c */
+extern const int supplier_priority[];
 
 /* Charge current limit min / max, based on PWM duty cycle */
 #define PWM_0_MA	500
