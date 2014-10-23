@@ -133,8 +133,8 @@ int pd_set_power_supply_ready(int port)
 {
 	/* Output the correct voltage */
 	gpio_set_level(GPIO_VBUS_CHARGER_EN, 1);
-	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 2);
-	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 3);
+	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 3);
+	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 4);
 
 	return EC_SUCCESS;
 }
