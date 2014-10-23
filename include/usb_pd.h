@@ -369,20 +369,23 @@ struct pd_policy {
  * <15:8>  : source pin assignment supported
  * <7>     : USB 2.0 signaling (0b=yes, 1b=no)
  * <6>     : Plug | Receptacle (0b == plug, 1b == receptacle)
- * <5:3>   : USB Gen 2 signaling for DP (000b=no, 001b=yes, rest=rsv)
- * <2>     : supports dp1.3
+ * <5:2>   : xxx1: Supports DPv1.3, xx1x Supports USB Gen 2 signaling
+ *           Other bits are reserved.
  * <1:0>   : signal direction ( 00b=rsv, 01b=sink, 10b=src 11b=both )
  */
-#define VDO_MODE_DP(snkp, srcp, usb, gdr, usbdp, dp3, sdir)		\
+#define VDO_MODE_DP(snkp, srcp, usb, gdr, sign, sdir)			\
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
-	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((usbdp) & 0x7) << 3	\
-	 | ((dp3) & 1) << 2 | ((sdir) & 0x3))
+	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
+	 | ((sdir) & 0x3))
 
 #define MODE_DP_PIN_A 0x01
 #define MODE_DP_PIN_B 0x02
 #define MODE_DP_PIN_C 0x04
 #define MODE_DP_PIN_D 0x08
 #define MODE_DP_PIN_E 0x10
+
+#define MODE_DP_V13  0x1
+#define MODE_DP_GEN2 0x2
 
 #define MODE_DP_SNK  0x1
 #define MODE_DP_SRC  0x2
@@ -413,13 +416,13 @@ struct pd_policy {
  * <23:16> : sink pin assignment supported (same as mode caps)
  * <15:8>  : source pin assignment supported (same as mode caps)
  * <7:6>   : SBZ
- * <5:2>   : signalling : 0h == unspec'd, 1h == dp v1.3,
- *           2h == USB gen2, remaining rsv
+ * <5:2>   : signalling : 1h == DP v1.3, 2h == Gen 2
+ *           Oh is only for USB, remaining values are reserved
  * <1:0>   : cfg : 00 == USB, 01|10 == DP, 11 == reserved
  */
 #define VDO_DP_CFG(snkp, srcp, sig, cfg)				\
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
-	 | ((sig) & 0x7) << 2 | ((cfg) & 0x3))
+	 | ((sig) & 0xf) << 2 | ((cfg) & 0x3))
 
 #define PD_DP_CFG_DPON(x) (((x & 0x3) == 1) || ((x & 0x3) == 2))
 /*

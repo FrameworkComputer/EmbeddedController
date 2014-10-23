@@ -129,8 +129,7 @@ const uint32_t vdo_dp_mode[1] =  {
 		    0,		   /* no src pin cfg */
 		    1,		   /* no usb2.0	signalling in AMode */
 		    CABLE_PLUG,	   /* its a plug */
-		    0,		   /* no GEN2 usb */
-		    0,		   /* no dp 1.3 support */
+		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
 		    MODE_DP_SNK)   /* Its a sink only */
 };
 
