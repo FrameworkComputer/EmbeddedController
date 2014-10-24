@@ -180,7 +180,7 @@ static int gesture_tap_for_battery(void)
 		if (delta_z_inner > 13 * delta_z_outer &&
 		    delta_z_inner > 1 * delta_xy_inner) {
 			delta_z_inner_max = delta_z_inner;
-			state_cnt = TAP_IDLE;
+			state_cnt = 0;
 			state = TAP_IMPULSE_1;
 		}
 		break;
@@ -254,7 +254,9 @@ static int gesture_tap_for_battery(void)
 	}
 
 	/* On state transitions, print debug info */
-	if (state != state_p && tap_debug) {
+	if (tap_debug &&
+	    (state != state_p ||
+	     (state_cnt % 10000 == 9999))) {
 		/* make sure we don't divide by 0 */
 		if (delta_z_outer == 0 || delta_xy_inner == 0)
 			CPRINTS("tap st %d->%d, error div by 0",
@@ -291,7 +293,7 @@ static void gesture_chipset_suspend(void)
 	 * record a whole new set of data, and enable tap detection
 	 */
 	history_initialized = 0;
-	state = 0;
+	state = TAP_IDLE;
 	history_idx = 0;
 	tap_detection = 1;
 }
