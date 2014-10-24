@@ -64,6 +64,7 @@ BOARDS_STM32=(
 	discovery
 	firefly
 	fruitpie
+	jerry	
 	kitty
 	minimuffin
 	nyan
