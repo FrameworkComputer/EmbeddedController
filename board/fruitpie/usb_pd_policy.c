@@ -191,9 +191,15 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		return pd_custom_vdm(port, cnt, payload, rpayload);
 }
 
-static void svdm_enter_dp_mode(int port, uint32_t mode_caps)
+static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
-	CPRINTF("Entering mode w/ vdo = %08x\n", mode_caps);
+	/* Only enter mode if device is DFP_D capable */
+	if (mode_caps & MODE_DP_SNK) {
+		CPRINTF("Entering mode w/ vdo = %08x\n", mode_caps);
+		return 0;
+	}
+
+	return -1;
 }
 
 static int dp_on;

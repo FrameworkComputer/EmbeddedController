@@ -243,9 +243,15 @@ static void svdm_safe_dp_mode(int port)
 	board_set_usb_mux(port, TYPEC_MUX_NONE, pd_get_polarity(port));
 }
 
-static void svdm_enter_dp_mode(int port, uint32_t mode_caps)
+static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
-	svdm_safe_dp_mode(port);
+	/* Only enter mode if device is DFP_D capable */
+	if (mode_caps & MODE_DP_SNK) {
+		svdm_safe_dp_mode(port);
+		return 0;
+	}
+
+	return -1;
 }
 
 static int dp_on;

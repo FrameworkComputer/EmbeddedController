@@ -132,7 +132,9 @@ static int dfp_enter_mode(int port, uint32_t *payload)
 	if (!AMODE_VALID(port))
 		return 0;
 
-	modep->fx->enter(port, modep->mode_caps);
+	if (modep->fx->enter(port, modep->mode_caps) == -1)
+		return 0;
+
 	payload[0] = VDO(modep->fx->svid, 1,
 			 CMD_ENTER_MODE |
 			 VDO_OPOS((modep->index + 1)));

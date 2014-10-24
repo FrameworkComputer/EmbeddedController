@@ -130,7 +130,7 @@ struct svdm_svid_data {
 
 struct svdm_amode_fx {
 	uint16_t svid;
-	void (*enter)(int port, uint32_t mode_caps);
+	int (*enter)(int port, uint32_t mode_caps);
 	int (*status)(int port, uint32_t *payload);
 	int (*config)(int port, uint32_t *payload);
 	int (*attention)(int port, uint32_t *payload);
