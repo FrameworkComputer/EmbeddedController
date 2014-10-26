@@ -140,6 +140,12 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
+int pd_power_swap(int port)
+{
+	/* TODO: use battery level to decide to accept/reject power swap */
+	/* Always allow power swap */
+	return 1;
+}
 /* ----------------- Vendor Defined Messages ------------------ */
 static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			 uint32_t **rpayload)

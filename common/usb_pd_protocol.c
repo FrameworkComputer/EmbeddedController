@@ -175,9 +175,12 @@ static const uint8_t dec4b5b[] = {
 /* Timers */
 #define PD_T_SEND_SOURCE_CAP  (100*MSEC) /* between 100ms and 200ms */
 #define PD_T_SINK_WAIT_CAP    (240*MSEC) /* between 210ms and 250ms */
+#define PD_T_SINK_TRANSITION   (35*MSEC) /* between 20ms and 35ms */
 #define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
 #define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
 #define PD_T_PS_TRANSITION    (500*MSEC) /* between 450ms and 550ms */
+#define PD_T_PS_SOURCE_ON     (480*MSEC) /* between 390ms and 480ms */
+#define PD_T_PS_SOURCE_OFF    (920*MSEC) /* between 750ms and 920ms */
 #define PD_T_DRP_HOLD         (120*MSEC) /* between 100ms and 150ms */
 #define PD_T_DRP_LOCK         (120*MSEC) /* between 100ms and 150ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
@@ -217,8 +220,10 @@ static int new_power_request;
 #endif
 
 static struct pd_protocol {
-	/* current port role */
-	uint8_t role;
+	/* current port power role (SOURCE or SINK) */
+	uint8_t power_role;
+	/* current port data role (DFP or UFP) */
+	uint8_t data_role;
 	/* 3-bit rolling message ID counter */
 	uint8_t msg_id;
 	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
@@ -288,7 +293,7 @@ int pd_is_connected(int port)
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Check if sink is connected */
-	if (pd[port].role == PD_ROLE_SINK)
+	if (pd[port].power_role == PD_ROLE_SINK)
 		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED;
 #endif
 	/* Must be a source */
@@ -308,6 +313,7 @@ static inline void set_state(int port, enum pd_states next_state)
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 		pd[port].dev_id = 0;
 		pd[port].drp_partner = 0;
+		pd[port].data_role = PD_ROLE_DFP;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_exit_mode(port, NULL);
 #else
@@ -323,6 +329,7 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	else if (next_state == PD_STATE_SNK_DISCONNECTED) {
 		pd[port].drp_partner = 0;
+		pd[port].data_role = PD_ROLE_UFP;
 	}
 #endif
 
@@ -514,8 +521,8 @@ static int send_validate_message(int port, uint16_t header,
 static int send_control(int port, int type)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(type, pd[port].role,
-			pd[port].msg_id, 0);
+	uint16_t header = PD_HEADER(type, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, 0);
 
 	bit_len = send_validate_message(port, header, 0, NULL);
 
@@ -527,7 +534,8 @@ static int send_control(int port, int type)
 
 static void send_goodcrc(int port, int id)
 {
-	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd[port].role, id, 0);
+	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd[port].power_role,
+			pd[port].data_role, id, 0);
 	int bit_len = prepare_message(port, header, 0, NULL);
 
 	/* If PD communication is disabled, return */
@@ -548,8 +556,8 @@ static int send_source_cap(int port)
 	const uint32_t *src_pdo = pd_src_pdo;
 	const int src_pdo_cnt = pd_src_pdo_cnt;
 #endif
-	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].role,
-			pd[port].msg_id, src_pdo_cnt);
+	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, src_pdo_cnt);
 
 	bit_len = send_validate_message(port, header, src_pdo_cnt, src_pdo);
 	if (debug_level >= 1)
@@ -562,8 +570,8 @@ static int send_source_cap(int port)
 static void send_sink_cap(int port)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].role,
-			pd[port].msg_id, pd_snk_pdo_cnt);
+	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt);
 
 	bit_len = send_validate_message(port, header, pd_snk_pdo_cnt,
 					pd_snk_pdo);
@@ -574,8 +582,8 @@ static void send_sink_cap(int port)
 static int send_request(int port, uint32_t rdo)
 {
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].role,
-			pd[port].msg_id, 1);
+	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, 1);
 
 	bit_len = send_validate_message(port, header, 1, &rdo);
 	if (debug_level >= 1)
@@ -590,8 +598,8 @@ static int send_bist_cmd(int port)
 	/* currently only support sending bist carrier 2 */
 	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
 	int bit_len;
-	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].role,
-			pd[port].msg_id, 1);
+	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, 1);
 
 	bit_len = send_validate_message(port, header, 1, &bdo);
 	CPRINTF("BIST>%d\n", bit_len);
@@ -664,7 +672,9 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 	rlen = pd_vdm(port, cnt, payload, &rdata);
 	if (rlen > 0) {
 		uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF,
-					    pd[port].role, pd[port].msg_id,
+					    pd[port].power_role,
+					    pd[port].data_role,
+					    pd[port].msg_id,
 					    rlen);
 		send_validate_message(port, header, rlen, rdata);
 		return;
@@ -678,7 +688,8 @@ static void execute_hard_reset(int port)
 {
 	pd[port].msg_id = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	set_state(port, pd[port].role == PD_ROLE_SINK ?
+	/* Go to source or sink role based on original power role */
+	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
 		PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
 
 	/* Clear the input current limit */
@@ -698,7 +709,7 @@ static void execute_soft_reset(int port)
 {
 	pd[port].msg_id = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	set_state(port, pd[port].role == PD_ROLE_SINK ?
+	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
 			PD_STATE_SNK_DISCOVERY : PD_STATE_SRC_DISCOVERY);
 #else
 	set_state(port, PD_STATE_SRC_DISCOVERY);
@@ -778,7 +789,7 @@ static void handle_data_request(int port, uint16_t head,
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_DATA_REQUEST:
-		if ((pd[port].role == PD_ROLE_SOURCE) && (cnt == 1))
+		if ((pd[port].power_role == PD_ROLE_SOURCE) && (cnt == 1))
 			if (!pd_request_voltage(payload[0])) {
 				send_control(port, PD_CTRL_ACCEPT);
 				set_state(port, PD_STATE_SRC_ACCEPTED);
@@ -834,38 +845,76 @@ static void handle_ctrl_request(int port, uint16_t head,
 	case PD_CTRL_GOTO_MIN:
 		break;
 	case PD_CTRL_PS_RDY:
-		if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
+		if (pd[port].task_state == PD_STATE_SNK_SWAP_SRC_DISABLE) {
+			set_state(port, PD_STATE_SNK_SWAP_STANDBY);
+		} else if (pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY) {
+			/* reset message ID and swap roles */
+			pd[port].msg_id = 0;
+			pd[port].power_role = PD_ROLE_SINK;
+			set_state(port, PD_STATE_SNK_DISCOVERY);
+		} else if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
 			/* Don't know what power source is ready. Reset. */
 			set_state(port, PD_STATE_HARD_RESET);
-		} else if (pd[port].role == PD_ROLE_SINK) {
+		} else if (pd[port].power_role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
 			pd_set_input_current_limit(port, pd[port].curr_limit,
 						   pd[port].supply_voltage);
 		}
 		break;
 	case PD_CTRL_REJECT:
-		set_state(port, PD_STATE_SNK_DISCOVERY);
+		if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
+			set_state(port, PD_STATE_SRC_READY);
+		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
+			set_state(port, PD_STATE_SNK_READY);
+		else
+			set_state(port, PD_STATE_SNK_DISCOVERY);
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_CTRL_ACCEPT:
 		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-			set_state(port, pd[port].role == PD_ROLE_SINK ?
+			set_state(port, pd[port].power_role == PD_ROLE_SINK ?
 					PD_STATE_SNK_DISCOVERY :
 					PD_STATE_SRC_DISCOVERY);
 #else
 			set_state(port, PD_STATE_SRC_DISCOVERY);
 #endif
 		}
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
+			set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
+		} else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT) {
+			set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
+		}
+#endif
 		break;
 	case PD_CTRL_SOFT_RESET:
 		execute_soft_reset(port);
 		/* We are done, acknowledge with an Accept packet */
 		send_control(port, PD_CTRL_ACCEPT);
 		break;
+	case PD_CTRL_PR_SWAP:
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (pd_power_swap(port)) {
+			send_control(port, PD_CTRL_ACCEPT);
+			if (pd[port].power_role == PD_ROLE_SINK)
+				set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
+			else
+				set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
+		} else {
+			send_control(port, PD_CTRL_REJECT);
+		}
+		break;
+#endif
 	case PD_CTRL_PROTOCOL_ERR:
-	case PD_CTRL_SWAP:
 	case PD_CTRL_WAIT:
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
+			set_state(port, PD_STATE_SRC_READY);
+		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
+			set_state(port, PD_STATE_SNK_READY);
+		break;
+#endif
 	default:
 		CPRINTF("Unhandled ctrl message type %d\n", type);
 	}
@@ -1099,8 +1148,9 @@ static void pd_vdm_send_state_machine(int port)
 		}
 
 		/* Prepare and send VDM */
-		header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].role,
-			pd[port].msg_id, (int)pd[port].vdo_count);
+		header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
+				   pd[port].data_role, pd[port].msg_id,
+				   (int)pd[port].vdo_count);
 		res = send_validate_message(port, header,
 				    pd[port].vdo_count,
 				    pd[port].vdo_data);
@@ -1150,11 +1200,11 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		 * state is force sink OR new DRP state is toggle off and we
 		 * are in the source disconnected state).
 		 */
-		if (pd[i].role == PD_ROLE_SOURCE &&
+		if (pd[i].power_role == PD_ROLE_SOURCE &&
 		    (drp_state == PD_DRP_FORCE_SINK ||
 		     (drp_state == PD_DRP_TOGGLE_OFF
 		      && pd[i].task_state == PD_STATE_SRC_DISCONNECTED))) {
-			pd[i].role = PD_ROLE_SINK;
+			pd[i].power_role = PD_ROLE_SINK;
 			set_state(i, PD_STATE_SNK_DISCONNECTED);
 			pd_set_host_mode(i, 0);
 			task_wake(PORT_TO_TASK_ID(i));
@@ -1164,9 +1214,9 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		 * Change to source if port is currently a sink and the
 		 * new DRP state is force source.
 		 */
-		if (pd[i].role == PD_ROLE_SINK &&
+		if (pd[i].power_role == PD_ROLE_SINK &&
 		    drp_state == PD_DRP_FORCE_SOURCE) {
-			pd[i].role = PD_ROLE_SOURCE;
+			pd[i].power_role = PD_ROLE_SOURCE;
 			set_state(i, PD_STATE_SRC_DISCONNECTED);
 			pd_set_host_mode(i, 1);
 			task_wake(PORT_TO_TASK_ID(i));
@@ -1176,7 +1226,19 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 
 int pd_get_role(int port)
 {
-	return pd[port].role;
+	return pd[port].power_role;
+}
+
+static int pd_is_power_swapping(int port)
+{
+	/* return true if in the act of swapping power roles */
+	return  pd[port].task_state == PD_STATE_SNK_SWAP_SNK_DISABLE ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_SRC_DISABLE ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_SNK_DISABLE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_SRC_DISABLE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY;
 }
 
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -1264,7 +1326,8 @@ void pd_task(void)
 	pd_tx_init();
 
 	/* Initialize PD protocol state variables for each port. */
-	pd[port].role = PD_ROLE_DEFAULT;
+	pd[port].power_role = PD_ROLE_DEFAULT;
+	pd[port].data_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
 	pd[port].ping_enabled = 0;
 	set_state(port, PD_DEFAULT_STATE);
@@ -1358,7 +1421,7 @@ void pd_task(void)
 			else if (drp_state != PD_DRP_FORCE_SOURCE &&
 				 (get_time().val >= next_role_swap ||
 				  pd_snk_is_vbus_provided(port))) {
-				pd[port].role = PD_ROLE_SINK;
+				pd[port].power_role = PD_ROLE_SINK;
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 				pd_set_host_mode(port, 0);
 				next_role_swap = get_time().val + PD_T_DRP_SNK;
@@ -1396,7 +1459,6 @@ void pd_task(void)
 					get_time().val +
 					PD_POWER_SUPPLY_TRANSITION_DELAY,
 					PD_STATE_SRC_TRANSITION);
-			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SRC_TRANSITION:
 			res = pd_set_power_supply_ready(port);
@@ -1416,7 +1478,8 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_READY:
 			timeout = PD_T_SOURCE_ACTIVITY;
-			if (pd[port].last_state != pd[port].task_state) {
+			if (pd[port].last_state != pd[port].task_state &&
+			    pd[port].data_role == PD_ROLE_DFP) {
 				/* Get sink cap to know if dual-role device */
 				send_control(port, PD_CTRL_GET_SINK_CAP);
 				break;
@@ -1456,6 +1519,51 @@ void pd_task(void)
 			timeout = 10 * MSEC;
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+		case PD_STATE_SRC_SWAP_INIT:
+			if (pd[port].last_state != pd[port].task_state) {
+				res = send_control(port, PD_CTRL_PR_SWAP);
+				if (res < 0)
+					set_state(port, PD_STATE_HARD_RESET);
+				/* Wait for accept or reject */
+				set_state_timeout(port,
+						  get_time().val + 200*MSEC,
+						  PD_STATE_SRC_READY);
+			}
+			break;
+		case PD_STATE_SRC_SWAP_SNK_DISABLE:
+			/* Give time for sink to stop drawing current */
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SINK_TRANSITION,
+						  PD_STATE_SRC_SWAP_SRC_DISABLE);
+			break;
+		case PD_STATE_SRC_SWAP_SRC_DISABLE:
+			/* Turn power off */
+			if (pd[port].last_state != pd[port].task_state) {
+				pd_power_supply_reset(port);
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_POWER_SUPPLY_TRANSITION_DELAY,
+						  PD_STATE_SRC_SWAP_STANDBY);
+			}
+			break;
+		case PD_STATE_SRC_SWAP_STANDBY:
+			/* Send PS_RDY to let sink know our power is off */
+			if (pd[port].last_state != pd[port].task_state) {
+				/* Send PS_RDY */
+				res = send_control(port, PD_CTRL_PS_RDY);
+				if (res < 0)
+					set_state(port, PD_STATE_HARD_RESET);
+				/* Switch to Rd */
+				pd_set_host_mode(port, 0);
+				/* Wait for PD_RDY from sink */
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_PS_SOURCE_ON,
+						  PD_STATE_HARD_RESET);
+			}
+			break;
 		case PD_STATE_SUSPENDED:
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
@@ -1521,7 +1629,7 @@ void pd_task(void)
 			if (drp_state == PD_DRP_TOGGLE_ON &&
 				   get_time().val >= next_role_swap) {
 				/* Swap roles to source */
-				pd[port].role = PD_ROLE_SOURCE;
+				pd[port].power_role = PD_ROLE_SOURCE;
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				pd_set_host_mode(port, 1);
 				next_role_swap = get_time().val + PD_T_DRP_SRC;
@@ -1542,7 +1650,6 @@ void pd_task(void)
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
 						  PD_STATE_HARD_RESET);
-			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_REQUESTED:
 			/* Ensure the power supply actually becomes ready */
@@ -1552,21 +1659,83 @@ void pd_task(void)
 			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_TRANSITION:
-			/* Wait for PS_READY */
+			/* Wait for PS_RDY */
 			if (pd[port].last_state != pd[port].task_state)
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_PS_TRANSITION,
 						  PD_STATE_HARD_RESET);
-			timeout = 10 * MSEC;
 			break;
 		case PD_STATE_SNK_READY:
+			/* if DFP, send SVDM on entry */
+			if (pd[port].last_state != pd[port].task_state &&
+			    pd[port].data_role == PD_ROLE_DFP) {
+				pd_send_vdm(port, USB_SID_PD,
+					    CMD_DISCOVER_IDENT, NULL, 0);
+			}
+
 			/* we have power, check vitals from time to time */
 			if (new_power_request) {
 				pd_send_request_msg(port);
 				new_power_request = 0;
 			}
 			timeout = 100*MSEC;
+			break;
+		case PD_STATE_SNK_SWAP_INIT:
+			if (pd[port].last_state != pd[port].task_state) {
+				res = send_control(port, PD_CTRL_PR_SWAP);
+				if (res < 0)
+					set_state(port, PD_STATE_HARD_RESET);
+				/* Wait for accept or reject */
+				set_state_timeout(port,
+						  get_time().val + 200*MSEC,
+						  PD_STATE_SNK_READY);
+			}
+			break;
+		case PD_STATE_SNK_SWAP_SNK_DISABLE:
+			/* Stop drawing power */
+			pd_set_input_current_limit(port, 0, 0);
+#ifdef CONFIG_CHARGE_MANAGER
+			typec_set_input_current_limit(port, 0, 0);
+#endif
+			set_state(port, PD_STATE_SNK_SWAP_SRC_DISABLE);
+			timeout = 10*MSEC;
+			break;
+		case PD_STATE_SNK_SWAP_SRC_DISABLE:
+			/* Wait for PS_RDY */
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_PS_SOURCE_OFF,
+						  PD_STATE_HARD_RESET);
+			break;
+		case PD_STATE_SNK_SWAP_STANDBY:
+			if (pd[port].last_state != pd[port].task_state) {
+				/* Switch to Rp and enable power supply */
+				pd_set_host_mode(port, 1);
+				if (pd_set_power_supply_ready(port)) {
+					set_state(port, PD_STATE_HARD_RESET);
+					break;
+				}
+				/* Wait for power supply to turn on */
+				set_state_timeout(
+					port,
+					get_time().val +
+					PD_POWER_SUPPLY_TRANSITION_DELAY,
+					PD_STATE_SNK_SWAP_COMPLETE);
+			}
+			break;
+		case PD_STATE_SNK_SWAP_COMPLETE:
+			/* Send PS_RDY and change to source role */
+			res = send_control(port, PD_CTRL_PS_RDY);
+			if (res < 0)
+				set_state(port, PD_STATE_HARD_RESET);
+
+			caps_count = 0;
+			pd[port].msg_id = 0;
+			pd[port].power_role = PD_ROLE_SOURCE;
+			set_state(port, PD_STATE_SRC_DISCOVERY);
+			timeout = 10*MSEC;
 			break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_SOFT_RESET:
@@ -1612,15 +1781,20 @@ void pd_task(void)
 		 * timeout value to wake up on the next state timeout.
 		 */
 		now = get_time();
-		if (pd[port].timeout && now.val >= pd[port].timeout)
+		if (pd[port].timeout && now.val >= pd[port].timeout) {
 			set_state(port, pd[port].timeout_state);
-		else if (pd[port].timeout - now.val < timeout)
+			/* On a state timeout, run next state soon */
+			timeout = timeout < 10*MSEC ? timeout : 10*MSEC;
+		} else if (pd[port].timeout - now.val < timeout) {
 			timeout = pd[port].timeout - now.val;
+		}
 
 		/* Check for disconnection */
-		if (!pd_is_connected(port))
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (!pd_is_connected(port) || pd_is_power_swapping(port))
 			continue;
-		if (pd[port].role == PD_ROLE_SOURCE) {
+#endif
+		if (pd[port].power_role == PD_ROLE_SOURCE) {
 			/* Source: detect disconnect by monitoring CC */
 			cc1_volt = pd_adc_read(port, pd[port].polarity);
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1638,7 +1812,7 @@ void pd_task(void)
 			}
 		}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (pd[port].role == PD_ROLE_SINK &&
+		if (pd[port].power_role == PD_ROLE_SINK &&
 		    !pd_snk_is_vbus_provided(port)) {
 			/* Sink: detect disconnect by monitoring VBUS */
 			set_state(port, PD_STATE_SNK_DISCONNECTED);
@@ -1812,7 +1986,7 @@ void pd_request_source_voltage(int port, int mv)
 		/* Set flag to send new power request in pd_task */
 		new_power_request = 1;
 	} else {
-		pd[port].role = PD_ROLE_SINK;
+		pd[port].power_role = PD_ROLE_SINK;
 		pd_set_host_mode(port, 0);
 		set_state(port, PD_STATE_SNK_DISCONNECTED);
 	}
@@ -1907,7 +2081,7 @@ static int command_pd(int argc, char **argv)
 		set_state(port, PD_STATE_BIST);
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strcasecmp(argv[2], "charger")) {
-		pd[port].role = PD_ROLE_SOURCE;
+		pd[port].power_role = PD_ROLE_SOURCE;
 		pd_set_host_mode(port, 1);
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		task_wake(PORT_TO_TASK_ID(port));
@@ -1939,6 +2113,19 @@ static int command_pd(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
 		set_state(port, PD_STATE_SOFT_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strncasecmp(argv[2], "swap", 4)) {
+		if (argc < 4)
+			return EC_ERROR_PARAM_COUNT;
+
+		if (!strncasecmp(argv[3], "power", 5)) {
+			if (pd[port].power_role == PD_ROLE_SINK)
+				set_state(port, PD_STATE_SNK_SWAP_INIT);
+			else
+				set_state(port, PD_STATE_SRC_SWAP_INIT);
+			task_wake(PORT_TO_TASK_ID(port));
+		} else {
+			return EC_ERROR_PARAM3;
+		}
 	} else if (!strncasecmp(argv[2], "ping", 4)) {
 		int enable;
 
@@ -1976,17 +2163,24 @@ static int command_pd(int argc, char **argv)
 			"DISABLED", "SUSPENDED",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SNK_DISCONNECTED", "SNK_DISCOVERY", "SNK_REQUESTED",
-			"SNK_TRANSITION", "SNK_READY",
+			"SNK_TRANSITION", "SNK_READY", "SNK_SWAP_INIT",
+			"SNK_SWAP_SNK_DISABLE", "SNK_SWAP_SRC_DISABLE",
+			"SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 			"SRC_DISCONNECTED", "SRC_DISCOVERY", "SRC_NEGOCIATE",
 			"SRC_ACCEPTED", "SRC_TRANSITION", "SRC_READY",
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
+			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 			"SOFT_RESET", "HARD_RESET", "BIST",
 		};
 		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
-		ccprintf("Port C%d, %s - Role: %s Polarity: CC%d DRP: %d, "
+		ccprintf("Port C%d, %s - Role: %s-%s Polarity: CC%d DRP: %d, "
 			 "State: %s\n",
 			port, pd_comm_enabled ? "Enabled" : "Disabled",
-			pd[port].role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+			pd[port].power_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			pd[port].polarity + 1, pd[port].drp_partner,
 			state_names[pd[port].task_state]);
 	} else {
@@ -1998,7 +2192,8 @@ static int command_pd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"dualrole|dump|enable [0|1]|rwhashtable|\n\t<port> "
 			"[tx|bist|charger|clock|dev"
-			"|soft|hash|hard|ping|state|vdm [ping | curr]]",
+			"|soft|hash|hard|ping|state|swap [power|data]|"
+			"vdm [ping | curr]]",
 			"USB PD",
 			NULL);
 
@@ -2093,7 +2288,7 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 				  pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
 	r->enabled = pd_comm_enabled;
-	r->role = pd[p->port].role;
+	r->role = pd[p->port].power_role;
 	r->polarity = pd[p->port].polarity;
 	r->state = pd[p->port].task_state;
 	args->response_size = sizeof(*r);

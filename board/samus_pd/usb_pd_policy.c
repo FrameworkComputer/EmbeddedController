@@ -162,6 +162,12 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
+int pd_power_swap(int port)
+{
+	/* TODO: use battery level to decide to accept/reject power swap */
+	/* Always allow power swap */
+	return 1;
+}
 /* ----------------- Vendor Defined Messages ------------------ */
 const struct svdm_response svdm_rsp = {
 	.identity = NULL,

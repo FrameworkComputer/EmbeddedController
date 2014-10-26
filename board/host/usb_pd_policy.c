@@ -125,6 +125,12 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
+int pd_power_swap(int port)
+{
+	/* Always allow power swap */
+	return 1;
+}
+
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	return 0;

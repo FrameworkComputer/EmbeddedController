@@ -153,3 +153,9 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
+int pd_power_swap(int port)
+{
+	/* Always allow power swap */
+	return 1;
+}
+

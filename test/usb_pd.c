@@ -102,13 +102,14 @@ static void simulate_rx_msg(int port, uint16_t header, int cnt,
 static void simulate_source_cap(int port)
 {
 	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, PD_ROLE_SOURCE,
-				    pd_port[port].msg_rx_id, pd_src_pdo_cnt);
+				    PD_ROLE_DFP, pd_port[port].msg_rx_id,
+				    pd_src_pdo_cnt);
 	simulate_rx_msg(port, header, pd_src_pdo_cnt, pd_src_pdo);
 }
 
 static void simulate_goodcrc(int port, int role, int id)
 {
-	simulate_rx_msg(port, PD_HEADER(PD_CTRL_GOOD_CRC, role, id, 0),
+	simulate_rx_msg(port, PD_HEADER(PD_CTRL_GOOD_CRC, role, role, id, 0),
 			0, NULL);
 }
 
@@ -116,7 +117,7 @@ static int verify_goodcrc(int port, int role, int id)
 {
 	return pd_test_tx_msg_verify_sop(0) &&
 	       pd_test_tx_msg_verify_short(0, PD_HEADER(PD_CTRL_GOOD_CRC,
-							role, id, 0)) &&
+							role, role, id, 0)) &&
 	       pd_test_tx_msg_verify_crc(0) &&
 	       pd_test_tx_msg_verify_eop(0);
 }
@@ -162,7 +163,7 @@ static int test_request(void)
 	/* Process the request */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(0));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(0,
-			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK,
+			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
 				  pd_port[0].msg_tx_id, 1)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(0, RDO_FIXED(2, 450, 900, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(0));
@@ -187,7 +188,8 @@ static int test_sink(void)
 	TEST_ASSERT(pd_test_tx_msg_verify_sop(1));
 	TEST_ASSERT(pd_test_tx_msg_verify_short(1,
 			PD_HEADER(PD_DATA_SOURCE_CAP, PD_ROLE_SOURCE,
-				  pd_port[1].msg_tx_id, pd_src_pdo_cnt)));
+				  PD_ROLE_DFP, pd_port[1].msg_tx_id,
+				  pd_src_pdo_cnt)));
 	for (i = 0; i < pd_src_pdo_cnt; ++i)
 		TEST_ASSERT(pd_test_tx_msg_verify_word(1, pd_src_pdo[i]));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(1));
