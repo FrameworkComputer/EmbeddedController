@@ -92,11 +92,16 @@ static void keyboard_irq_assert(void)
 	 * following falling edge, regardless of the line state before this
 	 * function call.
 	 */
+	uint64_t tstop = get_time().val + MSEC;
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
 	udelay(4);
 	/* Generate a falling edge */
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 0);
-	udelay(4);
+	/* Wait for host senses the interrupt and gets the char. */
+	do {
+		if (get_time().val > tstop)
+			break;
+	} while (lpc_keyboard_has_char());
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
 }
