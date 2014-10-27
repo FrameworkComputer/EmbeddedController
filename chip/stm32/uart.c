@@ -282,6 +282,15 @@ void uart_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+	/*
+	 * Wake up on start bit detection. WUS can only be written when UE=0,
+	 * so clear UE first.
+	 */
+	STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_UE;
+	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUS_START_BIT;
+#endif
+
 	/*
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * TX and RX enabled.
@@ -297,7 +306,9 @@ void uart_init(void)
 	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_DMAT;
 #else
 	/* DMA disabled, special modes disabled, error interrupt disabled */
-	STM32_USART_CR3(UARTN_BASE) = 0x0000;
+	STM32_USART_CR3(UARTN_BASE) &= ~STM32_USART_CR3_DMAR &
+				       ~STM32_USART_CR3_DMAT &
+				       ~STM32_USART_CR3_EIE;
 #endif
 
 #ifdef CONFIG_UART_RX_DMA

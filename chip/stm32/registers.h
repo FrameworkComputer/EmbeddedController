@@ -176,7 +176,7 @@
 #define STM32_USART4_BASE          0x40004c00
 
 #define STM32_USART_BASE(n)           CONCAT3(STM32_USART, n, _BASE)
-#define STM32_USART_REG(base, offset) REG16((base) + (offset))
+#define STM32_USART_REG(base, offset) REG32((base) + (offset))
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
@@ -190,9 +190,12 @@
 #define STM32_USART_CR1_OVER8		(1 << 15)
 #define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
 #define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x08)
+#define STM32_USART_CR3_EIE		(1 << 0)
 #define STM32_USART_CR3_DMAR		(1 << 6)
 #define STM32_USART_CR3_DMAT		(1 << 7)
 #define STM32_USART_CR3_ONEBIT		(1 << 11)
+#define STM32_USART_CR3_WUS_START_BIT	(2 << 20)
+#define STM32_USART_CR3_WUFIE		(1 << 22)
 #define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x0C)
 #define STM32_USART_GTPR(base)     STM32_USART_REG(base, 0x10)
 #define STM32_USART_RTOR(base)     STM32_USART_REG(base, 0x14)

@@ -328,15 +328,17 @@ void clock_refresh_console_in_use(void)
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 static void enable_serial_wakeup(int enable)
 {
-	if (enable)
+	if (enable) {
 		/*
 		 * Allow UART wake up from STOP mode. Note, UART clock must
 		 * be HSI(8MHz) for wakeup to work.
 		 */
 		STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UESM;
-	else
+		STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUFIE;
+	} else {
 		/* Disable wake up from STOP mode. */
 		STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_UESM;
+	}
 }
 #else
 static void enable_serial_wakeup(int enable)
