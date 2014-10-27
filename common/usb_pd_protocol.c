@@ -1193,12 +1193,10 @@ void pd_ping_enable(int port, int enable)
 }
 
 #ifdef CONFIG_CHARGE_MANAGER
-/*
- * Initialize type C and PD current limits based upon cc_voltage. The PD
- * current limit may be revised upward (or downward to zero) depending on
- * PD negotiation.
+/**
+ * Returns type C current limit (mA) based upon cc_voltage (mV).
  */
-void pd_init_current_limits(int port, int cc_voltage)
+static inline int get_typec_current_limit(int cc_voltage)
 {
 	int charge;
 
@@ -1211,18 +1209,8 @@ void pd_init_current_limits(int port, int cc_voltage)
 		charge = 500;
 	else
 		charge = 0;
-	typec_set_input_current_limit(port, charge, TYPE_C_VOLTAGE);
 
-	/*
-	 * Set the initial PD current limit based upon cc_voltage. If a PD
-	 * charger is attached, this will get changed upward later once
-	 * negotiation is complete.
-	 */
-	if (cc_voltage > PD_SNK_VA)
-		charge = PD_MIN_MA;
-	else
-		charge = 0;
-	pd_set_input_current_limit(port, charge, PD_MIN_MV);
+	return charge;
 }
 #endif /* CONFIG_CHARGE_MANAGER */
 
@@ -1464,11 +1452,13 @@ void pd_task(void)
 					pd[port].msg_id = 0;
 #ifdef CONFIG_CHARGE_MANAGER
 					initialized[port] = 1;
-					pd_init_current_limits(port,
-							       pd[port].
-							       polarity ?
-							       cc2_volt :
-							       cc1_volt);
+					typec_set_input_current_limit(
+					  port,
+					  get_typec_current_limit(pd[port].
+								  polarity ?
+								  cc2_volt :
+								  cc1_volt),
+					  TYPE_C_VOLTAGE);
 #endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
@@ -1483,7 +1473,8 @@ void pd_task(void)
 			 */
 			if (!initialized[port]) {
 				initialized[port] = 1;
-				pd_init_current_limits(port, 0);
+				typec_set_input_current_limit(port, 0, 0);
+				pd_set_input_current_limit(port, 0, 0);
 			}
 #endif
 			/*
@@ -1519,6 +1510,7 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_REQUESTED:
 			/* Ensure the power supply actually becomes ready */
+			pd_set_input_current_limit(port, PD_MIN_MA, PD_MIN_MV);
 			set_state(port, PD_STATE_SNK_TRANSITION);
 			hard_reset_count = 0;
 			timeout = 10 * MSEC;
