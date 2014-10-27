@@ -2323,6 +2323,17 @@ static int cmd_lightbar(int argc, char **argv)
 		sizeof(((struct ec_params_motion_sense *)0)->SUBCMD) \
 		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
 		sizeof(((struct ec_response_motion_sense *)0)->SUBCMD) }
+/*
+ * For ectool only, assume no more than 16 sensors.
+ * More advanced implementation would allocate the right amount of
+ * memory depending on the number of sensors.
+ */
+#define ECTOOL_MAX_SENSOR 16
+#define MS_DATA_SIZE() { \
+		sizeof(((struct ec_params_motion_sense *)0)->data) \
+		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
+		sizeof(((struct ec_response_motion_sense *)0)->data) \
+		+ ECTOOL_MAX_SENSOR * sizeof(struct sensor_data) }
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
@@ -2333,6 +2344,8 @@ static const struct {
 	MS_SIZES(sensor_odr),
 	MS_SIZES(sensor_range),
 	MS_SIZES(kb_wake_angle),
+	MS_SIZES(status),
+	MS_DATA_SIZE(),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
