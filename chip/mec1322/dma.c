@@ -29,6 +29,9 @@ void dma_disable(enum dma_channel channel)
 
 	if (chan->ctrl & (1 << 0))
 		chan->ctrl &= ~(1 << 0);
+
+	if (chan->act == 1)
+		chan->act = 0;
 }
 
 /**
@@ -83,7 +86,9 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
 void dma_start_rx(const struct dma_option *option, unsigned count,
 		  void *memory)
 {
-	mec1322_dma_chan_t *chan = dma_get_channel(option->channel);
+	mec1322_dma_chan_t *chan;
+
+	chan = dma_get_channel(option->channel);
 
 	prepare_channel(chan, count, option->periph, memory,
 			MEC1322_DMA_INC_MEM | MEC1322_DMA_DEV(option->channel) |
@@ -110,6 +115,9 @@ int dma_wait(enum dma_channel channel)
 {
 	mec1322_dma_chan_t *chan = dma_get_channel(channel);
 	timestamp_t deadline;
+
+	if (chan->act == 0)
+		return EC_SUCCESS;
 
 	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
 	while (!(chan->int_status & 0x4)) {

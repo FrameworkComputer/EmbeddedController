@@ -22,6 +22,11 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_EXTPOWER_GPIO
 
+#define CONFIG_SPI
+#define CONFIG_SPI_PORT 1
+#define CONFIG_SPI_CS_GPIO GPIO_PVT_CS0
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SIZE 4194304
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
 #undef CONFIG_EOPTION
@@ -33,10 +38,6 @@
 #undef CONFIG_FANS
 #undef CONFIG_ADC
 #undef CONFIG_WAKE_PIN
-#undef CONFIG_SPI
-#undef CONFIG_SPI_PORT
-#undef CONFIG_SPI_CS_GPIO
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

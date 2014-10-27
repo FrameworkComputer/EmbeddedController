@@ -31,7 +31,7 @@ UNIMPLEMENTED(PCH_RCIN_L)
 GPIO(PCH_SMI_L,         PORT(4),  4, GPIO_ODR_HIGH,                             NULL)                   /* SMI output */
 GPIO(PCH_WAKE_L,        PORT(6),  6, GPIO_ODR_HIGH,                             NULL)                   /* PCH wake pin */
 GPIO(KBD_KSO2,          PORT(10), 1, GPIO_KB_OUTPUT_COL2,                       NULL)                   /* Negative edge triggered irq. */
-
+GPIO(PVT_CS0,        	PORT(14), 6, GPIO_ODR_HIGH,                             NULL)                   /* SPI PVT Chip select */
 /*
  * Signals which aren't implemented on MEC1322 eval board but we'll
  * emulate anyway, to make it more convenient to debug other code.
@@ -51,3 +51,5 @@ ALTERNATE(PORT(11), 0x9e,     1, MODULE_LPC,           0)                       
 ALTERNATE(PORT(11), 0x40,     1, MODULE_LPC,           GPIO_INT_BOTH)           /* 116: LRESET# */
 ALTERNATE(PORT(12), 0x01,     1, MODULE_LPC,           0)                       /* 120: LFRAME# */
 ALTERNATE(PORT(5),  0x10,     1, MODULE_SPI,           0)
+ALTERNATE(PORT(16), 0x10,     1, MODULE_SPI,           0)
+ALTERNATE(PORT(15), 0x8,      1, MODULE_SPI,           0)

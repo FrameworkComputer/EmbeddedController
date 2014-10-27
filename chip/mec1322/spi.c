@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "timer.h"
 #include "util.h"
+#include "hooks.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
@@ -23,7 +24,7 @@
 #define SPI_DMA_CHANNEL (MEC1322_DMAC_SPI0_RX + CONFIG_SPI_PORT * 2)
 
 static const struct dma_option spi_rx_option = {
-	SPI_DMA_CHANNEL, (void *)&MEC1322_SPI_RD(0),
+	SPI_DMA_CHANNEL, (void *)&MEC1322_SPI_RD(CONFIG_SPI_PORT),
 	MEC1322_DMA_XFER_SIZE(1)
 };
 
@@ -74,9 +75,10 @@ int spi_transaction_async(const uint8_t *txdata, int txlen,
 	/* Enable auto read */
 	MEC1322_SPI_CR(CONFIG_SPI_PORT) |= 1 << 5;
 
-	dma_start_rx(&spi_rx_option, rxlen, rxdata);
-	MEC1322_SPI_TD(CONFIG_SPI_PORT) = 0;
-
+	if (rxlen != 0) {
+		dma_start_rx(&spi_rx_option, rxlen, rxdata);
+		MEC1322_SPI_TD(CONFIG_SPI_PORT) = 0;
+	}
 	return ret;
 }
 
@@ -85,15 +87,25 @@ int spi_transaction_flush(void)
 	int ret = dma_wait(SPI_DMA_CHANNEL);
 	uint8_t dummy __attribute__((unused)) = 0;
 
+	timestamp_t deadline;
+
 	/* Disable auto read */
 	MEC1322_SPI_CR(CONFIG_SPI_PORT) &= ~(1 << 5);
 
-	gpio_set_level(CONFIG_SPI_CS_GPIO, 1);
+	deadline.val = get_time().val + SPI_BYTE_TRANSFER_TIMEOUT_US;
+	/* Wait for FIFO empty SPISR_TXBE */
+	while ((MEC1322_SPI_SR(CONFIG_SPI_PORT) & 0x01) != 0x1) {
+		if (timestamp_expired(deadline, NULL))
+			return EC_ERROR_TIMEOUT;
+		usleep(SPI_BYTE_TRANSFER_POLL_INTERVAL_US);
+	}
 
 	dma_disable(SPI_DMA_CHANNEL);
 	dma_clear_isr(SPI_DMA_CHANNEL);
 	if (MEC1322_SPI_SR(CONFIG_SPI_PORT) & 0x2)
 		dummy = MEC1322_SPI_RD(CONFIG_SPI_PORT);
+
+	gpio_set_level(CONFIG_SPI_CS_GPIO, 1);
 
 	return ret;
 }
@@ -134,3 +146,4 @@ int spi_enable(int enable)
 
 	return EC_SUCCESS;
 }
+
