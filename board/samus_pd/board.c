@@ -12,6 +12,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "pi3usb9281.h"
 #include "power.h"
@@ -33,6 +34,9 @@ static enum power_state ps;
 
 /* Battery state of charge */
 int batt_soc;
+
+/* PD MCU status for host response */
+static struct ec_response_pd_status pd_status;
 
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
@@ -392,6 +396,20 @@ enum battery_present battery_is_present(void)
 	return BP_NOT_SURE;
 }
 
+static void pd_send_ec_int(void)
+{
+	gpio_set_level(GPIO_EC_INT, 1);
+
+	/*
+	 * Delay long enough to guarantee EC see's the change. Slowest
+	 * EC clock speed is 250kHz in deep sleep -> 4us, and add 1us
+	 * for buffer.
+	 */
+	usleep(5);
+
+	gpio_set_level(GPIO_EC_INT, 0);
+}
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *
@@ -423,5 +441,61 @@ void board_set_charge_limit(int charge_ma)
 		pwm_duty = 100;
 
 	pwm_set_duty(PWM_CH_ILIM, pwm_duty);
+
+	pd_status.curr_lim_ma = charge_ma;
+	pd_send_ec_int();
+
 	CPRINTS("Set ilim duty %d", pwm_duty);
 }
+
+/* Send host event up to AP */
+void pd_send_host_event(void)
+{
+	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	pd_send_ec_int();
+}
+
+/****************************************************************************/
+/* Console commands */
+static int command_ec_int(int argc, char **argv)
+{
+	pd_send_ec_int();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
+			"",
+			"Toggle EC interrupt line",
+			NULL);
+
+static int command_pd_host_event(int argc, char **argv)
+{
+	pd_send_host_event();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
+			"",
+			"Send PD host event",
+			NULL);
+
+/****************************************************************************/
+/* Host commands */
+static int ec_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pd_status *p = args->params;
+	struct ec_response_pd_status *r = args->response;
+
+	board_update_battery_soc(p->batt_soc);
+
+	*r = pd_status;
+
+	/* Clear host event */
+	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
+			EC_VER_MASK(0));

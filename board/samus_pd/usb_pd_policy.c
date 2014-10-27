@@ -9,7 +9,6 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "host_command.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -35,9 +34,6 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_mv = -1; /* no cap */
-
-/* PD MCU status for host response */
-static struct ec_response_pd_status pd_status;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 		      uint32_t *curr_limit, uint32_t *supply_voltage)
@@ -131,20 +127,6 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN, 0);
 }
 
-static void pd_send_ec_int(void)
-{
-	gpio_set_level(GPIO_EC_INT, 1);
-
-	/*
-	 * Delay long enough to guarantee EC see's the change. Slowest
-	 * EC clock speed is 250kHz in deep sleep -> 4us, and add 1us
-	 * for buffer.
-	 */
-	usleep(5);
-
-	gpio_set_level(GPIO_EC_INT, 0);
-}
-
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
@@ -152,9 +134,6 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update(CHARGE_SUPPLIER_PD, port, &charge);
-
-	pd_status.curr_lim_ma = max_ma;
-	pd_send_ec_int();
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
@@ -169,13 +148,6 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;
-}
-
-/* Send host event up to AP */
-static void pd_send_host_event(void)
-{
-	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
-	pd_send_ec_int();
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */
@@ -339,47 +311,3 @@ const struct svdm_amode_fx supported_modes[] = {
 	},
 };
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
-/****************************************************************************/
-/* Console commands */
-static int command_ec_int(int argc, char **argv)
-{
-	pd_send_ec_int();
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
-			"",
-			"Toggle EC interrupt line",
-			NULL);
-
-static int command_pd_host_event(int argc, char **argv)
-{
-	pd_send_host_event();
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
-			"",
-			"Send PD host event",
-			NULL);
-
-/****************************************************************************/
-/* Host commands */
-static int ec_status_host_cmd(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_pd_status *p = args->params;
-	struct ec_response_pd_status *r = args->response;
-
-	board_update_battery_soc(p->batt_soc);
-
-	*r = pd_status;
-
-	/* Clear host event */
-	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
-			EC_VER_MASK(0));
