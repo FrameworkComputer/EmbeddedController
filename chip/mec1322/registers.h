@@ -150,6 +150,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_LPC_MEM_BAR_CFG  REG32(MEC1322_LPC_CFG_BASE + 0xa4)
 
 #define MEC1322_LPC_RT_BASE      0x400f3100
+#define MEC1322_LPC_BUS_MONITOR  REG32(MEC1322_LPC_RT_BASE + 0x4)
 #define MEC1322_LPC_MEM_HOST_CFG REG32(MEC1322_LPC_RT_BASE + 0xfc)
 
 

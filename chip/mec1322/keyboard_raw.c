@@ -31,12 +31,29 @@ void keyboard_raw_task_start(void)
 
 test_mockable void keyboard_raw_drive_column(int out)
 {
-	if (out == KEYBOARD_COLUMN_ALL)
+	if (out == KEYBOARD_COLUMN_ALL) {
 		MEC1322_KS_KSO_SEL = 1 << 5; /* KSEN=0, KSALL=1 */
-	else if (out == KEYBOARD_COLUMN_NONE)
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		gpio_set_level(GPIO_KBD_KSO2, 1);
+#endif
+	} else if (out == KEYBOARD_COLUMN_NONE) {
 		MEC1322_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
-	else
-		MEC1322_KS_KSO_SEL = out + 4; /* KSO starts from KSO04 */
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		gpio_set_level(GPIO_KBD_KSO2, 0);
+#endif
+	} else {
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		if (out == 2) {
+			MEC1322_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
+			gpio_set_level(GPIO_KBD_KSO2, 1);
+		} else {
+			MEC1322_KS_KSO_SEL = out;
+			gpio_set_level(GPIO_KBD_KSO2, 0);
+		}
+#else
+		MEC1322_KS_KSO_SEL = out;
+#endif
+	}
 }
 
 test_mockable int keyboard_raw_read_rows(void)
@@ -55,7 +72,7 @@ void keyboard_raw_enable_interrupt(int enable)
 	}
 }
 
-static void keyboard_raw_interrupt(void)
+void keyboard_raw_interrupt(void)
 {
 	/* Clear interrupt status bits */
 	MEC1322_KS_KSI_STATUS = 0xff;

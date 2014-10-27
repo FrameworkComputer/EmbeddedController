@@ -18,6 +18,10 @@
 #include "timer.h"
 #include "util.h"
 
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_LPC, outstr)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+
 static uint8_t mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
 static uint32_t host_events;     /* Currently pending SCI/SMI events */
@@ -31,6 +35,34 @@ static int init_done;
 
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
+
+
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
+static void keyboard_irq_assert(void)
+{
+	/*
+	 * Enforce signal-high for long enough for the signal to be pulled high
+	 * by the external pullup resistor.  This ensures the host will see the
+	 * following falling edge, regardless of the line state before this
+	 * function call.
+	 */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+	udelay(4);
+	/* Generate a falling edge */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 0);
+	udelay(4);
+
+	/* Set signal high, now that we've generated the edge */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+}
+#else
+static void keyboard_irq_assert(void)
+{
+	/*
+	 * TODO(crosbug.com/p/24107): Implement SER_IRQ
+	 */
+}
+#endif
 
 /**
  * Generate SMI pulse to the host chipset via GPIO.
@@ -158,13 +190,13 @@ static void lpc_send_response_packet(struct host_packet *pkt)
  */
 static void setup_lpc(void)
 {
-	uintptr_t ptr = (uintptr_t)mem_mapped;
-
-	/* EMI module only takes alias memory address */
-	if (ptr < 0x120000)
-		ptr = ptr - 0x118000 + 0x20000000;
-
 	gpio_config_module(MODULE_LPC, 1);
+
+	/* Set up interrupt on LRESET# deassert */
+	MEC1322_INT_SOURCE(19) |= 1 << 1;
+	MEC1322_INT_ENABLE(19) |= 1 << 1;
+	MEC1322_INT_BLK_EN |= 1 << 19;
+	task_enable_irq(MEC1322_IRQ_GIRQ19);
 
 	/* Set up ACPI0 for 0x62/0x66 */
 	MEC1322_LPC_ACPI_EC0_BAR = 0x00628034;
@@ -181,18 +213,15 @@ static void setup_lpc(void)
 	/* Set up 8042 interface at 0x60/0x64 */
 	MEC1322_LPC_8042_BAR = 0x00608104;
 	MEC1322_8042_ACT |= 1;
-	MEC1322_INT_ENABLE(15) |= 1 << 14;
+	MEC1322_INT_ENABLE(15) |= ((1 << 13) | (1 << 14));
 	MEC1322_INT_BLK_EN |= 1 << 15;
 	task_enable_irq(MEC1322_IRQ_8042EM_IBF);
+	task_enable_irq(MEC1322_IRQ_8042EM_OBF);
 
 	/* TODO(crosbug.com/p/24107): Route KIRQ to SER_IRQ1 */
 
 	/* Set up EMI module for memory mapped region and port 80 */
 	MEC1322_LPC_EMI_BAR = 0x0080800f;
-	MEC1322_EMI_MBA0 = ptr;
-	MEC1322_EMI_MRL0 = 0x200;
-	MEC1322_EMI_MWL0 = 0x100;
-
 	MEC1322_INT_ENABLE(15) |= 1 << 2;
 	MEC1322_INT_BLK_EN |= 1 << 15;
 	task_enable_irq(MEC1322_IRQ_EMI);
@@ -224,6 +253,27 @@ static void lpc_init(void)
  * before other inits try to initialize their memmap data.
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
+
+void girq19_interrupt(void)
+{
+	/* Check interrupt result for LRESET# trigger */
+	if (MEC1322_INT_RESULT(19) & (1 << 1)) {
+		/* Initialize LPC module when LRESET# is deasserted */
+		if (!lpc_get_pltrst_asserted()) {
+			setup_lpc();
+		} else {
+			/* Store port 80 reset event */
+			port_80_write(PORT_80_EVENT_RESET);
+		}
+
+		CPRINTS("LPC RESET# %sasserted",
+			lpc_get_pltrst_asserted() ? "" : "de");
+
+		/* Clear interrupt source */
+		MEC1322_INT_SOURCE(19) |= 1 << 1;
+	}
+}
+DECLARE_IRQ(MEC1322_IRQ_GIRQ19, girq19_interrupt, 1);
 
 void emi_interrupt(void)
 {
@@ -313,6 +363,12 @@ void kb_ibf_interrupt(void)
 	task_wake(TASK_ID_KEYPROTO);
 }
 DECLARE_IRQ(MEC1322_IRQ_8042EM_IBF, kb_ibf_interrupt, 1);
+
+void kb_obf_interrupt(void)
+{
+	task_wake(TASK_ID_KEYPROTO);
+}
+DECLARE_IRQ(MEC1322_IRQ_8042EM_OBF, kb_obf_interrupt, 1);
 #endif
 
 int lpc_keyboard_has_char(void)
@@ -328,21 +384,21 @@ int lpc_keyboard_input_pending(void)
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	MEC1322_8042_E2H = chr;
-	/*
-	 * TODO(crosbug.com/p/24107): Implement SER_IRQ and handle
-	 *                            send_irq.
-	 */
+	if (send_irq)
+		keyboard_irq_assert();
 }
 
 void lpc_keyboard_clear_buffer(void)
 {
 	volatile char dummy __attribute__((unused));
+
 	dummy = MEC1322_8042_OBF_CLR;
 }
 
 void lpc_keyboard_resume_irq(void)
 {
-	/* TODO(crosbug.com/p/24107): Implement SER_IRQ */
+	if (lpc_keyboard_has_char())
+		keyboard_irq_assert();
 }
 
 void lpc_set_host_event_state(uint32_t mask)
@@ -391,6 +447,11 @@ void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
 uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 {
 	return event_mask[type];
+}
+
+int lpc_get_pltrst_asserted(void)
+{
+	return (MEC1322_LPC_BUS_MONITOR & (1<<1)) ? 1 : 0;
 }
 
 /* On boards without a host, this command is used to set up LPC */
