@@ -110,7 +110,7 @@ const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
 				 0, /* Vconn power */
 				 0, /* Vconn power required */
 				 1, /* Vbus power required */
-				 0	 /* USB SS support */);
+				 AMA_USBSS_BBONLY /* USB SS support */);
 
 static int svdm_response_identity(int port, uint32_t *payload)
 {

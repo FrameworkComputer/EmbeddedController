@@ -345,6 +345,8 @@ struct pd_policy {
 #define PD_VDO_AMA_VCONN_REQ(vdo) (((vdo) >> 4) & 1)
 #define PD_VDO_AMA_VBUS_REQ(vdo)  (((vdo) >> 3) & 1)
 
+#define AMA_USBSS_BBONLY 0x3
+
 /*
  * SVDM Discover SVIDs request -> response
  *
