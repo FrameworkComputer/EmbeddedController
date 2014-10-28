@@ -35,8 +35,9 @@ static enum power_state ps;
 /* Battery state of charge */
 int batt_soc;
 
-/* PD MCU status for host response */
+/* PD MCU status and host event status for host command */
 static struct ec_response_pd_status pd_status;
+static struct ec_response_host_event_status host_event_status;
 
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
@@ -110,6 +111,9 @@ static void board_usb_charger_update(int port)
 		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, port, &charge);
 		charge_manager_update(CHARGE_SUPPLIER_OTHER, port, &charge);
 	}
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 /* Pericom USB deferred tasks -- called after USB device insert / removal */
@@ -483,8 +487,13 @@ void board_set_charge_limit(int charge_ma)
 }
 
 /* Send host event up to AP */
-void pd_send_host_event(void)
+void pd_send_host_event(int mask)
 {
+	/* mask must be set */
+	if (!mask)
+		return;
+
+	atomic_or(&(host_event_status.status), mask);
 	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
 	pd_send_ec_int();
 }
@@ -504,12 +513,22 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 
 static int command_pd_host_event(int argc, char **argv)
 {
-	pd_send_host_event();
+	int event_mask;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	event_mask = strtoi(argv[1], &e, 10);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	pd_send_host_event(event_mask);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
-			"",
+			"event_mask",
 			"Send PD host event",
 			NULL);
 
@@ -532,4 +551,20 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
+			EC_VER_MASK(0));
+
+static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	struct ec_response_pd_status *r = args->response;
+
+	/* Clear host event bit to avoid sending more unnecessary events */
+	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
+
+	/* Read and clear the host event status to return to AP */
+	r->status = atomic_read_clear(&(host_event_status.status));
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, host_event_status_host_cmd,
 			EC_VER_MASK(0));

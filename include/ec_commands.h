@@ -2699,6 +2699,17 @@ struct ec_response_pd_status {
 	uint32_t curr_lim_ma; /* input current limit */
 } __packed;
 
+/* AP to PD MCU host event status command, cleared on read */
+#define EC_CMD_PD_HOST_EVENT_STATUS 0x104
+
+/* PD MCU host event status bits */
+#define PD_EVENT_UPDATE_DEVICE     (1 << 0)
+#define PD_EVENT_POWER_CHANGE      (1 << 1)
+#define PD_EVENT_IDENTITY_RECEIVED (1 << 2)
+struct ec_response_host_event_status {
+	uint32_t status;      /* PD MCU host event status */
+} __packed;
+
 /* Set USB type-C port role and muxes */
 #define EC_CMD_USB_PD_CONTROL 0x101
 

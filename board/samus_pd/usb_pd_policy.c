@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -118,6 +119,9 @@ int pd_set_power_supply_ready(int port)
 	/* provide VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN, 1);
 
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -125,6 +129,9 @@ void pd_power_supply_reset(int port)
 {
 	/* Kill VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN, 0);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
@@ -134,6 +141,9 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update(CHARGE_SUPPLIER_PD, port, &charge);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
@@ -143,6 +153,9 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update(CHARGE_SUPPLIER_TYPEC, port, &charge);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_board_checks(void)
@@ -179,7 +192,7 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		/* if last word is present, it contains lots of info */
 		if (cnt == 7) {
 			/* send host event */
-			pd_send_host_event();
+			pd_send_host_event(PD_EVENT_UPDATE_DEVICE);
 
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
 			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
