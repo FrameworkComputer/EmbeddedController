@@ -25,10 +25,6 @@
 .endif
 .endm
 
-ep_undefined:
-iface_undefined:
-	bx lr
-
 /* align function pointers on a 32-bit boundary */
 .align 2
 /* Endpoint callbacks */
@@ -99,3 +95,11 @@ interface  4
 interface  5
 interface  6
 interface  7
+
+.text
+.code 16
+
+.thumb_func
+ep_undefined:
+iface_undefined:
+	bx lr
