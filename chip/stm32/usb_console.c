@@ -37,8 +37,8 @@ const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
 	.bAlternateSetting  = 0,
 	.bNumEndpoints      = 2,
 	.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,
-	.bInterfaceSubClass = 0,
-	.bInterfaceProtocol = 0,
+	.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,
+	.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,
 	.iInterface         = 0,
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 0) = {

@@ -151,8 +151,8 @@ extern struct out_stream_ops const usb_stream_out_stream_ops;
 		.bAlternateSetting  = 0,				\
 		.bNumEndpoints      = 2,				\
 		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
-		.bInterfaceSubClass = 0,				\
-		.bInterfaceProtocol = 0,				\
+		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,	\
+		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,	\
 		.iInterface         = 0,				\
 	};								\
 	const struct usb_endpoint_descriptor				\
