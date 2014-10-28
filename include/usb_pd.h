@@ -130,6 +130,10 @@ enum pd_errors {
 #define PD_T_SRC_TURN_ON      (275*MSEC) /* 275ms */
 #define PD_T_SAFE_0V          (650*MSEC) /* 650ms */
 
+/* number of edges and time window to detect CC line is not idle */
+#define PD_RX_TRANSITION_COUNT  3
+#define PD_RX_TRANSITION_WINDOW 20 /* between 12us and 20us */
+
 /* from USB Type-C Specification Table 5-1 */
 #define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
 
@@ -1073,8 +1077,9 @@ void pd_set_clock(int port, int freq);
  * @param port USB-C port number
  * @param polarity plug polarity (0=CC1, 1=CC2).
  * @param bit_len size of the packet in bits.
+ * @return length transmitted or negative if error
  */
-void pd_start_tx(int port, int polarity, int bit_len);
+int pd_start_tx(int port, int polarity, int bit_len);
 
 /**
  * Set PD TX DMA to use circular mode. Call this before pd_start_tx() to
@@ -1118,6 +1123,9 @@ void pd_rx_complete(int port);
 void pd_rx_enable_monitoring(int port);
 /* stop listening to the CC wire during transmissions */
 void pd_rx_disable_monitoring(int port);
+
+/* get time since last RX edge interrupt */
+uint64_t get_time_since_last_edge(int port);
 
 /**
  * Deinitialize the hardware used for PD.

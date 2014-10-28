@@ -95,6 +95,7 @@ static void simulate_rx_msg(int port, uint16_t header, int cnt,
 	pd_test_rx_msg_append_word(port, crc32_result());
 
 	pd_test_rx_msg_append_eop(port);
+	pd_test_rx_msg_append_last_edge(port);
 
 	pd_simulate_rx(port);
 }

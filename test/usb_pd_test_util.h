@@ -14,6 +14,7 @@ void pd_test_rx_msg_append_bits(int port, uint32_t bits, int nb);
 void pd_test_rx_msg_append_kcode(int port, uint8_t kcode);
 void pd_test_rx_msg_append_sop(int port);
 void pd_test_rx_msg_append_eop(int port);
+void pd_test_rx_msg_append_last_edge(int port);
 void pd_test_rx_msg_append_4b(int port, uint8_t val);
 void pd_test_rx_msg_append_short(int port, uint16_t val);
 void pd_test_rx_msg_append_word(int port, uint32_t val);

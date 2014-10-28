@@ -13,6 +13,7 @@
 #include "hwtimer.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -70,6 +71,10 @@ static struct pd_physical {
 	timer_ctlr_t *tim_tx;
 	timer_ctlr_t *tim_rx;
 } pd_phy[PD_PORT_COUNT];
+
+/* keep track of RX edge timing in order to trigger receive */
+static timestamp_t rx_edge_ts[PD_PORT_COUNT][PD_RX_TRANSITION_COUNT];
+static int rx_edge_ts_idx[PD_PORT_COUNT];
 
 void pd_init_dequeue(int port)
 {
@@ -295,9 +300,16 @@ void pd_tx_set_circular_mode(int port)
 	pd_phy[port].dma_tx_option.flags |= STM32_DMA_CCR_CIRC;
 }
 
-void pd_start_tx(int port, int polarity, int bit_len)
+int pd_start_tx(int port, int polarity, int bit_len)
 {
 	stm32_dma_chan_t *tx = dma_get_channel(DMAC_SPI_TX(port));
+
+	/* disable RX detection interrupt */
+	pd_rx_disable_monitoring(port);
+
+	/* Check that we are not receiving a frame to avoid collisions */
+	if (pd_rx_started(port))
+		return -5;
 
 	/* Initialize spi peripheral to prepare for transmission. */
 	pd_tx_spi_init(port);
@@ -314,9 +326,6 @@ void pd_start_tx(int port, int polarity, int bit_len)
 			pd_phy[port].raw_samples);
 	/* Flush data in write buffer so that DMA can get the latest data */
 	asm volatile("dmb;");
-
-	/* disable RX detection interrupt */
-	pd_rx_disable_monitoring(port);
 
 	/* Kick off the DMA to send the data */
 	dma_clear_isr(DMAC_SPI_TX(port));
@@ -338,6 +347,8 @@ void pd_start_tx(int port, int polarity, int bit_len)
 	/* Start counting at 300Khz*/
 	pd_phy[port].tim_tx->cr1 |= 1;
 #endif
+
+	return bit_len;
 }
 
 void pd_tx_done(int port, int polarity)
@@ -436,23 +447,57 @@ void pd_rx_disable_monitoring(int port)
 	STM32_EXTI_PR = EXTI_COMP_MASK(port);
 }
 
+uint64_t get_time_since_last_edge(int port)
+{
+	int prev_idx = (rx_edge_ts_idx[port] == 0) ?
+			PD_RX_TRANSITION_COUNT - 1 :
+			rx_edge_ts_idx[port] - 1;
+	return get_time().val - rx_edge_ts[port][prev_idx].val;
+}
+
 /* detect an edge on the PD RX pin */
 void pd_rx_handler(void)
 {
 	int pending, i;
+	int next_idx;
 	pending = STM32_EXTI_PR;
 
 	for (i = 0; i < PD_PORT_COUNT; i++) {
 		if (pending & EXTI_COMP_MASK(i)) {
-			/* start sampling */
-			pd_rx_start(i);
+			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
+			next_idx = (rx_edge_ts_idx[i] ==
+					PD_RX_TRANSITION_COUNT - 1) ?
+						0 : rx_edge_ts_idx[i] + 1;
+
 			/*
-			 * ignore the comparator IRQ until we are done with
-			 * current message
+			 * Do not deep sleep while waiting for more edges. For
+			 * most boards, sleep is already disabled due to being
+			 * in PD connected state, but other boards can sleep
+			 * while connected.
 			 */
-			pd_rx_disable_monitoring(i);
-			/* trigger the analysis in the task */
-			pd_rx_event(i);
+			disable_sleep(SLEEP_MASK_USB_PD);
+
+			/*
+			 * If we have seen enough edges in a certain amount of
+			 * time, then trigger RX start.
+			 */
+			if ((rx_edge_ts[i][rx_edge_ts_idx[i]].val -
+			     rx_edge_ts[i][next_idx].val)
+			     < PD_RX_TRANSITION_WINDOW) {
+				/* start sampling */
+				pd_rx_start(i);
+				/*
+				 * ignore the comparator IRQ until we are done
+				 * with current message
+				 */
+				pd_rx_disable_monitoring(i);
+				/* trigger the analysis in the task */
+				pd_rx_event(i);
+			} else {
+				/* do not trigger RX start, just clear int */
+				STM32_EXTI_PR = EXTI_COMP_MASK(i);
+			}
+			rx_edge_ts_idx[i] = next_idx;
 		}
 	}
 }

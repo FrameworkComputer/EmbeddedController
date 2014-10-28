@@ -76,6 +76,12 @@ void pd_test_rx_msg_append_eop(int port)
 	pd_test_rx_msg_append_kcode(port, PD_EOP);
 }
 
+void pd_test_rx_msg_append_last_edge(int port)
+{
+	/* end with 1, 1, 0 similar to pd_write_last_edge() */
+	pd_test_rx_msg_append_bits(port, 3, 6);
+}
+
 void pd_test_rx_msg_append_4b(int port, uint8_t val)
 {
 	pd_test_rx_msg_append_bits(port, enc4b5b[val & 0xF], 5);
@@ -224,7 +230,7 @@ void pd_tx_set_circular_mode(int port)
 	/* Not implemented */
 }
 
-void pd_start_tx(int port, int polarity, int bit_len)
+int pd_start_tx(int port, int polarity, int bit_len)
 {
 	ASSERT(pd_phy[port].hw_init_done);
 	pd_phy[port].has_msg = 0;
@@ -237,6 +243,8 @@ void pd_start_tx(int port, int polarity, int bit_len)
 	 */
 	task_wake(TASK_ID_TEST_RUNNER);
 	task_wait_event(-1);
+
+	return bit_len;
 }
 
 void pd_tx_done(int port, int polarity)
