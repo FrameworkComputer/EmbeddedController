@@ -620,7 +620,8 @@ enum pd_data_msg_type {
 /* --- Policy layer functions --- */
 
 /**
- * Decide which voltage to use from the source capabilities.
+ * Decide which voltage to use from the source capabilities - prefer the
+ * mode which delivers the maximum allowable power.
  *
  * @param cnt  the number of Power Data Objects.
  * @param src_caps Power Data Objects representing the source capabilities.
@@ -631,6 +632,20 @@ enum pd_data_msg_type {
  */
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 		      uint32_t *curr_limit, uint32_t *supply_voltage);
+
+/**
+ * Decide which voltage to use from the source capabilities - prefer the
+ * mode which delivers the minimum allowable power.
+ *
+ * @param cnt  the number of Power Data Objects.
+ * @param src_caps Power Data Objects representing the source capabilities.
+ * @param rdo  requested Request Data Object.
+ * @param curr_limit  selected current limit (stored on success)
+ * @param supply_voltage  selected supply voltage (stored on success)
+ * @return <0 if invalid, else EC_SUCCESS
+ */
+int pd_choose_voltage_min(int cnt, uint32_t *src_caps, uint32_t *rdo,
+			  uint32_t *curr_limit, uint32_t *supply_voltage);
 
 /**
  * Put a cap on the max voltage requested as a sink.
@@ -1027,4 +1042,11 @@ void pd_ping_enable(int port, int enable);
 /* Issue PD soft reset */
 void pd_soft_reset(void);
 
+
+/**
+ * Signal power request to indicate a charger update that affects the port.
+ *
+ * @param port USB-C port number
+ */
+void pd_set_new_power_request(int port);
 #endif  /* __USB_PD_H */
