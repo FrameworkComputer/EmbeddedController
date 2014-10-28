@@ -39,7 +39,7 @@ const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
 	.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,
 	.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,
 	.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,
-	.iInterface         = 0,
+	.iInterface         = USB_STR_CONSOLE_NAME,
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 0) = {
 	.bLength            = USB_DT_ENDPOINT_SIZE,

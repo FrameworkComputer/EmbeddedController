@@ -42,10 +42,11 @@ USB_GPIO_CONFIG(usb_gpio,
 		USB_EP_GPIO)
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]    = usb_string_desc,
-	[USB_STR_VENDOR]  = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT] = USB_STRING_DESC("discovery-stm32f072"),
-	[USB_STR_VERSION] = NULL /* filled at runtime */,
+	[USB_STR_DESC]        = usb_string_desc,
+	[USB_STR_VENDOR]      = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT]     = USB_STRING_DESC("discovery-stm32f072"),
+	[USB_STR_VERSION]     = NULL /* filled at runtime */,
+	[USB_STR_STREAM_NAME] = USB_STRING_DESC("Echo"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);

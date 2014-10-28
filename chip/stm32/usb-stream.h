@@ -105,6 +105,7 @@ extern struct out_stream_ops const usb_stream_out_stream_ops;
  */
 #define USB_STREAM_CONFIG(NAME,						\
 			  INTERFACE,					\
+			  INTERFACE_NAME,				\
 			  ENDPOINT,					\
 			  RX_SIZE,					\
 			  TX_SIZE,					\
@@ -153,7 +154,7 @@ extern struct out_stream_ops const usb_stream_out_stream_ops;
 		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
 		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,	\
 		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,	\
-		.iInterface         = 0,				\
+		.iInterface         = INTERFACE_NAME,			\
 	};								\
 	const struct usb_endpoint_descriptor				\
 	USB_EP_DESC(INTERFACE, 0) = {					\

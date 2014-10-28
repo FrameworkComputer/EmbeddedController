@@ -33,6 +33,7 @@ USART_CONFIG(usart3, usart3_hw, 115200, 64, 64, in_ready, NULL)
 USART_CONFIG(usart4, usart4_hw, 115200, 64, 64, in_ready, NULL)
 USB_STREAM_CONFIG(usb_stream1,
 		  USB_IFACE_STREAM,
+		  USB_STR_STREAM_NAME,
 		  USB_EP_STREAM,
 		  256,
 		  256,
