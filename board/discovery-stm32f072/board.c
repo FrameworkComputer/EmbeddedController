@@ -47,7 +47,7 @@ const void *const usb_strings[] = {
 	[USB_STR_PRODUCT]      = USB_STRING_DESC("discovery-stm32f072"),
 	[USB_STR_VERSION]      = NULL /* filled at runtime */,
 	[USB_STR_STREAM_NAME]  = USB_STRING_DESC("Echo"),
-	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("EC"),
+	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Shell"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
