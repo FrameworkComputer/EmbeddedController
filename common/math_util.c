@@ -14,6 +14,7 @@
 #define COSINE_LUT_INCR_DEG	5
 #define COSINE_LUT_SIZE		((180 / COSINE_LUT_INCR_DEG) + 1)
 
+#ifdef CONFIG_FPU
 /* Lookup table for the value of cosine from 0 degrees to 180 degrees. */
 static const float cos_lut[] = {
 	 1.00000,  0.99619,  0.98481,  0.96593,  0.93969,
@@ -83,6 +84,7 @@ float cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
 
 	return (float)dotproduct / (denominator);
 }
+#endif
 
 /*
  * rotate a vector v

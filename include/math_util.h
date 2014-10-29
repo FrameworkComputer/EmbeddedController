@@ -8,7 +8,12 @@
 #ifndef __CROS_MATH_UTIL_H
 #define __CROS_MATH_UTIL_H
 
+#ifdef CONFIG_FPU
 typedef float matrix_3x3_t[3][3];
+#else
+typedef int matrix_3x3_t[3][3];
+#endif
+
 typedef int vector_3_t[3];
 
 
@@ -16,6 +21,7 @@ typedef int vector_3_t[3];
 #define SQ(x) ((x) * (x))
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
 
+#ifdef CONFIG_FPU
 
 /**
  * Find acos(x) in degrees. Argument is clipped to [-1.0, 1.0].
@@ -35,6 +41,8 @@ float arc_cos(float x);
  * @return Cosine of the angle between v1 and v2.
  */
 float cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2);
+
+#endif
 
 /**
  * Rotate vector v by rotation matrix R.

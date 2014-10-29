@@ -21,6 +21,8 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 #define CONFIG_RAM_BASE         0x0 /* Not supported */
 #define CONFIG_RAM_SIZE         0x0 /* Not supported */
 
+#define CONFIG_FPU
+
 /* Size of one firmware image in flash */
 #define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
 
