@@ -8,7 +8,7 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
-#include "ina231.h"
+#include "ina2xx.h"
 
 /* Port and task configuration */
 #define PD_PORT_COUNT 1
@@ -137,8 +137,8 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 
 	/* Detect when VBUS crosses the 4.5V threshold (1.25mV/bit) */
-	ina231_write(0, INA231_REG_ALERT, 4500 * 100 / 125);
-	ina231_write(0, INA231_REG_MASK, INA231_MASK_EN_BOL);
+	ina2xx_write(0, INA2XX_REG_ALERT, 4500 * 100 / 125);
+	ina2xx_write(0, INA2XX_REG_MASK, INA2XX_MASK_EN_BOL);
 	/* start as a power consumer */
 	gpio_set_level(GPIO_CC1_RD, 0);
 	gpio_set_level(GPIO_CC2_RD, 0);
