@@ -41,8 +41,12 @@ static int dsleep_recovery_margin_us = 1000000;
  * power mode is 5 us + PLL locking time is 200us.
  * SET_RTC_MATCH_DELAY: max time to set RTC match alarm. if we set the alarm
  * in the past, it will never wake up and cause a watchdog.
+ * For STM32F3, we are using HSE, which requires additional time to start up.
+ * Therefore, the latency for STM32F3 is set longer.
  */
-#if (CPU_CLOCK == PLL_CLOCK)
+#ifdef CHIP_VARIANT_STM32F373
+#define STOP_MODE_LATENCY 500  /* us */
+#elif (CPU_CLOCK == PLL_CLOCK)
 #define STOP_MODE_LATENCY 300   /* us */
 #else
 #define STOP_MODE_LATENCY 50    /* us */
@@ -214,7 +218,6 @@ static void config_hispeed_clock(void)
 	 * ADCCLK = PCLK / 6 = 4MHz
 	 * USB uses SYSCLK = 48MHz
 	 */
-	/*STM32_RCC_CFGR = 0x0041a400;*/
 	STM32_RCC_CFGR = 0x0041a400;
 
 	/* Enable the PLL */
