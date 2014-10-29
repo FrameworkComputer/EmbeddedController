@@ -247,14 +247,16 @@ struct pd_policy {
  * [0] :: SVDM header
  * [1] :: Identitiy header
  * [2] :: Cert Stat VDO
- * [3] :: (Product | Cable | AMA) VDO
+ * [3] :: (Product | Cable) VDO
+ * [4] :: AMA VDO
  *
  */
-#define VDO_INDEX_HDR   0
-#define VDO_INDEX_IDH   1
-#define VDO_INDEX_CSTAT 2
-#define VDO_INDEX_CABLE 3
-#define VDO_INDEX_AMA   3
+#define VDO_INDEX_HDR     0
+#define VDO_INDEX_IDH     1
+#define VDO_INDEX_CSTAT   2
+#define VDO_INDEX_CABLE   3
+#define VDO_INDEX_PRODUCT 3
+#define VDO_INDEX_AMA     4
 #define VDO_I(name) VDO_INDEX_##name
 
 /*
@@ -289,6 +291,14 @@ struct pd_policy {
  */
 #define VDO_CSTAT(tid)    ((tid) & 0xfffff)
 #define PD_CSTAT_TID(vdo) ((vdo) & 0xfffff)
+
+/*
+ * Product VDO
+ * -----------
+ * <31:16> : USB Product ID
+ * <15:0>  : USB bcdDevice
+ */
+#define VDO_PRODUCT(pid, bcd) (((pid) & 0xffff) << 16 | ((bcd) & 0xffff))
 
 /*
  * Cable VDO

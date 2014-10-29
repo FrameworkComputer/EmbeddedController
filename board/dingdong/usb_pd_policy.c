@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "util.h"
 #include "usb.h"
+#include "usb_bb.h"
 #include "usb_pd.h"
 #include "version.h"
 
@@ -105,6 +106,8 @@ const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 				 1, /* supports alt modes */
 				 USB_VID_GOOGLE);
 
+const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
+
 const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
 				 CONFIG_USB_PD_IDENTITY_SW_VERS,
 				 0, 0, 0, 0, /* SS[TR][12] */
@@ -118,8 +121,9 @@ static int svdm_response_identity(int port, uint32_t *payload)
 	payload[VDO_I(IDH)] = vdo_idh;
 	/* TODO(tbroch): Do we plan to obtain TID (test ID) for hoho */
 	payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
+	payload[VDO_I(PRODUCT)] = vdo_product;
 	payload[VDO_I(AMA)] = vdo_ama;
-	return 4;
+	return VDO_I(AMA) + 1;
 }
 
 static int svdm_response_svids(int port, uint32_t *payload)
@@ -128,9 +132,9 @@ static int svdm_response_svids(int port, uint32_t *payload)
 	return 2;
 }
 
-/* Will only ever be a single mode for this UFP_D device as it has no USB
- * support (2.0 or 3.0) making it only PIN_E configureable nor does it have any
- * source functionality.
+/*
+ * Will only ever be a single mode for this UFP_D device as it has no real USB
+ * support making it only PIN_E configureable
  */
 #define MODE_CNT 1
 #define OPOS 1

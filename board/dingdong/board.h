@@ -35,6 +35,7 @@
 
 /* USB configuration */
 #define CONFIG_USB_PID 0x5011
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

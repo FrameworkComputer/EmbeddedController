@@ -30,6 +30,10 @@
 #define USB_DEV_CLASS USB_CLASS_PER_INTERFACE
 #endif
 
+#ifndef CONFIG_USB_BCD_DEV
+#define CONFIG_USB_BCD_DEV 0x0100 /* 1.00 */
+#endif
+
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
@@ -41,7 +45,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bMaxPacketSize0 = USB_MAX_PACKET_SIZE,
 	.idVendor = USB_VID_GOOGLE,
 	.idProduct = CONFIG_USB_PID,
-	.bcdDevice = 0x0200, /* 2.00 */
+	.bcdDevice = CONFIG_USB_BCD_DEV,
 	.iManufacturer = USB_STR_VENDOR,
 	.iProduct = USB_STR_PRODUCT,
 	.iSerialNumber = 0,
