@@ -6,9 +6,11 @@
 
 #include "common.h"
 #include "console.h"
+#include "driver/accelgyro_lsm6ds0.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "motion_sense.h"
 #include "power.h"
 #include "registers.h"
 #include "task.h"
@@ -36,6 +38,29 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_SLAVE_I2C_SCL, GPIO_SLAVE_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Sensor mutex */
+static struct mutex g_mutex;
+
+struct motion_sensor_t motion_sensors[] = {
+
+	/*
+	 * Note: lsm6ds0: supports accelerometer and gyro sensor
+	 * Requriement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	{SENSOR_ACTIVE_S0_S3, "Accel", MOTIONSENSE_CHIP_LSM6DS0,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
+		&lsm6ds0_drv, &g_mutex, NULL,
+		LSM6DS0_ADDR1, NULL, 119000, 2},
+
+	{SENSOR_ACTIVE_S0_S3, "Gyro", MOTIONSENSE_CHIP_LSM6DS0,
+		MOTIONSENSE_TYPE_GYRO, MOTIONSENSE_LOC_LID,
+		&lsm6ds0_drv, &g_mutex, NULL,
+		LSM6DS0_ADDR1, NULL, 119000, 2000},
+
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 void board_config_pre_init(void)
 {
