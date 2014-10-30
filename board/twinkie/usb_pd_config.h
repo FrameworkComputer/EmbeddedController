@@ -12,7 +12,11 @@
 
 /* Port and task configuration */
 #define PD_PORT_COUNT 1
+#ifdef HAS_TASK_PD /* PD message injector mode */
 #define PORT_TO_TASK_ID(port) TASK_ID_PD
+#else
+#define PORT_TO_TASK_ID(port) -1
+#endif
 #define TASK_ID_TO_PORT(id)   0
 
 /* Timer selection for baseband PD communication */

@@ -394,15 +394,15 @@ static inline int encode_short(int port, int off, uint16_t val16)
 	return pd_write_sym(port, off, bmc4b5b[(val16 >> 12) & 0xF]);
 }
 
-static inline int encode_word(int port, int off, uint32_t val32)
+int encode_word(int port, int off, uint32_t val32)
 {
 	off = encode_short(port, off, (val32 >> 0) & 0xFFFF);
 	return encode_short(port, off, (val32 >> 16) & 0xFFFF);
 }
 
 /* prepare a 4b/5b-encoded PD message to send */
-static int prepare_message(int port, uint16_t header, uint8_t cnt,
-			   const uint32_t *data)
+int prepare_message(int port, uint16_t header, uint8_t cnt,
+		   const uint32_t *data)
 {
 	int off, i;
 	/* 64-bit preamble */
@@ -442,7 +442,7 @@ static int prepare_message(int port, uint16_t header, uint8_t cnt,
 static int analyze_rx(int port, uint32_t *payload);
 static void analyze_rx_bist(int port);
 
-static void send_hard_reset(int port)
+void send_hard_reset(int port)
 {
 	int off;
 

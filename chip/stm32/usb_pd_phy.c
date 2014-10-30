@@ -493,12 +493,6 @@ void pd_hw_init(int port)
 	dma_prepare_tx(&(phy->dma_tx_option), PD_MAX_RAW_SIZE,
 			phy->raw_samples);
 
-	/* configure RX DMA */
-	phy->dma_tim_option.channel = DMAC_TIM_RX(port);
-	phy->dma_tim_option.periph = (void *)(TIM_RX_CCR_REG(port));
-	phy->dma_tim_option.flags = STM32_DMA_CCR_MSIZE_8_BIT |
-				     STM32_DMA_CCR_PSIZE_16_BIT;
-
 	/* configure registers used for timers */
 	phy->tim_tx = (void *)TIM_REG_TX(port);
 	phy->tim_rx = (void *)TIM_REG_RX(port);
@@ -529,6 +523,12 @@ void pd_hw_init(int port)
 	/* Reload the pre-scaler and reset the counter */
 	phy->tim_tx->egr = 0x0001;
 #endif
+#ifndef CONFIG_USB_PD_TX_PHY_ONLY
+	/* configure RX DMA */
+	phy->dma_tim_option.channel = DMAC_TIM_RX(port);
+	phy->dma_tim_option.periph = (void *)(TIM_RX_CCR_REG(port));
+	phy->dma_tim_option.flags = STM32_DMA_CCR_MSIZE_8_BIT |
+				     STM32_DMA_CCR_PSIZE_16_BIT;
 
 	/* --- set counter for RX timing : 2.4Mhz rate, free-running --- */
 	__hw_timer_enable_clock(TIM_CLOCK_PD_RX(port), 1);
@@ -600,6 +600,7 @@ void pd_hw_init(int port)
 	EXTI_XTSR |= EXTI_COMP_MASK(port);
 	STM32_EXTI_IMR |= EXTI_COMP_MASK(port);
 	task_enable_irq(IRQ_COMP);
+#endif /* CONFIG_USB_PD_TX_PHY_ONLY */
 
 	CPRINTS("USB PD initialized");
 }

@@ -18,8 +18,8 @@
  */
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(SNIFFER, sniffer_task, NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(CONSOLE, console_task, NULL, TASK_STACK_SIZE) \
 	/*Disabled: TASK_ALWAYS(PD, pd_task, NULL, LARGER_TASK_STACK_SIZE) */
 /*
  * To get Twinkie to behave as a USB Power Delivery consumer/provider

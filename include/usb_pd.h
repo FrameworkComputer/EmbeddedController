@@ -947,6 +947,29 @@ int pd_write_sym(int port, int bit_off, uint32_t val10);
 int pd_write_last_edge(int port, int bit_off);
 
 /**
+ * Do 4B5B encoding on a 32-bit word.
+ *
+ * @param port USB-C port number
+ * @param off current offset in bits inside the message
+ * @param val32 32-bit word value to encode
+ * @return new offset in the message in bits.
+ */
+int encode_word(int port, int off, uint32_t val32);
+
+/**
+ * Ensure that we have an edge after EOP and we end up at level 0,
+ * also fill the last byte.
+ *
+ * @param port USB-C port number
+ * @param header PD packet header
+ * @param cnt number of payload words
+ * @param data payload content
+ * @return length of the message in bits.
+ */
+int prepare_message(int port, uint16_t header, uint8_t cnt,
+		    const uint32_t *data);
+
+/**
  * Dump the current PD packet on the console for debug.
  *
  * @param port USB-C port number

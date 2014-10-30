@@ -299,6 +299,45 @@ void sniffer_task(void)
 	}
 }
 
+int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us)
+{
+	stm32_dma_chan_t *chan = dma_get_channel(pol ? DMAC_TIM_RX2
+						     : DMAC_TIM_RX1);
+	uint32_t t0 = __hw_clock_source_read();
+	uint32_t c0 = chan->cndtr;
+	uint32_t t_gap = t0;
+	uint32_t c_gap = c0;
+	uint32_t total_edges = 0;
+
+	while (1) {
+		uint32_t t = __hw_clock_source_read();
+		uint32_t c = chan->cndtr;
+		if (t - t0 > timeout_us) /* Timeout */
+			break;
+		if (min_edges) { /* real packet detection */
+			int nb = (int)c_gap - (int)c;
+			if (nb < 0)
+				nb = RX_COUNT - nb;
+			if (nb > 3) { /* NOT IDLE */
+				t_gap = t;
+				c_gap = c;
+				total_edges += nb;
+			} else {
+				if ((t - t_gap) > 20 &&
+				    (total_edges - (t - t0)/256) >= min_edges)
+					/* real gap after the packet */
+					break;
+			}
+		}
+	}
+	return (__hw_clock_source_read() - t0 > timeout_us);
+}
+
+void recording_enable(uint8_t mask)
+{
+	/* TODO implement */
+}
+
 static int command_sniffer(int argc, char **argv)
 {
 	ccprintf("Seq number:%d Overflows: %d\n", seq, oflow);

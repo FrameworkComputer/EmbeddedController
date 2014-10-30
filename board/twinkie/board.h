@@ -18,14 +18,15 @@
 #define CONFIG_USB
 #define CONFIG_USB_CONSOLE
 
-#ifdef HAS_TASK_PD /* PD message injector mode */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_PD_USE_DAC_AS_REF
 #define CONFIG_HW_CRC
-#else /* PD sniffer mode */
+
+#ifndef HAS_TASK_PD /* PD sniffer mode */
 #undef CONFIG_DMA_DEFAULT_HANDLERS
+#define CONFIG_USB_PD_TX_PHY_ONLY
 #endif
 
 #define CONFIG_ADC
@@ -51,6 +52,10 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 #ifndef __ASSEMBLER__
+
+int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us);
+
+void recording_enable(uint8_t mask);
 
 /* Timer selection */
 #define TIM_CLOCK_MSB  3
