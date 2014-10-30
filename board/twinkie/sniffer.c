@@ -43,6 +43,27 @@ static usb_uint ep_buf[2][EP_BUF_SIZE / 2] __usb_ram;
 /* USB Buffers not used, ready to be filled */
 static volatile uint32_t free_usb = 3;
 
+static inline void led_set_activity(int ch)
+{
+	static int accumul[2];
+	static uint32_t last_ts[2];
+	uint32_t now = __hw_clock_source_read();
+	int delta = now - last_ts[ch];
+	last_ts[ch] = now;
+	accumul[ch] = MAX(0, accumul[ch] + (30000 - delta));
+	gpio_set_level(ch ? GPIO_LED_R_L : GPIO_LED_G_L, !accumul[ch]);
+}
+
+static inline void led_set_record(void)
+{
+	gpio_set_level(GPIO_LED_B_L, 0);
+}
+
+static inline void led_reset_record(void)
+{
+	gpio_set_level(GPIO_LED_B_L, 1);
+}
+
 /* USB descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_VENDOR) = {
 	.bLength = USB_DT_INTERFACE_SIZE,
@@ -138,9 +159,12 @@ void tim_rx1_handler(uint32_t stat)
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
+	} else {
+		led_set_record();
 	}
 	filled_dma |= mask;
 	dma->ifcr = STM32_DMA_ISR_ALL(DMAC_TIM_RX1);
+	led_set_activity(0);
 }
 
 void tim_rx2_handler(uint32_t stat)
@@ -156,9 +180,12 @@ void tim_rx2_handler(uint32_t stat)
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
+	} else {
+		led_set_record();
 	}
 	filled_dma |= mask;
 	dma->ifcr = STM32_DMA_ISR_ALL(DMAC_TIM_RX2);
+	led_set_activity(1);
 }
 
 void tim_dma_handler(void)
@@ -268,6 +295,7 @@ void sniffer_task(void)
 			u = !u;
 			atomic_clear((uint32_t *)&filled_dma, 1 << d);
 		}
+		led_reset_record();
 	}
 }
 
