@@ -48,9 +48,9 @@ static inline void spi_enable_clock(int port)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 }
 
-/* RX is using COMP1 triggering TIM1 CH1 */
+/* RX is using COMP1 or COMp2 triggering TIM1 CH1  */
 #define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
-#define CMP2OUTSEL 0
+#define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM1_IC1
 
 #define DMAC_TIM_RX(p) STM32_DMAC_CH2
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0

@@ -6,6 +6,7 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
@@ -81,6 +82,12 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
+	int red = supply_voltage == 20000;
+	int green = supply_voltage == 5000;
+	int blue = supply_voltage && !(red || green);
+	gpio_set_level(GPIO_LED_R_L, !red);
+	gpio_set_level(GPIO_LED_G_L, !green);
+	gpio_set_level(GPIO_LED_B_L, !blue);
 }
 
 void pd_set_max_voltage(unsigned mv)
