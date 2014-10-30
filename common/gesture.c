@@ -36,11 +36,6 @@
  * which to check for relatively calm periods. In between the two impulses
  * there is a minimum and maximum interstice time allowed.
  */
-#define OUTER_WINDOW_T 200
-#define INNER_WINDOW_T 30
-#define MIN_INTERSTICE_T 120
-#define MAX_INTERSTICE_T 500
-
 #define OUTER_WINDOW \
 	(CONFIG_GESTURE_TAP_OUTER_WINDOW_T / \
 	 CONFIG_GESTURE_SAMPLING_INTERVAL_MS)
@@ -80,7 +75,7 @@ static struct motion_sensor_t *sensor =
 static int history_z[MAX_WINDOW];  /* Changes in Z */
 static int history_xy[MAX_WINDOW]; /* Changes in X and Y */
 static int state, history_idx;
-static int history_initialized;
+static int history_initialized, history_init_index;
 static int tap_debug;
 
 /* Tap detection flag */
@@ -157,7 +152,7 @@ static int gesture_tap_for_battery(void)
 	/* Ignore data until we fill history buffer and wrap around */
 	if (history_idx == 0)
 		history_initialized = 1;
-	if (history_initialized == 0)
+	if (history_initialized == history_init_index)
 		return 0;
 
 	/*
@@ -262,12 +257,13 @@ static int gesture_tap_for_battery(void)
 			CPRINTS("tap st %d->%d, error div by 0",
 				state_p, state);
 		else
-			CPRINTS("tap st %d->%d, st_cnt %-3d",
+			CPRINTF("[%T tap st %d->%d, st_cnt %-3d ",
 				state_p, state, state_cnt);
-			CPRINTS("Z_in:Z_out %-3d, Z_in:XY_in %-3d",
+			CPRINTF("Z_in:Z_out %-3d, Z_in:XY_in %-3d ",
 				delta_z_inner / delta_z_outer,
 				delta_z_inner / delta_xy_inner);
-			CPRINTS("dZ_in %-8.3d, dZ_in_max %-8.3d, dZ_out %-8.3d",
+			CPRINTF("dZ_in %-8.3d, dZ_in_max %-8.3d, "
+				"dZ_out %-8.3d]\n",
 				delta_z_inner, delta_z_inner_max,
 				delta_z_outer);
 	}
@@ -289,12 +285,12 @@ static void gesture_chipset_suspend(void)
 	sensor->drv->set_data_rate(sensor, TAP_ODR, 1);
 
 	/*
-	 * Clear tap init and history index so that we have to
+	 * Clear tap init and history initialized so that we have to
 	 * record a whole new set of data, and enable tap detection
 	 */
 	history_initialized = 0;
+	history_init_index = history_idx;
 	state = TAP_IDLE;
-	history_idx = 0;
 	tap_detection = 1;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, gesture_chipset_suspend,
