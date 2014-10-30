@@ -363,10 +363,7 @@ error_enable_sensor:
 }
 #endif
 
-static int read(const struct motion_sensor_t *s,
-			int *x_acc,
-			int *y_acc,
-			int *z_acc)
+static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
 	uint8_t acc[6];
 	uint8_t reg = KXCJ9_XOUT_L;
@@ -411,9 +408,9 @@ static int read(const struct motion_sensor_t *s,
 	 * acc[4] = KXCJ9_ZOUT_L
 	 * acc[5] = KXCJ9_ZOUT_H
 	 */
-	*x_acc = multiplier * (((int8_t)acc[1]) << 4) | (acc[0] >> 4);
-	*y_acc = multiplier * (((int8_t)acc[3]) << 4) | (acc[2] >> 4);
-	*z_acc = multiplier * (((int8_t)acc[5]) << 4) | (acc[4] >> 4);
+	v[0] = multiplier * (((int8_t)acc[1]) << 4) | (acc[0] >> 4);
+	v[1] = multiplier * (((int8_t)acc[3]) << 4) | (acc[2] >> 4);
+	v[2] = multiplier * (((int8_t)acc[5]) << 4) | (acc[4] >> 4);
 
 	return EC_SUCCESS;
 }

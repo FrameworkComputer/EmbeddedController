@@ -287,18 +287,18 @@ struct motion_sensor_t motion_sensors[] = {
 	 * Requriement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
-	{SENSOR_ACTIVE_S0_S3_S5, "Base", SENSOR_CHIP_LSM6DS0,
-		SENSOR_ACCELEROMETER, LOCATION_BASE,
+	{SENSOR_ACTIVE_S0_S3_S5, "Base", MOTIONSENSE_CHIP_LSM6DS0,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_BASE,
 		&lsm6ds0_drv, &g_base_mutex, NULL,
 		LSM6DS0_ADDR1, &base_standard_ref, 119000, 2},
 
-	{SENSOR_ACTIVE_S0, "Lid",  SENSOR_CHIP_KXCJ9,
-		SENSOR_ACCELEROMETER, LOCATION_LID,
+	{SENSOR_ACTIVE_S0, "Lid",  MOTIONSENSE_CHIP_KXCJ9,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
 		&kxcj9_drv, &g_lid_mutex, &g_kxcj9_data,
 		KXCJ9_ADDR0, &lid_standard_ref, 100000, 2},
 
-	{SENSOR_ACTIVE_S0, "Base Gyro", SENSOR_CHIP_LSM6DS0,
-		SENSOR_GYRO, LOCATION_BASE,
+	{SENSOR_ACTIVE_S0, "Base Gyro", MOTIONSENSE_CHIP_LSM6DS0,
+		MOTIONSENSE_TYPE_GYRO, MOTIONSENSE_LOC_BASE,
 		&lsm6ds0_drv, &g_base_mutex, NULL,
 		LSM6DS0_ADDR1, NULL, 119000, 2000},
 

@@ -30,12 +30,11 @@ static int accel_init(const struct motion_sensor_t *s)
 	return EC_SUCCESS;
 }
 
-static int accel_read(const struct motion_sensor_t *s,
-	int *x_acc, int *y_acc, int *z_acc)
+static int accel_read(const struct motion_sensor_t *s, vector_3_t v)
 {
-	*x_acc = s->xyz[X];
-	*y_acc = s->xyz[Y];
-	*z_acc = s->xyz[Z];
+	v[X] = s->xyz[X];
+	v[Y] = s->xyz[Y];
+	v[Z] = s->xyz[Z];
 	return EC_SUCCESS;
 }
 
@@ -102,12 +101,12 @@ const matrix_3x3_t lid_standard_ref = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	{SENSOR_ACTIVE_S0_S3_S5, "base", SENSOR_CHIP_LSM6DS0,
-		SENSOR_ACCELEROMETER, LOCATION_BASE,
+	{SENSOR_ACTIVE_S0_S3_S5, "base", MOTIONSENSE_CHIP_LSM6DS0,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_BASE,
 		&test_motion_sense, NULL, NULL,
 		0, &base_standard_ref, 119000, 2},
-	{SENSOR_ACTIVE_S0, "lid", SENSOR_CHIP_KXCJ9,
-		SENSOR_ACCELEROMETER, LOCATION_LID,
+	{SENSOR_ACTIVE_S0, "lid", MOTIONSENSE_CHIP_KXCJ9,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
 		&test_motion_sense, NULL, NULL,
 		0, &lid_standard_ref, 100000, 2},
 };

@@ -2360,23 +2360,22 @@ static int cmd_lightbar(int argc, char **argv)
  * memory depending on the number of sensors.
  */
 #define ECTOOL_MAX_SENSOR 16
-#define MS_DATA_SIZE() { \
-		sizeof(((struct ec_params_motion_sense *)0)->data) \
+#define MS_DUMP_SIZE() { \
+		sizeof(((struct ec_params_motion_sense *)0)->dump) \
 		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
-		sizeof(((struct ec_response_motion_sense *)0)->data) \
-		+ ECTOOL_MAX_SENSOR * sizeof(struct sensor_data) }
+		sizeof(((struct ec_response_motion_sense *)0)->dump) \
+		+ sizeof(struct ec_response_motion_sensor_data) * \
+		  ECTOOL_MAX_SENSOR}
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
 } ms_command_sizes[] = {
-	MS_SIZES(dump),
+	MS_DUMP_SIZE(),
 	MS_SIZES(info),
 	MS_SIZES(ec_rate),
 	MS_SIZES(sensor_odr),
 	MS_SIZES(sensor_range),
 	MS_SIZES(kb_wake_angle),
-	MS_SIZES(status),
-	MS_DATA_SIZE(),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -2397,67 +2396,68 @@ static int ms_help(const char *cmd)
 
 static int cmd_motionsense(int argc, char **argv)
 {
-	int i, rv;
+	int i, rv, status_only = (argc == 2);
 	struct ec_params_motion_sense param;
-	struct ec_response_motion_sense resp;
+	uint8_t resp_buffer[ms_command_sizes[MOTIONSENSE_CMD_DUMP].outsize];
+	struct ec_response_motion_sense *resp =
+		(struct ec_response_motion_sense *)resp_buffer;
 	char *e;
+	/*
+	 * Warning: the following strings printed out are read in an
+	 * autotest. Do not change string without consulting autotest
+	 * for kernel_CrosECSysfsAccel.
+	 */
+	const char *motion_status_string[2][2] = {
+		{ "Motion sensing inactive", "0"},
+		{ "Motion sensing active", "1"},
+	};
 
 	/* No motionsense command has more than 5 args. */
 	if (argc > 5)
 		return ms_help(argv[0]);
 
-	if (argc == 1) {
-		/* No args, dump motion data. */
+	if ((argc == 1) ||
+	    (argc == 2 && !strcasecmp(argv[1], "active"))) {
 		param.cmd = MOTIONSENSE_CMD_DUMP;
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
-				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+		param.dump.max_sensor_count = ECTOOL_MAX_SENSOR;
+		rv = ec_command(
+			EC_CMD_MOTION_SENSE_CMD, 1,
+			&param, ms_command_sizes[param.cmd].insize,
+			resp, ms_command_sizes[param.cmd].outsize);
+		if (rv > 0) {
+			printf("%s\n", motion_status_string[
+					!!(resp->dump.module_flags &
+					   MOTIONSENSE_MODULE_FLAG_ACTIVE)][
+					status_only]);
+			if (status_only)
+				return 0;
 
-		if (rv < 0)
-			return rv;
-
-		if (resp.dump.module_flags & MOTIONSENSE_MODULE_FLAG_ACTIVE)
-			printf("Motion sensing active\n");
-		else
-			printf("Motion sensing inactive\n");
-
-		for (i = 0; i < EC_MOTION_SENSOR_COUNT; i++) {
-			printf("Sensor %d: ", i);
-			if (resp.dump.sensor_flags[i] &
-					MOTIONSENSE_SENSOR_FLAG_PRESENT)
-				printf("%d\t%d\t%d\n", resp.dump.data[3*i],
-							resp.dump.data[3*i+1],
-							resp.dump.data[3*i+2]);
-			else
+			if (resp->dump.sensor_count > ECTOOL_MAX_SENSOR) {
+				printf("Too many sensors to handle: %d",
+						resp->dump.sensor_count);
+				return -1;
+			}
+			for (i = 0; i < resp->dump.sensor_count; i++) {
 				/*
 				 * Warning: the following string printed out
 				 * is read by an autotest. Do not change string
 				 * without consulting autotest for
 				 * kernel_CrosECSysfsAccel.
 				 */
-				printf("None\n");
+				printf("Sensor %d: ", i);
+				if (resp->dump.sensor[i].flags &
+						MOTIONSENSE_SENSOR_FLAG_PRESENT)
+					printf("%d\t%d\t%d\n",
+						resp->dump.sensor[i].data[0],
+						resp->dump.sensor[i].data[1],
+						resp->dump.sensor[i].data[2]);
+				else
+					printf("None\n");
+			}
+			return 0;
+		} else {
+			return rv;
 		}
-
-		return 0;
-	}
-
-	if (argc == 2 && !strcasecmp(argv[1], "active")) {
-		param.cmd = MOTIONSENSE_CMD_DUMP;
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
-				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
-
-		/*
-		 * Warning: the following strings printed out are read in an
-		 * autotest. Do not change string without consulting autotest
-		 * for kernel_CrosECSysfsAccel.
-		 */
-		if (resp.dump.module_flags & MOTIONSENSE_MODULE_FLAG_ACTIVE)
-			printf("1\n");
-		else
-			printf("0\n");
-
-		return 0;
 	}
 
 	if (argc == 3 && !strcasecmp(argv[1], "info")) {
@@ -2469,15 +2469,15 @@ static int cmd_motionsense(int argc, char **argv)
 			return -1;
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
 				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+				resp, ms_command_sizes[param.cmd].outsize);
 
 		if (rv < 0)
 			return rv;
 
 		printf("Type:     ");
-		switch (resp.info.type) {
+		switch (resp->info.type) {
 		case MOTIONSENSE_TYPE_ACCEL:
 			printf("accel\n");
 			break;
@@ -2489,7 +2489,7 @@ static int cmd_motionsense(int argc, char **argv)
 		}
 
 		printf("Location: ");
-		switch (resp.info.location) {
+		switch (resp->info.location) {
 		case MOTIONSENSE_LOC_BASE:
 			printf("base\n");
 			break;
@@ -2501,9 +2501,12 @@ static int cmd_motionsense(int argc, char **argv)
 		}
 
 		printf("Chip:     ");
-		switch (resp.info.chip) {
+		switch (resp->info.chip) {
 		case MOTIONSENSE_CHIP_KXCJ9:
 			printf("kxcj9\n");
+			break;
+		case MOTIONSENSE_CHIP_LSM6DS0:
+			printf("lsm6ds0\n");
 			break;
 		default:
 			printf("unknown\n");
@@ -2524,14 +2527,14 @@ static int cmd_motionsense(int argc, char **argv)
 			}
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
 				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+				resp, ms_command_sizes[param.cmd].outsize);
 
 		if (rv < 0)
 			return rv;
 
-		printf("%d\n", resp.ec_rate.ret);
+		printf("%d\n", resp->ec_rate.ret);
 		return 0;
 	}
 
@@ -2562,14 +2565,14 @@ static int cmd_motionsense(int argc, char **argv)
 			}
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
 				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+				resp, ms_command_sizes[param.cmd].outsize);
 
 		if (rv < 0)
 			return rv;
 
-		printf("%d\n", resp.sensor_odr.ret);
+		printf("%d\n", resp->sensor_odr.ret);
 		return 0;
 	}
 
@@ -2600,14 +2603,14 @@ static int cmd_motionsense(int argc, char **argv)
 			}
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
 				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+				resp, ms_command_sizes[param.cmd].outsize);
 
 		if (rv < 0)
 			return rv;
 
-		printf("%d\n", resp.sensor_range.ret);
+		printf("%d\n", resp->sensor_range.ret);
 		return 0;
 	}
 
@@ -2623,14 +2626,14 @@ static int cmd_motionsense(int argc, char **argv)
 			}
 		}
 
-		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 0,
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
 				&param, ms_command_sizes[param.cmd].insize,
-				&resp, ms_command_sizes[param.cmd].outsize);
+				resp, ms_command_sizes[param.cmd].outsize);
 
 		if (rv < 0)
 			return rv;
 
-		printf("%d\n", resp.kb_wake_angle.ret);
+		printf("%d\n", resp->kb_wake_angle.ret);
 		return 0;
 	}
 
