@@ -117,9 +117,11 @@ void runtime_init(void)
 uint32_t task_wait_event(int timeout_us)
 {
 	uint32_t evt;
-	timestamp_t t0;
+	timestamp_t t0, t1;
 	uint32_t rtc0, rtc0ss, rtc1, rtc1ss;
 	int rtc_diff;
+
+	t1.val = get_time().val + timeout_us;
 
 	asm volatile("cpsid i");
 	/* the event already happened */
@@ -131,42 +133,58 @@ uint32_t task_wait_event(int timeout_us)
 		return evt;
 	}
 
-	/* set timeout on timer */
-	if (timeout_us < 0) {
-		asm volatile ("wfi");
-	} else if (timeout_us <= (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY)) {
-		STM32_TIM32_CCR1(2) = STM32_TIM32_CNT(2) + timeout_us;
-		STM32_TIM_SR(2) = 0; /* clear match flag */
-		STM32_TIM_DIER(2) = 2; /*  match interrupt */
+	/* loop until an event is triggered */
+	while (1) {
+		/* set timeout on timer */
+		if (timeout_us < 0) {
+			asm volatile ("wfi");
+		} else if (timeout_us <=
+			   (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY)) {
+			STM32_TIM32_CCR1(2) = STM32_TIM32_CNT(2) + timeout_us;
+			STM32_TIM_SR(2) = 0; /* clear match flag */
+			STM32_TIM_DIER(2) = 2; /*  match interrupt */
 
-		asm volatile("wfi");
+			asm volatile("wfi");
 
-		STM32_TIM_DIER(2) = 0; /* disable match interrupt */
-	} else {
+			STM32_TIM_DIER(2) = 0; /* disable match interrupt */
+		} else {
+			t0 = get_time();
+
+			/* set deep sleep bit */
+			CPU_SCB_SYSCTRL |= 0x4;
+
+			set_rtc_alarm(0, timeout_us - STOP_MODE_LATENCY,
+				      &rtc0, &rtc0ss);
+
+			asm volatile("wfi");
+
+			CPU_SCB_SYSCTRL &= ~0x4;
+
+			config_hispeed_clock();
+
+			/* fast forward timer according to RTC counter */
+			reset_rtc_alarm(&rtc1, &rtc1ss);
+			rtc_diff = get_rtc_diff(rtc0, rtc0ss, rtc1, rtc1ss);
+			t0.val = t0.val + rtc_diff;
+			force_time(t0);
+		}
+
+		asm volatile("cpsie i ; isb");
+		/* note: interrupt that woke us up will run here */
+
 		t0 = get_time();
+		/* check for timeout if timeout was set */
+		if (timeout_us >= 0 && t0.val >= t1.val)
+			last_event = TASK_EVENT_TIMER;
+		/* break from loop when event has triggered */
+		if (last_event)
+			break;
+		/* recalculate timeout if timeout was set */
+		if (timeout_us >= 0)
+			timeout_us = t1.val - t0.val;
 
-		/* set deep sleep bit */
-		CPU_SCB_SYSCTRL |= 0x4;
-
-		set_rtc_alarm(0, timeout_us - STOP_MODE_LATENCY,
-			      &rtc0, &rtc0ss);
-
-		asm volatile("wfi");
-
-		CPU_SCB_SYSCTRL &= ~0x4;
-
-		config_hispeed_clock();
-
-		/* fast forward timer according to RTC counter */
-		reset_rtc_alarm(&rtc1, &rtc1ss);
-		rtc_diff = get_rtc_diff(rtc0, rtc0ss, rtc1, rtc1ss);
-		t0.val = t0.val + rtc_diff;
-		force_time(t0);
+		asm volatile("cpsid i");
 	}
-
-	asm volatile("cpsie i ; isb");
-
-	/* note: interrupt that woke us up will run here */
 
 	evt = last_event;
 	last_event = 0;
