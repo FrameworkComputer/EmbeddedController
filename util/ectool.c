@@ -2921,6 +2921,11 @@ int cmd_usb_pd_power(int argc, char *argv[])
 			printf("Unknown\n");
 		}
 
+		if (r->role != USB_PD_PORT_POWER_DISCONNECTED) {
+			printf("  %s\n", r->dualrole ?
+				"Dual-role device" : "Dedicated charger");
+		}
+
 		printf("  Charger type: ");
 		switch (r->type) {
 		case USB_CHG_TYPE_PD:

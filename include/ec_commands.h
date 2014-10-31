@@ -2778,9 +2778,12 @@ enum usb_power_roles {
 struct ec_response_usb_pd_power_info {
 	uint8_t role;
 	uint8_t type;
+	uint8_t dualrole;
+	uint8_t reserved1;
 	uint16_t voltage_max;
 	uint16_t voltage_now;
 	uint16_t current_max;
+	uint16_t reserved2;
 	uint32_t max_power;
 } __packed;
 
