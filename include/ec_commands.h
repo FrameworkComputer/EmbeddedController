@@ -2811,10 +2811,7 @@ struct ec_params_usb_pd_fw_update {
 #define PD_RW_HASH_SIZE 20
 struct ec_params_usb_pd_rw_hash_entry {
 	uint16_t dev_id;
-	union {
-		uint8_t b[PD_RW_HASH_SIZE];
-		uint32_t w[PD_RW_HASH_SIZE/4];
-	} dev_rw_hash;
+	uint8_t dev_rw_hash[PD_RW_HASH_SIZE];
 } __packed;
 
 /* Read USB-PD Accessory info */

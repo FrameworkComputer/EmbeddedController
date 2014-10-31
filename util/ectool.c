@@ -793,6 +793,8 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 		(struct ec_params_usb_pd_rw_hash_entry *)ec_outbuf;
 	int i, rv;
 	char *e;
+	uint32_t val;
+	uint8_t *rwp;
 
 	if (argc < 7) {
 		fprintf(stderr, "Usage: %s <dev_id> <HASH[0]> ... <HASH[4]>\n",
@@ -806,12 +808,18 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 		return -1;
 	}
 
+	rwp = p->dev_rw_hash;
 	for (i = 2; i < 7; i++) {
-		p->dev_rw_hash.w[i - 2] = strtol(argv[i], &e, 0);
+		val = strtol(argv[i], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad RW hash\n");
 			return -1;
 		}
+		rwp[0] = (uint8_t)  (val >> 0) & 0xff;
+		rwp[1] = (uint8_t)  (val >> 8) & 0xff;
+		rwp[2] = (uint8_t) (val >> 16) & 0xff;
+		rwp[3] = (uint8_t) (val >> 24) & 0xff;
+		rwp += 4;
 	}
 	rv = ec_command(EC_CMD_USB_PD_RW_HASH_ENTRY, 0, p, sizeof(*p), NULL, 0);
 
@@ -848,9 +856,13 @@ int cmd_pd_device_info(int argc, char *argv[])
 	if (!r0->dev_id)
 		printf("Port:%d has no valid device\n", p->port);
 	else {
+		uint8_t *rwp = r0->dev_rw_hash;
 		printf("Port:%d Device:%d Hash: ", p->port, r0->dev_id);
-		for (i = 0; i < 5; i++)
-			printf(" 0x%08x", r0->dev_rw_hash.w[i]);
+		for (i = 0; i < 5; i++) {
+			printf(" 0x%02x%02x%02x%02x ", rwp[3], rwp[2], rwp[1],
+			       rwp[0]);
+			rwp += 4;
+		}
 		printf("\n");
 	}
 

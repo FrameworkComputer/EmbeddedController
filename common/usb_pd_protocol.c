@@ -1296,12 +1296,14 @@ static void pd_vdm_send_state_machine(int port)
 	}
 }
 
-static inline void pd_dev_dump_info(uint16_t dev_id, uint32_t *hash)
+static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 {
 	int j;
 	ccprintf("Device:0x%04x Hash:", dev_id);
-	for (j = 0; j < PD_RW_HASH_SIZE/4; j++)
-		ccprintf(" 0x%08x", hash[j]);
+	for (j = 0; j < PD_RW_HASH_SIZE; j += 4) {
+		ccprintf(" 0x%02x%02x%02x%02x", hash[j + 3], hash[j + 2],
+			 hash[j + 1], hash[j]);
+	}
 	ccprintf("\n");
 }
 
@@ -1310,7 +1312,7 @@ void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash)
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 	if (debug_level >= 1)
-		pd_dev_dump_info(dev_id, rw_hash);
+		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -2344,7 +2346,7 @@ static int command_pd(int argc, char **argv)
 		struct ec_params_usb_pd_rw_hash_entry *p;
 		for (i = 0; i < RW_HASH_ENTRIES; i++) {
 			p = &rw_hash_table[i];
-			pd_dev_dump_info(p->dev_id, p->dev_rw_hash.w);
+			pd_dev_dump_info(p->dev_id, p->dev_rw_hash);
 		}
 		return EC_SUCCESS;
 	}
@@ -2694,7 +2696,7 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 	r->dev_id = pd[*port].dev_id;
 
 	if (r->dev_id) {
-		memcpy(r->dev_rw_hash.b, pd[*port].dev_rw_hash,
+		memcpy(r->dev_rw_hash, pd[*port].dev_rw_hash,
 		       PD_RW_HASH_SIZE);
 	}
 
