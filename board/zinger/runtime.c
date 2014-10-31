@@ -231,6 +231,14 @@ void panic_reboot(void)
 	cpu_reset();
 }
 
+enum system_image_copy_t system_get_image_copy(void)
+{
+	if (is_ro_mode())
+		return SYSTEM_IMAGE_RO;
+	else
+		return SYSTEM_IMAGE_RW;
+}
+
 /* --- stubs --- */
 void __hw_timer_enable_clock(int n, int enable)
 { /* Done in hardware init */ }

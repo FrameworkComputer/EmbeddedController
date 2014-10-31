@@ -296,6 +296,11 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		memcpy(payload + 1, &version_data.version, 24);
 		rsize = 7;
 		break;
+	case VDO_CMD_READ_INFO:
+		/* copy info into response */
+		pd_get_info(payload + 1);
+		rsize = 7;
+		break;
 	default:
 		rsize = 0;
 	}

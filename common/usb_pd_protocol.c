@@ -15,12 +15,15 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
+#include "rsa.h"
+#include "sha256.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -1320,6 +1323,35 @@ void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash)
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 	if (debug_level >= 1)
 		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
+}
+
+uint8_t *flash_hash_rw(void)
+{
+	static struct sha256_ctx ctx;
+	SHA256_init(&ctx);
+	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF,
+		    CONFIG_FW_RW_SIZE - RSANUMBYTES);
+	return SHA256_final(&ctx);
+}
+
+void pd_get_info(uint32_t *info_data)
+{
+	void *hash;
+
+	/* calculate RW hash */
+	hash = flash_hash_rw();
+	/* copy first 20 bytes of RW hash */
+	memcpy(info_data, hash, 5 * sizeof(uint32_t));
+	/* copy other info into data msg */
+#if defined(CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR) && \
+	defined(CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR)
+	info_data[5] = VDO_INFO(CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR,
+				CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR,
+				ver_get_numcommits(),
+				(system_get_image_copy() != SYSTEM_IMAGE_RO));
+#else
+	info_data[5] = 0;
+#endif
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE

@@ -130,6 +130,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_SHA256
 #define CONFIG_SW_CRC
 #endif
 

@@ -9,8 +9,6 @@
 #include "common.h"
 #include "cpu.h"
 #include "registers.h"
-#include "rsa.h"
-#include "sha256.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -408,13 +406,4 @@ exit_er:
 	STM32_FLASH_CR = CR_LOCK;
 
 	return res;
-}
-
-static struct sha256_ctx ctx;
-uint8_t *flash_hash_rw(void)
-{
-	SHA256_init(&ctx);
-	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF,
-		    CONFIG_FW_RW_SIZE - RSANUMBYTES);
-	return SHA256_final(&ctx);
 }
