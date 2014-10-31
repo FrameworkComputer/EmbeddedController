@@ -825,8 +825,9 @@ int cmd_pd_device_info(int argc, char *argv[])
 	char *e;
 	struct ec_params_usb_pd_info_request *p =
 		(struct ec_params_usb_pd_info_request *)ec_outbuf;
-	struct ec_params_usb_pd_rw_hash_entry *r =
+	struct ec_params_usb_pd_rw_hash_entry *r0 =
 		(struct ec_params_usb_pd_rw_hash_entry *)ec_inbuf;
+	struct ec_params_usb_pd_discovery_entry *r1;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
@@ -844,14 +845,28 @@ int cmd_pd_device_info(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	if (!r->dev_id)
+	if (!r0->dev_id)
 		printf("Port:%d has no valid device\n", p->port);
 	else {
-		printf("Port:%d Device:%d Hash: ", p->port, r->dev_id);
+		printf("Port:%d Device:%d Hash: ", p->port, r0->dev_id);
 		for (i = 0; i < 5; i++)
-			printf(" 0x%08x", r->dev_rw_hash.w[i]);
+			printf(" 0x%08x", r0->dev_rw_hash.w[i]);
 		printf("\n");
 	}
+
+	r1 = (struct ec_params_usb_pd_discovery_entry *)ec_inbuf;
+	rv = ec_command(EC_CMD_USB_PD_DISCOVERY, 0, p, sizeof(*p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	if (!r1->vid)
+		printf("Port:%d has no discovered device\n", p->port);
+	else {
+		printf("Port:%d ptype:%d vid:0x%04x pid:0x%04x\n", p->port,
+		       r1->ptype, r1->vid, r1->pid);
+	}
+
 	return rv;
 }
 

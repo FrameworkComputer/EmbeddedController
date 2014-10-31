@@ -39,6 +39,7 @@ static void dfp_consume_identity(int port, uint32_t *payload)
 {
 	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
 	pe_init(port);
+	memcpy(&pe[port].identity, payload + 1, sizeof(pe[port].identity));
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
 		/* TODO(tbroch) do I disable VBUS here if power contract
@@ -189,7 +190,27 @@ int pd_exit_mode(int port, uint32_t *payload)
 
 static void dump_pe(int port)
 {
-	int i, j;
+	const char * const idh_ptype_names[]  = {
+		"UNDEF", "Hub", "Periph", "PCable", "ACable", "AMA",
+		"RSV6", "RSV7"};
+
+	int i, j, idh_ptype;
+
+	if (pe[port].identity[0] == 0) {
+		ccprintf("No identity discovered yet.\n");
+		return;
+	}
+	idh_ptype = PD_IDH_PTYPE(pe[port].identity[0]);
+	ccprintf("IDENT:\n");
+	ccprintf("\t[ID Header] %08x :: %s, VID:%04x\n", pe[port].identity[0],
+		 idh_ptype_names[idh_ptype], PD_IDH_VID(pe[port].identity[0]));
+	ccprintf("\t[Cert Stat] %08x\n", pe[port].identity[1]);
+	for (i = 2; i < ARRAY_SIZE(pe[port].identity); i++) {
+		ccprintf("\t");
+		if (pe[port].identity[i])
+			ccprintf("[%d] %08x ", i, pe[port].identity[i]);
+	}
+	ccprintf("\n");
 
 	if (pe[port].svid_cnt < 1) {
 		ccprintf("No SVIDS discovered yet.\n");
@@ -423,3 +444,26 @@ int pd_exit_mode(int port, uint32_t *payload)
 	return 0;
 }
 #endif /* !CONFIG_USB_PD_ALT_MODE_DFP */
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
+{
+	const uint8_t *port = args->params;
+	struct ec_params_usb_pd_discovery_entry *r = args->response;
+
+	if (*port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	r->vid = PD_IDH_VID(pe[*port].identity[0]);
+	r->ptype = PD_IDH_PTYPE(pe[*port].identity[0]);
+	/* pid only included if vid is assigned */
+	if (r->vid)
+		r->pid = PD_PRODUCT_PID(pe[*port].identity[2]);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
+		     hc_remote_pd_discovery,
+		     EC_VER_MASK(0));
+#endif
