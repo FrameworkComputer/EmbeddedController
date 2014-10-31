@@ -6,6 +6,7 @@
  */
 
 /* Interrupts */
+GPIO(AP_IN_SUSPEND,        E, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
 /*
  * TODO(gwendal): Follow Rambus work.
  * Combined accelerometer input. This will become an interrupt, once we have
@@ -21,7 +22,6 @@ GPIO(SH_IRQ_L,             A, 11, GPIO_OUT_LOW,  NULL)
 GPIO(LID_CLOSED,           A,  2, GPIO_INPUT,  NULL)
 GPIO(BASE_PRESENT,         A,  3, GPIO_INPUT,  NULL)
 GPIO(COMPASS_DRDY,         B, 11, GPIO_INPUT,  NULL)
-GPIO(AP_IN_SUSPEND,        B, 15, GPIO_INPUT,  NULL)
 
 #if 0
 /* Alternate functions */

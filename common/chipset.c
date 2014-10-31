@@ -17,6 +17,7 @@
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_POWER_AP
 static int command_apreset(int argc, char **argv)
 {
 	int is_cold = 1;
@@ -45,3 +46,4 @@ DECLARE_CONSOLE_COMMAND(apshutdown, command_apshutdown,
 			NULL,
 			"Force AP shutdown",
 			NULL);
+#endif

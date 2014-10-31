@@ -19,10 +19,15 @@
 #define CC_DEFAULT     CC_ALL
 
 /* Optional features */
+#undef CONFIG_EXTPOWER
+#undef CONFIG_HIBERNATE
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_I2C
 #define CONFIG_BOARD_PRE_INIT
 #undef  CONFIG_LID_SWITCH
+#undef CONFIG_CMD_POWER_AP
+#define CONFIG_POWER_COMMON
+#define CONFIG_CHIPSET_ECDRIVEN
 #define CONFIG_VBOOT_HASH
 #undef CONFIG_WATCHDOG_HELP
 
@@ -45,6 +50,13 @@
 #define TIM_ADC     3
 
 #include "gpio_signal.h"
+
+enum power_signal {
+	ECDRIVEN_SUSPEND_ASSERTED,
+
+	/* Number of power signals */
+	POWER_SIGNAL_COUNT
+};
 
 #endif /* !__ASSEMBLER__ */
 

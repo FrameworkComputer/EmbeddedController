@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -20,6 +21,12 @@ static void board_init(void)
 {
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	{GPIO_AP_IN_SUSPEND,  1, "SUSPEND_ASSERTED"},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

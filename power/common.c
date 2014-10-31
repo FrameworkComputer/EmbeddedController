@@ -328,6 +328,7 @@ static void power_lid_change(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, power_lid_change, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_EXTPOWER
 static void power_ac_change(void)
 {
 	if (extpower_is_present()) {
@@ -342,6 +343,7 @@ static void power_ac_change(void)
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
+#endif
 
 /*****************************************************************************/
 /* Interrupts */
