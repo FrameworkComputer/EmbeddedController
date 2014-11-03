@@ -38,4 +38,4 @@
 #define CONFIG_IRQ_COUNT 81
 
 /* STM32F3 has a larger USB RAM */
-#define CONFIG_USB_RAM_SIZE 1024
+#define CONFIG_USB_RAM_SIZE 512

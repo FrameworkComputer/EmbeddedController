@@ -226,7 +226,7 @@ struct usb_endpoint_descriptor {
 /* Helpers for managing the USB controller dedicated RAM */
 
 /* primitive to access the words in USB RAM */
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 typedef uint16_t usb_uint;
 #else
 /* older chips use a weird addressing were 16-bit words are 32-bit appart */
