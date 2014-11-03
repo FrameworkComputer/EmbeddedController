@@ -52,6 +52,7 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
 cmd_host_test = ./util/run_host_test $* $(silent)
+cmd_date = ./util/getdate.sh > $@
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
@@ -179,9 +180,32 @@ $(out)/vboot/%.o:$(VBOOT_SOURCE)/%.c
 $(out)/%.o:%.S
 	$(call quiet,c_to_o,AS     )
 
-$(out)/common/version.o: $(out)/ec_version.h
-$(out)/ec_version.h: $(filter-out $(out)/common/version.o,$(objs))
+# Conditionally force the rebuilding of ec_version.h only if it would be
+# changed.
+old_version_hash := $(shell cat $(out)/ec_version.h 2> /dev/null | md5sum -)
+new_version_hash := $(shell BOARD=$(BOARD) ./util/getversion.sh | md5sum -)
+
+ifneq ($(old_version_hash),$(new_version_hash))
+.PHONY: $(out)/ec_version.h
+endif
+
+# All of the objects have an order only dependency on the ec_version header.
+# This ensures that if ec_version.h needs to be build (because it was marked
+# PHONY above) then it will be rebuilt before any objects.  This is important
+# because some source files will include ev_version.h and fail to compile if
+# it doesn't already exist.  This dependency shouldn't be a normal dependency
+# because that would cause every object to be rebuilt when ec_version.h
+# changes, instead of just the ones that actually depend on it.  The objects
+# that truly depend on ec_version.h will have that information encoded in their
+# .d file.
+$(objs): | $(out)/ec_version.h
+
+$(out)/ec_version.h:
 	$(call quiet,version,VERSION)
+
+$(out)/common/version.o: $(out)/ec_date.h
+$(out)/ec_date.h: $(filter-out $(out)/common/version.o,$(objs))
+	$(call quiet,date,DATE   )
 
 $(out)/gen_pub_key.h: $(PEM)
 	$(call quiet,pubkey,PUBKEY )

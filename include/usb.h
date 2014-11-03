@@ -228,9 +228,12 @@ struct usb_endpoint_descriptor {
 /* primitive to access the words in USB RAM */
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 typedef uint16_t usb_uint;
+#elif defined(CHIP_FAMILY_STM32F) || defined(CHIP_FAMILY_STM32L)
+typedef uint16_t usb_uint;
+#elif defined(CHIP_HOST)
+typedef unsigned int usb_uint;
 #else
-/* older chips use a weird addressing were 16-bit words are 32-bit appart */
-typedef uint32_t usb_uint;
+#warn "usb_uint not defined for this chip family"
 #endif
 
 struct stm32_endpoint {

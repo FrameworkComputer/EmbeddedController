@@ -7,8 +7,8 @@
 
 #include <stdint.h>
 #include "common.h"
+#include "ec_date.h"
 #include "ec_version.h"
-#include "usb.h"
 #include "version.h"
 
 const struct version_struct version_data
@@ -20,11 +20,6 @@ const struct version_struct version_data
 
 const char build_info[] __attribute__((section(".rodata.buildinfo")))  =
 	CROS_EC_VERSION " " DATE " " BUILDER;
-
-#ifdef CONFIG_USB
-/* UTF-16 encoded USB string descriptor */
-const void * const usb_fw_version = USB_STRING_DESC(CROS_EC_VERSION32);
-#endif
 
 uint32_t ver_get_numcommits(void)
 {

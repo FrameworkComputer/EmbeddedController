@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "common.h"
 #include "console.h"
+#include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -67,7 +68,7 @@ const void * const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
 	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("FruitPie"),
-	[USB_STR_VERSION] = NULL /* filled at runtime */,
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 

@@ -125,12 +125,6 @@ static void ep0_rx(void)
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
 				goto unknown_req;
-			if (idx == USB_STR_VERSION) {
-				/* use the generated firmware version string */
-				desc = usb_fw_version;
-				len = desc[0];
-				break;
-			}
 			desc = usb_strings[idx];
 			len = desc[0];
 			break;
