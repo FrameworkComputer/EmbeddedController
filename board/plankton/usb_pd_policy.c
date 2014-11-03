@@ -23,10 +23,10 @@
 
 /* Source PDOs */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL),
+		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
 };
 static const int pd_src_pdo_cnts[3] = {
 		[SRC_CAP_5V] = 2,
@@ -38,9 +38,9 @@ static int pd_src_pdo_idx;
 
 /* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000,   500, 0),
-		PDO_FIXED(12000,  500, 0),
-		PDO_FIXED(20000,  500, 0),
+		PDO_FIXED(5000,   500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(12000,  500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(20000,  500, PDO_FIXED_DUAL_ROLE),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 

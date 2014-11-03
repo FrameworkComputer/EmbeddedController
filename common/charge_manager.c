@@ -201,8 +201,8 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 	else
 		r->role = USB_PD_PORT_POWER_DISCONNECTED;
 
-	/* TODO: fill in appropriate dual-role status */
-	r->dualrole = 0;
+	/* Is port partner dual-role capable */
+	r->dualrole = pd_get_partner_dualrole_capable(port);
 
 	if (sup == CHARGE_SUPPLIER_NONE) {
 		r->type = USB_CHG_TYPE_NONE;

@@ -43,6 +43,7 @@ enum pd_errors {
 #define PDO_FIXED_SUSPEND   (1 << 28) /* USB Suspend supported */
 #define PDO_FIXED_EXTERNAL  (1 << 27) /* Externally powered */
 #define PDO_FIXED_COMM_CAP  (1 << 26) /* USB Communications Capable */
+#define PDO_FIXED_DATA_SWAP (1 << 25) /* Data role swap command supported */
 #define PDO_FIXED_PEAK_CURR () /* [21..20] Peak current */
 #define PDO_FIXED_VOLT(mv)  (((mv)/50) << 10) /* Voltage in 50mV units */
 #define PDO_FIXED_CURR(ma)  (((ma)/10) << 0)  /* Max current in 10mA units */
@@ -970,6 +971,13 @@ int pd_is_connected(int port);
  * @param port USB-C port number
  */
 int pd_get_polarity(int port);
+
+/**
+ * Get port partner dual-role capable status
+ *
+ * @param port USB-C port number
+ */
+int pd_get_partner_dualrole_capable(int port);
 
 /**
  * Set the PD communication enabled flag. When communication is disabled,

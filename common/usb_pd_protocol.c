@@ -235,6 +235,8 @@ static struct pd_protocol {
 	uint64_t src_recover;
 	/* Flag for sending pings in SRC_READY */
 	uint8_t ping_enabled;
+	/* Port partner is a dual-role power device */
+	uint8_t drp_partner;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Current limit / voltage based on the last request message */
@@ -305,6 +307,7 @@ static inline void set_state(int port, enum pd_states next_state)
 
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 		pd[port].dev_id = 0;
+		pd[port].drp_partner = 0;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_exit_mode(port, NULL);
 #else
@@ -317,6 +320,11 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_set_vconn(port, pd[port].polarity, 0);
 #endif
 	}
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	else if (next_state == PD_STATE_SNK_DISCONNECTED) {
+		pd[port].drp_partner = 0;
+	}
+#endif
 
 #ifdef CONFIG_LOW_POWER_IDLE
 	/* If any PD port is connected, then disable deep sleep */
@@ -730,6 +738,10 @@ static void pd_send_request_msg(int port)
 	if (res == EC_SUCCESS) {
 		pd[port].curr_limit = curr_limit;
 		pd[port].supply_voltage = supply_voltage;
+		/* src cap 0 should be fixed PDO, get dualrole power capable */
+		if ((pd_src_caps[port][0] & PDO_TYPE_MASK) == PDO_TYPE_FIXED)
+			pd[port].drp_partner = (pd_src_caps[port][0] &
+						PDO_FIXED_DUAL_ROLE) ? 1 : 0;
 		res = send_request(port, rdo);
 		if (res >= 0)
 			set_state(port, PD_STATE_SNK_REQUESTED);
@@ -783,6 +795,10 @@ static void handle_data_request(int port, uint16_t head,
 
 		break;
 	case PD_DATA_SINK_CAP:
+		/* snk cap 0 should be fixed PDO, get dualrole power capable */
+		if ((payload[0] & PDO_TYPE_MASK) == PDO_TYPE_FIXED)
+			pd[port].drp_partner =
+				(payload[0] & PDO_FIXED_DUAL_ROLE) ? 1 : 0;
 		break;
 	case PD_DATA_VENDOR_DEF:
 		handle_vdm_request(port, cnt, payload);
@@ -1170,6 +1186,12 @@ int pd_get_polarity(int port)
 	return pd[port].polarity;
 }
 
+int pd_get_partner_dualrole_capable(int port)
+{
+	/* return dualrole status of port partner */
+	return pd[port].drp_partner;
+}
+
 void pd_comm_enable(int enable)
 {
 	pd_comm_enabled = enable;
@@ -1236,7 +1258,7 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	enum pd_states this_state;
 	timestamp_t now;
-	int caps_count = 0;
+	int caps_count = 0, src_ready_vdms_sent = 0;
 
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
@@ -1383,6 +1405,7 @@ void pd_task(void)
 			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
 				timeout =  PD_T_SEND_SOURCE_CAP;
+				src_ready_vdms_sent = 0;
 				/* it'a time to ping regularly the sink */
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
@@ -1392,7 +1415,15 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SRC_READY:
+			timeout = PD_T_SOURCE_ACTIVITY;
 			if (pd[port].last_state != pd[port].task_state) {
+				/* Get sink cap to know if dual-role device */
+				send_control(port, PD_CTRL_GET_SINK_CAP);
+				break;
+			}
+
+			/* Send VDMs once after get sink cap */
+			if (!src_ready_vdms_sent) {
 #ifdef CONFIG_USB_PD_SIMPLE_DFP
 				/*
 				 * For simple devices that don't support
@@ -1408,20 +1439,17 @@ void pd_task(void)
 				pd_send_vdm(port, USB_SID_PD,
 					    CMD_DISCOVER_IDENT, NULL, 0);
 #endif
-			}
-
-			if (!pd[port].ping_enabled) {
-				timeout = PD_T_SOURCE_ACTIVITY;
+				src_ready_vdms_sent = 1;
 				break;
 			}
+
+			if (!pd[port].ping_enabled)
+				break;
 
 			/* Verify that the sink is alive */
 			res = send_control(port, PD_CTRL_PING);
-			if (res >= 0) {
-				/* schedule next keep-alive */
-				timeout = PD_T_SOURCE_ACTIVITY;
+			if (res >= 0)
 				break;
-			}
 
 			/* Ping dropped. Try soft reset. */
 			set_state(port, PD_STATE_SOFT_RESET);
@@ -1955,10 +1983,11 @@ static int command_pd(int argc, char **argv)
 			"SOFT_RESET", "HARD_RESET", "BIST",
 		};
 		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
-		ccprintf("Port C%d, %s - Role: %s Polarity: CC%d State: %s\n",
+		ccprintf("Port C%d, %s - Role: %s Polarity: CC%d DRP: %d, "
+			 "State: %s\n",
 			port, pd_comm_enabled ? "Enabled" : "Disabled",
 			pd[port].role == PD_ROLE_SOURCE ? "SRC" : "SNK",
-			pd[port].polarity + 1,
+			pd[port].polarity + 1, pd[port].drp_partner,
 			state_names[pd[port].task_state]);
 	} else {
 		return EC_ERROR_PARAM1;

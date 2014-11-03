@@ -18,17 +18,16 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-/* TODO(crosbug.com/p/28869): update source and sink tables to spec. */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(5000,   900, 0),
+		PDO_FIXED(5000,   500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,   900, PDO_FIXED_DUAL_ROLE),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
-/* TODO(crosbug.com/p/28869): update source and sink tables to spec. */
 const uint32_t pd_snk_pdo[] = {
-		PDO_BATT(4500,   5500, 15000),
-		PDO_BATT(11500, 12500, 36000),
+		PDO_FIXED(5000, 500, PDO_FIXED_DUAL_ROLE),
+		PDO_BATT(5000, 20000, 10000),
+		PDO_VAR(5000, 20000, 3000),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
