@@ -500,7 +500,7 @@ DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 			NULL);
 #endif /* CONFIG_CMD_RTC_ALARM */
 
-#ifdef CONFIG_LOW_POWER_IDLE
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_COMMON_RUNTIME)
 /**
  * Print low power idle statistics
  */

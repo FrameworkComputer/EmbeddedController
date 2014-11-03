@@ -9,11 +9,13 @@
 #include "cpu.h"
 #include "debug.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
 
 volatile uint32_t last_event;
+uint32_t sleep_mask;
 
 timestamp_t get_time(void)
 {
@@ -139,7 +141,8 @@ uint32_t task_wait_event(int timeout_us)
 		if (timeout_us < 0) {
 			asm volatile ("wfi");
 		} else if (timeout_us <=
-			   (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY)) {
+			   (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY) ||
+			  !DEEP_SLEEP_ALLOWED) {
 			STM32_TIM32_CCR1(2) = STM32_TIM32_CNT(2) + timeout_us;
 			STM32_TIM_SR(2) = 0; /* clear match flag */
 			STM32_TIM_DIER(2) = 2; /*  match interrupt */
