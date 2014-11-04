@@ -21,6 +21,11 @@
 /* Acceptable margin between requested VBUS and measured value */
 #define MARGIN_MV 400 /* mV */
 
+/* Define typical operating power and max power */
+#define OPERATING_POWER_MW 5000
+#define MAX_POWER_MW       60000
+#define MAX_CURRENT_MA     3000
+
 /* Source PDOs */
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
@@ -63,6 +68,8 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 	int i;
 	int ma;
 	int set_mv = select_mv;
+	int max;
+	uint32_t flags;
 
 	/* Default to 5V */
 	if (set_mv <= 0)
@@ -78,11 +85,19 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 	if (i < 0)
 		return -EC_ERROR_UNKNOWN;
 
-	/* request all the power ... */
+	/* build rdo for desired power */
 	ma = 10 * (src_caps[i] & 0x3FF);
-	*rdo = RDO_FIXED(i + 1, ma, ma, 0);
-	CPRINTF("Request [%d] %dV %dmA\n", i, set_mv/1000, ma);
-	*curr_limit = ma;
+	max = MIN(ma, MAX_CURRENT_MA);
+	flags = (max * set_mv) < (1000 * OPERATING_POWER_MW) ?
+			RDO_CAP_MISMATCH : 0;
+	*rdo = RDO_FIXED(i + 1, max, max, 0);
+	CPRINTF("Request [%d] %dV %dmA", i, set_mv/1000, max);
+	/* Mismatch bit set if less power offered than the operating power */
+	if (flags & RDO_CAP_MISMATCH)
+		CPRINTF(" Mismatch");
+	CPRINTF("\n");
+
+	*curr_limit = max;
 	*supply_voltage = set_mv;
 	return EC_SUCCESS;
 }

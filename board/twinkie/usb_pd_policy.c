@@ -17,6 +17,11 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+/* Define typical operating power and max power */
+#define OPERATING_POWER_MW 15000
+#define MAX_POWER_MW       60000
+#define MAX_CURRENT_MA     3000
+
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
 		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
@@ -40,7 +45,10 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 	int i;
 	int sel_mv;
 	int max_uw = 0;
+	int max_ma;
 	int max_i = -1;
+	int max;
+	uint32_t flags;
 
 	/* Get max power */
 	for (i = 0; i < cnt; i++) {
@@ -61,20 +69,31 @@ int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 	if (max_i < 0)
 		return -EC_ERROR_UNKNOWN;
 
-	/* request all the power ... */
+	/* build rdo for desired power */
 	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-		int uw = 250000 * (src_caps[i] & 0x3FF);
-		*rdo = RDO_BATT(max_i + 1, uw/2, uw, 0);
-		*curr_limit = uw/sel_mv;
-		CPRINTF("Request [%d] %dV %dmW\n",
-			 max_i, sel_mv/1000, uw/1000);
+		int uw = 250000 * (src_caps[max_i] & 0x3FF);
+		max = MIN(1000 * uw, MAX_POWER_MW);
+		flags = (max < OPERATING_POWER_MW) ? RDO_CAP_MISMATCH : 0;
+		max_ma = 1000 * max / sel_mv;
+		*rdo = RDO_BATT(max_i + 1, max, max, flags);
+		CPRINTF("Request [%d] %dV %dmW",
+			max_i, sel_mv/1000, max);
 	} else {
 		int ma = 10 * (src_caps[max_i] & 0x3FF);
-		*rdo = RDO_FIXED(max_i + 1, ma / 2, ma, 0);
-		*curr_limit = ma;
-		CPRINTF("Request [%d] %dV %dmA\n",
-			 max_i, sel_mv/1000, ma);
+		max = MIN(ma, MAX_CURRENT_MA);
+		flags = (max * sel_mv) < (1000 * OPERATING_POWER_MW) ?
+				RDO_CAP_MISMATCH : 0;
+		max_ma = max;
+		*rdo = RDO_FIXED(max_i + 1, max, max, flags);
+		CPRINTF("Request [%d] %dV %dmA",
+			max_i, sel_mv/1000, max);
 	}
+	/* Mismatch bit set if less power offered than the operating power */
+	if (flags & RDO_CAP_MISMATCH)
+		CPRINTF(" Mismatch");
+	CPRINTF("\n");
+
+	*curr_limit = max_ma;
 	*supply_voltage = sel_mv;
 	return EC_SUCCESS;
 }
