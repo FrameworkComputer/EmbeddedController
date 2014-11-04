@@ -580,9 +580,6 @@ enum pd_data_msg_type {
 #define PD_REV10 0
 #define PD_REV20 1
 
-/* BMC-supported bit : we are using the baseband variant of the protocol */
-#define PD_BMC_SUPPORTED (1 << 15)
-
 /* Port role */
 #define PD_ROLE_SINK   0
 #define PD_ROLE_SOURCE 1
@@ -594,8 +591,7 @@ enum pd_data_msg_type {
 #define PD_HEADER(type, prole, drole, id, cnt) \
 	((type) | (PD_REV20 << 6) | \
 	 ((drole) << 5) | ((prole) << 8) | \
-	 ((id) << 9) | ((cnt) << 12) | \
-	 PD_BMC_SUPPORTED)
+	 ((id) << 9) | ((cnt) << 12))
 
 #define PD_HEADER_CNT(header)  (((header) >> 12) & 7)
 #define PD_HEADER_TYPE(header) ((header) & 0xF)
