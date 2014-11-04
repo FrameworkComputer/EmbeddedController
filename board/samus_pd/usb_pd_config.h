@@ -258,7 +258,7 @@ static inline int pd_snk_is_vbus_provided(int port)
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
-/* delay necessary for the voltage transition on the power supply */
-#define PD_POWER_SUPPLY_TRANSITION_DELAY 50000 /* us */
+/* delay for the voltage transition on the power supply, chip max is 16us */
+#define PD_POWER_SUPPLY_TRANSITION_DELAY 20000 /* us */
 
 #endif /* __USB_PD_CONFIG_H */

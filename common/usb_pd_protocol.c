@@ -1411,7 +1411,7 @@ void pd_task(void)
 				pd_set_vconn(port, pd[port].polarity, 1);
 #endif
 
-				set_state(port, PD_STATE_SRC_DISCOVERY);
+				set_state(port, PD_STATE_SRC_STARTUP);
 				caps_count = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 				/* Keep VBUS up for the hold period */
@@ -1432,6 +1432,15 @@ void pd_task(void)
 				timeout = 2*MSEC;
 			}
 #endif
+			break;
+		case PD_STATE_SRC_STARTUP:
+			/* Wait for power source to enable */
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(
+					port,
+					get_time().val +
+					PD_POWER_SUPPLY_TRANSITION_DELAY,
+					PD_STATE_SRC_DISCOVERY);
 			break;
 		case PD_STATE_SRC_DISCOVERY:
 			/* Send source cap some minimum number of times */
@@ -2169,8 +2178,9 @@ static int command_pd(int argc, char **argv)
 			"SNK_SWAP_SNK_DISABLE", "SNK_SWAP_SRC_DISABLE",
 			"SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-			"SRC_DISCONNECTED", "SRC_DISCOVERY", "SRC_NEGOCIATE",
-			"SRC_ACCEPTED", "SRC_TRANSITION", "SRC_READY",
+			"SRC_DISCONNECTED", "SRC_STARTUP", "SRC_DISCOVERY",
+			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_TRANSITION",
+			"SRC_READY",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
 			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",
