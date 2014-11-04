@@ -12,8 +12,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(5000,   900, 0),
+		PDO_FIXED(5000,   900, PDO_FIXED_EXTERNAL),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 

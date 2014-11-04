@@ -148,7 +148,6 @@ static void discharge_voltage(int target_volt)
 
 /* Power Delivery Objects */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_EXTERNAL),
 		PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_EXTERNAL),
@@ -162,7 +161,6 @@ static const struct {
 	int       ovp;    /* over-voltage limit in mV */
 	int       ovp_rec;/* over-voltage recovery threshold in mV */
 } voltages[ARRAY_SIZE(pd_src_pdo)] = {
-	{VO_5V,  UVP_MV(5000),  OVP_MV(5000), OVP_REC_MV(5000)},
 	{VO_5V,  UVP_MV(5000),  OVP_MV(5000), OVP_REC_MV(5000)},
 	{VO_12V, UVP_MV(12000), OVP_MV(12000), OVP_REC_MV(12000)},
 	{VO_20V, UVP_MV(20000), OVP_MV(20000), OVP_REC_MV(20000)},
@@ -238,7 +236,7 @@ int pd_set_power_supply_ready(int port)
 
 void pd_power_supply_reset(int port)
 {
-	int need_discharge = (volt_idx > 1) || discharge_is_enabled();
+	int need_discharge = (volt_idx > 0) || discharge_is_enabled();
 
 	output_disable();
 	volt_idx = 0;

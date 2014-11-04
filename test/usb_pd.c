@@ -165,7 +165,7 @@ static int test_request(void)
 	TEST_ASSERT(pd_test_tx_msg_verify_short(0,
 			PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK, PD_ROLE_UFP,
 				  pd_port[0].msg_tx_id, 1)));
-	TEST_ASSERT(pd_test_tx_msg_verify_word(0, RDO_FIXED(2, 450, 900, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_word(0, RDO_FIXED(1, 450, 900, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_crc(0));
 	TEST_ASSERT(pd_test_tx_msg_verify_eop(0));
 	inc_tx_id(0);
