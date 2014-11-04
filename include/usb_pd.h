@@ -58,7 +58,8 @@ enum pd_errors {
 #define PDO_VAR(min_mv, max_mv, op_ma) \
 				(PDO_VAR_MIN_VOLT(min_mv) | \
 				 PDO_VAR_MAX_VOLT(max_mv) | \
-				 PDO_VAR_OP_CURR(op_ma))
+				 PDO_VAR_OP_CURR(op_ma)   | \
+				 PDO_TYPE_VARIABLE)
 
 #define PDO_BATT_MAX_VOLT(mv) ((((mv) / 50) & 0x3FF) << 20)
 #define PDO_BATT_MIN_VOLT(mv) ((((mv) / 50) & 0x3FF) << 10)
@@ -67,7 +68,8 @@ enum pd_errors {
 #define PDO_BATT(min_mv, max_mv, op_mw) \
 				(PDO_BATT_MIN_VOLT(min_mv) | \
 				 PDO_BATT_MAX_VOLT(max_mv) | \
-				 PDO_BATT_OP_POWER(op_mw))
+				 PDO_BATT_OP_POWER(op_mw) | \
+				 PDO_TYPE_BATTERY)
 
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n)             (((n) & 0x7) << 28)
