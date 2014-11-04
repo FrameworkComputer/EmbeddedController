@@ -143,26 +143,25 @@ static int dfp_enter_mode(int port, uint32_t *payload)
 	return 1;
 }
 
-static int dfp_consume_attention(int port, uint32_t *payload)
+static void dfp_consume_attention(int port, uint32_t *payload)
 {
 	int svid = PD_VDO_VID(payload[0]);
 	int opos = PD_VDO_OPOS(payload[0]);
 
 	if (!AMODE_VALID(port))
-		return 0;
+		return;
 	if (svid != pe[port].amode.fx->svid) {
 		CPRINTF("PE ERR: svid s:0x%04x != m:0x%04x\n",
 			svid, pe[port].amode.fx->svid);
-		return 0; /* NAK */
+		return;
 	}
 	if (opos != pe[port].amode.index + 1) {
 		CPRINTF("PE ERR: opos s:%d != m:%d\n",
 			opos, pe[port].amode.index + 1);
-		return 0; /* NAK */
+		return;
 	}
-	if (!pe[port].amode.fx->attention)
-		return 0;
-	return pe[port].amode.fx->attention(port, payload);
+	if (pe[port].amode.fx->attention)
+		pe[port].amode.fx->attention(port, payload);
 }
 
 int pd_exit_mode(int port, uint32_t *payload)
@@ -269,8 +268,12 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			break;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		case CMD_ATTENTION:
-			func = &dfp_consume_attention;
-			break;
+			/*
+			 * attention is only SVDM with no response
+			 * (just goodCRC) return zero here.
+			 */
+			dfp_consume_attention(port, payload);
+			return 0;
 #endif
 		default:
 			CPRINTF("PE ERR: unknown command %d\n", cmd);
