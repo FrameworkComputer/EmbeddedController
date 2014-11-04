@@ -11,11 +11,10 @@ host-util-bin=ectool lbplay burn_my_ec stm32mon ec_sb_firmware_update lbcc
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 ifeq ($(CHIP),mec1322)
 comm-objs+=comm-mec1322.o
-else ifeq ($(CONFIG_LPC),y)
-comm-objs+=comm-lpc.o
 else
-comm-objs+=comm-i2c.o
+comm-objs+=comm-lpc.o
 endif
+comm-objs+=comm-i2c.o
 ectool-objs=ectool.o ectool_keyscan.o misc_util.o ec_flash.o $(comm-objs)
 
 ec_sb_firmware_update-objs=ec_sb_firmware_update.o $(comm-objs) misc_util.o
