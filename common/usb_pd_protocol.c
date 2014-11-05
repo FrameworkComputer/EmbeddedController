@@ -1334,7 +1334,7 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	enum pd_states this_state;
 	timestamp_t now;
-	int caps_count = 0, src_ready_vdms_sent = 0;
+	int caps_count = 0, src_ready_vdms_sent = 0, src_connected = 0;
 
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
@@ -1424,7 +1424,6 @@ void pd_task(void)
 #endif
 
 				set_state(port, PD_STATE_SRC_STARTUP);
-				caps_count = 0;
 			}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			/* Swap roles if time expired or VBUS is present */
@@ -1443,12 +1442,15 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_STARTUP:
 			/* Wait for power source to enable */
-			if (pd[port].last_state != pd[port].task_state)
+			if (pd[port].last_state != pd[port].task_state) {
+				caps_count = 0;
+				src_connected = 0;
 				set_state_timeout(
 					port,
 					get_time().val +
 					PD_POWER_SUPPLY_TRANSITION_DELAY,
 					PD_STATE_SRC_DISCOVERY);
+			}
 			break;
 		case PD_STATE_SRC_DISCOVERY:
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1456,6 +1458,21 @@ void pd_task(void)
 			if (pd[port].last_state != pd[port].task_state)
 				next_role_swap = get_time().val + PD_T_DRP_HOLD;
 #endif
+			/*
+			 * While we were enabling VBUS, other side could have
+			 * toggled roles, so now wait until other side settles
+			 * on UFP, before sending source cap.
+			 */
+			if (!src_connected) {
+				cc1_volt = pd_adc_read(port, pd[port].polarity);
+				if (cc1_volt < PD_SRC_VNC) {
+					src_connected = 1;
+				} else {
+					timeout = 10*MSEC;
+					break;
+				}
+			}
+
 			/* Send source cap some minimum number of times */
 			if (caps_count < PD_CAPS_COUNT) {
 				/* Query capabilites of the other side */
