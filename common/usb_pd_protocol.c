@@ -121,6 +121,10 @@ static const uint8_t dec4b5b[] = {
 
 /* Start of Packet sequence : three Sync-1 K-codes, then one Sync-2 K-code */
 #define PD_SOP (PD_SYNC1 | (PD_SYNC1<<5) | (PD_SYNC1<<10) | (PD_SYNC2<<15))
+#define PD_SOP_PRIME	(PD_SYNC1 | (PD_SYNC1<<5) | \
+			(PD_SYNC3<<10) | (PD_SYNC3<<15))
+#define PD_SOP_PRIME_PRIME	(PD_SYNC1 | (PD_SYNC3<<5) | \
+				(PD_SYNC1<<10) | (PD_SYNC3<<15))
 
 /* Hard Reset sequence : three RST-1 K-codes, then one RST-2 K-code */
 #define PD_HARD_RESET (PD_RST1 | (PD_RST1 << 5) |\
@@ -1050,10 +1054,15 @@ static int analyze_rx(int port, uint32_t *payload)
 	/* Find the Start Of Packet sequence */
 	while (bit > 0) {
 		bit = pd_dequeue_bits(port, bit, 20, &val);
-		if (val == PD_SOP)
+		if (val == PD_SOP) {
 			break;
-		/* TODO: detect SOP with 1 error code */
-		/* TODO: detect Hard reset */
+		} else if (val == PD_SOP_PRIME) {
+			CPRINTF("SOP'\n");
+			return -5;
+		} else if (val == PD_SOP_PRIME_PRIME) {
+			CPRINTF("SOP''\n");
+			return -5;
+		}
 	}
 	if (bit < 0) {
 		msg = "SOP";

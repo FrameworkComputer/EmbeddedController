@@ -603,6 +603,7 @@ enum pd_data_msg_type {
 /* K-codes for special symbols */
 #define PD_SYNC1 0x18
 #define PD_SYNC2 0x11
+#define PD_SYNC3 0x06
 #define PD_RST1  0x07
 #define PD_RST2  0x19
 #define PD_EOP   0x0D
