@@ -15,6 +15,13 @@
 #define CHARGE_CURRENT_UNINITIALIZED -1
 #define CHARGE_VOLTAGE_UNINITIALIZED -1
 
+/* Port override settings */
+enum {
+	OVERRIDE_DONT_CHARGE = -2,
+	OVERRIDE_OFF = -1,
+	/* [0, PD_PORT_COUNT): Port# */
+};
+
 #define POWER(charge_port) ((charge_port.current) * (charge_port.voltage))
 
 /* Charge tasks report available current and voltage */
@@ -30,6 +37,9 @@ void charge_manager_update(int supplier,
 
 /* Update charge ceiling for a given port */
 void charge_manager_set_ceil(int port, int ceil);
+
+/* Select an 'override port', which is always the preferred charge port */
+void charge_manager_set_override(int port);
 
 /* Returns the current active charge port, as determined by charge manager */
 int charge_manager_get_active_charge_port(void);

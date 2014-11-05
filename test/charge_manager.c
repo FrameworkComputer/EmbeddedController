@@ -64,6 +64,7 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 	int i, j;
 	struct charge_port_info charge;
 
+	charge_manager_set_override(OVERRIDE_OFF);
 	charge.current = current;
 	charge.voltage = voltage;
 
@@ -253,6 +254,89 @@ static int test_new_power_request(void)
 	return EC_SUCCESS;
 }
 
+static int test_override(void)
+{
+	struct charge_port_info charge;
+
+	/* Initialize table to no charge */
+	initialize_charge_table(0, 5000, 1000);
+
+	/*
+	 * Set a low-priority supplier on p0 and high-priority on p1, then
+	 * verify that p1 is selected.
+	 */
+	charge.current = 500;
+	charge.voltage = 5000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 1, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Set override to p0 and verify p0 is selected */
+	charge_manager_set_override(0);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+
+	/* Remove override and verify p1 is again selected */
+	charge_manager_set_override(OVERRIDE_OFF);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+
+	/*
+	 * Set override again to p0, but set p0 charge to 0, and verify p1
+	 * is again selected.
+	 */
+	charge.current = 0;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge_manager_set_override(0);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+
+	/* Set non-zero charge on port 0 and verify override was auto-removed */
+	charge.current = 250;
+	charge_manager_update(CHARGE_SUPPLIER_TEST5, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+
+	/*
+	 * Verify current limit is still selected according to supplier
+	 * priority on the override port.
+	 */
+	charge_manager_set_override(0);
+	charge.current = 300;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 300);
+	charge.current = 100;
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 100);
+
+	/* Set override to "don't charge", then verify we're not charging */
+	charge_manager_set_override(OVERRIDE_DONT_CHARGE);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+	TEST_ASSERT(active_charge_limit == 0);
+
+	/* Update a charge supplier, verify that we still aren't charging */
+	charge.current = 200;
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+	TEST_ASSERT(active_charge_limit == 0);
+
+	/* Turn override off, verify that we go back to the correct charge */
+	charge_manager_set_override(OVERRIDE_OFF);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -261,6 +345,7 @@ void run_test(void)
 	RUN_TEST(test_priority);
 	RUN_TEST(test_charge_ceil);
 	RUN_TEST(test_new_power_request);
+	RUN_TEST(test_override);
 
 	test_print_result();
 }
