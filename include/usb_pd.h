@@ -560,9 +560,9 @@ enum pd_ctrl_msg_type {
 	PD_CTRL_PS_RDY = 6,
 	PD_CTRL_GET_SOURCE_CAP = 7,
 	PD_CTRL_GET_SINK_CAP = 8,
-	PD_CTRL_PROTOCOL_ERR = 9,
+	PD_CTRL_DR_SWAP = 9,
 	PD_CTRL_PR_SWAP = 10,
-	/* 11 Reserved */
+	PD_CTRL_VCONN_SWAP = 11,
 	PD_CTRL_WAIT = 12,
 	PD_CTRL_SOFT_RESET = 13,
 	/* 14-15 Reserved */

@@ -908,7 +908,10 @@ static void handle_ctrl_request(int port, uint16_t head,
 		send_control(port, PD_CTRL_REJECT);
 #endif
 		break;
-	case PD_CTRL_PROTOCOL_ERR:
+	case PD_CTRL_DR_SWAP:
+	case PD_CTRL_VCONN_SWAP:
+		send_control(port, PD_CTRL_REJECT);
+		break;
 	case PD_CTRL_WAIT:
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
