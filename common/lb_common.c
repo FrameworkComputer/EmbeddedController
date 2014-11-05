@@ -67,9 +67,9 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
  * Samus LEDs can handle much higher currents, but these constants were
  * calibrated to provide uniform intensity at the level used by Link.
  * See crosbug.com/p/33017 before making any changes. */
-#define MAX_RED   0x28
-#define MAX_GREEN 0x24
-#define MAX_BLUE  0x34
+#define MAX_RED   0x34
+#define MAX_GREEN 0x2c
+#define MAX_BLUE  0x40
 #endif
 #ifdef BOARD_HOST
 /* For testing only */

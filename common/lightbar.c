@@ -110,10 +110,10 @@ static const struct lightbar_params_v1 default_params = {
 		 * https://sites.google.com/a/google.com/brandsite/the-colours
 		 * See crosbug.com/p/33017 before making any changes.
 		 */
-		{0x50, 0x98, 0xe8},		/* 0: Google blue */
-		{0xdb, 0x44, 0x37},		/* 1: Google red */
-		{0xf4, 0xb4, 0x00},		/* 2: Google yellow */
-		{0x00, 0x88, 0x30},		/* 3: Google green */
+		{0x34, 0x70, 0xb4},		/* 0: Google blue */
+		{0xbc, 0x50, 0x2c},		/* 1: Google red */
+		{0xd0, 0xe0, 0x00},		/* 2: Google yellow */
+		{0x50, 0xa0, 0x40},		/* 3: Google green */
 		/* These are primary colors */
 		{0x00, 0x00, 0xff},		/* 4: full blue */
 		{0xff, 0x00, 0x00},		/* 5: full red */
