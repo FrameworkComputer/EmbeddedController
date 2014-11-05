@@ -194,6 +194,7 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
+#ifndef TEST_CHARGE_MANAGER
 static int hc_pd_power_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_power_info *p = args->params;
@@ -289,3 +290,4 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
 		     hc_pd_power_info,
 		     EC_VER_MASK(0));
+#endif /* TEST_CHARGE_MANAGER */

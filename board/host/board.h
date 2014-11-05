@@ -39,4 +39,27 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+/* Charge suppliers */
+enum charge_supplier {
+	CHARGE_SUPPLIER_TEST1,
+	CHARGE_SUPPLIER_TEST2,
+	CHARGE_SUPPLIER_TEST3,
+	CHARGE_SUPPLIER_TEST4,
+	CHARGE_SUPPLIER_TEST5,
+	CHARGE_SUPPLIER_TEST6,
+	CHARGE_SUPPLIER_TEST7,
+	CHARGE_SUPPLIER_TEST8,
+	CHARGE_SUPPLIER_TEST9,
+	CHARGE_SUPPLIER_COUNT
+};
+
+/* supplier_priority table defined in board.c */
+extern const int supplier_priority[];
+
+/* Set the active charge port. */
+void board_set_active_charge_port(int charge_port);
+
+/* Set the charge current limit. */
+void board_set_charge_limit(int charge_ma);
+
 #endif /* __BOARD_H */

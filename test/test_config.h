@@ -133,5 +133,10 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_SW_CRC
 #endif
 
+#ifdef TEST_CHARGE_MANAGER
+#define CONFIG_CHARGE_MANAGER
+#define CONFIG_USB_PD_DUAL_ROLE
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __CROS_EC_TEST_CONFIG_H */
