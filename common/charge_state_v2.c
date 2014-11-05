@@ -592,7 +592,7 @@ void charger_task(void)
 
 		/* If the battery is not responsive, try to wake it up. */
 		if (!(curr.batt.flags & BATT_FLAG_RESPONSIVE)) {
-			if (battery_seems_to_be_dead) {
+			if (battery_seems_to_be_dead || battery_is_cut_off()) {
 				/* It's dead, do nothing */
 				curr.state = ST_IDLE;
 				curr.requested_voltage = 0;
