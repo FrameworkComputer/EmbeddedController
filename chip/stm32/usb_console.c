@@ -73,8 +73,9 @@ static void con_ep_rx(void)
 	for (i = 0; i < (btable_ep[USB_EP_CONSOLE].rx_count & 0x3ff); i++) {
 		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
 		if (rx_buf_next != rx_buf_tail) {
-			/* Not working on old STM32 ... */
-			rx_buf[rx_buf_head] = ((uint8_t *)ep_buf_rx)[i];
+			rx_buf[rx_buf_head] = ((i & 1) ?
+					       (ep_buf_rx[i >> 1] >> 8) :
+					       (ep_buf_rx[i >> 1] & 0xff));
 			rx_buf_head = rx_buf_next;
 		}
 	}
@@ -107,7 +108,7 @@ USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_reset);
 
 static int __tx_char(void *context, int c)
 {
-	uint16_t *buf = (uint16_t *)ep_buf_tx;
+	usb_uint *buf = (usb_uint *)ep_buf_tx;
 	int *tx_idx = context;
 
 	/* Do newline to CRLF translation */
