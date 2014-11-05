@@ -69,6 +69,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct fan_t fans[] = {
 	{.flags = FAN_USE_RPM_MODE,
 	 .rpm_min = 1000,
+	 .rpm_start = 1000,
 	 .rpm_max = 5050,
 	 .ch = 2,
 	 .pgood_gpio = GPIO_PP5000_PGOOD,

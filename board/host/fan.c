@@ -11,6 +11,7 @@
 const struct fan_t fans[] = {
 	{.flags = FAN_USE_RPM_MODE,
 	 .rpm_min = 1000,
+	 .rpm_start = 1500,
 	 .rpm_max = 5000,
 	 .ch = 0,
 	 .pgood_gpio = -1,
@@ -49,7 +50,7 @@ int fan_get_rpm_mode(int ch)
 	return mock_rpm_mode;
 }
 
-static int mock_rpm;
+int mock_rpm;
 void fan_set_rpm_target(int ch, int rpm)
 {
 	mock_rpm = rpm;

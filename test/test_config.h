@@ -104,6 +104,10 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_MASTER 1
 #endif
 
+#ifdef TEST_FAN
+#define CONFIG_FANS 1
+#endif
+
 #ifdef TEST_BUTTON
 #define CONFIG_BUTTON_COUNT 2
 #define CONFIG_KEYBOARD_PROTOCOL_8042

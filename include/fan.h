@@ -11,7 +11,9 @@
 /* Characteristic of each physical fan */
 struct fan_t {
 	unsigned int flags;
+	/* rpm_min is to keep turning. rpm_start is to begin turning */
 	int rpm_min;
+	int rpm_start;
 	int rpm_max;
 	/* Hardware channel number (the meaning is chip-specific) */
 	int ch;

@@ -98,7 +98,7 @@ int fan_get_rpm_target(int ch)
 	return (LM4_FAN_FANCMD(ch) & MAX_RPM) * RPM_SCALE;
 }
 
-void fan_set_rpm_target(int ch, int rpm)
+test_mockable void fan_set_rpm_target(int ch, int rpm)
 {
 	/* Apply fan scaling */
 	if (rpm > 0)
