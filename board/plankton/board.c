@@ -34,7 +34,7 @@ enum usbc_action {
 	USBC_ACT_USBDP_TOGGLE,
 	USBC_ACT_USB_EN,
 	USBC_ACT_DP_EN,
-	USBC_ACT_CABLE_FLIP,
+	USBC_ACT_MUX_FLIP,
 	USBC_ACT_CABLE_POLARITY0,
 	USBC_ACT_CABLE_POLARITY1,
 
@@ -76,7 +76,7 @@ static void set_usbc_action(enum usbc_action act)
 	case USBC_ACT_DP_EN:
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, 0);
 		break;
-	case USBC_ACT_CABLE_FLIP:
+	case USBC_ACT_MUX_FLIP:
 		pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_FLIP, NULL, 0);
 		gpio_set_level(GPIO_USBC_POLARITY,
 			       !gpio_get_level(GPIO_USBC_POLARITY));
@@ -115,8 +115,8 @@ static void button_deferred(void)
 	case GPIO_DBG_USB_TOGGLE_L:
 		set_usbc_action(USBC_ACT_USBDP_TOGGLE);
 		break;
-	case GPIO_DBG_CABLE_FLIP_L:
-		set_usbc_action(USBC_ACT_CABLE_FLIP);
+	case GPIO_DBG_MUX_FLIP_L:
+		set_usbc_action(USBC_ACT_MUX_FLIP);
 		break;
 	default:
 		break;
@@ -168,7 +168,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_DBG_20V_TO_DUT_L);
 	gpio_enable_interrupt(GPIO_DBG_CHG_TO_DEV_L);
 	gpio_enable_interrupt(GPIO_DBG_USB_TOGGLE_L);
-	gpio_enable_interrupt(GPIO_DBG_CABLE_FLIP_L);
+	gpio_enable_interrupt(GPIO_DBG_MUX_FLIP_L);
 
 	ina2xx_init(0, 0x399f, INA2XX_CALIB_1MA(10 /* mOhm */));
 }
@@ -194,7 +194,7 @@ static int cmd_usbc_action(int argc, char *argv[])
 	else if (!strcasecmp(argv[1], "dp"))
 		act = USBC_ACT_DP_EN;
 	else if (!strcasecmp(argv[1], "flip"))
-		act = USBC_ACT_CABLE_FLIP;
+		act = USBC_ACT_MUX_FLIP;
 	else if (!strcasecmp(argv[1], "pol0"))
 		act = USBC_ACT_CABLE_POLARITY0;
 	else if (!strcasecmp(argv[1], "pol1"))
