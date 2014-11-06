@@ -148,7 +148,7 @@ static int ec_command_lpc(int command, int version,
 	i = read_byte(EC_LPC_ADDR_HOST_DATA);
 	if (i) {
 		fprintf(stderr, "EC returned error result code %d\n", i);
-		return -i;
+		return -EECRESULT - i;
 	}
 
 	/* Read back args */
@@ -236,7 +236,7 @@ static int ec_command_lpc_3(int command, int version,
 	i = read_byte(EC_LPC_ADDR_HOST_DATA);
 	if (i) {
 		fprintf(stderr, "EC returned error result code %d\n", i);
-		return -i;
+		return -EECRESULT - i;
 	}
 
 	/* Read back response header and start checksum */

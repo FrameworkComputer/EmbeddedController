@@ -140,8 +140,8 @@ static int ec_command_i2c(int command, int version,
 	if (ret) {
 		debug("command 0x%02x returned an error %d\n",
 			 command, i2c_msg[1].buf[0]);
-		/* Translate ERROR to -ERROR */
-		ret = -ret;
+		/* Translate ERROR to -ERROR and offset */
+		ret = -EECRESULT - ret;
 	} else if (insize) {
 		debug("i2c resp  :");
 		/* copy response packet payload and compute checksum */
