@@ -275,9 +275,9 @@ struct pd_policy {
 #define IDH_PTYPE_UNDEF  0
 #define IDH_PTYPE_HUB    1
 #define IDH_PTYPE_PERIPH 2
-#define IDH_PTYPE_ACABLE 4
-#define IDH_PTYPE_PCABLE 5
-#define IDH_PTYPE_AMA    6
+#define IDH_PTYPE_ACABLE 3
+#define IDH_PTYPE_PCABLE 4
+#define IDH_PTYPE_AMA    5
 
 #define VDO_IDH(usbh, usbd, ptype, is_modal, vid)		\
 	((usbh) << 31 | (usbd) << 30 | ((ptype) & 0x7) << 27	\
