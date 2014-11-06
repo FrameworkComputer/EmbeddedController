@@ -2000,7 +2000,7 @@ static int remote_flashing(int argc, char **argv)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
 	uint32_t data[1];
-	int opos = pd_alt_mode();
+	int opos = pd_alt_mode(port);
 	if (!opos)
 		return;
 

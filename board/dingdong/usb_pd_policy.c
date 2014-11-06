@@ -215,7 +215,7 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	return 1;
 }
 
-int pd_alt_mode(void)
+int pd_alt_mode(int port)
 {
 	return alt_mode;
 }

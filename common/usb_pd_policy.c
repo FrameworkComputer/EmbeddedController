@@ -113,6 +113,15 @@ static int dfp_consume_modes(int port, int cnt, uint32_t *payload)
 	return (pe[port].svid_idx < pe[port].svid_cnt);
 }
 
+int pd_alt_mode(int port)
+{
+	if (!AMODE_VALID(port))
+		/* zero is reserved */
+		return 0;
+
+	return pe[port].amode.index + 1;
+}
+
 /* TODO(tbroch) this function likely needs to move up the stack to where system
  * policy decisions are made. */
 static int dfp_enter_mode(int port, uint32_t *payload)
@@ -138,8 +147,7 @@ static int dfp_enter_mode(int port, uint32_t *payload)
 		return 0;
 
 	payload[0] = VDO(modep->fx->svid, 1,
-			 CMD_ENTER_MODE |
-			 VDO_OPOS((modep->index + 1)));
+			 CMD_ENTER_MODE | VDO_OPOS(pd_alt_mode(port)));
 	return 1;
 }
 
@@ -155,9 +163,9 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 			svid, pe[port].amode.fx->svid);
 		return;
 	}
-	if (opos != pe[port].amode.index + 1) {
+	if (opos != pd_alt_mode(port)) {
 		CPRINTF("PE ERR: opos s:%d != m:%d\n",
-			opos, pe[port].amode.index + 1);
+			opos, pd_alt_mode(port));
 		return;
 	}
 	if (pe[port].amode.fx->attention)
@@ -174,7 +182,7 @@ int pd_exit_mode(int port, uint32_t *payload)
 
 	if (payload)
 		payload[0] = VDO(modep->fx->svid, 1,
-				 CMD_EXIT_MODE | VDO_OPOS((modep->index + 1)));
+				 CMD_EXIT_MODE | VDO_OPOS(pd_alt_mode(port)));
 	modep->index = -1;
 	return 1;
 }
@@ -200,7 +208,7 @@ static void dump_pe(int port)
 		return;
 	}
 
-	ccprintf("MODE[%d]: svid:%04x caps:%08x\n", pe[port].amode.index + 1,
+	ccprintf("MODE[%d]: svid:%04x caps:%08x\n", pd_alt_mode(port),
 		 pe[port].amode.fx->svid, pe[port].amode.mode_caps);
 }
 
@@ -314,7 +322,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 				rsize = pe[port].amode.fx->status(port,
 								  payload);
 				payload[0] |=
-					VDO_OPOS((pe[port].amode.index + 1));
+					VDO_OPOS(pd_alt_mode(port));
 			} else {
 				rsize = 0;
 			}
@@ -401,7 +409,8 @@ void pd_usb_billboard_deferred(void)
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP) \
 	&& !defined(CONFIG_USB_PD_SIMPLE_DFP)
 
-	if (!pd_alt_mode())
+	/* port always zero for these UFPs */
+	if (!pd_alt_mode(0))
 		usb_connect();
 
 #endif

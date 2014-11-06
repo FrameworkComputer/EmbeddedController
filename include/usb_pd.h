@@ -817,9 +817,10 @@ void board_flip_usb_mux(int port);
 /**
  * Determine if in alternate mode or not.
  *
+ * @param port port number.
  * @return object position of mode chosen in alternate mode otherwise zero.
  */
-int pd_alt_mode(void);
+int pd_alt_mode(int port);
 
 /**
  * Send hpd over USB PD.
