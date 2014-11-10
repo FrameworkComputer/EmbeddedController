@@ -193,6 +193,11 @@
 #undef CONFIG_BUTTON_COUNT
 
 /*
+ * Enable case close debug (CCD) mode.
+ */
+#undef CONFIG_CASE_CLOSED_DEBUG
+
+/*
  * Capsense chip has buttons, too.
  */
 #undef CONFIG_CAPSENSE

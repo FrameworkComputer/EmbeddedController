@@ -7,9 +7,11 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "battery.h"
+#include "case_closed_debug.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -20,9 +22,12 @@
 #include "power_button.h"
 #include "registers.h"
 #include "task.h"
+#include "usb.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "usb-stm32f3.h"
 #include "util.h"
+#include "pi3usb9281.h"
 
 void vbus_evt(enum gpio_signal signal)
 {
@@ -36,6 +41,15 @@ void unhandled_evt(enum gpio_signal signal)
 }
 
 #include "gpio_list.h"
+
+const void *const usb_strings[] = {
+	[USB_STR_DESC]    = usb_string_desc,
+	[USB_STR_VENDOR]  = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Ryu - Raiden debug"),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+};
+
+BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* Initialize board. */
 static void board_init(void)
@@ -150,4 +164,36 @@ int board_discharge_on_ac(int enable)
 int extpower_is_present(void)
 {
 	return gpio_get_level(GPIO_CHGR_ACOK);
+}
+
+/*
+ * Disconnect the USB lines from the AP, this enables manual control of the
+ * Pericom polarity switch and disconnects the USB 2.0 lines
+ */
+void ccd_board_connect(void)
+{
+	pi3usb9281_set_pins(0, 0x00);
+	pi3usb9281_set_switch_manual(0, 0);
+}
+
+/*
+ * Reconnect the USB lines to the AP re-enabling automatic switching
+ */
+void ccd_board_disconnect(void)
+{
+	pi3usb9281_set_switch_manual(0, 1);
+}
+
+void usb_board_connect(void)
+{
+	/*
+	 * TODO(robotboy): Enable DP pullup for Proto 3, Proto 2 doesn't have
+	 * the DP pullup, so case closed debug will only work on a Proto 2 if
+	 * the board is reworked, and this function is updated.
+	 */
+}
+
+void usb_board_disconnect(void)
+{
+	/* TODO(robotboy): Disable DP pullup for Proto 3 */
 }

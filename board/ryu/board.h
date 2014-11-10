@@ -25,6 +25,7 @@
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_FLASH_ERASE_CHECK
 #define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_SWITCH_PI3USB9281
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
 #define CONFIG_ADC
@@ -82,6 +83,23 @@
 #define CONFIG_HOSTCMD_I2C_SLAVE_ADDR 0x3c
 #endif
 
+/* USB Configuration */
+#define CONFIG_USB
+#define CONFIG_USB_PID 0x500f
+
+/* Prevent the USB driver from initializing at boot */
+#define CONFIG_USB_INHIBIT_INIT
+
+/* USB interface indexes (use define rather than enum to expand them) */
+#define USB_IFACE_COUNT 0
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL 0
+#define USB_EP_COUNT   1
+
+/* Enable Case Closed Debugging */
+#define CONFIG_CASE_CLOSED_DEBUG
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
@@ -107,6 +125,16 @@ enum adc_channel {
 	ADC_IBAT,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
+};
+
+/* USB string indexes */
+enum usb_strings {
+	USB_STR_DESC = 0,
+	USB_STR_VENDOR,
+	USB_STR_PRODUCT,
+	USB_STR_VERSION,
+
+	USB_STR_COUNT
 };
 
 /* Discharge battery when on AC power for factory test. */
