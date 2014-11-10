@@ -10,6 +10,8 @@
 
 #ifdef CONFIG_USB_CONSOLE
 
+#include <stdarg.h>
+
 /**
  * Put a null-terminated string to the USB console, like fputs().
  *
@@ -40,6 +42,15 @@ int usb_putc(int c);
  * @return the character, or -1 if no input waiting.
  */
 int usb_getc(void);
+
+/**
+ * Enable and Disable the USB console.
+ *
+ * By default the console is enabled, this should not be a problem since it
+ * is not accessible until the USB peripheral is also initialized, which can
+ * be delayed.
+ */
+void usb_console_enable(int enabled);
 
 #define usb_va_start va_start
 #define usb_va_end va_end

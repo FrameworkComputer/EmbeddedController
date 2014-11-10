@@ -43,10 +43,11 @@ void unhandled_evt(enum gpio_signal signal)
 #include "gpio_list.h"
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]    = usb_string_desc,
-	[USB_STR_VENDOR]  = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT] = USB_STRING_DESC("Ryu - Raiden debug"),
-	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_DESC]         = usb_string_desc,
+	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT]      = USB_STRING_DESC("Ryu debug"),
+	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("EC_PD"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);

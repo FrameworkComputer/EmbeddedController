@@ -28,6 +28,7 @@ static volatile int rx_buf_tail;
 static int last_tx_ok = 1;
 
 static int is_reset;
+static int is_enabled = 1;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
@@ -128,6 +129,9 @@ static int __tx_char(void *context, int c)
 
 static void usb_enable_tx(int len)
 {
+	if (!is_enabled)
+		return;
+
 	btable_ep[USB_EP_CONSOLE].tx_count = len;
 	STM32_TOGGLE_EP(USB_EP_CONSOLE, EP_TX_MASK, EP_TX_VALID, 0);
 }
@@ -180,6 +184,9 @@ int usb_getc(void)
 	int c;
 
 	if (rx_buf_tail == rx_buf_head)
+		return -1;
+
+	if (!is_enabled)
 		return -1;
 
 	c = rx_buf[rx_buf_tail];
@@ -236,4 +243,9 @@ int usb_vprintf(const char *format, va_list args)
 
 	usb_enable_tx(tx_idx);
 	return ret;
+}
+
+void usb_console_enable(int enabled)
+{
+	is_enabled = enabled;
 }

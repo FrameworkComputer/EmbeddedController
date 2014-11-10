@@ -91,11 +91,16 @@
 #define CONFIG_USB_INHIBIT_INIT
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_COUNT 0
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_COUNT   1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
-#define USB_EP_COUNT   1
+#define USB_EP_CONSOLE 1
+#define USB_EP_COUNT   2
+
+/* Enable console over USB */
+#define CONFIG_USB_CONSOLE
 
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
@@ -133,6 +138,7 @@ enum usb_strings {
 	USB_STR_VENDOR,
 	USB_STR_PRODUCT,
 	USB_STR_VERSION,
+	USB_STR_CONSOLE_NAME,
 
 	USB_STR_COUNT
 };
