@@ -9,6 +9,7 @@
 #include "common.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
@@ -57,6 +58,20 @@ int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
 }
+
+static void board_startup_hook(void)
+{
+	/* Power on the VCC_5V */
+	gpio_set_level(GPIO_5V_DRV, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_hook, HOOK_PRIO_DEFAULT);
+
+static void board_shutdown_hook(void)
+{
+	/* Power off the VCC_5V */
+	gpio_set_level(GPIO_5V_DRV, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_shutdown_hook, HOOK_PRIO_DEFAULT);
 
 void board_config_pre_init(void)
 {

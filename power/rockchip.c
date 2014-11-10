@@ -159,17 +159,6 @@ static void set_pmic_source(int asserted)
 }
 
 /**
- * Power on or off the VCC_5V
- *
- * @param asserted	Assert (=1) or deassert (=0) the signal.
- */
-static void set_5v_power(int asserted)
-{
-	/* Signal is active-high */
-	gpio_set_level(GPIO_5V_DRV, asserted ? 1 : 0);
-}
-
-/**
  * Check for some event triggering the shutdown.
  *
  * It can be either a long power button press or a shutdown triggered from the
@@ -384,8 +373,6 @@ static void power_on(void)
 	usleep(PMIC_RESET_HOLD_TIME);
 	set_pmic_reset(0);
 	set_pmic_warm_reset(0);
-
-	set_5v_power(1);
 }
 
 /**
@@ -424,7 +411,6 @@ static int wait_for_power_button_release(unsigned int timeout_us)
  */
 static void power_off(void)
 {
-	set_5v_power(0);
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */

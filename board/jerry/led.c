@@ -14,7 +14,9 @@
 #include "util.h"
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED};
+	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_POWER_LED,
+};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -39,6 +41,12 @@ static int bat_led_set(enum led_color color, int on)
 	return EC_SUCCESS;
 }
 
+static int pwr_led_set(int on)
+{
+	gpio_set_level(GPIO_POWER_LED, on);
+	return EC_SUCCESS;
+}
+
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	/* Ignoring led_id as both leds support the same colors */
@@ -48,7 +56,8 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (EC_LED_ID_BATTERY_LED == led_id) {
+	switch (led_id) {
+	case EC_LED_ID_BATTERY_LED:
 		if (brightness[EC_LED_COLOR_GREEN] != 0) {
 			bat_led_set(LED_GREEN, 1);
 			bat_led_set(LED_ORANGE, 0);
@@ -59,11 +68,15 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			bat_led_set(LED_GREEN, 0);
 			bat_led_set(LED_ORANGE, 0);
 		}
-		return EC_SUCCESS;
-	} else {
+		break;
+	case EC_LED_ID_POWER_LED:
+		pwr_led_set(brightness[EC_LED_COLOR_BLUE]);
+		break;
+	default:
 		return EC_ERROR_UNKNOWN;
-	}
 
+	}
+	return EC_SUCCESS;
 }
 
 static void jerry_led_set_power(void)
@@ -78,11 +91,11 @@ static void jerry_led_set_power(void)
 	 * Power off: OFF
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		bat_led_set(LED_GREEN, 0);
+		pwr_led_set(0);
 	else if (chipset_in_state(CHIPSET_STATE_ON))
-		bat_led_set(LED_GREEN, 1);
+		pwr_led_set(1);
 	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-		bat_led_set(LED_GREEN, (power_second & 3) ? 0 : 1);
+		pwr_led_set((power_second & 3) ? 0 : 1);
 }
 
 
