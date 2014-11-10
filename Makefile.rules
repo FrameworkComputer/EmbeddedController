@@ -151,6 +151,10 @@ $(out)/%.bin: $(out)/%.obj
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
+# Beware of ec.spi.spi.bin.
+$(out)/%.spi.bin: $(out)/%.bin
+	$(call quiet,pack_package,PACK   )
+
 flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).RW.flat
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)

@@ -35,7 +35,10 @@ PEM ?= board/$(BOARD)/dev_key.pem
 
 include Makefile.toolchain
 
-all: $(out)/$(PROJECT).bin utils
+# Define the traditional first target. The dependencies of this are near the bottom
+# as they can be altered by chip and board files.
+all:
+.PHONY: all
 
 # The board makefile sets $CHIP and the chip makefile sets $CORE.
 # Include those now, since they must be defined for _flag_cfg below.
@@ -127,6 +130,8 @@ all-y+=$(call objs_from_dir,power,power)
 all-y+=$(call objs_from_dir,test,$(PROJECT))
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common power test util
 dirs+=$(shell find driver -type d)
+
+all: $(out)/$(PROJECT).bin utils ${PROJECT_EXTRA}
 
 include Makefile.rules
 
