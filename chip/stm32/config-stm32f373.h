@@ -37,5 +37,8 @@
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 81
 
-/* STM32F3 has a larger USB RAM */
-#define CONFIG_USB_RAM_SIZE 512
+/* STM32F3 uses the older 4 byte aligned access mechanism */
+#define CONFIG_USB_RAM_BASE        0x40006000
+#define CONFIG_USB_RAM_SIZE        512
+#define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
+#define CONFIG_USB_RAM_ACCESS_SIZE 4

@@ -13,7 +13,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "usb.h"
+#include "usb_api.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "version.h"

@@ -10,6 +10,8 @@
 
 #include <stddef.h> /* for wchar_t */
 
+#include "usb_api.h"
+
 #define USB_MAX_PACKET_SIZE 64
 
 /* USB 2.0 chapter 9 definitions */
@@ -226,17 +228,7 @@ struct usb_endpoint_descriptor {
 /* Helpers for managing the USB controller dedicated RAM */
 
 /* primitive to access the words in USB RAM */
-#if defined(CHIP_FAMILY_STM32F0)
-typedef uint16_t usb_uint;
-#elif (defined(CHIP_FAMILY_STM32F) || \
-       defined(CHIP_FAMILY_STM32L) || \
-       defined(CHIP_FAMILY_STM32F3))
-typedef uint32_t usb_uint;
-#elif defined(CHIP_HOST)
-typedef unsigned int usb_uint;
-#else
-#warn "usb_uint not defined for this chip family"
-#endif
+typedef CONFIG_USB_RAM_ACCESS_TYPE usb_uint;
 
 struct stm32_endpoint {
 	volatile usb_uint tx_addr;
@@ -298,11 +290,5 @@ extern void (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 #define USB_DECLARE_IFACE(num, handler)              \
 	void IFACE_HANDLER(num)(void)                \
 	__attribute__ ((alias(STRINGIFY(handler))));
-
-/* functions to start/stop USB */
-void usb_init(void);
-void usb_disconnect(void);
-void usb_connect(void);
-void usb_release(void);
 
 #endif /* USB_H */

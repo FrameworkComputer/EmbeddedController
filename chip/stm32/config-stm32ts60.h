@@ -44,3 +44,9 @@
 /* Only USART2 support */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 2
+
+/* USB packet ram config */
+#define CONFIG_USB_RAM_BASE        0x40006000
+#define CONFIG_USB_RAM_SIZE        512
+#define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
+#define CONFIG_USB_RAM_ACCESS_SIZE 4

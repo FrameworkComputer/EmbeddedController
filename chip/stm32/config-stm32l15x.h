@@ -55,3 +55,9 @@
 
 /* Flash erases to 0, not 1 */
 #define CONFIG_FLASH_ERASED_VALUE32 0
+
+/* USB packet ram config */
+#define CONFIG_USB_RAM_BASE        0x40006000
+#define CONFIG_USB_RAM_SIZE        512
+#define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
+#define CONFIG_USB_RAM_ACCESS_SIZE 4
