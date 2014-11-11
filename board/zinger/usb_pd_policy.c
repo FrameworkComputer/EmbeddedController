@@ -146,11 +146,13 @@ static void discharge_voltage(int target_volt)
 
 /* ----------------------- USB Power delivery policy ---------------------- */
 
+#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
+
 /* Power Delivery Objects */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_EXTERNAL),
-		PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_EXTERNAL),
+		PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_FLAGS),
+		PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_FLAGS),
+		PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
@@ -249,6 +251,17 @@ void pd_power_supply_reset(int port)
 	/* discharge voltage to 5V ? */
 	if (need_discharge)
 		discharge_voltage(voltages[0].ovp);
+}
+
+int pd_data_swap(int port, int data_role)
+{
+	/* Allow data swap if we are a DFP, otherwise don't allow */
+	return (data_role == PD_ROLE_DFP) ? 1 : 0;
+}
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* Do nothing */
 }
 
 int pd_board_checks(void)

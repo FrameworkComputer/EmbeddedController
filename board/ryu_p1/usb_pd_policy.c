@@ -23,13 +23,15 @@
 #define MAX_POWER_MW       60000
 #define MAX_CURRENT_MA     3000
 
+#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)
+
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   900, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,   900, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
 		PDO_BATT(5000, 20000, 10000),
 		PDO_VAR(5000, 20000, 3000),
 };
@@ -162,6 +164,18 @@ int pd_power_swap(int port)
 	/* Always allow power swap */
 	return 1;
 }
+
+int pd_data_swap(int port, int data_role)
+{
+	/* Always allow data swap */
+	return 1;
+}
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* TODO: what do we need to do to change host controller data role? */
+}
+
 /* ----------------- Vendor Defined Messages ------------------ */
 static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			 uint32_t **rpayload)

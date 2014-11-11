@@ -22,15 +22,17 @@
 #define MAX_POWER_MW       60000
 #define MAX_CURRENT_MA     3000
 
+#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
+
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,  3000, PDO_FIXED_FLAGS),
+		PDO_FIXED(12000, 3000, PDO_FIXED_FLAGS),
+		PDO_FIXED(20000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
 		PDO_BATT(5000, 20000, 15000),
 		PDO_VAR(5000, 20000, 3000),
 };
@@ -158,4 +160,15 @@ int pd_power_swap(int port)
 {
 	/* Always refuse power swap */
 	return 0;
+}
+
+int pd_data_swap(int port, int data_role)
+{
+	/* Always allow data swap */
+	return 1;
+}
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* Do nothing */
 }

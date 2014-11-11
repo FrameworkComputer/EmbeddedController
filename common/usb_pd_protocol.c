@@ -226,11 +226,24 @@ static uint32_t pd_src_caps[PD_PORT_COUNT][PDO_MAX_OBJECTS];
 static int pd_src_cap_cnt[PD_PORT_COUNT];
 #endif
 
+#define PD_FLAGS_PING_ENABLED     (1 << 0) /* SRC_READY pings enabled */
+#define PD_FLAGS_PARTNER_DR_POWER (1 << 1) /* port partner is dual-role power */
+#define PD_FLAGS_PARTNER_DR_DATA  (1 << 2) /* port partner is dual-role data */
+#define PD_FLAGS_DATA_SWAPPED     (1 << 3) /* data swap complete */
+#define PD_FLAGS_SNK_CAP_RECVD    (1 << 4) /* sink capabilities received */
+/* Flags to clear on a disconnect */
+#define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
+					   PD_FLAGS_PARTNER_DR_DATA | \
+					   PD_FLAGS_DATA_SWAPPED | \
+					   PD_FLAGS_SNK_CAP_RECVD)
+
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
 	uint8_t power_role;
 	/* current port data role (DFP or UFP) */
 	uint8_t data_role;
+	/* port flags, see PD_FLAGS_* */
+	uint8_t flags;
 	/* 3-bit rolling message ID counter */
 	uint8_t msg_id;
 	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
@@ -245,10 +258,6 @@ static struct pd_protocol {
 	uint64_t timeout;
 	/* Time for source recovery after hard reset */
 	uint64_t src_recover;
-	/* Flag for sending pings in SRC_READY */
-	uint8_t ping_enabled;
-	/* Port partner is a dual-role power device */
-	uint8_t drp_partner;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Current limit / voltage based on the last request message */
@@ -325,7 +334,7 @@ static inline void set_state(int port, enum pd_states next_state)
 
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 		pd[port].dev_id = 0;
-		pd[port].drp_partner = 0;
+		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 		pd[port].data_role = PD_ROLE_DFP;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_exit_mode(port, NULL);
@@ -341,7 +350,7 @@ static inline void set_state(int port, enum pd_states next_state)
 	}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	else if (next_state == PD_STATE_SNK_DISCONNECTED) {
-		pd[port].drp_partner = 0;
+		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 		pd[port].data_role = PD_ROLE_UFP;
 	}
 #endif
@@ -793,10 +802,6 @@ static void pd_send_request_msg(int port, enum pd_request_types request)
 #endif
 		pd[port].curr_limit = curr_limit;
 		pd[port].supply_voltage = supply_voltage;
-		/* src cap 0 should be fixed PDO, get dualrole power capable */
-		if ((pd_src_caps[port][0] & PDO_TYPE_MASK) == PDO_TYPE_FIXED)
-			pd[port].drp_partner = (pd_src_caps[port][0] &
-						PDO_FIXED_DUAL_ROLE) ? 1 : 0;
 		res = send_request(port, rdo);
 		if (res >= 0)
 			set_state(port, PD_STATE_SNK_REQUESTED);
@@ -815,6 +820,22 @@ static void pd_send_request_msg(int port, enum pd_request_types request)
 }
 #endif
 
+static void pd_update_pdo_flags(int port, uint32_t pdo)
+{
+	/* can only parse PDO flags if type is fixed */
+	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
+		if (pdo & PDO_FIXED_DUAL_ROLE)
+			pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
+		else
+			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
+
+		if (pdo & PDO_FIXED_DATA_SWAP)
+			pd[port].flags |= PD_FLAGS_PARTNER_DR_DATA;
+		else
+			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_DATA;
+	}
+}
+
 static void handle_data_request(int port, uint16_t head,
 		uint32_t *payload)
 {
@@ -828,6 +849,8 @@ static void handle_data_request(int port, uint16_t head,
 			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)
 			|| (pd[port].task_state == PD_STATE_SNK_READY)) {
 			pd_store_src_cap(port, cnt, payload);
+			/* src cap 0 should be fixed PDO */
+			pd_update_pdo_flags(port, payload[0]);
 			pd_send_request_msg(port, PD_REQUEST_MIN);
 		}
 		break;
@@ -850,10 +873,9 @@ static void handle_data_request(int port, uint16_t head,
 
 		break;
 	case PD_DATA_SINK_CAP:
-		/* snk cap 0 should be fixed PDO, get dualrole power capable */
-		if ((payload[0] & PDO_TYPE_MASK) == PDO_TYPE_FIXED)
-			pd[port].drp_partner =
-				(payload[0] & PDO_FIXED_DUAL_ROLE) ? 1 : 0;
+		pd[port].flags |= PD_FLAGS_SNK_CAP_RECVD;
+		/* snk cap 0 should be fixed PDO */
+		pd_update_pdo_flags(port, payload[0]);
 		break;
 	case PD_DATA_VENDOR_DEF:
 		handle_vdm_request(port, cnt, payload);
@@ -861,6 +883,13 @@ static void handle_data_request(int port, uint16_t head,
 	default:
 		CPRINTF("Unhandled data message type %d\n", type);
 	}
+}
+
+static void pd_dr_swap(int port)
+{
+	pd[port].data_role = !pd[port].data_role;
+	pd_execute_data_swap(port, pd[port].data_role);
+	pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
 }
 
 static void handle_ctrl_request(int port, uint16_t head,
@@ -910,15 +939,22 @@ static void handle_ctrl_request(int port, uint16_t head,
 #endif
 		}
 		break;
+#endif
 	case PD_CTRL_REJECT:
-		if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
+	case PD_CTRL_WAIT:
+		if (pd[port].task_state == PD_STATE_SRC_DR_SWAP)
+			set_state(port, PD_STATE_SRC_READY);
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		else if (pd[port].task_state == PD_STATE_SNK_DR_SWAP)
+			set_state(port, PD_STATE_SNK_READY);
+		else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
 			set_state(port, PD_STATE_SRC_READY);
 		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
 			set_state(port, PD_STATE_SNK_READY);
 		else
 			set_state(port, PD_STATE_SNK_DISCOVERY);
+#endif
 		break;
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_CTRL_ACCEPT:
 		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -928,9 +964,17 @@ static void handle_ctrl_request(int port, uint16_t head,
 #else
 			set_state(port, PD_STATE_SRC_DISCOVERY);
 #endif
+		} else if (pd[port].task_state == PD_STATE_SRC_DR_SWAP) {
+			/* switch data role */
+			pd_dr_swap(port);
+			set_state(port, PD_STATE_SRC_READY);
 		}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
+		else if (pd[port].task_state == PD_STATE_SNK_DR_SWAP) {
+			/* switch data role */
+			pd_dr_swap(port);
+			set_state(port, PD_STATE_SNK_READY);
+		} else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
 			set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
 		} else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT) {
 			set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
@@ -958,17 +1002,17 @@ static void handle_ctrl_request(int port, uint16_t head,
 #endif
 		break;
 	case PD_CTRL_DR_SWAP:
+		if (pd_data_swap(port, pd[port].data_role)) {
+			/* Accept switch and perform data swap */
+			if (send_control(port, PD_CTRL_ACCEPT) >= 0)
+				pd_dr_swap(port);
+		} else {
+			send_control(port, PD_CTRL_REJECT);
+		}
+		break;
 	case PD_CTRL_VCONN_SWAP:
 		send_control(port, PD_CTRL_REJECT);
 		break;
-	case PD_CTRL_WAIT:
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
-			set_state(port, PD_STATE_SRC_READY);
-		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
-			set_state(port, PD_STATE_SNK_READY);
-		break;
-#endif
 	default:
 		CPRINTF("Unhandled ctrl message type %d\n", type);
 	}
@@ -1310,7 +1354,13 @@ int pd_get_polarity(int port)
 int pd_get_partner_dualrole_capable(int port)
 {
 	/* return dualrole status of port partner */
-	return pd[port].drp_partner;
+	return pd[port].flags & PD_FLAGS_PARTNER_DR_POWER;
+}
+
+int pd_get_partner_data_swap_capable(int port)
+{
+	/* return data swap capable status of port partner */
+	return pd[port].flags & PD_FLAGS_PARTNER_DR_DATA;
 }
 
 void pd_comm_enable(int enable)
@@ -1337,7 +1387,10 @@ void pd_comm_enable(int enable)
 
 void pd_ping_enable(int port, int enable)
 {
-	pd[port].ping_enabled = enable;
+	if (enable)
+		pd[port].flags |= PD_FLAGS_PING_ENABLED;
+	else
+		pd[port].flags &= ~PD_FLAGS_PING_ENABLED;
 }
 
 #ifdef CONFIG_CHARGE_MANAGER
@@ -1387,7 +1440,7 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	enum pd_states this_state;
 	timestamp_t now;
-	int caps_count = 0, src_ready_vdms_sent = 0, src_connected = 0;
+	int caps_count = 0, src_connected = 0;
 
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
@@ -1396,7 +1449,7 @@ void pd_task(void)
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd[port].data_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
-	pd[port].ping_enabled = 0;
+	pd[port].flags = 0;
 	set_state(port, PD_DEFAULT_STATE);
 
 	/* Ensure the power supply is in the default state */
@@ -1561,7 +1614,11 @@ void pd_task(void)
 			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
 				timeout =  PD_T_SEND_SOURCE_CAP;
-				src_ready_vdms_sent = 0;
+				/*
+				 * fake set data role swapped flag so we send
+				 * discover identity when we enter SRC_READY
+				 */
+				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
 				/* it'a time to ping regularly the sink */
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
@@ -1573,14 +1630,15 @@ void pd_task(void)
 		case PD_STATE_SRC_READY:
 			timeout = PD_T_SOURCE_ACTIVITY;
 			if (pd[port].last_state != pd[port].task_state &&
-			    pd[port].data_role == PD_ROLE_DFP) {
+			    !(pd[port].flags & PD_FLAGS_SNK_CAP_RECVD)) {
 				/* Get sink cap to know if dual-role device */
 				send_control(port, PD_CTRL_GET_SINK_CAP);
 				break;
 			}
 
 			/* Send VDMs once after get sink cap */
-			if (!src_ready_vdms_sent) {
+			if (pd[port].data_role == PD_ROLE_DFP &&
+			    (pd[port].flags & PD_FLAGS_DATA_SWAPPED)) {
 #ifdef CONFIG_USB_PD_SIMPLE_DFP
 				/*
 				 * For simple devices that don't support
@@ -1596,11 +1654,11 @@ void pd_task(void)
 				pd_send_vdm(port, USB_SID_PD,
 					    CMD_DISCOVER_IDENT, NULL, 0);
 #endif
-				src_ready_vdms_sent = 1;
+				pd[port].flags &= ~PD_FLAGS_DATA_SWAPPED;
 				break;
 			}
 
-			if (!pd[port].ping_enabled)
+			if (!(pd[port].flags & PD_FLAGS_PING_ENABLED))
 				break;
 
 			/* Verify that the sink is alive */
@@ -1612,6 +1670,18 @@ void pd_task(void)
 			set_state(port, PD_STATE_SOFT_RESET);
 			timeout = 10 * MSEC;
 			break;
+		case PD_STATE_SRC_DR_SWAP:
+			if (pd[port].last_state != pd[port].task_state) {
+				res = send_control(port, PD_CTRL_DR_SWAP);
+				if (res < 0)
+					set_state(port, PD_STATE_HARD_RESET);
+				/* Wait for accept or reject */
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
+						  PD_STATE_SRC_READY);
+			}
+			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		case PD_STATE_SRC_SWAP_INIT:
 			if (pd[port].last_state != pd[port].task_state) {
@@ -1620,7 +1690,8 @@ void pd_task(void)
 					set_state(port, PD_STATE_HARD_RESET);
 				/* Wait for accept or reject */
 				set_state_timeout(port,
-						  get_time().val + 200*MSEC,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
 						  PD_STATE_SRC_READY);
 			}
 			break;
@@ -1761,10 +1832,12 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_READY:
 			/* if DFP, send SVDM on entry */
-			if (pd[port].last_state != pd[port].task_state &&
-			    pd[port].data_role == PD_ROLE_DFP) {
+			if (pd[port].data_role == PD_ROLE_DFP &&
+			    (pd[port].last_state != pd[port].task_state ||
+			     (pd[port].flags & PD_FLAGS_DATA_SWAPPED))) {
 				pd_send_vdm(port, USB_SID_PD,
 					    CMD_DISCOVER_IDENT, NULL, 0);
+				pd[port].flags &= ~PD_FLAGS_DATA_SWAPPED;
 			}
 
 			/* we have power, check vitals from time to time */
@@ -1785,6 +1858,18 @@ void pd_task(void)
 			}
 			timeout = 100*MSEC;
 			break;
+		case PD_STATE_SNK_DR_SWAP:
+			if (pd[port].last_state != pd[port].task_state) {
+				res = send_control(port, PD_CTRL_DR_SWAP);
+				if (res < 0)
+					set_state(port, PD_STATE_HARD_RESET);
+				/* Wait for accept or reject */
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
+						  PD_STATE_SRC_READY);
+			}
+			break;
 		case PD_STATE_SNK_SWAP_INIT:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_PR_SWAP);
@@ -1792,7 +1877,8 @@ void pd_task(void)
 					set_state(port, PD_STATE_HARD_RESET);
 				/* Wait for accept or reject */
 				set_state_timeout(port,
-						  get_time().val + 200*MSEC,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
 						  PD_STATE_SNK_READY);
 			}
 			break;
@@ -2239,6 +2325,12 @@ static int command_pd(int argc, char **argv)
 			else
 				set_state(port, PD_STATE_SRC_SWAP_INIT);
 			task_wake(PORT_TO_TASK_ID(port));
+		} else if (!strncasecmp(argv[3], "data", 4)) {
+			if (pd[port].power_role == PD_ROLE_SINK)
+				set_state(port, PD_STATE_SNK_DR_SWAP);
+			else
+				set_state(port, PD_STATE_SRC_DR_SWAP);
+			task_wake(PORT_TO_TASK_ID(port));
 		} else {
 			return EC_ERROR_PARAM3;
 		}
@@ -2249,10 +2341,12 @@ static int command_pd(int argc, char **argv)
 			enable = strtoi(argv[3], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM3;
-			pd[port].ping_enabled = enable;
+			pd_ping_enable(port, enable);
 		}
 
-		ccprintf("Pings %s\n", pd[port].ping_enabled ? "on" : "off");
+		ccprintf("Pings %s\n",
+			 (pd[port].flags & PD_FLAGS_PING_ENABLED) ?
+			 "on" : "off");
 	} else if (!strncasecmp(argv[2], "vdm", 3)) {
 		if (argc < 4)
 			return EC_ERROR_PARAM_COUNT;
@@ -2281,13 +2375,14 @@ static int command_pd(int argc, char **argv)
 			"DISABLED", "SUSPENDED",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SNK_DISCONNECTED", "SNK_DISCOVERY", "SNK_REQUESTED",
-			"SNK_TRANSITION", "SNK_READY", "SNK_SWAP_INIT",
-			"SNK_SWAP_SNK_DISABLE", "SNK_SWAP_SRC_DISABLE",
-			"SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
+			"SNK_TRANSITION", "SNK_READY", "SNK_DR_SWAP",
+			"SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
+			"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY",
+			"SNK_SWAP_COMPLETE",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 			"SRC_DISCONNECTED", "SRC_STARTUP", "SRC_DISCOVERY",
 			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_TRANSITION",
-			"SRC_READY",
+			"SRC_READY", "SRC_DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
 			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",
@@ -2295,12 +2390,16 @@ static int command_pd(int argc, char **argv)
 			"SOFT_RESET", "HARD_RESET", "BIST",
 		};
 		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
-		ccprintf("Port C%d, %s - Role: %s-%s Polarity: CC%d DRP: %d, "
-			 "State: %s\n",
+		ccprintf("Port C%d, %s - Role: %s-%s Polarity: CC%d "
+			 "Partner: %s%s, State: %s\n",
 			port, pd_comm_enabled ? "Enabled" : "Disabled",
 			pd[port].power_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
-			pd[port].polarity + 1, pd[port].drp_partner,
+			pd[port].polarity + 1,
+			(pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) ?
+				"PR_SWAP," : "",
+			(pd[port].flags & PD_FLAGS_PARTNER_DR_DATA) ?
+				"DR_SWAP" : "",
 			state_names[pd[port].task_state]);
 	} else {
 		return EC_ERROR_PARAM1;

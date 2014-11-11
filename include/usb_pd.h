@@ -498,6 +498,7 @@ enum pd_states {
 	PD_STATE_SNK_REQUESTED,
 	PD_STATE_SNK_TRANSITION,
 	PD_STATE_SNK_READY,
+	PD_STATE_SNK_DR_SWAP,
 
 	PD_STATE_SNK_SWAP_INIT,
 	PD_STATE_SNK_SWAP_SNK_DISABLE,
@@ -513,6 +514,7 @@ enum pd_states {
 	PD_STATE_SRC_ACCEPTED,
 	PD_STATE_SRC_TRANSITION,
 	PD_STATE_SRC_READY,
+	PD_STATE_SRC_DR_SWAP,
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	PD_STATE_SRC_SWAP_INIT,
@@ -593,7 +595,6 @@ enum pd_data_msg_type {
 #define PD_ROLE_DFP    1
 
 /* build message header */
-/* TODO(crosbug.com/p/28343): need to seperate data role from power role */
 #define PD_HEADER(type, prole, drole, id, cnt) \
 	((type) | (PD_REV20 << 6) | \
 	 ((drole) << 5) | ((prole) << 8) | \
@@ -715,9 +716,27 @@ int pd_board_checks(void);
 /**
  * Check if power swap is allowed.
  *
+ * @port USB-C port number
  * @return True if power swap is allowed, False otherwise
  */
 int pd_power_swap(int port);
+
+/**
+ * Check if data swap is allowed.
+ *
+ * @port USB-C port number
+ * @data_role current data role
+ * @return True if data swap is allowed, False otherwise
+ */
+int pd_data_swap(int port, int data_role);
+
+/**
+ * Execute data swap.
+ *
+ * @port USB-C port number
+ * @data_role new data role
+ */
+void pd_execute_data_swap(int port, int data_role);
 
 /**
  * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
@@ -1019,6 +1038,13 @@ int pd_get_polarity(int port);
  * @param port USB-C port number
  */
 int pd_get_partner_dualrole_capable(int port);
+
+/**
+ * Get port partner data swap capable status
+ *
+ * @param port USB-C port number
+ */
+int pd_get_partner_data_swap_capable(int port);
 
 /**
  * Set the PD communication enabled flag. When communication is disabled,

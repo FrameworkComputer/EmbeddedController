@@ -26,17 +26,19 @@
 #define MAX_POWER_MW       1500
 #define MAX_CURRENT_MA     300
 
+#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL)
+
 /* we are not acting as a source */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_EXTERNAL),
+		PDO_FIXED(5000,   500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
 /* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000,   500, 0),
-		PDO_FIXED(12000,  500, 0),
-		PDO_FIXED(20000,  500, 0),
+		PDO_FIXED(5000,   500, PDO_FIXED_FLAGS),
+		PDO_FIXED(12000,  500, PDO_FIXED_FLAGS),
+		PDO_FIXED(20000,  500, PDO_FIXED_FLAGS),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
@@ -156,4 +158,15 @@ int pd_power_swap(int port)
 {
 	/* Always refuse power swap */
 	return 0;
+}
+
+int pd_data_swap(int port, int data_role)
+{
+	/* Always refuse data swap */
+	return 0;
+}
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* Do nothing */
 }

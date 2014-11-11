@@ -26,11 +26,14 @@
 #define MAX_POWER_MW       60000
 #define MAX_CURRENT_MA     3000
 
+#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | \
+			 PDO_FIXED_EXTERNAL)
+
 /* Source PDOs */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,  3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(12000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,  3000, PDO_FIXED_FLAGS),
+		PDO_FIXED(12000, 3000, PDO_FIXED_FLAGS),
+		PDO_FIXED(20000, 3000, PDO_FIXED_FLAGS),
 };
 static const int pd_src_pdo_cnts[3] = {
 		[SRC_CAP_5V] = 1,
@@ -42,9 +45,9 @@ static int pd_src_pdo_idx;
 
 /* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(12000,  500, PDO_FIXED_DUAL_ROLE),
-		PDO_FIXED(20000,  500, PDO_FIXED_DUAL_ROLE),
+		PDO_FIXED(5000,   500, PDO_FIXED_FLAGS),
+		PDO_FIXED(12000,  500, PDO_FIXED_FLAGS),
+		PDO_FIXED(20000,  500, PDO_FIXED_FLAGS),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
@@ -173,3 +176,13 @@ int pd_power_swap(int port)
 	return 1;
 }
 
+int pd_data_swap(int port, int data_role)
+{
+	/* Always allow data swap */
+	return 1;
+}
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* Do nothing */
+}
