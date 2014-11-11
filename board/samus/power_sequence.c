@@ -412,6 +412,9 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
 
+		/* Put touchscreen in reset */
+		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
+
 		/*
 		 * Deassert prochot since CPU is off and we're about to drop
 		 * +VCCP.
