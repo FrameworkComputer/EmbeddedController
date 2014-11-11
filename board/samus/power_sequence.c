@@ -98,13 +98,11 @@ static void chipset_reset_rtc(void)
 	 * Assert RTCRST# to the PCH long enough for it to latch the
 	 * assertion and reset the internal RTC backed state.
 	 */
-	if (system_get_board_version() >= BOARD_VERSION_EVT) {
-		CPRINTS("Asserting RTCRST# to PCH");
-		gpio_set_level(GPIO_PCH_RTCRST_L, 0);
-		udelay(100);
-		gpio_set_level(GPIO_PCH_RTCRST_L, 1);
-		udelay(10 * MSEC);
-	}
+	CPRINTS("Asserting RTCRST# to PCH");
+	gpio_set_level(GPIO_PCH_RTCRST_L, 0);
+	udelay(100);
+	gpio_set_level(GPIO_PCH_RTCRST_L, 1);
+	udelay(10 * MSEC);
 }
 
 void chipset_reset(int cold_reset)
@@ -260,44 +258,26 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
 
 		/*
-		 * Proto2B boards added EC control of RSMRST which allows
-		 * the sequencing to properly wait for SLP_SUS before
-		 * enabling the 1.05V rail.  Prior to this the sequencing
-		 * had board specific timing requirements that needed the
-		 * 1.05V rail to be brought up just after DPWROK assertion.
+		 * Wait for SLP_SUS before enabling 1.05V rail.
 		 */
-		if (system_get_board_version() <= BOARD_VERSION_PROTO_2_A) {
-			CPRINTS("Proto2A board, using alternate sequencing");
-
-			/* Enable PP1050 rail. */
-			gpio_set_level(GPIO_PP1050_EN, 1);
-
-			/* Wait for 1.05V to come up and CPU to notice */
-			if (power_wait_signals(IN_PGOOD_PP1050 |
-					       IN_PCH_SLP_SUS_DEASSERTED)) {
-				CPRINTS("timeout waiting for PP1050/SLP_SUS");
-				chipset_force_g3();
-			}
-		} else {
-			if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
-				CPRINTS("timeout waiting for SLP_SUS deassert");
-				chipset_force_g3();
-				return POWER_G3;
-			}
-
-			/* Enable PP1050 rail. */
-			gpio_set_level(GPIO_PP1050_EN, 1);
-
-			/* Wait for 1.05V to come up and CPU to notice */
-			if (power_wait_signals(IN_PGOOD_PP1050)) {
-				CPRINTS("timeout waiting for PP1050");
-				chipset_force_g3();
-				return POWER_G3;
-			}
-
-			/* Deassert RSMRST# */
-			gpio_set_level(GPIO_PCH_RSMRST_L, 1);
+		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
+			CPRINTS("timeout waiting for SLP_SUS deassert");
+			chipset_force_g3();
+			return POWER_G3;
 		}
+
+		/* Enable PP1050 rail. */
+		gpio_set_level(GPIO_PP1050_EN, 1);
+
+		/* Wait for 1.05V to come up and CPU to notice */
+		if (power_wait_signals(IN_PGOOD_PP1050)) {
+			CPRINTS("timeout waiting for PP1050");
+			chipset_force_g3();
+			return POWER_G3;
+		}
+
+		/* Deassert RSMRST# */
+		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 		/* Wait 5ms for SUSCLK to stabilize */
 		msleep(5);

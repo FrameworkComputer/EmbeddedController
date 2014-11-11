@@ -166,16 +166,6 @@ enum als_id {
 	ALS_COUNT,
 };
 
-/* Known board versions for system_get_board_version(). */
-enum board_version {
-	BOARD_VERSION_PROTO_1_9 = 0,
-	BOARD_VERSION_PROTO_2_A = 1,
-	BOARD_VERSION_PROTO_2_B = 2,
-	BOARD_VERSION_EVT = 3,
-	BOARD_VERSION_EVT2 = 4,
-	BOARD_VERSION_EVT3 = 5,
-};
-
 /* Wireless signals */
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
