@@ -95,6 +95,11 @@ _rw_size_str:=$(shell echo "CONFIG_FW_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
 
+# Get RSA key size from board defines
+_rsa_size:=$(shell echo "CONFIG_RSA_KEY_SIZE" | $(CPP) $(CPPFLAGS) -P \
+            -Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/rsa.h)
+$(eval RSA_KEY_SIZE=$(_rsa_size))
+
 $(eval BOARD_$(UC_BOARD)=y)
 $(eval CHIP_$(UC_CHIP)=y)
 $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)

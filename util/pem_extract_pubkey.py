@@ -48,6 +48,9 @@ RSAPrivateKey ::= SEQUENCE {
 PEM_HEADER='-----BEGIN RSA PRIVATE KEY-----'
 PEM_FOOTER='-----END RSA PRIVATE KEY-----'
 
+# supported RSA key sizes
+RSA_KEY_SIZES=[2048, 4096, 8192]
+
 class PEMError(Exception):
   """Exception class for pem_extract_pubkey utility."""
 
@@ -130,8 +133,9 @@ def pem_get_mod(filename):
   if mod["tag"] != DER_INTEGER:
     raise PEMError('modulus field should be an integer')
   # 2048 bits + mandatory ASN.1 sign (0) => 257 Bytes
-  if mod["length"] != 257 or mod["data"][0] != '\x00':
-    raise PEMError('Invalid key length (expecting 2048 bits)')
+  modSize = (mod["length"] - 1) * 8
+  if modSize not in RSA_KEY_SIZES or mod["data"][0] != '\x00':
+    raise PEMError('Invalid key length : %d bits' % (modSize))
 
   # 3rd field is Public Exponent
   exp = seq.get_tag()
@@ -171,6 +175,7 @@ def compute_mod_parameters(modulus):
   '''
   # create an array of uint32_t to store the modulus but skip the sign byte
   w = array.array("I",modulus[1:])
+  wordCount = (len(modulus) - 1) / 4
   # all integers in DER encoded .pem file are big endian.
   w.reverse()
   w.byteswap()
@@ -183,7 +188,7 @@ def compute_mod_parameters(modulus):
   n0inv = B - modinv(w[0], B)
   # R = 2^(modulo size); RR = (R * R) % N
   RR = pow(2, 4096, N)
-  rr_words = to_words(RR, 64)
+  rr_words = to_words(RR, wordCount)
 
   return {'mod':w, 'rr':rr_words, 'n0inv':n0inv}
 

@@ -18,26 +18,36 @@ import sys
 from subprocess import Popen, PIPE
 from pem_extract_pubkey import extract_pubkey
 
-# Size of a 2048-bit RSA signature
-RSANUMBYTES = 256
 # OpenSSL command to sign with SHA256andRSA
 RSA_CMD = ["openssl", "dgst", "-sha256", "-sign"]
 
-# Length reserved at the end of the RO partition for the public key
-PUBKEY_RESERVED_SPACE = 528
+# supported RSA key sizes
+RSA_KEY_SIZES=[2048, 4096, 8192]
+
+def align16(v):
+  return (v + 15) / 16 * 16
 
 def main():
   # Parse command line arguments
   if len(sys.argv) < 3:
-    sys.stderr.write("Usage: %s [--rw] <pem> <ecfile>\n" % sys.argv[0])
+    sys.stderr.write("Usage: %s [--rw] [--4096|--8192] <pem> <ecfile>\n" % sys.argv[0])
     sys.exit(-1)
   if "--rw" in sys.argv:
     sys.argv.remove("--rw")
     has_ro = False
   else:
     has_ro = True
+  # Default to a 2048-bit RSA signature
+  RSANUMBYTES = 2048 / 8
+  for sz in RSA_KEY_SIZES:
+    param = "--%d" % (sz)
+    if param in sys.argv:
+      sys.argv.remove(param)
+      RSANUMBYTES = sz / 8
   pemfile = sys.argv[1]
   ecfile = sys.argv[2]
+  # Length reserved at the end of the RO partition for the public key
+  PUBKEY_RESERVED_SPACE = align16(2 * RSANUMBYTES + 4)
 
   # Get EC firmware content
   try:

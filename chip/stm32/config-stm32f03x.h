@@ -32,7 +32,8 @@
  * contiguous.
  */
 #if defined(BOARD_ZINGER) || defined(BOARD_MINIMUFFIN)
-#define CONFIG_FW_PSTATE_SIZE   0
+/* Not using pstate but keep some space for the public key */
+#define CONFIG_FW_PSTATE_SIZE   544
 #else
 #define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
 #endif

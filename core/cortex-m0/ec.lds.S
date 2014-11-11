@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 #include "config.h"
+#include "rsa.h"
 
 #define FW_OFF_(section) CONFIG_FW_##section##_OFF
 #define FW_OFF(section) (CONFIG_FLASH_BASE + FW_OFF_(section))
@@ -18,6 +19,10 @@ MEMORY
 {
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
+#ifdef RSA_PUBLIC_KEY_SIZE
+    PSTATE(r)  : ORIGIN = FW_OFF(SECTION) + FW_SIZE(SECTION), \
+                 LENGTH = CONFIG_FW_PSTATE_SIZE
+#endif
 #ifdef CONFIG_USB
     USB_RAM (rw) : \
         ORIGIN = CONFIG_USB_RAM_BASE, \
@@ -204,12 +209,23 @@ SECTIONS
 	/* NOTHING MAY GO AFTER THIS! */
     } > IRAM
 
-    .flash_suffix  : AT(LOADADDR(.data) + SIZEOF(.data)) {
+#ifdef RSA_PUBLIC_KEY_SIZE
+#ifdef SECTION_IS_RO
+    .flash_suffix : {
         FILL(0xff);
-        /* Put the public key coefficients at the end of the partition */
-        . = ORIGIN(FLASH) + LENGTH(FLASH) - 528;
+        /*
+	 * Put the public key coefficients at the end of the partition
+	 * after the pstate bits.
+	 */
+        . = ORIGIN(PSTATE) + LENGTH(PSTATE) - RSA_PUBLIC_KEY_SIZE;
+        *(.rsa_pubkey)
+    } > PSTATE
+#else /* RW section: we don't need the RSA public key, put it anywhere */
+    .flash_suffix  : AT(LOADADDR(.data) + SIZEOF(.data)) {
         *(.rsa_pubkey)
     } > FLASH
+#endif
+#endif
 
     /* The linker won't notice if the .data section is too big to fit,
      * apparently because we're sending it into IRAM, not FLASH. The following

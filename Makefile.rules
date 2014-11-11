@@ -61,7 +61,7 @@ cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
 
 # commands for RSA signature
 cmd_pubkey = ./util/pem_extract_pubkey.py $(PEM) > $@
-cmd_rsasign = ./util/ec_sign_rsa.py $(PEM) $(out)/$*.bin.tmp
+cmd_rsasign = ./util/ec_sign_rsa.py --$(RSA_KEY_SIZE) $(PEM) $(out)/$*.bin.tmp
 
 # commands to build optional xref files
 cmd_deps_to_list = cat $(deps) | tr -d ':\\' | tr ' ' '\012' \

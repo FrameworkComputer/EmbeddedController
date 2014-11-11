@@ -182,11 +182,11 @@ static int check_padding(const uint8_t *sig)
 }
 
 /*
- * Verify a 2048 bit SHA256WithRSA PKCS#1 v1.5 signature against an expected
+ * Verify a SHA256WithRSA PKCS#1 v1.5 signature against an expected
  * SHA256 hash.
  *
  * @param key           RSA public key
- * @param signature     2048-bit RSA signature
+ * @param signature     RSA signature
  * @param sha           SHA-256 digest of the content to verify
  * @param workbuf32     Work buffer; caller must verify this is
  *                      3 x RSANUMWORDS elements long.
