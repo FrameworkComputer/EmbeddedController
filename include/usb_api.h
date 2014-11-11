@@ -14,9 +14,10 @@
 
 /*
  * Initialize the USB peripheral, enabling its clock and configuring the DP/DN
- * GPIOs correctly.  This function is called via an init hook, but may need to
- * be called again if usb_release is called.  This function will call
- * usb_connect by default unless CONFIG_USB_INHIBIT is defined.
+ * GPIOs correctly.  This function is called via an init hook (unless the board
+ * defined CONFIG_USB_INHIBIT_INIT), but may need to be called again if
+ * usb_release is called.  This function will call usb_connect by default
+ * unless CONFIG_USB_INHIBIT_CONNECT is defined.
  */
 void usb_init(void);
 

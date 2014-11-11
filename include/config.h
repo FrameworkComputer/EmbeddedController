@@ -1129,8 +1129,11 @@
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
 
+/* Disable automatic connection of USB peripheral */
+#undef CONFIG_USB_INHIBIT_CONNECT
+
 /* Disable automatic initialization of USB peripheral */
-#undef CONFIG_USB_INHIBIT
+#undef CONFIG_USB_INHIBIT_INIT
 
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB

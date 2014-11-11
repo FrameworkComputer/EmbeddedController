@@ -295,13 +295,16 @@ void usb_init(void)
 	/* set interrupts mask : reset/correct tranfer/errors */
 	STM32_USB_CNTR = 0xe400;
 
-#ifndef CONFIG_USB_INHIBIT
+#ifndef CONFIG_USB_INHIBIT_CONNECT
 	usb_connect();
 #endif
 
 	CPRINTF("USB init done\n");
 }
+
+#ifndef CONFIG_USB_INHIBIT_INIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
+#endif
 
 void usb_release(void)
 {
