@@ -8,6 +8,7 @@
  * Drive high in S5-S0 when AC_PRESENT is high, otherwise drive low.
  */
 
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "extpower.h"
@@ -25,10 +26,24 @@ int extpower_is_present(void)
  */
 static void extpower_deferred(void)
 {
+	static int extpower_prev;
+	int extpower = extpower_is_present();
+
+	if (extpower && !extpower_prev) {
+		charger_discharge_on_ac(0);
+	} else if (extpower && extpower_prev) {
+		/* glitch on AC_PRESENT, attempt to recover from backboost */
+		charger_discharge_on_ac(1);
+		charger_discharge_on_ac(0);
+	} else {
+		charger_discharge_on_ac(1);
+	}
+	extpower_prev = extpower;
+
 	hook_notify(HOOK_AC_CHANGE);
 
 	/* Forward notification to host */
-	if (extpower_is_present())
+	if (extpower)
 		host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
 	else
 		host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
@@ -65,6 +80,8 @@ void extpower_interrupt(enum gpio_signal signal)
 static void extpower_init(void)
 {
 	extpower_buffer_to_pch();
+
+	hook_call_deferred(extpower_deferred, 0);
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
