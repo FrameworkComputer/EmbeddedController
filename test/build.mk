@@ -20,6 +20,7 @@ test-list-$(BOARD_SAMUS)=
 
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
+test-list-$(BOARD_RYU_P1)=
 
 # For some tests, we are running out of RAM for Samus PD. Disable them for
 # now.
