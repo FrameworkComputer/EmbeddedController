@@ -33,9 +33,9 @@ const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(20000, 3000, PDO_FIXED_EXTERNAL|PDO_FIXED_DUAL_ROLE),
 };
 static const int pd_src_pdo_cnts[3] = {
-		[SRC_CAP_5V] = 2,
-		[SRC_CAP_12V] = 3,
-		[SRC_CAP_20V] = 4,
+		[SRC_CAP_5V] = 1,
+		[SRC_CAP_12V] = 2,
+		[SRC_CAP_20V] = 3,
 };
 
 static int pd_src_pdo_idx;
@@ -147,8 +147,8 @@ int pd_set_power_supply_ready(int port)
 {
 	/* Output the correct voltage */
 	gpio_set_level(GPIO_VBUS_CHARGER_EN, 1);
-	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 3);
-	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 4);
+	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 2);
+	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 3);
 
 	return EC_SUCCESS;
 }
