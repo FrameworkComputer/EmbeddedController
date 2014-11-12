@@ -206,14 +206,14 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-int pd_power_swap(int port)
+int pd_check_power_swap(int port)
 {
 	/* TODO: use battery level to decide to accept/reject power swap */
 	/* Always allow power swap */
 	return 1;
 }
 
-int pd_data_swap(int port, int data_role)
+int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow */
 	return (data_role == PD_ROLE_UFP) ? 1 : 0;
@@ -222,6 +222,14 @@ int pd_data_swap(int port, int data_role)
 void pd_execute_data_swap(int port, int data_role)
 {
 	/* TODO: when switching to UFP need to open D+/D- switches */
+}
+
+void pd_new_contract(int port, int pr_role, int dr_role,
+		     int partner_pr_swap, int partner_dr_swap)
+{
+	/* If UFP, try to switch to DFP */
+	if (partner_dr_swap && dr_role == PD_ROLE_UFP)
+		pd_request_data_swap(port);
 }
 /* ----------------- Vendor Defined Messages ------------------ */
 const struct svdm_response svdm_rsp = {

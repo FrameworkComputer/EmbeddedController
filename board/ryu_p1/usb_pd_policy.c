@@ -158,17 +158,22 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-int pd_power_swap(int port)
+int pd_check_power_swap(int port)
 {
 	/* TODO: use battery level to decide to accept/reject power swap */
 	/* Always allow power swap */
 	return 1;
 }
 
-int pd_data_swap(int port, int data_role)
+int pd_check_data_swap(int port, int data_role)
 {
 	/* Always allow data swap */
 	return 1;
+}
+
+void pd_new_contract(int port, int pr_role, int dr_role,
+		     int partner_pr_swap, int partner_dr_swap)
+{
 }
 
 void pd_execute_data_swap(int port, int data_role)

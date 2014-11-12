@@ -145,13 +145,13 @@ int pd_board_checks(void)
 	return EC_SUCCESS;
 }
 
-int pd_power_swap(int port)
+int pd_check_power_swap(int port)
 {
 	/* Always allow power swap */
 	return 1;
 }
 
-int pd_data_swap(int port, int data_role)
+int pd_check_data_swap(int port, int data_role)
 {
 	/* Always allow data swap */
 	return 1;
@@ -160,6 +160,11 @@ int pd_data_swap(int port, int data_role)
 void pd_execute_data_swap(int port, int data_role)
 {
 	/* Do nothing */
+}
+
+void pd_new_contract(int port, int pr_role, int dr_role,
+		     int partner_pr_swap, int partner_dr_swap)
+{
 }
 
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)

@@ -253,7 +253,7 @@ void pd_power_supply_reset(int port)
 		discharge_voltage(voltages[0].ovp);
 }
 
-int pd_data_swap(int port, int data_role)
+int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a DFP, otherwise don't allow */
 	return (data_role == PD_ROLE_DFP) ? 1 : 0;
@@ -262,6 +262,14 @@ int pd_data_swap(int port, int data_role)
 void pd_execute_data_swap(int port, int data_role)
 {
 	/* Do nothing */
+}
+
+void pd_new_contract(int port, int pr_role, int dr_role,
+		     int partner_pr_swap, int partner_dr_swap)
+{
+	/* If DFP, try to switch to UFP */
+	if (partner_dr_swap && dr_role == PD_ROLE_DFP)
+		pd_request_data_swap(port);
 }
 
 int pd_board_checks(void)

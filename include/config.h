@@ -1100,7 +1100,7 @@
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP
 
-/* Simple DFP, such as power adapter, will send info CVDM on connect */
+/* Simple DFP, such as power adapter, will not send discovery VDM on connect */
 #undef CONFIG_USB_PD_SIMPLE_DFP
 
 /* Use comparator module for PD RX interrupt */

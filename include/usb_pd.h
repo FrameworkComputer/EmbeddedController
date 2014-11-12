@@ -689,9 +689,9 @@ void pd_request_source_voltage(int port, int mv);
 /**
  * Set the PD input current limit.
  *
- * @port USB-C port number
- * @max_ma Maximum current limit
- * @supply_voltage Voltage at which current limit is applied
+ * @param port USB-C port number
+ * @param max_ma Maximum current limit
+ * @param supply_voltage Voltage at which current limit is applied
  */
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage);
@@ -699,9 +699,9 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 /**
  * Set the type-C input current limit.
  *
- * @port USB-C port number
- * @max_ma Maximum current limit
- * @supply_voltage Voltage at which current limit is applied
+ * @param port USB-C port number
+ * @param max_ma Maximum current limit
+ * @param supply_voltage Voltage at which current limit is applied
  */
 void typec_set_input_current_limit(int port, uint32_t max_ma,
 				   uint32_t supply_voltage);
@@ -716,25 +716,37 @@ int pd_board_checks(void);
 /**
  * Check if power swap is allowed.
  *
- * @port USB-C port number
+ * @param port USB-C port number
  * @return True if power swap is allowed, False otherwise
  */
-int pd_power_swap(int port);
+int pd_check_power_swap(int port);
 
 /**
  * Check if data swap is allowed.
  *
- * @port USB-C port number
- * @data_role current data role
+ * @param port USB-C port number
+ * @param data_role current data role
  * @return True if data swap is allowed, False otherwise
  */
-int pd_data_swap(int port, int data_role);
+int pd_check_data_swap(int port, int data_role);
+
+/**
+ * A new power contract has been established
+ *
+ * @param port USB-C port number
+ * @param pr_role Our power role
+ * @param dr_role Our data role
+ * @param partner_pr_swap Partner supports PR_SWAP
+ * @param partner_dr_swap Partner supports DR_SWAP
+ */
+void pd_new_contract(int port, int pr_role, int dr_role,
+		     int partner_pr_swap, int partner_dr_swap);
 
 /**
  * Execute data swap.
  *
- * @port USB-C port number
- * @data_role new data role
+ * @param port USB-C port number
+ * @param data_role new data role
  */
 void pd_execute_data_swap(int port, int data_role);
 
@@ -1045,6 +1057,20 @@ int pd_get_partner_dualrole_capable(int port);
  * @param port USB-C port number
  */
 int pd_get_partner_data_swap_capable(int port);
+
+/**
+ * Request power swap command to be issued
+ *
+ * @param port USB-C port number
+ */
+void pd_request_power_swap(int port);
+
+/**
+ * Request data swap command to be issued
+ *
+ * @param port USB-C port number
+ */
+void pd_request_data_swap(int port);
 
 /**
  * Set the PD communication enabled flag. When communication is disabled,
