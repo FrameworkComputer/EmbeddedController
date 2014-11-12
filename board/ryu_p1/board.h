@@ -41,6 +41,7 @@
 
 /* Disable unused console command to save flash space */
 #undef CONFIG_CMD_POWERINDEBUG
+#undef CONFIG_CMD_PD
 
 /*
  * Pericom I2C workaround
