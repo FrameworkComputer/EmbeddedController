@@ -73,7 +73,7 @@ BOARDS_STM32=(
 	plankton
 	ryu
 	ryu_sh
-	ryu_p2
+	ryu_p1
 	samus_pd
 	snow
 	spring

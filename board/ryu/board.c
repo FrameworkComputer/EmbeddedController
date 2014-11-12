@@ -74,7 +74,7 @@ const struct adc_t adc_channels[] = {
 	[ADC_VBUS] = {"VBUS",  30000, 4096, 0, STM32_AIN(0)},
 	/* USB PD CC lines sensing. Converted to mV (3000mV/4096). */
 	[ADC_CC1_PD] = {"CC1_PD", 3000, 4096, 0, STM32_AIN(1)},
-	[ADC_CC2_PD] = {"CC1_PD", 3000, 4096, 0, STM32_AIN(3)},
+	[ADC_CC2_PD] = {"CC2_PD", 3000, 4096, 0, STM32_AIN(3)},
 	/* Charger current sensing. Converted to mA. */
 	[ADC_IADP] = {"IADP",  7500, 4096, 0, STM32_AIN(8)},
 	[ADC_IBAT] = {"IBAT", 37500, 4096, 0, STM32_AIN(13)},
@@ -137,31 +137,6 @@ int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 		*usb_str = NULL;
 
 	return has_ss;
-}
-
-void board_flip_usb_mux(int port)
-{
-	int usb_polarity;
-
-	/* Flip DP polarity */
-	gpio_set_level(GPIO_USBC_DP_POLARITY,
-		       !gpio_get_level(GPIO_USBC_DP_POLARITY));
-
-	/* Flip USB polarity if enabled */
-	if (gpio_get_level(GPIO_USBC_SS1_USB_MODE_L) &&
-	    gpio_get_level(GPIO_USBC_SS2_USB_MODE_L))
-		return;
-	usb_polarity = gpio_get_level(GPIO_USBC_SS1_USB_MODE_L);
-
-	/*
-	 * Disable both sides first so that we don't enable both at the
-	 * same time accidentally.
-	 */
-	gpio_set_level(GPIO_USBC_SS1_USB_MODE_L, 1);
-	gpio_set_level(GPIO_USBC_SS2_USB_MODE_L, 1);
-
-	gpio_set_level(GPIO_USBC_SS1_USB_MODE_L, !usb_polarity);
-	gpio_set_level(GPIO_USBC_SS2_USB_MODE_L, usb_polarity);
 }
 
 /**

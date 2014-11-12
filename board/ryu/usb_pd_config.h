@@ -14,15 +14,15 @@
 #define TASK_ID_TO_PORT(id)   0
 
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX_C0 14
-#define TIM_CLOCK_PD_RX_C0 1
+#define TIM_CLOCK_PD_TX_C0 3
+#define TIM_CLOCK_PD_RX_C0 2
 
 #define TIM_CLOCK_PD_TX(p) TIM_CLOCK_PD_TX_C0
 #define TIM_CLOCK_PD_RX(p) TIM_CLOCK_PD_RX_C0
 
 /* Timer channel */
-#define TIM_RX_CCR_C0 1
-#define TIM_TX_CCR_C0 1
+#define TIM_RX_CCR_C0 4
+#define TIM_TX_CCR_C0 4
 
 /* RX timer capture/compare register */
 #define TIM_CCR_C0 (&STM32_TIM_CCRx(TIM_CLOCK_PD_RX_C0, TIM_RX_CCR_C0))
@@ -37,7 +37,7 @@
 /* use the hardware accelerator for CRC */
 #define CONFIG_HW_CRC
 
-/* TX is using SPI1 on PB3-5 */
+/* TX is using SPI1 on PA6, PB3, and PB5 */
 #define SPI_REGS(p) STM32_SPI1_REGS
 
 static inline void spi_enable_clock(int port)
@@ -47,9 +47,9 @@ static inline void spi_enable_clock(int port)
 
 #define DMAC_SPI_TX(p) STM32_DMAC_CH3
 
-/* RX is using COMP1 triggering TIM1 CH1 */
-#define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM1_IC1
-#define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM1_IC1
+/* RX is using COMP1 triggering TIM2 CH4 */
+#define CMP1OUTSEL STM32_COMP_CMP1OUTSEL_TIM2_IC4
+#define CMP2OUTSEL STM32_COMP_CMP2OUTSEL_TIM2_IC4
 
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
@@ -59,14 +59,14 @@ static inline void spi_enable_clock(int port)
 /* triggers packet detection on comparator falling edge */
 #define EXTI_XTSR STM32_EXTI_FTSR
 
-#define DMAC_TIM_RX(p) STM32_DMAC_CH2
+#define DMAC_TIM_RX(p) STM32_DMAC_CH7
 
 /* the pins used for communication need to be hi-speed */
 static inline void pd_set_pins_speed(int port)
 {
 	/* 40 MHz pin speed on SPI MISO PA6 */
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0x00003000;
-	/* 40 MHz pin speed on TIM14_CH1 (PB1) */
+	/* 40 MHz pin speed on TIM3_CH4 (PB1) */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x0000000C;
 }
 
@@ -82,7 +82,7 @@ static inline void pd_tx_spi_reset(int port)
 static inline void pd_tx_enable(int port, int polarity)
 {
 	/* put SPI function on TX pin : PA6 is SPI MISO */
-	gpio_set_alternate_function(GPIO_A, 0x0040, 0);
+	gpio_set_alternate_function(GPIO_A, 0x0040, 5);
 
 	/* set the low level reference */
 	gpio_set_level(GPIO_USBC_CC_TX_EN, 1);

@@ -4,10 +4,10 @@
 #
 # Board specific files build
 
-# the IC is STmicro STM32F072VBH6
+# the IC is STmicro STM32F373VB
 CHIP:=stm32
-CHIP_FAMILY:=stm32f0
-CHIP_VARIANT:=stm32f07x
+CHIP_FAMILY:=stm32f3
+CHIP_VARIANT:=stm32f373
 
 board-y=board.o battery.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
