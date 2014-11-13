@@ -332,10 +332,25 @@ static inline void set_state(int port, enum pd_states next_state)
 	set_state_timeout(port, 0, 0);
 	pd[port].task_state = next_state;
 
+	if (last_state == next_state)
+		return;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* Ignore dual-role toggling between sink and source */
+	if ((last_state == PD_STATE_SNK_DISCONNECTED &&
+	     next_state == PD_STATE_SRC_DISCONNECTED) ||
+	    (last_state == PD_STATE_SRC_DISCONNECTED &&
+	     next_state == PD_STATE_SNK_DISCONNECTED))
+		return;
+#endif
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	if (next_state == PD_STATE_SRC_DISCONNECTED ||
+	    next_state == PD_STATE_SNK_DISCONNECTED) {
+#else
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
+#endif
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
-		pd[port].data_role = PD_ROLE_DFP;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_exit_mode(port, NULL);
 #else
@@ -348,12 +363,6 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_set_vconn(port, pd[port].polarity, 0);
 #endif
 	}
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	else if (next_state == PD_STATE_SNK_DISCONNECTED) {
-		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
-		pd[port].data_role = PD_ROLE_UFP;
-	}
-#endif
 
 #ifdef CONFIG_LOW_POWER_IDLE
 	/* If any PD port is connected, then disable deep sleep */
@@ -367,16 +376,6 @@ static inline void set_state(int port, enum pd_states next_state)
 		disable_sleep(SLEEP_MASK_USB_PD);
 #endif
 
-	/* Log state transition, except for toggling between sink and source */
-	if (last_state == next_state)
-		return;
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	if ((last_state == PD_STATE_SNK_DISCONNECTED &&
-	     next_state == PD_STATE_SRC_DISCONNECTED) ||
-	    (last_state == PD_STATE_SRC_DISCONNECTED &&
-	     next_state == PD_STATE_SNK_DISCONNECTED))
-		return;
-#endif
 	CPRINTF("C%d st%d\n", port, next_state);
 }
 
@@ -1511,6 +1510,8 @@ void pd_task(void)
 				pd_select_polarity(port, pd[port].polarity);
 				/* reset message ID counter on connection */
 				pd[port].msg_id = 0;
+				/* initial data role for source is DFP */
+				pd[port].data_role = PD_ROLE_DFP;
 				/* Set to USB SS initially */
 #ifdef CONFIG_USBC_SS_MUX
 				board_set_usb_mux(port, TYPEC_MUX_USB,
@@ -1756,6 +1757,8 @@ void pd_task(void)
 							   pd[port].polarity);
 					/* reset message ID  on connection */
 					pd[port].msg_id = 0;
+					/* initial data role for sink is UFP */
+					pd[port].data_role = PD_ROLE_UFP;
 #ifdef CONFIG_CHARGE_MANAGER
 					initialized[port] = 1;
 					typec_set_input_current_limit(
