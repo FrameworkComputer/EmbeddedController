@@ -2528,7 +2528,6 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 
 	switch (p->cmd) {
 	case USB_PD_FW_REBOOT:
-		ccprintf("PD Update - Reboot\n");
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
 
 		/* Delay to give time for device to reboot */
@@ -2536,7 +2535,6 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 
 	case USB_PD_FW_FLASH_ERASE:
-		ccprintf("PD Update - Erase RW flash\n");
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_ERASE, NULL, 0);
 
 		/* Wait until VDM is done */
@@ -2545,7 +2543,6 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 		break;
 
 	case USB_PD_FW_ERASE_SIG:
-		ccprintf("PD Update - Erase RW RSA signature\n");
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_ERASE_SIG, NULL, 0);
 
 		/* Wait until VDM is done */
@@ -2559,7 +2556,6 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 
 		size = p->size / 4;
-		ccprintf("PD Update - Write RW flash\n");
 		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
 			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
 				    data + i, MIN(size - i, VDO_MAX_SIZE - 1));
@@ -2590,10 +2586,8 @@ static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 	const struct ec_params_usb_pd_rw_hash_entry *p = args->params;
 	static int rw_hash_next_idx;
 
-	if (!p->dev_id) {
-		ccprintf("PD RW_HASH - 0 is not a valid device id");
+	if (!p->dev_id)
 		return EC_RES_INVALID_PARAM;
-	}
 
 	for (i = 0; i < RW_HASH_ENTRIES; i++) {
 		if (p->dev_id == rw_hash_table[i].dev_id) {
@@ -2609,8 +2603,6 @@ static int hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 			rw_hash_next_idx = 0;
 	}
 	memcpy(&rw_hash_table[idx], p, sizeof(*p));
-	ccprintf("PD RW_HASH - stored dev_id:%d at index:%d\n",
-		 rw_hash_table[idx].dev_id, idx);
 
 	return EC_RES_SUCCESS;
 }
@@ -2623,14 +2615,10 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_rw_hash_entry *r = args->response;
 
-	if (*port >= PD_PORT_COUNT) {
-		ccprintf("PD DEV_INFO - Port:%d >= %d (max ports)\n",
-			 *port, PD_PORT_COUNT);
+	if (*port >= PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
-	}
+
 	r->dev_id = pd[*port].dev_id;
-	ccprintf("PD DEV_INFO - requested Port:%d has Device:%d\n",
-		 *port, r->dev_id);
 
 	if (r->dev_id) {
 		memcpy(r->dev_rw_hash.b, pd[*port].dev_rw_hash,
