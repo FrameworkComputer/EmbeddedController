@@ -307,6 +307,9 @@ int flash_write_rw(int offset, int size, const char *data)
 	int res = EC_SUCCESS;
 	int i;
 
+	/* notify board of a RW flash contents change */
+	board_rw_contents_change();
+
 	if ((uint32_t)address > CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
@@ -357,6 +360,9 @@ int flash_erase_rw(void)
 	int res = EC_SUCCESS;
 	int offset = CONFIG_FW_RW_OFF;
 	int size = CONFIG_FW_RW_SIZE;
+
+	/* notify board of a RW flash contents change */
+	board_rw_contents_change();
 
 	/* unlock CR if needed */
 	if (STM32_FLASH_CR & CR_LOCK) {

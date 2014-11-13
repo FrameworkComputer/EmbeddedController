@@ -355,13 +355,10 @@ static inline void set_state(int port, enum pd_states next_state)
 #endif
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_exit_mode(port, NULL);
-#else
 #ifdef CONFIG_USBC_SS_MUX
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
-#endif
 #endif
 #ifdef CONFIG_USBC_VCONN
 		pd_set_vconn(port, pd[port].polarity, 0);
@@ -2607,7 +2604,7 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
 
 		/* Delay to give time for device to reboot */
-		usleep(750 * MSEC);
+		usleep(900 * MSEC);
 		return EC_RES_SUCCESS;
 
 	case USB_PD_FW_FLASH_ERASE:

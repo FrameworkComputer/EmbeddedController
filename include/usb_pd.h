@@ -376,6 +376,15 @@ struct pd_policy {
 #define PD_VDO_SVID_SVID1(vdo) ((vdo) & 0xffff)
 
 /*
+ * Google modes capabilities
+ * <31:8> : reserved
+ * <7:0>  : mode
+ */
+#define VDO_MODE_GOOGLE(mode) (mode & 0xff)
+
+#define MODE_GOOGLE_FU 1 /* Firmware Update mode */
+
+/*
  * Mode Capabilities
  *
  * Number of VDOs supplied is SID dependent (but <= 6 VDOS?)
@@ -749,13 +758,6 @@ void pd_new_contract(int port, int pr_role, int dr_role,
  * @param data_role new data role
  */
 void pd_execute_data_swap(int port, int data_role);
-
-/**
- * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
- *
- * @return Pointer to data payload for VDO_CMD_*_INFO
- */
-uint32_t *pd_get_info(void);
 
 /**
  * Handle Vendor Defined Messages

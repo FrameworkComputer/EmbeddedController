@@ -17,21 +17,17 @@
 /* the UART console is on USART1 (PA9/PA10) */
 #define CONFIG_UART_CONSOLE 1
 
+#ifdef BOARD_ZINGER
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR USB_PD_HW_DEV_ID_ZINGER
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR 0
+#elif defined(BOARD_MINIMUFFIN)
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR USB_PD_HW_DEV_ID_MINIMUFFIN
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR 0
+#else
+#error "Board does not have a USB-PD HW Device ID"
+#endif
+
 /* Optional features */
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_CUSTOM_VDM
-#undef CONFIG_USB_PD_DUAL_ROLE
-#undef CONFIG_USB_PD_INTERNAL_COMP
-#undef CONFIG_USB_PD_RX_COMP_IRQ
-#define CONFIG_USB_PD_SIMPLE_DFP
-#define CONFIG_HW_CRC
-#define CONFIG_RSA
-#define CONFIG_SHA256
-#undef CONFIG_WATCHDOG_HELP
-#undef CONFIG_WATCHDOG_PERIOD_MS
-#define CONFIG_WATCHDOG_PERIOD_MS 2300
-#undef CONFIG_LID_SWITCH
-#undef CONFIG_TASK_PROFILING
 #undef CONFIG_COMMON_GPIO
 #undef CONFIG_COMMON_PANIC_OUTPUT
 #undef CONFIG_COMMON_RUNTIME
@@ -44,11 +40,37 @@
 #undef CONFIG_FMAP
 #define CONFIG_HIBERNATE
 #define CONFIG_HIBERNATE_WAKEUP_PINS STM32_PWR_CSR_EWUP1
+#define CONFIG_HW_CRC
+#undef CONFIG_LID_SWITCH
+#define CONFIG_RSA
+#define CONFIG_SHA256
+#undef CONFIG_TASK_PROFILING
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_CUSTOM_VDM
+#undef CONFIG_USB_PD_DUAL_ROLE
+#undef CONFIG_USB_PD_INTERNAL_COMP
+#undef CONFIG_USB_PD_RX_COMP_IRQ
+#define CONFIG_USB_PD_SIMPLE_DFP
+#define CONFIG_USB_PD_IDENTITY_HW_VERS CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR
+#define CONFIG_USB_PD_IDENTITY_SW_VERS 0
+#undef CONFIG_WATCHDOG_HELP
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2300
 
 /* debug printf flash footprinf is about 1400 bytes */
 #define CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
+
+/* USB configuration */
+#if defined(BOARD_ZINGER)
+#define CONFIG_USB_PID 0x5012
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
+#elif defined(BOARD_MINIMUFFIN)
+#define CONFIG_USB_PID 0x5013
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
+#endif
 
 #ifndef __ASSEMBLER__
 
@@ -90,6 +112,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /* Reboot the CPU */
 void cpu_reset(void);
+
+/* Board version information functions */
+uint32_t *board_get_info(void);
+void board_rw_contents_change(void);
 
 #endif /* !__ASSEMBLER__ */
 

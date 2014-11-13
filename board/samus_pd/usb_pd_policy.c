@@ -257,20 +257,19 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		break;
 	case VDO_CMD_READ_INFO:
 	case VDO_CMD_SEND_INFO:
-		/* if last word is present, it contains lots of info */
+		/* copy hash */
 		if (cnt == 7) {
-			/* send host event */
-			pd_send_host_event(PD_EVENT_UPDATE_DEVICE);
-
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
+			pd_dev_store_rw_hash(port, dev_id, payload + 1);
+
+			pd_send_host_event(PD_EVENT_UPDATE_DEVICE);
 			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
 				VDO_INFO_SW_DBG_VER(payload[6]),
 				VDO_INFO_IS_RW(payload[6]));
-		}
-		/* copy hash */
-		if (cnt >= 6)
+		} else if (cnt == 6) {
+			/* really old devices don't have last byte */
 			pd_dev_store_rw_hash(port, dev_id, payload + 1);
-
+		}
 		break;
 	case VDO_CMD_CURRENT:
 		CPRINTF("Current: %dmA\n", payload[1]);
@@ -383,6 +382,36 @@ static void svdm_exit_dp_mode(int port)
 	gpio_set_level(PORT_TO_HPD(port), 0);
 }
 
+static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
+{
+	/* Always enter GFU mode */
+	return 0;
+}
+
+static void svdm_exit_gfu_mode(int port)
+{
+}
+
+static int svdm_gfu_status(int port, uint32_t *payload)
+{
+	/*
+	 * This is called after enter mode is successful, send unstructured
+	 * VDM to read info.
+	 */
+	pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_READ_INFO, NULL, 0);
+	return 0;
+}
+
+static int svdm_gfu_config(int port, uint32_t *payload)
+{
+	return 0;
+}
+
+static int svdm_gfu_attention(int port, uint32_t *payload)
+{
+	return 0;
+}
+
 const struct svdm_amode_fx supported_modes[] = {
 	{
 		.svid = USB_SID_DISPLAYPORT,
@@ -392,5 +421,13 @@ const struct svdm_amode_fx supported_modes[] = {
 		.attention = &svdm_dp_attention,
 		.exit = &svdm_exit_dp_mode,
 	},
+	{
+		.svid = USB_VID_GOOGLE,
+		.enter = &svdm_enter_gfu_mode,
+		.status = &svdm_gfu_status,
+		.config = &svdm_gfu_config,
+		.attention = &svdm_gfu_attention,
+		.exit = &svdm_exit_gfu_mode,
+	}
 };
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);

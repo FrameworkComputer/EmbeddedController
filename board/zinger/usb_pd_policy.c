@@ -395,28 +395,88 @@ void pd_adc_interrupt(void)
 DECLARE_IRQ(STM32_IRQ_ADC_COMP, pd_adc_interrupt, 1);
 
 /* ----------------- Vendor Defined Messages ------------------ */
-static uint32_t info_data[6];
-uint32_t *pd_get_info(void)
+const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
+				 0, /* data caps as USB device */
+				 IDH_PTYPE_AMA, /* Alternate mode */
+				 1, /* supports alt modes */
+				 USB_VID_GOOGLE);
+
+const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
+
+const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
+				 CONFIG_USB_PD_IDENTITY_SW_VERS,
+				 0, 0, 0, 0, /* SS[TR][12] */
+				 0, /* Vconn power */
+				 0, /* Vconn power required */
+				 0, /* Vbus power required */
+				 AMA_USBSS_BBONLY /* USB SS support */);
+
+/* When set true, we are in GFU mode */
+static int gfu_mode;
+
+static int svdm_response_identity(int port, uint32_t *payload)
 {
-	void *hash;
-
-	/* calculate RW hash */
-	hash = flash_hash_rw();
-	/* copy first 20 bytes of RW hash */
-	memcpy(info_data, hash, 5 * sizeof(uint32_t));
-	/* copy other info into data msg */
-#ifdef BOARD_ZINGER
-	info_data[5] = VDO_INFO(USB_PD_HW_DEV_ID_ZINGER, 1,
-				ver_get_numcommits(), !is_ro_mode());
-#elif defined(BOARD_MINIMUFFIN)
-	info_data[5] = VDO_INFO(USB_PD_HW_DEV_ID_MINIMUFFIN, 0,
-				ver_get_numcommits(), !is_ro_mode());
-#else
-#error "Board does not have a USB-PD HW Device ID"
-#endif
-
-	return info_data;
+	payload[VDO_I(IDH)] = vdo_idh;
+	payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
+	payload[VDO_I(PRODUCT)] = vdo_product;
+	payload[VDO_I(AMA)] = vdo_ama;
+	return VDO_I(AMA) + 1;
 }
+
+static int svdm_response_svids(int port, uint32_t *payload)
+{
+	payload[1] = VDO_SVID(USB_VID_GOOGLE, 0);
+	return 2;
+}
+
+/* Will only ever be a single mode for this device */
+#define MODE_CNT 1
+#define OPOS 1
+
+const uint32_t vdo_dp_mode[MODE_CNT] =  {
+	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
+};
+
+static int svdm_response_modes(int port, uint32_t *payload)
+{
+	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE)
+		return 0; /* nak */
+
+	memcpy(payload + 1, vdo_dp_mode, sizeof(vdo_dp_mode));
+	return MODE_CNT + 1;
+}
+
+static int svdm_enter_mode(int port, uint32_t *payload)
+{
+	/* SID & mode request is valid */
+	if ((PD_VDO_VID(payload[0]) != USB_VID_GOOGLE) ||
+	    (PD_VDO_OPOS(payload[0]) != OPOS))
+		return 0; /* will generate NAK */
+
+	gfu_mode = 1;
+	debug_printf("GFU\n");
+	return 1;
+}
+
+static int svdm_exit_mode(int port, uint32_t *payload)
+{
+	gfu_mode = 0;
+	return 1; /* Must return ACK */
+}
+
+static struct amode_fx dp_fx = {
+	.status = NULL,
+	.config = NULL,
+};
+
+const struct svdm_response svdm_rsp = {
+	.identity = &svdm_response_identity,
+	.svids = &svdm_response_svids,
+	.modes = &svdm_response_modes,
+	.enter_mode = &svdm_enter_mode,
+	.amode = &dp_fx,
+	.exit_mode = &svdm_exit_mode,
+};
 
 static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			 uint32_t **rpayload)
@@ -424,6 +484,10 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	static int flash_offset;
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize = 1;
+
+	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
+		return 0;
+
 	debug_printf("%T] VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	*rpayload = payload;
@@ -439,7 +503,7 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		break;
 	case VDO_CMD_READ_INFO:
 		/* copy info into response */
-		memcpy(payload + 1, pd_get_info(), 24);
+		memcpy(payload + 1, board_get_info(), 24);
 		rsize = 7;
 		break;
 	case VDO_CMD_FLASH_ERASE:

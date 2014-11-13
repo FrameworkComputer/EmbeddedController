@@ -18,8 +18,13 @@
 #include "usb_pd_config.h"
 #include "version.h"
 
+#ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
 
 #ifdef CONFIG_USB_PD_ALT_MODE
 
@@ -441,6 +446,9 @@ DECLARE_DEFERRED(pd_usb_billboard_deferred);
 #ifndef CONFIG_USB_PD_ALT_MODE_DFP
 int pd_exit_mode(int port, uint32_t *payload)
 {
+#ifdef CONFIG_USB_PD_ALT_MODE
+	svdm_rsp.exit_mode(port, payload);
+#endif
 	return 0;
 }
 #endif /* !CONFIG_USB_PD_ALT_MODE_DFP */
