@@ -21,6 +21,9 @@
 #define CONFIG_CMD_SPI_FLASH
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
+#define CONFIG_RSA
+#define CONFIG_RWSIG
+#define CONFIG_SHA256
 /* TODO(tbroch) Re-enable once STM spi master can be inhibited at boot so it
    doesn't interfere with HDMI loading its f/w */
 #undef CONFIG_SPI_FLASH
