@@ -80,6 +80,51 @@ static inline int g_uart_addr(int ch, int offset)
 #define G_UART_FIFO(ch)                           G_UARTREG(ch, 0x0024)
 #define G_UART_RFIFO(ch)                          G_UARTREG(ch, 0x0028)
 
+
+/*
+ * High-speed timers. Two modules with two timers each; four timers total.
+ */
+#define G_TIMEHS0_BASE_ADDR                       0x40570000
+#define G_TIMEHS1_BASE_ADDR                       0x40580000
+#define G_TIMEHS_BASE_ADDR_SEP                    0x00010000
+#define G_TIMEHSX_TIMER1_OFS                            0x00
+#define G_TIMEHSX_TIMER2_OFS                            0x20
+#define G_TIMEHSX_TIMER_OFS_SEP                         0x20
+/* NOTE: module is 0-1, timer is 1-2 */
+static inline int g_timehs_addr(unsigned int module, unsigned int timer,
+				int offset)
+{
+	return G_TIMEHS0_BASE_ADDR + G_TIMEHS_BASE_ADDR_SEP * module
+		+ G_TIMEHSX_TIMER1_OFS + G_TIMEHSX_TIMER_OFS_SEP * (timer - 1)
+		+ offset;
+}
+/* Per-timer registers */
+#define G_TIMEHSREG(m, t, ofs)            REG32(g_timehs_addr(m, t, ofs))
+#define G_TIMEHS_LOAD(m, t)               G_TIMEHSREG(m, t, 0x0000)
+#define G_TIMEHS_VALUE(m, t)              G_TIMEHSREG(m, t, 0x0004)
+#define G_TIMEHS_CONTROL(m, t)            G_TIMEHSREG(m, t, 0x0008)
+#define G_TIMEHS_INTCLR(m, t)             G_TIMEHSREG(m, t, 0x000c)
+#define G_TIMEHS_RIS(m, t)                G_TIMEHSREG(m, t, 0x0010)
+#define G_TIMEHS_MIS(m, t)                G_TIMEHSREG(m, t, 0x0014)
+#define G_TIMEHS_BGLOAD(m, t)             G_TIMEHSREG(m, t, 0x0018)
+/* These are only per-module */
+#define G_TIMEHS_ITCR(m)                  G_TIMEHSREG(m, 1, 0x0f00)
+#define G_TIMEHS_ITOP(m)                  G_TIMEHSREG(m, 1, 0x0f04)
+#define G_TIMEHS_PERIPHID4(m)             G_TIMEHSREG(m, 1, 0x0fd0)
+#define G_TIMEHS_PERIPHID5(m)             G_TIMEHSREG(m, 1, 0x0fd4)
+#define G_TIMEHS_PERIPHID6(m)             G_TIMEHSREG(m, 1, 0x0fd8)
+#define G_TIMEHS_PERIPHID7(m)             G_TIMEHSREG(m, 1, 0x0fdc)
+#define G_TIMEHS_PERIPHID0(m)             G_TIMEHSREG(m, 1, 0x0fe0)
+#define G_TIMEHS_PERIPHID1(m)             G_TIMEHSREG(m, 1, 0x0fe4)
+#define G_TIMEHS_PERIPHID2(m)             G_TIMEHSREG(m, 1, 0x0fe8)
+#define G_TIMEHS_PERIPHID3(m)             G_TIMEHSREG(m, 1, 0x0fec)
+#define G_TIMEHS_PCELLID0(m)              G_TIMEHSREG(m, 1, 0x0ff0)
+#define G_TIMEHS_PCELLID1(m)              G_TIMEHSREG(m, 1, 0x0ff4)
+#define G_TIMEHS_PCELLID2(m)              G_TIMEHSREG(m, 1, 0x0ff8)
+#define G_TIMEHS_PCELLID3(m)              G_TIMEHSREG(m, 1, 0x0ffc)
+
+
+/* Oscillator */
 #define G_XO0_BASE_ADDR                   0x40420000
 #define G_XO_OSC_RC_CAL_RSTB              REG32(G_XO0_BASE_ADDR + 0x0014)
 #define G_XO_OSC_RC_CAL_LOAD              REG32(G_XO0_BASE_ADDR + 0x0018)
