@@ -15,10 +15,6 @@
 #include "system.h"
 #include "util.h"
 
-/* Console output macros */
-#define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
-
 /* True if we're listening to the thermal control task. False if we're setting
  * things manually. */
 static int thermal_control_enabled[CONFIG_FANS];
@@ -49,7 +45,6 @@ int fan_percent_to_rpm(int fan, int pct)
 test_mockable void fan_set_percent_needed(int fan, int pct)
 {
 	int actual_rpm, new_rpm;
-	static int prev_rpm[CONFIG_FANS];
 
 	if (!thermal_control_enabled[fan])
 		return;
@@ -64,11 +59,6 @@ test_mockable void fan_set_percent_needed(int fan, int pct)
 	    actual_rpm < fans[fan].rpm_min * 9 / 10 &&
 	    new_rpm < fans[fan].rpm_start)
 		new_rpm = fans[fan].rpm_start;
-
-	if (new_rpm != prev_rpm[fan]) {
-		CPRINTS("Fan %d %d%% => %d rpm", fan, pct, new_rpm);
-		prev_rpm[fan] = new_rpm;
-	}
 
 	fan_set_rpm_target(fans[fan].ch, new_rpm);
 }
