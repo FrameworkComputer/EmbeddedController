@@ -167,6 +167,10 @@ void pd_power_supply_reset(int port)
 
 int pd_board_checks(void)
 {
+	static int was_connected = -1;
+	if (was_connected != 1 && pd_is_connected(0))
+		board_maybe_reset_usb_hub();
+	was_connected = pd_is_connected(0);
 	return EC_SUCCESS;
 }
 

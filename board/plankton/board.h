@@ -64,6 +64,9 @@ enum board_src_cap {
 /* Set USB PD source capability */
 void board_set_source_cap(enum board_src_cap cap);
 
+/* Reset USB hub if USB hub is switched to type-C port */
+void board_maybe_reset_usb_hub(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

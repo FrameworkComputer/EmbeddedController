@@ -225,6 +225,21 @@ static int board_usb_hub_reset(void)
 	return pca9534_set_level(I2C_PORT_MASTER, 0x40, 7, 1);
 }
 
+void board_maybe_reset_usb_hub(void)
+{
+	int ret;
+	int level;
+
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x40, 6, PCA9534_INPUT);
+	if (ret)
+		return;
+	ret = pca9534_get_level(I2C_PORT_MASTER, 0x40, 6, &level);
+	if (ret)
+		return;
+	if (level == 1)
+		board_usb_hub_reset();
+}
+
 static int cmd_usb_hub_reset(int argc, char *argv[])
 {
 	return board_usb_hub_reset();
