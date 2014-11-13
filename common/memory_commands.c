@@ -43,20 +43,34 @@ static int command_read_word(int argc, char **argv)
 	uint32_t value;
 	char *e;
 
-	if (argc != 2)
+	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
 	address = (uint32_t *)(uintptr_t)strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM1;
 
-	value = *address;
+	/* Just reading? */
+	if (argc < 3) {
+		value = *address;
+		ccprintf("read 0x%p = 0x%08x\n", address, value);
+		return EC_SUCCESS;
+	}
 
-	ccprintf("read 0x%p = 0x%08x\n", address, value);
+	/* Writing! */
+	value = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	ccprintf("write 0x%p = 0x%08x\n", address, value);
+	cflush();  /* Flush before writing in case this crashes */
+
+	*address = value;
 
 	return EC_SUCCESS;
+
 }
 DECLARE_CONSOLE_COMMAND(rw, command_read_word,
-			"addr",
-			"Read a word from memory",
+			"addr [value]",
+			"Read or write a word in memory",
 			NULL);

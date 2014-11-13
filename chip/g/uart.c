@@ -69,7 +69,7 @@ int uart_tx_ready(void)
 int uart_rx_available(void)
 {
 	/* True if the RX buffer is not completely empty. */
-	/* TODO(crosbug.com/p/33432): Ask Scott for a single bit for this. */
+	/* TODO(crosbug.com/p/33432): Want a single bit (b2/18273495) */
 	return G_UART_RFIFO(0) & 0x0fc0;
 }
 
