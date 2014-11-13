@@ -26,6 +26,10 @@
 
 static enum gpio_signal button_pressed;
 
+static int fake_pd_disconnected;
+static int fake_pd_host_mode;
+static int fake_pd_disconnect_duration_ms;
+
 enum usbc_action {
 	USBC_ACT_5V_TO_DUT,
 	USBC_ACT_12V_TO_DUT,
@@ -259,3 +263,120 @@ static void board_init_usb_hub(void)
 		hook_call_deferred(board_usb_hub_reset_no_return, 500 * MSEC);
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usb_hub, HOOK_PRIO_DEFAULT);
+
+void board_pd_set_host_mode(int enable)
+{
+	cprintf(CC_USBPD, "Host mode: %d\n", enable);
+
+	if (board_pd_fake_disconnected()) {
+		board_update_fake_adc_value(enable);
+		return;
+	}
+
+	if (enable) {
+		/* Source mode, disable charging */
+		gpio_set_level(GPIO_USBC_CHARGE_EN, 0);
+		/* High Z for no pull-down resistor on CC1 */
+		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_INPUT);
+		/* Set pull-up resistor on CC1 */
+		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_OUT_HIGH);
+		/* High Z for no pull-down resistor on CC2 */
+		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_INPUT);
+		/* Set pull-up resistor on CC2 */
+		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_OUT_HIGH);
+	} else {
+		/* Device mode, disable VBUS */
+		gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
+		gpio_set_level(GPIO_USBC_VSEL_0, 0);
+		gpio_set_level(GPIO_USBC_VSEL_1, 0);
+		/* High Z for no pull-up resistor on CC1 */
+		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_INPUT);
+		/* Set pull-down resistor on CC1 */
+		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_OUT_LOW);
+		/* High Z for no pull-up resistor on CC2 */
+		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_INPUT);
+		/* Set pull-down resistor on CC2 */
+		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_OUT_LOW);
+		/* Set charge enable */
+		gpio_set_level(GPIO_USBC_CHARGE_EN, 1);
+	}
+}
+
+int board_pd_fake_disconnected(void)
+{
+	return fake_pd_disconnected;
+}
+
+int board_fake_pd_adc_read(void)
+{
+	if (fake_pd_host_mode)
+		return 3000; /* mV */
+	else
+		return 0; /* mV */
+}
+
+void board_update_fake_adc_value(int host_mode)
+{
+	fake_pd_host_mode = host_mode;
+}
+
+static void fake_disconnect_end(void)
+{
+	fake_pd_disconnected = 0;
+	board_pd_set_host_mode(fake_pd_host_mode);
+}
+DECLARE_DEFERRED(fake_disconnect_end);
+
+static void fake_disconnect_start(void)
+{
+	/* Record the current host mode */
+	fake_pd_host_mode = !gpio_get_level(GPIO_USBC_CHARGE_EN);
+	/* Disable VBUS */
+	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
+	gpio_set_level(GPIO_USBC_VSEL_0, 0);
+	gpio_set_level(GPIO_USBC_VSEL_1, 0);
+	/* High Z for no pull-up resistor on CC1 */
+	gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_INPUT);
+	/* High Z for no pull-up resistor on CC2 */
+	gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_INPUT);
+	/* High Z for no pull-down resistor on CC1 */
+	gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_INPUT);
+	/* High Z for no pull-down resistor on CC2 */
+	gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_INPUT);
+
+	fake_pd_disconnected = 1;
+
+	hook_call_deferred(fake_disconnect_end,
+			   fake_pd_disconnect_duration_ms * MSEC);
+}
+DECLARE_DEFERRED(fake_disconnect_start);
+
+static int cmd_fake_disconnect(int argc, char *argv[])
+{
+	int delay_ms, duration_ms;
+	char *e;
+
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	delay_ms = strtoi(argv[1], &e, 0);
+	if (*e || delay_ms < 0)
+		return EC_ERROR_PARAM1;
+	duration_ms = strtoi(argv[2], &e, 0);
+	if (*e || duration_ms < 0)
+		return EC_ERROR_PARAM2;
+
+	/* Cancel any pending function calls */
+	hook_call_deferred(fake_disconnect_start, -1);
+	hook_call_deferred(fake_disconnect_end, -1);
+
+	fake_pd_disconnect_duration_ms = duration_ms;
+	hook_call_deferred(fake_disconnect_start, delay_ms * MSEC);
+
+	ccprintf("Fake disconnect for %d ms starting in %d ms.\n",
+		 duration_ms, delay_ms);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fake_disconnect, cmd_fake_disconnect,
+			"<delay_ms> <duration_ms>", NULL, NULL);

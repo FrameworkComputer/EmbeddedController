@@ -67,6 +67,18 @@ void board_set_source_cap(enum board_src_cap cap);
 /* Reset USB hub if USB hub is switched to type-C port */
 void board_maybe_reset_usb_hub(void);
 
+/* Whether faking PD disconnected or not */
+int board_pd_fake_disconnected(void);
+
+/* Get fake ADC reading */
+int board_fake_pd_adc_read(void);
+
+/* Set fake PD pull-up/pull-down */
+void board_update_fake_adc_value(int host_mode);
+
+/* Set pull-up/pull-down on CC lines */
+void board_pd_set_host_mode(int enable);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

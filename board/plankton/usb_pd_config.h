@@ -8,6 +8,8 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
+#include "board.h"
+
 /* USB-PD configuration */
 #define PD_PORT_COUNT 1
 #define PORT_TO_TASK_ID(port) TASK_ID_PD
@@ -124,38 +126,14 @@ static inline void pd_tx_init(void)
 
 static inline void pd_set_host_mode(int port, int enable)
 {
-	ccprintf("Host mode: %d\n", enable);
-	if (enable) {
-		/* Source mode, disable charging */
-		gpio_set_level(GPIO_USBC_CHARGE_EN, 0);
-		/* High Z for no pull-down resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_INPUT);
-		/* Set pull-up resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_OUT_HIGH);
-		/* High Z for no pull-down resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_INPUT);
-		/* Set pull-up resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_OUT_HIGH);
-	} else {
-		/* Device mode, disable VBUS */
-		gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
-		gpio_set_level(GPIO_USBC_VSEL_0, 0);
-		gpio_set_level(GPIO_USBC_VSEL_1, 0);
-		/* High Z for no pull-up resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_INPUT);
-		/* Set pull-down resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_OUT_LOW);
-		/* High Z for no pull-up resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_INPUT);
-		/* Set pull-down resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_OUT_LOW);
-		/* Set charge enable */
-		gpio_set_level(GPIO_USBC_CHARGE_EN, 1);
-	}
+	board_pd_set_host_mode(enable);
 }
 
 static inline int pd_adc_read(int port, int cc)
 {
+	if (board_pd_fake_disconnected())
+		return board_fake_pd_adc_read();
+
 	if (cc == 0)
 		return adc_read_channel(ADC_CH_CC1_PD);
 	else
