@@ -21,6 +21,7 @@
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
+#include "rsa.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -139,6 +140,14 @@ test_mockable int main(void)
 #endif
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
+#endif
+
+#ifdef CONFIG_RWSIG
+	/*
+	 * Check the RW firmware signature
+	 * and eventually jump to it if it is good.
+	 */
+	check_rw_signature();
 #endif
 
 	/* Initialize the hook library.  This calls HOOK_INIT hooks. */

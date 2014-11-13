@@ -215,6 +215,8 @@ $(out)/ec_date.h: $(filter-out $(out)/common/version.o,$(objs))
 $(out)/gen_pub_key.h: $(PEM)
 	$(call quiet,pubkey,PUBKEY )
 
+$(out)/common/rwsig.o: $(out)/gen_pub_key.h
+
 $(build-utils): $(out)/%:$(build-srcs)
 	$(call quiet,c_to_build,BUILDCC)
 

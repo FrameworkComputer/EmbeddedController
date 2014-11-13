@@ -898,6 +898,12 @@
 #undef CONFIG_RSA
 
 /*
+ * Verify the RW firmware using the RSA signature.
+ * (for accessories without software sync)
+ */
+#undef CONFIG_RWSIG
+
+/*
  * If defined, the hash module will save its last computed hash when jumping
  * between EC images.
  */

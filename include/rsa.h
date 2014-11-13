@@ -49,6 +49,8 @@ int rsa_verify(const struct rsa_public_key *key,
 	       const uint8_t *sha,
 	       uint32_t *workbuf32);
 
+void check_rw_signature(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* _INCLUDE_RSA_H */
