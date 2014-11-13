@@ -7,13 +7,16 @@
 
 /* Inputs with interrupt handlers are first for efficiency */
 GPIO_INT(VBUS_WAKE,           B, 5,  GPIO_INT_BOTH,    vbus_event)
-GPIO_INT(DBG_20V_TO_DUT_L,    C, 13, GPIO_INT_FALLING, button_event)
+GPIO_INT(DPSRC_HPD,           B, 13, GPIO_INT_BOTH,    hpd_event)
 GPIO_INT(DBG_12V_TO_DUT_L,    B, 14, GPIO_INT_FALLING, button_event)
 GPIO_INT(DBG_5V_TO_DUT_L,     B, 8,  GPIO_INT_FALLING, button_event)
 GPIO_INT(DBG_CHG_TO_DEV_L,    F, 1,  GPIO_INT_FALLING, button_event)
 GPIO_INT(DBG_USB_TOGGLE_L,    F, 0,  GPIO_INT_FALLING, button_event)
 GPIO_INT(DBG_CASE_CLOSE_EN_L, B, 12, GPIO_INT_FALLING, button_event)
 GPIO_INT(DBG_MUX_FLIP_L,      B, 15, GPIO_INT_FALLING, button_event)
+
+/* TODO(crosbug.com/p/33761) : This interrupt is double booked w/ HPD */
+GPIO(DBG_20V_TO_DUT_L,    C, 13, GPIO_INPUT)
 
 /* PD RX/TX */
 GPIO(USBC_PD_REF,         A, 1,  GPIO_ANALOG)
@@ -49,9 +52,6 @@ GPIO(USBC_VSEL_0,         C, 14, GPIO_OUT_LOW)
 GPIO(CASE_CLOSE_EN,       A, 7,  GPIO_OUT_LOW)
 GPIO(CASE_CLOSE_DFU_L,    A, 13, GPIO_OUT_HIGH)
 GPIO(DEBUG_TOGGLE,        B, 4,  GPIO_OUT_LOW)
-
-/* Display port */
-GPIO(DPSRC_HPD,           B, 13, GPIO_INPUT)
 
 /* Alternate functions */
 #if 0

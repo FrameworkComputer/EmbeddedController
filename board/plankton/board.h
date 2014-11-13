@@ -18,7 +18,11 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_IDENTITY_HW_VERS 1
+#define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_DYNAMIC_SRC_CAP
 #define CONFIG_ADC
@@ -32,6 +36,10 @@
 
 /* I2C ports configuration */
 #define I2C_PORT_MASTER 1
+
+/* USB configuration */
+#define CONFIG_USB_PID 0x500c
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
