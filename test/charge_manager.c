@@ -30,6 +30,12 @@ BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 static unsigned int active_charge_limit = CHARGE_SUPPLIER_NONE;
 static unsigned int active_charge_port = CHARGE_PORT_NONE;
 static int new_power_request[PD_PORT_COUNT];
+static int dual_role_capable[PD_PORT_COUNT];
+
+enum {
+	DEDICATED_CHARGER = 0,
+	DUAL_ROLE_CHARGER = 1,
+};
 
 /* Callback functions called by CM on state change */
 void board_set_charge_limit(int charge_ma)
@@ -47,11 +53,26 @@ void pd_set_new_power_request(int port)
 	new_power_request[port] = 1;
 }
 
-void clear_new_power_requests(void)
+static void clear_new_power_requests(void)
 {
 	int i;
 	for (i = 0; i < PD_PORT_COUNT; ++i)
 		new_power_request[i] = 0;
+}
+
+/*
+ * Set dual-role capability attribute of port. Note that this capability
+ * does not change dynamically, and thus won't trigger a charge manager
+ * refresh, in test code and in production.
+ */
+static void set_charger_role(int port, int role)
+{
+	dual_role_capable[port] = role;
+}
+
+int pd_get_partner_dualrole_capable(int port)
+{
+	return dual_role_capable[port];
 }
 
 static void wait_for_charge_manager_refresh(void)
@@ -70,6 +91,7 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 
 	for (i = 0; i < PD_PORT_COUNT; ++i) {
 		charge_manager_set_ceil(i, ceil);
+		set_charger_role(i, DEDICATED_CHARGER);
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j)
 			charge_manager_update(j, i, &charge);
 	}
@@ -303,14 +325,15 @@ static int test_override(void)
 	 * Verify current limit is still selected according to supplier
 	 * priority on the override port.
 	 */
-	charge_manager_set_override(0);
 	charge.current = 300;
 	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge_manager_set_override(0);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 0);
 	TEST_ASSERT(active_charge_limit == 300);
 	charge.current = 100;
 	charge_manager_update(CHARGE_SUPPLIER_TEST1, 0, &charge);
+	charge_manager_set_override(0);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 0);
 	TEST_ASSERT(active_charge_limit == 100);
@@ -337,6 +360,81 @@ static int test_override(void)
 	return EC_SUCCESS;
 }
 
+static int test_dual_role(void)
+{
+	struct charge_port_info charge;
+
+	/* Initialize table to no charge. */
+	initialize_charge_table(0, 5000, 1000);
+
+	/*
+	 * Mark P0 as dual-role and set a charge. Verify that we don't charge
+	 * from the port.
+	 */
+	set_charger_role(0, DUAL_ROLE_CHARGER);
+	charge.current = 500;
+	charge.voltage = 5000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+	TEST_ASSERT(active_charge_limit == 0);
+
+	/* Mark P0 as the override port, verify that we now charge. */
+	charge_manager_set_override(0);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Remove override and verify we go back to not charging */
+	charge_manager_set_override(OVERRIDE_OFF);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+	TEST_ASSERT(active_charge_limit == 0);
+
+	/* Mark P0 as the override port, verify that we again charge. */
+	charge_manager_set_override(0);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Insert a dedicated charger and verify override is removed */
+	charge.current = 400;
+	charge_manager_update(CHARGE_SUPPLIER_TEST6, 1, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 400);
+
+	/*
+	 * Verify the port is handled normally if the dual-role source is
+	 * unplugged and replaced with a dedicated source.
+	 */
+	set_charger_role(0, DEDICATED_CHARGER);
+	charge.current = 0;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge.current = 500;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/*
+	 * Verify that we charge from the dedicated port if a dual-role
+	 * source is also attached.
+	 */
+	set_charger_role(0, DUAL_ROLE_CHARGER);
+	charge.current = 0;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge.current = 500;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	charge.current = 200;
+	charge_manager_update(CHARGE_SUPPLIER_TEST6, 1, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 200);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -346,6 +444,7 @@ void run_test(void)
 	RUN_TEST(test_charge_ceil);
 	RUN_TEST(test_new_power_request);
 	RUN_TEST(test_override);
+	RUN_TEST(test_dual_role);
 
 	test_print_result();
 }

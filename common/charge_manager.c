@@ -95,8 +95,20 @@ static void charge_manager_refresh(void)
 		 */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 			for (j = 0; j < PD_PORT_COUNT; ++j) {
+				/*
+				 * Don't select this port if we have a
+				 * charge on another override port.
+				 */
 				if (override_port != OVERRIDE_OFF &&
 				    override_port == new_port &&
+				    override_port != j)
+					continue;
+
+				/*
+				 * Don't charge from a dual-role port unless
+				 * it is our override port.
+				 */
+				if (pd_get_partner_dualrole_capable(j) &&
 				    override_port != j)
 					continue;
 
@@ -175,6 +187,14 @@ void charge_manager_update(int supplier,
 	/* Update charge table if needed. */
 	if (available_charge[supplier][port].current != charge->current ||
 		available_charge[supplier][port].voltage != charge->voltage) {
+		/* Remove override when a dedicated charger is plugged */
+		if (override_port != OVERRIDE_OFF &&
+		    available_charge[supplier][port].current == 0 &&
+		    charge->current > 0 &&
+		    !pd_get_partner_dualrole_capable(port))
+			override_port = OVERRIDE_OFF;
+
+
 		available_charge[supplier][port].current = charge->current;
 		available_charge[supplier][port].voltage = charge->voltage;
 
