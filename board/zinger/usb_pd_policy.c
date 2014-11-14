@@ -152,13 +152,23 @@ static void discharge_voltage(int target_volt)
 
 #define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
 
+/* Voltage indexes for the PDOs */
+enum volt_idx {
+	PDO_IDX_5V  = 0,
+	PDO_IDX_12V = 1,
+	PDO_IDX_20V = 2,
+
+	PDO_IDX_COUNT
+};
+
 /* Power Delivery Objects */
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_FLAGS),
-		PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_FLAGS),
-		PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_FLAGS),
+	[PDO_IDX_5V]  = PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_FLAGS),
+	[PDO_IDX_12V] = PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_FLAGS),
+	[PDO_IDX_20V] = PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+BUILD_ASSERT(ARRAY_SIZE(pd_src_pdo) == PDO_IDX_COUNT);
 
 /* PDO voltages (should match the table above) */
 static const struct {
@@ -167,14 +177,19 @@ static const struct {
 	int       ovp;    /* over-voltage limit in mV */
 	int       ovp_rec;/* over-voltage recovery threshold in mV */
 } voltages[ARRAY_SIZE(pd_src_pdo)] = {
-	{VO_5V,  UVP_MV(5000),  OVP_MV(5000), OVP_REC_MV(5000)},
-	{VO_12V, UVP_MV(12000), OVP_MV(12000), OVP_REC_MV(12000)},
-	{VO_20V, UVP_MV(20000), OVP_MV(20000), OVP_REC_MV(20000)},
+	[PDO_IDX_5V]  = {VO_5V,  UVP_MV(5000),  OVP_MV(5000),
+						OVP_REC_MV(5000)},
+	[PDO_IDX_12V] = {VO_12V, UVP_MV(12000), OVP_MV(12000),
+						OVP_REC_MV(12000)},
+	[PDO_IDX_20V] = {VO_20V, UVP_MV(20000), OVP_MV(20000),
+						OVP_REC_MV(20000)},
 };
 
 /* current and previous selected PDO entry */
 static int volt_idx;
 static int last_volt_idx;
+/* target voltage at the end of discharge */
+static int discharge_volt_idx;
 
 /* output current measurement */
 int vbus_amp;
@@ -211,12 +226,18 @@ int pd_check_requested_voltage(uint32_t rdo)
 
 void pd_transition_voltage(int idx)
 {
-	if (idx - 1 < volt_idx) { /* down voltage transition */
+	last_volt_idx = volt_idx;
+	volt_idx = idx - 1;
+	if (volt_idx < last_volt_idx) { /* down voltage transition */
 		/* Stop OCP monitoring */
 		adc_disable_watchdog();
 
-		discharge_voltage(voltages[idx - 1].ovp);
-	} else if (idx - 1 > volt_idx) { /* up voltage transition */
+		discharge_volt_idx = volt_idx;
+		/* from 20V : do an intermediate step at 12V */
+		if (volt_idx == PDO_IDX_5V && last_volt_idx == PDO_IDX_20V)
+			volt_idx = PDO_IDX_12V;
+		discharge_voltage(voltages[volt_idx].ovp);
+	} else if (volt_idx > last_volt_idx) { /* up voltage transition */
 		if (discharge_is_enabled()) {
 			/* Make sure discharging is disabled */
 			discharge_disable();
@@ -225,8 +246,6 @@ void pd_transition_voltage(int idx)
 					    MAX_CURRENT_FAST, 0);
 		}
 	}
-	last_volt_idx = volt_idx;
-	volt_idx = idx - 1;
 	set_output_voltage(voltages[volt_idx].select);
 }
 
@@ -248,16 +267,21 @@ void pd_power_supply_reset(int port)
 	int need_discharge = (volt_idx > 0) || discharge_is_enabled();
 
 	output_disable();
-	volt_idx = 0;
-	set_output_voltage(VO_5V);
+	last_volt_idx = volt_idx;
+	/* from 20V : do an intermediate step at 12V */
+	volt_idx = volt_idx == PDO_IDX_20V ? PDO_IDX_12V : PDO_IDX_5V;
+	set_output_voltage(voltages[volt_idx].select);
 	/* TODO transition delay */
 
 	/* Stop OCP monitoring to save power */
 	adc_disable_watchdog();
 
 	/* discharge voltage to 5V ? */
-	if (need_discharge)
-		discharge_voltage(voltages[0].ovp);
+	if (need_discharge) {
+		/* final target : 5V  */
+		discharge_volt_idx = PDO_IDX_5V;
+		discharge_voltage(voltages[volt_idx].ovp);
+	}
 }
 
 int pd_check_data_swap(int port, int data_role)
@@ -371,6 +395,9 @@ int pd_board_checks(void)
 	/* the discharge did not work properly */
 	if (discharge_is_enabled() &&
 		(get_time().val > discharge_deadline.val)) {
+		/* ensure we always finish a 2-step discharge */
+		volt_idx = discharge_volt_idx;
+		set_output_voltage(voltages[volt_idx].select);
 		/* stop it */
 		discharge_disable();
 		/* enable over-current monitoring */
@@ -402,10 +429,18 @@ void pd_adc_interrupt(void)
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;
 
-	if (discharge_is_enabled()) { /* discharge completed */
-		discharge_disable();
-		/* enable over-current monitoring */
-		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
+	if (discharge_is_enabled()) {
+		if (discharge_volt_idx != volt_idx) {
+			/* first step of the discharge completed: now 12V->5V */
+			volt_idx = PDO_IDX_5V;
+			set_output_voltage(VO_5V);
+			discharge_voltage(voltages[PDO_IDX_5V].ovp);
+		} else { /* discharge complete */
+			discharge_disable();
+			/* enable over-current monitoring */
+			adc_enable_watchdog(ADC_CH_A_SENSE,
+					    MAX_CURRENT_FAST, 0);
+		}
 	} else {/* Over-current detection */
 		/* cut the power output */
 		pd_power_supply_reset(0);
