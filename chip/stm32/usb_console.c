@@ -18,7 +18,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 #define USB_CONSOLE_TIMEOUT_US (30 * MSEC)
-#define USB_CONSOLE_RX_BUF_SIZE 16
+#define USB_CONSOLE_RX_BUF_SIZE 64
 #define RX_BUF_NEXT(i) (((i) + 1) & (USB_CONSOLE_RX_BUF_SIZE - 1))
 
 static volatile char rx_buf[USB_CONSOLE_RX_BUF_SIZE];
