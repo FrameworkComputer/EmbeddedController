@@ -5,7 +5,7 @@
  */
 
 /* Inputs with interrupt handlers are first for efficiency */
-/* TODO(crosbug.com/p/33432): try enabling this */
+/* TODO(crosbug.com/p/33816): try enabling this */
 /* GPIO(CAMO0_BREACH_INT, A, 0, GPIO_INT_BOTH, button_event) */
 
 /* Outputs */

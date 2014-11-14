@@ -302,7 +302,7 @@ static void switch_osc_to_xtl(void)
 void clock_init(void)
 {
 	/*
-	 * TODO(crosbug.com/p/33432): The following comment was in the example
+	 * TODO(crosbug.com/p/33813): The following comment was in the example
 	 * code, but the function that's called doesn't match what it says.
 	 * Investigate further.
 	 */

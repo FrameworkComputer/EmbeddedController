@@ -19,7 +19,7 @@
 #define CONFIG_FLASH_BASE       0x40000
 #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024)
 /* flash chip specifics */
-/* TODO(crosbug.com/p/33432): These are probably wrong. Don't use them yet. */
+/* TODO(crosbug.com/p/33815): These are probably wrong. Don't use them yet. */
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */

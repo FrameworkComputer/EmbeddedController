@@ -11,7 +11,7 @@ void system_pre_init(void)
 
 }
 
-/* TODO(crosbug.com/p/33432): How do we force a reset? */
+/* TODO(crosbug.com/p/33818): How do we force a reset? */
 void system_reset(int flags)
 {
 
@@ -32,7 +32,7 @@ const char *system_get_chip_revision(void)
 	return G_REVISION_STR;
 }
 
-/* TODO(crosbug.com/p/33432): Where can we store stuff persistently? */
+/* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
 
 int system_get_vbnvcontext(uint8_t *block)
 {

@@ -14,7 +14,7 @@
 /* Initialize board. */
 static void board_init(void)
 {
-	/* TODO(crosbug.com/p/33432): Try enabling this */
+	/* TODO(crosbug.com/p/33812): Try enabling this */
 	/* gpio_enable_interrupt(GPIO_CAMO0_BREACH_INT); */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

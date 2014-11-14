@@ -7,7 +7,7 @@
 #include "gpio.h"
 #include "hooks.h"
 
-/* TODO(crosbug.com/p/33432): We don't have any GPIOs defined yet! */
+/* TODO(crosbug.com/p/33816): We don't have any GPIOs defined yet! */
 
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {

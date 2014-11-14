@@ -33,7 +33,7 @@ void uart_tx_start(void)
 	 * UART where the FIFO only triggers the interrupt when its
 	 * threshold is _crossed_, not just met.
 	 */
-	/* TODO(crosbug.com/p/33432): Do we need this hack here? Find out. */
+	/* TODO(crosbug.com/p/33819): Do we need this hack here? Find out. */
 	REG_WRITE_MASK(G_UART_ICTRL(0), 0x01, 0x01, 0);
 	task_trigger_irq(G_IRQNUM_UART0_TXINT);
 }
