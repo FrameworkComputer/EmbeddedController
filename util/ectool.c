@@ -886,9 +886,6 @@ int cmd_pd_device_info(int argc, char *argv[])
 	return rv;
 }
 
-
-/* PD image size is 16k minus 32 bits for the RW hash */
-#define PD_RW_IMAGE_SIZE (16 * 1024)
 int cmd_flash_pd(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_fw_update *p =
@@ -921,10 +918,6 @@ int cmd_flash_pd(int argc, char *argv[])
 	buf = read_file(argv[3], &fsize);
 	if (!buf)
 		return -1;
-
-	/* Verify size of file */
-	if (fsize != PD_RW_IMAGE_SIZE)
-		goto pd_flash_error;
 
 	/* Erase the current RW RSA signature */
 	fprintf(stderr, "Erasing expected RW hash\n");
