@@ -43,7 +43,7 @@ static int bat_led_set(enum led_color color, int on)
 
 static int pwr_led_set(int on)
 {
-	gpio_set_level(GPIO_POWER_LED, on);
+	gpio_set_level(GPIO_POWER_LED, on ? 0 : 1);
 	return EC_SUCCESS;
 }
 
