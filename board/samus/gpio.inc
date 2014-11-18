@@ -47,6 +47,7 @@ GPIO(USB2_OC_L,      E, 0, GPIO_INPUT, NULL) /* USB port overcurrent warning */
 GPIO(USB2_STATUS_L,  D, 7, GPIO_INPUT, NULL) /* USB charger port 2 status output */
 GPIO(PD_IN_RW,       A, 5, GPIO_INPUT, NULL) /* PD is in RW */
 GPIO(PCH_HDA_SDO_L,  G, 1, GPIO_INPUT, NULL) /* HDA_SDO signal to PCH to disable ME */
+GPIO(BKBOOST_DET,    B, 5, GPIO_INPUT, NULL) /* Backboost detect */
 
 /* Outputs; all unasserted by default except for reset signals */
 GPIO(CPU_PROCHOT,         B, 1, GPIO_OUT_LOW,  NULL) /* Force CPU to think it's overheated */
