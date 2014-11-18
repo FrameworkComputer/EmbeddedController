@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -101,6 +102,9 @@ static timestamp_t fault_deadline;
 /* reset over-current after 1 second */
 #define OCP_TIMEOUT SECOND
 
+/* Threshold below which we stop fast OCP to save power */
+#define SINK_IDLE_CURRENT VBUS_MA(500 /* mA */)
+
 /* Under-voltage limit is 0.8x Vnom */
 #define UVP_MV(mv)  VBUS_MV((mv) * 8 / 10)
 /* Over-voltage limit is 1.2x Vnom */
@@ -141,6 +145,7 @@ static void discharge_voltage(int target_volt)
 	discharge_deadline.val = get_time().val + DISCHARGE_TIMEOUT;
 	/* Monitor VBUS voltage */
 	target_volt -= DISCHARGE_OVERSHOOT_MV;
+	disable_sleep(SLEEP_MASK_USB_PD);
 	adc_enable_watchdog(ADC_CH_V_SENSE, 0xFFF, target_volt);
 }
 
@@ -325,6 +330,17 @@ int pd_board_checks(void)
 			return EC_ERROR_INVAL;
 		}
 	}
+	/*
+	 * Optimize power consumption when the sink is idle :
+	 * Enable STOP mode while we are connected,
+	 * this kills fast OCP as the actual ADC conversion for the analog
+	 * watchdog will happen on the next wake-up (x0 ms latency).
+	 */
+	if (vbus_amp < SINK_IDLE_CURRENT && !discharge_is_enabled())
+		/* override the PD state machine sleep mask */
+		enable_sleep(SLEEP_MASK_USB_PD);
+	else if (vbus_amp > SINK_IDLE_CURRENT)
+		disable_sleep(SLEEP_MASK_USB_PD);
 
 	/*
 	 * Set the voltage index to use for checking OVP. During a down step
