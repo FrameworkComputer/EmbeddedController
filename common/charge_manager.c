@@ -26,6 +26,8 @@ static int charge_ceil[PD_PORT_COUNT];
 /* Store current state of port enable / charge current. */
 static int charge_port = CHARGE_PORT_NONE;
 static int charge_current = CHARGE_CURRENT_UNINITIALIZED;
+static int charge_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
+static int charge_voltage;
 static int charge_supplier = CHARGE_SUPPLIER_NONE;
 static int override_port = OVERRIDE_OFF;
 
@@ -82,7 +84,10 @@ static void charge_manager_refresh(void)
 {
 	int new_supplier = CHARGE_SUPPLIER_NONE;
 	int new_port = CHARGE_PORT_NONE;
-	int new_charge_current, new_charge_voltage, i, j, old_port;
+	int new_charge_current, new_charge_current_uncapped;
+	int new_charge_voltage, i, j;
+	int updated_new_port = CHARGE_PORT_NONE;
+	int updated_old_port = CHARGE_PORT_NONE;
 
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
 	if (override_port != OVERRIDE_DONT_CHARGE) {
@@ -135,15 +140,19 @@ static void charge_manager_refresh(void)
 			override_port = OVERRIDE_OFF;
 	}
 
-	if (new_supplier == CHARGE_SUPPLIER_NONE)
-		new_charge_current = new_charge_voltage = 0;
-	else {
-		new_charge_current =
+	if (new_supplier == CHARGE_SUPPLIER_NONE) {
+		new_charge_current = 0;
+		new_charge_current_uncapped = 0;
+		new_charge_voltage = 0;
+	} else {
+		new_charge_current_uncapped =
 			available_charge[new_supplier][new_port].current;
 		/* Enforce port charge ceiling. */
-		if (charge_ceil[new_port] != CHARGE_CEIL_NONE &&
-		    charge_ceil[new_port] < new_charge_current)
-			new_charge_current = charge_ceil[new_port];
+		if (charge_ceil[new_port] != CHARGE_CEIL_NONE)
+			new_charge_current = MIN(charge_ceil[new_port],
+						 new_charge_current_uncapped);
+		else
+			new_charge_current = new_charge_current_uncapped;
 
 		new_charge_voltage =
 			available_charge[new_supplier][new_port].voltage;
@@ -156,17 +165,35 @@ static void charge_manager_refresh(void)
 			new_charge_current, new_charge_voltage);
 		board_set_charge_limit(new_charge_current);
 		board_set_active_charge_port(new_port);
-
-		charge_current = new_charge_current;
-		charge_supplier = new_supplier;
-		old_port = charge_port;
-		charge_port = new_port;
-
-		if (new_port != CHARGE_PORT_NONE)
-			pd_set_new_power_request(new_port);
-		if (old_port != CHARGE_PORT_NONE)
-			pd_set_new_power_request(old_port);
 	}
+
+	/*
+	 * Signal new power request only if the port changed, the voltage
+	 * on the same port changed, or the actual uncapped current
+	 * on the same port changed (don't consider ceil).
+	 */
+	if (new_port != CHARGE_PORT_NONE &&
+	    (new_port != charge_port ||
+	     new_charge_current_uncapped != charge_current_uncapped ||
+	     new_charge_voltage != charge_voltage))
+		updated_new_port = new_port;
+
+	/* Signal new power request on old port if we're switching away. */
+	if (charge_port != new_port && charge_port != CHARGE_PORT_NONE)
+		updated_old_port = charge_port;
+
+	/* Update globals to reflect current state. */
+	charge_current = new_charge_current;
+	charge_current_uncapped = new_charge_current_uncapped;
+	charge_voltage = new_charge_voltage;
+	charge_supplier = new_supplier;
+	charge_port = new_port;
+
+	/* New power requests must be set only after updating the globals. */
+	if (updated_new_port != CHARGE_PORT_NONE)
+		pd_set_new_power_request(updated_new_port);
+	if (updated_old_port != CHARGE_PORT_NONE)
+		pd_set_new_power_request(updated_old_port);
 }
 DECLARE_DEFERRED(charge_manager_refresh);
 

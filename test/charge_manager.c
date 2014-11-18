@@ -257,8 +257,16 @@ static int test_new_power_request(void)
 	TEST_ASSERT(new_power_request[1] == 1);
 	clear_new_power_requests();
 
-	/* Reduce port 1 limit and verify NPR on port 1 only */
+	/* Reduce port 1 through ceil and verify no NPR */
 	charge_manager_set_ceil(1, 500);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(new_power_request[0] == 0);
+	TEST_ASSERT(new_power_request[1] == 0);
+	clear_new_power_requests();
+
+	/* Change port 1 voltage and verify NPR on port 1 */
+	charge.voltage = 4000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 1, &charge);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(new_power_request[0] == 0);
 	TEST_ASSERT(new_power_request[1] == 1);

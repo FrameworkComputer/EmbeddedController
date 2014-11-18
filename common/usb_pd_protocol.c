@@ -273,10 +273,6 @@ static struct pd_protocol {
 	uint32_t supply_voltage;
 	/* Signal charging update that affects the port */
 	int new_power_request;
-#ifdef CONFIG_CHARGE_MANAGER
-	/* Track last requested charge type (min / max) */
-	enum pd_request_types last_charge_request;
-#endif
 #endif
 
 	/* PD state for Vendor Defined Messages */
@@ -773,54 +769,28 @@ static void pd_send_request_msg(int port, enum pd_request_types request)
 	/* we were waiting for them, let's process them */
 	res = pd_choose_voltage(pd_src_cap_cnt[port], pd_src_caps[port], &rdo,
 				&curr_limit, &supply_voltage);
-	if (res == EC_SUCCESS) {
-#ifdef CONFIG_CHARGE_MANAGER
-		/* Set max. limit, but apply 500mA ceiling */
-		charge_manager_set_ceil(port, PD_MIN_MA);
-		pd_set_input_current_limit(port,
-					   curr_limit,
-					   supply_voltage);
-		/* Negotiate for Vsafe5V, if requested */
-		if (request == PD_REQUEST_MIN) {
-			res = pd_choose_voltage_min(pd_src_cap_cnt[port],
-						    pd_src_caps[port],
-						    &rdo,
-						    &curr_limit,
-						    &supply_voltage);
-			if (res != EC_SUCCESS)
-				/*
-				 * Successfully requested max. voltage mode,
-				 * but unable to request min. for some reason.
-				 * We have no choice but to negotiate for max.
-				 * Update last_charge_request accordingly.
-				 */
-				request = PD_REQUEST_MAX;
-		}
+	if (res != EC_SUCCESS)
 		/*
-		 * The request message may be later rejected, in which case
-		 * last_charge_request may not reflect reality.
-		 * TODO(shawnn): Handle last_charge_request correctly for this
-		 * case. crosbug.com/p/33692.
+		 * If fail to choose voltage, do nothing, let source re-send
+		 * source cap
 		 */
-		pd[port].last_charge_request = request;
+		return;
+
+#ifdef CONFIG_CHARGE_MANAGER
+	/* Set max. limit, but apply 500mA ceiling */
+	charge_manager_set_ceil(port, PD_MIN_MA);
+	pd_set_input_current_limit(port, curr_limit, supply_voltage);
+	/* Negotiate for Vsafe5V, if requested */
+	if (request == PD_REQUEST_MIN)
+		pd_choose_voltage_min(pd_src_cap_cnt[port], pd_src_caps[port],
+				      &rdo, &curr_limit, &supply_voltage);
 #endif
-		pd[port].curr_limit = curr_limit;
-		pd[port].supply_voltage = supply_voltage;
-		res = send_request(port, rdo);
-		if (res >= 0)
-			set_state(port, PD_STATE_SNK_REQUESTED);
-		else
-			/*
-			 * for now: ignore failure here,
-			 * we will retry ...
-			 * TODO(crosbug.com/p/28332)
-			 */
-			set_state(port, PD_STATE_SNK_REQUESTED);
-	}
-	/*
-	 * TODO(crosbug.com/p/28332): if pd_choose_voltage
-	 * returns an error, ignore failure for now.
-	 */
+	pd[port].curr_limit = curr_limit;
+	pd[port].supply_voltage = supply_voltage;
+	res = send_request(port, rdo);
+	if (res >= 0)
+		set_state(port, PD_STATE_SNK_REQUESTED);
+	/* If fail send request, do nothing, let source re-send source cap */
 }
 #endif
 
@@ -987,8 +957,9 @@ static void handle_ctrl_request(int port, uint16_t head,
 			set_state(port, PD_STATE_SRC_READY);
 		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
 			set_state(port, PD_STATE_SNK_READY);
-		else
-			set_state(port, PD_STATE_SNK_DISCOVERY);
+		else if (pd[port].task_state == PD_STATE_SNK_REQUESTED)
+			/* no explicit contract */
+			set_state(port, PD_STATE_SNK_READY);
 #endif
 		break;
 	case PD_CTRL_ACCEPT:
@@ -1939,13 +1910,11 @@ void pd_task(void)
 				pd[port].new_power_request = 0;
 #ifdef CONFIG_CHARGE_MANAGER
 				if (charge_manager_get_active_charge_port()
-				    != port && pd[port].last_charge_request
-				    == PD_REQUEST_MAX)
+				    != port)
 					pd_send_request_msg(port,
 							    PD_REQUEST_MIN);
 				else if (charge_manager_get_active_charge_port()
-					 == port && pd[port].last_charge_request
-					 == PD_REQUEST_MIN)
+					 == port)
 #endif
 					pd_send_request_msg(port,
 							    PD_REQUEST_MAX);
