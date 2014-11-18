@@ -46,8 +46,12 @@ static void update_prescaler(void)
 	 * PCLK by 1, 16, or 256. We're targeting 30MHz, so we'll just let it
 	 * run at 1:1.
 	 */
-	REG_WRITE_MASK(G_TIMEHS_CONTROL(0, 1), 0x0c, 0x00, 2);
-	REG_WRITE_MASK(G_TIMEHS_CONTROL(0, 2), 0x0c, 0x00, 2);
+	REG_WRITE_MLV(GR_TIMEHS_CONTROL(0, 1),
+		      GC_TIMEHS_TIMER1CONTROL_PRE_MASK,
+		      GC_TIMEHS_TIMER1CONTROL_PRE_LSB, 0);
+	REG_WRITE_MLV(GR_TIMEHS_CONTROL(0, 2),
+		      GC_TIMEHS_TIMER1CONTROL_PRE_MASK,
+		      GC_TIMEHS_TIMER1CONTROL_PRE_LSB, 0);
 
 	/*
 	 * We're not yet doing anything to detect the current frequency, we're
@@ -63,16 +67,16 @@ uint32_t __hw_clock_event_get(void)
 {
 	/* At what time will the next event fire? */
 	uint32_t time_now_in_ticks;
-	time_now_in_ticks = (0xffffffff - G_TIMEHS_VALUE(0, 1));
-	return ticks_to_usecs(time_now_in_ticks + G_TIMEHS_VALUE(0, 2));
+	time_now_in_ticks = (0xffffffff - GR_TIMEHS_VALUE(0, 1));
+	return ticks_to_usecs(time_now_in_ticks + GR_TIMEHS_VALUE(0, 2));
 }
 
 void __hw_clock_event_clear(void)
 {
 	/* one-shot, 32-bit, timer & interrupts disabled, 1:1 prescale */
-	G_TIMEHS_CONTROL(0, 2) = 0x3;
+	GR_TIMEHS_CONTROL(0, 2) = 0x3;
 	/* Clear any pending interrupts */
-	G_TIMEHS_INTCLR(0, 2) = 0x1;
+	GR_TIMEHS_INTCLR(0, 2) = 0x1;
 }
 
 void __hw_clock_event_set(uint32_t deadline)
@@ -82,11 +86,11 @@ void __hw_clock_event_set(uint32_t deadline)
 	__hw_clock_event_clear();
 
 	/* How long from the current time to the deadline? */
-	time_now_in_ticks = (0xffffffff - G_TIMEHS_VALUE(0, 1));
-	G_TIMEHS_LOAD(0, 2) = usecs_to_ticks(deadline) - time_now_in_ticks;
+	time_now_in_ticks = (0xffffffff - GR_TIMEHS_VALUE(0, 1));
+	GR_TIMEHS_LOAD(0, 2) = usecs_to_ticks(deadline) - time_now_in_ticks;
 
 	/* timer & interrupts enabled */
-	G_TIMEHS_CONTROL(0, 2) = 0xa3;
+	GR_TIMEHS_CONTROL(0, 2) = 0xa3;
 }
 
 /*
@@ -98,7 +102,7 @@ void __hw_clock_event_irq(void)
 	__hw_clock_event_clear();
 	process_timers(0);
 }
-DECLARE_IRQ(G_IRQNUM_TIMEHS0_TIMINT2, __hw_clock_event_irq, 2);
+DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT2, __hw_clock_event_irq, 2);
 
 uint32_t __hw_clock_source_read(void)
 {
@@ -106,19 +110,19 @@ uint32_t __hw_clock_source_read(void)
 	 * Return the current time in usecs. Since the counter counts down,
 	 * we have to invert the value.
 	 */
-	return ticks_to_usecs(0xffffffff - G_TIMEHS_VALUE(0, 1));
+	return ticks_to_usecs(0xffffffff - GR_TIMEHS_VALUE(0, 1));
 }
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	G_TIMEHS_LOAD(0, 1) = 0xffffffff - usecs_to_ticks(ts);
+	GR_TIMEHS_LOAD(0, 1) = 0xffffffff - usecs_to_ticks(ts);
 }
 
 /* This handles rollover in the HW timer */
 void __hw_clock_source_irq(void)
 {
 	/* Clear the interrupt */
-	G_TIMEHS_INTCLR(0, 1) = 0x1;
+	GR_TIMEHS_INTCLR(0, 1) = 0x1;
 
 	/* The one-tick-per-clock HW counter has rolled over. */
 	hw_rollover_count++;
@@ -130,16 +134,16 @@ void __hw_clock_source_irq(void)
 		process_timers(0);
 	}
 }
-DECLARE_IRQ(G_IRQNUM_TIMEHS0_TIMINT1, __hw_clock_source_irq, 1);
+DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT1, __hw_clock_source_irq, 1);
 
 int __hw_clock_source_init(uint32_t start_t)
 {
 	/* Set the reload and current value. */
-	G_TIMEHS_BGLOAD(0, 1) = 0xffffffff;
-	G_TIMEHS_LOAD(0, 1) = 0xffffffff;
+	GR_TIMEHS_BGLOAD(0, 1) = 0xffffffff;
+	GR_TIMEHS_LOAD(0, 1) = 0xffffffff;
 
 	/* HW Timer enabled, periodic, interrupt enabled, 32-bit, wrapping */
-	G_TIMEHS_CONTROL(0, 1) = 0xe2;
+	GR_TIMEHS_CONTROL(0, 1) = 0xe2;
 	/* Event timer disabled */
 	__hw_clock_event_clear();
 
@@ -147,15 +151,15 @@ int __hw_clock_source_init(uint32_t start_t)
 	update_prescaler();
 
 	/* Clear any pending interrupts */
-	G_TIMEHS_INTCLR(0, 1) = 0x1;
+	GR_TIMEHS_INTCLR(0, 1) = 0x1;
 
 	/* Force the time to whatever we're told it is */
 	__hw_clock_source_set(start_t);
 
 	/* Here we go... */
-	task_enable_irq(G_IRQNUM_TIMEHS0_TIMINT1);
-	task_enable_irq(G_IRQNUM_TIMEHS0_TIMINT2);
+	task_enable_irq(GC_IRQNUM_TIMEHS0_TIMINT1);
+	task_enable_irq(GC_IRQNUM_TIMEHS0_TIMINT2);
 
 	/* Return the Event timer IRQ number (NOT the HW timer IRQ) */
-	return G_IRQNUM_TIMEHS0_TIMINT2;
+	return GC_IRQNUM_TIMEHS0_TIMINT2;
 }

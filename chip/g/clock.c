@@ -18,12 +18,12 @@ static void clock_on_xo0(void)
 {
 	/* turn on xo0 clock */
 	/* don't know which control word it might be in */
-#ifdef G_PMU_PERICLKSET0_DXO0_LSB
-	G_PMU_PERICLKSET0 = (1 << G_PMU_PERICLKSET0_DXO0_LSB);
+#ifdef GC_PMU_PERICLKSET0_DXO0_MASK
+	GR_PMU_PERICLKSET0 = GC_PMU_PERICLKSET0_DXO0_MASK;
 #endif
 
-#ifdef G_PMU_PERICLKSET1_DXO0_LSB
-	G_PMU_PERICLKSET1 = (1 << G_PMU_PERICLKSET1_DXO0_LSB);
+#ifdef GC_PMU_PERICLKSET1_DXO0_MASK
+	GR_PMU_PERICLKSET1 = GC_PMU_PERICLKSET1_DXO0_MASK;
 #endif
 }
 
@@ -60,37 +60,37 @@ static unsigned calib_rc_trim(void)
 	clock_on_xo0();
 
 	/* Clear the HOLD signal on dxo */
-	G_XO_OSC_CLRHOLD = G_XO_OSC_CLRHOLD_RC_TRIM_MASK;
+	GR_XO_OSC_CLRHOLD = GC_XO_OSC_CLRHOLD_RC_TRIM_MASK;
 
 	/* Reset RC calibration counters */
-	G_XO_OSC_RC_CAL_RSTB = 0x0;
-	G_XO_OSC_RC_CAL_RSTB = 0x1;
+	GR_XO_OSC_RC_CAL_RSTB = 0x0;
+	GR_XO_OSC_RC_CAL_RSTB = 0x1;
 
 	/* Write the LOAD val */
-	G_XO_OSC_RC_CAL_LOAD = LOAD_VAL;
+	GR_XO_OSC_RC_CAL_LOAD = LOAD_VAL;
 
 	/* Begin binary search */
 	mid = 0;
 	size = MAX_TRIM / 2;
 	for (iter = 0; iter <= 7; iter++) {
 		/* Set the trim value */
-		G_XO_OSC_RC = val_to_trim_code(mid) << G_XO_OSC_RC_TRIM_LSB;
+		GR_XO_OSC_RC = val_to_trim_code(mid) << GC_XO_OSC_RC_TRIM_LSB;
 
 		/* Do a calibration */
-		G_XO_OSC_RC_CAL_START = 0x1;
+		GR_XO_OSC_RC_CAL_START = 0x1;
 
 		/* NOTE: There is a small race condition because of the delay
 		 * in dregfile. The start doesn't actually appear for 2 clock
 		 * cycles after the write. So, poll until done goes low. */
-		while (G_XO_OSC_RC_CAL_DONE)
+		while (GR_XO_OSC_RC_CAL_DONE)
 			;
 
 		/* Wait until it's done */
-		while (!G_XO_OSC_RC_CAL_DONE)
+		while (!GR_XO_OSC_RC_CAL_DONE)
 			;
 
 		/* Check the counter value */
-		diff = LOAD_VAL - G_XO_OSC_RC_CAL_COUNT;
+		diff = LOAD_VAL - GR_XO_OSC_RC_CAL_COUNT;
 
 		/* Test to see whether we are still outside of our desired
 		 * resolution */
@@ -101,17 +101,17 @@ static unsigned calib_rc_trim(void)
 	}
 
 	/* Set the final trim value */
-	G_XO_OSC_RC = (val_to_trim_code(mid) << G_XO_OSC_RC_TRIM_LSB) |
-	    (0x1 << G_XO_OSC_RC_EN_LSB);
+	GR_XO_OSC_RC = (val_to_trim_code(mid) << GC_XO_OSC_RC_TRIM_LSB) |
+	    (0x1 << GC_XO_OSC_RC_EN_LSB);
 
 	/* Set the HOLD signal on dxo */
-	G_XO_OSC_SETHOLD = G_XO_OSC_SETHOLD_RC_TRIM_MASK;
+	GR_XO_OSC_SETHOLD = GC_XO_OSC_SETHOLD_RC_TRIM_MASK;
 
 	/* Switch back to the RC trim now that we are calibrated */
-	G_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
-	G_PMU_OSC_SELECT = G_PMU_OSC_SELECT_RC_TRIM;
+	GR_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
+	GR_PMU_OSC_SELECT = GC_PMU_OSC_SELECT_RC_TRIM;
 	/* Make sure the hold signal is set for future power downs */
-	G_PMU_OSC_HOLD_SET = 0x1;
+	GR_PMU_OSC_HOLD_SET = 0x1;
 
 	return mid;
 }
@@ -123,12 +123,12 @@ static void switch_osc_to_rc_trim(void)
 	unsigned trim_code;
 
 	/* check which clock we are running on */
-	unsigned osc_sel = G_PMU_OSC_SELECT_STAT;
+	unsigned osc_sel = GR_PMU_OSC_SELECT_STAT;
 
-	if (osc_sel == G_PMU_OSC_SELECT_RC_TRIM) {
+	if (osc_sel == GC_PMU_OSC_SELECT_RC_TRIM) {
 		/* already using the rc_trim so nothing to do here */
 		/* make sure the hold signal is set for future power downs */
-		G_PMU_OSC_HOLD_SET = 0x1;
+		GR_PMU_OSC_HOLD_SET = 0x1;
 		return;
 	}
 
@@ -136,53 +136,53 @@ static void switch_osc_to_rc_trim(void)
 	clock_on_xo0();
 
 	/* disable the RC_TRIM Clock */
-	REG_WRITE_MASK(G_PMU_OSC_CTRL,
-		       G_PMU_OSC_CTRL_RC_TRIM_READYB_MASK, 0x1,
-		       G_PMU_OSC_CTRL_RC_TRIM_READYB_LSB);
+	REG_WRITE_MLV(GR_PMU_OSC_CTRL,
+		      GC_PMU_OSC_CTRL_RC_TRIM_READYB_MASK,
+		      GC_PMU_OSC_CTRL_RC_TRIM_READYB_LSB, 1);
 
 	/* power up the clock if not already powered up */
-	G_PMU_CLRDIS = 1 << G_PMU_SETDIS_RC_TRIM_LSB;
+	GR_PMU_CLRDIS = 1 << GC_PMU_SETDIS_RC_TRIM_LSB;
 
 	/* Try to find the trim code */
-	saved_trim = G_XO_OSC_RC_STATUS;
-	fuse_trim = G_PMU_FUSE_RD_RC_OSC_26MHZ;
-	default_trim = G_XO_OSC_RC;
+	saved_trim = GR_XO_OSC_RC_STATUS;
+	fuse_trim = GR_PMU_FUSE_RD_RC_OSC_26MHZ;
+	default_trim = GR_XO_OSC_RC;
 
 	/* Check for the trim code in the always-on domain before looking at
 	 * the fuse */
-	if (saved_trim & G_XO_OSC_RC_STATUS_EN_MASK) {
-		trim_code = (saved_trim & G_XO_OSC_RC_STATUS_TRIM_MASK)
-		    >> G_XO_OSC_RC_STATUS_TRIM_LSB;
+	if (saved_trim & GC_XO_OSC_RC_STATUS_EN_MASK) {
+		trim_code = (saved_trim & GC_XO_OSC_RC_STATUS_TRIM_MASK)
+		    >> GC_XO_OSC_RC_STATUS_TRIM_LSB;
 		trimmed = 1;
-	} else if (fuse_trim & G_PMU_FUSE_RD_RC_OSC_26MHZ_EN_MASK) {
-		trim_code = (fuse_trim & G_PMU_FUSE_RD_RC_OSC_26MHZ_TRIM_MASK)
-		    >> G_PMU_FUSE_RD_RC_OSC_26MHZ_TRIM_LSB;
+	} else if (fuse_trim & GC_PMU_FUSE_RD_RC_OSC_26MHZ_EN_MASK) {
+		trim_code = (fuse_trim & GC_PMU_FUSE_RD_RC_OSC_26MHZ_TRIM_MASK)
+		    >> GC_PMU_FUSE_RD_RC_OSC_26MHZ_TRIM_LSB;
 		trimmed = 1;
 	} else {
-		trim_code = (default_trim & G_XO_OSC_RC_TRIM_MASK)
-		    >> G_XO_OSC_RC_TRIM_LSB;
+		trim_code = (default_trim & GC_XO_OSC_RC_TRIM_MASK)
+		    >> GC_XO_OSC_RC_TRIM_LSB;
 		trimmed = 0;
 	}
 
 	/* Write the trim code to dxo */
 	if (trimmed) {
 		/* clear the hold signal */
-		G_XO_OSC_CLRHOLD = 1 << G_XO_OSC_CLRHOLD_RC_TRIM_LSB;
-		G_XO_OSC_RC = (trim_code << G_XO_OSC_RC_TRIM_LSB) | /* write */
-		    ((trimmed & 0x1) << G_XO_OSC_RC_EN_LSB); /* enable */
+		GR_XO_OSC_CLRHOLD = 1 << GC_XO_OSC_CLRHOLD_RC_TRIM_LSB;
+		GR_XO_OSC_RC = (trim_code << GC_XO_OSC_RC_TRIM_LSB) |
+		    ((trimmed & 0x1) << GC_XO_OSC_RC_EN_LSB);
 		/* set the hold signal */
-		G_XO_OSC_SETHOLD = 1 << G_XO_OSC_SETHOLD_RC_TRIM_LSB;
+		GR_XO_OSC_SETHOLD = 1 << GC_XO_OSC_SETHOLD_RC_TRIM_LSB;
 	}
 
 	/* enable the RC_TRIM Clock */
-	REG_WRITE_MASK(G_PMU_OSC_CTRL, G_PMU_OSC_CTRL_RC_TRIM_READYB_MASK,
-		       0x0, G_PMU_OSC_CTRL_RC_TRIM_READYB_LSB);
+	REG_WRITE_MLV(GR_PMU_OSC_CTRL, GC_PMU_OSC_CTRL_RC_TRIM_READYB_MASK,
+		      GC_PMU_OSC_CTRL_RC_TRIM_READYB_LSB, 0);
 
 	/* Switch the select signal */
-	G_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
-	G_PMU_OSC_SELECT = G_PMU_OSC_SELECT_RC_TRIM;
+	GR_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
+	GR_PMU_OSC_SELECT = GC_PMU_OSC_SELECT_RC_TRIM;
 	/* make sure the hold signal is set for future power downs */
-	G_PMU_OSC_HOLD_SET = 0x1;
+	GR_PMU_OSC_HOLD_SET = 0x1;
 
 	/* If we didn't find a valid trim code, then we need to calibrate */
 	if (!trimmed)
@@ -197,73 +197,73 @@ static void switch_osc_to_xtl(void)
 	unsigned int fsm_status, max_trim;
 	unsigned int fsm_done;
 	/* check which clock we are running on */
-	unsigned int osc_sel = G_PMU_OSC_SELECT_STAT;
+	unsigned int osc_sel = GR_PMU_OSC_SELECT_STAT;
 
-	if (osc_sel == G_PMU_OSC_SELECT_XTL) {
+	if (osc_sel == GC_PMU_OSC_SELECT_XTL) {
 		/* already using the crystal so nothing to do here */
 		/* make sure the hold signal is set for future power downs */
-		G_PMU_OSC_HOLD_SET = 0x1;
+		GR_PMU_OSC_HOLD_SET = 0x1;
 		return;
 	}
 
-	if (osc_sel == G_PMU_OSC_SELECT_RC)
+	if (osc_sel == GC_PMU_OSC_SELECT_RC)
 		/* RC untrimmed clock. We must go through the trimmed clock
 		 * first to avoid glitching */
 		switch_osc_to_rc_trim();
 
 	/* disable the XTL Clock */
-	REG_WRITE_MASK(G_PMU_OSC_CTRL, G_PMU_OSC_CTRL_XTL_READYB_MASK,
-		       0x1, G_PMU_OSC_CTRL_XTL_READYB_LSB);
+	REG_WRITE_MLV(GR_PMU_OSC_CTRL, GC_PMU_OSC_CTRL_XTL_READYB_MASK,
+		      GC_PMU_OSC_CTRL_XTL_READYB_LSB, 1);
 
 	/* power up the clock if not already powered up */
-	G_PMU_CLRDIS = 1 << G_PMU_SETDIS_XTL_LSB;
+	GR_PMU_CLRDIS = 1 << GC_PMU_SETDIS_XTL_LSB;
 
 	/* Try to find the trim code */
 	trim_code = 0;
-	saved_trim = G_XO_OSC_XTL_TRIM_STAT;
-	fuse_trim = G_PMU_FUSE_RD_XTL_OSC_26MHZ;
+	saved_trim = GR_XO_OSC_XTL_TRIM_STAT;
+	fuse_trim = GR_PMU_FUSE_RD_XTL_OSC_26MHZ;
 
 	/* Check for the trim code in the always-on domain before looking at
 	 * the fuse */
-	if (saved_trim & G_XO_OSC_XTL_TRIM_STAT_EN_MASK) {
+	if (saved_trim & GC_XO_OSC_XTL_TRIM_STAT_EN_MASK) {
 		/* nothing to do */
-		/* trim_code = (saved_trim & G_XO_OSC_XTL_TRIM_STAT_CODE_MASK)
-		   >> G_XO_OSC_XTL_TRIM_STAT_CODE_LSB; */
+		/* trim_code = (saved_trim & GR_XO_OSC_XTL_TRIM_STAT_CODE_MASK)
+		   >> GR_XO_OSC_XTL_TRIM_STAT_CODE_LSB; */
 		/* print_trickbox_message("XTL TRIM CODE FOUND IN 3P3"); */
-	} else if (fuse_trim & G_PMU_FUSE_RD_XTL_OSC_26MHZ_EN_MASK) {
+	} else if (fuse_trim & GC_PMU_FUSE_RD_XTL_OSC_26MHZ_EN_MASK) {
 		/* push the fuse trim code as the saved trim code */
 		/* print_trickbox_message("XTL TRIM CODE FOUND IN FUSE"); */
-		trim_code = (fuse_trim & G_PMU_FUSE_RD_XTL_OSC_26MHZ_TRIM_MASK)
-		    >> G_PMU_FUSE_RD_XTL_OSC_26MHZ_TRIM_LSB;
+		trim_code = (fuse_trim & GC_PMU_FUSE_RD_XTL_OSC_26MHZ_TRIM_MASK)
+		    >> GC_PMU_FUSE_RD_XTL_OSC_26MHZ_TRIM_LSB;
 		/* make sure the hold signal is clear */
-		G_XO_OSC_CLRHOLD = 0x1 << G_XO_OSC_CLRHOLD_XTL_LSB;
-		G_XO_OSC_XTL_TRIM =
-		    (trim_code << G_XO_OSC_XTL_TRIM_CODE_LSB) |
-		    (0x1 << G_XO_OSC_XTL_TRIM_EN_LSB);
+		GR_XO_OSC_CLRHOLD = 0x1 << GC_XO_OSC_CLRHOLD_XTL_LSB;
+		GR_XO_OSC_XTL_TRIM =
+		    (trim_code << GC_XO_OSC_XTL_TRIM_CODE_LSB) |
+		    (0x1 << GC_XO_OSC_XTL_TRIM_EN_LSB);
 	} else
 		/* print_trickbox_message("XTL TRIM CODE NOT FOUND"); */
 		;
 
 	/* Run the crystal FSM to calibrate the crystal trim */
-	fsm_done = G_XO_OSC_XTL_FSM;
-	if (fsm_done & G_XO_OSC_XTL_FSM_DONE_MASK) {
+	fsm_done = GR_XO_OSC_XTL_FSM;
+	if (fsm_done & GC_XO_OSC_XTL_FSM_DONE_MASK) {
 		/* If FSM done is high, it means we already ran it so let's not
 		 * run it again */
 		/* DO NOTHING */
 	} else {
-		G_XO_OSC_XTL_FSM_EN = 0x0;	/* reset FSM */
-		G_XO_OSC_XTL_FSM_EN = G_XO_OSC_XTL_FSM_EN_KEY;
-		while (!(fsm_done & G_XO_OSC_XTL_FSM_DONE_MASK))
-			fsm_done = G_XO_OSC_XTL_FSM;
+		GR_XO_OSC_XTL_FSM_EN = 0x0;	/* reset FSM */
+		GR_XO_OSC_XTL_FSM_EN = GC_XO_OSC_XTL_FSM_EN_KEY;
+		while (!(fsm_done & GC_XO_OSC_XTL_FSM_DONE_MASK))
+			fsm_done = GR_XO_OSC_XTL_FSM;
 	}
 
 	/* Check the status and final trim value */
-	max_trim = (G_XO_OSC_XTL_FSM_CFG & G_XO_OSC_XTL_FSM_CFG_TRIM_MAX_MASK)
-	    >> G_XO_OSC_XTL_FSM_CFG_TRIM_MAX_LSB;
-	final_trim = (fsm_done & G_XO_OSC_XTL_FSM_TRIM_MASK)
-	    >> G_XO_OSC_XTL_FSM_TRIM_LSB;
-	fsm_status = (fsm_done & G_XO_OSC_XTL_FSM_STATUS_MASK)
-	    >> G_XO_OSC_XTL_FSM_STATUS_LSB;
+	max_trim = (GR_XO_OSC_XTL_FSM_CFG & GC_XO_OSC_XTL_FSM_CFG_TRIM_MAX_MASK)
+	    >> GC_XO_OSC_XTL_FSM_CFG_TRIM_MAX_LSB;
+	final_trim = (fsm_done & GC_XO_OSC_XTL_FSM_TRIM_MASK)
+	    >> GC_XO_OSC_XTL_FSM_TRIM_LSB;
+	fsm_status = (fsm_done & GC_XO_OSC_XTL_FSM_STATUS_MASK)
+	    >> GC_XO_OSC_XTL_FSM_STATUS_LSB;
 
 	/* Check status bit and trim value */
 	if (fsm_status) {
@@ -281,22 +281,22 @@ static void switch_osc_to_xtl(void)
 
 	/* save the trim for future powerups */
 	/* make sure the hold signal is clear (may have already been cleared) */
-	G_XO_OSC_CLRHOLD = 0x1 << G_XO_OSC_CLRHOLD_XTL_LSB;
-	G_XO_OSC_XTL_TRIM =
-	    (final_trim << G_XO_OSC_XTL_TRIM_CODE_LSB) |
-	    (0x1 << G_XO_OSC_XTL_TRIM_EN_LSB);
+	GR_XO_OSC_CLRHOLD = 0x1 << GC_XO_OSC_CLRHOLD_XTL_LSB;
+	GR_XO_OSC_XTL_TRIM =
+	    (final_trim << GC_XO_OSC_XTL_TRIM_CODE_LSB) |
+	    (0x1 << GC_XO_OSC_XTL_TRIM_EN_LSB);
 	/* make sure the hold signal is set for future power downs */
-	G_XO_OSC_SETHOLD = 0x1 << G_XO_OSC_SETHOLD_XTL_LSB;
+	GR_XO_OSC_SETHOLD = 0x1 << GC_XO_OSC_SETHOLD_XTL_LSB;
 
 	/* enable the XTL Clock */
-	REG_WRITE_MASK(G_PMU_OSC_CTRL, G_PMU_OSC_CTRL_XTL_READYB_MASK,
-		       0x0, G_PMU_OSC_CTRL_XTL_READYB_LSB);
+	REG_WRITE_MLV(GR_PMU_OSC_CTRL, GC_PMU_OSC_CTRL_XTL_READYB_MASK,
+		      GC_PMU_OSC_CTRL_XTL_READYB_LSB, 0);
 
 	/* Switch the select signal */
-	G_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
-	G_PMU_OSC_SELECT = G_PMU_OSC_SELECT_XTL;
+	GR_PMU_OSC_HOLD_CLR = 0x1;	/* make sure the hold signal is clear */
+	GR_PMU_OSC_SELECT = GC_PMU_OSC_SELECT_XTL;
 	/* make sure the hold signal is set for future power downs */
-	G_PMU_OSC_HOLD_SET = 0x1;
+	GR_PMU_OSC_HOLD_SET = 0x1;
 }
 
 void clock_init(void)
@@ -317,15 +317,15 @@ void clock_enable_module(enum module_id module, int enable)
 		return;
 
 	/* don't know which control word it might be in */
-#ifdef G_PMU_PERICLKSET0_DUART0_LSB
-	REG_WRITE_MASK(G_PMU_PERICLKSET0,
-		       1 << G_PMU_PERICLKSET0_DUART0_LSB, enable,
-		       G_PMU_PERICLKSET0_DUART0_LSB);
+#ifdef GC_PMU_PERICLKSET0_DUART0_LSB
+	REG_WRITE_MLV(GR_PMU_PERICLKSET0,
+		      GC_PMU_PERICLKSET0_DUART0_MASK,
+		      GC_PMU_PERICLKSET0_DUART0_LSB, enable);
 #endif
 
-#ifdef G_PMU_PERICLKSET1_DUART0_LSB
-	REG_WRITE_MASK(G_PMU_PERICLKSET1,
-		       1 << G_PMU_PERICLKSET1_DUART0_LSB, enable,
-		       G_PMU_PERICLKSET0_DUART1_LSB);
+#ifdef GR_PMU_PERICLKSET1_DUART0_LSB
+	REG_WRITE_MLV(GR_PMU_PERICLKSET1,
+		      GC_PMU_PERICLKSET1_DUART0_MASK,
+		      GC_PMU_PERICLKSET0_DUART1_LSB, enable);
 #endif
 }

@@ -29,7 +29,7 @@ const char *system_get_chip_name(void)
 
 const char *system_get_chip_revision(void)
 {
-	return G_REVISION_STR;
+	return GC_REVISION_STR;
 }
 
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */

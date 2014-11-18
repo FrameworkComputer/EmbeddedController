@@ -9,7 +9,7 @@
 #include "core/cortex-m/config_core.h"
 
 /* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT 93
+#define CONFIG_IRQ_COUNT 108
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000
