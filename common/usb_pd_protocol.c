@@ -1653,7 +1653,11 @@ void pd_task(void)
 			break;
 		case PD_STATE_SRC_NEGOCIATE:
 			/* wait for a "Request" message */
-			timeout = 500*MSEC;
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
+						  PD_STATE_HARD_RESET);
 			break;
 		case PD_STATE_SRC_ACCEPTED:
 			/* Accept sent, wait for enabling the new voltage */
@@ -1903,9 +1907,14 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SNK_REQUESTED:
-			/* Ensure the power supply actually becomes ready */
-			hard_reset_count = 0;
-			timeout = 10 * MSEC;
+			/* Wait for ACCEPT or REJECT */
+			if (pd[port].last_state != pd[port].task_state) {
+				hard_reset_count = 0;
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
+						  PD_STATE_HARD_RESET);
+			}
 			break;
 		case PD_STATE_SNK_TRANSITION:
 			/* Wait for PS_RDY */
