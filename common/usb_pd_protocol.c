@@ -190,6 +190,8 @@ static const uint8_t dec4b5b[] = {
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
 #define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
+#define PD_T_DEBOUNCE          (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_SINK_ADJ          (55*MSEC) /* between PD_T_DEBOUNCE and 60ms */
 #define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
 
 /* from USB Type-C Specification Table 5-1 */
@@ -1454,6 +1456,7 @@ void pd_task(void)
 	int hard_reset_count = 0;
 #ifdef CONFIG_CHARGE_MANAGER
 	static int initialized[PD_PORT_COUNT];
+	int typec_curr = 0, typec_curr_change = 0;
 #endif /* CONFIG_CHARGE_MANAGER */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	enum pd_states this_state;
@@ -1812,13 +1815,11 @@ void pd_task(void)
 					pd[port].data_role = PD_ROLE_UFP;
 #ifdef CONFIG_CHARGE_MANAGER
 					initialized[port] = 1;
+					typec_curr = get_typec_current_limit(
+						pd[port].polarity ? cc2_volt :
+								    cc1_volt);
 					typec_set_input_current_limit(
-					  port,
-					  get_typec_current_limit(pd[port].
-								  polarity ?
-								  cc2_volt :
-								  cc1_volt),
-					  TYPE_C_VOLTAGE);
+					  port, typec_curr, TYPE_C_VOLTAGE);
 #endif
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
@@ -1876,6 +1877,29 @@ void pd_task(void)
 						  PD_T_SINK_WAIT_CAP,
 						  PD_STATE_HARD_RESET);
 			}
+
+#ifdef CONFIG_CHARGE_MANAGER
+			timeout = PD_T_SINK_ADJ - PD_T_DEBOUNCE;
+
+			/* Check if CC pull-up has changed */
+			cc1_volt = pd_adc_read(port, pd[port].polarity);
+			if (typec_curr != get_typec_current_limit(cc1_volt)) {
+				/* debounce signal by requiring two reads */
+				if (typec_curr_change) {
+					/* set new input current limit */
+					typec_curr = get_typec_current_limit(
+							cc1_volt);
+					typec_set_input_current_limit(
+					  port, typec_curr, TYPE_C_VOLTAGE);
+				} else {
+					/* delay for debounce */
+					timeout = PD_T_DEBOUNCE;
+				}
+				typec_curr_change = !typec_curr_change;
+			} else {
+				typec_curr_change = 0;
+			}
+#endif
 			break;
 		case PD_STATE_SNK_REQUESTED:
 			/* Wait for ACCEPT or REJECT */
