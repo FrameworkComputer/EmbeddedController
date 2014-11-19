@@ -139,7 +139,7 @@ void pd_new_contract(int port, int pr_role, int dr_role,
 }
 /* ----------------- Vendor Defined Messages ------------------ */
 const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
-				 0, /* data caps as USB device */
+				 1, /* data caps as USB device */
 				 IDH_PTYPE_AMA, /* Alternate mode */
 				 1, /* supports alt modes */
 				 USB_VID_GOOGLE);

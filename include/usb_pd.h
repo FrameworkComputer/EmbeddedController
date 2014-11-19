@@ -277,8 +277,8 @@ struct pd_policy {
 #define IDH_PTYPE_UNDEF  0
 #define IDH_PTYPE_HUB    1
 #define IDH_PTYPE_PERIPH 2
-#define IDH_PTYPE_ACABLE 3
-#define IDH_PTYPE_PCABLE 4
+#define IDH_PTYPE_PCABLE 3
+#define IDH_PTYPE_ACABLE 4
 #define IDH_PTYPE_AMA    5
 
 #define VDO_IDH(usbh, usbd, ptype, is_modal, vid)		\
@@ -330,6 +330,12 @@ struct pd_policy {
 #define CABLE_CTYPE 2
 #define CABLE_PLUG       0
 #define CABLE_RECEPTACLE 1
+#define CABLE_CURR_1A5   0
+#define CABLE_CURR_3A    1
+#define CABLE_CURR_5A    2
+#define CABLE_USBSS_U2_ONLY  0
+#define CABLE_USBSS_U31_GEN1 1
+#define CABLE_USBSS_U31_GEN2 2
 #define VDO_CABLE(hw, fw, cbl, gdr, lat, term, tx1d, tx2d, rx1d, rx2d, cur, vps, sopp, usbss) \
 	(((hw) & 0x7) << 28 | ((fw) & 0x7) << 24 | ((cbl) & 0x3) << 18	\
 	 | (gdr) << 17 | ((lat) & 0x7) << 13 | ((term) & 0x3) << 11	\
@@ -361,7 +367,17 @@ struct pd_policy {
 #define PD_VDO_AMA_VCONN_REQ(vdo) (((vdo) >> 4) & 1)
 #define PD_VDO_AMA_VBUS_REQ(vdo)  (((vdo) >> 3) & 1)
 
-#define AMA_USBSS_BBONLY 0x3
+#define AMA_VCONN_PWR_1W   0
+#define AMA_VCONN_PWR_1W5  1
+#define AMA_VCONN_PWR_2W   2
+#define AMA_VCONN_PWR_3W   3
+#define AMA_VCONN_PWR_4W   4
+#define AMA_VCONN_PWR_5W   5
+#define AMA_VCONN_PWR_6W   6
+#define AMA_USBSS_U2_ONLY  0
+#define AMA_USBSS_U31_GEN1 1
+#define AMA_USBSS_U31_GEN2 2
+#define AMA_USBSS_BBONLY   3
 
 /*
  * SVDM Discover SVIDs request -> response
