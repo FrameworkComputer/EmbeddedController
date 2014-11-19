@@ -263,6 +263,8 @@ static struct pd_protocol {
 	/* Time for source recovery after hard reset */
 	uint64_t src_recover;
 
+	/* last requested voltage PDO index */
+	int requested_idx;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* Current limit / voltage based on the last request message */
 	uint32_t curr_limit;
@@ -857,7 +859,8 @@ static void handle_data_request(int port, uint16_t head,
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_DATA_REQUEST:
 		if ((pd[port].power_role == PD_ROLE_SOURCE) && (cnt == 1))
-			if (!pd_request_voltage(payload[0])) {
+			if (!pd_check_requested_voltage(payload[0])) {
+				pd[port].requested_idx = payload[0] >> 28;
 				send_control(port, PD_CTRL_ACCEPT);
 				set_state(port, PD_STATE_SRC_ACCEPTED);
 				return;
@@ -1634,17 +1637,26 @@ void pd_task(void)
 			timeout = 500*MSEC;
 			break;
 		case PD_STATE_SRC_ACCEPTED:
-			/* Accept sent, wait for the end of transition */
+			/* Accept sent, wait for enabling the new voltage */
 			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(
+					port,
+					get_time().val +
+					PD_T_SINK_TRANSITION,
+					PD_STATE_SRC_POWERED);
+			break;
+		case PD_STATE_SRC_POWERED:
+			/* Switch to the new requested voltage */
+			if (pd[port].last_state != pd[port].task_state) {
+				pd_transition_voltage(pd[port].requested_idx);
 				set_state_timeout(
 					port,
 					get_time().val +
 					PD_POWER_SUPPLY_TRANSITION_DELAY,
 					PD_STATE_SRC_TRANSITION);
+			}
 			break;
 		case PD_STATE_SRC_TRANSITION:
-			res = pd_set_power_supply_ready(port);
-			/* TODO error fallback */
 			/* the voltage output is good, notify the source */
 			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
@@ -2458,8 +2470,8 @@ static int command_pd(int argc, char **argv)
 			"SNK_SWAP_COMPLETE",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 			"SRC_DISCONNECTED", "SRC_STARTUP", "SRC_DISCOVERY",
-			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_TRANSITION",
-			"SRC_READY", "SRC_DR_SWAP",
+			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
+			"SRC_TRANSITION", "SRC_READY", "SRC_DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
 			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",

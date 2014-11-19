@@ -117,8 +117,7 @@ void pd_set_max_voltage(unsigned mv)
 	select_mv = mv;
 }
 
-int requested_voltage_idx;
-int pd_request_voltage(uint32_t rdo)
+int pd_check_requested_voltage(uint32_t rdo)
 {
 	int op_ma = rdo & 0x3FF;
 	int max_ma = (rdo >> 10) & 0x3FF;
@@ -137,21 +136,23 @@ int pd_request_voltage(uint32_t rdo)
 	if (max_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much max current */
 
-	CPRINTF("Switch to %d V %d mA (for %d/%d mA)\n",
+	CPRINTF("Requested %d V %d mA (for %d/%d mA)\n",
 		((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
 		((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
 
-	requested_voltage_idx = idx;
-
 	return EC_SUCCESS;
+}
+
+void pd_transition_voltage(int idx)
+{
+	gpio_set_level(GPIO_USBC_VSEL_0, idx >= 2);
+	gpio_set_level(GPIO_USBC_VSEL_1, idx >= 3);
 }
 
 int pd_set_power_supply_ready(int port)
 {
 	/* Output the correct voltage */
 	gpio_set_level(GPIO_VBUS_CHARGER_EN, 1);
-	gpio_set_level(GPIO_USBC_VSEL_0, requested_voltage_idx >= 2);
-	gpio_set_level(GPIO_USBC_VSEL_1, requested_voltage_idx >= 3);
 
 	return EC_SUCCESS;
 }
@@ -159,7 +160,6 @@ int pd_set_power_supply_ready(int port)
 void pd_power_supply_reset(int port)
 {
 	/* Kill VBUS */
-	requested_voltage_idx = 0;
 	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
 	gpio_set_level(GPIO_USBC_VSEL_0, 0);
 	gpio_set_level(GPIO_USBC_VSEL_1, 0);

@@ -537,6 +537,7 @@ enum pd_states {
 	PD_STATE_SRC_DISCOVERY,
 	PD_STATE_SRC_NEGOCIATE,
 	PD_STATE_SRC_ACCEPTED,
+	PD_STATE_SRC_POWERED,
 	PD_STATE_SRC_TRANSITION,
 	PD_STATE_SRC_READY,
 	PD_STATE_SRC_DR_SWAP,
@@ -685,7 +686,14 @@ void pd_set_max_voltage(unsigned mv);
  * @param rdo  Request Data Object with the selected operating point.
  * @return EC_SUCCESS if we can get the requested voltage/OP, <0 else.
  */
-int pd_request_voltage(uint32_t rdo);
+int pd_check_requested_voltage(uint32_t rdo);
+
+/**
+ * Select a new output voltage.
+ *
+ * param idx index of the new voltage in the source PDO table.
+ */
+void pd_transition_voltage(int idx);
 
 /**
  * Go back to the default/safe state of the power supply

@@ -180,7 +180,7 @@ static int last_volt_idx;
 /* output current measurement */
 int vbus_amp;
 
-int pd_request_voltage(uint32_t rdo)
+int pd_check_requested_voltage(uint32_t rdo)
 {
 	int op_ma = rdo & 0x3FF;
 	int max_ma = (rdo >> 10) & 0x3FF;
@@ -203,10 +203,15 @@ int pd_request_voltage(uint32_t rdo)
 	if (max_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much max current */
 
-	debug_printf("Switch to %d V %d mA (for %d/%d mA)\n",
+	debug_printf("Requested %d V %d mA (for %d/%d mA)\n",
 		     ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
 		     ((rdo >> 10) & 0x3ff) * 10, (rdo & 0x3ff) * 10);
+	/* Accept the requested voltage */
+	return EC_SUCCESS;
+}
 
+void pd_transition_voltage(int idx)
+{
 	if (idx - 1 < volt_idx) { /* down voltage transition */
 		/* Stop OCP monitoring */
 		adc_disable_watchdog();
@@ -224,8 +229,6 @@ int pd_request_voltage(uint32_t rdo)
 	last_volt_idx = volt_idx;
 	volt_idx = idx - 1;
 	set_output_voltage(voltages[volt_idx].select);
-
-	return EC_SUCCESS;
 }
 
 int pd_set_power_supply_ready(int port)

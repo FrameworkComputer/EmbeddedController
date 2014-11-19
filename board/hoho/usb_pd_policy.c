@@ -96,10 +96,14 @@ void pd_set_max_voltage(unsigned mv)
 	select_mv = mv;
 }
 
-int requested_voltage_idx;
-int pd_request_voltage(uint32_t rdo)
+int pd_check_requested_voltage(uint32_t rdo)
 {
 	return EC_SUCCESS;
+}
+
+void pd_transition_voltage(int idx)
+{
+	/* No operation: sink only */
 }
 
 int pd_set_power_supply_ready(int port)
