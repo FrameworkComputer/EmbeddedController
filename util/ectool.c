@@ -946,6 +946,8 @@ int cmd_flash_pd(int argc, char *argv[])
 	if (rv < 0)
 		goto pd_flash_error;
 
+	usleep(100000); /* 100ms to reboot and get CC line idle */
+
 	/* Erase RW flash */
 	fprintf(stderr, "Erasing RW flash\n");
 	p->cmd = USB_PD_FW_FLASH_ERASE;
@@ -968,7 +970,16 @@ int cmd_flash_pd(int argc, char *argv[])
 				p, p->size + sizeof(*p), NULL, 0);
 		if (rv < 0)
 			goto pd_flash_error;
+
+		/*
+		 * TODO(crosbug.com/p/33905) throttle so EC doesn't watchdog on
+		 * other tasks.  Remove once issue resolved.
+		 */
+		usleep(10000);
 	}
+
+	/* 100msec to guarantee writes finish */
+	usleep(100000);
 
 	/* Reboot into new RW */
 	fprintf(stderr, "Rebooting PD into new RW\n");
