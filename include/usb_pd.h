@@ -503,6 +503,9 @@ struct pd_policy {
 #define VDO_INFO_SW_DBG_VER(x)   (((x) >> 1) & 0x7fff)
 #define VDO_INFO_IS_RW(x)        ((x) & 1)
 
+#define HW_DEV_ID_MAJ(x) (x & 0x3ff)
+#define HW_DEV_ID_MIN(x) ((x) >> 10)
+
 /* USB-IF SIDs */
 #define USB_SID_PD          0xff00 /* power delivery */
 #define USB_SID_DISPLAYPORT 0xff01

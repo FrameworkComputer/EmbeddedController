@@ -1305,7 +1305,8 @@ static void pd_vdm_send_state_machine(int port)
 static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 {
 	int j;
-	ccprintf("Device:0x%04x Hash:", dev_id);
+	ccprintf("DevId:%d.%d Hash:", HW_DEV_ID_MAJ(dev_id),
+		 HW_DEV_ID_MIN(dev_id));
 	for (j = 0; j < PD_RW_HASH_SIZE; j += 4) {
 		ccprintf(" 0x%02x%02x%02x%02x", hash[j + 3], hash[j + 2],
 			 hash[j + 1], hash[j]);

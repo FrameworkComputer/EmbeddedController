@@ -198,9 +198,11 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		/* if last word is present, it contains lots of info */
 		if (cnt == 7) {
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
-			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
-				 VDO_INFO_SW_DBG_VER(payload[6]),
-				 VDO_INFO_IS_RW(payload[6]));
+			CPRINTF("DevId:%d.%d SW:%d RW:%d\n",
+				HW_DEV_ID_MAJ(dev_id),
+				HW_DEV_ID_MIN(dev_id),
+				VDO_INFO_SW_DBG_VER(payload[6]),
+				VDO_INFO_IS_RW(payload[6]));
 		}
 		/* copy hash */
 		if (cnt >= 6)

@@ -268,7 +268,9 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			pd_dev_store_rw_hash(port, dev_id, payload + 1);
 
 			pd_send_host_event(PD_EVENT_UPDATE_DEVICE);
-			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
+			CPRINTF("DevId:%d.%d SW:%d RW:%d\n",
+				HW_DEV_ID_MAJ(dev_id),
+				HW_DEV_ID_MIN(dev_id),
 				VDO_INFO_SW_DBG_VER(payload[6]),
 				VDO_INFO_IS_RW(payload[6]));
 		} else if (cnt == 6) {

@@ -210,7 +210,9 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		if (cnt == 7) {
 			/* TODO: Notify host */
 			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
-			CPRINTF("Dev:0x%04x SW:%d RW:%d\n", dev_id,
+			CPRINTF("DevId:%d.%d SW:%d RW:%d\n",
+				HW_DEV_ID_MAJ(dev_id),
+				HW_DEV_ID_MIN(dev_id),
 				VDO_INFO_SW_DBG_VER(payload[6]),
 				VDO_INFO_IS_RW(payload[6]));
 		}

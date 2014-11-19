@@ -861,9 +861,10 @@ int cmd_pd_device_info(int argc, char *argv[])
 		printf("Port:%d has no valid device\n", p->port);
 	else {
 		uint8_t *rwp = r0->dev_rw_hash;
-		printf("Port:%d Device:%d Hash: ", p->port, r0->dev_id);
+		printf("Port:%d DevId:%d.%d Hash:", p->port,
+		       HW_DEV_ID_MAJ(r0->dev_id), HW_DEV_ID_MIN(r0->dev_id));
 		for (i = 0; i < 5; i++) {
-			printf(" 0x%02x%02x%02x%02x ", rwp[3], rwp[2], rwp[1],
+			printf(" 0x%02x%02x%02x%02x", rwp[3], rwp[2], rwp[1],
 			       rwp[0]);
 			rwp += 4;
 		}
