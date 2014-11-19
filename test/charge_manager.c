@@ -6,8 +6,11 @@
  */
 
 #include "charge_manager.h"
+#include "common.h"
+#include "ec_commands.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "util.h"
 
@@ -73,6 +76,11 @@ static void set_charger_role(int port, int role)
 int pd_get_partner_dualrole_capable(int port)
 {
 	return dual_role_capable[port];
+}
+
+int pd_get_role(int port)
+{
+	return PD_ROLE_SINK;
 }
 
 static void wait_for_charge_manager_refresh(void)

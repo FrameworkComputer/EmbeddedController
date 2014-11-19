@@ -348,7 +348,30 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
 		     EC_VER_MASK(0));
 #endif /* TEST_CHARGE_MANAGER */
 
-static int command_charge_override(int argc, char **argv)
+static int hc_charge_port_override(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_charge_port_override *p = args->params;
+	const int16_t override_port = p->override_port;
+
+	if (override_port < OVERRIDE_DONT_CHARGE ||
+	    override_port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	if (override_port >= 0 && pd_get_role(override_port) != PD_ROLE_SINK)
+		/*
+		 * TODO(crosbug.com/p/31195): Switch dual-role ports
+		 * from source to sink.
+		 */
+		return EC_RES_ERROR;
+
+	charge_manager_set_override(override_port);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE,
+		     hc_charge_port_override,
+		     EC_VER_MASK(0));
+
+static int command_charge_port_override(int argc, char **argv)
 {
 	int port = OVERRIDE_OFF;
 	char *e;
@@ -359,11 +382,18 @@ static int command_charge_override(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
+	if (port >= 0 && pd_get_role(override_port) != PD_ROLE_SINK)
+		/*
+		 * TODO(crosbug.com/p/31195): Switch dual-role ports
+		 * from source to sink.
+		 */
+		return EC_ERROR_PARAM1;
+
 	charge_manager_set_override(port);
 	ccprintf("Set override: %d\n", port);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(chargeoverride, command_charge_override,
+DECLARE_CONSOLE_COMMAND(chgoverride, command_charge_port_override,
 	"[port | -1 | -2]",
 	"Force charging from a given port (-1 = off, -2 = disable charging)",
 	NULL);

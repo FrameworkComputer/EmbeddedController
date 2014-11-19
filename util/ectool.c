@@ -60,6 +60,8 @@ const char help_str[] =
 	"      Set the maximum battery charging current\n"
 	"  chargecontrol\n"
 	"      Force the battery to stop charging or discharge\n"
+	"  chargeoverride\n"
+	"      Overrides charge port selection logic\n"
 	"  chargestate\n"
 	"      Handle commands related to charge state v2 (and later)\n"
 	"  chipinfo\n"
@@ -5159,6 +5161,39 @@ int cmd_force_lid_open(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_charge_port_override(int argc, char *argv[])
+{
+	struct ec_params_charge_port_override p;
+	char *e;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <port# | dontcharge | off>\n",
+			argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "dontcharge"))
+		p.override_port = OVERRIDE_DONT_CHARGE;
+	else if (!strcasecmp(argv[1], "off"))
+		p.override_port = OVERRIDE_OFF;
+	else {
+		p.override_port = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad parameter.\n");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0, &p, sizeof(p),
+			NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Override port set to %d\n", p.override_port);
+	return 0;
+}
+
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"extpwrcurrentlimit", cmd_ext_power_current_limit},
@@ -5170,6 +5205,7 @@ const struct command commands[] = {
 	{"boardversion", cmd_board_version},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargecontrol", cmd_charge_control},
+	{"chargeoverride", cmd_charge_port_override},
 	{"chargestate", cmd_charge_state},
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
