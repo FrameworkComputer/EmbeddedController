@@ -8,6 +8,8 @@
 #include "adc_chip.h"
 #include "battery.h"
 #include "case_closed_debug.h"
+#include "charge_manager.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
@@ -29,6 +31,8 @@
 #include "util.h"
 #include "pi3usb9281.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+
 void vbus_evt(enum gpio_signal signal)
 {
 	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
@@ -38,6 +42,58 @@ void vbus_evt(enum gpio_signal signal)
 void unhandled_evt(enum gpio_signal signal)
 {
 	ccprintf("Unhandled INT %d,%d!\n", signal, gpio_get_level(signal));
+}
+
+/*
+ * Update available charge. Called from deferred task, queued on Pericom
+ * interrupt.
+ */
+static void board_usb_charger_update(void)
+{
+	int device_type, charger_status;
+	struct charge_port_info charge;
+	int type;
+	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+
+	/* Read interrupt register to clear */
+	pi3usb9281_get_interrupts(0);
+
+	/* Set device type */
+	device_type = pi3usb9281_get_device_type(0);
+	charger_status = pi3usb9281_get_charger_status(0);
+	if (PI3USB9281_CHG_STATUS_ANY(charger_status))
+		type = CHARGE_SUPPLIER_PROPRIETARY;
+	else if (device_type & PI3USB9281_TYPE_CDP)
+		type = CHARGE_SUPPLIER_BC12_CDP;
+	else if (device_type & PI3USB9281_TYPE_DCP)
+		type = CHARGE_SUPPLIER_BC12_DCP;
+	else if (device_type & PI3USB9281_TYPE_SDP)
+		type = CHARGE_SUPPLIER_BC12_SDP;
+	else
+		type = CHARGE_SUPPLIER_OTHER;
+
+	/* Attachment: decode + update available charge */
+	if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
+		charge.current = pi3usb9281_get_ilim(device_type,
+						     charger_status);
+		charge_manager_update(type, 0, &charge);
+	} else { /* Detachment: update available charge to 0 */
+		charge.current = 0;
+		charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, 0,
+				      &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, 0, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, 0, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, 0, &charge);
+		charge_manager_update(CHARGE_SUPPLIER_OTHER, 0, &charge);
+	}
+
+	/* notify host of power info change */
+	/*pd_send_host_event(PD_EVENT_POWER_CHANGE);*/
+}
+
+void usb_evt(enum gpio_signal signal)
+{
+	hook_call_deferred(board_usb_charger_update, 0);
 }
 
 #include "gpio_list.h"
@@ -55,6 +111,23 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 /* Initialize board. */
 static void board_init(void)
 {
+	struct charge_port_info charge;
+
+	/* Initialize all pericom charge suppliers to 0 */
+	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge.current = 0;
+	charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, 0,
+			      &charge);
+	charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, 0, &charge);
+	charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, 0, &charge);
+	charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, 0, &charge);
+	charge_manager_update(CHARGE_SUPPLIER_OTHER, 0, &charge);
+
+	/* Enable pericom BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
+	pi3usb9281_set_interrupt_mask(0, 0xff);
+	pi3usb9281_enable_interrupts(0);
+
 	/*
 	 * Determine recovery mode is requested by the power, volup, and
 	 * voldown buttons being pressed.
@@ -95,6 +168,18 @@ const struct adc_t adc_channels[] = {
 	[ADC_IBAT] = {"IBAT", 37500, 4096, 0, STM32_AIN(13)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Charge supplier priority: lower number indicates higher priority. */
+const int supplier_priority[] = {
+	[CHARGE_SUPPLIER_PD] = 0,
+	[CHARGE_SUPPLIER_TYPEC] = 1,
+	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
+	[CHARGE_SUPPLIER_BC12_DCP] = 1,
+	[CHARGE_SUPPLIER_BC12_CDP] = 2,
+	[CHARGE_SUPPLIER_BC12_SDP] = 3,
+	[CHARGE_SUPPLIER_OTHER] = 3
+};
+BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
@@ -193,4 +278,50 @@ void usb_board_connect(void)
 void usb_board_disconnect(void)
 {
 	gpio_set_level(GPIO_USB_PU_EN_L, 1);
+}
+
+/* Charge manager callback function, called on delayed override timeout */
+void board_charge_manager_override_timeout(void)
+{
+	/* TODO: Implement me! */
+}
+DECLARE_DEFERRED(board_charge_manager_override_timeout);
+
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	int ret = EC_SUCCESS;
+
+	if (charge_port >= 0 && charge_port < PD_PORT_COUNT &&
+	    pd_get_role(charge_port) != PD_ROLE_SINK) {
+		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
+		charge_port = CHARGE_PORT_NONE;
+		ret = EC_ERROR_INVAL;
+	}
+	if (charge_port == CHARGE_PORT_NONE) {
+		/* Disable charging */
+		charge_set_input_current_limit(0);
+	}
+
+	return ret;
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param charge_ma     Desired charge limit (mA).
+ */
+void board_set_charge_limit(int charge_ma)
+{
+	int rv = charge_set_input_current_limit(MAX(charge_ma,
+					CONFIG_CHARGER_INPUT_CURRENT));
+	if (rv < 0)
+		CPRINTS("Failed to set input current limit for PD");
 }

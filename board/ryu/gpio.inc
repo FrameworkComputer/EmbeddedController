@@ -9,7 +9,7 @@
 GPIO(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH | GPIO_PULL_UP,    vbus_evt)
 GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING,                unhandled_evt)
 GPIO(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
-GPIO(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)
+GPIO(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)
 GPIO(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)
 GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
 GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP, unhandled_evt)

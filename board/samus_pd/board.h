@@ -85,7 +85,7 @@ enum adc_channel {
 	ADC_C1_CC1_PD,
 	ADC_C0_CC2_PD,
 	ADC_C1_CC2_PD,
-	ADC_BOOSTIN,
+	ADC_VBUS,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };

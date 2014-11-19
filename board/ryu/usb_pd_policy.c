@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "charge_state.h"
+#include "charge_manager.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -35,10 +35,19 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
-	int rv = charge_set_input_current_limit(MAX(max_ma,
-					CONFIG_CHARGER_INPUT_CURRENT));
-	if (rv < 0)
-		CPRINTS("Failed to set input current limit for PD");
+	struct charge_port_info charge;
+	charge.current = max_ma;
+	charge.voltage = supply_voltage;
+	charge_manager_update(CHARGE_SUPPLIER_PD, port, &charge);
+}
+
+void typec_set_input_current_limit(int port, uint32_t max_ma,
+				   uint32_t supply_voltage)
+{
+	struct charge_port_info charge;
+	charge.current = max_ma;
+	charge.voltage = supply_voltage;
+	charge_manager_update(CHARGE_SUPPLIER_TYPEC, port, &charge);
 }
 
 int pd_check_requested_voltage(uint32_t rdo)

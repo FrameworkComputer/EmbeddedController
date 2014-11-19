@@ -8,6 +8,9 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
+#include "charge_state.h"
+#include "registers.h"
+
 /* Port and task configuration */
 #define PD_PORT_COUNT 1
 #define PORT_TO_TASK_ID(port) TASK_ID_PD
@@ -126,6 +129,7 @@ static inline void pd_set_host_mode(int port, int enable)
 	if (enable) {
 		/* We never charging in power source mode */
 		gpio_set_level(GPIO_USBC_CHARGE_EN_L, 1);
+		charge_set_input_current_limit(0);
 		/* High-Z is used for host mode. */
 		gpio_set_level(GPIO_USBC_CC1_DEVICE_ODL, 1);
 		gpio_set_level(GPIO_USBC_CC2_DEVICE_ODL, 1);
@@ -135,7 +139,6 @@ static inline void pd_set_host_mode(int port, int enable)
 		/* Pull low for device mode. */
 		gpio_set_level(GPIO_USBC_CC1_DEVICE_ODL, 0);
 		gpio_set_level(GPIO_USBC_CC2_DEVICE_ODL, 0);
-		/* Enable the charging path*/
 		gpio_set_level(GPIO_USBC_CHARGE_EN_L, 0);
 	}
 

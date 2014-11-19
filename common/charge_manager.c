@@ -3,8 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
 #include "charge_manager.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "timer.h"
@@ -515,7 +517,7 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 		    r->role == USB_PD_PORT_POWER_SINK_NOT_CHARGING)
 			r->voltage_now = 5000;
 		else
-			r->voltage_now = adc_read_channel(ADC_BOOSTIN);
+			r->voltage_now = adc_read_channel(ADC_VBUS);
 	}
 
 	args->response_size = sizeof(*r);
