@@ -44,6 +44,8 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	 */
 	if (flags & GPIO_OPEN_DRAIN)
 		STM32_GPIO_OTYPER(port) |= mask;
+	else
+		STM32_GPIO_OTYPER(port) &= ~mask;
 
 	val = STM32_GPIO_MODER(port) & ~mask2;
 	if (flags & GPIO_OUTPUT) {
