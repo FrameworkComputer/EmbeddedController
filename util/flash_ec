@@ -66,6 +66,7 @@ BOARDS_STM32=(
 	fruitpie
 	jerry	
 	kitty
+	mighty
 	minimuffin
 	nyan
 	pinky
