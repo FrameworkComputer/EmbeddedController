@@ -425,22 +425,6 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 }
 
 /**
- * Returns the SPI flash manufacturer ID and device ID [8:0]
- *
- * @return flash manufacturer + device ID or -1 on error
- */
-uint16_t spi_flash_get_id(void)
-{
-	uint8_t cmd[4] = {SPI_FLASH_MFR_DEV_ID, 0, 0, 0};
-	uint8_t resp[2];
-
-	if (spi_transaction(cmd, 4, resp, 2) != EC_SUCCESS)
-		return -1;
-
-	return (resp[4] << 8) | resp[5];
-}
-
-/**
  * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
  *
  * @return flash JEDEC ID or -1 on error

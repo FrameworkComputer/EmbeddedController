@@ -123,13 +123,6 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 	const uint8_t const *data);
 
 /**
- * Returns the SPI flash manufacturer ID and device ID [8:0]
- *
- * @return flash manufacturer + device ID
- */
-uint16_t spi_flash_get_id(void);
-
-/**
  * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
  *
  * @return flash JEDEC ID

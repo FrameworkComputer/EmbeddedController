@@ -213,7 +213,7 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	int i;
-	uint32_t int_status[15];
+	uint32_t int_status[16];
 	uint32_t int_block_status;
 	uint32_t nvic_status[3];
 	char *backup_gpio_ctl;
