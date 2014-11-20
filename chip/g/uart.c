@@ -124,7 +124,7 @@ void uart_ec_rx_interrupt(void)
 DECLARE_IRQ(GC_IRQNUM_UART0_RXINT, uart_ec_rx_interrupt, 1);
 
 /* Constants for setting baud rate */
-#define PCLK_FREQ  26000000
+#define PCLK_FREQ  30000000
 #define DEFAULT_UART_FREQ 1000000
 #define UART_NCO_WIDTH 16
 
