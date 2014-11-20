@@ -43,6 +43,8 @@ static unsigned select_mv = 5000;
 
 /* Whether alternate mode has been entered or not */
 static int alt_mode;
+/* When set true, we are in GFU mode */
+static int gfu_mode;
 
 int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
 		      uint32_t *curr_limit, uint32_t *supply_voltage)
@@ -170,18 +172,15 @@ static int svdm_response_identity(int port, uint32_t *payload)
 
 static int svdm_response_svids(int port, uint32_t *payload)
 {
-	payload[1] = VDO_SVID(USB_SID_DISPLAYPORT, 0);
-	return 2;
+	payload[1] = VDO_SVID(USB_SID_DISPLAYPORT, USB_VID_GOOGLE);
+	payload[2] = 0;
+	return 3;
 }
 
-/*
- * Will only ever be a single mode for this UFP_D device as it has no real USB
- * support making it only PIN_C configureable
- */
-#define MODE_CNT 1
-#define OPOS 1
+#define OPOS_DP 1
+#define OPOS_GFU 1
 
-const uint32_t vdo_dp_mode[MODE_CNT] =  {
+const uint32_t vdo_dp_modes[1] =  {
 	VDO_MODE_DP(0,		   /* UFP pin cfg supported : none */
 		    MODE_DP_PIN_C, /* DFP pin cfg supported */
 		    1,		   /* no usb2.0	signalling in AMode */
@@ -190,20 +189,28 @@ const uint32_t vdo_dp_mode[MODE_CNT] =  {
 		    MODE_DP_SNK)   /* Its a sink only */
 };
 
+const uint32_t vdo_goog_modes[1] =  {
+	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
+};
+
 static int svdm_response_modes(int port, uint32_t *payload)
 {
-	if (PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT)
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) {
+		memcpy(payload + 1, vdo_dp_modes, sizeof(vdo_dp_modes));
+		return ARRAY_SIZE(vdo_dp_modes) + 1;
+	} else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) {
+		memcpy(payload + 1, vdo_goog_modes, sizeof(vdo_goog_modes));
+		return ARRAY_SIZE(vdo_goog_modes) + 1;
+	} else {
 		return 0; /* nak */
-
-	memcpy(payload + 1, vdo_dp_mode, sizeof(vdo_dp_mode));
-	return MODE_CNT + 1;
+	}
 }
 
 static int dp_status(int port, uint32_t *payload)
 {
 	int opos = PD_VDO_OPOS(payload[0]);
 	int hpd = gpio_get_level(GPIO_DP_HPD);
-	if (opos != OPOS)
+	if (opos != OPOS_DP)
 		return 0; /* nak */
 
 	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
@@ -226,14 +233,21 @@ static int dp_config(int port, uint32_t *payload)
 
 static int svdm_enter_mode(int port, uint32_t *payload)
 {
-	/* SID & mode request is valid */
-	if ((PD_VDO_VID(payload[0]) != USB_SID_DISPLAYPORT) ||
-	    (PD_VDO_OPOS(payload[0]) != OPOS))
-		return 0; /* will generate a NAK */
+	int rv = 0; /* will generate a NAK */
 
-	/* TODO(tbroch) Enumerate USB BB here with updated mode choice */
-	alt_mode = OPOS;
-	return 1;
+	/* SID & mode request is valid */
+	if ((PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) &&
+	    (PD_VDO_OPOS(payload[0]) == OPOS_DP)) {
+		alt_mode = OPOS_DP;
+		rv = 1;
+	} else if ((PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) &&
+		   (PD_VDO_OPOS(payload[0]) == OPOS_GFU)) {
+		alt_mode = OPOS_GFU;
+		gfu_mode = 1;
+		rv = 1;
+	}
+	/* TODO(p/33968): Enumerate USB BB here with updated mode choice */
+	return rv;
 }
 
 int pd_alt_mode(int port)
@@ -243,8 +257,14 @@ int pd_alt_mode(int port)
 
 static int svdm_exit_mode(int port, uint32_t *payload)
 {
-	gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
 	alt_mode = 0;
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT)
+		gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
+	else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE)
+		gfu_mode = 0;
+	else
+		CPRINTF("Unknown exit mode req:0x%08x\n", payload[0]);
+
 	return 1; /* Must return ACK */
 }
 
