@@ -8,3 +8,6 @@
 CHIP:=g
 
 board-y=board.o
+
+# Need to generate a .hex file
+all: hex
