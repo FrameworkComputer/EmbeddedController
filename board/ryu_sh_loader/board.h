@@ -16,12 +16,11 @@
 #define CONFIG_UART_CONSOLE 1
 
 /*
- * The RO firmware image size is limited to 40K to
+ * The firmware image size is limited to 40K to
  * leave more space to the RW image.
  */
 #undef CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_IMAGE_SIZE (40*1024)
-#undef CONFIG_FW_INCLUDE_RO
 
 /* By default, enable all console messages  */
 #define CC_DEFAULT     CC_ALL
@@ -29,25 +28,18 @@
 /* Optional features */
 #undef CONFIG_EXTPOWER
 #undef CONFIG_HIBERNATE
-#define CONFIG_ACCELGYRO_LSM6DS0
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_I2C
 #define CONFIG_BOARD_PRE_INIT
 #undef  CONFIG_LID_SWITCH
 #undef CONFIG_CMD_POWER_AP
 #define CONFIG_POWER_COMMON
-#define CONFIG_CHIPSET_ECDRIVEN
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_VBOOT_HASH
 #undef CONFIG_WATCHDOG_HELP
 
 /* I2C ports configuration */
-#define I2C_PORT_MASTER 1
 #define I2C_PORT_SLAVE  0
 #define I2C_PORT_EC I2C_PORT_SLAVE
-#define I2C_PORT_ACCEL I2C_PORT_MASTER
-#define I2C_PORT_COMPASS I2C_PORT_MASTER
 
 /* slave address for host commands */
 #ifdef HAS_TASK_HOSTCMD
@@ -67,13 +59,6 @@
 #define TIM_ADC     3
 
 #include "gpio_signal.h"
-
-enum power_signal {
-	ECDRIVEN_SUSPEND_ASSERTED,
-
-	/* Number of power signals */
-	POWER_SIGNAL_COUNT
-};
 
 #endif /* !__ASSEMBLER__ */
 

@@ -14,8 +14,10 @@
 #define FW_IMAGE(sect) STRINGIFY(FW_FILE(OUTDIR,PROJECT,sect))
 
 /* Read Only firmware */
+#ifdef CONFIG_FW_INCLUDE_RO
 .section .image.RO, "ax"
 .incbin FW_IMAGE(RO)
+#endif
 
 /* Read Write firmware */
 .section .image.RW, "ax"

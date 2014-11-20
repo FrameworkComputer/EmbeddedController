@@ -549,6 +549,12 @@
 #undef CONFIG_FW_WP_RO_OFF
 #undef CONFIG_FW_WP_RO_SIZE
 
+/*
+ * Board Image ec.bin contains a RO firmware.  If not defined, the image will
+ * only contain the RW firmware. The RO firmware comes from another board.
+ */
+#define CONFIG_FW_INCLUDE_RO
+
 /*****************************************************************************/
 /* Motion sensor based gesture recognition information */
 #undef CONFIG_GESTURE_DETECTION

@@ -80,7 +80,8 @@ proj-%:
 	@echo "======= building $*"; \
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
 
-dis-y = $(out)/$(PROJECT).RO.dis $(out)/$(PROJECT).RW.dis
+dis-y = $(out)/$(PROJECT).RW.dis
+dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.dis
 dis: $(dis-y)
 
 hex-y = $(out)/$(PROJECT).RO.hex $(out)/$(PROJECT).RW.hex
@@ -159,7 +160,9 @@ $(out)/%.bin: $(out)/%.obj
 $(out)/%.spi.bin: $(out)/%.bin
 	$(call quiet,pack_package,PACK   )
 
-flat-y = $(out)/$(PROJECT).RO.flat $(out)/$(PROJECT).RW.flat
+flat-y = $(out)/$(PROJECT).RW.flat
+flat-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.flat
+
 deps += $(out)/firmware_image.lds.d $(flat-y:%.flat=%.lds.d)
 
 $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)
