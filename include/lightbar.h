@@ -35,7 +35,8 @@ enum lb_control {
 };
 
 /* Request a preset sequence from the lightbar task. */
-void lightbar_sequence(enum lightbar_sequence s);
+void lightbar_sequence_f(enum lightbar_sequence num, const char *f);
+#define lightbar_sequence(A) lightbar_sequence_f(A, __func__)
 
 /****************************************************************************/
 /* External stuff */

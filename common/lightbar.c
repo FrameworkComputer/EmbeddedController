@@ -657,15 +657,13 @@ static uint32_t sequence_STOP(void)
 
 	do {
 		msg = TASK_EVENT_CUSTOM(task_wait_event(-1));
-		CPRINTS("LB_stop got pending_msg %d", pending_msg);
+		CPRINTS("LB %s() got pending_msg %d", __func__, pending_msg);
 	} while (msg != PENDING_MSG || (
 			 pending_msg != LIGHTBAR_RUN &&
 			 pending_msg != LIGHTBAR_S0S3 &&
 			 pending_msg != LIGHTBAR_S3 &&
 			 pending_msg != LIGHTBAR_S3S5 &&
 			 pending_msg != LIGHTBAR_S5));
-
-	CPRINTS("LB_stop->running");
 	return 0;
 }
 
@@ -1392,19 +1390,23 @@ void lightbar_task(void)
 	lightbar_restore_state();
 
 	while (1) {
-		CPRINTS("LB task %d = %s",
-			st.cur_seq, lightbar_cmds[st.cur_seq].string);
+		CPRINTS("LB running cur_seq %d %s. prev_seq %d %s",
+			st.cur_seq, lightbar_cmds[st.cur_seq].string,
+			st.prev_seq, lightbar_cmds[st.prev_seq].string);
 		msg = lightbar_cmds[st.cur_seq].sequence();
 		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) {
-			CPRINTS("LB msg %d = %s", pending_msg,
-				lightbar_cmds[pending_msg].string);
+			CPRINTS("LB cur_seq %d %s returned pending msg %d %s",
+				st.cur_seq, lightbar_cmds[st.cur_seq].string,
+				pending_msg, lightbar_cmds[pending_msg].string);
 			if (st.cur_seq != pending_msg) {
 				if (is_normal_sequence(st.cur_seq))
 					st.prev_seq = st.cur_seq;
 				st.cur_seq = pending_msg;
 			}
 		} else {
-			CPRINTS("LB msg 0x%x", msg);
+			CPRINTS("LB cur_seq %d %s returned value %d",
+				st.cur_seq, lightbar_cmds[st.cur_seq].string,
+				msg);
 			switch (st.cur_seq) {
 			case LIGHTBAR_S5S3:
 				st.cur_seq = LIGHTBAR_S3;
@@ -1433,17 +1435,17 @@ void lightbar_task(void)
 }
 
 /* Function to request a preset sequence from the lightbar task. */
-void lightbar_sequence(enum lightbar_sequence num)
+void lightbar_sequence_f(enum lightbar_sequence num, const char *f)
 {
 	if (num > 0 && num < LIGHTBAR_NUM_SEQUENCES) {
-		CPRINTS("LB_seq %d = %s", num,
+		CPRINTS("LB %s() requests %d %s", f, num,
 			lightbar_cmds[num].string);
 		pending_msg = num;
 		task_set_event(TASK_ID_LIGHTBAR,
-			       TASK_EVENT_WAKE | TASK_EVENT_CUSTOM(PENDING_MSG),
+			       TASK_EVENT_CUSTOM(PENDING_MSG),
 			       0);
 	} else
-		CPRINTS("LB_seq %d - ignored", num);
+		CPRINTS("LB %s() requests %d - ignored", f, num);
 }
 
 /****************************************************************************/
