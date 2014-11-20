@@ -326,3 +326,8 @@ void usb_release(void)
 	/* disable USB device clock */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
 }
+
+int usb_is_enabled(void)
+{
+	return (STM32_RCC_APB1ENR & STM32_RCC_PB1_USB) ? 1 : 0;
+}

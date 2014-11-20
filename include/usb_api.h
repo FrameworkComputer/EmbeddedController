@@ -21,6 +21,9 @@
  */
 void usb_init(void);
 
+/* Check if USB peripheral is enabled. */
+int usb_is_enabled(void);
+
 /*
  * Enable the pullup on the DP line to signal that this device exists to the
  * host and to start the enumeration process.

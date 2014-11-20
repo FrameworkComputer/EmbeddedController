@@ -146,6 +146,9 @@ static int usb_wait_console(void)
 	timestamp_t deadline = get_time();
 	int wait_time_us = 1;
 
+	if (!is_enabled || !usb_is_enabled())
+		return EC_SUCCESS;
+
 	deadline.val += USB_CONSOLE_TIMEOUT_US;
 
 	/*
