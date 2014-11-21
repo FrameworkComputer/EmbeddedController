@@ -1803,11 +1803,11 @@ void pd_task(void)
 						  PD_STATE_HARD_RESET_SEND);
 				/* Switch to Rd */
 				pd_set_host_mode(port, 0);
-				/* Wait for PD_RDY from sink */
+				/* Wait for PS_RDY from sink */
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_PS_SOURCE_ON,
-						  PD_STATE_HARD_RESET_SEND);
+						  PD_STATE_HARD_RESET_EXECUTE);
 			}
 			break;
 		case PD_STATE_SUSPENDED:
@@ -2082,6 +2082,8 @@ void pd_task(void)
 				/* Switch to Rp and enable power supply */
 				pd_set_host_mode(port, 1);
 				if (pd_set_power_supply_ready(port)) {
+					/* Restore Rd */
+					pd_set_host_mode(port, 0);
 					set_state(port,
 						  PD_STATE_HARD_RESET_SEND);
 					break;
@@ -2097,8 +2099,11 @@ void pd_task(void)
 		case PD_STATE_SNK_SWAP_COMPLETE:
 			/* Send PS_RDY and change to source role */
 			res = send_control(port, PD_CTRL_PS_RDY);
-			if (res < 0)
+			if (res < 0) {
+				/* Restore Rd */
+				pd_set_host_mode(port, 0);
 				set_state(port, PD_STATE_HARD_RESET_SEND);
+			}
 
 			caps_count = 0;
 			pd[port].msg_id = 0;
@@ -2148,6 +2153,18 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_HARD_RESET_EXECUTE:
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+			/*
+			 * If hard reset while in the last stages of power
+			 * swap, then we need to restore our CC resistor.
+			 */
+			if (pd[port].last_state == PD_STATE_SRC_SWAP_STANDBY)
+				pd_set_host_mode(port, 1);
+			else if (pd[port].last_state ==
+					PD_STATE_SNK_SWAP_STANDBY)
+				pd_set_host_mode(port, 0);
+#endif
+
 			/* reset our own state machine */
 			execute_hard_reset(port);
 			timeout = 10*MSEC;
