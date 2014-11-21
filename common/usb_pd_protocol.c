@@ -1906,9 +1906,11 @@ void pd_task(void)
 
 			}
 			if (pd_snk_is_vbus_provided(port) &&
-			    snk_hard_reset_vbus_off)
+			    snk_hard_reset_vbus_off) {
 				/* VBUS went high again */
 				set_state(port, PD_STATE_SNK_DISCOVERY);
+				timeout = 10*MSEC;
+			}
 
 			/*
 			 * Don't need to set timeout because VBUS changing
