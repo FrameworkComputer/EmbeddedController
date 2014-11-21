@@ -26,8 +26,7 @@
 #define MAX_POWER_MW       60000
 #define MAX_CURRENT_MA     3000
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | \
-			 PDO_FIXED_EXTERNAL)
+#define PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP | PDO_FIXED_EXTERNAL)
 
 /* Source PDOs */
 const uint32_t pd_src_pdo[] = {
