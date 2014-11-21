@@ -379,8 +379,10 @@ static void host_command_init(void)
 	*host_get_memmap(EC_MEMMAP_ID_VERSION) = 1;
 	*host_get_memmap(EC_MEMMAP_EVENTS_VERSION) = 1;
 
+#ifdef CONFIG_HOSTCMD_EVENTS
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
 	CPRINTS("hostcmd init 0x%x", host_get_events());
+#endif
 }
 
 void host_command_task(void)

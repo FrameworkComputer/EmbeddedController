@@ -611,6 +611,13 @@
  */
 #undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 
+/* If we have host command task, assume we also are using host events. */
+#ifdef HAS_TASK_HOSTCMD
+#define CONFIG_HOSTCMD_EVENTS
+#else
+#undef  CONFIG_HOSTCMD_EVENTS
+#endif
+
 /*****************************************************************************/
 
 /* Enable debugging and profiling statistics for hook functions */
