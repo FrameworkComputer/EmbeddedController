@@ -91,7 +91,7 @@ GPIO(SLAVE_I2C_SCL,        A, 9,  GPIO_INPUT,    NULL)
 GPIO(SLAVE_I2C_SDA,        A, 10, GPIO_INPUT,    NULL)
 
 /* SCL gating for PI3USB9281 */
-GPIO(PERICOM_CLK_EN,       C, 15, GPIO_OUT_LOW,  NULL)
+GPIO(PERICOM_CLK_EN,       C, 15, GPIO_OUT_HIGH, NULL)
 
 /* Case closed debugging. */
 GPIO(USB_PU_EN_L,          C, 2,  GPIO_OUT_HIGH, NULL)
