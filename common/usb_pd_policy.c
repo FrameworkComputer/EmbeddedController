@@ -260,20 +260,23 @@ int pd_alt_mode(int port)
 	return pe[port].amode.index + 1;
 }
 
-/* TODO(tbroch) this function likely needs to move up the stack to where system
- * policy decisions are made. */
-static int dfp_enter_mode(int port, uint32_t *payload)
+/* Enter default mode or attempt to enter mode via svid & index arguments */
+static int dfp_enter_mode(int port, uint32_t *payload, int use_payload)
 {
 	int i, j, done;
 	struct svdm_amode_data *modep = &pe[port].amode;
+	uint16_t svid = (use_payload) ? PD_VDO_VID(payload[0]) : 0;
+	uint8_t opos = (use_payload) ? PD_VDO_OPOS(payload[0]) : 0;
+
 	for (i = 0, done = 0; !done && (i < supported_modes_cnt); i++) {
 		for (j = 0; j < pe[port].svid_cnt; j++) {
-			if (pe[port].svids[j].svid != supported_modes[i].svid)
+			struct svdm_svid_data *svidp = &pe[port].svids[j];
+			if ((svidp->svid != supported_modes[i].svid) ||
+			    (svid && (svidp->svid != svid)))
 				continue;
-			pe[port].amode.fx = &supported_modes[i];
-			pe[port].amode.mode_caps =
-				pe[port].svids[j].mode_vdo[0];
-			pe[port].amode.index = 0;
+			modep->fx = &supported_modes[i];
+			modep->mode_caps = pe[port].svids[j].mode_vdo[0];
+			modep->index = (opos && (opos < 7)) ? opos - 1 : 0;
 			done = 1;
 			break;
 		}
@@ -478,16 +481,19 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			dfp_consume_modes(port, cnt, payload);
 			rsize = dfp_discover_modes(port, payload);
 			if (!rsize)
-				rsize = dfp_enter_mode(port, payload);
+				rsize = dfp_enter_mode(port, payload, 0);
 			break;
 		case CMD_ENTER_MODE:
+			/*
+			 * TODO(crosbug.com/p/33946): Fix won't allow multiple
+			 * mode entry.
+			 */
+			if (!AMODE_VALID(port))
+				dfp_enter_mode(port, payload, 1);
 			if (AMODE_VALID(port)) {
 				rsize = pe[port].amode.fx->status(port,
 								  payload);
-				payload[0] |=
-					VDO_OPOS(pd_alt_mode(port));
-			} else {
-				rsize = 0;
+				payload[0] |= VDO_OPOS(pd_alt_mode(port));
 			}
 			break;
 		case CMD_DP_STATUS:
@@ -602,6 +608,37 @@ static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
 		     hc_remote_pd_discovery,
 		     EC_VER_MASK(0));
+
+static int hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_get_mode_request *p = args->params;
+	struct ec_params_usb_pd_get_mode_response *r = args->response;
+
+	if (p->port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	/* no more to send */
+	if (p->svid_idx >= pe[p->port].svid_cnt) {
+		r->svid = 0;
+		args->response_size = sizeof(r->svid);
+		return EC_RES_SUCCESS;
+	}
+
+	r->svid = pe[p->port].svids[p->svid_idx].svid;
+	r->active = 0;
+	memcpy(r->vdo, pe[p->port].svids[p->svid_idx].mode_vdo, 24);
+
+	if (AMODE_VALID(p->port) && pe[p->port].amode.fx->svid == r->svid) {
+		r->active = 1;
+		r->idx = pd_alt_mode(p->port) - 1;
+	}
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE,
+		     hc_remote_pd_get_amode,
+		     EC_VER_MASK(0));
+
 #endif
 
 #define FW_RW_END (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE)

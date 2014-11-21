@@ -140,6 +140,10 @@ const char help_str[] =
 	"      Whether or not the AP should pause in S5 on shutdown\n"
 	"  pdlog\n"
 	"      Prints the PD event log entries\n"
+	"  pdgetmode <port>\n"
+	"      Get All USB-PD alternate SVIDs and modes on <port>\n"
+	"  pdsetmode <port> <svid> <opos>\n"
+	"      Set USB-PD alternate SVID and mode on <port>\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
 	"  port80read\n"
@@ -997,6 +1001,76 @@ int cmd_flash_pd(int argc, char *argv[])
 pd_flash_error:
 	free(buf);
 	fprintf(stderr, "PD flash error\n");
+	return -1;
+}
+
+int cmd_pd_set_amode(int argc, char *argv[])
+{
+	char *e;
+	struct ec_params_usb_pd_set_mode_request *p =
+		(struct ec_params_usb_pd_set_mode_request *)ec_outbuf;
+
+	if (argc < 4) {
+		fprintf(stderr, "Usage: %s <port> <svid> <opos>\n", argv[0]);
+		return -1;
+	}
+
+	p->port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p->svid = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad svid\n");
+		return -1;
+	}
+
+	p->opos = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad mode\n");
+		return -1;
+	}
+
+	return ec_command(EC_CMD_USB_PD_SET_AMODE, 0, p, sizeof(*p), NULL, 0);
+}
+
+int cmd_pd_get_amode(int argc, char *argv[])
+{
+	int i;
+	char *e;
+	struct ec_params_usb_pd_get_mode_request *p =
+		(struct ec_params_usb_pd_get_mode_request *)ec_outbuf;
+	struct ec_params_usb_pd_get_mode_response *r =
+		(struct ec_params_usb_pd_get_mode_response *)ec_inbuf;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+		return -1;
+	}
+
+	p->port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p->svid_idx = 0;
+	do {
+		ec_command(EC_CMD_USB_PD_GET_AMODE, 0, p, sizeof(*p),
+			   ec_inbuf, ec_max_insize);
+		if (!r->svid)
+			break;
+		printf("%cSVID:0x%04x ", (r->active) ? '*' : ' ',
+		       r->svid);
+		for (i = 0; i < PDO_MODES; i++) {
+			printf("%c0x%08x ", (r->active && (r->idx == i)) ?
+			       '*' : ' ', r->vdo[i]);
+		}
+		printf("\n");
+		p->svid_idx++;
+	} while (p->svid_idx < SVID_DISCOVERY_MAX);
 	return -1;
 }
 
@@ -5334,6 +5408,8 @@ const struct command commands[] = {
 	{"nextevent", cmd_next_event},
 	{"panicinfo", cmd_panic_info},
 	{"pause_in_s5", cmd_s5},
+	{"pdgetmode", cmd_pd_get_amode},
+	{"pdsetmode", cmd_pd_set_amode},
 	{"port80read", cmd_port80_read},
 	{"pdlog", cmd_pd_log},
 	{"powerinfo", cmd_power_info},

@@ -2920,6 +2920,28 @@ struct ec_response_pd_log {
 #define PS_FAULT_OVP                          3
 #define PS_FAULT_DISCH                        4
 
+/* Get/Set USB-PD Alternate mode info */
+#define EC_CMD_USB_PD_GET_AMODE 0x116
+struct ec_params_usb_pd_get_mode_request {
+	uint16_t svid_idx; /* SVID index to get */
+	uint8_t port;      /* port */
+} __packed;
+
+struct ec_params_usb_pd_get_mode_response {
+	uint16_t svid;   /* SVID */
+	uint8_t active;  /* Active SVID */
+	uint8_t idx;     /* Index of active mode VDO. Ignored if !active */
+	uint32_t vdo[6]; /* Mode VDOs */
+} __packed;
+
+#define EC_CMD_USB_PD_SET_AMODE 0x117
+struct ec_params_usb_pd_set_mode_request {
+	int opos;      /* Object Position */
+	int svid_idx;  /* Index of svid to get */
+	uint16_t svid; /* SVID to set */
+	uint8_t port;  /* port */
+} __packed;
+
 #endif  /* !__ACPI__ */
 
 /*****************************************************************************/

@@ -1726,6 +1726,11 @@ void pd_task(void)
 	/* Initialize physical layer */
 	pd_hw_init(port);
 
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+	/* Initialize PD Policy engine */
+	pd_dfp_pe_init(port);
+#endif
+
 	while (1) {
 		/* process VDM messages last */
 		pd_vdm_send_state_machine(port);
@@ -3374,5 +3379,37 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
 		     hc_remote_pd_dev_info,
 		     EC_VER_MASK(0));
+
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+static int hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_set_mode_request *p = args->params;
+
+	if (p->port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	/* if in a mode exit it */
+	/* TODO(crosbug.com/p/33946): allow entry of multiple modes */
+	if (pd_alt_mode(p->port)) {
+		uint32_t vdo = pd_dfp_exit_mode(p->port);
+		if (vdo) {
+			queue_vdm(p->port, &vdo, NULL, 0);
+			task_wake(PORT_TO_TASK_ID(p->port));
+			/* Wait until exit VDM is done */
+			while (pd[p->port].vdm_state > 0)
+				task_wait_event(PD_T_VDM_E_MODE);
+		}
+	}
+
+	/* now try to enter new one. */
+	pd_send_vdm(p->port, p->svid,
+		    CMD_ENTER_MODE | VDO_OPOS(p->opos), NULL, 0);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
+		     hc_remote_pd_set_amode,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #endif /* CONFIG_COMMON_RUNTIME */
