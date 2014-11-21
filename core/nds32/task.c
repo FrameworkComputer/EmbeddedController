@@ -381,6 +381,8 @@ void mutex_lock(struct mutex *mtx)
 			/* end of critical section : re-enable interrupts */
 			asm volatile ("setgie.e");
 			/* Sleep waiting for our turn */
+			/* TODO(crbug.com/435612, crbug.com/435611)
+			 * This discards any pending events! */
 			task_wait_event(0);
 			/* re-enter critical section */
 			asm volatile ("setgie.d ; dsb");

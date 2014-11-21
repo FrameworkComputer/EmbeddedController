@@ -210,6 +210,9 @@ void mutex_lock(struct mutex *mtx)
 		}
 
 		if (!value)
+			/* Contention on the mutex */
+			/* TODO(crbug.com/435612, crbug.com/435611)
+			 * This discards any pending events! */
 			task_wait_event(-1);
 	} while (!value);
 

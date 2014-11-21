@@ -481,7 +481,8 @@ void mutex_lock(struct mutex *mtx)
 		 * 2 if somebody else owns the mutex, 0 else.
 		 */
 		if (value == 2)
-			task_wait_event(0);  /* Contention on the mutex */
+			/* Contention on the mutex */
+			task_wait_event_mask(TASK_EVENT_MUTEX, 0);
 	} while (value);
 
 	atomic_clear(&mtx->waiters, id);
