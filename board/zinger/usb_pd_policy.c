@@ -416,19 +416,11 @@ DECLARE_IRQ(STM32_IRQ_ADC_COMP, pd_adc_interrupt, 1);
 /* ----------------- Vendor Defined Messages ------------------ */
 const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 				 0, /* data caps as USB device */
-				 IDH_PTYPE_AMA, /* Alternate mode */
+				 IDH_PTYPE_UNDEF, /* Undefined */
 				 1, /* supports alt modes */
 				 USB_VID_GOOGLE);
 
 const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
-
-const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
-				 CONFIG_USB_PD_IDENTITY_SW_VERS,
-				 0, 0, 0, 0, /* SS[TR][12] */
-				 0, /* Vconn power */
-				 0, /* Vconn power required */
-				 0, /* Vbus power required */
-				 AMA_USBSS_BBONLY /* USB SS support */);
 
 /* When set true, we are in GFU mode */
 static int gfu_mode;
@@ -438,8 +430,7 @@ static int svdm_response_identity(int port, uint32_t *payload)
 	payload[VDO_I(IDH)] = vdo_idh;
 	payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
 	payload[VDO_I(PRODUCT)] = vdo_product;
-	payload[VDO_I(AMA)] = vdo_ama;
-	return VDO_I(AMA) + 1;
+	return VDO_I(PRODUCT) + 1;
 }
 
 static int svdm_response_svids(int port, uint32_t *payload)
