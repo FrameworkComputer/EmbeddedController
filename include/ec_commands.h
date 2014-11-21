@@ -2673,6 +2673,7 @@ struct ec_params_pd_status {
 struct ec_response_pd_status {
 	uint32_t status;      /* PD MCU status */
 	uint32_t curr_lim_ma; /* input current limit */
+	int32_t active_charge_port; /* active charging port */
 } __packed;
 
 /* AP to PD MCU host event status command, cleared on read */

@@ -33,7 +33,7 @@
 static enum power_state ps;
 
 /* Battery state of charge */
-int batt_soc;
+static int batt_soc;
 
 /* PD MCU status and host event status for host command */
 static struct ec_response_pd_status pd_status;
@@ -460,6 +460,7 @@ void board_set_active_charge_port(int charge_port)
 		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
 		charge_port = CHARGE_PORT_NONE;
 	}
+	pd_status.active_charge_port = charge_port;
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
 	CPRINTS("Set active charge port %d", charge_port);
