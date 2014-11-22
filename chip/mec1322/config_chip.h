@@ -103,7 +103,6 @@
 #if 0
 #define CONFIG_ADC
 #define CONFIG_PECI
-#define CONFIG_SWITCH
 #define CONFIG_MPU
 #endif
 #define CONFIG_DMA
@@ -111,5 +110,6 @@
 #define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_SPI
+#define CONFIG_SWITCH
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

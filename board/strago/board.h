@@ -47,7 +47,6 @@
 #undef CONFIG_EOPTION
 #undef CONFIG_PSTORE
 #undef CONFIG_PECI
-#undef CONFIG_SWITCH
 #undef CONFIG_PWM
 #undef CONFIG_FANS
 #undef CONFIG_ADC
