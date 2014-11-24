@@ -287,23 +287,18 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			 uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
-	int rsize = 1;
+	int rsize;
+
+	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
+		return 0;
+
 	CPRINTF("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	*rpayload = payload;
-	switch (cmd) {
-	case VDO_CMD_VERSION:
-		memcpy(payload + 1, &version_data.version, 24);
-		rsize = 7;
-		break;
-	case VDO_CMD_READ_INFO:
-		/* copy info into response */
-		pd_get_info(payload + 1);
-		rsize = 7;
-		break;
-	default:
-		rsize = 0;
-	}
+
+	rsize = pd_custom_flash_vdm(port, cnt, payload);
+	if (!rsize)
+		return 0;
 
 	CPRINTS("DONE");
 	/* respond (positively) to the request */

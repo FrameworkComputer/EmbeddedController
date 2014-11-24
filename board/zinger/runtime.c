@@ -205,6 +205,10 @@ void cpu_reset(void)
 		;
 }
 
+void system_reset(int flags)
+{
+	cpu_reset();
+}
 /**
  * Default exception handler, which reports a panic.
  *

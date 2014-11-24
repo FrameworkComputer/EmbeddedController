@@ -14,7 +14,6 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
-#include "version.h"
 
 /* ------------------------- Power supply control ------------------------ */
 
@@ -491,69 +490,33 @@ const struct svdm_response svdm_rsp = {
 static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			 uint32_t **rpayload)
 {
-	static int flash_offset;
 	int cmd = PD_VDO_CMD(payload[0]);
-	int rsize = 1;
+	int rsize;
 
 	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
 		return 0;
 
 	debug_printf("%T] VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
-
 	*rpayload = payload;
-	switch (cmd) {
-	case VDO_CMD_VERSION:
-		memcpy(payload + 1, &version_data.version, 24);
-		rsize = 7;
-		break;
-	case VDO_CMD_REBOOT:
-		/* ensure the power supply is in a safe state */
-		pd_power_supply_reset(0);
-		cpu_reset();
-		break;
-	case VDO_CMD_READ_INFO:
-		/* copy info into response */
-		memcpy(payload + 1, board_get_info(), 24);
-		rsize = 7;
-		break;
-	case VDO_CMD_FLASH_ERASE:
-		/* do not kill the code under our feet */
-		if (!is_ro_mode())
+
+	rsize = pd_custom_flash_vdm(port, cnt, payload);
+	if (!rsize) {
+		switch (cmd) {
+		case VDO_CMD_PING_ENABLE:
+			pd_ping_enable(0, payload[1]);
+			rsize = 1;
 			break;
-		flash_offset = 0;
-		flash_erase_rw();
-		break;
-	case VDO_CMD_FLASH_WRITE:
-		/* do not kill the code under our feet */
-		if (!is_ro_mode())
+		case VDO_CMD_CURRENT:
+			/* return last measured current */
+			payload[1] = ADC_TO_CURR_MA(vbus_amp);
+			rsize = 2;
 			break;
-		flash_write_rw(flash_offset, 4*(cnt - 1),
-			       (const char *)(payload+1));
-		flash_offset += 4*(cnt - 1);
-		break;
-	case VDO_CMD_ERASE_SIG:
-		/* this is not touching the code area */
-		{
-			uint32_t zero = 0;
-			int offset;
-			/* zeroes the area containing the RSA signature */
-			for (offset = CONFIG_FW_RW_SIZE - 256;
-			     offset < CONFIG_FW_RW_SIZE; offset += 4)
-				flash_write_rw(offset, 4, (const char *)&zero);
+		default:
+			/* Unknown : do not answer */
+			return 0;
 		}
-		break;
-	case VDO_CMD_PING_ENABLE:
-		pd_ping_enable(0, payload[1]);
-		break;
-	case VDO_CMD_CURRENT:
-		/* return last measured current */
-		payload[1] = ADC_TO_CURR_MA(vbus_amp);
-		rsize = 2;
-		break;
-	default:
-		/* Unknown : do not answer */
-		return 0;
 	}
+
 	debug_printf("%T] DONE\n");
 	/* respond (positively) to the request */
 	payload[0] |= VDO_SRC_RESPONDER;

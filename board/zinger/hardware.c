@@ -298,15 +298,11 @@ int adc_disable_watchdog(void)
 #define STRT     (1<<6)
 #define CR_LOCK  (1<<7)
 
-int flash_write_rw(int offset, int size, const char *data)
+int flash_physical_write(int offset, int size, const char *data)
 {
-	uint16_t *address = (uint16_t *)
-		(CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF + offset);
+	uint16_t *address = (uint16_t *)(CONFIG_FLASH_BASE + offset);
 	int res = EC_SUCCESS;
 	int i;
-
-	/* notify board of a RW flash contents change */
-	board_rw_contents_change();
 
 	if ((uint32_t)address > CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
@@ -353,14 +349,9 @@ exit_wr:
 	return res;
 }
 
-int flash_erase_rw(void)
+int flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
-	int offset = CONFIG_FW_RW_OFF;
-	int size = CONFIG_FW_RW_SIZE;
-
-	/* notify board of a RW flash contents change */
-	board_rw_contents_change();
 
 	/* unlock CR if needed */
 	if (STM32_FLASH_CR & CR_LOCK) {

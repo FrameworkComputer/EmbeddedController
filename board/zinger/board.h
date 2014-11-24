@@ -109,13 +109,6 @@ int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
 		     uint32_t rtc1, uint32_t rtc1ss);
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 
-/* Reboot the CPU */
-void cpu_reset(void);
-
-/* Board version information functions */
-uint32_t *board_get_info(void);
-void board_rw_contents_change(void);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

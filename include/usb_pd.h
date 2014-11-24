@@ -821,6 +821,16 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /**
+ * Handle Custom VDMs for flashing.
+ *
+ * @param port     USB-C port number
+ * @param cnt      number of data objects in the payload.
+ * @param payload  payload data.
+ * @return if >0, number of VDOs to send back.
+ */
+int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload);
+
+/**
  * Exit alternate mode
  *
  * @param port     USB-C port number
@@ -1165,4 +1175,5 @@ void pd_soft_reset(void);
  * @param port USB-C port number
  */
 void pd_set_new_power_request(int port);
+
 #endif  /* __USB_PD_H */
