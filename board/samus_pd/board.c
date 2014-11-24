@@ -57,15 +57,41 @@ const int supplier_priority[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
+static void pericom_port0_reenable_interrupts(void)
+{
+	pi3usb9281_enable_interrupts(0);
+}
+DECLARE_DEFERRED(pericom_port0_reenable_interrupts);
+
+static void pericom_port1_reenable_interrupts(void)
+{
+	pi3usb9281_enable_interrupts(1);
+}
+DECLARE_DEFERRED(pericom_port1_reenable_interrupts);
+
 void vbus0_evt(enum gpio_signal signal)
 {
 	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
+	/*
+	 * Re-enable interrupts on pericom charger detector since the
+	 * chip may periodically reset itself, and come back up with
+	 * registers in default state. TODO(crosbug.com/p/33823): Fix
+	 * these unwanted resets.
+	 */
+	hook_call_deferred(pericom_port0_reenable_interrupts, 0);
 	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
 	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
+	/*
+	 * Re-enable interrupts on pericom charger detector since the
+	 * chip may periodically reset itself, and come back up with
+	 * registers in default state. TODO(crosbug.com/p/33823): Fix
+	 * these unwanted resets.
+	 */
+	hook_call_deferred(pericom_port1_reenable_interrupts, 0);
 	task_wake(TASK_ID_PD_C1);
 }
 

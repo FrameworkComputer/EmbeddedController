@@ -65,6 +65,10 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* 10 deferrable tasks on this board */
+#undef  DEFERRABLE_MAX_COUNT
+#define DEFERRABLE_MAX_COUNT 10
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
