@@ -36,6 +36,21 @@
 #define NRF51_TWI_FREQ(port)      NRF51_TWI_100KBPS
 #define NRF51_TWI_PPI_CHAN(port)  0
 
+#define BATTERY_VOLTAGE_MAX         4425 /* mV */
+#define BATTERY_VOLTAGE_NORMAL      3800 /* mV */
+#define BATTERY_VOLTAGE_MIN         3000 /* mV */
+
+#define CONFIG_BATTERY_BQ27621
+#define BQ27621_CHEM_ID             0x0354 /* 4.35V maximum charge */
+#define BQ27621_TOGGLE_POWER_MIN    0
+
+#define BQ27621_DESIGN_CAPACITY     120 /* mAh */
+#define BQ27621_DESIGN_ENERGY       444 /* mWh */
+#define BQ27621_TERMINATE_VOLTAGE   BATTERY_VOLTAGE_MIN /* mV */
+#define BQ27621_TAPER_CURRENT       6   /* mA */
+
+#define I2C_PORT_BATTERY NRF51_TWI_PORT
+
 
 #include "gpio_signal.h"
 
