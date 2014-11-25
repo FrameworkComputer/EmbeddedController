@@ -815,12 +815,12 @@ static int range(int val, int min, int ofs)
 /* Handy constant */
 #define CUT (100 / NUM_LEDS)
 
-static uint32_t sequence_TAP_inner(void)
+static uint32_t sequence_TAP_inner(int dir)
 {
 	enum { RED, YELLOW, GREEN } base_color;
 	timestamp_t start, now;
 	uint32_t elapsed_time = 0;
-	int i, ci, max_led;
+	int i, l, ci, max_led;
 	int f_min, f_delta, f_osc, f_power, f_mult;
 	int gi, gr, gate[NUM_LEDS] = {0, 0, 0, 0};
 	uint8_t w = 0;
@@ -883,7 +883,8 @@ static uint32_t sequence_TAP_inner(void)
 				f_mult = f_mult * scale / FP_SCALE;
 			}
 
-			lb_set_rgb(i, f_mult * st.p.color[ci].r / FP_SCALE,
+			l = dir ? i : NUM_LEDS - 1 - i;
+			lb_set_rgb(l, f_mult * st.p.color[ci].r / FP_SCALE,
 				   f_mult * st.p.color[ci].g / FP_SCALE,
 				   f_mult * st.p.color[ci].b / FP_SCALE);
 		}
@@ -899,11 +900,23 @@ static uint32_t sequence_TAP_inner(void)
 	return 0;
 }
 
+/* TODO(chrome-os-partner:32227): Remove this when it works for real. */
+static int force_dir;
+
+/* Return 0 (left or none) or 1 (right) */
+static int get_tap_direction(void)
+{
+	/* TODO(chrome-os-partner:32227): Decide which direction to go */
+	CPRINTS("LB tap direction %d", force_dir);
+	return force_dir;
+}
+
 static uint32_t sequence_TAP(void)
 {
 	int i;
 	uint32_t r;
 	uint8_t br, save[NUM_LEDS][3];
+	int dir;
 
 	/*
 	 * There's a lot of unavoidable glitchiness on the AC_PRESENT interrupt
@@ -912,6 +925,9 @@ static uint32_t sequence_TAP(void)
 	 * from flickering without reducing the responsiveness to manual taps.
 	 */
 	WAIT_OR_RET(100 * MSEC);
+
+	/* Which direction should the power meter go? */
+	dir = get_tap_direction();
 
 #ifdef CONFIG_LIGHTBAR_POWER_RAILS
 	/* Request that the lightbar power rails be turned on. */
@@ -927,7 +943,7 @@ static uint32_t sequence_TAP(void)
 	br = lb_get_brightness();
 	lb_set_brightness(255);
 
-	r = sequence_TAP_inner();
+	r = sequence_TAP_inner(dir);
 
 	lb_set_brightness(br);
 	for (i = 0; i < NUM_LEDS; i++)
@@ -1720,6 +1736,8 @@ static int command_lightbar(int argc, char **argv)
 			num = find_msg_by_name(argv[2]);
 		if (num >= LIGHTBAR_NUM_SEQUENCES)
 			return EC_ERROR_PARAM2;
+		if (argc > 3)			/* for testing TAP direction */
+			force_dir = strtoi(argv[3], 0, 0);
 		lightbar_sequence(num);
 		return EC_SUCCESS;
 	}
