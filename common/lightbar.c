@@ -341,14 +341,14 @@ static inline int cycle_npn(uint16_t i)
 static uint32_t pending_msg;
 /* And here's the task event that we use to trigger delivery. */
 #define PENDING_MSG 1
-/* When a program halts, return this. */
-#define PROGRAM_FINISHED 2
 
 /* Interruptible delay. */
-#define WAIT_OR_RET(A) do { \
-	uint32_t msg = task_wait_event(A); \
-	if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) \
-		return PENDING_MSG; } while (0)
+#define WAIT_OR_RET(A) do {				\
+		uint32_t msg = task_wait_event(A);	\
+		uint32_t p_msg = pending_msg;		\
+		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG &&	\
+		    p_msg != st.cur_seq)			\
+			return p_msg; } while (0)
 
 /******************************************************************************/
 /* Here are the preprogrammed sequences. */
@@ -401,7 +401,8 @@ static uint32_t sequence_S3S0(void)
 		return res;
 
 #ifndef BLUE_PULSING
-	return 0;
+	/* next sequence */
+	return LIGHTBAR_S0;
 #endif
 
 	/* Ramp up to starting brightness, using S0 colors */
@@ -425,7 +426,7 @@ static uint32_t sequence_S3S0(void)
 	st.ramp = 0;
 
 	/* Ready for S0 */
-	return 0;
+	return LIGHTBAR_S0;
 }
 
 #ifdef BLUE_PULSING
@@ -549,6 +550,7 @@ static uint32_t sequence_S0S3(void)
 	int w, i, r, g, b;
 	int f;
 	uint8_t drop[NUM_LEDS][3];
+	uint32_t res;
 
 	/* Grab current colors */
 	for (i = 0; i < NUM_LEDS; i++)
@@ -567,7 +569,12 @@ static uint32_t sequence_S0S3(void)
 	}
 
 	/* pulse once and done */
-	return pulse_google_colors();
+	res = pulse_google_colors();
+	if (res)
+		return res;
+
+	/* next sequence */
+	return LIGHTBAR_S3;
 }
 
 /* CPU is sleeping */
@@ -628,14 +635,16 @@ static uint32_t sequence_S5S3(void)
 	lb_init();
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	lb_on();
-	return 0;
+	/* next sequence */
+	return LIGHTBAR_S3;
 }
 
 /* Sleep to off. The S3->S5 transition takes about 10msec, so just wait. */
 static uint32_t sequence_S3S5(void)
 {
 	lb_off();
-	return 0;
+	/* next sequence */
+	return LIGHTBAR_S5;
 }
 
 /* CPU is off. The lightbar loses power when the CPU is in S5, so there's
@@ -896,6 +905,14 @@ static uint32_t sequence_TAP(void)
 	uint32_t r;
 	uint8_t br, save[NUM_LEDS][3];
 
+	/*
+	 * There's a lot of unavoidable glitchiness on the AC_PRESENT interrupt
+	 * each time the EC boots, resulting in fights between the TAP sequence
+	 * and the S5S3->S3->S3S0->S0 sequences. This delay prevents the lights
+	 * from flickering without reducing the responsiveness to manual taps.
+	 */
+	WAIT_OR_RET(100 * MSEC);
+
 #ifdef CONFIG_LIGHTBAR_POWER_RAILS
 	/* Request that the lightbar power rails be turned on. */
 	if (lb_power(1)) {
@@ -926,6 +943,9 @@ static uint32_t sequence_TAP(void)
 /****************************************************************************/
 /* Lightbar bytecode interpreter: Lightbyte. */
 /****************************************************************************/
+
+/* When a program halts, return this. */
+#define PROGRAM_FINISHED 2
 
 static struct lightbar_program cur_prog;
 static struct lightbar_program next_prog;
@@ -1383,7 +1403,7 @@ static struct lightbar_cmd_t lightbar_cmds[] = {
 
 void lightbar_task(void)
 {
-	uint32_t msg;
+	uint32_t next_seq;
 
 	CPRINTS("LB task starting");
 
@@ -1393,20 +1413,19 @@ void lightbar_task(void)
 		CPRINTS("LB running cur_seq %d %s. prev_seq %d %s",
 			st.cur_seq, lightbar_cmds[st.cur_seq].string,
 			st.prev_seq, lightbar_cmds[st.prev_seq].string);
-		msg = lightbar_cmds[st.cur_seq].sequence();
-		if (TASK_EVENT_CUSTOM(msg) == PENDING_MSG) {
+		next_seq = lightbar_cmds[st.cur_seq].sequence();
+		if (next_seq) {
 			CPRINTS("LB cur_seq %d %s returned pending msg %d %s",
 				st.cur_seq, lightbar_cmds[st.cur_seq].string,
-				pending_msg, lightbar_cmds[pending_msg].string);
-			if (st.cur_seq != pending_msg) {
+				next_seq, lightbar_cmds[next_seq].string);
+			if (st.cur_seq != next_seq) {
 				if (is_normal_sequence(st.cur_seq))
 					st.prev_seq = st.cur_seq;
-				st.cur_seq = pending_msg;
+				st.cur_seq = next_seq;
 			}
 		} else {
-			CPRINTS("LB cur_seq %d %s returned value %d",
-				st.cur_seq, lightbar_cmds[st.cur_seq].string,
-				msg);
+			CPRINTS("LB cur_seq %d %s returned value 0",
+				st.cur_seq, lightbar_cmds[st.cur_seq].string);
 			switch (st.cur_seq) {
 			case LIGHTBAR_S5S3:
 				st.cur_seq = LIGHTBAR_S3;
