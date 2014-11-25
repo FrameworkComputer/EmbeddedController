@@ -169,26 +169,3 @@ int __hw_clock_source_init(uint32_t start_t)
 	return NRF51_PERID_TIMER0;
 }
 
-
-/* FIXME: for demo only. remove me later */
-#include "gpio.h"
-#include "timer.h"
-void blink_led(void)
-{
-	gpio_set_level(GPIO_LED0, 0);
-	gpio_set_level(GPIO_LED1, 1);
-	usleep(250 * 1000);
-	gpio_set_level(GPIO_LED0, 1);
-	gpio_set_level(GPIO_LED1, 0);
-	usleep(250 * 1000);
-	gpio_set_level(GPIO_LED0, 0);
-}
-static void test_hook(void)
-{
-	static int secs;
-	secs++;
-	if (!(secs % 100))
-		CPRINTS("%s()", __func__);
-	blink_led();
-}
-DECLARE_HOOK(HOOK_SECOND, test_hook, HOOK_PRIO_DEFAULT);
