@@ -14,3 +14,4 @@ chip-y+=gpio.o system.o uart.o
 chip-y+=jtag.o watchdog.o
 
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer.o clock.o
+chip-$(CONFIG_I2C)+=i2c.o

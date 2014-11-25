@@ -27,6 +27,9 @@
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
 
+/* Number of I2C ports */
+#define I2C_PORT_COUNT 2
+
 /*
  * --- chip variant settings ---
  */
