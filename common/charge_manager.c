@@ -7,11 +7,18 @@
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+
+#define POWER(charge_port) ((charge_port.current) * (charge_port.voltage))
+
+/* Timeout for delayed override power swap, allow for 500ms extra */
+#define POWER_SWAP_TIMEOUT (PD_T_SRC_RECOVER_MAX + PD_T_SRC_TURN_ON + \
+			    PD_T_SAFE_0V + 500 * MSEC)
 
 /* Keep track of available charge for each charge port. */
 static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
@@ -30,6 +37,9 @@ static int charge_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
 static int charge_voltage;
 static int charge_supplier = CHARGE_SUPPLIER_NONE;
 static int override_port = OVERRIDE_OFF;
+
+static int delayed_override_port = OVERRIDE_OFF;
+static timestamp_t delayed_override_deadline;
 
 /**
  * Initialize available charge. Run before board init, so board init can
@@ -215,15 +225,29 @@ void charge_manager_update(int supplier,
 	if (available_charge[supplier][port].current != charge->current ||
 		available_charge[supplier][port].voltage != charge->voltage) {
 		/* Remove override when a dedicated charger is plugged */
-		if (override_port != OVERRIDE_OFF &&
-		    available_charge[supplier][port].current == 0 &&
+		if (available_charge[supplier][port].current == 0 &&
 		    charge->current > 0 &&
-		    !pd_get_partner_dualrole_capable(port))
+		    !pd_get_partner_dualrole_capable(port)) {
 			override_port = OVERRIDE_OFF;
-
-
+			if (delayed_override_port != OVERRIDE_OFF) {
+				delayed_override_port = OVERRIDE_OFF;
+				hook_call_deferred(
+					board_charge_manager_override_timeout,
+					-1);
+			}
+		}
 		available_charge[supplier][port].current = charge->current;
 		available_charge[supplier][port].voltage = charge->voltage;
+
+		/*
+		 * If we have a charge on our delayed override port within
+		 * the deadline, make it our override port.
+		 */
+		if (port == delayed_override_port &&
+		    charge->current > 0 &&
+		    pd_get_role(delayed_override_port) == PD_ROLE_SINK &&
+		    get_time().val < delayed_override_deadline.val)
+			charge_manager_set_override(port);
 
 		/*
 		 * Don't call charge_manager_refresh unless all ports +
@@ -255,21 +279,52 @@ void charge_manager_set_ceil(int port, int ceil)
 
 /**
  * Select an 'override port', a port which is always the preferred charge port.
+ * Returns EC_SUCCESS on success, ec_error_list status on failure.
  *
  * @param port			Charge port to select as override, or
  *				OVERRIDE_OFF to select no override port,
  *				or OVERRIDE_DONT_CHARGE to specifc that no
  *				charge port should be selected.
  */
-void charge_manager_set_override(int port)
+int charge_manager_set_override(int port)
 {
-	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < PD_PORT_COUNT);
+	int retval = EC_SUCCESS;
 
-	if (override_port != port) {
-		override_port = port;
-		if (charge_manager_is_seeded())
-			hook_call_deferred(charge_manager_refresh, 0);
+	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < PD_PORT_COUNT);
+	/* Supersede any pending delayed overrides. */
+
+	if (delayed_override_port != OVERRIDE_OFF) {
+		delayed_override_port = OVERRIDE_OFF;
+		hook_call_deferred(
+			board_charge_manager_override_timeout, -1);
 	}
+
+	/* Set the override port if it's a sink. */
+	if (port < 0 || pd_get_role(port) == PD_ROLE_SINK) {
+		if (override_port != port) {
+			override_port = port;
+			if (charge_manager_is_seeded())
+				hook_call_deferred(charge_manager_refresh, 0);
+		}
+	}
+	/*
+	 * If the attached device is capable of being a sink, request a
+	 * power swap and set the delayed override for swap completion.
+	 */
+	else if (pd_get_role(port) != PD_ROLE_SINK &&
+		 pd_get_partner_dualrole_capable(port)) {
+		delayed_override_deadline.val = get_time().val +
+						POWER_SWAP_TIMEOUT;
+		delayed_override_port = port;
+		hook_call_deferred(
+			board_charge_manager_override_timeout,
+			POWER_SWAP_TIMEOUT);
+		pd_request_power_swap(port);
+	/* Can't charge from requested port -- return error. */
+	} else
+		retval = EC_ERROR_INVAL;
+
+	return retval;
 }
 
 int charge_manager_get_active_charge_port(void)
@@ -384,15 +439,7 @@ static int hc_charge_port_override(struct host_cmd_handler_args *args)
 	    override_port >= PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	if (override_port >= 0 && pd_get_role(override_port) != PD_ROLE_SINK)
-		/*
-		 * TODO(crosbug.com/p/31195): Switch dual-role ports
-		 * from source to sink.
-		 */
-		return EC_RES_ERROR;
-
-	charge_manager_set_override(override_port);
-	return EC_RES_SUCCESS;
+	return charge_manager_set_override(override_port);
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE,
 		     hc_charge_port_override,
@@ -409,16 +456,8 @@ static int command_charge_port_override(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	if (port >= 0 && pd_get_role(override_port) != PD_ROLE_SINK)
-		/*
-		 * TODO(crosbug.com/p/31195): Switch dual-role ports
-		 * from source to sink.
-		 */
-		return EC_ERROR_PARAM1;
-
-	charge_manager_set_override(port);
 	ccprintf("Set override: %d\n", port);
-	return EC_SUCCESS;
+	return charge_manager_set_override(port);
 }
 DECLARE_CONSOLE_COMMAND(chgoverride, command_charge_port_override,
 	"[port | -1 | -2]",

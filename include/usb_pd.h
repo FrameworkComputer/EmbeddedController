@@ -109,6 +109,30 @@ enum pd_errors {
 /* TODO(tbroch) is there a finite number for these in the spec */
 #define SVID_DISCOVERY_MAX 16
 
+/* Timers */
+#define PD_T_SEND_SOURCE_CAP  (100*MSEC) /* between 100ms and 200ms */
+#define PD_T_SINK_WAIT_CAP    (240*MSEC) /* between 210ms and 250ms */
+#define PD_T_SINK_TRANSITION   (35*MSEC) /* between 20ms and 35ms */
+#define PD_T_SOURCE_ACTIVITY   (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_SENDER_RESPONSE   (30*MSEC) /* between 24ms and 30ms */
+#define PD_T_PS_TRANSITION    (500*MSEC) /* between 450ms and 550ms */
+#define PD_T_PS_SOURCE_ON     (480*MSEC) /* between 390ms and 480ms */
+#define PD_T_PS_SOURCE_OFF    (920*MSEC) /* between 750ms and 920ms */
+#define PD_T_DRP_HOLD         (120*MSEC) /* between 100ms and 150ms */
+#define PD_T_DRP_LOCK         (120*MSEC) /* between 100ms and 150ms */
+/* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
+#define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
+#define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
+#define PD_T_DEBOUNCE          (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_SINK_ADJ          (55*MSEC) /* between PD_T_DEBOUNCE and 60ms */
+#define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
+#define PD_T_SRC_RECOVER_MAX (1000*MSEC) /* 1000ms */
+#define PD_T_SRC_TURN_ON      (275*MSEC) /* 275ms */
+#define PD_T_SAFE_0V          (650*MSEC) /* 650ms */
+
+/* from USB Type-C Specification Table 5-1 */
+#define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
+
 /* function table for entered mode */
 struct amode_fx {
 	int (*status)(int port, uint32_t *payload);

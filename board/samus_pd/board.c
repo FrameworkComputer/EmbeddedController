@@ -142,6 +142,13 @@ static void board_usb_charger_update(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+/* Charge manager callback function, called on delayed override timeout */
+void board_charge_manager_override_timeout(void)
+{
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(board_charge_manager_override_timeout);
+
 /* Pericom USB deferred tasks -- called after USB device insert / removal */
 static void usb_port0_charger_update(void)
 {

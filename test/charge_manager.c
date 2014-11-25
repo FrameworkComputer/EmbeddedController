@@ -34,6 +34,7 @@ static unsigned int active_charge_limit = CHARGE_SUPPLIER_NONE;
 static unsigned int active_charge_port = CHARGE_PORT_NONE;
 static int new_power_request[PD_PORT_COUNT];
 static int dual_role_capable[PD_PORT_COUNT];
+static int power_role[PD_PORT_COUNT];
 
 enum {
 	DEDICATED_CHARGER = 0,
@@ -49,6 +50,10 @@ void board_set_charge_limit(int charge_ma)
 void board_set_active_charge_port(int charge_port)
 {
 	active_charge_port = charge_port;
+}
+
+void board_charge_manager_override_timeout(void)
+{
 }
 
 void pd_set_new_power_request(int port)
@@ -78,9 +83,22 @@ int pd_get_partner_dualrole_capable(int port)
 	return dual_role_capable[port];
 }
 
+static void pd_set_role(int port, int role)
+{
+	power_role[port] = role;
+}
+
 int pd_get_role(int port)
 {
-	return PD_ROLE_SINK;
+	return power_role[port];
+}
+
+void pd_request_power_swap(int port)
+{
+	if (power_role[port] == PD_ROLE_SINK)
+		power_role[port] = PD_ROLE_SOURCE;
+	else
+		power_role[port] = PD_ROLE_SINK;
 }
 
 static void wait_for_charge_manager_refresh(void)
@@ -100,6 +118,7 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 	for (i = 0; i < PD_PORT_COUNT; ++i) {
 		charge_manager_set_ceil(i, ceil);
 		set_charger_role(i, DEDICATED_CHARGER);
+		pd_set_role(i, PD_ROLE_SINK);
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j)
 			charge_manager_update(j, i, &charge);
 	}
@@ -353,6 +372,23 @@ static int test_override(void)
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 0);
 	TEST_ASSERT(active_charge_limit == 100);
+
+	/*
+	 * Verify that an override request on a dual-role source port
+	 * causes a role swap, and we charge from the port if the swap
+	 * is successful.
+	 */
+	charge_manager_set_override(OVERRIDE_DONT_CHARGE);
+	set_charger_role(0, DUAL_ROLE_CHARGER);
+	pd_set_role(0, PD_ROLE_SOURCE);
+	charge_manager_set_override(0);
+	wait_for_charge_manager_refresh();
+	charge.current = 200;
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SINK);
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 200);
 
 	/* Set override to "don't charge", then verify we're not charging */
 	charge_manager_set_override(OVERRIDE_DONT_CHARGE);
