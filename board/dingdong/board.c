@@ -105,6 +105,8 @@ static void board_init(void)
 	hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
 	hpd_prev_ts = now.val;
 	gpio_enable_interrupt(GPIO_DP_HPD);
+
+	gpio_set_level(GPIO_STM_READY, 1); /* factory test only */
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
