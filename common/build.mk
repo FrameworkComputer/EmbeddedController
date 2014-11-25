@@ -18,6 +18,7 @@ common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 # instead, since all that's in battery.c is the battery console
 # command?
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o
+common-$(CONFIG_BATTERY_BQ27621)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
 common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o

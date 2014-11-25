@@ -16,6 +16,7 @@ driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
 # Batteries
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o
+driver-$(CONFIG_BATTERY_BQ27621)+=battery/bq27621_g1.o
 driver-$(CONFIG_BATTERY_LINK)+=battery/link.o
 driver-$(CONFIG_BATTERY_SAMUS)+=battery/samus.o
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
