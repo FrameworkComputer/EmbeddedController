@@ -222,8 +222,8 @@ int hook_call_deferred(void (*routine)(void), int us);
  *			order in which hooks are called.
  */
 #define DECLARE_HOOK(hooktype, routine, priority)			\
-	const struct hook_data __hook_##hooktype##_##routine		\
-	__attribute__((section(".rodata." #hooktype)))			\
+	const struct hook_data CONCAT4(__hook_, hooktype, _, routine)	\
+	__attribute__((section(".rodata." STRINGIFY(hooktype))))	\
 	     = {routine, priority}
 
 
@@ -247,13 +247,15 @@ struct deferred_data {
  * @param routine	Function pointer, with prototype void routine(void)
  */
 #define DECLARE_DEFERRED(routine)					\
-	const struct deferred_data __deferred_##routine			\
+	const struct deferred_data CONCAT2(__deferred_, routine)	\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
 
 #else /* CONFIG_COMMON_RUNTIME */
-#define DECLARE_HOOK(t, func, p) void unused_hook_##func(void) { func(); }
-#define DECLARE_DEFERRED(func) void unused_deferred_##func(void) { func(); }
+#define DECLARE_HOOK(t, func, p)				\
+	void CONCAT2(unused_hook_, func)(void) { func(); }
+#define DECLARE_DEFERRED(func)					\
+	void CONCAT2(unused_deferred_, func)(void) { func(); }
 #endif /* CONFIG_COMMON_RUNTIME */
 
 #endif  /* __CROS_EC_HOOKS_H */
