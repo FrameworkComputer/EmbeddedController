@@ -22,10 +22,13 @@ void host_command_pd_send_status(void)
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
 }
 
-static void pd_exchange_status(void)
+void pd_exchange_status(int *charge_port)
 {
 	struct ec_params_pd_status ec_status;
-	struct ec_response_pd_status pd_status;
+	struct ec_response_pd_status pd_status = {
+		/* default for when the PD isn't cooperating */
+		.active_charge_port = -1,
+	};
 	int rv = 0;
 
 	/* Send battery state of charge */
@@ -37,6 +40,9 @@ static void pd_exchange_status(void)
 	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
 			     sizeof(struct ec_params_pd_status), &pd_status,
 			     sizeof(struct ec_response_pd_status));
+
+	if (charge_port)
+		*charge_port = pd_status.active_charge_port;
 
 	if (rv < 0) {
 		CPRINTS("Host command to PD MCU failed");
@@ -57,7 +63,7 @@ static void pd_exchange_status(void)
 void pd_command_task(void)
 {
 	/* On startup exchange status with the PD */
-	pd_exchange_status();
+	pd_exchange_status(0);
 
 	while (1) {
 		/* Wait for the next command event */
@@ -65,7 +71,6 @@ void pd_command_task(void)
 
 		/* Process event to send status to PD */
 		if (evt & TASK_EVENT_EXCHANGE_PD_STATUS)
-			pd_exchange_status();
+			pd_exchange_status(0);
 	}
 }
-

@@ -214,6 +214,16 @@ void host_throttle_cpu(int throttle);
 void host_command_pd_send_status(void);
 
 /**
+ * Ask the PD MCU for its status, obtaining the current charge_port as a
+ * side-effect (-1 means none or don't know).
+ *
+ * @param charge_port   If present, updated with the current charge port:
+ *                        -1 == none/unknown, 0 == left, 1 == right.
+ */
+void pd_exchange_status(int *charge_port);
+
+
+/**
  * Send host command to PD MCU.
  *
  * @param command Host command number

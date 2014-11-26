@@ -900,15 +900,25 @@ static uint32_t sequence_TAP_inner(int dir)
 	return 0;
 }
 
-/* TODO(chrome-os-partner:32227): Remove this when it works for real. */
-static int force_dir;
+/* Override the tap direction for testing. -1 means ask the PD MCU. */
+static int force_dir = -1;
 
 /* Return 0 (left or none) or 1 (right) */
 static int get_tap_direction(void)
 {
-	/* TODO(chrome-os-partner:32227): Decide which direction to go */
-	CPRINTS("LB tap direction %d", force_dir);
-	return force_dir;
+	int dir = 0;
+
+	if (force_dir >= 0)
+		dir = force_dir;
+#ifdef HAS_TASK_PDCMD
+	else
+		pd_exchange_status(&dir);
+#endif
+	if (dir != 1)
+		dir = 0;
+
+	CPRINTS("LB tap direction %d", dir);
+	return dir;
 }
 
 static uint32_t sequence_TAP(void)
