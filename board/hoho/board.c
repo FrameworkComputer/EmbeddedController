@@ -10,7 +10,6 @@
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "i2c.h"
 #include "registers.h"
 #include "task.h"
 #include "usb.h"
@@ -153,12 +152,6 @@ const struct adc_t adc_channels[] = {
 	[ADC_CH_CC1_PD] = {"USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
-/* I2C ports */
-const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 400, GPIO_MCDP_I2C_SCL, GPIO_MCDP_I2C_SDA},
-};
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const void * const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,

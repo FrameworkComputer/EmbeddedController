@@ -20,7 +20,6 @@
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CMD_SPI_FLASH
 #define CONFIG_HW_CRC
-#define CONFIG_I2C
 #define CONFIG_RSA
 #define CONFIG_RWSIG
 #define CONFIG_SHA256
@@ -47,9 +46,6 @@
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_TASK_PROFILING
-
-/* I2C ports configuration */
-#define I2C_PORT_MASTER 0
 
 /* USB configuration */
 #define CONFIG_USB_PID 0x5010
