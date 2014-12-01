@@ -83,6 +83,15 @@ static int desc_left;
 /* pointer to descriptor data if any */
 static const uint8_t *desc_ptr;
 
+void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
+{
+	packet->bmRequestType = buffer[0] & 0xff;
+	packet->bRequest      = buffer[0] >> 8;
+	packet->wValue        = buffer[1];
+	packet->wIndex        = buffer[2];
+	packet->wLength       = buffer[3];
+}
+
 /* Requests on the control endpoint (aka EP0) */
 static void ep0_rx(void)
 {

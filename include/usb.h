@@ -194,6 +194,15 @@ struct usb_endpoint_descriptor {
 
 #define USB_BC12_CHARGE_VOLTAGE    5000 /* mV */
 
+/* Setup Packet */
+struct usb_setup_packet {
+	uint8_t  bmRequestType;
+	uint8_t  bRequest;
+	uint16_t wValue;
+	uint16_t wIndex;
+	uint16_t wLength;
+};
+
 /* Helpers for descriptors */
 
 #define WIDESTR(quote) WIDESTR2(quote)
@@ -241,6 +250,9 @@ struct stm32_endpoint {
 #define __usb_ram __attribute__((section(".usb_ram.data")))
 
 extern struct stm32_endpoint btable_ep[];
+
+/* Read from USB RAM into a usb_setup_packet struct */
+void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet);
 
 /* Copy data to the USB dedicated RAM and take care of the weird addressing */
 static inline void memcpy_usbram(usb_uint *ebuf, const uint8_t *src, int size)
