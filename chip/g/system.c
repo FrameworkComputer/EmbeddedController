@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cpu.h"
 #include "system.h"
 #include "registers.h"
 
@@ -14,7 +15,11 @@ void system_pre_init(void)
 /* TODO(crosbug.com/p/33818): How do we force a reset? */
 void system_reset(int flags)
 {
-
+	/* Until we have a full microcontroller, at least reset the CPU core */
+	CPU_NVIC_APINT = 0x05fa0004;
+	/* should be gone here */
+	while (1)
+		;
 }
 
 const char *system_get_chip_vendor(void)
