@@ -163,35 +163,33 @@ static void ms_rx(void)
 USB_DECLARE_EP(USB_EP_MS_TX, ms_tx, ms_tx, ms_tx_reset);
 USB_DECLARE_EP(USB_EP_MS_RX, ms_rx, ms_rx, ms_rx_reset);
 
-static void ms_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
+static int ms_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 {
 	uint16_t *req = (uint16_t *) ep0_buf_rx;
 
-	if ((req[0] & (USB_DIR_OUT | USB_RECIP_INTERFACE | USB_TYPE_CLASS)) ==
-	    (USB_DIR_OUT | USB_RECIP_INTERFACE | USB_TYPE_CLASS)) {
-		switch (req[0] >> 8) {
-		case USB_MS_REQ_RESET:
-			if (req[1] == 0 && req[2] == USB_IFACE_MS &&
-			    req[3] == 0) {
-				ms_rx_reset();
-			}
-		break;
-		case USB_MS_REQ_GET_MAX_LUN:
-			if (req[1] == 0 && req[2] == USB_IFACE_MS &&
-			    req[3] == 1) {
-				ep0_buf_tx[0] = SCSI_MAX_LUN;
-				btable_ep[0].tx_count = sizeof(uint8_t);
-				STM32_TOGGLE_EP(USB_EP_CONTROL, EP_TX_RX_MASK,
-					EP_TX_RX_VALID, 0);
-			}
-		break;
+	if ((req[0] & (USB_DIR_OUT | USB_RECIP_INTERFACE | USB_TYPE_CLASS)) !=
+	    (USB_DIR_OUT | USB_RECIP_INTERFACE | USB_TYPE_CLASS))
+		return 1;
+
+	switch (req[0] >> 8) {
+	case USB_MS_REQ_RESET:
+		if (req[1] == 0 && req[2] == USB_IFACE_MS &&
+		    req[3] == 0) {
+			ms_rx_reset();
 		}
-	} else {
-		CPRINTF("ms stalling: %x %x %x %x\n",
-			req[0], req[1], req[2], req[3]);
-		STM32_TOGGLE_EP(USB_EP_CONTROL, EP_TX_RX_MASK,
-			EP_RX_VALID | EP_TX_STALL, 0);
+		break;
+	case USB_MS_REQ_GET_MAX_LUN:
+		if (req[1] == 0 && req[2] == USB_IFACE_MS &&
+		    req[3] == 1) {
+			ep0_buf_tx[0] = SCSI_MAX_LUN;
+			btable_ep[0].tx_count = sizeof(uint8_t);
+			STM32_TOGGLE_EP(USB_EP_CONTROL, EP_TX_RX_MASK,
+					EP_TX_RX_VALID, 0);
+		}
+		break;
 	}
+
+	return 0;
 }
 USB_DECLARE_IFACE(USB_IFACE_MS, ms_iface_request);
 

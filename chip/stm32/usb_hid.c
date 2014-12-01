@@ -118,7 +118,7 @@ static void hid_reset(void)
 
 USB_DECLARE_EP(USB_EP_HID, hid_tx, hid_tx, hid_reset);
 
-static void hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
+static int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 {
 	if ((ep0_buf_rx[0] == (USB_DIR_IN | USB_RECIP_INTERFACE |
 			      (USB_REQ_GET_DESCRIPTOR << 8))) &&
@@ -132,9 +132,10 @@ static void hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 			  EP_STATUS_OUT);
 		CPRINTF("RPT %04x[l %04x]\n", STM32_USB_EP(0),
 			ep0_buf_rx[3]);
-	} else {
-		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_RX_VALID | EP_TX_STALL, 0);
+		return 0;
 	}
+
+	return 1;
 }
 USB_DECLARE_IFACE(USB_IFACE_HID, hid_iface_request)
 

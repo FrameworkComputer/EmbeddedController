@@ -100,6 +100,8 @@ interface  7
 .code 16
 
 .thumb_func
-ep_undefined:
+/* Undefined interface callbacks fail by returning non-zero*/
 iface_undefined:
+	mov r0, #1
+ep_undefined:
 	bx lr

@@ -94,8 +94,9 @@ static void ep0_rx(void)
 	/* interface specific requests */
 	if ((req & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
 		uint8_t iface = ep0_buf_rx[2] & 0xff;
-		if (iface < USB_IFACE_COUNT)
-			usb_iface_request[iface](ep0_buf_rx, ep0_buf_tx);
+		if (iface < USB_IFACE_COUNT &&
+		    usb_iface_request[iface](ep0_buf_rx, ep0_buf_tx))
+			goto unknown_req;
 		return;
 	}
 
