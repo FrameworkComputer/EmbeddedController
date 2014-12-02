@@ -103,14 +103,14 @@ struct usb_spi_config {
 		       INTERFACE,					\
 		       ENDPOINT,					\
 		       READY)						\
-	static uint16_t CONCAT2(NAME, _buffer)[USB_MAX_PACKET_SIZE / 2]; \
-	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
-	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
+	static uint16_t CONCAT2(NAME, _buffer_)[USB_MAX_PACKET_SIZE / 2]; \
+	static usb_uint CONCAT2(NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
+	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	struct usb_spi_config const NAME = {				\
 		.endpoint  = ENDPOINT,					\
-		.buffer    = CONCAT2(NAME, _buffer),			\
-		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
-		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer),		\
+		.buffer    = CONCAT2(NAME, _buffer_),			\
+		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
+		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
 		.ready     = READY,					\
 	};								\
 	const struct usb_interface_descriptor				\
@@ -143,13 +143,13 @@ struct usb_spi_config {
 		.wMaxPacketSize   = USB_MAX_PACKET_SIZE,		\
 		.bInterval        = 0,					\
 	};								\
-	static void CONCAT2(NAME, _ep_tx)   (void) { usb_spi_tx   (&NAME); } \
-	static void CONCAT2(NAME, _ep_rx)   (void) { usb_spi_rx   (&NAME); } \
-	static void CONCAT2(NAME, _ep_reset)(void) { usb_spi_reset(&NAME); } \
+	static void CONCAT2(NAME, _ep_tx_)   (void) { usb_spi_tx   (&NAME); } \
+	static void CONCAT2(NAME, _ep_rx_)   (void) { usb_spi_rx   (&NAME); } \
+	static void CONCAT2(NAME, _ep_reset_)(void) { usb_spi_reset(&NAME); } \
 	USB_DECLARE_EP(ENDPOINT,					\
-		       CONCAT2(NAME, _ep_tx),				\
-		       CONCAT2(NAME, _ep_rx),				\
-		       CONCAT2(NAME, _ep_reset));
+		       CONCAT2(NAME, _ep_tx_),				\
+		       CONCAT2(NAME, _ep_rx_),				\
+		       CONCAT2(NAME, _ep_reset_));
 
 /*
  * Check for a new request and process it synchronously, the SPI transaction
