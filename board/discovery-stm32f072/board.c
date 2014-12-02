@@ -9,8 +9,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "spi.h"
 #include "task.h"
 #include "usb_gpio.h"
+#include "usb_spi.h"
 #include "util.h"
 
 void button_event(enum gpio_signal signal);
@@ -52,6 +54,38 @@ const void *const usb_strings[] = {
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
+
+void usb_spi_board_enable(struct usb_spi_config const *config)
+{
+	/* Remap SPI2 to DMA channels 6 and 7 */
+	STM32_SYSCFG_CFGR1 |= (1 << 24);
+
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+
+	/* Set all four SPI pins to high speed */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
+
+	spi_enable(1);
+}
+
+void usb_spi_board_disable(struct usb_spi_config const *config)
+{
+	spi_enable(0);
+
+	/* Disable clocks to SPI2 module */
+	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
+
+	/* Release SPI GPIOs */
+	gpio_config_module(MODULE_SPI_MASTER, 0);
+}
 
 /* Initialize board. */
 static void board_init(void)

@@ -13,10 +13,10 @@
 static int16_t usb_spi_map_error(int error)
 {
 	switch (error) {
-	case EC_SUCCESS:       return usb_spi_success;
-	case EC_ERROR_TIMEOUT: return usb_spi_timeout;
-	case EC_ERROR_BUSY:    return usb_spi_busy;
-	default:               return usb_spi_unknown_error | (error & 0x7fff);
+	case EC_SUCCESS:       return USB_SPI_SUCCESS;
+	case EC_ERROR_TIMEOUT: return USB_SPI_TIMEOUT;
+	case EC_ERROR_BUSY:    return USB_SPI_BUSY;
+	default:               return USB_SPI_UNKNOWN_ERROR | (error & 0x7fff);
 	}
 }
 
@@ -77,11 +77,13 @@ int usb_spi_service_request(struct usb_spi_config const *config)
 	write_count = (config->buffer[0] >> 0) & 0xff;
 	read_count  = (config->buffer[0] >> 8) & 0xff;
 
-	if (write_count > USB_SPI_MAX_WRITE_COUNT ||
-	    write_count != (count - 2)) {
-		config->buffer[0] = usb_spi_write_count_invalid;
+	if (config->state->disabled || !config->state->enabled) {
+		config->buffer[0] = USB_SPI_DISABLED;
+	} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
+		   write_count != (count - 2)) {
+		config->buffer[0] = USB_SPI_WRITE_COUNT_INVALID;
 	} else if (read_count > USB_SPI_MAX_READ_COUNT) {
-		config->buffer[0] = usb_spi_read_count_invalid;
+		config->buffer[0] = USB_SPI_READ_COUNT_INVALID;
 	} else {
 		config->buffer[0] = usb_spi_map_error(
 			spi_transaction((uint8_t *)(config->buffer + 1),
@@ -121,4 +123,55 @@ void usb_spi_reset(struct usb_spi_config const *config)
 				  (2        <<  4) | /* TX NAK */
 				  (0        <<  9) | /* Bulk EP */
 				  (3        << 12)); /* RX Valid */
+}
+
+int usb_spi_interface(struct usb_spi_config const *config,
+		      usb_uint *rx_buf,
+		      usb_uint *tx_buf)
+{
+	struct usb_setup_packet setup;
+
+	usb_read_setup_packet(rx_buf, &setup);
+
+	if (setup.bmRequestType != (USB_DIR_OUT |
+				    USB_TYPE_VENDOR |
+				    USB_RECIP_INTERFACE))
+		return 1;
+
+	if (setup.wValue  != 0 ||
+	    setup.wIndex  != config->interface ||
+	    setup.wLength != 0)
+		return 1;
+
+	if (config->state->disabled)
+		return 1;
+
+	switch (setup.bRequest) {
+	case USB_SPI_REQ_ENABLE:
+		usb_spi_board_enable(config);
+		config->state->enabled = 1;
+		break;
+
+	case USB_SPI_REQ_DISABLE:
+		config->state->enabled = 0;
+		usb_spi_board_disable(config);
+		break;
+
+	default: return 1;
+	}
+
+	btable_ep[0].tx_count = 0;
+	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, EP_STATUS_OUT);
+	return 0;
+}
+
+void usb_spi_enable(struct usb_spi_config const *config, int enabled)
+{
+	config->state->disabled = !enabled;
+
+	if (config->state->disabled &&
+	    config->state->enabled) {
+		config->state->enabled = 0;
+		usb_spi_board_disable(config);
+	}
 }
