@@ -148,8 +148,8 @@ struct usb_spi_config {
 		.bAlternateSetting  = 0,				\
 		.bNumEndpoints      = 2,				\
 		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
-		.bInterfaceSubClass = 0,				\
-		.bInterfaceProtocol = 0,				\
+		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SPI,		\
+		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SPI,		\
 		.iInterface         = 0,				\
 	};								\
 	const struct usb_endpoint_descriptor				\
