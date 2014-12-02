@@ -105,5 +105,6 @@
 #undef CONFIG_WATCHDOG
 #define CONFIG_PWM
 #define CONFIG_ADC
+#define CONFIG_EC2I
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

@@ -383,6 +383,20 @@
 #define IT83XX_INTC_IVCT14      REG8(IT83XX_INTC_BASE+0x8E)
 #define IT83XX_INTC_IVCT15      REG8(IT83XX_INTC_BASE+0x8F)
 
+/* --- EC Access to the Host Controlled Modules (EC2I Bridge) --- */
+#define IT83XX_EC2I_BASE  0x00F01200
+
+#define IT83XX_EC2I_IHIOA       REG8(IT83XX_EC2I_BASE+0x00)
+#define IT83XX_EC2I_IHD         REG8(IT83XX_EC2I_BASE+0x01)
+#define IT83XX_EC2I_LSIOHA      REG8(IT83XX_EC2I_BASE+0x02)
+#define IT83XX_EC2I_SIOLV       REG8(IT83XX_EC2I_BASE+0x03)
+#define IT83XX_EC2I_IBMAE       REG8(IT83XX_EC2I_BASE+0x04)
+#define IT83XX_EC2I_IBCTL       REG8(IT83XX_EC2I_BASE+0x05)
+
+/* --- System Wake-UP Control (SWUC) --- */
+#define IT83XX_SWUC_BASE  0x00F01400
+#define IT83XX_SWUC_SWCTL1      REG8(IT83XX_SWUC_BASE+0x00)
+
 /* --- Wake-Up Control (WUC) --- */
 #define IT83XX_WUC_BASE   0x00F01B00
 
@@ -644,9 +658,7 @@ enum clock_gate_offsets {
 /* --- MISC (not implemented yet) --- */
 
 #define IT83XX_SMFI_BASE  0x00F01000
-#define IT83XX_EC2I_BASE  0x00F01200
 #define IT83XX_KBC_BASE   0x00F01300
-#define IT83XX_SWUC_BASE  0x00F01400
 #define IT83XX_PMC_BASE   0x00F01500
 #define IT83XX_PS2_BASE   0x00F01700
 #define IT83XX_DAC_BASE   0x00F01A00
