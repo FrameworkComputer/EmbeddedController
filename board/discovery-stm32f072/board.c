@@ -87,9 +87,13 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	gpio_config_module(MODULE_SPI_MASTER, 0);
 }
 
+USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI);
+
 /* Initialize board. */
 static void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_USER_BUTTON);
+
+	usb_spi_enable(&usb_spi, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

@@ -8,6 +8,7 @@
 /* STM32 USB SPI driver for Chrome EC */
 
 #include "compile_time_macros.h"
+#include "hooks.h"
 #include "usb.h"
 
 /*
@@ -95,18 +96,16 @@ struct usb_spi_config {
 	int endpoint;
 
 	/*
+	 * Deferred function to call to handle SPI request.
+	 */
+	void (*deferred)(void);
+
+	/*
 	 * Pointers to USB packet RAM and bounce buffer.
 	 */
 	uint16_t *buffer;
 	usb_uint *rx_ram;
 	usb_uint *tx_ram;
-
-	/*
-	 * Callback to notify managing task that a new SPI request has been
-	 * received.  This should wake up a task that will eventually call
-	 * the usb_spi_service_request function.
-	 */
-	void (*ready)(struct usb_spi_config const *config);
 };
 
 /*
@@ -120,16 +119,14 @@ struct usb_spi_config {
  *
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
- *
- * READY callback function for command reception notification.
  */
 #define USB_SPI_CONFIG(NAME,						\
 		       INTERFACE,					\
-		       ENDPOINT,					\
-		       READY)						\
+		       ENDPOINT)					\
 	static uint16_t CONCAT2(NAME, _buffer_)[USB_MAX_PACKET_SIZE / 2]; \
 	static usb_uint CONCAT2(NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
+	static void CONCAT2(NAME, _deferred_)(void);			\
 	struct usb_spi_state CONCAT2(NAME, _state_) = {			\
 		.disabled = 1,						\
 		.enabled  = 0,						\
@@ -138,10 +135,10 @@ struct usb_spi_config {
 		.state     = &CONCAT2(NAME, _state_),			\
 		.interface = INTERFACE,					\
 		.endpoint  = ENDPOINT,					\
+		.deferred  = CONCAT2(NAME, _deferred_),			\
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
-		.ready     = READY,					\
 	};								\
 	const struct usb_interface_descriptor				\
 	USB_IFACE_DESC(INTERFACE) = {					\
@@ -184,17 +181,15 @@ struct usb_spi_config {
 					      usb_uint *tx_buf)		\
 	{ return usb_spi_interface(&NAME, rx_buf, tx_buf); }		\
 	USB_DECLARE_IFACE(INTERFACE,					\
-			  CONCAT2(NAME, _interface_));
+			  CONCAT2(NAME, _interface_));			\
+	static void CONCAT2(NAME, _deferred_)(void)			\
+	{ usb_spi_deferred(&NAME); }					\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
 
 /*
- * Check for a new request and process it synchronously, the SPI transaction
- * will complete before this function returns.
- *
- * Returns:
- *     1: request serviced
- *     0: no request waiting
+ * Handle SPI request in a deferred callback.
  */
-int usb_spi_service_request(struct usb_spi_config const *config);
+void usb_spi_deferred(struct usb_spi_config const *config);
 
 /*
  * Set the enable state for the USB-SPI bridge.

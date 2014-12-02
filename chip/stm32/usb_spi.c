@@ -59,19 +59,11 @@ static void usb_spi_write_packet(struct usb_spi_config const *config,
 	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
-static int rx_valid(struct usb_spi_config const *config)
-{
-	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) == EP_RX_VALID;
-}
-
-int usb_spi_service_request(struct usb_spi_config const *config)
+void usb_spi_deferred(struct usb_spi_config const *config)
 {
 	uint8_t count;
 	uint8_t write_count;
 	uint8_t read_count;
-
-	if (rx_valid(config))
-		return 0;
 
 	count       = usb_spi_read_packet(config);
 	write_count = (config->buffer[0] >> 0) & 0xff;
@@ -93,8 +85,6 @@ int usb_spi_service_request(struct usb_spi_config const *config)
 	}
 
 	usb_spi_write_packet(config, read_count + 2);
-
-	return 1;
 }
 
 void usb_spi_tx(struct usb_spi_config const *config)
@@ -105,7 +95,8 @@ void usb_spi_tx(struct usb_spi_config const *config)
 void usb_spi_rx(struct usb_spi_config const *config)
 {
 	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_NAK, 0);
-	config->ready(config);
+
+	hook_call_deferred(config->deferred, 0);
 }
 
 void usb_spi_reset(struct usb_spi_config const *config)
