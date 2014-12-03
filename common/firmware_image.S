@@ -2,7 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Build the full image with up to 3 copies (Read only, A, B) of the program
+ * Build the full image with up to 2 copies (Read only, Read write)
+ * of the program
  */
 
 #include "config.h"
