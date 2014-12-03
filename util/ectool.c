@@ -940,7 +940,7 @@ int cmd_flash_pd(int argc, char *argv[])
 	if (rv < 0)
 		goto pd_flash_error;
 
-	usleep(100000); /* 100ms to reboot and get CC line idle */
+	usleep(3000000); /* 3sec to reboot and get CC line idle */
 
 	/* Erase RW flash */
 	fprintf(stderr, "Erasing RW flash\n");
