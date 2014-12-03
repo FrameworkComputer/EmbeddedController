@@ -13,6 +13,8 @@
 #include "util.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "adc.h"
+#include "adc_chip.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -46,6 +48,20 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_START_SW);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/* ADC channels. Must be in the exactly same order as in enum adc_channel. */
+const struct adc_t adc_channels[] = {
+	/* Convert to mV (3000mV/1024). */
+	{"adc_ch0", 3000, 1024, 0, 0},
+	{"adc_ch1", 3000, 1024, 0, 1},
+	{"adc_ch2", 3000, 1024, 0, 2},
+	{"adc_ch3", 3000, 1024, 0, 3},
+	{"adc_ch4", 3000, 1024, 0, 4},
+	{"adc_ch5", 3000, 1024, 0, 5},
+	{"adc_ch6", 3000, 1024, 0, 6},
+	{"adc_ch7", 3000, 1024, 0, 7},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /*****************************************************************************/
 /* Console commands */

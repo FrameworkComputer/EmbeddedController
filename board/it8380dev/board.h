@@ -29,5 +29,19 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum adc_channel {
+	ADC_CH_0,
+	ADC_CH_1,
+	ADC_CH_2,
+	ADC_CH_3,
+	ADC_CH_4,
+	ADC_CH_5,
+	ADC_CH_6,
+	ADC_CH_7,
+
+	/* Number of ADC channels */
+	ADC_CH_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __BOARD_H */
