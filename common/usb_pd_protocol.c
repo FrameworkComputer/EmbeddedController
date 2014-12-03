@@ -240,6 +240,7 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 #define PD_FLAGS_GET_SNK_CAP_SENT  (1 << 5) /* get sink cap sent */
 #define PD_FLAGS_NEW_CONTRACT      (1 << 6) /* new power contract established */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 7) /* explicit pwr contract in place */
+#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 8) /* disable comms after soft reset */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -255,7 +256,7 @@ static struct pd_protocol {
 	/* current port data role (DFP or UFP) */
 	uint8_t data_role;
 	/* port flags, see PD_FLAGS_* */
-	uint8_t flags;
+	uint16_t flags;
 	/* 3-bit rolling message ID counter */
 	uint8_t msg_id;
 	/* Port polarity : 0 => CC1 is CC line, 1 => CC2 is CC line */
@@ -751,6 +752,10 @@ static void execute_soft_reset(int port)
 #else
 	set_state(port, PD_STATE_SRC_DISCOVERY);
 #endif
+	/* if flag to disable PD comms after soft reset, then disable comms */
+	if (pd[port].flags & PD_FLAGS_SFT_RST_DIS_COMM)
+		pd_comm_enable(0);
+
 	CPRINTF("Soft Reset\n");
 }
 
@@ -763,6 +768,25 @@ void pd_soft_reset(void)
 			set_state(i, PD_STATE_SOFT_RESET);
 			task_wake(PORT_TO_TASK_ID(i));
 		}
+}
+
+void pd_prepare_sysjump(void)
+{
+	int i;
+
+	/*
+	 * On sysjump, we are most definitely going to drop pings (if any)
+	 * and lose all of our PD state. Instead of trying to remember all
+	 * the states and deal with on-going transmission, let's send soft
+	 * reset here and then disable PD communication until after sysjump
+	 * is complete so that the communication starts over without dropping
+	 * power.
+	 */
+	for (i = 0; i < PD_PORT_COUNT; ++i)
+		if (pd_is_connected(i))
+			pd[i].flags |= PD_FLAGS_SFT_RST_DIS_COMM;
+
+	pd_soft_reset();
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -982,13 +1006,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 		break;
 	case PD_CTRL_ACCEPT:
 		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-			set_state(port, pd[port].power_role == PD_ROLE_SINK ?
-					PD_STATE_SNK_DISCOVERY :
-					PD_STATE_SRC_DISCOVERY);
-#else
-			set_state(port, PD_STATE_SRC_DISCOVERY);
-#endif
+			execute_soft_reset(port);
 		} else if (pd[port].task_state == PD_STATE_SRC_DR_SWAP) {
 			/* switch data role */
 			pd_dr_swap(port);
@@ -1402,7 +1420,6 @@ int pd_get_partner_data_swap_capable(int port)
 void pd_comm_enable(int enable)
 {
 	pd_comm_enabled = enable;
-
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If communications are enabled, start hard reset timer for
@@ -2139,7 +2156,6 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_SOFT_RESET:
 			if (pd[port].last_state != pd[port].task_state) {
-				execute_soft_reset(port);
 				res = send_control(port, PD_CTRL_SOFT_RESET);
 
 				/* if soft reset failed, try hard reset. */

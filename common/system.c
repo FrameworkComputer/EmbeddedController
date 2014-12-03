@@ -402,13 +402,10 @@ static void jump_to_image(uintptr_t init_addr)
 
 #ifdef CONFIG_USB_POWER_DELIVERY
 	/*
-	 * On sysjump, we are most definitely going to drop pings (if any)
-	 * and lose all of our PD state. Instead of trying to remember all
-	 * the states and deal with on-going transmission, let's send soft
-	 * reset here so that the communication starts over without dropping
-	 * power.
+	 * Notify USB PD module that we are about to sysjump and give it time
+	 * to do what it needs.
 	 */
-	pd_soft_reset();
+	pd_prepare_sysjump();
 	usleep(5*MSEC);
 #endif
 

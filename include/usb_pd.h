@@ -1168,6 +1168,8 @@ void pd_ping_enable(int port, int enable);
 /* Issue PD soft reset */
 void pd_soft_reset(void);
 
+/* Prepare PD communication for sysjump */
+void pd_prepare_sysjump(void);
 
 /**
  * Signal power request to indicate a charger update that affects the port.
