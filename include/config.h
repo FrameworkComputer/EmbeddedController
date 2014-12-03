@@ -1120,6 +1120,9 @@
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP
 
+/* Define if USB-PD device has no way of detecting USB VBUS */
+#undef CONFIG_USB_PD_NO_VBUS_DETECT
+
 /* Simple DFP, such as power adapter, will not send discovery VDM on connect */
 #undef CONFIG_USB_PD_SIMPLE_DFP
 

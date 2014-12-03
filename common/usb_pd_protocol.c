@@ -837,6 +837,10 @@ static void handle_data_request(int port, uint16_t head,
 	case PD_DATA_SOURCE_CAP:
 		if ((pd[port].task_state == PD_STATE_SNK_DISCOVERY)
 			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)
+#ifdef CONFIG_USB_PD_NO_VBUS_DETECT
+			|| (pd[port].task_state ==
+			    PD_STATE_SNK_HARD_RESET_RECOVER)
+#endif
 			|| (pd[port].task_state == PD_STATE_SNK_READY)) {
 			pd_store_src_cap(port, cnt, payload);
 			/* src cap 0 should be fixed PDO */
@@ -1498,7 +1502,9 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
 	int hard_reset_count = 0;
+#ifndef CONFIG_USB_PD_NO_VBUS_DETECT
 	int snk_hard_reset_vbus_off = 0;
+#endif
 #ifdef CONFIG_CHARGE_MANAGER
 	static int initialized[PD_PORT_COUNT];
 	int typec_curr = 0, typec_curr_change = 0;
@@ -1918,6 +1924,22 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
+			if (pd[port].last_state != pd[port].task_state) {
+				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
+			}
+#ifdef CONFIG_USB_PD_NO_VBUS_DETECT
+			/*
+			 * Can't measure vbus state so this is the maximum
+			 * recovery time for the source.
+			 */
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(port, get_time().val +
+						  PD_T_SAFE_0V +
+						  PD_T_SRC_RECOVER_MAX +
+						  PD_T_SRC_TURN_ON,
+						  PD_STATE_SNK_DISCONNECTED);
+#else
 			/* Wait for VBUS to go low and then high*/
 			if (pd[port].last_state != pd[port].task_state) {
 				snk_hard_reset_vbus_off = 0;
@@ -1949,6 +1971,7 @@ void pd_task(void)
 			 * Don't need to set timeout because VBUS changing
 			 * will trigger an interrupt and wake us up.
 			 */
+#endif
 			break;
 		case PD_STATE_SNK_DISCOVERY:
 			/*
