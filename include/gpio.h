@@ -28,6 +28,7 @@
 #define GPIO_INT_F_HIGH    (1 << 12) /* Interrupt on high level */
 #define GPIO_DEFAULT       (1 << 13) /* Don't set up on boot */
 #define GPIO_INT_DSLEEP    (1 << 14) /* Interrupt in deep sleep */
+#define GPIO_INT_SHARED    (1 << 15) /* Shared among multiple pins */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)
