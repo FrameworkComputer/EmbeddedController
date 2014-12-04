@@ -7,7 +7,7 @@
 	{#name, GPIO_##port, (1 << pin), flags, signal},
 
 #define UNIMPLEMENTED(name) \
-	{#name, DUMMY_GPIO_BANK, 0, 0, NULL},
+	{#name, DUMMY_GPIO_BANK, 0, GPIO_DEFAULT, NULL},
 
 /* GPIO signal list. */
 const struct gpio_info gpio_list[] = {

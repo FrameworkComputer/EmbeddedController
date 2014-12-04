@@ -5,6 +5,7 @@
 
 #include "clock.h"
 #include "common.h"
+#include "gpio.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -137,16 +138,7 @@ void uart_init(void)
 	clock_enable_module(MODULE_UART, 1);
 
 	/* set up pinmux */
-	GR_PINMUX_DIOA0_SEL = GC_PINMUX_UART0_TX_SEL;
-	GR_PINMUX_UART0_RX_SEL = GC_PINMUX_DIOA1_SEL;
-
-	/* IE must be set to 1 to work as a digital pad (for any direction) */
-	/* turn on input driver (IE field) */
-	REG_WRITE_MLV(GR_PINMUX_DIOA0_CTL, GC_PINMUX_DIOA0_CTL_IE_MASK,
-		      GC_PINMUX_DIOA0_CTL_IE_LSB, 1);
-	/* turn on input driver (IE field) */
-	REG_WRITE_MLV(GR_PINMUX_DIOA1_CTL, GC_PINMUX_DIOA1_CTL_IE_MASK,
-		      GC_PINMUX_DIOA1_CTL_IE_LSB, 1);
+	gpio_config_module(MODULE_UART, 1);
 
 	/* set frequency */
 	GR_UART_NCO(0) = setting;

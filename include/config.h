@@ -588,6 +588,16 @@
 
 #endif
 
+/*****************************************************************************/
+
+/*
+ * Use a larger word (32 bits) to store the pin muxing configuration
+ * (aka alternate function).
+ *
+ * Less optimal for storage size and alignment, but might be required for
+ * platforms with very flexible pin muxing.
+ */
+#undef CONFIG_GPIO_LARGE_ALT_INFO
 
 /*****************************************************************************/
 

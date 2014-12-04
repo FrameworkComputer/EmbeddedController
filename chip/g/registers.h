@@ -19,13 +19,6 @@
 #define GR_SWDP_BUILD_DATE  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_DATE_OFFSET)
 #define GR_SWDP_BUILD_TIME  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_TIME_OFFSET)
 
-#define GR_PINMUX_DIOA0_SEL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA0_SEL_OFFSET)
-#define GR_PINMUX_DIOA0_CTL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA0_CTL_OFFSET)
-#define GR_PINMUX_DIOA1_SEL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA1_SEL_OFFSET)
-#define GR_PINMUX_DIOA1_CTL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA1_CTL_OFFSET)
-#define GR_PINMUX_UART0_RX_SEL        REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_UART0_RX_SEL_OFFSET)
-#define GR_PINMUX_UART0_TX_SEL        REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_UART0_TX_SEL_OFFSET)
-
 /* Power Management Unit */
 #define GR_PMU_REG(off)               REG32(GC_PMU_BASE_ADDR + (off))
 
@@ -110,6 +103,56 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_UART_FIFO(ch)              X_UARTREG(ch, GC_UART_FIFO_OFFSET)
 #define GR_UART_RFIFO(ch)             X_UARTREG(ch, GC_UART_RFIFO_OFFSET)
 
+/* GPIOs & PIN muxing */
+#define GPIO_M_COUNT  5
+#define GPIO_A_COUNT 15
+#define GPIO_B_COUNT  9
+
+/* GPIO bank index is the number of the first GPIO of the bank */
+#define GPIO_M 0
+#define GPIO_A GPIO_M_COUNT
+#define GPIO_B (GPIO_M_COUNT + GPIO_A_COUNT)
+#define DUMMY_GPIO_BANK GPIO_M
+
+#define GR_PINMUX_DIO_SEL(bank, di) REG32(GC_PINMUX_BASE_ADDR + ((bank) + (di))*8)
+#define GR_PINMUX_DIO_CTL(bank, di) REG32(GC_PINMUX_BASE_ADDR + ((bank) + (di))*8 + 4)
+
+#define GR_PINMUX_GPIO_SEL(wi, idx) REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_GPIO0_GPIO0_SEL_OFFSET + ((wi)*16 + (idx))*4)
+
+#define PINMUX_DIO_SEL(bank, di) (GC_PINMUX_DIOM0_SEL + (di) + (bank))
+#define PINMUX_GPIO_SEL(wi, idx)  (GC_PINMUX_GPIO0_GPIO0_SEL + (idx) + (wi)*16)
+
+#define PINMUX_DIO_CTL_DS(ds)  (((ds) & PINMUX_DIOA0_CTL_DS_GC_PINMUX_DIOA0_CTL_DS_MASK) << GC_PINMUX_DIOA0_CTL_DS_LSB)
+#define PINMUX_DIO_CTL_IE      (1 << GC_PINMUX_DIOA0_CTL_IE_LSB)
+#define PINMUX_DIO_CTL_PD      (1 << GC_PINMUX_DIOA0_CTL_PD_LSB)
+#define PINMUX_DIO_CTL_PU      (1 << GC_PINMUX_DIOA0_CTL_PU_LSB)
+#define PINMUX_DIO_CTL_INV     (1 << GC_PINMUX_DIOA0_CTL_INV_LSB)
+
+/*
+ * To store the alternate function pin muxing in a 32-bit integer :
+ * put the function index selector in the low 16 bits,
+ * and the selector register offset in the high 16 bits.
+ */
+#define PINMUX(func) (int)(CONCAT3(GC_PINMUX_, func, _SEL) | \
+		(CONCAT3(GC_PINMUX_, func, _SEL_OFFSET) << 16))
+#define PINMUX_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR + ((uint32_t)(word) >> 16))
+#define PINMUX_FUNC(word)  ((uint32_t)(word) & 0xffff)
+
+
+#define GR_GPIO_REG(n, off)         REG16(GC_GPIO0_BASE_ADDR + (n)*0x10000 + (off))
+#define GR_GPIO_DATAIN(n)           GR_GPIO_REG(n, GC_GPIO_DATAIN_OFFSET)
+#define GR_GPIO_DOUT(n)             GR_GPIO_REG(n, GC_GPIO_DOUT_OFFSET)
+#define GR_GPIO_SETDOUTEN(n)        GR_GPIO_REG(n, GC_GPIO_SETDOUTEN_OFFSET)
+#define GR_GPIO_CLRDOUTEN(n)        GR_GPIO_REG(n, GC_GPIO_CLRDOUTEN_OFFSET)
+#define GR_GPIO_SETINTEN(n)         GR_GPIO_REG(n, GC_GPIO_SETINTEN_OFFSET)
+#define GR_GPIO_CLRINTEN(n)         GR_GPIO_REG(n, GC_GPIO_CLRINTEN_OFFSET)
+#define GR_GPIO_SETINTTYPE(n)       GR_GPIO_REG(n, GC_GPIO_SETINTTYPE_OFFSET)
+#define GR_GPIO_CLRINTTYPE(n)       GR_GPIO_REG(n, GC_GPIO_CLRINTTYPE_OFFSET)
+#define GR_GPIO_SETINTPOL(n)        GR_GPIO_REG(n, GC_GPIO_SETINTPOL_OFFSET)
+#define GR_GPIO_CLRINTPOL(n)        GR_GPIO_REG(n, GC_GPIO_CLRINTPOL_OFFSET)
+#define GR_GPIO_CLRINTSTAT(n)       GR_GPIO_REG(n, GC_GPIO_CLRINTSTAT_OFFSET)
+
+#define GR_GPIO_MASKBYTE(n, m)      GR_GPIO_REG(n, GC_GPIO_MASKLOWBYTE_400_OFFSET + (m)*4)
 
 /*
  * High-speed timers. Two modules with two timers each; four timers total.

@@ -15,8 +15,8 @@
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
 
-/* How do I identify nonexistant GPIOs? */
-#define DUMMY_GPIO_BANK -1
+/* Need space to store the pin muxing configuration */
+#define CONFIG_GPIO_LARGE_ALT_INFO
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -27,6 +27,9 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
+
+/* user button interrupt handler */
+void button_event(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
