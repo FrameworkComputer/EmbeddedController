@@ -4,6 +4,7 @@
  */
 
 #include "adc.h"
+#include "battery.h"
 #include "board.h"
 #include "charge_manager.h"
 #include "chipset.h"
@@ -2782,6 +2783,17 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
+
+#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
+	defined(CONFIG_BATTERY_PRESENT_GPIO)
+	/*
+	 * Do not allow PD firmware update if no battery and this port
+	 * is sinking power, because we will lose power.
+	 */
+	if (battery_is_present() != BP_YES &&
+	    charge_manager_get_active_charge_port() == port)
+		return EC_RES_UNAVAILABLE;
+#endif
 
 	switch (p->cmd) {
 	case USB_PD_FW_REBOOT:
