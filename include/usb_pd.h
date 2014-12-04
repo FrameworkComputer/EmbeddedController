@@ -63,7 +63,7 @@ enum pd_errors {
 
 #define PDO_BATT_MAX_VOLT(mv) ((((mv) / 50) & 0x3FF) << 20)
 #define PDO_BATT_MIN_VOLT(mv) ((((mv) / 50) & 0x3FF) << 10)
-#define PDO_BATT_OP_POWER(mw) ((((mw) / 10) & 0x3FF) << 0)
+#define PDO_BATT_OP_POWER(mw) ((((mw) / 250) & 0x3FF) << 0)
 
 #define PDO_BATT(min_mv, max_mv, op_mw) \
 				(PDO_BATT_MIN_VOLT(min_mv) | \
