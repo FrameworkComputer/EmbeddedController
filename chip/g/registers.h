@@ -13,8 +13,11 @@
 /* Replace masked bits with val << lsb */
 #define REG_WRITE_MLV(reg, mask, lsb, val) reg = ((reg & ~mask) | ((val << lsb) & mask))
 
-/* Revision */
-#define GC_REVISION_STR "A1 20141117_055451"
+/* Revision generated from the register definitions */
+#define GC_REVISION_STR STRINGIFY(GC_REVISION)
+/* Revision registers */
+#define GR_SWDP_BUILD_DATE  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_DATE_OFFSET)
+#define GR_SWDP_BUILD_TIME  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_TIME_OFFSET)
 
 #define GR_PINMUX_DIOA0_SEL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA0_SEL_OFFSET)
 #define GR_PINMUX_DIOA0_CTL           REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_DIOA0_CTL_OFFSET)

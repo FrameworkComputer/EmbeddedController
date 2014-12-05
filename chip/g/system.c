@@ -72,7 +72,14 @@ const char *system_get_chip_name(void)
 
 const char *system_get_chip_revision(void)
 {
-	return GC_REVISION_STR;
+	int build_date = GR_SWDP_BUILD_DATE;
+	int build_time = GR_SWDP_BUILD_TIME;
+
+	if ((build_date != GC_SWDP_BUILD_DATE_DEFAULT) ||
+	    (build_time != GC_SWDP_BUILD_TIME_DEFAULT))
+		return GC_REVISION_STR" BUILD MISMATCH!";
+	else
+		return GC_REVISION_STR;
 }
 
 int system_set_scratchpad(uint32_t value)
