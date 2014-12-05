@@ -1,8 +1,8 @@
-/* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
+/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Raw keyboard I/O layer for STM32
+ * Raw keyboard I/O layer for nRF51
  *
  * To make this code portable, we rely heavily on looping over the keyboard
  * input and output entries in the board's gpio_list[]. Each set of inputs or
@@ -19,103 +19,50 @@
 #include "task.h"
 #include "util.h"
 
-/* Mask of external interrupts on input lines */
-static unsigned int irq_mask;
-
-static const uint32_t kb_out_ports[] = { KB_OUT_PORT_LIST };
-
-static void set_irq_mask(void)
-{
-	int i;
-
-	for (i = GPIO_KB_IN00; i < GPIO_KB_IN00 + KEYBOARD_ROWS; i++)
-		irq_mask |= gpio_list[i].mask;
-}
+/* Mask of output pins for driving. */
+static unsigned int col_mask;
 
 void keyboard_raw_init(void)
 {
-	/* Determine EXTI_PR mask to use for the board */
-	set_irq_mask();
+	int i;
 
-	/* Ensure interrupts are disabled in EXTI_PR */
+	/* Initialize col_mask */
+	col_mask = 0;
+	for (i = 0; i < KEYBOARD_COLS; i++)
+		col_mask |= gpio_list[GPIO_KB_OUT00 + i].mask;
+
+	/* Ensure interrupts are disabled */
 	keyboard_raw_enable_interrupt(0);
 }
 
 void keyboard_raw_task_start(void)
 {
-	/* Enable interrupts for keyboard matrix inputs */
+	/*
+	 * Enable the interrupt for keyboard matrix inputs.
+	 * One is enough, since they are shared.
+	 */
 	gpio_enable_interrupt(GPIO_KB_IN00);
-	gpio_enable_interrupt(GPIO_KB_IN01);
-	gpio_enable_interrupt(GPIO_KB_IN02);
-	gpio_enable_interrupt(GPIO_KB_IN03);
-	gpio_enable_interrupt(GPIO_KB_IN04);
-	gpio_enable_interrupt(GPIO_KB_IN05);
-	gpio_enable_interrupt(GPIO_KB_IN06);
-	gpio_enable_interrupt(GPIO_KB_IN07);
 }
 
 test_mockable void keyboard_raw_drive_column(int out)
 {
-	int i, done = 0;
+	/* tri-state all first */
+	NRF51_GPIO0_OUTSET = col_mask;
 
-	for (i = 0; i < ARRAY_SIZE(kb_out_ports); i++) {
-		uint32_t bsrr = 0;
-		int j;
-
-		for (j = GPIO_KB_OUT00; j <= GPIO_KB_OUT12; j++) {
-			if (gpio_list[j].port != kb_out_ports[i])
-				continue;
-
-			if (out == KEYBOARD_COLUMN_ALL) {
-				/* drive low (clear bit) */
-				bsrr |= gpio_list[j].mask << 16;
-			} else if (out == KEYBOARD_COLUMN_NONE) {
-				/* put output in hi-Z state (set bit) */
-				bsrr |= gpio_list[j].mask;
-			} else if (j - GPIO_KB_OUT00 == out) {
-				/*
-				 * Drive specified output low, others => hi-Z.
-				 *
-				 * To avoid conflict, tri-state all outputs
-				 * first, then assert specified output.
-				 */
-				keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-				bsrr |= gpio_list[j].mask << 16;
-				done = 1;
-				break;
-			}
-		}
-
-	#ifdef CONFIG_KEYBOARD_COL2_INVERTED
-		if (bsrr & (gpio_list[GPIO_KB_OUT02].mask << 16 |
-				 gpio_list[GPIO_KB_OUT02].mask))
-			bsrr ^= (gpio_list[GPIO_KB_OUT02].mask << 16 |
-				 gpio_list[GPIO_KB_OUT02].mask);
-	#endif
-
-		if (bsrr)
-			STM32_GPIO_BSRR(kb_out_ports[i]) = bsrr;
-
-		if (done)
-			break;
-	}
+	/* drive low for specified pin(s) */
+	if (out == KEYBOARD_COLUMN_ALL)
+		NRF51_GPIO0_OUTCLR = col_mask;
+	else if (out != KEYBOARD_COLUMN_NONE)
+		NRF51_GPIO0_OUTCLR = gpio_list[GPIO_KB_OUT00 + out].mask;
 }
 
 test_mockable int keyboard_raw_read_rows(void)
 {
 	int i;
-	unsigned int port, prev_port = 0;
 	int state = 0;
-	uint16_t port_val = 0;
 
 	for (i = 0; i < KEYBOARD_ROWS; i++) {
-		port = gpio_list[GPIO_KB_IN00 + i].port;
-		if (port != prev_port) {
-			port_val = STM32_GPIO_IDR(port);
-			prev_port = port;
-		}
-
-		if (port_val & gpio_list[GPIO_KB_IN00 + i].mask)
+		if (NRF51_GPIO0_IN & gpio_list[GPIO_KB_IN00 + i].mask)
 			state |= 1 << i;
 	}
 
@@ -127,13 +74,12 @@ void keyboard_raw_enable_interrupt(int enable)
 {
 	if (enable) {
 		/*
-		 * Assert all outputs would trigger un-wanted interrupts.
-		 * Clear them before enable interrupt.
+		 * Clear the PORT event before enabling the interrupt.
 		 */
-		STM32_EXTI_PR |= irq_mask;
-		STM32_EXTI_IMR |= irq_mask;	/* 1: unmask interrupt */
+		NRF51_GPIOTE_PORT = 0;
+		NRF51_GPIOTE_INTENSET = 1 << NRF51_GPIOTE_PORT_BIT;
 	} else {
-		STM32_EXTI_IMR &= ~irq_mask;	/* 0: mask interrupts */
+		NRF51_GPIOTE_INTENCLR = 1 << NRF51_GPIOTE_PORT_BIT;
 	}
 }
 
