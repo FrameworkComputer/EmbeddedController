@@ -267,6 +267,39 @@
 #define NRF55_TWI1_TXDRDY_BIT  ((0x11C - 0x100) / 4)
 
 /*
+ *  GPIOTE - GPIO Tasks and Events
+ */
+#define NRF51_GPIOTE_BASE   0x40006000
+/* Tasks */
+#define NRF51_GPIOTE_OUT(n)    REG32(NRF51_GPIOTE_BASE + ((n) * 4))
+/* Events */
+#define NRF51_GPIOTE_IN(n)     REG32(NRF51_GPIOTE_BASE + 0x100 + ((n) * 4))
+#define NRF51_GPIOTE_PORT      REG32(NRF51_GPIOTE_BASE + 0x17C)
+/* Registers */
+#define NRF51_GPIOTE_INTENSET  REG32(NRF51_GPIOTE_BASE + 0x304)
+#define NRF51_GPIOTE_INTENCLR  REG32(NRF51_GPIOTE_BASE + 0x308)
+#define NRF51_GPIOTE_CONFIG(n) REG32(NRF51_GPIOTE_BASE + 0x510 + ((n) * 4))
+#define NRF51_GPIOTE_POWER     REG32(NRF51_GPIOTE_BASE + 0xFFC)
+
+/* Number of IN events */
+#define NRF51_GPIOTE_IN_COUNT  4
+
+/* Bits */
+/* For GPIOTE.INTEN */
+#define NRF51_GPIOTE_IN_BIT(n) (n)
+#define NRF51_GPIOTE_PORT_BIT  31
+/* For GPIOTE.CONFIG */
+#define NRF51_GPIOTE_MODE_DISABLED     (0<<0)
+#define NRF51_GPIOTE_MODE_EVENT        (1<<0)
+#define NRF51_GPIOTE_MODE_TASK         (3<<0)
+#define NRF51_GPIOTE_PSEL_POS          (8)
+#define NRF51_GPIOTE_POLARITY_LOTOHI   (1<<16)
+#define NRF51_GPIOTE_POLARITY_HITOLO   (2<<16)
+#define NRF51_GPIOTE_POLARITY_TOGGLE   (3<<16)
+#define NRF51_GPIOTE_OUTINIT_LOW       (0<<20)
+#define NRF51_GPIOTE_OUTINIT_HIGH      (1<<20)
+
+/*
  *  Timer / Counter
  */
 #define NRF51_TIMER0_BASE   0x40008000
