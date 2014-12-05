@@ -87,7 +87,8 @@ void __hw_clock_event_set(uint32_t deadline)
 
 	/* How long from the current time to the deadline? */
 	time_now_in_ticks = (0xffffffff - GR_TIMEHS_VALUE(0, 1));
-	GR_TIMEHS_LOAD(0, 2) = usecs_to_ticks(deadline) - time_now_in_ticks;
+	GR_TIMEHS_LOAD(0, 2) = (deadline - time_now_in_ticks / clock_mul_factor)
+				* clock_mul_factor;
 
 	/* timer & interrupts enabled */
 	GR_TIMEHS_CONTROL(0, 2) = 0xa3;
