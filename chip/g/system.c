@@ -4,20 +4,58 @@
  */
 
 #include "cpu.h"
-#include "system.h"
 #include "registers.h"
+#include "system.h"
+#include "task.h"
+
+static void check_reset_cause(void)
+{
+	uint32_t reset_source = GR_PMU_RSTSRC;
+	uint32_t flags = 0;
+
+	/* Clear the reset source now we have recorded it */
+	GR_PMU_CLRRST = 1;
+
+	if (reset_source & (1 << GC_PMU_RSTSRC_POR_LSB))
+		flags |= RESET_FLAG_POWER_ON;
+	else if (reset_source & (1 << GC_PMU_RSTSRC_RESETB_LSB))
+		flags |= RESET_FLAG_RESET_PIN;
+	else if (reset_source & (1 << GC_PMU_RSTSRC_EXIT_LSB))
+		flags |= RESET_FLAG_WAKE_PIN;
+
+	if (reset_source & (1 << GC_PMU_RSTSRC_WDOG_LSB))
+		flags |= RESET_FLAG_WATCHDOG;
+
+	if (reset_source & (1 << GC_PMU_RSTSRC_SOFTWARE_LSB))
+		flags |= RESET_FLAG_HARD;
+	if (reset_source & (1 << GC_PMU_RSTSRC_SYSRESET_LSB))
+		flags |= RESET_FLAG_SOFT;
+
+	if (reset_source & (1 << GC_PMU_RSTSRC_FST_BRNOUT_LSB))
+		flags |= RESET_FLAG_BROWNOUT;
+
+	if (reset_source && !flags)
+		flags |= RESET_FLAG_OTHER;
+
+	system_set_reset_flags(flags);
+}
 
 void system_pre_init(void)
 {
-
+	check_reset_cause();
 }
 
-/* TODO(crosbug.com/p/33818): How do we force a reset? */
 void system_reset(int flags)
 {
-	/* Until we have a full microcontroller, at least reset the CPU core */
-	CPU_NVIC_APINT = 0x05fa0004;
-	/* should be gone here */
+	/* Disable interrupts to avoid task swaps during reboot */
+	interrupt_disable();
+
+	if (flags & SYSTEM_RESET_HARD) /* Reset the full microcontroller */
+		GR_PMU_GLOBAL_RESET = GC_PMU_GLOBAL_RESET_KEY;
+	else /* Reset only the CPU core */
+		CPU_NVIC_APINT = 0x05fa0004;
+
+	/* Spin and wait for reboot; should never return  */
 	while (1)
 		;
 }
@@ -37,8 +75,21 @@ const char *system_get_chip_revision(void)
 	return GC_REVISION_STR;
 }
 
-/* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
+int system_set_scratchpad(uint32_t value)
+{
+	GR_PMU_PWRDN_SCRATCH_HOLD_CLR = 1;
+	GR_PMU_PWRDN_SCRATCH0 = value;
+	GR_PMU_PWRDN_SCRATCH_HOLD_SET = 1;
 
+	return EC_SUCCESS;
+}
+
+uint32_t system_get_scratchpad(void)
+{
+	return GR_PMU_PWRDN_SCRATCH0;
+}
+
+/* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
 int system_get_vbnvcontext(uint8_t *block)
 {
 	return 0;
