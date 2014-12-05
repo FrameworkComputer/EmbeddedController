@@ -14,7 +14,6 @@
 #undef CONFIG_FMAP
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
-#undef CONFIG_WATCHDOG
 
 /* How do I identify nonexistant GPIOs? */
 #define DUMMY_GPIO_BANK -1
