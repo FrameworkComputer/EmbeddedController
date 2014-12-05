@@ -8,3 +8,9 @@
 void clock_init(void)
 {
 }
+
+int clock_get_freq(void)
+{
+	/* constant 16 MHz clock */
+	return 16000000;
+}
