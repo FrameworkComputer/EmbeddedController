@@ -181,8 +181,8 @@ int vbus_amp;
 
 int pd_check_requested_voltage(uint32_t rdo)
 {
-	int op_ma = rdo & 0x3FF;
-	int max_ma = (rdo >> 10) & 0x3FF;
+	int max_ma = rdo & 0x3FF;
+	int op_ma = (rdo >> 10) & 0x3FF;
 	int idx = rdo >> 28;
 	uint32_t pdo;
 	uint32_t pdo_ma;
