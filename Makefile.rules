@@ -70,7 +70,7 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
-.PHONY: all tests utils hosttests
+.PHONY: all tests utils utils-host utils-build hosttests
 
 buildall: $(foreach b, $(boards), proj-$(b)) runtests
 	@touch .tests-passed
@@ -86,7 +86,11 @@ dis: $(dis-y)
 hex-y = $(out)/$(PROJECT).RO.hex $(out)/$(PROJECT).RW.hex
 hex: $(hex-y)
 
-utils: $(build-utils) $(host-utils)
+utils-host: $(host-utils)
+
+utils-build: $(build-utils)
+
+utils: utils-host utils-build
 
 # On board test binaries
 test-targets=$(foreach t,$(test-list-y),test-$(t))
@@ -222,8 +226,6 @@ $(build-utils): $(out)/%:$(build-srcs)
 
 $(host-utils): $(out)/%:$(host-srcs)
 	$(call quiet,c_to_host,HOSTCC )
-
-$(out)/util/burn_my_ec: $(out)/$(PROJECT).bin
 
 $(out)/cscope.files: $(out)/$(PROJECT).bin
 	$(call quiet,deps_to_list,SH     )
