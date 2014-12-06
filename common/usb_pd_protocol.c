@@ -302,7 +302,7 @@ static const char * const pd_state_names[] = {
 	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "SRC_DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
-	"SRC_SWAP_STANDBY",
+	"SRC_SWAP_STANDBY", "SRC_TO_FORCE_SINK",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST",
 };
@@ -1516,9 +1516,7 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		    (drp_state == PD_DRP_FORCE_SINK ||
 		     (drp_state == PD_DRP_TOGGLE_OFF
 		      && pd[i].task_state == PD_STATE_SRC_DISCONNECTED))) {
-			pd[i].power_role = PD_ROLE_SINK;
-			set_state(i, PD_STATE_SNK_DISCONNECTED);
-			pd_set_host_mode(i, 0);
+			set_state(i, PD_STATE_SRC_TO_FORCE_SINK);
 			task_wake(PORT_TO_TASK_ID(i));
 		}
 
@@ -2062,6 +2060,22 @@ void pd_task(void)
 						  get_time().val +
 						  PD_T_PS_SOURCE_ON,
 						  PD_STATE_SNK_DISCONNECTED);
+			}
+			break;
+		case PD_STATE_SRC_TO_FORCE_SINK:
+			/*
+			 * Transition from Source to force sink role. Disable
+			 * VBUS and wait for VBUS to turn off
+			 */
+			if (pd[port].last_state != pd[port].task_state)
+				pd_power_supply_reset(port);
+
+			if (pd_snk_is_vbus_provided(port)) {
+				/* When VBUS is off, go to SNK_DISCONNECTED */
+				pd_set_host_mode(port, 0);
+				pd[port].power_role = PD_ROLE_SINK;
+				set_state(port, PD_STATE_SNK_DISCONNECTED);
+				timeout = 10*MSEC;
 			}
 			break;
 		case PD_STATE_SUSPENDED:
