@@ -868,7 +868,12 @@ static void handle_data_request(int port, uint16_t head,
 			pd_store_src_cap(port, cnt, payload);
 			/* src cap 0 should be fixed PDO */
 			pd_update_pdo_flags(port, payload[0]);
-			pd_send_request_msg(port, PD_REQUEST_MIN);
+#ifdef CONFIG_CHARGE_MANAGER
+			if (charge_manager_get_active_charge_port() == port)
+				pd_send_request_msg(port, PD_REQUEST_MAX);
+			else
+#endif
+				pd_send_request_msg(port, PD_REQUEST_MIN);
 		}
 		break;
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
