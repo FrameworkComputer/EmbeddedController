@@ -1938,7 +1938,10 @@ void pd_task(void)
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SAFE_0V,
-						  PD_STATE_HARD_RESET_SEND);
+						  hard_reset_count <
+						    PD_HARD_RESET_COUNT ?
+						     PD_STATE_HARD_RESET_SEND :
+						     PD_STATE_SNK_DISCOVERY);
 			}
 
 			if (!pd_snk_is_vbus_provided(port) &&
@@ -2179,7 +2182,9 @@ void pd_task(void)
 			break;
 		case PD_STATE_HARD_RESET_SEND:
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY)
+			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY ||
+			    pd[port].last_state ==
+					PD_STATE_SNK_HARD_RESET_RECOVER)
 				hard_reset_count++;
 #endif
 			if (pd[port].last_state != pd[port].task_state) {
