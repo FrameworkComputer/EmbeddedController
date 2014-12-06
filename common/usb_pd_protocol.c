@@ -939,10 +939,15 @@ void pd_request_data_swap(int port)
 	task_wake(PORT_TO_TASK_ID(port));
 }
 
+static void pd_set_data_role(int port, int role)
+{
+	pd[port].data_role = role;
+	pd_execute_data_swap(port, role);
+}
+
 static void pd_dr_swap(int port)
 {
-	pd[port].data_role = !pd[port].data_role;
-	pd_execute_data_swap(port, pd[port].data_role);
+	pd_set_data_role(port, !pd[port].data_role);
 	pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
 }
 
@@ -1511,7 +1516,7 @@ void pd_task(void)
 
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
-	pd[port].data_role = PD_ROLE_DEFAULT;
+	pd_set_data_role(port, PD_ROLE_DEFAULT);
 	pd[port].vdm_state = VDM_STATE_DONE;
 	pd[port].flags = 0;
 	set_state(port, PD_DEFAULT_STATE);
@@ -1573,7 +1578,7 @@ void pd_task(void)
 					GET_POLARITY(cc1_volt, cc2_volt);
 				pd_select_polarity(port, pd[port].polarity);
 				/* initial data role for source is DFP */
-				pd[port].data_role = PD_ROLE_DFP;
+				pd_set_data_role(port, PD_ROLE_DFP);
 				/* Set to USB SS initially */
 #ifdef CONFIG_USBC_SS_MUX
 				board_set_usb_mux(port, TYPEC_MUX_USB,
@@ -1869,7 +1874,7 @@ void pd_task(void)
 					/* reset message ID  on connection */
 					pd[port].msg_id = 0;
 					/* initial data role for sink is UFP */
-					pd[port].data_role = PD_ROLE_UFP;
+					pd_set_data_role(port, PD_ROLE_UFP);
 #ifdef CONFIG_CHARGE_MANAGER
 					initialized[port] = 1;
 					typec_curr = get_typec_current_limit(

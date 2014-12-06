@@ -82,8 +82,11 @@ int pi3usb9281_get_ilim(int device_type, int charger_status);
 /* Set switch configuration to manual. */
 int pi3usb9281_set_switch_manual(uint8_t chip_idx, int val);
 
-/* Set bits to enable pins in manual switch register */
+/* Set bits to enable pins in manual switch register. */
 int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t mask);
+
+/* Set D+/D-/Vbus switches to open or closed/auto-control. */
+int pi3usb9281_set_switches(uint8_t chip_idx, int open);
 
 /* Reset PI3USB9281. */
 int pi3usb9281_reset(uint8_t chip_idx);

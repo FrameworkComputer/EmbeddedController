@@ -185,6 +185,17 @@ int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t val)
 	return pi3usb9281_write(chip_idx, PI3USB9281_REG_MANUAL, val);
 }
 
+int pi3usb9281_set_switches(uint8_t chip_idx, int open)
+{
+	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL) & 0x15;
+	if (open)
+		ctrl &= ~PI3USB9281_CTRL_SWITCH_AUTO;
+	else
+		ctrl |= PI3USB9281_CTRL_SWITCH_AUTO;
+
+	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL, ctrl);
+}
+
 static void pi3usb9281_init(void)
 {
 	uint8_t dev_id;
