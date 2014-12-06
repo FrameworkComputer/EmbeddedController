@@ -64,7 +64,7 @@ BOARDS_STM32=(
 	discovery
 	firefly
 	fruitpie
-	jerry	
+	jerry
 	kitty
 	mighty
 	minimuffin
@@ -90,6 +90,10 @@ BOARDS_STM32_DFU=(
 	dingdong
 	hoho
 	twinkie
+)
+
+BOARDS_NPCX=(
+	npcx_evb
 )
 
 # Flags
@@ -405,6 +409,38 @@ function flash_lm4() {
 	die "Failed to program ${IMG}"
 }
 
+function flash_npcx() {
+	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
+
+	if [ "${FLAGS_usb}" = ${FLAGS_TRUE} ] ; then
+		OCD_CFG="${BOARD}.cfg"
+	else
+		OCD_CFG="servo_v2.cfg"
+	fi
+
+	OCD_PATH="${EC_DIR}/chip/npcx/openocd"
+	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
+		# Unprotect exists, but isn't needed because erasing pstate is
+		# implicit in writing the entire image
+		die "--unprotect not supported for this board."
+	fi
+
+	dut_control jtag_buf_on_flex_en:on
+	dut_control jtag_buf_en:on
+
+	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+		# Program RO region only
+		OCD_CMDS="init; flash_npcx_ro ${FLAGS_offset}; shutdown;"
+		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
+		die "Failed to program ${IMG}"
+	else
+		# Program all EC regions
+		OCD_CMDS="init; flash_npcx_evb ${FLAGS_offset}; shutdown;"
+		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
+		die "Failed to program ${IMG}"
+	fi
+}
+
 if dut_control boot_mode 2>/dev/null ; then
 	if [[ "${MCU}" != "ec" ]] ; then
 		die "Toad cable can't support non-ec UARTs"
@@ -434,6 +470,8 @@ elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	flash_stm32_dfu
 elif [ "${BOARD}" == "link" ]; then
 	flash_link
+elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
+	flash_npcx
 else
 	die "board ${BOARD} not supported"
 fi

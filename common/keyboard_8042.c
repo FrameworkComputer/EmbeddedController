@@ -453,7 +453,7 @@ static void clear_typematic_key(void)
 void keyboard_state_changed(int row, int col, int is_pressed)
 {
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
-	int32_t len;
+	int32_t len = 0;
 	enum ec_error_list ret;
 
 	CPRINTS5("KB (%d,%d)=%d", row, col, is_pressed);

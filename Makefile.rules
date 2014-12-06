@@ -239,6 +239,27 @@ $(out)/TAGS: $(out)/cscope.files
 $(out)/tags: $(out)/cscope.files
 	$(call quiet,ctags,CTAGS  )
 
+# TODO: optional make rules for PROJECT_EXTRA
+$(npcx-flash-fw-bin):
+	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
+	-@ mkdir -p $(@D)
+	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $(npcx-flash-fw).c \
+		-o $(out)/$(npcx-flash-fw).o
+	-@ $(LD) $(out)/$(npcx-flash-fw).o $(LDFLAGS) \
+		-o $(out)/$(npcx-flash-fw).elf -T $(npcx-flash-fw).ld \
+		-Map $(out)/$(npcx-flash-fw).map
+	-@ $(OBJCOPY) -O binary $(out)/$(npcx-flash-fw).elf $@
+
+# TODO: optional make rules for PROJECT_EXTRA
+$(npcx-lfw-bin):
+	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
+	-@ mkdir -p $(@D)
+	-@ $(CC) $(CFLAGS) -MMD -MF $(out)/$(npcx-lfw).d -c $(npcx-lfw).c \
+		-o $(out)/$(npcx-lfw).o
+	-@ $(LD) $(out)/$(npcx-lfw).o $(LDFLAGS) -o $(out)/$(npcx-lfw).elf \
+		-T $(npcx-lfw).ld -Map $(out)/$(npcx-lfw).map
+	-@ $(OBJCOPY) -O binary $(out)/$(npcx-lfw).elf $@
+
 .PHONY: xrefs
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
 	$(call targ_if_prog,ctags,$(out)/tags)

@@ -19,6 +19,9 @@ MEMORY
 {
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
+#ifdef CONFIG_CODERAM_ARCH
+    CDRAM (rx) : ORIGIN = CONFIG_CDRAM_BASE, LENGTH = CONFIG_CDRAM_SIZE
+#endif
 #ifdef RSA_PUBLIC_KEY_SIZE
     PSTATE(r)  : ORIGIN = FW_OFF(SECTION) + FW_SIZE(SECTION), \
                  LENGTH = CONFIG_FW_PSTATE_SIZE
@@ -43,12 +46,21 @@ SECTIONS
 #endif
         OUTDIR/core/CORE/init.o (.text)
         *(.text*)
+#ifdef CONFIG_CODERAM_ARCH
+        __flash_lpfw_start = .;
+        /* Entering deep idle FW for better power consumption */
+        KEEP(*(.lowpower_ram))
+        __flash_lpfw_end = .;
+        } > CDRAM AT > FLASH
+#else
 #ifdef COMPILE_FOR_RAM
     } > IRAM
 #else
     } > FLASH
 #endif
+#endif
     . = ALIGN(4);
+
     .rodata : {
 	/* Symbols defined here are declared in link_defs.h */
         __irqprio = .;
@@ -151,10 +163,14 @@ SECTIONS
         KEEP(*(.google))
 #endif
         . = ALIGN(4);
+#ifdef CONFIG_CODERAM_ARCH
+	} > CDRAM AT > FLASH
+#else
 #ifdef COMPILE_FOR_RAM
     } > IRAM
 #else
     } > FLASH
+#endif
 #endif
     __ro_end = . ;
 
@@ -184,7 +200,12 @@ SECTIONS
 #ifdef COMPILE_FOR_RAM
     .data : {
 #else
+#ifdef CONFIG_CODERAM_ARCH
+	__data_start = . ;
+	.data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
+#else
     .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
+#endif
 #endif
         . = ALIGN(4);
         __data_start = .;
