@@ -31,12 +31,18 @@ static void extpower_deferred(void)
 
 	if (extpower && !extpower_prev) {
 		charger_discharge_on_ac(0);
+		/* If in G3, enable PP5000 for accurate sensing of CC */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			gpio_set_level(GPIO_PP5000_EN, 1);
 	} else if (extpower && extpower_prev) {
 		/* glitch on AC_PRESENT, attempt to recover from backboost */
 		charger_discharge_on_ac(1);
 		charger_discharge_on_ac(0);
 	} else {
 		charger_discharge_on_ac(1);
+		/* If in G3, make sure PP5000 is off when no AC */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			gpio_set_level(GPIO_PP5000_EN, 0);
 	}
 	extpower_prev = extpower;
 

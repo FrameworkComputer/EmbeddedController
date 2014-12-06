@@ -1972,6 +1972,15 @@ void pd_task(void)
 #ifdef CONFIG_CHARGE_MANAGER
 			timeout = PD_T_SINK_ADJ - PD_T_DEBOUNCE;
 
+			/*
+			 * If we didn't come from disconnected, must have
+			 * come from some path that did not set typec
+			 * current limit. So, set to 0 so that we guarantee
+			 * this is revised below.
+			 */
+			if (pd[port].last_state != PD_STATE_SNK_DISCONNECTED)
+				typec_curr = 0;
+
 			/* Check if CC pull-up has changed */
 			cc1_volt = pd_adc_read(port, pd[port].polarity);
 			if (typec_curr != get_typec_current_limit(cc1_volt)) {

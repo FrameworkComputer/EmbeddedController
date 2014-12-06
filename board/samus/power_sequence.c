@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -85,7 +86,12 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PP1800_EN, 0);
 	gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 	gpio_set_level(GPIO_PP5000_USB_EN, 0);
-	gpio_set_level(GPIO_PP5000_EN, 0);
+	/*
+	 * Don't disable PP5000 if AC is attached because we need
+	 * it for accurate CC line voltage measurement on PD MCU.
+	 */
+	if (!extpower_is_present())
+		gpio_set_level(GPIO_PP5000_EN, 0);
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
 	gpio_set_level(GPIO_PP3300_DSW_EN, 0);
@@ -468,7 +474,13 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Turn off power rails enabled in S5 */
 		gpio_set_level(GPIO_PP1050_EN, 0);
-		gpio_set_level(GPIO_PP5000_EN, 0);
+
+		/*
+		 * Don't disable PP5000 if AC is attached because we need
+		 * it for accurate CC line voltage measurement on PD MCU.
+		 */
+		if (!extpower_is_present())
+			gpio_set_level(GPIO_PP5000_EN, 0);
 
 		/* Disable 3.3V DSW */
 		gpio_set_level(GPIO_PP3300_DSW_EN, 0);
@@ -488,6 +500,13 @@ int lb_power(int enabled)
 
 	/* If the AP is on, we don't change the rails. */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+
+	/*
+	 * Don't disable PP5000 if AC is attached because we need it for
+	 * accurate CC line voltage measurement on PD MCU.
+	 */
+	if (!enabled && extpower_is_present())
 		return 0;
 
 	/*
