@@ -678,39 +678,46 @@ enum pd_data_msg_type {
 
 /* --- Policy layer functions --- */
 
-/**
- * Decide which voltage to use from the source capabilities - prefer the
- * mode which delivers the maximum allowable power.
- *
- * @param cnt  the number of Power Data Objects.
- * @param src_caps Power Data Objects representing the source capabilities.
- * @param rdo  requested Request Data Object.
- * @param curr_limit  selected current limit (stored on success)
- * @param supply_voltage  selected supply voltage (stored on success)
- * @return <0 if invalid, else EC_SUCCESS
- */
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
-		      uint32_t *curr_limit, uint32_t *supply_voltage);
+/* Request types for pd_build_request() */
+enum pd_request_type {
+	PD_REQUEST_VSAFE5V,
+	PD_REQUEST_MAX,
+};
 
 /**
- * Decide which voltage to use from the source capabilities - prefer the
- * mode which delivers the minimum allowable power.
+ * Decide which PDO to choose from the source capabilities.
  *
  * @param cnt  the number of Power Data Objects.
  * @param src_caps Power Data Objects representing the source capabilities.
  * @param rdo  requested Request Data Object.
- * @param curr_limit  selected current limit (stored on success)
- * @param supply_voltage  selected supply voltage (stored on success)
+ * @param ma  selected current limit (stored on success)
+ * @param mv  selected supply voltage (stored on success)
+ * @param req_type request type
  * @return <0 if invalid, else EC_SUCCESS
  */
-int pd_choose_voltage_min(int cnt, uint32_t *src_caps, uint32_t *rdo,
-			  uint32_t *curr_limit, uint32_t *supply_voltage);
+int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
+		     uint32_t *ma, uint32_t *mv, enum pd_request_type req_type);
+
+/**
+ * Process source capabilities packet
+ *
+ * @param port USB-C port number
+ * @param cnt  the number of Power Data Objects.
+ * @param src_caps Power Data Objects representing the source capabilities.
+ */
+void pd_process_source_cap(int port, int cnt, uint32_t *src_caps);
 
 /**
  * Put a cap on the max voltage requested as a sink.
  * @param mv maximum voltage in millivolts.
  */
 void pd_set_max_voltage(unsigned mv);
+
+/**
+ * Get the max voltage that can be requested as set by pd_set_max_voltage().
+ * @return max voltage
+ */
+unsigned pd_get_max_voltage(void);
 
 /**
  * Request a new operating voltage.

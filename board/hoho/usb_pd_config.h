@@ -139,4 +139,11 @@ static inline int pd_snk_is_vbus_provided(int port)
 
 /* we are never a source : don't care about power supply */
 #define PD_POWER_SUPPLY_TRANSITION_DELAY 0 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 1000
+#define PD_MAX_POWER_MW       1500
+#define PD_MAX_CURRENT_MA     300
+#define PD_MAX_VOLTAGE_MV     5000
+
 #endif /* __USB_PD_CONFIG_H */

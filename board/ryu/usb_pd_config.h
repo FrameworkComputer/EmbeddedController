@@ -173,4 +173,10 @@ static inline int pd_snk_is_vbus_provided(int port)
 /* delay for the voltage transition on the power supply, chip max is 16us */
 #define PD_POWER_SUPPLY_TRANSITION_DELAY 20000 /* us */
 
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 10000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
+
 #endif /* __USB_PD_CONFIG_H */

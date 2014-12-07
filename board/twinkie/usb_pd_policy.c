@@ -17,11 +17,6 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-/* Define typical operating power and max power */
-#define OPERATING_POWER_MW 15000
-#define MAX_POWER_MW       60000
-#define MAX_CURRENT_MA     3000
-
 #define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
 
 const uint32_t pd_src_pdo[] = {
@@ -38,68 +33,6 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
-/* Cap on the max voltage requested as a sink (in millivolts) */
-static unsigned max_mv = -1; /* no cap */
-
-int pd_choose_voltage(int cnt, uint32_t *src_caps, uint32_t *rdo,
-		      uint32_t *curr_limit, uint32_t *supply_voltage)
-{
-	int i;
-	int sel_mv;
-	int max_uw = 0;
-	int max_ma;
-	int max_i = -1;
-	int max;
-	uint32_t flags;
-
-	/* Get max power */
-	for (i = 0; i < cnt; i++) {
-		int uw;
-		int mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
-		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-			uw = 250000 * (src_caps[i] & 0x3FF);
-		} else {
-			int ma = (src_caps[i] & 0x3FF) * 10;
-			uw = ma * mv;
-		}
-		if ((uw > max_uw) && (mv <= max_mv)) {
-			max_i = i;
-			max_uw = uw;
-			sel_mv = mv;
-		}
-	}
-	if (max_i < 0)
-		return -EC_ERROR_UNKNOWN;
-
-	/* build rdo for desired power */
-	if ((src_caps[max_i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
-		int uw = 250000 * (src_caps[max_i] & 0x3FF);
-		max = MIN(1000 * uw, MAX_POWER_MW);
-		flags = (max < OPERATING_POWER_MW) ? RDO_CAP_MISMATCH : 0;
-		max_ma = 1000 * max / sel_mv;
-		*rdo = RDO_BATT(max_i + 1, max, max, flags);
-		CPRINTF("Request [%d] %dV %dmW",
-			max_i, sel_mv/1000, max);
-	} else {
-		int ma = 10 * (src_caps[max_i] & 0x3FF);
-		max = MIN(ma, MAX_CURRENT_MA);
-		flags = (max * sel_mv) < (1000 * OPERATING_POWER_MW) ?
-				RDO_CAP_MISMATCH : 0;
-		max_ma = max;
-		*rdo = RDO_FIXED(max_i + 1, max, max, flags);
-		CPRINTF("Request [%d] %dV %dmA",
-			max_i, sel_mv/1000, max);
-	}
-	/* Mismatch bit set if less power offered than the operating power */
-	if (flags & RDO_CAP_MISMATCH)
-		CPRINTF(" Mismatch");
-	CPRINTF("\n");
-
-	*curr_limit = max_ma;
-	*supply_voltage = sel_mv;
-	return EC_SUCCESS;
-}
-
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
@@ -109,11 +42,6 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	gpio_set_level(GPIO_LED_R_L, !red);
 	gpio_set_level(GPIO_LED_G_L, !green);
 	gpio_set_level(GPIO_LED_B_L, !blue);
-}
-
-void pd_set_max_voltage(unsigned mv)
-{
-	max_mv = mv;
 }
 
 int pd_check_requested_voltage(uint32_t rdo)

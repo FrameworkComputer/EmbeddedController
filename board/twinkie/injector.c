@@ -66,11 +66,6 @@ static const struct res_cfg {
 #define CC_RD(cc) ((cc > PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))
 
-/* Stub the function as we are not using the RX path */
-void pd_set_max_voltage(unsigned mv)
-{
-}
-
 /* we don't have the default DMA handlers */
 void dma_event_interrupt_channel_3(void)
 {
