@@ -30,6 +30,9 @@ PROJECT?=ec
 # Output directory for build objects
 out?=build/$(BOARD)
 
+# File containing configuration information
+config=$(out)/.config
+
 # If no key file is provided, use the default dev key
 PEM ?= board/$(BOARD)/dev_key.pem
 
@@ -136,7 +139,10 @@ all-y+=$(call objs_from_dir,test,$(PROJECT))
 dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common power test util
 dirs+=$(shell find driver -type d)
 
-all: $(out)/$(PROJECT).bin utils ${PROJECT_EXTRA}
+$(config): $(out)/$(PROJECT).bin
+	@printf '%s=y\n' $(_tsk_cfg) $(_flag_cfg) > $@
+
+all: $(config) utils ${PROJECT_EXTRA}
 
 include Makefile.rules
 
