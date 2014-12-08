@@ -82,22 +82,38 @@ static void clock_set_osc(enum clock_osc osc)
 		/*
 		 * Set the recommended flash settings for 16MHz clock.
 		 *
-		 * The 3 bits must be programmed strictly sequentially, but it
-		 * is faster not to read-back the value of the ACR register in
-		 * the middle of the sequence so use a temporary variable.
+		 * The 3 bits must be programmed strictly sequentially.
+		 * Also, follow the RM to check 64-bit access and latency bit
+		 * after writing those bits to the FLASH_ACR register.
 		 */
 		tmp_acr = STM32_FLASH_ACR;
 		/* Enable 64-bit access */
 		tmp_acr |= STM32_FLASH_ACR_ACC64;
 		STM32_FLASH_ACR = tmp_acr;
+		/* Check ACC64 bit == 1 */
+		while (!(STM32_FLASH_ACR & STM32_FLASH_ACR_ACC64))
+			;
+
 		/* Enable Prefetch Buffer */
 		tmp_acr |= STM32_FLASH_ACR_PRFTEN;
 		STM32_FLASH_ACR = tmp_acr;
+
 		/* Flash 1 wait state */
 		tmp_acr |= STM32_FLASH_ACR_LATENCY;
 		STM32_FLASH_ACR = tmp_acr;
+		/* Check LATENCY bit == 1 */
+		while (!(STM32_FLASH_ACR & STM32_FLASH_ACR_LATENCY))
+			;
+
 		/* Switch to HSI */
 		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_HSI;
+		/* RM says to check SWS bits to make sure HSI is the sysclock */
+		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
+			STM32_RCC_CFGR_SWS_HSI)
+			;
+
+		/* Disable MSI */
+		STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
 
 		freq = HSI_CLOCK;
 		break;
@@ -107,28 +123,50 @@ static void clock_set_osc(enum clock_osc osc)
 		STM32_RCC_ICSCR =
 			(STM32_RCC_ICSCR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
 			STM32_RCC_ICSCR_MSIRANGE_1MHZ;
+		/* Ensure that MSI is ON */
+		if (!(STM32_RCC_CR & STM32_RCC_CR_MSIRDY)) {
+			/* Enable MSI */
+			STM32_RCC_CR |= STM32_RCC_CR_MSION;
+			/* Wait for MSI to be ready */
+			while (!(STM32_RCC_CR & STM32_RCC_CR_MSIRDY))
+				;
+		}
+
+		/* Switch to MSI */
 		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_MSI;
+		/* RM says to check SWS bits to make sure MSI is the sysclock */
+		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
+			STM32_RCC_CFGR_SWS_MSI)
+			;
 
 		/*
 		 * Set the recommended flash settings for <= 2MHz clock.
 		 *
-		 * The 3 bits must be programmed strictly sequentially, but it
-		 * is faster not to read-back the value of the ACR register in
-		 * the middle of the sequence so use a temporary variable.
+		 * The 3 bits must be programmed strictly sequentially.
+		 * Also, follow the RM to check 64-bit access and latency bit
+		 * after writing those bits to the FLASH_ACR register.
 		 */
 		tmp_acr = STM32_FLASH_ACR;
 		/* Flash 0 wait state */
 		tmp_acr &= ~STM32_FLASH_ACR_LATENCY;
 		STM32_FLASH_ACR = tmp_acr;
+		/* Check LATENCY bit == 0 */
+		while (STM32_FLASH_ACR & STM32_FLASH_ACR_LATENCY)
+			;
+
 		/* Disable prefetch Buffer */
 		tmp_acr &= ~STM32_FLASH_ACR_PRFTEN;
 		STM32_FLASH_ACR = tmp_acr;
+
 		/* Disable 64-bit access */
 		tmp_acr &= ~STM32_FLASH_ACR_ACC64;
 		STM32_FLASH_ACR = tmp_acr;
+		/* Check ACC64 bit == 0 */
+		while (STM32_FLASH_ACR & STM32_FLASH_ACR_ACC64)
+			;
 
 		/* Disable HSI */
-		STM32_RCC_CR &= STM32_RCC_CR_HSION;
+		STM32_RCC_CR &= ~STM32_RCC_CR_HSION;
 
 		/* Enable LPSDSR */
 		STM32_PWR_CR |= STM32_PWR_CR_LPSDSR;
