@@ -187,14 +187,10 @@ void ccd_board_disconnect(void)
 
 void usb_board_connect(void)
 {
-	/*
-	 * TODO(robotboy): Enable DP pullup for Proto 3, Proto 2 doesn't have
-	 * the DP pullup, so case closed debug will only work on a Proto 2 if
-	 * the board is reworked, and this function is updated.
-	 */
+	gpio_set_level(GPIO_USB_PU_EN_L, 0);
 }
 
 void usb_board_disconnect(void)
 {
-	/* TODO(robotboy): Disable DP pullup for Proto 3 */
+	gpio_set_level(GPIO_USB_PU_EN_L, 1);
 }
