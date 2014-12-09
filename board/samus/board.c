@@ -107,16 +107,16 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_t fans[] = {
 	{.flags = FAN_USE_RPM_MODE,
-	 .rpm_min = 2286,
-	 .rpm_start = 3090,
+	 .rpm_min = 1000,
+	 .rpm_start = 1000,
 	 .rpm_max = 6350,
 	 .ch = 2,
 	 .pgood_gpio = -1,
 	 .enable_gpio = -1,
 	},
 	{.flags = FAN_USE_RPM_MODE,
-	 .rpm_min = 2286,
-	 .rpm_start = 3090,
+	 .rpm_min = 1000,
+	 .rpm_start = 1000,
 	 .rpm_max = 6350,
 	 .ch = 3,
 	 .pgood_gpio = -1,
@@ -188,7 +188,7 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
  */
 struct ec_thermal_config thermal_params[] = {
 	/* Only the AP affects the thermal limits and fan speed. */
-	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)}, C_TO_K(43), C_TO_K(75)},
+	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)}, C_TO_K(43), C_TO_K(85)},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, 0, 0},
