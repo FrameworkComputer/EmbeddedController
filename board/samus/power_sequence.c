@@ -276,6 +276,9 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
+		/* Add 10ms delay between SUSP_VR and RSMRST */
+		msleep(10);
+
 		/* Deassert RSMRST# */
 		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
