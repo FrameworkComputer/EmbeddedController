@@ -200,17 +200,8 @@ static void update_dynamic_battery_info(void)
 	    curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL)
 		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
 
-	switch (curr.state) {
-	case ST_DISCHARGE:
-		tmp |= EC_BATT_FLAG_DISCHARGING;
-		break;
-	case ST_CHARGE:
-		tmp |= EC_BATT_FLAG_CHARGING;
-		break;
-	default:
-		/* neither charging nor discharging */
-		break;
-	}
+	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
+				       EC_BATT_FLAG_DISCHARGING;
 
 	/* Tell the AP to re-read battery status if charge state changes */
 	if (*memmap_flags != tmp)
@@ -237,6 +228,7 @@ static void dump_charge_state(void)
 #define DUMP_BATT(FLD, FMT) ccprintf("\t" #FLD " = " FMT "\n", curr.batt. FLD)
 	ccprintf("state = %s\n", state_list[curr.state]);
 	DUMP(ac, "%d");
+	DUMP(batt_is_charging, "%d");
 	ccprintf("chg.*:\n");
 	DUMP_CHG(voltage, "%dmV");
 	DUMP_CHG(current, "%dmA");
@@ -272,8 +264,7 @@ static void show_charging_progress(void)
 {
 	int rv, minutes, to_full;
 
-	if (curr.state == ST_IDLE ||
-	    curr.state == ST_DISCHARGE) {
+	if (!curr.batt_is_charging) {
 		rv = battery_time_to_empty(&minutes);
 		to_full = 0;
 	} else {
@@ -414,7 +405,7 @@ static inline int battery_too_low(void)
 /* Shut everything down before the battery completely dies. */
 static void prevent_deep_discharge(void)
 {
-	if (!battery_too_low()) {
+	if (!battery_too_low() || curr.batt_is_charging) {
 		/* Reset shutdown warning time */
 		shutdown_warning_time.val = 0;
 		return;
@@ -423,22 +414,24 @@ static void prevent_deep_discharge(void)
 	CPRINTS("Low battery: %d%%, %dmV",
 		curr.batt.state_of_charge, curr.batt.voltage);
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-#ifdef CONFIG_HIBERNATE
-		/* AP is off, so shut down the EC now */
-		CPRINTS("charge force EC hibernate due to low battery");
-		system_hibernate(0, 0);
-#endif
-	} else if (!shutdown_warning_time.val) {
-		/* Warn AP battery level is so low we'll shut down */
+	if (!shutdown_warning_time.val) {
 		CPRINTS("charge warn shutdown due to low battery");
 		shutdown_warning_time = get_time();
-		host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	} else if (get_time().val > shutdown_warning_time.val +
 		   LOW_BATTERY_SHUTDOWN_TIMEOUT_US) {
-		/* Timeout waiting for AP to shut down, so kill it */
-		CPRINTS("charge force shutdown due to low battery");
-		chipset_force_shutdown();
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+#ifdef CONFIG_HIBERNATE
+			/* Timeout waiting for charger to provide more power */
+			CPRINTS("charge force EC hibernate due to low battery");
+			system_hibernate(0, 0);
+#endif
+		} else {
+			/* Timeout waiting for AP to shut down, so kill it */
+			CPRINTS("charge force shutdown due to low battery");
+			chipset_force_shutdown();
+		}
 	}
 }
 
@@ -574,11 +567,18 @@ void charger_task(void)
 		if (curr.batt.flags & BATT_FLAG_BAD_ANY)
 			problem(PR_BATT_FLAGS, curr.batt.flags);
 
+		/*
+		 * If AC is present, check if input current is sufficient to
+		 * actually charge battery.
+		 */
+		curr.batt_is_charging = curr.ac && (curr.batt.current >= 0);
+
+		/* Don't let the battery hurt itself. */
+		prevent_hot_discharge();
+		prevent_deep_discharge();
+
 		if (!curr.ac) {
 			curr.state = ST_DISCHARGE;
-			/* Don't let the battery hurt itself. */
-			prevent_hot_discharge();
-			prevent_deep_discharge();
 			goto wait_for_it;
 		}
 

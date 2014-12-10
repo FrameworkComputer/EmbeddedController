@@ -27,6 +27,7 @@ enum charge_state_v2 {
 struct charge_state_data {
 	timestamp_t ts;
 	int ac;
+	int batt_is_charging;
 	struct charger_params chg;
 	struct batt_params batt;
 	enum charge_state_v2 state;
