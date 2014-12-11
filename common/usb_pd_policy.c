@@ -239,13 +239,13 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 static int dfp_discover_modes(int port, uint32_t *payload)
 {
 	uint16_t svid = pe[port].svids[pe[port].svid_idx].svid;
-	if (!pe[port].svid_cnt)
+	if (pe[port].svid_idx >= pe[port].svid_cnt)
 		return 0;
 	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
 	return 1;
 }
 
-static int dfp_consume_modes(int port, int cnt, uint32_t *payload)
+static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 {
 	int idx = pe[port].svid_idx;
 	pe[port].svids[idx].mode_cnt = cnt - 1;
@@ -257,7 +257,6 @@ static int dfp_consume_modes(int port, int cnt, uint32_t *payload)
 	}
 
 	pe[port].svid_idx++;
-	return (pe[port].svid_idx < pe[port].svid_cnt);
 }
 
 int pd_alt_mode(int port)
@@ -404,16 +403,11 @@ DECLARE_CONSOLE_COMMAND(pe, command_pe,
 
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
-	int i;
 	int cmd = PD_VDO_CMD(payload[0]);
 	int cmd_type = PD_VDO_CMDT(payload[0]);
 	int (*func)(int port, uint32_t *payload) = NULL;
 
 	int rsize = 1; /* VDM header at a minimum */
-	CPRINTF("SVDM/%d [%d] %08x", cnt, cmd, payload[0]);
-	for (i = 1; i < cnt; i++)
-		CPRINTF(" %08x", payload[i]);
-	CPRINTF("\n");
 
 	payload[0] &= ~VDO_CMDT_MASK;
 	*rpayload = payload;
@@ -479,9 +473,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			rsize = dfp_discover_modes(port, payload);
 			break;
 		case CMD_DISCOVER_MODES:
-			if (dfp_consume_modes(port, cnt, payload))
-				rsize = dfp_discover_modes(port, payload);
-			else
+			dfp_consume_modes(port, cnt, payload);
+			rsize = dfp_discover_modes(port, payload);
+			if (!rsize)
 				rsize = dfp_enter_mode(port, payload);
 			break;
 		case CMD_ENTER_MODE:
@@ -551,7 +545,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	} else {
 		CPRINTF("PE ERR: unknown cmd type %d\n", cmd);
 	}
-	CPRINTS("DONE");
 	return rsize;
 }
 

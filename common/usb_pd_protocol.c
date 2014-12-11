@@ -690,22 +690,34 @@ static void bist_mode_2_rx(int port)
 	}
 }
 
+static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
+			     int data_cnt)
+{
+	pd[port].vdo_count = data_cnt + 1;
+	pd[port].vdo_data[0] = header[0];
+	memcpy(&pd[port].vdo_data[1], data, sizeof(uint32_t) * data_cnt);
+	/* Set ready, pd task will actually send */
+	pd[port].vdm_state = VDM_STATE_READY;
+}
+
 static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 {
-	int rlen = 0;
+	int rlen = 0, i;
 	uint32_t *rdata;
 
-	if (pd[port].vdm_state == VDM_STATE_BUSY)
+	if (pd[port].vdm_state == VDM_STATE_BUSY) {
 		pd[port].vdm_state = VDM_STATE_DONE;
+		CPRINTF("VDM/%d [%02d] %08x", cnt, PD_VDO_CMD(payload[0]),
+			payload[0]);
+		if (PD_VDO_SVDM(payload[0]))
+			for (i = 1; i < cnt; i++)
+				CPRINTF(" %08x", payload[i]);
+		CPRINTF("\n");
+	}
 
 	rlen = pd_vdm(port, cnt, payload, &rdata);
 	if (rlen > 0) {
-		uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF,
-					    pd[port].power_role,
-					    pd[port].data_role,
-					    pd[port].msg_id,
-					    rlen);
-		send_validate_message(port, header, rlen, rdata);
+		queue_vdm(port, rdata, &rdata[1], rlen - 1);
 		return;
 	}
 	if (debug_level >= 1)
@@ -1291,26 +1303,34 @@ packet_err:
 void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count)
 {
-	int i;
-
 	if (count > VDO_MAX_SIZE - 1) {
 		CPRINTF("VDM over max size\n");
 		return;
 	}
 
+	/* set VDM header with VID & CMD */
 	pd[port].vdo_data[0] = VDO(vid, ((vid & USB_SID_PD) == USB_SID_PD) ?
-				   1 : 0, cmd);
+				   1 : (PD_VDO_CMD(cmd) < CMD_ATTENTION), cmd);
+	queue_vdm(port, pd[port].vdo_data, data, count);
 
-	pd[port].vdo_count = count + 1;
-	for (i = 1; i < count + 1; i++)
-		pd[port].vdo_data[i] = data[i-1];
-
-	/* Set ready, pd task will actually send */
-	pd[port].vdm_state = VDM_STATE_READY;
 	task_wake(PORT_TO_TASK_ID(port));
 }
 
-static void pd_vdm_send_state_machine(int port)
+static inline int pdo_busy(int port)
+{
+	/*
+	 * Note, main PDO state machine (pd_task) uses READY state exclusively
+	 * to denote port partners have successfully negociated a contract.  All
+	 * other protocol actions force state transitions.
+	 */
+	int rv = (pd[port].task_state != PD_STATE_SRC_READY);
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	rv &= (pd[port].task_state != PD_STATE_SNK_READY);
+#endif
+	return rv;
+}
+
+static void pd_vdm_send_state_machine(int port, int incoming_packet)
 {
 	int res;
 	uint16_t header;
@@ -1318,7 +1338,16 @@ static void pd_vdm_send_state_machine(int port)
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
-		/* Only transmit VDM if connected */
+		/*
+		 * if there's traffic or we're not in PDO ready state don't send
+		 * a VDM */
+		if (incoming_packet || pdo_busy(port))
+			break;
+
+		/*
+		 * Only transmit VDM if connected.  Should follow busy logic
+		 * (above) as custom VDMs can leave port in disconnected state
+		 */
 		if (!pd_is_connected(port)) {
 			pd[port].vdm_state = VDM_STATE_ERR_BUSY;
 			break;
@@ -1509,7 +1538,7 @@ void pd_task(void)
 	uint32_t payload[7];
 	int timeout = 10*MSEC;
 	int cc1_volt, cc2_volt;
-	int res, incoming_packet;
+	int res, incoming_packet = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
 	int hard_reset_count = 0;
@@ -1543,7 +1572,7 @@ void pd_task(void)
 
 	while (1) {
 		/* process VDM messages last */
-		pd_vdm_send_state_machine(port);
+		pd_vdm_send_state_machine(port, incoming_packet);
 
 		/* monitor for incoming packet if in a connected state */
 		if (pd_is_connected(port) && pd_comm_enabled)
@@ -1765,9 +1794,11 @@ void pd_task(void)
 
 			/*
 			 * Don't send any PD traffic if we woke up due to
-			 * incoming packet to avoid collisions
+			 * incoming packet or if VDO response pending to avoid
+			 * collisions.
 			 */
-			if (incoming_packet)
+			if (incoming_packet ||
+			    (pd[port].vdm_state == VDM_STATE_BUSY))
 				break;
 
 			/* Send get sink cap if haven't received it yet */
@@ -2081,9 +2112,11 @@ void pd_task(void)
 
 			/*
 			 * Don't send any PD traffic if we woke up due to
-			 * incoming packet to avoid collisions
+			 * incoming packet or if VDO response pending to avoid
+			 * collisions.
 			 */
-			if (incoming_packet)
+			if (incoming_packet ||
+			    (pd[port].vdm_state == VDM_STATE_BUSY))
 				break;
 
 			/* Check for new power to request */

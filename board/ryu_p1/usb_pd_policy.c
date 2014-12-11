@@ -121,7 +121,6 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	uint16_t dev_id = 0;
-	CPRINTF("VDM/%d [%d] %08x\n", cnt, cmd, payload[0]);
 
 	/* make sure we have some payload */
 	if (cnt == 0)
