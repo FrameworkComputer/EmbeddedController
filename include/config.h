@@ -349,6 +349,12 @@
 #define CONFIG_COMMON_GPIO
 
 /*
+ * Provides smaller GPIO names to reduce flash size.  Instead of the 'name'
+ * field in GPIO macro it will concat 'port' and 'pin' to reduce flash size.
+ */
+#undef CONFIG_COMMON_GPIO_SHORTNAMES
+
+/*
  * Provide common runtime layer code (tasks, hooks ...)
  * You want this unless you are doing a really tiny firmware.
  */

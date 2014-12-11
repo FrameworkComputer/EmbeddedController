@@ -3,8 +3,13 @@
  * found in the LICENSE file.
  */
 
+#ifdef CONFIG_COMMON_GPIO_SHORTNAMES
+#define GPIO(name, port, pin, flags, signal) \
+	{#port#pin, GPIO_##port, (1 << pin), flags, signal},
+#else
 #define GPIO(name, port, pin, flags, signal) \
 	{#name, GPIO_##port, (1 << pin), flags, signal},
+#endif
 
 #define UNIMPLEMENTED(name) \
 	{#name, DUMMY_GPIO_BANK, 0, GPIO_DEFAULT, NULL},
