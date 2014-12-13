@@ -842,7 +842,7 @@ void pd_get_info(uint32_t *info_data);
  * @param rpayload pointer to the data to send back.
  * @return if >0, number of VDOs to send back.
  */
-int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 
 /**
  * Handle Structured Vendor Defined Messages

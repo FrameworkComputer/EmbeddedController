@@ -128,3 +128,9 @@ void pd_new_contract(int port, int pr_role, int dr_role,
 		     int partner_pr_swap, int partner_dr_swap)
 {
 }
+
+int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+		  uint32_t **rpayload)
+{
+	return 0;
+}

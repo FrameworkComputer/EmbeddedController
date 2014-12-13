@@ -715,7 +715,11 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 		CPRINTF("\n");
 	}
 
-	rlen = pd_vdm(port, cnt, payload, &rdata);
+	if (PD_VDO_SVDM(payload[0]))
+		rlen = pd_svdm(port, cnt, payload, &rdata);
+	else
+		rlen = pd_custom_vdm(port, cnt, payload, &rdata);
+
 	if (rlen > 0) {
 		queue_vdm(port, rdata, &rdata[1], rlen - 1);
 		return;

@@ -153,8 +153,8 @@ const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
-static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-			 uint32_t **rpayload)
+int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+		  uint32_t **rpayload)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	uint16_t dev_id = 0;
@@ -202,14 +202,6 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	}
 
 	return 0;
-}
-
-int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
-{
-	if (PD_VDO_SVDM(payload[0]))
-		return pd_svdm(port, cnt, payload, rpayload);
-	else
-		return pd_custom_vdm(port, cnt, payload, rpayload);
 }
 
 static void svdm_safe_dp_mode(int port)

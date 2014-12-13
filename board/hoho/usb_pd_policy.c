@@ -229,8 +229,8 @@ const struct svdm_response svdm_rsp = {
 	.exit_mode = &svdm_exit_mode,
 };
 
-static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-			 uint32_t **rpayload)
+int pd_custom_vdm(int port, int cnt, uint32_t *payload,
+		  uint32_t **rpayload)
 {
 	int rsize;
 
@@ -247,12 +247,4 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	payload[0] |= VDO_SRC_RESPONDER;
 
 	return rsize;
-}
-
-int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
-{
-	if (PD_VDO_SVDM(payload[0]))
-		return pd_svdm(port, cnt, payload, rpayload);
-	else
-		return pd_custom_vdm(port, cnt, payload, rpayload);
 }
