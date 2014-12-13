@@ -903,7 +903,7 @@ int main(int argc, char **argv)
 		command_write_unprotect(ser);
 
 	if (flags & FLAG_ERASE || output_filename) {
-		if (!strcmp("STM32L15", chip->name)) {
+		if (!strncmp("STM32L15", chip->name, 8)) {
 			/* Mass erase is not supported on STM32L15xx */
 			/* command_ext_erase(ser, ERASE_ALL, 0); */
 			int i, page_count = chip->flash_size / chip->page_size;
