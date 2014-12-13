@@ -627,18 +627,30 @@
  */
 #undef CONFIG_HOST_COMMAND_STATUS
 
-/*
- * For ECs where the host command interface is I2C, slave
- * address which the EC will respond to.
- */
-#undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
-
 /* If we have host command task, assume we also are using host events. */
 #ifdef HAS_TASK_HOSTCMD
 #define CONFIG_HOSTCMD_EVENTS
 #else
 #undef  CONFIG_HOSTCMD_EVENTS
 #endif
+
+/*
+ * For ECs where the host command interface is I2C, slave
+ * address which the EC will respond to.
+ */
+#undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+
+/*
+ * Host command rate limiting assures EC will have time to process lower
+ * priority tasks even if the AP is hammering the EC with host commands.
+ * If there is less than CONFIG_HOSTCMD_RATE_LIMITING_MIN_REST between
+ * host commands for CONFIG_HOSTCMD_RATE_LIMITING_PERIOD, then a
+ * recess period of CONFIG_HOSTCMD_RATE_LIMITING_RECESS will be
+ * enforced.
+ */
+#define CONFIG_HOSTCMD_RATE_LIMITING_PERIOD   (500 * MSEC)
+#define CONFIG_HOSTCMD_RATE_LIMITING_MIN_REST (3   * MSEC)
+#define CONFIG_HOSTCMD_RATE_LIMITING_RECESS   (20  * MSEC)
 
 /*****************************************************************************/
 
