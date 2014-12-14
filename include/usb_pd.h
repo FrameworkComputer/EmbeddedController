@@ -139,6 +139,13 @@ enum pd_errors {
 /* from USB Type-C Specification Table 5-1 */
 #define PD_T_AME (1*SECOND) /* timeout from UFP attach to Alt Mode Entry */
 
+/* VDM Timers ( USB PD Spec Rev2.0 Table 6-30 )*/
+#define PD_T_VDM_BUSY         (100*MSEC) /* at least 100ms */
+#define PD_T_VDM_E_MODE        (25*MSEC) /* enter/exit the same max */
+#define PD_T_VDM_RCVR_RSP      (15*MSEC) /* max of 15ms */
+#define PD_T_VDM_SNDR_RSP      (30*MSEC) /* max of 30ms */
+#define PD_T_VDM_WAIT_MODE_E  (100*MSEC) /* enter/exit the same max */
+
 /* function table for entered mode */
 struct amode_fx {
 	int (*status)(int port, uint32_t *payload);

@@ -526,7 +526,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		case CMD_DISCOVER_SVID:
 		case CMD_DISCOVER_MODES:
 			/* resend if its discovery */
-			payload[0] |= VDO_CMDT(CMDT_INIT);
 			rsize = 1;
 			break;
 		case CMD_ENTER_MODE:

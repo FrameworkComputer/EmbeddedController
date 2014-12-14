@@ -193,6 +193,7 @@ enum vdm_states {
 	/* Anything >0 represents an active state */
 	VDM_STATE_READY = 1,
 	VDM_STATE_BUSY = 2,
+	VDM_STATE_WAIT_RSP_BUSY = 3,
 };
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -264,9 +265,13 @@ static struct pd_protocol {
 
 	/* PD state for Vendor Defined Messages */
 	enum vdm_states vdm_state;
+	/* Timeout for the current vdm state.  Set to 0 for no timeout. */
+	timestamp_t vdm_timeout;
 	/* next Vendor Defined Message to send */
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	uint8_t vdo_count;
+	/* VDO to retry if UFP responder replied busy. */
+	uint32_t vdo_retry;
 
 	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
 	uint16_t dev_id;
@@ -716,13 +721,24 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 	uint32_t *rdata;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
-		pd[port].vdm_state = VDM_STATE_DONE;
 		CPRINTF("VDM/%d [%02d] %08x", cnt, PD_VDO_CMD(payload[0]),
 			payload[0]);
 		if (PD_VDO_SVDM(payload[0]))
 			for (i = 1; i < cnt; i++)
 				CPRINTF(" %08x", payload[i]);
 		CPRINTF("\n");
+
+		/* If UFP responded busy retry after timeout */
+		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
+			pd[port].vdm_timeout.val = get_time().val +
+				PD_T_VDM_BUSY;
+			pd[port].vdm_state = VDM_STATE_WAIT_RSP_BUSY;
+			pd[port].vdo_retry = (payload[0] & ~VDO_CMDT_MASK) |
+				CMDT_INIT;
+			return;
+		} else {
+			pd[port].vdm_state = VDM_STATE_DONE;
+		}
 	}
 
 	if (PD_VDO_SVDM(payload[0]))
@@ -1355,11 +1371,36 @@ static inline int pdo_busy(int port)
 	return rv;
 }
 
+static uint64_t vdm_get_ready_timeout(uint32_t vdm_hdr)
+{
+	uint64_t timeout;
+	int cmd = PD_VDO_CMD(vdm_hdr);
+
+	/* its not a structured VDM command */
+	if (!PD_VDO_SVDM(vdm_hdr))
+		return 500*MSEC;
+
+	switch (PD_VDO_CMDT(vdm_hdr)) {
+	case CMDT_INIT:
+		if ((cmd == CMD_ENTER_MODE) || (cmd == CMD_EXIT_MODE))
+			timeout = PD_T_VDM_WAIT_MODE_E;
+		else
+			timeout = PD_T_VDM_SNDR_RSP;
+		break;
+	default:
+		if ((cmd == CMD_ENTER_MODE) || (cmd == CMD_EXIT_MODE))
+			timeout = PD_T_VDM_E_MODE;
+		else
+			timeout = PD_T_VDM_RCVR_RSP;
+		break;
+	}
+	return timeout;
+}
+
 static void pd_vdm_send_state_machine(int port, int incoming_packet)
 {
 	int res;
 	uint16_t header;
-	static uint64_t vdm_timeout;
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
@@ -1389,13 +1430,24 @@ static void pd_vdm_send_state_machine(int port, int incoming_packet)
 			pd[port].vdm_state = VDM_STATE_ERR_SEND;
 		} else {
 			pd[port].vdm_state = VDM_STATE_BUSY;
-			vdm_timeout = get_time().val + 500*MSEC;
+			pd[port].vdm_timeout.val = get_time().val +
+				vdm_get_ready_timeout(pd[port].vdo_data[0]);
+		}
+		break;
+	case VDM_STATE_WAIT_RSP_BUSY:
+		/* wait and then initiate request again */
+		if (get_time().val > pd[port].vdm_timeout.val) {
+			pd[port].vdo_data[0] = pd[port].vdo_retry;
+			pd[port].vdo_count = 1;
+			pd[port].vdm_state = VDM_STATE_READY;
 		}
 		break;
 	case VDM_STATE_BUSY:
 		/* Wait for VDM response or timeout */
-		if (get_time().val > vdm_timeout)
+		if (pd[port].vdm_timeout.val &&
+		    (get_time().val > pd[port].vdm_timeout.val)) {
 			pd[port].vdm_state = VDM_STATE_ERR_TMOUT;
+		}
 		break;
 	default:
 		break;
