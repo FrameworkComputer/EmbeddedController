@@ -222,6 +222,7 @@ static int test_charge_state(void)
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(90));
 	state = wait_charging_state();
+	sleep(HIGH_TEMP_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 	TEST_ASSERT(state == PWR_STATE_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
@@ -265,13 +266,19 @@ static int test_low_battery(void)
 {
 	test_setup(1);
 
-	ccprintf("[CHARGING TEST] Low battery with AC\n");
-
+	ccprintf("[CHARGING TEST] Low battery with AC and positive current\n");
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
+	sb_write(SB_CURRENT, 1000);
 	wait_charging_state();
 	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	TEST_ASSERT(!is_hibernated);
+
+	ccprintf("[CHARGING TEST] Low battery with AC and negative current\n");
+	sb_write(SB_CURRENT, -1000);
+	wait_charging_state();
+	sleep(LOW_BATTERY_SHUTDOWN_TIMEOUT);
+	TEST_ASSERT(is_hibernated);
 
 	ccprintf("[CHARGING TEST] Low battery shutdown S0->S5\n");
 	mock_chipset_state = CHIPSET_STATE_ON;
@@ -313,6 +320,27 @@ static int test_low_battery(void)
 	usleep(32 * SECOND);
 	wait_charging_state();
 	TEST_ASSERT(is_shutdown);
+
+	return EC_SUCCESS;
+}
+
+static int test_high_temp_battery(void)
+{
+	test_setup(1);
+
+	ccprintf("[CHARGING TEST] High battery temperature shutdown\n");
+	ev_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(90));
+	wait_charging_state();
+	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_SHUTDOWN));
+	TEST_ASSERT(!is_shutdown);
+	sleep(HIGH_TEMP_SHUTDOWN_TIMEOUT);
+	TEST_ASSERT(is_shutdown);
+
+	ccprintf("[CHARGING TEST] High battery temp S0->S5 hibernate\n");
+	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	wait_charging_state();
+	TEST_ASSERT(is_hibernated);
 
 	return EC_SUCCESS;
 }
@@ -650,6 +678,7 @@ void run_test(void)
 {
 	RUN_TEST(test_charge_state);
 	RUN_TEST(test_low_battery);
+	RUN_TEST(test_high_temp_battery);
 	RUN_TEST(test_external_funcs);
 	RUN_TEST(test_hc_charge_state);
 	RUN_TEST(test_hc_current_limit);

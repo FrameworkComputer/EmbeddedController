@@ -12,6 +12,8 @@
 
 /* Seconds after AP battery shutdown warning before we kill the AP */
 #define LOW_BATTERY_SHUTDOWN_TIMEOUT 30
+#define HIGH_TEMP_SHUTDOWN_TIMEOUT   30
+
 /* Seconds to spend trying to wake a non-responsive battery */
 #define PRECHARGE_TIMEOUT 30
 
