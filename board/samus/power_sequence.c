@@ -6,6 +6,7 @@
 /* X86 chipset power control module for Chrome EC */
 
 #include "battery.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -196,6 +197,13 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5:
 		while ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED) == 0) {
+			/* Return to G3 if battery level is too low */
+			if (charge_want_shutdown() ||
+			    charge_prevent_power_on()) {
+				CPRINTS("power-up inhibited");
+				return POWER_S5G3;
+			}
+
 			if (task_wait_event(SECOND*4) == TASK_EVENT_TIMER) {
 				CPRINTS("timeout waiting for S5 exit");
 				/* Put system in G3 and assert RTCRST# */
