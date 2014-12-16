@@ -53,3 +53,6 @@ driver-$(CONFIG_USB_SWITCH_TSU6721)+=usb_switch_tsu6721.o
 
 # Firmware Update
 driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o
+
+# video converters
+driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o

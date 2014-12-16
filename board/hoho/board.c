@@ -10,6 +10,7 @@
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "mcdp28x0.h"
 #include "registers.h"
 #include "task.h"
 #include "usb.h"
@@ -131,6 +132,21 @@ static void board_init_spi2(void)
 }
 #endif /* CONFIG_SPI_FLASH */
 
+static void factory_validation_deferred(void)
+{
+	struct mcdp_info info;
+
+	mcdp_enable();
+
+	/* test mcdp via serial to validate function */
+	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0xe) &&
+	    (MCDP_CHIPID(info.chipid) == 0x1))
+		gpio_set_level(GPIO_MCDP_READY, 1);
+
+	mcdp_disable();
+}
+DECLARE_DEFERRED(factory_validation_deferred);
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -144,8 +160,8 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_DP_HPD);
 
 	gpio_set_level(GPIO_STM_READY, 1); /* factory test only */
-	/* TODO(crosbug.com/p/34122): Add real check for MCDP function */
-	gpio_set_level(GPIO_MCDP_READY, 1); /* factory test only */
+	/* Delay needed to allow HDMI MCU to boot. */
+	hook_call_deferred(factory_validation_deferred, 200*MSEC);
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
