@@ -306,18 +306,27 @@ static int charge_request(int voltage, int current)
 	if (!voltage || !current)
 		voltage = current = 0;
 
-	if (prev_volt != voltage || prev_curr != current)
-		CPRINTS("%s(%dmV, %dmA)", __func__, voltage, current);
+	if (curr.ac) {
+		if (prev_volt != voltage || prev_curr != current)
+			CPRINTS("%s(%dmV, %dmA)", __func__, voltage, current);
+	}
+
+	/*
+	 * Set current before voltage so that if we are just starting
+	 * to charge, we allow some time (i2c delay) for charging circuit to
+	 * start at a voltage just above battery voltage before jumping
+	 * up. This helps avoid large current spikes when connecting
+	 * battery.
+	 */
+	if (current >= 0)
+		r2 = charger_set_current(current);
+	if (r2 != EC_SUCCESS)
+		problem(PR_SET_CURRENT, r2);
 
 	if (voltage >= 0)
 		r1 = charger_set_voltage(voltage);
 	if (r1 != EC_SUCCESS)
 		problem(PR_SET_VOLTAGE, r1);
-
-	if (current >= 0)
-		r2 = charger_set_current(current);
-	if (r2 != EC_SUCCESS)
-		problem(PR_SET_CURRENT, r2);
 
 	/*
 	 * Set the charge inhibit bit when possible as it appears to save
@@ -496,6 +505,7 @@ void charger_task(void)
 {
 	int sleep_usec;
 	int need_static = 1;
+	const struct charger_info * const info = charger_get_info();
 
 	/* Get the battery-specific values */
 	batt_info = battery_get_info();
@@ -766,6 +776,10 @@ wait_for_it:
 				charge_request(curr.requested_voltage,
 					       curr.requested_current);
 			}
+		} else {
+			charge_request(
+				charger_closest_voltage(
+				  curr.batt.voltage + info->voltage_step), -1);
 		}
 
 		/* How long to sleep? */

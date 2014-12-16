@@ -19,7 +19,7 @@ static const struct battery_info info = {
 	 *   normal = 7.4V
 	 *   min    = 6.0V
 	 */
-	.voltage_max    = 8400,
+	.voltage_max    = 8700,
 	.voltage_normal = 7400,
 	.voltage_min    = 6000,
 
