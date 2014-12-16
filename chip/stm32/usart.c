@@ -89,7 +89,7 @@ void usart_init(struct usart_config const *config)
 				 STM32_USART_CR1_RE |
 				 STM32_USART_CR1_RXNEIE);
 	STM32_USART_CR2(base) = 0x0000;
-	STM32_USART_CR3(base) = 0x0000;
+	STM32_USART_CR3(base) = STM32_USART_CR3_OVRDIS;
 
 	/*
 	 * Enable the variant specific HW.

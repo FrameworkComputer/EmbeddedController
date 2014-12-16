@@ -288,7 +288,13 @@ void uart_init(void)
 	 * so clear UE first.
 	 */
 	STM32_USART_CR1(UARTN_BASE) &= ~STM32_USART_CR1_UE;
-	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUS_START_BIT;
+
+	/*
+	 * Also disable the RX overrun interrupt, since we don't care about it
+	 * and we don't want to clear an extra flag in the interrupt
+	 */
+	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUS_START_BIT |
+	                               STM32_USART_CR3_OVRDIS;
 #endif
 
 	/*

@@ -194,6 +194,7 @@
 #define STM32_USART_CR3_DMAR		(1 << 6)
 #define STM32_USART_CR3_DMAT		(1 << 7)
 #define STM32_USART_CR3_ONEBIT		(1 << 11)
+#define STM32_USART_CR3_OVRDIS		(1 << 12)
 #define STM32_USART_CR3_WUS_START_BIT	(2 << 20)
 #define STM32_USART_CR3_WUFIE		(1 << 22)
 #define STM32_USART_BRR(base)      STM32_USART_REG(base, 0x0C)
