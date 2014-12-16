@@ -812,6 +812,19 @@ int charge_want_shutdown(void)
 		(curr.batt.state_of_charge < BATTERY_LEVEL_SHUTDOWN);
 }
 
+int charge_prevent_power_on(void)
+{
+	int prevent_power_on = 0;
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+	/* Require a minimum battery level to power on */
+	if (curr.batt.is_present == BP_NO ||
+	    curr.batt.state_of_charge < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+		prevent_power_on = 1;
+#endif
+	/* Factory override: Always allow power on if WP is disabled */
+	return prevent_power_on && system_is_locked();
+}
+
 enum charge_state charge_get_state(void)
 {
 	switch (curr.state) {

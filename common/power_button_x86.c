@@ -116,10 +116,12 @@ static void set_pwrbtn_to_pch(int high)
 {
 	/*
 	 * If the battery is discharging and low enough we'd shut down the
-	 * system, don't press the power button.
+	 * system, don't press the power button. Also, don't press the
+	 * power button if the battery is charging but the battery level
+	 * is too low.
 	 */
 #ifdef CONFIG_CHARGER
-	if (!high && charge_want_shutdown()) {
+	if (!high && (charge_want_shutdown() || charge_prevent_power_on())) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}

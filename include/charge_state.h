@@ -98,6 +98,12 @@ int charge_get_percent(void);
 int charge_want_shutdown(void);
 
 /**
+ * Return non-zero if the battery level is too low to allow power on, even if
+ * a charger is attached.
+ */
+int charge_prevent_power_on(void);
+
+/**
  * Get the last polled battery/charger temperature.
  *
  * @param idx		Sensor index to read.
