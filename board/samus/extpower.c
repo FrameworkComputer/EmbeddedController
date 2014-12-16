@@ -15,46 +15,12 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "task.h"
 
 int extpower_is_present(void)
 {
 	return gpio_get_level(GPIO_AC_PRESENT);
 }
-
-/**
- * Deferred function to handle external power change
- */
-static void extpower_deferred(void)
-{
-	static int extpower_prev;
-	int extpower = extpower_is_present();
-
-	if (extpower && !extpower_prev) {
-		charger_discharge_on_ac(0);
-		/* If in G3, enable PP5000 for accurate sensing of CC */
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			gpio_set_level(GPIO_PP5000_EN, 1);
-	} else if (extpower && extpower_prev) {
-		/* glitch on AC_PRESENT, attempt to recover from backboost */
-		charger_discharge_on_ac(1);
-		charger_discharge_on_ac(0);
-	} else {
-		charger_discharge_on_ac(1);
-		/* If in G3, make sure PP5000 is off when no AC */
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			gpio_set_level(GPIO_PP5000_EN, 0);
-	}
-	extpower_prev = extpower;
-
-	hook_notify(HOOK_AC_CHANGE);
-
-	/* Forward notification to host */
-	if (extpower)
-		host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
-	else
-		host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
-}
-DECLARE_DEFERRED(extpower_deferred);
 
 static void extpower_buffer_to_pch(void)
 {
@@ -79,17 +45,70 @@ void extpower_interrupt(enum gpio_signal signal)
 {
 	extpower_buffer_to_pch();
 
-	/* Trigger deferred notification of external power change */
-	hook_call_deferred(extpower_deferred, 0);
+	/* Trigger notification of external power change */
+	task_wake(TASK_ID_EXTPOWER);
 }
 
 static void extpower_init(void)
 {
 	extpower_buffer_to_pch();
 
-	hook_call_deferred(extpower_deferred, 0);
-
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 }
 DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_DEFAULT);
+
+static void extpower_board_hacks(int extpower)
+{
+	static int extpower_prev;
+
+	/*
+	 * Use discharge_on_ac() to workaround hardware backboosting
+	 * charge circuit problems.
+	 *
+	 * When in G3, PP5000 needs to be enabled to accurately sense
+	 * CC voltage when AC is attached. When AC is disconnceted
+	 * it needs to be off to save power.
+	 */
+	if (extpower && !extpower_prev) {
+		charger_discharge_on_ac(0);
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			gpio_set_level(GPIO_PP5000_EN, 1);
+	} else if (extpower && extpower_prev) {
+		/* Glitch on AC_PRESENT, attempt to recover from backboost */
+		charger_discharge_on_ac(1);
+		charger_discharge_on_ac(0);
+	} else {
+		charger_discharge_on_ac(1);
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			gpio_set_level(GPIO_PP5000_EN, 0);
+	}
+	extpower_prev = extpower;
+}
+
+/**
+ * Task to handle external power change
+ */
+void extpower_task(void)
+{
+	int extpower = extpower_is_present();
+	extpower_board_hacks(extpower);
+
+	while (1) {
+		/* Wait until next extpower interrupt */
+		task_wait_event(-1);
+
+		extpower = extpower_is_present();
+
+		/* Various board hacks to run on extpower change */
+		extpower_board_hacks(extpower);
+
+		hook_notify(HOOK_AC_CHANGE);
+
+		/* Forward notification to host */
+		if (extpower)
+			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
+		else
+			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
+	}
+}
