@@ -431,9 +431,11 @@ static void __nvic_init_irqs(void)
 		uint8_t irq = __irqprio[i].irq;
 		uint8_t prio = __irqprio[i].priority;
 		uint32_t prio_shift = irq % 4 * 8 + 6;
+		if (prio > 0x3)
+			prio = 0x3;
 		CPU_NVIC_PRI(irq / 4) =
 				(CPU_NVIC_PRI(irq / 4) &
-				 ~(0x7 << prio_shift)) |
+				 ~(0x3 << prio_shift)) |
 				(prio << prio_shift);
 	}
 }
