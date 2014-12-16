@@ -18,7 +18,7 @@
 #define CPU_NVIC_DIS(x)        CPUREG(0xe000e180)
 #define CPU_NVIC_UNPEND(x)     CPUREG(0xe000e280)
 #define CPU_NVIC_ISPR(x)       CPUREG(0xe000e200)
-#define CPU_NVIC_PRI(x)        CPUREG(0xe000e400)
+#define CPU_NVIC_PRI(x)        CPUREG(0xe000e400 + 4 * (x))
 
 /* System Control Block */
 
