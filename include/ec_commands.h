@@ -1017,6 +1017,8 @@ struct lightbar_params_v1 {
 	int32_t s3_sleep_for;
 	int32_t s3_ramp_up;
 	int32_t s3_ramp_down;
+	int32_t s5_ramp_up;
+	int32_t s5_ramp_down;
 	int32_t tap_tick_delay;
 	int32_t tap_gate_delay;
 	int32_t tap_display_time;
@@ -1045,6 +1047,9 @@ struct lightbar_params_v1 {
 	/* Map [AC][battery_level] to color index */
 	uint8_t s0_idx[2][LB_BATTERY_LEVELS];	/* AP is running */
 	uint8_t s3_idx[2][LB_BATTERY_LEVELS];	/* AP is sleeping */
+
+	/* s5: single color pulse on inhibited power-up */
+	uint8_t s5_idx;
 
 	/* Color palette */
 	struct rgb_s color[8];			/* 0-3 are Google colors */

@@ -55,6 +55,9 @@ static struct p_state {
 	/* It's either charging or discharging. */
 	int battery_is_charging;
 
+	/* Is power-on prevented due to battery level? */
+	int battery_is_power_on_prevented;
+
 	/* Pattern variables for state S0. */
 	uint16_t w0;				/* primary phase */
 	uint8_t ramp;				/* ramp-in for S3->S0 */
@@ -75,6 +78,8 @@ static const struct lightbar_params_v1 default_params = {
 	.s3_sleep_for = 5 * SECOND,		/* between checks */
 	.s3_ramp_up = 2500,
 	.s3_ramp_down = 10000,
+	.s5_ramp_up = 2500,
+	.s5_ramp_down = 10000,
 	.tap_tick_delay = 5000,			/* oscillation step time */
 	.tap_gate_delay = 200 * MSEC,		/* segment gating delay */
 	.tap_display_time = 3 * SECOND,		/* total sequence time */
@@ -103,6 +108,7 @@ static const struct lightbar_params_v1 default_params = {
 		{ 5, 0xff, 0xff, 0xff },       /* battery: 0 = red, else off */
 		{ 0xff, 0xff, 0xff, 0xff }     /* AC: do nothing */
 	},
+	.s5_idx = 5,			       /* flash red */
 	.color = {
 		/*
 		 * These values have been optically calibrated for the
@@ -187,6 +193,7 @@ static void get_battery_level(void)
 #ifdef HAS_TASK_CHARGER
 	st.battery_percent = pct = charge_get_percent();
 	st.battery_is_charging = (PWR_STATE_DISCHARGE != charge_get_state());
+	st.battery_is_power_on_prevented = charge_prevent_power_on();
 #endif
 
 	/* Find the new battery level */
@@ -647,13 +654,76 @@ static uint32_t sequence_S3S5(void)
 	return LIGHTBAR_S5;
 }
 
-/* CPU is off. The lightbar loses power when the CPU is in S5, so there's
- * nothing to do. We'll just wait here until the state changes. */
+/* Pulse S5 color to indicate that the battery is so critically low that it
+ * must charge first before the system can power on. */
+static uint32_t pulse_s5_color(void)
+{
+	int r, g, b;
+	int f;
+	int w;
+	struct rgb_s *color = &st.p.color[st.p.s5_idx];
+
+	for (w = 0; w < 128; w += 2) {
+		f = cycle_010(w);
+		r = color->r * f / FP_SCALE;
+		g = color->g * f / FP_SCALE;
+		b = color->b * f / FP_SCALE;
+		lb_set_rgb(NUM_LEDS, r, g, b);
+		WAIT_OR_RET(st.p.s5_ramp_up);
+	}
+	for (w = 128; w <= 256; w++) {
+		f = cycle_010(w);
+		r = color->r * f / FP_SCALE;
+		g = color->g * f / FP_SCALE;
+		b = color->b * f / FP_SCALE;
+		lb_set_rgb(NUM_LEDS, r, g, b);
+		WAIT_OR_RET(st.p.s5_ramp_down);
+	}
+
+	return 0;
+}
+
+/* CPU is off. Pulse the lightbar if a charger is attached and the battery is
+ * so low that the system cannot power on. Otherwise, the lightbar loses power
+ * when the CPU is in S5, so there's nothing to do. We'll just wait here until
+ * the state changes. */
 static uint32_t sequence_S5(void)
 {
+	int initialized = 0;
+	uint32_t res = 0;
+
+	while (1) {
+		get_battery_level();
+		if (!st.battery_is_power_on_prevented ||
+		    !st.battery_is_charging)
+			break;
+
+		if (!initialized) {
+#ifdef CONFIG_LIGHTBAR_POWER_RAILS
+			/* Request that lightbar power rails be turned on. */
+			if (lb_power(1)) {
+				lb_init();
+				lb_set_rgb(NUM_LEDS, 0, 0, 0);
+			}
+#endif
+			lb_on();
+			initialized = 1;
+		}
+
+		res = pulse_s5_color();
+		if (res)
+			break;
+	}
+
+#ifdef CONFIG_LIGHTBAR_POWER_RAILS
+	if (initialized)
+		/* Suggest that the lightbar power rails can be shut down. */
+		lb_power(0);
+#endif
 	lb_off();
-	WAIT_OR_RET(-1);
-	return 0;
+	if (!res)
+		WAIT_OR_RET(-1);
+	return res;
 }
 
 /* The AP is going to poke at the lightbar directly, so we don't want the EC
