@@ -35,7 +35,18 @@ int charge_manager_set_override(int port);
 /* Returns the current active charge port, as determined by charge manager */
 int charge_manager_get_active_charge_port(void);
 
-/* Board-level callback, called on delayed override timeout */
+/* Board-level callback functions */
+
+/*
+ * Set the active charge port. Returns EC_SUCCESS if the charge port is
+ * accepted, returns ec_error_list status otherwise.
+ */
+int board_set_active_charge_port(int charge_port);
+
+/* Set the charge current limit. */
+void board_set_charge_limit(int charge_ma);
+
+/* Called on delayed override timeout */
 void board_charge_manager_override_timeout(void);
 
 #endif /* __CHARGE_MANAGER_H */

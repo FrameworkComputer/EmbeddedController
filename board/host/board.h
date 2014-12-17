@@ -56,10 +56,4 @@ enum charge_supplier {
 /* supplier_priority table defined in board.c */
 extern const int supplier_priority[];
 
-/* Set the active charge port. */
-void board_set_active_charge_port(int charge_port);
-
-/* Set the charge current limit. */
-void board_set_charge_limit(int charge_ma);
-
 #endif /* __BOARD_H */

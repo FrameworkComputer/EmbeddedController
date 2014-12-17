@@ -123,12 +123,6 @@ void board_update_battery_soc(int soc);
 /* Get the last received battery level. */
 int board_get_battery_soc(void);
 
-/* Set the active charge port. */
-void board_set_active_charge_port(int charge_port);
-
-/* Set the charge current limit. */
-void board_set_charge_limit(int charge_ma);
-
 /* Send host event to AP */
 void pd_send_host_event(int mask);
 

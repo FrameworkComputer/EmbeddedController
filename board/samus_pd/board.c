@@ -485,18 +485,24 @@ static void pd_send_ec_int(void)
  * Set active charge port -- only one port can be active at a time.
  *
  * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
  */
-void board_set_active_charge_port(int charge_port)
+int board_set_active_charge_port(int charge_port)
 {
 	if (charge_port >= 0 && charge_port < PD_PORT_COUNT &&
 	    pd_get_role(charge_port) != PD_ROLE_SINK) {
-		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
-		charge_port = CHARGE_PORT_NONE;
+		CPRINTS("Skip enable p%d", charge_port);
+		return EC_ERROR_INVAL;
 	}
+
 	pd_status.active_charge_port = charge_port;
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
-	CPRINTS("Set active charge port %d", charge_port);
+
+	CPRINTS("New chg p%d", charge_port);
+	return EC_SUCCESS;
 }
 
 /**
@@ -517,7 +523,7 @@ void board_set_charge_limit(int charge_ma)
 	pd_status.curr_lim_ma = charge_ma;
 	pd_send_ec_int();
 
-	CPRINTS("Set ilim duty %d", pwm_duty);
+	CPRINTS("New ilim %d", charge_ma);
 }
 
 /* Send host event up to AP */

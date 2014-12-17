@@ -32,6 +32,7 @@ BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
 static unsigned int active_charge_limit = CHARGE_SUPPLIER_NONE;
 static unsigned int active_charge_port = CHARGE_PORT_NONE;
+static unsigned int charge_port_to_reject = CHARGE_PORT_NONE;
 static int new_power_request[PD_PORT_COUNT];
 static int dual_role_capable[PD_PORT_COUNT];
 static int power_role[PD_PORT_COUNT];
@@ -47,9 +48,20 @@ void board_set_charge_limit(int charge_ma)
 	active_charge_limit = charge_ma;
 }
 
-void board_set_active_charge_port(int charge_port)
+/* Sets a charge port that will be rejected as the active port. */
+static void set_charge_port_to_reject(int port)
 {
+	charge_port_to_reject = port;
+}
+
+int board_set_active_charge_port(int charge_port)
+{
+	if (charge_port != CHARGE_PORT_NONE &&
+	    charge_port == charge_port_to_reject)
+		return EC_ERROR_INVAL;
+
 	active_charge_port = charge_port;
+	return EC_SUCCESS;
 }
 
 void board_charge_manager_override_timeout(void)
@@ -112,6 +124,7 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 	struct charge_port_info charge;
 
 	charge_manager_set_override(OVERRIDE_OFF);
+	set_charge_port_to_reject(CHARGE_PORT_NONE);
 	charge.current = current;
 	charge.voltage = voltage;
 
@@ -487,6 +500,40 @@ static int test_dual_role(void)
 	return EC_SUCCESS;
 }
 
+static int test_rejected_port(void)
+{
+	struct charge_port_info charge;
+
+	/* Initialize table to no charge. */
+	initialize_charge_table(0, 5000, 1000);
+	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+
+	/* Set a charge on P0. */
+	charge.current = 500;
+	charge.voltage = 5000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST2, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Set P0 as rejected, and verify that it doesn't become active. */
+	set_charge_port_to_reject(1);
+	charge.current = 1000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 1, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Don't reject P0, and verify it can become active. */
+	set_charge_port_to_reject(CHARGE_PORT_NONE);
+	charge_manager_update(CHARGE_SUPPLIER_TEST1, 1, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 1000);
+
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -497,6 +544,7 @@ void run_test(void)
 	RUN_TEST(test_new_power_request);
 	RUN_TEST(test_override);
 	RUN_TEST(test_dual_role);
+	RUN_TEST(test_rejected_port);
 
 	test_print_result();
 }

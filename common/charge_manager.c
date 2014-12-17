@@ -87,17 +87,15 @@ static int charge_manager_is_seeded(void)
 }
 
 /**
- * Charge manager refresh -- responsible for selecting the active charge port
- * and charge power. Called as a deferred task.
+ * Select the 'best' charge port, as defined by the supplier heirarchy and the
+ * ability of the port to provide power.
  */
-static void charge_manager_refresh(void)
+static void charge_manager_get_best_charge_port(int *new_port,
+						int *new_supplier)
 {
-	int new_supplier = CHARGE_SUPPLIER_NONE;
-	int new_port = CHARGE_PORT_NONE;
-	int new_charge_current, new_charge_current_uncapped;
-	int new_charge_voltage, i, j;
-	int updated_new_port = CHARGE_PORT_NONE;
-	int updated_old_port = CHARGE_PORT_NONE;
+	int supplier = CHARGE_SUPPLIER_NONE;
+	int port = CHARGE_PORT_NONE;
+	int i, j;
 
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
 	if (override_port != OVERRIDE_DONT_CHARGE) {
@@ -115,7 +113,7 @@ static void charge_manager_refresh(void)
 				 * charge on another override port.
 				 */
 				if (override_port != OVERRIDE_OFF &&
-				    override_port == new_port &&
+				    override_port == port &&
 				    override_port != j)
 					continue;
 
@@ -129,25 +127,60 @@ static void charge_manager_refresh(void)
 
 				if (available_charge[i][j].current > 0 &&
 				    available_charge[i][j].voltage > 0 &&
-				   (new_supplier == CHARGE_SUPPLIER_NONE ||
+				   (supplier == CHARGE_SUPPLIER_NONE ||
 				    supplier_priority[i] <
-				    supplier_priority[new_supplier] ||
+				    supplier_priority[supplier] ||
 				   (j == override_port &&
-				    new_port != override_port) ||
+				    port != override_port) ||
 				   (supplier_priority[i] ==
-				    supplier_priority[new_supplier] &&
+				    supplier_priority[supplier] &&
 				    POWER(available_charge[i][j]) >
-				    POWER(available_charge[new_supplier]
-							  [new_port])))) {
-					new_supplier = i;
-					new_port = j;
+				    POWER(available_charge[supplier][port])))) {
+					supplier = i;
+					port = j;
 				}
 			}
 
 		/* Clear override if no charge is available on override port */
 		if (override_port != OVERRIDE_OFF &&
-		    override_port != new_port)
+		    override_port != port)
 			override_port = OVERRIDE_OFF;
+	}
+
+	*new_port = port;
+	*new_supplier = supplier;
+}
+
+/**
+ * Charge manager refresh -- responsible for selecting the active charge port
+ * and charge power. Called as a deferred task.
+ */
+static void charge_manager_refresh(void)
+{
+	int new_supplier, new_port;
+	int new_charge_current, new_charge_current_uncapped;
+	int new_charge_voltage, i;
+	int updated_new_port = CHARGE_PORT_NONE;
+	int updated_old_port = CHARGE_PORT_NONE;
+
+	/* Hunt for an acceptable charge port */
+	while (1) {
+		charge_manager_get_best_charge_port(&new_port, &new_supplier);
+
+		/* If the port changed, attempt to switch to it */
+		if (new_port == charge_port ||
+		    board_set_active_charge_port(new_port) == EC_SUCCESS)
+			break;
+
+		/* 'Dont charge' request must be accepted */
+		ASSERT(new_port != CHARGE_PORT_NONE);
+
+		/*
+		 * Zero the available charge on the rejected port so that
+		 * it is no longer chosen.
+		 */
+		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
+			available_charge[i][new_port].current = 0;
 	}
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE) {
@@ -170,11 +203,9 @@ static void charge_manager_refresh(void)
 
 	/* Change the charge limit + charge port if modified. */
 	if (new_port != charge_port || new_charge_current != charge_current) {
-		CPRINTS("New charge limit: supplier %d port %d current %d "
-			"voltage %d", new_supplier, new_port,
-			new_charge_current, new_charge_voltage);
 		board_set_charge_limit(new_charge_current);
-		board_set_active_charge_port(new_port);
+		CPRINTS("CL: p%d s%d i%d v%d", new_supplier, new_port,
+			new_charge_current, new_charge_voltage);
 	}
 
 	/*
