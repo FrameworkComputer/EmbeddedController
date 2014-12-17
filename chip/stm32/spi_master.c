@@ -166,7 +166,7 @@ int spi_transaction_async(const uint8_t *txdata, int txlen,
 
 	rv = shared_mem_acquire(MAX(txlen, rxlen), &buf);
 	if (rv != EC_SUCCESS)
-		goto err_free;
+		return rv;
 
 	/* Drive SS low */
 	gpio_set_level(CONFIG_SPI_CS_GPIO, 0);
