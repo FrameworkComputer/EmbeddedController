@@ -31,6 +31,7 @@ void charge_manager_set_ceil(int port, int ceil);
 
 /* Select an 'override port', which is always the preferred charge port */
 int charge_manager_set_override(int port);
+int charge_manager_get_override(void);
 
 /* Returns the current active charge port, as determined by charge manager */
 int charge_manager_get_active_charge_port(void);

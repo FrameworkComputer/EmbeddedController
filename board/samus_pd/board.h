@@ -66,9 +66,9 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-/* 10 deferrable tasks on this board */
+/* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 8
+#define DEFERRABLE_MAX_COUNT 9
 
 #ifndef __ASSEMBLER__
 

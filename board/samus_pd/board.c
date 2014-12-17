@@ -34,6 +34,11 @@ static enum power_state ps;
 
 /* Battery state of charge */
 static int batt_soc;
+static int fake_state_of_charge = -1; /* use real soc by default */
+
+/* Last charge port override when charging turned off due to full battery */
+static int chg_override_port = OVERRIDE_OFF;
+static int chg_is_cutoff;
 
 /* PD MCU status and host event status for host command */
 static struct ec_response_pd_status pd_status;
@@ -59,19 +64,20 @@ BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
 static void pericom_port0_reenable_interrupts(void)
 {
+	CPRINTS("VBUS p0 %d", gpio_get_level(GPIO_USB_C0_VBUS_WAKE));
 	pi3usb9281_enable_interrupts(0);
 }
 DECLARE_DEFERRED(pericom_port0_reenable_interrupts);
 
 static void pericom_port1_reenable_interrupts(void)
 {
+	CPRINTS("VBUS p1 %d", gpio_get_level(GPIO_USB_C1_VBUS_WAKE));
 	pi3usb9281_enable_interrupts(1);
 }
 DECLARE_DEFERRED(pericom_port1_reenable_interrupts);
 
 void vbus0_evt(enum gpio_signal signal)
 {
-	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
 	/*
 	 * Re-enable interrupts on pericom charger detector since the
 	 * chip may periodically reset itself, and come back up with
@@ -84,7 +90,6 @@ void vbus0_evt(enum gpio_signal signal)
 
 void vbus1_evt(enum gpio_signal signal)
 {
-	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
 	/*
 	 * Re-enable interrupts on pericom charger detector since the
 	 * chip may periodically reset itself, and come back up with
@@ -210,40 +215,95 @@ void usb1_evt(enum gpio_signal signal)
 	wake_usb_charger_task(1);
 }
 
-void pch_evt(enum gpio_signal signal)
+/* When battery is full, cutoff charging by disabling AC input current */
+static void check_charging_cutoff(void)
 {
-	/* Determine new chipset state, trigger corresponding hook */
+	int port;
+
+	/* Only check if charging needs to be turned off when not in S0 */
+	if (ps == POWER_S0)
+		return;
+
+	port = charge_manager_get_active_charge_port();
+
+	/*
+	 * If battery is full disable charging, if battery is not full, restore
+	 * charge port.
+	 */
+	if (!chg_is_cutoff && port != CHARGE_PORT_NONE && batt_soc == 100) {
+		charge_manager_set_override(OVERRIDE_DONT_CHARGE);
+		chg_is_cutoff = 1;
+	} else if (chg_is_cutoff && batt_soc < 100) {
+		charge_manager_set_override(chg_override_port);
+		chg_is_cutoff = 0;
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, check_charging_cutoff, HOOK_PRIO_DEFAULT);
+
+static void chipset_s5_to_s3(void)
+{
+	ps = POWER_S3;
+	hook_notify(HOOK_CHIPSET_STARTUP);
+}
+
+static void chipset_s3_to_s0(void)
+{
+	/* Disable deep sleep and restore charge override port */
+	disable_sleep(SLEEP_MASK_AP_RUN);
+	charge_manager_set_override(chg_override_port);
+	chg_is_cutoff = 0;
+
+	ps = POWER_S0;
+	hook_notify(HOOK_CHIPSET_RESUME);
+}
+
+static void chipset_s3_to_s5(void)
+{
+	ps = POWER_S5;
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+}
+
+static void chipset_s0_to_s3(void)
+{
+	/* Enable deep sleep and store charge override port */
+	enable_sleep(SLEEP_MASK_AP_RUN);
+	chg_override_port = charge_manager_get_override();
+
+	ps = POWER_S3;
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+}
+
+static void pch_evt_deferred(void)
+{
+	/* Determine new chipset state, trigger corresponding transition */
 	switch (ps) {
 	case POWER_S5:
-		if (gpio_get_level(GPIO_PCH_SLP_S5_L)) {
-			/* S5 -> S3 */
-			hook_notify(HOOK_CHIPSET_STARTUP);
-			ps = POWER_S3;
-		}
+		if (gpio_get_level(GPIO_PCH_SLP_S5_L))
+			chipset_s5_to_s3();
+		if (gpio_get_level(GPIO_PCH_SLP_S3_L))
+			chipset_s3_to_s0();
 		break;
 	case POWER_S3:
-		if (gpio_get_level(GPIO_PCH_SLP_S3_L)) {
-			/* S3 -> S0: disable deep sleep */
-			disable_sleep(SLEEP_MASK_AP_RUN);
-			hook_notify(HOOK_CHIPSET_RESUME);
-			ps = POWER_S0;
-		} else if (!gpio_get_level(GPIO_PCH_SLP_S5_L)) {
-			/* S3 -> S5 */
-			hook_notify(HOOK_CHIPSET_SHUTDOWN);
-			ps = POWER_S5;
-		}
+		if (gpio_get_level(GPIO_PCH_SLP_S3_L))
+			chipset_s3_to_s0();
+		else if (!gpio_get_level(GPIO_PCH_SLP_S5_L))
+			chipset_s3_to_s5();
 		break;
 	case POWER_S0:
-		if (!gpio_get_level(GPIO_PCH_SLP_S3_L)) {
-			/* S0 -> S3: enable deep sleep */
-			enable_sleep(SLEEP_MASK_AP_RUN);
-			hook_notify(HOOK_CHIPSET_SUSPEND);
-			ps = POWER_S3;
-		}
+		if (!gpio_get_level(GPIO_PCH_SLP_S3_L))
+			chipset_s0_to_s3();
+		if (!gpio_get_level(GPIO_PCH_SLP_S5_L))
+			chipset_s3_to_s5();
 		break;
 	default:
 		break;
 	}
+}
+DECLARE_DEFERRED(pch_evt_deferred);
+
+void pch_evt(enum gpio_signal signal)
+{
+	hook_call_deferred(pch_evt_deferred, 0);
 }
 
 void board_config_pre_init(void)
@@ -483,6 +543,7 @@ void board_flip_usb_mux(int port)
 void board_update_battery_soc(int soc)
 {
 	batt_soc = soc;
+	check_charging_cutoff();
 }
 
 int board_get_battery_soc(void)
@@ -521,8 +582,10 @@ static void pd_send_ec_int(void)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	if (charge_port >= 0 && charge_port < PD_PORT_COUNT &&
-	    pd_get_role(charge_port) != PD_ROLE_SINK) {
+	/* charge port is a realy physical port */
+	int is_real_port = (charge_port >= 0 && charge_port < PD_PORT_COUNT);
+
+	if (is_real_port && pd_get_role(charge_port) != PD_ROLE_SINK) {
 		CPRINTS("Skip enable p%d", charge_port);
 		return EC_ERROR_INVAL;
 	}
@@ -530,6 +593,17 @@ int board_set_active_charge_port(int charge_port)
 	pd_status.active_charge_port = charge_port;
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
+
+	/*
+	 * If new charge port when charge is cutoff, then user must have
+	 * plugged in a new dedicated charger. This resets the charge
+	 * override port and clears the charge cutoff flag.
+	 */
+	if (chg_is_cutoff && is_real_port) {
+		chg_override_port = OVERRIDE_OFF;
+		chg_is_cutoff = 0;
+	}
+	check_charging_cutoff();
 
 	CPRINTS("New chg p%d", charge_port);
 	return EC_SUCCESS;
@@ -602,6 +676,36 @@ DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
 			"Send PD host event",
 			NULL);
 
+static int command_battfake(int argc, char **argv)
+{
+	char *e;
+	int v;
+
+	if (argc == 2) {
+		v = strtoi(argv[1], &e, 0);
+		if (*e || v < -1 || v > 100)
+			return EC_ERROR_PARAM1;
+
+		fake_state_of_charge = v;
+	}
+
+	if (fake_state_of_charge < 0) {
+		ccprintf("Using real batt level\n");
+	} else {
+		ccprintf("Using fake batt level %d%%\n",
+			 fake_state_of_charge);
+	}
+
+	/* Send EC int to get batt info from EC */
+	pd_send_ec_int();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
+			"percent (-1 = use real level)",
+			"Set fake battery level",
+			NULL);
+
 /****************************************************************************/
 /* Host commands */
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
@@ -609,7 +713,9 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;
 
-	board_update_battery_soc(p->batt_soc);
+	/* if not using fake soc, then update battery soc */
+	board_update_battery_soc(fake_state_of_charge < 0 ?
+					p->batt_soc : fake_state_of_charge);
 
 	*r = pd_status;
 

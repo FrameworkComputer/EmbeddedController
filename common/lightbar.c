@@ -80,7 +80,7 @@ static const struct lightbar_params_v1 default_params = {
 	.tap_display_time = 3 * SECOND,		/* total sequence time */
 
 	.tap_pct_red = 10,			/* below this is red */
-	.tap_pct_green = 97,			/* above this is green */
+	.tap_pct_green = 94,			/* above this is green */
 	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
 	.tap_seg_max_on = 100,			/* max intensity (%) for "on" */
 	.tap_seg_osc = 50,			/* amplitude for charging osc */
@@ -876,8 +876,9 @@ static uint32_t sequence_TAP_inner(int dir)
 
 			f_mult = f_mult * gate[i] / FP_SCALE;
 
-			/* Pulse when charging */
-			if (st.battery_is_charging) {
+			/* Pulse when charging and not yet full */
+			if (st.battery_is_charging &&
+			    st.battery_percent <= st.p.tap_pct_green) {
 				int scale = (FP_SCALE -
 					     f_osc * cycle_010(w++) / FP_SCALE);
 				f_mult = f_mult * scale / FP_SCALE;
@@ -906,6 +907,7 @@ static int force_dir = -1;
 /* Return 0 (left or none) or 1 (right) */
 static int get_tap_direction(void)
 {
+	static int last_dir;
 	int dir = 0;
 
 	if (force_dir >= 0)
@@ -914,10 +916,13 @@ static int get_tap_direction(void)
 	else
 		pd_exchange_status(&dir);
 #endif
-	if (dir != 1)
+	if (dir < 0)
+		dir = last_dir;
+	else if (dir != 1)
 		dir = 0;
 
 	CPRINTS("LB tap direction %d", dir);
+	last_dir = dir;
 	return dir;
 }
 
