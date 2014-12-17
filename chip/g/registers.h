@@ -23,14 +23,94 @@
 #define DEFAULT_UART_FREQ 1000000
 #define UART_NCO_WIDTH 16
 
+/*
+ * Added Alias Module Family Base Address to 0-instance Module Base Address
+ * Simplify GBASE(mname) macro
+ */
+#define GC_MODULE_OFFSET         0x10000
+
+#define GC_AES_BASE_ADDR         GC_AES0_BASE_ADDR
+#define GC_CAMO_BASE_ADDR        GC_CAMO0_BASE_ADDR
+#define GC_FLASH_BASE_ADDR       GC_FLASH0_BASE_ADDR
+#define GC_GPIO_BASE_ADDR        GC_GPIO0_BASE_ADDR
+#define GC_I2C_BASE_ADDR         GC_I2C0_BASE_ADDR
+#define GC_I2CS_BASE_ADDR        GC_I2CS0_BASE_ADDR
+#define GC_RBOX_BASE_ADDR        GC_RBOX0_BASE_ADDR
+#define GC_RTC_BASE_ADDR         GC_RTC0_BASE_ADDR
+#define GC_SHA_BASE_ADDR         GC_SHA0_BASE_ADDR
+#define GC_SPI_BASE_ADDR         GC_SPI0_BASE_ADDR
+#define GC_SPS_BASE_ADDR         GC_SPS0_BASE_ADDR
+#define GC_SWDP_BASE_ADDR        GC_SWDP0_BASE_ADDR
+#define GC_TEMP_BASE_ADDR        GC_TEMP0_BASE_ADDR
+#define GC_TIMEHS_BASE_ADDR      GC_TIMEHS0_BASE_ADDR
+#define GC_TIMELS_BASE_ADDR      GC_TIMELS0_BASE_ADDR
+#define GC_TRNG_BASE_ADDR        GC_TRNG0_BASE_ADDR
+#define GC_UART_BASE_ADDR        GC_UART0_BASE_ADDR
+#define GC_USB_BASE_ADDR         GC_USB0_BASE_ADDR
+#define GC_WATCHDOG_BASE_ADDR    GC_WATCHDOG0_BASE_ADDR
+#define GC_XO_BASE_ADDR          GC_XO0_BASE_ADDR
+
+#define GBASE(mname)      \
+	GC_ ## mname ## _BASE_ADDR
+#define GOFFSET(mname, rname)  \
+	GC_ ## mname ## _ ## rname ## _OFFSET
+
+#define GREG32(mname, rname) \
+	REG32(GBASE(mname) + GOFFSET(mname, rname))
+#define GREG32_ADDR(mname, rname) \
+	REG32_ADDR(GBASE(mname) + GOFFSET(mname, rname))
+#define GWRITE(mname, rname, value) (GREG32(mname, rname) = (value))
+#define GREAD(mname, rname)	    GREG32(mname, rname)
+
+#define GFIELD_MASK(mname, rname, fname) \
+	GC_ ## mname ## _ ## rname ## _ ## fname ## _MASK
+
+#define GFIELD_LSB(mname, rname, fname)  \
+	GC_ ## mname ## _ ## rname ## _ ## fname ## _LSB
+
+#define GREAD_FIELD(mname, rname, fname) \
+	((GREG32(mname, rname) & GFIELD_MASK(mname, rname, fname)) \
+		>> GFIELD_LSB(mname, rname, fname))
+
+#define GWRITE_FIELD(mname, rname, fname, fval) \
+	(GREG32(mname, rname) = \
+	((GREG32(mname, rname) & (~GFIELD_MASK(mname, rname, fname))) | \
+	(((fval) << GFIELD_LSB(mname, rname, fname)) & \
+		GFIELD_MASK(mname, rname, fname))))
+
+
+#define GBASE_I(mname, i)     (GBASE(mname) + i*GC_MODULE_OFFSET)
+
+#define GREG32_I(mname, i, rname) \
+		REG32(GBASE_I(mname, i) + GOFFSET(mname, rname))
+
+#define GREG32_ADDR_I(mname, i, rname) \
+		REG32_ADDR(GBASE_I(mname, i) + GOFFSET(mname, rname))
+
+#define GWRITE_I(mname, i, rname, value) (GREG32_I(mname, i, rname) = (value))
+#define GREAD_I(mname, i, rname)	        GREG32_I(mname, i, rname)
+
+#define GREAD_FIELD_I(mname, i, rname, fname) \
+	((GREG32_I(mname, i, rname) & GFIELD_MASK(mname, rname, fname)) \
+		>> GFIELD_LSB(mname, rname, fname))
+
+#define GWRITE_FIELD_I(mname, i, rname, fname, fval) \
+	(GREG32_I(mname, i, rname) = \
+	((GREG32_I(mname, i, rname) & (~GFIELD_MASK(mname, rname, fname))) | \
+	(((fval) << GFIELD_LSB(mname, rname, fname)) & \
+		GFIELD_MASK(mname, rname, fname))))
+
 /* Replace masked bits with val << lsb */
-#define REG_WRITE_MLV(reg, mask, lsb, val) reg = ((reg & ~mask) | ((val << lsb) & mask))
+#define REG_WRITE_MLV(reg, mask, lsb, val) \
+		(reg = ((reg & ~mask) | ((val << lsb) & mask)))
 
 /* Revision generated from the register definitions */
 #define GC_REVISION_STR STRINGIFY(GC_REVISION)
 /* Revision registers */
-#define GR_SWDP_BUILD_DATE  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_DATE_OFFSET)
-#define GR_SWDP_BUILD_TIME  REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_TIME_OFFSET)
+#define GR_SWDP_BUILD_DATE  \
+	REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_DATE_OFFSET)
+#define GR_SWDP_BUILD_TIME  \
+	REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_TIME_OFFSET)
 
 /* Power Management Unit */
 #define GR_PMU_REG(off)               REG32(GC_PMU_BASE_ADDR + (off))
@@ -115,7 +195,6 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_UART_ISTATECLR(ch)         X_UARTREG(ch, GC_UART_ISTATECLR_OFFSET)
 #define GR_UART_FIFO(ch)              X_UARTREG(ch, GC_UART_FIFO_OFFSET)
 #define GR_UART_RFIFO(ch)             X_UARTREG(ch, GC_UART_RFIFO_OFFSET)
-
 
 /* GPIO port naming scheme left over from the LM4. Must maintain tradition! */
 #define GPIO_0 0

@@ -37,9 +37,13 @@
 #define STRINGIFY(name)  STRINGIFY0(name)
 
 /* Macros to access registers */
-#define REG32(addr) (*(volatile uint32_t *)(addr))
-#define REG16(addr) (*(volatile uint16_t *)(addr))
-#define REG8(addr)  (*(volatile uint8_t  *)(addr))
+#define REG32_ADDR(addr) ((volatile uint32_t *)(addr))
+#define REG16_ADDR(addr) ((volatile uint16_t *)(addr))
+#define REG8_ADDR(addr)  ((volatile uint8_t  *)(addr))
+
+#define REG32(addr) (*REG32_ADDR(addr))
+#define REG16(addr) (*REG16_ADDR(addr))
+#define REG8(addr)  (*REG8_ADDR(addr))
 
 /*
  * Define __aligned(n) and __packed if someone hasn't beat us to it.  Linux
