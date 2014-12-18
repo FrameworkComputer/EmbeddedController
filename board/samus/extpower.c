@@ -72,16 +72,14 @@ static void extpower_board_hacks(int extpower)
 	 */
 	if (extpower && !extpower_prev) {
 		charger_discharge_on_ac(0);
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			gpio_set_level(GPIO_PP5000_EN, 1);
+		set_pp5000_in_g3(PP5000_IN_G3_AC, 1);
 	} else if (extpower && extpower_prev) {
 		/* Glitch on AC_PRESENT, attempt to recover from backboost */
 		charger_discharge_on_ac(1);
 		charger_discharge_on_ac(0);
 	} else {
 		charger_discharge_on_ac(1);
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			gpio_set_level(GPIO_PP5000_EN, 0);
+		set_pp5000_in_g3(PP5000_IN_G3_AC, 0);
 	}
 	extpower_prev = extpower;
 }

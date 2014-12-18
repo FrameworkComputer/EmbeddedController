@@ -173,6 +173,13 @@ enum als_id {
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
 
+/* Bit masks for turning on PP5000 rail in G3 */
+#define PP5000_IN_G3_AC       (1 << 0)
+#define PP5000_IN_G3_LIGHTBAR (1 << 1)
+
+/* Enable/disable PP5000 rail mask in G3 */
+void set_pp5000_in_g3(int mask, int enable);
+
 /* Define for sensor tasks */
 #define CONFIG_SENSOR_BATTERY_TAP 0
 #define CONFIG_GESTURE_TAP_OUTER_WINDOW_T 200

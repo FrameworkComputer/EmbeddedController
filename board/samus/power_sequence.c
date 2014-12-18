@@ -62,6 +62,7 @@
 
 static int throttle_cpu;      /* Throttle CPU? */
 static int pause_in_s5;	      /* Pause in S5 when shutting down? */
+static uint32_t pp5000_in_g3; /* Turn PP5000 on in G3? */
 
 void chipset_force_shutdown(void)
 {
@@ -86,11 +87,8 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PP1800_EN, 0);
 	gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 	gpio_set_level(GPIO_PP5000_USB_EN, 0);
-	/*
-	 * Don't disable PP5000 if AC is attached because we need
-	 * it for accurate CC line voltage measurement on PD MCU.
-	 */
-	if (!extpower_is_present())
+	/* Disable PP5000 if allowed */
+	if (!pp5000_in_g3)
 		gpio_set_level(GPIO_PP5000_EN, 0);
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
@@ -475,11 +473,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Turn off power rails enabled in S5 */
 		gpio_set_level(GPIO_PP1050_EN, 0);
 
-		/*
-		 * Don't disable PP5000 if AC is attached because we need
-		 * it for accurate CC line voltage measurement on PD MCU.
-		 */
-		if (!extpower_is_present())
+		/* Check if we can disable PP5000 */
+		if (!pp5000_in_g3)
 			gpio_set_level(GPIO_PP5000_EN, 0);
 
 		/* Disable 3.3V DSW */
@@ -490,40 +485,65 @@ enum power_state power_handle_state(enum power_state state)
 	return state;
 }
 
+/**
+ * Set PP5000 rail in G3. The mask represents the reason for
+ * turning on/off the PP5000 rail in G3, and enable either
+ * enables or disables that mask. If any bit is enabled, then
+ * the PP5000 rail will remain on. If all bits are cleared,
+ * the rail will turn off.
+ *
+ * @param mask   Mask to modify
+ * @param enable Enable flag
+ */
+void set_pp5000_in_g3(int mask, int enable)
+{
+	if (enable)
+		atomic_or(&pp5000_in_g3, mask);
+	else
+		atomic_clear(&pp5000_in_g3, mask);
+
+	/* if we are in G3 now, then set the rail accordingly */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		gpio_set_level(GPIO_PP5000_EN, !!pp5000_in_g3);
+}
+
 #ifdef CONFIG_LIGHTBAR_POWER_RAILS
 /* Returns true if a change was made, NOT the new state */
 int lb_power(int enabled)
 {
-	/* No change needed. */
-	if (enabled == gpio_get_level(GPIO_PP5000_EN))
-		return 0;
+	int ret = 0;
+	int pp5000_en = gpio_get_level(GPIO_PP5000_EN);
+
+	set_pp5000_in_g3(PP5000_IN_G3_LIGHTBAR, enabled);
 
 	/* If the AP is on, we don't change the rails. */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		return 0;
+		return ret;
+
+	/* Check if PP5000 rail changed */
+	if (gpio_get_level(GPIO_PP5000_EN) != pp5000_en)
+		ret = 1;
 
 	/*
-	 * Don't disable PP5000 if AC is attached because we need it for
-	 * accurate CC line voltage measurement on PD MCU.
+	 * When turning on, we have to wait for the rails to come up
+	 * fully before we the lightbar ICs will respond. There's not
+	 * a reliable PGOOD signal for that (I tried), so we just
+	 * have to wait. These delays seem to work.
+	 *
+	 * Note, we should delay even if the PP5000 rail was already
+	 * enabled because we can't be sure it's been enabled long
+	 * enough for lightbar IC to respond.
 	 */
-	if (!enabled && extpower_is_present())
-		return 0;
-
-	/*
-	 * If the AP is off, we can still turn the lightbar on briefly.
-	 * When turning on, we have to wait for the rails to come up fully
-	 * before we the lightbar ICs will respond. There's not a reliable
-	 * PGOOD signal for that (I tried), so we just have to wait. These
-	 * delays seem to work.
-	 */
-	gpio_set_level(GPIO_PP5000_EN, enabled);
 	if (enabled)
 		msleep(10);
-	gpio_set_level(GPIO_LIGHTBAR_RESET_L, enabled);
-	if (enabled)
-		msleep(1);
 
-	return 1;
+	if (enabled != gpio_get_level(GPIO_LIGHTBAR_RESET_L)) {
+		ret = 1;
+		gpio_set_level(GPIO_LIGHTBAR_RESET_L, enabled);
+		msleep(1);
+	}
+
+	return ret;
 }
 #endif
 
