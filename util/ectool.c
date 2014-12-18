@@ -98,7 +98,7 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
-	"  flashpd\n"
+	"  flashpd <dev_id> <port> <filename>\n"
 	"      Flash commands over PD\n"
 	"  flashprotect [now] [enable | disable]\n"
 	"      Prints or sets EC flash protection state\n"
@@ -836,10 +836,86 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 	return rv;
 }
 
+/**
+ * determine if in GFU mode or not.
+ *
+ * NOTE, Sends HOST commands that modify ec_outbuf contents.
+ *
+ * @opos return value of GFU mode object position or zero if not found
+ * @port port number to query
+ * @return 1 if in GFU mode, 0 if not, -1 if error
+ */
+static int in_gfu_mode(int *opos, int port)
+{
+	int i;
+	struct ec_params_usb_pd_get_mode_request *p =
+		(struct ec_params_usb_pd_get_mode_request *)ec_outbuf;
+	struct ec_params_usb_pd_get_mode_response *r =
+		(struct ec_params_usb_pd_get_mode_response *)ec_inbuf;
+	p->port = port;
+	p->svid_idx = 0;
+	do {
+		ec_command(EC_CMD_USB_PD_GET_AMODE, 0, p, sizeof(*p),
+			   ec_inbuf, ec_max_insize);
+		if (!r->svid || (r->svid == USB_VID_GOOGLE))
+			break;
+		p->svid_idx++;
+	} while (p->svid_idx < SVID_DISCOVERY_MAX);
+
+	if (r->svid != USB_VID_GOOGLE) {
+		fprintf(stderr, "Google VID not returned\n");
+		return -1;
+	}
+
+	*opos = 0; /* invalid ... must be 1 thru 6 */
+	for (i = 0; i < PDO_MODES; i++) {
+		if (r->vdo[i] == MODE_GOOGLE_FU) {
+			*opos = i + 1;
+			break;
+		}
+	}
+
+	return r->active && ((r->idx + 1) == *opos);
+}
+
+/**
+ * Enter GFU mode.
+ *
+ * NOTE, Sends HOST commands that modify ec_outbuf contents.
+ *
+ * @port port number to enter GFU on.
+ * @return 1 if entered GFU mode, 0 if not, -1 if error
+ */
+static int enter_gfu_mode(int port)
+{
+	int opos;
+	struct ec_params_usb_pd_set_mode_request *p =
+		(struct ec_params_usb_pd_set_mode_request *)ec_outbuf;
+	int gfu_mode = in_gfu_mode(&opos, port);
+
+	if (gfu_mode < 0) {
+		fprintf(stderr, "Failed to query GFU mode support\n");
+		return 0;
+	} else if (!gfu_mode) {
+		if (!opos) {
+			fprintf(stderr, "Invalid object position %d\n", opos);
+			return 0;
+		}
+		p->port = port;
+		p->svid = USB_VID_GOOGLE;
+		p->opos = opos;
+
+		ec_command(EC_CMD_USB_PD_SET_AMODE, 0, p, sizeof(*p),
+			   NULL, 0);
+		usleep(500000); /* sleep to allow time for set mode */
+		gfu_mode = in_gfu_mode(&opos, port);
+	}
+	return gfu_mode;
+}
 
 int cmd_pd_device_info(int argc, char *argv[])
 {
-	int i, rv;
+	int i, rv, port;
 	char *e;
 	struct ec_params_usb_pd_info_request *p =
 		(struct ec_params_usb_pd_info_request *)ec_outbuf;
@@ -852,29 +928,10 @@ int cmd_pd_device_info(int argc, char *argv[])
 		return -1;
 	}
 
-	p->port = strtol(argv[1], &e, 0);
+	port = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad port\n");
 		return -1;
-	}
-
-	rv = ec_command(EC_CMD_USB_PD_DEV_INFO, 0, p, sizeof(*p),
-			ec_inbuf, ec_max_insize);
-	if (rv < 0)
-		return rv;
-
-	if (!r0->dev_id)
-		printf("Port:%d has no valid device\n", p->port);
-	else {
-		uint8_t *rwp = r0->dev_rw_hash;
-		printf("Port:%d DevId:%d.%d Hash:", p->port,
-		       HW_DEV_ID_MAJ(r0->dev_id), HW_DEV_ID_MIN(r0->dev_id));
-		for (i = 0; i < 5; i++) {
-			printf(" 0x%02x%02x%02x%02x", rwp[3], rwp[2], rwp[1],
-			       rwp[0]);
-			rwp += 4;
-		}
-		printf(" CurImg:%s\n", image_names[r0->current_image]);
 	}
 
 	r1 = (struct ec_params_usb_pd_discovery_entry *)ec_inbuf;
@@ -884,10 +941,35 @@ int cmd_pd_device_info(int argc, char *argv[])
 		return rv;
 
 	if (!r1->vid)
-		printf("Port:%d has no discovered device\n", p->port);
+		printf("Port:%d has no discovered device\n", port);
 	else {
-		printf("Port:%d ptype:%d vid:0x%04x pid:0x%04x\n", p->port,
+		printf("Port:%d ptype:%d vid:0x%04x pid:0x%04x\n", port,
 		       r1->ptype, r1->vid, r1->pid);
+	}
+
+	if (enter_gfu_mode(port) != 1) {
+		fprintf(stderr, "Failed to enter GFU mode\n");
+		return -1;
+	}
+
+	p->port = port;
+	rv = ec_command(EC_CMD_USB_PD_DEV_INFO, 0, p, sizeof(*p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	if (!r0->dev_id)
+		printf("Port:%d has no valid device\n", port);
+	else {
+		uint8_t *rwp = r0->dev_rw_hash;
+		printf("Port:%d DevId:%d.%d Hash:", port,
+		       HW_DEV_ID_MAJ(r0->dev_id), HW_DEV_ID_MIN(r0->dev_id));
+		for (i = 0; i < 5; i++) {
+			printf(" 0x%02x%02x%02x%02x", rwp[3], rwp[2], rwp[1],
+			       rwp[0]);
+			rwp += 4;
+		}
+		printf(" CurImg:%s\n", image_names[r0->current_image]);
 	}
 
 	return rv;
@@ -897,7 +979,7 @@ int cmd_flash_pd(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_fw_update *p =
 		(struct ec_params_usb_pd_fw_update *)ec_outbuf;
-	int i;
+	int i, dev_id, port;
 	int rv, fsize, step = 96;
 	char *e;
 	char *buf;
@@ -909,15 +991,20 @@ int cmd_flash_pd(int argc, char *argv[])
 		return -1;
 	}
 
-	p->dev_id = strtol(argv[1], &e, 0);
+	dev_id = strtol(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad device ID\n");
 		return -1;
 	}
 
-	p->port = strtol(argv[2], &e, 0);
+	port = strtol(argv[2], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	if (enter_gfu_mode(port) != 1) {
+		fprintf(stderr, "Failed to enter GFU mode\n");
 		return -1;
 	}
 
@@ -928,6 +1015,8 @@ int cmd_flash_pd(int argc, char *argv[])
 
 	/* Erase the current RW RSA signature */
 	fprintf(stderr, "Erasing expected RW hash\n");
+	p->dev_id = dev_id;
+	p->port = port;
 	p->cmd = USB_PD_FW_ERASE_SIG;
 	p->size = 0;
 	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
@@ -938,6 +1027,8 @@ int cmd_flash_pd(int argc, char *argv[])
 
 	/* Reboot */
 	fprintf(stderr, "Rebooting\n");
+	p->dev_id = dev_id;
+	p->port = port;
 	p->cmd = USB_PD_FW_REBOOT;
 	p->size = 0;
 	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
@@ -948,8 +1039,16 @@ int cmd_flash_pd(int argc, char *argv[])
 
 	usleep(3000000); /* 3sec to reboot and get CC line idle */
 
+	/* re-enter GFU after reboot */
+	if (enter_gfu_mode(port) != 1) {
+		fprintf(stderr, "Failed to enter GFU mode\n");
+		goto pd_flash_error;
+	}
+
 	/* Erase RW flash */
 	fprintf(stderr, "Erasing RW flash\n");
+	p->dev_id = dev_id;
+	p->port = port;
 	p->cmd = USB_PD_FW_FLASH_ERASE;
 	p->size = 0;
 	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
@@ -963,6 +1062,8 @@ int cmd_flash_pd(int argc, char *argv[])
 
 	/* Write RW flash */
 	fprintf(stderr, "Writing RW flash\n");
+	p->dev_id = dev_id;
+	p->port = port;
 	p->cmd = USB_PD_FW_FLASH_WRITE;
 	p->size = step;
 
