@@ -7,6 +7,9 @@
 
 CONSOLE_CHANNEL(CC_COMMAND,      "command")
 CONSOLE_CHANNEL(CC_ACCEL,        "accel")
+#ifdef CONFIG_BLUETOOTH_LE
+CONSOLE_CHANNEL(CC_BLUETOOTH_LE, "bluetooth_le")
+#endif
 #ifdef CONFIG_EXTENSION_COMMAND
 CONSOLE_CHANNEL(CC_EXTENSION,    "extension")
 #endif
