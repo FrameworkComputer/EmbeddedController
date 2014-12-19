@@ -333,6 +333,7 @@ int pd_exit_mode(int port, uint32_t *payload)
 	return 1;
 }
 
+#ifdef CONFIG_CMD_USB_PD_PE
 static void dump_pe(int port)
 {
 	const char * const idh_ptype_names[]  = {
@@ -398,6 +399,7 @@ DECLARE_CONSOLE_COMMAND(pe, command_pe,
 			"<port> dump",
 			"USB PE",
 			NULL);
+#endif /* CONFIG_CMD_USB_PD_PE */
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
