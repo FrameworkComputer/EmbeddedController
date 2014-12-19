@@ -2227,7 +2227,7 @@ void pd_task(void)
 			if (!hard_reset_sent) {
 				if (send_hard_reset(port) < 0) {
 					timeout = 10*MSEC;
-					return;
+					break;
 				}
 
 				/* successfully sent hard reset */
