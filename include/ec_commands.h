@@ -2789,6 +2789,8 @@ struct ec_params_usb_pd_fw_update {
 struct ec_params_usb_pd_rw_hash_entry {
 	uint16_t dev_id;
 	uint8_t dev_rw_hash[PD_RW_HASH_SIZE];
+	uint8_t reserved;        /* For alignment of current_image */
+	uint32_t current_image;  /* One of ec_current_image */
 } __packed;
 
 /* Read USB-PD Accessory info */

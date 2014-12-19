@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -151,7 +152,8 @@ static int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		}
 		/* copy hash */
 		if (cnt >= 6)
-			pd_dev_store_rw_hash(port, dev_id, payload + 1);
+			pd_dev_store_rw_hash(port, dev_id, payload + 1,
+					     SYSTEM_IMAGE_UNKNOWN);
 
 		break;
 	}

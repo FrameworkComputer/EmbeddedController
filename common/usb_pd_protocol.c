@@ -264,9 +264,10 @@ static struct pd_protocol {
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	uint8_t vdo_count;
 
-	/* Attached ChromeOS device id & RW hash */
+	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
 	uint16_t dev_id;
 	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
+	enum ec_current_image current_image;
 } pd[PD_PORT_COUNT];
 
 /*
@@ -1358,12 +1359,14 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 	ccprintf("\n");
 }
 
-void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash)
+void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
+			  uint32_t current_image)
 {
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 	if (debug_level >= 1)
 		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
+	pd[port].current_image = current_image;
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -2622,11 +2625,12 @@ static int command_pd(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "hard", 4)) {
 		set_state(port, PD_STATE_HARD_RESET_SEND);
 		task_wake(PORT_TO_TASK_ID(port));
-	} else if (!strncasecmp(argv[2], "hash", 4)) {
+	} else if (!strncasecmp(argv[2], "info", 4)) {
 		int i;
+		ccprintf("Hash ");
 		for (i = 0; i < PD_RW_HASH_SIZE / 4; i++)
 			ccprintf("%08x ", pd[port].dev_rw_hash[i]);
-		ccprintf("\n");
+		ccprintf("\nImage %d\n", pd[port].current_image);
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
 		set_state(port, PD_STATE_SOFT_RESET);
 		task_wake(PORT_TO_TASK_ID(port));
@@ -2946,6 +2950,8 @@ static int hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 		memcpy(r->dev_rw_hash, pd[*port].dev_rw_hash,
 		       PD_RW_HASH_SIZE);
 	}
+
+	r->current_image = pd[*port].current_image;
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

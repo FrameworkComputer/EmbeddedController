@@ -868,7 +868,7 @@ int cmd_pd_device_info(int argc, char *argv[])
 			       rwp[0]);
 			rwp += 4;
 		}
-		printf("\n");
+		printf(" CurImg:%s\n", image_names[r0->current_image]);
 	}
 
 	r1 = (struct ec_params_usb_pd_discovery_entry *)ec_inbuf;
