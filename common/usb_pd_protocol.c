@@ -254,8 +254,8 @@ static struct pd_protocol {
 	uint32_t supply_voltage;
 	/* Signal charging update that affects the port */
 	int new_power_request;
-	/* Store previously requested power type */
-	enum pd_request_type previous_pd_request;
+	/* Store previously requested voltage request */
+	int prev_request_mv;
 #endif
 
 	/* PD state for Vendor Defined Messages */
@@ -802,7 +802,7 @@ static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 static void pd_send_request_msg(int port, int always_send_request)
 {
 	uint32_t rdo, curr_limit, supply_voltage;
-	enum pd_request_type request;
+	int request_mv;
 	int res;
 
 #ifdef CONFIG_CHARGE_MANAGER
@@ -815,14 +815,15 @@ static void pd_send_request_msg(int port, int always_send_request)
 
 	/* Build and send request RDO */
 	/* If this port is not actively charging, select vSafe5V */
-	request = charging ? PD_REQUEST_MAX : PD_REQUEST_VSAFE5V;
+	request_mv = charging ? pd_get_max_voltage() : PD_MIN_MV;
 
-	/* Don't re-request the same state */
-	if (!always_send_request && pd[port].previous_pd_request == request)
+	/* Don't re-request the same voltage */
+	if (!always_send_request && pd[port].prev_request_mv == request_mv)
 		return;
 
 	res = pd_build_request(pd_src_cap_cnt[port], pd_src_caps[port],
-			       &rdo, &curr_limit, &supply_voltage, request);
+			       &rdo, &curr_limit, &supply_voltage,
+			       charging ? PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
 
 	if (res != EC_SUCCESS)
 		/*
@@ -833,7 +834,7 @@ static void pd_send_request_msg(int port, int always_send_request)
 
 	pd[port].curr_limit = curr_limit;
 	pd[port].supply_voltage = supply_voltage;
-	pd[port].previous_pd_request = request;
+	pd[port].prev_request_mv = request_mv;
 	res = send_request(port, rdo);
 	if (res >= 0)
 		set_state(port, PD_STATE_SNK_REQUESTED);
@@ -2606,11 +2607,14 @@ static int command_pd(int argc, char **argv)
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strncasecmp(argv[2], "dev", 3)) {
-		int max_volt = -1;
+		int max_volt;
 		if (argc >= 4)
 			max_volt = strtoi(argv[3], &e, 10) * 1000;
+		else
+			max_volt = pd_get_max_voltage();
 
 		pd_request_source_voltage(port, max_volt);
+		ccprintf("max req: %dmV\n", max_volt);
 	} else if (!strcasecmp(argv[2], "clock")) {
 		int freq;
 
