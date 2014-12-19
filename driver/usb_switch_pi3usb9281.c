@@ -136,7 +136,7 @@ int pi3usb9281_get_ilim(int device_type, int charger_status)
 	else if (device_type & PI3USB9281_TYPE_CDP)
 		current_limit_ma = 1500;
 	else if (device_type & PI3USB9281_TYPE_DCP)
-		current_limit_ma = 1500;
+		current_limit_ma = 500;
 
 	return current_limit_ma;
 }
