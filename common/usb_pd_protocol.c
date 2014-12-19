@@ -369,7 +369,9 @@ static inline void set_state(int port, enum pd_states next_state)
 #endif
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
-		pd_exit_mode(port, NULL);
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+		pd_dfp_exit_mode(port);
+#endif
 #ifdef CONFIG_USBC_SS_MUX
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
 				  pd[port].polarity);
@@ -784,7 +786,10 @@ static void execute_hard_reset(int port)
 		CPRINTF("HARD RESET (RECV)!\n");
 
 	pd[port].msg_id = 0;
-	pd_exit_mode(port, NULL);
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+	pd_dfp_exit_mode(port);
+	pd_dfp_pe_init(port);
+#endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	if (pd[port].power_role == PD_ROLE_SINK) {

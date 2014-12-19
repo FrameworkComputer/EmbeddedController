@@ -175,7 +175,7 @@ static struct pd_policy pe[PD_PORT_COUNT];
 
 #define AMODE_VALID(port) (pe[port].amode.index != -1)
 
-static void pe_init(int port)
+void pd_dfp_pe_init(int port)
 {
 	memset(&pe[port], 0, sizeof(struct pd_policy));
 	pe[port].amode.index = -1;
@@ -184,7 +184,7 @@ static void pe_init(int port)
 static void dfp_consume_identity(int port, uint32_t *payload)
 {
 	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
-	pe_init(port);
+	pd_dfp_pe_init(port);
 	memcpy(&pe[port].identity, payload + 1, sizeof(pe[port].identity));
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
@@ -318,7 +318,7 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 		pe[port].amode.fx->attention(port, payload);
 }
 
-int pd_exit_mode(int port, uint32_t *payload)
+uint32_t pd_dfp_exit_mode(int port)
 {
 	struct svdm_amode_data *modep = &pe[port].amode;
 	if (!modep->fx)
@@ -326,11 +326,19 @@ int pd_exit_mode(int port, uint32_t *payload)
 
 	modep->fx->exit(port);
 
-	if (payload)
-		payload[0] = VDO(modep->fx->svid, 1,
-				 CMD_EXIT_MODE | VDO_OPOS(pd_alt_mode(port)));
-	modep->index = -1;
-	return 1;
+	/*
+	 * TODO(crosbug.com/p/33946) : below needs revisited to allow multiple
+	 * mode entry.  Additionally it should honor OPOS == 7 as DFP's request
+	 * to exit all modes.
+	 */
+	if (pd_is_connected(port)) {
+		modep->index = -1;
+		return VDO(modep->fx->svid, 1,
+			   (CMD_EXIT_MODE | VDO_OPOS(pd_alt_mode(port))));
+	} else {
+		pd_dfp_pe_init(port);
+	}
+	return 0;
 }
 
 #ifdef CONFIG_CMD_USB_PD_PE
@@ -577,16 +585,6 @@ void pd_usb_billboard_deferred(void)
 #endif
 }
 DECLARE_DEFERRED(pd_usb_billboard_deferred);
-
-#ifndef CONFIG_USB_PD_ALT_MODE_DFP
-int pd_exit_mode(int port, uint32_t *payload)
-{
-#ifdef CONFIG_USB_PD_ALT_MODE
-	svdm_rsp.exit_mode(port, payload);
-#endif
-	return 0;
-}
-#endif /* !CONFIG_USB_PD_ALT_MODE_DFP */
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
