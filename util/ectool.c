@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/io.h>
 #include <unistd.h>
 
 #include "battery.h"
@@ -998,6 +997,8 @@ pd_flash_error:
 	return -1;
 }
 
+#ifdef __x86_64
+#include <sys/io.h>
 
 int cmd_serial_test(int argc, char *argv[])
 {
@@ -1018,6 +1019,28 @@ int cmd_serial_test(int argc, char *argv[])
 	return 0;
 }
 
+
+int cmd_port_80_flood(int argc, char *argv[])
+{
+	int i;
+
+	for (i = 0; i < 256; i++)
+		outb(i, 0x80);
+	return 0;
+}
+#else
+int cmd_serial_test(int argc, char *argv[])
+{
+	printf("x86 specific command\n");
+	return -1;
+}
+
+int cmd_port_80_flood(int argc, char *argv[])
+{
+	printf("x86 specific command\n");
+	return -1;
+}
+#endif
 
 int read_mapped_temperature(int id)
 {
@@ -4657,17 +4680,6 @@ int cmd_console(int argc, char *argv[])
 	printf("\n");
 	return 0;
 }
-
-/* Flood port 80 with byte writes */
-int cmd_port_80_flood(int argc, char *argv[])
-{
-	int i;
-
-	for (i = 0; i < 256; i++)
-		outb(i, 0x80);
-	return 0;
-}
-
 struct param_info {
 	const char *name;	/* name of this parameter */
 	const char *help;	/* help message */
