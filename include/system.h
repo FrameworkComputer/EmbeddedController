@@ -147,6 +147,11 @@ int system_unsafe_to_overwrite(uint32_t offset, uint32_t size);
 const char *system_get_image_copy_string(void);
 
 /**
+ * Return a text description of the passed image copy parameter.
+ */
+const char *system_image_copy_t_to_string(enum system_image_copy_t copy);
+
+/**
  * Return the number of bytes used in the specified image.
  *
  * This is the actual size of code+data in the image, as opposed to the

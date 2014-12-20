@@ -2667,7 +2667,8 @@ static int command_pd(int argc, char **argv)
 		ccprintf("Hash ");
 		for (i = 0; i < PD_RW_HASH_SIZE / 4; i++)
 			ccprintf("%08x ", pd[port].dev_rw_hash[i]);
-		ccprintf("\nImage %d\n", pd[port].current_image);
+		ccprintf("\nImage %s\n", system_image_copy_t_to_string(
+						pd[port].current_image));
 	} else if (!strncasecmp(argv[2], "soft", 4)) {
 		set_state(port, PD_STATE_SOFT_RESET);
 		task_wake(PORT_TO_TASK_ID(port));

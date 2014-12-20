@@ -81,7 +81,6 @@ static const char * const reset_flag_descs[] = {
 	"hibernate", "rtc-alarm", "wake-pin", "low-battery", "sysjump",
 	"hard", "ap-off", "preserved"};
 
-static const char * const image_names[] = {"unknown", "RO", "RW"};
 static uint32_t reset_flags;
 static int jumped_to_image;
 static int disable_jump;  /* Disable ALL jumps if system is locked */
@@ -293,10 +292,11 @@ void system_disable_jump(void)
 		}
 		if (ret == EC_SUCCESS) {
 			enable_mpu = 1;
-			CPRINTS("%s image locked", image_names[copy]);
+			CPRINTS("%s image locked",
+				system_image_copy_t_to_string(copy));
 		} else {
 			CPRINTS("Failed to lock %s image (%d)",
-				image_names[copy], ret);
+				system_image_copy_t_to_string(copy), ret);
 		}
 
 		if (enable_mpu)
@@ -372,8 +372,13 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 
 const char *system_get_image_copy_string(void)
 {
-	int copy = system_get_image_copy();
-	return copy < ARRAY_SIZE(image_names) ? image_names[copy] : "?";
+	return system_image_copy_t_to_string(system_get_image_copy());
+}
+
+const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
+{
+	static const char * const image_names[] = {"unknown", "RO", "RW"};
+	return image_names[copy < ARRAY_SIZE(image_names) ? copy : 0];
 }
 
 /**
@@ -469,7 +474,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 		return EC_ERROR_UNKNOWN;
 #endif
 
-	CPRINTS("Jumping to image %s", image_names[copy]);
+	CPRINTS("Jumping to image %s", system_image_copy_t_to_string(copy));
 
 	jump_to_image(init_addr);
 
