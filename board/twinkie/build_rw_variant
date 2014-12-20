@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+
+#
+# Build a Twinkie firmware image with
+# the regular Twinkie sniffer firmware in the RO partition
+# and a firmware behaving as a USB PD sink in the RW partition.
+#
+BOARD=twinkie
+VARIANT=sink
+RO_SIZE=65536
+
+# Clean build
+make BOARD=${BOARD} clean
+make BOARD=${BOARD} out=build/${BOARD}_${VARIANT} clean
+# Build regular Twinkie sniffer firmware
+make BOARD=${BOARD}
+# Build Twinkie as a USB PD consumer/producer (defaulting as a sink)
+make BOARD=${BOARD} PROJECT=${VARIANT} out=build/${BOARD}_${VARIANT}
+
+# Generate the final image by concatenating the built images
+VERSION=$(echo "VERSION" | cpp -P -imacros build/${BOARD}/ec_version.h)
+FINAL_IMG=build/${BOARD}/${VERSION//\"}.combined.bin
+cp build/${BOARD}/ec.bin ${FINAL_IMG}
+dd if=build/${BOARD}_${VARIANT}/${VARIANT}.RW.bin of=${FINAL_IMG} bs=1 seek=${RO_SIZE} conv=notrunc

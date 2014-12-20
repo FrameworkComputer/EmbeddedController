@@ -32,7 +32,7 @@ CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
             -DTEST_$(PROJECT) -DTEST_$(UC_PROJECT)
 CFLAGS_COVERAGE=$(if $(TEST_COVERAGE),-fprofile-arcs -ftest-coverage \
 				      -DTEST_COVERAGE,)
-CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=ec.tasklist \
+CFLAGS_DEFINE=-DOUTDIR=$(out) -DCHIP=$(CHIP) -DBOARD_TASKFILE=$(_tsk_lst_file) \
               -DBOARD=$(BOARD) -DCORE=$(CORE) -DPROJECT=$(PROJECT) \
               -DCHIP_VARIANT=$(CHIP_VARIANT) -DCHIP_FAMILY=$(CHIP_FAMILY) \
               -DBOARD_$(UC_BOARD) -DCHIP_$(UC_CHIP) -DCORE_$(UC_CORE) \

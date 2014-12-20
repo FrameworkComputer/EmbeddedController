@@ -338,6 +338,13 @@ void recording_enable(uint8_t mask)
 	/* TODO implement */
 }
 
+static void sniffer_sysjump(void)
+{
+	/* Stop DMA before jumping to avoid memory corruption */
+	recording_enable(0);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, sniffer_sysjump, HOOK_PRIO_DEFAULT);
+
 static int command_sniffer(int argc, char **argv)
 {
 	ccprintf("Seq number:%d Overflows: %d\n", seq, oflow);

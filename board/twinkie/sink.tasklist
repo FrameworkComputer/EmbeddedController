@@ -3,6 +3,13 @@
  * found in the LICENSE file.
  */
 
+/*
+ * To get Twinkie to behave as a USB Power Delivery consumer/provider
+ * device rather than a transparent sniffer, build it as below :
+ * make BOARD=twinkie PROJ=sink
+ * to use this task file instead of the default ec.tasklist.
+ */
+
 /**
  * List of enabled tasks in the priority order
  *
@@ -19,4 +26,4 @@
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(CONSOLE, console_task, NULL, LARGER_TASK_STACK_SIZE) \
-	TASK_ALWAYS(SNIFFER, sniffer_task, NULL, TASK_STACK_SIZE)
+	TASK_ALWAYS(PD, pd_task, NULL, LARGER_TASK_STACK_SIZE)

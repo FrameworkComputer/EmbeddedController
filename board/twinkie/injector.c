@@ -12,6 +12,7 @@
 #include "hwtimer.h"
 #include "injector.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
@@ -490,6 +491,17 @@ static int cmd_bufrd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_sink(int argc, char **argv)
+{
+	/*
+	 * Jump to the RW section which should contain a firmware acting
+	 * as a USB PD sink
+	 */
+	system_run_image_copy(SYSTEM_IMAGE_RW);
+
+	return EC_SUCCESS;
+}
+
 static int command_tw(int argc, char **argv)
 {
 	if (!strcasecmp(argv[1], "send"))
@@ -504,6 +516,8 @@ static int command_tw(int argc, char **argv)
 		return cmd_cc_level(argc - 2, argv + 2);
 	else if (!strncasecmp(argv[1], "resistor", 3))
 		return cmd_resistor(argc - 2, argv + 2);
+	else if (!strcasecmp(argv[1], "sink"))
+		return cmd_sink(argc - 2, argv + 2);
 	else if (!strcasecmp(argv[1], "txclock"))
 		return cmd_tx_clock(argc - 2, argv + 2);
 	else if (!strncasecmp(argv[1], "rxthresh", 8))
