@@ -1324,7 +1324,27 @@ void pd_hw_release(int port);
  */
 void pd_hw_init(int port, int role);
 
+/**
+ * Initialize the reception side of hardware used for PD.
+ *
+ * This is a subset of pd_hw_init() including only :
+ * the comparators + the RX edge delay timer + the RX DMA.
+ *
+ * @param port USB-C port number
+ */
+void pd_hw_init_rx(int port);
+
 /* --- Protocol layer functions --- */
+
+/**
+ * Decode a raw packet in the RX buffer.
+ *
+ * @param port USB-C port number
+ * @param payload buffer to store the packet payload (must be 7x 32-bit)
+ * @return the packet header or <0 in case of error
+ */
+int pd_analyze_rx(int port, uint32_t *payload);
+
 /**
  * Get connected state
  *

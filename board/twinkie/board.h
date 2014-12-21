@@ -27,6 +27,8 @@
 #ifndef HAS_TASK_PD /* PD sniffer mode */
 #undef CONFIG_DMA_DEFAULT_HANDLERS
 #define CONFIG_USB_PD_TX_PHY_ONLY
+/* override the comparator interrupt handler */
+#undef CONFIG_USB_PD_RX_COMP_IRQ
 #endif
 
 #define CONFIG_ADC
@@ -53,9 +55,17 @@
 
 #ifndef __ASSEMBLER__
 
+void sniffer_init(void);
+
 int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us);
 
-void recording_enable(uint8_t mask);
+int expect_packet(int pol, uint8_t cmd, uint32_t timeout_us);
+
+uint8_t recording_enable(uint8_t mask);
+
+void trace_packets(void);
+
+void set_trace_mode(int mode);
 
 /* Timer selection */
 #define TIM_CLOCK_MSB  3

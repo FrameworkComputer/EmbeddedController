@@ -189,6 +189,13 @@ static void fsm_wait(uint32_t w)
 	wait_packet(inj_polarity,  min_edges, timeout_ms * 1000);
 }
 
+static void fsm_expect(uint32_t w)
+{
+	uint32_t timeout_ms = INJ_ARG0(w);
+	uint8_t cmd = INJ_ARG2(w);
+
+	expect_packet(inj_polarity,  cmd, timeout_ms * 1000);
+}
 static void fsm_get(uint32_t w)
 {
 	int store_idx = INJ_ARG0(w);
@@ -243,6 +250,9 @@ static void fsm_set(uint32_t w)
 	case INJ_SET_POLARITY:
 		inj_polarity = guess_polarity(val);
 		break;
+	case INJ_SET_TRACE:
+		set_trace_mode(val);
+		break;
 	default:
 		/* Do nothing */
 		break;
@@ -278,6 +288,9 @@ static int fsm_run(int index)
 		case INJ_CMD_JUMP:
 			index = INJ_ARG0(w);
 			continue; /* do not increment index */
+		case INJ_CMD_EXPCT:
+			fsm_expect(w);
+			break;
 		case INJ_CMD_NOP:
 		default:
 			/* Do nothing */
@@ -502,6 +515,25 @@ static int cmd_sink(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_trace(int argc, char **argv)
+{
+	if (argc < 1)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[0], "on") ||
+	    !strcasecmp(argv[0], "1"))
+		set_trace_mode(TRACE_MODE_ON);
+	else if (!strcasecmp(argv[0], "raw"))
+		set_trace_mode(TRACE_MODE_RAW);
+	else if (!strcasecmp(argv[0], "off") ||
+		 !strcasecmp(argv[0], "0"))
+		set_trace_mode(TRACE_MODE_OFF);
+	else
+		return EC_ERROR_PARAM2;
+
+	return EC_SUCCESS;
+}
+
 static int command_tw(int argc, char **argv)
 {
 	if (!strcasecmp(argv[1], "send"))
@@ -518,6 +550,8 @@ static int command_tw(int argc, char **argv)
 		return cmd_resistor(argc - 2, argv + 2);
 	else if (!strcasecmp(argv[1], "sink"))
 		return cmd_sink(argc - 2, argv + 2);
+	else if (!strcasecmp(argv[1], "trace"))
+		return cmd_trace(argc - 2, argv + 2);
 	else if (!strcasecmp(argv[1], "txclock"))
 		return cmd_tx_clock(argc - 2, argv + 2);
 	else if (!strncasecmp(argv[1], "rxthresh", 8))

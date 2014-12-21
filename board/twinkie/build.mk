@@ -11,4 +11,4 @@ CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f07x
 
 board-y=board.o usb_pd_policy.o
-board-$(HAS_TASK_SNIFFER)+=sniffer.o injector.o
+board-$(HAS_TASK_SNIFFER)+=sniffer.o injector.o simpletrace.o

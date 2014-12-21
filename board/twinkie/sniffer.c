@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hwtimer.h"
 #include "hooks.h"
+#include "injector.h"
 #include "link_defs.h"
 #include "registers.h"
 #include "task.h"
@@ -28,6 +29,9 @@
 
 /* Task event for the USB transfer interrupt */
 #define USB_EVENTS TASK_EVENT_CUSTOM(3)
+
+/* Bitmap of enabled capture channels : CC1+CC2 by default */
+static uint8_t channel_mask = 0x3;
 
 /* edge timing samples */
 static uint8_t samples[2][RX_COUNT];
@@ -233,7 +237,7 @@ static void rx_timer_init(int tim_id, timer_ctlr_t *tim, int ch_idx, int up_idx)
 	tim->sr = 0;
 }
 
-static void sniffer_init(void)
+void sniffer_init(void)
 {
 	/* remap TIM1 CH1/2/3 to DMA channel 6 */
 	STM32_SYSCFG_CFGR1 |= 1 << 28;
@@ -255,8 +259,6 @@ static void sniffer_init(void)
 			 STM32_COMP_CMP2INSEL_VREF12 |
 			 STM32_COMP_CMP2OUTSEL_TIM2_IC4 |
 			 STM32_COMP_CMP2HYST_HI;
-	ccprintf("Sniffer initialized\n");
-
 
 	/* start sampling the edges on the CC lines using the RX timers */
 	dma_start_rx(&dma_tim_cc1, RX_COUNT, samples[0]);
@@ -267,6 +269,9 @@ static void sniffer_init(void)
 	STM32_TIM_CR1(TIM_RX2) |= 1;
 }
 DECLARE_HOOK(HOOK_INIT, sniffer_init, HOOK_PRIO_DEFAULT);
+
+/* state of the simple text tracer */
+extern int trace_mode;
 
 /* Task to post-process the samples and copy them the USB endpoint buffer */
 void sniffer_task(void)
@@ -296,6 +301,12 @@ void sniffer_task(void)
 			atomic_clear((uint32_t *)&filled_dma, 1 << d);
 		}
 		led_reset_record();
+
+		if (trace_mode != TRACE_MODE_OFF) {
+			uint8_t curr = recording_enable(0);
+			trace_packets();
+			recording_enable(curr);
+		}
 	}
 }
 
@@ -333,9 +344,25 @@ int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us)
 	return (__hw_clock_source_read() - t0 > timeout_us);
 }
 
-void recording_enable(uint8_t mask)
+uint8_t recording_enable(uint8_t new_mask)
 {
-	/* TODO implement */
+	uint8_t old_mask = channel_mask;
+	uint8_t diff = channel_mask ^ new_mask;
+	/* start/stop RX timers according to the channel mask */
+	if (diff & 1) {
+		if (new_mask & 1)
+			STM32_TIM_CR1(TIM_RX1) |= 1;
+		else
+			STM32_TIM_CR1(TIM_RX1) &= ~1;
+	}
+	if (diff & 2) {
+		if (new_mask & 2)
+			STM32_TIM_CR1(TIM_RX2) |= 1;
+		else
+			STM32_TIM_CR1(TIM_RX2) &= ~1;
+	}
+	channel_mask = new_mask;
+	return old_mask;
 }
 
 static void sniffer_sysjump(void)
