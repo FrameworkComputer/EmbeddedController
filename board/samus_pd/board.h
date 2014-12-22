@@ -68,7 +68,7 @@
 
 /* 10 deferrable tasks on this board */
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 10
+#define DEFERRABLE_MAX_COUNT 8
 
 #ifndef __ASSEMBLER__
 
