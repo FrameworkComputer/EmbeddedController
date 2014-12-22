@@ -103,5 +103,6 @@ interface  7
 /* Undefined interface callbacks fail by returning non-zero*/
 iface_undefined:
 	mov r0, #1
+.thumb_func
 ep_undefined:
 	bx lr
