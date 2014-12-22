@@ -106,7 +106,7 @@ GPIO(EC_JTAG_TCK,            C, 6,  GPIO_INPUT,    NULL)
 GPIO(EC_JTAG_TMS,            C, 7,  GPIO_INPUT,    NULL)
 GPIO(EC_JTAG_TDO,            C, 8,  GPIO_INPUT,    NULL)
 GPIO(EC_JTAG_TDI,            C, 9,  GPIO_INPUT,    NULL)
-GPIO(PD_ENTERING_RW,         B, 5,  GPIO_OUT_LOW,  NULL)
+GPIO(ENTERING_RW,            B, 5,  GPIO_OUT_LOW,  NULL)
 GPIO(PD_DISABLE_DEBUG,       E, 15, GPIO_OUT_HIGH, NULL)
 GPIO(PD_DEBUG_EN_L,          D, 4,  GPIO_INPUT | GPIO_PULL_UP, NULL)
 GPIO(PD_SPI_PP3300_EN_L,     A, 7,  GPIO_OUT_HIGH, NULL)
@@ -119,9 +119,6 @@ GPIO(EC_UART_RX,             C, 5,  GPIO_INPUT,    NULL)
 GPIO(AP_UART_TX,             D, 5,  GPIO_OUT_LOW,  NULL)
 GPIO(AP_UART_RX,             D, 6,  GPIO_INPUT,    NULL)
 #endif
-
-/* Unimplemented signals which we need to emulate for now */
-UNIMPLEMENTED(ENTERING_RW)
 
 ALTERNATE(B, 0x0008, 0, MODULE_USB_PD, 0) /* SPI1: SCK(PB3) */
 ALTERNATE(B, 0x2000, 0, MODULE_USB_PD, 0) /* SPI2: SCK(PB13) */
