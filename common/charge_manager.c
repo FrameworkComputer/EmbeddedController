@@ -87,6 +87,21 @@ static int charge_manager_is_seeded(void)
 }
 
 /**
+ * Perform cleanup operations on an override port, when switching to a
+ * different port. This involves switching the port from sink to source,
+ * if applicable.
+ */
+static void charge_manager_cleanup_override_port(int port)
+{
+	if (port < 0 || port >= PD_PORT_COUNT)
+		return;
+
+	if (pd_get_partner_dualrole_capable(port) &&
+	    pd_get_role(port) == PD_ROLE_SINK)
+		pd_request_power_swap(port);
+}
+
+/**
  * Select the 'best' charge port, as defined by the supplier heirarchy and the
  * ability of the port to provide power.
  */
@@ -141,10 +156,6 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				}
 			}
 
-		/* Clear override if no charge is available on override port */
-		if (override_port != OVERRIDE_OFF &&
-		    override_port != port)
-			override_port = OVERRIDE_OFF;
 	}
 
 	*new_port = port;
@@ -181,6 +192,16 @@ static void charge_manager_refresh(void)
 		 */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 			available_charge[i][new_port].current = 0;
+	}
+
+	/*
+	 * Clear override if it wasn't selected as the 'best' port -- it means
+	 * that no charge is available on the port, or the port was rejected.
+	 */
+	if (override_port >= 0 &&
+	    override_port != new_port) {
+		charge_manager_cleanup_override_port(override_port);
+		override_port = OVERRIDE_OFF;
 	}
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE) {
@@ -259,8 +280,11 @@ void charge_manager_update(int supplier,
 		if (available_charge[supplier][port].current == 0 &&
 		    charge->current > 0 &&
 		    !pd_get_partner_dualrole_capable(port)) {
+			charge_manager_cleanup_override_port(override_port);
 			override_port = OVERRIDE_OFF;
 			if (delayed_override_port != OVERRIDE_OFF) {
+				charge_manager_cleanup_override_port(
+					delayed_override_port);
 				delayed_override_port = OVERRIDE_OFF;
 				hook_call_deferred(
 					board_charge_manager_override_timeout,
@@ -322,9 +346,13 @@ int charge_manager_set_override(int port)
 	int retval = EC_SUCCESS;
 
 	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < PD_PORT_COUNT);
-	/* Supersede any pending delayed overrides. */
 
+	/* Supersede any pending delayed overrides. */
 	if (delayed_override_port != OVERRIDE_OFF) {
+		if (delayed_override_port != port)
+			charge_manager_cleanup_override_port(
+				delayed_override_port);
+
 		delayed_override_port = OVERRIDE_OFF;
 		hook_call_deferred(
 			board_charge_manager_override_timeout, -1);
@@ -333,6 +361,7 @@ int charge_manager_set_override(int port)
 	/* Set the override port if it's a sink. */
 	if (port < 0 || pd_get_role(port) == PD_ROLE_SINK) {
 		if (override_port != port) {
+			charge_manager_cleanup_override_port(override_port);
 			override_port = port;
 			if (charge_manager_is_seeded())
 				hook_call_deferred(charge_manager_refresh, 0);
