@@ -34,6 +34,17 @@ void dma_disable(enum dma_channel channel)
 		chan->act = 0;
 }
 
+void dma_disable_all(void)
+{
+	int ch;
+
+	for (ch = 0; ch < MEC1322_DMAC_COUNT; ch++) {
+		mec1322_dma_chan_t *chan = dma_get_channel(ch);
+		chan->ctrl &= ~(1 << 0);
+		chan->act = 0;
+	}
+}
+
 /**
  * Prepare a channel for use and start it
  *

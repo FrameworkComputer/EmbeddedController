@@ -7,6 +7,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "dma.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -420,6 +421,11 @@ static void jump_to_image(uintptr_t init_addr)
 
 	/* Disable interrupts before jump */
 	interrupt_disable();
+
+#ifdef CONFIG_DMA
+	/* Disable all DMA channels to avoid memory corruption */
+	dma_disable_all();
+#endif /* CONFIG_DMA */
 
 	/* Fill in preserved data between jumps */
 	jdata->reserved0 = 0;

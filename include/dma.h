@@ -65,6 +65,9 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
  */
 void dma_disable(enum dma_channel channel);
 
+/* Stop transfers on all DMA channels */
+void dma_disable_all(void);
+
 /**
  * Get the number of bytes available to read, or number of bytes written
  *

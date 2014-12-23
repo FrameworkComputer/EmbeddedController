@@ -1217,6 +1217,7 @@ enum dma_channel {
 	STM32_DMAC_I2C2_RX = STM32_DMAC_CH5,
 	STM32_DMAC_USART1_TX = STM32_DMAC_CH4,
 	STM32_DMAC_USART1_RX = STM32_DMAC_CH5,
+#if !defined(CHIP_VARIANT_STM32F03X) && !defined(CHIP_VARIANT_STM32F05X)
 	STM32_DMAC_USART2_RX = STM32_DMAC_CH6,
 	STM32_DMAC_USART2_TX = STM32_DMAC_CH7,
 	STM32_DMAC_I2C1_TX = STM32_DMAC_CH6,
@@ -1233,6 +1234,10 @@ enum dma_channel {
 
 	/* Only DMA1 (with 7 channels) is present on STM32F100 and STM32L151x */
 	STM32_DMAC_COUNT = 7,
+
+#else /* stm32f03x and stm32f05x have only 5 channels */
+	STM32_DMAC_COUNT = 5,
+#endif
 };
 
 /* Registers for a single channel of the DMA controller */
