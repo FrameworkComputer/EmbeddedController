@@ -96,7 +96,7 @@ GPIO(MASTER_I2C_SDA,         B, 11, GPIO_INPUT,    NULL)
 
 /* Case closed debugging. */
 GPIO(EC_INT,                 B, 2,  GPIO_OUT_LOW,  NULL)
-GPIO(EC_IN_RW,               C, 12, GPIO_INPUT,    NULL)
+GPIO(EC_IN_RW,               C, 12, GPIO_INPUT | GPIO_PULL_UP, NULL)
 GPIO(EC_RST_L,               C, 13, GPIO_OUT_HIGH, NULL)
 GPIO(SPI_FLASH_CS_L,         D, 0,  GPIO_INPUT,    NULL)
 GPIO(SPI_FLASH_CSK,          D, 1,  GPIO_INPUT,    NULL)
