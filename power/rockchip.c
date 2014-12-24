@@ -170,6 +170,7 @@ static int check_for_power_off_event(void)
 {
 	timestamp_t now;
 	int pressed = 0;
+	int ret = 0;
 
 	/*
 	 * Check for power button press.
@@ -206,13 +207,16 @@ static int check_for_power_off_event(void)
 		timer_cancel(TASK_ID_CHIPSET);
 	}
 
+	/* POWER_GOOD released by AP : shutdown immediately */
+	if (!power_has_signals(IN_POWER_GOOD)) {
+		if (power_button_was_pressed)
+			timer_cancel(TASK_ID_CHIPSET);
+		ret = 3;
+	}
+
 	power_button_was_pressed = pressed;
 
-	/* POWER_GOOD released by AP : shutdown immediately */
-	if (!power_has_signals(IN_POWER_GOOD))
-		return 3;
-
-	return 0;
+	return ret;
 }
 
 static void rockchip_lid_event(void)
