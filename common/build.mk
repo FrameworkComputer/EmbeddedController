@@ -25,6 +25,7 @@ common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o
 common-$(CONFIG_BATTERY_BQ27621)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
+common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CASE_CLOSED_DEBUG)+=case_closed_debug.o
