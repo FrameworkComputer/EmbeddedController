@@ -221,6 +221,8 @@ static void button_deferred(void)
 		break;
 	case GPIO_DBG_USB_TOGGLE_L:
 		set_usbc_action(USBC_ACT_USBDP_TOGGLE);
+		if (gpio_get_level(GPIO_USBC_SS_USB_MODE))
+			board_maybe_reset_usb_hub();
 		break;
 	case GPIO_DBG_MUX_FLIP_L:
 		set_usbc_action(USBC_ACT_MUX_FLIP);
