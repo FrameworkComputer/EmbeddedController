@@ -2731,6 +2731,13 @@ struct ec_response_usb_pd_control {
 	uint8_t state;
 } __packed;
 
+struct ec_response_usb_pd_control_v1 {
+	uint8_t enabled;
+	uint8_t role;
+	uint8_t polarity;
+	char state[32];
+} __packed;
+
 #define EC_CMD_USB_PD_PORTS 0x102
 
 struct ec_response_usb_pd_ports {

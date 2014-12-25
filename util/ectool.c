@@ -2841,16 +2841,22 @@ int cmd_usb_pd(int argc, char *argv[])
 	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source"};
 	const char *mux_str[] = {"", "none", "usb", "dp", "dock", "auto"};
 	struct ec_params_usb_pd_control p;
+	struct ec_response_usb_pd_control_v1 *r_v1 =
+		(struct ec_response_usb_pd_control_v1 *)ec_inbuf;
 	struct ec_response_usb_pd_control *r =
 		(struct ec_response_usb_pd_control *)ec_inbuf;
 	int rv, i, j;
 	int option_ok;
 	char *e;
+	int cmdver = 1;
 
 	BUILD_ASSERT(ARRAY_SIZE(role_str) == USB_PD_CTRL_ROLE_COUNT);
 	BUILD_ASSERT(ARRAY_SIZE(mux_str) == USB_PD_CTRL_MUX_COUNT);
 	p.role = USB_PD_CTRL_ROLE_NO_CHANGE;
 	p.mux = USB_PD_CTRL_MUX_NO_CHANGE;
+
+	if (!ec_cmd_version_supported(EC_CMD_USB_PD_CONTROL, cmdver))
+		cmdver = 0;
 
 	if (argc < 2) {
 		fprintf(stderr, "No port specified.\n");
@@ -2910,14 +2916,23 @@ int cmd_usb_pd(int argc, char *argv[])
 		}
 	}
 
-	rv = ec_command(EC_CMD_USB_PD_CONTROL, 0, &p, sizeof(p),
+	rv = ec_command(EC_CMD_USB_PD_CONTROL, cmdver, &p, sizeof(p),
 			ec_inbuf, ec_max_insize);
 
-	if ((rv >= 0) && (argc == 2))
+	if (rv < 0 || argc != 2)
+		return (rv < 0) ? rv : 0;
+
+	if (cmdver == 0) {
 		printf("Port C%d is %sabled, Role:%s Polarity:CC%d State:%d\n",
 		       p.port, (r->enabled) ? "en" : "dis",
 		       r->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 		       r->polarity + 1, r->state);
+	} else {
+		printf("Port C%d is %sabled, Role:%s Polarity:CC%d State:%s\n",
+		       p.port, (r_v1->enabled) ? "en" : "dis",
+		       r_v1->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+		       r_v1->polarity + 1, r_v1->state);
+	}
 	return (rv < 0 ? rv : 0);
 }
 

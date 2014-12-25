@@ -288,6 +288,27 @@ static uint8_t pd_comm_enabled = CONFIG_USB_PD_COMM_ENABLED;
 
 struct mutex pd_crc_lock;
 
+#ifdef CONFIG_COMMON_RUNTIME
+static const char * const pd_state_names[] = {
+	"DISABLED",
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	"SUSPENDED", "SNK_DISCONNECTED", "SNK_HARD_RESET_RECOVER",
+	"SNK_DISCOVERY", "SNK_REQUESTED", "SNK_TRANSITION", "SNK_READY",
+	"SNK_DR_SWAP", "SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
+	"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
+	"SRC_DISCONNECTED", "SRC_HARD_RESET_RECOVER", "SRC_STARTUP",
+	"SRC_DISCOVERY", "SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
+	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "SRC_DR_SWAP",
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
+	"SRC_SWAP_STANDBY",
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
+	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST",
+};
+BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
+#endif
+
 /*
  * 4 entry rw_hash table of type-C devices that AP has firmware updates for.
  */
@@ -2897,29 +2918,6 @@ static int command_pd(int argc, char **argv)
 	} else
 #endif
 	if (!strncasecmp(argv[2], "state", 5)) {
-		const char * const state_names[] = {
-			"DISABLED", "SUSPENDED",
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-			"SNK_DISCONNECTED", "SNK_HARD_RESET_RECOVER",
-			"SNK_DISCOVERY", "SNK_REQUESTED",
-			"SNK_TRANSITION", "SNK_READY", "SNK_DR_SWAP",
-			"SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
-			"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY",
-			"SNK_SWAP_COMPLETE",
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
-			"SRC_DISCONNECTED", "SRC_HARD_RESET_RECOVER",
-			"SRC_STARTUP", "SRC_DISCOVERY",
-			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
-			"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP",
-			"SRC_DR_SWAP",
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
-			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
-			"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE",
-			"BIST",
-		};
-		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
 		ccprintf("Port C%d, %s - Role: %s-%s Polarity: CC%d "
 			 "Flags: 0x%04x, State: %s\n",
 			port, pd_comm_enabled ? "Ena" : "Dis",
@@ -2927,7 +2925,7 @@ static int command_pd(int argc, char **argv)
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			pd[port].polarity + 1,
 			pd[port].flags,
-			state_names[pd[port].task_state]);
+			pd_state_names[pd[port].task_state]);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -3020,6 +3018,7 @@ static const enum typec_mux typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
 static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_control *p = args->params;
+	struct ec_response_usb_pd_control_v1 *r_v1 = args->response;
 	struct ec_response_usb_pd_control *r = args->response;
 
 	if (p->role >= USB_PD_CTRL_ROLE_COUNT ||
@@ -3034,16 +3033,27 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		board_set_usb_mux(p->port, typec_mux_map[p->mux],
 				  pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
-	r->enabled = pd_comm_enabled;
-	r->role = pd[p->port].power_role;
-	r->polarity = pd[p->port].polarity;
-	r->state = pd[p->port].task_state;
-	args->response_size = sizeof(*r);
+
+	if (args->version == 0) {
+		r->enabled = pd_comm_enabled;
+		r->role = pd[p->port].power_role;
+		r->polarity = pd[p->port].polarity;
+		r->state = pd[p->port].task_state;
+		args->response_size = sizeof(*r);
+	} else {
+		r_v1->enabled = pd_comm_enabled;
+		r_v1->role = pd[p->port].power_role;
+		r_v1->polarity = pd[p->port].polarity;
+		strzcpy(r_v1->state,
+			pd_state_names[pd[p->port].task_state],
+			sizeof(r_v1->state));
+		args->response_size = sizeof(*r_v1);
+	}
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
 		     hc_usb_pd_control,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static int hc_remote_flash(struct host_cmd_handler_args *args)
 {
