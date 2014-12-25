@@ -57,11 +57,13 @@ static int sn75dp130_dpcd_init(void);
 void hpd_lvl_deferred(void)
 {
 	int level = gpio_get_level(GPIO_DPSRC_HPD);
+	int dp_mode = !gpio_get_level(GPIO_USBC_SS_USB_MODE);
 
 	if (level != hpd_prev_level) {
 		/* Stable level changed. Send HPD event */
 		hpd_prev_level = level;
-		pd_send_hpd(0, level ? hpd_high : hpd_low);
+		if (dp_mode)
+			pd_send_hpd(0, level ? hpd_high : hpd_low);
 		/* Configure redriver's back side */
 		if (level)
 			sn75dp130_dpcd_init();
@@ -69,7 +71,7 @@ void hpd_lvl_deferred(void)
 	}
 
 	/* Send queued IRQ if the cable is attached */
-	if (hpd_possible_irq && level)
+	if (hpd_possible_irq && level && dp_mode)
 		pd_send_hpd(0, hpd_irq);
 	hpd_possible_irq = 0;
 
@@ -147,6 +149,18 @@ static void set_usbc_action(enum usbc_action act)
 		was_usb_mode = gpio_get_level(GPIO_USBC_SS_USB_MODE);
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, !was_usb_mode);
 		gpio_set_level(GPIO_CASE_CLOSE_EN, !was_usb_mode);
+		if (!gpio_get_level(GPIO_DPSRC_HPD))
+			break;
+		/*
+		 * DP cable is connected. Send HPD event according to USB/DP
+		 * mux state.
+		 */
+		if (!was_usb_mode) {
+			pd_send_hpd(0, hpd_low);
+		} else {
+			pd_send_hpd(0, hpd_high);
+			pd_send_hpd(0, hpd_irq);
+		}
 		break;
 	case USBC_ACT_USB_EN:
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, 1);
