@@ -505,9 +505,12 @@ DECLARE_HOST_COMMAND(EC_CMD_READ_MEMMAP,
 static int host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_get_cmd_versions *p = args->params;
+	const struct ec_params_get_cmd_versions_v1 *p_v1 = args->params;
 	struct ec_response_get_cmd_versions *r = args->response;
 
-	const struct host_command *cmd = find_host_command(p->cmd);
+	const struct host_command *cmd =
+		(args->version == 1) ? find_host_command(p_v1->cmd) :
+				       find_host_command(p->cmd);
 
 	if (!cmd)
 		return EC_RES_INVALID_PARAM;
@@ -520,7 +523,7 @@ static int host_command_get_cmd_versions(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 		     host_command_get_cmd_versions,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 /**
  * Print debug output for the host command request, before it's processed.

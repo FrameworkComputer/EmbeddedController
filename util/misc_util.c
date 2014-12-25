@@ -93,15 +93,22 @@ int is_string_printable(const char *buf)
  */
 int ec_get_cmd_versions(int cmd, uint32_t *pmask)
 {
+	struct ec_params_get_cmd_versions_v1 pver_v1;
 	struct ec_params_get_cmd_versions pver;
 	struct ec_response_get_cmd_versions rver;
 	int rv;
 
 	*pmask = 0;
 
-	pver.cmd = cmd;
-	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &pver, sizeof(pver),
+	pver_v1.cmd = cmd;
+	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 1, &pver_v1, sizeof(pver_v1),
 			&rver, sizeof(rver));
+
+	if (rv == -EECRESULT - EC_RES_INVALID_VERSION) {
+		pver.cmd = cmd;
+		rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &pver, sizeof(pver),
+				&rver, sizeof(rver));
+	}
 
 	if (rv < 0)
 		return rv;

@@ -617,6 +617,10 @@ struct ec_params_get_cmd_versions {
 	uint8_t cmd;      /* Command to check */
 } __packed;
 
+struct ec_params_get_cmd_versions_v1 {
+	uint16_t cmd;     /* Command to check */
+} __packed;
+
 struct ec_response_get_cmd_versions {
 	/*
 	 * Mask of supported versions; use EC_VER_MASK() to compare with a
