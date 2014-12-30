@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,6 +138,8 @@ const char help_str[] =
 	"      Prints saved panic info\n"
 	"  pause_in_s5 [on|off]\n"
 	"      Whether or not the AP should pause in S5 on shutdown\n"
+	"  pdlog\n"
+	"      Prints the PD event log entries\n"
 	"  port80flood\n"
 	"      Rapidly write bytes to port 80\n"
 	"  port80read\n"
@@ -2965,6 +2968,65 @@ int cmd_usb_pd(int argc, char *argv[])
 	return (rv < 0 ? rv : 0);
 }
 
+static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
+{
+	printf("Power role: ");
+
+	switch (r->role) {
+	case USB_PD_PORT_POWER_DISCONNECTED:
+		printf("Disconnected\n");
+		break;
+	case USB_PD_PORT_POWER_SOURCE:
+		printf("Source\n");
+		break;
+	case USB_PD_PORT_POWER_SINK:
+		printf("Sink\n");
+		break;
+	case USB_PD_PORT_POWER_SINK_NOT_CHARGING:
+		printf("Sink (not charging)\n");
+		break;
+	default:
+		printf("Unknown\n");
+	}
+
+	if (r->role != USB_PD_PORT_POWER_DISCONNECTED) {
+		printf("  %s\n", r->dualrole ?
+		       "Dual-role device" : "Dedicated charger");
+	}
+
+	printf("  Charger type: ");
+	switch (r->type) {
+	case USB_CHG_TYPE_PD:
+		printf("PD\n");
+		break;
+	case USB_CHG_TYPE_C:
+		printf("Type-c\n");
+		break;
+	case USB_CHG_TYPE_PROPRIETARY:
+		printf("Proprietary\n");
+		break;
+	case USB_CHG_TYPE_BC12_DCP:
+		printf("BC1.2 DCP\n");
+		break;
+	case USB_CHG_TYPE_BC12_CDP:
+		printf("BC1.2 CDP\n");
+		break;
+	case USB_CHG_TYPE_BC12_SDP:
+		printf("BC1.2 SDP\n");
+		break;
+	case USB_CHG_TYPE_OTHER:
+		printf("Other\n");
+		break;
+	default:
+		printf("None\n");
+	}
+	printf("  Max charging voltage: %dmV\n", r->meas.voltage_max);
+	printf("  Current charging voltage: %dmV\n", r->meas.voltage_now);
+	printf("  Max input current: %dmA\n", r->meas.current_max);
+	printf("  Max input power: %dmW\n", r->max_power / 1000);
+	printf("\n");
+}
+
 int cmd_usb_pd_power(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_power_info p;
@@ -2986,66 +3048,8 @@ int cmd_usb_pd_power(int argc, char *argv[])
 		if (rv < 0)
 			return rv;
 
-		printf("Port %d:\n  Power role: ", i);
-		switch (r->role) {
-		case USB_PD_PORT_POWER_DISCONNECTED:
-			printf("Disconnected\n");
-			break;
-		case USB_PD_PORT_POWER_SOURCE:
-			printf("Source\n");
-			break;
-		case USB_PD_PORT_POWER_SINK:
-			printf("Sink\n");
-			break;
-		case USB_PD_PORT_POWER_SINK_NOT_CHARGING:
-			printf("Sink (not charging)\n");
-			break;
-		default:
-			printf("Unknown\n");
-		}
-
-		if (r->role != USB_PD_PORT_POWER_DISCONNECTED) {
-			printf("  %s\n", r->dualrole ?
-				"Dual-role device" : "Dedicated charger");
-		}
-
-		printf("  Charger type: ");
-		switch (r->type) {
-		case USB_CHG_TYPE_PD:
-			printf("PD\n");
-			break;
-		case USB_CHG_TYPE_C:
-			printf("Type-c\n");
-			break;
-		case USB_CHG_TYPE_PROPRIETARY:
-			printf("Proprietary\n");
-			break;
-		case USB_CHG_TYPE_BC12_DCP:
-			printf("BC1.2 DCP\n");
-			break;
-		case USB_CHG_TYPE_BC12_CDP:
-			printf("BC1.2 CDP\n");
-			break;
-		case USB_CHG_TYPE_BC12_SDP:
-			printf("BC1.2 SDP\n");
-			break;
-		case USB_CHG_TYPE_OTHER:
-			printf("Other\n");
-			break;
-		default:
-			printf("None\n");
-		}
-
-		printf("  Max charging voltage: %dmV\n",
-			r->voltage_max);
-		printf("  Current charging voltage: %dmV\n",
-			r->voltage_now);
-		printf("  Max input current: %dmA\n",
-			r->current_max);
-		printf("  Max input power: %dmW\n",
-			r->max_power / 1000);
-
-		printf("\n");
+		printf("Port %d:\n", i);
+		print_pd_power_info(r);
 	}
 
 	return 0;
@@ -5232,6 +5236,52 @@ int cmd_charge_port_override(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_pd_log(int argc, char *argv[])
+{
+	union {
+		struct ec_response_pd_log r;
+		uint32_t words[8]; /* space for the payload */
+	} u;
+	struct ec_response_usb_pd_power_info pinfo;
+	int rv;
+
+	while (1) {
+		rv = ec_command(EC_CMD_PD_GET_LOG_ENTRY, 0,
+				NULL, 0, &u, sizeof(u));
+		if (rv < 0)
+			return rv;
+
+		if (u.r.type == PD_EVENT_NO_ENTRY) {
+			printf("--- END OF LOG ---\n");
+			break;
+		}
+
+		printf("Port: %d, %"PRIu64" ms ago : ",
+			PD_LOG_PORT(u.r.size_port),
+			(uint64_t)(u.r.timestamp << PD_LOG_TIMESTAMP_SHIFT)
+				 / 1000);
+		if (u.r.type == PD_EVENT_MCU_CHARGE) {
+			if (u.r.data & CHARGE_FLAGS_OVERRIDE)
+				printf("override ");
+			if (u.r.data & CHARGE_FLAGS_DELAYED_OVERRIDE)
+				printf("pending_override ");
+			printf("\n");
+			memcpy(&pinfo.meas, u.r.payload,
+				sizeof(struct usb_chg_measures));
+			pinfo.dualrole = !!(u.r.data & CHARGE_FLAGS_DUAL_ROLE);
+			pinfo.role = u.r.data & CHARGE_FLAGS_ROLE_MASK;
+			pinfo.type = (u.r.data & CHARGE_FLAGS_TYPE_MASK)
+					>> CHARGE_FLAGS_TYPE_SHIFT;
+			pinfo.max_power = 0;
+			print_pd_power_info(&pinfo);
+		} else { /* Unknown type */
+			printf(" event %02x\n", u.r.type);
+		}
+	}
+
+	return 0;
+}
+
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"extpwrcurrentlimit", cmd_ext_power_current_limit},
@@ -5285,6 +5335,7 @@ const struct command commands[] = {
 	{"panicinfo", cmd_panic_info},
 	{"pause_in_s5", cmd_s5},
 	{"port80read", cmd_port80_read},
+	{"pdlog", cmd_pd_log},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
 	{"pstoreinfo", cmd_pstore_info},
