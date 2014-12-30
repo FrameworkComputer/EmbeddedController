@@ -174,6 +174,7 @@ uint32_t task_wait_event(int timeout_us)
 
 		asm volatile("cpsie i ; isb");
 		/* note: interrupt that woke us up will run here */
+		asm volatile("cpsid i");
 
 		t0 = get_time();
 		/* check for timeout if timeout was set */
@@ -185,12 +186,11 @@ uint32_t task_wait_event(int timeout_us)
 		/* recalculate timeout if timeout was set */
 		if (timeout_us >= 0)
 			timeout_us = t1.val - t0.val;
-
-		asm volatile("cpsid i");
 	}
 
 	evt = last_event;
 	last_event = 0;
+	asm volatile("cpsie i ; isb");
 	return evt;
 }
 
