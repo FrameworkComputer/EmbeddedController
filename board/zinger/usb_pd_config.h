@@ -107,8 +107,8 @@ static inline void pd_tx_init(void)
 
 static inline int pd_adc_read(int port, int cc)
 {
-	/* only one CC line */
-	return adc_read_channel(ADC_CH_CC1_PD);
+	/* only one CC line, assume other one is always high */
+	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 4096;
 }
 
 /* 3.0A DFP : no-connect voltage is 2.45V */

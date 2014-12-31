@@ -17,21 +17,37 @@
 
 struct pd_port_t {
 	int host_mode;
-	int cc_volt[2]; /* -1 for Hi-Z */
 	int has_vbus;
 	int msg_tx_id;
 	int msg_rx_id;
 	int polarity;
+	int partner_role; /* -1 for none */
+	int partner_polarity;
 } pd_port[PD_PORT_COUNT];
 
 /* Mock functions */
 
 int pd_adc_read(int port, int cc)
 {
-	int val = pd_port[port].cc_volt[cc];
-	if (val == -1)
-		return pd_port[port].host_mode ? 3000 : 0;
-	return val;
+	if (pd_port[port].host_mode &&
+	    pd_port[port].partner_role == PD_ROLE_SINK)
+		/* we are source connected to sink, return Rd/Open */
+		return (pd_port[port].partner_polarity == cc) ? 400 : 3000;
+	else if (!pd_port[port].host_mode &&
+		  pd_port[port].partner_role == PD_ROLE_SOURCE)
+		/* we are sink connected to source, return Rp/Open */
+		return (pd_port[port].partner_polarity == cc) ? 1700 : 0;
+	else if (pd_port[port].host_mode &&
+		 pd_port[port].partner_role == PD_ROLE_SINK)
+		/* both sources */
+		return 3000;
+	else if (!pd_port[port].host_mode &&
+		 pd_port[port].partner_role == PD_ROLE_SOURCE)
+		/* both sinks */
+		return 0;
+
+	/* should never get here */
+	return 0;
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -72,7 +88,7 @@ static void init_ports(void)
 
 	for (i = 0; i < PD_PORT_COUNT; ++i) {
 		pd_port[i].host_mode = 0;
-		pd_port[i].cc_volt[0] = pd_port[i].cc_volt[1] = -1;
+		pd_port[i].partner_role = -1;
 		pd_port[i].has_vbus = 0;
 	}
 }
@@ -126,20 +142,21 @@ static int verify_goodcrc(int port, int role, int id)
 static void plug_in_source(int port, int polarity)
 {
 	pd_port[port].has_vbus = 1;
-	pd_port[port].cc_volt[polarity] = 3000;
+	pd_port[port].partner_role = PD_ROLE_SOURCE;
+	pd_port[port].partner_polarity = polarity;
 }
 
 static void plug_in_sink(int port, int polarity)
 {
 	pd_port[port].has_vbus = 0;
-	pd_port[port].cc_volt[polarity] = 400; /* V_rd */
+	pd_port[port].partner_role = PD_ROLE_SINK;
+	pd_port[port].partner_polarity = polarity;
 }
 
 static void unplug(int port)
 {
 	pd_port[port].has_vbus = 0;
-	pd_port[port].cc_volt[0] = -1;
-	pd_port[port].cc_volt[1] = -1;
+	pd_port[port].partner_role = -1;
 	task_wake(PORT_TO_TASK_ID(port));
 	usleep(30 * MSEC);
 }
@@ -150,7 +167,7 @@ static int test_request(void)
 
 	plug_in_source(0, 0);
 	task_wake(PORT_TO_TASK_ID(0));
-	task_wait_event(100 * MSEC);
+	task_wait_event(2 * PD_T_CC_DEBOUNCE + 100 * MSEC);
 	TEST_ASSERT(pd_port[0].polarity == 0);
 
 	/* We're in SNK_DISCOVERY now. Let's send the source cap. */

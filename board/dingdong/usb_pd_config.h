@@ -120,7 +120,8 @@ static inline void pd_set_host_mode(int port, int enable) {}
 
 static inline int pd_adc_read(int port, int cc)
 {
-	return adc_read_channel(ADC_CH_CC1_PD);
+	/* only one CC line, assume other one is always low */
+	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 0;
 }
 
 static inline int pd_snk_is_vbus_provided(int port)

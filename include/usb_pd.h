@@ -122,8 +122,8 @@ enum pd_errors {
 #define PD_T_PS_SOURCE_ON     (480*MSEC) /* between 390ms and 480ms */
 #define PD_T_PS_SOURCE_OFF    (920*MSEC) /* between 750ms and 920ms */
 #define PD_T_PS_HARD_RESET     (15*MSEC) /* between 10ms and 20ms */
-#define PD_T_DRP_HOLD         (120*MSEC) /* between 100ms and 150ms */
-#define PD_T_DRP_LOCK         (120*MSEC) /* between 100ms and 150ms */
+#define PD_T_ERROR_RECOVERY    (25*MSEC) /* 25ms */
+#define PD_T_CC_DEBOUNCE       (50*MSEC) /* between ??ms and ??ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
 #define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
 #define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
@@ -569,6 +569,7 @@ enum pd_states {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	PD_STATE_SUSPENDED,
 	PD_STATE_SNK_DISCONNECTED,
+	PD_STATE_SNK_DISCONNECTED_DEBOUNCE,
 	PD_STATE_SNK_HARD_RESET_RECOVER,
 	PD_STATE_SNK_DISCOVERY,
 	PD_STATE_SNK_REQUESTED,
@@ -584,6 +585,8 @@ enum pd_states {
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 	PD_STATE_SRC_DISCONNECTED,
+	PD_STATE_SRC_DISCONNECTED_DEBOUNCE,
+	PD_STATE_SRC_ACCESSORY,
 	PD_STATE_SRC_HARD_RESET_RECOVER,
 	PD_STATE_SRC_STARTUP,
 	PD_STATE_SRC_DISCOVERY,
@@ -610,6 +613,20 @@ enum pd_states {
 
 	/* Number of states. Not an actual state. */
 	PD_STATE_COUNT,
+};
+
+enum pd_cc_states {
+	PD_CC_NONE,
+
+	/* From DFP perspective */
+	PD_CC_NO_UFP,
+	PD_CC_AUDIO_ACC,
+	PD_CC_DEBUG_ACC,
+	PD_CC_UFP_ATTACHED,
+
+	/* From UFP perspective */
+	PD_CC_ACC_PRESENT,
+	PD_CC_DFP_ATTACHED
 };
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
