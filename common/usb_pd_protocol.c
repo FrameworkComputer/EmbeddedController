@@ -938,6 +938,8 @@ static void handle_data_request(int port, uint16_t head,
 		pd[port].flags |= PD_FLAGS_SNK_CAP_RECVD;
 		/* snk cap 0 should be fixed PDO */
 		pd_update_pdo_flags(port, payload[0]);
+		if (pd[port].task_state == PD_STATE_SRC_GET_SINK_CAP)
+			set_state(port, PD_STATE_SRC_READY);
 		break;
 	case PD_DATA_VENDOR_DEF:
 		handle_vdm_request(port, cnt, payload);
@@ -1821,6 +1823,7 @@ void pd_task(void)
 			    !(pd[port].flags & PD_FLAGS_SNK_CAP_RECVD)) {
 				/* Get sink cap to know if dual-role device */
 				send_control(port, PD_CTRL_GET_SINK_CAP);
+				set_state(port, PD_STATE_SRC_GET_SINK_CAP);
 				pd[port].flags &= ~PD_FLAGS_GET_SNK_CAP_SENT;
 				break;
 			}
@@ -1860,6 +1863,13 @@ void pd_task(void)
 			/* Ping dropped. Try soft reset. */
 			set_state(port, PD_STATE_SOFT_RESET);
 			timeout = 10 * MSEC;
+			break;
+		case PD_STATE_SRC_GET_SINK_CAP:
+			if (pd[port].last_state != pd[port].task_state)
+				set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SENDER_RESPONSE,
+						  PD_STATE_SRC_READY);
 			break;
 		case PD_STATE_SRC_DR_SWAP:
 			if (pd[port].last_state != pd[port].task_state) {
@@ -2747,7 +2757,8 @@ static int command_pd(int argc, char **argv)
 			"SRC_DISCONNECTED", "SRC_HARD_RESET_RECOVER",
 			"SRC_STARTUP", "SRC_DISCOVERY",
 			"SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
-			"SRC_TRANSITION", "SRC_READY", "SRC_DR_SWAP",
+			"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP",
+			"SRC_DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE",
 			"SRC_SWAP_SRC_DISABLE", "SRC_SWAP_STANDBY",
