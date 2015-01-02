@@ -585,7 +585,14 @@ static int send_source_cap(int port)
 	const uint32_t *src_pdo = pd_src_pdo;
 	const int src_pdo_cnt = pd_src_pdo_cnt;
 #endif
-	uint16_t header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
+	uint16_t header;
+
+	if (src_pdo_cnt == 0)
+		/* No source capabilities defined, sink only */
+		header = PD_HEADER(PD_CTRL_REJECT, pd[port].power_role,
+			pd[port].data_role, pd[port].msg_id, 0);
+	else
+		header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt);
 
 	bit_len = send_validate_message(port, header, src_pdo_cnt, src_pdo);
@@ -993,10 +1000,14 @@ static void handle_ctrl_request(int port, uint16_t head,
 		    (pd[port].task_state == PD_STATE_SRC_DISCOVERY))
 			set_state(port, PD_STATE_SRC_NEGOCIATE);
 		break;
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_CTRL_GET_SINK_CAP:
+#ifdef CONFIG_USB_PD_DUAL_ROLE
 		send_sink_cap(port);
+#else
+		send_control(port, PD_CTRL_REJECT);
+#endif
 		break;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_CTRL_GOTO_MIN:
 		break;
 	case PD_CTRL_PS_RDY:
