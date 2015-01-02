@@ -17,12 +17,15 @@
 volatile uint32_t last_event;
 uint32_t sleep_mask;
 
+/* High word of the 64-bit timestamp counter  */
+static volatile uint32_t clksrc_high;
+
 timestamp_t get_time(void)
 {
 	timestamp_t t;
 
 	t.le.lo = STM32_TIM32_CNT(2);
-	t.le.hi = 0;
+	t.le.hi = clksrc_high;
 	return t;
 }
 
@@ -62,9 +65,18 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 
 void tim2_interrupt(void)
 {
-	STM32_TIM_DIER(2) = 0; /* disable match interrupt */
+	uint32_t stat = STM32_TIM_SR(2);
+
+	if (stat & 2) { /* Event match */
+		/* disable match interrupt but keep update interrupt */
+		STM32_TIM_DIER(2) = 1;
+		last_event = TASK_EVENT_TIMER;
+	}
+	if (stat & 1) /* Counter overflow */
+		clksrc_high++;
+
+	STM32_TIM_SR(2) = ~stat & 3; /* clear interrupt flags */
 	task_clear_pending_irq(STM32_IRQ_TIM2);
-	last_event = TASK_EVENT_TIMER;
 }
 DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
@@ -115,6 +127,7 @@ void runtime_init(void)
  */
 #define STOP_MODE_LATENCY 300   /* us */
 #define SET_RTC_MATCH_DELAY 200 /* us */
+#define MAX_LATENCY (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY)
 
 uint32_t task_wait_event(int timeout_us)
 {
@@ -140,16 +153,15 @@ uint32_t task_wait_event(int timeout_us)
 		/* set timeout on timer */
 		if (timeout_us < 0) {
 			asm volatile ("wfi");
-		} else if (timeout_us <=
-			   (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY) ||
+		} else if (timeout_us <= MAX_LATENCY ||
+			  t1.le.lo - timeout_us > t1.le.lo + MAX_LATENCY ||
 			  !DEEP_SLEEP_ALLOWED) {
 			STM32_TIM32_CCR1(2) = STM32_TIM32_CNT(2) + timeout_us;
-			STM32_TIM_SR(2) = 0; /* clear match flag */
-			STM32_TIM_DIER(2) = 2; /*  match interrupt */
+			STM32_TIM_DIER(2) = 3; /*  match interrupt and UIE */
 
 			asm volatile("wfi");
 
-			STM32_TIM_DIER(2) = 0; /* disable match interrupt */
+			STM32_TIM_DIER(2) = 1; /* disable match, keep UIE */
 		} else {
 			t0 = get_time();
 

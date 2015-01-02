@@ -146,11 +146,12 @@ static void timers_init(void)
 	/* TIM2 is a 32-bit free running counter with 1Mhz frequency */
 	STM32_TIM_CR2(2) = 0x0000;
 	STM32_TIM32_ARR(2) = 0xFFFFFFFF;
-	STM32_TIM32_CNT(2) = 0;
 	STM32_TIM_PSC(2) = CPU_CLOCK / 1000000 - 1;
 	STM32_TIM_EGR(2) = 0x0001; /* Reload the pre-scaler */
 	STM32_TIM_CR1(2) = 1;
-	STM32_TIM_DIER(2) = 0;
+	STM32_TIM32_CNT(2) = 0x00000000;
+	STM32_TIM_SR(2) = 0; /* Clear pending interrupts */
+	STM32_TIM_DIER(2) = 1; /* Overflow interrupt */
 	task_enable_irq(STM32_IRQ_TIM2);
 }
 
