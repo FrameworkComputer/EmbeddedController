@@ -441,10 +441,10 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 	/* Fill in power role */
 	if (charge_port == port)
 		r->role = USB_PD_PORT_POWER_SINK;
-	else if (sup != CHARGE_SUPPLIER_NONE)
-		r->role = USB_PD_PORT_POWER_SINK_NOT_CHARGING;
 	else if (pd_is_connected(port) && pd_get_role(port) == PD_ROLE_SOURCE)
 		r->role = USB_PD_PORT_POWER_SOURCE;
+	else if (sup != CHARGE_SUPPLIER_NONE)
+		r->role = USB_PD_PORT_POWER_SINK_NOT_CHARGING;
 	else
 		r->role = USB_PD_PORT_POWER_DISCONNECTED;
 

@@ -2999,7 +2999,7 @@ int cmd_usb_pd_power(int argc, char *argv[])
 		printf("  Max input current: %dmA\n",
 			r->current_max);
 		printf("  Max input power: %dmW\n",
-			r->max_power);
+			r->max_power / 1000);
 
 		printf("\n");
 	}
