@@ -83,6 +83,10 @@ int main(void)
 	debug_printf("Power supply started ... %s\n",
 		is_ro_mode() ? "RO" : "RW");
 
+	/* the RO partition protection is not enabled : do it */
+	if (!flash_physical_is_permanently_protected())
+		flash_physical_permanent_protect();
+
 	/* Verify RW firmware and use it if valid */
 	if (is_ro_mode() && check_rw_valid())
 		jump_to_rw();

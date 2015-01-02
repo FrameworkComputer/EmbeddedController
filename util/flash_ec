@@ -333,7 +333,7 @@ function flash_stm32() {
 	# Reset the EC
 	ec_reset
 	# Unprotect flash, erase, and write
-	${STM32MON} -d ${EC_UART} -u -e -w "${IMG}"
+	${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
 }
 
 function flash_stm32_dfu() {
