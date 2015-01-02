@@ -2279,7 +2279,7 @@ void pd_task(void)
 				 */
 				if (pd[port].power_role == PD_ROLE_SOURCE) {
 					set_state_timeout(port,
-					  get_time().val + PD_T_SINK_TRANSITION,
+					  get_time().val + PD_T_PS_HARD_RESET,
 					  PD_STATE_HARD_RESET_EXECUTE);
 				} else {
 					set_state(port,
