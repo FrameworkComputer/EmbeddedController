@@ -174,7 +174,7 @@ static const uint8_t dec4b5b[] = {
 
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
-#define PD_RETRY_COUNT 2
+#define PD_RETRY_COUNT 3
 #define PD_HARD_RESET_COUNT 2
 #define PD_CAPS_COUNT 50
 
