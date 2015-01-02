@@ -926,6 +926,8 @@ static void handle_data_request(int port, uint16_t head,
 			}
 		/* the message was incorrect or cannot be satisfied */
 		send_control(port, PD_CTRL_REJECT);
+		/* keep last contract in place (whether implicit or explicit) */
+		set_state(port, PD_STATE_SRC_READY);
 		break;
 	case PD_DATA_BIST:
 		/* currently only support sending bist carrier mode 2 */
@@ -1714,6 +1716,7 @@ void pd_task(void)
 				 * discover identity when we enter SRC_READY
 				 */
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
 				/* reset various counters */
 				caps_count = 0;
 				src_connected = 0;
