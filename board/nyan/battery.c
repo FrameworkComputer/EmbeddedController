@@ -107,7 +107,7 @@ static struct battery_info info_3s = {
 	.discharging_max_c    = 50,
 };
 
-static struct battery_device support_batteries[] = {
+static const struct battery_device support_batteries[] = {
 	{
 		.manuf			= "NVT",
 		.device			= "ARROW",
