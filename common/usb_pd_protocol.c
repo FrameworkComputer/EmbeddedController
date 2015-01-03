@@ -1404,20 +1404,18 @@ static void pd_vdm_send_state_machine(int port, int incoming_packet)
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
-		/*
-		 * if there's traffic or we're not in PDO ready state don't send
-		 * a VDM */
-		if (incoming_packet || pdo_busy(port))
-			break;
-
-		/*
-		 * Only transmit VDM if connected.  Should follow busy logic
-		 * (above) as custom VDMs can leave port in disconnected state
-		 */
+		/* Only transmit VDM if connected. */
 		if (!pd_is_connected(port)) {
 			pd[port].vdm_state = VDM_STATE_ERR_BUSY;
 			break;
 		}
+
+		/*
+		 * if there's traffic or we're not in PDO ready state don't send
+		 * a VDM.
+		 */
+		if (incoming_packet || pdo_busy(port))
+			break;
 
 		/* Prepare and send VDM */
 		header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
