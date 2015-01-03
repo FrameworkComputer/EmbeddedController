@@ -2451,7 +2451,7 @@ void pd_set_suspend(int port, int enable)
 	task_wake(PORT_TO_TASK_ID(port));
 }
 
-#ifdef CONFIG_CMD_PD
+#if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
 static int hex8tou32(char *str, uint32_t *val)
 {
 	char *ptr = str;
@@ -2527,7 +2527,7 @@ static int remote_flashing(int argc, char **argv)
 	ccprintf("DONE %d\n", pd[port].vdm_state);
 	return EC_SUCCESS;
 }
-#endif
+#endif /* defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH) */
 
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
 void pd_send_hpd(int port, enum hpd_event hpd)
@@ -2739,11 +2739,16 @@ static int command_pd(int argc, char **argv)
 		} else if (!strncasecmp(argv[3], "curr", 4)) {
 			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_CURRENT,
 				    NULL, 0);
+		} else if (!strncasecmp(argv[3], "vers", 4)) {
+			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_VERSION,
+				    NULL, 0);
 		} else {
 			return EC_ERROR_PARAM_COUNT;
 		}
+#if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
 	} else if (!strncasecmp(argv[2], "flash", 4)) {
 		return remote_flashing(argc, argv);
+#endif
 	} else
 #endif
 	if (!strncasecmp(argv[2], "state", 5)) {
@@ -2793,7 +2798,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"dualrole|dump|enable [0|1]|rwhashtable|\n\t<port> "
 			"[tx|bist|charger|clock|dev"
 			"|soft|hash|hard|ping|state|swap [power|data]|"
-			"vdm [ping | curr]]",
+			"vdm [ping | curr | vers]]",
 			"USB PD",
 			NULL);
 
