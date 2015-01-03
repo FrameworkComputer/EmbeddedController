@@ -10,6 +10,9 @@
 
 #include "common.h"
 
+/* PD Host command timeout */
+#define PD_HOST_COMMAND_TIMEOUT_US SECOND
+
 enum pd_errors {
 	PD_ERR_INVAL = -1,      /* Invalid packet */
 	PD_ERR_HARD_RESET = -2, /* Got a Hard-Reset packet */

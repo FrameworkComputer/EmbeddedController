@@ -11,14 +11,12 @@
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
-
-/* Host command timeout */
-#define HOST_COMMAND_TIMEOUT_US SECOND
 
 /* Number of attempts for each PD host command */
 #define PD_HOST_COMMAND_ATTEMPTS 3
@@ -81,7 +79,7 @@ static int pd_host_command_internal(int command, int version,
 	 * length.
 	 */
 	i2c_lock(I2C_PORT_PD_MCU, 1);
-	i2c_set_timeout(I2C_PORT_PD_MCU, HOST_COMMAND_TIMEOUT_US);
+	i2c_set_timeout(I2C_PORT_PD_MCU, PD_HOST_COMMAND_TIMEOUT_US);
 	ret = i2c_xfer(I2C_PORT_PD_MCU, CONFIG_USB_PD_I2C_SLAVE_ADDR,
 			&req_buf[0], outsize + sizeof(rq) + 1, &resp_buf[0],
 			2, I2C_XFER_START);

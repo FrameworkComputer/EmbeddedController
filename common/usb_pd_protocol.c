@@ -3053,6 +3053,7 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 	int port = p->port;
 	const uint32_t *data = &(p->size) + 1;
 	int i, size;
+	timestamp_t timeout;
 
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
@@ -3073,23 +3074,24 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_REBOOT, NULL, 0);
 
 		/* Delay to give time for device to reboot */
-		usleep(900 * MSEC);
+		usleep(PD_HOST_COMMAND_TIMEOUT_US - 100*MSEC);
 		return EC_RES_SUCCESS;
 
 	case USB_PD_FW_FLASH_ERASE:
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_ERASE, NULL, 0);
-
-		/* Wait until VDM is done */
-		while (pd[port].vdm_state > 0)
-			task_wait_event(100*MSEC);
+		/*
+		 * TODO: Note, page erase for 2K is 20-40msec while host command
+		 * timeout is 1sec so this can't be longer.  In practice,
+		 * for 32 pages, its passed.  Better way to implement may be to
+		 * push burden to HOST to manage latency.
+		 */
+		timeout.val = get_time().val +
+			PD_HOST_COMMAND_TIMEOUT_US - 100*MSEC;
 		break;
 
 	case USB_PD_FW_ERASE_SIG:
 		pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_ERASE_SIG, NULL, 0);
-
-		/* Wait until VDM is done */
-		while (pd[port].vdm_state > 0)
-			task_wait_event(100*MSEC);
+		timeout.val = get_time().val + 500*MSEC;
 		break;
 
 	case USB_PD_FW_FLASH_WRITE:
@@ -3101,22 +3103,33 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
 			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
 				    data + i, MIN(size - i, VDO_MAX_SIZE - 1));
+			timeout.val = get_time().val + 500*MSEC;
 
 			/* Wait until VDM is done */
-			while (pd[port].vdm_state > 0)
+			while ((pd[port].vdm_state > 0) &&
+			       (get_time().val < timeout.val))
 				task_wait_event(10*MSEC);
+
+			if (pd[port].vdm_state > 0)
+				return EC_RES_TIMEOUT;
 		}
-		break;
+		return EC_RES_SUCCESS;
 
 	default:
 		return EC_RES_INVALID_PARAM;
 		break;
 	}
 
+	/* Wait until VDM is done or timeout */
+	while ((pd[port].vdm_state > 0) && (get_time().val < timeout.val))
+		task_wait_event(50*MSEC);
+
 	if (pd[port].vdm_state < 0)
 		return EC_RES_ERROR;
-	else
-		return EC_RES_SUCCESS;
+	if (pd[port].vdm_state > 0)
+		return EC_RES_TIMEOUT;
+
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 		     hc_remote_flash,
