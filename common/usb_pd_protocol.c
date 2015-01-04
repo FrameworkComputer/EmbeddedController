@@ -538,7 +538,6 @@ static int send_validate_message(int port, uint16_t header,
 		}
 	}
 	/* we failed all the re-transmissions */
-	/* TODO: try HardReset */
 	if (debug_level >= 1)
 		CPRINTF("TX NO ACK %04x/%d\n", header, cnt);
 	return -1;
@@ -1902,9 +1901,18 @@ void pd_task(void)
 		case PD_STATE_SRC_DR_SWAP:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_DR_SWAP);
-				if (res < 0)
-					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+				if (res < 0) {
+					timeout = 10*MSEC;
+					/*
+					 * If failed to get goodCRC, send
+					 * soft reset, otherwise ignore
+					 * failure.
+					 */
+					set_state(port, res == -1 ?
+						   PD_STATE_SOFT_RESET :
+						   PD_STATE_SRC_READY);
+					break;
+				}
 				/* Wait for accept or reject */
 				set_state_timeout(port,
 						  get_time().val +
@@ -1916,9 +1924,18 @@ void pd_task(void)
 		case PD_STATE_SRC_SWAP_INIT:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_PR_SWAP);
-				if (res < 0)
-					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+				if (res < 0) {
+					timeout = 10*MSEC;
+					/*
+					 * If failed to get goodCRC, send
+					 * soft reset, otherwise ignore
+					 * failure.
+					 */
+					set_state(port, res == -1 ?
+						   PD_STATE_SOFT_RESET :
+						   PD_STATE_SRC_READY);
+					break;
+				}
 				/* Wait for accept or reject */
 				set_state_timeout(port,
 						  get_time().val +
@@ -1949,16 +1966,19 @@ void pd_task(void)
 			if (pd[port].last_state != pd[port].task_state) {
 				/* Send PS_RDY */
 				res = send_control(port, PD_CTRL_PS_RDY);
-				if (res < 0)
+				if (res < 0) {
+					timeout = 10*MSEC;
 					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+						  PD_STATE_SRC_DISCONNECTED);
+					break;
+				}
 				/* Switch to Rd */
 				pd_set_host_mode(port, 0);
-				/* Wait for PS_RDY from sink */
+				/* Wait for PS_RDY from new source */
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_PS_SOURCE_ON,
-						  PD_STATE_HARD_RESET_EXECUTE);
+						  PD_STATE_SNK_DISCONNECTED);
 			}
 			break;
 		case PD_STATE_SUSPENDED:
@@ -2220,9 +2240,18 @@ void pd_task(void)
 		case PD_STATE_SNK_DR_SWAP:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_DR_SWAP);
-				if (res < 0)
-					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+				if (res < 0) {
+					timeout = 10*MSEC;
+					/*
+					 * If failed to get goodCRC, send
+					 * soft reset, otherwise ignore
+					 * failure.
+					 */
+					set_state(port, res == -1 ?
+						   PD_STATE_SOFT_RESET :
+						   PD_STATE_SNK_READY);
+					break;
+				}
 				/* Wait for accept or reject */
 				set_state_timeout(port,
 						  get_time().val +
@@ -2233,9 +2262,18 @@ void pd_task(void)
 		case PD_STATE_SNK_SWAP_INIT:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_PR_SWAP);
-				if (res < 0)
-					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+				if (res < 0) {
+					timeout = 10*MSEC;
+					/*
+					 * If failed to get goodCRC, send
+					 * soft reset, otherwise ignore
+					 * failure.
+					 */
+					set_state(port, res == -1 ?
+						   PD_STATE_SOFT_RESET :
+						   PD_STATE_SNK_READY);
+					break;
+				}
 				/* Wait for accept or reject */
 				set_state_timeout(port,
 						  get_time().val +
@@ -2268,8 +2306,9 @@ void pd_task(void)
 				if (pd_set_power_supply_ready(port)) {
 					/* Restore Rd */
 					pd_set_host_mode(port, 0);
+					timeout = 10*MSEC;
 					set_state(port,
-						  PD_STATE_HARD_RESET_SEND);
+						  PD_STATE_SNK_DISCONNECTED);
 					break;
 				}
 				/* Wait for power supply to turn on */
@@ -2286,7 +2325,9 @@ void pd_task(void)
 			if (res < 0) {
 				/* Restore Rd */
 				pd_set_host_mode(port, 0);
-				set_state(port, PD_STATE_HARD_RESET_SEND);
+				timeout = 10 * MSEC;
+				set_state(port, PD_STATE_SNK_DISCONNECTED);
+				break;
 			}
 
 			caps_count = 0;
