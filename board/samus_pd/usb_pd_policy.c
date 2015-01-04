@@ -139,8 +139,15 @@ void pd_execute_data_swap(int port, int data_role)
 	pi3usb9281_set_switches(port, (data_role == PD_ROLE_UFP));
 }
 
-void pd_new_contract(int port, int pr_role, int dr_role,
-		     int partner_pr_swap, int partner_dr_swap)
+void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
+{
+	/* If sink, and dual role toggling is on, then switch to source */
+	if (partner_pr_swap && pr_role == PD_ROLE_SINK &&
+	    pd_get_dual_role() == PD_DRP_TOGGLE_ON)
+		pd_request_power_swap(port);
+}
+
+void pd_check_dr_role(int port, int dr_role, int partner_dr_swap)
 {
 	/* If UFP, try to switch to DFP */
 	if (partner_dr_swap && dr_role == PD_ROLE_UFP)

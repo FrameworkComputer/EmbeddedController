@@ -210,19 +210,21 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 #define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
 #define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
 #define PD_FLAGS_GET_SNK_CAP_SENT  (1 << 5) /* get sink cap sent */
-#define PD_FLAGS_NEW_CONTRACT      (1 << 6) /* new power contract established */
-#define PD_FLAGS_EXPLICIT_CONTRACT (1 << 7) /* explicit pwr contract in place */
-#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 8) /* disable comms after soft reset */
-#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 9) /* previously PD connected */
+#define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
+#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 7) /* disable comms after soft reset */
+#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
+#define PD_FLAGS_CHECK_PR_ROLE     (1 << 9)/* check power role in READY */
+#define PD_FLAGS_CHECK_DR_ROLE     (1 << 10) /* check data role in READY */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
 					   PD_FLAGS_DATA_SWAPPED | \
 					   PD_FLAGS_SNK_CAP_RECVD | \
 					   PD_FLAGS_GET_SNK_CAP_SENT | \
-					   PD_FLAGS_NEW_CONTRACT | \
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
-					   PD_FLAGS_PREVIOUS_PD_CONN)
+					   PD_FLAGS_PREVIOUS_PD_CONN | \
+					   PD_FLAGS_CHECK_PR_ROLE | \
+					   PD_FLAGS_CHECK_DR_ROLE)
 
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
@@ -1423,6 +1425,11 @@ void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+enum pd_dual_role_states pd_get_dual_role(void)
+{
+	return drp_state;
+}
+
 void pd_set_dual_role(enum pd_dual_role_states state)
 {
 	int i;
@@ -1680,6 +1687,8 @@ void pd_task(void)
 				pd_set_vconn(port, pd[port].polarity, 1);
 #endif
 
+				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
+						  PD_FLAGS_CHECK_DR_ROLE;
 				hard_reset_count = 0;
 				set_state(port, PD_STATE_SRC_STARTUP);
 			}
@@ -1721,7 +1730,6 @@ void pd_task(void)
 				 * discover identity when we enter SRC_READY
 				 */
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
-				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
 				/* reset various counters */
 				caps_count = 0;
 				src_connected = 0;
@@ -1821,7 +1829,6 @@ void pd_task(void)
 			res = send_control(port, PD_CTRL_PS_RDY);
 			if (res >= 0) {
 				timeout = 10*MSEC;
-				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
 				/* it'a time to ping regularly the sink */
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
@@ -1855,16 +1862,21 @@ void pd_task(void)
 				break;
 			}
 
-			/* Check our role policy, which may trigger a swap */
-			if (pd[port].flags & PD_FLAGS_NEW_CONTRACT) {
-				pd_new_contract(
-					port, PD_ROLE_SOURCE,
-					pd[port].data_role,
-					pd[port].flags &
-						PD_FLAGS_PARTNER_DR_POWER,
-					pd[port].flags &
-						PD_FLAGS_PARTNER_DR_DATA);
-				pd[port].flags &= ~PD_FLAGS_NEW_CONTRACT;
+			/* Check power role policy, which may trigger a swap */
+			if (pd[port].flags & PD_FLAGS_CHECK_PR_ROLE) {
+				pd_check_pr_role(port, PD_ROLE_SOURCE,
+						 pd[port].flags &
+						     PD_FLAGS_PARTNER_DR_POWER);
+				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
+				break;
+			}
+
+			/* Check data role policy, which may trigger a swap */
+			if (pd[port].flags & PD_FLAGS_CHECK_DR_ROLE) {
+				pd_check_dr_role(port, pd[port].data_role,
+						 pd[port].flags &
+						     PD_FLAGS_PARTNER_DR_DATA);
+				pd[port].flags &= ~PD_FLAGS_CHECK_DR_ROLE;
 				break;
 			}
 
@@ -2019,6 +2031,9 @@ void pd_task(void)
 					  port, typec_curr, TYPE_C_VOLTAGE);
 #endif
 					hard_reset_count = 0;
+					pd[port].flags |=
+						PD_FLAGS_CHECK_PR_ROLE |
+						PD_FLAGS_CHECK_DR_ROLE;
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 					hook_call_deferred(
@@ -2056,10 +2071,8 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
-			if (pd[port].last_state != pd[port].task_state) {
+			if (pd[port].last_state != pd[port].task_state)
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
-				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
-			}
 #ifdef CONFIG_USB_PD_NO_VBUS_DETECT
 			/*
 			 * Can't measure vbus state so this is the maximum
@@ -2117,7 +2130,6 @@ void pd_task(void)
 				 * discover identity when we enter SRC_READY
 				 */
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
-				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
 
 				/*
 				 * If we haven't passed hard reset counter,
@@ -2208,20 +2220,21 @@ void pd_task(void)
 				break;
 			}
 
-			/*
-			 * Give time for source to check role policy first by
-			 * not running this the first time through state.
-			 */
-			if ((pd[port].flags & PD_FLAGS_NEW_CONTRACT) &&
-			    pd[port].last_state == pd[port].task_state) {
-				pd_new_contract(
-					port, PD_ROLE_SINK,
-					pd[port].data_role,
-					pd[port].flags &
-						PD_FLAGS_PARTNER_DR_POWER,
-					pd[port].flags &
-						PD_FLAGS_PARTNER_DR_DATA);
-				pd[port].flags &= ~PD_FLAGS_NEW_CONTRACT;
+			/* Check power role policy, which may trigger a swap */
+			if (pd[port].flags & PD_FLAGS_CHECK_PR_ROLE) {
+				pd_check_pr_role(port, PD_ROLE_SINK,
+						 pd[port].flags &
+						     PD_FLAGS_PARTNER_DR_POWER);
+				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
+				break;
+			}
+
+			/* Check data role policy, which may trigger a swap */
+			if (pd[port].flags & PD_FLAGS_CHECK_DR_ROLE) {
+				pd_check_dr_role(port, pd[port].data_role,
+						 pd[port].flags &
+						     PD_FLAGS_PARTNER_DR_DATA);
+				pd[port].flags &= ~PD_FLAGS_CHECK_DR_ROLE;
 				break;
 			}
 
@@ -2481,8 +2494,18 @@ void pd_rx_event(int port)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 static void dual_role_on(void)
 {
+	int i;
+
 	pd_set_dual_role(PD_DRP_TOGGLE_ON);
 	CPRINTS("chipset -> S0, enable dual-role toggling");
+
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+#ifdef CONFIG_CHARGE_MANAGER
+		if (charge_manager_get_active_charge_port() != i)
+#endif
+			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
+				       PD_FLAGS_CHECK_DR_ROLE;
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
 

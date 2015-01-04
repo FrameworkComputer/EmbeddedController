@@ -604,6 +604,12 @@ enum pd_dual_role_states {
 	PD_DRP_FORCE_SOURCE
 };
 /**
+ * Get dual role state
+ *
+ * @return Current dual-role state, from enum pd_dual_role_states
+ */
+enum pd_dual_role_states pd_get_dual_role(void);
+/**
  * Set dual role state, from among enum pd_dual_role_states
  *
  * @param state New state of dual-role port, selected from
@@ -810,16 +816,22 @@ int pd_check_power_swap(int port);
 int pd_check_data_swap(int port, int data_role);
 
 /**
- * A new power contract has been established
+ * Check current power role for potential power swap
  *
  * @param port USB-C port number
  * @param pr_role Our power role
- * @param dr_role Our data role
  * @param partner_pr_swap Partner supports PR_SWAP
+ */
+void pd_check_pr_role(int port, int pr_role, int partner_pr_swap);
+
+/**
+ * Check current data role for potential data swap
+ *
+ * @param port USB-C port number
+ * @param dr_role Our data role
  * @param partner_dr_swap Partner supports DR_SWAP
  */
-void pd_new_contract(int port, int pr_role, int dr_role,
-		     int partner_pr_swap, int partner_dr_swap);
+void pd_check_dr_role(int port, int dr_role, int partner_dr_swap);
 
 /**
  * Execute data swap.
