@@ -213,6 +213,7 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 #define PD_FLAGS_NEW_CONTRACT      (1 << 6) /* new power contract established */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 7) /* explicit pwr contract in place */
 #define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 8) /* disable comms after soft reset */
+#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 9) /* previously PD connected */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -220,7 +221,8 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 					   PD_FLAGS_SNK_CAP_RECVD | \
 					   PD_FLAGS_GET_SNK_CAP_SENT | \
 					   PD_FLAGS_NEW_CONTRACT | \
-					   PD_FLAGS_EXPLICIT_CONTRACT)
+					   PD_FLAGS_EXPLICIT_CONTRACT | \
+					   PD_FLAGS_PREVIOUS_PD_CONN)
 
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
@@ -897,6 +899,9 @@ static void handle_data_request(int port, uint16_t head,
 			    PD_STATE_SNK_HARD_RESET_RECOVER)
 #endif
 			|| (pd[port].task_state == PD_STATE_SNK_READY)) {
+			/* Port partner is now known to be PD capable */
+			pd[port].flags |= PD_FLAGS_PREVIOUS_PD_CONN;
+
 			pd_store_src_cap(port, cnt, payload);
 			/* src cap 0 should be fixed PDO */
 			pd_update_pdo_flags(port, payload[0]);
@@ -1558,9 +1563,9 @@ void pd_task(void)
 	int timeout = 10*MSEC;
 	int cc1_volt, cc2_volt;
 	int res, incoming_packet = 0;
+	int hard_reset_count = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
-	int hard_reset_count = 0;
 #ifndef CONFIG_USB_PD_NO_VBUS_DETECT
 	int snk_hard_reset_vbus_off = 0;
 #endif
@@ -1676,6 +1681,7 @@ void pd_task(void)
 				pd_set_vconn(port, pd[port].polarity, 1);
 #endif
 
+				hard_reset_count = 0;
 				set_state(port, PD_STATE_SRC_STARTUP);
 			}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1729,11 +1735,25 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SRC_DISCOVERY:
+			if (pd[port].last_state != pd[port].task_state) {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-			/* Keep VBUS up for the hold period */
-			if (pd[port].last_state != pd[port].task_state)
+				/* Keep VBUS up for the hold period */
 				next_role_swap = get_time().val + PD_T_DRP_HOLD;
 #endif
+				/*
+				 * If we have had PD connection with this port
+				 * partner, then start NoResponseTimer.
+				 */
+				if (pd[port].flags & PD_FLAGS_PREVIOUS_PD_CONN)
+					set_state_timeout(port,
+						get_time().val +
+						PD_T_NO_RESPONSE,
+						hard_reset_count <
+						  PD_HARD_RESET_COUNT ?
+						    PD_STATE_HARD_RESET_SEND :
+						    PD_STATE_SRC_DISCONNECTED);
+			}
+
 			/*
 			 * While we were enabling VBUS, other side could have
 			 * toggled roles, so now wait until other side settles
@@ -1757,7 +1777,12 @@ void pd_task(void)
 				if (res >= 0) {
 					set_state(port,
 						  PD_STATE_SRC_NEGOCIATE);
+					timeout = 10*MSEC;
+					hard_reset_count = 0;
 					caps_count = 0;
+					/* Port partner is PD capable */
+					pd[port].flags |=
+						PD_FLAGS_PREVIOUS_PD_CONN;
 				} else { /* failed, retry later */
 					timeout = PD_T_SEND_SOURCE_CAP;
 					caps_count++;
@@ -1973,6 +1998,7 @@ void pd_task(void)
 					typec_set_input_current_limit(
 					  port, typec_curr, TYPE_C_VOLTAGE);
 #endif
+					hard_reset_count = 0;
 					set_state(port, PD_STATE_SNK_DISCOVERY);
 					timeout = 10*MSEC;
 					hook_call_deferred(
@@ -1997,7 +2023,6 @@ void pd_task(void)
 			 * If no source detected, reset hard reset counter and
 			 * check for role swap
 			 */
-			hard_reset_count = 0;
 			if (drp_state == PD_DRP_TOGGLE_ON &&
 				   get_time().val >= next_role_swap) {
 				/* Swap roles to source */
@@ -2064,12 +2089,8 @@ void pd_task(void)
 #endif
 			break;
 		case PD_STATE_SNK_DISCOVERY:
-			/*
-			 * Wait for source cap expired only if we are enabled
-			 * and haven't passed the hard reset counter
-			 */
+			/* Wait for source cap expired only if we are enabled */
 			if ((pd[port].last_state != pd[port].task_state)
-			    && hard_reset_count < PD_HARD_RESET_COUNT
 			    && pd_comm_enabled) {
 				/*
 				 * fake set data role swapped flag so we send
@@ -2077,10 +2098,24 @@ void pd_task(void)
 				 */
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
 				pd[port].flags |= PD_FLAGS_NEW_CONTRACT;
-				set_state_timeout(port,
+
+				/*
+				 * If we haven't passed hard reset counter,
+				 * start SinkWaitCapTimer, otherwise start
+				 * NoResponseTimer.
+				 */
+				if (hard_reset_count < PD_HARD_RESET_COUNT)
+					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
 						  PD_STATE_HARD_RESET_SEND);
+				else if (pd[port].flags &
+					 PD_FLAGS_PREVIOUS_PD_CONN)
+					/* ErrorRecovery */
+					set_state_timeout(port,
+						  get_time().val +
+						  PD_T_NO_RESPONSE,
+						  PD_STATE_SNK_DISCONNECTED);
 #ifdef CONFIG_CHARGE_MANAGER
 				/*
 				 * If we didn't come from disconnected, must
@@ -2269,6 +2304,7 @@ void pd_task(void)
 				if (res < 0) {
 					set_state(port,
 						  PD_STATE_HARD_RESET_SEND);
+					timeout = 5*MSEC;
 					break;
 				}
 
@@ -2279,12 +2315,7 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_HARD_RESET_SEND:
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY ||
-			    pd[port].last_state ==
-					PD_STATE_SNK_HARD_RESET_RECOVER)
-				hard_reset_count++;
-#endif
+			hard_reset_count++;
 			if (pd[port].last_state != pd[port].task_state)
 				hard_reset_sent = 0;
 
