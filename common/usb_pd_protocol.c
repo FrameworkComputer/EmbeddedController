@@ -491,7 +491,7 @@ static int send_validate_message(int port, uint16_t header,
 		 */
 		if (r) {
 			pd_rx_enable_monitoring(port);
-			/* Message receive timeout is 2.7ms */
+			/* Wait for message receive timeout */
 			if (task_wait_event(USB_PD_RX_TMOUT_US) ==
 			    TASK_EVENT_TIMER)
 				continue;

@@ -544,7 +544,7 @@ struct pd_policy {
 #define USB_VID_GOOGLE 0x18d1
 
 /* Timeout for message receive in microseconds */
-#define USB_PD_RX_TMOUT_US 2700
+#define USB_PD_RX_TMOUT_US 1800
 
 /* --- Protocol layer functions --- */
 
