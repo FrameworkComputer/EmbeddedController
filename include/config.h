@@ -1190,15 +1190,6 @@
 #undef CONFIG_USB_BCD_DEV
 
 /*****************************************************************************/
-/* USB interfaces config */
-
-/* USB mass storage interface */
-#undef CONFIG_USB_MS
-
-/* USB mass storage local buffer size */
-#undef CONFIG_USB_MS_BUFFER_SIZE
-
-/*****************************************************************************/
 
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
