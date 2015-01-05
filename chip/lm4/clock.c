@@ -26,6 +26,7 @@
 
 #define PLL_CLOCK 66666667  /* System clock = 200MHz PLL/3 = 66.667MHz */
 
+#ifdef CONFIG_LOW_POWER_USE_LFIOSC
 /*
  * Length of time for the processor to wake up from deep sleep. Actual
  * measurement gives anywhere up to 780us, depending on the mode it is coming
@@ -33,6 +34,13 @@
  * sleep in our worst case deep sleep mode.
  */
 #define DEEP_SLEEP_RECOVER_TIME_USEC 850
+#else
+/*
+ * Length of time for the processor to wake up from deep sleep. Datasheet
+ * maximum is 145us, but in practice have seen as much as 215us.
+ */
+#define DEEP_SLEEP_RECOVER_TIME_USEC 300
+#endif
 
 /* Low power idle statistics */
 #ifdef CONFIG_LOW_POWER_IDLE
