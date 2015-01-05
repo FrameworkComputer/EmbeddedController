@@ -19,6 +19,7 @@
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USBPD))
 
 /* Optional features */
+#undef CONFIG_CMD_HASH
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_USB_POWER_DELIVERY

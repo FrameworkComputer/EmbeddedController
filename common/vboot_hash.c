@@ -209,7 +209,7 @@ DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
 
 /****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_HASH
 static int command_hash(int argc, char **argv)
 {
 	uint32_t offset = CONFIG_FW_RW_OFF;
@@ -274,7 +274,7 @@ DECLARE_CONSOLE_COMMAND(hash, command_hash,
 			"[abort | ro | rw] | [<offset> <size> [<nonce>]]",
 			"Request hash recomputation",
 			NULL);
-
+#endif /* CONFIG_CMD_HASH */
 /****************************************************************************/
 /* Host commands */
 
