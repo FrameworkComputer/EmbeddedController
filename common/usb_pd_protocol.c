@@ -2803,6 +2803,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			NULL);
 
 #ifdef CONFIG_USBC_SS_MUX
+#ifdef CONFIG_CMD_TYPEC
 static int command_typec(int argc, char **argv)
 {
 	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
@@ -2844,6 +2845,7 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			"<port> [none|usb|dp|dock]",
 			"Control type-C connector muxing",
 			NULL);
+#endif /* CONFIG_CMD_TYPEC */
 #endif /* CONFIG_USBC_SS_MUX */
 
 static int hc_pd_ports(struct host_cmd_handler_args *args)
