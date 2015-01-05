@@ -72,9 +72,6 @@ size_t out_stream_write(struct out_stream const *stream,
 			uint8_t const *buffer,
 			size_t count);
 void   out_stream_flush(struct out_stream const *stream);
-int    out_stream_pause(struct out_stream const *stream);
-int    out_stream_resume(struct out_stream const *stream);
-int    out_stream_is_paused(struct out_stream const *stream);
 void   out_stream_ready(struct out_stream const *stream);
 
 #endif /* INCLUDE_OUT_STREAM_H */
