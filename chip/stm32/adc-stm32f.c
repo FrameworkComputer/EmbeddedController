@@ -59,7 +59,7 @@ static void adc_configure(int ain_id)
 	STM32_ADC_CR1 &= ~(1 << 8);
 }
 
-static void adc_configure_all(void)
+static void __attribute__((unused)) adc_configure_all(void)
 {
 	int i;
 
@@ -210,6 +210,11 @@ int adc_read_channel(enum adc_channel ch)
 	       value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
+/*
+ * adc_read_all_channels() is not working properly on STM32F373.
+ * TODO(crosbug.com/p/33971): Fix it.
+ */
+#if 0
 int adc_read_all_channels(int *data)
 {
 	int i;
@@ -254,6 +259,15 @@ exit_all_channels:
 
 	mutex_unlock(&adc_lock);
 	return ret;
+}
+#endif
+
+int adc_read_all_channels(int *data)
+{
+	int i;
+	for (i = 0; i < ADC_CH_COUNT; ++i)
+		data[i] = adc_read_channel(i);
+	return EC_SUCCESS;
 }
 
 static void adc_init(void)
