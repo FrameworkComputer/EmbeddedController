@@ -254,15 +254,21 @@ extern struct stm32_endpoint btable_ep[];
 /* Read from USB RAM into a usb_setup_packet struct */
 void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet);
 
-/* Copy data to the USB dedicated RAM and take care of the weird addressing */
-static inline void memcpy_usbram(usb_uint *ebuf, const uint8_t *src, int size)
-{
-	int i;
-	for (i = 0; i < size / 2; i++, src += 2)
-		*ebuf++ = src[0] | (src[1] << 8);
-	if (size & 1)
-		*ebuf++ = src[0];
-}
+/*
+ * Copy data to and from the USB dedicated RAM and take care of the weird
+ * addressing.  These functions correctly handle unaligned accesses to the USB
+ * memory.  They have the same prototype as memcpy, allowing them to be used
+ * in places that expect memcpy.
+ *
+ * The USB packet RAM is attached to the processor via the AHB2APB bridge.  This
+ * bridge performs manipulations of read and write accesses as per the note in
+ * section 2.1 of RM0091.  The upshot is that it is OK to read from the packet
+ * RAM using 8-bit or 16-bit accesses, but not 32-bit, and it is only really OK
+ * to write to the packet RAM using 16-bit accesses.  Thus custom memcpy like
+ * routines need to be employed.
+ */
+void *memcpy_to_usbram(void *dest, const void *src, size_t n);
+void *memcpy_from_usbram(void *dest, const void *src, size_t n);
 
 /* Compute the address inside dedicate SRAM for the USB controller */
 #define usb_sram_addr(x) \

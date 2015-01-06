@@ -155,7 +155,7 @@ static void ep0_rx(void)
 			desc_ptr = desc + USB_MAX_PACKET_SIZE;
 			len = USB_MAX_PACKET_SIZE;
 		}
-		memcpy_usbram(ep0_buf_tx, desc, len);
+		memcpy_to_usbram(ep0_buf_tx, desc, len);
 		if (type == USB_DT_CONFIGURATION)
 			/* set the real descriptor size */
 			ep0_buf_tx[1] = USB_DESC_SIZE;
@@ -166,7 +166,7 @@ static void ep0_rx(void)
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
 		uint16_t zero = 0;
 		/* Get status */
-		memcpy_usbram(ep0_buf_tx, (void *)&zero, 2);
+		memcpy_to_usbram(ep0_buf_tx, (void *)&zero, 2);
 		btable_ep[0].tx_count = 2;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
 			  EP_STATUS_OUT /*null OUT transaction */);
@@ -208,7 +208,7 @@ static void ep0_tx(void)
 	if (desc_ptr) {
 		/* we have an on-going descriptor transfer */
 		int len = MIN(desc_left, USB_MAX_PACKET_SIZE);
-		memcpy_usbram(ep0_buf_tx, desc_ptr, len);
+		memcpy_to_usbram(ep0_buf_tx, desc_ptr, len);
 		btable_ep[0].tx_count = len;
 		desc_left -= len;
 		desc_ptr += len;
@@ -340,4 +340,58 @@ void usb_release(void)
 int usb_is_enabled(void)
 {
 	return (STM32_RCC_APB1ENR & STM32_RCC_PB1_USB) ? 1 : 0;
+}
+
+void *memcpy_to_usbram(void *dest, const void *src, size_t n)
+{
+	int       i;
+	uint8_t  *s = (uint8_t *) src;
+	usb_uint *d = (usb_uint *)((uintptr_t) dest & ~1);
+
+	if ((((uintptr_t) dest) & 1) && n) {
+		/*
+		 * The first destination byte is not aligned, perform a read/
+		 * modify/write.
+		 */
+		*d = (*d & ~0xff00) | (*s << 8);
+		n--;
+		s++;
+		d++;
+	}
+
+	for (i = 0; i < n / 2; i++, s += 2)
+		*d++ = (s[1] << 8) | s[0];
+
+	/*
+	 * There is a trailing byte to write into a final USB packet memory
+	 * location, use a read/modify/write to be safe.
+	 */
+	if (n & 1)
+		*d = (*d & ~0x00ff) | *s;
+
+	return dest;
+}
+
+void *memcpy_from_usbram(void *dest, const void *src, size_t n)
+{
+	int       i;
+	usb_uint *s = (usb_uint *)((uintptr_t) src & ~1);
+	uint8_t  *d = (uint8_t *) dest;
+
+	if ((((uintptr_t) src) & 1) && n) {
+		*d++ = *s++ >> 8;
+		n--;
+	}
+
+	for (i = 0; i < n / 2; i++) {
+		usb_uint value = *s++;
+
+		*d++ = (value >> 0) & 0xff;
+		*d++ = (value >> 8) & 0xff;
+	}
+
+	if (n & 1)
+		*d = *s;
+
+	return dest;
 }

@@ -88,7 +88,7 @@ static usb_uint hid_ep_buf[HID_REPORT_SIZE / 2] __usb_ram;
 
 void set_keyboard_report(uint64_t rpt)
 {
-	memcpy_usbram(hid_ep_buf, (const uint8_t *)&rpt, sizeof(rpt));
+	memcpy_to_usbram(hid_ep_buf, &rpt, sizeof(rpt));
 	/* enable TX */
 	STM32_TOGGLE_EP(USB_EP_HID, EP_TX_MASK, EP_TX_VALID, 0);
 }
@@ -124,7 +124,7 @@ static int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 			      (USB_REQ_GET_DESCRIPTOR << 8))) &&
 			      (ep0_buf_rx[1] == (USB_HID_DT_REPORT << 8))) {
 		/* Setup : HID specific : Get Report descriptor */
-		memcpy_usbram(ep0_buf_tx, report_desc,
+		memcpy_to_usbram(ep0_buf_tx, report_desc,
 				 sizeof(report_desc));
 		btable_ep[0].tx_count = MIN(ep0_buf_rx[3],
 				   sizeof(report_desc));
