@@ -56,6 +56,16 @@ void task_clear_pending_irq(int irq)
 	CPU_NVIC_UNPEND(0) = 1 << irq;
 }
 
+void interrupt_disable(void)
+{
+	asm("cpsid i");
+}
+
+void interrupt_enable(void)
+{
+	asm("cpsie i");
+}
+
 uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 {
 	last_event = event;

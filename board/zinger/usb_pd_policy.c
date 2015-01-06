@@ -554,6 +554,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 			payload[1] = ADC_TO_CURR_MA(vbus_amp);
 			rsize = 2;
 			break;
+		case VDO_CMD_GET_LOG:
+			rsize = pd_vdm_get_log_entry(payload);
+			break;
 		default:
 			/* Unknown : do not answer */
 			return 0;

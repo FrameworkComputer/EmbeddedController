@@ -282,6 +282,7 @@ struct pd_policy {
 #define VDO_CMD_PING_ENABLE  VDO_CMD_VENDOR(10)
 #define VDO_CMD_CURRENT      VDO_CMD_VENDOR(11)
 #define VDO_CMD_FLIP         VDO_CMD_VENDOR(12)
+#define VDO_CMD_GET_LOG      VDO_CMD_VENDOR(13)
 
 #define PD_VDO_VID(vdo)  ((vdo) >> 16)
 #define PD_VDO_SVDM(vdo) (((vdo) >> 15) & 1)
@@ -1275,5 +1276,33 @@ void pd_prepare_sysjump(void);
  * @param port USB-C port number
  */
 void pd_set_new_power_request(int port);
+
+/* ----- Logging ----- */
+#ifdef CONFIG_USB_PD_LOGGING
+/**
+ * Record one event in the PD logging FIFO.
+ *
+ * @param type event type as defined by PD_EVENT_xx in ec_commands.h
+ * @param size_port payload size and port num (defined by PD_LOG_PORT_SIZE)
+ * @param data type-defined information
+ * @param payload pointer to the optional payload (0..16 bytes)
+ */
+void pd_log_event(uint8_t type, uint8_t size_port,
+		  uint16_t data, void *payload);
+
+/**
+ * Retrieve one logged event and prepare a VDM with it.
+ *
+ * Used to answer the VDO_CMD_GET_LOG unstructured VDM.
+ *
+ * @param payload pointer to the payload data buffer (must be 7 words)
+ * @return number of 32-bit words in the VDM payload.
+ */
+int pd_vdm_get_log_entry(uint32_t *payload);
+#else  /* CONFIG_USB_PD_LOGGING */
+static inline void pd_log_event(uint8_t type, uint8_t size_port,
+				uint16_t data, void *payload) {}
+static inline int pd_vdm_get_log_entry(uint32_t *payload) { return 0; }
+#endif /* CONFIG_USB_PD_LOGGING */
 
 #endif  /* __USB_PD_H */

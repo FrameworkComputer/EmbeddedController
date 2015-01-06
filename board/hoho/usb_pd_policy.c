@@ -243,8 +243,17 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	*rpayload = payload;
 
 	rsize = pd_custom_flash_vdm(port, cnt, payload);
-	if (!rsize)
-		return 0;
+	if (!rsize) {
+		int cmd = PD_VDO_CMD(payload[0]);
+		switch (cmd) {
+		case VDO_CMD_GET_LOG:
+			rsize = pd_vdm_get_log_entry(payload);
+			break;
+		default:
+			/* Unknown : do not answer */
+			return 0;
+		}
+	}
 
 	/* respond (positively) to the request */
 	payload[0] |= VDO_SRC_RESPONDER;

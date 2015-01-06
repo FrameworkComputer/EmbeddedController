@@ -1178,6 +1178,12 @@
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP
 
+/* Record main PD events in a circular buffer */
+#undef CONFIG_USB_PD_LOGGING
+
+/* The size in bytes of the FIFO used for PD events logging */
+#undef CONFIG_USB_PD_LOG_SIZE
+
 /* Define if USB-PD device has no way of detecting USB VBUS */
 #undef CONFIG_USB_PD_NO_VBUS_DETECT
 
