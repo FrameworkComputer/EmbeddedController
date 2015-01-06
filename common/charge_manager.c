@@ -110,6 +110,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 {
 	int supplier = CHARGE_SUPPLIER_NONE;
 	int port = CHARGE_PORT_NONE;
+	int best_port_power, candidate_port_power;
 	int i, j;
 
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
@@ -118,11 +119,21 @@ static void charge_manager_get_best_charge_port(int *new_port,
 		 * Charge supplier selection logic:
 		 * 1. Prefer higher priority supply.
 		 * 2. Prefer higher power over lower in case priority is tied.
+		 * 3. Prefer current charge port over new port in case (1)
+		 *    and (2) are tied.
 		 * available_charge can be changed at any time by other tasks,
 		 * so make no assumptions about its consistency.
 		 */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 			for (j = 0; j < PD_PORT_COUNT; ++j) {
+				/*
+				 * Skip this supplier if there is no
+				 * available charge.
+				 */
+				if (available_charge[i][j].current == 0 ||
+				    available_charge[i][j].voltage == 0)
+					continue;
+
 				/*
 				 * Don't select this port if we have a
 				 * charge on another override port.
@@ -140,19 +151,31 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				    override_port != j)
 					continue;
 
-				if (available_charge[i][j].current > 0 &&
-				    available_charge[i][j].voltage > 0 &&
-				   (supplier == CHARGE_SUPPLIER_NONE ||
+				candidate_port_power =
+					POWER(available_charge[i][j]);
+
+				/* Select if no supplier chosen yet. */
+				if (supplier == CHARGE_SUPPLIER_NONE ||
+				/* ..or if supplier priority is higher. */
 				    supplier_priority[i] <
 				    supplier_priority[supplier] ||
+				/* ..or if this is our override port. */
 				   (j == override_port &&
 				    port != override_port) ||
+				/* ..or if priority is tied and.. */
 				   (supplier_priority[i] ==
 				    supplier_priority[supplier] &&
-				    POWER(available_charge[i][j]) >
-				    POWER(available_charge[supplier][port])))) {
+				/* candidate port can supply more power or.. */
+				   (candidate_port_power > best_port_power ||
+				/*
+				 * candidate port is the active port and can
+				 * supply the same amount of power.
+				 */
+				   (candidate_port_power == best_port_power &&
+				    charge_port == j)))) {
 					supplier = i;
 					port = j;
+					best_port_power = candidate_port_power;
 				}
 			}
 

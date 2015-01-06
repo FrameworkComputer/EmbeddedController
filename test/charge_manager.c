@@ -228,6 +228,17 @@ static int test_priority(void)
 	TEST_ASSERT(active_charge_port == 1);
 	TEST_ASSERT(active_charge_limit == 3000);
 
+	/*
+	 * Add a charge at equal priority and equal power, verify that the
+	 * active port doesn't change since the first plugged port is
+	 * selected as the tiebreaker.
+	 */
+	charge.current = 3000;
+	charge_manager_update(CHARGE_SUPPLIER_TEST6, 0, &charge);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 3000);
+
 	return EC_SUCCESS;
 }
 
