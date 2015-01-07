@@ -203,8 +203,15 @@ static void charge_manager_refresh(void)
 	while (1) {
 		charge_manager_get_best_charge_port(&new_port, &new_supplier);
 
-		/* If the port changed, attempt to switch to it */
-		if (new_port == charge_port ||
+		/*
+		 * If the port or supplier changed, make an attempt to switch to
+		 * the port. We will re-set the active port on a supplier change
+		 * to give the board-level function another chance to reject
+		 * the port, for example, if the port has become a charge
+		 * source.
+		 */
+		if ((new_port == charge_port &&
+		    new_supplier == charge_supplier) ||
 		    board_set_active_charge_port(new_port) == EC_SUCCESS)
 			break;
 
