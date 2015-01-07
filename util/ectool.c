@@ -1714,6 +1714,9 @@ static const struct {
 	LB_SIZES(get_params_v1),
 	LB_SIZES(set_params_v1),
 	LB_SIZES(set_program),
+	LB_SIZES(manual_suspend_ctrl),
+	LB_SIZES(suspend),
+	LB_SIZES(resume),
 };
 #undef LB_SIZES
 

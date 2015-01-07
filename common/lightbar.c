@@ -1571,21 +1571,26 @@ void lightbar_sequence_f(enum lightbar_sequence num, const char *f)
 /****************************************************************************/
 /* Get notifications from other parts of the system */
 
+static uint8_t manual_suspend_control;
+
 static void lightbar_startup(void)
 {
+	manual_suspend_control = 0;
 	lightbar_sequence(LIGHTBAR_S5S3);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, lightbar_startup, HOOK_PRIO_DEFAULT);
 
 static void lightbar_resume(void)
 {
-	lightbar_sequence(LIGHTBAR_S3S0);
+	if (!manual_suspend_control)
+		lightbar_sequence(LIGHTBAR_S3S0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lightbar_resume, HOOK_PRIO_DEFAULT);
 
 static void lightbar_suspend(void)
 {
-	lightbar_sequence(LIGHTBAR_S0S3);
+	if (!manual_suspend_control)
+		lightbar_sequence(LIGHTBAR_S0S3);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_suspend, HOOK_PRIO_DEFAULT);
 
@@ -1686,6 +1691,18 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		out->version.num = LIGHTBAR_IMPLEMENTATION_VERSION;
 		out->version.flags = LIGHTBAR_IMPLEMENTATION_FLAGS;
 		args->response_size = sizeof(out->version);
+		break;
+	case LIGHTBAR_CMD_MANUAL_SUSPEND_CTRL:
+		CPRINTS("LB_manual_suspend_ctrl");
+		manual_suspend_control = in->manual_suspend_ctrl.enable;
+		break;
+	case LIGHTBAR_CMD_SUSPEND:
+		CPRINTS("LB_suspend");
+		lightbar_sequence(LIGHTBAR_S0S3);
+		break;
+	case LIGHTBAR_CMD_RESUME:
+		CPRINTS("LB_resume");
+		lightbar_sequence(LIGHTBAR_S3S0);
 		break;
 	default:
 		CPRINTS("LB bad cmd 0x%x", in->cmd);
