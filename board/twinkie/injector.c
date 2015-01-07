@@ -427,8 +427,20 @@ static int cmd_rx_threshold(int argc, char **argv)
 
 static int cmd_ina_dump(int argc, char **argv, int index)
 {
+	if (index == 1) { /* VCONN INA is off by default, switch it on */
+		ina2xx_write(index, INA2XX_REG_CONFIG, 0x4123);
+		/*
+		 * wait for the end of conversion : 2x 1.1ms as defined
+		 * by the Vb and Vsh CT bits in the CONFIG register above.
+		 */
+		udelay(2200);
+	}
+
 	ccprintf("%s = %d mV ; %d mA\n", index == 0 ? "VBUS" : "VCONN",
 		ina2xx_get_voltage(index), ina2xx_get_current(index));
+
+	if (index == 1) /* power off VCONN INA */
+		ina2xx_write(index, INA2XX_REG_CONFIG, 0);
 
 	return EC_SUCCESS;
 }
