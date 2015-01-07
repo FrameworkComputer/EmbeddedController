@@ -37,9 +37,9 @@
 #else
 /*
  * Length of time for the processor to wake up from deep sleep. Datasheet
- * maximum is 145us, but in practice have seen as much as 215us.
+ * maximum is 145us, but in practice have seen as much as 336us.
  */
-#define DEEP_SLEEP_RECOVER_TIME_USEC 300
+#define DEEP_SLEEP_RECOVER_TIME_USEC 400
 #endif
 
 /* Low power idle statistics */
