@@ -336,6 +336,8 @@ void usb_release(void)
 	/* disable USB device clock */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
 }
+/* ensure the host disconnects and reconnects over a sysjump */
+DECLARE_HOOK(HOOK_SYSJUMP, usb_release, HOOK_PRIO_DEFAULT);
 
 int usb_is_enabled(void)
 {
