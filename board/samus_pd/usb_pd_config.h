@@ -258,8 +258,12 @@ static inline int pd_snk_is_vbus_provided(int port)
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
-/* delay for the voltage transition on the power supply, chip max is 16us */
-#define PD_POWER_SUPPLY_TRANSITION_DELAY 20000 /* us */
+/*
+ * delay for the voltage transition on the power supply, chip max is 16ms.
+ * delay to turn off the power supply depends on vbus capacitance, but
+ * is well above that. 80ms seems to work for most devices.
+ */
+#define PD_POWER_SUPPLY_TRANSITION_DELAY 80000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
