@@ -362,6 +362,14 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 		if (original_val[i] != val[i])
 			write_optb(i * 2 + 8, val[i]);
 
+#ifdef CONFIG_WP_ALWAYS
+	/*
+	 * Set a permanent protection by increasing RDP to level 1,
+	 * trying to unprotected the flash will trigger a full erase.
+	 */
+	write_optb(0, 0x11);
+#endif
+
 	return EC_SUCCESS;
 }
 

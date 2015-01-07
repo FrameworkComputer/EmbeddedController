@@ -65,6 +65,9 @@ static void flash_read_pstate(struct persist_state *pstate)
 	if (pstate->version != PERSIST_STATE_VERSION) {
 		memset(pstate, 0, sizeof(*pstate));
 		pstate->version = PERSIST_STATE_VERSION;
+#ifdef CONFIG_WP_ALWAYS
+		pstate->flags |= PERSIST_FLAG_PROTECT_RO;
+#endif
 	}
 }
 
@@ -202,7 +205,9 @@ uint32_t flash_get_protect(void)
 	int i;
 
 	/* Read write protect GPIO */
-#ifdef CONFIG_WP_ACTIVE_HIGH
+#ifdef CONFIG_WP_ALWAYS
+	flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
+#elif defined(CONFIG_WP_ACTIVE_HIGH)
 	if (gpio_get_level(GPIO_WP))
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 #else

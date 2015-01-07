@@ -353,6 +353,11 @@ function flash_stm32_dfu() {
 	fi
 
 	SIZE=$(wc -c ${IMG} | cut -d' ' -f1)
+	# Remove read protection
+	sudo $DFU_UTIL -a 0 -s ${ADDR}:${SIZE}:force:unprotect -D "${IMG}"
+	# Wait for mass-erase and reboot after unprotection
+	sleep 1
+	# Actual image flashing
 	sudo $DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 

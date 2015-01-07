@@ -28,7 +28,7 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR USB_PD_HW_DEV_ID_DINGDONG
-#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR 1
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR 2
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_FLASH
@@ -44,11 +44,8 @@
 #define CONFIG_USB_PID 0x5011
 #define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 
-/*
- * Allow dangerous commands all the time, since we don't have a write protect
- * switch.
- */
-#define CONFIG_SYSTEM_UNLOCKED
+/* No Write-protect GPIO, force the write-protection */
+#define CONFIG_WP_ALWAYS
 
 #ifndef __ASSEMBLER__
 
