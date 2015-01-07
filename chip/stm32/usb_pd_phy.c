@@ -76,6 +76,9 @@ static struct pd_physical {
 static timestamp_t rx_edge_ts[PD_PORT_COUNT][PD_RX_TRANSITION_COUNT];
 static int rx_edge_ts_idx[PD_PORT_COUNT];
 
+/* keep track of transmit polarity for DMA interrupt */
+static int tx_dma_polarities[PD_PORT_COUNT];
+
 void pd_init_dequeue(int port)
 {
 	/* preamble ends with 1 */
@@ -273,31 +276,37 @@ void pd_tx_spi_init(int port)
 	/* Enable Tx DMA for our first transaction */
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_DATASIZE(8);
 
-#ifdef CONFIG_USB_PD_TX_USES_SPI_MASTER
-	/*
-	 * Enable the master SPI: LSB first, force NSS, TX only, CPOL and CPHA
-	 * high.
-	 */
-	spi->cr1 = STM32_SPI_CR1_LSBFIRST | STM32_SPI_CR1_BIDIMODE
-		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI
-		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_MSTR
-		 | STM32_SPI_CR1_BR_DIV64R | STM32_SPI_CR1_SPE
-		 | STM32_SPI_CR1_CPOL | STM32_SPI_CR1_CPHA;
-
-#if CPU_CLOCK != 38400000
-#error "CPU_CLOCK must be 38.4MHz to use SPI master for USB PD Tx"
-#endif
-#else
 	/* Enable the slave SPI: LSB first, force NSS, TX only, CPHA */
 	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST
 		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE
 		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_CPHA;
-#endif
 }
 
 void pd_tx_set_circular_mode(int port)
 {
 	pd_phy[port].dma_tx_option.flags |= STM32_DMA_CCR_CIRC;
+}
+
+static void tx_dma_done(void *data)
+{
+	int port = (int)data;
+	int polarity = tx_dma_polarities[port];
+	stm32_spi_regs_t *spi = SPI_REGS(port);
+
+	while (spi->sr & STM32_SPI_SR_FTLVL)
+		; /* wait for TX FIFO empty */
+	while (spi->sr & STM32_SPI_SR_BSY)
+		; /* wait for BSY == 0 */
+
+	/* put TX pins and reference in Hi-Z */
+	pd_tx_disable(port, polarity);
+
+	/* Stop counting */
+	pd_phy[port].tim_tx->cr1 &= ~1;
+
+#if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
+	task_set_event(PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC, 0);
+#endif
 }
 
 int pd_start_tx(int port, int polarity, int bit_len)
@@ -329,8 +338,10 @@ int pd_start_tx(int port, int polarity, int bit_len)
 
 	/* Kick off the DMA to send the data */
 	dma_clear_isr(DMAC_SPI_TX(port));
-#ifdef CONFIG_COMMON_RUNTIME
-	dma_enable_tc_interrupt(DMAC_SPI_TX(port));
+#if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
+	tx_dma_polarities[port] = polarity;
+	dma_enable_tc_interrupt_callback(DMAC_SPI_TX(port), &tx_dma_done,
+					 (void *)port);
 #endif
 	dma_go(tx);
 
@@ -343,65 +354,29 @@ int pd_start_tx(int port, int polarity, int bit_len)
 	 */
 	pd_tx_enable(port, polarity);
 
-#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* Start counting at 300Khz*/
 	pd_phy[port].tim_tx->cr1 |= 1;
-#endif
 
 	return bit_len;
 }
 
 void pd_tx_done(int port, int polarity)
 {
-	stm32_spi_regs_t *spi = SPI_REGS(port);
+#if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
+	int rv;
 
-	/* wait for DMA */
-#ifdef CONFIG_COMMON_RUNTIME
-	task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+	/* wait for DMA, DMA interrupt will stop the SPI clock */
+	do {
+		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
+	} while (!(rv & (TASK_EVENT_TIMER | TASK_EVENT_DMA_TC)));
 	dma_disable_tc_interrupt(DMAC_SPI_TX(port));
-#endif
-
-	/* wait for real end of transmission */
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
-	while (spi->sr & STM32_SPI_SR_FTLVL)
-		; /* wait for TX FIFO empty */
 #else
-	while (!(spi->sr & STM32_SPI_SR_TXE))
-		; /* wait for TXE == 1 */
+	tx_dma_polarities[port] = polarity;
+	tx_dma_done((void *)port);
 #endif
-
-	/*
-	 * At the end of transmitting, the last bit is guaranteed by the
-	 * protocol to be low, and it is necessary that the TX line stay low
-	 * until pd_tx_disable().
-	 *
-	 * When using SPI slave mode for TX, this is done by writing out dummy
-	 * 0 byte at end.
-	 * When using SPI master mode, the CPOL and CPHA are set high, which
-	 * means that after the last bit is transmitted there are no more
-	 * clock edges. Hopefully, this is sufficient to guarantee that the
-	 * MOSI line does not change before pd_tx_disable().
-	 */
-#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
-	/* ensure that we are not pushing out junk */
-	*(uint8_t *)&spi->dr = 0;
-	while (spi->sr & STM32_SPI_SR_FTLVL)
-		; /* wait for TX FIFO empty */
-#else
-	while (spi->sr & STM32_SPI_SR_BSY)
-		; /* wait for BSY == 0 */
-#endif
-
-	/* put TX pins and reference in Hi-Z */
-	pd_tx_disable(port, polarity);
-
-#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
-	/* Stop counting */
-	pd_phy[port].tim_tx->cr1 &= ~1;
 
 	/* Reset SPI to clear remaining data in buffer */
 	pd_tx_spi_reset(port);
-#endif
 }
 
 /* --- RX operation using comparator linked to timer --- */
@@ -542,7 +517,6 @@ void pd_hw_init(int port)
 	phy->tim_tx = (void *)TIM_REG_TX(port);
 	phy->tim_rx = (void *)TIM_REG_RX(port);
 
-#ifndef CONFIG_USB_PD_TX_USES_SPI_MASTER
 	/* --- set the TX timer with updates at 600KHz (BMC frequency) --- */
 	__hw_timer_enable_clock(TIM_CLOCK_PD_TX(port), 1);
 	/* Timer configuration */
@@ -567,7 +541,6 @@ void pd_hw_init(int port)
 	phy->tim_tx->psc = 0;
 	/* Reload the pre-scaler and reset the counter */
 	phy->tim_tx->egr = 0x0001;
-#endif
 #ifndef CONFIG_USB_PD_TX_PHY_ONLY
 	/* configure RX DMA */
 	phy->dma_tim_option.channel = DMAC_TIM_RX(port);

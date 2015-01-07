@@ -1174,9 +1174,6 @@
 /* Use comparator module for PD RX interrupt */
 #define CONFIG_USB_PD_RX_COMP_IRQ
 
-/* USB PD transmit uses SPI master */
-#undef CONFIG_USB_PD_TX_USES_SPI_MASTER
-
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
 

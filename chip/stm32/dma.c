@@ -16,8 +16,11 @@
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
 #define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
 
-/* Task IDs for the interrupt handlers to wake up */
-static task_id_t id[STM32_DMAC_COUNT];
+/* Callback data to use when IRQ fires */
+static struct {
+	void (*cb)(void *);	/* Callback function to call */
+	void *cb_data;		/* Callback data for callback function */
+} dma_irq[STM32_DMAC_COUNT];
 
 /**
  * Return the IRQ for the DMA channel
@@ -206,14 +209,8 @@ void dma_test(void)
 
 void dma_init(void)
 {
-	int i;
-
 	/* Enable DMA1; current chips don't have DMA2 */
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
-
-	/* Initialize data for interrupt handlers */
-	for (i = 0; i < STM32_DMAC_COUNT; i++)
-		id[i] = TASK_ID_INVALID;
 }
 
 int dma_wait(enum dma_channel channel)
@@ -232,12 +229,27 @@ int dma_wait(enum dma_channel channel)
 	return EC_SUCCESS;
 }
 
+static inline void _dma_wake_callback(void *cb_data)
+{
+	task_id_t id = (task_id_t)(int)cb_data;
+	if (id != TASK_ID_INVALID)
+		task_set_event(id, TASK_EVENT_DMA_TC, 0);
+}
+
 void dma_enable_tc_interrupt(enum dma_channel channel)
+{
+	dma_enable_tc_interrupt_callback(channel, _dma_wake_callback,
+					 (void *)(int)task_get_current());
+}
+
+void dma_enable_tc_interrupt_callback(enum dma_channel channel,
+				      void (*callback)(void *),
+				      void *callback_data)
 {
 	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
-	/* Store task ID so the ISR knows which task to wake */
-	id[channel] = task_get_current();
+	dma_irq[channel].cb = callback;
+	dma_irq[channel].cb_data = callback_data;
 
 	chan->ccr |= STM32_DMA_CCR_TCIE;
 	task_enable_irq(dma_get_irq(channel));
@@ -247,10 +259,11 @@ void dma_disable_tc_interrupt(enum dma_channel channel)
 {
 	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
-	id[channel] = TASK_ID_INVALID;
-
 	chan->ccr &= ~STM32_DMA_CCR_TCIE;
 	task_disable_irq(dma_get_irq(channel));
+
+	dma_irq[channel].cb = NULL;
+	dma_irq[channel].cb_data = NULL;
 }
 
 void dma_clear_isr(enum dma_channel channel)
@@ -266,11 +279,12 @@ void dma_event_interrupt_channel_1(void)
 {
 	if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(STM32_DMAC_CH1)) {
 		dma_clear_isr(STM32_DMAC_CH1);
-		if (id[STM32_DMAC_CH1] != TASK_ID_INVALID)
-			task_wake(id[STM32_DMAC_CH1]);
+		if (dma_irq[STM32_DMAC_CH1].cb != NULL)
+			(*dma_irq[STM32_DMAC_CH1].cb)
+				(dma_irq[STM32_DMAC_CH1].cb_data);
 	}
 }
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_1, dma_event_interrupt_channel_1, 3);
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_1, dma_event_interrupt_channel_1, 1);
 
 void dma_event_interrupt_channel_2_3(void)
 {
@@ -279,12 +293,12 @@ void dma_event_interrupt_channel_2_3(void)
 	for (i = STM32_DMAC_CH2; i <= STM32_DMAC_CH3; i++) {
 		if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(i)) {
 			dma_clear_isr(i);
-			if (id[i] != TASK_ID_INVALID)
-				task_wake(id[i]);
+			if (dma_irq[i].cb != NULL)
+				(*dma_irq[i].cb)(dma_irq[i].cb_data);
 		}
 	}
 }
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_2_3, dma_event_interrupt_channel_2_3, 3);
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_2_3, dma_event_interrupt_channel_2_3, 1);
 
 void dma_event_interrupt_channel_4_7(void)
 {
@@ -293,12 +307,12 @@ void dma_event_interrupt_channel_4_7(void)
 	for (i = STM32_DMAC_CH4; i <= STM32_DMAC_CH7; i++) {
 		if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(i)) {
 			dma_clear_isr(i);
-			if (id[i] != TASK_ID_INVALID)
-				task_wake(id[i]);
+			if (dma_irq[i].cb != NULL)
+				(*dma_irq[i].cb)(dma_irq[i].cb_data);
 		}
 	}
 }
-DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, dma_event_interrupt_channel_4_7, 3);
+DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, dma_event_interrupt_channel_4_7, 1);
 
 #else /* !CHIP_FAMILY_STM32F0 */
 
@@ -306,11 +320,12 @@ DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, dma_event_interrupt_channel_4_7, 3);
 	void CONCAT2(dma_event_interrupt_channel_, x)(void) \
 	{ \
 		dma_clear_isr(CONCAT2(STM32_DMAC_CH, x)); \
-		if (id[CONCAT2(STM32_DMAC_CH, x)] != TASK_ID_INVALID) \
-			task_wake(id[CONCAT2(STM32_DMAC_CH, x)]); \
+		if (dma_irq[CONCAT2(STM32_DMAC_CH, x)].cb != NULL) \
+			(*dma_irq[CONCAT2(STM32_DMAC_CH, x)].cb) \
+				(dma_irq[CONCAT2(STM32_DMAC_CH, x)].cb_data); \
 	} \
 	DECLARE_IRQ(CONCAT2(STM32_IRQ_DMA_CHANNEL_, x), \
-		    CONCAT2(dma_event_interrupt_channel_, x), 3);
+		    CONCAT2(dma_event_interrupt_channel_, x), 1);
 
 DECLARE_DMA_IRQ(1);
 DECLARE_DMA_IRQ(2);
