@@ -949,6 +949,9 @@ int cmd_flash_pd(int argc, char *argv[])
 	rv = ec_command(EC_CMD_USB_PD_FW_UPDATE, 0,
 			p, p->size + sizeof(*p), NULL, 0);
 
+	/* 3 secs should allow ample time for 2KB page erases at 40ms */
+	usleep(3000000);
+
 	if (rv < 0)
 		goto pd_flash_error;
 
