@@ -265,10 +265,13 @@ enum power_state power_chipset_init(void)
 		init_power_state = POWER_G3;
 	} else {
 		/* In the SYSJUMP case, we check if the AP is on */
-		if (power_get_signals() & IN_XPSHOLD)
+		if (power_get_signals() & IN_XPSHOLD) {
 			init_power_state = POWER_S0;
-		else
+			disable_sleep(SLEEP_MASK_AP_RUN);
+		} else {
 			init_power_state = POWER_G3;
+			enable_sleep(SLEEP_MASK_AP_RUN);
+		}
 	}
 
 	/* Leave power off only if requested by reset flags */
