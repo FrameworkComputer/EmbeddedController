@@ -2871,17 +2871,12 @@ static int command_pd(int argc, char **argv)
 		};
 		BUILD_ASSERT(ARRAY_SIZE(state_names) == PD_STATE_COUNT);
 		ccprintf("Port C%d, %s - Role: %s-%s Polarity: CC%d "
-			 "Contract: %s, Partner: %s%s, State: %s\n",
+			 "Flags: 0x%04x, State: %s\n",
 			port, pd_comm_enabled ? "Ena" : "Dis",
 			pd[port].power_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			pd[port].polarity + 1,
-			pd[port].flags & PD_FLAGS_EXPLICIT_CONTRACT ?
-				"Yes" : "No",
-			(pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) ?
-				"PR_SWAP," : "",
-			(pd[port].flags & PD_FLAGS_PARTNER_DR_DATA) ?
-				"DR_SWAP" : "",
+			pd[port].flags,
 			state_names[pd[port].task_state]);
 	} else {
 		return EC_ERROR_PARAM1;
