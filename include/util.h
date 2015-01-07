@@ -12,6 +12,8 @@
 #include "compile_time_macros.h"
 #include "panic.h"
 
+#include <stddef.h>
+
 /**
  * Trigger a debug exception if the condition
  * is not verified at runtime.
@@ -88,12 +90,12 @@ int isdigit(int c);
 int isspace(int c);
 int isalpha(int c);
 int isprint(int c);
-int memcmp(const void *s1, const void *s2, int len);
-void *memcpy(void *dest, const void *src, int len);
-void *memset(void *dest, int c, int len);
-void *memmove(void *dest, const void *src, int len);
+int memcmp(const void *s1, const void *s2, size_t len);
+void *memcpy(void *dest, const void *src, size_t len);
+void *memset(void *dest, int c, size_t len);
+void *memmove(void *dest, const void *src, size_t len);
 int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, int size);
+int strncasecmp(const char *s1, const char *s2, size_t size);
 int strlen(const char *s);
 
 /* Like strtol(), but for integers. */

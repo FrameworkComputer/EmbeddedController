@@ -80,11 +80,27 @@ size_t queue_add_unit(struct queue const *q, void const *src);
 /* Add multiple units to queue. */
 size_t queue_add_units(struct queue const *q, void const *src, size_t count);
 
+/* Add multiple units to queue using supplied memcpy. */
+size_t queue_add_memcpy(struct queue const *q,
+			void const *src,
+			size_t count,
+			void *(*memcpy)(void *dest,
+					void const *src,
+					size_t n));
+
 /* Remove one unit from the begin of the queue. */
 size_t queue_remove_unit(struct queue const *q, void *dest);
 
 /* Remove multiple units from the begin of the queue. */
 size_t queue_remove_units(struct queue const *q, void *dest, size_t count);
+
+/* Remove multiple units from the begin of the queue using supplied memcpy. */
+size_t queue_remove_memcpy(struct queue const *q,
+			   void *dest,
+			   size_t count,
+			   void *(*memcpy)(void *dest,
+					   void const *src,
+					   size_t n));
 
 /* Peek (return but don't remove) the count elements starting with the i'th. */
 size_t queue_peek_units(struct queue const *q,

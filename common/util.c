@@ -58,7 +58,7 @@ int strcasecmp(const char *s1, const char *s2)
 }
 
 
-int strncasecmp(const char *s1, const char *s2, int size)
+int strncasecmp(const char *s1, const char *s2, size_t size)
 {
 	int diff;
 
@@ -155,7 +155,7 @@ int parse_bool(const char *s, int *dest)
 	}
 }
 
-int memcmp(const void *s1, const void *s2, int len)
+int memcmp(const void *s1, const void *s2, size_t len)
 {
 	const char *sa = s1;
 	const char *sb = s2;
@@ -171,7 +171,7 @@ int memcmp(const void *s1, const void *s2, int len)
 }
 
 
-void *memcpy(void *dest, const void *src, int len)
+void *memcpy(void *dest, const void *src, size_t len)
 {
 	char *d = (char *)dest;
 	const char *s = (const char *)src;
@@ -215,7 +215,7 @@ void *memcpy(void *dest, const void *src, int len)
 }
 
 
-void *memset(void *dest, int c, int len)
+void *memset(void *dest, int c, size_t len)
 {
 	char *d = (char *)dest;
 	uint32_t cccc;
@@ -253,7 +253,7 @@ void *memset(void *dest, int c, int len)
 }
 
 
-void *memmove(void *dest, const void *src, int len)
+void *memmove(void *dest, const void *src, size_t len)
 {
 	if ((uintptr_t)dest <= (uintptr_t)src ||
 	    (uintptr_t)dest >= (uintptr_t)src + len) {
