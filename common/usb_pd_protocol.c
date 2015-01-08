@@ -791,7 +791,6 @@ static void execute_hard_reset(int port)
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
-		typec_set_input_current_limit(port, 0, 0);
 		charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
 #endif /* CONFIG_CHARGE_MANAGER */
 
