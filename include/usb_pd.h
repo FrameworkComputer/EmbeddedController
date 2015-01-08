@@ -176,6 +176,7 @@ struct svdm_amode_fx {
 	int (*enter)(int port, uint32_t mode_caps);
 	int (*status)(int port, uint32_t *payload);
 	int (*config)(int port, uint32_t *payload);
+	void (*post_config)(int port);
 	int (*attention)(int port, uint32_t *payload);
 	void (*exit)(int port);
 };
@@ -199,6 +200,10 @@ enum hpd_event {
 	hpd_high,
 	hpd_irq,
 };
+
+/* DisplayPort flags */
+#define DP_FLAGS_DP_ON              (1 << 0) /* Display port mode is on */
+#define DP_FLAGS_HPD_HI_PENDING     (1 << 1) /* Pending HPD_HI */
 
 /* Policy structure for driving alternate mode */
 struct pd_policy {
