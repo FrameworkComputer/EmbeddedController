@@ -20,6 +20,10 @@ enum wireless_power_state {
 /**
  * Set wireless power state.
  */
+#ifdef CONFIG_WIRELESS
 void wireless_set_state(enum wireless_power_state state);
+#else
+static inline void wireless_set_state(enum wireless_power_state state) { }
+#endif
 
 #endif  /* __CROS_EC_WIRELESS_H */
