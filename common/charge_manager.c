@@ -110,7 +110,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 {
 	int supplier = CHARGE_SUPPLIER_NONE;
 	int port = CHARGE_PORT_NONE;
-	int best_port_power, candidate_port_power;
+	int best_port_power = -1, candidate_port_power;
 	int i, j;
 
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
