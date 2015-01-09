@@ -538,6 +538,27 @@
 
 
 /*
+ *  Random Number Generator (RNG)
+ */
+#define NRF51_RNG_BASE               0x4000D000
+/* Tasks */
+#define NRF51_RNG_START              REG32(NRF51_RNG_BASE + 0x000)
+#define NRF51_RNG_STOP               REG32(NRF51_RNG_BASE + 0x004)
+/* Events */
+#define NRF51_RNG_VALRDY             REG32(NRF51_RNG_BASE + 0x100)
+/* Registers */
+#define NRF51_RNG_SHORTS             REG32(NRF51_RNG_BASE + 0x200)
+#define NRF51_RNG_INTENSET           REG32(NRF51_RNG_BASE + 0x304)
+#define NRF51_RNG_INTENCLR           REG32(NRF51_RNG_BASE + 0x308)
+#define NRF51_RNG_CONFIG             REG32(NRF51_RNG_BASE + 0x504)
+#define NRF51_RNG_VALUE              REG32(NRF51_RNG_BASE + 0x508)
+/* For RNG Shortcuts */
+#define NRF51_RNG_SHORTS_VALRDY_STOP (1 << 0)
+/* For RNG Config */
+#define NRF51_RNG_DERCEN             (1 << 0)
+
+
+/*
  *  Watchdog Timer (WDT)
  */
 #define NRF51_WDT_BASE        0x40010000
