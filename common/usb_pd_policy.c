@@ -665,6 +665,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		/* do not kill the code under our feet */
 		if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 			break;
+		pd_log_event(PD_EVENT_ACC_RW_ERASE, 0, 0, NULL);
 		flash_offset = CONFIG_FW_RW_OFF;
 		flash_physical_erase(CONFIG_FW_RW_OFF, CONFIG_FW_RW_SIZE);
 		rw_flash_changed = 1;

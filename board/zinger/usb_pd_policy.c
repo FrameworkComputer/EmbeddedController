@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "debug.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "registers.h"
 #include "system.h"
@@ -340,6 +341,7 @@ int pd_board_checks(void)
 
 	if (fault == FAULT_FAST_OCP) {
 		debug_printf("Fast OCP\n");
+		pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_FAST_OCP, NULL);
 		fault = FAULT_OCP;
 		/* reset over-current after 1 second */
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
@@ -357,6 +359,7 @@ int pd_board_checks(void)
 			debug_printf("OCP %d mA\n",
 			  vbus_amp * VDDA_MV / CURR_GAIN * 1000
 				   / R_SENSE / ADC_SCALE);
+			pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_OCP, NULL);
 			fault = FAULT_OCP;
 			/* reset over-current after 1 second */
 			fault_deadline.val = get_time().val + OCP_TIMEOUT;
@@ -383,9 +386,11 @@ int pd_board_checks(void)
 
 	if ((output_is_enabled() && (vbus_volt > voltages[ovp_idx].ovp)) ||
 	    (fault && (vbus_volt > voltages[ovp_idx].ovp_rec))) {
-		if (!fault)
+		if (!fault) {
 			debug_printf("OVP %d mV\n",
 				     ADC_TO_VOLT_MV(vbus_volt));
+			pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_OVP, NULL);
+		}
 		fault = FAULT_OVP;
 		/* no timeout */
 		fault_deadline.val = get_time().val;
@@ -404,6 +409,7 @@ int pd_board_checks(void)
 		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
 		debug_printf("Disch FAIL %d mV\n",
 			     ADC_TO_VOLT_MV(vbus_volt));
+		pd_log_event(PD_EVENT_PS_FAULT, 0, PS_FAULT_DISCH, NULL);
 		fault = FAULT_DISCHARGE;
 		/* reset it after 1 second */
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;

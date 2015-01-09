@@ -8,10 +8,12 @@
  */
 
 #include "console.h"
+#include "ec_commands.h"
 #include "rsa.h"
 #include "sha256.h"
 #include "shared_mem.h"
 #include "system.h"
+#include "usb_pd.h"
 #include "util.h"
 
 /* Console output macros */
@@ -64,6 +66,7 @@ void check_rw_signature(void)
 		system_run_image_copy(SYSTEM_IMAGE_RW);
 	} else {
 		CPRINTS("RSA verify FAILED\n");
+		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);
 		/* RW firmware is invalid : do not jump there */
 		if (system_is_locked())
 			system_disable_jump();

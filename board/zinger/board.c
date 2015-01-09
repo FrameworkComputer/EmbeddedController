@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "debug.h"
+#include "ec_commands.h"
 #include "registers.h"
 #include "rsa.h"
 #include "sha256.h"
@@ -65,6 +66,7 @@ static int check_rw_valid(void *rw_hash)
 	good = rsa_verify(&pkey, (void *)rw_sig, rw_hash, rsa_workbuf);
 	if (!good) {
 		debug_printf("RSA FAILED\n");
+		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);
 		return 0;
 	}
 

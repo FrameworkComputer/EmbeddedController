@@ -2889,9 +2889,7 @@ struct ec_response_pd_log {
 #define PD_EVENT_ACC_GFU_ENTER (PD_EVENT_ACC_BASE+2)
 /* PD power supply events */
 #define PD_EVENT_PS_BASE        0x40
-#define PD_EVENT_PS_OCP        (PD_EVENT_PS_BASE+0)
-#define PD_EVENT_PS_OVP        (PD_EVENT_PS_BASE+1)
-#define PD_EVENT_PS_TEMP       (PD_EVENT_PS_BASE+2)
+#define PD_EVENT_PS_FAULT      (PD_EVENT_PS_BASE+0)
 /* PD video dongles events */
 #define PD_EVENT_VIDEO_BASE     0x60
 /* Returned in the "type" field, when there is no entry available */
@@ -2913,6 +2911,14 @@ struct ec_response_pd_log {
 #define CHARGE_FLAGS_TYPE_MASK       (0xF << CHARGE_FLAGS_TYPE_SHIFT)
 /* Power delivery role */
 #define CHARGE_FLAGS_ROLE_MASK         (7 <<  0)
+
+/*
+ * PD_EVENT_PS_FAULT data field flags definition :
+ */
+#define PS_FAULT_OCP                          1
+#define PS_FAULT_FAST_OCP                     2
+#define PS_FAULT_OVP                          3
+#define PS_FAULT_DISCH                        4
 
 #endif  /* !__ACPI__ */
 
