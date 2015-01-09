@@ -890,7 +890,6 @@ static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 static void pd_send_request_msg(int port, int always_send_request)
 {
 	uint32_t rdo, curr_limit, supply_voltage;
-	int request_mv;
 	int res;
 
 #ifdef CONFIG_CHARGE_MANAGER
@@ -903,12 +902,6 @@ static void pd_send_request_msg(int port, int always_send_request)
 
 	/* Build and send request RDO */
 	/* If this port is not actively charging, select vSafe5V */
-	request_mv = charging ? pd_get_max_voltage() : PD_MIN_MV;
-
-	/* Don't re-request the same voltage */
-	if (!always_send_request && pd[port].prev_request_mv == request_mv)
-		return;
-
 	res = pd_build_request(pd_src_cap_cnt[port], pd_src_caps[port],
 			       &rdo, &curr_limit, &supply_voltage,
 			       charging ? PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
@@ -920,9 +913,19 @@ static void pd_send_request_msg(int port, int always_send_request)
 		 */
 		return;
 
+	/* Don't re-request the same voltage */
+	if (!always_send_request && pd[port].prev_request_mv == supply_voltage)
+		return;
+
+	CPRINTF("Request [%d] %dmV %dmA", RDO_POS(rdo),
+		supply_voltage, curr_limit);
+	if (rdo & RDO_CAP_MISMATCH)
+		CPRINTF(" Mismatch");
+	CPRINTF("\n");
+
 	pd[port].curr_limit = curr_limit;
 	pd[port].supply_voltage = supply_voltage;
-	pd[port].prev_request_mv = request_mv;
+	pd[port].prev_request_mv = supply_voltage;
 	res = send_request(port, rdo);
 	if (res >= 0)
 		set_state(port, PD_STATE_SNK_REQUESTED);

@@ -117,24 +117,16 @@ int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
 
 	pd_extract_pdo_power(src_caps[pdo_index], ma, mv);
 	uw = *ma * *mv;
+	/* Mismatch bit set if less power offered than the operating power */
 	if (uw < (1000 * PD_OPERATING_POWER_MW))
 		flags |= RDO_CAP_MISMATCH;
 
 	if ((src_caps[pdo_index] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		int mw = uw / 1000;
 		*rdo = RDO_BATT(pdo_index + 1, mw, mw, flags);
-		CPRINTF("Request [%d] %dmV %dmW",
-			pdo_index, *mv, mw);
 	} else {
 		*rdo = RDO_FIXED(pdo_index + 1, *ma, *ma, flags);
-		CPRINTF("Request [%d] %dmV %dmA",
-			pdo_index, *mv, *ma);
 	}
-	/* Mismatch bit set if less power offered than the operating power */
-	if (flags & RDO_CAP_MISMATCH)
-		CPRINTF(" Mismatch");
-	CPRINTF("\n");
-
 	return EC_SUCCESS;
 }
 

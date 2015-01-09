@@ -76,6 +76,7 @@ enum pd_errors {
 
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n)             (((n) & 0x7) << 28)
+#define RDO_POS(rdo)               (((rdo) >> 28) & 0x7)
 #define RDO_GIVE_BACK              (1 << 27)
 #define RDO_CAP_MISMATCH           (1 << 26)
 #define RDO_COMM_CAP               (1 << 25)
