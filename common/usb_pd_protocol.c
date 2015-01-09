@@ -813,6 +813,20 @@ static void execute_hard_reset(int port)
 #endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+	/*
+	 * If we are swapping to a source and have changed to Rp, restore back
+	 * to Rd to match our power_role.
+	 */
+	if (pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY ||
+	    pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE)
+		pd_set_host_mode(port, 0);
+	/*
+	 * If we are swapping to a sink and have changed to Rd, change role to
+	 * sink to match the CC pull resistor.
+	 */
+	if (pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY)
+		pd[port].power_role = PD_ROLE_SINK;
+
 	if (pd[port].power_role == PD_ROLE_SINK) {
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
