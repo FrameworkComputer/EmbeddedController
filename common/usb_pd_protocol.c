@@ -1161,6 +1161,11 @@ static void handle_ctrl_request(int port, uint16_t head,
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 		if (pd_check_power_swap(port)) {
 			send_control(port, PD_CTRL_ACCEPT);
+			/*
+			 * Clear flag for checking power role to avoid
+			 * immediately requesting another swap.
+			 */
+			pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
 			if (pd[port].power_role == PD_ROLE_SINK)
 				set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
 			else
@@ -1174,7 +1179,12 @@ static void handle_ctrl_request(int port, uint16_t head,
 		break;
 	case PD_CTRL_DR_SWAP:
 		if (pd_check_data_swap(port, pd[port].data_role)) {
-			/* Accept switch and perform data swap */
+			/*
+			 * Accept switch and perform data swap. Clear
+			 * flag for checking data role to avoid
+			 * immediately requesting another swap.
+			 */
+			pd[port].flags &= ~PD_FLAGS_CHECK_DR_ROLE;
 			if (send_control(port, PD_CTRL_ACCEPT) >= 0)
 				pd_dr_swap(port);
 		} else {
