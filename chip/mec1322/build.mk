@@ -30,4 +30,4 @@ SCRIPTDIR:=./chip/${CHIP}/util
 cmd_pack_package = ${SCRIPTDIR}/pack_ec.py -o $@ -i $^ \
 	--payload_key ${SCRIPTDIR}/rsakey_sign_payload.pem \
 	--header_key ${SCRIPTDIR}/rsakey_sign_header.pem \
-	--spi_size ${CHIP_SPI_SIZE_MB}
+	--spi_size ${CHIP_SPI_SIZE_KB}
