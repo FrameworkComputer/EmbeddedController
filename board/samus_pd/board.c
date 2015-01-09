@@ -403,9 +403,11 @@ static void board_init(void)
 	}
 	pd_comm_enable(pd_enable);
 
+#ifdef CONFIG_PWM
 	/* Enable ILIM PWM: initial duty cycle 0% = 500mA limit. */
 	pwm_enable(PWM_CH_ILIM, 1);
 	pwm_set_duty(PWM_CH_ILIM, 0);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -616,6 +618,7 @@ int board_set_active_charge_port(int charge_port)
  */
 void board_set_charge_limit(int charge_ma)
 {
+#ifdef CONFIG_PWM
 	int pwm_duty = MA_TO_PWM(charge_ma);
 	if (pwm_duty < 0)
 		pwm_duty = 0;
@@ -623,6 +626,7 @@ void board_set_charge_limit(int charge_ma)
 		pwm_duty = 100;
 
 	pwm_set_duty(PWM_CH_ILIM, pwm_duty);
+#endif
 
 	pd_status.curr_lim_ma = charge_ma;
 	pd_send_ec_int();
