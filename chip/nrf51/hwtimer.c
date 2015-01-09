@@ -56,8 +56,6 @@ static uint32_t last_deadline;  /* cache of event set */
  *
  */
 static uint32_t shift;
-static uint32_t overflow;
-static uint32_t prev_read;
 
 void __hw_clock_event_set(uint32_t deadline)
 {
@@ -81,50 +79,44 @@ void __hw_clock_event_clear(void)
 
 uint32_t __hw_clock_source_read(void)
 {
-	uint32_t now;
-
 	/* to capture the current value */
 	NRF51_TIMER0_CAPTURE1 = 1;
-	now = NRF51_TIMER0_CC1 + shift;
-
-	/* detect if a wrap happened */
-	if (now < prev_read)
-		overflow++;
-	prev_read = now;
-
-	return now;
+	return NRF51_TIMER0_CC1 + shift;
 }
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	shift = prev_read = ts;
+	shift = ts;
 
 	/* reset counter to zero */
 	NRF51_TIMER0_STOP = 1;
 	NRF51_TIMER0_CLEAR = 1;
-	NRF51_TIMER0_START = 1;
 
 	/* So that no interrupt until next __hw_clock_event_set() */
 	NRF51_TIMER0_CC0 = ts - 1;
 
 	/* Update the overflow point */
 	NRF51_TIMER0_CC2 = 0 - shift;
+
+	/* Start the timer again */
+	NRF51_TIMER0_START = 1;
 }
 
 
 /* Interrupt handler for timer */
 void timer_irq(void)
 {
+	int overflow = 0;
+
 	/* clear status */
 	NRF51_TIMER0_COMPARE0 = 0;
+
 	if (NRF51_TIMER0_COMPARE2) {
-		/* Invoke a read to update overflow variable */
-		__hw_clock_source_read();
 		NRF51_TIMER0_COMPARE2 = 0;
+		overflow = 1;
 	}
 
 	process_timers(overflow);
-	overflow = 0;
 }
 DECLARE_IRQ(NRF51_PERID_TIMER0, timer_irq, 1);
 
