@@ -44,56 +44,96 @@ void unhandled_evt(enum gpio_signal signal)
 	ccprintf("Unhandled INT %d,%d!\n", signal, gpio_get_level(signal));
 }
 
+/* Wait 200ms after a charger is detected to debounce pin contact order */
+#define USB_CHG_DEBOUNCE_DELAY_MS 200
 /*
- * Update available charge. Called from deferred task, queued on Pericom
- * interrupt.
+ * Wait 100ms after reset, before re-enabling attach interrupt, so that the
+ * spurious attach interrupt from certain ports is ignored.
  */
-static void board_usb_charger_update(void)
+#define USB_CHG_RESET_DELAY_MS 100
+
+void usb_charger_task(void)
 {
 	int device_type, charger_status;
 	struct charge_port_info charge;
 	int type;
 	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
 
-	/* Read interrupt register to clear */
-	pi3usb9281_get_interrupts(0);
+	while (1) {
+		/* Read interrupt register to clear */
+		pi3usb9281_get_interrupts(0);
 
-	/* Set device type */
-	device_type = pi3usb9281_get_device_type(0);
-	charger_status = pi3usb9281_get_charger_status(0);
-	if (PI3USB9281_CHG_STATUS_ANY(charger_status))
-		type = CHARGE_SUPPLIER_PROPRIETARY;
-	else if (device_type & PI3USB9281_TYPE_CDP)
-		type = CHARGE_SUPPLIER_BC12_CDP;
-	else if (device_type & PI3USB9281_TYPE_DCP)
-		type = CHARGE_SUPPLIER_BC12_DCP;
-	else if (device_type & PI3USB9281_TYPE_SDP)
-		type = CHARGE_SUPPLIER_BC12_SDP;
-	else
-		type = CHARGE_SUPPLIER_OTHER;
+		/* Set device type */
+		device_type = pi3usb9281_get_device_type(0);
+		charger_status = pi3usb9281_get_charger_status(0);
 
-	/* Attachment: decode + update available charge */
-	if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
-		charge.current = pi3usb9281_get_ilim(device_type,
-						     charger_status);
-		charge_manager_update(type, 0, &charge);
-	} else { /* Detachment: update available charge to 0 */
-		charge.current = 0;
-		charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, 0,
-				      &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, 0, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, 0, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, 0, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_OTHER, 0, &charge);
+		/* Debounce pin plug order if we detect a charger */
+		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
+			msleep(USB_CHG_DEBOUNCE_DELAY_MS);
+
+			/* Trigger chip reset to refresh detection registers */
+			pi3usb9281_reset(0);
+			/* Clear possible disconnect interrupt */
+			pi3usb9281_get_interrupts(0);
+			/* Mask attach interrupt */
+			pi3usb9281_set_interrupt_mask(0,
+						      0xff &
+						      ~PI3USB9281_INT_ATTACH);
+			/* Re-enable interrupts */
+			pi3usb9281_enable_interrupts(0);
+			msleep(USB_CHG_RESET_DELAY_MS);
+
+			/* Clear possible attach interrupt */
+			pi3usb9281_get_interrupts(0);
+			/* Re-enable attach interrupt */
+			pi3usb9281_set_interrupt_mask(0, 0xff);
+
+			/* Re-read ID registers */
+			device_type = pi3usb9281_get_device_type(0);
+			charger_status = pi3usb9281_get_charger_status(0);
+		}
+
+		if (PI3USB9281_CHG_STATUS_ANY(charger_status))
+			type = CHARGE_SUPPLIER_PROPRIETARY;
+		else if (device_type & PI3USB9281_TYPE_CDP)
+			type = CHARGE_SUPPLIER_BC12_CDP;
+		else if (device_type & PI3USB9281_TYPE_DCP)
+			type = CHARGE_SUPPLIER_BC12_DCP;
+		else if (device_type & PI3USB9281_TYPE_SDP)
+			type = CHARGE_SUPPLIER_BC12_SDP;
+		else
+			type = CHARGE_SUPPLIER_OTHER;
+
+		/* Attachment: decode + update available charge */
+		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
+			charge.current = pi3usb9281_get_ilim(device_type,
+							     charger_status);
+			charge_manager_update(type, 0, &charge);
+		} else { /* Detachment: update available charge to 0 */
+			charge.current = 0;
+			charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, 0,
+					      &charge);
+			charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, 0,
+					      &charge);
+			charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, 0,
+					      &charge);
+			charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, 0,
+					      &charge);
+			charge_manager_update(CHARGE_SUPPLIER_OTHER, 0,
+					      &charge);
+		}
+
+		/* notify host of power info change */
+		/* pd_send_host_event(PD_EVENT_POWER_CHANGE); */
+
+		/* Wait for interrupt */
+		task_wait_event(-1);
 	}
-
-	/* notify host of power info change */
-	/*pd_send_host_event(PD_EVENT_POWER_CHANGE);*/
 }
 
 void usb_evt(enum gpio_signal signal)
 {
-	hook_call_deferred(board_usb_charger_update, 0);
+	task_wake(TASK_ID_USB_CHG);
 }
 
 #include "gpio_list.h"
