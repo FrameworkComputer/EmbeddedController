@@ -256,6 +256,34 @@ DECLARE_CONSOLE_COMMAND(waitms, command_wait,
 			"Busy-wait for msec",
 			NULL);
 
+#ifdef CONFIG_CMD_FORCETIME
+static int command_force_time(int argc, char **argv)
+{
+	char *e;
+	timestamp_t new;
+
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	new.le.hi = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	new.le.lo = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	ccprintf("Time: 0x%016lx = %.6ld s\n", new.val, new.val);
+	force_time(new);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(forcetime, command_force_time,
+			"hi lo",
+			"Force current time",
+			NULL);
+#endif
+
 static int command_get_time(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
