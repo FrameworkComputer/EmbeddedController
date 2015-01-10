@@ -1470,7 +1470,7 @@ static uint64_t vdm_get_ready_timeout(uint32_t vdm_hdr)
 	return timeout;
 }
 
-static void pd_vdm_send_state_machine(int port, int incoming_packet)
+static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
@@ -1487,7 +1487,7 @@ static void pd_vdm_send_state_machine(int port, int incoming_packet)
 		 * if there's traffic or we're not in PDO ready state don't send
 		 * a VDM.
 		 */
-		if (incoming_packet || pdo_busy(port))
+		if (pdo_busy(port))
 			break;
 
 		/* Prepare and send VDM */
@@ -1723,7 +1723,7 @@ void pd_task(void)
 
 	while (1) {
 		/* process VDM messages last */
-		pd_vdm_send_state_machine(port, incoming_packet);
+		pd_vdm_send_state_machine(port);
 
 		/* monitor for incoming packet if in a connected state */
 		if (pd_is_connected(port) && pd_comm_enabled)
