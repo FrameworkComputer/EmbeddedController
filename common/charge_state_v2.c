@@ -28,8 +28,8 @@
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
-#define LOW_BATTERY_SHUTDOWN_TIMEOUT_US (LOW_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
-#define HIGH_TEMP_SHUTDOWN_TIMEOUT_US   (HIGH_TEMP_SHUTDOWN_TIMEOUT * SECOND)
+#define CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US \
+	(CRITICAL_BATTERY_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
 #define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
 
@@ -45,7 +45,6 @@ static int state_machine_force_idle;
 static int manual_mode;  /* volt/curr are no longer maintained by charger */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_warning_time;
-test_export_static timestamp_t shutdown_batttemp_warning_time;
 static timestamp_t precharge_start_time;
 static int battery_seems_to_be_dead;
 static int battery_seems_to_be_disconnected;
@@ -402,50 +401,6 @@ static inline int battery_too_hot(int batt_temp_c)
 		 batt_temp_c < batt_info->discharging_min_c));
 }
 
-static void prevent_hot_discharge(void)
-{
-	int batt_temp_c;
-
-	/*
-	 * TODO(crosbug.com/p/27642): The thermal loop should watch the battery
-	 * temp anyway, so it can turn fans on. It could also force an AP
-	 * shutdown if it's too hot, but AFAIK we don't have anything in place
-	 * to do a battery shutdown if it's really really hot. We probably
-	 * should, just in case.
-	 */
-	batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
-
-	if (!battery_too_hot(batt_temp_c)) {
-		/* Reset shutdown warning time */
-		shutdown_batttemp_warning_time.val = 0;
-		return;
-	}
-
-	CPRINTS("Batt temp out of range %dC", batt_temp_c);
-
-	if (!shutdown_batttemp_warning_time.val) {
-		CPRINTS("charge warn shutdown due to battery temp %dC",
-			batt_temp_c);
-		shutdown_batttemp_warning_time.val = get_time().val;
-		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
-	} else if (get_time().val > shutdown_batttemp_warning_time.val +
-		   HIGH_TEMP_SHUTDOWN_TIMEOUT_US) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-#ifdef CONFIG_HIBERNATE
-			/* Timeout waiting for temp to change */
-			CPRINTS("charge force EC hib due to batt temp %dC",
-				batt_temp_c);
-			system_hibernate(0, 0);
-#endif
-		} else {
-			CPRINTS("charge force shutdown due to batt temp %dC",
-				batt_temp_c);
-			chipset_force_shutdown();
-		}
-	}
-}
-
 /* True if we know the charge is too low, or we know the voltage is too low. */
 static inline int battery_too_low(void)
 {
@@ -455,34 +410,56 @@ static inline int battery_too_low(void)
 		 curr.batt.voltage <= batt_info->voltage_min));
 }
 
-/* Shut everything down before the battery completely dies. */
-static void prevent_deep_discharge(void)
+
+/*
+ * Send host event to the AP if the battery is temperature or charge level
+ * is critical. Force-shutdown if the problem isn't corrected after timeout.
+ */
+static void shutdown_on_critical_battery(void)
 {
-	if (!battery_too_low() || curr.batt_is_charging) {
+	int batt_temp_c;
+	int battery_critical = 0;
+
+	/*
+	 * TODO(crosbug.com/p/27642): The thermal loop should watch the battery
+	 * temp, so it can turn fans on.
+	 */
+	batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
+	if (battery_too_hot(batt_temp_c)) {
+		CPRINTS("Batt temp out of range: %dC", batt_temp_c);
+		battery_critical = 1;
+	}
+
+	if (battery_too_low() && !curr.batt_is_charging) {
+		CPRINTS("Low battery: %d%%, %dmV",
+			curr.batt.state_of_charge, curr.batt.voltage);
+		battery_critical = 1;
+	}
+
+	if (!battery_critical) {
 		/* Reset shutdown warning time */
 		shutdown_warning_time.val = 0;
 		return;
 	}
 
-	CPRINTS("Low battery: %d%%, %dmV",
-		curr.batt.state_of_charge, curr.batt.voltage);
-
 	if (!shutdown_warning_time.val) {
-		CPRINTS("charge warn shutdown due to low battery");
+		CPRINTS("charge warn shutdown due to critical battery");
 		shutdown_warning_time = get_time();
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	} else if (get_time().val > shutdown_warning_time.val +
-		   LOW_BATTERY_SHUTDOWN_TIMEOUT_US) {
+		   CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 #ifdef CONFIG_HIBERNATE
 			/* Timeout waiting for charger to provide more power */
-			CPRINTS("charge force EC hibernate due to low battery");
+			CPRINTS(
+			  "charge force EC hibernate due to critical battery");
 			system_hibernate(0, 0);
 #endif
 		} else {
 			/* Timeout waiting for AP to shut down, so kill it */
-			CPRINTS("charge force shutdown due to low battery");
+			CPRINTS(
+			  "charge force shutdown due to critical battery");
 			chipset_force_shutdown();
 		}
 	}
@@ -628,8 +605,7 @@ void charger_task(void)
 		curr.batt_is_charging = curr.ac && (curr.batt.current >= 0);
 
 		/* Don't let the battery hurt itself. */
-		prevent_hot_discharge();
-		prevent_deep_discharge();
+		shutdown_on_critical_battery();
 
 		if (!curr.ac) {
 			curr.state = ST_DISCHARGE;
