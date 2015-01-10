@@ -54,17 +54,13 @@ int is_ro_mode(void)
 	return (uint32_t)&jump_to_rw < (uint32_t)rw_rst;
 }
 
-static int check_rw_valid(void)
+static int check_rw_valid(void *rw_hash)
 {
 	int good;
-	void *rw_hash;
 
 	/* Check if we have a RW firmware flashed */
 	if (*rw_rst == 0xffffffff)
 		return 0;
-
-	/* calculate hash of RW */
-	rw_hash = flash_hash_rw();
 
 	good = rsa_verify(&pkey, (void *)rw_sig, rw_hash, rsa_workbuf);
 	if (!good) {
@@ -79,6 +75,8 @@ extern void pd_task(void);
 
 int main(void)
 {
+	void *rw_hash;
+
 	hardware_init();
 	debug_printf("Power supply started ... %s\n",
 		is_ro_mode() ? "RO" : "RW");
@@ -87,8 +85,16 @@ int main(void)
 	if (!flash_physical_is_permanently_protected())
 		flash_physical_permanent_protect();
 
+	/*
+	 * calculate the hash of the RW partition
+	 *
+	 * Also pre-cache it so we can answer Discover Identity VDM
+	 * fast enough (in less than 30ms).
+	 */
+	rw_hash = flash_hash_rw();
+
 	/* Verify RW firmware and use it if valid */
-	if (is_ro_mode() && check_rw_valid())
+	if (is_ro_mode() && check_rw_valid(rw_hash))
 		jump_to_rw();
 
 	/* background loop for PD events */
