@@ -21,6 +21,7 @@
  * r0 and lr must be PRESERVED.
  * r12 can be clobbered.
  */
+.section .text.__gnu_thumb1_case_uqi
 .global __gnu_thumb1_case_uqi
 .thumb_func
 __gnu_thumb1_case_uqi:
@@ -34,6 +35,7 @@ __gnu_thumb1_case_uqi:
 	mov     r1, r12
 	bx      lr
 
+.section .text.__gnu_thumb1_case_sqi
 .global __gnu_thumb1_case_sqi
 .thumb_func
 __gnu_thumb1_case_sqi:
@@ -47,6 +49,7 @@ __gnu_thumb1_case_sqi:
 	mov     r1, r12
 	bx      lr
 
+.section .text.__gnu_thumb1_case_uhi
 .global __gnu_thumb1_case_uhi
 .thumb_func
 __gnu_thumb1_case_uhi:
@@ -62,6 +65,7 @@ __gnu_thumb1_case_uhi:
 	bx      lr
 
 
+.section .text.__gnu_thumb1_case_shi
 .global __gnu_thumb1_case_shi
 .thumb_func
 __gnu_thumb1_case_shi:

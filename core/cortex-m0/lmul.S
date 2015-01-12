@@ -25,22 +25,13 @@
 
 
 
-@ long long __muldi3(long long, long long)
-@
-@ libgcc wrapper: just an alias for __aeabi_lmul()
-@
-	.thumb_func
-	.global __muldi3
-__muldi3:
-
-
-
 @ long long __aeabi_lmul(long long r1:r0, long long r3:r2)
 @
 @ Multiply r1:r0 and r3:r2 and return the product in r1:r0
 @ Can also be used for unsigned long product
 @
 	.thumb_func
+	.section .text.__aeabi_lmul
 	.global __aeabi_lmul
 __aeabi_lmul:
 

@@ -25,24 +25,13 @@
 	.thumb
 	.cpu cortex-m0
 
-
-
-@ int __divsi3(int num, int denom)
-@
-@ libgcc wrapper: just an alias for __aeabi_idivmod(), the remainder is ignored
-@
-	.thumb_func
-	.global __divsi3
-__divsi3:
-
-
-
 @ int __aeabi_idiv(int num:r0, int denom:r1)
 @
 @ Divide r0 by r1 and return quotient in r0 (all signed).
 @ Use __aeabi_uidivmod() but check signs before and change signs afterwards.
 @
 	.thumb_func
+	.section .text.__aeabi_idiv
 	.global __aeabi_idiv
 __aeabi_idiv:
 
@@ -77,6 +66,7 @@ L_neg_result:
 @ Divide r0 by r1 and return the quotient in r0 and the remainder in r1
 @
 	.thumb_func
+	.section .text.__aeabi_idivmod
 	.global __aeabi_idivmod
 __aeabi_idivmod:
 
@@ -113,21 +103,12 @@ L_num_pos_bis:
 
 
 
-@ unsigned __udivsi3(unsigned num, unsigned denom)
-@
-@ libgcc wrapper: just an alias for __aeabi_uidivmod(), the remainder is ignored
-@
-	.thumb_func
-	.global __udivsi3
-__udivsi3:
-
-
-
 @ unsigned __aeabi_uidiv(unsigned num, unsigned denom)
 @
 @ Just an alias for __aeabi_uidivmod(), the remainder is ignored
 @
 	.thumb_func
+	.section .text.__aeabi_uidivmod
 	.global __aeabi_uidiv
 __aeabi_uidiv:
 
