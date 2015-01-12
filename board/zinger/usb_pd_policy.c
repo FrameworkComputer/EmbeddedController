@@ -322,7 +322,7 @@ int pd_board_checks(void)
 	/* If output is disabled for long enough, then hibernate */
 	if (!pd_is_connected(0) && hib_to_ready) {
 		if (get_time().val >= hib_to.val) {
-			debug_printf("hibernate\n");
+			debug_printf("hib\n");
 			__enter_hibernate(0, 0);
 		}
 	} else {
@@ -339,7 +339,7 @@ int pd_board_checks(void)
 	vbus_amp = adc_read_channel(ADC_CH_A_SENSE);
 
 	if (fault == FAULT_FAST_OCP) {
-		debug_printf("Fast OverCurrent\n");
+		debug_printf("Fast OCP\n");
 		fault = FAULT_OCP;
 		/* reset over-current after 1 second */
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
@@ -354,7 +354,7 @@ int pd_board_checks(void)
 				break;
 		/* trigger the slow OCP iff all 4 samples are above the max */
 		if (count == 3) {
-			debug_printf("OverCurrent : %d mA\n",
+			debug_printf("OCP %d mA\n",
 			  vbus_amp * VDDA_MV / CURR_GAIN * 1000
 				   / R_SENSE / ADC_SCALE);
 			fault = FAULT_OCP;
@@ -384,7 +384,7 @@ int pd_board_checks(void)
 	if ((output_is_enabled() && (vbus_volt > voltages[ovp_idx].ovp)) ||
 	    (fault && (vbus_volt > voltages[ovp_idx].ovp_rec))) {
 		if (!fault)
-			debug_printf("OverVoltage : %d mV\n",
+			debug_printf("OVP %d mV\n",
 				     ADC_TO_VOLT_MV(vbus_volt));
 		fault = FAULT_OVP;
 		/* no timeout */
@@ -402,7 +402,7 @@ int pd_board_checks(void)
 		discharge_disable();
 		/* enable over-current monitoring */
 		adc_enable_watchdog(ADC_CH_A_SENSE, MAX_CURRENT_FAST, 0);
-		debug_printf("Discharge failure : %d mV\n",
+		debug_printf("Disch FAIL %d mV\n",
 			     ADC_TO_VOLT_MV(vbus_volt));
 		fault = FAULT_DISCHARGE;
 		/* reset it after 1 second */
@@ -560,7 +560,6 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		}
 	}
 
-	debug_printf("%T] DONE\n");
 	/* respond (positively) to the request */
 	payload[0] |= VDO_SRC_RESPONDER;
 

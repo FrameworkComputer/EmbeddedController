@@ -64,7 +64,7 @@ static int check_rw_valid(void *rw_hash)
 
 	good = rsa_verify(&pkey, (void *)rw_sig, rw_hash, rsa_workbuf);
 	if (!good) {
-		debug_printf("RSA verify FAILED\n");
+		debug_printf("RSA FAILED\n");
 		return 0;
 	}
 
@@ -78,7 +78,7 @@ int main(void)
 	void *rw_hash;
 
 	hardware_init();
-	debug_printf("Power supply started ... %s\n",
+	debug_printf("%s started\n",
 		is_ro_mode() ? "RO" : "RW");
 
 	/* the RO partition protection is not enabled : do it */
@@ -100,7 +100,7 @@ int main(void)
 	/* background loop for PD events */
 	pd_task();
 
-	debug_printf("background loop exited !\n");
+	debug_printf("EXIT!\n");
 	/* we should never reach that point */
 	system_reset(0);
 	return 0;
