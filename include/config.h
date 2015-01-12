@@ -800,6 +800,18 @@
 /* Support common LED interface */
 #undef CONFIG_LED_COMMON
 
+/* Standard LED behavior according to spec given that we have a red-green
+ * bicolor led for charging and one power led
+ */
+#undef CONFIG_LED_POLICY_STD
+
+/*
+ * LEDs for LED_POLICY STD may be inverted.  In this case they are active low
+ * and the GPIO names will be GPIO_LED..._L.
+ */
+#undef CONFIG_LED_BAT_ACTIVE_LOW
+#undef CONFIG_LED_POWER_ACTIVE_LOW
+
 /* Support for LED driver chip(s) */
 #undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
