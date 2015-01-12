@@ -210,11 +210,6 @@ int adc_read_channel(enum adc_channel ch)
 	       value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
-/*
- * adc_read_all_channels() is not working properly on STM32F373.
- * TODO(crosbug.com/p/33971): Fix it.
- */
-#if 0
 int adc_read_all_channels(int *data)
 {
 	int i;
@@ -235,6 +230,7 @@ int adc_read_all_channels(int *data)
 
 	adc_configure_all();
 
+	dma_clear_isr(STM32_DMAC_ADC);
 	dma_start_rx(&dma_adc_option, ADC_CH_COUNT, raw_data);
 
 	/* Start conversion */
@@ -259,15 +255,6 @@ exit_all_channels:
 
 	mutex_unlock(&adc_lock);
 	return ret;
-}
-#endif
-
-int adc_read_all_channels(int *data)
-{
-	int i;
-	for (i = 0; i < ADC_CH_COUNT; ++i)
-		data[i] = adc_read_channel(i);
-	return EC_SUCCESS;
 }
 
 static void adc_init(void)
