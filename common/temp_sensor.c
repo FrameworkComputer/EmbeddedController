@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "thermal.h"
 #include "timer.h"
 #include "util.h"
 
@@ -109,7 +110,15 @@ static int command_temps(int argc, char **argv)
 
 		switch (rv) {
 		case EC_SUCCESS:
-			ccprintf("%d K = %d C\n", t, K_TO_C(t));
+			ccprintf("%d K = %d C", t, K_TO_C(t));
+			if (thermal_params[i].temp_fan_off &&
+			    thermal_params[i].temp_fan_max)
+				ccprintf("  %d%%",
+					 thermal_fan_percent(
+						 thermal_params[i].temp_fan_off,
+						 thermal_params[i].temp_fan_max,
+						 t));
+			ccprintf("\n");
 			break;
 		case EC_ERROR_NOT_POWERED:
 			ccprintf("Not powered\n");

@@ -121,7 +121,7 @@ test_mockable_static void smi_sensor_failure_warning(void)
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }
 
-static int fan_percent(int low, int high, int cur)
+int thermal_fan_percent(int low, int high, int cur)
 {
 	if (cur < low)
 		return 0;
@@ -181,9 +181,9 @@ static void thermal_control(void)
 		/* figure out the max fan needed, too */
 		if (thermal_params[i].temp_fan_off &&
 		    thermal_params[i].temp_fan_max) {
-			f = fan_percent(thermal_params[i].temp_fan_off,
-					thermal_params[i].temp_fan_max,
-					t);
+			f = thermal_fan_percent(thermal_params[i].temp_fan_off,
+						thermal_params[i].temp_fan_max,
+						t);
 			if (f > fmax)
 				fmax = f;
 		}
