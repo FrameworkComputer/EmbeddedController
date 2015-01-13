@@ -488,7 +488,7 @@ int send_hard_reset(int port)
 		return 0;
 
 	if (debug_level >= 1)
-		CPRINTF("Sending hard reset\n");
+		CPRINTF("C%d Send hard reset\n", port);
 
 	/* 64-bit preamble */
 	off = pd_write_preamble(port);
@@ -590,7 +590,7 @@ static int send_validate_message(int port, uint16_t header,
 	}
 	/* we failed all the re-transmissions */
 	if (debug_level >= 1)
-		CPRINTF("TX NO ACK %04x/%d\n", header, cnt);
+		CPRINTF("TX NOACK%d %04x/%d\n", port, header, cnt);
 	return -1;
 }
 
@@ -765,8 +765,8 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 	uint32_t *rdata;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
-		CPRINTF("VDM/%d [%02d] %08x", cnt, PD_VDO_CMD(payload[0]),
-			payload[0]);
+		CPRINTF("VDM%d/%d [%02d] %08x", port, cnt,
+			 PD_VDO_CMD(payload[0]), payload[0]);
 		if (PD_VDO_SVDM(payload[0]))
 			for (i = 1; i < cnt; i++)
 				CPRINTF(" %08x", payload[i]);
@@ -802,9 +802,9 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 static void execute_hard_reset(int port)
 {
 	if (pd[port].last_state == PD_STATE_HARD_RESET_SEND)
-		CPRINTF("HARD RESET (SENT)!\n");
+		CPRINTF("C%d HARD RST TX\n", port);
 	else
-		CPRINTF("HARD RESET (RECV)!\n");
+		CPRINTF("C%d HARD RST RX\n", port);
 
 	pd[port].msg_id = 0;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -858,7 +858,7 @@ static void execute_soft_reset(int port)
 	if (pd[port].flags & PD_FLAGS_SFT_RST_DIS_COMM)
 		pd_comm_enable(0);
 
-	CPRINTF("Soft Reset\n");
+	CPRINTF("C%d Soft Rst\n", port);
 }
 
 void pd_soft_reset(void)
@@ -931,7 +931,7 @@ static void pd_send_request_msg(int port, int always_send_request)
 	if (!always_send_request && pd[port].prev_request_mv == supply_voltage)
 		return;
 
-	CPRINTF("Request [%d] %dmV %dmA", RDO_POS(rdo),
+	CPRINTF("Req C%d [%d] %dmV %dmA", port, RDO_POS(rdo),
 		supply_voltage, curr_limit);
 	if (rdo & RDO_CAP_MISMATCH)
 		CPRINTF(" Mismatch");
@@ -1296,7 +1296,7 @@ static void analyze_rx_bist(int port)
 
 	/* if we didn't find any bytes that match criteria, display error */
 	if (i == 10) {
-		CPRINTF("Could not find any bytes of alternating bits\n");
+		CPRINTF("invalid pattern\n");
 		return;
 	}
 
@@ -1333,7 +1333,10 @@ static int analyze_rx(int port, uint32_t *payload)
 
 	/* Detect preamble */
 	bit = pd_find_preamble(port);
-	if (bit < 0) {
+	if (bit == -2) {
+		/* Hard reset */
+		return -2;
+	} else if (bit < 0) {
 		msg = "Preamble";
 		goto packet_err;
 	}
@@ -1390,7 +1393,7 @@ static int analyze_rx(int port, uint32_t *payload)
 		if (pcrc != ccrc)
 			bit = PD_ERR_CRC;
 		if (debug_level >= 1)
-			/* DEBUG */CPRINTF("CRC %08x <> %08x\n", pcrc, ccrc);
+			CPRINTF("CRC%d %08x <> %08x\n", port, pcrc, ccrc);
 		goto packet_err;
 	}
 
@@ -1410,7 +1413,7 @@ packet_err:
 	if (debug_level >= 2)
 		pd_dump_packet(port, msg);
 	else
-		CPRINTF("RXERR %s\n", msg);
+		CPRINTF("RXERR%d %s\n", port, msg);
 	return bit;
 }
 
