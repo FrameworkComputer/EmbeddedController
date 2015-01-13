@@ -406,10 +406,18 @@ static void unprotect_all_blocks(void)
 
 int flash_pre_init(void)
 {
+	uint32_t reset_flags = system_get_reset_flags();
 	uint32_t prot_flags = flash_get_protect();
 	int need_reset = 0;
 
 	if (flash_physical_restore_state())
+		return EC_SUCCESS;
+
+	/*
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection. Nothing additional needs to be done.
+	 */
+	if (reset_flags & RESET_FLAG_SYSJUMP)
 		return EC_SUCCESS;
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
