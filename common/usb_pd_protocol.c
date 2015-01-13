@@ -2882,7 +2882,8 @@ void pd_request_source_voltage(int port, int mv)
 {
 	pd_set_max_voltage(mv);
 
-	if (pd[port].task_state == PD_STATE_SNK_READY) {
+	if (pd[port].task_state == PD_STATE_SNK_READY ||
+	    pd[port].task_state == PD_STATE_SNK_TRANSITION) {
 		/* Set flag to send new power request in pd_task */
 		pd[port].new_power_request = 1;
 	} else {
