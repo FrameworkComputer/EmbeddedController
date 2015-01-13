@@ -50,7 +50,7 @@ static inline void output_disable(void)
 static inline int output_is_enabled(void)
 {
 	/* GPF0 = enable output FET */
-	return STM32_GPIO_IDR(GPIO_F) & 1;
+	return STM32_GPIO_ODR(GPIO_F) & 1;
 }
 
 /* ----- fault conditions ----- */
@@ -135,7 +135,7 @@ static inline void discharge_disable(void)
 static inline int discharge_is_enabled(void)
 {
 	/* GPF1 = enable discharge FET */
-	return STM32_GPIO_IDR(GPIO_F) & 2;
+	return STM32_GPIO_ODR(GPIO_F) & 2;
 }
 
 static void discharge_voltage(int target_volt)
