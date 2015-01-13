@@ -112,7 +112,7 @@ static timestamp_t fault_deadline;
 #define OVP_REC_MV(mv)  VBUS_MV((mv) * 11 / 10)
 
 /* Maximum discharging delay */
-#define DISCHARGE_TIMEOUT (90*MSEC)
+#define DISCHARGE_TIMEOUT (275*MSEC)
 /* Voltage overshoot below the OVP threshold for discharging to avoid OVP */
 #define DISCHARGE_OVERSHOOT_MV VBUS_MV(200)
 
@@ -407,6 +407,7 @@ int pd_board_checks(void)
 		fault = FAULT_DISCHARGE;
 		/* reset it after 1 second */
 		fault_deadline.val = get_time().val + OCP_TIMEOUT;
+		return EC_ERROR_INVAL;
 	}
 
 	/* everything is good *and* the error condition has expired */
