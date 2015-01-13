@@ -187,20 +187,21 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.
  */
 struct ec_thermal_config thermal_params[] = {
-	/* Only the AP affects the thermal limits and fan speed. */
-	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)}, C_TO_K(43), C_TO_K(85)},
+	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
+	{{C_TO_K(95), C_TO_K(97), C_TO_K(99)},
+	 C_TO_K(50), C_TO_K(85)},		/* PECI */
+	{{0, 0, 0}, 0, 0},			/* EC */
+	{{0, 0, 0}, C_TO_K(41), C_TO_K(55)},	/* Charger die */
 	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, C_TO_K(35), C_TO_K(49)},	/* CPU die */
 	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, C_TO_K(28), C_TO_K(44)},	/* Left C die */
 	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, C_TO_K(29), C_TO_K(43)},	/* Right C die */
 	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, C_TO_K(30), C_TO_K(44)},	/* Right D die */
 	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, C_TO_K(43), C_TO_K(54)},	/* Left D die */
 	{{0, 0, 0}, 0, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
