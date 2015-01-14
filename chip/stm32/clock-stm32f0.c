@@ -156,7 +156,7 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	/* Calculate alarm time */
 	alarm_sec = rtc_to_sec(*rtc) + delay_s;
 	alarm_us = (RTC_PREDIV_S - *rtcss) * US_PER_RTC_TICK + delay_us;
-	alarm_sec = (alarm_sec + alarm_us / SECOND) % 86400;
+	alarm_sec = alarm_sec + alarm_us / SECOND;
 	alarm_us = alarm_us % 1000000;
 
 	/* Set alarm time */
