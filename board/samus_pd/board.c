@@ -29,6 +29,9 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+/* Amount to offset the input current limit when sending to EC */
+#define INPUT_CURRENT_LIMIT_OFFSET_MA 192
+
 /* Chipset power state */
 static enum power_state ps;
 
@@ -628,7 +631,8 @@ void board_set_charge_limit(int charge_ma)
 	pwm_set_duty(PWM_CH_ILIM, pwm_duty);
 #endif
 
-	pd_status.curr_lim_ma = charge_ma;
+	pd_status.curr_lim_ma = MAX(0, charge_ma -
+					INPUT_CURRENT_LIMIT_OFFSET_MA);
 	pd_send_ec_int();
 
 	CPRINTS("New ilim %d", charge_ma);
