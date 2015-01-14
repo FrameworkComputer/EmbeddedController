@@ -227,7 +227,7 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 #define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
 #define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
 #define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
-#define PD_FLAGS_CURR_LIM_INIT     (1 << 11)/* input curr limit initialized */
+#define PD_FLAGS_VBUS_PRESENT      (1 << 11)/* vbus present in sink disconn. */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -237,7 +237,8 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \
-					   PD_FLAGS_CHECK_DR_ROLE)
+					   PD_FLAGS_CHECK_DR_ROLE | \
+					   PD_FLAGS_VBUS_PRESENT)
 
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
@@ -320,7 +321,7 @@ static const char * const pd_state_names[] = {
 	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "SRC_DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
-	"SRC_SWAP_STANDBY", "SRC_TO_FORCE_SINK",
+	"SRC_SWAP_STANDBY",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST",
 };
@@ -1573,7 +1574,9 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		    (drp_state == PD_DRP_FORCE_SINK ||
 		     (drp_state == PD_DRP_TOGGLE_OFF
 		      && pd[i].task_state == PD_STATE_SRC_DISCONNECTED))) {
-			set_state(i, PD_STATE_SRC_TO_FORCE_SINK);
+			pd[i].power_role = PD_ROLE_SINK;
+			set_state(i, PD_STATE_SNK_DISCONNECTED);
+			pd_set_host_mode(i, 0);
 			task_wake(PORT_TO_TASK_ID(i));
 		}
 
@@ -1687,6 +1690,15 @@ void pd_set_new_power_request(int port)
 }
 #endif /* CONFIG_CHARGE_MANAGER */
 
+#if defined(CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP) && defined(CONFIG_USBC_SS_MUX)
+/*
+ * Backwards compatible DFP does not support USB SS because it applies VBUS
+ * before debouncing CC and setting USB SS muxes, but SS detection will fail
+ * before we are done debouncing CC.
+ */
+#error "Backwards compatible DFP does not support USB"
+#endif
+
 void pd_task(void)
 {
 	int head;
@@ -1729,6 +1741,21 @@ void pd_task(void)
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
 	pd_dfp_pe_init(port);
+#endif
+
+#ifdef CONFIG_CHARGE_MANAGER
+	/* Initialize PD supplier current limit to 0 */
+	pd_set_input_current_limit(port, 0, 0);
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/* If sink, set initial type-C current limit based on vbus */
+	if (pd_snk_is_vbus_provided(port)) {
+		typec_set_input_current_limit(port, 500, TYPE_C_VOLTAGE);
+		pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
+	} else {
+		typec_set_input_current_limit(port, 0, 0);
+		pd[port].flags &= ~PD_FLAGS_VBUS_PRESENT;
+	}
+#endif
 #endif
 
 	while (1) {
@@ -1794,34 +1821,19 @@ void pd_task(void)
 			cc1_volt = pd_adc_read(port, 0);
 			cc2_volt = pd_adc_read(port, 1);
 			if (!CC_NC(cc1_volt) || !CC_NC(cc2_volt)) {
-#ifdef CONFIG_USBC_SS_MUX
-				/*
-				 * Set to USB SS based on current plarity
-				 * (might change after the debounce).
-				 */
-				board_set_usb_mux(port, TYPEC_MUX_USB,
-						  DFP_GET_POLARITY(cc1_volt,
-								   cc2_volt));
-#endif
+#ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* Enable VBUS */
-				if (pd_set_power_supply_ready(port)) {
-#ifdef CONFIG_USBC_SS_MUX
-					board_set_usb_mux(port, TYPEC_MUX_NONE,
-							  DFP_GET_POLARITY(
-								cc1_volt,
-								cc2_volt));
-#endif
+				if (pd_set_power_supply_ready(port))
 					break;
-				}
+#endif
 				pd[port].cc_state = PD_CC_NONE;
 				set_state(port,
 					PD_STATE_SRC_DISCONNECTED_DEBOUNCE);
 			}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-			/* Swap roles if time expired or VBUS is present */
+			/* Swap roles if time expired */
 			else if (drp_state != PD_DRP_FORCE_SOURCE &&
-				 (get_time().val >= next_role_swap ||
-				  pd_snk_is_vbus_provided(port))) {
+				 get_time().val >= next_role_swap) {
 				pd[port].power_role = PD_ROLE_SINK;
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 				pd_set_host_mode(port, 0);
@@ -1838,8 +1850,10 @@ void pd_task(void)
 			cc2_volt = pd_adc_read(port, 1);
 
 			if (CC_NC(cc1_volt) && CC_NC(cc2_volt)) {
+#ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* No connection any more, remove VBUS */
 				pd_power_supply_reset(port);
+#endif
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				timeout = 5*MSEC;
 				break;
@@ -1877,6 +1891,16 @@ void pd_task(void)
 				board_set_usb_mux(port, TYPEC_MUX_USB,
 						  pd[port].polarity);
 #endif
+#ifndef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
+				/* Enable VBUS */
+				if (pd_set_power_supply_ready(port)) {
+#ifdef CONFIG_USBC_SS_MUX
+					board_set_usb_mux(port, TYPEC_MUX_NONE,
+							  pd[port].polarity);
+#endif
+					break;
+				}
+#endif
 				/* initial data role for source is DFP */
 				pd_set_data_role(port, PD_ROLE_DFP);
 
@@ -1893,8 +1917,10 @@ void pd_task(void)
 			/* Accessory is attached */
 			else if (new_cc_state == PD_CC_AUDIO_ACC ||
 				 new_cc_state == PD_CC_DEBUG_ACC) {
+#ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* Remove VBUS */
 				pd_power_supply_reset(port);
+#endif
 				set_state(port, PD_STATE_SRC_ACCESSORY);
 			}
 			break;
@@ -1942,6 +1968,7 @@ void pd_task(void)
 				pd[port].msg_id = 0;
 				set_state_timeout(
 					port,
+#ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 					/*
 					 * delay for power supply to start up.
 					 * subtract out debounce time if coming
@@ -1953,6 +1980,10 @@ void pd_task(void)
 					  (pd[port].last_state ==
 					   PD_STATE_SRC_DISCONNECTED_DEBOUNCE
 						? PD_T_CC_DEBOUNCE : 0),
+#else
+					get_time().val +
+					PD_POWER_SUPPLY_TRANSITION_DELAY,
+#endif
 					PD_STATE_SRC_DISCOVERY);
 			}
 			break;
@@ -2189,22 +2220,6 @@ void pd_task(void)
 						  PD_STATE_SNK_DISCONNECTED);
 			}
 			break;
-		case PD_STATE_SRC_TO_FORCE_SINK:
-			/*
-			 * Transition from Source to force sink role. Disable
-			 * VBUS and wait for VBUS to turn off
-			 */
-			if (pd[port].last_state != pd[port].task_state)
-				pd_power_supply_reset(port);
-
-			if (pd_snk_is_vbus_provided(port)) {
-				/* When VBUS is off, go to SNK_DISCONNECTED */
-				pd_set_host_mode(port, 0);
-				pd[port].power_role = PD_ROLE_SINK;
-				set_state(port, PD_STATE_SNK_DISCONNECTED);
-				timeout = 10*MSEC;
-			}
-			break;
 		case PD_STATE_SUSPENDED:
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
@@ -2219,41 +2234,45 @@ void pd_task(void)
 		case PD_STATE_SNK_DISCONNECTED:
 			timeout = 10*MSEC;
 
+#ifdef CONFIG_CHARGE_MANAGER
 			/*
-			 * Source connection monitoring
-			 * Note, if we just turned VBUS off, we may still see
-			 * VBUS present, but that should be safe because we
-			 * will wait in the debounce state until vbus is
-			 * removed.
+			 * If VBUS, use default 500mA limit, otherwise
+			 * set current limit to 0. This is necessary for
+			 * an accessory that provides power with no Rp.
 			 */
-			if (pd_snk_is_vbus_provided(port)) {
+			if (pd_snk_is_vbus_provided(port) &&
+			    !(pd[port].flags & PD_FLAGS_VBUS_PRESENT)) {
+				typec_set_input_current_limit(port, 500,
+							      TYPE_C_VOLTAGE);
+				pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
+			} else if (!pd_snk_is_vbus_provided(port) &&
+				   (pd[port].flags & PD_FLAGS_VBUS_PRESENT)) {
+				typec_set_input_current_limit(port, 0, 0);
+				pd[port].flags &= ~PD_FLAGS_VBUS_PRESENT;
+			}
+#endif
+
+			/* Source connection monitoring */
+			cc1_volt = pd_adc_read(port, 0);
+			cc2_volt = pd_adc_read(port, 1);
+			if (CC_RP(cc1_volt) || CC_RP(cc2_volt)) {
 				pd[port].cc_state = PD_CC_NONE;
 				hard_reset_count = 0;
+				new_cc_state = PD_CC_DFP_ATTACHED;
+				pd[port].cc_debounce = get_time().val +
+							PD_T_CC_DEBOUNCE;
 				set_state(port,
 					PD_STATE_SNK_DISCONNECTED_DEBOUNCE);
 				break;
 			}
 
-#ifdef CONFIG_CHARGE_MANAGER
-			/*
-			 * If no VBUS, set charge limit to zero if we have
-			 * yet to set a limit for this port.
-			 */
-			if (!(pd[port].flags & PD_FLAGS_CURR_LIM_INIT)) {
-				pd[port].flags |= PD_FLAGS_CURR_LIM_INIT;
-				typec_set_input_current_limit(port, 0, 0);
-				pd_set_input_current_limit(port, 0, 0);
-			}
-#endif
 			/*
 			 * If no source detected, check for role toggle.
-			 * Do not role toggle if Rp is detected.
+			 * Do not toggle if VBUS is present.
 			 */
-			cc1_volt = pd_adc_read(port, 0);
-			cc2_volt = pd_adc_read(port, 1);
 			if (drp_state == PD_DRP_TOGGLE_ON &&
 			    get_time().val >= next_role_swap &&
-			    !CC_RP(cc1_volt) && !CC_RP(cc2_volt)) {
+			    !pd_snk_is_vbus_provided(port)) {
 				/* Swap roles to source */
 				pd[port].power_role = PD_ROLE_SOURCE;
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
@@ -2265,7 +2284,9 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SNK_DISCONNECTED_DEBOUNCE:
-			if (!pd_snk_is_vbus_provided(port)) {
+			cc1_volt = pd_adc_read(port, 0);
+			cc2_volt = pd_adc_read(port, 1);
+			if (!CC_RP(cc1_volt) && !CC_RP(cc2_volt)) {
 				/* No connection any more */
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 				timeout = 5*MSEC;
@@ -2273,50 +2294,34 @@ void pd_task(void)
 			}
 
 			timeout = 20*MSEC;
-			cc1_volt = pd_adc_read(port, 0);
-			cc2_volt = pd_adc_read(port, 1);
-			if (!CC_RP(cc1_volt) && !CC_RP(cc2_volt))
-				/* Accessory */
-				new_cc_state = PD_CC_ACC_PRESENT;
-			else
-				/* DFP attached */
-				new_cc_state = PD_CC_DFP_ATTACHED;
 
-			/* Debounce the cc state */
-			if (new_cc_state != pd[port].cc_state) {
-				pd[port].cc_debounce = get_time().val +
-							PD_T_CC_DEBOUNCE;
-				pd[port].cc_state = new_cc_state;
+			/* Wait for CC debounce and VBUS present */
+			if (get_time().val < pd[port].cc_debounce ||
+			    !pd_snk_is_vbus_provided(port))
 				break;
-			} else if (get_time().val < pd[port].cc_debounce) {
-				break;
-			}
 
-			/* Debounce complete */
-			if (new_cc_state == PD_CC_DFP_ATTACHED) {
-				pd[port].polarity =
-					UFP_GET_POLARITY(cc1_volt, cc2_volt);
-				pd_select_polarity(port, pd[port].polarity);
-				/* reset message ID  on connection */
-				pd[port].msg_id = 0;
-				/* initial data role for sink is UFP */
-				pd_set_data_role(port, PD_ROLE_UFP);
+			/* We are attached */
+			pd[port].polarity =
+				UFP_GET_POLARITY(cc1_volt, cc2_volt);
+			pd_select_polarity(port, pd[port].polarity);
+			/* reset message ID  on connection */
+			pd[port].msg_id = 0;
+			/* initial data role for sink is UFP */
+			pd_set_data_role(port, PD_ROLE_UFP);
 #ifdef CONFIG_CHARGE_MANAGER
-				pd[port].flags |= PD_FLAGS_CURR_LIM_INIT;
-				typec_curr = get_typec_current_limit(
-					pd[port].polarity ? cc2_volt :
-							    cc1_volt);
-				typec_set_input_current_limit(
-					port, typec_curr, TYPE_C_VOLTAGE);
+			typec_curr = get_typec_current_limit(
+				pd[port].polarity ? cc2_volt :
+						    cc1_volt);
+			typec_set_input_current_limit(
+				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
-				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
-						  PD_FLAGS_CHECK_DR_ROLE;
-				set_state(port, PD_STATE_SNK_DISCOVERY);
-				timeout = 10*MSEC;
-				hook_call_deferred(
-					pd_usb_billboard_deferred,
-					PD_T_AME);
-			}
+			pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
+					  PD_FLAGS_CHECK_DR_ROLE;
+			set_state(port, PD_STATE_SNK_DISCOVERY);
+			timeout = 10*MSEC;
+			hook_call_deferred(
+				pd_usb_billboard_deferred,
+				PD_T_AME);
 			break;
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
 			if (pd[port].last_state != pd[port].task_state)

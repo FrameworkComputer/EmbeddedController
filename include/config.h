@@ -1209,6 +1209,9 @@
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
 
+/* Support v1.1 type-C connection state machine */
+#undef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
+
 /* Support for USB type-c vconn. Not needed for captive cables. */
 #undef CONFIG_USBC_VCONN
 
