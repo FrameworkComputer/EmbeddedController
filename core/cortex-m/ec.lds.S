@@ -267,7 +267,7 @@ SECTIONS
      * explicit ASSERT afterwards will cause the linker to abort if we use too
      * much. */
     __hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
-    ASSERT(FW_SIZE(SECTION) >
+    ASSERT(FW_SIZE(SECTION) >=
                  (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
 
