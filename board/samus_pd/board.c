@@ -47,6 +47,13 @@ static int chg_is_cutoff;
 static struct ec_response_pd_status pd_status;
 static struct ec_response_host_event_status host_event_status;
 
+/*
+ * Store the state of our USB data switches so that they can be restored
+ * after pericom reset.
+ */
+static int usb_switch_state[PD_PORT_COUNT];
+static struct mutex usb_switch_lock[PD_PORT_COUNT];
+
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(15), STM32_TIM_CH(2), 0, GPIO_ILIM_ADJ_PWM, GPIO_ALT_F1},
@@ -103,6 +110,14 @@ void vbus1_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C1);
 }
 
+void set_usb_switches(int port, int open)
+{
+	mutex_lock(&usb_switch_lock[port]);
+	usb_switch_state[port] = open;
+	pi3usb9281_set_switches(port, open);
+	mutex_unlock(&usb_switch_lock[port]);
+}
+
 /* Wait 200ms after a charger is detected to debounce pin contact order */
 #define USB_CHG_DEBOUNCE_DELAY_MS 200
 /*
@@ -133,6 +148,14 @@ void usb_charger_task(void)
 
 			/* Trigger chip reset to refresh detection registers */
 			pi3usb9281_reset(port);
+			/*
+			 * Restore data switch settings - switches return to
+			 * closed on reset until restored.
+			 */
+			mutex_lock(&usb_switch_lock[port]);
+			if (usb_switch_state[port])
+				pi3usb9281_set_switches(port, 1);
+			mutex_unlock(&usb_switch_lock[port]);
 			/* Clear possible disconnect interrupt */
 			pi3usb9281_get_interrupts(port);
 			/* Mask attach interrupt */

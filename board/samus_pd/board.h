@@ -132,6 +132,9 @@ int board_get_battery_soc(void);
 /* Send host event to AP */
 void pd_send_host_event(int mask);
 
+/* Update the state of the USB data switches */
+void set_usb_switches(int port, int open);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

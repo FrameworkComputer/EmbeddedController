@@ -10,7 +10,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "pi3usb9281.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -141,7 +140,7 @@ int pd_check_data_swap(int port, int data_role)
 void pd_execute_data_swap(int port, int data_role)
 {
 	/* Open USB switches when taking UFP role */
-	pi3usb9281_set_switches(port, (data_role == PD_ROLE_UFP));
+	set_usb_switches(port, (data_role == PD_ROLE_UFP));
 }
 
 void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
