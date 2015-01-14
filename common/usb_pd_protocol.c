@@ -477,7 +477,6 @@ int prepare_message(int port, uint16_t header, uint8_t cnt,
 }
 
 static int analyze_rx(int port, uint32_t *payload);
-static void analyze_rx_bist(int port);
 
 int send_hard_reset(int port)
 {
@@ -681,6 +680,9 @@ static int send_request(int port, uint32_t rdo)
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
+#ifdef CONFIG_COMMON_RUNTIME
+static void analyze_rx_bist(int port);
+
 static int send_bist_cmd(int port)
 {
 	/* currently only support sending bist carrier 2 */
@@ -694,6 +696,33 @@ static int send_bist_cmd(int port)
 
 	return bit_len;
 }
+
+static void bist_mode_2_rx(int port)
+{
+	/* monitor for incoming packet */
+	pd_rx_enable_monitoring(port);
+
+	/* loop until we start receiving data */
+	while (1) {
+		task_wait_event(500*MSEC);
+		/* incoming packet ? */
+		if (pd_rx_started(port))
+			break;
+	}
+
+	/*
+	 * once we start receiving bist data, do not
+	 * let state machine run again. stay here, and
+	 * analyze a chunk of data every 250ms.
+	 */
+	while (1) {
+		analyze_rx_bist(port);
+		pd_rx_complete(port);
+		msleep(250);
+		pd_rx_enable_monitoring(port);
+	}
+}
+#endif
 
 static void bist_mode_2_tx(int port)
 {
@@ -721,32 +750,6 @@ static void bist_mode_2_tx(int port)
 	/* do not let pd task state machine run anymore */
 	while (1)
 		task_wait_event(-1);
-}
-
-static void bist_mode_2_rx(int port)
-{
-	/* monitor for incoming packet */
-	pd_rx_enable_monitoring(port);
-
-	/* loop until we start receiving data */
-	while (1) {
-		task_wait_event(500*MSEC);
-		/* incoming packet ? */
-		if (pd_rx_started(port))
-			break;
-	}
-
-	/*
-	 * once we start receiving bist data, do not
-	 * let state machine run again. stay here, and
-	 * analyze a chunk of data every 250ms.
-	 */
-	while (1) {
-		analyze_rx_bist(port);
-		pd_rx_complete(port);
-		msleep(250);
-		pd_rx_enable_monitoring(port);
-	}
 }
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
@@ -1273,6 +1276,7 @@ static inline int decode_word(int port, int off, uint32_t *val32)
 	return decode_short(port, off, ((uint16_t *)val32 + 1));
 }
 
+#ifdef CONFIG_COMMON_RUNTIME
 static int count_set_bits(int n)
 {
 	int count = 0;
@@ -1318,6 +1322,7 @@ static void analyze_rx_bist(int port)
 	CPRINTF("- incorrect bits: %d / %d\n", invalid_bits,
 			total_invalid_bits);
 }
+#endif
 
 static int analyze_rx(int port, uint32_t *payload)
 {
@@ -2655,10 +2660,12 @@ void pd_task(void)
 			execute_hard_reset(port);
 			timeout = 10*MSEC;
 			break;
+#ifdef CONFIG_COMMON_RUNTIME
 		case PD_STATE_BIST:
 			send_bist_cmd(port);
 			bist_mode_2_rx(port);
 			break;
+#endif
 		default:
 			break;
 		}

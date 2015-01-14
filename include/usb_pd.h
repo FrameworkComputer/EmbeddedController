@@ -610,7 +610,9 @@ enum pd_states {
 	PD_STATE_SOFT_RESET,
 	PD_STATE_HARD_RESET_SEND,
 	PD_STATE_HARD_RESET_EXECUTE,
+#ifdef CONFIG_COMMON_RUNTIME
 	PD_STATE_BIST,
+#endif
 
 	/* Number of states. Not an actual state. */
 	PD_STATE_COUNT,
