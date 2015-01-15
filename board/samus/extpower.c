@@ -11,11 +11,16 @@
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "task.h"
+#include "util.h"
+
+/* Backboost has been detected */
+static int bkboost_detected;
 
 int extpower_is_present(void)
 {
@@ -92,6 +97,9 @@ void extpower_task(void)
 	int extpower = extpower_is_present();
 	extpower_board_hacks(extpower);
 
+	/* Enable backboost detection interrupt */
+	gpio_enable_interrupt(GPIO_BKBOOST_DET);
+
 	while (1) {
 		/* Wait until next extpower interrupt */
 		task_wait_event(-1);
@@ -110,3 +118,19 @@ void extpower_task(void)
 			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
 	}
 }
+
+void bkboost_det_interrupt(enum gpio_signal signal)
+{
+	/* Backboost has been detected, save it, and disable interrupt */
+	bkboost_detected = 1;
+	gpio_disable_interrupt(GPIO_BKBOOST_DET);
+}
+
+static int command_backboost_det(int argc, char **argv)
+{
+	ccprintf("Backboost detected: %d\n", bkboost_detected);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(bkboost, command_backboost_det, NULL,
+			"Read backboost detection",
+			NULL);

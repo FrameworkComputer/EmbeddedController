@@ -117,8 +117,6 @@ enum x86_signal {
 enum adc_channel {
 	/* EC internal die temperature in degrees K. */
 	ADC_CH_EC_TEMP = 0,
-	/* Charger current in mA. */
-	ADC_CH_CHARGER_CURRENT,
 	/* BAT_TEMP */
 	ADC_CH_BAT_TEMP,
 
@@ -175,6 +173,9 @@ enum als_id {
 
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
+
+/* Backboost detected interrupt */
+void bkboost_det_interrupt(enum gpio_signal signal);
 
 /* Bit masks for turning on PP5000 rail in G3 */
 #define PP5000_IN_G3_AC       (1 << 0)
