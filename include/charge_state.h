@@ -10,9 +10,6 @@
 
 /* Stuff that's common to all charger implementations can go here. */
 
-/* Seconds after AP battery shutdown warning before we kill the AP */
-#define CRITICAL_BATTERY_SHUTDOWN_TIMEOUT 30
-
 /* Seconds to spend trying to wake a non-responsive battery */
 #define PRECHARGE_TIMEOUT 30
 

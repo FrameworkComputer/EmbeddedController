@@ -126,6 +126,18 @@
 #undef CONFIG_BATTERY_SMART
 
 /*
+ * Critical battery shutdown timeout (seconds)
+ *
+ * If the battery is at extremely low charge (and discharging) or extremely
+ * high temperature, the EC will shut itself down. This defines the timeout
+ * period in seconds between the critical condition being detected and the
+ * EC shutting itself down. Note that if the critical condition is corrected
+ * before the timeout expiration, the EC will not shut itself down.
+ *
+ */
+#define CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT 30
+
+/*
  * Support battery cut-off as host command and console command.
  *
  * Once defined, you have to implement a board_cut_off_battery() function
