@@ -380,7 +380,7 @@ static void i2c_init(void)
 	task_enable_irq(STM32_IRQ_I2C2_EV);
 	task_enable_irq(STM32_IRQ_I2C2_ER);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 /*****************************************************************************/
 /* STM32 Host I2C */

@@ -408,7 +408,7 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 /*****************************************************************************/
 /* Console commands */

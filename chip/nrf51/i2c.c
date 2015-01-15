@@ -63,7 +63,7 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++)
 		i2c_init_port(i);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 static void dump_i2c_reg(int port)
 {

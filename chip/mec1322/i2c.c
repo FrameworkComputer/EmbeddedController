@@ -340,7 +340,7 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; ++i)
 		configure_port(i2c_ports[i].port, i2c_ports[i].kbps);
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 static void handle_interrupt(int port)
 {

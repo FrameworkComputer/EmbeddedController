@@ -406,7 +406,7 @@ static void i2c_init(void)
 		i2c_set_timeout(i, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 /**
  * Handle an interrupt on the specified port.

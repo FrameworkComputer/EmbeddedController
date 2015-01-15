@@ -589,4 +589,4 @@ static void i2c_init(void)
 		task_enable_irq(i2c_irqs[port]);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);

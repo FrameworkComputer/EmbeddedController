@@ -443,7 +443,7 @@ static void i2c_init(void)
 	task_enable_irq(IRQ_SLAVE);
 #endif
 }
-DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 /**

@@ -21,16 +21,18 @@ enum hook_priority {
 	HOOK_PRIO_INIT_DMA = HOOK_PRIO_FIRST + 1,
 	/* LPC inits before modules which need memory-mapped I/O */
 	HOOK_PRIO_INIT_LPC = HOOK_PRIO_FIRST + 1,
+	/* I2C is needed before chipset inits (battery communications). */
+	HOOK_PRIO_INIT_I2C = HOOK_PRIO_FIRST + 2,
 	/* Chipset inits before modules which need to know its initial state. */
-	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 2,
+	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 3,
 	/* Lid switch inits before power button */
-	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 3,
+	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 4,
 	/* Power button inits before chipset and switch */
-	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 4,
+	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 5,
 	/* PWM inits before modules which might use it (fans, LEDs) */
-	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 5,
+	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 6,
 	/* Extpower inits before modules which might use it (battery, LEDs) */
-	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 6,
+	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 7,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,
