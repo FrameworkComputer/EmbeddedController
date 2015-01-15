@@ -88,7 +88,6 @@ static void configure_port(int port, int kbps)
 	MEC1322_I2C_CONFIG(port) |= 1 << 29; /* ENIDI */
 	MEC1322_INT_ENABLE(12) |= (1 << port);
 	MEC1322_INT_BLK_EN |= 1 << 12;
-	task_enable_irq(MEC1322_IRQ_I2C_0 + port);
 }
 
 static void reset_port(int port)
