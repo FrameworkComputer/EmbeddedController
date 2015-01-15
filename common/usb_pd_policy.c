@@ -206,7 +206,7 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 
 	for (i = pe[port].svid_cnt; i < pe[port].svid_cnt + 12; i += 2) {
 		if (i == SVID_DISCOVERY_MAX) {
-			CPRINTF("ERR: too many svids discovered\n");
+			CPRINTF("ERR:SVIDCNT\n");
 			break;
 		}
 
@@ -225,7 +225,7 @@ static void dfp_consume_svids(int port, uint32_t *payload)
 	}
 	/* TODO(tbroch) need to re-issue discover svids if > 12 */
 	if (i && ((i % 12) == 0))
-		CPRINTF("TODO: need to re-issue discover svids > 12\n");
+		CPRINTF("ERR:SVID+12\n");
 }
 
 static int dfp_discover_modes(int port, uint32_t *payload)
@@ -242,7 +242,7 @@ static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 	int idx = pe[port].svid_idx;
 	pe[port].svids[idx].mode_cnt = cnt - 1;
 	if (pe[port].svids[idx].mode_cnt < 0) {
-		CPRINTF("PE ERR: no modes provided for SVID\n");
+		CPRINTF("ERR:NOMODE\n");
 	} else {
 		memcpy(pe[port].svids[pe[port].svid_idx].mode_vdo, &payload[1],
 		       sizeof(uint32_t) * pe[port].svids[idx].mode_cnt);
@@ -297,12 +297,12 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 	if (!AMODE_VALID(port))
 		return;
 	if (svid != pe[port].amode.fx->svid) {
-		CPRINTF("PE ERR: svid s:0x%04x != m:0x%04x\n",
+		CPRINTF("ERR:svid s:0x%04x != m:0x%04x\n",
 			svid, pe[port].amode.fx->svid);
 		return;
 	}
 	if (opos != pd_alt_mode(port)) {
-		CPRINTF("PE ERR: opos s:%d != m:%d\n",
+		CPRINTF("ERR:opos s:%d != m:%d\n",
 			opos, pd_alt_mode(port));
 		return;
 	}
@@ -447,7 +447,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			return 0;
 #endif
 		default:
-			CPRINTF("PE ERR: unknown command %d\n", cmd);
+			CPRINTF("ERR:CMD:%d\n", cmd);
 			rsize = 0;
 		}
 		if (func)
@@ -517,7 +517,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			rsize = 0;
 			break;
 		default:
-			CPRINTF("PE ERR: unknown command %d\n", cmd);
+			CPRINTF("ERR:CMD:%d\n", cmd);
 			rsize = 0;
 		}
 
@@ -533,7 +533,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			break;
 		case CMD_ENTER_MODE:
 			/* Error */
-			CPRINTF("PE ERR: received BUSY for Enter mode\n");
+			CPRINTF("ERR:ENTBUSY\n");
 			rsize = 0;
 			break;
 		case CMD_EXIT_MODE:
@@ -547,7 +547,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		rsize = 0;
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 	} else {
-		CPRINTF("PE ERR: unknown cmd type %d\n", cmd);
+		CPRINTF("ERR:CMDT:%d\n", cmd);
 	}
 	return rsize;
 }

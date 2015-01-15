@@ -313,7 +313,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		else
 			hook_call_deferred(hpd0_irq_deferred, 300);
 	} else if (irq & !cur_lvl) {
-		CPRINTF("PE ERR: IRQ_HPD w/ HPD_LOW\n");
+		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
 	} else {
 		gpio_set_level(hpd, lvl);
