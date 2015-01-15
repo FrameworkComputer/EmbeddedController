@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "system.h"
 #include "task.h"
 #include "util.h"
 
@@ -70,20 +71,32 @@ static void extpower_board_hacks(int extpower)
 	/*
 	 * Use discharge_on_ac() to workaround hardware backboosting
 	 * charge circuit problems.
-	 *
+	 */
+	int use_bkboost_workaround = (system_get_board_version() < 1);
+
+	/*
 	 * When in G3, PP5000 needs to be enabled to accurately sense
 	 * CC voltage when AC is attached. When AC is disconnceted
 	 * it needs to be off to save power.
 	 */
 	if (extpower && !extpower_prev) {
-		charger_discharge_on_ac(0);
+		if (use_bkboost_workaround)
+			charger_discharge_on_ac(0);
+
 		set_pp5000_in_g3(PP5000_IN_G3_AC, 1);
 	} else if (extpower && extpower_prev) {
-		/* Glitch on AC_PRESENT, attempt to recover from backboost */
-		charger_discharge_on_ac(1);
-		charger_discharge_on_ac(0);
+		if (use_bkboost_workaround) {
+			/*
+			 * Glitch on AC_PRESENT, attempt to recover from
+			 * backboost
+			 */
+			charger_discharge_on_ac(1);
+			charger_discharge_on_ac(0);
+		}
 	} else {
-		charger_discharge_on_ac(1);
+		if (use_bkboost_workaround)
+			charger_discharge_on_ac(1);
+
 		set_pp5000_in_g3(PP5000_IN_G3_AC, 0);
 	}
 	extpower_prev = extpower;
