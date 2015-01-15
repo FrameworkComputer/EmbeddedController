@@ -147,7 +147,7 @@ def main():
                       default=4096)
   parser.add_argument("-l", "--header_loc", type=int,
                       help="Location of header in SPI flash",
-                      default=0x170000)
+                      default=0)
   parser.add_argument("-p", "--payload_offset", type=int,
                       help="The offset of payload from the header",
                       default=0x240)
