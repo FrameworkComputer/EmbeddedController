@@ -937,9 +937,11 @@ void pd_dfp_pe_init(int port);
  * @param dev_id		device identifier
  * @param rw_hash		pointer to rw_hash
  * @param current_image		current image: RW or RO
+ * @return			true if the dev / hash match an existing hash
+ *				in our table, false otherwise
  */
-void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
-			  uint32_t ec_current_image);
+int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
+			 uint32_t ec_current_image);
 
 /**
  * Send Vendor Defined Message

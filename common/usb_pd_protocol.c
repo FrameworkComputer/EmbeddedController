@@ -1541,9 +1541,13 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 }
 #endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
 
-void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
-			  uint32_t current_image)
+int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
+			 uint32_t current_image)
 {
+#ifdef CONFIG_COMMON_RUNTIME
+	int i;
+#endif
+
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 #ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
@@ -1551,6 +1555,16 @@ void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
 #endif
 	pd[port].current_image = current_image;
+
+#ifdef CONFIG_COMMON_RUNTIME
+	/* Search table for matching device / hash */
+	for (i = 0; i < RW_HASH_ENTRIES; i++)
+		if (dev_id == rw_hash_table[i].dev_id)
+			return !memcmp(rw_hash,
+				       rw_hash_table[i].dev_rw_hash,
+				       PD_RW_HASH_SIZE);
+#endif
+	return 0;
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
