@@ -1526,6 +1526,7 @@ static void pd_vdm_send_state_machine(int port)
 	}
 }
 
+#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
 static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 {
 	int j;
@@ -1537,14 +1538,17 @@ static inline void pd_dev_dump_info(uint16_t dev_id, uint8_t *hash)
 	}
 	ccprintf("\n");
 }
+#endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
 
 void pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 			  uint32_t current_image)
 {
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
+#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
 	if (debug_level >= 1)
 		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
+#endif
 	pd[port].current_image = current_image;
 }
 
@@ -2966,7 +2970,9 @@ static int command_pd(int argc, char **argv)
 		pd_comm_enable(enable);
 		ccprintf("Ports %s\n", enable ? "enabled" : "disabled");
 		return EC_SUCCESS;
-	} else if (!strncasecmp(argv[1], "rwhashtable", 3)) {
+	}
+#ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
+	else if (!strncasecmp(argv[1], "rwhashtable", 3)) {
 		int i;
 		struct ec_params_usb_pd_rw_hash_entry *p;
 		for (i = 0; i < RW_HASH_ENTRIES; i++) {
@@ -2975,6 +2981,7 @@ static int command_pd(int argc, char **argv)
 		}
 		return EC_SUCCESS;
 	}
+#endif /* CONFIG_CMD_PD_DEV_DUMP_INFO */
 
 #endif
 	/* command: pd <port> <subcmd> [args] */
