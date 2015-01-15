@@ -764,17 +764,10 @@ static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
 
 static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 {
-	int rlen = 0, i;
+	int rlen = 0;
 	uint32_t *rdata;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
-		CPRINTF("VDM%d/%d [%02d] %08x", port, cnt,
-			 PD_VDO_CMD(payload[0]), payload[0]);
-		if (PD_VDO_SVDM(payload[0]))
-			for (i = 1; i < cnt; i++)
-				CPRINTF(" %08x", payload[i]);
-		CPRINTF("\n");
-
 		/* If UFP responded busy retry after timeout */
 		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_BUSY) {
 			pd[port].vdm_timeout.val = get_time().val +
