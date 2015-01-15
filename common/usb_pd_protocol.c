@@ -2931,6 +2931,31 @@ void pd_send_hpd(int port, enum hpd_event hpd)
 }
 #endif
 
+int pd_fetch_acc_log_entry(int port)
+{
+	timestamp_t timeout;
+
+	/* Cannot send a VDM now, the host should retry */
+	if (pd[port].vdm_state > 0)
+		return pd[port].vdm_state == VDM_STATE_BUSY ?
+				EC_RES_BUSY : EC_RES_UNAVAILABLE;
+
+	pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_GET_LOG, NULL, 0);
+	timeout.val = get_time().val + 500*MSEC;
+
+	/* Wait until VDM is done */
+	while ((pd[port].vdm_state > 0) &&
+	       (get_time().val < timeout.val))
+		task_wait_event(10*MSEC);
+
+	if (pd[port].vdm_state > 0)
+		return EC_RES_TIMEOUT;
+	else if (pd[port].vdm_state < 0)
+		return EC_RES_ERROR;
+
+	return EC_RES_SUCCESS;
+}
+
 void pd_request_source_voltage(int port, int mv)
 {
 	pd_set_max_voltage(mv);

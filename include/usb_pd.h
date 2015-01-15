@@ -952,6 +952,23 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 			 uint32_t ec_current_image);
 
 /**
+ * Try to fetch one PD log entry from accessory
+ *
+ * @param port	USB-C accessory port number
+ * @return	EC_RES_SUCCESS if the VDM was sent properly else error code
+ */
+int pd_fetch_acc_log_entry(int port);
+
+/**
+ * Analyze the log entry received as the VDO_CMD_GET_LOG payload.
+ *
+ * @param port		USB-C accessory port number
+ * @param cnt		number of data objects in payload
+ * @param payload	payload data
+ */
+void pd_log_recv_vdm(int port, int cnt, uint32_t *payload);
+
+/**
  * Send Vendor Defined Message
  *
  * @param port     USB-C port number

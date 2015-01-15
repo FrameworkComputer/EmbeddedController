@@ -232,6 +232,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	case VDO_CMD_FLIP:
 		board_flip_usb_mux(port);
 		break;
+	case VDO_CMD_GET_LOG:
+		pd_log_recv_vdm(port, cnt, payload);
+		break;
 	}
 
 	return 0;

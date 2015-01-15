@@ -8,6 +8,10 @@
 #include "host_command.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd.h"
+#ifdef HAS_TASK_HOSTCMD
+#include "usb_pd_config.h"
+#endif
 #include "util.h"
 
 /* Event log FIFO */
@@ -40,8 +44,8 @@ static size_t log_tail_next;
 /* Size of one FIFO entry */
 #define ENTRY_SIZE(payload_sz) (1+DIV_ROUND_UP((payload_sz), UNIT_SIZE))
 
-void pd_log_event(uint8_t type, uint8_t size_port,
-		  uint16_t data, void *payload)
+static void log_add_event(uint8_t type, uint8_t size_port, uint16_t data,
+			  void *payload, uint32_t timestamp)
 {
 	struct ec_response_pd_log *r;
 	size_t payload_size = PD_LOG_SIZE(size_port);
@@ -68,7 +72,7 @@ void pd_log_event(uint8_t type, uint8_t size_port,
 
 	r = log_events + (current_tail & (LOG_SIZE - 1));
 
-	r->timestamp = get_time().val >> PD_LOG_TIMESTAMP_SHIFT;
+	r->timestamp = timestamp;
 	r->type = type;
 	r->size_port = size_port;
 	r->data = data;
@@ -83,6 +87,14 @@ void pd_log_event(uint8_t type, uint8_t size_port,
 	/* mark the entry available in the queue if nobody is behind us */
 	if (current_tail == log_tail)
 		log_tail = log_tail_next;
+}
+
+void pd_log_event(uint8_t type, uint8_t size_port,
+		  uint16_t data, void *payload)
+{
+	uint32_t timestamp = get_time().val >> PD_LOG_TIMESTAMP_SHIFT;
+
+	log_add_event(type, size_port, data, payload, timestamp);
 }
 
 static int pd_log_dequeue(struct ec_response_pd_log *r)
@@ -125,12 +137,54 @@ retry:
 }
 
 #ifdef HAS_TASK_HOSTCMD
+
+/* number of accessory entries we have queued since last check */
+static volatile int incoming_logs;
+
+void pd_log_recv_vdm(int port, int cnt, uint32_t *payload)
+{
+	struct ec_response_pd_log *r = (void *)&payload[1];
+	/* update port number from MCU point of view */
+	size_t size = PD_LOG_SIZE(r->size_port);
+	uint8_t size_port = PD_LOG_PORT_SIZE(size, port);
+	uint32_t timestamp;
+
+	if ((cnt < 2 + DIV_ROUND_UP(size, sizeof(uint32_t))) ||
+	    !(payload[0] & VDO_SRC_RESPONDER))
+		/* Not a proper log entry, bail out */
+		return;
+
+	if (r->type != PD_EVENT_NO_ENTRY) {
+		timestamp = (get_time().val >> PD_LOG_TIMESTAMP_SHIFT)
+			  - r->timestamp;
+		log_add_event(r->type, size_port, r->data, r->payload,
+			      timestamp);
+		/* record that we have enqueued new content */
+		incoming_logs++;
+	}
+}
+
 /* we are a PD MCU/EC, send back the events to the host */
 static int hc_pd_get_log_entry(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pd_log *r = args->response;
 
+dequeue_retry:
 	args->response_size = pd_log_dequeue(r);
+	/* if the MCU log no longer has entries, try connected accessories */
+	if (r->type == PD_EVENT_NO_ENTRY) {
+		int i, res;
+		incoming_logs = 0;
+		for (i = 0; i < PD_PORT_COUNT; ++i) {
+			res = pd_fetch_acc_log_entry(i);
+			if (res == EC_RES_BUSY) /* host should retry */
+				return EC_RES_BUSY;
+		}
+		/* we have received new entries from an accessory */
+		if (incoming_logs)
+			goto dequeue_retry;
+		/* else the current entry is already "PD_EVENT_NO_ENTRY" */
+	}
 
 	return EC_RES_SUCCESS;
 }
