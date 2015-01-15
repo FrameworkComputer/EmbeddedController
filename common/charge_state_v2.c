@@ -186,8 +186,17 @@ static void update_dynamic_battery_info(void)
 	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
 		*memmap_rate = ABS(curr.batt.current);
 
-	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
-		*memmap_cap = curr.batt.remaining_capacity;
+	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
+		/*
+		 * If we're running off the battery, it must have some charge.
+		 * Don't report zero charge, as that has special meaning
+		 * to Chrome OS powerd.
+		 */
+		if (curr.batt.remaining_capacity == 0 && !curr.batt_is_charging)
+			*memmap_cap = 1;
+		else
+			*memmap_cap = curr.batt.remaining_capacity;
+	}
 
 	cap_changed = 0;
 	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
