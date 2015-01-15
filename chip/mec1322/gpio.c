@@ -181,13 +181,20 @@ void gpio_pre_init(void)
 		gpio_set_flags_by_mask(g->port, g->mask, g->flags);
 }
 
+/* Clear any interrupt flags before enabling GPIO interrupt */
+#define ENABLE_GPIO_GIRQ(x) \
+	do { \
+		MEC1322_INT_SOURCE(x) |= MEC1322_INT_RESULT(x); \
+		task_enable_irq(MEC1322_IRQ_GIRQ ## x); \
+	} while (0)
+
 static void gpio_init(void)
 {
-	task_enable_irq(MEC1322_IRQ_GIRQ8);
-	task_enable_irq(MEC1322_IRQ_GIRQ9);
-	task_enable_irq(MEC1322_IRQ_GIRQ10);
-	task_enable_irq(MEC1322_IRQ_GIRQ11);
-	task_enable_irq(MEC1322_IRQ_GIRQ20);
+	ENABLE_GPIO_GIRQ(8);
+	ENABLE_GPIO_GIRQ(9);
+	ENABLE_GPIO_GIRQ(10);
+	ENABLE_GPIO_GIRQ(11);
+	ENABLE_GPIO_GIRQ(20);
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
