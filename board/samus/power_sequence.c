@@ -268,6 +268,17 @@ enum power_state power_handle_state(enum power_state state)
 			}
 		}
 
+		/*
+		 * TODO(crosbug.com/p/31583): Temporary hack to allow booting
+		 * without battery. If battery is not present here, then delay
+		 * to give time for PD MCU to negotiate to 20V.
+		 */
+		battery_get_params(&batt);
+		if (batt.is_present != BP_YES && !system_is_locked()) {
+			CPRINTS("Attempting boot w/o battery, adding delay");
+			msleep(500);
+		}
+
 		/* Assert DPWROK */
 		gpio_set_level(GPIO_PCH_DPWROK, 1);
 
@@ -304,17 +315,6 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5S3:
-		/*
-		 * TODO(crosbug.com/p/31583): Temporary hack to allow booting
-		 * without battery. If battery is not present here, then delay
-		 * to give time for PD MCU to negotiate to 20V.
-		 */
-		battery_get_params(&batt);
-		if (batt.is_present != BP_YES && !system_is_locked()) {
-			CPRINTS("Attempting boot w/o battery, adding delay");
-			msleep(500);
-		}
-
 		/* Turn on power to RAM */
 		gpio_set_level(GPIO_PP1800_EN, 1);
 		gpio_set_level(GPIO_PP1200_EN, 1);
