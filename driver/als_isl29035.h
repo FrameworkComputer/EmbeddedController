@@ -8,6 +8,6 @@
 #ifndef __CROS_EC_ALS_ILS29035_H
 #define __CROS_EC_ALS_ILS29035_H
 
-int isl29035_read_lux(int *lux);
+int isl29035_read_lux(int *lux, int af);
 
 #endif	/* __CROS_EC_ALS_ILS29035_H */

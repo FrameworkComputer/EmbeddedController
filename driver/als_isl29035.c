@@ -35,7 +35,7 @@ static void isl29035_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, isl29035_init, HOOK_PRIO_DEFAULT);
 
-int isl29035_read_lux(int *lux)
+int isl29035_read_lux(int *lux, int af)
 {
 	int rv, lsb, msb, data;
 
@@ -62,11 +62,16 @@ int isl29035_read_lux(int *lux)
 
 	/*
 	 * The default power-on values will give 16 bits of precision:
-	 * 0x0000-0xffff indicates 0-1000 lux. If you change the defaults,
-	 * you'll need to change the scale factor accordingly (and maybe this
-	 * expression, to avoid rounding errors).
+	 * 0x0000-0xffff indicates 0-1000 lux. We multiply the sensor value by
+	 * a scaling factor to account for attentuation by glass, tinting, etc.
+	 *
+	 * Caution: Don't go nuts with the attentuation factor. If it's
+	 * greater than 32, the signed int math will roll over and you'll get
+	 * very wrong results. Of course, if you have that much attenuation and
+	 * are still getting useful readings, you probably have your sensor
+	 * pointed directly into the sun.
 	 */
-	*lux = data * 1000 / 0xffff;
+	*lux = data * af * 1000 / 0xffff;
 
 	return EC_SUCCESS;
 }

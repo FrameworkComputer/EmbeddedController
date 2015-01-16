@@ -17,7 +17,8 @@
 
 int als_read(enum als_id id, int *lux)
 {
-	return als[id].read(lux);
+	int af = als[id].attenuation_factor;
+	return als[id].read(lux, af);
 }
 
 void als_task(void)
