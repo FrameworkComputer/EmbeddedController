@@ -268,16 +268,21 @@ static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 	pe[port].svid_idx++;
 }
 
+static struct svdm_amode_data *get_modep(int port)
+{
+	return &pe[port].amode;
+}
+
 int pd_alt_mode(int port)
 {
-	return pe[port].amode.opos;
+	return get_modep(port)->opos;
 }
 
 /* Enter default mode or attempt to enter mode via svid & index arguments */
 static int dfp_enter_mode(int port, uint32_t *payload, int use_payload)
 {
 	int i, j, done;
-	struct svdm_amode_data *modep = &pe[port].amode;
+	struct svdm_amode_data *modep = get_modep(port);
 	uint16_t svid = (use_payload) ? PD_VDO_VID(payload[0]) : 0;
 	uint8_t opos = (use_payload) ? PD_VDO_OPOS(payload[0]) : 0;
 
@@ -305,30 +310,44 @@ static int dfp_enter_mode(int port, uint32_t *payload, int use_payload)
 	return 1;
 }
 
+static int validate_mode_request(struct svdm_amode_data *modep,
+				 uint16_t svid, int opos)
+{
+	if (!modep->fx)
+		return 0;
+
+	if (svid != modep->fx->svid) {
+		CPRINTF("ERR:svid r:0x%04x != c:0x%04x\n",
+			svid, modep->fx->svid);
+		return 0;
+	}
+
+	if (opos != modep->opos) {
+		CPRINTF("ERR:opos r:%d != c:%d\n",
+			opos, modep->opos);
+		return 0;
+	}
+
+	return 1;
+}
+
 static void dfp_consume_attention(int port, uint32_t *payload)
 {
-	int svid = PD_VDO_VID(payload[0]);
+	struct svdm_amode_data *modep = get_modep(port);
+	uint16_t svid = PD_VDO_VID(payload[0]);
 	int opos = PD_VDO_OPOS(payload[0]);
 
-	if (!pe[port].amode.opos)
+	if (!validate_mode_request(modep, svid, opos))
 		return;
-	if (svid != pe[port].amode.fx->svid) {
-		CPRINTF("ERR:svid s:0x%04x != m:0x%04x\n",
-			svid, pe[port].amode.fx->svid);
-		return;
-	}
-	if (opos != pd_alt_mode(port)) {
-		CPRINTF("ERR:opos s:%d != m:%d\n",
-			opos, pd_alt_mode(port));
-		return;
-	}
-	if (pe[port].amode.fx->attention)
-		pe[port].amode.fx->attention(port, payload);
+
+	if (modep->fx->attention)
+		modep->fx->attention(port, payload);
 }
 
 uint32_t pd_dfp_exit_mode(int port)
 {
-	struct svdm_amode_data *modep = &pe[port].amode;
+	struct svdm_amode_data *modep = get_modep(port);
+
 	if (!modep->fx)
 		return 0;
 
@@ -340,9 +359,9 @@ uint32_t pd_dfp_exit_mode(int port)
 	 * to exit all modes.
 	 */
 	if (pd_is_connected(port)) {
+		int cur_opos = modep->opos;
 		modep->opos = 0;
-		return VDO(modep->fx->svid, 1,
-			   (CMD_EXIT_MODE | VDO_OPOS(pd_alt_mode(port))));
+		return VDO(modep->fx->svid, 1, (CMD_EXIT_MODE | cur_opos));
 	} else {
 		pd_dfp_pe_init(port);
 	}
@@ -362,6 +381,7 @@ static void dump_pe(int port)
 		"RSV6", "RSV7"};
 
 	int i, j, idh_ptype;
+	struct svdm_amode_data *modep;
 
 	if (pe[port].identity[0] == 0) {
 		ccprintf("No identity discovered yet.\n");
@@ -395,9 +415,9 @@ static void dump_pe(int port)
 		ccprintf("No mode chosen yet.\n");
 		return;
 	}
-
-	ccprintf("MODE[%d]: svid:%04x caps:%08x\n", pd_alt_mode(port),
-		 pe[port].amode.fx->svid, pe[port].amode.mode_caps);
+	modep = get_modep(port);
+	ccprintf("MODE[%d]: svid:%04x caps:%08x\n", modep->opos,
+		 modep->fx->svid, modep->mode_caps);
 }
 
 static int command_pe(int argc, char **argv)
