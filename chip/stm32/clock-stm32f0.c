@@ -515,6 +515,7 @@ DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 #endif /* CONFIG_CMD_RTC_ALARM */
 
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_COMMON_RUNTIME)
+#ifdef CONFIG_CMD_IDLE_STATS
 /**
  * Print low power idle statistics
  */
@@ -536,5 +537,6 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
 			"Print last idle stats",
 			NULL);
+#endif /* CONFIG_CMD_IDLE_STATS */
 #endif
 
