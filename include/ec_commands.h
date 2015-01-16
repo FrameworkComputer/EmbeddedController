@@ -2929,16 +2929,23 @@ struct ec_params_usb_pd_get_mode_request {
 
 struct ec_params_usb_pd_get_mode_response {
 	uint16_t svid;   /* SVID */
-	uint8_t active;  /* Active SVID */
-	uint8_t opos;    /* Object Position */
+	uint16_t opos;    /* Object Position */
 	uint32_t vdo[6]; /* Mode VDOs */
 } __packed;
 
 #define EC_CMD_USB_PD_SET_AMODE 0x117
+
+enum pd_mode_cmd {
+	PD_EXIT_MODE = 0,
+	PD_ENTER_MODE = 1,
+	/* Not a command.  Do NOT remove. */
+	PD_MODE_CMD_COUNT,
+};
+
 struct ec_params_usb_pd_set_mode_request {
-	int opos;      /* Object Position */
-	int svid_idx;  /* Index of svid to get */
+	uint32_t cmd;  /* enum pd_mode_cmd */
 	uint16_t svid; /* SVID to set */
+	uint8_t opos;  /* Object Position */
 	uint8_t port;  /* port */
 } __packed;
 

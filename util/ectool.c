@@ -876,7 +876,7 @@ static int in_gfu_mode(int *opos, int port)
 		}
 	}
 
-	return r->active && (r->opos == *opos);
+	return r->opos == *opos;
 }
 
 /**
@@ -905,6 +905,7 @@ static int enter_gfu_mode(int port)
 		p->port = port;
 		p->svid = USB_VID_GOOGLE;
 		p->opos = opos;
+		p->cmd = PD_ENTER_MODE;
 
 		ec_command(EC_CMD_USB_PD_SET_AMODE, 0, p, sizeof(*p),
 			   NULL, 0);
@@ -1113,8 +1114,9 @@ int cmd_pd_set_amode(int argc, char *argv[])
 	struct ec_params_usb_pd_set_mode_request *p =
 		(struct ec_params_usb_pd_set_mode_request *)ec_outbuf;
 
-	if (argc < 4) {
-		fprintf(stderr, "Usage: %s <port> <svid> <opos>\n", argv[0]);
+	if (argc < 5) {
+		fprintf(stderr, "Usage: %s <port> <svid> <opos> <cmd>\n",
+			argv[0]);
 		return -1;
 	}
 
@@ -1125,17 +1127,22 @@ int cmd_pd_set_amode(int argc, char *argv[])
 	}
 
 	p->svid = strtol(argv[2], &e, 0);
-	if (e && *e) {
+	if ((e && *e) || !p->svid) {
 		fprintf(stderr, "Bad svid\n");
 		return -1;
 	}
 
 	p->opos = strtol(argv[3], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad mode\n");
+	if ((e && *e) || !p->opos) {
+		fprintf(stderr, "Bad opos\n");
 		return -1;
 	}
 
+	p->cmd = strtol(argv[4], &e, 0);
+	if ((e && *e) || (p->cmd >= PD_MODE_CMD_COUNT)) {
+		fprintf(stderr, "Bad cmd\n");
+		return -1;
+	}
 	return ec_command(EC_CMD_USB_PD_SET_AMODE, 0, p, sizeof(*p), NULL, 0);
 }
 
@@ -1165,10 +1172,10 @@ int cmd_pd_get_amode(int argc, char *argv[])
 			   ec_inbuf, ec_max_insize);
 		if (!r->svid)
 			break;
-		printf("%cSVID:0x%04x ", (r->active) ? '*' : ' ',
+		printf("%cSVID:0x%04x ", (r->opos) ? '*' : ' ',
 		       r->svid);
 		for (i = 0; i < PDO_MODES; i++) {
-			printf("%c0x%08x ", (r->active && (r->opos == i + 1)) ?
+			printf("%c0x%08x ", (r->opos && (r->opos == i + 1)) ?
 			       '*' : ' ', r->vdo[i]);
 		}
 		printf("\n");

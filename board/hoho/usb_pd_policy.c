@@ -33,10 +33,8 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
-/* Whether alternate mode has been entered or not */
-static int alt_mode;
-/* When set true, we are in GFU mode */
-static int gfu_mode;
+/* Holds valid object position (opos) for entered mode */
+static int alt_mode[PD_AMODE_COUNT];
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
@@ -194,12 +192,11 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	/* SID & mode request is valid */
 	if ((PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) &&
 	    (PD_VDO_OPOS(payload[0]) == OPOS_DP)) {
-		alt_mode = OPOS_DP;
+		alt_mode[PD_AMODE_DISPLAYPORT] = OPOS_DP;
 		rv = 1;
 	} else if ((PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) &&
 		   (PD_VDO_OPOS(payload[0]) == OPOS_GFU)) {
-		alt_mode = OPOS_GFU;
-		gfu_mode = 1;
+		alt_mode[PD_AMODE_GOOGLE] = OPOS_GFU;
 		rv = 1;
 	}
 
@@ -213,20 +210,25 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	return rv;
 }
 
-int pd_alt_mode(int port)
+int pd_alt_mode(int port, uint16_t svid)
 {
-	return alt_mode;
+	if (svid == USB_SID_DISPLAYPORT)
+		return alt_mode[PD_AMODE_DISPLAYPORT];
+	else if (svid == USB_VID_GOOGLE)
+		return alt_mode[PD_AMODE_GOOGLE];
+	return 0;
 }
 
 static int svdm_exit_mode(int port, uint32_t *payload)
 {
-	alt_mode = 0;
-	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT)
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) {
 		gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
-	else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE)
-		gfu_mode = 0;
-	else
+		alt_mode[PD_AMODE_DISPLAYPORT] = 0;
+	} else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) {
+		alt_mode[PD_AMODE_GOOGLE] = 0;
+	} else {
 		CPRINTF("Unknown exit mode req:0x%08x\n", payload[0]);
+	}
 
 	return 1; /* Must return ACK */
 }
@@ -250,7 +252,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 {
 	int rsize;
 
-	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
+	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE ||
+	    !alt_mode[PD_AMODE_GOOGLE])
 		return 0;
 
 	*rpayload = payload;

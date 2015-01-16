@@ -400,7 +400,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-		pd_dfp_exit_mode(port);
+		pd_dfp_exit_mode(port, 0, 0);
 #endif
 #ifdef CONFIG_USBC_SS_MUX
 		board_set_usb_mux(port, TYPEC_MUX_NONE,
@@ -813,8 +813,7 @@ static void execute_hard_reset(int port)
 
 	pd[port].msg_id = 0;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	pd_dfp_exit_mode(port);
-	pd_dfp_pe_init(port);
+	pd_dfp_exit_mode(port, 0, 0);
 #endif
 
 	/*
@@ -2903,7 +2902,7 @@ static int remote_flashing(int argc, char **argv)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
 	uint32_t data[1];
-	int opos = pd_alt_mode(port);
+	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
 	if (!opos)
 		return;
 
@@ -3450,26 +3449,27 @@ static int hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_set_mode_request *p = args->params;
 
-	if (p->port >= PD_PORT_COUNT)
+	if ((p->port >= PD_PORT_COUNT) || (!p->svid) || (!p->opos))
 		return EC_RES_INVALID_PARAM;
 
-	/* if in a mode exit it */
-	/* TODO(crosbug.com/p/33946): allow entry of multiple modes */
-	if (pd_alt_mode(p->port)) {
-		uint32_t vdo = pd_dfp_exit_mode(p->port);
-		if (vdo) {
-			queue_vdm(p->port, &vdo, NULL, 0);
-			task_wake(PORT_TO_TASK_ID(p->port));
-			/* Wait until exit VDM is done */
-			while (pd[p->port].vdm_state > 0)
-				task_wait_event(PD_T_VDM_E_MODE);
+	switch (p->cmd) {
+	case PD_EXIT_MODE:
+		if (pd_dfp_exit_mode(p->port, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid,
+				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
+		else {
+			CPRINTF("Failed exit mode\n");
+			return EC_RES_ERROR;
 		}
+		break;
+	case PD_ENTER_MODE:
+		if (pd_dfp_enter_mode(p->port, p->svid, p->opos))
+			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
+				    VDO_OPOS(p->opos), NULL, 0);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
 	}
-
-	/* now try to enter new one. */
-	pd_send_vdm(p->port, p->svid,
-		    CMD_ENTER_MODE | VDO_OPOS(p->opos), NULL, 0);
-
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,

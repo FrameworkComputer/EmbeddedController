@@ -110,7 +110,6 @@ enum pd_errors {
 
 #define BDO(mode, cnt)      ((mode) | ((cnt) & 0xFFFF))
 
-/* TODO(tbroch) is there a finite number for these in the spec */
 #define SVID_DISCOVERY_MAX 16
 
 /* Timers */
@@ -195,7 +194,7 @@ struct svdm_amode_data {
 	/* VDM object position */
 	int opos;
 	/* mode capabilities specific to SVID amode. */
-	uint32_t mode_caps;
+	struct svdm_svid_data *data;
 };
 
 enum hpd_event {
@@ -209,6 +208,14 @@ enum hpd_event {
 #define DP_FLAGS_DP_ON              (1 << 0) /* Display port mode is on */
 #define DP_FLAGS_HPD_HI_PENDING     (1 << 1) /* Pending HPD_HI */
 
+/* supported alternate modes */
+enum pd_alternate_modes {
+	PD_AMODE_GOOGLE,
+	PD_AMODE_DISPLAYPORT,
+	/* not a real mode */
+	PD_AMODE_COUNT,
+};
+
 /* Policy structure for driving alternate mode */
 struct pd_policy {
 	/* index of svid currently being operated on */
@@ -219,8 +226,10 @@ struct pd_policy {
 	uint32_t identity[PDO_MAX_OBJECTS - 1];
 	/* supported svids & corresponding vdo mode data */
 	struct svdm_svid_data svids[SVID_DISCOVERY_MAX];
-	/*  active mode */
-	struct svdm_amode_data amode;
+	/*  active modes */
+	struct svdm_amode_data amodes[PD_AMODE_COUNT];
+	/* Next index to insert DFP alternate mode into amodes */
+	int amode_idx;
 };
 
 /*
@@ -927,12 +936,24 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload);
 int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload);
 
 /**
- * Exit alternate mode on DFP
+ * Enter alternate mode on DFP
  *
  * @param port     USB-C port number
- * @return VDO to send to UFP or zero if none
+ * @param svid USB standard or vendor id to exit or zero for DFP amode reset.
+ * @param opos object position of mode to exit.
+ * @return vdm for UFP to be sent to enter mode or zero if not.
  */
-uint32_t pd_dfp_exit_mode(int port);
+uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos);
+
+/**
+ * Exit alternate mode on DFP
+ *
+ * @param port USB-C port number
+ * @param svid USB standard or vendor id to exit or zero for DFP amode reset.
+ * @param opos object position of mode to exit.
+ * @return 1 if UFP should be sent exit mode VDM.
+ */
+int pd_dfp_exit_mode(int port, uint16_t svid, int opos);
 
 /**
  * Initialize policy engine for DFP
@@ -1049,9 +1070,10 @@ void board_flip_usb_mux(int port);
  * Determine if in alternate mode or not.
  *
  * @param port port number.
+ * @param svid USB standard or vendor id
  * @return object position of mode chosen in alternate mode otherwise zero.
  */
-int pd_alt_mode(int port);
+int pd_alt_mode(int port, uint16_t svid);
 
 /**
  * Send hpd over USB PD.
