@@ -739,7 +739,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
 
 static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
 {
-	struct ec_response_pd_status *r = args->response;
+	struct ec_response_host_event_status *r = args->response;
 
 	/* Clear host event bit to avoid sending more unnecessary events */
 	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
