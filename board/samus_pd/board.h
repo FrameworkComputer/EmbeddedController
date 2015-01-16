@@ -66,12 +66,6 @@
 #define CONFIG_HOSTCMD_I2C_SLAVE_ADDR CONFIG_USB_PD_I2C_SLAVE_ADDR
 #endif
 
-/*
- * Allow dangerous commands all the time, since we don't have a write protect
- * switch.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
 /* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT
 #define DEFERRABLE_MAX_COUNT 9
