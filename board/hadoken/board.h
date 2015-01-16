@@ -25,6 +25,10 @@
 #define BATTERY_VOLTAGE_NORMAL      3800 /* mV */
 #define BATTERY_VOLTAGE_MIN         3000 /* mV */
 
+#define CONFIG_BLUETOOTH_LE
+#define CONFIG_BLUETOOTH_LE_STACK
+#define CONFIG_BLUETOOTH_LE_RADIO_TEST
+
 #include "gpio_signal.h"
 
 #endif /* !__ASSEMBLER__ */

@@ -253,6 +253,15 @@
  */
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 
+/* Include support for Bluetooth LE */
+#undef CONFIG_BLUETOOTH_LE
+
+/* Include support for testing the radio for Bluetooth LE */
+#undef CONFIG_BLUETOOTH_LE_RADIO_TEST
+
+/* Include support for the HCI and link layers for Bluetooth LE */
+#undef CONFIG_BLUETOOTH_LE_STACK
+
 /* Boot header storage offset. */
 #undef CONFIG_BOOT_HEADER_STORAGE_OFF
 
