@@ -183,12 +183,9 @@ unsigned pd_get_max_voltage(void)
 
 static struct pd_policy pe[PD_PORT_COUNT];
 
-#define AMODE_VALID(port) (pe[port].amode.index != -1)
-
 void pd_dfp_pe_init(int port)
 {
 	memset(&pe[port], 0, sizeof(struct pd_policy));
-	pe[port].amode.index = -1;
 }
 
 static void dfp_consume_identity(int port, int cnt, uint32_t *payload)
@@ -273,11 +270,7 @@ static void dfp_consume_modes(int port, int cnt, uint32_t *payload)
 
 int pd_alt_mode(int port)
 {
-	if (!AMODE_VALID(port))
-		/* zero is reserved */
-		return 0;
-
-	return pe[port].amode.index + 1;
+	return pe[port].amode.opos;
 }
 
 /* Enter default mode or attempt to enter mode via svid & index arguments */
@@ -296,12 +289,12 @@ static int dfp_enter_mode(int port, uint32_t *payload, int use_payload)
 				continue;
 			modep->fx = &supported_modes[i];
 			modep->mode_caps = pe[port].svids[j].mode_vdo[0];
-			modep->index = (opos && (opos < 7)) ? opos - 1 : 0;
+			modep->opos = (opos && (opos < 7)) ? opos : 1;
 			done = 1;
 			break;
 		}
 	}
-	if (!AMODE_VALID(port))
+	if (!modep->opos)
 		return 0;
 
 	if (modep->fx->enter(port, modep->mode_caps) == -1)
@@ -317,7 +310,7 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 	int svid = PD_VDO_VID(payload[0]);
 	int opos = PD_VDO_OPOS(payload[0]);
 
-	if (!AMODE_VALID(port))
+	if (!pe[port].amode.opos)
 		return;
 	if (svid != pe[port].amode.fx->svid) {
 		CPRINTF("ERR:svid s:0x%04x != m:0x%04x\n",
@@ -347,7 +340,7 @@ uint32_t pd_dfp_exit_mode(int port)
 	 * to exit all modes.
 	 */
 	if (pd_is_connected(port)) {
-		modep->index = -1;
+		modep->opos = 0;
 		return VDO(modep->fx->svid, 1,
 			   (CMD_EXIT_MODE | VDO_OPOS(pd_alt_mode(port))));
 	} else {
@@ -398,7 +391,7 @@ static void dump_pe(int port)
 				 pe[port].svids[i].mode_vdo[j]);
 		ccprintf("\n");
 	}
-	if (!AMODE_VALID(port)) {
+	if (!modep->opos) {
 		ccprintf("No mode chosen yet.\n");
 		return;
 	}
@@ -513,9 +506,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			 * TODO(crosbug.com/p/33946): Fix won't allow multiple
 			 * mode entry.
 			 */
-			if (!AMODE_VALID(port))
+			if (!pe[port].amode.opos)
 				dfp_enter_mode(port, payload, 1);
-			if (AMODE_VALID(port)) {
+			if (pe[port].amode.opos) {
 				rsize = pe[port].amode.fx->status(port,
 								  payload);
 				payload[0] |= VDO_OPOS(pd_alt_mode(port));
@@ -525,14 +518,14 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			/* DP status response & UFP's DP attention have same
 			   payload */
 			dfp_consume_attention(port, payload);
-			if (AMODE_VALID(port))
+			if (pe[port].amode.opos)
 				rsize = pe[port].amode.fx->config(port,
 								  payload);
 			else
 				rsize = 0;
 			break;
 		case CMD_DP_CONFIG:
-			if (AMODE_VALID(port) &&
+			if (pe[port].amode.opos &&
 			    pe[port].amode.fx->post_config)
 				pe[port].amode.fx->post_config(port);
 			/* no response after DFPs ack */
@@ -653,9 +646,9 @@ static int hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	r->active = 0;
 	memcpy(r->vdo, pe[p->port].svids[p->svid_idx].mode_vdo, 24);
 
-	if (AMODE_VALID(p->port) && pe[p->port].amode.fx->svid == r->svid) {
+	if (pe[p->port].amode.opos && pe[p->port].amode.fx->svid == r->svid) {
 		r->active = 1;
-		r->idx = pd_alt_mode(p->port) - 1;
+		r->opos = pd_alt_mode(p->port);
 	}
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

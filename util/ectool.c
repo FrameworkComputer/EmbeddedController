@@ -876,7 +876,7 @@ static int in_gfu_mode(int *opos, int port)
 		}
 	}
 
-	return r->active && ((r->idx + 1) == *opos);
+	return r->active && (r->opos == *opos);
 }
 
 /**
@@ -1168,7 +1168,7 @@ int cmd_pd_get_amode(int argc, char *argv[])
 		printf("%cSVID:0x%04x ", (r->active) ? '*' : ' ',
 		       r->svid);
 		for (i = 0; i < PDO_MODES; i++) {
-			printf("%c0x%08x ", (r->active && (r->idx == i)) ?
+			printf("%c0x%08x ", (r->active && (r->opos == i + 1)) ?
 			       '*' : ' ', r->vdo[i]);
 		}
 		printf("\n");

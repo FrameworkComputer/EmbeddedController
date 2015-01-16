@@ -189,9 +189,12 @@ extern const struct svdm_response svdm_rsp;
 extern const struct svdm_amode_fx supported_modes[];
 extern const int supported_modes_cnt;
 
+/* DFP data needed to support alternate mode entry and exit */
 struct svdm_amode_data {
 	const struct svdm_amode_fx *fx;
-	int index;
+	/* VDM object position */
+	int opos;
+	/* mode capabilities specific to SVID amode. */
 	uint32_t mode_caps;
 };
 

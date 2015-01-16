@@ -2930,7 +2930,7 @@ struct ec_params_usb_pd_get_mode_request {
 struct ec_params_usb_pd_get_mode_response {
 	uint16_t svid;   /* SVID */
 	uint8_t active;  /* Active SVID */
-	uint8_t idx;     /* Index of active mode VDO. Ignored if !active */
+	uint8_t opos;    /* Object Position */
 	uint32_t vdo[6]; /* Mode VDOs */
 } __packed;
 
