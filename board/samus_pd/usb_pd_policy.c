@@ -26,6 +26,13 @@
 #define MAX_POWER_MW       60000
 #define MAX_CURRENT_MA     3000
 
+/*
+ * Do not request any voltage within this deadband region, where
+ * we're not sure whether or not the boost or the bypass will be on.
+ */
+#define INPUT_VOLTAGE_DEADBAND_MIN 9700
+#define INPUT_VOLTAGE_DEADBAND_MAX 11999
+
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)
 
 const uint32_t pd_src_pdo[] = {
@@ -39,6 +46,13 @@ const uint32_t pd_snk_pdo[] = {
 		PDO_VAR(5000, 20000, 3000),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
+
+int pd_is_valid_input_voltage(int mv)
+{
+	/* Allow any voltage not in the boost bypass deadband */
+	return  (mv < INPUT_VOLTAGE_DEADBAND_MIN) ||
+		(mv > INPUT_VOLTAGE_DEADBAND_MAX);
+}
 
 int pd_check_requested_voltage(uint32_t rdo)
 {

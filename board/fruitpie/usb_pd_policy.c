@@ -44,6 +44,12 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 		CPRINTS("Failed to set input current limit for PD");
 }
 
+int pd_is_valid_input_voltage(int mv)
+{
+	/* Any voltage less than the max is allowed */
+	return 1;
+}
+
 int pd_check_requested_voltage(uint32_t rdo)
 {
 	int max_ma = rdo & 0x3FF;

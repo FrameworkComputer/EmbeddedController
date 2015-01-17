@@ -768,6 +768,14 @@ void pd_set_max_voltage(unsigned mv);
 unsigned pd_get_max_voltage(void);
 
 /**
+ * Check if this board supports the given input voltage.
+ *
+ * @mv input voltage
+ * @return 1 if voltage supported, 0 if not
+ */
+int pd_is_valid_input_voltage(int mv);
+
+/**
  * Request a new operating voltage.
  *
  * @param rdo  Request Data Object with the selected operating point.

@@ -25,6 +25,12 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
+int pd_is_valid_input_voltage(int mv)
+{
+	/* Any voltage less than the max is allowed */
+	return 1;
+}
+
 int pd_check_requested_voltage(uint32_t rdo)
 {
 	int max_ma = rdo & 0x3FF;
