@@ -522,10 +522,21 @@ const struct batt_params *charger_current_battery_params(void)
 
 void charger_init(void)
 {
+	const struct charger_info * const info = charger_get_info();
+
 	/* Initialize current state */
 	memset(&curr, 0, sizeof(curr));
 	curr.batt.is_present = BP_NOT_SURE;
-	curr.desired_input_current = CONFIG_CHARGER_INPUT_CURRENT;
+
+	/*
+	 * If system is not locked, then use max input current limit so
+	 * that if there is no battery present, we can pull as much power
+	 * as needed. If battery is present, then input current will be
+	 * immediately lowered to the real desired value.
+	 */
+	curr.desired_input_current = system_is_locked() ?
+					CONFIG_CHARGER_INPUT_CURRENT :
+					info->input_current_max;
 }
 DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 
@@ -931,6 +942,15 @@ int charge_temp_sensor_get_val(int idx, int *temp_ptr)
 
 int charge_set_input_current_limit(int ma)
 {
+	/*
+	 * If battery is not present and we are not locked, then allow system
+	 * to pull as much input current as needed. Yes, we might overcurrent
+	 * the charger but this is no worse then browning out due to
+	 * insufficient input current.
+	 */
+	if (curr.batt.is_present != BP_YES && !system_is_locked())
+		return EC_SUCCESS;
+
 	curr.desired_input_current = ma;
 	return charger_set_input_current(ma);
 }
