@@ -1990,13 +1990,13 @@ void pd_task(void)
 					 * on during debounce.
 					 */
 					get_time().val +
-					PD_POWER_SUPPLY_TRANSITION_DELAY -
+					PD_POWER_SUPPLY_TURN_ON_DELAY -
 					  (pd[port].last_state ==
 					   PD_STATE_SRC_DISCONNECTED_DEBOUNCE
 						? PD_T_CC_DEBOUNCE : 0),
 #else
 					get_time().val +
-					PD_POWER_SUPPLY_TRANSITION_DELAY,
+					PD_POWER_SUPPLY_TURN_ON_DELAY,
 #endif
 					PD_STATE_SRC_DISCOVERY);
 			}
@@ -2061,7 +2061,7 @@ void pd_task(void)
 				set_state_timeout(
 					port,
 					get_time().val +
-					PD_POWER_SUPPLY_TRANSITION_DELAY,
+					PD_POWER_SUPPLY_TURN_ON_DELAY,
 					PD_STATE_SRC_TRANSITION);
 			}
 			break;
@@ -2210,7 +2210,7 @@ void pd_task(void)
 				pd_power_supply_reset(port);
 				set_state_timeout(port,
 						  get_time().val +
-						  PD_POWER_SUPPLY_TRANSITION_DELAY,
+						  PD_POWER_SUPPLY_TURN_OFF_DELAY,
 						  PD_STATE_SRC_SWAP_STANDBY);
 			}
 			break;
@@ -2595,7 +2595,7 @@ void pd_task(void)
 				set_state_timeout(
 					port,
 					get_time().val +
-					PD_POWER_SUPPLY_TRANSITION_DELAY,
+					PD_POWER_SUPPLY_TURN_ON_DELAY,
 					PD_STATE_SNK_SWAP_COMPLETE);
 			}
 			break;

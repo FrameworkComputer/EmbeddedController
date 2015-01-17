@@ -174,7 +174,8 @@ static inline int pd_snk_is_vbus_provided(int port)
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
 /* delay for the voltage transition on the power supply, chip max is 16us */
-#define PD_POWER_SUPPLY_TRANSITION_DELAY 20000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  20000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 20000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 10000
