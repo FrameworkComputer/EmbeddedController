@@ -171,14 +171,31 @@ static void update_dynamic_battery_info(void)
 	int *memmap_lfcc = (int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
 	uint8_t *memmap_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	uint8_t tmp;
-	int cap_changed;
+	int send_batt_status_event = 0;
+	int send_batt_info_event = 0;
+	static int batt_present;
 
 	tmp = 0;
 	if (curr.ac)
 		tmp |= EC_BATT_FLAG_AC_PRESENT;
 
-	if (curr.batt.is_present == BP_YES)
+	if (curr.batt.is_present == BP_YES) {
 		tmp |= EC_BATT_FLAG_BATT_PRESENT;
+		batt_present = 1;
+		/* Tell the AP to read battery info if it is newly present. */
+		if (!(*memmap_flags & EC_BATT_FLAG_BATT_PRESENT))
+			send_batt_info_event++;
+	} else {
+		/*
+		 * Require two consecutive updates with BP_NOT_SURE
+		 * before reporting it gone to the host.
+		 */
+		if (batt_present)
+			tmp |= EC_BATT_FLAG_BATT_PRESENT;
+		else if (*memmap_flags & EC_BATT_FLAG_BATT_PRESENT)
+			send_batt_info_event++;
+		batt_present = 0;
+	}
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		*memmap_volt = curr.batt.voltage;
@@ -198,12 +215,12 @@ static void update_dynamic_battery_info(void)
 			*memmap_cap = curr.batt.remaining_capacity;
 	}
 
-	cap_changed = 0;
 	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
 	    (curr.batt.full_capacity <= (*memmap_lfcc - LFCC_EVENT_THRESH) ||
 	     curr.batt.full_capacity >= (*memmap_lfcc + LFCC_EVENT_THRESH))) {
 		*memmap_lfcc = curr.batt.full_capacity;
-		cap_changed = 1;
+		/* Poke the AP if the full_capacity changes. */
+		send_batt_info_event++;
 	}
 
 	if (curr.batt.is_present == BP_YES &&
@@ -216,12 +233,15 @@ static void update_dynamic_battery_info(void)
 
 	/* Tell the AP to re-read battery status if charge state changes */
 	if (*memmap_flags != tmp)
-		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		send_batt_status_event++;
+
+	/* Update flags before sending host events. */
 	*memmap_flags = tmp;
 
-	/* Poke the AP if the full_capacity changes. */
-	if (cap_changed)
+	if (send_batt_info_event)
 		host_set_single_event(EC_HOST_EVENT_BATTERY);
+	if (send_batt_status_event)
+		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
 }
 
 static const char * const state_list[] = {
