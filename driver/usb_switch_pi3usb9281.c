@@ -204,7 +204,8 @@ static void pi3usb9281_init(void)
 	for (i = 0; i < PI3USB9281_COUNT; i++) {
 		dev_id = pi3usb9281_read(i, PI3USB9281_REG_DEV_ID);
 
-		if (dev_id != 0x10)
+		if (dev_id != PI3USB9281_DEV_ID &&
+		    dev_id != PI3USB9281_DEV_ID_A)
 			CPRINTS("PI3USB9281[%d] invalid ID 0x%02x", i, dev_id);
 	}
 }

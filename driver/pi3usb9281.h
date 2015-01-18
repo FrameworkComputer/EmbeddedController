@@ -18,6 +18,9 @@
 #define PI3USB9281_REG_RESET        0x1b
 #define PI3USB9281_REG_VBUS         0x1d
 
+#define PI3USB9281_DEV_ID           0x10
+#define PI3USB9281_DEV_ID_A         0x18
+
 #define PI3USB9281_CTRL_INT_MASK    (1 << 0)
 #define PI3USB9281_CTRL_AUTO        (1 << 2)
 #define PI3USB9281_CTRL_SWITCH_AUTO (1 << 4)
