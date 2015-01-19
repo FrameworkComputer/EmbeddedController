@@ -809,6 +809,12 @@ static void execute_hard_reset(int port)
 	pd_dfp_pe_init(port);
 #endif
 
+	/*
+	 * Fake set last state to hard reset to make sure that the next
+	 * state to run knows that we just did a hard reset.
+	 */
+	pd[port].last_state = PD_STATE_HARD_RESET_EXECUTE;
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If we are swapping to a source and have changed to Rp, restore back
