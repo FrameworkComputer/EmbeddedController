@@ -818,11 +818,13 @@ static void execute_hard_reset(int port)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If we are swapping to a source and have changed to Rp, restore back
-	 * to Rd to match our power_role.
+	 * to Rd and turn off vbus to match our power_role.
 	 */
 	if (pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY ||
-	    pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE)
+	    pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE) {
 		pd_set_host_mode(port, 0);
+		pd_power_supply_reset(port);
+	}
 	/*
 	 * If we are swapping to a sink and have changed to Rd, change role to
 	 * sink to match the CC pull resistor.
@@ -1113,6 +1115,8 @@ static void handle_ctrl_request(int port, uint16_t head,
 		} else if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
 			/* Don't know what power source is ready. Reset. */
 			set_state(port, PD_STATE_HARD_RESET_SEND);
+		} else if (pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY) {
+			/* Do nothing, assume this is a redundant PD_RDY */
 		} else if (pd[port].power_role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
 #ifdef CONFIG_CHARGE_MANAGER
@@ -2611,6 +2615,7 @@ void pd_task(void)
 			if (res < 0) {
 				/* Restore Rd */
 				pd_set_host_mode(port, 0);
+				pd_power_supply_reset(port);
 				timeout = 10 * MSEC;
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 				break;
