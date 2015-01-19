@@ -1746,6 +1746,14 @@ void pd_task(void)
 	timestamp_t now;
 	int caps_count = 0, hard_reset_sent = 0;
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/*
+	 * Set CC pull resistors, and charge_en and vbus_en GPIOs to match
+	 * the initial role.
+	 */
+	pd_set_host_mode(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE);
+#endif
+
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
 
