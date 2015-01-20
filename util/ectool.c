@@ -3136,9 +3136,10 @@ int cmd_usb_pd(int argc, char *argv[])
 		       r->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 		       r->polarity + 1, r->state);
 	} else {
-		printf("Port C%d is %sabled, Role:%s Polarity:CC%d State:%s\n",
-		       p.port, (r_v1->enabled) ? "en" : "dis",
-		       r_v1->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
+		printf("Port C%d is %s, Role:%s %s Polarity:CC%d State:%s\n",
+		       p.port, (r_v1->enabled) ? "enabled" : "disabled",
+		       r_v1->role & PD_ROLE_SOURCE ? "SRC" : "SNK",
+		       r_v1->role & (PD_ROLE_DFP << 1) ? "DFP" : "UFP",
 		       r_v1->polarity + 1, r_v1->state);
 	}
 	return (rv < 0 ? rv : 0);

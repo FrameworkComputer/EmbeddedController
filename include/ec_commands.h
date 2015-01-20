@@ -2741,7 +2741,7 @@ struct ec_response_usb_pd_control {
 
 struct ec_response_usb_pd_control_v1 {
 	uint8_t enabled;
-	uint8_t role;
+	uint8_t role; /* [0] power: 0=SNK/1=SRC [1] data: 0=UFP/1=DFP */
 	uint8_t polarity;
 	char state[32];
 } __packed;
