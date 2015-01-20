@@ -386,7 +386,15 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	if (next_state == PD_STATE_SRC_DISCONNECTED ||
 	    next_state == PD_STATE_SNK_DISCONNECTED) {
-#else
+		if (pd[port].flags & PD_FLAGS_VBUS_PRESENT) {
+			/* Clear the input current limit */
+			pd_set_input_current_limit(port, 0, 0);
+#ifdef CONFIG_CHARGE_MANAGER
+			typec_set_input_current_limit(port, 0, 0);
+			charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
+#endif
+		}
+#else /* CONFIG_USB_PD_DUAL_ROLE */
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 #endif
 		pd[port].dev_id = 0;
@@ -2348,7 +2356,8 @@ void pd_task(void)
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
 			pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
-					  PD_FLAGS_CHECK_DR_ROLE;
+					  PD_FLAGS_CHECK_DR_ROLE |
+					  PD_FLAGS_VBUS_PRESENT;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 			timeout = 10*MSEC;
 			hook_call_deferred(
@@ -2753,12 +2762,6 @@ void pd_task(void)
 		    pd[port].task_state != PD_STATE_HARD_RESET_EXECUTE) {
 			/* Sink: detect disconnect by monitoring VBUS */
 			set_state(port, PD_STATE_SNK_DISCONNECTED);
-			/* Clear the input current limit */
-			pd_set_input_current_limit(port, 0, 0);
-#ifdef CONFIG_CHARGE_MANAGER
-			typec_set_input_current_limit(port, 0, 0);
-			charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
-#endif
 			/* set timeout small to reconnect fast */
 			timeout = 5*MSEC;
 		}
