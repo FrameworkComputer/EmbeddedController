@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "battery.h"
@@ -3147,60 +3148,57 @@ int cmd_usb_pd(int argc, char *argv[])
 
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
-	printf("Power role: ");
-
 	switch (r->role) {
 	case USB_PD_PORT_POWER_DISCONNECTED:
-		printf("Disconnected\n");
+		printf("Disconnected");
 		break;
 	case USB_PD_PORT_POWER_SOURCE:
-		printf("Source\n");
+		printf("SRC");
 		break;
 	case USB_PD_PORT_POWER_SINK:
-		printf("Sink\n");
+		printf("SNK");
 		break;
 	case USB_PD_PORT_POWER_SINK_NOT_CHARGING:
-		printf("Sink (not charging)\n");
+		printf("SNK (not charging)");
 		break;
 	default:
-		printf("Unknown\n");
+		printf("Unknown");
 	}
 
-	if (r->role != USB_PD_PORT_POWER_DISCONNECTED) {
-		printf("  %s\n", r->dualrole ?
-		       "Dual-role device" : "Dedicated charger");
+	if ((r->role == USB_PD_PORT_POWER_DISCONNECTED) ||
+	    (r->role == USB_PD_PORT_POWER_SOURCE)) {
+		printf("\n");
+		return;
 	}
 
-	printf("  Charger type: ");
+	printf(r->dualrole ? " DRP" : " Charger");
 	switch (r->type) {
 	case USB_CHG_TYPE_PD:
-		printf("PD\n");
+		printf(" PD");
 		break;
 	case USB_CHG_TYPE_C:
-		printf("Type-c\n");
+		printf(" Type-C");
 		break;
 	case USB_CHG_TYPE_PROPRIETARY:
-		printf("Proprietary\n");
+		printf(" Proprietary");
 		break;
 	case USB_CHG_TYPE_BC12_DCP:
-		printf("BC1.2 DCP\n");
+		printf(" DCP");
 		break;
 	case USB_CHG_TYPE_BC12_CDP:
-		printf("BC1.2 CDP\n");
+		printf(" CDP");
 		break;
 	case USB_CHG_TYPE_BC12_SDP:
-		printf("BC1.2 SDP\n");
+		printf(" SDP");
 		break;
 	case USB_CHG_TYPE_OTHER:
-		printf("Other\n");
+		printf(" Other");
 		break;
-	default:
-		printf("None\n");
 	}
-	printf("  Max charging voltage: %dmV\n", r->meas.voltage_max);
-	printf("  Current charging voltage: %dmV\n", r->meas.voltage_now);
-	printf("  Max input current: %dmA\n", r->meas.current_max);
-	printf("  Max input power: %dmW\n", r->max_power / 1000);
+	printf(" %dmV max %dmV / %dmA",
+		r->meas.voltage_now, r->meas.voltage_max, r->meas.current_max);
+	if (r->max_power)
+		printf(" / %dmW", r->max_power / 1000);
 	printf("\n");
 }
 
@@ -3225,7 +3223,7 @@ int cmd_usb_pd_power(int argc, char *argv[])
 		if (rv < 0)
 			return rv;
 
-		printf("Port %d:\n", i);
+		printf("Port %d: ", i);
 		print_pd_power_info(r);
 	}
 
@@ -5421,8 +5419,14 @@ int cmd_pd_log(int argc, char *argv[])
 	} u;
 	struct ec_response_usb_pd_power_info pinfo;
 	int rv;
+	unsigned long long milliseconds;
+	unsigned seconds;
+	time_t now;
+	struct tm ltime;
+	char time_str[64];
 
 	while (1) {
+		now = time(NULL);
 		rv = ec_command(EC_CMD_PD_GET_LOG_ENTRY, 0,
 				NULL, 0, &u, sizeof(u));
 		if (rv < 0)
@@ -5433,16 +5437,22 @@ int cmd_pd_log(int argc, char *argv[])
 			break;
 		}
 
-		printf("Port: %d, %"PRIu64" ms ago : ",
-			PD_LOG_PORT(u.r.size_port),
-			(uint64_t)(u.r.timestamp << PD_LOG_TIMESTAMP_SHIFT)
-				 / 1000);
+		/* the timestamp is in 1024th of seconds */
+		milliseconds = ((uint64_t)u.r.timestamp <<
+					 PD_LOG_TIMESTAMP_SHIFT) / 1000;
+		/* the timestamp is the number of milliseconds in the past */
+		seconds = (milliseconds + 999) / 1000;
+		milliseconds -= seconds * 1000;
+		now -= seconds;
+		localtime_r(&now, &ltime);
+		strftime(time_str, sizeof(time_str), "%F %T", &ltime);
+		printf("%s.%03lld P%d ", time_str, -milliseconds,
+			PD_LOG_PORT(u.r.size_port));
 		if (u.r.type == PD_EVENT_MCU_CHARGE) {
 			if (u.r.data & CHARGE_FLAGS_OVERRIDE)
 				printf("override ");
 			if (u.r.data & CHARGE_FLAGS_DELAYED_OVERRIDE)
 				printf("pending_override ");
-			printf("\n");
 			memcpy(&pinfo.meas, u.r.payload,
 				sizeof(struct usb_chg_measures));
 			pinfo.dualrole = !!(u.r.data & CHARGE_FLAGS_DUAL_ROLE);
@@ -5451,8 +5461,21 @@ int cmd_pd_log(int argc, char *argv[])
 					>> CHARGE_FLAGS_TYPE_SHIFT;
 			pinfo.max_power = 0;
 			print_pd_power_info(&pinfo);
+		} else if (u.r.type == PD_EVENT_ACC_RW_FAIL) {
+			printf("RW signature check failed\n");
+		} else if (u.r.type == PD_EVENT_PS_FAULT) {
+			static const char * const fault_names[] = {
+				"---", "OCP", "fast OCP", "OVP", "Discharge"
+			};
+			const char *fault = u.r.data < ARRAY_SIZE(fault_names) ?
+					fault_names[u.r.data] : "???";
+			printf("Power supply fault: %s\n", fault);
 		} else { /* Unknown type */
-			printf(" event %02x\n", u.r.type);
+			int i;
+			printf("Event %02x (%04x) [", u.r.type, u.r.data);
+			for (i = 0; i < PD_LOG_SIZE(u.r.size_port); i++)
+				printf("%02x ", u.r.payload[i]);
+			printf("]\n");
 		}
 	}
 
