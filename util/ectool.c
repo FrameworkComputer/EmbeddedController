@@ -934,6 +934,7 @@ int cmd_pd_device_info(int argc, char *argv[])
 		return -1;
 	}
 
+	p->port = port;
 	r1 = (struct ec_params_usb_pd_discovery_entry *)ec_inbuf;
 	rv = ec_command(EC_CMD_USB_PD_DISCOVERY, 0, p, sizeof(*p),
 			ec_inbuf, ec_max_insize);
