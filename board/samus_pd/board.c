@@ -118,10 +118,10 @@ void set_usb_switches(int port, int open)
 	mutex_unlock(&usb_switch_lock[port]);
 }
 
-/* Wait 200ms after a charger is detected to debounce pin contact order */
-#define USB_CHG_DEBOUNCE_DELAY_MS 200
+/* Wait after a charger is detected to debounce pin contact order */
+#define USB_CHG_DEBOUNCE_DELAY_MS 500
 /*
- * Wait 100ms after reset, before re-enabling attach interrupt, so that the
+ * Wait after reset, before re-enabling attach interrupt, so that the
  * spurious attach interrupt from certain ports is ignored.
  */
 #define USB_CHG_RESET_DELAY_MS 100
