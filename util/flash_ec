@@ -311,6 +311,25 @@ function free_pty() {
 
 # Board specific flashing scripts
 
+# helper function for setting up servo v2/3 with openocd paths
+function setup_openocd() {
+	if [[ -z "${EC_DIR}" ]]; then
+	    # check if we're on beaglebone
+	    if [[ -e "/usr/bin/lib" ]]; then
+		OCD_CFG="servo_v3.cfg"
+		OCD_PATH="/usr/bin/lib"
+	    else
+		die "Cannot locate openocd configs"
+	    fi
+	else
+	    if [ "${FLAGS_usb}" = ${FLAGS_TRUE} ] ; then
+		OCD_CFG="${BOARD}.cfg"
+	    else
+		OCD_CFG="servo_v2.cfg"
+	    fi
+	fi
+}
+
 function flash_stm32() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
@@ -366,10 +385,9 @@ function flash_stm32_dfu() {
 }
 
 function flash_link() {
-	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
-
-	OCD_CFG="servo_v2.cfg"
 	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
+	setup_openocd
+
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		info "Clearing write protect flag."
@@ -385,15 +403,9 @@ function flash_link() {
 }
 
 function flash_lm4() {
-	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
-
-	if [ "${FLAGS_usb}" = ${FLAGS_TRUE} ] ; then
-		OCD_CFG="${BOARD}.cfg"
-	else
-		OCD_CFG="servo_v2.cfg"
-	fi
-
 	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
+	setup_openocd
+
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset};"
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		# Unprotect exists, but isn't needed because erasing pstate is
@@ -410,15 +422,9 @@ function flash_lm4() {
 }
 
 function flash_npcx() {
-	[[ -n "${EC_DIR}" ]] || die "Cannot locate openocd script"
-
-	if [ "${FLAGS_usb}" = ${FLAGS_TRUE} ] ; then
-		OCD_CFG="${BOARD}.cfg"
-	else
-		OCD_CFG="servo_v2.cfg"
-	fi
-
 	OCD_PATH="${EC_DIR}/chip/npcx/openocd"
+	setup_openocd
+
 	if [ "${FLAGS_unprotect}" = ${FLAGS_TRUE} ] ; then
 		# Unprotect exists, but isn't needed because erasing pstate is
 		# implicit in writing the entire image
