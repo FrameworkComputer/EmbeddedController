@@ -183,11 +183,11 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, C_TO_K(35), C_TO_K(49)},	/* CPU die */
 	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, C_TO_K(28), C_TO_K(44)},	/* Left C die */
+	{{0, 0, 0}, 0, 0},			/* Left C die */
 	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, C_TO_K(29), C_TO_K(43)},	/* Right C die */
+	{{0, 0, 0}, 0, 0},			/* Right C die */
 	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, C_TO_K(30), C_TO_K(44)},	/* Right D die */
+	{{0, 0, 0}, 0, 0},			/* Right D die */
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, C_TO_K(43), C_TO_K(54)},	/* Left D die */
 	{{0, 0, 0}, 0, 0},
