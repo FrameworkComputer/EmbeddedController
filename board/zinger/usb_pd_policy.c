@@ -117,6 +117,9 @@ static timestamp_t fault_deadline;
 /* Voltage overshoot below the OVP threshold for discharging to avoid OVP */
 #define DISCHARGE_OVERSHOOT_MV VBUS_MV(200)
 
+/* Time to wait after last RX edge interrupt before allowing deep sleep */
+#define PD_RX_SLEEP_TIMEOUT (100*MSEC)
+
 /* ----- output voltage discharging ----- */
 
 /* expiration date of the discharge */
@@ -333,7 +336,7 @@ int pd_board_checks(void)
 #endif
 
 	/* if it's been a while since last RX edge, then allow deep sleep */
-	if (get_time_since_last_edge(0) > PD_RX_TRANSITION_WINDOW)
+	if (get_time_since_last_edge(0) > PD_RX_SLEEP_TIMEOUT)
 		enable_sleep(SLEEP_MASK_USB_PD);
 
 	vbus_volt = adc_read_channel(ADC_CH_V_SENSE);
