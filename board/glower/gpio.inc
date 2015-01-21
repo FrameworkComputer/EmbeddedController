@@ -71,6 +71,9 @@ GPIO(EC_HIB,              PORT(3),  4, GPIO_INPUT,    NULL)
 GPIO(ICMNT,               PORT(6),  1, GPIO_INPUT,    NULL)
 GPIO(PVT_CS0,             PORT(14), 6, GPIO_ODR_HIGH, NULL)
 
+/* Configure VCC_PWRGD as GPIO so that it's internally gated high */
+GPIO(TP78,                PORT(6),  3, GPIO_OUT_HIGH, NULL)
+
 
 ALTERNATE(PORT(16), 0x24, 1, MODULE_UART,          0) /* UART0 */
 ALTERNATE(PORT(2),  0x0f, 2, MODULE_I2C,           0) /* I2C1 and I2C2 */
