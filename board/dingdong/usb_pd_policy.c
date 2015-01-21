@@ -203,7 +203,14 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 		gfu_mode = 1;
 		rv = 1;
 	}
-	/* TODO(p/33968): Enumerate USB BB here with updated mode choice */
+
+	if (rv)
+		/*
+		 * If we failed initial mode entry we'll have enumerated the USB
+		 * Billboard class.  If so we should disconnect.
+		 */
+		usb_disconnect();
+
 	return rv;
 }
 
