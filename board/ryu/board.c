@@ -42,7 +42,8 @@ DECLARE_DEFERRED(vbus_log);
 void vbus_evt(enum gpio_signal signal)
 {
 	hook_call_deferred(vbus_log, 0);
-	task_wake(TASK_ID_PD);
+	if (task_start_called())
+		task_wake(TASK_ID_PD);
 }
 
 /* Wait 200ms after a charger is detected to debounce pin contact order */
