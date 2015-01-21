@@ -33,15 +33,16 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+static void vbus_log(void)
+{
+	CPRINTS("VBUS %d", gpio_get_level(GPIO_CHGR_ACOK));
+}
+DECLARE_DEFERRED(vbus_log);
+
 void vbus_evt(enum gpio_signal signal)
 {
-	ccprintf("VBUS %d, %d!\n", signal, gpio_get_level(signal));
+	hook_call_deferred(vbus_log, 0);
 	task_wake(TASK_ID_PD);
-}
-
-void unhandled_evt(enum gpio_signal signal)
-{
-	ccprintf("Unhandled INT %d,%d!\n", signal, gpio_get_level(signal));
 }
 
 /* Wait 200ms after a charger is detected to debounce pin contact order */
