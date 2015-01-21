@@ -84,7 +84,7 @@ static const struct lightbar_params_v1 default_params = {
 	.tap_gate_delay = 200 * MSEC,		/* segment gating delay */
 	.tap_display_time = 3 * SECOND,		/* total sequence time */
 
-	.tap_pct_red = 10,			/* below this is red */
+	.tap_pct_red = 14,			/* below this is red */
 	.tap_pct_green = 94,			/* above this is green */
 	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
 	.tap_seg_max_on = 100,			/* max intensity (%) for "on" */
