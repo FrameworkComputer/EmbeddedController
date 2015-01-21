@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "pi3usb9281.h"
 #include "util.h"
@@ -25,13 +26,22 @@
 
 #ifdef CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO
 #define PI3USB9281_COUNT 2
+struct mutex mux_lock;
 static inline void select_chip(uint8_t chip_idx)
 {
+	mutex_lock(&mux_lock);
 	gpio_set_level(CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO, chip_idx);
+}
+
+static inline void unselect_chip(void)
+{
+	/* Just release the mutex, no need to change the mux gpio */
+	mutex_unlock(&mux_lock);
 }
 #else
 #define PI3USB9281_COUNT 1
 #define select_chip(x)
+#define unselect_chip()
 #endif
 
 static int saved_interrupts[PI3USB9281_COUNT];
@@ -42,6 +52,8 @@ uint8_t pi3usb9281_read(uint8_t chip_idx, uint8_t reg)
 
 	select_chip(chip_idx);
 	res = i2c_read8(I2C_PORT_MASTER, PI3USB9281_I2C_ADDR, reg, &val);
+	unselect_chip();
+
 	if (res)
 		return 0xee;
 
@@ -54,6 +66,8 @@ int pi3usb9281_write(uint8_t chip_idx, uint8_t reg, uint8_t val)
 
 	select_chip(chip_idx);
 	res = i2c_write8(I2C_PORT_MASTER, PI3USB9281_I2C_ADDR, reg, val);
+	unselect_chip();
+
 	if (res)
 		CPRINTS("PI3USB9281 I2C write failed");
 	return res;
