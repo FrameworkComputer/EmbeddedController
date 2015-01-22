@@ -9,6 +9,8 @@
 #include "console.h"
 #include "registers.h"
 #include "system.h"
+#include "task.h"
+#include "cpu.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -67,10 +69,36 @@ static void check_reset_cause(void)
 	NRF51_POWER_RESETREAS = raw_cause;
 }
 
+static void system_watchdog_reset(void)
+{
+	if (NRF51_WDT_TIMEOUT != 0) {
+		/* Hard reset the WDT */
+		NRF51_WDT_POWER = 0;
+		NRF51_WDT_POWER = 1;
+	}
+
+	/* NRF51_WDT_CONFIG_HALT_RUN breaks this */
+	NRF51_WDT_CONFIG = NRF51_WDT_CONFIG_SLEEP_RUN;
+
+	NRF51_WDT_RREN = NRF51_WDT_RREN_BIT(0);
+	NRF51_WDT_CRV = 3; /* @32KHz */
+	NRF51_WDT_START = 1;
+}
 
 void system_reset(int flags)
 {
-	CPRINTS("TODO: implement %s(). Infinite loop.", __func__);
+	/* Disable interrupts to avoid task swaps during reboot */
+	interrupt_disable();
+
+	if (flags & SYSTEM_RESET_HARD)
+		/* Ask the watchdog to trigger a hard reboot */
+		system_watchdog_reset();
+	else {
+		/* Use SYSRESETREQ to trigger a soft reboot */
+		CPU_NVIC_APINT = 0x05fa0004;
+	}
+
+	/* Spin and wait for reboot; should never return */
 	while (1)
 		;
 }
