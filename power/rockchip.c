@@ -415,6 +415,8 @@ static int wait_for_power_button_release(unsigned int timeout_us)
  */
 static void power_off(void)
 {
+	unsigned int power_off_timeout = 100; /* ms */
+
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
@@ -422,6 +424,13 @@ static void power_off(void)
 	/* Change SUSPEND_L and EC_INT pin to high-Z to reduce power draw. */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT);
 	gpio_set_flags(GPIO_EC_INT, GPIO_INPUT);
+
+	/* Wait till we actually turn off to not mess up the state machine. */
+	while (power_get_signals() & IN_POWER_GOOD) {
+		msleep(1);
+		power_off_timeout--;
+		ASSERT(power_off_timeout);
+	}
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
