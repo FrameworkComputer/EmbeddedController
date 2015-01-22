@@ -473,8 +473,8 @@ static void handle_acpi_write(int is_cmd)
  */
 static void handle_host_write(int is_cmd)
 {
-	/* Ignore data writes */
-	if (!is_cmd) {
+	/* Ignore data writes or overlapping commands from host */
+	if (!is_cmd || (LM4_LPC_ST(LPC_CH_CMD) & LM4_LPC_ST_BUSY)) {
 		LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_FRMH;
 		return;
 	}
