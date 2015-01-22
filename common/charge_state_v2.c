@@ -875,9 +875,18 @@ int charge_prevent_power_on(void)
 {
 	int prevent_power_on = 0;
 #ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+	struct batt_params params;
+	struct batt_params *current_batt_params = &curr.batt;
+
+	/* If battery params seem uninitialized then retrieve them */
+	if (current_batt_params->is_present == BP_NOT_SURE) {
+		battery_get_params(&params);
+		current_batt_params = &params;
+	}
 	/* Require a minimum battery level to power on */
-	if (curr.batt.is_present == BP_NO ||
-	    curr.batt.state_of_charge < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+	if (current_batt_params->is_present != BP_YES ||
+	    current_batt_params->state_of_charge <
+	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
 #endif
 	/* Factory override: Always allow power on if WP is disabled */
