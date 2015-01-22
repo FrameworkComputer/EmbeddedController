@@ -183,4 +183,7 @@ static inline int pd_snk_is_vbus_provided(int port)
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
+/* The lower the input voltage, the higher the power efficiency. */
+#define PD_PREFER_LOW_VOLTAGE
+
 #endif /* __USB_PD_CONFIG_H */

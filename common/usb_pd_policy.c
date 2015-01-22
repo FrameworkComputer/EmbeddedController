@@ -50,6 +50,9 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 {
 	int i, uw, max_uw = 0, mv, ma;
 	int ret = -1;
+#ifdef PD_PREFER_LOW_VOLTAGE
+	int cur_mv;
+#endif
 
 	/* max_mv of -1 represents max limit */
 	if (max_mv == -1)
@@ -71,10 +74,21 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 			ma = (src_caps[i] & 0x3FF) * 10;
 			uw = ma * mv;
 		}
+#ifdef PD_PREFER_LOW_VOLTAGE
+		if (mv > max_mv)
+			continue;
+		uw = MIN(uw, PD_MAX_POWER_MW * 1000);
+		if ((uw > max_uw) || ((uw == max_uw) && mv < cur_mv)) {
+			ret = i;
+			max_uw = uw;
+			cur_mv = mv;
+		}
+#else
 		if ((uw > max_uw) && (mv <= max_mv)) {
 			ret = i;
 			max_uw = uw;
 		}
+#endif
 	}
 	return ret;
 }
