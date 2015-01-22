@@ -176,7 +176,8 @@ static void check_reset_cause(void)
  * functions, and can't be declared static (or else the compiler optimizes it
  * into the main hibernate function.
  */
-void  __attribute__((section(".iram.text"))) __enter_hibernate(int hibctl)
+void  __attribute__((noinline)) __attribute__((section(".iram.text")))
+__enter_hibernate(int hibctl)
 {
 	LM4_HIBERNATE_HIBCTL = hibctl;
 	while (1)
