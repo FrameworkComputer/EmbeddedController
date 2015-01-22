@@ -64,7 +64,7 @@ static int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 	int size_bit = 0;
 
 	if (!size)
-		return -EC_ERROR_INVAL;
+		return EC_SUCCESS;
 	while (!(size & 1)) {
 		size_bit++;
 		size >>= 1;
