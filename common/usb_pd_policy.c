@@ -96,10 +96,10 @@ static void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
 		max_ma = 1000 * MIN(1000 * uw, PD_MAX_POWER_MW) / *mv;
 	} else {
 		max_ma = 10 * (pdo & 0x3FF);
-		max_ma = MIN(max_ma, PD_MAX_CURRENT_MA);
+		max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *mv);
 	}
 
-	*ma = max_ma;
+	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
 
 int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
