@@ -3262,6 +3262,9 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 	struct ec_response_usb_pd_control_v1 *r_v1 = args->response;
 	struct ec_response_usb_pd_control *r = args->response;
 
+	if (p->port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
 	if (p->role >= USB_PD_CTRL_ROLE_COUNT ||
 	    p->mux >= USB_PD_CTRL_MUX_COUNT)
 		return EC_RES_INVALID_PARAM;
@@ -3304,6 +3307,9 @@ static int hc_remote_flash(struct host_cmd_handler_args *args)
 	const uint32_t *data = &(p->size) + 1;
 	int i, size, rv = EC_RES_SUCCESS;
 	timestamp_t timeout;
+
+	if (port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
 
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
