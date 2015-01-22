@@ -355,6 +355,36 @@
 
 
 /*
+ *  Watchdog Timer (WDT)
+ */
+#define NRF51_WDT_BASE        0x40010000
+/* Tasks */
+#define NRF51_WDT_START       REG32(NRF51_WDT_BASE + 0x000)
+/* Events */
+#define NRF51_WDT_TIMEOUT     REG32(NRF51_WDT_BASE + 0x100)
+/* Registers */
+#define NRF51_WDT_INTENSET    REG32(NRF51_WDT_BASE + 0x304)
+#define NRF51_WDT_INTENCLR    REG32(NRF51_WDT_BASE + 0x308)
+#define NRF51_WDT_RUNSTATUS   REG32(NRF51_WDT_BASE + 0x400)
+#define NRF51_WDT_REQSTATUS   REG32(NRF51_WDT_BASE + 0x404)
+#define NRF51_WDT_CRV         REG32(NRF51_WDT_BASE + 0x504)
+#define NRF51_WDT_RREN        REG32(NRF51_WDT_BASE + 0x508)
+#define NRF51_WDT_CONFIG      REG32(NRF51_WDT_BASE + 0x50C)
+#define NRF51_WDT_RR(n)       REG32(NRF51_WDT_BASE + 0x600 + ((n) * 4))
+#define NRF51_WDT_POWER       REG32(NRF51_WDT_BASE + 0xFFC)
+/* Bitfields */
+#define NRF51_WDT_RUNSTATUS_RUNNING        1
+#define NRF51_WDT_REQSTATUS_BIT(n)        (1<<(n))
+#define NRF51_WDT_RREN_BIT(n)             (1<<(n))
+#define NRF51_WDT_CONFIG_SLEEP_PAUSE       0
+#define NRF51_WDT_CONFIG_SLEEP_RUN         1
+#define NRF51_WDT_CONFIG_HALT_PAUSE       (0<<4)
+#define NRF51_WDT_CONFIG_HALT_RUN         (1<<4)
+
+#define NRF51_WDT_RELOAD_VAL             0x6E524635
+
+
+/*
  *  GPIO
  */
 #define NRF51_GPIO_BASE     0x50000000
