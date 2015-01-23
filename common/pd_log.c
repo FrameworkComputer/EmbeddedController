@@ -176,6 +176,9 @@ dequeue_retry:
 		int i, res;
 		incoming_logs = 0;
 		for (i = 0; i < PD_PORT_COUNT; ++i) {
+			/* only accessories who knows Google logging format */
+			if (pd_get_identity_vid(i) != USB_VID_GOOGLE)
+				continue;
 			res = pd_fetch_acc_log_entry(i);
 			if (res == EC_RES_BUSY) /* host should retry */
 				return EC_RES_BUSY;

@@ -939,6 +939,14 @@ uint32_t pd_dfp_exit_mode(int port);
 void pd_dfp_pe_init(int port);
 
 /**
+ * Return the VID of the USB PD accessory connected to a specified port
+ *
+ * @param port  USB-C port number
+ * @return      the USB Vendor Identifier or 0 if it doesn't exist
+ */
+uint16_t pd_get_identity_vid(int port);
+
+/**
  * Store Device ID & RW hash of device
  *
  * @param port			USB-C port number

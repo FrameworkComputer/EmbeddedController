@@ -340,6 +340,11 @@ uint32_t pd_dfp_exit_mode(int port)
 	return 0;
 }
 
+uint16_t pd_get_identity_vid(int port)
+{
+	return PD_IDH_VID(pe[port].identity[0]);
+}
+
 #ifdef CONFIG_CMD_USB_PD_PE
 static void dump_pe(int port)
 {
@@ -356,7 +361,7 @@ static void dump_pe(int port)
 	idh_ptype = PD_IDH_PTYPE(pe[port].identity[0]);
 	ccprintf("IDENT:\n");
 	ccprintf("\t[ID Header] %08x :: %s, VID:%04x\n", pe[port].identity[0],
-		 idh_ptype_names[idh_ptype], PD_IDH_VID(pe[port].identity[0]));
+		 idh_ptype_names[idh_ptype], pd_get_identity_vid(port));
 	ccprintf("\t[Cert Stat] %08x\n", pe[port].identity[1]);
 	for (i = 2; i < ARRAY_SIZE(pe[port].identity); i++) {
 		ccprintf("\t");
@@ -600,7 +605,7 @@ static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 	if (*port >= PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	r->vid = PD_IDH_VID(pe[*port].identity[0]);
+	r->vid = pd_get_identity_vid(*port);
 	r->ptype = PD_IDH_PTYPE(pe[*port].identity[0]);
 	/* pid only included if vid is assigned */
 	if (r->vid)
