@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -88,9 +88,18 @@ static int pwr_led_set_color(enum led_color color)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	/* Ignoring led_id as both leds support the same colors */
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
-	brightness_range[EC_LED_COLOR_YELLOW] = 1;
+	switch (led_id) {
+	case EC_LED_ID_BATTERY_LED:
+		brightness_range[EC_LED_COLOR_RED] = 1;
+		brightness_range[EC_LED_COLOR_GREEN] = 1;
+		break;
+	case EC_LED_ID_POWER_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		break;
+	default:
+		/* ignore */
+		break;
+	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
