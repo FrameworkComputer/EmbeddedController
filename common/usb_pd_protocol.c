@@ -833,12 +833,6 @@ static void execute_hard_reset(int port)
 		pd_set_host_mode(port, 0);
 		pd_power_supply_reset(port);
 	}
-	/*
-	 * If we are swapping to a sink and have changed to Rd, change role to
-	 * sink to match the CC pull resistor.
-	 */
-	if (pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY)
-		pd[port].power_role = PD_ROLE_SINK;
 
 	if (pd[port].power_role == PD_ROLE_SINK) {
 		/* Clear the input current limit */
@@ -2251,8 +2245,9 @@ void pd_task(void)
 						  PD_STATE_SRC_DISCONNECTED);
 					break;
 				}
-				/* Switch to Rd */
+				/* Switch to Rd and swap roles to sink */
 				pd_set_host_mode(port, 0);
+				pd[port].power_role = PD_ROLE_SINK;
 				/* Wait for PS_RDY from new source */
 				set_state_timeout(port,
 						  get_time().val +
@@ -2698,10 +2693,7 @@ void pd_task(void)
 			 * If hard reset while in the last stages of power
 			 * swap, then we need to restore our CC resistor.
 			 */
-			if (pd[port].last_state == PD_STATE_SRC_SWAP_STANDBY)
-				pd_set_host_mode(port, 1);
-			else if (pd[port].last_state ==
-					PD_STATE_SNK_SWAP_STANDBY)
+			if (pd[port].last_state == PD_STATE_SNK_SWAP_STANDBY)
 				pd_set_host_mode(port, 0);
 #endif
 
