@@ -219,14 +219,16 @@ enum battery_present battery_is_present(void)
 void battery_get_params(struct batt_params *batt)
 {
 	int v;
+	const uint32_t flags_to_check = BATT_FLAG_BAD_TEMPERATURE |
+					BATT_FLAG_BAD_STATE_OF_CHARGE |
+					BATT_FLAG_BAD_VOLTAGE |
+					BATT_FLAG_BAD_CURRENT;
 
 	/* Reset flags */
 	batt->flags = 0;
 
 	if (bq27541_read(REG_TEMPERATURE, &batt->temperature))
 		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
-	else
-		batt->flags |= BATT_FLAG_RESPONSIVE; /* Battery is responding */
 
 	if (bq27541_read8(REG_STATE_OF_CHARGE, &batt->state_of_charge))
 		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
@@ -241,6 +243,14 @@ void battery_get_params(struct batt_params *batt)
 
 	/* Default to not desiring voltage and current */
 	batt->desired_voltage = batt->desired_current = 0;
+
+	/* If any of those reads worked, the battery is responsive */
+	if ((batt->flags & flags_to_check) != flags_to_check) {
+		batt->flags |= BATT_FLAG_RESPONSIVE;
+		batt->is_present = BP_YES;
+	} else {
+		batt->is_present = BP_NOT_SURE;
+	}
 
 	v = 0;
 	if (battery_charging_allowed(&v)) {
