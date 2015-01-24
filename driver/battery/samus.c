@@ -60,65 +60,127 @@ static int fast_charging_allowed = 1;
 int charger_profile_override(struct charge_state_data *curr)
 {
 	/* temp in 0.1 deg C */
-	int temp_c = curr->batt.temperature - 2731;
+	int temp_c;
+	const struct charger_info *info;
+
 	/* keep track of last temperature range for hysteresis */
 	static enum {
 		TEMP_LOW,
 		TEMP_NORMAL,
 		TEMP_HIGH
-	} temp_range = TEMP_NORMAL;
+	} temp_range = TEMP_NORMAL, prev_temp_range = TEMP_NORMAL;
 
-	/* We only want to override how we charge, nothing else. */
-	if (curr->state != ST_CHARGE)
-		return 0;
+	/* charging voltage to use at high temp */
+	static int high_temp_charging_voltage;
 
-	/* Do we want to mess with the charge profile too? */
-	if (!fast_charging_allowed)
+	/* custom profile phase at normal temp */
+	static int normal_temp_phase;
+
+	/* battery voltage and current and previous voltage and current */
+	int batt_voltage, batt_current;
+	static int prev_batt_voltage, prev_batt_current;
+
+	/*
+	 * Determine temperature range:
+	 * Low: Battery is <15C
+	 * Normal: Battery is 15-45C
+	 * High: Battery is >45C
+	 *
+	 * Add 0.2 degrees of hysteresis.
+	 * If temp reading was bad use last range.
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE)) {
+		temp_c = curr->batt.temperature - 2731;
+		if (temp_c < 149)
+			temp_range = TEMP_LOW;
+		else if (temp_c > 151 && temp_c < 449)
+			temp_range = TEMP_NORMAL;
+		else if (temp_c > 451)
+			temp_range = TEMP_HIGH;
+	}
+
+	/*
+	 * Treat voltage and current as a pair, if either is bad fall back to
+	 * previous reading.
+	 */
+	if (curr->batt.flags &
+	    (BATT_FLAG_BAD_VOLTAGE | BATT_FLAG_BAD_CURRENT)) {
+		batt_voltage = prev_batt_voltage;
+		batt_current = prev_batt_current;
+	} else {
+		batt_voltage = prev_batt_voltage = curr->batt.voltage;
+		batt_current = prev_batt_current = curr->batt.current;
+	}
+
+	/*
+	 * If we are not charging or we aren't using fast charging profiles,
+	 * then do not override desired current and voltage and reset some
+	 * fast charging profile static variables.
+	 */
+	if (curr->state != ST_CHARGE || !fast_charging_allowed) {
+		prev_temp_range = TEMP_NORMAL;
+		normal_temp_phase = 0;
 		return 0;
+	}
 
 	/*
 	 * Okay, impose our custom will:
-	 * When battery is 15-45C:
-	 * CC at 9515mA @ 8.3V
-	 * CV at 8.3V until current drops to 4759mA
-	 * CC at 4759mA @ 8.7V
-	 * CV at 8.7V
+	 * Normal temp:
+	 * Phase 0: CC at 9515mA @ 8.3V
+	 *          CV at 8.3V until current drops to 4759mA
+	 * Phase 1: CC at 4759mA @ 8.7V
+	 *          CV at 8.7V
 	 *
-	 * When battery is <15C:
+	 * Low temp:
 	 * CC at 2854mA @ 8.7V
 	 * CV at 8.7V
 	 *
-	 * When battery is >45C:
-	 * CC at 6660mA @ 8.3V
-	 * CV at 8.3V (when battery is hot we don't go to fully charged)
-	 *
-	 * Add 0.2 degrees of hysteresis.
+	 * High temp:
+	 * If battery voltage < 8.3V then:
+	 *	CC at 6660mA @ 8.3V
+	 *	CV at 8.3V (when battery is hot we don't go to fully charged)
+	 * else:
+	 *	CV at just above battery voltage which will essentially
+	 *         terminate the charge and allow battery to cool.
+	 * Note that if we ever request a voltage below the present battery
+	 * voltage, then we will stop the BQ switching, which will power off
+	 * the INA and we won't be able to charge again until AC is
+	 * disconnected. see crbug.com/p/35491.
 	 */
-	if (temp_c < 149)
-		temp_range = TEMP_LOW;
-	else if (temp_c > 151 && temp_c < 449)
-		temp_range = TEMP_NORMAL;
-	else if (temp_c > 451)
-		temp_range = TEMP_HIGH;
-
 	switch (temp_range) {
 	case TEMP_LOW:
 		curr->requested_current = 2854;
 		curr->requested_voltage = 8700;
 		break;
 	case TEMP_NORMAL:
-		curr->requested_current = 9515;
-		curr->requested_voltage = 8300;
-		if (curr->batt.current <= 4759 && curr->batt.voltage >= 8250) {
+		if (normal_temp_phase == 0) {
+			curr->requested_current = 9515;
+			curr->requested_voltage = 8300;
+			if (batt_current <= 4759 && batt_voltage >= 8200)
+				normal_temp_phase = 1;
+		}
+		if (normal_temp_phase == 1) {
 			curr->requested_current = 4759;
 			curr->requested_voltage = 8700;
 		}
 		break;
 	case TEMP_HIGH:
+		/*
+		 * First time TEMP_HIGH is used, get the closest voltage
+		 * just above the battery voltage. If it is above 8.3V, we
+		 * will use that as the target, otherwise we will use 8.3V.
+		 */
+		if (prev_temp_range != TEMP_HIGH) {
+			info = charger_get_info();
+			high_temp_charging_voltage = MAX(8300,
+				charger_closest_voltage(batt_voltage +
+							info->voltage_step));
+		}
 		curr->requested_current = 6660;
-		curr->requested_voltage = 8300;
+		curr->requested_voltage = high_temp_charging_voltage;
 		break;
 	}
+	prev_temp_range = temp_range;
 
 	return 0;
 }

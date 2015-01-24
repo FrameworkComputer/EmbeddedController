@@ -744,24 +744,22 @@ void charger_task(void)
 		 * out of that state, even if the charge level is full.
 		 */
 		if (curr.batt.state_of_charge >= BATTERY_LEVEL_FULL &&
-		    !battery_seems_to_be_disconnected) {
+		    !battery_seems_to_be_disconnected)
 			/* Full up. Stop charging */
 			curr.state = ST_IDLE;
-			goto wait_for_it;
-		}
 
 		/*
 		 * TODO(crosbug.com/p/27643): Quit trying if charging too long
 		 * without getting full (CONFIG_CHARGER_TIMEOUT_HOURS).
 		 */
 
+wait_for_it:
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
 		sleep_usec = charger_profile_override(&curr);
 		if (sleep_usec < 0)
 			problem(PR_CUSTOM, sleep_usec);
 #endif
 
-wait_for_it:
 		/* Keep the AP informed */
 		if (need_static)
 			need_static = update_static_battery_info();
