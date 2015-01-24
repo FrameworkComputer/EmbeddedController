@@ -191,11 +191,13 @@ void pd_dfp_pe_init(int port)
 	pe[port].amode.index = -1;
 }
 
-static void dfp_consume_identity(int port, uint32_t *payload)
+static void dfp_consume_identity(int port, int cnt, uint32_t *payload)
 {
 	int ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
+	size_t identity_size = MIN(sizeof(pe[port].identity),
+				   (cnt - 1) * sizeof(uint32_t));
 	pd_dfp_pe_init(port);
-	memcpy(&pe[port].identity, payload + 1, sizeof(pe[port].identity));
+	memcpy(&pe[port].identity, payload + 1, identity_size);
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
 		/* TODO(tbroch) do I disable VBUS here if power contract
@@ -493,7 +495,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		switch (cmd) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		case CMD_DISCOVER_IDENT:
-			dfp_consume_identity(port, payload);
+			dfp_consume_identity(port, cnt, payload);
 			rsize = dfp_discover_svids(port, payload);
 			break;
 		case CMD_DISCOVER_SVID:
