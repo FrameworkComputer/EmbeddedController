@@ -16,7 +16,9 @@
 #include "util.h"
 
 #define START_CHARGE_DELAY 5000 /* ms */
-#define TEST_CHECK_CHARGE_DELAY (START_CHARGE_DELAY + 500) /* ms */
+#define MONITOR_CHARGE_DONE_DELAY 1000 /* ms */
+#define TEST_CHECK_CHARGE_DELAY (START_CHARGE_DELAY + \
+				 MONITOR_CHARGE_DONE_DELAY + 500) /* ms */
 
 static void wait_for_lid_debounce(void)
 {
@@ -38,7 +40,7 @@ static int test_lid(void)
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 0);
 
 	/*
-	 * Close the lid. The EC should wait for a second before
+	 * Close the lid. The EC should wait for 5 second before
 	 * enabling transmitter.
 	 */
 	set_lid_open(0);
@@ -71,10 +73,16 @@ static int test_charge_done(void)
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
 	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
 
-	/* Oops, need charging again. */
+	/* Oops, CHARGE_DONE changes again. We should ignore it. */
 	gpio_set_level(GPIO_CHARGE_DONE, 0);
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
-	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
+
+	/* Open the lid. Charger should be turned off. */
+	set_lid_open(1);
+	msleep(TEST_CHECK_CHARGE_DELAY);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 0);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
 
 	return EC_SUCCESS;
 }
@@ -105,25 +113,45 @@ static int test_lid_open_during_charging(void)
 	return EC_SUCCESS;
 }
 
-static int test_clear_charge_done(void)
+static int test_debounce_charge_done(void)
 {
-	/* Lid is open initially. CHARGE_DONE is set. */
+	/* Lid is open initially. */
 	set_lid_open(1);
+	gpio_set_level(GPIO_CHARGE_DONE, 0);
 	msleep(TEST_CHECK_CHARGE_DELAY);
-	gpio_set_level(GPIO_CHARGE_DONE, 1);
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 0);
 	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
 
 	/* Close the lid. Charging should start. */
 	set_lid_open(0);
-	msleep(TEST_CHECK_CHARGE_DELAY);
+	msleep(START_CHARGE_DELAY + 100);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
+
+	/* Within the first second, changes on CHARGE_DONE should be ignore. */
+	gpio_set_level(GPIO_CHARGE_DONE, 1);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
+	msleep(100);
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
 	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
 	gpio_set_level(GPIO_CHARGE_DONE, 0);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
+	msleep(100);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 1);
 
-	/* Charge is done. */
+	/* Changes on CHARGE_DONE after take effect. */
+	msleep(MONITOR_CHARGE_DONE_DELAY);
 	gpio_set_level(GPIO_CHARGE_DONE, 1);
 	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 1);
+	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
+
+	/* Open the lid. Charger should be turned off. */
+	set_lid_open(1);
+	msleep(TEST_CHECK_CHARGE_DELAY);
+	TEST_ASSERT(gpio_get_level(GPIO_BASE_CHG_VDD_EN) == 0);
 	TEST_ASSERT(gpio_get_level(GPIO_CHARGE_EN) == 0);
 
 	return EC_SUCCESS;
@@ -136,7 +164,7 @@ void run_test(void)
 	RUN_TEST(test_lid);
 	RUN_TEST(test_charge_done);
 	RUN_TEST(test_lid_open_during_charging);
-	RUN_TEST(test_clear_charge_done);
+	RUN_TEST(test_debounce_charge_done);
 
 	test_print_result();
 }
