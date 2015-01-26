@@ -8,8 +8,6 @@
 #ifndef MCDP28X0_H
 #define MCDP28X0_H
 
-#include <util.h>
-
 #define MCDP_OUTBUF_MAX 16
 #define MCDP_INBUF_MAX 16
 

@@ -17,6 +17,7 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "compile_time_macros.h"
+#include "driver/mcdp28x0.h"
 #include "ec_flash.h"
 #include "ectool.h"
 #include "lightbar.h"
@@ -5424,6 +5425,7 @@ int cmd_pd_log(int argc, char *argv[])
 		struct ec_response_pd_log r;
 		uint32_t words[8]; /* space for the payload */
 	} u;
+	struct mcdp_info minfo;
 	struct ec_response_usb_pd_power_info pinfo;
 	int rv;
 	unsigned long long milliseconds;
@@ -5477,6 +5479,19 @@ int cmd_pd_log(int argc, char *argv[])
 			const char *fault = u.r.data < ARRAY_SIZE(fault_names) ?
 					fault_names[u.r.data] : "???";
 			printf("Power supply fault: %s\n", fault);
+		} else if (u.r.type == PD_EVENT_VIDEO_DP_MODE) {
+			printf("DP mode %sabled\n", (u.r.data == 1) ?
+			       "en" : "dis");
+		} else if (u.r.type == PD_EVENT_VIDEO_CODEC) {
+			memcpy(&minfo, u.r.payload,
+			       sizeof(struct mcdp_info));
+			printf("HDMI info: family:%04x chipid:%04x "
+			       "irom:%d.%d.%d fw:%d.%d.%d\n",
+			       MCDP_FAMILY(minfo.family),
+			       MCDP_CHIPID(minfo.chipid),
+			       minfo.irom.major, minfo.irom.minor,
+			       minfo.irom.build, minfo.fw.major,
+			       minfo.fw.minor, minfo.fw.build);
 		} else { /* Unknown type */
 			int i;
 			printf("Event %02x (%04x) [", u.r.type, u.r.data);
