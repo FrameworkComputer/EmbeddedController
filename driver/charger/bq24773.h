@@ -14,9 +14,9 @@
 /* Chip specific commands */
 #define BQ24773_CHARGE_OPTION0          0x00
 #define BQ24773_CHARGE_OPTION1          0x02
-#define BQ24773_PROTECT_OPTION0         0x04
-#define BQ24773_PROTECT_OPTION1         0x06
-#define BQ24773_PROTECT_STATUS          0x08
+#define BQ24773_PROCHOT_OPTION0         0x04
+#define BQ24773_PROCHOT_OPTION1         0x06
+#define BQ24773_PROCHOT_STATUS          0x08
 #define BQ24773_DEVICE_ADDRESS          0x09
 #define BQ24773_CHARGE_CURRENT          0x0A
 #define BQ24773_MAX_CHARGE_VOLTAGE      0x0C
