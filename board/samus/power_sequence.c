@@ -175,18 +175,6 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-static void update_touchscreen(void)
-{
-	/*
-	 * If the lid is closed; put the touchscreen in reset to save power.
-	 * If the lid is open, take it out of reset so it can wake the
-	 * processor (although just opening the lid should do that anyway, so
-	 * we don't have to worry about it staying on while the AP is off).
-	 */
-	gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, lid_is_open());
-}
-DECLARE_HOOK(HOOK_LID_CHANGE, update_touchscreen, HOOK_PRIO_DEFAULT);
-
 enum power_state power_handle_state(enum power_state state)
 {
 	struct batt_params batt;
