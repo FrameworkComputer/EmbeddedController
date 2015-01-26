@@ -78,12 +78,6 @@
  */
 #define PMIC_STARTUP_MS 300
 
-/*
- * Hold time fo the RK808 PMIC reset.
- */
-#define PMIC_RESET_HOLD_TIME (50 * MSEC)
-
-
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -110,18 +104,6 @@ static enum power_request_t power_request;
 
 /* Forward declaration */
 static void chipset_turn_off_power_rails(void);
-
-
-/**
- * Set the PMIC RESET signal.
- *
- * @param asserted	Resetting (=1) or idle (=0)
- */
-static void set_pmic_reset(int asserted)
-{
-	/* Signal is active-high */
-	gpio_set_level(GPIO_PMIC_RESET, asserted ? 1 : 0);
-}
 
 
 /**
@@ -372,10 +354,6 @@ static void power_on(void)
 	for (i = 0; i < PMIC_STARTUP_MS; i++)
 		usleep(1 * MSEC);
 
-	/* Reset the PMIC to make sure it's in a known state. */
-	set_pmic_reset(1);
-	usleep(PMIC_RESET_HOLD_TIME);
-	set_pmic_reset(0);
 	set_pmic_warm_reset(0);
 }
 
