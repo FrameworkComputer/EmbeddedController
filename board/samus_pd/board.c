@@ -121,7 +121,7 @@ void set_usb_switches(int port, int open)
 }
 
 /* Wait after a charger is detected to debounce pin contact order */
-#define USB_CHG_DEBOUNCE_DELAY_MS 500
+#define USB_CHG_DEBOUNCE_DELAY_MS 1000
 /*
  * Wait after reset, before re-enabling attach interrupt, so that the
  * spurious attach interrupt from certain ports is ignored.
