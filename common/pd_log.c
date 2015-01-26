@@ -146,7 +146,7 @@ void pd_log_recv_vdm(int port, int cnt, uint32_t *payload)
 	struct ec_response_pd_log *r = (void *)&payload[1];
 	/* update port number from MCU point of view */
 	size_t size = PD_LOG_SIZE(r->size_port);
-	uint8_t size_port = PD_LOG_PORT_SIZE(size, port);
+	uint8_t size_port = PD_LOG_PORT_SIZE(port, size);
 	uint32_t timestamp;
 
 	if ((cnt < 2 + DIV_ROUND_UP(size, sizeof(uint32_t))) ||
