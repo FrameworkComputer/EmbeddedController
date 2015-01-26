@@ -7,6 +7,7 @@
 #include "board.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -195,6 +196,7 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	    (PD_VDO_OPOS(payload[0]) == OPOS_DP)) {
 		alt_mode[PD_AMODE_DISPLAYPORT] = OPOS_DP;
 		rv = 1;
+		pd_log_event(PD_EVENT_VIDEO_DP_MODE, 0, 1, NULL);
 	} else if ((PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) &&
 		   (PD_VDO_OPOS(payload[0]) == OPOS_GFU)) {
 		alt_mode[PD_AMODE_GOOGLE] = OPOS_GFU;
@@ -225,6 +227,7 @@ static int svdm_exit_mode(int port, uint32_t *payload)
 	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) {
 		gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
 		alt_mode[PD_AMODE_DISPLAYPORT] = 0;
+		pd_log_event(PD_EVENT_VIDEO_DP_MODE, 0, 0, NULL);
 	} else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) {
 		alt_mode[PD_AMODE_GOOGLE] = 0;
 	} else {

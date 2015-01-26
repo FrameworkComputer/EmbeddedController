@@ -7,6 +7,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "common.h"
+#include "ec_commands.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -140,8 +141,12 @@ static void factory_validation_deferred(void)
 
 	/* test mcdp via serial to validate function */
 	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0xe) &&
-	    (MCDP_CHIPID(info.chipid) == 0x1))
+	    (MCDP_CHIPID(info.chipid) == 0x1)) {
 		gpio_set_level(GPIO_MCDP_READY, 1);
+		pd_log_event(PD_EVENT_VIDEO_CODEC,
+			     PD_LOG_PORT_SIZE(0, sizeof(info)),
+			     0, &info);
+	}
 
 	mcdp_disable();
 }

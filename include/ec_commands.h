@@ -2886,12 +2886,13 @@ struct ec_response_pd_log {
 #define PD_EVENT_ACC_BASE       0x20
 #define PD_EVENT_ACC_RW_FAIL   (PD_EVENT_ACC_BASE+0)
 #define PD_EVENT_ACC_RW_ERASE  (PD_EVENT_ACC_BASE+1)
-#define PD_EVENT_ACC_GFU_ENTER (PD_EVENT_ACC_BASE+2)
 /* PD power supply events */
 #define PD_EVENT_PS_BASE        0x40
 #define PD_EVENT_PS_FAULT      (PD_EVENT_PS_BASE+0)
 /* PD video dongles events */
 #define PD_EVENT_VIDEO_BASE     0x60
+#define PD_EVENT_VIDEO_DP_MODE (PD_EVENT_VIDEO_BASE+0)
+#define PD_EVENT_VIDEO_CODEC   (PD_EVENT_VIDEO_BASE+1)
 /* Returned in the "type" field, when there is no entry available */
 #define PD_EVENT_NO_ENTRY       0xFF
 
