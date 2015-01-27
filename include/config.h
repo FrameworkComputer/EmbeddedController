@@ -265,6 +265,9 @@
 /* Include debugging support for the Bluetooth link layer */
 #undef CONFIG_BLUETOOTH_LL_DEBUG
 
+/* Include debugging support for Bluetooth HCI */
+#undef CONFIG_BLUETOOTH_HCI_DEBUG
+
 /* Boot header storage offset. */
 #undef CONFIG_BOOT_HEADER_STORAGE_OFF
 
