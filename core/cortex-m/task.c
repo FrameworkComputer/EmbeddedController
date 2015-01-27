@@ -359,7 +359,8 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 		/* The receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
 #ifndef CONFIG_TASK_PROFILING
-		need_resched_or_profiling = 1;
+		if (start_called)
+			need_resched_or_profiling = 1;
 #endif
 	} else {
 		if (wait)
