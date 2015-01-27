@@ -22,6 +22,9 @@ test-list-$(BOARD_SAMUS)=
 test-list-$(BOARD_RYU)=
 test-list-$(BOARD_RYU_P1)=
 
+# llama has issues when building tests
+test-list-$(BOARD_LLAMA)=
+
 # For some tests, we are running out of RAM for Samus PD. Disable them for
 # now.
 test-list-$(BOARD_SAMUS_PD)=

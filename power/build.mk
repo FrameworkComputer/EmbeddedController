@@ -14,4 +14,5 @@ power-$(CONFIG_CHIPSET_IVYBRIDGE)+=ivybridge.o
 power-$(CONFIG_CHIPSET_ROCKCHIP)+=rockchip.o
 power-$(CONFIG_CHIPSET_TEGRA)+=tegra.o
 power-$(CONFIG_CHIPSET_BRASWELL)+=braswell.o
+power-$(CONFIG_CHIPSET_MEDIATEK)+=mediatek.o
 power-$(CONFIG_POWER_COMMON)+=common.o
