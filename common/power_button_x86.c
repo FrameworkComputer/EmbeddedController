@@ -121,7 +121,8 @@ static void set_pwrbtn_to_pch(int high)
 	 * is too low.
 	 */
 #ifdef CONFIG_CHARGER
-	if (!high && (charge_want_shutdown() || charge_prevent_power_on())) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
+	   (charge_want_shutdown() || charge_prevent_power_on())) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
