@@ -32,7 +32,7 @@ enum {
 };
 
 /* Current acceleration vectors and current lid angle. */
-static float lid_angle_deg;
+static int lid_angle_deg;
 static int lid_angle_is_reliable;
 
 /*
@@ -41,7 +41,7 @@ static int lid_angle_is_reliable;
  * efficiency, value is given unit-less, so if you want the threshold to be
  * at 15 degrees, the value would be cos(15 deg) = 0.96593.
  */
-#define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD 0.96593F
+#define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD FLOAT_TO_FP(0.96593)
 
 
 /* Pointer to constant acceleration orientation data. */
@@ -61,11 +61,12 @@ struct motion_sensor_t *accel_lid = &motion_sensors[CONFIG_SENSOR_LID];
  * @return flag representing if resulting lid angle calculation is reliable.
  */
 static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
-		float *lid_angle)
+			       int *lid_angle)
 {
 	vector_3_t v;
-	float ang_lid_to_base, ang_lid_90, ang_lid_270;
-	float lid_to_base, base_to_hinge;
+	fp_t ang_lid_to_base, cos_lid_90, cos_lid_270;
+	fp_t lid_to_base, base_to_hinge;
+	fp_t denominator;
 	int reliable = 1;
 
 	/*
@@ -82,64 +83,66 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	 * If hinge aligns too closely with gravity, then result may be
 	 * unreliable.
 	 */
-	if (ABS(base_to_hinge) > HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD)
+	if (fp_abs(base_to_hinge) > HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD)
 		reliable = 0;
 
-	base_to_hinge = SQ(base_to_hinge);
+	base_to_hinge = fp_sq(base_to_hinge);
 
 	/* Check divide by 0. */
-	if (ABS(1.0F - base_to_hinge) < 0.01F) {
-		*lid_angle = 0.0;
+	denominator = FLOAT_TO_FP(1.0) - base_to_hinge;
+	if (fp_abs(denominator) < FLOAT_TO_FP(0.01)) {
+		*lid_angle = 0;
 		return 0;
 	}
 
-	ang_lid_to_base = arc_cos(
-			(lid_to_base - base_to_hinge) / (1 - base_to_hinge));
+	ang_lid_to_base = arc_cos(fp_div(lid_to_base - base_to_hinge,
+					 denominator));
 
 	/*
 	 * The previous calculation actually has two solutions, a positive and
 	 * a negative solution. To figure out the sign of the answer, calculate
-	 * the angle between the actual lid angle and the estimated vector if
-	 * the lid were open to 90 deg, ang_lid_90. Also calculate the angle
-	 * between the actual lid angle and the estimated vector if the lid
-	 * were open to 270 deg, ang_lid_270. The smaller of the two angles
-	 * represents which one is closer. If the lid is closer to the
-	 * estimated 270 degree vector then the result is negative, otherwise
-	 * it is positive.
+	 * the cosine of the angle between the actual lid angle and the
+	 * estimated vector if the lid were open to 90 deg, cos_lid_90. Also
+	 * calculate the cosine of the angle between the actual lid angle and
+	 * the estimated vector if the lid were open to 270 deg,
+	 * cos_lid_270. The smaller of the two angles represents which one is
+	 * closer. If the lid is closer to the estimated 270 degree vector then
+	 * the result is negative, otherwise it is positive.
 	 */
 	rotate(base, p_acc_orient->rot_hinge_90, v);
-	ang_lid_90 = cosine_of_angle_diff(v, lid);
+	cos_lid_90 = cosine_of_angle_diff(v, lid);
 	rotate(v, p_acc_orient->rot_hinge_180, v);
-	ang_lid_270 = cosine_of_angle_diff(v, lid);
+	cos_lid_270 = cosine_of_angle_diff(v, lid);
 
 	/*
-	 * Note that ang_lid_90 and ang_lid_270 are not in degrees, because
+	 * Note that cos_lid_90 and cos_lid_270 are not in degrees, because
 	 * the arc_cos() was never performed. But, since arc_cos() is
 	 * monotonically decreasing, we can do this comparison without ever
 	 * taking arc_cos(). But, since the function is monotonically
 	 * decreasing, the logic of this comparison is reversed.
 	 */
-	if (ang_lid_270 > ang_lid_90)
+	if (cos_lid_270 > cos_lid_90)
 		ang_lid_to_base = -ang_lid_to_base;
 
 	/* Place lid angle between 0 and 360 degrees. */
 	if (ang_lid_to_base < 0)
-		ang_lid_to_base += 360;
+		ang_lid_to_base += FLOAT_TO_FP(360);
 
-	*lid_angle = ang_lid_to_base;
+	/*
+	 * Round to nearest int by adding 0.5. Note, only works because lid
+	 * angle is known to be positive.
+	 */
+	*lid_angle = FP_TO_INT(ang_lid_to_base + FLOAT_TO_FP(0.5));
+
 	return reliable;
 }
 
 int motion_lid_get_angle(void)
 {
 	if (lid_angle_is_reliable)
-		/*
-		 * Round to nearest int by adding 0.5. Note, only works because
-		 * lid angle is known to be positive.
-		 */
-		return (int)(lid_angle_deg + 0.5F);
+		return lid_angle_deg;
 	else
-		return (int)LID_ANGLE_UNRELIABLE;
+		return LID_ANGLE_UNRELIABLE;
 }
 
 /*

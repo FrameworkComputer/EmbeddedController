@@ -10,44 +10,56 @@
 #include "math_util.h"
 #include "util.h"
 
+/* Some useful math functions.  Use with integers only! */
+#define SQ(x) ((x) * (x))
+
 /* For cosine lookup table, define the increment and the size of the table. */
 #define COSINE_LUT_INCR_DEG	5
 #define COSINE_LUT_SIZE		((180 / COSINE_LUT_INCR_DEG) + 1)
 
-#ifdef CONFIG_FPU
 /* Lookup table for the value of cosine from 0 degrees to 180 degrees. */
-static const float cos_lut[] = {
-	 1.00000,  0.99619,  0.98481,  0.96593,  0.93969,
-	 0.90631,  0.86603,  0.81915,  0.76604,  0.70711,
-	 0.64279,  0.57358,  0.50000,  0.42262,  0.34202,
-	 0.25882,  0.17365,  0.08716,  0.00000, -0.08716,
-	-0.17365, -0.25882, -0.34202, -0.42262, -0.50000,
-	-0.57358, -0.64279, -0.70711, -0.76604, -0.81915,
-	-0.86603, -0.90631, -0.93969, -0.96593, -0.98481,
-	-0.99619, -1.00000,
+static const fp_t cos_lut[] = {
+	FLOAT_TO_FP( 1.00000), FLOAT_TO_FP( 0.99619), FLOAT_TO_FP( 0.98481),
+	FLOAT_TO_FP( 0.96593), FLOAT_TO_FP( 0.93969), FLOAT_TO_FP( 0.90631),
+	FLOAT_TO_FP( 0.86603), FLOAT_TO_FP( 0.81915), FLOAT_TO_FP( 0.76604),
+	FLOAT_TO_FP( 0.70711), FLOAT_TO_FP( 0.64279), FLOAT_TO_FP( 0.57358),
+	FLOAT_TO_FP( 0.50000), FLOAT_TO_FP( 0.42262), FLOAT_TO_FP( 0.34202),
+	FLOAT_TO_FP( 0.25882), FLOAT_TO_FP( 0.17365), FLOAT_TO_FP( 0.08716),
+	FLOAT_TO_FP( 0.00000), FLOAT_TO_FP(-0.08716), FLOAT_TO_FP(-0.17365),
+	FLOAT_TO_FP(-0.25882), FLOAT_TO_FP(-0.34202), FLOAT_TO_FP(-0.42262),
+	FLOAT_TO_FP(-0.50000), FLOAT_TO_FP(-0.57358), FLOAT_TO_FP(-0.64279),
+	FLOAT_TO_FP(-0.70711), FLOAT_TO_FP(-0.76604), FLOAT_TO_FP(-0.81915),
+	FLOAT_TO_FP(-0.86603), FLOAT_TO_FP(-0.90631), FLOAT_TO_FP(-0.93969),
+	FLOAT_TO_FP(-0.96593), FLOAT_TO_FP(-0.98481), FLOAT_TO_FP(-0.99619),
+	FLOAT_TO_FP(-1.00000),
 };
 BUILD_ASSERT(ARRAY_SIZE(cos_lut) == COSINE_LUT_SIZE);
 
 
-float arc_cos(float x)
+fp_t arc_cos(fp_t x)
 {
 	int i;
 
 	/* Cap x if out of range. */
-	if (x < -1.0)
-		x = -1.0;
-	else if (x > 1.0)
-		x = 1.0;
+	if (x < FLOAT_TO_FP(-1.0))
+		x = FLOAT_TO_FP(-1.0);
+	else if (x > FLOAT_TO_FP(1.0))
+		x = FLOAT_TO_FP(1.0);
 
 	/*
 	 * Increment through lookup table to find index and then linearly
 	 * interpolate for precision.
 	 */
 	/* TODO(crosbug.com/p/25600): Optimize with binary search. */
-	for (i = 0; i < COSINE_LUT_SIZE-1; i++)
-		if (x >= cos_lut[i+1])
-			return COSINE_LUT_INCR_DEG *
-			(i + (cos_lut[i] - x) / (cos_lut[i] - cos_lut[i+1]));
+	for (i = 0; i < COSINE_LUT_SIZE-1; i++) {
+		if (x >= cos_lut[i+1]) {
+			const fp_t interp = fp_div(cos_lut[i] - x,
+						   cos_lut[i] - cos_lut[i + 1]);
+
+			return fp_mul(INT_TO_FP(COSINE_LUT_INCR_DEG),
+				      INT_TO_FP(i) + interp);
+		}
+	}
 
 	/*
 	 * Shouldn't be possible to get here because inputs are clipped to
@@ -59,56 +71,114 @@ float arc_cos(float x)
 	return 0;
 }
 
-int vector_magnitude(const vector_3_t v)
+/**
+ * Integer square root.
+ */
+int int_sqrtf(int64_t x)
 {
-	return sqrtf(SQ(v[0]) + SQ(v[1]) + SQ(v[2]));
+	int rmax = 0x7fffffff;
+	int rmin = 0;
+
+	/* Short cut if x is 32-bit value */
+	if (x < rmax)
+		rmax = 0x7fff;
+
+	/*
+	 * Just binary-search.  There are better algorithms, but we call this
+	 * infrequently enough it doesn't matter.
+	 */
+	if (x <= 0)
+		return 0;  /* Yeah, for imaginary numbers too */
+	else if (x > (int64_t)rmax * rmax)
+		return rmax;
+
+	while (1) {
+		int r = (rmax + rmin) / 2;
+		int64_t r2 = (int64_t)r * r;
+
+		if (r2 > x) {
+			/* Guessed too high */
+			rmax = r;
+		} else if (r2 < x) {
+			/* Guessed too low.  Watch out for rounding! */
+			if (rmin == r)
+				return r;
+
+			rmin = r;
+		} else {
+			/* Bullseye! */
+			return r;
+		}
+	}
 }
 
-float cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
+int vector_magnitude(const vector_3_t v)
 {
-	int dotproduct;
-	float denominator;
+	int64_t sum =   (int64_t)v[0] * v[0] +
+			(int64_t)v[1] * v[1] +
+			(int64_t)v[2] * v[2];
+
+	return int_sqrtf(sum);
+}
+
+fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
+{
+	int64_t dotproduct;
+	int64_t denominator;
 
 	/*
 	 * Angle between two vectors is acos(A dot B / |A|*|B|). To return
 	 * cosine of angle between vectors, then don't do acos operation.
 	 */
 
-	dotproduct = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+	dotproduct =	(int64_t)v1[0] * v2[0] +
+			(int64_t)v1[1] * v2[1] +
+			(int64_t)v1[2] * v2[2];
 
-	denominator = vector_magnitude(v1) * vector_magnitude(v2);
+	denominator = (int64_t)vector_magnitude(v1) * vector_magnitude(v2);
 
 	/* Check for divide by 0 although extremely unlikely. */
-	if (ABS(denominator) < 0.01F)
-		return 0.0;
+	if (!denominator)
+		return 0;
 
-	return (float)dotproduct / (denominator);
+	/*
+	 * We must shift the dot product first, so that we can represent
+	 * fractions.  The answer is always a number with magnitude < 1.0, so
+	 * if we don't shift, it will always round down to 0.
+	 *
+	 * Note that overflow is possible if the dot product is large (that is,
+	 * if the vector components are of size (31 - FP_BITS/2) bits.  If that
+	 * ever becomes a problem, we could detect this by counting the leading
+	 * zeroes of the dot product and shifting the denominator down
+	 * partially instead of shifting the dot product up.  With the current
+	 * FP_BITS=16, that happens if the vector components are ~2^23.  Which
+	 * we're a long way away from; the vector components used in
+	 * accelerometer calculations are ~2^11.
+	 */
+	return (dotproduct << FP_BITS) / denominator;
 }
-#endif
 
 /*
  * rotate a vector v
  *  - support input v and output res are the same vector
  */
-void rotate(const vector_3_t v, const matrix_3x3_t R,
-		vector_3_t res)
+void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 {
-	vector_3_t t;
+	int64_t t[3];
 
-	/* copy input v to temp vector t */
-	t[0] = v[0];
-	t[1] = v[1];
-	t[2] = v[2];
+	/* Rotate */
+	t[0] =	(int64_t)v[0] * R[0][0] +
+		(int64_t)v[1] * R[1][0] +
+		(int64_t)v[2] * R[2][0];
+	t[1] =	(int64_t)v[0] * R[0][1] +
+		(int64_t)v[1] * R[1][1] +
+		(int64_t)v[2] * R[2][1];
+	t[2] =	(int64_t)v[0] * R[0][2] +
+		(int64_t)v[1] * R[1][2] +
+		(int64_t)v[2] * R[2][2];
 
-	/* start rotate */
-	res[0] =	t[0] * R[0][0] +
-			t[1] * R[1][0] +
-			t[2] * R[2][0];
-	res[1] =	t[0] * R[0][1] +
-			t[1] * R[1][1] +
-			t[2] * R[2][1];
-	res[2] =	t[0] * R[0][2] +
-			t[1] * R[1][2] +
-			t[2] * R[2][2];
+	/* Scale by fixed point shift when writing back to result */
+	res[0] = t[0] >> FP_BITS;
+	res[1] = t[1] >> FP_BITS;
+	res[2] = t[2] >> FP_BITS;
 }
-

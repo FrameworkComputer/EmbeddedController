@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include <stdio.h>
 
 #include "accelgyro.h"
 #include "common.h"
@@ -89,15 +90,15 @@ const struct accelgyro_drv test_motion_sense = {
 };
 
 const matrix_3x3_t base_standard_ref = {
-	{ 1, 0, 0},
-	{ 0, 1, 0},
-	{ 0, 0, 1}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 const matrix_3x3_t lid_standard_ref = {
-	{ 1, 0, 0},
-	{ 1, 0, 0},
-	{ 0, 0, 1}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {

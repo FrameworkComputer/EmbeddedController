@@ -285,6 +285,12 @@ void motion_sense_task(void)
 		gesture_calc();
 #endif
 #ifdef CONFIG_LID_ANGLE
+		/*
+		 * TODO (crosbug.com/p/36132): Checking for ALL sensors on is
+		 * overkill.  It should just check for ACCEL in BASE and ACCEL
+		 * in LID, since those are the only ones needed for the lid
+		 * calculation.
+		 */
 		if (rd_cnt == motion_sensor_count)
 			motion_lid_calc();
 #endif
@@ -299,7 +305,7 @@ void motion_sense_task(void)
 					sensor->xyz[Z]);
 			}
 #ifdef CONFIG_LID_ANGLE
-			CPRINTF("a=%-6.1d", 10 * motion_lid_get_angle());
+			CPRINTF("a=%-4d", motion_lid_get_angle());
 #endif
 			CPRINTF("]\n");
 		}
@@ -778,5 +784,3 @@ DECLARE_CONSOLE_COMMAND(accelint, command_accelerometer_interrupt,
 #endif /* CONFIG_ACCEL_INTERRUPTS */
 
 #endif /* CONFIG_CMD_ACCELS */
-
-

@@ -37,7 +37,7 @@ static int test_acos(void)
 
 	/* Test a handful of values. */
 	for (test = -1.0; test <= 1.0; test += 0.01) {
-		a = arc_cos(test);
+		a = FP_TO_FLOAT(arc_cos(FLOAT_TO_FP(test)));
 		b = acos(test) * RAD_TO_DEG;
 		TEST_ASSERT(IS_FLOAT_EQUAL(a, b, ACOS_TOLERANCE_DEG));
 	}

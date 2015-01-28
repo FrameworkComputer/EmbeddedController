@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-/* Header for motion_sense.c */
+/* Header for motion_lid.h */
 
 #ifndef __CROS_EC_MOTION_LID_H
 #define __CROS_EC_MOTION_LID_H
 
 /* Anything outside of lid angle range [-180, 180] should work. */
-#define LID_ANGLE_UNRELIABLE 500.0F
+#define LID_ANGLE_UNRELIABLE 500
 
 /**
  * This structure defines all of the data needed to specify the orientation
@@ -37,7 +37,8 @@ extern const struct accel_orientation acc_orient;
  * Get last calculated lid angle. Note, the lid angle calculated by the EC
  * is un-calibrated and is an approximate angle.
  *
- * @return lid angle in degrees in range [0, 360].
+ * @return lid angle in degrees in range [0, 360], or LID_ANGLE_UNRELIABLE
+ * if the lid angle can't be determined.
  */
 int motion_lid_get_angle(void);
 

@@ -59,7 +59,7 @@ static const int kb_wake_small_angle = 13;
  *
  * @return true/false
  */
-static int lid_in_range_to_accept_keys(float ang)
+static int lid_in_range_to_accept_keys(int ang)
 {
 	/*
 	 * If the keyboard wake large angle is min or max, then this
@@ -82,7 +82,7 @@ static int lid_in_range_to_accept_keys(float ang)
  *
  * @return true/false
  */
-static int lid_in_range_to_ignore_keys(float ang)
+static int lid_in_range_to_ignore_keys(int ang)
 {
 	/*
 	 * If the keyboard wake large angle is min or max, then this
@@ -114,9 +114,9 @@ void lid_angle_set_kb_wake_angle(int ang)
 	kb_wake_large_angle = ang;
 }
 
-void lidangle_keyscan_update(float lid_ang)
+void lidangle_keyscan_update(int lid_ang)
 {
-	static float lidangle_buffer[KEY_SCAN_LID_ANGLE_BUFFER_SIZE];
+	static int lidangle_buffer[KEY_SCAN_LID_ANGLE_BUFFER_SIZE];
 	static int index;
 
 	int i;

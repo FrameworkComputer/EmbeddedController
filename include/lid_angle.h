@@ -15,7 +15,7 @@
  *
  * @lid_ang Lid angle.
  */
-void lidangle_keyscan_update(float lid_ang);
+void lidangle_keyscan_update(int lid_ang);
 
 /**
  * Getter and setter methods for the keyboard wake angle. In S3, when the
