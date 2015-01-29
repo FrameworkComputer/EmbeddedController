@@ -1,4 +1,18 @@
+/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Battery pack vendor provided charging profile
+ */
+
 #include "battery.h"
+#include "battery_smart.h"
+#include "i2c.h"
+#include "util.h"
+
+/* Shutdown mode parameter to write to manufacturer access register */
+#define PARAM_CUT_OFF_LOW  0x10
+#define PARAM_CUT_OFF_HIGH 0x00
 
 static const struct battery_info info = {
 	.voltage_max = 8700,
@@ -19,4 +33,29 @@ static const struct battery_info info = {
 const struct battery_info *battery_get_info(void)
 {
 	return &info;
+}
+
+static int cutoff(void)
+{
+	int rv;
+        uint8_t buf[3];
+
+	/* Ship mode command must be sent twice to take effect */
+        buf[0] = SB_MANUFACTURER_ACCESS & 0xff;
+        buf[1] = PARAM_CUT_OFF_LOW;
+        buf[2] = PARAM_CUT_OFF_HIGH;
+
+        i2c_lock(I2C_PORT_BATTERY, 1);
+        rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
+                      I2C_XFER_SINGLE);
+        rv |= i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
+                      I2C_XFER_SINGLE);
+        i2c_lock(I2C_PORT_BATTERY, 0);
+
+        return rv;
+}
+
+int board_cut_off_battery(void)
+{
+	return cutoff();
 }

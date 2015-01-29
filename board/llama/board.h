@@ -10,7 +10,7 @@
 
 #define CONFIG_CHIPSET_MEDIATEK
 /* Add for AC adaptor, charger, battery */
-#undef CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CHARGER
