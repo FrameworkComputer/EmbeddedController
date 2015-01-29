@@ -199,11 +199,17 @@ ec_enable_boot0() {
 }
 
 # Put back the servo and the system in a clean state at exit
+FROZEN_PIDS=""
 cleanup() {
 	if [ -n "${save}" ]; then
 		info "Restoring servo settings..."
 		servo_restore "$save"
 	fi
+
+	for pid in ${FROZEN_PIDS}; do
+		info "Sending SIGCONT to process ${pid}!"
+		kill -CONT ${pid}
+	done
 
 	ec_reset
 }
@@ -301,29 +307,20 @@ function servo_restore() {
 	done
 }
 
-function free_pty() {
-	local pids
-
-	pids=$(lsof -F p 2>/dev/null -- $1 | cut -d'p' -f2)
-	if [ "${pids}" == "" ]; then
-		return
+function claim_pty() {
+	if grep -q cros_sdk /proc/1/cmdline; then
+		die "You must run this tool in a chroot that was entered with" \
+		    "'cros_sdk --no-ns-pid' (see crbug.com/444931 for details)"
 	fi
 
-	# Try to kill nicely at first...
-	kill ${pids}
-	info "You'll need to re-launch console on $1"
+	FROZEN_PIDS=$(lsof -FR 2>/dev/null -- $1 | tr -d 'pR')
 
-	# Wait up to 3 seconds for them to die...
-	for i in $(seq 30); do
-		pids=$(lsof -F p 2>/dev/null -- $1 | cut -d'p' -f2)
-		if [ "${pids}" == "" ]; then
-			return
-		fi
-		sleep .1
+	# reverse order to SIGSTOP parents before children
+	for pid in $(echo ${FROZEN_PIDS} | tac -s " "); do
+		info "Sending SIGSTOP to process ${pid}!"
+		sleep 0.02
+		kill -STOP ${pid}
 	done
-
-	# Forcibly kill
-	kill -9 ${pids}
 }
 
 # Board specific flashing scripts
@@ -361,7 +358,7 @@ function flash_stm32() {
 	fi
 
 	info "Using serial flasher : ${STM32MON}"
-	free_pty ${EC_UART}
+	claim_pty ${EC_UART}
 
 	if [ "${SERVO_TYPE}" = "servo" ] ; then
 		dut_control ${MCU}_uart_en:on
