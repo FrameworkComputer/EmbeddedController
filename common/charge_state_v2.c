@@ -611,6 +611,13 @@ void charger_task(void)
 			curr.batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
 		}
 
+		/* If the battery thinks it's above 100%, don't believe it */
+		if (curr.batt.state_of_charge > 100) {
+			CPRINTS("ignoring ridiculous batt.soc of %d%%",
+				curr.batt.state_of_charge);
+			curr.batt.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
+		}
+
 		/*
 		 * Now decide what we want to do about it. We'll normally just
 		 * pass along whatever the battery wants to the charger. Note
@@ -738,15 +745,6 @@ void charger_task(void)
 			battery_seems_to_be_dead = 0;
 			curr.state = ST_CHARGE;
 		}
-
-		/*
-		 * If battery seems to be disconnected, we need to get it
-		 * out of that state, even if the charge level is full.
-		 */
-		if (curr.batt.state_of_charge >= BATTERY_LEVEL_FULL &&
-		    !battery_seems_to_be_disconnected)
-			/* Full up. Stop charging */
-			curr.state = ST_IDLE;
 
 		/*
 		 * TODO(crosbug.com/p/27643): Quit trying if charging too long
