@@ -2921,6 +2921,26 @@ struct ec_response_pd_log {
 #define PS_FAULT_OVP                          3
 #define PS_FAULT_DISCH                        4
 
+/*
+ * PD_EVENT_VIDEO_CODEC payload is "struct mcdp_info".
+ */
+struct mcdp_version {
+	uint8_t major;
+	uint8_t minor;
+	uint16_t build;
+} __packed;
+
+struct mcdp_info {
+	uint8_t family[2];
+	uint8_t chipid[2];
+	struct mcdp_version irom;
+	struct mcdp_version fw;
+} __packed;
+
+/* struct mcdp_info field decoding */
+#define MCDP_CHIPID(chipid) ((chipid[0] << 8) | chipid[1])
+#define MCDP_FAMILY(family) ((family[0] << 8) | family[1])
+
 /* Get/Set USB-PD Alternate mode info */
 #define EC_CMD_USB_PD_GET_AMODE 0x116
 struct ec_params_usb_pd_get_mode_request {

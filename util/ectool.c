@@ -17,7 +17,6 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "compile_time_macros.h"
-#include "driver/mcdp28x0.h"
 #include "ec_flash.h"
 #include "ectool.h"
 #include "lightbar.h"
