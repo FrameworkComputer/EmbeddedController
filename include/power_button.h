@@ -18,6 +18,15 @@
 int power_button_is_pressed(void);
 
 /**
+ * Wait for the power button to be released
+ *
+ * @param timeout_us Timeout in microseconds, or -1 to wait forever
+ * @return EC_SUCCESS if ok, or
+ *         EC_ERROR_TIMEOUT if power button failed to release
+ */
+int power_button_wait_for_release(unsigned int timeout_us);
+
+/**
  * Return non-zero if power button signal asserted at hardware input.
  *
  */

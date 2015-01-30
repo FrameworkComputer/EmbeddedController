@@ -358,37 +358,6 @@ static void power_on(void)
 }
 
 /**
- * Wait for the power button to be released
- *
- * @param timeout_us Timeout in microseconds, or -1 to wait forever
- * @return EC_SUCCESS if ok, or
- *         EC_ERROR_TIMEOUT if power button failed to release
- */
-static int wait_for_power_button_release(unsigned int timeout_us)
-{
-	timestamp_t deadline;
-	timestamp_t now = get_time();
-
-	deadline.val = now.val + timeout_us;
-
-	while (power_button_is_pressed()) {
-		now = get_time();
-		if (timeout_us < 0) {
-			task_wait_event(-1);
-		} else if (timestamp_expired(deadline, &now) ||
-			(task_wait_event(deadline.val - now.val) ==
-			TASK_EVENT_TIMER)) {
-			CPRINTS("power button not released in time");
-			return EC_ERROR_TIMEOUT;
-		}
-	}
-
-	CPRINTS("power button released");
-	power_button_was_pressed = 0;
-	return EC_SUCCESS;
-}
-
-/**
  * Power off the AP
  */
 static void power_off(void)
@@ -475,9 +444,10 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (power_wait_signals(IN_POWER_GOOD) == EC_SUCCESS) {
 			CPRINTS("POWER_GOOD seen");
-			if (wait_for_power_button_release(
+			if (power_button_wait_for_release(
 					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
 					EC_SUCCESS) {
+				power_button_was_pressed = 0;
 				set_pmic_pwron(0);
 
 				/* setup misc gpio for S3/S0 functionality */
@@ -538,7 +508,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
-		wait_for_power_button_release(-1);
+		power_button_wait_for_release(-1);
+		power_button_was_pressed = 0;
 		return POWER_S5;
 
 	case POWER_S5G3:

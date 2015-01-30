@@ -13,6 +13,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power_button.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -29,6 +30,7 @@
 
 static int debounced_power_pressed;	/* Debounced power button state */
 static int simulate_power_pressed;
+static volatile int power_button_is_stable = 1;
 
 /**
  * Return non-zero if power button signal asserted at hardware input.
@@ -69,6 +71,36 @@ int power_button_is_pressed(void)
 }
 
 /**
+ * Wait for the power button to be released
+ *
+ * @param timeout_us Timeout in microseconds, or -1 to wait forever
+ * @return EC_SUCCESS if ok, or
+ *         EC_ERROR_TIMEOUT if power button failed to release
+ */
+int power_button_wait_for_release(unsigned int timeout_us)
+{
+	timestamp_t deadline;
+	timestamp_t now = get_time();
+
+	deadline.val = now.val + timeout_us;
+
+	while (!power_button_is_stable || power_button_is_pressed()) {
+		now = get_time();
+		if (timeout_us < 0) {
+			task_wait_event(-1);
+		} else if (timestamp_expired(deadline, &now) ||
+			(task_wait_event(deadline.val - now.val) ==
+			TASK_EVENT_TIMER)) {
+			CPRINTS("power button not released in time");
+			return EC_ERROR_TIMEOUT;
+		}
+	}
+
+	CPRINTS("power button released in time");
+	return EC_SUCCESS;
+}
+
+/**
  * Handle power button initialization.
  */
 static void power_button_init(void)
@@ -93,10 +125,13 @@ static void power_button_change_deferred(void)
 		keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	/* If power button hasn't changed state, nothing to do */
-	if (new_pressed == debounced_power_pressed)
+	if (new_pressed == debounced_power_pressed) {
+		power_button_is_stable = 1;
 		return;
+	}
 
 	debounced_power_pressed = new_pressed;
+	power_button_is_stable = 1;
 
 	CPRINTS("power button %s", new_pressed ? "pressed" : "released");
 
@@ -120,6 +155,7 @@ void power_button_interrupt(enum gpio_signal signal)
 		keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	/* Reset power button debounce time */
+	power_button_is_stable = 0;
 	hook_call_deferred(power_button_change_deferred, PWRBTN_DEBOUNCE_US);
 }
 
@@ -139,12 +175,14 @@ static int command_powerbtn(int argc, char **argv)
 
 	ccprintf("Simulating %d ms power button press.\n", ms);
 	simulate_power_pressed = 1;
+	power_button_is_stable = 0;
 	hook_call_deferred(power_button_change_deferred, 0);
 
 	msleep(ms);
 
 	ccprintf("Simulating power button release.\n");
 	simulate_power_pressed = 0;
+	power_button_is_stable = 0;
 	hook_call_deferred(power_button_change_deferred, 0);
 
 	return EC_SUCCESS;
