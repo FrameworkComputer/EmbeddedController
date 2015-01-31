@@ -128,15 +128,22 @@ void set_usb_switches(int port, int open)
  */
 #define USB_CHG_RESET_DELAY_MS 100
 
+/* Automatically do one redetection after a timeout period, for SDP ports. */
+#define USB_CHG_AUTO_REDETECT_TIMEOUT (30 * SECOND)
+
 void usb_charger_task(void)
 {
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
 	int device_type, charger_status;
 	struct charge_port_info charge;
-	int type;
+	int type, redetect_timeout;
+	uint32_t wake_event = 0;
 	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
 
 	while (1) {
+		/* By default, don't do automatic redetection */
+		redetect_timeout = -1;
+
 		/* Read interrupt register to clear on chip */
 		pi3usb9281_get_interrupts(port);
 
@@ -148,7 +155,13 @@ void usb_charger_task(void)
 		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
 			msleep(USB_CHG_DEBOUNCE_DELAY_MS);
 
-			/* Trigger chip reset to refresh detection registers */
+			/*
+			 * Trigger chip reset to refresh detection registers.
+			 * WARNING: This reset is acceptable for samus_pd,
+			 * but may not be acceptable for devices that have
+			 * an OTG / device mode, as we may be interrupting
+			 * the connection.
+			 */
 			pi3usb9281_reset(port);
 			/*
 			 * Restore data switch settings - switches return to
@@ -184,8 +197,18 @@ void usb_charger_task(void)
 			type = CHARGE_SUPPLIER_BC12_CDP;
 		else if (device_type & PI3USB9281_TYPE_DCP)
 			type = CHARGE_SUPPLIER_BC12_DCP;
-		else if (device_type & PI3USB9281_TYPE_SDP)
+		else if (device_type & PI3USB9281_TYPE_SDP) {
+			/*
+			 * Automatically do one redetection after a timeout
+			 * period when an SDP port is identified, since
+			 * pin contact order may have caused
+			 * misidentification.
+			 */
+			if (wake_event != TASK_EVENT_TIMER)
+				redetect_timeout =
+					USB_CHG_AUTO_REDETECT_TIMEOUT;
 			type = CHARGE_SUPPLIER_BC12_SDP;
+		}
 		else
 			type = CHARGE_SUPPLIER_OTHER;
 
@@ -217,7 +240,7 @@ void usb_charger_task(void)
 		pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
 		/* Wait for interrupt */
-		task_wait_event(-1);
+		wake_event = task_wait_event(redetect_timeout);
 	}
 }
 
