@@ -45,6 +45,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_lid_change, __hooks_lid_change_end},
 	{__hooks_pwrbtn_change, __hooks_pwrbtn_change_end},
 	{__hooks_charge_state_change, __hooks_charge_state_change_end},
+	{__hooks_battery_soc_change, __hooks_battery_soc_change_end},
 	{__hooks_tick, __hooks_tick_end},
 	{__hooks_second, __hooks_second_end},
 };
