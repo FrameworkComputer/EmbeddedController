@@ -184,9 +184,22 @@ int charger_post_init(void)
 	if (rv)
 		return rv;
 
+#ifndef BOARD_SAMUS
 	/* Turn off PROCHOT warning */
 	rv = i2c_write8(I2C_PORT_CHARGER, BQ24773_ADDR,
 			BQ24773_PROCHOT_OPTION1, 0);
+#else
+	/* On Samus, use PROCHOT warning to detect charging problems */
+	/* Turn on PROCHOT warning */
+	rv = i2c_write16(I2C_PORT_CHARGER, BQ24773_ADDR,
+			 BQ24773_PROCHOT_OPTION1, 0x8120);
+	/* Set PROCHOT ICRIT warning when IADP is >120% of IDPM */
+	rv |= i2c_write16(I2C_PORT_CHARGER, BQ24773_ADDR,
+			 BQ24773_PROCHOT_OPTION0, 0x1b54);
+#endif
+
+	if (rv)
+		return rv;
 
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
 	/* Read the external ILIM pin enabled flag. */

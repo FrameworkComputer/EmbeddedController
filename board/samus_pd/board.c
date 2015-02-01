@@ -37,11 +37,9 @@ static enum power_state ps;
 
 /* Battery state of charge */
 static int batt_soc;
-static int fake_state_of_charge = -1; /* use real soc by default */
 
-/* Last charge port override when charging turned off due to full battery */
-static int chg_override_port = OVERRIDE_OFF;
-static int chg_is_cutoff;
+/* Default to 5V charging allowed for dead battery case */
+enum pd_charge_state charge_state = PD_CHARGE_5V;
 
 /* PD MCU status and host event status for host command */
 static struct ec_response_pd_status pd_status;
@@ -266,31 +264,6 @@ void usb1_evt(enum gpio_signal signal)
 	wake_usb_charger_task(1);
 }
 
-/* When battery is full, cutoff charging by disabling AC input current */
-static void check_charging_cutoff(void)
-{
-	int port;
-
-	/* Only check if charging needs to be turned off when not in S0 */
-	if (ps == POWER_S0)
-		return;
-
-	port = charge_manager_get_active_charge_port();
-
-	/*
-	 * If battery is full disable charging, if battery is not full, restore
-	 * charge port.
-	 */
-	if (!chg_is_cutoff && port != CHARGE_PORT_NONE && batt_soc == 100) {
-		charge_manager_set_override(OVERRIDE_DONT_CHARGE);
-		chg_is_cutoff = 1;
-	} else if (chg_is_cutoff && batt_soc < 100) {
-		charge_manager_set_override(chg_override_port);
-		chg_is_cutoff = 0;
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, check_charging_cutoff, HOOK_PRIO_DEFAULT);
-
 static void chipset_s5_to_s3(void)
 {
 	ps = POWER_S3;
@@ -301,9 +274,6 @@ static void chipset_s3_to_s0(void)
 {
 	/* Disable deep sleep and restore charge override port */
 	disable_sleep(SLEEP_MASK_AP_RUN);
-	charge_manager_set_override(chg_override_port);
-	chg_is_cutoff = 0;
-
 	ps = POWER_S0;
 	hook_notify(HOOK_CHIPSET_RESUME);
 }
@@ -318,8 +288,6 @@ static void chipset_s0_to_s3(void)
 {
 	/* Enable deep sleep and store charge override port */
 	enable_sleep(SLEEP_MASK_AP_RUN);
-	chg_override_port = charge_manager_get_override();
-
 	ps = POWER_S3;
 	hook_notify(HOOK_CHIPSET_SUSPEND);
 }
@@ -437,6 +405,9 @@ static void board_init(void)
 	/* Enable interrupts on PCH state change */
 	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
 	gpio_enable_interrupt(GPIO_PCH_SLP_S5_L);
+
+	/* Initialize active charge port to none */
+	pd_status.active_charge_port = CHARGE_PORT_NONE;
 
 	/*
 	 * Do not enable PD communication in RO as a security measure.
@@ -596,7 +567,6 @@ void board_flip_usb_mux(int port)
 void board_update_battery_soc(int soc)
 {
 	batt_soc = soc;
-	check_charging_cutoff();
 }
 
 int board_get_battery_soc(void)
@@ -643,23 +613,39 @@ int board_set_active_charge_port(int charge_port)
 		return EC_ERROR_INVAL;
 	}
 
-	pd_status.active_charge_port = charge_port;
-	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
-	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
+	CPRINTS("New chg p%d", charge_port);
 
 	/*
-	 * If new charge port when charge is cutoff, then user must have
-	 * plugged in a new dedicated charger. This resets the charge
-	 * override port and clears the charge cutoff flag.
+	 * If charging and the active charge port is changed, then disable
+	 * charging to guarantee charge circuit starts up cleanly.
 	 */
-	if (chg_is_cutoff && is_real_port) {
-		chg_override_port = OVERRIDE_OFF;
-		chg_is_cutoff = 0;
+	if (pd_status.active_charge_port != CHARGE_PORT_NONE &&
+	    (charge_port == CHARGE_PORT_NONE ||
+	     charge_port != pd_status.active_charge_port)) {
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
+		charge_state = PD_CHARGE_NONE;
+		pd_status.active_charge_port = charge_port;
+		CPRINTS("Chg: None\n");
+		return EC_SUCCESS;
 	}
-	check_charging_cutoff();
 
-	CPRINTS("New chg p%d", charge_port);
+	/* Save active charge port and enable charging if allowed */
+	pd_status.active_charge_port = charge_port;
+	if (charge_state != PD_CHARGE_NONE) {
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, !(charge_port == 0));
+		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, !(charge_port == 1));
+	}
+
 	return EC_SUCCESS;
+}
+
+/**
+ * Return if max voltage charging is allowed.
+ */
+int pd_is_max_request_allowed(void)
+{
+	return charge_state == PD_CHARGE_MAX;
 }
 
 /**
@@ -732,36 +718,6 @@ DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
 			"Send PD host event",
 			NULL);
 
-static int command_battfake(int argc, char **argv)
-{
-	char *e;
-	int v;
-
-	if (argc == 2) {
-		v = strtoi(argv[1], &e, 0);
-		if (*e || v < -1 || v > 100)
-			return EC_ERROR_PARAM1;
-
-		fake_state_of_charge = v;
-	}
-
-	if (fake_state_of_charge < 0) {
-		ccprintf("Using real batt level\n");
-	} else {
-		ccprintf("Using fake batt level %d%%\n",
-			 fake_state_of_charge);
-	}
-
-	/* Send EC int to get batt info from EC */
-	pd_send_ec_int();
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
-			"percent (-1 = use real level)",
-			"Set fake battery level",
-			NULL);
-
 /****************************************************************************/
 /* Host commands */
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
@@ -769,9 +725,60 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;
 
-	/* if not using fake soc, then update battery soc */
-	board_update_battery_soc(fake_state_of_charge < 0 ?
-					p->batt_soc : fake_state_of_charge);
+	/* update battery soc */
+	board_update_battery_soc(p->batt_soc);
+
+	if (args->version == 1) {
+		if (p->charge_state != charge_state) {
+			switch (p->charge_state) {
+			case PD_CHARGE_NONE:
+				/*
+				 * No current allowed in, set new power request
+				 * so that PD negotiates down to vSafe5V.
+				 */
+				charge_state = p->charge_state;
+				gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+				gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
+				pd_set_new_power_request(
+					pd_status.active_charge_port);
+				CPRINTS("Chg: None");
+				break;
+			case PD_CHARGE_5V:
+				/* Allow current on the active charge port */
+				charge_state = p->charge_state;
+				gpio_set_level(GPIO_USB_C0_CHARGE_EN_L,
+					!(pd_status.active_charge_port == 0));
+				gpio_set_level(GPIO_USB_C1_CHARGE_EN_L,
+					!(pd_status.active_charge_port == 1));
+				CPRINTS("Chg: 5V");
+				break;
+			case PD_CHARGE_MAX:
+				/*
+				 * Allow negotiation above vSafe5V. Should only
+				 * ever get this command when 5V charging is
+				 * already allowed.
+				 */
+				if (charge_state == PD_CHARGE_5V) {
+					charge_state = p->charge_state;
+					pd_set_new_power_request(
+						pd_status.active_charge_port);
+					CPRINTS("Chg: Max");
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	} else {
+		/*
+		 * If the EC is using this command version, then it won't ever
+		 * set charging allowed, so we should just assume charging at
+		 * the max is allowed.
+		 */
+		charge_state = PD_CHARGE_MAX;
+		pd_set_new_power_request(pd_status.active_charge_port);
+		CPRINTS("Chg: Max");
+	}
 
 	*r = pd_status;
 
@@ -783,7 +790,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
-			EC_VER_MASK(0));
+			EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
 {

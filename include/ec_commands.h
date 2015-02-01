@@ -2680,9 +2680,17 @@ struct ec_params_reboot_ec {
 /* EC to PD MCU exchange status command */
 #define EC_CMD_PD_EXCHANGE_STATUS 0x100
 
+enum pd_charge_state {
+	PD_CHARGE_NO_CHANGE = 0, /* Don't change charge state */
+	PD_CHARGE_NONE,          /* No charging allowed */
+	PD_CHARGE_5V,            /* 5V charging only */
+	PD_CHARGE_MAX            /* Charge at max voltage */
+};
+
 /* Status of EC being sent to PD */
 struct ec_params_pd_status {
-	int8_t batt_soc; /* battery state of charge */
+	int8_t batt_soc;      /* battery state of charge */
+	uint8_t charge_state; /* charging state (from enum pd_charge_state) */
 } __packed;
 
 /* Status of PD being sent back to EC */

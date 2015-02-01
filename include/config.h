@@ -1157,17 +1157,17 @@
 /* Include all USB Power Delivery modules */
 #undef CONFIG_USB_POWER_DELIVERY
 
-/* Alternative configuration keeping only the TX part of PHY */
-#undef CONFIG_USB_PD_TX_PHY_ONLY
-
-/* Default state of PD communication enabled flag */
-#define CONFIG_USB_PD_COMM_ENABLED 1
-
 /* Support for USB PD alternate mode */
 #undef CONFIG_USB_PD_ALT_MODE
 
 /* Support for USB PD alternate mode of Downward Facing Port */
 #undef CONFIG_USB_PD_ALT_MODE_DFP
+
+/* Check if max voltage request is allowed before each request */
+#undef CONIFG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
+
+/* Default state of PD communication enabled flag */
+#define CONFIG_USB_PD_COMM_ENABLED 1
 
 /* Respond to custom vendor-defined messages over PD */
 #undef CONFIG_USB_PD_CUSTOM_VDM
@@ -1205,6 +1205,9 @@
 
 /* Use comparator module for PD RX interrupt */
 #define CONFIG_USB_PD_RX_COMP_IRQ
+
+/* Alternative configuration keeping only the TX part of PHY */
+#undef CONFIG_USB_PD_TX_PHY_ONLY
 
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX

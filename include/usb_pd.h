@@ -759,6 +759,14 @@ int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
 		     uint32_t *ma, uint32_t *mv, enum pd_request_type req_type);
 
 /**
+ * Check if max voltage request is allowed (only used if
+ * CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED is defined).
+ *
+ * @return True if max voltage request allowed, False otherwise
+ */
+int pd_is_max_request_allowed(void);
+
+/**
  * Process source capabilities packet
  *
  * @param port USB-C port number

@@ -47,7 +47,7 @@
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
 	/* Exchange status with PD MCU. */
-	host_command_pd_send_status();
+	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
 }
 
 #include "gpio_list.h"

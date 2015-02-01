@@ -17,8 +17,15 @@
 
 #define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
 
-void host_command_pd_send_status(void)
+/* By default allow 5V charging only for the dead battery case */
+static enum pd_charge_state charge_state = PD_CHARGE_5V;
+
+void host_command_pd_send_status(enum pd_charge_state new_chg_state)
 {
+	/* Update PD MCU charge state if necessary */
+	if (new_chg_state != PD_CHARGE_NO_CHANGE)
+		charge_state = new_chg_state;
+	/* Wake PD HC task to send status */
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
 }
 
@@ -31,13 +38,20 @@ void pd_exchange_status(int *charge_port)
 	};
 	int rv = 0;
 
-	/* Send battery state of charge */
+	/* Send PD charge state and battery state of charge */
+	ec_status.charge_state = charge_state;
 	if (charge_get_flags() & CHARGE_FLAG_BATT_RESPONSIVE)
 		ec_status.batt_soc = charge_get_percent();
 	else
 		ec_status.batt_soc = -1;
 
-	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
+	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 1, &ec_status,
+			     sizeof(struct ec_params_pd_status), &pd_status,
+			     sizeof(struct ec_response_pd_status));
+
+	/* If PD doesn't support new command version, try old version */
+	if (rv == -EC_RES_INVALID_VERSION)
+		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
 			     sizeof(struct ec_params_pd_status), &pd_status,
 			     sizeof(struct ec_response_pd_status));
 

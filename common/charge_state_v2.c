@@ -774,9 +774,6 @@ wait_for_it:
 			show_charging_progress();
 			prev_charge = curr.batt.state_of_charge;
 			hook_notify(HOOK_BATTERY_SOC_CHANGE);
-#ifdef HAS_TASK_PDCMD
-			host_command_pd_send_status();
-#endif
 		}
 		prev_full = is_full;
 

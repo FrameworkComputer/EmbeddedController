@@ -917,14 +917,25 @@ static void pd_send_request_msg(int port, int always_send_request)
 #else
 	const int charging = 1;
 #endif
+
+#ifdef CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
+	int max_request_allowed = pd_is_max_request_allowed();
+#else
+	const int max_request_allowed = 1;
+#endif
+
 	/* Clear new power request */
 	pd[port].new_power_request = 0;
 
 	/* Build and send request RDO */
-	/* If this port is not actively charging, select vSafe5V */
+	/*
+	 * If this port is not actively charging or we are not allowed to
+	 * request the max voltage, then select vSafe5V
+	 */
 	res = pd_build_request(pd_src_cap_cnt[port], pd_src_caps[port],
 			       &rdo, &curr_limit, &supply_voltage,
-			       charging ? PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
+			       charging && max_request_allowed ?
+					PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
 
 	if (res != EC_SUCCESS)
 		/*
