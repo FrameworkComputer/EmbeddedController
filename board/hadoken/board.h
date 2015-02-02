@@ -28,6 +28,7 @@
 #define CONFIG_BLUETOOTH_LE
 #define CONFIG_BLUETOOTH_LE_STACK
 #define CONFIG_BLUETOOTH_LE_RADIO_TEST
+#define CONFIG_BLUETOOTH_LL_DEBUG
 
 #include "gpio_signal.h"
 

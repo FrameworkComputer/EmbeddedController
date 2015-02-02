@@ -364,7 +364,7 @@ void fill_remapping_table(struct remapping_table *rt, uint8_t map[5],
 
 void ble_tx(struct ble_pdu *pdu);
 
-int ble_ll_rx(struct ble_pdu *pdu, int timeout, int adv);
+int ble_rx(struct ble_pdu *pdu, int timeout, int adv);
 
 int ble_radio_init(void);
 
