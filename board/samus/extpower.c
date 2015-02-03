@@ -223,6 +223,7 @@ static void check_charge_wedged(void)
 		 */
 		if (prochot_status) {
 			host_command_pd_send_status(PD_CHARGE_NONE);
+			charger_disable(1);
 			charge_circuit_state = CHARGE_CIRCUIT_WEDGED;
 			CPRINTS("Charge circuit wedged!");
 		}
