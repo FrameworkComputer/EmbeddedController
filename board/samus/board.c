@@ -230,15 +230,6 @@ enum battery_present battery_is_present(void)
 #endif
 
 /**
- * Show battery status on lightbar when AC status changes
- */
-void show_battery_status(void)
-{
-	lightbar_sequence(LIGHTBAR_TAP);
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, show_battery_status, HOOK_PRIO_DEFAULT);
-
-/**
  * Discharge battery when on AC power for factory test.
  */
 int board_discharge_on_ac(int enable)

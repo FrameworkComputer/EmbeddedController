@@ -984,7 +984,7 @@ static int get_tap_direction(void)
 		dir = force_dir;
 #ifdef HAS_TASK_PDCMD
 	else
-		pd_exchange_status(&dir);
+		dir = pd_get_active_charge_port();
 #endif
 	if (dir < 0)
 		dir = last_dir;
