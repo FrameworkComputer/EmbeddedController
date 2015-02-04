@@ -143,18 +143,13 @@ int smbus_write_word(uint8_t i2c_port, uint8_t slave_addr,
 			uint8_t smbus_cmd, uint16_t d16)
 {
 	int rv;
-	struct smbus_wr_word *s;
-	rv = shared_mem_acquire(sizeof(struct smbus_wr_word), (char **)&s);
-	if (rv) {
-		CPRINTF("smbus write wd[%02X] mem error\n", smbus_cmd);
-		return rv;
-	}
-	s->slave_addr = slave_addr,
-	s->smbus_cmd = smbus_cmd;
-	s->data[0] = d16 & 0xFF;
-	s->data[1] = (d16 >> 8) & 0xFF;
-	rv = smbus_if_write(i2c_port, (struct smbus_wr_if *)s, 0, 2, 1);
-	shared_mem_release(s);
+	struct smbus_wr_word s;
+
+	s.slave_addr = slave_addr,
+	s.smbus_cmd = smbus_cmd;
+	s.data[0] = d16 & 0xFF;
+	s.data[1] = (d16 >> 8) & 0xFF;
+	rv = smbus_if_write(i2c_port, (struct smbus_wr_if *)&s, 0, 2, 1);
 	return rv;
 }
 
