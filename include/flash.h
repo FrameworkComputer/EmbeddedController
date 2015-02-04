@@ -39,6 +39,15 @@ enum flash_wp_range {
 /* Low-level methods, for use by flash_common. */
 
 /**
+ * Read from physical flash.
+ *
+ * @param offset	Flash offset to write.
+ * @param size	        Number of bytes to write.
+ * @param data          Destination buffer for data.  Must be 32-bit aligned.
+ */
+int flash_physical_read(int offset, int size, char *data);
+
+/**
  * Write to physical flash.
  *
  * Offset and size must be a multiple of CONFIG_FLASH_WRITE_SIZE.
@@ -188,6 +197,19 @@ int flash_get_size(void);
  * @return size of flash region available at *ptrp, or -1 on error
  */
 int flash_dataptr(int offset, int size_req, int align, const char **ptrp);
+
+/**
+ * Read from flash.
+ *
+ * If flash is mapped (CONFIG_FLASH_MAPPED), it is usually more efficient to
+ * use flash_dataptr() to get a pointer directly to the flash memory rather
+ * than use flash_read(), since the former saves a memcpy() operation.
+ *
+ * @param offset	Flash offset to write.
+ * @param size	        Number of bytes to write.
+ * @param data          Destination buffer for data.  Must be 32-bit aligned.
+ */
+int flash_read(int offset, int size, char *data);
 
 /**
  * Write to flash.

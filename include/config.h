@@ -550,6 +550,13 @@
 #undef CONFIG_FLASH_BASE
 #undef CONFIG_FLASH_ERASED_VALUE32
 #undef CONFIG_FLASH_ERASE_SIZE
+
+/*
+ * Flash is directly mapped into the EC's address space.  If this is not
+ * defined, the flash driver must implement flash_physical_read().
+ */
+#define CONFIG_FLASH_MAPPED
+
 #undef CONFIG_FLASH_PHYSICAL_SIZE
 #undef CONFIG_FLASH_PROTECT_NEXT_BOOT
 #undef CONFIG_FLASH_SIZE

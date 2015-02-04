@@ -7,9 +7,11 @@
 
 #include "common.h"
 #include "console.h"
+#include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "sha256.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -56,6 +58,37 @@ static void vboot_hash_abort(void)
 	}
 }
 
+#ifndef CONFIG_FLASH_MAPPED
+
+static void vboot_hash_next_chunk(void);
+
+static int read_and_hash_chunk(int offset, int size)
+{
+	char *buf;
+	int rv;
+
+	rv = shared_mem_acquire(size, &buf);
+	if (rv == EC_ERROR_BUSY) {
+		/* Couldn't update hash right now; try again later */
+		hook_call_deferred(vboot_hash_next_chunk, WORK_INTERVAL_US);
+		return rv;
+	} else if (rv != EC_SUCCESS) {
+		vboot_hash_abort();
+		return rv;
+	}
+
+	rv = flash_read(offset, size, buf);
+	if (rv == EC_SUCCESS)
+		SHA256_update(&ctx, (const uint8_t *)buf, size);
+	else
+		vboot_hash_abort();
+
+	shared_mem_release(buf);
+	return rv;
+}
+
+#endif
+
 /**
  * Do next chunk of hashing work, if any.
  */
@@ -72,8 +105,14 @@ static void vboot_hash_next_chunk(void)
 
 	/* Compute the next chunk of hash */
 	size = MIN(CHUNK_SIZE, data_size - curr_pos);
+
+#ifdef CONFIG_FLASH_MAPPED
 	SHA256_update(&ctx, (const uint8_t *)(CONFIG_FLASH_BASE +
 					      data_offset + curr_pos), size);
+#else
+	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)
+		return;
+#endif
 
 	curr_pos += size;
 	if (curr_pos >= data_size) {

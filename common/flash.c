@@ -36,6 +36,17 @@ struct persist_state {
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
 
+int flash_range_ok(int offset, int size_req, int align)
+{
+	if (offset < 0 || size_req < 0 ||
+			offset + size_req > CONFIG_FLASH_SIZE ||
+			(offset | size_req) & (align - 1))
+		return 0;  /* Invalid range */
+
+	return 1;
+}
+
+#ifdef CONFIG_FLASH_MAPPED
 /**
  * Get the physical memory address of a flash offset
  *
@@ -52,6 +63,17 @@ static const char *flash_physical_dataptr(int offset)
 	return (char *)((uintptr_t)CONFIG_FLASH_BASE + offset);
 }
 
+int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
+{
+	if (!flash_range_ok(offset, size_req, align))
+		return -1;  /* Invalid range */
+	if (ptrp)
+		*ptrp = flash_physical_dataptr(offset);
+
+	return CONFIG_FLASH_SIZE - offset;
+}
+#endif
+
 /**
  * Read persistent state into pstate.
  *
@@ -59,7 +81,7 @@ static const char *flash_physical_dataptr(int offset)
  */
 static void flash_read_pstate(struct persist_state *pstate)
 {
-	memcpy(pstate, flash_physical_dataptr(PSTATE_OFFSET), sizeof(*pstate));
+	flash_read(PSTATE_OFFSET, sizeof(*pstate), (char *)pstate);
 
 	/* Sanity-check data and initialize if necessary */
 	if (pstate->version != PERSIST_STATE_VERSION) {
@@ -103,22 +125,12 @@ static int flash_write_pstate(const struct persist_state *pstate)
 				    (const char *)pstate);
 }
 
-int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
-{
-	if (offset < 0 || size_req < 0 ||
-			offset + size_req > CONFIG_FLASH_SIZE ||
-			(offset | size_req) & (align - 1))
-		return -1;  /* Invalid range */
-	if (ptrp)
-		*ptrp = flash_physical_dataptr(offset);
-
-	return CONFIG_FLASH_SIZE - offset;
-}
-
 int flash_is_erased(uint32_t offset, int size)
 {
 	const uint32_t *ptr;
 
+#ifdef CONFIG_FLASH_MAPPED
+	/* Use pointer directly to flash */
 	if (flash_dataptr(offset, size, sizeof(uint32_t),
 			  (const char **)&ptr) < 0)
 		return 0;
@@ -126,13 +138,49 @@ int flash_is_erased(uint32_t offset, int size)
 	for (size /= sizeof(uint32_t); size > 0; size--, ptr++)
 		if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
 			return 0;
+#else
+	/* Read flash a chunk at a time */
+	uint32_t buf[8];
+	int bsize;
+
+	while (size) {
+		bsize = MIN(size, sizeof(buf));
+
+		if (flash_read(offset, bsize, (char *)buf))
+			return 0;
+
+		size -= bsize;
+		offset += bsize;
+
+		ptr = buf;
+		for (bsize /= sizeof(uint32_t); bsize > 0; bsize--, ptr++)
+			if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
+				return 0;
+
+	}
+#endif
 
 	return 1;
 }
 
+int flash_read(int offset, int size, char *data)
+{
+#ifdef CONFIG_FLASH_MAPPED
+	const char *src;
+
+	if (flash_dataptr(offset, size, 1, &src) < 0)
+		return EC_ERROR_INVAL;
+
+	memcpy(data, src, size);
+	return EC_SUCCESS;
+#else
+	return flash_physical_read(offset, size, data);
+#endif
+}
+
 int flash_write(int offset, int size, const char *data)
 {
-	if (flash_dataptr(offset, size, CONFIG_FLASH_WRITE_SIZE, NULL) < 0)
+	if (!flash_range_ok(offset, size, CONFIG_FLASH_WRITE_SIZE))
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 #ifdef CONFIG_VBOOT_HASH
@@ -144,7 +192,7 @@ int flash_write(int offset, int size, const char *data)
 
 int flash_erase(int offset, int size)
 {
-	if (flash_dataptr(offset, size, CONFIG_FLASH_ERASE_SIZE, NULL) < 0)
+	if (!flash_range_ok(offset, size, CONFIG_FLASH_ERASE_SIZE))
 		return EC_ERROR_INVAL;  /* Invalid range */
 
 #ifdef CONFIG_VBOOT_HASH
@@ -456,6 +504,55 @@ DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
 			"offset [size]",
 			"Write pattern to flash",
 			NULL);
+
+static int command_flash_read(int argc, char **argv)
+{
+	int offset = -1;
+	int size = 256;
+	int rv;
+	char *data;
+	int i;
+
+	rv = parse_offset_size(argc, argv, 1, &offset, &size);
+	if (rv)
+		return rv;
+
+	if (size > shared_mem_size())
+		size = shared_mem_size();
+
+	/* Acquire the shared memory buffer */
+	rv = shared_mem_acquire(size, &data);
+	if (rv) {
+		ccputs("Can't get shared mem\n");
+		return rv;
+	}
+
+	/* Read the data */
+	if (flash_read(offset, size, data)) {
+		shared_mem_release(data);
+		return EC_ERROR_INVAL;
+	}
+
+	/* Dump it */
+	for (i = 0; i < size; i++) {
+		if ((offset + i) % 16) {
+			ccprintf(" %02x", data[i]);
+		} else {
+			ccprintf("\n%08x: %02x", offset + i, data[i]);
+			cflush();
+		}
+	}
+	ccprintf("\n");
+
+	/* Free the buffer */
+	shared_mem_release(data);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(flashread, command_flash_read,
+			"offset [size]",
+			"Read flash",
+			NULL);
 #endif
 
 static int command_flash_wp(int argc, char **argv)
@@ -534,15 +631,13 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 static int flash_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_read *p = args->params;
-	const char *src;
-
-	if (flash_dataptr(p->offset, p->size, 1, &src) < 0)
-		return EC_RES_ERROR;
 
 	if (p->size > args->response_max)
 		return EC_RES_OVERFLOW;
 
-	memcpy(args->response, src, p->size);
+	if (flash_read(p->offset, p->size, args->response))
+		return EC_RES_ERROR;
+
 	args->response_size = p->size;
 
 	return EC_RES_SUCCESS;

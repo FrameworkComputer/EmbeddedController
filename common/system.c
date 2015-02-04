@@ -499,6 +499,10 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
+#ifndef CONFIG_FLASH_MAPPED
+	static struct version_struct vdata;
+#endif
+
 	uintptr_t addr;
 	const struct version_struct *v;
 
@@ -510,17 +514,35 @@ const char *system_get_version(enum system_image_copy_t copy)
 	if (addr == 0xffffffff)
 		return "";
 
-	/* The version string is always located after the reset vectors, so
-	 * it's the same as in the current image. */
-#ifdef CONFIG_CODERAM_ARCH /* TODO: (ML) we run FW in Code RAM */
+	/*
+	 * The version string is always located after the reset vectors, so
+	 * it's the same offset as in the current image.  Find that offset.
+	 */
+#ifdef CONFIG_CODERAM_ARCH
+	/*
+	 * Code has been copied from flash to code RAM, so offset of the
+	 * current image's version struct is from the start of code RAM, not
+	 * the start of the flash image.
+	 */
 	addr += ((uintptr_t)&version_data - CONFIG_CDRAM_BASE);
 #else
+	/* Offset is from the start of the flash image */
 	addr += ((uintptr_t)&version_data - get_base(system_get_image_copy()));
+#endif
+
+#ifdef CONFIG_FLASH_MAPPED
+	/* Directly access the version data */
+	v = (const struct version_struct *)addr;
+#else
+	/* Read the version struct into a buffer */
+	if (flash_read(addr - CONFIG_FLASH_BASE, sizeof(vdata), (char *)&vdata))
+		return "";
+
+	v = &vdata;
 #endif
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
-	v = (const struct version_struct *)addr;
 	if (v->cookie1 == RO(version_data).cookie1 &&
 	    v->cookie2 == RO(version_data).cookie2)
 		return v->version;
