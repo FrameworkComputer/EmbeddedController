@@ -320,6 +320,9 @@ int __hw_clock_source_init(uint32_t start_t)
 	__hw_timer_enable_clock(TIM_CLOCK_MSB, 1);
 	__hw_timer_enable_clock(TIM_CLOCK_LSB, 1);
 
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
+
 	/*
 	 * Timer configuration : Upcounter, counter disabled, update event only
 	 * on overflow.
@@ -404,6 +407,9 @@ void hwtimer_setup_watchdog(void)
 
 	/* Enable clock */
 	__hw_timer_enable_clock(TIM_WATCHDOG, 1);
+
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 
 	/*
 	 * Timer configuration : Down counter, counter disabled, update

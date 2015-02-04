@@ -7,12 +7,15 @@
 #define _CRC_HW_H
 /* CRC-32 hardware implementation with USB constants */
 
+#include "clock.h"
 #include "registers.h"
 
 static inline void crc32_init(void)
 {
 	/* switch on CRC controller */
 	STM32_RCC_AHBENR |= 1 << 6; /* switch on CRC controller */
+	/* Delay 1 AHB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_AHB, 1);
 	/* reset CRC state */
 	STM32_CRC_CR = STM32_CRC_CR_RESET | STM32_CRC_CR_REV_OUT
 		     | STM32_CRC_CR_REV_IN_WORD;

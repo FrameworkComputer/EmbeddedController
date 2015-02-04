@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
@@ -211,6 +212,8 @@ void dma_init(void)
 {
 	/* Enable DMA1; current chips don't have DMA2 */
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
+	/* Delay 1 AHB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_AHB, 1);
 }
 
 int dma_wait(enum dma_channel channel)

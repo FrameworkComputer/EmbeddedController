@@ -148,6 +148,8 @@ int __hw_clock_source_init(uint32_t start_t)
 {
 	/* Enable TIM peripheral block clocks */
 	__hw_timer_enable_clock(TIM_CLOCK32, 1);
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 
 	/*
 	 * Timer configuration : Upcounter, counter disabled, update event only
@@ -218,6 +220,8 @@ void hwtimer_setup_watchdog(void)
 {
 	/* Enable clock */
 	__hw_timer_enable_clock(TIM_WATCHDOG, 1);
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 
 	/*
 	 * Timer configuration : Up counter, counter disabled, update

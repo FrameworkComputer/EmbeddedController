@@ -343,6 +343,9 @@ static void i2c_init_port(unsigned int port)
 
 		/* enable I2C2 clock */
 		STM32_RCC_APB1ENR |= 1 << i2c_clock_bit[port];
+
+		/* Delay 1 APB clock cycle after the clock is enabled */
+		clock_wait_bus_cycles(BUS_APB, 1);
 	}
 
 	/* force reset of the i2c peripheral */

@@ -9,6 +9,7 @@
 #define __USB_PD_CONFIG_H
 
 #include "charge_state.h"
+#include "clock.h"
 #include "registers.h"
 
 /* Port and task configuration */
@@ -46,6 +47,8 @@
 static inline void spi_enable_clock(int port)
 {
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 }
 
 #define DMAC_SPI_TX(p) STM32_DMAC_CH3

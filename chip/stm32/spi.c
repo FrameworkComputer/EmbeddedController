@@ -9,6 +9,7 @@
  */
 
 #include "chipset.h"
+#include "clock.h"
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
@@ -629,6 +630,9 @@ static void spi_init(void)
 
 	/* Enable clocks to SPI1 module */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 
 	/*
 	 * Enable rx/tx DMA and get ready to receive our first transaction and

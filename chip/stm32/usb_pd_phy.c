@@ -582,6 +582,8 @@ void pd_hw_init(int port)
 #ifdef CONFIG_PD_USE_DAC_AS_REF
 	/* Enable DAC interface clock. */
 	STM32_RCC_APB1ENR |= (1 << 29);
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 	/* set voltage Vout=0.850V (Vref = 3.0V) */
 	STM32_DAC_DHR12RD = 850 * 4096 / 3000;
 	/* Start DAC channel 1 */
@@ -593,6 +595,8 @@ void pd_hw_init(int port)
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	/* turn on COMP/SYSCFG */
 	STM32_RCC_APB2ENR |= 1 << 0;
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 	/* currently in hi-speed mode : TODO revisit later, INM = PA0(INM6) */
 	STM32_COMP_CSR = STM32_COMP_CMP1MODE_LSPEED |
 			 STM32_COMP_CMP1INSEL_INM6 |

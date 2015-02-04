@@ -76,6 +76,12 @@ void usart_init(struct usart_config const *config)
 	*(config->hw->clock_register) |= config->hw->clock_enable;
 
 	/*
+	 * For STM32F3, A delay of 1 APB clock cycles is needed before we
+	 * can access any USART register. Fortunately, we have
+	 * gpio_config_module() below and thus don't need to add the delay.
+	 */
+
+	/*
 	 * Switch all GPIOs assigned to the USART module over to their USART
 	 * alternate functions.
 	 */

@@ -4,6 +4,7 @@
  */
 /* ryu sensor hub configuration */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_lsm6ds0.h"
@@ -64,6 +65,8 @@ void board_config_pre_init(void)
 	 *  and the register write as no effect.
 	 */
 	STM32_RCC_APB2ENR |= 1 << 0;
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 	/*
 	 * Remap USART DMA to match the USART driver
 	 * the DMA mapping is :

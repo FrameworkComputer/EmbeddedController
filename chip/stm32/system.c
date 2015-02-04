@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : hardware specific implementation */
 
+#include "clock.h"
 #include "console.h"
 #include "cpu.h"
 #include "flash.h"
@@ -165,6 +166,8 @@ void system_pre_init(void)
 	STM32_RCC_APB1ENR |= 1 << 28;
 	/* enable backup registers */
 	STM32_RCC_APB1ENR |= 1 << 27;
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 	/* Enable access to RCC CSR register and RTC backup registers */
 	STM32_PWR_CR |= 1 << 8;
 

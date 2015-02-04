@@ -50,6 +50,19 @@ int clock_get_freq(void)
 	return freq;
 }
 
+void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
+{
+	volatile uint32_t dummy __attribute__((unused));
+
+	if (bus == BUS_AHB) {
+		while (cycles--)
+			dummy = STM32_DMA1_REGS->isr;
+	} else { /* APB */
+		while (cycles--)
+			dummy = STM32_USART_BRR(STM32_USART1_BASE);
+	}
+}
+
 /**
  * Set which oscillator is used for the clock
  *

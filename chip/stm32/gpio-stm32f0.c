@@ -5,6 +5,7 @@
 
 /* GPIO module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -26,6 +27,9 @@ void gpio_enable_clocks(void)
 	 * and support disabling some of them in low-power idle.
 	 */
 	STM32_RCC_AHBENR |= 0x7e0000;
+
+	/* Delay 1 AHB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_AHB, 1);
 }
 
 static void gpio_init(void)

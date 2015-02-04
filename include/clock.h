@@ -47,13 +47,28 @@ void clock_enable_module(enum module_id module, int enable);
 void clock_enable_pll(int enable, int notify);
 
 /**
- * Wait for a number of clock cycles.
+ * Wait for a number of CPU clock cycles.
  *
  * Simple busy waiting for use before clocks/timers are initialized.
  *
  * @param cycles	Number of cycles to wait.
  */
 void clock_wait_cycles(uint32_t cycles);
+
+enum bus_type {
+	BUS_AHB,
+	BUS_APB,
+};
+
+/**
+ * Wait for a number of peripheral bus clock cycles.
+ *
+ * Dummy read on peripherals for delay.
+ *
+ * @param bus           Which bus clock cycle to use.
+ * @param cycles	Number of cycles to wait.
+ */
+void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles);
 
 /* Clock gate control modes for clock_enable_peripheral() */
 #define CGC_MODE_RUN    (1 << 0)

@@ -279,6 +279,12 @@ void uart_init(void)
 	STM32_RCC_APB1ENR |= CONCAT2(STM32_RCC_PB1_USART, UARTN);
 #endif
 
+	/*
+	 * For STM32F3, A delay of 1 APB clock cycles is needed before we
+	 * can access any USART register. Fortunately, we have
+	 * gpio_config_module() below and thus don't need to add the delay.
+	 */
+
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 

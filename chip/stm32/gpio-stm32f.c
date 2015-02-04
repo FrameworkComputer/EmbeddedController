@@ -5,6 +5,7 @@
 
 /* GPIO module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -116,6 +117,9 @@ void gpio_enable_clocks(void)
 #else
 	STM32_RCC_APB2ENR |= 0x1fd;
 #endif
+
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
 }
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)

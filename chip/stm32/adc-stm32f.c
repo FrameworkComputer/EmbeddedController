@@ -266,6 +266,12 @@ static void adc_init(void)
 	 */
 	STM32_RCC_APB2ENR |= (1 << 9);
 
+	/*
+	 * ADC clock is divided with respect to AHB, so no delay needed
+	 * here. If ADC clock is the same as AHB, a dummy read on ADC
+	 * register is needed here.
+	 */
+
 	if (!adc_powered()) {
 		/* Power on ADC module */
 		STM32_ADC_CR2 |= (1 << 0);  /* ADON */
