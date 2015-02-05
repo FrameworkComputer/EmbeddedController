@@ -21,9 +21,11 @@
 #define PI3USB9281_DEV_ID           0x10
 #define PI3USB9281_DEV_ID_A         0x18
 
-#define PI3USB9281_CTRL_INT_MASK    (1 << 0)
+#define PI3USB9281_CTRL_INT_DIS     (1 << 0)
 #define PI3USB9281_CTRL_AUTO        (1 << 2)
 #define PI3USB9281_CTRL_SWITCH_AUTO (1 << 4)
+/* Bits 5 thru 7 are read X, write 0 */
+#define PI3USB9281_CTRL_MASK        0x1f
 
 #define PI3USB9281_PIN_MANUAL_VBUS  (3 << 0)
 #define PI3USB9281_PIN_MANUAL_DP    (1 << 2)

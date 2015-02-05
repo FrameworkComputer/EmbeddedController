@@ -75,24 +75,27 @@ int pi3usb9281_write(uint8_t chip_idx, uint8_t reg, uint8_t val)
 
 int pi3usb9281_enable_interrupts(uint8_t chip_idx)
 {
-	int ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
+	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
 
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
-	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL, ctrl & 0x14);
+	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
+				ctrl & ~PI3USB9281_CTRL_INT_DIS &
+				PI3USB9281_CTRL_MASK);
 }
 
 int pi3usb9281_disable_interrupts(uint8_t chip_idx)
 {
-	int ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
+	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
 	int rv;
 
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
 	rv = pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-		(ctrl | PI3USB9281_CTRL_INT_MASK) & 0x15);
+			      (ctrl | PI3USB9281_CTRL_INT_DIS) &
+			      PI3USB9281_CTRL_MASK);
 	pi3usb9281_get_interrupts(chip_idx);
 	return rv;
 }
@@ -177,21 +180,18 @@ int pi3usb9281_reset(uint8_t chip_idx)
 
 int pi3usb9281_set_switch_manual(uint8_t chip_idx, int val)
 {
-	int ctrl;
-	int rv;
+	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
 
-	ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
 	if (val)
-		rv = pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-			ctrl & ~PI3USB9281_CTRL_AUTO);
+		ctrl &= ~PI3USB9281_CTRL_AUTO;
 	else
-		rv = pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-			ctrl | PI3USB9281_CTRL_AUTO);
+		ctrl |= PI3USB9281_CTRL_AUTO;
 
-	return rv;
+	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
+				ctrl & PI3USB9281_CTRL_MASK);
 }
 
 int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t val)
@@ -201,13 +201,18 @@ int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t val)
 
 int pi3usb9281_set_switches(uint8_t chip_idx, int open)
 {
-	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL) & 0x15;
+	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
+
+	if (ctrl == 0xee)
+		return EC_ERROR_UNKNOWN;
+
 	if (open)
 		ctrl &= ~PI3USB9281_CTRL_SWITCH_AUTO;
 	else
 		ctrl |= PI3USB9281_CTRL_SWITCH_AUTO;
 
-	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL, ctrl);
+	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
+				ctrl & PI3USB9281_CTRL_MASK);
 }
 
 static void pi3usb9281_init(void)
