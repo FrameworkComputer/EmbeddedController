@@ -28,9 +28,30 @@
 #define  LP8555_REG_CURRENT_MAXCURR_25MA  0x05
 #define  LP8555_REG_CURRENT_MAXCURR_30MA  0x06
 #define  LP8555_REG_CURRENT_MAXCURR_50MA  0x07
+#define LP8555_REG_STEP           0x15
+#define  LP8555_REG_STEP_STEP_0MS           (0 << 0)
+#define  LP8555_REG_STEP_STEP_8MS           (1 << 0)
+#define  LP8555_REG_STEP_STEP_16MS          (2 << 0)
+#define  LP8555_REG_STEP_STEP_24MS          (3 << 0)
+#define  LP8555_REG_STEP_STEP_28MS          (4 << 0)
+#define  LP8555_REG_STEP_STEP_32MS          (5 << 0)
+#define  LP8555_REG_STEP_STEP_100MS         (6 << 0)
+#define  LP8555_REG_STEP_STEP_200MS         (7 << 0)
+#define  LP8555_REG_STEP_PWM_IN_HYST_NONE   (0 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_1LSB   (1 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_2LSB   (2 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_4LSB   (3 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_8LSB   (4 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_16LSB  (5 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_32LSB  (6 << 3)
+#define  LP8555_REG_STEP_PWM_IN_HYST_64LSB  (7 << 3)
+#define  LP8555_REG_STEP_SMOOTH_NONE        (0 << 6)
+#define  LP8555_REG_STEP_SMOOTH_LIGHT       (1 << 6)
+#define  LP8555_REG_STEP_SMOOTH_MEDIUM      (2 << 6)
+#define  LP8555_REG_STEP_SMOOTH_HEAVY       (3 << 6)
 
 /**
- * Enable PWM mode in backlight controller and turn it on.
+ * Setup backlight controller and turn it on.
  */
 static void lp8555_enable_pwm_mode(void)
 {
@@ -46,7 +67,14 @@ static void lp8555_enable_pwm_mode(void)
 
 	/* Set max LED current to 23mA. */
 	i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_BACKLIGHT,
-		  LP8555_REG_CURRENT, LP8555_REG_CURRENT_MAXCURR_23MA);
+		   LP8555_REG_CURRENT, LP8555_REG_CURRENT_MAXCURR_23MA);
+
+	/* Set the rate of brightness change. */
+	i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_BACKLIGHT,
+		   LP8555_REG_STEP,
+		   LP8555_REG_STEP_STEP_200MS |
+		   LP8555_REG_STEP_PWM_IN_HYST_8LSB |
+		   LP8555_REG_STEP_SMOOTH_HEAVY);
 
 	/* Power on. */
 	i2c_read8(I2C_PORT_BACKLIGHT, I2C_ADDR_BACKLIGHT,
