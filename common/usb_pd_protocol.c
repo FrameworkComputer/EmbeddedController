@@ -1123,6 +1123,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 			/* reset message ID and swap roles */
 			pd[port].msg_id = 0;
 			pd[port].power_role = PD_ROLE_SINK;
+			pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 		} else if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
 			/* Don't know what power source is ready. Reset. */
