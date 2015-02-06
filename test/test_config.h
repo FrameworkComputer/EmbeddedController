@@ -139,5 +139,9 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_USB_PD_DUAL_ROLE
 #endif
 
+#ifdef TEST_CHARGE_RAMP
+#define CONFIG_CHARGE_RAMP
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __CROS_EC_TEST_CONFIG_H */

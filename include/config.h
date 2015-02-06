@@ -215,6 +215,14 @@
 #undef CONFIG_CAPSENSE
 
 /*****************************************************************************/
+
+/* Compile charge manager */
+#undef CONFIG_CHARGE_MANAGER
+
+/* Compile input current ramping support */
+#undef CONFIG_CHARGE_RAMP
+
+/*****************************************************************************/
 /* Charger config */
 
 /* Compile common charge state code. You must pick an implementation. */
@@ -335,6 +343,7 @@
 #undef CONFIG_CMD_ACCELS
 #undef CONFIG_CMD_ACCEL_INFO
 #undef CONFIG_CMD_BATDEBUG
+#undef CONFIG_CMD_CHGRAMP
 #undef CONFIG_CMD_CLOCKGATES
 #undef CONFIG_CMD_COMXTEST
 #undef CONFIG_CMD_ECTEMP
