@@ -82,6 +82,10 @@ BOARDS_STM32=(
 	zinger
 )
 
+BOARDS_PRIVATE_SPI_PP3300=(
+	glower
+)
+
 BOARDS_STM32_PROG_EN=(
 	plankton
 )
@@ -204,7 +208,9 @@ BOARD=${FLAGS_board}
 BOARD_ROOT=/build/${BOARD}
 
 # Possible default EC images
-if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+if $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
+	EC_FILE=ec.spi.bin
+elif [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 	EC_FILE=ec.RO.flat
 else
 	EC_FILE=ec.bin
@@ -264,6 +270,9 @@ if [[ "${MCU}" == "usbpd" ]] ; then
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 		servo_VARS+=" prog_en"
 	fi
+fi
+if $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
+	servo_VARS+=" spi1_buf_en spi1_buf_on_flex_en spi_hold"
 fi
 toad_VARS="${MCU}_uart_parity \
 ${MCU}_uart_baudrate boot_mode"
@@ -447,6 +456,12 @@ function flash_npcx() {
 	fi
 }
 
+function flash_private_spi_pp3300() {
+	dut_control cold_reset:on spi1_vref:pp3300
+	dut_control spi1_buf_en:on spi1_buf_on_flex_en:on spi_hold:off
+	sudo flashrom -p ft2232_spi:type=servo-v2,port=B -w "${IMG}"
+}
+
 if dut_control boot_mode 2>/dev/null ; then
 	if [[ "${MCU}" != "ec" ]] ; then
 		die "Toad cable can't support non-ec UARTs"
@@ -478,6 +493,8 @@ elif [ "${BOARD}" == "link" ]; then
 	flash_link
 elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
 	flash_npcx
+elif $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
+	flash_private_spi_pp3300
 else
 	die "board ${BOARD} not supported"
 fi
