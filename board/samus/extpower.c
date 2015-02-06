@@ -206,6 +206,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 static void check_charge_wedged(void)
 {
 	int rv, prochot_status;
+	static int counts_since_wedged;
 
 	if (charge_circuit_state == CHARGE_CIRCUIT_OK) {
 		/* Check PROCHOT warning */
@@ -220,12 +221,19 @@ static void check_charge_wedged(void)
 		 * Note: learn mode is critical here because when in this state
 		 * backboosting causes >20V on boostin even after PD disables
 		 * CHARGE_EN lines.
+		 *
+		 * If we were recently wedged, then give ourselves a free pass
+		 * here. This gives an opportunity for reading the PROCHOT
+		 * status to clear it if the error has gone away.
 		 */
-		if (prochot_status) {
+		if (prochot_status && counts_since_wedged >= 2) {
+			counts_since_wedged = 0;
 			host_command_pd_send_status(PD_CHARGE_NONE);
 			charger_disable(1);
 			charge_circuit_state = CHARGE_CIRCUIT_WEDGED;
 			CPRINTS("Charge circuit wedged!");
+		} else {
+			counts_since_wedged++;
 		}
 	} else {
 		/*
