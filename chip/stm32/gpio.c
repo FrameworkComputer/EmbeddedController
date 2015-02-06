@@ -128,3 +128,8 @@ void gpio_interrupt(void)
 			g->irq_handler(g - gpio_list);
 	}
 }
+#ifdef CHIP_FAMILY_STM32F0
+DECLARE_IRQ(STM32_IRQ_EXTI0_1, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI2_3, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI4_15, gpio_interrupt, 1);
+#endif

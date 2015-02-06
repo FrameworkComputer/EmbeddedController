@@ -21,6 +21,7 @@
 #define CPU_NVIC_PRI(x)        CPUREG(0xe000e400 + 4 * (x))
 
 /* System Control Block */
+#define CPU_SCB_ICSR           CPUREG(0xe000ed04)
 
 /* SCB AIRCR : Application interrupt and reset control register */
 #define CPU_NVIC_APINT         CPUREG(0xe000ed0c)

@@ -141,6 +141,7 @@ const char *task_get_name(task_id_t tskid);
  * is called.
  */
 void task_start_irq_handler(void *excep_return);
+void task_end_irq_handler(void *excep_return);
 #else
 #define task_start_irq_handler(excep_return)
 #endif

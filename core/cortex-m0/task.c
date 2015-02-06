@@ -123,19 +123,6 @@ uint32_t scratchpad[17];
 static task_ *current_task = (task_ *)scratchpad;
 
 /*
- * Should IRQs chain to svc_handler()?  This should be set if either of the
- * following is true:
- *
- * 1) Task scheduling has started, and task profiling is enabled.  Task
- * profiling does its tracking in svc_handler().
- *
- * 2) An event was set by an interrupt; this could result in a higher-priority
- * task unblocking.  After checking for a task switch, svc_handler() will clear
- * the flag (unless profiling is also enabled; then the flag remains set).
- */
-int need_resched_or_profiling;
-
-/*
  * Bitmap of all tasks ready to be run.
  *
  * Currently all tasks are enabled at startup.
@@ -209,7 +196,9 @@ task_ *__svc_handler(int desched, task_id_t resched)
 	 * start time explicitly.
 	 */
 	if (exc == 0xb) {
-		exc_start_time = get_time().val;
+		t = get_time().val;
+		current_task->runtime += (t - exc_end_time);
+		exc_end_time = t;
 		svc_calls++;
 	}
 #endif
@@ -237,22 +226,11 @@ task_ *__svc_handler(int desched, task_id_t resched)
 	next = __task_id_to_ptr(31 - __builtin_clz(tasks_ready));
 
 #ifdef CONFIG_TASK_PROFILING
-	/* Track time in interrupts */
+	/* Track additional time in re-sched exception context */
 	t = get_time().val;
-	exc_total_time += (t - exc_start_time);
+	exc_total_time += (t - exc_end_time);
 
-	/*
-	 * Bill the current task for time between the end of the last interrupt
-	 * and the start of this one.
-	 */
-	current->runtime += (exc_start_time - exc_end_time);
 	exc_end_time = t;
-#else
-	/*
-	 * Don't chain here from interrupts until the next time an interrupt
-	 * sets an event.
-	 */
-	need_resched_or_profiling = 0;
 #endif
 
 	/* Switch to new task */
@@ -284,6 +262,18 @@ void __schedule(int desched, int resched)
 	asm("svc 0" : : "r"(p0), "r"(p1));
 }
 
+void pendsv_handler(void)
+{
+	/* Clear pending flag */
+	CPU_SCB_ICSR = (1 << 27);
+
+	/* ensure we have priority 0 during re-scheduling */
+	__asm__ __volatile__("cpsid i");
+	/* re-schedule the highest priority task */
+	svc_handler(0, 0);
+	__asm__ __volatile__("cpsie i");
+}
+
 #ifdef CONFIG_TASK_PROFILING
 void task_start_irq_handler(void *excep_return)
 {
@@ -302,14 +292,33 @@ void task_start_irq_handler(void *excep_return)
 		irq_dist[irq]++;
 
 	/*
-	 * Continue iff a rescheduling event happened or profiling is active,
-	 * and we are not called from another exception (this must match the
-	 * logic for when we chain to svc_handler() below).
+	 * Continue iff the tasks are ready and we are not called from another
+	 * exception (as the time accouting is done in the outer irq).
 	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
+	if (!start_called || ((uint32_t)excep_return & 0xf) == 1)
 		return;
 
 	exc_start_time = t;
+	/*
+	 * Bill the current task for time between the end of the last interrupt
+	 * and the start of this one.
+	 */
+	current_task->runtime += (exc_start_time - exc_end_time);
+}
+
+void task_end_irq_handler(void *excep_return)
+{
+	uint64_t t = get_time().val;
+	/*
+	 * Continue iff the tasks are ready and we are not called from another
+	 * exception (as the time accouting is done in the outer irq).
+	 */
+	if (!start_called || ((uint32_t)excep_return & 0xf) == 1)
+		return;
+
+	/* Track time in interrupts */
+	exc_total_time += (t - exc_start_time);
+	exc_end_time = t;
 }
 #endif
 
@@ -357,10 +366,13 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 	if (in_interrupt_context()) {
 		/* The receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
-#ifndef CONFIG_TASK_PROFILING
-		if (start_called)
-			need_resched_or_profiling = 1;
-#endif
+		if (start_called) {
+			/*
+			 * Trigger the scheduler when there's
+			 * no other irqs happening.
+			 */
+			CPU_SCB_ICSR = (1 << 28);
+		}
 	} else {
 		if (wait) {
 			return __wait_evt(-1, tskid);
@@ -646,7 +658,6 @@ int task_start(void)
 #ifdef CONFIG_TASK_PROFILING
 	task_start_time = exc_end_time = get_time().val;
 #endif
-	start_called = 1;
 
-	return __task_start(&need_resched_or_profiling);
+	return __task_start(&start_called);
 }

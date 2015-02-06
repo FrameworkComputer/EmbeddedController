@@ -14,4 +14,7 @@ void cpu_init(void)
 
 	/* Set supervisor call (SVC) to priority 0 */
 	CPU_NVIC_SHCSR2 = 0;
+
+	/* Set lowest priority for PendSV */
+	CPU_NVIC_SHCSR3 = (0xff << 16);
 }
