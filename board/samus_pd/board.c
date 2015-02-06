@@ -214,24 +214,29 @@ void usb_charger_task(void)
 		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
 			charge.current = pi3usb9281_get_ilim(device_type,
 							     charger_status);
-			charge_manager_update(type, port, &charge);
+			charge_manager_update_charge(type, port, &charge);
 		} else { /* Detachment: update available charge to 0 */
 			charge.current = 0;
-			charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY,
-					      port,
-					      &charge);
-			charge_manager_update(CHARGE_SUPPLIER_BC12_CDP,
-					      port,
-					      &charge);
-			charge_manager_update(CHARGE_SUPPLIER_BC12_DCP,
-					      port,
-					      &charge);
-			charge_manager_update(CHARGE_SUPPLIER_BC12_SDP,
-					      port,
-					      &charge);
-			charge_manager_update(CHARGE_SUPPLIER_OTHER,
-					      port,
-					      &charge);
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_PROPRIETARY,
+						port,
+						&charge);
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_BC12_CDP,
+						port,
+						&charge);
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_BC12_DCP,
+						port,
+						&charge);
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_BC12_SDP,
+						port,
+						&charge);
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_OTHER,
+						port,
+						&charge);
 		}
 
 		/* notify host of power info change */
@@ -371,12 +376,21 @@ static void board_init(void)
 	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
 	charge.current = 0;
 	for (i = 0; i < PD_PORT_COUNT; i++) {
-		charge_manager_update(CHARGE_SUPPLIER_PROPRIETARY, i,
-				      &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_CDP, i, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_DCP, i, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_BC12_SDP, i, &charge);
-		charge_manager_update(CHARGE_SUPPLIER_OTHER, i, &charge);
+		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+					     i,
+					     &charge);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+					     i,
+					     &charge);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+					     i,
+					     &charge);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+					     i,
+					     &charge);
+		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+					     i,
+					     &charge);
 	}
 
 	/* Enable pericom BC1.2 interrupts. */

@@ -22,9 +22,12 @@ struct charge_port_info {
 };
 
 /* Called by charging tasks to update their available charge */
-void charge_manager_update(int supplier,
-			   int charge_port,
-			   struct charge_port_info *charge);
+void charge_manager_update_charge(int supplier,
+				  int port,
+				  struct charge_port_info *charge);
+
+/* Called by charging tasks to indicate partner dualrole capability change */
+void charge_manager_update_dualrole(int port);
 
 /* Update charge ceiling for a given port */
 void charge_manager_set_ceil(int port, int ceil);

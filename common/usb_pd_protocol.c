@@ -280,6 +280,11 @@ static struct pd_protocol {
 	int prev_request_mv;
 #endif
 
+#ifdef CONFIG_CHARGE_MANAGER
+	/* Dual-role capability of attached partner port */
+	enum dualrole_capabilities dualrole_capability;
+#endif
+
 	/* PD state for Vendor Defined Messages */
 	enum vdm_states vdm_state;
 	/* Timeout for the current vdm state.  Set to 0 for no timeout. */
@@ -399,6 +404,10 @@ static inline void set_state(int port, enum pd_states next_state)
 #endif
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
+#ifdef CONFIG_CHARGE_MANAGER
+		pd[port].dualrole_capability = CAP_UNKNOWN;
+		charge_manager_update_dualrole(port);
+#endif
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_dfp_exit_mode(port, 0, 0);
 #endif
@@ -968,10 +977,19 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 {
 	/* can only parse PDO flags if type is fixed */
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
-		if (pdo & PDO_FIXED_DUAL_ROLE)
+		if (pdo & PDO_FIXED_DUAL_ROLE) {
 			pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
-		else
+#ifdef CONFIG_CHARGE_MANAGER
+			pd[port].dualrole_capability = CAP_DUALROLE;
+			charge_manager_update_dualrole(port);
+#endif
+		} else {
 			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
+#ifdef CONFIG_CHARGE_MANAGER
+			pd[port].dualrole_capability = CAP_DEDICATED;
+			charge_manager_update_dualrole(port);
+#endif
+		}
 
 		if (pdo & PDO_FIXED_DATA_SWAP)
 			pd[port].flags |= PD_FLAGS_PARTNER_DR_DATA;
@@ -1655,11 +1673,13 @@ int pd_get_polarity(int port)
 	return pd[port].polarity;
 }
 
-int pd_get_partner_dualrole_capable(int port)
+#ifdef CONFIG_CHARGE_MANAGER
+enum dualrole_capabilities pd_get_partner_dualrole_capable(int port)
 {
 	/* return dualrole status of port partner */
-	return pd[port].flags & PD_FLAGS_PARTNER_DR_POWER;
+	return pd[port].dualrole_capability;
 }
+#endif /* CONFIG_CHARGE_MANAGER */
 
 int pd_get_partner_data_swap_capable(int port)
 {
@@ -1791,6 +1811,7 @@ void pd_task(void)
 #ifdef CONFIG_CHARGE_MANAGER
 	/* Initialize PD supplier current limit to 0 */
 	pd_set_input_current_limit(port, 0, 0);
+	pd[port].dualrole_capability = CAP_UNKNOWN;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* If sink, set initial type-C current limit based on vbus */
 	if (pd_snk_is_vbus_provided(port)) {
@@ -2673,6 +2694,21 @@ void pd_task(void)
 			hard_reset_count++;
 			if (pd[port].last_state != pd[port].task_state)
 				hard_reset_sent = 0;
+#ifdef CONFIG_CHARGE_MANAGER
+			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY) {
+				/*
+				 * If discovery timed out, assume that we
+				 * have a dedicated charger attached. This
+				 * may not be a correct assumption according
+				 * to the specification, but it generally
+				 * works in practice and the harmful
+				 * effects of a wrong assumption here
+				 * are minimal.
+				 */
+				pd[port].dualrole_capability = CAP_DEDICATED;
+				charge_manager_update_dualrole(port);
+			}
+#endif
 
 			/* try sending hard reset until it succeeds */
 			if (!hard_reset_sent) {

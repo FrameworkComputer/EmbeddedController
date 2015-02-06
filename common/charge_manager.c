@@ -43,6 +43,11 @@ static int override_port = OVERRIDE_OFF;
 static int delayed_override_port = OVERRIDE_OFF;
 static timestamp_t delayed_override_deadline;
 
+enum charge_manager_change_type {
+	CHANGE_CHARGE,
+	CHANGE_DUALROLE,
+};
+
 /**
  * Initialize available charge. Run before board init, so board init can
  * initialize data, if needed.
@@ -127,7 +132,7 @@ static void charge_manager_fill_power_info(int port,
 		r->role = USB_PD_PORT_POWER_DISCONNECTED;
 
 	/* Is port partner dual-role capable */
-	r->dualrole = pd_get_partner_dualrole_capable(port);
+	r->dualrole = (pd_get_partner_dualrole_capable(port) == CAP_DUALROLE);
 
 	if (sup == CHARGE_SUPPLIER_NONE ||
 	    r->role == USB_PD_PORT_POWER_SOURCE) {
@@ -226,7 +231,7 @@ static void charge_manager_cleanup_override_port(int port)
 	if (port < 0 || port >= PD_PORT_COUNT)
 		return;
 
-	if (pd_get_partner_dualrole_capable(port) &&
+	if (pd_get_partner_dualrole_capable(port) == CAP_DUALROLE &&
 	    pd_get_role(port) == PD_ROLE_SINK)
 		pd_request_power_swap(port);
 }
@@ -277,7 +282,8 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				 * Don't charge from a dual-role port unless
 				 * it is our override port.
 				 */
-				if (pd_get_partner_dualrole_capable(j) &&
+				if (pd_get_partner_dualrole_capable(j) !=
+				    CAP_DEDICATED &&
 				    override_port != j)
 					continue;
 
@@ -425,6 +431,88 @@ static void charge_manager_refresh(void)
 }
 DECLARE_DEFERRED(charge_manager_refresh);
 
+static void charge_manager_make_change(enum charge_manager_change_type change,
+				       int supplier,
+				       int port,
+				       struct charge_port_info *charge)
+{
+	int i;
+	int clear_override = 0;
+
+	/* Determine if this is a change which can affect charge status */
+	switch (change) {
+	case CHANGE_CHARGE:
+		/* Ignore changes where charge is identical */
+		if (available_charge[supplier][port].current ==
+		    charge->current &&
+		    available_charge[supplier][port].voltage ==
+		    charge->voltage)
+			return;
+		if (charge->current > 0 &&
+		    available_charge[supplier][port].current == 0)
+			clear_override = 1;
+		break;
+	case CHANGE_DUALROLE:
+		/*
+		 * Ignore all except for transition to non-dualrole,
+		 * which may occur some time after we see a charge
+		 */
+		if (pd_get_partner_dualrole_capable(port) != CAP_DEDICATED)
+			return;
+		/* Clear override only if a charge is present on the port */
+		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
+			if (available_charge[i][port].current > 0) {
+				clear_override = 1;
+				break;
+			}
+		/*
+		 * If there is no charge present on the port, the dualrole
+		 * change is meaningless to charge_manager.
+		 */
+		if (!clear_override)
+			return;
+		break;
+	}
+
+	/* Remove override when a dedicated charger is plugged */
+	if (clear_override && override_port != port &&
+	    pd_get_partner_dualrole_capable(port) == CAP_DEDICATED) {
+		charge_manager_cleanup_override_port(override_port);
+		override_port = OVERRIDE_OFF;
+		if (delayed_override_port != OVERRIDE_OFF) {
+			charge_manager_cleanup_override_port(
+				delayed_override_port);
+			delayed_override_port = OVERRIDE_OFF;
+			hook_call_deferred(
+				board_charge_manager_override_timeout,
+				-1);
+		}
+	}
+
+	if (change == CHANGE_CHARGE) {
+		available_charge[supplier][port].current = charge->current;
+		available_charge[supplier][port].voltage = charge->voltage;
+
+		/*
+		 * If we have a charge on our delayed override port within
+		 * the deadline, make it our override port.
+		*/
+		if (port == delayed_override_port && charge->current > 0 &&
+		    pd_get_role(delayed_override_port) == PD_ROLE_SINK &&
+		    get_time().val < delayed_override_deadline.val)
+			charge_manager_set_override(port);
+	}
+
+	/*
+	 * Don't call charge_manager_refresh unless all ports +
+	 * suppliers have reported in. We don't want to make changes
+	 * to our charge port until we are certain we know what is
+	 * attached.
+	 */
+	if (charge_manager_is_seeded())
+		hook_call_deferred(charge_manager_refresh, 0);
+}
+
 /**
  * Update available charge for a given port / supplier.
  *
@@ -432,53 +520,28 @@ DECLARE_DEFERRED(charge_manager_refresh);
  * @param port			Charge port to update.
  * @param charge		Charge port current / voltage.
  */
-void charge_manager_update(int supplier,
-			   int port,
-			   struct charge_port_info *charge)
+void charge_manager_update_charge(int supplier,
+				  int port,
+				  struct charge_port_info *charge)
 {
 	ASSERT(supplier >= 0 && supplier < CHARGE_SUPPLIER_COUNT);
 	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+	ASSERT(charge != NULL);
 
-	/* Update charge table if needed. */
-	if (available_charge[supplier][port].current != charge->current ||
-		available_charge[supplier][port].voltage != charge->voltage) {
-		/* Remove override when a dedicated charger is plugged */
-		if (available_charge[supplier][port].current == 0 &&
-		    charge->current > 0 &&
-		    !pd_get_partner_dualrole_capable(port)) {
-			charge_manager_cleanup_override_port(override_port);
-			override_port = OVERRIDE_OFF;
-			if (delayed_override_port != OVERRIDE_OFF) {
-				charge_manager_cleanup_override_port(
-					delayed_override_port);
-				delayed_override_port = OVERRIDE_OFF;
-				hook_call_deferred(
-					board_charge_manager_override_timeout,
-					-1);
-			}
-		}
-		available_charge[supplier][port].current = charge->current;
-		available_charge[supplier][port].voltage = charge->voltage;
+	charge_manager_make_change(CHANGE_CHARGE, supplier, port, charge);
+}
 
-		/*
-		 * If we have a charge on our delayed override port within
-		 * the deadline, make it our override port.
-		 */
-		if (port == delayed_override_port &&
-		    charge->current > 0 &&
-		    pd_get_role(delayed_override_port) == PD_ROLE_SINK &&
-		    get_time().val < delayed_override_deadline.val)
-			charge_manager_set_override(port);
-
-		/*
-		 * Don't call charge_manager_refresh unless all ports +
-		 * suppliers have reported in. We don't want to make changes
-		 * to our charge port until we are certain we know what is
-		 * attached.
-		 */
-		if (charge_manager_is_seeded())
-			hook_call_deferred(charge_manager_refresh, 0);
-	}
+/**
+ * Notify charge_manager of a partner dualrole capability change. There is
+ * no capability parameter to this function, since the capability can be
+ * checked with pd_get_partner_dualrole_capable().
+ *
+ * @param port			Charge port which changed.
+ */
+void charge_manager_update_dualrole(int port)
+{
+	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+	charge_manager_make_change(CHANGE_DUALROLE, 0, port, NULL);
 }
 
 /**
@@ -540,7 +603,7 @@ int charge_manager_set_override(int port)
 	 * power swap and set the delayed override for swap completion.
 	 */
 	else if (pd_get_role(port) != PD_ROLE_SINK &&
-		 pd_get_partner_dualrole_capable(port)) {
+		 pd_get_partner_dualrole_capable(port) == CAP_DUALROLE) {
 		delayed_override_deadline.val = get_time().val +
 						POWER_SWAP_TIMEOUT;
 		delayed_override_port = port;
