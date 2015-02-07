@@ -56,6 +56,7 @@ enum board_src_cap src_cap_mapping[USBC_ACT_COUNT] =
 static void set_usbc_action(enum usbc_action act)
 {
 	int need_soft_reset;
+	int was_usb_mode;
 
 	switch (act) {
 	case USBC_ACT_5V_TO_DUT:
@@ -71,8 +72,9 @@ static void set_usbc_action(enum usbc_action act)
 		pd_set_dual_role(PD_DRP_FORCE_SINK);
 		break;
 	case USBC_ACT_USBDP_TOGGLE:
-		gpio_set_level(GPIO_USBC_SS_USB_MODE,
-			       !gpio_get_level(GPIO_USBC_SS_USB_MODE));
+		was_usb_mode = gpio_get_level(GPIO_USBC_SS_USB_MODE);
+		gpio_set_level(GPIO_USBC_SS_USB_MODE, !was_usb_mode);
+		gpio_set_level(GPIO_CASE_CLOSE_EN, !was_usb_mode);
 		break;
 	case USBC_ACT_USB_EN:
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, 1);
@@ -380,3 +382,21 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 }
 DECLARE_CONSOLE_COMMAND(fake_disconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL, NULL);
+
+static void trigger_dfu_release(void)
+{
+	gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 1);
+	ccprintf("Deasserting CASE_CLOSE_DFU_L.\n");
+}
+DECLARE_DEFERRED(trigger_dfu_release);
+
+static int cmd_trigger_dfu(int argc, char *argv[])
+{
+	gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 0);
+	ccprintf("Asserting CASE_CLOSE_DFU_L.\n");
+	ccprintf("If you expect to see DFU debug but it doesn't show up,\n");
+	ccprintf("try flipping the USB type-C cable.\n");
+	hook_call_deferred(trigger_dfu_release, 1500 * MSEC);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dfu, cmd_trigger_dfu, NULL, NULL, NULL);
