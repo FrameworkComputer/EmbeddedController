@@ -157,6 +157,13 @@ static void allow_max_request(void)
 }
 DECLARE_DEFERRED(allow_max_request);
 
+static void allow_min_charging(void)
+{
+	if (!charge_is_disabled && charge_circuit_state == CHARGE_CIRCUIT_OK)
+		host_command_pd_send_status(PD_CHARGE_5V);
+}
+DECLARE_DEFERRED(allow_min_charging);
+
 static void extpower_board_hacks(int extpower, int extpower_prev)
 {
 	/* Cancel deferred attempt to enable max charge request */
@@ -165,7 +172,9 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 	/*
 	 * When AC is detected, delay briefly before allowing PD
 	 * to negotiate up to the max voltage to give charge circuit
-	 * time to settle down. When AC goes away, set PD to only allow
+	 * time to settle down. When AC goes away, disable charging
+	 * for a brief time, allowing charge state machine time to
+	 * see AC has gone away, and then set PD to only allow
 	 * 5V charging for the next time AC is connected.
 	 *
 	 * Use NVDC charger learn mode (charger_disable()) when AC
@@ -186,7 +195,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 		 * backboost
 		 */
 		host_command_pd_send_status(PD_CHARGE_NONE);
-	} else {
+	} else if (!extpower && extpower_prev) {
 		/* AC disconnected */
 		if (!charge_is_disabled &&
 		    charge_circuit_state == CHARGE_CIRCUIT_OK)
@@ -194,10 +203,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 
 		charger_disable(1);
 
-		if (!charge_is_disabled &&
-		    charge_circuit_state == CHARGE_CIRCUIT_OK)
-			host_command_pd_send_status(PD_CHARGE_5V);
-
+		hook_call_deferred(allow_min_charging, 100*MSEC);
 		set_pp5000_in_g3(PP5000_IN_G3_AC, 0);
 	}
 	extpower_prev = extpower;
