@@ -212,6 +212,10 @@ static void setup_lpc(void)
 
 	/* Set up 8042 interface at 0x60/0x64 */
 	MEC1322_LPC_8042_BAR = 0x00608104;
+
+	/* Set up indication of Auxillary sts */
+	MEC1322_8042_KB_CTRL |= 1 << 7;
+
 	MEC1322_8042_ACT |= 1;
 	MEC1322_INT_ENABLE(15) |= ((1 << 13) | (1 << 14));
 	MEC1322_INT_BLK_EN |= 1 << 15;
