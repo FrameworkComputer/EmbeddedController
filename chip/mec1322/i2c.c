@@ -35,6 +35,9 @@
 #define CTRL_ESO (1 << 6) /* Enable serial output */
 #define CTRL_PIN (1 << 7) /* Pending interrupt not */
 
+/* Maximum transfer of a SMBUS block transfer */
+#define SMBUS_MAX_BLOCK_SIZE 32
+
 static task_id_t task_waiting_on_port[I2C_PORT_COUNT];
 
 static void configure_port_speed(int port, int kbps)
@@ -328,6 +331,42 @@ int i2c_get_line_levels(int port)
 {
 	return (MEC1322_I2C_BB_CTRL(port) >> 5) & 0x3;
 }
+
+int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
+	int len)
+{
+	int	rv;
+	uint8_t	reg, block_length;
+
+	if ((len <= 0) || (len > SMBUS_MAX_BLOCK_SIZE))
+		return EC_ERROR_INVAL;
+
+	i2c_lock(port, 1);
+
+	/*
+	 * Read the counted string into the output buffer
+	 */
+	reg = offset;
+	rv = i2c_xfer(port, slave_addr, &reg, 1, data, len, I2C_XFER_SINGLE);
+	if (rv)
+		goto exit;
+
+	/*
+	 * Block length is the first byte of the returned buffer
+	 */
+	block_length = MIN(data[0], len - 1);
+
+	/*
+	 * Move data down, then null-terminate it
+	 */
+	memmove(data, data + 1, block_length);
+	data[block_length] = '\0';
+
+exit:
+	i2c_lock(port, 0);
+	return rv;
+}
+
 
 static void i2c_init(void)
 {
