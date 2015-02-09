@@ -30,10 +30,8 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	if (new_mode == current_mode)
 		return;
 
-	if (current_mode != CCD_MODE_DISABLED) {
+	if (current_mode != CCD_MODE_DISABLED)
 		usb_release();
-		ccd_board_disconnect();
-	}
 
 	current_mode = new_mode;
 
@@ -43,8 +41,6 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	 */
 	usb_console_enable(new_mode == CCD_MODE_ENABLED);
 
-	if (new_mode != CCD_MODE_DISABLED) {
-		ccd_board_connect();
+	if (new_mode != CCD_MODE_DISABLED)
 		usb_init();
-	}
 }

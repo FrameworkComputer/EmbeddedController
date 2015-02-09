@@ -305,24 +305,6 @@ int extpower_is_present(void)
 	return gpio_get_level(GPIO_CHGR_ACOK);
 }
 
-/*
- * Disconnect the USB lines from the AP, this enables manual control of the
- * Pericom polarity switch and disconnects the USB 2.0 lines
- */
-void ccd_board_connect(void)
-{
-	pi3usb9281_set_pins(0, 0x00);
-	pi3usb9281_set_switch_manual(0, 0);
-}
-
-/*
- * Reconnect the USB lines to the AP re-enabling automatic switching
- */
-void ccd_board_disconnect(void)
-{
-	pi3usb9281_set_switch_manual(0, 1);
-}
-
 void usb_board_connect(void)
 {
 	gpio_set_level(GPIO_USB_PU_EN_L, 0);

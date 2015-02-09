@@ -33,17 +33,4 @@ enum ccd_mode {
  */
 void ccd_set_mode(enum ccd_mode new_mode);
 
-/*
- * Board provided function that should ensure that the debug USB port is ready
- * for use by the case closed debug code.  This could mean updating a MUX or
- * switch to disconnect USB from the AP.
- */
-void ccd_board_connect(void);
-
-/*
- * Board provided function that releases the debug USB port, giving it back
- * to the AP.
- */
-void ccd_board_disconnect(void);
-
 #endif /* INCLUDE_CASE_CLOSED_DEBUG_H */
