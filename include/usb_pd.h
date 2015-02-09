@@ -1283,20 +1283,6 @@ int pd_is_connected(int port);
  */
 int pd_get_polarity(int port);
 
-/* Partner port dualrole capabilities */
-enum dualrole_capabilities {
-	CAP_UNKNOWN,
-	CAP_DUALROLE,
-	CAP_DEDICATED,
-};
-
-/**
- * Get port partner dual-role capable status
- *
- * @param port USB-C port number
- */
-enum dualrole_capabilities pd_get_partner_dualrole_capable(int port);
-
 /**
  * Get port partner data swap capable status
  *

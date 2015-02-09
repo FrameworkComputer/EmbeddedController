@@ -32,6 +32,9 @@ static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
  */
 static int charge_ceil[PD_PORT_COUNT];
 
+/* Dual-role capability of attached partner port */
+static enum dualrole_capabilities dualrole_capability[PD_PORT_COUNT];
+
 /* Store current state of port enable / charge current. */
 static int charge_port = CHARGE_PORT_NONE;
 static int charge_current = CHARGE_CURRENT_UNINITIALIZED;
@@ -64,6 +67,7 @@ static void charge_manager_init(void)
 				CHARGE_VOLTAGE_UNINITIALIZED;
 		}
 		charge_ceil[i] = CHARGE_CEIL_NONE;
+		dualrole_capability[i] = CAP_UNKNOWN;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_DEFAULT-1);
@@ -132,7 +136,7 @@ static void charge_manager_fill_power_info(int port,
 		r->role = USB_PD_PORT_POWER_DISCONNECTED;
 
 	/* Is port partner dual-role capable */
-	r->dualrole = (pd_get_partner_dualrole_capable(port) == CAP_DUALROLE);
+	r->dualrole = (dualrole_capability[port] == CAP_DUALROLE);
 
 	if (sup == CHARGE_SUPPLIER_NONE ||
 	    r->role == USB_PD_PORT_POWER_SOURCE) {
@@ -231,7 +235,7 @@ static void charge_manager_cleanup_override_port(int port)
 	if (port < 0 || port >= PD_PORT_COUNT)
 		return;
 
-	if (pd_get_partner_dualrole_capable(port) == CAP_DUALROLE &&
+	if (dualrole_capability[port] == CAP_DUALROLE &&
 	    pd_get_role(port) == PD_ROLE_SINK)
 		pd_request_power_swap(port);
 }
@@ -282,8 +286,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				 * Don't charge from a dual-role port unless
 				 * it is our override port.
 				 */
-				if (pd_get_partner_dualrole_capable(j) !=
-				    CAP_DEDICATED &&
+				if (dualrole_capability[j] != CAP_DEDICATED &&
 				    override_port != j)
 					continue;
 
@@ -457,7 +460,7 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		 * Ignore all except for transition to non-dualrole,
 		 * which may occur some time after we see a charge
 		 */
-		if (pd_get_partner_dualrole_capable(port) != CAP_DEDICATED)
+		if (dualrole_capability[port] != CAP_DEDICATED)
 			return;
 		/* Clear override only if a charge is present on the port */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
@@ -476,7 +479,7 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 
 	/* Remove override when a dedicated charger is plugged */
 	if (clear_override && override_port != port &&
-	    pd_get_partner_dualrole_capable(port) == CAP_DEDICATED) {
+	    dualrole_capability[port] == CAP_DEDICATED) {
 		charge_manager_cleanup_override_port(override_port);
 		override_port = OVERRIDE_OFF;
 		if (delayed_override_port != OVERRIDE_OFF) {
@@ -532,16 +535,19 @@ void charge_manager_update_charge(int supplier,
 }
 
 /**
- * Notify charge_manager of a partner dualrole capability change. There is
- * no capability parameter to this function, since the capability can be
- * checked with pd_get_partner_dualrole_capable().
+ * Notify charge_manager of a partner dualrole capability change.
  *
  * @param port			Charge port which changed.
+ * @param cap			New port capability.
  */
-void charge_manager_update_dualrole(int port)
+void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
 	ASSERT(port >= 0 && port < PD_PORT_COUNT);
-	charge_manager_make_change(CHANGE_DUALROLE, 0, port, NULL);
+	/* Ignore when capability is unchanged */
+	if (cap != dualrole_capability[port]) {
+		dualrole_capability[port] = cap;
+		charge_manager_make_change(CHANGE_DUALROLE, 0, port, NULL);
+	}
 }
 
 /**
@@ -603,7 +609,7 @@ int charge_manager_set_override(int port)
 	 * power swap and set the delayed override for swap completion.
 	 */
 	else if (pd_get_role(port) != PD_ROLE_SINK &&
-		 pd_get_partner_dualrole_capable(port) == CAP_DUALROLE) {
+		 dualrole_capability[port] == CAP_DUALROLE) {
 		delayed_override_deadline.val = get_time().val +
 						POWER_SWAP_TIMEOUT;
 		delayed_override_port = port;

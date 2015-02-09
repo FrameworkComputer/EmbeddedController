@@ -281,11 +281,6 @@ static struct pd_protocol {
 	int prev_request_mv;
 #endif
 
-#ifdef CONFIG_CHARGE_MANAGER
-	/* Dual-role capability of attached partner port */
-	enum dualrole_capabilities dualrole_capability;
-#endif
-
 	/* PD state for Vendor Defined Messages */
 	enum vdm_states vdm_state;
 	/* Timeout for the current vdm state.  Set to 0 for no timeout. */
@@ -406,8 +401,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 #ifdef CONFIG_CHARGE_MANAGER
-		pd[port].dualrole_capability = CAP_UNKNOWN;
-		charge_manager_update_dualrole(port);
+		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		pd_dfp_exit_mode(port, 0, 0);
@@ -981,14 +975,12 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 		if (pdo & PDO_FIXED_DUAL_ROLE) {
 			pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
 #ifdef CONFIG_CHARGE_MANAGER
-			pd[port].dualrole_capability = CAP_DUALROLE;
-			charge_manager_update_dualrole(port);
+			charge_manager_update_dualrole(port, CAP_DUALROLE);
 #endif
 		} else {
 			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
 #ifdef CONFIG_CHARGE_MANAGER
-			pd[port].dualrole_capability = CAP_DEDICATED;
-			charge_manager_update_dualrole(port);
+			charge_manager_update_dualrole(port, CAP_DEDICATED);
 #endif
 		}
 
@@ -1674,14 +1666,6 @@ int pd_get_polarity(int port)
 	return pd[port].polarity;
 }
 
-#ifdef CONFIG_CHARGE_MANAGER
-enum dualrole_capabilities pd_get_partner_dualrole_capable(int port)
-{
-	/* return dualrole status of port partner */
-	return pd[port].dualrole_capability;
-}
-#endif /* CONFIG_CHARGE_MANAGER */
-
 int pd_get_partner_data_swap_capable(int port)
 {
 	/* return data swap capable status of port partner */
@@ -1812,7 +1796,7 @@ void pd_task(void)
 #ifdef CONFIG_CHARGE_MANAGER
 	/* Initialize PD supplier current limit to 0 */
 	pd_set_input_current_limit(port, 0, 0);
-	pd[port].dualrole_capability = CAP_UNKNOWN;
+	charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/* If sink, set initial type-C current limit based on vbus */
 	if (pd_snk_is_vbus_provided(port)) {
@@ -2719,8 +2703,8 @@ void pd_task(void)
 				 * effects of a wrong assumption here
 				 * are minimal.
 				 */
-				pd[port].dualrole_capability = CAP_DEDICATED;
-				charge_manager_update_dualrole(port);
+				charge_manager_update_dualrole(port,
+							       CAP_DEDICATED);
 			}
 #endif
 

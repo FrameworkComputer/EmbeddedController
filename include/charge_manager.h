@@ -26,8 +26,15 @@ void charge_manager_update_charge(int supplier,
 				  int port,
 				  struct charge_port_info *charge);
 
+/* Partner port dualrole capabilities */
+enum dualrole_capabilities {
+	CAP_UNKNOWN,
+	CAP_DUALROLE,
+	CAP_DEDICATED,
+};
+
 /* Called by charging tasks to indicate partner dualrole capability change */
-void charge_manager_update_dualrole(int port);
+void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap);
 
 /* Update charge ceiling for a given port */
 void charge_manager_set_ceil(int port, int ceil);
