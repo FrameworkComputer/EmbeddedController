@@ -6,6 +6,7 @@
 #include "adc.h"
 #include "battery.h"
 #include "board.h"
+#include "case_closed_debug.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -1987,6 +1988,16 @@ void pd_task(void)
 				/* Remove VBUS */
 				pd_power_supply_reset(port);
 #endif
+
+#ifdef CONFIG_USBC_SS_MUX
+				board_set_usb_mux(port, TYPEC_MUX_USB,
+						  pd[port].polarity);
+#endif
+
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+				if (new_cc_state == PD_CC_DEBUG_ACC)
+					ccd_set_mode(CCD_MODE_ENABLED);
+#endif
 				set_state(port, PD_STATE_SRC_ACCESSORY);
 			}
 			break;
@@ -2003,6 +2014,9 @@ void pd_task(void)
 			    (pd[port].cc_state == PD_CC_DEBUG_ACC &&
 			     (!CC_RD(cc1_volt) || !CC_RD(cc2_volt)))) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+				ccd_set_mode(CCD_MODE_DISABLED);
+#endif
 				timeout = 10*MSEC;
 			}
 			break;
