@@ -16,5 +16,5 @@ void usb_connect(void)
 
 void usb_disconnect(void)
 {
-	usb_board_connect();
+	usb_board_disconnect();
 }
