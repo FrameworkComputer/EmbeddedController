@@ -140,6 +140,16 @@ enum power_on_event_t {
 	POWER_ON_EVENT_COUNT,
 };
 
+/**
+ * Parameters of mtk_backlight_override().
+ */
+enum blacklight_override_t {
+	MTK_BACKLIGHT_FORCE_OFF,
+	MTK_BACKLIGHT_CONTROL_BY_SOC,
+
+	MTK_BACKLIGHT_OVERRIDE_COUNT,
+};
+
 /* Forward declaration */
 static void chipset_turn_off_power_rails(void);
 
@@ -261,8 +271,30 @@ static int check_for_power_off_event(void)
 	return POWER_OFF_CANCEL;
 }
 
-static void llama_lid_event(void)
+/**
+ * Set the LCD backlight enable pin and override the signal from SoC.
+ *
+ * @param asserted	MTK_BACKLIGHT_FORCE_OFF, force off the panel backlight
+ *			MTK_BACKLIGHT_CONTROL_BY_SOC, leave the control to SOC
+ */
+static void mtk_backlight_override(enum blacklight_override_t asserted)
 {
+	/* Signal is active-low */
+	gpio_set_level(GPIO_EC_BL_OVERRIDE, !asserted);
+}
+
+static void mtk_lid_event(void)
+{
+	enum blacklight_override_t bl_override;
+
+	/* Override the panel backlight enable signal from SoC,
+	 * force the backlight off on lid close.
+	 */
+	bl_override = lid_is_open() ?
+		MTK_BACKLIGHT_CONTROL_BY_SOC :
+		MTK_BACKLIGHT_FORCE_OFF;
+	mtk_backlight_override(bl_override);
+
 	/* Power task only cares about lid-open events */
 	if (!lid_is_open())
 		return;
@@ -270,7 +302,7 @@ static void llama_lid_event(void)
 	lid_opened = 1;
 	task_wake(TASK_ID_CHIPSET);
 }
-DECLARE_HOOK(HOOK_LID_CHANGE, llama_lid_event, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_LID_CHANGE, mtk_lid_event, HOOK_PRIO_DEFAULT);
 
 enum power_state power_chipset_init(void)
 {

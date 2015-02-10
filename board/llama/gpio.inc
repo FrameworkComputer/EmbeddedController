@@ -32,6 +32,7 @@ GPIO(KB_IN07, D, 2,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 /* Outputs */
 GPIO(BAT_LED0,          B, 11, GPIO_OUT_LOW,   NULL)   /* LED_GREEN */
 GPIO(BAT_LED1,          A, 11, GPIO_OUT_LOW,   NULL)   /* LED_ORANGE */
+GPIO(EC_BL_OVERRIDE,    F, 1,  GPIO_OUT_LOW,   NULL)
 GPIO(EC_INT,            B, 9,  GPIO_OUT_HIGH,  NULL)
 GPIO(ENTERING_RW,       F, 0,  GPIO_OUT_LOW,   NULL)
 GPIO(KB_OUT00,          B, 0,  GPIO_KB_OUTPUT, NULL)
