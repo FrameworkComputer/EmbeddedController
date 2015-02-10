@@ -195,7 +195,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 		 * backboost
 		 */
 		host_command_pd_send_status(PD_CHARGE_NONE);
-	} else if (!extpower && extpower_prev) {
+	} else {
 		/* AC disconnected */
 		if (!charge_is_disabled &&
 		    charge_circuit_state == CHARGE_CIRCUIT_OK)
@@ -259,6 +259,7 @@ void extpower_task(void)
 	int extpower_prev = 0;
 
 	extpower_board_hacks(extpower, extpower_prev);
+	extpower_prev = extpower;
 
 	/* Enable backboost detection interrupt */
 	gpio_enable_interrupt(GPIO_BKBOOST_DET);
