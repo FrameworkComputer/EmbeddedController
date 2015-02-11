@@ -4,6 +4,7 @@
  */
 /* Strago board-specific configuration */
 
+#include "charger.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -64,3 +65,8 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+int board_discharge_on_ac(int enable)
+{
+	return charger_discharge_on_ac(enable);
+}
