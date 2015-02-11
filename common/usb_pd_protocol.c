@@ -1775,6 +1775,10 @@ void pd_task(void)
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE) && defined(CONFIG_USB_PD_ALT_MODE_DFP)
+	pd_config_init(port);
+#endif
+
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd_set_data_role(port, PD_ROLE_DEFAULT);

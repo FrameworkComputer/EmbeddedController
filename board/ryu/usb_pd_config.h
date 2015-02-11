@@ -147,6 +147,20 @@ static inline void pd_set_host_mode(int port, int enable)
 
 }
 
+/**
+ * Initialize various GPIOs and interfaces to safe state at start of pd_task.
+ *
+ * These include:
+ *   VCONNs disabled.
+ *
+ * @param port USB-C port number
+ */
+static inline void pd_config_init(int port)
+{
+	gpio_set_level(GPIO_USBC_VCONN1_EN_L, 1);
+	gpio_set_level(GPIO_USBC_VCONN2_EN_L, 1);
+}
+
 static inline int pd_adc_read(int port, int cc)
 {
 	if (cc == 0)
