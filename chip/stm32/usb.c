@@ -346,9 +346,15 @@ int usb_is_enabled(void)
 
 void *memcpy_to_usbram(void *dest, const void *src, size_t n)
 {
-	int       i;
-	uint8_t  *s = (uint8_t *) src;
-	usb_uint *d = (usb_uint *)((uintptr_t) dest & ~1);
+	/*
+	 * The d pointer needs to be volatile to prevent GCC from possibly
+	 * breaking writes to the USB packet RAM into multiple 16-bit writes,
+	 * which, due to the way the AHB2APB bridge works would clobber what
+	 * we write with 32-bit extensions of the 16-bit writes.
+	 */
+	int                i;
+	uint8_t           *s = (uint8_t *) src;
+	usb_uint volatile *d = (usb_uint volatile *)((uintptr_t) dest & ~1);
 
 	if ((((uintptr_t) dest) & 1) && n) {
 		/*
