@@ -522,21 +522,9 @@ const struct batt_params *charger_current_battery_params(void)
 
 void charger_init(void)
 {
-	const struct charger_info * const info = charger_get_info();
-
 	/* Initialize current state */
 	memset(&curr, 0, sizeof(curr));
 	curr.batt.is_present = BP_NOT_SURE;
-
-	/*
-	 * If system is not locked, then use max input current limit so
-	 * that if there is no battery present, we can pull as much power
-	 * as needed. If battery is present, then input current will be
-	 * immediately lowered to the real desired value.
-	 */
-	curr.desired_input_current = system_is_locked() ?
-					CONFIG_CHARGER_INPUT_CURRENT :
-					info->input_current_max;
 }
 DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 
@@ -554,6 +542,17 @@ void charger_task(void)
 	state_machine_force_idle = 0;
 	shutdown_warning_time.val = 0UL;
 	battery_seems_to_be_dead = 0;
+
+	/*
+	 * If system is not locked and we don't have a battery to live on,
+	 * then use max input current limit so that we can pull as much power
+	 * as needed.
+	 */
+	battery_get_params(&curr.batt);
+	if (curr.batt.is_present == BP_YES || system_is_locked())
+		curr.desired_input_current = CONFIG_CHARGER_INPUT_CURRENT;
+	else
+		curr.desired_input_current = info->input_current_max;
 
 	while (1) {
 
