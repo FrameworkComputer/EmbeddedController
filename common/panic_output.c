@@ -174,7 +174,7 @@ static int command_crash(int argc, char **argv)
 #endif
 	} else if (!strcasecmp(argv[1], "unaligned")) {
 		cflush();
-		ccprintf("%08x", *(int *)0xcdef);
+		ccprintf("%08x", *(volatile int *)0xcdef);
 	} else if (!strcasecmp(argv[1], "watchdog")) {
 		while (1)
 			;
