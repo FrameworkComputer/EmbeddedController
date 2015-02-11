@@ -170,3 +170,6 @@ L_dont_sub4:
 	bne	L_sub_loop4
 
 	pop	{r4, r5, r6, r7, pc}
+
+__aeabi_ldiv0:
+	bl panic_reboot
