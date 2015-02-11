@@ -123,7 +123,7 @@ void sspi_flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 	sspi_flash_cs_level(1);
 }
 
-void sspi_flash_physical_clear_stsreg(void)
+int sspi_flash_physical_clear_stsreg(void)
 {
 	/* Disable tri-state */
 	sspi_flash_tristate(0);
@@ -139,11 +139,17 @@ void sspi_flash_physical_clear_stsreg(void)
 	/* Wait writing completed */
 	sspi_flash_wait_ready();
 
-	/* Read status register 1/2 */
+	/* Read status register 1/2 for checking */
 	sspi_flash_execute_cmd(CMD_READ_STATUS_REG, MASK_CMD_RD_1BYTE);
+	if (NPCX_UMA_DB0 != 0x00)
+		return 0;
 	sspi_flash_execute_cmd(CMD_READ_STATUS_REG2, MASK_CMD_RD_1BYTE);
+	if (NPCX_UMA_DB0 != 0x00)
+		return 0;
 	/* Enable tri-state */
 	sspi_flash_tristate(1);
+
+	return 1;
 }
 
 void sspi_flash_physical_write(int offset, int size, const char *data)
@@ -212,7 +218,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 	uint8_t		*ptr_flash;
 	uint8_t		*ptr_mram;
 
-	ptr_flash = (uint8_t *)(0x64000000+offset);
+	ptr_flash = (uint8_t *)(CONFIG_FLASH_BASE + offset);
 	ptr_mram  = (uint8_t *)data;
 	result = 1;
 
@@ -235,7 +241,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 int sspi_flash_get_image_used(const char *fw_base)
 {
 	const uint8_t *image;
-	int size = 0x20000; /* maximum size is 128KB */
+	int size = CONFIG_CDRAM_SIZE; /* maximum size is 128KB */
 
 	image = (const uint8_t *)fw_base;
 	/*
@@ -250,7 +256,7 @@ int sspi_flash_get_image_used(const char *fw_base)
 
 }
 
-volatile __attribute__((section(".up_flag"))) unsigned int flag_upload;
+volatile __attribute__((section(".up_flag"))) uint32_t flag_upload;
 
 /* Entry function of spi upload function */
 void __attribute__ ((section(".startup_text"), noreturn))
@@ -259,8 +265,13 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	/*
 	 * Flash image has been uploaded to Code RAM
 	 */
-	const char *image_base = (char *)0x10088000;
+	const char *image_base = (const char *)CONFIG_CDRAM_BASE;
 	uint32_t sz_image = spi_size;
+
+	/* Unlock & stop watchdog */
+	NPCX_WDSDM = 0x87;
+	NPCX_WDSDM = 0x61;
+	NPCX_WDSDM = 0x63;
 
 	/* Set pinmux first */
 	sspi_flash_pinmux(1);
@@ -270,25 +281,25 @@ sspi_flash_upload(int spi_offset, int spi_size)
 		sz_image = sspi_flash_get_image_used(image_base);
 
 	/* Clear status reg of spi flash for protection */
-	sspi_flash_physical_clear_stsreg();
+	if (sspi_flash_physical_clear_stsreg()) {
+		/* Start to erase */
+		sspi_flash_physical_erase(spi_offset, sz_image);
 
-	/* Start to erase */
-	sspi_flash_physical_erase(spi_offset, sz_image);
+		/* Start to write */
+		sspi_flash_physical_write(spi_offset, sz_image, image_base);
 
-	/* Start to write */
-	sspi_flash_physical_write(spi_offset, sz_image, image_base);
+		/* Verify data */
+		if (sspi_flash_verify(spi_offset, sz_image, image_base))
+			flag_upload |= 0x02;
 
-	/* Verify data */
-	if (sspi_flash_verify(spi_offset, sz_image, image_base))
-		flag_upload |= 0x02;
-
-	/* Disable pinmux */
-	sspi_flash_pinmux(0);
+		/* Disable pinmux */
+		sspi_flash_pinmux(0);
+	}
 
 	/* Mark we have finished upload work */
 	flag_upload |= 0x01;
 
-	/* Should never reach this*/
+	/* Infinite loop */
 	for (;;)
 		;
 }

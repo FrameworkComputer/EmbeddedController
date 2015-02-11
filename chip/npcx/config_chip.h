@@ -54,8 +54,10 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE         512
 
-/* SPI Flash Spec of W25Q20CV */
+/* Address of RAM log used by Booter */
+#define ADDR_BOOT_RAMLOG        0x100C7FC0
 
+/* SPI Flash Spec of W25Q20CV */
 #define CONFIG_FLASH_BANK_SIZE	0x00001000  /* protect bank size 4K bytes */
 #define CONFIG_FLASH_ERASE_SIZE	0x00001000  /* sector erase size 4K bytes */
 #define CONFIG_FLASH_WRITE_SIZE	0x00000001  /* minimum write size */

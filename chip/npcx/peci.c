@@ -247,6 +247,12 @@ static void peci_init(void)
 {
 	int i;
 
+	/* Enable clock for PECI peripheral */
+	clock_enable_peripheral(CGC_OFFSET_PECI, CGC_PECI_MASK,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	/* Set PECI freq */
+	peci_freq_changed();
+
 	/* make sure PECI_DATA function pin enable */
 	CLEAR_BIT(NPCX_DEVALT(0x0A), 6);
 	/* Set initial clock frequency */

@@ -31,7 +31,9 @@ GPIO(MASTER_I2C_SDA,       B, 4, GPIO_INPUT,    NULL)
 GPIO(BOARD_VERSION1,       6, 4, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 1 */
 GPIO(BOARD_VERSION2,       6, 5, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 2 */
 GPIO(BOARD_VERSION3,       6, 6, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 3 */
-
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+GPIO(KBD_KSO2,             1, 7, GPIO_OUT_LOW,  NULL)  /* Negative edge triggered keyboard irq. */
+#endif
 /* Alternate pins for UART/I2C/ADC/SPI/PWM/MFT */
 ALTERNATE(1, 0x03, 1,  MODULE_UART,        0)    /* CR_SIN/SOUT             GPIO10/11    */
 ALTERNATE(B, 0x30, 1,  MODULE_I2C,         0)    /* I2C0SDA/I2C0SCL         GPIOB4/B5	 */
@@ -40,6 +42,6 @@ ALTERNATE(9, 0x07, 1,  MODULE_I2C,         0)    /* I2C1SCL/I2C2SDA/I2C2SCL GPIO
 ALTERNATE(4, 0x38, 1,  MODULE_ADC,         0)    /* ADC                     GPIO45/44/43 */
 ALTERNATE(A, 0x0A, 1,  MODULE_SPI,         0)    /* SPIP_MOSI/SPIP_SCLK     GPIOA3/A1	 */
 ALTERNATE(9, 0x20, 1,  MODULE_SPI,         0)    /* SPIP_MISO               GPIO95       */
-ALTERNATE(C, 0x04, 1,  MODULE_PWM_KBLIGHT, 0)    /* PWM1 for PWM/KBLIGHT Test	GPIOC2   */
-ALTERNATE(C, 0x08, 1,  MODULE_PWM_FAN,     0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
-ALTERNATE(4, 0x01, 1,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN Test GPIOD3  */
+ALTERNATE(C, 0x04, 3,  MODULE_PWM_KBLIGHT, 0)    /* PWM1 for PWM/KBLIGHT Test GPIOC2     */
+ALTERNATE(C, 0x08, 7,  MODULE_PWM_FAN,     0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
+ALTERNATE(4, 0x01, 3,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN Test GPIO40  */

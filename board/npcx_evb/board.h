@@ -46,7 +46,7 @@
 
 /* Optional for testing */
 #undef  CONFIG_PSTORE
-#define CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
+#undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
 
 /* Single I2C port, where the EC is the master. */
 #define I2C_PORT_MASTER         0

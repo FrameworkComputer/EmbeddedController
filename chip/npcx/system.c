@@ -24,16 +24,9 @@
 uint32_t base_addr;
 #endif
 
-/* Indices for battery-backed ram (BBRAM) data position */
-enum bbram_data_index {
-	BBRM_DATA_INDEX_SCRATCHPAD = 0,        /* General-purpose scratchpad */
-	BBRM_DATA_INDEX_SAVED_RESET_FLAGS = 4, /* Saved reset flags */
-	BBRM_DATA_INDEX_WAKE = 8,	       /* Wake reasons for hibernate */
-};
-
 /* Flags for BBRM_DATA_INDEX_WAKE */
-#define PSLDATA_WAKE_MTC        (1 << 0)  /* LCT alarm */
-#define PSLDATA_WAKE_PIN        (1 << 1)  /* Wake pin */
+#define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
+#define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
 
 /* Super-IO index and register definitions */
 #define SIO_OFFSET      0x4E
@@ -47,7 +40,8 @@ enum bbram_data_index {
 #define MTC_WUI_GROUP      MIWU_GROUP_4
 #define MTC_WUI_MASK       MASK_PIN7
 
-uint32_t flag_hibernate;
+/* ROM address of chip revision */
+#define CHIP_REV_ADDR 0x00007FFC
 
 /* Begin address for the .lpram section; defined in linker script */
 uintptr_t __lpram_fw_start = CONFIG_LPRAM_BASE;
@@ -259,32 +253,57 @@ void system_set_rtc(uint32_t seconds)
 }
 
 /* Check reset cause */
-static void check_reset_cause(void)
+void system_check_reset_cause(void)
 {
 	uint32_t hib_wake_flags = bbram_data_read(BBRM_DATA_INDEX_WAKE);
 	uint32_t flags = 0;
 
-	/* Check for VCC1 reset */
-	if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
-		flags |= RESET_FLAG_POWER_ON;
+	/* Use scratch bit to check power on reset or VCC1_RST reset */
+	if (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
+		/* Check for VCC1 reset */
+		if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
+			flags |= RESET_FLAG_RESET_PIN;
+		else
+			flags |= RESET_FLAG_POWER_ON;
+	}
+
+	/*
+	 * Set scratch bit to distinguish VCC1RST# is asserted again
+	 * or not. This bit will be clear automatically when VCC1RST#
+	 * is asserted or power-on reset occurs
+	 */
+	SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH);
 
 	/* Software debugger reset */
-	if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS))
+	if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS)) {
 		flags |= RESET_FLAG_SOFT;
+		/* Clear debugger reset status initially*/
+		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS);
+	}
 
 	/* Watchdog Reset */
+#ifndef CHIP_NPCX5M5G
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
 		flags |= RESET_FLAG_WATCHDOG;
 		/* Clear watchdog reset status initially*/
 		SET_BIT(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS);
 	}
+#else
+	/* Workaround method to check watchdog reset */
+	if (NPCX_BBRAM(BBRM_DATA_INDEX_RAMLOG) & 0x04)
+		flags |= RESET_FLAG_WATCHDOG;
+#endif
 
-	if ((hib_wake_flags & PSLDATA_WAKE_PIN))
+	if ((hib_wake_flags & HIBERNATE_WAKE_PIN))
 		flags |= RESET_FLAG_WAKE_PIN;
+	else if ((hib_wake_flags & HIBERNATE_WAKE_MTC))
+		flags |= RESET_FLAG_RTC_ALARM;
 
 	/* Restore then clear saved reset flags */
 	flags |= bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
 	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, 0);
+	/* Clear saved hibernate wake flag, too */
+	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
 
 	system_set_reset_flags(flags);
 }
@@ -316,6 +335,25 @@ void system_mpu_config(void)
 	 * [0]     - ENABLE             = 1 (enabled)
 	 */
 	CPU_MPU_RASR = 0x03080013;
+
+	/* Create a new MPU Region for data ram */
+	CPU_MPU_RNR  = 1;                         /* Select region number 1 */
+	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
+	CPU_MPU_RBAR = CONFIG_RAM_BASE;           /* Set region base address */
+	/*
+	 * Set region size & attribute and enable region
+	 * [31:29] - Reserved.
+	 * [28]    - XN (Execute Never) = 1
+	 * [27]    - Reserved.
+	 * [26:24] - AP                 = 011 (Full access)
+	 * [23:22] - Reserved.
+	 * [21:19,18,17,16] - TEX,S,C,B = 001000 (Normal memory)
+	 * [15:8]  - SRD                = 0 (Subregions enabled)
+	 * [7:6]   - Reserved.
+	 * [5:1]   - SIZE               = 01110 (32K)
+	 * [0]     - ENABLE             = 1 (enabled)
+	 */
+	CPU_MPU_RASR = 0x1308001D;
 }
 
 void __attribute__ ((section(".lowpower_ram")))
@@ -332,9 +370,22 @@ __enter_hibernate_in_lpram(void)
 		/* Enter deep idle, wake-up by GPIOxx or RTC */
 		asm("wfi");
 
-		/*TODO: Using POWER_BUTTON_L GPIO02 to wake-up? */
-		if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_1 , MIWU_GROUP_1), 2))
+		/* POWER_BUTTON_L wake-up */
+		if (NPCX_WKPND(NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON),
+			       NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 1))
+			     & NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 2)) {
+			/* Clear WUI pending bit of POWER_BUTTON_L */
+			NPCX_WKPCL(NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON),
+				   NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 1))
+				=  NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 2);
+			/*
+			 * Mark wake-up reason for hibernate
+			 * Do not call bbram_data_write directly cause of
+			 * excuting in low-power ram
+			 */
+			NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
 			break;
+		}
 		/* RTC wake-up */
 		else if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO)) {
 			/* Clear WUI pending bit of MTC */
@@ -342,6 +393,9 @@ __enter_hibernate_in_lpram(void)
 			/* Clear interrupt & Disable alarm interrupt */
 			CLEAR_BIT(NPCX_WTC, NPCX_WTC_WIE);
 			SET_BIT(NPCX_WTC, NPCX_WTC_PTO);
+
+			/* Mark wake-up reason for hibernate */
+			NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_MTC;
 			break;
 		}
 	}
@@ -388,13 +442,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	if (seconds || microseconds)
 		system_set_rtc_alarm(seconds, microseconds);
 
-	/* Unlock & stop watchdog registers */
+	/* Unlock & stop watchdog */
 	NPCX_WDSDM = 0x87;
 	NPCX_WDSDM = 0x61;
 	NPCX_WDSDM = 0x63;
-
-	/* Configure address LPRAM in the MPU as a regular memory */
-	system_mpu_config();
 
 	/* Enable Low Power RAM */
 	NPCX_LPRAM_CTRL = 1;
@@ -416,6 +467,13 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* execute hibernate func in LPRAM */
 	__hibernate_in_lpram();
 
+}
+
+static char system_to_hex(uint8_t x)
+{
+	if (x >= 0 && x <= 9)
+		return '0' + x;
+	return 'a' + x - 10;
 }
 
 /*****************************************************************************/
@@ -491,17 +549,19 @@ void system_pre_init(void)
 	 * EC should be initialized in Booter
 	 */
 
-#ifndef CHIP_NPCX5M5G
 	/* Power-down the modules we don't need */
-	NPCX_PWDWN_CTL(0) = 0xFD; /* Skip SDP_PD */
+	NPCX_PWDWN_CTL(0) = 0xF9; /* Skip SDP_PD FIU_PD */
 	NPCX_PWDWN_CTL(1) = 0xFF;
-	NPCX_PWDWN_CTL(2) = 0xFF;
-	NPCX_PWDWN_CTL(3) = 0xF0; /*Skip ITIM3/2/1_PD */
+	NPCX_PWDWN_CTL(2) = 0x8F;
+	NPCX_PWDWN_CTL(3) = 0xF4; /* Skip ITIM2/1_PD */
 	NPCX_PWDWN_CTL(4) = 0xF8;
-	NPCX_PWDWN_CTL(5) = 0x87;
-#endif
-	/* Check reset cause */
-	check_reset_cause();
+	NPCX_PWDWN_CTL(5) = 0x85; /* Skip ITIM5_PD */
+
+	/*
+	 * Configure LPRAM in the MPU as a regular memory
+	 * and DATA RAM to prevent code execution
+	 */
+	system_mpu_config();
 }
 
 void system_reset(int flags)
@@ -543,47 +603,57 @@ void system_reset(int flags)
  */
 const char *system_get_chip_vendor(void)
 {
-	uint8_t fam_id = system_sib_read_reg(SIO_OFFSET, INDEX_SID);
+	static char str[15] = "Unknown-";
+	char *p = str + 8;
+
+	/* Read Vendor ID in core register */
+	uint8_t fam_id = NPCX_SID_CR;
 	switch (fam_id) {
-	case 0xFC:
-		return "NUC";
+	case 0x20:
+		return "Nuvoton";
 	default:
-		return "Unknown";
+		*p       = system_to_hex((fam_id & 0xF0) >> 4);
+		*(p + 1) = system_to_hex(fam_id & 0x0F);
+		*(p + 2) = '\0';
+		return str;
 	}
 }
 
 const char *system_get_chip_name(void)
 {
-	uint8_t chip_id = system_sib_read_reg(SIO_OFFSET, INDEX_SRID);
+	static char str[15] = "Unknown-";
+	char *p = str + 8;
+
+	/* Read Chip ID in core register */
+	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 	switch (chip_id) {
-	case 0x05:
-		return "NPCX5m5G";
+	case 0x12:
+		return "NPCX585G";
+	case 0x13:
+		return "NPCX575G";
 	default:
-		return "Unknown";
+		*p       = system_to_hex((chip_id & 0xF0) >> 4);
+		*(p + 1) = system_to_hex(chip_id & 0x0F);
+		*(p + 2) = '\0';
+		return str;
 	}
 }
 
 const char *system_get_chip_revision(void)
 {
-	static char rev[1];
+	static char rev[4];
+#ifndef CHIP_NPCX5M5G
 	uint8_t rev_num = system_sib_read_reg(SIO_OFFSET, INDEX_CHPREV);
-
-	/* set revision from character '0' */
-	rev[0] = '0' + rev_num;
+#else
+	/* Read ROM data for chip revision directly */
+	uint8_t rev_num = *((uint8_t *)CHIP_REV_ADDR);
+#endif
+	*(rev) = 'A';
+	*(rev + 1) = '.';
+	*(rev + 2) = system_to_hex((rev_num & 0xF0) >> 4);
+	*(rev + 3) = system_to_hex(rev_num & 0x0F);
 
 	return rev;
-}
-
-int system_set_console_force_enabled(int val)
-{
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
-}
-
-int system_get_console_force_enabled(void)
-{
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
 }
 
 /**
@@ -595,12 +665,25 @@ int system_get_console_force_enabled(void)
  */
 int system_get_vbnvcontext(uint8_t *block)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int i;
+	uint32_t *pblock = (uint32_t *) block;
+	for (i = 0; i < 4; i++)
+		pblock[i] = bbram_data_read(BBRM_DATA_INDEX_VBNVCNTXT + i*4);
+
+	return EC_SUCCESS;
 }
 
 int system_set_vbnvcontext(const uint8_t *block)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int i, result;
+	uint32_t *pblock = (uint32_t *) block;
+	for (i = 0; i < 4; i++) {
+		result = bbram_data_write(BBRM_DATA_INDEX_VBNVCNTXT + i*4,
+				pblock[i]);
+		if (result != EC_SUCCESS)
+			return result;
+	}
+	return EC_SUCCESS;
 }
 
 /**

@@ -555,7 +555,6 @@ int flash_physical_erase(int offset, int size)
 		if (flash_check_prot_range(offset, CONFIG_FLASH_ERASE_SIZE))
 			return EC_ERROR_ACCESS_DENIED;
 
-
 		/*
 		 * Reload the watchdog timer, so that erasing many flash pages
 		 * doesn't cause a watchdog reset.  May not need this now that
@@ -603,17 +602,9 @@ int flash_physical_protect_now(int all)
 		all_protected = 1;
 		flash_write_prot_reg(0, CONFIG_FLASH_PHYSICAL_SIZE);
 	} else {
-		/* Protect the read-only section and persistent state */
-#ifdef CONFIG_PSTATE_AT_END
+		/* Protect the read-only section */
 		flash_write_prot_reg(RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
 				RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
-		flash_write_prot_reg(PSTATE_BANK * CONFIG_FLASH_BANK_SIZE,
-				CONFIG_FLASH_BANK_SIZE);
-#else
-		/* PSTATE immediately follows RO, in the first half of flash */
-		flash_write_prot_reg(RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
-				(RO_BANK_COUNT+1) * CONFIG_FLASH_BANK_SIZE);
-#endif
 	}
 
 	return EC_SUCCESS;

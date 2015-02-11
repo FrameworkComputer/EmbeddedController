@@ -231,7 +231,7 @@ void __idle(void)
 	while (1) {
 		/*
 		 * TODO:(ML) JTAG bug: if debugger is connected,
-		 * CPU can't enter wfi. Rev.B will fix it.
+		 * CPU can't enter wfi. Rev A3 will fix it.
 		 */
 		;
 	};

@@ -37,7 +37,7 @@
 #define I2C_LEVEL_SUPPORT                1
 /* Switcher of features */
 #define SUPPORT_LCT                      1
-#define SUPPORT_WDG                      0
+#define SUPPORT_WDG                      1
 #define SUPPORT_HIB                      1
 /* Switcher of debugging */
 #define DEBUG_I2C                        0
@@ -213,7 +213,7 @@
 #define NPCX_IRQ_WKINTA_2                NPCX_IRQ_60
 #define NPCX_IRQ_WKINTB_2                NPCX_IRQ_61
 #define NPCX_IRQ_WKINTC_2                NPCX_IRQ_62
-#define NPCX_IRQ_WKINTD_2                PCX_IRQ_63
+#define NPCX_IRQ_WKINTD_2                NPCX_IRQ_63
 
 #define NPCX_IRQ_COUNT                   64
 
@@ -397,8 +397,12 @@ enum {
 /******************************************************************************/
 /* MSWC Registers */
 #define NPCX_MSWCTL1                      REG8(NPCX_MSWC_BASE_ADDR + 0x000)
+#define NPCX_MSWCTL2                      REG8(NPCX_MSWC_BASE_ADDR + 0x002)
 #define NPCX_HCBAL                        REG8(NPCX_MSWC_BASE_ADDR + 0x008)
 #define NPCX_HCBAH                        REG8(NPCX_MSWC_BASE_ADDR + 0x00A)
+#define NPCX_SRID_CR                      REG8(NPCX_MSWC_BASE_ADDR + 0x01C)
+#define NPCX_SID_CR                       REG8(NPCX_MSWC_BASE_ADDR + 0x020)
+#define NPCX_DEVICE_ID_CR                 REG8(NPCX_MSWC_BASE_ADDR + 0x022)
 
 /******************************************************************************/
 /* System Configuration (SCFG) Registers */
@@ -451,6 +455,7 @@ enum {
 #define NPCX_STRPST_SPI_COMP             7
 #define NPCX_RSTCTL_VCC1_RST_STS         0
 #define NPCX_RSTCTL_DBGRST_STS           1
+#define NPCX_RSTCTL_VCC1_RST_SCRATCH     3
 #define NPCX_RSTCTL_LRESET_PLTRST_MODE   5
 #define NPCX_RSTCTL_HIPRST_MODE          6
 #define NPCX_DEV_CTL4_SPI_SP_SEL         4
@@ -712,6 +717,8 @@ enum {
 	CGC_OFFSET_PWM    = 1,
 	CGC_OFFSET_I2C    = 2,
 	CGC_OFFSET_ADC    = 3,
+	CGC_OFFSET_PECI   = 3,
+	CGC_OFFSET_SPI    = 3,
 	CGC_OFFSET_TIMER  = 3,
 	CGC_OFFSET_LPC    = 4,
 	CGC_OFFSET_ESPI   = 5,
@@ -721,11 +728,14 @@ enum {
 #define CGC_UART_MASK    (1 << NPCX_PWDWN_CTL1_UART_PD)
 #define CGC_FAN_MASK     (1 << NPCX_PWDWN_CTL1_MFT1_PD)
 #define CGC_FIU_MASK     (1 << NPCX_PWDWN_CTL1_FIU_PD)
-#define CGC_PWM_MASK     (1 << NPCX_PWDWN_CTL2_PWM2_PD)
+#define CGC_PWM_MASK     ((1 << NPCX_PWDWN_CTL2_PWM0_PD) | \
+			  (1 << NPCX_PWDWN_CTL2_PWM1_PD))
 #define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB2_PD))
 #define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
+#define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
+#define CGC_SPI_MASK     (1 << NPCX_PWDWN_CTL4_SPIP_PD)
 #define CGC_TIMER_MASK   ((1 << NPCX_PWDWN_CTL4_ITIM1_PD) | \
 			 (1 << NPCX_PWDWN_CTL4_ITIM2_PD) | \
 			 (1 << NPCX_PWDWN_CTL4_ITIM3_PD))

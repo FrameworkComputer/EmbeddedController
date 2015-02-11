@@ -137,10 +137,6 @@ int adc_read_channel(enum adc_channel ch)
 
 	mutex_lock(&adc_lock);
 
-	/* Enable ADC clock (bit4 mask = 0x10) */
-	clock_enable_peripheral(CGC_OFFSET_ADC, CGC_ADC_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
-
 	if (start_single_and_wait(adc->input_ch, ADC_TIMEOUT_US)) {
 		if ((adc->input_ch ==
 			((NPCX_ASCADD>>NPCX_ASCADD_SADDR)&((1<<5)-1)))
@@ -154,9 +150,6 @@ int adc_read_channel(enum adc_channel ch)
 	} else {
 		value = ADC_READ_ERROR;
 	}
-	/* Disable ADC clock (bit4 mask = 0x10) */
-	clock_disable_peripheral(CGC_OFFSET_ADC, CGC_ADC_MASK,
-				CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	mutex_unlock(&adc_lock);
 
@@ -218,6 +211,10 @@ static void adc_init(void)
 {
 	/* Configure pins from GPIOs to ADCs */
 	gpio_config_module(MODULE_ADC, 1);
+
+	/* Enable ADC clock (bit4 mask = 0x10) */
+	clock_enable_peripheral(CGC_OFFSET_ADC, CGC_ADC_MASK,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Enable ADC */
 	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCEN);

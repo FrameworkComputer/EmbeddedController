@@ -57,22 +57,27 @@ void pwm_freq_changed(void)
 {
 	uint32_t prescaler_divider = 0;
 
+	/* Disable PWM for module configuration */
+	pwm_enable(pwm_init_ch, 0);
+
 	if (pwm_init_ch == PWM_CH_FAN) {
 		/*
 		 * Using PWM Frequency and Resolution we calculate
 		 * prescaler for input clock
 		 */
-		/* (Benson_TBD_9) pwm_clock/freq/resolution not confirm */
 #ifdef CONFIG_PWM_INPUT_LFCLK
 		prescaler_divider = (uint32_t)(32768 /
-				pwm_channels[pwm_init_ch].freq);
+				(pwm_channels[pwm_init_ch].freq)
+				/(pwm_channels[pwm_init_ch].cycle_pulses));
 #else
-		prescaler_divider = (uint32_t)(clock_get_apb2_freq()
-				/ pwm_channels[pwm_init_ch].freq);
+		prescaler_divider = (uint32_t)(
+			clock_get_apb2_freq() / pwm_channels[pwm_init_ch].freq
+			/ (pwm_channels[pwm_init_ch].cycle_pulses));
 #endif
 	} else {
-		prescaler_divider = (uint32_t)(clock_get_apb2_freq()
-				/ pwm_channels[pwm_init_ch].freq);
+		prescaler_divider = (uint32_t)(
+			clock_get_apb2_freq() / pwm_channels[pwm_init_ch].freq
+			/ (pwm_channels[pwm_init_ch].cycle_pulses));
 	}
 	/* Set clock prescalre divider to ADC module*/
 	if (prescaler_divider >= 1)
@@ -138,8 +143,6 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 
 	if (percent < 0)
 		percent = 0;
-	/* (Benson_TBD_14) if 100% make mft cannot get TCRB,
-	 * it will need to change to 99% */
 	else if (percent > 100)
 		percent = 100;
 	CPRINTS("pwm1duty=%d", percent);
@@ -149,14 +152,14 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 	CPRINTS("freq=0x%x", pwm_channels[ch].freq);
 	CPRINTS("resolution=%d", resolution);
 	CPRINTS("duty_cycle=%d", duty_cycle);
-
+	if (percent*resolution > (duty_cycle*100))
+		duty_cycle += 1;
 	/* Set the duty cycle */
-	/* (Benson_TBD_14) Always enable the fan channel or not */
-	if (percent) {
+	if (duty_cycle > 0) {
 		NPCX_DCR(pwm_channels[ch].channel) = (duty_cycle - 1);
 		pwm_enable(ch, 1);
 	} else {
-		NPCX_DCR(pwm_channels[ch].channel) = 0;
+		NPCX_DCR(pwm_channels[ch].channel) = resolution;
 		pwm_enable(ch, 0);
 	}
 }
@@ -170,7 +173,8 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 int pwm_get_duty(enum pwm_channel ch)
 {
 	/* Return percent */
-	if (0 == pwm_get_enabled(ch))
+	if ((0 == pwm_get_enabled(ch)) || (NPCX_DCR(pwm_channels[ch].channel)
+			> NPCX_CTR(pwm_channels[ch].channel)))
 		return 0;
 	else
 		return (((NPCX_DCR(pwm_channels[ch].channel) + 1) * 100)
@@ -199,8 +203,8 @@ void pwm_config(enum pwm_channel ch)
 	/* Set PWM heartbeat mode is no heartbeat*/
 	NPCX_PWMCTL(pwm_channels[ch].channel) =
 			(NPCX_PWMCTL(pwm_channels[ch].channel)
-			&(~(((1<<2)-1)<<NPCX_PWMCTL_HB_DC_CTL)))
-			|(NPCX_PWM_HBM_NORMAL<<NPCX_PWMCTL_HB_DC_CTL);
+			& (~(((1<<2)-1) << NPCX_PWMCTL_HB_DC_CTL)))
+			| (NPCX_PWM_HBM_NORMAL << NPCX_PWMCTL_HB_DC_CTL);
 
 	/* Set PWM operation frequence */
 	pwm_freq_changed();
@@ -210,13 +214,10 @@ void pwm_config(enum pwm_channel ch)
 			(pwm_channels[ch].cycle_pulses - 1);
 
 	/* Set the duty cycle */
-	NPCX_DCR(pwm_channels[ch].channel) = 0;
+	NPCX_DCR(pwm_channels[ch].channel) = pwm_channels[ch].cycle_pulses;
 
 	/* Set PWM polarity is normal*/
 	CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel), NPCX_PWMCTL_INVP);
-
-	/* Set PWM open drain output is push-pull type*/
-	CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel), NPCX_PWMCTLEX_OD_OUT);
 
 	/* Select default CLK or LFCLK clock input to PWM module */
 	NPCX_PWMCTLEX(pwm_channels[ch].channel) =
@@ -252,7 +253,6 @@ static void pwm_init(void)
 	int i;
 
 #ifdef CONFIG_PWM_DSLEEP
-
 	/* Enable the PWM module and delay a few clocks */
 	clock_enable_peripheral(CGC_OFFSET_PWM, CGC_PWM_MASK, CGC_MODE_ALL);
 #else

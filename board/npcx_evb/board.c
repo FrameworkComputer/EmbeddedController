@@ -49,14 +49,22 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] =	{
 			.channel = 0,
-			.flags = 0,
-#ifdef CONFIG_PWM_INPUT_LFCLK
-			.freq = 20000, /* Need <= mft freq */
-#else
-			.freq = 3000000,
-#endif
-			/* 0xEA60=3000000*60/2/1500,0x190=20000*60/2/1500 */
-			.cycle_pulses = 0x190,
+			/*
+			 * flags can reverse the PWM output signal according to
+			 * the board design
+			 */
+			.flags = PWM_CONFIG_ACTIVE_LOW,
+			/*
+			 * freq_operation = freq_input / prescaler_divider
+			 * freq_output = freq_operation / cycle_pulses
+			 * and freq_output <= freq_mft
+			 */
+			.freq = 34,
+			/*
+			 * cycle_pulses = (cycle_pulses * freq_output) *
+			 * RPM_EDGES * RPM_SCALE * 60 / poles / rpm_min
+			 */
+			.cycle_pulses = 480,
 	},
 	[PWM_CH_KBLIGHT] = {
 			.channel = 1,
@@ -72,14 +80,14 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 const struct fan_t fans[] = {
 	[FAN_CH_0] = {
 		.flags = FAN_USE_RPM_MODE,
-		.rpm_min = 1500,
-		.rpm_start = 1500,
+		.rpm_min = 1020,
+		.rpm_start = 1020,
 		.rpm_max = 8190,
 		.ch = 0,/* Use PWM/MFT to control fan */
 		.pgood_gpio = GPIO_PGOOD_FAN,
 		.enable_gpio = -1,
 	},
-};/*TODO: (Benson_TBD_1) rpm_min/rpm_max not confirm */
+};
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
 /******************************************************************************/

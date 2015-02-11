@@ -15,13 +15,13 @@
 #include "timer.h"
 #include "task.h"
 #include "util.h"
+#include "system_chip.h"
 #include "watchdog.h"
 
 /* WDCNT value for watchdog period */
 #define WDCNT_VALUE   ((CONFIG_WATCHDOG_PERIOD_MS*INT_32K_CLOCK) / (1024*1000))
-/* Delay counter time for print watchdog info through UART */
-#define WDCNT_DELAY   0x10
-
+/* Delay time for warning timer to print watchdog info through UART */
+#define WDCNT_DELAY   WDCNT_VALUE
 
 void watchdog_init_warning_timer(void)
 {
@@ -45,7 +45,6 @@ void watchdog_init_warning_timer(void)
 	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
 }
 
-
 void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
@@ -55,16 +54,26 @@ void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	/* Read watchdog counter from TWMWD */
 	wd_cnt = NPCX_TWMWD;
 #if DEBUG_WDG
-	ccprintf("WD (%d)\r\n", wd_cnt);
+	panic_printf("WD (%d)\r\n", wd_cnt);
 #endif
-	if (wd_cnt <= WDCNT_DELAY)
+	if (wd_cnt <= WDCNT_DELAY) {
+		/*
+		 * Touch watchdog to let UART have enough time
+		 * to print panic info
+		 */
+		NPCX_WDSDM = 0x5C;
+		/* Print panic info */
 		watchdog_trace(excep_lr, excep_sp);
+		cflush();
+		/* Trigger watchdog immediately */
+		system_watchdog_reset();
+	}
 }
 
 /* ISR for watchdog warning naked will keep SP & LR */
 void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void) __attribute__((naked));
 void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void)
-		{
+{
 	/* Naked call so we can extract raw LR and SP */
 	asm volatile("mov r0, lr\n"
 			"mov r1, sp\n"
@@ -75,7 +84,7 @@ void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void)
 			"bl watchdog_check\n"
 			"pop {r0, lr}\n"
 			"b task_resched_if_needed\n");
-		}
+}
 const struct irq_priority IRQ_PRIORITY(ITIM16_INT(ITIM_WDG_NO))
 __attribute__((section(".rodata.irqprio")))
 = {ITIM16_INT(ITIM_WDG_NO), 0};

@@ -8,7 +8,22 @@
 #ifndef __CROS_EC_NPCX_LPC_H
 #define __CROS_EC_NPCX_LPC_H
 
+/* Indices for battery-backed ram (BBRAM) data position */
+enum bbram_data_index {
+	BBRM_DATA_INDEX_SCRATCHPAD = 0,        /* General-purpose scratchpad */
+	BBRM_DATA_INDEX_SAVED_RESET_FLAGS = 4, /* Saved reset flags */
+	BBRM_DATA_INDEX_WAKE = 8,	       /* Wake reasons for hibernate */
+	BBRM_DATA_INDEX_PBUTTON = 12,	       /* Power button for hibernate */
+	BBRM_DATA_INDEX_VBNVCNTXT = 16,	       /* VbNvContext for ARM arch */
+	BBRM_DATA_INDEX_RAMLOG = 32,	       /* RAM log for Booter */
+};
+
+/* Init lpc register through SIB */
 void system_lpc_host_register_init(void);
+/* Issue a watchdog reset*/
+void system_watchdog_reset(void);
+/* Check reset cause and return reset flags */
+void system_check_reset_cause(void);
 
 /* End address for the .lpram section; defined in linker script */
 extern unsigned int __lpram_fw_end;

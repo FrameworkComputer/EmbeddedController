@@ -9,6 +9,7 @@
 #include "registers.h"
 #include "config_chip.h"
 #include "ec_lfw.h"
+#include "system_chip.h"
 
 /* size of little FW */
 #define LFW_SIZE        0x1000
@@ -92,30 +93,9 @@ bin2ram(void)
 	/* Disable FIU pins to tri-state */
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 
-	/* TODO: (ML) Booter has cleared watchdog flag */
-#ifndef CHIP_NPCX5M5G
-	static uint32_t reset_flag;
-	/* Check for VCC1 reset */
-	if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS)) {
-		/* Clear flag bit */
-		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS);
-		reset_flag = 1;
-	}
-	/* Software debugger reset */
-	else if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS))
-		reset_flag = 1;
-	/* Watchdog Reset */
-	else if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
-		reset_flag = 1;
-	} else {
-		reset_flag = 0;
-	}
 
-	if (reset_flag) {
-#else
-	/* Workaround method to distinguish reboot or sysjump */
-	if (org_sp < 0x200C0000) {
-#endif
+	/* Distinguish reboot or sysjump */
+	if (org_sp < CONFIG_RAM_BASE) {
 		/* restore sp from begin of RO image */
 		asm volatile("ldr r0, =0x10088000\n"
 					 "ldr r1, [r0]\n"
@@ -148,6 +128,9 @@ entry_lfw(void)
 	/* Copy the bin2ram code to RAM */
 	for (i = 0; i < &__iram_fw_end - &__iram_fw_start; i++)
 		*(&__iram_fw_start + i) = *(&__flash_fw_start + i);
+
+	/* Copy ram log of booter into bbram */
+	NPCX_BBRAM(BBRM_DATA_INDEX_RAMLOG) = *((uint8_t *)ADDR_BOOT_RAMLOG);
 
 	/* Run code in RAM */
 	bin2ram();

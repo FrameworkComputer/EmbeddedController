@@ -350,8 +350,8 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 
 int lpc_get_pltrst_asserted(void)
 {
-	/* TODO: (Simon) need to define GPIO_PLTRST */
-	return 0;
+	/* Read PLTRST status*/
+	return (NPCX_MSWCTL1 & 0x04) ? 0 : 1;
 }
 
 /**
@@ -573,6 +573,8 @@ static void lpc_init(void)
 	NPCX_WIN_SIZE = 0x88;
 	NPCX_WIN_BASE(0) = (uint32_t)shm_mem_host_cmd;
 	NPCX_WIN_BASE(1) = (uint32_t)shm_memmap;
+	/* Write protect of Share memory */
+	NPCX_WIN_WR_PROT(1) = 0xFF;
 
 	/* Turn on PMC2 for Host Command usage */
 	SET_BIT(NPCX_HIPMCTL(PM_CHAN_2), 0);

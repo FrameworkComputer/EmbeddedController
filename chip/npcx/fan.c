@@ -59,11 +59,12 @@ enum npcx_mft_clk_src {
  * RPM = (n - 1) * m * f * 60 / poles / TACH
  *   n = Fan number of edges = (RPM_EDGES + 1)
  *   m = Fan multiplier defined by RANGE
- *   f = PWM and MFT freq
+ *   f = PWM and MFT operation freq
  *   poles = 2
  */
 #define RPM_TO_TACH(pwm_channel, rpm) \
-	MIN(((uint32_t)(pwm_channels[pwm_channel].freq)*30*RPM_EDGES*RPM_SCALE \
+	MIN(((uint32_t)(pwm_channels[pwm_channel].freq) \
+	*(pwm_channels[pwm_channel].cycle_pulses)*30*RPM_EDGES*RPM_SCALE \
 	/MAX((rpm), 1)), (pwm_channels[pwm_channel].cycle_pulses))
 
 #define TACH_TO_RPM(mft_channel, tach) \
@@ -73,6 +74,7 @@ enum npcx_mft_clk_src {
 /* Global variables */
 static volatile struct tacho_status_t tacho_status;
 static int rpm_target;
+static int pre_duty;
 static int rpm_actual = -1;
 static int fan_init_ch;
 /**
@@ -231,8 +233,6 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 	fan_init_ch = ch;
 	pwm_config(pwm_ch);
 
-	/* Mux mft */
-	CLEAR_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TB1_TACH2_SL1);
 	/* Configure pins from GPIOs to FAN */
 	gpio_config_module(MODULE_PWM_FAN, 1);
 
@@ -418,7 +418,8 @@ int fan_get_rpm_actual(int ch)
 	}
 	/* Start measure and return previous value when fan is working*/
 	if ((fan_get_enabled(ch)) && (fan_get_duty(ch))) {
-		if (tacho_status.cur_state == TACHO_IN_IDLE) {
+		if ((tacho_status.cur_state == TACHO_IN_IDLE)
+				|| (pre_duty != fan_get_duty(ch))) {
 			CPRINTS("mft_startmeasure");
 			if ((0 == rpm_actual) || (-1 == rpm_actual))
 				rpm_actual = fans[ch].rpm_min;
@@ -436,10 +437,12 @@ int fan_get_rpm_actual(int ch)
 			/* Measurement is active - stop the measurement */
 			mft_stopmeasure(fan_init_ch);
 			/* Need to avoid underflow state happen */
-			rpm_actual = fans[ch].rpm_max;
+			rpm_actual = 0;
 			/*
-			 * Flag TDPND means mft underflow happen then complete
-			 * measurement immediately
+			 * Flag TDPND means mft underflow happen,
+			 * but let MFT still can re-measure actual rpm
+			 * when user change pwm/fan duty during
+			 * TACHO_UNDERFLOW state.
 			 */
 			tacho_status.cur_state = TACHO_UNDERFLOW;
 			CPRINTS("TACHO_UNDERFLOW");
@@ -496,6 +499,7 @@ int fan_get_rpm_actual(int ch)
 
 		tacho_status.cur_state = TACHO_IN_IDLE;
 	}
+	pre_duty = fan_get_duty(ch);
 	return rpm_actual;
 }
 
@@ -550,7 +554,7 @@ enum fan_status fan_get_status(int ch)
 
 	rpm_actual = fan_get_rpm_actual(ch);
 
-	if (((fan_get_duty(ch)) && (0 == rpm_actual))
+	if (((fan_get_duty(ch)) && (rpm_actual < fans[ch].rpm_min))
 			|| ((!fan_get_duty(ch)) && (rpm_actual)))
 		return FAN_STATUS_FRUSTRATED;
 	else if ((rpm_actual == 0) && (!fan_get_duty(ch)))
@@ -572,7 +576,8 @@ int fan_is_stalled(int ch)
 	rpm_actual = fan_get_rpm_actual(ch);
 
 	/* Check for normal condition, others are stall condition */
-	if ((!fan_get_enabled(ch)) || ((fan_get_duty(ch)) && (rpm_actual))
+	if ((!fan_get_enabled(ch)) || ((fan_get_duty(ch))
+			&& (rpm_actual >= fans[ch].rpm_min))
 			|| ((!fan_get_duty(ch)) && (!rpm_actual)))
 		return 0;
 

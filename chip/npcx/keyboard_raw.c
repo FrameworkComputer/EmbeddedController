@@ -40,6 +40,14 @@ void keyboard_raw_init(void)
 	NPCX_KBSOUT0 = 0x00;
 	NPCX_KBSOUT1 = 0x00;
 
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	/*
+	 * When column 2 is inverted, Nuvoton EC KBS outputs only support
+	 * open-drain. So we should change this pin to GPIO
+	 */
+	SET_BIT(NPCX_DEVALT(ALT_GROUP_8), NPCX_DEVALT8_NO_KSO02_SL);
+#endif
+
 	/*
 	 * Enable interrupts for the inputs.  The top-level interrupt is still
 	 * masked off, so this won't trigger interrupts yet.
@@ -79,14 +87,29 @@ test_mockable void keyboard_raw_drive_column(int col)
 	uint32_t mask;
 
 	/* Drive all lines to high */
-	if (col == KEYBOARD_COLUMN_NONE)
+	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = KB_COL_MASK;
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		gpio_set_level(GPIO_KBD_KSO2, 1);
+#endif
+	}
 	/* Set KBSOUT to zero to detect key-press */
-	else if (col == KEYBOARD_COLUMN_ALL)
+	else if (col == KEYBOARD_COLUMN_ALL) {
 		mask = 0;
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		gpio_set_level(GPIO_KBD_KSO2, 0);
+#endif
+	}
 	/* Drive one line for detection */
-	else
+	else {
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+		if (col == 2)
+			gpio_set_level(GPIO_KBD_KSO2, 1);
+		else
+			gpio_set_level(GPIO_KBD_KSO2, 0);
+#endif
 		mask = ((~(1 << col)) & KB_COL_MASK);
+	}
 
 	/* Set KBSOUT */
 	NPCX_KBSOUT0 = (mask & 0xFFFF);

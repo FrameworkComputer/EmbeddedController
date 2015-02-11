@@ -63,7 +63,7 @@ void spi_freq_changed(void)
 	NPCX_SPI_CTL1 = (NPCX_SPI_CTL1&(~(((1<<7)-1)<<NPCX_SPI_CTL1_SCDV)))
 			|(prescaler_divider<<NPCX_SPI_CTL1_SCDV);
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, spi_freq_changed, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_FREQ_CHANGE, spi_freq_changed, HOOK_PRIO_FIRST);
 
 /**
  * Set SPI enabled.
@@ -169,6 +169,10 @@ int spi_transaction(const uint8_t *txdata, int txlen,
  */
 static void spi_init(void)
 {
+	/* Enable clock for SPI peripheral */
+	clock_enable_peripheral(CGC_OFFSET_SPI, CGC_SPI_MASK,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
+
 	/* Disabling spi module */
 	spi_enable(0);
 
