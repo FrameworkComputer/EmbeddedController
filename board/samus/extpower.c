@@ -209,37 +209,129 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 	extpower_prev = extpower;
 }
 
+/* Return boostin_voltage or negative if error */
+static int get_boostin_voltage(void)
+{
+	/* Static structs to save stack space */
+	static struct ec_response_usb_pd_power_info pd_power_ret;
+	static struct ec_params_usb_pd_power_info pd_power_args;
+	int ret;
+	int err;
+
+	/* Boost-in voltage is maximum of voltage now on each port */
+	pd_power_args.port = 0;
+	err = pd_host_command(EC_CMD_USB_PD_POWER_INFO, 0,
+			      &pd_power_args,
+			      sizeof(struct ec_params_usb_pd_power_info),
+			      &pd_power_ret,
+			      sizeof(struct ec_response_usb_pd_power_info));
+	if (err < 0)
+		return err;
+	ret = pd_power_ret.meas.voltage_now;
+
+	pd_power_args.port = 1;
+	err = pd_host_command(EC_CMD_USB_PD_POWER_INFO, 0,
+			      &pd_power_args,
+			      sizeof(struct ec_params_usb_pd_power_info),
+			      &pd_power_ret,
+			      sizeof(struct ec_response_usb_pd_power_info));
+	if (err < 0)
+		return err;
+
+	/* Get max of two measuremente */
+	if (pd_power_ret.meas.voltage_now > ret)
+		ret = pd_power_ret.meas.voltage_now;
+
+	return ret;
+}
+
+
+/* Time interval between checking if charge circuit is wedged */
+#define CHARGE_WEDGE_CHECK_INTERVAL (2*SECOND)
+
+/*
+ * Number of iterations through check_charge_wedged() with charging stalled
+ * before attempting unwedge.
+ */
+#define CHARGE_STALLED_COUNT 5
+/*
+ * Number of iterations through check_charge_wedged() with charging stalled
+ * after we already just tried unwedging the circuit, before we try again.
+ */
+#define CHARGE_STALLED_REPEATEDLY_COUNT 60
+
+/*
+ * Minimum number of iterations through check_charge_wedged() between
+ * unwedge attempts.
+ */
+#define MIN_COUNTS_BETWEEN_UNWEDGES 3
+
 static void check_charge_wedged(void)
 {
-	int rv, prochot_status;
+	int rv, prochot_status, boostin_voltage;
 	static int counts_since_wedged;
+	static int charge_stalled_count = CHARGE_STALLED_COUNT;
+	uint8_t *batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 
 	if (charge_circuit_state == CHARGE_CIRCUIT_OK) {
 		/* Check PROCHOT warning */
 		rv = i2c_read8(I2C_PORT_CHARGER, BQ24773_ADDR,
 				BQ24773_PROCHOT_STATUS, &prochot_status);
 		if (rv)
-			return;
+			prochot_status = 0;
 
 		/*
-		 * If PROCHOT is asserted, then charge circuit is wedged, turn
-		 * on learn mode and notify PD to disable charging on all ports.
-		 * Note: learn mode is critical here because when in this state
-		 * backboosting causes >20V on boostin even after PD disables
-		 * CHARGE_EN lines.
-		 *
+		 * If AC is present, and battery is discharging, and
+		 * boostin voltage is above 5V, then we might be wedged.
+		 */
+		if ((*batt_flags & EC_BATT_FLAG_AC_PRESENT) &&
+		    (*batt_flags & EC_BATT_FLAG_DISCHARGING)) {
+			boostin_voltage = get_boostin_voltage();
+			if (boostin_voltage > 6000)
+				charge_stalled_count--;
+			else if (boostin_voltage >= 0)
+				charge_stalled_count = CHARGE_STALLED_COUNT;
+			/* If boostin_voltage < 0, don't change stalled count */
+		} else {
+			charge_stalled_count = CHARGE_STALLED_COUNT;
+		}
+
+		/*
 		 * If we were recently wedged, then give ourselves a free pass
 		 * here. This gives an opportunity for reading the PROCHOT
 		 * status to clear it if the error has gone away.
 		 */
-		if (prochot_status && counts_since_wedged >= 2) {
+		if (counts_since_wedged < MIN_COUNTS_BETWEEN_UNWEDGES)
+			counts_since_wedged++;
+
+		/*
+		 * If PROCHOT is asserted, then charge circuit is wedged. If
+		 * charging has been stalled long enough, then also consider
+		 * the circuit wedged. To unwedge the charge circuit turn
+		 * on learn mode and notify PD to disable charging on all ports.
+		 * Note: learn mode is critical here because when in this state
+		 * backboosting causes >20V on boostin even after PD disables
+		 * CHARGE_EN lines.
+		 */
+		if ((prochot_status &&
+			counts_since_wedged >= MIN_COUNTS_BETWEEN_UNWEDGES) ||
+		    charge_stalled_count <= 0) {
 			counts_since_wedged = 0;
 			host_command_pd_send_status(PD_CHARGE_NONE);
 			charger_disable(1);
 			charge_circuit_state = CHARGE_CIRCUIT_WEDGED;
-			CPRINTS("Charge circuit wedged!");
-		} else {
-			counts_since_wedged++;
+			CPRINTS("Charge wedged! PROCHOT %02x, Stalled: %d",
+				prochot_status, charge_stalled_count);
+
+			/*
+			 * If this doesn't clear the problem, then start
+			 * the stall counter higher so that we don't retry
+			 * unwedging for a while. Note, if we do start charging
+			 * properly, then stall counter will be set to
+			 * default, so that we will trigger faster the first
+			 * time it stalls out.
+			 */
+			charge_stalled_count = CHARGE_STALLED_REPEATEDLY_COUNT;
 		}
 	} else {
 		/*
@@ -265,7 +357,8 @@ void extpower_task(void)
 	gpio_enable_interrupt(GPIO_BKBOOST_DET);
 
 	while (1) {
-		if (task_wait_event(2*SECOND) == TASK_EVENT_TIMER) {
+		if (task_wait_event(CHARGE_WEDGE_CHECK_INTERVAL) ==
+		    TASK_EVENT_TIMER) {
 			/* Periodically check if charge circuit is wedged */
 			check_charge_wedged();
 		} else {
