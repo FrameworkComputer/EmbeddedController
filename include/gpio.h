@@ -54,7 +54,7 @@ struct gpio_info {
 	uint32_t port;
 
 	/* Bitmask on that port (1 << N; 0 = signal not implemented) */
-	int mask;
+	uint32_t mask;
 
 	/* Flags (GPIO_*; see above) */
 	uint32_t flags;
