@@ -6,7 +6,9 @@
 /* System module for Chrome EC */
 
 #include "console.h"
+#include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 static int command_mem_dump(int argc, char **argv)
 {
@@ -31,6 +33,13 @@ static int command_mem_dump(int argc, char **argv)
 		else
 			ccprintf(" %08x", value);
 		cflush();
+
+		/* Lots of output could take a while.
+		 * Let other things happen, too */
+		if (!(i % 0x100)) {
+			watchdog_reload();
+			usleep(10 * MSEC);
+		}
 	}
 	ccprintf("\n");
 	cflush();
