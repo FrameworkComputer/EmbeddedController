@@ -11,14 +11,29 @@
 #include "task.h"
 #include "util.h"
 
+/*
+ * There's no way to trigger on both rising and falling edges, so force a
+ * compiler error if we try. The workaround is to use the pinmux to connect
+ * two GPIOs to the same input and configure each one for a separate edge.
+ */
+#undef GPIO_INT_BOTH
+#define GPIO_INT_BOTH NOT_SUPPORTED_ON_CR50
+
 #include "gpio_list.h"
 
+/* Interrupt handler for button pushes */
 void button_event(enum gpio_signal signal)
 {
-	int val = gpio_get_level(signal);
-	ccprintf("Button %d = %d\n", signal, gpio_get_level(signal));
+	int v;
 
-	gpio_set_level(GPIO_LED_4, val);
+	/* We have two GPIOs on the same input (one rising edge, one falling
+	 * edge), so de-alias them */
+	if (signal >= GPIO_SW_N_)
+		signal -= (GPIO_SW_N_ - GPIO_SW_N);
+
+	v = gpio_get_level(signal);
+	ccprintf("Button %d = %d\n", signal, v);
+	gpio_set_level(signal - GPIO_SW_N + GPIO_LED_4, v);
 }
 
 /* Initialize board. */
@@ -28,5 +43,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_SW_S);
 	gpio_enable_interrupt(GPIO_SW_W);
 	gpio_enable_interrupt(GPIO_SW_E);
+	gpio_enable_interrupt(GPIO_SW_N_);
+	gpio_enable_interrupt(GPIO_SW_S_);
+	gpio_enable_interrupt(GPIO_SW_W_);
+	gpio_enable_interrupt(GPIO_SW_E_);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

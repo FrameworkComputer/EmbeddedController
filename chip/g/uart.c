@@ -137,9 +137,6 @@ void uart_init(void)
 	/* turn on uart clock */
 	clock_enable_module(MODULE_UART, 1);
 
-	/* set up pinmux */
-	gpio_config_module(MODULE_UART, 1);
-
 	/* set frequency */
 	GR_UART_NCO(0) = setting;
 

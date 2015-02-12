@@ -103,43 +103,94 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_UART_FIFO(ch)              X_UARTREG(ch, GC_UART_FIFO_OFFSET)
 #define GR_UART_RFIFO(ch)             X_UARTREG(ch, GC_UART_RFIFO_OFFSET)
 
-/* GPIOs & PIN muxing */
-#define GPIO_M_COUNT  5
-#define GPIO_A_COUNT 15
-#define GPIO_B_COUNT  9
 
-/* GPIO bank index is the number of the first GPIO of the bank */
-#define GPIO_M 0
-#define GPIO_A GPIO_M_COUNT
-#define GPIO_B (GPIO_M_COUNT + GPIO_A_COUNT)
-#define DUMMY_GPIO_BANK GPIO_M
-
-#define GR_PINMUX_DIO_SEL(bank, di) REG32(GC_PINMUX_BASE_ADDR + ((bank) + (di))*8)
-#define GR_PINMUX_DIO_CTL(bank, di) REG32(GC_PINMUX_BASE_ADDR + ((bank) + (di))*8 + 4)
-
-#define GR_PINMUX_GPIO_SEL(wi, idx) REG32(GC_PINMUX_BASE_ADDR + GC_PINMUX_GPIO0_GPIO0_SEL_OFFSET + ((wi)*16 + (idx))*4)
-
-#define PINMUX_DIO_SEL(bank, di) (GC_PINMUX_DIOM0_SEL + (di) + (bank))
-#define PINMUX_GPIO_SEL(wi, idx)  (GC_PINMUX_GPIO0_GPIO0_SEL + (idx) + (wi)*16)
-
-#define PINMUX_DIO_CTL_DS(ds)  (((ds) & PINMUX_DIOA0_CTL_DS_GC_PINMUX_DIOA0_CTL_DS_MASK) << GC_PINMUX_DIOA0_CTL_DS_LSB)
-#define PINMUX_DIO_CTL_IE      (1 << GC_PINMUX_DIOA0_CTL_IE_LSB)
-#define PINMUX_DIO_CTL_PD      (1 << GC_PINMUX_DIOA0_CTL_PD_LSB)
-#define PINMUX_DIO_CTL_PU      (1 << GC_PINMUX_DIOA0_CTL_PU_LSB)
-#define PINMUX_DIO_CTL_INV     (1 << GC_PINMUX_DIOA0_CTL_INV_LSB)
+/* GPIO port naming scheme left over from the LM4. Must maintain tradition! */
+#define GPIO_0 0
+#define GPIO_1 1
+#define DUMMY_GPIO_BANK 0
 
 /*
- * To store the alternate function pin muxing in a 32-bit integer :
- * put the function index selector in the low 16 bits,
- * and the selector register offset in the high 16 bits.
+ * Our ARM core doesn't have GPIO alternate functions, but it does have a full
+ * NxM crossbar called the pinmux, which connects internal peripherals
+ * including GPIOs to external pins. We'll reuse the alternate function stuff
+ * from other ECs to configure the pinmux. This requires some clever macros
+ * that pack both a MUX selector offset (register address) and a MUX selector
+ * value (which input to choose) into a single uint32_t.
  */
-#define PINMUX(func) (int)(CONCAT3(GC_PINMUX_, func, _SEL) | \
-		(CONCAT3(GC_PINMUX_, func, _SEL_OFFSET) << 16))
-#define PINMUX_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR + ((uint32_t)(word) >> 16))
-#define PINMUX_FUNC(word)  ((uint32_t)(word) & 0xffff)
+
+/* Flags to indicate the direction of the signal-to-pin connection */
+#define DIO_INPUT 0x0001
+#define DIO_OUTPUT 0x0002
+
+/*
+ * To store a pinmux DIO in the struct gpio_alt_func's mask field, we use:
+ *
+ *   bits 31-16: offset of the MUX selector register that drives this signal
+ *   bits 15-0:  value to write to any pinmux selector to choose this source
+ */
+#define DIO(name) (uint32_t)(CONCAT3(GC_PINMUX_DIO, name, _SEL) |	\
+			     (CONCAT3(GC_PINMUX_DIO, name, _SEL_OFFSET) << 16))
+/* Extract the MUX selector register addres for the DIO */
+#define DIO_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR +			\
+				(((uint32_t)(word) >> 16) & 0xffff))
+/* Extract the control register address for this MUX */
+#define DIO_CTL_REG(word) REG32(GC_PINMUX_BASE_ADDR + 0x4 +		\
+				(((uint32_t)(word) >> 16) & 0xffff))
+/* Extract the selector value to choose this DIO */
+#define DIO_FUNC(word) ((uint32_t)(word) & 0xffff)
+
+/*
+ * The struct gpio_alt_func's port field will either contain an enum
+ * gpio_signal from gpio_list[], or an internal peripheral function. If bit 31
+ * is clear, then bits 30-0 are the gpio_signal. If bit 31 is set, the
+ * peripheral function is packed like the DIO, above.
+ *
+ * gpio:
+ *   bit 31:     0
+ *   bit 30-0:   enum gpio_signal
+ *
+ * peripheral:
+ *   bit 31:     1
+ *   bits 30-16: offset of the MUX selector register that drives this signal
+ *   bits 15-0:  value to write to any pinmux selector to choose this source
+*/
+
+/* Which is it? */
+#define FIELD_IS_FUNC(port) (0x80000000 & (port))
+/* Encode a pinmux identifier (both a MUX and a signal name) */
+#define GPIO_FUNC(name) (uint32_t)(CONCAT3(GC_PINMUX_, name, _SEL) |	\
+				   (CONCAT3(GC_PINMUX_, name, _SEL_OFFSET) << 16) | \
+		0x80000000)
+/* Extract the MUX selector register address to drive this signal */
+#define PERIPH_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR +	\
+				   (((uint32_t)(word) >> 16) & 0x7fff))
+/* Extract the control register address for this MUX */
+#define PERIPH_CTL_REG(word) REG32(GC_PINMUX_BASE_ADDR + 0x4 +	\
+				 (((uint32_t)(word) >> 16) & 0x7fff))
+/* Extract the selector value to choose this input source */
+#define PERIPH_FUNC(word) ((uint32_t)(word) & 0xffff)
+/* Extract the GPIO signal */
+#define FIELD_GET_GPIO(word) ((uint32_t)(word) & 0x7fffffff)
 
 
-#define GR_GPIO_REG(n, off)         REG16(GC_GPIO0_BASE_ADDR + (n)*0x10000 + (off))
+/* Map a GPIO <port,bitnum> to a selector value or register */
+#define GET_GPIO_FUNC(port, bitnum) \
+	(GC_PINMUX_GPIO0_GPIO0_SEL + 16 * port + bitnum)
+
+#define GET_GPIO_SEL_REG(port, bitnum) \
+	REG32(GC_PINMUX_BASE_ADDR + \
+	       GC_PINMUX_GPIO0_GPIO0_SEL_OFFSET + 64 * port + 4 * bitnum)
+
+/* Constants for setting MUX control bits (same bits for all DIO pins) */
+#define DIO_CTL_IE_LSB  GC_PINMUX_DIOA0_CTL_IE_LSB
+#define DIO_CTL_IE_MASK GC_PINMUX_DIOA0_CTL_IE_MASK
+#define DIO_CTL_PD_LSB  GC_PINMUX_DIOA0_CTL_PD_LSB
+#define DIO_CTL_PD_MASK GC_PINMUX_DIOA0_CTL_PD_MASK
+#define DIO_CTL_PU_LSB  GC_PINMUX_DIOA0_CTL_PU_LSB
+#define DIO_CTL_PU_MASK GC_PINMUX_DIOA0_CTL_PU_MASK
+
+/* Registers controlling the ARM core GPIOs */
+#define GR_GPIO_REG(n, off)         REG16(GC_GPIO0_BASE_ADDR + (n) * 0x10000 + (off))
 #define GR_GPIO_DATAIN(n)           GR_GPIO_REG(n, GC_GPIO_DATAIN_OFFSET)
 #define GR_GPIO_DOUT(n)             GR_GPIO_REG(n, GC_GPIO_DOUT_OFFSET)
 #define GR_GPIO_SETDOUTEN(n)        GR_GPIO_REG(n, GC_GPIO_SETDOUTEN_OFFSET)
@@ -152,7 +203,8 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_GPIO_CLRINTPOL(n)        GR_GPIO_REG(n, GC_GPIO_CLRINTPOL_OFFSET)
 #define GR_GPIO_CLRINTSTAT(n)       GR_GPIO_REG(n, GC_GPIO_CLRINTSTAT_OFFSET)
 
-#define GR_GPIO_MASKBYTE(n, m)      GR_GPIO_REG(n, GC_GPIO_MASKLOWBYTE_400_OFFSET + (m)*4)
+#define GR_GPIO_MASKLOWBYTE(n, mask)  GR_GPIO_REG(n, GC_GPIO_MASKLOWBYTE_400_OFFSET + (mask) * 4)
+#define GR_GPIO_MASKHIGHBYTE(n, mask) GR_GPIO_REG(n, GC_GPIO_MASKHIGHBYTE_800_OFFSET + (mask) * 4)
 
 /*
  * High-speed timers. Two modules with two timers each; four timers total.

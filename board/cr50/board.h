@@ -15,9 +15,6 @@
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
 
-/* Need space to store the pin muxing configuration */
-#define CONFIG_GPIO_LARGE_ALT_INFO
-
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
  * switch.
