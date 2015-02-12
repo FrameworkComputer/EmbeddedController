@@ -133,12 +133,24 @@ static inline void pd_set_host_mode(int port, int enable)
  * Initialize various GPIOs and interfaces to safe state at start of pd_task.
  *
  * These include:
+ *   VBUS, charge path based on power role.
+ *   Physical layer CC transmit.
  *   VCONNs disabled.
  *
- * @param port USB-C port number
+ * @param port        USB-C port number
+ * @param power_role  Power role of device
  */
-static inline void pd_config_init(int port)
+static inline void pd_config_init(int port, uint8_t power_role)
 {
+	/*
+	 * Set CC pull resistors, and charge_en and vbus_en GPIOs to match
+	 * the initial role.
+	 */
+	pd_set_host_mode(port, power_role);
+
+	/* Initialize TX pins and put them in Hi-Z */
+	pd_tx_init();
+
 	gpio_set_level(GPIO_USB_CC1_VCONN_EN_L, 1);
 	gpio_set_level(GPIO_USB_CC2_VCONN_EN_L, 1);
 }

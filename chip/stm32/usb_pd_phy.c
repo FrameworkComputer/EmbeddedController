@@ -489,10 +489,13 @@ void pd_hw_release(int port)
 }
 
 /* --- Startup initialization --- */
-void pd_hw_init(int port)
+void pd_hw_init(int port, int role)
 {
 	struct pd_physical *phy = &pd_phy[port];
 	uint32_t val;
+
+	/* Initialize all PD pins to default state based on desired role */
+	pd_config_init(port, role);
 
 	/* set 40 MHz pin speed on communication pins */
 	pd_set_pins_speed(port);

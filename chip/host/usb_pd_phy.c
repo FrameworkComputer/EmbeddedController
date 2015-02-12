@@ -286,8 +286,9 @@ void pd_hw_release(int port)
 	pd_phy[port].hw_init_done = 0;
 }
 
-void pd_hw_init(int port)
+void pd_hw_init(int port, int role)
 {
+	pd_config_init(port, role);
 	pd_phy[port].hw_init_done = 1;
 }
 

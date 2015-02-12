@@ -82,7 +82,7 @@ static void twinkie_init(void)
 	/* configure TX clock pins */
 	gpio_config_module(MODULE_USB_PD, 1);
 	/* Initialize physical layer */
-	pd_hw_init(0);
+	pd_hw_init(0, PD_ROLE_SINK);
 }
 DECLARE_HOOK(HOOK_INIT, twinkie_init, HOOK_PRIO_DEFAULT);
 

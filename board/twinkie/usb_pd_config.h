@@ -165,6 +165,18 @@ static inline void pd_set_host_mode(int port, int enable)
 	}
 }
 
+static inline void pd_config_init(int port, uint8_t power_role)
+{
+	/*
+	 * Set CC pull resistors, and charge_en and vbus_en GPIOs to match
+	 * the initial role.
+	 */
+	pd_set_host_mode(port, power_role);
+
+	/* Initialize TX pins and put them in Hi-Z */
+	pd_tx_init();
+}
+
 static inline int pd_adc_read(int port, int cc)
 {
 	if (cc == 0)

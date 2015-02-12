@@ -1757,20 +1757,11 @@ void pd_task(void)
 	timestamp_t now;
 	int caps_count = 0, hard_reset_sent = 0;
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	/*
-	 * Set CC pull resistors, and charge_en and vbus_en GPIOs to match
-	 * the initial role.
-	 */
-	pd_set_host_mode(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE);
-#endif
+	/* Ensure the power supply is in the default state */
+	pd_power_supply_reset(port);
 
-	/* Initialize TX pins and put them in Hi-Z */
-	pd_tx_init();
-
-#if defined(CONFIG_USB_PD_DUAL_ROLE) && defined(CONFIG_USB_PD_ALT_MODE_DFP)
-	pd_config_init(port);
-#endif
+	/* Initialize physical layer */
+	pd_hw_init(port, PD_ROLE_DEFAULT);
 
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
@@ -1778,12 +1769,6 @@ void pd_task(void)
 	pd[port].vdm_state = VDM_STATE_DONE;
 	pd[port].flags = 0;
 	set_state(port, PD_DEFAULT_STATE);
-
-	/* Ensure the power supply is in the default state */
-	pd_power_supply_reset(port);
-
-	/* Initialize physical layer */
-	pd_hw_init(port);
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
@@ -2282,7 +2267,7 @@ void pd_task(void)
 			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
 
-			pd_hw_init(port);
+			pd_hw_init(port, PD_ROLE_DEFAULT);
 			break;
 		case PD_STATE_SNK_DISCONNECTED:
 			timeout = 10*MSEC;

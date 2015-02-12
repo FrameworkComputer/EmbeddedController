@@ -22,6 +22,11 @@ test_mockable void pd_set_host_mode(int port, int enable)
 	/* Not implemented */
 }
 
+test_mockable void pd_config_init(int port, uint8_t power_role)
+{
+	/* Not implemented */
+}
+
 test_mockable int pd_adc_read(int port, int cc)
 {
 	/* Not implemented */

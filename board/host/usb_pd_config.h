@@ -22,6 +22,8 @@ void pd_tx_init(void);
 
 void pd_set_host_mode(int port, int enable);
 
+void pd_config_init(int port, uint8_t power_role);
+
 int pd_adc_read(int port, int cc);
 
 int pd_snk_is_vbus_provided(int port);

@@ -1264,8 +1264,9 @@ void pd_hw_release(int port);
  * Initialize the hardware used for PD RX/TX.
  *
  * @param port USB-C port number
+ * @param role Role to initialize pins in
  */
-void pd_hw_init(int port);
+void pd_hw_init(int port, int role);
 
 /* --- Protocol layer functions --- */
 /**

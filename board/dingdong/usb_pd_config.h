@@ -118,6 +118,12 @@ static inline void pd_tx_init(void)
 
 static inline void pd_set_host_mode(int port, int enable) {}
 
+static inline void pd_config_init(int port, uint8_t power_role)
+{
+	/* Initialize TX pins and put them in Hi-Z */
+	pd_tx_init();
+}
+
 static inline int pd_adc_read(int port, int cc)
 {
 	/* only one CC line, assume other one is always low */

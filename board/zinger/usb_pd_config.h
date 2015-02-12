@@ -105,6 +105,8 @@ static inline void pd_tx_init(void)
 	/* Already done in hardware_init() */
 }
 
+static inline void pd_config_init(int port, uint8_t power_role) {}
+
 static inline int pd_adc_read(int port, int cc)
 {
 	/* only one CC line, assume other one is always high */
