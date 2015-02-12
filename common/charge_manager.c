@@ -199,6 +199,9 @@ void charge_manager_save_log(int port)
 	uint16_t flags = 0;
 	struct ec_response_usb_pd_power_info pinfo;
 
+	if (port < 0 || port >= PD_PORT_COUNT)
+		return;
+
 	save_log[port] = 0;
 	charge_manager_fill_power_info(port, &pinfo);
 

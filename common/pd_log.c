@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "charge_manager.h"
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -193,6 +194,37 @@ dequeue_retry:
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_GET_LOG_ENTRY,
 		     hc_pd_get_log_entry,
+		     EC_VER_MASK(0));
+
+static int hc_pd_write_log_entry(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pd_write_log_entry *p = args->params;
+	uint8_t type = p->type;
+	uint8_t port = p->port;
+
+	if (type < PD_EVENT_MCU_BASE || type >= PD_EVENT_ACC_BASE)
+		return EC_RES_INVALID_PARAM;
+	if (port > 0 && port >= PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	switch (type) {
+	/* Charge event: Log data for all ports */
+	case PD_EVENT_MCU_CHARGE:
+		charge_manager_save_log(port);
+		break;
+
+	/* Other events: no extra data, just log event type + port */
+	case PD_EVENT_MCU_CONNECT:
+	case PD_EVENT_MCU_BOARD_CUSTOM:
+	default:
+		pd_log_event(type, PD_LOG_PORT_SIZE(port, 0), 0, NULL);
+		break;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_WRITE_LOG_ENTRY,
+		     hc_pd_write_log_entry,
 		     EC_VER_MASK(0));
 #else /* !HAS_TASK_HOSTCMD */
 /* we are a PD accessory, send back the events as a VDM (VDO_CMD_GET_LOG) */

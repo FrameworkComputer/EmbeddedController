@@ -245,6 +245,22 @@ static int get_boostin_voltage(void)
 	return ret;
 }
 
+/*
+ * Send command to PD to write a custom persistent log entry indicating that
+ * charging was wedged. Returns pd_host_command success status.
+ */
+static int log_charge_wedged(void)
+{
+	static struct ec_params_pd_write_log_entry log_args;
+
+	log_args.type = PD_EVENT_MCU_BOARD_CUSTOM;
+	log_args.port = 0;
+
+	return pd_host_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0,
+			       &log_args,
+			       sizeof(struct ec_params_pd_write_log_entry),
+			       NULL, 0);
+}
 
 /* Time interval between checking if charge circuit is wedged */
 #define CHARGE_WEDGE_CHECK_INTERVAL (2*SECOND)
@@ -320,6 +336,7 @@ static void check_charge_wedged(void)
 			host_command_pd_send_status(PD_CHARGE_NONE);
 			charger_disable(1);
 			charge_circuit_state = CHARGE_CIRCUIT_WEDGED;
+			log_charge_wedged();
 			CPRINTS("Charge wedged! PROCHOT %02x, Stalled: %d",
 				prochot_status, charge_stalled_count);
 

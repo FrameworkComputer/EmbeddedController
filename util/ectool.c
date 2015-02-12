@@ -141,6 +141,8 @@ const char help_str[] =
 	"      Whether or not the AP should pause in S5 on shutdown\n"
 	"  pdlog\n"
 	"      Prints the PD event log entries\n"
+	"  pdwritelog <type> <port>\n"
+	"      Writes a PD event log of the given <type>\n"
 	"  pdgetmode <port>\n"
 	"      Get All USB-PD alternate SVIDs and modes on <port>\n"
 	"  pdsetmode <port> <svid> <opos>\n"
@@ -5469,6 +5471,10 @@ int cmd_pd_log(int argc, char *argv[])
 					>> CHARGE_FLAGS_TYPE_SHIFT;
 			pinfo.max_power = 0;
 			print_pd_power_info(&pinfo);
+		} else if (u.r.type == PD_EVENT_MCU_CONNECT) {
+			printf("New connection\n");
+		} else if (u.r.type == PD_EVENT_MCU_BOARD_CUSTOM) {
+			printf("Board-custom event\n");
 		} else if (u.r.type == PD_EVENT_ACC_RW_FAIL) {
 			printf("RW signature check failed\n");
 		} else if (u.r.type == PD_EVENT_PS_FAULT) {
@@ -5501,6 +5507,36 @@ int cmd_pd_log(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+int cmd_pd_write_log(int argc, char *argv[])
+{
+	struct ec_params_pd_write_log_entry p;
+	char *e;
+
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <log_type> <port>\n",
+			argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "charge"))
+		p.type = PD_EVENT_MCU_CHARGE;
+	else {
+		p.type = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad log_type parameter.\n");
+			return -1;
+		}
+	}
+
+	p.port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port parameter.\n");
+		return -1;
+	}
+
+	return ec_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0, &p, sizeof(p), NULL, 0);
 }
 
 /* NULL-terminated list of commands */
@@ -5559,6 +5595,7 @@ const struct command commands[] = {
 	{"pdsetmode", cmd_pd_set_amode},
 	{"port80read", cmd_port80_read},
 	{"pdlog", cmd_pd_log},
+	{"pdwritelog", cmd_pd_write_log},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
 	{"pstoreinfo", cmd_pstore_info},

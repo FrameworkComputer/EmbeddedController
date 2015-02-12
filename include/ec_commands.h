@@ -2888,8 +2888,10 @@ struct ec_response_pd_log {
 /* PD event log : entry types */
 /* PD MCU events */
 #define PD_EVENT_MCU_BASE       0x00
-#define PD_EVENT_MCU_CHARGE    (PD_EVENT_MCU_BASE+0)
-#define PD_EVENT_MCU_CONNECT   (PD_EVENT_MCU_BASE+1)
+#define PD_EVENT_MCU_CHARGE             (PD_EVENT_MCU_BASE+0)
+#define PD_EVENT_MCU_CONNECT            (PD_EVENT_MCU_BASE+1)
+/* Reserved for custom board event */
+#define PD_EVENT_MCU_BOARD_CUSTOM       (PD_EVENT_MCU_BASE+2)
 /* PD generic accessory events */
 #define PD_EVENT_ACC_BASE       0x20
 #define PD_EVENT_ACC_RW_FAIL   (PD_EVENT_ACC_BASE+0)
@@ -2976,6 +2978,14 @@ struct ec_params_usb_pd_set_mode_request {
 	uint16_t svid; /* SVID to set */
 	uint8_t opos;  /* Object Position */
 	uint8_t port;  /* port */
+} __packed;
+
+/* Ask the PD MCU to record a log of a requested type */
+#define EC_CMD_PD_WRITE_LOG_ENTRY 0x117
+
+struct ec_params_pd_write_log_entry {
+	uint8_t type; /* event type : see PD_EVENT_xx above */
+	uint8_t port; /* port#, or 0 for events unrelated to a given port */
 } __packed;
 
 #endif  /* !__ACPI__ */
