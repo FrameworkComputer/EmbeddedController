@@ -30,7 +30,7 @@ static enum gpio_signal find_signal_by_name(const char *name)
 		return GPIO_COUNT;
 
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		if (!strcasecmp(name, g->name))
+		if (g->mask && !strcasecmp(name, g->name))
 			return i;
 	}
 
