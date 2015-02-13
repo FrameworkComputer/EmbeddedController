@@ -227,6 +227,17 @@ void uart_deepsleep_interrupt(enum gpio_signal signal);
 #define uart_deepsleep_interrupt NULL
 #endif
 
+#ifdef CONFIG_UART_INPUT_FILTER
+/**
+ * Application-specific input filter, which takes the next input character as
+ * a parameter.
+ *
+ * Return 0 to allow the character to be handled by the console, non-zero if
+ * the character was handled by the filter.
+ */
+int uart_input_filter(int c);
+#endif
+
 /*
  * COMx functions
  */

@@ -1143,6 +1143,9 @@
 /* UART index (number) for host UART, if present */
 #undef CONFIG_UART_HOST
 
+/* Use uart_input_filter() to filter UART input. See prototype in uart.h */
+#undef CONFIG_UART_INPUT_FILTER
+
 /*
  * UART receive buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.  Must be larger than

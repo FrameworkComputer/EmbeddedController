@@ -157,6 +157,10 @@ void uart_process_input(void)
 	for (i = cur_head; i != rx_buf_head; i = RX_BUF_NEXT(i)) {
 		int c = rx_buf[i];
 
+#ifdef CONFIG_UART_INPUT_FILTER  /* TODO(crosbug.com/p/36745): */
+#error "Filtering the UART input with DMA enabled is NOT SUPPORTED!"
+#endif
+
 		if (c == CTRL('S')) {
 			/* Software flow control - XOFF */
 			uart_suspended = 1;
@@ -196,6 +200,12 @@ void uart_process_input(void)
 	while (uart_rx_available()) {
 		int c = uart_read_char();
 		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
+
+#ifdef CONFIG_UART_INPUT_FILTER
+		/* Intercept the input before it goes to the console */
+		if (uart_input_filter(c))
+			continue;
+#endif
 
 		if (c == CTRL('S')) {
 			/* Software flow control - XOFF */
