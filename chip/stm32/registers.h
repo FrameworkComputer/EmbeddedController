@@ -293,6 +293,10 @@
 #define STM32_TIM9_BASE            0x40010800 /* STM32L15X only */
 #define STM32_TIM10_BASE           0x40010C00 /* STM32L15X only */
 #define STM32_TIM11_BASE           0x40011000 /* STM32L15X only */
+#elif defined(CHIP_FAMILY_STM32F4)
+#define STM32_TIM9_BASE            0x40014000 /* STM32F411 only */
+#define STM32_TIM10_BASE           0x40014400 /* STM32F411 only */
+#define STM32_TIM11_BASE           0x40014800 /* STM32F411 only */
 #endif	/* TIM9-11 */
 #define STM32_TIM12_BASE           0x40001800 /* STM32F373 */
 #define STM32_TIM13_BASE           0x40001c00 /* STM32F373 */
@@ -382,12 +386,14 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define DUMMY_GPIO_BANK GPIO_A
 
-#if defined(CHIP_FAMILY_STM32L)
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F4)
 #define STM32_GPIOA_BASE            0x40020000
 #define STM32_GPIOB_BASE            0x40020400
 #define STM32_GPIOC_BASE            0x40020800
 #define STM32_GPIOD_BASE            0x40020C00
 #define STM32_GPIOE_BASE            0x40021000
+#define STM32_GPIOF_BASE            0x40021400
+#define STM32_GPIOG_BASE            0x40021800
 #define STM32_GPIOH_BASE            0x40021400
 
 #define STM32_GPIO_MODER(b)     REG32((b) + 0x00)
@@ -408,6 +414,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_ALT_I2C                 0x4
 #define GPIO_ALT_SPI                 0x5
 #define GPIO_ALT_USART               0x7
+#define GPIO_ALT_I2C_23              0x9
 #define GPIO_ALT_USB                 0xA
 #define GPIO_ALT_LCD                 0xB
 #define GPIO_ALT_RI                  0xE
@@ -453,29 +460,6 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_ALT_FD		0xD
 #define GPIO_ALT_FE		0xE
 #define GPIO_ALT_FF		0xF
-
-#elif defined(CHIP_FAMILY_STM32F4)
-
-#define STM32_GPIOA_BASE            0x40020000
-#define STM32_GPIOB_BASE            0x40020400
-#define STM32_GPIOC_BASE            0x40020800
-#define STM32_GPIOD_BASE            0x40020C00
-#define STM32_GPIOE_BASE            0x40021000
-#define STM32_GPIOF_BASE            0x40021400
-#define STM32_GPIOG_BASE            0x40021800
-#define STM32_GPIOH_BASE            0x40021C00
-
-#define STM32_GPIO_MODER(b)     REG32((b) + 0x00)
-#define STM32_GPIO_OTYPER(b)    REG16((b) + 0x04)
-#define STM32_GPIO_OSPEEDR(b)   REG32((b) + 0x08)
-#define STM32_GPIO_PUPDR(b)     REG32((b) + 0x0C)
-#define STM32_GPIO_IDR(b)       REG16((b) + 0x10)
-#define STM32_GPIO_ODR(b)       REG16((b) + 0x14)
-#define STM32_GPIO_BSRR(b)      REG32((b) + 0x18)
-#define STM32_GPIO_LCKR(b)      REG32((b) + 0x1C)
-#define STM32_GPIO_AFRL(b)      REG32((b) + 0x20)
-#define STM32_GPIO_AFRH(b)      REG32((b) + 0x24)
-
 #else
 #error Unsupported chip variant
 #endif
@@ -976,6 +960,16 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #elif defined(CHIP_VARIANT_STM32F412)
 /* Required or recommended clocks for stm32f412 */
+#define STM32F4_PLL_REQ 2000000
+#define STM32F4_RTC_REQ 1000000
+#define STM32F4_IO_CLOCK  48000000
+#define STM32F4_USB_REQ 48000000
+#define STM32F4_VCO_CLOCK 384000000
+#define STM32F4_HSI_CLOCK 16000000
+#define STM32F4_LSI_CLOCK 32000
+
+#elif defined(CHIP_VARIANT_STM32F411)
+/* Required or recommended clocks for stm32f411 */
 #define STM32F4_PLL_REQ 2000000
 #define STM32F4_RTC_REQ 1000000
 #define STM32F4_IO_CLOCK  48000000
@@ -1841,10 +1835,29 @@ enum dma_channel {
 
 	STM32_DMAS_USART1_TX = STM32_DMA2_STREAM7,
 	STM32_DMAS_USART1_RX = STM32_DMA2_STREAM5,
+
 	/* Legacy naming for uart.c */
 	STM32_DMAC_USART1_TX = STM32_DMAS_USART1_TX,
 	STM32_DMAC_USART1_RX = STM32_DMAS_USART1_RX,
+#if defined(CHIP_VARIANT_STM32F411)
+	STM32_DMAS_USART2_TX = STM32_DMA1_STREAM6,
+	STM32_DMAS_USART2_RX = STM32_DMA1_STREAM5,
 
+	/* Legacy naming for uart.c */
+	STM32_DMAC_USART2_TX = STM32_DMAS_USART2_TX,
+	STM32_DMAC_USART2_RX = STM32_DMAS_USART2_RX,
+#endif
+
+#if defined(CHIP_VARIANT_STM32F411)
+	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM1,
+	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
+
+	STM32_DMAC_I2C2_TX = STM32_DMA1_STREAM7,
+	STM32_DMAC_I2C2_RX = STM32_DMA1_STREAM3,
+
+	STM32_DMAC_I2C3_TX = STM32_DMA1_STREAM4,
+	STM32_DMAC_I2C3_RX = STM32_DMA1_STREAM2,
+#else
 	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM6,
 	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
 
@@ -1853,6 +1866,7 @@ enum dma_channel {
 
 	STM32_DMAC_I2C3_TX = STM32_DMA1_STREAM4,
 	STM32_DMAC_I2C3_RX = STM32_DMA1_STREAM1,
+#endif
 
 	STM32_DMAC_FMPI2C4_TX = STM32_DMA1_STREAM5,
 	STM32_DMAC_FMPI2C4_RX = STM32_DMA1_STREAM2,

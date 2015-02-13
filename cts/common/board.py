@@ -14,10 +14,12 @@ OCD_SCRIPT_DIR = '/usr/local/share/openocd/scripts'
 OPENOCD_CONFIGS = {
     'stm32l476g-eval': 'board/stm32l4discovery.cfg',
     'nucleo-f072rb': 'board/st_nucleo_f0.cfg',
+    'nucleo-f411re': 'board/st_nucleo_f4.cfg',
 }
 FLASH_OFFSETS = {
     'stm32l476g-eval': '0x08000000',
     'nucleo-f072rb': '0x08000000',
+    'nucleo-f411re': '0x08000000',
 }
 
 
