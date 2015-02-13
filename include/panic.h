@@ -9,6 +9,8 @@
 #ifndef __CROS_EC_PANIC_H
 #define __CROS_EC_PANIC_H
 
+#include "software_panic.h"
+
 #include <stdarg.h>
 
 /* ARM Cortex-Mx registers saved on panic */
@@ -119,6 +121,20 @@ void panic(const char *msg);
  * Display a default message and reset
  */
 void panic_reboot(void);
+
+#ifdef CONFIG_SOFTWARE_PANIC
+/**
+ * Store a panic log and halt the system for a software-related reason, such as
+ * stack overflow or assertion failure.
+ */
+void software_panic(uint32_t panic_reason, uint32_t panic_info);
+
+/**
+ * Log a watchdog panic in the panic log. Called on the subsequent reboot after
+ * the watchdog fires.
+ */
+void panic_log_watchdog(void);
+#endif
 
 /**
  * Enable/disable bus fault handler

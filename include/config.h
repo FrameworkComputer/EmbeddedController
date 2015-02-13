@@ -379,6 +379,12 @@
 #define CONFIG_COMMON_PANIC_OUTPUT
 
 /*
+ * Store a panic log and halt the system for a software-related reasons, such as
+ * stack overflow or assertion failure.
+ */
+#undef CONFIG_SOFTWARE_PANIC
+
+/*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
  */

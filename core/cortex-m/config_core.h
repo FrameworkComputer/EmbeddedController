@@ -10,4 +10,6 @@
 #define BFD_ARCH arm
 #define BFD_FORMAT "elf32-littlearm"
 
+#define CONFIG_SOFTWARE_PANIC
+
 #endif /* __CONFIG_CORE_H */

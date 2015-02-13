@@ -12,5 +12,6 @@
 
 /* Emulate the CLZ instruction since the CPU core is lacking support */
 #define CONFIG_SOFTWARE_CLZ
+#define CONFIG_SOFTWARE_PANIC
 
 #endif /* __CONFIG_CORE_H */

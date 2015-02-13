@@ -10,6 +10,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "link_defs.h"
+#include "panic.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
@@ -209,7 +210,7 @@ task_ *__svc_handler(int desched, task_id_t resched)
 	if (*current->stack != STACK_UNUSED_VALUE) {
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_names[current - tasks]);
-		panic_reboot();
+		software_panic(PANIC_SW_STACK_OVERFLOW, current - tasks);
 	}
 #endif
 
@@ -573,38 +574,6 @@ DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"Print/set ready tasks",
 			NULL);
 #endif
-
-#ifdef CONFIG_CMD_STACKOVERFLOW
-static void stack_overflow_recurse(int n)
-{
-	ccprintf("+%d", n);
-
-	/*
-	 * Force task context switch, since that's where we do stack overflow
-	 * checking.
-	 */
-	msleep(10);
-
-	stack_overflow_recurse(n+1);
-
-	/*
-	 * Do work after the recursion, or else the compiler uses tail-chaining
-	 * and we don't actually consume additional stack.
-	 */
-	ccprintf("-%d", n);
-}
-
-static int command_stackoverflow(int argc, char **argv)
-{
-	ccprintf("Recursing 0,");
-	stack_overflow_recurse(1);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(stackoverflow, command_stackoverflow,
-			NULL,
-			"Recurse until stack overflow",
-			NULL);
-#endif /* CONFIG_CMD_STACKOVERFLOW */
 
 void task_pre_init(void)
 {
