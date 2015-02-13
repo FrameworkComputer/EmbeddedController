@@ -570,6 +570,7 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_I2C_SCAN
 static void scan_bus(int port, const char *desc)
 {
 	int a;
@@ -624,6 +625,7 @@ DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
 			NULL,
 			"Scan I2C ports for devices",
 			NULL);
+#endif
 
 static int command_i2cxfer(int argc, char **argv)
 {
