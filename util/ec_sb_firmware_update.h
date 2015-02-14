@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -108,32 +108,19 @@ enum sb_maker_id {
 	sb_maker_id_celxpert  = 0x0006,
 };
 
-/* if permanent error:b5,b3; go to setp8 */
-#define SB_FW_UPDATE_PERMANENT_ERROR_MASK 0x0028
-
-/* if firmware update fatal error:b12; go to step2 */
-#define SB_FW_UPDATE_FW_FATAL_ERROR_MASK    0x1000
-#define SB_FW_UPDATE_FW_FATAL_ERROR_RETRY_CNT 1  /* Retry Error cnt*/
-
-/* if error:b11,b10,b9 b2,b1,b0; go to step1 */
-#define SB_FW_UPDATE_ERROR_MASK           0x0E07
-#define SB_FW_UPDATE_ERROR_RETRY_CNT      1  /* Retry Error cnt*/
-
-/* if FEC.b13=1, go to step6 */
-#define SB_FW_UPDATE_FEC_ERROR_MASK       0x2000 /* b13 */
-#define SB_FW_UPDATE_FEC_ERROR_RETRY_CNT  1  /* b13.FEC retry cnt*/
-
-/* if busy; retry 10 times */
-#define SB_FW_UPDATE_BUSY_ERROR_MASK      0x4000 /* b14 */
-#define SB_FW_UPDATE_BUSY_ERROR_RETRY_CNT 1  /* b14.busy retry cnt*/
-
-/**
- * Update Smart Battery Firmware
- *
- * @param fw_image_name  firmware image name
- *
- * @return 0 if success, negative if error.
+/*
+ * Ref: Common Smart Battery System Interface Specification v8.0 page 21-24.
+ * case 1. If permanent error:b5,b3, go to setp8.
+ * case 2. If error:b11,b10,b9 b2,b1,b0, go to step1. Retry < 3 times.
+ * case 3. If firmware update fatal error:b12, go to step2. Retry < 3 times.
+ *         In order to simply the implementation, I merged case 2 and 3.
+ *         If firmware update fatal error:b12, go to step1 as well.
+ * case 4. If error.FEC.b13=1, go to step6. Retry < 3 times.
+ * case 5. If battery interface is busy, retry < 10 times.
+ *    Delay 1 second between retries.
  */
-int ec_sb_firmware_update(const char *fw_image_name);
+#define SB_FW_UPDATE_ERROR_RETRY_CNT      2
+#define SB_FW_UPDATE_FEC_ERROR_RETRY_CNT  2
+#define SB_FW_UPDATE_BUSY_ERROR_RETRY_CNT 9
 
 #endif
