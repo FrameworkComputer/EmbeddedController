@@ -43,6 +43,7 @@
 #define CMD_WRITEMEM 0x31 /* Writes memory (SRAM or Flash) */
 #define CMD_ERASE    0x43 /* Erases n pages of Flash memory */
 #define CMD_EXTERASE 0x44 /* Erases n pages of Flash memory */
+#define CMD_NO_STRETCH_ERASE 0x45 /* Erases while sending busy frame */
 #define CMD_WP       0x63 /* Enables write protect */
 #define CMD_WU       0x73 /* Disables write protect */
 #define CMD_RP       0x82 /* Enables the read protection */
@@ -50,6 +51,7 @@
 
 #define RESP_NACK    0x1f
 #define RESP_ACK     0x79
+#define RESP_BUSY    0x76
 
 /* SPI Start of Frame */
 #define SOF          0x5A
@@ -69,19 +71,20 @@ struct stm32_def {
 	uint32_t flash_start;
 	uint32_t flash_size;
 	uint32_t page_size;
-	uint32_t cmds_len;
+	uint32_t cmds_len[2];
 } chip_defs[] = {
-	{0x416, "STM32L15xxB",   0x08000000, 0x20000, 256, 13},
-	{0x429, "STM32L15xxB-A", 0x08000000, 0x20000, 256, 13},
-	{0x427, "STM32L15xxC",   0x08000000, 0x40000, 256, 13},
-	{0x435, "STM32L44xx",    0x08000000, 0x40000, 2048, 13},
-	{0x420, "STM32F100xx",   0x08000000, 0x20000, 1024, 13},
-	{0x410, "STM32F102R8",   0x08000000, 0x10000, 1024, 13},
-	{0x440, "STM32F05x",     0x08000000, 0x10000, 1024, 13},
-	{0x444, "STM32F03x",     0x08000000, 0x08000, 1024, 13},
-	{0x448, "STM32F07xB",    0x08000000, 0x20000, 2048, 13},
-	{0x432, "STM32F37xx",    0x08000000, 0x40000, 2048, 13},
-	{0x442, "STM32F09x",     0x08000000, 0x40000, 2048, 13},
+	{0x416, "STM32L15xxB",   0x08000000, 0x20000,   256, {13, 13} },
+	{0x429, "STM32L15xxB-A", 0x08000000, 0x20000,   256, {13, 13} },
+	{0x427, "STM32L15xxC",   0x08000000, 0x40000,   256, {13, 13} },
+	{0x435, "STM32L44xx",    0x08000000, 0x40000,  2048, {13, 13} },
+	{0x420, "STM32F100xx",   0x08000000, 0x20000,  1024, {13, 13} },
+	{0x410, "STM32F102R8",   0x08000000, 0x10000,  1024, {13, 13} },
+	{0x440, "STM32F05x",     0x08000000, 0x10000,  1024, {13, 13} },
+	{0x444, "STM32F03x",     0x08000000, 0x08000,  1024, {13, 13} },
+	{0x448, "STM32F07xB",    0x08000000, 0x20000,  2048, {13, 13} },
+	{0x432, "STM32F37xx",    0x08000000, 0x40000,  2048, {13, 13} },
+	{0x442, "STM32F09x",     0x08000000, 0x40000,  2048, {13, 13} },
+	{0x431, "STM32F411",     0x08000000, 0x80000, 16384, {13, 19} },
 	{ 0 }
 };
 
@@ -96,10 +99,18 @@ enum interface_mode {
 	MODE_SPI,
 } mode = MODE_SERIAL;
 
+/* I2c address the EC is listening depends on the device:
+ * stm32f07xxx: 0x76
+ * stm32f411xx: 0x72
+ */
+#define DEFAULT_I2C_SLAVE_ADDRESS 0x76
+
 /* store custom parameters */
 speed_t baudrate = DEFAULT_BAUDRATE;
 int i2c_adapter = INVALID_I2C_ADAPTER;
 const char *spi_adapter;
+int i2c_slave_address = DEFAULT_I2C_SLAVE_ADDRESS;
+uint8_t boot_loader_version;
 const char *serial_port = "/dev/ttyUSB1";
 const char *input_filename;
 const char *output_filename;
@@ -203,11 +214,7 @@ int open_i2c(const int port)
 		perror("Unable to open i2c adapter");
 		return -1;
 	}
-	/*
-	 * When in I2C mode, the bootloader is listening at address 0x76 (10 bit
-	 * mode), 0x3B (7 bit mode)
-	 */
-	if (ioctl(fd, I2C_SLAVE, 0x3B) < 0) {
+	if (ioctl(fd, I2C_SLAVE, i2c_slave_address >> 1) < 0) {
 		perror("Unable to select proper address");
 		close(fd);
 		return -1;
@@ -293,6 +300,9 @@ int wait_for_ack(int fd)
 						return -EIO;
 				discard_input(fd);
 				return -EINVAL;
+			} else if (resp == RESP_BUSY) {
+				/* I2C Boot protocol 1.1 */
+				deadline = time(NULL) + DEFAULT_TIMEOUT;
 			} else {
 				if (mode == MODE_SERIAL)
 					fprintf(stderr, "Receive junk: %02x\n",
@@ -473,9 +483,9 @@ int command_get_commands(int fd, struct stm32_def *chip)
 
 	/*
 	 * For i2c, we have to request the exact amount of bytes we expect.
-	 * TODO(gwendal): Broken on device with Bootloader version 1.1
 	 */
-	res = send_command(fd, CMD_GETCMD, NULL, 0, cmds, chip->cmds_len, 1);
+	res = send_command(fd, CMD_GETCMD, NULL, 0, cmds,
+			   chip->cmds_len[(mode == MODE_I2C ? 1 : 0)], 1);
 	if (res > 0) {
 		if (cmds[0] > sizeof(cmds) - 2) {
 			fprintf(stderr, "invalid GET answer (%02x...)\n",
@@ -484,6 +494,7 @@ int command_get_commands(int fd, struct stm32_def *chip)
 		}
 		printf("Bootloader v%d.%d, commands : ",
 		       cmds[1] >> 4, cmds[1] & 0xf);
+		boot_loader_version = cmds[1];
 
 		erase = command_erase;
 		for (i = 2; i < 2 + cmds[0]; i++) {
@@ -605,6 +616,7 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 {
 	int res;
+	uint8_t erase_cmd;
 	uint16_t count_be = htons(count);
 	payload_t load[2] = {
 		{ 2, (uint8_t *)&count_be},
@@ -634,7 +646,9 @@ int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 		load_cnt = 1;
 	}
 
-	res = send_command(fd, CMD_EXTERASE, load, load_cnt,
+	erase_cmd = (boot_loader_version == 0x10 ? CMD_EXTERASE :
+		     CMD_NO_STRETCH_ERASE);
+	res = send_command(fd, erase_cmd, load, load_cnt,
 			   NULL, 0, 1);
 	if (res >= 0)
 		printf("Flash erased.\n");
@@ -845,6 +859,7 @@ static const struct option longopts[] = {
 	{"erase", 0, 0, 'e'},
 	{"go", 0, 0, 'g'},
 	{"help", 0, 0, 'h'},
+	{"location", 1, 0, 'l'},
 	{"unprotect", 0, 0, 'u'},
 	{"baudrate", 1, 0, 'b'},
 	{"adapter", 1, 0, 'a'},
@@ -855,15 +870,18 @@ static const struct option longopts[] = {
 void display_usage(char *program)
 {
 	fprintf(stderr,
-		"Usage: %s [-a <i2c_adapter> | [-d <tty>] [-b <baudrate>]]"
-		" [-u] [-e] [-U] [-r <file>] [-w <file>] [-g]\n", program);
+		"Usage: %s [-a <i2c_adapter> [-l address ]] | [-s]"
+		" [-d <tty>] [-b <baudrate>]] [-u] [-e] [-U]"
+		" [-r <file>] [-w <file>] [-g]\n", program);
 	fprintf(stderr, "Can access the controller via serial port or i2c\n");
 	fprintf(stderr, "Serial port mode:\n");
 	fprintf(stderr, "--d[evice] <tty> : use <tty> as the serial port\n");
 	fprintf(stderr, "--b[audrate] <baudrate> : set serial port speed "
 			"to <baudrate> bauds\n");
 	fprintf(stderr, "i2c mode:\n");
-	fprintf(stderr, "--a[dapter] <id> : use i2c adapter <id>.\n\n");
+	fprintf(stderr, "--a[dapter] <id> : use i2c adapter <id>.\n");
+	fprintf(stderr, "--l[ocation]  <address> : use address <address>.\n");
+	fprintf(stderr, "--s[pi]: use spi mode.\n");
 	fprintf(stderr, "--u[nprotect] : remove flash write protect\n");
 	fprintf(stderr, "--U[nprotect] : remove flash read protect\n");
 	fprintf(stderr, "--e[rase] : erase all the flash content\n");
@@ -904,12 +922,15 @@ int parse_parameters(int argc, char **argv)
 	int opt, idx;
 	int flags = 0;
 
-	while ((opt = getopt_long(argc, argv, "a:b:d:eghr:s:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghr:s:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
 			i2c_adapter = atoi(optarg);
 			mode = MODE_I2C;
+			break;
+		case 'l':
+			i2c_slave_address = strtol(optarg, NULL, 0);
 			break;
 		case 'b':
 			baudrate = parse_baudrate(optarg);
@@ -989,9 +1010,9 @@ int main(int argc, char **argv)
 		command_write_unprotect(ser);
 
 	if (flags & FLAG_ERASE || output_filename) {
-		if (!strncmp("STM32L15", chip->name, 8)) {
-			/* Mass erase is not supported on STM32L15xx */
-			/* command_ext_erase(ser, ERASE_ALL, 0); */
+		if ((!strncmp("STM32L15", chip->name, 8)) ||
+		    (!strncmp("STM32F41", chip->name, 8))) {
+			/* Mass erase is not supported on these chips*/
 			int i, page_count = chip->flash_size / chip->page_size;
 			for (i = 0; i < page_count; i += 128) {
 				int count = MIN(128, page_count - i);
