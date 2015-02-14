@@ -10,6 +10,8 @@
 #include "console.h"
 #include "host_command.h"
 #include "lightbar.h"
+#include "panic.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -43,6 +45,9 @@ static void pd_exchange_status(void)
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
 	int rv = 0;
+#ifdef CONFIG_HOSTCMD_PD_PANIC
+	static int pd_in_rw;
+#endif
 
 	/* Send PD charge state and battery state of charge */
 	ec_status.charge_state = charge_state;
@@ -65,6 +70,21 @@ static void pd_exchange_status(void)
 		CPRINTS("Host command to PD MCU failed");
 		return;
 	}
+
+#ifdef CONFIG_HOSTCMD_PD_PANIC
+	/*
+	 * Check if PD MCU is in RW. If PD MCU was in RW and is now in RO
+	 * AND it did not sysjump to RO, then it must have crashed, and
+	 * therefore we should panic as well.
+	 */
+	if (pd_status.status & PD_STATUS_IN_RW) {
+		pd_in_rw = 1;
+	} else if (pd_in_rw &&
+		   !(pd_status.status & PD_STATUS_JUMPED_TO_IMAGE)) {
+		panic_printf("PD crash");
+		software_panic(PANIC_SW_PD_CRASH, 0);
+	}
+#endif
 
 #ifdef HAS_TASK_LIGHTBAR
 	/*

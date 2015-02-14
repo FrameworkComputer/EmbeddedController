@@ -17,6 +17,7 @@
 /* Software panic reasons */
 #define PANIC_SW_DIV_ZERO		(PANIC_SW_BASE + 0)
 #define PANIC_SW_STACK_OVERFLOW		(PANIC_SW_BASE + 1)
+#define PANIC_SW_PD_CRASH		(PANIC_SW_BASE + 2)
 #define PANIC_SW_ASSERT			(PANIC_SW_BASE + 3)
 #define PANIC_SW_WATCHDOG		(PANIC_SW_BASE + 4)
 

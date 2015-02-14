@@ -471,6 +471,12 @@ static void board_init(void)
 	/* Initialize active charge port to none */
 	pd_status.active_charge_port = CHARGE_PORT_NONE;
 
+	/* Set PD MCU system status bits */
+	if (system_jumped_to_this_image())
+		pd_status.status |= PD_STATUS_JUMPED_TO_IMAGE;
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		pd_status.status |= PD_STATUS_IN_RW;
+
 	/*
 	 * Do not enable PD communication in RO as a security measure.
 	 * We don't want to allow communication to outside world until

@@ -2694,7 +2694,9 @@ struct ec_params_pd_status {
 } __packed;
 
 /* Status of PD being sent back to EC */
-#define PD_STATUS_HOST_EVENT (1 << 0)
+#define PD_STATUS_HOST_EVENT      (1 << 0) /* Forward host event to AP */
+#define PD_STATUS_IN_RW           (1 << 1) /* Running RW image */
+#define PD_STATUS_JUMPED_TO_IMAGE (1 << 2) /* Current image was jumped to */
 struct ec_response_pd_status {
 	uint32_t status;      /* PD MCU status */
 	uint32_t curr_lim_ma; /* input current limit */

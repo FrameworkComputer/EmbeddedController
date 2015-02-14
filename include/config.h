@@ -708,6 +708,9 @@
 #define CONFIG_HOSTCMD_RATE_LIMITING_MIN_REST (3   * MSEC)
 #define CONFIG_HOSTCMD_RATE_LIMITING_RECESS   (20  * MSEC)
 
+/* Panic when status of PD MCU reflects that it has crashed */
+#undef CONFIG_HOSTCMD_PD_PANIC
+
 /*****************************************************************************/
 
 /* Enable debugging and profiling statistics for hook functions */
