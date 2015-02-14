@@ -8,8 +8,10 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
+#include "adc.h"
 #include "charge_state.h"
 #include "clock.h"
+#include "gpio.h"
 #include "registers.h"
 
 /* Port and task configuration */

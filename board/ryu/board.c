@@ -9,6 +9,7 @@
 #include "battery.h"
 #include "case_closed_debug.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "common.h"
@@ -35,6 +36,14 @@
 
 /* Default input current limit when VBUS is present */
 #define DEFAULT_CURR_LIMIT            500  /* mA */
+
+/* VBUS too low threshold */
+#define VBUS_LOW_THRESHOLD_MV 4600
+
+/* Input current error margin */
+#define IADP_ERROR_MARGIN_MA 100
+
+static int charge_current_limit;
 
 static void vbus_log(void)
 {
@@ -383,8 +392,51 @@ int board_set_active_charge_port(int charge_port)
  */
 void board_set_charge_limit(int charge_ma)
 {
-	int rv = charge_set_input_current_limit(MAX(charge_ma,
-					CONFIG_CHARGER_INPUT_CURRENT));
+	int rv;
+
+	charge_current_limit = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
+	rv = charge_set_input_current_limit(charge_current_limit);
 	if (rv < 0)
 		CPRINTS("Failed to set input current limit for PD");
+}
+
+/**
+ * Return whether ramping is allowed for given supplier
+ */
+int board_is_ramp_allowed(int supplier)
+{
+	return supplier == CHARGE_SUPPLIER_BC12_DCP ||
+	       supplier == CHARGE_SUPPLIER_BC12_SDP;
+}
+
+/**
+ * Return the maximum allowed input current
+ */
+int board_get_ramp_current_limit(int supplier)
+{
+	switch (supplier) {
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 2000;
+	case CHARGE_SUPPLIER_BC12_SDP:
+		return 1000;
+	default:
+		return 500;
+	}
+}
+
+/**
+ * Return if board is consuming full amount of input current
+ */
+int board_is_consuming_full_charge(void)
+{
+	return adc_read_channel(ADC_IADP) >= charge_current_limit -
+					     IADP_ERROR_MARGIN_MA;
+}
+
+/**
+ * Return if VBUS is sagging low enough that we should stop ramping
+ */
+int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
+{
+	return adc_read_channel(ADC_VBUS) < VBUS_LOW_THRESHOLD_MV;
 }
