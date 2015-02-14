@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "battery.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -713,12 +714,108 @@ int pd_is_max_request_allowed(void)
 }
 
 /**
+ * Return whether ramping is allowed for given supplier
+ */
+int board_is_ramp_allowed(int supplier)
+{
+	/* Don't allow ramping in RO when write protected */
+	if (system_get_image_copy() != SYSTEM_IMAGE_RW
+	    && system_is_locked())
+		return 0;
+	else
+		return supplier == CHARGE_SUPPLIER_BC12_DCP ||
+		       supplier == CHARGE_SUPPLIER_BC12_SDP;
+}
+
+/**
+ * Return the maximum allowed input current
+ */
+int board_get_ramp_current_limit(int supplier)
+{
+	switch (supplier) {
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 2000;
+	case CHARGE_SUPPLIER_BC12_SDP:
+		return 1000;
+	default:
+		return 500;
+	}
+}
+
+/**
+ * Return if board is consuming full amount of input current
+ */
+int board_is_consuming_full_charge(void)
+{
+	return batt_soc >= 1 && batt_soc < 95;
+}
+
+/*
+ * Number of VBUS samples to average when computing if VBUS is too low
+ * for the ramp stable state.
+ */
+#define VBUS_STABLE_SAMPLE_COUNT 4
+
+/* VBUS too low threshold */
+#define VBUS_LOW_THRESHOLD_MV    4600
+
+/**
+ * Return if VBUS is sagging too low
+ */
+int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
+{
+	static int vbus[VBUS_STABLE_SAMPLE_COUNT];
+	static int vbus_idx, vbus_samples_full;
+	int vbus_sum, i;
+
+	/*
+	 * If we are not allowing charging, it's because the EC saw
+	 * ACOK go low, so we know VBUS is drooping too far.
+	 */
+	if (charge_state == PD_CHARGE_NONE)
+		return 1;
+
+	/* If we are ramping, only look at one reading */
+	if (ramp_state == CHG_RAMP_VBUS_RAMPING) {
+		/* Reset the VBUS array vars used for the stable state */
+		vbus_idx = vbus_samples_full = 0;
+		return adc_read_channel(ADC_VBUS) < VBUS_LOW_THRESHOLD_MV;
+	}
+
+	/* Fill VBUS array with ADC readings */
+	vbus[vbus_idx] = adc_read_channel(ADC_VBUS);
+	vbus_idx = (vbus_idx == VBUS_STABLE_SAMPLE_COUNT-1) ? 0 : vbus_idx + 1;
+	if (vbus_idx == 0)
+		vbus_samples_full = 1;
+
+	/* If VBUS array is not full yet, then return ok */
+	if (!vbus_samples_full)
+		return 0;
+
+	/* All VBUS samples are populated, take average */
+	vbus_sum = 0;
+	for (i = 0; i < VBUS_STABLE_SAMPLE_COUNT; i++)
+		vbus_sum += vbus[i];
+
+	/* Return if average is lower than threshold */
+	return vbus_sum < (VBUS_STABLE_SAMPLE_COUNT * VBUS_LOW_THRESHOLD_MV);
+}
+
+/**
  * Set the charge limit based upon desired maximum.
  *
  * @param charge_ma     Desired charge limit (mA).
  */
 void board_set_charge_limit(int charge_ma)
 {
+	static int last_charge_ma = -1;
+
+	/* if current hasn't changed, don't do anything */
+	if (charge_ma == last_charge_ma)
+		return;
+
+	last_charge_ma = charge_ma;
+
 #ifdef CONFIG_PWM
 	int pwm_duty = MA_TO_PWM(charge_ma);
 	if (pwm_duty < 0)
@@ -805,6 +902,11 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 				gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 				pd_set_new_power_request(
 					pd_status.active_charge_port);
+				/*
+				 * Wake charge ramp task so that it will check
+				 * board_is_vbus_too_low() and stop ramping up.
+				 */
+				task_wake(TASK_ID_CHG_RAMP);
 				CPRINTS("Chg: None");
 				break;
 			case PD_CHARGE_5V:
