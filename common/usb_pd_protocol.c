@@ -228,7 +228,6 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 #define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
 #define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
 #define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
-#define PD_FLAGS_VBUS_PRESENT      (1 << 11)/* vbus present in sink disconn. */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -238,8 +237,7 @@ static int pd_src_cap_cnt[PD_PORT_COUNT];
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \
-					   PD_FLAGS_CHECK_DR_ROLE | \
-					   PD_FLAGS_VBUS_PRESENT)
+					   PD_FLAGS_CHECK_DR_ROLE)
 
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
@@ -387,14 +385,12 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	if (next_state == PD_STATE_SRC_DISCONNECTED ||
 	    next_state == PD_STATE_SNK_DISCONNECTED) {
-		if (pd[port].flags & PD_FLAGS_VBUS_PRESENT) {
-			/* Clear the input current limit */
-			pd_set_input_current_limit(port, 0, 0);
+		/* Clear the input current limit */
+		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
-			typec_set_input_current_limit(port, 0, 0);
-			charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
+		typec_set_input_current_limit(port, 0, 0);
+		charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
 #endif
-		}
 #else /* CONFIG_USB_PD_DUAL_ROLE */
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 #endif
@@ -1134,7 +1130,6 @@ static void handle_ctrl_request(int port, uint16_t head,
 			/* reset message ID and swap roles */
 			pd[port].msg_id = 0;
 			pd[port].power_role = PD_ROLE_SINK;
-			pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 		} else if (pd[port].task_state == PD_STATE_SNK_DISCOVERY) {
 			/* Don't know what power source is ready. Reset. */
@@ -1714,8 +1709,6 @@ static inline int get_typec_current_limit(int cc_voltage)
 		charge = 3000;
 	else if (cc_voltage > TYPE_C_SRC_1500_THRESHOLD)
 		charge = 1500;
-	else if (cc_voltage > PD_SNK_VA)
-		charge = 500;
 	else
 		charge = 0;
 
@@ -1798,19 +1791,10 @@ void pd_task(void)
 #endif
 
 #ifdef CONFIG_CHARGE_MANAGER
-	/* Initialize PD supplier current limit to 0 */
+	/* Initialize PD and type-C supplier current limits to 0 */
 	pd_set_input_current_limit(port, 0, 0);
+	typec_set_input_current_limit(port, 0, 0);
 	charge_manager_update_dualrole(port, CAP_UNKNOWN);
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	/* If sink, set initial type-C current limit based on vbus */
-	if (pd_snk_is_vbus_provided(port)) {
-		typec_set_input_current_limit(port, 500, TYPE_C_VOLTAGE);
-		pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
-	} else {
-		typec_set_input_current_limit(port, 0, 0);
-		pd[port].flags &= ~PD_FLAGS_VBUS_PRESENT;
-	}
-#endif
 #endif
 
 	while (1) {
@@ -2303,24 +2287,6 @@ void pd_task(void)
 		case PD_STATE_SNK_DISCONNECTED:
 			timeout = 10*MSEC;
 
-#ifdef CONFIG_CHARGE_MANAGER
-			/*
-			 * If VBUS, use default 500mA limit, otherwise
-			 * set current limit to 0. This is necessary for
-			 * an accessory that provides power with no Rp.
-			 */
-			if (pd_snk_is_vbus_provided(port) &&
-			    !(pd[port].flags & PD_FLAGS_VBUS_PRESENT)) {
-				typec_set_input_current_limit(port, 500,
-							      TYPE_C_VOLTAGE);
-				pd[port].flags |= PD_FLAGS_VBUS_PRESENT;
-			} else if (!pd_snk_is_vbus_provided(port) &&
-				   (pd[port].flags & PD_FLAGS_VBUS_PRESENT)) {
-				typec_set_input_current_limit(port, 0, 0);
-				pd[port].flags &= ~PD_FLAGS_VBUS_PRESENT;
-			}
-#endif
-
 			/* Source connection monitoring */
 			cc1_volt = pd_adc_read(port, 0);
 			cc2_volt = pd_adc_read(port, 1);
@@ -2385,8 +2351,7 @@ void pd_task(void)
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
 			pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
-					  PD_FLAGS_CHECK_DR_ROLE |
-					  PD_FLAGS_VBUS_PRESENT;
+					  PD_FLAGS_CHECK_DR_ROLE;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 			timeout = 10*MSEC;
 			hook_call_deferred(

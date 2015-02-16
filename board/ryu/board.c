@@ -33,6 +33,9 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+/* Default input current limit when VBUS is present */
+#define DEFAULT_CURR_LIMIT            500  /* mA */
+
 static void vbus_log(void)
 {
 	CPRINTS("VBUS %d", gpio_get_level(GPIO_CHGR_ACOK));
@@ -41,6 +44,19 @@ DECLARE_DEFERRED(vbus_log);
 
 void vbus_evt(enum gpio_signal signal)
 {
+	struct charge_port_info charge;
+	int vbus_level = gpio_get_level(signal);
+
+	/*
+	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
+	 * ourselves, then update the VBUS supplier.
+	 */
+	if (!vbus_level || !gpio_get_level(GPIO_USBC_5V_EN)) {
+		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
+	}
+
 	hook_call_deferred(vbus_log, 0);
 	if (task_start_called())
 		task_wake(TASK_ID_PD);
@@ -163,18 +179,28 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 /* Initialize board. */
 static void board_init(void)
 {
-	struct charge_port_info charge;
+	struct charge_port_info charge_none, charge_vbus;
 
 	/* Initialize all pericom charge suppliers to 0 */
-	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge.current = 0;
+	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.current = 0;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
 				     0,
-				     &charge);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP, 0, &charge);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP, 0, &charge);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP, 0, &charge);
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, 0, &charge);
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP, 0, &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP, 0, &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP, 0, &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, 0, &charge_none);
+
+	/* Initialize VBUS supplier based on whether or not VBUS is present */
+	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_vbus.current = DEFAULT_CURR_LIMIT;
+	if (gpio_get_level(GPIO_CHGR_ACOK))
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
+					     &charge_vbus);
+	else
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
+					     &charge_none);
 
 	/* Enable pericom BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
@@ -230,7 +256,8 @@ const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_BC12_DCP] = 1,
 	[CHARGE_SUPPLIER_BC12_CDP] = 2,
 	[CHARGE_SUPPLIER_BC12_SDP] = 3,
-	[CHARGE_SUPPLIER_OTHER] = 3
+	[CHARGE_SUPPLIER_OTHER] = 3,
+	[CHARGE_SUPPLIER_VBUS] = 4
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
@@ -333,9 +360,10 @@ DECLARE_DEFERRED(board_charge_manager_override_timeout);
 int board_set_active_charge_port(int charge_port)
 {
 	int ret = EC_SUCCESS;
+	/* check if we are source vbus on that port */
+	int source = gpio_get_level(GPIO_USBC_5V_EN);
 
-	if (charge_port >= 0 && charge_port < PD_PORT_COUNT &&
-	    pd_get_role(charge_port) != PD_ROLE_SINK) {
+	if (charge_port >= 0 && charge_port < PD_PORT_COUNT && source) {
 		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
 		charge_port = CHARGE_PORT_NONE;
 		ret = EC_ERROR_INVAL;
