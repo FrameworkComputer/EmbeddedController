@@ -35,6 +35,9 @@ static int bkboost_detected;
 /* Charging is disabled */
 static int charge_is_disabled;
 
+/* Extpower task has been initialized */
+static int extpower_task_initialized;
+
 /*
  * Charge circuit occasionally gets wedged and doesn't charge.
  * This variable keeps track of the state of the circuit.
@@ -70,10 +73,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, extpower_shutdown, HOOK_PRIO_DEFAULT);
 
 void extpower_interrupt(enum gpio_signal signal)
 {
+	/* Trigger notification of external power change */
 	extpower_buffer_to_pch();
 
-	/* Trigger notification of external power change */
-	task_wake(TASK_ID_EXTPOWER);
+	/* Wake extpower task only if task has been initialized */
+	if (extpower_task_initialized)
+		task_wake(TASK_ID_EXTPOWER);
 }
 
 static void extpower_init(void)
@@ -369,6 +374,7 @@ void extpower_task(void)
 
 	extpower_board_hacks(extpower, extpower_prev);
 	extpower_prev = extpower;
+	extpower_task_initialized = 1;
 
 	/* Enable backboost detection interrupt */
 	gpio_enable_interrupt(GPIO_BKBOOST_DET);
