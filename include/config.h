@@ -551,6 +551,13 @@
  */
 #undef CONFIG_FAN_RPM_CUSTOM
 
+/*
+ * We normally check and update the fans once per second (HOOK_SECOND). If this
+ * is #defined to a postive integer N, we will only update the fans every N
+ * seconds instead.
+ */
+#undef CONFIG_FAN_UPDATE_PERIOD
+
 /*****************************************************************************/
 /* Flash configuration */
 

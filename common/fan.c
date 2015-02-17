@@ -19,6 +19,11 @@
  * things manually. */
 static int thermal_control_enabled[CONFIG_FANS];
 
+#ifdef CONFIG_FAN_UPDATE_PERIOD
+/* Should we ignore the fans for a while? */
+static int fan_update_counter[CONFIG_FANS];
+#endif
+
 #ifndef CONFIG_FAN_RPM_CUSTOM
 /* This is the default implementation. It's only called over [0,100].
  * Convert the percentage to a target RPM. We can't simply scale all
@@ -48,6 +53,13 @@ test_mockable void fan_set_percent_needed(int fan, int pct)
 
 	if (!thermal_control_enabled[fan])
 		return;
+
+#ifdef CONFIG_FAN_UPDATE_PERIOD
+	/* Only set each fan every so often, to avoid rapid changes. */
+	fan_update_counter[fan] %= CONFIG_FAN_UPDATE_PERIOD;
+	if (fan_update_counter[fan]++)
+		return;
+#endif
 
 	new_rpm = fan_percent_to_rpm(fan, pct);
 	actual_rpm = fan_get_rpm_actual(fans[fan].ch);
