@@ -289,7 +289,7 @@ static int log_charge_wedged(void)
 
 static void check_charge_wedged(void)
 {
-	int rv, prochot_status, boostin_voltage;
+	int rv, prochot_status, batt_discharging_on_ac, boostin_voltage;
 	static int counts_since_wedged;
 	static int charge_stalled_count = CHARGE_STALLED_COUNT;
 	uint8_t *batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
@@ -301,13 +301,22 @@ static void check_charge_wedged(void)
 		if (rv)
 			prochot_status = 0;
 
+		batt_discharging_on_ac =
+			(*batt_flags & EC_BATT_FLAG_AC_PRESENT) &&
+			(*batt_flags & EC_BATT_FLAG_DISCHARGING);
+
+		/*
+		 * If PROCHOT is set or we are discharging on AC, then we
+		 * need to know boostin_voltage.
+		 */
+		if (prochot_status || batt_discharging_on_ac)
+			boostin_voltage = get_boostin_voltage();
+
 		/*
 		 * If AC is present, and battery is discharging, and
 		 * boostin voltage is above 5V, then we might be wedged.
 		 */
-		if ((*batt_flags & EC_BATT_FLAG_AC_PRESENT) &&
-		    (*batt_flags & EC_BATT_FLAG_DISCHARGING)) {
-			boostin_voltage = get_boostin_voltage();
+		if (batt_discharging_on_ac) {
 			if (boostin_voltage > 6000)
 				charge_stalled_count--;
 			else if (boostin_voltage >= 0)
@@ -326,15 +335,17 @@ static void check_charge_wedged(void)
 			counts_since_wedged++;
 
 		/*
-		 * If PROCHOT is asserted, then charge circuit is wedged. If
-		 * charging has been stalled long enough, then also consider
-		 * the circuit wedged. To unwedge the charge circuit turn
-		 * on learn mode and notify PD to disable charging on all ports.
+		 * If PROCHOT is asserted AND boost_in voltage is above 5V,
+		 * then charge circuit is wedged. If charging has been stalled
+		 * long enough, then also consider the circuit wedged.
+		 *
+		 * To unwedge the charge circuit turn on learn mode and notify
+		 * PD to disable charging on all ports.
 		 * Note: learn mode is critical here because when in this state
 		 * backboosting causes >20V on boostin even after PD disables
 		 * CHARGE_EN lines.
 		 */
-		if ((prochot_status &&
+		if ((prochot_status && boostin_voltage > 6000 &&
 			counts_since_wedged >= MIN_COUNTS_BETWEEN_UNWEDGES) ||
 		    charge_stalled_count <= 0) {
 			counts_since_wedged = 0;
