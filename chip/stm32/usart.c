@@ -6,7 +6,6 @@
 /* USART driver for Chrome EC */
 
 #include "atomic.h"
-#include "clock.h"
 #include "common.h"
 #include "gpio.h"
 #include "registers.h"
@@ -117,9 +116,9 @@ void usart_shutdown(struct usart_config const *config)
 	config->hw->ops->disable(config);
 }
 
-void usart_set_baud_f0_l(struct usart_config const *config)
+void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz)
 {
-	int      div  = DIV_ROUND_NEAREST(clock_get_freq(), config->baud);
+	int      div  = DIV_ROUND_NEAREST(frequency_hz, config->baud);
 	intptr_t base = config->hw->base;
 
 	if (div / 16 > 0) {
@@ -139,9 +138,9 @@ void usart_set_baud_f0_l(struct usart_config const *config)
 	}
 }
 
-void usart_set_baud_f(struct usart_config const *config)
+void usart_set_baud_f(struct usart_config const *config, int frequency_hz)
 {
-	int div = DIV_ROUND_NEAREST(clock_get_freq(), config->baud);
+	int div = DIV_ROUND_NEAREST(frequency_hz, config->baud);
 
 	/* STM32F only supports x16 oversampling */
 	STM32_USART_BRR(config->hw->base) = div;

@@ -177,9 +177,9 @@ void usart_interrupt(struct usart_config const *config);
 /*
  * These are HW specific baud rate calculation and setting functions that the
  * peripheral variant code uses during initialization and clock frequency
- * change.
+ * change.  The baud rate divisor input frequency is passed in Hertz.
  */
-void usart_set_baud_f0_l(struct usart_config const *config);
-void usart_set_baud_f(struct usart_config const *config);
+void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz);
+void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
 
 #endif /* CHIP_STM32_USART_H */
