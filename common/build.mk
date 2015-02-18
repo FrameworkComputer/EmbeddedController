@@ -7,7 +7,7 @@
 #
 
 common-y=util.o
-common-y+=version.o printf.o queue.o
+common-y+=version.o printf.o queue.o producer.o consumer.o
 
 common-$(CONFIG_ADC)+=adc.o
 common-$(CONFIG_ALS)+=als.o
@@ -75,7 +75,7 @@ common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SMBUS)+= smbus.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o
-common-$(CONFIG_STREAM)+=in_stream.o out_stream.o
+common-$(CONFIG_STREAM)+=in_stream.o out_stream.o stream_adaptor.o
 common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o throttle_ap.o
