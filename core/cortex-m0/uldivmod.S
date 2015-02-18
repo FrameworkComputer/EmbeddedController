@@ -173,5 +173,5 @@ L_dont_sub4:
 	pop	{r4, r5, r6, r7, pc}
 
 __aeabi_ldiv0:
-	ldr	SOFTWARE_PANIC_REASON_REG, =DIV_ZERO_PANIC
+	ldr	SOFTWARE_PANIC_REASON_REG, =PANIC_SW_DIV_ZERO
 	bl	exception_panic
