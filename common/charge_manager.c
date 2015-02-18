@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "system.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
@@ -583,6 +584,14 @@ void charge_manager_update_charge(int supplier,
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
 	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+
+	/*
+	 * We have no way of determining the charger dualrole capability in
+	 * locked RO, so just assume we always have a dedicated charger.
+	 */
+	if (system_get_image_copy() == SYSTEM_IMAGE_RO && system_is_locked())
+		cap = CAP_DEDICATED;
+
 	/* Ignore when capability is unchanged */
 	if (cap != dualrole_capability[port]) {
 		dualrole_capability[port] = cap;
