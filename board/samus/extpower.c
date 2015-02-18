@@ -289,7 +289,7 @@ static int log_charge_wedged(void)
 
 static void check_charge_wedged(void)
 {
-	int rv, prochot_status, batt_discharging_on_ac, boostin_voltage;
+	int rv, prochot_status, batt_discharging_on_ac, boostin_voltage = 0;
 	static int counts_since_wedged;
 	static int charge_stalled_count = CHARGE_STALLED_COUNT;
 	uint8_t *batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
