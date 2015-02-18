@@ -29,6 +29,8 @@
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "usb-stm32f3.h"
+#include "usb-stream.h"
+#include "usart-stm32f3.h"
 #include "util.h"
 #include "pi3usb9281.h"
 
@@ -176,14 +178,73 @@ void usb_evt(enum gpio_signal signal)
 #include "gpio_list.h"
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Ryu debug"),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("EC_PD"),
+	[USB_STR_DESC]           = usb_string_desc,
+	[USB_STR_VENDOR]         = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT]        = USB_STRING_DESC("Ryu debug"),
+	[USB_STR_VERSION]        = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_CONSOLE_NAME]   = USB_STRING_DESC("EC_PD"),
+	[USB_STR_AP_STREAM_NAME] = USB_STRING_DESC("AP"),
+	[USB_STR_SH_STREAM_NAME] = USB_STRING_DESC("SH"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
+
+/*
+ * Define AP and SH console forwarding queues and associated USART and USB
+ * stream endpoints.
+ */
+
+QUEUE_CONFIG(ap_usart_to_usb, 64, uint8_t);
+QUEUE_CONFIG(usb_to_ap_usart, 64, uint8_t);
+QUEUE_CONFIG(sh_usart_to_usb, 64, uint8_t);
+QUEUE_CONFIG(usb_to_sh_usart, 64, uint8_t);
+
+struct usb_stream_config const usb_ap_stream;
+struct usb_stream_config const usb_sh_stream;
+
+USART_CONFIG(usart1,
+	     usart1_hw,
+	     115200,
+	     ap_usart_to_usb,
+	     usb_to_ap_usart,
+	     usb_ap_stream.consumer,
+	     usb_ap_stream.producer)
+
+USART_CONFIG(usart3,
+	     usart3_hw,
+	     115200,
+	     sh_usart_to_usb,
+	     usb_to_sh_usart,
+	     usb_sh_stream.consumer,
+	     usb_sh_stream.producer)
+
+#define AP_USB_STREAM_RX_SIZE	16
+#define AP_USB_STREAM_TX_SIZE	16
+
+USB_STREAM_CONFIG(usb_ap_stream,
+		  USB_IFACE_AP_STREAM,
+		  USB_STR_AP_STREAM_NAME,
+		  USB_EP_AP_STREAM,
+		  AP_USB_STREAM_RX_SIZE,
+		  AP_USB_STREAM_TX_SIZE,
+		  usb_to_ap_usart,
+		  ap_usart_to_usb,
+		  usart1.consumer,
+		  usart1.producer)
+
+#define SH_USB_STREAM_RX_SIZE	16
+#define SH_USB_STREAM_TX_SIZE	16
+
+USB_STREAM_CONFIG(usb_sh_stream,
+		  USB_IFACE_SH_STREAM,
+		  USB_STR_SH_STREAM_NAME,
+		  USB_EP_SH_STREAM,
+		  SH_USB_STREAM_RX_SIZE,
+		  SH_USB_STREAM_TX_SIZE,
+		  usb_to_sh_usart,
+		  sh_usart_to_usb,
+		  usart3.consumer,
+		  usart3.producer)
 
 /* Initialize board. */
 static void board_init(void)
@@ -224,6 +285,16 @@ static void board_init(void)
 	    !gpio_get_level(GPIO_BTN_VOLD_L) &&
 	    !gpio_get_level(GPIO_BTN_VOLU_L))
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+
+	/*
+	 * Initialize AP and SH console forwarding USARTs and queues.
+	 */
+	queue_init(&ap_usart_to_usb);
+	queue_init(&usb_to_ap_usart);
+	queue_init(&sh_usart_to_usb);
+	queue_init(&usb_to_sh_usart);
+	usart_init(&usart1);
+	usart_init(&usart3);
 
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is
