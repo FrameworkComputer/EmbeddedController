@@ -143,9 +143,16 @@ void timer_cancel(task_id_t tskid)
 	 */
 }
 
+/*
+ * For us < (2^31 - task scheduling latency)(~ 2147 sec), this function will
+ * sleep for at least us, and no more than 2*us. As us approaches 2^32-1, the
+ * probability of delay longer than 2*us (and possibly infinite delay)
+ * increases.
+ */
 void usleep(unsigned us)
 {
 	uint32_t evt = 0;
+	uint32_t t0 = __hw_clock_source_read();
 
 	/* If task scheduling has not started, just delay */
 	if (!task_start_called()) {
@@ -156,7 +163,8 @@ void usleep(unsigned us)
 	ASSERT(us);
 	do {
 		evt |= task_wait_event(us);
-	} while (!(evt & TASK_EVENT_TIMER));
+	} while (!(evt & TASK_EVENT_TIMER) &&
+		((__hw_clock_source_read() - t0) < us));
 
 	/* Re-queue other events which happened in the meanwhile */
 	if (evt)
