@@ -115,16 +115,6 @@ struct panic_data *panic_get_data(void)
 	return pdata_ptr->magic == PANIC_DATA_MAGIC ? pdata_ptr : NULL;
 }
 
-#ifdef CONFIG_SOFTWARE_PANIC
-static void panic_init(void)
-{
-	/* Log panic cause if watchdog caused reset */
-	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG)
-		panic_log_watchdog();
-}
-DECLARE_HOOK(HOOK_INIT, panic_init, HOOK_PRIO_DEFAULT);
-#endif
-
 #ifdef CONFIG_CMD_STACKOVERFLOW
 static void stack_overflow_recurse(int n)
 {

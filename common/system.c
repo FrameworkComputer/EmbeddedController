@@ -575,6 +575,16 @@ void system_common_pre_init(void)
 {
 	uintptr_t addr;
 
+#ifdef CONFIG_SOFTWARE_PANIC
+	/*
+	 * Log panic cause if watchdog caused reset. This
+	 * must happen before calculating jump_data address
+	 * because it might change panic pointer.
+	 */
+	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG)
+		panic_log_watchdog();
+#endif
+
 	/*
 	 * Put the jump data before the panic data, or at the end of RAM if
 	 * panic data is not present.
