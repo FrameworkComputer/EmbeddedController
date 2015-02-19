@@ -46,21 +46,22 @@ static void check_reset_cause(void)
 	uint32_t flags = 0;
 	uint32_t raw_cause = NRF51_POWER_RESETREAS;
 
-	if (raw_cause & 0x00000001)
+	if (raw_cause & NRF51_POWER_RESETREAS_RESETPIN)
 		flags |= RESET_FLAG_RESET_PIN;
 
-	if (raw_cause & 0x00000002)
+	if (raw_cause & NRF51_POWER_RESETREAS_DOG)
 		flags |= RESET_FLAG_WATCHDOG;
 
-	/*
-	 * According to the data sheet, this bit is set by AIRCR.SYSRESETREQ.
-	 * However, th reset from J-Link also sets this bit. This could mislead
-	 * us.
-	 */
-	if (raw_cause & 0x00000004)
+	/* Note that the programmer uses a soft reset in debug mode. */
+	if (raw_cause & NRF51_POWER_RESETREAS_SREQ)
 		flags |= RESET_FLAG_SOFT;
 
-	if (raw_cause & 0x00070008)
+	if (raw_cause & (NRF51_POWER_RESETREAS_OFF |
+			NRF51_POWER_RESETREAS_LPCOMP))
+		flags |= RESET_FLAG_WAKE_PIN;
+
+	if (raw_cause & (NRF51_POWER_RESETREAS_LOCKUP |
+			NRF51_POWER_RESETREAS_DIF))
 		flags |= RESET_FLAG_OTHER;
 
 	system_set_reset_flags(flags);

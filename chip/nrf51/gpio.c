@@ -126,7 +126,9 @@ void gpio_pre_init(void)
 	int is_warm = 0;
 	int i;
 
-	if (NRF51_POWER_RESETREAS & (1 << 2)) {
+	if (NRF51_POWER_RESETREAS &
+			(NRF51_POWER_RESETREAS_OFF | /* GPIO Wake */
+			 NRF51_POWER_RESETREAS_LPCOMP)) {
 		/* This is a warm reboot */
 		is_warm = 1;
 	}
@@ -144,8 +146,7 @@ void gpio_pre_init(void)
 			continue;
 
 		/*
-		 * If this is a warm reboot, don't set the output levels or
-		 * we'll shut off the AP.
+		 * If this is a warm reboot, don't set the output levels again.
 		 */
 		if (is_warm)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
