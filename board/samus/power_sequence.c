@@ -81,6 +81,7 @@ static void chipset_force_g3(void)
 {
 	CPRINTS("Forcing G3");
 
+	gpio_disable_interrupt(GPIO_VCORE_PGOOD);
 	gpio_set_level(GPIO_PCH_PWROK, 0);
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_PP1050_EN, 0);
@@ -370,11 +371,19 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle_cpu);
 
+		/*
+		 * VCORE_PGOOD signal buffer is powered by PP1050_VCCST which
+		 * is gated by SLP_S3 assertion.  Now the signal is valid and
+		 * can be enabled as an interrupt source.
+		 */
+		gpio_enable_interrupt(GPIO_VCORE_PGOOD);
+
 		/* Set PCH_PWROK */
 		gpio_set_level(GPIO_PCH_PWROK, 1);
 
 		/* Wait for VCORE_PGOOD before enabling SYS_PWROK */
 		if (power_wait_signals(IN_PGOOD_VCORE)) {
+			gpio_disable_interrupt(GPIO_VCORE_PGOOD);
 			hook_notify(HOOK_CHIPSET_SUSPEND);
 			enable_sleep(SLEEP_MASK_AP_RUN);
 			gpio_set_level(GPIO_PCH_PWROK, 0);
@@ -429,6 +438,12 @@ enum power_state power_handle_state(enum power_state state)
 		/* Turn off DSW gated */
 		gpio_set_level(GPIO_PP3300_DSW_GATED_EN, 0);
 
+		/*
+		 * VCORE_PGOOD signal buffer is powered by PP1050_VCCST which
+		 * is gated by SLP_S3 assertion.  The signal is no longer
+		 * valid and should be disabled as an interrupt source.
+		 */
+		gpio_disable_interrupt(GPIO_VCORE_PGOOD);
 		return POWER_S3;
 
 	case POWER_S3S5:
