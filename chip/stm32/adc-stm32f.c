@@ -16,6 +16,16 @@
 
 #define ADC_SINGLE_READ_TIMEOUT 3000 /* 3 ms */
 
+#define SMPR1_EXPAND(v) ((v) | ((v) << 3) | ((v) << 6) | ((v) << 9) | \
+			 ((v) << 12) | ((v) << 15) | ((v) << 18) | \
+			 ((v) << 21))
+#define SMPR2_EXPAND(v) (SMPR1_EXPAND(v) | ((v) << 24) | ((v) << 27))
+
+/* Default ADC sample time = 13.5 cycles */
+#ifndef CONFIG_ADC_SAMPLE_TIME
+#define CONFIG_ADC_SAMPLE_TIME 2
+#endif
+
 struct mutex adc_lock;
 
 static int watchdog_ain_id;
@@ -290,11 +300,8 @@ static void adc_init(void)
 	/* Set right alignment */
 	STM32_ADC_CR2 &= ~(1 << 11);
 
-	/*
-	 * Set sample time of all channels to 13.5 cycles.
-	 * Conversion takes 15.75 us.
-	 */
-	STM32_ADC_SMPR1 = 0x00492492;
-	STM32_ADC_SMPR2 = 0x12492492;
+	/* Set sample time of all channels */
+	STM32_ADC_SMPR1 = SMPR1_EXPAND(CONFIG_ADC_SAMPLE_TIME);
+	STM32_ADC_SMPR2 = SMPR2_EXPAND(CONFIG_ADC_SAMPLE_TIME);
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);

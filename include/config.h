@@ -51,6 +51,9 @@
  */
 #undef CONFIG_ADC_CLOCK
 
+/* ADC sample time selection. The value is chip-dependent. */
+#undef CONFIG_ADC_SAMPLE_TIME
+
 /*
  * Some ALS modules may be connected to the EC. We need the command, and
  * specific drivers for each module.
