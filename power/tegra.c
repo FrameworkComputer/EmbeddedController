@@ -466,7 +466,6 @@ static void power_off(void)
 		       GPIO_INPUT);
 
 	lid_opened = 0;
-	enable_sleep(SLEEP_MASK_AP_RUN);
 	powerled_set_state(POWERLED_STATE_OFF);
 	CPRINTS("power shutdown complete");
 }
@@ -549,6 +548,7 @@ enum power_state power_handle_state(enum power_state state)
 		return state;
 
 	case POWER_S3S0:
+		disable_sleep(SLEEP_MASK_AP_RUN);
 		powerled_set_state(POWERLED_STATE_ON);
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;
@@ -570,6 +570,7 @@ enum power_state power_handle_state(enum power_state state)
 			powerled_set_state(POWERLED_STATE_OFF);
 		/* Call hooks here since we don't know it prior to AP suspend */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+		enable_sleep(SLEEP_MASK_AP_RUN);
 		return POWER_S3;
 
 	case POWER_S3S5:
