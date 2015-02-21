@@ -158,6 +158,12 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	alarm_us = (RTC_PREDIV_S - *rtcss) * US_PER_RTC_TICK + delay_us;
 	alarm_sec = alarm_sec + alarm_us / SECOND;
 	alarm_us = alarm_us % 1000000;
+	/*
+	 * If seconds is greater than 1 day, subtract by 1 day to deal with
+	 * 24-hour rollover.
+	 */
+	if (alarm_sec >= 86400)
+		alarm_sec -= 86400;
 
 	/* Set alarm time */
 	STM32_RTC_ALRMAR = sec_to_rtc(alarm_sec);
