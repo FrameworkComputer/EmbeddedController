@@ -47,6 +47,8 @@ void check_rw_signature(void)
 	if (*rw_rst == 0xffffffff)
 		return;
 
+	CPRINTS("Verifying RW image...");
+
 	/* Large buffer for RSA computation : could be re-use afterwards... */
 	res = shared_mem_acquire(3 * RSANUMBYTES, (char **)&rsa_workbuf);
 	if (res) {
@@ -59,13 +61,14 @@ void check_rw_signature(void)
 	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF,
 		      CONFIG_FW_RW_SIZE - RSANUMBYTES);
 	hash = SHA256_final(&ctx);
+
 	good = rsa_verify(&pkey, (void *)rw_sig, (void *)hash, rsa_workbuf);
 	if (good) {
-		CPRINTS("RW image verified\n");
+		CPRINTS("RW image verified");
 		/* Jump to the RW firmware */
 		system_run_image_copy(SYSTEM_IMAGE_RW);
 	} else {
-		CPRINTS("RSA verify FAILED\n");
+		CPRINTS("RSA verify FAILED");
 		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);
 		/* RW firmware is invalid : do not jump there */
 		if (system_is_locked())

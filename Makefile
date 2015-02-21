@@ -99,6 +99,9 @@ _rw_off:=$(shell echo "$$(($(_rw_off_str)))")
 _rw_size_str:=$(shell echo "CONFIG_FW_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
+_flash_base_str:=$(shell echo "CONFIG_FLASH_BASE" | $(CPP) $(CPPFLAGS) -P \
+		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
+_flash_base:=$(shell echo "$$(($(_flash_base_str)))")
 
 # Get RSA key size from board defines
 _rsa_size:=$(shell echo "CONFIG_RSA_KEY_SIZE" | $(CPP) $(CPPFLAGS) -P \
