@@ -52,6 +52,7 @@ void shared_mem_release(void *ptr)
 	buf_in_use = 0;
 }
 
+#ifdef CONFIG_CMD_SHMEM
 static int command_shmem(int argc, char **argv)
 {
 	ccprintf("Size:%6d\n", shared_mem_size());
@@ -63,3 +64,4 @@ DECLARE_CONSOLE_COMMAND(shmem, command_shmem,
 			NULL,
 			"Print shared memory stats",
 			NULL);
+#endif
