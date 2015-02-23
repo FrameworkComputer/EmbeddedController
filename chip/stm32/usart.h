@@ -8,21 +8,23 @@
 /* STM32 USART driver for Chrome EC */
 
 #include "common.h"
+#include "consumer.h"
 #include "in_stream.h"
 #include "out_stream.h"
+#include "producer.h"
 #include "queue.h"
 
 #include <stdint.h>
 
 /*
  * Per-USART state stored in RAM.  This structure will be zero initialized by
- * BSS init.  Most importantly, irq_lock will be zero, ensuring that shared
- * interrupts don't cause problems.
+ * BSS init.
  */
 struct usart_state {
-	struct queue_state rx;
-	struct queue_state tx;
-
+	/*
+	 * Counter of bytes receieved and then dropped because of lack of space
+	 * in the RX queue.
+	 */
 	uint32_t rx_dropped;
 };
 
@@ -38,6 +40,9 @@ struct usart_hw_ops {
 	void (*enable)(struct usart_config const *config);
 
 	/*
+	 * The generic USART shutdown code calls this function, allowing the
+	 * variant specific code an opportunity to do any variant specific
+	 * shutdown tasks.
 	 */
 	void (*disable)(struct usart_config const *config);
 };
@@ -71,8 +76,7 @@ struct usart_config {
 
 	/*
 	 * Pointer to USART state structure.  The state structure maintains per
-	 * USART information (head and tail pointers for the queues for
-	 * instance).
+	 * USART information.
 	 */
 	struct usart_state volatile *state;
 
@@ -81,82 +85,68 @@ struct usart_config {
 	 */
 	int baud;
 
-	/*
-	 * TX and RX queue configs.  The state for the queue is stored
-	 * separately in the usart_state structure.
-	 */
-	struct queue rx;
-	struct queue tx;
-
-	/*
-	 * In and Out streams, these contain pointers to the virtual function
-	 * tables that implement in and out streams.  They can be used by any
-	 * code that wants to read or write to a stream interface.
-	 */
-	struct in_stream  in;
-	struct out_stream out;
+	struct consumer consumer;
+	struct producer producer;
 };
 
 /*
  * These function tables are defined by the USART driver and are used to
- * initialize the in and out streams in the usart_config.
+ * initialize the consumer and producer in the usart_config.
  */
-extern struct in_stream_ops const usart_in_stream_ops;
-extern struct out_stream_ops const usart_out_stream_ops;
+extern struct consumer_ops const usart_consumer_ops;
+extern struct producer_ops const usart_producer_ops;
 
 /*
  * Convenience macro for defining USARTs and their associated state and buffers.
- * NAME is used to construct the names of the queue buffers, usart_state struct,
- * and usart_config struct, the latter is just called NAME.  RX_SIZE and TX_SIZE
- * are the size in bytes of the RX and TX buffers respectively.  RX_READY and
- * TX_READY are the callback functions for the in and out streams.  The USART
- * baud rate is specified by the BAUD parameter.
+ * NAME is used to construct the names of the usart_state struct, and
+ * usart_config struct, the latter is just called NAME.
  *
- * If you want to share a queue with other code, you can manually initialize a
- * usart_config to use the shared queue, or you can use this macro and then get
- * the queue buffers as <NAME>_tx_buffer, and <NAME>_rx_buffer.
+ * HW is the name of the usart_hw_config provided by the variant specific code.
+ *
+ * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this USART
+ * should write to and read from respectively.  They must match the queues
+ * that the CONSUMER and PRODUCER read from and write to respectively.
+ *
+ * CONSUMER and PRODUCER are the names of the consumer and producer objects at
+ * the other ends of the RX and TX queues respectively.
  */
-#define USART_CONFIG(NAME,						\
-		     HW,						\
-		     BAUD,						\
-		     RX_SIZE,						\
-		     TX_SIZE,						\
-		     RX_READY,						\
-		     TX_READY)						\
-	static uint8_t CONCAT2(NAME, _tx_buffer)[TX_SIZE];		\
-	static uint8_t CONCAT2(NAME, _rx_buffer)[RX_SIZE];		\
-									\
-	static struct usart_state CONCAT2(NAME, _state);		\
-	struct usart_config const NAME = {				\
-		.hw    = &HW,						\
-		.state = &CONCAT2(NAME, _state),			\
-		.baud  = BAUD,						\
-		.rx = {							\
-			.state        = &CONCAT2(NAME, _state.rx),	\
-			.buffer_units = RX_SIZE,			\
-			.unit_bytes   = 1,				\
-			.buffer       = CONCAT2(NAME, _rx_buffer),	\
-		},							\
-		.tx = {							\
-			.state        = &CONCAT2(NAME, _state.tx),	\
-			.buffer_units = TX_SIZE,			\
-			.unit_bytes   = 1,				\
-			.buffer       = CONCAT2(NAME, _tx_buffer),	\
-		},							\
-		.in  = {						\
-			.ready = RX_READY,				\
-			.ops   = &usart_in_stream_ops,			\
-		},							\
-		.out = {						\
-			.ready = TX_READY,				\
-			.ops   = &usart_out_stream_ops,			\
-		},							\
+/*
+ * The following assertions can not be made because they require access to
+ * non-const fields, but should be kept in mind.
+ *
+ * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
+ * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
+ * BUILD_ASSERT(PRODUCER.queue == &TX_QUEUE);
+ * BUILD_ASSERT(CONSUMER.queue == &RX_QUEUE);
+ */
+#define USART_CONFIG(NAME,					\
+		     HW,					\
+		     BAUD,					\
+		     RX_QUEUE,					\
+		     TX_QUEUE,					\
+		     CONSUMER,					\
+		     PRODUCER)					\
+								\
+	static struct usart_state CONCAT2(NAME, _state);	\
+	struct usart_config const NAME = {			\
+		.hw       = &HW,				\
+		.state    = &CONCAT2(NAME, _state),		\
+		.baud     = BAUD,				\
+		.consumer = {					\
+			.producer = &PRODUCER,			\
+			.queue    = &TX_QUEUE,			\
+			.ops      = &usart_consumer_ops,	\
+		},						\
+		.producer = {					\
+			.consumer = &CONSUMER,			\
+			.queue    = &RX_QUEUE,			\
+			.ops      = &usart_producer_ops,	\
+		},						\
 	};
 
 /*
  * Initialize the given USART.  Once init is finished the USART streams are
- * available for operating on, and the stream ready callbacks could be called
- * at any time.
+ * available for operating on.
  */
 void usart_init(struct usart_config const *config);
 
@@ -169,8 +159,6 @@ void usart_shutdown(struct usart_config const *config);
  * Handle a USART interrupt.  The per-variant USART code creates bindings
  * for the variants interrupts to call this generic USART interrupt handler
  * with the appropriate usart_config.
- *
- * This function could also be called manually to poll the USART hardware.
  */
 void usart_interrupt(struct usart_config const *config);
 

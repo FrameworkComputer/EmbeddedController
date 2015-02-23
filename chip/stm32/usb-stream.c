@@ -15,112 +15,45 @@
 #include "usb.h"
 #include "usb-stream.h"
 
-/*
- * The USB packet RAM is attached to the processor via the AHB2APB bridge.  This
- * bridge performs manipulations of read and write accesses as per the note in
- * section 2.1 of RM0091.  The upshot is that it is OK to read from the packet
- * RAM using 8-bit or 16-bit accesses, but not 32-bit, and it is only really OK
- * to write to the packet RAM using 16-bit accesses.  Thus custom memcpy like
- * routines need to be employed.  Furthermore, reading from and writing to the
- * RX and TX queues uses memcpy, which will try to do 32-bit accesses if it can.
- * so we must read and write single bytes at a time and construct 16-bit
- * accesses to the packet RAM.
- *
- * This could be improved by adding a set of operations on the queue to get
- * a pointer and size of the largest contiguous free/full region, then that
- * region could be operated on and a commit operation could be performed on
- * the queue.
- */
 static size_t rx_read(struct usb_stream_config const *config)
 {
 	size_t count = btable_ep[config->endpoint].rx_count & 0x3ff;
 
-	if (count < queue_space(&config->rx)) {
-		usb_uint *buffer = config->rx_ram;
-		size_t    i;
+	/*
+	 * Only read the received USB packet if there is enough space in the
+	 * receive queue.
+	 */
+	if (count >= queue_space(config->producer.queue))
+		return 0;
 
-		for (i = 0; i < count / 2; i++) {
-			usb_uint word = *buffer++;
-			uint8_t  lsb  = (word >> 0) & 0xff;
-			uint8_t  msb  = (word >> 8) & 0xff;
-
-			queue_add_unit(&config->rx, &lsb);
-			queue_add_unit(&config->rx, &msb);
-		}
-
-		if (count & 1) {
-			usb_uint word = *buffer++;
-			uint8_t  lsb  = (word >> 0) & 0xff;
-
-			queue_add_unit(&config->rx, &lsb);
-		}
-
-		return count;
-	}
-
-	return 0;
+	return producer_write_memcpy(&config->producer,
+				     config->rx_ram,
+				     count,
+				     memcpy_from_usbram);
 }
 
 static size_t tx_write(struct usb_stream_config const *config)
 {
-	usb_uint *buffer = config->tx_ram;
-	size_t    count  = MIN(USB_MAX_PACKET_SIZE, queue_count(&config->tx));
-	size_t    i;
-
-	for (i = 0; i < count / 2; i++) {
-		uint8_t lsb;
-		uint8_t msb;
-
-		queue_remove_unit(&config->tx, &lsb);
-		queue_remove_unit(&config->tx, &msb);
-
-		*buffer++ = (msb << 8) | lsb;
-	}
-
-	if (count & 1) {
-		uint8_t lsb;
-
-		queue_remove_unit(&config->tx, &lsb);
-
-		*buffer++ = lsb;
-	}
+	size_t count = consumer_read_memcpy(&config->consumer,
+					    config->tx_ram,
+					    USB_MAX_PACKET_SIZE,
+					    memcpy_to_usbram);
 
 	btable_ep[config->endpoint].tx_count = count;
 
 	return count;
 }
 
-static size_t usb_read(struct in_stream const *stream,
-		       uint8_t *buffer,
-		       size_t count)
+static void usb_read(struct producer const *producer, size_t count)
 {
 	struct usb_stream_config const *config =
-		DOWNCAST(stream, struct usb_stream_config, in);
-
-	size_t read = QUEUE_REMOVE_UNITS(&config->rx, buffer, count);
+		DOWNCAST(producer, struct usb_stream_config, producer);
 
 	if (config->state->rx_waiting && rx_read(config)) {
 		config->state->rx_waiting = 0;
 
 		STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
-
-		/*
-		 * Make sure that the reader of this queue knows that there is
-		 * more to read.
-		 */
-		in_stream_ready(&config->in);
-
-		/*
-		 * If there is still space left in the callers buffer fill it
-		 * up with the additional bytes just added to the queue.
-		 */
-		if (count - read > 0)
-			read += QUEUE_REMOVE_UNITS(&config->rx,
-						   buffer + read,
-						   count - read);
 	}
-
-	return read;
 }
 
 static int tx_valid(struct usb_stream_config const *config)
@@ -128,14 +61,10 @@ static int tx_valid(struct usb_stream_config const *config)
 	return (STM32_USB_EP(config->endpoint) & EP_TX_MASK) == EP_TX_VALID;
 }
 
-static size_t usb_write(struct out_stream const *stream,
-			uint8_t const *buffer,
-			size_t count)
+static void usb_written(struct consumer const *consumer, size_t count)
 {
 	struct usb_stream_config const *config =
-		DOWNCAST(stream, struct usb_stream_config, out);
-
-	size_t wrote = QUEUE_ADD_UNITS(&config->tx, buffer, count);
+		DOWNCAST(consumer, struct usb_stream_config, consumer);
 
 	/*
 	 * If we are not currently in a valid transmission state and we had
@@ -143,26 +72,24 @@ static size_t usb_write(struct out_stream const *stream,
 	 */
 	if (!tx_valid(config) && tx_write(config))
 		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
-
-	return wrote;
 }
 
-static void usb_flush(struct out_stream const *stream)
+static void usb_flush(struct consumer const *consumer)
 {
 	struct usb_stream_config const *config =
-		DOWNCAST(stream, struct usb_stream_config, out);
+		DOWNCAST(consumer, struct usb_stream_config, consumer);
 
-	while (tx_valid(config) || queue_count(&config->tx))
+	while (tx_valid(config) || queue_count(consumer->queue))
 		;
 }
 
-struct in_stream_ops const usb_stream_in_stream_ops = {
+struct producer_ops const usb_stream_producer_ops = {
 	.read = usb_read,
 };
 
-struct out_stream_ops const usb_stream_out_stream_ops = {
-	.write = usb_write,
-	.flush = usb_flush,
+struct consumer_ops const usb_stream_consumer_ops = {
+	.written = usb_written,
+	.flush   = usb_flush,
 };
 
 void usb_stream_tx(struct usb_stream_config const *config)
@@ -171,8 +98,6 @@ void usb_stream_tx(struct usb_stream_config const *config)
 		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
 	else
 		STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
-
-	out_stream_ready(&config->out);
 }
 
 void usb_stream_rx(struct usb_stream_config const *config)
@@ -193,8 +118,6 @@ void usb_stream_rx(struct usb_stream_config const *config)
 		config->state->rx_waiting = 1;
 		STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
 	}
-
-	in_stream_ready(&config->in);
 }
 
 void usb_stream_reset(struct usb_stream_config const *config)
