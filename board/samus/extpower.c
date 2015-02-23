@@ -119,8 +119,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, cancel_charging_cutoff, HOOK_PRIO_DEFAULT);
 static void batt_soc_change(void)
 {
 	/* If in S0, leave charging alone */
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
 		return;
+	}
 
 	/* Check to disable or enable charging based on batt state of charge */
 	if (!charge_is_disabled && charge_get_percent() == 100) {
@@ -129,6 +131,9 @@ static void batt_soc_change(void)
 	} else if (charge_is_disabled && charge_get_percent() < 100) {
 		charge_is_disabled = 0;
 		host_command_pd_send_status(PD_CHARGE_5V);
+	} else {
+		/* Leave charging alone, but update battery SOC */
+		host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
 	}
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, batt_soc_change, HOOK_PRIO_DEFAULT);
