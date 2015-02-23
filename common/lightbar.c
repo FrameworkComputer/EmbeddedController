@@ -84,6 +84,7 @@ static const struct lightbar_params_v1 default_params = {
 	.tap_gate_delay = 200 * MSEC,		/* segment gating delay */
 	.tap_display_time = 3 * SECOND,		/* total sequence time */
 
+	/* TODO (crosbug.com/p/36996): remove unused tap_pct_red */
 	.tap_pct_red = 14,			/* below this is red */
 	.tap_pct_green = 94,			/* above this is green */
 	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
@@ -903,7 +904,7 @@ static uint32_t sequence_TAP_inner(int dir)
 	while (1) {
 		get_battery_level();
 
-		if (st.battery_percent < st.p.tap_pct_red)
+		if (st.battery_level == 0)
 			base_color = RED;
 		else if (st.battery_percent > st.p.tap_pct_green)
 			base_color = GREEN;
@@ -931,7 +932,7 @@ static uint32_t sequence_TAP_inner(int dir)
 				switch (base_color) {
 				case RED:
 					f_power = range(st.battery_percent, 0,
-							st.p.tap_pct_red - 1);
+						st.p.battery_threshold[0] - 1);
 					break;
 				case YELLOW:
 					f_power = range(st.battery_percent,
