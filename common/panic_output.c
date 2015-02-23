@@ -115,6 +115,20 @@ struct panic_data *panic_get_data(void)
 	return pdata_ptr->magic == PANIC_DATA_MAGIC ? pdata_ptr : NULL;
 }
 
+static void panic_init(void)
+{
+#ifdef CONFIG_HOSTCMD_EVENTS
+	struct panic_data *addr = panic_get_data();
+
+	/* Notify host of new panic event */
+	if (addr && !(addr->flags & PANIC_DATA_FLAG_OLD_HOSTEVENT)) {
+		host_set_single_event(EC_HOST_EVENT_PANIC);
+		addr->flags |= PANIC_DATA_FLAG_OLD_HOSTEVENT;
+	}
+#endif
+}
+DECLARE_HOOK(HOOK_INIT, panic_init, HOOK_PRIO_DEFAULT);
+
 #ifdef CONFIG_CMD_STACKOVERFLOW
 static void stack_overflow_recurse(int n)
 {

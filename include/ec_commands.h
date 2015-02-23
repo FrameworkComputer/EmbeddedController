@@ -279,6 +279,9 @@ enum host_event_code {
 	/* Battery Status flags have changed */
 	EC_HOST_EVENT_BATTERY_STATUS = 23,
 
+	/* EC encountered a panic, triggering a reset */
+	EC_HOST_EVENT_PANIC = 24,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
