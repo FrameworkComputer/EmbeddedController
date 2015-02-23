@@ -15,7 +15,7 @@ build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) uti
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 
 # Don't do a build test on the following boards:
-skip_boards = OWNERS host it8380dev ryu_p1
+skip_boards = OWNERS host it8380dev
 boards := $(filter-out $(skip_boards),$(subst board/,,$(wildcard board/*)))
 
 # Create output directories if necessary

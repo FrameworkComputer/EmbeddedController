@@ -20,7 +20,6 @@ test-list-$(BOARD_SAMUS)=
 
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
-test-list-$(BOARD_RYU_P1)=
 
 # llama has issues when building tests
 test-list-$(BOARD_LLAMA)=
