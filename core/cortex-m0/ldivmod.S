@@ -73,8 +73,12 @@ L_neg_both:
 
 L_num_pos:
 	cmp	r3, #0
-	bge	__aeabi_uldivmod
+	blt	L_den_neg
+	push	{r4, lr}
+	bl	__aeabi_uldivmod	@ offset too big for b / bge
+	pop	{r4, pc}
 
+L_den_neg:
 	push	{r4, lr}
 	movs	r4, #0			@ den = -den
 	rsbs	r2, r2, #0
