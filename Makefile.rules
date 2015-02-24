@@ -53,7 +53,7 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
 cmd_host_test = ./util/run_host_test $* $(silent)
-cmd_date = ./util/getdate.sh > $@
+cmd_date = $(if $(USE_GIT_DATE),cat /dev/null,./util/getdate.sh) > $@
 cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
