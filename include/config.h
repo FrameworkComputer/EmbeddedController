@@ -587,6 +587,15 @@
 
 #undef CONFIG_FLASH_PHYSICAL_SIZE
 #undef CONFIG_FLASH_PROTECT_NEXT_BOOT
+
+/*
+ * Use a bank of flash to store its persistent write protect state.  This
+ * allows ECs with internal flash to emulate something closer to a SPI flash
+ * write protect register.  If this is not defined, write protect state is
+ * maintained solely by the physical flash driver.
+ */
+#define CONFIG_FLASH_PSTATE
+
 #undef CONFIG_FLASH_SIZE
 #undef CONFIG_FLASH_WRITE_IDEAL_SIZE
 #undef CONFIG_FLASH_WRITE_SIZE

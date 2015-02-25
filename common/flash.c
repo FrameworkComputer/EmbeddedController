@@ -23,6 +23,7 @@
 #define CONFIG_FLASH_ERASED_VALUE32 (-1U)
 #endif
 
+#ifdef CONFIG_FLASH_PSTATE
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
@@ -35,6 +36,7 @@ struct persist_state {
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
+#endif
 
 int flash_range_ok(int offset, int size_req, int align)
 {
@@ -74,6 +76,7 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 }
 #endif
 
+#ifdef CONFIG_FLASH_PSTATE
 /**
  * Read persistent state into pstate.
  *
@@ -124,6 +127,7 @@ static int flash_write_pstate(const struct persist_state *pstate)
 	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
 				    (const char *)pstate);
 }
+#endif /* CONFIG_FLASH_PSTATE */
 
 int flash_is_erased(uint32_t offset, int size)
 {
@@ -204,6 +208,7 @@ int flash_erase(int offset, int size)
 
 int flash_protect_at_boot(enum flash_wp_range range)
 {
+#ifdef CONFIG_FLASH_PSTATE
 	struct persist_state pstate;
 	int new_flags = (range != FLASH_WP_NONE) ? PERSIST_FLAG_PROTECT_RO : 0;
 
@@ -243,11 +248,13 @@ int flash_protect_at_boot(enum flash_wp_range range)
 #endif
 
 	return EC_SUCCESS;
+#else
+	return flash_physical_protect_at_boot(range);
+#endif
 }
 
 uint32_t flash_get_protect(void)
 {
-	struct persist_state pstate;
 	uint32_t flags = 0;
 	int not_protected[2] = {0};
 	int i;
@@ -263,23 +270,30 @@ uint32_t flash_get_protect(void)
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
 #endif
 
-	/* Read persistent state of RO-at-boot flag */
-	flash_read_pstate(&pstate);
-	if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
-		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+#ifdef CONFIG_FLASH_PSTATE
+	{
+		/* Read persistent state of RO-at-boot flag */
+		struct persist_state pstate;
+		flash_read_pstate(&pstate);
+		if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
+			flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+	}
+#endif
 
 	/* Scan flash protection */
 	for (i = 0; i < PHYSICAL_BANKS; i++) {
-		/*
-		 * Is this bank part of RO?  Needs to handle PSTATE not
-		 * immediately following RO code, since it doesn't on link.
-		 */
-		int is_ro = ((i >= RO_BANK_OFFSET &&
-			      i < RO_BANK_OFFSET + RO_BANK_COUNT) ||
-			     (i >= PSTATE_BANK &&
-			      i < PSTATE_BANK + PSTATE_BANK_COUNT)) ? 1 : 0;
-		int bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
-				 EC_FLASH_PROTECT_ALL_NOW);
+		/* Is this bank part of RO */
+		int is_ro = (i >= RO_BANK_OFFSET &&
+			     i < RO_BANK_OFFSET + RO_BANK_COUNT) ? 1 : 0;
+		int bank_flag;
+
+#ifdef CONFIG_FLASH_PSTATE
+		/* PSTATE acts like part of RO; protected at same time */
+		if (i >= PSTATE_BANK && i < PSTATE_BANK + PSTATE_BANK_COUNT)
+			is_ro = 1;
+#endif
+		bank_flag = (is_ro ? EC_FLASH_PROTECT_RO_NOW :
+			     EC_FLASH_PROTECT_ALL_NOW);
 
 		if (flash_physical_get_protect(i)) {
 			/* At least one bank in the region is protected */
