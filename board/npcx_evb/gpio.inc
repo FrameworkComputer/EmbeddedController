@@ -7,7 +7,7 @@
 
 /* TODO: Redefine debug 2 inputs */
 GPIO(RECOVERY_L,           0, 0, GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
-GPIO(WP_L,                 0, 1, GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
+GPIO(WP_L,                 9, 3, GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
 
 /* For testing 8042 commands, we need the following GPIOs */
 /* TODO: Redefine 4 inputs */

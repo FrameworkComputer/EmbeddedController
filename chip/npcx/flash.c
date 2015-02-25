@@ -179,6 +179,15 @@ static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 	if (sec && bp == 6)
 		return EC_ERROR_INVAL;
 
+	/*
+	 * If SRP0 is not set, flash is not protected because status register
+	 * can be rewritten.
+	 */
+	if (!(sr1 & SPI_FLASH_SR1_SRP0)) {
+		*start = *len = 0;
+		return EC_SUCCESS;
+	}
+
 	/* Determine granularity (4kb sector or 64kb block) */
 	/* Computation using 2 * 1024 is correct */
 	size = sec ? (2 * 1024) : (64 * 1024);
@@ -273,6 +282,9 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 	*sr1 |= (sec ? SPI_FLASH_SR1_SEC : 0) | (tb ? SPI_FLASH_SR1_TB : 0)
 		| (bp << 2);
 	*sr2 |= (cmp ? SPI_FLASH_SR2_CMP : 0);
+
+	/* Set SRP0 so status register can't be changed */
+	*sr1 |= SPI_FLASH_SR1_SRP0;
 
 	return EC_SUCCESS;
 }
@@ -372,8 +384,10 @@ void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 	/* Chip Select up */
 	flash_cs_level(1);
 }
+
 /*****************************************************************************/
 /* Physical layer APIs */
+
 int flash_physical_read(int offset, int size, char *data)
 {
 	int dest_addr = offset;
@@ -588,6 +602,16 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
+	/* Check if RO section is protected in status register */
+	if (flash_check_prot_reg(RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
+				 RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE))
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/*
+	 * TODO: If status register protects a range, but SRP0 is not set,
+	 * flags should indicate EC_FLASH_PROTECT_ERROR_INCONSISTENT.
+	 */
+
 	/* Read all-protected state from our shadow copy */
 	if (all_protected)
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
@@ -597,17 +621,30 @@ uint32_t flash_physical_get_protect_flags(void)
 
 int flash_physical_protect_now(int all)
 {
-	if (all) {
-		/* Protect the entire flash */
+	if (all)
 		all_protected = 1;
-		flash_write_prot_reg(0, CONFIG_FLASH_PHYSICAL_SIZE);
-	} else {
-		/* Protect the read-only section */
-		flash_write_prot_reg(RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
-				RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
-	}
+
+	/* TODO: if all, disable SPI interface */
 
 	return EC_SUCCESS;
+}
+
+
+int flash_physical_protect_at_boot(enum flash_wp_range range)
+{
+	switch (range) {
+	case FLASH_WP_NONE:
+		/* Clear protection bits in status register */
+		return flash_set_status_for_prot(0, 0);
+	case FLASH_WP_RO:
+		/* Protect read-only */
+		return flash_write_prot_reg(
+			    RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
+			    RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
+	case FLASH_WP_ALL:
+	default:
+		return EC_ERROR_INVAL;
+	}
 }
 
 uint32_t flash_physical_get_valid_flags(void)
@@ -641,8 +678,6 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 
 int flash_pre_init(void)
 {
-	uint32_t reset_flags, prot_flags, unwanted_prot_flags;
-
 	/* Enable FIU interface */
 	flash_pinmux(1);
 
@@ -650,50 +685,6 @@ int flash_pre_init(void)
 	/* Disable tristate all the time */
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 #endif
-
-	reset_flags = system_get_reset_flags();
-	prot_flags = flash_get_protect();
-	unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
-			EC_FLASH_PROTECT_ERROR_INCONSISTENT;
-
-	/*
-	 * If we have already jumped between images, an earlier image could
-	 * have applied write protection.  Nothing additional needs to be done.
-	 */
-	if (reset_flags & RESET_FLAG_SYSJUMP)
-		return EC_SUCCESS;
-
-	/* Handle flash write-protection */
-	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
-		/*
-		 * Write protect is asserted.  If we want RO flash protected,
-		 * protect it now.
-		 */
-		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
-				!(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
-					EC_FLASH_PROTECT_RO_NOW);
-			if (rv)
-				return rv;
-
-			/* Re-read flags */
-			prot_flags = flash_get_protect();
-		}
-
-		/* Update all-now flag if all flash is protected */
-		if (prot_flags & EC_FLASH_PROTECT_ALL_NOW)
-			all_protected = 1;
-	} else {
-		/* Don't want RO flash protected */
-		unwanted_prot_flags |= EC_FLASH_PROTECT_RO_NOW;
-	}
-
-	/* If there are no unwanted flags, done */
-	if (!(prot_flags & unwanted_prot_flags))
-		return EC_SUCCESS;
-
-	/* Otherwise, clear the flash protection bits of status registers */
-	flash_set_status_for_prot(0, 0);
 
 	return EC_SUCCESS;
 }
