@@ -970,14 +970,6 @@
 /* Compile common code for AP power state machine */
 #undef CONFIG_POWER_COMMON
 
-/*
- * The EC stores persistent state information for flash write protect in a
- * block of flash.  If this option is defined, the information is in the last
- * bank of flash, instead of the last bank in the nominally read-only section
- * of flash.
- */
-#undef CONFIG_PSTATE_AT_END
-
 /* Use part of the EC's data EEPROM to hold persistent storage for the AP. */
 #undef CONFIG_PSTORE
 

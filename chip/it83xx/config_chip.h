@@ -69,23 +69,13 @@
  */
 #define CONFIG_FW_PSTATE_SIZE		CONFIG_FLASH_BANK_SIZE
 
-#ifdef CONFIG_PSTATE_AT_END
-/* PSTATE is at end of flash */
-#define CONFIG_FW_RO_SIZE		CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_PSTATE_OFF		(CONFIG_FLASH_PHYSICAL_SIZE	\
-					 - CONFIG_FW_PSTATE_SIZE)
-/* Don't claim PSTATE is part of flash */
-#define CONFIG_FLASH_SIZE		CONFIG_FW_PSTATE_OFF
-
-#else
 /* PSTATE immediately follows RO, in the first half of flash */
 #define CONFIG_FW_RO_SIZE		(CONFIG_FW_IMAGE_SIZE		\
 					 - CONFIG_FW_PSTATE_SIZE)
 #define CONFIG_FW_PSTATE_OFF		CONFIG_FW_RO_SIZE
 #define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
-#endif
 
-/* Either way, RW firmware is one firmware image offset from the start */
+/* RW firmware is one firmware image offset from the start */
 #define CONFIG_FW_RW_OFF		CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_RW_SIZE		CONFIG_FW_IMAGE_SIZE
 
