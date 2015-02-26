@@ -16,21 +16,17 @@
 #include "ec_commands.h"
 #include <unistd.h>
 
-#define DPRINTF(fmt, ...) \
-	do {\
-		if (debug)\
-			printf("SBFW: " fmt, ## __VA_ARGS__);\
-	} while (0)
-
-/* Debug EC Smart Battery Firmwarwe Update */
-static int debug;
-
 enum {
 	BEGIN_DELAY  = 0,
 	SETUP_DELAY  = 1,
 	WRITE_DELAY  = 2,
 	END_DELAY    = 3,
 	NUM_DELAYS   = 4
+};
+
+enum {
+	F_AC_PRESENT    = 1,/* AC Present */
+	F_VERSION_CHECK = 2 /* do firmware version check */
 };
 
 const char *delay_names[NUM_DELAYS] = {
@@ -57,6 +53,7 @@ enum fw_update_state {
 
 #define MAX_FW_IMAGE_NAME_SIZE 80
 struct fw_update_ctrl {
+	uint32_t flags; /* fw update control flags */
 	int size;    /* size of battery firmware image */
 	char *ptr;   /* current read pointer of the firmware image */
 	int  offset; /* current block write offset */
@@ -112,24 +109,26 @@ static int get_key_value(const char *filename,
 static void print_battery_firmware_image_hdr(
 	struct sb_fw_header *hdr)
 {
-	printf("%c%c%c%c hdr_ver:%04X major_minor:%04X\n",
+	printf("Latest Battery Firmware:\n");
+	printf("\t%c%c%c%c hdr_ver:%04x major_minor:%04x\n",
 		hdr->signature[0],
 		hdr->signature[1],
 		hdr->signature[2],
 		hdr->signature[3],
 		hdr->hdr_version, hdr->pkg_version_major_minor);
 
-	printf("vendor_id:%04X battery_type:%04X fw_ver:%04X tbl_ver:%04X\n",
+	printf("\tmaker:0x%04x hwid:0x%04x fw_ver:0x%04x tbl_ver:0x%04x\n",
 		hdr->vendor_id, hdr->battery_type, hdr->fw_version,
 		hdr->data_table_version);
 
-	printf("bin off:%08X size:%08X chk_sum:%02X\n",
+	printf("\tbinary offset:0x%08x size:0x%08x chk_sum:0x%02x\n",
 		hdr->fw_binary_offset, hdr->fw_binary_size, hdr->checksum);
 }
 
 static void print_info(struct sb_fw_update_info *info)
 {
-	printf("maker_id:0x%X hw_id:0x%X fw_ver:0x%X d_ver:0x%X\n",
+	printf("\nCurrent Battery Firmware:\n");
+	printf("\tmaker:0x%04x hwid:0x%04x fw_ver:0x%04x tbl_ver:0x%04x\n",
 		info->maker_id,
 		info->hardware_id,
 		info->fw_version,
@@ -253,13 +252,11 @@ static char *read_fw_image(struct fw_update_ctrl *fw_update)
 	fw_update->size = size;
 	fw_update->ptr = buf;
 	fw_update->fw_img_hdr = (struct sb_fw_header *)buf;
-	if (debug)
-		print_battery_firmware_image_hdr(fw_update->fw_img_hdr);
+	print_battery_firmware_image_hdr(fw_update->fw_img_hdr);
 
 	if (fw_update->fw_img_hdr->fw_binary_offset >= fw_update->size ||
 		fw_update->size < 256) {
-		fprintf(stderr,
-			"Load Firmware Image[%s] Error offset:%d size:%d\n",
+		printf("Load Firmware Image[%s] Error offset:%d size:%d\n",
 			fw_update->image_name,
 			fw_update->fw_img_hdr->fw_binary_offset,
 			fw_update->size);
@@ -308,8 +305,7 @@ static int get_info(struct sb_fw_update_info *info)
 		param, sizeof(struct ec_sb_fw_update_header),
 		resp, SB_FW_UPDATE_CMD_INFO_SIZE);
 	if (rv < 0) {
-		fprintf(stderr,
-			"Firmware Update Get Info Error\n");
+		printf("Firmware Update Get Info Error\n");
 		return -EC_RES_ERROR;
 	}
 	memcpy(info, resp->info.data, SB_FW_UPDATE_CMD_INFO_SIZE);
@@ -326,8 +322,7 @@ static int send_subcmd(int subcmd)
 	rv = ec_command(EC_CMD_SB_FW_UPDATE, 0,
 		param, sizeof(struct ec_sb_fw_update_header), NULL, 0);
 	if (rv < 0) {
-		fprintf(stderr,
-			"Firmware Update subcmd:%d Error\n", subcmd);
+		printf("Firmware Update subcmd:%d Error\n", subcmd);
 		return -EC_RES_ERROR;
 	}
 	return EC_RES_SUCCESS;
@@ -345,8 +340,7 @@ static int write_block(const uint8_t *ptr, int bsize)
 	rv = ec_command(EC_CMD_SB_FW_UPDATE, 0,
 		param, sizeof(struct ec_params_sb_fw_update), NULL, 0);
 	if (rv < 0) {
-		fprintf(stderr,
-		"Firmware Update Write Error offset@%p\n", ptr);
+		printf("Firmware Update Write Error offset@%p\n", ptr);
 		return -EC_RES_ERROR;
 	}
 	return EC_RES_SUCCESS;
@@ -381,9 +375,6 @@ static enum fw_update_state s0_read_status(struct fw_update_ctrl *fw_update)
 		return S10_TERMINAL;
 	}
 
-	if (debug)
-		print_status(&fw_update->status);
-
 	if (!((fw_update->status.abnormal_condition == 0)
 		&& (fw_update->status.fw_update_supported == 1))) {
 		log_msg(fw_update, S0_READ_STATUS, "Unsupported");
@@ -414,9 +405,10 @@ static enum fw_update_state s1_read_battery_info(
 		log_msg(fw_update, S1_READ_INFO, "Interface Error");
 		return S10_TERMINAL;
 	}
+	print_info(&fw_update->info);
 
 	sprintf(fw_update->image_name,
-			"/lib/firmware/battery/maker.%04X.hwid.%04X.cfg",
+			"/lib/firmware/battery/maker.%04x.hwid.%04x.cfg",
 			fw_update->info.maker_id,
 			fw_update->info.hardware_id);
 	if (-1 == get_key_value(fw_update->image_name,
@@ -427,7 +419,7 @@ static enum fw_update_state s1_read_battery_info(
 	}
 
 	sprintf(fw_update->image_name,
-			"/lib/firmware/battery/maker.%04X.hwid.%04X.bin",
+			"/lib/firmware/battery/maker.%04x.hwid.%04x.bin",
 			fw_update->info.maker_id,
 			fw_update->info.hardware_id);
 
@@ -436,9 +428,6 @@ static enum fw_update_state s1_read_battery_info(
 		log_msg(fw_update, S1_READ_INFO, "Open Image File");
 		return S10_TERMINAL;
 	}
-
-	if (debug)
-		print_info(&fw_update->info);
 
 	rv = get_status(&fw_update->status);
 	if (rv) {
@@ -449,19 +438,22 @@ static enum fw_update_state s1_read_battery_info(
 
 	rv = check_if_valid_fw(fw_update->fw_img_hdr, &fw_update->info);
 	if (rv == 0) {
-		print_info(&fw_update->info);
-		print_battery_firmware_image_hdr(fw_update->fw_img_hdr);
 		fw_update->rv = EC_RES_INVALID_PARAM;
 		log_msg(fw_update, S1_READ_INFO, "Invalid Firmware");
 		return S10_TERMINAL;
 	}
 
 	rv = check_if_need_update_fw(fw_update->fw_img_hdr, &fw_update->info);
-	if (rv == 0) {
-		print_info(&fw_update->info);
-		print_battery_firmware_image_hdr(fw_update->fw_img_hdr);
+	if (rv == 0 && (fw_update->flags & F_VERSION_CHECK)) {
 		fw_update->rv = 0;
 		log_msg(fw_update, S1_READ_INFO, "Latest Firmware");
+		return S10_TERMINAL;
+	}
+
+	if (!(fw_update->flags & F_AC_PRESENT)) {
+		fw_update->rv = 0;
+		log_msg(fw_update, S1_READ_INFO,
+			"Require AC Adapter Counnected.");
 		return S10_TERMINAL;
 	}
 	return S2_WRITE_PREPARE;
@@ -520,9 +512,6 @@ static enum fw_update_state s5_read_status(struct fw_update_ctrl *fw_update)
 	fw_update->ptr += fw_update->fw_img_hdr->fw_binary_offset;
 	fw_update->size -= fw_update->fw_img_hdr->fw_binary_offset;
 	fw_update->offset = 0;
-
-	DPRINTF("Write size 0x%X total_size:0x%X\n",
-		fw_update->step_size, fw_update->size);
 
 	return S6_WRITE_BLOCK;
 }
@@ -700,36 +689,49 @@ int main(int argc, char *argv[])
 {
 	int rv = 0, interfaces = COMM_LPC;
 	int protect = 1;
+	int version_check = 1;
+	uint8_t val = 0;
 	if (argc > 3) {
-		fprintf(stderr,
-			"Usage: %s [protect] [debug]\n"
-			"	protect: 0 or 1\n"
-			"	debug: 0 or 1\n", argv[0]);
+		printf("Usage: %s [protect] [version_check]\n"
+			"	protect: 0 or 1, default 1\n"
+			"	version_check: 0 or 1, default 1\n",
+			argv[0]);
 		return -1;
 	}
 
 	if (argc >= 2)
 		protect = atoi(argv[1]);
 
-	if (argc == 3)
-		debug = atoi(argv[2]);
-	else
-		debug = 0;
+	if (argc >= 3)
+		version_check = atoi(argv[2]);
 
 	if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
-		fprintf(stderr, "Could not acquire GEC lock.\n");
-		exit(1);
+		printf("Could not acquire GEC lock.\n");
+		return -1;
 	}
 
 	if (comm_init(interfaces, NULL)) {
-		fprintf(stderr, "Couldn't find EC\n");
+		printf("Couldn't find EC\n");
 		goto out;
 	}
 
+	fw_update.flags = 0;
+	rv = ec_readmem(EC_MEMMAP_BATT_FLAG, sizeof(val), &val);
+	if (rv <= 0) {
+		printf("EC Memmap read error:%d\n", rv);
+		goto out;
+	}
+
+	if (version_check)
+		fw_update.flags |= F_VERSION_CHECK;
+
+	if (val & EC_BATT_FLAG_AC_PRESENT)
+		fw_update.flags |= F_AC_PRESENT;
+
 	rv = ec_sb_firmware_update(&fw_update);
-	if (rv)
-		printf("\n\nFirmware:%s Fail [%s]\n",
-			fw_update.image_name,
+	printf("Battery Firmware Update:0x%02x %s%s\n",
+			fw_update.flags,
+			((rv) ? "FAIL " : " "),
 			fw_update.msg);
 
 	/* Update battery firmware update interface to be protected */
