@@ -11,7 +11,7 @@ CORE:=cortex-m0
 CFLAGS_CPU+=-march=armv6-m -mcpu=cortex-m0
 
 chip-y+=gpio.o system.o uart.o
-chip-y+=jtag.o watchdog.o
+chip-y+=jtag.o watchdog.o ppi.o
 
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer.o clock.o
 chip-$(CONFIG_I2C)+=i2c.o
