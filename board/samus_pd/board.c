@@ -160,6 +160,7 @@ void set_usb_switches(int port, int open)
 void usb_charger_task(void)
 {
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
+	int vbus_source = (port == 0 ? GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN);
 	int device_type, charger_status;
 	struct charge_port_info charge;
 	int type;
@@ -169,9 +170,14 @@ void usb_charger_task(void)
 		/* Read interrupt register to clear on chip */
 		pi3usb9281_get_interrupts(port);
 
-		/* Set device type */
-		device_type = pi3usb9281_get_device_type(port);
-		charger_status = pi3usb9281_get_charger_status(port);
+		if (gpio_get_level(vbus_source)) {
+			/* If we're sourcing VBUS then we're not charging */
+			device_type = charger_status = 0;
+		} else {
+			/* Set device type */
+			device_type = pi3usb9281_get_device_type(port);
+			charger_status = pi3usb9281_get_charger_status(port);
+		}
 
 		/* Debounce pin plug order if we detect a charger */
 		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
@@ -213,19 +219,19 @@ void usb_charger_task(void)
 			charger_status = pi3usb9281_get_charger_status(port);
 		}
 
-		if (PI3USB9281_CHG_STATUS_ANY(charger_status))
-			type = CHARGE_SUPPLIER_PROPRIETARY;
-		else if (device_type & PI3USB9281_TYPE_CDP)
-			type = CHARGE_SUPPLIER_BC12_CDP;
-		else if (device_type & PI3USB9281_TYPE_DCP)
-			type = CHARGE_SUPPLIER_BC12_DCP;
-		else if (device_type & PI3USB9281_TYPE_SDP)
-			type = CHARGE_SUPPLIER_BC12_SDP;
-		else
-			type = CHARGE_SUPPLIER_OTHER;
-
 		/* Attachment: decode + update available charge */
 		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
+			if (PI3USB9281_CHG_STATUS_ANY(charger_status))
+				type = CHARGE_SUPPLIER_PROPRIETARY;
+			else if (device_type & PI3USB9281_TYPE_CDP)
+				type = CHARGE_SUPPLIER_BC12_CDP;
+			else if (device_type & PI3USB9281_TYPE_DCP)
+				type = CHARGE_SUPPLIER_BC12_DCP;
+			else if (device_type & PI3USB9281_TYPE_SDP)
+				type = CHARGE_SUPPLIER_BC12_SDP;
+			else
+				type = CHARGE_SUPPLIER_OTHER;
+
 			charge.current = pi3usb9281_get_ilim(device_type,
 							     charger_status);
 			charge_manager_update_charge(type, port, &charge);
