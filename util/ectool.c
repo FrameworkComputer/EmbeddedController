@@ -3203,6 +3203,9 @@ static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 	case USB_CHG_TYPE_OTHER:
 		printf(" Other");
 		break;
+	case USB_CHG_TYPE_VBUS:
+		printf(" VBUS");
+		break;
 	}
 	printf(" %dmV max %dmV / %dmA",
 		r->meas.voltage_now, r->meas.voltage_max, r->meas.current_max);

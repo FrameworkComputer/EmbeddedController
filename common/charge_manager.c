@@ -183,6 +183,9 @@ static void charge_manager_fill_power_info(int port,
 		case CHARGE_SUPPLIER_BC12_SDP:
 			r->type = USB_CHG_TYPE_BC12_SDP;
 			break;
+		case CHARGE_SUPPLIER_VBUS:
+			r->type = USB_CHG_TYPE_VBUS;
+			break;
 		default:
 			r->type = USB_CHG_TYPE_OTHER;
 		}
