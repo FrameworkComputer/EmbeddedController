@@ -2907,7 +2907,7 @@ void pd_send_hpd(int port, enum hpd_event hpd)
 		return;
 
 	data[0] = VDO_DP_STATUS((hpd == hpd_irq),  /* IRQ_HPD */
-				(hpd == hpd_high), /* HPD_HI|LOW */
+				(hpd != hpd_low),  /* HPD_HI|LOW */
 				0,		      /* request exit DP */
 				0,		      /* request exit USB */
 				0,		      /* MF pref */
