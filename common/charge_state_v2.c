@@ -981,12 +981,12 @@ static int charge_command_charge_control(struct host_cmd_handler_args *args)
 
 	rv = charge_force_idle(p->mode != CHARGE_CONTROL_NORMAL);
 	if (rv != EC_SUCCESS)
-		return rv;
+		return EC_RES_ERROR;
 
 #ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
 	rv = board_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
 	if (rv != EC_SUCCESS)
-		return rv;
+		return EC_RES_ERROR;
 #endif
 
 	return EC_RES_SUCCESS;
