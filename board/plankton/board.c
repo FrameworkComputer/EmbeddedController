@@ -217,6 +217,20 @@ DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
 			"Set Plankton type-C port state",
 			NULL);
 
+int board_in_hub_mode(void)
+{
+	int ret;
+	int level;
+
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x40, 6, PCA9534_INPUT);
+	if (ret)
+		return -1;
+	ret = pca9534_get_level(I2C_PORT_MASTER, 0x40, 6, &level);
+	if (ret)
+		return -1;
+	return level;
+}
+
 static int board_usb_hub_reset(void)
 {
 	int ret;
@@ -233,16 +247,7 @@ static int board_usb_hub_reset(void)
 
 void board_maybe_reset_usb_hub(void)
 {
-	int ret;
-	int level;
-
-	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x40, 6, PCA9534_INPUT);
-	if (ret)
-		return;
-	ret = pca9534_get_level(I2C_PORT_MASTER, 0x40, 6, &level);
-	if (ret)
-		return;
-	if (level == 1)
+	if (board_in_hub_mode() == 1)
 		board_usb_hub_reset();
 }
 

@@ -149,6 +149,9 @@ void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
 
 void pd_check_dr_role(int port, int dr_role, int partner_dr_swap)
 {
+	/* If Plankton is in USB hub mode, always act as UFP */
+	if (board_in_hub_mode() && dr_role == PD_ROLE_DFP && partner_dr_swap)
+		pd_request_data_swap(port);
 }
 
 int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)

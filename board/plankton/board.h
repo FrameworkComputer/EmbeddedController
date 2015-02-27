@@ -79,6 +79,13 @@ void board_update_fake_adc_value(int host_mode);
 /* Set pull-up/pull-down on CC lines */
 void board_pd_set_host_mode(int enable);
 
+/*
+ * Whether the board is in USB hub mode or not
+ *
+ * @return 1 when in hub mode, 0 when not, and -1 on error.
+ */
+int board_in_hub_mode(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
