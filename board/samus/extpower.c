@@ -398,8 +398,12 @@ void extpower_task(void)
 	while (1) {
 		if (task_wait_event(CHARGE_WEDGE_CHECK_INTERVAL) ==
 		    TASK_EVENT_TIMER) {
-			/* Periodically check if charge circuit is wedged */
-			check_charge_wedged();
+			/*
+			 * If we are NOT purposely discharging on AC, then
+			 * periodically check if charge circuit is wedged.
+			 */
+			if (!board_is_discharging_on_ac())
+				check_charge_wedged();
 		} else {
 			/* Must have received power change interrupt */
 			extpower = extpower_is_present();

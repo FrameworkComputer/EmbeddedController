@@ -177,6 +177,7 @@ enum als_id {
 
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
+int board_is_discharging_on_ac(void);
 
 /* Backboost detected interrupt */
 void bkboost_det_interrupt(enum gpio_signal signal);
