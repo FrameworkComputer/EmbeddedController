@@ -36,6 +36,15 @@
 /* Default input current limit when VBUS is present */
 #define DEFAULT_CURR_LIMIT            500  /* mA */
 
+/*
+ * When battery is high, system may not be pulling full current. Also, when
+ * high AND input voltage is below boost bypass, then limit input current
+ * limit to HIGH_BATT_LIMIT_CURR_MA to reduce audible ringing.
+ */
+#define HIGH_BATT_THRESHOLD 90
+#define HIGH_BATT_LIMIT_BOOST_BYPASS_MV 11000
+#define HIGH_BATT_LIMIT_CURR_MA 2000
+
 /* Chipset power state */
 static enum power_state ps;
 
@@ -43,11 +52,18 @@ static enum power_state ps;
 static int batt_soc;
 
 /* Default to 5V charging allowed for dead battery case */
-enum pd_charge_state charge_state = PD_CHARGE_5V;
+static enum pd_charge_state charge_state = PD_CHARGE_5V;
 
-/* PD MCU status and host event status for host command */
-static struct ec_response_pd_status pd_status;
-static struct ec_response_host_event_status host_event_status;
+/*
+ * PD MCU status and host event status for host command
+ * Note: these vars must be aligned on 4-byte boundary because we pass the
+ * address to atomic_ functions which use assembly to access them.
+ */
+static struct ec_response_pd_status pd_status __aligned(4);
+static struct ec_response_host_event_status host_event_status __aligned(4);
+
+/* Desired input current limit */
+static int desired_charge_rate_ma = -1;
 
 /*
  * Store the state of our USB data switches so that they can be restored
@@ -621,10 +637,6 @@ void board_flip_usb_mux(int port)
 	gpio_set_level(usb_mux->ss2_dp_mode, usb_polarity);
 }
 
-void board_update_battery_soc(int soc)
-{
-	batt_soc = soc;
-}
 
 int board_get_battery_soc(void)
 {
@@ -742,7 +754,7 @@ int board_get_ramp_current_limit(int supplier)
  */
 int board_is_consuming_full_charge(void)
 {
-	return batt_soc >= 1 && batt_soc < 95;
+	return batt_soc >= 1 && batt_soc < HIGH_BATT_THRESHOLD;
 }
 
 /*
@@ -796,20 +808,21 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 	return vbus_sum < (VBUS_STABLE_SAMPLE_COUNT * VBUS_LOW_THRESHOLD_MV);
 }
 
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param charge_ma     Desired charge limit (mA).
- */
-void board_set_charge_limit(int charge_ma)
+static int board_update_charge_limit(int charge_ma)
 {
-	static int last_charge_ma = -1;
+	static int actual_charge_rate_ma = -1;
+
+	desired_charge_rate_ma = charge_ma;
+
+	if (batt_soc >= HIGH_BATT_THRESHOLD &&
+	    adc_read_channel(ADC_VBUS) < HIGH_BATT_LIMIT_BOOST_BYPASS_MV)
+		charge_ma = MIN(charge_ma, HIGH_BATT_LIMIT_CURR_MA);
 
 	/* if current hasn't changed, don't do anything */
-	if (charge_ma == last_charge_ma)
-		return;
+	if (charge_ma == actual_charge_rate_ma)
+		return 0;
 
-	last_charge_ma = charge_ma;
+	actual_charge_rate_ma = charge_ma;
 
 #ifdef CONFIG_PWM
 	int pwm_duty = MA_TO_PWM(charge_ma);
@@ -823,9 +836,27 @@ void board_set_charge_limit(int charge_ma)
 
 	pd_status.curr_lim_ma = MAX(0, charge_ma -
 					INPUT_CURRENT_LIMIT_OFFSET_MA);
-	pd_send_ec_int();
 
 	CPRINTS("New ilim %d", charge_ma);
+	return 1;
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param charge_ma     Desired charge limit (mA).
+ */
+void board_set_charge_limit(int charge_ma)
+{
+	/* Update current limit and notify EC if it changed */
+	if (board_update_charge_limit(charge_ma))
+		pd_send_ec_int();
+}
+
+static void board_update_battery_soc(int soc)
+{
+	batt_soc = soc;
+	board_update_charge_limit(desired_charge_rate_ma);
 }
 
 /* Send host event up to AP */
