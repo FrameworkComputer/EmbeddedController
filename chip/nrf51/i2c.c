@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ppi.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -20,6 +21,9 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 #define I2C_TIMEOUT 20000
+
+/* Keep track of the PPI channel used for each port */
+static int i2c_ppi_chan[] = {-1, -1};
 
 static void i2c_init_port(unsigned int port);
 
@@ -40,10 +44,10 @@ static void i2c_init_port(unsigned int port)
 	NRF51_TWI_PSELSDA(port) = NRF51_TWI_SDA_PIN(port);
 	NRF51_TWI_FREQUENCY(port) = NRF51_TWI_FREQ(port);
 
-	NRF51_PPI_CHENCLR = 1 << (NRF51_TWI_PPI_CHAN(port));
+	NRF51_PPI_CHENCLR = 1 << i2c_ppi_chan[port];
 
-	NRF51_PPI_EEP(NRF51_TWI_PPI_CHAN(port)) = (uint32_t)&NRF51_TWI_BB(port);
-	NRF51_PPI_TEP(NRF51_TWI_PPI_CHAN(port)) =
+	NRF51_PPI_EEP(i2c_ppi_chan[port]) = (uint32_t)&NRF51_TWI_BB(port);
+	NRF51_PPI_TEP(i2c_ppi_chan[port]) =
 		(uint32_t)&NRF51_TWI_SUSPEND(port);
 
 	/* Master enable */
@@ -55,12 +59,18 @@ static void i2c_init_port(unsigned int port)
 
 static void i2c_init(void)
 {
-	int i;
+	int i, rv;
 
 	gpio_config_module(MODULE_I2C, 1);
 
-	for (i = 0; i < i2c_ports_used; i++)
-		i2c_init_port(i);
+	for (i = 0; i < i2c_ports_used; i++) {
+		if (i2c_ppi_chan[i] == -1) {
+			rv = ppi_request_channel(&i2c_ppi_chan[i]);
+			ASSERT(rv == EC_SUCCESS);
+
+			i2c_init_port(i);
+		}
+	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
@@ -185,12 +195,12 @@ static int i2c_master_read(int port, int slave_addr, uint8_t *data, int size)
 	NRF51_TWI_ADDRESS(port) = slave_addr >> 1;
 
 	if (size == 1) /* Last byte: stop after this one. */
-		NRF51_PPI_TEP(NRF51_TWI_PPI_CHAN(port)) =
+		NRF51_PPI_TEP(i2c_ppi_chan[port]) =
 			(uint32_t)&NRF51_TWI_STOP(port);
 	else
-		NRF51_PPI_TEP(NRF51_TWI_PPI_CHAN(port)) =
+		NRF51_PPI_TEP(i2c_ppi_chan[port]) =
 			(uint32_t)&NRF51_TWI_SUSPEND(port);
-	NRF51_PPI_CHENSET = 1 << NRF51_TWI_PPI_CHAN(port);
+	NRF51_PPI_CHENSET = 1 << i2c_ppi_chan[port];
 
 	NRF51_TWI_RXDRDY(port) = 0;
 	NRF51_TWI_STARTRX(port) = 1;
@@ -213,7 +223,7 @@ static int i2c_master_read(int port, int slave_addr, uint8_t *data, int size)
 
 		/* Second to the last byte: stop next time. */
 		if (curr_byte == size-2)
-			NRF51_PPI_TEP(NRF51_TWI_PPI_CHAN(port)) =
+			NRF51_PPI_TEP(i2c_ppi_chan[port]) =
 				(uint32_t)&NRF51_TWI_STOP(port);
 
 		/*
@@ -237,7 +247,7 @@ static int i2c_master_read(int port, int slave_addr, uint8_t *data, int size)
 
 	NRF51_TWI_STOP(port) = 0;
 
-	NRF51_PPI_CHENCLR = 1 << NRF51_TWI_PPI_CHAN(port);
+	NRF51_PPI_CHENCLR = 1 << i2c_ppi_chan[port];
 
 	return EC_SUCCESS;
 }
