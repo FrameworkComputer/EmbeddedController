@@ -26,6 +26,8 @@
 #define PI3USB9281_CTRL_SWITCH_AUTO (1 << 4)
 /* Bits 5 thru 7 are read X, write 0 */
 #define PI3USB9281_CTRL_MASK        0x1f
+/* Bits 1 and 3 are read 1, write 1 */
+#define PI3USB9281_CTRL_RSVD_1      0x0a
 
 #define PI3USB9281_PIN_MANUAL_VBUS  (3 << 0)
 #define PI3USB9281_PIN_MANUAL_DP    (1 << 2)

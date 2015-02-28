@@ -73,6 +73,14 @@ int pi3usb9281_write(uint8_t chip_idx, uint8_t reg, uint8_t val)
 	return res;
 }
 
+/* Write control register, taking care to correctly set reserved bits. */
+static int pi3usb9281_write_ctrl(uint8_t chip_idx, uint8_t ctrl)
+{
+	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
+				(ctrl & PI3USB9281_CTRL_MASK) |
+				PI3USB9281_CTRL_RSVD_1);
+}
+
 int pi3usb9281_enable_interrupts(uint8_t chip_idx)
 {
 	uint8_t ctrl = pi3usb9281_read(chip_idx, PI3USB9281_REG_CONTROL);
@@ -80,9 +88,7 @@ int pi3usb9281_enable_interrupts(uint8_t chip_idx)
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
-	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-				ctrl & ~PI3USB9281_CTRL_INT_DIS &
-				PI3USB9281_CTRL_MASK);
+	return pi3usb9281_write_ctrl(chip_idx, ctrl & ~PI3USB9281_CTRL_INT_DIS);
 }
 
 int pi3usb9281_disable_interrupts(uint8_t chip_idx)
@@ -93,9 +99,7 @@ int pi3usb9281_disable_interrupts(uint8_t chip_idx)
 	if (ctrl == 0xee)
 		return EC_ERROR_UNKNOWN;
 
-	rv = pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-			      (ctrl | PI3USB9281_CTRL_INT_DIS) &
-			      PI3USB9281_CTRL_MASK);
+	rv = pi3usb9281_write_ctrl(chip_idx, ctrl | PI3USB9281_CTRL_INT_DIS);
 	pi3usb9281_get_interrupts(chip_idx);
 	return rv;
 }
@@ -190,8 +194,7 @@ int pi3usb9281_set_switch_manual(uint8_t chip_idx, int val)
 	else
 		ctrl |= PI3USB9281_CTRL_AUTO;
 
-	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-				ctrl & PI3USB9281_CTRL_MASK);
+	return pi3usb9281_write_ctrl(chip_idx, ctrl);
 }
 
 int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t val)
@@ -211,8 +214,7 @@ int pi3usb9281_set_switches(uint8_t chip_idx, int open)
 	else
 		ctrl |= PI3USB9281_CTRL_SWITCH_AUTO;
 
-	return pi3usb9281_write(chip_idx, PI3USB9281_REG_CONTROL,
-				ctrl & PI3USB9281_CTRL_MASK);
+	return pi3usb9281_write_ctrl(chip_idx, ctrl);
 }
 
 static void pi3usb9281_init(void)
