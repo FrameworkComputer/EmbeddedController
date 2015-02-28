@@ -193,8 +193,8 @@ static void setup_lpc(void)
 	gpio_config_module(MODULE_LPC, 1);
 
 	/* Set up interrupt on LRESET# deassert */
-	MEC1322_INT_SOURCE(19) |= 1 << 0;
-	MEC1322_INT_ENABLE(19) |= 1 << 0;
+	MEC1322_INT_SOURCE(19) |= 1 << 1;
+	MEC1322_INT_ENABLE(19) |= 1 << 1;
 	MEC1322_INT_BLK_EN |= 1 << 19;
 	task_enable_irq(MEC1322_IRQ_GIRQ19);
 
@@ -257,7 +257,7 @@ DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 void girq19_interrupt(void)
 {
 	/* Check interrupt result for LRESET# trigger */
-	if (MEC1322_INT_RESULT(19) & (1 << 0)) {
+	if (MEC1322_INT_RESULT(19) & (1 << 1)) {
 		/* Initialize LPC module when LRESET# is deasserted */
 		if (!lpc_get_pltrst_asserted()) {
 			setup_lpc();
@@ -270,7 +270,7 @@ void girq19_interrupt(void)
 			lpc_get_pltrst_asserted() ? "" : "de");
 
 		/* Clear interrupt source */
-		MEC1322_INT_SOURCE(19) |= 1 << 0;
+		MEC1322_INT_SOURCE(19) |= 1 << 1;
 	}
 }
 DECLARE_IRQ(MEC1322_IRQ_GIRQ19, girq19_interrupt, 1);
