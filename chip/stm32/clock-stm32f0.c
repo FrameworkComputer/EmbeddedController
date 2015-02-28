@@ -131,7 +131,13 @@ static inline void rtc_read(uint32_t *rtc, uint32_t *rtcss)
 	/* Read current time synchronously */
 	do {
 		*rtc = STM32_RTC_TR;
-		*rtcss = STM32_RTC_SSR;
+		/*
+		 * RTC_SSR must be read twice with identical values because
+		 * glitches may occur for reads close to the RTCCLK edge.
+		 */
+		do {
+			*rtcss = STM32_RTC_SSR;
+		} while (*rtcss != STM32_RTC_SSR);
 	} while (*rtc != STM32_RTC_TR);
 }
 
