@@ -27,8 +27,12 @@ chip-$(CONFIG_SPI)+=spi.o
 # location of the scripts and keys used to pack the SPI flash image
 SCRIPTDIR:=./chip/${CHIP}/util
 
-# commands to package something
-cmd_pack_package = ${SCRIPTDIR}/pack_ec.py -o $@ -i $^ \
-	--payload_key ${SCRIPTDIR}/rsakey_sign_payload.pem \
-	--header_key ${SCRIPTDIR}/rsakey_sign_header.pem \
-	--spi_size ${CHIP_SPI_SIZE_KB}
+# Allow SPI size to be overridden by board specific size, default to 256KB.
+CHIP_SPI_SIZE_KB?=256
+
+# Commands to convert $^ to $@.tmp
+cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $@.tmp1 ; \
+		 ${SCRIPTDIR}/pack_ec.py -o $@.tmp -i $@.tmp1 \
+		 --payload_key ${SCRIPTDIR}/rsakey_sign_payload.pem \
+		 --header_key ${SCRIPTDIR}/rsakey_sign_header.pem \
+		 --spi_size ${CHIP_SPI_SIZE_KB} ; rm -f $@.tmp1

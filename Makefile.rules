@@ -36,7 +36,8 @@ silent_err = $(if $(V),,2>/dev/null)
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
           -D$(call section_is,$*) \
           -DSECTION=$(call section,$*) $< -o $@
-cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
+# Allow obj_to_bin to be overridden by board or chip specific commands
+cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
 cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
@@ -157,10 +158,6 @@ $(out)/%.bin: $(out)/%.obj
 	$(if $(wildcard $(PEM)),$(call quiet,extractrw-y,EXTR_RW), \
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
-
-# Beware of ec.spi.spi.bin.
-$(out)/%.spi.bin: $(out)/%.bin
-	$(call quiet,pack_package,PACK   )
 
 flat-y = $(out)/$(PROJECT).RW.flat
 flat-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.flat
