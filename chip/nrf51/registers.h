@@ -232,7 +232,7 @@
 #define NRF51_RADIO_TEST        REG32(NRF51_RADIO_BASE + 0x540)
 #define NRF51_RADIO_TIFS        REG32(NRF51_RADIO_BASE + 0x544)
 #define NRF51_RADIO_RSSISAMPLE  REG32(NRF51_RADIO_BASE + 0x548)
-#define NRF51_RADIO_STATE       REG32(NRF51_RADIO_BASE + 0x550)
+/* NRF51_RADIO_STATE (0x550) is Broken (PAN 2.4) */
 #define NRF51_RADIO_DATAWHITEIV REG32(NRF51_RADIO_BASE + 0x554)
 #define NRF51_RADIO_BCC         REG32(NRF51_RADIO_BASE + 0x560)
 #define NRF51_RADIO_DAB(n)      REG32(NRF51_RADIO_BASE + 0x600 + ((n) * 4))
@@ -250,6 +250,17 @@
 /* NRF51_RADIO_SHORTS_END_START (0x20) is Broken (PAN 2.4) */
 #define NRF51_RADIO_SHORTS_ADDRESS_BCSTART            0x040
 #define NRF51_RADIO_SHORTS_DISABLED_RSSISTOP          0x100
+
+/* For RADIO.INTEN bits */
+#define NRF51_RADIO_READY_BIT                         0
+#define NRF51_RADIO_ADDRESS_BIT                       1
+#define NRF51_RADIO_PAYLOAD_BIT                       2
+#define NRF51_RADIO_END_BIT                           3
+#define NRF51_RADIO_DISABLED_BIT                      4
+#define NRF51_RADIO_DEVMATCH_BIT                      5
+#define NRF51_RADIO_DEVMISS_BIT                       6
+#define NRF51_RADIO_RSSIEND_BIT                       7
+#define NRF51_RADIO_BCMATCH_BIT                       10
 
 /* CRC Status */
 #define NRF51_RADIO_CRCSTATUS_OK                      0x1
@@ -269,17 +280,49 @@
 /* TX Mode */
 #define NRF51_RADIO_MODE_BLE_1MBIT                    0x03
 
-/* PCNF0 Packet Configuration */
+/*
+ * PCNF0 and PCNF1 Packet Configuration
+ *
+ * The radio unpacks the packet for you according to these settings.
+ *
+ * The on-air format is:
+ *
+ * |_Preamble_|___Base___|_Prefix_|___S0____|_Length_,_S1_|__Payload__|___|
+ * 0           <ba_bytes> <1 byte><s0_bytes>   <1 byte>    <max_bytes> <extra>
+ *
+ * The in-memory format is
+ *
+ * uint8_t s0[s0_bytes];
+ * uint8_t length;
+ * uint8_t s1;
+ * uint8_t payload[max_bytes];
+ *
+ * lf_bits is how many bits to store in length
+ * s1_bits is how many bits to store in s1
+ *
+ * If any one of these lengths are set to zero, the field is omitted in memory.
+ */
+
 #define NRF51_RADIO_PCNF0_LFLEN_SHIFT                 0
 #define NRF51_RADIO_PCNF0_S0LEN_SHIFT                 8
 #define NRF51_RADIO_PCNF0_S1LEN_SHIFT                 16
 
-/* PCNF1 Packet Configuration */
+#define NRF51_RADIO_PCNF0_VAL(lf_bits, s0_bytes, s1_bits) \
+	((lf_bits) << NRF51_RADIO_PCNF0_LFLEN_SHIFT | \
+	 (s0_bytes) << NRF51_RADIO_PCNF0_S0LEN_SHIFT | \
+	 (s1_bits) << NRF51_RADIO_PCNF0_S1LEN_SHIFT)
+
 #define NRF51_RADIO_PCNF1_MAXLEN_SHIFT                0
 #define NRF51_RADIO_PCNF1_STATLEN_SHIFT               8
 #define NRF51_RADIO_PCNF1_BALEN_SHIFT                 16
 #define NRF51_RADIO_PCNF1_ENDIAN_BIG                  0x1000000
 #define NRF51_RADIO_PCNF1_WHITEEN                     0x2000000
+
+#define NRF51_RADIO_PCNF1_VAL(max_bytes, extra_bytes, ba_bytes, whiten) \
+	((max_bytes) << NRF51_RADIO_PCNF1_MAXLEN_SHIFT | \
+	 (extra_bytes) << NRF51_RADIO_PCNF1_STATLEN_SHIFT | \
+	 (ba_bytes) << NRF51_RADIO_PCNF1_BALEN_SHIFT | \
+	 ((whiten) ? NRF51_RADIO_PCNF1_WHITEEN : 0))
 
 /* PREFIX0 */
 #define NRF51_RADIO_PREFIX0_AP0_SHIFT                 0
@@ -313,7 +356,9 @@
 
 /* DACNF */
 #define NRF51_RADIO_DACNF_ENA(n)                      (1 << (n))
+#define NRF51_RADIO_DACNF_MAX                         8
 #define NRF51_RADIO_DACNF_TXADD(n)                    (1 << ((n)+8))
+#define NRF51_RADIO_TXADD_MAX                         8
 
 /* OVERRIDE4 */
 #define NRF51_RADIO_OVERRIDE_EN                       (1 << 31)
