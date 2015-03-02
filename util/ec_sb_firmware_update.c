@@ -527,10 +527,8 @@ static enum fw_update_state s6_write_block(struct fw_update_ctrl *fw_update)
 
 	bsize = fw_update->step_size;
 
-	if ((offset & 0x1FFF) == 0x000)
+	if ((offset & 0xFFFF) == 0x0)
 		printf("\n%X\n", offset);
-	else
-		printf(".");
 
 	if (fw_update->fec_err_retry_cnt == 0) {
 		fw_update->rv = -1;
