@@ -51,6 +51,9 @@ struct usb_stream_config {
 	 */
 	int endpoint;
 
+	size_t rx_size;
+	size_t tx_size;
+
 	usb_uint *rx_ram;
 	usb_uint *tx_ram;
 
@@ -81,6 +84,10 @@ extern struct producer_ops const usb_stream_producer_ops;
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
  *
+ * RX_SIZE and TX_SIZE are the number of bytes of USB packet RAM to allocate
+ * for the RX and TX packets respectively.  The valid values for these
+ * parameters are dictated by the USB peripheral.
+ *
  * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this driver
  * should write to and read from respectively.  They must match the queues
  * that the CONSUMER and PRODUCER read from and write to respectively.
@@ -92,8 +99,8 @@ extern struct producer_ops const usb_stream_producer_ops;
  * The following assertions can not be made because they require access to
  * non-const fields, but should be kept in mind.
  *
- * BUILD_ASSERT(RX_QUEUE.buffer_units >= USB_MAX_PACKET_SIZE);
- * BUILD_ASSERT(TX_QUEUE.buffer_units >= USB_MAX_PACKET_SIZE);
+ * BUILD_ASSERT(RX_QUEUE.buffer_units >= RX_SIZE);
+ * BUILD_ASSERT(TX_QUEUE.buffer_units >= TX_SIZE);
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(PRODUCER.queue == &TX_QUEUE);
@@ -103,17 +110,30 @@ extern struct producer_ops const usb_stream_producer_ops;
 			  INTERFACE,					\
 			  INTERFACE_NAME,				\
 			  ENDPOINT,					\
+			  RX_SIZE,					\
+			  TX_SIZE,					\
 			  RX_QUEUE,					\
 			  TX_QUEUE,					\
 			  CONSUMER,					\
 			  PRODUCER)					\
 									\
-	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
-	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
+	BUILD_ASSERT(RX_SIZE <= USB_MAX_PACKET_SIZE);			\
+	BUILD_ASSERT(TX_SIZE <= USB_MAX_PACKET_SIZE);			\
+	BUILD_ASSERT(RX_SIZE > 0);					\
+	BUILD_ASSERT(TX_SIZE > 0);					\
+	BUILD_ASSERT((RX_SIZE <   64 && (RX_SIZE & 0x01) == 0) ||	\
+		     (RX_SIZE < 1024 && (RX_SIZE & 0x1f) == 0));	\
+	BUILD_ASSERT((TX_SIZE <   64 && (TX_SIZE & 0x01) == 0) ||	\
+		     (TX_SIZE < 1024 && (TX_SIZE & 0x1f) == 0));	\
+									\
+	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[RX_SIZE / 2] __usb_ram; \
+	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[TX_SIZE / 2] __usb_ram; \
 	static struct usb_stream_state CONCAT2(NAME, _state);		\
 	struct usb_stream_config const NAME = {				\
 		.state    = &CONCAT2(NAME, _state),			\
 		.endpoint = ENDPOINT,					\
+		.rx_size  = RX_SIZE,					\
+		.tx_size  = TX_SIZE,					\
 		.rx_ram   = CONCAT2(NAME, _ep_rx_buffer),		\
 		.tx_ram   = CONCAT2(NAME, _ep_tx_buffer),		\
 		.consumer = {						\
@@ -145,7 +165,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.bDescriptorType  = USB_DT_ENDPOINT,			\
 		.bEndpointAddress = 0x80 | ENDPOINT,			\
 		.bmAttributes     = 0x02 /* Bulk IN */,			\
-		.wMaxPacketSize   = USB_MAX_PACKET_SIZE,		\
+		.wMaxPacketSize   = TX_SIZE,				\
 		.bInterval        = 10,					\
 	};								\
 	const struct usb_endpoint_descriptor				\
@@ -154,7 +174,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.bDescriptorType  = USB_DT_ENDPOINT,			\
 		.bEndpointAddress = ENDPOINT,				\
 		.bmAttributes     = 0x02 /* Bulk OUT */,		\
-		.wMaxPacketSize   = USB_MAX_PACKET_SIZE,		\
+		.wMaxPacketSize   = RX_SIZE,				\
 		.bInterval        = 0,					\
 	};								\
 	static void CONCAT2(NAME, _ep_tx)(void)				\

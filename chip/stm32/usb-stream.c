@@ -36,7 +36,7 @@ static size_t tx_write(struct usb_stream_config const *config)
 {
 	size_t count = consumer_read_memcpy(&config->consumer,
 					    config->tx_ram,
-					    USB_MAX_PACKET_SIZE,
+					    config->tx_size,
 					    memcpy_to_usbram);
 
 	btable_ep[config->endpoint].tx_count = count;
@@ -120,6 +120,14 @@ void usb_stream_rx(struct usb_stream_config const *config)
 	}
 }
 
+static usb_uint usb_ep_rx_size(size_t bytes)
+{
+	if (bytes < 64)
+		return bytes << 9;
+	else
+		return 0x8000 | ((bytes - 32) << 5);
+}
+
 void usb_stream_reset(struct usb_stream_config const *config)
 {
 	int i = config->endpoint;
@@ -128,7 +136,7 @@ void usb_stream_reset(struct usb_stream_config const *config)
 	btable_ep[i].tx_count = 0;
 
 	btable_ep[i].rx_addr  = usb_sram_addr(config->rx_ram);
-	btable_ep[i].rx_count = 0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
+	btable_ep[i].rx_count = usb_ep_rx_size(config->rx_size);
 
 	config->state->rx_waiting = 0;
 
