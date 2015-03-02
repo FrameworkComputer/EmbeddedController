@@ -2987,7 +2987,7 @@ struct ec_params_usb_pd_set_mode_request {
 } __packed;
 
 /* Ask the PD MCU to record a log of a requested type */
-#define EC_CMD_PD_WRITE_LOG_ENTRY 0x117
+#define EC_CMD_PD_WRITE_LOG_ENTRY 0x118
 
 struct ec_params_pd_write_log_entry {
 	uint8_t type; /* event type : see PD_EVENT_xx above */
