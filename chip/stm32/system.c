@@ -10,6 +10,7 @@
 #include "cpu.h"
 #include "flash.h"
 #include "registers.h"
+#include "panic.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
@@ -19,8 +20,8 @@
 #define CONSOLE_BIT_MASK 0x8000
 
 enum bkpdata_index {
-	BKPDATA_INDEX_SCRATCHPAD,	/* General-purpose scratchpad */
-	BKPDATA_INDEX_SAVED_RESET_FLAGS,/* Saved reset flags */
+	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
+	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
 	BKPDATA_INDEX_VBNV_CONTEXT0,
 	BKPDATA_INDEX_VBNV_CONTEXT1,
 	BKPDATA_INDEX_VBNV_CONTEXT2,
@@ -29,6 +30,11 @@ enum bkpdata_index {
 	BKPDATA_INDEX_VBNV_CONTEXT5,
 	BKPDATA_INDEX_VBNV_CONTEXT6,
 	BKPDATA_INDEX_VBNV_CONTEXT7,
+#ifdef CONFIG_SOFTWARE_PANIC
+	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
+	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
+	BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, /* Saved panic exception code */
+#endif
 };
 
 /**
@@ -162,6 +168,11 @@ static void check_reset_cause(void)
 
 void system_pre_init(void)
 {
+#ifdef CONFIG_SOFTWARE_PANIC
+	uint16_t reason, info;
+	uint8_t exception;
+#endif
+
 	/* enable clock on Power module */
 	STM32_RCC_APB1ENR |= 1 << 28;
 	/* enable backup registers */
@@ -197,6 +208,19 @@ void system_pre_init(void)
 #endif
 
 	check_reset_cause();
+
+#ifdef CONFIG_SOFTWARE_PANIC
+	/* Restore then clear saved panic reason */
+	reason = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_REASON);
+	info = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_INFO);
+	exception = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION);
+	if (reason || info || exception) {
+		panic_set_reason(reason, info, exception);
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_REASON, 0);
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, 0);
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, 0);
+	}
+#endif
 }
 
 void system_reset(int flags)
@@ -223,6 +247,17 @@ void system_reset(int flags)
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | console_en);
 
 	if (flags & SYSTEM_RESET_HARD) {
+#ifdef CONFIG_SOFTWARE_PANIC
+		uint32_t reason, info;
+		uint8_t exception;
+
+		/* Panic data will be wiped by hard reset, so save it */
+		panic_get_reason(&reason, &info, &exception);
+		/* 16 bits stored - upper 16 bits of reason / info are lost */
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_REASON, reason);
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, info);
+		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, exception);
+#endif
 
 #ifdef CHIP_FAMILY_STM32L
 		/*

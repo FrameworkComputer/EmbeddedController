@@ -582,7 +582,7 @@ void system_common_pre_init(void)
 	 * because it might change panic pointer.
 	 */
 	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG)
-		panic_log_watchdog();
+		panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
 #endif
 
 	/*

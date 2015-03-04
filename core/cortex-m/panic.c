@@ -373,27 +373,46 @@ void exception_panic(void)
 		);
 }
 
-void software_panic(uint32_t panic_reason, uint32_t panic_info)
+#ifdef CONFIG_SOFTWARE_PANIC
+void software_panic(uint32_t reason, uint32_t info)
 {
 	__asm__("mov " STRINGIFY(SOFTWARE_PANIC_INFO_REG) ", %0\n"
 		"mov " STRINGIFY(SOFTWARE_PANIC_REASON_REG) ", %1\n"
 		"bl exception_panic\n"
-		: : "r"(panic_info), "r"(panic_reason));
+		: : "r"(info), "r"(reason));
 }
 
-void panic_log_watchdog(void)
+void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
 	uint32_t *lregs = pdata_ptr->cm.regs;
 
-	/* Watchdog reset, log panic cause */
+	/* Setup panic data structure */
 	memset(pdata_ptr, 0, sizeof(*pdata_ptr));
 	pdata_ptr->magic = PANIC_DATA_MAGIC;
 	pdata_ptr->struct_size = sizeof(*pdata_ptr);
 	pdata_ptr->struct_version = 2;
 	pdata_ptr->arch = PANIC_ARCH_CORTEX_M;
 
-	lregs[3] = PANIC_SW_WATCHDOG;
+	/* Log panic cause */
+	lregs[1] = exception;
+	lregs[3] = reason;
+	lregs[4] = info;
 }
+
+void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
+{
+	uint32_t *lregs = pdata_ptr->cm.regs;
+
+	if (pdata_ptr->magic == PANIC_DATA_MAGIC &&
+	    pdata_ptr->struct_version == 2) {
+		*exception = lregs[1];
+		*reason = lregs[3];
+		*info = lregs[4];
+	} else {
+		*exception = *reason = *info = 0;
+	}
+}
+#endif
 
 void bus_fault_handler(void)
 {

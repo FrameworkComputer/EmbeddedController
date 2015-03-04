@@ -10,6 +10,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "host_command.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -18,9 +19,14 @@
 
 /* Indices for hibernate data registers */
 enum hibdata_index {
-	HIBDATA_INDEX_SCRATCHPAD,        /* General-purpose scratchpad */
-	HIBDATA_INDEX_WAKE,              /* Wake reasons for hibernate */
-	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
+	HIBDATA_INDEX_SCRATCHPAD,           /* General-purpose scratchpad */
+	HIBDATA_INDEX_WAKE,                 /* Wake reasons for hibernate */
+	HIBDATA_INDEX_SAVED_RESET_FLAGS,    /* Saved reset flags */
+#ifdef CONFIG_SOFTWARE_PANIC
+	HIBDATA_INDEX_SAVED_PANIC_REASON,   /* Saved panic reason */
+	HIBDATA_INDEX_SAVED_PANIC_INFO,     /* Saved panic data */
+	HIBDATA_INDEX_SAVED_PANIC_EXCEPTION /* Saved panic exception code */
+#endif
 };
 
 /* Flags for HIBDATA_INDEX_WAKE */
@@ -385,6 +391,10 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 void system_pre_init(void)
 {
 	uint32_t hibctl;
+#ifdef CONFIG_SOFTWARE_PANIC
+	uint32_t reason, info;
+	uint8_t exception;
+#endif
 
 	/*
 	 * Enable clocks to the hibernation module in run, sleep,
@@ -441,6 +451,19 @@ void system_pre_init(void)
 
 	check_reset_cause();
 
+#ifdef CONFIG_SOFTWARE_PANIC
+	/* Restore then clear saved panic reason */
+	reason = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_REASON);
+	info = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_INFO);
+	exception = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION);
+	if (reason || info || exception) {
+		panic_set_reason(reason, info, exception);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_REASON, 0);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_INFO, 0);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION, 0);
+	}
+#endif
+
 	/* Initialize bootcfg if needed */
 	if (LM4_SYSTEM_BOOTCFG != CONFIG_BOOTCFG_VALUE) {
 		/* read-modify-write */
@@ -473,6 +496,17 @@ void system_reset(int flags)
 	hibdata_write(HIBDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
+#ifdef CONFIG_SOFTWARE_PANIC
+		uint32_t reason, info;
+		uint8_t exception;
+
+		/* Panic data will be wiped by hard reset, so save it */
+		panic_get_reason(&reason, &info, &exception);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_REASON, reason);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_INFO, info);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION, exception);
+#endif
+
 		/*
 		 * Bounce through hibernate to trigger a hard reboot.  Do
 		 * not wake on wake pin, since we need the full duration.
