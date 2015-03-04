@@ -627,6 +627,7 @@ DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
 			NULL);
 #endif
 
+#ifdef CONFIG_CMD_I2C_XFER
 static int command_i2cxfer(int argc, char **argv)
 {
 	int port, slave_addr;
@@ -706,3 +707,4 @@ DECLARE_CONSOLE_COMMAND(i2cxfer, command_i2cxfer,
 			"r/r16/rlen/w/w16 port addr offset [value | len]",
 			"Read write I2C",
 			NULL);
+#endif
