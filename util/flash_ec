@@ -83,7 +83,9 @@ BOARDS_STM32=(
 )
 
 BOARDS_PRIVATE_SPI_PP3300=(
+	cyan
 	glower
+	strago
 )
 
 BOARDS_STM32_PROG_EN=(
