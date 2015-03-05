@@ -230,6 +230,11 @@ void pd_tx_set_circular_mode(int port)
 	/* Not implemented */
 }
 
+void pd_tx_clear_circular_mode(int port)
+{
+	/* Not implemented */
+}
+
 int pd_start_tx(int port, int polarity, int bit_len)
 {
 	ASSERT(pd_phy[port].hw_init_done);

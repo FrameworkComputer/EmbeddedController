@@ -244,6 +244,10 @@ static struct pd_protocol {
 	enum pd_cc_states cc_state;
 	/* Error sending message and message was dropped */
 	int8_t send_error;
+#ifdef CONFIG_COMMON_RUNTIME
+	/* TX BIST duration used by console command test mode */
+	int32_t tx_bist_test_usec;
+#endif
 
 	/* last requested voltage PDO index */
 	int requested_idx;
@@ -300,7 +304,8 @@ static const char * const pd_state_names[] = {
 	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
 	"SRC_SWAP_STANDBY",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST",
+	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST_RX",
+	"BIST_TX",
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 #endif
@@ -668,7 +673,7 @@ static int send_request(int port, uint32_t rdo)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
-static void analyze_rx_bist(int port);
+static int analyze_rx_bist(int port);
 
 static int send_bist_cmd(int port)
 {
@@ -686,28 +691,57 @@ static int send_bist_cmd(int port)
 
 static void bist_mode_2_rx(int port)
 {
+	int analyze_bist = 0;
+	int num_bits;
+	timestamp_t start_time;
+
 	/* monitor for incoming packet */
 	pd_rx_enable_monitoring(port);
 
 	/* loop until we start receiving data */
-	while (1) {
-		task_wait_event(500*MSEC);
+	start_time.val = get_time().val;
+	while ((get_time().val - start_time.val) < (500*MSEC)) {
+		task_wait_event(10*MSEC);
 		/* incoming packet ? */
-		if (pd_rx_started(port))
+		if (pd_rx_started(port)) {
+			analyze_bist = 1;
 			break;
+		}
 	}
 
-	/*
-	 * once we start receiving bist data, do not
-	 * let state machine run again. stay here, and
-	 * analyze a chunk of data every 250ms.
-	 */
-	while (1) {
-		analyze_rx_bist(port);
-		pd_rx_complete(port);
-		msleep(250);
-		pd_rx_enable_monitoring(port);
+	if (analyze_bist) {
+		/*
+		 * once we start receiving bist data, analyze 40 bytes
+		 * every 10 msec. Continue analyzing until BIST data
+		 * is no longer received. The standard limits the max
+		 * BIST length to 60 msec.
+		 */
+		start_time.val = get_time().val;
+		while ((get_time().val - start_time.val)
+			< (PD_T_BIST_RECEIVE)) {
+			num_bits = analyze_rx_bist(port);
+			pd_rx_complete(port);
+			/*
+			 * If no data was received, then analyze_rx_bist()
+			 * will return a -1 and there is no need to stay
+			 * in this mode
+			 */
+			if (num_bits == -1)
+				break;
+			msleep(10);
+			pd_rx_enable_monitoring(port);
+		}
+	} else {
+		CPRINTF("BIST RX TO\n");
 	}
+	/* Set to appropriate port disconnected state */
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
+		  PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
+#else
+	set_state(port, PD_STATE_SRC_DISCONNECTED);
+#endif
+
 }
 #endif
 
@@ -719,8 +753,7 @@ static void bist_mode_2_tx(int port)
 	if (!pd_comm_enabled)
 		return;
 
-	CPRINTF("BIST carrier 2 - sending on port %d\n", port);
-
+	CPRINTF("BIST 2: p%d\n", port);
 	/*
 	 * build context buffer with 5 bytes, where the data is
 	 * alternating 1's and 0's.
@@ -730,13 +763,34 @@ static void bist_mode_2_tx(int port)
 	bit = pd_write_sym(port, bit, BMC(0x15));
 	bit = pd_write_sym(port, bit, BMC(0x0a));
 
-	/* start a circular DMA transfer (will never end) */
+	/* start a circular DMA transfer */
 	pd_tx_set_circular_mode(port);
 	pd_start_tx(port, pd[port].polarity, bit);
+#ifdef CONFIG_COMMON_RUNTIME
+	if (pd[port].tx_bist_test_usec == 0) {
+		/* do not let pd task state machine run anymore */
+		while (1)
+			task_wait_event(-1);
+	} else {
+		/* Length of BIST specified in tx_bist_test_usec. */
+		task_wait_event(pd[port].tx_bist_test_usec);
+	}
+#else
+	task_wait_event(PD_T_BIST_TRANSMIT);
+#endif
 
-	/* do not let pd task state machine run anymore */
-	while (1)
-		task_wait_event(-1);
+	/* clear dma circular mode, will also stop dma */
+	pd_tx_clear_circular_mode(port);
+	/* finish and cleanup transmit */
+	pd_tx_done(port, pd[port].polarity);
+	/* Set to appropriate port disconnected state */
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
+		  PD_STATE_SNK_DISCONNECTED :
+		  PD_STATE_SRC_DISCONNECTED);
+#else
+	set_state(port, PD_STATE_SRC_DISCONNECTED);
+#endif
 }
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
@@ -1044,11 +1098,23 @@ static void handle_data_request(int port, uint16_t head,
 		set_state(port, PD_STATE_SRC_READY);
 		break;
 	case PD_DATA_BIST:
-		/* currently only support sending bist carrier mode 2 */
-		if ((payload[0] >> 28) == 5)
-			/* bist data object mode is 2 */
-			bist_mode_2_tx(port);
-
+		/* If not in READY state, then don't start BIST */
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (pd[port].task_state == PD_STATE_SRC_READY ||
+		    pd[port].task_state == PD_STATE_SNK_READY) {
+#else
+		if (pd[port].task_state == PD_STATE_SRC_READY) {
+#endif
+			/* currently only support sending bist carrier mode 2 */
+			if ((payload[0] >> 28) == 5) {
+				/* bist data object mode is 2 */
+#ifdef CONFIG_COMMON_RUNTIME
+				/* set duration of BIST tx in msec */
+				pd[port].tx_bist_test_usec = PD_T_BIST_TRANSMIT;
+#endif
+				bist_mode_2_tx(port);
+			}
+		}
 		break;
 	case PD_DATA_SINK_CAP:
 		pd[port].flags |= PD_FLAGS_SNK_CAP_RECVD;
@@ -1315,11 +1381,12 @@ static int count_set_bits(int n)
 	return count;
 }
 
-static void analyze_rx_bist(int port)
+static int analyze_rx_bist(int port)
 {
 	int i = 0, bit = -1;
 	uint32_t w, match;
 	int invalid_bits = 0;
+	int bits_analyzed = 0;
 	static int total_invalid_bits;
 
 	/* dequeue bits until we see a full byte of alternating 1's and 0's */
@@ -1329,9 +1396,8 @@ static void analyze_rx_bist(int port)
 	/* if we didn't find any bytes that match criteria, display error */
 	if (i == 10) {
 		CPRINTF("invalid pattern\n");
-		return;
+		return -1;
 	}
-
 	/*
 	 * now we know what matching byte we are looking for, dequeue a bunch
 	 * more data and count how many bits differ from expectations.
@@ -1340,15 +1406,18 @@ static void analyze_rx_bist(int port)
 	bit = i - 1;
 	for (i = 0; i < 40; i++) {
 		bit = pd_dequeue_bits(port, bit, 8, &w);
-		if (i % 20 == 0)
+		if (i && (i % 20 == 0))
 			CPRINTF("\n");
 		CPRINTF("%02x ", w);
+		bits_analyzed += 8;
 		invalid_bits += count_set_bits(w ^ match);
 	}
 
 	total_invalid_bits += invalid_bits;
-	CPRINTF("- incorrect bits: %d / %d\n", invalid_bits,
-			total_invalid_bits);
+
+	CPRINTF("\nInvalid: %d/%d\n",
+		invalid_bits, total_invalid_bits);
+	return bits_analyzed;
 }
 #endif
 
@@ -2702,9 +2771,12 @@ void pd_task(void)
 			timeout = 10*MSEC;
 			break;
 #ifdef CONFIG_COMMON_RUNTIME
-		case PD_STATE_BIST:
+		case PD_STATE_BIST_RX:
 			send_bist_cmd(port);
 			bist_mode_2_rx(port);
+			break;
+		case PD_STATE_BIST_TX:
+			bist_mode_2_tx(port);
 			break;
 #endif
 		default:
@@ -2970,6 +3042,7 @@ void pd_request_source_voltage(int port, int mv)
 static int command_pd(int argc, char **argv)
 {
 	int port;
+	int duration;
 	char *e;
 
 	if (argc < 2)
@@ -3060,8 +3133,15 @@ static int command_pd(int argc, char **argv)
 	if (!strcasecmp(argv[2], "tx")) {
 		set_state(port, PD_STATE_SNK_DISCOVERY);
 		task_wake(PORT_TO_TASK_ID(port));
-	} else if (!strcasecmp(argv[2], "bist")) {
-		set_state(port, PD_STATE_BIST);
+	} else if (!strcasecmp(argv[2], "bist_rx")) {
+		set_state(port, PD_STATE_BIST_RX);
+		task_wake(PORT_TO_TASK_ID(port));
+	} else if (!strcasecmp(argv[2], "bist_tx")) {
+		duration = strtoi(argv[3], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM3;
+		pd[port].tx_bist_test_usec = duration;
+		set_state(port, PD_STATE_BIST_TX);
 		task_wake(PORT_TO_TASK_ID(port));
 	} else if (!strcasecmp(argv[2], "charger")) {
 		pd[port].power_role = PD_ROLE_SOURCE;
@@ -3169,7 +3249,7 @@ static int command_pd(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"dualrole|dump|enable [0|1]|rwhashtable|\n\t<port> "
-			"[tx|bist|charger|clock|dev"
+			"[tx|bist_rx|bist_tx|charger|clock|dev"
 			"|soft|hash|hard|ping|state|swap [power|data]|"
 			"vdm [ping | curr | vers]]",
 			"USB PD",

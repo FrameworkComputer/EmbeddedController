@@ -282,11 +282,6 @@ void pd_tx_spi_init(int port)
 		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_CPHA;
 }
 
-void pd_tx_set_circular_mode(int port)
-{
-	pd_phy[port].dma_tx_option.flags |= STM32_DMA_CCR_CIRC;
-}
-
 static void tx_dma_done(void *data)
 {
 	int port = (int)data;
@@ -340,8 +335,12 @@ int pd_start_tx(int port, int polarity, int bit_len)
 	dma_clear_isr(DMAC_SPI_TX(port));
 #if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
 	tx_dma_polarities[port] = polarity;
-	dma_enable_tc_interrupt_callback(DMAC_SPI_TX(port), &tx_dma_done,
-					 (void *)port);
+	if (!(pd_phy[port].dma_tx_option.flags & STM32_DMA_CCR_CIRC)) {
+		/* Only enable interrupt if not in circular mode */
+		dma_enable_tc_interrupt_callback(DMAC_SPI_TX(port),
+						 &tx_dma_done,
+						 (void *)port);
+	}
 #endif
 	dma_go(tx);
 
@@ -377,6 +376,22 @@ void pd_tx_done(int port, int polarity)
 
 	/* Reset SPI to clear remaining data in buffer */
 	pd_tx_spi_reset(port);
+}
+
+void pd_tx_set_circular_mode(int port)
+{
+	pd_phy[port].dma_tx_option.flags |= STM32_DMA_CCR_CIRC;
+}
+
+void pd_tx_clear_circular_mode(int port)
+{
+	/* clear the circular mode bit in flag variable */
+	pd_phy[port].dma_tx_option.flags &= ~STM32_DMA_CCR_CIRC;
+	/* disable dma transaction underway */
+	dma_disable(DMAC_SPI_TX(port));
+#if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
+	tx_dma_done((void *)port);
+#endif
 }
 
 /* --- RX operation using comparator linked to timer --- */

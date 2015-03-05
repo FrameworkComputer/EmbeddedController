@@ -134,6 +134,8 @@ enum pd_errors {
 #define PD_T_SRC_TURN_ON      (275*MSEC) /* 275ms */
 #define PD_T_SAFE_0V          (650*MSEC) /* 650ms */
 #define PD_T_NO_RESPONSE     (5500*MSEC) /* between 4.5s and 5.5s */
+#define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
+#define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -626,7 +628,8 @@ enum pd_states {
 	PD_STATE_HARD_RESET_SEND,
 	PD_STATE_HARD_RESET_EXECUTE,
 #ifdef CONFIG_COMMON_RUNTIME
-	PD_STATE_BIST,
+	PD_STATE_BIST_RX,
+	PD_STATE_BIST_TX,
 #endif
 
 	/* Number of states. Not an actual state. */
@@ -1261,6 +1264,13 @@ int pd_start_tx(int port, int polarity, int bit_len);
  * @param port USB-C port number
  */
 void pd_tx_set_circular_mode(int port);
+
+/**
+ * Stop PD TX DMA circular mode transaction already in progress.
+ *
+ * @param port USB-C port number
+ */
+void pd_tx_clear_circular_mode(int port);
 
 /**
  * Call when we are done sending a packet.
