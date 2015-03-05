@@ -67,9 +67,14 @@
 #define CONFIG_FW_RO_SIZE		CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
-/* Either way, RW firmware is one firmware image offset from the start */
-#define CONFIG_FW_RW_OFF		CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_RW_SIZE		CONFIG_FW_IMAGE_SIZE
+/*
+ * TODO(crosbug.com/p/37510): Implement a loader to load either RO or RW at
+ * runtime. Since this doesn't exist yet and we're running low on program
+ * memory, only flash + load RW for now.
+ */
+#undef  CONFIG_FW_INCLUDE_RO
+#define CONFIG_FW_RW_OFF		CONFIG_FW_RO_OFF
+#define CONFIG_FW_RW_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
 /* TODO(crosbug.com/p/23796): why 2 sets of configs with the same numbers? */
 #define CONFIG_FW_WP_RO_OFF		CONFIG_FW_RO_OFF
