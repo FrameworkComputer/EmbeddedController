@@ -873,6 +873,7 @@ static uint32_t sequence_KONAMI(void)
 	return r;
 }
 
+#ifdef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
 /* Returns 0.0 to 1.0 for val in [min, min + ofs] */
 static int range(int val, int min, int ofs)
 {
@@ -882,6 +883,7 @@ static int range(int val, int min, int ofs)
 		return FP_SCALE;
 	return (val - min) * FP_SCALE / ofs;
 }
+#endif
 
 /* Handy constant */
 #define CUT (100 / NUM_LEDS)
@@ -892,12 +894,15 @@ static uint32_t sequence_TAP_inner(int dir)
 	timestamp_t start, now;
 	uint32_t elapsed_time = 0;
 	int i, l, ci, max_led;
-	int f_min, f_delta, f_osc, f_power, f_mult;
+	int f_osc, f_mult;
 	int gi, gr, gate[NUM_LEDS] = {0, 0, 0, 0};
 	uint8_t w = 0;
+#ifdef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
+	int f_min, f_delta, f_power;
 
 	f_min = st.p.tap_seg_min_on * FP_SCALE / 100;
 	f_delta = (st.p.tap_seg_max_on - st.p.tap_seg_min_on) * FP_SCALE / 100;
+#endif
 	f_osc = st.p.tap_seg_osc * FP_SCALE / 100;
 
 	start = get_time();
@@ -924,6 +929,7 @@ static uint32_t sequence_TAP_inner(int dir)
 
 		for (i = 0; i < NUM_LEDS; i++) {
 
+#ifdef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
 			if (max_led > i) {
 				f_mult = FP_SCALE;
 			} else if (max_led < i) {
@@ -944,6 +950,12 @@ static uint32_t sequence_TAP_inner(int dir)
 				}
 				f_mult = f_min + f_power * f_delta / FP_SCALE;
 			}
+#else
+			if (max_led >= i)
+				f_mult = FP_SCALE;
+			else if (max_led < i)
+				f_mult = 0;
+#endif
 
 			f_mult = f_mult * gate[i] / FP_SCALE;
 

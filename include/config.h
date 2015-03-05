@@ -882,6 +882,12 @@
 #undef CONFIG_LIGHTBAR_POWER_RAILS
 
 /*
+ * For tap sequence, show the last segment in dim to give a better idea of
+ * battery percentage.
+ */
+#undef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
+
+/*
  * Low power idle options. These are disabled by default and all boards that
  * want to use low power idle must define it. When using the LFIOSC, the low
  * frequency clock will be used to conserve even more power when possible.
