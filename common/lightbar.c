@@ -865,6 +865,9 @@ static uint32_t sequence_KONAMI(void)
 	int tmp;
 	uint32_t r;
 
+	/* First clear all segments */
+	lb_set_rgb(NUM_LEDS, 0, 0, 0);
+
 	/* Force brightness to max, then restore it */
 	tmp = lb_get_brightness();
 	lb_set_brightness(255);
