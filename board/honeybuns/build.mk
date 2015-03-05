@@ -10,5 +10,5 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f0
 CHIP_VARIANT:=stm32f07x
 
-board-y=board.o
+board-y=board.o hx3.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
