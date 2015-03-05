@@ -69,9 +69,9 @@ int charger_get_input_current(int *input_current)
 		return rv;
 
 #ifdef CONFIG_CHARGER_BQ24770
-	*input_current = REG8_TO_CURRENT(reg, R_AC);
-#elif defined(CONFIG_CHARGER_BQ24773)
 	*input_current = REG_TO_CURRENT(reg, R_AC);
+#elif defined(CONFIG_CHARGER_BQ24773)
+	*input_current = REG8_TO_CURRENT(reg, R_AC);
 #endif
 	return EC_SUCCESS;
 }
