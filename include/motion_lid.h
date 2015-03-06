@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_MOTION_LID_H
 #define __CROS_EC_MOTION_LID_H
 
+#include "host_command.h"
+
 /* Anything outside of lid angle range [-180, 180] should work. */
 #define LID_ANGLE_UNRELIABLE 500
 
