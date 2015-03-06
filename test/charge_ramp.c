@@ -58,7 +58,7 @@ void board_set_charge_limit(int limit_ma)
 		task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_OVERCURRENT, 0);
 }
 
-int board_get_ramp_current_limit(int supplier)
+int board_get_ramp_current_limit(int supplier, int sup_curr)
 {
 	if (supplier == CHARGE_SUPPLIER_TEST9)
 		return 1600;

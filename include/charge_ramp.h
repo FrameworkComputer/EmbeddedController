@@ -29,10 +29,11 @@ int board_is_ramp_allowed(int supplier);
  * Get the maximum current limit that we are allowed to ramp to
  *
  * @supplier Active supplier type
+ * @sup_curr Input current limit based on supplier
  *
  * @return Maximum current in mA
  */
-int board_get_ramp_current_limit(int supplier);
+int board_get_ramp_current_limit(int supplier, int sup_curr);
 
 /**
  * Check if board is consuming full input current
