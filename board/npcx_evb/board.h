@@ -20,6 +20,8 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 #define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SIZE          0x00800000 /* 8MB spi flash */
+#define CONFIG_SPI_FLASH_W25Q64
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_POWER_BUTTON
@@ -38,7 +40,6 @@
 
 #define CONFIG_UART_HOST                0
 #define CONFIG_FANS                     1
-#define CONFIG_SPI_FLASH_SIZE           0x00800000 /* 8MB spi flash */
 
 /* Optional feature - used by nuvoton */
 #define CONFIG_PWM_INPUT_LFCLK          /* PWM use LFCLK for input clock */

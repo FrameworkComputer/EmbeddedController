@@ -1039,6 +1039,12 @@
 /* Support SPI flash */
 #undef CONFIG_SPI_FLASH
 
+/* Support W25Q64 SPI flash */
+#undef CONFIG_SPI_FLASH_W25Q64
+
+/* Support W25X40 SPI flash */
+#undef CONFIG_SPI_FLASH_W25X40
+
 /* Size (bytes) of SPI flash memory */
 #undef CONFIG_SPI_FLASH_SIZE
 

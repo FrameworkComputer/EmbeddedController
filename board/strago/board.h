@@ -28,6 +28,8 @@
 #define CONFIG_SPI_CS_GPIO GPIO_PVT_CS0
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE 4194304
+/* TODO: Add flash protect support for the SPI part strago actually has */
+#define CONFIG_SPI_FLASH_W25Q64
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
 #undef CONFIG_EOPTION

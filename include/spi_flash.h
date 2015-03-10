@@ -141,11 +141,9 @@ uint64_t spi_flash_get_unique_id(void);
  * Note that this does not check the hardware WP pin as we might not be
  * able to read the WP pin status.
  *
- * @param wp Status register write protection mode
- *
- * @return EC_SUCCESS for no protection, or non-zero if error.
+ * @return enum spi_flash_wp status based on protection
  */
-int spi_flash_check_wp(void);
+enum spi_flash_wp spi_flash_check_wp(void);
 
 /**
  * Set SPI flash status register write protection
