@@ -15,6 +15,7 @@ CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 chip-y=clock.o gpio.o hwtimer.o system.o uart.o jtag.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_FANS)+=fan.o
+chip-$(CONFIG_FLASH)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o

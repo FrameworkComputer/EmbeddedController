@@ -37,6 +37,7 @@ GPIO(PVT_CS0,        	PORT(14), 6, GPIO_ODR_HIGH,                             NU
  * emulate anyway, to make it more convenient to debug other code.
  */
 UNIMPLEMENTED(ENTERING_RW) /* EC entering RW code */
+UNIMPLEMENTED(WP_L) /* SPI WP Input */
 
 /* Alternate functions GPIO definition */
 ALTERNATE(PORT(16), 0x24,     1, MODULE_UART,          0) 			/* UART0 */

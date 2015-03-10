@@ -22,7 +22,7 @@ GPIO(SHD_CS0,    PORT(15), 0, GPIO_ODR_HIGH, NULL)
  * emulate anyway, to make it more convenient to debug other code.
  */
 UNIMPLEMENTED(RECOVERY_L)  /* Recovery signal from DOWN button */
-UNIMPLEMENTED(WP)          /* Write protect input */
+UNIMPLEMENTED(WP_L)        /* Write protect input */
 UNIMPLEMENTED(ENTERING_RW) /* EC entering RW code */
 
 ALTERNATE(PORT(16), 0x24,     1, MODULE_UART,    0) /* UART0 */

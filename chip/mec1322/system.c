@@ -369,3 +369,15 @@ void htimer_interrupt(void)
 	/* Time to wake up */
 }
 DECLARE_IRQ(MEC1322_IRQ_HTIMER, htimer_interrupt, 1);
+
+/* TODO(crosbug.com/p/37510): Implement bootloader */
+enum system_image_copy_t system_get_shrspi_image_copy(void)
+{
+	return SYSTEM_IMAGE_RW;
+}
+
+/* TODO(crosbug.com/p/37510): Implement bootloader */
+uint32_t system_get_lfw_address(uint32_t flash_addr)
+{
+	return CONFIG_FW_RO_OFF;
+}

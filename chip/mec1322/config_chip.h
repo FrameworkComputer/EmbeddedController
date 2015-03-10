@@ -47,25 +47,36 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE             512
 
-#define CONFIG_FLASH_BASE           0x00100000
-
-#define CONFIG_FLASH_PHYSICAL_SIZE  0x00018000
-
-/* Size of one firmware image in RAM */
-
 /****************************************************************************/
 /* Define our flash layout. */
+/* Protect bank size 4K bytes */
+#define CONFIG_FLASH_BANK_SIZE          0x00001000
+/* Sector erase size 4K bytes */
+#define CONFIG_FLASH_ERASE_SIZE         0x00001000
+/* Minimum write size */
+#define CONFIG_FLASH_WRITE_SIZE         0x00000004
+
+/* One page size for write */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE   256
+
+/* 96KB flash used for program memory */
+#define CONFIG_FLASH_PHYSICAL_SIZE      0x00018000
+/* Program memory base address */
+#define CONFIG_FLASH_BASE               0x00100000
+
+#define CONFIG_CDRAM_BASE               0x00100000
+#define CONFIG_CDRAM_SIZE               0x00020000
 
 /* Size of one firmware image in flash */
 #ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE		(CONFIG_FLASH_PHYSICAL_SIZE / 2)
+#define CONFIG_FW_IMAGE_SIZE            (CONFIG_FLASH_PHYSICAL_SIZE / 2)
 #endif
 
 /* RO firmware must start at beginning of flash */
-#define CONFIG_FW_RO_OFF		0
+#define CONFIG_FW_RO_OFF                0
 
-#define CONFIG_FW_RO_SIZE		CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
+#define CONFIG_FW_RO_SIZE               CONFIG_FW_IMAGE_SIZE
+#define CONFIG_FLASH_SIZE               CONFIG_FLASH_PHYSICAL_SIZE
 
 /*
  * TODO(crosbug.com/p/37510): Implement a loader to load either RO or RW at
@@ -73,14 +84,18 @@
  * memory, only flash + load RW for now.
  */
 #undef  CONFIG_FW_INCLUDE_RO
-#define CONFIG_FW_RW_OFF		CONFIG_FW_RO_OFF
-#define CONFIG_FW_RW_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
+#define CONFIG_FW_RW_OFF                CONFIG_FW_RO_OFF
+#define CONFIG_FW_RW_SIZE               CONFIG_FLASH_PHYSICAL_SIZE
 
 /* TODO(crosbug.com/p/23796): why 2 sets of configs with the same numbers? */
-#define CONFIG_FW_WP_RO_OFF		CONFIG_FW_RO_OFF
-#define CONFIG_FW_WP_RO_SIZE		CONFIG_FW_RO_SIZE
+#define CONFIG_FW_WP_RO_OFF             CONFIG_FW_RO_OFF
+#define CONFIG_FW_WP_RO_SIZE            CONFIG_FW_RO_SIZE
 
-#define CONFIG_FLASH_BANK_SIZE          4
+/* Non-memmapped, external SPI */
+/* #define CONFIG_CODERAM_ARCH */
+#undef  CONFIG_FLASH_MAPPED
+#undef  CONFIG_FLASH_PSTATE
+#define CONFIG_SPI_FLASH
 
 /****************************************************************************/
 /* Customize the build */
@@ -91,12 +106,10 @@
 #define CONFIG_SWITCH
 #define CONFIG_MPU
 #endif
+#define CONFIG_DMA
+#define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_LPC
-#define CONFIG_FPU
 #define CONFIG_SPI
-#define CONFIG_DMA
-
-#undef CONFIG_FLASH
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
