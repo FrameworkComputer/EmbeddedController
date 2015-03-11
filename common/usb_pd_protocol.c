@@ -306,9 +306,9 @@ struct mutex pd_crc_lock;
 
 #ifdef CONFIG_COMMON_RUNTIME
 static const char * const pd_state_names[] = {
-	"DISABLED",
+	"DISABLED", "SUSPENDED",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	"SUSPENDED", "SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
+	"SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
 	"SNK_HARD_RESET_RECOVER",
 	"SNK_DISCOVERY", "SNK_REQUESTED", "SNK_TRANSITION", "SNK_READY",
 	"SNK_DR_SWAP", "SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
@@ -2947,6 +2947,7 @@ int pd_fetch_acc_log_entry(int port)
 	return EC_RES_SUCCESS;
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
 void pd_request_source_voltage(int port, int mv)
 {
 	pd_set_max_voltage(mv);
@@ -2963,6 +2964,7 @@ void pd_request_source_voltage(int port, int mv)
 
 	task_wake(PORT_TO_TASK_ID(port));
 }
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 static int command_pd(int argc, char **argv)
 {
@@ -2972,7 +2974,7 @@ static int command_pd(int argc, char **argv)
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-#ifdef CONFIG_CMD_PD
+#if defined(CONFIG_CMD_PD) && defined(CONFIG_USB_PD_DUAL_ROLE)
 	/* command: pd <subcmd> <args> */
 	if (!strcasecmp(argv[1], "dualrole")) {
 		if (argc < 3) {
@@ -3052,7 +3054,7 @@ static int command_pd(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	if (*e || port >= PD_PORT_COUNT)
 		return EC_ERROR_PARAM2;
-#ifdef CONFIG_CMD_PD
+#if defined(CONFIG_CMD_PD) && defined(CONFIG_USB_PD_DUAL_ROLE)
 
 	if (!strcasecmp(argv[2], "tx")) {
 		set_state(port, PD_STATE_SNK_DISCOVERY);
@@ -3217,6 +3219,8 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			NULL);
 #endif /* CONFIG_CMD_TYPEC */
 #endif /* CONFIG_USBC_SS_MUX */
+
+#ifdef HAS_TASK_HOSTCMD
 
 static int hc_pd_ports(struct host_cmd_handler_args *args)
 {
@@ -3476,5 +3480,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 		     hc_remote_pd_set_amode,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
+
+#endif /* HAS_TASK_HOSTCMD */
 
 #endif /* CONFIG_COMMON_RUNTIME */
