@@ -17,6 +17,7 @@ GPIO(PD_TX_DATA,        PIN(B, 4),  GPIO_OUT_LOW)
 
 /* Power and muxes control */
 GPIO(PP20000_EN,        PIN(A, 8),  GPIO_OUT_LOW)
+GPIO(PP12000_EN,        PIN(A, 14), GPIO_OUT_LOW)
 GPIO(PPVAR_VBUS_EN,     PIN(B, 12), GPIO_OUT_LOW)
 GPIO(SS_MUX_OE_L,       PIN(B, 13), GPIO_OUT_HIGH)
 GPIO(SS_MUX_SEL,        PIN(B, 14), GPIO_OUT_LOW)
@@ -40,7 +41,6 @@ GPIO(MASTER_I2C_SDA,    PIN(B, 7),  GPIO_INPUT)
 
 /* Test points */
 GPIO(TP6,               PIN(A, 13), GPIO_OUT_HIGH /*GPIO_ODR_HIGH*/)
-GPIO(TP7,               PIN(A, 14), GPIO_OUT_LOW /*GPIO_ODR_HIGH*/)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)

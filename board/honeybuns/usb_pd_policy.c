@@ -19,20 +19,24 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DUAL_ROLE | \
-			 PDO_FIXED_DATA_SWAP)
+#define PDO_FIXED_FLAGS (PDO_FIXED_EXTERNAL | PDO_FIXED_DATA_SWAP)
+
+/* Voltage indexes for the PDOs */
+enum volt_idx {
+	PDO_IDX_5V  = 0,
+	PDO_IDX_12V = 1,
+	PDO_IDX_20V = 2,
+
+	PDO_IDX_COUNT
+};
 
 const uint32_t pd_src_pdo[] = {
-		PDO_FIXED(5000,  3000, PDO_FIXED_FLAGS),
-		PDO_FIXED(12000, 3000, PDO_FIXED_FLAGS),
-		PDO_FIXED(20000, 3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_5V]  = PDO_FIXED(5000,  3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_12V] = PDO_FIXED(12000, 3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_20V] = PDO_FIXED(20000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-
-const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
-};
-const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
+BUILD_ASSERT(ARRAY_SIZE(pd_src_pdo) == PDO_IDX_COUNT);
 
 /* Holds valid object position (opos) for entered mode */
 static int alt_mode[PD_AMODE_COUNT];
@@ -78,7 +82,25 @@ int pd_check_requested_voltage(uint32_t rdo)
 
 void pd_transition_voltage(int idx)
 {
-	/* No-operation: we are always 5V */
+	/* PDO index are starting from 1 */
+	switch (idx - 1) {
+	case PDO_IDX_20V:
+#if 0
+		gpio_set_level(GPIO_PPVAR_VBUS_EN, 0);
+		gpio_set_level(GPIO_PP20000_EN, 1);
+		break;
+#endif /* 20V transition is broken, putting 12V instead: fall-through */
+	case PDO_IDX_12V:
+		gpio_set_level(GPIO_PP12000_EN, 1);
+		gpio_set_level(GPIO_PP20000_EN, 0);
+		gpio_set_level(GPIO_PPVAR_VBUS_EN, 1);
+		break;
+	case PDO_IDX_5V:
+	default:
+		gpio_set_level(GPIO_PP12000_EN, 0);
+		gpio_set_level(GPIO_PP20000_EN, 0);
+		gpio_set_level(GPIO_PPVAR_VBUS_EN, 1);
+	}
 }
 
 int pd_set_power_supply_ready(int port)
@@ -92,6 +114,8 @@ void pd_power_supply_reset(int port)
 {
 	/* Kill VBUS */
 	gpio_set_level(GPIO_PPVAR_VBUS_EN, 0);
+	gpio_set_level(GPIO_PP12000_EN, 0);
+	gpio_set_level(GPIO_PP20000_EN, 0);
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -106,8 +130,8 @@ int pd_board_checks(void)
 
 int pd_check_power_swap(int port)
 {
-	/* Always allow power swap */
-	return 1;
+	/* We are source-only */
+	return 0;
 }
 
 int pd_check_data_swap(int port, int data_role)
