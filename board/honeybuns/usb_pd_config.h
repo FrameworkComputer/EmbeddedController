@@ -133,8 +133,8 @@ static inline void pd_config_init(int port, uint8_t power_role)
 
 static inline int pd_adc_read(int port, int cc)
 {
-	/* only one CC line, assume other one is always low */
-	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 0;
+	/* only one CC line, assume other one is always high */
+	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 3300;
 }
 
 
@@ -148,8 +148,8 @@ static inline int pd_snk_is_vbus_provided(int port)
 	return 0;
 }
 
-/* Standard-current DFP : no-connect voltage is 1.55V */
-#define PD_SRC_VNC 1550 /* mV */
+/* 3.0A DFP : no-connect voltage is 2.45V */
+#define PD_SRC_VNC 2450 /* mV */
 
 /* UFP-side : threshold for DFP connection detection */
 #define PD_SNK_VA   200 /* mV */
