@@ -62,7 +62,7 @@ void board_config_pre_init(void)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CH_CC1_PD] = {"CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
+	[ADC_CH_CC1_PD] = {"CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
 	/* VBUS sense via 100k/8.8k voltage divder 3.3V -> 40.8V */
 	[ADC_CH_VIN_DIV_P] = {"VIN_DIV_P", 40800, 4096, 0, STM32_AIN(5)},
 	[ADC_CH_VIN_DIV_N] = {"VIN_DIV_N", 40800, 4096, 0, STM32_AIN(6)},
