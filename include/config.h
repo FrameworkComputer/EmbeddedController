@@ -1045,6 +1045,9 @@
 /* Support W25X40 SPI flash */
 #undef CONFIG_SPI_FLASH_W25X40
 
+/* SPI flash part supports SR2 register */
+#undef CONFIG_SPI_FLASH_HAS_SR2
+
 /* Size (bytes) of SPI flash memory */
 #undef CONFIG_SPI_FLASH_SIZE
 
