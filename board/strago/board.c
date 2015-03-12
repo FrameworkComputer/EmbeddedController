@@ -18,6 +18,8 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
@@ -29,6 +31,15 @@
 #define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
 
 #include "gpio_list.h"
+
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	{0, PWM_CONFIG_ACTIVE_LOW},
+	{1, PWM_CONFIG_ACTIVE_LOW},
+	{3, PWM_CONFIG_ACTIVE_LOW},
+};
+
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {

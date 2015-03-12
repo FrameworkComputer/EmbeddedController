@@ -10,5 +10,5 @@
 CHIP:=mec1322
 CHIP_SPI_SIZE_KB:=512
 
-board-y=board.o
+board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
