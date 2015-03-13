@@ -68,23 +68,22 @@
 struct stm32_def {
 	uint16_t   id;
 	const char *name;
-	uint32_t flash_start;
 	uint32_t flash_size;
 	uint32_t page_size;
 	uint32_t cmds_len[2];
 } chip_defs[] = {
-	{0x416, "STM32L15xxB",   0x08000000, 0x20000,   256, {13, 13} },
-	{0x429, "STM32L15xxB-A", 0x08000000, 0x20000,   256, {13, 13} },
-	{0x427, "STM32L15xxC",   0x08000000, 0x40000,   256, {13, 13} },
-	{0x435, "STM32L44xx",    0x08000000, 0x40000,  2048, {13, 13} },
-	{0x420, "STM32F100xx",   0x08000000, 0x20000,  1024, {13, 13} },
-	{0x410, "STM32F102R8",   0x08000000, 0x10000,  1024, {13, 13} },
-	{0x440, "STM32F05x",     0x08000000, 0x10000,  1024, {13, 13} },
-	{0x444, "STM32F03x",     0x08000000, 0x08000,  1024, {13, 13} },
-	{0x448, "STM32F07xB",    0x08000000, 0x20000,  2048, {13, 13} },
-	{0x432, "STM32F37xx",    0x08000000, 0x40000,  2048, {13, 13} },
-	{0x442, "STM32F09x",     0x08000000, 0x40000,  2048, {13, 13} },
-	{0x431, "STM32F411",     0x08000000, 0x80000, 16384, {13, 19} },
+	{0x416, "STM32L15xxB",   0x20000,   256, {13, 13} },
+	{0x429, "STM32L15xxB-A", 0x20000,   256, {13, 13} },
+	{0x427, "STM32L15xxC",   0x40000,   256, {13, 13} },
+	{0x435, "STM32L44xx",    0x40000,  2048, {13, 13} },
+	{0x420, "STM32F100xx",   0x20000,  1024, {13, 13} },
+	{0x410, "STM32F102R8",   0x10000,  1024, {13, 13} },
+	{0x440, "STM32F05x",     0x10000,  1024, {13, 13} },
+	{0x444, "STM32F03x",     0x08000,  1024, {13, 13} },
+	{0x448, "STM32F07xB",    0x20000,  2048, {13, 13} },
+	{0x432, "STM32F37xx",    0x40000,  2048, {13, 13} },
+	{0x442, "STM32F09x",     0x40000,  2048, {13, 13} },
+	{0x431, "STM32F411",     0x80000, 16384, {13, 19} },
 	{ 0 }
 };
 
@@ -114,6 +113,7 @@ uint8_t boot_loader_version;
 const char *serial_port = "/dev/ttyUSB1";
 const char *input_filename;
 const char *output_filename;
+uint32_t offset = 0x08000000, length = 0;
 
 /* optional command flags */
 enum {
@@ -777,8 +777,11 @@ int read_flash(int fd, struct stm32_def *chip, const char *filename,
 {
 	int res;
 	FILE *hnd;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buffer;
 
+	if (!size)
+		size = chip->flash_size;
+	buffer = malloc(size);
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %d bytes\n", size);
 		return -ENOMEM;
@@ -791,9 +794,6 @@ int read_flash(int fd, struct stm32_def *chip, const char *filename,
 		return -EIO;
 	}
 
-	if (!size)
-		size = chip->flash_size;
-	offset += chip->flash_start;
 	printf("Reading %d bytes at 0x%08x\n", size, offset);
 	res = command_read_mem(fd, offset, size, buffer);
 	if (res > 0) {
@@ -838,7 +838,6 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 	}
 	fclose(hnd);
 
-	offset += chip->flash_start;
 	printf("Writing %d bytes at 0x%08x\n", res, offset);
 	written = command_write_mem(fd, offset, res, buffer);
 	if (written != res) {
@@ -864,6 +863,8 @@ static const struct option longopts[] = {
 	{"baudrate", 1, 0, 'b'},
 	{"adapter", 1, 0, 'a'},
 	{"spi", 1, 0, 's'},
+	{"length", 1, 0, 'n'},
+	{"offset", 1, 0, 'o'},
 	{NULL, 0, 0, 0}
 };
 
@@ -872,7 +873,8 @@ void display_usage(char *program)
 	fprintf(stderr,
 		"Usage: %s [-a <i2c_adapter> [-l address ]] | [-s]"
 		" [-d <tty>] [-b <baudrate>]] [-u] [-e] [-U]"
-		" [-r <file>] [-w <file>] [-g]\n", program);
+		" [-r <file>] [-w <file>] [-o offset] [-l length] [-g]\n",
+		program);
 	fprintf(stderr, "Can access the controller via serial port or i2c\n");
 	fprintf(stderr, "Serial port mode:\n");
 	fprintf(stderr, "--d[evice] <tty> : use <tty> as the serial port\n");
@@ -890,6 +892,8 @@ void display_usage(char *program)
 	fprintf(stderr, "--s[pi] </dev/spi> : use SPI adapter on </dev>.\n");
 	fprintf(stderr, "--w[rite] <file|-> : read <file> or\n\t"
 			"standard input and write it to flash\n");
+	fprintf(stderr, "--o[ffset] : offset to read/write/start from/to\n");
+	fprintf(stderr, "--n[length] : amount to read/write\n");
 	fprintf(stderr, "--g[o] : jump to execute flash entrypoint\n");
 
 	exit(2);
@@ -922,7 +926,7 @@ int parse_parameters(int argc, char **argv)
 	int opt, idx;
 	int flags = 0;
 
-	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghr:s:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghn:o:r:s:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
@@ -948,6 +952,12 @@ int parse_parameters(int argc, char **argv)
 		case 'h':
 		case '?':
 			display_usage(argv[0]);
+			break;
+		case 'n':
+			length = strtol(optarg, NULL, 0);
+			break;
+		case 'o':
+			offset = strtol(optarg, NULL, 0);
 			break;
 		case 'r':
 			input_filename = optarg;
@@ -1028,21 +1038,20 @@ int main(int argc, char **argv)
 	}
 
 	if (input_filename) {
-		ret = read_flash(ser, chip, input_filename,
-				 0, chip->flash_size);
+		ret = read_flash(ser, chip, input_filename, offset, length);
 		if (ret)
 			goto terminate;
 	}
 
 	if (output_filename) {
-		ret = write_flash(ser, chip, output_filename, 0);
+		ret = write_flash(ser, chip, output_filename, offset);
 		if (ret)
 			goto terminate;
 	}
 
 	/* Run the program from flash */
 	if (flags & FLAG_GO)
-		command_go(ser, chip->flash_start);
+		command_go(ser, offset);
 
 	/* Normal exit */
 	ret = 0;
