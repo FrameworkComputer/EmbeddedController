@@ -104,7 +104,7 @@ int ec_get_cmd_versions(int cmd, uint32_t *pmask)
 	rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 1, &pver_v1, sizeof(pver_v1),
 			&rver, sizeof(rver));
 
-	if (rv == -EECRESULT - EC_RES_INVALID_VERSION) {
+	if (rv < 0) {
 		pver.cmd = cmd;
 		rv = ec_command(EC_CMD_GET_CMD_VERSIONS, 0, &pver, sizeof(pver),
 				&rver, sizeof(rver));
