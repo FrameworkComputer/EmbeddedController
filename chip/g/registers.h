@@ -7,8 +7,21 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
-#include "gc_regdefs.h"
+#if defined(CHIP_VARIANT_CR50_FPGA)
+#include "cr50_fpga_regdefs.h"
+#define PCLK_FREQ  30000000
+#elif defined(CHIP_VARIANT_CR50_A1)
+#include "cr50_a1_regdefs.h"
+#define PCLK_FREQ  24000000
+#else
+#error "Unsupported CR50 chip variant"
+#endif
+
 #include "util.h"
+
+/* Constants for setting baud rate */
+#define DEFAULT_UART_FREQ 1000000
+#define UART_NCO_WIDTH 16
 
 /* Replace masked bits with val << lsb */
 #define REG_WRITE_MLV(reg, mask, lsb, val) reg = ((reg & ~mask) | ((val << lsb) & mask))

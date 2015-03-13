@@ -7,7 +7,7 @@
 
 CHIP:=g
 CHIP_FAMILY:=cr50
-CHIP_VARIANT:=cr50_fpga
+CHIP_VARIANT:=cr50_a1
 
 board-y=board.o
 
