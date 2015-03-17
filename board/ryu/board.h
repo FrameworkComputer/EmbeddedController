@@ -98,24 +98,32 @@
 #define USB_IFACE_CONSOLE   0
 #define USB_IFACE_AP_STREAM 1
 #define USB_IFACE_SH_STREAM 2
-#define USB_IFACE_COUNT     3
+#define USB_IFACE_SPI       3
+#define USB_IFACE_COUNT     4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
 #define USB_EP_CONSOLE   1
 #define USB_EP_AP_STREAM 2
 #define USB_EP_SH_STREAM 3
-#define USB_EP_COUNT     4
+#define USB_EP_SPI       4
+#define USB_EP_COUNT     5
 
 /* Enable console over USB */
 #define CONFIG_USB_CONSOLE
+
+/* Enable control of SPI over USB */
+#define CONFIG_SPI_MASTER_PORT 2
+#define CONFIG_SPI_CS_GPIO     GPIO_SPI_FLASH_NSS
+
+#define CONFIG_USB_SPI
 
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
 
 /* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 11
+#define DEFERRABLE_MAX_COUNT 12
 
 #ifndef __ASSEMBLER__
 

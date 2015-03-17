@@ -24,10 +24,12 @@
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
+#include "spi.h"
 #include "task.h"
 #include "usb.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "usb_spi.h"
 #include "usb-stm32f3.h"
 #include "usb-stream.h"
 #include "usart-stm32f3.h"
@@ -515,4 +517,51 @@ int board_is_consuming_full_charge(void)
 int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 {
 	return adc_read_channel(ADC_VBUS) < VBUS_LOW_THRESHOLD_MV;
+}
+
+/*
+ * Enable and disable SPI for case closed debugging.  This forces the AP into
+ * reset while SPI is enabled, thus preventing contention on the SPI interface.
+ */
+void usb_spi_board_enable(struct usb_spi_config const *config)
+{
+	/* Place AP into reset */
+	gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
+
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_set_flags(GPIO_SPI_FLASH_NSS, GPIO_OUT_HIGH);
+
+	/* Set all four SPI pins to high speed */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xf03c0000;
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
+
+	/* Enable SPI LDO to power the flash chip */
+	gpio_set_level(GPIO_VDDSPI_EN, 1);
+
+	spi_enable(1);
+}
+
+void usb_spi_board_disable(struct usb_spi_config const *config)
+{
+	spi_enable(0);
+
+	/* Disable SPI LDO */
+	gpio_set_level(GPIO_VDDSPI_EN, 0);
+
+	/* Disable clocks to SPI2 module */
+	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
+
+	/* Release SPI GPIOs */
+	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_set_flags(GPIO_SPI_FLASH_NSS, GPIO_INPUT);
+
+	/* Release AP from reset */
+	gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);
 }
