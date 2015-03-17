@@ -69,12 +69,25 @@ BUILD_ASSERT(USB_MAX_PACKET_SIZE == (2 + USB_SPI_MAX_READ_COUNT));
 
 struct usb_spi_state {
 	/*
-	 * The SPI bridge must be both not disabled and enabled to allow access
-	 * to the SPI device.  The disabled bit is dictated by the caller of
-	 * usb_spi_enable.  The enabled bit is set by the USB host, most likely
-	 * flashrom, by sending a USB_SPI_REQ_ENABLE message to the device.
+	 * The SPI bridge must be enabled both locally and by the host to allow
+	 * access to the SPI device.  The enabled_host flag is set and cleared
+	 * by sending USB_SPI_REQ_ENABLE and USB_SPI_REQ_DISABLE to the device
+	 * control endpoint.  The enabled_device flag is set by calling
+	 * usb_spi_enable.
 	 */
-	int disabled;
+	int enabled_host;
+	int enabled_device;
+
+	/*
+	 * The current enabled state.  This is only updated in the deferred
+	 * callback.  Whenever either of the host or device specific enable
+	 * flags is changed the deferred callback is queued, and it will check
+	 * their combined state against this flag.  If the combined state is
+	 * different, then one of usb_spi_board_enable or usb_spi_board_disable
+	 * is called and this flag is updated.  This ensures that the board
+	 * specific state update routines are only called from the deferred
+	 * callback.
+	 */
 	int enabled;
 };
 
@@ -128,8 +141,9 @@ struct usb_spi_config {
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	static void CONCAT2(NAME, _deferred_)(void);			\
 	struct usb_spi_state CONCAT2(NAME, _state_) = {			\
-		.disabled = 1,						\
-		.enabled  = 0,						\
+		.enabled_host   = 0,					\
+		.enabled_device = 0,					\
+		.enabled        = 0,					\
 	};								\
 	struct usb_spi_config const NAME = {				\
 		.state     = &CONCAT2(NAME, _state_),			\

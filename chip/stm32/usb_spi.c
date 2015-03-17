@@ -59,32 +59,53 @@ static void usb_spi_write_packet(struct usb_spi_config const *config,
 	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
+static int rx_valid(struct usb_spi_config const *config)
+{
+	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) == EP_RX_VALID;
+}
+
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
-	uint8_t count;
-	uint8_t write_count;
-	uint8_t read_count;
+	/*
+	 * If our overall enabled state has changed we call the board specific
+	 * enable or disable routines and save our new state.
+	 */
+	int enabled = (config->state->enabled_host &&
+		       config->state->enabled_device);
 
-	count       = usb_spi_read_packet(config);
-	write_count = (config->buffer[0] >> 0) & 0xff;
-	read_count  = (config->buffer[0] >> 8) & 0xff;
+	if (enabled ^ config->state->enabled) {
+		if (enabled) usb_spi_board_enable(config);
+		else         usb_spi_board_disable(config);
 
-	if (config->state->disabled || !config->state->enabled) {
-		config->buffer[0] = USB_SPI_DISABLED;
-	} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
-		   write_count != (count - 2)) {
-		config->buffer[0] = USB_SPI_WRITE_COUNT_INVALID;
-	} else if (read_count > USB_SPI_MAX_READ_COUNT) {
-		config->buffer[0] = USB_SPI_READ_COUNT_INVALID;
-	} else {
-		config->buffer[0] = usb_spi_map_error(
-			spi_transaction((uint8_t *)(config->buffer + 1),
-					write_count,
-					(uint8_t *)(config->buffer + 1),
-					read_count));
+		config->state->enabled = enabled;
 	}
 
-	usb_spi_write_packet(config, read_count + 2);
+	/*
+	 * And if there is a USB packet waiting we process it and generate a
+	 * response.
+	 */
+	if (!rx_valid(config)) {
+		uint8_t count       = usb_spi_read_packet(config);
+		uint8_t write_count = (config->buffer[0] >> 0) & 0xff;
+		uint8_t read_count  = (config->buffer[0] >> 8) & 0xff;
+
+		if (!config->state->enabled) {
+			config->buffer[0] = USB_SPI_DISABLED;
+		} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
+			   write_count != (count - 2)) {
+			config->buffer[0] = USB_SPI_WRITE_COUNT_INVALID;
+		} else if (read_count > USB_SPI_MAX_READ_COUNT) {
+			config->buffer[0] = USB_SPI_READ_COUNT_INVALID;
+		} else {
+			config->buffer[0] = usb_spi_map_error(
+				spi_transaction((uint8_t *)(config->buffer + 1),
+						write_count,
+						(uint8_t *)(config->buffer + 1),
+						read_count));
+		}
+
+		usb_spi_write_packet(config, read_count + 2);
+	}
 }
 
 void usb_spi_tx(struct usb_spi_config const *config)
@@ -134,22 +155,26 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	    setup.wLength != 0)
 		return 1;
 
-	if (config->state->disabled)
+	if (!config->state->enabled_device)
 		return 1;
 
 	switch (setup.bRequest) {
 	case USB_SPI_REQ_ENABLE:
-		usb_spi_board_enable(config);
-		config->state->enabled = 1;
+		config->state->enabled_host = 1;
 		break;
 
 	case USB_SPI_REQ_DISABLE:
-		config->state->enabled = 0;
-		usb_spi_board_disable(config);
+		config->state->enabled_host = 0;
 		break;
 
 	default: return 1;
 	}
+
+	/*
+	 * Our state has changed, call the deferred function to handle the
+	 * state change.
+	 */
+	hook_call_deferred(config->deferred, 0);
 
 	btable_ep[0].tx_count = 0;
 	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, EP_STATUS_OUT);
@@ -158,11 +183,7 @@ int usb_spi_interface(struct usb_spi_config const *config,
 
 void usb_spi_enable(struct usb_spi_config const *config, int enabled)
 {
-	config->state->disabled = !enabled;
+	config->state->enabled_device = enabled;
 
-	if (config->state->disabled &&
-	    config->state->enabled) {
-		config->state->enabled = 0;
-		usb_spi_board_disable(config);
-	}
+	hook_call_deferred(config->deferred, 0);
 }
