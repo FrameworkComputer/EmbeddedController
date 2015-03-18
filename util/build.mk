@@ -21,4 +21,5 @@ comm-objs+=comm-i2c.o
 
 ectool-objs=ectool.o ectool_keyscan.o misc_util.o ec_flash.o $(comm-objs)
 ec_sb_firmware_update-objs=ec_sb_firmware_update.o $(comm-objs) misc_util.o
+ec_sb_firmware_update-objs+=powerd_lock.o
 lbplay-objs=lbplay.o $(comm-objs)
