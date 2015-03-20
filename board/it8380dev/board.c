@@ -16,6 +16,11 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "ec2i_chip.h"
+#include "power_button.h"
+#include "lid_switch.h"
+#include "keyboard_scan.h"
+#include "timer.h"
+#include "lpc.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -71,7 +76,7 @@ BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
 /* Initialize board. */
 static void board_init(void)
 {
-	gpio_enable_interrupt(GPIO_START_SW);
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -88,6 +93,20 @@ const struct adc_t adc_channels[] = {
 	{"adc_ch7", 3000, 1024, 0, 7},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	.output_settle_us = 35,
+	.debounce_down_us = 5 * MSEC,
+	.debounce_up_us = 40 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
 
 /*****************************************************************************/
 /* Console commands */

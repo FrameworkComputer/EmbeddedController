@@ -10,10 +10,12 @@
 CORE:=nds32
 
 # Required chip modules
-chip-y=hwtimer.o uart.o gpio.o system.o jtag.o clock.o irq.o
+chip-y=hwtimer.o uart.o gpio.o system.o jtag.o clock.o irq.o intc.o
 
 # Optional chip modules
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_EC2I)+=ec2i.o
+chip-$(CONFIG_LPC)+=lpc.o
+chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

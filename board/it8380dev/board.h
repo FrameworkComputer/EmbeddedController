@@ -8,10 +8,18 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#ifndef __ASSEMBLER__
+/* Optional features */
+#define CONFIG_POWER_BUTTON
+#define CONFIG_KEYBOARD_PROTOCOL_8042
+#define CONFIG_KEYBOARD_BOARD_CONFIG
+#undef CONFIG_KEYBOARD_KSI_WUC_INT
 
-/* stubbed features */
-#undef CONFIG_LID_SWITCH
+/* Debug */
+#undef CONFIG_KEYBOARD_DEBUG
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+
+#ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 

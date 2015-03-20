@@ -26,14 +26,15 @@
 /* Memory mapping */
 
 #define CONFIG_RAM_BASE             0x00080000
-#define CONFIG_RAM_SIZE             0x00002000
+#define CONFIG_RAM_SIZE             0x00004000
 
 /* System stack size */
 #define CONFIG_STACK_SIZE           1024
 
 /* non-standard task stack sizes */
 #define IDLE_TASK_STACK_SIZE        512
-#define LARGER_TASK_STACK_SIZE      640
+#define LARGER_TASK_STACK_SIZE      768
+#define SMALLER_TASK_STACK_SIZE     384
 
 /* Default task stack size */
 #define TASK_STACK_SIZE             512
@@ -96,5 +97,6 @@
 #define CONFIG_PWM
 #define CONFIG_ADC
 #define CONFIG_EC2I
+#define CONFIG_LPC
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

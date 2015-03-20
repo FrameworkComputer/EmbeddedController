@@ -14,6 +14,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "kmsc_chip.h"
 
 /*
  * Converts port (ie GPIO A) to base address offset of the control register
@@ -360,6 +361,13 @@ static void __gpio_irq(void)
 {
 	/* Determine interrupt number. */
 	int irq = IT83XX_INTC_IVCT2 - 16;
+
+#if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_KSI_WUC_INT)
+	if (irq == IT83XX_IRQ_WKINTC) {
+		keyboard_raw_interrupt();
+		return;
+	}
+#endif
 
 	/* Run the GPIO master handler above with corresponding port/mask. */
 	gpio_interrupt(gpio_irqs[irq].gpio_port, gpio_irqs[irq].gpio_mask);

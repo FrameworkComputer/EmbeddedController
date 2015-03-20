@@ -95,6 +95,12 @@ reset:
 	li   $r0, 0x00080005
 	mtsr $r0, $mr7
 
+	/* Enable DLM 8k~12K(bit2) and DLM 12k~16k(bit3) */
+	la  $r1, 0x00F02030
+	lbi $r0, [$r1]
+	ori $r0, $r0, 0x0C
+	sbi $r0, [$r1]
+
 	/* Clear BSS */
 	la   $r0, _bss_start
 	lwi  $r1, [$r0]
