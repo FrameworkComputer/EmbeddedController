@@ -252,6 +252,16 @@ int board_is_discharging_on_ac(void)
 	return discharging_on_ac;
 }
 
+/**
+ * Reset PD MCU
+ */
+void board_reset_pd_mcu(void)
+{
+	gpio_set_level(GPIO_USB_MCU_RST, 1);
+	usleep(100);
+	gpio_set_level(GPIO_USB_MCU_RST, 0);
+}
+
 /* Base Sensor mutex */
 static struct mutex g_base_mutex;
 

@@ -30,6 +30,9 @@
 #elif defined(CHIP_VARIANT_STM32F10X)
 /* STM32F101xx, STM32F102xx, STM32F103xx, STM32F105xx, and STM32F107xx */
 #include "config-stm32f10x.h"
+#elif defined(CHIP_VARIANT_STM32F09X)
+/* STM32F09xx */
+#include "config-stm32f09x.h"
 #elif defined(CHIP_VARIANT_STM32F07X)
 /* STM32F07xx */
 #include "config-stm32f07x.h"

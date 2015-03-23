@@ -56,6 +56,7 @@ driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 
 # USB switches
 driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
+driver-$(CONFIG_USB_SWITCH_PI3USB30532)+=usb_switch_pi3usb30532.o
 driver-$(CONFIG_USB_SWITCH_TSU6721)+=usb_switch_tsu6721.o
 
 # Firmware Update

@@ -668,9 +668,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_COLD:
 #ifdef HAS_TASK_PDCMD
 		/* Reboot the PD chip as well */
-		gpio_set_level(GPIO_USB_MCU_RST, 1);
-		usleep(100);
-		gpio_set_level(GPIO_USB_MCU_RST, 0);
+		board_reset_pd_mcu();
 #endif
 		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
