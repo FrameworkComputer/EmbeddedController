@@ -352,7 +352,12 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+/* TODO(crosbug.com/p/38333) remove me */
+#define GPIO_USBC_SS1_USB_MODE_L GPIO_USBC_MUX_CONF0
+#define GPIO_USBC_SS2_USB_MODE_L GPIO_USBC_MUX_CONF1
+#define GPIO_USBC_SS_EN_L GPIO_USBC_MUX_CONF2
+
+void p4_board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 {
 	/* reset everything */
 	gpio_set_level(GPIO_USBC_SS_EN_L, 1);
@@ -380,7 +385,36 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_USBC_SS_EN_L, 0);
 }
 
-int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
+void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+{
+	if (board_get_version() < 5) {
+		/* P4/EVT or older boards */
+		/* TODO(crosbug.com/p/38333) remove this */
+		p4_board_set_usb_mux(port, mux, polarity);
+		return;
+	}
+
+	/* reset everything */
+	gpio_set_level(GPIO_USBC_MUX_CONF0, 0);
+	gpio_set_level(GPIO_USBC_MUX_CONF1, 0);
+	gpio_set_level(GPIO_USBC_MUX_CONF2, 0);
+
+	if (mux == TYPEC_MUX_NONE)
+		/* everything is already disabled, we can return */
+		return;
+
+	gpio_set_level(GPIO_USBC_MUX_CONF0, polarity);
+
+	if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK)
+		/* USB 3.0 uses 2 superspeed lanes */
+		gpio_set_level(GPIO_USBC_MUX_CONF2, 1);
+
+	if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK)
+		/* DP uses available superspeed lanes (x2 or x4) */
+		gpio_set_level(GPIO_USBC_MUX_CONF1, 1);
+}
+
+int p4_board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 {
 	int has_ss = !gpio_get_level(GPIO_USBC_SS_EN_L);
 	int has_usb = !gpio_get_level(GPIO_USBC_SS1_USB_MODE_L) ||
@@ -399,6 +433,33 @@ int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
 		*usb_str = NULL;
 
 	return has_ss;
+}
+
+int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
+{
+	int has_usb, has_dp, polarity;
+
+	if (board_get_version() < 5) {
+		/* P4/EVT or older boards */
+		/* TODO(crosbug.com/p/38333) remove this */
+		return p4_board_get_usb_mux(port, dp_str, usb_str);
+	}
+
+	has_usb = gpio_get_level(GPIO_USBC_MUX_CONF2);
+	has_dp = gpio_get_level(GPIO_USBC_MUX_CONF1);
+	polarity = gpio_get_level(GPIO_USBC_MUX_CONF0);
+
+	if (has_dp)
+		*dp_str = polarity ? "DP2" : "DP1";
+	else
+		*dp_str = NULL;
+
+	if (has_usb)
+		*usb_str = polarity ? "USB2" : "USB1";
+	else
+		*usb_str = NULL;
+
+	return has_dp || has_usb;
 }
 
 /**
@@ -564,4 +625,33 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 
 	/* Release AP from reset */
 	gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);
+}
+
+int board_get_version(void)
+{
+	static int ver;
+
+	if (!ver) {
+		/*
+		 * read the board EC ID on the tristate strappings
+		 * using ternary encoding: 0 = 0, 1 = 1, Hi-Z = 2
+		 */
+		uint8_t id0 = 0, id1 = 0;
+		gpio_set_flags(GPIO_BOARD_ID0, GPIO_PULL_DOWN | GPIO_INPUT);
+		gpio_set_flags(GPIO_BOARD_ID1, GPIO_PULL_DOWN | GPIO_INPUT);
+		usleep(100);
+		id0 = gpio_get_level(GPIO_BOARD_ID0);
+		id1 = gpio_get_level(GPIO_BOARD_ID1);
+		gpio_set_flags(GPIO_BOARD_ID0, GPIO_PULL_UP | GPIO_INPUT);
+		gpio_set_flags(GPIO_BOARD_ID1, GPIO_PULL_UP | GPIO_INPUT);
+		usleep(100);
+		id0 = gpio_get_level(GPIO_BOARD_ID0) && !id0 ? 2 : id0;
+		id1 = gpio_get_level(GPIO_BOARD_ID1) && !id1 ? 2 : id1;
+		gpio_set_flags(GPIO_BOARD_ID0, GPIO_INPUT);
+		gpio_set_flags(GPIO_BOARD_ID1, GPIO_INPUT);
+		ver = id1 * 3 + id0;
+		CPRINTS("Board ID = %d\n", ver);
+	}
+
+	return ver;
 }

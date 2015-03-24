@@ -132,6 +132,8 @@ static inline void pd_tx_init(void)
 static inline void pd_set_host_mode(int port, int enable)
 {
 	if (enable) {
+		/* Turn the 5V regulator providing VBUS */
+		gpio_set_level(GPIO_EN_PP5000, 1);
 		/* We never charging in power source mode */
 		gpio_set_level(GPIO_USBC_CHARGE_EN_L, 1);
 		charge_set_input_current_limit(0);
@@ -141,6 +143,8 @@ static inline void pd_set_host_mode(int port, int enable)
 	} else {
 		/* Kill VBUS power supply */
 		gpio_set_level(GPIO_USBC_5V_EN, 0);
+		/* Turn off the 5V regulator */
+		gpio_set_level(GPIO_EN_PP5000, 0);
 		/* Pull low for device mode. */
 		gpio_set_level(GPIO_USBC_CC1_DEVICE_ODL, 0);
 		gpio_set_level(GPIO_USBC_CC2_DEVICE_ODL, 0);

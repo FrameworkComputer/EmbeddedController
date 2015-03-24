@@ -38,9 +38,16 @@ GPIO(USBC_TX_CLKIN,        B, 3,  GPIO_OUT_LOW,  NULL)
 /* System power */
 GPIO(PMIC_PWRON_L,         D, 14, GPIO_ODR_HIGH, NULL)
 GPIO(PMIC_WARM_RESET_L,    E, 4,  GPIO_ODR_HIGH, NULL)
-GPIO(EN_PP3300_RSVD,       E, 13, GPIO_INPUT,    NULL)
+GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW,  NULL) /* Proto 5+ */
+/*
+ * We are missing an external pull-up for EN_PP3300. Pull it up here.
+ * EN_PP3300 is still controlled by PMIC though.
+ */
+GPIO(EN_PP3300_RSVD,       E, 13, GPIO_INPUT | GPIO_PULL_UP, NULL)
 /* sensor temp output and PMIC reset input */
-GPIO(PMIC_THERM_L,         D, 12, GPIO_ODR_HIGH, NULL)
+GPIO(P5_PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH, NULL)
+/* TODO(crosbug.com/p/38333) remove P4_PMIC_THERM_L */
+GPIO(P4_PMIC_THERM_L,      D, 12, GPIO_ODR_HIGH, NULL)
 
 GPIO(VBUS_SENSE,           A, 0,  GPIO_ANALOG,   NULL)
 GPIO(CHGR_IADP,            B, 0,  GPIO_ANALOG,   NULL)
@@ -59,11 +66,13 @@ GPIO(USBC_VCONN2_EN_L,     D, 10, GPIO_OUT_HIGH, NULL)
 GPIO(USBC_CC1_DEVICE_ODL,  A, 5,  GPIO_ODR_LOW,  NULL)
 GPIO(USBC_CC2_DEVICE_ODL,  E, 14, GPIO_ODR_LOW,  NULL)
 
+/* Pericom PI3USB30592 mux controls on Proto 5+ */
+GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW,  NULL)
+GPIO(USBC_MUX_CONF1,       D, 9,  GPIO_OUT_LOW,  NULL)
+GPIO(USBC_MUX_CONF2,       E, 0,  GPIO_OUT_LOW,  NULL)
+/* TODO(crosbug.com/p/38333) remove USBC_DP_xxx GPIOs */
 GPIO(USBC_DP_MODE_L,       D, 1,  GPIO_OUT_HIGH, NULL)
 GPIO(USBC_DP_POLARITY,     D, 2,  GPIO_OUT_HIGH, NULL)
-GPIO(USBC_SS1_USB_MODE_L,  D, 3,  GPIO_OUT_HIGH, NULL)
-GPIO(USBC_SS2_USB_MODE_L,  D, 9,  GPIO_OUT_HIGH, NULL)
-GPIO(USBC_SS_EN_L,         E, 0,  GPIO_OUT_HIGH, NULL)
 
 /* Inputs */
 GPIO(BOARD_ID0,            E, 11,  GPIO_INPUT,    NULL)
@@ -98,11 +107,12 @@ GPIO(USB_PU_EN_L,          C, 2,  GPIO_OUT_HIGH, NULL)
 GPIO(PD_DISABLE_DEBUG,     C, 6,  GPIO_OUT_LOW,  NULL)
 GPIO(SPI_FLASH_NSS,        B, 9,  GPIO_INPUT,    NULL)
 GPIO(VDDSPI_EN,            C, 12, GPIO_OUT_LOW,  NULL)
-GPIO(SH_RESET_L,           C, 4,  GPIO_ODR_HIGH, NULL)
+GPIO(SH_RESET,             C, 4,  GPIO_ODR_HIGH, NULL)
 GPIO(SH_BOOT,              C, 9,  GPIO_ODR_HIGH, NULL)
 GPIO(EC_INT_L,             F, 2,  GPIO_ODR_HIGH, NULL)
 GPIO(ENTERING_RW,          E, 15, GPIO_OUT_LOW,  NULL)
 GPIO(WP_L,                 F, 6,  GPIO_INPUT,    NULL)
+GPIO(FW_DEBUG_MODE_L,      C, 7,  GPIO_ODR_HIGH, NULL) /* Proto 5+ */
 
 #if 0
 /* Alternate functions */

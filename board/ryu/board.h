@@ -16,7 +16,7 @@
 #define CONFIG_UART_CONSOLE 2
 
 /* By default, enable all console messages excepted USB */
-#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USBPD))
+#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USB))
 
 /* Optional features */
 #undef CONFIG_CMD_HASH
@@ -127,11 +127,17 @@
 
 #ifndef __ASSEMBLER__
 
+int board_get_version(void);
+
 /* Timer selection */
 #define TIM_CLOCK32 5
 #define TIM_WATCHDOG 19
 
 #include "gpio_signal.h"
+
+/* PMIC_THERM_L selection at runtime depending on board version */
+#define GPIO_PMIC_THERM_L (board_get_version() >= 5 ? GPIO_P5_PMIC_THERM_L : \
+						      GPIO_P4_PMIC_THERM_L)
 
 enum power_signal {
 	TEGRA_XPSHOLD = 0,
