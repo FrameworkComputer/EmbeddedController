@@ -348,6 +348,16 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 	return event_mask[type];
 }
 
+void lpc_set_acpi_status_mask(uint8_t mask)
+{
+	/* TODO (crbug.com/p/38224): Implement */
+}
+
+void lpc_clear_acpi_status_mask(uint8_t mask)
+{
+	/* TODO (crbug.com/p/38224): Implement */
+}
+
 int lpc_get_pltrst_asserted(void)
 {
 	/* Read PLTRST status*/

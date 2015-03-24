@@ -449,6 +449,16 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 	return event_mask[type];
 }
 
+void lpc_set_acpi_status_mask(uint8_t mask)
+{
+	MEC1322_ACPI_EC_STATUS(0) |= mask;
+}
+
+void lpc_clear_acpi_status_mask(uint8_t mask)
+{
+	MEC1322_ACPI_EC_STATUS(0) &= ~mask;
+}
+
 int lpc_get_pltrst_asserted(void)
 {
 	return (MEC1322_LPC_BUS_MONITOR & (1<<1)) ? 1 : 0;

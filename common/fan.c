@@ -471,17 +471,23 @@ DECLARE_HOOK(HOOK_INIT, pwm_fan_init, HOOK_PRIO_DEFAULT);
 static void pwm_fan_second(void)
 {
 	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+	uint16_t rpm;
 	int stalled = 0;
 	int fan;
 
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
 		if (fan_is_stalled(fans[fan].ch)) {
-			mapped[fan] = EC_FAN_SPEED_STALLED;
+			rpm = EC_FAN_SPEED_STALLED;
 			stalled = 1;
 			cprints(CC_PWM, "Fan %d stalled!", fan);
 		} else {
-			mapped[fan] = fan_get_rpm_actual(fans[fan].ch);
+			rpm = fan_get_rpm_actual(fans[fan].ch);
 		}
+
+		/* Lock ACPI read access to memmap during multi-byte write */
+		host_lock_memmap();
+		mapped[fan] = rpm;
+		host_unlock_memmap();
 	}
 
 	/*

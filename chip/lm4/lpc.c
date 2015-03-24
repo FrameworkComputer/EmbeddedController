@@ -432,6 +432,24 @@ uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 	return event_mask[type];
 }
 
+void lpc_set_acpi_status_mask(uint8_t mask)
+{
+	uint32_t set_mask = 0;
+	if (mask & EC_LPC_STATUS_BURST_MODE)
+		set_mask |= LM4_LPC_ST_BURST;
+
+	LM4_LPC_ST(LPC_CH_ACPI) |= set_mask;
+}
+
+void lpc_clear_acpi_status_mask(uint8_t mask)
+{
+	uint32_t clear_mask = 0;
+	if (mask & EC_LPC_STATUS_BURST_MODE)
+		clear_mask |= LM4_LPC_ST_BURST;
+
+	LM4_LPC_ST(LPC_CH_ACPI) &= ~clear_mask;
+}
+
 int lpc_get_pltrst_asserted(void)
 {
 	return (LM4_LPC_LPCSTS & (1<<10)) ? 1 : 0;

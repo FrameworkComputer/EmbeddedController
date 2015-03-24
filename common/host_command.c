@@ -81,6 +81,18 @@ uint8_t *host_get_memmap(int offset)
 #endif
 }
 
+static struct mutex memmap_write_mutex;
+
+void host_lock_memmap()
+{
+	mutex_lock(&memmap_write_mutex);
+}
+
+void host_unlock_memmap()
+{
+	mutex_unlock(&memmap_write_mutex);
+}
+
 int host_get_vboot_mode(void)
 {
 	return g_vboot_mode;

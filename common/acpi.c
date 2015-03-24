@@ -7,9 +7,12 @@
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
+#include "hooks.h"
+#include "host_command.h"
 #include "lpc.h"
 #include "ec_commands.h"
 #include "pwm.h"
+#include "timer.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -26,7 +29,20 @@ static int dptf_temp_sensor_id;			/* last sensor ID written */
 static int dptf_temp_threshold;			/* last threshold written */
 #endif
 
-/* This handles AP writes to the EC via the ACPI I/O port. There are only a few
+/*
+ * Deferred function to ensure that ACPI burst mode doesn't remain enabled
+ * indefinitely.
+ */
+static void acpi_unlock_memmap_deferred(void)
+{
+	lpc_clear_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
+	host_unlock_memmap();
+	CPUTS("ACPI force unlock mutex, missed burst disable?");
+}
+DECLARE_DEFERRED(acpi_unlock_memmap_deferred);
+
+/*
+ * This handles AP writes to the EC via the ACPI I/O port. There are only a few
  * ACPI commands (EC_CMD_ACPI_*), but they are all handled here.
  */
 int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
@@ -87,7 +103,15 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 		default:
-			CPRINTS("ACPI read 0x%02x (ignored)", acpi_addr);
+			if (acpi_addr >= EC_ACPI_MEM_MAPPED_BEGIN &&
+			    acpi_addr <
+			    EC_ACPI_MEM_MAPPED_BEGIN + EC_ACPI_MEM_MAPPED_SIZE)
+				result = *((uint8_t *)(lpc_get_memmap_range() +
+					   acpi_addr -
+					   EC_ACPI_MEM_MAPPED_BEGIN));
+			else
+				CPRINTS("ACPI read 0x%02x (ignored)",
+					acpi_addr);
 			break;
 		}
 
@@ -149,16 +173,31 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 				acpi_addr, data);
 			break;
 		}
-
-/* At the moment, ACPI implies LPC. */
-#ifdef CONFIG_LPC
 	} else if (acpi_cmd == EC_CMD_ACPI_QUERY_EVENT && !acpi_data_count) {
 		/* Clear and return the lowest host event */
 		int evt_index = lpc_query_host_event_state();
 		CPRINTS("ACPI query = %d", evt_index);
 		*resultptr = evt_index;
 		retval = 1;
-#endif
+	} else if (acpi_cmd == EC_CMD_ACPI_BURST_ENABLE && !acpi_data_count) {
+		/* Enter burst mode */
+		host_lock_memmap();
+		lpc_set_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
+
+		/*
+		 * Unlock from deferred function in case burst mode is enabled
+		 * for an extremely long time  (ex. kernel bug / crash).
+		 */
+		hook_call_deferred(acpi_unlock_memmap_deferred, 1*SECOND);
+
+		/* ACPI 5.0-12.3.3: Burst ACK */
+		*resultptr = 0x90;
+		retval = 1;
+	} else if (acpi_cmd == EC_CMD_ACPI_BURST_DISABLE && !acpi_data_count) {
+		/* Leave burst mode */
+		hook_call_deferred(acpi_unlock_memmap_deferred, -1);
+		lpc_clear_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
+		host_unlock_memmap();
 	}
 
 	return retval;

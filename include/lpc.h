@@ -97,6 +97,16 @@ void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask);
 uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type);
 
 /**
+ * Set the EC_LPC_STATUS_* mask for the specified status.
+ */
+void lpc_set_acpi_status_mask(uint8_t mask);
+
+/**
+ * Clear the EC_LPC_STATUS_* mask for the specified status.
+ */
+void lpc_clear_acpi_status_mask(uint8_t mask);
+
+/**
  * Return the state of platform reset.
  *
  * @return non-zero if PLTRST# is asserted (low); 0 if not asserted (high).
