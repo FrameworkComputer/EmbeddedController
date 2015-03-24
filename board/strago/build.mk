@@ -8,7 +8,7 @@
 
 # the IC is SMSC MEC1322 / external SPI is 4MB / external clock is crystal
 CHIP:=mec1322
-CHIP_SPI_SIZE_KB:=4096
+CHIP_SPI_SIZE_KB:=512
 
 board-y=board.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
