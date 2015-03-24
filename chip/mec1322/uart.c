@@ -32,6 +32,9 @@ void uart_tx_start(void)
 	if (MEC1322_UART_IER & (1 << 1))
 		return;
 
+	/* Do not allow deep sleep while transmit in progress */
+	disable_sleep(SLEEP_MASK_UART);
+
 	/*
 	 * Re-enable the transmit interrupt, then forcibly trigger the
 	 * interrupt.  This works around a hardware problem with the
@@ -45,12 +48,15 @@ void uart_tx_start(void)
 void uart_tx_stop(void)
 {
 	MEC1322_UART_IER &= ~(1 << 1);
+
+	/* Re-allow deep sleep */
+	enable_sleep(SLEEP_MASK_UART);
 }
 
 void uart_tx_flush(void)
 {
 	/* Wait for transmit FIFO empty */
-	while (!(MEC1322_UART_LSR & (1 << 5)))
+	while (!(MEC1322_UART_LSR & MEC1322_LSR_TX_EMPTY))
 		;
 }
 
@@ -60,7 +66,13 @@ int uart_tx_ready(void)
 	 * We have no indication of free space in transmit FIFO. To work around
 	 * this, we check transmit FIFO empty bit every 16 characters written.
 	 */
-	return tx_fifo_used != 0 || MEC1322_UART_LSR & (1 << 5);
+	return tx_fifo_used != 0 || (MEC1322_UART_LSR & MEC1322_LSR_TX_EMPTY);
+}
+
+int uart_tx_in_progress(void)
+{
+	/* return 0: FIFO is empty, 1: FIFO NOT Empty */
+	return !(MEC1322_UART_LSR & MEC1322_LSR_TX_EMPTY);
 }
 
 int uart_rx_available(void)
@@ -156,3 +168,66 @@ void uart_init(void)
 
 	init_done = 1;
 }
+
+#ifdef CONFIG_LOW_POWER_IDLE
+void uart_enter_dsleep(void)
+{
+	const struct gpio_info g = gpio_list[GPIO_UART0_RX];
+
+	/* Disable the UART interrupt. */
+	task_disable_irq(MEC1322_IRQ_UART);  /* NVIC interrupt for UART=13 */
+
+	/*
+	 * Set the UART0 RX pin to be a GPIO-162(fixed pin) interrupt
+	 * with the flags defined in the gpio.inc file.
+	 */
+	gpio_set_flags_by_mask(g.port, g.mask, g.flags);
+	gpio_set_alternate_function(g.port, g.mask, -1);
+
+	/* power-down/de-activate UART0 */
+	MEC1322_UART_ACT &= ~(1 << 0);
+
+	/* Clear pending interrupts on GPIO_UART0_RX(GPIO162, girq=8, bit=18) */
+	MEC1322_INT_SOURCE(8) = (1<<18);
+
+	/* Enable GPIO interrupts on the UART0 RX pin. */
+	gpio_enable_interrupt(GPIO_UART0_RX);
+}
+
+
+void uart_exit_dsleep(void)
+{
+	/*
+	 * If the UART0 RX GPIO interrupt has not fired, then no edge has been
+	 * detected. Disable the GPIO interrupt so that switching the pin over
+	 * to a UART pin doesn't inadvertently cause a GPIO edge interrupt.
+	 * Note: we can't disable this interrupt if it has already fired
+	 * because then the IRQ will not run at all.
+	 */
+	if (!((1 << 18) & MEC1322_INT_SOURCE(8))) /* if edge interrupt */
+		gpio_disable_interrupt(GPIO_UART0_RX);
+
+	/* Configure UART0 pins for use in UART peripheral. */
+	gpio_config_module(MODULE_UART, 1);
+
+	/* Clear pending interrupts on UART peripheral and enable interrupts. */
+	uart_clear_rx_fifo(0);
+	task_enable_irq(MEC1322_IRQ_UART); /* NVIC interrupt for UART = 13 */
+
+	/* power-up/activate UART0 */
+	MEC1322_UART_ACT |= (1 << 0);
+}
+
+void uart_deepsleep_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * Activity seen on UART RX pin while UART was disabled for deep sleep.
+	 * The console won't see that character because the UART is disabled,
+	 * so we need to inform the clock module of UART activity ourselves.
+	 */
+	clock_refresh_console_in_use();
+
+	/* Disable interrupts on UART0 RX pin to avoid repeated interrupts. */
+	gpio_disable_interrupt(GPIO_UART0_RX);
+}
+#endif /* CONFIG_LOW_POWER_IDLE */

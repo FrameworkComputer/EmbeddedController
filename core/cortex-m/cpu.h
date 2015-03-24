@@ -13,6 +13,12 @@
 /* Macro to access 32-bit registers */
 #define CPUREG(addr) (*(volatile uint32_t*)(addr))
 
+#define CPU_NVIC_ST_CTRL       CPUREG(0xE000E010)
+#define ST_ENABLE              (1 << 0)
+#define ST_TICKINT             (1 << 1)
+#define ST_CLKSOURCE           (1 << 2)
+#define ST_COUNTFLAG           (1 << 16)
+
 /* Nested Vectored Interrupt Controller */
 #define CPU_NVIC_EN(x)         CPUREG(0xe000e100 + 4 * (x))
 #define CPU_NVIC_DIS(x)        CPUREG(0xe000e180 + 4 * (x))

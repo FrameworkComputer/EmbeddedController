@@ -89,6 +89,8 @@
 #define MEC1322_UART_MSR       REG8(MEC1322_UART_RUNTIME_BASE + 0x6)
 #define MEC1322_UART_SCR       REG8(MEC1322_UART_RUNTIME_BASE + 0x7)
 
+/* Bit defines for MEC1322_UART_LSR */
+#define MEC1322_LSR_TX_EMPTY     (1 << 5)
 
 /* GPIO */
 #define MEC1322_GPIO_BASE      0x40081000
@@ -161,6 +163,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 
 #define MEC1322_LPC_RT_BASE      0x400f3100
 #define MEC1322_LPC_BUS_MONITOR  REG32(MEC1322_LPC_RT_BASE + 0x4)
+#define MEC1322_LPC_CLK_CTRL     REG32(MEC1322_LPC_RT_BASE + 0x10)
 #define MEC1322_LPC_MEM_HOST_CFG REG32(MEC1322_LPC_RT_BASE + 0xfc)
 
 
