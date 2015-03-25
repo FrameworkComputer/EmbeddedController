@@ -65,8 +65,30 @@ static struct p_state {
 	uint8_t _pad0;				/* next item is __packed */
 
 	/* Tweakable parameters. */
-	struct lightbar_params_v1 p;
+	union {
+		struct lightbar_params_v1 p;
+		struct {
+			struct lightbar_params_v2_timing timing;
+			struct lightbar_params_v2_tap tap;
+			struct lightbar_params_v2_oscillation osc;
+			struct lightbar_params_v2_brightness bright;
+			struct lightbar_params_v2_thresholds thlds;
+			struct lightbar_params_v2_colors colors;
+		} p_v2;
+	};
 } st;
+
+/* Each of the parameters must be less than 120 bytes
+ * (crbug.com/467716)
+ */
+#define MAX_PARAM_SIZE 120
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_timing) <= MAX_PARAM_SIZE);
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_tap) <= MAX_PARAM_SIZE);
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_oscillation) <= MAX_PARAM_SIZE);
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_brightness) <= MAX_PARAM_SIZE);
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_thresholds) <= MAX_PARAM_SIZE);
+BUILD_ASSERT(sizeof(struct lightbar_params_v2_colors) <= MAX_PARAM_SIZE);
+#undef MAX_PARAM_SIZE
 
 static const struct lightbar_params_v1 default_params = {
 	.google_ramp_up = 2500,
@@ -1719,6 +1741,83 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 	case LIGHTBAR_CMD_RESUME:
 		CPRINTS("LB_resume");
 		lightbar_sequence(LIGHTBAR_S3S0);
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_TIMING:
+		CPRINTS("LB_get_params_v2_timing");
+		memcpy(&out->get_params_v2_timing,
+		       &st.p_v2.timing,
+		       sizeof(st.p_v2.timing));
+		args->response_size = sizeof(out->get_params_v2_timing);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_TIMING:
+		CPRINTS("LB_set_params_v2_timing");
+		memcpy(&st.p_v2.timing,
+		       &in->set_v2par_timing,
+		       sizeof(struct lightbar_params_v2_timing));
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_TAP:
+		CPRINTS("LB_get_params_v2_tap");
+		memcpy(&out->get_params_v2_tap,
+		       &st.p_v2.tap,
+		       sizeof(struct lightbar_params_v2_tap));
+		args->response_size = sizeof(out->get_params_v2_tap);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_TAP:
+		CPRINTS("LB_set_params_v2_tap");
+		memcpy(&st.p_v2.tap,
+		       &in->set_v2par_tap,
+		       sizeof(struct lightbar_params_v2_tap));
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_OSCILLATION:
+		CPRINTS("LB_get_params_v2_oscillation");
+		memcpy(&out->get_params_v2_osc, &st.p_v2.osc,
+		       sizeof(struct lightbar_params_v2_oscillation));
+		args->response_size = sizeof(out->get_params_v2_osc);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_OSCILLATION:
+		CPRINTS("LB_set_params_v2_oscillation");
+		memcpy(&st.p_v2.osc,
+		       &in->set_v2par_osc,
+		       sizeof(struct lightbar_params_v2_oscillation));
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_BRIGHTNESS:
+		CPRINTS("LB_get_params_v2_brightness");
+		memcpy(&out->get_params_v2_bright,
+		       &st.p_v2.bright,
+		       sizeof(struct lightbar_params_v2_brightness));
+		args->response_size = sizeof(out->get_params_v2_bright);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_BRIGHTNESS:
+		CPRINTS("LB_set_params_v2_brightness");
+		memcpy(&st.p_v2.bright,
+		       &in->set_v2par_bright,
+		       sizeof(struct lightbar_params_v2_brightness));
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_THRESHOLDS:
+		CPRINTS("LB_get_params_v2_thlds");
+		memcpy(&out->get_params_v2_thlds,
+		       &st.p_v2.thlds,
+		       sizeof(struct lightbar_params_v2_thresholds));
+		args->response_size = sizeof(out->get_params_v2_thlds);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_THRESHOLDS:
+		CPRINTS("LB_set_params_v2_thlds");
+		memcpy(&st.p_v2.thlds,
+		       &in->set_v2par_thlds,
+		       sizeof(struct lightbar_params_v2_thresholds));
+		break;
+	case LIGHTBAR_CMD_GET_PARAMS_V2_COLORS:
+		CPRINTS("LB_get_params_v2_colors");
+		memcpy(&out->get_params_v2_colors,
+		       &st.p_v2.colors,
+		       sizeof(struct lightbar_params_v2_colors));
+		args->response_size = sizeof(out->get_params_v2_colors);
+		break;
+	case LIGHTBAR_CMD_SET_PARAMS_V2_COLORS:
+		CPRINTS("LB_set_params_v2_colors");
+		memcpy(&st.p_v2.colors,
+		       &in->set_v2par_colors,
+		       sizeof(struct lightbar_params_v2_colors));
 		break;
 	default:
 		CPRINTS("LB bad cmd 0x%x", in->cmd);
