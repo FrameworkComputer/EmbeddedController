@@ -89,6 +89,12 @@ int battery_device_name(char *device_name, int buf_size)
 	int rv, i, val;
 	int len = MIN(7, buf_size - 1);
 
+	if (battery_type_id == BQ27742_TYPE_ID) {
+		/* No device name register available */
+		strzcpy(device_name, "<BATT>", len);
+		return 0;
+	}
+
 	rv = bq27541_read8(REG_DEVICE_NAME_LENGTH, &val);
 	if (rv)
 		return rv;
