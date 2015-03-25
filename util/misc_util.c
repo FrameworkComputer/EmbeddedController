@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/utsname.h>
 
 #include "comm-host.h"
 #include "misc_util.h"
@@ -133,3 +134,39 @@ int ec_cmd_version_supported(int cmd, int ver)
 
 	return (mask & EC_VER_MASK(ver)) ? 1 : 0;
 }
+
+/**
+ * Return 1 is the current kernel version is greater or equal to
+ * <major>.<minor>.<sublevel>
+ */
+int kernel_version_ge(int major, int minor, int sublevel)
+{
+	struct utsname uts;
+	int atoms, kmajor, kminor, ksublevel;
+
+	if (uname(&uts) < 0)
+		return -1;
+	atoms = sscanf(uts.release, "%d.%d.%d", &kmajor, &kminor, &ksublevel);
+	if (atoms < 1)
+		return -1;
+
+	if (kmajor > major)
+		return 1;
+	if (kmajor < major)
+		return 0;
+
+	/* kmajor == major */
+	if (atoms < 2)
+		return 0 == minor && 0 == sublevel;
+	if (kminor > minor)
+		return 1;
+	if (kminor < minor)
+		return 0;
+
+	/* kminor == minor */
+	if (atoms < 3)
+		return 0 == sublevel;
+
+	return ksublevel >= sublevel;
+}
+

@@ -11,6 +11,8 @@
 
 #include "comm-host.h"
 #include "ec_commands.h"
+#include "misc_util.h"
+
 
 int (*ec_command_proto)(int command, int version,
 			const void *outdata, int outsize,
@@ -78,9 +80,16 @@ int ec_command(int command, int version,
 int comm_init(int interfaces, const char *device_name)
 {
 	struct ec_response_get_protocol_info info;
+	int allow_large_buffer;
 
 	/* Default memmap access */
 	ec_readmem = fake_readmem;
+
+	allow_large_buffer = kernel_version_ge(3, 14, 0);
+	if (allow_large_buffer < 0) {
+		fprintf(stderr, "Unable to check linux version\n");
+		return 1;
+	}
 
 	/* Prefer new /dev method */
 	if ((interfaces & COMM_DEV) && comm_init_dev &&
@@ -111,10 +120,12 @@ int comm_init(int interfaces, const char *device_name)
 	/* read max request / response size from ec for protocol v3+ */
 	if (ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0, &info,
 		sizeof(info)) == sizeof(info)) {
-		ec_max_outsize = info.max_request_packet_size -
-			 sizeof(struct ec_host_request);
-		ec_max_insize = info.max_response_packet_size -
-			sizeof(struct ec_host_response);
+		if ((allow_large_buffer) ||
+		    (info.max_request_packet_size < ec_max_outsize))
+			ec_max_outsize = info.max_request_packet_size;
+		if ((allow_large_buffer) ||
+		    (info.max_request_packet_size < ec_max_insize))
+			ec_max_insize = info.max_response_packet_size;
 
 		ec_outbuf = realloc(ec_outbuf, ec_max_outsize);
 		ec_inbuf = realloc(ec_inbuf, ec_max_insize);
