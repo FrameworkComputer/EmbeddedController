@@ -199,7 +199,7 @@ static void setup_lpc(void)
 	task_enable_irq(MEC1322_IRQ_GIRQ19);
 
 	/* Set up ACPI0 for 0x62/0x66 */
-	MEC1322_LPC_ACPI_EC0_BAR = 0x00628034;
+	MEC1322_LPC_ACPI_EC0_BAR = 0x00628304;
 	MEC1322_INT_ENABLE(15) |= 1 << 6;
 	MEC1322_INT_BLK_EN |= 1 << 15;
 	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
