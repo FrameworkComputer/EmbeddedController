@@ -144,11 +144,7 @@ int comm_init_dev(const char *device_name)
 		ec_readmem = ec_readmem_dev;
 
 	/*
-	 * TODO(crosbug.com/p/23823): Need a way to get this from the driver
-	 * and EC.  For now, pick a magic lowest common denominator value. The
-	 * ec_max_outsize is set to handle v3 EC protocol. The ec_max_insize
-	 * needs to be set to the largest value that can be returned from the
-	 * EC, EC_PROTO2_MAX_PARAM_SIZE.
+	 * Set temporary size, will be updated later.
 	 */
 	ec_max_outsize = EC_PROTO2_MAX_PARAM_SIZE - 8;
 	ec_max_insize = EC_PROTO2_MAX_PARAM_SIZE;
