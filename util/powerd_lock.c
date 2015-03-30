@@ -40,37 +40,23 @@ int disable_power_management()
 {
 	FILE *lock_file;
 	int rc = 0;
-
 	lock_file = fopen(lock_file_path, "w");
-	if (!lock_file) {
-		printf("%s: Failed to open %s for writing: %s\n",
-			__func__, lock_file_path, strerror(errno));
-		return 1;
-	}
+	if (!lock_file)
+		return POWERD_CREATE_LOCK_FILE_ERROR;
 
-	if (fprintf(lock_file, "%ld", (long)getpid()) < 0) {
-		printf("%s: Failed to write PID to %s: %s\n",
-			__func__, lock_file_path, strerror(errno));
-		rc = 1;
-	}
+	if (fprintf(lock_file, "%ld", (long)getpid()) < 0)
+		rc = POWERD_WRITE_LOCK_FILE_ERROR;
 
-	if (fclose(lock_file) != 0) {
-		printf("%s: Failed to close %s: %s\n",
-			__func__, lock_file_path, strerror(errno));
-	}
+	if (fclose(lock_file) != 0)
+		rc |= POWERD_CLOSE_LOCK_FILE_ERROR;
 	return rc;
-
 }
 
 int restore_power_management()
 {
 	int result = 0;
-
 	result = unlink(lock_file_path);
-	if (result != 0 && errno != ENOENT)  {
-		printf("%s: Failed to unlink %s: %s\n",
-			__func__, lock_file_path, strerror(errno));
-		return 1;
-	}
+	if (result != 0 && errno != ENOENT)
+		return POWERD_DELETE_LOCK_FILE_ERROR;
 	return 0;
 }

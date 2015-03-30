@@ -24,6 +24,14 @@
 #ifndef __POWER_H__
 #define __POWER_H__ 1
 
+enum POWERD_ERROR_CODE {
+	POWERD_OK = 0,
+	POWERD_CREATE_LOCK_FILE_ERROR = 0x1,
+	POWERD_WRITE_LOCK_FILE_ERROR  = 0x2,
+	POWERD_CLOSE_LOCK_FILE_ERROR  = 0x4,
+	POWERD_DELETE_LOCK_FILE_ERROR = 0x8
+};
+
 /* Disable power management. */
 int disable_power_management(void);
 
