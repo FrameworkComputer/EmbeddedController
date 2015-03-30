@@ -78,6 +78,21 @@ test_mockable int main(void)
 	flash_pre_init();
 #endif
 
+#if defined(CONFIG_CASE_CLOSED_DEBUG)
+	/*
+	 * If the device is both soft (EC flash protection active) and hard
+	 * (WP hardware signal active) write protected then we assert
+	 * PD_NO_DEBUG, preventing the EC from interfering with the AP's
+	 * access to the SPI flash.  The PD_NO_DEBUG signal is latched in
+	 * hardware, so changing this GPIO later has no effect.
+	 */
+#define FLASH_PROTECT_MASK (EC_FLASH_PROTECT_RO_NOW |		\
+			    EC_FLASH_PROTECT_GPIO_ASSERTED)
+
+	if ((flash_get_protect() & FLASH_PROTECT_MASK) == FLASH_PROTECT_MASK)
+		gpio_set_level(GPIO_PD_DISABLE_DEBUG, 1);
+#endif
+
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */
 	clock_init();
 
