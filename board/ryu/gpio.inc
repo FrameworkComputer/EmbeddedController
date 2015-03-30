@@ -21,9 +21,13 @@ GPIO_INT(HPD_IN,               C, 1,  GPIO_INT_BOTH,                   pp1800_on
 
 /* Interrupt lines not used yet */
 GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING)
-GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP)
+GPIO(LB_INT_L,             C, 14, GPIO_INT_FALLING | GPIO_PULL_UP)
 GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP)
 GPIO(BASE_PRES_L,          E, 10, GPIO_INT_BOTH | GPIO_PULL_UP)
+GPIO(CHGR_INT_L,           B, 2,  GPIO_INT_FALLING)
+GPIO(CAM_SYNC_INT_L,       C, 7,  GPIO_INT_FALLING)
+GPIO(ACC_IRQ,              D, 12, GPIO_INPUT)
+GPIO(COMPASS_DRDY,         A, 8,  GPIO_INPUT)
 
 /* Buttons */
 GPIO(BTN_VOLD_L,           C, 0,  GPIO_INPUT | GPIO_PULL_UP)
@@ -45,7 +49,6 @@ GPIO(USBC_TX_CLKIN,        B, 3,  GPIO_OUT_LOW)
 /* System power */
 GPIO(PMIC_PWRON_L,         D, 14, GPIO_ODR_HIGH)
 GPIO(PMIC_WARM_RESET_L,    E, 4,  GPIO_ODR_HIGH)
-GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW) /* Proto 5+ */
 /*
  * We are missing an external pull-up for EN_PP3300.
  * This GPIO is used to pull it up through an external 100kOhm.
@@ -56,8 +59,8 @@ GPIO(EN_PP3300_RSVD,       E, 13, GPIO_OUT_LOW)
 GPIO(PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH)
 
 GPIO(VBUS_SENSE,           A, 0,  GPIO_ANALOG)
-GPIO(CHGR_IADP,            B, 0,  GPIO_ANALOG)
-GPIO(CHGR_IBAT,            C, 3,  GPIO_ANALOG)
+GPIO(CHGR_PSEL,            B, 0,  GPIO_OUT_LOW)
+GPIO(CHGR_OTG,             C, 3,  GPIO_OUT_LOW)
 
 /* Inductive charging */
 GPIO(CHARGE_EN,            D, 13, GPIO_OUT_LOW)
@@ -65,12 +68,13 @@ GPIO(BASE_CHG_VDD_EN,      E, 5,  GPIO_OUT_LOW)
 
 /* USB-C Power and muxes control */
 GPIO(USBC_CHARGE_EN_L,     A, 7,  GPIO_OUT_LOW)
-GPIO(USBC_5V_EN,           D, 8,  GPIO_OUT_LOW)
 GPIO(USBC_VCONN1_EN_L,     F, 10, GPIO_OUT_HIGH)
 GPIO(USBC_VCONN2_EN_L,     D, 10, GPIO_OUT_HIGH)
 
 GPIO(USBC_CC1_DEVICE_ODL,  A, 5,  GPIO_ODR_LOW)
 GPIO(USBC_CC2_DEVICE_ODL,  E, 14, GPIO_ODR_LOW)
+GPIO(USBC_CC_PUEN1,        D, 0,  GPIO_INPUT)
+GPIO(USBC_CC_PUEN2,        C, 8,  GPIO_INPUT)
 
 /* Pericom PI3USB30592 mux controls on Proto 5+ */
 GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW)
@@ -113,9 +117,10 @@ GPIO(VDDSPI_EN,            C, 12, GPIO_OUT_LOW)
 GPIO(SH_RESET,             C, 4,  GPIO_ODR_HIGH)
 GPIO(SH_BOOT,              C, 9,  GPIO_ODR_HIGH)
 GPIO(EC_INT_L,             F, 2,  GPIO_ODR_HIGH)
-GPIO(ENTERING_RW,          E, 15, GPIO_OUT_LOW)
+GPIO(ENTERING_RW,          E, 9,  GPIO_OUT_LOW)
 GPIO(WP_L,                 F, 6,  GPIO_INPUT)
-GPIO(FW_DEBUG_MODE_L,      C, 7,  GPIO_ODR_HIGH) /* Proto 5+ */
+GPIO(FW_DEBUG_MODE_L,      D, 1,  GPIO_ODR_HIGH)
+GPIO(EC_BOOT_SPI_EN,       F, 4,  GPIO_ODR_HIGH)
 
 #if 0
 /* Alternate functions */

@@ -132,8 +132,6 @@ static inline void pd_tx_init(void)
 static inline void pd_set_host_mode(int port, int enable)
 {
 	if (enable) {
-		/* Turn the 5V regulator providing VBUS */
-		gpio_set_level(GPIO_EN_PP5000, 1);
 		/* We never charging in power source mode */
 		gpio_set_level(GPIO_USBC_CHARGE_EN_L, 1);
 		charge_set_input_current_limit(0);
@@ -142,9 +140,8 @@ static inline void pd_set_host_mode(int port, int enable)
 		gpio_set_level(GPIO_USBC_CC2_DEVICE_ODL, 1);
 	} else {
 		/* Kill VBUS power supply */
-		gpio_set_level(GPIO_USBC_5V_EN, 0);
-		/* Turn off the 5V regulator */
-		gpio_set_level(GPIO_EN_PP5000, 0);
+		charger_enable_otg_power(0);
+		gpio_set_level(GPIO_CHGR_OTG, 0);
 		/* Pull low for device mode. */
 		gpio_set_level(GPIO_USBC_CC1_DEVICE_ODL, 0);
 		gpio_set_level(GPIO_USBC_CC2_DEVICE_ODL, 0);
@@ -211,15 +208,15 @@ static inline int pd_snk_is_vbus_provided(int port)
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
-/* delay for the voltage transition on the power supply, chip max is 16us */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  20000 /* us */
+/* delay for the voltage transition on the power supply, BQ25x spec is 30ms */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  40000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 20000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 10000
 #define PD_MAX_POWER_MW       24000
 #define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_VOLTAGE_MV     12000
 
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE

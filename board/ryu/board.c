@@ -64,7 +64,7 @@ void vbus_evt(enum gpio_signal signal)
 	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
 	 * ourselves, then update the VBUS supplier.
 	 */
-	if (!vbus_level || !gpio_get_level(GPIO_USBC_5V_EN)) {
+	if (!vbus_level || !gpio_get_level(GPIO_CHGR_OTG)) {
 		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
 		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
@@ -457,7 +457,7 @@ int board_set_active_charge_port(int charge_port)
 {
 	int ret = EC_SUCCESS;
 	/* check if we are source vbus on that port */
-	int source = gpio_get_level(GPIO_USBC_5V_EN);
+	int source = gpio_get_level(GPIO_CHGR_OTG);
 
 	if (charge_port >= 0 && charge_port < PD_PORT_COUNT && source) {
 		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
