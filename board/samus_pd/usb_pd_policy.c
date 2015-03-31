@@ -157,18 +157,30 @@ void pd_execute_data_swap(int port, int data_role)
 	set_usb_switches(port, (data_role == PD_ROLE_UFP));
 }
 
-void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
+void pd_check_pr_role(int port, int pr_role, int flags)
 {
-	/* If sink, and dual role toggling is on, then switch to source */
-	if (partner_pr_swap && pr_role == PD_ROLE_SINK &&
-	    pd_get_dual_role() == PD_DRP_TOGGLE_ON)
-		pd_request_power_swap(port);
+	/*
+	 * If partner is dual-role power and dualrole toggling is on, consider
+	 * if a power swap is necessary.
+	 */
+	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    pd_get_dual_role() == PD_DRP_TOGGLE_ON) {
+		/*
+		 * If we are a sink and partner is not externally powered, then
+		 * swap to become a source. If we are source and partner is
+		 * externally powered, swap to become a sink.
+		 */
+		int partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
+		if ((!partner_extpower && pr_role == PD_ROLE_SINK) ||
+		     (partner_extpower && pr_role == PD_ROLE_SOURCE))
+			pd_request_power_swap(port);
+	}
 }
 
-void pd_check_dr_role(int port, int dr_role, int partner_dr_swap)
+void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
-	if (partner_dr_swap && dr_role == PD_ROLE_UFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
 		pd_request_data_swap(port);
 }
 /* ----------------- Vendor Defined Messages ------------------ */

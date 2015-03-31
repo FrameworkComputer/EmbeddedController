@@ -217,28 +217,6 @@ static uint32_t pd_src_caps[PD_PORT_COUNT][PDO_MAX_OBJECTS];
 static int pd_src_cap_cnt[PD_PORT_COUNT];
 #endif
 
-#define PD_FLAGS_PING_ENABLED      (1 << 0) /* SRC_READY pings enabled */
-#define PD_FLAGS_PARTNER_DR_POWER  (1 << 1) /* port partner is dualrole power */
-#define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
-#define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
-#define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
-#define PD_FLAGS_GET_SNK_CAP_SENT  (1 << 5) /* get sink cap sent */
-#define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
-#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 7) /* disable comms after soft reset */
-#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
-#define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
-#define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
-/* Flags to clear on a disconnect */
-#define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
-					   PD_FLAGS_PARTNER_DR_DATA | \
-					   PD_FLAGS_DATA_SWAPPED | \
-					   PD_FLAGS_SNK_CAP_RECVD | \
-					   PD_FLAGS_GET_SNK_CAP_SENT | \
-					   PD_FLAGS_EXPLICIT_CONTRACT | \
-					   PD_FLAGS_PREVIOUS_PD_CONN | \
-					   PD_FLAGS_CHECK_PR_ROLE | \
-					   PD_FLAGS_CHECK_DR_ROLE)
-
 static struct pd_protocol {
 	/* current port power role (SOURCE or SINK) */
 	uint8_t power_role;
@@ -967,24 +945,39 @@ static void pd_send_request_msg(int port, int always_send_request)
 static void pd_update_pdo_flags(int port, uint32_t pdo)
 {
 	/* can only parse PDO flags if type is fixed */
-	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
-		if (pdo & PDO_FIXED_DUAL_ROLE) {
-			pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
-#ifdef CONFIG_CHARGE_MANAGER
-			charge_manager_update_dualrole(port, CAP_DUALROLE);
-#endif
-		} else {
-			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
-#ifdef CONFIG_CHARGE_MANAGER
-			charge_manager_update_dualrole(port, CAP_DEDICATED);
-#endif
-		}
+	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+		return;
 
-		if (pdo & PDO_FIXED_DATA_SWAP)
-			pd[port].flags |= PD_FLAGS_PARTNER_DR_DATA;
-		else
-			pd[port].flags &= ~PD_FLAGS_PARTNER_DR_DATA;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	if (pdo & PDO_FIXED_DUAL_ROLE)
+		pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
+	else
+		pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
+
+	if (pdo & PDO_FIXED_EXTERNAL)
+		pd[port].flags |= PD_FLAGS_PARTNER_EXTPOWER;
+	else
+		pd[port].flags &= ~PD_FLAGS_PARTNER_EXTPOWER;
+#endif
+
+	if (pdo & PDO_FIXED_DATA_SWAP)
+		pd[port].flags |= PD_FLAGS_PARTNER_DR_DATA;
+	else
+		pd[port].flags &= ~PD_FLAGS_PARTNER_DR_DATA;
+
+#ifdef CONFIG_CHARGE_MANAGER
+	/*
+	 * If partner supports power swap and is NOT externally powered, then
+	 * treat this as a dualrole device. Otherwise, treat this as a
+	 * dedicated charger.
+	 */
+	if ((pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    !(pd[port].flags & PD_FLAGS_PARTNER_EXTPOWER)) {
+		charge_manager_update_dualrole(port, CAP_DUALROLE);
+	} else {
+		charge_manager_update_dualrole(port, CAP_DEDICATED);
 	}
+#endif
 }
 
 static void handle_data_request(int port, uint16_t head,
@@ -2129,8 +2122,7 @@ void pd_task(void)
 			/* Check power role policy, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_PR_ROLE) {
 				pd_check_pr_role(port, PD_ROLE_SOURCE,
-						 pd[port].flags &
-						     PD_FLAGS_PARTNER_DR_POWER);
+						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
 				break;
 			}
@@ -2138,8 +2130,7 @@ void pd_task(void)
 			/* Check data role policy, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_DR_ROLE) {
 				pd_check_dr_role(port, pd[port].data_role,
-						 pd[port].flags &
-						     PD_FLAGS_PARTNER_DR_DATA);
+						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_DR_ROLE;
 				break;
 			}
@@ -2496,8 +2487,7 @@ void pd_task(void)
 			/* Check power role policy, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_PR_ROLE) {
 				pd_check_pr_role(port, PD_ROLE_SINK,
-						 pd[port].flags &
-						     PD_FLAGS_PARTNER_DR_POWER);
+						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
 				break;
 			}
@@ -2505,8 +2495,7 @@ void pd_task(void)
 			/* Check data role policy, which may trigger a swap */
 			if (pd[port].flags & PD_FLAGS_CHECK_DR_ROLE) {
 				pd_check_dr_role(port, pd[port].data_role,
-						 pd[port].flags &
-						     PD_FLAGS_PARTNER_DR_DATA);
+						 pd[port].flags);
 				pd[port].flags &= ~PD_FLAGS_CHECK_DR_ROLE;
 				break;
 			}

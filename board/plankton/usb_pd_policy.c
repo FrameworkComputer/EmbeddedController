@@ -143,14 +143,15 @@ void pd_execute_data_swap(int port, int data_role)
 	/* Do nothing */
 }
 
-void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
+void pd_check_pr_role(int port, int pr_role, int flags)
 {
 }
 
-void pd_check_dr_role(int port, int dr_role, int partner_dr_swap)
+void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If Plankton is in USB hub mode, always act as UFP */
-	if (board_in_hub_mode() && dr_role == PD_ROLE_DFP && partner_dr_swap)
+	if (board_in_hub_mode() && dr_role == PD_ROLE_DFP &&
+	    (flags & PD_FLAGS_PARTNER_DR_DATA))
 		pd_request_data_swap(port);
 }
 

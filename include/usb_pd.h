@@ -630,6 +630,31 @@ enum pd_states {
 	PD_STATE_COUNT,
 };
 
+#define PD_FLAGS_PING_ENABLED      (1 << 0) /* SRC_READY pings enabled */
+#define PD_FLAGS_PARTNER_DR_POWER  (1 << 1) /* port partner is dualrole power */
+#define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
+#define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
+#define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
+#define PD_FLAGS_GET_SNK_CAP_SENT  (1 << 5) /* get sink cap sent */
+#define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
+#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 7) /* disable comms after soft reset */
+#define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
+#define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
+#define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
+#define PD_FLAGS_PARTNER_EXTPOWER  (1 << 11)/* port partner has external pwr */
+/* Flags to clear on a disconnect */
+#define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
+					   PD_FLAGS_PARTNER_DR_DATA | \
+					   PD_FLAGS_DATA_SWAPPED | \
+					   PD_FLAGS_SNK_CAP_RECVD | \
+					   PD_FLAGS_GET_SNK_CAP_SENT | \
+					   PD_FLAGS_EXPLICIT_CONTRACT | \
+					   PD_FLAGS_PREVIOUS_PD_CONN | \
+					   PD_FLAGS_CHECK_PR_ROLE | \
+					   PD_FLAGS_CHECK_DR_ROLE | \
+					   PD_FLAGS_PARTNER_EXTPOWER)
+
+
 enum pd_cc_states {
 	PD_CC_NONE,
 
@@ -883,18 +908,18 @@ int pd_check_data_swap(int port, int data_role);
  *
  * @param port USB-C port number
  * @param pr_role Our power role
- * @param partner_pr_swap Partner supports PR_SWAP
+ * @param flags PD flags
  */
-void pd_check_pr_role(int port, int pr_role, int partner_pr_swap);
+void pd_check_pr_role(int port, int pr_role, int flags);
 
 /**
  * Check current data role for potential data swap
  *
  * @param port USB-C port number
  * @param dr_role Our data role
- * @param partner_dr_swap Partner supports DR_SWAP
+ * @param flags PD flags
  */
-void pd_check_dr_role(int port, int dr_role, int partner_dr_swap);
+void pd_check_dr_role(int port, int dr_role, int flags);
 
 /**
  * Execute data swap.
