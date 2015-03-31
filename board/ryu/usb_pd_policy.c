@@ -27,8 +27,8 @@ const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
 const uint32_t pd_snk_pdo[] = {
 		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
-		PDO_BATT(5000, 20000, 10000),
-		PDO_VAR(5000, 20000, 3000),
+		PDO_BATT(4750, 21000, 10000),
+		PDO_VAR(4750, 21000, 3000),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
