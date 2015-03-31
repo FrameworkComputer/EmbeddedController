@@ -5,19 +5,19 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(LID_OPEN,             0, 0, GPIO_INT_BOTH, lid_interrupt)
-GPIO_INT(POWER_BUTTON_L,       0, 0, GPIO_INT_BOTH, power_button_interrupt)
-GPIO_INT(AC_PRESENT,           0, 0, GPIO_INT_BOTH, extpower_interrupt)
-GPIO_INT(BUTTON_VOLUME_DOWN_L, 0, 0, GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(BUTTON_VOLUME_UP,     0, 0, GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(CHARGE_DONE,          0, 0, GPIO_INT_BOTH, inductive_charging_interrupt)
+GPIO_INT(LID_OPEN,             PIN(0, 0), GPIO_INT_BOTH, lid_interrupt)
+GPIO_INT(POWER_BUTTON_L,       PIN(0, 0), GPIO_INT_BOTH, power_button_interrupt)
+GPIO_INT(AC_PRESENT,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
+GPIO_INT(BUTTON_VOLUME_DOWN_L, PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(BUTTON_VOLUME_UP,     PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(CHARGE_DONE,          PIN(0, 0), GPIO_INT_BOTH, inductive_charging_interrupt)
 
-GPIO(EC_INT,               0, 0, 0)
-GPIO(WP,                   0, 0, 0)
-GPIO(ENTERING_RW,          0, 0, 0)
-GPIO(PCH_BKLTEN,           0, 0, 0)
-GPIO(ENABLE_BACKLIGHT,     0, 0, 0)
+GPIO(EC_INT,               PIN(0, 0), 0)
+GPIO(WP,                   PIN(0, 0), 0)
+GPIO(ENTERING_RW,          PIN(0, 0), 0)
+GPIO(PCH_BKLTEN,           PIN(0, 0), 0)
+GPIO(ENABLE_BACKLIGHT,     PIN(0, 0), 0)
 
 /* Inductive charging */
-GPIO(CHARGE_EN,            0, 0, 0)
-GPIO(BASE_CHG_VDD_EN,      0, 0, 0)
+GPIO(CHARGE_EN,            PIN(0, 0), 0)
+GPIO(BASE_CHG_VDD_EN,      PIN(0, 0), 0)

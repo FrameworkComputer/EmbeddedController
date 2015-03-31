@@ -5,19 +5,26 @@
  * found in the LICENSE file.
  */
 
+#ifndef GPIO_PIN
+#error "Your architecture must define GPIO_PIN and it did not."
+#endif
+
+#ifndef GPIO_PIN_MASK
+#error "Your architecture must define GPIO_PIN_MASK and it did not."
+#endif
+
 /*
  * The GPIO macro is used to define a new GPIO pin name and function.
  *
  * The name is used to populate the gpio_signal enum by first
  * prepending GPIO_ to the name.  It is also used to construct the
- * string name that is presented in the shell interface.  Similarly,
- * the port parameter has GPIO_ prepended to it before it is used to
- * initialize the port base address of a gpio_info struct.  The pin
- * number is used to create a bitmask.  The flags parameter is passed
- * on to the gpio_info directly.
+ * string name that is presented in the shell interface.  The pin
+ * parameter should use PIN macro and will be expand to GPIO_PIN
+ * defined on each board.  The flags parameter is passed on to the
+ * gpio_info directly.
  */
 #ifndef GPIO
-#define GPIO(name, port, pin, flags)
+#define GPIO(name, pin, flags)
 #endif
 
 /*
@@ -27,7 +34,7 @@
  * array.
  */
 #ifndef GPIO_INT
-#define GPIO_INT(name, port, pin, flags, signal)
+#define GPIO_INT(name, pin, flags, signal)
 #endif
 
 /*
@@ -40,11 +47,11 @@
  * alternate function mode.  The function parameter is chip/variant specific
  * and will usually need to be looked up in the datasheet.  The flags parameter
  * has the same meaning as in the GPIO macro above.  This macro can assign
- * multiple pins on the same port to a module, the second parameter is the
- * bitmask of pins to be assigned.
+ * multiple pins on the same port to a module, pinmasks should use PIN_MASK
+ * and will be expanded as GPIO_PIN_MASK defined in each config_chip.h.
  */
 #ifndef ALTERNATE
-#define ALTERNATE(port, mask, function, module, flags)
+#define ALTERNATE(pinmask, function, module, flags)
 #endif
 
 /*

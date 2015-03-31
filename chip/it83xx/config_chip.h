@@ -73,4 +73,7 @@
 #define CONFIG_EC2I
 #define CONFIG_LPC
 
+#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
+#define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

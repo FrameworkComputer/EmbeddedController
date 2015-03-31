@@ -36,4 +36,7 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 /* Do NOT use common timer code which is designed for hardware counters. */
 #undef CONFIG_COMMON_TIMER
 
+#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
+#define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */

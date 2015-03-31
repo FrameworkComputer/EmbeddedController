@@ -89,8 +89,7 @@
 
 /* GPIO */
 #define MEC1322_GPIO_BASE      0x40081000
-#define MEC1322_GPIO_PORT(x)   (x)
-#define GPIO_PORT(x)           MEC1322_GPIO_PORT(x)
+
 static inline uintptr_t gpio_port_base(int port_id)
 {
 	int oct = (port_id / 10) * 8 + port_id % 10;
@@ -98,7 +97,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 }
 #define MEC1322_GPIO_CTL(port, id) REG32(gpio_port_base(port) + (id << 2))
 
-#define DUMMY_GPIO_BANK GPIO_PORT(0)
+#define DUMMY_GPIO_BANK 0
 
 
 /* Timer */
