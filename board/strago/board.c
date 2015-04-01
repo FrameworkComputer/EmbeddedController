@@ -5,11 +5,16 @@
 /* Strago board-specific configuration */
 
 #include "charger.h"
+#include "driver/accel_kxcj9.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "lid_switch.h"
+#include "math_util.h"
+#include "motion_lid.h"
+#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
@@ -70,3 +75,49 @@ int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
 }
+
+/* Four Motion sensors */
+/* kxcj9 mutex and local/private data*/
+static struct mutex g_kxcj9_mutex[2];
+struct kxcj9_data g_kxcj9_data[2];
+
+/* Matrix to rotate accelrator into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{ 0,  FLOAT_TO_FP(1),  0},
+	{FLOAT_TO_FP(-1),  0,  0},
+	{ 0,  0,  FLOAT_TO_FP(1)}
+};
+
+const matrix_3x3_t lid_standard_ref = {
+	{FLOAT_TO_FP(-1),  0,  0},
+	{ 0, FLOAT_TO_FP(-1),  0},
+	{ 0,  0, FLOAT_TO_FP(-1)}
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	{SENSOR_ACTIVE_S0, "Base Accel", MOTIONSENSE_CHIP_KXCJ9,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_BASE,
+		&kxcj9_drv, &g_kxcj9_mutex[0], &g_kxcj9_data[0],
+		KXCJ9_ADDR1, &base_standard_ref, 100000, 2},
+	{SENSOR_ACTIVE_S0, "Lid Accel", MOTIONSENSE_CHIP_KXCJ9,
+		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
+		&kxcj9_drv, &g_kxcj9_mutex[1], &g_kxcj9_data[1],
+		KXCJ9_ADDR0, &lid_standard_ref, 100000, 2},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* Define the accelerometer orientation matrices. */
+const struct accel_orientation acc_orient = {
+	/* Hinge aligns with x axis. */
+	.rot_hinge_90 = {
+		{ FLOAT_TO_FP(1),  0,  0},
+		{ 0,  0,  FLOAT_TO_FP(1)},
+		{ 0, FLOAT_TO_FP(-1),  0}
+	},
+	.rot_hinge_180 = {
+		{ FLOAT_TO_FP(1),  0,  0},
+		{ 0, FLOAT_TO_FP(-1),  0},
+		{ 0,  0, FLOAT_TO_FP(-1)}
+	},
+	.hinge_axis = {1, 0, 0},
+};

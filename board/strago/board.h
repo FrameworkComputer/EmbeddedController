@@ -55,6 +55,14 @@
 #define I2C_PORT_PD_MCU		2
 #define I2C_PORT_THERMAL	3
 
+/* Accelerometer */
+#define CONFIG_ACCEL_KXCJ9
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_LID_ANGLE
+#define CONFIG_SENSOR_BASE	0
+#define CONFIG_SENSOR_LID	1
+
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
 #undef CONFIG_EOPTION
