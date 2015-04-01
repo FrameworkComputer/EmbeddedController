@@ -127,6 +127,8 @@ const char help_str[] =
 	"      Perform I2C transfer on EC's I2C bus\n"
 	"  infopddev <port>\n"
 	"      Get info about USB type-C accessory attached to port\n"
+	"  inventory\n"
+	"      Return the list of supported features\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
 	"  led <name> <query | auto | off | <color> | <color>=<value>...>\n"
@@ -390,6 +392,58 @@ int cmd_s5(int argc, char *argv[])
 		printf("%s\n", r.value ? "on" : "off");
 
 	return rv < 0;
+}
+
+static const char * const ec_feature_names[] = {
+	[EC_FEATURE_LIMITED] = "Limited image, load RW for more",
+	[EC_FEATURE_FLASH] = "Flash",
+	[EC_FEATURE_PWM_FAN] = "Direct Fan power management",
+	[EC_FEATURE_PWM_KEYB] = "Keyboard backlight",
+	[EC_FEATURE_LIGHTBAR] = "Lightbar",
+	[EC_FEATURE_LED] = "LED",
+	[EC_FEATURE_MOTION_SENSE] = "Motion Sensors",
+	[EC_FEATURE_KEYB] = "Keyboard",
+	[EC_FEATURE_PSTORE] = "Host Permanent Storage",
+	[EC_FEATURE_PORT80] = "BIOS Port 80h access",
+	[EC_FEATURE_THERMAL] = "Thermal management",
+	[EC_FEATURE_BKLIGHT_SWITCH] = "Switch backlight on/off",
+	[EC_FEATURE_WIFI_SWITCH] = "Switch wifi on/off",
+	[EC_FEATURE_HOST_EVENTS] = "Host event",
+	[EC_FEATURE_GPIO] = "GPIO",
+	[EC_FEATURE_I2C] = "I2C master",
+	[EC_FEATURE_CHARGER] = "Charger",
+	[EC_FEATURE_BATTERY] = "Simple Battery",
+	[EC_FEATURE_SMART_BATTERY] = "Smart Battery",
+	[EC_FEATURE_HANG_DETECT] = "Host hang detection",
+	[EC_FEATURE_PMU] = "Power Management",
+	[EC_FEATURE_SUB_MCU] = "Control downstream MCU",
+	[EC_FEATURE_USB_PD] = "USB Cros Power Delievery",
+	[EC_FEATURE_USB_MUX] = "USB Multiplexer",
+};
+
+int cmd_inventory(int argc, char *argv[])
+{
+	struct ec_response_get_features r;
+	int rv, i, j, idx;
+
+	rv = ec_command(EC_CMD_GET_FEATURES, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("EC supported features:\n");
+	for (i = 0, idx = 0; i < 2; i++) {
+		for (j = 0; j < 32; j++, idx++) {
+			if (r.flags[i] & (1 << j)) {
+				if (idx >= ARRAY_SIZE(ec_feature_names) ||
+				    strlen(ec_feature_names[idx]) == 0)
+					printf("%-4d: Unknown feature\n", idx);
+				else
+					printf("%-4d: %s support\n",
+					       idx, ec_feature_names[idx]);
+			}
+		}
+	}
+	return 0;
 }
 
 
@@ -6155,6 +6209,7 @@ const struct command commands[] = {
 	{"i2cwrite", cmd_i2c_write},
 	{"i2cxfer", cmd_i2c_xfer},
 	{"infopddev", cmd_pd_device_info},
+	{"inventory", cmd_inventory},
 	{"led", cmd_led},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},

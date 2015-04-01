@@ -678,6 +678,98 @@ DECLARE_HOST_COMMAND(EC_CMD_TEST_PROTOCOL,
 		     host_command_test_protocol,
 		     EC_VER_MASK(0));
 
+/* Returns supported features. */
+static int host_command_get_features(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_features *r = args->response;
+	args->response_size = sizeof(*r);
+
+	memset(r, 0, sizeof(*r));
+	r->flags[0] = 0
+#ifdef CONFIG_FW_LIMITED_IMAGE
+		| EC_FEATURE_MASK_0(EC_FEATURE_LIMITED)
+#endif
+#ifdef CONFIG_FLASH
+		| EC_FEATURE_MASK_0(EC_FEATURE_FLASH)
+#endif
+#ifdef CONFIG_FANS
+		| EC_FEATURE_MASK_0(EC_FEATURE_PWM_FAN)
+#endif
+#ifdef CONFIG_PWM_KBLIGHT
+		| EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB)
+#endif
+#ifdef HAS_TASK_LIGHTBAR
+		| EC_FEATURE_MASK_0(EC_FEATURE_LIGHTBAR)
+#endif
+#ifdef CONFIG_LED_COMMON
+		| EC_FEATURE_MASK_0(EC_FEATURE_LED)
+#endif
+#ifdef HAS_TASK_MOTIONSENSE
+		| EC_FEATURE_MASK_0(EC_FEATURE_MOTION_SENSE)
+#endif
+#ifdef HAS_TASK_KEYSCAN
+		| EC_FEATURE_MASK_0(EC_FEATURE_KEYB)
+#endif
+#ifdef CONFIG_PSTORE
+		| EC_FEATURE_MASK_0(EC_FEATURE_PSTORE)
+#endif
+#ifdef CONFIG_LPC
+		| EC_FEATURE_MASK_0(EC_FEATURE_PORT80)
+#endif
+#ifdef CONFIG_TEMP_SENSOR
+		| EC_FEATURE_MASK_0(EC_FEATURE_THERMAL)
+#endif
+/* Hack to uniquely identify Samus and Falco ec */
+#if (defined CONFIG_BACKLIGHT_LID) || \
+		(defined CONFIG_BATTERY_SAMUS) || \
+		(defined CONFIG_EXTPOWER_FALCO)
+		| EC_FEATURE_MASK_0(EC_FEATURE_BKLIGHT_SWITCH)
+#endif
+#ifdef CONFIG_WIRELESS
+		| EC_FEATURE_MASK_0(EC_FEATURE_WIFI_SWITCH)
+#endif
+#ifdef CONFIG_HOSTCMD_EVENTS
+		| EC_FEATURE_MASK_0(EC_FEATURE_HOST_EVENTS)
+#endif
+#ifdef CONFIG_COMMON_GPIO
+		| EC_FEATURE_MASK_0(EC_FEATURE_GPIO)
+#endif
+#ifdef CONFIG_I2C
+		| EC_FEATURE_MASK_0(EC_FEATURE_I2C)
+#endif
+#ifdef CONFIG_CHARGER
+		| EC_FEATURE_MASK_0(EC_FEATURE_CHARGER)
+#endif
+#if (defined CONFIG_BATTERY) || (defined CONFIG_BATTERY_SMART)
+		| EC_FEATURE_MASK_0(EC_FEATURE_BATTERY)
+#endif
+#ifdef CONFIG_BATTERY_SMART
+		| EC_FEATURE_MASK_0(EC_FEATURE_SMART_BATTERY)
+#endif
+#ifdef CONFIG_AP_HANG_DETECT
+		| EC_FEATURE_MASK_0(EC_FEATURE_HANG_DETECT)
+#endif
+#ifdef CONFIG_PMU_POWERINFO
+		| EC_FEATURE_MASK_0(EC_FEATURE_PMU)
+#endif
+#ifdef HAS_TASK_PDCMD
+		| EC_FEATURE_MASK_0(EC_FEATURE_SUB_MCU)
+#endif
+#ifdef CONFIG_CHARGE_MANAGER
+		| EC_FEATURE_MASK_0(EC_FEATURE_USB_PD)
+#endif
+/* should be more generic */
+#ifdef CONFIG_USB_SWITCH_TSU6721
+		| EC_FEATURE_MASK_0(EC_FEATURE_USB_MUX)
+#endif
+		;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_FEATURES,
+		     host_command_get_features,
+		     EC_VER_MASK(0));
+
+
 /*****************************************************************************/
 /* Console commands */
 
