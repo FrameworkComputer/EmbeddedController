@@ -97,6 +97,11 @@ static void motion_sense_suspend(void)
 
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
+
+		/* if it is in s5, don't enter suspend */
+		if (sensor->active == SENSOR_ACTIVE_S5)
+			continue;
+
 		sensor->active = SENSOR_ACTIVE_S3;
 
 		/* Saving power if the sensor is not active in S3 */
