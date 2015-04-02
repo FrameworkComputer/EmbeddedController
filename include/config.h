@@ -806,6 +806,12 @@
  */
 #undef CONFIG_KEYBOARD_COL2_INVERTED
 
+/*
+ * Config KSO to start from a different KSO pin. This is to allow some chips
+ * to use alternate functions on KSO pins.
+ */
+#define CONFIG_KEYBOARD_KSO_BASE 0
+
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
 

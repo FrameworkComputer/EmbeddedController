@@ -47,11 +47,11 @@ test_mockable void keyboard_raw_drive_column(int out)
 			MEC1322_KS_KSO_SEL = 1 << 6; /* KSEN=1 */
 			gpio_set_level(GPIO_KBD_KSO2, 1);
 		} else {
-			MEC1322_KS_KSO_SEL = out;
+			MEC1322_KS_KSO_SEL = out + CONFIG_KEYBOARD_KSO_BASE;
 			gpio_set_level(GPIO_KBD_KSO2, 0);
 		}
 #else
-		MEC1322_KS_KSO_SEL = out;
+		MEC1322_KS_KSO_SEL = out + CONFIG_KEYBOARD_KSO_BASE;
 #endif
 	}
 }
