@@ -103,11 +103,6 @@ _flash_base_str:=$(shell echo "CONFIG_FLASH_BASE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _flash_base=$(shell echo "$$(($(_flash_base_str)))")
 
-# Get RSA key size from board defines
-_rsa_size:=$(shell echo "CONFIG_RSA_KEY_SIZE" | $(CPP) $(CPPFLAGS) -P \
-            -Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/rsa.h)
-$(eval RSA_KEY_SIZE=$(_rsa_size))
-
 $(eval BOARD_$(UC_BOARD)=y)
 $(eval CHIP_$(UC_CHIP)=y)
 $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
