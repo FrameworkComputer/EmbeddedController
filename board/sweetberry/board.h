@@ -13,6 +13,8 @@
 
 #define CONFIG_BOARD_POST_GPIO_INIT
 
+#define CONFIG_FLASH_WRITE_SIZE STM32_FLASH_WRITE_SIZE_3300
+
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
 

@@ -51,6 +51,7 @@ chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
 ifdef CONFIG_FLASH_PHYSICAL
 chip-$(CHIP_FAMILY_STM32F0)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
+chip-$(CHIP_FAMILY_STM32F4)+=flash-f.o
 endif
 chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
 chip-$(CONFIG_STM32_CHARGER_DETECT)+=charger_detect.o

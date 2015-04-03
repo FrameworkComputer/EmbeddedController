@@ -1405,35 +1405,63 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
 #define STM32_FLASH_ACR_LATENCY     (1 << 0)
-#define STM32_FLASH_ACR_PRFTEN      (1 << 8)
-#define STM32_FLASH_ACR_ICEN        (1 << 9)
-#define STM32_FLASH_ACR_DCEN        (1 << 10)
+#define STM32_FLASH_ACR_SHIFT           0
+#define STM32_FLASH_ACR_LAT_MASK        0xf
+#define STM32_FLASH_ACR_PRFTEN          (1 << 8)
+#define STM32_FLASH_ACR_ICEN            (1 << 9)
+#define STM32_FLASH_ACR_DCEN            (1 << 10)
+#define STM32_FLASH_ACR_ICRST           (1 << 11)
+#define STM32_FLASH_ACR_DCRST           (1 << 12)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x04)
+#define  FLASH_KEYR_KEY1                0x45670123
+#define  FLASH_KEYR_KEY2                0xCDEF89AB
 #define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x08)
+#define  FLASH_OPTKEYR_KEY1             0x08192A3B
+#define  FLASH_OPTKEYR_KEY2             0x4C5D6E7F
 #define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x0c)
-#define  FLASH_SR_BUSY              (1 << 16)
-#define  FLASH_SR_ERR_MASK          (0x1f3)
+#define  FLASH_SR_EOP                   (1 << 0)
+#define  FLASH_SR_OPERR                 (1 << 1)
+#define  FLASH_SR_WRPERR                (1 << 4)
+#define  FLASH_SR_PGAERR                (1 << 5)
+#define  FLASH_SR_PGPERR                (1 << 6)
+#define  FLASH_SR_PGSERR                (1 << 7)
+#define  FLASH_SR_RDERR                 (1 << 8)
+#define  FLASH_SR_ALL_ERR \
+	(FLASH_SR_OPERR | FLASH_SR_WRPERR | FLASH_SR_PGAERR | \
+	 FLASH_SR_PGPERR | FLASH_SR_PGSERR | FLASH_SR_RDERR)
+#define  FLASH_SR_BUSY                   (1 << 16)
 #define STM32_FLASH_CR              REG32(STM32_FLASH_REGS_BASE + 0x10)
-#define  FLASH_CR_PG                (1 << 0)
-#define  FLASH_CR_SER               (1 << 1)
-#define  FLASH_CR_STRT              (1 << 16)
-#define  FLASH_CR_LOCK              (1 << 31)
-#define  FLASH_CR_PSIZE(size)       (((size) & 0x3) << 8)
-#define  FLASH_CR_PSIZE_16          (1)
-#define  FLASH_CR_PSIZE_32          (2)
-#define  FLASH_CR_PSIZE_MASK        FLASH_CR_PSIZE(0x3)
-#define  FLASH_CR_SNB(sec)          (((sec) & 0xf) << 3)
-#define  FLASH_CR_SNB_MASK          FLASH_CR_SNB(0xf)
-
+#define  FLASH_CR_PG                    (1 << 0)
+#define  FLASH_CR_PER                   (1 << 1)
+#define  FLASH_CR_MER                   (1 << 2)
+#define STM32_FLASH_CR_SNB_OFFSET       (3)
+#define STM32_FLASH_CR_SNB(sec) \
+	(((sec) & 0xf) << STM32_FLASH_CR_SNB_OFFSET)
+#define STM32_FLASH_CR_SNB_MASK         (STM32_FLASH_CR_SNB(0xf))
+#define STM32_FLASH_CR_PSIZE_OFFSET     (8)
+#define STM32_FLASH_CR_PSIZE(size) \
+	(((size) & 0x3) << STM32_FLASH_CR_PSIZE_OFFSET)
+#define STM32_FLASH_CR_PSIZE_MASK       (STM32_FLASH_CR_PSIZE(0x3))
+#define  FLASH_CR_STRT                  (1 << 16)
+#define  FLASH_CR_LOCK                  (1 << 31)
 #define STM32_FLASH_OPTCR           REG32(STM32_FLASH_REGS_BASE + 0x14)
+#define  FLASH_OPTLOCK                  (1 << 0)
+#define  FLASH_OPTSTRT                  (1 << 1)
+#define STM32_FLASH_BOR_LEV_OFFSET      (2)
+#define STM32_FLASH_RDP_MASK            (0xFF << 8)
+#define STM32_FLASH_nWRP_OFFSET         (16)
+#define STM32_FLASH_nWRP(_bank)         (1 << (_bank + STM32_FLASH_nWRP_OFFSET))
+#define STM32_FLASH_nWRP_ALL            (0xFF << STM32_FLASH_nWRP_OFFSET)
+#define STM32_FLASH_OPT_LOCKED      (STM32_FLASH_OPTCR & FLASH_OPTLOCK)
 
 #define STM32_OPTB_BASE             0x1FFFC000
-
-#define STM32_OPTB_RDP_OFF          0x00
-#define STM32_OPTB_USER_OFF         0x02
+#define STM32_OPTB_RDP_USER         REG32(STM32_OPTB_BASE + 0x00)
+#define STM32_OPTB_RDP_OFF              0x00
+#define STM32_OPTB_USER_OFF             0x02
 #define STM32_OPTB_WRP_OFF(n)       (0x08 + (n&3) * 2)
-#define STM32_OPTB_WRP01            0x08
-#define STM32_OPTB_WRP23            0x0c
+#define STM32_OPTB_WP               REG32(STM32_OPTB_BASE + 0x08)
+#define STM32_OPTB_nWRP(_bank)          (1 << (_bank))
+#define STM32_OPTB_nWRP_ALL             (0xFF)
 
 #define STM32_OPTB_COMPL_SHIFT      8
 

@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CONFIG_FLASH_WRITE_SIZE STM32_FLASH_WRITE_SIZE_3300
+
 /* Use external clock */
 #define CONFIG_STM32_CLOCK_HSE_HZ 24000000
 
