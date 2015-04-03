@@ -27,22 +27,6 @@
 /* Flash page programming timeout.  This is 2x the datasheet max. */
 #define FLASH_TIMEOUT_US 16000
 
-/* Flash unlocking keys */
-#define KEY1    0x45670123
-#define KEY2    0xCDEF89AB
-
-/* Lock bits for FLASH_CR register */
-#define PG       (1<<0)
-#define PER      (1<<1)
-#define OPTPG    (1<<4)
-#define OPTER    (1<<5)
-#define STRT     (1<<6)
-#define CR_LOCK  (1<<7)
-#define PRG_LOCK 0
-#define OPT_LOCK (1<<9)
-
-static int write_optb(int byte, uint8_t value);
-
 static inline int calculate_flash_timeout(void)
 {
 	return (FLASH_TIMEOUT_US *
@@ -52,10 +36,20 @@ static inline int calculate_flash_timeout(void)
 static int wait_busy(void)
 {
 	int timeout = calculate_flash_timeout();
-	while (STM32_FLASH_SR & (1 << 0) && timeout-- > 0)
+	while ((STM32_FLASH_SR & FLASH_SR_BUSY) && timeout-- > 0)
 		udelay(CYCLE_PER_FLASH_LOOP);
 	return (timeout > 0) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
 }
+
+
+/*
+ * We at least unlock the control register lock.
+ * We may also unlock other locks.
+ */
+enum extra_lock_type  {
+	NO_EXTRA_LOCK = 0,
+	OPT_LOCK = 1,
+};
 
 static int unlock(int locks)
 {
@@ -65,27 +59,30 @@ static int unlock(int locks)
 	 */
 	ignore_bus_fault(1);
 
-	/* unlock CR if needed */
-	if (STM32_FLASH_CR & CR_LOCK) {
-		STM32_FLASH_KEYR = KEY1;
-		STM32_FLASH_KEYR = KEY2;
+	/* Always unlock CR if needed */
+	if (STM32_FLASH_CR & FLASH_CR_LOCK) {
+		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
+		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
 	}
 	/* unlock option memory if required */
-	if ((locks & OPT_LOCK) && !(STM32_FLASH_CR & OPT_LOCK)) {
-		STM32_FLASH_OPTKEYR = KEY1;
-		STM32_FLASH_OPTKEYR = KEY2;
+	if ((locks & OPT_LOCK) && STM32_FLASH_OPT_LOCKED) {
+		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
+		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
 	}
 
 	/* Re-enable bus fault handler */
 	ignore_bus_fault(0);
 
-	return ((STM32_FLASH_CR ^ OPT_LOCK) & (locks | CR_LOCK)) ?
-			EC_ERROR_UNKNOWN : EC_SUCCESS;
+	if ((locks & OPT_LOCK) && STM32_FLASH_OPT_LOCKED)
+		return EC_ERROR_UNKNOWN;
+	if (STM32_FLASH_CR & FLASH_CR_LOCK)
+		return EC_ERROR_UNKNOWN;
+	return EC_SUCCESS;
 }
 
 static void lock(void)
 {
-	STM32_FLASH_CR = CR_LOCK;
+	STM32_FLASH_CR |= FLASH_CR_LOCK;
 }
 
 /*
@@ -121,8 +118,8 @@ static int erase_optb(void)
 		return rv;
 
 	/* Must be set in 2 separate lines. */
-	STM32_FLASH_CR |= OPTER;
-	STM32_FLASH_CR |= STRT;
+	STM32_FLASH_CR |= FLASH_CR_OPTSTRT;
+	STM32_FLASH_CR |= FLASH_CR_STRT;
 
 	rv = wait_busy();
 	if (rv)
@@ -132,6 +129,7 @@ static int erase_optb(void)
 	return EC_SUCCESS;
 }
 
+static int write_optb(int byte, uint8_t value);
 /*
  * Since the option byte erase is WHOLE erase, this function is to keep
  * rest of bytes, but make this byte 0xff.
@@ -190,12 +188,12 @@ static int write_optb(int byte, uint8_t value)
 		return rv;
 
 	/* set OPTPG bit */
-	STM32_FLASH_CR |= OPTPG;
+	STM32_FLASH_CR |= FLASH_CR_OPTPG;
 
 	*hword = ((~value) << STM32_OPTB_COMPL_SHIFT) | value;
 
 	/* reset OPTPG bit */
-	STM32_FLASH_CR &= ~OPTPG;
+	STM32_FLASH_CR &= ~FLASH_CR_OPTPG;
 
 	rv = wait_busy();
 	if (rv)
@@ -210,23 +208,38 @@ static int write_optb(int byte, uint8_t value)
 
 int flash_physical_write(int offset, int size, const char *data)
 {
+#if CONFIG_FLASH_WRITE_SIZE == 1
+	uint8_t *address = (uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
+	uint8_t quantum = 0;
+#elif CONFIG_FLASH_WRITE_SIZE == 2
 	uint16_t *address = (uint16_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
+	uint16_t quantum = 0;
+#elif CONFIG_FLASH_WRITE_SIZE == 4
+	uint32_t *address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
+	uint32_t quantum = 0;
+#else
+#error "CONFIG_FLASH_WRITE_SIZE not supported."
+#endif
 	int res = EC_SUCCESS;
 	int timeout = calculate_flash_timeout();
-	int i;
 
-	if (unlock(PRG_LOCK) != EC_SUCCESS) {
+	if (unlock(NO_EXTRA_LOCK) != EC_SUCCESS) {
 		res = EC_ERROR_UNKNOWN;
 		goto exit_wr;
 	}
 
 	/* Clear previous error status */
-	STM32_FLASH_SR = 0x34;
+	STM32_FLASH_SR = FLASH_SR_ALL_ERR | FLASH_SR_EOP;
 
 	/* set PG bit */
-	STM32_FLASH_CR |= PG;
+	STM32_FLASH_CR |= FLASH_CR_PG;
 
-	for (; size > 0; size -= sizeof(uint16_t)) {
+	for (; size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
+		int i;
+
+		for (i = CONFIG_FLASH_WRITE_SIZE - 1, quantum = 0; i >= 0; i--)
+			quantum = (quantum << 8) + data[i];
+		data += CONFIG_FLASH_WRITE_SIZE;
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing with interrupt disabled.
@@ -234,27 +247,30 @@ int flash_physical_write(int offset, int size, const char *data)
 		watchdog_reload();
 
 		/* wait to be ready  */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < timeout);
+		for (i = 0;
+		     (STM32_FLASH_SR & FLASH_SR_BUSY) &&
+		     (i < timeout);
 		     i++)
 			;
 
-		/* write the half word */
-		*address++ = data[0] + (data[1] << 8);
-		data += 2;
+		/* write the data */
+		*address++ = quantum;
 
 		/* Wait for writes to complete */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < timeout);
+		for (i = 0;
+		     (STM32_FLASH_SR & FLASH_SR_BUSY) &&
+		     (i < timeout);
 		     i++)
 			;
 
-		if (STM32_FLASH_SR & 1) {
+		if (STM32_FLASH_SR & FLASH_SR_BUSY) {
 			res = EC_ERROR_TIMEOUT;
 			goto exit_wr;
 		}
 
 		/* Check for error conditions - erase failed, voltage error,
 		 * protection error */
-		if (STM32_FLASH_SR & 0x14) {
+		if (STM32_FLASH_SR & FLASH_SR_ALL_ERR) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_wr;
 		}
@@ -262,7 +278,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 exit_wr:
 	/* Disable PG bit */
-	STM32_FLASH_CR &= ~PG;
+	STM32_FLASH_CR &= ~FLASH_CR_PG;
 
 	lock();
 
@@ -272,29 +288,30 @@ exit_wr:
 int flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
+	int sector_size;
+	int timeout_us;
 
-	if (unlock(PRG_LOCK) != EC_SUCCESS)
+	if (unlock(NO_EXTRA_LOCK) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
 	/* Clear previous error status */
-	STM32_FLASH_SR = 0x34;
+	STM32_FLASH_SR = FLASH_SR_ALL_ERR | FLASH_SR_EOP;
 
-	/* set PER bit */
-	STM32_FLASH_CR |= PER;
+	/* set SER/PER bit */
+	STM32_FLASH_CR |= FLASH_CR_PER;
 
-	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-	     offset += CONFIG_FLASH_ERASE_SIZE) {
+	while (size > 0) {
 		timestamp_t deadline;
-
+		sector_size = CONFIG_FLASH_ERASE_SIZE;
+		timeout_us = FLASH_TIMEOUT_US;
 		/* Do nothing if already erased */
-		if (flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
-			continue;
-
+		if (flash_is_erased(offset, sector_size))
+			goto next_sector;
 		/* select page to erase */
 		STM32_FLASH_AR = CONFIG_PROGRAM_MEMORY_BASE + offset;
 
 		/* set STRT bit : start erase */
-		STM32_FLASH_CR |= STRT;
+		STM32_FLASH_CR |= FLASH_CR_STRT;
 
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset during a
@@ -302,13 +319,14 @@ int flash_physical_erase(int offset, int size)
 		 */
 		watchdog_reload();
 
-		deadline.val = get_time().val + FLASH_TIMEOUT_US;
+		deadline.val = get_time().val + timeout_us;
 		/* Wait for erase to complete */
-		while ((STM32_FLASH_SR & 1) &&
+		watchdog_reload();
+		while ((STM32_FLASH_SR & FLASH_SR_BUSY) &&
 		       (get_time().val < deadline.val)) {
-			usleep(300);
+			usleep(timeout_us/100);
 		}
-		if (STM32_FLASH_SR & 1) {
+		if (STM32_FLASH_SR & FLASH_SR_BUSY) {
 			res = EC_ERROR_TIMEOUT;
 			goto exit_er;
 		}
@@ -317,15 +335,18 @@ int flash_physical_erase(int offset, int size)
 		 * Check for error conditions - erase failed, voltage error,
 		 * protection error
 		 */
-		if (STM32_FLASH_SR & 0x14) {
+		if (STM32_FLASH_SR & FLASH_SR_ALL_ERR) {
 			res = EC_ERROR_UNKNOWN;
 			goto exit_er;
 		}
+next_sector:
+		size -= sector_size;
+		offset += sector_size;
 	}
 
 exit_er:
-	/* reset PER bit */
-	STM32_FLASH_CR &= ~PER;
+	/* reset SER/PER bit */
+	STM32_FLASH_CR &= ~FLASH_CR_PER;
 
 	lock();
 
@@ -400,6 +421,9 @@ static int registers_need_reset(void)
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
 	int ro_wp_region_start = WP_BANK_OFFSET;
 	int ro_wp_region_end = WP_BANK_OFFSET + WP_BANK_COUNT;
+#ifdef CONFIG_FLASH_PSTATE
+	ro_wp_region_end += PSTATE_BANK_COUNT;
+#endif
 
 	for (i = ro_wp_region_start; i < ro_wp_region_end; i++)
 		if (flash_physical_get_protect_at_boot(i) != ro_at_boot)

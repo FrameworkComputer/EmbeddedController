@@ -291,7 +291,7 @@ void system_reset(int flags)
 		 * The reload request triggers a chip reset, so let's just
 		 * use this for hard reset.
 		 */
-		STM32_FLASH_CR |= STM32_FLASH_CR_OBL_LAUNCH;
+		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 #elif defined(CHIP_FAMILY_STM32L4)
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;

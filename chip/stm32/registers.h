@@ -1298,14 +1298,14 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_WRPR            REG32(STM32_FLASH_REGS_BASE + 0x20)
 
 #define STM32_OPTB_BASE             0x1ff80000
-#define STM32_OPTB_RDP              0x00
-#define STM32_OPTB_USER             0x04
-#define STM32_OPTB_WRP1L            0x08
-#define STM32_OPTB_WRP1H            0x0c
-#define STM32_OPTB_WRP2L            0x10
-#define STM32_OPTB_WRP2H            0x14
-#define STM32_OPTB_WRP3L            0x18
-#define STM32_OPTB_WRP3H            0x1c
+#define STM32_OPTB_RDP                  0x00
+#define STM32_OPTB_USER                 0x04
+#define STM32_OPTB_WRP1L                0x08
+#define STM32_OPTB_WRP1H                0x0c
+#define STM32_OPTB_WRP2L                0x10
+#define STM32_OPTB_WRP2H                0x14
+#define STM32_OPTB_WRP3L                0x18
+#define STM32_OPTB_WRP3H                0x1c
 
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #define STM32_FLASH_REGS_BASE       0x40022000
@@ -1316,22 +1316,40 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_ACR_LATENCY     (1 << 0)
 #define STM32_FLASH_ACR_PRFTEN      (1 << 4)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x04)
+#define  FLASH_KEYR_KEY1                0x45670123
+#define  FLASH_KEYR_KEY2                0xCDEF89AB
+
 #define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x08)
+#define  FLASH_OPTKEYR_KEY1             FLASH_KEYR_KEY1
+#define  FLASH_OPTKEYR_KEY2             FLASH_KEYR_KEY2
 #define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x0c)
+#define  FLASH_SR_BUSY                  (1 << 0)
+#define  FLASH_SR_PGERR                 (1 << 2)
+#define  FLASH_SR_WRPRTERR              (1 << 4)
+#define  FLASH_SR_ALL_ERR \
+	(FLASH_SR_PGERR | FLASH_SR_WRPRTERR)
+#define  FLASH_SR_EOP                   (1 << 5)
 #define STM32_FLASH_CR              REG32(STM32_FLASH_REGS_BASE + 0x10)
-#define STM32_FLASH_CR_OBL_LAUNCH   (1 << 13)
+#define  FLASH_CR_PG                    (1 << 0)
+#define  FLASH_CR_PER                   (1 << 1)
+#define  FLASH_CR_OPTPG                 (1 << 4)
+#define  FLASH_CR_OPTSTRT               (1 << 5)
+#define  FLASH_CR_STRT                  (1 << 6)
+#define  FLASH_CR_LOCK                  (1 << 7)
+#define  FLASH_CR_OPTWRE                (1 << 9)
+#define  FLASH_CR_OBL_LAUNCH            (1 << 13)
+#define STM32_FLASH_OPT_LOCKED      (STM32_FLASH_CR & FLASH_CR_OPTWRE)
 #define STM32_FLASH_AR              REG32(STM32_FLASH_REGS_BASE + 0x14)
 #define STM32_FLASH_OBR             REG32(STM32_FLASH_REGS_BASE + 0x1c)
-#define STM32_FLASH_OBR_RDP_MASK    (3 << 1)
+#define STM32_FLASH_OBR_RDP_MASK        (3 << 1)
 #define STM32_FLASH_WRPR            REG32(STM32_FLASH_REGS_BASE + 0x20)
 
 #define STM32_OPTB_BASE             0x1FFFF800
-
-#define STM32_OPTB_RDP_OFF          0x00
-#define STM32_OPTB_USER_OFF         0x02
-#define STM32_OPTB_WRP_OFF(n)       (0x08 + (n&3) * 2)
-#define STM32_OPTB_WRP01            0x08
-#define STM32_OPTB_WRP23            0x0c
+#define STM32_OPTB_RDP_OFF              0x00
+#define STM32_OPTB_USER_OFF             0x02
+#define STM32_OPTB_WRP_OFF(n)           (0x08 + (n&3) * 2)
+#define STM32_OPTB_WRP01                0x08
+#define STM32_OPTB_WRP23                0x0c
 
 #define STM32_OPTB_COMPL_SHIFT      8
 
