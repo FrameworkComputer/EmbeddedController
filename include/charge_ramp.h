@@ -58,6 +58,20 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state);
  */
 int chg_ramp_get_current_limit(void);
 
+/**
+ * Return if charge ramping has reached stable state
+ *
+ * @return 1 if stable, 0 otherwise
+ */
+int chg_ramp_is_stable(void);
+
+/**
+ * Return if charge ramping has reached detected state
+ *
+ * @return 1 if detected, 0 otherwise
+ */
+int chg_ramp_is_detected(void);
+
 #ifdef HAS_TASK_CHG_RAMP
 /**
  * Notify charge ramp module of supplier type change on a port. If port

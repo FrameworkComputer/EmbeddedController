@@ -9,6 +9,7 @@
 #include "charge_ramp.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
@@ -48,7 +49,7 @@
 
 enum chg_ramp_state {
 	CHG_RAMP_DISCONNECTED,
-	CHG_RAMP_CHARGE_DETECT,
+	CHG_RAMP_CHARGE_DETECT_DELAY,
 	CHG_RAMP_OVERCURRENT_DETECT,
 	CHG_RAMP_RAMP,
 	CHG_RAMP_STABILIZE,
@@ -115,8 +116,8 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 	reg_time = registration_time;
 	if (ramp_st != CHG_RAMP_STABILIZE) {
 		ramp_st = (active_port == CHARGE_PORT_NONE) ?
-			  CHG_RAMP_DISCONNECTED : CHG_RAMP_CHARGE_DETECT;
-		CPRINTS("Ramp reset: st%d\n", ramp_st);
+			  CHG_RAMP_DISCONNECTED : CHG_RAMP_CHARGE_DETECT_DELAY;
+		CPRINTS("Ramp reset: st%d", ramp_st);
 		task_wake(TASK_ID_CHG_RAMP);
 	}
 }
@@ -138,10 +139,24 @@ int chg_ramp_get_current_limit(void)
 	}
 }
 
+int chg_ramp_is_detected(void)
+{
+	/* Charger detected (charge detect delay has passed) */
+	return ramp_st > CHG_RAMP_CHARGE_DETECT_DELAY;
+}
+
+int chg_ramp_is_stable(void)
+{
+	return ramp_st == CHG_RAMP_STABLE;
+}
+
 void chg_ramp_task(void)
 {
 	int task_wait_time = -1;
 	int i;
+	uint64_t detect_end_time_us = 0, time_us;
+	int last_active_port = CHARGE_PORT_NONE;
+
 	/*
 	 * Static initializer so that we don't clobber early calls to this
 	 * module.
@@ -162,25 +177,37 @@ void chg_ramp_task(void)
 			/* Do nothing */
 			task_wait_time = -1;
 			break;
-		case CHG_RAMP_CHARGE_DETECT:
+		case CHG_RAMP_CHARGE_DETECT_DELAY:
 			/* Delay for charge_manager to determine supplier */
-			/* On entry to state, store the OC recovery time */
-			if (ramp_st_prev != ramp_st)
+			/*
+			 * On entry to state, or if port changes, store the
+			 * OC recovery time, and calculate the detect end
+			 * time to exit this state.
+			 */
+			if (ramp_st_prev != ramp_st ||
+			    active_port != last_active_port) {
+				last_active_port = active_port;
 				ACTIVE_OC_INFO.recover =
 					reg_time.val - ACTIVE_OC_INFO.ts.val;
-
-			/*
-			 * If we are not drawing full charge, then don't ramp,
-			 * just wait in this state, until we are.
-			 */
-			if (!board_is_consuming_full_charge()) {
-				task_wait_time = CURRENT_DRAW_DELAY;
+				detect_end_time_us = get_time().val +
+						     CHARGE_DETECT_DELAY;
+				task_wait_time = CHARGE_DETECT_DELAY;
 				break;
 			}
 
+			/* If detect delay has not passed, set wait time */
+			time_us = get_time().val;
+			if (time_us < detect_end_time_us) {
+				task_wait_time = detect_end_time_us - time_us;
+				break;
+			}
+
+			/* Detect delay is over, fall through to next state */
 			ramp_st_new = CHG_RAMP_OVERCURRENT_DETECT;
-			task_wait_time = CHARGE_DETECT_DELAY;
-			break;
+#ifdef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
+			/* notify host of power info change */
+			pd_send_host_event(PD_EVENT_POWER_CHANGE);
+#endif
 		case CHG_RAMP_OVERCURRENT_DETECT:
 			/* Check if we should ramp or go straight to stable */
 			task_wait_time = SECOND;
@@ -189,6 +216,15 @@ void chg_ramp_task(void)
 			if (!board_is_ramp_allowed(active_sup)) {
 				active_icl_new = min_icl;
 				ramp_st_new = CHG_RAMP_STABLE;
+				break;
+			}
+
+			/*
+			 * If we are not drawing full charge, then don't ramp,
+			 * just wait in this state, until we are.
+			 */
+			if (!board_is_consuming_full_charge()) {
+				task_wait_time = CURRENT_DRAW_DELAY;
 				break;
 			}
 
@@ -259,15 +295,20 @@ void chg_ramp_task(void)
 
 			ramp_st_new = active_port == CHARGE_PORT_NONE ?
 				      CHG_RAMP_DISCONNECTED :
-				      CHG_RAMP_CHARGE_DETECT;
+				      CHG_RAMP_CHARGE_DETECT_DELAY;
 			break;
 		case CHG_RAMP_STABLE:
 			/* Maintain input current limit */
 			/* On entry log charging stats */
+			if (ramp_st_prev != ramp_st) {
 #ifdef CONFIG_USB_PD_LOGGING
-			if (ramp_st_prev != ramp_st)
 				charge_manager_save_log(active_port);
 #endif
+#ifdef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
+				/* notify host of power info change */
+				pd_send_host_event(PD_EVENT_POWER_CHANGE);
+#endif
+			}
 
 			/* Keep an eye on VBUS and restart ramping if it dips */
 			if (board_is_ramp_allowed(active_sup) &&

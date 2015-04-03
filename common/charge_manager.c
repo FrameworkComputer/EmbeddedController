@@ -192,11 +192,40 @@ static void charge_manager_fill_power_info(int port,
 		r->meas.voltage_max = available_charge[sup][port].voltage;
 
 		if (use_ramp_current) {
-			r->meas.current_max = chg_ramp_get_current_limit();
+			/*
+			 * If charge_ramp has not detected charger yet,
+			 * then charger type is unknown.
+			 */
+			if (!chg_ramp_is_detected())
+				r->type = USB_CHG_TYPE_UNKNOWN;
+
+			/* Current limit is output of ramp module */
+			r->meas.current_lim = chg_ramp_get_current_limit();
+
+			/*
+			 * If ramp is allowed, then the max current depends
+			 * on if ramp is stable. If ramp is stable, then
+			 * max current is same as input current limit. If
+			 * ramp is not stable, then we report the maximum
+			 * current we could ramp up to for this supplier.
+			 * If ramp is not allowed, max current is just the
+			 * available charge current.
+			 */
+			if (board_is_ramp_allowed(sup)) {
+				r->meas.current_max = chg_ramp_is_stable() ?
+					r->meas.current_lim :
+					board_get_ramp_current_limit(
+					  sup,
+					  available_charge[sup][port].current);
+			} else {
+				r->meas.current_max =
+					available_charge[sup][port].current;
+			}
+
 			r->max_power =
 				r->meas.current_max * r->meas.voltage_max;
 		} else {
-			r->meas.current_max =
+			r->meas.current_max = r->meas.current_lim =
 				available_charge[sup][port].current;
 			r->max_power = POWER(available_charge[sup][port]);
 		}

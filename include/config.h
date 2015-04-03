@@ -1279,6 +1279,9 @@
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
 
+/* Send host event when power changes */
+#undef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
+
 /* HW & SW version for alternate mode discover identity response (4bits each) */
 #undef CONFIG_USB_PD_IDENTITY_HW_ID
 #undef CONFIG_USB_PD_IDENTITY_SW_ID

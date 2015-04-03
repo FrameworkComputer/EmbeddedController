@@ -3771,9 +3771,13 @@ static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 	case USB_CHG_TYPE_VBUS:
 		printf(" VBUS");
 		break;
+	case USB_CHG_TYPE_UNKNOWN:
+		printf(" Unknown");
+		break;
 	}
-	printf(" %dmV max %dmV / %dmA",
-		r->meas.voltage_now, r->meas.voltage_max, r->meas.current_max);
+	printf(" %dmV / %dmA, max %dmV / %dmA",
+		r->meas.voltage_now, r->meas.current_lim, r->meas.voltage_max,
+		r->meas.current_max);
 	if (r->max_power)
 		printf(" / %dmW", r->max_power / 1000);
 	printf("\n");
