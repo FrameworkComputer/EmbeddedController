@@ -944,6 +944,17 @@ static void pd_send_request_msg(int port, int always_send_request)
 
 static void pd_update_pdo_flags(int port, uint32_t pdo)
 {
+#ifdef CONFIG_CHARGE_MANAGER
+#ifdef CONFIG_USB_PD_ALT_MODE_DFP
+	int charge_whitelisted =
+		(pd[port].power_role == PD_ROLE_SINK &&
+		 pd_charge_from_device(pd_get_identity_vid(port),
+				       pd_get_identity_pid(port)));
+#else
+	const int charge_whitelisted = 0;
+#endif
+#endif
+
 	/* can only parse PDO flags if type is fixed */
 	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
 		return;
@@ -967,16 +978,17 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 
 #ifdef CONFIG_CHARGE_MANAGER
 	/*
-	 * If partner supports power swap and is NOT externally powered, then
-	 * treat this as a dualrole device. Otherwise, treat this as a
-	 * dedicated charger.
+	 * Treat device as a dedicated charger (meaning we should charge
+	 * from it) if it does not support power swap, or if it is externally
+	 * powered, or if we are a sink and the device identity matches a
+	 * charging white-list.
 	 */
-	if ((pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) &&
-	    !(pd[port].flags & PD_FLAGS_PARTNER_EXTPOWER)) {
-		charge_manager_update_dualrole(port, CAP_DUALROLE);
-	} else {
+	if (!(pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) ||
+	    (pd[port].flags & PD_FLAGS_PARTNER_EXTPOWER) ||
+	    charge_whitelisted)
 		charge_manager_update_dualrole(port, CAP_DEDICATED);
-	}
+	else
+		charge_manager_update_dualrole(port, CAP_DUALROLE);
 #endif
 }
 

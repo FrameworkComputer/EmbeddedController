@@ -175,6 +175,17 @@ unsigned pd_get_max_voltage(void)
 {
 	return max_request_mv;
 }
+
+int pd_charge_from_device(uint16_t vid, uint16_t pid)
+{
+	/* TODO: rewrite into table if we get more of these */
+	/*
+	 * White-list Apple charge-through accessory since it doesn't set
+	 * externally powered bit, but we still need to charge from it when
+	 * we are a sink.
+	 */
+	return (vid == USB_VID_APPLE && pid == 0x1012);
+}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_USB_PD_ALT_MODE
@@ -434,6 +445,11 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 uint16_t pd_get_identity_vid(int port)
 {
 	return PD_IDH_VID(pe[port].identity[0]);
+}
+
+uint16_t pd_get_identity_pid(int port)
+{
+	return PD_PRODUCT_PID(pe[port].identity[2]);
 }
 
 #ifdef CONFIG_CMD_USB_PD_PE

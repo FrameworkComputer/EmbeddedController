@@ -573,6 +573,9 @@ struct pd_policy {
 /* USB Vendor ID assigned to Google Inc. */
 #define USB_VID_GOOGLE 0x18d1
 
+/* Other Vendor IDs */
+#define USB_VID_APPLE  0x05ac
+
 /* Timeout for message receive in microseconds */
 #define USB_PD_RX_TMOUT_US 1800
 
@@ -922,6 +925,17 @@ void pd_check_pr_role(int port, int pr_role, int flags);
 void pd_check_dr_role(int port, int dr_role, int flags);
 
 /**
+ * Check if we should charge from this device. This is
+ * basically a white-list for chargers that are dual-role,
+ * don't set the externally powered bit, but we should charge
+ * from by default.
+ *
+ * @param vid Port partner Vendor ID
+ * @param pid Port partner Product ID
+ */
+int pd_charge_from_device(uint16_t vid, uint16_t pid);
+
+/**
  * Execute data swap.
  *
  * @param port USB-C port number
@@ -1002,6 +1016,14 @@ void pd_dfp_pe_init(int port);
  * @return      the USB Vendor Identifier or 0 if it doesn't exist
  */
 uint16_t pd_get_identity_vid(int port);
+
+/**
+ * Return the PID of the USB PD accessory connected to a specified port
+ *
+ * @param port  USB-C port number
+ * @return      the USB Product Identifier or 0 if it doesn't exist
+ */
+uint16_t pd_get_identity_pid(int port);
 
 /**
  * Store Device ID & RW hash of device
