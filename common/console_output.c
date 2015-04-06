@@ -66,6 +66,8 @@ static const char * const channel_names[] = {
 	"hook",
 };
 BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
+/* ensure that we are not silently masking additional channels */
+BUILD_ASSERT(CC_CHANNEL_COUNT <= 8*sizeof(uint32_t));
 
 /*****************************************************************************/
 /* Channel-based console output */
