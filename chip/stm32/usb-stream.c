@@ -44,21 +44,22 @@ static size_t tx_write(struct usb_stream_config const *config)
 	return count;
 }
 
+static int tx_valid(struct usb_stream_config const *config)
+{
+	return (STM32_USB_EP(config->endpoint) & EP_TX_MASK) == EP_TX_VALID;
+}
+
+static int rx_valid(struct usb_stream_config const *config)
+{
+	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) == EP_RX_VALID;
+}
+
 static void usb_read(struct producer const *producer, size_t count)
 {
 	struct usb_stream_config const *config =
 		DOWNCAST(producer, struct usb_stream_config, producer);
 
-	if (config->state->rx_waiting && rx_read(config)) {
-		config->state->rx_waiting = 0;
-
-		STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
-	}
-}
-
-static int tx_valid(struct usb_stream_config const *config)
-{
-	return (STM32_USB_EP(config->endpoint) & EP_TX_MASK) == EP_TX_VALID;
+	hook_call_deferred(config->deferred, 0);
 }
 
 static void usb_written(struct consumer const *consumer, size_t count)
@@ -66,12 +67,7 @@ static void usb_written(struct consumer const *consumer, size_t count)
 	struct usb_stream_config const *config =
 		DOWNCAST(consumer, struct usb_stream_config, consumer);
 
-	/*
-	 * If we are not currently in a valid transmission state and we had
-	 * something for the TX buffer, then mark the TX endpoint as valid.
-	 */
-	if (!tx_valid(config) && tx_write(config))
-		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
+	hook_call_deferred(config->deferred, 0);
 }
 
 static void usb_flush(struct consumer const *consumer)
@@ -92,32 +88,27 @@ struct consumer_ops const usb_stream_consumer_ops = {
 	.flush   = usb_flush,
 };
 
+void usb_stream_deferred(struct usb_stream_config const *config)
+{
+	if (!tx_valid(config) && tx_write(config))
+		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
+
+	if (!rx_valid(config) && rx_read(config))
+		STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
+}
+
 void usb_stream_tx(struct usb_stream_config const *config)
 {
-	if (tx_write(config))
-		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
-	else
-		STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
+	STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
+
+	hook_call_deferred(config->deferred, 0);
 }
 
 void usb_stream_rx(struct usb_stream_config const *config)
 {
-	if (rx_read(config)) {
-		/*
-		 * RX packet consumed, mark the packet as VALID.
-		 */
-		STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
-	} else {
-		/*
-		 * There is not enough space in the RX queue to receive this
-		 * packet.  Leave the RX endpoint in a NAK state, clear the
-		 * interrupt, and indicate to the usb_read function that when
-		 * there is enough space in the queue to hold it there is an
-		 * RX packet waiting.
-		 */
-		config->state->rx_waiting = 1;
-		STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
-	}
+	STM32_TOGGLE_EP(config->endpoint, 0, 0, 0);
+
+	hook_call_deferred(config->deferred, 0);
 }
 
 static usb_uint usb_ep_rx_size(size_t bytes)

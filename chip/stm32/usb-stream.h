@@ -9,6 +9,7 @@
 
 #include "compile_time_macros.h"
 #include "consumer.h"
+#include "hooks.h"
 #include "in_stream.h"
 #include "out_stream.h"
 #include "producer.h"
@@ -50,6 +51,11 @@ struct usb_stream_config {
 	 * Endpoint index, and pointers to the USB packet RAM buffers.
 	 */
 	int endpoint;
+
+	/*
+	 * Deferred function to call to handle USB and Queue request.
+	 */
+	void (*deferred)(void);
 
 	size_t rx_size;
 	size_t tx_size;
@@ -129,19 +135,21 @@ extern struct producer_ops const usb_stream_producer_ops;
 	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[RX_SIZE / 2] __usb_ram; \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[TX_SIZE / 2] __usb_ram; \
 	static struct usb_stream_state CONCAT2(NAME, _state);		\
+	static void CONCAT2(NAME, _deferred_)(void);			\
 	struct usb_stream_config const NAME = {				\
-		.state    = &CONCAT2(NAME, _state),			\
-		.endpoint = ENDPOINT,					\
-		.rx_size  = RX_SIZE,					\
-		.tx_size  = TX_SIZE,					\
-		.rx_ram   = CONCAT2(NAME, _ep_rx_buffer),		\
-		.tx_ram   = CONCAT2(NAME, _ep_tx_buffer),		\
-		.consumer = {						\
+		.state     = &CONCAT2(NAME, _state),			\
+		.endpoint  = ENDPOINT,					\
+		.deferred  = CONCAT2(NAME, _deferred_),			\
+		.rx_size   = RX_SIZE,					\
+		.tx_size   = TX_SIZE,					\
+		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
+		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer),		\
+		.consumer  = {						\
 			.producer = &PRODUCER,				\
 			.queue    = &TX_QUEUE,				\
 			.ops      = &usb_stream_consumer_ops,		\
 		},							\
-		.producer = {						\
+		.producer  = {						\
 			.consumer = &CONSUMER,				\
 			.queue    = &RX_QUEUE,				\
 			.ops      = &usb_stream_producer_ops,		\
@@ -192,7 +200,15 @@ extern struct producer_ops const usb_stream_producer_ops;
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx),				\
 		       CONCAT2(NAME, _ep_rx),				\
-		       CONCAT2(NAME, _ep_reset));
+		       CONCAT2(NAME, _ep_reset));			\
+	static void CONCAT2(NAME, _deferred_)(void)			\
+	{ usb_stream_deferred(&NAME); }					\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
+
+/*
+ * Handle USB and Queue request in a deferred callback.
+ */
+void usb_stream_deferred(struct usb_stream_config const *config);
 
 /*
  * These functions are used by the trampoline functions defined above to

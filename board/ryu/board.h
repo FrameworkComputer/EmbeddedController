@@ -123,7 +123,7 @@
 
 /* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 12
+#define DEFERRABLE_MAX_COUNT 14
 
 #ifndef __ASSEMBLER__
 
