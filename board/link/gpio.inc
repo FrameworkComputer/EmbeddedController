@@ -8,14 +8,7 @@
 /* Inputs with interrupt handlers are first for efficiency */
 GPIO(POWER_BUTTON_L,       K, 7, GPIO_INT_BOTH, power_button_interrupt) /* Power button */
 GPIO(LID_OPEN,             K, 5, GPIO_INT_BOTH, lid_interrupt)          /* Lid switch */
-
-/* Other inputs */
-GPIO(THERMAL_DATA_READY_L, B, 4, GPIO_INPUT,    NULL)                   /* Data ready from I2C thermal sensor */
 GPIO(AC_PRESENT,           H, 3, GPIO_INT_BOTH, extpower_interrupt)     /* AC power present */
-GPIO(BOARD_VERSION1,       H, 6, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 1 */
-GPIO(BOARD_VERSION2,       L, 6, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 2 */
-GPIO(BOARD_VERSION3,       L, 7, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 3 */
-GPIO(ONEWIRE,              H, 2, GPIO_INPUT,    NULL)                   /* One-wire bus to adapter LED */
 GPIO(PCH_BKLTEN,           J, 3, GPIO_INT_BOTH, backlight_interrupt)    /* Backlight enable signal from PCH */
 GPIO(PCH_SLP_A_L,          G, 5, GPIO_INT_BOTH, power_signal_interrupt) /* SLP_A# signal from PCH */
 GPIO(PCH_SLP_ME_CSW_DEV_L, G, 4, GPIO_INT_BOTH, power_signal_interrupt) /* SLP_ME_CSW_DEV# signal from PCH */
@@ -33,9 +26,16 @@ GPIO(PGOOD_VCCP,           K, 2, GPIO_INT_BOTH, power_signal_interrupt) /* Power
 GPIO(PGOOD_VCCSA,          H, 1, GPIO_INT_BOTH, power_signal_interrupt) /* Power good on +VCCSA */
 GPIO(PGOOD_VGFX_CORE,      D, 2, GPIO_INT_BOTH, power_signal_interrupt) /* Power good on +VGFX_CORE */
 GPIO(RECOVERY_L,           H, 7, GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
+GPIO(WP,                   J, 4, GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
+/* Other inputs */
+GPIO(THERMAL_DATA_READY_L, B, 4, GPIO_INPUT,    NULL)                   /* Data ready from I2C thermal sensor */
+GPIO(BOARD_VERSION1,       H, 6, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 1 */
+GPIO(BOARD_VERSION2,       L, 6, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 2 */
+GPIO(BOARD_VERSION3,       L, 7, GPIO_INPUT,    NULL)                   /* Board version stuffing resistor 3 */
+GPIO(ONEWIRE,              H, 2, GPIO_INPUT,    NULL)                   /* One-wire bus to adapter LED */
 GPIO(USB1_STATUS_L,        E, 7, GPIO_INPUT, NULL)                      /* USB charger port 1 status output */
 GPIO(USB2_STATUS_L,        E, 1, GPIO_INPUT, NULL)                      /* USB charger port 2 status output */
-GPIO(WP,                   J, 4, GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
+
 
 /* Outputs; all unasserted by default except for reset signals */
 GPIO(CPU_PROCHOT,          F, 2, GPIO_OUT_LOW,  NULL) /* Force CPU to think it's overheated */
