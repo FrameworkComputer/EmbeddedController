@@ -7,16 +7,16 @@
 
 /* Interrupts */
 GPIO(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH | GPIO_PULL_UP,    vbus_evt)
-GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING,                NULL)
 GPIO(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
 GPIO(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)
 GPIO(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)
 GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
+GPIO(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
+GPIO(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
+GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING,                NULL)
 GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
 GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
-GPIO(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
 GPIO(BASE_PRES_L,          E, 10, GPIO_INT_BOTH | GPIO_PULL_UP,    NULL)
-GPIO(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
 
 /* Buttons */
 GPIO(BTN_VOLD_L,           C, 0,  GPIO_INPUT | GPIO_PULL_UP,       NULL)
