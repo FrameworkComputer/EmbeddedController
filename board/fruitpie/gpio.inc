@@ -7,6 +7,7 @@
 
 GPIO(VBUS_WAKE,         B, 5,  GPIO_INT_BOTH,    vbus_event)
 GPIO(MASTER_I2C_INT_L,  C, 13, GPIO_INT_FALLING, tsu_event)
+GPIO(ALERT_L,           A, 2,  GPIO_INT_FALLING, rohm_event)
 
 /* PD RX/TX */
 GPIO(USB_CC1_PD,        A, 0,  GPIO_ANALOG,  NULL)
@@ -54,7 +55,6 @@ GPIO(MASTER_I2C_SCL,    B, 10, GPIO_INPUT, NULL)
 GPIO(MASTER_I2C_SDA,    B, 11, GPIO_INPUT, NULL)
 
 /* Rohm BD92104 connections */
-GPIO(ALERT_L,           A, 2,  GPIO_INT_FALLING, rohm_event)
 GPIO(USBPD_RST,         B, 0,  GPIO_OUT_LOW,     NULL)
 GPIO(USBPD_FORCE_OTG,   B, 1,  GPIO_OUT_LOW,     NULL)
 GPIO(USBPD_VIN_EN_L,    F, 0,  GPIO_OUT_HIGH,    NULL)
