@@ -24,6 +24,9 @@ GPIO(JTAG_TCK,       C, 0, GPIO_DEFAULT,                        jtag_interrupt) 
 GPIO(UART0_RX,       A, 0, GPIO_PULL_UP | GPIO_INT_BOTH_DSLEEP, uart_deepsleep_interrupt) /* UART0 RX input */
 GPIO(BKBOOST_DET,    B, 5, GPIO_INT_RISING,                     bkboost_det_interrupt)    /* Backboost detect */
 
+/* Interrupt signal from PD MCU, external pull-down */
+GPIO(PD_MCU_INT, J, 5, GPIO_INT_RISING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
+
 /*
  * Combined accelerometer input. This will become an interrupt, once we have
  * support for it.
@@ -34,9 +37,6 @@ GPIO(ACCEL_INT, F, 7, GPIO_INPUT, NULL)
  * Ambient Light Sensor input.  This could become an interrupt once supported.
  */
 GPIO(ALS_INT_L, N, 0, GPIO_INPUT, NULL)
-
-/* Interrupt signal from PD MCU, external pull-down */
-GPIO(PD_MCU_INT, J, 5, GPIO_INT_RISING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
 
 /* Other inputs */
 GPIO(BOARD_VERSION1, Q, 7, GPIO_INPUT, NULL) /* Board version stuffing resistor 1 */
