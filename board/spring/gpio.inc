@@ -13,7 +13,6 @@ GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_BOTH,     power_signal_interrupt) /* App Pr
 GPIO(CHARGER_INT_L,  C, 4,  GPIO_INT_FALLING,  pmu_irq_handler)
 GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)          /* LID switch detection */
 GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt) /* AP suspend/resume state */
-GPIO(WP_L,           A, 13, GPIO_INPUT,        NULL)                   /* Write protection pin (low active) */
 
 /* Keyboard inputs */
 GPIO(KB_IN00,     C, 8,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
@@ -25,6 +24,8 @@ GPIO(KB_IN05,     C, 14, GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(KB_IN06,     C, 15, GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(KB_IN07,     D, 2,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(USB_CHG_INT, A, 6,  GPIO_INT_FALLING, extpower_interrupt)
+
+GPIO(WP_L,           A, 13, GPIO_INPUT,        NULL)                   /* Write protection pin (low active) */
 
 /* Other inputs */
 GPIO(BCHGR_VACG, A, 0, GPIO_INT_BOTH, NULL) /* AC good on TPSChrome */
