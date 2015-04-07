@@ -36,7 +36,6 @@ static int init_done;
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
 
-
 #ifdef CONFIG_KEYBOARD_IRQ_GPIO
 static void keyboard_irq_assert(void)
 {
@@ -224,11 +223,21 @@ static void setup_lpc(void)
 
 	/* TODO(crosbug.com/p/24107): Route KIRQ to SER_IRQ1 */
 
-	/* Set up EMI module for memory mapped region and port 80 */
-	MEC1322_LPC_EMI_BAR = 0x0080800f;
+	/* Set up EMI module for memory mapped region, base address 0x800 */
+	MEC1322_LPC_EMI_BAR = 0x0800800f;
 	MEC1322_INT_ENABLE(15) |= 1 << 2;
 	MEC1322_INT_BLK_EN |= 1 << 15;
 	task_enable_irq(MEC1322_IRQ_EMI);
+
+	/* Access data RAM through alias address */
+	MEC1322_EMI_MBA0 = (uint32_t)mem_mapped - 0x118000 + 0x20000000;
+
+	/*
+	 * Limit EMI read / write range. First 256 bytes are RW for host
+	 * commands. Second 256 bytes are RO for mem-mapped data.
+	 */
+	MEC1322_EMI_MRL0 = 0x200;
+	MEC1322_EMI_MWL0 = 0x100;
 
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
