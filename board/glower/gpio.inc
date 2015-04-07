@@ -88,3 +88,7 @@ ALTERNATE(PORT(2),  0x40, 2, MODULE_LPC,           0) /* LPC SCI */
 ALTERNATE(PORT(15), 0x08, 1, MODULE_SPI,           0)
 ALTERNATE(PORT(16), 0x10, 1, MODULE_SPI,           0)
 ALTERNATE(PORT(5),  0x10, 1, MODULE_SPI,           0)
+ALTERNATE(PORT(1),  0x10,     1, MODULE_LPC,           0) /* 14: CLKRUN# */
+ALTERNATE(PORT(11), 0x9e,     1, MODULE_LPC,           0) /* 111~114:LAD[0:3],  117:PCI_CLK */
+ALTERNATE(PORT(11), 0x40,     1, MODULE_LPC,           GPIO_INT_BOTH) /* 116: LRESET# */
+ALTERNATE(PORT(12), 0x01,     1, MODULE_LPC,           0) /* 120: LFRAME# */
