@@ -484,3 +484,22 @@ static int lpc_command_init(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(lpcinit, lpc_command_init, NULL, NULL, NULL);
+
+/* Get protocol information */
+static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->response;
+
+	memset(r, 0, sizeof(*r));
+	r->protocol_versions = (1 << 3);
+	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->flags = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
+		lpc_get_protocol_info,
+		EC_VER_MASK(0));
