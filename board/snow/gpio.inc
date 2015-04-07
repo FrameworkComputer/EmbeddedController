@@ -12,7 +12,7 @@ GPIO(SOC1V8_XPSHOLD, A, 3,  GPIO_INT_BOTH,     power_signal_interrupt) /* App Pr
 GPIO(CHARGER_INT_L,  C, 4,  GPIO_INT_FALLING,  pmu_irq_handler)
 GPIO(LID_OPEN,       C, 13, GPIO_INT_BOTH,     lid_interrupt)          /* LID switch detection */
 GPIO(SUSPEND_L,      A, 7,  INT_BOTH_FLOATING, power_signal_interrupt) /* AP suspend/resume state */
-GPIO(WP_L,           B, 4,  GPIO_INPUT,        NULL)                   /* Write protection pin (low active) */
+GPIO(SPI1_NSS,       A, 4,  GPIO_DEFAULT,      spi_event)
 
 /* Keyboard inputs */
 GPIO(KB_IN00, C, 8,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
@@ -24,9 +24,10 @@ GPIO(KB_IN05, C, 14, GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(KB_IN06, C, 15, GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(KB_IN07, D, 2,  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 
+
 /* Other inputs */
 GPIO(AC_PWRBTN_L, A, 0, GPIO_INT_BOTH, NULL)
-GPIO(SPI1_NSS,    A, 4, GPIO_DEFAULT,  spi_event)
+GPIO(WP_L,        B, 4, GPIO_INPUT,    NULL) /* Write protection pin (low active) */
 
 /*
  * I2C pins should be configured as inputs until I2C module is
