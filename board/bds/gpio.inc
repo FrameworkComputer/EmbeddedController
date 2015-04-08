@@ -6,8 +6,8 @@
  */
 
 /* Recovery signal from DOWN button */
-GPIO(RECOVERY_L, D, 1, GPIO_PULL_UP, NULL)
-GPIO(DEBUG_LED,  A, 7, GPIO_OUT_LOW, NULL)
+GPIO(RECOVERY_L, D, 1, GPIO_PULL_UP)
+GPIO(DEBUG_LED,  A, 7, GPIO_OUT_LOW)
 
 /*
  * Signals which aren't implemented on BDS but we'll emulate anyway, to

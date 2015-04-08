@@ -193,7 +193,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	const struct gpio_info *g = gpio_list + signal;
 
 	/* Fail if not implemented or no interrupt handler */
-	if (!g->mask || !g->irq_handler)
+	if (!g->mask || signal >= GPIO_IH_COUNT)
 		return EC_ERROR_INVAL;
 
 	/* If it's not shared, use INT0-INT3, otherwise use PORT. */
@@ -253,7 +253,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	int i;
 
 	/* Fail if not implemented or no interrupt handler */
-	if (!g->mask || !g->irq_handler)
+	if (!g->mask || signal >= GPIO_IH_COUNT)
 		return EC_ERROR_INVAL;
 
 	/* If it's not shared, use INT0-INT3, otherwise use PORT. */
@@ -285,21 +285,24 @@ void gpio_interrupt(void)
 {
 	const struct gpio_info *g;
 	int i;
+	int signal;
 
 	for (i = 0; i < NRF51_GPIOTE_IN_COUNT; i++) {
 		if (NRF51_GPIOTE_IN(i)) {
 			NRF51_GPIOTE_IN(i) = 0;
 			g = gpio_ints[i];
-			if (g && g->irq_handler)
-				g->irq_handler(g - gpio_list);
+			signal = g - gpio_list;
+			if (g && signal < GPIO_IH_COUNT)
+				gpio_irq_handlers[signal](signal);
 		}
 	}
 
 	if (NRF51_GPIOTE_PORT) {
 		NRF51_GPIOTE_PORT = 0;
 		g = gpio_int_port;
-		if (g && g->irq_handler)
-			g->irq_handler(g - gpio_list);
+		signal = g - gpio_list;
+		if (g && signal < GPIO_IH_COUNT)
+			gpio_irq_handlers[signal](signal);
 	}
 }
 DECLARE_IRQ(NRF51_PERID_GPIOTE, gpio_interrupt, 1);

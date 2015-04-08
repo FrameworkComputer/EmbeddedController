@@ -45,6 +45,15 @@
 #define GPIO_INT_ANY        (GPIO_INT_BOTH | GPIO_INT_LEVEL)
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
 
+/* NOTE: This is normally included from board.h, thru config.h and common.h But,
+ * some boards and unit tests don't have a gpio_signal enum defined, so we
+ * define an emtpy one here.*/
+#ifndef __CROS_EC_GPIO_SIGNAL_H
+enum gpio_signal {
+	NULL
+};
+#endif /* __CROS_EC_GPIO_SIGNAL_H */
+
 /* GPIO signal definition structure, for use by board.c */
 struct gpio_info {
 	/* Signal name */
@@ -58,17 +67,19 @@ struct gpio_info {
 
 	/* Flags (GPIO_*; see above) */
 	uint32_t flags;
-
-	/*
-	 * Interrupt handler.  If non-NULL, and the signal's interrupt is
-	 * enabled, this will be called in the context of the GPIO interrupt
-	 * handler.
-	 */
-	void (*irq_handler)(enum gpio_signal signal);
 };
 
 /* Signal information from board.c.  Must match order from enum gpio_signal. */
 extern const struct gpio_info gpio_list[];
+
+/* Interrupt handler table for those GPIOs which have IRQ handlers.
+ *
+ * If the signal's interrupt is enabled, this will be called in the
+ * context of the GPIO interrupt handler.
+ */
+extern void (* const gpio_irq_handlers[])(enum gpio_signal signal);
+extern const int gpio_ih_count;
+#define GPIO_IH_COUNT gpio_ih_count
 
 /* GPIO alternate function structure, for use by board.c */
 struct gpio_alt_func {

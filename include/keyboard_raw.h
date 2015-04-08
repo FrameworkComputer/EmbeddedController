@@ -68,7 +68,7 @@ void keyboard_raw_enable_interrupt(int enable);
 void keyboard_raw_gpio_interrupt(enum gpio_signal signal);
 
 #else
-#define keyboard_raw_gpio_interrupt NULL
-#endif
+static inline void keyboard_raw_gpio_interrupt(enum gpio_signal signal) { }
+#endif /* !HAS_TASK_KEYSCAN */
 
 #endif  /* __CROS_EC_KEYBOARD_RAW_H */

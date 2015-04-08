@@ -10,6 +10,7 @@
 
 #include <stdarg.h>  /* For va_list */
 #include "common.h"
+#include "gpio.h"
 
 /**
  * Initialize the UART module.
@@ -224,8 +225,8 @@ void uart_exit_dsleep(void);
  */
 void uart_deepsleep_interrupt(enum gpio_signal signal);
 #else
-#define uart_deepsleep_interrupt NULL
-#endif
+static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
+#endif /* !CONFIG_LOW_POWER_IDLE */
 
 #ifdef CONFIG_UART_INPUT_FILTER
 /**

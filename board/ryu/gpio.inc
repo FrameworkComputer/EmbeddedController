@@ -6,120 +6,120 @@
  */
 
 /* Interrupts */
-GPIO(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH | GPIO_PULL_UP,    vbus_evt)
-GPIO(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
-GPIO(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)
-GPIO(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)
-GPIO(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
-GPIO(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
-GPIO(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
-GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING,                NULL)
-GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
-GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
-GPIO(BASE_PRES_L,          E, 10, GPIO_INT_BOTH | GPIO_PULL_UP,    NULL)
+GPIO_INT(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH | GPIO_PULL_UP,    vbus_evt)
+GPIO_INT(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
+GPIO_INT(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)
+GPIO_INT(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)
+GPIO_INT(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
+GPIO_INT(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
+GPIO_INT(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
+GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING)
+GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP)
+GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP)
+GPIO(BASE_PRES_L,          E, 10, GPIO_INT_BOTH | GPIO_PULL_UP)
 
 /* Buttons */
-GPIO(BTN_VOLD_L,           C, 0,  GPIO_INPUT | GPIO_PULL_UP,       NULL)
-GPIO(BTN_VOLU_L,           A, 2,  GPIO_INPUT | GPIO_PULL_UP,       NULL)
+GPIO(BTN_VOLD_L,           C, 0,  GPIO_INPUT | GPIO_PULL_UP)
+GPIO(BTN_VOLU_L,           A, 2,  GPIO_INPUT | GPIO_PULL_UP)
 
 /* PD RX/TX */
-GPIO(USBC_CC1_PD,          A, 1,  GPIO_ANALOG,   NULL)
-GPIO(USBC_CC2_PD,          A, 3,  GPIO_ANALOG,   NULL)
-GPIO(USBC_CC_EN,           A, 4,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_CC_TX_DATA,      A, 6,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_CC_TX_EN,        D, 7,  GPIO_OUT_LOW,  NULL)
+GPIO(USBC_CC1_PD,          A, 1,  GPIO_ANALOG)
+GPIO(USBC_CC2_PD,          A, 3,  GPIO_ANALOG)
+GPIO(USBC_CC_EN,           A, 4,  GPIO_OUT_LOW)
+GPIO(USBC_CC_TX_DATA,      A, 6,  GPIO_OUT_LOW)
+GPIO(USBC_CC_TX_EN,        D, 7,  GPIO_OUT_LOW)
 
 #if 0
 /* Alternate functions */
-GPIO(USBC_TX_CLKOUT,       B, 1,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_TX_CLKIN,        B, 3,  GPIO_OUT_LOW,  NULL)
+GPIO(USBC_TX_CLKOUT,       B, 1,  GPIO_OUT_LOW)
+GPIO(USBC_TX_CLKIN,        B, 3,  GPIO_OUT_LOW)
 #endif
 
 /* System power */
-GPIO(PMIC_PWRON_L,         D, 14, GPIO_ODR_HIGH, NULL)
-GPIO(PMIC_WARM_RESET_L,    E, 4,  GPIO_ODR_HIGH, NULL)
-GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW,  NULL) /* Proto 5+ */
+GPIO(PMIC_PWRON_L,         D, 14, GPIO_ODR_HIGH)
+GPIO(PMIC_WARM_RESET_L,    E, 4,  GPIO_ODR_HIGH)
+GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW) /* Proto 5+ */
 /*
  * We are missing an external pull-up for EN_PP3300. Pull it up here.
  * EN_PP3300 is still controlled by PMIC though.
  */
-GPIO(EN_PP3300_RSVD,       E, 13, GPIO_INPUT | GPIO_PULL_UP, NULL)
+GPIO(EN_PP3300_RSVD,       E, 13, GPIO_INPUT | GPIO_PULL_UP)
 /* sensor temp output and PMIC reset input */
-GPIO(P5_PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH, NULL)
+GPIO(P5_PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH)
 /* TODO(crosbug.com/p/38333) remove P4_PMIC_THERM_L */
-GPIO(P4_PMIC_THERM_L,      D, 12, GPIO_ODR_HIGH, NULL)
+GPIO(P4_PMIC_THERM_L,      D, 12, GPIO_ODR_HIGH)
 
-GPIO(VBUS_SENSE,           A, 0,  GPIO_ANALOG,   NULL)
-GPIO(CHGR_IADP,            B, 0,  GPIO_ANALOG,   NULL)
-GPIO(CHGR_IBAT,            C, 3,  GPIO_ANALOG,   NULL)
+GPIO(VBUS_SENSE,           A, 0,  GPIO_ANALOG)
+GPIO(CHGR_IADP,            B, 0,  GPIO_ANALOG)
+GPIO(CHGR_IBAT,            C, 3,  GPIO_ANALOG)
 
 /* Inductive charging */
-GPIO(CHARGE_EN,            D, 13, GPIO_OUT_LOW,  NULL)
-GPIO(BASE_CHG_VDD_EN,      E, 5,  GPIO_OUT_LOW,  NULL)
+GPIO(CHARGE_EN,            D, 13, GPIO_OUT_LOW)
+GPIO(BASE_CHG_VDD_EN,      E, 5,  GPIO_OUT_LOW)
 
 /* USB-C Power and muxes control */
-GPIO(USBC_CHARGE_EN_L,     A, 7,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_5V_EN,           D, 8,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_VCONN1_EN_L,     F, 10, GPIO_OUT_HIGH, NULL)
-GPIO(USBC_VCONN2_EN_L,     D, 10, GPIO_OUT_HIGH, NULL)
+GPIO(USBC_CHARGE_EN_L,     A, 7,  GPIO_OUT_LOW)
+GPIO(USBC_5V_EN,           D, 8,  GPIO_OUT_LOW)
+GPIO(USBC_VCONN1_EN_L,     F, 10, GPIO_OUT_HIGH)
+GPIO(USBC_VCONN2_EN_L,     D, 10, GPIO_OUT_HIGH)
 
-GPIO(USBC_CC1_DEVICE_ODL,  A, 5,  GPIO_ODR_LOW,  NULL)
-GPIO(USBC_CC2_DEVICE_ODL,  E, 14, GPIO_ODR_LOW,  NULL)
+GPIO(USBC_CC1_DEVICE_ODL,  A, 5,  GPIO_ODR_LOW)
+GPIO(USBC_CC2_DEVICE_ODL,  E, 14, GPIO_ODR_LOW)
 
 /* Pericom PI3USB30592 mux controls on Proto 5+ */
-GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_MUX_CONF1,       D, 9,  GPIO_OUT_LOW,  NULL)
-GPIO(USBC_MUX_CONF2,       E, 0,  GPIO_OUT_LOW,  NULL)
+GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW)
+GPIO(USBC_MUX_CONF1,       D, 9,  GPIO_OUT_LOW)
+GPIO(USBC_MUX_CONF2,       E, 0,  GPIO_OUT_LOW)
 /* TODO(crosbug.com/p/38333) remove USBC_DP_xxx GPIOs */
-GPIO(USBC_DP_MODE_L,       D, 1,  GPIO_OUT_HIGH, NULL)
-GPIO(USBC_DP_POLARITY,     D, 2,  GPIO_OUT_HIGH, NULL)
+GPIO(USBC_DP_MODE_L,       D, 1,  GPIO_OUT_HIGH)
+GPIO(USBC_DP_POLARITY,     D, 2,  GPIO_OUT_HIGH)
 
 /* Inputs */
-GPIO(BOARD_ID0,            E, 11,  GPIO_INPUT,    NULL)
-GPIO(BOARD_ID1,            E, 12,  GPIO_INPUT,    NULL)
-GPIO(SH_SIGNAL,            E, 2,   GPIO_INPUT,    NULL)
+GPIO(BOARD_ID0,            E, 11,  GPIO_INPUT)
+GPIO(BOARD_ID1,            E, 12,  GPIO_INPUT)
+GPIO(SH_SIGNAL,            E, 2,   GPIO_INPUT)
 
 /* Lightbar reset */
-GPIO(LB_RST_L,             D, 15, GPIO_ODR_HIGH | GPIO_PULL_UP, NULL)
+GPIO(LB_RST_L,             D, 15, GPIO_ODR_HIGH | GPIO_PULL_UP)
 
 #if 0
 /* Alternate functions */
-GPIO(USB_DM,               A, 11, GPIO_ANALOG,   NULL)
-GPIO(USB_DP,               A, 12, GPIO_ANALOG,   NULL)
-GPIO(UART_TX,              D, 5,  GPIO_OUT_LOW,  NULL)
-GPIO(UART_RX,              D, 6,  GPIO_OUT_LOW,  NULL)
+GPIO(USB_DM,               A, 11, GPIO_ANALOG)
+GPIO(USB_DP,               A, 12, GPIO_ANALOG)
+GPIO(UART_TX,              D, 5,  GPIO_OUT_LOW)
+GPIO(UART_RX,              D, 6,  GPIO_OUT_LOW)
 #endif
 
 /*
  * I2C pins should be configured as inputs until I2C module is
  * initialized. This will avoid driving the lines unintentionally.
  */
-GPIO(MASTER_I2C_SCL,       A, 15, GPIO_INPUT,    NULL)
-GPIO(MASTER_I2C_SDA,       A, 14, GPIO_INPUT,    NULL)
-GPIO(SLAVE_I2C_SCL,        A, 9,  GPIO_INPUT,    NULL)
-GPIO(SLAVE_I2C_SDA,        A, 10, GPIO_INPUT,    NULL)
+GPIO(MASTER_I2C_SCL,       A, 15, GPIO_INPUT)
+GPIO(MASTER_I2C_SDA,       A, 14, GPIO_INPUT)
+GPIO(SLAVE_I2C_SCL,        A, 9,  GPIO_INPUT)
+GPIO(SLAVE_I2C_SDA,        A, 10, GPIO_INPUT)
 
 /* SCL gating for PI3USB9281 */
-GPIO(PERICOM_CLK_EN,       C, 15, GPIO_OUT_HIGH, NULL)
+GPIO(PERICOM_CLK_EN,       C, 15, GPIO_OUT_HIGH)
 
 /* Case closed debugging. */
-GPIO(USB_PU_EN_L,          C, 2,  GPIO_OUT_HIGH, NULL)
-GPIO(PD_DISABLE_DEBUG,     C, 6,  GPIO_OUT_LOW,  NULL)
-GPIO(SPI_FLASH_NSS,        B, 9,  GPIO_INPUT,    NULL)
-GPIO(VDDSPI_EN,            C, 12, GPIO_OUT_LOW,  NULL)
-GPIO(SH_RESET,             C, 4,  GPIO_ODR_HIGH, NULL)
-GPIO(SH_BOOT,              C, 9,  GPIO_ODR_HIGH, NULL)
-GPIO(EC_INT_L,             F, 2,  GPIO_ODR_HIGH, NULL)
-GPIO(ENTERING_RW,          E, 15, GPIO_OUT_LOW,  NULL)
-GPIO(WP_L,                 F, 6,  GPIO_INPUT,    NULL)
-GPIO(FW_DEBUG_MODE_L,      C, 7,  GPIO_ODR_HIGH, NULL) /* Proto 5+ */
+GPIO(USB_PU_EN_L,          C, 2,  GPIO_OUT_HIGH)
+GPIO(PD_DISABLE_DEBUG,     C, 6,  GPIO_OUT_LOW)
+GPIO(SPI_FLASH_NSS,        B, 9,  GPIO_INPUT)
+GPIO(VDDSPI_EN,            C, 12, GPIO_OUT_LOW)
+GPIO(SH_RESET,             C, 4,  GPIO_ODR_HIGH)
+GPIO(SH_BOOT,              C, 9,  GPIO_ODR_HIGH)
+GPIO(EC_INT_L,             F, 2,  GPIO_ODR_HIGH)
+GPIO(ENTERING_RW,          E, 15, GPIO_OUT_LOW)
+GPIO(WP_L,                 F, 6,  GPIO_INPUT)
+GPIO(FW_DEBUG_MODE_L,      C, 7,  GPIO_ODR_HIGH) /* Proto 5+ */
 
 #if 0
 /* Alternate functions */
-GPIO(SH_UART_TX,           C, 11, GPIO_OUT_LOW,  NULL)
-GPIO(SH_UART_RX,           C, 10, GPIO_INPUT,    NULL)
-GPIO(AP_UART_TX,           B, 6,  GPIO_OUT_LOW,  NULL)
-GPIO(AP_UART_RX,           B, 7,  GPIO_INPUT,    NULL)
+GPIO(SH_UART_TX,           C, 11, GPIO_OUT_LOW)
+GPIO(SH_UART_RX,           C, 10, GPIO_INPUT)
+GPIO(AP_UART_TX,           B, 6,  GPIO_OUT_LOW)
+GPIO(AP_UART_RX,           B, 7,  GPIO_INPUT)
 #endif
 
 UNIMPLEMENTED(AP_RESET_L)

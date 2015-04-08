@@ -8,15 +8,26 @@
 /*
  * The GPIO macro is used to define a new GPIO pin name and function.
  *
- * The name is used to populate the gpio_signal enum by first prepending GPIO_
- * to the name.  It is also used to construct the string name that is presented
- * in the shell interface.  Similarly, the port parameter has GPIO_ prepended to
- * it before it is used to initialize the port base address of a gpio_info
- * struct.  The pin number is used to create a bitmask.  The flags and signal
- * parameters are passed on to the gpio_info directly.
+ * The name is used to populate the gpio_signal enum by first
+ * prepending GPIO_ to the name.  It is also used to construct the
+ * string name that is presented in the shell interface.  Similarly,
+ * the port parameter has GPIO_ prepended to it before it is used to
+ * initialize the port base address of a gpio_info struct.  The pin
+ * number is used to create a bitmask.  The flags parameter is passed
+ * on to the gpio_info directly.
  */
 #ifndef GPIO
-#define GPIO(name, port, pin, flags, signal)
+#define GPIO(name, port, pin, flags)
+#endif
+
+/*
+ * The GPIO_INT macro is used to define a GPIOs that have an IRQ handler.
+ *
+ * The IRQ handler pointers are stored as elements in the gpio_irq_handlers
+ * array.
+ */
+#ifndef GPIO_INT
+#define GPIO_INT(name, port, pin, flags, signal)
 #endif
 
 /*
@@ -61,5 +72,6 @@
  * Once the gpio.inc file has been included these macros are no longer needed.
  */
 #undef GPIO
+#undef GPIO_INT
 #undef ALTERNATE
 #undef UNIMPLEMENTED

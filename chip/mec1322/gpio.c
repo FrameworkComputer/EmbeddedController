@@ -218,12 +218,10 @@ static void gpio_interrupt(int girq, int port_offset)
 
 	MEC1322_INT_SOURCE(girq) |= sts;
 
-	for (i = 0; i < GPIO_COUNT && sts; ++i, ++g) {
-		if (!g->irq_handler)
-			continue;
+	for (i = 0; i < GPIO_IH_COUNT && sts; ++i, ++g) {
 		bit = (g->port - port_offset) * 8 + __builtin_ffs(g->mask) - 1;
 		if (sts & (1 << bit))
-			g->irq_handler(i);
+			gpio_irq_handlers[i](i);
 		sts &= ~(1 << bit);
 	}
 }

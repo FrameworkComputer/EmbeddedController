@@ -14,6 +14,7 @@
 #define __CROS_EC_CHIPSET_H
 
 #include "common.h"
+#include "gpio.h"
 
 /*
  * Chipset state mask
@@ -95,8 +96,7 @@ static inline void chipset_exit_hard_off(void) { }
 static inline void chipset_throttle_cpu(int throttle) { }
 static inline void chipset_force_shutdown(void) { }
 static inline void chipset_reset(int cold_reset) { }
-
-#define power_interrupt NULL
+static inline void power_interrupt(enum gpio_signal signal) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 

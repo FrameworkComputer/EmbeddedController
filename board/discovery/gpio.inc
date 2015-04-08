@@ -6,11 +6,11 @@
  */
 
 /* Inputs with interrupt handlers are first for efficiency */
-GPIO(USER_BUTTON, A, 0, GPIO_INT_BOTH, button_event)
+GPIO_INT(USER_BUTTON, A, 0, GPIO_INT_BOTH, button_event)
 
 /* Outputs */
-GPIO(LED_BLUE,    B, 6, GPIO_OUT_LOW, NULL)
-GPIO(LED_GREEN,   B, 7, GPIO_OUT_LOW, NULL)
+GPIO(LED_BLUE,    B, 6, GPIO_OUT_LOW)
+GPIO(LED_GREEN,   B, 7, GPIO_OUT_LOW)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)

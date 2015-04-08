@@ -100,7 +100,7 @@ enum power_state power_handle_state(enum power_state state);
 #ifdef HAS_TASK_CHIPSET
 void power_signal_interrupt(enum gpio_signal signal);
 #else
-#define power_signal_interrupt NULL
-#endif
+static inline void power_signal_interrupt(enum gpio_signal signal) { }
+#endif /* !HAS_TASK_CHIPSET */
 
 #endif  /* __CROS_EC_POWER_H */

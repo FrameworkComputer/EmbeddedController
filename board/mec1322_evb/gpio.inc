@@ -5,17 +5,17 @@
  * found in the LICENSE file.
  */
 
-GPIO(LED1,       PORT(15), 4, GPIO_ODR_LOW,  NULL)
-GPIO(LED2,       PORT(15), 5, GPIO_ODR_HIGH, NULL)
-GPIO(LED3,       PORT(15), 6, GPIO_ODR_LOW,  NULL)
-GPIO(PCH_SMI_L,  PORT(4),  4, GPIO_ODR_HIGH, NULL) /* SMI output */
-GPIO(PCH_WAKE_L, PORT(20), 0, GPIO_ODR_HIGH, NULL) /* PCH wake pin */
+GPIO(LED1,       PORT(15), 4, GPIO_ODR_LOW)
+GPIO(LED2,       PORT(15), 5, GPIO_ODR_HIGH)
+GPIO(LED3,       PORT(15), 6, GPIO_ODR_LOW)
+GPIO(PCH_SMI_L,  PORT(4),  4, GPIO_ODR_HIGH) /* SMI output */
+GPIO(PCH_WAKE_L, PORT(20), 0, GPIO_ODR_HIGH) /* PCH wake pin */
 
 /* Switch S1 */
-GPIO(S1,         PORT(6),  3, GPIO_INT_FALLING | GPIO_PULL_UP, NULL)
+GPIO(S1,         PORT(6),  3, GPIO_INT_FALLING | GPIO_PULL_UP)
 
 /* Shared SPI CS */
-GPIO(SHD_CS0,    PORT(15), 0, GPIO_ODR_HIGH, NULL)
+GPIO(SHD_CS0,    PORT(15), 0, GPIO_ODR_HIGH)
 
 /*
  * Signals which aren't implemented on MEC1322 eval board but we'll

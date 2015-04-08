@@ -6,33 +6,34 @@
  */
 
 /* TODO: Redefine debug 2 inputs */
-GPIO(RECOVERY_L,           0, 0, GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
-GPIO(WP_L,                 9, 3, GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
+GPIO_INT(RECOVERY_L,           0, 0, GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
+GPIO_INT(WP_L,                 9, 3, GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
 
 /* For testing 8042 commands, we need the following GPIOs */
 /* TODO: Redefine 4 inputs */
-GPIO(POWER_BUTTON_L,       0, 2, GPIO_PULL_UP   | GPIO_INT_BOTH, power_button_interrupt) /* Power button */
-GPIO(LID_OPEN,             3, 3, GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interrupt)          /* Lid switch */
-GPIO(ENTERING_RW,          3, 6, GPIO_OUT_LOW,  NULL)                                    /* Indicate when EC is entering RW code */
-GPIO(PCH_WAKE_L,           5, 0, GPIO_OUT_HIGH, NULL)                                    /* Wake signal output to PCH */
+GPIO_INT(POWER_BUTTON_L,       0, 2, GPIO_PULL_UP   | GPIO_INT_BOTH, power_button_interrupt) /* Power button */
+GPIO_INT(LID_OPEN,             3, 3, GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interrupt)          /* Lid switch */
+
+GPIO(ENTERING_RW,          3, 6, GPIO_OUT_LOW)                                    /* Indicate when EC is entering RW code */
+GPIO(PCH_WAKE_L,           5, 0, GPIO_OUT_HIGH)                                   /* Wake signal output to PCH */
 
 /* Used for module testing */
-GPIO(PGOOD_FAN,            C, 7, GPIO_PULL_UP	| GPIO_INPUT, NULL)                      /* Power Good for FAN test */
-GPIO(SPI_CS_L,             A, 5, GPIO_OUT_HIGH,   NULL)                                  /* SPI_CS Ready, Low Active. */
+GPIO(PGOOD_FAN,            C, 7, GPIO_PULL_UP	| GPIO_INPUT)                     /* Power Good for FAN test */
+GPIO(SPI_CS_L,             A, 5, GPIO_OUT_HIGH)                                   /* SPI_CS Ready, Low Active. */
 
 /*
  * I2C pins should be configured as inputs until I2C module is
  * initialized. This will avoid driving the lines unintentionally.
  */
-GPIO(MASTER_I2C_SCL,       B, 5, GPIO_INPUT,    NULL)
-GPIO(MASTER_I2C_SDA,       B, 4, GPIO_INPUT,    NULL)
+GPIO(MASTER_I2C_SCL,       B, 5, GPIO_INPUT)
+GPIO(MASTER_I2C_SDA,       B, 4, GPIO_INPUT)
 
 /* Used for board version command */
-GPIO(BOARD_VERSION1,       6, 4, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 1 */
-GPIO(BOARD_VERSION2,       6, 5, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 2 */
-GPIO(BOARD_VERSION3,       6, 6, GPIO_INPUT,    NULL)  /* Board version stuffing resistor 3 */
+GPIO(BOARD_VERSION1,       6, 4, GPIO_INPUT)    /* Board version stuffing resistor 1 */
+GPIO(BOARD_VERSION2,       6, 5, GPIO_INPUT)    /* Board version stuffing resistor 2 */
+GPIO(BOARD_VERSION3,       6, 6, GPIO_INPUT)    /* Board version stuffing resistor 3 */
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
-GPIO(KBD_KSO2,             1, 7, GPIO_OUT_LOW,  NULL)  /* Negative edge triggered keyboard irq. */
+GPIO(KBD_KSO2,             1, 7, GPIO_OUT_LOW)  /* Negative edge triggered keyboard irq. */
 #endif
 /* Alternate pins for UART/I2C/ADC/SPI/PWM/MFT */
 ALTERNATE(1, 0x03, 1,  MODULE_UART,        0)    /* CR_SIN/SOUT             GPIO10/11    */

@@ -9,6 +9,7 @@
 #define __CROS_EC_JTAG_H
 
 #include "common.h"
+#include "gpio.h"
 
 /**
  * Pre-initialize the JTAG module.
@@ -23,8 +24,7 @@ void jtag_pre_init(void);
  */
 void jtag_interrupt(enum gpio_signal signal);
 #else
-#define jtag_interrupt NULL
-#endif
-
+static inline void jtag_interrupt(enum gpio_signal signal) { }
+#endif /* !CONFIG_LOW_POWER_IDLE */
 
 #endif  /* __CROS_EC_JTAG_H */

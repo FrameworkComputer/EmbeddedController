@@ -174,9 +174,9 @@ static void gpio_invoke_handler(uint32_t port, uint32_t mask)
 {
 	const struct gpio_info *g = gpio_list;
 	int i;
-	for (i = 0; i < GPIO_COUNT; i++, g++)
-		if (g->irq_handler && port == g->port && (mask & g->mask))
-			g->irq_handler(i);
+	for (i = 0; i < GPIO_IH_COUNT; i++, g++)
+		if (port == g->port && (mask & g->mask))
+			gpio_irq_handlers[i](i);
 }
 
 static void gpio_interrupt(int port)

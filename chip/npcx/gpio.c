@@ -350,9 +350,9 @@ void gpio_execute_isr(uint8_t port, uint8_t mask)
 	int i;
 	const struct gpio_info *g = gpio_list;
 	/* Find GPIOs and execute interrupt service routine */
-	for (i = 0; i < GPIO_COUNT; i++, g++) {
-		if (port == g->port && mask == g->mask && g->irq_handler) {
-			g->irq_handler(i);
+	for (i = 0; i < GPIO_IH_COUNT; i++, g++) {
+		if (port == g->port && mask == g->mask) {
+			gpio_irq_handlers[i](i);
 			return;
 		}
 	}

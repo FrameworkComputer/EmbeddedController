@@ -1,4 +1,4 @@
-/*
+/* -*- mode:c -*-
  * Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
@@ -7,25 +7,25 @@
 /* Inputs with interrupt handlers are first for efficiency */
 
 /* User Push buttons */
-GPIO(SW_N,   0, 0, GPIO_INT_RISING, button_event)
-GPIO(SW_S,   0, 1, GPIO_INT_RISING, button_event)
-GPIO(SW_W,   0, 2, GPIO_INT_RISING, button_event)
-GPIO(SW_E,   0, 3, GPIO_INT_RISING, button_event)
+GPIO_INT(SW_N,   0, 0, GPIO_INT_RISING, button_event)
+GPIO_INT(SW_S,   0, 1, GPIO_INT_RISING, button_event)
+GPIO_INT(SW_W,   0, 2, GPIO_INT_RISING, button_event)
+GPIO_INT(SW_E,   0, 3, GPIO_INT_RISING, button_event)
 
 /* We can't trigger on both rising and falling edge, so attach each button
  * to two input GPIOs. */
-GPIO(SW_N_,   1, 0, GPIO_INT_FALLING, button_event)
-GPIO(SW_S_,   1, 1, GPIO_INT_FALLING, button_event)
-GPIO(SW_W_,   1, 2, GPIO_INT_FALLING, button_event)
-GPIO(SW_E_,   1, 3, GPIO_INT_FALLING, button_event)
+GPIO_INT(SW_N_,   1, 0, GPIO_INT_FALLING, button_event)
+GPIO_INT(SW_S_,   1, 1, GPIO_INT_FALLING, button_event)
+GPIO_INT(SW_W_,   1, 2, GPIO_INT_FALLING, button_event)
+GPIO_INT(SW_E_,   1, 3, GPIO_INT_FALLING, button_event)
 
 /* User GPIO LEDs */
-GPIO(LED_2,  0, 4, GPIO_OUT_LOW, NULL)
-GPIO(LED_3,  0, 5, GPIO_OUT_LOW, NULL)
-GPIO(LED_4,  0, 6, GPIO_OUT_LOW, NULL)
-GPIO(LED_5,  0, 7, GPIO_OUT_LOW, NULL)
-GPIO(LED_6,  0, 8, GPIO_OUT_LOW, NULL)
-GPIO(LED_7,  0, 9, GPIO_OUT_LOW, NULL)
+GPIO(LED_2,  0, 4, GPIO_OUT_LOW)
+GPIO(LED_3,  0, 5, GPIO_OUT_LOW)
+GPIO(LED_4,  0, 6, GPIO_OUT_LOW)
+GPIO(LED_5,  0, 7, GPIO_OUT_LOW)
+GPIO(LED_6,  0, 8, GPIO_OUT_LOW)
+GPIO(LED_7,  0, 9, GPIO_OUT_LOW)
 
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
