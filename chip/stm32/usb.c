@@ -77,6 +77,8 @@ struct stm32_endpoint btable_ep[USB_EP_COUNT]
 static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 
+#define EP0_BUF_TX_SRAM_ADDR ((void *) usb_sram_addr(ep0_buf_tx))
+
 static int set_addr;
 /* remaining size of descriptor data to transfer */
 static int desc_left;
@@ -155,7 +157,7 @@ static void ep0_rx(void)
 			desc_ptr = desc + USB_MAX_PACKET_SIZE;
 			len = USB_MAX_PACKET_SIZE;
 		}
-		memcpy_to_usbram(ep0_buf_tx, desc, len);
+		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc, len);
 		if (type == USB_DT_CONFIGURATION)
 			/* set the real descriptor size */
 			ep0_buf_tx[1] = USB_DESC_SIZE;
@@ -166,7 +168,7 @@ static void ep0_rx(void)
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
 		uint16_t zero = 0;
 		/* Get status */
-		memcpy_to_usbram(ep0_buf_tx, (void *)&zero, 2);
+		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, (void *)&zero, 2);
 		btable_ep[0].tx_count = 2;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
 			  EP_STATUS_OUT /*null OUT transaction */);
@@ -208,7 +210,7 @@ static void ep0_tx(void)
 	if (desc_ptr) {
 		/* we have an on-going descriptor transfer */
 		int len = MIN(desc_left, USB_MAX_PACKET_SIZE);
-		memcpy_to_usbram(ep0_buf_tx, desc_ptr, len);
+		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc_ptr, len);
 		btable_ep[0].tx_count = len;
 		desc_left -= len;
 		desc_ptr += len;
@@ -346,21 +348,15 @@ int usb_is_enabled(void)
 
 void *memcpy_to_usbram(void *dest, const void *src, size_t n)
 {
-	/*
-	 * The d pointer needs to be volatile to prevent GCC from possibly
-	 * breaking writes to the USB packet RAM into multiple 16-bit writes,
-	 * which, due to the way the AHB2APB bridge works would clobber what
-	 * we write with 32-bit extensions of the 16-bit writes.
-	 */
-	int                i;
-	uint8_t           *s = (uint8_t *) src;
-	usb_uint volatile *d = (usb_uint volatile *)((uintptr_t) dest & ~1);
+	int       unaligned =                 (((uintptr_t) dest) & 1);
+	usb_uint *d         = &__usb_ram_start[((uintptr_t) dest) / 2];
+	uint8_t  *s         = (uint8_t *) src;
+	int       i;
 
-	if ((((uintptr_t) dest) & 1) && n) {
-		/*
-		 * The first destination byte is not aligned, perform a read/
-		 * modify/write.
-		 */
+	/*
+	 * Handle unaligned leading byte via read/modify/write.
+	 */
+	if (unaligned && n) {
 		*d = (*d & ~0xff00) | (*s << 8);
 		n--;
 		s++;
@@ -382,13 +378,16 @@ void *memcpy_to_usbram(void *dest, const void *src, size_t n)
 
 void *memcpy_from_usbram(void *dest, const void *src, size_t n)
 {
-	int       i;
-	usb_uint *s = (usb_uint *)((uintptr_t) src & ~1);
-	uint8_t  *d = (uint8_t *) dest;
+	int             unaligned =                 (((uintptr_t) src) & 1);
+	usb_uint const *s         = &__usb_ram_start[((uintptr_t) src) / 2];
+	uint8_t        *d         = (uint8_t *) dest;
+	int             i;
 
-	if ((((uintptr_t) src) & 1) && n) {
-		*d++ = *s++ >> 8;
+	if (unaligned && n) {
+		*d = *s >> 8;
 		n--;
+		s++;
+		d++;
 	}
 
 	for (i = 0; i < n / 2; i++) {

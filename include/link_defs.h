@@ -57,11 +57,6 @@ extern const struct hook_data __hooks_second_end[];
 extern const struct deferred_data __deferred_funcs[];
 extern const struct deferred_data __deferred_funcs_end[];
 
-/* USB data */
-extern const uint8_t __usb_desc[];
-extern const uint8_t __usb_desc_end[];
-extern const uint16_t __usb_ram_start[];
-
 /* I2C fake devices for unit testing */
 extern const struct test_i2c_read_dev __test_i2c_read8[];
 extern const struct test_i2c_read_dev __test_i2c_read8_end[];

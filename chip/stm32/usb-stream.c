@@ -17,7 +17,8 @@
 
 static size_t rx_read(struct usb_stream_config const *config)
 {
-	size_t count = btable_ep[config->endpoint].rx_count & 0x3ff;
+	uintptr_t address = btable_ep[config->endpoint].rx_addr;
+	size_t    count   = btable_ep[config->endpoint].rx_count & 0x3ff;
 
 	/*
 	 * Only read the received USB packet if there is enough space in the
@@ -27,17 +28,18 @@ static size_t rx_read(struct usb_stream_config const *config)
 		return 0;
 
 	return producer_write_memcpy(&config->producer,
-				     config->rx_ram,
+				     (void *) address,
 				     count,
 				     memcpy_from_usbram);
 }
 
 static size_t tx_write(struct usb_stream_config const *config)
 {
-	size_t count = consumer_read_memcpy(&config->consumer,
-					    config->tx_ram,
-					    config->tx_size,
-					    memcpy_to_usbram);
+	uintptr_t address = btable_ep[config->endpoint].tx_addr;
+	size_t    count   = consumer_read_memcpy(&config->consumer,
+						(void *) address,
+						config->tx_size,
+						memcpy_to_usbram);
 
 	btable_ep[config->endpoint].tx_count = count;
 

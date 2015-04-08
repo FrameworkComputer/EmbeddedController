@@ -235,12 +235,17 @@ struct usb_setup_packet {
 #define USB_EP_DESC(i, num) USB_CONF_DESC(CONCAT4(iface, i, _1ep, num))
 #define USB_CUSTOM_DESC(i, name) USB_CONF_DESC(CONCAT4(iface, i, _2, name))
 
-#define USB_DESC_SIZE (__usb_desc_end - __usb_desc)
-
 /* Helpers for managing the USB controller dedicated RAM */
 
 /* primitive to access the words in USB RAM */
 typedef CONFIG_USB_RAM_ACCESS_TYPE usb_uint;
+
+/* USB Linker data */
+extern const uint8_t __usb_desc[];
+extern const uint8_t __usb_desc_end[];
+extern usb_uint __usb_ram_start[];
+
+#define USB_DESC_SIZE (__usb_desc_end - __usb_desc)
 
 struct stm32_endpoint {
 	volatile usb_uint tx_addr;
@@ -261,22 +266,20 @@ void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet);
  * Copy data to and from the USB dedicated RAM and take care of the weird
  * addressing.  These functions correctly handle unaligned accesses to the USB
  * memory.  They have the same prototype as memcpy, allowing them to be used
- * in places that expect memcpy.
+ * in places that expect memcpy.  The void pointer used to represent a location
+ * in the USB dedicated RAM should be the offset in that address space, not the
+ * AHB address space.
  *
  * The USB packet RAM is attached to the processor via the AHB2APB bridge.  This
  * bridge performs manipulations of read and write accesses as per the note in
- * section 2.1 of RM0091.  The upshot is that it is OK to read from the packet
- * RAM using 8-bit or 16-bit accesses, but not 32-bit, and it is only really OK
- * to write to the packet RAM using 16-bit accesses.  Thus custom memcpy like
- * routines need to be employed.
+ * section 2.1 of RM0091.  The upshot is that custom memcpy like routines need
+ * to be employed.
  */
 void *memcpy_to_usbram(void *dest, const void *src, size_t n);
 void *memcpy_from_usbram(void *dest, const void *src, size_t n);
 
 /* Compute the address inside dedicate SRAM for the USB controller */
-#define usb_sram_addr(x) \
-	(((uint32_t)(x) - (uint32_t)__usb_ram_start) \
-	/ (sizeof(usb_uint)/sizeof(uint16_t)))
+#define usb_sram_addr(x) ((x - __usb_ram_start) * sizeof(uint16_t))
 
 /* These descriptors defined in board code */
 extern const void * const usb_strings[];
