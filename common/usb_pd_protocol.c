@@ -172,6 +172,16 @@ static const uint8_t dec4b5b[] = {
 #define CC_RP(cc)  (cc >= PD_SNK_VA)
 #define UFP_GET_POLARITY(cc1, cc2) (CC_RP(cc2))
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+#define DUAL_ROLE_IF_ELSE(port, sink_clause, src_clause) \
+	(pd[port].power_role == PD_ROLE_SINK ? (sink_clause) : (src_clause))
+#else
+#define DUAL_ROLE_IF_ELSE(port, sink_clause, src_clause) (src_clause)
+#endif
+
+#define READY_RETURN_STATE(port) DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_READY, \
+							 PD_STATE_SRC_READY)
+
 /*
  * Type C power source charge current limits are identified by their cc
  * voltage (set by selecting the proper Rd resistor). Any voltage below
@@ -293,13 +303,13 @@ static const char * const pd_state_names[] = {
 	"SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
 	"SNK_HARD_RESET_RECOVER",
 	"SNK_DISCOVERY", "SNK_REQUESTED", "SNK_TRANSITION", "SNK_READY",
-	"SNK_DR_SWAP", "SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
+	"SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
 	"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SRC_DISCONNECTED", "SRC_DISCONNECTED_DEBOUNCE", "SRC_ACCESSORY",
 	"SRC_HARD_RESET_RECOVER", "SRC_STARTUP",
 	"SRC_DISCOVERY", "SRC_NEGOCIATE", "SRC_ACCEPTED", "SRC_POWERED",
-	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "SRC_DR_SWAP",
+	"SRC_TRANSITION", "SRC_READY", "SRC_GET_SNK_CAP", "DR_SWAP",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SRC_SWAP_INIT", "SRC_SWAP_SNK_DISABLE", "SRC_SWAP_SRC_DISABLE",
 	"SRC_SWAP_STANDBY",
@@ -332,16 +342,14 @@ int pd_is_connected(int port)
 	if (pd[port].task_state == PD_STATE_DISABLED)
 		return 0;
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	/* Check if sink is connected */
-	if (pd[port].power_role == PD_ROLE_SINK)
-		return pd[port].task_state != PD_STATE_SNK_DISCONNECTED &&
-		      pd[port].task_state != PD_STATE_SNK_DISCONNECTED_DEBOUNCE;
-#endif
-	/* Must be a source */
-	return pd[port].task_state != PD_STATE_SRC_DISCONNECTED &&
-	       pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE &&
-	       pd[port].task_state != PD_STATE_SRC_ACCESSORY;
+	return DUAL_ROLE_IF_ELSE(port,
+		/* sink */
+		pd[port].task_state != PD_STATE_SNK_DISCONNECTED &&
+		pd[port].task_state != PD_STATE_SNK_DISCONNECTED_DEBOUNCE,
+		/* source */
+		pd[port].task_state != PD_STATE_SRC_DISCONNECTED &&
+		pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE &&
+		pd[port].task_state != PD_STATE_SRC_ACCESSORY);
 }
 
 static inline void set_state(int port, enum pd_states next_state)
@@ -735,13 +743,8 @@ static void bist_mode_2_rx(int port)
 		CPRINTF("BIST RX TO\n");
 	}
 	/* Set to appropriate port disconnected state */
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
-		  PD_STATE_SNK_DISCONNECTED : PD_STATE_SRC_DISCONNECTED);
-#else
-	set_state(port, PD_STATE_SRC_DISCONNECTED);
-#endif
-
+	set_state(port, DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_DISCONNECTED,
+						PD_STATE_SRC_DISCONNECTED));
 }
 #endif
 
@@ -784,13 +787,8 @@ static void bist_mode_2_tx(int port)
 	/* finish and cleanup transmit */
 	pd_tx_done(port, pd[port].polarity);
 	/* Set to appropriate port disconnected state */
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
-		  PD_STATE_SNK_DISCONNECTED :
-		  PD_STATE_SRC_DISCONNECTED);
-#else
-	set_state(port, PD_STATE_SRC_DISCONNECTED);
-#endif
+	set_state(port, DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_DISCONNECTED,
+						PD_STATE_SRC_DISCONNECTED));
 }
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
@@ -886,12 +884,8 @@ static void execute_hard_reset(int port)
 static void execute_soft_reset(int port)
 {
 	pd[port].msg_id = 0;
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	set_state(port, pd[port].power_role == PD_ROLE_SINK ?
-			PD_STATE_SNK_DISCOVERY : PD_STATE_SRC_DISCOVERY);
-#else
-	set_state(port, PD_STATE_SRC_DISCOVERY);
-#endif
+	set_state(port, DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_DISCOVERY,
+						PD_STATE_SRC_DISCOVERY));
 	/* if flag to disable PD comms after soft reset, then disable comms */
 	if (pd[port].flags & PD_FLAGS_SFT_RST_DIS_COMM)
 		pd_comm_enable(0);
@@ -1099,12 +1093,9 @@ static void handle_data_request(int port, uint16_t head,
 		break;
 	case PD_DATA_BIST:
 		/* If not in READY state, then don't start BIST */
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (pd[port].task_state == PD_STATE_SRC_READY ||
-		    pd[port].task_state == PD_STATE_SNK_READY) {
-#else
-		if (pd[port].task_state == PD_STATE_SRC_READY) {
-#endif
+		if (DUAL_ROLE_IF_ELSE(port,
+				pd[port].task_state == PD_STATE_SNK_READY,
+				pd[port].task_state == PD_STATE_SRC_READY)) {
 			/* currently only support sending bist carrier mode 2 */
 			if ((payload[0] >> 28) == 5) {
 				/* bist data object mode is 2 */
@@ -1144,12 +1135,10 @@ void pd_request_power_swap(int port)
 
 void pd_request_data_swap(int port)
 {
-	if (pd[port].task_state == PD_STATE_SRC_READY)
-		set_state(port, PD_STATE_SRC_DR_SWAP);
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-	else if (pd[port].task_state == PD_STATE_SNK_READY)
-		set_state(port, PD_STATE_SNK_DR_SWAP);
-#endif
+	if (DUAL_ROLE_IF_ELSE(port,
+				pd[port].task_state == PD_STATE_SNK_READY,
+				pd[port].task_state == PD_STATE_SRC_READY))
+		set_state(port, PD_STATE_DR_SWAP);
 	task_wake(PORT_TO_TASK_ID(port));
 }
 
@@ -1221,11 +1210,9 @@ static void handle_ctrl_request(int port, uint16_t head,
 #endif
 	case PD_CTRL_REJECT:
 	case PD_CTRL_WAIT:
-		if (pd[port].task_state == PD_STATE_SRC_DR_SWAP)
-			set_state(port, PD_STATE_SRC_READY);
+		if (pd[port].task_state == PD_STATE_DR_SWAP)
+			set_state(port, READY_RETURN_STATE(port));
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		else if (pd[port].task_state == PD_STATE_SNK_DR_SWAP)
-			set_state(port, PD_STATE_SNK_READY);
 		else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT)
 			set_state(port, PD_STATE_SRC_READY);
 		else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT)
@@ -1238,17 +1225,13 @@ static void handle_ctrl_request(int port, uint16_t head,
 	case PD_CTRL_ACCEPT:
 		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
 			execute_soft_reset(port);
-		} else if (pd[port].task_state == PD_STATE_SRC_DR_SWAP) {
+		} else if (pd[port].task_state == PD_STATE_DR_SWAP) {
 			/* switch data role */
 			pd_dr_swap(port);
-			set_state(port, PD_STATE_SRC_READY);
+			set_state(port, READY_RETURN_STATE(port));
 		}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		else if (pd[port].task_state == PD_STATE_SNK_DR_SWAP) {
-			/* switch data role */
-			pd_dr_swap(port);
-			set_state(port, PD_STATE_SNK_READY);
-		} else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
+		else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
 			/* explicit contract goes away for power swap */
 			pd[port].flags &= ~PD_FLAGS_EXPLICIT_CONTRACT;
 			set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
@@ -1277,10 +1260,10 @@ static void handle_ctrl_request(int port, uint16_t head,
 			 * immediately requesting another swap.
 			 */
 			pd[port].flags &= ~PD_FLAGS_CHECK_PR_ROLE;
-			if (pd[port].power_role == PD_ROLE_SINK)
-				set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
-			else
-				set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
+			set_state(port,
+				  DUAL_ROLE_IF_ELSE(port,
+					PD_STATE_SNK_SWAP_SNK_DISABLE,
+					PD_STATE_SRC_SWAP_SNK_DISABLE));
 		} else {
 			send_control(port, PD_CTRL_REJECT);
 		}
@@ -2246,7 +2229,7 @@ void pd_task(void)
 						  PD_T_SENDER_RESPONSE,
 						  PD_STATE_SRC_READY);
 			break;
-		case PD_STATE_SRC_DR_SWAP:
+		case PD_STATE_DR_SWAP:
 			if (pd[port].last_state != pd[port].task_state) {
 				res = send_control(port, PD_CTRL_DR_SWAP);
 				if (res < 0) {
@@ -2258,14 +2241,14 @@ void pd_task(void)
 					 */
 					set_state(port, res == -1 ?
 						   PD_STATE_SOFT_RESET :
-						   PD_STATE_SRC_READY);
+						   READY_RETURN_STATE(port));
 					break;
 				}
 				/* Wait for accept or reject */
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SENDER_RESPONSE,
-						  PD_STATE_SRC_READY);
+						  READY_RETURN_STATE(port));
 			}
 			break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -2592,28 +2575,6 @@ void pd_task(void)
 
 			/* Sent all messages, don't need to wake very often */
 			timeout = 200*MSEC;
-			break;
-		case PD_STATE_SNK_DR_SWAP:
-			if (pd[port].last_state != pd[port].task_state) {
-				res = send_control(port, PD_CTRL_DR_SWAP);
-				if (res < 0) {
-					timeout = 10*MSEC;
-					/*
-					 * If failed to get goodCRC, send
-					 * soft reset, otherwise ignore
-					 * failure.
-					 */
-					set_state(port, res == -1 ?
-						   PD_STATE_SOFT_RESET :
-						   PD_STATE_SNK_READY);
-					break;
-				}
-				/* Wait for accept or reject */
-				set_state_timeout(port,
-						  get_time().val +
-						  PD_T_SENDER_RESPONSE,
-						  PD_STATE_SRC_READY);
-			}
 			break;
 		case PD_STATE_SNK_SWAP_INIT:
 			if (pd[port].last_state != pd[port].task_state) {
