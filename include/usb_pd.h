@@ -136,6 +136,7 @@ enum pd_errors {
 #define PD_T_NO_RESPONSE     (5500*MSEC) /* between 4.5s and 5.5s */
 #define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
 #define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
+#define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -621,6 +622,12 @@ enum pd_states {
 	PD_STATE_SRC_SWAP_SNK_DISABLE,
 	PD_STATE_SRC_SWAP_SRC_DISABLE,
 	PD_STATE_SRC_SWAP_STANDBY,
+
+#ifdef CONFIG_USBC_VCONN_SWAP
+	PD_STATE_VCONN_SWAP_SEND,
+	PD_STATE_VCONN_SWAP_INIT,
+	PD_STATE_VCONN_SWAP_READY,
+#endif /* CONFIG_USBC_VCONN_SWAP */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 	PD_STATE_SOFT_RESET,
@@ -647,6 +654,7 @@ enum pd_states {
 #define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
 #define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
 #define PD_FLAGS_PARTNER_EXTPOWER  (1 << 11)/* port partner has external pwr */
+#define PD_FLAGS_VCONN_ON          (1 << 12)/* vconn is being sourced */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -657,7 +665,8 @@ enum pd_states {
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \
 					   PD_FLAGS_CHECK_DR_ROLE | \
-					   PD_FLAGS_PARTNER_EXTPOWER)
+					   PD_FLAGS_PARTNER_EXTPOWER | \
+					   PD_FLAGS_VCONN_ON)
 
 
 enum pd_cc_states {
@@ -736,11 +745,15 @@ enum pd_data_msg_type {
 #define PD_REV10 0
 #define PD_REV20 1
 
-/* Port role */
+/* Power role */
 #define PD_ROLE_SINK   0
 #define PD_ROLE_SOURCE 1
+/* Data role */
 #define PD_ROLE_UFP    0
 #define PD_ROLE_DFP    1
+/* Vconn role */
+#define PD_ROLE_VCONN_OFF 0
+#define PD_ROLE_VCONN_ON  1
 
 /* build message header */
 #define PD_HEADER(type, prole, drole, id, cnt) \
@@ -907,6 +920,15 @@ int pd_check_power_swap(int port);
  * @return True if data swap is allowed, False otherwise
  */
 int pd_check_data_swap(int port, int data_role);
+
+/**
+ * Check if vconn swap is allowed.
+ *
+ * @param port USB-C port number
+ * @return True if vconn swap is allowed, False otherwise
+ */
+
+int pd_check_vconn_swap(int port);
 
 /**
  * Check current power role for potential power swap

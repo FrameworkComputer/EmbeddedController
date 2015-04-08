@@ -1279,6 +1279,9 @@
 /* Support for USB type-c vconn. Not needed for captive cables. */
 #undef CONFIG_USBC_VCONN
 
+/* Support VCONN swap */
+#undef CONFIG_USBC_VCONN_SWAP
+
 /* USB Binary device Object Store support */
 #undef CONFIG_USB_BOS
 
