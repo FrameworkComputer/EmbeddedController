@@ -11,11 +11,7 @@ build-util-bin=ec_uartd iteflash
 
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 ifneq ($(HOSTCC),mipsel-cros-linux-gnu-gcc)
-ifeq ($(CHIP),mec1322)
-comm-objs+=comm-mec1322.o
-else
 comm-objs+=comm-lpc.o
-endif
 endif
 comm-objs+=comm-i2c.o
 
