@@ -49,8 +49,7 @@
 /* All PM_SLP signals from PCH deasserted */
 #define IN_ALL_PM_SLP_DEASSERTED (IN_SLP_S3_DEASSERTED | IN_SLP_S4_DEASSERTED)
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0 (IN_PGOOD_ALWAYS_ON | IN_PGOOD_ALL_NONCORE |		\
-		   IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
+#define IN_ALL_S0 (IN_PGOOD_S0 | IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
 static int pause_in_s5 = 1;   /* Pause in S5 when shutting down? */
@@ -185,11 +184,11 @@ enum power_state power_handle_state(enum power_state state)
 
 		/*wireless_set_state(WIRELESS_ON);*/
 
-		if (power_wait_signals(IN_PGOOD_S0)) {
+		if (!power_has_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
 
 		/*wireless_set_state(WIRELESS_OFF);*/
-			return POWER_S3;
+			return POWER_S3S5;
 		}
 
 		/* Call hooks now that rails are up */
@@ -222,9 +221,8 @@ enum power_state power_handle_state(enum power_state state)
 		  CPRINTS("power wait for PLTRST# to deassert");
 		  while (lpc_get_pltrst_asserted()) {
 			usleep(MSEC);
-#ifndef STRAGO_PO
-			i++;
-#endif
+
+				i++;
 			if (i >= 50) {
 				CPRINTS("power timeout on PLTRST#");
 				chipset_force_shutdown();
@@ -239,12 +237,15 @@ enum power_state power_handle_state(enum power_state state)
 
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_S0)) {
-			/* Required rail went away - Cold Reset? */
+
+		if (!power_has_signals(IN_PGOOD_ALWAYS_ON)) {
 			chipset_force_shutdown();
 			return POWER_S0S3;
-		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
+		}
+
+		if (!power_has_signals(IN_ALL_S0)) {
 			/* Power down to next state */
+			gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 			return POWER_S0S3;
 		}
 
