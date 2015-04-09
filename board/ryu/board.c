@@ -307,6 +307,16 @@ static void board_init(void)
 
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_CHGR_ACOK);
+
+	/*
+	 * TODO(crosbug.com/p/38689) Workaround for PMIC issue on P5.
+	 * remove when P5 are de-commissioned.
+	 * We are re-using EXTINT1 for the new power sequencing workaround
+	 * this is killing the base closing detection on P5
+	 * we won't charge it.
+	 */
+	if (board_get_version() == 5)
+		gpio_enable_interrupt(GPIO_HPD_IN);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -316,6 +326,16 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_AP_IN_SUSPEND,  1, "SUSPEND_ASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/*
+ * TODO(crosbug.com/p/38689) Workaround for MAX77620 PMIC EN_PP3300 issue.
+ * remove when P5 are de-commissioned.
+ */
+void pp1800_on_off_evt(enum gpio_signal signal)
+{
+	int level = gpio_get_level(signal);
+	gpio_set_level(GPIO_EN_PP3300_RSVD, level);
+}
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {

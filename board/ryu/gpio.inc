@@ -13,6 +13,13 @@ GPIO_INT(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_inter
 GPIO_INT(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
 GPIO_INT(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
 GPIO_INT(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
+/*
+ * TODO(crosbug.com/p/38689) Workaround for MAX77620 PMIC PP3300 issue
+ * Put back as GPIO_ODR_HIGH for P6+
+ */
+GPIO_INT(HPD_IN,               C, 1,  GPIO_INT_BOTH,                   pp1800_on_off_evt)
+
+/* Interrupt lines not used yet */
 GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING)
 GPIO(LB_INT_L,             E, 7,  GPIO_INT_FALLING | GPIO_PULL_UP)
 GPIO(LIGHTBAR_EN_L,        E, 8,  GPIO_INT_FALLING | GPIO_PULL_UP)
@@ -40,10 +47,11 @@ GPIO(PMIC_PWRON_L,         D, 14, GPIO_ODR_HIGH)
 GPIO(PMIC_WARM_RESET_L,    E, 4,  GPIO_ODR_HIGH)
 GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW) /* Proto 5+ */
 /*
- * We are missing an external pull-up for EN_PP3300. Pull it up here.
+ * We are missing an external pull-up for EN_PP3300.
+ * This GPIO is used to pull it up through an external 100kOhm.
  * EN_PP3300 is still controlled by PMIC though.
  */
-GPIO(EN_PP3300_RSVD,       E, 13, GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EN_PP3300_RSVD,       E, 13, GPIO_OUT_LOW)
 /* sensor temp output and PMIC reset input */
 GPIO(P5_PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH)
 /* TODO(crosbug.com/p/38333) remove P4_PMIC_THERM_L */

@@ -193,6 +193,9 @@ int board_discharge_on_ac(int enable);
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
 
+/* PP1800 transition GPIO interrupt handler */
+void pp1800_on_off_evt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
