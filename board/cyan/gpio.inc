@@ -5,6 +5,15 @@
  * found in the LICENSE file.
  */
 
+GPIO(LID_OPEN,          PORT(2),  7, GPIO_INT_BOTH_DSLEEP,                      lid_interrupt)          /* Lid switch */
+GPIO(AC_PRESENT,        PORT(3),  0, GPIO_INT_BOTH_DSLEEP,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
+GPIO(WP_L,              PORT(3),  3, GPIO_INT_BOTH,                             switch_interrupt)       /* Write protect input */
+GPIO(POWER_BUTTON_L,    PORT(3),  5, GPIO_INT_BOTH_DSLEEP,                      power_button_interrupt) /* Power button */
+GPIO(RSMRST_L_PGOOD,    PORT(6),  3, GPIO_INT_BOTH,                             power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
+GPIO(ALL_SYS_PGOOD,     PORT(13), 0, GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
+GPIO(PCH_SLP_S4_L,      PORT(20), 0, GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S4# signal from PCH */
+GPIO(PCH_SLP_S3_L,      PORT(20), 6, GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S3# signal from PCH */
+
 GPIO(NC_012,            PORT(1),  2, GPIO_INPUT | GPIO_PULL_UP,                 NULL)                   /* NC */
 GPIO(USB_ILIM_SEL,      PORT(1),  3, GPIO_OUT_HIGH,                             NULL)                   /* USB current control */
 GPIO(I2C_PORT0_SCL,     PORT(1),  5, GPIO_ODR_HIGH,                             NULL)
@@ -13,13 +22,9 @@ GPIO(I2C_PORT0_SDA,     PORT(1),  6, GPIO_ODR_HIGH,                             
 GPIO(I2C_PORT1_SCL,     PORT(2),  2, GPIO_ODR_HIGH,                             NULL)
 GPIO(I2C_PORT1_SDA,     PORT(2),  3, GPIO_ODR_HIGH,                             NULL)
 GPIO(PCH_SCI_L,         PORT(2),  6, GPIO_ODR_HIGH,                             NULL)                   /* SCI output */
-GPIO(LID_OPEN,          PORT(2),  7, GPIO_INT_BOTH_DSLEEP,                      lid_interrupt)          /* Lid switch */
 
-GPIO(AC_PRESENT,        PORT(3),  0, GPIO_INT_BOTH_DSLEEP,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
 GPIO(VOLUME_UP,         PORT(3),  1, GPIO_INT_FALLING,                          NULL)                   /* Volume up button */
-GPIO(WP_L,              PORT(3),  3, GPIO_INT_BOTH,                             switch_interrupt)       /* Write protect input */
 GPIO(VOLUME_DOWN,       PORT(3),  4, GPIO_INT_FALLING,                          NULL)                   /* Volume down button */
-GPIO(POWER_BUTTON_L,    PORT(3),  5, GPIO_INT_BOTH_DSLEEP,                      power_button_interrupt) /* Power button */
 GPIO(USB2_PWR_EN,       PORT(3),  6, GPIO_OUT_HIGH,                             NULL)                   /* Enable power for USB2 Port */
 
 GPIO(ENTERING_RW,       PORT(4),  1, GPIO_OUT_LOW,                              NULL)                   /* Indicate when EC is entering RW code */
@@ -39,7 +44,6 @@ GPIO(EC_ADC1,           PORT(5),  7, GPIO_ANALOG,                               
 GPIO(CHGR_PMON,         PORT(6),  0, GPIO_ANALOG,                               NULL)
 GPIO(WIFI_PWREN,        PORT(6),  1, GPIO_OUT_HIGH,                             NULL)                   /* Enable power for WiFi */
 GPIO(BATT_EN_L,         PORT(6),  2, GPIO_INPUT,                                NULL)                   /* Will be NC */
-GPIO(RSMRST_L_PGOOD,    PORT(6),  3, GPIO_INT_BOTH,                             power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
 GPIO(SW_OPEN_EC,        PORT(6),  4, GPIO_INT_BOTH,                             NULL)                   /* Signal from USB Charger to EC to indicate if the isolation switch is open or close */
 GPIO(PCH_SYS_PWROK,     PORT(6),  5, GPIO_OUT_LOW,                              NULL)                   /* EC thinks everything is up and ready (DELAY_ALL_SYS_PWRGD) */
 GPIO(PCH_WAKE_L,        PORT(6),  6, GPIO_ODR_HIGH,                             NULL)                   /* PCH wake pin */
@@ -55,7 +59,6 @@ GPIO(EC_WAKE_L,         PORT(12), 3, GPIO_INT_BOTH_DSLEEP,                      
 GPIO(USB_CHG_DET_EC,    PORT(12), 4, GPIO_INT_BOTH,                             NULL)                   /* Signal from USB Charger to EC to indicate charger has been detected */
 GPIO(GYRO_INT2,         PORT(12), 7, GPIO_INT_FALLING,                          NULL)                   /* Gyro sensor interrupt 2 to EC */
 
-GPIO(ALL_SYS_PGOOD,     PORT(13), 0, GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
 GPIO(EC_PLUG_DETECT,    PORT(13), 2, GPIO_INT_BOTH,                             NULL)
 GPIO(BAT_LED0_L,        PORT(13), 3, GPIO_ODR_HIGH,                             NULL)                   /* Battery charging LED - blue */
 GPIO(WWAN_PWREN,        PORT(13), 5, GPIO_OUT_HIGH,                             NULL)                   /* Enable power for WWAN - PROBE_DETECT_L */
@@ -80,12 +83,10 @@ GPIO(PCH_PWRBTN_L,      PORT(16), 0, GPIO_OUT_HIGH,                             
 GPIO(GYRO_INT1,         PORT(16), 1, GPIO_INT_FALLING,                          NULL)                   /* Gyro sensor interrupt 1 to EC */
 GPIO(MUX_CROSS_BAR_EN,  PORT(16), 3, GPIO_OUT_LOW,                              NULL)                   /* Enable signal of the USB Type C Mux */
 
-GPIO(PCH_SLP_S4_L,      PORT(20), 0, GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S4# signal from PCH */
 GPIO(MUX_CROSS_BAR_POL, PORT(20), 1, GPIO_OUT_LOW,                              NULL)                   /* Output from EC to POL signal of USB Type C Mux */
 GPIO(EC_BL_DISABLE_L,   PORT(20), 2, GPIO_OUT_HIGH,                             NULL)                   /* EDP backligh disable signal from EC */
 GPIO(SMC_SHUTDOWN,      PORT(20), 3, GPIO_OUT_LOW,                              NULL)                   /* Shutdown signal from EC to power sequencing PLD */
 GPIO(MUX_CROSS_BAR_MODE,PORT(20), 4, GPIO_OUT_LOW,                              NULL)                   /* Output from EC - Type C Mux mode select */
-GPIO(PCH_SLP_S3_L,      PORT(20), 6, GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S3# signal from PCH */
 
 GPIO(SUSPWRDNACK_SOC_EC,PORT(21), 0, GPIO_OUT_LOW,                              NULL)                   /* SUSPWRDNACK signal from EC to MOIC device */
 GPIO(PCH_SLP_SX_L,      PORT(21), 1, GPIO_INT_BOTH_DSLEEP,                      NULL)                   /* Sleep SOIX signal from SOC to EC */
