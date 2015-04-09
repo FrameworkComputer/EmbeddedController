@@ -26,11 +26,6 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
 
-/* For vector_3_t, define which coordinates are in which location. */
-enum {
-	X, Y, Z
-};
-
 /* Current acceleration vectors and current lid angle. */
 static int lid_angle_deg;
 static int lid_angle_is_reliable;

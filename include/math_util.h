@@ -70,6 +70,10 @@ typedef fp_t matrix_3x3_t[3][3];
 /* Integer vector */
 typedef int vector_3_t[3];
 
+/* For vector_3_t, define which coordinates are in which location. */
+enum {
+	X, Y, Z
+};
 /*
  * Return absolute value of x.  Note that as a macro expansion, this may have
  * side effects if x includes function calls, which is why inline functions

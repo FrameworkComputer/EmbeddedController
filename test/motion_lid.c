@@ -19,11 +19,6 @@
 #include "timer.h"
 #include "util.h"
 
-/* For vector_3_t, define which coordinates are in which location. */
-enum {
-	X, Y, Z
-};
-
 /*****************************************************************************/
 /* Mock functions */
 static int accel_init(const struct motion_sensor_t *s)

@@ -32,10 +32,6 @@
 /* Time to wait in between failed attempts to initialize sensors */
 #define TASK_MOTION_SENSE_WAIT_TIME (500 * MSEC)
 
-/* For vector_3_t, define which coordinates are in which location. */
-enum {
-	X, Y, Z
-};
 
 /* Bounds for setting the sensor polling interval. */
 #define MIN_POLLING_INTERVAL_MS 5
