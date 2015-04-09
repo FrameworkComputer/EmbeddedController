@@ -250,6 +250,7 @@ int adc_read_all_channels(int *data)
 	/* Enable DMA */
 	STM32_ADC_CFGR1 |= 0x1;
 
+	dma_clear_isr(STM32_DMAC_ADC);
 	dma_start_rx(&dma_adc_option, ADC_CH_COUNT, raw_data);
 
 	/* Clear flags */
