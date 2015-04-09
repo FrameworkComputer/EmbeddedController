@@ -13,6 +13,22 @@ static const char error_str[] = "ERROR";
 
 #define MAX_FORMAT 1024  /* Maximum chars in a single format field */
 
+#ifdef CONFIG_COMMON_RUNTIME
+static inline int divmod(uint64_t *n, int d)
+{
+	return uint64divmod(n, d);
+}
+#else /* !CONFIG_COMMON_RUNTIME */
+/* if we are optimizing for size, remove the 64-bit support */
+#define NO_UINT64_SUPPORT
+static inline int divmod(uint32_t *n, int d)
+{
+	int r = *n % d;
+	*n /= d;
+	return r;
+}
+#endif
+
 /**
  * Convert the lowest nibble of a number to hex
  *
@@ -152,8 +168,13 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			continue;
 		} else {
-			uint64_t v;
 			int base = 10;
+#ifdef NO_UINT64_SUPPORT
+			uint32_t v;
+
+			v = va_arg(args, uint32_t);
+#else /* NO_UINT64_SUPPORT */
+			uint64_t v;
 
 			/* Handle length */
 			if (c == 'l') {
@@ -171,6 +192,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			} else {
 				v = va_arg(args, uint32_t);
 			}
+#endif
 
 			switch (c) {
 			case 'd':
@@ -224,7 +246,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 * numbers.
 			 */
 			for (vlen = 0; vlen < precision; vlen++)
-				*(--vstr) = '0' + uint64divmod(&v, 10);
+				*(--vstr) = '0' + divmod(&v, 10);
 			if (precision)
 				*(--vstr) = '.';
 
@@ -232,7 +254,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				*(--vstr) = '0';
 
 			while (v) {
-				int digit = uint64divmod(&v, base);
+				int digit = divmod(&v, base);
 				if (digit < 10)
 					*(--vstr) = '0' + digit;
 				else if (c == 'X')
