@@ -16,7 +16,7 @@
 #define CONFIG_UART_CONSOLE 2
 
 /* By default, enable all console messages excepted USB */
-#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USB))
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_USB) | CC_MASK(CC_LIGHTBAR)))
 
 /* Optional features */
 #undef CONFIG_CMD_HASH
