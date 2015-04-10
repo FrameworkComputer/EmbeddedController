@@ -291,9 +291,6 @@ fi
 if $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
 	servo_VARS+=" spi1_buf_en spi1_buf_on_flex_en spi_hold"
 fi
-if $(servo_has_warm_reset); then
-	servo_VARS+=" warm_reset"
-fi
 toad_VARS="${MCU}_uart_parity \
 ${MCU}_uart_baudrate boot_mode"
 
@@ -376,6 +373,11 @@ function flash_stm32() {
 	ec_reset
 	# Unprotect flash, erase, and write
 	${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
+	# Remove the Application processor reset
+	# TODO(crosbug.com/p/30738): we cannot rely on servo_VARS to restore it
+	if $(servo_has_warm_reset); then
+		dut_control warm_reset:off
+	fi
 }
 
 function flash_stm32_dfu() {
