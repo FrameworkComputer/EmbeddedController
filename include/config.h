@@ -54,6 +54,9 @@
 /* ADC sample time selection. The value is chip-dependent. */
 #undef CONFIG_ADC_SAMPLE_TIME
 
+/* Include the ADC analog watchdog feature in the ADC code */
+#define CONFIG_ADC_WATCHDOG
+
 /*
  * Some ALS modules may be connected to the EC. We need the command, and
  * specific drivers for each module.

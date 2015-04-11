@@ -17,6 +17,7 @@
 
 /* Optional features */
 #define CONFIG_ADC
+#undef  CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP

@@ -18,9 +18,6 @@
 
 struct mutex adc_lock;
 
-static int watchdog_ain_id;
-static int watchdog_delay_ms;
-
 static const struct dma_option dma_adc_option = {
 	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
 	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT,
@@ -34,6 +31,11 @@ static void adc_configure(int ain_id)
 	/* Disable DMA */
 	STM32_ADC_CFGR1 &= ~0x1;
 }
+
+#ifdef CONFIG_ADC_WATCHDOG
+
+static int watchdog_ain_id;
+static int watchdog_delay_ms;
 
 static void adc_continuous_read(int ain_id)
 {
@@ -192,6 +194,14 @@ int adc_set_watchdog_delay(int delay_ms)
 
 	return EC_SUCCESS;
 }
+
+#else /* CONFIG_ADC_WATCHDOG */
+
+static int adc_watchdog_enabled(void) { return 0; }
+static int adc_enable_watchdog_no_lock(void) { return 0; }
+static int adc_disable_watchdog_no_lock(void) { return 0; }
+
+#endif /* CONFIG_ADC_WATCHDOG */
 
 int adc_read_channel(enum adc_channel ch)
 {
