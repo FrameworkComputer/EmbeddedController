@@ -300,10 +300,10 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	board_set_usb_mux(port, TYPEC_MUX_DP, pd_get_polarity(port));
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* sink pins */
-				MODE_DP_PIN_E, /* src pins */
+	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* UFP_U as UFP_D */
+				0,             /* UFP_U as DFP_D */
 				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+				2);            /* UFP_U connected as UFP_D */
 	return 2;
 };
 
