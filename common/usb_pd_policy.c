@@ -399,7 +399,7 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 	int opos = PD_VDO_OPOS(payload[0]);
 	struct svdm_amode_data *modep = get_modep(port, svid);
 
-	if (!validate_mode_request(modep, svid, opos))
+	if (!modep || !validate_mode_request(modep, svid, opos))
 		return;
 
 	if (modep->fx->attention)
@@ -432,7 +432,7 @@ int pd_dfp_exit_mode(int port, uint16_t svid, int opos)
 	 * multiple modes on one SVID.
 	 */
 	modep = get_modep(port, svid);
-	if (!validate_mode_request(modep, svid, opos))
+	if (!modep || !validate_mode_request(modep, svid, opos))
 		return 0;
 
 	/* call DFPs exit function */
@@ -610,24 +610,30 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			}
 			break;
 		case CMD_ENTER_MODE:
-			if (!modep->opos)
-				pd_dfp_enter_mode(port, 0, 0);
-			if (modep->opos) {
-				rsize = modep->fx->status(port, payload);
-				payload[0] |= PD_VDO_OPOS(modep->opos);
+			if (!modep) {
+				rsize = 0;
+			} else {
+				if (!modep->opos)
+					pd_dfp_enter_mode(port, 0, 0);
+
+				if (modep->opos) {
+					rsize = modep->fx->status(port,
+								  payload);
+					payload[0] |= PD_VDO_OPOS(modep->opos);
+				}
 			}
 			break;
 		case CMD_DP_STATUS:
 			/* DP status response & UFP's DP attention have same
 			   payload */
 			dfp_consume_attention(port, payload);
-			if (modep->opos)
+			if (modep && modep->opos)
 				rsize = modep->fx->config(port, payload);
 			else
 				rsize = 0;
 			break;
 		case CMD_DP_CONFIG:
-			if (modep->opos && modep->fx->post_config)
+			if (modep && modep->opos && modep->fx->post_config)
 				modep->fx->post_config(port);
 			/* no response after DFPs ack */
 			rsize = 0;
