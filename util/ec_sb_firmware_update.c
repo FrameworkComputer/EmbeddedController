@@ -18,6 +18,9 @@
 #include "misc_util.h"
 #include "powerd_lock.h"
 
+#define SIMPLO_MAKER_ID 0x5
+#define SIMPLO_HWID 0x74
+
 /* Subcommands: [check|update] */
 enum {
 	OP_UNKNOWN = 0,
@@ -313,9 +316,10 @@ static int get_info(struct sb_fw_update_info *info)
 	} while ((rv < 0) && (cnt++ < SB_FW_UPDATE_DEFAULT_RETRY_CNT));
 
 	if (rv < 0) {
-		printf("Firmware Update Get Info Error\n");
+		memset(info, 0, SB_FW_UPDATE_CMD_INFO_SIZE);
 		return -EC_RES_ERROR;
 	}
+
 	memcpy(info, resp->info.data, SB_FW_UPDATE_CMD_INFO_SIZE);
 	return EC_RES_SUCCESS;
 }
@@ -420,6 +424,12 @@ static enum fw_update_state s1_read_battery_info(
 		return S10_TERMINAL;
 	}
 	print_info(&fw_update->info);
+
+	if ((fw_update->info.maker_id != SIMPLO_MAKER_ID) ||
+		(fw_update->info.hardware_id != SIMPLO_HWID)) {
+		log_msg(fw_update, S1_READ_INFO, "No Updates.");
+		return S10_TERMINAL;
+	}
 
 	sprintf(fw_update->image_name,
 			"/lib/firmware/battery/maker.%04x.hwid.%04x.bin",
