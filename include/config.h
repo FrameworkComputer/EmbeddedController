@@ -249,6 +249,13 @@
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
+ * BQ2589x 5V boost current limit and voltage.
+ * Should be the combination of BQ2589X_BOOSTV_MV(voltage) and
+ * BQ2589X_BOOST_LIM_xxxMA.
+ */
+#undef CONFIG_CHARGER_BQ2589X_BOOST
+
+/*
  * Board specific charging current limit, in mA.  If defined, the charge state
  * machine will not allow the battery to request more current than this.
  */

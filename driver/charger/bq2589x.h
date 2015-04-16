@@ -31,6 +31,33 @@
 #define BQ2589X_REG_ADC_INPUT_CURR  0x13 /* Read-only */
 #define BQ2589X_REG_ID              0x14
 
+/* REG00 : input current register bit definitions */
+#define BQ2589X_INPUT_CURR_EN_ILIM (1<<6)
+
+/* REG02 : first configuration register bit definitions */
+#define BQ2589X_CFG1_CONV_START    (1<<7)
+#define BQ2589X_CFG1_AUTO_DPDM_EN  (1<<0)
+
+/* REG03 : second configuration register bit definitions */
+#define BQ2589X_CFG2_CHG_CONFIG    (1<<4)
+#define BQ2589X_CFG2_OTG_CONFIG    (1<<5)
+#define BQ2589X_CFG2_WD_RST        (1<<6)
+
+/* 5V VBUS Boost settings */
+#define BQ2589X_BOOSTV_MV(mv)       (((((mv) - 4550)/64) & 0xF) << 4)
+#define BQ2589X_BOOSTV_DEFAULT      BQ2589X_BOOSTV_MV(4998)
+#define BQ2589X_BOOST_LIM_500MA     0x00
+#define BQ2589X_BOOST_LIM_750MA     0x01
+#define BQ2589X_BOOST_LIM_1200MA    0x02
+#define BQ2589X_BOOST_LIM_1400MA    0x03
+#define BQ2589X_BOOST_LIM_1650MA    0x04
+#define BQ2589X_BOOST_LIM_1875MA    0x05
+#define BQ2589X_BOOST_LIM_2150MA    0x06
+#define BQ2589X_BOOST_LIM_2450MA    0x07
+#define BQ2589X_BOOST_LIM_DEFAULT   BQ2589X_BOOST_LIM_1400MA
+#define BQ2589X_BOOST_DEFAULT       (BQ2589X_BOOST_LIM_DEFAULT |\
+				     BQ2589X_BOOSTV_DEFAULT)
+
 #define BQ2589X_DEVICE_ID_MASK      0x38
 #define BQ25890_DEVICE_ID           0x18
 #define BQ25892_DEVICE_ID           0x00

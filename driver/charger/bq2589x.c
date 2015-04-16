@@ -19,6 +19,11 @@
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+/* 5V Boost settings */
+#ifndef CONFIG_CHARGER_BQ2589X_BOOST
+#define CONFIG_CHARGER_BQ2589X_BOOST BQ2589X_BOOST_DEFAULT
+#endif
+
 /* Charger information */
 static const struct charger_info bq2589x_charger_info = {
 	.name         = "bq2589x",
@@ -50,7 +55,7 @@ static int bq2589x_watchdog_reset(void)
 	rv = bq2589x_read(BQ2589X_REG_CFG2, &val);
 	if (rv)
 		return rv;
-	val |= (1 << 6);
+	val |= BQ2589X_CFG2_WD_RST;
 	return bq2589x_write(BQ2589X_REG_CFG2, val);
 }
 
@@ -73,7 +78,8 @@ int charger_enable_otg_power(int enabled)
 	rv = bq2589x_read(BQ2589X_REG_CFG2, &val);
 	if (rv)
 		return rv;
-	val = (val & ~0x30) | (enabled ? 0x20 : 0x10);
+	val = (val & ~(BQ2589X_CFG2_CHG_CONFIG | BQ2589X_CFG2_OTG_CONFIG))
+	    | (enabled ? BQ2589X_CFG2_OTG_CONFIG : BQ2589X_CFG2_CHG_CONFIG);
 	return bq2589x_write(BQ2589X_REG_CFG2, val);
 }
 
@@ -126,12 +132,15 @@ int charger_device_id(int *id)
 
 int charger_get_option(int *option)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	/* Ignored: does not exist */
+	*option = 0;
+	return EC_SUCCESS;
 }
 
 int charger_set_option(int option)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	/* Ignored: does not exist */
+	return EC_SUCCESS;
 }
 
 const struct charger_info *charger_get_info(void)
@@ -141,12 +150,14 @@ const struct charger_info *charger_get_info(void)
 
 int charger_get_status(int *status)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	/* TODO(crosbug.com/p/38603) implement using REG0C value */
+	*status = 0;
+	return EC_SUCCESS;
 }
 
 int charger_set_mode(int mode)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	return EC_SUCCESS;
 }
 
 int charger_get_current(int *current)
@@ -209,10 +220,11 @@ int charger_post_init(void)
 {
 #ifdef CONFIG_CHARGER_ILIM_PIN_DISABLED
 	int val, rv;
+	/* Ignore ILIM pin value */
 	rv = bq2589x_read(BQ2589X_REG_INPUT_CURR, &val);
 	if (rv)
 		return rv;
-	val &= ~0x40;
+	val &= ~BQ2589X_INPUT_CURR_EN_ILIM;
 	rv = bq2589x_write(BQ2589X_REG_INPUT_CURR, val);
 	if (rv)
 		return rv;
@@ -253,6 +265,9 @@ static void bq2589x_init(void)
 	if (bq2589x_watchdog_reset())
 		return;
 
+	if (bq2589x_write(BQ2589X_REG_BOOST_MODE, CONFIG_CHARGER_BQ2589X_BOOST))
+		return;
+
 	CPRINTF("BQ2589%c initialized\n",
 		BQ2589X_DEVICE_ID == BQ25890_DEVICE_ID ? '0' :
 		(BQ2589X_DEVICE_ID == BQ25895_DEVICE_ID ? '5' : '2'));
@@ -271,10 +286,10 @@ static int command_bq2589x(int argc, char **argv)
 
 	/* Trigger one ADC conversion */
 	bq2589x_read(BQ2589X_REG_CFG1, &value);
-	bq2589x_write(BQ2589X_REG_CFG1, value | 0x80);
+	bq2589x_write(BQ2589X_REG_CFG1, value | BQ2589X_CFG1_CONV_START);
 	do {
 		bq2589x_read(BQ2589X_REG_CFG1, &value);
-	} while (value & 0x80); /* Wait for End of Conversion */
+	} while (value & BQ2589X_CFG1_CONV_START); /* Wait for End of Conv. */
 
 	bq2589x_read(BQ2589X_REG_ADC_BATT_VOLT, &batt_mv);
 	bq2589x_read(BQ2589X_REG_ADC_SYS_VOLT, &sys_mv);
