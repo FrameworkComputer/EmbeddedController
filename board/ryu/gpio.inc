@@ -53,9 +53,7 @@ GPIO(EN_PP5000,            A, 14, GPIO_OUT_LOW) /* Proto 5+ */
  */
 GPIO(EN_PP3300_RSVD,       E, 13, GPIO_OUT_LOW)
 /* sensor temp output and PMIC reset input */
-GPIO(P5_PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH)
-/* TODO(crosbug.com/p/38333) remove P4_PMIC_THERM_L */
-GPIO(P4_PMIC_THERM_L,      D, 12, GPIO_ODR_HIGH)
+GPIO(PMIC_THERM_L,      B, 8,  GPIO_ODR_HIGH)
 
 GPIO(VBUS_SENSE,           A, 0,  GPIO_ANALOG)
 GPIO(CHGR_IADP,            B, 0,  GPIO_ANALOG)
@@ -78,9 +76,6 @@ GPIO(USBC_CC2_DEVICE_ODL,  E, 14, GPIO_ODR_LOW)
 GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW)
 GPIO(USBC_MUX_CONF1,       D, 9,  GPIO_OUT_LOW)
 GPIO(USBC_MUX_CONF2,       E, 0,  GPIO_OUT_LOW)
-/* TODO(crosbug.com/p/38333) remove USBC_DP_xxx GPIOs */
-GPIO(USBC_DP_MODE_L,       D, 1,  GPIO_OUT_HIGH)
-GPIO(USBC_DP_POLARITY,     D, 2,  GPIO_OUT_HIGH)
 
 /* Inputs */
 GPIO(BOARD_ID0,            E, 11,  GPIO_INPUT)

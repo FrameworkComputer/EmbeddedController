@@ -135,10 +135,6 @@ int board_get_version(void);
 
 #include "gpio_signal.h"
 
-/* PMIC_THERM_L selection at runtime depending on board version */
-#define GPIO_PMIC_THERM_L (board_get_version() >= 5 ? GPIO_P5_PMIC_THERM_L : \
-						      GPIO_P4_PMIC_THERM_L)
-
 enum power_signal {
 	TEGRA_XPSHOLD = 0,
 	TEGRA_SUSPEND_ASSERTED,
