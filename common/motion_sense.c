@@ -456,7 +456,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
-		/* Set new data rate if the data arg has a value. */
+		/* Set new range if the data arg has a value. */
 		if (in->sensor_range.data != EC_MOTION_SENSE_NO_VALUE) {
 			if (sensor->drv->set_range(sensor,
 						in->sensor_range.data,

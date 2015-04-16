@@ -37,25 +37,52 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Sensor mutex */
 static struct mutex g_mutex;
 
+/* lsm6ds0 local sensor data (per-sensor) */
+struct lsm6ds0_data g_lsm6ds0_data[2];
+
 struct motion_sensor_t motion_sensors[] = {
 
 	/*
 	 * Note: lsm6ds0: supports accelerometer and gyro sensor
-	 * Requriement: accelerometer sensor must init before gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
-	{SENSOR_ACTIVE_S0_S3, "Accel", MOTIONSENSE_CHIP_LSM6DS0,
-		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
-		&lsm6ds0_drv, &g_mutex, NULL,
-		LSM6DS0_ADDR1, NULL, 119000, 2},
+	{.name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_LSM6DS0,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &lsm6ds0_drv,
+	 .mutex = &g_mutex,
+	 .drv_data = &g_lsm6ds0_data[0],
+	 .i2c_addr = LSM6DS0_ADDR1,
+	 .rot_standard_ref = NULL,
+	 .default_odr = 119000,
+	 .default_range = 2
+	},
 
-	{SENSOR_ACTIVE_S0_S3, "Gyro", MOTIONSENSE_CHIP_LSM6DS0,
-		MOTIONSENSE_TYPE_GYRO, MOTIONSENSE_LOC_LID,
-		&lsm6ds0_drv, &g_mutex, NULL,
-		LSM6DS0_ADDR1, NULL, 119000, 2000},
+	{.name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_LSM6DS0,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &lsm6ds0_drv,
+	 .mutex = &g_mutex,
+	 .drv_data = &g_lsm6ds0_data[1],
+	 .i2c_addr = LSM6DS0_ADDR1,
+	 .rot_standard_ref = NULL,
+	 .default_odr = 119000,
+	 .default_range = 2000
+	},
 
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/*
+ * Note: If a new sensor driver is added, make sure to update the following
+ * assert.
+ */
+BUILD_ASSERT(ARRAY_SIZE(motion_sensors) == ARRAY_SIZE(g_lsm6ds0_data));
 
 void board_config_pre_init(void)
 {
