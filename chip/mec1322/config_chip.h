@@ -84,8 +84,31 @@
 #define CONFIG_FW_RO_SIZE               CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FLASH_SIZE               CONFIG_FLASH_PHYSICAL_SIZE
 
+/****************************************************************************/
+/* SPI Flash Memory Mapping */
+
 /*
- * TODO(crosbug.com/p/37510): Implement a loader to load either RO or RW at
+ * Size of total image used ( 256k = lfw + RSA Keys + RO + RW images)
+ * located at the end of the flash.
+ */
+#define CONFIG_FLASH_BASE_SPI	(CONFIG_SPI_FLASH_SIZE - (0x40000))
+
+#define CONFIG_RO_WP_SPI_OFF		0x20000
+#define CONFIG_RO_SPI_OFF		0x20000
+#define CONFIG_RW_SPI_OFF		0
+#define CONFIG_RO_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI +	\
+						CONFIG_RO_SPI_OFF)
+#define CONFIG_RW_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI +	\
+						CONFIG_RW_SPI_OFF)
+/* Memory Location shared between lfw and RO/RW image */
+/*
+ * TODO(crosbug.com/p/37510): Alter to the right value when lfw + Ro/RW
+ * architecture is enabled.
+ */
+#define SHARED_RAM_LFW_RORW		0
+
+/*
+ * TODO(crosbug.com/p/37510): Implement a lfw to load either RO or RW at
  * runtime. Since this doesn't exist yet and we're running low on program
  * memory, only flash + load RW for now.
  */
