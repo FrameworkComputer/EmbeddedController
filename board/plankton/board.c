@@ -165,26 +165,84 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* 8-bit address */
 #define SN75DP130_I2C_ADDR 0x5c
+/*
+ * Pin number for active-high reset from PCA9534 to CMOS pull-down to
+ * SN75DP130's RSTN (active-low)
+ */
+#define REDRIVER_RST_PIN  0x1
 
-static void sn75dp130_redriver_init(void)
+static int sn75dp130_i2c_write(uint8_t index, uint8_t value)
 {
-	int i;
+	return i2c_write8(I2C_PORT_MASTER, SN75DP130_I2C_ADDR, index, value);
+}
 
-	/* Disable squelch detect */
-	i2c_write8(1, SN75DP130_I2C_ADDR, 0x3, 0x1a);
-	/* Disable link training on re-driver source side */
-	i2c_write8(1, SN75DP130_I2C_ADDR, 0x4, 0x0);
+/**
+ * Reset redriver.
+ *
+ * Note, MUST set SW15 to 'PD' in order to control i2c from PD-MCU.  This can
+ * NOT be done via software.
+ */
+static int sn75dp130_reset(void)
+{
+	int rv;
+
+	rv = pca9534_config_pin(I2C_PORT_MASTER, 0x40, REDRIVER_RST_PIN,
+				PCA9534_OUTPUT);
+	/* Assert (its active high) */
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x40, REDRIVER_RST_PIN, 1);
+	/* datasheet recommends > 100usec */
+	usleep(200);
+
+	/* De-assert */
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x40, REDRIVER_RST_PIN, 0);
+	/* datasheet recommends > 400msec */
+	usleep(450 * MSEC);
+	return rv;
+}
+
+static int sn75dp130_dpcd_init(void)
+{
+	int i, rv;
+
+	/* set upper & middle DPCD addr ... constant for writes below */
+	rv = sn75dp130_i2c_write(0x1c, 0x0);
+	rv |= sn75dp130_i2c_write(0x1d, 0x1);
+
+	/* link_bw_set: 5.4gbps */
+	rv |= sn75dp130_i2c_write(0x1e, 0x0);
+	rv |= sn75dp130_i2c_write(0x1f, 0x14);
+
+	/* lane_count_set: 4 */
+	rv |= sn75dp130_i2c_write(0x1e, 0x1);
+	rv |= sn75dp130_i2c_write(0x1f, 0x4);
 
 	/*
 	 * Force Link voltage level & pre-emphasis by writing each of the lane's
 	 * DPCD config registers 103-106h accordingly.
 	 */
-	i2c_write8(1, SN75DP130_I2C_ADDR, 0x1c, 0x0);
-	i2c_write8(1, SN75DP130_I2C_ADDR, 0x1d, 0x1);
 	for (i = 0x3; i < 0x7; i++) {
-		i2c_write8(1, SN75DP130_I2C_ADDR, 0x1e, i);
-		i2c_write8(1, SN75DP130_I2C_ADDR, 0x1f, 0x3);
+		rv |= sn75dp130_i2c_write(0x1e, i);
+		rv |= sn75dp130_i2c_write(0x1f, 0x3);
 	}
+	return rv;
+}
+
+static int sn75dp130_redriver_init(void)
+{
+	int rv;
+
+	rv = sn75dp130_reset();
+
+	/* Disable squelch detect */
+	rv |= sn75dp130_i2c_write(0x3, 0x1a);
+	/* Disable link training on re-driver source side */
+	rv |= sn75dp130_i2c_write(0x4, 0x0);
+
+	/* Can only configure DPCD portion of redriver in presence of an HPD */
+	if (gpio_get_level(GPIO_DPSRC_HPD))
+		sn75dp130_dpcd_init();
+
+	return rv;
 }
 
 static void board_init(void)
