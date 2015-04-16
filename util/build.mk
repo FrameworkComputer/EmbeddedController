@@ -10,10 +10,7 @@ host-util-bin=ectool lbplay stm32mon ec_sb_firmware_update lbcc
 build-util-bin=ec_uartd iteflash
 
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
-ifneq ($(HOSTCC),mipsel-cros-linux-gnu-gcc)
-comm-objs+=comm-lpc.o
-endif
-comm-objs+=comm-i2c.o
+comm-objs+=comm-lpc.o comm-i2c.o
 
 ectool-objs=ectool.o ectool_keyscan.o misc_util.o ec_flash.o $(comm-objs)
 ec_sb_firmware_update-objs=ec_sb_firmware_update.o $(comm-objs) misc_util.o

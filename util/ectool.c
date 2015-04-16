@@ -1186,7 +1186,8 @@ int cmd_pd_get_amode(int argc, char *argv[])
 	return -1;
 }
 
-#ifdef __x86_64
+/* The I/O asm funcs exist only on x86. */
+#if defined(__i386__) || defined(__x86_64__)
 #include <sys/io.h>
 
 int cmd_serial_test(int argc, char *argv[])

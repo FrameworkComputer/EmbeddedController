@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+/* The I/O asm funcs exist only on x86. */
+#if defined(__i386__) || defined(__x86_64__)
+
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/io.h>
@@ -309,3 +312,5 @@ int comm_init_lpc(void)
 	ec_readmem = ec_readmem_lpc;
 	return 0;
 }
+
+#endif
