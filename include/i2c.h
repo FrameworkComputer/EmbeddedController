@@ -134,20 +134,28 @@ void i2c_lock(int port, int lock);
  */
 void i2c_set_timeout(int port, uint32_t timeout);
 
-/* Read a 16-bit register from the slave at 8-bit slave address <slaveaddr>, at
- * the specified 8-bit <offset> in the slave's address space. */
+/**
+ * Read a 16-bit register from the slave at 8-bit slave address <slaveaddr>, at
+ * the specified 8-bit <offset> in the slave's address space.
+ */
 int i2c_read16(int port, int slave_addr, int offset, int *data);
 
-/* Write a 16-bit register to the slave at 8-bit slave address <slaveaddr>, at
- * the specified 8-bit <offset> in the slave's address space. */
+/**
+ * Write a 16-bit register to the slave at 8-bit slave address <slaveaddr>, at
+ * the specified 8-bit <offset> in the slave's address space.
+ */
 int i2c_write16(int port, int slave_addr, int offset, int data);
 
-/* Read an 8-bit register from the slave at 8-bit slave address <slaveaddr>, at
- * the specified 8-bit <offset> in the slave's address space. */
+/**
+ * Read an 8-bit register from the slave at 8-bit slave address <slaveaddr>, at
+ * the specified 8-bit <offset> in the slave's address space.
+ */
 int i2c_read8(int port, int slave_addr, int offset, int *data);
 
-/* Write an 8-bit register to the slave at 8-bit slave address <slaveaddr>, at
- * the specified 8-bit <offset> in the slave's address space. */
+/**
+ * Write an 8-bit register to the slave at 8-bit slave address <slaveaddr>, at
+ * the specified 8-bit <offset> in the slave's address space.
+ */
 int i2c_write8(int port, int slave_addr, int offset, int data);
 
 /**
@@ -164,7 +172,8 @@ int i2c_is_busy(int port);
  */
 int i2c_unwedge(int port);
 
-/* Read ascii string using smbus read block protocol.
+/**
+ * Read ascii string using smbus read block protocol.
  * Read bytestream from <slaveaddr>:<offset> with format:
  *     [length_N] [byte_0] [byte_1] ... [byte_N-1]
  *
@@ -175,5 +184,16 @@ int i2c_unwedge(int port);
  */
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
 			int len);
+
+/**
+ * Convert port number to controller number, for multi-port controllers.
+ * This function will only be called if CONFIG_I2C_MULTI_PORT_CONTROLLER is
+ * defined.
+ *
+ * @parm port I2C port
+ *
+ * @return controller number, or -1 on invalid parameter
+ */
+int i2c_port_to_controller(int port);
 
 #endif  /* __CROS_EC_I2C_H */

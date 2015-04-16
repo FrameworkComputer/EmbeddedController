@@ -26,10 +26,20 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
-static struct mutex port_mutex[I2C_PORT_COUNT];
+/* Only chips with multi-port controllers will define I2C_CONTROLER_COUNT */
+#ifndef I2C_CONTROLLER_COUNT
+#define I2C_CONTROLLER_COUNT I2C_PORT_COUNT
+#endif
+
+static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
 
 void i2c_lock(int port, int lock)
 {
+#ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER
+	/* Lock the controller, not the port */
+	port = i2c_port_to_controller(port);
+	ASSERT(port != -1);
+#endif
 	if (lock) {
 		/* Don't allow deep sleep when I2C port is locked */
 		disable_sleep(SLEEP_MASK_I2C);

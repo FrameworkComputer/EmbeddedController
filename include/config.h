@@ -778,6 +778,16 @@
 #undef CONFIG_I2C_SCL_GATE_ADDR
 #undef CONFIG_I2C_SCL_GATE_GPIO
 
+/*
+ * I2C multi-port controller.
+ *
+ * If CONFIG_I2C_MULTI_PORT_CONTROLLER is defined, a single on-chip I2C
+ * controller may have multiple I2C ports attached. Therefore, I2c operations
+ * must lock the controller (not just the port) to prevent hardware access
+ * conflicts.
+ */
+#undef CONFIG_I2C_MULTI_PORT_CONTROLLER
+
 /*****************************************************************************/
 /* Current/Power monitor */
 
