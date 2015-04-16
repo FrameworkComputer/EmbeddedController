@@ -41,6 +41,6 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"port0", 0, 100},
+	{"port0", MEC1322_I2C0_0, 100},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);

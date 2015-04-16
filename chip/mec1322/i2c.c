@@ -38,9 +38,9 @@
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
 
-static task_id_t task_waiting_on_port[I2C_PORT_COUNT];
+static task_id_t task_waiting_on_controller[I2C_CONTROLLER_COUNT];
 
-static void configure_port_speed(int port, int kbps)
+static void configure_controller_speed(int controller, int kbps)
 {
 	int min_t_low, min_t_high;
 	int t_low, t_high;
@@ -56,62 +56,63 @@ static void configure_port_speed(int port, int kbps)
 		/* Fast mode plus */
 		min_t_low = I2C_CLOCK * 0.5 / 1000000 - 1; /* 0.5 us */
 		min_t_high = I2C_CLOCK * 0.26 / 1000000 - 1; /* 0.26 us */
-		MEC1322_I2C_DATA_TIM(port) = 0x06060601;
-		MEC1322_I2C_DATA_TIM_2(port) = 0x06;
+		MEC1322_I2C_DATA_TIM(controller) = 0x06060601;
+		MEC1322_I2C_DATA_TIM_2(controller) = 0x06;
 	} else if (kbps > 100) {
 		/* Fast mode */
 		min_t_low = I2C_CLOCK * 1.3 / 1000000 - 1; /* 1.3 us */
 		min_t_high = I2C_CLOCK * 0.6 / 1000000 - 1; /* 0.6 us */
-		MEC1322_I2C_DATA_TIM(port) = 0x040a0a01;
-		MEC1322_I2C_DATA_TIM_2(port) = 0x0a;
+		MEC1322_I2C_DATA_TIM(controller) = 0x040a0a01;
+		MEC1322_I2C_DATA_TIM_2(controller) = 0x0a;
 	} else {
 		/* Standard mode */
 		min_t_low = I2C_CLOCK * 4.7 / 1000000 - 1; /* 4.7 us */
 		min_t_high = I2C_CLOCK * 4.0 / 1000000 - 1; /* 4.0 us */
-		MEC1322_I2C_DATA_TIM(port) = 0x0c4d5006;
-		MEC1322_I2C_DATA_TIM_2(port) = 0x4d;
+		MEC1322_I2C_DATA_TIM(controller) = 0x0c4d5006;
+		MEC1322_I2C_DATA_TIM_2(controller) = 0x4d;
 	}
 
 	t_low = MAX(min_t_low + 1, period / 2);
 	t_high = MAX(min_t_high + 1, period - t_low);
 
-	MEC1322_I2C_BUS_CLK(port) = ((t_high & 0xff) << 8) |
-				    (t_low & 0xff);
+	MEC1322_I2C_BUS_CLK(controller) = ((t_high & 0xff) << 8) |
+					  (t_low & 0xff);
 }
 
-static void configure_port(int port, int kbps)
+static void configure_controller(int controller, int kbps)
 {
-	MEC1322_I2C_CTRL(port) = CTRL_PIN;
-	MEC1322_I2C_OWN_ADDR(port) = 0x0;
-	configure_port_speed(port, kbps);
-	MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO | CTRL_ACK | CTRL_ENI;
-	MEC1322_I2C_CONFIG(port) |= 1 << 10; /* ENAB */
+	MEC1322_I2C_CTRL(controller) = CTRL_PIN;
+	MEC1322_I2C_OWN_ADDR(controller) = 0x0;
+	configure_controller_speed(controller, kbps);
+	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+				       CTRL_ACK | CTRL_ENI;
+	MEC1322_I2C_CONFIG(controller) |= 1 << 10; /* ENAB */
 
 	/* Enable interrupt */
-	MEC1322_I2C_CONFIG(port) |= 1 << 29; /* ENIDI */
-	MEC1322_INT_ENABLE(12) |= (1 << port);
+	MEC1322_I2C_CONFIG(controller) |= 1 << 29; /* ENIDI */
+	MEC1322_INT_ENABLE(12) |= (1 << controller);
 	MEC1322_INT_BLK_EN |= 1 << 12;
 }
 
-static void reset_port(int port)
+static void reset_controller(int controller)
 {
 	int i;
 
-	MEC1322_I2C_CONFIG(port) |= 1 << 9;
+	MEC1322_I2C_CONFIG(controller) |= 1 << 9;
 	udelay(100);
-	MEC1322_I2C_CONFIG(port) &= ~(1 << 9);
+	MEC1322_I2C_CONFIG(controller) &= ~(1 << 9);
 
 	for (i = 0; i < i2c_ports_used; ++i)
-		if (port == i2c_ports[i].port) {
-			configure_port(i2c_ports[i].port, i2c_ports[i].kbps);
+		if (controller == i2c_port_to_controller(i2c_ports[i].port)) {
+			configure_controller(controller, i2c_ports[i].kbps);
 			break;
 		}
 }
 
-static int wait_for_interrupt(int port, int *event)
+static int wait_for_interrupt(int controller, int *event)
 {
-	task_waiting_on_port[port] = task_get_current();
-	task_enable_irq(MEC1322_IRQ_I2C_0 + port);
+	task_waiting_on_controller[controller] = task_get_current();
+	task_enable_irq(MEC1322_IRQ_I2C_0 + controller);
 	/*
 	 * We want to wait here quietly until the I2C interrupt comes
 	 * along, but we don't want to lose any pending events that
@@ -121,7 +122,7 @@ static int wait_for_interrupt(int port, int *event)
 	 * implementation of usleep() for a similar situation.
 	 */
 	*event |= (task_wait_event(SECOND) & ~TASK_EVENT_I2C_IDLE);
-	task_waiting_on_port[port] = TASK_ID_INVALID;
+	task_waiting_on_controller[controller] = TASK_ID_INVALID;
 	if (*event & TASK_EVENT_TIMER) {
 		/* Restore any events that we saw while waiting */
 		task_set_event(task_get_current(),
@@ -131,17 +132,17 @@ static int wait_for_interrupt(int port, int *event)
 	return EC_SUCCESS;
 }
 
-static int wait_idle(int port)
+static int wait_idle(int controller)
 {
-	uint8_t sts = MEC1322_I2C_STATUS(port);
+	uint8_t sts = MEC1322_I2C_STATUS(controller);
 	int rv;
 	int event = 0;
 
 	while (!(sts & STS_NBB)) {
-		rv = wait_for_interrupt(port, &event);
+		rv = wait_for_interrupt(controller, &event);
 		if (rv)
 			return rv;
-		sts = MEC1322_I2C_STATUS(port);
+		sts = MEC1322_I2C_STATUS(controller);
 	}
 	/*
 	 * Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
@@ -154,17 +155,17 @@ static int wait_idle(int port)
 	return EC_SUCCESS;
 }
 
-static int wait_byte_done(int port)
+static int wait_byte_done(int controller)
 {
-	uint8_t sts = MEC1322_I2C_STATUS(port);
+	uint8_t sts = MEC1322_I2C_STATUS(controller);
 	int rv;
 	int event = 0;
 
 	while (sts & STS_PIN) {
-		rv = wait_for_interrupt(port, &event);
+		rv = wait_for_interrupt(controller, &event);
 		if (rv)
 			return rv;
-		sts = MEC1322_I2C_STATUS(port);
+		sts = MEC1322_I2C_STATUS(controller);
 	}
 	/*
 	 * Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
@@ -185,32 +186,56 @@ static inline void fill_in_buf(uint8_t *in, int id, uint8_t val)
 		in[id - 1] = val;
 }
 
+static void select_port(int port)
+{
+	/*
+	 * I2C0_1 uses port 1 of controller 0. All other I2C pin sets
+	 * use port 0.
+	 */
+	uint8_t port_sel = (port == MEC1322_I2C0_1) ? 1 : 0;
+	int controller = i2c_port_to_controller(port);
+
+	MEC1322_I2C_CONFIG(controller) &= ~0xf;
+	MEC1322_I2C_CONFIG(controller) |= port_sel;
+
+}
+
+static inline int get_line_level(int controller)
+{
+	return (MEC1322_I2C_BB_CTRL(controller) >> 5) & 0x3;
+}
+
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
 	int i;
+	int controller;
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	uint8_t reg_sts;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
-	wait_idle(port);
+	select_port(port);
+	controller = i2c_port_to_controller(port);
+	wait_idle(controller);
 
-	reg_sts = MEC1322_I2C_STATUS(port);
+	reg_sts = MEC1322_I2C_STATUS(controller);
 	if (!started &&
 	    (((reg_sts & (STS_BER | STS_LAB)) || !(reg_sts & STS_NBB)) ||
-			    (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
+			    (get_line_level(controller)
+			    != I2C_LINE_IDLE))) {
 		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port,
 			reg_sts,
-			i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
-			i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
+			get_line_level(controller) & I2C_LINE_SCL_HIGH,
+			get_line_level(controller) & I2C_LINE_SDA_HIGH);
 
-		/* Attempt to unwedge the port. */
-		i2c_unwedge(port);
+		/* Attempt to unwedge the controller. */
+		i2c_unwedge(controller);
 
-		/* Bus error, bus busy, or arbitration lost. Reset port. */
-		reset_port(port);
+		/* Bus error, bus busy, or arbitration lost. Try reset. */
+		reset_controller(controller);
+		select_port(port);
 
 		/*
 		 * We don't know what edges the slave saw, so sleep long enough
@@ -220,23 +245,24 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 
 	if (out) {
-		MEC1322_I2C_DATA(port) = (uint8_t)slave_addr;
+		MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr;
 
 		/*
 		 * Clock out the slave address. Send START bit if start flag is
 		 * set.
 		 */
-		MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
-					 CTRL_ACK | (started ? 0 : CTRL_STA);
+		MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
+					       CTRL_ACK |
+					       (started ? 0 : CTRL_STA);
 		if (!started)
 			started = 1;
 
 		for (i = 0; i < out_size; ++i) {
-			if (wait_byte_done(port))
+			if (wait_byte_done(controller))
 				goto err_i2c_xfer;
-			MEC1322_I2C_DATA(port) = out[i];
+			MEC1322_I2C_DATA(controller) = out[i];
 		}
-		if (wait_byte_done(port))
+		if (wait_byte_done(controller))
 			goto err_i2c_xfer;
 
 		/*
@@ -244,64 +270,66 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		 * doesn't expect to receive data.
 		 */
 		if ((flags & I2C_XFER_STOP) && in_size == 0) {
-			MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO |
-						 CTRL_STO | CTRL_ACK;
+			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+						       CTRL_STO | CTRL_ACK;
 		}
 	}
 
 	if (in_size) {
 		if (out_size) {
 			/* resend start bit when change direction */
-			MEC1322_I2C_CTRL(port) = CTRL_ESO | CTRL_STA |
-						 CTRL_ACK | CTRL_ENI;
+			MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_STA |
+						       CTRL_ACK | CTRL_ENI;
 		}
 
-		MEC1322_I2C_DATA(port) = (uint8_t)slave_addr | 0x01;
+		MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr | 0x01;
 
 		if (!started) {
 			started = 1;
 			/* Clock out slave address with START bit */
-			MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO |
-						 CTRL_STA | CTRL_ACK | CTRL_ENI;
+			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+						       CTRL_STA | CTRL_ACK |
+						       CTRL_ENI;
 		}
 
 		/* On MEC1322, first byte read is dummy read (slave addr) */
 		in_size++;
 
 		for (i = 0; i < in_size - 2; ++i) {
-			if (wait_byte_done(port))
+			if (wait_byte_done(controller))
 				goto err_i2c_xfer;
-			fill_in_buf(in, i, MEC1322_I2C_DATA(port));
+			fill_in_buf(in, i, MEC1322_I2C_DATA(controller));
 		}
-		if (wait_byte_done(port))
+		if (wait_byte_done(controller))
 			goto err_i2c_xfer;
 
 		/*
 		 * De-assert ACK bit before reading the next to last byte,
 		 * so that the last byte is NACK'ed.
 		 */
-		MEC1322_I2C_CTRL(port) = CTRL_ESO | CTRL_ENI;
-		fill_in_buf(in, in_size - 2, MEC1322_I2C_DATA(port));
-		if (wait_byte_done(port))
+		MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_ENI;
+		fill_in_buf(in, in_size - 2, MEC1322_I2C_DATA(controller));
+		if (wait_byte_done(controller))
 			goto err_i2c_xfer;
 
 		/* Send STOP if stop flag is set */
-		MEC1322_I2C_CTRL(port) =
+		MEC1322_I2C_CTRL(controller) =
 			CTRL_PIN | CTRL_ESO | CTRL_ACK |
 			((flags & I2C_XFER_STOP) ? CTRL_STO : 0);
 
 		/* Now read the last byte */
-		fill_in_buf(in, in_size - 1, MEC1322_I2C_DATA(port));
+		fill_in_buf(in, in_size - 1, MEC1322_I2C_DATA(controller));
 	}
 
 	/* Check for error conditions */
-	if (MEC1322_I2C_STATUS(port) & (STS_LAB | STS_BER))
+	if (MEC1322_I2C_STATUS(controller) & (STS_LAB | STS_BER))
 		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 err_i2c_xfer:
 	/* Send STOP and return error */
-	MEC1322_I2C_CTRL(port) = CTRL_PIN | CTRL_ESO | CTRL_STO | CTRL_ACK;
+	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+				       CTRL_STO | CTRL_ACK;
 	return EC_ERROR_UNKNOWN;
 }
 
@@ -329,7 +357,13 @@ int i2c_raw_get_sda(int port)
 
 int i2c_get_line_levels(int port)
 {
-	return (MEC1322_I2C_BB_CTRL(port) >> 5) & 0x3;
+	int rv;
+
+	i2c_lock(port, 1);
+	select_port(port);
+	rv = get_line_level(i2c_port_to_controller(port));
+	i2c_lock(port, 0);
+	return rv;
 }
 
 int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
@@ -367,32 +401,54 @@ exit:
 	return rv;
 }
 
+int i2c_port_to_controller(int port)
+{
+	if (port < 0 || port >= MEC1322_I2C_PORT_COUNT)
+		return -1;
+	return (port == MEC1322_I2C0_0) ? 0 : port - 1;
+}
 
 static void i2c_init(void)
 {
 	int i;
+	int controller;
+	int controller0_kbps = -1;
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
 
-	for (i = 0; i < i2c_ports_used; ++i)
-		configure_port(i2c_ports[i].port, i2c_ports[i].kbps);
+	for (i = 0; i < i2c_ports_used; ++i) {
+		/*
+		 * If this controller has multiple ports, check if we already
+		 * configured it. If so, ensure previously configured bitrate
+		 * matches.
+		 */
+		controller = i2c_port_to_controller(i2c_ports[i].port);
+		if (controller == 0) {
+			if (controller0_kbps != -1) {
+				ASSERT(controller0_kbps == i2c_ports[i].kbps);
+				continue;
+			}
+			controller0_kbps = i2c_ports[i].kbps;
+		}
+		configure_controller(controller, i2c_ports[i].kbps);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
-static void handle_interrupt(int port)
+static void handle_interrupt(int controller)
 {
-	int id = task_waiting_on_port[port];
+	int id = task_waiting_on_controller[controller];
 
 	/* Clear the interrupt status */
-	MEC1322_I2C_COMPLETE(port) |= 1 << 29;
+	MEC1322_I2C_COMPLETE(controller) |= 1 << 29;
 
 	/*
 	 * Write to control register interferes with I2C transaction.
 	 * Instead, let's disable IRQ from the core until the next time
 	 * we want to wait for STS_PIN/STS_NBB.
 	 */
-	task_disable_irq(MEC1322_IRQ_I2C_0 + port);
+	task_disable_irq(MEC1322_IRQ_I2C_0 + controller);
 
 	/* Wake up the task which was waiting on the I2C interrupt, if any. */
 	if (id != TASK_ID_INVALID)

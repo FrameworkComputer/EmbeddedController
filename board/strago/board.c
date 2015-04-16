@@ -51,10 +51,10 @@ const struct power_signal_info power_signal_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"batt_chg",	0, 100},
-	{"sensors",	1, 100},
-	{"pd_mcu",	2, 100},
-	{"thermal",	3, 100}
+	{"batt_chg",	MEC1322_I2C0_0, 100},
+	{"sensors",	MEC1322_I2C1,   100},
+	{"pd_mcu",	MEC1322_I2C2,   100},
+	{"thermal",	MEC1322_I2C3,   100}
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

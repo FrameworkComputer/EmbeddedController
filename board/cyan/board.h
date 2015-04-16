@@ -44,16 +44,6 @@
 /* TODO: Add flash protect support for the SPI part cyan actually has */
 #define CONFIG_SPI_FLASH_W25Q64
 
-/* I2C ports */
-#define I2C_PORT0		0
-#define I2C_PORT1		1
-
-#define I2C_PORT_BATTERY	I2C_PORT0
-#define I2C_PORT_CHARGER	I2C_PORT0
-#define I2C_PORT_THERMAL	I2C_PORT0
-
-#define I2C_PORT_ACCEL		I2C_PORT1
-
 /* Temperature sensor */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
@@ -76,6 +66,12 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
+#include "registers.h"
+
+#define I2C_PORT_BATTERY	MEC1322_I2C0_0
+#define I2C_PORT_CHARGER	MEC1322_I2C0_0
+#define I2C_PORT_THERMAL	MEC1322_I2C0_0
+#define I2C_PORT_ACCEL		MEC1322_I2C1
 
 /* power signal definitions */
 enum power_signal {

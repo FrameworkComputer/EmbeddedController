@@ -8,7 +8,6 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_WATCHDOG_HELP
@@ -49,15 +48,6 @@
 
 #define CONFIG_I2C
 
-/* I2C ports */
-#define I2C_PORT_BATTERY	0
-#define I2C_PORT_CHARGER	0
-#define I2C_PORT_ACCEL		1
-#define I2C_PORT_GYRO		1
-#define I2C_PORT_ALS		1
-#define I2C_PORT_PD_MCU		2
-#define I2C_PORT_THERMAL	3
-
 /* Accelerometer */
 #define CONFIG_ACCEL_KXCJ9
 #define CONFIG_CMD_ACCELS
@@ -77,6 +67,16 @@
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
+#include "registers.h"
+
+/* I2C ports */
+#define I2C_PORT_BATTERY	MEC1322_I2C0_0
+#define I2C_PORT_CHARGER	MEC1322_I2C0_0
+#define I2C_PORT_ACCEL		MEC1322_I2C1
+#define I2C_PORT_GYRO		MEC1322_I2C1
+#define I2C_PORT_ALS		MEC1322_I2C1
+#define I2C_PORT_PD_MCU		MEC1322_I2C2
+#define I2C_PORT_THERMAL	MEC1322_I2C3
 
 /* power signal definitions */
 enum power_signal {
