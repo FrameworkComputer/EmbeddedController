@@ -75,6 +75,7 @@ BOARDS_STM32=(
 	pit
 	plankton
 	ryu
+	ryu_p4p5
 	ryu_sh
 	samus_pd
 	snow
