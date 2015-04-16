@@ -23,11 +23,13 @@
 #define RW_BANK_COUNT		(CONFIG_FW_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 /* Persistent protection state flash offset / size / bank */
-#ifdef CONFIG_FLASH_PSTATE
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
 #define PSTATE_OFFSET		CONFIG_FW_PSTATE_OFF
 #define PSTATE_SIZE		CONFIG_FW_PSTATE_SIZE
 #define PSTATE_BANK		(PSTATE_OFFSET / CONFIG_FLASH_BANK_SIZE)
 #define PSTATE_BANK_COUNT	(PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
+#else
+#define PSTATE_BANK_COUNT	0
 #endif
 
 /* Range of write protection */

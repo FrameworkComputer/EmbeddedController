@@ -598,12 +598,24 @@
 #undef CONFIG_FLASH_PROTECT_NEXT_BOOT
 
 /*
- * Use a bank of flash to store its persistent write protect state.  This
- * allows ECs with internal flash to emulate something closer to a SPI flash
- * write protect register.  If this is not defined, write protect state is
- * maintained solely by the physical flash driver.
+ * Store persistent write protect for the flash inside the flash data itself.
+ * This allows ECs with internal flash to emulate something closer to a SPI
+ * flash write protect register.  If this is not defined, write protect state
+ * is maintained solely by the physical flash driver.
  */
 #define CONFIG_FLASH_PSTATE
+
+/*
+ * Store the pstate data in its own dedicated bank of flash.  This allows
+ * disabling the protect-RO-at-boot flag without rewriting the RO firmware,
+ * but costs a bank of flash.
+ *
+ * If this is not defined, the pstate data is stored inside the RO firmware
+ * image itself.  This is more space-efficient, but the only way to clear the
+ * flag once it's set is to rewrite the RO firmware (after removing the WP
+ * screw, of course).
+ */
+#define CONFIG_FLASH_PSTATE_BANK
 
 #undef CONFIG_FLASH_SIZE
 #undef CONFIG_FLASH_WRITE_IDEAL_SIZE

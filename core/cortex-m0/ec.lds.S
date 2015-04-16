@@ -36,6 +36,10 @@ SECTIONS
         . = ALIGN(4);
         __version_struct_offset = .;
         KEEP(*(.rodata.ver))
+
+        . = ALIGN(4);
+        KEEP(*(.rodata.pstate))
+
 #ifdef SHIFT_CODE_FOR_TEST
         . = ALIGN(256);
 #else

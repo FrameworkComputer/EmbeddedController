@@ -198,7 +198,9 @@ int flash_physical_protect_now(int all)
 	} else {
 		/* Protect the read-only section and persistent state */
 		protect_banks(RO_BANK_OFFSET, RO_BANK_COUNT);
+#ifdef PSTATE_BANK
 		protect_banks(PSTATE_BANK, 1);
+#endif
 	}
 
 	return EC_SUCCESS;

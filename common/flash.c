@@ -24,6 +24,16 @@
 #endif
 
 #ifdef CONFIG_FLASH_PSTATE
+
+/*
+ * If flash isn't mapped to the EC's address space, it's probably SPI, and
+ * should be using SPI write protect, not PSTATE.
+ */
+#ifndef CONFIG_FLASH_MAPPED
+#error "PSTATE should only be used with internal mapped mapped flash."
+#endif
+
+#ifdef CONFIG_FLASH_PSTATE_BANK
 /* Persistent protection state - emulates a SPI status register for flashrom */
 struct persist_state {
 	uint8_t version;            /* Version of this struct */
@@ -36,7 +46,50 @@ struct persist_state {
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
+
+#else /* !CONFIG_FLASH_PSTATE_BANK */
+
+/*
+ * Flags for write protect state depend on the erased value of flash.  The
+ * locked value must be the same as the unlocked value with one or more bits
+ * transitioned away from the erased state.  That way, it is possible to
+ * rewrite the data in-place to set the lock.
+ *
+ * STM32F0x can only write 0x0000 to a non-erased half-word, which means
+ * PSTATE_MAGIC_LOCKED isn't quite as pretty.  That's ok; the only thing
+ * we actually need to detect is PSTATE_MAGIC_UNLOCKED, since that's the
+ * only value we'll ever alter, and the only value which causes us not to
+ * lock the flash at boot.
+ */
+#if (CONFIG_FLASH_ERASED_VALUE32 == -1U)
+#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057  /* "WPNO" */
+#define PSTATE_MAGIC_LOCKED   0x00000000  /* ""     */
+#elif (CONFIG_FLASH_ERASED_VALUE32 == 0)
+#define PSTATE_MAGIC_UNLOCKED 0x4f4e5057  /* "WPNO" */
+#define PSTATE_MAGIC_LOCKED   0x5f5f5057  /* "WP__" */
+#else
+/* What kind of wacky flash doesn't erase all bits to 1 or 0? */
+#error "PSTATE needs magic values for this flash architecture."
 #endif
+
+/*
+ * Rewriting the write protect flag in place currently requires a minimum write
+ * size <= the size of the flag value.
+ *
+ * We could work around this on chips with larger minimum write size by reading
+ * the write block containing the flag into RAM, changing it to the locked
+ * value, and then rewriting that block.  But we should only pay for that
+ * complexity when we run across another chip which needs it.
+ */
+#if (CONFIG_FLASH_WRITE_SIZE > 4)
+#error "Non-bank-based PSTATE requires flash write size <= 32 bits."
+#endif
+
+const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
+	PSTATE_MAGIC_UNLOCKED;
+
+#endif /* !CONFIG_FLASH_PSTATE_BANK */
+#endif /* CONFIG_FLASH_PSTATE */
 
 int flash_range_ok(int offset, int size_req, int align)
 {
@@ -77,21 +130,26 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
 #endif
 
 #ifdef CONFIG_FLASH_PSTATE
-/**
- * Read persistent state into pstate.
- *
- * @param pstate	Destination for persistent state
- */
-static void flash_read_pstate(struct persist_state *pstate)
-{
-	flash_read(PSTATE_OFFSET, sizeof(*pstate), (char *)pstate);
+#ifdef CONFIG_FLASH_PSTATE_BANK
 
-	/* Sanity-check data and initialize if necessary */
-	if (pstate->version != PERSIST_STATE_VERSION) {
-		memset(pstate, 0, sizeof(*pstate));
-		pstate->version = PERSIST_STATE_VERSION;
+/**
+ * Read and return persistent state flags (EC_FLASH_PROTECT_*)
+ */
+static uint32_t flash_read_pstate(void)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(PSTATE_OFFSET);
+
+	if ((pstate->version == PERSIST_STATE_VERSION) &&
+	    (pstate->flags & PERSIST_FLAG_PROTECT_RO)) {
+		/* Lock flag is known to be set */
+		return EC_FLASH_PROTECT_RO_AT_BOOT;
+	} else {
 #ifdef CONFIG_WP_ALWAYS
-		pstate->flags |= PERSIST_FLAG_PROTECT_RO;
+		return PERSIST_FLAG_PROTECT_RO;
+#else
+		return 0;
 #endif
 	}
 }
@@ -99,17 +157,19 @@ static void flash_read_pstate(struct persist_state *pstate)
 /**
  * Write persistent state from pstate, erasing if necessary.
  *
- * @param pstate	Source persistent state
+ * @param flags		New flash write protect flags to set in pstate.
  * @return EC_SUCCESS, or nonzero if error.
  */
-static int flash_write_pstate(const struct persist_state *pstate)
+static int flash_write_pstate(uint32_t flags)
 {
-	struct persist_state current_pstate;
+	struct persist_state pstate;
 	int rv;
 
+	/* Only check the flags we write to pstate */
+	flags &= EC_FLASH_PROTECT_RO_AT_BOOT;
+
 	/* Check if pstate has actually changed */
-	flash_read_pstate(&current_pstate);
-	if (!memcmp(&current_pstate, pstate, sizeof(*pstate)))
+	if (flags == flash_read_pstate())
 		return EC_SUCCESS;
 
 	/* Erase pstate */
@@ -123,10 +183,75 @@ static int flash_write_pstate(const struct persist_state *pstate)
 	 * it's protected.
 	 */
 
-	/* Rewrite the data */
-	return flash_physical_write(PSTATE_OFFSET, sizeof(*pstate),
-				    (const char *)pstate);
+	/* Write a new pstate */
+	memset(&pstate, 0, sizeof(pstate));
+	pstate.version = PERSIST_STATE_VERSION;
+	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
+		pstate.flags |= PERSIST_FLAG_PROTECT_RO;
+	return flash_physical_write(PSTATE_OFFSET, sizeof(pstate),
+				    (const char *)&pstate);
 }
+
+#else /* !CONFIG_FLASH_PSTATE_BANK */
+
+/**
+ * Return the address of the pstate data in EC-RO.
+ */
+static const uintptr_t get_pstate_addr(void)
+{
+	uintptr_t addr = (uintptr_t)&pstate_data;
+
+	/* Always use the pstate data in RO, even if we're RW */
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		addr += CONFIG_FW_RO_OFF - CONFIG_FW_RW_OFF;
+
+	return addr;
+}
+
+/**
+ * Read and return persistent state flags (EC_FLASH_PROTECT_*)
+ */
+static uint32_t flash_read_pstate(void)
+{
+	/* Check for the unlocked magic value */
+	if (*(const uint32_t *)get_pstate_addr() == PSTATE_MAGIC_UNLOCKED)
+		return 0;
+
+	/* Anything else is locked */
+	return EC_FLASH_PROTECT_RO_AT_BOOT;
+}
+
+/**
+ * Write persistent state from pstate, erasing if necessary.
+ *
+ * @param flags		New flash write protect flags to set in pstate.
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+static int flash_write_pstate(uint32_t flags)
+{
+	const uint32_t new_pstate = PSTATE_MAGIC_LOCKED;
+
+	/* Only check the flags we write to pstate */
+	flags &= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/* Check if pstate has actually changed */
+	if (flags == flash_read_pstate())
+		return EC_SUCCESS;
+
+	/* We can only set the protect flag, not clear it */
+	if (!(flags & EC_FLASH_PROTECT_RO_AT_BOOT))
+		return EC_ERROR_ACCESS_DENIED;
+
+	/*
+	 * Write a new pstate.  We can overwrite the existing value, because
+	 * we're only moving bits from the erased state to the unerased state.
+	 */
+	return flash_physical_write(get_pstate_addr() - CONFIG_FLASH_BASE,
+				    sizeof(new_pstate),
+				    (const char *)&new_pstate);
+}
+
+#endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */
 
 int flash_is_erased(uint32_t offset, int size)
@@ -209,25 +334,22 @@ int flash_erase(int offset, int size)
 int flash_protect_at_boot(enum flash_wp_range range)
 {
 #ifdef CONFIG_FLASH_PSTATE
-	struct persist_state pstate;
-	int new_flags = (range != FLASH_WP_NONE) ? PERSIST_FLAG_PROTECT_RO : 0;
+	uint32_t new_flags =
+		(range != FLASH_WP_NONE) ? EC_FLASH_PROTECT_RO_AT_BOOT : 0;
 
 	/* Read the current persist state from flash */
-	flash_read_pstate(&pstate);
-
-	if (pstate.flags != new_flags) {
+	if (flash_read_pstate() != new_flags) {
 		/* Need to update pstate */
 		int rv;
 
+#ifdef CONFIG_FLASH_PSTATE_BANK
 		/* Fail if write protect block is already locked */
 		if (flash_physical_get_protect(PSTATE_BANK))
 			return EC_ERROR_ACCESS_DENIED;
+#endif
 
-		/* Set the new flag */
-		pstate.flags = new_flags;
-
-		/* Write the state back to flash */
-		rv = flash_write_pstate(&pstate);
+		/* Write the desired flags */
+		rv = flash_write_pstate(new_flags);
 		if (rv)
 			return rv;
 	}
@@ -271,13 +393,8 @@ uint32_t flash_get_protect(void)
 #endif
 
 #ifdef CONFIG_FLASH_PSTATE
-	{
-		/* Read persistent state of RO-at-boot flag */
-		struct persist_state pstate;
-		flash_read_pstate(&pstate);
-		if (pstate.flags & PERSIST_FLAG_PROTECT_RO)
-			flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
-	}
+	/* Read persistent state of RO-at-boot flag */
+	flags |= flash_read_pstate();
 #endif
 
 	/* Scan flash protection */
@@ -287,7 +404,7 @@ uint32_t flash_get_protect(void)
 			     i < RO_BANK_OFFSET + RO_BANK_COUNT) ? 1 : 0;
 		int bank_flag;
 
-#ifdef CONFIG_FLASH_PSTATE
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
 		/* PSTATE acts like part of RO; protected at same time */
 		if (i >= PSTATE_BANK && i < PSTATE_BANK + PSTATE_BANK_COUNT)
 			is_ro = 1;
@@ -446,7 +563,6 @@ static int command_flash_info(int argc, char **argv)
 		ccputs(flash_physical_get_protect(i) ? "Y" : ".");
 	}
 	ccputs("\n");
-
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
