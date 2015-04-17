@@ -3431,7 +3431,8 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		r->state = pd[p->port].task_state;
 		args->response_size = sizeof(*r);
 	} else {
-		r_v1->enabled = pd_comm_enabled;
+		r_v1->enabled = pd_comm_enabled |
+				(pd_is_connected(p->port) << 1);
 		r_v1->role = pd[p->port].power_role |
 			    (pd[p->port].data_role << 1);
 		r_v1->polarity = pd[p->port].polarity;
