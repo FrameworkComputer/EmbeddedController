@@ -65,6 +65,11 @@
 #define CONFIG_VBOOT_HASH
 #undef  CONFIG_WATCHDOG_HELP
 
+/* Use PSTATE embedded in the RO image, not in its own erase block */
+#undef  CONFIG_FLASH_PSTATE_BANK
+#undef  CONFIG_FW_PSTATE_SIZE
+#define CONFIG_FW_PSTATE_SIZE 0
+
 /* I2C ports configuration */
 #define I2C_PORT_MASTER 1
 #define I2C_PORT_SLAVE  0
