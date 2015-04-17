@@ -4,9 +4,11 @@
  */
 /* Strago board-specific configuration */
 
+#include "als.h"
 #include "charger.h"
 #include "charge_state.h"
 #include "driver/accel_kxcj9.h"
+#include "driver/als_isl29035.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -74,6 +76,12 @@ const struct temp_sensor_t temp_sensors[] = {
 		0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* ALS instances. Must be in same order as enum als_id. */
+struct als_t als[] = {
+	{"ISL", isl29035_read_lux, 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 /* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.

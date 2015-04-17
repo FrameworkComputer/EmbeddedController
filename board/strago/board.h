@@ -37,6 +37,8 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
 
+#define CONFIG_ALS
+#define CONFIG_ALS_ISL29035
 #define CONFIG_CHARGER
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER_V2
@@ -111,6 +113,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 
 	TEMP_SENSOR_COUNT
+};
+
+/* Light sensors */
+enum als_id {
+	ALS_ISL29035 = 0,
+
+	ALS_COUNT,
 };
 
 /* Discharge battery when on AC power for factory test. */
