@@ -21,8 +21,7 @@ HOSTCC?=$(HOST_CROSS_COMPILE)gcc
 CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
             -fno-strict-aliasing -fno-common                              \
             -Werror-implicit-function-declaration -Wno-format-security    \
-            -fno-delete-null-pointer-checks -Wdeclaration-after-statement \
-            -Wno-pointer-sign -fno-strict-overflow -fconserve-stack
+            -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
@@ -41,6 +40,7 @@ CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(CFLAGS_WARN) $(CFLAGS_y)
 CFLAGS+= -ffunction-sections -fshort-wchar
+CFLAGS+= -fno-delete-null-pointer-checks -fconserve-stack
 
 FTDIVERSION=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
 ifneq ($(FTDIVERSION),)
