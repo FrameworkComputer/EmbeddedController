@@ -82,13 +82,6 @@ BOARDS_STM32=(
 	spring
 	zinger
 )
-
-BOARDS_PRIVATE_SPI_PP3300=(
-	cyan
-	glower
-	strago
-)
-
 BOARDS_STM32_PROG_EN=(
 	plankton
 )
@@ -101,6 +94,12 @@ BOARDS_STM32_DFU=(
 
 BOARDS_NPCX=(
 	npcx_evb
+)
+
+BOARDS_MEC1322=(
+	cyan
+	glower
+	strago
 )
 
 # Flags
@@ -221,9 +220,7 @@ BOARD=${FLAGS_board}
 BOARD_ROOT=/build/${BOARD}
 
 # Possible default EC images
-if $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
-	EC_FILE=ec.spi.bin
-elif [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
+if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 	EC_FILE=ec.RO.flat
 else
 	EC_FILE=ec.bin
@@ -287,9 +284,6 @@ if [[ "${MCU}" == "usbpd" ]] ; then
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 		servo_VARS+=" prog_en"
 	fi
-fi
-if $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
-	servo_VARS+=" spi1_buf_en spi1_buf_on_flex_en spi_hold"
 fi
 toad_VARS="${MCU}_uart_parity \
 ${MCU}_uart_baudrate boot_mode"
@@ -468,10 +462,43 @@ function flash_npcx() {
 	fi
 }
 
-function flash_private_spi_pp3300() {
-	dut_control cold_reset:on spi1_vref:pp3300
-	dut_control spi1_buf_en:on spi1_buf_on_flex_en:on spi_hold:off
-	sudo flashrom -p ft2232_spi:type=servo-v2,port=B -w "${IMG}"
+function flash_mec1322() {
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
+	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
+	FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
+
+	if [ ! -x "$FLASHROM" ]; then
+		die "no flashrom util found."
+	fi
+
+	dut_control cold_reset:on
+
+	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
+	dut-control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
+
+	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
+	IMG_SIZE=$(stat -c%s "$IMG")
+	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
+
+	# Temp image
+	T=/tmp/flash_mec_$$
+
+	{	# Patch temp image up to SPI_SIZE
+		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
+			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
+		fi
+		cat $IMG
+	} > $T
+
+	sudo ${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
+
+	rm $T
+
+	# Turn off SPI1 interface on servo
+	dut_control spi1_vref:off spi1_buf_en:off spi1_buf_on_flex_en:off
+
+	# Do not save/restore servo settings
+	save=
 }
 
 if dut_control boot_mode 2>/dev/null ; then
@@ -505,8 +532,8 @@ elif [ "${BOARD}" == "link" ]; then
 	flash_link
 elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
 	flash_npcx
-elif $(in_array "${BOARDS_PRIVATE_SPI_PP3300[@]}" "${BOARD}"); then
-	flash_private_spi_pp3300
+elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
+	flash_mec1322
 else
 	die "board ${BOARD} not supported"
 fi

@@ -18,6 +18,7 @@ LOAD_ADDR = 0x100000
 HEADER_SIZE = 0x140
 SPI_CLOCK_LIST = [48, 24, 12, 8]
 SPI_READ_CMD_LIST = [0x3, 0xb, 0x3b]
+IMAGE_SIZE = 96 * 1024
 
 CRC_TABLE = [0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
              0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d]
@@ -37,14 +38,19 @@ def GetEntryPoint(payload_file):
     s = f.read(4)
   return struct.unpack('<I', s)[0]
 
-def GetPayload(payload_file):
+def GetPayloadFromOffset(payload_file,offset):
   """Read payload and pad it to 64-byte aligned."""
   with open(payload_file, 'rb') as f:
+    f.seek(offset)
     payload = bytearray(f.read())
   rem_len = len(payload) % 64
   if rem_len:
     payload += '\0' * (64 - rem_len)
   return payload
+
+def GetPayload(payload_file):
+  """Read payload and pad it to 64-byte aligned."""
+  return GetPayloadFromOffset(payload_file, 0)
 
 def GetPublicKey(pem_file):
   """Extract public exponent and modulus from PEM file."""
@@ -79,7 +85,7 @@ def GetSpiReadCmdParameter(args):
 def PadZeroTo(data, size):
   data.extend('\0' * (size - len(data)))
 
-def BuildHeader(args, payload_len):
+def BuildHeader(args, payload_len, rorofile):
   # Identifier and header version
   header = bytearray(['C', 'S', 'M', 'S', '\0'])
 
@@ -88,7 +94,7 @@ def BuildHeader(args, payload_len):
   header.append(GetSpiReadCmdParameter(args))
 
   header.extend(struct.pack('<I', LOAD_ADDR))
-  header.extend(struct.pack('<I', GetEntryPoint(args.input)))
+  header.extend(struct.pack('<I', GetEntryPoint(rorofile)))
   header.append((payload_len >> 6) & 0xff)
   header.append((payload_len >> 14) & 0xff)
   PadZeroTo(header, 0x14)
@@ -127,8 +133,24 @@ def BuildTag(args):
   tag.append(Crc8(0, tag))
   return tag
 
+def PacklfwRoImage(rorw_file, loader_file):
+  """TODO:Clean up to get rid of Temp file and just use memory
+  to save data"""
+  """Create a temp file with the
+  first IMAGE_SIZE bytes from the rorw file and the
+  bytes from the loader_file appended
+  return the filename"""
+  fo=tempfile.NamedTemporaryFile(delete=False) # Need to keep file around
+  with open(loader_file,'rb') as fin1:
+    pro = fin1.read()
+  fo.write(pro)
+  with open(rorw_file, 'rb') as fin:
+    ro = fin.read(IMAGE_SIZE)
+  fo.write(ro)
+  fo.close()
+  return fo.name
 
-def main():
+def parseargs():
   parser = argparse.ArgumentParser()
   parser.add_argument("-i", "--input",
                       help="EC binary to pack, usually ec.bin or ec.RO.flat.",
@@ -142,15 +164,24 @@ def main():
   parser.add_argument("--payload_key",
                       help="PEM key file for signing payload",
                       default="rsakey_sign_payload.pem")
+  parser.add_argument("--loader_file",
+                      help="EC loader binary",
+                      default="ecloader.bin")
   parser.add_argument("-s", "--spi_size", type=int,
-                      help="Size of the SPI flash in KB",
-                      default=4096)
+                      help="Size of the SPI flash in MB",
+                      default=4)
   parser.add_argument("-l", "--header_loc", type=int,
                       help="Location of header in SPI flash",
-                      default=0)
+                      default=0x170000)
   parser.add_argument("-p", "--payload_offset", type=int,
                       help="The offset of payload from the header",
                       default=0x240)
+  parser.add_argument("-r", "--rwpayload_loc", type=int,
+                      help="The offset of payload from the header",
+                      default=0x190000)
+  parser.add_argument("-z", "--romstart", type=int,
+                      help="The first location to output of the rom",
+                      default=0)
   parser.add_argument("-c", "--chip_select", type=int,
                       help="Chip select signal to use, either 0 or 1.",
                       default=0)
@@ -160,29 +191,49 @@ def main():
   parser.add_argument("--spi_read_cmd", type=int,
                       help="SPI read command. 0x3, 0xB, or 0x3B.",
                       default=0xb)
-  args = parser.parse_args()
+  return parser.parse_args()
+
+# Debug helper routine
+def dumpsects(spi_list):
+  for s in spi_list:
+    print "%x %d %s\n"%(s[0],len(s[1]),s[2])
+
+def main():
+  args = parseargs()
 
   spi_size = args.spi_size * 1024
+  args.header_loc = spi_size - (128 * 1024)
+  args.rwpayload_loc = spi_size - (256 * 1024)
+  args.romstart = spi_size - (256 * 1024)
+
   spi_list = []
 
-  payload = GetPayload(args.input)
+  rorofile=PacklfwRoImage(args.input, args.loader_file)
+  payload = GetPayload(rorofile)
   payload_len = len(payload)
+  #print payload_len
   payload_signature = SignByteArray(payload, args.payload_key)
-  header = BuildHeader(args, payload_len)
+  header = BuildHeader(args, payload_len, rorofile)
   header_signature = SignByteArray(header, args.header_key)
   tag = BuildTag(args)
+  # truncate the RW to 128k
+  payloadrw = GetPayloadFromOffset(args.input,IMAGE_SIZE)[:128*1024]
+  os.remove(rorofile)           # clean up the temp file
 
-  spi_list.append((args.header_loc, header))
-  spi_list.append((args.header_loc + HEADER_SIZE, header_signature))
-  spi_list.append((args.header_loc + args.payload_offset, payload))
+  spi_list.append((args.header_loc, header, "header"))
+  spi_list.append((args.header_loc + HEADER_SIZE, header_signature, "header_signature"))
+  spi_list.append((args.header_loc + args.payload_offset, payload, "payload"))
   spi_list.append((args.header_loc + args.payload_offset + payload_len,
-                   payload_signature))
-  spi_list.append((spi_size - 256, tag))
+                   payload_signature, "payload_signature"))
+  spi_list.append((spi_size - 256, tag, "tag"))
+  spi_list.append((args.rwpayload_loc, payloadrw, "payloadrw"))
+
 
   spi_list = sorted(spi_list)
+  #dumpsects(spi_list)
 
   with open(args.output, 'wb') as f:
-    addr = 0
+    addr = args.romstart
     for s in spi_list:
       assert addr <= s[0]
       if addr < s[0]:

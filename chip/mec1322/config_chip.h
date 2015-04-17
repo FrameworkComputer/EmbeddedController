@@ -36,12 +36,35 @@
 /* Memory mapping */
 
 /*
- * The memory region for RAM is actually 0x00100000-0x00120000. The lower 96K
- * stores code and the higher 32K stores data. To reflect this, let's say
- * the lower 96K is flash, and the higher 32K is RAM.
+ * The memory region for RAM is actually 0x00100000-0x00120000.
+ * RAM for Loader = 2k
+ * RAM for RO/RW = 24k
+ * CODE size of the Loader is 4k
+ * As per the above configuartion  the upper 26k
+ * is used to store data.The rest is for code.
+ * the lower 100K is flash[ 4k Loader and 96k RO/RW],
+ * and the higher 26K is RAM shared by loader and RO/RW.
  */
-#define CONFIG_RAM_BASE             0x00118000
-#define CONFIG_RAM_SIZE             0x00008000
+
+/****************************************************************************/
+/* Define our RAM layout. */
+
+#define CONFIG_MEC_SRAM_BASE_START	 0x00100000
+#define CONFIG_MEC_SRAM_BASE_END	 0x00120000
+#define CONFIG_MEC_SRAM_SIZE		 (CONFIG_MEC_SRAM_BASE_END - \
+						CONFIG_MEC_SRAM_BASE_START)
+
+/* 2k RAM for Loader */
+#define CONFIG_RAM_SIZE_LOADER           0x00000800
+/* 24k RAM for RO /RW */
+#define CONFIG_RAM_SIZE_RORW             0x00006000
+
+#define CONFIG_RAM_SIZE_TOTAL             (CONFIG_RAM_SIZE_LOADER + \
+						CONFIG_RAM_SIZE_RORW)
+#define CONFIG_RAM_BASE_RORW              (CONFIG_MEC_SRAM_BASE_END - \
+						CONFIG_RAM_SIZE_TOTAL)
+#define CONFIG_RAM_BASE                   CONFIG_RAM_BASE_RORW
+#define CONFIG_RAM_SIZE                   CONFIG_RAM_SIZE_TOTAL
 
 /* System stack size */
 #define CONFIG_STACK_SIZE           4096
@@ -65,32 +88,47 @@
 /* One page size for write */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE   256
 
-/* 96KB flash used for program memory */
-#define CONFIG_FLASH_PHYSICAL_SIZE      0x00018000
+/* Loader code Image size 4k*/
+#define CONFIG_LOADER_IMAGE_SIZE	0x00001000
+
+/* Independent of the Flash Physical size of the board
+256KB Max size used. Located at the top most segment */
+#define CONFIG_FLASH_PHYSICAL_SIZE	0x00040000
+
 /* Program memory base address */
 #define CONFIG_FLASH_BASE               0x00100000
 
 #define CONFIG_CDRAM_BASE               0x00100000
 #define CONFIG_CDRAM_SIZE               0x00020000
 
+#define CONFIG_FW_LOADER_OFF		0
+#define CONFIG_FW_LOADER_SIZE		CONFIG_LOADER_IMAGE_SIZE
+
 /* Size of one firmware image in flash */
 #ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE            (CONFIG_FLASH_PHYSICAL_SIZE / 2)
+#define CONFIG_FW_IMAGE_SIZE		(96 * 1024)
 #endif
 
-/* RO firmware must start at beginning of flash */
-#define CONFIG_FW_RO_OFF                0
+/* RO/RW firmware must be after Loader code */
+#define CONFIG_FW_RO_OFF		CONFIG_FW_LOADER_SIZE
 
-#define CONFIG_FW_RO_SIZE               CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FLASH_SIZE               CONFIG_FLASH_PHYSICAL_SIZE
+#define CONFIG_FW_RO_SIZE		CONFIG_FW_IMAGE_SIZE
+#define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
+#define  CONFIG_FW_INCLUDE_RO
+#define CONFIG_FW_RW_OFF		CONFIG_FW_RO_OFF
+#define CONFIG_FW_RW_SIZE		CONFIG_FW_RO_SIZE
+
+/* Write protect Loader and RO Image */
+#define CONFIG_FW_WP_RO_OFF		CONFIG_FW_LOADER_OFF
+/* Write protect 128k section of 256k physical flash
+which contains Loader and RO Images */
+#define CONFIG_FW_WP_RO_SIZE		(CONFIG_FLASH_PHYSICAL_SIZE >> 1)
 /****************************************************************************/
 /* SPI Flash Memory Mapping */
 
-/*
- * Size of total image used ( 256k = lfw + RSA Keys + RO + RW images)
- * located at the end of the flash.
- */
+/* Size of tolal image used ( 256k = lfw + RSA Keys + RO + RW images)
+     located at the end of the flash */
 #define CONFIG_FLASH_BASE_SPI	(CONFIG_SPI_FLASH_SIZE - (0x40000))
 
 #define CONFIG_RO_WP_SPI_OFF		0x20000
@@ -100,29 +138,14 @@
 						CONFIG_RO_SPI_OFF)
 #define CONFIG_RW_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI +	\
 						CONFIG_RW_SPI_OFF)
-/* Memory Location shared between lfw and RO/RW image */
-/*
- * TODO(crosbug.com/p/37510): Alter to the right value when lfw + Ro/RW
- * architecture is enabled.
- */
-#define SHARED_RAM_LFW_RORW		0
+/* Memory Lcation shared between lfw and RO/RWimage */
+#define SHARED_RAM_LFW_RORW		(CONFIG_MEC_SRAM_BASE_START + \
+						(CONFIG_LOADER_IMAGE_SIZE - 4))
 
-/*
- * TODO(crosbug.com/p/37510): Implement a lfw to load either RO or RW at
- * runtime. Since this doesn't exist yet and we're running low on program
- * memory, only flash + load RW for now.
- */
-#undef  CONFIG_FW_INCLUDE_RO
-#define CONFIG_FW_RW_OFF                CONFIG_FW_RO_OFF
-#define CONFIG_FW_RW_SIZE               CONFIG_FLASH_PHYSICAL_SIZE
-
-/* TODO(crosbug.com/p/23796): why 2 sets of configs with the same numbers? */
-#define CONFIG_FW_WP_RO_OFF             CONFIG_FW_RO_OFF
-#define CONFIG_FW_WP_RO_SIZE            CONFIG_FW_RO_SIZE
 
 /* Non-memmapped, external SPI */
-/* #define CONFIG_CODERAM_ARCH */
-#undef  CONFIG_FLASH_MAPPED
+/* #define CONFIG_CODERAM_ARCH
+#undef  CONFIG_FLASH_MAPPED*/
 #undef  CONFIG_FLASH_PSTATE
 #define CONFIG_SPI_FLASH
 
@@ -142,3 +165,4 @@
 #define CONFIG_SWITCH
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
+

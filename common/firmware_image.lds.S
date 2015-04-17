@@ -18,7 +18,14 @@ SECTIONS
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+#if (CONFIG_FW_RO_OFF == CONFIG_FW_RW_OFF)
+/* This is applicable to ECs in which RO and RW execution is
+mapped to the same location but we still have to generate an ec.bin with RO
+and RW images at different Flash offset */
+    .image.RW : AT(CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE) {
+#else
     .image.RW : AT(CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF) {
+#endif
         *(.image.RW)
     } > FLASH =0xff
     .padding : AT(CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE - 1) {
