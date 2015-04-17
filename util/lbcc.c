@@ -81,15 +81,15 @@ static const int num_operands[] = {
 
 #define OP(NAME, BYTES, MNEMONIC) MNEMONIC,
 #include "lightbar_opcode_list.h"
-static const char const *opcode_sym[] = {
+static const char * const opcode_sym[] = {
 	LIGHTBAR_OPCODE_TABLE
 };
 #undef OP
 
-static const char const *control_sym[] = {
+static const char * const control_sym[] = {
 	"beg", "end", "phase", "<invalid>"
 };
-static const char const *color_sym[] = {
+static const char * const color_sym[] = {
 	"r", "g", "b", "<invalid>"
 };
 

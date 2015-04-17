@@ -5663,7 +5663,7 @@ static int cmd_tmp006cal_v1(int idx, int argc, char *argv[])
 	int i, rv, cmdsize;
 
 	/* Algorithm 1 parameter names */
-	static const char const *alg1_pname[] = {
+	static const char * const alg1_pname[] = {
 		"s0", "a1", "a2", "b0", "b1", "b2", "c2",
 		"d0", "d1", "ds", "e0", "e1",
 	};

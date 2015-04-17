@@ -23,7 +23,7 @@ static int fd = -1;
 #define ARRAY_SIZE(t) (sizeof(t) / sizeof(t[0]))
 #endif
 
-static const char const *meanings[] = {
+static const char * const meanings[] = {
 	"SUCCESS",
 	"INVALID_COMMAND",
 	"ERROR",
