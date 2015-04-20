@@ -630,7 +630,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (errorcnt) {
-		fprintf(stderr, "\nUsage:  %s [options] ...\n\n", progname);
+		fprintf(stderr, usage, progname);
 		exit(1);
 	}
 
