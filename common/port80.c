@@ -9,17 +9,24 @@
 #include "console.h"
 #include "host_command.h"
 #include "port80.h"
+#include "task.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
 
 #define HISTORY_LEN 256
+#define PORT80_POLL_PERIOD MSEC
 
 static uint16_t history[HISTORY_LEN];
 static int writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
 static int scroll;
 static int print_in_int = 1;
+#ifdef HAS_TASK_PORT80
+static int task_en;   /* Port 80 task control */
+static int task_timeout = -1;
+#endif
 
 void port_80_write(int data)
 {
@@ -42,6 +49,30 @@ void port_80_write(int data)
 	history[writes % ARRAY_SIZE(history)] = data;
 	writes++;
 }
+
+#ifdef HAS_TASK_PORT80
+/*
+ * Port80 POST code polling limitation:
+ * - POST code 0xFF is ignored.
+ * - POST code frequency is greater than 1 msec.
+ */
+void port80_task(void)
+{
+#ifdef CONFIG_PORT80_TASK_EN
+	task_en = 1;
+	task_timeout = PORT80_POLL_PERIOD;
+#endif
+
+	while (1) {
+		int data = port_80_read();
+
+		if (data != PORT_80_IGNORE)
+			port_80_write(data);
+
+		task_wait_event(task_timeout);
+	}
+}
+#endif
 
 /*****************************************************************************/
 /* Console commands */
@@ -69,6 +100,22 @@ static int command_port80(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "flush")) {
 			writes = 0;
 			return EC_SUCCESS;
+#ifdef HAS_TASK_PORT80
+		} else if (!strcasecmp(argv[1], "task")) {
+			task_en = !task_en;
+			ccprintf("task %sabled\n", task_en ? "en" : "dis");
+			if (task_en) {
+				task_timeout = PORT80_POLL_PERIOD;
+				task_wake(TASK_ID_PORT80);
+			} else
+				task_timeout = -1;
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "poll")) {
+			i = port_80_read();
+			if (i != PORT_80_IGNORE)
+				port_80_write(i);
+			/* continue on to print the port 80 history */
+#endif
 		} else {
 			return EC_ERROR_PARAM1;
 		}

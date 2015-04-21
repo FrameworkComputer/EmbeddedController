@@ -239,6 +239,10 @@ static void setup_lpc(void)
 	MEC1322_EMI_MRL0 = 0x200;
 	MEC1322_EMI_MWL0 = 0x100;
 
+	/* Set up Mailbox for Port80 trapping */
+	MEC1322_MBX_INDEX = 0xff;
+	MEC1322_LPC_MAILBOX_BAR = 0x00808901;
+
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
 		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
@@ -293,6 +297,29 @@ void emi_interrupt(void)
 	port_80_write(MEC1322_EMI_H2E_MBX);
 }
 DECLARE_IRQ(MEC1322_IRQ_EMI, emi_interrupt, 1);
+
+#ifdef HAS_TASK_PORT80
+/*
+ * Port80 POST code polling limitation:
+ * - POST code 0xFF is ignored.
+ */
+int port_80_read(void)
+{
+	int data;
+
+	/* read MBX_INDEX for POST code */
+	data = MEC1322_MBX_INDEX;
+
+	/* clear MBX_INDEX for next POST code*/
+	MEC1322_MBX_INDEX = 0xff;
+
+	/* mark POST code 0xff as invalid */
+	if (data == 0xff)
+		data = PORT_80_IGNORE;
+
+	return data;
+}
+#endif
 
 void acpi_0_interrupt(void)
 {

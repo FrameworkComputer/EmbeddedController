@@ -175,6 +175,10 @@ static inline uintptr_t gpio_port_base(int port_id)
 
 
 /* Mailbox */
+#define MEC1322_MBX_RT_BASE    0x400f2400
+#define MEC1322_MBX_INDEX      REG8(MEC1322_MBX_RT_BASE + 0x0)
+#define MEC1322_MBX_DATA       REG8(MEC1322_MBX_RT_BASE + 0x1)
+
 #define MEC1322_MBX_BASE       0x400f2500
 #define MEC1322_MBX_H2E_MBX    REG8(MEC1322_MBX_BASE + 0x0)
 #define MEC1322_MBX_E2H_MBX    REG8(MEC1322_MBX_BASE + 0x4)

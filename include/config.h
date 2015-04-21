@@ -1005,6 +1005,14 @@
 
 /*****************************************************************************/
 
+/*
+ * Enable polling at boot by port 80 task.
+ * Ignored if port 80 is handled by interrupt
+ */
+#undef CONFIG_PORT80_TASK_EN
+
+/*****************************************************************************/
+
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
