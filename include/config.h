@@ -1310,6 +1310,12 @@
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
 
+/*
+ * Only configure USB type-c superspeed mux when DFP (for chipsets that
+ * don't support being a UFP)
+ */
+#undef CONFIG_USBC_SS_MUX_DFP_ONLY
+
 /* Support v1.1 type-C connection state machine */
 #undef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 

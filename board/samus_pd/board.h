@@ -59,6 +59,7 @@
 #define CONFIG_USB_SWITCH_PI3USB9281
 #undef  CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO
 #define CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO GPIO_USB_C_BC12_SEL
+#define CONFIG_USBC_SS_MUX_DFP_ONLY
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
@@ -137,9 +138,6 @@ int board_get_battery_soc(void);
 
 /* Send host event to AP */
 void pd_send_host_event(int mask);
-
-/* Update the state of the USB data switches */
-void set_usb_switches(int port, int open);
 
 #endif /* !__ASSEMBLER__ */
 

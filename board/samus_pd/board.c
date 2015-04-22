@@ -157,14 +157,6 @@ void vbus1_evt(enum gpio_signal signal)
 		task_wake(TASK_ID_PD_C1);
 }
 
-void set_usb_switches(int port, int open)
-{
-	mutex_lock(&usb_switch_lock[port]);
-	usb_switch_state[port] = open;
-	pi3usb9281_set_switches(port, open);
-	mutex_unlock(&usb_switch_lock[port]);
-}
-
 /* Wait after a charger is detected to debounce pin contact order */
 #define USB_CHG_DEBOUNCE_DELAY_MS 1000
 /*
@@ -558,6 +550,16 @@ const struct usb_port_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == PD_PORT_COUNT);
 
+
+static void board_set_usb_switches(int port, int open)
+{
+
+	mutex_lock(&usb_switch_lock[port]);
+	usb_switch_state[port] = open;
+	pi3usb9281_set_switches(port, open);
+	mutex_unlock(&usb_switch_lock[port]);
+}
+
 void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 {
 	const struct usb_port_mux *usb_mux = usb_muxes + port;
@@ -569,6 +571,10 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(usb_mux->dp_polarity, 1);
 	gpio_set_level(usb_mux->ss1_dp_mode, 1);
 	gpio_set_level(usb_mux->ss2_dp_mode, 1);
+
+	if ((mux == TYPEC_MUX_NONE) || (mux == TYPEC_MUX_USB))
+		/* Set D+/D- switch to appropriate level */
+		board_set_usb_switches(port, mux == TYPEC_MUX_NONE);
 
 	if (mux == TYPEC_MUX_NONE)
 		/* everything is already disabled, we can return */
