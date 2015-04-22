@@ -37,7 +37,9 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 		i = __builtin_ffs(mask) - 1;
 		val = MEC1322_GPIO_CTL(port, i);
 		val &= ~((1 << 12) | (1 << 13));
-		val |= (func & 0x3) << 12;
+		/* mux_control = 0 indicates GPIO */
+		if (func > 0)
+			val |= (func & 0x3) << 12;
 		MEC1322_GPIO_CTL(port, i) = val;
 		mask &= ~(1 << i);
 	}
