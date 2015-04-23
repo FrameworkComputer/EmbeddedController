@@ -139,13 +139,13 @@ static uint8_t host_buffer[I2C_MAX_HOST_PACKET_SIZE + 2];
 static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
 static int host_i2c_resp_port;
 static int tx_pending;
+static int tx_index, tx_end;
 static struct host_packet i2c_packet;
 
 static void i2c_send_response_packet(struct host_packet *pkt)
 {
 	int size = pkt->response_size;
 	uint8_t *out = host_buffer;
-	int i = 0;
 
 	/* Ignore host command in-progress */
 	if (pkt->driver_result == EC_RES_IN_PROGRESS)
@@ -155,14 +155,9 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 	*out++ = pkt->driver_result;
 	*out++ = size;
 
-	/* Transmit data when I2C tx buffer is empty until finished. */
-	while ((i < size + 2) && tx_pending) {
-		if (STM32_I2C_ISR(host_i2c_resp_port) & STM32_I2C_ISR_TXIS)
-			STM32_I2C_TXDR(host_i2c_resp_port) = host_buffer[i++];
-
-		/* I2C is slow, so let other things run while we wait */
-		usleep(50);
-	}
+	/* host_buffer data range */
+	tx_index = 0;
+	tx_end = size + 2;
 
 	/*
 	 * Set the transmitter to be in 'not full' state to keep sending
@@ -267,14 +262,40 @@ static void i2c_event_handler(int port)
 	if (i2c_isr & STM32_I2C_ISR_RXNE)
 		host_buffer[buf_idx++] = STM32_I2C_RXDR(port);
 
+	/* Master requested STOP or RESTART */
+	if (i2c_isr & STM32_I2C_ISR_NACK) {
+		/* Make sure TXIS interrupt is disabled */
+		STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
+		/* Clear NACK */
+		STM32_I2C_ICR(port) |= STM32_I2C_ICR_NACKCF;
+		/* Resend last byte on RESTART */
+		if (port == I2C_PORT_EC && tx_index)
+			tx_index--;
+	}
+
 	/* Transmitter empty event */
 	if (i2c_isr & STM32_I2C_ISR_TXIS) {
 		if (port == I2C_PORT_EC) { /* host is waiting for PD response */
-			if (rx_pending) {
+			if (tx_pending) {
+				if (tx_index < tx_end) {
+					STM32_I2C_TXDR(port) =
+						host_buffer[tx_index++];
+				} else {
+					STM32_I2C_TXDR(port) = 0xec;
+					/*
+					 * Set tx_index = 0 to prevent NACK
+					 * handler resending last buffer byte.
+					 */
+					tx_index = 0;
+					tx_end = 0;
+					/* No pending data */
+					tx_pending = 0;
+				}
+			} else if (rx_pending) {
 				host_i2c_resp_port = port;
 				/*
 				 * Disable TXIS interrupt, transmission will
-				 * be done by host command task.
+				 * be prepared by host command task.
 				 */
 				STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
 
@@ -300,6 +321,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 {
 	int rv = EC_SUCCESS;
 	int i;
+	int xfer_start = flags & I2C_XFER_START;
+	int xfer_stop = flags & I2C_XFER_STOP;
 
 #if defined(CONFIG_I2C_SCL_GATE_ADDR) && defined(CONFIG_I2C_SCL_GATE_PORT)
 	if (port == CONFIG_I2C_SCL_GATE_PORT &&
@@ -311,14 +334,17 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	ASSERT(in || !in_bytes);
 
 	/* Clear status */
-	STM32_I2C_ICR(port) = 0x3F38;
-	STM32_I2C_CR2(port) = 0;
+	if (xfer_start) {
+		STM32_I2C_ICR(port) = STM32_I2C_ICR_ALL;
+		STM32_I2C_CR2(port) = 0;
+	}
 
 	if (out_bytes || !in_bytes) {
 		/* Configure the write transfer */
 		STM32_I2C_CR2(port) =  ((out_bytes & 0xFF) << 16)
 			| slave_addr
-			| (in_bytes == 0 ? STM32_I2C_CR2_AUTOEND : 0);
+			| ((in_bytes == 0 && xfer_stop) ?
+				STM32_I2C_CR2_AUTOEND : 0);
 		/* let's go ... */
 		STM32_I2C_CR2(port) |= STM32_I2C_CR2_START;
 
@@ -338,9 +364,9 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		}
 		/* Configure the read transfer and (re)start */
 		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
-				    | STM32_I2C_CR2_RD_WRN | slave_addr
-				    | STM32_I2C_CR2_AUTOEND
-				    | STM32_I2C_CR2_START;
+			| STM32_I2C_CR2_RD_WRN | slave_addr
+			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
+			| STM32_I2C_CR2_START;
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
@@ -351,13 +377,15 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 			in[i] = STM32_I2C_RXDR(port);
 		}
 	}
-	rv = wait_isr(port, STM32_I2C_ISR_STOP);
+	rv = wait_isr(port, xfer_stop ? STM32_I2C_ISR_STOP : STM32_I2C_ISR_TC);
 	if (rv)
 		goto xfer_exit;
 
 xfer_exit:
 	/* clear status */
-	STM32_I2C_ICR(port) = 0x3F38;
+	if (xfer_stop)
+		STM32_I2C_ICR(port) = STM32_I2C_ICR_ALL;
+
 	/* On error, queue a stop condition */
 	if (rv) {
 		/* queue a STOP condition */
@@ -430,7 +458,8 @@ static void i2c_init(void)
 
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
-			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE;
+			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
+			| STM32_I2C_CR1_NACKIE;
 #if defined(CONFIG_LOW_POWER_IDLE) && (I2C_PORT_EC == STM32_I2C1_PORT)
 	/*
 	 * If using low power idle and EC port is I2C1, then set I2C1 to wake
