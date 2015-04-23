@@ -14,10 +14,12 @@
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
 
 enum pd_errors {
-	PD_ERR_INVAL = -1,      /* Invalid packet */
-	PD_ERR_HARD_RESET = -2, /* Got a Hard-Reset packet */
-	PD_ERR_CRC = -3,        /* CRC mismatch */
-	PD_ERR_ID = -4,         /* Invalid ID number */
+	PD_ERR_INVAL = -1,           /* Invalid packet */
+	PD_ERR_HARD_RESET = -2,      /* Got a Hard-Reset packet */
+	PD_ERR_CRC = -3,             /* CRC mismatch */
+	PD_ERR_ID = -4,              /* Invalid ID number */
+	PD_ERR_UNSUPPORTED_SOP = -5, /* Unsupported SOP */
+	PD_ERR_CABLE_RESET = -6      /* Got a Cable-Reset packet */
 };
 
 /* incoming packet event (for the USB PD task) */

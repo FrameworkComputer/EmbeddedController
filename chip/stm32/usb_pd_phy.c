@@ -180,7 +180,9 @@ int pd_find_preamble(int port)
 		if (all == 0x36db6db6)
 			return bit - 1; /* should be SYNC-1 */
 		if (all == 0xF33F3F3F)
-			return -2; /* got HARD-RESET */
+			return PD_ERR_HARD_RESET; /* got HARD-RESET */
+		if (all == 0x3c7fe0ff)
+			return PD_ERR_CABLE_RESET; /* got CABLE-RESET */
 	}
 	return -1;
 }

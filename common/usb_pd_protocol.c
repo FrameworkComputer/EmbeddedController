@@ -1449,9 +1449,9 @@ int pd_analyze_rx(int port, uint32_t *payload)
 
 	/* Detect preamble */
 	bit = pd_find_preamble(port);
-	if (bit == -2) {
-		/* Hard reset */
-		return -2;
+	if (bit == PD_ERR_HARD_RESET || bit == PD_ERR_CABLE_RESET) {
+		/* Hard reset or cable reset */
+		return bit;
 	} else if (bit < 0) {
 		msg = "Preamble";
 		goto packet_err;
@@ -1464,10 +1464,10 @@ int pd_analyze_rx(int port, uint32_t *payload)
 			break;
 		} else if (val == PD_SOP_PRIME) {
 			CPRINTF("SOP'\n");
-			return -5;
+			return PD_ERR_UNSUPPORTED_SOP;
 		} else if (val == PD_SOP_PRIME_PRIME) {
 			CPRINTF("SOP''\n");
-			return -5;
+			return PD_ERR_UNSUPPORTED_SOP;
 		}
 	}
 	if (bit < 0) {
