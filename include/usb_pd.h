@@ -22,8 +22,11 @@ enum pd_rx_errors {
 	PD_RX_ERR_CABLE_RESET = -6      /* Got a Cable-Reset packet */
 };
 
-/* incoming packet event (for the USB PD task) */
+/* incoming/outgoing packet event (for the USB PD task) */
 #define PD_EVENT_RX (1<<2)
+#define PD_EVENT_TX (1<<3)
+/* CC line change event */
+#define PD_EVENT_CC (1<<4)
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7
@@ -767,6 +770,13 @@ enum pd_data_msg_type {
 /* Vconn role */
 #define PD_ROLE_VCONN_OFF 0
 #define PD_ROLE_VCONN_ON  1
+
+/* Port role at startup */
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+#define PD_ROLE_DEFAULT PD_ROLE_SINK
+#else
+#define PD_ROLE_DEFAULT PD_ROLE_SOURCE
+#endif
 
 /* build message header */
 #define PD_HEADER(type, prole, drole, id, cnt) \
