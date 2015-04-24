@@ -184,7 +184,7 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 	 * externally powered bit, but we still need to charge from it when
 	 * we are a sink.
 	 */
-	return (vid == USB_VID_APPLE && pid == 0x1012);
+	return (vid == USB_VID_APPLE && (pid == 0x1012 || pid == 0x1013));
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
