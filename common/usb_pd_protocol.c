@@ -1932,7 +1932,8 @@ void pd_task(void)
 			/* Vnc monitoring */
 			cc1_volt = pd_adc_read(port, 0);
 			cc2_volt = pd_adc_read(port, 1);
-			if (!CC_NC(cc1_volt) || !CC_NC(cc2_volt)) {
+			if (CC_RD(cc1_volt) || CC_RD(cc2_volt) ||
+			    (CC_RA(cc1_volt) && CC_RA(cc2_volt))) {
 #ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* Enable VBUS */
 				if (pd_set_power_supply_ready(port))
@@ -1961,7 +1962,17 @@ void pd_task(void)
 			cc1_volt = pd_adc_read(port, 0);
 			cc2_volt = pd_adc_read(port, 1);
 
-			if (CC_NC(cc1_volt) && CC_NC(cc2_volt)) {
+			if (CC_RD(cc1_volt) && CC_RD(cc2_volt)) {
+				/* Debug accessory */
+				new_cc_state = PD_CC_DEBUG_ACC;
+			} else if (CC_RD(cc1_volt) || CC_RD(cc2_volt)) {
+				/* UFP attached */
+				new_cc_state = PD_CC_UFP_ATTACHED;
+			} else if (CC_RA(cc1_volt) && CC_RA(cc2_volt)) {
+				/* Audio accessory */
+				new_cc_state = PD_CC_AUDIO_ACC;
+			} else {
+				/* No UFP */
 #ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* No connection any more, remove VBUS */
 				pd_power_supply_reset(port);
@@ -1969,18 +1980,6 @@ void pd_task(void)
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				timeout = 5*MSEC;
 				break;
-			} else if (CC_RA(cc1_volt) && CC_RA(cc2_volt)) {
-				/* Audio accessory */
-				new_cc_state = PD_CC_AUDIO_ACC;
-			} else if (CC_RD(cc1_volt) && CC_RD(cc2_volt)) {
-				/* Debug accessory */
-				new_cc_state = PD_CC_DEBUG_ACC;
-			} else if (CC_RD(cc1_volt) || CC_RD(cc2_volt)) {
-				/* UFP attached */
-				new_cc_state = PD_CC_UFP_ATTACHED;
-			} else {
-				/* Powered cable, no UFP */
-				new_cc_state = PD_CC_NO_UFP;
 			}
 
 			/* Debounce the cc state */
