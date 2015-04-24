@@ -202,7 +202,16 @@ static void select_port(int port)
 
 static inline int get_line_level(int controller)
 {
-	return (MEC1322_I2C_BB_CTRL(controller) >> 5) & 0x3;
+	int ret, ctrl;
+	/*
+	* We need to enable BB (Bit Bang) mode in order to read line level
+	* properly, othervise line levels return always idle (0x60).
+	*/
+	ctrl = MEC1322_I2C_BB_CTRL(controller);
+	MEC1322_I2C_BB_CTRL(controller) |= 1;
+	ret = (MEC1322_I2C_BB_CTRL(controller) >> 5) & 0x3;
+	MEC1322_I2C_BB_CTRL(controller) = ctrl;
+	return ret;
 }
 
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
