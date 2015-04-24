@@ -71,6 +71,8 @@ BOARDS_STM32=(
 	mighty
 	minimuffin
 	nyan
+	oak
+	oak_pd
 	pinky
 	pit
 	plankton
@@ -273,7 +275,7 @@ function ec_uart() {
 # Servo variables management
 case "${BOARD}" in
 	ryu_sh ) MCU="sh" ;;
-	samus_pd ) MCU="usbpd" ;;
+	samus_pd|oak_pd ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
