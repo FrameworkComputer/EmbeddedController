@@ -45,7 +45,7 @@ void watchdog_init_warning_timer(void)
 	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
 }
 
-void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
 	/* Clear timeout status for event */

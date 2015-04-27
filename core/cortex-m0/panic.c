@@ -104,7 +104,7 @@ void panic_data_print(const struct panic_data *pdata)
 	print_reg(15, sregs, 6);
 }
 
-void report_panic(void)
+void __keep report_panic(void)
 {
 	struct panic_data *pdata = pdata_ptr;
 	uint32_t sp;
@@ -139,7 +139,7 @@ void report_panic(void)
  *
  * Declare this as a naked call so we can extract raw LR and IPSR values.
  */
-void exception_panic(void) __attribute__((naked));
+__keep void exception_panic(void) __attribute__((naked));
 void exception_panic(void)
 {
 	/* Save registers and branch directly to panic handler */

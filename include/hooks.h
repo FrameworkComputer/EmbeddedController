@@ -231,7 +231,7 @@ int hook_call_deferred(void (*routine)(void), int us);
  *			order in which hooks are called.
  */
 #define DECLARE_HOOK(hooktype, routine, priority)			\
-	const struct hook_data CONCAT4(__hook_, hooktype, _, routine)	\
+	const struct hook_data __keep CONCAT4(__hook_, hooktype, _, routine) \
 	__attribute__((section(".rodata." STRINGIFY(hooktype))))	\
 	     = {routine, priority}
 

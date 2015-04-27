@@ -5,6 +5,8 @@
  * Software emulation for CLZ instruction
  */
 
+#include "common.h"
+
 /**
  * Count leading zeros
  *
@@ -12,7 +14,7 @@
  * @return the number of leading 0-bits in x,
  * starting at the most significant bit position.
  */
-int __clzsi2(int x)
+int __keep __clzsi2(int x)
 {
 	int r = 0;
 

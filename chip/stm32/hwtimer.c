@@ -372,7 +372,7 @@ int __hw_clock_source_init(uint32_t start_t)
 
 #ifdef CONFIG_WATCHDOG_HELP
 
-void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	struct timer_ctlr *timer = (struct timer_ctlr *)TIM_WD_BASE;
 

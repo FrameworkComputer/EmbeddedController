@@ -11,14 +11,14 @@
 #include "ec_version.h"
 #include "version.h"
 
-const struct version_struct version_data
+const struct version_struct __keep version_data
 	__attribute__((section(".rodata.ver"))) = {
 	CROS_EC_VERSION_COOKIE1,
 	CROS_EC_VERSION32,
 	CROS_EC_VERSION_COOKIE2
 };
 
-const char build_info[] __attribute__((section(".rodata.buildinfo")))  =
+const char build_info[] __keep __attribute__((section(".rodata.buildinfo"))) =
 	CROS_EC_VERSION " " DATE " " BUILDER;
 
 uint32_t ver_get_numcommits(void)

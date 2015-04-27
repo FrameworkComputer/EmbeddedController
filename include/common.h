@@ -58,6 +58,16 @@
 #define __packed __attribute__((packed))
 #endif
 
+/*
+ * Force the toolchain to keep a symbol even with Link Time Optimization
+ * activated.
+ *
+ * Useful for C functions called only from assembly or through special sections.
+ */
+#ifndef __keep
+#define __keep __attribute__((used)) __attribute__((externally_visible))
+#endif
+
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
 #define K_TO_C(temp_c) ((temp_c) - 273)

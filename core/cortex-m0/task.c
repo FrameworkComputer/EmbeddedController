@@ -181,7 +181,7 @@ int task_start_called(void)
 /**
  * Scheduling system call
  */
-task_ *__svc_handler(int desched, task_id_t resched)
+task_  __attribute__((noinline)) *__svc_handler(int desched, task_id_t resched)
 {
 	task_ *current, *next;
 #ifdef CONFIG_TASK_PROFILING

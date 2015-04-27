@@ -24,6 +24,7 @@
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #define DECLARE_IRQ_(irq, routine, priority)                    \
 	void IRQ_HANDLER(irq)(void) __attribute__((naked));	\
+	void __keep routine(void);				\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
 		asm volatile("mov r0, lr\n"			\

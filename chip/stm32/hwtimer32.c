@@ -189,7 +189,7 @@ int __hw_clock_source_init(uint32_t start_t)
 
 #define IRQ_WD IRQ_TIM(TIM_WATCHDOG)
 
-void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	/* clear status */
 	STM32_TIM_SR(TIM_WATCHDOG) = 0;

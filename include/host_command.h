@@ -209,7 +209,7 @@ void host_packet_receive(struct host_packet *pkt);
 
 /* Register a host command handler */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	const struct host_command __host_cmd_##command			\
+	const struct host_command __keep __host_cmd_##command		\
 	__attribute__((section(".rodata.hcmds")))			\
 	     = {routine, command, version_mask}
 

@@ -284,7 +284,7 @@ void __schedule(int desched, int resched)
 }
 
 #ifdef CONFIG_TASK_PROFILING
-void task_start_irq_handler(void *excep_return)
+void __keep task_start_irq_handler(void *excep_return)
 {
 	/*
 	 * Get time before checking depth, in case this handler is
@@ -312,7 +312,7 @@ void task_start_irq_handler(void *excep_return)
 }
 #endif
 
-void task_resched_if_needed(void *excep_return)
+void __keep task_resched_if_needed(void *excep_return)
 {
 	/*
 	 * Continue iff a rescheduling event happened or profiling is active,
@@ -414,7 +414,7 @@ void task_enable_irq(int irq)
 	CPU_NVIC_EN(irq / 32) = 1 << (irq % 32);
 }
 
-void task_disable_irq(int irq)
+void __keep task_disable_irq(int irq)
 {
 	CPU_NVIC_DIS(irq / 32) = 1 << (irq % 32);
 }

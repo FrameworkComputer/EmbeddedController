@@ -12,7 +12,7 @@
 #include "uart.h"
 #include "watchdog.h"
 
-void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
+void __keep watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 {
 	uint32_t psp;
 	uint32_t *stack;

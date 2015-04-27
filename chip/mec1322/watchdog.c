@@ -73,7 +73,7 @@ int watchdog_init(void)
 }
 
 #ifdef CONFIG_WATCHDOG_HELP
-void watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
+void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	/* Clear status */
 	MEC1322_TMR16_STS(0) |= 1;

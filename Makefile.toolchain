@@ -55,7 +55,7 @@ LIBFTDI_LDLIBS=$(shell $(PKG_CONFIG) --libs   lib${LIBFTDI_NAME})
 
 BUILD_CFLAGS= $(LIBFTDI_CFLAGS) $(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN)
 HOST_CFLAGS=$(CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) -DHOST_TOOLS_BUILD
-LDFLAGS=-nostdlib -Wl,-X -Wl,--gc-sections -Wl,--build-id=none
+LDFLAGS=-nostdlib -Wl,-X -Wl,--gc-sections -Wl,--build-id=none $(LDFLAGS_EXTRA)
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
 HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,)

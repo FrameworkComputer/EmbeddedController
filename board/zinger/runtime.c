@@ -216,7 +216,7 @@ uint32_t task_wait_event(int timeout_us)
 	return evt;
 }
 
-void cpu_reset(void)
+void __keep cpu_reset(void)
 {
 	/* Disable interrupts */
 	asm volatile("cpsid i");

@@ -13,6 +13,11 @@ CROSS_COMPILE?=arm-none-eabi-
 CFLAGS_CPU+=-mthumb -Os -mno-sched-prolog
 CFLAGS_CPU+=-mno-unaligned-access
 
+ifneq ($(CONFIG_LTO),)
+CFLAGS_CPU+=-flto
+LDFLAGS_EXTRA+=-flto
+endif
+
 core-y=cpu.o init.o thumb_case.o div.o lmul.o ldivmod.o uldivmod.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o

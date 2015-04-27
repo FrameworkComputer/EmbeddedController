@@ -33,7 +33,7 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-test_mockable int main(void)
+test_mockable __keep int main(void)
 {
 	/*
 	 * Pre-initialization (pre-verified boot) stage.  Initialization at

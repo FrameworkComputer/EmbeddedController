@@ -115,7 +115,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 /*****************************************************************************/
 /* Interrupt handler */
 
-void gpio_interrupt(void)
+void __keep gpio_interrupt(void)
 {
 	int bit;
 	/* process only GPIO EXTINTs (EXTINT0..15) not other EXTINTs */

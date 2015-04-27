@@ -970,6 +970,9 @@
 /* Support LPC interface */
 #undef CONFIG_LPC
 
+/* Use Link-Time Optimizations to try to reduce the firmware code size */
+#undef CONFIG_LTO
+
 /* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMI160. */
 #undef CONFIG_MAG_BMI160_BMM150
 
