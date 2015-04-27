@@ -31,7 +31,7 @@ GPIO(PCH_SCI_L,         PORT(2),  6, GPIO_ODR_HIGH)                 /* SCI outpu
 
 GPIO(VOLUME_UP,         PORT(3),  1, GPIO_INT_FALLING)              /* Volume up button */
 GPIO(VOLUME_DOWN,       PORT(3),  4, GPIO_INT_FALLING)              /* Volume down button */
-GPIO(USB2_ENABLE,       PORT(3),  6, GPIO_OUT_HIGH)                 /* Enable power for USB2 Port */
+GPIO(USB2_PWR_EN,       PORT(3),  6, GPIO_OUT_LOW)                  /* Enable power for USB2 Port */
 
 GPIO(ENTERING_RW,       PORT(4),  1, GPIO_OUT_LOW)                  /* Indicate when EC is entering RW code */
 GPIO(PCH_SMI_L,         PORT(4),  4, GPIO_ODR_HIGH)                 /* SMI output */
@@ -53,7 +53,7 @@ GPIO(TEMP_SENSOR_3,     PORT(6),  2, GPIO_INPUT)                    /*  */
 GPIO(USBPD_BST_OFF,     PORT(6),  4, GPIO_OUT_HIGH)                 /* USB PD Boost Enable */
 GPIO(PCH_SYS_PWROK,     PORT(6),  5, GPIO_OUT_LOW)                  /* EC thinks everything is up and ready (DELAY_ALL_SYS_PWRGD) */
 GPIO(PCH_WAKE_L,        PORT(6),  6, GPIO_ODR_HIGH)                 /* PCH wake pin */
-GPIO(USB1_ENABLE,       PORT(6),  7, GPIO_OUT_HIGH)                 /* Enable power for USB3 Port */
+GPIO(USB3_PWR_EN,       PORT(6),  7, GPIO_OUT_LOW)                  /* Enable power for USB3 Port */
 
 GPIO(USB_CTL1,          PORT(10), 5, GPIO_OUT_HIGH)                 /* USB charging mode control */
 
