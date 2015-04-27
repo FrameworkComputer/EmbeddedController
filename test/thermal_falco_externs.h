@@ -9,7 +9,7 @@
 /* Normally private symbols from the modules that we're testing. */
 extern struct adapter_limits
 	ad_limits[][NUM_AC_TURBO_STATES][NUM_AC_THRESHOLDS];
-extern int ap_is_throttled;
+extern uint32_t ap_is_throttled;
 extern struct adapter_limits batt_limits[NUM_BATT_THRESHOLDS];
 
 #endif	/* __THERMAL_FALCO_EXTERNS_H */

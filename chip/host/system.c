@@ -17,7 +17,7 @@
 #include "util.h"
 
 #define SHARED_MEM_SIZE 512 /* bytes */
-char __shared_mem_buf[SHARED_MEM_SIZE];
+uint8_t __shared_mem_buf[SHARED_MEM_SIZE];
 
 #define RAM_DATA_SIZE (sizeof(struct panic_data) + 512) /* bytes */
 static char __ram_data[RAM_DATA_SIZE];

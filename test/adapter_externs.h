@@ -13,7 +13,7 @@ extern struct adapter_id_vals ad_id_vals[];
 extern struct adapter_limits
 	ad_limits[][NUM_AC_TURBO_STATES][NUM_AC_THRESHOLDS];
 extern int ac_turbo;
-extern int ap_is_throttled;
+extern uint32_t ap_is_throttled;
 extern void check_threshold(int current, struct adapter_limits *lim);
 extern struct adapter_limits batt_limits[NUM_BATT_THRESHOLDS];
 extern void watch_battery_closely(struct charge_state_context *ctx);
