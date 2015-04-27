@@ -36,9 +36,9 @@ static int init_done;
 static struct ec_lpc_host_args * const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
 
-#ifdef CONFIG_KEYBOARD_IRQ_GPIO
 static void keyboard_irq_assert(void)
 {
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
 	/*
 	 * Enforce signal-high for long enough for the signal to be pulled high
 	 * by the external pullup resistor.  This ensures the host will see the
@@ -53,15 +53,12 @@ static void keyboard_irq_assert(void)
 
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
-}
 #else
-static void keyboard_irq_assert(void)
-{
 	/*
-	 * TODO(crosbug.com/p/24107): Implement SER_IRQ
+	 * SERIRQ is automatically sent by KBC
 	 */
-}
 #endif
+}
 
 /**
  * Generate SMI pulse to the host chipset via GPIO.
@@ -221,7 +218,11 @@ static void setup_lpc(void)
 	task_enable_irq(MEC1322_IRQ_8042EM_IBF);
 	task_enable_irq(MEC1322_IRQ_8042EM_OBF);
 
-	/* TODO(crosbug.com/p/24107): Route KIRQ to SER_IRQ1 */
+#ifndef CONFIG_KEYBOARD_IRQ_GPIO
+	/* Set up SERIRQ for keyboard */
+	MEC1322_8042_KB_CTRL |= (1 << 5);
+	MEC1322_LPC_SIRQ(1) = 0x01;
+#endif
 
 	/* Set up EMI module for memory mapped region, base address 0x800 */
 	MEC1322_LPC_EMI_BAR = 0x0800800f;
