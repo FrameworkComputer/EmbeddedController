@@ -147,13 +147,13 @@ static void print_packet(int head, uint32_t *payload)
 	ccputs("\n");
 }
 
-static void print_error(enum pd_errors err)
+static void print_error(enum pd_rx_errors err)
 {
-	if (err == PD_ERR_INVAL)
+	if (err == PD_RX_ERR_INVAL)
 		ccprintf("%T TMOUT\n");
-	else if (err == PD_ERR_HARD_RESET)
+	else if (err == PD_RX_ERR_HARD_RESET)
 		ccprintf("%T HARD-RST\n");
-	else if (err == -5)
+	else if (err == PD_RX_ERR_UNSUPPORTED_SOP)
 		ccprintf("%T SOP*\n");
 	else
 		ccprintf("ERR %d\n", err);

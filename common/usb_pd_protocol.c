@@ -1449,7 +1449,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 
 	/* Detect preamble */
 	bit = pd_find_preamble(port);
-	if (bit == PD_ERR_HARD_RESET || bit == PD_ERR_CABLE_RESET) {
+	if (bit == PD_RX_ERR_HARD_RESET || bit == PD_RX_ERR_CABLE_RESET) {
 		/* Hard reset or cable reset */
 		return bit;
 	} else if (bit < 0) {
@@ -1464,10 +1464,10 @@ int pd_analyze_rx(int port, uint32_t *payload)
 			break;
 		} else if (val == PD_SOP_PRIME) {
 			CPRINTF("SOP'\n");
-			return PD_ERR_UNSUPPORTED_SOP;
+			return PD_RX_ERR_UNSUPPORTED_SOP;
 		} else if (val == PD_SOP_PRIME_PRIME) {
 			CPRINTF("SOP''\n");
-			return PD_ERR_UNSUPPORTED_SOP;
+			return PD_RX_ERR_UNSUPPORTED_SOP;
 		}
 	}
 	if (bit < 0) {
@@ -1507,7 +1507,7 @@ int pd_analyze_rx(int port, uint32_t *payload)
 	if (bit < 0 || pcrc != ccrc) {
 		msg = "CRC";
 		if (pcrc != ccrc)
-			bit = PD_ERR_CRC;
+			bit = PD_RX_ERR_CRC;
 		if (debug_level >= 1)
 			CPRINTF("CRC%d %08x <> %08x\n", port, pcrc, ccrc);
 		goto packet_err;
@@ -1914,7 +1914,7 @@ void pd_task(void)
 			pd_rx_complete(port);
 			if (head > 0)
 				handle_request(port,  head, payload);
-			else if (head == PD_ERR_HARD_RESET)
+			else if (head == PD_RX_ERR_HARD_RESET)
 				execute_hard_reset(port);
 		} else {
 			incoming_packet = 0;
