@@ -20,6 +20,7 @@
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
 #undef CONFIG_LID_SWITCH
+#define CONFIG_SHA256
 #define CONFIG_STM_HWTIMER32
 #undef CONFIG_TASK_PROFILING
 #define CONFIG_USB
@@ -28,6 +29,10 @@
 #undef CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
 #undef CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR USB_PD_HW_DEV_ID_HONEYBUNS
+#define CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR 0
+#define CONFIG_USB_PD_IDENTITY_HW_VERS 1
+#define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
@@ -36,13 +41,12 @@
 #define CONFIG_USBC_VCONN
 #undef CONFIG_WATCHDOG_HELP
 
-
-
 /* I2C ports configuration */
 #define I2C_PORT_MASTER 0
 
 /* USB configuration */
 #define CONFIG_USB_PID 0x5015
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 /* By default, enable all console messages excepted USB */
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_USB))
 
@@ -102,6 +106,9 @@ enum usb_strings {
 
 /* Enable/disable USB Hub */
 void hx3_enable(int enable);
+
+/* DisplayPort hotplug detection interrupt */
+void hpd_event(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -576,6 +576,13 @@ struct pd_policy {
 
 #define PD_DP_CFG_DPON(x) (((x & 0x3) == 1) || ((x & 0x3) == 2))
 /*
+ * Get the pin assignment mask
+ * for backward compatibility, if it is null,
+ * get the former sink pin assignment we used to be in <23:16>.
+ */
+#define PD_DP_CFG_PIN(x) ((((x) >> 8) & 0xff) ? (((x) >> 8) & 0xff) \
+					      : (((x) >> 16) & 0xff))
+/*
  * ChromeOS specific PD device Hardware IDs. Used to identify unique
  * products and used in VDO_INFO. Note this field is 10 bits.
  */
@@ -584,6 +591,7 @@ struct pd_policy {
 #define USB_PD_HW_DEV_ID_MINIMUFFIN  2
 #define USB_PD_HW_DEV_ID_DINGDONG    3
 #define USB_PD_HW_DEV_ID_HOHO        4
+#define USB_PD_HW_DEV_ID_HONEYBUNS   5
 
 /*
  * ChromeOS specific VDO_CMD_READ_INFO responds with device info including:

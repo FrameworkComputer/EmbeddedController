@@ -6,6 +6,7 @@
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -13,6 +14,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb.h"
 #include "usb_pd.h"
 
 
@@ -162,111 +164,184 @@ int pd_alt_mode(int port, uint16_t svid)
 	return 0;
 }
 
-
 /* ----------------- Vendor Defined Messages ------------------ */
-/* TODO () The VDM section needs to be updated for honeybuns */
+const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
+				 1, /* data caps as USB device */
+				 IDH_PTYPE_AMA, /* Alternate mode */
+				 1, /* supports alt modes */
+				 USB_VID_GOOGLE);
+
+const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
+
+const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
+				 CONFIG_USB_PD_IDENTITY_SW_VERS,
+				 0, 0, 0, 0, /* SS[TR][12] */
+				 0, /* Vconn power */
+				 0, /* Vconn power required */
+				 0, /* Vbus power required */
+				 AMA_USBSS_U31_GEN1 /* USB SS support */);
+
+static int svdm_response_identity(int port, uint32_t *payload)
+{
+	payload[VDO_I(IDH)] = vdo_idh;
+	payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
+	payload[VDO_I(PRODUCT)] = vdo_product;
+	payload[VDO_I(AMA)] = vdo_ama;
+	return VDO_I(AMA) + 1;
+}
+
+static int svdm_response_svids(int port, uint32_t *payload)
+{
+	payload[1] = VDO_SVID(USB_SID_DISPLAYPORT, USB_VID_GOOGLE);
+	payload[2] = 0;
+	return 3;
+}
+
+#define OPOS_DP 1
+#define OPOS_GFU 1
+
+const uint32_t vdo_dp_modes[1] =  {
+	VDO_MODE_DP(0,		   /* UFP pin cfg supported : none */
+		    MODE_DP_PIN_C | MODE_DP_PIN_D, /* DFP pin cfg supported */
+		    0,		   /* usb2.0 signalling even in AMode */
+		    CABLE_PLUG,    /* its a plug */
+		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
+		    MODE_DP_SNK)   /* Its a sink only */
+};
+
+const uint32_t vdo_goog_modes[1] =  {
+	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
+};
+
+static int svdm_response_modes(int port, uint32_t *payload)
+{
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) {
+		memcpy(payload + 1, vdo_dp_modes, sizeof(vdo_dp_modes));
+		return ARRAY_SIZE(vdo_dp_modes) + 1;
+	} else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) {
+		memcpy(payload + 1, vdo_goog_modes, sizeof(vdo_goog_modes));
+		return ARRAY_SIZE(vdo_goog_modes) + 1;
+	} else {
+		return 0; /* nak */
+	}
+}
+
+static int dp_status(int port, uint32_t *payload)
+{
+	int opos = PD_VDO_OPOS(payload[0]);
+	int hpd = gpio_get_level(GPIO_DP_HPD);
+	if (opos != OPOS_DP)
+		return 0; /* nak */
+
+	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
+				   (hpd == 1),       /* HPD_HI|LOW */
+				   0,		     /* request exit DP */
+				   0,		     /* request exit USB */
+				   1,		     /* MF pref */
+				   gpio_get_level(GPIO_PD_SBU_ENABLE),
+				   0,		     /* power low */
+				   0x2);
+	return 2;
+}
+
+static int dp_config(int port, uint32_t *payload)
+{
+	/* is it a 2+2 or 4 DP lanes mode ? */
+	enum typec_mux mux = PD_DP_CFG_PIN(payload[1]) & MODE_DP_PIN_MF_MASK ?
+				TYPEC_MUX_DOCK : TYPEC_MUX_DP;
+
+	if (PD_DP_CFG_DPON(payload[1]))
+		gpio_set_level(GPIO_PD_SBU_ENABLE, 1);
+	/* Get the DP lanes (or DP+USB SS depending on the mode) */
+	board_set_usb_mux(port, mux, USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	return 1;
+}
+
+static int svdm_enter_mode(int port, uint32_t *payload)
+{
+	int rv = 0; /* will generate a NAK */
+
+	/* SID & mode request is valid */
+	if ((PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) &&
+	    (PD_VDO_OPOS(payload[0]) == OPOS_DP)) {
+		alt_mode[PD_AMODE_DISPLAYPORT] = OPOS_DP;
+		rv = 1;
+		pd_log_event(PD_EVENT_VIDEO_DP_MODE, 0, 1, NULL);
+	} else if ((PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) &&
+		   (PD_VDO_OPOS(payload[0]) == OPOS_GFU)) {
+		alt_mode[PD_AMODE_GOOGLE] = OPOS_GFU;
+		rv = 1;
+	}
+
+	if (rv)
+		/*
+		 * If we failed initial mode entry we'll have enumerated the USB
+		 * Billboard class.  If so we should disconnect.
+		 */
+		usb_disconnect();
+
+	return rv;
+}
+
+static int svdm_exit_mode(int port, uint32_t *payload)
+{
+	if (PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) {
+		gpio_set_level(GPIO_PD_SBU_ENABLE, 0);
+		alt_mode[PD_AMODE_DISPLAYPORT] = 0;
+		pd_log_event(PD_EVENT_VIDEO_DP_MODE, 0, 0, NULL);
+	} else if (PD_VDO_VID(payload[0]) == USB_VID_GOOGLE) {
+		alt_mode[PD_AMODE_GOOGLE] = 0;
+	} else {
+		CPRINTF("Unknown exit mode req:0x%08x\n", payload[0]);
+	}
+
+	return 1; /* Must return ACK */
+}
+
+static struct amode_fx dp_fx = {
+	.status = &dp_status,
+	.config = &dp_config,
+};
+
 const struct svdm_response svdm_rsp = {
-	.identity = NULL,
-	.svids = NULL,
-	.modes = NULL,
+	.identity = &svdm_response_identity,
+	.svids = &svdm_response_svids,
+	.modes = &svdm_response_modes,
+	.enter_mode = &svdm_enter_mode,
+	.amode = &dp_fx,
+	.exit_mode = &svdm_exit_mode,
 };
 
 int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		  uint32_t **rpayload)
 {
-	int cmd = PD_VDO_CMD(payload[0]);
-	uint16_t dev_id = 0;
+	int rsize;
 
-	/* make sure we have some payload */
-	if (cnt == 0)
+	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE ||
+	    !alt_mode[PD_AMODE_GOOGLE])
 		return 0;
 
-	switch (cmd) {
-	case VDO_CMD_VERSION:
-		/* guarantee last byte of payload is null character */
-		*(payload + cnt - 1) = 0;
-		CPRINTF("version: %s\n", (char *)(payload+1));
-		break;
-	case VDO_CMD_READ_INFO:
-	case VDO_CMD_SEND_INFO:
-		/* if last word is present, it contains lots of info */
-		if (cnt == 7) {
-			dev_id = VDO_INFO_HW_DEV_ID(payload[6]);
-			CPRINTF("DevId:%d.%d SW:%d RW:%d\n",
-				HW_DEV_ID_MAJ(dev_id),
-				HW_DEV_ID_MIN(dev_id),
-				VDO_INFO_SW_DBG_VER(payload[6]),
-				VDO_INFO_IS_RW(payload[6]));
+	*rpayload = payload;
+
+	rsize = pd_custom_flash_vdm(port, cnt, payload);
+	if (!rsize) {
+		int cmd = PD_VDO_CMD(payload[0]);
+		switch (cmd) {
+#ifdef CONFIG_USB_PD_LOGGING
+		case VDO_CMD_GET_LOG:
+			rsize = pd_vdm_get_log_entry(payload);
+			break;
+#endif
+		default:
+			/* Unknown : do not answer */
+			return 0;
 		}
-		/* copy hash */
-		if (cnt >= 6)
-			pd_dev_store_rw_hash(port, dev_id, payload + 1,
-					     SYSTEM_IMAGE_UNKNOWN);
-
-		break;
 	}
 
-	return 0;
+	/* respond (positively) to the request */
+	payload[0] |= VDO_SRC_RESPONDER;
+
+	return rsize;
 }
 
-static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
-{
-	/* Only enter mode if device is DFP_D capable */
-	if (mode_caps & MODE_DP_SNK) {
-		CPRINTF("Entering mode w/ vdo = %08x\n", mode_caps);
-		return 0;
-	}
-
-	return -1;
-}
-
-static int dp_on;
-
-static int svdm_dp_status(int port, uint32_t *payload)
-{
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS);
-	payload[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
-				   0, /* HPD level ... not applicable */
-				   0, /* exit DP? ... no */
-				   0, /* usb mode? ... no */
-				   0, /* multi-function ... no */
-				   dp_on,
-				   0, /* power low? ... no */
-				   dp_on);
-	return 2;
-};
-
-static int svdm_dp_config(int port, uint32_t *payload)
-{
-	board_set_usb_mux(port, TYPEC_MUX_DP, USB_SWITCH_CONNECT,
-			  pd_get_polarity(port));
-	dp_on = 1;
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG);
-	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);	       /* UFP connected */
-	return 2;
-};
-
-static int svdm_dp_attention(int port, uint32_t *payload)
-{
-	return 1; /* ack */
-}
-
-static void svdm_exit_dp_mode(int port)
-{
-	CPRINTF("Exiting mode\n");
-	/* return to safe config */
-}
-
-const struct svdm_amode_fx supported_modes[] = {
-	{
-		.svid = USB_SID_DISPLAYPORT,
-		.enter = &svdm_enter_dp_mode,
-		.status = &svdm_dp_status,
-		.config = &svdm_dp_config,
-		.attention = &svdm_dp_attention,
-		.exit = &svdm_exit_dp_mode,
-	},
-};
-const int supported_modes_cnt = ARRAY_SIZE(supported_modes);

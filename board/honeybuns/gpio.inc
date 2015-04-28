@@ -5,8 +5,7 @@
  * found in the LICENSE file.
  */
 
-/*GPIO_INT(DP_HPD,            PIN(A, 0),  GPIO_INT_BOTH, hpd_event)*/
-GPIO(DP_HPD,            PIN(A, 0),  GPIO_INPUT)
+GPIO_INT(DP_HPD,        PIN(A, 0),  GPIO_INT_BOTH, hpd_event)
 
 /* PD RX/TX */
 GPIO(USB_CC1_PD,        PIN(A, 1),  GPIO_ANALOG)
