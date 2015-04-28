@@ -307,16 +307,14 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
+#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
 static void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
-	if (port)
-		gpio_set_level(GPIO_USB_C1_DP_HPD, 1);
-	else
-		gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
+	gpio_set_level(PORT_TO_HPD(port), 1);
 }
 
 static void hpd0_irq_deferred(void)
@@ -331,8 +329,8 @@ static void hpd1_irq_deferred(void)
 
 DECLARE_DEFERRED(hpd0_irq_deferred);
 DECLARE_DEFERRED(hpd1_irq_deferred);
-
-#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
+#define PORT_TO_HPD_IRQ_DEFERRED(port) ((port) ? hpd1_irq_deferred : \
+					hpd0_irq_deferred)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
@@ -352,10 +350,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	if (irq & cur_lvl) {
 		gpio_set_level(hpd, 0);
 		/* 250 usecs is minimum, 2msec is max */
-		if (port)
-			hook_call_deferred(hpd1_irq_deferred, 300);
-		else
-			hook_call_deferred(hpd0_irq_deferred, 300);
+		hook_call_deferred(PORT_TO_HPD_IRQ_DEFERRED(port), 300);
 	} else if (irq & !cur_lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
