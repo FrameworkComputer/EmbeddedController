@@ -487,12 +487,22 @@ struct pd_policy {
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
 	 | ((sdir) & 0x3))
+#define PD_VDO_MODE_DP_SNKP(x) (((x) >> 16) & 0x3f)
+#define PD_VDO_MODE_DP_SRCP(x) (((x) >> 8) & 0x3f)
 
 #define MODE_DP_PIN_A 0x01
 #define MODE_DP_PIN_B 0x02
 #define MODE_DP_PIN_C 0x04
 #define MODE_DP_PIN_D 0x08
 #define MODE_DP_PIN_E 0x10
+#define MODE_DP_PIN_F 0x20
+
+/* Pin configs B/D/F support multi-function */
+#define MODE_DP_PIN_MF_MASK 0x2a
+/* Pin configs A/B support BR2 signaling levels */
+#define MODE_DP_PIN_BR2_MASK 0x3
+/* Pin configs C/D/E/F support DP signaling levels */
+#define MODE_DP_PIN_DP_MASK 0x3c
 
 #define MODE_DP_V13  0x1
 #define MODE_DP_GEN2 0x2
@@ -520,8 +530,9 @@ struct pd_policy {
 	 | ((usbc) & 1) << 5 | ((mf) & 1) << 4 | ((en) & 1) << 3	\
 	 | ((lp) & 1) << 2 | ((conn & 0x3) << 0))
 
-#define PD_VDO_HPD_IRQ(x) ((x >> 8) & 1)
-#define PD_VDO_HPD_LVL(x) ((x >> 7) & 1)
+#define PD_VDO_DPSTS_HPD_IRQ(x) (((x) >> 8) & 1)
+#define PD_VDO_DPSTS_HPD_LVL(x) (((x) >> 7) & 1)
+#define PD_VDO_DPSTS_MF_PREF(x) (((x) >> 4) & 1)
 
 #define HPD_DEBOUNCE_LVL (100*MSEC)
 #define HPD_DEBOUNCE_IRQ (2*MSEC)
@@ -1017,6 +1028,15 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload);
  * @return vdm for UFP to be sent to enter mode or zero if not.
  */
 uint32_t pd_dfp_enter_mode(int port, uint16_t svid, int opos);
+
+/**
+ *  Get DisplayPort pin mode for DFP to request from UFP's capabilities.
+ *
+ * @param port     USB-C port number.
+ * @param status   DisplayPort Status VDO.
+ * @return one-hot PIN config to request.
+ */
+int pd_dfp_dp_get_pin_mode(int port, uint32_t status);
 
 /**
  * Exit alternate mode on DFP
