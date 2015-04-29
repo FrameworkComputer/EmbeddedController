@@ -250,13 +250,12 @@ int usb_vprintf(const char *format, va_list args)
 	int ret;
 	int tx_idx = 0;
 
-	ret = usb_wait_console();
-	if (ret)
-		return ret;
-
 	ret = vfnprintf(__tx_char, &tx_idx, format, args);
-
-	usb_enable_tx(tx_idx);
+	if (!ret && is_reset) {
+		ret = usb_wait_console();
+		if (!ret)
+			usb_enable_tx(tx_idx);
+	}
 	return ret;
 }
 

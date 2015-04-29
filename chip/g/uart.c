@@ -21,6 +21,9 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
+	if (!uart_init_done())
+		return;
+
 	/* If interrupt is already enabled, nothing to do */
 	if (GR_UART_ICTRL(0) & GC_UART_ICTRL_TX_MASK)
 		return;
