@@ -362,8 +362,8 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 	if (irq & cur_lvl) {
 		gpio_set_level(hpd, 0);
-		/* 250 usecs is minimum, 2msec is max */
-		hook_call_deferred(PORT_TO_HPD_IRQ_DEFERRED(port), 300);
+		hook_call_deferred(PORT_TO_HPD_IRQ_DEFERRED(port),
+				   HPD_DEBOUNCE_IRQ);
 	} else if (irq & !cur_lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
