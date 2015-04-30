@@ -59,8 +59,8 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_LID_ANGLE
-#define CONFIG_SENSOR_BASE	0
-#define CONFIG_SENSOR_LID	1
+#define CONFIG_LID_ANGLE_SENSOR_BASE	0
+#define CONFIG_LID_ANGLE_SENSOR_LID	1
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM

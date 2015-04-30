@@ -52,8 +52,8 @@
 
 /* Motion */
 #define CONFIG_ACCEL_KXCJ9
-#define CONFIG_SENSOR_BASE 0
-#define CONFIG_SENSOR_LID 1
+#define CONFIG_LID_ANGLE_SENSOR_BASE 0
+#define CONFIG_LID_ANGLE_SENSOR_LID 1
 #define CONFIG_LID_ANGLE
 
 /* Modules we want to exclude */

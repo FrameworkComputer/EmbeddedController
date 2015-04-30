@@ -660,10 +660,13 @@
 
 /*****************************************************************************/
 /* Motion sensor based gesture recognition information */
+/* These all require HAS_TASK_MOTIONSENSE to work */
+
+/* Do we want to detect gestures? */
 #undef CONFIG_GESTURE_DETECTION
-#ifndef CONFIG_GESTURE_DETECTION
+
 /* Which sensor to look for gesture recognition */
-#undef CONFIG_SENSOR_BATTERY_TAP
+#undef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 /* Sensor sampling interval for gesture recognition */
 #undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
 /*
@@ -682,23 +685,20 @@
 #undef CONFIG_GESTURE_TAP_MIN_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_MAX_INTERSTICE_T
 
-#endif
-
+/* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE
-#ifndef CONFIG_LID_ANGLE
-#undef CONFIG_SENSOR_BASE
-#undef CONFIG_SENSOR_LID
 
+/* Which sensor is located on the base? */
+#undef CONFIG_LID_ANGLE_SENSOR_BASE
+/* Which sensor is located on the lid? */
+#undef CONFIG_LID_ANGLE_SENSOR_LID
 /*
  * Allows using the lid angle measurement to determine if key scanning should
  * be enabled or disabled when chipset is suspended.
  */
 #undef CONFIG_LID_ANGLE_KEY_SCAN
 
-#endif
-
 /*****************************************************************************/
-
 /*
  * Support the host asking the EC about the status of the most recent host
  * command.

@@ -47,8 +47,10 @@ static int lid_angle_is_reliable;
 /* Pointer to constant acceleration orientation data. */
 const struct accel_orientation * const p_acc_orient = &acc_orient;
 
-struct motion_sensor_t *accel_base = &motion_sensors[CONFIG_SENSOR_BASE];
-struct motion_sensor_t *accel_lid = &motion_sensors[CONFIG_SENSOR_LID];
+struct motion_sensor_t *accel_base =
+	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
+struct motion_sensor_t *accel_lid =
+	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
