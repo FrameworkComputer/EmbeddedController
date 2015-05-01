@@ -55,37 +55,80 @@ static int command_read_word(int argc, char **argv)
 {
 	volatile uint32_t *address;
 	uint32_t value;
+	unsigned access_size = 4;
+	unsigned argc_offs = 0;
 	char *e;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	address = (uint32_t *)(uintptr_t)strtoi(argv[1], &e, 0);
+	if (argc > 2) {
+		if ((argv[1][0] == '.') && (strlen(argv[1]) == 2)) {
+			argc_offs = 1;
+			switch (argv[1][1]) {
+			case 'b':
+				access_size = 1;
+				break;
+			case 's':
+				access_size = 2;
+				break;
+			default:
+				return EC_ERROR_PARAM1;
+			}
+		}
+	}
+
+	address = (uint32_t *)(uintptr_t)strtoi(argv[1 + argc_offs], &e, 0);
 	if (*e)
-		return EC_ERROR_PARAM1;
+		return EC_ERROR_PARAM1 + argc_offs;
 
 	/* Just reading? */
-	if (argc < 3) {
-		value = *address;
-		ccprintf("read 0x%p = 0x%08x\n", address, value);
+	if ((argc - argc_offs) < 3) {
+		switch (access_size) {
+		case 1:
+			ccprintf("read 0x%p = 0x%02x\n",
+				 address, *((uint8_t *)address));
+			break;
+		case 2:
+			ccprintf("read 0x%p = 0x%04x\n",
+				 address, *((uint16_t *)address));
+			break;
+
+		default:
+			ccprintf("read 0x%p = 0x%08x\n",  address, *address);
+			break;
+		}
 		return EC_SUCCESS;
 	}
 
 	/* Writing! */
-	value = strtoi(argv[2], &e, 0);
+	value = strtoi(argv[2 + argc_offs], &e, 0);
 	if (*e)
-		return EC_ERROR_PARAM2;
+		return EC_ERROR_PARAM2 + argc_offs;
 
-	ccprintf("write 0x%p = 0x%08x\n", address, value);
-	cflush();  /* Flush before writing in case this crashes */
-
-	*address = value;
+	switch (access_size) {
+	case 1:
+		ccprintf("write 0x%p = 0x%02x\n", address, (uint8_t)value);
+		cflush();  /* Flush before writing in case this crashes */
+		*((uint8_t *)address) = (uint8_t)value;
+		break;
+	case 2:
+		ccprintf("write 0x%p = 0x%04x\n", address, (uint16_t)value);
+		cflush();
+		*((uint16_t *)address) = (uint16_t)value;
+		break;
+	default:
+		ccprintf("write 0x%p = 0x%02x\n", address, value);
+		cflush();
+		*address = value;
+		break;
+	}
 
 	return EC_SUCCESS;
-
 }
-DECLARE_CONSOLE_COMMAND(rw, command_read_word,
-			"addr [value]",
-			"Read or write a word in memory",
-			NULL);
 
+DECLARE_CONSOLE_COMMAND
+	(rw, command_read_word,
+	 "addr [.{b|s}] [value]",
+	 "Read or write a word in memory optionally specifying the size",
+	 NULL);
