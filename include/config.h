@@ -45,12 +45,6 @@
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
 
-/*
- * ADC module has certain clock requirement. If this is defined, the ADC module
- * should call clock_enable_module() to configure clock for ADC.
- */
-#undef CONFIG_ADC_CLOCK
-
 /* ADC sample time selection. The value is chip-dependent. */
 #undef CONFIG_ADC_SAMPLE_TIME
 
@@ -1283,8 +1277,8 @@
 #undef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
 
 /* HW & SW version for alternate mode discover identity response (4bits each) */
-#undef CONFIG_USB_PD_IDENTITY_HW_ID
-#undef CONFIG_USB_PD_IDENTITY_SW_ID
+#undef CONFIG_USB_PD_IDENTITY_HW_VERS
+#undef CONFIG_USB_PD_IDENTITY_SW_VERS
 
 /* USB PD MCU slave address for host commands */
 #define CONFIG_USB_PD_I2C_SLAVE_ADDR 0x3c
