@@ -41,6 +41,7 @@
 
 /* Specify type of accelerometers attached. */
 #undef CONFIG_ACCEL_KXCJ9
+#undef CONFIG_ACCELGYRO_LSM6DS0
 
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
@@ -78,15 +79,18 @@
 /* Battery config */
 
 /*
- * Compile battery-specific code.  Choose at most one.
+ * Compile battery-specific code.
  *
  * Note that some boards have their own unique battery constants / functions.
  * In this case, those are provided in board/(boardname)/battery.c, and none of
  * these are defined.
  */
-#undef CONFIG_BATTERY_BQ20Z453	/* BQ20Z453 battery used on some ARM laptops */
-#undef CONFIG_BATTERY_BQ27541	/* BQ27541 battery */
-#undef CONFIG_BATTERY_LINK	/* Battery used on Link */
+#undef CONFIG_BATTERY_BQ20Z453
+#undef CONFIG_BATTERY_BQ27541
+#undef CONFIG_BATTERY_BQ27621
+#undef CONFIG_BATTERY_LINK
+#undef CONFIG_BATTERY_RYU
+#undef CONFIG_BATTERY_SAMUS
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
@@ -1256,7 +1260,7 @@
 #undef CONFIG_USB_PD_ALT_MODE_DFP
 
 /* Check if max voltage request is allowed before each request */
-#undef CONIFG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
+#undef CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
 
 /* Default state of PD communication enabled flag */
 #define CONFIG_USB_PD_COMM_ENABLED 1
@@ -1332,6 +1336,12 @@
 
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
+
+/* USB device buffers and descriptors */
+#undef CONFIG_USB_RAM_ACCESS_SIZE
+#undef CONFIG_USB_RAM_ACCESS_TYPE
+#undef CONFIG_USB_RAM_BASE
+#undef CONFIG_USB_RAM_SIZE
 
 /* Disable automatic connection of USB peripheral */
 #undef CONFIG_USB_INHIBIT_CONNECT
