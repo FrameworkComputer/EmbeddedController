@@ -231,7 +231,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 
-		return power_get_pause_in_s5() ? POWER_S5 : POWER_S5G3;
+		return POWER_S5G3;
 
 	case POWER_S5G3:
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
