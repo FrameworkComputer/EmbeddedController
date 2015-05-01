@@ -21,12 +21,6 @@
 /* Number of times to ramp current searching for limit before stable charging */
 #define RAMP_COUNT          3
 
-/*
- * Time to delay for detecting the charger type (must be long enough for BC1.2
- * driver to get supplier information and notify charge manager).
- */
-#define CHARGE_DETECT_DELAY (2*SECOND)
-
 /* Maximum allowable time charger can be unplugged to be considered an OCP */
 #define OC_RECOVER_MAX_TIME (SECOND)
 

@@ -22,9 +22,11 @@
 
 /*
  * Time to delay for detecting the charger type. This value follows
- * the value in common/charge_ramp.c.
+ * the value in common/charge_ramp.c, but must be less than the real
+ * CHARGE_DETECT_DELAY so we guarantee we wake up before the ramp
+ * has started.
  */
-#define CHARGE_DETECT_DELAY (2*SECOND)
+#define CHARGE_DETECT_DELAY_TEST (CHARGE_DETECT_DELAY - 100*MSEC)
 
 static int system_load_current_ma;
 static int vbus_low_current_ma = 500;
@@ -97,7 +99,7 @@ static void unplug_charger(void)
 static int unplug_charger_and_check(void)
 {
 	unplug_charger();
-	usleep(CHARGE_DETECT_DELAY);
+	usleep(CHARGE_DETECT_DELAY_TEST);
 	return charge_limit_ma == 0;
 }
 
@@ -118,7 +120,7 @@ static int test_no_ramp(void)
 	system_load_current_ma = 3000;
 	/* A powerful charger, but hey, you're not allowed to ramp! */
 	plug_charger(CHARGE_SUPPLIER_TEST1, 0, 500, 3000, 3000);
-	usleep(CHARGE_DETECT_DELAY);
+	usleep(CHARGE_DETECT_DELAY_TEST);
 	/* That's right. Start at 500 mA */
 	TEST_ASSERT(charge_limit_ma == 500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -134,7 +136,7 @@ static int test_full_ramp(void)
 	system_load_current_ma = 3000;
 	/* Now you get to ramp with this 3A charger */
 	plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 3000);
-	usleep(CHARGE_DETECT_DELAY);
+	usleep(CHARGE_DETECT_DELAY_TEST);
 	/* Start with something around 500 mA */
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 800));
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -163,7 +165,7 @@ static int test_overcurrent(void)
 	system_load_current_ma = 3000;
 	/* Huh...VBUS doesn't dip before the charger shuts down */
 	plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 1500);
-	usleep(CHARGE_DETECT_DELAY);
+	usleep(CHARGE_DETECT_DELAY_TEST);
 	/* Ramp starts at 500 mA */
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 
@@ -172,7 +174,7 @@ static int test_overcurrent(void)
 		unplug_charger();
 		usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 1500);
-		usleep(CHARGE_DETECT_DELAY);
+		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -200,7 +202,7 @@ static int test_switch_outlet(void)
 		unplug_charger();
 		usleep(SECOND * 1.5);
 		plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 3000, 3000);
-		usleep(CHARGE_DETECT_DELAY);
+		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -229,7 +231,7 @@ static int test_fast_switch(void)
 		unplug_charger();
 		usleep(600 * MSEC);
 		plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 3000);
-		usleep(CHARGE_DETECT_DELAY);
+		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -260,7 +262,7 @@ static int test_overcurrent_after_switch_outlet(void)
 		unplug_charger();
 		usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST5, 0, 500, 3000, 1500);
-		usleep(CHARGE_DETECT_DELAY);
+		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -293,7 +295,7 @@ static int test_partial_load(void)
 		unplug_charger();
 		usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 2500);
-		usleep(CHARGE_DETECT_DELAY);
+		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
