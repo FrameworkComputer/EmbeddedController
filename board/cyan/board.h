@@ -27,8 +27,8 @@
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_I2C
-
 #define CONFIG_PORT80_TASK_EN
+#define CONFIG_WAKE_PIN GPIO_POWER_BUTTON_L
 
 #define CONFIG_CHARGER
 #define CONFIG_BATTERY_SMART
@@ -65,7 +65,6 @@
 #undef CONFIG_PWM
 #undef CONFIG_FANS
 #undef CONFIG_ADC
-#undef CONFIG_WAKE_PIN
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
