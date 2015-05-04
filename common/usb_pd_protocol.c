@@ -397,7 +397,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_dfp_exit_mode(port, 0, 0);
 #endif
 #ifdef CONFIG_USBC_SS_MUX
-		board_set_usb_mux(port, TYPEC_MUX_NONE,
+		board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
 				  pd[port].polarity);
 #endif
 #ifdef CONFIG_USBC_VCONN
@@ -1154,10 +1154,15 @@ static void pd_set_data_role(int port, int role)
 	 * Need to connect SS mux for if new data role is DFP.
 	 * If new data role is UFP, then disconnect the SS mux.
 	 */
-	board_set_usb_mux(port, role == PD_ROLE_DFP ?
-			  TYPEC_MUX_USB : TYPEC_MUX_NONE, pd[port].polarity);
+	if (role == PD_ROLE_DFP)
+		board_set_usb_mux(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+				  pd[port].polarity);
+	else
+		board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+				  pd[port].polarity);
 #else
-	board_set_usb_mux(port, TYPEC_MUX_USB, pd[port].polarity);
+	board_set_usb_mux(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			  pd[port].polarity);
 #endif
 #endif
 }
@@ -2018,6 +2023,7 @@ void pd_task(void)
 				if (pd_set_power_supply_ready(port)) {
 #ifdef CONFIG_USBC_SS_MUX
 					board_set_usb_mux(port, TYPEC_MUX_NONE,
+							  USB_SWITCH_DISCONNECT,
 							  pd[port].polarity);
 #endif
 					break;
@@ -2045,6 +2051,7 @@ void pd_task(void)
 
 #ifdef CONFIG_USBC_SS_MUX
 				board_set_usb_mux(port, TYPEC_MUX_USB,
+						  USB_SWITCH_CONNECT,
 						  pd[port].polarity);
 #endif
 
@@ -3369,7 +3376,10 @@ static int command_typec(int argc, char **argv)
 	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
 		if (!strcasecmp(argv[2], mux_name[i]))
 			mux = i;
-	board_set_usb_mux(port, mux, pd_get_polarity(port));
+	board_set_usb_mux(port, mux, mux == TYPEC_MUX_NONE ?
+					USB_SWITCH_DISCONNECT :
+					USB_SWITCH_CONNECT,
+			  pd_get_polarity(port));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,
@@ -3429,6 +3439,9 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 #ifdef CONFIG_USBC_SS_MUX
 	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
 		board_set_usb_mux(p->port, typec_mux_map[p->mux],
+				  typec_mux_map[p->mux] == TYPEC_MUX_NONE ?
+					USB_SWITCH_DISCONNECT :
+					USB_SWITCH_CONNECT,
 				  pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
 

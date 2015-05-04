@@ -553,6 +553,9 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == PD_PORT_COUNT);
 
 static void board_set_usb_switches(int port, int open)
 {
+	/* If switch is not changing, then return */
+	if (open == usb_switch_state[port])
+		return;
 
 	mutex_lock(&usb_switch_lock[port]);
 	usb_switch_state[port] = open;
@@ -560,7 +563,8 @@ static void board_set_usb_switches(int port, int open)
 	mutex_unlock(&usb_switch_lock[port]);
 }
 
-void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+void board_set_usb_mux(int port, enum typec_mux mux,
+		       enum usb_switch usb, int polarity)
 {
 	const struct usb_port_mux *usb_mux = usb_muxes + port;
 
@@ -572,9 +576,8 @@ void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(usb_mux->ss1_dp_mode, 1);
 	gpio_set_level(usb_mux->ss2_dp_mode, 1);
 
-	if ((mux == TYPEC_MUX_NONE) || (mux == TYPEC_MUX_USB))
-		/* Set D+/D- switch to appropriate level */
-		board_set_usb_switches(port, mux == TYPEC_MUX_NONE);
+	/* Set D+/D- switch to appropriate level */
+	board_set_usb_switches(port, usb);
 
 	if (mux == TYPEC_MUX_NONE)
 		/* everything is already disabled, we can return */

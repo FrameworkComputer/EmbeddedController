@@ -183,7 +183,8 @@ static int command_debug(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(debugset, command_debug, NULL, "Set debug mode", NULL);
 
-void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+void board_set_usb_mux(int port, enum typec_mux mux,
+		       enum usb_switch usb, int polarity)
 {
 	/* reset everything */
 	gpio_set_level(GPIO_SS1_EN_L, 1);

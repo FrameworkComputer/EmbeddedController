@@ -405,7 +405,8 @@ void p4_board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_USBC_SS_EN_L, 0);
 }
 
-void board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+void board_set_usb_mux(int port, enum typec_mux mux,
+		       enum usb_switch usb, int polarity)
 {
 	if (board_get_version() < 5) {
 		/* P4/EVT or older boards */

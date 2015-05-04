@@ -1135,6 +1135,11 @@ enum typec_mux {
 	TYPEC_MUX_DOCK,
 };
 
+enum usb_switch {
+	USB_SWITCH_CONNECT,
+	USB_SWITCH_DISCONNECT,
+};
+
 /**
  * Configure superspeed muxes on type-C port.
  *
@@ -1142,7 +1147,8 @@ enum typec_mux {
  * @param mux selected function.
  * @param polarity plug polarity (0=CC1, 1=CC2).
  */
-void board_set_usb_mux(int port, enum typec_mux mux, int polarity);
+void board_set_usb_mux(int port, enum typec_mux mux,
+		       enum usb_switch usb, int polarity);
 
 /**
  * Query superspeed mux status on type-C port.

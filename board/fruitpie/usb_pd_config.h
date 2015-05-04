@@ -155,7 +155,7 @@ static inline void pd_config_init(int port, uint8_t power_role)
 	pd_tx_init();
 
 	/* Reset mux ... for NONE polarity doesn't matter */
-	board_set_usb_mux(port, TYPEC_MUX_NONE, 0);
+	board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT, 0);
 
 	gpio_set_level(GPIO_VCONN1_EN, 0);
 	gpio_set_level(GPIO_VCONN2_EN, 0);
