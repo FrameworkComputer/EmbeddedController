@@ -72,6 +72,7 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 			uw = 250000 * (src_caps[i] & 0x3FF);
 		} else {
 			ma = (src_caps[i] & 0x3FF) * 10;
+			ma = MIN(ma, PD_MAX_CURRENT_MA);
 			uw = ma * mv;
 		}
 #ifdef PD_PREFER_LOW_VOLTAGE
