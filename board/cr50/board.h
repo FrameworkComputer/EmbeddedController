@@ -15,6 +15,8 @@
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
 
+#if !defined(CHIP_VARIANT_CR50_A1)
+
 /* USB configuration */
 #define CONFIG_USB
 #define CONFIG_USB_CONSOLE
@@ -22,6 +24,7 @@
 
 #define CONFIG_USB_PID 0x5014
 
+#endif
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
  * switch.
