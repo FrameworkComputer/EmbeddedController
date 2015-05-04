@@ -1,0 +1,33 @@
+#
+# Rules for Google Case Closed Debugging devices.
+#
+# The first rule matches the google VID and records the product name, USB bus
+# number and USB device path (the device path is the list of hub ports between
+# the root and the device).  This becomes a unique directory name under which
+# later rules can create symlinks.  If this rule doesn't match udev will skip
+# the rest of this files rules.
+#
+# This rule intentionally matches using SUBSYSTEMS and ATTRS instead of
+# SUBSYSTEM and ATTR so that the GOOGLE_CCD_NAME is available to all nodes
+# that descend from a Google USB device (this includes all USB interface nodes
+# as well as all of the TTY nodes derived from CCD USB interfaces).
+#
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="18d1", ENV{GOOGLE_CCD_NAME}="$attr{product}-$attr{busnum}-$attr{devpath}"
+
+#
+# Force ModemManager to ignore all Google case closed debug devices.  It would
+# be better to just ignore the case closed debug serial console interfaces, but
+# ModemManager doesn't look at the usb_interface udev node, it looks at the
+# usb_device node, so you have to mark the entire device as incompatible with
+# ModemManager.
+#
+# This node could lose the match against the usb_device DEVTYPE and still work,
+# it would just add extraneous ID_MM_DEVICE_IGNORE tags to the TTY and USB
+# interface nodes.
+#
+SUBSYSTEM=="usb", ENV{GOOGLE_CCD_NAME}!="", ENV{DEVTYPE}=="usb_device", ENV{ID_USB_INTERFACES}=="*:ff5001:*", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+#
+# Construct a symlink to a TTY generated from a CCD USB serial interface.
+#
+SUBSYSTEM=="tty", ENV{GOOGLE_CCD_NAME}!="", ATTRS{bInterfaceClass}=="ff", ATTRS{bInterfaceSubClass}=="50", ATTRS{bInterfaceProtocol}=="01", OPTIONS+="string_escape=replace", SYMLINK+="google/$env{GOOGLE_CCD_NAME}/serial/$attr{interface}"
