@@ -317,12 +317,13 @@
 
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
+#undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
 #undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
+#undef CONFIG_CHIPSET_SKYLAKE   /* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
-#undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
 
 /* Support chipset throttling */
 #undef CONFIG_CHIPSET_CAN_THROTTLE
