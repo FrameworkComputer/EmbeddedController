@@ -27,6 +27,8 @@ int flash_physical_read(int offset, int size, char *data)
 {
 	int ret;
 
+	offset += CONFIG_FLASH_BASE_SPI;
+
 	/* Fail if offset, size, and data aren't at least word-aligned */
 	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
 		return EC_ERROR_INVAL;
@@ -49,6 +51,8 @@ int flash_physical_read(int offset, int size, char *data)
 int flash_physical_write(int offset, int size, const char *data)
 {
 	int ret, i, write_size;
+
+	offset += CONFIG_FLASH_BASE_SPI;
 
 	/* Fail if offset, size, and data aren't at least word-aligned */
 	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
@@ -81,6 +85,7 @@ int flash_physical_erase(int offset, int size)
 {
 	int ret;
 
+	offset += CONFIG_FLASH_BASE_SPI;
 	spi_enable(1);
 	ret = spi_flash_erase(offset, size);
 	spi_enable(0);

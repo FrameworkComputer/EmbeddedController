@@ -144,8 +144,8 @@ which contains Loader and RO Images */
 
 
 /* Non-memmapped, external SPI */
-/* #define CONFIG_CODERAM_ARCH
-#undef  CONFIG_FLASH_MAPPED*/
+/* #define CONFIG_CODERAM_ARCH*/
+#undef  CONFIG_FLASH_MAPPED
 #undef  CONFIG_FLASH_PSTATE
 #define CONFIG_SPI_FLASH
 
