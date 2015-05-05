@@ -21,8 +21,6 @@
 /* Optional features */
 #undef CONFIG_CMD_HASH
 #define CONFIG_CHARGE_MANAGER
-#define CONFIG_CHARGE_RAMP
-#define CONFIG_CMD_CHGRAMP
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_USB_POWER_DELIVERY
@@ -148,8 +146,6 @@ enum adc_channel {
 	ADC_VBUS = 0,
 	ADC_CC1_PD,
 	ADC_CC2_PD,
-	ADC_IADP,
-	ADC_IBAT,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
