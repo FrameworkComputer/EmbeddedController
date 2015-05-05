@@ -199,8 +199,10 @@ static inline int pd_snk_is_vbus_provided(int port)
 	return gpio_get_level(GPIO_CHGR_ACOK);
 }
 
-/* Standard-current DFP : no-connect voltage is 1.55V */
-#define PD_SRC_VNC 1550 /* mV */
+/* 1.5A DFP : no-connect voltage threshold is 1.60V */
+#define PD_SRC_VNC 1600 /* mV */
+/* 1.5A DFP : Ra/Rd detection voltage threshold is 400mV */
+#define PD_SRC_RD_THRESHOLD 400 /* mV */
 
 /* UFP-side : threshold for DFP connection detection */
 #define PD_SNK_VA   200 /* mV */
