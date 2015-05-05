@@ -49,6 +49,12 @@
 
 static int charge_current_limit;
 
+/*
+ * Store the state of our USB data switches so that they can be restored
+ * after pericom reset.
+ */
+static int usb_switch_state;
+
 static void vbus_log(void)
 {
 	CPRINTS("VBUS %d", gpio_get_level(GPIO_CHGR_ACOK));
@@ -104,6 +110,13 @@ void usb_charger_task(void)
 
 			/* Trigger chip reset to refresh detection registers */
 			pi3usb9281_reset(0);
+			/*
+			 * Restore data switch settings - switches return to
+			 * closed on reset until restored.
+			 */
+			if (usb_switch_state)
+				pi3usb9281_set_switches(0, 1);
+
 			/* Clear possible disconnect interrupt */
 			pi3usb9281_get_interrupts(0);
 			/* Mask attach interrupt */
@@ -372,12 +385,23 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+static void board_set_usb_switches(int port, int open)
+{
+	/* If switch is not changing, then return */
+	if (open == usb_switch_state)
+		return;
+
+	usb_switch_state = open;
+	pi3usb9281_set_switches(port, open);
+}
+
 /* TODO(crosbug.com/p/38333) remove me */
 #define GPIO_USBC_SS1_USB_MODE_L GPIO_USBC_MUX_CONF0
 #define GPIO_USBC_SS2_USB_MODE_L GPIO_USBC_MUX_CONF1
 #define GPIO_USBC_SS_EN_L GPIO_USBC_MUX_CONF2
 
-void p4_board_set_usb_mux(int port, enum typec_mux mux, int polarity)
+void p4_board_set_usb_mux(int port, enum typec_mux mux,
+			  enum usb_switch usb, int polarity)
 {
 	/* reset everything */
 	gpio_set_level(GPIO_USBC_SS_EN_L, 1);
@@ -385,6 +409,9 @@ void p4_board_set_usb_mux(int port, enum typec_mux mux, int polarity)
 	gpio_set_level(GPIO_USBC_DP_POLARITY, 1);
 	gpio_set_level(GPIO_USBC_SS1_USB_MODE_L, 1);
 	gpio_set_level(GPIO_USBC_SS2_USB_MODE_L, 1);
+
+	/* Set D+/D- switch to appropriate level */
+	board_set_usb_switches(port, usb);
 
 	if (mux == TYPEC_MUX_NONE)
 		/* everything is already disabled, we can return */
@@ -411,7 +438,7 @@ void board_set_usb_mux(int port, enum typec_mux mux,
 	if (board_get_version() < 5) {
 		/* P4/EVT or older boards */
 		/* TODO(crosbug.com/p/38333) remove this */
-		p4_board_set_usb_mux(port, mux, polarity);
+		p4_board_set_usb_mux(port, mux, usb, polarity);
 		return;
 	}
 
@@ -419,6 +446,9 @@ void board_set_usb_mux(int port, enum typec_mux mux,
 	gpio_set_level(GPIO_USBC_MUX_CONF0, 0);
 	gpio_set_level(GPIO_USBC_MUX_CONF1, 0);
 	gpio_set_level(GPIO_USBC_MUX_CONF2, 0);
+
+	/* Set D+/D- switch to appropriate level */
+	board_set_usb_switches(port, usb);
 
 	if (mux == TYPEC_MUX_NONE)
 		/* everything is already disabled, we can return */
