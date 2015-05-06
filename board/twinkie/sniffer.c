@@ -294,7 +294,7 @@ void sniffer_task(void)
 			}
 			ep_buf[u][0] = sample_seq[d >> 3] | (d & 7);
 			ep_buf[u][1] = sample_tstamp[d >> 3];
-			memcpy_to_usbram(ep_buf[u] + 2,
+			memcpy_to_usbram(((void *)usb_sram_addr(ep_buf[u] + 2)),
 					 samples[d >> 4]+off, EP_PAYLOAD_SIZE);
 			atomic_clear((uint32_t *)&free_usb, 1 << u);
 			u = !u;
