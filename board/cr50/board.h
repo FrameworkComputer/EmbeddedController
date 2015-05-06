@@ -36,6 +36,8 @@
 #define CONFIG_RSA
 #define CONFIG_SHA256
 
+#define CONFIG_SPS_TEST
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

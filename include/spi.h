@@ -8,6 +8,25 @@
 #ifndef __CROS_EC_SPI_H
 #define __CROS_EC_SPI_H
 
+/*
+ * SPI Clock polarity and phase mode (0 - 3)
+ * @code
+ * clk mode | POL PHA
+ * ---------+--------
+ *   0      |  0   0
+ *   1      |  0   1
+ *   2      |  1   0
+ *   3      |  1   1
+ * ---------+--------
+ * @endcode
+ */
+enum spi_clock_mode {
+	SPI_CLOCK_MODE0 = 0,
+	SPI_CLOCK_MODE1 = 1,
+	SPI_CLOCK_MODE2 = 2,
+	SPI_CLOCK_MODE3 = 3
+};
+
 /* Enable / disable the SPI port.  When the port is disabled, all its I/O lines
  * are high-Z so the EC won't interfere with other devices on the SPI bus. */
 int spi_enable(int enable);
