@@ -44,6 +44,8 @@
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 256
+#define CONFIG_USB_PD_TCPC
+#define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_PD_NO_VBUS_DETECT
 /* mcdp2850 serial interface */
 #define CONFIG_MCDP28X0 usart3_hw

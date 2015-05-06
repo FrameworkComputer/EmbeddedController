@@ -1293,8 +1293,10 @@ void pd_task(void)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
+#ifdef CONFIG_USB_PD_TCPC
 	/* Initialize port controller */
 	tcpc_init(port);
+#endif
 
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
@@ -1332,11 +1334,13 @@ void pd_task(void)
 		/* wait for next event/packet or timeout expiration */
 		evt = task_wait_event(timeout);
 
+#ifdef CONFIG_USB_PD_TCPC
 		/*
 		 * run port controller task to check CC and/or read incoming
 		 * messages
 		 */
 		tcpc_run(port, evt);
+#endif
 
 		/* process any potential incoming message */
 		incoming_packet = evt & PD_EVENT_RX;
@@ -1776,6 +1780,11 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SUSPENDED:
+			/*
+			 * TODO: Suspend state only supported if we are also
+			 * the TCPC.
+			 */
+#ifdef CONFIG_USB_PD_TCPC
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
 			pd_power_supply_reset(port);
@@ -1785,6 +1794,7 @@ void pd_task(void)
 				task_wait_event(-1);
 
 			pd_hw_init(port, PD_ROLE_DEFAULT);
+#endif
 			break;
 		case PD_STATE_SNK_DISCONNECTED:
 			timeout = 10*MSEC;

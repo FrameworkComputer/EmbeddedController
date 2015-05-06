@@ -1334,6 +1334,17 @@
 /* Use comparator module for PD RX interrupt */
 #define CONFIG_USB_PD_RX_COMP_IRQ
 
+/* Use TCPC module (type-C port controller) */
+#undef CONFIG_USB_PD_TCPC
+
+/*
+ * Choose one of the following TCPMs (type-C port manager) to manage TCPC. The
+ * TCPM stub is used to make direct function calls to TCPC when TCPC is on
+ * the same MCU. The TCPCI TCPM uses the standard TCPCI i2c interface to TCPC.
+ */
+#undef CONFIG_USB_PD_TCPM_STUB
+#undef CONFIG_USB_PD_TCPM_TCPCI
+
 /* Alternative configuration keeping only the TX part of PHY */
 #undef CONFIG_USB_PD_TX_PHY_ONLY
 

@@ -781,11 +781,10 @@ int tcpc_run(int port, int evt)
 	return 10*MSEC;
 }
 
-#if 0
-/* TODO: if we don't have TCPM on same CPU, we will need this task */
-void pd_phy_task(void)
+#ifndef CONFIG_USB_POWER_DELIVERY
+void pd_task(void)
 {
-	int port = TASK_ID_TO_PORT_PHY(task_get_current());
+	int port = TASK_ID_TO_PORT(task_get_current());
 	int timeout = 10*MSEC;
 	int evt;
 
@@ -839,10 +838,10 @@ void tcpc_set_cc(int port, int pull)
 
 	/* Wake the PD phy task with special CC event mask */
 	/* TODO: use top case if no TCPM on same CPU */
-#if 0
-	task_set_event(PORT_PHY_TO_TASK_ID(port), PD_EVENT_CC, 0);
-#else
+#ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_CC);
+#else
+	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
 #endif
 }
 
@@ -872,10 +871,10 @@ void tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 	pd[port].tx_head = header;
 	pd[port].tx_data = data;
 	/* TODO: use top case if no TCPM on same CPU */
-#if 0
-	task_set_event(PORT_PHY_TO_TASK_ID(port), PD_EVENT_TX, 0);
-#else
+#ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_TX);
+#else
+	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
 #endif
 }
 
