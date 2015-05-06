@@ -12,6 +12,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "power.h"
 #include "system.h"
 #include "task.h"
@@ -56,6 +57,11 @@ static uint64_t last_shutdown_time; /* When did we enter G3? */
 #ifdef CONFIG_HIBERNATE
 /* Delay before hibernating, in seconds */
 static uint32_t hibernate_delay = CONFIG_HIBERNATE_DELAY_SEC;
+#endif
+
+#ifdef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
+/* Pause in S5 on shutdown? */
+static int pause_in_s5;
 #endif
 
 /**
@@ -410,7 +416,6 @@ static void siglog_add(enum gpio_signal signal)
 #define SIGLOG(S)
 #endif	/* CONFIG_BRINGUP */
 
-
 void power_signal_interrupt(enum gpio_signal signal)
 {
 	SIGLOG(signal);
@@ -421,6 +426,18 @@ void power_signal_interrupt(enum gpio_signal signal)
 	/* Wake up the task */
 	task_wake(TASK_ID_CHIPSET);
 }
+
+#ifdef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
+inline int power_get_pause_in_s5(void)
+{
+	return pause_in_s5;
+}
+
+inline void power_set_pause_in_s5(int pause)
+{
+	pause_in_s5 = pause;
+}
+#endif
 
 /*****************************************************************************/
 /* Console commands */
@@ -506,3 +523,36 @@ DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
 			"Set the delay before going into hibernation",
 			NULL);
 #endif /* CONFIG_HIBERNATE */
+
+#ifdef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
+static int host_command_pause_in_s5(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_set_value *p = args->params;
+	struct ec_response_get_set_value *r = args->response;
+
+	if (p->flags & EC_GSV_SET)
+		pause_in_s5 = p->value;
+
+	r->value = pause_in_s5;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
+		     host_command_pause_in_s5,
+		     EC_VER_MASK(0));
+
+static int command_pause_in_s5(int argc, char **argv)
+{
+	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
+		return EC_ERROR_INVAL;
+
+	ccprintf("pause_in_s5 = %s\n", pause_in_s5 ? "on" : "off");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
+			"[on|off]",
+			"Should the AP pause in S5 during shutdown?",
+			NULL);
+#endif /* CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5 */

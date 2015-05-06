@@ -1026,6 +1026,9 @@
 /* Compile common code for AP power state machine */
 #undef CONFIG_POWER_COMMON
 
+/* Support stopping in S5 on shutdown */
+#undef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
+
 /* Use part of the EC's data EEPROM to hold persistent storage for the AP. */
 #undef CONFIG_PSTORE
 

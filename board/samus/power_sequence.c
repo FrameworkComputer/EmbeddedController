@@ -13,7 +13,6 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "host_command.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "registers.h"
@@ -62,7 +61,6 @@
 		   IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
-static int pause_in_s5;	      /* Pause in S5 when shutting down? */
 static uint32_t pp5000_in_g3; /* Turn PP5000 on in G3? */
 
 void chipset_force_shutdown(void)
@@ -474,7 +472,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_TOUCHSCREEN_RESET_L, 0);
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, 0);
 
-		return pause_in_s5 ? POWER_S5 : POWER_S5G3;
+		return power_get_pause_in_s5() ? POWER_S5 : POWER_S5G3;
 
 	case POWER_S5G3:
 		/* Deassert DPWROK */
@@ -559,34 +557,3 @@ int lb_power(int enabled)
 	return ret;
 }
 #endif
-
-static int host_command_gsv(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_get_set_value *p = args->params;
-	struct ec_response_get_set_value *r = args->response;
-
-	if (p->flags & EC_GSV_SET)
-		pause_in_s5 = p->value;
-
-	r->value = pause_in_s5;
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
-		     host_command_gsv,
-		     EC_VER_MASK(0));
-
-static int console_command_gsv(int argc, char **argv)
-{
-	if (argc > 1 && !parse_bool(argv[1], &pause_in_s5))
-		return EC_ERROR_INVAL;
-
-	ccprintf("pause_in_s5 = %s\n", pause_in_s5 ? "on" : "off");
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(pause_in_s5, console_command_gsv,
-			"[on|off]",
-			"Should the AP pause in S5 during shutdown?",
-			NULL);
