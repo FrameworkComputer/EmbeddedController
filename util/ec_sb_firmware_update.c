@@ -394,9 +394,9 @@ static enum fw_update_state s0_read_status(struct fw_update_ctrl *fw_update)
 
 	if (!((fw_update->status.abnormal_condition == 0)
 		&& (fw_update->status.fw_update_supported == 1))) {
-		log_msg(fw_update, S0_READ_STATUS, "Unsupported");
-		return S10_TERMINAL;
+		return S0_READ_STATUS;
 	}
+
 	if (fw_update->status.busy) {
 		usleep(DELAY_VALUE_BUSY);
 		return S0_READ_STATUS;
