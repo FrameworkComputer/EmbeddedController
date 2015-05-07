@@ -24,6 +24,9 @@
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_FLASH_ERASE_CHECK
 #define CONFIG_USB_PD_INTERNAL_COMP
@@ -121,7 +124,7 @@
 
 /* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 14
+#define DEFERRABLE_MAX_COUNT 16
 
 #ifndef __ASSEMBLER__
 
@@ -184,6 +187,9 @@ int board_discharge_on_ac(int enable);
 
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
+
+/* Send host event to AP */
+void pd_send_host_event(int mask);
 
 /* PP1800 transition GPIO interrupt handler */
 void pp1800_on_off_evt(enum gpio_signal signal);

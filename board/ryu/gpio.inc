@@ -13,11 +13,6 @@ GPIO_INT(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_inter
 GPIO_INT(CHARGE_DONE,          E, 6,  GPIO_INT_BOTH,                   inductive_charging_interrupt)
 GPIO_INT(AP_IN_SUSPEND,        F, 9,  GPIO_INT_BOTH,                   power_signal_interrupt)
 GPIO_INT(AP_HOLD,              E, 3,  GPIO_INT_BOTH,                   power_signal_interrupt)
-/*
- * TODO(crosbug.com/p/38689) Workaround for MAX77620 PMIC PP3300 issue
- * Put back as GPIO_ODR_HIGH for P6+
- */
-GPIO_INT(HPD_IN,               C, 1,  GPIO_INT_BOTH,                   pp1800_on_off_evt)
 
 /* Interrupt lines not used yet */
 GPIO(BC_TEMP_ALERT_L,      C, 5,  GPIO_INT_FALLING)
@@ -80,6 +75,8 @@ GPIO(USBC_CC_PUEN2,        C, 8,  GPIO_INPUT)
 GPIO(USBC_MUX_CONF0,       D, 3,  GPIO_OUT_LOW)
 GPIO(USBC_MUX_CONF1,       D, 9,  GPIO_OUT_LOW)
 GPIO(USBC_MUX_CONF2,       E, 0,  GPIO_OUT_LOW)
+
+GPIO(USBC_DP_HPD,          C, 1,  GPIO_OUT_LOW)
 
 /* Inputs */
 GPIO(BOARD_ID0,            E, 11,  GPIO_INPUT)
