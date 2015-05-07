@@ -109,27 +109,58 @@ int pd_board_checks(void)
 int pd_check_power_swap(int port)
 {
 	/* TODO: use battery level to decide to accept/reject power swap */
-	/* Always allow power swap */
-	return 1;
+	/*
+	 * Allow power swap as long as we are acting as a dual role device,
+	 * otherwise assume our role is fixed (not in S0 or console command
+	 * to fix our role).
+	 */
+	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Always allow data swap */
+	/* Always allow data swap: we can be DFP or UFP for USB */
 	return 1;
 }
 
-void pd_check_pr_role(int port, int pr_role, int flags)
+int pd_check_vconn_swap(int port)
 {
-}
-
-void pd_check_dr_role(int port, int dr_role, int flags)
-{
+	/*
+	 * VCONN is provided directly by the battery(PPVAR_SYS)
+	 * but use the same rules as power swap
+	 */
+	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 void pd_execute_data_swap(int port, int data_role)
 {
-	/* TODO: what do we need to do to change host controller data role? */
+	/* inform the host controller to change role */
+	pd_send_host_event(PD_EVENT_DATA_SWAP);
+}
+
+void pd_check_pr_role(int port, int pr_role, int flags)
+{
+	/*
+	 * If partner is dual-role power and dualrole toggling is on, consider
+	 * if a power swap is necessary.
+	 */
+	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    pd_get_dual_role() == PD_DRP_TOGGLE_ON) {
+		/*
+		 * If we are source and partner is externally powered,
+		 * swap to become a sink.
+		 */
+		if ((flags & PD_FLAGS_PARTNER_EXTPOWER) &&
+		    pr_role == PD_ROLE_SOURCE)
+			pd_request_power_swap(port);
+	}
+}
+
+void pd_check_dr_role(int port, int dr_role, int flags)
+{
+	/* if the partner is a DRP (e.g. laptop), try to switch to UFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
+		pd_request_data_swap(port);
 }
 
 int pd_custom_vdm(int port, int cnt, uint32_t *payload,

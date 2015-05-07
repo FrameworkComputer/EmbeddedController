@@ -32,6 +32,7 @@
 #define CONFIG_USB_SWITCH_PI3USB9281
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_ADC
 #define CONFIG_ADC_SAMPLE_TIME 3
 #define CONFIG_HW_CRC
@@ -193,6 +194,9 @@ int board_discharge_on_ac(int enable);
 
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
+
+/* Send host event to AP */
+void pd_send_host_event(int mask);
 
 /* PP1800 transition GPIO interrupt handler */
 void pp1800_on_off_evt(enum gpio_signal signal);

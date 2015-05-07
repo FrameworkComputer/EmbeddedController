@@ -585,6 +585,12 @@ void board_set_charge_limit(int charge_ma)
 		CPRINTS("Failed to set input current limit for PD");
 }
 
+/* Send host event up to AP */
+void pd_send_host_event(int mask)
+{
+	/* TODO(crosbug.com/p/33194): implement host events */
+}
+
 /**
  * Return whether ramping is allowed for given supplier
  */

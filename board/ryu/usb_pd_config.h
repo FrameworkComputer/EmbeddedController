@@ -220,6 +220,9 @@ static inline int pd_snk_is_vbus_provided(int port)
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  40000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 20000 /* us */
 
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 10000
 #define PD_MAX_POWER_MW       24000

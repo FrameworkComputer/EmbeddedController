@@ -2927,6 +2927,7 @@ struct ec_response_pd_status {
 #define PD_EVENT_UPDATE_DEVICE     (1 << 0)
 #define PD_EVENT_POWER_CHANGE      (1 << 1)
 #define PD_EVENT_IDENTITY_RECEIVED (1 << 2)
+#define PD_EVENT_DATA_SWAP         (1 << 3)
 struct ec_response_host_event_status {
 	uint32_t status;      /* PD MCU host event status */
 } __packed;
