@@ -40,12 +40,13 @@ cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
 cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
-cmd_elf_to_flat = $(OBJCOPY) -O binary $^ $@
+cmd_elf_to_flat = $(OBJCOPY) -O binary $< $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
-cmd_elf_to_hex = $(OBJCOPY) -O ihex $^ $@
+cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
 	--change-addresses $(_flash_base) $^ $@
 cmd_elf = $(LD) $(objs) $(LDFLAGS) -o $@ -T $< -Map $(out)/$*.map
+cmd_smap = $(NM) $< | sort > $@
 cmd_exe = $(CC) $(objs) $(HOST_TEST_LDFLAGS) -o $@
 cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
@@ -170,10 +171,10 @@ $(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)
 $(out)/%.dis: $(out)/%.elf
 	$(call quiet,elf_to_dis,OBJDUMP)
 
-$(out)/%.flat: $(out)/%.elf
+$(out)/%.flat: $(out)/%.elf $(out)/%.smap
 	$(call quiet,elf_to_flat,OBJCOPY)
 
-$(out)/%.hex: $(out)/%.elf
+$(out)/%.hex: $(out)/%.elf $(out)/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 
 $(out)/$(PROJECT).hex: $(out)/$(PROJECT).bin
@@ -181,6 +182,9 @@ $(out)/$(PROJECT).hex: $(out)/$(PROJECT).bin
 
 $(out)/%.elf: $(out)/%.lds $(objs)
 	$(call quiet,elf,LD     )
+
+$(out)/%.smap: $(out)/%.elf
+	$(call quiet,smap,NM     )
 
 $(out)/$(PROJECT).exe: $(objs)
 	$(call quiet,exe,EXE    )
