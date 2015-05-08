@@ -14,6 +14,8 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd_tcpc.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 /* Console output macros */
@@ -203,10 +205,31 @@ static void i2c_process_command(void)
 	host_packet_receive(&i2c_packet);
 }
 
+#ifdef TCPCI_I2C_SLAVE
+static void i2c_send_tcpc_response(int len)
+{
+	/* host_buffer data range, beyond this length, will return 0xec */
+	tx_index = 0;
+	tx_end = len;
+
+	/* enable transmit interrupt and use irq to send data back */
+	STM32_I2C_CR1(host_i2c_resp_port) |= STM32_I2C_CR1_TXIE;
+}
+
+static void i2c_process_tcpc_command(int read, int addr, int len)
+{
+	tcpc_i2c_process(read, TCPC_ADDR_TO_PORT(addr), len, &host_buffer[0],
+			 i2c_send_tcpc_response);
+}
+#endif
+
 static void i2c_event_handler(int port)
 {
 	int i2c_isr;
 	static int rx_pending, buf_idx;
+#ifdef TCPCI_I2C_SLAVE
+	int addr;
+#endif
 
 	i2c_isr = STM32_I2C_ISR(port);
 
@@ -248,6 +271,16 @@ static void i2c_event_handler(int port)
 
 	/* Stop condition on bus */
 	if (i2c_isr & STM32_I2C_ISR_STOP) {
+#ifdef TCPCI_I2C_SLAVE
+		/*
+		 * if tcpc is being addressed, and we received a stop
+		 * while rx is pending, then this is a write only to
+		 * the tcpc.
+		 */
+		addr = STM32_I2C_ISR_ADDCODE(STM32_I2C_ISR(port));
+		if (rx_pending && ADDR_IS_TCPC(addr))
+			i2c_process_tcpc_command(0, addr, buf_idx);
+#endif
 		rx_pending = 0;
 		tx_pending = 0;
 
@@ -299,7 +332,16 @@ static void i2c_event_handler(int port)
 				 */
 				STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
 
-				i2c_process_command();
+#ifdef TCPCI_I2C_SLAVE
+				addr = STM32_I2C_ISR_ADDCODE(
+					STM32_I2C_ISR(port));
+				if (ADDR_IS_TCPC(addr))
+					i2c_process_tcpc_command(1, addr,
+								 buf_idx);
+				else
+#endif
+					i2c_process_command();
+
 				/* Reset host buffer after end of transfer */
 				rx_pending = 0;
 				tx_pending = 1;
@@ -489,6 +531,13 @@ static void i2c_init(void)
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_WUPEN;
 #endif
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000 | CONFIG_HOSTCMD_I2C_SLAVE_ADDR;
+#ifdef TCPCI_I2C_SLAVE
+	/*
+	 * Configure TCPC address with OA2[1] masked so that we respond
+	 * to CONFIG_TCPC_I2C_BASE_ADDR and CONFIG_TCPC_I2C_BASE_ADDR + 2.
+	 */
+	STM32_I2C_OAR2(I2C_PORT_EC) = 0x8100 | CONFIG_TCPC_I2C_BASE_ADDR;
+#endif
 	task_enable_irq(IRQ_SLAVE);
 #endif
 }

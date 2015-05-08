@@ -12,6 +12,18 @@
 #define CONFIG_TCPC_I2C_BASE_ADDR 0x9c
 #endif
 
+/* If we are a TCPC but do not a TCPM, then we implement the slave TCPCI */
+#if defined(CONFIG_USB_PD_TCPC) && !defined(CONFIG_USB_PD_TCPM_STUB)
+#define TCPCI_I2C_SLAVE
+#endif
+
+#ifdef TCPCI_I2C_SLAVE
+/* Convert TCPC address to type-C port number */
+#define TCPC_ADDR_TO_PORT(addr) (((addr) - CONFIG_TCPC_I2C_BASE_ADDR) >> 1)
+/* Check if the i2c address belongs to TCPC */
+#define ADDR_IS_TCPC(addr)      (((addr) & 0xfc) == CONFIG_TCPC_I2C_BASE_ADDR)
+#endif
+
 /**
  * Process incoming TCPCI I2C command
  *
