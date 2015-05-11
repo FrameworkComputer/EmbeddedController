@@ -644,12 +644,27 @@
 #undef CONFIG_FW_IMAGE_SIZE
 #undef CONFIG_FW_PSTATE_OFF
 #undef CONFIG_FW_PSTATE_SIZE
-#undef CONFIG_FW_RO_OFF
-#undef CONFIG_FW_RO_SIZE
-#undef CONFIG_FW_RW_OFF
-#undef CONFIG_FW_RW_SIZE
-#undef CONFIG_FW_WP_RO_OFF
-#undef CONFIG_FW_WP_RO_SIZE
+
+/*
+ * Read-only / read-write image configuration.
+ * Images may reside on storage (ex. external or internal SPI) at a different
+ * offset than when copied to program memory. Hence, two sets of offsets,
+ * for STORAGE and for MEMORY.
+ */
+#undef CONFIG_RO_MEM_OFF
+#undef CONFIG_RO_STORAGE_OFF
+#undef CONFIG_RO_SIZE
+
+#undef CONFIG_RW_MEM_OFF
+#undef CONFIG_RW_STORAGE_OFF
+#undef CONFIG_RW_SIZE
+
+/*
+ * Write protect region offset / size. This region normally encompasses the
+ * RO image, but may also contain additional images or data.
+ */
+#undef CONFIG_WP_OFF
+#undef CONFIG_WP_SIZE
 
 /*
  * Board Image ec.bin contains a RO firmware.  If not defined, the image will

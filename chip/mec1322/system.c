@@ -379,5 +379,5 @@ enum system_image_copy_t system_get_shrspi_image_copy(void)
 /* TODO(crosbug.com/p/37510): Implement bootloader */
 uint32_t system_get_lfw_address(uint32_t flash_addr)
 {
-	return CONFIG_FW_RO_OFF;
+	return CONFIG_RO_MEM_OFF;
 }

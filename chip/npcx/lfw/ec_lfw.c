@@ -83,12 +83,12 @@ bin2ram(void)
 {
 	/* copy image from RO base */
 	if (IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION))
-		flash_burst_copy_fw_to_mram(CONFIG_FW_RO_OFF, CONFIG_CDRAM_BASE,
-				CONFIG_FW_RO_SIZE - LFW_SIZE);
+		flash_burst_copy_fw_to_mram(CONFIG_RO_MEM_OFF,
+			CONFIG_CDRAM_BASE, CONFIG_RO_SIZE - LFW_SIZE);
 	/* copy image from RW base */
 	else
-		flash_burst_copy_fw_to_mram(CONFIG_FW_RW_OFF, CONFIG_CDRAM_BASE,
-				CONFIG_FW_RW_SIZE - LFW_SIZE);
+		flash_burst_copy_fw_to_mram(CONFIG_RW_MEM_OFF,
+			CONFIG_CDRAM_BASE, CONFIG_RW_SIZE - LFW_SIZE);
 
 	/* Disable FIU pins to tri-state */
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);

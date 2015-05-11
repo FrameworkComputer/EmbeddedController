@@ -62,7 +62,7 @@
 #endif
 
 /* RO firmware must start at beginning of flash */
-#define CONFIG_FW_RO_OFF		0
+#define CONFIG_RO_MEM_OFF		0
 
 /*
  * The EC uses the one bank of flash to emulate a SPI-like write protect
@@ -71,18 +71,18 @@
 #define CONFIG_FW_PSTATE_SIZE		CONFIG_FLASH_BANK_SIZE
 
 /* PSTATE immediately follows RO, in the first half of flash */
-#define CONFIG_FW_RO_SIZE		(CONFIG_FW_IMAGE_SIZE		\
+#define CONFIG_RO_SIZE			(CONFIG_FW_IMAGE_SIZE		\
 					 - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_FW_PSTATE_OFF		CONFIG_FW_RO_SIZE
+#define CONFIG_FW_PSTATE_OFF		CONFIG_RO_SIZE
 #define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
 /* RW firmware is one firmware image offset from the start */
-#define CONFIG_FW_RW_OFF		CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_RW_SIZE		CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RW_MEM_OFF		CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RW_SIZE			CONFIG_FW_IMAGE_SIZE
 
 /* TODO: why 2 sets of configs with the same numbers? */
-#define CONFIG_FW_WP_RO_OFF		CONFIG_FW_RO_OFF
-#define CONFIG_FW_WP_RO_SIZE		CONFIG_FW_RO_SIZE
+#define CONFIG_WP_OFF			CONFIG_RO_MEM_OFF
+#define CONFIG_WP_SIZE			CONFIG_RO_SIZE
 
 /****************************************************************************/
 /* Customize the build */

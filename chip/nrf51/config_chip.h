@@ -48,17 +48,17 @@
 #define CONFIG_FW_IMAGE_SIZE    (128 * 1024)
 
 /* Define the RO/RW offset */
-#define CONFIG_FW_RO_OFF        0
-#define CONFIG_FW_RO_SIZE       (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_FW_RW_OFF        CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_RW_SIZE       CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RO_MEM_OFF       0
+#define CONFIG_RO_SIZE          (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
+#define CONFIG_RW_MEM_OFF       CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RW_SIZE          CONFIG_FW_IMAGE_SIZE
 
 /*
  * Put pstate after RO to give RW more space and make RO write protect
  * region contiguous.
  */
-#define CONFIG_FW_PSTATE_SIZE  CONFIG_FLASH_BANK_SIZE
-#define CONFIG_FW_PSTATE_OFF   (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE)
+#define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
+#define CONFIG_FW_PSTATE_OFF    (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
 
 
 /* Number of IRQ vectors on the NVIC */

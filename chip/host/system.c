@@ -261,8 +261,8 @@ void system_pre_init(void)
 		system_set_reset_flags(load_reset_flags());
 	}
 
-	*(uintptr_t *)(__host_flash + CONFIG_FW_RO_OFF + 4) =
+	*(uintptr_t *)(__host_flash + CONFIG_RO_MEM_OFF + 4) =
 		(uintptr_t)__ro_jump_resetvec;
-	*(uintptr_t *)(__host_flash + CONFIG_FW_RW_OFF + 4) =
+	*(uintptr_t *)(__host_flash + CONFIG_RW_MEM_OFF + 4) =
 		(uintptr_t)__rw_jump_resetvec;
 }

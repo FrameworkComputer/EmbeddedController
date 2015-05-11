@@ -110,20 +110,20 @@
 #endif
 
 /* RO/RW firmware must be after Loader code */
-#define CONFIG_FW_RO_OFF		CONFIG_FW_LOADER_SIZE
+#define CONFIG_RO_MEM_OFF		CONFIG_FW_LOADER_SIZE
 
-#define CONFIG_FW_RO_SIZE		CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RO_SIZE			CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
 #define  CONFIG_FW_INCLUDE_RO
-#define CONFIG_FW_RW_OFF		CONFIG_FW_RO_OFF
-#define CONFIG_FW_RW_SIZE		CONFIG_FW_RO_SIZE
+#define CONFIG_RW_MEM_OFF		CONFIG_RO_MEM_OFF
+#define CONFIG_RW_SIZE			CONFIG_RO_SIZE
 
 /* Write protect Loader and RO Image */
-#define CONFIG_FW_WP_RO_OFF		CONFIG_FW_LOADER_OFF
+#define CONFIG_WP_OFF			CONFIG_FW_LOADER_OFF
 /* Write protect 128k section of 256k physical flash
 which contains Loader and RO Images */
-#define CONFIG_FW_WP_RO_SIZE		(CONFIG_FLASH_PHYSICAL_SIZE >> 1)
+#define CONFIG_WP_SIZE			(CONFIG_FLASH_PHYSICAL_SIZE >> 1)
 /****************************************************************************/
 /* SPI Flash Memory Mapping */
 
@@ -132,12 +132,12 @@ which contains Loader and RO Images */
 #define CONFIG_FLASH_BASE_SPI	(CONFIG_SPI_FLASH_SIZE - (0x40000))
 
 #define CONFIG_RO_WP_SPI_OFF		0x20000
-#define CONFIG_RO_SPI_OFF		0x20000
-#define CONFIG_RW_SPI_OFF		0
+#define CONFIG_RO_STORAGE_OFF		0x20000
+#define CONFIG_RW_STORAGE_OFF		0
 #define CONFIG_RO_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI +	\
-						CONFIG_RO_SPI_OFF)
+						CONFIG_RO_STORAGE_OFF)
 #define CONFIG_RW_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI +	\
-						CONFIG_RW_SPI_OFF)
+						CONFIG_RW_STORAGE_OFF)
 /* Memory Lcation shared between lfw and RO/RWimage */
 #define SHARED_RAM_LFW_RORW		(CONFIG_MEC_SRAM_BASE_START + \
 						(CONFIG_LOADER_IMAGE_SIZE - 4))

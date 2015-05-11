@@ -26,18 +26,18 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 /* Size of one firmware image in flash */
 #define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
 
-#define CONFIG_FW_RO_OFF        0
-#define CONFIG_FW_RO_SIZE       (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_FW_RW_OFF        CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_RW_SIZE       CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_WP_RO_OFF     CONFIG_FW_RO_OFF
-#define CONFIG_FW_WP_RO_SIZE    CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RO_MEM_OFF       0
+#define CONFIG_RO_SIZE          (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
+#define CONFIG_RW_MEM_OFF       CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RW_SIZE          CONFIG_FW_IMAGE_SIZE
+#define CONFIG_WP_OFF           CONFIG_RO_MEM_OFF
+#define CONFIG_WP_SIZE          CONFIG_FW_IMAGE_SIZE
 
 /*
  * Put this after RO to give RW more space and make RO write protect region
  * contiguous.
  */
-#define CONFIG_FW_PSTATE_OFF    CONFIG_FW_RO_SIZE
+#define CONFIG_FW_PSTATE_OFF    CONFIG_RO_SIZE
 #define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
 
 /* Maximum number of deferrable functions */

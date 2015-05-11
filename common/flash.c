@@ -203,7 +203,7 @@ static const uintptr_t get_pstate_addr(void)
 
 	/* Always use the pstate data in RO, even if we're RW */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
-		addr += CONFIG_FW_RO_OFF - CONFIG_FW_RW_OFF;
+		addr += CONFIG_RO_MEM_OFF - CONFIG_RW_MEM_OFF;
 
 	return addr;
 }
@@ -879,16 +879,16 @@ static int flash_command_region_info(struct host_cmd_handler_args *args)
 
 	switch (p->region) {
 	case EC_FLASH_REGION_RO:
-		r->offset = CONFIG_FW_RO_OFF;
-		r->size = CONFIG_FW_RO_SIZE;
+		r->offset = CONFIG_RO_MEM_OFF;
+		r->size = CONFIG_RO_SIZE;
 		break;
 	case EC_FLASH_REGION_RW:
-		r->offset = CONFIG_FW_RW_OFF;
-		r->size = CONFIG_FW_RW_SIZE;
+		r->offset = CONFIG_RW_MEM_OFF;
+		r->size = CONFIG_RW_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
-		r->offset = CONFIG_FW_WP_RO_OFF;
-		r->size = CONFIG_FW_WP_RO_SIZE;
+		r->offset = CONFIG_WP_OFF;
+		r->size = CONFIG_WP_SIZE;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;

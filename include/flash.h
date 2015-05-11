@@ -15,12 +15,12 @@
 #define PHYSICAL_BANKS (CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 /* Read-only firmware offset and size in units of flash banks */
-#define RO_BANK_OFFSET		(CONFIG_FW_RO_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RO_BANK_COUNT		(CONFIG_FW_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_OFFSET		(CONFIG_RO_MEM_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RO_BANK_COUNT		(CONFIG_RO_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 /* Read-write firmware offset and size in units of flash banks */
-#define RW_BANK_OFFSET		(CONFIG_FW_RW_OFF / CONFIG_FLASH_BANK_SIZE)
-#define RW_BANK_COUNT		(CONFIG_FW_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define RW_BANK_OFFSET		(CONFIG_RW_MEM_OFF / CONFIG_FLASH_BANK_SIZE)
+#define RW_BANK_COUNT		(CONFIG_RW_SIZE / CONFIG_FLASH_BANK_SIZE)
 
 /* Persistent protection state flash offset / size / bank */
 #if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)

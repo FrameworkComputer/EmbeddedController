@@ -93,10 +93,10 @@ ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
 endif
 
 # Compute RW firmware size and offset
-_rw_off_str:=$(shell echo "CONFIG_FW_RW_OFF" | $(CPP) $(CPPFLAGS) -P \
+_rw_off_str:=$(shell echo "CONFIG_RW_MEM_OFF" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _rw_off:=$(shell echo "$$(($(_rw_off_str)))")
-_rw_size_str:=$(shell echo "CONFIG_FW_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
+_rw_size_str:=$(shell echo "CONFIG_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -Iboard/$(BOARD) -imacros include/config.h)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
 _flash_base_str:=$(shell echo "CONFIG_FLASH_BASE" | $(CPP) $(CPPFLAGS) -P \

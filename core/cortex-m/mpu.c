@@ -140,14 +140,14 @@ int mpu_protect_ram(void)
 
 int mpu_lock_ro_flash(void)
 {
-	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_FW_RO_OFF,
+	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_RO_MEM_OFF,
 			       CONFIG_FW_IMAGE_SIZE, MPU_ATTR_FLASH_MEMORY);
 }
 
 int mpu_lock_rw_flash(void)
 {
-	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_FW_RW_OFF,
-			       CONFIG_FW_RW_SIZE, MPU_ATTR_FLASH_MEMORY);
+	return mpu_lock_region(REGION_FLASH_MEMORY, CONFIG_RW_MEM_OFF,
+			       CONFIG_RW_SIZE, MPU_ATTR_FLASH_MEMORY);
 }
 
 int mpu_pre_init(void)

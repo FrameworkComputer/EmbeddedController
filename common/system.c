@@ -98,9 +98,9 @@ static uintptr_t get_base(enum system_image_copy_t copy)
 {
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
-		return CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF;
+		return CONFIG_FLASH_BASE + CONFIG_RO_MEM_OFF;
 	case SYSTEM_IMAGE_RW:
-		return CONFIG_FLASH_BASE + CONFIG_FW_RW_OFF;
+		return CONFIG_FLASH_BASE + CONFIG_RW_MEM_OFF;
 	default:
 		return 0xffffffff;
 	}
@@ -113,9 +113,9 @@ static uint32_t get_size(enum system_image_copy_t copy)
 {
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
-		return CONFIG_FW_RO_SIZE;
+		return CONFIG_RO_SIZE;
 	case SYSTEM_IMAGE_RW:
-		return CONFIG_FW_RW_SIZE;
+		return CONFIG_RW_SIZE;
 	default:
 		return 0;
 	}
@@ -317,12 +317,12 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
 			    CONFIG_FLASH_BASE;
 
-	if (my_addr >= CONFIG_FW_RO_OFF &&
-	    my_addr < (CONFIG_FW_RO_OFF + CONFIG_FW_RO_SIZE))
+	if (my_addr >= CONFIG_RO_MEM_OFF &&
+	    my_addr < (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE))
 		return SYSTEM_IMAGE_RO;
 
-	if (my_addr >= CONFIG_FW_RW_OFF &&
-	    my_addr < (CONFIG_FW_RW_OFF + CONFIG_FW_RW_SIZE))
+	if (my_addr >= CONFIG_RW_MEM_OFF &&
+	    my_addr < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE))
 		return SYSTEM_IMAGE_RW;
 
 	return SYSTEM_IMAGE_UNKNOWN;
@@ -357,12 +357,12 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
-		r_offset = CONFIG_FW_RO_OFF;
-		r_size = CONFIG_FW_RO_SIZE;
+		r_offset = CONFIG_RO_MEM_OFF;
+		r_size = CONFIG_RO_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW:
-		r_offset = CONFIG_FW_RW_OFF;
-		r_size = CONFIG_FW_RW_SIZE;
+		r_offset = CONFIG_RW_MEM_OFF;
+		r_size = CONFIG_RW_SIZE;
 		break;
 	default:
 		return 0;

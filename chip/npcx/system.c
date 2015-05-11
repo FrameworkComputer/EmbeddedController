@@ -854,7 +854,7 @@ enum system_image_copy_t system_get_shrspi_image_copy(void)
 static void system_sysjump(void)
 {
 	/* Jump to RO region -- set flag */
-	if (base_addr == CONFIG_FLASH_BASE + CONFIG_FW_RO_OFF)
+	if (base_addr == CONFIG_FLASH_BASE + CONFIG_RO_MEM_OFF)
 		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 	else /* Jump to RW region -- clear flag */
 		CLEAR_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);

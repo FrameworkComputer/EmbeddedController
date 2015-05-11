@@ -217,7 +217,7 @@ static void vboot_hash_init(void)
 #endif
 	{
 		/* Start computing the hash of RW firmware */
-		vboot_hash_start(CONFIG_FW_RW_OFF,
+		vboot_hash_start(CONFIG_RW_MEM_OFF,
 				 system_get_image_used(SYSTEM_IMAGE_RW),
 				 NULL, 0);
 	}
@@ -251,8 +251,8 @@ DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_CMD_HASH
 static int command_hash(int argc, char **argv)
 {
-	uint32_t offset = CONFIG_FW_RW_OFF;
-	uint32_t size = CONFIG_FW_RW_SIZE;
+	uint32_t offset = CONFIG_RW_MEM_OFF;
+	uint32_t size = CONFIG_RW_SIZE;
 	char *e;
 
 	if (argc == 1) {
@@ -277,12 +277,12 @@ static int command_hash(int argc, char **argv)
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[1], "rw")) {
 			return vboot_hash_start(
-				CONFIG_FW_RW_OFF,
+				CONFIG_RW_MEM_OFF,
 				system_get_image_used(SYSTEM_IMAGE_RW),
 				NULL, 0);
 		} else if (!strcasecmp(argv[1], "ro")) {
 			return vboot_hash_start(
-				CONFIG_FW_RO_OFF,
+				CONFIG_RO_MEM_OFF,
 				system_get_image_used(SYSTEM_IMAGE_RO),
 				NULL, 0);
 		}
@@ -354,10 +354,10 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 
 	/* Handle special offset values */
 	if (offset == EC_VBOOT_HASH_OFFSET_RO) {
-		offset = CONFIG_FW_RO_OFF;
+		offset = CONFIG_RO_MEM_OFF;
 		size = system_get_image_used(SYSTEM_IMAGE_RO);
 	} else if (p->offset == EC_VBOOT_HASH_OFFSET_RW) {
-		offset = CONFIG_FW_RW_OFF;
+		offset = CONFIG_RW_MEM_OFF;
 		size = system_get_image_used(SYSTEM_IMAGE_RW);
 	}
 
