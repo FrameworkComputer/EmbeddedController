@@ -286,10 +286,10 @@ static int test_overwrite_current(void)
 
 	/* Test that we cannot overwrite current image */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RO) {
-		offset = CONFIG_RO_MEM_OFF;
+		offset = CONFIG_RO_STORAGE_OFF;
 		size = CONFIG_RO_SIZE;
 	} else {
-		offset = CONFIG_RW_MEM_OFF;
+		offset = CONFIG_RW_STORAGE_OFF;
 		size = CONFIG_RW_SIZE;
 	}
 
@@ -312,10 +312,10 @@ static int test_overwrite_other(void)
 
 	/* Test that we can overwrite the other image */
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
-		offset = CONFIG_RO_MEM_OFF;
+		offset = CONFIG_RO_STORAGE_OFF;
 		size = CONFIG_RO_SIZE;
 	} else {
-		offset = CONFIG_RW_MEM_OFF;
+		offset = CONFIG_RW_STORAGE_OFF;
 		size = CONFIG_RW_SIZE;
 	}
 
@@ -335,10 +335,10 @@ static int test_overwrite_other(void)
 static int test_op_failure(void)
 {
 	mock_flash_op_fail = EC_ERROR_UNKNOWN;
-	VERIFY_NO_WRITE(CONFIG_RO_MEM_OFF, sizeof(testdata), testdata);
-	VERIFY_NO_WRITE(CONFIG_RW_MEM_OFF, sizeof(testdata), testdata);
-	VERIFY_NO_ERASE(CONFIG_RO_MEM_OFF, CONFIG_FLASH_ERASE_SIZE);
-	VERIFY_NO_ERASE(CONFIG_RW_MEM_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_WRITE(CONFIG_RO_STORAGE_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_WRITE(CONFIG_RW_STORAGE_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_ERASE(CONFIG_RO_STORAGE_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_ERASE(CONFIG_RW_STORAGE_OFF, CONFIG_FLASH_ERASE_SIZE);
 	mock_flash_op_fail = EC_SUCCESS;
 
 	return EC_SUCCESS;
@@ -360,9 +360,9 @@ static int test_flash_info(void)
 static int test_region_info(void)
 {
 	VERIFY_REGION_INFO(EC_FLASH_REGION_RO,
-			   CONFIG_RO_MEM_OFF, CONFIG_RO_SIZE);
+			   CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE);
 	VERIFY_REGION_INFO(EC_FLASH_REGION_RW,
-			   CONFIG_RW_MEM_OFF, CONFIG_RW_SIZE);
+			   CONFIG_RW_STORAGE_OFF, CONFIG_RW_SIZE);
 	VERIFY_REGION_INFO(EC_FLASH_REGION_WP_RO,
 			   CONFIG_WP_OFF, CONFIG_WP_SIZE);
 
@@ -391,16 +391,16 @@ static int test_write_protect(void)
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
 
 	/* Check we cannot erase anything */
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_MEM_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RW_MEM_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_RW_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	/* We should not even try to write/erase */
-	VERIFY_NO_ERASE(CONFIG_RO_MEM_OFF, CONFIG_FLASH_ERASE_SIZE);
-	VERIFY_NO_ERASE(CONFIG_RW_MEM_OFF, CONFIG_FLASH_ERASE_SIZE);
-	VERIFY_NO_WRITE(CONFIG_RO_MEM_OFF, sizeof(testdata), testdata);
-	VERIFY_NO_WRITE(CONFIG_RW_MEM_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_ERASE(CONFIG_RO_STORAGE_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_ERASE(CONFIG_RW_STORAGE_OFF, CONFIG_FLASH_ERASE_SIZE);
+	VERIFY_NO_WRITE(CONFIG_RO_STORAGE_OFF, sizeof(testdata), testdata);
+	VERIFY_NO_WRITE(CONFIG_RW_STORAGE_OFF, sizeof(testdata), testdata);
 
 	return EC_SUCCESS;
 }
@@ -409,7 +409,7 @@ static int test_boot_write_protect(void)
 {
 	/* Check write protect state persists through reboot */
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_MEM_OFF,
+	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	return EC_SUCCESS;

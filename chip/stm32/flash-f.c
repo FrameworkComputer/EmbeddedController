@@ -342,12 +342,12 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 	for (i = 0; i < 4; ++i)
 		original_val[i] = val[i] = read_optb(i * 2 + 8);
 
-	for (block = RO_BANK_OFFSET;
-	     block < RO_BANK_OFFSET + PHYSICAL_BANKS;
+	for (block = WP_BANK_OFFSET;
+	     block < WP_BANK_OFFSET + PHYSICAL_BANKS;
 	     block++) {
 		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2 - 4;
 
-		if (block >= RO_BANK_OFFSET + RO_BANK_COUNT + PSTATE_BANK_COUNT)
+		if (block >= WP_BANK_OFFSET + WP_BANK_COUNT)
 			cur_range = FLASH_WP_ALL;
 		else
 			cur_range = FLASH_WP_RO;
@@ -384,9 +384,8 @@ static int registers_need_reset(void)
 	uint32_t flags = flash_get_protect();
 	int i;
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
-	int ro_wp_region_start = RO_BANK_OFFSET;
-	int ro_wp_region_end =
-		RO_BANK_OFFSET + RO_BANK_COUNT + PSTATE_BANK_COUNT;
+	int ro_wp_region_start = WP_BANK_OFFSET;
+	int ro_wp_region_end = WP_BANK_OFFSET + WP_BANK_COUNT;
 
 	for (i = ro_wp_region_start; i < ro_wp_region_end; i++)
 		if (flash_physical_get_protect_at_boot(i) != ro_at_boot)

@@ -319,8 +319,7 @@ int flash_physical_get_protect(int block)
 int flash_physical_protect_at_boot(enum flash_wp_range range)
 {
 	uint32_t prot;
-	uint32_t mask = ((1 << (RO_BANK_COUNT + PSTATE_BANK_COUNT)) - 1)
-			<< RO_BANK_OFFSET;
+	uint32_t mask = ((1 << WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
 	int rv;
 
 	if (range == FLASH_WP_ALL)

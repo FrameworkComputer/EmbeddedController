@@ -56,33 +56,7 @@
 /****************************************************************************/
 /* Define our flash layout. */
 
-/* Size of one firmware image in flash */
-#ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE		(CONFIG_FLASH_PHYSICAL_SIZE / 2)
-#endif
-
-/* RO firmware must start at beginning of flash */
-#define CONFIG_RO_MEM_OFF		0
-
-/*
- * The EC uses the one bank of flash to emulate a SPI-like write protect
- * register with persistent state.
- */
-#define CONFIG_FW_PSTATE_SIZE		CONFIG_FLASH_BANK_SIZE
-
-/* PSTATE immediately follows RO, in the first half of flash */
-#define CONFIG_RO_SIZE			(CONFIG_FW_IMAGE_SIZE		\
-					 - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_FW_PSTATE_OFF		CONFIG_RO_SIZE
-#define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
-
-/* RW firmware is one firmware image offset from the start */
-#define CONFIG_RW_MEM_OFF		CONFIG_FW_IMAGE_SIZE
-#define CONFIG_RW_SIZE			CONFIG_FW_IMAGE_SIZE
-
-/* TODO: why 2 sets of configs with the same numbers? */
-#define CONFIG_WP_OFF			CONFIG_RO_MEM_OFF
-#define CONFIG_WP_SIZE			CONFIG_RO_SIZE
+#include "config_std_internal_flash.h"
 
 /****************************************************************************/
 /* Customize the build */

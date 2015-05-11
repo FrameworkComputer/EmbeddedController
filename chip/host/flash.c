@@ -114,7 +114,7 @@ uint32_t flash_physical_get_protect_flags(void)
 
 int flash_physical_protect_now(int all)
 {
-	memset(__host_flash_protect, 1, all ? PHYSICAL_BANKS : RO_BANK_COUNT);
+	memset(__host_flash_protect, 1, all ? PHYSICAL_BANKS : WP_BANK_COUNT);
 	return EC_SUCCESS;
 }
 

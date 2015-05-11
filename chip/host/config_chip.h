@@ -10,7 +10,6 @@
 
 /* Memory mapping */
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
-#define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
 extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 
 #define CONFIG_FLASH_BASE       ((uintptr_t)__host_flash)
@@ -23,22 +22,7 @@ extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 
 #define CONFIG_FPU
 
-/* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE    (64 * 1024)
-
-#define CONFIG_RO_MEM_OFF       0
-#define CONFIG_RO_SIZE          (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_RW_MEM_OFF       CONFIG_FW_IMAGE_SIZE
-#define CONFIG_RW_SIZE          CONFIG_FW_IMAGE_SIZE
-#define CONFIG_WP_OFF           CONFIG_RO_MEM_OFF
-#define CONFIG_WP_SIZE          CONFIG_FW_IMAGE_SIZE
-
-/*
- * Put this after RO to give RW more space and make RO write protect region
- * contiguous.
- */
-#define CONFIG_FW_PSTATE_OFF    CONFIG_RO_SIZE
-#define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
+#include "config_std_internal_flash.h"
 
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8

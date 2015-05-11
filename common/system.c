@@ -357,11 +357,11 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
-		r_offset = CONFIG_RO_MEM_OFF;
+		r_offset = CONFIG_RO_STORAGE_OFF;
 		r_size = CONFIG_RO_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW:
-		r_offset = CONFIG_RW_MEM_OFF;
+		r_offset = CONFIG_RW_STORAGE_OFF;
 		r_size = CONFIG_RW_SIZE;
 		break;
 	default:

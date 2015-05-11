@@ -195,13 +195,9 @@ int flash_physical_protect_now(int all)
 		all_protected = 1;
 		protect_banks(0, CONFIG_FLASH_PHYSICAL_SIZE /
 			      CONFIG_FLASH_BANK_SIZE);
-	} else {
-		/* Protect the read-only section and persistent state */
-		protect_banks(RO_BANK_OFFSET, RO_BANK_COUNT);
-#ifdef PSTATE_BANK
-		protect_banks(PSTATE_BANK, 1);
-#endif
-	}
+	} else
+		/* Protect the WP region (read-only section and pstate) */
+		protect_banks(WP_BANK_OFFSET, WP_BANK_COUNT);
 
 	return EC_SUCCESS;
 }

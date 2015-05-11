@@ -41,33 +41,16 @@
 /* Flash mapping */
 #define CONFIG_FLASH_BASE       0x00000000
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00040000
-#define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 
-/* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE    (128 * 1024)
-
-/* Define the RO/RW offset */
-#define CONFIG_RO_MEM_OFF       0
-#define CONFIG_RO_SIZE          (CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
-#define CONFIG_RW_MEM_OFF       CONFIG_FW_IMAGE_SIZE
-#define CONFIG_RW_SIZE          CONFIG_FW_IMAGE_SIZE
-
-/*
- * Put pstate after RO to give RW more space and make RO write protect
- * region contiguous.
- */
-#define CONFIG_FW_PSTATE_SIZE   CONFIG_FLASH_BANK_SIZE
-#define CONFIG_FW_PSTATE_OFF    (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
-
+#include "config_std_internal_flash.h"
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 32
 
 /* Not that much RAM, set to smaller */
-#undef CONFIG_UART_TX_BUF_SIZE
+#undef  CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 1024
-
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */
 

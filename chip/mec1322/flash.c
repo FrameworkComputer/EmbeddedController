@@ -123,8 +123,8 @@ int flash_physical_protect_now(int all)
 		offset = 0;
 		size = CONFIG_FLASH_PHYSICAL_SIZE;
 	} else {
-		offset = CONFIG_RO_MEM_OFF;
-		size = CONFIG_RO_SIZE;
+		offset = CONFIG_WP_OFF;
+		size = CONFIG_WP_SIZE;
 	}
 
 	spi_enable(1);
@@ -145,9 +145,9 @@ uint32_t flash_physical_get_protect_flags(void)
 	uint32_t flags = 0;
 
 	spi_enable(1);
-	if (spi_flash_check_protect(CONFIG_RO_MEM_OFF, CONFIG_RO_SIZE)) {
+	if (spi_flash_check_protect(CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE)) {
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
-		if (spi_flash_check_protect(CONFIG_RW_MEM_OFF,
+		if (spi_flash_check_protect(CONFIG_RW_STORAGE_OFF,
 					    CONFIG_RW_SIZE))
 			flags |= EC_FLASH_PROTECT_ALL_NOW;
 	}
@@ -206,8 +206,8 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 		offset = size = 0;
 		break;
 	case FLASH_WP_RO:
-		offset = CONFIG_RO_MEM_OFF;
-		size = CONFIG_RO_SIZE;
+		offset = CONFIG_WP_OFF;
+		size = CONFIG_WP_SIZE;
 		break;
 	case FLASH_WP_ALL:
 		offset = 0;

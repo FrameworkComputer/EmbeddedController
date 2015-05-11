@@ -819,7 +819,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE,
 
 #endif
 
-#define FW_RW_END (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)
+#define FW_RW_END (CONFIG_RW_STORAGE_OFF + CONFIG_RW_SIZE)
 
 uint8_t *flash_hash_rw(void)
 {
@@ -881,14 +881,14 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		if (system_get_image_copy() != SYSTEM_IMAGE_RO)
 			break;
 		pd_log_event(PD_EVENT_ACC_RW_ERASE, 0, 0, NULL);
-		flash_offset = CONFIG_RW_MEM_OFF;
-		flash_physical_erase(CONFIG_RW_MEM_OFF, CONFIG_RW_SIZE);
+		flash_offset = CONFIG_RW_STORAGE_OFF;
+		flash_physical_erase(CONFIG_RW_STORAGE_OFF, CONFIG_RW_SIZE);
 		rw_flash_changed = 1;
 		break;
 	case VDO_CMD_FLASH_WRITE:
 		/* do not kill the code under our feet */
 		if ((system_get_image_copy() != SYSTEM_IMAGE_RO) ||
-		    (flash_offset < CONFIG_RW_MEM_OFF))
+		    (flash_offset < CONFIG_RW_STORAGE_OFF))
 			break;
 		flash_physical_write(flash_offset, 4*(cnt - 1),
 				     (const char *)(payload+1));

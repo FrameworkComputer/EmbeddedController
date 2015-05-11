@@ -39,6 +39,9 @@
 #undef CONFIG_DEBUG_STACK_OVERFLOW
 #undef CONFIG_FLASH
 #undef CONFIG_FMAP
+/* Not using pstate but keep some space for the public key */
+#undef  CONFIG_FW_PSTATE_SIZE
+#define CONFIG_FW_PSTATE_SIZE 544
 #define CONFIG_HIBERNATE
 #define CONFIG_HIBERNATE_WAKEUP_PINS STM32_PWR_CSR_EWUP1
 #define CONFIG_HW_CRC

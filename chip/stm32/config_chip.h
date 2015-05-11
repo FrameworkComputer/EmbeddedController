@@ -43,6 +43,8 @@
 #error "Unsupported chip variant"
 #endif
 
+#include "config_std_internal_flash.h"
+
 /* System stack size */
 #define CONFIG_STACK_SIZE 1024
 

@@ -28,10 +28,8 @@
 /* #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024) */
 #define CONFIG_FLASH_PHYSICAL_SIZE (256 * 1024)
 
-/* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE    (128 * 1024)
 /* Compute the rest of the flash params from these */
-#include "config_std_flash.h"
+#include "config_std_internal_flash.h"
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500

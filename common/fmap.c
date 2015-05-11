@@ -17,10 +17,10 @@
 #define FMAP_VER_MINOR 0
 
 /*
- * For address containing CONFIG_FLASH_BASE (symbols in *.lds.S and variable),
- * this computes the offset to the start of flash.
+ * For address containing CONFIG_FLASH_BASE (symbols in *.RO.lds.S and
+ * variable), this computes the offset to the start of the image on flash.
  */
-#define RELATIVE(addr) ((addr) - CONFIG_FLASH_BASE)
+#define RELATIVE_RO(addr) ((addr) - CONFIG_FLASH_BASE - CONFIG_RO_MEM_OFF)
 
 struct fmap_header {
 	char        fmap_signature[FMAP_SIGNATURE_SIZE];
@@ -69,14 +69,14 @@ const struct _ec_fmap {
 			 * volatile data (ex, calibration results).
 			 */
 			.area_name = "EC_RO",
-			.area_offset = CONFIG_RO_MEM_OFF,
+			.area_offset = CONFIG_RO_STORAGE_OFF,
 			.area_size = CONFIG_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
 			/* (Optional) RO firmware code. */
 			.area_name = "FR_MAIN",
-			.area_offset = CONFIG_RO_MEM_OFF,
+			.area_offset = CONFIG_RO_STORAGE_OFF,
 			.area_size = CONFIG_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -86,8 +86,8 @@ const struct _ec_fmap {
 			 * ASCII, and padded with \0.
 			 */
 			.area_name = "RO_FRID",
-			.area_offset = CONFIG_RO_MEM_OFF +
-				RELATIVE((uint32_t)__version_struct_offset) +
+			.area_offset = CONFIG_RO_STORAGE_OFF +
+				RELATIVE_RO((uint32_t)__version_struct_offset) +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
@@ -96,8 +96,8 @@ const struct _ec_fmap {
 		/* Other RO stuff: FMAP, WP, KEYS, etc. */
 		{
 			.area_name = "FMAP",
-			.area_offset = CONFIG_RO_MEM_OFF +
-				RELATIVE((uint32_t)&ec_fmap),
+			.area_offset = CONFIG_RO_STORAGE_OFF +
+				RELATIVE_RO((uint32_t)&ec_fmap),
 			.area_size = sizeof(ec_fmap),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -117,7 +117,7 @@ const struct _ec_fmap {
 		{
 			 /* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
-			.area_offset = CONFIG_RW_MEM_OFF,
+			.area_offset = CONFIG_RW_STORAGE_OFF,
 			.area_size = CONFIG_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -125,10 +125,13 @@ const struct _ec_fmap {
 			/*
 			 * RW firmware version ID. Must be NULL terminated
 			 * ASCII, and padded with \0.
+			 * TODO: Get the relative offset of
+			 * __version_struct_offset within our RW image to
+			 * accomodate image asymmetry.
 			 */
 			.area_name = "RW_FWID",
-			.area_offset = CONFIG_RW_MEM_OFF +
-				RELATIVE((uint32_t)__version_struct_offset) +
+			.area_offset = CONFIG_RW_STORAGE_OFF +
+				RELATIVE_RO((uint32_t)__version_struct_offset) +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,

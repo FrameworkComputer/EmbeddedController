@@ -602,9 +602,9 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
-	/* Check if RO section is protected in status register */
-	if (flash_check_prot_reg(RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
-				 RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE))
+	/* Check if WP region is protected in status register */
+	if (flash_check_prot_reg(WP_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
+				 WP_BANK_COUNT*CONFIG_FLASH_BANK_SIZE))
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	/*
@@ -639,8 +639,8 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 	case FLASH_WP_RO:
 		/* Protect read-only */
 		return flash_write_prot_reg(
-			    RO_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
-			    RO_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
+			    WP_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
+			    WP_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
 	case FLASH_WP_ALL:
 	default:
 		return EC_ERROR_INVAL;
