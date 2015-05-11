@@ -77,6 +77,7 @@
 #define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_BATTERY I2C_PORT_MASTER
 #define I2C_PORT_LIGHTBAR I2C_PORT_MASTER
+#define I2C_PORT_ACCEL I2C_PORT_MASTER
 
 /* slave address for host commands */
 #ifdef HAS_TASK_HOSTCMD
@@ -122,6 +123,11 @@
 
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
+
+/* Sensor support */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
 
 /* Maximum number of deferrable functions */
 #undef  DEFERRABLE_MAX_COUNT

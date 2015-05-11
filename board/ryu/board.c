@@ -14,6 +14,7 @@
 #include "charger.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accelgyro_bmi160.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -21,6 +22,7 @@
 #include "i2c.h"
 #include "inductive_charging.h"
 #include "lid_switch.h"
+#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
@@ -361,6 +363,53 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_SLAVE_I2C_SCL, GPIO_SLAVE_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* Sensor mutex */
+static struct mutex g_mutex;
+
+/*  local sensor data (per-sensor) */
+struct motion_data_t g_saved_data[2];
+
+struct motion_sensor_t motion_sensors[] = {
+
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	{.name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_mutex,
+	 .drv_data = &g_saved_data[0],
+	 .i2c_addr = BMI160_ADDR0,
+	 .rot_standard_ref = NULL,
+	 .default_config = {
+		 .odr = 100000,
+		 .range = 2
+	 }
+	},
+
+	{.name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_mutex,
+	 .drv_data = &g_saved_data[1],
+	 .i2c_addr = BMI160_ADDR0,
+	 .rot_standard_ref = NULL,
+	 .default_config = {
+		 .odr = 100000,
+		 .range = 2000
+	 }
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static void board_set_usb_switches(int port, int open)
 {
