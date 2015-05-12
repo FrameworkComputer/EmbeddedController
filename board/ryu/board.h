@@ -30,6 +30,7 @@
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_FLASH_ERASE_CHECK
 #define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_SWITCH_PI3USB9281
@@ -192,6 +193,29 @@ enum usb_strings {
 
 	USB_STR_COUNT
 };
+
+/* 1.5A Rp */
+#define PD_SRC_VNC            PD_SRC_1_5_VNC_MV
+#define PD_SRC_RD_THRESHOLD   PD_SRC_1_5_RD_THRESH_MV
+
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* delay for the voltage transition on the power supply, BQ25x spec is 30ms */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  40000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 20000 /* us */
+
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 10000
+#define PD_MAX_POWER_MW       24000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     12000
+
+/* The lower the input voltage, the higher the power efficiency. */
+#define PD_PREFER_LOW_VOLTAGE
 
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);

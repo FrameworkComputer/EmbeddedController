@@ -44,6 +44,7 @@
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 256
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_PD_NO_VBUS_DETECT
@@ -88,6 +89,19 @@ enum usb_strings {
 
 	USB_STR_COUNT
 };
+
+/* we are acting only as a sink */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* we are never a source : don't care about power supply */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  0 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 0 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 1000
+#define PD_MAX_POWER_MW       1500
+#define PD_MAX_CURRENT_MA     300
+#define PD_MAX_VOLTAGE_MV     5000
 
 #endif /* !__ASSEMBLER__ */
 

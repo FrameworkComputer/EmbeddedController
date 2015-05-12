@@ -70,14 +70,14 @@ static struct pd_physical {
 	/* Pointers to timer register for each port */
 	timer_ctlr_t *tim_tx;
 	timer_ctlr_t *tim_rx;
-} pd_phy[PD_PORT_COUNT];
+} pd_phy[CONFIG_USB_PD_PORT_COUNT];
 
 /* keep track of RX edge timing in order to trigger receive */
-static timestamp_t rx_edge_ts[PD_PORT_COUNT][PD_RX_TRANSITION_COUNT];
-static int rx_edge_ts_idx[PD_PORT_COUNT];
+static timestamp_t rx_edge_ts[CONFIG_USB_PD_PORT_COUNT][PD_RX_TRANSITION_COUNT];
+static int rx_edge_ts_idx[CONFIG_USB_PD_PORT_COUNT];
 
 /* keep track of transmit polarity for DMA interrupt */
-static int tx_dma_polarities[PD_PORT_COUNT];
+static int tx_dma_polarities[CONFIG_USB_PD_PORT_COUNT];
 
 void pd_init_dequeue(int port)
 {
@@ -302,7 +302,7 @@ static void tx_dma_done(void *data)
 	pd_phy[port].tim_tx->cr1 &= ~1;
 
 #if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
-	task_set_event(PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC, 0);
 #endif
 }
 
@@ -456,7 +456,7 @@ void pd_rx_handler(void)
 	int next_idx;
 	pending = STM32_EXTI_PR;
 
-	for (i = 0; i < PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		if (pending & EXTI_COMP_MASK(i)) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
 			next_idx = (rx_edge_ts_idx[i] ==

@@ -21,10 +21,11 @@
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_DYNAMIC_SRC_CAP
 #define CONFIG_USB_PD_IDENTITY_HW_VERS 1
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_INTERNAL_COMP
-#define CONFIG_USB_PD_DYNAMIC_SRC_CAP
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_ADC
@@ -70,6 +71,23 @@ enum board_src_cap {
 	SRC_CAP_12V,
 	SRC_CAP_20V,
 };
+
+/* 3.0A Rp */
+#define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
+#define PD_SNK_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
+
+/* we are acting only as a sink */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* delay necessary for the voltage transition on the power supply */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 5000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
 
 /* Set USB PD source capability */
 void board_set_source_cap(enum board_src_cap cap);

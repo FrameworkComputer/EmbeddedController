@@ -10,9 +10,6 @@
 #include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
-#ifdef HAS_TASK_HOSTCMD
-#include "usb_pd_config.h"
-#endif
 #include "util.h"
 
 /* Event log FIFO */
@@ -176,7 +173,7 @@ dequeue_retry:
 	if (r->type == PD_EVENT_NO_ENTRY) {
 		int i, res;
 		incoming_logs = 0;
-		for (i = 0; i < PD_PORT_COUNT; ++i) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
 			/* only accessories who knows Google logging format */
 			if (pd_get_identity_vid(i) != USB_VID_GOOGLE)
 				continue;
@@ -204,7 +201,7 @@ static int hc_pd_write_log_entry(struct host_cmd_handler_args *args)
 
 	if (type < PD_EVENT_MCU_BASE || type >= PD_EVENT_ACC_BASE)
 		return EC_RES_INVALID_PARAM;
-	if (port > 0 && port >= PD_PORT_COUNT)
+	if (port > 0 && port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	switch (type) {

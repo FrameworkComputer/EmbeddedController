@@ -13,6 +13,24 @@
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
 
+#ifdef CONFIG_USB_PD_PORT_COUNT
+/*
+ * Define PD_PORT_TO_TASK_ID() and TASK_ID_TO_PD_PORT() macros to
+ * go between PD port number and task ID.
+ */
+#if CONFIG_USB_PD_PORT_COUNT == 1
+#ifdef HAS_TASK_PD
+#define PD_PORT_TO_TASK_ID(port) TASK_ID_PD
+#else
+#define PD_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
+#endif
+#define TASK_ID_TO_PD_PORT(id)   0
+#elif CONFIG_USB_PD_PORT_COUNT == 2
+#define PD_PORT_TO_TASK_ID(port) ((port) ? TASK_ID_PD_C1 : TASK_ID_PD_C0)
+#define TASK_ID_TO_PD_PORT(id)   ((id) == TASK_ID_PD_C0 ? 0 : 1)
+#endif
+#endif /* CONFIG_USB_PD_PORT_COUNT */
+
 enum pd_rx_errors {
 	PD_RX_ERR_INVAL = -1,           /* Invalid packet */
 	PD_RX_ERR_HARD_RESET = -2,      /* Got a Hard-Reset packet */
@@ -802,6 +820,19 @@ enum pd_data_msg_type {
 /* Minimum PD voltage (mV) */
 #define PD_MIN_MV	5000
 
+/* No connect voltage threshold for sources based on Rp */
+#define PD_SRC_DEF_VNC_MV        1600
+#define PD_SRC_1_5_VNC_MV        1600
+#define PD_SRC_3_0_VNC_MV        2600
+
+/* Rd voltage threshold for sources based on Rp */
+#define PD_SRC_DEF_RD_THRESH_MV  200
+#define PD_SRC_1_5_RD_THRESH_MV  400
+#define PD_SRC_3_0_RD_THRESH_MV  800
+
+/* Voltage threshold to detect connection when presenting Rd */
+#define PD_SNK_VA_MV             250
+
 /* --- Policy layer functions --- */
 
 /* Request types for pd_build_request() */
@@ -926,6 +957,14 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
  * @return EC_SUCCESS if the board is good, <0 else.
  */
 int pd_board_checks(void);
+
+/**
+ * Return if VBUS is detected on type-C port
+ *
+ * @param port USB-C port number
+ * @return VBUS is detected
+ */
+int pd_snk_is_vbus_provided(int port);
 
 /**
  * Check if power swap is allowed.

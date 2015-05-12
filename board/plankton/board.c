@@ -18,7 +18,6 @@
 #include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "util.h"
 
 void button_event(enum gpio_signal signal);

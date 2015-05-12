@@ -16,7 +16,6 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -127,6 +126,12 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+
+int pd_snk_is_vbus_provided(int port)
+{
+	return gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE :
+				     GPIO_USB_C0_VBUS_WAKE);
 }
 
 int pd_board_checks(void)
@@ -257,9 +262,9 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
-static int dp_flags[PD_PORT_COUNT];
+static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
 /* DP Status VDM as returned by UFP */
-static uint32_t dp_status[PD_PORT_COUNT];
+static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {

@@ -13,7 +13,6 @@
 #include "system.h"
 #include "timer.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -26,23 +25,23 @@
 
 /* Keep track of available charge for each charge port. */
 static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
-					       [PD_PORT_COUNT];
+					       [CONFIG_USB_PD_PORT_COUNT];
 
 /* Keep track of when the supplier on each port is registered. */
-static timestamp_t registration_time[PD_PORT_COUNT];
+static timestamp_t registration_time[CONFIG_USB_PD_PORT_COUNT];
 
 /*
  * Charge ceiling for ports. This can be set to temporarily limit the charge
  * pulled from a port, without influencing the port selection logic.
  */
-static int charge_ceil[PD_PORT_COUNT];
+static int charge_ceil[CONFIG_USB_PD_PORT_COUNT];
 
 /* Dual-role capability of attached partner port */
-static enum dualrole_capabilities dualrole_capability[PD_PORT_COUNT];
+static enum dualrole_capabilities dualrole_capability[CONFIG_USB_PD_PORT_COUNT];
 
 #ifdef CONFIG_USB_PD_LOGGING
 /* Mark port as dirty when making changes, for later logging */
-static int save_log[PD_PORT_COUNT];
+static int save_log[CONFIG_USB_PD_PORT_COUNT];
 #endif
 
 /* Store current state of port enable / charge current. */
@@ -69,7 +68,7 @@ static void charge_manager_init(void)
 {
 	int i, j;
 
-	for (i = 0; i < PD_PORT_COUNT; ++i) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j) {
 			available_charge[j][i].current =
 				CHARGE_CURRENT_UNINITIALIZED;
@@ -96,7 +95,7 @@ static int charge_manager_is_seeded(void)
 		return 1;
 
 	for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
-		for (j = 0; j < PD_PORT_COUNT; ++j)
+		for (j = 0; j < CONFIG_USB_PD_PORT_COUNT; ++j)
 			if (available_charge[i][j].current ==
 			    CHARGE_CURRENT_UNINITIALIZED ||
 			    available_charge[i][j].voltage ==
@@ -251,7 +250,7 @@ void charge_manager_save_log(int port)
 	uint16_t flags = 0;
 	struct ec_response_usb_pd_power_info pinfo;
 
-	if (port < 0 || port >= PD_PORT_COUNT)
+	if (port < 0 || port >= CONFIG_USB_PD_PORT_COUNT)
 		return;
 
 	save_log[port] = 0;
@@ -278,7 +277,7 @@ void charge_manager_save_log(int port)
  */
 static void charge_manager_cleanup_override_port(int port)
 {
-	if (port < 0 || port >= PD_PORT_COUNT)
+	if (port < 0 || port >= CONFIG_USB_PD_PORT_COUNT)
 		return;
 
 	if (dualrole_capability[port] == CAP_DUALROLE &&
@@ -310,7 +309,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 		 * so make no assumptions about its consistency.
 		 */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
-			for (j = 0; j < PD_PORT_COUNT; ++j) {
+			for (j = 0; j < CONFIG_USB_PD_PORT_COUNT; ++j) {
 				/*
 				 * Skip this supplier if there is no
 				 * available charge.
@@ -490,7 +489,7 @@ static void charge_manager_refresh(void)
 	if (updated_old_port != CHARGE_PORT_NONE)
 		save_log[updated_old_port] = 1;
 
-	for (i = 0; i < PD_PORT_COUNT; ++i)
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
 		if (save_log[i])
 			charge_manager_save_log(i);
 #endif
@@ -601,7 +600,7 @@ void charge_manager_update_charge(int supplier,
 				  struct charge_port_info *charge)
 {
 	ASSERT(supplier >= 0 && supplier < CHARGE_SUPPLIER_COUNT);
-	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 	ASSERT(charge != NULL);
 
 	charge_manager_make_change(CHANGE_CHARGE, supplier, port, charge);
@@ -615,7 +614,7 @@ void charge_manager_update_charge(int supplier,
  */
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
-	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
 	/*
 	 * We have no way of determining the charger dualrole capability in
@@ -639,7 +638,7 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
  */
 void charge_manager_set_ceil(int port, int ceil)
 {
-	ASSERT(port >= 0 && port < PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
 	if (charge_ceil[port] != ceil) {
 		charge_ceil[port] = ceil;
@@ -661,7 +660,7 @@ int charge_manager_set_override(int port)
 {
 	int retval = EC_SUCCESS;
 
-	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < PD_PORT_COUNT);
+	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < CONFIG_USB_PD_PORT_COUNT);
 
 	CPRINTS("Charge Override: %d", port);
 
@@ -748,7 +747,7 @@ static int hc_charge_port_override(struct host_cmd_handler_args *args)
 	const int16_t override_port = p->override_port;
 
 	if (override_port < OVERRIDE_DONT_CHARGE ||
-	    override_port >= PD_PORT_COUNT)
+	    override_port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	return charge_manager_set_override(override_port);
@@ -765,7 +764,8 @@ static int command_charge_port_override(int argc, char **argv)
 
 	if (argc >= 2) {
 		port = strtoi(argv[1], &e, 0);
-		if (*e || port < OVERRIDE_DONT_CHARGE || port >= PD_PORT_COUNT)
+		if (*e || port < OVERRIDE_DONT_CHARGE ||
+		    port >= CONFIG_USB_PD_PORT_COUNT)
 			return EC_ERROR_PARAM1;
 		ret = charge_manager_set_override(port);
 	}

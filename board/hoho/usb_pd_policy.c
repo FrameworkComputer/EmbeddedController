@@ -69,6 +69,11 @@ void pd_power_supply_reset(int port)
 {
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	return 1;
+}
+
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

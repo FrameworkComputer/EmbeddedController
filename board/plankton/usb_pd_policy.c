@@ -121,6 +121,11 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(GPIO_USBC_VSEL_1, 0);
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	return gpio_get_level(GPIO_VBUS_WAKE);
+}
+
 int pd_board_checks(void)
 {
 	static int was_connected = -1;

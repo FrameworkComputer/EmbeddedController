@@ -11,7 +11,6 @@
 #include "test_util.h"
 #include "timer.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "usb_pd_test_util.h"
 #include "util.h"
 
@@ -23,7 +22,7 @@ struct pd_port_t {
 	int polarity;
 	int partner_role; /* -1 for none */
 	int partner_polarity;
-} pd_port[PD_PORT_COUNT];
+} pd_port[CONFIG_USB_PD_PORT_COUNT];
 
 /* Mock functions */
 
@@ -86,7 +85,7 @@ static void init_ports(void)
 {
 	int i;
 
-	for (i = 0; i < PD_PORT_COUNT; ++i) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
 		pd_port[i].host_mode = 0;
 		pd_port[i].partner_role = -1;
 		pd_port[i].has_vbus = 0;
@@ -157,7 +156,7 @@ static void unplug(int port)
 {
 	pd_port[port].has_vbus = 0;
 	pd_port[port].partner_role = -1;
-	task_wake(PORT_TO_TASK_ID(port));
+	task_wake(PD_PORT_TO_TASK_ID(port));
 	usleep(30 * MSEC);
 }
 
@@ -166,7 +165,7 @@ static int test_request(void)
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
 
 	plug_in_source(0, 0);
-	task_wake(PORT_TO_TASK_ID(0));
+	task_wake(PD_PORT_TO_TASK_ID(0));
 	task_wait_event(2 * PD_T_CC_DEBOUNCE + 100 * MSEC);
 	TEST_ASSERT(pd_port[0].polarity == 0);
 
@@ -176,7 +175,7 @@ static int test_request(void)
 	TEST_ASSERT(verify_goodcrc(0, PD_ROLE_SINK, pd_port[0].msg_rx_id));
 
 	/* Wait for the power request */
-	task_wake(PORT_TO_TASK_ID(0));
+	task_wake(PD_PORT_TO_TASK_ID(0));
 	task_wait_event(35 * MSEC); /* tSenderResponse: 24~30 ms */
 	inc_rx_id(0);
 
@@ -200,7 +199,7 @@ static int test_sink(void)
 	int i;
 
 	plug_in_sink(1, 1);
-	task_wake(PORT_TO_TASK_ID(1));
+	task_wake(PD_PORT_TO_TASK_ID(1));
 	task_wait_event(250 * MSEC); /* tTypeCSinkWaitCap: 210~250 ms */
 	TEST_ASSERT(pd_port[1].polarity == 1);
 
@@ -217,7 +216,7 @@ static int test_sink(void)
 
 	/* Looks good. Ack the source cap. */
 	simulate_goodcrc(1, PD_ROLE_SINK, pd_port[1].msg_tx_id);
-	task_wake(PORT_TO_TASK_ID(1));
+	task_wake(PD_PORT_TO_TASK_ID(1));
 	usleep(30 * MSEC);
 	inc_tx_id(1);
 

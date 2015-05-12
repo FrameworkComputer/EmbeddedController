@@ -71,6 +71,12 @@ void pd_power_supply_reset(int port)
 {
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	/* VBUS_WAKE is broken (not detecting 5V), use the ADC instead */
+	return adc_read_channel(ADC_CH_VBUS_SENSE) > 4000;
+}
+
 int pd_board_checks(void)
 {
 	static int blinking;

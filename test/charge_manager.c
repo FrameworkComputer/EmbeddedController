@@ -11,7 +11,6 @@
 #include "test_util.h"
 #include "timer.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "util.h"
 
 #define CHARGE_MANAGER_SLEEP_MS 50
@@ -33,8 +32,8 @@ BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 static unsigned int active_charge_limit = CHARGE_SUPPLIER_NONE;
 static unsigned int active_charge_port = CHARGE_PORT_NONE;
 static unsigned int charge_port_to_reject = CHARGE_PORT_NONE;
-static int new_power_request[PD_PORT_COUNT];
-static int power_role[PD_PORT_COUNT];
+static int new_power_request[CONFIG_USB_PD_PORT_COUNT];
+static int power_role[CONFIG_USB_PD_PORT_COUNT];
 
 /* Callback functions called by CM on state change */
 void board_set_charge_limit(int charge_ma)
@@ -70,7 +69,7 @@ void pd_set_new_power_request(int port)
 static void clear_new_power_requests(void)
 {
 	int i;
-	for (i = 0; i < PD_PORT_COUNT; ++i)
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
 		new_power_request[i] = 0;
 }
 
@@ -107,7 +106,7 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 	charge.current = current;
 	charge.voltage = voltage;
 
-	for (i = 0; i < PD_PORT_COUNT; ++i) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
 		charge_manager_set_ceil(i, ceil);
 		charge_manager_update_dualrole(i, CAP_DEDICATED);
 		pd_set_role(i, PD_ROLE_SINK);
@@ -132,12 +131,12 @@ static int test_initialization(void)
 
 	/* Initialize all supplier/port pairs, except for the last one */
 	for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
-		for (j = 0; j < PD_PORT_COUNT; ++j) {
+		for (j = 0; j < CONFIG_USB_PD_PORT_COUNT; ++j) {
 			if (i == 0)
 				charge_manager_update_dualrole(j,
 							       CAP_DEDICATED);
 			if (i == CHARGE_SUPPLIER_COUNT - 1 &&
-			    j == PD_PORT_COUNT - 1)
+			    j == CONFIG_USB_PD_PORT_COUNT - 1)
 				break;
 			charge_manager_update_charge(i, j, &charge);
 		}
@@ -148,7 +147,7 @@ static int test_initialization(void)
 
 	/* Update last pair and verify a charge port has been selected */
 	charge_manager_update_charge(CHARGE_SUPPLIER_COUNT-1,
-				     PD_PORT_COUNT-1,
+				     CONFIG_USB_PD_PORT_COUNT-1,
 				     &charge);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port != CHARGE_PORT_NONE);

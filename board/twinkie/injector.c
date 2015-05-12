@@ -62,7 +62,6 @@ static const struct res_cfg {
 				     {GPIO_C, 0x8000, GPIO_OUT_HIGH} } },
 };
 
-#define PD_SRC_RD_THRESHOLD  200 /* mV */
 #define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
 #define CC_RD(cc) ((cc > PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))

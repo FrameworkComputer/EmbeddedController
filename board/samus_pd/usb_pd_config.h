@@ -12,11 +12,6 @@
 #ifndef __USB_PD_CONFIG_H
 #define __USB_PD_CONFIG_H
 
-/* Port and task configuration */
-#define PD_PORT_COUNT 2
-#define PORT_TO_TASK_ID(port) ((port) ? TASK_ID_PD_C1 : TASK_ID_PD_C0)
-#define TASK_ID_TO_PORT(id)   ((id) == TASK_ID_PD_C0 ? 0 : 1)
-
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 17
 #define TIM_CLOCK_PD_RX_C0 1
@@ -278,36 +273,5 @@ static inline void pd_set_vconn(int port, int polarity, int enable)
 		gpio_set_level(polarity ? GPIO_USB_C1_CC1_VCONN1_EN_L :
 					  GPIO_USB_C1_CC2_VCONN1_EN_L, !enable);
 }
-
-static inline int pd_snk_is_vbus_provided(int port)
-{
-	return gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE :
-				     GPIO_USB_C0_VBUS_WAKE);
-}
-
-/* Standard-current DFP : no-connect voltage is 1.55V */
-#define PD_SRC_VNC 1550 /* mV */
-
-/* UFP-side : threshold for DFP connection detection */
-#define PD_SNK_VA   200 /* mV */
-
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
-/*
- * delay to turn on the power supply max is ~16ms.
- * delay to turn off the power supply max is about ~180ms.
- */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
-
-/* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
-
-/* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
 
 #endif /* __USB_PD_CONFIG_H */

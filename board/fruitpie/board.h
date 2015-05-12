@@ -24,6 +24,7 @@
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USBC_SS_MUX
@@ -105,6 +106,23 @@ enum usb_strings {
 
 	USB_STR_COUNT
 };
+
+/* Standard-current Rp */
+#define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
+#define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
+
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* delay necessary for the voltage transition on the power supply */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 1000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
 
 #endif /* !__ASSEMBLER__ */
 

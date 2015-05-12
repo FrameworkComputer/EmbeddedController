@@ -29,6 +29,7 @@
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USBC_SS_MUX
@@ -78,6 +79,26 @@ enum usb_strings {
 
 	USB_STR_COUNT
 };
+
+/* 3.0A Rp */
+#define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
+#define PD_SRC_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
+
+/* we are acting only as a source */
+#define PD_DEFAULT_STATE PD_STATE_SRC_DISCONNECTED
+
+/* delay necessary for the voltage transition on the power supply */
+/* TODO (code.google.com/p/chrome-os-partner/issues/detail?id=37078)
+ * Need to measure these and adjust for honeybuns.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 1000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
 
 #endif /* !__ASSEMBLER__ */
 

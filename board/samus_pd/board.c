@@ -25,7 +25,6 @@
 #include "task.h"
 #include "usb.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -69,8 +68,8 @@ static int desired_charge_rate_ma = -1;
  * Store the state of our USB data switches so that they can be restored
  * after pericom reset.
  */
-static int usb_switch_state[PD_PORT_COUNT];
-static struct mutex usb_switch_lock[PD_PORT_COUNT];
+static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
+static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
 
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
@@ -403,7 +402,7 @@ static void board_init(void)
 	/* Initialize all pericom charge suppliers to 0 */
 	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
 	charge_none.current = 0;
-	for (i = 0; i < PD_PORT_COUNT; i++) {
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
 					     i,
 					     &charge_none);
@@ -548,7 +547,7 @@ const struct usb_port_mux usb_muxes[] = {
 		.ss2_dp_mode = GPIO_USB_C1_SS2_DP_MODE,
 	},
 };
-BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == PD_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_COUNT);
 
 
 static void board_set_usb_switches(int port, int open)
@@ -684,7 +683,8 @@ static void pd_send_ec_int(void)
 int board_set_active_charge_port(int charge_port)
 {
 	/* charge port is a realy physical port */
-	int is_real_port = (charge_port >= 0 && charge_port < PD_PORT_COUNT);
+	int is_real_port = (charge_port >= 0 &&
+			    charge_port < CONFIG_USB_PD_PORT_COUNT);
 	/* check if we are source vbus on that port */
 	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
 						       GPIO_USB_C1_5V_EN);

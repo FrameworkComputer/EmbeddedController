@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "adc.h"
+
 #include "atomic.h"
 #include "charge_manager.h"
 #include "common.h"
@@ -20,7 +20,6 @@
 #include "util.h"
 #include "usb_api.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -193,7 +192,7 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 
-static struct pd_policy pe[PD_PORT_COUNT];
+static struct pd_policy pe[CONFIG_USB_PD_PORT_COUNT];
 
 void pd_dfp_pe_init(int port)
 {
@@ -555,7 +554,7 @@ static int command_pe(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	/* command: pe <port> <subcmd> <args> */
 	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= PD_PORT_COUNT)
+	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_ERROR_PARAM2;
 	if (!strncasecmp(argv[2], "dump", 4))
 		dump_pe(port);
@@ -770,7 +769,7 @@ static int hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 	const uint8_t *port = args->params;
 	struct ec_params_usb_pd_discovery_entry *r = args->response;
 
-	if (*port >= PD_PORT_COUNT)
+	if (*port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	r->vid = pd_get_identity_vid(*port);
@@ -792,7 +791,7 @@ static int hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	const struct ec_params_usb_pd_get_mode_request *p = args->params;
 	struct ec_params_usb_pd_get_mode_response *r = args->response;
 
-	if (p->port >= PD_PORT_COUNT)
+	if (p->port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	/* no more to send */

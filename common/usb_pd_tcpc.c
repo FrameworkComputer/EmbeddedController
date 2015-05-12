@@ -157,8 +157,12 @@ static const uint8_t dec4b5b[] = {
  * Note, V(Rd) > V(Ra)
  */
 #ifndef PD_SRC_RD_THRESHOLD
-#define PD_SRC_RD_THRESHOLD  200 /* mV */
+#define PD_SRC_RD_THRESHOLD PD_SRC_DEF_RD_THRESH_MV
 #endif
+#ifndef PD_SRC_VNC
+#define PD_SRC_VNC PD_SRC_DEF_VNC_MV
+#endif
+
 #define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
 #define CC_RD(cc) ((cc >= PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #define CC_NC(cc)  (cc >= PD_SRC_VNC)
@@ -173,6 +177,10 @@ static const uint8_t dec4b5b[] = {
  * open   Rp     DFP attached      2
  * Rp     Rp     Accessory attached N/A
  */
+#ifndef PD_SNK_VA
+#define PD_SNK_VA PD_SNK_VA_MV
+#endif
+
 #define CC_RP(cc)  (cc >= PD_SNK_VA)
 
 /*
@@ -218,7 +226,7 @@ static struct pd_port_controller {
 	uint16_t tx_head;
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
-} pd[PD_PORT_COUNT];
+} pd[CONFIG_USB_PD_PORT_COUNT];
 
 static inline int encode_short(int port, int off, uint16_t val16)
 {
@@ -788,7 +796,7 @@ int tcpc_run(int port, int evt)
 #ifndef CONFIG_USB_POWER_DELIVERY
 void pd_task(void)
 {
-	int port = TASK_ID_TO_PORT(task_get_current());
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
 	int timeout = 10*MSEC;
 	int evt;
 
@@ -807,7 +815,7 @@ void pd_task(void)
 
 void pd_rx_event(int port)
 {
-	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 }
 
 int tcpc_alert_status(int port, int alert_reg, uint8_t *alert)
@@ -846,7 +854,7 @@ int tcpc_set_cc(int port, int pull)
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_CC);
 #else
-	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
 #endif
 	return EC_SUCCESS;
 }
@@ -886,7 +894,7 @@ int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_TX);
 #else
-	task_set_event(PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
 #endif
 	return EC_SUCCESS;
 }
@@ -1077,7 +1085,7 @@ static int command_tcpc(int argc, char **argv)
 	port = strtoi(argv[1], &e, 10);
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
-	if (*e || port >= PD_PORT_COUNT)
+	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_ERROR_PARAM2;
 
 	if (!strcasecmp(argv[2], "clock")) {

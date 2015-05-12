@@ -79,6 +79,12 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	/* Not implemented */
 }
 
+test_mockable int pd_snk_is_vbus_provided(int port)
+{
+	/* Not implemented */
+	return 1;
+}
+
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

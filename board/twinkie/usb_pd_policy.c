@@ -89,6 +89,12 @@ void pd_power_supply_reset(int port)
 {
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	/* assume the alert was programmed to detect bus voltage above 4.5V */
+	return (gpio_get_level(GPIO_VBUS_ALERT_L) == 0);
+}
+
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

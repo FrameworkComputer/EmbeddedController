@@ -130,6 +130,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_SHA256
@@ -139,10 +140,12 @@ int board_discharge_on_ac(int enabled);
 #ifdef TEST_CHARGE_MANAGER
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT 2
 #endif
 
 #ifdef TEST_CHARGE_RAMP
 #define CONFIG_CHARGE_RAMP
+#define CONFIG_USB_PD_PORT_COUNT 2
 #endif
 
 #endif  /* TEST_BUILD */

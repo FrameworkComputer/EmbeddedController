@@ -94,6 +94,11 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(GPIO_PPVAR_VBUS_EN, 0);
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	return 0;
+}
+
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

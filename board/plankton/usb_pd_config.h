@@ -10,11 +10,6 @@
 
 #include "board.h"
 
-/* USB-PD configuration */
-#define PD_PORT_COUNT 1
-#define PORT_TO_TASK_ID(port) TASK_ID_PD
-#define TASK_ID_TO_PORT(id)   0
-
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 17
 #define TIM_CLOCK_PD_RX_C0 1
@@ -165,29 +160,5 @@ static inline int pd_adc_read(int port, int cc)
 	else
 		return adc_read_channel(ADC_CH_CC2_PD);
 }
-
-static inline int pd_snk_is_vbus_provided(int port)
-{
-	return gpio_get_level(GPIO_VBUS_WAKE);
-}
-
-/* 3.0A DFP : no-connect voltage is 2.45V */
-#define PD_SRC_VNC 2450 /* mV */
-
-/* UFP-side : threshold for DFP connection detection */
-#define PD_SNK_VA   250 /* mV */
-
-/* we are acting only as a sink */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
-/* delay necessary for the voltage transition on the power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
-
-/* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW 5000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
 
 #endif /* __USB_PD_CONFIG_H */

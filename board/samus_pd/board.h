@@ -57,6 +57,7 @@
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 512
+#define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_SWITCH_PI3USB9281
@@ -128,6 +129,29 @@ enum charge_supplier {
 
 /* supplier_priority table defined in board.c */
 extern const int supplier_priority[];
+
+/* Standard-current Rp */
+#define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
+#define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
+
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/*
+ * delay to turn on the power supply max is ~16ms.
+ * delay to turn off the power supply max is about ~180ms.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
 
 /* Charge current limit min / max, based on PWM duty cycle */
 #define PWM_0_MA	500

@@ -29,7 +29,6 @@
 #include "task.h"
 #include "usb.h"
 #include "usb_pd.h"
-#include "usb_pd_config.h"
 #include "usb_spi.h"
 #include "usb-stm32f3.h"
 #include "usb-stream.h"
@@ -549,9 +548,9 @@ int board_set_active_charge_port(int charge_port)
 {
 	int ret = EC_SUCCESS;
 	/* check if we are source vbus on that port */
-	int source = gpio_get_level(GPIO_USBC_5V_EN);
+	int src = gpio_get_level(GPIO_USBC_5V_EN);
 
-	if (charge_port >= 0 && charge_port < PD_PORT_COUNT && source) {
+	if (charge_port >= 0 && charge_port < CONFIG_USB_PD_PORT_COUNT && src) {
 		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
 		charge_port = CHARGE_PORT_NONE;
 		ret = EC_ERROR_INVAL;

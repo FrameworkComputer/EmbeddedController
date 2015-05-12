@@ -101,6 +101,11 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(GPIO_USBC_5V_EN, 0);
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	return gpio_get_level(GPIO_CHGR_ACOK);
+}
+
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

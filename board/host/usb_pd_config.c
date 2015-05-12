@@ -33,8 +33,3 @@ test_mockable int pd_adc_read(int port, int cc)
 	return 0;
 }
 
-test_mockable int pd_snk_is_vbus_provided(int port)
-{
-	/* Not implemented */
-	return 1;
-}
