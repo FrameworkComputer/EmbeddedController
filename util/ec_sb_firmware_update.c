@@ -193,10 +193,12 @@ static int check_battery_firmware_image_version(
 	struct sb_fw_header *hdr,
 	struct sb_fw_update_info *p)
 {
-	return (((hdr->fw_version == 0xFFFF)
-			|| (hdr->fw_version > p->fw_version)) &&
-		((hdr->data_table_version == 0xFFFF)
-			|| (hdr->data_table_version > p->data_version)));
+	/*
+	 * If the battery firmware has a newer fw version
+	 * or a newer data table version, then it is ok to update.
+	 */
+	return (hdr->fw_version > p->fw_version)
+		|| (hdr->data_table_version > p->data_version);
 }
 
 
