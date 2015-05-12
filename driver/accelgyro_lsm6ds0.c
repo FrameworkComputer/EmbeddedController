@@ -169,7 +169,7 @@ static int set_range(const struct motion_sensor_t *s,
 	int ret, ctrl_val, range_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct accel_param_pair *ranges;
-	struct lsm6ds0_data *data = (struct lsm6ds0_data *)s->drv_data;
+	struct motion_data_t *data = (struct motion_data_t *)s->drv_data;
 
 	ctrl_reg = get_ctrl_reg(s->type);
 	ranges = get_range_table(s->type, &range_tbl_size);
@@ -191,20 +191,20 @@ static int set_range(const struct motion_sensor_t *s,
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->sensor_range = get_engineering_val(reg_val, ranges,
-							 range_tbl_size);
+		data->range = get_engineering_val(reg_val, ranges,
+				range_tbl_size);
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
-	return EC_SUCCESS;
+	return ret;
 }
 
 static int get_range(const struct motion_sensor_t *s,
 				int *range)
 {
-	struct lsm6ds0_data *data = (struct lsm6ds0_data *)s->drv_data;
+	struct motion_data_t *data = (struct motion_data_t *)s->drv_data;
 
-	*range = data->sensor_range;
+	*range = data->range;
 	return EC_SUCCESS;
 }
 
@@ -230,7 +230,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	int ret, val, odr_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct accel_param_pair *data_rates;
-	struct lsm6ds0_data *data = s->drv_data;
+	struct motion_data_t *data = s->drv_data;
 
 	ctrl_reg = get_ctrl_reg(s->type);
 	data_rates = get_odr_table(s->type, &odr_tbl_size);
@@ -251,7 +251,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->sensor_odr = get_engineering_val(reg_val, data_rates,
+		data->odr = get_engineering_val(reg_val, data_rates,
 						       odr_tbl_size);
 
 	/* CTRL_REG3_G 12h
@@ -274,15 +274,15 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
-	return EC_SUCCESS;
+	return ret;
 }
 
 static int get_data_rate(const struct motion_sensor_t *s,
 				int *rate)
 {
-	struct lsm6ds0_data *data = s->drv_data;
+	struct motion_data_t *data = s->drv_data;
 
-	*rate = data->sensor_odr;
+	*rate = data->odr;
 	return EC_SUCCESS;
 }
 
@@ -420,29 +420,30 @@ static int init(const struct motion_sensor_t *s)
 		if (ret)
 			return EC_ERROR_UNKNOWN;
 
-		ret = set_range(s, s->range, 1);
+		ret = set_range(s, s->runtime_config.range, 1);
 		if (ret)
 			return EC_ERROR_UNKNOWN;
 
-		ret = set_data_rate(s, s->odr, 1);
+		ret = set_data_rate(s, s->runtime_config.odr, 1);
 		if (ret)
 			return EC_ERROR_UNKNOWN;
 	}
 
 	if (MOTIONSENSE_TYPE_GYRO == s->type) {
 		/* Config GYRO Range */
-		ret = set_range(s, s->range, 1);
+		ret = set_range(s, s->runtime_config.range, 1);
 		if (ret)
 			return EC_ERROR_UNKNOWN;
 
 		/* Config ACCEL & GYRO ODR */
-		ret = set_data_rate(s, s->odr, 1);
+		ret = set_data_rate(s, s->runtime_config.odr, 1);
 		if (ret)
 			return EC_ERROR_UNKNOWN;
 	}
 
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
-			s->name, s->type, s->range, s->odr);
+			s->name, s->type, s->runtime_config.range,
+			s->runtime_config.odr);
 	return ret;
 }
 

@@ -123,14 +123,36 @@ const matrix_3x3_t lid_standard_ref = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	{SENSOR_ACTIVE_S0, "Base Accel", MOTIONSENSE_CHIP_KXCJ9,
-		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_BASE,
-		&kxcj9_drv, &g_kxcj9_mutex[0], &g_kxcj9_data[0],
-		KXCJ9_ADDR1, &base_standard_ref, 100000, 2},
-	{SENSOR_ACTIVE_S0, "Lid Accel", MOTIONSENSE_CHIP_KXCJ9,
-		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
-		&kxcj9_drv, &g_kxcj9_mutex[1], &g_kxcj9_data[1],
-		KXCJ9_ADDR0, &lid_standard_ref, 100000, 2},
+	{.name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KXCJ9,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &kxcj9_drv,
+	 .mutex = &g_kxcj9_mutex[0],
+	 .drv_data = &g_kxcj9_data[0],
+	 .i2c_addr = KXCJ9_ADDR1,
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_config = {
+		 .odr = 100000,
+		 .range = 2
+	 }
+	},
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KXCJ9,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kxcj9_drv,
+	 .mutex = &g_kxcj9_mutex[1],
+	 .drv_data = &g_kxcj9_data[1],
+	 .i2c_addr = KXCJ9_ADDR0,
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_config = {
+		 .odr = 100000,
+		 .range = 2
+	 }
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -165,8 +187,8 @@ static void motion_sensors_pre_init(void)
 		sensor = &motion_sensors[i];
 		sensor->state = SENSOR_NOT_INITIALIZED;
 
-		sensor->odr = sensor->default_odr;
-		sensor->range = sensor->default_range;
+		sensor->runtime_config.odr = sensor->default_config.odr;
+		sensor->runtime_config.range = sensor->default_config.range;
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sensors_pre_init,

@@ -76,8 +76,8 @@ static void motion_sense_shutdown(void)
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
 		sensor->active = SENSOR_ACTIVE_S5;
-		sensor->odr    = sensor->default_odr;
-		sensor->range  = sensor->default_range;
+		sensor->runtime_config.odr    = sensor->default_config.odr;
+		sensor->runtime_config.range  = sensor->default_config.range;
 		if ((sensor->state == SENSOR_INITIALIZED) &&
 		   !(sensor->active_mask & sensor->active)) {
 			sensor->drv->set_data_rate(sensor, 0, 0);
@@ -127,7 +127,8 @@ static void motion_sense_resume(void)
 		sensor->active = SENSOR_ACTIVE_S0;
 		if (sensor->state == SENSOR_INITIALIZED) {
 			/* Put back the odr previously set. */
-			sensor->drv->set_data_rate(sensor, sensor->odr, 1);
+			sensor->drv->set_data_rate(sensor,
+					sensor->runtime_config.odr, 1);
 		}
 	}
 }
@@ -233,8 +234,8 @@ void motion_sense_task(void)
 		sensor = &motion_sensors[i];
 		sensor->state = SENSOR_NOT_INITIALIZED;
 
-		sensor->odr = sensor->default_odr;
-		sensor->range = sensor->default_range;
+		sensor->runtime_config.odr = sensor->default_config.odr;
+		sensor->runtime_config.range = sensor->default_config.range;
 	}
 
 	set_present(lpc_status);
@@ -443,7 +444,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		sensor->drv->get_data_rate(sensor, &data);
 
 		/* Save configuration parameter: ODR */
-		sensor->odr = data;
+		sensor->runtime_config.odr = data;
 		out->sensor_odr.ret = data;
 
 		args->response_size = sizeof(out->sensor_odr);
@@ -471,7 +472,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		sensor->drv->get_range(sensor, &data);
 
 		/* Save configuration parameter: range */
-		sensor->range = data;
+		sensor->runtime_config.range = data;
 
 		out->sensor_range.ret = data;
 		args->response_size = sizeof(out->sensor_range);

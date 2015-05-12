@@ -102,14 +102,36 @@ const matrix_3x3_t lid_standard_ref = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
-	{SENSOR_ACTIVE_S0_S3_S5, "base", MOTIONSENSE_CHIP_LSM6DS0,
-		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_BASE,
-		&test_motion_sense, NULL, NULL,
-		0, &base_standard_ref, 119000, 2},
-	{SENSOR_ACTIVE_S0, "lid", MOTIONSENSE_CHIP_KXCJ9,
-		MOTIONSENSE_TYPE_ACCEL, MOTIONSENSE_LOC_LID,
-		&test_motion_sense, NULL, NULL,
-		0, &lid_standard_ref, 100000, 2},
+	{.name = "base",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_LSM6DS0,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &test_motion_sense,
+	 .mutex = NULL,
+	 .drv_data = NULL,
+	 .i2c_addr = 0,
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_config = {
+		 .odr = 119000,
+		 .range = 2
+	 }
+	},
+	{.name = "base",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KXCJ9,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &test_motion_sense,
+	 .mutex = NULL,
+	 .drv_data = NULL,
+	 .i2c_addr = 0,
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_config = {
+		 .odr = 119000,
+		 .range = 2
+	 }
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 

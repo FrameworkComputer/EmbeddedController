@@ -262,7 +262,7 @@ static struct mutex g_lid_mutex;
 struct kxcj9_data g_kxcj9_data;
 
 /* lsm6ds0 local sensor data (per-sensor) */
-struct lsm6ds0_data g_lsm6ds0_data[2];
+struct motion_data_t g_saved_data[2];
 
 /* Four Motion sensors */
 /* Matrix to rotate accelrator into standard reference frame */
@@ -291,11 +291,13 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &lsm6ds0_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_lsm6ds0_data[0],
+	 .drv_data = &g_saved_data[0],
 	 .i2c_addr = LSM6DS0_ADDR1,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_odr = 119000,
-	 .default_range = 2
+	 .default_config = {
+		 .odr = 119000,
+		 .range = 2
+	 }
 	},
 
 	{.name = "Lid",
@@ -308,8 +310,10 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data,
 	 .i2c_addr = KXCJ9_ADDR0,
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_odr = 100000,
-	 .default_range = 2
+	 .default_config = {
+		 .odr = 100000,
+		 .range = 2
+	 }
 	},
 
 	{.name = "Base Gyro",
@@ -319,11 +323,13 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &lsm6ds0_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_lsm6ds0_data[1],
+	 .drv_data = &g_saved_data[1],
 	 .i2c_addr = LSM6DS0_ADDR1,
 	 .rot_standard_ref = NULL,
-	 .default_odr = 119000,
-	 .default_range = 2000
+	 .default_config = {
+		 .odr = 119000,
+		 .range = 2000
+	 }
 	},
 
 };

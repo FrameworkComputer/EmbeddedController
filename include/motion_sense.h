@@ -26,6 +26,11 @@ enum sensor_state {
 #define SENSOR_ACTIVE_S0_S3 (SENSOR_ACTIVE_S3 | SENSOR_ACTIVE_S0)
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
+struct motion_data_t {
+	int odr;
+	int range;
+};
+
 struct motion_sensor_t {
 	/* RO fields */
 	uint32_t active_mask;
@@ -40,12 +45,10 @@ struct motion_sensor_t {
 	const matrix_3x3_t *rot_standard_ref;
 
 	/* Default configuration parameters, RO only */
-	int default_odr;
-	int default_range;
+	struct motion_data_t default_config;
 
 	/* Run-Time configuration parameters */
-	int odr;
-	int range;
+	struct motion_data_t runtime_config;
 
 	/* state parameters */
 	enum sensor_state state;
