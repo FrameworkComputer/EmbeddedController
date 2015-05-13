@@ -142,7 +142,7 @@ static void usart_interrupt_tx(struct usart_config const *config)
 	intptr_t base = config->hw->base;
 	uint8_t  byte;
 
-	if (consumer_read_unit(&config->consumer, &byte)) {
+	if (queue_remove_unit(config->consumer.queue, &byte)) {
 		STM32_USART_TDR(base) = byte;
 
 		/*
@@ -171,7 +171,7 @@ static void usart_interrupt_rx(struct usart_config const *config)
 	intptr_t base = config->hw->base;
 	uint8_t  byte = STM32_USART_RDR(base);
 
-	if (!producer_write_unit(&config->producer, &byte))
+	if (!queue_add_unit(config->producer.queue, &byte))
 		atomic_add((uint32_t *) &config->state->rx_dropped, 1);
 }
 

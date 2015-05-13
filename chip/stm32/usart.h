@@ -104,11 +104,7 @@ extern struct producer_ops const usart_producer_ops;
  * HW is the name of the usart_hw_config provided by the variant specific code.
  *
  * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this USART
- * should write to and read from respectively.  They must match the queues
- * that the CONSUMER and PRODUCER read from and write to respectively.
- *
- * CONSUMER and PRODUCER are the names of the consumer and producer objects at
- * the other ends of the RX and TX queues respectively.
+ * should write to and read from respectively.
  */
 /*
  * The following assertions can not be made because they require access to
@@ -116,16 +112,12 @@ extern struct producer_ops const usart_producer_ops;
  *
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
- * BUILD_ASSERT(PRODUCER.queue == &TX_QUEUE);
- * BUILD_ASSERT(CONSUMER.queue == &RX_QUEUE);
  */
 #define USART_CONFIG(NAME,					\
 		     HW,					\
 		     BAUD,					\
 		     RX_QUEUE,					\
-		     TX_QUEUE,					\
-		     CONSUMER,					\
-		     PRODUCER)					\
+		     TX_QUEUE)					\
 								\
 	static struct usart_state CONCAT2(NAME, _state);	\
 	struct usart_config const NAME = {			\
@@ -133,14 +125,12 @@ extern struct producer_ops const usart_producer_ops;
 		.state    = &CONCAT2(NAME, _state),		\
 		.baud     = BAUD,				\
 		.consumer = {					\
-			.producer = &PRODUCER,			\
-			.queue    = &TX_QUEUE,			\
-			.ops      = &usart_consumer_ops,	\
+			.queue = &TX_QUEUE,			\
+			.ops   = &usart_consumer_ops,		\
 		},						\
 		.producer = {					\
-			.consumer = &CONSUMER,			\
-			.queue    = &RX_QUEUE,			\
-			.ops      = &usart_producer_ops,	\
+			.queue = &RX_QUEUE,			\
+			.ops   = &usart_producer_ops,		\
 		},						\
 	};
 

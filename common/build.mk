@@ -7,7 +7,7 @@
 #
 
 common-y=util.o
-common-y+=version.o printf.o queue.o producer.o consumer.o
+common-y+=version.o printf.o queue.o queue_policies.o
 
 common-$(CONFIG_ADC)+=adc.o
 common-$(CONFIG_ALS)+=als.o

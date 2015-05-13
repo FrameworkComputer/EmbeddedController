@@ -27,16 +27,16 @@ static size_t rx_read(struct usb_stream_config const *config)
 	if (count >= queue_space(config->producer.queue))
 		return 0;
 
-	return producer_write_memcpy(&config->producer,
-				     (void *) address,
-				     count,
-				     memcpy_from_usbram);
+	return queue_add_memcpy(config->producer.queue,
+				(void *) address,
+				count,
+				memcpy_from_usbram);
 }
 
 static size_t tx_write(struct usb_stream_config const *config)
 {
 	uintptr_t address = btable_ep[config->endpoint].tx_addr;
-	size_t    count   = consumer_read_memcpy(&config->consumer,
+	size_t    count   = queue_remove_memcpy(config->consumer.queue,
 						(void *) address,
 						config->tx_size,
 						memcpy_to_usbram);

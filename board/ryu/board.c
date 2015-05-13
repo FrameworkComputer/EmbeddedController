@@ -25,6 +25,7 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -210,58 +211,51 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  * Define AP and SH console forwarding queues and associated USART and USB
  * stream endpoints.
  */
+struct usart_config const ap_usart;
+struct usart_config const sh_usart;
 
-static struct queue const ap_usart_to_usb = QUEUE_NULL(64, uint8_t);
-static struct queue const usb_to_ap_usart = QUEUE_NULL(64, uint8_t);
-static struct queue const sh_usart_to_usb = QUEUE_NULL(64, uint8_t);
-static struct queue const usb_to_sh_usart = QUEUE_NULL(64, uint8_t);
+struct usb_stream_config const ap_usb;
+struct usb_stream_config const sh_usb;
 
-struct usb_stream_config const usb_ap_stream;
-struct usb_stream_config const usb_sh_stream;
+static struct queue const ap_usart_to_usb = QUEUE_DIRECT(64, uint8_t,
+							 ap_usart.producer,
+							 ap_usb.consumer);
+static struct queue const ap_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
+							 ap_usb.producer,
+							 ap_usart.consumer);
+static struct queue const sh_usart_to_usb = QUEUE_DIRECT(64, uint8_t,
+							 sh_usart.producer,
+							 sh_usb.consumer);
+static struct queue const sh_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
+							 sh_usb.producer,
+							 sh_usart.consumer);
 
-USART_CONFIG(usart1,
-	     usart1_hw,
-	     115200,
-	     ap_usart_to_usb,
-	     usb_to_ap_usart,
-	     usb_ap_stream.consumer,
-	     usb_ap_stream.producer)
-
-USART_CONFIG(usart3,
-	     usart3_hw,
-	     115200,
-	     sh_usart_to_usb,
-	     usb_to_sh_usart,
-	     usb_sh_stream.consumer,
-	     usb_sh_stream.producer)
+USART_CONFIG(ap_usart, usart1_hw, 115200, ap_usart_to_usb, ap_usb_to_usart)
+USART_CONFIG(sh_usart, usart3_hw, 115200, sh_usart_to_usb, sh_usb_to_usart)
 
 #define AP_USB_STREAM_RX_SIZE	16
 #define AP_USB_STREAM_TX_SIZE	16
 
-USB_STREAM_CONFIG(usb_ap_stream,
+USB_STREAM_CONFIG(ap_usb,
 		  USB_IFACE_AP_STREAM,
 		  USB_STR_AP_STREAM_NAME,
 		  USB_EP_AP_STREAM,
 		  AP_USB_STREAM_RX_SIZE,
 		  AP_USB_STREAM_TX_SIZE,
-		  usb_to_ap_usart,
-		  ap_usart_to_usb,
-		  usart1.consumer,
-		  usart1.producer)
+		  ap_usb_to_usart,
+		  ap_usart_to_usb)
 
 #define SH_USB_STREAM_RX_SIZE	16
 #define SH_USB_STREAM_TX_SIZE	16
 
-USB_STREAM_CONFIG(usb_sh_stream,
+USB_STREAM_CONFIG(sh_usb,
 		  USB_IFACE_SH_STREAM,
 		  USB_STR_SH_STREAM_NAME,
 		  USB_EP_SH_STREAM,
 		  SH_USB_STREAM_RX_SIZE,
 		  SH_USB_STREAM_TX_SIZE,
-		  usb_to_sh_usart,
-		  sh_usart_to_usb,
-		  usart3.consumer,
-		  usart3.producer)
+		  sh_usb_to_usart,
+		  sh_usart_to_usb)
 
 /* Initialize board. */
 static void board_init(void)
@@ -307,11 +301,11 @@ static void board_init(void)
 	 * Initialize AP and SH console forwarding USARTs and queues.
 	 */
 	queue_init(&ap_usart_to_usb);
-	queue_init(&usb_to_ap_usart);
+	queue_init(&ap_usb_to_usart);
 	queue_init(&sh_usart_to_usb);
-	queue_init(&usb_to_sh_usart);
-	usart_init(&usart1);
-	usart_init(&usart3);
+	queue_init(&sh_usb_to_usart);
+	usart_init(&ap_usart);
+	usart_init(&sh_usart);
 
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is

@@ -13,6 +13,7 @@
 #include "console.h"
 #include "panic.h"
 #include "task.h"
+#include "queue_policies.h"
 #include "stream_adaptor.h"
 #include "timer.h"
 #include "usart-stm32f0.h"
@@ -29,49 +30,23 @@ static void out_ready(struct out_stream const *stream)
 	task_wake(TASK_ID_ECHO);
 }
 
-#define USART_STREAM_CONFIG(NAME,					\
-			    HW,						\
-			    BAUD,					\
-			    RX_SIZE,					\
-			    TX_SIZE,					\
-			    IN_READY,					\
-			    OUT_READY)					\
-									\
-	static struct queue const CONCAT2(NAME, _rx_queue) =		\
-		QUEUE_NULL(RX_SIZE, uint8_t);				\
-	static struct queue const CONCAT2(NAME, _tx_queue) =		\
-		QUEUE_NULL(TX_SIZE, uint8_t);				\
-									\
-	struct usart_config const NAME;					\
-									\
-	IN_STREAM_FROM_PRODUCER(CONCAT2(NAME, _in),			\
-				NAME.producer,				\
-				CONCAT2(NAME, _rx_queue),		\
-				IN_READY)				\
-	OUT_STREAM_FROM_CONSUMER(CONCAT2(NAME, _out),			\
-				 NAME.consumer,				\
-				 CONCAT2(NAME, _tx_queue),		\
-				 OUT_READY)				\
-									\
-	USART_CONFIG(NAME,						\
-		     HW,						\
-		     BAUD,						\
-		     CONCAT2(NAME, _rx_queue),				\
-		     CONCAT2(NAME, _tx_queue),				\
-		     CONCAT2(NAME, _in).consumer,			\
-		     CONCAT2(NAME, _out).producer)
-
-USART_STREAM_CONFIG(usart1, usart1_hw, 115200, 64, 64, in_ready, NULL);
-USART_STREAM_CONFIG(usart3, usart3_hw, 115200, 64, 64, in_ready, NULL);
-USART_STREAM_CONFIG(usart4, usart4_hw, 115200, 64, 64, in_ready, NULL);
-
-static struct queue const usb_rx_queue = QUEUE_NULL(256, uint8_t);
-static struct queue const usb_tx_queue = QUEUE_NULL(256, uint8_t);
-
+/*
+ * Forward declare all device configurations so that they can be used to
+ * construct appropriate queue policies within the IO_STREAM_CONFIG macro.
+ */
+struct usart_config const usart1;
+struct usart_config const usart3;
+struct usart_config const usart4;
 struct usb_stream_config const usb_stream1;
 
-IN_STREAM_FROM_PRODUCER(usb_in, usb_stream1.producer, usb_rx_queue, in_ready)
-OUT_STREAM_FROM_CONSUMER(usb_out, usb_stream1.consumer, usb_tx_queue, out_ready)
+IO_STREAM_CONFIG(usart1, 64,  64, in_ready, NULL)
+IO_STREAM_CONFIG(usart3, 64,  64, in_ready, NULL)
+IO_STREAM_CONFIG(usart4, 64,  64, in_ready, NULL)
+IO_STREAM_CONFIG(usb_stream1, 256, 256, in_ready, out_ready)
+
+USART_CONFIG(usart1, usart1_hw, 115200, usart1_rx_queue, usart1_tx_queue)
+USART_CONFIG(usart3, usart3_hw, 115200, usart3_rx_queue, usart3_tx_queue)
+USART_CONFIG(usart4, usart4_hw, 115200, usart4_rx_queue, usart4_tx_queue)
 
 USB_STREAM_CONFIG(usb_stream1,
 		  USB_IFACE_STREAM,
@@ -79,10 +54,8 @@ USB_STREAM_CONFIG(usb_stream1,
 		  USB_EP_STREAM,
 		  64,
 		  64,
-		  usb_rx_queue,
-		  usb_tx_queue,
-		  usb_in.consumer,
-		  usb_out.producer)
+		  usb_stream1_rx_queue,
+		  usb_stream1_tx_queue)
 
 struct stream_console_state {
 	size_t wrote;
@@ -106,7 +79,9 @@ struct stream_console_config {
 STREAM_CONSOLE_CONFIG(usart1_stream_console, &usart1_in.in, &usart1_out.out)
 STREAM_CONSOLE_CONFIG(usart3_stream_console, &usart3_in.in, &usart3_out.out)
 STREAM_CONSOLE_CONFIG(usart4_stream_console, &usart4_in.in, &usart4_out.out)
-STREAM_CONSOLE_CONFIG(usb_stream1_console, &usb_in.in, &usb_out.out)
+STREAM_CONSOLE_CONFIG(usb_stream1_console,
+		      &usb_stream1_in.in,
+		      &usb_stream1_out.out)
 
 static struct stream_console_config const *const consoles[] = {
 	&usart1_stream_console,

@@ -95,11 +95,7 @@ extern struct producer_ops const usb_stream_producer_ops;
  * parameters are dictated by the USB peripheral.
  *
  * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this driver
- * should write to and read from respectively.  They must match the queues
- * that the CONSUMER and PRODUCER read from and write to respectively.
- *
- * CONSUMER and PRODUCER are the names of the consumer and producer objects at
- * the other ends of the RX and TX queues respectively.
+ * should write to and read from respectively.
  */
 /*
  * The following assertions can not be made because they require access to
@@ -109,8 +105,6 @@ extern struct producer_ops const usb_stream_producer_ops;
  * BUILD_ASSERT(TX_QUEUE.buffer_units >= TX_SIZE);
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
- * BUILD_ASSERT(PRODUCER.queue == &TX_QUEUE);
- * BUILD_ASSERT(CONSUMER.queue == &RX_QUEUE);
  */
 #define USB_STREAM_CONFIG(NAME,						\
 			  INTERFACE,					\
@@ -119,9 +113,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 			  RX_SIZE,					\
 			  TX_SIZE,					\
 			  RX_QUEUE,					\
-			  TX_QUEUE,					\
-			  CONSUMER,					\
-			  PRODUCER)					\
+			  TX_QUEUE)					\
 									\
 	BUILD_ASSERT(RX_SIZE <= USB_MAX_PACKET_SIZE);			\
 	BUILD_ASSERT(TX_SIZE <= USB_MAX_PACKET_SIZE);			\
@@ -145,14 +137,12 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer),		\
 		.consumer  = {						\
-			.producer = &PRODUCER,				\
-			.queue    = &TX_QUEUE,				\
-			.ops      = &usb_stream_consumer_ops,		\
+			.queue = &TX_QUEUE,				\
+			.ops   = &usb_stream_consumer_ops,		\
 		},							\
 		.producer  = {						\
-			.consumer = &CONSUMER,				\
-			.queue    = &RX_QUEUE,				\
-			.ops      = &usb_stream_producer_ops,		\
+			.queue = &RX_QUEUE,				\
+			.ops   = &usb_stream_producer_ops,		\
 		},							\
 	};								\
 	const struct usb_interface_descriptor				\
