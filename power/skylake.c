@@ -68,7 +68,8 @@ void chipset_reset(int cold_reset)
 		if (gpio_get_level(GPIO_SYS_RESET_L) == 0)
 			return;
 		gpio_set_level(GPIO_SYS_RESET_L, 0);
-		udelay(100);
+		/* Debounce time for SYS_RESET_L is 16 ms */
+		udelay(20 * MSEC);
 		gpio_set_level(GPIO_SYS_RESET_L, 1);
 	} else {
 		/*
