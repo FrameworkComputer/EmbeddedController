@@ -26,7 +26,7 @@ static pthread_t input_thread;
 #define INPUT_BUFFER_SIZE 16
 static int char_available;
 
-QUEUE_CONFIG(cached_char, INPUT_BUFFER_SIZE, char);
+static struct queue const cached_char = QUEUE_NULL(INPUT_BUFFER_SIZE, char);
 
 #define CONSOLE_CAPTURE_SIZE 2048
 static char capture_buf[CONSOLE_CAPTURE_SIZE];

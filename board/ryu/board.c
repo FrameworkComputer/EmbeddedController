@@ -211,10 +211,10 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  * stream endpoints.
  */
 
-QUEUE_CONFIG(ap_usart_to_usb, 64, uint8_t);
-QUEUE_CONFIG(usb_to_ap_usart, 64, uint8_t);
-QUEUE_CONFIG(sh_usart_to_usb, 64, uint8_t);
-QUEUE_CONFIG(usb_to_sh_usart, 64, uint8_t);
+static struct queue const ap_usart_to_usb = QUEUE_NULL(64, uint8_t);
+static struct queue const usb_to_ap_usart = QUEUE_NULL(64, uint8_t);
+static struct queue const sh_usart_to_usb = QUEUE_NULL(64, uint8_t);
+static struct queue const usb_to_sh_usart = QUEUE_NULL(64, uint8_t);
 
 struct usb_stream_config const usb_ap_stream;
 struct usb_stream_config const usb_sh_stream;

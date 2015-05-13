@@ -37,8 +37,8 @@ static inline void print_buffer(uint8_t *buf, int cnt)
 static inline void print_buffer(uint8_t *buf, int cnt) {}
 #endif
 
-QUEUE_CONFIG(rx_queue, MCDP_INBUF_MAX,  uint8_t);
-QUEUE_CONFIG(tx_queue, MCDP_OUTBUF_MAX, uint8_t);
+struct queue const rx_queue = QUEUE_NULL(MCDP_INBUF_MAX,  uint8_t);
+struct queue const tx_queue = QUEUE_NULL(MCDP_OUTBUF_MAX, uint8_t);
 
 struct usart_config const usart_mcdp;
 

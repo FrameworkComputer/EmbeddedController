@@ -68,7 +68,7 @@ enum scancode_set_list {
  */
 static struct mutex to_host_mutex;
 
-QUEUE_CONFIG(to_host, 16, uint8_t);
+static struct queue const to_host = QUEUE_NULL(16, uint8_t);
 
 /* Queue command/data from the host */
 enum {
@@ -91,7 +91,7 @@ struct host_byte {
  *
  * Hence, 5 (actually 4 plus one spare) is large enough, but use 8 for safety.
  */
-QUEUE_CONFIG(from_host, 8, struct host_byte);
+static struct queue const from_host = QUEUE_NULL(8, struct host_byte);
 
 static int i8042_irq_enabled;
 

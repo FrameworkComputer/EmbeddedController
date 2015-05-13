@@ -12,8 +12,8 @@
 #include "timer.h"
 #include "util.h"
 
-QUEUE_CONFIG(test_queue8, 8, char)
-QUEUE_CONFIG(test_queue2, 2, int16_t)
+static struct queue const test_queue8 = QUEUE_NULL(8, char);
+static struct queue const test_queue2 = QUEUE_NULL(2, int16_t);
 
 static int test_queue8_empty(void)
 {

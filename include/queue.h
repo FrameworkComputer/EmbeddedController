@@ -15,6 +15,37 @@
 /* Generic queue container. */
 
 /*
+ * Queue policies describe how a queue behaves (who it notifies, in what
+ * contexts) when units are added or removed from the queue.
+ *
+ * The queue_policy structure is a table of virtual function pointers.  Each
+ * policy will implement the add and remove functions.  Each policy also
+ * optionally defines a new structure that contains the queue_policy struct by
+ * value any any additional data needed to implement the policy.  This
+ * structure is then initialized using the policy specific functions and the
+ * additional data.
+ *
+ * If a policy is so simple that it doesn't require any additional data then
+ * the queue_policy structure can just be used directly, as queue_policy_null
+ * does below.
+ */
+struct queue_policy {
+	void (*add)(struct queue_policy const *queue_policy, size_t count);
+	void (*remove)(struct queue_policy const *queue_policy, size_t count);
+};
+
+/*
+ * The NULL policy does no notification when units are added or removed from
+ * the queue.  Since the NULL policy doesn't do anything it doesn't actually
+ * need to extend the queue_policy interface and can just use it directly.
+ *
+ * The QUEUE_NULL macro constructs a queue that uses the NULL policy.
+ */
+extern struct queue_policy const queue_policy_null;
+
+#define QUEUE_NULL(SIZE, TYPE) QUEUE(SIZE, TYPE, queue_policy_null)
+
+/*
  * RAM state for a queue.
  */
 struct queue_state {
@@ -41,6 +72,8 @@ struct queue_state {
 struct queue {
 	struct queue_state volatile *state;
 
+	struct queue_policy const *policy;
+
 	size_t  buffer_units; /* size of buffer (in units) */
 	size_t  unit_bytes;   /* size of unit   (in byte) */
 	uint8_t *buffer;
@@ -48,19 +81,17 @@ struct queue {
 
 /*
  * Convenience macro for construction of a Queue along with its backing buffer
- * and state structure.
+ * and state structure.  This macro creates a compound literal that can be used
+ * to statically initialize a queue.
  */
-#define QUEUE_CONFIG(NAME, SIZE, TYPE)					\
-	static TYPE CONCAT2(NAME, _buffer)[SIZE];			\
-									\
-	static struct queue_state CONCAT2(NAME, _state);		\
-	struct queue const NAME =					\
-	{								\
-		.state        = &CONCAT2(NAME, _state),			\
-		.buffer_units = SIZE,					\
-		.unit_bytes   = sizeof(TYPE),				\
-		.buffer       = (uint8_t *) CONCAT2(NAME, _buffer),	\
-	};
+#define QUEUE(SIZE, TYPE, POLICY)				\
+	((struct queue) {					\
+		.state        = &((struct queue_state){}),	\
+		.policy       = &POLICY,			\
+		.buffer_units = SIZE,				\
+		.unit_bytes   = sizeof(TYPE),			\
+		.buffer       = (uint8_t *) &((TYPE[SIZE]){}),	\
+	})
 
 /* Initialize the queue to empty state. */
 void queue_init(struct queue const *q);
