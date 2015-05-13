@@ -32,8 +32,8 @@ struct in_stream_from_queue {
 extern struct in_stream_ops const in_stream_from_queue_in_stream_ops;
 extern struct consumer_ops const in_stream_from_queue_consumer_ops;
 
-#define IN_STREAM_FROM_QUEUE(NAME, QUEUE, READY)			\
-	struct in_stream_from_queue const NAME = {			\
+#define IN_STREAM_FROM_QUEUE(QUEUE, READY)				\
+	((struct in_stream_from_queue) {				\
 		.consumer = {						\
 			.queue = &QUEUE,				\
 			.ops   = &in_stream_from_queue_consumer_ops,	\
@@ -42,7 +42,7 @@ extern struct consumer_ops const in_stream_from_queue_consumer_ops;
 			.ready = READY,					\
 			.ops   = &in_stream_from_queue_in_stream_ops,	\
 		},							\
-	};
+	})
 
 /*
  * +..........+               +..........+------+............+
@@ -63,8 +63,8 @@ struct out_stream_from_queue {
 extern struct out_stream_ops const out_stream_from_queue_out_stream_ops;
 extern struct producer_ops const out_stream_from_queue_producer_ops;
 
-#define OUT_STREAM_FROM_QUEUE(NAME, QUEUE, READY)			\
-	struct out_stream_from_queue const NAME = {			\
+#define OUT_STREAM_FROM_QUEUE(QUEUE, READY)				\
+	((struct out_stream_from_queue) {				\
 		.producer = {						\
 			.queue = &QUEUE,				\
 			.ops   = &out_stream_from_queue_producer_ops,	\
@@ -73,7 +73,7 @@ extern struct producer_ops const out_stream_from_queue_producer_ops;
 			.ready = READY,					\
 			.ops   = &out_stream_from_queue_out_stream_ops, \
 		},							\
-	};
+	})
 
 /*
  * Given a forward declared device configuration called NAME that implements
@@ -81,7 +81,6 @@ extern struct producer_ops const out_stream_from_queue_producer_ops;
  * streams called <NAME>_in and <NAME>_out.
  */
 #define IO_STREAM_CONFIG(NAME, RX_SIZE, TX_SIZE, IN_READY, OUT_READY)	\
-									\
 	struct in_stream_from_queue const CONCAT2(NAME, _in);		\
 									\
 	struct queue const CONCAT2(NAME, _rx_queue) =			\
@@ -89,9 +88,9 @@ extern struct producer_ops const out_stream_from_queue_producer_ops;
 			     uint8_t,					\
 			     NAME.producer,				\
 			     CONCAT2(NAME, _in).consumer);		\
-	IN_STREAM_FROM_QUEUE(CONCAT2(NAME, _in),			\
-			     CONCAT2(NAME, _rx_queue),			\
-			     IN_READY)					\
+	struct in_stream_from_queue const CONCAT2(NAME, _in) =		\
+		IN_STREAM_FROM_QUEUE(CONCAT2(NAME, _rx_queue),		\
+				     IN_READY);				\
 									\
 									\
 	struct out_stream_from_queue const CONCAT2(NAME, _out);		\
@@ -101,8 +100,8 @@ extern struct producer_ops const out_stream_from_queue_producer_ops;
 			     uint8_t,					\
 			     CONCAT2(NAME, _out).producer,		\
 			     NAME.consumer);				\
-	OUT_STREAM_FROM_QUEUE(CONCAT2(NAME, _out),			\
-			      CONCAT2(NAME, _tx_queue),			\
-			      OUT_READY)
+	struct out_stream_from_queue const CONCAT2(NAME, _out) =	\
+		OUT_STREAM_FROM_QUEUE(CONCAT2(NAME, _tx_queue),		\
+				      OUT_READY);
 
 #endif /* INCLUDE_STREAM_ADAPTOR_H */

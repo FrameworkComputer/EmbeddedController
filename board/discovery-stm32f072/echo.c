@@ -68,29 +68,20 @@ struct stream_console_config {
 	struct out_stream const *out;
 };
 
-#define STREAM_CONSOLE_CONFIG(NAME, IN, OUT)			\
-	static struct stream_console_state NAME##_state;	\
-	struct stream_console_config const NAME = {		\
-		.state = &NAME##_state,				\
+#define STREAM_CONSOLE_CONFIG(IN, OUT) {			\
+		.state = &((struct stream_console_state){}),	\
 		.in    = IN,					\
 		.out   = OUT,					\
-	};
+	}
 
-STREAM_CONSOLE_CONFIG(usart1_stream_console, &usart1_in.in, &usart1_out.out)
-STREAM_CONSOLE_CONFIG(usart3_stream_console, &usart3_in.in, &usart3_out.out)
-STREAM_CONSOLE_CONFIG(usart4_stream_console, &usart4_in.in, &usart4_out.out)
-STREAM_CONSOLE_CONFIG(usb_stream1_console,
-		      &usb_stream1_in.in,
-		      &usb_stream1_out.out)
-
-static struct stream_console_config const *const consoles[] = {
-	&usart1_stream_console,
-	&usart3_stream_console,
-	&usart4_stream_console,
-	&usb_stream1_console,
+static struct stream_console_config const consoles[] = {
+	STREAM_CONSOLE_CONFIG(&usart1_in.in, &usart1_out.out),
+	STREAM_CONSOLE_CONFIG(&usart3_in.in, &usart3_out.out),
+	STREAM_CONSOLE_CONFIG(&usart4_in.in, &usart4_out.out),
+	STREAM_CONSOLE_CONFIG(&usb_stream1_in.in, &usb_stream1_out.out)
 };
 
-static size_t echo(struct stream_console_config const *const consoles[],
+static size_t echo(struct stream_console_config const consoles[],
 		   size_t consoles_count)
 {
 	size_t total = 0;
@@ -100,7 +91,7 @@ static size_t echo(struct stream_console_config const *const consoles[],
 		size_t  j;
 		uint8_t buffer[64];
 		size_t  remaining = 0;
-		size_t  count     = in_stream_read(consoles[i]->in,
+		size_t  count     = in_stream_read(consoles[i].in,
 						   buffer,
 						   sizeof(buffer));
 
@@ -108,22 +99,22 @@ static size_t echo(struct stream_console_config const *const consoles[],
 			continue;
 
 		for (j = 0; j < consoles_count; ++j)
-			consoles[j]->state->wrote = 0;
+			consoles[j].state->wrote = 0;
 
 		do {
 			remaining = 0;
 
 			for (j = 0; j < consoles_count; ++j) {
-				size_t wrote = consoles[j]->state->wrote;
+				size_t wrote = consoles[j].state->wrote;
 
 				if (count == wrote)
 					continue;
 
-				wrote += out_stream_write(consoles[j]->out,
+				wrote += out_stream_write(consoles[j].out,
 							  buffer + wrote,
 							  count - wrote);
 
-				consoles[j]->state->wrote = wrote;
+				consoles[j].state->wrote = wrote;
 
 				remaining += count - wrote;
 			}
@@ -172,7 +163,7 @@ static int command_echo_info(int argc, char **argv)
 		 atomic_read_clear((uint32_t *) &(usart4.state->rx_dropped)));
 
 	for (i = 0; i < ARRAY_SIZE(consoles); ++i)
-		out_stream_write(consoles[i]->out, message, strlen(message));
+		out_stream_write(consoles[i].out, message, strlen(message));
 
 	return EC_SUCCESS;
 }
