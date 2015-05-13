@@ -26,7 +26,13 @@ if ghash=`git rev-parse --short --verify HEAD 2>/dev/null`; then
 	dirty=`sh -c "[ '$(git diff-index --name-only HEAD)' ] && echo '-dirty'"`
 	vbase="${ver_major}.${ver_branch}.${numcommits}-${ghash}${dirty}"
 else
-	vbase="no_version"
+	# Fall back to the VCSID provided by the packaging system if available.
+	if ghash=${VCSID##*-}; then
+		vbase="1.1.9999-${ghash:0:7}"
+	else
+		# then ultimately fails to "no_version"
+		vbase="no_version"
+	fi
 fi
 
 ver="${BOARD}_${vbase}"
