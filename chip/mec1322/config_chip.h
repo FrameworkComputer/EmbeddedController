@@ -156,12 +156,8 @@ which contains Loader and RO Images */
 #define CONFIG_RW_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI + \
 					CONFIG_RW_STORAGE_OFF)
 
-/* Memory Lcation shared between lfw and RO /RW image */
-#define SHARED_RAM_LFW_RORW		(CONFIG_MEC_SRAM_BASE_START + \
-					(CONFIG_LOADER_SIZE - 4))
-
 /* Non-memmapped, external SPI */
-/* #define CONFIG_CODERAM_ARCH */
+#define CONFIG_CODERAM_ARCH
 #undef  CONFIG_FLASH_MAPPED
 #undef  CONFIG_FLASH_PSTATE
 #define CONFIG_SPI_FLASH

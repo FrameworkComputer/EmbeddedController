@@ -25,9 +25,6 @@
 
 #include "ec_lfw.h"
 
-static uintptr_t *const image_type = (uintptr_t *const) SHARED_RAM_LFW_RORW;
-
-
 __attribute__ ((section(".intvector")))
 const struct int_vector_t hdr_int_vect = {
 			(void *)0x11FA00, /* init sp, unused,
@@ -85,18 +82,18 @@ static int spi_flash_readloc(uint8_t *buf_usr,
 	return spi_transaction(cmd, 4, buf_usr, bytes);
 }
 
-int spi_rwimage_load(void)
+int spi_image_load(uint32_t offset)
 {
 	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF + CONFIG_FLASH_BASE);
 	uint32_t i;
 
-	memset((void *)buf, 0xFF, (CONFIG_RW_SIZE - 4));
+	memset((void *)buf, 0xFF, (CONFIG_FW_IMAGE_SIZE - 4));
 
 	spi_enable(1);
 
-	for (i = 0; i < CONFIG_RW_SIZE; i += SPI_CHUNK_SIZE)
+	for (i = 0; i < CONFIG_FW_IMAGE_SIZE; i += SPI_CHUNK_SIZE)
 		spi_flash_readloc(&buf[i],
-					CONFIG_RW_IMAGE_FLASHADDR + i,
+					offset + i,
 					SPI_CHUNK_SIZE);
 
 	spi_enable(0);
@@ -206,6 +203,24 @@ void uart_init(void)
 	gpio_config_module(MODULE_UART, 1);
 }
 
+void system_init(void)
+{
+
+	uint32_t status = MEC1322_VBAT_STS;
+	uint32_t wdt_cnt = MEC1322_EC_WDT_CNT;
+
+	/* Reset the image type if reset cause is power-on */
+	if (status & (1 << 7) || (wdt_cnt == 0))
+		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX)
+					= SYSTEM_IMAGE_UNKNOWN;
+}
+
+
+enum system_image_copy_t system_get_image_copy(void)
+{
+	return MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX);
+}
+
 void lfw_main()
 {
 
@@ -219,17 +234,25 @@ void lfw_main()
 	cpu_init();
 	dma_init();
 	uart_init();
+	system_init();
 
 	uart_puts("littlefw");
 	uart_puts(version_data.version);
 	uart_puts("\n");
 
-	switch (*image_type) {
+	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RW:
+		uart_puts("lfw-RW load\n");
 		init_addr = CONFIG_RW_MEM_OFF + CONFIG_FLASH_BASE;
-		spi_rwimage_load();
+		spi_image_load(CONFIG_RW_IMAGE_FLASHADDR);
+		break;
 	case SYSTEM_IMAGE_RO:
+		uart_puts("lfw-RO load\n");
+		spi_image_load(CONFIG_RO_IMAGE_FLASHADDR);
+		/* fall through */
 	default:
+		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) =
+							SYSTEM_IMAGE_RO;
 		init_addr = CONFIG_RO_MEM_OFF + CONFIG_FLASH_BASE;
 	}
 

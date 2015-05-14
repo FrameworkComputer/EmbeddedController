@@ -494,7 +494,9 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 #ifdef CONFIG_CODERAM_ARCH
 	/* Jump to little FW for code ram architecture */
-	init_addr = system_get_lfw_address(base);
+	init_addr = system_get_lfw_address();
+
+	system_set_image_copy(copy);
 #else
 	/* Make sure the reset vector is inside the destination image */
 	init_addr = *(uintptr_t *)(base + 4);

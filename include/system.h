@@ -371,20 +371,32 @@ void system_reset_rtc_alarm(void);
 
 #ifdef CONFIG_CODERAM_ARCH
 /**
- * Determine which address should be jumped and return address of littel FW
+ * Return address of little FW to prepare for sysjump
  *
  * Note: This feature is used for code ram arch
  *
- * @param flash_addr  jump address of spi flash for RO or RW region
  */
-uint32_t system_get_lfw_address(uint32_t flash_addr);
+uint32_t system_get_lfw_address(void);
 
 /**
- * Return whcih region is used in Code RAM
+ * Setup the destination image for a sysjump
+ *
+ * Note: This is called for devices with code ram arc by system code
+ * just before the jump to the little firmware. It should store the
+ * destination image so that it will be available to the little
+ * firmware after the jump.
+ *
+ * @param copy		Region - (RO/RW) to use in code ram
+ */
+void system_set_image_copy(enum system_image_copy_t copy);
+
+/**
+ * Return which region is used in Code RAM
  *
  * Note: This feature is used for code ram arch
  *
  */
 enum system_image_copy_t system_get_shrspi_image_copy(void);
+
 #endif
 #endif  /* __CROS_EC_SYSTEM_H */

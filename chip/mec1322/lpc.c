@@ -14,6 +14,7 @@
 #include "lpc.h"
 #include "port80.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -21,6 +22,8 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+
+#define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 
 static uint8_t mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
@@ -180,6 +183,34 @@ static void lpc_send_response_packet(struct host_packet *pkt)
 	MEC1322_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
 }
 
+/**
+ * Preserve event masks across a sysjump.
+ */
+static void lpc_sysjump(void)
+{
+	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
+				sizeof(event_mask), event_mask);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
+
+/**
+ * Restore event masks after a sysjump.
+ */
+static void lpc_post_sysjump(void)
+{
+	const uint32_t *prev_mask;
+	int size, version;
+
+	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
+							  &version, &size);
+	if (!prev_mask || version != 1 || size != sizeof(event_mask))
+		return;
+
+	memcpy(event_mask, prev_mask, sizeof(event_mask));
+}
+
+
+
 /*
  * Most registers in LPC module are reset when the host is off. We need to
  * set up LPC again when the host is starting up.
@@ -257,6 +288,20 @@ static void setup_lpc(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, setup_lpc, HOOK_PRIO_FIRST);
 
+static void lpc_resume(void)
+{
+	/* Mask all host events until the host unmasks them itself.  */
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
+
+	/* Store port 80 event so we know where resume happened */
+	port_80_write(PORT_80_EVENT_RESUME);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
+
+
+
 static void lpc_init(void)
 {
 	/* Activate LPC interface */
@@ -265,6 +310,13 @@ static void lpc_init(void)
 	/* Initialize host args and memory map to all zero */
 	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
 	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
+
+	setup_lpc();
+
+	/* Restore event masks if needed */
+	lpc_post_sysjump();
+
+
 }
 /*
  * Set prio to higher than default; this way LPC memory mapped data is ready
@@ -508,7 +560,7 @@ int lpc_get_pltrst_asserted(void)
 /* On boards without a host, this command is used to set up LPC */
 static int lpc_command_init(int argc, char **argv)
 {
-	setup_lpc();
+	lpc_init();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(lpcinit, lpc_command_init, NULL, NULL, NULL);

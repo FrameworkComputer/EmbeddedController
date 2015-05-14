@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -134,7 +135,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 		if (flags & GPIO_HIGH)
 			MEC1322_GPIO_CTL(port, i) |= (1 << 16);
-		else
+		else if (flags & GPIO_LOW)
 			MEC1322_GPIO_CTL(port, i) &= ~(1 << 16);
 	}
 }
@@ -177,10 +178,26 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	int i;
+	int flags;
+	int is_warm = gpio_is_reboot_warm();
 	const struct gpio_info *g = gpio_list;
 
-	for (i = 0; i < GPIO_COUNT; i++, g++)
-		gpio_set_flags_by_mask(g->port, g->mask, g->flags);
+
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
+		flags = g->flags;
+
+		if (flags & GPIO_DEFAULT)
+			continue;
+
+		/*
+		 * If this is a warm reboot, don't set the output levels or
+		 * we'll shut off the AP.
+		 */
+		if (is_warm)
+			flags &= ~(GPIO_LOW | GPIO_HIGH);
+
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
+	}
 }
 
 /* Clear any interrupt flags before enabling GPIO interrupt */
