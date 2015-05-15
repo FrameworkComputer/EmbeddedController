@@ -7,12 +7,9 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "host_command.h"
-#include "i2c.h"
-#include "util.h"
 
-#define PARAM_CUT_OFF_LOW  0x10
-#define PARAM_CUT_OFF_HIGH 0x00
+/* Shutdown mode parameter to write to manufacturer access register */
+#define SB_SHUTDOWN_DATA	0x0010
 
 /* Battery temperature ranges in degrees C */
 static const struct battery_info info = {
@@ -29,25 +26,15 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-int battery_command_cut_off(struct host_cmd_handler_args *args)
+int board_cut_off_battery(void)
 {
 	int rv;
-	uint8_t buf[3];
 
-	buf[0] = SB_MANUFACTURER_ACCESS & 0xff;
-	buf[1] = PARAM_CUT_OFF_LOW;
-	buf[2] = PARAM_CUT_OFF_HIGH;
+	/* Ship mode command must be sent twice to take effect */
+	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 
-	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		      I2C_XFER_SINGLE);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		      I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_BATTERY, 0);
+	if (rv != EC_SUCCESS)
+		return rv;
 
-	if (rv)
-		return EC_RES_ERROR;
-	return EC_RES_SUCCESS;
+	return sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 }
-DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
-		     EC_VER_MASK(0));

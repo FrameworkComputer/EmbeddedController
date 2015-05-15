@@ -33,7 +33,7 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-static int cutoff(void)
+int board_cut_off_battery(void)
 {
 	int rv;
 
@@ -45,19 +45,3 @@ static int cutoff(void)
 
 	return sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 }
-
-static int battery_command_cut_off(struct host_cmd_handler_args *args)
-{
-	return cutoff() ? EC_RES_ERROR : EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cut_off,
-		     EC_VER_MASK(0));
-
-static int command_battcutoff(int argc, char **argv)
-{
-	return cutoff();
-}
-DECLARE_CONSOLE_COMMAND(battcutoff, command_battcutoff,
-			NULL,
-			"Enable battery cutoff (ship mode)",
-			NULL);
