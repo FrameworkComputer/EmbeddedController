@@ -694,7 +694,7 @@ static int command_accel_init(int argc, char **argv)
 	sensor = &motion_sensors[id];
 	motion_sense_init(sensor);
 
-	ccprintf("%s\n", sensor->name);
+	ccprintf("%s: %d\n", sensor->name, sensor->state);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init,

@@ -102,8 +102,9 @@
 /* odr = 100 / (1 << (8 - reg)) ,within limit */
 #define BMI160_ODR_0_78HZ      0x01
 #define BMI160_ODR_25HZ	       0x06
-#define BMI160_ODR_1600HZ      0x0C
-#define BMI160_ODR_3200HZ      0x0D
+#define BMI160_ODR_800HZ       0x0b
+#define BMI160_ODR_1600HZ      0x0c
+#define BMI160_ODR_3200HZ      0x0d
 
 #define BMI160_REG_TO_ODR(_regval) (100000 / (1 << (8 - (_regval))))
 #define BMI160_ODR_TO_REG(_odr) (__builtin_clz(100000 / (_odr)) - 23)
@@ -116,10 +117,25 @@
 #define BMI160_FIFO_CONFIG_1   0x47
 
 #define BMI160_MAG_IF_0        0x4b
+#define BMI160_MAG_I2C_ADDRESS BMI160_MAG_IF_0
 #define BMI160_MAG_IF_1        0x4c
+#define BMI160_MAG_I2C_CONTROL BMI160_MAG_IF_1
+#define BMI160_MAG_READ_BURST_MASK 3
+#define BMI160_MAG_READ_BURST_1    0
+#define BMI160_MAG_READ_BURST_2    1
+#define BMI160_MAG_READ_BURST_6    2
+#define BMI160_MAG_READ_BURST_8    3
+#define BMI160_MAG_OFFSET_OFF      3
+#define BMI160_MAG_OFFSET_MASK     (0xf << BMI160_MAG_OFFSET_OFF)
+#define BMI160_MAG_MANUAL_EN       (1 << 7)
+
 #define BMI160_MAG_IF_2        0x4d
+#define BMI160_MAG_I2C_READ_ADDR    BMI160_MAG_IF_2
 #define BMI160_MAG_IF_3        0x4e
+#define BMI160_MAG_I2C_WRITE_ADDR   BMI160_MAG_IF_3
 #define BMI160_MAG_IF_4        0x4f
+#define BMI160_MAG_I2C_WRITE_DATA   BMI160_MAG_IF_4
+#define BMI160_MAG_I2C_READ_DATA    BMI160_MAG_X_L_G
 
 #define BMI160_INT_EN_0        0x50
 #define BMI160_INT_EN_1        0x51
@@ -152,6 +168,11 @@
 #define BMI160_FOC_CONF        0x69
 #define BMI160_CONF            0x6a
 #define BMI160_IF_CONF         0x6b
+#define BMI160_IF_MODE_OFF     4
+#define BMI160_IF_MODE_MASK    3
+#define BMI160_IF_MODE_AUTO_OFF 0
+#define BMI160_IF_MODE_I2C_IOS  1
+#define BMI160_IF_MODE_AUTO_I2C 2
 
 #define BMI160_PMU_TRIGGER     0x6c
 #define BMI160_SELF_TEST       0x6d
@@ -168,8 +189,8 @@
 #define BMI160_CMD_MAG_MODE_SUSP   0x18
 #define BMI160_CMD_MAG_MODE_NORMAL 0x19
 #define BMI160_CMD_MAG_MODE_LOWPOWER 0x1a
-#define BMI150_CMD_MODE_NORMAL(_sensor) (0x11 + 4 * (_sensor))
-#define BMI150_CMD_MODE_SUSPEND(_sensor) (0x10 + 4 * (_sensor))
+#define BMI160_CMD_MODE_NORMAL(_sensor) (0x11 + 4 * (_sensor))
+#define BMI160_CMD_MODE_SUSPEND(_sensor) (0x10 + 4 * (_sensor))
 
 #define BMI160_CMD_FIFO_FLUSH      0xb0
 #define BMI160_CMD_INT_RESET       0xb1
@@ -177,6 +198,14 @@
 #define BMI160_CMD_EXT_MODE_EN_B0  0x37
 #define BMI160_CMD_EXT_MODE_EN_B1  0x9a
 #define BMI160_CMD_EXT_MODE_EN_B2  0xc0
+
+#define BMI160_CMD_EXT_MODE_ADDR   0x7f
+#define BMI160_CMD_PAGING_EN           (1 << 7)
+#define BMI160_CMD_TARGET_PAGE         (1 << 4)
+#define BMI160_COM_C_TRIM_ADDR 0x85
+#define BMI160_COM_C_TRIM              (3 << 4)
+
+
 
 #define BMI160_CMD_TGT_PAGE    0
 #define BMI160_CMD_TGT_PAGE_COM    1
@@ -251,4 +280,9 @@ enum bmi160_running_mode {
 	APPLICATION_INDOOR_NAVIGATION  = 8,
 };
 
+#define BMI160_FLAG_SEC_I2C_ENABLED    (1 << 0)
+struct bmi160_drv_data_t {
+	struct motion_data_t saved_data[3];
+	uint8_t       flags;
+};
 #endif /* __CROS_EC_ACCEL_BMI160_H */

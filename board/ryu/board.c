@@ -368,7 +368,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 static struct mutex g_mutex;
 
 /*  local sensor data (per-sensor) */
-struct motion_data_t g_saved_data[2];
+struct bmi160_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
 
@@ -384,7 +384,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
-	 .drv_data = &g_saved_data[0],
+	 .drv_data = &g_bmi160_data,
 	 .i2c_addr = BMI160_ADDR0,
 	 .rot_standard_ref = NULL,
 	 .default_config = {
@@ -400,12 +400,28 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
-	 .drv_data = &g_saved_data[1],
+	 .drv_data = &g_bmi160_data,
 	 .i2c_addr = BMI160_ADDR0,
 	 .rot_standard_ref = NULL,
 	 .default_config = {
 		 .odr = 100000,
 		 .range = 2000
+	 }
+	},
+
+	{.name = "Mag",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_MAG,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .i2c_addr = BMI160_ADDR0,
+	 .rot_standard_ref = NULL,
+	 .default_config = {
+		 .odr = 25000,
+		 .range = 1
 	 }
 	},
 };
