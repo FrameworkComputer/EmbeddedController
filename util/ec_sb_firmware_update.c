@@ -273,7 +273,7 @@ static char *read_fw_image(struct fw_update_ctrl *fw_update)
 static int get_status(struct sb_fw_update_status *status)
 {
 	int rv = EC_RES_SUCCESS;
-	int cnt;
+	int cnt = 0;
 
 	struct ec_params_sb_fw_update *param =
 		(struct ec_params_sb_fw_update *)ec_outbuf;
@@ -301,7 +301,7 @@ static int get_status(struct sb_fw_update_status *status)
 static int get_info(struct sb_fw_update_info *info)
 {
 	int rv = EC_RES_SUCCESS;
-	int cnt;
+	int cnt = 0;
 
 	struct ec_params_sb_fw_update *param =
 		(struct ec_params_sb_fw_update *)ec_outbuf;
