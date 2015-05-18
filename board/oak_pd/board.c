@@ -15,6 +15,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "usb_pd.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -34,9 +35,7 @@ void pd_send_ec_int(void)
 
 void vbus0_evt(enum gpio_signal signal)
 {
-#ifdef HAS_TASK_PD_C0
-	task_wake(TASK_ID_PD_C0);
-#endif
+	task_wake(TASK_ID_PD);
 }
 
 void vbus1_evt(enum gpio_signal signal)

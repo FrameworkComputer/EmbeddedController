@@ -53,6 +53,11 @@
 #undef  CONFIG_UART_TX_DMA
 #undef  CONFIG_UART_RX_DMA
 #define CONFIG_UART_TX_BUF_SIZE 128
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_TCPC
+#define CONFIG_USBC_VCONN
 #define CONFIG_VBOOT_HASH
 #undef  CONFIG_WATCHDOG
 #undef  CONFIG_WATCHDOG_HELP
@@ -88,6 +93,10 @@ enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
+
+/* 1.5A Rp */
+#define PD_SRC_VNC            PD_SRC_1_5_VNC_MV
+#define PD_SRC_RD_THRESHOLD   PD_SRC_1_5_RD_THRESH_MV
 
 #endif /* !__ASSEMBLER__ */
 
