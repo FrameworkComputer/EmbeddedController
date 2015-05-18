@@ -28,6 +28,7 @@ test-list-$(BOARD_LLAMA)=
 # For some tests, we are running out of RAM for Samus PD. Disable them for
 # now.
 test-list-$(BOARD_SAMUS_PD)=
+test-list-$(BOARD_OAK_PD)=
 
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
