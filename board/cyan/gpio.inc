@@ -38,9 +38,9 @@ GPIO(USB_OC1_L,         PORT(4),  5, GPIO_INT_FALLING)                /* DB2 BC1
 GPIO(NC_46,             PORT(4),  6, GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(NC_47,             PORT(4),  7, GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 
-GPIO(NC_50,             PORT(5),  0, GPIO_INPUT | GPIO_PULL_UP)       /* NC */
+GPIO(TOUCHPANEL_PWREN,  PORT(5),  0, GPIO_OUT_HIGH)                   /* Enable power for Touch Panel */
 GPIO(PCH_SUS_STAT_L,    PORT(5),  1, GPIO_INT_FALLING)                /* Signal to inform EC that SOC is entering low power state */
-GPIO(TOUCHPANEL_PWREN,  PORT(5),  2, GPIO_OUT_HIGH)                   /* Enable power for Touch Panel */
+GPIO(TP_INT_DISABLE,    PORT(5),  2, GPIO_OUT_LOW)                    /* Disable Track Pad interrupt */
 GPIO(TRACKPAD_PWREN,    PORT(5),  3, GPIO_OUT_HIGH)                   /* Enable power for Track Pad */
 GPIO(USB_OC0_L,         PORT(5),  5, GPIO_INT_FALLING)                /* Over current signal of the BC1.2 charger to EC */
 GPIO(NC_56,             PORT(5),  6, GPIO_INPUT | GPIO_PULL_UP)       /* NC */
