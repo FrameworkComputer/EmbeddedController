@@ -109,8 +109,9 @@ int main(int argc, char **argv)
 {
 	libusb_context       *context;
 	libusb_device_handle *device;
-	uint16_t              vendor_id  = 0x18d1;
-	uint16_t              product_id = 0x500f;
+	uint16_t              vendor_id  = 0x18d1; /* Google */
+	uint16_t              product_id = 0x500f; /* discovery-stm32f072 */
+	int                   interface = 1;	   /* gpio interface */
 
 	if (!(argc == 2 && strcmp(argv[1], "read")  == 0) &&
 	    !(argc == 4 && strcmp(argv[1], "write") == 0)) {
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
 	}
 
 	CHECK(libusb_set_auto_detach_kernel_driver(device, 1));
-	CHECK(libusb_claim_interface(device, 0));
+	CHECK(libusb_claim_interface(device, interface));
 
 	if (argc == 2 && strcmp(argv[1], "read") == 0) {
 		uint32_t mask;

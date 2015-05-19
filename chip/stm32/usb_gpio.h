@@ -10,12 +10,19 @@
 #include "compile_time_macros.h"
 #include "usb.h"
 
+struct usb_gpio_state {
+	uint32_t set_mask;
+	uint32_t clear_mask;
+};
+
 /*
  * Compile time Per-USB gpio configuration stored in flash.  Instances of this
  * structure are provided by the user of the USB gpio.  This structure binds
  * together all information required to operate a USB gpio.
  */
 struct usb_gpio_config {
+	struct usb_gpio_state *state;
+
 	/*
 	 * Endpoint index, and pointers to the USB packet RAM buffers.
 	 */
@@ -55,6 +62,7 @@ struct usb_gpio_config {
 	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[USB_GPIO_RX_PACKET_SIZE / 2] __usb_ram;	\
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[USB_GPIO_TX_PACKET_SIZE / 2] __usb_ram;	\
 	struct usb_gpio_config const NAME = {				\
+		.state     = &((struct usb_gpio_state){}),		\
 		.endpoint  = ENDPOINT,					\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer),		\
@@ -106,7 +114,8 @@ struct usb_gpio_config {
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx),				\
 		       CONCAT2(NAME, _ep_rx),				\
-		       CONCAT2(NAME, _ep_reset));
+		       CONCAT2(NAME, _ep_reset))
+
 
 /*
  * These functions are used by the trampoline functions defined above to

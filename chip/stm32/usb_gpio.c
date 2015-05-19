@@ -39,6 +39,9 @@ void usb_gpio_rx(struct usb_gpio_config const *config)
 			        (uint32_t)(config->rx_ram[3]) << 16);
 	uint32_t ignore_mask = set_mask & clear_mask;
 
+	config->state->set_mask = set_mask;
+	config->state->clear_mask = clear_mask;
+
 	if ((btable_ep[config->endpoint].rx_count & 0x3ff) ==
 	    USB_GPIO_RX_PACKET_SIZE) {
 		for (i = 0; i < config->num_gpios; ++i, mask <<= 1) {

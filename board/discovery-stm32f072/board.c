@@ -39,10 +39,22 @@ static enum gpio_signal const usb_gpio_list[] = {
 	GPIO_LED_R,
 };
 
+/*
+ * This instantiates struct usb_gpio_config const usb_gpio, plus several other
+ * variables, all named something beginning with usb_gpio_
+ */
 USB_GPIO_CONFIG(usb_gpio,
 		usb_gpio_list,
 		USB_IFACE_GPIO,
-		USB_EP_GPIO)
+		USB_EP_GPIO);
+
+void usb_gpio_tick(void)
+{
+	if (usb_gpio.state->set_mask || usb_gpio.state->clear_mask)
+		return;
+	button_event(0);
+}
+DECLARE_HOOK(HOOK_TICK, usb_gpio_tick, HOOK_PRIO_DEFAULT);
 
 const void *const usb_strings[] = {
 	[USB_STR_DESC]         = usb_string_desc,
