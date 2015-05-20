@@ -158,11 +158,37 @@ int mcdp_get_info(struct mcdp_info  *info)
 
 	memcpy(info, &inbuf[2], MCDP_LEN_GETINFO);
 
-#ifdef MCDP_DEBUG
-	CPRINTF("family:%04x chipid:%04x irom:%d.%d.%d fw:%d.%d.%d\n",
-		MCDP_FAMILY(info->family), MCDP_CHIPID(info->chipid),
-		info->irom.major, info->irom.minor, info->irom.build,
-		info->fw.major, info->fw.minor, info->fw.build);
-#endif
 	return EC_SUCCESS;
 }
+
+#ifdef CONFIG_CMD_MCDP
+int command_mcdp(int argc, char **argv)
+{
+	int rv = EC_SUCCESS;
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	mcdp_enable();
+	if (!strncasecmp(argv[1], "info", 4)) {
+		struct mcdp_info info;
+		rv = mcdp_get_info(&info);
+		if (!rv)
+			ccprintf("family:%04x chipid:%04x irom:%d.%d.%d "
+				 "fw:%d.%d.%d\n",
+				 MCDP_FAMILY(info.family),
+				 MCDP_CHIPID(info.chipid),
+				 info.irom.major, info.irom.minor,
+				 info.irom.build,
+				 info.fw.major, info.fw.minor, info.fw.build);
+	} else {
+		rv = EC_ERROR_PARAM1;
+	}
+
+	mcdp_disable();
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
+			"info",
+			"USB PD",
+			NULL);
+#endif /* CONFIG_CMD_MCDP */
