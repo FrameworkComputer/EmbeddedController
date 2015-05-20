@@ -8,6 +8,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
@@ -151,11 +152,17 @@ static void led_tick(void)
 	if (led_debug)
 		return;
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+	if (extpower_is_present()) {
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+			strago_led_set_battery();
+			return;
+		}
+	} else if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED)) {
 		strago_led_set_power();
+		return;
+	}
 
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		strago_led_set_battery();
+	set_color(LED_OFF);
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
