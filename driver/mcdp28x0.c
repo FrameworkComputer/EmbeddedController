@@ -50,15 +50,15 @@ USART_CONFIG(usart_mcdp, CONFIG_MCDP28X0, 115200, rx_queue, tx_queue,
 /**
  * Compute checksum.
  *
+ * @seed initial value of checksum.
  * @msg message bytes to compute checksum on.
  * @cnt count of message bytes.
  * @return partial checksum.
  */
-static uint8_t compute_checksum(const uint8_t *msg, int cnt)
+static uint8_t compute_checksum(uint8_t seed, const uint8_t *msg, int cnt)
 {
 	int i;
-	/* 1st byte (not in msg) is always cnt + 2, so seed chksum with that */
-	uint8_t chksum = cnt + 2;
+	uint8_t chksum = seed;
 
 	for (i = 0; i < cnt; i++)
 		chksum += msg[i];
@@ -69,8 +69,8 @@ static uint8_t compute_checksum(const uint8_t *msg, int cnt)
  * transmit message over serial
  *
  * Packet consists of:
- *   msg[0]     == length including this byte + cnt + chksum
- *   msg[1]     == 1st message byte
+ *   msg[0]     == length of entire packet
+ *   msg[1]     == 1st message byte (typically command)
  *   msg[cnt+1] == last message byte
  *   msg[cnt+2] == checksum
  *
@@ -81,7 +81,8 @@ static uint8_t compute_checksum(const uint8_t *msg, int cnt)
 static int tx_serial(const uint8_t *msg, int cnt)
 {
 	uint8_t out = cnt + 2;
-	uint8_t chksum = compute_checksum(msg, cnt);
+	/* 1st byte (not in msg) is always cnt + 2, so seed chksum with that */
+	uint8_t chksum = compute_checksum(cnt + 2, msg, cnt);
 
 	if (out_stream_write(&usart_out.out, &out, 1) != 1)
 		return EC_ERROR_UNKNOWN;
@@ -99,6 +100,15 @@ static int tx_serial(const uint8_t *msg, int cnt)
 
 /**
  * receive message over serial
+ *
+ * While definitive documentation is lacking its believed the following receive
+ * packet is always true.
+ *
+ * Packet consists of:
+ *   msg[0]     == length of entire packet
+ *   msg[1]     == 1st message byte (typically command)
+ *   msg[cnt+2] == last message byte
+ *   msg[cnt+3] == checksum
  *
  * @msg pointer to buffer to read message into
  * @cnt count of message bytes
@@ -118,6 +128,9 @@ static int rx_serial(uint8_t *msg, int cnt)
 	}
 
 	print_buffer(msg, cnt);
+
+	if (msg[cnt-1] != compute_checksum(0, msg, cnt-1))
+		return EC_ERROR_UNKNOWN;
 
 	return !(read == cnt);
 }
@@ -141,11 +154,6 @@ int mcdp_get_info(struct mcdp_info  *info)
 		return EC_ERROR_UNKNOWN;
 
 	if (rx_serial(inbuf, sizeof(inbuf)))
-		return EC_ERROR_UNKNOWN;
-
-	/* check length & returned command ... no checksum provided */
-	if (((inbuf[0] - 1) != sizeof(inbuf)) ||
-	    (inbuf[1] != MCDP_CMD_GETINFO))
 		return EC_ERROR_UNKNOWN;
 
 	memcpy(info, &inbuf[2], MCDP_LEN_GETINFO);

@@ -12,10 +12,11 @@
 #define MCDP_INBUF_MAX 16
 
 #define MCDP_CMD_GETINFO 0x40
+
+/* packet header (2 bytes: length + cmd) + data + footer (1byte: checksum) */
+#define MCDP_RSP_LEN(len) (len + 3)
 #define MCDP_LEN_GETINFO 12
 
-/* length byte + cmd byte + data len */
-#define MCDP_RSP_LEN(len) (len + 2)
 
 /**
  * Enable mcdp driver.
