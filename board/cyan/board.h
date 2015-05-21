@@ -11,6 +11,7 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_WATCHDOG_HELP
+#define CONFIG_BOARD_VERSION
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_CHIPSET_BRASWELL
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L

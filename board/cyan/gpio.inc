@@ -18,7 +18,7 @@ GPIO(NC_012,            PIN(12), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                   /* USB current control */
 GPIO(I2C0_0_SCL,        PIN(15), GPIO_ODR_HIGH)
 GPIO(I2C0_0_SDA,        PIN(16), GPIO_ODR_HIGH)
-GPIO(BOARD_ID2,         PIN(17), GPIO_INPUT)                      /* Board ID */
+GPIO(BOARD_VERSION3,    PIN(17), GPIO_INPUT)                      /* Board ID */
 
 GPIO(I2C2_SCL,          PIN(20), GPIO_ODR_HIGH)
 GPIO(I2C2_SDA,          PIN(21), GPIO_ODR_HIGH)
@@ -66,7 +66,7 @@ GPIO(GYRO_INT2,         PIN(127), GPIO_INT_FALLING)                /* Gyro senso
 
 GPIO(NC_132,            PIN(132), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(BAT_LED0_L,        PIN(133), GPIO_ODR_HIGH)                   /* Battery charging LED - blue */
-GPIO(BOARD_ID1,         PIN(134), GPIO_INPUT)                      /* Board ID */
+GPIO(BOARD_VERSION2,    PIN(134), GPIO_INPUT)                      /* Board ID */
 GPIO(WWAN_PWREN,        PIN(135), GPIO_OUT_HIGH)                   /* Enable power for WWAN - PROBE_DETECT_L */
 GPIO(BAT_LED1_L,        PIN(136), GPIO_ODR_HIGH)                   /* Battery charging LED - orange */
 
@@ -80,7 +80,7 @@ GPIO(EC_KBD_ALERT,      PIN(147), GPIO_OUT_HIGH)
 GPIO(WLAN_OFF_L,        PIN(150), GPIO_ODR_HIGH)                   /* Wireless LAN */
 GPIO(CPU_PROCHOT,       PIN(151), GPIO_OUT_LOW)
 GPIO(KBD_IRQ_L,         PIN(152), GPIO_ODR_HIGH)                   /* Negative edge triggered irq. */
-GPIO(BOARD_ID0,         PIN(154), GPIO_INPUT)                      /* Board ID */
+GPIO(BOARD_VERSION1,    PIN(154), GPIO_INPUT)                      /* Board ID */
 GPIO(CORE_PWROK,        PIN(155), GPIO_ODR_HIGH)                   /* CORE_PWR_OK_R */
 GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH_DSLEEP)            /* LID_OPEN_OUT2_R */
 GPIO(PCH_SUSPWRDNACK,   PIN(157), GPIO_INT_FALLING)                /* PMC SUSPWRDNACK signal from SOC to EC */
