@@ -90,6 +90,8 @@ static int tx_serial(const uint8_t *msg, int cnt)
 	if (out_stream_write(&usart_mcdp_out.out, msg, cnt) != cnt)
 		return EC_ERROR_UNKNOWN;
 
+	print_buffer((uint8_t *)msg, cnt);
+
 	if (out_stream_write(&usart_mcdp_out.out, &chksum, 1) != 1)
 		return EC_ERROR_UNKNOWN;
 
@@ -163,6 +165,17 @@ int mcdp_get_info(struct mcdp_info  *info)
 }
 
 #ifdef CONFIG_CMD_MCDP
+static int rx_serial_ack(void)
+{
+	if (rx_serial(mcdp_inbuf, 3))
+		return EC_ERROR_UNKNOWN;
+
+	if (mcdp_inbuf[1] != MCDP_CMD_ACK)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
 static int mcdp_get_dev_id(char *dev, uint8_t dev_id, int dev_cnt)
 {
 	uint8_t msg[2];
@@ -177,6 +190,45 @@ static int mcdp_get_dev_id(char *dev, uint8_t dev_id, int dev_cnt)
 
 	memcpy(dev, &mcdp_inbuf[2], mcdp_inbuf[0] - 3);
 	dev[mcdp_inbuf[0] - 3] = '\0';
+	return EC_SUCCESS;
+}
+
+static int mcdp_appstest(uint8_t cmd, int paramc, char **paramv)
+{
+	uint8_t msg[6];
+	char *e;
+	int i;
+
+	/* setup any appstest params */
+	msg[0] = MCDP_CMD_APPSTESTPARAM;
+	for (i = 0; i < paramc; i++) {
+		uint32_t param = strtoi(paramv[i], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+		msg[1] = i + 1;
+		msg[2] = (param >> 24) & 0xff;
+		msg[3] = (param >> 16) & 0xff;
+		msg[4] = (param >>  8) & 0xff;
+		msg[5] = (param >>  0) & 0xff;
+		if (tx_serial(msg, sizeof(msg)))
+			return EC_ERROR_UNKNOWN;
+
+		if (rx_serial_ack())
+			return EC_ERROR_UNKNOWN;
+	}
+
+	msg[0] = MCDP_CMD_APPSTEST;
+	msg[1] = cmd;
+	if (tx_serial(msg, 2))
+		return EC_ERROR_UNKNOWN;
+
+	if (rx_serial_ack())
+		return EC_ERROR_UNKNOWN;
+
+	/* magic */
+	rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf));
+	rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf));
+
 	return EC_SUCCESS;
 }
 
@@ -209,6 +261,14 @@ int command_mcdp(int argc, char **argv)
 			rv = mcdp_get_dev_id(dev, dev_id, 32);
 		if (!rv)
 			ccprintf("devid[%d] = %s\n", dev_id, dev);
+	} else if (!strncasecmp(argv[1], "appstest", 4)) {
+		uint8_t cmd = strtoi(argv[2], &e, 10);
+		if (*e)
+			rv = EC_ERROR_PARAM2;
+		else
+			rv = mcdp_appstest(cmd, argc - 3, &argv[3]);
+		if (!rv)
+			ccprintf("appstest[%d] completed\n", cmd);
 	} else {
 		rv = EC_ERROR_PARAM1;
 	}
@@ -217,7 +277,7 @@ int command_mcdp(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
-			"info|devid <id>",
+			"info|devid <id>|appstest <cmd> [<params>]",
 			"USB PD",
 			NULL);
 #endif /* CONFIG_CMD_MCDP */

@@ -11,8 +11,11 @@
 #define MCDP_OUTBUF_MAX 16
 #define MCDP_INBUF_MAX 16
 
-#define MCDP_CMD_GETINFO  0x40
-#define MCDP_CMD_GETDEVID 0x30
+#define MCDP_CMD_GETINFO       0x40
+#define MCDP_CMD_GETDEVID      0x30
+#define MCDP_CMD_APPSTEST      0x12
+#define MCDP_CMD_APPSTESTPARAM 0x11
+#define MCDP_CMD_ACK           0x0c
 
 /* packet header (2 bytes: length + cmd) + data + footer (1byte: checksum) */
 #define MCDP_RSP_LEN(len) (len + 3)
