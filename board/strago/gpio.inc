@@ -16,10 +16,9 @@ GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,      
 GPIO(KBD_KSO2,          PIN(1),  GPIO_KB_OUTPUT_COL2)           /* Negative edge triggered irq. */
 
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                 /* USB current control */
-
 GPIO(I2C_PORT0_SCL,     PIN(15), GPIO_ODR_HIGH)
 GPIO(I2C_PORT0_SDA,     PIN(16), GPIO_ODR_HIGH)
-GPIO(BOARD_ID2,         PIN(17), GPIO_INPUT | GPIO_PULL_UP)     /* NC */
+GPIO(BOARD_VERSION3,    PIN(17), GPIO_INPUT)                    /* BOARD_ID2 */
 GPIO(I2C_PORT1_SCL,     PIN(22), GPIO_ODR_HIGH)
 GPIO(I2C_PORT1_SDA,     PIN(23), GPIO_ODR_HIGH)
 GPIO(I2C_PORT2_SCL,     PIN(20), GPIO_ODR_HIGH)
@@ -66,7 +65,7 @@ GPIO(PERICOM_INT,       PIN(124), GPIO_INT_BOTH)                 /* */
 GPIO(GYRO_INT2,         PIN(127), GPIO_INT_FALLING)              /* Gyro sensor interrupt 2 to EC */
 
 GPIO(EC_PLUG_DETECT,    PIN(132), GPIO_INT_BOTH)
-GPIO(BOARD_ID1,         PIN(154), GPIO_INPUT | GPIO_PULL_UP)     /* Board Id 1 */
+GPIO(BOARD_VERSION2,    PIN(134), GPIO_INPUT)                    /* BOARD_ID1 */
 GPIO(NC_135,            PIN(135), GPIO_INPUT | GPIO_PULL_UP)     /* NC */
 
 GPIO(THERMAL_PROBE_EN_L,PIN(140), GPIO_OUT_HIGH)
@@ -78,7 +77,7 @@ GPIO(ALS_INT,           PIN(147), GPIO_INT_FALLING)              /* ALS sensor i
 GPIO(WLAN_OFF_L,        PIN(150), GPIO_ODR_HIGH)                 /* Wireless LAN */
 GPIO(CPU_PROCHOT,       PIN(151), GPIO_OUT_LOW)
 GPIO(KBD_IRQ_L,         PIN(152), GPIO_ODR_HIGH)                 /* Negative edge triggered irq. */
-GPIO(BOARD_ID0,         PIN(154), GPIO_INPUT | GPIO_PULL_UP)     /* NC */
+GPIO(BOARD_VERSION1,    PIN(154), GPIO_INPUT)                    /* BOARD_ID0 */
 GPIO(CORE_PWROK,        PIN(155), GPIO_ODR_HIGH)                 /* CORE_PWR_OK_R */
 GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH_DSLEEP)          /* LID_OPEN_OUT2_R */
 GPIO(PCH_SUSPWRDNACK,   PIN(157), GPIO_INT_FALLING)              /* PMC SUSPWRDNACK signal from SOC to EC */
