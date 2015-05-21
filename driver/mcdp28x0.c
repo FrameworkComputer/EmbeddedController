@@ -17,6 +17,8 @@
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 
+static uint8_t mcdp_inbuf[MCDP_INBUF_MAX];
+
 #undef MCDP_DEBUG
 
 #ifdef MCDP_DEBUG
@@ -93,8 +95,6 @@ static int tx_serial(const uint8_t *msg, int cnt)
 	if (out_stream_write(&usart_out.out, &chksum, 1) != 1)
 		return EC_ERROR_UNKNOWN;
 
-	print_buffer(tx_queue_buffer, cnt + 2);
-
 	return EC_SUCCESS;
 }
 
@@ -129,6 +129,10 @@ static int rx_serial(uint8_t *msg, int cnt)
 
 	print_buffer(msg, cnt);
 
+	/* Some response sizes are dynamic so shrink cnt accordingly. */
+	if (cnt > msg[0])
+		cnt = msg[0];
+
 	if (msg[cnt-1] != compute_checksum(0, msg, cnt-1))
 		return EC_ERROR_UNKNOWN;
 
@@ -147,24 +151,42 @@ void mcdp_disable(void)
 
 int mcdp_get_info(struct mcdp_info  *info)
 {
-	uint8_t inbuf[MCDP_RSP_LEN(MCDP_LEN_GETINFO)];
 	const uint8_t msg[2] = {MCDP_CMD_GETINFO, 0x00}; /* cmd + msg type */
 
 	if (tx_serial(msg, sizeof(msg)))
 		return EC_ERROR_UNKNOWN;
 
-	if (rx_serial(inbuf, sizeof(inbuf)))
+	if (rx_serial(mcdp_inbuf, MCDP_RSP_LEN(MCDP_LEN_GETINFO)))
 		return EC_ERROR_UNKNOWN;
 
-	memcpy(info, &inbuf[2], MCDP_LEN_GETINFO);
+	memcpy(info, &mcdp_inbuf[2], MCDP_LEN_GETINFO);
 
 	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_CMD_MCDP
+static int mcdp_get_dev_id(char *dev, uint8_t dev_id, int dev_cnt)
+{
+	uint8_t msg[2];
+	msg[0] = MCDP_CMD_GETDEVID;
+	msg[1] = dev_id;
+
+	if (tx_serial(msg, sizeof(msg)))
+		return EC_ERROR_UNKNOWN;
+
+	if (rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf)))
+		return EC_ERROR_UNKNOWN;
+
+	memcpy(dev, &mcdp_inbuf[2], mcdp_inbuf[0] - 3);
+	dev[mcdp_inbuf[0] - 3] = '\0';
+	return EC_SUCCESS;
+}
+
 int command_mcdp(int argc, char **argv)
 {
 	int rv = EC_SUCCESS;
+	char *e;
+
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
@@ -180,6 +202,15 @@ int command_mcdp(int argc, char **argv)
 				 info.irom.major, info.irom.minor,
 				 info.irom.build,
 				 info.fw.major, info.fw.minor, info.fw.build);
+	} else if (!strncasecmp(argv[1], "devid", 4)) {
+		uint8_t dev_id = strtoi(argv[2], &e, 10);
+		char dev[32];
+		if (*e)
+			rv = EC_ERROR_PARAM2;
+		else
+			rv = mcdp_get_dev_id(dev, dev_id, 32);
+		if (!rv)
+			ccprintf("devid[%d] = %s\n", dev_id, dev);
 	} else {
 		rv = EC_ERROR_PARAM1;
 	}
@@ -188,7 +219,7 @@ int command_mcdp(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
-			"info",
+			"info|devid <id>",
 			"USB PD",
 			NULL);
 #endif /* CONFIG_CMD_MCDP */
