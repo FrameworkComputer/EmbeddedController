@@ -340,13 +340,19 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 	}
 
 	if (out_bytes || !in_bytes) {
-		/* Configure the write transfer */
+		/*
+		 * Configure the write transfer: if we are stopping then set
+		 * AUTOEND bit to automatically set STOP bit after NBYTES.
+		 * if we are not stopping, set RELOAD bit so that we can load
+		 * NBYTES again. if we are starting, then set START bit.
+		 */
 		STM32_I2C_CR2(port) =  ((out_bytes & 0xFF) << 16)
 			| slave_addr
 			| ((in_bytes == 0 && xfer_stop) ?
-				STM32_I2C_CR2_AUTOEND : 0);
-		/* let's go ... */
-		STM32_I2C_CR2(port) |= STM32_I2C_CR2_START;
+				STM32_I2C_CR2_AUTOEND : 0)
+			| ((in_bytes == 0 && !xfer_stop) ?
+				STM32_I2C_CR2_RELOAD : 0)
+			| (xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < out_bytes; i++) {
 			rv = wait_isr(port, STM32_I2C_ISR_TXIS);
@@ -362,11 +368,18 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 			if (rv)
 				goto xfer_exit;
 		}
-		/* Configure the read transfer and (re)start */
+		/*
+		 * Configure the read transfer: if we are stopping then set
+		 * AUTOEND bit to automatically set STOP bit after NBYTES.
+		 * if we are not stopping, set RELOAD bit so that we can load
+		 * NBYTES again. if we were just transmitting, we need to
+		 * set START bit to send (re)start and begin read transaction.
+		 */
 		STM32_I2C_CR2(port) = ((in_bytes & 0xFF) << 16)
 			| STM32_I2C_CR2_RD_WRN | slave_addr
 			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
-			| STM32_I2C_CR2_START;
+			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
+			| (out_bytes ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
@@ -377,7 +390,14 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 			in[i] = STM32_I2C_RXDR(port);
 		}
 	}
-	rv = wait_isr(port, xfer_stop ? STM32_I2C_ISR_STOP : STM32_I2C_ISR_TC);
+
+	/*
+	 * If we are stopping, then we already set AUTOEND and we should
+	 * wait for the stop bit to be transmitted. Otherwise, we set
+	 * the RELOAD bit and we should wait for transfer complete
+	 * reload (TCR).
+	 */
+	rv = wait_isr(port, xfer_stop ? STM32_I2C_ISR_STOP : STM32_I2C_ISR_TCR);
 	if (rv)
 		goto xfer_exit;
 

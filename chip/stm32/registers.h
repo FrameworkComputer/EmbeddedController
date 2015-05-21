@@ -474,6 +474,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_I2C_ISR_NACK          (1 << 4)
 #define STM32_I2C_ISR_STOP          (1 << 5)
 #define STM32_I2C_ISR_TC            (1 << 6)
+#define STM32_I2C_ISR_TCR           (1 << 7)
 #define STM32_I2C_ISR_BERR          (1 << 8)
 #define STM32_I2C_ISR_ARLO          (1 << 9)
 #define STM32_I2C_ISR_OVR           (1 << 10)
