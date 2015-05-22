@@ -176,16 +176,6 @@ static int wait_byte_done(int controller)
 	return sts & STS_LRB;
 }
 
-static inline void fill_in_buf(uint8_t *in, int id, uint8_t val)
-{
-	/*
-	 * On MEC1322, first byte read is dummy read (slave addr).
-	 * Throw it away.
-	 */
-	if (id != 0)
-		in[id - 1] = val;
-}
-
 static void select_port(int port)
 {
 	/*
@@ -214,28 +204,39 @@ static inline int get_line_level(int controller)
 	return ret;
 }
 
+static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
+{
+	if (!skip) {
+		**in = val;
+		(*in)++;
+	}
+}
+
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
 	int i;
 	int controller;
-	int started = (flags & I2C_XFER_START) ? 0 : 1;
-	uint8_t reg_sts;
+	int send_start = flags & I2C_XFER_START;
+	int send_stop = flags & I2C_XFER_STOP;
+	int skip = 0;
+	int bytes_to_read;
+	uint8_t reg;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
 	select_port(port);
 	controller = i2c_port_to_controller(port);
-	wait_idle(controller);
+	if (send_start)
+		wait_idle(controller);
 
-	reg_sts = MEC1322_I2C_STATUS(controller);
-	if (!started &&
-	    (((reg_sts & (STS_BER | STS_LAB)) || !(reg_sts & STS_NBB)) ||
+	reg = MEC1322_I2C_STATUS(controller);
+	if (send_start &&
+	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			    (get_line_level(controller)
 			    != I2C_LINE_IDLE))) {
-		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port,
-			reg_sts,
+		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port, reg,
 			get_line_level(controller) & I2C_LINE_SCL_HIGH,
 			get_line_level(controller) & I2C_LINE_SDA_HIGH);
 
@@ -253,7 +254,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		usleep(1000);
 	}
 
-	if (out) {
+	if (out_size) {
 		MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr;
 
 		/*
@@ -262,9 +263,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		 */
 		MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
 					       CTRL_ACK |
-					       (started ? 0 : CTRL_STA);
-		if (!started)
-			started = 1;
+					       (send_start ? CTRL_STA : 0);
 
 		for (i = 0; i < out_size; ++i) {
 			if (wait_byte_done(controller))
@@ -278,56 +277,61 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		 * Send STOP bit if the stop flag is on, and caller
 		 * doesn't expect to receive data.
 		 */
-		if ((flags & I2C_XFER_STOP) && in_size == 0) {
+		if (send_stop && in_size == 0) {
 			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 						       CTRL_STO | CTRL_ACK;
 		}
 	}
 
 	if (in_size) {
-		if (out_size) {
-			/* resend start bit when change direction */
+		/* Resend start bit when changing direction */
+		if (out_size || send_start) {
 			MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_STA |
-						       CTRL_ACK | CTRL_ENI;
+						       CTRL_ACK | CTRL_ENI |
+						       CTRL_PIN;
+
+			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr
+						     | 0x01;
+			/* Skip over the dummy byte */
+			skip = 1;
+			in_size++;
 		}
 
-		MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr | 0x01;
+		/* Special flags need to be set for last two bytes */
+		bytes_to_read = send_stop ? in_size - 2 : in_size;
 
-		if (!started) {
-			started = 1;
-			/* Clock out slave address with START bit */
-			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-						       CTRL_STA | CTRL_ACK |
-						       CTRL_ENI;
-		}
-
-		/* On MEC1322, first byte read is dummy read (slave addr) */
-		in_size++;
-
-		for (i = 0; i < in_size - 2; ++i) {
+		for (i = 0; i < bytes_to_read; ++i) {
 			if (wait_byte_done(controller))
 				goto err_i2c_xfer;
-			fill_in_buf(in, i, MEC1322_I2C_DATA(controller));
+			push_in_buf(&in, MEC1322_I2C_DATA(controller), skip);
+			skip = 0;
 		}
 		if (wait_byte_done(controller))
 			goto err_i2c_xfer;
 
-		/*
-		 * De-assert ACK bit before reading the next to last byte,
-		 * so that the last byte is NACK'ed.
-		 */
-		MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_ENI;
-		fill_in_buf(in, in_size - 2, MEC1322_I2C_DATA(controller));
-		if (wait_byte_done(controller))
-			goto err_i2c_xfer;
+		if (send_stop) {
+			/*
+			 * De-assert ACK bit before reading the next to last
+			 * byte, so that the last byte is NACK'ed.
+			 */
+			MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_ENI;
+			push_in_buf(&in, MEC1322_I2C_DATA(controller), skip);
+			if (wait_byte_done(controller))
+				goto err_i2c_xfer;
 
-		/* Send STOP if stop flag is set */
-		MEC1322_I2C_CTRL(controller) =
-			CTRL_PIN | CTRL_ESO | CTRL_ACK |
-			((flags & I2C_XFER_STOP) ? CTRL_STO : 0);
+			/* Send STOP */
+			MEC1322_I2C_CTRL(controller) =
+				CTRL_PIN | CTRL_ESO | CTRL_ACK | CTRL_STO;
 
-		/* Now read the last byte */
-		fill_in_buf(in, in_size - 1, MEC1322_I2C_DATA(controller));
+			/*
+			 * We need to know our stop point two bytes in
+			 * advance. If we don't know soon enough, we need
+			 * to do an extra dummy read (to last_addr + 1) to
+			 * issue the stop.
+			 */
+			push_in_buf(&in, MEC1322_I2C_DATA(controller),
+				    in_size == 1);
+		}
 	}
 
 	/* Check for error conditions */
