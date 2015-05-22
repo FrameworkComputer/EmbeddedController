@@ -239,8 +239,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			get_line_level(controller) & I2C_LINE_SCL_HIGH,
 			get_line_level(controller) & I2C_LINE_SDA_HIGH);
 
-		/* Attempt to unwedge the controller. */
-		i2c_unwedge(controller);
+		/* Attempt to unwedge the port. */
+		i2c_unwedge(port);
 
 		/* Bus error, bus busy, or arbitration lost. Try reset. */
 		reset_controller(controller);
