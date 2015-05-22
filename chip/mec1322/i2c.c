@@ -379,41 +379,6 @@ int i2c_get_line_levels(int port)
 	return rv;
 }
 
-int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
-	int len)
-{
-	int	rv;
-	uint8_t	reg, block_length;
-
-	if ((len <= 0) || (len > SMBUS_MAX_BLOCK_SIZE))
-		return EC_ERROR_INVAL;
-
-	i2c_lock(port, 1);
-
-	/*
-	 * Read the counted string into the output buffer
-	 */
-	reg = offset;
-	rv = i2c_xfer(port, slave_addr, &reg, 1, data, len, I2C_XFER_SINGLE);
-	if (rv)
-		goto exit;
-
-	/*
-	 * Block length is the first byte of the returned buffer
-	 */
-	block_length = MIN(data[0], len - 1);
-
-	/*
-	 * Move data down, then null-terminate it
-	 */
-	memmove(data, data + 1, block_length);
-	data[block_length] = '\0';
-
-exit:
-	i2c_lock(port, 0);
-	return rv;
-}
-
 int i2c_port_to_controller(int port)
 {
 	if (port < 0 || port >= MEC1322_I2C_PORT_COUNT)

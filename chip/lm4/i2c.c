@@ -305,36 +305,6 @@ int i2c_get_line_levels(int port)
 	return LM4_I2C_MBMON(port) & 0x03;
 }
 
-int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
-		    int len)
-{
-	int rv;
-	uint8_t reg, block_length;
-
-	i2c_lock(port, 1);
-
-	reg = offset;
-	/*
-	 * Send device reg space offset, and read back block length.  Keep this
-	 * session open without a stop.
-	 */
-	rv = i2c_xfer(port, slave_addr, &reg, 1, &block_length, 1,
-		      I2C_XFER_START);
-	if (rv)
-		goto exit;
-
-	if (len && block_length > (len - 1))
-		block_length = len - 1;
-
-	rv = i2c_xfer(port, slave_addr, 0, 0, data, block_length,
-		      I2C_XFER_STOP);
-	data[block_length] = 0;
-
-exit:
-	i2c_lock(port, 0);
-	return rv;
-}
-
 void i2c_set_timeout(int port, uint32_t timeout)
 {
 	pdata[port].timeout_us = timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
