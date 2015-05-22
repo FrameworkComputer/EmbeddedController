@@ -15,8 +15,14 @@
 #include "led_common.h"
 #include "util.h"
 
-#define LED_TOTAL_TICKS 16
-#define LED_ON_TICKS 4
+#define CRITICAL_LOW_BATTERY_PERMILLAGE 71
+#define LOW_BATTERY_PERMILLAGE 137
+#define FULL_BATTERY_PERMILLAGE 937
+
+#define LED_TOTAL_4SECS_TICKS 16
+#define LED_TOTAL_2SECS_TICKS 8
+#define LED_ON_1SEC_TICKS 4
+#define LED_ON_2SECS_TICKS 8
 
 enum led_color {
 	LED_OFF = 0,
@@ -124,8 +130,8 @@ static void cyan_led_set_power(void)
 
 		/* Blink once every four seconds. */
 		cyan_led_set_color_power(
-			(power_ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
-			LED_AMBER : LED_OFF);
+			(power_ticks % LED_TOTAL_4SECS_TICKS <
+			 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
 
 		previous_state_suspend = 1;
 		return;
@@ -143,28 +149,52 @@ static void cyan_led_set_battery(void)
 {
 	static int battery_ticks;
 	uint32_t chflags = charge_get_flags();
+	int remaining_capacity;
+	int full_charge_capacity;
+	int permillage;
 
 	battery_ticks++;
 
+	remaining_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	full_charge_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	permillage = !full_charge_capacity ? 0 :
+		(1000 * remaining_capacity) / full_charge_capacity;
+
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		cyan_led_set_color_battery(LED_AMBER);
+		/* Make the percentage approximate to UI shown */
+		cyan_led_set_color_battery(permillage <
+			FULL_BATTERY_PERMILLAGE ? LED_AMBER : LED_BLUE);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		cyan_led_set_color_battery(LED_BLUE);
 		break;
 	case PWR_STATE_DISCHARGE:
-		cyan_led_set_color_battery(LED_OFF);
+		/* Less than 3%, blink one second every two seconds */
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+		    permillage <= CRITICAL_LOW_BATTERY_PERMILLAGE)
+			cyan_led_set_color_battery(
+				(battery_ticks % LED_TOTAL_2SECS_TICKS <
+				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+		/* Less than 10%, blink one second every four seconds */
+		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+			 permillage <= LOW_BATTERY_PERMILLAGE)
+			cyan_led_set_color_battery(
+				(battery_ticks % LED_TOTAL_4SECS_TICKS <
+				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+		else
+			cyan_led_set_color_battery(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		cyan_led_set_color_battery(
-			(battery_ticks % LED_TOTAL_TICKS < LED_ON_TICKS) ?
-			LED_AMBER : LED_OFF);
+			(battery_ticks % LED_TOTAL_2SECS_TICKS <
+			 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
 			cyan_led_set_color_battery(
-				(battery_ticks & 0x4) ? LED_BLUE : LED_OFF);
+				(battery_ticks % LED_TOTAL_4SECS_TICKS <
+				 LED_ON_2SECS_TICKS) ? LED_BLUE : LED_AMBER);
 		else
 			cyan_led_set_color_battery(LED_BLUE);
 		break;
