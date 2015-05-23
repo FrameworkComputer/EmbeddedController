@@ -5,14 +5,14 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(LID_OPEN,          PIN(27),  GPIO_INT_BOTH,                      lid_interrupt)          /* Lid switch */
-GPIO_INT(AC_PRESENT,        PIN(30),  GPIO_INT_BOTH,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
-GPIO_INT(WP_L,              PIN(33),  GPIO_INT_BOTH,                      switch_interrupt)       /* Write protect input */
-GPIO_INT(POWER_BUTTON_L,    PIN(35),  GPIO_INT_BOTH,                      power_button_interrupt) /* Power button */
-GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH,                      power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
-GPIO_INT(ALL_SYS_PGOOD,     PIN(130), GPIO_INT_BOTH,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
-GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S4# signal from PCH */
-GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S3# signal from PCH */
+GPIO_INT(LID_OPEN,          PIN(27),  GPIO_INT_BOTH_DSLEEP,                      lid_interrupt)          /* Lid switch */
+GPIO_INT(AC_PRESENT,        PIN(30),  GPIO_INT_BOTH_DSLEEP,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
+GPIO_INT(WP_L,              PIN(33),  GPIO_INT_BOTH,                             switch_interrupt)       /* Write protect input */
+GPIO_INT(POWER_BUTTON_L,    PIN(35),  GPIO_INT_BOTH_DSLEEP,                      power_button_interrupt) /* Power button */
+GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH,                             power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
+GPIO_INT(ALL_SYS_PGOOD,     PIN(130), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
+GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* SLP_S4# signal from PCH */
+GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* SLP_S3# signal from PCH */
 
 GPIO(NC_012,            PIN(12), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                   /* USB current control */
@@ -49,7 +49,7 @@ GPIO(NC_57,             PIN(57), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(CHGR_PMON,         PIN(60), GPIO_ANALOG)
 GPIO(WIFI_PWREN,        PIN(61), GPIO_OUT_HIGH)                   /* Enable power for WiFi */
 GPIO(BATT_EN_L,         PIN(62), GPIO_INPUT)                      /* Will be NC */
-GPIO(NC_64,             PIN(64), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
+GPIO(EC_HIB_L,          PIN(64), GPIO_OUT_LOW)
 GPIO(PCH_SYS_PWROK,     PIN(65), GPIO_OUT_LOW)                    /* EC thinks everything is up and ready (DELAY_ALL_SYS_PWRGD) */
 GPIO(PCH_WAKE_L,        PIN(66), GPIO_ODR_HIGH)                   /* PCH wake pin */
 GPIO(USB1_ENABLE,       PIN(67), GPIO_OUT_LOW)                    /* Enable power for USB3 Port */
@@ -111,6 +111,7 @@ ALTERNATE(PIN_MASK(10, 0xd8),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_OUTPUT)
 #else
  ALTERNATE(PIN_MASK(0, 0x02),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_OUTPUT_COL2)
 #endif
+
 ALTERNATE(PIN_MASK(3,  0x04),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
 ALTERNATE(PIN_MASK(4,  0x0d),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
 ALTERNATE(PIN_MASK(12, 0x60),   2,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
@@ -124,3 +125,9 @@ ALTERNATE(PIN_MASK(12, 0x01),   1,      MODULE_LPC,             0)              
 ALTERNATE(PIN_MASK(5,  0x10),   1,      MODULE_SPI,             0)                      /* 54: MOSI */
 ALTERNATE(PIN_MASK(16, 0x10),   1,      MODULE_SPI,             0)                      /* 164: MISO */
 ALTERNATE(PIN_MASK(15, 0x08),   1,      MODULE_SPI,             0)                      /* 153: CLK */
+
+/* Re-Config LPC Pins to GPIO Open Drain for SOC G3 (EC - POWER_G3) state */
+ALTERNATE(PIN_MASK(1,  0x10),   0,      MODULE_GPIO,            GPIO_ODR_HIGH)          /* 14: LPC CLKRUN */
+ALTERNATE(PIN_MASK(11, 0x9e),   0,      MODULE_GPIO,            GPIO_ODR_HIGH)          /* 111~114:LAD[0:3], 117:PCI_CLK */
+ALTERNATE(PIN_MASK(11, 0x40),   0,      MODULE_GPIO,            GPIO_ODR_HIGH)          /* 116: LRESET# */
+ALTERNATE(PIN_MASK(12, 0x01),   0,      MODULE_GPIO,            GPIO_ODR_HIGH)          /* 120: LFRAME# */
