@@ -121,6 +121,6 @@ enum sb_maker_id {
  */
 #define SB_FW_UPDATE_ERROR_RETRY_CNT      2
 #define SB_FW_UPDATE_FEC_ERROR_RETRY_CNT  2
-#define SB_FW_UPDATE_BUSY_ERROR_RETRY_CNT 9
+#define SB_FW_UPDATE_BUSY_ERROR_RETRY_CNT 4
 
 #endif
