@@ -165,8 +165,8 @@ static void i2c_init_port(const struct i2c_port_t *p)
 /*****************************************************************************/
 /* Interface */
 
-int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
-	     uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
+		  uint8_t *in, int in_bytes, int flags)
 {
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	int rv = EC_SUCCESS;
@@ -302,7 +302,7 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 		 */
 		if (rv == I2C_ERROR_FAILED_START) {
 			const struct i2c_port_t *p = i2c_ports;
-			CPRINTS("i2c_xfer start error; "
+			CPRINTS("chip_i2c_xfer start error; "
 				"unwedging and resetting i2c %d", port);
 
 			i2c_unwedge(port);

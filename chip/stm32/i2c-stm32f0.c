@@ -358,8 +358,8 @@ DECLARE_IRQ(IRQ_SLAVE, i2c2_event_interrupt, 2);
 /*****************************************************************************/
 /* Interface */
 
-int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
-	     uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
+		  uint8_t *in, int in_bytes, int flags)
 {
 	int rv = EC_SUCCESS;
 	int i;

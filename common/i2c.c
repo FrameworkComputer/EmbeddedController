@@ -33,6 +33,13 @@
 
 static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
 
+int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+	     uint8_t *in, int in_size, int flags)
+{
+	return chip_i2c_xfer(port, slave_addr, out, out_size, in,
+			     in_size, flags);
+}
+
 void i2c_lock(int port, int lock)
 {
 #ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER

@@ -374,8 +374,8 @@ DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 2);
 /*****************************************************************************/
 /* IC specific low-level driver */
 
-int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
-	     uint8_t *in, int in_size, int flags)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+		  uint8_t *in, int in_size, int flags)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + port;
 

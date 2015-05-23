@@ -243,8 +243,8 @@ static int i2c_master_read(int port, int slave_addr, uint8_t *data, int size)
 	return EC_SUCCESS;
 }
 
-int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
-	     uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
+		  uint8_t *in, int in_bytes, int flags)
 {
 	int rv = EC_SUCCESS;
 

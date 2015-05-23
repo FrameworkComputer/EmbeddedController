@@ -33,8 +33,8 @@ extern const unsigned int i2c_ports_used;
 /**
  * Transmit one block of raw data, then receive one block of raw data.
  *
- * This is a low-level platform-dependent function used by the other functions
- * below.  It must be called between i2c_lock(port, 1) and i2c_lock(port, 0).
+ * This is a wrapper function for chip_i2c_xfer(), a low-level chip-dependent
+ * function. It must be called between i2c_lock(port, 1) and i2c_lock(port, 0).
  *
  * @param port		Port to access
  * @param slave_addr	Slave device address
@@ -51,6 +51,25 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 #define I2C_LINE_SCL_HIGH (1 << 0)
 #define I2C_LINE_SDA_HIGH (1 << 1)
 #define I2C_LINE_IDLE (I2C_LINE_SCL_HIGH | I2C_LINE_SDA_HIGH)
+
+/**
+ * Chip-level function to transmit one block of raw data, then receive one
+ * block of raw data.
+ *
+ * This is a low-level chip-dependent function and should only be called by
+ * i2c_xfer().
+ *
+ * @param port		Port to access
+ * @param slave_addr	Slave device address
+ * @param out		Data to send
+ * @param out_size	Number of bytes to send
+ * @param in		Destination buffer for received data
+ * @param in_size	Number of bytes to receive
+ * @param flags		Flags (see I2C_XFER_* above)
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+		  uint8_t *in, int in_size, int flags);
 
 /**
  * Return raw I/O line levels (I2C_LINE_*) for a port when port is in alternate

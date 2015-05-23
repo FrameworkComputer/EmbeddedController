@@ -106,8 +106,8 @@ int i2c_do_work(int port)
 		/*
 		 * Error after starting; abort transfer.  Ignore errors at
 		 * start because arbitration and timeout errors are taken care
-		 * of in i2c_xfer(), and slave ack failures will automatically
-		 * clear once we send a start condition.
+		 * of in chip_i2c_xfer(), and slave ack failures will
+		 * automatically clear once we send a start condition.
 		 */
 		pd->err = EC_ERROR_UNKNOWN;
 		return 0;
@@ -168,8 +168,8 @@ int i2c_do_work(int port)
 	return 0;
 }
 
-int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
-	     uint8_t *in, int in_size, int flags)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+		  uint8_t *in, int in_size, int flags)
 {
 	struct i2c_port_data *pd = pdata + port;
 	uint32_t reg_mcs = LM4_I2C_MCS(port);
