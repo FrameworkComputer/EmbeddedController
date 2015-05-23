@@ -6,7 +6,7 @@
  */
 
 /* Interrupts */
-GPIO_INT(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH | GPIO_PULL_UP,    vbus_evt)
+GPIO_INT(CHGR_ACOK,            D, 4,  GPIO_INT_BOTH,                   vbus_evt)
 GPIO_INT(POWER_BUTTON_L,       C, 13, GPIO_INT_BOTH,                   power_button_interrupt) /* active high, the name is for compatibility with existing code */
 GPIO_INT(USBC_BC12_INT_L,      D, 11, GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)
 GPIO_INT(LID_OPEN,             E, 1,  GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)
