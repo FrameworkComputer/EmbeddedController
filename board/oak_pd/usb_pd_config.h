@@ -95,7 +95,7 @@ static inline void pd_set_pins_speed(int port)
 		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00030000;
 	} else {
 		/* 40 MHz pin speed on SPI PB13/14,
-		 * (USB_C1_TX_CLKIN & USB_C1_CC1_TX_DATA)
+		 * (USB_C1_TX_CLKIN & USB_C1_CCX_TX_DATA)
 		 */
 		STM32_GPIO_OSPEEDR(GPIO_B) |= 0x3C000000;
 		/* 40 MHz pin speed on TIM15_CH2 (PB15) */
@@ -143,7 +143,19 @@ static inline void pd_tx_enable(int port, int polarity)
 		/* put SPI function on TX pin */
 		/* USB_C1_CCX_TX_DATA: PB14 is SPI1 MISO */
 		gpio_set_alternate_function(GPIO_B, 0x4000, 0);
-		/* TODO: MCU ADC pin output low */
+		/* MCU ADC pin output low */
+		if (polarity) {
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
+					& ~(3 << (2*5))) /* PA5 disable ADC */
+					|  (1 << (2*5)); /* Set as GPO */
+			gpio_set_level(GPIO_USB_C1_CC2_PD, 0);
+		} else {
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
+					& ~(3 << (2*0))) /* PA0 disable ADC */
+					|  (1 << (2*0)); /* Set as GPO */
+			gpio_set_level(GPIO_USB_C1_CC1_PD, 0);
+		}
+
 		/*
 		 * There is a pin muxer to select CC1 or CC2 TX_DATA,
 		 * Pin mux is controlled by USB_C1_CC2_TX_SEL pin,
@@ -158,37 +170,32 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	if (port == 0) {
-		/* output low on SPI TX to disable the FET */
 		if (polarity) {/* PA6 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_A, 0x0040, -1);
-			/* TODO: Set MCU ADC PA4 pin to ADC function (Hi-Z) */
+			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
 					|  (3 << (2*4))) /* PA4 as ADC */
 					& ~(1 << (2*4)); /* disable GPO */
+			gpio_set_alternate_function(GPIO_A, 0x0040, -1);
 		} else {/* PB4 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_B, 0x0010, -1);
-			/* put the low level reference in Hi-Z */
-			/* TODO: Set MCU ADC PA2 pin to ADC function (Hi-Z) */
+			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-					|  (3 << (2*2))) /* PA2 disable ADC */
-					& ~(1 << (2*2)); /* Set as GPO */
+					|  (3 << (2*2))) /* PA2 as ADC */
+					& ~(1 << (2*2)); /* disable GPO */
+			gpio_set_alternate_function(GPIO_B, 0x0010, -1);
 		}
 	} else {
-		/* Select the pin according to the polarity */
-		gpio_set_level(GPIO_USB_C1_CC2_TX_SEL, polarity);
-		/* output low on SPI TX to disable the FET */
-		/* PB14 is SPI2 MISO */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				& ~(3 << (2*14))) /* Pin14 disable ADC */
-				|  (1 << (2*14)); /* Set as GPO */
-		/* 00: Input mode (reset state)
-		 * 01: General purpose output mode
-		 * 10: Alternate function mode
-		 * 11: Analog mode
-		 */
-
-		/* put the low level reference in Hi-Z */
-		/* TODO: Set MCU ADC pin to ADC function (Hi-Z) */
+		if (polarity) {
+			/* set ADC PA4 pin to ADC function (Hi-Z) */
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
+					|  (3 << (2*5))) /* PA5 as ADC */
+					& ~(1 << (2*5)); /* disable GPO */
+		} else {
+			/* set ADC PA4 pin to ADC function (Hi-Z) */
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
+					|  (3 << (2*0))) /* PA0 as ADC */
+					& ~(1 << (2*0)); /* disable GPO */
+		}
+		gpio_set_alternate_function(GPIO_B, 0x4000, -1);
 	}
 }
 
@@ -246,6 +253,7 @@ static inline void pd_set_host_mode(int port, int enable)
 			/* High-Z is used for host mode. */
 			gpio_set_level(GPIO_USB_C1_CC1_ODL, 1);
 			gpio_set_level(GPIO_USB_C1_CC2_ODL, 1);
+			/* Set TX Hi-Z */
 			gpio_set_flags(GPIO_USB_C1_CCX_TX_DATA, GPIO_INPUT);
 		} else {
 			/* Set HOST_HIGH to High-Z for device mode. */
@@ -314,3 +322,4 @@ static inline void pd_set_vconn(int port, int polarity, int enable)
 }
 
 #endif /* __USB_PD_CONFIG_H */
+

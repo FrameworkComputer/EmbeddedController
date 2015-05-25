@@ -5,6 +5,7 @@
 
 /* Oak board configuration */
 
+#include "adc_chip.h"
 #include "battery.h"
 #include "charger.h"
 #include "chipset.h"
@@ -17,6 +18,7 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
+#include "pi3usb30532.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
@@ -66,8 +68,21 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_SOC_POWER_GOOD, 1, "POWER_GOOD"},	/* Active high */
 	{GPIO_SUSPEND_L, 0, "SUSPEND#_ASSERTED"},	/* Active low */
 };
-
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/* VDC_BOOSTIN_SENSE(PC1): ADC_IN11, output in mV */
+	[ADC_VBUS] = {"VBUS", 33000, 4096, 0, STM32_AIN(11)},
+	/*
+	 * PSYS_MONITOR(PA2): ADC_IN2, 1.44 uA/W on 6.05k Ohm
+	 * output in mW
+	 */
+	[ADC_PSYS] = {"PSYS", 379415, 4096, 0, STM32_AIN(2)},
+	/* AMON_BMON(PC0): ADC_IN10, output in uV */
+	[ADC_AMON_BMON] = {"AMON_BMON", 183333, 4096, 0, STM32_AIN(10)},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

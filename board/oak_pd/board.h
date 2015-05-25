@@ -8,6 +8,10 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+#undef CONFIG_BOARD_OAK_REV_1
+#define CONFIG_BOARD_OAK_REV_1_5
+#undef CONFIG_BOARD_OAK_REV_2
+
 /*
  * The flash size is only 32kB.
  * No space for 2 partitions,
