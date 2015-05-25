@@ -31,6 +31,13 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_CUSTOM_VDM
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 
 #define CONFIG_SPI_PORT 1
@@ -50,6 +57,7 @@
 #define I2C_PORT_BATTERY MEC1322_I2C0_0
 #define I2C_PORT_CHARGER MEC1322_I2C0_0
 #define I2C_PORT_PD_MCU MEC1322_I2C1
+#define I2C_PORT_TCPC MEC1322_I2C1
 #define I2C_PORT_ALS MEC1322_I2C2
 #define I2C_PORT_ACCEL MEC1322_I2C2
 #define I2C_PORT_PMIC MEC1322_I2C3
@@ -72,8 +80,29 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* TODO: determine the following board specific type-C power constants */
+/*
+ * delay to turn on the power supply max is ~16ms.
+ * delay to turn off the power supply max is about ~180ms.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
+
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
+
+/* Reset PD MCU */
+void board_reset_pd_mcu(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

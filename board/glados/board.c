@@ -17,7 +17,13 @@
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
+#include "task.h"
+#include "timer.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
@@ -27,14 +33,18 @@
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
+	hook_call_deferred(tcpc_alert, 0);
 }
 
 void vbus0_evt(enum gpio_signal signal)
 {
+	CPRINTF("VBUS C0, %d\n", !gpio_get_level(signal));
+	task_wake(TASK_ID_PD);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
+	CPRINTF("VBUS C1, %d\n", !gpio_get_level(signal));
 }
 
 void usb0_evt(enum gpio_signal signal)
@@ -75,6 +85,23 @@ int board_discharge_on_ac(int enable)
 	return charger_discharge_on_ac(enable);
 }
 
+/**
+ * Reset PD MCU
+ */
+void board_reset_pd_mcu(void)
+{
+	gpio_set_level(GPIO_PD_RST_L, 0);
+	usleep(100);
+	gpio_set_level(GPIO_PD_RST_L, 1);
+}
+
+void __board_i2c_set_timeout(int port, uint32_t timeout)
+{
+}
+
+void i2c_set_timeout(int port, uint32_t timeout)
+		__attribute__((weak, alias("__board_i2c_set_timeout")));
+
 struct motion_sensor_t motion_sensors[] = {
 
 };
@@ -95,3 +122,14 @@ static void pmic_init(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmic_init, HOOK_PRIO_DEFAULT);
+
+/* Initialize board. */
+static void board_init(void)
+{
+	/* Enable PD MCU interrupt */
+	gpio_enable_interrupt(GPIO_PD_MCU_INT);
+	/* Enable VBUS interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
