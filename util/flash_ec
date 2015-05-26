@@ -64,6 +64,7 @@ BOARDS_STM32=(
 	discovery
 	firefly
 	fruitpie
+	glados_pd
 	honeybuns
 	jerry
 	kitty
@@ -101,6 +102,7 @@ BOARDS_NPCX=(
 
 BOARDS_MEC1322=(
 	cyan
+	glados
 	glower
 	strago
 )
@@ -275,7 +277,7 @@ function ec_uart() {
 # Servo variables management
 case "${BOARD}" in
 	ryu_sh ) MCU="sh" ;;
-	samus_pd|oak_pd ) MCU="usbpd" ;;
+	glados_pd|oak_pd|samus_pd ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
