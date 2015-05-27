@@ -726,6 +726,8 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 	} else {
 		CPRINTF("ERR:CMDT:%d\n", cmd);
+		/* do not answer */
+		rsize = 0;
 	}
 	return rsize;
 }
