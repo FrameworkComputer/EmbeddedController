@@ -149,6 +149,11 @@ void i2c_lock(int port, int lock);
 #define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
 
 /**
+ * Prepare I2C module for sysjump.
+ */
+void i2c_prepare_sysjump(void);
+
+/**
  * Set the timeout for an I2C transaction.
  *
  * @param port		Port to set timeout for

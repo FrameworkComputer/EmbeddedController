@@ -68,6 +68,15 @@ void i2c_lock(int port, int lock)
 	}
 }
 
+void i2c_prepare_sysjump(void)
+{
+	int i;
+
+	/* Lock all I2C port to prepare for sysjump */
+	for (i = 0; i < i2c_ports_used; i++)
+		i2c_lock(i2c_ports[i].port, 1);
+}
+
 int i2c_read16(int port, int slave_addr, int offset, int *data)
 {
 	int rv;

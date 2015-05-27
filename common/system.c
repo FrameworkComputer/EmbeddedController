@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "i2c.h"
 #include "lpc.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
@@ -419,6 +420,10 @@ static void jump_to_image(uintptr_t init_addr)
 	usleep(5*MSEC);
 #endif
 
+#ifdef CONFIG_I2C
+	/* Prepare I2C module for sysjump */
+	i2c_prepare_sysjump();
+#endif
 	/* Flush UART output unless the UART hasn't been initialized yet */
 	if (uart_init_done())
 		uart_flush_output();
