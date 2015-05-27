@@ -185,7 +185,7 @@ toad_ec_boot0() {
 }
 
 servo_ec_boot0() {
-	dut_control spi1_vref:pp3300
+	dut_control ec_boot_mode:on
 }
 
 servo_usbpd_boot0() {
@@ -283,7 +283,7 @@ case "${BOARD}" in
 esac
 
 servo_VARS="${MCU}_uart_en ${MCU}_uart_parity \
-${MCU}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en spi1_vref"
+${MCU}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en spi1_vref dev_mode"
 if [[ "${MCU}" == "usbpd" ]] ; then
 	servo_VARS+=" usbpd_boot_mode"
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
