@@ -47,6 +47,8 @@ static volatile int rx_buf_head;
 static volatile int rx_buf_tail;
 static int tx_snapshot_head;
 static int tx_snapshot_tail;
+static int tx_last_snapshot_head;
+static int tx_next_snapshot_head;
 static int uart_suspended;
 
 /**
@@ -60,7 +62,7 @@ static int uart_suspended;
  */
 static int __tx_char(void *context, int c)
 {
-	int tx_buf_next;
+	int tx_buf_next, tx_buf_new_tail;
 
 	/* Do newline to CRLF translation */
 	if (c == '\n' && __tx_char(NULL, '\r'))
@@ -69,6 +71,21 @@ static int __tx_char(void *context, int c)
 	tx_buf_next = TX_BUF_NEXT(tx_buf_head);
 	if (tx_buf_next == tx_buf_tail)
 		return 1;
+
+	/*
+	 * If we do a READ_RECENT, the buffer may have wrapped around, and
+	 * we'll drop most of the logs in this case. Make sure the place
+	 * we read from in that case is always ahead of the new tx_buf_head.
+	 *
+	 * We also want to make sure that the next time we snapshot and want
+	 * to READ_RECENT, we don't start reading from a stale tail.
+	 */
+	tx_buf_new_tail = TX_BUF_NEXT(tx_buf_next);
+	if (tx_buf_next == tx_last_snapshot_head &&
+	    tx_last_snapshot_head != tx_snapshot_head)
+		tx_last_snapshot_head = tx_buf_new_tail;
+	if (tx_buf_next == tx_next_snapshot_head)
+		tx_next_snapshot_head = tx_buf_new_tail;
 
 	tx_buf[tx_buf_head] = c;
 	tx_buf_head = tx_buf_next;
@@ -345,6 +362,9 @@ static int host_command_console_snapshot(struct host_cmd_handler_args *args)
 	/* Assume the whole circular buffer is full */
 	tx_snapshot_head = tx_buf_head;
 	tx_snapshot_tail = TX_BUF_NEXT(tx_snapshot_head);
+	/* Set up pointer for just the new part of the buffer */
+	tx_last_snapshot_head = tx_next_snapshot_head;
+	tx_next_snapshot_head = tx_buf_head;
 
 	/*
 	 * Immediately skip any unused bytes.  This doesn't always work,
@@ -368,28 +388,33 @@ DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_SNAPSHOT,
 		     host_command_console_snapshot,
 		     EC_VER_MASK(0));
 
-static int host_command_console_read(struct host_cmd_handler_args *args)
+/*
+ * Common code for host_command_console_read and
+ * host_command_console_read_recent.
+ */
+static int console_read_helper(struct host_cmd_handler_args *args,
+			       int *tail)
 {
 	char *dest = (char *)args->response;
 
 	/* If no snapshot data, return empty response */
-	if (tx_snapshot_head == tx_snapshot_tail)
+	if (tx_snapshot_head == *tail)
 		return EC_RES_SUCCESS;
 
 	/* Copy data to response */
-	while (tx_snapshot_tail != tx_snapshot_head &&
+	while (*tail != tx_snapshot_head &&
 	       args->response_size < args->response_max - 1) {
 
 		/*
 		 * Copy only non-zero bytes, so that we don't copy unused
 		 * bytes if the buffer hasn't completely rolled at boot.
 		 */
-		if (tx_buf[tx_snapshot_tail]) {
-			*(dest++) = tx_buf[tx_snapshot_tail];
+		if (tx_buf[*tail]) {
+			*(dest++) = tx_buf[*tail];
 			args->response_size++;
 		}
 
-		tx_snapshot_tail = TX_BUF_NEXT(tx_snapshot_tail);
+		*tail = TX_BUF_NEXT(*tail);
 	}
 
 	/* Null-terminate */
@@ -398,6 +423,29 @@ static int host_command_console_read(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
+
+static int host_command_console_read(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_console_read_v1 *p;
+
+	if (args->version == 0) {
+		/*
+		 * Prior versions of this command only support reading from
+		 * an entire snapshot, not just the output since the last
+		 * snapshot.
+		 */
+		return console_read_helper(args, &tx_snapshot_tail);
+	} else if (args->version == 1) {
+		/* Check the params to figure out where to start reading. */
+		p = args->params;
+		if (p->subcmd == CONSOLE_READ_NEXT)
+			return console_read_helper(args, &tx_snapshot_tail);
+		else if (p->subcmd == CONSOLE_READ_RECENT)
+			return console_read_helper(args,
+						   &tx_last_snapshot_head);
+	}
+	return EC_RES_INVALID_PARAM;
+}
 DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_READ,
 		     host_command_console_read,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
