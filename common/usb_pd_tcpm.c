@@ -28,7 +28,7 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 			TCPC_REG_CC1_STATUS, &status);
 
 	/* If i2c read fails, return error */
-	if (rv < 0)
+	if (rv)
 		return rv;
 
 	*cc1 = TCPC_REG_CC_STATUS_VOLT(status & 0xff);
@@ -93,7 +93,7 @@ int tcpm_get_message(int port, uint32_t *payload, int *head)
 			 TCPC_REG_RX_HDR, (int *)head);
 
 	/* If i2c read fails, return error */
-	if (rv < 0)
+	if (rv)
 		return rv;
 
 	if (cnt > 0) {
@@ -122,7 +122,7 @@ int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 			  TCPC_REG_TX_HDR, header);
 
 	/* If i2c read fails, return error */
-	if (rv < 0)
+	if (rv)
 		return rv;
 
 	if (cnt > 0) {
@@ -135,7 +135,7 @@ int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 	}
 
 	/* If i2c read fails, return error */
-	if (rv < 0)
+	if (rv)
 		return rv;
 
 	rv = i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
