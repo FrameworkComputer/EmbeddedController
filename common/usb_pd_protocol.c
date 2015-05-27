@@ -1855,8 +1855,13 @@ void pd_task(void)
 			typec_set_input_current_limit(
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
+			/*
+			 * fake set data role swapped flag so we send
+			 * discover identity when we enter SRC_READY
+			 */
 			pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
-					  PD_FLAGS_CHECK_DR_ROLE;
+					  PD_FLAGS_CHECK_DR_ROLE |
+					  PD_FLAGS_DATA_SWAPPED;
 			set_state(port, PD_STATE_SNK_DISCOVERY);
 			timeout = 10*MSEC;
 			hook_call_deferred(
@@ -1917,12 +1922,6 @@ void pd_task(void)
 			/* Wait for source cap expired only if we are enabled */
 			if ((pd[port].last_state != pd[port].task_state)
 			    && pd_comm_enabled) {
-				/*
-				 * fake set data role swapped flag so we send
-				 * discover identity when we enter SRC_READY
-				 */
-				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
-
 				/*
 				 * If we haven't passed hard reset counter,
 				 * start SinkWaitCapTimer, otherwise start
