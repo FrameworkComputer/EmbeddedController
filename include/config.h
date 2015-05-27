@@ -200,6 +200,12 @@
 /* Modify the default behavior to make system bringup easier. */
 #undef CONFIG_BRINGUP
 
+/*
+ * Enable debug prints / asserts that may helpful for debugging board bring-up,
+ * but probably shouldn't be enabled for production for performance reasons.
+ */
+#undef CONFIG_DEBUG_BRINGUP
+
 /*****************************************************************************/
 
 /*

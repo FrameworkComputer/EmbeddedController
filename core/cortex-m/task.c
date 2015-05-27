@@ -177,6 +177,10 @@ inline int get_interrupt_context(void)
 
 task_id_t task_get_current(void)
 {
+#ifdef CONFIG_DEBUG_BRINGUP
+	/* If we haven't done a context switch then our task ID isn't valid */
+	ASSERT(current_task != (task_ *)scratchpad);
+#endif
 	return current_task - tasks;
 }
 
