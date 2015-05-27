@@ -11,6 +11,7 @@
 #include <stddef.h> /* for wchar_t */
 
 #include "usb_api.h"
+#include "usb_hw.h"
 
 #define USB_MAX_PACKET_SIZE 64
 
@@ -226,60 +227,17 @@ struct usb_setup_packet {
 		WIDESTR(str) \
 	}
 
-
+/* Use these macros for declaring descriptors, to order them properly */
 #define USB_CONF_DESC(name) CONCAT2(usb_desc_, name) \
 	 __attribute__((section(".rodata.usb_desc_" STRINGIFY(name))))
-
-/* build descriptor names to order them properly */
 #define USB_IFACE_DESC(num) USB_CONF_DESC(CONCAT3(iface, num, _0iface))
 #define USB_EP_DESC(i, num) USB_CONF_DESC(CONCAT4(iface, i, _1ep, num))
 #define USB_CUSTOM_DESC(i, name) USB_CONF_DESC(CONCAT4(iface, i, _2, name))
 
-/* Helpers for managing the USB controller dedicated RAM */
-
-/* primitive to access the words in USB RAM */
-typedef CONFIG_USB_RAM_ACCESS_TYPE usb_uint;
-
 /* USB Linker data */
 extern const uint8_t __usb_desc[];
 extern const uint8_t __usb_desc_end[];
-extern usb_uint __usb_ram_start[];
-
 #define USB_DESC_SIZE (__usb_desc_end - __usb_desc)
-
-struct stm32_endpoint {
-	volatile usb_uint tx_addr;
-	volatile usb_uint tx_count;
-	volatile usb_uint rx_addr;
-	volatile usb_uint rx_count;
-};
-
-/* attribute to define a variable in USB RAM */
-#define __usb_ram __attribute__((section(".usb_ram.data")))
-
-extern struct stm32_endpoint btable_ep[];
-
-/* Read from USB RAM into a usb_setup_packet struct */
-void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet);
-
-/*
- * Copy data to and from the USB dedicated RAM and take care of the weird
- * addressing.  These functions correctly handle unaligned accesses to the USB
- * memory.  They have the same prototype as memcpy, allowing them to be used
- * in places that expect memcpy.  The void pointer used to represent a location
- * in the USB dedicated RAM should be the offset in that address space, not the
- * AHB address space.
- *
- * The USB packet RAM is attached to the processor via the AHB2APB bridge.  This
- * bridge performs manipulations of read and write accesses as per the note in
- * section 2.1 of RM0091.  The upshot is that custom memcpy like routines need
- * to be employed.
- */
-void *memcpy_to_usbram(void *dest, const void *src, size_t n);
-void *memcpy_from_usbram(void *dest, const void *src, size_t n);
-
-/* Compute the address inside dedicate SRAM for the USB controller */
-#define usb_sram_addr(x) ((x - __usb_ram_start) * sizeof(uint16_t))
 
 /* These descriptors defined in board code */
 extern const void * const usb_strings[];
@@ -287,33 +245,5 @@ extern const uint8_t usb_string_desc[];
 /* USB string descriptor with the firmware version */
 extern const void * const usb_fw_version;
 extern const struct bos_context bos_ctx;
-
-/* Helpers for endpoint declaration */
-
-#define EP_HANDLER2(num, suffix) CONCAT3(ep_, num, suffix)
-#define EP_TX_HANDLER(num) EP_HANDLER2(num, _tx)
-#define EP_RX_HANDLER(num) EP_HANDLER2(num, _rx)
-#define EP_RESET_HANDLER(num) EP_HANDLER2(num, _rst)
-
-#define USB_DECLARE_EP(num, tx_handler, rx_handler, rst_handler) \
-	void EP_TX_HANDLER(num)(void)                            \
-		__attribute__ ((alias(STRINGIFY(tx_handler))));  \
-	void EP_RX_HANDLER(num)(void)                            \
-		__attribute__ ((alias(STRINGIFY(rx_handler))));  \
-	void EP_RESET_HANDLER(num)(void)                         \
-		__attribute__ ((alias(STRINGIFY(rst_handler))));
-
-/* arrays with all endpoint callbacks */
-extern void (*usb_ep_tx[]) (void);
-extern void (*usb_ep_rx[]) (void);
-extern void (*usb_ep_reset[]) (void);
-/* array with interface-specific control request callbacks */
-extern int (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
-
-#define IFACE_HANDLER(num) CONCAT3(iface_, num, _request)
-#define USB_DECLARE_IFACE(num, handler)					\
-	int IFACE_HANDLER(num)(usb_uint *ep0_buf_rx,			\
-			       usb_uint *epo_buf_tx)			\
-	__attribute__ ((alias(STRINGIFY(handler))));
 
 #endif /* USB_H */
