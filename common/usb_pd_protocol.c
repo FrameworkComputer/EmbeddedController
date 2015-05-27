@@ -2355,7 +2355,16 @@ void tcpc_alert(void)
 			task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_CC, 0);
 		} else if (status & TCPC_REG_ALERT1_RX_STATUS) {
 			/* message received */
+			/*
+			 * If TCPC is compiled in, then we will have already
+			 * received PD_EVENT_RX from phy layer in
+			 * pd_rx_event(), so we don't need to set another
+			 * event. If TCPC is not running on this MCU, then
+			 * this needs to wake the PD task.
+			 */
+#ifndef CONFIG_USB_PD_TCPC
 			task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_RX, 0);
+#endif
 		} else if (status & TCPC_REG_ALERT1_RX_HARD_RST) {
 			/* hard reset received */
 			execute_hard_reset(i);
