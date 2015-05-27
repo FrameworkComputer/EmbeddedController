@@ -6,6 +6,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "atomic.h"
 #include "battery.h"
 #include "case_closed_debug.h"
 #include "charge_manager.h"
@@ -50,6 +51,13 @@
 #define IADP_ERROR_MARGIN_MA 100
 
 static int charge_current_limit;
+
+/*
+ * PD host event status for host command
+ * Note: this variable must be aligned on 4-byte boundary because we pass the
+ * address to atomic_ functions which use assembly to access them.
+ */
+static struct ec_response_host_event_status host_event_status __aligned(4);
 
 /*
  * Store the state of our USB data switches so that they can be restored
@@ -180,7 +188,7 @@ void usb_charger_task(void)
 		}
 
 		/* notify host of power info change */
-		/* pd_send_host_event(PD_EVENT_POWER_CHANGE); */
+		pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
 		/* Wait for interrupt */
 		task_wait_event(-1);
@@ -567,7 +575,13 @@ void board_set_charge_limit(int charge_ma)
 /* Send host event up to AP */
 void pd_send_host_event(int mask)
 {
-	/* TODO(crosbug.com/p/33194): implement host events */
+	/* mask must be set */
+	if (!mask)
+		return;
+
+	atomic_or(&(host_event_status.status), mask);
+	/* interrupt the AP */
+	host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }
 
 /**
@@ -645,3 +659,19 @@ int board_get_version(void)
 
 	return ver;
 }
+
+/****************************************************************************/
+/* Host commands */
+
+static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	struct ec_response_host_event_status *r = args->response;
+
+	/* Read and clear the host event status to return to AP */
+	r->status = atomic_read_clear(&(host_event_status.status));
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, host_event_status_host_cmd,
+			EC_VER_MASK(0));
