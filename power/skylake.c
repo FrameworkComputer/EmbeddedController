@@ -52,10 +52,6 @@ void chipset_force_shutdown(void)
 void chipset_force_g3(void)
 {
 	CPRINTS("Forcing G3");
-
-	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
-	gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 }
 
 void chipset_reset(int cold_reset)
@@ -177,10 +173,6 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S3S5;
 		}
 
-		gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
-		gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
-		gpio_set_level(GPIO_PP3300_WLAN_EN, 1);
-
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
 
@@ -213,10 +205,6 @@ enum power_state power_handle_state(enum power_state state)
 		 * to go into deep sleep in S3 or lower.
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
-
-		gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
-		gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
-		gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
 
 		return POWER_S3;
 
