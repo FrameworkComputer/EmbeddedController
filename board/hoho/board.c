@@ -36,16 +36,16 @@ void hpd_event(enum gpio_signal signal);
  *    3. irq  : downstream display sink signalling an interrupt.
  *
  * The debounce times for these various events are:
- *  100MSEC : min pulse width of level value.
- *    2MSEC : min pulse width of IRQ low pulse.  Max is level debounce min.
+ *   HPD_USTREAM_DEBOUNCE_LVL : min pulse width of level value.
+ *   HPD_USTREAM_DEBOUNCE_IRQ : min pulse width of IRQ low pulse.
  *
  * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
  * ----------------------------------------------------
- * 1        0         1     <2ms        n/a       low glitch (ignore)
- * 1        0         1     >2ms        <100ms    irq
- * x        0         1     n/a         >100ms    high
- * 0        1         0     <100ms      n/a       high glitch (ignore)
- * x        1         0     n/a         >100ms    low
+ * 1        0         1     <IRQ        n/a       low glitch (ignore)
+ * 1        0         1     >IRQ        <LVL      irq
+ * x        0         1     n/a         >LVL      high
+ * 0        1         0     <LVL        n/a       high glitch (ignore)
+ * x        1         0     n/a         >LVL      low
  */
 
 void hpd_irq_deferred(void)
@@ -79,14 +79,15 @@ void hpd_event(enum gpio_signal signal)
 	hook_call_deferred(hpd_lvl_deferred, -1);
 
 	/* It's a glitch.  Previous time moves but level is the same. */
-	if (cur_delta < HPD_DEBOUNCE_IRQ)
+	if (cur_delta < HPD_USTREAM_DEBOUNCE_IRQ)
 		return;
 
-	if ((!hpd_prev_level && level) && (cur_delta < HPD_DEBOUNCE_LVL))
+	if ((!hpd_prev_level && level) &&
+	    (cur_delta < HPD_USTREAM_DEBOUNCE_LVL))
 		/* It's an irq */
 		hook_call_deferred(hpd_irq_deferred, 0);
-	else if (cur_delta >= HPD_DEBOUNCE_LVL)
-		hook_call_deferred(hpd_lvl_deferred, HPD_DEBOUNCE_LVL);
+	else if (cur_delta >= HPD_USTREAM_DEBOUNCE_LVL)
+		hook_call_deferred(hpd_lvl_deferred, HPD_USTREAM_DEBOUNCE_LVL);
 
 	hpd_prev_level = level;
 }

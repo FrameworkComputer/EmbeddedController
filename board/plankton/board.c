@@ -41,16 +41,16 @@ static int sn75dp130_dpcd_init(void);
  *    3. irq  : downstream display sink signalling an interrupt.
  *
  * The debounce times for these various events are:
- *  100MSEC : min pulse width of level value.
- *    2MSEC : min pulse width of IRQ low pulse.  Max is level debounce min.
+ *   HPD_USTREAM_DEBOUNCE_LVL : min pulse width of level value.
+ *   HPD_USTREAM_DEBOUNCE_IRQ : min pulse width of IRQ low pulse.
  *
  * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
  * ----------------------------------------------------
- * 1        0         1     <2ms        n/a       low glitch (ignore)
- * 1        0         1     >2ms        <100ms    irq
- * x        0         1     n/a         >100ms    high
- * 0        1         0     <100ms      n/a       high glitch (ignore)
- * x        1         0     n/a         >100ms    low
+ * 1        0         1     <IRQ        n/a       low glitch (ignore)
+ * 1        0         1     >IRQ        <LVL      irq
+ * x        0         1     n/a         >LVL      high
+ * 0        1         0     <LVL        n/a       high glitch (ignore)
+ * x        1         0     n/a         >LVL      low
  */
 
 void hpd_lvl_deferred(void)
@@ -84,14 +84,14 @@ void hpd_event(enum gpio_signal signal)
 	uint64_t cur_delta = now.val - hpd_prev_ts;
 
 	/* Record low pulse */
-	if (cur_delta >= HPD_DEBOUNCE_IRQ && level)
+	if (cur_delta >= HPD_USTREAM_DEBOUNCE_IRQ && level)
 		hpd_possible_irq = 1;
 
 	/* store current time */
 	hpd_prev_ts = now.val;
 
 	/* All previous hpd level events need to be re-triggered */
-	hook_call_deferred(hpd_lvl_deferred, HPD_DEBOUNCE_LVL);
+	hook_call_deferred(hpd_lvl_deferred, HPD_USTREAM_DEBOUNCE_LVL);
 }
 
 /* Debounce time for voltage buttons */
