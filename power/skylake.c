@@ -47,14 +47,12 @@ void chipset_force_shutdown(void)
 	 * Force off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
-	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 }
 
 void chipset_force_g3(void)
 {
 	CPRINTS("Forcing G3");
 
-	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP3300_WLAN_EN, 0);
@@ -115,6 +113,8 @@ enum power_state power_chipset_init(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
+	gpio_set_level(GPIO_PCH_RSMRST_L, gpio_get_level(GPIO_RSMRST_L_PGOOD));
+
 	switch (state) {
 	case POWER_G3:
 		break;
@@ -153,9 +153,6 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
-
-		/* Deassert RSMRST# */
-		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 		return POWER_S5;
 
@@ -235,7 +232,6 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5G3;
 
 	case POWER_S5G3:
-		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 		return POWER_G3;
 
 	default:
