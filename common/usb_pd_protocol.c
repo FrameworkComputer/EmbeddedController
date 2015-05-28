@@ -1235,9 +1235,9 @@ static inline int get_typec_current_limit(int cc)
 	int charge;
 
 	/* Detect type C charger current limit based upon vbus voltage. */
-	if (cc == TYPEC_CC_VOLT_SRC_3_0)
+	if (cc == TYPEC_CC_VOLT_SNK_3_0)
 		charge = 3000;
-	else if (cc == TYPEC_CC_VOLT_SRC_1_5)
+	else if (cc == TYPEC_CC_VOLT_SNK_1_5)
 		charge = 1500;
 	else
 		charge = 0;
