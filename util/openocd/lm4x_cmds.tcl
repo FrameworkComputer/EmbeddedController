@@ -7,47 +7,25 @@
 # Program internal flash
 
 proc flash_lm4 {path offset} {
-	#set firstsect [expr {$offset / 1024}];
-	#set lastsect [expr {($offset + $size) / 1024 - 1}];
 	reset halt;
 	flash write_image erase $path $offset;
 	reset
 }
 
-proc flash_auron { } {
-	flash_lm4 ../../../build/auron/ec.bin 0
+proc flash_lm4_board {board} {
+	flash_lm4 ../../../build/$board/ec.bin 0
 }
 
-proc flash_bds { } {
-	flash_lm4 ../../../build/bds/ec.bin 0
+proc flash_lm4_ro {board} {
+	flash_lm4 ../../../build/$board/ec.RO.flat 0
 }
 
-proc flash_rambi { } {
-	flash_lm4 ../../../build/rambi/ec.bin 0
+proc flash_lm4_rw {board} {
+	flash_lm4 ../../../build/$board/ec.RW.bin 131072
 }
 
-proc flash_samus { } {
-	flash_lm4 ../../../build/samus/ec.bin 0
-}
-
-proc flash_samus_ro { } {
-	flash_lm4 ../../../build/samus/ec.RO.flat 0
-}
-
-proc flash_samus_rw { } {
-	flash_lm4 ../../../build/samus/ec.RW.bin 131072
-}
-
-proc flash_rambi_ro { } {
-	flash_lm4 ../../../build/rambi/ec.RO.flat 0
-}
-
-proc flash_rambi_rw { } {
-	flash_lm4 ../../../build/rambi/ec.RW.bin 131072
-}
-
-# Auron have pstate following RO
-proc unprotect_auron { } {
+# Boards with CONFIG_FLASH_PSTATE_BANK have pstate following RO
+proc unprotect_pstate { } {
 	reset halt
 	flash erase_sector 0 126 127
 	reset
@@ -62,6 +40,12 @@ proc ramboot_lm4 {path} {
 	resume
 }
 
-proc ramboot_bds { } {
-	ramboot_lm4 ../../../build/bds/ec.RO.flat
+proc ramboot_lm4_board {board} {
+	ramboot_lm4 ../../../build/$board/ec.RO.flat
+}
+
+proc flash_emerged_board {board} {
+	set firmware_image ../../../../../../chroot/build/$board/firmware/ec.bin
+
+	flash_lm4 $firmware_image 0
 }
