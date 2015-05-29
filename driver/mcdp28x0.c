@@ -139,6 +139,17 @@ static int rx_serial(uint8_t *msg, int cnt)
 	return !(read == cnt);
 }
 
+static int rx_serial_ack(void)
+{
+	if (rx_serial(mcdp_inbuf, 3))
+		return EC_ERROR_UNKNOWN;
+
+	if (mcdp_inbuf[1] != MCDP_CMD_ACK)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
 void mcdp_enable(void)
 {
 	usart_init(&usart_mcdp);
@@ -151,13 +162,16 @@ void mcdp_disable(void)
 
 int mcdp_get_info(struct mcdp_info  *info)
 {
-	const uint8_t msg[2] = {MCDP_CMD_GETINFO, 0x00}; /* cmd + msg type */
+	const uint8_t msg[2] = {MCDP_CMD_APPSTEST, 0x28};
 
 	if (tx_serial(msg, sizeof(msg)))
 		return EC_ERROR_UNKNOWN;
 
-	if (rx_serial(mcdp_inbuf, MCDP_RSP_LEN(MCDP_LEN_GETINFO)))
+	if (rx_serial_ack())
 		return EC_ERROR_UNKNOWN;
+
+	/* chksum is unreliable ... don't check */
+	rx_serial(mcdp_inbuf, MCDP_RSP_LEN(MCDP_LEN_GETINFO));
 
 	memcpy(info, &mcdp_inbuf[2], MCDP_LEN_GETINFO);
 
@@ -165,17 +179,6 @@ int mcdp_get_info(struct mcdp_info  *info)
 }
 
 #ifdef CONFIG_CMD_MCDP
-static int rx_serial_ack(void)
-{
-	if (rx_serial(mcdp_inbuf, 3))
-		return EC_ERROR_UNKNOWN;
-
-	if (mcdp_inbuf[1] != MCDP_CMD_ACK)
-		return EC_ERROR_UNKNOWN;
-
-	return EC_SUCCESS;
-}
-
 static int mcdp_get_dev_id(char *dev, uint8_t dev_id, int dev_cnt)
 {
 	uint8_t msg[2];

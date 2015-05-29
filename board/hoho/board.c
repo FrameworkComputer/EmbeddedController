@@ -141,8 +141,8 @@ static void factory_validation_deferred(void)
 	mcdp_enable();
 
 	/* test mcdp via serial to validate function */
-	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0xe) &&
-	    (MCDP_CHIPID(info.chipid) == 0x1)) {
+	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0x0010) &&
+	(MCDP_CHIPID(info.chipid) == 0x2850)) {
 		gpio_set_level(GPIO_MCDP_READY, 1);
 		pd_log_event(PD_EVENT_VIDEO_CODEC,
 			     PD_LOG_PORT_SIZE(0, sizeof(info)),
