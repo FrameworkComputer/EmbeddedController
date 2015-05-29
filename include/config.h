@@ -1381,7 +1381,7 @@
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
 
-/* USB device buffers and descriptors */
+/* USB device buffers and descriptors in dedicated RAM */
 #undef CONFIG_USB_RAM_ACCESS_SIZE
 #undef CONFIG_USB_RAM_ACCESS_TYPE
 #undef CONFIG_USB_RAM_BASE

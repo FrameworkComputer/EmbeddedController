@@ -23,7 +23,7 @@ MEMORY
     PSTATE(r)  : ORIGIN = FW_OFF(SECTION) + FW_SIZE(SECTION), \
                  LENGTH = CONFIG_FW_PSTATE_SIZE
 #endif
-#ifdef CONFIG_USB
+#ifdef CONFIG_USB_RAM_SIZE
     USB_RAM (rw) : \
         ORIGIN = CONFIG_USB_RAM_BASE, \
         LENGTH = CONFIG_USB_RAM_SIZE * CONFIG_USB_RAM_ACCESS_SIZE / 2
@@ -246,7 +246,7 @@ SECTIONS
                  (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
 
-#ifdef CONFIG_USB
+#ifdef CONFIG_USB_RAM_SIZE
     .usb_ram (NOLOAD) : {
         __usb_ram_start = .;
         . = ALIGN(8);

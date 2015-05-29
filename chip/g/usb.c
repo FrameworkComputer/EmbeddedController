@@ -95,9 +95,8 @@ struct g_usb_desc ep0_out_desc;
 struct g_usb_desc ep0_in_desc;
 
 /* Control endpoint (EP0) buffers */
-static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] /*__usb_ram*/;
-static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] /*__usb_ram*/;
-
+static uint8_t ep0_buf_tx[USB_MAX_PACKET_SIZE];
+static uint8_t ep0_buf_rx[USB_MAX_PACKET_SIZE];
 
 static int set_addr;
 /* remaining size of descriptor data to transfer */
@@ -109,7 +108,6 @@ static const uint8_t *desc_ptr;
 static void ep0_rx(void)
 {
 	uint32_t epint = GR_USB_DOEPINT(0);
-	uint16_t req = ep0_buf_rx[0]; /* bRequestType | bRequest */
 
 	GR_USB_DOEPINT(0) = epint; /* clear IT */
 
@@ -117,19 +115,20 @@ static void ep0_rx(void)
 	desc_ptr = NULL;
 
 	/* interface specific requests */
-	if ((req & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
-		uint8_t iface = ep0_buf_rx[2] & 0xff;
+	if ((ep0_buf_rx[0] & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
+		uint8_t iface = ep0_buf_rx[4];
 		if (iface < USB_IFACE_COUNT &&
 		    usb_iface_request[iface](ep0_buf_rx, ep0_buf_tx))
 			goto unknown_req;
 		return;
 	}
 
-	if (req == (USB_DIR_IN | (USB_REQ_GET_DESCRIPTOR << 8))) {
-		uint8_t type = ep0_buf_rx[1] >> 8;
-		uint8_t idx = ep0_buf_rx[1] & 0xff;
+	if (ep0_buf_rx[0] == USB_DIR_IN &&
+	    ep0_buf_rx[1] == USB_REQ_GET_DESCRIPTOR) {
+		uint8_t type = ep0_buf_rx[3];
+		uint8_t idx = ep0_buf_rx[2];
 		const uint8_t *desc;
-		int len;
+		int len, req_len;
 
 		switch (type) {
 		case USB_DT_DEVICE: /* Setup : Get device descriptor */
@@ -160,7 +159,8 @@ static void ep0_rx(void)
 			goto unknown_req;
 		}
 		/* do not send more than what the host asked for */
-		len = MIN(ep0_buf_rx[3], len);
+		req_len = (((unsigned int)ep0_buf_rx[7]) << 8) + ep0_buf_rx[6];
+		len = MIN(req_len, len);
 		/*
 		 * if we cannot transmit everything at once,
 		 * keep the remainder for the next IN packet
@@ -170,10 +170,12 @@ static void ep0_rx(void)
 			desc_ptr = desc + USB_MAX_PACKET_SIZE;
 			len = USB_MAX_PACKET_SIZE;
 		}
-		memcpy_to_usbram(ep0_buf_tx, desc, len);
-		if (type == USB_DT_CONFIGURATION)
+		memcpy(ep0_buf_tx, desc, len);
+		if (type == USB_DT_CONFIGURATION) {
 			/* set the real descriptor size */
-			ep0_buf_tx[1] = USB_DESC_SIZE;
+			ep0_buf_tx[2] = USB_DESC_SIZE & 0xff;
+			ep0_buf_tx[3] = (USB_DESC_SIZE & 0xff00) >> 8;
+		}
 		ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY |
 				    DIEPDMA_IOC | DIEPDMA_TXBYTES(len);
 		GR_USB_DIEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
@@ -181,21 +183,22 @@ static void ep0_rx(void)
 				   | DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
 		GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 		/* send the null OUT transaction if the transfer is complete */
-	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
+	} else if (ep0_buf_rx[0] == USB_DIR_IN &&
+		   ep0_buf_rx[1] == USB_REQ_GET_STATUS) {
 		uint16_t zero = 0;
 		/* Get status */
-		memcpy_to_usbram(ep0_buf_tx, (void *)&zero, 2);
+		memcpy(ep0_buf_tx, &zero, 2);
 		ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC |
 				    DIEPDMA_TXBYTES(2);
 		GR_USB_DIEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 		ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST
 				   | DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
 		GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
-	} else if ((req & 0xff) == USB_DIR_OUT) {
-		switch (req >> 8) {
+	} else if (ep0_buf_rx[0] == USB_DIR_OUT) {
+		switch (ep0_buf_rx[1]) {
 		case USB_REQ_SET_ADDRESS:
 			/* set the address after we got IN packet handshake */
-			set_addr = ep0_buf_rx[1] & 0xff;
+			set_addr = ep0_buf_rx[2];
 			/* need null IN transaction -> TX Valid */
 			ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC |
 					    DIEPDMA_TXBYTES(0) | DIEPDMA_SP;
@@ -205,7 +208,7 @@ static void ep0_rx(void)
 			GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 			break;
 		case USB_REQ_SET_CONFIGURATION:
-			/* uint8_t cfg = ep0_buf_rx[1] & 0xff; */
+			/* uint8_t cfg = ep0_buf_rx[2]; */
 			/* null IN for handshake */
 			ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC |
 					    DIEPDMA_TXBYTES(0) | DIEPDMA_SP;
@@ -246,7 +249,7 @@ static void ep0_tx(void)
 	if (desc_ptr) {
 		/* we have an on-going descriptor transfer */
 		int len = MIN(desc_left, USB_MAX_PACKET_SIZE);
-		memcpy_to_usbram(ep0_buf_tx, desc_ptr, len);
+		memcpy(ep0_buf_tx, desc_ptr, len);
 		ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY |
 				    DIEPDMA_IOC | DIEPDMA_TXBYTES(len);
 		desc_left -= len;
@@ -453,9 +456,4 @@ void usb_release(void)
 	/* disable clocks */
 	clock_enable_module(MODULE_USB, 0);
 	/* TODO: pin-mux */
-}
-
-void *memcpy_to_usbram(void *dest, const void *src, size_t n)
-{
-	return memcpy(dest, src, n);
 }

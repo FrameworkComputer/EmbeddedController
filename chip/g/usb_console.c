@@ -62,8 +62,8 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) =
 	.bInterval          = 0
 };
 
-static usb_uint ep_buf_tx[USB_MAX_PACKET_SIZE / 2] /*__usb_ram*/;
-static usb_uint ep_buf_rx[USB_MAX_PACKET_SIZE / 2] /*__usb_ram*/;
+static uint8_t ep_buf_tx[USB_MAX_PACKET_SIZE];
+static uint8_t ep_buf_rx[USB_MAX_PACKET_SIZE];
 static struct g_usb_desc ep_out_desc;
 static struct g_usb_desc ep_in_desc;
 
@@ -82,9 +82,7 @@ static void con_ep_rx(void)
 	for (i = 0; i < rx_size; i++) {
 		int rx_buf_next = RX_BUF_NEXT(rx_buf_head);
 		if (rx_buf_next != rx_buf_tail) {
-			rx_buf[rx_buf_head] = ((i & 1) ?
-					       (ep_buf_rx[i >> 1] >> 8) :
-					       (ep_buf_rx[i >> 1] & 0xff));
+			rx_buf[rx_buf_head] = ep_buf_rx[i];
 			rx_buf_head = rx_buf_next;
 		}
 	}
@@ -123,7 +121,6 @@ USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_reset);
 
 static int __tx_char(void *context, int c)
 {
-	usb_uint *buf = (usb_uint *)ep_buf_tx;
 	int *tx_idx = context;
 
 	/* Do newline to CRLF translation */
@@ -132,10 +129,8 @@ static int __tx_char(void *context, int c)
 
 	if (*tx_idx > 63)
 		return 1;
-	if (!(*tx_idx & 1))
-		buf[*tx_idx/2] = c;
-	else
-		buf[*tx_idx/2] |= c << 8;
+
+	ep_buf_tx[*tx_idx] = c;
 	(*tx_idx)++;
 
 	return 0;

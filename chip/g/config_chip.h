@@ -50,13 +50,6 @@
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
 
-/* USB : TODO FIXME */
-#define CONFIG_USB_RAM_ACCESS_TYPE uint16_t
-/* No dedicated USB RAM */
-#define CONFIG_USB_RAM_BASE 0xdead0000
-#define CONFIG_USB_RAM_ACCESS_SIZE 0
-#define CONFIG_USB_RAM_SIZE 0
-
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
 
