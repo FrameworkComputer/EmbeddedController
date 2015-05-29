@@ -255,15 +255,14 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 
 	if (out_size) {
-		MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr;
+		if (send_start) {
+			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr;
 
-		/*
-		 * Clock out the slave address. Send START bit if start flag is
-		 * set.
-		 */
-		MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
-					       CTRL_ACK |
-					       (send_start ? CTRL_STA : 0);
+			/* Clock out the slave address, sending START bit */
+			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
+						       CTRL_ENI | CTRL_ACK |
+						       CTRL_STA;
+		}
 
 		for (i = 0; i < out_size; ++i) {
 			if (wait_byte_done(controller))
@@ -286,12 +285,25 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (in_size) {
 		/* Resend start bit when changing direction */
 		if (out_size || send_start) {
-			MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_STA |
-						       CTRL_ACK | CTRL_ENI |
-						       CTRL_PIN;
+			/* Repeated start case */
+			if (out_size)
+				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
+							       CTRL_STA |
+							       CTRL_ACK |
+							       CTRL_ENI |
+							       CTRL_PIN;
 
 			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr
 						     | 0x01;
+
+			/* New transaction case, clock out slave address. */
+			if (!out_size)
+				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
+							       CTRL_STA |
+							       CTRL_ACK |
+							       CTRL_ENI |
+							       CTRL_PIN;
+
 			/* Skip over the dummy byte */
 			skip = 1;
 			in_size++;
