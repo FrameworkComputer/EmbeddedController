@@ -2352,7 +2352,8 @@ void tcpc_alert(void)
 		if (status & TCPC_REG_ALERT1_CC_STATUS) {
 			/* CC status changed, wake task */
 			task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_CC, 0);
-		} else if (status & TCPC_REG_ALERT1_RX_STATUS) {
+		}
+		if (status & TCPC_REG_ALERT1_RX_STATUS) {
 			/* message received */
 			/*
 			 * If TCPC is compiled in, then we will have already
@@ -2364,11 +2365,13 @@ void tcpc_alert(void)
 #ifndef CONFIG_USB_PD_TCPC
 			task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_RX, 0);
 #endif
-		} else if (status & TCPC_REG_ALERT1_RX_HARD_RST) {
+		}
+		if (status & TCPC_REG_ALERT1_RX_HARD_RST) {
 			/* hard reset received */
 			execute_hard_reset(i);
 			task_wake(PD_PORT_TO_TASK_ID(i));
-		} else if (status & TCPC_REG_ALERT1_TX_COMPLETE) {
+		}
+		if (status & TCPC_REG_ALERT1_TX_COMPLETE) {
 			/* transmit complete */
 			pd_transmit_complete(i, status);
 		}
