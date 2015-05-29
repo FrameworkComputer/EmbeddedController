@@ -145,6 +145,9 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+		/* Call hooks to initialize PMIC */
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
+
 		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
 			chipset_force_shutdown();
 			return POWER_G3;

@@ -7,8 +7,10 @@
 
 #include "button.h"
 #include "charger.h"
+#include "console.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
@@ -19,6 +21,8 @@
 
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
+
+#define I2C_ADDR_BD99992 0x60
 
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
@@ -80,3 +84,14 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{ 0 },
 	{ 0 },
 };
+
+static void pmic_init(void)
+{
+	/*
+	 * Set V085ACNT / V0.85A Control Register:
+	 * Lower power mode = 0.7V.
+	 * Nominal output = 1.0V.
+	 */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmic_init, HOOK_PRIO_DEFAULT);
