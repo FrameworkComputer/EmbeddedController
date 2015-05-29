@@ -14,6 +14,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lpc.h"
+#include "spi_flash.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
@@ -338,16 +339,13 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 
 int system_get_image_used(enum system_image_copy_t copy)
 {
+#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
+	int image_offset;
+	uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
+#endif
 	const uint8_t *image;
-	int size = 0;
-
-	/*
-	 * TODO(crosbug.com/p/41063): Make this work on platforms with
-	 * external, non-memmapped SPI flash.
-	 */
-	image = (const uint8_t *)get_program_memory_addr(copy);
+	int size;
 	size = get_size(copy);
-
 	if (size <= 0)
 		return 0;
 
@@ -356,8 +354,28 @@ int system_get_image_used(enum system_image_copy_t copy)
 	 * last byte of the image.  See ec.lds.S for how this is inserted at
 	 * the end of the image.
 	 */
+#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
+	image_offset = (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
+			CONFIG_RO_STORAGE_OFF;
+	image = buf;
+
+	do {
+		if (image == buf) {
+			flash_read(image_offset + size -
+				SPI_FLASH_MAX_WRITE_SIZE,
+				SPI_FLASH_MAX_WRITE_SIZE, buf);
+			image = buf + SPI_FLASH_MAX_WRITE_SIZE;
+		}
+
+		image--, size--;
+
+	} while (*image != 0xea);
+#else
+	image = (const uint8_t *)get_program_memory_addr(copy);
 	for (size--; size > 0 && image[size] != 0xea; size--)
 		;
+#endif
+
 	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
 }
 
