@@ -312,19 +312,26 @@ function claim_pty() {
 
 # Board specific flashing scripts
 
-# helper function for setting up servo v2/3 with openocd paths
-function setup_openocd() {
+# helper function for using servo v2/3 with openocd
+function flash_openocd() {
+	OCD_CFG="servo.cfg"
 	if [[ -z "${EC_DIR}" ]]; then
 		# check if we're on beaglebone
 		if [[ -e "/usr/bin/lib" ]]; then
-			OCD_CFG="servo_v3.cfg"
 			OCD_PATH="/usr/bin/lib"
 		else
 			die "Cannot locate openocd configs"
 		fi
 	else
-		OCD_CFG="servo_v2.cfg"
+		OCD_PATH="${EC_DIR}/util/openocd"
 	fi
+
+	dut_control jtag_buf_on_flex_en:on
+	dut_control jtag_buf_en:on
+
+	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -f "${OCD_CHIP_CFG}" \
+		-c "${OCD_CMDS}" || \
+	die "Failed to program ${IMG}"
 }
 
 function flash_stm32() {
@@ -384,37 +391,25 @@ function flash_stm32_dfu() {
 }
 
 function flash_lm4() {
-	OCD_PATH="${EC_DIR}/chip/lm4/openocd"
-	setup_openocd
-
+	OCD_CHIP_CFG="lm4_chip.cfg"
 	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset}; shutdown;"
 
-	dut_control jtag_buf_on_flex_en:on
-	dut_control jtag_buf_en:on
+	flash_openocd
 
-	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
-	die "Failed to program ${IMG}"
 }
 
 function flash_npcx() {
-	OCD_PATH="${EC_DIR}/chip/npcx/openocd"
 	IMG_PATH="${EC_DIR}/build/${BOARD}"
-	setup_openocd
-
-	dut_control jtag_buf_on_flex_en:on
-	dut_control jtag_buf_en:on
-
+	OCD_CHIP_CFG="npcx_chip.cfg"
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 		# Program RO region only
 		OCD_CMDS="init; flash_npcx_ro ${IMG_PATH} ${FLAGS_offset}; shutdown;"
-		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
-		die "Failed to program ${IMG}"
 	else
 		# Program all EC regions
 		OCD_CMDS="init; flash_npcx_all ${IMG_PATH} ${FLAGS_offset}; shutdown;"
-		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
-		die "Failed to program ${IMG}"
 	fi
+
+	flash_openocd
 }
 
 function flash_mec1322() {
