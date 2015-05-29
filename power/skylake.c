@@ -145,7 +145,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-		if (gpio_get_level(GPIO_PCH_SLP_SUS_L) == 0) {
+		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
