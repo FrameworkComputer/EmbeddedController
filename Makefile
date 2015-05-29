@@ -124,27 +124,62 @@ include util/lock/build.mk
 
 includes+=$(includes-y)
 
-objs_from_dir=$(sort $(foreach obj, $($(2)-y), \
-	        $(out)/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj))))
+ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), \
+	        $(out)/RO/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj))))
 
 # Get all sources to build
-all-y=$(call objs_from_dir,core/$(CORE),core)
-all-y+=$(call objs_from_dir,chip/$(CHIP),chip)
-all-y+=$(call objs_from_dir,board/$(BOARD),board)
-all-y+=$(call objs_from_dir,private,private)
-all-y+=$(call objs_from_dir,private-cr51,private-cr51)
-all-y+=$(call objs_from_dir,common,common)
-all-y+=$(call objs_from_dir,driver,driver)
-all-y+=$(call objs_from_dir,power,power)
-all-y+=$(call objs_from_dir,test,$(PROJECT))
-dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common power test util
-dirs+=private private-cr51
+all-ro-y=$(call ro-objs_from_dir,core/$(CORE),core)
+all-ro-y+=$(call ro-objs_from_dir,chip/$(CHIP),chip)
+all-ro-y+=$(call ro-objs_from_dir,board/$(BOARD),board)
+all-ro-y+=$(call ro-objs_from_dir,private,private)
+all-ro-y+=$(call ro-objs_from_dir,private-cr51,private-cr51)
+all-ro-y+=$(call ro-objs_from_dir,common,common)
+all-ro-y+=$(call ro-objs_from_dir,driver,driver)
+all-ro-y+=$(call ro-objs_from_dir,power,power)
+all-ro-y+=$(call ro-objs_from_dir,test,$(PROJECT))
+dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common power test
+dirs+= private private-cr51
 dirs+=$(shell find driver -type d)
+common_dirs=util
 
+ro-objs := $(all-ro-y)
+# Don't include the shared objects in the RO/RW image if we're enabling
+# the shared objects library.
+ifeq ($(CONFIG_SHAREDLIB),y)
+ro-objs := $(filter-out %_sharedlib.o, $(ro-objs))
+endif
+rw-objs := $(ro-objs:$(out)/RO/%=$(out)/RW/%)
+ro-deps := $(ro-objs:%.o=%.o.d)
+rw-deps := $(rw-objs:%.o=%.o.d)
+deps := $(ro-deps) $(rw-deps)
+
+.PHONY: ro rw
 $(config): $(out)/$(PROJECT).bin
 	@printf '%s=y\n' $(_tsk_cfg) $(_flag_cfg) > $@
 
-all: $(config) utils ${PROJECT_EXTRA}
+def_all_deps:=utils ro rw $(config) $(PROJECT_EXTRA)
+all_deps?=$(def_all_deps)
+all: $(all_deps)
+
+ro: override BLD:=RO
+ro: $(libsharedobjs_elf-y) $(out)/RO/$(PROJECT).RO.flat
+
+rw: override BLD:=RW
+rw: $(libsharedobjs_elf-y) $(out)/RW/$(PROJECT).RW.flat
+
+# Shared objects library
+SHOBJLIB := libsharedobjs
+sharedlib-objs := $(filter %_sharedlib.o, $(all-ro-y))
+sharedlib-objs := $(sharedlib-objs:$(out)/RO/%=$(out)/$(SHOBJLIB)/%)
+sharedlib-deps := $(sharedlib-objs:%.o=%.o.d)
+deps += $(sharedlib-deps)
+def_libsharedobjs_deps := $(sharedlib-objs)
+libsharedobjs_deps ?= $(def_libsharedobjs_deps)
+
+libsharedobjs-$(CONFIG_SHAREDLIB) := $(out)/$(SHOBJLIB)/$(SHOBJLIB).flat
+libsharedobjs_elf-$(CONFIG_SHAREDLIB) := \
+	$(libsharedobjs-$(CONFIG_SHAREDLIB):%.flat=%.elf)
+libsharedobjs: $(libsharedobjs-y)
 
 include Makefile.rules
 

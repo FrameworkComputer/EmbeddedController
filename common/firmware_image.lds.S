@@ -24,6 +24,12 @@ SECTIONS
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+#ifdef CONFIG_SHAREDLIB
+    .image.libsharedobjs : AT(CONFIG_FLASH_BASE + CONFIG_SHAREDLIB_MEM_OFF) {
+        *(.image.libsharedobjs)
+    } > FLASH =0xff
+    . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+#endif
 #if (CONFIG_RO_MEM_OFF == CONFIG_RW_MEM_OFF)
 /* This is applicable to ECs in which RO and RW execution is
 mapped to the same location but we still have to generate an ec.bin with RO

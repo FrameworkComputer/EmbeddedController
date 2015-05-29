@@ -17,6 +17,9 @@ OUTPUT_ARCH(BFD_ARCH)
 ENTRY(reset)
 MEMORY
 {
+#ifdef CONFIG_SHAREDLIB
+    SHARED_LIB (rx) : ORIGIN = FW_OFF(SHAREDLIB), LENGTH = FW_SIZE_(SHAREDLIB)
+#endif
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 #ifdef RSA_PUBLIC_KEY_SIZE
@@ -31,6 +34,11 @@ MEMORY
 }
 SECTIONS
 {
+#ifdef CONFIG_SHAREDLIB
+    .roshared : {
+        KEEP(*(.roshared*))
+    } > SHARED_LIB
+#endif
     .text : {
         OUTDIR/core/CORE/init.o (.text.vecttable)
         . = ALIGN(4);

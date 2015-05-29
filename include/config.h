@@ -1280,6 +1280,21 @@
  */
 #undef CONFIG_RWSIG
 
+/****************************************************************************/
+/* Shared objects library. */
+
+/* Support shared objects library between RO and RW. */
+#undef CONFIG_SHAREDLIB
+
+/* Size of shared objects library. */
+#undef CONFIG_SHAREDLIB_SIZE
+
+/* Program memory offset of shared objects library. */
+#undef CONFIG_SHAREDLIB_MEM_OFF
+
+/* Storage  offset of sharedobjects library. */
+#undef CONFIG_SHAREDLIB_STORAGE_OFF
+
 /*
  * If defined, the hash module will save its last computed hash when jumping
  * between EC images.

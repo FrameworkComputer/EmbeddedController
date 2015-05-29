@@ -27,6 +27,9 @@ MEMORY
      */
     FLASH_HDR (rx) : ORIGIN = FW_OFF(RO_HDR), LENGTH = FW_SIZE(RO_HDR)
 #endif
+#ifdef CONFIG_SHAREDLIB
+    SHARED_LIB (rx) : ORIGIN = FW_OFF(SHAREDLIB), LENGTH = FW_SIZE_(SHAREDLIB)
+#endif
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 #ifdef CONFIG_CODERAM_ARCH
@@ -59,6 +62,11 @@ SECTIONS
         KEEP(*(.header))
     } > FLASH_HDR
 #endif
+#ifdef CONFIG_SHAREDLIB
+    .roshared : {
+        KEEP(*(.roshared*))
+    } > SHARED_LIB
+#endif
     .text : {
         OUTDIR/core/CORE/init.o (.text.vecttable)
         . = ALIGN(4);
@@ -89,7 +97,6 @@ SECTIONS
 #endif
 #endif
     . = ALIGN(4);
-
     .rodata : {
 	/* Symbols defined here are declared in link_defs.h */
         __irqprio = .;

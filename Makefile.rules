@@ -7,8 +7,6 @@
 # Embedded Controller firmware build system - common targets
 #
 
-objs := $(all-y)
-deps := $(objs:%.o=%.o.d)
 build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
@@ -19,10 +17,14 @@ skip_boards = OWNERS host it8380dev
 boards := $(filter-out $(skip_boards),$(subst board/,,$(wildcard board/*)))
 
 # Create output directories if necessary
-_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(d) ] || \
+_common_dir_create := $(foreach d,$(common_dirs),$(shell [ -d $(out)/$(d) ] || \
 	    mkdir -p $(out)/$(d)))
-_dir_y_create := $(foreach d,$(dirs-y),$(shell [ -d $(out)/$(d) ] || \
-	    mkdir -p $(out)/$(d)))
+_sharedlib_dir_create := $(foreach d,$(dirs),$(shell \
+	[ -d $(out)/$(SHOBJLIB)/$(d) ] || mkdir -p $(out)/$(SHOBJLIB)/$(d)))
+_dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
+	    mkdir -p $(out)/RO/$(d); mkdir -p $(out)/RW/$(d)))
+_dir_y_create := $(foreach d,$(dirs-y),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
+	    mkdir -p $(out)/RO/$(d); mkdir -p $(out)/RW/$(d)))
 
 section = $(subst .,,$(suffix $(1)))
 section_is = $(subst .,,SECTION_IS_$(suffix $(1)))
@@ -40,15 +42,19 @@ cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
 cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
-cmd_elf_to_flat = $(OBJCOPY) -O binary $< $@
+cmd_elf_to_flat = $(OBJCOPY) -O binary $(patsubst %.flat,%.elf,$@) $@
+# Allow the .roshared section to overlap other sections (itself)
+cmd_ec_elf_to_flat = $(OBJCOPY) --set-section-flags .roshared=share \
+			-O binary $(patsubst %.flat,%.elf,$@) $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
 	--change-addresses $(_flash_base) $^ $@
-cmd_elf = $(CC) $(objs) $(LDFLAGS) -o $@ -Wl,-T,$< -Wl,-Map,$(out)/$*.map
 cmd_smap = $(NM) $< | sort > $@
-cmd_exe = $(CC) $(objs) $(HOST_TEST_LDFLAGS) -o $@
-cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $@
+cmd_elf = $(CC) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
+	-o $@ -Wl,-T,$< -Wl,-Map,$(patsubst %.elf,%.map,$@)
+cmd_exe = $(CC) $(ro-objs) $(HOST_TEST_LDFLAGS) -o $@
+cmd_c_to_o = $(CC) $(CFLAGS) -MMD -MF $@.d -c $< -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c) \
 	         $(BUILD_LDFLAGS) \
@@ -61,7 +67,11 @@ cmd_version = ./util/getversion.sh > $@
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
 	       bs=1 count=$(_rw_size) skip=$(_rw_off) $(silent_err)
-cmd_copyrw-y = cd $(out) && cp $(PROJECT).RW.flat $(PROJECT).RW.bin
+cmd_copyrw-y = cd $(out) && cp RW/$(PROJECT).RW.flat RW/$(PROJECT).RW.bin
+cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
+	-Wl,-T,common/ec.$(SHOBJLIB).ld $(LDFLAGS) \
+	-o $(out)/$(SHOBJLIB)/$(SHOBJLIB).elf \
+	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
 
 # commands for RSA signature
 cmd_pubkey = ./util/pem_extract_pubkey.py $(PEM) > $@
@@ -83,12 +93,13 @@ proj-%:
 	@echo "======= building $*"; \
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
 
-dis-y = $(out)/$(PROJECT).RW.dis
-dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.dis
+dis-y := $(out)/RW/$(PROJECT).RW.dis
+dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.dis
+dis-$(CONFIG_SHAREDLIB) += $(out)/$(SHOBJLIB)/$(SHOBJLIB).dis
 dis: $(dis-y)
 .PHONY: dis
 
-hex-y = $(out)/$(PROJECT).RO.hex $(out)/$(PROJECT).RW.hex $(out)/$(PROJECT).hex
+hex-y := $(out)/RO/$(PROJECT).RO.hex $(out)/RW/$(PROJECT).RW.hex $(out)/$(PROJECT).hex
 hex: $(hex-y)
 .PHONY: hex
 
@@ -165,12 +176,15 @@ $(out)/%.bin: $(out)/%.obj
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
-flat-y = $(out)/$(PROJECT).RW.flat
-flat-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.flat
+flat-y := $(out)/RW/$(PROJECT).RW.flat
+flat-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.flat
 
 deps += $(out)/firmware_image.lds.d $(flat-y:%.flat=%.lds.d)
 
-$(out)/%.obj: common/firmware_image.S $(out)/firmware_image.lds $(flat-y)
+flat-$(CONFIG_SHAREDLIB) += $(libsharedobjs-y)
+
+$(out)/$(PROJECT).obj: common/firmware_image.S $(out)/firmware_image.lds \
+	$(flat-y)
 	$(call quiet,flat_to_obj,CAT    )
 
 $(out)/%.dis: $(out)/%.elf
@@ -179,29 +193,58 @@ $(out)/%.dis: $(out)/%.elf
 $(out)/%.flat: $(out)/%.elf $(out)/%.smap
 	$(call quiet,elf_to_flat,OBJCOPY)
 
-$(out)/%.hex: $(out)/%.elf $(out)/%.smap
+$(out)/RW/ec.RW.flat: $(out)/RW/ec.RW.elf $(out)/RW/ec.RW.smap
+	$(call quiet,ec_elf_to_flat,OBJCOPY)
+$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.elf $(out)/RO/ec.RO.smap
+	$(call quiet,ec_elf_to_flat,OBJCOPY)
+
+$(out)/RW/%.hex: $(out)/RW/%.elf $(out)/RW/%.smap
+	$(call quiet,elf_to_hex,OBJCOPY)
+$(out)/RO/%.hex: $(out)/RO/%.elf $(out)/RO/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 
 $(out)/$(PROJECT).hex: $(out)/$(PROJECT).bin
 	$(call quiet,bin_to_hex,OBJCOPY)
 
+$(out)/RW/%.elf: override BLD:=RW
+$(out)/RW/%.elf: private objs := $(rw-objs)
+$(out)/RW/%.elf: $(out)/RW/%.lds $(rw-objs) $(libsharedobjs_elf-y)
+	$(call quiet,elf,LD     )
+
+$(out)/RO/%.elf: override BLD:=RO
+$(out)/RO/%.elf: private objs := $(ro-objs)
+$(out)/RO/%.elf: $(out)/RO/%.lds $(ro-objs) $(libsharedobjs_elf-y)
+	$(call quiet,elf,LD     )
+
 $(out)/%.elf: $(out)/%.lds $(objs)
 	$(call quiet,elf,LD     )
+
+$(out)/$(SHOBJLIB)/$(SHOBJLIB).elf: $(sharedlib-objs)
+	@mkdir -p $(out)/$(SHOBJLIB)
+	$(call quiet,sharedlib_elf,LD     )
 
 $(out)/%.smap: $(out)/%.elf
 	$(call quiet,smap,NM     )
 
-$(out)/$(PROJECT).exe: $(objs)
+$(out)/$(PROJECT).exe: $(ro-objs)
 	$(call quiet,exe,EXE    )
 
-$(out)/%.o:%.c
+$(out)/RO/%.o:%.c
+	$(call quiet,c_to_o,CC     )
+$(out)/RW/%.o:%.c
+	$(call quiet,c_to_o,CC     )
+$(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE
+$(out)/$(SHOBJLIB)/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 
 $(out)/vboot/%.o:$(VBOOT_SOURCE)/%.c
 	$(call quiet,c_to_o,CC     )
 
-$(out)/%.o:%.S
+$(out)/RO/%.o:%.S
 	$(call quiet,c_to_o,AS     )
+$(out)/RW/%.o:%.S
+	$(call quiet,c_to_o,AS     )
+
 
 # Conditionally force the rebuilding of ec_version.h only if it would be
 # changed.
@@ -215,25 +258,30 @@ endif
 # All of the objects have an order only dependency on the ec_version header.
 # This ensures that if ec_version.h needs to be build (because it was marked
 # PHONY above) then it will be rebuilt before any objects.  This is important
-# because some source files will include ev_version.h and fail to compile if
+# because some source files will include ec_version.h and fail to compile if
 # it doesn't already exist.  This dependency shouldn't be a normal dependency
 # because that would cause every object to be rebuilt when ec_version.h
 # changes, instead of just the ones that actually depend on it.  The objects
 # that truly depend on ec_version.h will have that information encoded in their
 # .d file.
-$(objs): | $(out)/ec_version.h
+$(ro-objs): | $(out)/ec_version.h
+$(rw-objs): | $(out)/ec_version.h
+$(sharedlib-objs): | $(out)/ec_version.h
 
 $(out)/ec_version.h:
 	$(call quiet,version,VERSION)
 
-$(out)/common/version.o: $(out)/ec_date.h
-$(out)/ec_date.h: $(filter-out $(out)/common/version.o,$(objs))
+$(out)/RO/common/version.o: $(out)/ec_date.h
+$(out)/RW/common/version.o: $(out)/ec_date.h
+
+$(out)/ec_date.h: $(filter-out $(out)/%/common/version.o,$(objs))
 	$(call quiet,date,DATE   )
 
 $(out)/gen_pub_key.h: $(PEM)
 	$(call quiet,pubkey,PUBKEY )
 
-$(out)/common/rwsig.o: $(out)/gen_pub_key.h
+$(out)/RO/common/rwsig.o: $(out)/gen_pub_key.h
+$(out)/RW/common/rwsig.o: $(out)/gen_pub_key.h
 
 $(build-utils): $(out)/%:$(build-srcs)
 	$(call quiet,c_to_build,BUILDCC)

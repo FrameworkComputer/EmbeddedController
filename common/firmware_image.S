@@ -8,15 +8,21 @@
 
 #include "config.h"
 
-#define FW_FILE(builddir,proj,sect) builddir##/##proj##.##sect##.flat
+#define FW_FILE(builddir,proj,sect) builddir##/##sect##/##proj##.##sect##.flat
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
-#define FW_IMAGE(sect) STRINGIFY(FW_FILE(OUTDIR,PROJECT,sect))
+#define FW_IMAGE(sect) STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect))
 
 /* Read Only firmware */
 #ifdef CONFIG_FW_INCLUDE_RO
 .section .image.RO, "ax"
 .incbin FW_IMAGE(RO)
+#endif
+
+/* Shared objects library */
+#ifdef CONFIG_SHAREDLIB
+.section .image.libsharedobjs, "ax"
+.incbin STRINGIFY(FINAL_OUTDIR/libsharedobjs/libsharedobjs.flat)
 #endif
 
 /* Read Write firmware */
