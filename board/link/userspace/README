@@ -1,3 +1,0 @@
-Sometimes we need to perform some run-time tweaks of the EC from the AP's
-userspace. This directory holds those tweaks. They're picked up by the
-ec-utils ebuild.
