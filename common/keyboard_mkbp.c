@@ -148,9 +148,10 @@ test_mockable int keyboard_fifo_add(const uint8_t *buffp)
 kb_fifo_push_done:
 
 	if (ret == EC_SUCCESS) {
-		set_host_interrupt(1);
 #ifdef CONFIG_MKBP_EVENT
 		mkbp_send_event(EC_MKBP_EVENT_KEY_MATRIX);
+#else
+		set_host_interrupt(1);
 #endif
 	}
 
@@ -193,6 +194,12 @@ void keyboard_send_battery_key(void)
 static int keyboard_get_scan(struct host_cmd_handler_args *args)
 {
 	kb_fifo_remove(args->response);
+	/* if CONFIG_MKBP_EVENT is enabled, we still reset the interrupt
+	 * (even if there is an another pending event)
+	 * to be backward compatible with firmware using the old API to poll
+	 * the keyboard, other software should use EC_CMD_GET_NEXT_EVENT
+	 * instead of this command
+	 */
 	if (!kb_fifo_entries)
 		set_host_interrupt(0);
 
