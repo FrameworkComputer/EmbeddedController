@@ -124,15 +124,16 @@ extern struct g_usb_desc ep0_out_desc;
 
 static int hid_iface_request(uint8_t *ep0_buf_rx, uint8_t *ep0_buf_tx)
 {
-	int len, req_len;
+	/* This chip and buffer data are all little-endian, so this works */
+	struct usb_setup_packet *req = (struct usb_setup_packet *)ep0_buf_rx;
+	int len;
 
-	if (ep0_buf_rx[0] == (USB_DIR_IN | USB_RECIP_INTERFACE) &&
-	    ep0_buf_rx[1] == USB_REQ_GET_DESCRIPTOR &&
-	    ep0_buf_rx[3] == USB_HID_DT_REPORT) {
+	if (req->bmRequestType == (USB_DIR_IN | USB_RECIP_INTERFACE) &&
+	    req->bRequest == USB_REQ_GET_DESCRIPTOR &&
+	    req->wValue == (USB_HID_DT_REPORT << 8)) {
 		/* Setup : HID specific : Get Report descriptor */
 		memcpy(ep0_buf_tx, report_desc, sizeof(report_desc));
-		req_len = (((unsigned int)ep0_buf_rx[7]) << 8) + ep0_buf_rx[6];
-		len = MIN(req_len, sizeof(report_desc));
+		len = MIN(req->wLength, sizeof(report_desc));
 		ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY |
 			DIEPDMA_IOC | DIEPDMA_TXBYTES(len);
 		GR_USB_DIEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;

@@ -104,10 +104,16 @@ static int desc_left;
 /* pointer to descriptor data if any */
 static const uint8_t *desc_ptr;
 
-/* Requests on the control endpoint (aka EP0) */
+/*
+ * Requests on the control endpoint (aka EP0). The USB spec mandates that all
+ * values are little-endian over the wire. Since this file is intentionally
+ * chip-specific and we're a little-endian architecture, we can just cast the
+ * buffer into the correct struct.
+ */
 static void ep0_rx(void)
 {
 	uint32_t epint = GR_USB_DOEPINT(0);
+	struct usb_setup_packet *req = (struct usb_setup_packet *)ep0_buf_rx;
 
 	GR_USB_DOEPINT(0) = epint; /* clear IT */
 
@@ -115,20 +121,20 @@ static void ep0_rx(void)
 	desc_ptr = NULL;
 
 	/* interface specific requests */
-	if ((ep0_buf_rx[0] & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
-		uint8_t iface = ep0_buf_rx[4];
+	if ((req->bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
+		uint8_t iface = req->wIndex & 0xff;
 		if (iface < USB_IFACE_COUNT &&
 		    usb_iface_request[iface](ep0_buf_rx, ep0_buf_tx))
 			goto unknown_req;
 		return;
 	}
 
-	if (ep0_buf_rx[0] == USB_DIR_IN &&
-	    ep0_buf_rx[1] == USB_REQ_GET_DESCRIPTOR) {
-		uint8_t type = ep0_buf_rx[3];
-		uint8_t idx = ep0_buf_rx[2];
+	if (req->bmRequestType == USB_DIR_IN &&
+	    req->bRequest == USB_REQ_GET_DESCRIPTOR) {
+		uint8_t type = req->wValue >> 8;
+		uint8_t idx = req->wValue & 0xff;
 		const uint8_t *desc;
-		int len, req_len;
+		int len;
 
 		switch (type) {
 		case USB_DT_DEVICE: /* Setup : Get device descriptor */
@@ -159,8 +165,7 @@ static void ep0_rx(void)
 			goto unknown_req;
 		}
 		/* do not send more than what the host asked for */
-		req_len = (((unsigned int)ep0_buf_rx[7]) << 8) + ep0_buf_rx[6];
-		len = MIN(req_len, len);
+		len = MIN(req->wLength, len);
 		/*
 		 * if we cannot transmit everything at once,
 		 * keep the remainder for the next IN packet
@@ -172,9 +177,10 @@ static void ep0_rx(void)
 		}
 		memcpy(ep0_buf_tx, desc, len);
 		if (type == USB_DT_CONFIGURATION) {
+			struct usb_config_descriptor *cfg =
+				(struct usb_config_descriptor *)ep0_buf_tx;
 			/* set the real descriptor size */
-			ep0_buf_tx[2] = USB_DESC_SIZE & 0xff;
-			ep0_buf_tx[3] = (USB_DESC_SIZE & 0xff00) >> 8;
+			cfg->wTotalLength = USB_DESC_SIZE;
 		}
 		ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY |
 				    DIEPDMA_IOC | DIEPDMA_TXBYTES(len);
@@ -183,8 +189,8 @@ static void ep0_rx(void)
 				   | DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
 		GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 		/* send the null OUT transaction if the transfer is complete */
-	} else if (ep0_buf_rx[0] == USB_DIR_IN &&
-		   ep0_buf_rx[1] == USB_REQ_GET_STATUS) {
+	} else if (req->bmRequestType == USB_DIR_IN &&
+		   req->bRequest == USB_REQ_GET_STATUS) {
 		uint16_t zero = 0;
 		/* Get status */
 		memcpy(ep0_buf_tx, &zero, 2);
@@ -194,11 +200,11 @@ static void ep0_rx(void)
 		ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST
 				   | DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
 		GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
-	} else if (ep0_buf_rx[0] == USB_DIR_OUT) {
-		switch (ep0_buf_rx[1]) {
+	} else if (req->bmRequestType == USB_DIR_OUT) {
+		switch (req->bRequest) {
 		case USB_REQ_SET_ADDRESS:
 			/* set the address after we got IN packet handshake */
-			set_addr = ep0_buf_rx[2];
+			set_addr = req->wValue & 0xff;
 			/* need null IN transaction -> TX Valid */
 			ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC |
 					    DIEPDMA_TXBYTES(0) | DIEPDMA_SP;
@@ -208,7 +214,7 @@ static void ep0_rx(void)
 			GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 			break;
 		case USB_REQ_SET_CONFIGURATION:
-			/* uint8_t cfg = ep0_buf_rx[2]; */
+			/* uint8_t cfg = req->wValue & 0xff; */
 			/* null IN for handshake */
 			ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC |
 					    DIEPDMA_TXBYTES(0) | DIEPDMA_SP;
@@ -384,7 +390,7 @@ void usb_init(void)
 	/* unmask subset of endpoint interrupts */
 	GR_USB_DIEPMSK = DIEPMSK_TIMEOUTMSK | DIEPMSK_AHBERRMSK |
 			 DIEPMSK_EPDISBLDMSK | DIEPMSK_XFERCOMPLMSK |
-			 DIEPMSK_INTKNEPMISMSK /*| (1<<9)*//*BNA*/;
+			 DIEPMSK_INTKNEPMISMSK;
 	GR_USB_DOEPMSK = DOEPMSK_SETUPMSK | DOEPMSK_AHBERRMSK |
 			 DOEPMSK_EPDISBLDMSK | DOEPMSK_XFERCOMPLMSK;
 	GR_USB_DAINTMSK = 0;
