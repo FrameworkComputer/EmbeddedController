@@ -1721,7 +1721,13 @@ struct ec_response_motion_sensor_data {
 	/* sensor number the data comes from */
 	uint8_t sensor_num;
 	/* Each sensor is up to 3-axis. */
-	int16_t data[3];
+	union {
+		int16_t             data[3];
+		struct {
+			uint16_t    rsvd;
+			uint32_t    timestamp;
+		} __packed;
+	};
 } __packed;
 
 struct ec_response_motion_sense_fifo_info {

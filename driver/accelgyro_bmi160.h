@@ -49,39 +49,82 @@
 #define BMI160_SENSORTIME_2    0x1a
 
 #define BMI160_STATUS          0x1b
-#define BMI160_DRDY_ACC        0x80
-#define BMI160_DRDY_GYR        0x40
-#define BMI160_DRDY_MAG        0x20
+#define BMI160_POR_DETECTED        (1 << 0)
+#define BMI160_GYR_SLF_TST         (1 << 1)
+#define BMI160_MAG_MAN_OP          (1 << 2)
+#define BMI160_FOC_RDY             (1 << 3)
+#define BMI160_NVM_RDY             (1 << 4)
+#define BMI160_DRDY_MAG            (1 << 5)
+#define BMI160_DRDY_GYR            (1 << 6)
+#define BMI160_DRDY_ACC            (1 << 7)
 #define BMI160_DRDY_OFF(_sensor)   (7 - (_sensor))
 #define BMI160_DRDY_MASK(_sensor)  (1 << BMI160_DRDY_OFF(_sensor))
-#define BMI160_NVM_RDY         0x10
-#define BMI160_FOC_RDY         0x08
-#define BMI160_MAG_MAN_OP      0x04
-#define BMI160_GYR_SLF_TST     0x02
-#define BMI160_POR_DETECTED    0x01
 
-
+/* first 2 bytes are the interrupt reasons, next 2 some qualifier */
 #define BMI160_INT_STATUS_0    0x1c
+#define BMI160_STEP_INT            (1 << 0)
+#define BMI160_SIGMOT_INT          (1 << 1)
+#define BMI160_ANYM_INT            (1 << 2)
+#define BMI160_PMU_TRIGGER_INT     (1 << 3)
+#define BMI160_D_TAP_INT           (1 << 4)
+#define BMI160_S_TAP_INT           (1 << 5)
+#define BMI160_ORIENT_INT          (1 << 6)
+#define BMI160_FLAT_INT            (1 << 7)
+
 #define BMI160_INT_STATUS_1    0x1d
+#define BMI160_HIGHG_INT           (1 << (2 + 8))
+#define BMI160_LOWG_INT            (1 << (3 + 8))
+#define BMI160_DRDY_INT            (1 << (4 + 8))
+#define BMI160_FFULL_INT           (1 << (5 + 8))
+#define BMI160_FWM_INT             (1 << (6 + 8))
+#define BMI160_NOMO_INT            (1 << (7 + 8))
+
+#define BMI160_INT_MASK            0xFFFF
+
 #define BMI160_INT_STATUS_2    0x1e
 #define BMI160_INT_STATUS_3    0x1f
+#define BMI160_FIRST_X             (1 << (0 + 16))
+#define BMI160_FIRST_Y             (1 << (1 + 16))
+#define BMI160_FIRST_Z             (1 << (2 + 16))
+#define BMI160_SIGN                (1 << (3 + 16))
+#define BMI160_ANYM_OFFSET         0
+#define BMI160_TAP_OFFSET          4
+#define BMI160_HIGH_OFFSET         8
+#define BMI160_INT_INFO(_type, _data) \
+(CONCAT2(BMI160_, _data) << CONCAT3(BMI160_, _type, _OFFSET))
+
+#define BMI160_ORIENT_Z            (1 << (6 + 24))
+#define BMI160_FLAT                (1 << (7 + 24))
 
 #define BMI160_TEMPERATURE_0   0x20
 #define BMI160_TEMPERATURE_1   0x21
 
 #define BMI160_FIFO_LENGTH_0   0x22
 #define BMI160_FIFO_LENGTH_1   0x23
+#define BMI160_FIFO_LENGTH_MASK    ((1 << 11) - 1)
 #define BMI160_FIFO_DATA       0x24
+enum fifo_header {
+	BMI160_EMPTY = 0x80,
+	BMI160_SKIP = 0x40,
+	BMI160_TIME = 0x44,
+	BMI160_CONFIG = 0x48
+};
+
+#define BMI160_FH_MODE_MASK    0xc0
+#define BMI160_FH_PARM_OFFSET    2
+#define BMI160_FH_PARM_MASK    (0x7 << BMI160_FH_PARM_OFFSET)
+#define BMI160_FH_EXT_MASK     0x03
+
 
 #define BMI160_ACC_CONF        0x40
-#define BMI160_GSEL_2G         0X03
-#define BMI160_GSEL_4G         0X05
-#define BMI160_GSEL_8G         0X08
-#define BMI160_GSEL_16G        0X0C
+#define BMI160_GSEL_2G         0x03
+#define BMI160_GSEL_4G         0x05
+#define BMI160_GSEL_8G         0x08
+#define BMI160_GSEL_16G        0x0c
 
 #define BMI160_ODR_MASK                 0x0F
 
-#define BMI160_ACC_BW_OFFSET   4
+#define BMI160_ACC_BW_OFFSET            4
 #define BMI160_ACC_BW_MASK     (0x7 << BMI160_ACC_BW_OFFSET)
 #define BMI160_ACC_RANGE       0x41
 
@@ -119,6 +162,18 @@
 #define BMI160_FIFO_DOWNS      0x45
 #define BMI160_FIFO_CONFIG_0   0x46
 #define BMI160_FIFO_CONFIG_1   0x47
+#define BMI160_FIFO_TAG_TIME_EN    (1 << 1)
+#define BMI160_FIFO_TAG_INT2_EN    (1 << 2)
+#define BMI160_FIFO_TAG_INT1_EN    (1 << 3)
+#define BMI160_FIFO_HEADER_EN      (1 << 4)
+#define BMI160_FIFO_MAG_EN         (1 << 5)
+#define BMI160_FIFO_ACC_EN         (1 << 6)
+#define BMI160_FIFO_GYR_EN         (1 << 7)
+#define BMI160_FIFO_TARG_INT(_i)  CONCAT3(BMI160_FIFO_TAG_INT, _i, _EN)
+#define BMI160_FIFO_SENSOR_EN(_sensor) \
+	((_sensor) == MOTIONSENSE_TYPE_ACCEL ? BMI160_FIFO_ACC_EN : \
+	  ((_sensor) == MOTIONSENSE_TYPE_GYRO ? BMI160_FIFO_GYR_EN : \
+	   BMI160_FIFO_MAG_EN))
 
 #define BMI160_MAG_IF_0        0x4b
 #define BMI160_MAG_I2C_ADDRESS BMI160_MAG_IF_0
@@ -142,15 +197,70 @@
 #define BMI160_MAG_I2C_READ_DATA    BMI160_MAG_X_L_G
 
 #define BMI160_INT_EN_0        0x50
+#define BMI160_INT_ANYMO_X_EN      (1 << 0)
+#define BMI160_INT_ANYMO_Y_EN      (1 << 1)
+#define BMI160_INT_ANYMO_Z_EN      (1 << 2)
+#define BMI160_INT_D_TAP_EN        (1 << 4)
+#define BMI160_INT_S_TAP_EN        (1 << 5)
+#define BMI160_INT_ORIENT_EN       (1 << 6)
+#define BMI160_INT_FLAT_EN         (1 << 7)
 #define BMI160_INT_EN_1        0x51
+#define BMI160_INT_HIGHG_X_EN      (1 << 0)
+#define BMI160_INT_HIGHG_Y_EN      (1 << 1)
+#define BMI160_INT_HIGHG_Z_EN      (1 << 2)
+#define BMI160_INT_LOW_EN          (1 << 3)
+#define BMI160_INT_DRDY_EN         (1 << 4)
+#define BMI160_INT_FFUL_EN         (1 << 5)
+#define BMI160_INT_FWM_EN          (1 << 6)
 #define BMI160_INT_EN_2        0x52
+#define BMI160_INT_NOMOX_EN        (1 << 0)
+#define BMI160_INT_NOMOY_EN        (1 << 1)
+#define BMI160_INT_NOMOZ_EN        (1 << 2)
+#define BMI160_INT_STEP_DET_EN     (1 << 3)
 
 #define BMI160_INT_OUT_CTRL    0x53
+#define BMI160_INT_EDGE_CTRL       (1 << 0)
+#define BMI160_INT_LVL_CTRL        (1 << 1)
+#define BMI160_INT_OD              (1 << 2)
+#define BMI160_INT_OUTPUT_EN       (1 << 3)
+#define BMI160_INT1_CTRL_OFFSET     0
+#define BMI160_INT2_CTRL_OFFSET     4
+#define BMI160_INT_CTRL(_i, _bit) \
+(CONCAT2(BMI160_INT_, _bit) << CONCAT3(BMI160_INT, _i, _CTRL_OFFSET))
+
 #define BMI160_INT_LATCH       0x54
+#define BMI160_INT1_INPUT_EN       (1 << 4)
+#define BMI160_INT2_INPUT_EN       (1 << 5)
+#define BMI160_LATCH_MASK          0xf
+#define BMI160_LATCH_NONE          0
+#define BMI160_LATCH_FOREVER       0xf
 
 #define BMI160_INT_MAP_0       0x55
+#define BMI160_INT_LOWG_STEP       (1 << 0)
+#define BMI160_INT_HIGHG           (1 << 1)
+#define BMI160_INT_ANYMOTION       (1 << 2)
+#define BMI160_INT_NOMOTION        (1 << 3)
+#define BMI160_INT_D_TAP           (1 << 4)
+#define BMI160_INT_S_TAP           (1 << 5)
+#define BMI160_INT_ORIENT          (1 << 6)
+#define BMI160_INT_FLAT            (1 << 7)
+
 #define BMI160_INT_MAP_1       0x56
+#define BMI160_INT_PMU_TRIG        (1 << 0)
+#define BMI160_INT_FFULL           (1 << 1)
+#define BMI160_INT_FWM             (1 << 2)
+#define BMI160_INT_DRDY            (1 << 3)
+#define BMI160_INT1_MAP_OFFSET      4
+#define BMI160_INT2_MAP_OFFSET      0
+#define BMI160_INT_MAP(_i, _bit) \
+(CONCAT2(BMI160_INT_, _bit) << CONCAT3(BMI160_INT, _i, _MAP_OFFSET))
+#define BMI160_INT_FIFO_MAP    BMI160_INT_MAP_1
+
 #define BMI160_INT_MAP_2       0x57
+
+#define BMI160_INT_MAP_INT_1   BMI160_INT_MAP_0
+#define BMI160_INT_MAP_INT_2   BMI160_INT_MAP_2
+#define BMI160_INT_MAP_REG(_i)  CONCAT2(BMI160_INT_MAP_INT_, _i)
 
 #define BMI160_INT_DATA_0      0x58
 #define BMI160_INT_DATA_1      0x59
@@ -193,8 +303,10 @@
 #define BMI160_CMD_MAG_MODE_SUSP   0x18
 #define BMI160_CMD_MAG_MODE_NORMAL 0x19
 #define BMI160_CMD_MAG_MODE_LOWPOWER 0x1a
-#define BMI160_CMD_MODE_NORMAL(_sensor) (0x11 + 4 * (_sensor))
-#define BMI160_CMD_MODE_SUSPEND(_sensor) (0x10 + 4 * (_sensor))
+#define BMI160_CMD_MODE_SUSPEND(_sensor) \
+	(BMI160_CMD_ACC_MODE_SUSP + 4 * (_sensor))
+#define BMI160_CMD_MODE_NORMAL(_sensor) \
+	(BMI160_CMD_ACC_MODE_NORMAL + 4 * (_sensor))
 
 #define BMI160_CMD_FIFO_FLUSH      0xb0
 #define BMI160_CMD_INT_RESET       0xb1
@@ -221,52 +333,6 @@
 #define BMI160_FF_DATA_LEN_GYR          6
 #define BMI160_FF_DATA_LEN_MAG          8
 
-#if 0
-#define BMI160_DPS_SEL_245     (0 << 3)
-#define BMI160_DPS_SEL_500     (1 << 3)
-#define BMI160_DPS_SEL_1000    (2 << 3)
-#define BMI160_DPS_SEL_2000    (3 << 3)
-#define BMI160_GSEL_2G         (0 << 3)
-#define BMI160_GSEL_4G         (2 << 3)
-#define BMI160_GSEL_8G         (3 << 3)
-
-#define BMI160_RANGE_MASK      (3 << 3)
-
-#define BMI160_ODR_PD          (0 << 5)
-#define BMI160_ODR_10HZ        (1 << 5)
-#define BMI160_ODR_15HZ        (1 << 5)
-#define BMI160_ODR_50HZ        (2 << 5)
-#define BMI160_ODR_59HZ        (2 << 5)
-#define BMI160_ODR_119HZ       (3 << 5)
-#define BMI160_ODR_238HZ       (4 << 5)
-#define BMI160_ODR_476HZ       (5 << 5)
-#define BMI160_ODR_952HZ       (6 << 5)
-
-#define BMI160_ODR_MASK        (7 << 5)
-
-/*
- * Register      : STATUS_REG
- * Address       : 0X27
- */
-enum bmi160_status {
-	BMI160_STS_DOWN                = 0x00,
-	BMI160_STS_XLDA_UP             = 0x01,
-	BMI160_STS_GDA_UP              = 0x02,
-};
-#define         BMI160_STS_XLDA_MASK       0x01
-#define         BMI160_STS_GDA_MASK        0x02
-
-/*
- * Register      : CTRL_REG8
- * Address       : 0X22
- * Bit Group Name: BDU
- */
-enum bmi160_bdu {
-	BMI160_BDU_DISABLE              = 0x00,
-	BMI160_BDU_ENABLE               = 0x40,
-};
-#endif
-
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define BMI160_RESOLUTION      16
 
@@ -285,8 +351,19 @@ enum bmi160_running_mode {
 };
 
 #define BMI160_FLAG_SEC_I2C_ENABLED    (1 << 0)
+
 struct bmi160_drv_data_t {
 	struct motion_data_t saved_data[3];
 	uint8_t              flags;
 };
+
+#define BMI160_GET_DATA(_s) \
+	((struct bmi160_drv_data_t *)(_s)->drv_data)
+#define BMI160_GET_SAVED_DATA(_s) \
+	(&BMI160_GET_DATA(_s)->saved_data[(_s)->type])
+
+extern struct bmi160_drv_data_t g_bmi160_data;
+
+void bmi160_interrupt(enum gpio_signal signal);
+
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */

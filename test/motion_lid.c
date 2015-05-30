@@ -158,6 +158,8 @@ static int test_lid_angle(void)
 	lid->xyz[Z] = 1000;
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	task_wake(TASK_ID_MOTIONSENSE);
+	msleep(5);
+	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(5);
 	TEST_ASSERT(motion_lid_get_angle() == 0);

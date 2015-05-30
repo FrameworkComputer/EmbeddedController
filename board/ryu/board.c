@@ -275,9 +275,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Sensor mutex */
 static struct mutex g_mutex;
 
-/*  local sensor data (per-sensor) */
-struct bmi160_drv_data_t g_bmi160_data;
-
 struct motion_sensor_t motion_sensors[] = {
 
 	/*
