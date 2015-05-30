@@ -217,6 +217,9 @@ static void board_init(void)
 
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_CHGR_ACOK);
+
+	/* Enable interrupts from BMI160 sensor. */
+	gpio_enable_interrupt(GPIO_ACC_IRQ1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
