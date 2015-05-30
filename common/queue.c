@@ -42,7 +42,7 @@ size_t queue_space(struct queue const *q)
 	return q->buffer_units - queue_count(q);
 }
 
-size_t queue_add_unit(struct queue const *q, void const *src)
+size_t queue_add_unit(struct queue const *q, const void *src)
 {
 	size_t tail = q->state->tail & (q->buffer_units - 1);
 
@@ -61,16 +61,16 @@ size_t queue_add_unit(struct queue const *q, void const *src)
 	return 1;
 }
 
-size_t queue_add_units(struct queue const *q, void const *src, size_t count)
+size_t queue_add_units(struct queue const *q, const void *src, size_t count)
 {
 	return queue_add_memcpy(q, src, count, memcpy);
 }
 
 size_t queue_add_memcpy(struct queue const *q,
-			void const *src,
+			const void *src,
 			size_t count,
 			void *(*memcpy)(void *dest,
-					void const *src,
+					const void *src,
 					size_t n))
 {
 	size_t transfer = MIN(count, queue_space(q));
@@ -98,7 +98,7 @@ static void queue_read_safe(struct queue const *q,
 			    size_t head,
 			    size_t transfer,
 			    void *(*memcpy)(void *dest,
-					    void const *src,
+					    const void *src,
 					    size_t n))
 {
 	size_t first = MIN(transfer, q->buffer_units - head);
@@ -141,7 +141,7 @@ size_t queue_remove_memcpy(struct queue const *q,
 			   void *dest,
 			   size_t count,
 			   void *(*memcpy)(void *dest,
-					   void const *src,
+					   const void *src,
 					   size_t n))
 {
 	size_t transfer = MIN(count, queue_count(q));
@@ -160,6 +160,17 @@ size_t queue_peek_units(struct queue const *q,
 			void *dest,
 			size_t i,
 			size_t count)
+{
+	return queue_peek_memcpy(q, dest, i, count, memcpy);
+}
+
+size_t queue_peek_memcpy(struct queue const *q,
+			 void *dest,
+			 size_t i,
+			 size_t count,
+			 void *(*memcpy)(void *dest,
+				const void *src,
+				size_t n))
 {
 	size_t available = queue_count(q);
 	size_t transfer  = MIN(count, available - i);

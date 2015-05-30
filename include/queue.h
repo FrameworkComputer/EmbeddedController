@@ -106,17 +106,17 @@ size_t queue_count(struct queue const *q);
 size_t queue_space(struct queue const *q);
 
 /* Add one unit to queue. */
-size_t queue_add_unit(struct queue const *q, void const *src);
+size_t queue_add_unit(struct queue const *q, const void *src);
 
 /* Add multiple units to queue. */
-size_t queue_add_units(struct queue const *q, void const *src, size_t count);
+size_t queue_add_units(struct queue const *q, const void *src, size_t count);
 
 /* Add multiple units to queue using supplied memcpy. */
 size_t queue_add_memcpy(struct queue const *q,
-			void const *src,
+			const void *src,
 			size_t count,
 			void *(*memcpy)(void *dest,
-					void const *src,
+					const void *src,
 					size_t n));
 
 /* Remove one unit from the begin of the queue. */
@@ -130,7 +130,7 @@ size_t queue_remove_memcpy(struct queue const *q,
 			   void *dest,
 			   size_t count,
 			   void *(*memcpy)(void *dest,
-					   void const *src,
+					   const void *src,
 					   size_t n));
 
 /* Peek (return but don't remove) the count elements starting with the i'th. */
@@ -138,6 +138,15 @@ size_t queue_peek_units(struct queue const *q,
 			void *dest,
 			size_t i,
 			size_t count);
+
+/* Peek (return but don't remove) the count elements starting with the i'th. */
+size_t queue_peek_memcpy(struct queue const *q,
+			 void *dest,
+			 size_t i,
+			 size_t count,
+			 void *(*memcpy)(void *dest,
+				const void *src,
+				size_t n));
 
 /*
  * These macros will statically select the queue functions based on the number
