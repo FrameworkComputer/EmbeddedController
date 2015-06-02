@@ -14,6 +14,7 @@ extern int tcpc_set_cc(int port, int pull);
 extern int tcpc_set_polarity(int port, int polarity);
 extern int tcpc_set_vconn(int port, int enable);
 extern int tcpc_set_msg_header(int port, int power_role, int data_role);
+extern int tcpc_set_rx_enable(int port, int enable);
 
 extern int tcpc_get_message(int port, uint32_t *payload, int *head);
 extern int tcpc_transmit(int port, enum tcpm_transmit_type type,
@@ -47,6 +48,11 @@ int tcpm_set_msg_header(int port, int power_role, int data_role)
 int tcpm_alert_status(int port, int alert_reg, uint8_t *alert)
 {
 	return tcpc_alert_status(port, alert_reg, alert);
+}
+
+int tcpm_set_rx_enable(int port, int enable)
+{
+	return tcpc_set_rx_enable(port, enable);
 }
 
 int tcpm_get_message(int port, uint32_t *payload, int *head)

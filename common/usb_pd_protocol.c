@@ -251,6 +251,8 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_USBC_VCONN
 		tcpm_set_vconn(port, 0);
 #endif
+		/* Disable TCPC RX */
+		tcpm_set_rx_enable(port, 0);
 	}
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -287,6 +289,10 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 		       uint16_t header, const uint32_t *data)
 {
 	int evt;
+
+	/* If comms are disabled, do not transmit, return error */
+	if (!pd_comm_enabled)
+		return -1;
 
 	tcpm_transmit(port, type, header, data);
 
@@ -1198,23 +1204,26 @@ int pd_get_partner_data_swap_capable(int port)
 #ifdef CONFIG_COMMON_RUNTIME
 void pd_comm_enable(int enable)
 {
+	int i;
+
 	pd_comm_enabled = enable;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		/* If type-C connection, then update the TCPC RX enable */
+		if (pd_is_connected(i))
+			tcpm_set_rx_enable(i, enable);
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	/*
-	 * If communications are enabled, start hard reset timer for
-	 * any port in PD_SNK_DISCOVERY.
-	 */
-	if (enable) {
-		int i;
-		for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-			if (pd[i].task_state == PD_STATE_SNK_DISCOVERY)
-				set_state_timeout(i,
-						  get_time().val +
-						  PD_T_SINK_WAIT_CAP,
-						  PD_STATE_HARD_RESET_SEND);
-		}
-	}
+		/*
+		 * If communications are enabled, start hard reset timer for
+		 * any port in PD_SNK_DISCOVERY.
+		 */
+		if (enable && pd[i].task_state == PD_STATE_SNK_DISCOVERY)
+			set_state_timeout(i,
+					  get_time().val + PD_T_SINK_WAIT_CAP,
+					  PD_STATE_HARD_RESET_SEND);
 #endif
+	}
 }
 #endif
 
@@ -1295,6 +1304,9 @@ void pd_task(void)
 	/* Initialize port controller */
 	tcpc_init(port);
 #endif
+
+	/* Disable TCPC RX until connection is established */
+	tcpm_set_rx_enable(port, 0);
 
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
@@ -1442,6 +1454,9 @@ void pd_task(void)
 					break;
 				}
 #endif
+				/* If PD comm is enabled, enable TCPC RX */
+				if (pd_comm_enabled)
+					tcpm_set_rx_enable(port, 1);
 
 #ifdef CONFIG_USBC_VCONN
 				tcpm_set_vconn(port, 1);
@@ -1855,6 +1870,10 @@ void pd_task(void)
 			typec_set_input_current_limit(
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
+			/* If PD comm is enabled, enable TCPC RX */
+			if (pd_comm_enabled)
+				tcpm_set_rx_enable(port, 1);
+
 			/*
 			 * fake set data role swapped flag so we send
 			 * discover identity when we enter SRC_READY

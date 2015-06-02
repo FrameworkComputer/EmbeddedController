@@ -34,19 +34,10 @@
  */
 static int debug_level;
 
-/*
- * TODO: disable in RO? can we remove enable var from protocol layer?
- * do we need to send a hard reset when we transition to enabled because
- * source could have given up sending source cap and may need hard reset
- * in order to establish a contract.
- */
-static uint8_t pd_comm_enabled = 1;
-
 static struct mutex pd_crc_lock;
 #else
 #define CPRINTF(format, args...)
 static const int debug_level;
-static const int pd_comm_enabled = 1;
 #endif
 
 /* Encode 5 bits using Biphase Mark Coding */
@@ -216,6 +207,8 @@ static struct pd_port_controller {
 	uint8_t cc_status[2];
 	/* TCPC alert status */
 	uint8_t alert[2];
+	/* RX enabled */
+	uint8_t rx_enabled;
 
 	/* Last received */
 	int rx_head;
@@ -711,10 +704,8 @@ void tcpc_init(int port)
 	/* Initialize physical layer */
 	pd_hw_init(port, PD_ROLE_DEFAULT);
 
-	/* make sure PD monitoring is enabled to wake on PD RX */
-	if (pd_comm_enabled)
-		pd_rx_enable_monitoring(port);
-
+	/* make sure PD monitoring is disabled initially */
+	pd[port].rx_enabled = 0;
 }
 
 int tcpc_run(int port, int evt)
@@ -722,7 +713,7 @@ int tcpc_run(int port, int evt)
 	int cc, i, res;
 
 	/* incoming packet ? */
-	if (pd_rx_started(port) && pd_comm_enabled) {
+	if (pd_rx_started(port) && pd[port].rx_enabled) {
 		pd[port].rx_head = pd_analyze_rx(port,
 						 pd[port].rx_payload);
 		pd_rx_complete(port);
@@ -738,7 +729,7 @@ int tcpc_run(int port, int evt)
 	}
 
 	/* outgoing packet ? */
-	if ((evt & PD_EVENT_TX) && pd_comm_enabled) {
+	if ((evt & PD_EVENT_TX) && pd[port].rx_enabled) {
 		switch (pd[port].tx_type) {
 		case TRANSMIT_SOP:
 			res = send_validate_message(port,
@@ -786,7 +777,7 @@ int tcpc_run(int port, int evt)
 	}
 
 	/* make sure PD monitoring is enabled to wake on PD RX */
-	if (pd_comm_enabled)
+	if (pd[port].rx_enabled)
 		pd_rx_enable_monitoring(port);
 
 	/* TODO: adjust timeout based on how often to sample CC */
@@ -883,6 +874,16 @@ int tcpc_set_vconn(int port, int enable)
 	return EC_SUCCESS;
 }
 
+int tcpc_set_rx_enable(int port, int enable)
+{
+	pd[port].rx_enabled = enable;
+
+	if (!enable)
+		pd_rx_disable_monitoring(port);
+
+	return EC_SUCCESS;
+}
+
 int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 		  const uint32_t *data)
 {
@@ -935,6 +936,10 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 	case TCPC_REG_ALERT2:
 		/* TODO: clear alert status reg when writtent to */
 		break;
+	case TCPC_REG_RX_DETECT:
+		tcpc_set_rx_enable(port, payload[1] &
+					 TCPC_REG_RX_DETECT_SOP_HRST_MASK);
+		break;
 	case TCPC_REG_TX_HDR:
 		pd[port].tx_head = (payload[2] << 8) | payload[1];
 		break;
@@ -979,6 +984,10 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_ALERT1:
 	case TCPC_REG_ALERT2:
 		tcpc_alert_status(port, reg, payload);
+		return 1;
+	case TCPC_REG_RX_DETECT:
+		payload[0] = pd[port].rx_enabled ?
+				TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0;
 		return 1;
 	case TCPC_REG_RX_BYTE_CNT:
 		payload[0] = 4*PD_HEADER_CNT(pd[port].rx_head);
@@ -1067,18 +1076,6 @@ static int command_tcpc(int argc, char **argv)
 			debug_level = level;
 		}
 		return EC_SUCCESS;
-	} else if (!strcasecmp(argv[1], "enable")) {
-		int enable;
-
-		if (argc < 3)
-			return EC_ERROR_PARAM_COUNT;
-
-		enable = strtoi(argv[2], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM3;
-		pd_comm_enabled = enable;
-		ccprintf("Ports %s\n", enable ? "enabled" : "disabled");
-		return EC_SUCCESS;
 	}
 
 	/* command: pd <port> <subcmd> [args] */
@@ -1103,7 +1100,7 @@ static int command_tcpc(int argc, char **argv)
 	} else if (!strncasecmp(argv[2], "state", 5)) {
 		ccprintf("Port C%d, %s - CC:%d, CC0:%d, CC1:%d, "
 			 "Alert: 0x%02x 0x%02x\n", port,
-			 pd_comm_enabled ? "Ena" : "Dis",
+			 pd[port].rx_enabled ? "Ena" : "Dis",
 			 pd[port].cc_pull,
 			 pd[port].cc_status[0], pd[port].cc_status[1],
 			 pd[port].alert[0], pd[port].alert[1]);
@@ -1112,7 +1109,7 @@ static int command_tcpc(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(tcpc, command_tcpc,
-			"dump|enable [0|1]\n\t<port> [clock|state]",
+			"dump [0|1]\n\t<port> [clock|state]",
 			"Type-C Port Controller",
 			NULL);
 #endif

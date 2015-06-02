@@ -102,6 +102,8 @@ enum tcpc_cc_pull {
 #define TCPC_REG_RX_BYTE_CNT       0x2f
 #define TCPC_REG_RX_STATUS         0x30
 #define TCPC_REG_RX_DETECT         0x31
+#define TCPC_REG_RX_DETECT_SOP_HRST_MASK 0x21
+
 #define TCPC_REG_RX_HDR            0x32
 #define TCPC_REG_RX_DATA           0x34 /* through 0x4f */
 
@@ -209,6 +211,16 @@ int tcpm_set_vconn(int port, int enable);
  * @return EC_SUCCESS or error
  */
 int tcpm_set_msg_header(int port, int power_role, int data_role);
+
+/**
+ * Set RX enable flag
+ *
+ * @param port Type-C port number
+ * @enable true for enable, false for disable
+ *
+ * @return EC_SUCCESS or error
+ */
+int tcpm_set_rx_enable(int port, int enable);
 
 /**
  * Read last received PD message.

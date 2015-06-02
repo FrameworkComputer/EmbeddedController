@@ -80,6 +80,14 @@ int tcpm_alert_status(int port, int alert_reg, uint8_t *alert)
 			 alert_reg, (int *)alert);
 }
 
+int tcpm_set_rx_enable(int port, int enable)
+{
+	/* If enable, then set RX detect for SOP and HRST */
+	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+			  TCPC_REG_RX_DETECT,
+			  enable ? TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0);
+}
+
 int tcpm_get_message(int port, uint32_t *payload, int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
