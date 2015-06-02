@@ -386,6 +386,23 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			sizeof(struct ec_response_motion_sensor_data);
 		break;
 
+	case MOTIONSENSE_CMD_DATA:
+		sensor = host_sensor_id_to_motion_sensor(
+				in->sensor_odr.sensor_num);
+
+		if (sensor == NULL)
+			return EC_RES_INVALID_PARAM;
+
+		out->data.flags = 0;
+
+		mutex_lock(&g_sensor_mutex);
+		out->data.data[X] = sensor->xyz[X];
+		out->data.data[Y] = sensor->xyz[Y];
+		out->data.data[Z] = sensor->xyz[Z];
+		mutex_unlock(&g_sensor_mutex);
+		args->response_size = sizeof(out->data);
+		break;
+
 	case MOTIONSENSE_CMD_INFO:
 		sensor = host_sensor_id_to_motion_sensor(
 				in->sensor_odr.sensor_num);
@@ -493,7 +510,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD,
 		     host_cmd_motion_sense,
-		     EC_VER_MASK(1));
+		     EC_VER_MASK(1) | EC_VER_MASK(2));
 
 /*****************************************************************************/
 /* Console commands */

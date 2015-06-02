@@ -1555,7 +1555,7 @@ struct ec_response_led_control {
  */
 
 /* Verified boot hash command */
-#define EC_CMD_VBOOT_HASH 0x2A
+#define EC_CMD_VBOOT_HASH 0x2a
 
 struct ec_params_vboot_hash {
 	uint8_t cmd;             /* enum ec_vboot_hash_cmd */
@@ -1607,7 +1607,7 @@ enum ec_vboot_hash_status {
  * Motion sense commands. We'll make separate structs for sub-commands with
  * different input args, so that we know how much to expect.
  */
-#define EC_CMD_MOTION_SENSE_CMD 0x2B
+#define EC_CMD_MOTION_SENSE_CMD 0x2b
 
 /* Motion sense commands */
 enum motionsense_command {
@@ -1651,6 +1651,11 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_KB_WAKE_ANGLE = 5,
 
+	/*
+	 * Returns a single sensor data.
+	 */
+	MOTIONSENSE_CMD_DATA = 6,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -1660,12 +1665,14 @@ enum motionsensor_type {
 	MOTIONSENSE_TYPE_ACCEL = 0,
 	MOTIONSENSE_TYPE_GYRO = 1,
 	MOTIONSENSE_TYPE_MAG = 2,
+	MOTIONSENSE_TYPE_MAX = 3,
 };
 
 /* List of motion sensor locations. */
 enum motionsensor_location {
 	MOTIONSENSE_LOC_BASE = 0,
 	MOTIONSENSE_LOC_LID = 1,
+	MOTIONSENSE_LOC_MAX = 2,
 };
 
 /* List of motion sensor chips. */
@@ -1710,10 +1717,10 @@ struct ec_params_motion_sense {
 			int16_t data;
 		} ec_rate, kb_wake_angle;
 
-		/* Used for MOTIONSENSE_CMD_INFO. */
+		/* Used for MOTIONSENSE_CMD_INFO, MOTIONSENSE_CMD_DATA. */
 		struct {
 			uint8_t sensor_num;
-		} info;
+		} info, data;
 
 		/*
 		 * Used for MOTIONSENSE_CMD_SENSOR_ODR and
@@ -1770,6 +1777,9 @@ struct ec_response_motion_sense {
 			/* Should be element of enum motionsensor_chip. */
 			uint8_t chip;
 		} info;
+
+		/* Used for MOTIONSENSE_CMD_DATA */
+		struct ec_response_motion_sensor_data data;
 
 		/*
 		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR,
@@ -3112,8 +3122,8 @@ struct ec_response_pd_log {
 /* The timestamp is the microsecond counter shifted to get about a ms. */
 #define PD_LOG_TIMESTAMP_SHIFT 10 /* 1 LSB = 1024us */
 
-#define PD_LOG_SIZE_MASK  0x1F
-#define PD_LOG_PORT_MASK  0xE0
+#define PD_LOG_SIZE_MASK  0x1f
+#define PD_LOG_PORT_MASK  0xe0
 #define PD_LOG_PORT_SHIFT    5
 #define PD_LOG_PORT_SIZE(port, size) (((port) << PD_LOG_PORT_SHIFT) | \
 				      ((size) & PD_LOG_SIZE_MASK))
@@ -3139,7 +3149,7 @@ struct ec_response_pd_log {
 #define PD_EVENT_VIDEO_DP_MODE (PD_EVENT_VIDEO_BASE+0)
 #define PD_EVENT_VIDEO_CODEC   (PD_EVENT_VIDEO_BASE+1)
 /* Returned in the "type" field, when there is no entry available */
-#define PD_EVENT_NO_ENTRY       0xFF
+#define PD_EVENT_NO_ENTRY       0xff
 
 /*
  * PD_EVENT_MCU_CHARGE event definition :
@@ -3154,7 +3164,7 @@ struct ec_response_pd_log {
 #define CHARGE_FLAGS_OVERRIDE          (1 << 13)
 /* Charger type */
 #define CHARGE_FLAGS_TYPE_SHIFT               3
-#define CHARGE_FLAGS_TYPE_MASK       (0xF << CHARGE_FLAGS_TYPE_SHIFT)
+#define CHARGE_FLAGS_TYPE_MASK       (0xf << CHARGE_FLAGS_TYPE_SHIFT)
 /* Power delivery role */
 #define CHARGE_FLAGS_ROLE_MASK         (7 <<  0)
 
