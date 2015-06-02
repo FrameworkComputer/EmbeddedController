@@ -170,23 +170,20 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	if (port == 0) {
-		/* output low on SPI TX to disable the FET */
 		if (polarity) {/* PA6 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_A, 0x0040, -1);
 			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
 					|  (3 << (2*4))) /* PA4 as ADC */
 					& ~(1 << (2*4)); /* disable GPO */
+			gpio_set_alternate_function(GPIO_A, 0x0040, -1);
 		} else {/* PB4 is SPI1 MISO */
-			gpio_set_alternate_function(GPIO_B, 0x0010, -1);
 			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
 					|  (3 << (2*2))) /* PA2 as ADC */
 					& ~(1 << (2*2)); /* disable GPO */
+			gpio_set_alternate_function(GPIO_B, 0x0010, -1);
 		}
 	} else {
-		/* output low on SPI TX to disable the FET (PB14) */
-		gpio_set_alternate_function(GPIO_B, 0x4000, -1);
 		if (polarity) {
 			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
@@ -198,6 +195,7 @@ static inline void pd_tx_disable(int port, int polarity)
 					|  (3 << (2*0))) /* PA0 as ADC */
 					& ~(1 << (2*0)); /* disable GPO */
 		}
+		gpio_set_alternate_function(GPIO_B, 0x4000, -1);
 	}
 }
 
