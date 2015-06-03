@@ -153,7 +153,7 @@ static inline void pd_tx_enable(int port, int polarity)
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
 					& ~(3 << (2*0))) /* PA0 disable ADC */
 					|  (1 << (2*0)); /* Set as GPO */
-			gpio_set_level(GPIO_USB_C1_CC2_PD, 0);
+			gpio_set_level(GPIO_USB_C1_CC1_PD, 0);
 		}
 
 		/*
