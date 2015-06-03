@@ -21,17 +21,13 @@
  *
  * @param offset        Flash offset to write.
  * @param size          Number of bytes to write.
- * @param data          Destination buffer for data.  Must be 32-bit aligned.
+ * @param data          Destination buffer for data.
  */
 int flash_physical_read(int offset, int size, char *data)
 {
 	int ret;
 
 	offset += CONFIG_FLASH_BASE_SPI;
-
-	/* Fail if offset, size, and data aren't at least word-aligned */
-	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
-		return EC_ERROR_INVAL;
 
 	spi_enable(1);
 	ret = spi_flash_read((uint8_t *)data, offset, size);
