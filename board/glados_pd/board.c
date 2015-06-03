@@ -36,14 +36,12 @@ void pd_send_ec_int(void)
 
 void vbus0_evt(enum gpio_signal signal)
 {
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
-#ifdef HAS_TASK_PD_C1
 	task_wake(TASK_ID_PD_C1);
-#endif
 }
 
 void board_config_pre_init(void)

@@ -39,12 +39,13 @@ static void pd_mcu_interrupt(enum gpio_signal signal)
 void vbus0_evt(enum gpio_signal signal)
 {
 	CPRINTF("VBUS C0, %d\n", !gpio_get_level(signal));
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
 	CPRINTF("VBUS C1, %d\n", !gpio_get_level(signal));
+	task_wake(TASK_ID_PD_C1);
 }
 
 void usb0_evt(enum gpio_signal signal)
