@@ -24,3 +24,5 @@ chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_USB)+=usb.o usb_endpoints.o
 chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
+# TODO(wfrichar): Document this (and all other CONFIG_USB_*) in config.h
+chip-$(CONFIG_USB_BLOB)+=usb_blob.o

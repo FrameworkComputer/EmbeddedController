@@ -88,6 +88,7 @@ common-$(CONFIG_USB_PD_TCPM_STUB)+=usb_pd_tcpm_stub.o
 common-$(CONFIG_USB_PD_TCPM_TCPCI)+=usb_pd_tcpm.o
 common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_WIRELESS)+=wireless.o
+common-$(HAS_TASK_BLOB)+=blob.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
 common-$(HAS_TASK_CONSOLE)+=console.o console_output.o uart_buffering.o
 common-$(HAS_TASK_CONSOLE)+=memory_commands.o
