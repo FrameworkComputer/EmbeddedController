@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "power.h"
+#include "power_button.h"
 #include "system.h"
 #include "util.h"
 #include "wireless.h"
@@ -38,15 +39,21 @@
 #define IN_ALL_S0 (IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
+static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(void)
 {
 	CPRINTS("%s()", __func__);
 
 	/*
-	 * Force off. This condition will reset once the state machine
-	 * transitions to G3.
+	 * Force off. Sending a reset command to the PMIC will power off
+	 * the EC, so simulate a long power button press instead. This
+	 * condition will reset once the state machine transitions to G3.
+	 * Consider reducing the latency here by changing the power off
+	 * hold time on the PMIC.
 	 */
+	forcing_shutdown = 1;
+	power_button_pch_press();
 }
 
 void chipset_force_g3(void)
@@ -113,6 +120,10 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
+		if (forcing_shutdown) {
+			power_button_pch_release();
+			forcing_shutdown = 0;
+		}
 		break;
 
 	case POWER_S5:

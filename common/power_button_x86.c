@@ -131,6 +131,15 @@ static void set_pwrbtn_to_pch(int high)
 	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
+void power_button_pch_press(void)
+{
+	CPRINTS("PB PCH force press");
+
+	/* Assert power button signal to PCH */
+	if (!power_button_is_pressed())
+		set_pwrbtn_to_pch(0);
+}
+
 void power_button_pch_release(void)
 {
 	CPRINTS("PB PCH force release");
