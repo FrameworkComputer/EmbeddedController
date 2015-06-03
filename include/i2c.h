@@ -145,6 +145,9 @@ int i2c_raw_mode(int port, int enable);
  */
 void i2c_lock(int port, int lock);
 
+/* Default maximum time we allow for an I2C transfer */
+#define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
+
 /**
  * Set the timeout for an I2C transaction.
  *

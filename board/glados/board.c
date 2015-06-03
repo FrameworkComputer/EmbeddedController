@@ -95,13 +95,6 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
-void __board_i2c_set_timeout(int port, uint32_t timeout)
-{
-}
-
-void i2c_set_timeout(int port, uint32_t timeout)
-		__attribute__((weak, alias("__board_i2c_set_timeout")));
-
 struct motion_sensor_t motion_sensors[] = {
 
 };

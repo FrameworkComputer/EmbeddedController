@@ -38,7 +38,13 @@
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
 
-static task_id_t task_waiting_on_controller[I2C_CONTROLLER_COUNT];
+/* I2C controller state data */
+struct {
+	/* Transaction timeout, or 0 to use default. */
+	uint32_t timeout_us;
+	/* Task waiting on port, or TASK_ID_INVALID if none. */
+	task_id_t task_waiting;
+} cdata[I2C_CONTROLLER_COUNT];
 
 static void configure_controller_speed(int controller, int kbps)
 {
@@ -111,7 +117,7 @@ static void reset_controller(int controller)
 
 static int wait_for_interrupt(int controller, int *event)
 {
-	task_waiting_on_controller[controller] = task_get_current();
+	cdata[controller].task_waiting = task_get_current();
 	task_enable_irq(MEC1322_IRQ_I2C_0 + controller);
 	/*
 	 * We want to wait here quietly until the I2C interrupt comes
@@ -121,8 +127,9 @@ static int wait_for_interrupt(int controller, int *event)
 	 * the I2C is either completed or timed out. Refer to the
 	 * implementation of usleep() for a similar situation.
 	 */
-	*event |= (task_wait_event(SECOND) & ~TASK_EVENT_I2C_IDLE);
-	task_waiting_on_controller[controller] = TASK_ID_INVALID;
+	*event |= (task_wait_event(cdata[controller].timeout_us)
+		  & ~TASK_EVENT_I2C_IDLE);
+	cdata[controller].task_waiting = TASK_ID_INVALID;
 	if (*event & TASK_EVENT_TIMER) {
 		/* Restore any events that we saw while waiting */
 		task_set_event(task_get_current(),
@@ -398,6 +405,13 @@ int i2c_port_to_controller(int port)
 	return (port == MEC1322_I2C0_0) ? 0 : port - 1;
 }
 
+void i2c_set_timeout(int port, uint32_t timeout)
+{
+	/* Param is port, but timeout is stored by-controller. */
+	cdata[i2c_port_to_controller(port)].timeout_us =
+		timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
+}
+
 static void i2c_init(void)
 {
 	int i;
@@ -422,13 +436,17 @@ static void i2c_init(void)
 			controller0_kbps = i2c_ports[i].kbps;
 		}
 		configure_controller(controller, i2c_ports[i].kbps);
+		cdata[controller].task_waiting = TASK_ID_INVALID;
+
+		/* Use default timeout. */
+		i2c_set_timeout(i2c_ports[i].port, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
 
 static void handle_interrupt(int controller)
 {
-	int id = task_waiting_on_controller[controller];
+	int id = cdata[controller].task_waiting;
 
 	/* Clear the interrupt status */
 	MEC1322_I2C_COMPLETE(controller) |= 1 << 29;
