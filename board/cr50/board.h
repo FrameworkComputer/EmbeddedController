@@ -19,8 +19,8 @@
 
 /* USB configuration */
 #define CONFIG_USB
-#define CONFIG_USB_CONSOLE
 #define CONFIG_USB_HID
+#define CONFIG_USB_BLOB
 
 #define CONFIG_USB_PID 0x5014
 
@@ -60,13 +60,13 @@ enum usb_strings {
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_BLOB    0
 #define USB_IFACE_HID     1
 #define USB_IFACE_COUNT   2
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
-#define USB_EP_CONSOLE   1
+#define USB_EP_BLOB      1
 #define USB_EP_HID       2
 #define USB_EP_COUNT     3
 
