@@ -421,7 +421,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_bytes,
 			| STM32_I2C_CR2_RD_WRN | slave_addr
 			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
 			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
-			| (out_bytes ? STM32_I2C_CR2_START : 0);
+			| (out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
