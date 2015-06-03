@@ -36,8 +36,16 @@ static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
-	return chip_i2c_xfer(port, slave_addr, out, out_size, in,
-			     in_size, flags);
+	int i;
+	int ret = EC_SUCCESS;
+
+	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
+		ret = chip_i2c_xfer(port, slave_addr, out, out_size, in,
+			in_size, flags);
+		if (ret != EC_ERROR_BUSY)
+			break;
+	}
+	return ret;
 }
 
 void i2c_lock(int port, int lock)

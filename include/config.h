@@ -805,6 +805,8 @@
 #undef CONFIG_I2C_PASSTHROUGH
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 
+/* Defines I2C operation retry count when slave nack'd(EC_ERROR_BUSY) */
+#define CONFIG_I2C_NACK_RETRY_COUNT 0
 /*
  * I2C SCL gating.
  *
@@ -1381,7 +1383,7 @@
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
 
-/* USB device buffers and descriptors in dedicated RAM */
+/* USB device buffers and descriptors */
 #undef CONFIG_USB_RAM_ACCESS_SIZE
 #undef CONFIG_USB_RAM_ACCESS_TYPE
 #undef CONFIG_USB_RAM_BASE

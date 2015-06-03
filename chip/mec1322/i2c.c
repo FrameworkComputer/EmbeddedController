@@ -229,6 +229,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	int skip = 0;
 	int bytes_to_read;
 	uint8_t reg;
+	int ret_done;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
@@ -272,11 +273,13 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		}
 
 		for (i = 0; i < out_size; ++i) {
-			if (wait_byte_done(controller))
+			ret_done = wait_byte_done(controller);
+			if (ret_done)
 				goto err_chip_i2c_xfer;
 			MEC1322_I2C_DATA(controller) = out[i];
 		}
-		if (wait_byte_done(controller))
+		ret_done = wait_byte_done(controller);
+		if (ret_done)
 			goto err_chip_i2c_xfer;
 
 		/*
@@ -320,12 +323,14 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		bytes_to_read = send_stop ? in_size - 2 : in_size;
 
 		for (i = 0; i < bytes_to_read; ++i) {
-			if (wait_byte_done(controller))
+			ret_done = wait_byte_done(controller);
+			if (ret_done)
 				goto err_chip_i2c_xfer;
 			push_in_buf(&in, MEC1322_I2C_DATA(controller), skip);
 			skip = 0;
 		}
-		if (wait_byte_done(controller))
+		ret_done = wait_byte_done(controller);
+		if (ret_done)
 			goto err_chip_i2c_xfer;
 
 		if (send_stop) {
@@ -335,7 +340,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			 */
 			MEC1322_I2C_CTRL(controller) = CTRL_ESO | CTRL_ENI;
 			push_in_buf(&in, MEC1322_I2C_DATA(controller), skip);
-			if (wait_byte_done(controller))
+			ret_done = wait_byte_done(controller);
+			if (ret_done)
 				goto err_chip_i2c_xfer;
 
 			/* Send STOP */
@@ -362,7 +368,12 @@ err_chip_i2c_xfer:
 	/* Send STOP and return error */
 	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 				       CTRL_STO | CTRL_ACK;
-	return EC_ERROR_UNKNOWN;
+	if (ret_done == STS_LRB)
+		return EC_ERROR_BUSY;
+	else if (ret_done == EC_ERROR_TIMEOUT)
+		return EC_ERROR_TIMEOUT;
+	else
+		return EC_ERROR_UNKNOWN;
 }
 
 int i2c_raw_get_scl(int port)

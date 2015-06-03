@@ -79,6 +79,9 @@
 #define I2C_PORT_ACCEL		MEC1322_I2C1
 #define I2C_PORT_THERMAL	MEC1322_I2C3
 
+#undef CONFIG_I2C_NACK_RETRY_COUNT
+#define CONFIG_I2C_NACK_RETRY_COUNT 2
+
 /* power signal definitions */
 enum power_signal {
 	X86_ALL_SYS_PWRGD = 0,
