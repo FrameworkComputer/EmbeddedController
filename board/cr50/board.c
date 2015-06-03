@@ -24,6 +24,7 @@
 
 #include "gpio_list.h"
 
+#ifdef CONFIG_USB_HID
 static void send_hid_event(void)
 {
 #if !defined(CHIP_VARIANT_CR50_A1)
@@ -45,6 +46,7 @@ static void send_hid_event(void)
 #endif
 }
 DECLARE_DEFERRED(send_hid_event);
+#endif
 
 /* Interrupt handler for button pushes */
 void button_event(enum gpio_signal signal)
@@ -57,7 +59,9 @@ void button_event(enum gpio_signal signal)
 		signal -= (GPIO_SW_N_ - GPIO_SW_N);
 
 	v = gpio_get_level(signal);
+#ifdef CONFIG_USB_HID
 	send_hid_event();
+#endif
 	ccprintf("Button %d = %d\n", signal, v);
 	gpio_set_level(signal - GPIO_SW_N + GPIO_LED_4, v);
 }
