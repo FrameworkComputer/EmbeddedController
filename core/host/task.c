@@ -196,6 +196,34 @@ uint32_t task_wait_event(int timeout_us)
 	return ret;
 }
 
+uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
+{
+	uint64_t deadline = get_time().val + timeout_us;
+	uint32_t events = 0;
+	int time_remaining_us = timeout_us;
+
+	/* Add the timer event to the mask so we can indicate a timeout */
+	event_mask |= TASK_EVENT_TIMER;
+
+	while (!(events & event_mask)) {
+		/* Collect events to re-post later */
+		events |= task_wait_event(time_remaining_us);
+
+		time_remaining_us = deadline - get_time().val;
+		if (timeout_us > 0 && time_remaining_us <= 0) {
+			/* Ensure we return a TIMER event if we timeout */
+			events |= TASK_EVENT_TIMER;
+			break;
+		}
+	}
+
+	/* Re-post any other events collected */
+	if (events & ~event_mask)
+		tasks[task_get_current()].event |= events & ~event_mask;
+
+	return events & event_mask;
+}
+
 void mutex_lock(struct mutex *mtx)
 {
 	int value = 0;

@@ -403,8 +403,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Re-post any other events collected */
 	if (events & ~event_mask)
-		atomic_or(task_get_event_bitmap(task_get_current()),
-			  events & ~event_mask);
+		atomic_or(&current_task->events, events & ~event_mask);
 
 	return events & event_mask;
 }

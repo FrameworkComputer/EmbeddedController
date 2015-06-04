@@ -216,6 +216,25 @@ uint32_t task_wait_event(int timeout_us)
 	return evt;
 }
 
+uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
+{
+	uint32_t evt = 0;
+
+	/* Add the timer event to the mask so we can indicate a timeout */
+	event_mask |= TASK_EVENT_TIMER;
+
+	/* Wait until an event matching event_mask */
+	do {
+		evt |= task_wait_event(timeout_us);
+	} while (!(evt & event_mask));
+
+	/* Restore any pending events not in the event_mask */
+	if (evt & ~event_mask)
+		task_set_event(0, evt & ~event_mask, 0);
+
+	return evt & event_mask;
+}
+
 void __keep cpu_reset(void)
 {
 	/* Disable interrupts */
