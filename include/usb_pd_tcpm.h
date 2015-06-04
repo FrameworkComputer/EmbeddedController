@@ -24,27 +24,26 @@
 #define TCPC_REG_DEV_CAP_2         0xd
 #define TCPC_REG_DEV_CAP_3         0xe
 #define TCPC_REG_DEV_CAP_4         0xf
-#define TCPC_REG_ALERT1            0x10
-#define TCPC_REG_ALERT1_SLEEP_EXITED (1<<7)
-#define TCPC_REG_ALERT1_POWER_STATUS (1<<6)
-#define TCPC_REG_ALERT1_CC_STATUS    (1<<5)
-#define TCPC_REG_ALERT1_RX_STATUS    (1<<4)
-#define TCPC_REG_ALERT1_RX_HARD_RST  (1<<3)
-#define TCPC_REG_ALERT1_TX_SUCCESS   (1<<2)
-#define TCPC_REG_ALERT1_TX_DISCARDED (1<<1)
-#define TCPC_REG_ALERT1_TX_FAILED    (1<<0)
-#define TCPC_REG_ALERT1_TX_COMPLETE  (TCPC_REG_ALERT1_TX_SUCCESS | \
-				      TCPC_REG_ALERT1_TX_DISCARDED | \
-				      TCPC_REG_ALERT1_TX_FAILED)
+#define TCPC_REG_ALERT             0x10
+#define TCPC_REG_ALERT_GPIO_CHANGE  (1<<10)
+#define TCPC_REG_ALERT_V_ALARM_LO   (1<<9)
+#define TCPC_REG_ALERT_V_ALARM_HI   (1<<8)
+#define TCPC_REG_ALERT_SLEEP_EXITED (1<<7)
+#define TCPC_REG_ALERT_POWER_STATUS (1<<6)
+#define TCPC_REG_ALERT_CC_STATUS    (1<<5)
+#define TCPC_REG_ALERT_RX_STATUS    (1<<4)
+#define TCPC_REG_ALERT_RX_HARD_RST  (1<<3)
+#define TCPC_REG_ALERT_TX_SUCCESS   (1<<2)
+#define TCPC_REG_ALERT_TX_DISCARDED (1<<1)
+#define TCPC_REG_ALERT_TX_FAILED    (1<<0)
+#define TCPC_REG_ALERT_TX_COMPLETE  (TCPC_REG_ALERT_TX_SUCCESS | \
+				      TCPC_REG_ALERT_TX_DISCARDED | \
+				      TCPC_REG_ALERT_TX_FAILED)
 
-#define TCPC_REG_ALERT2            0x11
-#define TCPC_REG_ALERT3            0x12
-#define TCPC_REG_ALERT4            0x13
-#define TCPC_REG_ALERT_MASK_1      0x14
-#define TCPC_REG_ALERT_MASK_2      0x15
-#define TCPC_REG_POWER_STATUS_MASK 0x16
-#define TCPC_REG_CC1_STATUS        0x18
-#define TCPC_REG_CC2_STATUS        0x19
+#define TCPC_REG_ALERT_MASK        0x12
+#define TCPC_REG_POWER_STATUS_MASK 0x14
+#define TCPC_REG_CC1_STATUS        0x16
+#define TCPC_REG_CC2_STATUS        0x17
 #define TCPC_REG_CC_STATUS_SET(term, volt) \
 		((term) << 3 | volt)
 #define TCPC_REG_CC_STATUS_TERM(reg) (((reg) & 0x38) >> 3)
@@ -130,8 +129,8 @@ enum tcpm_transmit_type {
 /**
  * TCPC is asserting alert
  */
-void tcpc_alert(void);
-
+void tcpc_alert(int port);
+void tcpc_alert_clear(int port);
 /**
  * Initialize TCPC.
  *
@@ -152,13 +151,23 @@ int tcpc_run(int port, int evt);
  * Read TCPC alert status
  *
  * @param port Type-C port number
- * @param alert_reg Alert register to read
+ * @param reg TCPC register address
  * @param alert Pointer to location to store alert status
- *
+
  * @return EC_SUCCESS or error
  */
-int tcpm_alert_status(int port, int alert_reg, uint8_t *alert);
+int tcpm_alert_status(int port, int reg, uint16_t *alert);
 
+/**
+ * Write TCPC Alert Mask register
+ *
+ * @param port Type-C port number
+ * @param reg TCPC register address
+ * @param mask bits to be set in Alert Mask register
+
+ * @return EC_SUCCESS or error
+ */
+int tcpm_alert_mask_set(int port, int reg, uint16_t mask);
 
 /**
  * Initialize TCPM driver and wait for TCPC readiness.

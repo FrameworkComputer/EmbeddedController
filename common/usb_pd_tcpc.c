@@ -187,7 +187,7 @@ static const uint8_t dec4b5b[] = {
 #define TYPE_C_SRC_3000_THRESHOLD	1230 /* mV */
 
 /* Convert TCPC Alert register to index into pd.alert[] */
-#define ALERT_REG_TO_INDEX(reg) (reg - TCPC_REG_ALERT1)
+#define ALERT_REG_TO_INDEX(reg) (reg - TCPC_REG_ALERT)
 
 /* PD transmit errors */
 enum pd_tx_errors {
@@ -209,7 +209,8 @@ static struct pd_port_controller {
 	/* CC status */
 	uint8_t cc_status[2];
 	/* TCPC alert status */
-	uint8_t alert[2];
+	uint16_t alert;
+	uint16_t alert_mask;
 	/* RX enabled */
 	uint8_t rx_enabled;
 
@@ -696,10 +697,16 @@ static int cc_voltage_to_status(int port, int cc_volt)
 		return 0;
 }
 
-static void alert(int port, int reg, int mask)
+static void alert(int port, int mask)
 {
-	pd[port].alert[ALERT_REG_TO_INDEX(reg)] |= mask;
-	tcpc_alert();
+	/* Always update the Alert status register */
+	pd[port].alert |= mask;
+	/*
+	 * Only send interrupt to TCPM if corresponding
+	 * bit in the alert_enable register is set.
+	 */
+	if (pd[port].alert_mask & mask)
+		tcpc_alert(port);
 }
 
 void tcpc_init(int port)
@@ -726,10 +733,9 @@ int tcpc_run(int port, int evt)
 			handle_request(port,
 				       pd[port].rx_head,
 				       pd[port].rx_payload);
-			alert(port, TCPC_REG_ALERT1, TCPC_REG_ALERT1_RX_STATUS);
+			alert(port, TCPC_REG_ALERT_RX_STATUS);
 		} else if (pd[port].rx_head == PD_RX_ERR_HARD_RESET) {
-			alert(port, TCPC_REG_ALERT1,
-			      TCPC_REG_ALERT1_RX_HARD_RST);
+			alert(port, TCPC_REG_ALERT_RX_HARD_RST);
 		}
 	}
 
@@ -754,14 +760,11 @@ int tcpc_run(int port, int evt)
 
 		/* send appropriate alert for tx completion */
 		if (res >= 0)
-			alert(port, TCPC_REG_ALERT1,
-			      TCPC_REG_ALERT1_TX_SUCCESS);
+			alert(port, TCPC_REG_ALERT_TX_SUCCESS);
 		else if (res == PD_TX_ERR_GOODCRC)
-			alert(port, TCPC_REG_ALERT1,
-			      TCPC_REG_ALERT1_TX_FAILED);
+			alert(port, TCPC_REG_ALERT_TX_FAILED);
 		else
-			alert(port, TCPC_REG_ALERT1,
-			      TCPC_REG_ALERT1_TX_DISCARDED);
+			alert(port, TCPC_REG_ALERT_TX_DISCARDED);
 	} else {
 		/* If we have nothing to transmit, then sample CC lines */
 
@@ -778,8 +781,7 @@ int tcpc_run(int port, int evt)
 			cc = cc_voltage_to_status(port, cc);
 			if (pd[port].cc_status[i] != cc) {
 				pd[port].cc_status[i] = cc;
-				alert(port, TCPC_REG_ALERT1,
-				      TCPC_REG_ALERT1_CC_STATUS);
+				alert(port, TCPC_REG_ALERT_CC_STATUS);
 			}
 		}
 	}
@@ -820,14 +822,30 @@ void pd_rx_event(int port)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 }
 
-int tcpc_alert_status(int port, int alert_reg, uint8_t *alert)
+int tcpc_alert_status(int port, uint16_t *alert)
 {
-	int ret = pd[port].alert[ALERT_REG_TO_INDEX(alert_reg)];
-
-	/* TODO: Need to use alert mask to know which bits to let through */
-	/* TODO: Alert register is read-clear for now, but shouldn't be */
-	pd[port].alert[ALERT_REG_TO_INDEX(alert_reg)] = 0;
+	/* return the value of the TCPC Alert register */
+	uint16_t ret = pd[port].alert;
 	*alert = ret;
+	return EC_SUCCESS;
+}
+
+int tcpc_alert_status_clear(int port, uint16_t mask)
+{
+	/* clear only the bits specified by the TCPM */
+	pd[port].alert &= ~mask;
+#ifndef CONFIG_USB_POWER_DELIVERY
+	/* Set Alert# inactive if all alert bits clear */
+	if (!pd[port].alert)
+		tcpc_alert_clear(port);
+#endif
+	return EC_SUCCESS;
+}
+
+int tcpc_alert_mask_update(int port, uint16_t mask)
+{
+	/* Update the alert mask as specificied by the TCPM */
+	pd[port].alert_mask = mask;
 	return EC_SUCCESS;
 }
 
@@ -929,6 +947,7 @@ int tcpc_get_message(int port, uint32_t *payload, int *head)
 #ifndef CONFIG_USB_POWER_DELIVERY
 static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 {
+	uint16_t alert;
 	switch (reg) {
 	case TCPC_REG_ROLE_CTRL:
 		tcpc_set_cc(port, TCPC_REG_ROLE_CTRL_CC1(payload[1]));
@@ -943,9 +962,16 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 				    TCPC_REG_MSG_HDR_INFO_PROLE(payload[1]),
 				    TCPC_REG_MSG_HDR_INFO_DROLE(payload[1]));
 		break;
-	case TCPC_REG_ALERT1:
-	case TCPC_REG_ALERT2:
-		/* TODO: clear alert status reg when writtent to */
+	case TCPC_REG_ALERT:
+		alert = payload[1];
+		alert |= (payload[2] << 8);
+		/* clear alert bits specified by the TCPM */
+		tcpc_alert_status_clear(port, alert);
+		break;
+	case TCPC_REG_ALERT_MASK:
+		alert = payload[1];
+		alert |= (payload[2] << 8);
+		tcpc_alert_mask_update(port, alert);
 		break;
 	case TCPC_REG_RX_DETECT:
 		tcpc_set_rx_enable(port, payload[1] &
@@ -967,6 +993,7 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 {
 	int cc1, cc2;
+	uint16_t alert;
 
 	switch (reg) {
 	case TCPC_REG_VENDOR_ID:
@@ -995,14 +1022,19 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		payload[0] = TCPC_REG_MSG_HDR_INFO_SET(pd[port].data_role,
 						       pd[port].power_role);
 		return 1;
-	case TCPC_REG_ALERT1:
-	case TCPC_REG_ALERT2:
-		tcpc_alert_status(port, reg, payload);
-		return 1;
 	case TCPC_REG_RX_DETECT:
 		payload[0] = pd[port].rx_enabled ?
 				TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0;
 		return 1;
+	case TCPC_REG_ALERT:
+		tcpc_alert_status(port, &alert);
+		payload[0] = alert & 0xff;
+		payload[1] = (alert >> 8) & 0xff;
+		return 2;
+	case TCPC_REG_ALERT_MASK:
+		payload[0] = pd[port].alert_mask & 0xff;
+		payload[1] = (pd[port].alert_mask >> 8) & 0xff;
+		return 2;
 	case TCPC_REG_RX_BYTE_CNT:
 		payload[0] = 4*PD_HEADER_CNT(pd[port].rx_head);
 		return 1;
@@ -1113,11 +1145,11 @@ static int command_tcpc(int argc, char **argv)
 		return EC_SUCCESS;
 	} else if (!strncasecmp(argv[2], "state", 5)) {
 		ccprintf("Port C%d, %s - CC:%d, CC0:%d, CC1:%d, "
-			 "Alert: 0x%02x 0x%02x\n", port,
+			 "Alert: 0x%02x\n", port,
 			 pd[port].rx_enabled ? "Ena" : "Dis",
 			 pd[port].cc_pull,
 			 pd[port].cc_status[0], pd[port].cc_status[1],
-			 pd[port].alert[0], pd[port].alert[1]);
+			 pd[port].alert);
 	}
 
 	return EC_SUCCESS;

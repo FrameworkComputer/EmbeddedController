@@ -8,7 +8,11 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-extern int tcpc_alert_status(int port, int alert_reg, uint8_t *alert);
+#include "console.h"
+
+extern int tcpc_alert_status(int port, uint16_t *alert);
+extern int tcpc_alert_status_clear(int port, uint16_t mask);
+extern int tcpc_alert_mask_update(int port, uint16_t mask);
 extern int tcpc_get_cc(int port, int *cc1, int *cc2);
 extern int tcpc_set_cc(int port, int pull);
 extern int tcpc_set_polarity(int port, int polarity);
@@ -51,14 +55,25 @@ int tcpm_set_msg_header(int port, int power_role, int data_role)
 	return tcpc_set_msg_header(port, power_role, data_role);
 }
 
-int tcpm_alert_status(int port, int alert_reg, uint8_t *alert)
+int tcpm_alert_status(int port, int alert_reg, uint16_t *alert)
 {
-	return tcpc_alert_status(port, alert_reg, alert);
+	int rv;
+
+	/* Read TCPC Alert register */
+	rv = tcpc_alert_status(port, alert);
+	/* Clear all bits being processed by the protocol layer */
+	tcpc_alert_status_clear(port, *alert);
+	return rv;
 }
 
 int tcpm_set_rx_enable(int port, int enable)
 {
 	return tcpc_set_rx_enable(port, enable);
+}
+
+int tcpm_alert_mask_set(int port, int reg, uint16_t mask)
+{
+	return tcpc_alert_mask_update(port, mask);
 }
 
 int tcpm_get_message(int port, uint32_t *payload, int *head)

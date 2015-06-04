@@ -3015,6 +3015,11 @@ struct ec_params_pd_status {
 #define PD_STATUS_HOST_EVENT      (1 << 0) /* Forward host event to AP */
 #define PD_STATUS_IN_RW           (1 << 1) /* Running RW image */
 #define PD_STATUS_JUMPED_TO_IMAGE (1 << 2) /* Current image was jumped to */
+#define PD_STATUS_TCPC_ALERT_0    (1 << 3) /* Alert active in port 0 TCPC */
+#define PD_STATUS_TCPC_ALERT_1    (1 << 4) /* Alert active in port 1 TCPC */
+#define PD_STATUS_EC_INT_ACTIVE  (PD_STATUS_TCPC_ALERT_0 | \
+				      PD_STATUS_TCPC_ALERT_1 | \
+				      PD_STATUS_HOST_EVENT)
 struct ec_response_pd_status {
 	uint32_t status;      /* PD MCU status */
 	uint32_t curr_lim_ma; /* input current limit */

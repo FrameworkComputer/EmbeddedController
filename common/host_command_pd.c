@@ -8,6 +8,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "host_command.h"
 #include "lightbar.h"
 #include "panic.h"
@@ -45,11 +46,31 @@ void host_command_pd_send_status(enum pd_charge_state new_chg_state)
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
 }
 
+static int pd_send_host_command(struct ec_params_pd_status *ec_status,
+	struct ec_response_pd_status *pd_status)
+{
+	int rv;
+
+	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 1, ec_status,
+			     sizeof(struct ec_params_pd_status), pd_status,
+			     sizeof(struct ec_response_pd_status));
+
+	/* If PD doesn't support new command version, try old version */
+	if (rv == -EC_RES_INVALID_VERSION)
+		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, ec_status,
+			     sizeof(struct ec_params_pd_status), pd_status,
+			     sizeof(struct ec_response_pd_status));
+	return rv;
+}
+
 static void pd_exchange_status(void)
 {
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
 	int rv = 0;
+#ifdef CONFIG_USB_PD_TCPM_TCPCI
+	int loop_count;
+#endif
 #ifdef CONFIG_HOSTCMD_PD_PANIC
 	static int pd_in_rw;
 #endif
@@ -63,15 +84,7 @@ static void pd_exchange_status(void)
 	else
 		ec_status.batt_soc = -1;
 
-	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 1, &ec_status,
-			     sizeof(struct ec_params_pd_status), &pd_status,
-			     sizeof(struct ec_response_pd_status));
-
-	/* If PD doesn't support new command version, try old version */
-	if (rv == -EC_RES_INVALID_VERSION)
-		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, &ec_status,
-			     sizeof(struct ec_params_pd_status), &pd_status,
-			     sizeof(struct ec_response_pd_status));
+	rv = pd_send_host_command(&ec_status, &pd_status);
 
 	if (rv < 0) {
 		CPRINTS("Host command to PD MCU failed");
@@ -124,7 +137,32 @@ static void pd_exchange_status(void)
 		host_set_single_event(EC_HOST_EVENT_PD_MCU);
 
 #ifdef CONFIG_USB_PD_TCPM_TCPCI
-	tcpc_alert();
+	/*
+	 * Loop here until all Alerts from either port have been handled.
+	 * This is necessary to prevent the case where Alert bits are set
+	 * and the GPIO line is held low, which would prevent a new edge
+	 * event which prevents tcpc_alert() from being called and that
+	 * in turn prevents the GPIO line from being released.
+	 */
+	while (!gpio_get_level(GPIO_PD_MCU_INT)) {
+		/*
+		 * If TCPC is not present on this MCU, then check
+		 * to see if either PD port is signallng an
+		 * Alert# to the TCPM.
+		 */
+		if (pd_status.status & PD_STATUS_TCPC_ALERT_0)
+			tcpc_alert(0);
+		if (pd_status.status & PD_STATUS_TCPC_ALERT_1)
+			tcpc_alert(1);
+		if (loop_count++) {
+			usleep(50*MSEC);
+			rv = pd_send_host_command(&ec_status, &pd_status);
+			if (rv < 0) {
+				CPRINTS("Host command to PD MCU failed");
+				return;
+			}
+		}
+	}
 #endif
 }
 
