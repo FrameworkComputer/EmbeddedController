@@ -297,9 +297,7 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 	tcpm_transmit(port, type, header, data);
 
 	/* Wait until TX is complete */
-	do {
-		evt = task_wait_event(PD_T_TCPC_TX_TIMEOUT);
-	} while (!(evt & (TASK_EVENT_TIMER | PD_EVENT_TX)));
+	evt = task_wait_event_mask(PD_EVENT_TX, PD_T_TCPC_TX_TIMEOUT);
 
 	if (evt & TASK_EVENT_TIMER)
 		return -1;
