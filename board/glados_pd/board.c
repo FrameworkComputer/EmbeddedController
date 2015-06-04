@@ -101,3 +101,20 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"",
 			"Toggle EC interrupt line",
 			NULL);
+
+static int ec_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	struct ec_response_pd_status *r = args->response;
+
+	/*
+	 * TODO: use state here to notify EC of host events, tcpc port
+	 * 0 alert and tcpc port 1 alert.
+	 */
+	r->status = 0;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
+			EC_VER_MASK(1));
+

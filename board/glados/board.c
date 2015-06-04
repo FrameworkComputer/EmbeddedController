@@ -11,6 +11,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
@@ -33,7 +34,8 @@
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(tcpc_alert, 0);
+	/* Exchange status with PD MCU to determine interrupt cause */
+	host_command_pd_send_status(0);
 }
 
 void vbus0_evt(enum gpio_signal signal)

@@ -1328,6 +1328,12 @@
 /* The size in bytes of the FIFO used for PD events logging */
 #undef CONFIG_USB_PD_LOG_SIZE
 
+/*
+ * Use if PD MCU controls charging (selecting charging port and input
+ * current limit).
+ */
+#undef CONFIG_USB_PD_MCU_CHG_CTRL
+
 /* Define if USB-PD device has no way of detecting USB VBUS */
 #undef CONFIG_USB_PD_NO_VBUS_DETECT
 
