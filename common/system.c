@@ -93,10 +93,16 @@ static enum ec_reboot_cmd reboot_at_shutdown;
 uint32_t sleep_mask;
 
 /**
- * Return the base pointer for the image copy, or 0xffffffff if error.
+ * Return the program memory address where the image `copy` begins or should
+ * begin. In the case of CODERAM_ARCH, the image may or may not currently
+ * reside at the location returned.
  */
-static uintptr_t get_base(enum system_image_copy_t copy)
+static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 {
+	/*
+	 * TODO(crosbug.com/p/23796): CONFIG_FLASH_BASE has overloaded meaning,
+	 * add an explicit CONFIG for program memory base for all boards.
+	 */
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_FLASH_BASE + CONFIG_RO_MEM_OFF;
@@ -335,7 +341,11 @@ int system_get_image_used(enum system_image_copy_t copy)
 	const uint8_t *image;
 	int size = 0;
 
-	image = (const uint8_t *)get_base(copy);
+	/*
+	 * TODO(crosbug.com/p/41063): Make this work on platforms with
+	 * external, non-memmapped SPI flash.
+	 */
+	image = (const uint8_t *)get_program_memory_addr(copy);
 	size = get_size(copy);
 
 	if (size <= 0)
@@ -478,7 +488,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	}
 
 	/* Load the appropriate reset vector */
-	base = get_base(copy);
+	base = get_program_memory_addr(copy);
 	if (base == 0xffffffff)
 		return EC_ERROR_INVAL;
 
@@ -504,43 +514,55 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-#ifndef CONFIG_FLASH_MAPPED
+#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
 	static struct version_struct vdata;
 #endif
 
 	uintptr_t addr;
 	const struct version_struct *v;
+	enum system_image_copy_t active_copy = system_get_image_copy();
 
 	/* Handle version of current image */
-	if (copy == system_get_image_copy() || copy == SYSTEM_IMAGE_UNKNOWN)
+	if (copy == active_copy || copy == SYSTEM_IMAGE_UNKNOWN)
 		return &RO(version_data).version[0];
 
-	addr = get_base(copy);
-	if (addr == 0xffffffff)
+	if (active_copy == SYSTEM_IMAGE_UNKNOWN)
 		return "";
 
 	/*
 	 * The version string is always located after the reset vectors, so
 	 * it's the same offset as in the current image.  Find that offset.
 	 */
+	addr = ((uintptr_t)&version_data -
+	       get_program_memory_addr(active_copy));
 #ifdef CONFIG_CODERAM_ARCH
-	/*
-	 * Code has been copied from flash to code RAM, so offset of the
-	 * current image's version struct is from the start of code RAM, not
-	 * the start of the flash image.
-	 */
-	addr += ((uintptr_t)&version_data - CONFIG_CDRAM_BASE);
-#else
-	/* Offset is from the start of the flash image */
-	addr += ((uintptr_t)&version_data - get_base(system_get_image_copy()));
-#endif
-
 #ifdef CONFIG_FLASH_MAPPED
-	/* Directly access the version data */
+	/* Geometry constants have non-standard meaning for npcx */
+	addr = ((uintptr_t)&version_data - CONFIG_CDRAM_BASE +
+			   get_program_memory_addr(copy));
+#else
+	/*
+	 * Since our requested image isn't currently populated in program
+	 * memory, read the version information from the proper location
+	 * on storage.
+	 */
+	addr += (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
+					    CONFIG_RO_STORAGE_OFF;
+#endif /* CONFIG_FLASH_MAPPED */
+#else /* CONFIG_CODERAM_ARCH */
+	/*
+	 * Read version from program memory, which is always populated with
+	 * both images.
+	 */
+	addr += get_program_memory_addr(copy);
+#endif /*CONFIG_CODERAM_ARCH */
+
+#if defined(CONFIG_FLASH_MAPPED) || !defined(CONFIG_CODERAM_ARCH)
+	/* Directly access the data from program memory or mapped flash. */
 	v = (const struct version_struct *)addr;
 #else
-	/* Read the version struct into a buffer */
-	if (flash_read(addr - CONFIG_FLASH_BASE, sizeof(vdata), (char *)&vdata))
+	/* Read the version struct from flash into a buffer. */
+	if (flash_read(addr, sizeof(vdata), (char *)&vdata))
 		return "";
 
 	v = &vdata;
