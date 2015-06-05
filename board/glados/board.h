@@ -12,6 +12,7 @@
 #define CONFIG_ADC
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BUTTON_COUNT 2
+#define CONFIG_CHARGE_MANAGER
 
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
@@ -64,6 +65,9 @@
 #define I2C_PORT_ACCEL MEC1322_I2C2
 #define I2C_PORT_PMIC MEC1322_I2C3
 
+#undef DEFERRABLE_MAX_COUNT
+#define DEFERRABLE_MAX_COUNT 9
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -91,6 +95,22 @@ enum power_signal {
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT
 };
+
+/* Charge suppliers */
+enum charge_supplier {
+	CHARGE_SUPPLIER_PD,
+	CHARGE_SUPPLIER_TYPEC,
+	CHARGE_SUPPLIER_BC12_DCP,
+	CHARGE_SUPPLIER_BC12_CDP,
+	CHARGE_SUPPLIER_BC12_SDP,
+	CHARGE_SUPPLIER_PROPRIETARY,
+	CHARGE_SUPPLIER_OTHER,
+	CHARGE_SUPPLIER_VBUS,
+	CHARGE_SUPPLIER_COUNT
+};
+
+/* supplier_priority table defined in board.c */
+extern const int supplier_priority[];
 
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
