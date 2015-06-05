@@ -5,6 +5,7 @@
 
 /* Glados board-specific configuration */
 
+#include "adc_chip.h"
 #include "button.h"
 #include "charger.h"
 #include "console.h"
@@ -70,6 +71,20 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PMIC_DPWROK,       1, "PMIC_DPWROK"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/* Battery pack thermisor */
+	[ADC_BATT_TEMP] = {"BATT_TEMP", 1, 1, 0, 0},
+	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33V. */
+	[ADC_VBUS] = {"VBUS", 33000, 1024, 0, 1},
+	/* Adapter current output or battery discharging current */
+	[ADC_AMON_BMON] = {"AMON_BMON", 1, 1, 0, 3},
+	/* System current consumption */
+	[ADC_PSYS] = {"PSYS", 1, 1, 0, 4},
+
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
 	{"batt",     MEC1322_I2C0_0, 100,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},

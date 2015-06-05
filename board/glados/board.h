@@ -9,6 +9,7 @@
 #define __BOARD_H
 
 /* Optional features */
+#define CONFIG_ADC
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BUTTON_COUNT 2
 
@@ -67,6 +68,16 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+/* ADC signal */
+enum adc_channel {
+	ADC_BATT_TEMP,
+	ADC_VBUS,
+	ADC_AMON_BMON,
+	ADC_PSYS,
+	/* Number of ADC channels */
+	ADC_CH_COUNT
+};
 
 /* power signal definitions */
 enum power_signal {
