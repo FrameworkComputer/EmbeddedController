@@ -257,28 +257,47 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes)
 int spi_flash_write(unsigned int offset, unsigned int bytes,
 	const uint8_t const *data)
 {
-	int rv;
+	int rv, write_size;
 
 	/* Invalid input */
 	if (!data || offset + bytes > CONFIG_SPI_FLASH_SIZE ||
 	    bytes > SPI_FLASH_MAX_WRITE_SIZE)
 		return EC_ERROR_INVAL;
 
-	/* Enable writing to SPI flash */
-	rv = spi_flash_write_enable();
-	if (rv)
-		return rv;
+	while (bytes > 0) {
+		/* Write length can not go beyond the end of the flash page */
+		write_size = MIN(bytes, SPI_FLASH_MAX_WRITE_SIZE -
+		(offset & (SPI_FLASH_MAX_WRITE_SIZE - 1)));
 
-	/* Copy data to send buffer; buffers may overlap */
-	memmove(buf + 4, data, bytes);
+		/* Wait for previous operation to complete */
+		rv = spi_flash_wait();
+		if (rv)
+			return rv;
 
-	/* Compose instruction */
-	buf[0] = SPI_FLASH_PAGE_PRGRM;
-	buf[1] = (offset >> 16) & 0xFF;
-	buf[2] = (offset >> 8) & 0xFF;
-	buf[3] = offset & 0xFF;
+		/* Enable writing to SPI flash */
+		rv = spi_flash_write_enable();
+		if (rv)
+			return rv;
 
-	return spi_transaction(buf, 4 + bytes, NULL, 0);
+		/* Copy data to send buffer; buffers may overlap */
+		memmove(buf + 4, data, write_size);
+
+		/* Compose instruction */
+		buf[0] = SPI_FLASH_PAGE_PRGRM;
+		buf[1] = (offset) >> 16;
+		buf[2] = (offset) >> 8;
+		buf[3] = offset;
+
+		rv = spi_transaction(buf, 4 + write_size, NULL, 0);
+		if (rv)
+			return rv;
+
+		data += write_size;
+		offset += write_size;
+		bytes -= write_size;
+	}
+
+	return rv;
 }
 
 /**

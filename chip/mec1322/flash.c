@@ -62,8 +62,6 @@ int flash_physical_write(int offset, int size, const char *data)
 				      (uint8_t *)data + i);
 		if (ret != EC_SUCCESS)
 			break;
-		/* BUG: Multi-page writes fail if no delay */
-		msleep(1);
 	}
 	spi_enable(0);
 	return ret;
