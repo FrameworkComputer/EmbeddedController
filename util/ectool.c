@@ -3221,6 +3221,9 @@ static const struct {
 	MS_SIZES(sensor_range),
 	MS_SIZES(kb_wake_angle),
 	MS_SIZES(data),
+	MS_SIZES(fifo_flush),
+	MS_SIZES(fifo_info),
+	MS_SIZES(fifo_read),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3235,6 +3238,12 @@ static int ms_help(const char *cmd)
 	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
 	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
 	printf("  %s kb_wake NUM                - set/get KB wake ang\n", cmd);
+	printf("  %s data NUM                   - read sensor latest data\n",
+			cmd);
+	printf("  %s fifo_info                  - print fifo info\n", cmd);
+	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
+	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
+			cmd);
 
 	return 0;
 }
@@ -3481,6 +3490,92 @@ static int cmd_motionsense(int argc, char **argv)
 
 		printf("%d\n", resp->kb_wake_angle.ret);
 		return 0;
+	}
+
+	if (argc == 2 && !strcasecmp(argv[1], "fifo_info")) {
+		param.cmd = MOTIONSENSE_CMD_FIFO_INFO;
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+
+		printf("Size:     %d\n", resp->fifo_info.size);
+		printf("Count:    %d\n", resp->fifo_info.count);
+		printf("Lost:     %d\n", resp->fifo_info.lost);
+		printf("Timestamp:%" PRIx32 "\n", resp->fifo_info.timestamp);
+		return 0;
+	}
+
+	if (argc == 3 && !strcasecmp(argv[1], "fifo_read")) {
+		/* large number to test fragmentation */
+		struct {
+			uint32_t number_data;
+			struct ec_response_motion_sensor_data data[512];
+		} fifo_read_buffer = {
+			.number_data = -1,
+		};
+		int print_data = 0,  max_data = strtol(argv[2], &e, 0);
+
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+		while (fifo_read_buffer.number_data != 0 &&
+		       print_data < max_data) {
+			struct ec_response_motion_sensor_data *vector;
+			param.cmd = MOTIONSENSE_CMD_FIFO_READ;
+			param.fifo_read.max_data_vector =
+				MIN(ARRAY_SIZE(fifo_read_buffer.data),
+				    max_data - print_data);
+
+			rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+					&param,
+					ms_command_sizes[param.cmd].outsize,
+					&fifo_read_buffer, ec_max_insize);
+			if (rv < 0)
+				return rv;
+
+			print_data += fifo_read_buffer.number_data;
+			for (i = 0; i < fifo_read_buffer.number_data; i++) {
+				vector = &fifo_read_buffer.data[i];
+				if (vector->flags &
+					(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP |
+					 MOTIONSENSE_SENSOR_FLAG_FLUSH)) {
+					uint32_t timestamp = 0;
+
+					memcpy(&timestamp, vector->data,
+							sizeof(uint32_t));
+					printf("Timestamp:%" PRIx32 "%s\n",
+						timestamp,
+						(vector->flags &
+						 MOTIONSENSE_SENSOR_FLAG_FLUSH ?
+						 " - Flush" : ""));
+				} else {
+					printf("Sensor %d: %d\t%d\t%d\n",
+						vector->sensor_num,
+						vector->data[0],
+						vector->data[1],
+						vector->data[2]);
+				}
+			}
+		}
+		return 0;
+	}
+	if (argc == 3 && !strcasecmp(argv[1], "fifo_flush")) {
+		param.cmd = MOTIONSENSE_CMD_FIFO_FLUSH;
+
+		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+
+		return rv < 0 ? rv : 0;
 	}
 
 	return ms_help(argv[0]);
