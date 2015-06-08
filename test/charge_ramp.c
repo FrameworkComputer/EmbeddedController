@@ -38,7 +38,7 @@ static int charge_limit_ma;
 
 int board_is_ramp_allowed(int supplier)
 {
-	/* Ramp for TEST4-TEST9 */
+	/* Ramp for TEST4-TEST8 */
 	return supplier > CHARGE_SUPPLIER_TEST3;
 }
 
@@ -62,12 +62,16 @@ void board_set_charge_limit(int limit_ma)
 
 int board_get_ramp_current_limit(int supplier, int sup_curr)
 {
-	if (supplier == CHARGE_SUPPLIER_TEST9)
+	if (supplier == CHARGE_SUPPLIER_TEST7)
 		return 1600;
 	else if (supplier == CHARGE_SUPPLIER_TEST8)
 		return 2400;
 	else
 		return 3000;
+}
+
+void pd_send_host_event(int mask)
+{
 }
 
 /* Test utilities */
@@ -191,7 +195,7 @@ static int test_switch_outlet(void)
 
 	system_load_current_ma = 3000;
 	/* Here's a nice powerful charger */
-	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 3000, 3000);
+	plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 3000);
 
 	/*
 	 * Now the user decides to move it to a nearby outlet...actually
@@ -201,7 +205,7 @@ static int test_switch_outlet(void)
 		usleep(SECOND * 20);
 		unplug_charger();
 		usleep(SECOND * 1.5);
-		plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 3000, 3000);
+		plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 3000);
 		usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
@@ -399,7 +403,7 @@ static int test_vbus_shift(void)
 	 * At first, the charger is able to supply up to 1900 mA before
 	 * the VBUS voltage starts to drop.
 	 */
-	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 1900, 2000);
+	plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 1900, 2000);
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(is_in_range(charge_limit_ma, 1700, 1900));
 
@@ -456,7 +460,7 @@ static int test_ramp_limit(void)
 	system_load_current_ma = 3000;
 
 	/* Plug in supplier that is limited to 1.6A */
-	plug_charger(CHARGE_SUPPLIER_TEST9, 0, 500, 3000, 3000);
+	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 3000, 3000);
 	usleep(SECOND);
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -470,7 +474,7 @@ static int test_ramp_limit(void)
 	TEST_ASSERT(charge_limit_ma == 2400);
 
 	/* Go back to 1.6A limited, but VBUS goes low before that point */
-	plug_charger(CHARGE_SUPPLIER_TEST9, 0, 500, 1200, 1300);
+	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 1200, 1300);
 	usleep(SECOND);
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	TEST_ASSERT(wait_stable_no_overcurrent());

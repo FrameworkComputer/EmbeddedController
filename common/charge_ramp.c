@@ -197,10 +197,8 @@ void chg_ramp_task(void)
 
 			/* Detect delay is over, fall through to next state */
 			ramp_st_new = CHG_RAMP_OVERCURRENT_DETECT;
-#ifdef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
 			/* notify host of power info change */
 			pd_send_host_event(PD_EVENT_POWER_CHANGE);
-#endif
 		case CHG_RAMP_OVERCURRENT_DETECT:
 			/* Check if we should ramp or go straight to stable */
 			task_wait_time = SECOND;
@@ -297,10 +295,8 @@ void chg_ramp_task(void)
 #ifdef CONFIG_USB_PD_LOGGING
 				charge_manager_save_log(active_port);
 #endif
-#ifdef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
 				/* notify host of power info change */
 				pd_send_host_event(PD_EVENT_POWER_CHANGE);
-#endif
 			}
 
 			/* Keep an eye on VBUS and restart ramping if it dips */

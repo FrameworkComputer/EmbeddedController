@@ -89,113 +89,9 @@ void vbus_evt(enum gpio_signal signal)
 		task_wake(TASK_ID_PD);
 }
 
-/* Wait 200ms after a charger is detected to debounce pin contact order */
-#define USB_CHG_DEBOUNCE_DELAY_MS 200
-/*
- * Wait 100ms after reset, before re-enabling attach interrupt, so that the
- * spurious attach interrupt from certain ports is ignored.
- */
-#define USB_CHG_RESET_DELAY_MS 100
-
-void usb_charger_task(void)
-{
-	int device_type, charger_status;
-	struct charge_port_info charge;
-	int type;
-	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-
-	while (1) {
-		/* Read interrupt register to clear */
-		pi3usb9281_get_interrupts(0);
-
-		/* Set device type */
-		device_type = pi3usb9281_get_device_type(0);
-		charger_status = pi3usb9281_get_charger_status(0);
-
-		/* Debounce pin plug order if we detect a charger */
-		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
-			msleep(USB_CHG_DEBOUNCE_DELAY_MS);
-
-			/* Trigger chip reset to refresh detection registers */
-			pi3usb9281_reset(0);
-			/*
-			 * Restore data switch settings - switches return to
-			 * closed on reset until restored.
-			 */
-			if (usb_switch_state)
-				pi3usb9281_set_switches(0, 1);
-
-			/* Clear possible disconnect interrupt */
-			pi3usb9281_get_interrupts(0);
-			/* Mask attach interrupt */
-			pi3usb9281_set_interrupt_mask(0,
-						      0xff &
-						      ~PI3USB9281_INT_ATTACH);
-			/* Re-enable interrupts */
-			pi3usb9281_enable_interrupts(0);
-			msleep(USB_CHG_RESET_DELAY_MS);
-
-			/* Clear possible attach interrupt */
-			pi3usb9281_get_interrupts(0);
-			/* Re-enable attach interrupt */
-			pi3usb9281_set_interrupt_mask(0, 0xff);
-
-			/* Re-read ID registers */
-			device_type = pi3usb9281_get_device_type(0);
-			charger_status = pi3usb9281_get_charger_status(0);
-		}
-
-		if (PI3USB9281_CHG_STATUS_ANY(charger_status))
-			type = CHARGE_SUPPLIER_PROPRIETARY;
-		else if (device_type & PI3USB9281_TYPE_CDP)
-			type = CHARGE_SUPPLIER_BC12_CDP;
-		else if (device_type & PI3USB9281_TYPE_DCP)
-			type = CHARGE_SUPPLIER_BC12_DCP;
-		else if (device_type & PI3USB9281_TYPE_SDP)
-			type = CHARGE_SUPPLIER_BC12_SDP;
-		else
-			type = CHARGE_SUPPLIER_OTHER;
-
-		/* Attachment: decode + update available charge */
-		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
-			charge.current = pi3usb9281_get_ilim(device_type,
-							     charger_status);
-			charge_manager_update_charge(type, 0, &charge);
-		} else { /* Detachment: update available charge to 0 */
-			charge.current = 0;
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_PROPRIETARY,
-						0,
-						&charge);
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_BC12_CDP,
-						0,
-						&charge);
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_BC12_DCP,
-						0,
-						&charge);
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_BC12_SDP,
-						0,
-						&charge);
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_OTHER,
-						0,
-						&charge);
-		}
-
-		/* notify host of power info change */
-		pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
-		/* Wait for interrupt */
-		task_wait_event(-1);
-	}
-}
-
 void usb_evt(enum gpio_signal signal)
 {
-	task_wake(TASK_ID_USB_CHG);
+	task_wake(TASK_ID_USB_CHG_P0);
 }
 
 #include "gpio_list.h"
@@ -364,19 +260,6 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/* Charge supplier priority: lower number indicates higher priority. */
-const int supplier_priority[] = {
-	[CHARGE_SUPPLIER_PD] = 0,
-	[CHARGE_SUPPLIER_TYPEC] = 1,
-	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
-	[CHARGE_SUPPLIER_BC12_DCP] = 1,
-	[CHARGE_SUPPLIER_BC12_CDP] = 2,
-	[CHARGE_SUPPLIER_BC12_SDP] = 3,
-	[CHARGE_SUPPLIER_OTHER] = 3,
-	[CHARGE_SUPPLIER_VBUS] = 4
-};
-BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
-
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 	{"master", I2C_PORT_MASTER, 100,
@@ -386,14 +269,15 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-static void board_set_usb_switches(int port, int open)
+void board_set_usb_switches(int port, enum usb_switch setting)
 {
 	/* If switch is not changing, then return */
-	if (open == usb_switch_state)
+	if (setting == usb_switch_state)
 		return;
 
-	usb_switch_state = open;
-	pi3usb9281_set_switches(port, open);
+	if (setting != USB_SWITCH_RESTORE)
+		usb_switch_state = setting;
+	pi3usb9281_set_switches(port, usb_switch_state);
 }
 
 /* TODO(crosbug.com/p/38333) remove me */

@@ -40,7 +40,6 @@
 
 /* Default input current limit when VBUS is present */
 #define DEFAULT_CURR_LIMIT      500  /* mA */
-#define USB_BC12_CHARGE_VOLTAGE 5000 /* mV */
 
 static void ap_reset_deferred(void)
 {
@@ -108,19 +107,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-/* Charge supplier priority: lower number indicates higher priority. */
-const int supplier_priority[] = {
-	[CHARGE_SUPPLIER_PD] = 0,
-	[CHARGE_SUPPLIER_TYPEC] = 1,
-	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
-	[CHARGE_SUPPLIER_BC12_DCP] = 1,
-	[CHARGE_SUPPLIER_BC12_CDP] = 2,
-	[CHARGE_SUPPLIER_BC12_SDP] = 3,
-	[CHARGE_SUPPLIER_OTHER] = 3,
-	[CHARGE_SUPPLIER_VBUS] = 4
-};
-BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
 static int discharging_on_ac;
 

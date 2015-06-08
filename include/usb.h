@@ -196,8 +196,6 @@ struct usb_endpoint_descriptor {
 #define USB_REQ_SET_INTERFACE      0x0B
 #define USB_REQ_SYNCH_FRAME        0x0C
 
-#define USB_BC12_CHARGE_VOLTAGE    5000 /* mV */
-
 /* Setup Packet */
 struct usb_setup_packet {
 	uint8_t  bmRequestType;

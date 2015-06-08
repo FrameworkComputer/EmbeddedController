@@ -39,8 +39,8 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* Charge suppliers */
-enum charge_supplier {
+/* Fake test charge suppliers */
+enum {
 	CHARGE_SUPPLIER_TEST1,
 	CHARGE_SUPPLIER_TEST2,
 	CHARGE_SUPPLIER_TEST3,
@@ -49,11 +49,10 @@ enum charge_supplier {
 	CHARGE_SUPPLIER_TEST6,
 	CHARGE_SUPPLIER_TEST7,
 	CHARGE_SUPPLIER_TEST8,
-	CHARGE_SUPPLIER_TEST9,
-	CHARGE_SUPPLIER_COUNT
+	CHARGE_SUPPLIER_TEST_COUNT
 };
 
-/* supplier_priority table defined in board.c */
+/* Custom charge_manager priority table is defined in test code */
 extern const int supplier_priority[];
 
 /* Standard-current Rp */

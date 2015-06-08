@@ -76,6 +76,7 @@ common-$(CONFIG_STREAM)+=in_stream.o out_stream.o stream_adaptor.o
 common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o throttle_ap.o
+common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o

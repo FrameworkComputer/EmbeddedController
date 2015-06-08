@@ -1291,9 +1291,6 @@
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
 
-/* Send host event when power changes */
-#undef CONFIG_USB_PD_HOST_EVENT_ON_POWER_CHANGE
-
 /* HW & SW version for alternate mode discover identity response (4bits each) */
 #undef CONFIG_USB_PD_IDENTITY_HW_VERS
 #undef CONFIG_USB_PD_IDENTITY_SW_VERS
@@ -1370,6 +1367,9 @@
 
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
+
+/* Common USB / BC1.2 charger task */
+#undef CONFIG_USB_CHARGER
 
 /* USB device buffers and descriptors */
 #undef CONFIG_USB_RAM_ACCESS_SIZE

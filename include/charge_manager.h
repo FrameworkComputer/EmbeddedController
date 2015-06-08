@@ -17,6 +17,21 @@
 #define CHARGE_CURRENT_UNINITIALIZED -1
 #define CHARGE_VOLTAGE_UNINITIALIZED -1
 
+#define USB_BC12_CHARGE_VOLTAGE    5000 /* mV */
+
+/* Commonly-used charge suppliers listed in no particular order */
+enum charge_supplier {
+	CHARGE_SUPPLIER_PD,
+	CHARGE_SUPPLIER_TYPEC,
+	CHARGE_SUPPLIER_BC12_DCP,
+	CHARGE_SUPPLIER_BC12_CDP,
+	CHARGE_SUPPLIER_BC12_SDP,
+	CHARGE_SUPPLIER_PROPRIETARY,
+	CHARGE_SUPPLIER_OTHER,
+	CHARGE_SUPPLIER_VBUS,
+	CHARGE_SUPPLIER_COUNT
+};
+
 /* Charge tasks report available current and voltage */
 struct charge_port_info {
 	int current;

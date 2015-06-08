@@ -96,22 +96,6 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
-/* Charge suppliers */
-enum charge_supplier {
-	CHARGE_SUPPLIER_PD,
-	CHARGE_SUPPLIER_TYPEC,
-	CHARGE_SUPPLIER_BC12_DCP,
-	CHARGE_SUPPLIER_BC12_CDP,
-	CHARGE_SUPPLIER_BC12_SDP,
-	CHARGE_SUPPLIER_PROPRIETARY,
-	CHARGE_SUPPLIER_OTHER,
-	CHARGE_SUPPLIER_VBUS,
-	CHARGE_SUPPLIER_COUNT
-};
-
-/* supplier_priority table defined in board.c */
-extern const int supplier_priority[];
-
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
