@@ -67,7 +67,8 @@ void vbus_wake_interrupt(enum gpio_signal signal)
 
 void pd_mcu_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(tcpc_alert, 0);
+	/* Exchange status with PD MCU to determin interrupt cause */
+	host_command_pd_send_status(0);
 }
 
 #include "gpio_list.h"
