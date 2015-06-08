@@ -995,6 +995,10 @@ int charge_set_input_current_limit(int ma)
 	if (curr.batt.is_present != BP_YES && !system_is_locked())
 		return EC_SUCCESS;
 
+#ifdef CONFIG_CHARGER_MAX_INPUT_CURRENT
+	/* Limit input current limit to max limit for this board */
+	ma = MIN(ma, CONFIG_CHARGER_MAX_INPUT_CURRENT);
+#endif
 	curr.desired_input_current = ma;
 	return charger_set_input_current(ma);
 }

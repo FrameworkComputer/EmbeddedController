@@ -274,12 +274,17 @@
 #undef CONFIG_CHARGER_ILIM_PIN_DISABLED
 
 /*
- * Maximum amount of input current the charger can receive, in mA.
+ * Default input current for the board, in mA.
  *
  * This value should depend on external power adapter, designed charging
  * voltage, and the maximum power of the running system.
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
+
+/*
+ * Board specific maximum input current limit, in mA.
+ */
+#undef CONFIG_CHARGER_MAX_INPUT_CURRENT
 
 /*
  * Equivalent of CONFIG_BATTERY_OVERRIDE_PARAMS for use with
