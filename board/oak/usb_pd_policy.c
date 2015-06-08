@@ -73,31 +73,31 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
-	/*
-	 * TODO: this only works on port 0 for now. need to include
-	 * charge manager to manage CHARGE_L
-	 */
-	if (port == 0) {
-		/* Disable charging */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-		/* Provide VBUS */
-		gpio_set_level(GPIO_USB_C0_5V_OUT, 1);
-	}
+	/* Disable charging */
+	gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
+			      GPIO_USB_C0_CHARGE_L, 1);
+	/* Provide VBUS */
+	gpio_set_level(port ? GPIO_USB_C1_5V_OUT :
+			      GPIO_USB_C0_5V_OUT, 1);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
 void pd_power_supply_reset(int port)
 {
+	/* Disable VBUS */
+	gpio_set_level(port ? GPIO_USB_C1_5V_OUT :
+			      GPIO_USB_C0_5V_OUT, 0);
+
 	/*
-	 * TODO: this only works on port 0 for now. need to include
-	 * charge manager to manage CHARGE_L
+	 * TODO: Currently we can only detect VBUS when charge_l is
+	 * asserted, so, if there is no active charge port, then enable
+	 * charge_l. If the other port is the active charger, then leave
+	 * this port disabled.
 	 */
-	if (port == 0) {
-		/* Disable VBUS */
-		gpio_set_level(GPIO_USB_C0_5V_OUT, 0);
-		/* Enable charging */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
-	}
+	if (charge_manager_get_active_charge_port() != !port)
+		gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
+				      GPIO_USB_C0_CHARGE_L, 0);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,

@@ -7,6 +7,8 @@
 
 #include "adc_chip.h"
 #include "battery.h"
+#include "charge_manager.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
@@ -34,6 +36,10 @@
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
+
+/* Default input current limit when VBUS is present */
+#define DEFAULT_CURR_LIMIT      500  /* mA */
+#define USB_BC12_CHARGE_VOLTAGE 5000 /* mV */
 
 static void ap_reset_deferred(void)
 {
@@ -102,6 +108,19 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* Charge supplier priority: lower number indicates higher priority. */
+const int supplier_priority[] = {
+	[CHARGE_SUPPLIER_PD] = 0,
+	[CHARGE_SUPPLIER_TYPEC] = 1,
+	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
+	[CHARGE_SUPPLIER_BC12_DCP] = 1,
+	[CHARGE_SUPPLIER_BC12_CDP] = 2,
+	[CHARGE_SUPPLIER_BC12_SDP] = 3,
+	[CHARGE_SUPPLIER_OTHER] = 3,
+	[CHARGE_SUPPLIER_VBUS] = 4
+};
+BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
+
 static int discharging_on_ac;
 
 /**
@@ -148,6 +167,70 @@ static void board_init(void)
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Set active charge port -- only one port can active at a time.
+ *
+ * @param charge_port    Charge port to enable.
+ *
+ * Return EC_SUCCESS if charge port is accepted and made active.
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	/* charge port is a physical port */
+	int is_real_port = (charge_port >= 0 &&
+			    charge_port < CONFIG_USB_PD_PORT_COUNT);
+	/* check if we are source VBUS on the port */
+	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_OUT :
+						       GPIO_USB_C1_5V_OUT);
+
+	if (is_real_port && source) {
+		CPRINTF("Skip enable p%d", charge_port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTF("New chg p%d", charge_port);
+
+	if (charge_port == CHARGE_PORT_NONE) {
+		/*
+		 * TODO: currently we only get VBUS knowledge when charge
+		 * is enabled. so, when not changing, we need to enable
+		 * both ports. but, this is dangerous if you have two
+		 * chargers plugged in and you set charge override to -1
+		 * then it will enable both sides!
+		 */
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
+		gpio_set_level(GPIO_USB_C1_CHARGE_L, 0);
+	} else {
+		/* Make sure non-charging port is disabled */
+		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
+					     GPIO_USB_C1_CHARGE_L, 1);
+		/* Enable charging port */
+		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_L :
+					     GPIO_USB_C0_CHARGE_L, 0);
+	}
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param charge_ma     Desired charge limit (mA).
+ */
+void board_set_charge_limit(int charge_ma)
+{
+	charge_set_input_current_limit(MAX(charge_ma,
+					   CONFIG_CHARGER_INPUT_CURRENT));
+}
+
+/* Charge manager callback function, called on delayed override timeout */
+void board_charge_manager_override_timeout(void)
+{
+	/* TODO: what to do here? */
+}
+DECLARE_DEFERRED(board_charge_manager_override_timeout);
 
 #ifndef CONFIG_AP_WARM_RESET_INTERRUPT
 /* Using this hook if system doesn't have enough external line. */

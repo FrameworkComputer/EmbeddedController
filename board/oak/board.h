@@ -18,6 +18,7 @@
 /* Add for AC adaptor, charger, battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
+#define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 
 #ifdef CONFIG_BOARD_OAK_REV_1
@@ -69,7 +70,7 @@
 #undef CONFIG_UART_RX_DMA
 
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 9
+#define DEFERRABLE_MAX_COUNT 10
 
 /*
  * Allow dangerous commands.
@@ -135,6 +136,22 @@ enum adc_channel {
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
 };
+
+/* Charge suppliers */
+enum charge_supplier {
+	CHARGE_SUPPLIER_PD,
+	CHARGE_SUPPLIER_TYPEC,
+	CHARGE_SUPPLIER_BC12_DCP,
+	CHARGE_SUPPLIER_BC12_CDP,
+	CHARGE_SUPPLIER_BC12_SDP,
+	CHARGE_SUPPLIER_PROPRIETARY,
+	CHARGE_SUPPLIER_OTHER,
+	CHARGE_SUPPLIER_VBUS,
+	CHARGE_SUPPLIER_COUNT
+};
+
+/* supplier_priority table defined in board.c */
+extern const int supplier_priority[];
 
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
