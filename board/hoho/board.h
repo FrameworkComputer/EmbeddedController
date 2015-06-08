@@ -50,7 +50,6 @@
 #define CONFIG_USB_PD_NO_VBUS_DETECT
 /* mcdp2850 serial interface */
 #define CONFIG_MCDP28X0 usart3_hw
-#define CONFIG_STREAM
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART3
 #undef CONFIG_WATCHDOG_HELP

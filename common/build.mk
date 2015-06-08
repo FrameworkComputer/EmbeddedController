@@ -72,7 +72,6 @@ common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SMBUS)+= smbus.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o spi_flash_reg.o
-common-$(CONFIG_STREAM)+=in_stream.o out_stream.o stream_adaptor.o
 common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o thermal.o throttle_ap.o

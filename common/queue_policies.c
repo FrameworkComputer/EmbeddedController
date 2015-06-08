@@ -26,3 +26,18 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count)
 	if (count && direct->producer->ops->read)
 		direct->producer->ops->read(direct->producer, count);
 }
+
+struct producer const null_producer = {
+	.queue = NULL,
+	.ops   = &((struct producer_ops const) {
+		 .read = NULL,
+	}),
+};
+
+struct consumer const null_consumer = {
+	.queue = NULL,
+	.ops   = &((struct consumer_ops const) {
+		.written = NULL,
+		.flush   = NULL,
+	}),
+};

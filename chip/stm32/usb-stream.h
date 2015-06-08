@@ -10,8 +10,6 @@
 #include "compile_time_macros.h"
 #include "consumer.h"
 #include "hooks.h"
-#include "in_stream.h"
-#include "out_stream.h"
 #include "producer.h"
 #include "queue.h"
 #include "usb.h"

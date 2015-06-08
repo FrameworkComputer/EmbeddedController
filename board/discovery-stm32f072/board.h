@@ -12,7 +12,6 @@
 #define CPU_CLOCK 48000000
 
 /* Enable USART1,3,4 and USB streams */
-#define CONFIG_STREAM
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART1
 #define CONFIG_STREAM_USART3

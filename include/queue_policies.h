@@ -40,4 +40,12 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count);
 #define QUEUE_DIRECT(SIZE, TYPE, PRODUCER, CONSUMER)			\
 	QUEUE(SIZE, TYPE, QUEUE_POLICY_DIRECT(PRODUCER, CONSUMER).policy)
 
+/*
+ * The null_producer and null_consumer are useful when constructing a queue
+ * where one end needs notification, but the other end doesn't care.  These
+ * producer and consumer structs just ignore all notifications.
+ */
+extern struct producer const null_producer;
+extern struct consumer const null_consumer;
+
 #endif /* INCLUDE_QUEUE_POLICIES_H */

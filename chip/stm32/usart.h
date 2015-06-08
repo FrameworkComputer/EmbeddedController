@@ -9,8 +9,6 @@
 
 #include "common.h"
 #include "consumer.h"
-#include "in_stream.h"
-#include "out_stream.h"
 #include "producer.h"
 #include "queue.h"
 

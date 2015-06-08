@@ -10,7 +10,8 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "mcdp28x0.h"
-#include "stream_adaptor.h"
+#include "queue.h"
+#include "queue_policies.h"
 #include "timer.h"
 #include "usart-stm32f0.h"
 #include "util.h"
@@ -39,7 +40,14 @@ static inline void print_buffer(uint8_t *buf, int cnt) {}
 
 struct usart_config const usart_mcdp;
 
-IO_STREAM_CONFIG(usart_mcdp, MCDP_INBUF_MAX, MCDP_OUTBUF_MAX, NULL, NULL);
+struct queue const usart_mcdp_rx_queue = QUEUE_DIRECT(MCDP_INBUF_MAX,
+						      uint8_t,
+						      usart_mcdp.producer,
+						      null_consumer);
+struct queue const usart_mcdp_tx_queue = QUEUE_DIRECT(MCDP_OUTBUF_MAX,
+						      uint8_t,
+						      null_producer,
+						      usart_mcdp.consumer);
 
 USART_CONFIG(usart_mcdp,
 	     CONFIG_MCDP28X0,
@@ -84,15 +92,15 @@ static int tx_serial(const uint8_t *msg, int cnt)
 	/* 1st byte (not in msg) is always cnt + 2, so seed chksum with that */
 	uint8_t chksum = compute_checksum(cnt + 2, msg, cnt);
 
-	if (out_stream_write(&usart_mcdp_out.out, &out, 1) != 1)
+	if (queue_add_unit(&usart_mcdp_tx_queue, &out) != 1)
 		return EC_ERROR_UNKNOWN;
 
-	if (out_stream_write(&usart_mcdp_out.out, msg, cnt) != cnt)
+	if (queue_add_units(&usart_mcdp_tx_queue, msg, cnt) != cnt)
 		return EC_ERROR_UNKNOWN;
 
 	print_buffer((uint8_t *)msg, cnt);
 
-	if (out_stream_write(&usart_mcdp_out.out, &chksum, 1) != 1)
+	if (queue_add_unit(&usart_mcdp_tx_queue, &chksum) != 1)
 		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
@@ -119,11 +127,11 @@ static int rx_serial(uint8_t *msg, int cnt)
 	size_t read;
 	int retry = 2;
 
-	read = in_stream_read(&usart_mcdp_in.in, msg, cnt);
+	read = queue_remove_units(&usart_mcdp_rx_queue, msg, cnt);
 	while ((read < cnt) && retry) {
 		usleep(100*MSEC);
-		read += in_stream_read(&usart_mcdp_in.in, msg + read,
-				       cnt - read);
+		read += queue_remove_units(&usart_mcdp_rx_queue, msg + read,
+					   cnt - read);
 		retry--;
 	}
 
