@@ -724,7 +724,8 @@ enum pd_dual_role_states {
 	PD_DRP_TOGGLE_ON,
 	PD_DRP_TOGGLE_OFF,
 	PD_DRP_FORCE_SINK,
-	PD_DRP_FORCE_SOURCE
+	PD_DRP_FORCE_SOURCE,
+	PD_DRP_DEBUG_ACC_TOGGLE
 };
 /**
  * Get dual role state
