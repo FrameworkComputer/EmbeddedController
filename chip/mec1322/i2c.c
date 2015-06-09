@@ -300,8 +300,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
 							       CTRL_STA |
 							       CTRL_ACK |
-							       CTRL_ENI |
-							       CTRL_PIN;
+							       CTRL_ENI;
 
 			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr
 						     | 0x01;
