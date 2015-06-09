@@ -89,7 +89,6 @@
 #undef CONFIG_BATTERY_BQ20Z453
 #undef CONFIG_BATTERY_BQ27541
 #undef CONFIG_BATTERY_BQ27621
-#undef CONFIG_BATTERY_LINK
 #undef CONFIG_BATTERY_RYU
 #undef CONFIG_BATTERY_SAMUS
 
@@ -326,7 +325,6 @@
 #undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
-#undef CONFIG_CHIPSET_IVYBRIDGE /* Intel Ivy Bridge (x86) */
 #undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_SKYLAKE   /* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
@@ -558,20 +556,8 @@
 /* Include code for handling external power */
 #define CONFIG_EXTPOWER
 
-/* Support turbo-mode chargers */
-#undef CONFIG_EXTPOWER_FALCO
-
 /* Support detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
-
-/*
- * Support detecting external power presence via a pair of GPIOs, as used
- * on Snow.
- */
-#undef CONFIG_EXTPOWER_SNOW
-
-/* Support providing power to the device via USB on Spring. */
-#undef CONFIG_EXTPOWER_SPRING
 
 /*****************************************************************************/
 /* Number of cooling fans. Undef if none. */
@@ -1007,15 +993,6 @@
 
 /*****************************************************************************/
 /* PMU config */
-
-/*
- * Force switching on and off the FETs on the PMU controlling various power
- * rails during AP startup and shutdown sequences.  This is mainly useful for
- * bringup when we don't have the corresponding sequences in the AP code.
- *
- * Currently supported only on spring platform.
- */
-#undef CONFIG_PMU_FORCE_FET
 
 /*
  * Enable hard-resetting the PMU from the EC.  The implementation is rather
@@ -1547,7 +1524,6 @@
 #undef CONFIG_CHIPSET_BRASWELL
 #undef CONFIG_CHIPSET_GAIA
 #undef CONFIG_CHIPSET_HASWELL
-#undef CONFIG_CHIPSET_IVYBRIDGE
 #undef CONFIG_CHIPSET_ROCKCHIP
 #undef CONFIG_CHIPSET_TEGRA
 #undef CONFIG_POWER_COMMON

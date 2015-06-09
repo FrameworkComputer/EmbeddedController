@@ -719,10 +719,8 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_TEMP_SENSOR
 		| EC_FEATURE_MASK_0(EC_FEATURE_THERMAL)
 #endif
-/* Hack to uniquely identify Samus and Falco ec */
-#if (defined CONFIG_BACKLIGHT_LID) || \
-		(defined CONFIG_BATTERY_SAMUS) || \
-		(defined CONFIG_EXTPOWER_FALCO)
+/* Hack to uniquely identify Samus ec */
+#if (defined CONFIG_BACKLIGHT_LID) || (defined CONFIG_BATTERY_SAMUS)
 		| EC_FEATURE_MASK_0(EC_FEATURE_BKLIGHT_SWITCH)
 #endif
 #ifdef CONFIG_WIRELESS

@@ -120,9 +120,6 @@ DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
  *
  * This reuses the same EC_CMD_POWER_INFO host command as Spring, but doesn't
  * provide the full set of information because Pit doesn't take power over USB.
- *
- * Note that Spring *also* uses the TPS65090 PMU, but it can't use this common
- * code because it implements the same host command differently...
  */
 static int power_command_info(struct host_cmd_handler_args *args)
 {

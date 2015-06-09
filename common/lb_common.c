@@ -56,12 +56,6 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 #define MAX_GREEN 0x30
 #define MAX_BLUE  0x67
 #endif
-#ifdef BOARD_LINK
-/* Link uses seven segments, not four, but keep the same limits anyway */
-#define MAX_RED   0x5c
-#define MAX_GREEN 0x30
-#define MAX_BLUE  0x67
-#endif
 #if defined(BOARD_SAMUS) || defined(BOARD_RYU) || defined(BOARD_RYU_P4P5)
 /* Samus uses completely different LEDs, so the numbers are different. The
  * Samus LEDs can handle much higher currents, but these constants were
@@ -115,9 +109,6 @@ static void set_from_array(const struct initdata_s *data, int count)
 /* Controller register lookup tables. */
 static const uint8_t led_to_ctrl[] = { 1, 1, 0, 0 };
 #ifdef BOARD_BDS
-static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
-#endif
-#ifdef BOARD_LINK
 static const uint8_t led_to_isc[] = { 0x18, 0x15, 0x18, 0x15 };
 #endif
 #ifdef BOARD_SAMUS

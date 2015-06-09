@@ -37,12 +37,11 @@ class FlashPDError(Exception):
 class FlashPD(client.ServoClient):
   """class to flash PD MCU.
 
-  Note,
-  Some designs(samus) have multiple embedded MCUs.  In that case the convention
-  is to name the pty associated with usbpd as 'usbpd_uart_pty'.  In the case
-  where there is only one MCU (fruitpie) we prefer 'usbpd_uart_pty' but will
-  also associate 'ecu_uart_pty' with having capability to flash the UBS-PD
-  capable PSU(zinger).
+    Note, Some designs(samus) have multiple embedded MCUs.  In that case
+    the convention is to name the pty associated with usbpd as
+    'usbpd_uart_pty'.  In the case where there is only one MCU we prefer
+    'usbpd_uart_pty' but will also associate 'ecu_uart_pty' with having
+    capability to flash the USB-PD capable PSU(zinger).
 
   Attributes:
     _options : Values instance from optparse.

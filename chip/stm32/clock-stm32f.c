@@ -113,27 +113,18 @@ void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
-#if defined(BOARD_SNOW) || defined(BOARD_SPRING)
 /*
- * stays on HSI (8MHz), no prescaler, PLLSRC = HSI/2, PLLMUL = x4
- * no MCO                      => PLLCLK = 16 Mhz
- */
-#define DESIRED_CPU_CLOCK 16000000
-#define RCC_CFGR 0x00080000
-#elif defined(BOARD_MCCROSKEY)
-/*
+ * These were the clock settings we used for the STM32F103 reference, but
+ * they'll need updating for use on some other board.
+ *
  * HSI = 8MHz, no prescaler, no MCO
  * PLLSRC = HSI/2, PLLMUL = x12 => PLLCLK = 48MHz
  * USB clock = PLLCLK
  */
 #define DESIRED_CPU_CLOCK 48000000
 #define RCC_CFGR 0x00680000
-#elif defined(BOARD_KEYBORG)
-#define DESIRED_CPU_CLOCK 48000000
-#define RCC_CFGR 0x00534000
-#else
 #error "Need board-specific clock settings"
-#endif
+
 BUILD_ASSERT(CPU_CLOCK == DESIRED_CPU_CLOCK);
 
 static void config_hispeed_clock(void)

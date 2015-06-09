@@ -14,19 +14,6 @@ proc flash_lm4 {path offset} {
 	reset
 }
 
-proc flash_link { } {
-	flash_lm4 ../../../build/link/ec.bin 0
-}
-
-proc flash_link_ro { } {
-	flash_lm4 ../../../build/link/ec.RO.flat 0
-}
-
-# Link originally had 80KB images, but TOT builds 128KB images
-proc flash_link_rw { } {
-	flash_lm4 ../../../build/link/ec.RW.bin 131072
-}
-
 proc flash_auron { } {
 	flash_lm4 ../../../build/auron/ec.bin 0
 }
@@ -51,42 +38,12 @@ proc flash_samus_rw { } {
 	flash_lm4 ../../../build/samus/ec.RW.bin 131072
 }
 
-proc flash_squawks { } {
-	flash_lm4 ../../../build/squawks/ec.bin 0
-}
-
-proc flash_squawks_ro { } {
-	flash_lm4 ../../../build/squawks/ec.RO.flat 0
-}
-
-proc flash_falco { } {
-	flash_lm4 ../../../build/falco/ec.bin 0
-}
-
-proc flash_peppy { } {
-	flash_lm4 ../../../build/peppy/ec.bin 0
-}
-
 proc flash_rambi_ro { } {
 	flash_lm4 ../../../build/rambi/ec.RO.flat 0
 }
 
 proc flash_rambi_rw { } {
 	flash_lm4 ../../../build/rambi/ec.RW.bin 131072
-}
-
-# link has pstate in last sector
-proc unprotect_link { } {
-	reset halt
-	flash erase_sector 0 254 255
-	reset
-}
-
-# Peppy/falco have pstate following RO
-proc unprotect_peppy { } {
-	reset halt
-	flash erase_sector 0 126 127
-	reset
 }
 
 # Auron have pstate following RO
@@ -105,16 +62,6 @@ proc ramboot_lm4 {path} {
 	resume
 }
 
-proc ramboot_link { } {
-	ramboot_lm4 ../../../build/link/ec.RO.flat
-}
-
 proc ramboot_bds { } {
 	ramboot_lm4 ../../../build/bds/ec.RO.flat
-}
-
-proc flash_emerged_link { } {
-	set firmware_image ../../../../../../chroot/build/link/firmware/ec.bin
-
-	flash_lm4 $firmware_image 0
 }

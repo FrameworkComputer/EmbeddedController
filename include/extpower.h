@@ -10,11 +10,6 @@
 
 #include "common.h"
 
-#ifdef CONFIG_EXTPOWER_SPRING
-/* Spring-USB-power-specific methods */
-#include "extpower_spring.h"
-#endif
-
 /**
  * Return non-zero if external power is present.
  */
@@ -26,10 +21,5 @@ int extpower_is_present(void);
  * @param signal	Signal which triggered the interrupt.
  */
 void extpower_interrupt(enum gpio_signal signal);
-
-#ifdef CONFIG_EXTPOWER_FALCO
-/* Adapter-specific logic */
-#include "extpower_falco.h"
-#endif
 
 #endif  /* __CROS_EC_EXTPOWER_H */

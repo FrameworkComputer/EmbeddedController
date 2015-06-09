@@ -36,13 +36,12 @@ test-list-$(BOARD_OAK_PD)=
 # Emulator tests
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
-test-list-host+=sbs_charging adapter host_command
+test-list-host+=sbs_charging host_command
 test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
 test-list-host+=motion_lid math_util sbs_charging_v2 battery_get_params_smart
 test-list-host+=lightbar inductive_charging usb_pd fan charge_manager
 test-list-host+=charge_ramp
 
-adapter-y=adapter.o
 battery_get_params_smart-y=battery_get_params_smart.o
 bklight_lid-y=bklight_lid.o
 bklight_passthru-y=bklight_passthru.o
