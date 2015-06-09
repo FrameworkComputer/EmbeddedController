@@ -540,21 +540,18 @@ DECLARE_DEFERRED(board_charge_manager_override_timeout);
  */
 int board_set_active_charge_port(int charge_port)
 {
-	int ret = EC_SUCCESS;
 	/* check if we are source vbus on that port */
 	int src = gpio_get_level(GPIO_CHGR_OTG);
 
 	if (charge_port >= 0 && charge_port < CONFIG_USB_PD_PORT_COUNT && src) {
 		CPRINTS("Port %d is not a sink, skipping enable", charge_port);
-		charge_port = CHARGE_PORT_NONE;
-		ret = EC_ERROR_INVAL;
-	}
-	if (charge_port == CHARGE_PORT_NONE) {
-		/* Disable charging */
-		charge_set_input_current_limit(0);
+		return EC_ERROR_INVAL;
 	}
 
-	return ret;
+	/* Enable/disable charging */
+	gpio_set_level(GPIO_USBC_CHARGE_EN_L, charge_port == CHARGE_PORT_NONE);
+
+	return EC_SUCCESS;
 }
 
 /**
