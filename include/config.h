@@ -1414,8 +1414,8 @@
 /* Support the Pericom PI3USB9281 I2C USB switch */
 #undef CONFIG_USB_SWITCH_PI3USB9281
 
-/* Select GPIO MUX for Pericom PI3USB9281 I2C USB switch */
-#undef CONFIG_USB_SWITCH_PI3USB9281_MUX_GPIO
+/* Number of Pericom PI3USB9281 chips present in system */
+#undef CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT
 
 /*****************************************************************************/
 /* USB GPIO config */

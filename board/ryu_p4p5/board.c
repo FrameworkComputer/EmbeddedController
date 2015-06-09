@@ -158,6 +158,15 @@ USB_STREAM_CONFIG(sh_usb,
 		  sh_usb_to_usart,
 		  sh_usart_to_usb)
 
+struct pi3usb9281_config pi3usb9281_chips[] = {
+	{
+		.i2c_port = I2C_PORT_PERICOM,
+		.mux_lock = NULL,
+	}
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
+	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -186,8 +195,6 @@ static void board_init(void)
 
 	/* Enable pericom BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
-	pi3usb9281_set_interrupt_mask(0, 0xff);
-	pi3usb9281_enable_interrupts(0);
 
 	/*
 	 * Determine recovery mode is requested by the power, volup, and

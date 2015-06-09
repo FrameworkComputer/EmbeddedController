@@ -16,6 +16,7 @@
 #include "pi3usb9281.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 
 /* Wait after a charger is detected to debounce pin contact order */
@@ -26,24 +27,36 @@
  */
 #define USB_CHG_RESET_DELAY_MS 100
 
+int usb_charger_port_is_sourcing_vbus(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_C0_5V_EN);
+#if CONFIG_USB_PD_PORT_COUNT >= 2
+	else if (port == 1)
+		return gpio_get_level(GPIO_USB_C1_5V_EN);
+#endif
+	/* Not a valid port */
+	return 0;
+}
+
 void usb_charger_task(void)
 {
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
-#if (CONFIG_USB_PD_PORT_COUNT == 1)
-	int vbus_source = GPIO_USB_C0_5V_EN;
-#else
-	int vbus_source = (port == 0 ? GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN);
-#endif
+
 	int device_type, charger_status;
 	struct charge_port_info charge;
 	int type;
+
 	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+
+	/* Initialize chip and enable interrupts */
+	pi3usb9281_init(port);
 
 	while (1) {
 		/* Read interrupt register to clear on chip */
 		pi3usb9281_get_interrupts(port);
 
-		if (gpio_get_level(vbus_source)) {
+		if (usb_charger_port_is_sourcing_vbus(port)) {
 			/* If we're sourcing VBUS then we're not charging */
 			device_type = charger_status = 0;
 		} else {

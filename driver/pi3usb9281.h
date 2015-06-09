@@ -56,46 +56,55 @@
 /* Check if charge status has any connection */
 #define PI3USB9281_CHG_STATUS_ANY(x) (((x) & 0x1f) > 1)
 
-/* Read PI3USB9281 register. */
-uint8_t pi3usb9281_read(uint8_t chip_idx, uint8_t reg);
+/* Define configuration of one pi3usb9281 part */
+struct pi3usb9281_config {
+	/* i2c port that chip resides on */
+	int i2c_port;
+	/* GPIO for chip selection in muxed configuration */
+	enum gpio_signal mux_gpio;
+	/* Logic level of mux_gpio to select chip */
+	int mux_gpio_level;
+	/* Mutex to lock access to mux gpio or NULL if no mux exists */
+	struct mutex *mux_lock;
+};
 
-/* Write PI3USB9281 register. */
-int pi3usb9281_write(uint8_t chip_idx, uint8_t reg, uint8_t val);
+/* Configuration struct defined at board level */
+extern struct pi3usb9281_config pi3usb9281_chips[];
+
+/* Initialize chip and enable interrupts */
+void pi3usb9281_init(int port);
 
 /* Enable interrupts. */
-int pi3usb9281_enable_interrupts(uint8_t chip_idx);
+int pi3usb9281_enable_interrupts(int port);
 
 /* Disable all interrupts. */
-int pi3usb9281_disable_interrupts(uint8_t chip_idx);
+int pi3usb9281_disable_interrupts(int port);
 
 /* Set interrupt mask. */
-int pi3usb9281_set_interrupt_mask(uint8_t chip_idx, uint8_t mask);
+int pi3usb9281_set_interrupt_mask(int port, uint8_t mask);
 
 /* Get and clear current interrupt status. */
-int pi3usb9281_get_interrupts(uint8_t chip_idx);
-
-/* Get but keep interrupt status. */
-int pi3usb9281_peek_interrupts(uint8_t chip_idx);
+int pi3usb9281_get_interrupts(int port);
 
 /* Get attached device type. */
-int pi3usb9281_get_device_type(uint8_t chip_idx);
+int pi3usb9281_get_device_type(int port);
 
 /* Get attached charger status. */
-int pi3usb9281_get_charger_status(uint8_t chip_idx);
+int pi3usb9281_get_charger_status(int port);
 
 /* Get charger current limit based on device type and charger status. */
 int pi3usb9281_get_ilim(int device_type, int charger_status);
 
 /* Set switch configuration to manual. */
-int pi3usb9281_set_switch_manual(uint8_t chip_idx, int val);
+int pi3usb9281_set_switch_manual(int port, int val);
 
 /* Set bits to enable pins in manual switch register. */
-int pi3usb9281_set_pins(uint8_t chip_idx, uint8_t mask);
+int pi3usb9281_set_pins(int port, uint8_t mask);
 
 /* Set D+/D-/Vbus switches to open or closed/auto-control. */
-int pi3usb9281_set_switches(uint8_t chip_idx, int open);
+int pi3usb9281_set_switches(int port, int open);
 
 /* Reset PI3USB9281. */
-int pi3usb9281_reset(uint8_t chip_idx);
+int pi3usb9281_reset(int port);
 
 #endif /* PI3USB9281_H */

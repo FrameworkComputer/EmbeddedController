@@ -42,4 +42,12 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode);
  */
 int usb_charge_ports_enabled(void);
 
+/**
+ * Returns true if the passed port is a power source.
+ *
+ * @param port  Port number.
+ * @return      True if port is sourcing vbus.
+ */
+int usb_charger_port_is_sourcing_vbus(int port);
+
 #endif  /* __CROS_EC_USB_CHARGE_H */

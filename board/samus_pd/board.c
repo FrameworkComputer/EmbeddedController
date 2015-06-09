@@ -24,6 +24,7 @@
 #include "system.h"
 #include "task.h"
 #include "usb.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
 
@@ -76,6 +77,24 @@ const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(15), STM32_TIM_CH(2), 0, GPIO_ILIM_ADJ_PWM, GPIO_ALT_F1},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+struct mutex pericom_mux_lock;
+struct pi3usb9281_config pi3usb9281_chips[] = {
+	{
+		.i2c_port = I2C_PORT_PERICOM,
+		.mux_gpio = GPIO_USB_C_BC12_SEL,
+		.mux_gpio_level = 0,
+		.mux_lock = &pericom_mux_lock,
+	},
+	{
+		.i2c_port = I2C_PORT_PERICOM,
+		.mux_gpio = GPIO_USB_C_BC12_SEL,
+		.mux_gpio_level = 1,
+		.mux_lock = &pericom_mux_lock,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
+	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
 
 static void pericom_port0_reenable_interrupts(void)
 {
@@ -309,10 +328,6 @@ static void board_init(void)
 	/* Enable pericom BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-	pi3usb9281_set_interrupt_mask(0, 0xff);
-	pi3usb9281_set_interrupt_mask(1, 0xff);
-	pi3usb9281_enable_interrupts(0);
-	pi3usb9281_enable_interrupts(1);
 
 	/* Determine initial chipset state */
 	if (slp_s5 && slp_s3) {
@@ -555,10 +570,7 @@ int board_set_active_charge_port(int charge_port)
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
 	/* check if we are source vbus on that port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
-						       GPIO_USB_C1_5V_EN);
-
-	if (is_real_port && source) {
+	if (is_real_port && usb_charger_port_is_sourcing_vbus(charge_port)) {
 		CPRINTS("Skip enable p%d", charge_port);
 		return EC_ERROR_INVAL;
 	}

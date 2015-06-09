@@ -108,6 +108,24 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+struct mutex pericom_mux_lock;
+struct pi3usb9281_config pi3usb9281_chips[] = {
+	{
+		.i2c_port = I2C_PORT_PERICOM,
+		.mux_gpio = GPIO_USB_C_BC12_SEL,
+		.mux_gpio_level = 0,
+		.mux_lock = &pericom_mux_lock,
+	},
+	{
+		.i2c_port = I2C_PORT_PERICOM,
+		.mux_gpio = GPIO_USB_C_BC12_SEL,
+		.mux_gpio_level = 1,
+		.mux_lock = &pericom_mux_lock,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
+	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+
 static int discharging_on_ac;
 
 /**
@@ -185,6 +203,7 @@ static void board_init(void)
 				&charge_none);
 
 		/* Initialize VBUS supplier based on VBUS */
+		/* TODO(crbug.com/498974): Don't do i2c from hook_init. */
 		bc12_status = pi3usb9281_get_charger_status(i);
 		charge_sel = PI3USB9281_CHG_STATUS_ANY(bc12_status) ?
 				&charge_vbus : &charge_none;

@@ -26,3 +26,5 @@
 	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C0, pd_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C1, pd_task, NULL, LARGER_TASK_STACK_SIZE)
+
+/* TODO: Add pericom USB charger tasks */
