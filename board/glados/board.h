@@ -21,8 +21,6 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 #define CONFIG_CHARGER_INPUT_CURRENT 512
-/* TODO: Remove this limit once boards can charge at higher than this */
-#define CONFIG_CHARGER_MAX_INPUT_CURRENT 1500
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 
 #define CONFIG_CHIPSET_SKYLAKE
@@ -129,7 +127,11 @@ extern const int supplier_priority[];
 #define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+/*
+ * TODO: max voltage should be 20V, but this causes excessive i2c noise
+ * on battery bus on proto0, which leads to inconsistent charging.
+ */
+#define PD_MAX_VOLTAGE_MV     5000
 
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
